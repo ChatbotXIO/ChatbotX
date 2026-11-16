@@ -199,6 +199,7 @@ const INBOX_IDENTIFIER_DESCRIPTIONS: Record<InboxIdentifierKind, string> = {
     "The WhatsApp number as people read it (e.g. +84 90 123 4567); only digits are compared, and two numbers sharing it make the request ambiguous.",
   botId:
     "The numeric Telegram bot id (`sourceId` of a Telegram inbox), not the @username.",
+  channelId: "The LINE Channel ID (`sourceId` of a LINE inbox).",
   oaId: "The Zalo Official Account id (`sourceId` of a Zalo inbox).",
   openId:
     "The connected TikTok account's open id, not the username or a customer's id.",
@@ -211,6 +212,7 @@ const CHANNEL_USER_ID_DESCRIPTIONS: Record<ChannelUserIdKind, string> = {
   igsid: "The Instagram-scoped user id of the person.",
   telegramChatId: "The Telegram chat id of the person.",
   zaloUserId: "The Zalo user id of the person.",
+  lineUserId: "The LINE user id of the person (`source.userId`).",
   tiktokCustomerOpenId:
     "The TikTok open id of the customer (not the connected account).",
   threadsUsername: "The person's Threads username; matched lower-cased.",

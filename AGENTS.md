@@ -200,6 +200,7 @@ See **`.agents/rules/git.md`** for the full canonical rules (commit format, bran
 - Trigger sequence actions (`addSequence` / `removeSequence`: shape, no sequence events, template behavior) and trigger loop protection (non-emitting actions, per-trigger-per-contact run circuit breaker, blind spots): `docs/trigger-actions.md`
 - Bot block trigger events (`contactBlockedBot` / `contactUnblockedBot`: Telegram `my_chat_member` source, existing contacts only, retry dedupe, re-registering older bots' webhooks with `backfill:telegram-webhooks`): `docs/bot-block-trigger-events.md`
 - Comment automation (all channels): `docs/comment-automation.md` (skill: `.agents/skills/comment-automation/`)
+- LINE channel (Messaging API setup, webhook + signature, reply vs push and monthly quota, token refresh, flow-step mapping, ops runbook, open items): `docs/line.md`
 - Push notifications (Expo Push Service, device tokens): `docs/push-notifications.md`
 - Enterprise licensing (offline Ed25519 license keys): `docs/licensing.md`
 - Platform support access (super admin opening any workspace): `docs/support-access.md`

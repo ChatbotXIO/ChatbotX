@@ -29,7 +29,22 @@ export const buttonTypes = z.enum([
 ])
 export type ButtonType = z.infer<typeof buttonTypes>
 
-export { BUTTON_LABEL_MAX } from "./button-limits"
+/**
+ * How a step or card button looks, on a channel that lets the author choose.
+ * The one list of styles: the button schema, each channel policy's
+ * `buttonStyles` (which of them a channel renders, and its default), the
+ * builder's picker and the channel integrations all read it from here.
+ */
+export const buttonStyles = z.enum(["primary", "secondary", "link"])
+export type ButtonStyle = z.infer<typeof buttonStyles>
+
+/** A button's optional `style`, shared by the step schema and the flow DSL. */
+export const buttonStyleField = buttonStyles.optional().meta({
+  description:
+    'Look of the button: "primary" (filled, accent colour), "secondary" (filled, neutral) or "link" (text only). Rendered only on channels whose policy lists button styles (`buttonStyles` in `capabilities.get`; today LINE only), on step and card buttons; omitted means the channel default ("link" on LINE). Every other channel, and quick replies, ignore it, and it never blocks publish.',
+})
+
+export { BUTTON_LABEL_MAX, CARD_BUTTON_MAX } from "./button-limits"
 
 export const buttonStepSchema = z
   .object({
@@ -48,6 +63,7 @@ export const buttonStepSchema = z
         description: `Button label shown to the contact (max ${BUTTON_LABEL_MAX} characters).`,
         maxLength: BUTTON_LABEL_MAX,
       }),
+    style: buttonStyleField,
   })
   .and(
     z.discriminatedUnion("buttonType", [

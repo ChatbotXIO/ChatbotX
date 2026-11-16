@@ -78,6 +78,7 @@ import {
 } from "../../lib/comment-automation-anchor"
 import { logger } from "../../lib/logger"
 import { resolveCallPhoneButtons } from "../utils/call-phone-buttons"
+import { clampCardButtonsToChannel } from "../utils/clamp-card-buttons"
 import { warnUncopyableCopyTextButtons } from "../utils/copy-text-buttons"
 import { resolveMiniAppLinks } from "../utils/mini-app-buttons"
 import { mapStepButtons } from "../utils/step-buttons"
@@ -678,13 +679,38 @@ export async function sendFlowStep({
     return
   }
 
+  // The node's authored channel is not enforced at runtime (see above), so a
+  // card can carry more buttons than the resolved channel's API takes (a
+  // 5-button LINE card reaching a 3-button Messenger contact) and be rejected
+  // whole. Cut card buttons here, once, to that channel's policy limit. Text
+  // and media step buttons are left to each integration, which already
+  // handles the overflow (see `clampCardButtonsToChannel`).
+  const clamped = clampCardButtonsToChannel(
+    step as SendFlowStepData,
+    targetContactInbox.channel,
+  )
+  if (clamped.dropped.length > 0) {
+    logger.warn(
+      {
+        conversationId,
+        flowId,
+        flowVersionId,
+        stepId: step.id,
+        stepType: step.stepType,
+        channel: targetContactInbox.channel,
+        dropped: clamped.dropped,
+      },
+      "Dropping card buttons over the resolved channel's card button limit",
+    )
+  }
+
   // Spintax is on here because only channelDeliverableStepTypes reach this
   // point — every string leaf is copy an author wrote for a contact to read.
   // Code- or data-carrying steps (external request, execute JavaScript) resolve
   // through their own handlers and deliberately leave it off.
   const authoredStep = await resolveContactVariablesDeep(
     conversation.contactId,
-    step,
+    clamped.step as typeof step,
     {
       contactInbox: targetContactInbox,
       conversation,

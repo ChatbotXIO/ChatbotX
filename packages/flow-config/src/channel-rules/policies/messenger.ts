@@ -6,6 +6,7 @@ import { defineChannelFlowPolicy } from "./define"
 export const messengerFlowPolicy = defineChannelFlowPolicy({
   limits: {
     buttonCount: 3,
+    cardButtonCount: 3,
     buttonLabel: 20,
     text: 2000,
   },

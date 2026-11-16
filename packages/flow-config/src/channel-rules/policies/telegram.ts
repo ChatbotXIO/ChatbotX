@@ -7,6 +7,7 @@ import { defineChannelFlowPolicy } from "./define"
 export const telegramFlowPolicy = defineChannelFlowPolicy({
   limits: {
     buttonCount: 10,
+    cardButtonCount: 3,
     buttonLabel: 20,
     text: 4096,
   },

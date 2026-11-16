@@ -1,6 +1,7 @@
 import {
   connectionStateService,
   customDomainService,
+  lineIntegrationService,
   platformCredentialService,
   tenantService,
   workspaceMemberService,
@@ -270,6 +271,11 @@ export const handleWebhook = async (
     return handleTelegramWebhook(req)
   }
 
+  // LINE uses per-channel config: the row's channel secret signs the body.
+  if (integrationType === "line") {
+    return handleLineWebhook(req)
+  }
+
   // TikTok uses per-account config (not org-level settings).
   // A credential-scoped route additionally proves the addressed credential
   // belongs to the account receiving the event.
@@ -502,6 +508,82 @@ const handleTelegramWebhook = async (req: NextRequest) => {
     )
     return jsonError(message, 400)
   }
+}
+
+/**
+ * D8/D15: route by the `channelId` query param, verify with that row's
+ * channel secret (inside the handler, over the raw body — `req` is passed on
+ * unread). An unknown channel is acked with 200 so LINE stops redelivering
+ * after a disconnect (LINE has no webhook "unset").
+ */
+const handleLineWebhook = async (req: NextRequest) => {
+  const channelId = req.nextUrl.searchParams.get("channelId")
+  if (!channelId) {
+    return jsonError("Missing channelId query param", 400)
+  }
+
+  const integration = integrations.line
+  if (!integration?.handleRequest) {
+    return jsonError("Method is not implemented", 400)
+  }
+
+  const integrationLine =
+    await lineIntegrationService.findByChannelId(channelId)
+  if (!integrationLine) {
+    logger.info(
+      { channelId, integrationType: "line" },
+      "Dropping LINE webhook for an unknown channel",
+    )
+    return new Response("OK")
+  }
+
+  const auth = integrationLine.auth as { clientSecret?: string }
+
+  try {
+    const result = await integration.handleRequest({
+      config: {
+        channelId: integrationLine.channelId,
+        channelSecret: auth.clientSecret ?? "",
+        botUserId: integrationLine.botUserId,
+        // biome-ignore lint/suspicious/noExplicitAny: safe pass value
+      } as any,
+      req,
+      queue: integrationQueue,
+    })
+
+    return new Response(result as BodyInit)
+  } catch (e: unknown) {
+    return lineWebhookErrorResponse(e, channelId)
+  }
+}
+
+const HTTP_CLIENT_ERROR_MIN = 400
+const HTTP_SERVER_ERROR_MIN = 500
+
+/**
+ * The handler's own rejections carry their status (`LineException`: 401 bad
+ * signature, 400 wrong destination or unreadable body) and are answered with
+ * it. Anything else is our failure (queue, Redis, DB): a 500, so LINE's
+ * webhook redelivery (when enabled in the LINE console) retries the batch.
+ * Events already enqueued before the failure are safe to see again: messages
+ * dedupe on `sourceId` (LINE message id, or `webhookEventId` for a postback)
+ * and follow/unfollow are ordered by event time. A 500's message stays
+ * generic: it can carry internal detail.
+ */
+const lineWebhookErrorResponse = (error: unknown, channelId: string) => {
+  const status =
+    error instanceof SdkException &&
+    error.httpStatusCode >= HTTP_CLIENT_ERROR_MIN &&
+    error.httpStatusCode < HTTP_SERVER_ERROR_MIN
+      ? error.httpStatusCode
+      : HTTP_SERVER_ERROR_MIN
+  const logContext = { err: error, integrationType: "line", channelId, status }
+  if (status < HTTP_SERVER_ERROR_MIN) {
+    logger.warn(logContext, "LINE webhook rejected")
+    return jsonError((error as SdkException).message, status)
+  }
+  logger.error(logContext, "LINE handleRequest failed")
+  return jsonError("Internal error", HTTP_SERVER_ERROR_MIN)
 }
 
 const handleTiktokWebhook = async (req: NextRequest, credentialId?: string) => {

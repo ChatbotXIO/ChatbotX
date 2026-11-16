@@ -1602,6 +1602,17 @@ chatbotx zalo-channels tag-sync update <id> --enabled <enabled>
 
 ---
 
+### `line-channels`
+
+```bash
+chatbotx line-channels list|get <id>
+chatbotx line-channels create --channelId <id> --channelSecret <secret>
+chatbotx line-channels delete <id>
+chatbotx line-channels test-webhook add <id>   # POST /v1/line-channels/{id}/test-webhook; no collision, derived name ends in `:add`
+```
+
+---
+
 ## Known command-name collisions
 
 Commands are named by `pathAndMethodToCommandName` (`apps/cli/src/openapi-loader.ts`) from `{path, method}` alone, ignoring the router's own action key. When two operations under the same resource reduce to the same name, `toolsToCommands` keeps the first and silently drops the second (a `Warning: duplicate command name "..." — skipping` line on stderr). Every entry below was verified against source, not just the stderr warning.

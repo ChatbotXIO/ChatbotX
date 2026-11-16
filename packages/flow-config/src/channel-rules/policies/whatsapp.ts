@@ -7,6 +7,7 @@ import { defineChannelFlowPolicy } from "./define"
 export const whatsappFlowPolicy = defineChannelFlowPolicy({
   limits: {
     buttonCount: 3,
+    cardButtonCount: 3,
     buttonLabel: 20,
     text: 4096,
     // `catalog_message` is an interactive message: its body is capped at 1,024

@@ -1873,6 +1873,7 @@
     "duplicated": {
       "generic": "חשבון זה כבר מחובר לסביבת עבודה אחרת.",
       "instagram": "חשבון Instagram זה כבר מחובר לסביבת עבודה אחרת.",
+      "line": "This LINE channel is already connected to another workspace.",
       "messenger": "דף Facebook זה כבר מחובר לסביבת עבודה אחרת.",
       "telegram": "בוט Telegram זה כבר מחובר לסביבת עבודה אחרת.",
       "threads": "חשבון Threads זה כבר מחובר לסביבת עבודה אחרת.",
@@ -3521,7 +3522,8 @@
       "botId": "מזהה בוט Telegram",
       "oaId": "מזהה Zalo OA",
       "openId": "open id של חשבון TikTok",
-      "threadsUserId": "מזהה משתמש Threads"
+      "threadsUserId": "מזהה משתמש Threads",
+      "channelId": "LINE Channel ID"
     },
     "channelUserIdKinds": {
       "psid": "Messenger PSID",
@@ -3531,7 +3533,8 @@
       "tiktokCustomerOpenId": "open id של לקוח TikTok",
       "threadsUsername": "שם משתמש Threads",
       "apiSourceId": "מזהה מקור איש הקשר",
-      "whatsappId": "מזהה WhatsApp (wa_id)"
+      "whatsappId": "מזהה WhatsApp (wa_id)",
+      "lineUserId": "LINE user id"
     },
     "mappings": {
       "title": "שמירת נתונים נכנסים",
@@ -6180,7 +6183,17 @@
     "button": {
       "label": "כפתור",
       "whenPressed": "כאשר כפתור זה נלחץ",
-      "callToThisNumber": "התקשר למספר זה"
+      "callToThisNumber": "התקשר למספר זה",
+      "style": {
+        "label": "סגנון הכפתור",
+        "description": "איך הכפתור נראה לאיש הקשר.",
+        "default": "{style} (ברירת מחדל)",
+        "options": {
+          "primary": "ראשי",
+          "secondary": "משני",
+          "link": "קישור"
+        }
+      }
     },
     "buttonLabel": {
       "label": "תווית כפתור"
@@ -6356,7 +6369,8 @@
       "threadsUsername": "שם משתמש ב-Threads",
       "webchatGuestId": "מזהה אורח ב-Webchat",
       "externalId": "מזהה חיצוני",
-      "channelId": "מזהה ערוץ"
+      "channelId": "מזהה ערוץ",
+      "lineUserId": "LINE User ID"
     },
     "flow": {
       "label": "תהליך"
@@ -6871,6 +6885,7 @@
       "placeholders": {
         "instagram": "מזהה משתמש Instagram",
         "messenger": "PSID של Messenger",
+        "line": "LINE user ID",
         "telegram": "מזהה צ'אט Telegram",
         "tiktok": "מזהה משתמש TikTok",
         "zalo": "מזהה משתמש Zalo"
@@ -7765,6 +7780,10 @@
     "telegramAllContacts": {
       "title": "Telegram",
       "description": "השתמשו בסוג הודעה זה אם ברצונכם לשלוח שידור לאנשי הקשר שלכם ב-Telegram."
+    },
+    "lineAllContacts": {
+      "title": "LINE",
+      "description": "שלחו הודעת תפוצה לאנשי הקשר שלכם ב-LINE בכל עת. כל הודעה נספרת במכסת ההודעות החודשית של חשבון LINE Official Account שלכם. אנשי קשר שחסמו את החשבון שלכם מדולגים."
     },
     "tiktokActiveContacts": {
       "title": "TikTok",
@@ -12001,6 +12020,23 @@
       "title": "Danger zone",
       "description": "Deletes your account and the {count, plural, =0 {0 workspaces} one {# workspace} other {# workspaces}} you own.",
       "openSettings": "Delete account"
+    }
+  },
+  "integrationLine": {
+    "channelIdLabel": "Channel ID",
+    "channelSecretLabel": "Channel secret",
+    "credentialsHelp": "Find both values in the LINE Developers console: open your Messaging API channel and go to Basic settings.",
+    "webhookNotEnabled": "LINE is not delivering messages yet. In LINE Official Account Manager, turn on \"Use webhook\" and turn off \"Auto-reply messages\", then press Test webhook.",
+    "webhookReplaced": "The webhook URL previously set on this LINE channel ({url}) was replaced with ChatbotX's.",
+    "testWebhook": "Test webhook",
+    "testWebhookSuccess": "LINE webhook is working.",
+    "webhookTestFailed": "LINE's webhook test failed: {reason}",
+    "continue": "Continue",
+    "errors": {
+      "channelHidden": "LINE is not available for this workspace.",
+      "credentialsRejected": "Invalid LINE Channel ID or Channel secret.",
+      "webhookRejected": "LINE rejected the webhook URL. Please try again later or contact support.",
+      "providerUnavailable": "LINE is temporarily unavailable. Please try again in a moment."
     }
   }
 }

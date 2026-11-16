@@ -5,6 +5,7 @@ import {
   inboxModel,
   integrationApiModel,
   integrationInstagramModel,
+  integrationLineModel,
   integrationMessengerModel,
   integrationSmtpModel,
   integrationTelegramModel,
@@ -239,6 +240,16 @@ const fetchZaloBatch = makeChannelFetcher({
   label: "Zalo OA",
 })
 
+const fetchLineBatch = makeChannelFetcher({
+  channel: "line",
+  provider: "line",
+  satellite: integrationLineModel,
+  sourceIdCol: integrationLineModel.channelId,
+  nameCol: integrationLineModel.name,
+  tokenErrCol: integrationLineModel.tokenRefreshError,
+  label: "LINE",
+})
+
 const fetchThreadsBatch = makeChannelFetcher({
   channel: "threads",
   provider: "threads",
@@ -292,6 +303,7 @@ export const CHANNEL_FETCHERS: Partial<Record<IntegrationType, BatchFetcher>> =
     telegram: fetchTelegramBatch,
     tiktok: fetchTiktokBatch,
     zalo: fetchZaloBatch,
+    line: fetchLineBatch,
     threads: fetchThreadsBatch,
     api: fetchApiBatch,
     smtp: fetchSmtpBatch,
@@ -306,6 +318,7 @@ export const PROVIDER_CHANNEL: Partial<Record<IntegrationType, ChannelType>> = {
   telegram: "telegram",
   tiktok: "tiktok",
   zalo: "zalo",
+  line: "line",
   threads: "threads",
   api: "api",
   smtp: "smtp",
@@ -330,6 +343,7 @@ export const CHANNEL_SATELLITE_TABLE: Partial<
   telegram: integrationTelegramModel,
   tiktok: integrationTiktokModel,
   zalo: integrationZaloModel,
+  line: integrationLineModel,
   threads: integrationThreadsModel,
   api: integrationApiModel,
   smtp: integrationSmtpModel,

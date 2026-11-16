@@ -19,6 +19,7 @@
     "@chatbotx.io/integration-instagram": "workspace:*",
     "@chatbotx.io/integration-instagram-facebook": "workspace:*",
     "@chatbotx.io/integration-klaviyo": "workspace:*",
+    "@chatbotx.io/integration-line": "workspace:*",
     "@chatbotx.io/integration-mailchimp": "workspace:*",
     "@chatbotx.io/integration-mailer-lite": "workspace:*",
     "@chatbotx.io/integration-messenger": "workspace:*",

@@ -18,6 +18,7 @@ export const broadcastSubactions = z.enum([
   "whatsappWithin24Hours",
   "instagramActiveContacts",
   "telegramAllContacts",
+  "lineAllContacts",
   "tiktokActiveContacts",
 ])
 export type BroadcastSubaction = z.infer<typeof broadcastSubactions>

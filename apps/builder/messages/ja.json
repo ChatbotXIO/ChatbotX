@@ -620,6 +620,10 @@
       "title": "Telegram",
       "description": "Telegramの連絡先に一斉配信を送信する場合は、このメッセージタイプを使用します。"
     },
+    "lineAllContacts": {
+      "title": "LINE",
+      "description": "LINEの連絡先にいつでも一斉配信を送信できます。各メッセージはLINE公式アカウントの月間メッセージ通数に含まれます。アカウントをブロックした連絡先には送信されません。"
+    },
     "tiktokActiveContacts": {
       "title": "TikTok",
       "description": "プロモーションを含めることができ、過去24時間以内にボットへメッセージを送ったユーザーにのみ送信されます。TikTokの一斉配信ではテキストと画像のみ使用できます。"
@@ -1383,7 +1387,17 @@
     "button": {
       "label": "ボタン",
       "whenPressed": "このボタンが押されたとき",
-      "callToThisNumber": "この番号に発信"
+      "callToThisNumber": "この番号に発信",
+      "style": {
+        "label": "ボタンのスタイル",
+        "description": "連絡先に表示されるボタンの見た目です。",
+        "default": "{style}（デフォルト）",
+        "options": {
+          "primary": "プライマリ",
+          "secondary": "セカンダリ",
+          "link": "リンク"
+        }
+      }
     },
     "buttonLabel": {
       "label": "ボタンラベル"
@@ -1559,7 +1573,8 @@
       "threadsUsername": "Threadsユーザー名",
       "webchatGuestId": "WebチャットゲストID",
       "externalId": "外部ID",
-      "channelId": "チャネルID"
+      "channelId": "チャネルID",
+      "lineUserId": "LINE User ID"
     },
     "flow": {
       "label": "フロー"
@@ -2074,6 +2089,7 @@
       "placeholders": {
         "instagram": "InstagramユーザーID",
         "messenger": "Messenger PSID",
+        "line": "LINE user ID",
         "telegram": "TelegramチャットID",
         "tiktok": "TikTokユーザーID",
         "zalo": "ZaloユーザーID"
@@ -4217,6 +4233,7 @@
     "duplicated": {
       "generic": "このアカウントはすでに別のワークスペースに接続されています。",
       "instagram": "このInstagramアカウントはすでに別のワークスペースに接続されています。",
+      "line": "This LINE channel is already connected to another workspace.",
       "messenger": "このFacebookページはすでに別のワークスペースに接続されています。",
       "telegram": "このTelegramボットはすでに別のワークスペースに接続されています。",
       "threads": "このThreadsアカウントはすでに別のワークスペースに接続されています。",
@@ -5865,7 +5882,8 @@
       "botId": "TelegramボットID",
       "oaId": "Zalo OA ID",
       "openId": "TikTokアカウントのopen id",
-      "threadsUserId": "ThreadsユーザーID"
+      "threadsUserId": "ThreadsユーザーID",
+      "channelId": "LINE Channel ID"
     },
     "channelUserIdKinds": {
       "psid": "Messenger PSID",
@@ -5875,7 +5893,8 @@
       "tiktokCustomerOpenId": "TikTok顧客のopen id",
       "threadsUsername": "Threadsユーザー名",
       "apiSourceId": "連絡先ソースID",
-      "whatsappId": "WhatsApp ID(wa_id)"
+      "whatsappId": "WhatsApp ID(wa_id)",
+      "lineUserId": "LINE user id"
     },
     "mappings": {
       "title": "受信データを保存",
@@ -12001,6 +12020,23 @@
       "title": "Danger zone",
       "description": "Deletes your account and the {count, plural, =0 {0 workspaces} one {# workspace} other {# workspaces}} you own.",
       "openSettings": "Delete account"
+    }
+  },
+  "integrationLine": {
+    "channelIdLabel": "Channel ID",
+    "channelSecretLabel": "Channel secret",
+    "credentialsHelp": "Find both values in the LINE Developers console: open your Messaging API channel and go to Basic settings.",
+    "webhookNotEnabled": "LINE is not delivering messages yet. In LINE Official Account Manager, turn on \"Use webhook\" and turn off \"Auto-reply messages\", then press Test webhook.",
+    "webhookReplaced": "The webhook URL previously set on this LINE channel ({url}) was replaced with ChatbotX's.",
+    "testWebhook": "Test webhook",
+    "testWebhookSuccess": "LINE webhook is working.",
+    "webhookTestFailed": "LINE's webhook test failed: {reason}",
+    "continue": "Continue",
+    "errors": {
+      "channelHidden": "LINE is not available for this workspace.",
+      "credentialsRejected": "Invalid LINE Channel ID or Channel secret.",
+      "webhookRejected": "LINE rejected the webhook URL. Please try again later or contact support.",
+      "providerUnavailable": "LINE is temporarily unavailable. Please try again in a moment."
     }
   }
 }

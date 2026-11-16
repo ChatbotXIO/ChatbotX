@@ -969,6 +969,24 @@ export const possibleErrorsOnCreatingConnection = {
   ...possibleIdempotencyErrors,
 } satisfies ErrorMap
 
+/** `POST /v1/line-channels`: credentials rejected by LINE, channel already connected elsewhere, LINE unavailable. */
+export const possibleErrorsOnConnectingLine = {
+  notFound,
+  businessError,
+  channelDuplicated: {
+    message: "This account is already connected to another workspace.",
+    status: 400,
+  },
+  connectionCredentialsRejected,
+  connectionProviderUnavailable,
+  channelHidden,
+  lineWebhookRejected: {
+    message: "LINE rejected the webhook URL",
+    status: 400,
+  },
+  ...possibleIdempotencyErrors,
+} satisfies ErrorMap
+
 export const possibleErrorsOnReconnectingConnection = {
   connectionProviderDedicatedOnly,
   notFound,

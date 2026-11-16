@@ -13,11 +13,14 @@ import type { IntegrationType } from "@chatbotx.io/database/partials"
  * create, reconnect, rename, refresh, disconnect, and the connect-session
  * targets/cancel endpoints. `verify` and reads stay open.
  *
+ * - `line`: the generic connect path cannot register LINE's webhook URL, so it
+ *   connects only through the dedicated LINE connect action / public API.
  * - `googleAds`: super admin only and never a platform support session
  *   (`assertCanManageGoogleAds`). v1 has no public API for Google Ads.
  */
 const DEDICATED_ONLY_PROVIDERS: ReadonlySet<IntegrationType> = new Set([
   "googleAds",
+  "line",
 ] satisfies IntegrationType[])
 
 /** Throws a typed 403 when `provider` may only be managed from its dedicated entry point. */

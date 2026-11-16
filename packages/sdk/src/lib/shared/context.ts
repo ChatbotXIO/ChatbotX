@@ -10,6 +10,10 @@ export type ContextUploader = {
     abortSignal?: AbortSignal,
     // biome-ignore lint/suspicious/noExplicitAny: wip
   ): Promise<any>
+  /** Reads an object by key straight from the bucket. */
+  getObjectStream?(
+    path: string,
+  ): Promise<{ stream: AsyncIterable<Uint8Array>; contentLength?: number }>
 }
 
 export type ContextQueue = {
@@ -36,6 +40,17 @@ export type AuthStore<AO extends AuthValue = AuthValue> = {
   markOffline?: (reason?: unknown) => Promise<void>
 }
 
+/**
+ * Short-lived key/value store scoped to one integration. For single-use
+ * secrets that must cross a process boundary within seconds (e.g. a reply
+ * token stashed at receive time and taken at send time). `take` is atomic:
+ * only one caller gets the value.
+ */
+export type ContextEphemeralStore = {
+  put(key: string, value: string, ttlSeconds: number): Promise<void>
+  take(key: string): Promise<string | null>
+}
+
 export type Context<AO extends AuthValue, ID = Record<string, unknown>> = {
   storagePrefix: string
   /**
@@ -48,6 +63,7 @@ export type Context<AO extends AuthValue, ID = Record<string, unknown>> = {
   auth: AO
   authStore?: AuthStore<AO>
   queue?: ContextQueue
+  ephemeral?: ContextEphemeralStore
   integrationDetail?: ID
   platform: {
     appUrl: string

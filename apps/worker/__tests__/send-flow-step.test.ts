@@ -375,6 +375,7 @@ import {
   SEQUENCE_SCHEDULE_PAYLOAD_TYPE,
 } from "@chatbotx.io/flow-config"
 import type { ChatJobSendFlowStep } from "@chatbotx.io/worker-config"
+import { logger } from "../src/lib/logger"
 
 const { sendChatMessage, sendFlowStep } = await import(
   "../src/chat/handlers/send-flow-step"
@@ -718,6 +719,85 @@ describe("sendFlowStep", () => {
     expect(mockRepositoryCreate).not.toHaveBeenCalled()
     expect(mockRepositoryCreateWithAttachments).not.toHaveBeenCalled()
     expect(mockSendFlowStepToChannel).not.toHaveBeenCalled()
+  })
+
+  describe("card button limit of the resolved channel", () => {
+    const fiveButtons = Array.from({ length: 5 }, (_, index) => ({
+      id: `b${index + 1}`,
+      label: `Option ${index + 1}`,
+      buttonType: null,
+      beforeStep: null,
+      steps: [],
+    }))
+    const lineTextStep = {
+      id: "step-line",
+      nodeId: "node-line",
+      stepType: "sendText",
+      text: "Pick one",
+      buttons: fiveButtons,
+    } as unknown as SendFlowStepData["step"]
+    const lineCarouselStep = {
+      id: "step-line-carousel",
+      nodeId: "node-line",
+      stepType: "sendCarousel",
+      layout: "horizontal",
+      cards: [
+        { id: "c1", stepType: "sendCard", title: "A", buttons: fiveButtons },
+      ],
+    } as unknown as SendFlowStepData["step"]
+    const DROPPED =
+      "Dropping card buttons over the resolved channel's card button limit"
+    const sentStep = () =>
+      mockSendFlowStepToChannel.mock.calls.at(-1)?.[0]?.step as {
+        buttons?: { id: string }[]
+        cards?: { buttons: { id: string }[] }[]
+      }
+
+    test("a 5-button text step is passed to a 3-button channel unchanged", async () => {
+      await sendFlowStep({
+        ...baseParams,
+        contactInboxId: "ci-1",
+        step: lineTextStep,
+      })
+
+      expect(sentStep().buttons).toHaveLength(5)
+      expect(logger.warn).not.toHaveBeenCalledWith(expect.anything(), DROPPED)
+    })
+
+    test("each carousel card is cut to the channel's card limit and logged", async () => {
+      await sendFlowStep({
+        ...baseParams,
+        contactInboxId: "ci-1",
+        step: lineCarouselStep,
+      })
+
+      expect(sentStep().cards?.[0]?.buttons.map((button) => button.id)).toEqual(
+        ["b1", "b2", "b3"],
+      )
+      expect(logger.warn).toHaveBeenCalledWith(
+        expect.objectContaining({
+          channel: "messenger",
+          dropped: [{ group: "cards.0", kept: 3, dropped: 2 }],
+        }),
+        DROPPED,
+      )
+    })
+
+    test("LINE keeps all 5 card buttons and logs nothing", async () => {
+      mockFindContactInbox.mockResolvedValue({
+        ...fakeContactInbox,
+        channel: "line",
+      })
+
+      await sendFlowStep({
+        ...baseParams,
+        contactInboxId: "ci-1",
+        step: lineCarouselStep,
+      })
+
+      expect(sentStep().cards?.[0]?.buttons).toHaveLength(5)
+      expect(logger.warn).not.toHaveBeenCalledWith(expect.anything(), DROPPED)
+    })
   })
 
   describe("whatsappLocation step", () => {

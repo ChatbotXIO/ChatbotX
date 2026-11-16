@@ -23,6 +23,7 @@ import {
 import {
   coexistSyncRunModel,
   integrationInstagramModel,
+  integrationLineModel,
   integrationMessengerModel,
   integrationSmtpModel,
   integrationTelegramModel,
@@ -769,6 +770,15 @@ class WorkspaceLifecycleService extends BaseService {
         await finish(integrations?.zalo)
         return
       }
+      case channelTypes.enum.line: {
+        if (removeIntegrationRow && inbox.integrationLine) {
+          await tx
+            .delete(integrationLineModel)
+            .where(eq(integrationLineModel.id, inbox.integrationLine.id))
+        }
+        await finish(integrations?.line)
+        return
+      }
       case channelTypes.enum.telegram: {
         if (removeIntegrationRow && inbox.integrationTelegram) {
           await tx
@@ -867,6 +877,8 @@ const inboxToAuth = (inbox: InboxWithIntegrations): unknown => {
       return inbox.integrationWhatsapp?.auth
     case channelTypes.enum.zalo:
       return inbox.integrationZalo?.auth
+    case channelTypes.enum.line:
+      return inbox.integrationLine?.auth
     case channelTypes.enum.telegram:
       return inbox.integrationTelegram?.auth
     case channelTypes.enum.tiktok:

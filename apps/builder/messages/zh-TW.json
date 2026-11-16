@@ -245,7 +245,17 @@
     "button": {
       "label": "按鈕",
       "whenPressed": "當按下此按鈕時",
-      "callToThisNumber": "撥打此號碼"
+      "callToThisNumber": "撥打此號碼",
+      "style": {
+        "label": "按鈕樣式",
+        "description": "按鈕在聯絡人端的顯示方式。",
+        "default": "{style}（預設）",
+        "options": {
+          "primary": "主要",
+          "secondary": "次要",
+          "link": "連結"
+        }
+      }
     },
     "buttonLabel": {
       "label": "按鈕標籤"
@@ -406,7 +416,8 @@
       "threadsUsername": "Threads 使用者名稱",
       "webchatGuestId": "網頁聊天訪客 ID",
       "externalId": "外部 ID",
-      "channelId": "頻道 ID"
+      "channelId": "頻道 ID",
+      "lineUserId": "LINE User ID"
     },
     "flow": {
       "label": "流程"
@@ -913,6 +924,7 @@
       "placeholders": {
         "instagram": "Instagram 使用者 ID",
         "messenger": "MessengerPSID",
+        "line": "LINE user ID",
         "telegram": "Telegram 聊天 ID",
         "tiktok": "TikTok 使用者 ID",
         "zalo": "Zalo 使用者 ID"
@@ -2581,6 +2593,10 @@
       "title": "Telegram",
       "description": "如果您想向您的Telegram 聯絡人傳送廣播，請使用此訊息類型。"
     },
+    "lineAllContacts": {
+      "title": "LINE",
+      "description": "隨時向您的 LINE 聯絡人傳送群發訊息。每則訊息都會計入您的 LINE 官方帳號每月訊息額度。已封鎖您帳號的聯絡人將被略過。"
+    },
     "tiktokActiveContacts": {
       "title": "TikTok",
       "description": "可能包含促銷訊息，並且只會傳送給過去 24 小時內向您的機器人傳送訊息的使用者。TikTok 廣播僅支援文字和影像。"
@@ -3126,6 +3142,7 @@
     "duplicated": {
       "generic": "此帳戶已連接到另一個工作區。",
       "instagram": "此 Instagram 帳戶已連接到另一個工作區。",
+      "line": "This LINE channel is already connected to another workspace.",
       "messenger": "此Facebook 頁面已連接到另一個工作區。",
       "telegram": "此Telegram 機器人已連接到另一個工作區。",
       "threads": "此Threads帳戶已連接到另一個工作區。",
@@ -5934,7 +5951,8 @@
       "botId": "Telegram 機器人 ID",
       "oaId": "Zalo OA ID",
       "openId": "TikTok 帳號 open id",
-      "threadsUserId": "Threads 使用者 ID"
+      "threadsUserId": "Threads 使用者 ID",
+      "channelId": "LINE Channel ID"
     },
     "channelUserIdKinds": {
       "psid": "Messenger PSID",
@@ -5944,7 +5962,8 @@
       "tiktokCustomerOpenId": "TikTok 客戶 open id",
       "threadsUsername": "Threads 使用者名稱",
       "apiSourceId": "聯絡人來源 ID",
-      "whatsappId": "WhatsApp ID (wa_id)"
+      "whatsappId": "WhatsApp ID (wa_id)",
+      "lineUserId": "LINE user id"
     },
     "mappings": {
       "title": "儲存傳入資料",
@@ -12001,6 +12020,23 @@
       "title": "Danger zone",
       "description": "Deletes your account and the {count, plural, =0 {0 workspaces} one {# workspace} other {# workspaces}} you own.",
       "openSettings": "Delete account"
+    }
+  },
+  "integrationLine": {
+    "channelIdLabel": "Channel ID",
+    "channelSecretLabel": "Channel secret",
+    "credentialsHelp": "Find both values in the LINE Developers console: open your Messaging API channel and go to Basic settings.",
+    "webhookNotEnabled": "LINE is not delivering messages yet. In LINE Official Account Manager, turn on \"Use webhook\" and turn off \"Auto-reply messages\", then press Test webhook.",
+    "webhookReplaced": "The webhook URL previously set on this LINE channel ({url}) was replaced with ChatbotX's.",
+    "testWebhook": "Test webhook",
+    "testWebhookSuccess": "LINE webhook is working.",
+    "webhookTestFailed": "LINE's webhook test failed: {reason}",
+    "continue": "Continue",
+    "errors": {
+      "channelHidden": "LINE is not available for this workspace.",
+      "credentialsRejected": "Invalid LINE Channel ID or Channel secret.",
+      "webhookRejected": "LINE rejected the webhook URL. Please try again later or contact support.",
+      "providerUnavailable": "LINE is temporarily unavailable. Please try again in a moment."
     }
   }
 }

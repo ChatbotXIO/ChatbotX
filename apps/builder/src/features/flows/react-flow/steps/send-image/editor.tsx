@@ -1,3 +1,4 @@
+import { buttonContainers } from "@chatbotx.io/flow-config"
 import { MediaLibraryOrInsertLink } from "@/components/media-library-or-insert-link"
 import { ButtonGroupEditor } from "../button/editor"
 import { MediaStepNotice } from "../button/media-step-notice"
@@ -12,7 +13,10 @@ const SendImageStepEditor = ({ parentName }: SendImageStepEditorProps) => (
       <MediaLibraryOrInsertLink fileType="image" parentName={parentName} />
     </div>
     <div className="bg-slate-200 px-3 py-2 dark:bg-neutral-900">
-      <ButtonGroupEditor parentName={`${parentName}.buttons`} />
+      <ButtonGroupEditor
+        container={buttonContainers.step}
+        parentName={`${parentName}.buttons`}
+      />
       <MediaStepNotice parentName={parentName} />
     </div>
   </div>

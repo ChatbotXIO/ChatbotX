@@ -262,6 +262,7 @@ describe("capability table", () => {
       messenger: "channelApi",
       instagram: "channelApi",
       zalo: "channelApi",
+      line: "channelApi",
       telegram: "channelApi",
       whatsapp: "payload",
       api: "payload",
@@ -277,8 +278,14 @@ describe("capability table", () => {
     }
   })
 
-  test("hasOnDemandProfileApi is true for exactly messenger/instagram/zalo/telegram", () => {
-    const onDemandChannels = ["messenger", "instagram", "zalo", "telegram"]
+  test("hasOnDemandProfileApi is true for exactly messenger/instagram/zalo/line/telegram", () => {
+    const onDemandChannels = [
+      "messenger",
+      "instagram",
+      "zalo",
+      "line",
+      "telegram",
+    ]
 
     for (const channel of channelTypes.options) {
       expect(hasOnDemandProfileApi(channel)).toBe(
