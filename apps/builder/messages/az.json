@@ -8507,6 +8507,22 @@
     "portalSmtp": "SMTP parametrləri",
     "portalPricingPage": "Qiymətlər"
   },
+  "deleteAccountPage": {
+    "title": "ChatbotX hesabınızı silin",
+    "intro": "Hesabınızı və məlumatlarınızı aşağıdakı yollardan biri ilə silə bilərsiniz.",
+    "waysTitle": "Hesabı necə silmək olar",
+    "wayMobile": "Mobil tətbiqdə: Parametrlər → Hesabı sil.",
+    "wayWeb": "Veb-də: daxil olun və hesabın silinməsi səhifəsini açın.",
+    "wayWebLink": "Hesabın silinməsini aç",
+    "wayEmail": "E-poçt vasitəsilə: qeydiyyatdan keçdiyiniz ünvandan {email} ünvanına yazın.",
+    "whatHappensTitle": "Bundan sonra nə baş verir",
+    "whatHappens": "Silinmə 24 saatlıq gözləmə müddətindən sonra başlayır və geri qaytarıla bilməz. Əvvəlcə abunəlikləri ləğv edin.",
+    "deletedTitle": "Sildiyimiz məlumatlar",
+    "deleted": "Profiliniz (ad və e-poçt), giriş məlumatları, push bildiriş tokenləri və sahibi olduğunuz bütün iş sahələri, o cümlədən kontaktlar, söhbətlər, mesajlar və yüklənmiş fayllar.",
+    "sharedWorkspace": "Sahibi olduğunuz iş sahəsində başqa üzvlər varsa, o, onlar üçün də silinir.",
+    "retainedTitle": "Saxladığımız məlumatlar",
+    "retained": "Başqalarının iş sahələrində yazdığınız qeydlər adınız silinməklə qalır. Silinmənin baş verdiyini göstərən qeyd saxlanılır. Ödəniş və faktura qeydləri qanunun tələb etdiyi müddət ərzində saxlanıla bilər."
+  },
   "unsubscribePage": {
     "title": "Abunəlikdən çıxmısınız.",
     "description": "Bu göndərəndən daha e-poçt almayacaqsınız.",

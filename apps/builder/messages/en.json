@@ -8507,6 +8507,22 @@
     "portalSmtp": "SMTP Settings",
     "portalPricingPage": "Pricing"
   },
+  "deleteAccountPage": {
+    "title": "Delete your ChatbotX account",
+    "intro": "You can delete your account and its data in any of these ways.",
+    "waysTitle": "How to delete your account",
+    "wayMobile": "In the mobile app: Settings → Delete account.",
+    "wayWeb": "On the web: sign in and open the account deletion page.",
+    "wayWebLink": "Open account deletion",
+    "wayEmail": "By email: write to {email} from your registered address.",
+    "whatHappensTitle": "What happens next",
+    "whatHappens": "Deletion starts after a 24-hour grace period and cannot be undone. Cancel any subscriptions first.",
+    "deletedTitle": "Data we delete",
+    "deleted": "Your profile (name and email), sign-in credentials, push notification tokens, and every workspace you own, including its contacts, conversations, messages and uploaded files.",
+    "sharedWorkspace": "If other people are members of a workspace you own, it is deleted for them too.",
+    "retainedTitle": "Data we keep",
+    "retained": "Notes you wrote in workspaces owned by others stay, with your name removed. A record that the deletion took place is kept. Billing and invoice records may be kept as long as the law requires."
+  },
   "unsubscribePage": {
     "title": "You have been unsubscribed.",
     "description": "You will no longer receive emails from this sender.",
