@@ -4,7 +4,7 @@ Creates ChatbotX contacts from a channel's existing conversation history — the
 operator picks a connected inbox and a "scan from" time, and a background job
 walks the channel's conversation list newest→oldest, stopping at that time, and
 imports every participant who is not already a contact. Ported from v1's
-"Quét Khách Hàng Tự Động". Messenger only today (Instagram/Zalo are follow-ups).
+"Quét Khách Hàng Tự Động". Messenger and Instagram (native and via Facebook) today.
 
 Entry point: **Contacts → Import ▸ Automatic Customer Scan**.
 
@@ -55,12 +55,24 @@ scanContactScans cron (1 min, distributedLock)  ── pickDueRuns({ type:'conta
    │
 runContactScan engine ── claimContactScanRun (mints claimToken) ── walk /conversations DESC
    │   stop at scanFromAt (ceiling); skip above lastSyncedAt (frontier); bulkImportChannelContacts per page
-   │   4-min chunk budget → yieldForContinuation (release token, stay 'running') → enqueue next chunk → reclaim
-   ├── done          → succeeded | partial (some pages failed) | failed
-   ├── transient err → resetForRetry (status='init'); sweeper re-drives; markMaxAttemptsFailed after 5 attempts
+   │   chunk (5 pages or 4 min) → yieldForContinuation (release token, stay 'running') → enqueue next chunk → reclaim
+   ├── done          → succeeded | partial (page cap) | failed
+   ├── cancelled     → partial + `cancelled` sentinel (operator Cancel, or channel disconnected)
+   ├── rate limit / high usage → park (running, no claim) + delayed job; attempts reset to 1
+   ├── transient err → retryOrFail: back to 'init' for the sweeper, or failed on the 5th in a row
    └── auth/permission err → failed (currentError sentinel)
 ```
 
+- **Cancel**: `POST /v1/contact-scans/cancel` (`contactScans.cancel`) and the
+  "Cancel scan" button end a live scan as `partial` with the `cancelled`
+  sentinel, clear its claim and cursor, and keep the contacts already imported.
+  The worker's next write is fenced out, so at most the page in flight finishes.
+  It is shown as `cancelled` (one mapping, `resolveContactScanRunStatus`, used by
+  the status view and the history list; no new enum value). Nothing running is
+  `cancelled: false`, not an error. Disconnecting Messenger or Instagram from the
+  inbox cancels the integration's scan in the same transaction (workspace
+  teardown ends it too: cancelled for Instagram, failed for Messenger). A cancelled scan still counts
+  toward the 24 h cooldown (measured from `createdAt`).
 - **Cooldown**: 24 h from `createdAt` before the same inbox can scan again
   (`resolveContactScanAvailability`). ETA shown to the user is `createdAt + 4 h`
   (derived, not stored).
@@ -81,7 +93,55 @@ runContactScan engine ── claimContactScanRun (mints claimToken) ── walk 
    (`packages/business/src/contact-scan/channel-registry.ts`).
 4. Add the adapter to `contactScanAdapters`
    (`apps/worker/src/integration/handlers/contact-scan/adapter.ts`) implementing
-   `loadContext` / `listPage` / `classifyError` for the channel's conversation API.
+   `loadContext` / `listPage` / `classifyError` / `readBackoff` for the channel's conversation API (`classifyError` goes through the channel's own `mapToChannelError`).
 
 The `satisfies Record<ContactScanChannel, …>` on the registry and the adapter map
 makes a missing channel a compile error — no other file needs a channel branch.
+
+## Pacing and rate limits
+
+`apps/worker/.../contact-scan/pacing.ts` owns the rhythm (named constants, no
+env switch: changing them is a code change and a deploy):
+
+| | Value |
+|---|---|
+| Chunk | 5 pages or 4 minutes, whichever comes first |
+| Between two pages | 1 second |
+| Next chunk | queued 5 seconds later |
+| Provider reports a wait | that wait, capped at 30 minutes |
+| Rate limited, or usage ≥ 95% | 10 minutes |
+| Usage ≥ 85% | 2 minutes |
+
+Every wait is a **delayed job** (`yieldForContinuation` + `integrationQueue.add`
+with `delay`), never a sleep in the worker, so a rate-limited scan holds no
+worker slot. The scan path no longer uses `withInlineRetry` or
+`sleepForUsageThrottle` (coexist keeps them).
+
+- **Units**: Meta's `estimated_time_to_regain_access` is in **minutes**
+  (Graph API "Rate Limits"). `estimatedMinutesToMs` in
+  `integrations/messenger/src/apis/usage.ts` is the one place that converts it.
+- **Neutral signal**: an adapter returns `{ usagePercent, retryAfterMs }` for a
+  page and for a failed call (`readBackoff`, read from the error response's
+  headers through `getOriginError`); the engine knows no header names or units.
+- **Classification** goes through each channel's own `mapToChannelError`: a rate
+  limit (`isRateLimited`: category `RATE_LIMITED` or reason `rate_limited`, or a
+  bare HTTP 429) waits and retries the same page; network/5xx/timeouts are
+  transient; `AUTH_FAILED` and `PERMISSION_DENIED` fail the scan. The code tables
+  live in the integrations (`RATE_LIMIT_CODES`); a code with only the reason
+  (Instagram `80002`; Instagram via Facebook `32`, `80001`, `80002`) makes the
+  scan back off without changing how messages are sent.
+- **Error accounting**: `attempts` is the sweeper's pick count, so a running
+  claim is 1 and the Nth consecutive failure sees N. A finished page resets it
+  to 1 (same write as the heartbeat); so does the release for a rate-limit
+  wait (an idle released run must not be failed by the sweeper); a
+  transient failure goes through `retryOrFailContactScanRun`, one atomic UPDATE
+  that returns the run to `init` or, on the 5th failure in a row, fails it at
+  once (it cannot wait for `markMaxAttemptsFailed`).
+- **Lost delayed job**: a parked run is `running` with no claim.
+  `pickDueRuns({ releasedGraceMs })` (passed only by the scan, 35 minutes, longer
+  than the 30-minute maximum wait) takes it back if its job is lost.
+- A job that retries the SAME page after a rate limit carries a unique
+  `generation` in its job id (`buildContactScanPageJobId`), because BullMQ drops
+  an add whose id still exists.
+- Separate work, not in this change: coexist's `usage-throttle.ts` and
+  `messenger-sync.ts` also read the unit as seconds.

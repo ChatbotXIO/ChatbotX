@@ -309,6 +309,8 @@ const getChannelIntegrationId = (
       return inbox.integrationThreads?.id ?? null
     case channelTypes.enum.telegram:
       return inbox.integrationTelegram?.id ?? null
+    case channelTypes.enum.line:
+      return inbox.integrationLine?.id ?? null
     case channelTypes.enum.webchat:
       return inbox.integrationWebchat?.id ?? null
     case channelTypes.enum.smtp:
@@ -439,6 +441,8 @@ export const getIntegrationField = async (
           return inbox.integrationThreads?.name ?? null
         case channelTypes.enum.telegram:
           return inbox.integrationTelegram?.name ?? null
+        case channelTypes.enum.line:
+          return inbox.integrationLine?.name ?? null
         case channelTypes.enum.webchat:
           return inbox.integrationWebchat?.name ?? null
         case channelTypes.enum.smtp:

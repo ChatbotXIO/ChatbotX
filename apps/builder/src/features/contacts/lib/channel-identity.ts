@@ -26,6 +26,10 @@ export const sourceIdentityConfigByChannel = {
     labelKey: "fields.channelIdentity.zaloUserId",
     hideWhenSourceUserIdKeyed: false,
   },
+  [channelTypes.enum.line]: {
+    labelKey: "fields.channelIdentity.lineUserId",
+    hideWhenSourceUserIdKeyed: false,
+  },
   [channelTypes.enum.telegram]: {
     labelKey: "fields.channelIdentity.telegramChatId",
     hideWhenSourceUserIdKeyed: false,

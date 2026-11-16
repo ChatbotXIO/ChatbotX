@@ -222,7 +222,17 @@
     "button": {
       "label": "Pulsante",
       "whenPressed": "Quando viene premuto questo pulsante",
-      "callToThisNumber": "Chiama questo numero"
+      "callToThisNumber": "Chiama questo numero",
+      "style": {
+        "label": "Stile del pulsante",
+        "description": "Come appare il pulsante al contatto.",
+        "default": "{style} (predefinito)",
+        "options": {
+          "primary": "Principale",
+          "secondary": "Secondario",
+          "link": "Link"
+        }
+      }
     },
     "buttonLabel": {
       "label": "Etichetta del pulsante"
@@ -398,7 +408,8 @@
       "threadsUsername": "Nome utente Threads",
       "webchatGuestId": "ID ospite Webchat",
       "externalId": "ID esterno",
-      "channelId": "ID canale"
+      "channelId": "ID canale",
+      "lineUserId": "LINE User ID"
     },
     "flow": {
       "label": "Flusso"
@@ -913,6 +924,7 @@
       "placeholders": {
         "instagram": "ID utente Instagram",
         "messenger": "PSID di Messenger",
+        "line": "LINE user ID",
         "telegram": "ID chat Telegram",
         "tiktok": "ID utente TikTok",
         "zalo": "ID utente Zalo"
@@ -1997,6 +2009,31 @@
         "noMatches": "No matching chunks were found.",
         "agentHasNoFiles": "This agent has no knowledge files."
       }
+    },
+    "create": {
+      "trigger": "Aggiungi conoscenza",
+      "title": "Aggiungi conoscenza",
+      "description": "Carica un file o importalo da un URL pubblico. L'agente IA cerca nel suo contenuto quando risponde.",
+      "tabs": {
+        "fromUrl": "Da URL"
+      },
+      "urlHelp": "Un link diretto a un file supportato, un link Google Docs, Sheets o Slides condiviso pubblicamente o una pagina web statica. I contenuti generati con JavaScript potrebbero mancare.",
+      "snapshotNotice": "L'URL viene scaricato una sola volta come istantanea. Le modifiche successive alla fonte non vengono sincronizzate; aggiungilo di nuovo per aggiornarlo.",
+      "uploadFailed": "Caricamento di {name} non riuscito",
+      "rateLimited": "Troppe importazioni da URL. Attendi qualche secondo e riprova.",
+      "errors": {
+        "urlNotAllowed": "Questo URL non è consentito. Usa un indirizzo Internet pubblico.",
+        "invalidUrl": "L'URL non è valido. Usa un link http(s) completo senza nome utente o password.",
+        "googleFileNotPublic": "Questo file Google non è condiviso pubblicamente. Imposta l'accesso generale su \"Chiunque abbia il link\" e riprova.",
+        "googlePublishedNotSupported": "I link Google \"Pubblica sul Web\" non sono supportati. Condividi il file pubblicamente e usa il suo link normale.",
+        "unsupportedFileType": "Questo tipo di file non è supportato come conoscenza.",
+        "fileTooLarge": "Il file supera {maxSize}.",
+        "downloadTimedOut": "Il download ha impiegato troppo tempo. Prova un file più piccolo o un host più veloce.",
+        "downloadFailed": "La fonte ha restituito un errore. Verifica che il link si apra senza accedere.",
+        "tooManyRedirects": "L'URL reindirizza troppe volte.",
+        "invalidRedirect": "L'URL reindirizza a un indirizzo non valido.",
+        "uploadPathNotAllowed": "Il file caricato non è consentito. Caricalo di nuovo."
+      }
     }
   },
   "aiFunctions": {
@@ -2204,6 +2241,11 @@
       "paused": "In pausa",
       "ended": "Terminata"
     },
+    "statusReason": {
+      "accountPolicyBlocked": "Interrotto automaticamente: l'account del canale è stato bloccato dall'invio dopo una violazione delle norme.",
+      "accountSendRestricted": "Interrotto automaticamente: l'account del canale è temporaneamente limitato nell'invio.",
+      "page": "Pagina: {name}"
+    },
     "stats": {
       "sent": "Inviato",
       "delivered": "Consegnato",
@@ -2267,6 +2309,10 @@
     "telegramAllContacts": {
       "title": "Telegram",
       "description": "Usa questo tipo di messaggio se vuoi inviare un broadcast ai tuoi contatti Telegram."
+    },
+    "lineAllContacts": {
+      "title": "LINE",
+      "description": "Invia un broadcast ai tuoi contatti LINE in qualsiasi momento. Ogni messaggio viene conteggiato nella quota mensile di messaggi del tuo LINE Official Account. I contatti che hanno bloccato il tuo account vengono saltati."
     },
     "tiktokActiveContacts": {
       "title": "TikTok",
@@ -2352,7 +2398,14 @@
     "resumeDialog": {
       "title": "Resume broadcast",
       "description": "\"{name}\" will continue sending to recipients who have not received it yet.",
-      "templateDescription": "«{name}» riprende a ripetersi dal prossimo orario pianificato. Le esecuzioni durante la pausa sono state saltate."
+      "templateDescription": "«{name}» riprende a ripetersi dal prossimo orario pianificato. Le esecuzioni durante la pausa sono state saltate.",
+      "blocked": {
+        "title": "Interrotto perché l'account del canale non può inviare",
+        "description": "Se l'account è ancora bloccato, il primo messaggio fallirà e la trasmissione si interromperà di nuovo. Inviare mentre è bloccato può causare una restrizione più severa.",
+        "pageLabel": "Pagina",
+        "errorLabel": "Errore dal canale",
+        "confirm": "Riprendi comunque"
+      }
     },
     "planLimitDialog": {
       "title": "Aggiorna il tuo piano",
@@ -4214,6 +4267,7 @@
     "duplicated": {
       "generic": "Questo account è già collegato a un'altra area di lavoro.",
       "instagram": "Questo account Instagram è già collegato a un'altra area di lavoro.",
+      "line": "This LINE channel is already connected to another workspace.",
       "messenger": "Questa Pagina Facebook è già collegata a un'altra area di lavoro.",
       "telegram": "Questo bot Telegram è già collegato a un'altra area di lavoro.",
       "threads": "Questo account Threads è già collegato a un'altra area di lavoro.",
@@ -4593,6 +4647,13 @@
       "cardEnding": "Carta che termina con {lastFourDigits}",
       "notCharged": "Non ancora addebitato. Addebitalo tramite il tuo fornitore di pagamenti.",
       "reference": "Riferimento {referenceId}"
+    },
+    "sendQueue": {
+      "failed": "Un messaggio non è stato inviato. Invialo di nuovo dalla conversazione se possibile, o continua a inviare.",
+      "unconfirmed": "Non siamo riusciti a confermare l'invio dell'ultimo messaggio. Scegli se continuare a inviare.",
+      "continue": "Continua a inviare",
+      "discard": "Elimina i messaggi in coda",
+      "dismiss": "Ignora"
     }
   },
   "instagram": {
@@ -5855,7 +5916,8 @@
       "botId": "ID bot Telegram",
       "oaId": "ID Zalo OA",
       "openId": "Open ID account TikTok",
-      "threadsUserId": "ID utente Threads"
+      "threadsUserId": "ID utente Threads",
+      "channelId": "LINE Channel ID"
     },
     "channelUserIdKinds": {
       "psid": "PSID Messenger",
@@ -5865,7 +5927,8 @@
       "tiktokCustomerOpenId": "Open ID cliente TikTok",
       "threadsUsername": "Nome utente Threads",
       "apiSourceId": "ID origine contatto",
-      "whatsappId": "ID WhatsApp (wa_id)"
+      "whatsappId": "ID WhatsApp (wa_id)",
+      "lineUserId": "LINE user id"
     },
     "mappings": {
       "title": "Salva i dati in entrata",
@@ -6125,7 +6188,8 @@
       "total": "Total customers scanned: {count}",
       "waitCooldown": "You must wait another 24 hours before you can use this feature again.",
       "failed": "The last scan failed. You can try again once the cooldown ends.",
-      "partial": "The last scan finished partially — some conversations could not be imported."
+      "partial": "The last scan finished partially — some conversations could not be imported.",
+      "cancelled": "L'ultima scansione è stata annullata prima del termine."
     },
     "errors": {
       "contactScanFromTimeInvalid": "Scan-from time must be in the past.",
@@ -6151,9 +6215,20 @@
         "running": "Running",
         "succeeded": "Succeeded",
         "partial": "Partial",
-        "failed": "Failed"
+        "failed": "Failed",
+        "cancelled": "Annullata"
       },
       "empty": "No scans have been run yet."
+    },
+    "cancel": {
+      "button": "Annulla scansione",
+      "title": "Annullare questa scansione?",
+      "description": "La scansione si ferma e i clienti già importati vengono mantenuti. Devi comunque attendere 24 ore dall'avvio di questa scansione prima di poter scansionare di nuovo questa casella.",
+      "keep": "Continua la scansione",
+      "confirm": "Annulla scansione",
+      "success": "Scansione annullata.",
+      "notRunning": "Nessuna scansione è in corso per questa casella.",
+      "failed": "Impossibile annullare la scansione. Riprova."
     }
   },
   "auditLogs": {
@@ -11963,5 +12038,38 @@
       "description": "Deletes your account and the {count, plural, =0 {0 workspaces} one {# workspace} other {# workspaces}} you own.",
       "openSettings": "Delete account"
     }
+  },
+  "integrationLine": {
+    "channelIdLabel": "Channel ID",
+    "channelSecretLabel": "Channel secret",
+    "credentialsHelp": "Find both values in the LINE Developers console: open your Messaging API channel and go to Basic settings.",
+    "webhookNotEnabled": "LINE is not delivering messages yet. In LINE Official Account Manager, turn on \"Use webhook\" and turn off \"Auto-reply messages\", then press Test webhook.",
+    "webhookReplaced": "The webhook URL previously set on this LINE channel ({url}) was replaced with ChatbotX's.",
+    "testWebhook": "Test webhook",
+    "testWebhookSuccess": "LINE webhook is working.",
+    "webhookTestFailed": "LINE's webhook test failed: {reason}",
+    "continue": "Continue",
+    "errors": {
+      "channelHidden": "LINE is not available for this workspace.",
+      "credentialsRejected": "Invalid LINE Channel ID or Channel secret.",
+      "webhookRejected": "LINE rejected the webhook URL. Please try again later or contact support.",
+      "providerUnavailable": "LINE is temporarily unavailable. Please try again in a moment."
+    }
+  },
+  "deleteAccountPage": {
+    "title": "Elimina il tuo account ChatbotX",
+    "intro": "Puoi eliminare il tuo account e i relativi dati in uno di questi modi.",
+    "waysTitle": "Come eliminare il tuo account",
+    "wayMobile": "Nell'app mobile: Impostazioni → Elimina account.",
+    "wayWeb": "Sul web: accedi e apri la pagina di eliminazione dell'account.",
+    "wayWebLink": "Apri eliminazione account",
+    "wayEmail": "Via email: scrivi a {email} dall'indirizzo registrato.",
+    "whatHappensTitle": "Cosa succede dopo",
+    "whatHappens": "L'eliminazione inizia dopo un periodo di tolleranza di 24 ore e non può essere annullata. Annulla prima gli abbonamenti.",
+    "deletedTitle": "Dati che eliminiamo",
+    "deleted": "Il tuo profilo (nome ed email), le credenziali di accesso, i token delle notifiche push e ogni workspace di tua proprietà, inclusi contatti, conversazioni, messaggi e file caricati.",
+    "sharedWorkspace": "Se altre persone sono membri di un workspace di tua proprietà, viene eliminato anche per loro.",
+    "retainedTitle": "Dati che conserviamo",
+    "retained": "Le note scritte in workspace di altri restano, senza il tuo nome. Viene conservata una traccia dell'avvenuta eliminazione. I dati di fatturazione possono essere conservati per il tempo richiesto dalla legge."
   }
 }

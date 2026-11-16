@@ -17,6 +17,7 @@ import { useIsMobileState } from "@chatbotx.io/ui/hooks/use-mobile"
 import { Loader2Icon } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { useEffect, useState } from "react"
+import { SendQueueRunner } from "@/features/messages/components/send-queue-runner"
 import { useConversationIdParam } from "../conversations/hooks/use-conversation-id-param"
 import type { ConversationResource } from "../conversations/schema/resource"
 import { useCallPlaybackStore } from "../messages/store/call-playback-store"
@@ -127,6 +128,7 @@ export const ChatLayout = (props: ChatLayoutProps) => {
         user goes back to the list, and the realtime socket must not go with it.
       */}
       <ChatRealtime />
+      <SendQueueRunner />
       {/*
         The VoIP provider (single `useWhatsappVoipCall` peer/hook instance),
         the call panel and `WhatsappCallInfoSheet` now

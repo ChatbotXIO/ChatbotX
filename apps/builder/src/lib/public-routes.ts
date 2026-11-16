@@ -50,6 +50,8 @@ export const PUBLIC_ROUTES = [
   // capability token (see `app/connect/[sessionId]/page.tsx`'s doc comment).
   "/connect",
   "/account/delete",
+  // Static info page for app-store data-deletion disclosures; no session data.
+  "/delete-account",
 ]
 
 /**

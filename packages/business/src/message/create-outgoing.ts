@@ -1,3 +1,4 @@
+import { REPLY_TARGET_CREATED_AT_KEY } from "@chatbotx.io/database/partials"
 import {
   createMessageRepository,
   flowRepository,
@@ -6,6 +7,7 @@ import {
 import type {
   ContactInboxModel,
   ConversationModel,
+  MessageModel,
   UserModel,
 } from "@chatbotx.io/database/types"
 import {
@@ -16,6 +18,10 @@ import {
   uploadMultipleFiles,
 } from "@chatbotx.io/filesystem"
 import type { SendProductsContent } from "@chatbotx.io/flow-config"
+import {
+  RealtimeEventType,
+  routeForConversation,
+} from "@chatbotx.io/realtime-protocol"
 import type { MessageButtonTemplate } from "@chatbotx.io/sdk"
 import { createId } from "@chatbotx.io/utils"
 import { channelTypes } from "@chatbotx.io/utils/channel"
@@ -40,7 +46,10 @@ import {
   validationException,
 } from "../errors"
 import { logger } from "../logger"
-import { queueMessageCreatedEvent } from "../platform/realtime-broadcast"
+import {
+  queueMessageCreatedEvent,
+  queueWorkspaceRealtimeEvent,
+} from "../platform/realtime-broadcast"
 import { resolveTenantSettings } from "../platform/settings"
 import { productMessageService } from "../product-message/service"
 import { getPublicFileUrl } from "../utils"
@@ -227,6 +236,62 @@ const withBypassThreadControlLock = (
   }
 }
 
+const ENQUEUE_FAILED_SEND_ERROR = "Could not queue the message for delivery"
+
+/**
+ * The row exists and `messageCreated` has already gone to every open tab, so a
+ * failed enqueue must leave the failed state on the row and tell those tabs,
+ * or they would show a message that is neither sent nor marked failed (and that
+ * cannot be resent). Bookkeeping only: it never replaces the enqueue error.
+ */
+const recordEnqueueFailure = async (input: {
+  repository: Awaited<ReturnType<typeof createMessageRepository>>
+  message: Pick<MessageModel, "id" | "createdAt" | "workspaceId">
+  conversation: ConversationModel
+  clientId: string | undefined
+}): Promise<void> => {
+  const { repository, message, conversation, clientId } = input
+  try {
+    await repository.updateSendError(
+      message.id,
+      ENQUEUE_FAILED_SEND_ERROR,
+      message.workspaceId,
+      message.createdAt,
+    )
+    await queueWorkspaceRealtimeEvent(message.workspaceId, {
+      eventType: RealtimeEventType.messageFailed,
+      data: {
+        messageId: message.id,
+        clientId,
+        error: ENQUEUE_FAILED_SEND_ERROR,
+      },
+      route: routeForConversation(conversation),
+    })
+  } catch (err) {
+    logger.error(
+      { err, messageId: message.id, workspaceId: message.workspaceId },
+      "Failed to record an enqueue failure on the outgoing message",
+    )
+  }
+}
+
+/**
+ * A private reply answers a comment stored in the commenter's own conversation,
+ * and the row keeps only that comment's id. Its createdAt (the shard key needed
+ * to find it again) is kept here so a failed private reply can be resent.
+ */
+const withReplyTargetCreatedAt = (
+  contentAttributes: Record<string, unknown> | null,
+  isPrivateReply: boolean | undefined,
+  replyToMessageCreatedAt: Date | undefined,
+): Record<string, unknown> | null =>
+  isPrivateReply && replyToMessageCreatedAt
+    ? {
+        ...contentAttributes,
+        [REPLY_TARGET_CREATED_AT_KEY]: replyToMessageCreatedAt.toISOString(),
+      }
+    : contentAttributes
+
 export const createOutgoing = async (props: {
   conversation: ConversationModel
   contactInbox: ContactInboxModel
@@ -374,11 +439,15 @@ export const createOutgoing = async (props: {
       ? ("comment" as const)
       : ("message" as const),
     parentId,
-    contentAttributes: withBypassThreadControlLock(
-      productMessage?.contentAttributes ??
-        parsedInput.contentAttributes ??
-        (parsedInput.isPrivateReply ? { isPrivateReply: true } : null),
-      parsedInput.bypassThreadControlLock,
+    contentAttributes: withReplyTargetCreatedAt(
+      withBypassThreadControlLock(
+        productMessage?.contentAttributes ??
+          parsedInput.contentAttributes ??
+          (parsedInput.isPrivateReply ? { isPrivateReply: true } : null),
+        parsedInput.bypassThreadControlLock,
+      ),
+      parsedInput.isPrivateReply,
+      parsedInput.replyToMessageCreatedAt,
     ),
   }
 
@@ -497,6 +566,12 @@ export const createOutgoing = async (props: {
   // actually delivers it to the channel failed, the caller must see an
   // error instead of a false "sent" success — the row stays for retry.
   if (sendChannelMessageError !== undefined) {
+    await recordEnqueueFailure({
+      repository,
+      message,
+      conversation: targetConversation,
+      clientId: parsedInput.clientId,
+    })
     throw sendChannelMessageError
   }
 

@@ -83,3 +83,15 @@ export const createAIFileRequest = z.object({
   size: z.number(),
 })
 export type CreateAIFileRequest = z.infer<typeof createAIFileRequest>
+
+/** Shared with `createAIFilePublicRequest` so both paths validate alike. */
+export const aiFileUrlField = z.url()
+export const aiFileNameField = z.string().trim().min(1)
+
+export const createAIFileFromUrlRequest = z.object({
+  name: aiFileNameField,
+  url: aiFileUrlField,
+})
+export type CreateAIFileFromUrlRequest = z.infer<
+  typeof createAIFileFromUrlRequest
+>

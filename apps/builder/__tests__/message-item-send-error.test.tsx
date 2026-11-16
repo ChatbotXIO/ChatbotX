@@ -27,6 +27,13 @@ vi.mock("@/features/messages/components/whatsapp-call-card", () => ({
   WhatsappCallCard: () => <div data-slot="whatsapp-call-card">audioCall</div>,
 }))
 
+// Comment rows render the reply/like/hide actions, which read the chat store;
+// this file is about the send-error affordances, so a stub keeps it store-free.
+vi.mock("@/features/messages/components/message-actions", () => ({
+  MessageActions: () => null,
+  MessageActionsEditor: () => null,
+}))
+
 let container: HTMLDivElement | null = null
 let root: Root | null = null
 
@@ -69,6 +76,7 @@ const makeMessage = (overrides: Partial<MessageResourceWithRelations> = {}) =>
     deletedAt: null,
     attributes: null,
     contentAttributes: null,
+    contactInboxId: "ci-1",
     attachments: [],
     ...overrides,
   }) as unknown as MessageResourceWithRelations
@@ -160,5 +168,117 @@ describe("MessageItem call-failure affordance", () => {
     const el = renderComponent(<MessageItem message={callMessage()} />)
 
     expect(el.querySelector(".text-destructive")).toBeNull()
+  })
+})
+
+describe("MessageItem Resend control", () => {
+  const renderResend = () =>
+    vi.fn((_: unknown) => <span data-testid="resend" />)
+
+  test("is offered for a failed outgoing direct message", () => {
+    const resend = renderResend()
+    const el = renderComponent(
+      <MessageItem
+        message={makeMessage({
+          sendError: "Timed out",
+          senderType: "user",
+          sourceId: null,
+        })}
+        renderResend={resend}
+      />,
+    )
+
+    expect(el.querySelector('[data-testid="resend"]')).not.toBeNull()
+    expect(resend).toHaveBeenCalledTimes(1)
+  })
+
+  test.each([
+    ["a message that did not fail", { sendError: null, senderType: "user" }],
+    ["a bot message", { sendError: "x", senderType: "bot" }],
+    [
+      "a message the channel already accepted",
+      { sendError: "x", senderType: "user", sourceId: "mid-1" },
+    ],
+    [
+      "a public comment reply",
+      { sendError: "x", senderType: "user", type: "comment" },
+    ],
+  ])("is not offered for %s", (_name, overrides) => {
+    const resend = renderResend()
+    const el = renderComponent(
+      <MessageItem
+        message={makeMessage({
+          sourceId: null,
+          ...(overrides as Partial<MessageResourceWithRelations>),
+        })}
+        renderResend={resend}
+      />,
+    )
+
+    expect(el.querySelector('[data-testid="resend"]')).toBeNull()
+    expect(resend).not.toHaveBeenCalled()
+  })
+
+  test("is offered for a failed private reply (a comment delivered as a DM)", () => {
+    const el = renderComponent(
+      <MessageItem
+        message={makeMessage({
+          sendError: "x",
+          senderType: "user",
+          sourceId: null,
+          type: "comment",
+          contentAttributes: { isPrivateReply: true },
+        })}
+        renderResend={() => <span data-testid="resend" />}
+      />,
+    )
+
+    expect(el.querySelector('[data-testid="resend"]')).not.toBeNull()
+  })
+
+  test("is not offered for a row the server never accepted (an optimistic row has no contact inbox)", () => {
+    const el = renderComponent(
+      <MessageItem
+        message={makeMessage({
+          sendError: "x",
+          senderType: "user",
+          sourceId: null,
+          contactInboxId: "",
+        })}
+        renderResend={() => <span data-testid="resend" />}
+      />,
+    )
+
+    expect(el.querySelector('[data-testid="resend"]')).toBeNull()
+  })
+
+  test("is never offered in the guest view", () => {
+    const el = renderComponent(
+      <MessageItem
+        guestDisplay
+        message={makeMessage({
+          sendError: "x",
+          senderType: "user",
+          sourceId: null,
+        })}
+        renderResend={() => <span data-testid="resend" />}
+      />,
+    )
+
+    expect(el.querySelector('[data-testid="resend"]')).toBeNull()
+  })
+
+  test("renders nothing extra when the view passes no Resend control", () => {
+    const el = renderComponent(
+      <MessageItem
+        message={makeMessage({
+          sendError: "x",
+          senderType: "user",
+          sourceId: null,
+        })}
+      />,
+    )
+
+    expect(el.querySelector('[data-testid="resend"]')).toBeNull()
   })
 })

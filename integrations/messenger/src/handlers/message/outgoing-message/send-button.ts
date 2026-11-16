@@ -105,6 +105,20 @@ export function convertButtons({
    */
   transformLabel?: (label: string) => string
 }): FacebookButton[] | undefined {
+  // Messenger's button template takes MAX_BUTTONS; the rest are not sent. A
+  // node authored for a channel with a higher limit (LINE: 5) can reach a
+  // Messenger contact via a jump or broadcast, so make the loss visible.
+  if (buttons.length > MAX_BUTTONS) {
+    logger.warn(
+      {
+        flowId,
+        flowVersionId,
+        kept: MAX_BUTTONS,
+        dropped: buttons.length - MAX_BUTTONS,
+      },
+      "Dropping step buttons over the channel's button limit",
+    )
+  }
   const chunks = chunk(buttons, MAX_BUTTONS)
   if (chunks.length > 0 && chunks[0]) {
     return chunks[0].map((button) =>

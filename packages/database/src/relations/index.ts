@@ -105,6 +105,7 @@ import { integrationGoogleCalendarRelations } from "./integration-google-calenda
 import { integrationGoogleSheetsRelations } from "./integration-google-sheets"
 import { integrationInstagramRelations } from "./integration-instagram"
 import { integrationKlaviyoRelations } from "./integration-klaviyo"
+import { integrationLineRelations } from "./integration-line"
 import { integrationMailchimpRelations } from "./integration-mailchimp"
 import { integrationMailerLiteRelations } from "./integration-mailer-lite"
 import { integrationMessengerRelations } from "./integration-messenger"
@@ -265,6 +266,7 @@ export const relations = {
   ...messengerMessageTemplateRelations,
   ...integrationWebchatRelations,
   ...integrationZaloRelations,
+  ...integrationLineRelations,
   ...invitationRelations,
   ...emailTopicRelations,
   ...analyticsEmailTopicRelations,

@@ -3,6 +3,7 @@ import { z } from "zod"
 import { countMessageCharacters } from "../channel-rules/characters"
 import { baseStepSchema } from "./base"
 import { buttonStepSchema } from "./button"
+import { CARD_BUTTON_MAX } from "./button-limits"
 import { sendImageStepDefaultFn, sendImageStepSchema } from "./send-image"
 import { stepTypes } from "./step-action"
 
@@ -31,7 +32,12 @@ export const sendCardStepSchema = baseStepSchema.extend({
       url: zodUrlWithVariables().or(z.literal("")),
     })
     .optional(),
-  buttons: z.array(buttonStepSchema).max(3),
+  buttons: z
+    .array(buttonStepSchema)
+    .max(CARD_BUTTON_MAX)
+    .describe(
+      "Buttons on the card (use [] for none). The limit depends on the channel: see `limits.cardButtonCount` of the channel's policy.",
+    ),
 })
 
 export type SendCardStepSchema = z.infer<typeof sendCardStepSchema>

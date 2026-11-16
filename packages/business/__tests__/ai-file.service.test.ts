@@ -30,6 +30,7 @@ const {
   mockFindChunksContaining,
   mockLoggerError,
   mockCreateId,
+  mockHeadObject,
 } = vi.hoisted(() => {
   const mockInsertReturning = vi.fn()
   const mockInsertValues = vi.fn(() => ({ returning: mockInsertReturning }))
@@ -60,6 +61,7 @@ const {
     mockFindChunksContaining: vi.fn(),
     mockLoggerError: vi.fn(),
     mockCreateId: vi.fn(() => "file-1"),
+    mockHeadObject: vi.fn(),
   }
 })
 
@@ -118,9 +120,11 @@ vi.mock("@chatbotx.io/utils", async (importOriginal) => ({
 }))
 
 class MockUploadValidationError extends Error {
-  constructor(message: string) {
+  readonly reason?: string
+  constructor(message: string, reason?: string) {
     super(message)
     this.name = "UploadValidationError"
+    this.reason = reason
   }
 }
 
@@ -128,6 +132,7 @@ vi.mock("@chatbotx.io/filesystem", () => ({
   uploader: {
     getPresignedDownload: mockGetPresignedDownload,
     deleteObject: mockDeleteObject,
+    headObject: mockHeadObject,
   },
   uploadFile: mockUploadFile,
   uploadFileFromUrl: mockUploadFileFromUrl,
@@ -228,6 +233,10 @@ beforeEach(() => {
   mockClaimProcessingRun.mockResolvedValue(true)
   mockFinishProcessingRun.mockResolvedValue(true)
   mockCreateId.mockImplementation(() => "file-1")
+  mockHeadObject.mockResolvedValue({
+    ContentLength: 456,
+    ContentType: "application/pdf",
+  })
 })
 
 describe("aiFileService.create", () => {
@@ -325,6 +334,8 @@ describe("aiFileService.create", () => {
       "private",
       AI_FILE_MAX_UPLOAD_BYTES,
       expect.any(Function),
+      expect.any(AbortSignal),
+      expect.any(Function),
     )
 
     // The guard runs inside uploadFileFromUrl (once per redirect hop), so
@@ -404,6 +415,323 @@ describe("aiFileService.create", () => {
       "No embedding provider configured",
     )
     expect(mockInsert).not.toHaveBeenCalled()
+  })
+})
+
+describe("aiFileService.create source checks", () => {
+  type Validator = (response: {
+    finalUrl: string
+    mimeType: string
+    contentDisposition: string | null
+    contentLength: number | null
+  }) =>
+    | Promise<{ mimeType?: string; name?: string }>
+    | { mimeType?: string; name?: string }
+
+  /** Runs the service's response validator the way uploadFileFromUrl does. */
+  function stubDownload(response: {
+    finalUrl: string
+    mimeType: string
+    contentDisposition?: string | null
+  }) {
+    mockUploadFileFromUrl.mockImplementation(
+      async (
+        _url: string,
+        _path: string,
+        _acl: string,
+        _maxBytes: number,
+        _validateUrl: unknown,
+        _signal: AbortSignal,
+        validateResponse: Validator,
+      ) => {
+        const overrides = await validateResponse({
+          contentDisposition: null,
+          contentLength: null,
+          ...response,
+        })
+        return {
+          name: overrides.name ?? "export",
+          mimeType: overrides.mimeType ?? response.mimeType,
+          originPath: "workspaces/workspace-1/ai-files/file-1",
+          size: 10,
+          fileType: "file",
+        }
+      },
+    )
+  }
+
+  const insertedValues = () =>
+    (mockInsert.mock.results[0]?.value as { values: ReturnType<typeof vi.fn> })
+      .values.mock.calls[0]?.[0]
+
+  const rejection = async (promise: Promise<unknown>) =>
+    (await promise.catch((caught: unknown) => caught)) as ChatbotXException & {
+      reason?: string
+      maxBytes?: number
+    }
+
+  test("downloads a Google Doc through its plain-text export", async () => {
+    stubDownload({
+      finalUrl: "https://doc-0s-docs.googleusercontent.com/export/abc",
+      mimeType: "text/plain; charset=utf-8",
+      contentDisposition: 'attachment; filename="Handbook.txt"',
+    })
+
+    await aiFileService.create(workspaceId, {
+      url: "https://docs.google.com/document/d/abc/edit",
+    })
+
+    expect(mockUploadFileFromUrl.mock.calls[0]?.[0]).toBe(
+      "https://docs.google.com/document/d/abc/export?format=txt",
+    )
+    expect(insertedValues()).toEqual(
+      expect.objectContaining({ name: "Handbook.txt", mimeType: "text/plain" }),
+    )
+  })
+
+  test("refuses a Google file that redirects to a sign-in page", async () => {
+    stubDownload({
+      finalUrl: "https://accounts.google.com/ServiceLogin?continue=x",
+      mimeType: "text/html",
+    })
+
+    const error = await rejection(
+      aiFileService.create(workspaceId, {
+        url: "https://docs.google.com/spreadsheets/d/abc/edit",
+      }),
+    )
+
+    expect(error.code).toBe("businessError")
+    expect(error.httpStatusCode).toBe(400)
+    expect(error.reason).toBe("googleFileNotPublic")
+    expect(mockInsert).not.toHaveBeenCalled()
+  })
+
+  test("refuses a Google export with an unexpected type", async () => {
+    stubDownload({
+      finalUrl: "https://docs.google.com/document/d/abc/export?format=txt",
+      mimeType: "text/html; charset=utf-8",
+    })
+
+    const error = await rejection(
+      aiFileService.create(workspaceId, {
+        url: "https://docs.google.com/document/d/abc/edit",
+      }),
+    )
+
+    expect(error.reason).toBe("googleFileNotPublic")
+  })
+
+  test("refuses a publish-to-web link without downloading", async () => {
+    const error = await rejection(
+      aiFileService.create(workspaceId, {
+        url: "https://docs.google.com/document/d/e/2PACX-x/pub",
+      }),
+    )
+
+    expect(error.reason).toBe("googlePublishedNotSupported")
+    expect(mockUploadFileFromUrl).not.toHaveBeenCalled()
+  })
+
+  test("infers an octet-stream download's type from Content-Disposition", async () => {
+    stubDownload({
+      finalUrl: "https://cdn.example.com/download?id=1",
+      mimeType: "application/octet-stream",
+      contentDisposition: 'attachment; filename="manual.pdf"',
+    })
+
+    await aiFileService.create(workspaceId, {
+      url: "https://cdn.example.com/download?id=1",
+    })
+
+    expect(insertedValues()).toEqual(
+      expect.objectContaining({
+        name: "manual.pdf",
+        mimeType: "application/pdf",
+      }),
+    )
+  })
+
+  test("refuses an octet-stream download whose type cannot be inferred", async () => {
+    stubDownload({
+      finalUrl: "https://cdn.example.com/blob",
+      mimeType: "application/octet-stream",
+    })
+
+    const error = await rejection(
+      aiFileService.create(workspaceId, {
+        url: "https://cdn.example.com/blob",
+      }),
+    )
+
+    expect(error.reason).toBe("unsupportedFileType")
+    expect(mockInsert).not.toHaveBeenCalled()
+  })
+
+  test("refuses a direct download of a non-knowledge type", async () => {
+    stubDownload({
+      finalUrl: "https://cdn.example.com/a.png",
+      mimeType: "image/png",
+    })
+
+    const error = await rejection(
+      aiFileService.create(workspaceId, {
+        url: "https://cdn.example.com/a.png",
+      }),
+    )
+
+    expect(error.reason).toBe("unsupportedFileType")
+  })
+
+  test("reports an aborted download as downloadTimedOut", async () => {
+    const timeoutSpy = vi
+      .spyOn(AbortSignal, "timeout")
+      .mockReturnValue(AbortSignal.abort())
+    mockUploadFileFromUrl.mockRejectedValueOnce(
+      new DOMException("The operation was aborted", "TimeoutError"),
+    )
+
+    const error = await rejection(
+      aiFileService.create(workspaceId, { url: "https://slow.example.com/a" }),
+    )
+    timeoutSpy.mockRestore()
+
+    expect(error.message).toBe("Download timed out")
+    expect(error.reason).toBe("downloadTimedOut")
+  })
+
+  test("keeps a filesystem reason and adds maxBytes for fileTooLarge", async () => {
+    mockUploadFileFromUrl.mockRejectedValueOnce(
+      new MockUploadValidationError("File exceeds", "fileTooLarge"),
+    )
+
+    const error = await rejection(
+      aiFileService.create(workspaceId, { url: "https://example.com/a.pdf" }),
+    )
+
+    expect(error.code).toBe("businessError")
+    expect(error.reason).toBe("fileTooLarge")
+    expect(error.maxBytes).toBe(AI_FILE_MAX_UPLOAD_BYTES)
+    // The public API must not fold anything into the message.
+    expect(error.data).toBeUndefined()
+  })
+
+  test("logs a storage failure with the hostname only", async () => {
+    mockUploadFileFromUrl.mockRejectedValueOnce(new Error("s3 down"))
+
+    await rejection(
+      aiFileService.create(workspaceId, {
+        url: "https://files.example.com/a.pdf?token=secret-token",
+      }),
+    )
+
+    const [fields] = mockLoggerError.mock.calls[0] ?? []
+    expect(fields).toEqual(
+      expect.objectContaining({
+        workspaceId,
+        sourceKind: "url",
+        hostname: "files.example.com",
+      }),
+    )
+    expect(JSON.stringify(fields)).not.toContain("secret-token")
+  })
+
+  test("file mode infers a missing type from the name", async () => {
+    mockUploadFile.mockResolvedValue({
+      name: "notes.md",
+      mimeType: "application/octet-stream",
+      originPath: "workspaces/workspace-1/ai-files/file-1",
+      size: 5,
+      fileType: "file",
+    })
+
+    await aiFileService.create(workspaceId, {
+      file: new File(["# hi"], "notes.md"),
+    })
+
+    expect(insertedValues()).toEqual(
+      expect.objectContaining({ mimeType: "text/markdown" }),
+    )
+  })
+
+  test("file mode refuses an unknown type before uploading", async () => {
+    const error = await rejection(
+      aiFileService.create(workspaceId, { file: new File(["x"], "blob") }),
+    )
+
+    expect(error.reason).toBe("unsupportedFileType")
+    expect(mockUploadFile).not.toHaveBeenCalled()
+  })
+
+  const pathInput = {
+    name: "manual.pdf",
+    path: "workspaces/workspace-1/ai-files/uploaded.pdf",
+    mimeType: "application/pdf",
+    size: 1,
+  }
+
+  test("path mode records the stored size and type", async () => {
+    mockHeadObject.mockResolvedValueOnce({
+      ContentLength: 999,
+      ContentType: "binary/octet-stream",
+    })
+
+    await aiFileService.create(workspaceId, pathInput)
+
+    expect(insertedValues()).toEqual(
+      expect.objectContaining({ size: 999, mimeType: "application/pdf" }),
+    )
+  })
+
+  test("path mode deletes and refuses an object over the limit", async () => {
+    mockHeadObject.mockResolvedValueOnce({
+      ContentLength: AI_FILE_MAX_UPLOAD_BYTES + 1,
+      ContentType: "application/pdf",
+    })
+
+    const error = await rejection(aiFileService.create(workspaceId, pathInput))
+
+    expect(error.reason).toBe("fileTooLarge")
+    expect(mockDeleteObject).toHaveBeenCalledWith(pathInput.path)
+    expect(mockInsert).not.toHaveBeenCalled()
+  })
+
+  test("path mode deletes and refuses a non-knowledge type", async () => {
+    mockHeadObject.mockResolvedValueOnce({
+      ContentLength: 10,
+      ContentType: "image/png",
+    })
+
+    const error = await rejection(aiFileService.create(workspaceId, pathInput))
+
+    expect(error.reason).toBe("unsupportedFileType")
+    expect(mockDeleteObject).toHaveBeenCalledWith(pathInput.path)
+  })
+
+  test("path mode keeps the original refusal when the delete fails", async () => {
+    mockHeadObject.mockResolvedValueOnce({
+      ContentLength: 10,
+      ContentType: "image/png",
+    })
+    mockDeleteObject.mockRejectedValueOnce(new Error("s3 down"))
+
+    const error = await rejection(aiFileService.create(workspaceId, pathInput))
+
+    expect(error.reason).toBe("unsupportedFileType")
+    expect(mockLoggerWarn).toHaveBeenCalled()
+  })
+
+  test("path mode refuses a foreign prefix without deleting it", async () => {
+    const error = await rejection(
+      aiFileService.create(workspaceId, {
+        ...pathInput,
+        path: "workspaces/workspace-2/ai-files/x.pdf",
+      }),
+    )
+
+    expect(error.reason).toBe("uploadPathNotAllowed")
+    expect(mockHeadObject).not.toHaveBeenCalled()
+    expect(mockDeleteObject).not.toHaveBeenCalled()
   })
 })
 

@@ -1,36 +1,20 @@
+import { AI_FILE_EXTENSION_MIME_TYPES } from "@chatbotx.io/sdk"
 import z from "zod"
 
-export const allowableKnowledgeExtensionsMap = () => ({
-  "text/plain": [".txt"],
-  "application/json": [".json"],
-  "application/pdf": [".pdf"],
-  "text/markdown": [".md", ".markdown"],
-  "text/x-markdown": [".md", ".markdown"],
-  "application/vnd.openxmlformats-officedocument.wordprocessingml.document": [
-    ".docx",
-  ],
-  "application/msword": [".doc"],
-  "text/csv": [".csv"],
-  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": [
-    ".xlsx",
-  ],
-  "application/vnd.ms-excel": [".xls"],
-  "text/html": [".html", ".htm"],
-  "application/xhtml+xml": [".xhtml"],
-  "application/xml": [".xml"],
-  "text/xml": [".xml"],
-  "text/vtt": [".vtt"],
-  "text/x-java-properties": [".properties"],
-  "message/rfc822": [".eml"],
-  "application/vnd.ms-outlook": [".msg"],
-  "application/rtf": [".rtf"],
-  "text/rtf": [".rtf"],
-  "application/epub+zip": [".epub"],
-  "application/vnd.ms-powerpoint": [".ppt"],
-  "application/vnd.openxmlformats-officedocument.presentationml.presentation": [
-    ".pptx",
-  ],
-})
+/**
+ * Knowledge upload extensions grouped by MIME type, derived from
+ * `AI_FILE_EXTENSION_MIME_TYPES` in `@chatbotx.io/sdk` so the picker and the
+ * server never disagree on what counts as a knowledge file.
+ */
+export const allowableKnowledgeExtensionsMap = (): Record<string, string[]> => {
+  const map: Record<string, string[]> = {}
+  for (const [extension, mimeType] of Object.entries(
+    AI_FILE_EXTENSION_MIME_TYPES,
+  )) {
+    map[mimeType] = [...(map[mimeType] ?? []), `.${extension}`]
+  }
+  return map
+}
 
 export const getAllowableKnowledgeExtensions = () =>
   Object.values(allowableKnowledgeExtensionsMap()).flat().join(",")

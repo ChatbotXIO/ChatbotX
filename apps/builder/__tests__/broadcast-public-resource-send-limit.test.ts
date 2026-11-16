@@ -65,3 +65,50 @@ describe("publicBroadcastResource send limit fields", () => {
     expect(result.success && result.data.targets?.[0]?.inboxId).toBe("5")
   })
 })
+
+describe("publicBroadcastResource status reason", () => {
+  const base = {
+    id: "1",
+    name: "Broadcast",
+    status: "cancelled",
+    schedulesType: "now",
+    schedulesAt: new Date(),
+    flowId: null,
+    contactCount: 5,
+    audienceRangeStart: null,
+    audienceRangeEnd: null,
+    sendRatePerMinute: null,
+  }
+
+  test("exposes the three status reason fields", () => {
+    expect(Object.keys(publicBroadcastResource.shape)).toEqual(
+      expect.arrayContaining([
+        "statusReason",
+        "statusErrorMessage",
+        "statusInboxId",
+      ]),
+    )
+  })
+
+  test("parses a system-stopped broadcast and keeps the values", () => {
+    const result = publicBroadcastResource.parse({
+      ...base,
+      statusReason: "accountSendRestricted",
+      statusErrorMessage: "restricted",
+      statusInboxId: "9",
+    })
+    expect(result.statusReason).toBe("accountSendRestricted")
+    expect(result.statusErrorMessage).toBe("restricted")
+    expect(result.statusInboxId).toBe("9")
+  })
+
+  test("a customer-stopped broadcast has null reason fields", () => {
+    const result = publicBroadcastResource.parse({
+      ...base,
+      statusReason: null,
+      statusErrorMessage: null,
+      statusInboxId: null,
+    })
+    expect(result.statusReason).toBeNull()
+  })
+})

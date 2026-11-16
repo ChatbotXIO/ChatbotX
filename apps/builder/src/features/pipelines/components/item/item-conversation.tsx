@@ -15,6 +15,7 @@ import {
   ChatStoreProvider,
   useChatStore,
 } from "@/features/chat/store/chat-store-provider"
+import { SendQueueRunner } from "@/features/messages/components/send-queue-runner"
 import { useCallPlaybackStore } from "@/features/messages/store/call-playback-store"
 
 type ItemConversationProps = {
@@ -34,6 +35,7 @@ export function ItemConversation(props: ItemConversationProps) {
   return (
     <ChatStoreProvider>
       <ChatRealtime />
+      <SendQueueRunner />
       <ItemConversationPanes {...props} />
     </ChatStoreProvider>
   )

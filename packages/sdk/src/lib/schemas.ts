@@ -1,4 +1,5 @@
 import { z } from "zod"
+import { channelErrorReasonValues } from "./channel-error-codes"
 
 export const integrationPropsSchema = z.object({
   name: z.string().trim().min(1),
@@ -11,6 +12,7 @@ export const parsedErrorSchema = z.object({
   statusCode: z.number(),
   subcode: z.union([z.string(), z.number()]),
   category: z.string().optional(),
+  reason: z.enum(channelErrorReasonValues).optional(),
   isRetryable: z.boolean().optional(),
   isPermanent: z.boolean().optional(),
 })

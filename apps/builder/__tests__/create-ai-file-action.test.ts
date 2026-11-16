@@ -16,14 +16,8 @@ vi.mock("@/features/common/schema", () => ({
   workspaceIdrequestParams: [],
 }))
 
-vi.mock("@chatbotx.io/business", () => ({
-  aiFileService: {
-    create: mocks.create,
-  },
-}))
-
-vi.mock("@chatbotx.io/business/errors", () => ({
-  ChatbotXException: class ChatbotXException extends Error {
+const { MockChatbotXException, MockAIFileCreateException } = vi.hoisted(() => {
+  class MockChatbotXException extends Error {
     code = "systemError"
     httpStatusCode = 400
 
@@ -37,7 +31,26 @@ vi.mock("@chatbotx.io/business/errors", () => ({
         this.httpStatusCode = httpStatusCode
       }
     }
+  }
+  class MockAIFileCreateException extends MockChatbotXException {
+    readonly reason: string
+    constructor(message: string, reason: string) {
+      super(message, "businessError", 400)
+      this.reason = reason
+    }
+  }
+  return { MockChatbotXException, MockAIFileCreateException }
+})
+
+vi.mock("@chatbotx.io/business", () => ({
+  aiFileService: {
+    create: mocks.create,
   },
+  AIFileCreateException: MockAIFileCreateException,
+}))
+
+vi.mock("@chatbotx.io/business/errors", () => ({
+  ChatbotXException: MockChatbotXException,
 }))
 
 vi.mock("next-intl/server", () => ({
@@ -88,7 +101,7 @@ describe("createAIFileAction", () => {
     )
 
     await expect(callAction()).rejects.toMatchObject({
-      message: "noEmbeddingProvider",
+      message: "aiFiles.noEmbeddingProvider",
     })
   })
 
@@ -97,6 +110,22 @@ describe("createAIFileAction", () => {
 
     await expect(callAction()).rejects.toMatchObject({
       message: "db exploded",
+    })
+  })
+
+  test.each([
+    "fileTooLarge",
+    "unsupportedFileType",
+    "uploadPathNotAllowed",
+  ])("translates a %s refusal of the uploaded object", async (reason) => {
+    mocks.create.mockRejectedValue(
+      new MockAIFileCreateException("English message", reason),
+    )
+
+    await expect(callAction()).rejects.toMatchObject({
+      message: `aiFiles.create.errors.${reason}`,
+      code: "businessError",
+      httpStatusCode: 400,
     })
   })
 })

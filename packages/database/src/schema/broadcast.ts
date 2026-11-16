@@ -12,8 +12,10 @@ import {
   uniqueIndex,
 } from "drizzle-orm/pg-core"
 import {
+  type BroadcastStatusReason,
   broadcastScheduleTypes,
   broadcastStatuses,
+  broadcastStatusReasons,
   broadcastTargetModes,
 } from "../partials"
 import {
@@ -29,6 +31,10 @@ import { workspaceModel } from "./workspace"
 export const broadcastStatus = pgEnum(
   "broadcastStatus",
   broadcastStatuses.options as [string, ...string[]],
+)
+export const broadcastStatusReason = pgEnum(
+  "broadcastStatusReason",
+  broadcastStatusReasons.options as [string, ...string[]],
 )
 export const broadcastScheduleType = pgEnum(
   "broadcastScheduleType",
@@ -76,6 +82,12 @@ export const broadcastModel = pgTable(
      */
     targetMode: text().notNull().default(broadcastTargetModes.enum.channel),
     status: broadcastStatus().notNull(),
+    /** Set when the system stopped the broadcast (see `broadcastStatusReasons`); null for a customer-driven status. No default. */
+    statusReason: broadcastStatusReason().$type<BroadcastStatusReason>(),
+    /** The provider's error text behind `statusReason`, truncated to `BROADCAST_STATUS_ERROR_MESSAGE_MAX_LENGTH`. */
+    statusErrorMessage: text(),
+    /** The inbox whose send error caused `statusReason`. No FK: resolved through the ORM-only `statusInbox` relation, null once the inbox is gone. */
+    statusInboxId: bigintAsString(),
     schedulesType: broadcastScheduleType().notNull(),
     schedulesAt: timestamp(timestampConfig).notNull(),
     contactFilter: jsonb(),

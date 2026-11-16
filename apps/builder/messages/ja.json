@@ -319,6 +319,31 @@
         "noMatches": "No matching chunks were found.",
         "agentHasNoFiles": "This agent has no knowledge files."
       }
+    },
+    "create": {
+      "trigger": "ナレッジを追加",
+      "title": "ナレッジを追加",
+      "description": "ファイルをアップロードするか、公開 URL からインポートします。AI エージェントは回答時にその内容を検索します。",
+      "tabs": {
+        "fromUrl": "URL から"
+      },
+      "urlHelp": "対応ファイルへの直接リンク、一般公開された Google ドキュメント・スプレッドシート・スライドのリンク、または静的なウェブページ。JavaScript で描画される内容は含まれない場合があります。",
+      "snapshotNotice": "URL はスナップショットとして一度だけダウンロードされます。元の内容の変更は同期されません。更新するには再度追加してください。",
+      "uploadFailed": "{name} のアップロードに失敗しました",
+      "rateLimited": "URL からのインポートが多すぎます。数秒待ってからもう一度お試しください。",
+      "errors": {
+        "urlNotAllowed": "この URL は許可されていません。公開されたインターネットアドレスを使用してください。",
+        "invalidUrl": "URL が無効です。ユーザー名やパスワードを含まない完全な http(s) リンクを使用してください。",
+        "googleFileNotPublic": "この Google ファイルは一般公開されていません。一般的なアクセスを「リンクを知っている全員」に設定してもう一度お試しください。",
+        "googlePublishedNotSupported": "Google の「ウェブに公開」リンクには対応していません。ファイルを一般公開し、通常のリンクを使用してください。",
+        "unsupportedFileType": "このファイル形式はナレッジとしてサポートされていません。",
+        "fileTooLarge": "ファイルが {maxSize} を超えています。",
+        "downloadTimedOut": "ダウンロードに時間がかかりすぎました。より小さいファイルか高速なホストをお試しください。",
+        "downloadFailed": "取得元がエラーを返しました。ログインせずにリンクを開けるか確認してください。",
+        "tooManyRedirects": "URL のリダイレクト回数が多すぎます。",
+        "invalidRedirect": "URL が無効なアドレスにリダイレクトしています。",
+        "uploadPathNotAllowed": "アップロードされたファイルは許可されていません。もう一度アップロードしてください。"
+      }
     }
   },
   "aiFunctions": {
@@ -526,6 +551,11 @@
       "paused": "一時停止中",
       "ended": "終了"
     },
+    "statusReason": {
+      "accountPolicyBlocked": "自動停止: ポリシー違反によりチャネルアカウントの送信がブロックされました。",
+      "accountSendRestricted": "自動停止: チャネルアカウントの送信が一時的に制限されています。",
+      "page": "ページ: {name}"
+    },
     "stats": {
       "sent": "送信済み",
       "delivered": "配信済み",
@@ -589,6 +619,10 @@
     "telegramAllContacts": {
       "title": "Telegram",
       "description": "Telegramの連絡先に一斉配信を送信する場合は、このメッセージタイプを使用します。"
+    },
+    "lineAllContacts": {
+      "title": "LINE",
+      "description": "LINEの連絡先にいつでも一斉配信を送信できます。各メッセージはLINE公式アカウントの月間メッセージ通数に含まれます。アカウントをブロックした連絡先には送信されません。"
     },
     "tiktokActiveContacts": {
       "title": "TikTok",
@@ -674,7 +708,14 @@
     "resumeDialog": {
       "title": "Resume broadcast",
       "description": "\"{name}\" will continue sending to recipients who have not received it yet.",
-      "templateDescription": "「{name}」は次の予定時刻から再び繰り返されます。一時停止中の実行はスキップされました。"
+      "templateDescription": "「{name}」は次の予定時刻から再び繰り返されます。一時停止中の実行はスキップされました。",
+      "blocked": {
+        "title": "チャネルアカウントが送信できないため停止しました",
+        "description": "アカウントがまだブロックされている場合、最初のメッセージは失敗し、配信は再び停止します。ブロック中に送信すると、より厳しい制限につながる可能性があります。",
+        "pageLabel": "ページ",
+        "errorLabel": "チャネルからのエラー",
+        "confirm": "それでも再開"
+      }
     },
     "planLimitDialog": {
       "title": "プランをアップグレード",
@@ -1357,7 +1398,17 @@
     "button": {
       "label": "ボタン",
       "whenPressed": "このボタンが押されたとき",
-      "callToThisNumber": "この番号に発信"
+      "callToThisNumber": "この番号に発信",
+      "style": {
+        "label": "ボタンのスタイル",
+        "description": "連絡先に表示されるボタンの見た目です。",
+        "default": "{style}（デフォルト）",
+        "options": {
+          "primary": "プライマリ",
+          "secondary": "セカンダリ",
+          "link": "リンク"
+        }
+      }
     },
     "buttonLabel": {
       "label": "ボタンラベル"
@@ -1533,7 +1584,8 @@
       "threadsUsername": "Threadsユーザー名",
       "webchatGuestId": "WebチャットゲストID",
       "externalId": "外部ID",
-      "channelId": "チャネルID"
+      "channelId": "チャネルID",
+      "lineUserId": "LINE User ID"
     },
     "flow": {
       "label": "フロー"
@@ -2048,6 +2100,7 @@
       "placeholders": {
         "instagram": "InstagramユーザーID",
         "messenger": "Messenger PSID",
+        "line": "LINE user ID",
         "telegram": "TelegramチャットID",
         "tiktok": "TikTokユーザーID",
         "zalo": "ZaloユーザーID"
@@ -4191,6 +4244,7 @@
     "duplicated": {
       "generic": "このアカウントはすでに別のワークスペースに接続されています。",
       "instagram": "このInstagramアカウントはすでに別のワークスペースに接続されています。",
+      "line": "This LINE channel is already connected to another workspace.",
       "messenger": "このFacebookページはすでに別のワークスペースに接続されています。",
       "telegram": "このTelegramボットはすでに別のワークスペースに接続されています。",
       "threads": "このThreadsアカウントはすでに別のワークスペースに接続されています。",
@@ -4570,6 +4624,13 @@
       "cardEnding": "末尾 {lastFourDigits} のカード",
       "notCharged": "まだ請求されていません。決済プロバイダーで請求してください。",
       "reference": "参照番号 {referenceId}"
+    },
+    "sendQueue": {
+      "failed": "メッセージを送信できませんでした。可能なら会話から再送信するか、送信を続けてください。",
+      "unconfirmed": "最後のメッセージが送信されたか確認できませんでした。送信を続けるか選択してください。",
+      "continue": "送信を続ける",
+      "discard": "待機中のメッセージを破棄",
+      "dismiss": "閉じる"
     }
   },
   "instagram": {
@@ -5832,7 +5893,8 @@
       "botId": "TelegramボットID",
       "oaId": "Zalo OA ID",
       "openId": "TikTokアカウントのopen id",
-      "threadsUserId": "ThreadsユーザーID"
+      "threadsUserId": "ThreadsユーザーID",
+      "channelId": "LINE Channel ID"
     },
     "channelUserIdKinds": {
       "psid": "Messenger PSID",
@@ -5842,7 +5904,8 @@
       "tiktokCustomerOpenId": "TikTok顧客のopen id",
       "threadsUsername": "Threadsユーザー名",
       "apiSourceId": "連絡先ソースID",
-      "whatsappId": "WhatsApp ID(wa_id)"
+      "whatsappId": "WhatsApp ID(wa_id)",
+      "lineUserId": "LINE user id"
     },
     "mappings": {
       "title": "受信データを保存",
@@ -6102,7 +6165,8 @@
       "total": "Total customers scanned: {count}",
       "waitCooldown": "You must wait another 24 hours before you can use this feature again.",
       "failed": "The last scan failed. You can try again once the cooldown ends.",
-      "partial": "The last scan finished partially — some conversations could not be imported."
+      "partial": "The last scan finished partially — some conversations could not be imported.",
+      "cancelled": "前回のスキャンは完了前にキャンセルされました。"
     },
     "errors": {
       "contactScanFromTimeInvalid": "Scan-from time must be in the past.",
@@ -6128,9 +6192,20 @@
         "running": "Running",
         "succeeded": "Succeeded",
         "partial": "Partial",
-        "failed": "Failed"
+        "failed": "Failed",
+        "cancelled": "キャンセル済み"
       },
       "empty": "No scans have been run yet."
+    },
+    "cancel": {
+      "button": "スキャンをキャンセル",
+      "title": "このスキャンをキャンセルしますか？",
+      "description": "スキャンは停止し、取り込み済みの顧客は保持されます。このインボックスを再度スキャンするには、このスキャンの開始から24時間待つ必要があります。",
+      "keep": "スキャンを続ける",
+      "confirm": "スキャンをキャンセル",
+      "success": "スキャンをキャンセルしました。",
+      "notRunning": "このインボックスで実行中のスキャンはありません。",
+      "failed": "スキャンをキャンセルできませんでした。もう一度お試しください。"
     }
   },
   "auditLogs": {
@@ -11963,5 +12038,38 @@
       "description": "Deletes your account and the {count, plural, =0 {0 workspaces} one {# workspace} other {# workspaces}} you own.",
       "openSettings": "Delete account"
     }
+  },
+  "integrationLine": {
+    "channelIdLabel": "Channel ID",
+    "channelSecretLabel": "Channel secret",
+    "credentialsHelp": "Find both values in the LINE Developers console: open your Messaging API channel and go to Basic settings.",
+    "webhookNotEnabled": "LINE is not delivering messages yet. In LINE Official Account Manager, turn on \"Use webhook\" and turn off \"Auto-reply messages\", then press Test webhook.",
+    "webhookReplaced": "The webhook URL previously set on this LINE channel ({url}) was replaced with ChatbotX's.",
+    "testWebhook": "Test webhook",
+    "testWebhookSuccess": "LINE webhook is working.",
+    "webhookTestFailed": "LINE's webhook test failed: {reason}",
+    "continue": "Continue",
+    "errors": {
+      "channelHidden": "LINE is not available for this workspace.",
+      "credentialsRejected": "Invalid LINE Channel ID or Channel secret.",
+      "webhookRejected": "LINE rejected the webhook URL. Please try again later or contact support.",
+      "providerUnavailable": "LINE is temporarily unavailable. Please try again in a moment."
+    }
+  },
+  "deleteAccountPage": {
+    "title": "ChatbotX アカウントの削除",
+    "intro": "次のいずれかの方法で、アカウントとそのデータを削除できます。",
+    "waysTitle": "アカウントの削除方法",
+    "wayMobile": "モバイルアプリ：設定 → アカウントを削除。",
+    "wayWeb": "ウェブ：サインインしてアカウント削除ページを開きます。",
+    "wayWebLink": "アカウント削除を開く",
+    "wayEmail": "メール：登録済みのアドレスから {email} 宛にご連絡ください。",
+    "whatHappensTitle": "削除後の流れ",
+    "whatHappens": "削除は24時間の猶予期間の後に開始され、取り消せません。事前にすべてのサブスクリプションを解約してください。",
+    "deletedTitle": "削除するデータ",
+    "deleted": "プロフィール（名前とメールアドレス）、サインイン情報、プッシュ通知トークン、所有するすべてのワークスペース（連絡先、会話、メッセージ、アップロードしたファイルを含む）。",
+    "sharedWorkspace": "所有するワークスペースに他のメンバーがいる場合、そのワークスペースはメンバーからも削除されます。",
+    "retainedTitle": "保持するデータ",
+    "retained": "他の人が所有するワークスペースに書いたメモは、名前を削除した状態で残ります。削除が行われたことの記録は保持されます。請求および領収書の記録は、法律で求められる期間保持される場合があります。"
   }
 }

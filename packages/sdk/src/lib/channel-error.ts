@@ -1,21 +1,25 @@
 import {
   type ChannelErrorCategory,
+  type ChannelErrorReason,
   PERMANENT_CATEGORIES,
   RETRYABLE_CATEGORIES,
 } from "./channel-error-codes"
 import { SdkException, UNKNOWN_ERROR } from "./exception"
+import type { ParsedError } from "./schemas"
 
 export type ChannelErrorOptions = {
   code?: string | number
   httpStatusCode?: number
   subCode?: string | number | null
   type?: string
+  reason?: ChannelErrorReason
 }
 
 export class ChannelError extends SdkException {
   readonly category: ChannelErrorCategory
   readonly isRetryable: boolean
   readonly isPermanent: boolean
+  readonly reason?: ChannelErrorReason
 
   constructor(
     message: string,
@@ -27,6 +31,7 @@ export class ChannelError extends SdkException {
       httpStatusCode = 400,
       subCode = null,
       type,
+      reason,
     } = options
 
     super(message, "channelError", httpStatusCode, null, type)
@@ -35,6 +40,11 @@ export class ChannelError extends SdkException {
     this.category = category
     this.isRetryable = RETRYABLE_CATEGORIES.has(category)
     this.isPermanent = PERMANENT_CATEGORIES.has(category)
+    this.reason = reason
+  }
+
+  override async getErrorData(): Promise<ParsedError> {
+    return { ...(await super.getErrorData()), reason: this.reason }
   }
 }
 
@@ -52,6 +62,7 @@ export class ThreadControlTakeRefusedError extends ChannelError {
       httpStatusCode: error.httpStatusCode,
       subCode: error.subCode ?? null,
       type: error.type,
+      reason: error.reason,
     }).setOriginError(error.getOriginError())
   }
 }

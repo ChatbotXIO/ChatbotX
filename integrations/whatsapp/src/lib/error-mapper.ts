@@ -1,6 +1,7 @@
 import {
   ChannelError,
   ChannelErrorCategory,
+  ChannelErrorReason,
   UNKNOWN_ERROR,
 } from "@chatbotx.io/sdk"
 import { formatGraphErrorMessage } from "@chatbotx.io/utils/graph-error"
@@ -211,6 +212,15 @@ function defaultHttpStatus(category: ChannelErrorCategory): number {
   }
 }
 
+// Account-level send blocks. Source: developers.facebook.com/docs/whatsapp/
+// cloud-api/support/error-codes. 131031 is deliberately absent: it carries
+// two meanings (account locked, or request data mismatch such as a wrong PIN).
+const ACCOUNT_SEND_BLOCK_REASONS: ReadonlyMap<number, ChannelErrorReason> =
+  new Map([
+    [368, ChannelErrorReason.ACCOUNT_POLICY_BLOCKED], // WABA restricted/disabled for policy violation
+    [131_064, ChannelErrorReason.ACCOUNT_SEND_RESTRICTED], // messaging limit after template classification violations
+  ])
+
 function mapApiFields(fields: ChannelErrorSource): ChannelError {
   const numCode = typeof fields.code === "number" ? fields.code : undefined
   const category = categorize(numCode, fields.type)
@@ -228,6 +238,10 @@ function mapApiFields(fields: ChannelErrorSource): ChannelError {
       httpStatusCode: fields.httpStatusCode ?? defaultHttpStatus(category),
       subCode: fields.subCode,
       type: fields.type,
+      reason:
+        numCode === undefined
+          ? undefined
+          : ACCOUNT_SEND_BLOCK_REASONS.get(numCode),
     },
   )
 

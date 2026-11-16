@@ -1,6 +1,7 @@
 import {
   ChannelError,
   ChannelErrorCategory,
+  ChannelErrorReason,
   UNKNOWN_ERROR,
 } from "@chatbotx.io/sdk"
 import {
@@ -157,6 +158,13 @@ function defaultHttpStatus(category: ChannelErrorCategory): number {
   }
 }
 
+// Account-level send blocks. Source: Zalo ZNS error codes. -248 is deliberately
+// absent: the docs do not say whether the account or one message is blocked.
+const ACCOUNT_SEND_BLOCK_REASONS: ReadonlyMap<number, ChannelErrorReason> =
+  new Map([
+    [-1351, ChannelErrorReason.ACCOUNT_POLICY_BLOCKED], // OA blocked for violation detection
+  ])
+
 function mapZaloCode(fields: ChannelErrorSource): ChannelError {
   const numCode = typeof fields.code === "number" ? fields.code : undefined
   const category = categorize(numCode)
@@ -165,6 +173,10 @@ function mapZaloCode(fields: ChannelErrorSource): ChannelError {
     httpStatusCode: fields.httpStatusCode ?? defaultHttpStatus(category),
     subCode: fields.subCode,
     type: fields.type,
+    reason:
+      numCode === undefined
+        ? undefined
+        : ACCOUNT_SEND_BLOCK_REASONS.get(numCode),
   })
 }
 

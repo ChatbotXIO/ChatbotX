@@ -100,4 +100,9 @@ describe("isPublicRoute", () => {
     expect(isPublicRoute("/account/settings")).toBe(false)
     expect(isPublicRoute("/account/deletex")).toBe(false)
   })
+
+  test("/delete-account info page is public, siblings are not", () => {
+    expect(isPublicRoute("/delete-account")).toBe(true)
+    expect(isPublicRoute("/delete-accounts")).toBe(false)
+  })
 })

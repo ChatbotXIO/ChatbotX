@@ -3,6 +3,7 @@ import type { ButtonType } from "../../steps/button"
 import { apiFlowPolicy } from "./api"
 import type { ChannelFlowPolicy, ChannelFlowPolicyMap } from "./define"
 import { instagramFlowPolicy } from "./instagram"
+import { lineFlowPolicy } from "./line"
 import { messengerFlowPolicy } from "./messenger"
 import { omnichannelFlowPolicy } from "./omnichannel"
 import { smtpFlowPolicy } from "./smtp"
@@ -16,6 +17,7 @@ import { zaloFlowPolicy } from "./zalo"
 export const CHANNEL_FLOW_POLICIES: ChannelFlowPolicyMap = {
   [channelTypes.enum.api]: apiFlowPolicy,
   [channelTypes.enum.instagram]: instagramFlowPolicy,
+  [channelTypes.enum.line]: lineFlowPolicy,
   [channelTypes.enum.messenger]: messengerFlowPolicy,
   [channelTypes.enum.omnichannel]: omnichannelFlowPolicy,
   [channelTypes.enum.smtp]: smtpFlowPolicy,
@@ -46,10 +48,15 @@ export const isNativeButtonType = (
   getChannelFlowPolicy(channel)?.nativeButtonTypes.includes(buttonType) ?? false
 
 export {
+  type ButtonContainer,
+  type ButtonStyleSupport,
+  buttonContainers,
   CHANNEL_POLICY_VERSION,
   type ChannelFlowPolicy,
   channelDeliverableStepTypes,
+  getButtonCountLimit,
   type StepSupport,
   stepSupport,
 } from "./define"
+export { LINE_BUTTON_STYLES } from "./line"
 export { TIKTOK_CARD_TITLE_MAX } from "./tiktok"

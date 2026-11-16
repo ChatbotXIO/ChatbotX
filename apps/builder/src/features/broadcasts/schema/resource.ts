@@ -1,3 +1,4 @@
+import { broadcastStatusReasons } from "@chatbotx.io/database/partials"
 import {
   broadcastModel,
   createSelectSchema,
@@ -45,6 +46,8 @@ type BroadcastRecurrenceSummary = Pick<
 export type BroadcastResourceWithRelations = BroadcastResource & {
   recurrence?: BroadcastRecurrenceSummary | null
   parent?: Pick<BroadcastModel, "id" | "name"> | null
+  /** The page whose send error stopped the broadcast (see `statusReason`); null once that page is deleted. */
+  statusInbox?: Pick<InboxModel, "id" | "name"> | null
   flow?: Pick<FlowModel, "id" | "name"> | null
   integrationWhatsapp?: Pick<IntegrationWhatsappModel, "id" | "name"> | null
   integrationMessenger?: Pick<IntegrationMessengerModel, "id" | "name"> | null
@@ -66,6 +69,22 @@ export const publicBroadcastResource = createSelectSchema(broadcastModel)
     sendRatePerMinute: true,
   })
   .extend({
+    statusReason: z
+      .enum(broadcastStatusReasons.options)
+      .nullish()
+      .describe(
+        "Set when the system (not a person) stopped the broadcast: `accountPolicyBlocked` or `accountSendRestricted` — the channel page is blocked from sending, so every recipient would fail. Cleared on resume. Check the page is unblocked before resuming: if it is not, the first message fails and the broadcast stops again.",
+      ),
+    statusErrorMessage: z
+      .string()
+      .nullish()
+      .describe("The provider's error text behind `statusReason`."),
+    statusInboxId: z
+      .string()
+      .nullish()
+      .describe(
+        "The inbox (channel page) whose send error caused `statusReason`.",
+      ),
     parentBroadcastId: z
       .string()
       .nullish()

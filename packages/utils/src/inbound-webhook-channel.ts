@@ -16,6 +16,7 @@ export const inboxIdentifierKinds = z.enum([
   "displayPhoneNumber",
   "botId",
   "oaId",
+  "channelId",
   "openId",
   "threadsUserId",
 ])
@@ -50,6 +51,7 @@ export const channelUserIdKinds = z.enum([
   "igsid",
   "telegramChatId",
   "zaloUserId",
+  "lineUserId",
   "tiktokCustomerOpenId",
   "threadsUsername",
   "whatsappId",
@@ -90,6 +92,19 @@ export const INBOUND_WEBHOOK_CHANNEL_SPECS: Record<
     inboxIdentifiers: noInboxIdentifiers,
     channelUserId: null,
     creationIdentities: [],
+  },
+  // A LINE inbox's `sourceId` is the Channel ID; the contact is the LINE
+  // user id (`source.userId` of the webhook event).
+  line: {
+    inboxIdentifiers: [
+      {
+        kind: "channelId",
+        strategy: "inboxSourceId",
+        examplePath: "$.channel_id",
+      },
+    ],
+    channelUserId: { kind: "lineUserId", examplePath: "$.source.userId" },
+    creationIdentities: ["channelUserId"],
   },
   webchat: {
     inboxIdentifiers: noInboxIdentifiers,

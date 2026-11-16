@@ -58,17 +58,20 @@ const aiFileService = {
 }
 vi.mock("@chatbotx.io/business", () => ({
   aiFileService,
-  AI_FILE_MAX_UPLOAD_BYTES: 100 * 1000 * 1000,
+  AI_FILE_MAX_UPLOAD_BYTES: 25 * 1024 * 1024,
 }))
 
 vi.mock("@chatbotx.io/business/errors", () => ({
   BROADCAST_PLAN_LIMIT_CODE: "broadcastPlanLimit",
+  ChatbotXException: class extends Error {},
   notFoundException: (message: string) => new Error(message),
 }))
 
 const searchAIFiles = vi.fn()
 vi.mock("@chatbotx.io/ai/server", () => ({ searchAIFiles }))
+const assertAIFileCreateFromUrlNotRateLimited = vi.fn()
 vi.mock("@/features/ai-files/lib/rate-limit", () => ({
+  assertAIFileCreateFromUrlNotRateLimited,
   assertAIFileReindexNotRateLimited: vi.fn(),
   assertAIFileSearchNotRateLimited: vi.fn(),
 }))
@@ -175,19 +178,47 @@ describe("POST /v1/ai-files", () => {
     expect(aiFileService.create).toHaveBeenCalledWith("workspace-1", {
       file,
     })
+    expect(assertAIFileCreateFromUrlNotRateLimited).not.toHaveBeenCalled()
   })
 
   test("delegates to aiFileService.create with a source url", async () => {
     aiFileService.create.mockResolvedValueOnce({ id: "file-2" })
 
+    const resHeaders = new Headers()
+
     await procedure.handler?.({
-      context: { workspace: { id: "workspace-1" } },
+      context: { workspace: { id: "workspace-1" }, resHeaders },
       input: { url: "https://example.com/manual.pdf" },
     })
 
+    expect(assertAIFileCreateFromUrlNotRateLimited).toHaveBeenCalledWith(
+      "workspace-1",
+      resHeaders,
+    )
     expect(aiFileService.create).toHaveBeenCalledWith("workspace-1", {
       url: "https://example.com/manual.pdf",
     })
+  })
+
+  test("a rate-limited url never reaches the service", async () => {
+    const limited = Object.assign(new Error("Too many requests"), {
+      code: "tooManyRequests",
+    })
+    assertAIFileCreateFromUrlNotRateLimited.mockRejectedValueOnce(limited)
+
+    await expect(
+      procedure.handler?.({
+        context: { workspace: { id: "workspace-1" } },
+        input: { url: "https://example.com/manual.pdf" },
+      }),
+    ).rejects.toBe(limited)
+    expect(aiFileService.create).not.toHaveBeenCalled()
+  })
+
+  test("documents the 25 MB limit instead of 100MB", () => {
+    const route = procedure.route as RouteConfig & { description?: string }
+    expect(route.description).toContain("25 MB")
+    expect(route.description).not.toContain("100MB")
   })
 })
 
@@ -217,6 +248,16 @@ describe("createAIFilePublicRequest", () => {
       expect(result.error.issues[0]?.message).toBe(
         "Provide either 'file' or 'url', not both.",
       )
+    }
+  })
+
+  test("rejects a file over 25 MB", () => {
+    const big = new File([new Uint8Array(25 * 1024 * 1024 + 1)], "big.pdf")
+    const result = createAIFilePublicRequest.safeParse({ file: big })
+
+    expect(result.success).toBe(false)
+    if (!result.success) {
+      expect(result.error.issues[0]?.message).toBe("Max file size is 25 MB.")
     }
   })
 

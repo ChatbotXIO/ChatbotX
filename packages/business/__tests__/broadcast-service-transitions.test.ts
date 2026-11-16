@@ -1058,6 +1058,9 @@ describe("repeating broadcasts (templates)", () => {
     expect(result).toEqual({ id: "b-1", nextRunAt })
     expect(updateReturning.mock.calls[0][0].values).toEqual({
       status: "recurring",
+      statusReason: null,
+      statusErrorMessage: null,
+      statusInboxId: null,
     })
     expect(flatten(updateReturning.mock.calls[0][0].condition)).toEqual(
       expect.arrayContaining([

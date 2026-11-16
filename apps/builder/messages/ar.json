@@ -319,6 +319,31 @@
         "noMatches": "No matching chunks were found.",
         "agentHasNoFiles": "This agent has no knowledge files."
       }
+    },
+    "create": {
+      "trigger": "إضافة معرفة",
+      "title": "إضافة معرفة",
+      "description": "ارفع ملفًا أو استورده من رابط URL عام. يبحث وكيل الذكاء الاصطناعي في محتواه عند الرد.",
+      "tabs": {
+        "fromUrl": "من رابط URL"
+      },
+      "urlHelp": "رابط مباشر إلى ملف مدعوم، أو رابط مستندات أو جداول أو عروض Google تقديمية مُشارك للعامة، أو صفحة ويب ثابتة. قد يكون المحتوى المعروض بواسطة JavaScript مفقودًا.",
+      "snapshotNotice": "يُنزَّل الرابط مرة واحدة كلقطة. لا تتم مزامنة التغييرات اللاحقة على المصدر؛ أضفه مرة أخرى للتحديث.",
+      "uploadFailed": "فشل رفع {name}",
+      "rateLimited": "عمليات استيراد كثيرة جدًا من الروابط. يُرجى الانتظار بضع ثوانٍ ثم المحاولة مرة أخرى.",
+      "errors": {
+        "urlNotAllowed": "هذا الرابط غير مسموح به. استخدم عنوان إنترنت عامًا.",
+        "invalidUrl": "الرابط غير صالح. استخدم رابط http(s) كاملًا دون اسم مستخدم أو كلمة مرور.",
+        "googleFileNotPublic": "ملف Google هذا غير مُشارك للعامة. اضبط الوصول العام على \"أي شخص لديه الرابط\" ثم حاول مرة أخرى.",
+        "googlePublishedNotSupported": "روابط Google \"النشر على الويب\" غير مدعومة. شارك الملف للعامة واستخدم رابطه العادي.",
+        "unsupportedFileType": "نوع الملف هذا غير مدعوم كمعرفة.",
+        "fileTooLarge": "حجم الملف أكبر من {maxSize}.",
+        "downloadTimedOut": "استغرق التنزيل وقتًا طويلًا. جرّب ملفًا أصغر أو خادمًا أسرع.",
+        "downloadFailed": "أعاد المصدر خطأً. تأكد من أن الرابط يُفتح دون تسجيل الدخول.",
+        "tooManyRedirects": "يعيد الرابط التوجيه مرات كثيرة جدًا.",
+        "invalidRedirect": "يعيد الرابط التوجيه إلى عنوان غير صالح.",
+        "uploadPathNotAllowed": "الملف المرفوع غير مسموح به. يُرجى رفعه مرة أخرى."
+      }
     }
   },
   "aiFunctions": {
@@ -526,6 +551,11 @@
       "paused": "متوقف مؤقتًا",
       "ended": "منتهٍ"
     },
+    "statusReason": {
+      "accountPolicyBlocked": "تم الإيقاف تلقائيًا: تم حظر حساب القناة من الإرسال بعد مخالفة للسياسات.",
+      "accountSendRestricted": "تم الإيقاف تلقائيًا: حساب القناة مقيّد مؤقتًا من الإرسال.",
+      "page": "الصفحة: {name}"
+    },
     "stats": {
       "sent": "مُرسَل",
       "delivered": "مُسلَّم",
@@ -589,6 +619,10 @@
     "telegramAllContacts": {
       "title": "Telegram",
       "description": "استخدم هذا النوع من الرسائل إذا كنت تريد إرسال بث إلى جهات اتصالك على Telegram."
+    },
+    "lineAllContacts": {
+      "title": "LINE",
+      "description": "أرسل بثًا إلى جهات اتصال LINE في أي وقت. تُحتسب كل رسالة ضمن الحصة الشهرية للرسائل في حساب LINE الرسمي الخاص بك. يتم تخطي جهات الاتصال التي حظرت حسابك."
     },
     "tiktokActiveContacts": {
       "title": "TikTok",
@@ -674,7 +708,14 @@
     "resumeDialog": {
       "title": "Resume broadcast",
       "description": "\"{name}\" will continue sending to recipients who have not received it yet.",
-      "templateDescription": "سيعود \"{name}\" إلى التكرار من الموعد المجدول التالي. تم تخطي عمليات التشغيل أثناء الإيقاف."
+      "templateDescription": "سيعود \"{name}\" إلى التكرار من الموعد المجدول التالي. تم تخطي عمليات التشغيل أثناء الإيقاف.",
+      "blocked": {
+        "title": "تم الإيقاف لأن حساب القناة لا يستطيع الإرسال",
+        "description": "إذا كان الحساب لا يزال محظورًا، ستفشل الرسالة الأولى وسيتوقف البث مرة أخرى. قد يؤدي الإرسال أثناء الحظر إلى تقييد أشد.",
+        "pageLabel": "الصفحة",
+        "errorLabel": "الخطأ من القناة",
+        "confirm": "استئناف على أي حال"
+      }
     },
     "planLimitDialog": {
       "title": "ترقية خطتك",
@@ -1139,6 +1180,7 @@
     "duplicated": {
       "generic": "هذا الحساب متصل بالفعل بمساحة عمل أخرى.",
       "instagram": "حساب إنستغرام هذا متصل بالفعل بمساحة عمل أخرى.",
+      "line": "This LINE channel is already connected to another workspace.",
       "messenger": "صفحة فيسبوك هذه متصلة بالفعل بمساحة عمل أخرى.",
       "telegram": "بوت تيليجرام هذا متصل بالفعل بمساحة عمل أخرى.",
       "threads": "حساب Threads هذا متصل بالفعل بمساحة عمل أخرى.",
@@ -1513,7 +1555,17 @@
     "button": {
       "label": "زر",
       "whenPressed": "عند الضغط على هذا الزر",
-      "callToThisNumber": "الاتصال بهذا الرقم"
+      "callToThisNumber": "الاتصال بهذا الرقم",
+      "style": {
+        "label": "نمط الزر",
+        "description": "كيف يظهر الزر لجهة الاتصال.",
+        "default": "{style} (افتراضي)",
+        "options": {
+          "primary": "أساسي",
+          "secondary": "ثانوي",
+          "link": "رابط"
+        }
+      }
     },
     "buttonLabel": {
       "label": "تسمية الزر"
@@ -1689,7 +1741,8 @@
       "threadsUsername": "اسم مستخدم Threads",
       "webchatGuestId": "معرّف زائر Webchat",
       "externalId": "المعرّف الخارجي",
-      "channelId": "معرّف القناة"
+      "channelId": "معرّف القناة",
+      "lineUserId": "LINE User ID"
     },
     "flow": {
       "label": "المسار"
@@ -2204,6 +2257,7 @@
       "placeholders": {
         "instagram": "معرّف مستخدم Instagram",
         "messenger": "معرّف PSID في Messenger",
+        "line": "LINE user ID",
         "telegram": "معرّف محادثة Telegram",
         "tiktok": "معرّف مستخدم TikTok",
         "zalo": "معرّف مستخدم Zalo"
@@ -4593,6 +4647,13 @@
       "cardEnding": "بطاقة تنتهي بـ {lastFourDigits}",
       "notCharged": "لم يتم الخصم بعد. اخصمه عبر مزود الدفع.",
       "reference": "المرجع {referenceId}"
+    },
+    "sendQueue": {
+      "failed": "فشل إرسال رسالة. أعد إرسالها من المحادثة إن أمكن، أو اختر متابعة الإرسال.",
+      "unconfirmed": "تعذّر تأكيد إرسال آخر رسالة. اختر ما إذا كنت تريد متابعة الإرسال.",
+      "continue": "متابعة الإرسال",
+      "discard": "تجاهل الرسائل في قائمة الانتظار",
+      "dismiss": "تجاهل"
     }
   },
   "instagram": {
@@ -5855,7 +5916,8 @@
       "botId": "معرّف بوت Telegram",
       "oaId": "معرّف Zalo OA",
       "openId": "open id لحساب TikTok",
-      "threadsUserId": "معرّف مستخدم Threads"
+      "threadsUserId": "معرّف مستخدم Threads",
+      "channelId": "LINE Channel ID"
     },
     "channelUserIdKinds": {
       "psid": "Messenger PSID",
@@ -5865,7 +5927,8 @@
       "tiktokCustomerOpenId": "open id لعميل TikTok",
       "threadsUsername": "اسم مستخدم Threads",
       "apiSourceId": "معرّف مصدر جهة الاتصال",
-      "whatsappId": "معرّف WhatsApp (wa_id)"
+      "whatsappId": "معرّف WhatsApp (wa_id)",
+      "lineUserId": "LINE user id"
     },
     "mappings": {
       "title": "حفظ البيانات الواردة",
@@ -6125,7 +6188,8 @@
       "total": "Total customers scanned: {count}",
       "waitCooldown": "You must wait another 24 hours before you can use this feature again.",
       "failed": "The last scan failed. You can try again once the cooldown ends.",
-      "partial": "The last scan finished partially — some conversations could not be imported."
+      "partial": "The last scan finished partially — some conversations could not be imported.",
+      "cancelled": "تم إلغاء آخر عملية مسح قبل اكتمالها."
     },
     "errors": {
       "contactScanFromTimeInvalid": "Scan-from time must be in the past.",
@@ -6151,9 +6215,20 @@
         "running": "Running",
         "succeeded": "Succeeded",
         "partial": "Partial",
-        "failed": "Failed"
+        "failed": "Failed",
+        "cancelled": "تم الإلغاء"
       },
       "empty": "No scans have been run yet."
+    },
+    "cancel": {
+      "button": "إلغاء المسح",
+      "title": "هل تريد إلغاء هذا المسح؟",
+      "description": "يتوقف المسح ويتم الاحتفاظ بالعملاء الذين تم استيرادهم بالفعل. لا يزال عليك الانتظار 24 ساعة من بدء هذا المسح قبل أن تتمكن من مسح صندوق الوارد هذا مرة أخرى.",
+      "keep": "متابعة المسح",
+      "confirm": "إلغاء المسح",
+      "success": "تم إلغاء المسح.",
+      "notRunning": "لا توجد عملية مسح قيد التشغيل لصندوق الوارد هذا.",
+      "failed": "تعذّر إلغاء المسح. يرجى المحاولة مرة أخرى."
     }
   },
   "auditLogs": {
@@ -11963,5 +12038,38 @@
       "description": "Deletes your account and the {count, plural, =0 {0 workspaces} one {# workspace} other {# workspaces}} you own.",
       "openSettings": "Delete account"
     }
+  },
+  "integrationLine": {
+    "channelIdLabel": "Channel ID",
+    "channelSecretLabel": "Channel secret",
+    "credentialsHelp": "Find both values in the LINE Developers console: open your Messaging API channel and go to Basic settings.",
+    "webhookNotEnabled": "LINE is not delivering messages yet. In LINE Official Account Manager, turn on \"Use webhook\" and turn off \"Auto-reply messages\", then press Test webhook.",
+    "webhookReplaced": "The webhook URL previously set on this LINE channel ({url}) was replaced with ChatbotX's.",
+    "testWebhook": "Test webhook",
+    "testWebhookSuccess": "LINE webhook is working.",
+    "webhookTestFailed": "LINE's webhook test failed: {reason}",
+    "continue": "Continue",
+    "errors": {
+      "channelHidden": "LINE is not available for this workspace.",
+      "credentialsRejected": "Invalid LINE Channel ID or Channel secret.",
+      "webhookRejected": "LINE rejected the webhook URL. Please try again later or contact support.",
+      "providerUnavailable": "LINE is temporarily unavailable. Please try again in a moment."
+    }
+  },
+  "deleteAccountPage": {
+    "title": "حذف حساب ChatbotX الخاص بك",
+    "intro": "يمكنك حذف حسابك وبياناته بإحدى الطرق التالية.",
+    "waysTitle": "كيفية حذف حسابك",
+    "wayMobile": "في تطبيق الجوال: الإعدادات ← حذف الحساب.",
+    "wayWeb": "على الويب: سجّل الدخول وافتح صفحة حذف الحساب.",
+    "wayWebLink": "فتح صفحة حذف الحساب",
+    "wayEmail": "عبر البريد الإلكتروني: راسل {email} من عنوانك المسجّل.",
+    "whatHappensTitle": "ما يحدث بعد ذلك",
+    "whatHappens": "يبدأ الحذف بعد فترة سماح مدتها 24 ساعة ولا يمكن التراجع عنه. ألغِ أي اشتراكات أولاً.",
+    "deletedTitle": "البيانات التي نحذفها",
+    "deleted": "ملفك الشخصي (الاسم والبريد الإلكتروني) وبيانات تسجيل الدخول ورموز إشعارات الدفع وكل مساحة عمل تملكها، بما في ذلك جهات الاتصال والمحادثات والرسائل والملفات المرفوعة.",
+    "sharedWorkspace": "إذا كان هناك أشخاص آخرون أعضاء في مساحة عمل تملكها، فستُحذف لهم أيضاً.",
+    "retainedTitle": "البيانات التي نحتفظ بها",
+    "retained": "تبقى الملاحظات التي كتبتها في مساحات عمل يملكها آخرون، مع إزالة اسمك. يُحتفظ بسجل يفيد بحدوث الحذف. قد يُحتفظ بسجلات الفوترة والفواتير للمدة التي يتطلبها القانون."
   }
 }

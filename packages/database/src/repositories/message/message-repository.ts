@@ -252,6 +252,19 @@ export interface IMessageRepository {
     overlay: Record<string, unknown>
   }): Promise<{ id: string } | null>
 
+  /**
+   * Atomically clears a failed outgoing message's `sendError` so it can be sent
+   * again, only while it is still a failed send that never reached the channel
+   * (`sendError IS NOT NULL AND sourceId IS NULL`). Of two concurrent callers
+   * exactly one gets the row; the other (and a message that is not resendable)
+   * gets `null`, and must not enqueue anything.
+   */
+  claimForResend(params: {
+    id: string
+    workspaceId: string
+    createdAt: Date
+  }): Promise<{ id: string } | null>
+
   create(message: CreateMessageInput): Promise<MessageModel>
 
   createOrUpdate(message: CreateMessageInput): Promise<CreateMessageResult>

@@ -319,6 +319,31 @@
         "noMatches": "No matching chunks were found.",
         "agentHasNoFiles": "This agent has no knowledge files."
       }
+    },
+    "create": {
+      "trigger": "הוספת ידע",
+      "title": "הוספת ידע",
+      "description": "העלו קובץ או ייבאו אותו מכתובת URL ציבורית. סוכן ה-AI מחפש בתוכן שלו בזמן המענה.",
+      "tabs": {
+        "fromUrl": "מכתובת URL"
+      },
+      "urlHelp": "קישור ישיר לקובץ נתמך, קישור Google Docs‏, Sheets או Slides ששותף באופן ציבורי, או דף אינטרנט סטטי. תוכן שמוצג באמצעות JavaScript עלול להיות חסר.",
+      "snapshotNotice": "הכתובת מורדת פעם אחת כתמונת מצב. שינויים מאוחרים יותר במקור לא מסונכרנים; הוסיפו אותה שוב כדי לעדכן.",
+      "uploadFailed": "העלאת {name} נכשלה",
+      "rateLimited": "יותר מדי ייבואים מכתובת URL. המתינו כמה שניות ונסו שוב.",
+      "errors": {
+        "urlNotAllowed": "כתובת URL זו אינה מותרת. השתמשו בכתובת אינטרנט ציבורית.",
+        "invalidUrl": "כתובת ה-URL אינה תקינה. השתמשו בקישור http(s) מלא ללא שם משתמש או סיסמה.",
+        "googleFileNotPublic": "קובץ Google זה לא שותף באופן ציבורי. הגדירו גישה כללית ל\"כל מי שיש לו את הקישור\" ונסו שוב.",
+        "googlePublishedNotSupported": "קישורי \"פרסום באינטרנט\" של Google אינם נתמכים. שתפו את הקובץ באופן ציבורי והשתמשו בקישור הרגיל שלו.",
+        "unsupportedFileType": "סוג קובץ זה אינו נתמך כידע.",
+        "fileTooLarge": "הקובץ גדול מ-{maxSize}.",
+        "downloadTimedOut": "ההורדה נמשכה זמן רב מדי. נסו קובץ קטן יותר או שרת מהיר יותר.",
+        "downloadFailed": "המקור החזיר שגיאה. ודאו שהקישור נפתח ללא התחברות.",
+        "tooManyRedirects": "כתובת ה-URL מפנה יותר מדי פעמים.",
+        "invalidRedirect": "כתובת ה-URL מפנה לכתובת לא תקינה.",
+        "uploadPathNotAllowed": "הקובץ שהועלה אינו מותר. העלו אותו שוב."
+      }
     }
   },
   "aiFunctions": {
@@ -1848,6 +1873,7 @@
     "duplicated": {
       "generic": "חשבון זה כבר מחובר לסביבת עבודה אחרת.",
       "instagram": "חשבון Instagram זה כבר מחובר לסביבת עבודה אחרת.",
+      "line": "This LINE channel is already connected to another workspace.",
       "messenger": "דף Facebook זה כבר מחובר לסביבת עבודה אחרת.",
       "telegram": "בוט Telegram זה כבר מחובר לסביבת עבודה אחרת.",
       "threads": "חשבון Threads זה כבר מחובר לסביבת עבודה אחרת.",
@@ -2227,6 +2253,13 @@
       "cardEnding": "כרטיס המסתיים ב-{lastFourDigits}",
       "notCharged": "עדיין לא חויב. חייב דרך ספק התשלומים שלך.",
       "reference": "אסמכתה {referenceId}"
+    },
+    "sendQueue": {
+      "failed": "שליחת הודעה נכשלה. שלח אותה שוב מהשיחה אם אפשר, או המשך לשלוח.",
+      "unconfirmed": "לא הצלחנו לאשר שההודעה האחרונה נשלחה. בחר אם להמשיך לשלוח.",
+      "continue": "המשך לשלוח",
+      "discard": "מחק הודעות בתור",
+      "dismiss": "סגור"
     }
   },
   "instagram": {
@@ -3489,7 +3522,8 @@
       "botId": "מזהה בוט Telegram",
       "oaId": "מזהה Zalo OA",
       "openId": "open id של חשבון TikTok",
-      "threadsUserId": "מזהה משתמש Threads"
+      "threadsUserId": "מזהה משתמש Threads",
+      "channelId": "LINE Channel ID"
     },
     "channelUserIdKinds": {
       "psid": "Messenger PSID",
@@ -3499,7 +3533,8 @@
       "tiktokCustomerOpenId": "open id של לקוח TikTok",
       "threadsUsername": "שם משתמש Threads",
       "apiSourceId": "מזהה מקור איש הקשר",
-      "whatsappId": "מזהה WhatsApp (wa_id)"
+      "whatsappId": "מזהה WhatsApp (wa_id)",
+      "lineUserId": "LINE user id"
     },
     "mappings": {
       "title": "שמירת נתונים נכנסים",
@@ -3759,7 +3794,8 @@
       "total": "Total customers scanned: {count}",
       "waitCooldown": "You must wait another 24 hours before you can use this feature again.",
       "failed": "The last scan failed. You can try again once the cooldown ends.",
-      "partial": "The last scan finished partially — some conversations could not be imported."
+      "partial": "The last scan finished partially — some conversations could not be imported.",
+      "cancelled": "הסריקה האחרונה בוטלה לפני שהסתיימה."
     },
     "errors": {
       "contactScanFromTimeInvalid": "Scan-from time must be in the past.",
@@ -3785,9 +3821,20 @@
         "running": "Running",
         "succeeded": "Succeeded",
         "partial": "Partial",
-        "failed": "Failed"
+        "failed": "Failed",
+        "cancelled": "בוטל"
       },
       "empty": "No scans have been run yet."
+    },
+    "cancel": {
+      "button": "ביטול סריקה",
+      "title": "לבטל את הסריקה הזו?",
+      "description": "הסריקה נעצרת והלקוחות שכבר יובאו נשמרים. עדיין צריך להמתין 24 שעות מתחילת הסריקה הזו לפני שאפשר לסרוק שוב את תיבת הדואר הזו.",
+      "keep": "המשך סריקה",
+      "confirm": "ביטול סריקה",
+      "success": "הסריקה בוטלה.",
+      "notRunning": "אין סריקה פועלת עבור תיבת הדואר הזו.",
+      "failed": "לא ניתן היה לבטל את הסריקה. נסו שוב."
     }
   },
   "auditLogs": {
@@ -6142,7 +6189,17 @@
     "button": {
       "label": "כפתור",
       "whenPressed": "כאשר כפתור זה נלחץ",
-      "callToThisNumber": "התקשר למספר זה"
+      "callToThisNumber": "התקשר למספר זה",
+      "style": {
+        "label": "סגנון הכפתור",
+        "description": "איך הכפתור נראה לאיש הקשר.",
+        "default": "{style} (ברירת מחדל)",
+        "options": {
+          "primary": "ראשי",
+          "secondary": "משני",
+          "link": "קישור"
+        }
+      }
     },
     "buttonLabel": {
       "label": "תווית כפתור"
@@ -6318,7 +6375,8 @@
       "threadsUsername": "שם משתמש ב-Threads",
       "webchatGuestId": "מזהה אורח ב-Webchat",
       "externalId": "מזהה חיצוני",
-      "channelId": "מזהה ערוץ"
+      "channelId": "מזהה ערוץ",
+      "lineUserId": "LINE User ID"
     },
     "flow": {
       "label": "תהליך"
@@ -6833,6 +6891,7 @@
       "placeholders": {
         "instagram": "מזהה משתמש Instagram",
         "messenger": "PSID של Messenger",
+        "line": "LINE user ID",
         "telegram": "מזהה צ'אט Telegram",
         "tiktok": "מזהה משתמש TikTok",
         "zalo": "מזהה משתמש Zalo"
@@ -7659,6 +7718,11 @@
       "paused": "מושהה",
       "ended": "הסתיים"
     },
+    "statusReason": {
+      "accountPolicyBlocked": "נעצר אוטומטית: חשבון הערוץ נחסם מלשלוח בעקבות הפרת מדיניות.",
+      "accountSendRestricted": "נעצר אוטומטית: חשבון הערוץ מוגבל זמנית מלשלוח.",
+      "page": "עמוד: {name}"
+    },
     "stats": {
       "sent": "נשלח",
       "delivered": "נמסר",
@@ -7722,6 +7786,10 @@
     "telegramAllContacts": {
       "title": "Telegram",
       "description": "השתמשו בסוג הודעה זה אם ברצונכם לשלוח שידור לאנשי הקשר שלכם ב-Telegram."
+    },
+    "lineAllContacts": {
+      "title": "LINE",
+      "description": "שלחו הודעת תפוצה לאנשי הקשר שלכם ב-LINE בכל עת. כל הודעה נספרת במכסת ההודעות החודשית של חשבון LINE Official Account שלכם. אנשי קשר שחסמו את החשבון שלכם מדולגים."
     },
     "tiktokActiveContacts": {
       "title": "TikTok",
@@ -7807,7 +7875,14 @@
     "resumeDialog": {
       "title": "Resume broadcast",
       "description": "\"{name}\" will continue sending to recipients who have not received it yet.",
-      "templateDescription": "\"{name}\" יחזור על עצמו שוב מהמועד המתוזמן הבא. הרצות בזמן ההשהיה דולגו."
+      "templateDescription": "\"{name}\" יחזור על עצמו שוב מהמועד המתוזמן הבא. הרצות בזמן ההשהיה דולגו.",
+      "blocked": {
+        "title": "נעצר כי חשבון הערוץ לא יכול לשלוח",
+        "description": "אם החשבון עדיין חסום, ההודעה הראשונה תיכשל והשידור ייעצר שוב. שליחה בזמן החסימה עלולה להוביל להגבלה חמורה יותר.",
+        "pageLabel": "עמוד",
+        "errorLabel": "שגיאה מהערוץ",
+        "confirm": "המשך בכל זאת"
+      }
     },
     "planLimitDialog": {
       "title": "שדרוג התוכנית",
@@ -11963,5 +12038,38 @@
       "description": "Deletes your account and the {count, plural, =0 {0 workspaces} one {# workspace} other {# workspaces}} you own.",
       "openSettings": "Delete account"
     }
+  },
+  "integrationLine": {
+    "channelIdLabel": "Channel ID",
+    "channelSecretLabel": "Channel secret",
+    "credentialsHelp": "Find both values in the LINE Developers console: open your Messaging API channel and go to Basic settings.",
+    "webhookNotEnabled": "LINE is not delivering messages yet. In LINE Official Account Manager, turn on \"Use webhook\" and turn off \"Auto-reply messages\", then press Test webhook.",
+    "webhookReplaced": "The webhook URL previously set on this LINE channel ({url}) was replaced with ChatbotX's.",
+    "testWebhook": "Test webhook",
+    "testWebhookSuccess": "LINE webhook is working.",
+    "webhookTestFailed": "LINE's webhook test failed: {reason}",
+    "continue": "Continue",
+    "errors": {
+      "channelHidden": "LINE is not available for this workspace.",
+      "credentialsRejected": "Invalid LINE Channel ID or Channel secret.",
+      "webhookRejected": "LINE rejected the webhook URL. Please try again later or contact support.",
+      "providerUnavailable": "LINE is temporarily unavailable. Please try again in a moment."
+    }
+  },
+  "deleteAccountPage": {
+    "title": "מחיקת חשבון ChatbotX שלך",
+    "intro": "אפשר למחוק את החשבון ואת הנתונים שלו באחת מהדרכים הבאות.",
+    "waysTitle": "איך למחוק את החשבון",
+    "wayMobile": "באפליקציה לנייד: הגדרות ← מחיקת חשבון.",
+    "wayWeb": "באתר: התחברו ופתחו את דף מחיקת החשבון.",
+    "wayWebLink": "פתיחת מחיקת החשבון",
+    "wayEmail": "בדוא\"ל: כתבו אל {email} מהכתובת הרשומה שלכם.",
+    "whatHappensTitle": "מה קורה אחר כך",
+    "whatHappens": "המחיקה מתחילה לאחר תקופת המתנה של 24 שעות ואי אפשר לבטל אותה. בטלו קודם מנויים.",
+    "deletedTitle": "נתונים שאנו מוחקים",
+    "deleted": "הפרופיל שלכם (שם ודוא\"ל), פרטי התחברות, אסימוני התראות דחיפה וכל סביבת עבודה שבבעלותכם, כולל אנשי קשר, שיחות, הודעות וקבצים שהועלו.",
+    "sharedWorkspace": "אם אנשים אחרים חברים בסביבת עבודה שבבעלותכם, היא נמחקת גם עבורם.",
+    "retainedTitle": "נתונים שאנו שומרים",
+    "retained": "הערות שכתבתם בסביבות עבודה של אחרים נשארות, ללא שמכם. נשמרת רשומה על כך שהמחיקה התרחשה. רשומות חיוב וחשבוניות עשויות להישמר כל עוד החוק מחייב."
   }
 }

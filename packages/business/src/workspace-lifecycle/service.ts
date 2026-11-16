@@ -10,6 +10,7 @@ import {
   type InboxDisconnectReason,
 } from "@chatbotx.io/database/partials"
 import {
+  coexistSyncRunRepository,
   connectionRepository,
   HEAVY_WORKSPACE_TABLES,
   LIVE_RUN_STATUSES,
@@ -22,6 +23,7 @@ import {
 import {
   coexistSyncRunModel,
   integrationInstagramModel,
+  integrationLineModel,
   integrationMessengerModel,
   integrationSmtpModel,
   integrationTelegramModel,
@@ -50,6 +52,7 @@ import {
   connectionStateService,
   type PendingQuotaRelease,
 } from "../connection/state-service"
+import { CONTACT_SCAN_ERRORS } from "../contact-scan/constants"
 import { WorkspacePurgeIncompleteError } from "../errors"
 import { inboxService } from "../inbox/service"
 import { integrationActiveCampaignService } from "../integration-active-campaign/service"
@@ -767,6 +770,15 @@ class WorkspaceLifecycleService extends BaseService {
         await finish(integrations?.zalo)
         return
       }
+      case channelTypes.enum.line: {
+        if (removeIntegrationRow && inbox.integrationLine) {
+          await tx
+            .delete(integrationLineModel)
+            .where(eq(integrationLineModel.id, inbox.integrationLine.id))
+        }
+        await finish(integrations?.line)
+        return
+      }
       case channelTypes.enum.telegram: {
         if (removeIntegrationRow && inbox.integrationTelegram) {
           await tx
@@ -789,6 +801,17 @@ class WorkspaceLifecycleService extends BaseService {
               tx,
             })
           }
+          // Both Instagram variants support the contact scan, so this is not
+          // gated on the integration type.
+          // Through the repository, not `contactScanService`: importing the
+          // service here closes an import cycle (contact-scan → inbox →
+          // quota → tenant → workspace-lifecycle).
+          await coexistSyncRunRepository.cancelActiveContactScanRuns({
+            channel: "instagram",
+            integrationId: inbox.integrationInstagram.id,
+            currentError: CONTACT_SCAN_ERRORS.cancelled,
+            tx,
+          })
           await tx
             .delete(integrationInstagramModel)
             .where(
@@ -854,6 +877,8 @@ const inboxToAuth = (inbox: InboxWithIntegrations): unknown => {
       return inbox.integrationWhatsapp?.auth
     case channelTypes.enum.zalo:
       return inbox.integrationZalo?.auth
+    case channelTypes.enum.line:
+      return inbox.integrationLine?.auth
     case channelTypes.enum.telegram:
       return inbox.integrationTelegram?.auth
     case channelTypes.enum.tiktok:

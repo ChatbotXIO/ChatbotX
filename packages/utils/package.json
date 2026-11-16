@@ -39,6 +39,7 @@
     "./has-link": "./src/has-link.ts",
     "./id": "./src/id.ts",
     "./image-optimize": "./src/image-optimize.ts",
+    "./image-renditions": "./src/image-renditions.ts",
     "./image-optimize-settings": "./src/image-optimize-settings.ts",
     "./inbound-webhook-channel": "./src/inbound-webhook-channel.ts",
     "./inbox-image-support": "./src/inbox-image-support.ts",

@@ -12,6 +12,7 @@ import { logProviderError } from "@chatbotx.io/business/error-log"
 import { sanitizePublicText } from "@chatbotx.io/business/errors"
 import { supportsProfileSnapshot } from "@chatbotx.io/database/partials"
 import type { CoexistRunWriteGuard } from "@chatbotx.io/database/repositories"
+import type { CoexistSyncRunModel } from "@chatbotx.io/database/types"
 import { isContactScanChannel } from "@chatbotx.io/utils/channel"
 import {
   buildContactScanPageJobId,
@@ -21,65 +22,136 @@ import {
 } from "@chatbotx.io/worker-config"
 import { logger } from "../../../lib/logger"
 import { filterConversationWindow } from "../coexist/conversation-window"
-import {
-  resolveUsageThrottle,
-  sleepForUsageThrottle,
-} from "../coexist/usage-throttle"
 import { enqueueProfileSnapshotJobs } from "../profile-snapshot/queue"
 import type { ContactScanErrorClassification } from "./adapter"
 import { contactScanAdapters } from "./adapter"
+import { CONTACT_SCAN_PACING, resolveScanPacing } from "./pacing"
+
+const sleep = (ms: number): Promise<void> =>
+  new Promise((resolve) => setTimeout(resolve, ms))
+
+type ContinuationInput = {
+  runId: string
+  workspaceId: string
+  /** `run.attempts` at claim: part of the job id, so a retry is a distinct job. */
+  attempts: number
+  pageNumber: number
+  expect: CoexistRunWriteGuard
+  delayMs: number
+  /** Set when the next chunk's page number may already have been used (a same-page retry, a restarted walk): its job id must be unique. */
+  retriesSamePage: boolean
+  /** Writes `attempts = 1` with the release (a wait that is not a failure). */
+  resetAttempts?: boolean
+}
 
 /**
- * Active wall-time budget per chunk — same value and rationale as coexist
- * (`coexist/messenger-sync.ts`'s `CHUNK_BUDGET_MS`): stay well inside the
- * BullMQ job lock, persist state, and hot-chain a continuation.
+ * Releases the claim (the run stays `running`) and queues the next chunk after
+ * `delayMs`. A wait is always a delayed job, never a sleep inside the worker, so
+ * a rate-limited scan holds no worker slot. If the job cannot be queued the run
+ * is reopened for the sweeper.
  */
-const CHUNK_BUDGET_MS = 4 * 60 * 1000
+const scheduleContinuation = async (
+  input: ContinuationInput,
+): Promise<void> => {
+  const { runId, workspaceId } = input
+  const yieldRows = await contactScanService.yieldForContinuation({
+    runId,
+    expect: input.expect,
+    attempts: input.resetAttempts ? 1 : undefined,
+  })
+  if (yieldRows === 0) {
+    logger.warn({ runId }, "[contact-scan] yield lost the claim — abandoning")
+    return
+  }
+  try {
+    await integrationQueue.add(
+      IntegrationJobAction.contactScan,
+      {
+        type: IntegrationJobAction.contactScan,
+        data: { runId, workspaceId },
+      },
+      {
+        jobId: buildContactScanPageJobId({
+          runId,
+          attempts: input.attempts,
+          pageNumber: input.pageNumber + 1,
+          generation: input.retriesSamePage ? Date.now() : undefined,
+        }),
+        delay: input.delayMs,
+        attempts: 1,
+        removeOnComplete: true,
+        // A failed job keeps its id reserved; do not keep it forever.
+        removeOnFail: { count: 100 },
+      },
+    )
+    logger.info(
+      { runId, pageNumber: input.pageNumber, delayMs: input.delayMs },
+      "[contact-scan] chunk done — continuation enqueued",
+    )
+  } catch (error) {
+    logger.error(
+      { err: error, runId },
+      "[contact-scan] continuation enqueue failed — reopening for the sweeper",
+    )
+    await contactScanService.reopenReleased({ runId })
+  }
+}
 
-/** Bounded in-process pause on a Meta usage-budget signal, same rationale as
- *  `instagram-sync.ts`'s `MAX_USAGE_PAUSE_MS`. */
-const MAX_USAGE_PAUSE_MS = 45_000
-
-/** Single sequential walk — no per-conversation fan-out — so the throttle's
- *  concurrency value is unused; only its `pauseMs` matters here. */
-const SEQUENTIAL_CONCURRENCY = 1
+type ClassificationInput = {
+  run: CoexistSyncRunModel
+  workspaceId: string
+  pageNumber: number
+  expect: CoexistRunWriteGuard
+  /** Sanitized fallback text, used only by `unknown`. */
+  message: string
+  /** How long a rate-limited scan must wait, from the provider's headers. */
+  waitMs: number
+}
 
 /**
  * Terminal/retry handler per `adapter.classifyError` outcome — a table, never
  * an if/else chain, so the compiler catches a missing arm if the union grows.
- * `message` is the sanitized fallback text used only by `unknown`.
  */
 const CLASSIFICATION_HANDLERS: Record<
   ContactScanErrorClassification,
-  (input: {
-    runId: string
-    expect: CoexistRunWriteGuard
-    message: string
-  }) => Promise<number>
+  (input: ClassificationInput) => Promise<unknown>
 > = {
-  retryable: ({ runId, expect }) =>
-    contactScanService.resetForRetry({
-      runId,
-      currentError: CONTACT_SCAN_ERRORS.providerRetryable,
+  // Wait through the queue and retry the SAME page (the failed page was never
+  // persisted, so the saved cursor still points at it). A rate limit is not a
+  // failure and the provider answered, so the count goes back to a single
+  // attempt: left high, the sweeper would terminalize the released run during
+  // a long wait (it is idle for more than 10 minutes).
+  rateLimited: ({ run, workspaceId, pageNumber, expect, waitMs }) =>
+    scheduleContinuation({
+      runId: run.id,
+      workspaceId,
+      attempts: run.attempts,
+      resetAttempts: true,
+      pageNumber,
       expect,
+      delayMs: waitMs,
+      retriesSamePage: true,
     }),
-  tokenInvalid: ({ runId, expect }) =>
+  // Transient (network, 5xx): back to the sweeper, or failed on the last try.
+  retryable: ({ run, expect }) =>
+    contactScanService.retryOrFail({ runId: run.id, expect }),
+  tokenInvalid: ({ run, expect }) =>
     contactScanService.finish({
-      runId,
+      runId: run.id,
       status: "failed",
       currentError: CONTACT_SCAN_ERRORS.tokenInvalid,
       expect,
     }),
-  graphPermission: ({ runId, expect }) =>
+  graphPermission: ({ run, expect }) =>
     contactScanService.finish({
-      runId,
+      runId: run.id,
       status: "failed",
       currentError: CONTACT_SCAN_ERRORS.graphPermission,
       expect,
     }),
-  unknown: ({ runId, expect, message }) =>
+  unknown: ({ run, expect, message }) =>
     contactScanService.finish({
-      runId,
+      runId: run.id,
       status: "failed",
       currentError: sanitizePublicText(message),
       expect,
@@ -152,11 +224,7 @@ export const runContactScan = async (
       { err: error, runId },
       "[contact-scan] setup (loadContext/workspaceService.find) threw — retrying",
     )
-    await contactScanService.resetForRetry({
-      runId,
-      currentError: CONTACT_SCAN_ERRORS.providerRetryable,
-      expect,
-    })
+    await contactScanService.retryOrFail({ runId, expect })
     return
   }
 
@@ -183,26 +251,13 @@ export const runContactScan = async (
   // rejected-resume-cursor recovery (clear + restart from page 1); every
   // later page failure goes straight to the outer error classification.
   let firstPageCursorRecoveryAvailable = Boolean(cursor)
+  // After a cursor restart the page numbers count again from 1, so a later
+  // continuation id could equal one used earlier in this run.
+  let walkRestarted = false
 
-  let pauseUntil = 0
-  const applyUsageThrottle = (
-    signal: Parameters<typeof resolveUsageThrottle>[0]["signal"],
-  ): void => {
-    const decision = resolveUsageThrottle({
-      signal,
-      defaultConcurrency: SEQUENTIAL_CONCURRENCY,
-      maxPauseMs: MAX_USAGE_PAUSE_MS,
-    })
-    if (decision.pauseMs > 0) {
-      pauseUntil = Math.max(pauseUntil, Date.now() + decision.pauseMs)
-    }
-  }
-  const respectPause = async (): Promise<void> => {
-    const waitMs = pauseUntil - Date.now()
-    if (waitMs > 0) {
-      await sleepForUsageThrottle(waitMs)
-    }
-  }
+  // Pages walked in THIS chunk, and a wait the pacing asked for after a page.
+  let pagesInChunk = 0
+  let nextChunkDelayMs: number = CONTACT_SCAN_PACING.chunkGapMs
 
   try {
     while (true) {
@@ -226,21 +281,32 @@ export const runContactScan = async (
         return
       }
 
-      if (Date.now() - jobStart >= CHUNK_BUDGET_MS) {
+      // A chunk is a few pages (not the whole budget), so a big inbox is walked
+      // as a steady trickle of short jobs rather than one long burst.
+      if (
+        pagesInChunk >= CONTACT_SCAN_PACING.chunkMaxPages ||
+        Date.now() - jobStart >= CONTACT_SCAN_PACING.chunkBudgetMs
+      ) {
         continueLater = true
         break
       }
 
-      await respectPause()
+      if (pagesInChunk > 0) {
+        await sleep(CONTACT_SCAN_PACING.pageGapMs)
+      }
       pageNumber += 1
 
       let page: Awaited<ReturnType<typeof adapter.listPage>>
       try {
         page = await adapter.listPage({ context, cursor })
       } catch (error) {
+        // Only a cursor the provider REJECTS is cleared: a rate limit or a
+        // transient failure says nothing about the cursor.
+        const failure = adapter.classifyError({ error, context })
         if (
           firstPageCursorRecoveryAvailable &&
-          adapter.classifyError(error) !== "retryable"
+          failure !== "retryable" &&
+          failure !== "rateLimited"
         ) {
           firstPageCursorRecoveryAvailable = false
           const clearedRows = await contactScanService.updateProgress({
@@ -258,12 +324,13 @@ export const runContactScan = async (
           )
           cursor = undefined
           pageNumber = 0
+          walkRestarted = true
           continue
         }
         throw error
       }
       firstPageCursorRecoveryAvailable = false
-      applyUsageThrottle(page.usageSignal)
+      pagesInChunk += 1
 
       const filtered = filterConversationWindow({
         items: page.entries,
@@ -277,9 +344,8 @@ export const runContactScan = async (
       // this page was durably persisted as "processed" yet, so the ONLY safe
       // move is to retry the SAME page from the last-good `resumeCursor` —
       // never advance `cursor`/`page.after` past contacts we never actually
-      // imported. `resetForRetry` hands the run back to the scheduler
-      // (bounded by `CONTACT_SCAN_MAX_ATTEMPTS` → `markMaxAttemptsFailed`),
-      // which re-fetches this exact page on the next attempt.
+      // imported. `retryOrFail` hands the run back to the scheduler (or fails
+      // it on the last attempt), which re-fetches this exact page next time.
       let pageResult: Awaited<
         ReturnType<typeof bulkImportChannelContacts>
       > | null = null
@@ -298,12 +364,12 @@ export const runContactScan = async (
             { err: error, runId, pageNumber },
             "[contact-scan] bulk import threw — retrying this page",
           )
-          const retryRows = await contactScanService.resetForRetry({
+          const outcome = await contactScanService.retryOrFail({
             runId,
-            currentError: CONTACT_SCAN_ERRORS.pageImportFailed,
             expect,
+            retryError: CONTACT_SCAN_ERRORS.pageImportFailed,
           })
-          if (retryRows === 0) {
+          if (outcome === null) {
             logger.warn(
               { runId },
               "[contact-scan] retry reset lost the claim — abandoning",
@@ -364,6 +430,12 @@ export const runContactScan = async (
           currentPageNumber: pageNumber,
           currentStep: `page ${pageNumber} processed (${filtered.itemsToProcess.length} in window)`,
           currentError: null,
+          // A finished page ends any run of failures. `attempts` counts the
+          // sweeper's picks, so a claim that is running counts as 1; reset to
+          // that (not 0) so the 5th consecutive failure fails the run, exactly
+          // like a fresh one.
+          attempts: 1,
+          lastHeartbeatAt: new Date(),
         },
         expect,
       })
@@ -374,6 +446,15 @@ export const runContactScan = async (
 
       cursor = page.after
       if (!(cursor && !filtered.stopAll)) {
+        break
+      }
+
+      // High usage or a provider wait: stop here and continue after the wait,
+      // as a delayed job (never a sleep in the worker).
+      const pacingWaitMs = resolveScanPacing({ signal: page.usageSignal })
+      if (pacingWaitMs > 0) {
+        nextChunkDelayMs = pacingWaitMs
+        continueLater = true
         break
       }
     }
@@ -387,51 +468,21 @@ export const runContactScan = async (
     }
 
     if (continueLater) {
-      const yieldRows = await contactScanService.yieldForContinuation({
+      await scheduleContinuation({
         runId,
+        workspaceId,
+        attempts: run.attempts,
+        pageNumber,
         expect,
+        delayMs: nextChunkDelayMs,
+        retriesSamePage: walkRestarted,
       })
-      if (yieldRows === 0) {
-        logger.warn(
-          { runId },
-          "[contact-scan] yield lost the claim — abandoning",
-        )
-        return
-      }
-      try {
-        await integrationQueue.add(
-          IntegrationJobAction.contactScan,
-          {
-            type: IntegrationJobAction.contactScan,
-            data: { runId, workspaceId },
-          },
-          {
-            jobId: buildContactScanPageJobId({
-              runId,
-              attempts: run.attempts,
-              pageNumber: pageNumber + 1,
-            }),
-            attempts: 1,
-            removeOnComplete: true,
-          },
-        )
-        logger.info(
-          { runId, pageNumber },
-          "[contact-scan] chunk done — continuation enqueued",
-        )
-      } catch (error) {
-        logger.error(
-          { err: error, runId },
-          "[contact-scan] continuation enqueue failed — reopening for the sweeper",
-        )
-        await contactScanService.reopenReleased({ runId })
-      }
       return
     }
 
     // Walk finished (no cursor left, or the ceiling was reached). A page
-    // whose import throws now retries the SAME page via `resetForRetry`
-    // (FIX 1) instead of counting a failure and moving on, so reaching this
+    // whose import throws now retries the SAME page via `retryOrFail`
+    // instead of counting a failure and moving on, so reaching this
     // point always means every page in the walk imported — always
     // `succeeded`. The only remaining `partial` outcome is the
     // `CONTACT_SCAN_MAX_PAGES` page-budget cap above, which finishes
@@ -442,9 +493,19 @@ export const runContactScan = async (
     logger.error({ err: error, runId }, "[contact-scan] fatal error")
     await logProviderError({ provider: adapter.provider, workspaceId, error })
 
-    const classification = adapter.classifyError(error)
+    const classification = adapter.classifyError({ error, context })
     const message =
       error instanceof Error ? error.message : "Unknown contact scan error"
-    await CLASSIFICATION_HANDLERS[classification]({ runId, expect, message })
+    await CLASSIFICATION_HANDLERS[classification]({
+      run,
+      workspaceId,
+      pageNumber,
+      expect,
+      message,
+      waitMs: resolveScanPacing({
+        signal: adapter.readBackoff({ error, context }),
+        rateLimited: classification === "rateLimited",
+      }),
+    })
   }
 }

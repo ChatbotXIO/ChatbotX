@@ -319,6 +319,31 @@
         "noMatches": "No matching chunks were found.",
         "agentHasNoFiles": "This agent has no knowledge files."
       }
+    },
+    "create": {
+      "trigger": "Lisää tietoa",
+      "title": "Lisää tietoa",
+      "description": "Lataa tiedosto tai tuo se julkisesta URL-osoitteesta. Tekoälyagentti hakee sen sisällöstä vastatessaan.",
+      "tabs": {
+        "fromUrl": "URL-osoitteesta"
+      },
+      "urlHelp": "Suora linkki tuettuun tiedostoon, julkisesti jaettu Google Docs-, Sheets- tai Slides-linkki tai staattinen verkkosivu. JavaScriptillä luotu sisältö voi puuttua.",
+      "snapshotNotice": "URL-osoite ladataan kerran tilannekuvana. Lähteen myöhempiä muutoksia ei synkronoida; lisää se uudelleen päivittääksesi.",
+      "uploadFailed": "Tiedoston {name} lataus epäonnistui",
+      "rateLimited": "Liian monta tuontia URL-osoitteesta. Odota muutama sekunti ja yritä uudelleen.",
+      "errors": {
+        "urlNotAllowed": "Tämä URL-osoite ei ole sallittu. Käytä julkista internetosoitetta.",
+        "invalidUrl": "URL-osoite on virheellinen. Käytä täydellistä http(s)-linkkiä ilman käyttäjänimeä tai salasanaa.",
+        "googleFileNotPublic": "Tätä Google-tiedostoa ei ole jaettu julkisesti. Aseta yleiseksi käyttöoikeudeksi \"Kaikki, joilla on linkki\" ja yritä uudelleen.",
+        "googlePublishedNotSupported": "Googlen \"Julkaise verkossa\" -linkkejä ei tueta. Jaa tiedosto julkisesti ja käytä sen tavallista linkkiä.",
+        "unsupportedFileType": "Tätä tiedostotyyppiä ei tueta tietona.",
+        "fileTooLarge": "Tiedosto on suurempi kuin {maxSize}.",
+        "downloadTimedOut": "Lataus kesti liian kauan. Kokeile pienempää tiedostoa tai nopeampaa palvelinta.",
+        "downloadFailed": "Lähde palautti virheen. Tarkista, että linkki aukeaa kirjautumatta.",
+        "tooManyRedirects": "URL-osoite uudelleenohjaa liian monta kertaa.",
+        "invalidRedirect": "URL-osoite uudelleenohjaa virheelliseen osoitteeseen.",
+        "uploadPathNotAllowed": "Ladattu tiedosto ei ole sallittu. Lataa se uudelleen."
+      }
     }
   },
   "aiFunctions": {
@@ -526,6 +551,11 @@
       "paused": "Tauolla",
       "ended": "Päättynyt"
     },
+    "statusReason": {
+      "accountPolicyBlocked": "Pysäytetty automaattisesti: kanavan tili estettiin lähettämästä käytäntörikkomuksen vuoksi.",
+      "accountSendRestricted": "Pysäytetty automaattisesti: kanavan tilin lähettämistä on tilapäisesti rajoitettu.",
+      "page": "Sivu: {name}"
+    },
     "stats": {
       "sent": "Lähetetty",
       "delivered": "Toimitettu",
@@ -589,6 +619,10 @@
     "telegramAllContacts": {
       "title": "Telegram",
       "description": "Käytä tätä viestityyppiä, kun haluat lähettää joukkolähetyksen Telegram-yhteystiedoillesi."
+    },
+    "lineAllContacts": {
+      "title": "LINE",
+      "description": "Lähetä joukkoviesti LINE-yhteystiedoillesi milloin tahansa. Jokainen viesti lasketaan LINE Official Account -tilisi kuukausittaiseen viestikiintiöön. Tilisi estäneet yhteystiedot ohitetaan."
     },
     "tiktokActiveContacts": {
       "title": "TikTok",
@@ -674,7 +708,14 @@
     "resumeDialog": {
       "title": "Resume broadcast",
       "description": "\"{name}\" will continue sending to recipients who have not received it yet.",
-      "templateDescription": "\"{name}\" alkaa toistua uudelleen seuraavasta ajastetusta ajankohdasta. Tauon aikaiset ajot ohitettiin."
+      "templateDescription": "\"{name}\" alkaa toistua uudelleen seuraavasta ajastetusta ajankohdasta. Tauon aikaiset ajot ohitettiin.",
+      "blocked": {
+        "title": "Pysäytetty, koska kanavan tili ei voi lähettää",
+        "description": "Jos tili on edelleen estetty, ensimmäinen viesti epäonnistuu ja lähetys pysähtyy uudelleen. Lähettäminen eston aikana voi johtaa ankarampaan rajoitukseen.",
+        "pageLabel": "Sivu",
+        "errorLabel": "Kanavan virhe",
+        "confirm": "Jatka silti"
+      }
     },
     "planLimitDialog": {
       "title": "Päivitä tilauksesi",
@@ -1357,7 +1398,17 @@
     "button": {
       "label": "Painike",
       "whenPressed": "Kun tätä painiketta painetaan",
-      "callToThisNumber": "Soita tähän numeroon"
+      "callToThisNumber": "Soita tähän numeroon",
+      "style": {
+        "label": "Painikkeen tyyli",
+        "description": "Miltä painike näyttää yhteyshenkilölle.",
+        "default": "{style} (oletus)",
+        "options": {
+          "primary": "Ensisijainen",
+          "secondary": "Toissijainen",
+          "link": "Linkki"
+        }
+      }
     },
     "buttonLabel": {
       "label": "Painikkeen teksti"
@@ -1533,7 +1584,8 @@
       "threadsUsername": "Threads-käyttäjänimi",
       "webchatGuestId": "Webchat-vierastunnus",
       "externalId": "Ulkoinen tunnus",
-      "channelId": "Kanavan tunnus"
+      "channelId": "Kanavan tunnus",
+      "lineUserId": "LINE User ID"
     },
     "flow": {
       "label": "Flow"
@@ -2048,6 +2100,7 @@
       "placeholders": {
         "instagram": "Instagram-käyttäjätunnus",
         "messenger": "Messenger PSID",
+        "line": "LINE user ID",
         "telegram": "Telegram-keskustelun tunnus",
         "tiktok": "TikTok-käyttäjätunnus",
         "zalo": "Zalo-käyttäjätunnus"
@@ -4214,6 +4267,7 @@
     "duplicated": {
       "generic": "Tämä tili on jo yhdistetty toiseen työtilaan.",
       "instagram": "Tämä Instagram-tili on jo yhdistetty toiseen työtilaan.",
+      "line": "This LINE channel is already connected to another workspace.",
       "messenger": "Tämä Facebook-sivu on jo yhdistetty toiseen työtilaan.",
       "telegram": "Tämä Telegram-botti on jo yhdistetty toiseen työtilaan.",
       "threads": "Tämä Threads-tili on jo yhdistetty toiseen työtilaan.",
@@ -4593,6 +4647,13 @@
       "cardEnding": "Kortti, joka päättyy {lastFourDigits}",
       "notCharged": "Ei vielä veloitettu. Veloita maksupalveluntarjoajasi kautta.",
       "reference": "Viite {referenceId}"
+    },
+    "sendQueue": {
+      "failed": "Viestin lähetys epäonnistui. Lähetä se keskustelusta uudelleen, jos mahdollista, tai jatka lähettämistä.",
+      "unconfirmed": "Emme voineet vahvistaa, että viimeisin viesti lähetettiin. Valitse, jatketaanko lähettämistä.",
+      "continue": "Jatka lähettämistä",
+      "discard": "Hylkää jonossa olevat viestit",
+      "dismiss": "Hylkää"
     }
   },
   "instagram": {
@@ -5855,7 +5916,8 @@
       "botId": "Telegram-botin tunnus",
       "oaId": "Zalo OA -tunnus",
       "openId": "TikTok-tilin open id",
-      "threadsUserId": "Threads-käyttäjätunnus (id)"
+      "threadsUserId": "Threads-käyttäjätunnus (id)",
+      "channelId": "LINE Channel ID"
     },
     "channelUserIdKinds": {
       "psid": "Messenger PSID",
@@ -5865,7 +5927,8 @@
       "tiktokCustomerOpenId": "TikTok-asiakkaan open id",
       "threadsUsername": "Threads-käyttäjänimi",
       "apiSourceId": "Yhteystiedon lähteen tunnus",
-      "whatsappId": "WhatsApp-tunnus (wa_id)"
+      "whatsappId": "WhatsApp-tunnus (wa_id)",
+      "lineUserId": "LINE user id"
     },
     "mappings": {
       "title": "Tallenna saapuvat tiedot",
@@ -6125,7 +6188,8 @@
       "total": "Total customers scanned: {count}",
       "waitCooldown": "You must wait another 24 hours before you can use this feature again.",
       "failed": "The last scan failed. You can try again once the cooldown ends.",
-      "partial": "The last scan finished partially — some conversations could not be imported."
+      "partial": "The last scan finished partially — some conversations could not be imported.",
+      "cancelled": "Viimeisin skannaus peruttiin ennen valmistumista."
     },
     "errors": {
       "contactScanFromTimeInvalid": "Scan-from time must be in the past.",
@@ -6151,9 +6215,20 @@
         "running": "Running",
         "succeeded": "Succeeded",
         "partial": "Partial",
-        "failed": "Failed"
+        "failed": "Failed",
+        "cancelled": "Peruttu"
       },
       "empty": "No scans have been run yet."
+    },
+    "cancel": {
+      "button": "Peruuta skannaus",
+      "title": "Perutaanko tämä skannaus?",
+      "description": "Skannaus pysähtyy ja jo tuodut asiakkaat säilyvät. Sinun on silti odotettava 24 tuntia tämän skannauksen alusta ennen kuin voit skannata tämän postilaatikon uudelleen.",
+      "keep": "Jatka skannausta",
+      "confirm": "Peruuta skannaus",
+      "success": "Skannaus peruttu.",
+      "notRunning": "Tälle postilaatikolle ei ole käynnissä skannausta.",
+      "failed": "Skannausta ei voitu perua. Yritä uudelleen."
     }
   },
   "auditLogs": {
@@ -11963,5 +12038,38 @@
       "description": "Deletes your account and the {count, plural, =0 {0 workspaces} one {# workspace} other {# workspaces}} you own.",
       "openSettings": "Delete account"
     }
+  },
+  "integrationLine": {
+    "channelIdLabel": "Channel ID",
+    "channelSecretLabel": "Channel secret",
+    "credentialsHelp": "Find both values in the LINE Developers console: open your Messaging API channel and go to Basic settings.",
+    "webhookNotEnabled": "LINE is not delivering messages yet. In LINE Official Account Manager, turn on \"Use webhook\" and turn off \"Auto-reply messages\", then press Test webhook.",
+    "webhookReplaced": "The webhook URL previously set on this LINE channel ({url}) was replaced with ChatbotX's.",
+    "testWebhook": "Test webhook",
+    "testWebhookSuccess": "LINE webhook is working.",
+    "webhookTestFailed": "LINE's webhook test failed: {reason}",
+    "continue": "Continue",
+    "errors": {
+      "channelHidden": "LINE is not available for this workspace.",
+      "credentialsRejected": "Invalid LINE Channel ID or Channel secret.",
+      "webhookRejected": "LINE rejected the webhook URL. Please try again later or contact support.",
+      "providerUnavailable": "LINE is temporarily unavailable. Please try again in a moment."
+    }
+  },
+  "deleteAccountPage": {
+    "title": "Poista ChatbotX-tilisi",
+    "intro": "Voit poistaa tilisi ja sen tiedot jollakin seuraavista tavoista.",
+    "waysTitle": "Tilin poistaminen",
+    "wayMobile": "Mobiilisovelluksessa: Asetukset → Poista tili.",
+    "wayWeb": "Verkossa: kirjaudu sisään ja avaa tilin poistosivu.",
+    "wayWebLink": "Avaa tilin poisto",
+    "wayEmail": "Sähköpostilla: kirjoita osoitteeseen {email} rekisteröidystä osoitteestasi.",
+    "whatHappensTitle": "Mitä seuraavaksi tapahtuu",
+    "whatHappens": "Poisto alkaa 24 tunnin odotusajan jälkeen, eikä sitä voi perua. Peruuta ensin kaikki tilaukset.",
+    "deletedTitle": "Tiedot, jotka poistamme",
+    "deleted": "Profiilisi (nimi ja sähköposti), kirjautumistiedot, push-ilmoitustunnisteet ja kaikki omistamasi workspacet yhteystietoineen, keskusteluineen, viesteineen ja ladattuine tiedostoineen.",
+    "sharedWorkspace": "Jos omistamasi workspacen jäsenenä on muita, se poistetaan myös heiltä.",
+    "retainedTitle": "Tiedot, jotka säilytämme",
+    "retained": "Muiden workspaceihin kirjoittamasi muistiinpanot säilyvät ilman nimeäsi. Tieto poiston tapahtumisesta säilytetään. Laskutustietoja voidaan säilyttää lain vaatiman ajan."
   }
 }

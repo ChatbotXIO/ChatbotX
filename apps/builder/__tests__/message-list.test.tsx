@@ -91,6 +91,9 @@ vi.mock("@/features/conversations/components/conversation-info", () => ({
   ConversationInfo: () => null,
 }))
 
+vi.mock("@/features/messages/components/resend-message-button", () => ({
+  ResendMessageButton: () => null,
+}))
 vi.mock("@/features/messages/components/message-item", () => ({
   MessageItem: () => null,
 }))
