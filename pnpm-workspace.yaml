@@ -43,7 +43,7 @@ catalog:
   lucide-react: "^1.17.0"
   mime-types: "^3.0.2"
   msw: "^2.7.3"
-  next: 16.4.3
+  next: 16.4.5
   pg: "^8.20.0"
   react: 19.2.5
   react-dom: 19.2.5
