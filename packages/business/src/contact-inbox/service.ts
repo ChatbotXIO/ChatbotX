@@ -1168,7 +1168,6 @@ class ContactInboxService extends BaseService {
       firstInteractionAt: explicitFirstInteractionAt,
       lastIncomingMessageAt: explicitLastIncomingMessageAt,
       contactLastReadAt: explicitContactLastReadAt,
-      lastMessageAt: explicitLastMessageAt,
       lastUserInput,
       lastUserInputType,
       referral,
@@ -1176,13 +1175,6 @@ class ContactInboxService extends BaseService {
     } = data
 
     const updateData = { ...nextData }
-    if (explicitLastMessageAt) {
-      // Advance-only: a message stamped with its provider time can reach the
-      // worker after a newer one, and must not move the last-message mark back.
-      Object.assign(updateData, {
-        lastMessageAt: sql`GREATEST(${contactInboxModel.lastMessageAt}, ${explicitLastMessageAt})`,
-      })
-    }
     if (explicitFirstInteractionAt) {
       Object.assign(updateData, {
         firstInteractionAt: sql`CASE WHEN ${contactInboxModel.firstInteractionAt} IS NULL OR ${contactInboxModel.firstInteractionAt} > ${explicitFirstInteractionAt} THEN ${explicitFirstInteractionAt} ELSE ${contactInboxModel.firstInteractionAt} END`,

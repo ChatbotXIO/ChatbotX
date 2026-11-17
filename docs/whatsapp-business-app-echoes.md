@@ -79,12 +79,8 @@ automation. It never starts inbound AI or flow automation.
   business-scoped user id (`to_user_id`, always present) as its second identity.
   `to` and the contact's `wa_id` are omitted for a customer who adopted a
   username; the contact is then keyed on the business-scoped id.
-- The echo's `timestamp` is stored as the message time when it is within
-  `PROVIDER_TIME_MAX_PAST_MS` / `PROVIDER_TIME_MAX_FUTURE_SKEW_MS` of now
-  (`received-message.ts`); outside that window the receive time is used. A later
-  history import of the same message only collapses with the live row when both
-  carry the same timestamp.
-- `ContactInbox.lastMessageAt` only moves forward.
+- A sent message is stored at the time the worker receives it, as Messenger and
+  Instagram echoes are.
 
 ## Operating notes
 
@@ -105,9 +101,3 @@ automation. It never starts inbound AI or flow automation.
   id yet, or a failed send) has the same text or attachment type. A message typed
   on the phone with the same text in that window is then stored without realtime
   or native-app side effects. The same limit applies to Messenger echoes.
-- A message that reaches the inbox after a newer one of the same conversation (a
-  delayed echo) is stored at its own time; it neither replaces that newer message
-  in the conversation list nor moves the conversation. A delayed message that is
-  still its conversation's newest moves it to the top like any new message, even
-  if another conversation had newer activity; the list order is exact again on
-  reload.

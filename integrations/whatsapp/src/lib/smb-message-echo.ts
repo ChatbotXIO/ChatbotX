@@ -59,7 +59,6 @@ export const smbMessageEchoEnvelopeSchema = z.looseObject({
   to: z.string().optional(),
   to_user_id: z.string().optional(),
   to_parent_user_id: z.string().optional(),
-  timestamp: z.unknown().optional(),
 })
 export type SmbMessageEchoEnvelope = z.infer<
   typeof smbMessageEchoEnvelopeSchema
@@ -146,16 +145,6 @@ export const readSmbEchoText = (echo: SmbMessageEchoEnvelope): string => {
     return text.data.text.body
   }
   return `[${echo.type ?? "unknown"}]`
-}
-
-/** Meta's echo time (Unix seconds); unusable -> `undefined`. */
-export const readSmbEchoTimestamp = (
-  echo: SmbMessageEchoEnvelope,
-): Date | undefined => {
-  const seconds = Number(echo.timestamp)
-  return Number.isFinite(seconds) && seconds > 0
-    ? new Date(seconds * 1000)
-    : undefined
 }
 
 /**

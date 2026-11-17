@@ -516,14 +516,6 @@ export type IncomingMessage = {
     | { [x: string]: unknown }
   attachments?: IncomingAttachment[]
   clientId?: string | null
-  /**
-   * The provider's own time for the message. When it falls inside a short
-   * window around now the worker stores the message at this time, so a message
-   * a delayed job delivers late keeps its place in the conversation and
-   * collapses with a later history import of the same message. Channels that
-   * do not set it keep the time the worker received the message.
-   */
-  occurredAt?: Date
 }
 
 export type MessageWhatsappFlowResponseEntity = {

@@ -7,7 +7,6 @@ import {
   readSmbEchoMedia,
   readSmbEchoRevokedMessageId,
   readSmbEchoText,
-  readSmbEchoTimestamp,
   readSmbMessageEchoPayload,
   SMB_MESSAGE_ECHO_PAYLOAD_KIND,
   type SmbMessageEchoEnvelope,
@@ -206,26 +205,6 @@ describe("readSmbEchoRevokedMessageId", () => {
   })
 })
 
-describe("readSmbEchoTimestamp", () => {
-  test.each([
-    ["a string of seconds", "1739321024"],
-    ["a number of seconds", 1_739_321_024],
-  ])("reads %s", (_label, timestamp) => {
-    expect(readSmbEchoTimestamp(echoEnvelope({ timestamp }))).toEqual(
-      new Date(1_739_321_024_000),
-    )
-  })
-
-  test.each([
-    ["missing", undefined],
-    ["not a number", "yesterday"],
-    ["zero", "0"],
-    ["negative", "-5"],
-  ])("returns nothing when the timestamp is %s", (_label, timestamp) => {
-    expect(readSmbEchoTimestamp(echoEnvelope({ timestamp }))).toBeUndefined()
-  })
-})
-
 describe("buildSmbEchoContact", () => {
   test("keys the contact on the phone number and carries the business-scoped ids", () => {
     const contact = buildSmbEchoContact(
@@ -329,7 +308,7 @@ describe("receiveMessage — live Business-app echo", () => {
     mockParseVideoMessage.mockReset()
   })
 
-  test("stores a text echo as a first-party outgoing message at the echo time", async () => {
+  test("stores a text echo as a first-party outgoing message", async () => {
     const result = await receiveMessage(buildProps())
 
     expect(result).toEqual({
@@ -338,7 +317,6 @@ describe("receiveMessage — live Business-app echo", () => {
         messageType: "outgoing",
         contentType: "text",
         text: "Here is the info",
-        occurredAt: new Date(1_739_321_024_000),
       },
       contact: {
         sourceId: "16505551234",
@@ -438,14 +416,6 @@ describe("receiveMessage — live Business-app echo", () => {
 
     expect(result?.message?.text).toBe("[interactive]")
     expect(mockParseImageMessage).not.toHaveBeenCalled()
-  })
-
-  test("omits the echo time when Meta sends none so the worker uses the receive time", async () => {
-    const result = await receiveMessage(
-      buildProps({ echo: echoEnvelope({ timestamp: undefined }) }),
-    )
-
-    expect(result?.message?.occurredAt).toBeUndefined()
   })
 
   test("keeps the customer-message path for a payload without the echo marker", async () => {

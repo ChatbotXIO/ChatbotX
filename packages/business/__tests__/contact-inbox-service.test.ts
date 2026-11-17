@@ -389,9 +389,7 @@ describe("contactInboxService timestamp helpers", () => {
     })
 
     expect(mockDbUpdate).toHaveBeenCalled()
-    const [setData] = mockDbSet.mock.calls[0] ?? []
-    expect(setData).not.toHaveProperty("firstInteractionAt")
-    expect(setData).toHaveProperty("lastMessageAt")
+    expect(mockDbSet).toHaveBeenCalledWith({ lastMessageAt })
   })
 
   test("updateTracking stores explicit firstInteractionAt as an earliest timestamp", async () => {
@@ -423,28 +421,7 @@ describe("contactInboxService timestamp helpers", () => {
           "firstInteractionAt",
         ],
       },
-      lastMessageAt: {
-        strings: ["GREATEST(", ", ", ")"],
-        values: ["lastMessageAt", lastMessageAt],
-      },
-    })
-  })
-
-  test("updateTracking advances lastMessageAt with GREATEST so a delayed older message cannot move it back", async () => {
-    const lastMessageAt = new Date("2026-07-09T07:43:30.676Z")
-
-    await contactInboxService.updateTracking({
-      contactInboxId: "contact-inbox-1",
-      contactId: "contact-1",
-      workspaceId: "workspace-1",
-      data: { lastMessageAt },
-    })
-
-    expect(mockDbSet).toHaveBeenCalledWith({
-      lastMessageAt: {
-        strings: ["GREATEST(", ", ", ")"],
-        values: ["lastMessageAt", lastMessageAt],
-      },
+      lastMessageAt,
     })
   })
 

@@ -297,38 +297,6 @@ const isThirdPartyEcho = (props: {
   props.message?.messageType === messageTypes.enum.outgoing &&
   !getStoryReply(props.message.contentAttributes)
 
-/**
- * How far a provider time may be from now to be stored as the message time.
- * The past bound keeps the 24-hour source-id lookback that starts at the stored
- * time from widening, and the future bound absorbs clock skew between the
- * provider and this worker. Anything outside falls back to the receive time.
- */
-export const PROVIDER_TIME_MAX_PAST_MS = 10 * 60 * 1000
-export const PROVIDER_TIME_MAX_FUTURE_SKEW_MS = 60 * 1000
-
-/**
- * The time to store a message at: the provider's own time when it is a valid
- * date inside the window above, otherwise `undefined` (the caller then stores
- * the receive time). Pure, so the window is testable without a clock.
- */
-export const resolveProviderMessageTime = (
-  occurredAt: Date | undefined,
-  now: Date = new Date(),
-): Date | undefined => {
-  if (!occurredAt) {
-    return
-  }
-  const occurredAtMs = occurredAt.getTime()
-  if (!Number.isFinite(occurredAtMs)) {
-    return
-  }
-  const offsetMs = occurredAtMs - now.getTime()
-  const isInsideWindow =
-    offsetMs >= -PROVIDER_TIME_MAX_PAST_MS &&
-    offsetMs <= PROVIDER_TIME_MAX_FUTURE_SKEW_MS
-  return isInsideWindow ? occurredAt : undefined
-}
-
 export const receiveMessage = async (
   props: IntegrationJobReceiveMessage["data"],
 ): Promise<{
@@ -642,7 +610,6 @@ export const receiveMessage = async (
         conversation,
         incomingMessage,
         storageUrl,
-        createdAt: resolveProviderMessageTime(incomingMessage.occurredAt),
         // A Business-AI (Meta AI) reply on standby keeps the conversation
         // unread so a human agent monitors the AI (Integration Guide §5.3).
         keepUnread: threadControl?.ownerRole === "ai_agent",

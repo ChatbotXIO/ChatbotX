@@ -704,14 +704,8 @@ vi.mock(
 // Import after mocks
 // ---------------------------------------------------------------------------
 
-const {
-  metaReferralToContactSource,
-  PROVIDER_TIME_MAX_FUTURE_SKEW_MS,
-  PROVIDER_TIME_MAX_PAST_MS,
-  receiveComment,
-  receiveMessage,
-  resolveProviderMessageTime,
-} = await import("../src/integration/handlers/received-message")
+const { metaReferralToContactSource, receiveComment, receiveMessage } =
+  await import("../src/integration/handlers/received-message")
 const { encodeButtonPayload } = await import("@chatbotx.io/flow-config")
 const { logger } = await import("../src/lib/logger")
 const { allIntegrations, integrationService } = await import(
@@ -1623,89 +1617,6 @@ describe("receiveMessage — message repository branch", () => {
       expect(mockRecordInboundActivity).toHaveBeenCalledWith(
         expect.objectContaining({ isExternalHumanEcho: false }),
       )
-    })
-  })
-
-  describe("provider message time", () => {
-    const now = new Date("2026-11-17T08:00:00.000Z")
-    const shiftedFromNow = (offsetMs: number) =>
-      new Date(now.getTime() + offsetMs)
-
-    test("uses a provider time inside the window", () => {
-      const occurredAt = shiftedFromNow(-60_000)
-
-      expect(resolveProviderMessageTime(occurredAt, now)).toBe(occurredAt)
-    })
-
-    test("accepts both edges of the window", () => {
-      const oldest = shiftedFromNow(-PROVIDER_TIME_MAX_PAST_MS)
-      const newest = shiftedFromNow(PROVIDER_TIME_MAX_FUTURE_SKEW_MS)
-
-      expect(resolveProviderMessageTime(oldest, now)).toBe(oldest)
-      expect(resolveProviderMessageTime(newest, now)).toBe(newest)
-    })
-
-    test.each([
-      ["older than the window", shiftedFromNow(-PROVIDER_TIME_MAX_PAST_MS - 1)],
-      [
-        "further in the future than the skew",
-        shiftedFromNow(PROVIDER_TIME_MAX_FUTURE_SKEW_MS + 1),
-      ],
-      ["not a valid date", new Date("not a date")],
-      ["missing", undefined],
-    ])("falls back to the receive time when the provider time is %s", (_label, occurredAt) => {
-      expect(resolveProviderMessageTime(occurredAt, now)).toBeUndefined()
-    })
-
-    const mockEchoWithOccurredAt = (occurredAt: Date | undefined) => {
-      mockFindLastByConversation.mockResolvedValueOnce([])
-      mockRunChannelHandler.mockResolvedValue({
-        message: {
-          ...baseIncomingMessage,
-          messageType: "outgoing",
-          attachments: [],
-          occurredAt,
-        },
-        contact: { sourceId: "psid-123", firstName: "Test" },
-        postbackAction: null,
-        quickReplyAction: null,
-        ref: null,
-      })
-      mockCreateOrUpdate.mockResolvedValue({
-        message: { ...fakeCreatedMessage, messageType: "outgoing" },
-        isNew: true,
-      })
-    }
-
-    test("stores a message at its provider time", async () => {
-      const occurredAt = new Date(Date.now() - 30_000)
-      mockEchoWithOccurredAt(occurredAt)
-
-      await receiveMessage(baseProps)
-
-      expect(mockCreateOrUpdate).toHaveBeenCalledWith(
-        expect.objectContaining({ createdAt: occurredAt }),
-      )
-    })
-
-    test("stores a message received without a provider time at the receive time", async () => {
-      mockEchoWithOccurredAt(undefined)
-      const before = Date.now()
-
-      await receiveMessage(baseProps)
-
-      const [stored] = mockCreateOrUpdate.mock.calls[0] ?? []
-      expect(stored.createdAt.getTime()).toBeGreaterThanOrEqual(before)
-    })
-
-    test("ignores a provider time far in the past", async () => {
-      const stale = new Date(Date.now() - 24 * 60 * 60 * 1000)
-      mockEchoWithOccurredAt(stale)
-
-      await receiveMessage(baseProps)
-
-      const [stored] = mockCreateOrUpdate.mock.calls[0] ?? []
-      expect(stored.createdAt).not.toEqual(stale)
     })
   })
 

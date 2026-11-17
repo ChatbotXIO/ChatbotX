@@ -24,7 +24,6 @@ import {
   buildSmbEchoContact,
   readSmbEchoMedia,
   readSmbEchoText,
-  readSmbEchoTimestamp,
   readSmbMessageEchoPayload,
   type SmbMessageEchoEnvelope,
   type SmbMessageEchoPayload,
@@ -327,9 +326,8 @@ type WhatsappReceiveMessageResult = Awaited<
 const readSmbEchoFragment = async (props: {
   ctx: Parameters<WhatsappReceiveMessageHandler>[0]["ctx"]
   echo: SmbMessageEchoEnvelope
-  occurredAt: Date | undefined
 }): Promise<IncomingMessageFragment> => {
-  const { ctx, echo, occurredAt } = props
+  const { ctx, echo } = props
   const content = readSmbEchoMedia(echo)
   const parse = content ? messageParsers[content.mediaType] : undefined
   if (!(content && parse)) {
@@ -340,7 +338,7 @@ const readSmbEchoFragment = async (props: {
   return await parse({ [content.mediaType]: content.media } as never, {
     ctx,
     whatsappClient: getWhatsappClient(ctx.auth),
-    receivedAt: occurredAt ?? new Date(),
+    receivedAt: new Date(),
   })
 }
 
@@ -359,8 +357,7 @@ const parseSmbMessageEcho = async (props: {
 }): Promise<WhatsappReceiveMessageResult> => {
   const { ctx, payload } = props
   const { echo } = payload
-  const occurredAt = readSmbEchoTimestamp(echo)
-  const fragment = await readSmbEchoFragment({ ctx, echo, occurredAt })
+  const fragment = await readSmbEchoFragment({ ctx, echo })
 
   // Only what is storable is kept: a parser's referral, Google click, postback
   // or flow token belongs to a customer's message, never to an echo.
@@ -371,7 +368,6 @@ const parseSmbMessageEcho = async (props: {
     text: fragment.text,
     attachments: fragment.attachments,
     contentAttributes: fragment.contentAttributes,
-    occurredAt,
   }
 
   return {
