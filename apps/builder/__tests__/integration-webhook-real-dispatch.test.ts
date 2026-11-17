@@ -245,7 +245,7 @@ describe("credential-scoped webhook real dispatch", () => {
       )
     })
 
-    test("dispatches an edit echo as a live updateIncomingMessage job with lowPriority set", async () => {
+    test("dispatches an edit echo as a live updateIncomingMessage job", async () => {
       await dispatchEcho({
         id: "wamid.edit-1",
         to: "16505551234",
@@ -266,7 +266,6 @@ describe("credential-scoped webhook real dispatch", () => {
             messageId: "wamid.original",
             newText: "fixed",
             retryIfMissing: true,
-            lowPriority: true,
           }),
         }),
         expect.objectContaining({
@@ -281,7 +280,7 @@ describe("credential-scoped webhook real dispatch", () => {
       )
     })
 
-    test("dispatches a revoke echo as a live deleteIncomingMessage job with lowPriority set", async () => {
+    test("dispatches a revoke echo as a live deleteIncomingMessage job", async () => {
       await dispatchEcho({
         id: "wamid.revoke-1",
         type: "revoke",
@@ -295,7 +294,6 @@ describe("credential-scoped webhook real dispatch", () => {
           data: expect.objectContaining({
             messageId: "wamid.original",
             retryIfMissing: true,
-            lowPriority: true,
           }),
         }),
         expect.objectContaining({

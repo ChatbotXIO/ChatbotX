@@ -53,7 +53,6 @@ const { logger } = await import("../src/lib/logger")
 const {
   applyIncomingTextUpdate,
   deleteIncomingMessage,
-  MessageNotStoredYetError,
   updateIncomingMessage,
 } = await import("../src/integration/handlers/incoming-message-change")
 
@@ -127,7 +126,7 @@ describe("updateIncomingMessage", () => {
         { ...props, retryIfMissing: true },
         jobOnAttempt(1),
       ),
-    ).rejects.toThrow(MessageNotStoredYetError)
+    ).rejects.toThrow("not stored yet")
 
     expect(mocks.publishRealtimeEvent).not.toHaveBeenCalled()
   })
@@ -286,6 +285,7 @@ describe("realtime events wait for the conversation's message ingress", () => {
   const lockedProps = {
     ...baseProps,
     newText: "edited text",
+    retryIfMissing: true,
   }
 
   const holdIngressLock = () => {
@@ -330,7 +330,10 @@ describe("realtime events wait for the conversation's message ingress", () => {
     ])
     const release = holdIngressLock()
 
-    const pending = deleteIncomingMessage(baseProps)
+    const pending = deleteIncomingMessage({
+      ...baseProps,
+      retryIfMissing: true,
+    })
     await vi.waitFor(() => expect(mocks.runExclusive).toHaveBeenCalled())
 
     expect(mocks.deleteBySourceId).toHaveBeenCalled()
@@ -339,6 +342,35 @@ describe("realtime events wait for the conversation's message ingress", () => {
     await release()
     await pending
 
+    expect(mocks.publishRealtimeEvent).toHaveBeenCalledTimes(1)
+  })
+
+  test.each([
+    ["a Messenger unsend", () => deleteIncomingMessage(baseProps)],
+    [
+      "a comment edit",
+      () =>
+        applyIncomingTextUpdate({
+          integrationType: "messenger",
+          integrationIdentifier: "page-1",
+          sourceId: "comment-1",
+          newText: "edited comment",
+          action: "updateIncomingComment",
+          onMissing: vi.fn(),
+        }),
+    ],
+  ])("publishes %s at once, without taking the ingress lock", async (_label, run) => {
+    mocks.deleteBySourceId.mockResolvedValue([
+      { id: "msg-1", conversationId: "conv-1" },
+    ])
+    mocks.updateTextBySourceId.mockResolvedValue({
+      id: "msg-1",
+      conversationId: "conv-1",
+    })
+
+    await run()
+
+    expect(mocks.runExclusive).not.toHaveBeenCalled()
     expect(mocks.publishRealtimeEvent).toHaveBeenCalledTimes(1)
   })
 

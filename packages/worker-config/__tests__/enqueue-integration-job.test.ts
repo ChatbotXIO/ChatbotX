@@ -214,38 +214,6 @@ describe("low-queue routing", () => {
     expect(mocks.queueAdd).not.toHaveBeenCalled()
   })
 
-  describe("incoming message edit and delete", () => {
-    const deleteData = {
-      integrationType: "messenger",
-      integrationIdentifier: "page-1",
-      messageId: "mid-1",
-    }
-    const updateData = { ...deleteData, newText: "edited" }
-
-    test.each([
-      [IntegrationJobAction.deleteIncomingMessage, deleteData],
-      [IntegrationJobAction.updateIncomingMessage, updateData],
-    ] as const)("keeps %s from existing producers on the integration queue", async (type, data) => {
-      await enqueueIntegrationJob({ type, data } as never)
-
-      expect(mocks.queueAdd).toHaveBeenCalledTimes(1)
-      expect(mocks.lowQueueAdd).not.toHaveBeenCalled()
-    })
-
-    test.each([
-      [IntegrationJobAction.deleteIncomingMessage, deleteData],
-      [IntegrationJobAction.updateIncomingMessage, updateData],
-    ] as const)("routes %s to the low queue when the producer asks for it", async (type, data) => {
-      await enqueueIntegrationJob({
-        type,
-        data: { ...data, lowPriority: true },
-      } as never)
-
-      expect(mocks.lowQueueAdd).toHaveBeenCalledTimes(1)
-      expect(mocks.queueAdd).not.toHaveBeenCalled()
-    })
-  })
-
   test("leaves customer messages on the integration queue", async () => {
     await enqueueIntegrationJob({
       type: IntegrationJobAction.incomingMessage,

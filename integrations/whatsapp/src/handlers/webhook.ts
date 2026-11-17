@@ -211,15 +211,13 @@ const buildSentMessageJob: SmbEchoJobBuilder = (context) => ({
 
 /**
  * The fields every edit or revoke job shares: it changes a message that may
- * still be stored by its own job, so it waits for it (`retryIfMissing`), and it
- * runs on the `low` queue (`lowPriority`).
+ * still be stored by its own job, so it waits for it (`retryIfMissing`).
  */
 const changeJobFields = (context: SmbEchoJobContext) =>
   ({
     integrationType: "whatsapp",
     integrationIdentifier: context.phoneNumberId,
     retryIfMissing: true,
-    lowPriority: true,
   }) as const
 
 const buildChangeJob = (
@@ -557,16 +555,6 @@ const SMB_ECHO_IDENTITY_KEYS: ContactIdentityKeys = {
   userId: "to_user_id",
 }
 
-/** The first contact whose `field` equals `value`; none when there is no value. */
-const findContactByField = (
-  contacts: unknown[],
-  field: string,
-  value: string | undefined,
-): unknown =>
-  value === undefined
-    ? undefined
-    : contacts.find((contact) => readStringField(contact, field) === value)
-
 /**
  * The contact for one message of a batch, matched by identity
  * (`wa_id`/`user_id`), not position — Meta does not guarantee index alignment
@@ -585,11 +573,11 @@ const pickContactsForMessage = (
   }
   const phone = readStringField(message, identityKeys.phone)
   const userId = readStringField(message, identityKeys.userId)
-  // The business-scoped user id is the stable identity (a phone number can be
-  // omitted or change), so it decides when the two name different contacts.
-  const matched =
-    findContactByField(contacts, "user_id", userId) ??
-    findContactByField(contacts, "wa_id", phone)
+  const matched = contacts.find(
+    (contact) =>
+      (phone !== undefined && readStringField(contact, "wa_id") === phone) ||
+      (userId !== undefined && readStringField(contact, "user_id") === userId),
+  )
   if (matched !== undefined) {
     return [matched]
   }

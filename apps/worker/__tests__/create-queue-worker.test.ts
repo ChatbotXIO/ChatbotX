@@ -11,7 +11,6 @@ const state = vi.hoisted(() => ({
   onShutdown: vi.fn(),
   requestShutdown: vi.fn(),
   loggerError: vi.fn(),
-  loggerDebug: vi.fn(),
   isShutdownRequested: vi.fn(() => false),
 }))
 
@@ -41,7 +40,7 @@ vi.mock("@chatbotx.io/worker-config", () => ({
 }))
 
 vi.mock("../src/lib/logger", () => ({
-  logger: { error: state.loggerError, debug: state.loggerDebug },
+  logger: { error: state.loggerError },
 }))
 
 vi.mock("../src/lib/shutdown", () => ({
@@ -90,38 +89,6 @@ describe("createQueueWorker", () => {
       expect.objectContaining({ queue: "chat", jobId: "7" }),
       "Job has failed",
     )
-  })
-
-  test("logs a failure the job is designed to retry at debug, not error", () => {
-    const isExpectedRetry = vi.fn().mockReturnValue(true)
-    createQueueWorker("low" as never, vi.fn(), { isExpectedRetry })
-
-    state.listeners.get("failed")?.(
-      { id: "7" } as never,
-      new Error("not stored yet") as never,
-    )
-
-    expect(isExpectedRetry).toHaveBeenCalledWith({ id: "7" }, expect.any(Error))
-    expect(state.loggerDebug).toHaveBeenCalledWith(
-      expect.objectContaining({ queue: "low", jobId: "7" }),
-      "Job has failed",
-    )
-    expect(state.loggerError).not.toHaveBeenCalled()
-    expect(state.captured[0]?.options).not.toHaveProperty("isExpectedRetry")
-  })
-
-  test("still logs an unexpected failure at error when isExpectedRetry says no", () => {
-    createQueueWorker("low" as never, vi.fn(), {
-      isExpectedRetry: () => false,
-    })
-
-    state.listeners.get("failed")?.(
-      { id: "8" } as never,
-      new Error("boom") as never,
-    )
-
-    expect(state.loggerError).toHaveBeenCalledTimes(1)
-    expect(state.loggerDebug).not.toHaveBeenCalled()
   })
 
   test("a custom onFailed replaces the default logger", async () => {

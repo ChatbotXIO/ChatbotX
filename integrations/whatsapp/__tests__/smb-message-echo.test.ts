@@ -240,16 +240,6 @@ describe("buildSmbEchoContact", () => {
     expect(contact.sourceParentUserId).toBe("US.ENT.contact")
   })
 
-  test("keys the contact on the matched contact's phone number when the echo's own phone disagrees with its business-scoped id", () => {
-    const contact = buildSmbEchoContact(
-      echoEnvelope({ to: "111", to_user_id: "US.B" }),
-      { wa_id: "222", user_id: "US.B" },
-    )
-
-    expect(contact.sourceId).toBe("222")
-    expect(contact.sourceUserId).toBe("US.B")
-  })
-
   test("returns an empty source id when the echo names nobody", () => {
     expect(
       buildSmbEchoContact(

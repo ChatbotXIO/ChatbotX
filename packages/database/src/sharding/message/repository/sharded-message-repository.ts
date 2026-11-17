@@ -199,24 +199,6 @@ export class ShardedMessageRepository implements IMessageRepository {
     return [...timeRangeShards, writeShard]
   }
 
-  /**
-   * The write shard first, then the time-range shards without it. For a lookup
-   * that stops at the first shard holding the row, so the most likely shard is
-   * queried first; the set of shards is the same as `mergeWriteShard`.
-   */
-  private putWriteShardFirst(
-    timeRangeShards: MessageShardTimeRangeInfo[],
-    writeShard: MessageShardTimeRangeInfo | null,
-  ): MessageShardTimeRangeInfo[] {
-    if (!writeShard) {
-      return timeRangeShards
-    }
-    return [
-      writeShard,
-      ...timeRangeShards.filter((s) => s.shard.id !== writeShard.shard.id),
-    ]
-  }
-
   private async getConversationReadShards(
     sinceTime: Date,
     workspaceId?: string,
@@ -630,14 +612,11 @@ export class ShardedMessageRepository implements IMessageRepository {
     caller: string,
   ): Promise<{ conversationId: string; id: string } | null> {
     // sourceId-based update: scan shards from the last 90 days (same window
-    // used by findBySourceId for parent-comment lookups), starting with the
-    // workspace write shard. A provider-driven edit targets a message that was
-    // just stored, which is in the write shard, so the scan usually ends at its
-    // first query instead of walking every shard of the window.
+    // used by findBySourceId for parent-comment lookups).
     const since = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000)
     const writeShard = await this.shardManager.getWriteShardInfo(workspaceId)
     const timeShards = await this.getShardsForRange(since, new Date())
-    const shards = this.putWriteShardFirst(timeShards, writeShard)
+    const shards = this.mergeWriteShard(timeShards, writeShard)
 
     for (const shardInfo of shards) {
       try {

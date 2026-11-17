@@ -27,9 +27,6 @@ const workerState = vi.hoisted(() => ({
   handleMessageStatus: vi.fn(async () => undefined),
   contactMarkAsRead: vi.fn(async () => undefined),
   processIncomingMessage: vi.fn(async () => undefined),
-  deleteIncomingMessage: vi.fn(async () => undefined),
-  updateIncomingMessage: vi.fn(async () => undefined),
-  MessageNotStoredYetError: class MessageNotStoredYetError extends Error {},
   resolveWorkspaceId: vi.fn(
     async (): Promise<string | undefined> => "ws-resolved",
   ),
@@ -74,8 +71,6 @@ vi.mock("@chatbotx.io/worker-config", () => ({
     messageStatus: "messageStatus",
     contactMarkAsRead: "contactMarkAsRead",
     incomingMessageEcho: "incomingMessageEcho",
-    deleteIncomingMessage: "deleteIncomingMessage",
-    updateIncomingMessage: "updateIncomingMessage",
   },
   queueNames: {
     enum: {
@@ -116,7 +111,7 @@ vi.mock("../src/lib/bootstrap", () => ({
 }))
 
 vi.mock("../src/lib/logger", () => ({
-  logger: { debug: vi.fn(), error: vi.fn(), info: vi.fn(), warn: vi.fn() },
+  logger: { error: vi.fn(), info: vi.fn(), warn: vi.fn() },
 }))
 
 vi.mock("../src/lib/run-job-with-audit-context", () => ({
@@ -149,12 +144,6 @@ vi.mock("../src/integration/handlers/incoming-message", () => ({
   processIncomingMessage: workerState.processIncomingMessage,
 }))
 
-vi.mock("../src/integration/handlers/incoming-message-change", () => ({
-  deleteIncomingMessage: workerState.deleteIncomingMessage,
-  updateIncomingMessage: workerState.updateIncomingMessage,
-  MessageNotStoredYetError: workerState.MessageNotStoredYetError,
-}))
-
 vi.mock("../src/integration/job-context", () => ({
   runIntegrationJobWithWebhookContext:
     workerState.runIntegrationJobWithWebhookContext,
@@ -172,19 +161,11 @@ vi.mock("../src/integration/handlers/received-message", () => ({
   receiveComment: workerState.receiveComment,
 }))
 
-const { logger: mockedLogger } = await import("../src/lib/logger")
-
 // Importing the worker module boots it exactly once (ESM module cache).
 await import("../src/low/worker")
 await vi.waitFor(() => {
   expect(workerState.capturedWorkers).toHaveLength(3)
 })
-const lowWorkerFailedListener = workerState.workerOn.mock.calls.find(
-  ([event]) => event === "failed",
-)?.[1] as (
-  job: { id: string; attemptsMade: number; opts: { attempts: number } },
-  err: Error,
-) => void
 
 describe("low worker process boot", () => {
   beforeEach(() => {
@@ -195,10 +176,6 @@ describe("low worker process boot", () => {
     workerState.handleMessageStatus.mockClear()
     workerState.contactMarkAsRead.mockClear()
     workerState.processIncomingMessage.mockClear()
-    workerState.deleteIncomingMessage.mockClear()
-    workerState.updateIncomingMessage.mockClear()
-    vi.mocked(mockedLogger.debug).mockClear()
-    vi.mocked(mockedLogger.error).mockClear()
     workerState.resolveWorkspaceId.mockClear()
     workerState.resolveWorkspaceId.mockResolvedValue("ws-resolved")
     workerState.deferOnLockContention.mockClear()
@@ -346,78 +323,6 @@ describe("low worker process boot", () => {
       "ws-5",
       expect.any(Function),
     )
-  })
-
-  describe("Business-app edit and revoke routed from the integration queue", () => {
-    const changeData = {
-      integrationType: "whatsapp",
-      integrationIdentifier: "phone-1",
-      messageId: "wamid.original",
-      retryIfMissing: true,
-      lowPriority: true,
-    }
-
-    test.each([
-      ["deleteIncomingMessage", workerState.deleteIncomingMessage, changeData],
-      [
-        "updateIncomingMessage",
-        workerState.updateIncomingMessage,
-        { ...changeData, newText: "fixed" },
-      ],
-    ])("routes %s to its handler with the data and the job, inside the webhook context", async (type, handler, data) => {
-      const [worker] = workerState.capturedWorkers
-      const job = {
-        attemptsMade: 1,
-        data: { type, data },
-        opts: { attempts: 6 },
-      }
-
-      await worker?.processor(job)
-
-      expect(handler).toHaveBeenCalledWith(data, job)
-      expect(
-        workerState.runIntegrationJobWithWebhookContext,
-      ).toHaveBeenCalledWith(job.data, expect.any(Function))
-      expect(workerState.withBlockedOwnerGuard).toHaveBeenCalledWith(
-        "ws-resolved",
-        expect.any(Function),
-      )
-    })
-  })
-
-  describe("failed-job logging of the low Worker", () => {
-    // Captured at boot: the mock config resets call records between tests.
-    const failedListener = () => lowWorkerFailedListener
-
-    test("logs a missing-message retry that has attempts left at debug, not error", () => {
-      failedListener()(
-        { id: "j1", attemptsMade: 2, opts: { attempts: 6 } },
-        new workerState.MessageNotStoredYetError("not stored yet"),
-      )
-
-      expect(mockedLogger.debug).toHaveBeenCalledTimes(1)
-      expect(mockedLogger.error).not.toHaveBeenCalled()
-    })
-
-    test("logs the same failure at error once its attempts are exhausted", () => {
-      failedListener()(
-        { id: "j2", attemptsMade: 6, opts: { attempts: 6 } },
-        new workerState.MessageNotStoredYetError("not stored yet"),
-      )
-
-      expect(mockedLogger.error).toHaveBeenCalledTimes(1)
-      expect(mockedLogger.debug).not.toHaveBeenCalled()
-    })
-
-    test("logs any other failure at error", () => {
-      failedListener()(
-        { id: "j3", attemptsMade: 1, opts: { attempts: 6 } },
-        new Error("boom"),
-      )
-
-      expect(mockedLogger.error).toHaveBeenCalledTimes(1)
-      expect(mockedLogger.debug).not.toHaveBeenCalled()
-    })
   })
 
   describe("bookkeeping ingress routed from the integration queue", () => {

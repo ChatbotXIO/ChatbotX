@@ -32,8 +32,6 @@ export const LowJobAction = {
   messageStatus: "messageStatus",
   contactMarkAsRead: "contactMarkAsRead",
   incomingMessageEcho: "incomingMessageEcho",
-  deleteIncomingMessage: "deleteIncomingMessage",
-  updateIncomingMessage: "updateIncomingMessage",
 } as const
 
 export type LowJobAction = (typeof LowJobAction)[keyof typeof LowJobAction]

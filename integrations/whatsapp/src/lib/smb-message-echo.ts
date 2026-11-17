@@ -112,7 +112,7 @@ const isSmbEchoMediaType = (type: string): type is SmbEchoMediaType =>
   (SMB_ECHO_MEDIA_TYPES as readonly string[]).includes(type)
 
 /** A media echo the live media parsers can store: its type and media object. */
-export type SmbEchoMediaContent = {
+type SmbEchoMediaContent = {
   mediaType: SmbEchoMediaType
   media: SmbEchoMedia
 }
@@ -162,10 +162,7 @@ export const buildSmbEchoContact = (
   const sourceUsername = asString(contact?.profile?.username)
   const firstName = asString(contact?.profile?.name)
   return {
-    // The matched contact is the one the business-scoped id points at, so its
-    // phone number is preferred over the echo's own when the two disagree.
-    sourceId:
-      asString(contact?.wa_id) ?? asString(echo.to) ?? sourceUserId ?? "",
+    sourceId: asString(echo.to) ?? sourceUserId ?? "",
     ...(firstName ? { firstName } : {}),
     ...(sourceUserId ? { sourceUserId } : {}),
     ...(sourceParentUserId ? { sourceParentUserId } : {}),

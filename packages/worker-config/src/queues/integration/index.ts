@@ -273,20 +273,18 @@ export type IntegrationJobDeleteIncomingComment = {
 }
 
 /**
- * How a producer that changes a stored message by its provider id wants a
- * missing row handled and which queue runs the job. Both fields are optional
- * and default to the original behavior, so jobs queued before they existed and
- * the producers that never set them (a Messenger unsend) are unchanged.
+ * Optional for the producers that change a stored message by its provider id.
+ * Absent (a Messenger unsend, a job queued before it existed) keeps the original
+ * behavior: a missing row only warns.
  */
 export type IncomingMessageChangeOptions = {
   /**
    * The message may still be on its way (its own job has not stored it yet):
-   * throw on a missing row so the job retries, and warn once on the last
-   * attempt instead of failing.
+   * throw on a missing row so the job retries, warn once on the last attempt,
+   * and wait for the conversation's message ingress before publishing the
+   * change (best effort: it is published anyway when the wait times out).
    */
   retryIfMissing?: boolean
-  /** Bookkeeping that must not queue ahead of a customer reply: run on `low`. */
-  lowPriority?: true
 }
 
 export type IntegrationJobDeleteIncomingMessage = {
@@ -1631,8 +1629,6 @@ export type LowRoutedIntegrationJob =
   | IntegrationJobMessageStatus
   | IntegrationJobContactMarkAsRead
   | IntegrationJobReceiveMessageEcho
-  | IntegrationJobDeleteIncomingMessage
-  | IntegrationJobUpdateIncomingMessage
 
 /**
  * Whether a job goes to the `low` queue. A new bookkeeping action joins with a
@@ -1648,11 +1644,6 @@ const isLowRoutedIntegrationJob = (
     case IntegrationJobAction.contactMarkAsRead:
     case IntegrationJobAction.incomingMessageEcho:
       return true
-    case IntegrationJobAction.deleteIncomingMessage:
-    case IntegrationJobAction.updateIncomingMessage:
-      // Only a producer that sets `lowPriority` moves here: the same job from
-      // Messenger or Instagram keeps running on the `integration` queue.
-      return job.data.lowPriority === true
     default:
       return false
   }

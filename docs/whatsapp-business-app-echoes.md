@@ -1,55 +1,34 @@
 # WhatsApp Business-app echoes (`smb_message_echoes`)
 
 A business onboarded to Coexistence can keep chatting from the WhatsApp Business
-app (or a linked device). Meta mirrors every message it sends, and every edit
-or revoke it makes, to the webhook field `smb_message_echoes`, one
-`message_echoes[]` item each. This page covers how
-those messages reach the inbox. The one-off history import that Coexistence also
-runs (`history`, `smb_app_state_sync`) is a different path and is not described
-here.
+app (or a linked device). Meta mirrors every message it sends, and every edit or
+revoke it makes, to the webhook field `smb_message_echoes`, one
+`message_echoes[]` item each. This page covers how they reach the inbox. The
+one-off history import that Coexistence also runs (`history`,
+`smb_app_state_sync`) is a different path and is not described here.
 
 Meta reference: "smb_message_echoes webhook reference" and "Onboard WhatsApp
 Business app users" (developers.facebook.com, WhatsApp Business Platform).
 
 ## Flow
 
-```
-Meta webhook (field smb_message_echoes)
-  -> integrations/whatsapp/src/handlers/webhook.ts   extractSmbMessageEchoPayloads
-     (one strategy per echo kind: message / edit / revoke)
-```
+`extractSmbMessageEchoPayloads` (`integrations/whatsapp/src/handlers/webhook.ts`)
+turns each echo into one job, chosen by its kind:
 
-| Echo `type` | Job (queue `low`) | Effect |
-|-------------|-------------------|--------|
-| `text`, `image`, `video`, `document`, `audio`, `sticker`, any other | `incomingMessageEcho` | Stored as an outgoing first-party message; see below. |
-| `edit` | `updateIncomingMessage` | Replaces the text (the body, or the caption of a media message) of the message named by `edit.original_message_id`, and publishes `messageUpdated`. An edit with no text is skipped with an info log. |
-| `revoke` | `deleteIncomingMessage` | Soft-deletes the message named by `revoke.original_message_id` and publishes `messageDeleted`, like a contact unsending a DM on Messenger. |
+| Echo `type` | Job (queue) | Effect |
+|-------------|-------------|--------|
+| `text`, `image`, `video`, `document`, `audio`, `sticker`, any other | `incomingMessageEcho` (`low`) | Stored as an outgoing first-party message, see below. |
+| `edit` | `updateIncomingMessage` (`integration`) | Replaces the text (the body, or the caption of a media message; an empty caption clears it) of the message named by `edit.original_message_id` and publishes `messageUpdated`. An edit with no text is skipped with an info log. |
+| `revoke` | `deleteIncomingMessage` (`integration`) | Soft-deletes the message named by `revoke.original_message_id` and publishes `messageDeleted`, like a contact unsending a DM on Messenger. |
 
-`edit` and `revoke` carry `retryIfMissing` and `lowPriority`: the message they
-change may still be stored by its own job, so a missing row retries (6 attempts,
-5s exponential backoff, longer than the 5 attempts of a sent message) and warns
-once after the last attempt. The two flags are optional on those jobs; without
-them (a Messenger unsend) a missing row only warns and the job runs on the
-`integration` queue.
-
-The row is changed at once, but the realtime event waits for the conversation's
-message ingress lock (`ingress:conv:<conversationId>`, the lock a new message holds
-while it is inserted and announced), so the inbox never receives an edit or an
-unsend before the message it changes. The wait is capped at 10 s, the same budget
-message ingress itself uses. If the lock is still held after that (the critical
-section is a few database writes and one publish, so this means Redis or the
-database is under stress), the event is published at once, as ingress degrades
-too, and the inbox may keep the original text of that message until it reloads;
-the stored message is correct either way.
-
-A revoke hides the message (soft delete) and a counter or analytics event that
-already counted it is not rolled back, while a later history import of the same
-conversation only marks a revoked message `revoked: true` and keeps its text.
-Two edits of one message end with whichever job applies last (known
-limitation): when the original message is stored late, each edit retries on its
-own backoff schedule, so the older edit can be applied after the newer one, and
-two edits processed at the same moment can publish in the other order than they
-were stored, so the inbox may show the other text until it reloads.
+An edit or a revoke carries `retryIfMissing`: the message it changes may still
+be stored by its own job, so a missing row retries (6 attempts, 5s exponential
+backoff, longer than the 5 attempts of a sent message) and warns once after the
+last attempt, and its realtime event waits for the conversation's message ingress
+lock (`ingress:conv:<conversationId>`), so the inbox normally receives the
+message before the change. This is best effort: the wait is capped at 10 s, as
+message ingress itself is, and after that the event is published at once. A Messenger unsend or a comment edit
+does not set the flag and behaves as before.
 
 A sent message:
 
@@ -60,44 +39,45 @@ A sent message:
   -> saveAndBroadcastMessage -> realtime `message.created`
 ```
 
-It is the same job a Messenger echo uses, so the message is stored as an
-outgoing first-party message, appears in the inbox and conversation list in
-realtime, closes the human-reply window and runs outbound "Page" keyword
-automation. It never starts inbound AI or flow automation.
+It is the job a Messenger echo uses, so the message is stored as an outgoing
+first-party message at the time the worker receives it, appears in the inbox and
+conversation list in realtime, closes the human-reply window and runs outbound
+"Page" keyword automation. It never starts inbound AI or flow automation.
 
 ## What a sent message stores
 
 | Echo `type` | Handling |
 |-------------|----------|
 | `text` | Stored as an outgoing text message. |
-| `image`, `video`, `document`, `audio`, `sticker` | Run through the same media parser as a customer's media (download and storage), but only the text, attachments and content attributes are kept. Needs the media `id` and `mime_type`. |
+| `image`, `video`, `document`, `audio`, `sticker` | Run through the same media parser as a customer's media (download and storage); only the text, attachments and content attributes are kept. Needs the media `id` and `mime_type`. |
 | any other type, or media missing a required field | Stored as the placeholder `[type]` (the text the history import also stores). |
 
-## Identity and time
-
-- The contact is keyed on the recipient's phone number (`to`) and carries the
-  business-scoped user id (`to_user_id`, always present) as its second identity.
-  `to` and the contact's `wa_id` are omitted for a customer who adopted a
-  username; the contact is then keyed on the business-scoped id.
-- A sent message is stored at the time the worker receives it, as Messenger and
-  Instagram echoes are.
+The contact is keyed on the recipient's phone number (`to`) and carries the
+business-scoped user id (`to_user_id`, always present). `to` is omitted for a
+customer who adopted a username; the contact is then keyed on the business-scoped
+id.
 
 ## Operating notes
 
 - A first message to a number ChatbotX has not seen creates a contact and
-  conversation, even when Coexistence history sync is disabled. A business that
-  chats with personal contacts from the phone will see those contacts appear.
-- Deploy every worker before the builder. A sent message uses the existing
-  `incomingMessageEcho` job, so an old worker accepts it and runs the old WhatsApp
-  parser on it; that throws on every attempt and the failed job is then removed,
-  so the echo is lost. The job is removed when it fails, so look for `Job has
-  failed` log entries on the `low` queue whose `jobId` starts with `wa-smb-`, not
-  for an `Unhandled ... job type` log. An edit or a revoke is a `low` job an old
-  worker does not know: it logs `Unhandled low job type` and drops it.
+  conversation, even when Coexistence history sync is disabled.
+- An edit or a revoke is only applied from a signature-verified delivery. A manual
+  integration without an app secret still stores sent messages but ignores edits
+  and revokes.
+- Deploy every worker before the builder. An old worker runs the old WhatsApp
+  parser on a new `incomingMessageEcho` job, which throws on every attempt and is
+  then removed (look for `Job has failed` entries whose `jobId` starts with
+  `wa-smb-`), and it does not know `updateIncomingMessage` (it logs `Unhandled
+  integration job type` and drops it).
 - Rows staged by the old path before the deploy still flush through the history
   import.
-- Known limitation: `receiveMessage` treats an outgoing message as an echo of a
-  ChatbotX send when a pending outgoing row from the last 2 minutes (no provider
-  id yet, or a failed send) has the same text or attachment type. A message typed
-  on the phone with the same text in that window is then stored without realtime
-  or native-app side effects. The same limit applies to Messenger echoes.
+- Known limitations:
+  - A revoke hides the message (soft delete); counters that already counted it
+    are not rolled back, and a later history import only marks a revoked message
+    `revoked: true`.
+  - Two edits of one message end with whichever job applies last; when they run
+    at the same moment the inbox may show the other text until it reloads.
+  - `receiveMessage` treats an outgoing message as an echo of a ChatbotX send when
+    a pending outgoing row from the last 2 minutes has the same text or
+    attachment type; such a message is stored without realtime or native-app side
+    effects. The same limit applies to Messenger echoes.

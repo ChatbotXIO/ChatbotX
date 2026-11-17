@@ -692,7 +692,7 @@ describe("extractSmbMessageEchoPayloads", () => {
     })
   })
 
-  it("turns an edit into an updateIncomingMessage job that waits for the original message and runs on the low queue", () => {
+  it("turns an edit into an updateIncomingMessage job that waits for the original message", () => {
     const [job] = extractSmbMessageEchoPayloads(
       buildEchoBody([buildEditEcho()]),
     )
@@ -707,7 +707,6 @@ describe("extractSmbMessageEchoPayloads", () => {
           messageId: "wamid.original",
           newText: "Corrected text",
           retryIfMissing: true,
-          lowPriority: true,
         },
       },
     })
@@ -733,7 +732,7 @@ describe("extractSmbMessageEchoPayloads", () => {
     })
   })
 
-  it("turns a revoke into a deleteIncomingMessage job that waits for the original message and runs on the low queue", () => {
+  it("turns a revoke into a deleteIncomingMessage job that waits for the original message", () => {
     const [job] = extractSmbMessageEchoPayloads(
       buildEchoBody([buildRevokeEcho()]),
     )
@@ -747,7 +746,6 @@ describe("extractSmbMessageEchoPayloads", () => {
           integrationIdentifier: ECHO_PHONE_NUMBER_ID,
           messageId: "wamid.original",
           retryIfMissing: true,
-          lowPriority: true,
         },
       },
     })
@@ -831,22 +829,6 @@ describe("extractSmbMessageEchoPayloads", () => {
 
     expect(job?.queueJob.data).toMatchObject({
       payload: { contact: { profile: { username: "bea" } } },
-    })
-  })
-
-  it("prefers the business-scoped user id over the phone number when they point at different contacts", () => {
-    const [job] = extractSmbMessageEchoPayloads(
-      buildEchoBody(
-        [buildEcho({ to: "111", to_user_id: "US.B" })],
-        [
-          { wa_id: "111", user_id: "US.A", profile: { name: "Ann" } },
-          { wa_id: "222", user_id: "US.B", profile: { name: "Bea" } },
-        ],
-      ),
-    )
-
-    expect(job?.queueJob.data).toMatchObject({
-      payload: { contact: { profile: { name: "Bea" } } },
     })
   })
 

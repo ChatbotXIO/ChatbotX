@@ -27,17 +27,6 @@ import { integrationService } from "../../services/integrations"
  */
 
 /**
- * The message a change targets is not stored yet. Expected while its own job
- * is still running, so the worker logs the retries below error level.
- */
-export class MessageNotStoredYetError extends Error {
-  constructor(action: string, messageId: string) {
-    super(`${action}: message ${messageId} is not stored yet`)
-    this.name = "MessageNotStoredYetError"
-  }
-}
-
-/**
  * What a handler does when the message is not stored (yet). Default, and for
  * every producer that predates `retryIfMissing`: warn and finish. With
  * `retryIfMissing` the message may still be on its way (its own job has not run
@@ -61,7 +50,7 @@ const handleMissingMessage = (props: {
     )
     return
   }
-  throw new MessageNotStoredYetError(action, messageId)
+  throw new Error(`${action}: message ${messageId} is not stored yet`)
 }
 
 const findRealtimeRoute = async (props: {
@@ -117,6 +106,23 @@ const publishAfterMessageIngress = async (
 }
 
 /**
+ * Publishes a change. A change to a message that may still be in flight
+ * (`retryIfMissing`) waits for that message's ingress; every other change (a
+ * Messenger unsend, a comment edit) publishes at once, as it always has.
+ */
+const publishChange = async (props: {
+  conversationId: string
+  waitForIngress: boolean
+  publish: () => Promise<void>
+}): Promise<void> => {
+  if (props.waitForIngress) {
+    await publishAfterMessageIngress(props.conversationId, props.publish)
+    return
+  }
+  await props.publish()
+}
+
+/**
  * Replaces the text of the message stored under `sourceId` and publishes the
  * new text to the inbox. Shared by the comment edit and the message edit, which
  * differ only in what a missing row means (`onMissing`) and in log wording.
@@ -127,6 +133,7 @@ export const applyIncomingTextUpdate = async (props: {
   sourceId: string
   newText: string
   action: string
+  waitForIngress?: boolean
   onMissing: () => void
 }): Promise<void> => {
   const { integrationType, integrationIdentifier, sourceId, newText } = props
@@ -153,17 +160,20 @@ export const applyIncomingTextUpdate = async (props: {
     conversationId: updated.conversationId,
     action: props.action,
   })
-  await publishAfterMessageIngress(updated.conversationId, () =>
-    queueWorkspaceRealtimeEvent(inbox.workspaceId, {
-      eventType: RealtimeEventType.messageUpdated,
-      data: {
-        messageId: updated.id,
-        newText,
-        removedAttachment: false,
-      },
-      route,
-    }),
-  )
+  await publishChange({
+    conversationId: updated.conversationId,
+    waitForIngress: props.waitForIngress === true,
+    publish: () =>
+      queueWorkspaceRealtimeEvent(inbox.workspaceId, {
+        eventType: RealtimeEventType.messageUpdated,
+        data: {
+          messageId: updated.id,
+          newText,
+          removedAttachment: false,
+        },
+        route,
+      }),
+  })
 }
 
 /** The provider edited a message: show the new text. */
@@ -178,6 +188,7 @@ export const updateIncomingMessage = async (
     sourceId: props.messageId,
     newText: props.newText,
     action,
+    waitForIngress: props.retryIfMissing === true,
     onMissing: () =>
       handleMissingMessage({
         messageId: props.messageId,
@@ -227,11 +238,14 @@ export const deleteIncomingMessage = async (
     conversationId: first.conversationId,
     action,
   })
-  await publishAfterMessageIngress(first.conversationId, () =>
-    queueWorkspaceRealtimeEvent(inbox.workspaceId, {
-      eventType: RealtimeEventType.messageDeleted,
-      data: { messageIds: deleted.map((row) => row.id) },
-      route,
-    }),
-  )
+  await publishChange({
+    conversationId: first.conversationId,
+    waitForIngress: props.retryIfMissing === true,
+    publish: () =>
+      queueWorkspaceRealtimeEvent(inbox.workspaceId, {
+        eventType: RealtimeEventType.messageDeleted,
+        data: { messageIds: deleted.map((row) => row.id) },
+        route,
+      }),
+  })
 }
