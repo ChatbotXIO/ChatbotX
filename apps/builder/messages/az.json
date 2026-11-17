@@ -6695,6 +6695,7 @@
       "actionSkipReason": {
         "noConversation": "Kontaktın söhbəti yoxdur",
         "noContactInbox": "Kontakt bu qutuya qoşulmayıb",
+        "contactNeverMessaged": "Əlaqə yalnız şərh yazıb və heç vaxt mesaj göndərməyib",
         "flowInactive": "Axın dərc olunmayıb",
         "unsupportedAction": "Bu əməliyyat burada dəstəklənmir",
         "unsupportedChannel": "Kanal bu əməliyyatı dəstəkləmir",

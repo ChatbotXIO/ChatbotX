@@ -5488,6 +5488,7 @@
       "actionSkipReason": {
         "noConversation": "Kontakten har ingen konversation",
         "noContactInbox": "Kontakten är inte ansluten till denna inkorg",
+        "contactNeverMessaged": "Kontakten har bara kommenterat och har aldrig skickat ett meddelande",
         "flowInactive": "Flödet är inte publicerat",
         "unsupportedAction": "Åtgärden stöds inte här",
         "unsupportedChannel": "Kanalen stöder inte åtgärden",

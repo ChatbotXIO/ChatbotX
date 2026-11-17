@@ -6013,6 +6013,7 @@
       "actionSkipReason": {
         "noConversation": "Kontakten har ingen samtale",
         "noContactInbox": "Kontakten er ikke forbundet til denne indbakke",
+        "contactNeverMessaged": "Kontakten har kun kommenteret og har aldrig sendt en besked",
         "flowInactive": "Flowet er ikke udgivet",
         "unsupportedAction": "Handlingen understøttes ikke her",
         "unsupportedChannel": "Kanalen understøtter ikke handlingen",

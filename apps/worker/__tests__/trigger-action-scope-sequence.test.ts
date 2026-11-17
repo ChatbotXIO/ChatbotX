@@ -61,7 +61,10 @@ vi.mock("@chatbotx.io/business", () => ({
   tagService: {},
   tagSyncService: {},
   metaConversionsService: {},
-  contactInboxService: {},
+  contactInboxService: {
+    // Not a comment-only contact, so flow starts are never skipped here.
+    findByIdForWorkspace: async () => undefined,
+  },
   googleAdsConversionService: {},
 }))
 vi.mock("@chatbotx.io/events/context", () => ({

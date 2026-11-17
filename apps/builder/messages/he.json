@@ -3619,6 +3619,7 @@
       "actionSkipReason": {
         "noConversation": "לאיש הקשר אין שיחה",
         "noContactInbox": "איש הקשר לא מחובר לתיבה זו",
+        "contactNeverMessaged": "איש הקשר רק הגיב ומעולם לא שלח הודעה",
         "flowInactive": "התהליך לא פורסם",
         "unsupportedAction": "פעולה זו אינה נתמכת כאן",
         "unsupportedChannel": "הערוץ אינו תומך בפעולה זו",

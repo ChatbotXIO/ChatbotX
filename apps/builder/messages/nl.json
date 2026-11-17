@@ -6013,6 +6013,7 @@
       "actionSkipReason": {
         "noConversation": "Het contact heeft geen gesprek",
         "noContactInbox": "Het contact is niet verbonden met deze inbox",
+        "contactNeverMessaged": "Het contact heeft alleen gereageerd en nog nooit een bericht gestuurd",
         "flowInactive": "De flow is niet gepubliceerd",
         "unsupportedAction": "Deze actie wordt hier niet ondersteund",
         "unsupportedChannel": "Het kanaal ondersteunt deze actie niet",

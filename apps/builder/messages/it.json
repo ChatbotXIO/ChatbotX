@@ -6013,6 +6013,7 @@
       "actionSkipReason": {
         "noConversation": "Il contatto non ha una conversazione",
         "noContactInbox": "Il contatto non è collegato a questa casella",
+        "contactNeverMessaged": "Il contatto ha solo commentato e non ha mai inviato un messaggio",
         "flowInactive": "Il flusso non è pubblicato",
         "unsupportedAction": "Questa azione non è supportata qui",
         "unsupportedChannel": "Il canale non supporta questa azione",

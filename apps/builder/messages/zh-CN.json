@@ -5488,6 +5488,7 @@
       "actionSkipReason": {
         "noConversation": "联系人没有会话",
         "noContactInbox": "联系人未连接到此收件箱",
+        "contactNeverMessaged": "该联系人仅发表过评论，从未发送过消息",
         "flowInactive": "流程未发布",
         "unsupportedAction": "此处不支持该操作",
         "unsupportedChannel": "该渠道不支持此操作",

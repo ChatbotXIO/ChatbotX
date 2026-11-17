@@ -6013,6 +6013,7 @@
       "actionSkipReason": {
         "noConversation": "Yhteystiedolla ei ole keskustelua",
         "noContactInbox": "Yhteystieto ei ole yhdistetty tähän saapuneet-kansioon",
+        "contactNeverMessaged": "Yhteyshenkilö on vain kommentoinut eikä ole koskaan lähettänyt viestiä",
         "flowInactive": "Flow'ta ei ole julkaistu",
         "unsupportedAction": "Toimintoa ei tueta tässä",
         "unsupportedChannel": "Kanava ei tue tätä toimintoa",

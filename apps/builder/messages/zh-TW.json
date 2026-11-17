@@ -6059,6 +6059,7 @@
       "actionSkipReason": {
         "noConversation": "聯絡人沒有對話",
         "noContactInbox": "聯絡人未連接到此收件匣",
+        "contactNeverMessaged": "此聯絡人僅留過言，從未傳送過訊息",
         "flowInactive": "流程未發布",
         "unsupportedAction": "此處不支援該動作",
         "unsupportedChannel": "該頻道不支援此動作",

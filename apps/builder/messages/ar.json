@@ -6013,6 +6013,7 @@
       "actionSkipReason": {
         "noConversation": "ليس لجهة الاتصال محادثة",
         "noContactInbox": "جهة الاتصال غير متصلة بهذا الصندوق",
+        "contactNeverMessaged": "علّق جهة الاتصال فقط ولم يرسل أي رسالة من قبل",
         "flowInactive": "لم يتم نشر التدفق",
         "unsupportedAction": "هذا الإجراء غير مدعوم هنا",
         "unsupportedChannel": "القناة لا تدعم هذا الإجراء",

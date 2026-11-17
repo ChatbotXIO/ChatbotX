@@ -6013,6 +6013,7 @@
       "actionSkipReason": {
         "noConversation": "Kişinin görüşmesi yok",
         "noContactInbox": "Kişi bu gelen kutusuna bağlı değil",
+        "contactNeverMessaged": "Kişi yalnızca yorum yaptı ve hiç mesaj göndermedi",
         "flowInactive": "Akış yayınlanmamış",
         "unsupportedAction": "Bu eylem burada desteklenmiyor",
         "unsupportedChannel": "Kanal bu eylemi desteklemiyor",

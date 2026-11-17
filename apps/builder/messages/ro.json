@@ -6013,6 +6013,7 @@
       "actionSkipReason": {
         "noConversation": "Contactul nu are o conversație",
         "noContactInbox": "Contactul nu este conectat la această căsuță",
+        "contactNeverMessaged": "Contactul doar a comentat și nu a trimis niciodată un mesaj",
         "flowInactive": "Fluxul nu este publicat",
         "unsupportedAction": "Această acțiune nu este acceptată aici",
         "unsupportedChannel": "Canalul nu acceptă această acțiune",

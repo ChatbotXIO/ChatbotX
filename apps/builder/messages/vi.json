@@ -6368,6 +6368,7 @@
       "actionSkipReason": {
         "noConversation": "Liên hệ chưa có cuộc trò chuyện",
         "noContactInbox": "Liên hệ chưa kết nối với hộp thư này",
+        "contactNeverMessaged": "Liên hệ này mới chỉ bình luận, chưa từng nhắn tin",
         "flowInactive": "Luồng chưa được xuất bản",
         "unsupportedAction": "Hành động này không được hỗ trợ ở đây",
         "unsupportedChannel": "Kênh không hỗ trợ hành động này",

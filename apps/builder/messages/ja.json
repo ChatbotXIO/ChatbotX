@@ -5990,6 +5990,7 @@
       "actionSkipReason": {
         "noConversation": "コンタクトに会話がありません",
         "noContactInbox": "コンタクトがこの受信トレイに接続されていません",
+        "contactNeverMessaged": "この連絡先はコメントのみで、メッセージを送ったことがありません",
         "flowInactive": "フローが公開されていません",
         "unsupportedAction": "このアクションはここでは使用できません",
         "unsupportedChannel": "このチャネルはこのアクションに対応していません",

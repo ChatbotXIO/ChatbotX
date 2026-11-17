@@ -6695,6 +6695,7 @@
       "actionSkipReason": {
         "noConversation": "The contact has no conversation",
         "noContactInbox": "The contact is not connected to this inbox",
+        "contactNeverMessaged": "The contact has only commented and has never sent a message",
         "flowInactive": "The flow is not published",
         "unsupportedAction": "This action is not supported here",
         "unsupportedChannel": "The channel does not support this action",

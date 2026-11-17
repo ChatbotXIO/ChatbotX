@@ -1,4 +1,8 @@
-import { flowService } from "@chatbotx.io/business"
+import { contactInboxService, flowService } from "@chatbotx.io/business"
+import {
+  type ContactSource,
+  contactSources,
+} from "@chatbotx.io/database/partials"
 import { startExternalStepActionSchema } from "@chatbotx.io/flow-config"
 import baseLogger from "@chatbotx.io/logger"
 import {
@@ -26,6 +30,57 @@ const enqueueSendFlow = async (
     return
   }
   await integrationQueue.add(IntegrationJobAction.sendFlow, sendFlowJob)
+}
+
+const COMMENT_CONTACT_SOURCES: ReadonlySet<ContactSource> = new Set([
+  contactSources.enum.comments,
+  contactSources.enum.liveComments,
+])
+
+/**
+ * A contact created by a post/live comment who has never sent a message.
+ *
+ * A trigger-started flow is a normal DM: nothing anchors it to the comment, so
+ * the channel only delivers it once the contact has messaged the account
+ * (Messenger answers `(#551) This person isn't available right now`). Every
+ * "New Contact" trigger fired for such a commenter used to leave a failed
+ * message in the post's conversation. A comment reply — public or private —
+ * belongs to Comment automation, which addresses the commenter by comment id.
+ *
+ * Matched on the contact inbox's source, not on "never messaged" alone: a
+ * "New Contact" trigger fires before the first DM of a messaging contact is
+ * stored, so that contact has no `lastIncomingMessageAt` yet either.
+ */
+async function isCommentOnlyContact(props: {
+  contactInboxId: string
+  workspaceId: string
+}): Promise<boolean> {
+  const contactInbox = await contactInboxService.findByIdForWorkspace({
+    id: props.contactInboxId,
+    workspaceId: props.workspaceId,
+  })
+  if (!contactInbox) {
+    return false
+  }
+  return (
+    COMMENT_CONTACT_SOURCES.has(contactInbox.source as ContactSource) &&
+    contactInbox.lastIncomingMessageAt === null
+  )
+}
+
+const skipCommentOnlyContact = async (props: {
+  contactInboxId: string
+  workspaceId: string
+  flowId: string
+}) => {
+  if (!(await isCommentOnlyContact(props))) {
+    return null
+  }
+  baseLogger.info(
+    props,
+    "Skipping trigger flow: the contact has only commented and never messaged",
+  )
+  return skipped("contactNeverMessaged")
 }
 
 export const startAnotherFlow: TriggerActionHandler = async ({
@@ -60,6 +115,15 @@ export const startAnotherFlow: TriggerActionHandler = async ({
       `Flow ${flowId} not found or not active, skipping startAnotherFlow action`,
     )
     return skipped("flowInactive")
+  }
+
+  const commentOnlySkip = await skipCommentOnlyContact({
+    contactInboxId: contactInbox.id,
+    workspaceId,
+    flowId,
+  })
+  if (commentOnlySkip) {
+    return commentOnlySkip
   }
 
   const sendFlowJob = buildSendFlowJob({
@@ -104,6 +168,15 @@ export const startExternalStep: TriggerActionHandler = async ({
   if (status !== "ready") {
     // The status names the reason: flowNotFound, flowInactive, flowNotPublished, nodeNotFound.
     return skipped(status)
+  }
+
+  const commentOnlySkip = await skipCommentOnlyContact({
+    contactInboxId: contactInbox.id,
+    workspaceId,
+    flowId,
+  })
+  if (commentOnlySkip) {
+    return commentOnlySkip
   }
 
   await enqueueSendFlow(

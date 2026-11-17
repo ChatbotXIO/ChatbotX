@@ -115,6 +115,12 @@ vi.mock("@chatbotx.io/business", async () => ({
     buildSourceKey: (...args: unknown[]) => mocks.buildSourceKey(...args),
   },
   contactInboxService: {
+    // A contact inbox that has messaged, so flow starts are not skipped as
+    // comment-only (see `isCommentOnlyContact` in flow-actions.ts).
+    findByIdForWorkspace: async () => ({
+      source: "inboundMessage",
+      lastIncomingMessageAt: new Date(),
+    }),
     findGoogleClickAttribution: (...args: unknown[]) =>
       mocks.findGoogleClickAttribution(...args),
     findLatestGoogleClickInboxByContact: (...args: unknown[]) =>

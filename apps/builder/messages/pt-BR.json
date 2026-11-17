@@ -7070,6 +7070,7 @@
       "actionSkipReason": {
         "noConversation": "O contato não tem conversa",
         "noContactInbox": "O contato não está conectado a esta caixa de entrada",
+        "contactNeverMessaged": "O contato apenas comentou e nunca enviou uma mensagem",
         "flowInactive": "O fluxo não está publicado",
         "unsupportedAction": "Esta ação não é compatível aqui",
         "unsupportedChannel": "O canal não oferece suporte a esta ação",

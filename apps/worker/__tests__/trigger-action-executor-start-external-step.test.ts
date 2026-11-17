@@ -9,6 +9,7 @@ const mocks = vi.hoisted(() => ({
   findMostRecentByContact: vi.fn(),
   resolveStartTarget: vi.fn(),
   findActiveById: vi.fn(),
+  findByIdForWorkspace: vi.fn(),
   queueAdd: vi.fn(),
 }))
 
@@ -49,7 +50,10 @@ vi.mock("@chatbotx.io/business", () => ({
   tagService: {},
   tagSyncService: {},
   metaConversionsService: {},
-  contactInboxService: {},
+  contactInboxService: {
+    findByIdForWorkspace: (...args: unknown[]) =>
+      mocks.findByIdForWorkspace(...args),
+  },
   googleAdsConversionService: {},
 }))
 vi.mock("@chatbotx.io/events/context", () => ({
@@ -95,6 +99,13 @@ const conversation = {
 }
 const action = { type: "startExternalStep", flowId: "11", nodeId: "22" }
 
+// A contact inbox that has messaged the account: flow starts go ahead.
+const messagingContactInbox = {
+  id: "ci-1",
+  source: "inboundMessage",
+  lastIncomingMessageAt: new Date("2026-11-01T00:00:00Z"),
+}
+
 const run = (
   overrides: Record<string, unknown> = {},
   actionOverrides: Record<string, unknown> = {},
@@ -113,6 +124,25 @@ describe("ActionExecutor startExternalStep", () => {
     mocks.findLatestCreatedByContact.mockResolvedValue(conversation)
     mocks.findMostRecentByContact.mockResolvedValue({ id: "ci-1" })
     mocks.resolveStartTarget.mockResolvedValue("ready")
+    mocks.findByIdForWorkspace.mockResolvedValue(messagingContactInbox)
+  })
+
+  test("a contact that has only commented and never messaged is skipped", async () => {
+    mocks.findByIdForWorkspace.mockResolvedValue({
+      id: "ci-1",
+      source: "comments",
+      lastIncomingMessageAt: null,
+    })
+
+    expect(await run()).toEqual({
+      status: "skipped",
+      reason: "contactNeverMessaged",
+    })
+    expect(mocks.findByIdForWorkspace).toHaveBeenCalledWith({
+      id: "ci-1",
+      workspaceId: "ws-1",
+    })
+    expect(mocks.queueAdd).not.toHaveBeenCalled()
   })
 
   test("enqueues a node-entry sendFlow job with the same shape as the flow step", async () => {
@@ -203,10 +233,52 @@ describe("ActionExecutor startAnotherFlow", () => {
     mocks.findLatestCreatedByContact.mockResolvedValue(conversation)
     mocks.findMostRecentByContact.mockResolvedValue({ id: "ci-1" })
     mocks.findActiveById.mockResolvedValue({ id: "11", currentVersionId: "v1" })
+    mocks.findByIdForWorkspace.mockResolvedValue(messagingContactInbox)
   })
 
   const start = (overrides: Record<string, unknown> = {}) =>
     run(overrides, { type: "startAnotherFlow", nodeId: undefined })
+
+  test.each([
+    ["a post comment", "comments"],
+    ["a live comment", "liveComments"],
+  ])("a contact created by %s who never messaged is skipped", async (_label, source) => {
+    mocks.findByIdForWorkspace.mockResolvedValue({
+      id: "ci-1",
+      source,
+      lastIncomingMessageAt: null,
+    })
+
+    expect(await start()).toEqual({
+      status: "skipped",
+      reason: "contactNeverMessaged",
+    })
+    expect(mocks.queueAdd).not.toHaveBeenCalled()
+  })
+
+  test("a commenter who has since messaged gets the flow", async () => {
+    mocks.findByIdForWorkspace.mockResolvedValue({
+      id: "ci-1",
+      source: "comments",
+      lastIncomingMessageAt: new Date("2026-11-01T00:00:00Z"),
+    })
+
+    expect(await start()).toEqual({ status: "succeeded" })
+    expect(mocks.queueAdd).toHaveBeenCalledTimes(1)
+  })
+
+  // A "New Contact" trigger fires before a messaging contact's first DM is
+  // stored, so "never messaged" alone must not skip it.
+  test("a contact created by a message is not skipped before its first DM is stored", async () => {
+    mocks.findByIdForWorkspace.mockResolvedValue({
+      id: "ci-1",
+      source: "inboundMessage",
+      lastIncomingMessageAt: null,
+    })
+
+    expect(await start()).toEqual({ status: "succeeded" })
+    expect(mocks.queueAdd).toHaveBeenCalledTimes(1)
+  })
 
   test("a flow started by a Decision of the same flow is not restarted (self-loop)", async () => {
     const outcome = await start({ decisionFlowOrigin: { flowId: "11" } })
