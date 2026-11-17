@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
-const { findFirst, resolveTenantOwnerId } = vi.hoisted(() => ({
-  findFirst: vi.fn(),
+const { findEmailCached, resolveTenantOwnerId } = vi.hoisted(() => ({
+  findEmailCached: vi.fn(),
   resolveTenantOwnerId: vi.fn(),
 }))
 
@@ -9,8 +9,8 @@ vi.mock("@chatbotx.io/business/errors", () => ({
   tenantOwnerEmailReservedException: () =>
     Object.assign(new Error("reserved"), { code: "tenantOwnerEmailReserved" }),
 }))
-vi.mock("@chatbotx.io/database/client", () => ({
-  db: { query: { userModel: { findFirst } } },
+vi.mock("@chatbotx.io/business", () => ({
+  userService: { findEmailCached },
 }))
 vi.mock("@chatbotx.io/database/schema", () => ({ ROOT_TENANT_ID: "1" }))
 vi.mock("../src/tenant-context", () => ({ resolveTenantOwnerId }))
@@ -20,7 +20,7 @@ import { assertNotTenantOwnerEmail } from "../src/tenant-owner-email"
 beforeEach(() => {
   vi.clearAllMocks()
   resolveTenantOwnerId.mockResolvedValue("owner-1")
-  findFirst.mockResolvedValue({ email: "Owner@Example.com" })
+  findEmailCached.mockResolvedValue("Owner@Example.com")
 })
 
 describe("assertNotTenantOwnerEmail", () => {
