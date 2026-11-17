@@ -9423,7 +9423,7 @@
     },
     "duplicateDialog": {
       "title": "Duplicar minigame",
-      "description": "Isso cria uma cópia do minigame com todas as configurações. Os prêmios não são copiados — adicione-os à cópia depois.",
+      "description": "Isso cria uma cópia do minigame com todas as configurações. Os prêmios e a imagem dos prêmios não são copiados, e a cópia começa desativada — adicione prêmios e depois ative-a.",
       "success": "Minigame duplicado com sucesso"
     }
   },

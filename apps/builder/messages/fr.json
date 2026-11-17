@@ -9423,7 +9423,7 @@
     },
     "duplicateDialog": {
       "title": "Dupliquer le mini-jeu",
-      "description": "Une copie du mini-jeu sera créée avec tous ses paramètres. Les lots ne sont pas copiés : ajoutez-les ensuite à la copie.",
+      "description": "Une copie du mini-jeu sera créée avec tous ses paramètres. Les lots et l'image des lots ne sont pas copiés, et la copie est désactivée au départ : ajoutez des lots, puis activez-la.",
       "success": "Mini-jeu dupliqué avec succès"
     }
   },

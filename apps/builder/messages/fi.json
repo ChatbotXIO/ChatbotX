@@ -9423,7 +9423,7 @@
     },
     "duplicateDialog": {
       "title": "Monista minipeli",
-      "description": "Tämä luo minipelistä kopion kaikkine asetuksineen. Palkintoja ei kopioida – lisää ne kopioon jälkikäteen.",
+      "description": "Tämä luo minipelistä kopion kaikkine asetuksineen. Palkintoja ja palkintokuvaa ei kopioida, ja kopio on aluksi pois päältä – lisää palkinnot ja ota se sitten käyttöön.",
       "success": "Minipeli monistettu"
     }
   },

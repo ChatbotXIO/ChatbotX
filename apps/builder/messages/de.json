@@ -9423,7 +9423,7 @@
     },
     "duplicateDialog": {
       "title": "Minispiel duplizieren",
-      "description": "Dadurch wird eine Kopie des Minispiels mit allen Einstellungen erstellt. Preise werden nicht kopiert – füge sie anschließend zur Kopie hinzu.",
+      "description": "Dadurch wird eine Kopie des Minispiels mit allen Einstellungen erstellt. Preise und das Preisbild werden nicht kopiert, und die Kopie ist zunächst deaktiviert – füge Preise hinzu und aktiviere sie dann.",
       "success": "Minispiel erfolgreich dupliziert"
     }
   },

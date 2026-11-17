@@ -41,7 +41,14 @@ const source = (name: string) => ({
   type: "jackpot",
   enabled: true,
   generalSettings: { name, showName: true },
-  appearance: { backgroundColor: "#000000" },
+  appearance: {
+    backgroundColor: "#000000",
+    backgroundImage: { mode: "url", url: "https://cdn.example/bg.png" },
+    prizeDescriptionImage: {
+      mode: "url",
+      url: "https://cdn.example/prizes.png",
+    },
+  },
   playerSettings: { drawsPerPerson: 3 },
   prizeSettings: {
     prizes: [
@@ -77,7 +84,7 @@ beforeEach(() => {
 })
 
 describe("minigameService.duplicate", () => {
-  test("copies settings but not prizes, plays, or counters", async () => {
+  test("copies settings but not prizes, prize image, plays, or counters, and starts disabled", async () => {
     findFirst.mockResolvedValue(source("Spin"))
     findMany.mockResolvedValue([])
 
@@ -86,11 +93,15 @@ describe("minigameService.duplicate", () => {
     const [values] = inserted()
     expect(values).toEqual({
       workspaceId: "ws-1",
-      enabled: true,
+      enabled: false,
       name: "Spin - Copy",
       type: "jackpot",
       generalSettings: { name: "Spin - Copy", showName: true },
-      appearance: { backgroundColor: "#000000" },
+      appearance: {
+        backgroundColor: "#000000",
+        backgroundImage: { mode: "url", url: "https://cdn.example/bg.png" },
+        prizeDescriptionImage: { mode: "file", url: "" },
+      },
       playerSettings: { drawsPerPerson: 3 },
       prizeSettings: {
         prizes: [],

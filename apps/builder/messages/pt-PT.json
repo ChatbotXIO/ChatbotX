@@ -9423,7 +9423,7 @@
     },
     "duplicateDialog": {
       "title": "Duplicar minijogo",
-      "description": "Isto cria uma cópia do minijogo com todas as definições. Os prémios não são copiados — adicione-os à cópia depois.",
+      "description": "Isto cria uma cópia do minijogo com todas as definições. Os prémios e a imagem dos prémios não são copiados, e a cópia começa desativada — adicione prémios e depois ative-a.",
       "success": "Minijogo duplicado com sucesso"
     }
   },

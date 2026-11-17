@@ -9423,7 +9423,7 @@
     },
     "duplicateDialog": {
       "title": "Duplikat minigame",
-      "description": "Ini akan membuat salinan minigame dengan semua pengaturannya. Hadiah tidak disalin — tambahkan ke salinan setelahnya.",
+      "description": "Ini akan membuat salinan minigame dengan semua pengaturannya. Hadiah dan gambar hadiah tidak disalin, dan salinan dimulai dalam keadaan nonaktif — tambahkan hadiah, lalu aktifkan.",
       "success": "Minigame berhasil diduplikat"
     }
   },

@@ -9423,7 +9423,7 @@
     },
     "duplicateDialog": {
       "title": "Duplică minijocul",
-      "description": "Se va crea o copie a minijocului cu toate setările. Premiile nu sunt copiate — adaugă-le ulterior în copie.",
+      "description": "Se va crea o copie a minijocului cu toate setările. Premiile și imaginea premiilor nu sunt copiate, iar copia pornește dezactivată — adaugă premii, apoi activează-o.",
       "success": "Minijocul a fost duplicat cu succes"
     }
   },

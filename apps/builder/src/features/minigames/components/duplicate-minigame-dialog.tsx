@@ -49,8 +49,16 @@ export function DuplicateMinigameDialog({
     },
   )
 
+  // Closing while the copy is being created would still create it and then
+  // jump to its edit page, so Cancel/Esc/overlay are ignored until it settles.
+  const handleOpenChange = (nextOpen: boolean) => {
+    if (!(nextOpen || isPending)) {
+      onOpenChange(false)
+    }
+  }
+
   return (
-    <Dialog onOpenChange={onOpenChange} open={open}>
+    <Dialog onOpenChange={handleOpenChange} open={open}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>{t("minigames.duplicateDialog.title")}</DialogTitle>
@@ -59,7 +67,11 @@ export function DuplicateMinigameDialog({
           </DialogDescription>
         </DialogHeader>
         <DialogFooter>
-          <Button onClick={() => onOpenChange(false)} variant="ghost">
+          <Button
+            disabled={isPending}
+            onClick={() => handleOpenChange(false)}
+            variant="ghost"
+          >
             {t("actions.cancel")}
           </Button>
           <Button disabled={isPending || !minigameId} onClick={() => execute()}>

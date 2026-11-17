@@ -55,6 +55,14 @@ function withoutPrizes(
   }
 }
 
+/**
+ * The prize description image pictures the source's prizes, which the copy
+ * does not have, so the copy starts without it. Other images are kept.
+ */
+function withoutPrizeImage(appearance: MinigameAppearance): MinigameAppearance {
+  return { ...appearance, prizeDescriptionImage: { mode: "file", url: "" } }
+}
+
 type ListInput = {
   workspaceId: string
   page?: number
@@ -344,8 +352,10 @@ class MinigameService extends BaseService {
 
   /**
    * Copies a minigame's settings into a new minigame named `<name> - Copy`
-   * (then `- Copy 2`, `- Copy 3`, … while taken). Prizes are not copied (see
-   * `withoutPrizes`); plays, players, and counters start from zero.
+   * (then `- Copy 2`, `- Copy 3`, … while taken). Prizes and the prize
+   * description image are not copied (see `withoutPrizes`,
+   * `withoutPrizeImage`); plays, players, and counters start from zero. The
+   * copy starts disabled so its play link is not live before it has prizes.
    */
   async duplicate(input: {
     workspaceId: string
@@ -369,12 +379,12 @@ class MinigameService extends BaseService {
           .insert(minigameModel)
           .values({
             workspaceId: input.workspaceId,
-            enabled: source.enabled,
+            enabled: false,
             ...this.toColumns({
               workspaceId: input.workspaceId,
               type: source.type,
               generalSettings: { ...source.generalSettings, name },
-              appearance: source.appearance,
+              appearance: withoutPrizeImage(source.appearance),
               playerSettings: source.playerSettings,
               prizeSettings: withoutPrizes(source.prizeSettings),
               winningMessageSettings: source.winningMessageSettings,

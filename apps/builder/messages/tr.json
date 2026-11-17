@@ -9423,7 +9423,7 @@
     },
     "duplicateDialog": {
       "title": "Mini oyunu çoğalt",
-      "description": "Tüm ayarlarıyla mini oyunun bir kopyası oluşturulur. Ödüller kopyalanmaz — bunları daha sonra kopyaya ekleyin.",
+      "description": "Tüm ayarlarıyla mini oyunun bir kopyası oluşturulur. Ödüller ve ödül görseli kopyalanmaz, kopya kapalı olarak başlar — ödülleri ekleyin, ardından açın.",
       "success": "Mini oyun başarıyla çoğaltıldı"
     }
   },

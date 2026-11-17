@@ -9481,7 +9481,7 @@
     },
     "duplicateDialog": {
       "title": "Duplicate minigame",
-      "description": "This creates a copy of the minigame with all its settings. Prizes are not copied — add them to the copy afterwards.",
+      "description": "This creates a copy of the minigame with all its settings. Prizes and the prize image are not copied, and the copy starts turned off — add prizes, then turn it on.",
       "success": "Minigame duplicated successfully"
     }
   },
