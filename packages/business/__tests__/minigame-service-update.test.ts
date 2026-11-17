@@ -40,6 +40,10 @@ vi.mock("@chatbotx.io/database/client", () => ({
   isUniqueViolationError: vi.fn(() => false),
 }))
 
+vi.mock("@chatbotx.io/database/repositories", () => ({
+  minigameRepository: { listNamesWithPrefix: vi.fn() },
+}))
+
 vi.mock("@chatbotx.io/database/schema", () => ({
   minigameModel: {
     id: "id",
