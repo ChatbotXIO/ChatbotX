@@ -56,6 +56,10 @@ import { handleSendGoogleAdsConversion } from "./handlers/google-ads/send-conver
 import { resumeHeavyStep } from "./handlers/heavy-step-resume"
 import { handleChannelLabelWebhook } from "./handlers/inbox_labels"
 import { processIncomingMessage } from "./handlers/incoming-message"
+import {
+  deleteIncomingMessage,
+  updateIncomingMessage,
+} from "./handlers/incoming-message-change"
 import { processLeadgen } from "./handlers/lead-ads"
 import { processMarketingMessageWebhook } from "./handlers/marketing-message-webhook"
 import { handleMessageStatus } from "./handlers/message-status"
@@ -64,7 +68,6 @@ import { handleProviderAccountEvent } from "./handlers/provider-account-event"
 import { runQuickReplyFollowUpResume } from "./handlers/quick-reply-resume"
 import {
   deleteIncomingComment,
-  deleteIncomingMessage,
   processMessageReaction,
   receiveComment,
   updateIncomingComment,
@@ -284,7 +287,11 @@ function startIntegrationWorker() {
               return
             }
             case IntegrationJobAction.deleteIncomingMessage: {
-              await deleteIncomingMessage(job.data.data)
+              await deleteIncomingMessage(job.data.data, job)
+              return
+            }
+            case IntegrationJobAction.updateIncomingMessage: {
+              await updateIncomingMessage(job.data.data, job)
               return
             }
             case IntegrationJobAction.messageReaction: {

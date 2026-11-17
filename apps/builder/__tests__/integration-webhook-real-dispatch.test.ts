@@ -178,64 +178,159 @@ describe("credential-scoped webhook real dispatch", () => {
       undefined,
     )
   })
-  test("dispatches coexistence payloads through the credential-scoped WhatsApp route", async () => {
-    const clientSecret = "whatsapp-secret"
-    const body = JSON.stringify({
-      entry: [
-        {
-          changes: [
-            {
-              field: "smb_message_echoes",
-              value: {
-                message_echoes: [{ id: "wamid.echo-1" }],
-                metadata: { phone_number_id: "phone-1" },
+  describe("coexistence webhooks through the credential-scoped WhatsApp route", () => {
+    const dispatchChange = async (
+      field: string,
+      value: Record<string, unknown>,
+    ) => {
+      const clientSecret = "whatsapp-secret"
+      const body = JSON.stringify({
+        entry: [
+          {
+            changes: [
+              {
+                field,
+                value: { ...value, metadata: { phone_number_id: "phone-1" } },
               },
-            },
-          ],
+            ],
+          },
+        ],
+        object: "whatsapp_business_account",
+      })
+      const signature = createHmac("sha256", clientSecret)
+        .update(body)
+        .digest("hex")
+
+      findDecryptedForWebhook.mockResolvedValue({
+        config: {
+          clientId: "whatsapp-app",
+          clientSecret,
+          verifyToken: "verify-token",
         },
-      ],
-      object: "whatsapp_business_account",
-    })
-    const signature = createHmac("sha256", clientSecret)
-      .update(body)
-      .digest("hex")
+        userId: "owner-1",
+      })
 
-    findDecryptedForWebhook.mockResolvedValue({
-      config: {
-        clientId: "whatsapp-app",
-        clientSecret,
-        verifyToken: "verify-token",
-      },
-      userId: "owner-1",
-    })
+      const response = await handleWebhook(
+        "whatsapp",
+        asNextRequest(
+          "https://broker.test/integrations/whatsapp/webhook/c/credential-1",
+          body,
+          { "X-Hub-Signature-256": `sha256=${signature}` },
+        ),
+        "credential-1",
+      )
 
-    const response = await handleWebhook(
-      "whatsapp",
-      asNextRequest(
-        "https://broker.test/integrations/whatsapp/webhook/c/credential-1",
-        body,
-        { "X-Hub-Signature-256": `sha256=${signature}` },
-      ),
-      "credential-1",
-    )
+      expect(response.status).toBe(200)
+      await expect(response.text()).resolves.toBe("ok")
+    }
 
-    expect(response.status).toBe(200)
-    await expect(response.text()).resolves.toBe("ok")
-    expect(identifyInboxAndIntegrationAuthFromIdentifier).toHaveBeenCalledWith(
-      "whatsapp",
-      "phone-1",
-    )
-    expect(integrationQueueAdd).toHaveBeenCalledWith(
-      "coexistWhatsappBuffer",
-      expect.objectContaining({
-        data: expect.objectContaining({
-          phoneNumberId: "phone-1",
+    const dispatchEcho = (echo: Record<string, unknown>) =>
+      dispatchChange("smb_message_echoes", { message_echoes: [echo] })
+
+    test("dispatches a history payload to the coexistence history buffer", async () => {
+      await dispatchChange("history", { history: [{ dummy: true }] })
+
+      expect(
+        identifyInboxAndIntegrationAuthFromIdentifier,
+      ).toHaveBeenCalledWith("whatsapp", "phone-1")
+      expect(integrationQueueAdd).toHaveBeenCalledWith(
+        "coexistWhatsappBuffer",
+        expect.objectContaining({
+          data: expect.objectContaining({ phoneNumberId: "phone-1" }),
+          type: "coexistWhatsappBuffer",
         }),
-        type: "coexistWhatsappBuffer",
-      }),
-      expect.objectContaining({
-        jobId: expect.stringMatching(COEXIST_JOB_ID),
-      }),
-    )
+        expect.objectContaining({
+          jobId: expect.stringMatching(COEXIST_JOB_ID),
+        }),
+      )
+    })
+
+    test("dispatches an edit echo as a live updateIncomingMessage job", async () => {
+      await dispatchEcho({
+        id: "wamid.edit-1",
+        to: "16505551234",
+        to_user_id: "US.1",
+        type: "edit",
+        edit: {
+          original_message_id: "wamid.original",
+          message: { type: "text", text: { body: "fixed" } },
+        },
+      })
+
+      expect(integrationQueueAdd).toHaveBeenCalledWith(
+        "updateIncomingMessage",
+        expect.objectContaining({
+          type: "updateIncomingMessage",
+          data: expect.objectContaining({
+            integrationIdentifier: "phone-1",
+            messageId: "wamid.original",
+            newText: "fixed",
+            retryIfMissing: true,
+          }),
+        }),
+        expect.objectContaining({
+          jobId: "wa-smb-edit-phone-1-wamid.edit-1",
+          attempts: 6,
+        }),
+      )
+      expect(integrationQueueAdd).not.toHaveBeenCalledWith(
+        "coexistWhatsappBuffer",
+        expect.anything(),
+        expect.anything(),
+      )
+    })
+
+    test("dispatches a revoke echo as a live deleteIncomingMessage job", async () => {
+      await dispatchEcho({
+        id: "wamid.revoke-1",
+        type: "revoke",
+        revoke: { original_message_id: "wamid.original" },
+      })
+
+      expect(integrationQueueAdd).toHaveBeenCalledWith(
+        "deleteIncomingMessage",
+        expect.objectContaining({
+          type: "deleteIncomingMessage",
+          data: expect.objectContaining({
+            messageId: "wamid.original",
+            retryIfMissing: true,
+          }),
+        }),
+        expect.objectContaining({
+          jobId: "wa-smb-revoke-phone-1-wamid.revoke-1",
+        }),
+      )
+    })
+
+    test("dispatches a message the business sent as a live incomingMessageEcho job", async () => {
+      await dispatchEcho({
+        id: "wamid.echo-2",
+        to: "16505551234",
+        to_user_id: "US.1",
+        type: "text",
+        text: { body: "hi" },
+      })
+
+      expect(integrationQueueAdd).toHaveBeenCalledWith(
+        "incomingMessageEcho",
+        expect.objectContaining({
+          type: "incomingMessageEcho",
+          data: expect.objectContaining({
+            integrationType: "whatsapp",
+            integrationIdentifier: "phone-1",
+            payload: expect.objectContaining({ kind: "smbMessageEcho" }),
+          }),
+        }),
+        expect.objectContaining({
+          jobId: "wa-smb-message-phone-1-wamid.echo-2",
+          attempts: 5,
+        }),
+      )
+      expect(integrationQueueAdd).not.toHaveBeenCalledWith(
+        "coexistWhatsappBuffer",
+        expect.anything(),
+        expect.anything(),
+      )
+    })
   })
 })

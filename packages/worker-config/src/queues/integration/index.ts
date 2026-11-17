@@ -56,6 +56,7 @@ export const IntegrationJobAction = {
   updateIncomingComment: "updateIncomingComment",
   deleteIncomingComment: "deleteIncomingComment",
   deleteIncomingMessage: "deleteIncomingMessage",
+  updateIncomingMessage: "updateIncomingMessage",
   messageReaction: "messageReaction",
   messageStatus: "messageStatus",
   runFlowPostback: "runFlowPostback",
@@ -271,13 +272,39 @@ export type IntegrationJobDeleteIncomingComment = {
   }
 }
 
+/**
+ * Optional for the producers that change a stored message by its provider id.
+ * Absent (a Messenger unsend, a job queued before it existed) keeps the original
+ * behavior: a missing row only warns.
+ */
+export type IncomingMessageChangeOptions = {
+  /**
+   * The message may still be on its way (its own job has not stored it yet):
+   * throw on a missing row so the job retries, warn once on the last attempt,
+   * and wait for the conversation's message ingress before publishing the
+   * change (best effort: it is published anyway when the wait times out).
+   */
+  retryIfMissing?: boolean
+}
+
 export type IntegrationJobDeleteIncomingMessage = {
   type: typeof IntegrationJobAction.deleteIncomingMessage
   data: {
     integrationType: string
     integrationIdentifier: string
     messageId: string
-  }
+  } & IncomingMessageChangeOptions
+}
+
+/** The provider edited a message already stored: replace its text. */
+export type IntegrationJobUpdateIncomingMessage = {
+  type: typeof IntegrationJobAction.updateIncomingMessage
+  data: {
+    integrationType: string
+    integrationIdentifier: string
+    messageId: string
+    newText: string
+  } & IncomingMessageChangeOptions
 }
 
 export type IntegrationJobMessageReaction = {
@@ -1474,6 +1501,7 @@ export type IntegrationJobData =
   | IntegrationJobUpdateIncomingComment
   | IntegrationJobDeleteIncomingComment
   | IntegrationJobDeleteIncomingMessage
+  | IntegrationJobUpdateIncomingMessage
   | IntegrationJobMessageReaction
   | IntegrationJobMessageStatus
   | IntegrationJobRecordEmailTrackingTransition

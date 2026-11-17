@@ -1007,6 +1007,121 @@ describe("chat store conversation updates", () => {
     unsubscribe()
   })
 
+  describe("edit and unsend keep the conversation list preview in step", () => {
+    const withPreview = (conversationId: string, previewId: string) => ({
+      ...makeConversation(conversationId, new Date("2026-01-01T00:00:00Z")),
+      messages: [
+        {
+          ...makeMessage(
+            conversationId,
+            new Date("2026-01-01T00:00:00Z"),
+            previewId,
+          ),
+          text: "original",
+          deletedAt: null,
+        },
+      ],
+    })
+
+    const seed = () => {
+      const store = createChatStore()
+      store.setState({
+        conversations: [
+          withPreview("conv-1", "msg-last"),
+          withPreview("conv-2", "msg-other"),
+        ] as never,
+        activeConversationId: "conv-1",
+        messages: [
+          {
+            ...makeMessage(
+              "conv-1",
+              new Date("2026-01-01T00:00:00Z"),
+              "msg-last",
+            ),
+            text: "original",
+            deletedAt: null,
+          },
+        ] as never,
+      })
+      return store
+    }
+
+    const previewOf = (
+      store: ReturnType<typeof createChatStore>,
+      conversationId: string,
+    ) =>
+      store
+        .getState()
+        .conversations.find(
+          (conversation) => conversation.id === conversationId,
+        )?.messages[0]
+
+    test("an edit changes the preview text as well as the open timeline", () => {
+      const store = seed()
+
+      store.getState().updateMessageText("msg-last", "edited", {
+        newAttachmentPath: null,
+        removedAttachment: false,
+      })
+
+      expect(store.getState().messages[0]?.text).toBe("edited")
+      expect(previewOf(store, "conv-1")?.text).toBe("edited")
+    })
+
+    test("an edit changes the preview of a conversation that is not open", () => {
+      const store = seed()
+
+      store.getState().updateMessageText("msg-other", "edited elsewhere", {
+        newAttachmentPath: null,
+        removedAttachment: false,
+      })
+
+      expect(previewOf(store, "conv-2")?.text).toBe("edited elsewhere")
+      expect(store.getState().messages[0]?.text).toBe("original")
+    })
+
+    test("an unsend marks the preview deleted as well as the open timeline", () => {
+      const store = seed()
+
+      store.getState().markMessagesDeleted(["msg-last"])
+
+      expect(store.getState().messages[0]?.deletedAt).toBeInstanceOf(Date)
+      expect(previewOf(store, "conv-1")?.deletedAt).toBeInstanceOf(Date)
+    })
+
+    test("restoring a message whose unsend failed clears the preview mark as well", () => {
+      const store = seed()
+      store.getState().markMessagesDeleted(["msg-last"])
+
+      store.getState().markMessagesRestored(["msg-last"])
+
+      expect(store.getState().messages[0]?.deletedAt).toBeNull()
+      expect(previewOf(store, "conv-1")?.deletedAt).toBeNull()
+    })
+
+    test("an edit or unsend of a message that is not a preview leaves the previews alone", () => {
+      const store = seed()
+      const before = store.getState().conversations
+
+      store.getState().updateMessageText("msg-older", "edited", {
+        newAttachmentPath: null,
+        removedAttachment: false,
+      })
+      store.getState().markMessagesDeleted(["msg-older"])
+
+      expect(store.getState().conversations).toBe(before)
+    })
+
+    test("only the matching preview changes, the other conversations keep their reference", () => {
+      const store = seed()
+      const untouched = previewOf(store, "conv-2")
+
+      store.getState().markMessagesDeleted(["msg-last"])
+
+      expect(previewOf(store, "conv-2")).toBe(untouched)
+    })
+  })
+
   test("keeps the state reference for unmatched realtime mutations", () => {
     const store = createChatStore()
     const before = store.getState()

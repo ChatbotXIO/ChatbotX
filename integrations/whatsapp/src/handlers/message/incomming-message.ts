@@ -20,6 +20,14 @@ import {
   readThreadControlReceiveInfo,
 } from "../../lib/conversation-routing"
 import { extractWhatsappUserIdentity } from "../../lib/raw-identity"
+import {
+  buildSmbEchoContact,
+  readSmbEchoMedia,
+  readSmbEchoText,
+  readSmbMessageEchoPayload,
+  type SmbMessageEchoEnvelope,
+  type SmbMessageEchoPayload,
+} from "../../lib/smb-message-echo"
 import { asString } from "../../lib/value"
 import type { WhatsappAuthValue, WhatsappWebhookEvent } from "../../schema"
 import { readFlowResponseMedia } from "./incoming-flow-media"
@@ -305,12 +313,84 @@ const messageParsers: {
   video: parseVideoMessage,
 }
 
+type WhatsappReceiveMessageHandler =
+  MessageHandlers<WhatsappAuthValue>["receiveMessage"]
+type WhatsappReceiveMessageResult = Awaited<
+  ReturnType<WhatsappReceiveMessageHandler>
+>
+
+/**
+ * What an echo contributes to the stored message: its text, or the media the
+ * live media parser downloaded for it.
+ */
+const readSmbEchoFragment = async (props: {
+  ctx: Parameters<WhatsappReceiveMessageHandler>[0]["ctx"]
+  echo: SmbMessageEchoEnvelope
+}): Promise<IncomingMessageFragment> => {
+  const { ctx, echo } = props
+  const content = readSmbEchoMedia(echo)
+  const parse = content ? messageParsers[content.mediaType] : undefined
+  if (!(content && parse)) {
+    return { text: readSmbEchoText(echo) }
+  }
+  // Same documented assertion as the customer path: the registry key is the
+  // media type just read, which TypeScript cannot prove through the lookup.
+  return await parse({ [content.mediaType]: content.media } as never, {
+    ctx,
+    whatsappClient: getWhatsappClient(ctx.auth),
+    receivedAt: new Date(),
+  })
+}
+
+/**
+ * A message the business sent from the WhatsApp Business app or a linked
+ * device, as an outgoing first-party message on the customer it went to.
+ *
+ * Media goes through the same live parsers as a customer's media (download and
+ * storage included), but only what is storable is kept: the parsers also read
+ * customer-only data (a referral, a Google click, a postback, a flow token)
+ * that an echo must never carry into the conversation.
+ */
+const parseSmbMessageEcho = async (props: {
+  ctx: Parameters<WhatsappReceiveMessageHandler>[0]["ctx"]
+  payload: SmbMessageEchoPayload
+}): Promise<WhatsappReceiveMessageResult> => {
+  const { ctx, payload } = props
+  const { echo } = payload
+  const fragment = await readSmbEchoFragment({ ctx, echo })
+
+  // Only what is storable is kept: a parser's referral, Google click, postback
+  // or flow token belongs to a customer's message, never to an echo.
+  const message: IncomingMessage = {
+    sourceId: echo.id,
+    messageType: messageTypes.enum.outgoing,
+    contentType: fragment.contentType ?? contentTypes.enum.text,
+    text: fragment.text,
+    attachments: fragment.attachments,
+    contentAttributes: fragment.contentAttributes,
+  }
+
+  return {
+    message,
+    contact: buildSmbEchoContact(echo, payload.contact),
+    postbackAction: null,
+    quickReplyAction: null,
+    ref: null,
+    echoOrigin: echoOrigins.enum.firstParty,
+  }
+}
+
 export const receiveMessage: MessageHandlers<WhatsappAuthValue>["receiveMessage"] =
   async (props) => {
     const {
       ctx,
       data: { payload },
     } = props
+
+    const smbMessageEcho = readSmbMessageEchoPayload(payload)
+    if (smbMessageEcho) {
+      return await parseSmbMessageEcho({ ctx, payload: smbMessageEcho })
+    }
 
     const data = payload as WhatsappWebhookEvent
     const threadControl = readThreadControlReceiveInfo(data.raw)

@@ -431,6 +431,31 @@ const replaceMessageById = (
   return { messages: nextMessages }
 }
 
+// The message the conversation list shows as a conversation's latest.
+type ConversationPreviewMessage =
+  ListConversationsResponse["data"][number]["messages"][number]
+
+// Returns a `set` patch with `patch` applied to every conversation whose list
+// preview is one of `messageIds`, or `null` when none is so the caller can hand
+// back the untouched state. The open timeline (`state.messages`) is a separate
+// copy of the same message, so an edit or an unsend has to reach both.
+const patchConversationPreviews = (
+  conversations: ListConversationsResponse["data"],
+  messageIds: ReadonlySet<string>,
+  patch: (preview: ConversationPreviewMessage) => ConversationPreviewMessage,
+): { conversations: ListConversationsResponse["data"] } | null => {
+  let changed = false
+  const nextConversations = conversations.map((conversation) => {
+    const [preview] = conversation.messages
+    if (!(preview && messageIds.has(preview.id))) {
+      return conversation
+    }
+    changed = true
+    return { ...conversation, messages: [patch(preview)] }
+  })
+  return changed ? { conversations: nextConversations } : null
+}
+
 const prependOlderMessages = (
   currentMessages: MessageResourceWithRelations[],
   olderPage: MessageResourceWithRelations[],
@@ -1152,6 +1177,14 @@ export const createChatStore = (initialState: ChatStoreInitialState = {}) => {
           })
           return changed ? { messages } : state
         })
+        set(
+          (state) =>
+            patchConversationPreviews(
+              state.conversations,
+              idSet,
+              (preview) => ({ ...preview, deletedAt: now }),
+            ) ?? state,
+        )
       },
 
       markMessagesRestored: (messageIds: string[]) => {
@@ -1161,6 +1194,14 @@ export const createChatStore = (initialState: ChatStoreInitialState = {}) => {
             idSet.has(message.id) ? { ...message, deletedAt: null } : message,
           ),
         }))
+        set(
+          (state) =>
+            patchConversationPreviews(
+              state.conversations,
+              idSet,
+              (preview) => ({ ...preview, deletedAt: null }),
+            ) ?? state,
+        )
       },
 
       markMessageFailed: (
@@ -1298,6 +1339,14 @@ export const createChatStore = (initialState: ChatStoreInitialState = {}) => {
                 ],
               }
             }) ?? state,
+        )
+        set(
+          (state) =>
+            patchConversationPreviews(
+              state.conversations,
+              new Set([messageId]),
+              (preview) => ({ ...preview, text: newText }),
+            ) ?? state,
         )
       },
 

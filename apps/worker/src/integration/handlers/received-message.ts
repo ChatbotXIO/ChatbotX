@@ -122,7 +122,6 @@ import {
   getInboundCartReplyJobId,
   IntegrationJobAction,
   type IntegrationJobDeleteIncomingComment,
-  type IntegrationJobDeleteIncomingMessage,
   type IntegrationJobMessageReaction,
   type IntegrationJobProcessCommentAutomation,
   type IntegrationJobReceiveComment,
@@ -134,6 +133,7 @@ import {
 } from "@chatbotx.io/worker-config"
 import { UnrecoverableError } from "bullmq"
 import { normalizeError } from "universal-error-normalizer"
+import { ingressConversationLockKey } from "../../lib/ingress-lock"
 import { LOCK_CONTENTION_POLICY } from "../../lib/lock-contention-deferral"
 import { logger } from "../../lib/logger"
 import {
@@ -167,6 +167,7 @@ import {
   emitStoredCommerceEvent,
   enrichInboundCommerce,
 } from "./inbound-commerce"
+import { applyIncomingTextUpdate } from "./incoming-message-change"
 import {
   awardCommentLeaderboard,
   awardInboundMessageLeaderboard,
@@ -1530,7 +1531,7 @@ const persistMessage = async (
 export const saveAndBroadcastMessage = async (
   props: SaveAndBroadcastMessageProps,
 ): Promise<SaveMessageResult> => {
-  const lockKey = `ingress:conv:${props.conversation.id}`
+  const lockKey = ingressConversationLockKey(props.conversation.id)
 
   // Serializes the insert → tracking → realtime → notification → event-bus
   // critical section. The repository's msg:upsert dedup lock is taken inside
@@ -2179,49 +2180,19 @@ export const receiveComment = async (
 // and broadcast the change to the inbox in real-time.
 export const updateIncomingComment = async (
   props: IntegrationJobUpdateIncomingComment["data"],
-): Promise<void> => {
-  const { integrationType, integrationIdentifier, commentId, newText } = props
-
-  const { inbox } =
-    await integrationService.identifyInboxAndIntegrationAuthFromIdentifier(
-      integrationType as IntegrationType,
-      integrationIdentifier,
-    )
-
-  const repository = await createMessageRepository()
-  const updated = await repository.updateTextBySourceId(
-    commentId,
-    inbox.workspaceId,
-    newText,
-  )
-
-  if (!updated) {
-    logger.warn({ commentId }, "updateIncomingComment: comment not found")
-    return
-  }
-
-  const conversation = await conversationService.findBy({
-    where: { id: updated.conversationId, workspaceId: inbox.workspaceId },
+): Promise<void> =>
+  await applyIncomingTextUpdate({
+    integrationType: props.integrationType,
+    integrationIdentifier: props.integrationIdentifier,
+    sourceId: props.commentId,
+    newText: props.newText,
+    action: "updateIncomingComment",
+    onMissing: () =>
+      logger.warn(
+        { commentId: props.commentId },
+        "updateIncomingComment: comment not found",
+      ),
   })
-  if (!conversation) {
-    logger.warn(
-      {
-        conversationId: updated.conversationId,
-        workspaceId: inbox.workspaceId,
-      },
-      "updateIncomingComment: conversation not found for realtime route",
-    )
-  }
-  queueWorkspaceRealtimeEvent(inbox.workspaceId, {
-    eventType: RealtimeEventType.messageUpdated,
-    data: {
-      messageId: updated.id,
-      newText,
-      removedAttachment: false,
-    },
-    route: routeForConversation(conversation),
-  })
-}
 
 // When a commenter deletes their comment, soft-delete it (and any
 // child comments) in the DB and broadcast the deletion to the inbox.
@@ -2259,53 +2230,6 @@ export const deleteIncomingComment = async (
         workspaceId: inbox.workspaceId,
       },
       "deleteIncomingComment: conversation not found for realtime route",
-    )
-  }
-  queueWorkspaceRealtimeEvent(inbox.workspaceId, {
-    eventType: RealtimeEventType.messageDeleted,
-    data: { messageIds },
-    route: routeForConversation(conversation),
-  })
-}
-
-// When a contact unsends a previously-sent DM, soft-delete it in the DB and
-// broadcast the deletion to the inbox — mirrors deleteIncomingComment, keyed
-// on the message's `mid` (already stored as Message.sourceId, see
-// saveAndBroadcastMessage above).
-export const deleteIncomingMessage = async (
-  props: IntegrationJobDeleteIncomingMessage["data"],
-): Promise<void> => {
-  const { integrationType, integrationIdentifier, messageId } = props
-
-  const { inbox } =
-    await integrationService.identifyInboxAndIntegrationAuthFromIdentifier(
-      integrationType as IntegrationType,
-      integrationIdentifier,
-    )
-
-  const repository = await createMessageRepository()
-  const deleted = await repository.deleteBySourceId(
-    messageId,
-    inbox.workspaceId,
-    new Date(),
-  )
-
-  if (deleted.length === 0) {
-    logger.warn({ messageId }, "deleteIncomingMessage: message not found")
-    return
-  }
-
-  const messageIds = deleted.map((row) => row.id)
-  const conversation = await conversationService.findBy({
-    where: { id: deleted[0].conversationId, workspaceId: inbox.workspaceId },
-  })
-  if (!conversation) {
-    logger.warn(
-      {
-        conversationId: deleted[0].conversationId,
-        workspaceId: inbox.workspaceId,
-      },
-      "deleteIncomingMessage: conversation not found for realtime route",
     )
   }
   queueWorkspaceRealtimeEvent(inbox.workspaceId, {
