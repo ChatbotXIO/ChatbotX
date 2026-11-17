@@ -11,6 +11,12 @@ import { isShutdownRequested, onShutdown } from "./shutdown"
 type QueueWorkerOptions<TData> = Omit<WorkerOptions, "connection"> & {
   /** Replaces the default `failed` logger (e.g. to mark a job's side effects). */
   onFailed?: (job: Job<TData> | undefined, err: Error) => void | Promise<void>
+  /**
+   * A failure the job is designed to retry (a race that resolves itself): the
+   * default logger then reports it at debug instead of error, so a healthy
+   * retry does not look like an outage. Ignored when `onFailed` is supplied.
+   */
+  isExpectedRetry?: (job: Job<TData>, err: Error) => boolean
 }
 
 /**
@@ -28,7 +34,7 @@ type QueueWorkerOptions<TData> = Omit<WorkerOptions, "connection"> & {
 export function createQueueWorker<TData>(
   queue: QueueName,
   processor: Processor<TData>,
-  { onFailed, ...options }: QueueWorkerOptions<TData> = {},
+  { onFailed, isExpectedRetry, ...options }: QueueWorkerOptions<TData> = {},
 ): Worker<TData> {
   if (isShutdownRequested()) {
     throw new Error(`Cannot start ${queue} worker: shutdown already requested`)
@@ -46,7 +52,8 @@ export function createQueueWorker<TData>(
   worker.on("failed", (job, err): Promise<void> | undefined => {
     if (!onFailed) {
       if (job) {
-        logger.error(
+        const level = isExpectedRetry?.(job, err) ? "debug" : "error"
+        logger[level](
           { err: normalizeError(err), queue, jobId: job.id },
           "Job has failed",
         )

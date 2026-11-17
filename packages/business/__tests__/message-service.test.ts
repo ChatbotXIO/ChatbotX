@@ -13,6 +13,7 @@ const mocks = vi.hoisted(() => {
     hardDeleteAllByContactInbox: vi.fn(),
     listIncomingTextsByContactInbox: vi.fn(),
     updateMessageText: vi.fn(),
+    updateTextBySourceId: vi.fn(),
     updateSendError: vi.fn(),
     updateSourceId: vi.fn(),
   }
@@ -373,5 +374,64 @@ describe("messageService", () => {
       message,
       attachments,
     )
+  })
+})
+
+describe("messageService changes by provider message id", () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    mocks.createMessageRepository.mockResolvedValue(mocks.repo)
+  })
+
+  test("updateTextBySourceId replaces the text in the caller's workspace and returns where the message is", async () => {
+    mocks.repo.updateTextBySourceId.mockResolvedValue({
+      id: "msg-1",
+      conversationId: "conv-1",
+    })
+
+    const result = await messageService.updateTextBySourceId({
+      sourceId: "wamid.1",
+      workspaceId: "ws-1",
+      text: "edited",
+    })
+
+    expect(mocks.repo.updateTextBySourceId).toHaveBeenCalledWith(
+      "wamid.1",
+      "ws-1",
+      "edited",
+    )
+    expect(result).toEqual({ id: "msg-1", conversationId: "conv-1" })
+  })
+
+  test("updateTextBySourceId returns null when no message has that id", async () => {
+    mocks.repo.updateTextBySourceId.mockResolvedValue(null)
+
+    await expect(
+      messageService.updateTextBySourceId({
+        sourceId: "wamid.missing",
+        workspaceId: "ws-1",
+        text: "edited",
+      }),
+    ).resolves.toBeNull()
+  })
+
+  test("deleteBySourceId soft-deletes in the caller's workspace and returns where the rows were", async () => {
+    const at = new Date("2026-11-17T00:00:00Z")
+    mocks.repo.deleteBySourceId.mockResolvedValue([
+      { id: "msg-1", conversationId: "conv-1" },
+    ])
+
+    const result = await messageService.deleteBySourceId({
+      sourceId: "wamid.1",
+      workspaceId: "ws-1",
+      createdAtHint: at,
+    })
+
+    expect(mocks.repo.deleteBySourceId).toHaveBeenCalledWith(
+      "wamid.1",
+      "ws-1",
+      at,
+    )
+    expect(result).toEqual([{ id: "msg-1", conversationId: "conv-1" }])
   })
 })

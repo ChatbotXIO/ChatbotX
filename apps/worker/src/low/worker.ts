@@ -16,11 +16,17 @@ import { coexistAttachmentDownload } from "../integration/handlers/coexist/attac
 import { updateContactAvatar } from "../integration/handlers/contact/update-avatar"
 import { contactMarkAsRead } from "../integration/handlers/conversation"
 import { processIncomingMessage } from "../integration/handlers/incoming-message"
+import {
+  deleteIncomingMessage,
+  MessageNotStoredYetError,
+  updateIncomingMessage,
+} from "../integration/handlers/incoming-message-change"
 import { handleMessageStatus } from "../integration/handlers/message-status"
 import { receiveComment } from "../integration/handlers/received-message"
 import { runIntegrationJobWithWebhookContext } from "../integration/job-context"
 import { processLeaderboardJob } from "../leaderboard/process-job"
 import { createQueueWorker } from "../lib/create-queue-worker"
+import { hasExhaustedAttempts } from "../lib/job-attempts"
 import { deferOnLockContention } from "../lib/lock-contention-deferral"
 import { logger } from "../lib/logger"
 import { resolveWorkspaceId } from "../lib/resolve-workspace-id"
@@ -78,6 +84,18 @@ async function processLowJob(
           case LowJobAction.contactMarkAsRead: {
             await runIntegrationJobWithWebhookContext(jobData, () =>
               contactMarkAsRead(jobData.data),
+            )
+            return
+          }
+          case LowJobAction.deleteIncomingMessage: {
+            await runIntegrationJobWithWebhookContext(jobData, () =>
+              deleteIncomingMessage(jobData.data, job),
+            )
+            return
+          }
+          case LowJobAction.updateIncomingMessage: {
+            await runIntegrationJobWithWebhookContext(jobData, () =>
+              updateIncomingMessage(jobData.data, job),
             )
             return
           }
@@ -155,7 +173,13 @@ function startLowWorker() {
         await settleMissedCommentReplay(job)
       }
     },
-    { concurrency: env.LOW_WORKER_CONCURRENCY },
+    {
+      concurrency: env.LOW_WORKER_CONCURRENCY,
+      // An edit or unsend can arrive before the message job stored its row; the
+      // retry resolves it, so it must not read as an outage in the logs.
+      isExpectedRetry: (job, err) =>
+        err instanceof MessageNotStoredYetError && !hasExhaustedAttempts(job),
+    },
   )
 
   // Rate-limited provider enrichment (contact relationship snapshots). Its own

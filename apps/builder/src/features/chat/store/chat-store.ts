@@ -431,6 +431,64 @@ const replaceMessageById = (
   return { messages: nextMessages }
 }
 
+// The message the conversation list shows as a conversation's latest.
+type ConversationPreviewMessage =
+  ListConversationsResponse["data"][number]["messages"][number]
+
+// A message stored at its provider time can reach the client after a newer one
+// (a delayed Business-app echo, for one). It then must not replace the newer
+// message the list shows. The same message again (an id or a client id match,
+// which is how the server copy of an optimistic send arrives) always applies.
+// An optimistic preview (no contact inbox yet) carries the browser's clock, not
+// the server's, so it is never treated as the newer one.
+const isOptimisticPreview = (preview: ConversationPreviewMessage): boolean =>
+  preview.contactInboxId === ""
+
+const isSameMessage = (
+  preview: ConversationPreviewMessage,
+  incoming: MessageResourceWithRelations,
+): boolean =>
+  preview.id === incoming.id ||
+  (Boolean(incoming.clientId) && preview.clientId === incoming.clientId)
+
+const isOlderThanPreview = (
+  preview: ConversationPreviewMessage | undefined,
+  incoming: MessageResourceWithRelations,
+): boolean => {
+  if (
+    !preview ||
+    isOptimisticPreview(preview) ||
+    isSameMessage(preview, incoming)
+  ) {
+    return false
+  }
+  return (
+    new Date(incoming.createdAt).getTime() <
+    new Date(preview.createdAt).getTime()
+  )
+}
+
+// Returns a `set` patch with `patch` applied to every conversation whose list
+// preview is one of `messageIds`, or `null` when none is so the caller can hand
+// back the untouched state. The open timeline (`state.messages`) is a separate
+// copy of the same message, so an edit or an unsend has to reach both.
+const patchConversationPreviews = (
+  conversations: ListConversationsResponse["data"],
+  messageIds: ReadonlySet<string>,
+  patch: (preview: ConversationPreviewMessage) => ConversationPreviewMessage,
+): { conversations: ListConversationsResponse["data"] } | null => {
+  let changed = false
+  const nextConversations = conversations.map((conversation) => {
+    const [preview] = conversation.messages
+    if (!(preview && messageIds.has(preview.id))) {
+      return conversation
+    }
+    changed = true
+    return { ...conversation, messages: [patch(preview)] }
+  })
+  return changed ? { conversations: nextConversations } : null
+}
+
 const prependOlderMessages = (
   currentMessages: MessageResourceWithRelations[],
   olderPage: MessageResourceWithRelations[],
@@ -1152,6 +1210,14 @@ export const createChatStore = (initialState: ChatStoreInitialState = {}) => {
           })
           return changed ? { messages } : state
         })
+        set(
+          (state) =>
+            patchConversationPreviews(
+              state.conversations,
+              idSet,
+              (preview) => ({ ...preview, deletedAt: now }),
+            ) ?? state,
+        )
       },
 
       markMessagesRestored: (messageIds: string[]) => {
@@ -1161,6 +1227,14 @@ export const createChatStore = (initialState: ChatStoreInitialState = {}) => {
             idSet.has(message.id) ? { ...message, deletedAt: null } : message,
           ),
         }))
+        set(
+          (state) =>
+            patchConversationPreviews(
+              state.conversations,
+              idSet,
+              (preview) => ({ ...preview, deletedAt: null }),
+            ) ?? state,
+        )
       },
 
       markMessageFailed: (
@@ -1298,6 +1372,14 @@ export const createChatStore = (initialState: ChatStoreInitialState = {}) => {
                 ],
               }
             }) ?? state,
+        )
+        set(
+          (state) =>
+            patchConversationPreviews(
+              state.conversations,
+              new Set([messageId]),
+              (preview) => ({ ...preview, text: newText }),
+            ) ?? state,
         )
       },
 
@@ -1505,6 +1587,7 @@ export const createChatStore = (initialState: ChatStoreInitialState = {}) => {
             ),
           )
           const lastMessageIndexByConversationId = new Map<string, number>()
+          let hasConversationChange = false
           let messages: MessageResourceWithRelations[] | null = null
           let messageIndexById = new Map<string, number>()
           let messageIndexByClientId = new Map<string, number>()
@@ -1522,20 +1605,29 @@ export const createChatStore = (initialState: ChatStoreInitialState = {}) => {
                 currentConversation,
                 message,
               )
+              const isLate = isOlderThanPreview(
+                currentConversation.messages[0],
+                message,
+              )
+              hasConversationChange = true
               conversationsById.set(message.conversationId, {
                 ...currentConversation,
                 ...(conversationPatch ?? {}),
                 ...readStatePatch,
-                messages: [message],
+                messages: isLate ? currentConversation.messages : [message],
                 lastActivityAt: latestActivityAt(
                   currentConversation.lastActivityAt,
                   message.createdAt,
                 ),
               })
-              lastMessageIndexByConversationId.set(
-                message.conversationId,
-                messageIndex,
-              )
+              // A late message adds no new activity, so it keeps the
+              // conversation where it is instead of moving it to the top.
+              if (!isLate) {
+                lastMessageIndexByConversationId.set(
+                  message.conversationId,
+                  messageIndex,
+                )
+              }
             } else {
               unmatchedWorkspaceId ??= message.workspaceId
             }
@@ -1597,7 +1689,7 @@ export const createChatStore = (initialState: ChatStoreInitialState = {}) => {
             }
           }
 
-          if (lastMessageIndexByConversationId.size === 0 && !messages) {
+          if (!(hasConversationChange || messages)) {
             return state
           }
 
@@ -1612,9 +1704,16 @@ export const createChatStore = (initialState: ChatStoreInitialState = {}) => {
               const conversation = conversationsById.get(conversationId)
               return conversation ? [conversation] : []
             }),
-            ...state.conversations.filter(
-              (conversation) => !movedConversationIdSet.has(conversation.id),
-            ),
+            // Conversations that were not moved still take their patches
+            // (e.g. the read state of a late agent reply).
+            ...state.conversations
+              .filter(
+                (conversation) => !movedConversationIdSet.has(conversation.id),
+              )
+              .map(
+                (conversation) =>
+                  conversationsById.get(conversation.id) ?? conversation,
+              ),
           ]
           return {
             conversations,

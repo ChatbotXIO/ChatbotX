@@ -1007,6 +1007,288 @@ describe("chat store conversation updates", () => {
     unsubscribe()
   })
 
+  describe("edit and unsend keep the conversation list preview in step", () => {
+    const withPreview = (conversationId: string, previewId: string) => ({
+      ...makeConversation(conversationId, new Date("2026-01-01T00:00:00Z")),
+      messages: [
+        {
+          ...makeMessage(
+            conversationId,
+            new Date("2026-01-01T00:00:00Z"),
+            previewId,
+          ),
+          text: "original",
+          deletedAt: null,
+        },
+      ],
+    })
+
+    const seed = () => {
+      const store = createChatStore()
+      store.setState({
+        conversations: [
+          withPreview("conv-1", "msg-last"),
+          withPreview("conv-2", "msg-other"),
+        ] as never,
+        activeConversationId: "conv-1",
+        messages: [
+          {
+            ...makeMessage(
+              "conv-1",
+              new Date("2026-01-01T00:00:00Z"),
+              "msg-last",
+            ),
+            text: "original",
+            deletedAt: null,
+          },
+        ] as never,
+      })
+      return store
+    }
+
+    const previewOf = (
+      store: ReturnType<typeof createChatStore>,
+      conversationId: string,
+    ) =>
+      store
+        .getState()
+        .conversations.find(
+          (conversation) => conversation.id === conversationId,
+        )?.messages[0]
+
+    test("an edit changes the preview text as well as the open timeline", () => {
+      const store = seed()
+
+      store.getState().updateMessageText("msg-last", "edited", {
+        newAttachmentPath: null,
+        removedAttachment: false,
+      })
+
+      expect(store.getState().messages[0]?.text).toBe("edited")
+      expect(previewOf(store, "conv-1")?.text).toBe("edited")
+    })
+
+    test("an edit changes the preview of a conversation that is not open", () => {
+      const store = seed()
+
+      store.getState().updateMessageText("msg-other", "edited elsewhere", {
+        newAttachmentPath: null,
+        removedAttachment: false,
+      })
+
+      expect(previewOf(store, "conv-2")?.text).toBe("edited elsewhere")
+      expect(store.getState().messages[0]?.text).toBe("original")
+    })
+
+    test("an unsend marks the preview deleted as well as the open timeline", () => {
+      const store = seed()
+
+      store.getState().markMessagesDeleted(["msg-last"])
+
+      expect(store.getState().messages[0]?.deletedAt).toBeInstanceOf(Date)
+      expect(previewOf(store, "conv-1")?.deletedAt).toBeInstanceOf(Date)
+    })
+
+    test("restoring a message whose unsend failed clears the preview mark as well", () => {
+      const store = seed()
+      store.getState().markMessagesDeleted(["msg-last"])
+
+      store.getState().markMessagesRestored(["msg-last"])
+
+      expect(store.getState().messages[0]?.deletedAt).toBeNull()
+      expect(previewOf(store, "conv-1")?.deletedAt).toBeNull()
+    })
+
+    test("an edit or unsend of a message that is not a preview leaves the previews alone", () => {
+      const store = seed()
+      const before = store.getState().conversations
+
+      store.getState().updateMessageText("msg-older", "edited", {
+        newAttachmentPath: null,
+        removedAttachment: false,
+      })
+      store.getState().markMessagesDeleted(["msg-older"])
+
+      expect(store.getState().conversations).toBe(before)
+    })
+
+    test("only the matching preview changes, the other conversations keep their reference", () => {
+      const store = seed()
+      const untouched = previewOf(store, "conv-2")
+
+      store.getState().markMessagesDeleted(["msg-last"])
+
+      expect(previewOf(store, "conv-2")).toBe(untouched)
+    })
+  })
+
+  describe("a late message does not replace a newer list preview", () => {
+    const previewFor = (id: string, createdAt: Date, clientId?: string) => ({
+      ...makeMessage("conv-1", createdAt, id),
+      ...(clientId ? { clientId } : {}),
+    })
+
+    const seed = (preview: ReturnType<typeof previewFor>) => {
+      const store = createChatStore()
+      store.setState({
+        conversations: [
+          {
+            ...makeConversation("conv-1", new Date("2026-01-01T00:10:00Z")),
+            messages: [preview],
+          },
+        ] as never,
+      })
+      return store
+    }
+
+    const previewIdOf = (store: ReturnType<typeof createChatStore>) =>
+      store.getState().conversations[0]?.messages[0]?.id
+
+    const newer = new Date("2026-01-01T00:10:00Z")
+    const older = new Date("2026-01-01T00:05:00Z")
+
+    test("handleNewMessages keeps the newer preview when an older message arrives late", () => {
+      const store = seed(previewFor("msg-new", newer))
+
+      store
+        .getState()
+        .handleNewMessages([makeMessage("conv-1", older, "msg-late") as never])
+
+      expect(previewIdOf(store)).toBe("msg-new")
+    })
+
+    test("a late older message does not lift its conversation above one with newer activity", () => {
+      const store = createChatStore()
+      const conversationA = {
+        ...makeConversation("conv-a", new Date("2026-01-01T10:00:00Z")),
+        messages: [
+          makeMessage("conv-a", new Date("2026-01-01T10:00:00Z"), "a-new"),
+        ],
+      }
+      const conversationB = {
+        ...makeConversation("conv-b", new Date("2026-01-01T10:05:00Z")),
+        messages: [
+          makeMessage("conv-b", new Date("2026-01-01T10:05:00Z"), "b-new"),
+        ],
+      }
+      store.setState({
+        conversations: [conversationB, conversationA] as never,
+      })
+
+      store
+        .getState()
+        .handleNewMessages([
+          makeMessage(
+            "conv-a",
+            new Date("2026-01-01T09:55:00Z"),
+            "a-late",
+          ) as never,
+        ])
+
+      expect(
+        store.getState().conversations.map((conversation) => conversation.id),
+      ).toEqual(["conv-b", "conv-a"])
+      expect(store.getState().conversations[1]?.messages[0]?.id).toBe("a-new")
+    })
+
+    test("a late agent message still marks its conversation read without moving it", () => {
+      const store = createChatStore()
+      const conversationA = {
+        ...makeConversation("conv-a", new Date("2026-01-01T10:00:00Z")),
+        agentLastReadAt: null,
+        messages: [
+          makeMessage("conv-a", new Date("2026-01-01T10:00:00Z"), "a-new"),
+        ],
+      }
+      const conversationB = {
+        ...makeConversation("conv-b", new Date("2026-01-01T10:05:00Z")),
+        messages: [
+          makeMessage("conv-b", new Date("2026-01-01T10:05:00Z"), "b-new"),
+        ],
+      }
+      store.setState({
+        conversations: [conversationB, conversationA] as never,
+      })
+
+      store
+        .getState()
+        .handleNewMessages([
+          makeOutgoingMessage(
+            "conv-a",
+            new Date("2026-01-01T09:55:00Z"),
+            "user",
+          ) as never,
+        ])
+
+      const [first, second] = store.getState().conversations
+      expect(first?.id).toBe("conv-b")
+      expect(second?.id).toBe("conv-a")
+      expect(second?.agentLastReadAt).toEqual(new Date("2026-01-01T09:55:00Z"))
+      expect(second?.messages[0]?.id).toBe("a-new")
+    })
+
+    test("a newer message still becomes the preview", () => {
+      const store = seed(previewFor("msg-old", older))
+
+      store
+        .getState()
+        .handleNewMessages([makeMessage("conv-1", newer, "msg-new") as never])
+
+      expect(previewIdOf(store)).toBe("msg-new")
+    })
+
+    test("the server copy of an optimistic message replaces it even when the client clock ran ahead", () => {
+      const store = seed(previewFor("optimistic-id", newer, "client-1"))
+      const serverCopy = {
+        ...makeMessage("conv-1", older, "server-id"),
+        clientId: "client-1",
+      }
+
+      store.getState().handleNewMessages([serverCopy as never])
+
+      expect(previewIdOf(store)).toBe("server-id")
+    })
+
+    test("an optimistic send always becomes the preview, whatever the browser clock says", () => {
+      const store = seed(previewFor("msg-server", newer))
+      const optimistic = {
+        ...makeMessage("conv-1", older, "optimistic-id"),
+        clientId: "client-9",
+        contactInboxId: "",
+      }
+
+      store.getState().updateConversationViaMessage(optimistic as never)
+
+      expect(previewIdOf(store)).toBe("optimistic-id")
+    })
+
+    test("a server message replaces an optimistic preview stamped ahead by the browser clock", () => {
+      const ahead = new Date("2026-01-01T00:20:00Z")
+      const store = seed({
+        ...previewFor("optimistic-id", ahead, "client-9"),
+        contactInboxId: "",
+      } as never)
+
+      store
+        .getState()
+        .handleNewMessages([
+          makeMessage("conv-1", newer, "contact-reply") as never,
+        ])
+
+      expect(previewIdOf(store)).toBe("contact-reply")
+    })
+
+    test("a redelivery of the preview message itself is applied", () => {
+      const store = seed(previewFor("msg-same", newer))
+
+      store
+        .getState()
+        .handleNewMessages([makeMessage("conv-1", older, "msg-same") as never])
+
+      expect(previewIdOf(store)).toBe("msg-same")
+    })
+  })
+
   test("keeps the state reference for unmatched realtime mutations", () => {
     const store = createChatStore()
     const before = store.getState()

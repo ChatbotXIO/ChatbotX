@@ -23,6 +23,7 @@ const INBOUND_WEBHOOK_JOB_TYPES: ReadonlySet<string> = new Set([
   IntegrationJobAction.messageReaction,
   IntegrationJobAction.messageStatus,
   IntegrationJobAction.deleteIncomingMessage,
+  IntegrationJobAction.updateIncomingMessage,
   IntegrationJobAction.updateIncomingComment,
   IntegrationJobAction.deleteIncomingComment,
   IntegrationJobAction.processLeadgen,

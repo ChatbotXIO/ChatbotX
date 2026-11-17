@@ -169,6 +169,42 @@ class MessageService extends BaseService {
       : await repo.deleteById(props.id, props.workspaceId, props.createdAt)
   }
 
+  /**
+   * Replaces the text of the message a channel identifies by its own id
+   * (`sourceId`), within the caller's workspace. Returns where the message is,
+   * or `null` when none has that id (it may not be stored yet).
+   */
+  async updateTextBySourceId(props: {
+    sourceId: string
+    workspaceId: string
+    text: string
+  }): Promise<{ conversationId: string; id: string } | null> {
+    const repo = await createMessageRepository()
+    return await repo.updateTextBySourceId(
+      props.sourceId,
+      props.workspaceId,
+      props.text,
+    )
+  }
+
+  /**
+   * Soft-deletes the message a channel identifies by its own id (`sourceId`),
+   * within the caller's workspace. `createdAtHint` only routes the sharded
+   * lookup; the repository falls back to every shard when it misses.
+   */
+  async deleteBySourceId(props: {
+    sourceId: string
+    workspaceId: string
+    createdAtHint: Date
+  }): Promise<{ conversationId: string; id: string }[]> {
+    const repo = await createMessageRepository()
+    return await repo.deleteBySourceId(
+      props.sourceId,
+      props.workspaceId,
+      props.createdAtHint,
+    )
+  }
+
   async updateText(props: {
     createdAt: Date
     id: string

@@ -1251,6 +1251,118 @@ describe("ShardedMessageRepository.mergeContentAttributesBySourceId", () => {
   })
 })
 
+describe("ShardedMessageRepository.updateTextBySourceId", () => {
+  const rangeShard = makeShardInfo("tr:range", "range")
+  const writeShard = makeShardInfo("tr:write", "write")
+
+  function makeUpdateClient(rows: unknown[]) {
+    const chain = {
+      set: vi.fn().mockReturnThis(),
+      where: vi.fn().mockReturnThis(),
+      returning: vi.fn().mockResolvedValue(rows),
+    }
+    return { update: vi.fn().mockReturnValue(chain), chain }
+  }
+
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  test("looks in the workspace write shard first and stops once it finds the row", async () => {
+    const found = { id: "msg-1", conversationId: "conv-1" }
+    const writeClient = makeUpdateClient([found])
+    const rangeClient = makeUpdateClient([])
+    const shardManager = {
+      getShardsForTimeRange: vi.fn().mockResolvedValue([rangeShard]),
+      getWriteShardInfo: vi.fn().mockResolvedValue(writeShard),
+      getShardClient: vi.fn(async (shard: { id: string }) =>
+        shard.id === writeShard.shard.id ? writeClient : rangeClient,
+      ),
+    }
+    const repo = new ShardedMessageRepository(shardManager as never)
+
+    const result = await repo.updateTextBySourceId("wamid.1", "ws-1", "edited")
+
+    expect(result).toEqual(found)
+    expect(shardManager.getShardClient).toHaveBeenCalledTimes(1)
+    expect(shardManager.getShardClient).toHaveBeenCalledWith(writeShard.shard)
+    expect(rangeClient.update).not.toHaveBeenCalled()
+    expect(writeClient.chain.set).toHaveBeenCalledWith({ text: "edited" })
+  })
+
+  test("falls back to the shards of the last 90 days when the write shard does not hold the row", async () => {
+    const found = { id: "msg-2", conversationId: "conv-2" }
+    const writeClient = makeUpdateClient([])
+    const rangeClient = makeUpdateClient([found])
+    const shardManager = {
+      getShardsForTimeRange: vi.fn().mockResolvedValue([rangeShard]),
+      getWriteShardInfo: vi.fn().mockResolvedValue(writeShard),
+      getShardClient: vi.fn(async (shard: { id: string }) =>
+        shard.id === writeShard.shard.id ? writeClient : rangeClient,
+      ),
+    }
+    const repo = new ShardedMessageRepository(shardManager as never)
+
+    await expect(
+      repo.updateTextBySourceId("wamid.2", "ws-1", "edited"),
+    ).resolves.toEqual(found)
+
+    expect(shardManager.getShardClient).toHaveBeenNthCalledWith(
+      1,
+      writeShard.shard,
+    )
+    expect(shardManager.getShardClient).toHaveBeenNthCalledWith(
+      2,
+      rangeShard.shard,
+    )
+  })
+
+  test("still searches the time-range shards when the workspace has no write shard", async () => {
+    const found = { id: "msg-3", conversationId: "conv-3" }
+    const shardManager = {
+      getShardsForTimeRange: vi.fn().mockResolvedValue([rangeShard]),
+      getWriteShardInfo: vi.fn().mockResolvedValue(null),
+      getShardClient: vi.fn().mockResolvedValue(makeUpdateClient([found])),
+    }
+    const repo = new ShardedMessageRepository(shardManager as never)
+
+    await expect(
+      repo.updateTextBySourceId("wamid.3", "ws-1", "edited"),
+    ).resolves.toEqual(found)
+  })
+
+  test("returns null when no shard holds the row", async () => {
+    const shardManager = {
+      getShardsForTimeRange: vi.fn().mockResolvedValue([rangeShard]),
+      getWriteShardInfo: vi.fn().mockResolvedValue(writeShard),
+      getShardClient: vi.fn().mockResolvedValue(makeUpdateClient([])),
+    }
+    const repo = new ShardedMessageRepository(shardManager as never)
+
+    await expect(
+      repo.updateTextBySourceId("wamid.4", "ws-1", "edited"),
+    ).resolves.toBeNull()
+  })
+
+  test("skips a shard that fails and keeps looking", async () => {
+    const found = { id: "msg-5", conversationId: "conv-5" }
+    const shardManager = {
+      getShardsForTimeRange: vi.fn().mockResolvedValue([rangeShard]),
+      getWriteShardInfo: vi.fn().mockResolvedValue(writeShard),
+      getShardClient: vi.fn((shard: { id: string }) =>
+        shard.id === writeShard.shard.id
+          ? Promise.reject(new Error("down"))
+          : Promise.resolve(makeUpdateClient([found])),
+      ),
+    }
+    const repo = new ShardedMessageRepository(shardManager as never)
+
+    await expect(
+      repo.updateTextBySourceId("wamid.5", "ws-1", "edited"),
+    ).resolves.toEqual(found)
+  })
+})
+
 describe("ShardedMessageRepository.listByConversation — write-shard union", () => {
   beforeEach(() => {
     vi.clearAllMocks()
