@@ -14,6 +14,13 @@ const {
   isUniqueViolationError: vi.fn(),
 }))
 
+vi.mock("@chatbotx.io/database/repositories", () => ({
+  minigameRepository: {
+    listNamesWithPrefix: async () =>
+      ((await findMany()) as { name: string }[]).map((row) => row.name),
+  },
+}))
+
 vi.mock("@chatbotx.io/database/client", () => ({
   and: vi.fn(),
   db: {

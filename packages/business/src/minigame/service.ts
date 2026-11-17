@@ -15,10 +15,10 @@ import type {
   MinigameType,
   MinigameWinningMessageSettings,
 } from "@chatbotx.io/database/partials"
+import { minigameRepository } from "@chatbotx.io/database/repositories"
 import { minigameModel } from "@chatbotx.io/database/schema"
 import type { MinigameModel } from "@chatbotx.io/database/types"
 import {
-  escapeLikePattern,
   getPaginationWithDefaults,
   likeContains,
   parseOrderBy,
@@ -336,20 +336,6 @@ class MinigameService extends BaseService {
     }
   }
 
-  private async listNamesWithPrefix(input: {
-    workspaceId: string
-    prefix: string
-  }): Promise<string[]> {
-    const rows = await db.query.minigameModel.findMany({
-      where: {
-        workspaceId: input.workspaceId,
-        name: { like: `${escapeLikePattern(input.prefix)}%` },
-      },
-      columns: { name: true },
-    })
-    return rows.map((row) => row.name)
-  }
-
   /**
    * Copies a minigame's settings into a new minigame named `<name> - Copy`
    * (then `- Copy 2`, `- Copy 3`, … while taken). Prizes and the prize
@@ -363,7 +349,7 @@ class MinigameService extends BaseService {
   }): Promise<MinigameModel> {
     const source = await this.find(input)
     const taken = new Set(
-      await this.listNamesWithPrefix({
+      await minigameRepository.listNamesWithPrefix({
         workspaceId: input.workspaceId,
         prefix: copyNamePrefix(source.name, MINIGAME_COPY_NAME),
       }),
