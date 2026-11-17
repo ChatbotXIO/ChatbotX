@@ -235,10 +235,19 @@ export const tenantService = {
    * via `reactivate` — no data is deleted.
    */
   async suspend(ownerId: string): Promise<void> {
+    // Only the tenant's own workspaces: the owner's root (platform) workspaces
+    // are outside the white-label plan and must keep running.
+    const tenant = await this.findByOwner(ownerId)
+    if (!tenant) {
+      // No tenant row: an undefined `tenantId` would tear down every workspace
+      // the owner has, root ones included.
+      return
+    }
     await workspaceLifecycleService.deactivateOwnerWorkspaces({
       ownerId,
       reason: "tenant_suspended",
       teardownLevel: "pause",
+      tenantId: tenant.id,
     })
     return this.setStatusByOwner(ownerId, "suspended")
   },
@@ -261,9 +270,14 @@ export const tenantService = {
    * once the backfill's `--verify` is 0.
    */
   async reactivate(ownerId: string): Promise<void> {
+    const tenant = await this.findByOwner(ownerId)
+    if (!tenant) {
+      return
+    }
     await this.setStatusByOwner(ownerId, "active")
     const pausedConnections = await connectionRepository.listPausedByOwner({
       ownerId,
+      tenantId: tenant.id,
     })
     for (const connection of pausedConnections) {
       try {
@@ -283,6 +297,7 @@ export const tenantService = {
     const pausedInboxesWithoutConnection =
       await inboxRepository.listTenantSuspendedWithoutConnectionByOwner({
         ownerId,
+        tenantId: tenant.id,
       })
     for (const inbox of pausedInboxesWithoutConnection) {
       try {

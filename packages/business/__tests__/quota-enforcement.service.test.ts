@@ -80,7 +80,7 @@ const userQuotaService = {
   isLimitReached: vi.fn(async () => false),
   isTeamMemberLimitReached: vi.fn(async () => false),
   countDistinctTeamMembersForOwner: vi.fn(async () => 0),
-  countDistinctTeamMembersForTenant: vi.fn(async () => 0),
+  countDistinctTeamMembersForPool: vi.fn(async () => 0),
   getRemainingSlots: vi.fn(async () => null as number | null),
   increment: vi.fn(async () => undefined),
   incrementBy: vi.fn(async () => undefined),
@@ -708,8 +708,8 @@ describe("quotaEnforcementService.getUsageSummary", () => {
     expect(userQuotaService.getLiveUsage).toHaveBeenCalledWith(RESELLER)
     expect(userQuotaService.getForUser).toHaveBeenCalledWith(RESELLER)
     expect(
-      userQuotaService.countDistinctTeamMembersForTenant,
-    ).toHaveBeenCalledWith(TENANT)
+      userQuotaService.countDistinctTeamMembersForPool,
+    ).toHaveBeenCalledWith(RESELLER, TENANT)
   })
 
   test("sub-account reports its own live allocation, not the pool", async () => {
@@ -810,7 +810,7 @@ describe("quotaEnforcementService.hasReachedLimit", () => {
     )
     expect(userQuotaService.isTeamMemberLimitReached).toHaveBeenNthCalledWith(
       2,
-      { tenantId: TENANT },
+      { pool: { ownerId: RESELLER, tenantId: TENANT } },
       RESELLER,
     )
   })
@@ -856,7 +856,7 @@ describe("quotaEnforcementService.hasRoomForTeamMembers", () => {
     )
     expect(userQuotaService.isTeamMemberLimitReached).toHaveBeenNthCalledWith(
       2,
-      { tenantId: TENANT },
+      { pool: { ownerId: RESELLER, tenantId: TENANT } },
       RESELLER,
       1,
     )
@@ -875,7 +875,7 @@ describe("quotaEnforcementService.hasRoomForTeamMembers", () => {
 
     expect(userQuotaService.isTeamMemberLimitReached).toHaveBeenCalledTimes(1)
     expect(userQuotaService.isTeamMemberLimitReached).toHaveBeenCalledWith(
-      { tenantId: TENANT },
+      { pool: { ownerId: RESELLER, tenantId: TENANT } },
       RESELLER,
       5,
     )

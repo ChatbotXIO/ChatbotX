@@ -5,7 +5,7 @@ import { CouponTopicStoreProvider } from "@/features/coupons/provider/coupon-top
 import { hasWorkspacePermission } from "@/lib/auth/permission-routes"
 import { enforcePasswordCurrent } from "@/lib/auth/require-password-current"
 import {
-  getCurrentUserAndAllLinkedWorkspaces,
+  getCurrentUserAndHostScopedWorkspaces,
   getCurrentUserAndTargetWorkspace,
 } from "@/lib/auth/utils"
 import { logger } from "@/lib/log"
@@ -25,7 +25,7 @@ export default async function WorkspaceNoSidebarLayout({
     return notFound()
   }
 
-  const userAndWorkspaces = await getCurrentUserAndAllLinkedWorkspaces()
+  const userAndWorkspaces = await getCurrentUserAndHostScopedWorkspaces()
   if (!userAndWorkspaces) {
     logger.debug(
       `User is not authenticated or does not have access to the workspace ${workspaceId}`,

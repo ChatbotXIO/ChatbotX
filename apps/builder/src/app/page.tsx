@@ -22,7 +22,7 @@ import { loadHomeTemplateStore } from "@/features/workspaces/lib/load-home-templ
 import { homeSearchParamsCache } from "@/features/workspaces/schema/home-search-params"
 import { hasWorkspacePermission } from "@/lib/auth/permission-routes"
 import { enforcePasswordCurrent } from "@/lib/auth/require-password-current"
-import { getCurrentUserAndAllLinkedWorkspaces } from "@/lib/auth/utils"
+import { getCurrentUserAndHostScopedWorkspaces } from "@/lib/auth/utils"
 import { getDomainFromHeader } from "@/lib/domain"
 import {
   buildQuotaMetrics,
@@ -36,7 +36,7 @@ export default async function MainPage({
 }: {
   searchParams: Promise<SearchParams>
 }) {
-  const userAndWorkspaces = await getCurrentUserAndAllLinkedWorkspaces()
+  const userAndWorkspaces = await getCurrentUserAndHostScopedWorkspaces()
   if (!userAndWorkspaces) {
     return notFound()
   }

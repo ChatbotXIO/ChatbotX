@@ -23,6 +23,7 @@ import {
 import { userModel } from "@chatbotx.io/database/schema"
 import { setLocalStatementTimeout } from "@chatbotx.io/database/statement-timeout"
 import type { UserModel } from "@chatbotx.io/database/types"
+import { withCache } from "@chatbotx.io/redis"
 import { BaseService } from "../base.service"
 import { ChatbotXException, notFoundException } from "../errors"
 import { logger } from "../logger"
@@ -36,6 +37,7 @@ const accountDeletionTarget = (user: Pick<UserModel, "id">) => ({
   id: user.id,
 })
 
+const EMAIL_CACHE_TTL_SECONDS = 300
 const USER_PURGE_RETRY_DELAY_MS = 60 * 60 * 1000
 const USER_FINAL_DELETE_STATEMENT_TIMEOUT = "30s"
 const USER_REFERENCE_DRAIN_BATCH_SIZE = 5000
@@ -66,6 +68,25 @@ class UserService extends BaseService {
       throw notFoundException("User not found")
     }
     return user
+  }
+
+  /**
+   * A user's email through a short-lived cache. For hot-path guards (tenant
+   * signup) that compare against a tenant owner's email; the TTL bounds how
+   * long a changed email can be stale.
+   */
+  async findEmailCached(userId: string): Promise<string | null> {
+    return await withCache(
+      `users:email:${userId}`,
+      async () => {
+        const user = await db.query.userModel.findFirst({
+          where: { id: userId },
+          columns: { email: true },
+        })
+        return user?.email ?? null
+      },
+      { ttl: EMAIL_CACHE_TTL_SECONDS },
+    )
   }
 
   async findNameAndEmail(

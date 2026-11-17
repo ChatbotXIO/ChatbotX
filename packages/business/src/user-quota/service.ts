@@ -13,6 +13,7 @@ import {
   planStatuses,
 } from "@chatbotx.io/database/partials"
 import { tenantRepository } from "@chatbotx.io/database/repositories/tenant"
+import { poolWorkspaceScope } from "@chatbotx.io/database/repositories/workspace"
 import { workspaceMacRepository } from "@chatbotx.io/database/repositories/workspace-mac"
 import {
   connectionModel,
@@ -44,6 +45,12 @@ export type { QuotaMetric } from "../quota-shared/live-counter-store"
  * prior behavior.
  */
 const DEFAULT_PLAN_ENTITLEMENT_KEY = "entitlements:default-plan"
+
+/** Which workspaces a team-member count covers. `pool` = a reseller owner's tenant plus the root workspaces they own. */
+export type TeamMemberScope =
+  | { ownerId: string }
+  | { tenantId: string }
+  | { pool: { ownerId: string; tenantId: string } }
 
 // Last-resort fallback used only when the default-plan snapshot is unreadable
 // (cold/flushed Redis). A 1-day `trial` keeps the user signed in but every
@@ -609,12 +616,9 @@ class UserQuotaService extends BaseService {
    * row, so it's never counted here to begin with.
    */
   private async countDistinctTeamMembers(
-    scope: { ownerId: string } | { tenantId: string },
+    scope: TeamMemberScope,
   ): Promise<number> {
-    const where =
-      "ownerId" in scope
-        ? eq(workspaceModel.ownerId, scope.ownerId)
-        : eq(workspaceModel.tenantId, scope.tenantId)
+    const where = this.workspaceScopeWhere(scope)
     const rows = await db
       .select({ count: countDistinct(workspaceMemberModel.userId) })
       .from(workspaceMemberModel)
@@ -624,6 +628,28 @@ class UserQuotaService extends BaseService {
       )
       .where(where)
     return rows[0]?.count ?? 0
+  }
+
+  /**
+   * Workspace predicate for a quota scope. `pool` is a reseller owner's pool:
+   * their tenant's workspaces PLUS the root-tenant workspaces they own (made
+   * on the platform host), since one `UserQuota` row covers both.
+   */
+  private workspaceScopeWhere(scope: TeamMemberScope): SQL {
+    if ("pool" in scope) {
+      return poolWorkspaceScope(scope.pool.ownerId, scope.pool.tenantId)
+    }
+    return "ownerId" in scope
+      ? eq(workspaceModel.ownerId, scope.ownerId)
+      : eq(workspaceModel.tenantId, scope.tenantId)
+  }
+
+  /** Source-of-truth team-member count for a reseller owner's pool (tenant + owned root workspaces). */
+  countDistinctTeamMembersForPool(
+    ownerId: string,
+    tenantId: string,
+  ): Promise<number> {
+    return this.countDistinctTeamMembers({ pool: { ownerId, tenantId } })
   }
 
   /** Source-of-truth team-member count for the per-owner reconcile. */
@@ -643,7 +669,7 @@ class UserQuotaService extends BaseService {
    * batch — e.g. an owner plus N members created together.
    */
   async isTeamMemberLimitReached(
-    scope: { ownerId: string } | { tenantId: string },
+    scope: TeamMemberScope,
     limitUserId: string,
     additionalCount = 1,
   ): Promise<boolean> {
@@ -839,9 +865,9 @@ class UserQuotaService extends BaseService {
 
   /**
    * Reconcile a reseller owner's `UserQuota.*Used` from the source-of-truth DB
-   * counts aggregated across EVERY workspace under their tenant — the owner's row
-   * is the pool (owner's own resources carry the reseller tenantId too, so the
-   * tenant aggregate already includes them; no separate own-count is added). The
+   * counts aggregated across EVERY workspace under their tenant PLUS the
+   * root-tenant workspaces the owner created on the platform host — the owner's
+   * row is the pool (see `poolWorkspaceScope`). The
    * recomputed counts are authoritative (already reflect deletions) and are
    * assigned directly so freeing pooled resources frees pooled quota.
    * `teamMembers` is `COUNT(DISTINCT userId)`; all other metrics are `COUNT(*)`.
@@ -869,9 +895,9 @@ class UserQuotaService extends BaseService {
       teamMembersUsed,
       macUsed,
     ] = await Promise.all([
-      this.countWorkspaceScopedUsage(eq(workspaceModel.tenantId, tenantId)),
-      this.countDistinctTeamMembers({ tenantId }),
-      workspaceMacRepository.sumForTenant(tenantId),
+      this.countWorkspaceScopedUsage(poolWorkspaceScope(ownerId, tenantId)),
+      this.countDistinctTeamMembers({ pool: { ownerId, tenantId } }),
+      workspaceMacRepository.sumForTenant(tenantId, ownerId),
     ])
 
     await db

@@ -41,6 +41,10 @@ const {
   mockEnsureConnectTargetForOwner: vi.fn(),
 }))
 
+vi.mock("@/lib/tenant/request-tenant", () => ({
+  resolveRequestTenantId: vi.fn(async () => "1"),
+}))
+
 vi.mock("next/navigation", () => ({
   notFound: vi.fn(() => {
     throw new Error("not found")
@@ -230,6 +234,7 @@ describe("GET /channels/create/messenger — Facebook SSO token reuse", () => {
       ownerId,
       name: "New Workspace",
       quotaConsumption: undefined,
+      hostTenantId: "1",
       tx: undefined,
     })
     const sessionInput = mockConnectSessionCreate.mock.calls[0]?.[0]

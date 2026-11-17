@@ -28,6 +28,10 @@ import {
 // fixtures/mocks from `whatsapp-connect-action.mocks.ts`.
 // ---------------------------------------------------------------------------
 
+vi.mock("@/lib/tenant/request-tenant", () => ({
+  resolveRequestTenantId: vi.fn(async () => "1"),
+}))
+
 vi.mock("@/lib/safe-action", () => {
   const chain: Record<string, unknown> = {}
   chain.inputSchema = () => chain

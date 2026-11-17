@@ -57,7 +57,7 @@ vi.mock("@/lib/auth/require-password-current", () => ({
   enforcePasswordCurrent: vi.fn(),
 }))
 vi.mock("@/lib/auth/utils", () => ({
-  getCurrentUserAndAllLinkedWorkspaces:
+  getCurrentUserAndHostScopedWorkspaces:
     mocks.getCurrentUserAndAllLinkedWorkspaces,
 }))
 vi.mock("@/lib/domain", () => ({ getDomainFromHeader: async () => "host" }))

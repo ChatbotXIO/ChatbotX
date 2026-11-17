@@ -27,6 +27,10 @@ import {
 import { getCurrentUserId } from "@/lib/auth/utils"
 import { getGuestClientIp } from "@/lib/rate-limit/guest-rate-limit"
 import {
+  canOpenWorkspaceOnHost,
+  resolveRequestTenantId,
+} from "@/lib/tenant/request-tenant"
+import {
   checkWorkspaceOwnerAccess,
   workspaceAccessDenialException,
 } from "@/lib/workspace/authorize-workspace-access"
@@ -148,6 +152,15 @@ export const workspaceActionClientAllowExpired = authActionClient.use(
       throw new Error("Workspace not found")
     }
     const { workspace, member, isSupportSession } = access
+    if (
+      !canOpenWorkspaceOnHost({
+        workspaceTenantId: workspace.tenantId,
+        hostTenantId: await resolveRequestTenantId(),
+        isSupportSession,
+      })
+    ) {
+      throw new Error("Workspace not found")
+    }
 
     // permissions is exposed so actions can gate on it (e.g. superAdmin)
     // without a second user+member round-trip — the same rows are already

@@ -88,6 +88,7 @@ export const mePublicRouter = {
     })
     .output(z.object({ workspaces: z.array(workspaceResource) }))
     .errors(possibleErrorsOnListingResource)
+    // Not host-scoped: a token/mobile caller has no browser host (host scoping applies to session surfaces only).
     .handler(async ({ context }) => await listMyWorkspaces(context.user.id)),
 
   ensureDefaultWorkspace: mobileUserAPI

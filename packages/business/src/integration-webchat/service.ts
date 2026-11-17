@@ -330,6 +330,8 @@ class IntegrationWebchatService extends BaseService {
     actorUserId?: string
     workspaceName: string
     data: CreateWebchatRequest
+    /** Server-resolved tenant of the request host; see `workspaceService.resolveWorkspaceTenant`. */
+    hostTenantId?: string
   }): Promise<{
     workspaceId: string
     createdWorkspace: boolean
@@ -381,6 +383,7 @@ class IntegrationWebchatService extends BaseService {
                 ownerId,
               },
               quotaConsumption: workspaceQuotaConsumption,
+              hostTenantId: input.hostTenantId,
             })
             workspaceId = newWorkspace.id
             createdWorkspace = true

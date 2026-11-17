@@ -23,10 +23,19 @@ circular FK; it is re-exported from `@chatbotx.io/database/schema`.
 - **`User.tenantId`** — defaults to `ROOT_TENANT_ID`. Email is unique *per tenant*
   (`User_email_tenant_key`), never globally — the same email can exist as fully
   separate accounts across tenants.
-- **`Workspace.tenantId`** — owner-derived, never host-derived, via
-  `workspaceService.resolveTenantForOwner` (`packages/business/src/workspace/service.ts`):
-  a sub-account inherits its own tenant; a reseller gets the tenant they own; a
-  plain platform user gets the root tenant.
+- **`Workspace.tenantId`** — owner-derived, via
+  `workspaceService.resolveWorkspaceTenant` (`packages/business/src/workspace/service.ts`):
+  a sub-account inherits its own tenant; a plain platform user gets the root
+  tenant; a reseller owner chooses between **their tenant and root by the host the
+  request came in on** — their tenant on their own custom domain, root on the
+  platform host (or any other host). The host tenant is resolved server-side
+  (`resolveRequestTenantId`, from `x-domain`) and is never taken from the client.
+  With no request context (`hostTenantId` undefined — workers, scripts) the
+  owner-derived tenant is kept. `resolveTenantForOwner` stays for sub-account
+  provisioning and the admin console, which pass their tenant explicitly. A
+  reseller's root-tenant workspaces use the platform's branding and credentials
+  (`resolveCredentialOwnerIdForWorkspace` keys off `workspace.tenantId`). Existing
+  workspaces are not migrated between tenants.
 - **`CustomDomain.tenantId`** — the host → tenant routing key (was `userId`).
 
 When adding a column with `Record<ChannelType, …>`-style fan-out, remember the
@@ -403,7 +412,9 @@ Quota is tracked in `UserQuota` rows only — there is no separate tenant-level 
 | Reseller owner | One row (their own, acts as the pool) | Gated by their own pool row only |
 | Sub-account | One row (their own) + owner's pool row | Gated by **both** their own row **and** the owner's pool row |
 
-The owner's `*Used` columns aggregate the whole tenant: owner's own resources carry the reseller `tenantId` so they are already included in tenant-scoped DB counts. No separate summation step is needed.
+The owner's `*Used` columns aggregate the owner's **pool**: every workspace in their tenant **plus the root-tenant workspaces the owner owns** (created on the platform host). Reconcile uses `poolWorkspaceScope(ownerId, tenantId)` for contacts/workspaces/channels, `countDistinctTeamMembersForPool` for team members and `workspaceMacRepository.sumForTenant(tenantId, ownerId)` for MAC, so one owner row covers both. Live consumption already resolves to the owner's row, so it needs no change.
+
+A sub-account of tenant `T` may not be created with the email of `T`'s owner (`tenantOwnerEmailReserved`, 409): `assertNotTenantOwnerEmail` runs in `provisionResellerAccount` and in the better-auth `user.create.before` hook. Tenant suspend/downgrade only tears down the tenant's own workspaces (`deactivateOwnerWorkspaces({ tenantId })`); the owner's root workspaces keep running, and `reactivate` resumes only that tenant's paused connections.
 
 ### Two-level enforcement (`QuotaEnforcementService`)
 
@@ -427,7 +438,7 @@ Every `consume` and `incrementBy` call on `UserQuotaService` is write-through: i
 1. Scans Redis for `user-quota-live:*` keys (active users with live counters).
 2. Unions in all active reseller owner IDs from `tenantService.listActiveOwnerIds()` so cold owners (no Redis key yet) are always included.
 3. For each user ID:
-   - **Reseller owner with active tenant** → calls `userQuotaService.reconcileOwnerPoolUsage(ownerId, tenantId)`: runs five parallel `COUNT(*)`/`SUM` queries scoped to `workspaceModel.tenantId` and writes the authoritative current counts to both the `UserQuota` row and the Redis live hash.
+   - **Reseller owner with active tenant** → calls `userQuotaService.reconcileOwnerPoolUsage(ownerId, tenantId)`: runs five parallel `COUNT(*)`/`SUM` queries scoped to the owner's pool (`poolWorkspaceScope`: the tenant plus the owner's root workspaces) and writes the authoritative current counts to both the `UserQuota` row and the Redis live hash.
    - **Everyone else** → runs per-owner self-count queries scoped to `workspaceModel.ownerId` and writes the same columns.
 
 Capacity counts are written directly (not `GREATEST`), so a reconcile tick self-heals drift and resource deletion frees capacity.

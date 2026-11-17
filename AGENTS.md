@@ -148,7 +148,7 @@ One line each; the full text (reasons, file paths, edge cases) is in `docs/agent
 
 9. **The chain is `action | API handler → service → repository → DB`** — code in `apps/` and `integrations/` never imports `db` (lint-checked); it calls a service in `packages/business/`. The public and private paths for one resource call the same service method, passing the caller's scope as plain data. See `.agents/rules/data-access.md`.
 
-10. **White-label tenancy** — derive a new workspace's `tenantId` from its owner (`workspaceService.resolveTenantForOwner`), never from request or client input; `User` email is unique per tenant. See `docs/tenancy.md`.
+10. **White-label tenancy** — derive a new workspace's `tenantId` from its owner via `workspaceService.resolveWorkspaceTenant` (a reseller owner gets their tenant or root by the server-resolved host), never from client input; `User` email is unique per tenant. See `docs/tenancy.md`.
 
 11. **Cloud signup writes a bootstrap `UserQuota` trial row** (`ensureBootstrapPlan`) before `publishEntitlements`, so a new cloud user always has a quota row.
 

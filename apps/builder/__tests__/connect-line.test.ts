@@ -25,6 +25,10 @@ const m = vi.hoisted(() => {
     refreshAuth: vi.fn(),
   }
 })
+vi.mock("@/lib/tenant/request-tenant", () => ({
+  resolveRequestTenantId: vi.fn(async () => "1"),
+}))
+
 vi.mock("@/integration", () => ({
   integrations: {
     line: { runAction: m.runAction, refreshAuth: m.refreshAuth },

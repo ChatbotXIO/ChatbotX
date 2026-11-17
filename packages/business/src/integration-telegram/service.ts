@@ -67,6 +67,8 @@ class TelegramIntegrationService extends BaseService {
     botId: string
     botUsername: string
     botToken: string
+    /** Server-resolved tenant of the request host; see `workspaceService.resolveWorkspaceTenant`. */
+    hostTenantId?: string
     onConnected: (ctx: {
       integrationId: string
       /** Pass as `secret_token` to setWebhook; the webhook checks it. */
@@ -126,6 +128,7 @@ class TelegramIntegrationService extends BaseService {
                 ownerId: createdBy,
               },
               quotaConsumption: workspaceQuotaConsumption,
+              hostTenantId: input.hostTenantId,
             })
             workspaceId = workspace.id
           }

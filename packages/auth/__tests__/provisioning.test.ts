@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, test, vi } from "vitest"
 
 const {
   findDecryptedForUser,
+  assertNotTenantOwnerEmail,
   findIdByEmail,
   generateTemporaryPassword,
   insertWithCredential,
@@ -9,6 +10,7 @@ const {
   resolveTenantSettingsByOwner,
   sendAccountCredentials,
 } = vi.hoisted(() => ({
+  assertNotTenantOwnerEmail: vi.fn(),
   findDecryptedForUser: vi.fn(),
   findIdByEmail: vi.fn(),
   generateTemporaryPassword: vi.fn(),
@@ -39,6 +41,8 @@ vi.mock("@chatbotx.io/database/repositories", () => ({
   userRepository: { findIdByEmail, insertWithCredential },
 }))
 
+vi.mock("../src/tenant-owner-email", () => ({ assertNotTenantOwnerEmail }))
+
 vi.mock("@chatbotx.io/mail", () => ({
   DEFAULT_ACCOUNT_CREDENTIALS_SUBJECT: "Your {{brandName}} account is ready",
   sendAccountCredentials,
@@ -57,6 +61,7 @@ const SMTP_CONFIG = {
 
 beforeEach(() => {
   vi.clearAllMocks()
+  assertNotTenantOwnerEmail.mockResolvedValue(undefined)
   generateTemporaryPassword.mockResolvedValue({
     hashedPassword: "hashed:TempPass123456AB",
     initialPassword: "TempPass123456AB",
@@ -99,6 +104,31 @@ describe("provisionResellerAccount", () => {
       }),
     ).rejects.toMatchObject({ code: "smtpCredentialMissing" })
 
+    expect(findIdByEmail).not.toHaveBeenCalled()
+    expect(insertWithCredential).not.toHaveBeenCalled()
+    expect(sendAccountCredentials).not.toHaveBeenCalled()
+  })
+
+  test("rejects the tenant owner's email (any case) without emailing or inserting", async () => {
+    findDecryptedForUser.mockResolvedValue({ config: SMTP_CONFIG })
+    assertNotTenantOwnerEmail.mockRejectedValue(
+      Object.assign(new Error("reserved"), {
+        code: "tenantOwnerEmailReserved",
+      }),
+    )
+
+    await expect(
+      provisionResellerAccount({
+        resellerUserId: "owner-1",
+        email: "  Owner@Example.com ",
+        name: "Customer",
+      }),
+    ).rejects.toMatchObject({ code: "tenantOwnerEmailReserved" })
+
+    expect(assertNotTenantOwnerEmail).toHaveBeenCalledWith({
+      email: "owner@example.com",
+      tenantId: "42",
+    })
     expect(findIdByEmail).not.toHaveBeenCalled()
     expect(insertWithCredential).not.toHaveBeenCalled()
     expect(sendAccountCredentials).not.toHaveBeenCalled()

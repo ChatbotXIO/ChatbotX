@@ -1338,3 +1338,72 @@ describe("WorkspaceService.create — tenant default template", () => {
     expect(quotaConsumption).toEqual({ consumed: false })
   })
 })
+
+describe("WorkspaceService.resolveWorkspaceTenant", () => {
+  const RESELLER_TENANT = "42"
+  const asResellerOwner = () => {
+    findFirstUser.mockResolvedValue({ tenantId: "1" })
+    tenantService.findByOwner.mockResolvedValue({ id: RESELLER_TENANT })
+  }
+
+  test("a sub-account keeps its own tenant on any host", async () => {
+    findFirstUser.mockResolvedValue({ tenantId: "77" })
+
+    await expect(
+      workspaceService.resolveWorkspaceTenant({
+        ownerId: "sub",
+        hostTenantId: "1",
+      }),
+    ).resolves.toBe("77")
+  })
+
+  test("a reseller owner on their tenant's host gets their tenant", async () => {
+    asResellerOwner()
+
+    await expect(
+      workspaceService.resolveWorkspaceTenant({
+        ownerId: "owner",
+        hostTenantId: RESELLER_TENANT,
+      }),
+    ).resolves.toBe(RESELLER_TENANT)
+  })
+
+  test("a reseller owner on the platform host gets the root tenant", async () => {
+    asResellerOwner()
+
+    await expect(
+      workspaceService.resolveWorkspaceTenant({
+        ownerId: "owner",
+        hostTenantId: "1",
+      }),
+    ).resolves.toBe("1")
+  })
+
+  test("a reseller owner on another tenant's host gets the root tenant", async () => {
+    asResellerOwner()
+
+    await expect(
+      workspaceService.resolveWorkspaceTenant({
+        ownerId: "owner",
+        hostTenantId: "99",
+      }),
+    ).resolves.toBe("1")
+  })
+
+  test("without request context the owner-derived tenant is kept", async () => {
+    asResellerOwner()
+
+    await expect(
+      workspaceService.resolveWorkspaceTenant({ ownerId: "owner" }),
+    ).resolves.toBe(RESELLER_TENANT)
+  })
+
+  test("a plain platform user gets the root tenant", async () => {
+    await expect(
+      workspaceService.resolveWorkspaceTenant({
+        ownerId: "user",
+        hostTenantId: "1",
+      }),
+    ).resolves.toBe("1")
+  })
+})

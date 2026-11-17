@@ -10,6 +10,7 @@ import { integrations } from "@/integration"
 import { logger } from "@/lib/log"
 import { buildBrokerCallbackUrl } from "@/lib/oauth-broker"
 import { authActionClient } from "@/lib/safe-action"
+import { resolveRequestTenantId } from "@/lib/tenant/request-tenant"
 import {
   type ConnectTelegramRequest,
   connectTelegramRequest,
@@ -27,6 +28,7 @@ export const connectTelegramAction = authActionClient
     }) => {
       try {
         const workspaceId = parsedInput.workspaceId ?? undefined
+        const hostTenantId = await resolveRequestTenantId()
 
         // Validate bot token and fetch bot info from Telegram
         const botData = await integrations.telegram.runAction("connect", {
@@ -46,6 +48,7 @@ export const connectTelegramAction = authActionClient
           botId: botData.id,
           botUsername: botData.username,
           botToken: parsedInput.botToken,
+          hostTenantId,
           onConnected: async ({ webhookSecretToken }) => {
             // Register webhook URL with Telegram
             const webhookUrl = buildBrokerCallbackUrl(

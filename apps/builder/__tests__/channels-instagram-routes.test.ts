@@ -50,6 +50,10 @@ const {
   mockEnsureConnectTargetForOwner: vi.fn(),
 }))
 
+vi.mock("@/lib/tenant/request-tenant", () => ({
+  resolveRequestTenantId: vi.fn(async () => "1"),
+}))
+
 vi.mock("next/navigation", () => ({
   notFound: vi.fn(() => {
     throw new Error("not found")
@@ -224,6 +228,7 @@ describe.each([
       ownerId: "user-1",
       name: "New Workspace",
       quotaConsumption: undefined,
+      hostTenantId: "1",
       tx: "tx",
     })
   })
