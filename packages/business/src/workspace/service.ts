@@ -186,14 +186,21 @@ class WorkspaceService extends BaseService {
   private async ensureForOwner(
     props: EnsureOwnerWorkspaceInput,
     findExisting: (
-      input: { ownerId: string },
+      input: { ownerId: string; tenantId: string },
       tx: DatabaseClient,
     ) => Promise<WorkspaceModel | undefined>,
   ): Promise<WorkspaceModel> {
     const { ownerId, name, tx, quotaConsumption, hostTenantId } = props
     const run = async (lockTx: DatabaseClient): Promise<WorkspaceModel> => {
       await workspaceRepository.lockFirstWorkspace({ ownerId }, lockTx)
-      const existing = await findExisting({ ownerId }, lockTx)
+      // Reuse only a workspace of the tenant this request targets: a reseller
+      // owner on their white-label host must not get a root workspace back
+      // (and the other way round).
+      const tenantId = await this.resolveWorkspaceTenant({
+        ownerId,
+        hostTenantId,
+      })
+      const existing = await findExisting({ ownerId, tenantId }, lockTx)
       if (existing) {
         // Nothing new to install into: a share page's choice must not carry
         // over to whatever this user creates next.
@@ -201,7 +208,7 @@ class WorkspaceService extends BaseService {
         return existing
       }
       return await this.create({
-        data: { name, ownerId },
+        data: { name, ownerId, tenantId },
         createdBy: ownerId,
         tx: lockTx,
         quotaConsumption,
@@ -991,15 +998,35 @@ class WorkspaceService extends BaseService {
    * a tenant) gets that tenant; a plain platform user gets the root tenant.
    */
   async resolveTenantForOwner(creatorId: string): Promise<string> {
+    const { userTenantId, ownedTenantId } =
+      await this.loadOwnerTenancy(creatorId)
+    return this.ownerTenantFrom(userTenantId, ownedTenantId)
+  }
+
+  /** One read of the owner's own tenant plus the tenant they own, shared by both resolvers. */
+  private async loadOwnerTenancy(ownerId: string): Promise<{
+    userTenantId: string | undefined
+    ownedTenantId: string | undefined
+  }> {
     const creator = await db.query.userModel.findFirst({
-      where: { id: creatorId },
+      where: { id: ownerId },
       columns: { tenantId: true },
     })
-    if (creator && creator.tenantId !== ROOT_TENANT_ID) {
-      return creator.tenantId
+    const owned =
+      creator && creator.tenantId !== ROOT_TENANT_ID
+        ? undefined
+        : await tenantService.findByOwner(ownerId)
+    return { userTenantId: creator?.tenantId, ownedTenantId: owned?.id }
+  }
+
+  private ownerTenantFrom(
+    userTenantId: string | undefined,
+    ownedTenantId: string | undefined,
+  ): string {
+    if (userTenantId !== undefined && userTenantId !== ROOT_TENANT_ID) {
+      return userTenantId
     }
-    const owned = await tenantService.findByOwner(creatorId)
-    return owned?.id ?? ROOT_TENANT_ID
+    return ownedTenantId ?? ROOT_TENANT_ID
   }
 
   /**
@@ -1013,15 +1040,15 @@ class WorkspaceService extends BaseService {
     ownerId: string
     hostTenantId?: string
   }): Promise<string> {
-    const ownerTenant = await this.resolveTenantForOwner(props.ownerId)
-    if (ownerTenant === ROOT_TENANT_ID || props.hostTenantId === undefined) {
-      return ownerTenant
-    }
-    const creator = await db.query.userModel.findFirst({
-      where: { id: props.ownerId },
-      columns: { tenantId: true },
-    })
-    if (creator && creator.tenantId !== ROOT_TENANT_ID) {
+    const { userTenantId, ownedTenantId } = await this.loadOwnerTenancy(
+      props.ownerId,
+    )
+    const ownerTenant = this.ownerTenantFrom(userTenantId, ownedTenantId)
+    if (
+      ownerTenant === ROOT_TENANT_ID ||
+      props.hostTenantId === undefined ||
+      (userTenantId !== undefined && userTenantId !== ROOT_TENANT_ID)
+    ) {
       return ownerTenant
     }
     return props.hostTenantId === ownerTenant ? ownerTenant : ROOT_TENANT_ID

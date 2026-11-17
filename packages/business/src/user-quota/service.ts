@@ -5,7 +5,6 @@ import {
   db,
   eq,
   inArray,
-  or,
   type SQL,
   sql,
 } from "@chatbotx.io/database/client"
@@ -14,6 +13,7 @@ import {
   planStatuses,
 } from "@chatbotx.io/database/partials"
 import { tenantRepository } from "@chatbotx.io/database/repositories/tenant"
+import { poolWorkspaceScope } from "@chatbotx.io/database/repositories/workspace"
 import { workspaceMacRepository } from "@chatbotx.io/database/repositories/workspace-mac"
 import {
   connectionModel,
@@ -51,21 +51,6 @@ export type TeamMemberScope =
   | { ownerId: string }
   | { tenantId: string }
   | { pool: { ownerId: string; tenantId: string } }
-
-/**
- * A reseller owner's pooled workspaces: everything in their tenant, plus the
- * root-tenant workspaces they own (created on the platform host). One
- * `UserQuota` row covers both, so reconcile must count both.
- */
-export function poolWorkspaceScope(ownerId: string, tenantId: string): SQL {
-  return or(
-    eq(workspaceModel.tenantId, tenantId),
-    and(
-      eq(workspaceModel.tenantId, ROOT_TENANT_ID),
-      eq(workspaceModel.ownerId, ownerId),
-    ),
-  ) as SQL
-}
 
 // Last-resort fallback used only when the default-plan snapshot is unreadable
 // (cold/flushed Redis). A 1-day `trial` keeps the user signed in but every

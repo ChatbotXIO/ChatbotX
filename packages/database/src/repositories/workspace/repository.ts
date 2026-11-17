@@ -97,11 +97,15 @@ export const workspaceRepository = {
    * ends up with more than one live row.
    */
   async findActiveByOwner(
-    input: { ownerId: string },
+    input: { ownerId: string; tenantId?: string },
     tx: DatabaseClient = db,
   ): Promise<WorkspaceModel | undefined> {
     return await tx.query.workspaceModel.findFirst({
-      where: { ownerId: input.ownerId, scheduledDeletionAt: { isNull: true } },
+      where: {
+        ownerId: input.ownerId,
+        scheduledDeletionAt: { isNull: true },
+        ...(input.tenantId === undefined ? {} : { tenantId: input.tenantId }),
+      },
       orderBy: { id: "asc" },
     })
   },
@@ -112,7 +116,7 @@ export const workspaceRepository = {
    * channel remains an immutable connect target.
    */
   async findEmptyActiveByOwner(
-    input: { ownerId: string },
+    input: { ownerId: string; tenantId?: string },
     tx: DatabaseClient = db,
   ): Promise<WorkspaceModel | undefined> {
     const workspaces = await tx
@@ -122,6 +126,9 @@ export const workspaceRepository = {
         and(
           eq(workspaceModel.ownerId, input.ownerId),
           isNull(workspaceModel.scheduledDeletionAt),
+          input.tenantId === undefined
+            ? undefined
+            : eq(workspaceModel.tenantId, input.tenantId),
           notExists(
             tx
               .select({ one: sql`1` })

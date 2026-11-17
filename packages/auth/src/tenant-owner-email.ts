@@ -1,5 +1,5 @@
+import { userService } from "@chatbotx.io/business"
 import { tenantOwnerEmailReservedException } from "@chatbotx.io/business/errors"
-import { db } from "@chatbotx.io/database/client"
 import { ROOT_TENANT_ID } from "@chatbotx.io/database/schema"
 import { resolveTenantOwnerId } from "./tenant-context"
 
@@ -20,11 +20,7 @@ export async function assertNotTenantOwnerEmail(props: {
   if (!ownerId) {
     return
   }
-  const owner = await db.query.userModel.findFirst({
-    where: { id: ownerId },
-    columns: { email: true },
-  })
-  const ownerEmail = owner?.email
+  const ownerEmail = await userService.findEmailCached(ownerId)
   if (ownerEmail && ownerEmail.toLowerCase() === props.email.toLowerCase()) {
     throw tenantOwnerEmailReservedException()
   }

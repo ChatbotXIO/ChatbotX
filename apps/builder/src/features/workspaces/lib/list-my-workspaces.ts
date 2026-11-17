@@ -3,6 +3,8 @@ import { workspaceMemberService } from "@chatbotx.io/business"
 /**
  * The workspaces `userId` is a member of. Shared by the session `/rpc`
  * procedure and the mobile `GET /v1/me/workspaces`, so the two never disagree.
+ * Not host-scoped: the session procedure filters by request host itself; the
+ * token/mobile callers have no browser host.
  */
 export const listMyWorkspaces = async (userId: string) => {
   const members = await workspaceMemberService.listByUserId({ userId })

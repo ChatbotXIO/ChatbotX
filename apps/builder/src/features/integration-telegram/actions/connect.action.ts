@@ -28,6 +28,7 @@ export const connectTelegramAction = authActionClient
     }) => {
       try {
         const workspaceId = parsedInput.workspaceId ?? undefined
+        const hostTenantId = await resolveRequestTenantId()
 
         // Validate bot token and fetch bot info from Telegram
         const botData = await integrations.telegram.runAction("connect", {
@@ -47,7 +48,7 @@ export const connectTelegramAction = authActionClient
           botId: botData.id,
           botUsername: botData.username,
           botToken: parsedInput.botToken,
-          hostTenantId: await resolveRequestTenantId(),
+          hostTenantId,
           onConnected: async ({ webhookSecretToken }) => {
             // Register webhook URL with Telegram
             const webhookUrl = buildBrokerCallbackUrl(

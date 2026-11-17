@@ -13,6 +13,12 @@ const mocks = vi.hoisted(() => ({
   checkWorkspaceOwnerAccess: vi.fn().mockResolvedValue(null),
 }))
 
+vi.mock("@/lib/tenant/request-tenant", () => ({
+  resolveRequestTenantId: async () => "root-tenant",
+  canOpenWorkspaceOnHost: () => true,
+  filterWorkspacesForHost: <T>(items: T[]) => items,
+}))
+
 vi.mock("@chatbotx.io/business", () => ({
   isPlatformAdmin: mocks.isPlatformAdmin,
   isSuperAdmin: mocks.isSuperAdmin,

@@ -213,6 +213,7 @@ async function connectLineSteps(
   const { user, workspaceId, channelId, channelSecret } = input
 
   const integration = integrations.line
+  const hostTenantId = await resolveRequestTenantId()
   const ownerId = await resolveOwnerId({ workspaceId, user })
   await assertLineCreatable({ workspaceId, ownerId })
   const { auth, bot } = await inStage("credentials", () =>
@@ -229,7 +230,7 @@ async function connectLineSteps(
     channelId,
     auth,
     bot,
-    hostTenantId: await resolveRequestTenantId(),
+    hostTenantId,
     onConnected: async () => {
       // Endpoint GET/PUT only; the webhook test runs after commit below.
       registered = await inStage("webhook", () =>

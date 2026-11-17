@@ -158,3 +158,14 @@ test("suspend scopes the teardown to the tenant so the owner's platform workspac
     expect.objectContaining({ tenantId: "tenant-1" }),
   )
 })
+
+test("suspend and reactivate do nothing when the owner has no tenant row (root workspaces untouched)", async () => {
+  vi.spyOn(tenantService, "findByOwner").mockResolvedValue(undefined as never)
+
+  await tenantService.suspend("owner-1")
+  await tenantService.reactivate("owner-1")
+
+  expect(deactivateOwnerWorkspacesMock).not.toHaveBeenCalled()
+  expect(listPausedByOwnerMock).not.toHaveBeenCalled()
+  expect(connectionTransitionMock).not.toHaveBeenCalled()
+})

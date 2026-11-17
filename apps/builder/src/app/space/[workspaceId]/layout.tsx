@@ -37,7 +37,7 @@ import { getTenantSettings } from "@/features/tenant/utils"
 import { hasWorkspacePermission } from "@/lib/auth/permission-routes"
 import { enforcePasswordCurrent } from "@/lib/auth/require-password-current"
 import {
-  getCurrentUserAndAllLinkedWorkspaces,
+  getCurrentUserAndHostScopedWorkspaces,
   getCurrentUserAndTargetWorkspace,
 } from "@/lib/auth/utils"
 import { buildWorkspaceQuotaMetrics } from "@/lib/quota-metrics"
@@ -57,7 +57,7 @@ export default async function WorkspaceLayout({
     return notFound()
   }
 
-  const userAndWorkspaces = await getCurrentUserAndAllLinkedWorkspaces()
+  const userAndWorkspaces = await getCurrentUserAndHostScopedWorkspaces()
   if (!userAndWorkspaces) {
     return notFound()
   }

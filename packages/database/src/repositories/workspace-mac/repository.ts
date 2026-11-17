@@ -11,7 +11,8 @@ import {
   sql,
   sum,
 } from "../../client"
-import { ROOT_TENANT_ID, workspaceMacModel, workspaceModel } from "../../schema"
+import { workspaceMacModel, workspaceModel } from "../../schema"
+import { poolWorkspaceScope } from "../workspace/pool-scope"
 
 class WorkspaceMacRepository {
   /**
@@ -28,13 +29,7 @@ class WorkspaceMacRepository {
       .from(workspaceModel)
       .where(
         poolOwnerId
-          ? or(
-              eq(workspaceModel.tenantId, tenantId),
-              and(
-                eq(workspaceModel.tenantId, ROOT_TENANT_ID),
-                eq(workspaceModel.ownerId, poolOwnerId),
-              ),
-            )
+          ? poolWorkspaceScope(poolOwnerId, tenantId)
           : eq(workspaceModel.tenantId, tenantId),
       )
     const [row] = await client
@@ -47,10 +42,12 @@ class WorkspaceMacRepository {
             poolOwnerId
               ? inArray(workspaceMacModel.workspaceId, tenantWorkspaces)
               : undefined,
-            and(
-              isNull(workspaceMacModel.tenantId),
-              inArray(workspaceMacModel.workspaceId, tenantWorkspaces),
-            ),
+            poolOwnerId
+              ? undefined
+              : and(
+                  isNull(workspaceMacModel.tenantId),
+                  inArray(workspaceMacModel.workspaceId, tenantWorkspaces),
+                ),
           ),
           lte(workspaceMacModel.periodStart, sql`now()`),
           gt(workspaceMacModel.periodEnd, sql`now()`),
