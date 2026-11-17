@@ -18,6 +18,7 @@ import { assertChannelCreatable } from "@/features/connections/lib/connect-flow"
 import { integrations } from "@/integration"
 import { logger } from "@/lib/log"
 import { buildBrokerCallbackUrl } from "@/lib/oauth-broker"
+import { resolveRequestTenantId } from "@/lib/tenant/request-tenant"
 
 export type ConnectLineInput = {
   /** Omitted → a new workspace is created for the channel (Telegram parity). */
@@ -228,6 +229,7 @@ async function connectLineSteps(
     channelId,
     auth,
     bot,
+    hostTenantId: await resolveRequestTenantId(),
     onConnected: async () => {
       // Endpoint GET/PUT only; the webhook test runs after commit below.
       registered = await inStage("webhook", () =>

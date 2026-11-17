@@ -10,6 +10,7 @@ import { integrations } from "@/integration"
 import { logger } from "@/lib/log"
 import { buildBrokerCallbackUrl } from "@/lib/oauth-broker"
 import { authActionClient } from "@/lib/safe-action"
+import { resolveRequestTenantId } from "@/lib/tenant/request-tenant"
 import {
   type ConnectTelegramRequest,
   connectTelegramRequest,
@@ -46,6 +47,7 @@ export const connectTelegramAction = authActionClient
           botId: botData.id,
           botUsername: botData.username,
           botToken: parsedInput.botToken,
+          hostTenantId: await resolveRequestTenantId(),
           onConnected: async ({ webhookSecretToken }) => {
             // Register webhook URL with Telegram
             const webhookUrl = buildBrokerCallbackUrl(

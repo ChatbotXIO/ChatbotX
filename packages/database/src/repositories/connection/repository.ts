@@ -225,7 +225,7 @@ export const connectionRepository = {
    * per-connection `teardown.resume` sweep.
    */
   async listPausedByOwner(
-    input: { ownerId: string },
+    input: { ownerId: string; tenantId?: string },
     tx: DatabaseClient = db,
   ): Promise<ConnectionModel[]> {
     const rows = await tx
@@ -238,6 +238,9 @@ export const connectionRepository = {
       .where(
         and(
           eq(workspaceModel.ownerId, input.ownerId),
+          input.tenantId
+            ? eq(workspaceModel.tenantId, input.tenantId)
+            : undefined,
           eq(connectionModel.status, "paused"),
         ),
       )

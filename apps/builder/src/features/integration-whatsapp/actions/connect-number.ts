@@ -29,6 +29,7 @@ import { toConnectActionFailure } from "@/features/channel-connect/lib/connect-a
 import { logger } from "@/lib/log"
 import { resolvePlatformOwnerId } from "@/lib/platform-credential-owner"
 import { resolveProviderOriginForCredential } from "@/lib/provider-origin"
+import { resolveRequestTenantId } from "@/lib/tenant/request-tenant"
 import {
   checkWorkspaceOwnerAccess,
   workspaceAccessDenialException,
@@ -512,6 +513,7 @@ async function persistWhatsappNumber({
       isCoexist,
       platformType,
       signupSession: prepared.signupSession,
+      hostTenantId: await resolveRequestTenantId(),
     })
 
   return {

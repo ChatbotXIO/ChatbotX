@@ -11,17 +11,32 @@ import {
   sql,
   sum,
 } from "../../client"
-import { workspaceMacModel, workspaceModel } from "../../schema"
+import { ROOT_TENANT_ID, workspaceMacModel, workspaceModel } from "../../schema"
 
 class WorkspaceMacRepository {
+  /**
+   * `poolOwnerId`: also include the root-tenant workspaces this owner holds
+   * (a reseller owner's platform-host workspaces share their tenant's pool).
+   */
   async sumForTenant(
     tenantId: string,
+    poolOwnerId?: string,
     client: DatabaseClient = db,
   ): Promise<number> {
     const tenantWorkspaces = client
       .select({ id: workspaceModel.id })
       .from(workspaceModel)
-      .where(eq(workspaceModel.tenantId, tenantId))
+      .where(
+        poolOwnerId
+          ? or(
+              eq(workspaceModel.tenantId, tenantId),
+              and(
+                eq(workspaceModel.tenantId, ROOT_TENANT_ID),
+                eq(workspaceModel.ownerId, poolOwnerId),
+              ),
+            )
+          : eq(workspaceModel.tenantId, tenantId),
+      )
     const [row] = await client
       .select({ total: sum(workspaceMacModel.macCount) })
       .from(workspaceMacModel)
@@ -29,6 +44,9 @@ class WorkspaceMacRepository {
         and(
           or(
             eq(workspaceMacModel.tenantId, tenantId),
+            poolOwnerId
+              ? inArray(workspaceMacModel.workspaceId, tenantWorkspaces)
+              : undefined,
             and(
               isNull(workspaceMacModel.tenantId),
               inArray(workspaceMacModel.workspaceId, tenantWorkspaces),

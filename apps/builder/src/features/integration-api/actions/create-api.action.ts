@@ -7,6 +7,7 @@ import {
 } from "@chatbotx.io/business"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
 import { authActionClient } from "@/lib/safe-action"
+import { resolveRequestTenantId } from "@/lib/tenant/request-tenant"
 import { createApiRequest } from "../schema/mutation"
 
 export const createApiAction = authActionClient
@@ -25,6 +26,7 @@ export const createApiAction = authActionClient
       ownerId = workspace.ownerId
     }
 
+    const hostTenantId = await resolveRequestTenantId()
     const result = await integrationApiService.createWithToken({
       ownerId,
       actorUserId: ctx.user.id,
@@ -41,6 +43,7 @@ export const createApiAction = authActionClient
             ownerId,
           },
           quotaConsumption,
+          hostTenantId,
         })
         return workspace.id
       },

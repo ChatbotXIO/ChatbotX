@@ -8,6 +8,7 @@ import type { DatabaseClient } from "@chatbotx.io/database/client"
 import type { WorkspaceModel } from "@chatbotx.io/database/types"
 import { redirect } from "next/navigation"
 import type { MessageKey } from "@/features/channel-connect/lib/message-key"
+import { resolveRequestTenantId } from "@/lib/tenant/request-tenant"
 
 const DEFAULT_WORKSPACE_NAME = "New Workspace"
 
@@ -102,6 +103,8 @@ async function callEnsureWorkspace(
     name,
     tx,
     quotaConsumption,
+    // Server-resolved from the request host: decides tenant vs root for a reseller owner.
+    hostTenantId: await resolveRequestTenantId(),
   })
 }
 

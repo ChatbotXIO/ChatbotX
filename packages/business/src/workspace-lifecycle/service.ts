@@ -531,9 +531,13 @@ class WorkspaceLifecycleService extends BaseService {
     reason: InboxDisconnectReason
     integrations?: WorkspaceTeardownIntegrations
     teardownLevel?: WorkspaceTeardownLevel
+    /** Limit teardown to this tenant's workspaces (tenant suspend must not touch the owner's platform workspaces). Omit for every workspace the owner has. */
+    tenantId?: string
   }): Promise<string[]> {
     const workspaces = await db.query.workspaceModel.findMany({
-      where: { ownerId: props.ownerId },
+      where: props.tenantId
+        ? { ownerId: props.ownerId, tenantId: props.tenantId }
+        : { ownerId: props.ownerId },
       columns: { id: true, tenantId: true },
     })
 

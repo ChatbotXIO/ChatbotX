@@ -85,6 +85,9 @@ const { tenantService } = await import("../src/enterprise/tenant/service")
 
 beforeEach(() => {
   vi.clearAllMocks()
+  vi.spyOn(tenantService, "findByOwner").mockResolvedValue({
+    id: "tenant-1",
+  } as never)
   state.updatedTenantRow = { id: "tenant-1" }
   state.pausedConnections = []
   deactivateOwnerWorkspacesMock.mockResolvedValue([])
@@ -101,6 +104,7 @@ test("suspend pauses the owner's workspaces with teardownLevel pause and reason 
     ownerId: "owner-1",
     reason: "tenant_suspended",
     teardownLevel: "pause",
+    tenantId: "tenant-1",
   })
 })
 
@@ -123,7 +127,10 @@ test("reactivate resumes every paused connection for the owner via teardown.resu
 
   await tenantService.reactivate("owner-1")
 
-  expect(listPausedByOwnerMock).toHaveBeenCalledWith({ ownerId: "owner-1" })
+  expect(listPausedByOwnerMock).toHaveBeenCalledWith({
+    ownerId: "owner-1",
+    tenantId: "tenant-1",
+  })
   expect(connectionTransitionMock).toHaveBeenNthCalledWith(1, {
     connectionId: "connection-1",
     event: "teardown.resume",
@@ -142,4 +149,12 @@ test("reactivate is a no-op resume sweep when the owner has no paused connection
   await tenantService.reactivate("owner-1")
 
   expect(connectionTransitionMock).not.toHaveBeenCalled()
+})
+
+test("suspend scopes the teardown to the tenant so the owner's platform workspaces keep running", async () => {
+  await tenantService.suspend("owner-1")
+
+  expect(deactivateOwnerWorkspacesMock).toHaveBeenCalledWith(
+    expect.objectContaining({ tenantId: "tenant-1" }),
+  )
 })

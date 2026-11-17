@@ -86,6 +86,7 @@ vi.mock("@chatbotx.io/database/client", () => ({
   gt: vi.fn(),
   inArray: (a: unknown, b: unknown) => ({ inArray: [a, b] }),
   lte: vi.fn(),
+  or: (...args: unknown[]) => ({ or: args }),
   sql: Object.assign(
     (strings: TemplateStringsArray) => ({ sql: strings.join("?") }),
     { raw: vi.fn() },
@@ -215,6 +216,26 @@ describe("reconcileOwnerAfterTeardown", () => {
 })
 
 describe("reconcileOwnerPoolUsage", () => {
+  test("counts the tenant's workspaces plus the owner's root workspaces as one pool", async () => {
+    await userQuotaService.reconcileOwnerPoolUsage("owner-1", "tenant-1")
+
+    expect(sumForTenant).toHaveBeenCalledWith("tenant-1", "owner-1")
+    const wheres = dbSelect.mock.results
+      .map((r) => r.value)
+      .flatMap((b) => b.where.mock.calls.map((c: unknown[]) => c[0]))
+    expect(wheres[0]).toEqual({
+      or: [
+        { eq: ["workspace.tenantId", "tenant-1"] },
+        {
+          and: [
+            { eq: ["workspace.tenantId", "1"] },
+            { eq: ["workspace.ownerId", "owner-1"] },
+          ],
+        },
+      ],
+    })
+  })
+
   test("does not restore MAC after a quota rollover races the reconcile", async () => {
     await userQuotaService.reconcileOwnerPoolUsage("owner-1", "tenant-1")
 

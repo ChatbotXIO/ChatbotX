@@ -193,7 +193,7 @@ export const inboxRepository = {
    * `Connection` backfill's `--verify` is 0.
    */
   async listTenantSuspendedWithoutConnectionByOwner(
-    input: { ownerId: string },
+    input: { ownerId: string; tenantId?: string },
     tx: DatabaseClient = db,
   ): Promise<InboxModel[]> {
     const rows = await tx
@@ -204,6 +204,9 @@ export const inboxRepository = {
       .where(
         and(
           eq(workspaceModel.ownerId, input.ownerId),
+          input.tenantId
+            ? eq(workspaceModel.tenantId, input.tenantId)
+            : undefined,
           eq(inboxModel.status, "disconnected"),
           eq(inboxModel.disconnectReason, "tenant_suspended"),
           isNull(connectionModel.id),

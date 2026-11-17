@@ -82,6 +82,8 @@ type EnsureOwnerWorkspaceInput = {
   name: string
   tx?: DatabaseClient
   quotaConsumption?: WorkspaceQuotaConsumption
+  /** Tenant of the host the request came in on (server-resolved, never client input). */
+  hostTenantId?: string
 }
 
 /** What `writeWorkspace` has already done, for `insertWorkspace`'s rollback. */
@@ -188,7 +190,7 @@ class WorkspaceService extends BaseService {
       tx: DatabaseClient,
     ) => Promise<WorkspaceModel | undefined>,
   ): Promise<WorkspaceModel> {
-    const { ownerId, name, tx, quotaConsumption } = props
+    const { ownerId, name, tx, quotaConsumption, hostTenantId } = props
     const run = async (lockTx: DatabaseClient): Promise<WorkspaceModel> => {
       await workspaceRepository.lockFirstWorkspace({ ownerId }, lockTx)
       const existing = await findExisting({ ownerId }, lockTx)
@@ -203,6 +205,7 @@ class WorkspaceService extends BaseService {
         createdBy: ownerId,
         tx: lockTx,
         quotaConsumption,
+        hostTenantId,
       })
     }
 
@@ -1000,6 +1003,31 @@ class WorkspaceService extends BaseService {
   }
 
   /**
+   * Tenant for a new workspace. Sub-accounts always get their own tenant. A
+   * reseller owner (a root user who owns a tenant) gets their tenant only when
+   * the request came in on that tenant's host, otherwise the root tenant.
+   * `hostTenantId` must be server-resolved; `undefined` (no request context,
+   * e.g. worker/script) keeps the owner-derived tenant.
+   */
+  async resolveWorkspaceTenant(props: {
+    ownerId: string
+    hostTenantId?: string
+  }): Promise<string> {
+    const ownerTenant = await this.resolveTenantForOwner(props.ownerId)
+    if (ownerTenant === ROOT_TENANT_ID || props.hostTenantId === undefined) {
+      return ownerTenant
+    }
+    const creator = await db.query.userModel.findFirst({
+      where: { id: props.ownerId },
+      columns: { tenantId: true },
+    })
+    if (creator && creator.tenantId !== ROOT_TENANT_ID) {
+      return ownerTenant
+    }
+    return props.hostTenantId === ownerTenant ? ownerTenant : ROOT_TENANT_ID
+  }
+
+  /**
    * `quotaConsumption`: pass it when `tx` is a caller-owned transaction. The
    * `workspaces` seat is consumed outside SQL, so if that transaction later
    * rolls back the caller must hand the seat back itself via
@@ -1016,6 +1044,8 @@ class WorkspaceService extends BaseService {
     members?: Array<{ userId: string; permissions: WorkspaceMemberPermissions }>
     /** False when the owner is not the one creating it (the admin console): their share-page choice stays out of it. */
     consumeInstallIntent?: boolean
+    /** Tenant of the request host; lets a reseller owner pick tenant vs root. Ignored when `data.tenantId` is set. */
+    hostTenantId?: string
   }): Promise<WorkspaceModel> {
     // First, so a creation refused below still ends the choice.
     const installIntentToken =
@@ -1055,6 +1085,7 @@ class WorkspaceService extends BaseService {
     quotaConsumption?: WorkspaceQuotaConsumption
     members?: Array<{ userId: string; permissions: WorkspaceMemberPermissions }>
     installIntentToken: string | null
+    hostTenantId?: string
   }): Promise<WorkspaceModel> {
     // This consume runs against `db`, not `tx`: if a caller wraps `create` in
     // its own transaction that later rolls back (e.g. a channel connect action),
@@ -1158,11 +1189,16 @@ class WorkspaceService extends BaseService {
     progress: WriteProgress
     members?: Array<{ userId: string; permissions: WorkspaceMemberPermissions }>
     installIntentToken: string | null
+    hostTenantId?: string
   }): Promise<WorkspaceModel> {
     const { data, tx } = props
 
     const tenantId =
-      data.tenantId ?? (await this.resolveTenantForOwner(props.createdBy))
+      data.tenantId ??
+      (await this.resolveWorkspaceTenant({
+        ownerId: props.createdBy,
+        hostTenantId: props.hostTenantId,
+      }))
     const [newWorkspace] = await tx
       .insert(workspaceModel)
       .values({
