@@ -1,3 +1,4 @@
+import type { SmtpAuthValue } from "@chatbotx.io/integration-smtp"
 import { resolveSmtpHostAndPort } from "./smtp-host"
 import { verifySmtpConnection } from "./verify-connection"
 
@@ -8,15 +9,6 @@ type SmtpConnectionInput = {
   username: string
   password: string
   fromAddress: string
-}
-
-type SmtpPreparedAuth = {
-  authType: "custom"
-  provider: SmtpConnectionInput["provider"]
-  host: string
-  port: number
-  username: string
-  password: string
 }
 
 /**
@@ -36,7 +28,7 @@ type SmtpPreparedAuth = {
 export async function prepareSmtpAuth(input: SmtpConnectionInput): Promise<{
   host: string
   port: number
-  auth: SmtpPreparedAuth
+  auth: SmtpAuthValue
 }> {
   await verifySmtpConnection(input)
 

@@ -16,7 +16,7 @@ import {
 import type { IntegrationType } from "../src/partials/integration"
 import { userRepository } from "../src/repositories/user/repository"
 
-export const CONNECTION_AUTHORIZATION_ROTATION_BATCH_SIZE = 200
+const CONNECTION_AUTHORIZATION_ROTATION_BATCH_SIZE = 200
 
 type ProviderEntry = [IntegrationType, UserConnectionAuthorization]
 

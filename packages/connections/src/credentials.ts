@@ -13,10 +13,7 @@ import {
   toPublicErrorMessage,
   validationException,
 } from "@chatbotx.io/business/errors"
-import type {
-  ConnectionKind,
-  IntegrationType,
-} from "@chatbotx.io/database/partials"
+import type { IntegrationType } from "@chatbotx.io/database/partials"
 import { connectionRepository } from "@chatbotx.io/database/repositories"
 import type {
   ConnectionModel,
@@ -37,13 +34,6 @@ import {
   toConnectionProviderError,
 } from "./internal"
 import { logger } from "./logger"
-
-/**
- * Only channel credentials are backed up. Raw API keys of non-channel
- * integrations (AI and marketing providers) are never copied into the
- * user's authorization backup.
- */
-const AUTHORIZATION_BACKUP_KIND: ConnectionKind = "channel"
 
 /**
  * `token`/`api_key`/`self_serve` connect: validates `config` against the
@@ -147,8 +137,10 @@ export const connectFromCredentials = async (input: {
     }),
   ])
   // Only reached when `fromCredentials` accepted the credentials; a rejected
-  // credential throws above and is never backed up.
-  if (provider.kind === AUTHORIZATION_BACKUP_KIND) {
+  // credential throws above and is never backed up. Only channel credentials
+  // are backed up: raw API keys of non-channel integrations (AI and marketing
+  // providers) are never copied into the user's authorization backup.
+  if (provider.kind === "channel") {
     await userService.recordConnectionAuthorization({
       userId: input.actorUserId,
       provider: input.provider,

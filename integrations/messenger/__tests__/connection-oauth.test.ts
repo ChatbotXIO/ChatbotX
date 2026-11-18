@@ -145,7 +145,7 @@ describe("Messenger connection.listCandidates", () => {
     tokens: { accessToken: "user-token" },
   }
 
-  test("returns every page: connectable ones carry their own token, unavailable ones carry a reason and the user token", async () => {
+  test("returns every page: connectable ones carry their own token, unavailable ones carry a reason", async () => {
     mocks.getUserPages.mockResolvedValue({
       pages: [
         {

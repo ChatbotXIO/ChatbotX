@@ -561,8 +561,8 @@ const completeReconnect = async (input: {
   let candidate: ConnectionCandidate | undefined
   try {
     if (adapter.provider.listCandidates) {
-      // An unavailable account is listed for display only; its auth is not
-      // the account's own, so it can never satisfy a reconnect.
+      // An unavailable account is listed for display only, so it is never
+      // used for a reconnect.
       const candidates = (
         await adapter.provider.listCandidates({ auth })
       ).filter(({ unavailableReason }) => !unavailableReason)

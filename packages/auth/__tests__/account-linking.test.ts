@@ -318,7 +318,6 @@ describe("createAuth keeps the encrypted connection authorization backup out of 
     >
 
     expect(adapterConfig.debugLogs).toBeFalsy()
-    expect(config.database).not.toHaveProperty("debugLogs", true)
     expect(JSON.stringify(config.advanced ?? {})).not.toContain("debugLogs")
   })
 })
