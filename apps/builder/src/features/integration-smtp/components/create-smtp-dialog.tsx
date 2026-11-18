@@ -29,7 +29,7 @@ export const CreateSmtpDialog = ({
     <Dialog onOpenChange={onOpenChange} open={open}>
       <DialogTrigger render={children} />
 
-      <DialogContent className="max-h-screen max-w-lg overflow-y-scroll">
+      <DialogContent className="max-h-[calc(100dvh-4rem)] overflow-y-auto sm:max-w-3xl">
         <DialogHeader>
           <DialogTitle>
             {t("actions.connectFeature", { feature: "SMTP" })}

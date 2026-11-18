@@ -83,6 +83,40 @@ describe("receiveMessage", () => {
     expect(result).toBeNull()
   })
 
+  const mailWith = (extraHeader: string, from = "jane@example.com") =>
+    [
+      `From: ${from}`,
+      "To: support@acme.test",
+      "Subject: Hello",
+      "Message-ID: <loop@example.com>",
+      extraHeader,
+      "Content-Type: text/plain; charset=utf-8",
+      "",
+      "Body",
+    ].filter(Boolean)
+
+  test.each([
+    ["Precedence: bulk", "Precedence: bulk"],
+    ["Precedence: junk", "Precedence: junk"],
+    ["Precedence: list", "Precedence: list"],
+    ["X-Auto-Response-Suppress", "X-Auto-Response-Suppress: All"],
+    ["Auto-Submitted: auto-generated", "Auto-Submitted: auto-generated"],
+    ["List-Id", "List-Id: <news.example.com>"],
+  ])("drops mail carrying %s", async (_name, header) => {
+    expect(await receive(mailWith(header))).toBeNull()
+  })
+
+  test.each([
+    "mailer-daemon@example.com",
+    "postmaster@example.com",
+  ])("drops mail from the bounce sender %s", async (from) => {
+    expect(await receive(mailWith("", from))).toBeNull()
+  })
+
+  test("keeps mail marked Auto-Submitted: no", async () => {
+    expect(await receive(mailWith("Auto-Submitted: no"))).not.toBeNull()
+  })
+
   test("drops mail from the inbox's own address (loop guard), case-insensitively", async () => {
     const result = await receive([
       "From: SUPPORT@acme.test",

@@ -350,29 +350,55 @@ describe("integrationSmtpService.update", () => {
     expect(lastSetArg()).not.toHaveProperty("imapLastUid")
   })
 
-  // The SMTP password doubles as the IMAP login unless a dedicated one is set.
-  test("an SMTP password change resets the cursor only when it is also the IMAP login", async () => {
+  // A password change keeps the same mailbox, so the cursor must survive:
+  // dropping it would skip the mail that arrived while the old password failed.
+  // UIDVALIDITY (checked at fetch time) still catches a real mailbox change.
+  test("an SMTP password change keeps the cursor", async () => {
     mockFindOrFail.mockResolvedValue({ ...existing, imapEnabled: true })
     await integrationSmtpService.update({
       workspaceId: "ws-1",
       id: "smtp-1",
       data: { password: "new-pass" },
     })
-    expect(lastSetArg()).toHaveProperty("imapLastUid", null)
+    expect(lastSetArg()).not.toHaveProperty("imapLastUid")
+  })
 
-    vi.clearAllMocks()
+  test("a dedicated IMAP password change keeps the cursor", async () => {
     mockFindOrFail.mockResolvedValue({
       ...existing,
       imapEnabled: true,
       auth: { ...auth, imapUsername: "box", imapPassword: "box-pass" },
     })
-    mockUpdateReturning.mockResolvedValue([{ id: "smtp-1" }])
     await integrationSmtpService.update({
       workspaceId: "ws-1",
       id: "smtp-1",
-      data: { password: "new-pass" },
+      data: { imapPassword: "new-box-pass" },
     })
     expect(lastSetArg()).not.toHaveProperty("imapLastUid")
+  })
+
+  test("a username change resets the cursor", async () => {
+    mockFindOrFail.mockResolvedValue({ ...existing, imapEnabled: true })
+    await integrationSmtpService.update({
+      workspaceId: "ws-1",
+      id: "smtp-1",
+      data: { username: "someone-else" },
+    })
+    expect(lastSetArg()).toHaveProperty("imapLastUid", null)
+  })
+
+  test("a dedicated IMAP username change resets the cursor", async () => {
+    mockFindOrFail.mockResolvedValue({
+      ...existing,
+      imapEnabled: true,
+      auth: { ...auth, imapUsername: "box", imapPassword: "box-pass" },
+    })
+    await integrationSmtpService.update({
+      workspaceId: "ws-1",
+      id: "smtp-1",
+      data: { imapUsername: "other-box" },
+    })
+    expect(lastSetArg()).toHaveProperty("imapLastUid", null)
   })
 
   test("stores dedicated IMAP credentials in auth, omitting unset keys", async () => {

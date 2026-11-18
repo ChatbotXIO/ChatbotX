@@ -1,3 +1,4 @@
+import { SdkException } from "@chatbotx.io/sdk"
 import { describe, expect, test, vi } from "vitest"
 import { parseRawEmail } from "../src/inbound/parse"
 import {
@@ -8,6 +9,7 @@ import {
 } from "../src/inbound/webhook"
 
 const JOB_ID = /^smtp-in-inbox-1-wh-[0-9a-f]{32}$/
+const DEDUP_KEY = /^[0-9a-f]{32}$/
 
 const rawMail = [
   "From: Jane Doe <jane@example.com>",
@@ -218,6 +220,87 @@ describe("extractRawEmails", () => {
       httpStatusCode: 413,
     })
   })
+
+  test.each([
+    [
+      "mailgun",
+      () =>
+        form({
+          from: "bot@example.com",
+          recipient: "support@acme.test",
+          subject: "OOO",
+          "body-plain": "away",
+          "message-headers": JSON.stringify([
+            ["Message-Id", "<mg2@example.com>"],
+            ["Auto-Submitted", "auto-replied"],
+          ]),
+        }),
+    ],
+    [
+      "postmark",
+      () =>
+        json({
+          From: "bot@example.com",
+          To: "support@acme.test",
+          Subject: "OOO",
+          TextBody: "away",
+          Headers: [
+            { Name: "Message-ID", Value: "<pm2@example.com>" },
+            { Name: "Auto-Submitted", Value: "auto-replied" },
+          ],
+        }),
+    ],
+    [
+      "brevo",
+      () =>
+        json({
+          items: [
+            {
+              From: { Address: "bot@example.com" },
+              To: [{ Address: "support@acme.test" }],
+              Subject: "OOO",
+              RawTextBody: "away",
+              Headers: {
+                "Message-ID": "<bv2@example.com>",
+                "Auto-Submitted": "auto-replied",
+              },
+            },
+          ],
+        }),
+    ],
+  ] as const)("%s keeps Auto-Submitted so loop protection still works", async (provider, request) => {
+    const [raw] = await extractRawEmails(provider, request())
+    expect((await parseRawEmail(raw as Buffer))?.isAutomated).toBe(true)
+  })
+
+  test("a brevo batch keeps the good mails when one item has no sender", async () => {
+    const mails = await extractRawEmails(
+      "brevo",
+      json({
+        items: [
+          {
+            MessageId: "<ok1@example.com>",
+            From: { Address: "jane@example.com" },
+            To: [{ Address: "support@acme.test" }],
+            Subject: "Good one",
+            RawTextBody: "First",
+          },
+          { MessageId: "<bad@example.com>", Subject: "No sender" },
+          {
+            MessageId: "<ok2@example.com>",
+            From: { Address: "joe@example.com" },
+            To: [{ Address: "support@acme.test" }],
+            Subject: "Good two",
+            RawTextBody: "Second",
+          },
+        ],
+      }),
+    )
+    expect(mails).toHaveLength(2)
+    expect((await parseRawEmail(mails[1] as Buffer))?.messageId).toBe(
+      "<ok2@example.com>",
+    )
+  })
 })
 
 describe("mailDedupKey", () => {
@@ -229,7 +312,54 @@ describe("mailDedupKey", () => {
   })
 })
 
+describe("mailDedupKey stability", () => {
+  const noId = "From: a@example.com\r\nSubject: x\r\n\r\nbody"
+
+  test("a mail with no Message-ID gets a stable hash key", async () => {
+    const first = await mailDedupKey(Buffer.from(noId))
+    expect(first).toMatch(DEDUP_KEY)
+    expect(await mailDedupKey(Buffer.from(noId))).toBe(first)
+    expect(await mailDedupKey(Buffer.from(`${noId}!`))).not.toBe(first)
+  })
+
+  test("a different Message-ID gives a different key", async () => {
+    const other = rawMail.replace("<m1@example.com>", "<m2@example.com>")
+    expect(await mailDedupKey(Buffer.from(rawMail))).not.toBe(
+      await mailDedupKey(Buffer.from(other)),
+    )
+  })
+})
+
 describe("handleInboundWebhook", () => {
+  test("the same mail delivered twice gets the same job id", async () => {
+    const queue = { add: vi.fn() }
+    const deliver = () =>
+      handleInboundWebhook({
+        config: { inboxId: "inbox-1", provider: "postmark" },
+        req: json({ RawEmail: rawMail }),
+        queue,
+      })
+
+    await deliver()
+    await deliver()
+
+    const ids = queue.add.mock.calls.map(
+      (call) => (call[2] as { jobId: string }).jobId,
+    )
+    expect(ids).toHaveLength(2)
+    expect(ids[0]).toBe(ids[1])
+  })
+
+  test("rejects instead of silently dropping mail when no queue is available", async () => {
+    await expect(
+      handleInboundWebhook({
+        config: { inboxId: "inbox-1", provider: "postmark" },
+        req: json({ RawEmail: rawMail }),
+        queue: undefined,
+      }),
+    ).rejects.toBeInstanceOf(SdkException)
+  })
+
   test("enqueues each mail as an incomingMessage job for the inbox", async () => {
     const queue = { add: vi.fn() }
 

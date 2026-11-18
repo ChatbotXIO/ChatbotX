@@ -1,6 +1,9 @@
 import type { SmtpImapInput } from "@chatbotx.io/business"
 import type { SmtpAuthValue } from "@chatbotx.io/integration-smtp"
-import { imapHostMap } from "@chatbotx.io/integration-smtp/schema"
+import {
+  DEFAULT_IMAP_MAILBOX,
+  imapHostMap,
+} from "@chatbotx.io/integration-smtp/schema"
 import type { ImapSettingsRequest } from "../schema/mutation"
 import { resolveSmtpHostAndPort } from "./smtp-host"
 import { verifySmtpConnection } from "./verify-connection"
@@ -26,8 +29,6 @@ export type PreparedSmtpAuth = {
   imapUsername?: string
   imapPassword?: string
 }
-
-const DEFAULT_MAILBOX = "INBOX"
 
 /** Pins a known provider's IMAP endpoint; `other` keeps what the caller typed. */
 const resolveImapEndpoint = (
@@ -90,7 +91,7 @@ export async function prepareSmtpAuth(
   }
 
   const endpoint = resolveImapEndpoint(input.provider, imap)
-  const mailbox = imap.mailbox ?? DEFAULT_MAILBOX
+  const mailbox = imap.mailbox ?? DEFAULT_IMAP_MAILBOX
   await verifyImapLogin({
     ...endpoint,
     mailbox,

@@ -75,9 +75,21 @@ export const integrationSmtpRepository = {
     token: string,
     tx: DatabaseClient = db,
   ): Promise<IntegrationSmtpModel | undefined> {
-    return await tx.query.integrationSmtpModel.findFirst({
-      where: { inboundToken: token },
-    })
+    // Only a connected inbox accepts mail: a disconnected one gets the same
+    // "unknown token" answer. The token itself is kept on disconnect so a
+    // reconnect makes the already-configured provider URL work again.
+    const [match] = await tx
+      .select({ row: integrationSmtpModel })
+      .from(integrationSmtpModel)
+      .innerJoin(inboxModel, eq(inboxModel.id, integrationSmtpModel.inboxId))
+      .where(
+        and(
+          eq(integrationSmtpModel.inboundToken, token),
+          eq(inboxModel.status, "connected"),
+        ),
+      )
+      .limit(1)
+    return match?.row
   },
 
   /** Replaces the webhook token; the unique index rejects a collision. */

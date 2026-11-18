@@ -11,6 +11,7 @@ const m = vi.hoisted(() => ({
   runExclusive: vi.fn(),
   isLockAcquisitionError: vi.fn(),
   order: [] as string[],
+  warn: vi.fn(),
 }))
 
 vi.mock("@chatbotx.io/business", () => ({
@@ -36,7 +37,7 @@ vi.mock("@chatbotx.io/redis", () => ({
 }))
 
 vi.mock("@chatbotx.io/logger", () => ({
-  getChildLogger: () => ({ info: vi.fn(), warn: vi.fn(), error: vi.fn() }),
+  getChildLogger: () => ({ info: vi.fn(), warn: m.warn, error: vi.fn() }),
 }))
 
 vi.mock("@chatbotx.io/worker-config", () => ({
@@ -92,6 +93,63 @@ beforeEach(() => {
 })
 
 describe("pollSmtpInbox", () => {
+  it("warns about each skipped mail and still advances the cursor past it", async () => {
+    m.fetchNewMessages.mockResolvedValue({
+      messages: [{ uid: 12, raw: Buffer.from("two") }],
+      skipped: [{ uid: 11, size: 9_000_000 }],
+      cursor: { uidValidity: 100, lastUid: 12 },
+      hasMore: false,
+    })
+
+    await pollSmtpInbox(data)
+
+    expect(m.warn).toHaveBeenCalledWith(
+      { integrationId: "smtp-1", inboxId: "inbox-1", uid: 11, size: 9_000_000 },
+      "Skipping oversized or unreadable IMAP email",
+    )
+    expect(m.recordPollSuccess).toHaveBeenCalledWith({
+      id: "smtp-1",
+      uidValidity: 100,
+      lastUid: 12,
+    })
+  })
+
+  it("warns when the mailbox was re-baselined", async () => {
+    m.fetchNewMessages.mockResolvedValue({
+      messages: [],
+      skipped: [],
+      rebaselined: "uidvalidity-changed",
+      cursor: { uidValidity: 200, lastUid: 40 },
+      hasMore: false,
+    })
+
+    await pollSmtpInbox(data)
+
+    expect(m.warn).toHaveBeenCalledWith(
+      {
+        integrationId: "smtp-1",
+        inboxId: "inbox-1",
+        reason: "uidvalidity-changed",
+        uidValidity: 200,
+      },
+      "IMAP mailbox re-baselined: mail before this point is not imported",
+    )
+  })
+
+  it("does not warn about a first poll baseline", async () => {
+    m.fetchNewMessages.mockResolvedValue({
+      messages: [],
+      skipped: [],
+      rebaselined: "first-poll",
+      cursor: { uidValidity: 100, lastUid: 10 },
+      hasMore: false,
+    })
+
+    await pollSmtpInbox(data)
+
+    expect(m.warn).not.toHaveBeenCalled()
+  })
+
   it("enqueues each mail as an incomingMessage and advances the cursor only afterwards", async () => {
     m.fetchNewMessages.mockResolvedValue({
       messages: [
@@ -99,6 +157,7 @@ describe("pollSmtpInbox", () => {
         { uid: 12, raw: Buffer.from("two") },
       ],
       cursor: { uidValidity: 100, lastUid: 12 },
+      skipped: [],
       hasMore: false,
     })
 
@@ -144,6 +203,7 @@ describe("pollSmtpInbox", () => {
         { uid: 12, raw: Buffer.from("two") },
       ],
       cursor: { uidValidity: 100, lastUid: 12 },
+      skipped: [],
       hasMore: false,
     })
     m.queueAdd
@@ -176,6 +236,7 @@ describe("pollSmtpInbox", () => {
     m.fetchNewMessages.mockResolvedValue({
       messages: [],
       cursor: { uidValidity: 200, lastUid: 5 },
+      skipped: [],
       hasMore: false,
     })
 
@@ -226,6 +287,7 @@ describe("pollSmtpInbox", () => {
     m.fetchNewMessages.mockResolvedValue({
       messages: [],
       cursor: { uidValidity: 100, lastUid: 10 },
+      skipped: [],
       hasMore: false,
     })
 

@@ -15,7 +15,7 @@ export const fromAddressSchema = z
     (val) => {
       const match = val.match(fromAddressRegex)
       const email = match ? match[1].trim() : val
-      return z.email().safeParse(email).success
+      return z.email({ pattern: z.regexes.html5Email }).safeParse(email).success
     },
     { message: "Invalid from address. Use an email or 'Name <email>' format." },
   )

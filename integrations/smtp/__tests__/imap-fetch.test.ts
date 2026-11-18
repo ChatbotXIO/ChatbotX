@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
-type FakeMessage = { uid: number; source?: Buffer }
+type FakeMessage = { uid: number; source?: Buffer; size?: number }
 
 const state = vi.hoisted(() => ({
   mailbox: { uidValidity: 100n, uidNext: 11 } as {
@@ -48,6 +48,7 @@ vi.mock("imapflow", () => ({
   },
 }))
 
+import { MAX_RAW_SOURCE_BYTES } from "../src/inbound/constants"
 import { fetchNewMessages, verifyImapConnection } from "../src/inbound/imap"
 
 const connection = {
@@ -100,6 +101,7 @@ describe("fetchNewMessages", () => {
 
     expect(result).toEqual({
       messages: [],
+      skipped: [],
       cursor: { uidValidity: 100, lastUid: 10 },
       hasMore: false,
     })
@@ -144,9 +146,9 @@ describe("fetchNewMessages", () => {
     expect(result.hasMore).toBe(true)
   })
 
-  test("skips a message with no source without moving the cursor past it", async () => {
-    state.mailbox = { uidValidity: 100n, uidNext: 13 }
-    state.messages = [{ uid: 11 }, { uid: 12, source: raw(12) }]
+  test("reports a message with no source as skipped and moves the cursor past it", async () => {
+    state.mailbox = { uidValidity: 100n, uidNext: 14 }
+    state.messages = [{ uid: 11 }, { uid: 12, source: raw(12) }, { uid: 13 }]
 
     const result = await fetchNewMessages({
       connection,
@@ -154,6 +156,62 @@ describe("fetchNewMessages", () => {
     })
 
     expect(result.messages.map((m) => m.uid)).toEqual([12])
+    expect(result.skipped.map((m) => m.uid)).toEqual([11, 13])
+    expect(result.cursor.lastUid).toBe(13)
+  })
+
+  test("skips mail over the size cap, reports it, and moves the cursor past it", async () => {
+    state.mailbox = { uidValidity: 100n, uidNext: 13 }
+    state.messages = [
+      { uid: 11, source: raw(11), size: MAX_RAW_SOURCE_BYTES + 1 },
+      { uid: 12, source: raw(12), size: 100 },
+    ]
+
+    const result = await fetchNewMessages({
+      connection,
+      cursor: { uidValidity: 100, lastUid: 10 },
+    })
+
+    expect(result.messages.map((m) => m.uid)).toEqual([12])
+    expect(result.skipped).toEqual([
+      { uid: 11, size: MAX_RAW_SOURCE_BYTES + 1 },
+    ])
+    expect(result.cursor.lastUid).toBe(12)
+  })
+
+  test("moves the cursor past an oversized newest mail even when nothing else arrived", async () => {
+    state.mailbox = { uidValidity: 100n, uidNext: 12 }
+    state.messages = [
+      { uid: 11, source: raw(11), size: MAX_RAW_SOURCE_BYTES + 1 },
+    ]
+
+    const result = await fetchNewMessages({
+      connection,
+      cursor: { uidValidity: 100, lastUid: 10 },
+    })
+
+    expect(result.messages).toEqual([])
+    expect(result.skipped).toHaveLength(1)
+    expect(result.cursor.lastUid).toBe(11)
+  })
+
+  test("flags a re-baseline on a changed UIDVALIDITY or a first poll only", async () => {
+    const changed = await fetchNewMessages({
+      connection,
+      cursor: { uidValidity: 55, lastUid: 4 },
+    })
+    const first = await fetchNewMessages({
+      connection,
+      cursor: { uidValidity: null, lastUid: null },
+    })
+    const steady = await fetchNewMessages({
+      connection,
+      cursor: { uidValidity: 100, lastUid: 10 },
+    })
+
+    expect(changed.rebaselined).toBe("uidvalidity-changed")
+    expect(first.rebaselined).toBe("first-poll")
+    expect(steady.rebaselined).toBeUndefined()
   })
 
   test("releases the mailbox lock and logs out on success", async () => {

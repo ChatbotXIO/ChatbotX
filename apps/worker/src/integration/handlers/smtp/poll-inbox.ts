@@ -71,6 +71,31 @@ const pollLocked = async (
       cursor: { uidValidity: row.imapUidValidity, lastUid: row.imapLastUid },
     })
 
+    for (const mail of result.skipped) {
+      log.warn(
+        {
+          integrationId: row.id,
+          inboxId: row.inboxId,
+          uid: mail.uid,
+          size: mail.size,
+        },
+        "Skipping oversized or unreadable IMAP email",
+      )
+    }
+    // A first poll baselines by design; only a changed UIDVALIDITY means mail
+    // may have been missed.
+    if (result.rebaselined === "uidvalidity-changed") {
+      log.warn(
+        {
+          integrationId: row.id,
+          inboxId: row.inboxId,
+          reason: result.rebaselined,
+          uidValidity: result.cursor.uidValidity,
+        },
+        "IMAP mailbox re-baselined: mail before this point is not imported",
+      )
+    }
+
     for (const mail of result.messages) {
       await integrationQueue.add(
         IntegrationJobAction.incomingMessage,

@@ -1,4 +1,5 @@
 import { ImapFlow } from "imapflow"
+import { logger } from "../lib/logger"
 import {
   IMAP_CONNECT_TIMEOUT_MS,
   MAX_MESSAGES_PER_POLL,
@@ -20,8 +21,17 @@ export type ImapCursor = {
 
 export type FetchedMail = { uid: number; raw: Buffer }
 
+/** Mail the poll passed over for good: a retry could never import it. */
+export type SkippedMail = { uid: number; size?: number }
+
+export type RebaselineReason = "first-poll" | "uidvalidity-changed"
+
 export type ImapFetchResult = {
   messages: FetchedMail[]
+  /** Over the size cap or without a body; the cursor still moves past them. */
+  skipped: SkippedMail[]
+  /** Set when no history was trusted and the cursor was reset to "now". */
+  rebaselined?: RebaselineReason
   /** The cursor to persist once the messages are safely enqueued. */
   cursor: { uidValidity: number; lastUid: number }
   /** More mail is waiting beyond the per-poll limit. */
@@ -39,7 +49,9 @@ const openClient = (connection: ImapConnection): ImapFlow => {
     greetingTimeout: IMAP_CONNECT_TIMEOUT_MS,
   })
   // imapflow emits socket errors as events; an unhandled one would crash the worker.
-  client.on("error", () => undefined)
+  client.on("error", (err: unknown) => {
+    logger.warn({ err, host: connection.host }, "IMAP connection error")
+  })
   return client
 }
 
@@ -81,6 +93,11 @@ export const fetchNewMessages = async (props: {
       if (cursor.uidValidity !== uidValidity || lastUid === null) {
         return {
           messages: [],
+          skipped: [],
+          rebaselined:
+            lastUid === null || cursor.uidValidity === null
+              ? "first-poll"
+              : "uidvalidity-changed",
           cursor: { uidValidity, lastUid: newestUid },
           hasMore: false,
         }
@@ -89,36 +106,48 @@ export const fetchNewMessages = async (props: {
       if (newestUid <= lastUid) {
         return {
           messages: [],
+          skipped: [],
           cursor: { uidValidity, lastUid },
           hasMore: false,
         }
       }
 
       const messages: FetchedMail[] = []
+      const skipped: SkippedMail[] = []
       let hasMore = false
       // `N:*` always yields the newest message even when its UID < N: filter.
       for await (const message of client.fetch(
         `${lastUid + 1}:*`,
-        { uid: true, source: { maxLength: MAX_RAW_SOURCE_BYTES } },
+        { uid: true, size: true, source: { maxLength: MAX_RAW_SOURCE_BYTES } },
         { uid: true },
       )) {
-        if (message.uid <= lastUid || !message.source) {
+        if (message.uid <= lastUid) {
           continue
         }
         if (messages.length >= limit) {
           hasMore = true
           break
         }
+        // A truncated mail cannot be parsed, and re-fetching it never gets
+        // smaller: skip it for good rather than stall the cursor on it.
+        if (!message.source || (message.size ?? 0) > MAX_RAW_SOURCE_BYTES) {
+          skipped.push({ uid: message.uid, size: message.size })
+          continue
+        }
         messages.push({ uid: message.uid, raw: message.source })
       }
       messages.sort((a, b) => a.uid - b.uid)
 
+      const newestSeenUid = Math.max(
+        lastUid,
+        ...messages.map((mail) => mail.uid),
+        ...skipped.map((mail) => mail.uid),
+      )
+
       return {
         messages,
-        cursor: {
-          uidValidity,
-          lastUid: messages.at(-1)?.uid ?? lastUid,
-        },
+        skipped,
+        cursor: { uidValidity, lastUid: newestSeenUid },
         hasMore,
       }
     } finally {

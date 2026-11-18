@@ -433,6 +433,51 @@ describe("chat send-message handlers", () => {
 
       expect(mockFindEmailThread).not.toHaveBeenCalled()
     })
+
+    const flowSend = (inbox: unknown) =>
+      sendFlowStepToChannel({
+        conversation: conversation as never,
+        contactInbox: inbox as never,
+        flowId: "flow-1",
+        step: {
+          id: "step-1",
+          nodeId: "node-1",
+          stepType: "sendText",
+          text: "hello",
+        } as never,
+        botSentAnalytics: {
+          triggerHandler: "sendFlowStepToChannel",
+          triggerType: "message_bot_sent_flow_step_channel",
+        },
+      })
+
+    test("passes the last inbound email's thread to a flow step send", async () => {
+      const thread = { subject: "Order 1234", messageId: "<in@example.com>" }
+      mockFindEmailThread.mockResolvedValue(thread)
+
+      await flowSend(smtpInbox)
+
+      expect(mockFindEmailThread).toHaveBeenCalledWith({
+        conversation,
+        contactInboxId: "ci-1",
+      })
+      expect(mockRunChannelHandler).toHaveBeenCalledWith(
+        "message",
+        "sendFlowStep",
+        expect.objectContaining({
+          data: expect.objectContaining({ emailThread: thread }),
+        }),
+      )
+    })
+
+    test("does not look up an email thread for a flow step on other channels", async () => {
+      await flowSend(contactInbox)
+
+      expect(mockFindEmailThread).not.toHaveBeenCalled()
+      expect(mockRunChannelHandler.mock.calls[0]?.[2].data.emailThread).toBe(
+        undefined,
+      )
+    })
   })
 
   test("passes sendFrom to sendMessage channel handler", async () => {

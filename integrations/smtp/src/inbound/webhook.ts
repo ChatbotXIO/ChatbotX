@@ -316,16 +316,22 @@ const fromBrevo = async (req: Request): Promise<Buffer[]> => {
     if (inReplyTo && !headers.has("in-reply-to")) {
       headers.set("in-reply-to", inReplyTo)
     }
-    mails.push(
-      await composeRaw({
-        from: brevoAddress(item.From),
-        to: brevoAddress(item.To),
-        subject: text(item.Subject),
-        text: text(item.RawTextBody),
-        html: text(item.RawHtmlBody),
-        headers,
-      }),
-    )
+    // One bad item (e.g. no sender) must not fail the batch: the provider
+    // would retry the whole POST and the good mails would be processed twice.
+    try {
+      mails.push(
+        await composeRaw({
+          from: brevoAddress(item.From),
+          to: brevoAddress(item.To),
+          subject: text(item.Subject),
+          text: text(item.RawTextBody),
+          html: text(item.RawHtmlBody),
+          headers,
+        }),
+      )
+    } catch (err) {
+      logger.warn({ err, messageId }, "Skipping unreadable Brevo inbound item")
+    }
   }
   return mails
 }
@@ -360,6 +366,15 @@ export const handleInboundWebhook = async (
   props: HandleRequestProps<SmtpWebhookConfig>,
 ): Promise<string> => {
   const { req, config, queue } = props
+  // Without a queue the mail would be acknowledged and lost: fail loudly so
+  // the provider retries once the wiring is fixed.
+  if (!queue) {
+    throw new SdkException(
+      "Inbound mail queue is unavailable",
+      "SMTP_WEBHOOK_QUEUE_UNAVAILABLE",
+      503,
+    )
+  }
   const mails = await extractRawEmails(config.provider, req)
 
   for (const raw of mails) {
@@ -371,7 +386,7 @@ export const handleInboundWebhook = async (
       )
       continue
     }
-    await queue?.add(
+    await queue.add(
       "incomingMessage",
       {
         type: "incomingMessage",

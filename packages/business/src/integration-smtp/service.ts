@@ -98,15 +98,14 @@ const resolveImapCredentials = (
 }
 
 /**
- * The mailbox login actually used: dedicated IMAP credentials when set, else the
- * SMTP ones. An SMTP-only credential change must not drop the poll cursor
- * (it would skip mail that arrived meanwhile) unless it is also the IMAP login.
+ * The mailbox identity actually used: the dedicated IMAP username when set,
+ * else the SMTP one. The password is deliberately not part of it: a password
+ * change keeps the same mailbox, and dropping the cursor would skip the mail
+ * that arrived while the old password was failing. A real mailbox change is
+ * still caught by the UIDVALIDITY check when the next poll fetches.
  */
-const effectiveImapLogin = (auth: SmtpAuthInput): string =>
-  JSON.stringify([
-    auth.imapUsername ?? auth.username,
-    auth.imapPassword ?? auth.password,
-  ])
+const effectiveImapUsername = (auth: SmtpAuthInput): string =>
+  auth.imapUsername ?? auth.username
 
 const INBOUND_TOKEN_BYTES = 32
 
@@ -395,14 +394,15 @@ class IntegrationSmtpService extends BaseService {
       port: integration.imapPort,
       mailbox: integration.imapMailbox,
     }
-    // A different mailbox (or credentials) has its own UID space: drop the
+    // A different mailbox (or login username) has its own UID space: drop the
     // cursor so the next poll re-baselines instead of trusting a stale UID.
+    // A password-only change keeps the cursor (see `effectiveImapUsername`).
     const isImapSourceChanged =
       imap.enabled !== integration.imapEnabled ||
       imap.host !== integration.imapHost ||
       imap.port !== integration.imapPort ||
       imap.mailbox !== integration.imapMailbox ||
-      effectiveImapLogin(auth) !== effectiveImapLogin(currentAuth)
+      effectiveImapUsername(auth) !== effectiveImapUsername(currentAuth)
 
     // Scoped by workspace as well as id: `findByIdForWorkspace` above already
     // proves ownership, but this method accepts a `workspaceId` and must

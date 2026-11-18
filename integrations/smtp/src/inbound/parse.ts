@@ -1,4 +1,5 @@
 import { type AddressObject, type ParsedMail, simpleParser } from "mailparser"
+import { logger } from "../lib/logger"
 import {
   MAX_ATTACHMENT_BYTES,
   MAX_ATTACHMENTS_PER_EMAIL,
@@ -93,6 +94,36 @@ const sha256Hex = async (raw: Buffer): Promise<string> => {
   ).join("")
 }
 
+/**
+ * The customer files worth storing. Anything dropped for size or count is
+ * logged with the counts: the mail itself is still imported.
+ */
+const selectAttachments = (
+  mail: ParsedMail,
+  fromAddress: string,
+): ParsedAttachment[] => {
+  // Inline images (signature logos, tracking pixels) are not customer files.
+  const files = mail.attachments.filter((attachment) => !attachment.related)
+  const withinSize = files.filter(
+    (attachment) => attachment.size <= MAX_ATTACHMENT_BYTES,
+  )
+  const kept = withinSize.slice(0, MAX_ATTACHMENTS_PER_EMAIL)
+  const oversized = files.length - withinSize.length
+  const overCount = withinSize.length - kept.length
+  if (oversized > 0 || overCount > 0) {
+    logger.warn(
+      { messageId: mail.messageId, fromAddress, oversized, overCount },
+      "Dropped inbound email attachments over the size or count cap",
+    )
+  }
+  return kept.map((attachment) => ({
+    filename: attachment.filename,
+    contentType: attachment.contentType,
+    size: attachment.size,
+    content: attachment.content,
+  }))
+}
+
 /** Parses a raw RFC 5322 message. Returns `null` when it has no usable sender. */
 export const parseRawEmail = async (
   raw: Buffer,
@@ -103,6 +134,8 @@ export const parseRawEmail = async (
   if (!fromAddress) {
     return null
   }
+
+  const attachments = selectAttachments(mail, fromAddress)
 
   const fullText = (mail.text ?? "").trim()
   const html = typeof mail.html === "string" ? mail.html : undefined
@@ -119,17 +152,7 @@ export const parseRawEmail = async (
     text: stripQuotedReply(fullText),
     fullText,
     html: html?.slice(0, MAX_STORED_HTML_CHARS),
-    attachments: mail.attachments
-      // Inline images (signature logos, tracking pixels) are not customer files.
-      .filter((attachment) => !attachment.related)
-      .filter((attachment) => attachment.size <= MAX_ATTACHMENT_BYTES)
-      .slice(0, MAX_ATTACHMENTS_PER_EMAIL)
-      .map((attachment) => ({
-        filename: attachment.filename,
-        contentType: attachment.contentType,
-        size: attachment.size,
-        content: attachment.content,
-      })),
+    attachments,
     isAutomated: isAutomatedMail(mail, fromAddress),
   }
 }

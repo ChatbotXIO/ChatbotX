@@ -4,7 +4,7 @@ export const MAX_RAW_SOURCE_BYTES = 5 * 1024 * 1024
 export const MAX_MESSAGES_PER_POLL = 50
 export const MAX_ATTACHMENTS_PER_EMAIL = 10
 export const MAX_ATTACHMENT_BYTES = 10 * 1024 * 1024
-/** Cap on the sanitised-nowhere HTML kept in `contentAttributes.email.html`. */
+/** Cap on the raw, unsanitised HTML kept in `contentAttributes.email.html`. */
 export const MAX_STORED_HTML_CHARS = 50_000
 export const MAX_REFERENCES = 20
 export const DEFAULT_IMAP_MAILBOX = "INBOX"

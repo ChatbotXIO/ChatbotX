@@ -38,7 +38,7 @@ Auto-replies and loops: `Auto-Submitted`, `Precedence: bulk|junk|auto_reply|list
 
 - URL: `POST /integrations/smtp/webhook/<token>`; get it with `smtpIntegrations.getInboundWebhook`, replace it with `rotateInboundWebhook`. The token is 256 random bits, created on first use, stored unhashed (the URL must be shown again) with a unique index. **It is the only credential**: treat the URL like a password and rotate it if it leaks. There is no provider signature check.
 - The adapter is chosen from the inbox's provider (`integrations/smtp/src/inbound/webhook.ts`): SendGrid (`email` raw field), Mailgun (`body-mime`), Postmark (`RawEmail`) pass the source through. When a provider only sends parsed fields, a mail is rebuilt keeping `Message-ID`, `In-Reply-To`, `References` and the auto-reply headers. Attachments survive only in raw mode and for Postmark; Brevo sends none.
-- Bounds: body read through a capped reader (15 MB, whatever `Content-Length` says), at most 50 mails per request (Brevo batches), 5 MB per mail (larger ones are acknowledged and dropped so the provider stops retrying). Retries of one mail share a job id derived from its `Message-ID`.
+- Bounds: body read through a capped reader (15 MB, whatever `Content-Length` says), at most 50 mails per request (Brevo batches), 5 MB per mail (larger ones are acknowledged and dropped with a warning so the provider stops retrying; IMAP polling does the same, logging each skipped UID and moving the cursor past it). Retries of one mail share a job id derived from its `Message-ID`.
 
 ## Data
 

@@ -20,7 +20,8 @@ vi.mock("@chatbotx.io/sdk", () => ({
 }))
 vi.mock("@chatbotx.io/worker-config", () => ({ integrationQueue: queue }))
 vi.mock("@/integration", () => ({ integrations: { smtp: { handleRequest } } }))
-vi.mock("@/lib/log", () => ({ logger: { warn: vi.fn() } }))
+const logger = { warn: vi.fn(), error: vi.fn() }
+vi.mock("@/lib/log", () => ({ logger }))
 
 const { SdkException } = await import("@chatbotx.io/sdk")
 const { POST } = await import(
@@ -92,4 +93,37 @@ test("a rejected payload surfaces the exception's status", async () => {
   const response = await call("tok")
 
   expect(response.status).toBe(413)
+})
+
+test("an unexpected failure is a 500 that does not echo the internal message", async () => {
+  findByInboundToken.mockResolvedValue({
+    inboxId: "inbox-1",
+    auth: { provider: "brevo" },
+  })
+  handleRequest.mockRejectedValue(new Error("redis ECONNREFUSED 10.0.0.5"))
+
+  const response = await call("tok")
+
+  expect(response.status).toBe(500)
+  expect(await response.text()).not.toContain("10.0.0.5")
+  expect(logger.error).toHaveBeenCalledWith(
+    expect.objectContaining({ inboxId: "inbox-1", provider: "brevo" }),
+    expect.any(String),
+  )
+})
+
+test("a rejected payload is logged at warn, not error", async () => {
+  findByInboundToken.mockResolvedValue({
+    inboxId: "inbox-1",
+    auth: { provider: "brevo" },
+  })
+  const error = new SdkException("bad payload")
+  error.httpStatusCode = 400
+  handleRequest.mockRejectedValue(error)
+
+  const response = await call("tok")
+
+  expect(response.status).toBe(400)
+  expect(logger.warn).toHaveBeenCalled()
+  expect(logger.error).not.toHaveBeenCalled()
 })

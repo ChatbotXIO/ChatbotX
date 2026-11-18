@@ -2,7 +2,10 @@ import {
   createSelectSchema,
   integrationSmtpModel,
 } from "@chatbotx.io/database/schema"
-import type { smtpProviders } from "@chatbotx.io/integration-smtp/schema"
+import {
+  inboundWebhookProviders,
+  type smtpProviders,
+} from "@chatbotx.io/integration-smtp/schema"
 import { z } from "zod"
 import { fromAddressSchema } from "./mutation"
 
@@ -56,7 +59,7 @@ export type ListIntegrationSmtpsResponse = z.infer<
 
 export const inboundWebhookResource = z.object({
   provider: z
-    .enum(["sendgrid", "mailgun", "postmark", "brevo"])
+    .enum(inboundWebhookProviders)
     .describe("Relay provider the webhook payload format is read as."),
   url: z
     .string()

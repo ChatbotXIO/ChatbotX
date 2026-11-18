@@ -1463,6 +1463,16 @@ export async function sendFlowStepToChannel({
     }
   }
 
+  // Same gate as `sendMessageToChannel`: an email reply must carry the inbound
+  // mail's thread headers or it opens a new thread in the customer's client.
+  const emailThread =
+    contactInbox.channel === channelTypes.enum.smtp
+      ? await conversationService.findLastIncomingEmailThread({
+          conversation,
+          contactInboxId: contactInbox.id,
+        })
+      : undefined
+
   // Captured BEFORE dispatch — see `recordServiceSent`'s `dispatchedAt`.
   const dispatchedAt = new Date()
   let result: OutgoingSendResult
@@ -1483,6 +1493,7 @@ export async function sendFlowStepToChannel({
         richResponse,
         sendFrom,
         commentAnchor,
+        emailThread,
       },
     })
   } catch (error) {

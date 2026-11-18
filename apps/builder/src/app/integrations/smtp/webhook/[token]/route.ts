@@ -45,14 +45,20 @@ export const POST = async (
     })
     return new Response(result as BodyInit)
   } catch (err: unknown) {
-    logger.warn(
+    if (err instanceof SdkException) {
+      // A payload the provider sent wrongly: its own message is safe to show.
+      logger.warn(
+        { err, inboxId: row.inboxId, provider },
+        "SMTP inbound webhook rejected",
+      )
+      return json({ message: err.message }, err.httpStatusCode)
+    }
+    // Anything else is our fault (queue down, bug): a 5xx makes the provider
+    // retry, and the internal message stays out of the response.
+    logger.error(
       { err, inboxId: row.inboxId, provider },
-      "SMTP inbound webhook rejected",
+      "SMTP inbound webhook failed",
     )
-    const status = err instanceof SdkException ? err.httpStatusCode : 400
-    return json(
-      { message: err instanceof Error ? err.message : "Invalid request" },
-      status,
-    )
+    return json({ message: "Internal error" }, 500)
   }
 }

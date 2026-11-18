@@ -2,6 +2,9 @@ import type { BaseConfig, Context } from "@chatbotx.io/sdk"
 import { customAuthSchema } from "@chatbotx.io/sdk"
 import { z } from "zod"
 
+// Plain constant, safe for the Edge-traced graph (unlike the `./imap` subpath).
+export { DEFAULT_IMAP_MAILBOX } from "./inbound/constants"
+
 export const smtpProviders = z.enum([
   "google",
   "outlook",

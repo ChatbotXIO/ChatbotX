@@ -136,6 +136,41 @@ describe("sendFlowStep", () => {
     )
   })
 
+  const textStep = { stepType: "sendText", text: "Hi", buttons: [] }
+
+  test("replies in the inbound email's thread when emailThread is given", async () => {
+    await sendFlowStep({
+      ctx,
+      data: {
+        contact,
+        flowId: "f",
+        step: textStep,
+        emailThread: {
+          subject: "Order 1234",
+          messageId: "<in@example.com>",
+          references: ["<first@example.com>"],
+        },
+      },
+    } as never)
+
+    const mail = sendMailMock.mock.calls[0][0]
+    expect(mail.subject).toBe("Re: Order 1234")
+    expect(mail.inReplyTo).toBe("<in@example.com>")
+    expect(mail.references).toEqual(["<first@example.com>", "<in@example.com>"])
+  })
+
+  test("starts a new thread when there is no emailThread", async () => {
+    await sendFlowStep({
+      ctx,
+      data: { contact, flowId: "f", step: textStep },
+    } as never)
+
+    const mail = sendMailMock.mock.calls[0][0]
+    expect(mail.subject).toBe("New message")
+    expect(mail.inReplyTo).toBeUndefined()
+    expect(mail.references).toBeUndefined()
+  })
+
   test("throws for unsupported step types", async () => {
     await expect(
       sendFlowStep({

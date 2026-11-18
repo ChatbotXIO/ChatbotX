@@ -79,6 +79,7 @@ export const receiveMessage: MessageHandlers<SmtpAuthValue>["receiveMessage"] =
     const payload = smtpInboundPayloadSchema.parse(data.payload)
     const email = await parseRawEmail(Buffer.from(payload.raw, "base64"))
     if (!email) {
+      logger.warn("Dropping inbound email without a usable sender")
       return null
     }
 
