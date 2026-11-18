@@ -269,14 +269,37 @@ export type SuccessErrorStepSchema = BaseStepSchema & {
   errorNodeId?: string
 }
 
+/**
+ * The node the edge leaving `sourceId` enters. Pass `sourceNodeId` whenever the
+ * handle id may not be unique across the flow: condition case ids (and
+ * `otherwiseId`) were kept as-is by node Duplicate, so two condition nodes can
+ * share a handle id and a handle-only lookup returns the other node's edge.
+ */
 export const seekConnectedNode = (
   flowVersion: FlowVersionModel,
   sourceId: string,
+  sourceNodeId?: string,
 ) => {
   const connectedNode = (flowVersion.edges as EdgeSchema[]).find(
-    (edge) => edge.sourceHandle === sourceId,
+    (edge) =>
+      edge.sourceHandle === sourceId &&
+      (sourceNodeId === undefined || edge.source === sourceNodeId),
   )
   return connectedNode?.target
+}
+
+/** Id of the flow node whose `details.steps` holds the step `stepId`. */
+export const findNodeIdContainingStep = (
+  flowVersion: FlowVersionModel,
+  stepId: string,
+): string | undefined => {
+  const nodes = (flowVersion.nodes ?? []) as Array<{
+    id: string
+    data?: { details?: { steps?: Array<{ id?: string }> } }
+  }>
+  return nodes.find((node) =>
+    node.data?.details?.steps?.some((step) => step.id === stepId),
+  )?.id
 }
 
 export async function sendFlow(

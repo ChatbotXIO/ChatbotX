@@ -1,6 +1,7 @@
 import {
   aiGenerateTextDefaultFn,
   buttonTypes,
+  conditionNodeDefaultFn,
   emailStepDefaultFn,
   type FlowNode,
   pageElementTypes,
@@ -300,6 +301,66 @@ describe("duplicateFlowNodeData", () => {
       edges: [],
     })
 
+    expect(result.success, result.error?.message).toBe(true)
+  })
+})
+
+describe("duplicateFlowNodeData — condition", () => {
+  test("gives every case and the otherwise handle a new id", () => {
+    const original = conditionNodeDefaultFn({
+      nodeProps: { id: "1", position: { x: 0, y: 0 } },
+    })
+    original.data.details.steps = [
+      {
+        id: "2",
+        stepType: "condition",
+        otherwiseId: "3",
+        cases: [
+          {
+            id: "4",
+            operator: "and",
+            conditions: [
+              { field: "source", operator: "in", value: ["comments"] },
+            ],
+          },
+          {
+            id: "5",
+            operator: "and",
+            conditions: [
+              { field: "source", operator: "in", value: ["liveComments"] },
+            ],
+          },
+        ],
+      },
+    ]
+
+    const duplicatedNode = duplicateFlowNode(original as FlowNode)
+    if (!("steps" in duplicatedNode.data.details)) {
+      throw new Error("Expected duplicated condition steps")
+    }
+    const duplicatedStep = duplicatedNode.data.details.steps[0]
+    if (!("cases" in duplicatedStep && "otherwiseId" in duplicatedStep)) {
+      throw new Error("Expected a duplicated condition step")
+    }
+
+    const caseIds = duplicatedStep.cases.map((caseItem) =>
+      "id" in caseItem ? caseItem.id : undefined,
+    )
+    expect(caseIds).not.toContain("4")
+    expect(caseIds).not.toContain("5")
+    expect(new Set(caseIds).size).toBe(2)
+    expect(duplicatedStep.otherwiseId).not.toBe("3")
+    expect(duplicatedStep.cases.map((caseItem) => caseItem.conditions)).toEqual(
+      [
+        [{ field: "source", operator: "in", value: ["comments"] }],
+        [{ field: "source", operator: "in", value: ["liveComments"] }],
+      ],
+    )
+
+    const result = updateFlowVersionSchema.safeParse({
+      nodes: [duplicatedNode],
+      edges: [],
+    })
     expect(result.success, result.error?.message).toBe(true)
   })
 })
