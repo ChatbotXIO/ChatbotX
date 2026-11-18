@@ -912,6 +912,19 @@
       "enabled": "AI kiểm duyệt",
       "description": "AI đọc mọi bình luận trước khi bot trả lời, rồi ẩn hoặc xoá những bình luận thuộc các loại bên dưới. Bình luận đã bị kiểm duyệt sẽ không được trả lời.",
       "aiAgentDescription": "Chỉ dùng model AI của agent, không dùng lời dặn của agent.",
+      "engine": "Chấm bằng",
+      "engines": {
+        "aiAgent": "AI Agent",
+        "decision": "AI Router (Jev)"
+      },
+      "decisionConnection": "Kết nối AI Router",
+      "decisionConnectionDescription": "Chỉ hiện các kết nối đang bật. API key của kết nối được dùng để chấm từng bình luận.",
+      "decisionConnectionUnavailable": "Kết nối này đã bị xóa hoặc tắt. Hãy chọn kết nối khác, nếu không bình luận sẽ không được kiểm tra.",
+      "decisionModel": "Mô hình",
+      "decisionThreshold": "Ngưỡng vi phạm",
+      "decisionThresholdDescription": "AI Router phải chắc chắn bao nhiêu (0.5–0.95) thì bình luận mới bị tính là vi phạm. Càng cao càng ít bình luận bị chặn.",
+      "noDecisionConnection": "Workspace này chưa có kết nối AI Router nào đang bật.",
+      "addDecisionConnection": "Thêm kết nối",
       "categoriesLabel": "Chặn bình luận",
       "categories": {
         "hate": "Thù ghét",

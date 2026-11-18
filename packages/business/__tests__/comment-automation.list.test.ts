@@ -40,6 +40,10 @@ vi.mock("../src/ai-agent/service", () => ({
   aiAgentService: { findByIdForWorkspace: vi.fn() },
 }))
 
+vi.mock("../src/decision/comment-moderation-service", () => ({
+  decisionCommentModerationService: { isConnectionUsable: vi.fn() },
+}))
+
 vi.mock("@chatbotx.io/database/schema", () => ({
   contactInboxModel: {},
   commentAutomationModel: { name: "commentAutomation.name" },

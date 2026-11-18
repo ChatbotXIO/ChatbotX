@@ -870,6 +870,19 @@
       "enabled": "KI-Moderation",
       "description": "Ein KI-Agent liest jeden Kommentar, bevor der Bot antwortet, und blendet Kommentare in den unten genannten Kategorien aus oder löscht sie. Auf einen moderierten Kommentar wird nie geantwortet.",
       "aiAgentDescription": "Es wird nur das KI-Modell des Agenten verwendet, nicht dessen Prompt.",
+      "engine": "Klassifizieren mit",
+      "engines": {
+        "aiAgent": "KI-Agent",
+        "decision": "AI Router (Jev)"
+      },
+      "decisionConnection": "AI-Router-Verbindung",
+      "decisionConnectionDescription": "Nur aktive Verbindungen werden angezeigt. Mit dem API-Schlüssel der Verbindung wird jeder Kommentar klassifiziert.",
+      "decisionConnectionUnavailable": "Diese Verbindung wurde gelöscht oder deaktiviert. Wähle eine andere, sonst werden Kommentare nicht geprüft.",
+      "decisionModel": "Modell",
+      "decisionThreshold": "Treffer-Schwelle",
+      "decisionThresholdDescription": "Wie sicher sich der AI Router sein muss (0,5–0,95), bevor ein Kommentar als Kategorie zählt. Höher blockiert weniger Kommentare.",
+      "noDecisionConnection": "In diesem Workspace ist keine AI-Router-Verbindung aktiv.",
+      "addDecisionConnection": "Verbindung hinzufügen",
       "categoriesLabel": "Kommentare blockieren, die",
       "categories": {
         "hate": "Hassrede",

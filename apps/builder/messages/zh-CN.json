@@ -1224,6 +1224,19 @@
       "enabled": "AI 审核",
       "description": "机器人回复之前，AI 智能体会阅读每条留言，并隐藏或删除属于以下类别的留言。被审核的留言不会收到回复。",
       "aiAgentDescription": "仅使用智能体的 AI 模型，不使用其提示词。",
+      "engine": "判定方式",
+      "engines": {
+        "aiAgent": "AI 智能体",
+        "decision": "AI Router (Jev)"
+      },
+      "decisionConnection": "AI Router 连接",
+      "decisionConnectionDescription": "仅列出已启用的连接。将使用该连接的 API 密钥判定每条评论。",
+      "decisionConnectionUnavailable": "此连接已被删除或停用。请选择其他连接，否则评论将不会被检查。",
+      "decisionModel": "模型",
+      "decisionThreshold": "匹配阈值",
+      "decisionThresholdDescription": "AI Router 需要多大把握（0.5–0.95）才将评论归入某个类别。数值越高，被拦截的评论越少。",
+      "noDecisionConnection": "此工作区没有已启用的 AI Router 连接。",
+      "addDecisionConnection": "添加连接",
       "categoriesLabel": "屏蔽属于以下类型的留言",
       "categories": {
         "hate": "仇恨言论",

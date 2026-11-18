@@ -15,6 +15,7 @@ const mocks = vi.hoisted(() => ({
   storeGet: vi.fn(),
   storePut: vi.fn(),
   createReplyModel: vi.fn(),
+  decisionClassify: vi.fn(),
 }))
 
 vi.mock("@chatbotx.io/analytics", () => ({
@@ -29,6 +30,7 @@ vi.mock("@chatbotx.io/business", () => ({
   aiAgentService: { findByIdForWorkspace: mocks.findAIAgent },
   commentAutomationService: { findActive: mocks.findActive },
   contactInboxService: { findBy: mocks.findContactInbox },
+  decisionCommentModerationService: { classify: mocks.decisionClassify },
   logProviderError: mocks.logProviderError,
 }))
 
@@ -70,9 +72,11 @@ vi.mock("../src/lib/logger", () => ({
   logger: { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() },
 }))
 
-const { buildModerationInstructions, processCommentModeration } = await import(
-  "../src/integration/handlers/comment-automation/moderation"
-)
+const {
+  buildModerationInstructions,
+  processCommentModeration,
+  verdictCacheKey,
+} = await import("../src/integration/handlers/comment-automation/moderation")
 
 const REPLAY_RESUME_JOB_ID_RE =
   /^comment-auto-comment-1-automation-1-moderated-replay-/
@@ -336,5 +340,130 @@ describe("buildModerationInstructions", () => {
     expect(instructions).toContain("- offensive:")
     expect(instructions).not.toContain("- spam:")
     expect(instructions).toContain("Do not block price complaints")
+  })
+})
+
+describe("processCommentModeration with the AI Router (decision) engine", () => {
+  const decisionModeration = {
+    enabled: true,
+    engine: "decision" as const,
+    aiAgentId: null,
+    decisionConnectionId: "connection-1",
+    decisionModel: "jev-1.13.0",
+    categories: ["hate" as const, "offensive" as const],
+    instruction: "Do not block price complaints",
+    action: "hide" as const,
+  }
+
+  beforeEach(() => {
+    mocks.findActive.mockResolvedValue({
+      id: "automation-1",
+      hideComments: { aiModeration: decisionModeration },
+    })
+  })
+
+  test("a category at or above the default threshold hides the comment and logs the probabilities", async () => {
+    mocks.decisionClassify.mockResolvedValue({
+      status: "ok",
+      probabilities: { hate: 0.92, offensive: 0.12 },
+      providerKind: "typesafe",
+      model: "jev-1.13.0",
+    })
+
+    await processCommentModeration(jobData)
+
+    expect(mocks.decisionClassify).toHaveBeenCalledWith(
+      expect.objectContaining({
+        workspaceId: "workspace-1",
+        connectionId: "connection-1",
+        model: "jev-1.13.0",
+        categories: ["hate", "offensive"],
+        comment: "you people are trash",
+      }),
+    )
+    expect(mocks.findAIAgent).not.toHaveBeenCalled()
+    expect(mocks.generateText).not.toHaveBeenCalled()
+    expect(mocks.recordModeration).toHaveBeenCalledWith(
+      expect.objectContaining({
+        source: "ai",
+        categories: ["hate"],
+        reason: "AI Router jev-1.13.0: hate 92%, offensive 12%",
+        action: "hide",
+        provider: "typesafe",
+        modelId: "jev-1.13.0",
+      }),
+    )
+    expect(mocks.integrationQueueAdd).not.toHaveBeenCalled()
+  })
+
+  test("every category below the threshold resumes the reply", async () => {
+    mocks.findActive.mockResolvedValue({
+      id: "automation-1",
+      hideComments: {
+        aiModeration: { ...decisionModeration, decisionThreshold: 0.95 },
+      },
+    })
+    mocks.decisionClassify.mockResolvedValue({
+      status: "ok",
+      probabilities: { hate: 0.92, offensive: 0.12 },
+      providerKind: "typesafe",
+      model: "jev-1.13.0",
+    })
+
+    await processCommentModeration(jobData)
+
+    expect(mocks.recordModeration).not.toHaveBeenCalled()
+    expect(mocks.integrationQueueAdd).toHaveBeenCalled()
+  })
+
+  test.each([
+    "failed",
+    "unavailable",
+  ])("fails open when the AI Router is %s", async (status) => {
+    mocks.decisionClassify.mockResolvedValue({ status })
+
+    await processCommentModeration(jobData)
+
+    expect(mocks.recordModeration).not.toHaveBeenCalled()
+    expect(mocks.storePut).not.toHaveBeenCalled()
+    expect(mocks.integrationQueueAdd).toHaveBeenCalled()
+  })
+})
+
+describe("verdictCacheKey", () => {
+  const base = {
+    workspaceId: "workspace-1",
+    commentId: "comment-1",
+  }
+  const decision = {
+    ...aiModeration,
+    engine: "decision" as const,
+    decisionConnectionId: "connection-1",
+    decisionModel: "jev-1.13.0",
+  }
+
+  test("an AI agent row without `engine` keeps the same key as `engine: aiAgent`", () => {
+    expect(verdictCacheKey({ ...base, aiModeration })).toBe(
+      verdictCacheKey({
+        ...base,
+        aiModeration: { ...aiModeration, engine: "aiAgent" },
+      }),
+    )
+  })
+
+  test("engines, models and thresholds never share a verdict", () => {
+    const keys = new Set([
+      verdictCacheKey({ ...base, aiModeration }),
+      verdictCacheKey({ ...base, aiModeration: decision }),
+      verdictCacheKey({
+        ...base,
+        aiModeration: { ...decision, decisionModel: "jev-2" },
+      }),
+      verdictCacheKey({
+        ...base,
+        aiModeration: { ...decision, decisionThreshold: 0.9 },
+      }),
+    ])
+    expect(keys.size).toBe(4)
   })
 })

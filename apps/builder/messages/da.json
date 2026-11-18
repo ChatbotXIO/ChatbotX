@@ -870,6 +870,19 @@
       "enabled": "AI-moderering",
       "description": "En AI-agent læser hver kommentar, før botten svarer, og skjuler eller sletter dem i kategorierne nedenfor. En modereret kommentar får aldrig svar.",
       "aiAgentDescription": "Kun agentens AI-model bruges, ikke dens prompt.",
+      "engine": "Klassificér med",
+      "engines": {
+        "aiAgent": "AI-agent",
+        "decision": "AI Router (Jev)"
+      },
+      "decisionConnection": "AI Router-forbindelse",
+      "decisionConnectionDescription": "Kun aktive forbindelser vises. Forbindelsens API-nøgle bruges til at klassificere hver kommentar.",
+      "decisionConnectionUnavailable": "Denne forbindelse er slettet eller slået fra. Vælg en anden, ellers bliver kommentarer ikke tjekket.",
+      "decisionModel": "Model",
+      "decisionThreshold": "Tærskel for match",
+      "decisionThresholdDescription": "Hvor sikker AI Router skal være (0,5–0,95), før en kommentar tæller som en kategori. Højere blokerer færre kommentarer.",
+      "noDecisionConnection": "Ingen AI Router-forbindelse er aktiv i dette workspace.",
+      "addDecisionConnection": "Tilføj en forbindelse",
       "categoriesLabel": "Bloker kommentarer, der er",
       "categories": {
         "hate": "Hadefuld tale",

@@ -2267,6 +2267,19 @@
       "enabled": "Moderare cu AI",
       "description": "Un agent AI citește fiecare comentariu înainte ca botul să răspundă și le ascunde sau le șterge pe cele din categoriile de mai jos. La un comentariu moderat nu se răspunde niciodată.",
       "aiAgentDescription": "Se folosește doar modelul AI al agentului, nu și promptul acestuia.",
+      "engine": "Clasifică cu",
+      "engines": {
+        "aiAgent": "Agent AI",
+        "decision": "AI Router (Jev)"
+      },
+      "decisionConnection": "Conexiune AI Router",
+      "decisionConnectionDescription": "Sunt afișate doar conexiunile activate. Cheia API a conexiunii este folosită pentru a clasifica fiecare comentariu.",
+      "decisionConnectionUnavailable": "Această conexiune a fost ștearsă sau dezactivată. Alege alta, altfel comentariile nu vor fi verificate.",
+      "decisionModel": "Model",
+      "decisionThreshold": "Prag de potrivire",
+      "decisionThresholdDescription": "Cât de sigur trebuie să fie AI Router (0,5–0,95) înainte ca un comentariu să intre într-o categorie. Mai mare blochează mai puține comentarii.",
+      "noDecisionConnection": "Nicio conexiune AI Router nu este activată în acest workspace.",
+      "addDecisionConnection": "Adaugă o conexiune",
       "categoriesLabel": "Blochează comentariile care sunt",
       "categories": {
         "hate": "Discurs de ură",

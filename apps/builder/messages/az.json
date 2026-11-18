@@ -912,6 +912,19 @@
       "enabled": "Süni intellekt moderasiyası",
       "description": "Süni intellekt agenti bot cavab verməzdən əvvəl hər şərhi oxuyur və aşağıdakı kateqoriyalara aid olanları gizlədir və ya silir. Moderasiya olunmuş şərhə cavab verilmir.",
       "aiAgentDescription": "Yalnız agentin süni intellekt modelindən istifadə olunur, təlimatından deyil.",
+      "engine": "Təsnif etmək üçün",
+      "engines": {
+        "aiAgent": "AI agent",
+        "decision": "AI Router (Jev)"
+      },
+      "decisionConnection": "AI Router bağlantısı",
+      "decisionConnectionDescription": "Yalnız aktiv bağlantılar göstərilir. Hər şərhi təsnif etmək üçün bağlantının API açarından istifadə olunur.",
+      "decisionConnectionUnavailable": "Bu bağlantı silinib və ya söndürülüb. Başqasını seçin, əks halda şərhlər yoxlanılmayacaq.",
+      "decisionModel": "Model",
+      "decisionThreshold": "Uyğunluq həddi",
+      "decisionThresholdDescription": "Şərhin kateqoriyaya aid sayılması üçün AI Router nə qədər əmin olmalıdır (0.5–0.95). Yüksək dəyər daha az şərhi bloklayır.",
+      "noDecisionConnection": "Bu iş sahəsində aktiv AI Router bağlantısı yoxdur.",
+      "addDecisionConnection": "Bağlantı əlavə et",
       "categoriesLabel": "Bu şərhləri blokla",
       "categories": {
         "hate": "Nifrət ritorikası",

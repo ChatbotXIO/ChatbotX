@@ -870,6 +870,19 @@
       "enabled": "Moderasi AI",
       "description": "Agen AI membaca setiap komentar sebelum bot membalas, lalu menyembunyikan atau menghapus komentar dalam kategori di bawah. Komentar yang dimoderasi tidak akan pernah dibalas.",
       "aiAgentDescription": "Hanya model AI milik agen yang digunakan, bukan prompt-nya.",
+      "engine": "Klasifikasi dengan",
+      "engines": {
+        "aiAgent": "Agen AI",
+        "decision": "AI Router (Jev)"
+      },
+      "decisionConnection": "Koneksi AI Router",
+      "decisionConnectionDescription": "Hanya koneksi yang aktif yang ditampilkan. Kunci API koneksi digunakan untuk mengklasifikasi setiap komentar.",
+      "decisionConnectionUnavailable": "Koneksi ini telah dihapus atau dinonaktifkan. Pilih yang lain, atau komentar tidak akan diperiksa.",
+      "decisionModel": "Model",
+      "decisionThreshold": "Ambang kecocokan",
+      "decisionThresholdDescription": "Seberapa yakin AI Router harus (0,5–0,95) sebelum komentar dihitung sebagai suatu kategori. Nilai lebih tinggi memblokir lebih sedikit komentar.",
+      "noDecisionConnection": "Tidak ada koneksi AI Router yang aktif di workspace ini.",
+      "addDecisionConnection": "Tambah koneksi",
       "categoriesLabel": "Blokir komentar yang",
       "categories": {
         "hate": "Ujaran kebencian",

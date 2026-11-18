@@ -8037,6 +8037,19 @@
       "enabled": "פיקוח בינה מלאכותית",
       "description": "סוכן בינה מלאכותית קורא כל תגובה לפני שהבוט משיב, ומסתיר או מוחק תגובות בקטגוריות שלמטה. על תגובה שנוהלה לא משיבים לעולם.",
       "aiAgentDescription": "נעשה שימוש רק במודל הבינה המלאכותית של הסוכן, ולא בהנחיה שלו.",
+      "engine": "סיווג באמצעות",
+      "engines": {
+        "aiAgent": "סוכן AI",
+        "decision": "AI Router (Jev)"
+      },
+      "decisionConnection": "חיבור AI Router",
+      "decisionConnectionDescription": "מוצגים רק חיבורים פעילים. מפתח ה-API של החיבור משמש לסיווג כל תגובה.",
+      "decisionConnectionUnavailable": "החיבור הזה נמחק או כובה. בחרו חיבור אחר, אחרת התגובות לא ייבדקו.",
+      "decisionModel": "מודל",
+      "decisionThreshold": "סף התאמה",
+      "decisionThresholdDescription": "עד כמה AI Router צריך להיות בטוח (0.5–0.95) כדי שתגובה תיחשב לקטגוריה. ערך גבוה יותר חוסם פחות תגובות.",
+      "noDecisionConnection": "אין חיבור AI Router פעיל בסביבת העבודה הזו.",
+      "addDecisionConnection": "הוספת חיבור",
       "categoriesLabel": "חסימת תגובות שהן",
       "categories": {
         "hate": "דברי שנאה",

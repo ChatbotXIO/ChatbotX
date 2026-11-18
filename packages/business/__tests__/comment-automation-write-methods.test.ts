@@ -10,6 +10,7 @@ const mocks = vi.hoisted(() => ({
   assertDeletable: vi.fn(),
   flowExists: vi.fn(),
   findAIAgent: vi.fn(),
+  isConnectionUsable: vi.fn(),
 }))
 
 vi.mock("@chatbotx.io/database/client", () => ({
@@ -60,6 +61,7 @@ vi.mock("@chatbotx.io/database/partials", async () => {
       options: ["instagram", "instagramFacebook"],
     },
     normalizeReplyTexts: (reply: unknown) => reply,
+    resolveModerationEngine: actual.resolveModerationEngine,
     rootFolderId: "0",
   }
 })
@@ -120,6 +122,12 @@ vi.mock("../src/ai-agent/service", () => ({
   aiAgentService: { findByIdForWorkspace: mocks.findAIAgent },
 }))
 
+vi.mock("../src/decision/comment-moderation-service", () => ({
+  decisionCommentModerationService: {
+    isConnectionUsable: mocks.isConnectionUsable,
+  },
+}))
+
 const { commentAutomationService } = await import(
   "../src/comment-automation/service"
 )
@@ -130,6 +138,7 @@ beforeEach(() => {
   mocks.assertDeletable.mockResolvedValue(undefined)
   mocks.flowExists.mockResolvedValue(true)
   mocks.findAIAgent.mockResolvedValue({ id: "agent-1" })
+  mocks.isConnectionUsable.mockResolvedValue("ok")
 })
 
 describe("commentAutomationService — type-scoped writes", () => {
@@ -1001,6 +1010,81 @@ describe("commentAutomationService — AI moderation", () => {
       }),
     ).rejects.toMatchObject({ code: "validation" })
     expect(mocks.insert).not.toHaveBeenCalled()
+  })
+
+  describe("with the AI Router (decision) engine", () => {
+    const decisionModeration = {
+      ...aiModeration,
+      engine: "decision" as const,
+      aiAgentId: null,
+      decisionConnectionId: "connection-1",
+      decisionModel: "jev-1.13.0",
+    }
+    const decisionHideComments = {
+      ...hideComments,
+      aiModeration: decisionModeration,
+    }
+
+    test("checks the connection in this workspace and stores it without an agent", async () => {
+      const values = mockInsert()
+
+      await commentAutomationService.createMessenger({
+        workspaceId: "1",
+        data: { name: "hello", hideComments: decisionHideComments },
+      })
+
+      expect(mocks.isConnectionUsable).toHaveBeenCalledWith({
+        workspaceId: "1",
+        connectionId: "connection-1",
+        model: "jev-1.13.0",
+      })
+      expect(mocks.findAIAgent).not.toHaveBeenCalled()
+      expect(values).toHaveBeenCalledWith(
+        expect.objectContaining({
+          hideComments: expect.objectContaining({
+            aiModeration: decisionModeration,
+          }),
+        }),
+      )
+    })
+
+    test.each([
+      "connectionNotFound",
+      "modelNotFound",
+    ] as const)("rejects a connection that is %s", async (status) => {
+      mocks.isConnectionUsable.mockResolvedValue(status)
+      mockInsert()
+
+      await expect(
+        commentAutomationService.createMessenger({
+          workspaceId: "1",
+          data: { name: "hello", hideComments: decisionHideComments },
+        }),
+      ).rejects.toMatchObject({ code: "validation" })
+      expect(mocks.insert).not.toHaveBeenCalled()
+    })
+
+    test("rejects a missing connection or model", async () => {
+      for (const missing of [
+        { decisionConnectionId: null },
+        { decisionModel: null },
+      ]) {
+        await expect(
+          commentAutomationService.createMessenger({
+            workspaceId: "1",
+            data: {
+              name: "hello",
+              hideComments: {
+                ...hideComments,
+                aiModeration: { ...decisionModeration, ...missing },
+              },
+            },
+          }),
+        ).rejects.toMatchObject({ code: "validation" })
+      }
+      expect(mocks.isConnectionUsable).not.toHaveBeenCalled()
+      expect(mocks.insert).not.toHaveBeenCalled()
+    })
   })
 
   test("skips the agent check when moderation is off", async () => {
