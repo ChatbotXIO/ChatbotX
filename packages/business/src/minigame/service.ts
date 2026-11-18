@@ -15,6 +15,7 @@ import type {
   MinigameType,
   MinigameWinningMessageSettings,
 } from "@chatbotx.io/database/partials"
+import { minigameRepository } from "@chatbotx.io/database/repositories"
 import { minigameModel } from "@chatbotx.io/database/schema"
 import type { MinigameModel } from "@chatbotx.io/database/types"
 import {
@@ -24,6 +25,43 @@ import {
 } from "@chatbotx.io/database/utils"
 import { BaseService } from "../base.service"
 import { ChatbotXException, notFoundException } from "../errors"
+import {
+  type CopyNameOptions,
+  copyNamePrefix,
+  insertWithFreeCopyName,
+} from "../lib/copy-name"
+
+/** `minigameGeneralSettingsSchema.name` allows up to 150 characters. */
+const MINIGAME_NAME_MAX_LENGTH = 150
+
+/** How minigame copies are named: `<name> - Copy`, `<name> - Copy 2`, … */
+const MINIGAME_COPY_NAME: CopyNameOptions = {
+  style: "dash",
+  maxLength: MINIGAME_NAME_MAX_LENGTH,
+}
+
+/**
+ * A copy starts with no prizes: every play is a loss until the admin adds
+ * prizes, so `loseRate` becomes 100 to keep the 100% total valid. The
+ * no-prize outcome's label/image and the prize-name custom field are kept.
+ */
+function withoutPrizes(
+  prizeSettings: MinigamePrizeSettings,
+): MinigamePrizeSettings {
+  return {
+    ...prizeSettings,
+    prizes: [],
+    nonWinning: { ...prizeSettings.nonWinning, loseRate: 100 },
+  }
+}
+
+/**
+ * The prize description image pictures the source's prizes, which the copy
+ * does not have, so the copy starts without it. Other images are kept.
+ */
+function withoutPrizeImage(appearance: MinigameAppearance): MinigameAppearance {
+  return { ...appearance, prizeDescriptionImage: { mode: "file", url: "" } }
+}
 
 type ListInput = {
   workspaceId: string
@@ -296,6 +334,62 @@ class MinigameService extends BaseService {
     } catch (error) {
       this.rethrowNameConflict(error)
     }
+  }
+
+  /**
+   * Copies a minigame's settings into a new minigame named `<name> - Copy`
+   * (then `- Copy 2`, `- Copy 3`, … while taken). Prizes and the prize
+   * description image are not copied (see `withoutPrizes`,
+   * `withoutPrizeImage`); plays, players, and counters start from zero. The
+   * copy starts disabled so its play link is not live before it has prizes.
+   */
+  async duplicate(input: {
+    workspaceId: string
+    id: string
+  }): Promise<MinigameModel> {
+    const source = await this.find(input)
+    const taken = new Set(
+      await minigameRepository.listNamesWithPrefix({
+        workspaceId: input.workspaceId,
+        prefix: copyNamePrefix(source.name, MINIGAME_COPY_NAME),
+      }),
+    )
+
+    const copy = await insertWithFreeCopyName({
+      constraint: "Minigame_workspaceId_name_key",
+      base: source.name,
+      taken,
+      options: MINIGAME_COPY_NAME,
+      insert: async (name) => {
+        const [row] = await db
+          .insert(minigameModel)
+          .values({
+            workspaceId: input.workspaceId,
+            enabled: false,
+            ...this.toColumns({
+              workspaceId: input.workspaceId,
+              type: source.type,
+              generalSettings: { ...source.generalSettings, name },
+              appearance: withoutPrizeImage(source.appearance),
+              playerSettings: source.playerSettings,
+              prizeSettings: withoutPrizes(source.prizeSettings),
+              winningMessageSettings: source.winningMessageSettings,
+              nonWinningMessageSettings: source.nonWinningMessageSettings,
+            }),
+          })
+          .returning()
+        return row
+      },
+    })
+
+    if (copy) {
+      return copy
+    }
+    throw new ChatbotXException(
+      "Minigame name already exists",
+      "nameAlreadyExists",
+      409,
+    )
   }
 
   async setEnabled(

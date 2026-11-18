@@ -9420,6 +9420,11 @@
         "lose": "Ingen vinst",
         "empty": "Inga spelloggar ännu"
       }
+    },
+    "duplicateDialog": {
+      "title": "Duplicera minispel",
+      "description": "Detta skapar en kopia av minispelet med alla inställningar. Priser och prisbilden kopieras inte, och kopian är avstängd från början – lägg till priser och slå sedan på den.",
+      "success": "Minispelet har duplicerats"
     }
   },
   "mediaLibrary": {

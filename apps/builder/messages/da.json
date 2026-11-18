@@ -9420,6 +9420,11 @@
         "lose": "Ingen præmie",
         "empty": "Ingen spiloptegnelser endnu"
       }
+    },
+    "duplicateDialog": {
+      "title": "Dupliker minispil",
+      "description": "Dette opretter en kopi af minispillet med alle dets indstillinger. Præmier og præmiebilledet kopieres ikke, og kopien starter slået fra — tilføj præmier, og slå den derefter til.",
+      "success": "Minispillet blev duplikeret"
     }
   },
   "mediaLibrary": {

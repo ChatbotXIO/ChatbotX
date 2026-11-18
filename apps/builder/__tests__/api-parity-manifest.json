@@ -378,6 +378,7 @@
     "mini-apps/update-mini-app.action:updateMiniAppAction": "covered:mini-apps",
     "minigames/create-minigame.action:createMinigameAction": "covered:minigames",
     "minigames/delete-minigames.action:deleteMinigamesAction": "covered:minigames",
+    "minigames/duplicate-minigame.action:duplicateMinigameAction": "covered:minigames",
     "minigames/enable-minigame.action:enableMinigameAction": "covered:minigames",
     "minigames/find-contact-conversation.action:findContactConversationAction": "covered:minigames",
     "minigames/get-minigame-plays.action:getMinigamePlaysAction": "covered:minigames",

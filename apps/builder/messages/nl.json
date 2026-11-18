@@ -9420,6 +9420,11 @@
         "lose": "Geen prijs",
         "empty": "Nog geen speelrecords"
       }
+    },
+    "duplicateDialog": {
+      "title": "Minigame dupliceren",
+      "description": "Hiermee maak je een kopie van de minigame met alle instellingen. Prijzen en de prijsafbeelding worden niet gekopieerd en de kopie staat eerst uit — voeg prijzen toe en zet hem daarna aan.",
+      "success": "Minigame succesvol gedupliceerd"
     }
   },
   "mediaLibrary": {

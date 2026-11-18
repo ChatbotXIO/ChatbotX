@@ -9478,6 +9478,11 @@
         "lose": "Mükafat yoxdur",
         "empty": "Hələ oyun qeydi yoxdur"
       }
+    },
+    "duplicateDialog": {
+      "title": "Mini oyunu dublikat et",
+      "description": "Bütün ayarları ilə mini oyunun surəti yaradılacaq. Mükafatlar və mükafat şəkli köçürülmür, surət isə söndürülmüş başlayır — mükafatları əlavə edin, sonra onu aktiv edin.",
+      "success": "Mini oyun uğurla dublikat edildi"
     }
   },
   "mediaLibrary": {

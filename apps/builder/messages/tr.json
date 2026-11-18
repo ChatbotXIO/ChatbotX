@@ -9420,6 +9420,11 @@
         "lose": "Ödül yok",
         "empty": "Henüz oyun kaydı yok"
       }
+    },
+    "duplicateDialog": {
+      "title": "Mini oyunu çoğalt",
+      "description": "Tüm ayarlarıyla mini oyunun bir kopyası oluşturulur. Ödüller ve ödül görseli kopyalanmaz, kopya kapalı olarak başlar — ödülleri ekleyin, ardından açın.",
+      "success": "Mini oyun başarıyla çoğaltıldı"
     }
   },
   "mediaLibrary": {

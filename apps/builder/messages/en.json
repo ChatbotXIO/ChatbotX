@@ -9478,6 +9478,11 @@
         "lose": "No prize",
         "empty": "No play records yet"
       }
+    },
+    "duplicateDialog": {
+      "title": "Duplicate minigame",
+      "description": "This creates a copy of the minigame with all its settings. Prizes and the prize image are not copied, and the copy starts turned off — add prizes, then turn it on.",
+      "success": "Minigame duplicated successfully"
     }
   },
   "mediaLibrary": {

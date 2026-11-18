@@ -9420,6 +9420,11 @@
         "lose": "Ei palkintoa",
         "empty": "Ei pelitapahtumia vielä"
       }
+    },
+    "duplicateDialog": {
+      "title": "Monista minipeli",
+      "description": "Tämä luo minipelistä kopion kaikkine asetuksineen. Palkintoja ja palkintokuvaa ei kopioida, ja kopio on aluksi pois päältä – lisää palkinnot ja ota se sitten käyttöön.",
+      "success": "Minipeli monistettu"
     }
   },
   "mediaLibrary": {

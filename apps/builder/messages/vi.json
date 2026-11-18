@@ -9478,6 +9478,11 @@
         "lose": "Không trúng",
         "empty": "Chưa có bản ghi lượt chơi nào"
       }
+    },
+    "duplicateDialog": {
+      "title": "Nhân bản minigame",
+      "description": "Tạo một bản sao của minigame với toàn bộ cài đặt. Giải thưởng và ảnh giải thưởng không được sao chép, và bản sao ở trạng thái tắt — hãy thêm giải thưởng rồi bật lên.",
+      "success": "Đã nhân bản minigame thành công"
     }
   },
   "mediaLibrary": {

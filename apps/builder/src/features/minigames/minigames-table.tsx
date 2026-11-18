@@ -27,6 +27,7 @@ import { formatDate } from "@chatbotx.io/ui/lib/format"
 import type { DataTableRowAction } from "@chatbotx.io/ui/types/data-table"
 import type { ColumnDef } from "@tanstack/react-table"
 import {
+  CopyPlusIcon,
   HistoryIcon,
   MoreHorizontalIcon,
   PencilIcon,
@@ -38,6 +39,7 @@ import { useLocale, useTranslations } from "next-intl"
 import React, { use, useMemo } from "react"
 import { EnabledSwitchCell } from "@/components/data-table/enabled-switch-cell"
 import { enableMinigameAction } from "./actions/enable-minigame.action"
+import { DuplicateMinigameDialog } from "./components/duplicate-minigame-dialog"
 import { MINIGAME_TYPE_CONFIGS } from "./constants"
 import { DeleteMinigamesDialog } from "./delete-minigames"
 import { MinigamesTableToolbarActions } from "./minigames-table-toolbar-actions"
@@ -274,6 +276,13 @@ export function MinigamesTable({ workspaceId, promises }: MinigamesTableProps) {
               </DropdownMenuItem>
 
               <DropdownMenuItem
+                onClick={() => setRowAction({ row, variant: "duplicate" })}
+              >
+                <CopyPlusIcon />
+                {t("actions.duplicate")}
+              </DropdownMenuItem>
+
+              <DropdownMenuItem
                 render={
                   <Link
                     href={`/space/${workspaceId}/minigames/${row.original.id}/history`}
@@ -335,6 +344,17 @@ export function MinigamesTable({ workspaceId, promises }: MinigamesTableProps) {
           onOpenChange={() => setRowAction(null)}
           open={rowAction?.variant === "delete"}
           showTrigger={false}
+          workspaceId={workspaceId}
+        />
+
+        <DuplicateMinigameDialog
+          minigameId={
+            rowAction?.variant === "duplicate"
+              ? rowAction.row.original.id
+              : null
+          }
+          onOpenChange={() => setRowAction(null)}
+          open={rowAction?.variant === "duplicate"}
           workspaceId={workspaceId}
         />
       </CardContent>

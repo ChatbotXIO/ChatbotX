@@ -9420,6 +9420,11 @@
         "lose": "Sin premio",
         "empty": "Aún no hay registros de jugadas"
       }
+    },
+    "duplicateDialog": {
+      "title": "Duplicar minijuego",
+      "description": "Se creará una copia del minijuego con toda su configuración. Los premios y la imagen de premios no se copian, y la copia empieza desactivada: añade premios y luego actívala.",
+      "success": "Minijuego duplicado correctamente"
     }
   },
   "mediaLibrary": {

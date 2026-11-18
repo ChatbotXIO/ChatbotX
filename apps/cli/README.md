@@ -1210,6 +1210,7 @@ chatbotx minigames list                                # [--page --perPage]
 chatbotx minigames get <id>
 chatbotx minigames create --name <name> --type <type>
 chatbotx minigames update <id>                          # Full replace (PUT) / partial (PATCH) collide, see note
+chatbotx minigames duplicate <id>                       # Copy as "<name> - Copy", disabled (prizes, plays and counters are not copied)
 chatbotx minigames delete <id>
 chatbotx minigames bulk-delete --ids <ids>
 chatbotx minigames enabled update <id> --enabled <enabled>
