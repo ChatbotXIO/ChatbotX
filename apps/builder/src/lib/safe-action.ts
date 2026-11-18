@@ -7,6 +7,7 @@ import {
 import { getAuditActor, withAuditContext } from "@chatbotx.io/business/audit"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
 import { findOrFail, isDatabaseError } from "@chatbotx.io/database/client"
+import { userColumnsWithoutSecrets } from "@chatbotx.io/database/repositories/user-columns"
 import { userModel } from "@chatbotx.io/database/schema"
 import { FlowAuthoringException } from "@chatbotx.io/flow-config"
 import { SdkException } from "@chatbotx.io/sdk"
@@ -75,11 +76,14 @@ export const actionClient = createSafeActionClient({
 export const authActionClient = actionClient.use(async ({ next }) => {
   const id = await getCurrentUserId()
 
+  // `ctx.user` reaches every authenticated action, so the encrypted
+  // `connectionAuthorizations` backup is left out of the read.
   const user = await findOrFail({
     table: userModel,
     where: {
       id,
     },
+    columns: userColumnsWithoutSecrets,
   })
 
   // Forced-password-change gate — the single chokepoint for EVERY authenticated

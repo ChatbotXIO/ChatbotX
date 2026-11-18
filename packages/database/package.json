@@ -74,6 +74,7 @@
     "./repositories/place-category": "./src/repositories/place-category/index.ts",
     "./repositories/template-installed-resource": "./src/repositories/template-installed-resource/index.ts",
     "./repositories/template-uninstall-references": "./src/repositories/template-uninstall/references.ts",
+    "./repositories/user-columns": "./src/repositories/user/columns.ts",
     "./repositories/tenant": "./src/repositories/tenant/index.ts",
     "./repositories/workspace": "./src/repositories/workspace/index.ts",
     "./repositories/workspace-mac": "./src/repositories/workspace-mac/index.ts",

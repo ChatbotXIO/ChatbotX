@@ -23,6 +23,7 @@ const m = vi.hoisted(() => {
       Promise.resolve({ visibleChannels: ["line"] }),
     ),
     refreshAuth: vi.fn(),
+    record: vi.fn(async () => undefined),
   }
 })
 vi.mock("@/lib/tenant/request-tenant", () => ({
@@ -55,6 +56,7 @@ vi.mock("@chatbotx.io/business", async (importOriginal) => ({
     markTokenRefreshError: m.markTokenRefreshError,
   },
   tenantService: { resolveVisibleChannels: m.resolveVisibleChannels },
+  userService: { recordConnectionAuthorization: m.record },
 }))
 vi.mock("@/lib/workspace/resolve-visible-channels", () => ({
   resolveChannelPolicy: m.resolveChannelPolicy,
@@ -93,6 +95,96 @@ describe("connectLine", () => {
     ])
     expect(m.connect.mock.calls[0]?.[0]).toMatchObject({ createdBy: "owner1" })
     expect(result.webhook).toMatchObject({ active: true, testOk: true })
+  })
+
+  test("records the validated credentials once, before the channel is stored (workspace token: no user)", async () => {
+    m.connect.mockResolvedValueOnce({
+      workspaceId: "w1",
+      createdWorkspace: false,
+      wasCreated: false,
+      integrationId: "1",
+      inboxId: "2",
+    })
+
+    await connectLine({
+      workspaceId: "w1",
+      user: null,
+      channelId: "123",
+      channelSecret: "s",
+    })
+
+    expect(m.record).toHaveBeenCalledTimes(1)
+    expect(m.record).toHaveBeenCalledWith({
+      userId: null,
+      provider: "line",
+      auth: { a: 1 },
+      phase: "credentialsValidated",
+      workspaceId: "w1",
+    })
+    expect(m.record.mock.invocationCallOrder[0]).toBeLessThan(
+      m.connect.mock.invocationCallOrder[0] as number,
+    )
+  })
+
+  test("a new-workspace connect records once, with a null workspace, before connecting", async () => {
+    m.connect.mockResolvedValueOnce({
+      workspaceId: "w-new",
+      createdWorkspace: true,
+      wasCreated: true,
+      integrationId: "1",
+      inboxId: "2",
+    })
+
+    await connectLine({
+      user: { id: "u1", email: "a@b.c" } as never,
+      channelId: "123",
+      channelSecret: "s",
+    })
+
+    expect(m.record).toHaveBeenCalledTimes(1)
+    expect(m.record).toHaveBeenCalledWith(
+      expect.objectContaining({
+        userId: "u1",
+        workspaceId: null,
+        phase: "credentialsValidated",
+      }),
+    )
+    expect(m.record.mock.invocationCallOrder[0]).toBeLessThan(
+      m.connect.mock.invocationCallOrder[0] as number,
+    )
+  })
+
+  test("a new-workspace connect that fails still records once, with a null workspace", async () => {
+    m.connect.mockRejectedValueOnce(new Error("db down"))
+
+    await expect(
+      connectLine({
+        user: { id: "u1", email: "a@b.c" } as never,
+        channelId: "123",
+        channelSecret: "s",
+      }),
+    ).rejects.toBeDefined()
+
+    expect(m.record).toHaveBeenCalledTimes(1)
+    expect(m.record).toHaveBeenCalledWith(
+      expect.objectContaining({ userId: "u1", workspaceId: null }),
+    )
+  })
+
+  test("records nothing when LINE rejects the credentials", async () => {
+    const { SdkException } = await import("@chatbotx.io/sdk")
+    m.runAction.mockRejectedValueOnce(new SdkException("bad", "lineError", 401))
+
+    await expect(
+      connectLine({
+        workspaceId: "w1",
+        user: null,
+        channelId: "1",
+        channelSecret: "s",
+      }),
+    ).rejects.toMatchObject({ code: "connectionCredentialsRejected" })
+
+    expect(m.record).not.toHaveBeenCalled()
   })
 
   test("maps a LINE 401 to connectionCredentialsRejected", async () => {

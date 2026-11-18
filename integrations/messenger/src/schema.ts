@@ -1,4 +1,5 @@
 import type {
+  ConnectionCandidateUnavailableReason,
   Context,
   Handler,
   IncomingAttachment,
@@ -622,7 +623,10 @@ export const facebookPageSchema = z.object({
   tasks: z.array(z.string()).optional(),
 })
 export type FacebookPage = z.infer<typeof facebookPageSchema>
-export type ConnectableFacebookPage = FacebookPage & { isConnectable: boolean }
+export type ConnectableFacebookPage = FacebookPage & {
+  isConnectable: boolean
+  unavailableReason?: ConnectionCandidateUnavailableReason
+}
 
 // Webhook verification schemas
 export const webhookVerificationRequestSchema = z.object({

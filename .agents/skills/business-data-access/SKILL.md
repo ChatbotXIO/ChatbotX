@@ -21,6 +21,14 @@ alternatives for the app layer. The app layer calls a service; the service
 may call a repository. See `.agents/rules/data-access.md` for the full rule
 and the per-layer responsibility table.
 
+## Reading `User`
+
+`User.connectionAuthorizations` is an encrypted secret column. Read users through
+`userColumnsWithoutSecrets` (`@chatbotx.io/database/repositories/user-columns`) and never return the
+full row to a client, cache, log or `ctx`; write it only via
+`userService.recordConnectionAuthorization`. See AGENTS.md invariant 26 and
+`docs/agents/invariants.md`.
+
 ## Boundary Rule
 
 Do not add direct database imports in:

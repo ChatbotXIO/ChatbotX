@@ -66,6 +66,8 @@ These instructions apply repository-wide. Read the relevant detailed rule in `.a
 24. **Workspace purge must stay bounded** — index new FKs, audit high-volume purge paths, and use bounded child-before-parent drains. Read `.agents/skills/workspace-purge/SKILL.md`.
 
 25. **Keep Node-only code out of builder router imports** — split it into a server-only package subpath; Edge instrumentation traces the full router graph. See `apps/builder/__tests__/edge-instrumentation-graph.test.ts`.
+
+26. **`User.connectionAuthorizations` is a secret column** — the encrypted backup of each user's latest provider authorization, kept independently of `Connection`/channel rows. Every `User` read that reaches a client, cache, log or `ctx` goes through `userColumnsWithoutSecrets` (`UserModel` omits the column); never declare it in better-auth `additionalFields`; write only through `userService.recordConnectionAuthorization`; guarded by `packages/database/__tests__/user-secret-projection.test.ts`.
 <!-- END GENERATED: SHARED-INVARIANTS -->
 
 ## Rule index

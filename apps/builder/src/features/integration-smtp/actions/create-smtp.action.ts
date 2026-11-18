@@ -1,6 +1,10 @@
 "use server"
 
-import { integrationSmtpService, workspaceService } from "@chatbotx.io/business"
+import {
+  integrationSmtpService,
+  userService,
+  workspaceService,
+} from "@chatbotx.io/business"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
 import { workspaceIdrequestParams } from "@/features/common/schema"
 import { workspaceActionClient } from "@/lib/safe-action"
@@ -14,10 +18,11 @@ export const createSmtpAction = workspaceActionClient
     const {
       bindArgsParsedInputs: [workspaceId],
       parsedInput,
+      ctx,
     } = props
-    const { fromAddress, username, password, provider } = parsedInput
+    const { fromAddress, username } = parsedInput
 
-    const { host, port } = await prepareSmtpAuth(parsedInput)
+    const { auth } = await prepareSmtpAuth(parsedInput)
 
     const workspace = await workspaceService.find({
       where: { id: workspaceId },
@@ -26,19 +31,20 @@ export const createSmtpAction = workspaceActionClient
       throw new ChatbotXException("Workspace not found")
     }
 
+    await userService.recordConnectionAuthorization({
+      userId: ctx.user.id,
+      provider: "smtp",
+      auth,
+      phase: "credentialsValidated",
+      workspaceId,
+    })
+
     const { inbox } = await integrationSmtpService.connect({
       workspaceId,
       ownerId: workspace.ownerId,
       name: username,
       fromAddress,
-      auth: {
-        authType: "custom",
-        provider,
-        host,
-        port,
-        username,
-        password,
-      },
+      auth,
     })
 
     return {

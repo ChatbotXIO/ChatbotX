@@ -74,10 +74,8 @@ const selectableItem: ConnectPickerItem = {
   secondary: "page-selectable",
 }
 
-// A generic disabled row — Messenger's `listCandidates` drops non-admin
-// pages before they ever become a session target, so this stands in for any
-// disabled row (e.g. already connected elsewhere), not a not-admin-specific
-// case the UI no longer renders.
+// A generic disabled row — stands in for any non-selectable page (already
+// connected, or unavailable with a translated reason).
 const disabledItem: ConnectPickerItem = {
   id: "page-disabled",
   name: "Disabled Page",
@@ -143,6 +141,33 @@ describe("MessengerPages", () => {
     expect(container.textContent).toContain(
       "messenger.selectPage.alreadyConnectedNote",
     )
+  })
+
+  test("shows the unavailable reason on a disabled row", () => {
+    renderPages([
+      selectableItem,
+      {
+        ...disabledItem,
+        disabledReason:
+          "messenger.selectPage.unavailableInsufficientPermissions",
+      },
+    ])
+
+    expect(container.textContent).toContain(
+      "messenger.selectPage.unavailableInsufficientPermissions",
+    )
+  })
+
+  test("keeps continue disabled and offers no selectable row when every page is unavailable", () => {
+    renderPages([disabledItem])
+
+    const rows = checkboxes().slice(1)
+    expect(rows).toHaveLength(1)
+    expect(
+      rows[0]?.hasAttribute("disabled") ||
+        rows[0]?.getAttribute("aria-disabled") === "true",
+    ).toBe(true)
+    expect(continueButton()?.hasAttribute("disabled")).toBe(true)
   })
 
   test("empty picker retry preserves workspace ID", () => {

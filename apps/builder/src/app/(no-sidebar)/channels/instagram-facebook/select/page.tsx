@@ -18,8 +18,7 @@ export const dynamic = "force-dynamic"
  * `session.targets` is already narrowed to accounts linked to a Page the
  * user administers (Instagram-Facebook's `listCandidates` mirrors
  * `getUserInstagramAccounts`'s `/me/accounts` scoping) — no live re-fetch,
- * and (like Messenger) no "not admin" rank: only selectable vs.
- * already-connected.
+ * and no "not admin" rank: only selectable vs. already-connected.
  */
 export default async function InstagramFacebookSelectPage({
   searchParams,

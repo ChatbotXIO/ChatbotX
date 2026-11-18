@@ -1,4 +1,4 @@
-import { integrationThreadsService } from "@chatbotx.io/business"
+import { integrationThreadsService, userService } from "@chatbotx.io/business"
 import {
   buildThreadsAuthValue,
   getThreadsProfile,
@@ -21,6 +21,7 @@ export async function reconnectThreadsHandler(props: {
   callbackUrl: string
   workspaceId: string
   integrationId: string
+  userId: string
   accessToken: string
   expiresAt?: string
 }): Promise<ReconnectResult> {
@@ -51,6 +52,14 @@ export async function reconnectThreadsHandler(props: {
       expiresAt: props.expiresAt,
       threadsUserId: profile.id,
       username: profile.username,
+    })
+
+    await userService.recordConnectionAuthorization({
+      userId: props.userId,
+      provider: "threads",
+      auth,
+      phase: "reconnectValidated",
+      workspaceId: props.workspaceId,
     })
 
     const updated = await integrationThreadsService.reconnect({

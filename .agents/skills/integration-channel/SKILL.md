@@ -74,6 +74,7 @@ After confirmation, execute these 4 phases **in order**. Each phase ends with a 
 - **`ChannelType` cascade** — adding a value to `channelTypes` (defined in `packages/utils/src/channel.ts`) breaks every `Record<ChannelType, ...>`; grep `Record<ChannelType` and multiline `Record<\n\s*ChannelType` and fix ALL hits. A `CHANNEL_CAPABILITIES` entry marked `manageable` needs the Phase 4 settings page, or the row 404s.
 - **Webhook URLs on white-label** — register provider webhook URLs on the broker host (`getBrokerOrigin()` / `buildBrokerCallbackUrl()`), not the tenant's custom domain; see [webhook-flow.md](references/webhook-flow.md).
 - **Phase 3 checkpoint:** run `pnpm lint` and `pnpm --filter <touched-workspace> check-types`; fix undeclared-variable / missing-import errors before continuing.
+- **Connection authorization backup:** a new connect path must call `userService.recordConnectionAuthorization` once it holds an `AuthValue` (AGENTS.md invariant 26); a rejected credential records nothing.
 - **Logging:** use the structured logger, never `console`, and log with `{ err: error }` (AGENTS.md invariant 20).
 
 ## Post-Creation Verification

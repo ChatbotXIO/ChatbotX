@@ -1,11 +1,14 @@
 // @vitest-environment node
 
+import { connectSessionTargetSchema } from "@chatbotx.io/database/partials"
+import { connectionCandidateUnavailableReasons } from "@chatbotx.io/sdk"
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
 type RouteConfig = {
   method: string
   path: string
   summary: string
+  description?: string
   tags: string[]
 }
 
@@ -629,6 +632,27 @@ describe("GET /v1/connect-sessions/{id}", () => {
       workspaceId: "workspace-1",
     })
     expect(result).toEqual({ id: "session-1", sessionResource: true })
+  })
+})
+
+describe("connect session target documentation", () => {
+  test("the session description tells agents to pick selectable targets and to cancel and re-authorize when none is selectable", () => {
+    const description =
+      findProcedure("GET", "/v1/connect-sessions/{id}").route.description ?? ""
+    expect(description).toContain("selectable: true")
+    expect(description).toContain("disabledReason")
+    expect(description).toContain("connectSessions.cancel")
+    expect(description).toContain("connections.create")
+    expect(description).toContain("connections.reconnect")
+  })
+
+  test("disabledReason stays an optional string and documents the known values", () => {
+    const field = connectSessionTargetSchema.shape.disabledReason
+    expect(field.safeParse(undefined).success).toBe(true)
+    expect(field.safeParse("someFutureReason").success).toBe(true)
+    for (const reason of connectionCandidateUnavailableReasons) {
+      expect(field.description).toContain(reason)
+    }
   })
 })
 

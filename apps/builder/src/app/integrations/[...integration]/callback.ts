@@ -6,6 +6,7 @@ import {
   integrationThreadsService,
   platformCredentialService,
   templateInstallIntentService,
+  userService,
   workspaceService,
 } from "@chatbotx.io/business"
 import { auditService, withAuditContext } from "@chatbotx.io/business/audit"
@@ -626,6 +627,7 @@ export const handleCallback = async (
               code,
               callbackUrl,
               workspaceId: workspace.id,
+              userId,
             }),
         )
         return redirect(safeReferer)
@@ -749,6 +751,7 @@ export const handleCallback = async (
           credentialConfig: messengerCredential.config,
           workspaceId: workspace.id,
           integrationId: stateParams.reconnectIntegrationId,
+          userId,
           code,
           callbackUrl,
         })
@@ -829,6 +832,7 @@ export const handleCallback = async (
         credentialConfig: instagramCredential.config,
         workspaceId: workspace.id,
         integrationId: stateParams.reconnectIntegrationId,
+        userId,
         userToken,
       })
       if (result.status === "success") {
@@ -908,6 +912,7 @@ export const handleCallback = async (
         credentialConfig: instagramFacebookCredential.config,
         workspaceId: workspace.id,
         integrationId: stateParams.reconnectIntegrationId,
+        userId,
         userToken,
       })
       if (result.status === "success") {
@@ -952,6 +957,7 @@ export const handleCallback = async (
           callbackUrl,
           workspaceId: workspace.id,
           integrationId: stateParams.reconnectIntegrationId,
+          userId,
           accessToken: token.accessToken,
           expiresAt: token.expiresAt,
         })
@@ -981,6 +987,14 @@ export const handleCallback = async (
         expiresAt: token.expiresAt,
         threadsUserId: profile.id,
         username: profile.username,
+      })
+
+      await userService.recordConnectionAuthorization({
+        userId,
+        provider: "threads",
+        auth,
+        phase: "authorizationObtained",
+        workspaceId: workspace.id,
       })
 
       let threadsIntegrationId: string
@@ -1096,6 +1110,7 @@ export const handleCallback = async (
           zaloSettings: zaloCredential.config,
           workspaceId: workspace.id,
           integrationId: stateParams.reconnectIntegrationId,
+          userId,
           req,
           callbackUrl: zaloRedirectUrl,
         })
@@ -1160,6 +1175,7 @@ export const handleCallback = async (
             code,
             callbackUrl,
             workspaceId: workspace.id,
+            userId,
           }),
       )
 
@@ -1208,6 +1224,14 @@ export const handleCallback = async (
           credentialConfig: googleCredential.config,
           req,
           callbackUrl,
+          workspaceId: workspace.id,
+        })
+
+        await userService.recordConnectionAuthorization({
+          userId,
+          provider: "googleCalendar",
+          auth: connection.auth,
+          phase: "authorizationObtained",
           workspaceId: workspace.id,
         })
 
@@ -1276,6 +1300,17 @@ export const handleCallback = async (
         req,
       })) as unknown as Oauth2AuthValue
       googleSheetsAuth = authResult
+      // Only an obtained authorization is recorded; an empty result falls
+      // through to the `notFound()` guard below.
+      if (authResult) {
+        await userService.recordConnectionAuthorization({
+          userId,
+          provider: "googleSheets",
+          auth: authResult,
+          phase: "authorizationObtained",
+          workspaceId: workspace.id,
+        })
+      }
       break
     }
 

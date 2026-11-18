@@ -189,6 +189,19 @@ describe("listConversations / findConversation attachment count", () => {
     )
   })
 
+  test("listConversations loads the assigned user without the secret column", async () => {
+    mocks.findManyQuery.mockResolvedValue([])
+
+    await listConversations(
+      { workspaceId: "ws-1" },
+      { includeEmailAndPhone: true },
+    )
+
+    expect(mocks.findManyQuery.mock.calls[0]?.[0]?.with.assignedUser).toEqual({
+      columns: { connectionAuthorizations: false },
+    })
+  })
+
   test("findConversation requests attachmentCountOnly instead of full attachment rows", async () => {
     const conversation = {
       id: "conv-1",

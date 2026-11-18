@@ -1,3 +1,4 @@
+import { withCache } from "@chatbotx.io/redis"
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
 const mocks = vi.hoisted(() => ({
@@ -329,5 +330,26 @@ describe("InboxTeamService membership mutation revocation", () => {
     expect(
       mocks.enqueueWorkspaceMemberRealtimeConnectionRevocationRetry,
     ).toHaveBeenCalledTimes(1)
+  })
+
+  test("the cached team list loads each member's user without the secret column", async () => {
+    vi.mocked(withCache).mockImplementationOnce((_key, load) => load())
+
+    await inboxTeamService.listByWorkspace({ workspaceId: WORKSPACE_ID })
+
+    expect(
+      mocks.teamFindMany.mock.calls[0]?.[0]?.with.inboxTeamMembers.with.user,
+    ).toEqual({ columns: { connectionAuthorizations: false } })
+  })
+
+  test("loads the removed members' users without the secret column", async () => {
+    await inboxTeamService.removeMembers(
+      { workspaceId: WORKSPACE_ID, inboxTeamId: TEAM_ID },
+      ["member-1"],
+    )
+
+    expect(mocks.teamMemberFindMany.mock.calls[0]?.[0]?.with.user).toEqual({
+      columns: { connectionAuthorizations: false },
+    })
   })
 })

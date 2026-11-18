@@ -1,6 +1,7 @@
 import { parseEnvBool } from "@chatbotx.io/utils"
 import {
   DrizzleQueryError,
+  getTableColumns,
   type InferSelectModel,
   relationsFilterToSQL,
   type SQLWrapper,
@@ -163,19 +164,47 @@ const resolveRelationsFilter = <TTable extends PgTable>(props: {
   )
 }
 
-export const findOrFail = async <TTable extends PgTable>(props: {
+/** Columns left out of a `findOrFail` read, in drizzle's `columns` exclusion form. */
+type ExcludedColumns<TTable extends PgTable> = Partial<
+  Record<keyof InferSelectModel<TTable>, false>
+>
+
+export const findOrFail = async <
+  TTable extends PgTable,
+  TExcluded extends ExcludedColumns<TTable> = Record<never, false>,
+>(props: {
   client?: DatabaseClient
   table: TTable
   where: Record<string, unknown> | undefined
   message?: string
-}): Promise<InferSelectModel<TTable>> => {
+  /**
+   * Columns to leave out, as `{ column: false }` (e.g.
+   * `userColumnsWithoutSecrets`); every other column is read.
+   */
+  columns?: TExcluded
+}): Promise<Omit<InferSelectModel<TTable>, keyof TExcluded>> => {
   const { client = db, table, where, message = "Record not found" } = props
-  const result = await client
-    .select()
+  const { columns: excluded } = props
+  // Without exclusions keep the plain `select()` every other caller relies on.
+  const query = excluded
+    ? client.select(
+        Object.fromEntries(
+          Object.entries(getTableColumns(table)).filter(
+            ([key]) => !(key in excluded),
+          ),
+        ),
+      )
+    : client.select()
+  const result = await query
     .from(table as PgTable)
     .where(relationsFilterToSQL(table, where as RelationsFilterArg))
     .limit(1)
-    .then((result) => result[0] as InferSelectModel<TTable> | undefined)
+    .then(
+      (result) =>
+        result[0] as
+          | Omit<InferSelectModel<TTable>, keyof TExcluded>
+          | undefined,
+    )
 
   if (!result) {
     throw new ModelNotfoundException(message)

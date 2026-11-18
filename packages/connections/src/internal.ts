@@ -27,6 +27,7 @@ import type {
 import {
   authValueSchema,
   ConnectionProviderRejectedError,
+  connectionCandidateUnavailableReasons,
 } from "@chatbotx.io/sdk"
 import { z } from "zod"
 import { logger } from "./logger"
@@ -51,6 +52,7 @@ export const encryptedCandidatesSchema = z.array(
     authExpiresAt: z.string().optional(),
     avatarUrl: z.string().optional(),
     alreadyConnected: z.enum(["this_workspace", "other_workspace"]).optional(),
+    unavailableReason: z.enum(connectionCandidateUnavailableReasons).optional(),
     auth: authValueSchema,
   }),
 ) satisfies z.ZodType<ConnectionCandidate[]>

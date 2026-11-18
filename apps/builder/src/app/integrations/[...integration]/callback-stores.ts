@@ -6,6 +6,7 @@ import {
   integrationWhatsappService,
   messagingAdsConnectionService,
   messengerIntegrationService,
+  userService,
 } from "@chatbotx.io/business"
 import type { MessagingAdChannel } from "@chatbotx.io/database/partials"
 import {
@@ -29,6 +30,7 @@ export const storeFacebookAdsConnection = async (args: {
   code: string
   callbackUrl: string
   workspaceId: string
+  userId: string
 }): Promise<void> => {
   const shortLivedToken = await exchangeFacebookAdsCode(
     args.credentialConfig,
@@ -49,6 +51,13 @@ export const storeFacebookAdsConnection = async (args: {
     expiresAt: tokenExpiresAt?.toISOString(),
     version: args.credentialConfig.version,
   }
+  await userService.recordConnectionAuthorization({
+    userId: args.userId,
+    provider: "facebookAds",
+    auth: facebookAdsAuth,
+    phase: "authorizationObtained",
+    workspaceId: args.workspaceId,
+  })
   await integrationFacebookAdsService.upsert({
     workspaceId: args.workspaceId,
     auth: facebookAdsAuth,

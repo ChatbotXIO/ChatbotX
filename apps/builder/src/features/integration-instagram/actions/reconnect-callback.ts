@@ -1,6 +1,7 @@
 import {
   connectionStateService,
   instagramIntegrationService,
+  userService,
 } from "@chatbotx.io/business"
 import type { InstagramAuthValue } from "@chatbotx.io/integration-instagram"
 import {
@@ -16,6 +17,7 @@ import {
 } from "@chatbotx.io/integration-instagram-facebook"
 import { AuthType } from "@chatbotx.io/sdk"
 import { seedReconnectBranding } from "@/features/channel-connect/lib/branding-follow-ups"
+import { buildFacebookUserAuth } from "@/features/channel-connect/lib/facebook-user-auth"
 import type { ReconnectResult } from "@/lib/channel-reconnect"
 import {
   buildIntegrationUserInfo,
@@ -34,6 +36,7 @@ export async function reconnectInstagramHandler(props: {
   credentialConfig: { clientId: string; clientSecret: string; version: string }
   workspaceId: string
   integrationId: string
+  userId: string
   userToken: string
 }): Promise<ReconnectResult> {
   const integrationInstagram =
@@ -66,6 +69,14 @@ export async function reconnectInstagramHandler(props: {
         version: props.credentialConfig.version,
       },
     }
+
+    await userService.recordConnectionAuthorization({
+      userId: props.userId,
+      provider: "instagram",
+      auth,
+      phase: "reconnectValidated",
+      workspaceId: props.workspaceId,
+    })
 
     // Direct Instagram login authenticates as the account itself, so the
     // account IS the user. Best-effort — a failed build leaves `userInfo`
@@ -141,6 +152,7 @@ export async function reconnectInstagramFacebookHandler(props: {
   credentialConfig: { clientId: string; clientSecret: string; version: string }
   workspaceId: string
   integrationId: string
+  userId: string
   userToken: string
 }): Promise<ReconnectResult> {
   const integrationInstagram =
@@ -188,6 +200,15 @@ export async function reconnectInstagramFacebookHandler(props: {
         version: props.credentialConfig.version,
       },
     }
+
+    await userService.recordConnectionAuthorization({
+      userId: props.userId,
+      provider: "instagramFacebook",
+      // The user-level token; `auth` above holds the page token.
+      auth: buildFacebookUserAuth(props.credentialConfig, props.userToken, ""),
+      phase: "reconnectValidated",
+      workspaceId: props.workspaceId,
+    })
 
     // DB write before the webhook subscription (matching the connect flow) so
     // a failed write never leaves the webhook bound to the new page while the

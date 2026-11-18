@@ -3,7 +3,11 @@ import type * as schema from "./schema"
 export type IntegrationWebchatModel =
   typeof schema.integrationWebchatModel.$inferSelect
 export type IntegrationApiModel = typeof schema.integrationApiModel.$inferSelect
-export type UserModel = typeof schema.userModel.$inferSelect
+type UserRow = typeof schema.userModel.$inferSelect
+/** Secret `User` columns; a read must go through `userColumnsWithoutSecrets`. */
+export type UserSecretColumns = Pick<UserRow, "connectionAuthorizations">
+/** A `User` row as read for app code: without the secret columns. */
+export type UserModel = Omit<UserRow, keyof UserSecretColumns>
 export type UserDeviceTokenModel =
   typeof schema.userDeviceTokenModel.$inferSelect
 export type MobileRefreshTokenModel =

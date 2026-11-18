@@ -914,6 +914,8 @@ export function createAuth(config: AuthConfig) {
                 ...(ownerId ? [{ id: ownerId, tenantId: ROOT_TENANT_ID }] : []),
               ],
             },
+            // Only the display name is used, so never read the whole row.
+            columns: { name: true },
           })
           if (!user) {
             throw new APIError(400, {

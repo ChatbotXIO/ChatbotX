@@ -3,6 +3,7 @@ import "server-only"
 import {
   integrationWhatsappService,
   platformCredentialService,
+  userService,
   type WhatsappSignupSessionAuthorized,
   whatsappBusinessAccountService,
   workspaceMemberService,
@@ -495,6 +496,19 @@ async function persistWhatsappNumber({
     phoneNumber.display_phone_number,
   )
   const phoneName = phoneNumber.verified_name.trim() || displayPhoneNumber
+
+  // One backup slot per user and provider, newer wins: parallel per-number
+  // connects of one signup overwrite each other and the last auth survives.
+  // Recorded before `integrationWhatsappService.connectPhoneNumber` so a
+  // failed connect keeps the backup; a null workspace (first-ever connect) has
+  // no id yet.
+  await userService.recordConnectionAuthorization({
+    userId,
+    provider: "whatsapp",
+    auth,
+    phase: "authorizationObtained",
+    workspaceId: workspaceId ?? null,
+  })
 
   const { workspaceId: connectedWorkspaceId, integrationRow } =
     await integrationWhatsappService.connectPhoneNumber({

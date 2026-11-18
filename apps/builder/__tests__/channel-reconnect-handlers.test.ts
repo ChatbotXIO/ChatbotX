@@ -85,6 +85,7 @@ vi.mock("@chatbotx.io/business", () => ({
   connectionStateService: {
     commitReconnect: mockCommitReconnect,
   },
+  userService: { recordConnectionAuthorization: vi.fn(async () => undefined) },
 }))
 
 vi.mock("@/features/channel-connect/lib/branding-follow-ups", () => ({
@@ -264,6 +265,7 @@ describe("reconnectMessengerHandler", () => {
       credentialConfig,
       workspaceId: "ws-1",
       integrationId: "im-1",
+      userId: "user-1",
       code: "code-1",
       callbackUrl: "https://broker.example.com/integrations/messenger/callback",
     })
@@ -445,6 +447,7 @@ describe("reconnectInstagramHandler", () => {
       credentialConfig,
       workspaceId: "ws-1",
       integrationId: "ig-1",
+      userId: "user-1",
       userToken: "ig-user-token",
     })
 
@@ -588,6 +591,7 @@ describe("reconnectInstagramFacebookHandler", () => {
       credentialConfig,
       workspaceId: "ws-1",
       integrationId: "ig-1",
+      userId: "user-1",
       userToken: "fb-user-token",
     })
 
@@ -733,6 +737,7 @@ describe("reconnectZaloHandler", () => {
       zaloSettings,
       workspaceId: "ws-1",
       integrationId: "iz-1",
+      userId: "user-1",
       req: new Request(
         "https://broker.example.com/integrations/zalo/callback?code=code-1",
       ),

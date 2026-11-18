@@ -96,18 +96,21 @@ const config: IntegrationDefinition<
       }
       const version = auth.version ?? DEFAULT_API_VERSION
       const { pages } = await getUserPages(auth.tokens.accessToken, version)
-      return pages
-        .filter((page) => page.isConnectable && page.access_token)
-        .map((page) => ({
-          sourceId: page.id,
-          displayName: page.name,
-          auth: oauth2Auth(
-            auth,
-            auth.redirectUrl,
-            { accessToken: page.access_token as string },
-            { pageId: page.id, pageName: page.name, version },
-          ) satisfies MessengerAuthValue,
-        }))
+      return pages.map((page) => ({
+        sourceId: page.id,
+        displayName: page.name,
+        ...(page.unavailableReason
+          ? { unavailableReason: page.unavailableReason }
+          : {}),
+        // An unavailable page may have no token of its own; its entry then
+        // carries the user-level token in memory only (never stored).
+        auth: oauth2Auth(
+          auth,
+          auth.redirectUrl,
+          { accessToken: page.access_token ?? auth.tokens.accessToken },
+          { pageId: page.id, pageName: page.name, version },
+        ) satisfies MessengerAuthValue,
+      }))
     },
     describe: (auth) => {
       if (!auth.metadata?.pageId) {

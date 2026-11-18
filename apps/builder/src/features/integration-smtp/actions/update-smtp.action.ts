@@ -1,6 +1,6 @@
 "use server"
 
-import { integrationSmtpService } from "@chatbotx.io/business"
+import { integrationSmtpService, userService } from "@chatbotx.io/business"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { workspaceActionClient } from "@/lib/safe-action"
 import { prepareSmtpAuth } from "../lib/prepare-smtp-auth"
@@ -13,11 +13,20 @@ export const updateSmtpAction = workspaceActionClient
     const {
       bindArgsParsedInputs: [workspaceId, id],
       parsedInput,
+      ctx,
     } = props
 
     // Merging against the stored auth, the change diff, and the audit record
     // all live in the service.
-    const { host, port } = await prepareSmtpAuth(parsedInput)
+    const { host, port, auth } = await prepareSmtpAuth(parsedInput)
+
+    await userService.recordConnectionAuthorization({
+      userId: ctx.user.id,
+      provider: "smtp",
+      auth,
+      phase: "credentialsValidated",
+      workspaceId,
+    })
 
     return await integrationSmtpService.update({
       workspaceId,
