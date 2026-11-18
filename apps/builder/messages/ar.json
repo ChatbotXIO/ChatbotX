@@ -870,6 +870,19 @@
       "enabled": "الإشراف بالذكاء الاصطناعي",
       "description": "يقرأ وكيل ذكاء اصطناعي كل تعليق قبل أن يرد البوت، ويخفي أو يحذف التعليقات ضمن الفئات أدناه. لا يتم الرد على التعليق الذي تم الإشراف عليه.",
       "aiAgentDescription": "يُستخدم نموذج الذكاء الاصطناعي الخاص بالوكيل فقط، وليس التعليمات الخاصة به.",
+      "engine": "التصنيف بواسطة",
+      "engines": {
+        "aiAgent": "وكيل الذكاء الاصطناعي",
+        "decision": "AI Router (Jev)"
+      },
+      "decisionConnection": "اتصال AI Router",
+      "decisionConnectionDescription": "تظهر الاتصالات المفعلة فقط. يُستخدم مفتاح API الخاص بالاتصال لتصنيف كل تعليق.",
+      "decisionConnectionUnavailable": "تم حذف هذا الاتصال أو إيقافه. اختر اتصالًا آخر، وإلا فلن يتم فحص التعليقات.",
+      "decisionModel": "النموذج",
+      "decisionThreshold": "حد المطابقة",
+      "decisionThresholdDescription": "مدى تأكد AI Router (0.5–0.95) قبل احتساب التعليق ضمن فئة. القيمة الأعلى تحظر تعليقات أقل.",
+      "noDecisionConnection": "لا يوجد اتصال AI Router مفعل في مساحة العمل هذه.",
+      "addDecisionConnection": "إضافة اتصال",
       "categoriesLabel": "حظر التعليقات التي تكون",
       "categories": {
         "hate": "خطاب كراهية",

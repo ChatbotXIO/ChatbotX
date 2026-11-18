@@ -870,6 +870,19 @@
       "enabled": "Tekoälymoderointi",
       "description": "Tekoälyagentti lukee jokaisen kommentin ennen kuin botti vastaa, ja piilottaa tai poistaa alla olevien luokkien kommentit. Moderoituun kommenttiin ei koskaan vastata.",
       "aiAgentDescription": "Vain agentin tekoälymallia käytetään, ei sen kehotetta.",
+      "engine": "Luokittele käyttäen",
+      "engines": {
+        "aiAgent": "AI-agentti",
+        "decision": "AI Router (Jev)"
+      },
+      "decisionConnection": "AI Router -yhteys",
+      "decisionConnectionDescription": "Vain käytössä olevat yhteydet näytetään. Yhteyden API-avaimella luokitellaan jokainen kommentti.",
+      "decisionConnectionUnavailable": "Tämä yhteys on poistettu tai poistettu käytöstä. Valitse toinen, muuten kommentteja ei tarkisteta.",
+      "decisionModel": "Malli",
+      "decisionThreshold": "Osumakynnys",
+      "decisionThresholdDescription": "Kuinka varma AI Routerin on oltava (0,5–0,95), ennen kuin kommentti lasketaan luokkaan. Suurempi arvo estää vähemmän kommentteja.",
+      "noDecisionConnection": "Tässä työtilassa ei ole käytössä olevaa AI Router -yhteyttä.",
+      "addDecisionConnection": "Lisää yhteys",
       "categoriesLabel": "Estä kommentit, jotka ovat",
       "categories": {
         "hate": "Vihapuhetta",

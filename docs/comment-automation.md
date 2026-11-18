@@ -135,7 +135,7 @@ Each filter that fails calls `logAutomationSkipped(..., reason)` (logged at `inf
 | `options.trackUserTags` | Count who the commenter tagged | Not a filter — never skips. Adds the comment's counts to `Contact.totalTagged`/`totalNewTagged`, which back `{{total_tagged}}`/`{{total_new_tagged}}`. Once per comment, ahead of the reply filters. See [Tag tracking](#tag-tracking). |
 | `hideComments.*` | Auto-hide matching comments | Runs after the reply filters, on a comment the automation also answers (see [Moderation](#moderation-hide-rules--ai)). `matchHideRule` — `all`, `hasPhoneNumber` (PHONE_RE), `hasLink` (LINK_RE, matches bare domains too), `hasKeywords` (case- and accent-insensitive), `hasImage`/`hasVideo`/`hasGif` (attachment lookup, see below), `hasEmoji` (`\p{Extended_Pictographic}` on the text). A row written before `hasGif`/`hasEmoji` existed lacks the keys — absent reads as off. |
 | `hideComments.showCommentsAfter` | Auto-unhide delay | Enqueues a delayed unhide job (`jobId = unhide-comment-${commentId}`). Hide rules only — an AI moderation hide stays hidden. |
-| `hideComments.aiModeration` | AI moderation | Optional; absent = off. `enabled`, `aiAgentId` (only the agent's model list is used, never its prompt), `categories` (`hate`/`offensive`/`harassment`/`negative`/`spam`), `instruction`, `action` (`hide`/`delete`; the service pins `delete` → `hide` on Threads, and pins `enabled` off on an Instagram Live automation). See [Moderation](#moderation-hide-rules--ai). |
+| `hideComments.aiModeration` | AI moderation | Optional; absent = off. `enabled`, `engine` (`aiAgent` default / `decision`), `aiAgentId` (engine `aiAgent`; only the agent's model list is used, never its prompt), `decisionConnectionId` + `decisionModel` + `decisionThreshold` (engine `decision`: an enabled AI Router connection of this workspace and one of its `modelCatalog`, checked on every write; a template install switches it off and clears the connection with a `credentialRequired` warning), `categories` (`hate`/`offensive`/`harassment`/`negative`/`spam`), `instruction`, `action` (`hide`/`delete`; the service pins `delete` → `hide` on Threads, and pins `enabled` off on an Instagram Live automation). See [Moderation](#moderation-hide-rules--ai). |
 | `publicReply` / `privateReply` | The reply | See [Reply types](#reply-types). |
 | `replyAfter` | Delay before replying | `computeDelayMs` → passed as BullMQ `{ delay }`. |
 
@@ -588,10 +588,27 @@ The two halves of moderation run at different points of the automation loop
    `-replay-<id>` suffix, since the webhook run's completed job may still hold the fixed id.
    `processCommentModeration`:
    - restores the replay context (low priority) when `replay` is set;
-   - re-reads the automation (`findActive`) and the agent; either gone → resume;
-   - classifies with `generateText` + `Output.object` over the agent's model list (the same
-     provider fallback as `generateAIReplyText`; each failure goes to Error Logs). The comment is
-     sent as quoted data in the user message, never in the instructions;
+   - re-reads the automation (`findActive`); gone or moderation off → resume;
+   - classifies with the automation's **engine** (`aiModeration.engine`, absent = `aiAgent`):
+     - `aiAgent` — re-reads the agent (gone → resume), then `generateText` + `Output.object`
+       over the agent's model list (the same provider fallback as `generateAIReplyText`; each
+       failure goes to Error Logs). The comment is sent as quoted data in the user message,
+       never in the instructions;
+     - `decision` — an **AI Router** connection (Decision, e.g. Jev) via
+       `decisionCommentModerationService.classify`
+       ([`decision/comment-moderation-service.ts`](../packages/business/src/decision/comment-moderation-service.ts)):
+       one `noul` (yes/no) question per selected category, keyed by the category, the comment in
+       `state.currentMessage` marked as untrusted data. A category is flagged when its
+       `probabilityTrue` ≥ `decisionThreshold` (0.5–0.95, default 0.7). The guidance (`instruction`) goes inside every
+       question, so this engine caps it at 500 characters (the provider allows 1000 per
+       question, including the fixed text). The provider returns no
+       sentence, so the log's `reason` lists the probabilities ("AI Router jev-1.13.0: hate
+       92%, offensive 12%"), `provider` is the connection's `providerKind`, `modelId` the model.
+       A connection that is gone, disabled or no longer lists the model is `unavailable`; it
+       and a provider error both fail open (resume, nothing cached);
+   - the verdict is cached 10 minutes per comment, keyed by the engine's inputs (agent — or
+     connection, model, threshold — plus categories and instruction). The `aiAgent` key is the
+     same as before engines existed;
    - keeps only the categories the automation selected. Flagged → `moderated` miss, log row
      (`source: ai`, `reason`, `provider`, `modelId`), then `changeChannelMessageState` (hide) or
      `deleteChannelMessage` (delete), both with the `moderation` marker and the same

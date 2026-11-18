@@ -2843,6 +2843,19 @@
       "enabled": "AI 審核",
       "description": "機器人回覆之前，AI 智能體會閱讀每則留言，並隱藏或刪除屬於以下類別的留言。被審核的留言不會收到回覆。",
       "aiAgentDescription": "僅使用智能體的 AI 模型，不使用其提示詞。",
+      "engine": "判定方式",
+      "engines": {
+        "aiAgent": "AI 智慧代理",
+        "decision": "AI Router (Jev)"
+      },
+      "decisionConnection": "AI Router 連線",
+      "decisionConnectionDescription": "僅列出已啟用的連線。將使用該連線的 API 金鑰判定每則留言。",
+      "decisionConnectionUnavailable": "此連線已被刪除或停用。請選擇其他連線，否則留言將不會被檢查。",
+      "decisionModel": "模型",
+      "decisionThreshold": "符合門檻",
+      "decisionThresholdDescription": "AI Router 需要多大把握（0.5–0.95）才將留言歸入某個類別。數值越高，被攔截的留言越少。",
+      "noDecisionConnection": "此工作區沒有已啟用的 AI Router 連線。",
+      "addDecisionConnection": "新增連線",
       "categoriesLabel": "封鎖屬於以下類型的留言",
       "categories": {
         "hate": "仇恨言論",

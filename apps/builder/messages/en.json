@@ -912,6 +912,19 @@
       "enabled": "AI moderation",
       "description": "An AI agent reads every comment before the bot replies and hides or deletes the ones in the categories below. A moderated comment is never replied to.",
       "aiAgentDescription": "Only the agent's AI model is used, not its prompt.",
+      "engine": "Classify with",
+      "engines": {
+        "aiAgent": "AI agent",
+        "decision": "AI Router (Jev)"
+      },
+      "decisionConnection": "AI Router connection",
+      "decisionConnectionDescription": "Only enabled connections are listed. The connection's API key is used to classify each comment.",
+      "decisionConnectionUnavailable": "This connection was deleted or turned off. Choose another one, or comments will not be checked.",
+      "decisionModel": "Model",
+      "decisionThreshold": "Match threshold",
+      "decisionThresholdDescription": "How sure the AI Router must be (0.5–0.95) before a comment counts as a category. Higher blocks fewer comments.",
+      "noDecisionConnection": "No AI Router connection is enabled in this workspace.",
+      "addDecisionConnection": "Add a connection",
       "categoriesLabel": "Block comments that are",
       "categories": {
         "hate": "Hate speech",

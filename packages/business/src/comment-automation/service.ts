@@ -26,6 +26,7 @@ import {
   isLiveCommentAutomation,
   liveCommentCapabilities,
   normalizeReplyTexts,
+  resolveModerationEngine,
 } from "@chatbotx.io/database/partials"
 import {
   commentAutomationEventModel,
@@ -45,6 +46,7 @@ import { createId } from "@chatbotx.io/utils"
 import { formatInTimeZone } from "date-fns-tz"
 import { aiAgentService } from "../ai-agent/service"
 import { BaseService } from "../base.service"
+import { decisionCommentModerationService } from "../decision/comment-moderation-service"
 import { notFoundException, validationException } from "../errors"
 import { flowService } from "../flow/service"
 import { resolveFolderIdFilter } from "../lib/folder-filter"
@@ -1101,7 +1103,7 @@ class CommentAutomationService extends BaseService {
       })
     }
     await this.assertReplyFlowsExist(input.workspaceId, input.data)
-    await this.assertModerationAgentExists(
+    await this.assertModerationConfigured(
       input.workspaceId,
       input.data.hideComments,
     )
@@ -1141,7 +1143,7 @@ class CommentAutomationService extends BaseService {
           tx,
         })
         await this.assertReplyFlowsExist(ctx.workspaceId, data, tx)
-        await this.assertModerationAgentExists(
+        await this.assertModerationConfigured(
           ctx.workspaceId,
           data.hideComments,
         )
@@ -1288,11 +1290,11 @@ class CommentAutomationService extends BaseService {
   }
 
   /**
-   * Same idea as `assertReplyFlowsExist`: an AI moderation agent from another
-   * workspace — or one since deleted — fails at write time instead of
-   * silently letting every comment through.
+   * Same idea as `assertReplyFlowsExist`: an AI moderation agent or AI Router
+   * connection from another workspace — or one since deleted or disabled —
+   * fails at write time instead of silently letting every comment through.
    */
-  private async assertModerationAgentExists(
+  private async assertModerationConfigured(
     workspaceId: string,
     hideComments: Pick<CommentHideComments, "aiModeration"> | null | undefined,
   ): Promise<void> {
@@ -1300,16 +1302,20 @@ class CommentAutomationService extends BaseService {
     if (!aiModeration?.enabled) {
       return
     }
-    if (!aiModeration.aiAgentId) {
-      throw validationException(
-        "hideComments.aiModeration.aiAgentId",
-        "AI agent is required",
-      )
-    }
     if (aiModeration.categories.length === 0) {
       throw validationException(
         "hideComments.aiModeration.categories",
         "Choose at least one category",
+      )
+    }
+    if (resolveModerationEngine(aiModeration) === "decision") {
+      await this.assertModerationConnectionUsable(workspaceId, aiModeration)
+      return
+    }
+    if (!aiModeration.aiAgentId) {
+      throw validationException(
+        "hideComments.aiModeration.aiAgentId",
+        "AI agent is required",
       )
     }
     const agent = await aiAgentService.findByIdForWorkspace({
@@ -1320,6 +1326,43 @@ class CommentAutomationService extends BaseService {
       throw validationException(
         "hideComments.aiModeration.aiAgentId",
         "AI agent not found",
+      )
+    }
+  }
+
+  /** The `decision` engine's connection: this workspace's, enabled, with the model. */
+  private async assertModerationConnectionUsable(
+    workspaceId: string,
+    aiModeration: CommentAIModeration,
+  ): Promise<void> {
+    const { decisionConnectionId, decisionModel } = aiModeration
+    if (!decisionConnectionId) {
+      throw validationException(
+        "hideComments.aiModeration.decisionConnectionId",
+        "AI Router connection is required",
+      )
+    }
+    if (!decisionModel) {
+      throw validationException(
+        "hideComments.aiModeration.decisionModel",
+        "AI Router model is required",
+      )
+    }
+    const usable = await decisionCommentModerationService.isConnectionUsable({
+      workspaceId,
+      connectionId: decisionConnectionId,
+      model: decisionModel,
+    })
+    if (usable === "connectionNotFound") {
+      throw validationException(
+        "hideComments.aiModeration.decisionConnectionId",
+        "AI Router connection not found or disabled",
+      )
+    }
+    if (usable === "modelNotFound") {
+      throw validationException(
+        "hideComments.aiModeration.decisionModel",
+        "Model is not in the AI Router connection's catalog",
       )
     }
   }
@@ -1419,7 +1462,7 @@ class CommentAutomationService extends BaseService {
       })
     }
     await this.assertReplyFlowsExist(input.workspaceId, input.data)
-    await this.assertModerationAgentExists(
+    await this.assertModerationConfigured(
       input.workspaceId,
       input.data.hideComments,
     )
@@ -1469,7 +1512,7 @@ class CommentAutomationService extends BaseService {
           tx,
         })
         await this.assertReplyFlowsExist(ctx.workspaceId, data, tx)
-        await this.assertModerationAgentExists(
+        await this.assertModerationConfigured(
           ctx.workspaceId,
           data.hideComments,
         )
@@ -1611,7 +1654,7 @@ class CommentAutomationService extends BaseService {
       { publicReply: data.publicReply },
       tx,
     )
-    await this.assertModerationAgentExists(workspaceId, data.hideComments)
+    await this.assertModerationConfigured(workspaceId, data.hideComments)
     await assertAutomationAccount({
       workspaceId,
       type: this.threadsType,
@@ -1683,7 +1726,7 @@ class CommentAutomationService extends BaseService {
       { publicReply: data.publicReply },
       tx,
     )
-    await this.assertModerationAgentExists(workspaceId, data.hideComments)
+    await this.assertModerationConfigured(workspaceId, data.hideComments)
     await assertAutomationAccount({
       workspaceId,
       type: this.threadsType,
@@ -1841,7 +1884,7 @@ class CommentAutomationService extends BaseService {
       { publicReply: data.publicReply },
       tx,
     )
-    await this.assertModerationAgentExists(workspaceId, data.hideComments)
+    await this.assertModerationConfigured(workspaceId, data.hideComments)
     await assertAutomationAccount({
       workspaceId,
       type: this.tiktokType,
@@ -1913,7 +1956,7 @@ class CommentAutomationService extends BaseService {
       { publicReply: data.publicReply },
       tx,
     )
-    await this.assertModerationAgentExists(workspaceId, data.hideComments)
+    await this.assertModerationConfigured(workspaceId, data.hideComments)
     await assertAutomationAccount({
       workspaceId,
       type: this.tiktokType,

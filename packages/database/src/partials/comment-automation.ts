@@ -437,21 +437,85 @@ export type CommentModerationCategory = z.infer<
   typeof commentModerationCategories
 >
 
+/**
+ * What each category means, told to whichever model classifies the comment —
+ * one source so an AI agent and an AI Router judge the same thing.
+ */
+export const COMMENT_MODERATION_CATEGORY_DESCRIPTIONS: Record<
+  CommentModerationCategory,
+  string
+> = {
+  hate: "hate speech or discrimination against a group (race, religion, gender, nationality, disability, orientation…)",
+  offensive: "insults, profanity, vulgar or obscene language",
+  harassment: "threats, bullying, or targeted attacks on a person",
+  negative:
+    "hostile attacks on the brand or business meant to damage it (not ordinary complaints or questions)",
+  spam: "scams, phishing, or unrelated self-promotion",
+}
+
 export const commentModerationActions = z.enum(["hide", "delete"])
 export type CommentModerationAction = z.infer<typeof commentModerationActions>
 
 export const COMMENT_MODERATION_INSTRUCTION_MAX_LENGTH = 1000
 
+/**
+ * The AI Router engine sends the guidance inside each question's
+ * instructions, which the provider caps at 1000 characters together with the
+ * fixed moderation text (up to ~430), so its guidance is shorter.
+ */
+export const COMMENT_MODERATION_DECISION_INSTRUCTION_MAX_LENGTH = 500
+
+/**
+ * What classifies the comment: an AI agent's chat model, or an AI Router
+ * (Decision, e.g. Jev) connection asked one yes/no question per category.
+ */
+export const commentModerationEngines = z.enum(["aiAgent", "decision"])
+export type CommentModerationEngine = z.infer<typeof commentModerationEngines>
+
+/** Probability at or above which an AI Router answer blocks a category. */
+export const COMMENT_MODERATION_DEFAULT_DECISION_THRESHOLD = 0.7
+
 export const commentAIModerationSchema = z
   .object({
     enabled: z
       .boolean()
-      .describe("Let an AI agent's model check every comment before replying."),
+      .describe("Let an AI model check every comment before replying."),
+    /**
+     * Optional because every row written before AI Router moderation existed
+     * lacks the key — absent reads as `aiAgent`.
+     */
+    engine: commentModerationEngines
+      .optional()
+      .describe(
+        "What classifies the comment: `aiAgent` (an AI agent's model, set `aiAgentId`) or `decision` (an AI Router connection such as Jev, set `decisionConnectionId` and `decisionModel`). Omitted means `aiAgent`.",
+      ),
     aiAgentId: z
       .string()
       .nullable()
       .describe(
-        "AI agent whose model classifies the comment (from `aiAgents.list`). Only its model is used, not its prompt. Required when `enabled` is true.",
+        "AI agent whose model classifies the comment (from `aiAgents.list`). Only its model is used, not its prompt. Required when `enabled` is true and `engine` is `aiAgent`.",
+      ),
+    decisionConnectionId: z
+      .string()
+      .nullable()
+      .optional()
+      .describe(
+        "AI Router connection that classifies the comment (from `decisionConnections.list`, must be enabled). Required when `enabled` is true and `engine` is `decision`.",
+      ),
+    decisionModel: z
+      .string()
+      .nullable()
+      .optional()
+      .describe(
+        "Model of `decisionConnectionId` to ask, one of the connection's `modelCatalog` (e.g. `jev-1.13.0`). Required when `enabled` is true and `engine` is `decision`.",
+      ),
+    decisionThreshold: z
+      .number()
+      .min(0.5)
+      .max(0.95)
+      .optional()
+      .describe(
+        "With `engine` `decision`: the probability (0.5–0.95) at or above which a category counts as matched. Omitted means 0.7.",
       ),
     categories: z
       .array(commentModerationCategories)
@@ -463,7 +527,7 @@ export const commentAIModerationSchema = z
       .max(COMMENT_MODERATION_INSTRUCTION_MAX_LENGTH)
       .optional()
       .describe(
-        "Extra guidance for the AI, e.g. 'Do not block customers complaining about price'.",
+        "Extra guidance for the AI, e.g. 'Do not block customers complaining about price'. At most 1000 characters, 500 with `engine` `decision`.",
       ),
     action: commentModerationActions.describe(
       "What to do with a blocked comment: `hide` (reversible) or `delete` (permanent). `delete` is stored as `hide` on Threads, which cannot delete.",
@@ -473,7 +537,32 @@ export const commentAIModerationSchema = z
     if (!value.enabled) {
       return
     }
-    if (!value.aiAgentId) {
+    if (resolveModerationEngine(value) === "decision") {
+      if (!value.decisionConnectionId) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["decisionConnectionId"],
+          message: "Choose an AI Router connection",
+        })
+      }
+      if (!value.decisionModel) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["decisionModel"],
+          message: "Choose a model",
+        })
+      }
+      if (
+        (value.instruction?.trim().length ?? 0) >
+        COMMENT_MODERATION_DECISION_INSTRUCTION_MAX_LENGTH
+      ) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["instruction"],
+          message: `At most ${COMMENT_MODERATION_DECISION_INSTRUCTION_MAX_LENGTH} characters with AI Router`,
+        })
+      }
+    } else if (!value.aiAgentId) {
       ctx.addIssue({
         code: "custom",
         path: ["aiAgentId"],
@@ -490,14 +579,36 @@ export const commentAIModerationSchema = z
   })
 export type CommentAIModeration = z.infer<typeof commentAIModerationSchema>
 
+/** The stored engine; a row written before `engine` existed is `aiAgent`. */
+export function resolveModerationEngine(
+  aiModeration: CommentAIModeration,
+): CommentModerationEngine {
+  return aiModeration.engine ?? "aiAgent"
+}
+
+/** The probability an AI Router answer must reach to block a category. */
+export function resolveDecisionThreshold(
+  aiModeration: Pick<CommentAIModeration, "decisionThreshold">,
+): number {
+  return (
+    aiModeration.decisionThreshold ??
+    COMMENT_MODERATION_DEFAULT_DECISION_THRESHOLD
+  )
+}
+
+/** On, with at least one category and the chosen engine fully configured. */
 export function isAIModerationEnabled(
   aiModeration: CommentAIModeration | undefined,
-): aiModeration is CommentAIModeration & { aiAgentId: string } {
-  return Boolean(
-    aiModeration?.enabled &&
-      aiModeration.aiAgentId &&
-      aiModeration.categories.length > 0,
-  )
+): aiModeration is CommentAIModeration {
+  if (!aiModeration?.enabled || aiModeration.categories.length === 0) {
+    return false
+  }
+  if (resolveModerationEngine(aiModeration) === "decision") {
+    return Boolean(
+      aiModeration.decisionConnectionId && aiModeration.decisionModel,
+    )
+  }
+  return Boolean(aiModeration.aiAgentId)
 }
 
 export const commentHideCommentsSchema = z.object({
@@ -537,7 +648,7 @@ export const commentHideCommentsSchema = z.object({
   aiModeration: commentAIModerationSchema
     .optional()
     .describe(
-      "AI moderation: an AI agent's model reads each comment and hides or deletes the ones in the chosen categories. Runs before the reply filters; a moderated comment is never replied to. Omitted means off.",
+      "AI moderation: an AI agent's model or an AI Router connection (see `engine`) reads each comment and hides or deletes the ones in the chosen categories. Runs before the reply filters; a moderated comment is never replied to. Omitted means off.",
     ),
   keywords: z
     .array(z.string())

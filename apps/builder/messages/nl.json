@@ -870,6 +870,19 @@
       "enabled": "AI-moderatie",
       "description": "Een AI-agent leest elke opmerking voordat de bot antwoordt en verbergt of verwijdert opmerkingen in de onderstaande categorieën. Op een gemodereerde opmerking wordt nooit gereageerd.",
       "aiAgentDescription": "Alleen het AI-model van de agent wordt gebruikt, niet de prompt.",
+      "engine": "Classificeren met",
+      "engines": {
+        "aiAgent": "AI-agent",
+        "decision": "AI Router (Jev)"
+      },
+      "decisionConnection": "AI Router-verbinding",
+      "decisionConnectionDescription": "Alleen ingeschakelde verbindingen worden getoond. De API-sleutel van de verbinding wordt gebruikt om elke reactie te classificeren.",
+      "decisionConnectionUnavailable": "Deze verbinding is verwijderd of uitgeschakeld. Kies een andere, anders worden reacties niet gecontroleerd.",
+      "decisionModel": "Model",
+      "decisionThreshold": "Drempel voor overeenkomst",
+      "decisionThresholdDescription": "Hoe zeker AI Router moet zijn (0,5–0,95) voordat een reactie als categorie telt. Hoger blokkeert minder reacties.",
+      "noDecisionConnection": "Er is geen ingeschakelde AI Router-verbinding in deze workspace.",
+      "addDecisionConnection": "Verbinding toevoegen",
       "categoriesLabel": "Opmerkingen blokkeren die",
       "categories": {
         "hate": "Haatzaaiend zijn",

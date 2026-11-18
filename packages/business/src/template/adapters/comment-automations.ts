@@ -166,6 +166,39 @@ const clearPostSelection = (
 }
 
 /**
+ * An AI Router connection holds the source workspace's API key, so it never
+ * ships: AI moderation that runs on one is installed switched off with its
+ * connection cleared, and the installer is told to pick their own.
+ */
+const clearDecisionModeration = (
+  ctx: TemplateInstallContext,
+  entry: TemplateFBCommentEntry,
+): TemplateFBCommentEntry["hideComments"] => {
+  const { hideComments } = entry
+  const aiModeration = hideComments?.aiModeration
+  // Inline, not `resolveModerationEngine`: absent `engine` is `aiAgent`.
+  if (!hideComments || aiModeration?.engine !== "decision") {
+    return hideComments
+  }
+  if (aiModeration.enabled) {
+    ctx.warn({
+      category: "fbCommentAutomations",
+      entityKind: "credentialRequired",
+      path: `fbCommentAutomations.${entry.sourceId}.hideComments.aiModeration`,
+      value: aiModeration.decisionModel ?? "",
+    })
+  }
+  return {
+    ...hideComments,
+    aiModeration: {
+      ...aiModeration,
+      enabled: false,
+      decisionConnectionId: null,
+    },
+  }
+}
+
+/**
  * `post.value`/`excludeKeywords` hold external Facebook post ids and plain
  * keyword strings respectively — copied verbatim. `privateReply`/
  * `publicReply` are the two discriminated-union reply configs, each
@@ -229,7 +262,7 @@ export const commentAutomationsAdapter: ResourceAdapter<TemplateFBCommentEntry> 
             includeKeywords: entry.includeKeywords,
             excludeKeywords: entry.excludeKeywords,
             options: entry.options,
-            hideComments: entry.hideComments,
+            hideComments: clearDecisionModeration(ctx, entry),
             replyAfter: entry.replyAfter,
           })
           .returning()

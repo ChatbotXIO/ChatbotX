@@ -870,6 +870,19 @@
       "enabled": "Moderación con IA",
       "description": "Un agente de IA lee cada comentario antes de que el bot responda y oculta o elimina los de las categorías siguientes. Nunca se responde a un comentario moderado.",
       "aiAgentDescription": "Solo se usa el modelo de IA del agente, no su prompt.",
+      "engine": "Clasificar con",
+      "engines": {
+        "aiAgent": "Agente de IA",
+        "decision": "AI Router (Jev)"
+      },
+      "decisionConnection": "Conexión de AI Router",
+      "decisionConnectionDescription": "Solo se muestran las conexiones activas. La clave API de la conexión se usa para clasificar cada comentario.",
+      "decisionConnectionUnavailable": "Esta conexión se eliminó o desactivó. Elige otra o los comentarios no se revisarán.",
+      "decisionModel": "Modelo",
+      "decisionThreshold": "Umbral de coincidencia",
+      "decisionThresholdDescription": "Qué tan seguro debe estar AI Router (0,5–0,95) para que un comentario cuente en una categoría. Un valor más alto bloquea menos comentarios.",
+      "noDecisionConnection": "No hay ninguna conexión de AI Router activa en este espacio de trabajo.",
+      "addDecisionConnection": "Añadir una conexión",
       "categoriesLabel": "Bloquear comentarios que sean",
       "categories": {
         "hate": "Discurso de odio",

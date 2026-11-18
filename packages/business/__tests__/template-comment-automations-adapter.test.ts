@@ -137,6 +137,44 @@ describe("comment automations adapter: inbox scope and posts", () => {
     ])
   })
 
+  test("AI moderation on an AI Router connection installs off, without the source's connection", async () => {
+    const hideComments = {
+      all: false,
+      hasPhoneNumber: false,
+      hasImage: false,
+      hasVideo: false,
+      hasLink: false,
+      hasKeywords: false,
+      keywords: [],
+      showCommentsAfter: "none" as const,
+      aiModeration: {
+        enabled: true,
+        engine: "decision" as const,
+        aiAgentId: null,
+        decisionConnectionId: "source-connection",
+        decisionModel: "jev-1.13.0",
+        categories: ["hate" as const],
+        action: "hide" as const,
+      },
+    }
+
+    const { inserted, warnings } = await install({ hideComments })
+
+    expect(inserted).toMatchObject({
+      hideComments: {
+        aiModeration: {
+          enabled: false,
+          engine: "decision",
+          decisionConnectionId: null,
+          decisionModel: "jev-1.13.0",
+        },
+      },
+    })
+    expect(warnings).toEqual([
+      expect.objectContaining({ entityKind: "credentialRequired" }),
+    ])
+  })
+
   test("an automation covering all posts keeps its post setting", async () => {
     const { inserted } = await install({
       post: { type: "published", value: [] },

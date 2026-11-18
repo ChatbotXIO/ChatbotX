@@ -870,6 +870,19 @@
       "enabled": "Yapay zeka moderasyonu",
       "description": "Bir yapay zeka ajanı, bot yanıt vermeden önce her yorumu okur ve aşağıdaki kategorilerdeki yorumları gizler veya siler. Moderasyona alınan yoruma asla yanıt verilmez.",
       "aiAgentDescription": "Yalnızca ajanın yapay zeka modeli kullanılır, istemi (prompt) kullanılmaz.",
+      "engine": "Şununla sınıflandır",
+      "engines": {
+        "aiAgent": "Yapay zeka ajanı",
+        "decision": "AI Router (Jev)"
+      },
+      "decisionConnection": "AI Router bağlantısı",
+      "decisionConnectionDescription": "Yalnızca etkin bağlantılar listelenir. Her yorumu sınıflandırmak için bağlantının API anahtarı kullanılır.",
+      "decisionConnectionUnavailable": "Bu bağlantı silindi veya kapatıldı. Başka birini seçin, aksi halde yorumlar kontrol edilmez.",
+      "decisionModel": "Model",
+      "decisionThreshold": "Eşleşme eşiği",
+      "decisionThresholdDescription": "Bir yorumun bir kategoriye girmesi için AI Router'ın ne kadar emin olması gerektiği (0,5–0,95). Daha yüksek değer daha az yorumu engeller.",
+      "noDecisionConnection": "Bu çalışma alanında etkin bir AI Router bağlantısı yok.",
+      "addDecisionConnection": "Bağlantı ekle",
       "categoriesLabel": "Şu yorumları engelle",
       "categories": {
         "hate": "Nefret söylemi",

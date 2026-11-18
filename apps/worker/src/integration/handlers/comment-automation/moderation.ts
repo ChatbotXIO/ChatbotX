@@ -4,14 +4,18 @@ import {
   aiAgentService,
   commentAutomationService,
   contactInboxService,
+  decisionCommentModerationService,
   logProviderError,
 } from "@chatbotx.io/business"
 import {
   type AIAgentProviderModels,
+  COMMENT_MODERATION_CATEGORY_DESCRIPTIONS,
   type CommentAIModeration,
   type CommentModerationCategory,
   commentModerationCategories,
   isAIModerationEnabled,
+  resolveDecisionThreshold,
+  resolveModerationEngine,
 } from "@chatbotx.io/database/partials"
 import type {
   CommentAutomationModel,
@@ -310,15 +314,6 @@ const moderationVerdictSchema = z.object({
 })
 type ModerationVerdict = z.infer<typeof moderationVerdictSchema>
 
-const CATEGORY_DESCRIPTIONS: Record<CommentModerationCategory, string> = {
-  hate: "hate speech or discrimination against a group (race, religion, gender, nationality, disability, orientation…)",
-  offensive: "insults, profanity, vulgar or obscene language",
-  harassment: "threats, bullying, or targeted attacks on a person",
-  negative:
-    "hostile attacks on the brand or business meant to damage it (not ordinary complaints or questions)",
-  spam: "scams, phishing, or unrelated self-promotion",
-}
-
 /**
  * The fixed moderation prompt. The comment itself goes in the user message as
  * quoted data — never into these instructions — so a comment saying "ignore
@@ -328,7 +323,10 @@ export function buildModerationInstructions(
   aiModeration: CommentAIModeration,
 ): string {
   const categories = aiModeration.categories
-    .map((category) => `- ${category}: ${CATEGORY_DESCRIPTIONS[category]}`)
+    .map(
+      (category) =>
+        `- ${category}: ${COMMENT_MODERATION_CATEGORY_DESCRIPTIONS[category]}`,
+    )
     .join("\n")
   const extra = aiModeration.instruction?.trim()
   return [
@@ -353,24 +351,34 @@ function buildModerationPrompt(comment: string): string {
 const VERDICT_CACHE_TTL_SECONDS = 10 * 60
 
 /**
- * Keyed by everything that can change the answer — the comment, the agent
- * (its models), the categories asked about and the extra guidance — so two
+ * Keyed by everything that can change the answer — the comment, the engine
+ * and what it runs on (the agent, or the AI Router connection, model and
+ * threshold), the categories asked about and the extra guidance — so two
  * automations share a verdict only when they would have asked the same
- * question.
+ * question. The `aiAgent` fingerprint is unchanged from before engines
+ * existed, so verdicts cached across a deploy stay valid.
  */
-function verdictCacheKey(props: {
+export function verdictCacheKey(props: {
   workspaceId: string
   commentId: string
-  aiModeration: CommentAIModeration & { aiAgentId: string }
+  aiModeration: CommentAIModeration
 }): string {
+  const { aiModeration } = props
+  const categories = [...aiModeration.categories].sort()
+  const instruction = aiModeration.instruction?.trim() ?? ""
+  const parts =
+    resolveModerationEngine(aiModeration) === "decision"
+      ? [
+          "decision",
+          aiModeration.decisionConnectionId,
+          aiModeration.decisionModel,
+          resolveDecisionThreshold(aiModeration),
+          categories,
+          instruction,
+        ]
+      : [aiModeration.aiAgentId, categories, instruction]
   const fingerprint = createHash("sha256")
-    .update(
-      JSON.stringify([
-        props.aiModeration.aiAgentId,
-        [...props.aiModeration.categories].sort(),
-        props.aiModeration.instruction?.trim() ?? "",
-      ]),
-    )
+    .update(JSON.stringify(parts))
     .digest("hex")
     .slice(0, 16)
   return `comment-moderation:${props.workspaceId}:${props.commentId}:${fingerprint}`
@@ -436,6 +444,107 @@ async function classifyComment(props: {
     }
   }
   return { status: "failed" }
+}
+
+/**
+ * The log's reason for an AI Router verdict: the provider answers with
+ * probabilities, not a sentence, so the reason lists them — e.g.
+ * "AI Router jev-1.13.0: hate 92%, offensive 12%".
+ */
+export function formatDecisionReason(
+  model: string,
+  probabilities: Partial<Record<CommentModerationCategory, number>>,
+): string {
+  const scores = Object.entries(probabilities)
+    .map(
+      ([category, probability]) =>
+        `${category} ${Math.round((probability ?? 0) * 100)}%`,
+    )
+    .join(", ")
+  return `AI Router ${model}: ${scores}`
+}
+
+/**
+ * Asks the automation's AI Router connection one yes/no question per
+ * category; a category is flagged when its probability reaches the
+ * threshold. Shaped as the same verdict the AI agent path returns, so the
+ * cache, `blockedCategories` and the log treat both engines alike.
+ */
+async function classifyCommentWithDecision(props: {
+  workspaceId: string
+  aiModeration: CommentAIModeration
+  comment: string
+}): Promise<ClassifyResult> {
+  const { aiModeration } = props
+  if (!(aiModeration.decisionConnectionId && aiModeration.decisionModel)) {
+    return { status: "failed" }
+  }
+  const result = await decisionCommentModerationService.classify({
+    workspaceId: props.workspaceId,
+    connectionId: aiModeration.decisionConnectionId,
+    model: aiModeration.decisionModel,
+    categories: aiModeration.categories,
+    instruction: aiModeration.instruction,
+    comment: props.comment,
+  })
+  if (result.status !== "ok") {
+    logger.warn(
+      {
+        workspaceId: props.workspaceId,
+        connectionId: aiModeration.decisionConnectionId,
+        status: result.status,
+      },
+      "[comment-moderation] AI Router did not judge the comment",
+    )
+    return { status: "failed" }
+  }
+  const threshold = resolveDecisionThreshold(aiModeration)
+  const categories = aiModeration.categories.filter(
+    (category) => (result.probabilities[category] ?? 0) >= threshold,
+  )
+  return {
+    status: "ok",
+    verdict: {
+      flagged: categories.length > 0,
+      categories,
+      reason: formatDecisionReason(result.model, result.probabilities),
+    },
+    provider: result.providerKind,
+    modelId: result.model,
+  }
+}
+
+/**
+ * Classifies with the automation's engine. A missing AI agent is `failed`,
+ * like every other reason nobody judged the comment.
+ */
+async function classifyWithEngine(props: {
+  workspaceId: string
+  contactInbox: ContactInboxModel | undefined
+  aiModeration: CommentAIModeration
+  comment: string
+}): Promise<ClassifyResult> {
+  const { aiModeration, workspaceId } = props
+  if (resolveModerationEngine(aiModeration) === "decision") {
+    return await classifyCommentWithDecision(props)
+  }
+  const aiAgent = aiModeration.aiAgentId
+    ? await aiAgentService.findByIdForWorkspace({
+        id: aiModeration.aiAgentId,
+        workspaceId,
+      })
+    : null
+  if (!aiAgent) {
+    logger.warn(
+      { workspaceId, aiAgentId: aiModeration.aiAgentId },
+      "[comment-moderation] AI agent not found",
+    )
+    return { status: "failed" }
+  }
+  return await classifyComment({
+    ...props,
+    providers: aiAgent.models as AIAgentProviderModels,
+  })
 }
 
 /** The categories the AI flagged that this automation actually blocks. */
@@ -508,16 +617,6 @@ export async function processCommentModeration(
     return
   }
 
-  const aiAgent = await aiAgentService.findByIdForWorkspace({
-    id: aiModeration.aiAgentId,
-    workspaceId,
-  })
-  if (!aiAgent) {
-    logger.warn(logContext, "[comment-moderation] AI agent not found, resuming")
-    await resumeCommentAutomation(data)
-    return
-  }
-
   const comment = commentAutomation.message?.trim() ?? ""
   if (!comment) {
     await resumeCommentAutomation(data)
@@ -535,10 +634,9 @@ export async function processCommentModeration(
   const result =
     cached?.status === "ok"
       ? cached
-      : await classifyComment({
+      : await classifyWithEngine({
           workspaceId,
           contactInbox,
-          providers: aiAgent.models as AIAgentProviderModels,
           aiModeration,
           comment,
         })
@@ -553,10 +651,7 @@ export async function processCommentModeration(
       )
   }
   if (result.status === "failed") {
-    logger.warn(
-      logContext,
-      "[comment-moderation] every provider failed, resuming",
-    )
+    logger.warn(logContext, "[comment-moderation] comment not judged, resuming")
     await resumeCommentAutomation(data)
     return
   }

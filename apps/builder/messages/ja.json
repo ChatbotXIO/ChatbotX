@@ -870,6 +870,19 @@
       "enabled": "AIモデレーション",
       "description": "ボットが返信する前にAIエージェントがすべてのコメントを読み、以下のカテゴリに該当するものを非表示または削除します。モデレートされたコメントには返信しません。",
       "aiAgentDescription": "エージェントのAIモデルのみを使用し、プロンプトは使用しません。",
+      "engine": "判定に使用",
+      "engines": {
+        "aiAgent": "AIエージェント",
+        "decision": "AI Router (Jev)"
+      },
+      "decisionConnection": "AI Router 接続",
+      "decisionConnectionDescription": "有効な接続のみ表示されます。各コメントの判定には接続のAPIキーが使われます。",
+      "decisionConnectionUnavailable": "この接続は削除または無効化されています。別の接続を選ばないと、コメントはチェックされません。",
+      "decisionModel": "モデル",
+      "decisionThreshold": "一致のしきい値",
+      "decisionThresholdDescription": "コメントをカテゴリに該当とみなすのに必要な AI Router の確信度（0.5〜0.95）。高いほどブロックされるコメントは少なくなります。",
+      "noDecisionConnection": "このワークスペースに有効な AI Router 接続がありません。",
+      "addDecisionConnection": "接続を追加",
       "categoriesLabel": "次のコメントをブロック",
       "categories": {
         "hate": "ヘイトスピーチ",

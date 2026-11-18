@@ -1036,6 +1036,19 @@
       "enabled": "AI-moderering",
       "description": "En AI-agent läser varje kommentar innan boten svarar och döljer eller tar bort dem i kategorierna nedan. En modererad kommentar får aldrig något svar.",
       "aiAgentDescription": "Endast agentens AI-modell används, inte dess prompt.",
+      "engine": "Klassificera med",
+      "engines": {
+        "aiAgent": "AI-agent",
+        "decision": "AI Router (Jev)"
+      },
+      "decisionConnection": "AI Router-anslutning",
+      "decisionConnectionDescription": "Endast aktiverade anslutningar visas. Anslutningens API-nyckel används för att klassificera varje kommentar.",
+      "decisionConnectionUnavailable": "Den här anslutningen har tagits bort eller stängts av. Välj en annan, annars kontrolleras inte kommentarer.",
+      "decisionModel": "Modell",
+      "decisionThreshold": "Tröskel för träff",
+      "decisionThresholdDescription": "Hur säker AI Router måste vara (0,5–0,95) innan en kommentar räknas som en kategori. Högre blockerar färre kommentarer.",
+      "noDecisionConnection": "Ingen AI Router-anslutning är aktiverad i den här arbetsytan.",
+      "addDecisionConnection": "Lägg till en anslutning",
       "categoriesLabel": "Blockera kommentarer som är",
       "categories": {
         "hate": "Hatpropaganda",
