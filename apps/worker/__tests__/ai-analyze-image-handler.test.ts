@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, test, vi } from "vitest"
 const mocks = vi.hoisted(() => ({
   isImageUrl: vi.fn(),
   logStepProviderError: vi.fn(),
+  probeImageMimeType: vi.fn(),
   processStreamingText: vi.fn(),
   readCustomFieldValue: vi.fn(),
   resolveContactVariablesDeep: vi.fn(),
@@ -16,6 +17,9 @@ vi.mock("@chatbotx.io/ai", () => ({
   aiTimeouts: { aiTotal: 30_000 },
   isImageUrl: mocks.isImageUrl,
   processStreamingText: mocks.processStreamingText,
+}))
+vi.mock("@chatbotx.io/business/media/probe-image-url", () => ({
+  probeImageMimeType: mocks.probeImageMimeType,
 }))
 vi.mock("@chatbotx.io/variables", () => ({
   resolveContactVariablesDeep: mocks.resolveContactVariablesDeep,
@@ -105,6 +109,61 @@ describe("handleAIAnalyzeImage", () => {
         ],
       }),
     )
+  })
+
+  test("does not probe a link that already ends in an image extension", async () => {
+    await handleAIAnalyzeImage(props)
+
+    expect(mocks.probeImageMimeType).not.toHaveBeenCalled()
+  })
+
+  test("accepts an extensionless link served as an image (WhatsApp media)", async () => {
+    const url =
+      "https://cdn.example/public/whatsapp/1/2/2026/11/17/11785793378962970"
+    mocks.isImageUrl.mockReturnValue(false)
+    mocks.readCustomFieldValue.mockResolvedValue(url)
+    mocks.probeImageMimeType.mockResolvedValue("image/jpeg")
+
+    await expect(handleAIAnalyzeImage(props)).resolves.toMatchObject({
+      status: "success",
+    })
+
+    expect(mocks.probeImageMimeType).toHaveBeenCalledWith(url)
+    expect(mocks.streamText).toHaveBeenCalledWith(
+      expect.objectContaining({
+        messages: [
+          expect.objectContaining({
+            content: expect.arrayContaining([
+              { data: url, mediaType: "image/jpeg", type: "file" },
+            ]),
+          }),
+        ],
+      }),
+    )
+  })
+
+  test("rejects an extensionless link that is not served as an image", async () => {
+    mocks.isImageUrl.mockReturnValue(false)
+    mocks.readCustomFieldValue.mockResolvedValue("https://cdn.example/page")
+    mocks.probeImageMimeType.mockResolvedValue(null)
+
+    await expect(handleAIAnalyzeImage(props)).resolves.toEqual({
+      status: "error",
+      errorMessage: "Invalid image URL provided",
+      result: null,
+    })
+    expect(mocks.streamText).not.toHaveBeenCalled()
+  })
+
+  test("rejects a value that is not an http(s) link without probing", async () => {
+    mocks.isImageUrl.mockReturnValue(false)
+    mocks.readCustomFieldValue.mockResolvedValue("not a url")
+
+    await expect(handleAIAnalyzeImage(props)).resolves.toMatchObject({
+      status: "error",
+    })
+    expect(mocks.probeImageMimeType).not.toHaveBeenCalled()
+    expect(mocks.streamText).not.toHaveBeenCalled()
   })
 
   test("resolves contact variables in the prompt", async () => {
