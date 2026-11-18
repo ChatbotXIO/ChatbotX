@@ -4734,7 +4734,10 @@
       "noPagesTitle": "No Facebook Páginas found",
       "noPagesDescription": "Páginas inside un Empresa Manager require Empresa Manager access during connection. ReConectar Messenger y grant todos requested permisos.",
       "alreadyConnectedNote": "This página es already connected",
-      "tryAgain": "Intenta volver a conectar"
+      "tryAgain": "Intenta volver a conectar",
+      "unavailableInsufficientPermissions": "Necesitas acceso total de administrador a esta página para conectarla.",
+      "unavailableMissingAccessToken": "Facebook no concedió acceso a esta página. Vuelve a conectar y permite el acceso.",
+      "unavailableGeneric": "Esta página no se puede conectar."
     },
     "title": "Facebook Messenger",
     "tabs": {

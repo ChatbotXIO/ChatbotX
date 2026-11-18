@@ -1,8 +1,13 @@
 import { ChatbotXException } from "@chatbotx.io/business/errors"
 import type {
   ChannelType,
+  ConnectSessionTarget,
   IntegrationType,
 } from "@chatbotx.io/database/partials"
+import {
+  type ConnectionCandidateUnavailableReason,
+  isConnectionCandidateUnavailableReason,
+} from "@chatbotx.io/sdk"
 import { headers } from "next/headers"
 import Image from "next/image"
 import { redirect } from "next/navigation"
@@ -114,6 +119,29 @@ export async function resolveSelectSession(input: {
 }
 
 /**
+ * Translated labels for a target's machine `disabledReason`. `byReason` is
+ * exhaustive over `ConnectionCandidateUnavailableReason`; `fallback` covers a
+ * stored value this build does not know (the public API keeps the field an
+ * open string, so older rows or newer providers can carry one).
+ */
+export type UnavailableReasonLabels = {
+  byReason: Record<ConnectionCandidateUnavailableReason, string>
+  fallback: string
+}
+
+function resolveUnavailableLabel(
+  reason: string | undefined,
+  labels: UnavailableReasonLabels | undefined,
+): string | undefined {
+  if (!(reason && labels)) {
+    return
+  }
+  return isConnectionCandidateUnavailableReason(reason)
+    ? labels.byReason[reason]
+    : labels.fallback
+}
+
+/**
  * Shared `ConnectSessionTarget` → `ConnectPickerItem` mapping for the two
  * multi-account select pages (Messenger, Instagram-via-Facebook) — the
  * single-target direct-login Instagram page has no picker row to map.
@@ -124,23 +152,20 @@ export async function resolveSelectSession(input: {
  * `InboxIcon`, unchanged from before this extraction.
  */
 export function toConnectPickerItem(input: {
-  target: {
-    id: string
-    name: string
-    avatarUrl?: string
-    selectable: boolean
-    alreadyConnected?: "this_workspace" | "other_workspace"
-  }
+  target: ConnectSessionTarget
   channel: ChannelType
   alreadyConnectedLabel: string
+  unavailableLabels?: UnavailableReasonLabels
 }): ConnectPickerItem {
-  const { target, channel, alreadyConnectedLabel } = input
+  const { target, channel, alreadyConnectedLabel, unavailableLabels } = input
   return {
     id: target.id,
     name: target.name,
     secondary: target.id,
     disabled: !target.selectable,
-    disabledReason: target.alreadyConnected ? alreadyConnectedLabel : undefined,
+    disabledReason: target.alreadyConnected
+      ? alreadyConnectedLabel
+      : resolveUnavailableLabel(target.disabledReason, unavailableLabels),
     leading: target.avatarUrl ? (
       <Image
         alt={target.name}

@@ -1,22 +1,30 @@
+import type { ConnectSessionTarget } from "@chatbotx.io/database/partials"
 import { getTranslations } from "next-intl/server"
 import {
   resolveSelectSession,
   toConnectPickerItem,
+  type UnavailableReasonLabels,
 } from "@/features/channel-connect/lib/select-page"
 import { SelectPage } from "@/features/integration-messenger/components/select-account"
 
 export const dynamic = "force-dynamic"
 
 /**
- * `session.targets` is already the fully-computed, admin-filtered,
- * already-connected-marked list `ConnectionService.listAndAttachCandidates`
- * built at authorization time — there is no live `getUserPages` re-fetch
- * here anymore. Messenger's `listCandidates` silently drops pages the user
- * doesn't administer before they ever become a target, so this page never
- * sees a not-admin row to warn about, and the Business Manager lookup
- * warning isn't part of the session's public target projection either —
- * both were removed along with the dead props that carried them.
+ * `session.targets` is the fully computed list `ConnectionService
+ * .listAndAttachCandidates` built at authorization time — there is no live
+ * `getUserPages` re-fetch here. Every page Facebook returned is a row: a
+ * page the user can connect, a page that cannot be connected (it carries a
+ * machine `disabledReason`, translated below), or a page already connected.
+ * Rows are ranked in that order: selectable 0, unavailable 1, already
+ * connected 2.
  */
+const rankOf = (target: ConnectSessionTarget): number => {
+  if (target.selectable) {
+    return 0
+  }
+  return target.alreadyConnected ? 2 : 1
+}
+
 export default async function MessengerSelectPage({
   searchParams,
 }: {
@@ -31,15 +39,28 @@ export default async function MessengerSelectPage({
     getTranslations(),
   ])
 
-  const items = resolved.session.targets
+  const unavailableLabels: UnavailableReasonLabels = {
+    byReason: {
+      insufficientPermissions: t(
+        "messenger.selectPage.unavailableInsufficientPermissions",
+      ),
+      missingAccessToken: t(
+        "messenger.selectPage.unavailableMissingAccessToken",
+      ),
+    },
+    fallback: t("messenger.selectPage.unavailableGeneric"),
+  }
+
+  const items = [...resolved.session.targets]
+    .sort((current, next) => rankOf(current) - rankOf(next))
     .map((target) =>
       toConnectPickerItem({
         target,
         channel: "messenger",
         alreadyConnectedLabel: t("messenger.selectPage.alreadyConnectedNote"),
+        unavailableLabels,
       }),
     )
-    .sort((current, next) => Number(current.disabled) - Number(next.disabled))
 
   return (
     <SelectPage

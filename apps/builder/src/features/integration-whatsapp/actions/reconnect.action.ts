@@ -4,12 +4,13 @@ import {
   connectionStateService,
   integrationWhatsappService,
   platformCredentialService,
+  userService,
   WHATSAPP_CAPI_SCOPE,
   whatsappBusinessAccountService,
 } from "@chatbotx.io/business"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
 import type { WhatsappCredential } from "@chatbotx.io/database/partials"
-import type { WorkspaceModel } from "@chatbotx.io/database/types"
+import type { UserModel, WorkspaceModel } from "@chatbotx.io/database/types"
 import type { WhatsappAuthValue } from "@chatbotx.io/integration-whatsapp"
 import { listPhoneNumbers as whatsappListPhoneNumbers } from "@chatbotx.io/integration-whatsapp/api/phone-number"
 import { findWaba } from "@chatbotx.io/integration-whatsapp/api/waba"
@@ -237,7 +238,7 @@ export async function persistReconnectAuthAndResubscribe(input: {
 
 async function reconnectWhatsapp(input: {
   code: string
-  ctx: { workspace: WorkspaceModel }
+  ctx: { workspace: WorkspaceModel; user: UserModel }
   integrationWhatsappId: string
   workspaceId: string
 }) {
@@ -276,6 +277,14 @@ async function reconnectWhatsapp(input: {
     phoneNumber,
   })
 
+  await userService.recordConnectionAuthorization({
+    userId: input.ctx.user.id,
+    provider: "whatsapp",
+    auth,
+    phase: "reconnectValidated",
+    workspaceId: input.workspaceId,
+  })
+
   const resubscribed = await persistReconnectAuthAndResubscribe({
     auth,
     hasCapiScope,
@@ -307,7 +316,7 @@ export const reconnectWhatsappAction = workspaceActionClient
       parsedInput,
     }: {
       bindArgsParsedInputs: readonly [string, string]
-      ctx: { workspace: WorkspaceModel }
+      ctx: { workspace: WorkspaceModel; user: UserModel }
       parsedInput: z.infer<typeof reconnectWhatsappSchema>
     }) =>
       await reconnectWhatsapp({

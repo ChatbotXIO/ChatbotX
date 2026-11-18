@@ -4734,7 +4734,10 @@
       "noPagesTitle": "Nessuna Pagina Facebook trovata",
       "noPagesDescription": "Le Pagine in un Business Manager richiedono l'accesso a Business Manager durante la connessione. Ricollega Messenger e concedi tutte le autorizzazioni richieste.",
       "alreadyConnectedNote": "Questa Pagina è già collegata",
-      "tryAgain": "Prova a ricollegarti"
+      "tryAgain": "Prova a ricollegarti",
+      "unavailableInsufficientPermissions": "Per collegare questa Pagina serve l'accesso completo come amministratore.",
+      "unavailableMissingAccessToken": "Facebook non ha concesso l'accesso a questa Pagina. Ricollega e consenti l'accesso.",
+      "unavailableGeneric": "Questa Pagina non può essere collegata."
     },
     "title": "Facebook Messenger",
     "tabs": {

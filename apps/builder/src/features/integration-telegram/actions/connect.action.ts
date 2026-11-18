@@ -1,6 +1,6 @@
 "use server"
 
-import { telegramIntegrationService } from "@chatbotx.io/business"
+import { telegramIntegrationService, userService } from "@chatbotx.io/business"
 import { auditService } from "@chatbotx.io/business/audit"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
 import type { UserModel } from "@chatbotx.io/database/types"
@@ -39,6 +39,20 @@ export const connectTelegramAction = authActionClient
         const ownerId = await resolveConnectOwnerId({
           workspaceId,
           user: ctx.user,
+        })
+
+        // The bot token is the authorization. Recorded before
+        // `telegramIntegrationService.connect` so a failed connect keeps the
+        // backup; a new workspace has no id yet.
+        await userService.recordConnectionAuthorization({
+          userId: ctx.user.id,
+          provider: "telegram",
+          auth: {
+            authType: "secretText",
+            secretText: parsedInput.botToken,
+          },
+          phase: "credentialsValidated",
+          workspaceId: workspaceId ?? null,
         })
 
         const result = await telegramIntegrationService.connect({

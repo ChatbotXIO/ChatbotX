@@ -15,6 +15,7 @@ const findByIdForWorkspace = vi.fn()
 const updateAuth = vi.fn()
 const seedPersistentMenu = vi.fn()
 const commitReconnect = vi.fn()
+const recordConnectionAuthorization = vi.fn(async () => undefined)
 
 vi.mock("@chatbotx.io/business", () => ({
   instagramIntegrationService: {
@@ -25,6 +26,7 @@ vi.mock("@chatbotx.io/business", () => ({
   connectionStateService: {
     commitReconnect,
   },
+  userService: { recordConnectionAuthorization },
 }))
 
 vi.mock("@chatbotx.io/business/connection", () => ({
@@ -97,6 +99,7 @@ const { reconnectInstagramHandler, reconnectInstagramFacebookHandler } =
 
 const WORKSPACE_ID = "100"
 const INTEGRATION_ID = "200"
+const USER_ID = "user-1"
 
 function directRow(overrides: Record<string, unknown> = {}) {
   return {
@@ -135,6 +138,7 @@ function invokeDirect() {
     },
     workspaceId: WORKSPACE_ID,
     integrationId: INTEGRATION_ID,
+    userId: USER_ID,
     userToken: "user-token",
   })
 }
@@ -148,6 +152,7 @@ function invokeFacebook() {
     },
     workspaceId: WORKSPACE_ID,
     integrationId: INTEGRATION_ID,
+    userId: USER_ID,
     userToken: "user-token",
   })
 }
@@ -345,5 +350,51 @@ describe("reconnectInstagramFacebookHandler — Part 2: branding follow-up", () 
 
     const call = seedReconnectBranding.mock.calls[0][0]
     expect(call.persistBrandingMenu).toBeUndefined()
+  })
+})
+
+describe("Instagram reconnect — connection authorization capture", () => {
+  test("direct login records the validated auth once, before the commit", async () => {
+    findByIdForWorkspace.mockResolvedValue(directRow())
+
+    await invokeDirect()
+
+    expect(recordConnectionAuthorization).toHaveBeenCalledTimes(1)
+    expect(recordConnectionAuthorization).toHaveBeenCalledWith({
+      userId: USER_ID,
+      provider: "instagram",
+      auth: expect.objectContaining({ tokens: { accessToken: "user-token" } }),
+      phase: "reconnectValidated",
+      workspaceId: WORKSPACE_ID,
+    })
+    expect(
+      recordConnectionAuthorization.mock.invocationCallOrder[0],
+    ).toBeLessThan(commitReconnect.mock.invocationCallOrder[0] as number)
+  })
+
+  test("Facebook login records the validated auth once, under its own provider", async () => {
+    findByIdForWorkspace.mockResolvedValue(facebookRow())
+
+    await invokeFacebook()
+
+    expect(recordConnectionAuthorization).toHaveBeenCalledTimes(1)
+    expect(recordConnectionAuthorization).toHaveBeenCalledWith({
+      userId: USER_ID,
+      provider: "instagramFacebook",
+      // The user-level token, not the page token that gets stored.
+      auth: expect.objectContaining({ tokens: { accessToken: "user-token" } }),
+      phase: "reconnectValidated",
+      workspaceId: WORKSPACE_ID,
+    })
+  })
+
+  test("records nothing when the authorized account is not the connected one", async () => {
+    findByIdForWorkspace.mockResolvedValue(directRow())
+    getInstagramAccount.mockResolvedValue({ userId: "someone-else", name: "x" })
+
+    const result = await invokeDirect()
+
+    expect(result).toEqual({ status: "error", reason: "accountNotFound" })
+    expect(recordConnectionAuthorization).not.toHaveBeenCalled()
   })
 })

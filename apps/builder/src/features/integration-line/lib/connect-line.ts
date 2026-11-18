@@ -1,6 +1,7 @@
 import {
   lineIntegrationService,
   tenantService,
+  userService,
   workspaceService,
 } from "@chatbotx.io/business"
 import { auditService } from "@chatbotx.io/business/audit"
@@ -219,6 +220,17 @@ async function connectLineSteps(
   const { auth, bot } = await inStage("credentials", () =>
     integration.runAction("connect", { channelId, channelSecret }),
   )
+
+  // The signed-in user, or null for a workspace-token call (skipped). Recorded
+  // before `lineIntegrationService.connect` so a failed connect keeps the
+  // backup; a new workspace has no id yet.
+  await userService.recordConnectionAuthorization({
+    userId: user?.id ?? null,
+    provider: "line",
+    auth,
+    phase: "credentialsValidated",
+    workspaceId: workspaceId ?? null,
+  })
 
   const url = buildLineWebhookUrl(channelId)
   let registered: { previousWebhookUrl: string | null } | undefined

@@ -10,6 +10,7 @@ import {
   type WorkspaceMemberPermissionsRow,
   workspaceMemberRepository,
 } from "@chatbotx.io/database/repositories"
+import { userColumnsWithoutSecrets } from "@chatbotx.io/database/repositories/user-columns"
 import { workspaceMemberModel } from "@chatbotx.io/database/schema"
 import type {
   UserModel,
@@ -119,7 +120,7 @@ export class WorkspaceMemberService extends BaseService {
     const { id, workspaceId, tx = db } = props
     const member = await tx.query.workspaceMemberModel.findFirst({
       where: { id, workspaceId },
-      with: { user: true },
+      with: { user: { columns: userColumnsWithoutSecrets } },
     })
     const removeMember = async (client: DatabaseClient) => {
       await client
@@ -362,7 +363,7 @@ export class WorkspaceMemberService extends BaseService {
         await tx.query.workspaceMemberModel.findMany({
           where: { workspaceId },
           with: {
-            user: true,
+            user: { columns: userColumnsWithoutSecrets },
           },
           orderBy: { createdAt: "asc" },
         }),
@@ -432,7 +433,7 @@ export class WorkspaceMemberService extends BaseService {
         userId,
       },
       with: {
-        user: true,
+        user: { columns: userColumnsWithoutSecrets },
       },
     })
   }
@@ -539,7 +540,7 @@ export class WorkspaceMemberService extends BaseService {
         ...pagination,
         where,
         with: {
-          user: true,
+          user: { columns: userColumnsWithoutSecrets },
         },
       }),
       db.$count(
@@ -562,7 +563,7 @@ export class WorkspaceMemberService extends BaseService {
         workspaceId: input.workspaceId,
       },
       with: {
-        user: true,
+        user: { columns: userColumnsWithoutSecrets },
       },
     })
   }

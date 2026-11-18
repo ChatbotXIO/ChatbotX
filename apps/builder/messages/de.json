@@ -4734,7 +4734,10 @@
       "noPagesTitle": "Keine Facebook-Seiten gefunden",
       "noPagesDescription": "Seiten in einem Business Manager erfordern während der Verbindung Zugriff auf den Business Manager. Verbinden Sie Messenger erneut und erteilen Sie alle angeforderten Berechtigungen.",
       "alreadyConnectedNote": "Diese Seite ist bereits verbunden",
-      "tryAgain": "Erneute Verbindung versuchen"
+      "tryAgain": "Erneute Verbindung versuchen",
+      "unavailableInsufficientPermissions": "Du benötigst vollen Admin-Zugriff auf diese Seite, um sie zu verbinden.",
+      "unavailableMissingAccessToken": "Facebook hat keinen Zugriff auf diese Seite gewährt. Verbinde erneut und erlaube den Zugriff.",
+      "unavailableGeneric": "Diese Seite kann nicht verbunden werden."
     },
     "title": "Facebook Messenger",
     "tabs": {

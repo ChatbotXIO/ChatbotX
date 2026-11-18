@@ -4780,7 +4780,10 @@
       "noPagesTitle": "找不到Facebook 頁面",
       "noPagesDescription": "商務管理平台內的頁面需要在連線期間存取商務管理平台。重新連線Messenger並授予所有請求的權限。",
       "alreadyConnectedNote": "該頁面已連接",
-      "tryAgain": "嘗試重新連接"
+      "tryAgain": "嘗試重新連接",
+      "unavailableInsufficientPermissions": "你需要擁有此頁面的完整管理員權限才能連接。",
+      "unavailableMissingAccessToken": "Facebook 未授予此頁面的存取權限。請重新連接並允許存取。",
+      "unavailableGeneric": "無法連接此頁面。"
     },
     "title": "Facebook Messenger",
     "tabs": {

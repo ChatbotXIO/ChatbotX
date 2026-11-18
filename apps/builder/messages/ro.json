@@ -4734,7 +4734,10 @@
       "noPagesTitle": "Nicio pagină de Facebook găsită",
       "noPagesDescription": "Paginile din interiorul unui Business Manager necesită acces Business Manager în timpul conectării. Reconectează Messenger și acordă toate permisiunile solicitate.",
       "alreadyConnectedNote": "Această pagină este deja conectată",
-      "tryAgain": "Încearcă să te reconectezi"
+      "tryAgain": "Încearcă să te reconectezi",
+      "unavailableInsufficientPermissions": "Ai nevoie de acces complet de administrator la această Pagină pentru a o conecta.",
+      "unavailableMissingAccessToken": "Facebook nu a acordat acces la această Pagină. Reconectează-te și permite accesul.",
+      "unavailableGeneric": "Această Pagină nu poate fi conectată."
     },
     "title": "Facebook Messenger",
     "tabs": {

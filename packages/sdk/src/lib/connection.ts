@@ -36,10 +36,32 @@ export type ConnectionDescriptor = {
   avatarUrl?: string
 }
 
-/** One selectable target surfaced by `listCandidates` during a connect session — carries auth, never persisted as-is. */
+/**
+ * Why a listed account cannot be connected. Machine values: the shared flow
+ * stores them as the target's `disabledReason` and the UI translates them.
+ */
+export const connectionCandidateUnavailableReasons = [
+  "insufficientPermissions",
+  "missingAccessToken",
+] as const
+export type ConnectionCandidateUnavailableReason =
+  (typeof connectionCandidateUnavailableReasons)[number]
+
+/** Narrows a stored open string (e.g. a target's `disabledReason`) to a known reason. */
+export const isConnectionCandidateUnavailableReason = (
+  value: string,
+): value is ConnectionCandidateUnavailableReason =>
+  (connectionCandidateUnavailableReasons as readonly string[]).includes(value)
+
+/**
+ * One target surfaced by `listCandidates` during a connect session — carries
+ * auth, never persisted as-is. A candidate with `unavailableReason` is shown
+ * but cannot be selected, and its auth is never stored.
+ */
 export type ConnectionCandidate<IAuth extends AuthValue = AuthValue> =
   ConnectionDescriptor & {
     alreadyConnected?: "this_workspace" | "other_workspace"
+    unavailableReason?: ConnectionCandidateUnavailableReason
     auth: IAuth
   }
 

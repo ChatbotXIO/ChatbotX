@@ -4711,7 +4711,10 @@
       "noPagesTitle": "Nenhuma Página do Facebook encontrada",
       "noPagesDescription": "Páginas dentro de um Gerenciador de Negócios exigem acesso a ele durante a conexão. Reconecte o Messenger e conceda todas as permissões solicitadas.",
       "alreadyConnectedNote": "Esta página já está conectada",
-      "tryAgain": "Tentar reconectar"
+      "tryAgain": "Tentar reconectar",
+      "unavailableInsufficientPermissions": "Você precisa de acesso total de administrador a esta Página para conectá-la.",
+      "unavailableMissingAccessToken": "O Facebook não concedeu acesso a esta Página. Reconecte e permita o acesso.",
+      "unavailableGeneric": "Esta Página não pode ser conectada."
     },
     "title": "Facebook Messenger",
     "tabs": {

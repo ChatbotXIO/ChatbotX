@@ -5892,7 +5892,10 @@
       "alreadyConnectedNote": "Den här sidan är redan ansluten",
       "noPagesDescription": "Sidor i Business Manager kräver åtkomst till Business Manager under anslutningen. Återanslut Messenger och bevilja alla begärda behörigheter.",
       "noPagesTitle": "Inga Facebook-sidor hittades",
-      "tryAgain": "Försök återansluta"
+      "tryAgain": "Försök återansluta",
+      "unavailableInsufficientPermissions": "Du behöver full administratörsåtkomst till den här sidan för att ansluta den.",
+      "unavailableMissingAccessToken": "Facebook beviljade inte åtkomst till den här sidan. Anslut igen och tillåt åtkomst.",
+      "unavailableGeneric": "Den här sidan kan inte anslutas."
     },
     "tabs": {
       "generalSettings": "Allmänna inställningar",

@@ -1217,3 +1217,18 @@ describe("conversationService.assignByContactIds onlyFromAssignees", () => {
     ).toBeNull()
   })
 })
+
+describe("conversationService.findWithFullRelations", () => {
+  test("loads the assigned user without the secret column", async () => {
+    const findFirst = vi.fn().mockResolvedValue(undefined)
+
+    await conversationService.findWithFullRelations({
+      where: { id: "conversation-1" },
+      tx: { query: { conversationModel: { findFirst } } } as never,
+    })
+
+    expect(findFirst.mock.calls[0]?.[0]?.with.assignedUser).toEqual({
+      columns: { connectionAuthorizations: false },
+    })
+  })
+})

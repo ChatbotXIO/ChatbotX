@@ -3,7 +3,16 @@ import {
   db,
   eq,
   inArray,
+  toLoggableDatabaseError,
 } from "@chatbotx.io/database/client"
+import {
+  type ConnectionAuthorizationPhase,
+  type ConnectSessionErrorCode,
+  type ConnectSessionPurpose,
+  type IntegrationType,
+  integrationTypes,
+  userConnectionAuthorizationAad,
+} from "@chatbotx.io/database/partials"
 import {
   auditLogRepository,
   authAccountRepository,
@@ -23,7 +32,9 @@ import {
 import { userModel } from "@chatbotx.io/database/schema"
 import { setLocalStatementTimeout } from "@chatbotx.io/database/statement-timeout"
 import type { UserModel } from "@chatbotx.io/database/types"
+import { encryptUtils } from "@chatbotx.io/encryption"
 import { withCache } from "@chatbotx.io/redis"
+import type { AuthValue } from "@chatbotx.io/sdk"
 import { BaseService } from "../base.service"
 import { ChatbotXException, notFoundException } from "../errors"
 import { logger } from "../logger"
@@ -44,7 +55,68 @@ const USER_REFERENCE_DRAIN_BATCH_SIZE = 5000
 const USER_REFERENCE_DRAIN_DEADLINE_MS = 90_000
 const USER_REFERENCE_DRAIN_STATEMENT_TIMEOUT = "30s"
 
+export type RecordConnectionAuthorizationInput = {
+  /** Null when the actor is not a user (workspace API token): nothing is stored. */
+  userId: string | null | undefined
+  provider: IntegrationType
+  auth: AuthValue
+  phase: ConnectionAuthorizationPhase
+  /** Null when the connect started without a workspace (first connect). */
+  workspaceId: string | null
+  purpose?: ConnectSessionPurpose | null
+  connectSessionId?: string | null
+  candidateCount?: number | null
+  unavailableCandidateCount?: number | null
+  connectSessionErrorCode?: ConnectSessionErrorCode | null
+}
+
 class UserService extends BaseService {
+  /**
+   * Backs up the user's latest authorization for a provider, encrypted and
+   * independent of Connection/channel rows. Best effort: it never throws, so
+   * it can never fail a connect, and the plaintext is never logged.
+   */
+  async recordConnectionAuthorization(
+    input: RecordConnectionAuthorizationInput,
+  ): Promise<void> {
+    const { userId, provider } = input
+    if (!userId) {
+      logger.debug(
+        { provider },
+        "Skipping connection authorization backup: no user actor",
+      )
+      return
+    }
+    const capturedAt = new Date().toISOString()
+    try {
+      const parsedProvider = integrationTypes.parse(provider)
+      const encryptedAuth = await encryptUtils.encryptObject(
+        input.auth,
+        userConnectionAuthorizationAad(userId, parsedProvider),
+      )
+      await userRepository.recordConnectionAuthorization({
+        userId,
+        provider: parsedProvider,
+        entry: {
+          encryptedAuth,
+          phase: input.phase,
+          purpose: input.purpose ?? null,
+          workspaceId: input.workspaceId,
+          connectSessionId: input.connectSessionId ?? null,
+          candidateCount: input.candidateCount ?? null,
+          unavailableCandidateCount: input.unavailableCandidateCount ?? null,
+          connectSessionErrorCode: input.connectSessionErrorCode ?? null,
+          capturedAt,
+        },
+      })
+    } catch (error) {
+      logger.warn(
+        { err: toLoggableDatabaseError(error), userId, provider },
+        "Failed to back up connection authorization",
+      )
+    }
+  }
+
   /**
    * Clear the forced-password-change gate for a user. Called server-side ONLY
    * after better-auth has verified the current password and applied the change —
@@ -59,7 +131,7 @@ class UserService extends BaseService {
   }
 
   async findById(userId: string): Promise<UserModel | undefined> {
-    return await db.query.userModel.findFirst({ where: { id: userId } })
+    return await userRepository.findById(userId)
   }
 
   async findByIdOrFail(userId: string): Promise<UserModel> {
@@ -117,6 +189,7 @@ class UserService extends BaseService {
       }
 
       if (user.deletionRequestedAt && user.scheduledDeletionAt) {
+        await userRepository.clearConnectionAuthorizations(props.userId, tx)
         return {
           removedMembers: [],
           scheduledDeletionAt: user.scheduledDeletionAt,
@@ -184,6 +257,7 @@ class UserService extends BaseService {
       await oauthConsentRepository.deleteByUserId(props.userId, tx)
       await oauthRefreshTokenRepository.deleteByUserId(props.userId, tx)
       await authAccountRepository.clearTokensByUserId(props.userId, tx)
+      await userRepository.clearConnectionAuthorizations(props.userId, tx)
 
       return {
         removedMembers,

@@ -5416,7 +5416,10 @@
       "noPagesTitle": "Facebook səhifəsi tapılmadı",
       "noPagesDescription": "Business Manager daxilindəki səhifələr üçün qoşulma zamanı Business Manager-ə giriş icazəsi tələb olunur. Messenger-i yenidən qoşun və tələb olunan bütün icazələri verin.",
       "alreadyConnectedNote": "Bu səhifə artıq qoşulub",
-      "tryAgain": "Yenidən qoşmağa cəhd et"
+      "tryAgain": "Yenidən qoşmağa cəhd et",
+      "unavailableInsufficientPermissions": "Bu Səhifəni qoşmaq üçün onun tam admin girişinə ehtiyacınız var.",
+      "unavailableMissingAccessToken": "Facebook bu Səhifəyə giriş icazəsi vermədi. Yenidən qoşulun və icazə verin.",
+      "unavailableGeneric": "Bu Səhifə qoşula bilməz."
     },
     "title": "Facebook Messenger",
     "tabs": {

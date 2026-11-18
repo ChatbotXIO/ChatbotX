@@ -2301,7 +2301,10 @@
       "noPagesTitle": "לא נמצאו דפי Facebook",
       "noPagesDescription": "דפים בתוך Business Manager דורשים גישה ל-Business Manager במהלך החיבור. חברו מחדש את Messenger והעניקו את כל ההרשאות המבוקשות.",
       "alreadyConnectedNote": "דף זה כבר מחובר",
-      "tryAgain": "ניסיון חיבור מחדש"
+      "tryAgain": "ניסיון חיבור מחדש",
+      "unavailableInsufficientPermissions": "דרושה לך גישת מנהל מלאה לעמוד זה כדי לחבר אותו.",
+      "unavailableMissingAccessToken": "פייסבוק לא העניקה גישה לעמוד זה. התחבר מחדש ואשר גישה.",
+      "unavailableGeneric": "לא ניתן לחבר עמוד זה."
     },
     "title": "Facebook Messenger",
     "tabs": {

@@ -17,6 +17,9 @@ vi.mock("@chatbotx.io/database/repositories", () => ({
   connectionRepository: {},
   integrationInstagramRepository: {},
 }))
+vi.mock("@chatbotx.io/business", () => ({
+  userService: { recordConnectionAuthorization: vi.fn() },
+}))
 vi.mock("@chatbotx.io/business/connect-session", () => ({
   connectSessionService: { create: mocks.createSession },
 }))

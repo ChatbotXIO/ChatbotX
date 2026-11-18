@@ -324,7 +324,7 @@ export const connectSessionsPublicRouter = {
       path: "/v1/connect-sessions/{id}",
       summary: "Get connect session",
       description:
-        "Poll this after `connections.create` or `connections.reconnect` returns a `session`. `status` moves `pending` -> `awaiting_selection` (multi-account) or straight to `completed` (single-account) once the OAuth round trip finishes, or `failed`/`expired`/`cancelled`. Call `connectSessions.connectTargets` once `awaiting_selection`. Clients must tolerate unknown future values in `status`/`nextAction.type`.",
+        "Poll this after `connections.create` or `connections.reconnect` returns a `session`. `status` moves `pending` -> `awaiting_selection` (multi-account) or straight to `completed` (single-account) once the OAuth round trip finishes, or `failed`/`expired`/`cancelled`. Call `connectSessions.connectTargets` once `awaiting_selection`, passing only `targets[]` entries with `selectable: true`. A target with `selectable: false` is listed for display only: `alreadyConnected` marks one that is already connected, `disabledReason` explains why it cannot be connected. If no target is selectable, cancel the session (`connectSessions.cancel`), then start a new connect with `connections.create` (or `connections.reconnect` for an existing connection) and have the user grant access to the missing accounts. Clients must tolerate unknown future values in `status`/`nextAction.type`.",
       tags: ["Connections"],
       spec: mcpSpec({ visibility: "default" }),
     })

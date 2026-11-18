@@ -81,6 +81,9 @@ vi.mock("@chatbotx.io/business", () => ({
     markProvisioned: mocks.markWabaProvisionedMock,
     upsertCurrentCredential: mocks.upsertWabaCredentialMock,
   },
+  userService: {
+    recordConnectionAuthorization: mocks.recordAuthorizationMock,
+  },
   workspaceMemberService: {
     isMember: mocks.isMemberMock,
   },

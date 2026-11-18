@@ -5416,7 +5416,10 @@
       "noPagesTitle": "No Facebook Pages found",
       "noPagesDescription": "Pages inside a Business Manager require Business Manager access during connection. Reconnect Messenger and grant all requested permissions.",
       "alreadyConnectedNote": "This page is already connected",
-      "tryAgain": "Try reconnecting"
+      "tryAgain": "Try reconnecting",
+      "unavailableInsufficientPermissions": "You need full admin access to this Page to connect it.",
+      "unavailableMissingAccessToken": "Facebook didn't grant access to this Page. Reconnect and allow it.",
+      "unavailableGeneric": "This Page can't be connected."
     },
     "title": "Facebook Messenger",
     "tabs": {

@@ -5892,7 +5892,10 @@
       "alreadyConnectedNote": "该页面已连接",
       "noPagesDescription": "商务管理平台内的页面需要在连接期间访问商务管理平台。重新连接Messenger并授予所有请求的权限。",
       "noPagesTitle": "找不到Facebook 页面",
-      "tryAgain": "尝试重新连接"
+      "tryAgain": "尝试重新连接",
+      "unavailableInsufficientPermissions": "你需要拥有此主页的完整管理员权限才能连接它。",
+      "unavailableMissingAccessToken": "Facebook 未授予对此主页的访问权限。请重新连接并允许访问。",
+      "unavailableGeneric": "无法连接此主页。"
     },
     "tabs": {
       "generalSettings": "一般设置",

@@ -1,3 +1,4 @@
+import type { ConnectionCandidateUnavailableReason } from "@chatbotx.io/sdk"
 import { fetchAllCursorPages } from "@chatbotx.io/utils"
 import { DEFAULT_API_VERSION } from "../constants"
 import { MessengerAPIException, rescue } from "../exception"
@@ -201,26 +202,42 @@ async function getBusinessManagedPages(
   }
 }
 
-function hasAllAdminTasks(tasks?: string[]): boolean {
+/**
+ * A page that reports no `tasks` at all is treated as fully managed; only a
+ * page that lists tasks without every admin task lacks permissions.
+ */
+function lacksAdminTasks(tasks?: string[]): boolean {
   if (!tasks?.length) {
     return false
   }
 
-  return ADMIN_PAGE_TASKS.every((task) => tasks.includes(task))
+  return !ADMIN_PAGE_TASKS.every((task) => tasks.includes(task))
+}
+
+/** Why a page cannot be connected, in fixed precedence; `undefined` when it can. */
+function resolveUnavailableReason(
+  page: FacebookPage,
+  source: FacebookPageSource,
+): ConnectionCandidateUnavailableReason | undefined {
+  if (!page.access_token) {
+    return "missingAccessToken"
+  }
+  if (source === "direct" && lacksAdminTasks(page.tasks)) {
+    return "insufficientPermissions"
+  }
+  return
 }
 
 function classifyConnectable(
   page: FacebookPage,
   source: FacebookPageSource,
 ): ConnectableFacebookPage {
-  const hasAccessToken = Boolean(page.access_token)
+  const unavailableReason = resolveUnavailableReason(page, source)
 
   return {
     ...page,
-    isConnectable:
-      source === "direct"
-        ? hasAccessToken && hasAllAdminTasks(page.tasks)
-        : hasAccessToken,
+    isConnectable: unavailableReason === undefined,
+    ...(unavailableReason ? { unavailableReason } : {}),
   }
 }
 

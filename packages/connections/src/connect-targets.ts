@@ -249,8 +249,7 @@ export const connectTargets = async (input: {
   try {
     for (const targetId of input.targetIds) {
       const target = targetById.get(targetId)
-      const candidate = candidateBySourceId.get(targetId)
-      if (!(target && candidate)) {
+      if (!target) {
         outcomes.push({ targetId, status: "failed", reason: "unknown" })
         continue
       }
@@ -260,6 +259,11 @@ export const connectTargets = async (input: {
             ? { targetId, status: "duplicated", reason: "alreadyConnected" }
             : { targetId, status: "failed", reason: "notSelectable" },
         )
+        continue
+      }
+      const candidate = candidateBySourceId.get(targetId)
+      if (!candidate) {
+        outcomes.push({ targetId, status: "failed", reason: "unknown" })
         continue
       }
 

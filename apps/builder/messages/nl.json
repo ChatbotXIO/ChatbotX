@@ -4734,7 +4734,10 @@
       "noPagesTitle": "Geen Facebook-pagina's gevonden",
       "noPagesDescription": "Voor pagina's in Bedrijfsmanager is tijdens het koppelen toegang tot Bedrijfsmanager vereist. Koppel Messenger opnieuw en verleen alle gevraagde machtigingen.",
       "alreadyConnectedNote": "Deze pagina is al gekoppeld",
-      "tryAgain": "Probeer opnieuw te koppelen"
+      "tryAgain": "Probeer opnieuw te koppelen",
+      "unavailableInsufficientPermissions": "Je hebt volledige beheerderstoegang tot deze Pagina nodig om hem te koppelen.",
+      "unavailableMissingAccessToken": "Facebook heeft geen toegang tot deze Pagina verleend. Koppel opnieuw en sta toegang toe.",
+      "unavailableGeneric": "Deze Pagina kan niet worden gekoppeld."
     },
     "title": "Facebook Messenger",
     "tabs": {

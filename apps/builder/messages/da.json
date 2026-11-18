@@ -4734,7 +4734,10 @@
       "noPagesTitle": "Ingen Facebook Pages found",
       "noPagesDescription": "Pages inside a Business Manager require Business Manager access during forbindelse. Forbind igen Messenger og grant alle requested tilladelser.",
       "alreadyConnectedNote": "Denne page er allerede forbundet",
-      "tryAgain": "Try reconnecting"
+      "tryAgain": "Try reconnecting",
+      "unavailableInsufficientPermissions": "Du skal have fuld administratoradgang til denne side for at forbinde den.",
+      "unavailableMissingAccessToken": "Facebook gav ikke adgang til denne side. Forbind igen, og tillad adgang.",
+      "unavailableGeneric": "Denne side kan ikke forbindes."
     },
     "title": "Facebook Messenger",
     "tabs": {

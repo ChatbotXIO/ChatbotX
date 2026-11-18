@@ -1,5 +1,6 @@
 /**
- * Re-encrypts all Credential rows from the previous key to the current key.
+ * Re-encrypts all Credential rows and every `User.connectionAuthorizations`
+ * entry from the previous key to the current key.
  *
  * Usage:
  *   pnpm --filter @chatbotx.io/database rotate:encryption-key [--dry-run]
@@ -18,7 +19,7 @@
  */
 import { encryptUtils } from "@chatbotx.io/encryption"
 import { eq } from "drizzle-orm"
-import type { z } from "zod"
+import { z } from "zod"
 import { db } from "../src/client"
 import {
   type CredentialByType,
@@ -28,9 +29,19 @@ import {
   credentialSchemas,
 } from "../src/partials/credential"
 import { platformCredentialModel } from "../src/schema/platform-credential"
+import {
+  type ConnectionAuthorizationCrypto,
+  rotateConnectionAuthorizations,
+} from "./rotate-connection-authorizations"
 
 const isDryRun = process.argv.includes("--dry-run")
 const activeKid = process.env.ENCRYPTION_KEY_ID ?? "default"
+
+const authorizationCrypto: ConnectionAuthorizationCrypto = {
+  decrypt: async (blob, aad) =>
+    await encryptUtils.decryptObject(blob, z.unknown(), aad),
+  encrypt: async (auth, aad) => await encryptUtils.encryptObject(auth, aad),
+}
 
 const main = async (): Promise<void> => {
   if (!process.env.ENCRYPTION_KEY_PREV) {
@@ -52,6 +63,14 @@ const main = async (): Promise<void> => {
   )
 
   if (isDryRun) {
+    const authorizations = await rotateConnectionAuthorizations({
+      activeKid,
+      dryRun: true,
+      crypto: authorizationCrypto,
+    })
+    console.log(
+      `Found ${authorizations.toRotate} connection authorization entries across ${authorizations.scanned} users to rotate.`,
+    )
     console.log("Dry run — no changes written.")
     return
   }
@@ -87,7 +106,16 @@ const main = async (): Promise<void> => {
   }
 
   console.log(`Rotation complete: ${rotated} rotated, ${errors} errors.`)
-  if (errors > 0) {
+
+  const authorizations = await rotateConnectionAuthorizations({
+    activeKid,
+    dryRun: false,
+    crypto: authorizationCrypto,
+  })
+  console.log(
+    `Connection authorizations: ${authorizations.rotated} rotated, ${authorizations.skippedChanged} changed meanwhile, ${authorizations.errors} errors.`,
+  )
+  if (errors > 0 || authorizations.errors > 0) {
     process.exit(1)
   }
 }

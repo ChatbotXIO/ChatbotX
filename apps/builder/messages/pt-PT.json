@@ -4734,7 +4734,10 @@
       "noPagesTitle": "Não foram encontradas Páginas do Facebook",
       "noPagesDescription": "As Páginas num Gestor de Negócios exigem acesso ao Gestor de Negócios durante a ligação. Volte a ligar o Messenger e conceda todas as permissões solicitadas.",
       "alreadyConnectedNote": "Esta página já está ligada",
-      "tryAgain": "Tentar ligar novamente"
+      "tryAgain": "Tentar ligar novamente",
+      "unavailableInsufficientPermissions": "Precisa de acesso total de administrador a esta Página para a ligar.",
+      "unavailableMissingAccessToken": "O Facebook não concedeu acesso a esta Página. Volte a ligar e permita o acesso.",
+      "unavailableGeneric": "Esta Página não pode ser ligada."
     },
     "title": "Facebook Messenger",
     "tabs": {

@@ -9,6 +9,7 @@ const mocks = vi.hoisted(() => ({
   findByIdForWorkspace: vi.fn(),
   findWorkspace: vi.fn(),
   findWorkspaceById: vi.fn(),
+  recordConnectionAuthorization: vi.fn(async () => undefined),
   update: vi.fn(),
   verifySmtpConnection: vi.fn(),
 }))
@@ -36,6 +37,9 @@ vi.mock("@chatbotx.io/business", () => ({
   workspaceService: {
     find: mocks.findWorkspace,
     findById: mocks.findWorkspaceById,
+  },
+  userService: {
+    recordConnectionAuthorization: mocks.recordConnectionAuthorization,
   },
 }))
 
@@ -98,6 +102,7 @@ describe("createSmtpAction", () => {
   test("calls verifySmtpConnection before integrationSmtpService.connect", async () => {
     await (createSmtpAction as (props: unknown) => Promise<unknown>)({
       bindArgsParsedInputs: ["ws-1"],
+      ctx: { user: { id: "user-1" } },
       parsedInput: {
         provider: "google",
         host: "ignored.example.com",
@@ -114,6 +119,7 @@ describe("createSmtpAction", () => {
   test("a non-other provider passes smtpHostMap-resolved host/port", async () => {
     await (createSmtpAction as (props: unknown) => Promise<unknown>)({
       bindArgsParsedInputs: ["ws-1"],
+      ctx: { user: { id: "user-1" } },
       parsedInput: {
         provider: "google",
         host: "ignored.example.com",
@@ -137,6 +143,7 @@ describe("createSmtpAction", () => {
   test("does not record the connect audit itself", async () => {
     await (createSmtpAction as (props: unknown) => Promise<unknown>)({
       bindArgsParsedInputs: ["ws-1"],
+      ctx: { user: { id: "user-1" } },
       parsedInput: {
         provider: "google",
         host: "ignored.example.com",
@@ -164,6 +171,7 @@ describe("updateSmtpAction", () => {
   const run = () =>
     (updateSmtpAction as (props: unknown) => Promise<unknown>)({
       bindArgsParsedInputs: ["ws-1", "smtp-1"],
+      ctx: { user: { id: "user-1" } },
       parsedInput,
     })
 
@@ -210,6 +218,7 @@ describe("deleteSmtpAction", () => {
   test("resolves the row and owner, then delegates without auditing", async () => {
     await (deleteSmtpAction as (props: unknown) => Promise<unknown>)({
       bindArgsParsedInputs: ["ws-1", "smtp-1"],
+      ctx: { user: { id: "user-1" } },
     })
 
     expect(mocks.disconnect).toHaveBeenCalledWith({
@@ -219,5 +228,86 @@ describe("deleteSmtpAction", () => {
       ownerId: "owner-1",
     })
     expect(mocks.auditRecord).not.toHaveBeenCalled()
+  })
+})
+
+describe("SMTP actions — connection authorization capture", () => {
+  const otherInput = {
+    provider: "other",
+    host: "smtp.example.com",
+    port: 587,
+    username: "me",
+    password: "pw",
+    fromAddress: "me@example.com",
+  }
+  const expectedAuth = {
+    authType: "custom",
+    provider: "other",
+    host: "smtp.example.com",
+    port: 587,
+    username: "me",
+    password: "pw",
+  }
+  const ctx = { user: { id: "user-1" } }
+
+  test("create records the verified credentials once, before the channel is stored", async () => {
+    await (createSmtpAction as (props: unknown) => Promise<unknown>)({
+      bindArgsParsedInputs: ["ws-1"],
+      ctx,
+      parsedInput: otherInput,
+    })
+
+    expect(mocks.recordConnectionAuthorization).toHaveBeenCalledTimes(1)
+    expect(mocks.recordConnectionAuthorization).toHaveBeenCalledWith({
+      userId: "user-1",
+      provider: "smtp",
+      auth: expectedAuth,
+      phase: "credentialsValidated",
+      workspaceId: "ws-1",
+    })
+    expect(
+      mocks.recordConnectionAuthorization.mock.invocationCallOrder[0],
+    ).toBeLessThan(mocks.connect.mock.invocationCallOrder[0] as number)
+  })
+
+  test("update records the verified credentials once, before the update", async () => {
+    await (updateSmtpAction as (props: unknown) => Promise<unknown>)({
+      bindArgsParsedInputs: ["ws-1", "smtp-1"],
+      ctx,
+      parsedInput: otherInput,
+    })
+
+    expect(mocks.recordConnectionAuthorization).toHaveBeenCalledTimes(1)
+    expect(mocks.recordConnectionAuthorization).toHaveBeenCalledWith({
+      userId: "user-1",
+      provider: "smtp",
+      auth: expectedAuth,
+      phase: "credentialsValidated",
+      workspaceId: "ws-1",
+    })
+    expect(
+      mocks.recordConnectionAuthorization.mock.invocationCallOrder[0],
+    ).toBeLessThan(mocks.update.mock.invocationCallOrder[0] as number)
+  })
+
+  test("nothing is recorded when SMTP verification rejects the credentials", async () => {
+    mocks.verifySmtpConnection.mockRejectedValue(new Error("auth failed"))
+
+    await expect(
+      (createSmtpAction as (props: unknown) => Promise<unknown>)({
+        bindArgsParsedInputs: ["ws-1"],
+        ctx,
+        parsedInput: otherInput,
+      }),
+    ).rejects.toThrow("auth failed")
+    await expect(
+      (updateSmtpAction as (props: unknown) => Promise<unknown>)({
+        bindArgsParsedInputs: ["ws-1", "smtp-1"],
+        ctx,
+        parsedInput: otherInput,
+      }),
+    ).rejects.toThrow("auth failed")
+
+    expect(mocks.recordConnectionAuthorization).not.toHaveBeenCalled()
   })
 })

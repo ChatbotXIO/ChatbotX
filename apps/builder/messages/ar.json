@@ -4734,7 +4734,10 @@
       "noPagesTitle": "لم يتم العثور على صفحات Facebook",
       "noPagesDescription": "تتطلب الصفحات الموجودة داخل مدير الأعمال منح صلاحية الوصول إليه أثناء الاتصال. أعد ربط Messenger وامنح جميع الأذونات المطلوبة.",
       "alreadyConnectedNote": "هذه الصفحة مرتبطة بالفعل",
-      "tryAgain": "محاولة إعادة الاتصال"
+      "tryAgain": "محاولة إعادة الاتصال",
+      "unavailableInsufficientPermissions": "تحتاج إلى صلاحيات إدارة كاملة لهذه الصفحة لربطها.",
+      "unavailableMissingAccessToken": "لم يمنح Facebook حق الوصول إلى هذه الصفحة. أعد الربط واسمح بالوصول.",
+      "unavailableGeneric": "لا يمكن ربط هذه الصفحة."
     },
     "title": "Facebook Messenger",
     "tabs": {

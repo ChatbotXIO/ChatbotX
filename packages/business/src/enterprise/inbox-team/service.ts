@@ -6,6 +6,7 @@ import {
   inArray,
 } from "@chatbotx.io/database/client"
 import { inboxTeamMemberRepository } from "@chatbotx.io/database/repositories"
+import { userColumnsWithoutSecrets } from "@chatbotx.io/database/repositories/user-columns"
 import {
   inboxTeamMemberModel,
   inboxTeamModel,
@@ -45,7 +46,7 @@ class InboxTeamService extends BaseService {
           where: { workspaceId },
           with: {
             inboxTeamMembers: {
-              with: { user: true },
+              with: { user: { columns: userColumnsWithoutSecrets } },
             },
           },
           orderBy: { createdAt: "asc" },
@@ -311,7 +312,7 @@ class InboxTeamService extends BaseService {
         userId: { in: userIds },
         inboxTeamId: team.id,
       },
-      with: { user: true },
+      with: { user: { columns: userColumnsWithoutSecrets } },
     })
     const deleted = await db
       .delete(inboxTeamMemberModel)

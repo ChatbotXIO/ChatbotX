@@ -279,3 +279,22 @@ describe("callHistoryActionClient — requireCallHistoryAccess gate", () => {
     expect(result.serverError).toBeUndefined()
   })
 })
+
+describe("authActionClient user read", () => {
+  test("reads ctx.user without the encrypted connection authorization backup", async () => {
+    mocks.resolveWorkspaceAccess.mockResolvedValue({
+      workspace: { id: "123", ownerId: "owner-1" },
+      member: { permissions: { superAdmin: true } },
+      isSupportSession: false,
+    })
+
+    const result = await callProbeAction("123")
+
+    expect(mocks.findOrFail).toHaveBeenCalledWith(
+      expect.objectContaining({
+        columns: { connectionAuthorizations: false },
+      }),
+    )
+    expect(result.data?.user).not.toHaveProperty("connectionAuthorizations")
+  })
+})

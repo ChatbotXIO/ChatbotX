@@ -4734,7 +4734,10 @@
       "noPagesTitle": "Facebook-sivuja ei löytynyt",
       "noPagesDescription": "Business Managerin sivut edellyttävät Business Manager -käyttöoikeutta yhdistämisen aikana. Yhdistä Messenger uudelleen ja myönnä kaikki pyydetyt oikeudet.",
       "alreadyConnectedNote": "Tämä sivu on jo yhdistetty",
-      "tryAgain": "Yritä yhdistää uudelleen"
+      "tryAgain": "Yritä yhdistää uudelleen",
+      "unavailableInsufficientPermissions": "Tarvitset sivun täydet ylläpito-oikeudet sen yhdistämiseen.",
+      "unavailableMissingAccessToken": "Facebook ei myöntänyt pääsyä tähän sivuun. Yhdistä uudelleen ja salli pääsy.",
+      "unavailableGeneric": "Tätä sivua ei voi yhdistää."
     },
     "title": "Facebook Messenger",
     "tabs": {

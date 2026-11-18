@@ -4711,7 +4711,10 @@
       "noPagesTitle": "Facebookページが見つかりません",
       "noPagesDescription": "ビジネスマネージャ内のページに接続するには、ビジネスマネージャへのアクセス権が必要です。Messengerを再接続し、要求されたすべての権限を許可してください。",
       "alreadyConnectedNote": "このページはすでに接続されています",
-      "tryAgain": "再接続を試す"
+      "tryAgain": "再接続を試す",
+      "unavailableInsufficientPermissions": "このページを接続するには、ページの完全な管理者権限が必要です。",
+      "unavailableMissingAccessToken": "Facebookからこのページへのアクセスが許可されていません。再接続してアクセスを許可してください。",
+      "unavailableGeneric": "このページは接続できません。"
     },
     "title": "Facebook Messenger",
     "tabs": {

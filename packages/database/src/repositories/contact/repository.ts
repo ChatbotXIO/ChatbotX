@@ -13,6 +13,7 @@ import { buildContactFilterMatchSQL } from "../../queries"
 import type { ContactFilterCriteriaInput } from "../../queries/contact-filter/types"
 import { contactModel } from "../../schema"
 import type { ContactCustomFieldModel, ContactModel } from "../../types"
+import { userColumnsWithoutSecrets } from "../user/columns"
 import { buildContactListWhere, resolveContactOrderBy } from "./list-where"
 
 /** What a contact-export page loads besides the contact row itself. */
@@ -43,7 +44,12 @@ const PUBLIC_CONTACT_RELATIONS = {
   tags: true,
   contactCustomFields: true,
   contactInboxes: { with: { inbox: true } },
-  conversation: { with: { assignedUser: true, assignedInboxTeam: true } },
+  conversation: {
+    with: {
+      assignedUser: { columns: userColumnsWithoutSecrets },
+      assignedInboxTeam: true,
+    },
+  },
 } as const
 
 export const contactRepository = {
@@ -104,7 +110,12 @@ export const contactRepository = {
       ...input,
       with: {
         contactInboxes: { with: { inbox: true } },
-        conversation: { with: { assignedUser: true, assignedInboxTeam: true } },
+        conversation: {
+          with: {
+            assignedUser: { columns: userColumnsWithoutSecrets },
+            assignedInboxTeam: true,
+          },
+        },
       },
     })
   },

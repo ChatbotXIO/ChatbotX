@@ -4776,7 +4776,10 @@
       "noPagesTitle": "Không tìm thấy trang Facebook",
       "noPagesDescription": "Các trang nằm trong Business Manager cần được cấp quyền Business Manager khi kết nối. Hãy kết nối lại Messenger và cấp tất cả quyền được yêu cầu.",
       "alreadyConnectedNote": "Trang này đã được kết nối",
-      "tryAgain": "Kết nối lại"
+      "tryAgain": "Kết nối lại",
+      "unavailableInsufficientPermissions": "Bạn cần toàn quyền quản trị trang này để kết nối.",
+      "unavailableMissingAccessToken": "Facebook chưa cấp quyền truy cập trang này. Hãy kết nối lại và cho phép.",
+      "unavailableGeneric": "Không thể kết nối trang này."
     },
     "title": "Facebook Messenger",
     "tabs": {

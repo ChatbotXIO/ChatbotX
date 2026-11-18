@@ -33,7 +33,15 @@ const {
   mockReconnectInstagramHandler,
   mockReconnectInstagramFacebookHandler,
   mockReconnectZaloHandler,
+  mockRecordConnectionAuthorization,
   mockConnectZaloHandler,
+  mockConnectTiktokHandler,
+  mockThreadsConnect,
+  mockExchangeThreadsCode,
+  mockGetThreadsProfile,
+  mockReconnectThreadsHandler,
+  mockIntegrationCreate,
+  mockGoogleSheetsHandleRequest,
   mockExchangeAndVerifyGoogleCalendar,
   mockCreateGoogleFromOAuthCallback,
   mockResolveOwnerForWorkspace,
@@ -77,7 +85,15 @@ const {
   mockReconnectInstagramHandler: vi.fn(),
   mockReconnectInstagramFacebookHandler: vi.fn(),
   mockReconnectZaloHandler: vi.fn(),
+  mockRecordConnectionAuthorization: vi.fn(async () => undefined),
   mockConnectZaloHandler: vi.fn(),
+  mockConnectTiktokHandler: vi.fn(),
+  mockThreadsConnect: vi.fn(),
+  mockExchangeThreadsCode: vi.fn(),
+  mockGetThreadsProfile: vi.fn(),
+  mockReconnectThreadsHandler: vi.fn(),
+  mockIntegrationCreate: vi.fn(async () => undefined),
+  mockGoogleSheetsHandleRequest: vi.fn(),
   mockExchangeAndVerifyGoogleCalendar: vi.fn(),
   mockCreateGoogleFromOAuthCallback: vi.fn(),
   mockResolveOwnerForWorkspace: vi.fn(async () => "platform-owner-1"),
@@ -130,6 +146,11 @@ vi.mock("@chatbotx.io/business", () => ({
     findByWorkspaceId: mockFindFacebookAdsByWorkspaceId,
   },
   connectionStateService: { transition: mockConnectionTransition },
+  userService: {
+    recordConnectionAuthorization: mockRecordConnectionAuthorization,
+  },
+  integrationThreadsService: { connect: mockThreadsConnect },
+  integrationService: { create: mockIntegrationCreate },
   platformCredentialService: { resolveForOwner: mockResolveForOwner },
   hasWorkspaceAccess: mockHasWorkspaceAccess,
   workspaceService: {
@@ -302,7 +323,7 @@ vi.mock("@/features/external-calendars/lib/google-calendar-provider", () => ({
 }))
 
 vi.mock("@/features/integration-tiktok/actions/connect.action", () => ({
-  connectTiktokHandler: vi.fn(),
+  connectTiktokHandler: mockConnectTiktokHandler,
 }))
 
 vi.mock("@/features/integration-zalo/actions/connect-zalo.action", () => ({
@@ -313,6 +334,24 @@ vi.mock("@/features/integration-zalo/actions/reconnect-callback", () => ({
   reconnectZaloHandler: mockReconnectZaloHandler,
 }))
 
+vi.mock("@/features/integration-threads/actions/reconnect-callback", () => ({
+  reconnectThreadsHandler: mockReconnectThreadsHandler,
+}))
+
+vi.mock("@chatbotx.io/integration-threads", async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import("@chatbotx.io/integration-threads")>()
+  return {
+    ...actual,
+    exchangeCodeForToken: mockExchangeThreadsCode,
+    getThreadsProfile: mockGetThreadsProfile,
+    buildThreadsAuthValue: vi.fn(() => ({
+      authType: "oauth2",
+      tokens: { accessToken: "threads-token" },
+    })),
+  }
+})
+
 vi.mock("@/integration", () => ({
   integrations: {
     messenger: {},
@@ -321,8 +360,9 @@ vi.mock("@/integration", () => ({
     facebookAds: {},
     tiktok: {},
     zalo: {},
+    threads: {},
     googleCalendar: {},
-    googleSheets: {},
+    googleSheets: { handleRequest: mockGoogleSheetsHandleRequest },
   },
 }))
 
@@ -428,6 +468,7 @@ describe("handleCallback OAuth reconnect", () => {
       },
       workspaceId: "1",
       integrationId: "5",
+      userId: "user-1",
       code: "code-1",
       callbackUrl: "https://broker.example.com/integrations/messenger/callback",
     })
@@ -618,6 +659,19 @@ describe("handleCallback OAuth reconnect", () => {
       providerCalendarId: "primary",
       email: "owner@example.com",
     })
+    expect(mockRecordConnectionAuthorization).toHaveBeenCalledTimes(1)
+    expect(mockRecordConnectionAuthorization).toHaveBeenCalledWith({
+      userId: "user-1",
+      provider: "googleCalendar",
+      auth: { type: "oauth2", tokens: { accessToken: "google-token" } },
+      phase: "authorizationObtained",
+      workspaceId: "1",
+    })
+    expect(
+      mockRecordConnectionAuthorization.mock.invocationCallOrder[0],
+    ).toBeLessThan(
+      mockCreateGoogleFromOAuthCallback.mock.invocationCallOrder[0] as number,
+    )
 
     const redirectTarget = new URL(mockRedirect.mock.calls[0][0])
     expect(redirectTarget.searchParams.get("externalCalendarConnect")).toBe(
@@ -691,6 +745,14 @@ describe("handleCallback OAuth reconnect", () => {
     )
 
     expect(mockUpsertFacebookAds).toHaveBeenCalled()
+    expect(mockRecordConnectionAuthorization).toHaveBeenCalledTimes(1)
+    expect(mockRecordConnectionAuthorization).toHaveBeenCalledWith(
+      expect.objectContaining({
+        userId: "user-1",
+        provider: "facebookAds",
+        phase: "authorizationObtained",
+      }),
+    )
     expect(mockWithAuditContext).toHaveBeenCalledWith(
       expect.objectContaining({
         userId: "user-1",
@@ -729,6 +791,17 @@ describe("handleCallback OAuth reconnect", () => {
         version: "v23.0",
       }),
       tokenExpiresAt: expect.any(Date),
+    })
+    expect(mockRecordConnectionAuthorization).toHaveBeenCalledTimes(1)
+    expect(mockRecordConnectionAuthorization).toHaveBeenCalledWith({
+      userId: "user-1",
+      provider: "facebookAds",
+      auth: expect.objectContaining({
+        authType: "custom",
+        accessToken: "ads-token",
+      }),
+      phase: "authorizationObtained",
+      workspaceId: "1",
     })
     expect(mockWithAuditContext).toHaveBeenCalledWith(
       {
@@ -819,6 +892,9 @@ describe("handleCallback OAuth reconnect", () => {
       }),
     )
     expect(mockUpsertFacebookAds).not.toHaveBeenCalled()
+    // A per-integration ads grant is not a provider connection of its own, so
+    // it must not take the user's backup slot for the channel provider.
+    expect(mockRecordConnectionAuthorization).not.toHaveBeenCalled()
     expect(mockRedirect).toHaveBeenCalledWith(REFERER)
   })
 
@@ -907,6 +983,7 @@ describe("handleCallback OAuth reconnect", () => {
       },
       workspaceId: "1",
       integrationId: "5",
+      userId: "user-1",
       req: request,
       callbackUrl: "https://broker.example.com/integrations/zalo/callback",
     })
@@ -977,6 +1054,7 @@ describe("handleCallback OAuth reconnect", () => {
       },
       workspaceId: "1",
       integrationId: "7",
+      userId: "user-1",
       userToken: "ig-user-token",
     })
 
@@ -1008,11 +1086,118 @@ describe("handleCallback OAuth reconnect", () => {
       },
       workspaceId: "1",
       integrationId: "7",
+      userId: "user-1",
       userToken: "igfb-user-token",
     })
 
     const redirectTarget = new URL(mockRedirect.mock.calls[0][0])
     expect(redirectTarget.searchParams.get("reconnect")).toBe("error")
     expect(redirectTarget.searchParams.get("reason")).toBe("accountNotFound")
+  })
+
+  test("threads reconnect hands the acting user to the handler", async () => {
+    mockExchangeThreadsCode.mockResolvedValue({ accessToken: "threads-token" })
+    mockReconnectThreadsHandler.mockResolvedValue({ status: "success" })
+
+    await handleCallback(
+      "threads",
+      buildCallbackRequest("threads", {
+        workspaceId: "1",
+        referer: REFERER,
+        reconnectIntegrationId: "9",
+      }),
+    )
+
+    expect(mockReconnectThreadsHandler).toHaveBeenCalledWith(
+      expect.objectContaining({
+        workspaceId: "1",
+        integrationId: "9",
+        userId: "user-1",
+        accessToken: "threads-token",
+      }),
+    )
+    // The handler records its own validated reconnect; the callback adds none.
+    expect(mockRecordConnectionAuthorization).not.toHaveBeenCalled()
+  })
+
+  test("threads connect records the obtained auth once, before the integration is created", async () => {
+    mockExchangeThreadsCode.mockResolvedValue({ accessToken: "threads-token" })
+    mockGetThreadsProfile.mockResolvedValue({ id: "th-1", username: "me" })
+    mockThreadsConnect.mockResolvedValue({ id: "integration-1" })
+
+    await handleCallback(
+      "threads",
+      buildCallbackRequest("threads", { workspaceId: "1", referer: REFERER }),
+    )
+
+    expect(mockRecordConnectionAuthorization).toHaveBeenCalledTimes(1)
+    expect(mockRecordConnectionAuthorization).toHaveBeenCalledWith({
+      userId: "user-1",
+      provider: "threads",
+      auth: { authType: "oauth2", tokens: { accessToken: "threads-token" } },
+      phase: "authorizationObtained",
+      workspaceId: "1",
+    })
+    expect(
+      mockRecordConnectionAuthorization.mock.invocationCallOrder[0],
+    ).toBeLessThan(mockThreadsConnect.mock.invocationCallOrder[0] as number)
+  })
+
+  test("threads connect keeps the capture when creating the integration fails", async () => {
+    mockExchangeThreadsCode.mockResolvedValue({ accessToken: "threads-token" })
+    mockGetThreadsProfile.mockResolvedValue({ id: "th-1", username: "me" })
+    mockThreadsConnect.mockRejectedValue(new Error("boom"))
+
+    await expect(
+      handleCallback(
+        "threads",
+        buildCallbackRequest("threads", { workspaceId: "1", referer: REFERER }),
+      ),
+    ).rejects.toThrow("boom")
+
+    expect(mockRecordConnectionAuthorization).toHaveBeenCalledTimes(1)
+  })
+
+  test("google sheets connect records the obtained auth once, before the integration is created", async () => {
+    const sheetsAuth = {
+      authType: "oauth2",
+      tokens: { accessToken: "gs-token" },
+    }
+    mockGoogleSheetsHandleRequest.mockResolvedValue(sheetsAuth)
+
+    await handleCallback(
+      "googleSheets",
+      buildCallbackRequest("google-sheets", {
+        workspaceId: "1",
+        referer: REFERER,
+      }),
+    )
+
+    expect(mockRecordConnectionAuthorization).toHaveBeenCalledTimes(1)
+    expect(mockRecordConnectionAuthorization).toHaveBeenCalledWith({
+      userId: "user-1",
+      provider: "googleSheets",
+      auth: sheetsAuth,
+      phase: "authorizationObtained",
+      workspaceId: "1",
+    })
+    expect(
+      mockRecordConnectionAuthorization.mock.invocationCallOrder[0],
+    ).toBeLessThan(mockIntegrationCreate.mock.invocationCallOrder[0] as number)
+  })
+
+  test("zalo and tiktok connects add no capture at the callback (their handlers own it)", async () => {
+    await handleCallback(
+      "zalo",
+      buildCallbackRequest("zalo", { workspaceId: "1", referer: REFERER }),
+    )
+    await handleCallback(
+      "tiktok",
+      buildCallbackRequest("tiktok", { workspaceId: "1", referer: REFERER }),
+    )
+
+    expect(mockConnectZaloHandler).toHaveBeenCalled()
+    expect(mockConnectTiktokHandler).toHaveBeenCalled()
+    expect(mockRecordConnectionAuthorization).not.toHaveBeenCalled()
   })
 })

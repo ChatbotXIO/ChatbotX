@@ -15,6 +15,8 @@ const findById = vi.fn()
 const updateAuth = vi.fn()
 const commitReconnect = vi.fn()
 
+const recordConnectionAuthorization = vi.fn(async () => undefined)
+
 vi.mock("@chatbotx.io/business", () => ({
   zaloIntegrationService: {
     findById,
@@ -23,6 +25,7 @@ vi.mock("@chatbotx.io/business", () => ({
   connectionStateService: {
     commitReconnect,
   },
+  userService: { recordConnectionAuthorization },
 }))
 
 vi.mock("@chatbotx.io/business/connection", () => ({
@@ -56,6 +59,7 @@ const { reconnectZaloHandler } = await import("../reconnect-callback")
 
 const WORKSPACE_ID = "100"
 const INTEGRATION_ID = "200"
+const USER_ID = "user-1"
 
 function invoke() {
   return reconnectZaloHandler({
@@ -65,6 +69,7 @@ function invoke() {
     } as never,
     workspaceId: WORKSPACE_ID,
     integrationId: INTEGRATION_ID,
+    userId: USER_ID,
     req: new Request("https://app.example/callback"),
     callbackUrl: "https://app.example/callback",
   })
@@ -129,5 +134,35 @@ describe("reconnectZaloHandler — Part 1: transaction atomicity", () => {
       "My OA",
       SENTINEL_TX,
     )
+  })
+})
+
+describe("reconnectZaloHandler — connection authorization capture", () => {
+  test("records the validated auth once, before the reconnect is committed", async () => {
+    await invoke()
+
+    expect(recordConnectionAuthorization).toHaveBeenCalledTimes(1)
+    expect(recordConnectionAuthorization).toHaveBeenCalledWith({
+      userId: USER_ID,
+      provider: "zalo",
+      auth: expect.objectContaining({ oaId: "oa-1" }),
+      phase: "reconnectValidated",
+      workspaceId: WORKSPACE_ID,
+    })
+    expect(
+      recordConnectionAuthorization.mock.invocationCallOrder[0],
+    ).toBeLessThan(commitReconnect.mock.invocationCallOrder[0] as number)
+  })
+
+  test("records nothing when the authorized OA is not the connected one", async () => {
+    handleRequest.mockResolvedValue({
+      oaId: "oa-other",
+      metadata: { oaName: "Other" },
+    })
+
+    const result = await invoke()
+
+    expect(result).toEqual({ status: "error", reason: "accountNotFound" })
+    expect(recordConnectionAuthorization).not.toHaveBeenCalled()
   })
 })

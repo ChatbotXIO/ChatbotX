@@ -97,6 +97,9 @@ const encryptedCandidatesSchema = z.array(
     authExpiresAt: z.string().optional(),
     avatarUrl: z.string().optional(),
     alreadyConnected: z.enum(["this_workspace", "other_workspace"]).optional(),
+    unavailableReason: z
+      .enum(["insufficientPermissions", "missingAccessToken"])
+      .optional(),
     auth: z.unknown(),
   }),
 )
@@ -183,6 +186,99 @@ describe("connectTargets — ConnectSession.encryptedAuth tamper detection (real
     expect(result.outcomes).toEqual([
       { targetId: "page-1", status: "failed", reason: "inProgress" },
     ])
+  })
+
+  describe("target and candidate precedence", () => {
+    const encryptSelectable = () =>
+      encryptUtils.encryptObject(
+        [
+          {
+            sourceId: "page-1",
+            displayName: "Page One",
+            auth: { authType: "none" },
+          },
+        ],
+        `connect-session:${baseSession.id}`,
+      )
+
+    const runWith = async (
+      targets: Record<string, unknown>[],
+      targetIds: string[],
+    ) => {
+      mocks.findByIdForWorkspace.mockResolvedValue({
+        ...baseSession,
+        targets,
+        encryptedAuth: await encryptSelectable(),
+      })
+      mocks.recordResults.mockResolvedValue({
+        ...baseSession,
+        status: "awaiting_selection",
+      })
+      return await connectTargets({
+        sessionId: baseSession.id,
+        workspaceId: baseSession.workspaceId,
+        targetIds,
+      })
+    }
+
+    it("reports an id with no target as unknown", async () => {
+      const result = await runWith(baseSession.targets, ["page-404"])
+      expect(result.outcomes).toEqual([
+        { targetId: "page-404", status: "failed", reason: "unknown" },
+      ])
+      expect(mocks.claimTarget).not.toHaveBeenCalled()
+    })
+
+    it("reports an unavailable target whose candidate was never stored as notSelectable", async () => {
+      const result = await runWith(
+        [
+          {
+            id: "page-2",
+            name: "Page Two",
+            selectable: false,
+            disabledReason: "insufficientPermissions",
+          },
+        ],
+        ["page-2"],
+      )
+      expect(result.outcomes).toEqual([
+        { targetId: "page-2", status: "failed", reason: "notSelectable" },
+      ])
+      expect(mocks.claimTarget).not.toHaveBeenCalled()
+    })
+
+    it("reports an already connected target whose candidate was never stored as alreadyConnected", async () => {
+      const result = await runWith(
+        [
+          {
+            id: "page-3",
+            name: "Page Three",
+            selectable: false,
+            alreadyConnected: "other_workspace",
+          },
+        ],
+        ["page-3"],
+      )
+      expect(result.outcomes).toEqual([
+        {
+          targetId: "page-3",
+          status: "duplicated",
+          reason: "alreadyConnected",
+        },
+      ])
+      expect(mocks.claimTarget).not.toHaveBeenCalled()
+    })
+
+    it("reports a selectable target without a stored candidate as unknown", async () => {
+      const result = await runWith(
+        [{ id: "page-4", name: "Page Four", selectable: true }],
+        ["page-4"],
+      )
+      expect(result.outcomes).toEqual([
+        { targetId: "page-4", status: "failed", reason: "unknown" },
+      ])
+      expect(mocks.claimTarget).not.toHaveBeenCalled()
+    })
   })
 
   it("rejects a tampered encryptedAuth ciphertext instead of silently decrypting garbage (regression: replaces the deleted facebook-pending-auth tamper test)", async () => {

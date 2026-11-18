@@ -25,6 +25,7 @@ import {
   getSafeSinceTime,
   insertDmConversationsIfAbsent,
 } from "@chatbotx.io/database/repositories"
+import { userColumnsWithoutSecrets } from "@chatbotx.io/database/repositories/user-columns"
 import { conversationModel, inboxModel } from "@chatbotx.io/database/schema"
 import type {
   AttachmentModel,
@@ -843,7 +844,7 @@ class ConversationService extends BaseService {
           with: { inbox: true },
         },
         messages: true,
-        assignedUser: true,
+        assignedUser: { columns: userColumnsWithoutSecrets },
         assignedInboxTeam: true,
       },
     })

@@ -4734,7 +4734,10 @@
       "noPagesTitle": "Facebook Sayfası bulunamadı",
       "noPagesDescription": "Bir İşletme Yöneticisi içindeki sayfalar, bağlantı sırasında İşletme Yöneticisi erişimi gerektirir. Messenger'ı yeniden bağlayın ve istenen tüm izinleri verin.",
       "alreadyConnectedNote": "Bu sayfa zaten bağlı",
-      "tryAgain": "Yeniden bağlanmayı dene"
+      "tryAgain": "Yeniden bağlanmayı dene",
+      "unavailableInsufficientPermissions": "Bu Sayfayı bağlamak için Sayfada tam yönetici erişimine sahip olmanız gerekir.",
+      "unavailableMissingAccessToken": "Facebook bu Sayfaya erişim izni vermedi. Yeniden bağlanın ve erişime izin verin.",
+      "unavailableGeneric": "Bu Sayfa bağlanamıyor."
     },
     "title": "Facebook Messenger",
     "tabs": {

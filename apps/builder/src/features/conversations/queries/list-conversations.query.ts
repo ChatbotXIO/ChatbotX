@@ -9,6 +9,7 @@ import {
   contactInboxOperationalColumns,
   createMessageRepository,
 } from "@chatbotx.io/database/repositories"
+import { userColumnsWithoutSecrets } from "@chatbotx.io/database/repositories/user-columns"
 import type {
   ContactInboxOperationalModel,
   InboxModel,
@@ -167,7 +168,7 @@ export async function listConversations(
         columns: contactInboxOperationalColumns,
         with: { inbox: true },
       },
-      assignedUser: true,
+      assignedUser: { columns: userColumnsWithoutSecrets },
       assignedInboxTeam: true,
     },
   })

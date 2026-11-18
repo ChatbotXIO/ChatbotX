@@ -56,6 +56,9 @@ describe("userService.requestAccountDeletion", () => {
     const markDeletionRequested = vi
       .spyOn(userRepository, "markDeletionRequested")
       .mockResolvedValue()
+    const clearConnectionAuthorizations = vi
+      .spyOn(userRepository, "clearConnectionAuthorizations")
+      .mockResolvedValue()
     vi.spyOn(userRepository, "findForAccountDeletion").mockResolvedValue({
       ...dueUser,
       scheduledDeletionAt,
@@ -70,6 +73,10 @@ describe("userService.requestAccountDeletion", () => {
     ).resolves.toEqual({ scheduledDeletionAt })
 
     expect(markDeletionRequested).not.toHaveBeenCalled()
+    expect(clearConnectionAuthorizations).toHaveBeenCalledWith(
+      "user-1",
+      expect.anything(),
+    )
     expect(finalize).toHaveBeenCalledWith([])
   })
 
@@ -115,6 +122,10 @@ describe("userService.requestAccountDeletion", () => {
     vi.spyOn(oauthConsentRepository, "deleteByUserId").mockResolvedValue(0)
     vi.spyOn(oauthRefreshTokenRepository, "deleteByUserId").mockResolvedValue(0)
     vi.spyOn(authAccountRepository, "clearTokensByUserId").mockResolvedValue()
+    vi.spyOn(
+      userRepository,
+      "clearConnectionAuthorizations",
+    ).mockResolvedValue()
     mockTransaction(transaction)
 
     const result = await userService.requestAccountDeletion({
@@ -134,6 +145,10 @@ describe("userService.requestAccountDeletion", () => {
       transaction,
     )
     expect(authAccountRepository.clearTokensByUserId).toHaveBeenCalledWith(
+      "user-1",
+      transaction,
+    )
+    expect(userRepository.clearConnectionAuthorizations).toHaveBeenCalledWith(
       "user-1",
       transaction,
     )
@@ -187,6 +202,10 @@ describe("userService.requestAccountDeletion", () => {
     vi.spyOn(oauthConsentRepository, "deleteByUserId").mockResolvedValue(0)
     vi.spyOn(oauthRefreshTokenRepository, "deleteByUserId").mockResolvedValue(0)
     vi.spyOn(authAccountRepository, "clearTokensByUserId").mockResolvedValue()
+    vi.spyOn(
+      userRepository,
+      "clearConnectionAuthorizations",
+    ).mockResolvedValue()
     const workspaceServicePrivate = workspaceService as unknown as {
       invalidateWorkspaceCache: (id: string, tx: unknown) => Promise<void>
     }

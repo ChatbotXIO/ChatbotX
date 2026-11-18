@@ -4,11 +4,13 @@ import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
  * Hoisted mock handles. `vi.mock` factories run before module top-level, so any
  * value a factory references must be created with `vi.hoisted`.
  */
-const { betterAuthMock, findById, revokeAllForUser } = vi.hoisted(() => ({
-  betterAuthMock: vi.fn((config: Record<string, unknown>) => config),
-  findById: vi.fn(),
-  revokeAllForUser: vi.fn(async () => undefined),
-}))
+const { betterAuthMock, drizzleAdapterMock, findById, revokeAllForUser } =
+  vi.hoisted(() => ({
+    betterAuthMock: vi.fn((config: Record<string, unknown>) => config),
+    drizzleAdapterMock: vi.fn((..._args: unknown[]) => ({})),
+    findById: vi.fn(),
+    revokeAllForUser: vi.fn(async () => undefined),
+  }))
 
 // Mirrors trusted-origins-build-phase.test.ts's approach: stub `betterAuth` to
 // just hand back its config object so we can inspect the `plugins` array
@@ -23,7 +25,7 @@ vi.mock("better-auth", async () => {
 })
 
 vi.mock("better-auth/adapters/drizzle", () => ({
-  drizzleAdapter: () => ({}),
+  drizzleAdapter: drizzleAdapterMock,
 }))
 
 vi.mock("better-auth/next-js", () => ({
@@ -270,5 +272,52 @@ describe("createAuth account linking", () => {
       ).rejects.toThrow()
       expect(upgrade).not.toHaveBeenCalled()
     })
+  })
+})
+
+describe("createAuth keeps the encrypted connection authorization backup out of auth", () => {
+  const SECRET_COLUMN = "connectionAuthorizations"
+
+  beforeEach(() => {
+    vi.resetModules()
+    betterAuthMock.mockClear()
+    drizzleAdapterMock.mockClear()
+    vi.stubEnv("SKIP_ENV_CHECK", "true")
+    vi.stubEnv("NEXT_PUBLIC_BUILDER_URL", BUILDER_URL)
+    vi.stubEnv("NEXT_PUBLIC_BROKER_URL", BROKER_URL)
+    vi.stubEnv("BETTER_AUTH_SECRET", "test-secret")
+    vi.stubEnv("NEXT_PHASE", "phase-production-build")
+  })
+
+  afterEach(() => {
+    vi.unstubAllEnvs()
+  })
+
+  test("never declares the column as a user field, so better-auth cannot return it", async () => {
+    const { createAuth } = await import("../src/server")
+    createAuth({})
+    const config = betterAuthMock.mock.calls.at(-1)?.[0] as {
+      user: { additionalFields: Record<string, unknown> }
+    }
+
+    expect(Object.keys(config.user.additionalFields)).not.toContain(
+      SECRET_COLUMN,
+    )
+  })
+
+  test("does not enable adapter debug logs, which print raw rows", async () => {
+    const { createAuth } = await import("../src/server")
+    createAuth({})
+    const adapterConfig = drizzleAdapterMock.mock.calls.at(-1)?.[1] as Record<
+      string,
+      unknown
+    >
+    const config = betterAuthMock.mock.calls.at(-1)?.[0] as Record<
+      string,
+      unknown
+    >
+
+    expect(adapterConfig.debugLogs).toBeFalsy()
+    expect(JSON.stringify(config.advanced ?? {})).not.toContain("debugLogs")
   })
 })
