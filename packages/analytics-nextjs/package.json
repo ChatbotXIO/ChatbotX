@@ -18,16 +18,16 @@
     "@chatbotx.io/redis": "workspace:*",
     "@chatbotx.io/ui": "workspace:*",
     "@hookform/resolvers": "^5.2.2",
-    "@orpc/client": "^1.15.4",
-    "@orpc/server": "^1.15.4",
+    "@orpc/client": "^1.16.2",
+    "@orpc/server": "^1.16.2",
     "@t3-oss/env-nextjs": "catalog:",
     "date-fns": "catalog:",
     "lucide-react": "catalog:",
-    "next-intl": "^4.14.8",
+    "next-intl": "^4.15.1",
     "react": "catalog:",
     "react-hook-form": "catalog:",
     "zod": "catalog:",
-    "zustand": "^5.0.12"
+    "zustand": "^5.1.0"
   },
   "devDependencies": {
     "@chatbotx.io/typescript-config": "workspace:*",

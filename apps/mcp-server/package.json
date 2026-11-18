@@ -48,7 +48,7 @@
     "eval:search": "tsx evals/search-audit.ts"
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.32.0",
+    "@modelcontextprotocol/sdk": "^1.32.2",
     "@t3-oss/env-core": "catalog:",
     "dotenv": "^17.4.2",
     "zod": "catalog:"
@@ -58,7 +58,7 @@
     "@chatbotx.io/flow-config": "workspace:*",
     "@chatbotx.io/logger": "workspace:*",
     "@chatbotx.io/vitest-config": "workspace:*",
-    "@orpc/zod": "^1.15.4",
+    "@orpc/zod": "^1.16.2",
     "@types/node": "catalog:",
     "ai": "catalog:",
     "dotenv-cli": "catalog:",

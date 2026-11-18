@@ -36,7 +36,7 @@
   ],
   "dependencies": {
     "@t3-oss/env-core": "catalog:",
-    "yargs": "^18.0.0",
+    "yargs": "^18.2.0",
     "zod": "catalog:"
   },
   "devDependencies": {

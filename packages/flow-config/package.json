@@ -12,7 +12,7 @@
   },
   "dependencies": {
     "@chatbotx.io/utils": "workspace:*",
-    "@xyflow/react": "^12.10.2",
+    "@xyflow/react": "^12.12.1",
     "date-fns": "catalog:",
     "libphonenumber-js": "catalog:",
     "zod": "catalog:"

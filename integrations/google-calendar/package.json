@@ -6,7 +6,7 @@
   "dependencies": {
     "@chatbotx.io/logger": "workspace:*",
     "@chatbotx.io/sdk": "workspace:*",
-    "@googleapis/calendar": "^20.1.0",
+    "@googleapis/calendar": "^20.2.0",
     "google-auth-library": "catalog:",
     "googleapis-common": "^9.3.1",
     "universal-error-normalizer": "catalog:",
