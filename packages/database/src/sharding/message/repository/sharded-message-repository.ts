@@ -1039,6 +1039,55 @@ export class ShardedMessageRepository implements IMessageRepository {
     return []
   }
 
+  async hardDeleteById(
+    id: string,
+    workspaceId: string,
+    createdAt: Date,
+  ): Promise<{ id: string }[]> {
+    // The write shard joins the time-range shards for the same reason as in
+    // `deleteAttachmentsByMessageId`: an attachment row can land beside its
+    // message in an adjacent shard.
+    const timeRangeShards = await this.getShardsForRange(createdAt, createdAt)
+    const writeShard = await this.shardManager.getWriteShardInfo(workspaceId)
+    const shards = this.mergeWriteShard(timeRangeShards, writeShard)
+    if (shards.length === 0) {
+      return []
+    }
+
+    const perShard = await Promise.all(
+      shards.map(async (shardInfo) => {
+        try {
+          const client = await this.shardManager.getShardClient(shardInfo.shard)
+          await client
+            .delete(attachmentModel)
+            .where(
+              and(
+                eq(attachmentModel.messageId, id),
+                eq(attachmentModel.workspaceId, workspaceId),
+              ),
+            )
+          return await client
+            .delete(messageModel)
+            .where(
+              and(
+                eq(messageModel.workspaceId, workspaceId),
+                eq(messageModel.id, id),
+                matchesCreatedAt(messageModel.createdAt, createdAt),
+              ),
+            )
+            .returning({ id: messageModel.id })
+        } catch (error) {
+          logger.warn(
+            { err: error, shardId: shardInfo.shard.id },
+            "Shard delete failed in hardDeleteById",
+          )
+          return []
+        }
+      }),
+    )
+    return perShard.flat() as { id: string }[]
+  }
+
   async listIncomingTextsByContactInbox({
     contactInboxId,
     limit,

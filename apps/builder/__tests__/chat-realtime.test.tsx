@@ -21,6 +21,7 @@ const chatStoreState = {
   applyAgentLastReadAt: vi.fn(),
   handleNewMessages: vi.fn(),
   markMessagesDeleted: vi.fn(),
+  removeMessages: vi.fn(),
   markMessageFailed: vi.fn(),
   settleSendResult: vi.fn(),
   assignMessageCommentId: vi.fn(),
@@ -118,7 +119,7 @@ describe("ChatRealtime — chat event parity", () => {
     expect(wholeStoreSelectionMock).not.toHaveBeenCalled()
   })
 
-  test("registers exactly the eleven chat events, no more, no fewer", async () => {
+  test("registers exactly the twelve chat events, no more, no fewer", async () => {
     await render()
     expect(Object.keys(capturedHandlers ?? {}).sort()).toEqual(
       [
@@ -132,6 +133,7 @@ describe("ChatRealtime — chat event parity", () => {
         "messageDeleted",
         "messageFailed",
         "messageIdAssigned",
+        "messageRemoved",
         "messageUpdated",
       ].sort(),
     )
@@ -151,6 +153,12 @@ describe("ChatRealtime — chat event parity", () => {
     await render()
     act(() => emit("messageDeleted", { messageIds: ["m1"] }))
     expect(chatStoreState.markMessagesDeleted).toHaveBeenCalledWith(["m1"])
+  })
+
+  test("messageRemoved drops the messages from the timeline", async () => {
+    await render()
+    act(() => emit("messageRemoved", { messageIds: ["m1"] }))
+    expect(chatStoreState.removeMessages).toHaveBeenCalledWith(["m1"])
   })
 
   test("messageIdAssigned assigns the comment id", async () => {

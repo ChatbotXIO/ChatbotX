@@ -3,6 +3,7 @@ import {
   ChatbotXException,
   notFoundException,
 } from "@chatbotx.io/business/errors"
+import type { SendFrom } from "@chatbotx.io/utils/send-from"
 import { ChatJobAction, chatQueue } from "@chatbotx.io/worker-config"
 import type { SendWhatsappTemplateRequest } from "../schema/send-template"
 
@@ -20,8 +21,14 @@ export async function sendWhatsappTemplateToConversation(props: {
   request: SendWhatsappTemplateRequest
   /** Who is sending: a signed-in member (`user`) or a workspace token (`api`). */
   sender: { initiatedBy: "api" } | { initiatedBy: "user"; adminId: string }
+  /**
+   * `inbox` for a member in the builder's Inbox (a failed template is kept
+   * with its error), `api` for the Public API/CLI/MCP (a failed one is removed
+   * and logged to the Error Log).
+   */
+  sendFrom: SendFrom
 }): Promise<void> {
-  const { workspaceId, conversationId, request, sender } = props
+  const { workspaceId, conversationId, request, sender, sendFrom } = props
   const conversation = await conversationService.findByOrFail({
     where: { id: conversationId, workspaceId },
   })
@@ -50,6 +57,7 @@ export async function sendWhatsappTemplateToConversation(props: {
       templateId: request.templateId,
       templateData: request.templateData,
       ...sender,
+      sendFrom,
     },
   })
 }

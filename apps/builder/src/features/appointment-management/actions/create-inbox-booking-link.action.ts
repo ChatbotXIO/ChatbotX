@@ -50,6 +50,7 @@ export const createInboxBookingLinkAction = workspaceActionClient
           ...linkInput,
           user: ctx.user,
           bypassThreadControlLock: parsedInput.bypassThreadControlLock,
+          sendFrom: "inbox",
         })
         return {
           url: sent.url,

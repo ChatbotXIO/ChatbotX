@@ -15,6 +15,7 @@ import {
 } from "@chatbotx.io/flow-config"
 import type { CommentAnchor, Variables } from "@chatbotx.io/sdk"
 import type { ErrorLogProvider } from "@chatbotx.io/utils/error-log"
+import type { SendFrom } from "@chatbotx.io/utils/send-from"
 import {
   type BotResponseTrackingContext,
   BROADCAST_SEND_PRIORITY,
@@ -44,7 +45,7 @@ export type ExecuteMultipleStepsProps = {
   metadata?: MetadataPayload
   isBulkBroadcast?: boolean
   quickReplies?: ButtonStepProps[]
-  sendFrom?: "inbox"
+  sendFrom?: SendFrom
   sentByUserId?: string
   nodeVisits?: NodeVisits
   triggerMessageId?: string

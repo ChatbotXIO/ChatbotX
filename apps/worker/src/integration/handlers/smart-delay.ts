@@ -14,6 +14,7 @@ import {
   metadataSchema,
 } from "@chatbotx.io/flow-config"
 import { createId } from "@chatbotx.io/utils"
+import type { SendFrom } from "@chatbotx.io/utils/send-from"
 import {
   type FlowJobPriorityOptions,
   flowContinuationJobOptions,
@@ -33,7 +34,7 @@ type SmartDelayJobSpec = {
 
 type SmartDelayResumeJobExtras = {
   metadata?: MetadataPayload
-  sendFrom?: "inbox"
+  sendFrom?: SendFrom
   appointmentId?: string
 }
 
@@ -167,7 +168,7 @@ export async function scheduleSmartDelayResume(props: {
   nodeId: string
   stepId: string
   metadata?: MetadataPayload
-  sendFrom?: "inbox"
+  sendFrom?: SendFrom
   appointmentId?: string
 }): Promise<void> {
   const rowId = createId()

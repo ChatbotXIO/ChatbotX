@@ -110,6 +110,24 @@ const isPrivateReplyAttributes = (contentAttributes: unknown): boolean =>
   contentAttributes.isPrivateReply === true
 
 /**
+ * `contentAttributes` key marking a message a workspace member sent from the
+ * builder's Inbox (`sendFrom: "inbox"`). Stamped when the row is created so a
+ * retry or a late delivery-status callback can still tell it apart.
+ */
+export const SENT_FROM_INBOX_KEY = "sentFromInbox"
+
+/**
+ * Whether a message was sent by a workspace member from the Inbox. Only such a
+ * message is kept, with its error, when its send fails for good; every other
+ * failed outgoing message is removed and its error goes to the Error Log.
+ */
+export const isSentFromInbox = (contentAttributes: unknown): boolean =>
+  typeof contentAttributes === "object" &&
+  contentAttributes !== null &&
+  SENT_FROM_INBOX_KEY in contentAttributes &&
+  contentAttributes[SENT_FROM_INBOX_KEY] === true
+
+/**
  * A message that can be sent again: an outgoing message a person or the API
  * typed (never a bot or a flow), a DM or a private reply (stored as a `comment`
  * but delivered as a DM), that failed and was never given a provider id. A

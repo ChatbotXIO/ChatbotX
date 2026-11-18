@@ -35,6 +35,7 @@ import {
   SdkException,
   type Variables,
 } from "@chatbotx.io/sdk"
+import type { SendFrom } from "@chatbotx.io/utils/send-from"
 import {
   type BotResponseTrackingContext,
   flowContinuationJobOptions,
@@ -171,7 +172,7 @@ type ExecuteStepsAndQuickRepliesProps = {
   trackingContext?: BotResponseTrackingContext
   metadata?: MetadataPayload
   isBulkBroadcast?: boolean
-  sendFrom?: "inbox"
+  sendFrom?: SendFrom
   sentByUserId?: string
   nodeVisits?: NodeVisits
   triggerMessageId?: string

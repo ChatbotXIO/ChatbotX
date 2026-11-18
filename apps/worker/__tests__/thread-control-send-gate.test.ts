@@ -161,11 +161,14 @@ const flowStepArgs = {
   },
 }
 
+// An agent's message from the Inbox: a refused send is kept with its error,
+// so the gate's verdict shows up as a `sendError` on the row.
 const sendDirect = (contactInbox: Record<string, unknown>) =>
   sendMessageToChannel({
     conversation: conversation as never,
     contactInbox: contactInbox as never,
     message: message as never,
+    sendFrom: "inbox",
   })
 
 const rejection = (code: number) =>
@@ -297,6 +300,7 @@ describe("send gate — sendMessageToChannel (Service messages)", () => {
         type: "comment",
         contentAttributes: { isPrivateReply: true },
       } as never,
+      sendFrom: "inbox",
     })
 
     expect(mocks.runChannelHandler).not.toHaveBeenCalled()

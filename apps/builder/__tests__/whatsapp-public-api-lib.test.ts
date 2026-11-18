@@ -53,6 +53,7 @@ describe("sendWhatsappTemplateToConversation", () => {
         conversationId: "1",
         request: { ...request, inboxId: "5" },
         sender: { initiatedBy: "api" },
+        sendFrom: "api",
       }),
     ).rejects.toThrow("no WhatsApp inbox")
     expect(mocks.queueAdd).not.toHaveBeenCalled()
@@ -70,6 +71,7 @@ describe("sendWhatsappTemplateToConversation", () => {
       conversationId: "1",
       request,
       sender: { initiatedBy: "api" },
+      sendFrom: "api",
     })
 
     expect(mocks.queueAdd.mock.calls[0][1].data.contactInbox.id).toBe("w-new")
@@ -87,6 +89,7 @@ describe("sendWhatsappTemplateToConversation", () => {
         conversationId: "1",
         request,
         sender: { initiatedBy: "api" },
+        sendFrom: "api",
       }),
     ).rejects.toThrow("Inbox not found")
     expect(mocks.queueAdd).not.toHaveBeenCalled()
@@ -103,6 +106,7 @@ describe("sendWhatsappTemplateToConversation", () => {
       conversationId: "1",
       request: { ...request, inboxId: "7" },
       sender: { initiatedBy: "api" },
+      sendFrom: "api",
     })
     expect(mocks.queueAdd).toHaveBeenCalledTimes(1)
   })
@@ -118,11 +122,13 @@ describe("sendWhatsappTemplateToConversation", () => {
       conversationId: "1",
       request: { ...request, inboxId: "7" },
       sender: { initiatedBy: "user", adminId: "admin-9" },
+      sendFrom: "inbox",
     })
 
     expect(mocks.queueAdd.mock.calls[0][1].data).toMatchObject({
       initiatedBy: "user",
       adminId: "admin-9",
+      sendFrom: "inbox",
     })
   })
 
@@ -137,10 +143,12 @@ describe("sendWhatsappTemplateToConversation", () => {
       conversationId: "1",
       request: { ...request, inboxId: "7" },
       sender: { initiatedBy: "api" },
+      sendFrom: "api",
     })
 
     const data = mocks.queueAdd.mock.calls[0][1].data
     expect(data.initiatedBy).toBe("api")
+    expect(data.sendFrom).toBe("api")
     expect(data).not.toHaveProperty("adminId")
   })
 })

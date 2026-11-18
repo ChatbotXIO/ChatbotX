@@ -1,8 +1,12 @@
-import { isBulkOutboundMetadata } from "@chatbotx.io/flow-config"
+import { logProviderErrorForChannel } from "@chatbotx.io/business/error-log"
+import {
+  isBulkOutboundMetadata,
+  isProactiveOutboundMetadata,
+} from "@chatbotx.io/flow-config"
 import { ChatJobAction, type ChatJobData } from "@chatbotx.io/worker-config"
 import { settleCommentAutomationFailure } from "../../lib/comment-automation-anchor"
 import { logger } from "../../lib/logger"
-import { recordMessageSendError } from "./send-message"
+import { settleFailedOutgoingMessage } from "./send-message"
 
 /** The `sendError` / Error Logs detail for a send the bot quota dropped. */
 export const BOT_MESSAGE_QUOTA_REACHED_ERROR = "Bot message limit reached"
@@ -12,9 +16,12 @@ export const BOT_MESSAGE_QUOTA_REACHED_ERROR = "Bot message limit reached"
  * keep looking delivered.
  *
  * - `sendChannelMessage`: the outgoing `Message` row already exists (a public
- *   comment reply is written to the inbox before it is enqueued), so it gets a
- *   `sendError` and a realtime `messageFailed`, and its comment-automation event
- *   flips from the optimistic `sent` to `failed`.
+ *   comment reply is written to the inbox before it is enqueued). A bot message
+ *   is never one a member sent from the Inbox, so it is removed for good (with
+ *   a realtime `messageRemoved`) and the failure is written to the Error Log —
+ *   except for a broadcast/sequence send, whose failures stay in its own
+ *   stats. Its comment-automation event flips from the optimistic `sent` to
+ *   `failed`.
  * - `sendFlowMessage` carrying a comment-automation anchor: no message exists
  *   yet, so only the automation event is settled `failed`. A `spent` anchor
  *   means the comment's first DM already went out, so that event stays as is.
@@ -48,19 +55,33 @@ async function recordSkippedChannelMessage(
     { type: typeof ChatJobAction.sendChannelMessage }
   >["data"],
 ): Promise<void> {
-  const { conversation, message, metadata, isBulkBroadcast } = data
+  const { conversation, contactInbox, message, metadata, isBulkBroadcast } =
+    data
   const isBulkOutbound =
     isBulkOutboundMetadata(metadata, isBulkBroadcast) ||
     isBulkOutboundMetadata(message.contentAttributes?.metadata, isBulkBroadcast)
 
-  await recordMessageSendError(
-    message.id,
-    message.clientId,
-    conversation.workspaceId,
-    message.createdAt ? new Date(message.createdAt) : undefined,
-    BOT_MESSAGE_QUOTA_REACHED_ERROR,
-    { conversationId: conversation.id, silent: isBulkOutbound },
-  )
+  const outcome = await settleFailedOutgoingMessage({
+    message,
+    conversationId: conversation.id,
+    workspaceId: conversation.workspaceId,
+    errorMessage: BOT_MESSAGE_QUOTA_REACHED_ERROR,
+    sendFrom: data.sendFrom,
+    silent: isBulkOutbound,
+  })
+  // No `message:failed` is emitted for a quota skip, so the removed message's
+  // Error Log row is written here. Bulk sends keep it out, as everywhere.
+  const isBulkOrigin =
+    isProactiveOutboundMetadata(metadata) ||
+    isProactiveOutboundMetadata(message.contentAttributes?.metadata)
+  if (outcome === "removed" && !(isBulkOutbound || isBulkOrigin)) {
+    await logProviderErrorForChannel(contactInbox.channel, {
+      workspaceId: conversation.workspaceId,
+      contactId: conversation.contactId,
+      sourceId: contactInbox.sourceId,
+      error: new Error(BOT_MESSAGE_QUOTA_REACHED_ERROR),
+    })
+  }
   await settleCommentAutomationFailure({
     contentAttributes: message.contentAttributes,
     errorDetail: BOT_MESSAGE_QUOTA_REACHED_ERROR,

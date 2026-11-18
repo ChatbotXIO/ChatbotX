@@ -26,6 +26,7 @@ import type {
   MessageInboundOrderEntity,
   OutgoingMessage,
 } from "@chatbotx.io/sdk"
+import type { SendFrom } from "@chatbotx.io/utils/send-from"
 import { type JobsOptions, Queue } from "bullmq"
 import {
   defaultJobOptions,
@@ -418,7 +419,7 @@ export type IntegrationJobRunFlowNode = {
      */
     isBulkBroadcast?: boolean
     appointmentId?: string
-    sendFrom?: "inbox"
+    sendFrom?: SendFrom
     /**
      * The inbox user who sent the flow (`sendFrom: "inbox"`), for the
      * `{{admin_name}}` / `{{admin_team_name}}` variables. Like `sendFrom` it is

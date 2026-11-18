@@ -6,6 +6,7 @@ import {
   emailTrackingService,
   inboxService,
   integrationSmtpService,
+  logProviderError,
   resolveTenantSettings,
   signEmailClickUrl,
   workspaceService,
@@ -28,6 +29,7 @@ import type {
 import { renderDynamicEmailHtml } from "@chatbotx.io/mail/dynamic"
 import { contactVariableService } from "@chatbotx.io/variables"
 import type { IntegrationJobRecordEmailTrackingTransition } from "@chatbotx.io/worker-config"
+import { isBulkSendOrigin } from "../../lib/bulk-send-origin"
 import { resolveButtonUrl } from "../../lib/convert-button"
 import { logger } from "../../lib/logger"
 import type { ExecuteStepProps } from "./flow"
@@ -122,7 +124,7 @@ export async function sendEmail({
   flowVersion,
   step,
   contactInbox,
-  metadata: _metadata,
+  metadata,
   sentByUserId,
 }: ExecuteStepProps<EmailStepSchema>) {
   const contact = await contactService.findBy({
@@ -233,15 +235,28 @@ export async function sendEmail({
       subject,
       html: await renderDynamicEmailHtml(props),
     })
-  } catch {
+  } catch (error) {
     logger.error(
       {
+        err: error,
         integrationSmtpId: smtpIntegration.id,
         workspaceId: conversation.workspaceId,
       },
       "handleSendEmail: SMTP send failed",
     )
     await emailTopicAnalyticsService.markFailed(token)
+    // An email step creates no message, so the workspace Error Log is the only
+    // place a failed send shows up — except for a broadcast/sequence run, whose
+    // own stats report it (one row per recipient would bury every other error).
+    if (!isBulkSendOrigin(metadata)) {
+      await logProviderError({
+        provider: "smtp",
+        workspaceId: conversation.workspaceId,
+        contactId: conversation.contactId,
+        sourceId: contactInbox.sourceId,
+        error,
+      })
+    }
     return
   }
 

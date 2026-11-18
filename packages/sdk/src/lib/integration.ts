@@ -1,4 +1,5 @@
 import type { MetadataPayload } from "@chatbotx.io/flow-config"
+import type { SendFrom } from "@chatbotx.io/utils/send-from"
 import type { AuthValue, Oauth2AuthValue } from "./auth"
 import type { ConnectionProvider } from "./connection"
 import {
@@ -89,7 +90,7 @@ export type ChannelSendFlowStepProps<IAuth extends AuthValue> = {
     quickReplies?: MessageButtonTemplate[]
     metadata?: MetadataPayload
     richResponse?: RichResponseContentAttributes
-    sendFrom?: "inbox"
+    sendFrom?: SendFrom
     /**
      * See {@link CommentAnchor}. Honored by Messenger and Instagram; other
      * channels ignore it.
@@ -115,7 +116,7 @@ export type MessageHandlers<
         message: OutgoingMessage
         quickReplies?: MessageButtonTemplate[]
         metadata?: MetadataPayload
-        sendFrom?: "inbox"
+        sendFrom?: SendFrom
       }
     },
     OutgoingSendResult
@@ -144,7 +145,7 @@ export type MessageHandlers<
         quickReplies?: MessageButtonTemplate[]
         metadata?: MetadataPayload
         richResponse?: RichResponseContentAttributes
-        sendFrom?: "inbox"
+        sendFrom?: SendFrom
         /** See {@link ChannelSendFlowStepProps}. */
         commentAnchor?: CommentAnchor
       }
@@ -181,7 +182,7 @@ export type CommentHandlers<IAuth extends AuthValue> = {
         contact: OutgoingContact
         message: OutgoingMessage
         metadata?: MetadataPayload
-        sendFrom?: "inbox"
+        sendFrom?: SendFrom
       }
     },
     OutgoingSendResult
@@ -196,7 +197,7 @@ export type CommentHandlers<IAuth extends AuthValue> = {
         contact: OutgoingContact
         message: OutgoingMessage
         metadata?: MetadataPayload
-        sendFrom?: "inbox"
+        sendFrom?: SendFrom
       }
     },
     OutgoingSendResult

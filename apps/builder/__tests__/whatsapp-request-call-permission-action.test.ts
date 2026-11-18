@@ -235,6 +235,7 @@ describe("requestCallPermissionAction", () => {
         inboxId: "inbox-other",
         requireRequestedInbox,
         messages: ENGLISH_CALL_PERMISSION_MESSAGES,
+        sendFrom: "api",
       })
 
     test("never falls back to another number when the caller requires it", async () => {

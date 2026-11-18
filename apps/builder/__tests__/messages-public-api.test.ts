@@ -283,6 +283,7 @@ describe("POST /v1/conversations/{conversationId}/messages", () => {
       conversation: { id: "conv-1", contactId: "contact-1" },
       contactInbox: { id: "contact-inbox-1" },
       input,
+      sendFrom: "api",
     })
     expect(messageService.createOutgoing.mock.calls[0][0]).not.toHaveProperty(
       "user",
@@ -432,6 +433,7 @@ describe("POST /v1/conversations/{conversationId}/messages/{messageId}/resend", 
       conversationId: "conv-1",
       messageId: "msg-1",
       createdAt,
+      sendFrom: "api",
     })
     expect(result).toEqual({ id: "msg-1", queued: true })
   })
@@ -513,6 +515,7 @@ describe("POST /v1/conversations/{conversationId}/whatsapp-template", () => {
       request: { templateId: "5", templateData: { params: [] }, inboxId: "3" },
       // An API send is not an agent reply: no human-sent analytics event.
       sender: { initiatedBy: "api" },
+      sendFrom: "api",
     })
   })
 
@@ -546,6 +549,7 @@ describe("POST /v1/conversations/{conversationId}/whatsapp-template", () => {
       conversationId: "9",
       request: { templateId: "5", templateData: nested },
       sender: { initiatedBy: "api" },
+      sendFrom: "api",
     })
   })
 

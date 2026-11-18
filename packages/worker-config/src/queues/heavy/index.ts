@@ -11,6 +11,7 @@ import {
 import { getChildLogger } from "@chatbotx.io/logger"
 import type { CommentAnchor } from "@chatbotx.io/sdk"
 import { isStoredImageOptimizationEnabled } from "@chatbotx.io/utils/image-optimize-settings"
+import { type SendFrom, sendFromSchema } from "@chatbotx.io/utils/send-from"
 import { type JobsOptions, Queue } from "bullmq"
 import { z } from "zod"
 import {
@@ -31,7 +32,7 @@ export type HeavyFlowContinuation = {
   metadata?: z.infer<typeof metadataSchema>
   nodeId?: string
   nodeVisits?: Record<string, number>
-  sendFrom?: "inbox"
+  sendFrom?: SendFrom
   sentByUserId?: string
   targetId?: string
   targetType?: FlowActionTargetType
@@ -221,7 +222,7 @@ const heavyFlowContinuationSchema = z
     targetType: z.enum(["button", "quickReply"]).optional(),
     metadata: metadataSchema.optional(),
     appointmentId: z.string().min(1).optional(),
-    sendFrom: z.literal("inbox").optional(),
+    sendFrom: sendFromSchema.optional(),
     sentByUserId: z.string().min(1).optional(),
     nodeVisits: z.record(z.string(), z.number().int().nonnegative()).optional(),
     // Must mirror every field of `CommentAnchor`. Zod strips unknown keys, so

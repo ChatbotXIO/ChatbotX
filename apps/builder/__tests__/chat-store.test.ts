@@ -1122,6 +1122,85 @@ describe("chat store conversation updates", () => {
     })
   })
 
+  describe("removeMessages drops messages the server removed for good", () => {
+    const preview = (conversationId: string, previewId: string) => ({
+      ...makeConversation(conversationId, new Date("2026-01-01T00:00:00Z")),
+      messages: [
+        makeMessage(
+          conversationId,
+          new Date("2026-01-01T00:02:00Z"),
+          previewId,
+        ),
+      ],
+    })
+
+    const seed = () => {
+      const store = createChatStore()
+      store.setState({
+        conversations: [
+          preview("conv-1", "msg-failed"),
+          preview("conv-2", "msg-failed-elsewhere"),
+        ] as never,
+        activeConversationId: "conv-1",
+        messages: [
+          makeMessage("conv-1", new Date("2026-01-01T00:00:00Z"), "msg-older"),
+          makeMessage("conv-1", new Date("2026-01-01T00:01:00Z"), "msg-kept"),
+          makeMessage("conv-1", new Date("2026-01-01T00:02:00Z"), "msg-failed"),
+        ] as never,
+      })
+      return store
+    }
+
+    const previewIdOf = (
+      store: ReturnType<typeof createChatStore>,
+      conversationId: string,
+    ) =>
+      (
+        store
+          .getState()
+          .conversations.find(
+            (conversation) => conversation.id === conversationId,
+          )?.messages[0] as { id: string } | undefined
+      )?.id
+
+    test("takes the message out of the open timeline, with no placeholder", () => {
+      const store = seed()
+
+      store.getState().removeMessages(["msg-failed"])
+
+      expect(store.getState().messages.map((message) => message.id)).toEqual([
+        "msg-older",
+        "msg-kept",
+      ])
+    })
+
+    test("the open conversation's preview falls back to its last remaining message", () => {
+      const store = seed()
+
+      store.getState().removeMessages(["msg-failed"])
+
+      expect(previewIdOf(store, "conv-1")).toBe("msg-kept")
+    })
+
+    test("a conversation that is not open keeps its preview until reloaded", () => {
+      const store = seed()
+
+      store.getState().removeMessages(["msg-failed-elsewhere"])
+
+      expect(previewIdOf(store, "conv-2")).toBe("msg-failed-elsewhere")
+      expect(store.getState().messages).toHaveLength(3)
+    })
+
+    test("keeps the state reference when no loaded message matches", () => {
+      const store = seed()
+      const before = store.getState()
+
+      store.getState().removeMessages(["missing"])
+
+      expect(store.getState()).toBe(before)
+    })
+  })
+
   test("keeps the state reference for unmatched realtime mutations", () => {
     const store = createChatStore()
     const before = store.getState()

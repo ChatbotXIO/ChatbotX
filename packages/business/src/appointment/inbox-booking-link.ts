@@ -9,6 +9,7 @@ import {
 } from "@chatbotx.io/encryption"
 import type { MessageButtonTemplate } from "@chatbotx.io/sdk"
 import { createId } from "@chatbotx.io/utils"
+import type { SendFrom } from "@chatbotx.io/utils/send-from"
 import { normalizeError } from "universal-error-normalizer"
 import { appointmentCalendarService } from "../appointment-calendar"
 import { ChatbotXException } from "../errors"
@@ -95,6 +96,8 @@ export async function sendInboxBookingLink(
     contactInbox: ContactInboxModel
     user?: Pick<UserModel, "id">
     bypassThreadControlLock?: boolean
+    /** `inbox` from the builder's Inbox, `api` from the Public API (see `SendFrom`). */
+    sendFrom: SendFrom
   },
 ) {
   const link = await createInboxBookingLink(input)
@@ -116,6 +119,7 @@ export async function sendInboxBookingLink(
         quickReplies: [link.content.button],
       },
       user: input.user,
+      sendFrom: input.sendFrom,
     })
     return { ...link, message }
   } catch (error) {

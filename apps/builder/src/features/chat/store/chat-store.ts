@@ -305,6 +305,9 @@ export type ChatActions = {
   // Message actions
   appendMessage: (message: MessageResourceWithRelations) => void
   markMessagesDeleted: (messageIds: string[]) => void
+  // Drops messages the server removed for good (a failed automated or API
+  // send) — unlike `markMessagesDeleted`, no "deleted" placeholder is left.
+  removeMessages: (messageIds: string[]) => void
   markMessagesRestored: (messageIds: string[]) => void
   markMessageFailed: (
     messageId: string,
@@ -452,6 +455,41 @@ const patchConversationPreviews = (
     }
     changed = true
     return { ...conversation, messages: [patch(preview)] }
+  })
+  return changed ? { conversations: nextConversations } : null
+}
+
+// After messages are removed for good, a conversation whose list preview was
+// one of them shows the last message still in the open timeline instead. Only
+// the open conversation has its timeline loaded; any other keeps its preview
+// until the list is next fetched.
+const replaceRemovedConversationPreviews = (props: {
+  conversations: ListConversationsResponse["data"]
+  activeConversationId: string | null | undefined
+  messages: MessageResourceWithRelations[]
+  removedIds: ReadonlySet<string>
+}): { conversations: ListConversationsResponse["data"] } | null => {
+  const { conversations, activeConversationId, messages, removedIds } = props
+  let changed = false
+  const nextConversations = conversations.map((conversation) => {
+    const [preview] = conversation.messages
+    if (
+      !(
+        preview &&
+        removedIds.has(preview.id) &&
+        conversation.id === activeConversationId
+      )
+    ) {
+      return conversation
+    }
+    const replacement = messages.findLast(
+      (message) => message.conversationId === conversation.id,
+    )
+    if (!replacement) {
+      return conversation
+    }
+    changed = true
+    return { ...conversation, messages: [replacement] }
   })
   return changed ? { conversations: nextConversations } : null
 }
@@ -1185,6 +1223,29 @@ export const createChatStore = (initialState: ChatStoreInitialState = {}) => {
               (preview) => ({ ...preview, deletedAt: now }),
             ) ?? state,
         )
+      },
+
+      removeMessages: (messageIds: string[]) => {
+        const idSet = new Set(messageIds)
+        set((state) => {
+          const messages = state.messages.filter(
+            (message) => !idSet.has(message.id),
+          )
+          const messagesChanged = messages.length !== state.messages.length
+          const previewPatch = replaceRemovedConversationPreviews({
+            conversations: state.conversations,
+            activeConversationId: state.activeConversationId,
+            messages,
+            removedIds: idSet,
+          })
+          if (!(messagesChanged || previewPatch)) {
+            return state
+          }
+          return {
+            ...(messagesChanged ? { messages } : {}),
+            ...(previewPatch ?? {}),
+          }
+        })
       },
 
       markMessagesRestored: (messageIds: string[]) => {

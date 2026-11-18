@@ -39,6 +39,7 @@ export function ChatRealtime() {
     markMessageFailed,
     openConversation,
     patchContactInboxThreadControl,
+    removeMessages,
     resumeConversationHeadRefresh,
     scheduleConversationHeadRefresh,
     settleSendResult,
@@ -56,6 +57,7 @@ export function ChatRealtime() {
       markMessageFailed: state.markMessageFailed,
       openConversation: state.openConversation,
       patchContactInboxThreadControl: state.patchContactInboxThreadControl,
+      removeMessages: state.removeMessages,
       resumeConversationHeadRefresh: state.resumeConversationHeadRefresh,
       scheduleConversationHeadRefresh: state.scheduleConversationHeadRefresh,
       settleSendResult: state.settleSendResult,
@@ -217,6 +219,10 @@ export function ChatRealtime() {
     messageDeleted: (event) => {
       flushPendingCreatedMessages()
       markMessagesDeleted(event.data.messageIds)
+    },
+    messageRemoved: (event) => {
+      flushPendingCreatedMessages()
+      removeMessages(event.data.messageIds)
     },
     messageIdAssigned: (event) => {
       flushPendingCreatedMessages()

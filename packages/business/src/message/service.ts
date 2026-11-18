@@ -170,6 +170,25 @@ class MessageService extends BaseService {
   }
 
   /**
+   * Permanently removes one message and its attachment rows. Unlike
+   * {@link MessageService.delete} it leaves no tombstone, so the inbox does not
+   * render "The message has been deleted." in its place. Used for an outgoing
+   * message whose send failed for good and is not one a workspace member sent
+   * from the Inbox (see `settleFailedOutgoingMessage` in the worker).
+   */
+  async hardDelete(
+    props: FindMessageByIdParams & { tx?: DatabaseClient },
+  ): Promise<{ id: string }[]> {
+    const { tx = db } = props
+    const repo = await createMessageRepository(tx)
+    return await repo.hardDeleteById(
+      props.id,
+      props.workspaceId,
+      props.createdAt,
+    )
+  }
+
+  /**
    * Replaces the text of the message a channel identifies by its own id
    * (`sourceId`), within the caller's workspace. Returns where the message is,
    * or `null` when none has that id (it may not be stored yet).

@@ -498,6 +498,7 @@ describe("POST /v1/conversations/{conversationId}/appointment-booking-link", () 
       appUrl: "https://app.test",
       user: { id: "user-1" },
       bypassThreadControlLock: true,
+      sendFrom: "api",
     })
     expect(createInboxBookingLink).not.toHaveBeenCalled()
     expect(result).toMatchObject({ messageId: "msg-1" })
