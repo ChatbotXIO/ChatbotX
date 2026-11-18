@@ -315,7 +315,7 @@ export async function processMessengerTemplate(
       ...(flow && { flowVersionId: flow.versionId }),
       ...(trackingContext && { trackingContext }),
       metadata,
-      ...(sendFrom === "inbox" && { [SENT_FROM_INBOX_KEY]: true }),
+      ...(sendFrom && { [SENT_FROM_INBOX_KEY]: sendFrom === "inbox" }),
     }
 
     newMessage = await messageService.create({

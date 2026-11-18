@@ -811,7 +811,7 @@ describe("processWhatsappTemplate", () => {
       )
     })
 
-    test("an API template does not stamp its row", async () => {
+    test("an API template stamps its row sentFromInbox: false", async () => {
       await sendWhatsappTemplateToConversation({
         conversation: fakeConversation,
         contactInbox: { ...fakeContactInbox, contactId: "contact-1" },
@@ -823,7 +823,7 @@ describe("processWhatsappTemplate", () => {
       const [created] = mockRepositoryCreate.mock.calls[0] as [
         { contentAttributes: Record<string, unknown> },
       ]
-      expect(created.contentAttributes).not.toHaveProperty("sentFromInbox")
+      expect(created.contentAttributes).toHaveProperty("sentFromInbox", false)
     })
   })
 

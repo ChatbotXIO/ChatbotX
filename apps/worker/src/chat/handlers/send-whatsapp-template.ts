@@ -320,7 +320,7 @@ export async function processWhatsappTemplate(
       ...(trackingContext && { trackingContext }),
       payload: {} as MessageTemplateEntity["payload"],
       metadata,
-      ...(sendFrom === "inbox" && { [SENT_FROM_INBOX_KEY]: true }),
+      ...(sendFrom && { [SENT_FROM_INBOX_KEY]: sendFrom === "inbox" }),
     }
 
     if (flowButtonTemplates.length > 0) {

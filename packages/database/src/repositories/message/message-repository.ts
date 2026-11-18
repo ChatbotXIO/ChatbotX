@@ -358,7 +358,8 @@ export interface IMessageRepository {
   /**
    * Permanently removes one message and its attachment rows (no `deletedAt`
    * tombstone — the inbox would render a soft-deleted row as "The message has
-   * been deleted."). Returns the ids of the message rows removed.
+   * been deleted."). Returns the ids of the message rows removed. Throws when a
+   * shard fails, so the caller never reports a delete that did not happen.
    */
   hardDeleteById(
     id: string,

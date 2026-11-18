@@ -10,6 +10,7 @@ import {
 } from "@chatbotx.io/business"
 import {
   channelTypes,
+  isLegacyMemberMessage,
   isSentFromInbox,
   isServiceSendBlocked,
   readThreadControlColumns,
@@ -1038,6 +1039,7 @@ type FailedOutgoingMessage = {
   clientId?: string | undefined
   createdAt?: Date | string | null | undefined
   contentAttributes?: unknown
+  senderType?: string | null | undefined
 }
 
 /**
@@ -1049,8 +1051,18 @@ type FailedOutgoingMessage = {
 export const shouldKeepFailedOutgoingMessage = (input: {
   sendFrom?: SendFrom | undefined
   contentAttributes?: unknown
-}): boolean =>
-  input.sendFrom === "inbox" || isSentFromInbox(input.contentAttributes)
+  senderType?: string | null | undefined
+}): boolean => {
+  if (input.sendFrom === "inbox" || isSentFromInbox(input.contentAttributes)) {
+    return true
+  }
+  if (input.sendFrom === "api") {
+    return false
+  }
+  // No job context (a late delivery status): a member's message from before the
+  // marker existed is kept rather than lost.
+  return isLegacyMemberMessage(input)
+}
 
 /**
  * Settles the row of an outgoing message whose send failed. Shared by every
@@ -1088,6 +1100,7 @@ export const settleFailedOutgoingMessage = async (input: {
     shouldKeepFailedOutgoingMessage({
       sendFrom: input.sendFrom,
       contentAttributes: message.contentAttributes,
+      senderType: message.senderType,
     })
   ) {
     await recordMessageSendError(

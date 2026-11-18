@@ -1054,11 +1054,17 @@ export class ShardedMessageRepository implements IMessageRepository {
       return []
     }
 
-    const perShard = await Promise.all(
+    // Every shard is attempted, but a shard that fails must fail the call: the
+    // caller tells the open tabs the message is gone, which is only true when
+    // the delete really happened. An empty result alone cannot say so, because a
+    // shard that never held the message returns no rows too. Each shard removes
+    // the attachments and the message in one transaction, so a failure leaves
+    // the message with its files instead of the files alone.
+    const perShard = await Promise.allSettled(
       shards.map(async (shardInfo) => {
-        try {
-          const client = await this.shardManager.getShardClient(shardInfo.shard)
-          await client
+        const client = await this.shardManager.getShardClient(shardInfo.shard)
+        return await client.transaction(async (tx) => {
+          await tx
             .delete(attachmentModel)
             .where(
               and(
@@ -1066,7 +1072,7 @@ export class ShardedMessageRepository implements IMessageRepository {
                 eq(attachmentModel.workspaceId, workspaceId),
               ),
             )
-          return await client
+          return await tx
             .delete(messageModel)
             .where(
               and(
@@ -1076,16 +1082,31 @@ export class ShardedMessageRepository implements IMessageRepository {
               ),
             )
             .returning({ id: messageModel.id })
-        } catch (error) {
-          logger.warn(
-            { err: error, shardId: shardInfo.shard.id },
-            "Shard delete failed in hardDeleteById",
-          )
-          return []
-        }
+        })
       }),
     )
-    return perShard.flat() as { id: string }[]
+
+    const deleted: { id: string }[] = []
+    let firstFailure: unknown
+    let hasFailure = false
+    perShard.forEach((outcome, index) => {
+      if (outcome.status === "fulfilled") {
+        deleted.push(...(outcome.value as { id: string }[]))
+        return
+      }
+      logger.warn(
+        { err: outcome.reason, shardId: shards[index]?.shard.id },
+        "Shard delete failed in hardDeleteById",
+      )
+      if (!hasFailure) {
+        hasFailure = true
+        firstFailure = outcome.reason
+      }
+    })
+    if (hasFailure) {
+      throw firstFailure
+    }
+    return deleted
   }
 
   async listIncomingTextsByContactInbox({

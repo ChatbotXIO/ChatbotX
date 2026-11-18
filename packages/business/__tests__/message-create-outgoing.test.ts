@@ -247,7 +247,7 @@ describe("messageService.createOutgoing", () => {
     )
   })
 
-  test("stamps an Inbox message so a failed send keeps it, and leaves an API one unstamped", async () => {
+  test("stamps an Inbox message true and an API one false, so only a row with no stamp is older than the marker", async () => {
     await createOutgoing({
       conversation: conversation as never,
       contactInbox: contactInbox as never,
@@ -266,7 +266,7 @@ describe("messageService.createOutgoing", () => {
       ([row]) => row as { contentAttributes: unknown },
     )
     expect(inboxRow?.contentAttributes).toEqual({ sentFromInbox: true })
-    expect(apiRow?.contentAttributes).toBeNull()
+    expect(apiRow?.contentAttributes).toEqual({ sentFromInbox: false })
     const sendFroms = mockChatQueueAdd.mock.calls
       .filter(([name]) => name === "sendChannelMessage")
       .map(([, job]) => (job as { data: { sendFrom?: string } }).data.sendFrom)
@@ -488,7 +488,7 @@ describe("messageService.createOutgoing private reply target", () => {
     const created = mockRepositoryCreate.mock.calls[0]?.[0] as {
       contentAttributes: Record<string, unknown> | null
     }
-    expect(created.contentAttributes).toBeNull()
+    expect(created.contentAttributes).toEqual({ sentFromInbox: false })
   })
 })
 

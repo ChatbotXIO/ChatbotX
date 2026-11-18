@@ -2038,6 +2038,7 @@ describe("chat send-message handlers", () => {
       willRetryOnThrow: boolean,
       sendFrom?: "inbox" | "api",
       contentAttributes?: Record<string, unknown>,
+      senderType: "user" | "bot" = "user",
     ) => {
       mockRunChannelHandler.mockRejectedValueOnce(
         new ChannelError("rate limited", ChannelErrorCategory.RATE_LIMITED, {
@@ -2055,7 +2056,7 @@ describe("chat send-message handlers", () => {
             contactInboxId: "ci-1",
             contentType: "text",
             messageType: "outgoing",
-            senderType: "user",
+            senderType,
             text: "hello",
             clientId: "client-1",
             contentAttributes,
@@ -2110,12 +2111,12 @@ describe("chat send-message handlers", () => {
     })
 
     test.each([
-      ["an API send", "api" as const],
-      ["an automated (bot) send", undefined],
-    ])("on the final failure of %s the message is removed, not marked", async (_name, sendFrom) => {
-      await expect(failing(false, sendFrom)).rejects.toBeInstanceOf(
-        ChannelError,
-      )
+      ["an API send", "api" as const, "user" as const],
+      ["an automated (bot) send", undefined, "bot" as const],
+    ])("on the final failure of %s the message is removed, not marked", async (_name, sendFrom, senderType) => {
+      await expect(
+        failing(false, sendFrom, undefined, senderType),
+      ).rejects.toBeInstanceOf(ChannelError)
 
       expect(mockUpdateSendError).not.toHaveBeenCalled()
       expect(mockHardDelete).toHaveBeenCalledWith({
@@ -2195,6 +2196,49 @@ describe("chat send-message handlers", () => {
         }),
       ).resolves.toBe("kept")
       expect(mockHardDelete).not.toHaveBeenCalled()
+    })
+
+    test("keeps a member's message that predates the marker (late failed status)", async () => {
+      // The row has no `sentFromInbox` at all and the status callback carries no
+      // `sendFrom`: it was sent from the Inbox before the marker existed.
+      await expect(
+        settle({
+          message: {
+            id: "msg-old",
+            createdAt,
+            contentAttributes: {},
+            senderType: "user",
+          },
+        }),
+      ).resolves.toBe("kept")
+      expect(mockHardDelete).not.toHaveBeenCalled()
+    })
+
+    test("removes a message stamped sentFromInbox: false even though a member sent it", async () => {
+      await expect(
+        settle({
+          message: {
+            id: "msg-api",
+            createdAt,
+            contentAttributes: { sentFromInbox: false },
+            senderType: "user",
+          },
+        }),
+      ).resolves.toBe("removed")
+      expect(mockHardDelete).toHaveBeenCalledTimes(1)
+    })
+
+    test("removes an unstamped bot message", async () => {
+      await expect(
+        settle({
+          message: {
+            id: "msg-bot",
+            createdAt,
+            contentAttributes: {},
+            senderType: "bot",
+          },
+        }),
+      ).resolves.toBe("removed")
     })
 
     test.each([

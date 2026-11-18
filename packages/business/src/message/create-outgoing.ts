@@ -295,14 +295,18 @@ const recordEnqueueFailure = async (input: {
   }
 }
 
-/** Stamps a member's Inbox message so a failed send keeps it (see `isSentFromInbox`). */
+/**
+ * Stamps where a message was sent from: `true` for a member's Inbox message, so
+ * a failed send keeps it (see `isSentFromInbox`), `false` for the API. A row
+ * with no stamp at all is older than the marker (see `isLegacyMemberMessage`).
+ */
 const withSentFromInbox = (
   contentAttributes: Record<string, unknown> | null,
   sendFrom: SendFrom,
-): Record<string, unknown> | null =>
-  sendFrom === "inbox"
-    ? { ...contentAttributes, [SENT_FROM_INBOX_KEY]: true }
-    : contentAttributes
+): Record<string, unknown> | null => ({
+  ...contentAttributes,
+  [SENT_FROM_INBOX_KEY]: sendFrom === "inbox",
+})
 
 /**
  * A private reply answers a comment stored in the commenter's own conversation,

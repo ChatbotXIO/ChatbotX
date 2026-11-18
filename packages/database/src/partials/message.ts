@@ -128,6 +128,24 @@ export const isSentFromInbox = (contentAttributes: unknown): boolean =>
   contentAttributes[SENT_FROM_INBOX_KEY] === true
 
 /**
+ * Whether a message was created before the Inbox marker existed, and was typed
+ * by a member. Every row created since carries `sentFromInbox` (`true` from the
+ * Inbox, `false` from the API), so a row with no marker at all is older. Such a
+ * row sent by a member (`senderType: "user"`) is kept when its send fails late:
+ * it was an Inbox message then, and removing it would lose what the member typed.
+ */
+export const isLegacyMemberMessage = (input: {
+  contentAttributes?: unknown
+  senderType?: string | null | undefined
+}): boolean =>
+  input.senderType === "user" &&
+  !(
+    typeof input.contentAttributes === "object" &&
+    input.contentAttributes !== null &&
+    SENT_FROM_INBOX_KEY in input.contentAttributes
+  )
+
+/**
  * A message that can be sent again: an outgoing message a person or the API
  * typed (never a bot or a flow), a DM or a private reply (stored as a `comment`
  * but delivered as a DM), that failed and was never given a provider id. A

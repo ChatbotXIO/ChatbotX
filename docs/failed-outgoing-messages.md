@@ -26,12 +26,26 @@ Rows that already carried a `sendError` before this rule are left untouched.
   `requestWhatsappCallPermission` and the builder's `sendWhatsappTemplateToConversation`
   take a **required** `sendFrom`: builder actions and the session-auth private route
   pass `"inbox"`, public procedures and `order/service.ts` pass `"api"`.
-- A row created for an Inbox send is stamped `contentAttributes.sentFromInbox = true`
-  (`SENT_FROM_INBOX_KEY`, `isSentFromInbox` in `@chatbotx.io/database/partials`):
-  `createOutgoing`, flow steps of a flow sent from the Inbox, and template rows. A retry
-  or a late delivery-status callback reads the stamp, not the job.
+- A row created by `createOutgoing` or a template sender is stamped
+  `contentAttributes.sentFromInbox` (`SENT_FROM_INBOX_KEY`, `isSentFromInbox` in
+  `@chatbotx.io/database/partials`): `true` for an Inbox send, `false` for an `"api"`
+  send. Flow steps of a flow sent from the Inbox are stamped `true` too. A retry or a
+  late delivery-status callback reads the stamp, not the job.
+- A row with **no stamp at all** is older than the marker. One a member typed
+  (`senderType: "user"`) is kept when its failure arrives late (`isLegacyMemberMessage`),
+  because removing it would lose what the member typed. Automated sends are
+  `senderType: "bot"` and are never kept by this rule.
 
-Keep rule: `sendFrom === "inbox" || isSentFromInbox(message.contentAttributes)`.
+Keep rule (`shouldKeepFailedOutgoingMessage`):
+
+1. `sendFrom === "inbox"` or `sentFromInbox === true` → keep.
+2. `sendFrom === "api"` → remove.
+3. No job context (a late delivery status): keep only a member's message with no stamp.
+
+Removing a row is `hardDeleteById`, which deletes the attachments and the message in
+one transaction per shard and **throws when a shard fails**. The worker and
+`createOutgoing` then log the failure and do not publish `messageRemoved`, so the open
+tabs never show a delete that did not happen.
 
 ## Where it is applied
 
