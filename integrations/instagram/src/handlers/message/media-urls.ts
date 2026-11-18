@@ -8,4 +8,5 @@ export const getMessageMediaUrls: MessageHandlers<InstagramAuthValue>["getMessag
       graphMessageId: data.graphMessageId,
       accessToken: ctx.auth.tokens.accessToken,
       version: ctx.auth.metadata.version,
+      loginType: ctx.auth.metadata.loginType,
     })

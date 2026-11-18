@@ -519,6 +519,29 @@ chatbotx integrations update-ai --provider <provider> --autoReply <true|false>  
 
 ---
 
+### `connections`
+
+```bash
+chatbotx connection-providers list                  # Discover providers and their connection strategy
+chatbotx connections create --provider <provider>   # Starts OAuth or connects a credential provider
+chatbotx connect-sessions get <id>                  # Poll an OAuth session after opening nextAction.url
+chatbotx connect-sessions target add <id> --targetIds <ids>  # Finish when multiple targets require selection
+```
+
+An OAuth callback completes automatically when exactly one target is
+selectable. If several targets are selectable, poll until
+`awaiting_selection`, then connect the chosen IDs.
+
+Instagram Unified Login is enabled by the platform administrator, not through
+a workspace CLI flag. In **Admin → Platform credentials → Instagram**, the
+optional `unifiedLoginConfigId` is Meta's Login for Business `config_id`. When
+it is empty, the legacy direct Instagram OAuth flow remains in use. The Meta
+configuration must issue a non-expiring Business Integration System User token;
+user tokens and expiring system-user tokens are not refreshable by the current
+Instagram integration.
+
+---
+
 ### `keywords`
 
 ```bash

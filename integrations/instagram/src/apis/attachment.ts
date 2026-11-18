@@ -12,7 +12,7 @@ import {
 } from "@chatbotx.io/utils/store-incoming-image"
 import fetch from "cross-fetch"
 import { rescue } from "../exception"
-import { instagramBusinessClient } from "../lib/http-client"
+import { getInstagramGraphClient } from "../lib/http-client"
 import type {
   InstagramAttachment,
   InstagramAuthValue,
@@ -28,7 +28,7 @@ export const uploadAttachment = (
   const endpoint = `${auth.metadata.version}/${auth.metadata.pageId}/message_attachments`
 
   return rescue(endpoint, () =>
-    instagramBusinessClient.post<InstagramSendMessageResponse>(endpoint, {
+    getInstagramGraphClient(auth).post<InstagramSendMessageResponse>(endpoint, {
       headers: {
         Authorization: `Bearer ${auth.tokens.accessToken}`,
       },

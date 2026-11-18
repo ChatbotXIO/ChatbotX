@@ -19,6 +19,7 @@ export const updateInstagramSettingAction = authActionClient
       version: parsedInput.version,
       verifyToken: parsedInput.verifyToken,
       clientSecret: parsedInput.clientSecret,
+      unifiedLoginConfigId: parsedInput.unifiedLoginConfigId || undefined,
     }
 
     await platformCredentialService.upsert({

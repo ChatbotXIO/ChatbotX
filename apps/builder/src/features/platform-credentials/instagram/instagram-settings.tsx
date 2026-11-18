@@ -205,6 +205,7 @@ export function EditInstagramSettingsForm({
             version: publicConfig?.version ?? "v25.0",
             verifyToken: publicConfig?.verifyToken ?? "",
             clientSecret: "",
+            unifiedLoginConfigId: publicConfig?.unifiedLoginConfigId ?? "",
           } satisfies InstagramCredentialUpdate,
         },
       },
@@ -244,6 +245,11 @@ export function EditInstagramSettingsForm({
           label={t("fields.apiVersion.label")}
           name="version"
           required
+        />
+
+        <InputField
+          label={t("fields.unifiedLoginConfigId.label")}
+          name="unifiedLoginConfigId"
         />
 
         <div className="flex items-center justify-between gap-2">

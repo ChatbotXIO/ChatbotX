@@ -2552,6 +2552,9 @@
     "configId": {
       "label": "ID för appkonfiguration"
     },
+    "unifiedLoginConfigId": {
+      "label": "Unified Login Configuration ID"
+    },
     "consecutiveFailedReply": {
       "label": "Misslyckade svar i följd"
     },

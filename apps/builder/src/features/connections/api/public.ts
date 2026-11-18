@@ -152,7 +152,7 @@ export const connectionsPublicRouter = {
       successStatus: 201,
       summary: "Connect channel or integration",
       description:
-        'Credential-strategy providers (`token`/`api_key`/`self_serve`) connect immediately and return `connection` (`session: null`). `webchat` and `api` are self-serve channels; API returns its bearer token once in `secret.token`, and webchat accepts its branding and behavior fields in `config` using the `POST /v1/webchats` shape. OAuth providers (`oauth_redirect`/`oauth_popup`) return `connection: null` and a `session` whose `nextAction` is `{type:"open_url", url}` — show that URL to the person connecting, then poll `connectSessions.get` until `awaiting_selection` (a multi-account provider) or `completed` (a single-account provider), then call `connectSessions.connectTargets` to finish a multi-account connect. Call `connectionProviders.list` first to find the provider key and required `config` fields. The person opening the URL must have admin rights on the account being connected: the resulting token belongs to them, so hand each person their own link — a leaked URL can only connect the opener\'s account into this workspace…',
+        'Credential-strategy providers (`token`/`api_key`/`self_serve`) connect immediately and return `connection` (`session: null`). `webchat` and `api` are self-serve channels; API returns its bearer token once in `secret.token`, and webchat accepts its branding and behavior fields in `config` using the `POST /v1/webchats` shape. OAuth providers (`oauth_redirect`/`oauth_popup`) return `connection: null` and a `session` whose `nextAction` is `{type:"open_url", url}` — show that URL to the person connecting, then poll `connectSessions.get`. The callback completes automatically when exactly one target is selectable; when multiple selectable targets remain, the session moves to `awaiting_selection` and the caller must use `connectSessions.connectTargets`. Call `connectionProviders.list` first to find the provider key and required `config` fields. The person opening the URL must have admin rights on the account being connected: the resulting token belongs to them, so hand each person their own link — a leaked URL can only connect the opener\'s account into this workspace…',
       tags: ["Connections"],
       spec: mcpSpec({ visibility: "default" }),
     })
@@ -324,7 +324,7 @@ export const connectSessionsPublicRouter = {
       path: "/v1/connect-sessions/{id}",
       summary: "Get connect session",
       description:
-        "Poll this after `connections.create` or `connections.reconnect` returns a `session`. `status` moves `pending` -> `awaiting_selection` (multi-account) or straight to `completed` (single-account) once the OAuth round trip finishes, or `failed`/`expired`/`cancelled`. Call `connectSessions.connectTargets` once `awaiting_selection`. Clients must tolerate unknown future values in `status`/`nextAction.type`.",
+        "Poll this after `connections.create` or `connections.reconnect` returns a `session`. Once the OAuth round trip finishes, `status` moves from `pending` straight to `completed` when exactly one target is selectable, or to `awaiting_selection` when multiple selectable targets remain; it may also become `failed`, `expired`, or `cancelled`. Call `connectSessions.connectTargets` once `awaiting_selection`. Clients must tolerate unknown future values in `status`/`nextAction.type`.",
       tags: ["Connections"],
       spec: mcpSpec({ visibility: "default" }),
     })

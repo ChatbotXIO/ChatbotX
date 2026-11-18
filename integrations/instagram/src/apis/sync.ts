@@ -1,8 +1,9 @@
 import { DEFAULT_API_VERSION } from "../constants"
 import { rescue } from "../exception"
 import {
-  instagramBusinessClient,
+  getInstagramGraphClientForLoginType,
   instagramCoexistGraphClient,
+  instagramUnifiedCoexistGraphClient,
 } from "../lib/http-client"
 import {
   createGraphConversationSync,
@@ -33,10 +34,17 @@ const sync = createGraphConversationSync({
   rescue,
 })
 
+const unifiedSync = createGraphConversationSync({
+  client: instagramUnifiedCoexistGraphClient,
+  defaultVersion: DEFAULT_API_VERSION,
+  rescue,
+})
+
 export const getMessageMediaUrls = (props: {
   graphMessageId: string
   accessToken: string
   version?: string
+  loginType?: "direct" | "unified"
 }): Promise<
   Array<{ sourceId: string; url: string; mimeType: string | null }>
 > => {
@@ -44,7 +52,9 @@ export const getMessageMediaUrls = (props: {
   const endpoint = `${version}/${graphMessageId}`
 
   return rescue(endpoint, async () => {
-    const response = await instagramBusinessClient.get<{
+    const response = await getInstagramGraphClientForLoginType(
+      props.loginType,
+    ).get<{
       attachments?: { data?: InstagramHistoryAttachment[] }
     }>(endpoint, {
       headers: { Authorization: `Bearer ${accessToken}` },
@@ -77,8 +87,9 @@ export const listInstagramConversations = (props: {
   accessToken: string
   version?: string
   after?: string
+  loginType?: "direct" | "unified"
 }): Promise<GraphSyncPaginatedResult<InstagramConversation>> =>
-  sync.listConversations({
+  (props.loginType === "unified" ? unifiedSync : sync).listConversations({
     node: props.igUserId,
     accessToken: props.accessToken,
     version: props.version,
@@ -90,11 +101,19 @@ export const fetchInstagramConversationMessages = (props: {
   accessToken: string
   version?: string
   after?: string
+  loginType?: "direct" | "unified"
 }): Promise<GraphSyncPaginatedResult<InstagramHistoryMessage>> =>
-  sync.fetchConversationMessages(props)
+  (props.loginType === "unified"
+    ? unifiedSync
+    : sync
+  ).fetchConversationMessages(props)
 
 export const fetchInstagramParticipantProfile = (props: {
   userId: string
   accessToken: string
   version?: string
-}) => sync.fetchContactProfile(props)
+  loginType?: "direct" | "unified"
+}) =>
+  (props.loginType === "unified" ? unifiedSync : sync).fetchContactProfile(
+    props,
+  )

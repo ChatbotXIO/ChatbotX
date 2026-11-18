@@ -1,7 +1,12 @@
 import type { Context } from "@chatbotx.io/sdk"
 import { DEFAULT_API_VERSION } from "../constants"
 import { InstagramAPIException, rescue } from "../exception"
-import { instagramBusinessClient } from "../lib/http-client"
+import {
+  getInstagramAccountNode,
+  getInstagramGraphClient,
+  getInstagramGraphClientForLoginType,
+  instagramBusinessClient,
+} from "../lib/http-client"
 import type { InstagramAuthValue, InstagramProfileRequest } from "../schema"
 
 export const INSTAGRAM_SUBSCRIBE_FIELDS = [
@@ -42,12 +47,12 @@ export const getAccountPictureUrl = async (props: {
   const { ctx } = props
   const version = ctx.auth.metadata.version ?? DEFAULT_API_VERSION
   const accessToken = ctx.auth.tokens.accessToken
-  const endpoint = `${version}/me`
+  const endpoint = `${version}/${getInstagramAccountNode(ctx.auth)}`
 
   try {
     return await rescue(endpoint, async () => {
       const res: { profile_picture_url?: string } =
-        await instagramBusinessClient.get(endpoint, {
+        await getInstagramGraphClient(ctx.auth).get(endpoint, {
           searchParams: {
             fields: "profile_picture_url",
             access_token: accessToken,
@@ -64,23 +69,27 @@ export const subscribePageToInstagramWebhook = (props: {
   igId: string
   accessToken: string
   version?: string
+  loginType?: "direct" | "unified"
 }): Promise<void> => {
   const { version = DEFAULT_API_VERSION } = props
   const endpoint = `${version}/${props.igId}/subscribed_apps`
-  const subscribedFields = INSTAGRAM_SUBSCRIBE_FIELDS.join(",")
+  const subscribedFields = [
+    ...INSTAGRAM_SUBSCRIBE_FIELDS.filter(
+      (field) => props.loginType !== "unified" || field !== "messaging_optins",
+    ),
+    ...(props.loginType === "unified" ? ["message_reactions"] : []),
+  ].join(",")
 
   return rescue(endpoint, async () => {
-    const response = await instagramBusinessClient.post<{ success?: boolean }>(
-      endpoint,
-      {
-        headers: {
-          Authorization: `Bearer ${props.accessToken}`,
-        },
-        json: {
-          subscribed_fields: subscribedFields,
-        },
+    const client = getInstagramGraphClientForLoginType(props.loginType)
+    const response = await client.post<{ success?: boolean }>(endpoint, {
+      headers: {
+        Authorization: `Bearer ${props.accessToken}`,
       },
-    )
+      ...(props.loginType === "unified"
+        ? { searchParams: { subscribed_fields: subscribedFields } }
+        : { json: { subscribed_fields: subscribedFields } }),
+    })
     if (response.success !== true) {
       throw new InstagramAPIException(
         `Subscribe failed for Instagram page ${props.igId}`,
@@ -93,12 +102,14 @@ export const unsubscribePageFromInstagramWebhook = (props: {
   igId: string
   accessToken: string
   version?: string
+  loginType?: "direct" | "unified"
 }): Promise<void> => {
   const { version = DEFAULT_API_VERSION } = props
   const endpoint = `${version}/${props.igId}/subscribed_apps`
 
   return rescue(endpoint, async () => {
-    const response = await instagramBusinessClient.delete<{
+    const client = getInstagramGraphClientForLoginType(props.loginType)
+    const response = await client.delete<{
       success?: boolean
     }>(endpoint, {
       headers: {
@@ -119,10 +130,10 @@ export const deleteProfileFields = (props: {
 }): Promise<void> => {
   const { ctx, fields } = props
   const version = ctx.auth.metadata.version ?? DEFAULT_API_VERSION
-  const endpoint = `${version}/me/messenger_profile`
+  const endpoint = `${version}/${getInstagramAccountNode(ctx.auth)}/messenger_profile`
 
   return rescue(endpoint, () =>
-    instagramBusinessClient.delete(endpoint, {
+    getInstagramGraphClient(ctx.auth).delete(endpoint, {
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${ctx.auth.tokens.accessToken}`,
@@ -141,7 +152,7 @@ export const updateProfile = (props: {
 }): Promise<void> => {
   const { ctx, params } = props
   const version = ctx.auth.metadata.version ?? DEFAULT_API_VERSION
-  const endpoint = `${version}/me/messenger_profile`
+  const endpoint = `${version}/${getInstagramAccountNode(ctx.auth)}/messenger_profile`
 
   return rescue(endpoint, () => {
     const queries = new URLSearchParams({
@@ -149,7 +160,7 @@ export const updateProfile = (props: {
       access_token: ctx.auth.tokens.accessToken,
     }).toString()
 
-    return instagramBusinessClient.post(`${endpoint}?${queries}`, {
+    return getInstagramGraphClient(ctx.auth).post(`${endpoint}?${queries}`, {
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${ctx.auth.tokens.accessToken}`,
@@ -169,7 +180,7 @@ export const getPersistentMenu = (props: {
 }> => {
   const { ctx } = props
   const version = ctx.auth.metadata.version ?? DEFAULT_API_VERSION
-  const endpoint = `${version}/me/messenger_profile`
+  const endpoint = `${version}/${getInstagramAccountNode(ctx.auth)}/messenger_profile`
 
   return rescue(endpoint, async () => {
     const queries = new URLSearchParams({
@@ -180,7 +191,7 @@ export const getPersistentMenu = (props: {
 
     const response: {
       persistent_menu?: InstagramProfileRequest["persistent_menu"]
-    } = await instagramBusinessClient.get(`${endpoint}?${queries}`, {
+    } = await getInstagramGraphClient(ctx.auth).get(`${endpoint}?${queries}`, {
       headers: {
         Authorization: `Bearer ${ctx.auth.tokens.accessToken}`,
       },
@@ -211,11 +222,11 @@ export const addBranding = async (props: {
     url: props.url,
   }
 
-  const endpoint = `${version}/me/messenger_profile`
+  const endpoint = `${version}/${getInstagramAccountNode(ctx.auth)}/messenger_profile`
 
   if (!persistentMenu || persistentMenu.length === 0) {
     await rescue(endpoint, () =>
-      instagramBusinessClient.post(`${endpoint}?${queries}`, {
+      getInstagramGraphClient(ctx.auth).post(`${endpoint}?${queries}`, {
         headers: { "Content-Type": "application/json" },
         json: {
           platform: "instagram",
@@ -255,7 +266,7 @@ export const addBranding = async (props: {
   })
 
   await rescue(endpoint, () =>
-    instagramBusinessClient.post(`${endpoint}?${queries}`, {
+    getInstagramGraphClient(ctx.auth).post(`${endpoint}?${queries}`, {
       headers: { "Content-Type": "application/json" },
       json: {
         platform: "instagram",

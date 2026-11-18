@@ -1,6 +1,9 @@
 import { DEFAULT_API_VERSION } from "../constants"
 import { rescue } from "../exception"
-import { instagramBusinessClient } from "../lib/http-client"
+import {
+  getInstagramAccountNode,
+  getInstagramGraphClient,
+} from "../lib/http-client"
 import {
   INSTAGRAM_MESSAGE_METADATA,
   type InstagramAuthValue,
@@ -18,7 +21,7 @@ export const replyToComment = (
   const endpoint = `${version}/${commentId}/replies`
 
   return rescue(endpoint, () =>
-    instagramBusinessClient.post<{ id: string }>(endpoint, {
+    getInstagramGraphClient(auth).post<{ id: string }>(endpoint, {
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${auth.tokens.accessToken}`,
@@ -37,7 +40,7 @@ export const deleteComment = (
   const endpoint = `${version}/${commentId}`
 
   return rescue(endpoint, () =>
-    instagramBusinessClient.delete<{ success: boolean }>(endpoint, {
+    getInstagramGraphClient(auth).delete<{ success: boolean }>(endpoint, {
       headers: {
         Authorization: `Bearer ${auth.tokens.accessToken}`,
       },
@@ -54,7 +57,7 @@ export const hideComment = (
   const endpoint = `${version}/${commentId}`
 
   return rescue(endpoint, () =>
-    instagramBusinessClient.post<{ success: boolean }>(endpoint, {
+    getInstagramGraphClient(auth).post<{ success: boolean }>(endpoint, {
       headers: {
         Authorization: `Bearer ${auth.tokens.accessToken}`,
       },
@@ -82,10 +85,10 @@ export const sendPrivateReplyMessage = (
   message: InstagramSendMessage | InstagramMessageAttachmentPayload,
 ): Promise<InstagramSendMessageResponse> => {
   const version = auth.metadata.version ?? DEFAULT_API_VERSION
-  const endpoint = `${version}/me/messages`
+  const endpoint = `${version}/${getInstagramAccountNode(auth)}/messages`
 
   return rescue(endpoint, () =>
-    instagramBusinessClient.post<InstagramSendMessageResponse>(endpoint, {
+    getInstagramGraphClient(auth).post<InstagramSendMessageResponse>(endpoint, {
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${auth.tokens.accessToken}`,
@@ -142,7 +145,7 @@ export const listMediaComments = (props: {
   const endpoint = `${version}/${mediaId}/comments`
 
   return rescue(endpoint, async () => {
-    const res = await instagramBusinessClient.get<{
+    const res = await getInstagramGraphClient(auth).get<{
       data: InstagramMediaComment[]
       paging?: { cursors?: { after?: string }; next?: string }
     }>(endpoint, {

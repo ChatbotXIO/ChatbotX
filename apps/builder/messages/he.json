@@ -7176,6 +7176,9 @@
     "configId": {
       "label": "מזהה תצורת אפליקציה"
     },
+    "unifiedLoginConfigId": {
+      "label": "Unified Login Configuration ID"
+    },
     "systemUserId": {
       "label": "מזהה משתמש מערכת"
     },

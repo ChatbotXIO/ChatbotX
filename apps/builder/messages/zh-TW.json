@@ -1209,6 +1209,9 @@
     "configId": {
       "label": "應用程式設定 ID"
     },
+    "unifiedLoginConfigId": {
+      "label": "Unified Login Configuration ID"
+    },
     "systemUserId": {
       "label": "系統使用者 ID"
     },
