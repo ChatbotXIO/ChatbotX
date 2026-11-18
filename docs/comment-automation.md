@@ -599,7 +599,9 @@ The two halves of moderation run at different points of the automation loop
        ([`decision/comment-moderation-service.ts`](../packages/business/src/decision/comment-moderation-service.ts)):
        one `noul` (yes/no) question per selected category, keyed by the category, the comment in
        `state.currentMessage` marked as untrusted data. A category is flagged when its
-       `probabilityTrue` ≥ `decisionThreshold` (0.5–0.99, default 0.7). The provider returns no
+       `probabilityTrue` ≥ `decisionThreshold` (0.5–0.95, default 0.7). The guidance (`instruction`) goes inside every
+       question, so this engine caps it at 500 characters (the provider allows 1000 per
+       question, including the fixed text). The provider returns no
        sentence, so the log's `reason` lists the probabilities ("AI Router jev-1.13.0: hate
        92%, offensive 12%"), `provider` is the connection's `providerKind`, `modelId` the model.
        A connection that is gone, disabled or no longer lists the model is `unavailable`; it

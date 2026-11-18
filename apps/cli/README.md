@@ -810,7 +810,7 @@ chatbotx comment-automations moderation-logs list <id> [--from <iso>] [--to <iso
 chatbotx comment-automations moderation-summary list <id> [--from <iso>] [--to <iso>] [--action hide|delete] [--source rule|ai]  # { total, hidden, deleted, byRule, byAI, failed, pending }
 ```
 
-AI moderation itself is configured on the automation: `hideComments.aiModeration` (`enabled`, `aiAgentId` from `ai-agents list`, `categories`, `instruction`, `action`) on `fb-comments` / `ig-comments` / `threads-comments` / `tiktok-comments` create/update.
+AI moderation itself is configured on the automation: `hideComments.aiModeration` (`enabled`, `engine` = `aiAgent` (default, set `aiAgentId` from `ai-agents list`) or `decision` (an AI Router connection such as Jev: `decisionConnectionId` from `decision-connections list`, `decisionModel` from its `modelCatalog`, optional `decisionThreshold` 0.5–0.95, default 0.7), `categories`, `instruction` (max 1000 characters, 500 with `decision`), `action`) on `fb-comments` / `ig-comments` / `threads-comments` / `tiktok-comments` create/update.
 
 ---
 

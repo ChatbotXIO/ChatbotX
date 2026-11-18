@@ -1,5 +1,4 @@
 import {
-  decisionConnectionService,
   decisionProfileContractSchema,
   decisionProfileService,
 } from "@chatbotx.io/business"
@@ -25,45 +24,7 @@ const activeDecisionProfileSchema = z
   })
   .strict()
 
-const moderationConnectionSchema = z
-  .object({
-    defaultModel: z.string().nullable(),
-    id: z.string(),
-    modelCatalog: z.array(z.string()),
-    name: z.string(),
-  })
-  .strict()
-
 export const decisionProfilesAuthenticatedAPI = {
-  /**
-   * The enabled AI Router connections a comment automation's AI moderation
-   * can run on — credential-safe, the same rows `decisionConnections.list`
-   * returns publicly.
-   */
-  listModerationConnections: authorizedAPI
-    .route({
-      method: "GET",
-      path: "/workspaces/{workspaceId}/decision-profiles/moderation-connections",
-      summary: "List AI Router connections for comment moderation",
-      tags: ["Decision"],
-    })
-    .input(withWorkspaceIdSchema)
-    .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
-    .output(z.array(moderationConnectionSchema))
-    .handler(async ({ input }) => {
-      const connections = await decisionConnectionService.listSafe(
-        input.workspaceId,
-      )
-      return connections
-        .filter((connection) => connection.status === "enabled")
-        .map(({ defaultModel, id, modelCatalog, name }) => ({
-          defaultModel,
-          id,
-          modelCatalog,
-          name,
-        }))
-    }),
-
   listGlobalRouterDestinations: authorizedAPI
     .route({
       method: "GET",

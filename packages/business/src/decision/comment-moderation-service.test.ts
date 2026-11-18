@@ -1,5 +1,7 @@
 import {
+  COMMENT_MODERATION_DECISION_INSTRUCTION_MAX_LENGTH,
   commentAIModerationSchema,
+  commentModerationCategories,
   isAIModerationEnabled,
   resolveDecisionThreshold,
   resolveModerationEngine,
@@ -31,13 +33,16 @@ describe("buildCommentModerationContract", () => {
     )
   })
 
-  test("keeps each question within the provider's instruction limit", () => {
+  test("the longest allowed guidance fits every question whole", () => {
+    const guidance = `${"x".repeat(COMMENT_MODERATION_DECISION_INSTRUCTION_MAX_LENGTH - 4)} END`
     const contract = buildCommentModerationContract({
-      categories: ["negative"],
-      instruction: "x".repeat(1000),
+      categories: [...commentModerationCategories.options],
+      instruction: guidance,
     })
 
-    expect(contract.questions[0]?.instructions.length).toBeLessThanOrEqual(1000)
+    for (const question of contract.questions) {
+      expect(question.instructions).toContain(guidance)
+    }
     expect(() => decisionProviderContractSchema.parse(contract)).not.toThrow()
   })
 
@@ -108,5 +113,29 @@ describe("commentAIModerationSchema engines", () => {
         decisionThreshold: 0.2,
       }).success,
     ).toBe(false)
+  })
+
+  test("the decision engine rejects guidance too long to send whole", () => {
+    const decision = {
+      ...base,
+      engine: "decision" as const,
+      decisionConnectionId: "connection-1",
+      decisionModel: "jev-1.13.0",
+    }
+    const tooLong = "x".repeat(
+      COMMENT_MODERATION_DECISION_INSTRUCTION_MAX_LENGTH + 1,
+    )
+
+    expect(
+      commentAIModerationSchema.safeParse({ ...decision, instruction: tooLong })
+        .success,
+    ).toBe(false)
+    expect(
+      commentAIModerationSchema.safeParse({
+        ...base,
+        aiAgentId: "agent-1",
+        instruction: tooLong,
+      }).success,
+    ).toBe(true)
   })
 })

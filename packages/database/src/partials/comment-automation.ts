@@ -459,6 +459,13 @@ export type CommentModerationAction = z.infer<typeof commentModerationActions>
 export const COMMENT_MODERATION_INSTRUCTION_MAX_LENGTH = 1000
 
 /**
+ * The AI Router engine sends the guidance inside each question's
+ * instructions, which the provider caps at 1000 characters together with the
+ * fixed moderation text (up to ~430), so its guidance is shorter.
+ */
+export const COMMENT_MODERATION_DECISION_INSTRUCTION_MAX_LENGTH = 500
+
+/**
  * What classifies the comment: an AI agent's chat model, or an AI Router
  * (Decision, e.g. Jev) connection asked one yes/no question per category.
  */
@@ -505,10 +512,10 @@ export const commentAIModerationSchema = z
     decisionThreshold: z
       .number()
       .min(0.5)
-      .max(0.99)
+      .max(0.95)
       .optional()
       .describe(
-        "With `engine` `decision`: the probability (0.5–0.99) at or above which a category counts as matched. Omitted means 0.7.",
+        "With `engine` `decision`: the probability (0.5–0.95) at or above which a category counts as matched. Omitted means 0.7.",
       ),
     categories: z
       .array(commentModerationCategories)
@@ -520,7 +527,7 @@ export const commentAIModerationSchema = z
       .max(COMMENT_MODERATION_INSTRUCTION_MAX_LENGTH)
       .optional()
       .describe(
-        "Extra guidance for the AI, e.g. 'Do not block customers complaining about price'.",
+        "Extra guidance for the AI, e.g. 'Do not block customers complaining about price'. At most 1000 characters, 500 with `engine` `decision`.",
       ),
     action: commentModerationActions.describe(
       "What to do with a blocked comment: `hide` (reversible) or `delete` (permanent). `delete` is stored as `hide` on Threads, which cannot delete.",
@@ -543,6 +550,16 @@ export const commentAIModerationSchema = z
           code: "custom",
           path: ["decisionModel"],
           message: "Choose a model",
+        })
+      }
+      if (
+        (value.instruction?.trim().length ?? 0) >
+        COMMENT_MODERATION_DECISION_INSTRUCTION_MAX_LENGTH
+      ) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["instruction"],
+          message: `At most ${COMMENT_MODERATION_DECISION_INSTRUCTION_MAX_LENGTH} characters with AI Router`,
         })
       }
     } else if (!value.aiAgentId) {
@@ -631,7 +648,7 @@ export const commentHideCommentsSchema = z.object({
   aiModeration: commentAIModerationSchema
     .optional()
     .describe(
-      "AI moderation: an AI agent's model reads each comment and hides or deletes the ones in the chosen categories. Runs before the reply filters; a moderated comment is never replied to. Omitted means off.",
+      "AI moderation: an AI agent's model or an AI Router connection (see `engine`) reads each comment and hides or deletes the ones in the chosen categories. Runs before the reply filters; a moderated comment is never replied to. Omitted means off.",
     ),
   keywords: z
     .array(z.string())

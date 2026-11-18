@@ -1,6 +1,8 @@
 "use client"
 
 import {
+  COMMENT_MODERATION_DECISION_INSTRUCTION_MAX_LENGTH,
+  COMMENT_MODERATION_INSTRUCTION_MAX_LENGTH,
   type CommentModerationCategory,
   commentModerationCategories,
 } from "@chatbotx.io/database/partials"
@@ -50,7 +52,7 @@ function DecisionEngineFields() {
   const workspaceId = useWorkspaceId()
   const { control, getValues, setValue } = useFormContext()
   const { data: connections, isSuccess } = useQuery(
-    orpc.decisionProfilesAPI.listModerationConnections.queryOptions({
+    orpc.decisionConnectionsAPI.listEnabled.queryOptions({
       input: { workspaceId: workspaceId ?? "" },
       enabled: Boolean(workspaceId),
     }),
@@ -66,11 +68,13 @@ function DecisionEngineFields() {
       return
     }
     const model = getValues("hideComments.aiModeration.decisionModel")
+    // Not `shouldDirty`: opening a saved automation whose model left the
+    // catalog must not mark the form changed; a connection the user picks is
+    // already dirty.
     if (!connection.modelCatalog.includes(model)) {
       setValue(
         "hideComments.aiModeration.decisionModel",
         connection.defaultModel ?? connection.modelCatalog[0] ?? null,
-        { shouldDirty: true },
       )
     }
   }, [connection, getValues, setValue])
@@ -89,22 +93,20 @@ function DecisionEngineFields() {
     [connection],
   )
 
-  if (isSuccess && connectionOptions.length === 0) {
-    return (
-      <p className="text-muted-foreground text-sm">
-        {t("commentAutomation.aiModeration.noDecisionConnection")}{" "}
-        <Link
-          className="text-primary underline"
-          href={`/space/${workspaceId}/settings/integrations/decision-connections`}
-        >
-          {t("commentAutomation.aiModeration.addDecisionConnection")}
-        </Link>
-      </p>
-    )
-  }
-
   return (
     <>
+      {/* The field stays rendered so its required error shows on save. */}
+      {isSuccess && connectionOptions.length === 0 && (
+        <p className="text-muted-foreground text-sm">
+          {t("commentAutomation.aiModeration.noDecisionConnection")}{" "}
+          <Link
+            className="text-primary underline"
+            href={`/space/${workspaceId}/settings/integrations/decision-connections`}
+          >
+            {t("commentAutomation.aiModeration.addDecisionConnection")}
+          </Link>
+        </p>
+      )}
       <ComboboxField
         description={t(
           "commentAutomation.aiModeration.decisionConnectionDescription",
@@ -219,7 +221,11 @@ export function AIModerationField({ canDelete }: Props) {
               "commentAutomation.aiModeration.instructionDescription",
             )}
             label={t("commentAutomation.aiModeration.instruction")}
-            maxLength={1000}
+            maxLength={
+              engine === "decision"
+                ? COMMENT_MODERATION_DECISION_INSTRUCTION_MAX_LENGTH
+                : COMMENT_MODERATION_INSTRUCTION_MAX_LENGTH
+            }
             name="hideComments.aiModeration.instruction"
             placeholder={t(
               "commentAutomation.aiModeration.instructionPlaceholder",
