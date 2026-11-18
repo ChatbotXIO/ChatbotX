@@ -23,6 +23,7 @@ import { getPublicFileUrl } from "@chatbotx.io/business/utils"
 import {
   channelTypes,
   messageTypes,
+  SENT_FROM_INBOX_KEY,
   senderTypes,
 } from "@chatbotx.io/database/partials"
 import type { MessageWithAttachments } from "@chatbotx.io/database/repositories"
@@ -65,6 +66,7 @@ import {
 } from "@chatbotx.io/sdk"
 import { createId } from "@chatbotx.io/utils"
 import { resolveStackFrames } from "@chatbotx.io/utils/error-log"
+import { isManualSend } from "@chatbotx.io/utils/send-from"
 import { resolveContactVariablesDeep } from "@chatbotx.io/variables"
 import type {
   ChatJobSendChatMessage,
@@ -86,9 +88,9 @@ import { resolveStoredStepContent } from "../utils/stored-step-content"
 import {
   isDeliveredDirectMessage,
   markConversationReadAfterDelivery,
-  recordMessageSendError,
   sendFlowStepToChannel,
   sendMessageToChannel,
+  settleFailedOutgoingMessage,
 } from "./send-message"
 import { processMessengerTemplate } from "./send-messenger-template"
 import { processWhatsappTemplate } from "./send-whatsapp-template"
@@ -597,6 +599,7 @@ export async function sendFlowStep({
         isBulkBroadcast,
         sentByUserId,
         statusBranches,
+        sendFrom,
       })
     } catch (error) {
       logger.error(
@@ -633,6 +636,7 @@ export async function sendFlowStep({
         metadata,
         isBulkBroadcast,
         sentByUserId,
+        sendFrom,
       })
     } catch (error) {
       logger.error(
@@ -859,6 +863,7 @@ export async function sendFlowStep({
         nodeId: resolvedStep.nodeId,
         flowId,
         flowVersionId,
+        ...(sendFrom === "inbox" ? { [SENT_FROM_INBOX_KEY]: true } : {}),
       }
 
     // The caller's own quick replies (their payloads are not flow buttons) go
@@ -1031,7 +1036,7 @@ export async function sendFlowStep({
         // producer claim owns the close and the measurement, so the worker
         // must not consume the window first.
         closeHumanReplyWindow: !(
-          sendFrom === "inbox" || isProactiveOutboundMetadata(metadata)
+          isManualSend(sendFrom) || isProactiveOutboundMetadata(metadata)
         ),
         lastStep: conversation.currentStep,
         currentStep: resolvedStep.id,
@@ -1207,14 +1212,16 @@ export async function sendFlowStep({
       willRetry: false,
     })
 
-    await recordMessageSendError(
-      message?.id,
-      undefined,
-      conversation.workspaceId,
-      message?.createdAt,
-      parsedError.message,
-      { conversationId: conversation.id, silent: isBulkOutbound },
-    )
+    // Kept with its error when a member sent this flow from the Inbox;
+    // otherwise removed (the `message:failed` above feeds the Error Log).
+    await settleFailedOutgoingMessage({
+      message,
+      conversationId: conversation.id,
+      workspaceId: conversation.workspaceId,
+      errorMessage: parsedError.message,
+      sendFrom,
+      silent: isBulkOutbound,
+    })
 
     // Always terminal here, for the same reason the `message:failed` emit above
     // says so: this catch swallows the error, so nothing will re-attempt the

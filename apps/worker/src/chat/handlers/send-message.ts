@@ -10,13 +10,14 @@ import {
 } from "@chatbotx.io/business"
 import {
   channelTypes,
+  isLegacyMemberMessage,
+  isSentFromInbox,
   isServiceSendBlocked,
   readThreadControlColumns,
   resolveChannelConversationId,
   resolveThreadControlState,
   toThreadControlTimestamp,
 } from "@chatbotx.io/database/partials"
-
 import type {
   ContactInboxModel,
   ConversationModel,
@@ -45,6 +46,7 @@ import {
   type SendFlowStepData,
 } from "@chatbotx.io/sdk"
 import { resolveStackFrames } from "@chatbotx.io/utils/error-log"
+import { isManualSend, type SendFrom } from "@chatbotx.io/utils/send-from"
 import type {
   ChatJobChangeChannelMessageState,
   ChatJobDeleteChannelMessage,
@@ -582,20 +584,20 @@ export async function sendMessageToChannel(
       metadata,
       willRetry,
     })
-    // An inbox message records only its FINAL failure: while the job will still
-    // be retried it may yet go out, and an error badge now would invite a
-    // Resend that duplicates it. Other sends keep recording every failure, so
-    // a retry that never runs (quota, blocked workspace) still leaves one.
-    if (!willRetry || sendFrom !== "inbox") {
-      await recordMessageSendError(
-        message?.id,
-        message?.clientId,
-        conversation.workspaceId,
-        message?.createdAt ? new Date(message.createdAt) : undefined,
-        errorData.message,
-        { conversationId: conversation.id, silent: isBulkOutbound },
-      )
-    }
+    // Only the FINAL failure settles the row: while the job will still be
+    // retried it may yet go out, and an error badge now would invite a Resend
+    // that duplicates it. A member's Inbox message is kept with its error;
+    // any other is removed (its error goes to the Error Log via the
+    // `message:failed` above).
+    await settleFailedOutgoingMessage({
+      message,
+      conversationId: conversation.id,
+      workspaceId: conversation.workspaceId,
+      errorMessage: errorData.message,
+      sendFrom,
+      silent: isBulkOutbound,
+      willRetry,
+    })
     // Terminal failures only: an attempt that is about to be retried must not
     // put a row in the automation's Error Logs for a reply that still lands.
     if (!willRetry) {
@@ -893,6 +895,7 @@ const queueConversationScopedMessageEvent = async (input: {
   eventType:
     | typeof RealtimeEventType.messageFailed
     | typeof RealtimeEventType.messageIdAssigned
+    | typeof RealtimeEventType.messageRemoved
   data:
     | Extract<
         RealtimeEventData,
@@ -901,6 +904,10 @@ const queueConversationScopedMessageEvent = async (input: {
     | Extract<
         RealtimeEventData,
         { eventType: typeof RealtimeEventType.messageIdAssigned }
+      >["data"]
+    | Extract<
+        RealtimeEventData,
+        { eventType: typeof RealtimeEventType.messageRemoved }
       >["data"]
 }): Promise<void> => {
   try {
@@ -939,7 +946,7 @@ const publishInboxSendConfirmation = async (input: {
   conversation: Pick<ConversationModel, "id" | "workspaceId">
   message: Pick<MessageModel, "id"> & { clientId?: string | undefined }
 }): Promise<void> => {
-  if (input.sendFrom !== "inbox" || input.silent) {
+  if (!isManualSend(input.sendFrom) || input.silent) {
     return
   }
   try {
@@ -1026,6 +1033,152 @@ export const recordMessageSendError = async (
     silent: options.silent,
     workspaceId,
   })
+
+type FailedOutgoingMessage = {
+  id?: string | undefined
+  clientId?: string | undefined
+  createdAt?: Date | string | null | undefined
+  contentAttributes?: unknown
+  senderType?: string | null | undefined
+}
+
+/**
+ * Whether a failed outgoing message stays in the conversation with its error.
+ * Only a message a workspace member sent from the builder's Inbox does — read
+ * from the job (`sendFrom`) or, for a retry or a late delivery-status
+ * callback, from the marker stamped on the row when it was created.
+ */
+export const shouldKeepFailedOutgoingMessage = (input: {
+  sendFrom?: SendFrom | undefined
+  contentAttributes?: unknown
+  senderType?: string | null | undefined
+}): boolean => {
+  if (input.sendFrom === "inbox" || isSentFromInbox(input.contentAttributes)) {
+    return true
+  }
+  if (input.sendFrom === "api") {
+    return false
+  }
+  // No job context (a late delivery status): a member's message from before the
+  // marker existed is kept rather than lost.
+  return isLegacyMemberMessage(input)
+}
+
+/**
+ * Settles the row of an outgoing message whose send failed. Shared by every
+ * send path so the rule is one rule:
+ *
+ * - `willRetry` — another attempt is coming: the row is left as it is.
+ * - kept ({@link shouldKeepFailedOutgoingMessage}) — `sendError` is written
+ *   and `messageFailed` published, as the Inbox has always shown.
+ * - otherwise — the row and its attachments are removed for good and
+ *   `messageRemoved` published (not for a bulk send, which publishes nothing).
+ *   The failure itself reaches the Error Log through the caller's
+ *   `message:failed` emit (bulk sends are skipped there).
+ *
+ * Never throws: it runs inside the caller's failure handling.
+ */
+export const settleFailedOutgoingMessage = async (input: {
+  message: FailedOutgoingMessage | undefined
+  conversationId: string
+  workspaceId: string
+  errorMessage: string
+  sendFrom?: SendFrom | undefined
+  /** A bulk (broadcast/sequence) send: no realtime event. */
+  silent?: boolean
+  willRetry?: boolean
+}): Promise<"kept" | "removed" | "pending" | "skipped"> => {
+  const { message } = input
+  if (input.willRetry) {
+    return "pending"
+  }
+  const createdAt = message?.createdAt ? new Date(message.createdAt) : undefined
+  if (!(message?.id && createdAt)) {
+    return "skipped"
+  }
+  if (
+    shouldKeepFailedOutgoingMessage({
+      sendFrom: input.sendFrom,
+      contentAttributes: message.contentAttributes,
+      senderType: message.senderType,
+    })
+  ) {
+    await recordMessageSendError(
+      message.id,
+      message.clientId,
+      input.workspaceId,
+      createdAt,
+      input.errorMessage,
+      { conversationId: input.conversationId, silent: input.silent },
+    )
+    return "kept"
+  }
+  await removeFailedOutgoingMessage({
+    messageId: message.id,
+    createdAt,
+    conversationId: input.conversationId,
+    workspaceId: input.workspaceId,
+    silent: input.silent,
+  })
+  return "removed"
+}
+
+/**
+ * {@link settleFailedOutgoingMessage} for the template senders, which insert a
+ * new row on every attempt. A failure that will be retried therefore removes
+ * this attempt's row (the next attempt writes its own), so a retried template
+ * never leaves a duplicate behind; the final failure settles as usual.
+ */
+export const settleFailedTemplateMessage = async (
+  input: Parameters<typeof settleFailedOutgoingMessage>[0],
+): Promise<"kept" | "removed" | "pending" | "skipped"> => {
+  if (!input.willRetry) {
+    return await settleFailedOutgoingMessage(input)
+  }
+  const { message } = input
+  const createdAt = message?.createdAt ? new Date(message.createdAt) : undefined
+  if (!(message?.id && createdAt)) {
+    return "skipped"
+  }
+  await removeFailedOutgoingMessage({
+    messageId: message.id,
+    createdAt,
+    conversationId: input.conversationId,
+    workspaceId: input.workspaceId,
+    silent: input.silent,
+  })
+  return "removed"
+}
+
+const removeFailedOutgoingMessage = async (input: {
+  messageId: string
+  createdAt: Date
+  conversationId: string
+  workspaceId: string
+  silent?: boolean
+}): Promise<void> => {
+  try {
+    await messageService.hardDelete({
+      id: input.messageId,
+      workspaceId: input.workspaceId,
+      createdAt: input.createdAt,
+    })
+    if (input.silent) {
+      return
+    }
+    await queueConversationScopedMessageEvent({
+      workspaceId: input.workspaceId,
+      conversationId: input.conversationId,
+      eventType: RealtimeEventType.messageRemoved,
+      data: { messageIds: [input.messageId] },
+    })
+  } catch (err) {
+    logger.error(
+      { err, messageId: input.messageId, workspaceId: input.workspaceId },
+      "Failed to remove a failed outgoing message",
+    )
+  }
+}
 
 const clearMessageSendError = async (
   messageId: string | undefined,
@@ -1220,7 +1373,7 @@ export async function sendFlowStepToChannel({
   richResponse?: ChatJobSendFlowStep["data"]["richResponse"]
   messageId?: string
   messageCreatedAt?: Date
-  sendFrom?: "inbox"
+  sendFrom?: SendFrom
   commentAnchor?: CommentAnchor
   botSentAnalytics: BotSentTrigger
   /** Set when a workspace member triggered the send (see `ProcessWhatsappTemplateParams`). */

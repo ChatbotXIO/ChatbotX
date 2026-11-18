@@ -28,6 +28,7 @@ import {
   type OutgoingMessage,
   type SendFlowStepProps,
 } from "@chatbotx.io/sdk"
+import { isManualSend, type SendFrom } from "@chatbotx.io/utils/send-from"
 import { sendPrivateReplyMessage } from "../../../apis/comment"
 import { sendMessage as sendMessageApi } from "../../../apis/message"
 import { ensureMessengerWhitelistedDomain } from "../../../apis/page"
@@ -535,7 +536,7 @@ export const buildMessagePayload = (props: {
 export function resolveMessagingPolicy(props: {
   contact: OutgoingContact
   now?: Date | number
-  sendFrom?: "inbox"
+  sendFrom?: SendFrom
   /**
    * A take-over / forced reply (the standby send gate was bypassed): always
    * tag HUMAN_AGENT — a human agent is stepping in, so the tag is used even
@@ -546,7 +547,7 @@ export function resolveMessagingPolicy(props: {
 }): MessengerMessagingPolicy {
   const { contact, sendFrom, forceHumanAgent } = props
 
-  if (sendFrom !== "inbox") {
+  if (!isManualSend(sendFrom)) {
     return { messagingType: "RESPONSE" }
   }
 

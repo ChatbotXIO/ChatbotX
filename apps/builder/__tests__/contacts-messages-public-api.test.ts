@@ -123,6 +123,7 @@ describe("POST /v1/contacts/{identifier}/messages", () => {
       conversation,
       contactInbox,
       input: { identifier: "id:1", text: "hello", inboxId: "inbox-1" },
+      sendFrom: "api",
     })
   })
 
@@ -152,6 +153,7 @@ describe("POST /v1/contacts/{identifier}/messages", () => {
       conversation,
       contactInbox,
       input,
+      sendFrom: "api",
     })
   })
 
@@ -341,6 +343,7 @@ describe("POST /v1/contacts/{identifier}/auto-replies", () => {
       conversation,
       contactInbox,
       input: { text: "Welcome!", inboxId: undefined },
+      sendFrom: "api",
     })
   })
 })
@@ -380,6 +383,7 @@ describe("POST /v1/contacts/{identifier}/flows", () => {
       conversation,
       contactInbox,
       input: { flowId: "flow-1", inboxId: "inbox-1" },
+      sendFrom: "api",
     })
   })
 })

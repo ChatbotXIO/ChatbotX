@@ -3,6 +3,7 @@ import { z } from "zod"
 export const RealtimeEventType = {
   messageCreated: "messageCreated",
   messageDeleted: "messageDeleted",
+  messageRemoved: "messageRemoved",
   messageUpdated: "messageUpdated",
   messageContentUpdated: "messageContentUpdated",
   messageIdAssigned: "messageIdAssigned",
@@ -30,6 +31,7 @@ type RealtimeEventDelivery = "conversation" | "workspace" | "targeted"
 export const EVENT_DELIVERY = {
   [RealtimeEventType.messageCreated]: "conversation",
   [RealtimeEventType.messageDeleted]: "conversation",
+  [RealtimeEventType.messageRemoved]: "conversation",
   [RealtimeEventType.messageUpdated]: "conversation",
   [RealtimeEventType.messageContentUpdated]: "conversation",
   [RealtimeEventType.messageIdAssigned]: "conversation",
@@ -224,6 +226,19 @@ export type RealtimeEventCreateMessage = {
 
 export type RealtimeEventMessageDeleted = {
   eventType: typeof RealtimeEventType.messageDeleted
+  data: {
+    messageIds: string[]
+  }
+}
+
+/**
+ * Messages permanently removed from the conversation — an outgoing message
+ * whose send failed for good and that a member did not send from the Inbox.
+ * Unlike {@link RealtimeEventMessageDeleted} (a tombstone rendered as "The
+ * message has been deleted."), the client drops the rows from the timeline.
+ */
+export type RealtimeEventMessageRemoved = {
+  eventType: typeof RealtimeEventType.messageRemoved
   data: {
     messageIds: string[]
   }
@@ -524,6 +539,7 @@ export type RealtimeEventPipelineItemChanged = {
 type AllRealtimeEventData =
   | RealtimeEventCreateMessage
   | RealtimeEventMessageDeleted
+  | RealtimeEventMessageRemoved
   | RealtimeEventMessageIdAssigned
   | RealtimeEventMessageUpdated
   | RealtimeEventMessageContentUpdated

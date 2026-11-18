@@ -750,6 +750,8 @@ describe("orderService — customer message and delete", () => {
       input: {
         text: "The status of your order has been updated.\n\nStatus: Processing\n\nWe are preparing it",
       },
+      // A system notification: a failed one is removed, not kept.
+      sendFrom: "api",
     })
   })
 

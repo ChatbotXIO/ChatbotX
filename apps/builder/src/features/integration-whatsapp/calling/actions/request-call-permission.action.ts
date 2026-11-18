@@ -51,6 +51,7 @@ export const requestCallPermissionAction = callingActionClient
         text: parsedInput.text,
         inboxId: parsedInput.inboxId,
         user: ctx.user,
+        sendFrom: "inbox",
         messages: {
           notWhatsappConversation: t(
             "whatsapp.calls.errors.notWhatsappConversation",

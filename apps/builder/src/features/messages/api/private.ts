@@ -117,6 +117,8 @@ export const messagesAuthenticatedAPI = {
         contactInbox,
         input,
         user,
+        // Session-authenticated route the builder's Inbox composer calls.
+        sendFrom: "inbox",
       })
     }),
 

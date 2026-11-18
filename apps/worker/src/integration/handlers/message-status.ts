@@ -7,6 +7,7 @@ import {
 } from "@chatbotx.io/database/repositories"
 import { emit } from "@chatbotx.io/event-bus"
 import {
+  isProactiveOutboundMetadata,
   type MetadataPayload,
   messageEventTypeSchema,
   UPDATE_STATUS_PAYLOAD_TYPE,
@@ -21,6 +22,7 @@ import {
   type IntegrationJobMessageStatus,
 } from "@chatbotx.io/worker-config"
 import type { Job } from "bullmq"
+import { settleFailedOutgoingMessage } from "../../chat/handlers/send-message"
 import { logger } from "../../lib/logger"
 import {
   allIntegrations,
@@ -199,46 +201,26 @@ export const handleMessageStatus = async (
       return
     }
 
-    const contentAttributes = message.contentAttributes as {
-      type?: string
-      payload?: {
-        buttons?: Array<{
-          id: string
-          label: string
-          postback?: string
-        }>
-      }
-      [key: string]: unknown
-    }
+    await runTemplateStatusBranch({
+      message,
+      eventStatus,
+      contactInboxId: contactInbox.id,
+      parentJob,
+    })
 
-    if (contentAttributes?.type !== "whatsapp_template") {
-      return
-    }
-
-    const buttons = contentAttributes.payload?.buttons
-    if (!(buttons && Array.isArray(buttons))) {
-      return
-    }
-
-    const buttonLabel =
-      eventStatus === "delivered"
-        ? WA_TEMPLATE_STATUS_BUTTON_LABELS.delivered
-        : WA_TEMPLATE_STATUS_BUTTON_LABELS.failed
-    const button = buttons.find((b) => b.label === buttonLabel)
-    if (!button?.postback) {
-      return
-    }
-
-    await runFlowPostback(
-      {
+    // After the status branch, so a branch that throws (and is retried) still
+    // finds the message on the next attempt.
+    if (eventStatus === "failed" && message.messageType === "outgoing") {
+      await settleFailedOutgoingMessage({
+        message,
         conversationId: message.conversationId,
-        action: button.postback,
-        ref: null,
-        contactInboxId: contactInbox.id,
-        webhookType: IntegrationJobAction.messageStatus,
-      },
-      { flowExecutionKey: parentJob?.id },
-    )
+        workspaceId: inbox.workspaceId,
+        errorMessage: resolveStatusErrorMessage(payload.error),
+        silent: isProactiveOutboundMetadata(
+          message.contentAttributes?.metadata,
+        ),
+      })
+    }
   } catch (error) {
     logger.error(
       error,
@@ -246,4 +228,71 @@ export const handleMessageStatus = async (
     )
     throw error
   }
+}
+
+/** A provider's `error` body, as the text shown on a kept message. */
+const resolveStatusErrorMessage = (error: unknown): string => {
+  if (typeof error === "object" && error !== null) {
+    const message = Reflect.get(error, "message")
+    if (typeof message === "string" && message.length > 0) {
+      return message
+    }
+  }
+  return "The channel reported that the message was not delivered"
+}
+
+/**
+ * A WhatsApp template's "Delivered" / "Failed" status button leads its flow
+ * somewhere: run that postback.
+ */
+const runTemplateStatusBranch = async (props: {
+  message: {
+    conversationId: string
+    contentAttributes?: Record<string, unknown> | null
+  }
+  eventStatus: "delivered" | "failed"
+  contactInboxId: string
+  parentJob?: Job
+}): Promise<void> => {
+  const { message, eventStatus, parentJob } = props
+  const contentAttributes = message.contentAttributes as {
+    type?: string
+    payload?: {
+      buttons?: Array<{
+        id: string
+        label: string
+        postback?: string
+      }>
+    }
+    [key: string]: unknown
+  }
+
+  if (contentAttributes?.type !== "whatsapp_template") {
+    return
+  }
+
+  const buttons = contentAttributes.payload?.buttons
+  if (!(buttons && Array.isArray(buttons))) {
+    return
+  }
+
+  const buttonLabel =
+    eventStatus === "delivered"
+      ? WA_TEMPLATE_STATUS_BUTTON_LABELS.delivered
+      : WA_TEMPLATE_STATUS_BUTTON_LABELS.failed
+  const button = buttons.find((b) => b.label === buttonLabel)
+  if (!button?.postback) {
+    return
+  }
+
+  await runFlowPostback(
+    {
+      conversationId: message.conversationId,
+      action: button.postback,
+      ref: null,
+      contactInboxId: props.contactInboxId,
+      webhookType: IntegrationJobAction.messageStatus,
+    },
+    { flowExecutionKey: parentJob?.id },
+  )
 }

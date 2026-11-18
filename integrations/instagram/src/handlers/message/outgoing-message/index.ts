@@ -23,6 +23,7 @@ import {
   type OutgoingMessage,
   type SendFlowStepProps,
 } from "@chatbotx.io/sdk"
+import { isManualSend, type SendFrom } from "@chatbotx.io/utils/send-from"
 import { sendPrivateReplyMessage } from "../../../apis/comment"
 import { sendMessage as sendMessageApi } from "../../../apis/message"
 import { mapToChannelError } from "../../../lib/error-mapper"
@@ -52,7 +53,7 @@ type InstagramMessagingPolicy = {
 export function resolveMessagingPolicy(props: {
   contact: OutgoingContact
   now?: Date | number
-  sendFrom?: "inbox"
+  sendFrom?: SendFrom
 }): InstagramMessagingPolicy {
   const { contact, sendFrom } = props
 
@@ -67,7 +68,7 @@ export function resolveMessagingPolicy(props: {
     nowMs = props.now
   }
 
-  if (sendFrom !== "inbox") {
+  if (!isManualSend(sendFrom)) {
     if (lastIncomingMessageAt) {
       const elapsedMs = nowMs - lastIncomingMessageAt.getTime()
       if (elapsedMs > META_RESPONSE_WINDOW_MS) {

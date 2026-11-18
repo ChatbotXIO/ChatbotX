@@ -219,9 +219,11 @@ Delivery and state are two different things, and a comment splits them:
   A comment does not open one, so each channel's `sendFlowStep` calls
   `assertCommentPrivateReplyFollowUpDeliverable` (`@chatbotx.io/sdk`) against
   `contact.lastIncomingMessageAt` first: inside the window it sends normally, outside it
-  throws `comment_private_reply_already_used`, which `sendFlowStep`'s catch records as the
-  message's `sendError` so the inbox says why the rest of the flow never arrived. Before
-  this the Send API simply rejected the follow-up and the error was swallowed.
+  throws `comment_private_reply_already_used`, which `sendFlowStep`'s catch settles as a
+  failed bot message: the message is removed from the conversation and the error is
+  written to the workspace Error Log, which says why the rest of the flow never arrived
+  (see [failed-outgoing-messages.md](failed-outgoing-messages.md)). Before this the Send
+  API simply rejected the follow-up and the error was swallowed.
   `replyChannel: "public"` is *not* consumed: it survives every step, node and re-enqueued
   `sendFlow` job of the run, so the whole flow answers on the post.
 
@@ -283,7 +285,8 @@ name a row by that triple. So:
 
 - **Sent +1** for the set, never +N — same as `repliesCount`.
 - If message #2 fails after #1 landed, the outcome stays **Delivered**; #2's error still surfaces
-  as a `sendError` on its `Message` row in the inbox and in the workspace Error Logs.
+  in the workspace Error Logs; its bot `Message` row is removed from the inbox (see
+  [failed-outgoing-messages.md](failed-outgoing-messages.md)).
 - Only **all** messages failing records Failed.
 
 Private reply is deliberately excluded: Meta allows one comment-anchored DM per comment.
@@ -879,9 +882,10 @@ fails the comment is processed immediately.
   nothing but `message`; there is no `attachment_url` (that is a Facebook Page comment
   feature, used by `integrations/messenger`). A media step in a *public* reply flow
   therefore cannot be delivered on either Instagram variant: `sendComment` throws
-  `ChannelError(PAYLOAD_INVALID)` so the failure lands on the message row as a `sendError`
-  the inbox shows. It used to `return { messageIds: [] }` with only a `logger.warn`, which
-  made the step vanish while the inbox still displayed it. On Messenger the same step does
+  `ChannelError(PAYLOAD_INVALID)` so the failure is recorded: the bot message is removed
+  from the inbox and the error lands in the workspace Error Log. It used to
+  `return { messageIds: [] }` with only a `logger.warn`, which made the step look sent
+  while it never was. On Messenger the same step does
   post, carrying `attachments[0].url` as `attachment_url` — only the first attachment. To
   deliver media in answer to a comment, use a **private** reply: the comment_id-anchored Send
   API takes attachments and templates. (Corroborated by

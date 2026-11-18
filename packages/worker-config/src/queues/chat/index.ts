@@ -29,6 +29,7 @@ import type {
   WhatsappLocationStepSchema,
 } from "@chatbotx.io/flow-config"
 import type { CommentAnchor, MessageButtonTemplate } from "@chatbotx.io/sdk"
+import type { SendFrom } from "@chatbotx.io/utils/send-from"
 import { Queue } from "bullmq"
 import {
   defaultJobOptions,
@@ -68,7 +69,7 @@ export type ChatJobSendChannelMessage = {
     quickReplies?: MessageButtonTemplate[]
     metadata?: MetadataPayload
     isBulkBroadcast?: boolean
-    sendFrom?: "inbox"
+    sendFrom?: SendFrom
   }
 }
 
@@ -122,7 +123,7 @@ export type ChatJobSendFlowStep = {
      * the send records them as status branches of the message it produces.
      */
     statusBranches?: WaTemplateStatusBranch[]
-    sendFrom?: "inbox"
+    sendFrom?: SendFrom
     /** See `IntegrationJobRunFlowNode["data"]["sentByUserId"]`. */
     sentByUserId?: string
     /** See {@link CommentAnchor}. */
@@ -182,6 +183,12 @@ export type ChatJobSendWhatsappTemplateToConversation = {
     initiatedBy?: "user" | "api"
     /** The member behind `initiatedBy: "user"`. */
     adminId?: string
+    /**
+     * `inbox` when a member sent it from the builder's Inbox: the row is
+     * stamped and kept with its error if the send fails for good. Absent or
+     * `api` — the row is removed on a final failure.
+     */
+    sendFrom?: SendFrom
   }
 }
 

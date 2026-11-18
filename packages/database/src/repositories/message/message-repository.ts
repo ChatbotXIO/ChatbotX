@@ -355,6 +355,18 @@ export interface IMessageRepository {
     params: HardDeleteAllByContactInboxParams,
   ): Promise<HardDeleteAllByContactInboxResult>
 
+  /**
+   * Permanently removes one message and its attachment rows (no `deletedAt`
+   * tombstone — the inbox would render a soft-deleted row as "The message has
+   * been deleted."). Returns the ids of the message rows removed. Throws when a
+   * shard fails, so the caller never reports a delete that did not happen.
+   */
+  hardDeleteById(
+    id: string,
+    workspaceId: string,
+    createdAt: Date,
+  ): Promise<{ id: string }[]>
+
   /** Whether a message already carries an attachment of this type — lets a
    * retryable pipeline re-run its attach step without duplicating the file. */
   hasAttachmentOfType(props: {

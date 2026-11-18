@@ -2696,6 +2696,25 @@ describe("processCommentAIReply", () => {
         replyText: "AI answer",
         errorDetail: "token revoked",
       })
+      // The DM is sent inline and creates no message, so the Error Log is the
+      // workspace-wide record of it.
+      expect(mockLogProviderError).toHaveBeenCalledWith(
+        expect.objectContaining({
+          provider: "messenger",
+          workspaceId: "workspace-1",
+          error: expect.objectContaining({ message: "token revoked" }),
+        }),
+      )
+    })
+
+    test("public: a failure is left to the chat worker's Error Log row", async () => {
+      mockMessageCreate.mockRejectedValue(new Error("shard down"))
+
+      await expect(
+        processCommentAIReply(buildAIJobData() as any),
+      ).rejects.toThrow("shard down")
+
+      expect(mockLogProviderError).not.toHaveBeenCalled()
     })
 
     test("does not record on an attempt that will be retried", async () => {

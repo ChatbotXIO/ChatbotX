@@ -5,6 +5,7 @@ import {
   messageStatusBranchService,
   queueMessageCreatedEvent,
 } from "@chatbotx.io/business"
+import { SENT_FROM_INBOX_KEY } from "@chatbotx.io/database/partials"
 import type { messageModel } from "@chatbotx.io/database/schema"
 import type {
   ContactInboxModel,
@@ -31,6 +32,7 @@ import {
 } from "@chatbotx.io/sdk"
 import { createId } from "@chatbotx.io/utils"
 import { resolveStackFrames } from "@chatbotx.io/utils/error-log"
+import type { SendFrom } from "@chatbotx.io/utils/send-from"
 import { contactVariableService } from "@chatbotx.io/variables"
 import type {
   BotResponseTrackingContext,
@@ -55,6 +57,7 @@ import {
   isDeliveredDirectMessage,
   markConversationReadAfterDelivery,
   sendFlowStepToChannel,
+  settleFailedTemplateMessage,
 } from "./send-message"
 
 // Meta rejects (error 131062) an authentication-category template sent to a
@@ -104,6 +107,11 @@ export interface ProcessWhatsappTemplateParams {
   humanSender?: { adminId: string }
   isBulkBroadcast?: boolean
   metadata?: MetadataPayload
+  /**
+   * Where the send was started (see `SendFrom`). `inbox` stamps the row so a
+   * failed send keeps it with its error; anything else removes it.
+   */
+  sendFrom?: SendFrom
   /** The inbox user who sent the running flow, for `{{admin_name}}` in the params. */
   sentByUserId?: string
   /**
@@ -206,6 +214,7 @@ export async function processWhatsappTemplate(
     humanSender,
     sentByUserId,
     statusBranches,
+    sendFrom,
   } = params
   const isBulkOutbound = isBulkOutboundMetadata(
     metadata,
@@ -232,6 +241,9 @@ export async function processWhatsappTemplate(
   }
 
   let newMessage: typeof messageModel.$inferSelect | null = null
+  // Set once the provider accepted the template: a failure after that point is
+  // bookkeeping, and the delivered message must not be removed or marked.
+  let isDispatched = false
 
   try {
     const validated = await validateWhatsappTemplate(
@@ -308,6 +320,7 @@ export async function processWhatsappTemplate(
       ...(trackingContext && { trackingContext }),
       payload: {} as MessageTemplateEntity["payload"],
       metadata,
+      ...(sendFrom && { [SENT_FROM_INBOX_KEY]: sendFrom === "inbox" }),
     }
 
     if (flowButtonTemplates.length > 0) {
@@ -391,6 +404,7 @@ export async function processWhatsappTemplate(
         occurredAt: createdMessage.createdAt,
       },
     })
+    isDispatched = true
 
     // Same rule as a flow reply: a delivered bot DM honours the inbox's
     // markReadOnOutbound option. Templates get no channel echo on WhatsApp, so
@@ -474,6 +488,11 @@ export async function processWhatsappTemplate(
       },
       "Failed to send WhatsApp template to provider",
     )
+    const willRetry = willSendRetry({
+      error,
+      channel: contactInbox.channel,
+      willRetryOnThrow,
+    })
     await emit(messageEventTypeSchema.enum["message:failed"], {
       ...eventLogData,
       action: {
@@ -485,12 +504,20 @@ export async function processWhatsappTemplate(
       // stackless `ParsedError`, so `ErrorLog.stackTrace` has no other source.
       errorStack: resolveStackFrames(error),
       occurredAt: new Date(),
-      willRetry: willSendRetry({
-        error,
-        channel: contactInbox.channel,
-        willRetryOnThrow,
-      }),
+      willRetry,
     })
+
+    if (newMessage && !isDispatched) {
+      await settleFailedTemplateMessage({
+        message: newMessage,
+        conversationId: conversation.id,
+        workspaceId: conversation.workspaceId,
+        errorMessage: errorData.message,
+        sendFrom,
+        silent: isBulkOutbound,
+        willRetry,
+      })
+    }
 
     throw error
   }
@@ -619,6 +646,7 @@ export async function sendWhatsappTemplateToConversation(
     metadata,
     initiatedBy,
     adminId,
+    sendFrom,
   } = data
 
   try {
@@ -649,6 +677,7 @@ export async function sendWhatsappTemplateToConversation(
       },
       metadata,
       humanSender: initiatedBy === "user" && adminId ? { adminId } : undefined,
+      sendFrom,
     })
   } catch (error) {
     logger.error(

@@ -346,6 +346,10 @@ vi.mock("../src/services/integrations", () => ({
   resolveIntegrationContextFromContactInbox: vi.fn(),
 }))
 
+const mockSettleFailedOutgoingMessage = vi.hoisted(() =>
+  vi.fn().mockResolvedValue("removed"),
+)
+
 vi.mock("../src/chat/handlers/send-message", async (importOriginal) => {
   const actual =
     await importOriginal<typeof import("../src/chat/handlers/send-message")>()
@@ -353,7 +357,7 @@ vi.mock("../src/chat/handlers/send-message", async (importOriginal) => {
     ...actual,
     sendFlowStepToChannel: mockSendFlowStepToChannel,
     sendMessageToChannel: mockSendMessageToChannel,
-    recordMessageSendError: vi.fn().mockResolvedValue(undefined),
+    settleFailedOutgoingMessage: mockSettleFailedOutgoingMessage,
     markConversationReadAfterDelivery: mockMarkReadByOutbound,
   }
 })
@@ -962,6 +966,68 @@ describe("sendFlowStep", () => {
     expect(mockRecordOutboundFlowStep).toHaveBeenCalledWith(
       expect.objectContaining({ closeHumanReplyWindow: true }),
     )
+  })
+
+  describe("a failed send", () => {
+    beforeEach(() => {
+      mockSendFlowStepToChannel.mockRejectedValueOnce(new Error("rejected"))
+    })
+
+    test("of an automated flow step settles its message without the inbox rule", async () => {
+      await sendFlowStep(baseParams)
+
+      expect(mockEmit).toHaveBeenCalledWith(
+        "message:failed",
+        expect.objectContaining({ willRetry: false }),
+      )
+      expect(mockSettleFailedOutgoingMessage).toHaveBeenCalledWith({
+        message: expect.objectContaining({ id: "msg-created" }),
+        conversationId: "conv-1",
+        workspaceId: "ws-1",
+        errorMessage: expect.any(String),
+        sendFrom: undefined,
+        silent: false,
+      })
+    })
+
+    test("of a flow sent from the inbox passes sendFrom so the message is kept", async () => {
+      await sendFlowStep({ ...baseParams, sendFrom: "inbox" })
+
+      expect(mockSettleFailedOutgoingMessage).toHaveBeenCalledWith(
+        expect.objectContaining({ sendFrom: "inbox" }),
+      )
+    })
+
+    test("of a bulk broadcast step settles silently", async () => {
+      await sendFlowStep({
+        ...baseParams,
+        isBulkBroadcast: true,
+        metadata: { type: BROADCAST_PAYLOAD_TYPE } as never,
+      })
+
+      expect(mockSettleFailedOutgoingMessage).toHaveBeenCalledWith(
+        expect.objectContaining({ silent: true }),
+      )
+    })
+  })
+
+  test("stamps a flow step sent from the inbox as sentFromInbox", async () => {
+    await sendFlowStep({ ...baseParams, sendFrom: "inbox" })
+
+    expect(mockRepositoryCreate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        contentAttributes: expect.objectContaining({ sentFromInbox: true }),
+      }),
+    )
+  })
+
+  test("does not stamp an automated or API flow step", async () => {
+    await sendFlowStep({ ...baseParams, sendFrom: "api" })
+
+    const [created] = mockRepositoryCreate.mock.calls[0] as [
+      { contentAttributes: Record<string, unknown> },
+    ]
+    expect(created.contentAttributes).not.toHaveProperty("sentFromInbox")
   })
 
   test("an inbox-originated flow step leaves the window to the producer claim", async () => {

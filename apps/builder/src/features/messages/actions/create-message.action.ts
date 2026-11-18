@@ -32,5 +32,6 @@ export const createMessageAction = workspaceActionClient
       contactInbox,
       input: parsedInput,
       user: ctx.user,
+      sendFrom: "inbox",
     })
   })

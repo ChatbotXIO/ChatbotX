@@ -81,12 +81,17 @@ vi.mock("@chatbotx.io/database/client", () => ({
 // delivered; mark-read forwards to conversationService.markReadByOutbound) so
 // this file checks the handler's wiring; the helpers themselves are covered by
 // send-message-handler.test.ts.
+const mockSettleFailedTemplateMessage = vi.hoisted(() =>
+  vi.fn().mockResolvedValue("removed"),
+)
+
 vi.mock("../src/chat/handlers/send-message", () => ({
   isDeliveredDirectMessage: ({ result }: { result: { sentCount: number } }) =>
     result.sentCount > 0,
   markConversationReadAfterDelivery: (props: unknown) =>
     mockMarkReadByOutbound(props),
   sendFlowStepToChannel: vi.fn(),
+  settleFailedTemplateMessage: mockSettleFailedTemplateMessage,
 }))
 
 vi.mock("../src/integration/handlers/messenger-template-handler", () => ({
