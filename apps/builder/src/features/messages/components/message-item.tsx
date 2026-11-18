@@ -59,6 +59,7 @@ import { useCopyToClipboard } from "usehooks-ts"
 import type { AttachmentResource } from "@/features/attachments/schema/resource"
 import { useAttachmentSource } from "@/features/attachments/utils"
 import { contactDisplayName } from "@/features/contacts/lib/contact-display-name"
+import { getEmailSubject } from "../lib/get-email-subject"
 import {
   getSentPaymentRequests,
   getSentTemplateName,
@@ -170,6 +171,7 @@ export const MessageItem = (props: MessageItemProps) => {
   const isLiked = attributes?.liked === true
   const isHidden = attributes?.hidden === true
   const hasAttachments = !!message.attachments?.length
+  const emailSubject = getEmailSubject(message.contentAttributes)
   const storyReply = getStoryReplyEntity(message.contentAttributes)
   // Call rows render localized labels from contentAttributes; the stored
   // text is only an English fallback for previews and must not double-render.
@@ -302,6 +304,9 @@ export const MessageItem = (props: MessageItemProps) => {
                     isDeleted && "opacity-50",
                   )}
                 >
+                  {emailSubject && !isDeleted && (
+                    <p className="mb-1 font-semibold text-xs">{emailSubject}</p>
+                  )}
                   <pre className="wrap-break-word whitespace-pre-line font-sans">
                     {isDeleted ? (
                       <span className="text-xs italic">

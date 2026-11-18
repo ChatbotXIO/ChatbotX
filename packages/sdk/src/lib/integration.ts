@@ -96,6 +96,12 @@ export type ChannelSendFlowStepProps<IAuth extends AuthValue> = {
      * channels ignore it.
      */
     commentAnchor?: CommentAnchor
+    /**
+     * Thread headers (subject, message id, references) of the conversation's
+     * last inbound email, so a flow reply lands in the same thread. Read only
+     * by the SMTP channel; other channels ignore it.
+     */
+    emailThread?: Record<string, unknown>
   }
 }
 export type OutgoingSendResult = {
@@ -148,6 +154,8 @@ export type MessageHandlers<
         sendFrom?: SendFrom
         /** See {@link ChannelSendFlowStepProps}. */
         commentAnchor?: CommentAnchor
+        /** See {@link ChannelSendFlowStepProps}. */
+        emailThread?: Record<string, unknown>
       }
     },
     OutgoingSendResult

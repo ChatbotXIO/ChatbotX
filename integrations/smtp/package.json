@@ -5,16 +5,23 @@
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
-    "./schema": "./src/schema.ts"
+    "./schema": "./src/schema.ts",
+    "./imap": "./src/imap-entry.ts"
   },
   "dependencies": {
+    "@chatbotx.io/flow-config": "workspace:*",
+    "@chatbotx.io/logger": "workspace:*",
     "@chatbotx.io/sdk": "workspace:*",
+    "@chatbotx.io/utils": "workspace:*",
+    "imapflow": "catalog:",
+    "mailparser": "catalog:",
     "nodemailer": "^10.3.1",
     "zod": "catalog:"
   },
   "devDependencies": {
     "@chatbotx.io/typescript-config": "workspace:*",
     "@chatbotx.io/vitest-config": "workspace:*",
+    "@types/mailparser": "^3.4.6",
     "@types/node": "catalog:",
     "typescript": "catalog:",
     "vitest": "catalog:"

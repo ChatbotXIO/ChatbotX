@@ -7,6 +7,8 @@ import {
   selfServeConnection,
 } from "@chatbotx.io/sdk"
 import { sendMail } from "./actions"
+import { messageHandlers } from "./handlers/message"
+import { handleInboundWebhook, type SmtpWebhookConfig } from "./inbound/webhook"
 import type { SmtpActions, SmtpAuthValue } from "./schema"
 
 const smtpFields: readonly ConnectionConfigField[] = [
@@ -53,7 +55,7 @@ const config: IntegrationDefinition<BaseConfig, SmtpAuthValue, SmtpActions> = {
   name: "smtp",
   channels: {
     channel: {
-      message: {},
+      message: messageHandlers,
     },
   },
   actions: {
@@ -68,9 +70,10 @@ const config: IntegrationDefinition<BaseConfig, SmtpAuthValue, SmtpActions> = {
       displayName: `SMTP (${auth.provider})`,
     }),
   }),
-  handleRequest(_props: HandleRequestProps<BaseConfig>) {
-    throw new Error("Method is not implemented.")
-  },
+  // Inbound-parse webhook; the builder route resolves the inbox from the URL
+  // token and passes `{ inboxId, provider }`.
+  handleRequest: (props: HandleRequestProps<BaseConfig>) =>
+    handleInboundWebhook(props as HandleRequestProps<SmtpWebhookConfig>),
   disconnect(_props: SmtpAuthValue): Promise<void> {
     // SMTP credentials are workspace-local (host/port/username/password);
     // there is no external provider session or webhook subscription to

@@ -1,6 +1,7 @@
 "use client"
 
 import {
+  imapHostMap,
   smtpHostMap,
   smtpProviders,
 } from "@chatbotx.io/integration-smtp/schema"
@@ -20,6 +21,8 @@ import { useInvalidateInboxes } from "@/features/inboxes/provider/inbox-hook"
 import { createSmtpAction } from "../actions/create-smtp.action"
 import { createSmtpRequest } from "../schema/mutation"
 import { smtpProviderLabels } from "../schema/resource"
+import { SmtpReceiveFields } from "./smtp-receive-fields"
+import { SmtpSetupGuide } from "./smtp-setup-guide"
 
 type CreateSmtpFormProps = {
   readonly workspaceId: string
@@ -71,6 +74,7 @@ export const CreateSmtpForm = ({
           username: "",
           password: "",
           fromAddress: "",
+          imap: { enabled: false },
         },
       },
     },
@@ -84,6 +88,10 @@ export const CreateSmtpForm = ({
       smtpHostMap[value as (typeof smtpProviders.options)[number]]
     form.setValue("host", host)
     form.setValue("port", port || 587)
+    // A relay has no mailbox to read: never carry IMAP over from the old provider.
+    if (imapHostMap[value as (typeof smtpProviders.options)[number]] === null) {
+      form.setValue("imap.enabled", false)
+    }
   }
 
   return (
@@ -100,6 +108,8 @@ export const CreateSmtpForm = ({
             }
           }}
         />
+
+        <SmtpSetupGuide provider={selectedProvider} />
 
         <div className="flex gap-2">
           <InputField
@@ -145,6 +155,13 @@ export const CreateSmtpForm = ({
           placeholder={t("fields.fromAddress.placeholder")}
           required
           type="email"
+        />
+
+        <Separator />
+
+        <SmtpReceiveFields
+          provider={selectedProvider}
+          workspaceId={workspaceId}
         />
 
         <div className="flex justify-end gap-2">

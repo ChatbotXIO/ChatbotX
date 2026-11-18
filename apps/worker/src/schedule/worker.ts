@@ -36,6 +36,7 @@ import {
 import { maintainLeaderboardPartitions } from "./handlers/maintain-leaderboard-partitions"
 import { maintainMacPartitions } from "./handlers/maintain-mac-partitions"
 import { materializeRecurringBroadcasts } from "./handlers/materialize-recurring-broadcasts"
+import { pollSmtpInboxes } from "./handlers/poll-smtp-inboxes"
 import { prepareBroadcast } from "./handlers/prepare-broadcast"
 import { processBroadcastContacts } from "./handlers/process-broadcast-contacts"
 import { purgeAutomationThrottle } from "./handlers/purge-automation-throttle"
@@ -201,6 +202,10 @@ async function startScheduleWorker() {
 
             case ScheduleJobData.scanContactScans:
               await scanContactScans()
+              return
+
+            case ScheduleJobData.pollSmtpInboxes:
+              await pollSmtpInboxes()
               return
 
             case ScheduleJobData.scanAiHandoverBulkRuns:

@@ -22,7 +22,7 @@ export const createSmtpAction = workspaceActionClient
     } = props
     const { fromAddress, username } = parsedInput
 
-    const { auth } = await prepareSmtpAuth(parsedInput)
+    const { auth, imap } = await prepareSmtpAuth(parsedInput)
 
     const workspace = await workspaceService.find({
       where: { id: workspaceId },
@@ -45,6 +45,7 @@ export const createSmtpAction = workspaceActionClient
       name: username,
       fromAddress,
       auth,
+      imap,
     })
 
     return {

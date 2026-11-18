@@ -321,7 +321,13 @@ export const buildConnectionStoreBindings = (
     tableName: "IntegrationSmtp",
     identityColumn: "id",
     onDisconnect: "keep_row",
-    configColumns: ["fromAddress"],
+    configColumns: [
+      "fromAddress",
+      "imapEnabled",
+      "imapHost",
+      "imapPort",
+      "imapMailbox",
+    ],
   }),
   line: makeChannelBinding({
     table: integrationLineModel,
