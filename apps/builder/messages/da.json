@@ -7631,6 +7631,22 @@
       "empty": "Enter skabelon brødtekst til see a preview"
     }
   },
+  "resellerWorkspaces": {
+    "title": "Underkontoens arbejdsområder",
+    "description": "Flyt et arbejdsområde, der ejes af en af dine underkonti, til dine egne platformsarbejdsområder.",
+    "owner": "Ejer",
+    "searchPlaceholder": "Søg efter navn, ejerens e-mail eller ID",
+    "moveAction": "Flyt til mine arbejdsområder",
+    "dialogTitle": "Vil du flytte \"{name}\" til dine arbejdsområder?",
+    "dialogIntro": "Dette arbejdsområde ejes i øjeblikket af {email}. Du bliver den eneste ejer.",
+    "warnAccess": "Underkontoen og dens team mister adgangen til arbejdsområdet.",
+    "warnPlatform": "Arbejdsområdet flyttes til platformens URL og bruger platformens branding. Det åbner ikke længere på dit eget domæne.",
+    "warnTemplates": "Skabeloner installeret fra din butik kan bagefter ikke afinstalleres fra dette arbejdsområde.",
+    "cancel": "Annuller",
+    "confirm": "Flyt arbejdsområde",
+    "success": "Arbejdsområdet er flyttet til dine arbejdsområder",
+    "error": "Arbejdsområdet kunne ikke flyttes"
+  },
   "manageSidebar": {
     "administrationGroup": "Administration",
     "platformGroup": "Platform",

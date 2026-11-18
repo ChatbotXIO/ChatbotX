@@ -8509,6 +8509,22 @@
       "empty": "Önbaxış üçün şablonun məzmununu daxil edin"
     }
   },
+  "resellerWorkspaces": {
+    "title": "Alt hesab iş sahələri",
+    "description": "Alt hesablarınızdan birinə məxsus iş sahəsini öz platforma iş sahələrinizə köçürün.",
+    "owner": "Sahib",
+    "searchPlaceholder": "Ad, sahib e-poçtu və ya ID ilə axtarın",
+    "moveAction": "İş sahələrimə köçür",
+    "dialogTitle": "\"{name}\" iş sahəsi sizin iş sahələrinizə köçürülsün?",
+    "dialogIntro": "Bu iş sahəsi hazırda {email} adresinə məxsusdur. Siz onun yeganə sahibi olacaqsınız.",
+    "warnAccess": "Alt hesab və komandası iş sahəsinə çıxışı itirəcək.",
+    "warnPlatform": "İş sahəsi platforma URL-inə keçir və platforma brendindən istifadə edir. O, artıq xüsusi domeninizdə açılmır.",
+    "warnTemplates": "Mağazanızdan quraşdırılmış şablonlar sonradan bu iş sahəsindən silinə bilməz.",
+    "cancel": "Ləğv et",
+    "confirm": "İş sahəsini köçür",
+    "success": "İş sahəsi sizin iş sahələrinizə köçürüldü",
+    "error": "İş sahəsini köçürmək mümkün olmadı"
+  },
   "manageSidebar": {
     "administrationGroup": "İdarəetmə",
     "platformGroup": "Platforma",

@@ -7631,6 +7631,22 @@
       "empty": "Geben Sie einen Vorlageninhalt ein, um eine Vorschau anzuzeigen"
     }
   },
+  "resellerWorkspaces": {
+    "title": "Workspaces der Unterkonten",
+    "description": "Verschiebe einen Workspace, der einem deiner Unterkonten gehört, in deine eigenen Plattform-Workspaces.",
+    "owner": "Inhaber",
+    "searchPlaceholder": "Nach Name, Inhaber-E-Mail oder ID suchen",
+    "moveAction": "In meine Workspaces verschieben",
+    "dialogTitle": "„{name}“ in deine Workspaces verschieben?",
+    "dialogIntro": "Dieser Workspace gehört derzeit {email}. Du wirst sein alleiniger Inhaber.",
+    "warnAccess": "Das Unterkonto und sein Team verlieren den Zugriff auf den Workspace.",
+    "warnPlatform": "Der Workspace wechselt zur Plattform-URL und nutzt das Plattform-Branding. Er öffnet sich nicht mehr auf deiner eigenen Domain.",
+    "warnTemplates": "Aus deinem Store installierte Vorlagen können danach nicht mehr aus diesem Workspace deinstalliert werden.",
+    "cancel": "Abbrechen",
+    "confirm": "Workspace verschieben",
+    "success": "Workspace in deine Workspaces verschoben",
+    "error": "Der Workspace konnte nicht verschoben werden"
+  },
   "manageSidebar": {
     "administrationGroup": "Administration",
     "platformGroup": "Plattform",

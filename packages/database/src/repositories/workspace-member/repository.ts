@@ -1,6 +1,14 @@
-import { and, type DatabaseClient, db, eq, inArray, sql } from "../../client"
+import {
+  and,
+  type DatabaseClient,
+  db,
+  eq,
+  inArray,
+  ne,
+  sql,
+} from "../../client"
 import type { WorkspaceMemberPermissions } from "../../partials/workspace"
-import { workspaceMemberModel } from "../../schema"
+import { ROOT_TENANT_ID, userModel, workspaceMemberModel } from "../../schema"
 
 export type WorkspaceMemberPermissionsRow = {
   userId: string
@@ -79,6 +87,66 @@ class WorkspaceMemberRepository {
         userId: workspaceMemberModel.userId,
         workspaceId: workspaceMemberModel.workspaceId,
       })
+  }
+
+  /**
+   * Removes every member of a workspace whose account belongs to a non-root
+   * tenant. Used when a sub-account workspace moves to the platform: those
+   * users can never reach the platform host. Returns the removed user ids.
+   */
+  async deleteNonRootMembers(
+    workspaceId: string,
+    tx: DatabaseClient,
+  ): Promise<string[]> {
+    const rows = await tx
+      .delete(workspaceMemberModel)
+      .where(
+        and(
+          eq(workspaceMemberModel.workspaceId, workspaceId),
+          inArray(
+            workspaceMemberModel.userId,
+            tx
+              .select({ id: userModel.id })
+              .from(userModel)
+              .where(ne(userModel.tenantId, ROOT_TENANT_ID)),
+          ),
+        ),
+      )
+      .returning({ userId: workspaceMemberModel.userId })
+    return rows.map((row) => row.userId)
+  }
+
+  /** The user's membership row in a workspace, if any. */
+  async findByWorkspaceAndUser(
+    props: { workspaceId: string; userId: string },
+    tx: DatabaseClient,
+  ): Promise<{ id: string } | undefined> {
+    const [row] = await tx
+      .select({ id: workspaceMemberModel.id })
+      .from(workspaceMemberModel)
+      .where(
+        and(
+          eq(workspaceMemberModel.workspaceId, props.workspaceId),
+          eq(workspaceMemberModel.userId, props.userId),
+        ),
+      )
+      .limit(1)
+    return row
+  }
+
+  /** Sets a membership's role and permissions (promotion to owner). */
+  async setRoleAndPermissions(
+    props: {
+      id: string
+      role: (typeof workspaceMemberModel.$inferInsert)["role"]
+      permissions: WorkspaceMemberPermissions
+    },
+    tx: DatabaseClient,
+  ): Promise<void> {
+    await tx
+      .update(workspaceMemberModel)
+      .set({ role: props.role, permissions: props.permissions })
+      .where(eq(workspaceMemberModel.id, props.id))
   }
 }
 

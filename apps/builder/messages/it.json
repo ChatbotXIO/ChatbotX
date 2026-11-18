@@ -7631,6 +7631,22 @@
       "empty": "Inserisci il corpo del modello per visualizzare un'anteprima"
     }
   },
+  "resellerWorkspaces": {
+    "title": "Spazi di lavoro dei sotto-account",
+    "description": "Sposta uno spazio di lavoro di proprietà di un tuo sotto-account tra i tuoi spazi di lavoro della piattaforma.",
+    "owner": "Proprietario",
+    "searchPlaceholder": "Cerca per nome, email del proprietario o ID",
+    "moveAction": "Sposta nei miei spazi di lavoro",
+    "dialogTitle": "Spostare \"{name}\" nei tuoi spazi di lavoro?",
+    "dialogIntro": "Questo spazio di lavoro appartiene attualmente a {email}. Ne diventerai l'unico proprietario.",
+    "warnAccess": "Il sotto-account e il suo team perderanno l'accesso allo spazio di lavoro.",
+    "warnPlatform": "Lo spazio di lavoro passa all'URL della piattaforma e usa il suo marchio. Non si apre più sul tuo dominio personalizzato.",
+    "warnTemplates": "I modelli installati dal tuo store non potranno più essere disinstallati da questo spazio di lavoro.",
+    "cancel": "Annulla",
+    "confirm": "Sposta spazio di lavoro",
+    "success": "Spazio di lavoro spostato nei tuoi spazi di lavoro",
+    "error": "Impossibile spostare lo spazio di lavoro"
+  },
   "manageSidebar": {
     "administrationGroup": "Amministrazione",
     "platformGroup": "Piattaforma",

@@ -5566,6 +5566,22 @@
     },
     "title": "Make.com"
   },
+  "resellerWorkspaces": {
+    "title": "子账户工作区",
+    "description": "将归您的某个子账户所有的工作区移动到您自己的平台工作区。",
+    "owner": "所有者",
+    "searchPlaceholder": "按名称、所有者邮箱或 ID 搜索",
+    "moveAction": "移动到我的工作区",
+    "dialogTitle": "将“{name}”移动到您的工作区?",
+    "dialogIntro": "该工作区当前归 {email} 所有。您将成为唯一所有者。",
+    "warnAccess": "子账户及其团队将失去对该工作区的访问权限。",
+    "warnPlatform": "工作区将迁移到平台网址并使用平台品牌，不再通过您的自定义域名打开。",
+    "warnTemplates": "之后无法从该工作区卸载从您的商店安装的模板。",
+    "cancel": "取消",
+    "confirm": "移动工作区",
+    "success": "工作区已移动到您的工作区",
+    "error": "无法移动工作区"
+  },
   "manageSidebar": {
     "administrationGroup": "管理",
     "platformGroup": "平台",

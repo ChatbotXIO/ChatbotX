@@ -7631,6 +7631,22 @@
       "empty": "Näe esikatselu kirjoittamalla mallin runko"
     }
   },
+  "resellerWorkspaces": {
+    "title": "Alitilien työtilat",
+    "description": "Siirrä alitilisi omistama työtila omiin alustan työtiloihisi.",
+    "owner": "Omistaja",
+    "searchPlaceholder": "Hae nimellä, omistajan sähköpostilla tai tunnuksella",
+    "moveAction": "Siirrä omiin työtiloihini",
+    "dialogTitle": "Siirretäänkö \"{name}\" työtiloihisi?",
+    "dialogIntro": "Tämän työtilan omistaa tällä hetkellä {email}. Sinusta tulee sen ainoa omistaja.",
+    "warnAccess": "Alitili ja sen tiimi menettävät pääsyn työtilaan.",
+    "warnPlatform": "Työtila siirtyy alustan URL-osoitteeseen ja käyttää alustan brändiä. Se ei enää avaudu omalla verkkotunnuksellasi.",
+    "warnTemplates": "Kaupastasi asennettuja malleja ei voi jälkeenpäin poistaa tästä työtilasta.",
+    "cancel": "Peruuta",
+    "confirm": "Siirrä työtila",
+    "success": "Työtila siirrettiin työtiloihisi",
+    "error": "Työtilan siirtäminen epäonnistui"
+  },
   "manageSidebar": {
     "administrationGroup": "Hallinta",
     "platformGroup": "Alusta",

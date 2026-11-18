@@ -75,6 +75,11 @@ import {
   releaseWorkspaceSeat,
   type WorkspaceQuotaConsumption,
 } from "./quota-consumption"
+import {
+  type TransferSubAccountWorkspaceInput,
+  type TransferSubAccountWorkspaceResult,
+  transferSubAccountWorkspaceToOwner,
+} from "./transfer-to-reseller-owner"
 
 type WorkspaceWhere = Partial<{ id: string; ownerId: string }>
 type EnsureOwnerWorkspaceInput = {
@@ -400,6 +405,34 @@ class WorkspaceService extends BaseService {
     }
 
     return updated
+  }
+
+  /**
+   * Moves a sub-account's workspace to the reseller owner's platform
+   * workspaces (see `transfer-to-reseller-owner.ts`).
+   */
+  async transferSubAccountWorkspaceToOwner(
+    input: TransferSubAccountWorkspaceInput,
+  ): Promise<TransferSubAccountWorkspaceResult> {
+    return await transferSubAccountWorkspaceToOwner(input)
+  }
+
+  /** The reseller's sub-accounts' workspaces. The tenant comes from the caller, never from input. */
+  async listSubAccountWorkspaces(props: {
+    resellerUserId: string
+    keyword?: string
+    page?: number | null
+    perPage?: number | null
+  }) {
+    const { resellerUserId, ...query } = props
+    const tenant = await tenantService.findByOwner(resellerUserId)
+    if (tenant?.status !== "active") {
+      return { data: [], pageCount: 0 }
+    }
+    return await workspaceRepository.listByTenantForOwnerConsole({
+      tenantId: tenant.id,
+      ...query,
+    })
   }
 
   private async invalidateWorkspaceCache(

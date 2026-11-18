@@ -7279,6 +7279,22 @@
       "instagramFacebookDescription": "Instagram conectat printr-o Pagină Facebook. Acceptă răspuns prin text, flux sau AI agent."
     }
   },
+  "resellerWorkspaces": {
+    "title": "Spațiile de lucru ale subconturilor",
+    "description": "Mută un spațiu de lucru deținut de unul dintre subconturile tale în propriile spații de lucru ale platformei.",
+    "owner": "Proprietar",
+    "searchPlaceholder": "Caută după nume, e-mailul proprietarului sau ID",
+    "moveAction": "Mută în spațiile mele de lucru",
+    "dialogTitle": "Muți „{name}” în spațiile tale de lucru?",
+    "dialogIntro": "Acest spațiu de lucru aparține în prezent lui {email}. Vei deveni singurul proprietar.",
+    "warnAccess": "Subcontul și echipa lui vor pierde accesul la spațiul de lucru.",
+    "warnPlatform": "Spațiul de lucru trece la URL-ul platformei și folosește brandingul platformei. Nu se mai deschide pe domeniul tău personalizat.",
+    "warnTemplates": "Șabloanele instalate din magazinul tău nu vor mai putea fi dezinstalate ulterior din acest spațiu de lucru.",
+    "cancel": "Anulează",
+    "confirm": "Mută spațiul de lucru",
+    "success": "Spațiul de lucru a fost mutat în spațiile tale de lucru",
+    "error": "Spațiul de lucru nu a putut fi mutat"
+  },
   "manageSidebar": {
     "administrationGroup": "Administrare",
     "platformGroup": "Platformă",

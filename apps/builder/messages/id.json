@@ -7631,6 +7631,22 @@
       "empty": "Masukkan isi templat untuk melihat pratinjau"
     }
   },
+  "resellerWorkspaces": {
+    "title": "Workspace sub-akun",
+    "description": "Pindahkan workspace milik salah satu sub-akun Anda ke workspace platform Anda sendiri.",
+    "owner": "Pemilik",
+    "searchPlaceholder": "Cari berdasarkan nama, email pemilik, atau ID",
+    "moveAction": "Pindahkan ke workspace saya",
+    "dialogTitle": "Pindahkan \"{name}\" ke workspace Anda?",
+    "dialogIntro": "Workspace ini saat ini dimiliki oleh {email}. Anda akan menjadi satu-satunya pemilik.",
+    "warnAccess": "Sub-akun dan timnya akan kehilangan akses ke workspace.",
+    "warnPlatform": "Workspace pindah ke URL platform dan memakai branding platform. Workspace tidak lagi terbuka di domain kustom Anda.",
+    "warnTemplates": "Template yang dipasang dari toko Anda tidak dapat dicopot dari workspace ini setelahnya.",
+    "cancel": "Batal",
+    "confirm": "Pindahkan workspace",
+    "success": "Workspace dipindahkan ke workspace Anda",
+    "error": "Workspace tidak dapat dipindahkan"
+  },
   "manageSidebar": {
     "administrationGroup": "Administrasi",
     "platformGroup": "Platform",

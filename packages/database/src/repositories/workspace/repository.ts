@@ -3,13 +3,17 @@ import {
   asc,
   type DatabaseClient,
   db,
+  desc,
   eq,
+  ilike,
   isNull,
   notExists,
+  or,
   sql,
 } from "../../client"
-import { inboxModel, workspaceModel } from "../../schema"
+import { inboxModel, userModel, workspaceModel } from "../../schema"
 import type { WorkspaceModel } from "../../types"
+import { getPaginationWithDefaults, likeContains } from "../../utils"
 
 /** What a workspace deletion request needs from the locked row. */
 export type WorkspaceDeletionRequestState = Pick<
@@ -21,6 +25,27 @@ export type WorkspaceDeletionRequestState = Pick<
   | "deletionRequestedById"
   | "purgeStartedAt"
 >
+
+/** A workspace locked for an owner transfer, with its owner's tenant. */
+export type WorkspaceOwnerTransferState = Pick<
+  WorkspaceModel,
+  | "id"
+  | "ownerId"
+  | "tenantId"
+  | "purgeStartedAt"
+  | "scheduledDeletionAt"
+  | "name"
+> & { ownerTenantId: string }
+
+/** One row of the reseller console's sub-account workspace list. */
+export type SubAccountWorkspaceRow = {
+  id: string
+  name: string
+  createdAt: Date
+  ownerId: string
+  ownerName: string | null
+  ownerEmail: string
+}
 
 export const workspaceRepository = {
   /**
@@ -155,5 +180,100 @@ export const workspaceRepository = {
       .from(workspaceModel)
       .where(eq(workspaceModel.ownerId, input.ownerId))
       .orderBy(asc(workspaceModel.id))
+  },
+
+  /**
+   * Locks one workspace row (`FOR NO KEY UPDATE`, only the `Workspace` row, not
+   * the joined `User`) and returns what an owner transfer must check: the
+   * workspace's tenant and purge state plus its owner's tenant. Same lock as
+   * `findByIdForUpdate`, so it serializes with the purge fence. Requires an
+   * open transaction.
+   */
+  async lockForOwnerTransfer(
+    input: { id: string },
+    tx: DatabaseClient,
+  ): Promise<WorkspaceOwnerTransferState | undefined> {
+    const [row] = await tx
+      .select({
+        id: workspaceModel.id,
+        name: workspaceModel.name,
+        ownerId: workspaceModel.ownerId,
+        tenantId: workspaceModel.tenantId,
+        purgeStartedAt: workspaceModel.purgeStartedAt,
+        scheduledDeletionAt: workspaceModel.scheduledDeletionAt,
+        ownerTenantId: userModel.tenantId,
+      })
+      .from(workspaceModel)
+      .innerJoin(userModel, eq(workspaceModel.ownerId, userModel.id))
+      .where(eq(workspaceModel.id, input.id))
+      .for("no key update", { of: workspaceModel })
+    return row
+  },
+
+  /** Re-points a workspace at a new owner and tenant. Caller holds the row lock. */
+  async reassignOwner(
+    input: { id: string; ownerId: string; tenantId: string },
+    tx: DatabaseClient,
+  ): Promise<void> {
+    await tx
+      .update(workspaceModel)
+      .set({ ownerId: input.ownerId, tenantId: input.tenantId })
+      .where(eq(workspaceModel.id, input.id))
+  },
+
+  /**
+   * Workspaces of tenant `tenantId` whose owner is a sub-account of that same
+   * tenant (the reseller's own workspaces and stray rows are excluded), newest
+   * first, for the reseller console.
+   */
+  async listByTenantForOwnerConsole(
+    input: {
+      tenantId: string
+      keyword?: string
+      page?: number | null
+      perPage?: number | null
+    },
+    tx: DatabaseClient = db,
+  ): Promise<{ data: SubAccountWorkspaceRow[]; pageCount: number }> {
+    const pagination = getPaginationWithDefaults(input)
+    const keywordFilter = input.keyword
+      ? or(
+          ilike(workspaceModel.name, likeContains(input.keyword)),
+          ilike(userModel.email, likeContains(input.keyword)),
+          ilike(workspaceModel.id, likeContains(input.keyword)),
+        )
+      : undefined
+    const where = and(
+      eq(workspaceModel.tenantId, input.tenantId),
+      eq(userModel.tenantId, input.tenantId),
+      isNull(workspaceModel.scheduledDeletionAt),
+      isNull(workspaceModel.purgeStartedAt),
+      keywordFilter,
+    )
+
+    const [data, [{ count }]] = await Promise.all([
+      tx
+        .select({
+          id: workspaceModel.id,
+          name: workspaceModel.name,
+          createdAt: workspaceModel.createdAt,
+          ownerId: workspaceModel.ownerId,
+          ownerName: userModel.name,
+          ownerEmail: userModel.email,
+        })
+        .from(workspaceModel)
+        .innerJoin(userModel, eq(workspaceModel.ownerId, userModel.id))
+        .where(where)
+        .orderBy(desc(workspaceModel.createdAt))
+        .limit(pagination.limit)
+        .offset(pagination.offset),
+      tx
+        .select({ count: sql<number>`count(*)::int` })
+        .from(workspaceModel)
+        .innerJoin(userModel, eq(workspaceModel.ownerId, userModel.id))
+        .where(where),
+    ])
+
+    return { data, pageCount: Math.ceil(count / pagination.limit) }
   },
 }

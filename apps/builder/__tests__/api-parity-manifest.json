@@ -168,6 +168,7 @@
     "help-items/create-help-item.action:createHelpItemAction": "private:no public surface yet (UI-only, not yet audited)",
     "help-items/delete-help-item.action:deleteHelpItemAction": "private:no public surface yet (UI-only, not yet audited)",
     "help-items/update-help-item.action:updateHelpItemAction": "private:no public surface yet (UI-only, not yet audited)",
+    "reseller-workspaces/transfer-workspace-to-owner.action:transferWorkspaceToOwnerAction": "private:reseller-level operation; no reseller public auth stack, workspace tokens must not re-tenant workspaces",
     "ig-comments/bulk-delete-ig-comments.action:bulkDeleteIgCommentsAction": "covered:ig-comments",
     "ig-comments/create-ig-comment.action:createIgCommentAction": "covered:ig-comments",
     "ig-comments/delete-ig-comment.action:deleteIgCommentAction": "covered:ig-comments",

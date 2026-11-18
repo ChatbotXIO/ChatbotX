@@ -7677,6 +7677,22 @@
       "empty": "輸入範本內容以檢視預覽"
     }
   },
+  "resellerWorkspaces": {
+    "title": "子帳號工作區",
+    "description": "將屬於您其中一個子帳號的工作區移至您自己的平台工作區。",
+    "owner": "擁有者",
+    "searchPlaceholder": "依名稱、擁有者電子郵件或 ID 搜尋",
+    "moveAction": "移至我的工作區",
+    "dialogTitle": "要將「{name}」移至您的工作區嗎?",
+    "dialogIntro": "此工作區目前屬於 {email}。您將成為唯一擁有者。",
+    "warnAccess": "子帳號及其團隊將失去此工作區的存取權。",
+    "warnPlatform": "工作區將移至平台網址並使用平台品牌，不再於您的自訂網域開啟。",
+    "warnTemplates": "之後無法從此工作區解除安裝從您的商店安裝的範本。",
+    "cancel": "取消",
+    "confirm": "移動工作區",
+    "success": "工作區已移至您的工作區",
+    "error": "無法移動工作區"
+  },
   "manageSidebar": {
     "administrationGroup": "管理",
     "platformGroup": "平台",

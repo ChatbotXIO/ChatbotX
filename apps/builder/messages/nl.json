@@ -7631,6 +7631,22 @@
       "empty": "Voer de sjablooninhoud in om een voorbeeld te bekijken"
     }
   },
+  "resellerWorkspaces": {
+    "title": "Werkruimtes van subaccounts",
+    "description": "Verplaats een werkruimte van een van je subaccounts naar je eigen platformwerkruimtes.",
+    "owner": "Eigenaar",
+    "searchPlaceholder": "Zoek op naam, e-mailadres van de eigenaar of ID",
+    "moveAction": "Verplaatsen naar mijn werkruimtes",
+    "dialogTitle": "\"{name}\" naar je werkruimtes verplaatsen?",
+    "dialogIntro": "Deze werkruimte is momenteel eigendom van {email}. Jij wordt de enige eigenaar.",
+    "warnAccess": "Het subaccount en het team verliezen de toegang tot de werkruimte.",
+    "warnPlatform": "De werkruimte verhuist naar de platform-URL en gebruikt de platformbranding. Ze opent niet meer op je eigen domein.",
+    "warnTemplates": "Sjablonen die vanuit je winkel zijn geïnstalleerd, kunnen daarna niet meer uit deze werkruimte worden verwijderd.",
+    "cancel": "Annuleren",
+    "confirm": "Werkruimte verplaatsen",
+    "success": "Werkruimte verplaatst naar je werkruimtes",
+    "error": "De werkruimte kon niet worden verplaatst"
+  },
   "manageSidebar": {
     "administrationGroup": "Beheer",
     "platformGroup": "Platform",

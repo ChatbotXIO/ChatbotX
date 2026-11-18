@@ -7631,6 +7631,22 @@
       "empty": "Introduce plantilla body un see un preview"
     }
   },
+  "resellerWorkspaces": {
+    "title": "Espacios de trabajo de subcuentas",
+    "description": "Mueve un espacio de trabajo de una de tus subcuentas a tus propios espacios de trabajo de la plataforma.",
+    "owner": "Propietario",
+    "searchPlaceholder": "Busca por nombre, correo del propietario o ID",
+    "moveAction": "Mover a mis espacios de trabajo",
+    "dialogTitle": "¿Mover \"{name}\" a tus espacios de trabajo?",
+    "dialogIntro": "Este espacio de trabajo pertenece actualmente a {email}. Serás su único propietario.",
+    "warnAccess": "La subcuenta y su equipo perderán el acceso al espacio de trabajo.",
+    "warnPlatform": "El espacio de trabajo pasa a la URL de la plataforma y usa su marca. Ya no se abre en tu dominio personalizado.",
+    "warnTemplates": "Las plantillas instaladas desde tu tienda no podrán desinstalarse después de este espacio de trabajo.",
+    "cancel": "Cancelar",
+    "confirm": "Mover espacio de trabajo",
+    "success": "Espacio de trabajo movido a tus espacios de trabajo",
+    "error": "No se pudo mover el espacio de trabajo"
+  },
   "manageSidebar": {
     "administrationGroup": "Administración",
     "platformGroup": "Plataforma",

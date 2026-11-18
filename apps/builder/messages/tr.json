@@ -7631,6 +7631,22 @@
       "empty": "Önizlemeyi görmek için şablon içeriği girin"
     }
   },
+  "resellerWorkspaces": {
+    "title": "Alt hesap çalışma alanları",
+    "description": "Alt hesaplarınızdan birine ait bir çalışma alanını kendi platform çalışma alanlarınıza taşıyın.",
+    "owner": "Sahip",
+    "searchPlaceholder": "Ada, sahibin e-postasına veya kimliğe göre ara",
+    "moveAction": "Çalışma alanlarıma taşı",
+    "dialogTitle": "\"{name}\" çalışma alanlarınıza taşınsın mı?",
+    "dialogIntro": "Bu çalışma alanı şu anda {email} kullanıcısına ait. Tek sahibi siz olacaksınız.",
+    "warnAccess": "Alt hesap ve ekibi çalışma alanına erişimi kaybedecek.",
+    "warnPlatform": "Çalışma alanı platform URL'sine taşınır ve platform markasını kullanır. Artık özel alan adınızda açılmaz.",
+    "warnTemplates": "Mağazanızdan yüklenen şablonlar sonrasında bu çalışma alanından kaldırılamaz.",
+    "cancel": "İptal",
+    "confirm": "Çalışma alanını taşı",
+    "success": "Çalışma alanı çalışma alanlarınıza taşındı",
+    "error": "Çalışma alanı taşınamadı"
+  },
   "manageSidebar": {
     "administrationGroup": "Yönetim",
     "platformGroup": "Platform",

@@ -7869,6 +7869,22 @@
       "empty": "Nhập nội dung template để xem trước"
     }
   },
+  "resellerWorkspaces": {
+    "title": "Không gian làm việc của tài khoản phụ",
+    "description": "Chuyển không gian làm việc thuộc một tài khoản phụ của bạn sang các không gian làm việc nền tảng của riêng bạn.",
+    "owner": "Chủ sở hữu",
+    "searchPlaceholder": "Tìm theo tên, email chủ sở hữu hoặc ID",
+    "moveAction": "Chuyển vào không gian làm việc của tôi",
+    "dialogTitle": "Chuyển \"{name}\" vào các không gian làm việc của bạn?",
+    "dialogIntro": "Không gian làm việc này hiện thuộc về {email}. Bạn sẽ là chủ sở hữu duy nhất.",
+    "warnAccess": "Tài khoản phụ và nhóm của họ sẽ mất quyền truy cập vào không gian làm việc.",
+    "warnPlatform": "Không gian làm việc chuyển sang URL nền tảng và dùng thương hiệu nền tảng. Nó không còn mở trên tên miền tùy chỉnh của bạn.",
+    "warnTemplates": "Các mẫu cài từ cửa hàng của bạn không thể gỡ khỏi không gian làm việc này sau đó.",
+    "cancel": "Hủy",
+    "confirm": "Chuyển không gian làm việc",
+    "success": "Đã chuyển không gian làm việc vào các không gian làm việc của bạn",
+    "error": "Không thể chuyển không gian làm việc"
+  },
   "manageSidebar": {
     "administrationGroup": "Quản trị",
     "platformGroup": "Nền tảng",

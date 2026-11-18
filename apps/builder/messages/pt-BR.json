@@ -7631,6 +7631,22 @@
       "empty": "Digite o corpo do modelo para ver uma pré-visualização"
     }
   },
+  "resellerWorkspaces": {
+    "title": "Espaços de trabalho das subcontas",
+    "description": "Mova um espaço de trabalho de uma das suas subcontas para os seus próprios espaços de trabalho da plataforma.",
+    "owner": "Proprietário",
+    "searchPlaceholder": "Busque por nome, e-mail do proprietário ou ID",
+    "moveAction": "Mover para meus espaços de trabalho",
+    "dialogTitle": "Mover \"{name}\" para os seus espaços de trabalho?",
+    "dialogIntro": "Este espaço de trabalho pertence atualmente a {email}. Você será o único proprietário.",
+    "warnAccess": "A subconta e a equipe dela perderão o acesso ao espaço de trabalho.",
+    "warnPlatform": "O espaço de trabalho passa para a URL da plataforma e usa a marca da plataforma. Ele não abre mais no seu domínio personalizado.",
+    "warnTemplates": "Modelos instalados da sua loja não poderão ser desinstalados deste espaço de trabalho depois.",
+    "cancel": "Cancelar",
+    "confirm": "Mover espaço de trabalho",
+    "success": "Espaço de trabalho movido para os seus espaços de trabalho",
+    "error": "Não foi possível mover o espaço de trabalho"
+  },
   "manageSidebar": {
     "administrationGroup": "Administração",
     "platformGroup": "Plataforma",

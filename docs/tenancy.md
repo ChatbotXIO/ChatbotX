@@ -34,8 +34,10 @@ circular FK; it is re-exported from `@chatbotx.io/database/schema`.
   owner-derived tenant is kept. `resolveTenantForOwner` stays for sub-account
   provisioning and the admin console, which pass their tenant explicitly. A
   reseller's root-tenant workspaces use the platform's branding and credentials
-  (`resolveCredentialOwnerIdForWorkspace` keys off `workspace.tenantId`). Existing
-  workspaces are not migrated between tenants.
+  (`resolveCredentialOwnerIdForWorkspace` keys off `workspace.tenantId`). Workspaces
+  are not migrated between tenants automatically; the one supported move is a
+  reseller taking over a sub-account's workspace (see
+  [Moving a sub-account workspace to the reseller](#moving-a-sub-account-workspace-to-the-reseller)).
 - **`CustomDomain.tenantId`** — the host → tenant routing key (was `userId`).
 
 When adding a column with `Record<ChannelType, …>`-style fan-out, remember the
@@ -499,6 +501,52 @@ the database.**
 Independently, `unsubscribeExpiredTrials` tears down channels once a trial has
 been expired for seven days. `UserQuota.channelsTornDownAt` is the one-shot
 marker, making retries safe and preventing repeated provider disconnects.
+
+## Moving a sub-account workspace to the reseller
+
+A reseller owner can take over a workspace owned by one of their sub-accounts
+and turn it into one of their own **platform (root-tenant)** workspaces, from
+`/manage/sub-account-workspaces`. Only the reseller owner (an owner of an
+`active` tenant) can do it; there is no public API because no reseller-level
+public auth stack exists and a workspace token must never re-tenant a workspace
+(exempt in invariant 23, recorded in `api-parity-manifest.json`).
+
+`workspaceService.transferSubAccountWorkspaceToOwner` (`packages/business/src/workspace/transfer-to-reseller-owner.ts`)
+derives the tenant from the caller (`tenantService.findByOwner`), never from
+input, then in one transaction: locks the workspace row (`FOR NO KEY UPDATE`,
+serializing with the purge fence), takes the `first-workspace:<ownerId>`
+advisory locks for the old and new owner in sorted order, sets
+`Workspace.ownerId` = reseller and `tenantId` = root, deletes every membership
+whose user is not in the root tenant (the old owner and their team), makes the
+reseller the single `owner` member (promoting an existing agent row), and
+re-stamps the current-period `WorkspaceMac` row. A workspace in another tenant,
+one not owned by a sub-account, or a missing one is `not found`; one that is
+being purged or has a scheduled deletion is a `conflict`. After commit it busts
+the workspace/roster/owner/membership caches, reconciles quota for the old
+owner, the reseller and the reseller pool, and writes a
+`transfer_workspace_to_owner` audit record. Post-commit failures are logged, not
+thrown, because the move is already durable.
+
+Effects:
+
+- **Host and branding** — the workspace opens only on the platform host
+  (`isWorkspaceVisibleOnHost`) and uses platform branding; it 404s on the
+  reseller's domain.
+- **Membership** — the sub-account and its team lose access; the reseller is the
+  only owner.
+- **Quota pool** — unchanged: `poolWorkspaceScope` is `tenantId = T OR
+  (root AND ownerId = reseller)`, so the workspace stays in the same pool.
+- **Credentials** — unchanged: `resolveCredentialOwnerIdForWorkspace` resolves to
+  the reseller both before and after, so channels keep working.
+
+Limitations:
+
+- Templates installed from the reseller's store cannot be uninstalled in the
+  moved workspace: the `template.tenantId === workspace.tenantId` gate in
+  `uninstall.service.ts` no longer matches.
+- `Template` rows the sub-account already published keep `tenantId = T`.
+- Past-period `WorkspaceMac` rows and `WorkspaceBotMessageUsage` keep the old
+  owner as billing history.
 
 ## Residual security considerations
 

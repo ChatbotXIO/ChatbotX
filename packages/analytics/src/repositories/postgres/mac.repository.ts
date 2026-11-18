@@ -84,6 +84,32 @@ function toIso(value: unknown): string | undefined {
 }
 
 export class MacRepository {
+  /**
+   * Re-stamps the owner and tenant on a workspace's CURRENT-period rollup row
+   * after the workspace moved to a new owner. `ensureWorkspaceMac` keeps the
+   * stored values on conflict, so without this the row keeps counting toward
+   * the old owner. Past periods stay as billing history.
+   */
+  async restampCurrentPeriodOwner(
+    input: { workspaceId: string; ownerId: string; tenantId: string },
+    client: DatabaseClient = db,
+  ): Promise<void> {
+    await client
+      .update(workspaceMacModel)
+      .set({
+        ownerId: input.ownerId,
+        tenantId: input.tenantId,
+        updatedAt: sql`now()`,
+      })
+      .where(
+        and(
+          eq(workspaceMacModel.workspaceId, input.workspaceId),
+          lte(workspaceMacModel.periodStart, sql`now()`),
+          gt(workspaceMacModel.periodEnd, sql`now()`),
+        ),
+      )
+  }
+
   async ensureWorkspaceMac(
     entries: { workspaceId: string; periodStart: Date; periodEnd: Date }[],
     client: DatabaseClient = db,

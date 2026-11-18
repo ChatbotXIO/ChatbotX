@@ -16,6 +16,7 @@ import {
   PaletteIcon,
   RadioTowerIcon,
   StoreIcon,
+  UsersRoundIcon,
 } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { BrandIcon } from "@/components/brand-icon"
@@ -83,6 +84,11 @@ export function PortalManageSidebar({
             icon: StoreIcon,
           },
 
+          {
+            title: t("resellerWorkspaces.title"),
+            url: "/manage/sub-account-workspaces",
+            icon: UsersRoundIcon,
+          },
           {
             title: t("platformBranding.title"),
             url: "/manage/branding",

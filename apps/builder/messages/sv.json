@@ -5566,6 +5566,22 @@
     },
     "title": "Make"
   },
+  "resellerWorkspaces": {
+    "title": "Underkontons arbetsytor",
+    "description": "Flytta en arbetsyta som ägs av ett av dina underkonton till dina egna plattformsarbetsytor.",
+    "owner": "Ägare",
+    "searchPlaceholder": "Sök på namn, ägarens e-post eller ID",
+    "moveAction": "Flytta till mina arbetsytor",
+    "dialogTitle": "Flytta \"{name}\" till dina arbetsytor?",
+    "dialogIntro": "Den här arbetsytan ägs just nu av {email}. Du blir ensam ägare.",
+    "warnAccess": "Underkontot och dess team förlorar åtkomsten till arbetsytan.",
+    "warnPlatform": "Arbetsytan flyttas till plattformens URL och använder plattformens varumärke. Den öppnas inte längre på din egen domän.",
+    "warnTemplates": "Mallar som installerats från din butik kan efteråt inte avinstalleras från den här arbetsytan.",
+    "cancel": "Avbryt",
+    "confirm": "Flytta arbetsyta",
+    "success": "Arbetsytan har flyttats till dina arbetsytor",
+    "error": "Det gick inte att flytta arbetsytan"
+  },
   "manageSidebar": {
     "administrationGroup": "Administration",
     "platformGroup": "Plattform",

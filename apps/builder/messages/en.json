@@ -8509,6 +8509,22 @@
       "empty": "Enter template body to see a preview"
     }
   },
+  "resellerWorkspaces": {
+    "title": "Sub-account workspaces",
+    "description": "Move a workspace owned by one of your sub-accounts to your own platform workspaces.",
+    "owner": "Owner",
+    "searchPlaceholder": "Search by name, owner email or ID",
+    "moveAction": "Move to my workspaces",
+    "dialogTitle": "Move \"{name}\" to your workspaces?",
+    "dialogIntro": "This workspace is currently owned by {email}. You will become its only owner.",
+    "warnAccess": "The sub-account and its team will lose access to the workspace.",
+    "warnPlatform": "The workspace moves to the platform URL and uses platform branding. It no longer opens on your custom domain.",
+    "warnTemplates": "Templates installed from your store cannot be uninstalled from this workspace afterwards.",
+    "cancel": "Cancel",
+    "confirm": "Move workspace",
+    "success": "Workspace moved to your workspaces",
+    "error": "Could not move the workspace"
+  },
   "manageSidebar": {
     "administrationGroup": "Administration",
     "platformGroup": "Platform",
