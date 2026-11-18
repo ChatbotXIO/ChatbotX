@@ -4,11 +4,18 @@ An SMTP inbox is a two-way email channel. Agents and flows **send** from it, and
 
 ## Identity and threading
 
-- One contact per sender address: `ContactInbox.sourceId` is the lowercase sender email. There is one conversation per contact, as on other channels.
-- `Message.sourceId` is the RFC `Message-ID`. Thread headers are kept in `contentAttributes.email` (`subject`, `messageId`, `inReplyTo`, `references`, `from`, `to`, `cc`, `html`).
-- **Sending** (`integrations/smtp/src/handlers/message/send-message.ts`): `From` is the inbox's `fromAddress`; the subject is `Re: <last inbound subject>`; `In-Reply-To` and `References` come from the last inbound mail. The worker (`withEmailThread` in `apps/worker/src/chat/handlers/send-message.ts`) attaches those headers because the handler only sees the outgoing message. An explicit `contentAttributes.email` wins. The generated `Message-ID` is returned so the customer's next reply links back.
-- Flows can send `sendText` steps (website buttons become links); other step types are unsupported on this channel (`packages/flow-config/src/channel-rules/policies/smtp.ts`). The separate flow `email` step is unchanged and saves no message.
+- One contact per sender address: `ContactInbox.sourceId` is the lowercase sender email. Inbound email conversations are keyed by `Conversation.sourceId = email:<root Message-ID>`; legacy SMTP DMs remain unchanged.
+- `Message.sourceId` is the RFC `Message-ID`; `threadSourceIds` records ancestry nearest-parent first. Thread headers are kept in `contentAttributes.email` (`subject`, `messageId`, `inReplyTo`, `references`, `from`, `to`, `cc`, `html`).
+- Inbound routing first resolves a stored Message-ID or ancestor from the previous 90 days (including legacy DMs), then falls back to the `email:<root>` key. Missing or expired ancestry can fragment a thread; subjects are never used to merge it.
+- **Sending** (`integrations/smtp/src/handlers/message/send-message.ts`): `From` is the inbox's `fromAddress`; replies use a selected parent message's subject, `In-Reply-To` and bounded `References`. The actual `Message-ID` and headers are returned in `OutgoingSendResult.email`.
 - The inbox shows `contentAttributes.email.subject` above the message text. HTML is stored for reference and **never rendered**; the body is text only, with quoted history stripped (`inbound/quoted-reply.ts`).
+
+### Delivery limits
+
+- SMTP conversations use `email:<Message-ID>` as their source key. The root message id is retained so subsequent replies can find the thread.
+- A reply can only be routed through an anchor stored during the preceding 90 days. Missing headers, old mail, or reply branches whose ancestor is unavailable can split one mail thread into multiple conversations. Subjects never merge conversations.
+- If delivery succeeds but persisting its returned headers fails, a later inbound reply can route to a new branch. The root `References` header normally lets later replies converge.
+- Legacy SMTP DMs remain visible with their mixed history. Assigning by contact still assigns every conversation for that contact.
 
 ## Receiving mail
 

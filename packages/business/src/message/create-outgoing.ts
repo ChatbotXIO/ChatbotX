@@ -442,6 +442,16 @@ export const createOutgoing = async (props: {
       })
     : conversation
 
+  const isSmtpEmailReply =
+    contactInbox.channel === "smtp" && Boolean(parsedInput.replyToMessageId)
+  if (isSmtpEmailReply && parsedInput.replyToMessageId) {
+    await conversationService.findEmailReplyParent({
+      conversation: targetConversation,
+      contactInboxId: contactInbox.id,
+      replyToMessageId: parsedInput.replyToMessageId,
+    })
+  }
+
   let uploadedFiles: UploadedFile[] = []
   if (
     "files" in parsedInput &&
@@ -465,12 +475,32 @@ export const createOutgoing = async (props: {
   }
 
   const repository = await createMessageRepository()
-
-  const parentId = parsedInput.replyToMessageId ?? null
+  const parentId = isSmtpEmailReply
+    ? null
+    : (parsedInput.replyToMessageId ?? null)
 
   const plainText = "text" in parsedInput ? (parsedInput.text ?? null) : null
 
   const now = new Date()
+  const baseContentAttributes = withSentFromInbox(
+    withReplyTargetCreatedAt(
+      withBypassThreadControlLock(
+        productMessage?.contentAttributes ??
+          parsedInput.contentAttributes ??
+          (parsedInput.isPrivateReply ? { isPrivateReply: true } : null),
+        parsedInput.bypassThreadControlLock,
+      ),
+      parsedInput.isPrivateReply,
+      parsedInput.replyToMessageCreatedAt,
+    ),
+    sendFrom,
+  )
+  const contentAttributes = isSmtpEmailReply
+    ? {
+        ...(baseContentAttributes ?? {}),
+        emailReplyToMessageId: parsedInput.replyToMessageId,
+      }
+    : baseContentAttributes
   const messageInput = {
     text: productMessage ? productMessage.text : plainText,
     messageType: "outgoing" as const,
@@ -481,23 +511,12 @@ export const createOutgoing = async (props: {
     contactInboxId: contactInbox.id,
     contentType: "text" as const,
     createdAt: now,
-    type: parsedInput.replyToMessageId
-      ? ("comment" as const)
-      : ("message" as const),
+    type:
+      parsedInput.replyToMessageId && !isSmtpEmailReply
+        ? ("comment" as const)
+        : ("message" as const),
     parentId,
-    contentAttributes: withSentFromInbox(
-      withReplyTargetCreatedAt(
-        withBypassThreadControlLock(
-          productMessage?.contentAttributes ??
-            parsedInput.contentAttributes ??
-            (parsedInput.isPrivateReply ? { isPrivateReply: true } : null),
-          parsedInput.bypassThreadControlLock,
-        ),
-        parsedInput.isPrivateReply,
-        parsedInput.replyToMessageCreatedAt,
-      ),
-      sendFrom,
-    ),
+    contentAttributes,
   }
 
   const attachmentInputs = uploadedFiles.map((file) => ({

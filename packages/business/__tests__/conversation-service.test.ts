@@ -856,12 +856,12 @@ describe("conversationService outbound activity bump", () => {
 describe("human-reply-window SQL fragments", () => {
   const at = new Date("2026-10-18T09:00:00.000Z")
 
-  test("open is DM-only, stale-event guarded and keeps the earliest start", () => {
+  test("open is direct-conversation-only, stale-event guarded and keeps the earliest start", () => {
     const set = humanReplyWindowSet({ open: at })
 
     const text = collectSqlText(set.awaitingHumanReplySince)
-    expect(text).toContain(`"sourceId" IS NOT NULL`)
-    expect(text).toContain(`"awaitingHumanReplyClosedAt"`)
+    expect(text).toContain(`"sourceId" IS NULL`)
+    expect(text).toContain(`"sourceId" LIKE 'email:%'`)
     expect(text).toContain("LEAST(COALESCE")
     expect(text).not.toContain("botEnabled")
     expect(collectSqlParams(set.awaitingHumanReplySince)).toContain(
@@ -873,7 +873,7 @@ describe("human-reply-window SQL fragments", () => {
   test.each([
     "externalHuman",
     "archive",
-  ] as const)("close by %s is DM-only and ignores botEnabled", (actor) => {
+  ] as const)("close by %s is direct-conversation-only and ignores botEnabled", (actor) => {
     const set = humanReplyWindowSet({ close: at, actor })
 
     for (const fragment of [
@@ -882,7 +882,7 @@ describe("human-reply-window SQL fragments", () => {
     ]) {
       const text = collectSqlText(fragment)
       expect(text).toContain(`"sourceId" IS NULL`)
-      expect(text).not.toContain("botEnabled")
+      expect(text).toContain(`"sourceId" LIKE 'email:%'`)
     }
     expect(collectSqlText(set.awaitingHumanReplyClosedAt)).toContain("GREATEST")
   })
@@ -907,11 +907,12 @@ describe("human-reply-window SQL fragments", () => {
     )
   })
 
-  test("reopen only fires for an unanswered, unclosed DM message", () => {
+  test("reopen only fires for an unanswered, unclosed direct-conversation message", () => {
     const text = collectSqlText(reopenIfUnansweredSince())
 
     expect(text).toContain(`"awaitingHumanReplySince" IS NULL`)
     expect(text).toContain(`"sourceId" IS NULL`)
+    expect(text).toContain(`"sourceId" LIKE 'email:%'`)
     expect(text).toContain(`"contactRepliedAt" > COALESCE("adminRepliedAt"`)
     expect(text).toContain(
       `"contactRepliedAt" > COALESCE("awaitingHumanReplyClosedAt"`,

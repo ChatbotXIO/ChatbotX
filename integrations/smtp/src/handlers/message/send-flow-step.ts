@@ -1,12 +1,12 @@
 import { buttonTypes, stepTypes } from "@chatbotx.io/flow-config"
 import { type MessageHandlers, SdkException } from "@chatbotx.io/sdk"
 import type { SmtpAuthValue } from "../../schema"
+import { readThreadAttributes } from "./email-headers"
 import {
-  buildReplySubject,
-  buildThreadHeaders,
-  readThreadAttributes,
-} from "./email-headers"
-import { deliverMail, readFromAddress } from "./send-message"
+  readEmailConversationMessageId,
+  readFromAddress,
+  sendThreadedMail,
+} from "./send-message"
 
 export const handledFlowStepTypes = [stepTypes.enum.sendText] as const
 
@@ -44,17 +44,22 @@ export const sendFlowStep: MessageHandlers<SmtpAuthValue>["sendFlowStep"] =
     ]
     const text = [step.text, ...links].filter(Boolean).join("\n\n")
 
-    const thread = readThreadAttributes({ email: emailThread })
-    const messageId = await deliverMail({
+    const parent = readThreadAttributes({ email: emailThread })
+    const delivered = await sendThreadedMail({
       auth: ctx.auth,
       fromAddress,
-      mail: {
-        to: contact.sourceId,
-        subject: buildReplySubject(thread.subject),
-        text,
-        ...buildThreadHeaders(thread),
-      },
+      to: contact.sourceId,
+      text,
+      parent,
+      outgoingMessageId:
+        parent.messageId || parent.inReplyTo
+          ? undefined
+          : readEmailConversationMessageId(contact),
     })
 
-    return { messageIds: [messageId], sentCount: 1 }
+    return {
+      messageIds: [delivered.messageId],
+      sentCount: 1,
+      email: delivered,
+    }
   }

@@ -212,12 +212,13 @@ export const createContactWithInbox = async ({
           tx,
         })
 
-        await tx.insert(conversationModel).values({
-          workspaceId,
-          contactId: contact.id,
-          id: createId(),
-        })
-
+        if (inboxChannel !== "smtp") {
+          await tx.insert(conversationModel).values({
+            workspaceId,
+            contactId: contact.id,
+            id: createId(),
+          })
+        }
         return { contact, contactInbox }
       },
     })

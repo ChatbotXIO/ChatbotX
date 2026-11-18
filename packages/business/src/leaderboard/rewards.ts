@@ -25,13 +25,6 @@ export async function sendLeaderboardFlow(input: {
   /** Fixed queue job id, so a re-send for the same purpose is dropped. */
   jobId?: string
 }): Promise<boolean> {
-  const conversation = await conversationService.findDMByContact({
-    workspaceId: input.leaderboard.workspaceId,
-    contactId: input.contactId,
-  })
-  if (!conversation) {
-    return false
-  }
   const contactInboxes = await contactInboxService.listByContactId({
     workspaceId: input.leaderboard.workspaceId,
     contactId: input.contactId,
@@ -43,6 +36,11 @@ export async function sendLeaderboardFlow(input: {
   if (!contactInbox) {
     return false
   }
+  const conversation = await conversationService.resolveOutreachConversation({
+    workspaceId: input.leaderboard.workspaceId,
+    contactInbox,
+    seed: input.jobId,
+  })
   await integrationQueue.add(
     IntegrationJobAction.sendFlow,
     {

@@ -57,7 +57,11 @@ import {
   routeForConversation,
 } from "@chatbotx.io/realtime-protocol"
 import { withCache } from "@chatbotx.io/redis"
-import { createId } from "@chatbotx.io/utils"
+import {
+  createId,
+  deterministicMessageId,
+  generateMessageId,
+} from "@chatbotx.io/utils"
 import {
   NotificationJobAction,
   notificationQueue,
@@ -102,6 +106,12 @@ const resolveInboundWindow = (props: {
 }
 
 export const BOT_DISABLE_DURATION_MS = 24 * 60 * 60 * 1000
+
+export const EMAIL_THREAD_LOOKBACK_DAYS = 90
+const EMAIL_THREAD_LOOKBACK_MS =
+  EMAIL_THREAD_LOOKBACK_DAYS * 24 * 60 * 60 * 1000
+
+const SMTP_FROM_ADDRESS = /<([^>]+)>\s*$/
 
 export type TriggerContext = {
   triggerSource: string
@@ -623,6 +633,26 @@ class ConversationService extends BaseService {
     })) as ConversationWithContactInboxes | undefined
   }
 
+  /** Latest conversation for a contact that has an SMTP inbox, for Inbox links. */
+  async findLatestSmtpConversationByContact(props: {
+    workspaceId: string
+    contactId: string
+    tx?: DatabaseClient
+  }): Promise<ConversationWithContactInboxes | undefined> {
+    const { tx = db, workspaceId, contactId } = props
+    const conversation = (await tx.query.conversationModel.findFirst({
+      where: { workspaceId, contactId },
+      orderBy: (table) =>
+        sql`${table.lastActivityAt} DESC NULLS LAST, ${table.id} DESC`,
+      with: { contactInboxes: true },
+    })) as ConversationWithContactInboxes | undefined
+    return conversation?.contactInboxes.some(
+      (contactInbox) => contactInbox.channel === "smtp",
+    )
+      ? conversation
+      : undefined
+  }
+
   /**
    * Shared by the public `/v1/contacts/{identifier}/messages|auto-replies|flows`
    * handlers: resolve the contact's conversation and the specific
@@ -655,16 +685,10 @@ class ConversationService extends BaseService {
     contactInbox: ContactInboxModel
   }> {
     const { contactId, workspaceId, inboxId } = props
-    const conversation = await this.findByContactWithInboxes({
-      contactId,
-      workspaceId,
-    })
-    if (!conversation) {
-      throw notFoundException("Conversation not found")
-    }
-
     const contactInbox = inboxId
-      ? conversation.contactInboxes.find((ci) => ci.inboxId === inboxId)
+      ? await contactInboxService.findBy({
+          where: { contactId, inboxId },
+        })
       : await contactInboxService.findRecentByContactId({
           workspaceId,
           contactId,
@@ -672,7 +696,27 @@ class ConversationService extends BaseService {
     if (!contactInbox) {
       throw notFoundException("Conversation not found")
     }
-
+    if (contactInbox.channel === "smtp") {
+      const opened = await this.resolveOutreachConversation({
+        workspaceId,
+        contactInbox,
+      })
+      const conversation = (await db.query.conversationModel.findFirst({
+        where: { id: opened.id, workspaceId, contactId },
+        with: { contactInboxes: true },
+      })) as ConversationWithContactInboxes | undefined
+      if (!conversation) {
+        throw notFoundException("Conversation not found")
+      }
+      return { contactInbox, conversation }
+    }
+    const conversation = await this.findByContactWithInboxes({
+      contactId,
+      workspaceId,
+    })
+    if (!conversation) {
+      throw notFoundException("Conversation not found")
+    }
     return { conversation, contactInbox }
   }
 
@@ -1009,6 +1053,133 @@ class ConversationService extends BaseService {
     }
 
     return created
+  }
+
+  /**
+   * Resolves an inbound SMTP message to the already-stored message it replies
+   * to, falling back to the thread's stable root key. Parent IDs are ordered
+   * closest first by the SMTP adapter.
+   */
+  async resolveEmailThreadConversation(props: {
+    workspaceId: string
+    contactId: string
+    contactInboxId: string
+    messageSourceId: string
+    threadSourceIds: string[]
+    threadKey: string
+    tx?: DatabaseClient
+  }): Promise<ConversationModel> {
+    const {
+      workspaceId,
+      contactId,
+      contactInboxId,
+      messageSourceId,
+      threadSourceIds,
+      threadKey,
+      tx,
+    } = props
+    const sourceIds = [...new Set([messageSourceId, ...threadSourceIds])]
+    const messageRepository = await createMessageRepository()
+    const anchors = await messageRepository.findThreadAnchorsBySourceIds({
+      workspaceId,
+      contactInboxId,
+      sourceIds,
+      sinceTime: new Date(Date.now() - EMAIL_THREAD_LOOKBACK_MS),
+    })
+    const anchorBySourceId = new Map(
+      anchors.flatMap((anchor) =>
+        anchor.sourceId ? [[anchor.sourceId, anchor] as const] : [],
+      ),
+    )
+
+    for (const sourceId of [messageSourceId, ...threadSourceIds]) {
+      const anchor = anchorBySourceId.get(sourceId)
+      if (!anchor) {
+        continue
+      }
+      const conversation = await this.findByUncached({
+        tx,
+        where: {
+          id: anchor.conversationId,
+          workspaceId,
+          contactId,
+        },
+      })
+      if (conversation) {
+        return conversation
+      }
+    }
+
+    return await this.findOrCreate({
+      workspaceId,
+      contactId,
+      sourceId: `email:${threadKey}`,
+      tx,
+    })
+  }
+
+  /**
+   * Opens an idempotent SMTP outreach thread using the configured inbox sender
+   * as the Message-ID domain.
+   */
+  async openEmailThread(props: {
+    workspaceId: string
+    contactId: string
+    contactInboxId: string
+    seed?: string
+    tx?: DatabaseClient
+  }): Promise<ConversationModel> {
+    const { tx = db } = props
+    const contactInbox = await contactInboxService.findBy({
+      where: { id: props.contactInboxId, contactId: props.contactId },
+      tx,
+    })
+    if (!contactInbox) {
+      throw notFoundException("Contact inbox not found")
+    }
+    const smtp = await tx.query.integrationSmtpModel.findFirst({
+      where: {
+        workspaceId: props.workspaceId,
+        inboxId: contactInbox.inboxId,
+      },
+    })
+    if (!smtp) {
+      throw notFoundException("SMTP integration not found")
+    }
+    const addressMatch = smtp.fromAddress.match(SMTP_FROM_ADDRESS)
+    const domain = (addressMatch?.[1] ?? smtp.fromAddress).trim().split("@")[1]
+    const messageId = props.seed
+      ? deterministicMessageId(props.seed, domain || "localhost")
+      : generateMessageId(domain || "localhost")
+    return await this.findOrCreate({
+      workspaceId: props.workspaceId,
+      contactId: props.contactId,
+      sourceId: `email:${messageId}`,
+      tx,
+    })
+  }
+
+  async resolveOutreachConversation(props: {
+    workspaceId: string
+    contactInbox: ContactInboxModel
+    seed?: string
+    tx?: DatabaseClient
+  }): Promise<ConversationModel> {
+    if (props.contactInbox.channel === "smtp") {
+      return await this.openEmailThread({
+        workspaceId: props.workspaceId,
+        contactId: props.contactInbox.contactId,
+        contactInboxId: props.contactInbox.id,
+        seed: props.seed,
+        tx: props.tx,
+      })
+    }
+    return await this.findOrCreate({
+      workspaceId: props.workspaceId,
+      contactId: props.contactInbox.contactId,
+      sourceId: null,
+      tx: props.tx,
+    })
   }
 
   async updateArchived(props: {
@@ -2027,6 +2198,74 @@ class ConversationService extends BaseService {
       const email = message.contentAttributes?.email
       if (
         message.contactInboxId === contactInboxId &&
+        typeof email === "object" &&
+        email !== null
+      ) {
+        return email as Record<string, unknown>
+      }
+    }
+    return
+  }
+
+  /**
+   * Selects exactly one stored email message as the parent of an SMTP send.
+   * An explicit source ID never falls back: accepting another parent would
+   * reply into the wrong customer thread.
+   */
+  async findEmailReplyParent(props: {
+    conversation: Pick<
+      ConversationModel,
+      "id" | "workspaceId" | "lastActivityAt" | "createdAt"
+    >
+    contactInboxId: string
+    replyToMessageId?: string
+  }): Promise<Record<string, unknown> | undefined> {
+    const { conversation, contactInboxId, replyToMessageId } = props
+    const messageRepository = await createMessageRepository()
+    const sinceTime =
+      getSafeSinceTime(
+        conversation.lastActivityAt ?? conversation.createdAt,
+        EMAIL_THREAD_LOOKBACK_MS,
+      ) ?? new Date(Date.now() - EMAIL_THREAD_LOOKBACK_MS)
+
+    if (replyToMessageId) {
+      const message = await messageRepository.findByIdForConversation(
+        replyToMessageId,
+        conversation.id,
+        conversation.workspaceId,
+        sinceTime,
+      )
+      const email = message?.contentAttributes?.email
+      if (
+        !message?.sourceId ||
+        message.contactInboxId !== contactInboxId ||
+        typeof email !== "object" ||
+        email === null
+      ) {
+        throw new ChatbotXException(
+          "The requested email reply parent was not found",
+          "EMAIL_REPLY_PARENT_NOT_FOUND",
+          404,
+        )
+      }
+      return email as Record<string, unknown>
+    }
+
+    const messages = await messageRepository.findLastByConversation(
+      conversation.id,
+      {
+        workspaceId: conversation.workspaceId,
+        messageTypes: ["incoming", "outgoing"],
+        limit: 10,
+        withAttachments: false,
+        sinceTime,
+      },
+    )
+    for (const message of messages) {
+      const email = message.contentAttributes?.email
+      if (
+        message.contactInboxId === contactInboxId &&
+        message.sourceId &&
         typeof email === "object" &&
         email !== null
       ) {

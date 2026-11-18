@@ -1,3 +1,4 @@
+import { generateMessageId } from "@chatbotx.io/utils"
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
 const sendMailMock = vi.fn()
@@ -9,7 +10,6 @@ import {
   buildReplySubject,
   buildThreadHeaders,
   extractEmailAddress,
-  generateMessageId,
   textToHtml,
 } from "../src/handlers/message/email-headers"
 import { sendFlowStep } from "../src/handlers/message/send-flow-step"
@@ -59,10 +59,8 @@ describe("email headers", () => {
     expect(extractEmailAddress("support@acme.test")).toBe("support@acme.test")
   })
 
-  test("builds a well-formed Message-ID from a 'Name <email>' from address", () => {
-    expect(generateMessageId("Acme <support@acme.test>")).toMatch(
-      ACME_MESSAGE_ID,
-    )
+  test("builds a well-formed Message-ID for the sender domain", () => {
+    expect(generateMessageId("acme.test")).toMatch(ACME_MESSAGE_ID)
   })
 
   test("escapes html", () => {

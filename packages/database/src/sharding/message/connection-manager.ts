@@ -315,6 +315,21 @@ export class MessageShardConnectionManager {
     }
   }
 
+  /** Reads from the writer, never a replica: callers need their own fresh writes. */
+  async withShardClientForPrimary<T>(
+    shard: ShardConfig,
+    fn: (client: MessageShardDatabaseClient) => Promise<T>,
+  ): Promise<T> {
+    if (
+      shard.id === MessageShardConnectionManager.MAIN_DB_SHARD_ID ||
+      this.isMainDbShard(shard)
+    ) {
+      return await fn(this.mainDbShardClient)
+    }
+    const entry = await this.ensureEntry(shard)
+    return await fn(entry.client)
+  }
+
   markReadReplicaUnhealthy(shardId: string): void {
     const entry = this.pools.get(shardId)
     if (!entry?.readClient) {

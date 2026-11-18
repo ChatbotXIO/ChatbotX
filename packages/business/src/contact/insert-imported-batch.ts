@@ -131,13 +131,15 @@ export async function insertImportedContactBatch(
       return { inserted: 0, orphanCount }
     }
 
-    await tx.insert(conversationModel).values(
-      survivors.map(({ contactId }) => ({
-        id: createId(),
-        workspaceId,
-        contactId,
-      })),
-    )
+    if (inbox.channel !== "smtp") {
+      await tx.insert(conversationModel).values(
+        survivors.map(({ contactId }) => ({
+          id: createId(),
+          workspaceId,
+          contactId,
+        })),
+      )
+    }
 
     await contactCustomFieldService.insertNormalizedValuesForNewContacts({
       workspaceId,

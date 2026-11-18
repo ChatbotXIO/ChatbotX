@@ -15,14 +15,6 @@ export async function sendFlowDirect(
 ): Promise<Date> {
   const { flowExecutionKey, flowId, workspaceId, contactId, metadata } = params
 
-  const conversation = await conversationService.findBy({
-    where: { contactId, workspaceId },
-  })
-
-  if (!conversation) {
-    throw new Error(`Conversation not found for contact ${contactId}`)
-  }
-
   const allContactInboxes = await contactInboxService.listByContactId({
     workspaceId,
     contactId,
@@ -30,6 +22,14 @@ export async function sendFlowDirect(
 
   await Promise.all(
     allContactInboxes.map(async (contactInbox) => {
+      const conversation =
+        await conversationService.resolveOutreachConversation({
+          workspaceId,
+          contactInbox,
+          seed: flowExecutionKey
+            ? `${flowExecutionKey}:${flowId}:${contactInbox.id}`
+            : undefined,
+        })
       await runFlowNode(
         {
           flowId,

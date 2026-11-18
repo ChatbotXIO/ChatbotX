@@ -3,6 +3,8 @@ import { beforeEach, describe, expect, test, vi } from "vitest"
 const findScheduledForPrepare = vi.fn()
 const resolveTemplateIntegrationMessengerId = vi.fn()
 const findOrCreateDMByContactIds = vi.fn()
+const openEmailThread = vi.fn()
+
 const isStillPreparing = vi.fn()
 const queueDraftRecipientsPurge = vi.fn()
 const forEachAudienceChunk = vi.fn()
@@ -39,6 +41,7 @@ vi.mock("@chatbotx.io/business", () => ({
   conversationService: {
     findOrCreateDMByContactIds: (...args: unknown[]) =>
       findOrCreateDMByContactIds(...args),
+    openEmailThread: (...args: unknown[]) => openEmailThread(...args),
   },
 }))
 
@@ -93,6 +96,7 @@ beforeEach(() => {
   findScheduledForPrepare.mockResolvedValue(undefined)
   resolveTemplateIntegrationMessengerId.mockResolvedValue(null)
   findOrCreateDMByContactIds.mockResolvedValue([])
+  openEmailThread.mockReset()
   isStillPreparing.mockReset().mockResolvedValue(true)
   queueDraftRecipientsPurge.mockReset().mockResolvedValue(undefined)
   forEachAudienceChunk.mockResolvedValue(undefined)
@@ -378,6 +382,63 @@ describe("prepareBroadcast", () => {
         removeOnFail: true,
       },
     )
+  })
+
+  test("opens an idempotent thread per SMTP inbox without creating a DM", async () => {
+    findScheduledForPrepare.mockResolvedValue(baseBroadcast())
+    openEmailThread.mockImplementation(
+      async ({ contactInboxId }: { contactInboxId: string }) => ({
+        id: `email-${contactInboxId}`,
+      }),
+    )
+    forEachAudienceChunk.mockImplementation(
+      async (
+        _input: unknown,
+        onChunk: (
+          rows: Array<{ id: string; contactId: string; channel: string }>,
+        ) => Promise<unknown>,
+      ) => {
+        await onChunk([
+          { id: "smtp-1", contactId: "contact-1", channel: "smtp" },
+          { id: "smtp-2", contactId: "contact-1", channel: "smtp" },
+        ])
+      },
+    )
+
+    await prepareBroadcast(BROADCAST_ID)
+
+    expect(findOrCreateDMByContactIds).toHaveBeenCalledWith({
+      workspaceId: WORKSPACE_ID,
+      contactIds: [],
+    })
+    expect(openEmailThread).toHaveBeenCalledWith({
+      workspaceId: WORKSPACE_ID,
+      contactId: "contact-1",
+      contactInboxId: "smtp-1",
+      seed: `${BROADCAST_ID}:smtp-1`,
+    })
+    expect(openEmailThread).toHaveBeenCalledWith({
+      workspaceId: WORKSPACE_ID,
+      contactId: "contact-1",
+      contactInboxId: "smtp-2",
+      seed: `${BROADCAST_ID}:smtp-2`,
+    })
+    expect(insertRecipients).toHaveBeenCalledWith({
+      recipients: [
+        {
+          broadcastId: BROADCAST_ID,
+          contactId: "contact-1",
+          contactInboxId: "smtp-1",
+          conversationId: "email-smtp-1",
+        },
+        {
+          broadcastId: BROADCAST_ID,
+          contactId: "contact-1",
+          contactInboxId: "smtp-2",
+          conversationId: "email-smtp-2",
+        },
+      ],
+    })
   })
 
   // A contact on several inboxes is stored once (conflicts are skipped), so

@@ -31,6 +31,10 @@ export type MessageReferral = {
 
 export type IncomingContact = {
   sourceId: string
+  /**
+   * Channel-defined key that selects the conversation for an incoming message:
+   * a comment post id or an SMTP email thread (`email:<Message-ID>`).
+   */
   sourceConversationId?: string
   phoneNumber?: string
   phoneNumberId?: string
@@ -499,6 +503,11 @@ export type MessageType = z.infer<typeof messageTypes>
 
 export type IncomingMessage = {
   sourceId: string
+  /**
+   * Source IDs of messages in the provider's ancestry, ordered closest parent
+   * first. SMTP uses these to resolve a thread before its root arrives.
+   */
+  threadSourceIds?: string[]
   messageType: MessageType
   contentType: ContentType
   text?: string

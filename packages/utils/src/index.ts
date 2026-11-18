@@ -1,6 +1,7 @@
 export * from "./cache-keys"
 export * from "./concurrency"
 export * from "./datetime"
+export * from "./email"
 export * from "./encode"
 export * from "./env"
 export * from "./graph-pagination"

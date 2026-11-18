@@ -12,9 +12,14 @@ export const findSubmissionConversationAction =
     .bindArgsSchemas(workspaceIdrequestParams)
     .inputSchema(z.object({ contactId: zodBigintAsString() }))
     .action(async ({ bindArgsParsedInputs: [workspaceId], parsedInput }) => {
-      const conversation = await conversationService.findDMByContact({
-        workspaceId,
-        contactId: parsedInput.contactId,
-      })
+      const conversation =
+        (await conversationService.findDMByContact({
+          workspaceId,
+          contactId: parsedInput.contactId,
+        })) ??
+        (await conversationService.findLatestSmtpConversationByContact({
+          workspaceId,
+          contactId: parsedInput.contactId,
+        }))
       return { conversationId: conversation?.id ?? null }
     })

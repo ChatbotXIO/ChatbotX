@@ -334,13 +334,19 @@ export class PipelineItemQueryService extends BaseService {
   > {
     const { workspaceId, itemId } = input
     const view = await this.getItemView(input)
-    const [attachments, [conversation]] = await Promise.all([
-      pipelineItemContentRepository.listAttachments({ workspaceId, itemId }),
-      conversationService.findDMByContactIds({
-        workspaceId,
-        contactIds: [view.item.contactId],
-      }),
-    ])
+    const [attachments, [directConversation], smtpConversation] =
+      await Promise.all([
+        pipelineItemContentRepository.listAttachments({ workspaceId, itemId }),
+        conversationService.findDMByContactIds({
+          workspaceId,
+          contactIds: [view.item.contactId],
+        }),
+        conversationService.findLatestSmtpConversationByContact({
+          workspaceId,
+          contactId: view.item.contactId,
+        }),
+      ])
+    const conversation = directConversation ?? smtpConversation
     return { ...view, attachments, conversationId: conversation?.id ?? null }
   }
 

@@ -58,11 +58,6 @@ export const extractEmailAddress = (value: string): string => {
   return (match ? match[1] : value).trim().toLowerCase()
 }
 
-export const generateMessageId = (fromAddress: string): string => {
-  const domain = extractEmailAddress(fromAddress).split("@")[1] || "localhost"
-  return `<${globalThis.crypto.randomUUID()}@${domain}>`
-}
-
 /** `In-Reply-To` + bounded `References` chain for the reply. */
 export const buildThreadHeaders = (
   thread: EmailThreadAttributes,
@@ -73,9 +68,14 @@ export const buildThreadHeaders = (
   }
   const chain = [...(thread.references ?? []), parent]
   const unique = [...new Set(chain)]
+  const root = unique[0] ?? parent
+  const references =
+    unique.length <= MAX_REFERENCES
+      ? unique
+      : [root, ...unique.slice(-(MAX_REFERENCES - 1))]
   return {
     inReplyTo: parent,
-    references: unique.slice(-MAX_REFERENCES),
+    references,
   }
 }
 

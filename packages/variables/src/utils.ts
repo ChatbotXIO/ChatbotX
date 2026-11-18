@@ -293,10 +293,12 @@ const getFlowStepValue = async (
   context: ContactVariableContext,
   key: "lastStep" | "currentStep",
 ): Promise<string | null> => {
-  const conversation = await conversationService.findDMByContact({
-    workspaceId: context.contact.workspaceId,
-    contactId: context.contact.id,
-  })
+  const conversation =
+    context.conversation ??
+    (await conversationService.findDMByContact({
+      workspaceId: context.contact.workspaceId,
+      contactId: context.contact.id,
+    }))
   return conversation?.[key] ?? null
 }
 

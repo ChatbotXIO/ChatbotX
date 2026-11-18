@@ -16,6 +16,7 @@ import {
   isNotNull,
   isNull,
   ne,
+  or,
   type SQL,
   sql,
 } from "@chatbotx.io/database/client"
@@ -2998,10 +2999,9 @@ class BroadcastService extends BaseService {
   }
 
   /**
-   * By default a broadcast reaches only contacts that already have a DM, so
-   * it opens no conversations. A filter on chat history (**Last interaction**)
-   * chooses the audience itself — e.g. "has no value" for contacts who never
-   * messaged, including ones with no DM yet — and the send opens their DM.
+   * Non-SMTP channels require an existing DM unless their audience filter
+   * explicitly selects contacts without one. SMTP opens one email thread per
+   * recipient, so it is eligible without a DM.
    *
    * A query that already joins the DM (`buildDmConversationJoin`) passes how,
    * so the requirement reuses that join instead of probing the DM again.
@@ -3018,13 +3018,14 @@ class BroadcastService extends BaseService {
     ) {
       return
     }
+    const isSmtp = eq(contactInboxModel.channel, "smtp")
     switch (dmJoin) {
       case "inner":
         return
       case "left":
-        return isNotNull(conversationModel.id)
+        return or(isSmtp, isNotNull(conversationModel.id))
       default:
-        return contactInboxHasDmSQL()
+        return or(isSmtp, contactInboxHasDmSQL())
     }
   }
 

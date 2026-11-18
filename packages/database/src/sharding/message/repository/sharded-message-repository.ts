@@ -39,6 +39,7 @@ import type {
   FindManyBySourceIdsParams,
   FindMessageByIdParams,
   FindRichResponseByButtonParams,
+  FindThreadAnchorsBySourceIdsParams,
   FindTriggerMessageOptions,
   HardDeleteAllByContactInboxParams,
   HardDeleteAllByContactInboxResult,
@@ -850,6 +851,25 @@ export class ShardedMessageRepository implements IMessageRepository {
       workspaceId,
       { sourceId },
       "updateSourceId",
+      createdAt,
+    )
+  }
+
+  updateSourceIdAndEmail(
+    id: string,
+    sourceId: string,
+    email: Record<string, unknown>,
+    workspaceId: string,
+    createdAt: Date,
+  ): Promise<{ id: string } | null> {
+    return this.updateAcrossShards(
+      id,
+      workspaceId,
+      {
+        sourceId,
+        contentAttributes: sql`COALESCE(${messageModel.contentAttributes}, '{}'::jsonb) || ${JSON.stringify({ email })}::jsonb`,
+      },
+      "updateSourceIdAndEmail",
       createdAt,
     )
   }
@@ -2050,6 +2070,21 @@ export class ShardedMessageRepository implements IMessageRepository {
     return null
   }
 
+  async findByIdForConversation(
+    id: string,
+    conversationId: string,
+    workspaceId: string,
+    sinceTime: Date,
+  ): Promise<MessageWithAttachments | null> {
+    return await this.findByIdInConversation(
+      id,
+      conversationId,
+      sinceTime,
+      true,
+      workspaceId,
+    )
+  }
+
   async findBySourceId(
     sourceId: string,
     conversationId: string,
@@ -2161,6 +2196,46 @@ export class ShardedMessageRepository implements IMessageRepository {
       }),
     )
 
+    return shardResults.flat()
+  }
+
+  async findThreadAnchorsBySourceIds({
+    contactInboxId,
+    sourceIds,
+    workspaceId,
+    sinceTime,
+  }: FindThreadAnchorsBySourceIdsParams): Promise<MessageSourceRow[]> {
+    if (sourceIds.length === 0) {
+      return []
+    }
+
+    const shards = await this.getConversationReadShards(sinceTime, workspaceId)
+    const shardResults = await Promise.all(
+      shards.map(
+        async (shardInfo): Promise<MessageSourceRow[]> =>
+          await this.shardManager.withShardClientForPrimary(
+            shardInfo.shard,
+            async (shardClient) =>
+              (await shardClient
+                .select({
+                  id: messageModel.id,
+                  conversationId: messageModel.conversationId,
+                  contactInboxId: messageModel.contactInboxId,
+                  sourceId: messageModel.sourceId,
+                  createdAt: messageModel.createdAt,
+                })
+                .from(messageModel)
+                .where(
+                  and(
+                    eq(messageModel.workspaceId, workspaceId),
+                    eq(messageModel.contactInboxId, contactInboxId),
+                    inArray(messageModel.sourceId, sourceIds),
+                    gte(messageModel.createdAt, sinceTime),
+                  ),
+                )) as MessageSourceRow[],
+          ),
+      ),
+    )
     return shardResults.flat()
   }
 

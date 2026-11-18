@@ -191,6 +191,7 @@ vi.mock("@chatbotx.io/database/client", () => ({
   inArray: (left: unknown, right: unknown) => ({ __inArray: [left, right] }),
   isNull: (value: unknown) => ({ __isNull: value }),
   isNotNull: (value: unknown) => ({ __isNotNull: value }),
+  or: (...args: unknown[]) => ({ __or: args }),
   ne: (left: unknown, right: unknown) => ({ __ne: [left, right] }),
 }))
 
@@ -410,7 +411,9 @@ describe("broadcastService.countAudience", () => {
     })
 
     const where = mocks.count.mock.calls[0]?.[1] as { __and?: unknown[] }
-    expect(where.__and).toContainEqual({ RAW: "has-dm" })
+    expect(where.__and).toContainEqual({
+      __or: expect.arrayContaining([{ RAW: "has-dm" }]),
+    })
   })
 
   test("drops the DM requirement when the filter is on Last interaction", async () => {
@@ -446,9 +449,10 @@ describe("broadcastService.countAudience", () => {
     })
 
     const where = mocks.count.mock.calls[0]?.[1] as { __and?: unknown[] }
-    expect(where.__and).toContainEqual({ RAW: "has-dm" })
+    expect(where.__and).toContainEqual({
+      __or: expect.arrayContaining([{ RAW: "has-dm" }]),
+    })
   })
-
   test("omits the 24h predicate for non-windowed broadcast subactions", async () => {
     mocks.resolveBroadcastInboxIds.mockResolvedValue(["inbox-1"])
     mocks.count.mockResolvedValue(3)
@@ -812,8 +816,12 @@ describe("broadcastService.listAudiencePreview", () => {
             __and: expect.arrayContaining([
               { __inArray: ["ContactInbox.inboxId", ["inbox-1"]] },
               { RAW: "contact-filter" },
-              // The left-joined DM is the DM requirement; no second probe.
-              { __isNotNull: "Conversation.id" },
+              // The left-joined direct conversation is the requirement; no second probe.
+              expect.objectContaining({
+                __or: expect.arrayContaining([
+                  { __isNotNull: "Conversation.id" },
+                ]),
+              }),
             ]),
           }),
           { __eq: ["Contact.workspaceId", "ws-1"] },

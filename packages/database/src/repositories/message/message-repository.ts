@@ -144,6 +144,13 @@ export interface FindManyBySourceIdsParams {
   workspaceId: string
 }
 
+export interface FindThreadAnchorsBySourceIdsParams {
+  contactInboxId: string
+  sinceTime: Date
+  sourceIds: string[]
+  workspaceId: string
+}
+
 export interface HardDeleteAllByContactInboxParams {
   contactInboxId: string
   sinceTime: Date
@@ -315,6 +322,13 @@ export interface IMessageRepository {
     params: FindMessageByIdParams,
   ): Promise<MessageWithAttachments | null>
 
+  findByIdForConversation(
+    id: string,
+    conversationId: string,
+    workspaceId: string,
+    sinceTime: Date,
+  ): Promise<MessageWithAttachments | null>
+
   findBySourceId(
     sourceId: string,
     conversationId: string,
@@ -346,6 +360,14 @@ export interface IMessageRepository {
   findRichResponseByButton(
     params: FindRichResponseByButtonParams,
   ): Promise<RichResponseContentAttributes | null>
+
+  /**
+   * Finds email thread anchors from shard primaries so a just-persisted parent
+   * is immediately visible. Any unavailable shard fails the whole lookup.
+   */
+  findThreadAnchorsBySourceIds(
+    params: FindThreadAnchorsBySourceIdsParams,
+  ): Promise<MessageSourceRow[]>
 
   findTriggerMessage(
     options: FindTriggerMessageOptions,
@@ -448,6 +470,14 @@ export interface IMessageRepository {
   updateSourceId(
     id: string,
     sourceId: string,
+    workspaceId: string,
+    createdAt: Date,
+  ): Promise<{ id: string } | null>
+
+  updateSourceIdAndEmail(
+    id: string,
+    sourceId: string,
+    email: Record<string, unknown>,
     workspaceId: string,
     createdAt: Date,
   ): Promise<{ id: string } | null>

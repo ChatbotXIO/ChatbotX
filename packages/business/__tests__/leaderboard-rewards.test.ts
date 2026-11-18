@@ -6,7 +6,7 @@ const mocks = vi.hoisted(() => ({
   claimRewardRecipient: vi.fn(),
   setRewardRecipient: vi.fn(),
   top: vi.fn(),
-  findDMByContact: vi.fn(),
+  resolveOutreachConversation: vi.fn(),
   listByContactId: vi.fn(),
   integrationAdd: vi.fn(),
   leaderboardAdd: vi.fn(),
@@ -33,7 +33,9 @@ vi.mock("../src/contact-inbox/service", () => ({
 }))
 
 vi.mock("../src/conversation/service", () => ({
-  conversationService: { findDMByContact: mocks.findDMByContact },
+  conversationService: {
+    resolveOutreachConversation: mocks.resolveOutreachConversation,
+  },
 }))
 
 vi.mock("../src/leaderboard/ranking", () => ({
@@ -78,7 +80,7 @@ beforeEach(() => {
   mocks.setRewardRecipient.mockResolvedValue(undefined)
   mocks.leaderboardAdd.mockResolvedValue(undefined)
   mocks.top.mockResolvedValue(winners)
-  mocks.findDMByContact.mockResolvedValue({ id: "c1" })
+  mocks.resolveOutreachConversation.mockResolvedValue({ id: "c1" })
   mocks.listByContactId.mockResolvedValue([{ id: "ci1", inboxId: "10" }])
 })
 
@@ -137,8 +139,8 @@ describe("triggerLeaderboardRewards", () => {
     await expect(trigger()).resolves.toMatchObject({ sent: 0 })
   })
 
-  test("a winner without a conversation is recorded as skipped", async () => {
-    mocks.findDMByContact.mockResolvedValueOnce(undefined)
+  test("a winner without a contact inbox is recorded as skipped", async () => {
+    mocks.listByContactId.mockResolvedValueOnce([])
     const result = await trigger()
     expect(result.skipped).toEqual(["7"])
     expect(mocks.setRewardRecipient).toHaveBeenCalledWith({

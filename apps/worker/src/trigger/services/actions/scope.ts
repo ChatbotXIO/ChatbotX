@@ -5,7 +5,7 @@ import type { TriggerActionScope } from "./types"
 
 type ScopeIdentity = Pick<
   ActionExecutionContext,
-  "contactId" | "workspaceId" | "contactInboxId"
+  "contactId" | "workspaceId" | "contactInboxId" | "conversationId"
 >
 
 /** Memoizes a lookup, but forgets a failure so the next action retries it. */
@@ -31,10 +31,18 @@ function memoize<T>(load: () => Promise<T>): {
 export function createTriggerActionScope(
   identity: ScopeIdentity,
 ): TriggerActionScope {
-  const { contactId, workspaceId, contactInboxId } = identity
-  const conversation = memoize(() =>
-    conversationService.findLatestCreatedByContact({ workspaceId, contactId }),
-  )
+  const { contactId, workspaceId, contactInboxId, conversationId } = identity
+  const conversation = memoize(async () => {
+    if (conversationId) {
+      return await conversationService.findBy({
+        where: { id: conversationId, workspaceId, contactId },
+      })
+    }
+    return await conversationService.findLatestCreatedByContact({
+      workspaceId,
+      contactId,
+    })
+  })
   const contactInbox = memoize(() =>
     resolveActionContactInbox({ contactId, workspaceId, contactInboxId }),
   )
