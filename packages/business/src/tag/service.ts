@@ -783,6 +783,11 @@ class TagService extends BaseService {
     return tag
   }
 
+  /** Drops the workspace's cached tag lists, e.g. after `upsertByNames` created tags. */
+  async invalidateWorkspaceTags(workspaceId: string): Promise<void> {
+    await this.invalidateCacheTags(tagCacheTags(workspaceId))
+  }
+
   async upsertByNames(props: {
     workspaceId: string
     names: string[]

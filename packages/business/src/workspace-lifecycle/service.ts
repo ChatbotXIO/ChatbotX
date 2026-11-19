@@ -12,6 +12,7 @@ import {
 import {
   coexistSyncRunRepository,
   connectionRepository,
+  contactSyncRunRepository,
   HEAVY_WORKSPACE_TABLES,
   LIVE_RUN_STATUSES,
   NO_FK_WORKSPACE_TABLES,
@@ -53,6 +54,7 @@ import {
   type PendingQuotaRelease,
 } from "../connection/state-service"
 import { CONTACT_SCAN_ERRORS } from "../contact-scan/constants"
+import { isContactSyncFollowUpChannel } from "../contact-sync/constants"
 import { WorkspacePurgeIncompleteError } from "../errors"
 import { inboxService } from "../inbox/service"
 import { integrationActiveCampaignService } from "../integration-active-campaign/service"
@@ -679,6 +681,30 @@ class WorkspaceLifecycleService extends BaseService {
       })
     }
 
+    // A page going away ends its open contact-import items and cancels any
+    // history sync they still owe, so a reconnect never starts one unasked.
+    // Messenger and Instagram lock their integration row first (the order a
+    // handoff takes it in), so the two cannot deadlock.
+    const historyIntegrations = {
+      [channelTypes.enum.messenger]: inbox.integrationMessenger,
+      [channelTypes.enum.instagram]: inbox.integrationInstagram,
+    } as Partial<Record<string, { id: string } | null | undefined>>
+    const historyIntegration = historyIntegrations[inbox.channel]
+    // Through the repositories, not `contactSyncService`: importing the
+    // service here closes an import cycle (see the contact scan note below).
+    if (historyIntegration && isContactSyncFollowUpChannel(inbox.channel)) {
+      await coexistSyncRunRepository.lockIntegration({
+        channel: inbox.channel,
+        workspaceId: inbox.workspaceId,
+        integrationId: historyIntegration.id,
+        tx,
+      })
+    }
+    await contactSyncRunRepository.cancelForInbox(
+      { workspaceId: inbox.workspaceId, inboxId: inbox.id },
+      tx,
+    )
+
     switch (inbox.channel) {
       case channelTypes.enum.messenger: {
         if (removeIntegrationRow && inbox.integrationMessenger) {
@@ -796,15 +822,15 @@ class WorkspaceLifecycleService extends BaseService {
       }
       case channelTypes.enum.instagram: {
         if (removeIntegrationRow && inbox.integrationInstagram) {
-          if (inbox.integrationInstagram.type === "instagram") {
-            await coexistService.tearDownForIntegration({
-              workspaceId: inbox.workspaceId,
-              integrationId: inbox.integrationInstagram.id,
-              channel: "instagram",
-              currentError: "Integration disconnected",
-              tx,
-            })
-          }
+          // Both Instagram variants run coexist history, including the
+          // Facebook-linked one that a contact import hands off to.
+          await coexistService.tearDownForIntegration({
+            workspaceId: inbox.workspaceId,
+            integrationId: inbox.integrationInstagram.id,
+            channel: "instagram",
+            currentError: "Integration disconnected",
+            tx,
+          })
           // Both Instagram variants support the contact scan, so this is not
           // gated on the integration type.
           // Through the repository, not `contactScanService`: importing the

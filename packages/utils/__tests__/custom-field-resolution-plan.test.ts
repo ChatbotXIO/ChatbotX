@@ -118,4 +118,73 @@ describe("planCustomFieldResolution", () => {
       plannedName: "age_1_1",
     })
   })
+  test("the copy style renames a name taken by another type to `<name> copy`, then `copy 2`", () => {
+    const { plans } = planCustomFieldResolution(
+      [row("1", "Age", "shortText"), row("2", "age copy", "shortText")],
+      [
+        { name: "Age", type: "number" },
+        { name: "Score", type: "number" },
+      ],
+      "copy",
+    )
+    expect(plans.get("number:age")).toEqual({
+      action: "rename",
+      plannedName: "Age copy 2",
+    })
+    expect(plans.get("number:score")).toEqual({
+      action: "create",
+      plannedName: "Score",
+    })
+  })
+
+  test("the copy style reuses an earlier `<name> copy` of the requested type instead of adding `copy 2`", () => {
+    const { plans } = planCustomFieldResolution(
+      [row("1", "Age", "shortText"), row("2", "Age copy", "number")],
+      [{ name: "Age", type: "number" }],
+      "copy",
+    )
+    expect(plans.get("number:age")).toEqual({
+      action: "reuse",
+      row: row("2", "Age copy", "number"),
+    })
+  })
+
+  test("the copy style walks past a copy of another type to the copy of the requested type", () => {
+    const { plans } = planCustomFieldResolution(
+      [
+        row("1", "Age", "shortText"),
+        row("2", "Age copy", "shortText"),
+        row("3", "Age copy 2", "number"),
+      ],
+      [{ name: "Age", type: "number" }],
+      "copy",
+    )
+    expect(plans.get("number:age")).toMatchObject({
+      action: "reuse",
+      row: { id: "3" },
+    })
+  })
+
+  test("the numbered style never reuses an earlier renamed field (unchanged behaviour)", () => {
+    const { plans } = planCustomFieldResolution(
+      [row("1", "Age", "shortText"), row("2", "Age_1", "number")],
+      [{ name: "Age", type: "number" }],
+    )
+    expect(plans.get("number:age")).toEqual({
+      action: "rename",
+      plannedName: "Age_2",
+    })
+  })
+
+  test("the copy style still reuses a field of the same type and name", () => {
+    const { plans } = planCustomFieldResolution(
+      [row("1", "Age", "number")],
+      [{ name: "Age", type: "number" }],
+      "copy",
+    )
+    expect(plans.get("number:age")).toEqual({
+      action: "reuse",
+      row: row("1", "Age", "number"),
+    })
+  })
 })

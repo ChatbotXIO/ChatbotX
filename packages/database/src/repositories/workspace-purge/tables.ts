@@ -18,6 +18,10 @@ export const HEAVY_WORKSPACE_TABLES = [
   "LeaderboardParticipant",
   "AIConversationEmbedding",
   "AIEmbedding",
+  // Items before their run; mappings can reach tens of thousands per page.
+  "ContactSyncRunItem",
+  "ContactSyncRun",
+  "ContactSyncMapping",
   "TriggerExecution",
   "FlowRun",
   "FlowVersion",

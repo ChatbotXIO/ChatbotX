@@ -110,6 +110,17 @@ export function CoexistOptionsPanel({
   )
 }
 
+/** What the AhaChat import-first choice does, under the list once a row chose it. */
+export function AhachatImportNote() {
+  const t = useTranslations()
+
+  return (
+    <section className="space-y-2 rounded-lg border bg-muted/30 p-3">
+      <p className="text-sm">{t("ahachatImport.panelDescription")}</p>
+    </section>
+  )
+}
+
 export type CoexistRowTrailingOptions = {
   /** The row this trailing column belongs to. */
   row: { name: string; disabled?: boolean }

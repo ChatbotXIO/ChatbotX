@@ -825,6 +825,31 @@ chatbotx contact-scans cancel --inboxId <inboxId>    # Cancel running Automatic 
 
 ---
 
+### `contact-syncs`
+
+Import contacts (with tags and custom fields) from AhaChat into the connected
+Messenger, Instagram, Zalo and Telegram pages of the workspace. AhaChat is asked
+about each page by itself: no AhaChat token is needed. Nothing imported runs a
+trigger, flow or webhook; one sync may run per workspace, and a Contacts-menu
+sync may start once every 4 hours.
+
+```bash
+chatbotx contact-syncs sources                                   # Connected pages and whether AhaChat has them (found / absent / ambiguous / unavailable) [--provider]
+chatbotx contact-syncs sources-schema --inboxId <id>             # Page tags/fields and their mappings
+chatbotx contact-syncs sources-mappings --inboxId <id> --tags '[{"externalId":"12","target":{"tagName":"VIP"}}]'
+                                                                 # [--fields '[{"externalId":"7","target":{"customFieldId":"..."}}]']
+chatbotx contact-syncs availability                              # canSync / blockedReason / nextSyncAt
+chatbotx contact-syncs create --sources '[{"inboxId":"<id>"}]'   # [--syncTags --syncCustomFields --overwriteExisting]
+chatbotx contact-syncs connect-import --pages '[{"inboxId":"<id>","aiReadsSyncedHistory":false}]'
+                                                                 # Just-connected Messenger/Instagram pages: contacts first, then their history sync by itself; needs the contacts and channels scopes
+chatbotx contact-syncs sources-retry-history --inboxId <id>      # Re-open a history sync that could not follow an import
+chatbotx contact-syncs list                                      # [--page --perPage]
+chatbotx contact-syncs get --runId <runId>                       # Run status with per-page counts and the history follow-up
+chatbotx contact-syncs cancel --runId <runId>
+```
+
+---
+
 ### `coupon-topics` / `coupons`
 
 ```bash

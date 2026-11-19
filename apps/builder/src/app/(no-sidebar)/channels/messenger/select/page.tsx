@@ -1,10 +1,12 @@
 import type { ConnectSessionTarget } from "@chatbotx.io/database/partials"
 import { getTranslations } from "next-intl/server"
+import { AhachatImportAvailability } from "@/features/channel-connect/lib/ahachat-import-availability"
 import {
   resolveSelectSession,
   toConnectPickerItem,
   type UnavailableReasonLabels,
 } from "@/features/channel-connect/lib/select-page"
+import { findConnectPagesOnAhachat } from "@/features/contact-sync/lib/access"
 import { SelectPage } from "@/features/integration-messenger/components/select-account"
 
 export const dynamic = "force-dynamic"
@@ -63,10 +65,22 @@ export default async function MessengerSelectPage({
     )
 
   return (
-    <SelectPage
-      items={items}
-      sessionId={sessionId}
-      workspaceId={resolved.workspace.id}
-    />
+    <AhachatImportAvailability
+      pageIds={
+        await findConnectPagesOnAhachat({
+          workspaceId: resolved.workspace.id,
+          channel: "messenger",
+          pageIds: resolved.session.targets
+            .filter((target) => target.selectable)
+            .map((target) => target.id),
+        })
+      }
+    >
+      <SelectPage
+        items={items}
+        sessionId={sessionId}
+        workspaceId={resolved.workspace.id}
+      />
+    </AhachatImportAvailability>
   )
 }

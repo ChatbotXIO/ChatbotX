@@ -92,6 +92,7 @@ vi.mock("@chatbotx.io/worker-config", async () => ({
     syncRetargetAudience: "syncRetargetAudience",
     whatsappCallEvent: "whatsappCallEvent",
     whatsappIdentityChange: "whatsappIdentityChange",
+    contactSync: "contactSync",
   },
   PURGE_WORKSPACES_INTERVAL_MINUTES: 60,
   chatQueue: { getJobCounts: workerState.getJobCounts },
@@ -280,6 +281,9 @@ vi.mock("../src/integration/handlers/template-flow-response", () => ({
 }))
 vi.mock("../src/integration/handlers/wait-resume", () => ({
   runWaitResume: vi.fn(),
+}))
+vi.mock("../src/integration/handlers/contact-sync/engine", () => ({
+  runContactSync: vi.fn(async () => undefined),
 }))
 vi.mock("../src/integration/handlers/whatsapp-call", () => ({
   handleWhatsappCallEvent: vi.fn(async () => undefined),
@@ -538,6 +542,54 @@ describe("whatsappCallEvent (the main integration queue's isBlockedWorkspace gat
     expect(isBlockedWorkspace).toHaveBeenCalledWith("ws-frozen")
     expect(handleWhatsappCallEvent).not.toHaveBeenCalled()
     expect(result).toBeUndefined()
+  })
+})
+
+describe("contactSync integration worker dispatch", () => {
+  const job = {
+    type: "contactSync",
+    data: { runId: "run-1", workspaceId: "ws-1" },
+  }
+
+  test("runs the engine for an active workspace", async () => {
+    const { runContactSync } = await import(
+      "../src/integration/handlers/contact-sync/engine"
+    )
+    const { resolveWorkspaceId } = await import(
+      "../src/lib/resolve-workspace-id"
+    )
+    vi.mocked(runContactSync).mockClear()
+    vi.mocked(resolveWorkspaceId).mockResolvedValueOnce("ws-1")
+    const [integrationWorker] = workerState.capturedWorkers
+
+    await integrationWorker?.processor({ data: job })
+
+    await integrationWorker?.processor({ data: job })
+
+    expect(runContactSync).toHaveBeenCalledWith(job.data)
+  })
+
+  test("a blocked owner completes without invoking the engine and without throwing", async () => {
+    const { isBlockedWorkspace } = await import(
+      "../src/lib/is-blocked-workspace"
+    )
+    const { runContactSync } = await import(
+      "../src/integration/handlers/contact-sync/engine"
+    )
+    const { resolveWorkspaceId } = await import(
+      "../src/lib/resolve-workspace-id"
+    )
+    vi.mocked(runContactSync).mockClear()
+    vi.mocked(resolveWorkspaceId).mockResolvedValueOnce("ws-1")
+    vi.mocked(isBlockedWorkspace).mockResolvedValueOnce(true)
+    const [integrationWorker] = workerState.capturedWorkers
+
+    await expect(
+      integrationWorker?.processor({ data: job }),
+    ).resolves.toBeUndefined()
+
+    expect(isBlockedWorkspace).toHaveBeenCalledWith("ws-1")
+    expect(runContactSync).not.toHaveBeenCalled()
   })
 })
 

@@ -1204,6 +1204,56 @@ exports[`public API spec — operation naming guard > operation list (operationI
   },
   {
     "method": "POST",
+    "operationId": "contactSyncs.cancel",
+    "path": "/v1/contact-syncs/{runId}/cancel",
+  },
+  {
+    "method": "POST",
+    "operationId": "contactSyncs.create",
+    "path": "/v1/contact-syncs",
+  },
+  {
+    "method": "GET",
+    "operationId": "contactSyncs.get",
+    "path": "/v1/contact-syncs/{runId}",
+  },
+  {
+    "method": "GET",
+    "operationId": "contactSyncs.getAvailability",
+    "path": "/v1/contact-syncs/availability",
+  },
+  {
+    "method": "GET",
+    "operationId": "contactSyncs.getSchema",
+    "path": "/v1/contact-syncs/sources/{inboxId}/schema",
+  },
+  {
+    "method": "GET",
+    "operationId": "contactSyncs.list",
+    "path": "/v1/contact-syncs",
+  },
+  {
+    "method": "GET",
+    "operationId": "contactSyncs.listSources",
+    "path": "/v1/contact-syncs/sources",
+  },
+  {
+    "method": "POST",
+    "operationId": "contactSyncs.retryHistory",
+    "path": "/v1/contact-syncs/sources/{inboxId}/retry-history",
+  },
+  {
+    "method": "PUT",
+    "operationId": "contactSyncs.saveMappings",
+    "path": "/v1/contact-syncs/sources/{inboxId}/mappings",
+  },
+  {
+    "method": "POST",
+    "operationId": "contactSyncs.startConnectImport",
+    "path": "/v1/contact-syncs/connect-import",
+  },
+  {
+    "method": "POST",
     "operationId": "conversations.archive",
     "path": "/v1/conversations/{id}/archive",
   },

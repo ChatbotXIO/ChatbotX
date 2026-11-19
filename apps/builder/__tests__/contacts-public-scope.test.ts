@@ -78,6 +78,9 @@ const importsCallCount = workspaceTokenAuthAPIForScope.mock.calls.length
 await import("@/features/contact-scan/api/public")
 const contactScanCallCount = workspaceTokenAuthAPIForScope.mock.calls.length
 
+await import("@/features/contact-sync/api/public")
+const contactSyncCallCount = workspaceTokenAuthAPIForScope.mock.calls.length
+
 await import("@/features/folders/api/public")
 
 const allScopeCalls = workspaceTokenAuthAPIForScope.mock.calls.map(
@@ -164,7 +167,13 @@ describe("contacts public router scope wiring", () => {
     )
   })
 
+  test("contact-sync public router registers under the 'contacts' scope", () => {
+    expect(
+      allScopeCalls.slice(contactScanCallCount, contactSyncCallCount),
+    ).toEqual(["contacts"])
+  })
+
   test("folders public router registers under the 'contacts' scope", () => {
-    expect(allScopeCalls.slice(contactScanCallCount)).toEqual(["contacts"])
+    expect(allScopeCalls.slice(contactSyncCallCount)).toEqual(["contacts"])
   })
 })

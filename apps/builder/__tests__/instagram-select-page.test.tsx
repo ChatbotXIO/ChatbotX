@@ -1,7 +1,7 @@
 // @vitest-environment node
 
 import { ChatbotXException } from "@chatbotx.io/business/errors"
-import { isValidElement } from "react"
+import { isValidElement, type ReactNode } from "react"
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
 const {
@@ -17,6 +17,14 @@ const {
   mockResolveConnectSessionForSelect: vi.fn(),
   mockSelectAccount: vi.fn(() => null),
 }))
+
+vi.mock("@chatbotx.io/integration-ahachat", () => ({
+  isAhachatConfigured: () => true,
+}))
+
+/** The page wraps the picker in the AhaChat availability provider: tests look at the picker inside. */
+const unwrapAvailability = (node: ReactNode): ReactNode =>
+  isValidElement<{ children: ReactNode }>(node) ? node.props.children : node
 
 vi.mock("next/navigation", () => ({
   redirect: mockRedirect,
@@ -70,7 +78,7 @@ describe("InstagramSelectPage", () => {
   })
 
   test("renders SelectAccount with the resolved account, session id, and workspace id", async () => {
-    const element = await InstagramSelectPage(pageArgs)
+    const element = unwrapAvailability(await InstagramSelectPage(pageArgs))
 
     expect(isValidElement<SelectAccountElementProps>(element)).toBe(true)
     if (!isValidElement<SelectAccountElementProps>(element)) {

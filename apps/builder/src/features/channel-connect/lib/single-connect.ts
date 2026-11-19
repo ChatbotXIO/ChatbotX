@@ -2,6 +2,7 @@
 
 import type { ConnectSessionErrorCode } from "@chatbotx.io/business/inbox/connect-outcome-types"
 import type { ConnectActionResultWire, ConnectOutcome } from "../schema"
+import { startAhachatImportCall } from "./ahachat-import-client"
 import { coexistUnavailable, setCoexist } from "./coexist-client"
 import type { MessageKey } from "./message-key"
 import type { ConnectTarget } from "./picker-items"
@@ -47,15 +48,32 @@ async function enableCoexist({
   outcome,
   channel,
   aiReadsSyncedHistory,
+  importFromAhachat,
   t,
   workspaceId,
 }: {
   outcome: ConnectOutcome & { integrationId: string }
   channel: ConnectPickerChannel
   aiReadsSyncedHistory: boolean
+  /** "Import from AhaChat first" was asked for this row: its history sync follows the import. */
+  importFromAhachat: boolean
   t: Translate
   workspaceId: string | undefined
 }): Promise<void> {
+  if (workspaceId && importFromAhachat && outcome.inboxId) {
+    toastCoexistResult({
+      t,
+      name: outcome.name,
+      result: await startAhachatImportCall({
+        workspaceId,
+        inboxId: outcome.inboxId,
+        aiReadsSyncedHistory,
+        t,
+      }),
+    })
+    return
+  }
+
   // Falsy (not just `undefined`) so a resolver returning "" never reaches the
   // coexist procedure, whose workspace authorization would reject it as an
   // opaque failure instead of the explicit "sync did not start".
@@ -98,6 +116,7 @@ async function runRequestedCoexist<TItem extends ConnectTarget, TResult>({
     outcome,
     channel,
     aiReadsSyncedHistory: item.aiReadsSyncedHistory ?? false,
+    importFromAhachat: item.ahachat ?? false,
     t,
     workspaceId: resolveCoexistWorkspaceId(),
   })

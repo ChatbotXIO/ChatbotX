@@ -293,6 +293,12 @@ export const makeChannelBinding = <TTable extends ChannelSatelliteTable>(opts: {
  * identity column. Most providers have one integration per workspace;
  * `openaiCompatible` deliberately permits multiple rows.
  */
+/** See `makeWorkspaceIntegrationBinding`'s `authCodec`. */
+export type WorkspaceAuthCodec = {
+  encode: (auth: AuthValue, workspaceId: string) => Promise<unknown>
+  decode: (stored: unknown, workspaceId: string) => Promise<AuthValue>
+}
+
 type WorkspaceSatelliteTable = PgTable & {
   id: AnyPgColumn
   workspaceId: AnyPgColumn
@@ -323,6 +329,12 @@ export const makeWorkspaceIntegrationBinding = <
   defaultConfigValues?: (
     input: ConnectionStoreInsertInput,
   ) => Record<string, unknown>
+  /**
+   * Encrypts the auth value before it is written and decrypts it after it is
+   * read, so the auth column never holds the plain secret. Without a codec
+   * the auth value is stored as is.
+   */
+  authCodec?: WorkspaceAuthCodec
 }): ConnectionStoreBinding<WorkspaceConfigColumn<TTable>> => {
   const { table } = opts
   // `.from()`/`.insert()` reject a generic `TTable` param — see the same
@@ -335,6 +347,14 @@ export const makeWorkspaceIntegrationBinding = <
   const authColumn = table[
     authColumnName as keyof TTable
   ] as unknown as AnyPgColumn
+  const encodeAuth = async (auth: AuthValue, workspaceId: string) =>
+    opts.authCodec ? await opts.authCodec.encode(auth, workspaceId) : auth
+  const decodeAuth = async (stored: unknown, workspaceId: string) =>
+    asAuthValue(
+      opts.authCodec
+        ? await opts.authCodec.decode(stored, workspaceId)
+        : stored,
+    )
 
   return {
     loadAuthByForeignKey: async (integrationId, workspaceId, tx = db) => {
@@ -357,7 +377,7 @@ export const makeWorkspaceIntegrationBinding = <
           `Unable to load auth for ${opts.tableName} integration ${integrationId}`,
         )
       }
-      const auth = asAuthValue(row.auth)
+      const auth = await decodeAuth(row.auth, workspaceId)
       if (!("baseURL" in row) || typeof row.baseURL !== "string") {
         return auth
       }
@@ -378,7 +398,7 @@ export const makeWorkspaceIntegrationBinding = <
         .update(table)
         .set({
           ...safeConfig,
-          [authColumnName]: auth,
+          [authColumnName]: await encodeAuth(auth, workspaceId),
         } as InferInsertModel<TTable>)
         .where(
           and(
@@ -394,6 +414,8 @@ export const makeWorkspaceIntegrationBinding = <
         input.config,
         opts.configColumns,
       )
+      // Encrypted before the transaction opens: no crypto work holds a connection.
+      const storedAuth = await encodeAuth(input.auth, input.workspaceId)
       const run = async (client: DatabaseClient) => {
         const [parent] = await client
           .insert(integrationModel)
@@ -412,7 +434,7 @@ export const makeWorkspaceIntegrationBinding = <
           ...safeConfig,
           workspaceId: input.workspaceId,
           integrationId: parent.id,
-          [authColumnName]: input.auth,
+          [authColumnName]: storedAuth,
         }
         // Same per-table shape gap as `makeChannelBinding.insertRow` above.
         const [row] = await client

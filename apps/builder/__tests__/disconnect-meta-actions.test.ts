@@ -22,6 +22,7 @@ const mocks = vi.hoisted(() => {
     ),
     coexistTearDownForIntegration: vi.fn().mockResolvedValue(undefined),
     contactScanCancel: vi.fn().mockResolvedValue(undefined),
+    contactSyncCancelForInbox: vi.fn().mockResolvedValue(undefined),
     connectionStateDisconnect: vi.fn().mockResolvedValue(undefined),
     findOrFail: vi.fn(),
     instagramExists: vi.fn().mockResolvedValue(false),
@@ -63,6 +64,7 @@ vi.mock("@chatbotx.io/business/connection", () => ({
 }))
 
 vi.mock("@chatbotx.io/business", () => ({
+  contactSyncService: { cancelForInbox: mocks.contactSyncCancelForInbox },
   coexistService: {
     tearDownForIntegration: mocks.coexistTearDownForIntegration,
   },
@@ -267,13 +269,31 @@ describe("Meta disconnect actions", () => {
       instagramFacebookRow.auth,
     )
     // The contact scan supports both Instagram variants, so a Facebook-backed
-    // one is cancelled too (unlike coexist, which is native-only).
+    // one is cancelled too.
     expect(mocks.contactScanCancel).toHaveBeenCalledWith({
       channel: "instagram",
       integrationId: "instagram-1",
       tx: mocks.tx,
     })
-    expect(mocks.coexistTearDownForIntegration).not.toHaveBeenCalled()
+    // So are the page's open contact-import items and owed history sync, with
+    // the integration row locked first (the order a handoff takes it in).
+    expect(mocks.contactSyncCancelForInbox).toHaveBeenCalledWith(
+      {
+        workspaceId: "workspace-1",
+        inboxId: "inbox-2",
+        lock: { channel: "instagram", integrationId: "instagram-1" },
+      },
+      mocks.tx,
+    )
+    // A contact import hands off to coexist on both variants, so the
+    // Facebook-linked one is torn down too.
+    expect(mocks.coexistTearDownForIntegration).toHaveBeenCalledWith({
+      workspaceId: "workspace-1",
+      integrationId: "instagram-1",
+      channel: "instagram",
+      currentError: "Integration disconnected",
+      tx: mocks.tx,
+    })
     expect(mocks.metaCapiDeleteByIntegration).toHaveBeenCalledWith(
       {
         workspaceId: "workspace-1",

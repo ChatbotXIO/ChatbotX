@@ -205,6 +205,13 @@ export const MARKETING_MESSAGE_STOP_TOKEN_PATH =
  */
 export const CONTACT_SCAN_CANCEL_TOKEN_PATH = "/v1/contact-scans/cancel"
 
+/**
+ * Cancelling a Contact Sync, like `cancelContactSyncAction`
+ * (`workspaceActionClientAllowExpired`): it only stops work. Gate-only
+ * allow-list: a `read_only` token still cannot call it.
+ */
+const CONTACT_SYNC_CANCEL_TOKEN_PATH = "/v1/contact-syncs/{runId}/cancel"
+
 const READ_ONLY_POST_PATHS = new Set<string>([
   CONVERSATIONS_LIST_POST_PATH,
   FILTER_VALUE_LABELS_POST_PATH,
@@ -212,6 +219,7 @@ const READ_ONLY_POST_PATHS = new Set<string>([
   BROADCAST_STOP_TOKEN_PATH,
   MARKETING_MESSAGE_STOP_TOKEN_PATH,
   CONTACT_SCAN_CANCEL_TOKEN_PATH,
+  CONTACT_SYNC_CANCEL_TOKEN_PATH,
   BROADCAST_AUDIENCE_PREVIEW_TOKEN_PATH,
   // Template uninstall and its cancel remove or give back copies: a
   // delete/cancel-type action, open on a trial-expired workspace like the UI

@@ -45,6 +45,7 @@ import { runAsMissedCommentReplay } from "./handlers/comment-automation/replay-p
 import { confirmOrderPayment } from "./handlers/confirm-order-payment"
 import { updateContactAvatar } from "./handlers/contact/update-avatar"
 import { runContactScan } from "./handlers/contact-scan/engine"
+import { runContactSync } from "./handlers/contact-sync/engine"
 import { agentMarkAsRead, contactMarkAsRead } from "./handlers/conversation"
 import {
   runFlowNode,
@@ -575,6 +576,10 @@ function startIntegrationWorker() {
             }
             case IntegrationJobAction.aiHandoverBulkToggle: {
               await runAiHandoverBulkToggle(job.data.data)
+              return
+            }
+            case IntegrationJobAction.contactSync: {
+              await runContactSync(job.data.data)
               return
             }
             case IntegrationJobAction.aiHandoverTakeBack: {

@@ -9,17 +9,22 @@ import { useTranslations } from "next-intl"
 import { useForm, useWatch } from "react-hook-form"
 import { z } from "zod"
 import { useCoexistSelection } from "../hooks/use-coexist-selection"
+import { useAhachatPageIds } from "../lib/ahachat-import-availability"
+import { ahachatImportChannelOf } from "../lib/ahachat-import-client"
 import { dropUnselectedCoexistIds } from "../lib/coexist-selection"
 import type { MessageKey } from "../lib/message-key"
 import type { ConnectPickerItem } from "../lib/picker-items"
+import type { ConnectPickerChannel } from "../lib/registry"
 import { selectAllState } from "../lib/select-all"
 import { MAX_CONNECT_SELECTIONS, uniqueIds } from "../schema"
+import { AhachatPageBadge } from "./ahachat-page-badge"
 import { ConnectSelectionHeader } from "./connect-selection-header"
 
 type ConnectSelectionFormValues = {
   selectedIds: string[]
   coexistIds: string[]
   aiReadsSyncedHistoryIds: string[]
+  ahachatIds: string[]
 }
 
 /** What `onSubmit` receives: the picked ids under the caller's own field name, plus the coexist opt-in. Referenced through `ConnectSelectionFormProps` — callers infer it. */
@@ -31,6 +36,8 @@ type ConnectSelectionValues<TFieldName extends string> = Record<
   coexistIds: string[]
   /** Always a subset of `coexistIds`. */
   aiReadsSyncedHistoryIds: string[]
+  /** Always a subset of `coexistIds`: rows importing from AhaChat first. */
+  ahachatIds: string[]
 }
 
 export type ConnectSelectionFormProps<TFieldName extends string> = {
@@ -47,6 +54,11 @@ export type ConnectSelectionFormProps<TFieldName extends string> = {
    * row carries a coexist switch and the submitted `coexistIds` stay empty.
    */
   coexist?: { descriptionKey: MessageKey }
+  /**
+   * The channel being picked, so "import contacts from AhaChat first?" is asked
+   * only where the channel supports it (never WhatsApp) and the member may use it.
+   */
+  channel?: ConnectPickerChannel
 }
 
 /**
@@ -63,6 +75,7 @@ function useSelectionForm(max: number) {
     }),
     coexistIds: z.array(z.string()),
     aiReadsSyncedHistoryIds: z.array(z.string()),
+    ahachatIds: z.array(z.string()),
   })
   return useForm<ConnectSelectionFormValues>({
     resolver: zodResolver(schema),
@@ -71,6 +84,7 @@ function useSelectionForm(max: number) {
       selectedIds: [],
       coexistIds: [],
       aiReadsSyncedHistoryIds: [],
+      ahachatIds: [],
     },
   })
 }
@@ -95,6 +109,7 @@ function toSelectionValues<TFieldName extends string>(
       values.aiReadsSyncedHistoryIds,
       coexistIds,
     ),
+    ahachatIds: dropUnselectedCoexistIds(values.ahachatIds, coexistIds),
     // Unavoidable: `idsFieldName` is a generic type parameter, so the computed
     // key cannot be proven to be the literal `TFieldName` this object type
     // requires. Every other field is checked normally.
@@ -144,14 +159,21 @@ export function ConnectSelectionForm<TFieldName extends string>({
   isSubmitting: externalSubmitting,
   onCancel,
   coexist,
+  channel,
 }: ConnectSelectionFormProps<TFieldName>) {
   const form = useSelectionForm(max)
+  const ahachatPageIds = useAhachatPageIds()
+  const ahachatSupported =
+    channel !== undefined && ahachatImportChannelOf(channel) !== null
 
   const selectedIds =
     useWatch({ control: form.control, name: "selectedIds" }) ?? []
   const coexistSelection = useCoexistSelection<ConnectSelectionFormValues>({
     control: form.control,
+    ahachatPageIds: ahachatSupported ? ahachatPageIds : undefined,
+    maxSelected: max,
     names: {
+      ahachatIds: "ahachatIds",
       aiReadsSyncedHistoryIds: "aiReadsSyncedHistoryIds",
       coexistIds: "coexistIds",
       selectedIds: "selectedIds",
@@ -183,6 +205,12 @@ export function ConnectSelectionForm<TFieldName extends string>({
     description: item.disabled ? item.disabledReason : item.secondary,
     disabled: item.disabled,
     leading: item.leading,
+    labelSuffix:
+      ahachatSupported && ahachatPageIds.has(item.id) ? (
+        <AhachatPageBadge
+          selected={coexistSelection.ahachatIds.includes(item.id)}
+        />
+      ) : undefined,
     trailing: coexist ? coexistSelection.trailingFor(item) : undefined,
   }))
 
@@ -208,6 +236,7 @@ export function ConnectSelectionForm<TFieldName extends string>({
         </div>
 
         {coexist && coexistSelection.panel(coexist.descriptionKey)}
+        {coexistSelection.importDialog}
 
         <SelectionFormFooter
           isSubmitting={isSubmitting}

@@ -78,6 +78,9 @@ const { registerSchedules } = await import(
   "../src/schedule/handlers/register-schedules"
 )
 
+/** Schedulers of removed jobs, removed on every boot so a persisted one stops firing. */
+const RETIRED = ["scanAhachatImportRuns"]
+
 const CLOUD_ONLY = [
   "syncUserQuota",
   "reconcileTenants",
@@ -110,7 +113,11 @@ describe("registerSchedules — edition gating", () => {
     for (const name of CLOUD_ONLY) {
       expect(names).toContain(name)
     }
-    expect(mockRemoveJobScheduler).not.toHaveBeenCalled()
+    // Only the retired schedulers are removed on cloud.
+    expect(mockRemoveJobScheduler).toHaveBeenCalledTimes(RETIRED.length)
+    for (const name of RETIRED) {
+      expect(mockRemoveJobScheduler).toHaveBeenCalledWith(name)
+    }
     expect(names).toContain("refreshLicense")
     expect(upsertedRepeatOptionsFor("refreshLicense")?.pattern).toMatch(
       HOURLY_CRON_PATTERN,
@@ -129,7 +136,9 @@ describe("registerSchedules — edition gating", () => {
     }
     expect(names).not.toContain("refreshLicense")
     expect(mockRemoveJobScheduler).toHaveBeenCalledWith("refreshLicense")
-    expect(mockRemoveJobScheduler).toHaveBeenCalledTimes(CLOUD_ONLY.length + 1)
+    expect(mockRemoveJobScheduler).toHaveBeenCalledTimes(
+      CLOUD_ONLY.length + 1 + RETIRED.length,
+    )
   })
 
   test("enterprise registers the license scheduler and removes cloud-only schedulers", async () => {
@@ -146,7 +155,9 @@ describe("registerSchedules — edition gating", () => {
     expect(upsertedRepeatOptionsFor("refreshLicense")?.pattern).toMatch(
       HOURLY_CRON_PATTERN,
     )
-    expect(mockRemoveJobScheduler).toHaveBeenCalledTimes(CLOUD_ONLY.length)
+    expect(mockRemoveJobScheduler).toHaveBeenCalledTimes(
+      CLOUD_ONLY.length + RETIRED.length,
+    )
   })
 
   test("all-edition schedulers register regardless of edition", async () => {

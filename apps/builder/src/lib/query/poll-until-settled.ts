@@ -1,4 +1,4 @@
-const DEFAULT_POLL_INTERVAL_MS = 5000
+export const DEFAULT_POLL_INTERVAL_MS = 5000
 
 type QueryWithStatusData<TData extends { status: string }> = {
   state: { data?: TData }

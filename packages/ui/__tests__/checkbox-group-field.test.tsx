@@ -289,7 +289,12 @@ describe("CheckboxGroupField — row overflow guards (structural, not layout)", 
     // Truncated text is only recoverable through the tooltip.
     expect(label?.getAttribute("title")).toBe(longLabel)
 
-    const labelColumn = label?.parentElement
+    // The label's line (label text + optional `labelSuffix`) must shrink too,
+    // or the text could not truncate inside it.
+    const labelLine = label?.parentElement
+    expect(labelLine?.className).toContain("min-w-0")
+
+    const labelColumn = labelLine?.parentElement
     expect(labelColumn?.className).toContain("min-w-0")
     expect(labelColumn?.className).toContain("flex-1")
 

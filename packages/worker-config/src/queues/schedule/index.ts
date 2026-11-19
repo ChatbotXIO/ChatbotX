@@ -40,6 +40,7 @@ export const ScheduleJobData = {
   scanContactScans: "scanContactScans",
   pollSmtpInboxes: "pollSmtpInboxes",
   scanAiHandoverBulkRuns: "scanAiHandoverBulkRuns",
+  scanContactSyncRuns: "scanContactSyncRuns",
   reconcileMetaCatalogSyncs: "reconcileMetaCatalogSyncs",
   purgeCoexistStaging: "purgeCoexistStaging",
   purgeWhatsappSignupSessions: "purgeWhatsappSignupSessions",
@@ -277,6 +278,11 @@ export type ScheduleJobScanAiHandoverBulkRuns = {
   data: Record<string, never>
 }
 
+export type ScheduleJobScanContactSyncRuns = {
+  type: typeof ScheduleJobData.scanContactSyncRuns
+  data: Record<string, never>
+}
+
 export type ScheduleJobReconcileMetaCatalogSyncs = {
   type: typeof ScheduleJobData.reconcileMetaCatalogSyncs
   data: Record<string, never>
@@ -477,6 +483,7 @@ export type ScheduleJobData =
   | ScheduleJobScanContactScans
   | ScheduleJobPollSmtpInboxes
   | ScheduleJobScanAiHandoverBulkRuns
+  | ScheduleJobScanContactSyncRuns
   | ScheduleJobReconcileMetaCatalogSyncs
   | ScheduleJobPurgeCoexistStaging
   | ScheduleJobPurgeWhatsappSignupSessions

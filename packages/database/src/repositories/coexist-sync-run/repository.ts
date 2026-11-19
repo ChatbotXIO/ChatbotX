@@ -18,6 +18,8 @@ import type { CoexistSyncRunModel } from "../../types"
 import { getPaginationWithDefaults, parseOrderByAsObject } from "../../utils"
 import {
   type CoexistIntegrationRow,
+  integrationIdsByInbox,
+  integrationLocks,
   integrationLookups,
   integrationUpdates,
 } from "./integration-access"
@@ -807,6 +809,39 @@ export class CoexistSyncRunRepository {
       integrationId: input.integrationId,
       enabled: input.enabled,
       aiReadsSyncedHistory: input.aiReadsSyncedHistory,
+    })
+  }
+
+  /**
+   * Locks the channel integration row until the transaction ends. A history
+   * start, a connect-import start and a follow-up handoff all take it before
+   * they look at the page's live runs, so exactly one of them gets in.
+   */
+  lockIntegration(input: {
+    channel: CoexistChannel
+    workspaceId: string
+    integrationId: string
+    tx: DatabaseClient
+  }): Promise<void> {
+    return integrationLocks[input.channel]({
+      tx: input.tx,
+      workspaceId: input.workspaceId,
+      integrationId: input.integrationId,
+    })
+  }
+
+  /** The id of the channel integration an inbox belongs to, or `null`. */
+  findIntegrationIdByInbox(input: {
+    channel: CoexistChannel
+    workspaceId: string
+    inboxId: string
+    tx?: DatabaseClient
+  }): Promise<string | null> {
+    const { tx = db } = input
+    return integrationIdsByInbox[input.channel]({
+      tx,
+      workspaceId: input.workspaceId,
+      inboxId: input.inboxId,
     })
   }
 

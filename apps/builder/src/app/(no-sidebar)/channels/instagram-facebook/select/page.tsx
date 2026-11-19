@@ -6,10 +6,12 @@ import {
 } from "@chatbotx.io/ui/components/ui/card"
 import { getTranslations } from "next-intl/server"
 import { CONNECT_PICKER_CARD_CLASS } from "@/features/channel-connect/components/connect-picker-card"
+import { AhachatImportAvailability } from "@/features/channel-connect/lib/ahachat-import-availability"
 import {
   resolveSelectSession,
   toConnectPickerItem,
 } from "@/features/channel-connect/lib/select-page"
+import { findConnectPagesOnAhachat } from "@/features/contact-sync/lib/access"
 import { SelectFacebookAccounts } from "@/features/integration-instagram/components/select-facebook-accounts"
 
 export const dynamic = "force-dynamic"
@@ -50,11 +52,23 @@ export default async function InstagramFacebookSelectPage({
         <CardTitle>{t("fields.instagram.connectViaFacebook")}</CardTitle>
       </CardHeader>
       <CardContent>
-        <SelectFacebookAccounts
-          items={items}
-          sessionId={sessionId}
-          workspaceId={resolved.workspace.id}
-        />
+        <AhachatImportAvailability
+          pageIds={
+            await findConnectPagesOnAhachat({
+              workspaceId: resolved.workspace.id,
+              channel: "instagram",
+              pageIds: resolved.session.targets
+                .filter((target) => target.selectable)
+                .map((target) => target.id),
+            })
+          }
+        >
+          <SelectFacebookAccounts
+            items={items}
+            sessionId={sessionId}
+            workspaceId={resolved.workspace.id}
+          />
+        </AhachatImportAvailability>
       </CardContent>
     </Card>
   )

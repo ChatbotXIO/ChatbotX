@@ -259,6 +259,8 @@ const COMMAND_NAME_OVERRIDES: Readonly<Record<string, string>> = {
   "POST /v1/orders/{id}/ship": "orders:ship",
   "POST /v1/orders/{id}/conclude": "orders:conclude",
   "POST /v1/orders/{id}/cancel": "orders:cancel",
+  // Cancelling a contact sync run is a verb on the run, not a sub-resource.
+  "POST /v1/contact-syncs/{runId}/cancel": "contact-syncs:cancel",
   "GET /v1/marketing-messages/campaigns": "marketing-messages:list-campaigns",
   "POST /v1/marketing-messages/campaigns": "marketing-messages:create-campaign",
   "GET /v1/marketing-messages/campaigns/{id}":

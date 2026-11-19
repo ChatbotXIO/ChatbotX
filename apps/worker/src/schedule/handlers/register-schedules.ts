@@ -14,6 +14,9 @@ import { env } from "../../env"
  * teardown is the dangerous one: it disconnects every channel of an expired
  * trial owner, and off-cloud there is no billing path to recover from that.
  */
+/** Scheduler names of jobs that no longer exist (the AhaChat import sweeper). */
+const RETIRED_SCHEDULERS = ["scanAhachatImportRuns"] as const
+
 const CLOUD_ONLY_SCHEDULERS = [
   ScheduleJobData.syncUserQuota,
   ScheduleJobData.reconcileTenants,
@@ -47,6 +50,7 @@ const EVERY_MINUTE_SECOND_OFFSETS = {
   scanCoexistRuns: 28,
   scanContactScans: 32,
   scanAiHandoverBulkRuns: 36,
+  scanContactSyncRuns: 38,
   finalizeBroadcasts: 40,
   finalizeMarketingMessages: 44,
   reconcileMetaCatalogSyncs: 48,
@@ -74,6 +78,12 @@ export const registerSchedules = async () => {
     for (const name of CLOUD_ONLY_SCHEDULERS) {
       await scheduleQueue.removeJobScheduler(name)
     }
+  }
+
+  // Schedulers of removed jobs persist in Redis and would keep firing into an
+  // unknown job type.
+  for (const name of RETIRED_SCHEDULERS) {
+    await scheduleQueue.removeJobScheduler(name)
   }
 
   await scheduleQueue.upsertJobScheduler(
@@ -419,6 +429,20 @@ export const registerSchedules = async () => {
       name: ScheduleJobData.pollSmtpInboxes,
       data: {
         type: ScheduleJobData.pollSmtpInboxes,
+        data: {},
+      },
+    },
+  )
+
+  await scheduleQueue.upsertJobScheduler(
+    ScheduleJobData.scanContactSyncRuns,
+    {
+      pattern: everyMinuteAtOffset(ScheduleJobData.scanContactSyncRuns),
+    },
+    {
+      name: ScheduleJobData.scanContactSyncRuns,
+      data: {
+        type: ScheduleJobData.scanContactSyncRuns,
         data: {},
       },
     },

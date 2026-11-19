@@ -557,6 +557,9 @@
     "workspaces/update-workspace-action:updateWorkspaceAdvancedAction": "covered:workspaces",
     "workspaces/update-workspace-action:updateSmartResponseDelayAction": "covered:workspaces",
     "workspaces/update-workspace-status-action:updateWorkspaceStatusAction": "covered:workspaces",
-    "workspaces/upload-logo:updateWorkspaceLogo": "covered:workspaces"
+    "workspaces/upload-logo:updateWorkspaceLogo": "covered:workspaces",
+    "contact-sync/contact-sync.action:cancelContactSyncAction": "covered:contact-sync",
+    "contact-sync/contact-sync.action:saveContactSyncMappingsAction": "covered:contact-sync",
+    "contact-sync/contact-sync.action:startContactSyncAction": "covered:contact-sync"
   }
 }
