@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, test, vi } from "vitest"
 
 const mocks = vi.hoisted(() => ({
   findLatestCreatedByContact: vi.fn(),
+  findBy: vi.fn(),
   findByIdForContact: vi.fn(),
   findMostRecentByContact: vi.fn(),
   openEmailThread: vi.fn(),
@@ -10,6 +11,7 @@ const mocks = vi.hoisted(() => ({
 vi.mock("@chatbotx.io/business", () => ({
   conversationService: {
     findLatestCreatedByContact: mocks.findLatestCreatedByContact,
+    findBy: mocks.findBy,
     openEmailThread: mocks.openEmailThread,
   },
 }))
@@ -43,6 +45,29 @@ describe("createTriggerActionScope", () => {
 
     expect(mocks.findLatestCreatedByContact).toHaveBeenCalledTimes(1)
     expect(mocks.findMostRecentByContact).toHaveBeenCalledTimes(1)
+  })
+
+  test("an event conversationId that is not an email thread is ignored", async () => {
+    mocks.findBy.mockResolvedValue({ id: "comment-thread", sourceId: "post-1" })
+    const scope = createTriggerActionScope({
+      ...identity,
+      conversationId: "comment-thread",
+    })
+
+    await expect(scope.getConversation()).resolves.toEqual({ id: "conv-1" })
+    expect(mocks.findLatestCreatedByContact).toHaveBeenCalledTimes(1)
+  })
+
+  test("an event conversationId that is an email thread is used", async () => {
+    const thread = { id: "thread-1", sourceId: "email:<a@x>" }
+    mocks.findBy.mockResolvedValue(thread)
+    const scope = createTriggerActionScope({
+      ...identity,
+      conversationId: "thread-1",
+    })
+
+    await expect(scope.getConversation()).resolves.toBe(thread)
+    expect(mocks.findLatestCreatedByContact).not.toHaveBeenCalled()
   })
 
   test("is lazy: nothing is read until an action asks", () => {

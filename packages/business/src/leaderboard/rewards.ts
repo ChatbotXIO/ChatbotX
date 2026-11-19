@@ -15,8 +15,9 @@ import { leaderboardRankingService } from "./ranking"
 const REWARD_RETRY_DELAY_MS = 30_000
 
 /**
- * Starts `flowId` for one contact on the leaderboard's host channel (its DM
- * conversation). Returns false when the contact has no conversation there.
+ * Starts `flowId` for one contact on the leaderboard's host channel. Returns
+ * false when a non-SMTP contact has no DM conversation; an SMTP contact has
+ * none by design, so an email thread is opened for the reward instead.
  */
 export async function sendLeaderboardFlow(input: {
   leaderboard: Pick<LeaderboardModel, "workspaceId" | "inboxId">
@@ -36,11 +37,20 @@ export async function sendLeaderboardFlow(input: {
   if (!contactInbox) {
     return false
   }
-  const conversation = await conversationService.resolveOutreachConversation({
-    workspaceId: input.leaderboard.workspaceId,
-    contactInbox,
-    seed: input.jobId,
-  })
+  const conversation =
+    contactInbox.channel === "smtp"
+      ? await conversationService.resolveOutreachConversation({
+          workspaceId: input.leaderboard.workspaceId,
+          contactInbox,
+          seed: input.jobId,
+        })
+      : await conversationService.findDMByContact({
+          workspaceId: input.leaderboard.workspaceId,
+          contactId: input.contactId,
+        })
+  if (!conversation) {
+    return false
+  }
   await integrationQueue.add(
     IntegrationJobAction.sendFlow,
     {

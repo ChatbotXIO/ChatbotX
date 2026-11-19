@@ -1303,6 +1303,7 @@ describe("getSystemFieldValue", () => {
   test("location and flow step fields resolve from persisted contact state", async () => {
     const conversation = {
       id: "conversation-1",
+      sourceId: "email:<thread@example.com>",
       lastStep: "step-1",
       currentStep: "step-2",
     } as ConversationModel
@@ -1336,6 +1337,26 @@ describe("getSystemFieldValue", () => {
         systemFieldTypes.enum.current_step,
       ),
     ).resolves.toBe("step-2")
+  })
+
+  test("flow step fields of a non-email conversation read the contact's DM", async () => {
+    mockFindDMByContact.mockResolvedValueOnce({
+      id: "dm-1",
+      sourceId: null,
+      lastStep: "dm-step",
+    } as ConversationModel)
+    const comment = {
+      id: "comment-thread",
+      sourceId: "post-1",
+      lastStep: "ignored",
+    } as ConversationModel
+
+    await expect(
+      getSystemFieldValue(
+        createContext({ conversation: comment }),
+        systemFieldTypes.enum.last_step,
+      ),
+    ).resolves.toBe("dm-step")
   })
 
   test("profile_pic resolves storage paths to public URLs", async () => {

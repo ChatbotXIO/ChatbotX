@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto"
 
 import { conversationService } from "@chatbotx.io/business"
+import { isEmailThreadSourceId } from "@chatbotx.io/utils"
 import type { ActionExecutionContext } from "../../types"
 import { resolveActionContactInbox } from "../resolve-action-contact-inbox"
 import type { TriggerActionScope } from "./types"
@@ -61,10 +62,15 @@ export function createTriggerActionScope(
     })
   })
   const conversation = memoize(async () => {
+    // Only an email thread is addressed by id; every other channel keeps
+    // resolving the contact's latest conversation.
     if (conversationId) {
-      return await conversationService.findBy({
+      const requested = await conversationService.findBy({
         where: { id: conversationId, workspaceId, contactId },
       })
+      if (requested && isEmailThreadSourceId(requested.sourceId)) {
+        return requested
+      }
     }
     const latest = await conversationService.findLatestCreatedByContact({
       workspaceId,

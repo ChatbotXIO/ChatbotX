@@ -538,6 +538,10 @@ describe("broadcastService.countAudience", () => {
     expect(mocks.selectInnerJoin).not.toHaveBeenCalled()
     const where = JSON.stringify(mocks.count.mock.calls[0]?.[1])
     expect(where).toContain("EXISTS")
+    // Non-SMTP counts only assigned DMs; SMTP counts assigned email threads.
+    expect(where).toContain("'smtp'")
+    expect(where).toContain("email:%")
+    expect(where).toContain("IS NULL")
     // The default DM requirement (SMTP exempt) still applies.
     expect(where).toContain("has-dm")
   })

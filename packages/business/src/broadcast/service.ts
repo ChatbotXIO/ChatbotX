@@ -61,7 +61,6 @@ import {
   contactFilterUsesField,
   contactInboxHasDmSQL,
   contactInboxInteractedWithin24hSQL,
-  isDirectConversationSql,
   pruneEmailPhoneFilterConditions,
 } from "@chatbotx.io/database/queries"
 import {
@@ -3089,7 +3088,11 @@ class BroadcastService extends BaseService {
       SELECT 1 FROM ${conversationModel}
       WHERE ${conversationModel.contactId} = ${contactInboxModel.contactId}
         AND ${conversationModel.workspaceId} = ${input.workspaceId}
-        AND ${isDirectConversationSql(conversationModel.sourceId)}
+        AND CASE
+          WHEN ${contactInboxModel.channel} = 'smtp'
+            THEN ${conversationModel.sourceId} LIKE 'email:%'
+          ELSE ${conversationModel.sourceId} IS NULL
+        END
         AND ${conversationModel.assignedUserId} = ${input.restrictToAssignedUserId}
     )`
   }
