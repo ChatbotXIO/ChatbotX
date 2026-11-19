@@ -36,6 +36,42 @@ circular FK; it is re-exported from `@chatbotx.io/database/schema`.
   reseller's root-tenant workspaces use the platform's branding and credentials
   (`resolveCredentialOwnerIdForWorkspace` keys off `workspace.tenantId`). Existing
   workspaces are not migrated between tenants.
+- **Credential owner (tenant-first)** — `resolveCredentialOwnerIdForWorkspace`
+  (`packages/business/src/platform-credential/owner.ts`) is the one rule for
+  whose provider app a workspace uses: the tenant owner for a non-root
+  workspace, the workspace owner for a root one. Connect, reconnect, the
+  webhook routes and the worker all call it (the builder's request-time
+  `resolvePlatformOwnerId` only adds the host on top).
+- **Credential pin** — `Connection.platformCredentialId` (and
+  `ConnectSession.platformCredentialId`) record the `PlatformCredential` a
+  connection was made with, so adding or changing an app later never moves an
+  existing connection to another app. Readers call
+  `platformCredentialService.resolveForConnection` / `resolveForInbox`: the
+  pinned row when it exists, else the tenant-first owner lookup, and in both
+  cases the app's `clientId` must equal the `clientId` stored in the
+  connection's auth — a mismatch returns no credential (callers degrade to the
+  stored flags or the connect token) instead of using a different app. A
+  reconnect uses the pinned row while it is valid, otherwise the tenant-first
+  one, and writes the new pin together with the new auth. A connect callback
+  resolves the session's pin, so the code is exchanged with the app that
+  issued it; if that credential was deleted or replaced the connect stops.
+  Connections made before pins existed stay null until
+  `pnpm --filter @chatbotx.io/connections backfill:credential-pins` (supports
+  `--dry-run`) pins the ones a single candidate provably matches.
+- **Webhook ownership** — a reseller's secret (`/webhook/c/{id}` and a custom
+  domain) only enqueues jobs for inboxes whose credential owner is that
+  reseller (`createCredentialScopedQueue`); only the broker (platform) route is
+  unscoped.
+- **Host rule (who may open a workspace)** — `isWorkspaceVisibleOnHost`
+  (`apps/builder/src/lib/tenant/request-tenant.ts`): a workspace opens when
+  `workspace.tenantId` equals the host tenant, **or** the host is the root host
+  and the workspace belongs to the tenant the user **owns** (a reseller managing
+  their tenant where they sign in). Another tenant's workspace, or a tenant
+  workspace a plain root user merely joined, does not open on the root host; a
+  sub-account never opens anything there except a root workspace. The user's
+  tenancy (`User.tenantId` plus the tenant they own) is read once per request
+  (`resolveRequestUserTenancy`), never from the session. Membership and
+  support-consent checks still apply on top.
 - **`CustomDomain.tenantId`** — the host → tenant routing key (was `userId`).
 
 When adding a column with `Record<ChannelType, …>`-style fan-out, remember the

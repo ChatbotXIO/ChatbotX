@@ -17,6 +17,7 @@ import {
   credentialPublicSchemas,
   credentialSchemas,
 } from "@chatbotx.io/database/partials"
+import { connectionRepository } from "@chatbotx.io/database/repositories"
 import { platformCredentialModel } from "@chatbotx.io/database/schema"
 import type { PlatformCredentialModel } from "@chatbotx.io/database/types"
 import { encryptUtils } from "@chatbotx.io/encryption"
@@ -24,6 +25,8 @@ import { withCache } from "@chatbotx.io/redis"
 import type { z } from "zod"
 import { BaseService } from "../base.service"
 import { logger } from "../logger"
+import { workspaceService } from "../workspace/service"
+import { resolveCredentialOwnerIdForWorkspace } from "./owner"
 
 type CredentialRow<T extends CredentialType> = Omit<
   PlatformCredentialModel,
@@ -42,6 +45,15 @@ type DecryptedCredential<T extends CredentialType> = {
   createdAt: Date
   updatedAt: Date
 }
+
+const readClientId = (config: unknown): string | undefined =>
+  typeof config === "object" &&
+  config !== null &&
+  "clientId" in config &&
+  typeof config.clientId === "string" &&
+  config.clientId.length > 0
+    ? config.clientId
+    : undefined
 
 export type MetaAppCredentialType = Extract<
   CredentialType,
@@ -430,6 +442,160 @@ class PlatformCredentialService extends BaseService {
       tx: props.tx,
       strict: props.strict,
     })
+  }
+
+  /**
+   * The provider app a stored connection must keep using. Prefers the
+   * credential the connection pinned at connect time; a connection without a
+   * pin (made before pins existed, or its credential was deleted) falls back
+   * to the current tenant-first owner lookup. Either way the app is verified
+   * against `storedClientId` (the app id recorded in the connection's auth):
+   * a mismatch returns no credential rather than a different app, so a
+   * changed or replaced app can never be used for another app's tokens.
+   * Callers degrade (stored flags, connect token only) on `undefined`.
+   */
+  async resolveForConnection<T extends CredentialType>(props: {
+    connection: { id: string; platformCredentialId?: string | null }
+    workspace: { id: string; ownerId: string; tenantId: string }
+    type: T
+    storedClientId?: string | null
+    tx?: DatabaseClient
+  }): Promise<DecryptedCredential<T> | undefined> {
+    const { connection, workspace, type, storedClientId } = props
+    const pinned = connection.platformCredentialId
+      ? await this.findDecryptedById({
+          id: connection.platformCredentialId,
+          type,
+          tx: props.tx,
+        })
+      : undefined
+    const credential =
+      pinned ??
+      (await this.resolveForOwner({
+        ownerId: await resolveCredentialOwnerIdForWorkspace(
+          workspace.id,
+          workspace,
+        ),
+        type,
+        tx: props.tx,
+      }))
+
+    if (!credential) {
+      logger.warn(
+        { connectionId: connection.id, type, cause: "no-credential" },
+        "No platform credential for connection",
+      )
+      return
+    }
+    const currentClientId = readClientId(credential.config)
+    if (storedClientId && currentClientId !== storedClientId) {
+      logger.warn(
+        {
+          connectionId: connection.id,
+          type,
+          cause: pinned ? "pinned-app-changed" : "app-mismatch",
+        },
+        "Platform credential app differs from the connection's app",
+      )
+      return
+    }
+    return credential
+  }
+
+  /**
+   * `resolveForConnection` for a connection addressed by its channel inbox
+   * (what the integration rows and the worker hold). `integrationAuth` is the
+   * integration's stored auth; its `clientId`, when it has one, identifies the
+   * app the tokens belong to.
+   */
+  async resolveForInbox<T extends CredentialType>(props: {
+    workspaceId: string
+    inboxId: string | null | undefined
+    integrationAuth: unknown
+    type: T
+    tx?: DatabaseClient
+  }): Promise<DecryptedCredential<T> | undefined> {
+    const connection = props.inboxId
+      ? await connectionRepository.findByInboxId(
+          { inboxId: props.inboxId },
+          props.tx,
+        )
+      : undefined
+    const workspace = await workspaceService.findById({
+      id: props.workspaceId,
+      tx: props.tx,
+    })
+    return await this.resolveForConnection({
+      connection: connection ?? {
+        id: `inbox:${props.inboxId ?? "unknown"}`,
+        platformCredentialId: null,
+      },
+      workspace,
+      type: props.type,
+      storedClientId: readClientId(props.integrationAuth),
+      tx: props.tx,
+    })
+  }
+
+  /** One keyset page of a provider's connections with no credential pin (for the pin backfill). */
+  async listUnpinnedConnections(props: {
+    provider: Parameters<
+      typeof connectionRepository.listUnpinnedByProvider
+    >[0]["provider"]
+    afterId?: string | null
+    workspaceId?: string | null
+    limit: number
+  }) {
+    return await connectionRepository.listUnpinnedByProvider(props)
+  }
+
+  /** Pins a connection to a credential only while it has no pin. Returns whether it was written. */
+  async pinConnectionIfUnset(props: {
+    connectionId: string
+    workspaceId: string
+    platformCredentialId: string
+  }): Promise<boolean> {
+    return await connectionRepository.pinCredentialIfUnset({
+      id: props.connectionId,
+      workspaceId: props.workspaceId,
+      platformCredentialId: props.platformCredentialId,
+    })
+  }
+
+  /**
+   * The app a reconnect of an inbox's connection starts with: the pinned one
+   * while it still exists, otherwise the tenant-first owner's. The caller
+   * writes the returned credential's id as the connection's new pin together
+   * with the new auth.
+   */
+  async resolveForReconnect<T extends CredentialType>(props: {
+    workspace: { id: string; ownerId: string; tenantId: string }
+    inboxId: string
+    type: T
+    tx?: DatabaseClient
+  }): Promise<DecryptedCredential<T> | undefined> {
+    const connection = await connectionRepository.findByInboxId(
+      { inboxId: props.inboxId },
+      props.tx,
+    )
+    const pinned = connection?.platformCredentialId
+      ? await this.findDecryptedById({
+          id: connection.platformCredentialId,
+          type: props.type,
+          tx: props.tx,
+        })
+      : undefined
+    return (
+      pinned ??
+      (await this.resolveForOwner({
+        ownerId: await resolveCredentialOwnerIdForWorkspace(
+          props.workspace.id,
+          props.workspace,
+        ),
+        type: props.type,
+        tx: props.tx,
+      }))
+    )
   }
 
   /**

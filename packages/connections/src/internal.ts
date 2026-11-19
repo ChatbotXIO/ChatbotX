@@ -327,6 +327,8 @@ export const connectAndPersist = async (input: {
   existing: ConnectionModel | undefined
   ownerId: string | undefined
   actorUserId?: string | null
+  /** Pinned onto the `Connection` row; see `Connection.platformCredentialId`. */
+  platformCredentialId?: string | null
   /** Reuses an inactive channel's existing `inboxId` instead of minting a new one — only `connectFromCredentials`'s revive-or-insert path does this; a fresh `connectCandidate` target never has one yet. */
   reuseExistingInboxId?: boolean
   missingOwnerError: Error
@@ -384,6 +386,7 @@ export const connectAndPersist = async (input: {
           quotaConsumption,
           actorUserId: input.actorUserId,
           inboxId,
+          platformCredentialId: input.platformCredentialId,
         })
       }),
   )
@@ -444,6 +447,7 @@ export const attachIntegrationConnectionRow = async (input: {
   integrationId: string
   ownerId: string | undefined
   actorUserId: string
+  platformCredentialId?: string | null
 }): Promise<void> => {
   await db.transaction(async (tx) => {
     const existing = await connectionRepository.findByProviderSourceId(
@@ -464,6 +468,9 @@ export const attachIntegrationConnectionRow = async (input: {
             integrationId: input.integrationId,
             displayName: input.displayName,
             lastError: null,
+            ...(input.platformCredentialId
+              ? { platformCredentialId: input.platformCredentialId }
+              : {}),
           },
         },
         tx,
@@ -491,6 +498,7 @@ export const attachIntegrationConnectionRow = async (input: {
         statusReason: "manual",
         disconnectedAt: new Date(),
         createdBy: input.actorUserId,
+        platformCredentialId: input.platformCredentialId ?? null,
       },
       tx,
     )

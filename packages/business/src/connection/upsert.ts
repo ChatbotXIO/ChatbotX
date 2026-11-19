@@ -213,6 +213,8 @@ export const upsertConnectionRow = async (input: {
   quotaConsumption: ConnectionQuotaConsumption
   actorUserId?: string | null
   inboxId?: string | null
+  /** The provider app this connection is made with; see `Connection.platformCredentialId`. `null` clears it on a revive; omitted leaves it unchanged. */
+  platformCredentialId?: string | null
 }): Promise<ConnectionModel> => {
   const {
     tx,
@@ -227,6 +229,7 @@ export const upsertConnectionRow = async (input: {
     ownerId,
     actorUserId,
     inboxId,
+    platformCredentialId,
   } = input
 
   const integrationId = await saveOrInsertSatellite({
@@ -260,6 +263,11 @@ export const upsertConnectionRow = async (input: {
           integrationId: integrationId ?? null,
           displayName: descriptor.displayName,
           lastError: null,
+          // `null` clears a stale pin (e.g. a manual token over an OAuth connection);
+          // `undefined` leaves it alone.
+          ...(platformCredentialId === undefined
+            ? {}
+            : { platformCredentialId }),
         },
       },
       tx,
@@ -289,6 +297,7 @@ export const upsertConnectionRow = async (input: {
         statusReason: "manual",
         disconnectedAt: new Date(),
         createdBy: actorUserId ?? null,
+        platformCredentialId: platformCredentialId ?? null,
       },
       tx,
     )

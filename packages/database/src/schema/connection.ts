@@ -27,6 +27,7 @@ import {
 import { userModel } from "./auth-user"
 import { inboxModel } from "./inbox"
 import { integrationModel } from "./integration-base"
+import { platformCredentialModel } from "./platform-credential"
 import { workspaceModel } from "./workspace"
 
 /**
@@ -73,6 +74,14 @@ export const connectionModel = pgTable(
     // under the row lock so a late or duplicate webhook is a no-op.
     providerEventAt: timestamp(timestampConfig),
     providerEventKind: text().$type<ProviderAccountEventKind>(),
+    // The provider app (`PlatformCredential`) this connection was made with, so
+    // later calls keep using it when the owner adds or changes their own app.
+    // Null for connections made before the pin existed and once that credential
+    // is deleted; readers then fall back to the owner lookup and verify the app.
+    platformCredentialId: bigintAsString().references(
+      () => platformCredentialModel.id,
+      { onDelete: "set null", onUpdate: "cascade" },
+    ),
   },
   (table) => [
     uniqueIndex("Connection_workspaceId_provider_sourceId_key").using(
@@ -86,6 +95,9 @@ export const connectionModel = pgTable(
       table.provider.asc().nullsLast(),
       table.sourceId.asc().nullsLast(),
     ),
+    index("Connection_platformCredentialId_idx")
+      .using("btree", table.platformCredentialId.asc().nullsLast())
+      .where(sql`${table.platformCredentialId} IS NOT NULL`),
     uniqueIndex("Connection_inboxId_key").using(
       "btree",
       table.inboxId.asc().nullsLast(),

@@ -56,7 +56,9 @@ vi.mock("@chatbotx.io/database/schema", () => ({
 // package graph together once any subpath is imported, which otherwise pulls
 // in `contactRepository`'s real contact-filter query graph (needs the real
 // schema, conflicting with the narrow mock above).
-vi.mock("@chatbotx.io/database/repositories", () => ({}))
+vi.mock("@chatbotx.io/database/repositories", () => ({
+  userRepository: { findForAccountDeletion: vi.fn(async () => undefined) },
+}))
 vi.mock("@chatbotx.io/database/repositories/workspace", () => ({
   workspaceRepository: {
     findActiveByOwner: findActiveByOwnerRepo,

@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, test, vi } from "vitest"
 const mocks = vi.hoisted(() => ({
   debugTokenOrThrow: vi.fn(),
   resolveCredentialOwnerIdForWorkspace: vi.fn(),
-  resolveForOwner: vi.fn(),
+  resolveForInbox: vi.fn(),
   findWorkspace: vi.fn(),
 }))
 
@@ -31,7 +31,7 @@ vi.mock("@chatbotx.io/business", () => ({
       }),
     }),
   },
-  platformCredentialService: { resolveForOwner: mocks.resolveForOwner },
+  platformCredentialService: { resolveForInbox: mocks.resolveForInbox },
   resolveCredentialOwnerIdForWorkspace:
     mocks.resolveCredentialOwnerIdForWorkspace,
   workspaceService: { findById: mocks.findWorkspace },
@@ -50,6 +50,8 @@ const integration = {
   id: "wa-1",
   workspaceId: "ws-1",
   wabaId: "1606681630903299",
+  inboxId: "inbox-1",
+  auth: { clientId: "app-id" },
   hasCapiScope: false,
 } as unknown as Parameters<typeof refreshScopeCache<"whatsapp">>[1]
 
@@ -58,7 +60,7 @@ describe("refreshScopeCache — whatsapp", () => {
     vi.clearAllMocks()
     mocks.findWorkspace.mockResolvedValue({ ownerId: "owner-1" })
     mocks.resolveCredentialOwnerIdForWorkspace.mockResolvedValue("reseller-1")
-    mocks.resolveForOwner.mockResolvedValue({
+    mocks.resolveForInbox.mockResolvedValue({
       config: { clientId: "app-id", clientSecret: "app-secret" },
     })
   })
@@ -84,11 +86,10 @@ describe("refreshScopeCache — whatsapp", () => {
       "waba-token",
       "app-id|app-secret",
     )
-    expect(mocks.resolveCredentialOwnerIdForWorkspace).toHaveBeenCalledWith(
-      "ws-1",
-    )
-    expect(mocks.resolveForOwner).toHaveBeenCalledWith({
-      ownerId: "reseller-1",
+    expect(mocks.resolveForInbox).toHaveBeenCalledWith({
+      workspaceId: "ws-1",
+      inboxId: "inbox-1",
+      integrationAuth: { clientId: "app-id" },
       type: "whatsapp",
     })
   })

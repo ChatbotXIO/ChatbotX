@@ -11,6 +11,7 @@ import {
   oauthConsentRepository,
   oauthRefreshTokenRepository,
   sessionRepository,
+  tenantRepository,
   userDeviceTokenRepository,
   userRepository,
   workspaceRepository,
@@ -43,6 +44,103 @@ const mockTransaction = (transaction: Record<string, unknown> = {}) => {
     async (run: (tx: unknown) => Promise<unknown>) => await run(transaction),
   )
 }
+
+describe("userService.findTenancy", () => {
+  test("adds the owned tenant for a root-tenant user", async () => {
+    vi.spyOn(userService, "findTenantId").mockResolvedValue("1")
+    vi.spyOn(tenantRepository, "findByOwner").mockResolvedValue({
+      id: "tenant-1",
+    } as never)
+
+    await expect(userService.findTenancy("reseller-1")).resolves.toEqual({
+      tenantId: "1",
+      ownedTenantId: "tenant-1",
+    })
+  })
+
+  test("a sub-account has no owned tenant and skips the lookup", async () => {
+    vi.spyOn(userService, "findTenantId").mockResolvedValue("tenant-1")
+    const findByOwner = vi.spyOn(tenantRepository, "findByOwner")
+
+    await expect(userService.findTenancy("sub-1")).resolves.toEqual({
+      tenantId: "tenant-1",
+    })
+    expect(findByOwner).not.toHaveBeenCalled()
+  })
+})
+
+describe("userService.requestAccountDeletionByTenantAdmin", () => {
+  const tenant = { id: "tenant-1", ownerId: "reseller-1", status: "active" }
+
+  test("refuses when the actor is the target", async () => {
+    await expect(
+      userService.requestAccountDeletionByTenantAdmin({
+        actor: { userId: "reseller-1" },
+        userId: "reseller-1",
+      }),
+    ).rejects.toMatchObject({ code: "forbidden" })
+  })
+
+  test("refuses an actor that owns no active tenant", async () => {
+    vi.spyOn(tenantRepository, "findByOwner").mockResolvedValue(undefined)
+    await expect(
+      userService.requestAccountDeletionByTenantAdmin({
+        actor: { userId: "user-9" },
+        userId: "sub-1",
+      }),
+    ).rejects.toMatchObject({ code: "forbidden" })
+    vi.spyOn(tenantRepository, "findByOwner").mockResolvedValue({
+      ...tenant,
+      status: "suspended",
+    } as never)
+    await expect(
+      userService.requestAccountDeletionByTenantAdmin({
+        actor: { userId: "reseller-1" },
+        userId: "sub-1",
+      }),
+    ).rejects.toMatchObject({ code: "forbidden" })
+  })
+
+  test("does not reveal a user of a different tenant", async () => {
+    vi.spyOn(tenantRepository, "findByOwner").mockResolvedValue(tenant as never)
+    vi.spyOn(userService, "findTenantId").mockResolvedValue("tenant-2")
+    const schedule = vi.spyOn(
+      userService as never as { scheduleAccountDeletion: () => unknown },
+      "scheduleAccountDeletion",
+    )
+    await expect(
+      userService.requestAccountDeletionByTenantAdmin({
+        actor: { userId: "reseller-1" },
+        userId: "sub-2",
+      }),
+    ).rejects.toMatchObject({ code: "notFound" })
+    expect(schedule).not.toHaveBeenCalled()
+  })
+
+  test("schedules a sub-account of the tenant with the reseller as actor", async () => {
+    vi.spyOn(tenantRepository, "findByOwner").mockResolvedValue(tenant as never)
+    vi.spyOn(userService, "findTenantId").mockResolvedValue("tenant-1")
+    const scheduledDeletionAt = new Date("2026-11-13T12:00:00.000Z")
+    const schedule = vi
+      .spyOn(
+        userService as never as {
+          scheduleAccountDeletion: () => Promise<unknown>
+        },
+        "scheduleAccountDeletion",
+      )
+      .mockResolvedValue({ scheduledDeletionAt })
+    await expect(
+      userService.requestAccountDeletionByTenantAdmin({
+        actor: { userId: "reseller-1" },
+        userId: "sub-1",
+      }),
+    ).resolves.toEqual({ scheduledDeletionAt })
+    expect(schedule).toHaveBeenCalledWith({
+      actor: { userId: "reseller-1" },
+      userId: "sub-1",
+    })
+  })
+})
 
 describe("userService.requestAccountDeletion", () => {
   test("returns the original deadline without repeating side effects", async () => {

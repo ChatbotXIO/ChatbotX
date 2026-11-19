@@ -53,16 +53,21 @@ async function findReconnectTarget(input: {
 }
 
 type WhatsappCredentialWithOwner = {
+  id: string
   userId: string | null
   config: WhatsappCredential
 }
 
 async function resolveWhatsappSettings(input: {
-  ownerId: string
+  workspace: WorkspaceModel
+  inboxId: string
   t: ReconnectTranslations
 }): Promise<WhatsappCredentialWithOwner> {
-  const credential = await platformCredentialService.resolveForOwner({
-    ownerId: input.ownerId,
+  // The app the connection was made with while it exists, else the tenant-first
+  // one; the id is written back as the new pin with the new auth.
+  const credential = await platformCredentialService.resolveForReconnect({
+    workspace: input.workspace,
+    inboxId: input.inboxId,
     type: "whatsapp",
   })
   if (!credential) {
@@ -71,7 +76,11 @@ async function resolveWhatsappSettings(input: {
     )
   }
 
-  return { userId: credential.userId, config: credential.config }
+  return {
+    id: credential.id,
+    userId: credential.userId,
+    config: credential.config,
+  }
 }
 
 async function exchangeAndValidateWhatsappAccount(input: {
@@ -182,11 +191,14 @@ export async function persistReconnectAuthAndResubscribe(input: {
   integrationWhatsappId: string
   workspaceId: string
   inboxId: string
+  /** The app the new auth belongs to; pinned on the Connection with the auth. */
+  platformCredentialId?: string | null
 }): Promise<boolean> {
   await connectionStateService.commitReconnect({
     inboxId: input.inboxId,
     workspaceId: input.workspaceId,
     auth: input.auth,
+    platformCredentialId: input.platformCredentialId,
     writeAuth: async (tx) => {
       await integrationWhatsappService.replaceAuth({
         id: input.integrationWhatsappId,
@@ -251,7 +263,8 @@ async function reconnectWhatsapp(input: {
     t,
   })
   const whatsappCredential = await resolveWhatsappSettings({
-    ownerId: input.ctx.workspace.ownerId,
+    workspace: input.ctx.workspace,
+    inboxId: existing.inboxId,
     t,
   })
   const whatsappSettings = whatsappCredential.config
@@ -296,6 +309,7 @@ async function reconnectWhatsapp(input: {
     integrationWhatsappId: input.integrationWhatsappId,
     inboxId: existing.inboxId,
     workspaceId: input.workspaceId,
+    platformCredentialId: whatsappCredential.id,
   })
 
   return {

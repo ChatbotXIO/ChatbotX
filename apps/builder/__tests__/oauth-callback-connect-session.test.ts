@@ -19,6 +19,7 @@ const {
   mockCompleteAuthorization,
   mockConnectTargets,
   mockResolveForOwner,
+  mockFindDecryptedById,
   mockSanitizeReferer,
   mockResolveRelayTarget,
   mockNotFound,
@@ -36,6 +37,7 @@ const {
   mockCompleteAuthorization: vi.fn(),
   mockConnectTargets: vi.fn(),
   mockResolveForOwner: vi.fn(),
+  mockFindDecryptedById: vi.fn(),
   mockSanitizeReferer: vi.fn(async (referer: string) => referer),
   mockResolveRelayTarget: vi.fn(async () => null),
   mockNotFound: vi.fn(() => {
@@ -52,7 +54,10 @@ const {
 }))
 
 vi.mock("@chatbotx.io/business", () => ({
-  platformCredentialService: { resolveForOwner: mockResolveForOwner },
+  platformCredentialService: {
+    resolveForOwner: mockResolveForOwner,
+    findDecryptedById: mockFindDecryptedById,
+  },
   hasWorkspaceAccess: vi.fn(),
   workspaceService: { findById: vi.fn(), create: vi.fn() },
   messengerIntegrationService: {},
@@ -528,6 +533,91 @@ describe("handleCallback — ConnectSession state dispatch", () => {
       code: "code-1",
       callbackUrl: "https://broker.example.com/integrations/messenger/callback",
       credential: { clientId: "client-9", clientSecret: "secret-9" },
+    })
+  })
+
+  test("exchanges the code with the app the flow started with (the session pin), even after the owner added their own app", async () => {
+    mockFindByNonce.mockResolvedValueOnce({
+      id: "123",
+      provider: "messenger",
+      returnUrl: null,
+      platformOwnerId: "owner-1",
+      platformCredentialId: "cred-platform",
+    })
+    mockFindDecryptedById.mockResolvedValueOnce({
+      id: "cred-platform",
+      config: { clientId: "platform-app", clientSecret: "platform-secret" },
+      userId: null,
+    })
+    mockCompleteAuthorization.mockResolvedValueOnce({
+      id: "123",
+      workspaceId: "ws-1",
+      status: "awaiting_selection",
+      targets: [{ id: "page-1", selectable: false }],
+    })
+
+    await handleCallback("messenger", buildRequest("123.abc-nonce"))
+
+    expect(mockResolveForOwner).not.toHaveBeenCalled()
+    expect(mockCompleteAuthorization).toHaveBeenCalledWith(
+      expect.objectContaining({
+        credential: {
+          clientId: "platform-app",
+          clientSecret: "platform-secret",
+        },
+      }),
+    )
+  })
+
+  test("stops the connect when the pinned credential was deleted and the owner lookup now returns another app", async () => {
+    mockFindByNonce.mockResolvedValueOnce({
+      id: "123",
+      provider: "messenger",
+      returnUrl: null,
+      platformOwnerId: "owner-1",
+      platformCredentialId: "cred-platform",
+    })
+    mockFindDecryptedById.mockResolvedValueOnce(undefined)
+    mockResolveForOwner.mockResolvedValueOnce({
+      id: "cred-own",
+      config: { clientId: "own-app", clientSecret: "own-secret" },
+      userId: "owner-1",
+    })
+
+    await expect(
+      handleCallback("messenger", buildRequest("123.abc-nonce")),
+    ).rejects.toThrow("not found")
+    expect(mockCompleteAuthorization).not.toHaveBeenCalled()
+    expect(mockFailSession).toHaveBeenCalledWith({
+      id: "123",
+      errorCode: "internal_error",
+      statuses: ["pending"],
+    })
+  })
+
+  test("fails closed on the recorded app id when the pin was nulled by a deleted credential", async () => {
+    mockFindByNonce.mockResolvedValueOnce({
+      id: "123",
+      provider: "messenger",
+      returnUrl: null,
+      platformOwnerId: "owner-1",
+      platformCredentialId: null,
+      platformClientId: "platform-app",
+    })
+    mockResolveForOwner.mockResolvedValueOnce({
+      id: "cred-own",
+      config: { clientId: "own-app", clientSecret: "own-secret" },
+      userId: "owner-1",
+    })
+
+    await expect(
+      handleCallback("messenger", buildRequest("123.abc-nonce")),
+    ).rejects.toThrow("not found")
+    expect(mockCompleteAuthorization).not.toHaveBeenCalled()
+    expect(mockFailSession).toHaveBeenCalledWith({
+      id: "123",
+      errorCode: "internal_error",
+      statuses: ["pending"],
     })
   })
 

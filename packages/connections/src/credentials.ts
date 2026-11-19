@@ -199,6 +199,8 @@ export const reconnect = async (
     credential: ConnectionCredential
     callbackUrl: string
     platformOwnerId?: string | null
+    platformCredentialId?: string | null
+    platformClientId?: string | null
     originHost?: string | null
     returnUrl?: string | null
   } & ConnectSessionActor,
@@ -219,6 +221,8 @@ export const reconnect = async (
     callbackUrl: input.callbackUrl,
     targetConnectionId: connection.id,
     platformOwnerId: input.platformOwnerId,
+    platformCredentialId: input.platformCredentialId,
+    platformClientId: input.platformClientId,
     originHost: input.originHost,
     returnUrl: input.returnUrl,
     ...actor,

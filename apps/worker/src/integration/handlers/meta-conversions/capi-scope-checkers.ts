@@ -7,7 +7,6 @@ import {
   messengerIntegrationService,
   metaConversionsService,
   platformCredentialService,
-  resolveCredentialOwnerIdForWorkspace,
   WHATSAPP_CAPI_SCOPE,
 } from "@chatbotx.io/business"
 import {
@@ -75,6 +74,13 @@ export async function findEventIntegration<
   )
 }
 
+/** What a scope checker needs to find the connection's pinned provider app. */
+type CapiScopeIntegrationRef = {
+  workspaceId: string
+  inboxId: string | null | undefined
+  auth: unknown
+}
+
 type MetaCapiScopeCheckerConfig = {
   credentialType: Extract<
     Parameters<typeof platformCredentialService.resolveForOwner>[0]["type"],
@@ -103,11 +109,13 @@ type MetaCapiScopeCheckerConfig = {
 async function checkMetaCapiScope(
   input: CapiScopeCheckInput,
   storedHasCapiScope: boolean,
-  workspaceId: string,
+  integration: CapiScopeIntegrationRef,
   config: MetaCapiScopeCheckerConfig,
 ): Promise<boolean> {
-  const credential = await platformCredentialService.resolveForOwner({
-    ownerId: await resolveCredentialOwnerIdForWorkspace(workspaceId),
+  const credential = await platformCredentialService.resolveForInbox({
+    workspaceId: integration.workspaceId,
+    inboxId: integration.inboxId,
+    integrationAuth: integration.auth,
     type: config.credentialType,
   })
   if (!credential) {
@@ -126,9 +134,9 @@ async function checkMetaCapiScope(
 const checkMessengerCapiScope = (
   input: CapiScopeCheckInput,
   storedHasCapiScope: boolean,
-  workspaceId: string,
+  integration: CapiScopeIntegrationRef,
 ): Promise<boolean> =>
-  checkMetaCapiScope(input, storedHasCapiScope, workspaceId, {
+  checkMetaCapiScope(input, storedHasCapiScope, integration, {
     credentialType: "messenger",
     debugToken: debugMessengerToken,
     toAppAccessToken: toMessengerAppAccessToken,
@@ -138,9 +146,9 @@ const checkMessengerCapiScope = (
 const checkInstagramCapiScope = (
   input: CapiScopeCheckInput,
   storedHasCapiScope: boolean,
-  workspaceId: string,
+  integration: CapiScopeIntegrationRef,
 ): Promise<boolean> =>
-  checkMetaCapiScope(input, storedHasCapiScope, workspaceId, {
+  checkMetaCapiScope(input, storedHasCapiScope, integration, {
     credentialType: "instagramFacebook",
     debugToken: debugInstagramFacebookToken,
     toAppAccessToken: toInstagramFacebookAppAccessToken,
@@ -157,10 +165,12 @@ const checkInstagramCapiScope = (
 async function checkWhatsappCapiScope(
   input: CapiScopeCheckInput,
   storedHasCapiScope: boolean,
-  workspaceId: string,
+  integration: CapiScopeIntegrationRef,
 ): Promise<boolean> {
-  const credential = await platformCredentialService.resolveForOwner({
-    ownerId: await resolveCredentialOwnerIdForWorkspace(workspaceId),
+  const credential = await platformCredentialService.resolveForInbox({
+    workspaceId: integration.workspaceId,
+    inboxId: integration.inboxId,
+    integrationAuth: integration.auth,
     type: "whatsapp",
   })
   if (!credential) {
@@ -183,7 +193,7 @@ const scopeCheckers = {
   [TChannel in MetaConversionsChannel]: (
     input: CapiScopeCheckInput,
     storedHasCapiScope: boolean,
-    workspaceId: string,
+    integration: CapiScopeIntegrationRef,
   ) => Promise<boolean>
 }
 
@@ -197,11 +207,7 @@ export async function refreshScopeCache<
     channel,
     integration,
     checkScope: (input) =>
-      scopeCheckers[channel](
-        input,
-        integration.hasCapiScope,
-        integration.workspaceId,
-      ),
+      scopeCheckers[channel](input, integration.hasCapiScope, integration),
   })
 
   return refreshed ?? integration

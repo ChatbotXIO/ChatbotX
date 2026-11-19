@@ -24,6 +24,15 @@ export const OAUTH_CALLBACK_SLUG: Partial<Record<IntegrationType, string>> = {
   googleSheets: "google-sheets",
 }
 
+const readClientId = (config: unknown): string | null =>
+  typeof config === "object" &&
+  config !== null &&
+  "clientId" in config &&
+  typeof config.clientId === "string" &&
+  config.clientId.length > 0
+    ? config.clientId
+    : null
+
 /**
  * Resolves the tenant-aware platform credential + callback URL an OAuth
  * connect (`startSession`/`reconnect`) needs, for whichever `IntegrationType`
@@ -40,7 +49,17 @@ export const OAUTH_CALLBACK_SLUG: Partial<Record<IntegrationType, string>> = {
 export async function resolveOAuthCredential(input: {
   provider: IntegrationType
   ownerId: string
+  /**
+   * The credential a flow (or the connection being reconnected) already pinned.
+   * Used when it still exists, so the whole flow stays on one app; otherwise
+   * the tenant-first owner lookup decides.
+   */
+  pinnedCredentialId?: string | null
 }): Promise<{
+  /** The `PlatformCredential` row used; pinned onto the connection. */
+  credentialId: string
+  /** The app id in the credential, when it has one. */
+  clientId: string | null
   credential: Record<string, unknown>
   callbackUrl: string
 } | null> {
@@ -48,10 +67,18 @@ export async function resolveOAuthCredential(input: {
   if (!adapter?.credentialType) {
     return null
   }
-  const resolved = await platformCredentialService.resolveForOwner({
-    ownerId: input.ownerId,
-    type: adapter.credentialType,
-  })
+  const pinned = input.pinnedCredentialId
+    ? await platformCredentialService.findDecryptedById({
+        id: input.pinnedCredentialId,
+        type: adapter.credentialType,
+      })
+    : undefined
+  const resolved =
+    pinned ??
+    (await platformCredentialService.resolveForOwner({
+      ownerId: input.ownerId,
+      type: adapter.credentialType,
+    }))
   if (!resolved) {
     return null
   }
@@ -61,6 +88,8 @@ export async function resolveOAuthCredential(input: {
     `/integrations/${slug}/callback`,
   )
   return {
+    credentialId: resolved.id,
+    clientId: readClientId(resolved.config),
     // `CredentialByType[T]` is provider-specific and this call site is
     // deliberately generic across every `IntegrationType` — same erasure
     // `ConnectionCredential = unknown` already models on the SDK side.

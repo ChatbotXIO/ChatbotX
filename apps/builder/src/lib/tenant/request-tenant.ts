@@ -1,5 +1,6 @@
 import "server-only"
 import { resolveTenantByDomain } from "@chatbotx.io/auth/tenant"
+import { userService } from "@chatbotx.io/business"
 import { ROOT_TENANT_ID } from "@chatbotx.io/database/schema"
 import { cache } from "react"
 import { getDomainFromHeader } from "@/lib/domain"
@@ -15,16 +16,44 @@ export const resolveRequestTenantId = cache(
     await resolveTenantByDomain(await getDomainFromHeader()),
 )
 
+export interface UserTenancy {
+  /** The tenant a root-tenant user owns (a reseller), if any. */
+  ownedTenantId?: string
+  /** The user's own `User.tenantId`. */
+  tenantId?: string
+}
+
 /**
- * A workspace is reachable only on the host of its own tenant: a tenant's
- * white-label domain shows that tenant's workspaces, the platform host shows
- * root-tenant ones.
+ * Tenancy of the signed-in user, read once per request. Not the session (it
+ * never carries `tenantId`) and not `resolveTenantForOwner` (that returns the
+ * tenant a reseller owns, not the one they belong to).
+ */
+export const resolveRequestUserTenancy = cache(
+  async (userId: string): Promise<UserTenancy> =>
+    await userService.findTenancy(userId),
+)
+
+/**
+ * Host rule: a workspace opens when its tenant is the tenant of the host. On
+ * the platform (root) host a reseller (a root-tenant user) also opens the
+ * workspaces of the tenant they own — where they manage them — but no other
+ * tenant's. A sub-account never opens anything on the root host unless the
+ * workspace is a root one. Membership is still checked separately.
  */
 export function isWorkspaceVisibleOnHost(
   workspaceTenantId: string,
   hostTenantId: string,
+  userTenancy?: UserTenancy,
 ): boolean {
-  return workspaceTenantId === hostTenantId
+  if (workspaceTenantId === hostTenantId) {
+    return true
+  }
+  return (
+    hostTenantId === ROOT_TENANT_ID &&
+    userTenancy?.tenantId === ROOT_TENANT_ID &&
+    userTenancy.ownedTenantId !== undefined &&
+    workspaceTenantId === userTenancy.ownedTenantId
+  )
 }
 
 /**
@@ -36,19 +65,25 @@ export function isWorkspaceVisibleOnHost(
 export function canOpenWorkspaceOnHost(props: {
   workspaceTenantId: string
   hostTenantId: string
+  userTenancy?: UserTenancy
   isSupportSession: boolean
 }): boolean {
   if (props.isSupportSession && props.hostTenantId === ROOT_TENANT_ID) {
     return true
   }
-  return isWorkspaceVisibleOnHost(props.workspaceTenantId, props.hostTenantId)
+  return isWorkspaceVisibleOnHost(
+    props.workspaceTenantId,
+    props.hostTenantId,
+    props.userTenancy,
+  )
 }
 
 export function filterWorkspacesForHost<T extends { tenantId: string }>(
   items: readonly T[],
   hostTenantId: string,
+  userTenancy?: UserTenancy,
 ): T[] {
   return items.filter((item) =>
-    isWorkspaceVisibleOnHost(item.tenantId, hostTenantId),
+    isWorkspaceVisibleOnHost(item.tenantId, hostTenantId, userTenancy),
   )
 }

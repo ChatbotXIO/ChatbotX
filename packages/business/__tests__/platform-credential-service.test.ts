@@ -45,6 +45,14 @@ vi.mock("@chatbotx.io/database/schema", () => ({
     userId: "userId",
   },
 }))
+const connectionRepository = { findByInboxId: vi.fn() }
+vi.mock("@chatbotx.io/database/repositories", () => ({ connectionRepository }))
+const workspaceService = { findById: vi.fn() }
+vi.mock("../src/workspace/service", () => ({ workspaceService }))
+const resolveCredentialOwnerIdForWorkspace = vi.fn()
+vi.mock("../src/platform-credential/owner", () => ({
+  resolveCredentialOwnerIdForWorkspace,
+}))
 vi.mock("@chatbotx.io/encryption", () => ({
   encryptUtils: { decryptObject: vi.fn(), encryptObject: vi.fn() },
 }))
@@ -793,5 +801,173 @@ describe("googleAds hasDeveloperToken derivation (legacy rows)", () => {
 
     expect(result).toEqual(PLATFORM.publicConfig)
     expect(encryptUtils.decryptObject).not.toHaveBeenCalled()
+  })
+})
+
+describe("resolveForConnection", () => {
+  const WORKSPACE = { id: "ws-1", ownerId: "sub-1", tenantId: "tenant-1" }
+  const credential = (id: string, clientId: string, userId = "reseller-1") => ({
+    id,
+    userId,
+    type: "messenger",
+    config: { clientId, clientSecret: "secret" },
+  })
+
+  beforeEach(() => {
+    resolveCredentialOwnerIdForWorkspace
+      .mockReset()
+      .mockResolvedValue("reseller-1")
+  })
+
+  test("uses the pinned credential even after the owner adds their own app", async () => {
+    vi.spyOn(platformCredentialService, "findDecryptedById").mockResolvedValue(
+      credential("plat", "platform-app", "") as never,
+    )
+    const resolveForOwner = vi
+      .spyOn(platformCredentialService, "resolveForOwner")
+      .mockResolvedValue(credential("own", "own-app") as never)
+
+    const result = await platformCredentialService.resolveForConnection({
+      connection: { id: "c-1", platformCredentialId: "plat" },
+      workspace: WORKSPACE,
+      type: "messenger",
+      storedClientId: "platform-app",
+    })
+
+    expect(result?.id).toBe("plat")
+    expect(resolveForOwner).not.toHaveBeenCalled()
+  })
+
+  test("returns no credential when the pinned app's clientId was changed", async () => {
+    vi.spyOn(platformCredentialService, "findDecryptedById").mockResolvedValue(
+      credential("plat", "new-app") as never,
+    )
+
+    await expect(
+      platformCredentialService.resolveForConnection({
+        connection: { id: "c-1", platformCredentialId: "plat" },
+        workspace: WORKSPACE,
+        type: "messenger",
+        storedClientId: "old-app",
+      }),
+    ).resolves.toBeUndefined()
+  })
+
+  test("uses the new secret of the pinned row after a rotation", async () => {
+    vi.spyOn(platformCredentialService, "findDecryptedById").mockResolvedValue({
+      ...credential("plat", "app"),
+      config: { clientId: "app", clientSecret: "rotated" },
+    } as never)
+
+    const result = await platformCredentialService.resolveForConnection({
+      connection: { id: "c-1", platformCredentialId: "plat" },
+      workspace: WORKSPACE,
+      type: "messenger",
+      storedClientId: "app",
+    })
+
+    expect(result?.config.clientSecret).toBe("rotated")
+  })
+
+  test("falls back to the tenant-first owner for a connection with no pin", async () => {
+    const resolveForOwner = vi
+      .spyOn(platformCredentialService, "resolveForOwner")
+      .mockResolvedValue(credential("own", "own-app") as never)
+
+    const result = await platformCredentialService.resolveForConnection({
+      connection: { id: "c-1", platformCredentialId: null },
+      workspace: WORKSPACE,
+      type: "messenger",
+      storedClientId: "own-app",
+    })
+
+    expect(result?.id).toBe("own")
+    expect(resolveForOwner).toHaveBeenCalledWith(
+      expect.objectContaining({ ownerId: "reseller-1", type: "messenger" }),
+    )
+  })
+
+  test("a legacy connection never gets a different app than the one it was made with", async () => {
+    vi.spyOn(platformCredentialService, "resolveForOwner").mockResolvedValue(
+      credential("own", "own-app") as never,
+    )
+
+    await expect(
+      platformCredentialService.resolveForConnection({
+        connection: { id: "c-1", platformCredentialId: null },
+        workspace: WORKSPACE,
+        type: "messenger",
+        storedClientId: "platform-app",
+      }),
+    ).resolves.toBeUndefined()
+  })
+
+  test("two owners sharing a clientId each resolve their own pinned row", async () => {
+    const byId = new Map([
+      [
+        "row-a",
+        {
+          ...credential("row-a", "same-app", "a"),
+          config: { clientId: "same-app", clientSecret: "secret-a" },
+        },
+      ],
+      [
+        "row-b",
+        {
+          ...credential("row-b", "same-app", "b"),
+          config: { clientId: "same-app", clientSecret: "secret-b" },
+        },
+      ],
+    ])
+    vi.spyOn(platformCredentialService, "findDecryptedById").mockImplementation(
+      async ({ id }) => byId.get(id) as never,
+    )
+
+    const a = await platformCredentialService.resolveForConnection({
+      connection: { id: "c-a", platformCredentialId: "row-a" },
+      workspace: WORKSPACE,
+      type: "messenger",
+      storedClientId: "same-app",
+    })
+    const b = await platformCredentialService.resolveForConnection({
+      connection: { id: "c-b", platformCredentialId: "row-b" },
+      workspace: WORKSPACE,
+      type: "messenger",
+      storedClientId: "same-app",
+    })
+
+    expect([a?.config.clientSecret, b?.config.clientSecret]).toEqual([
+      "secret-a",
+      "secret-b",
+    ])
+  })
+
+  test("returns no credential when none exists", async () => {
+    vi.spyOn(platformCredentialService, "resolveForOwner").mockResolvedValue(
+      undefined,
+    )
+
+    await expect(
+      platformCredentialService.resolveForConnection({
+        connection: { id: "c-1", platformCredentialId: null },
+        workspace: WORKSPACE,
+        type: "messenger",
+      }),
+    ).resolves.toBeUndefined()
+  })
+
+  test("does not check the app identity for a connection that stores no clientId", async () => {
+    vi.spyOn(platformCredentialService, "findDecryptedById").mockResolvedValue(
+      credential("plat", "app") as never,
+    )
+
+    const result = await platformCredentialService.resolveForConnection({
+      connection: { id: "c-1", platformCredentialId: "plat" },
+      workspace: WORKSPACE,
+      type: "messenger",
+      storedClientId: undefined,
+    })
+
+    expect(result?.id).toBe("plat")
   })
 })

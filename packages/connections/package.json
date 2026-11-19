@@ -51,6 +51,7 @@
     "./messenger-teardown": "./src/messenger-teardown.ts"
   },
   "scripts": {
+    "backfill:credential-pins": "dotenv -e ../../.env -- tsx scripts/backfill-credential-pins.ts",
     "check-types": "tsc --noEmit",
     "test": "vitest run --passWithNoTests",
     "test:db": "dotenv -e ../../.env -- vitest run --dir __tests__/integration",

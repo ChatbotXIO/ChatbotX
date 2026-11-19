@@ -77,7 +77,7 @@ vi.mock("@chatbotx.io/business", () => ({
     replaceAuth: replaceAuthMock,
   },
   platformCredentialService: {
-    resolveForOwner: platformCredentialResolveMock,
+    resolveForReconnect: platformCredentialResolveMock,
   },
   whatsappBusinessAccountService: {
     upsertCurrentCredential: upsertCurrentCredentialMock,
@@ -172,6 +172,7 @@ describe("reconnectWhatsappAction", () => {
       ],
     })
     platformCredentialResolveMock.mockResolvedValue({
+      id: "credential-1",
       config: {
         clientId: "client-1",
         clientSecret: "secret-1",
@@ -298,6 +299,8 @@ describe("reconnectWhatsappAction", () => {
       expect.objectContaining({
         inboxId: "inbox-1",
         workspaceId: "ws-1",
+        // The new pin is written together with the new auth.
+        platformCredentialId: "credential-1",
       }),
     )
     expect(replaceAuthMock).toHaveBeenCalledWith(

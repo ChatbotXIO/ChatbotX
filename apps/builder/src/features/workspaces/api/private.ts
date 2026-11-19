@@ -3,6 +3,7 @@ import z from "zod"
 import {
   filterWorkspacesForHost,
   resolveRequestTenantId,
+  resolveRequestUserTenancy,
 } from "@/lib/tenant/request-tenant"
 import { authorizedAPI } from "@/orpc"
 import { listMyWorkspaces } from "../lib/list-my-workspaces"
@@ -28,6 +29,7 @@ export const workspacesAuthenticatedAPI = {
         workspaces: filterWorkspacesForHost(
           workspaces,
           await resolveRequestTenantId(),
+          await resolveRequestUserTenancy(context.user.id),
         ),
       }
     }),

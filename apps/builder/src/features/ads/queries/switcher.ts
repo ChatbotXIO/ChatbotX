@@ -7,6 +7,7 @@ import {
 } from "@chatbotx.io/business"
 import type { WhatsappCredentialPublic } from "@chatbotx.io/database/partials"
 import { WHATSAPP_OAUTH_CALLBACK_PATH } from "@/features/integration-whatsapp/libs/embedded-signup"
+import { resolveOwnerForWorkspace } from "@/lib/platform-credential-owner"
 import { resolveProviderOriginForCredential } from "@/lib/provider-origin"
 
 export type AdsSwitcherIntegration = {
@@ -53,7 +54,7 @@ export async function getAdsSwitcherData(
     instagramIntegrations,
   ] = await Promise.all([
     platformCredentialService.resolveForOwner({
-      ownerId: workspace.ownerId,
+      ownerId: await resolveOwnerForWorkspace(workspace),
       type: "whatsapp",
     }),
     integrationWhatsappService.listByWorkspaceId(workspaceId),

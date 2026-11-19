@@ -143,6 +143,8 @@ export const startConnect = async (input: {
     credential: resolved.credential,
     callbackUrl: resolved.callbackUrl,
     platformOwnerId: input.ownerId,
+    platformCredentialId: resolved.credentialId,
+    platformClientId: resolved.clientId,
     ...sessionReturn,
     ...input.actor,
   })
@@ -157,9 +159,12 @@ export const startReconnect = async (input: {
   ownerId: string
   actor: ConnectFlowActor
 }): Promise<{ session: ConnectSessionModel }> => {
+  // Reconnect keeps the app the connection was made with while it exists;
+  // otherwise it moves to the tenant-first credential and re-pins.
   const resolved = await resolveOAuthCredential({
     provider: input.connection.provider,
     ownerId: input.ownerId,
+    pinnedCredentialId: input.connection.platformCredentialId,
   })
   if (!resolved) {
     throw connectionNotConfiguredException(input.connection.provider)
@@ -171,6 +176,8 @@ export const startReconnect = async (input: {
     credential: resolved.credential,
     callbackUrl: resolved.callbackUrl,
     platformOwnerId: input.ownerId,
+    platformCredentialId: resolved.credentialId,
+    platformClientId: resolved.clientId,
     ...sessionReturn,
     ...input.actor,
   })
