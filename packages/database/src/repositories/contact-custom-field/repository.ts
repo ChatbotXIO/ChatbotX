@@ -14,6 +14,7 @@ import {
   contactModel,
   customFieldModel,
 } from "../../schema"
+import { contactRepository } from "../contact/repository"
 
 export const contactCustomFieldRepository = {
   /**
@@ -210,6 +211,109 @@ export const contactCustomFieldRepository = {
       with: { customField: true },
     })
   },
+
+  /**
+   * Writes already-normalized values: `fill` keeps an existing value,
+   * `overwrite` replaces it. One value per `(contact, field)` is written —
+   * the first given — since one statement cannot update a row twice; the
+   * others count as dropped. Rows are sorted so concurrent batches lock the
+   * unique index in the same order, and inserted in chunks that stay far
+   * below Postgres' bind-parameter limit. Emits nothing.
+   */
+  async bulkUpsertValues(
+    input: {
+      workspaceId: string
+      mode: "fill" | "overwrite"
+      entries: { contactId: string; customFieldId: string; value: string }[]
+    },
+    tx: DatabaseClient = db,
+  ): Promise<{ dropped: number }> {
+    if (input.entries.length === 0) {
+      return { dropped: 0 }
+    }
+    return await tx.transaction(async (trx) => {
+      // Contacts first, then fields (same order as `linkTags`), each
+      // key-share locked until the write commits: a contact or field deleted
+      // meanwhile cannot fail the insert's foreign key. Values of a deleted
+      // field are dropped and reported; values of a deleted contact are
+      // dropped silently, as there is no contact left to report them on.
+      const liveContacts = await contactRepository.lockLiveIds(
+        {
+          workspaceId: input.workspaceId,
+          ids: input.entries.map((entry) => entry.contactId),
+        },
+        trx,
+      )
+      const entries = input.entries.filter((entry) =>
+        liveContacts.has(entry.contactId),
+      )
+      if (entries.length === 0) {
+        return { dropped: 0 }
+      }
+      const live = await trx
+        .select({ id: customFieldModel.id })
+        .from(customFieldModel)
+        .where(
+          and(
+            eq(customFieldModel.workspaceId, input.workspaceId),
+            inArray(customFieldModel.id, [
+              ...new Set(entries.map((entry) => entry.customFieldId)),
+            ]),
+          ),
+        )
+        .orderBy(customFieldModel.id)
+        .for("key share")
+      const liveIds = new Set(live.map((row) => row.id))
+      const firstByPair = new Map<string, (typeof entries)[number]>()
+      for (const entry of entries) {
+        const pair = `${entry.contactId}:${entry.customFieldId}`
+        if (liveIds.has(entry.customFieldId) && !firstByPair.has(pair)) {
+          firstByPair.set(pair, entry)
+        }
+      }
+      const values = [...firstByPair.values()].sort(
+        (a, b) =>
+          a.contactId.localeCompare(b.contactId) ||
+          a.customFieldId.localeCompare(b.customFieldId),
+      )
+      for (
+        let offset = 0;
+        offset < values.length;
+        offset += VALUE_UPSERT_CHUNK_SIZE
+      ) {
+        await upsertValueRows(
+          trx,
+          input.mode,
+          values.slice(offset, offset + VALUE_UPSERT_CHUNK_SIZE),
+        )
+      }
+      return { dropped: entries.length - values.length }
+    })
+  },
+}
+
+/** Rows per insert: a few bind parameters each, far below Postgres' 65,535. */
+const VALUE_UPSERT_CHUNK_SIZE = 1000
+
+const upsertValueRows = async (
+  tx: DatabaseClient,
+  mode: "fill" | "overwrite",
+  rows: { contactId: string; customFieldId: string; value: string }[],
+): Promise<void> => {
+  const insert = tx.insert(contactCustomFieldModel).values(rows)
+  const target = [
+    contactCustomFieldModel.contactId,
+    contactCustomFieldModel.customFieldId,
+  ]
+  if (mode === "fill") {
+    await insert.onConflictDoNothing({ target })
+    return
+  }
+  await insert.onConflictDoUpdate({
+    target,
+    set: { value: sql`excluded."value"`, updatedAt: new Date() },
+    setWhere: sql`${contactCustomFieldModel.value} IS DISTINCT FROM excluded."value"`,
+  })
 }
 
 export type DateTimeSweepCursor = {

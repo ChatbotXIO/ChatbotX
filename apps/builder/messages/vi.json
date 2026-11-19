@@ -4752,7 +4752,8 @@
       "windowExpired": "Cửa sổ đồng bộ 24 giờ đã hết hạn. Vui lòng ngắt kết nối và kết nối lại số này để đồng bộ.",
       "notEligible": "Số này không đủ điều kiện đồng bộ lịch sử.",
       "triggerFailed": "Không thể bắt đầu đồng bộ. Vui lòng thử lại sau.",
-      "unknown": "Không thể bật đồng bộ. Vui lòng thử lại sau."
+      "unknown": "Không thể bật đồng bộ. Vui lòng thử lại sau.",
+      "contactImportRunning": "Chưa thể đồng bộ lịch sử khi contact của page này đang được nhập; hệ thống sẽ tự đồng bộ sau đó."
     }
   },
   "messenger": {
@@ -12182,6 +12183,125 @@
       "credentialsRejected": "Invalid LINE Channel ID or Channel secret.",
       "webhookRejected": "LINE rejected the webhook URL. Please try again later or contact support.",
       "providerUnavailable": "LINE is temporarily unavailable. Please try again in a moment."
+    }
+  },
+  "contactSync": {
+    "menu": "Đồng bộ với AhaChat",
+    "title": "Đồng bộ với AhaChat",
+    "description": "Lấy nhanh contact, tag và custom field từ AhaChat cho các page đã kết nối có trên AhaChat.",
+    "start": "Bắt đầu đồng bộ",
+    "empty": "Hãy kết nối một page Messenger, Instagram, Zalo hoặc Telegram trước.",
+    "noneInAhachat": "Chưa có page nào đã kết nối của bạn có trên AhaChat.",
+    "cooldown": "4 giờ đồng bộ một lần. Lần tới từ {time}.",
+    "options": {
+      "syncTags": "Đồng bộ tag",
+      "syncCustomFields": "Đồng bộ custom field",
+      "overwriteExisting": "Ghi đè dữ liệu",
+      "hint": "Khi tắt ghi đè, chỉ điền dữ liệu còn thiếu. Tag không bị xoá, giá trị trống không xoá dữ liệu."
+    },
+    "advanced": {
+      "show": "Sửa ánh xạ",
+      "hide": "Ẩn ánh xạ"
+    },
+    "mapping": {
+      "auto": "Khớp theo tên",
+      "saved": "Đã lưu ánh xạ",
+      "tags": "Tag",
+      "fields": "Custom field",
+      "noTags": "Page này không có tag.",
+      "noFields": "Page này không có custom field.",
+      "typeMismatch": "Khác kiểu: giá trị sẽ bị bỏ qua.",
+      "save": "Lưu ánh xạ"
+    },
+    "progress": {
+      "title": "Tiến độ đồng bộ",
+      "source": "Nguồn",
+      "counts": "{created} tạo mới · {updated} cập nhật · {skipped} bỏ qua · {failed} lỗi",
+      "skippedValues": "{count} giá trị custom field bị bỏ qua (không hợp lệ)",
+      "cancel": "Huỷ đồng bộ",
+      "done": "Xong",
+      "requested": "Yêu cầu lúc {time}",
+      "started": "Bắt đầu {time}",
+      "finished": "kết thúc {time}"
+    },
+    "ineligible": {
+      "notInAhachat": "Không có trong AhaChat",
+      "pageAmbiguous": "Trùng nhiều page AhaChat",
+      "ahachatUnavailable": "Không kết nối được AhaChat. Thử lại."
+    },
+    "status": {
+      "pending": "Đang chờ",
+      "running": "Đang chạy",
+      "cancelling": "Đang huỷ",
+      "succeeded": "Hoàn tất",
+      "partial": "Hoàn tất một phần",
+      "failed": "Thất bại",
+      "cancelled": "Đã huỷ"
+    },
+    "runErrors": {
+      "inboxUnavailable": "Hộp thư đã bị ngắt kết nối.",
+      "sourceUnavailable": "AhaChat trả về dữ liệu không đúng.",
+      "sourceDisconnected": "Page trên AhaChat đã bị gỡ.",
+      "pageLimitReached": "Đã dừng: đạt giới hạn mỗi page.",
+      "maxAttempts": "Đã dừng sau nhiều lần lỗi.",
+      "channelUnsupported": "Không còn đồng bộ được contact của kênh này.",
+      "pageNotFound": "Page đã bị xoá khỏi AhaChat."
+    },
+    "errors": {
+      "alreadyRunning": "Workspace đang có lượt đồng bộ chạy.",
+      "cooldown": "Mỗi 4 giờ đồng bộ một lần.",
+      "noSources": "Chọn ít nhất một page.",
+      "tooManySources": "Quá nhiều page trong một lượt.",
+      "sourceNotEligible": "Có page không đồng bộ được.",
+      "mappingInvalid": "Một số ánh xạ không hợp lệ.",
+      "forbidden": "Chỉ quản trị viên workspace mới đồng bộ contact từ AhaChat được.",
+      "generic": "Đã có lỗi xảy ra. Vui lòng thử lại.",
+      "sourceUnavailable": "Không kết nối được AhaChat. Thử lại sau ít phút.",
+      "notConfigured": "Server chưa cấu hình đồng bộ AhaChat."
+    },
+    "history": {
+      "open": "Lịch sử đồng bộ",
+      "title": "Lịch sử đồng bộ AhaChat",
+      "run": "Chi tiết đồng bộ",
+      "empty": "Chưa có lượt đồng bộ nào.",
+      "columns": {
+        "pages": "Page",
+        "created": "Tạo mới",
+        "updated": "Cập nhật",
+        "skipped": "Bỏ qua",
+        "failed": "Lỗi",
+        "finishedAt": "Kết thúc"
+      }
+    },
+    "followUp": {
+      "statusLine": "Đồng bộ lịch sử: {status}",
+      "pending": "Đồng bộ lịch sử sau khi nhập xong",
+      "linked": "Đã bắt đầu đồng bộ lịch sử",
+      "cancelled": "Đã huỷ: page bị ngắt kết nối",
+      "channelUnavailable": "Chưa chạy: page không còn kết nối",
+      "superseded": "Lượt nhập mới hơn sẽ đồng bộ lịch sử",
+      "workspaceUnavailable": "Chưa chạy: workspace không khả dụng",
+      "expired": "Chưa chạy: đã chờ quá lâu",
+      "retry": "Thử lại",
+      "retried": "Đồng bộ lịch sử sắp bắt đầu"
+    },
+    "source": {
+      "mapsTo": "{channel} → AhaChat: {page}"
+    }
+  },
+  "ahachatImport": {
+    "dialogTitle": "Lấy dữ liệu từ AhaChat?",
+    "dialogDescription": "{page} đã có trên AhaChat. Dùng dữ liệu từ đó để có contact ngay và đồng bộ lịch sử nhanh hơn.",
+    "importFirst": "Dùng AhaChat",
+    "historyOnly": "Bỏ qua AhaChat",
+    "panelDescription": "Contact, tag và custom field lấy từ AhaChat; lịch sử tự đồng bộ sau.",
+    "errors": {
+      "unknown": "Không bắt đầu nhập từ AhaChat được. Thử lại sau.",
+      "historyNotStarted": "Không bắt đầu được việc nhập lẫn đồng bộ lịch sử. Thử lại sau."
+    },
+    "badge": {
+      "onAhachat": "Có trên AhaChat",
+      "selected": "Dùng dữ liệu AhaChat"
     }
   }
 }

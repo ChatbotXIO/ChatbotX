@@ -11,7 +11,7 @@ import {
 } from "../../client"
 import { buildContactFilterMatchSQL } from "../../queries"
 import type { ContactFilterCriteriaInput } from "../../queries/contact-filter/types"
-import { contactModel } from "../../schema"
+import { contactModel, contactsToTagsModel, tagModel } from "../../schema"
 import type { ContactCustomFieldModel, ContactModel } from "../../types"
 import { userColumnsWithoutSecrets } from "../user/columns"
 import { buildContactListWhere, resolveContactOrderBy } from "./list-where"
@@ -38,6 +38,80 @@ type ContactListInput = {
   limit: number
   offset: number
   orderBy: Record<string, unknown>
+}
+
+/**
+ * How an imported value meets an existing one: `fill` writes only where the
+ * contact has nothing yet, `overwrite` lets the imported value win. In both
+ * modes a missing imported value never clears what the contact has.
+ */
+export type ContactMergeMode = "fill" | "overwrite"
+
+/** The `Contact` profile columns an import may write. */
+export type ContactProfilePatch = Partial<
+  Pick<
+    ContactModel,
+    | "firstName"
+    | "lastName"
+    | "gender"
+    | "phoneNumber"
+    | "email"
+    | "avatar"
+    | "locale"
+    | "timezone"
+    | "ref"
+    | "country"
+    | "state"
+    | "city"
+    | "location"
+  >
+>
+
+type MergeableColumn = {
+  column: keyof ContactProfilePatch
+  /** SQL type of the VALUES column, so a NULL-only column still types. */
+  cast: string
+  /** Text columns also count `''` as empty for `fill`. */
+  isText: boolean
+}
+
+/** One entry per mergeable column: the single source for the merge SQL. */
+const MERGEABLE_CONTACT_COLUMNS: readonly MergeableColumn[] = [
+  { column: "firstName", cast: "text", isText: true },
+  { column: "lastName", cast: "text", isText: true },
+  { column: "gender", cast: '"gender"', isText: false },
+  { column: "phoneNumber", cast: "text", isText: true },
+  { column: "email", cast: "text", isText: true },
+  { column: "avatar", cast: "text", isText: true },
+  { column: "locale", cast: "text", isText: true },
+  { column: "timezone", cast: "text", isText: true },
+  { column: "ref", cast: "text", isText: true },
+  { column: "country", cast: "text", isText: true },
+  { column: "state", cast: "text", isText: true },
+  { column: "city", cast: "text", isText: true },
+  { column: "location", cast: "jsonb", isText: false },
+]
+
+const mergedValueSql = (spec: MergeableColumn, mode: ContactMergeMode) => {
+  const current = sql.raw(`t."${spec.column}"`)
+  const incoming = sql.raw(`u."${spec.column}"`)
+  if (mode === "overwrite") {
+    return sql`COALESCE(${incoming}, ${current})`
+  }
+  const isEmpty = spec.isText
+    ? sql`(${current} IS NULL OR ${current} = '')`
+    : sql`${current} IS NULL`
+  return sql`CASE WHEN ${isEmpty} THEN COALESCE(${incoming}, ${current}) ELSE ${current} END`
+}
+
+const incomingValueSql = (
+  spec: MergeableColumn,
+  patch: ContactProfilePatch,
+) => {
+  const value = patch[spec.column]
+  const bound =
+    spec.column === "location" && value != null ? JSON.stringify(value) : value
+  return sql`${bound ?? null}::${sql.raw(spec.cast)}`
 }
 
 const PUBLIC_CONTACT_RELATIONS = {
@@ -359,4 +433,157 @@ export const contactRepository = {
       orderBy: { id: "asc" },
     })
   },
+
+  /**
+   * Merges imported profile values into existing contacts of one workspace
+   * in a single `UPDATE … FROM (VALUES …)`, writing only the columns listed
+   * in `MERGEABLE_CONTACT_COLUMNS`. Returns the ids of contacts that actually
+   * changed. Emits nothing and never touches interaction timestamps.
+   */
+  async mergeProfiles(
+    input: {
+      workspaceId: string
+      mode: ContactMergeMode
+      rows: { contactId: string; patch: ContactProfilePatch }[]
+    },
+    tx: DatabaseClient = db,
+  ): Promise<string[]> {
+    const rows = input.rows.filter((row) =>
+      MERGEABLE_CONTACT_COLUMNS.some((spec) => row.patch[spec.column] != null),
+    )
+    if (rows.length === 0) {
+      return []
+    }
+    const columnNames = sql.raw(
+      [
+        "id",
+        ...MERGEABLE_CONTACT_COLUMNS.map((spec) => `"${spec.column}"`),
+      ].join(", "),
+    )
+    const valueRows = rows.map(
+      (row) =>
+        sql`(${row.contactId}::int8, ${sql.join(
+          MERGEABLE_CONTACT_COLUMNS.map((spec) =>
+            incomingValueSql(spec, row.patch),
+          ),
+          sql`, `,
+        )})`,
+    )
+    const assignments = sql.join(
+      MERGEABLE_CONTACT_COLUMNS.map(
+        (spec) =>
+          sql`${sql.raw(`"${spec.column}"`)} = ${mergedValueSql(spec, input.mode)}`,
+      ),
+      sql`, `,
+    )
+    const changed = sql.join(
+      MERGEABLE_CONTACT_COLUMNS.map(
+        (spec) =>
+          sql`${mergedValueSql(spec, input.mode)} IS DISTINCT FROM ${sql.raw(`t."${spec.column}"`)}`,
+      ),
+      sql` OR `,
+    )
+    const result = await tx.execute<{ id: string }>(sql`
+      UPDATE "Contact" AS t
+      SET ${assignments}, "updatedAt" = NOW()
+      FROM (VALUES ${sql.join(valueRows, sql`, `)}) AS u(${columnNames})
+      WHERE t."id" = u.id
+        AND t."workspaceId" = ${input.workspaceId}::int8
+        AND (${changed})
+      RETURNING t."id"
+    `)
+    return result.rows.map((row) => String(row.id))
+  },
+
+  /**
+   * The ids among `ids` that are contacts of `workspaceId`, locked
+   * `FOR KEY SHARE` in id order until the caller's transaction commits. A
+   * concurrent delete waits for the commit, so rows written for these
+   * contacts in the same transaction cannot fail their foreign key; a
+   * contact deleted before the lock is simply not returned.
+   */
+  async lockLiveIds(
+    input: { workspaceId: string; ids: string[] },
+    tx: DatabaseClient,
+  ): Promise<Set<string>> {
+    if (input.ids.length === 0) {
+      return new Set()
+    }
+    const rows = await tx
+      .select({ id: contactModel.id })
+      .from(contactModel)
+      .where(
+        and(
+          eq(contactModel.workspaceId, input.workspaceId),
+          inArray(contactModel.id, [...new Set(input.ids)]),
+        ),
+      )
+      .orderBy(contactModel.id)
+      .for("key share")
+    return new Set(rows.map((row) => row.id))
+  },
+
+  /**
+   * Attaches tags to contacts without any tag event; already attached pairs
+   * are left alone. Contacts are locked first (`lockLiveIds`), then the live
+   * tags of `workspaceId` `FOR SHARE`: a soft delete is an `UPDATE`, so it
+   * waits for this commit, and one committed first fails the re-checked
+   * `deletedAt IS NULL`. Pairs of a deleted contact or tag are not linked.
+   */
+  async linkTags(
+    input: {
+      workspaceId: string
+      pairs: { contactId: string; tagId: string }[]
+    },
+    tx: DatabaseClient = db,
+  ): Promise<number> {
+    if (input.pairs.length === 0) {
+      return 0
+    }
+    return await tx.transaction(async (trx) => {
+      const liveContacts = await contactRepository.lockLiveIds(
+        {
+          workspaceId: input.workspaceId,
+          ids: input.pairs.map((pair) => pair.contactId),
+        },
+        trx,
+      )
+      const liveTags = await trx
+        .select({ id: tagModel.id })
+        .from(tagModel)
+        .where(
+          and(
+            eq(tagModel.workspaceId, input.workspaceId),
+            isNull(tagModel.deletedAt),
+            inArray(tagModel.id, [
+              ...new Set(input.pairs.map((pair) => pair.tagId)),
+            ]),
+          ),
+        )
+        .orderBy(tagModel.id)
+        .for("share")
+      const liveTagIds = new Set(liveTags.map((row) => row.id))
+      const pairs = input.pairs.filter(
+        (pair) =>
+          liveContacts.has(pair.contactId) && liveTagIds.has(pair.tagId),
+      )
+      let linked = 0
+      for (
+        let offset = 0;
+        offset < pairs.length;
+        offset += TAG_LINK_CHUNK_SIZE
+      ) {
+        const inserted = await trx
+          .insert(contactsToTagsModel)
+          .values(pairs.slice(offset, offset + TAG_LINK_CHUNK_SIZE))
+          .onConflictDoNothing()
+          .returning({ contactId: contactsToTagsModel.contactId })
+        linked += inserted.length
+      }
+      return linked
+    })
+  },
 }
+
+/** Pairs per insert: two bind parameters each, far below Postgres' 65,535. */
+const TAG_LINK_CHUNK_SIZE = 1000

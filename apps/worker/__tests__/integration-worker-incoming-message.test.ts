@@ -224,6 +224,9 @@ vi.mock("../src/integration/handlers/contact/update-avatar", () => ({
 vi.mock("../src/integration/handlers/contact-scan/engine", () => ({
   runContactScan: vi.fn(),
 }))
+vi.mock("../src/integration/handlers/contact-sync/engine", () => ({
+  runContactSync: vi.fn(),
+}))
 vi.mock("../src/integration/handlers/conversation", () => ({
   agentMarkAsRead: vi.fn(),
   contactMarkAsRead: vi.fn(),

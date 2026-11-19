@@ -380,6 +380,13 @@ export const createCoexistRoute = (channel: CoexistChannel) => {
               502,
             )
           }
+          if (reason === "contact_import_running") {
+            throw new ChatbotXException(
+              "This page's contacts are still importing and its history sync follows by itself: wait for it.",
+              "coexistContactImportRunning",
+              409,
+            )
+          }
           throw notFoundException("Channel not found")
         }
         const runId = "runId" in result ? result.runId : undefined

@@ -1,4 +1,5 @@
 import { z } from "zod"
+import { copyName } from "./copy-name"
 
 /**
  * See this package's README ("Exception: cross-cutting product enums") for why
@@ -106,21 +107,89 @@ export const normalizeCustomFieldName = (name: string): string =>
 const MAX_CUSTOM_FIELD_NAME_LENGTH = 255
 
 /**
- * `<name>_<n>` for the smallest `n` whose normalized form is not in `taken`
- * (the normalized names already in use across every type). The base is
- * shortened when needed so the suffixed name stays within the length limit.
+ * How a field that cannot keep its name is renamed: `numbered` gives
+ * `<name>_1`, `<name>_2`…; `copy` gives `<name> copy`, `<name> copy 2`….
+ * `reuseRenamed`: an earlier renamed field of the requested type is reused
+ * instead of allocating the next name, so resolving the same field again
+ * converges on one row.
+ */
+const CUSTOM_FIELD_RENAME_STYLES = {
+  numbered: {
+    rename: (name: string, attempt: number, maxLength: number) => {
+      const tail = `_${attempt}`
+      return `${name.slice(0, Math.max(1, maxLength - tail.length))}${tail}`
+    },
+    reuseRenamed: false,
+  },
+  copy: {
+    rename: (name: string, attempt: number, maxLength: number) =>
+      copyName(name, attempt, { style: "space", maxLength }),
+    reuseRenamed: true,
+  },
+} as const satisfies Record<
+  string,
+  {
+    rename: (name: string, attempt: number, maxLength: number) => string
+    reuseRenamed: boolean
+  }
+>
+
+export type CustomFieldRenameStyle = keyof typeof CUSTOM_FIELD_RENAME_STYLES
+
+/** The `attempt`-th renamed form of `name`, shortened to fit `maxLength`. */
+const renamedCustomFieldName = (
+  name: string,
+  attempt: number,
+  maxLength: number,
+  style: CustomFieldRenameStyle,
+): string =>
+  CUSTOM_FIELD_RENAME_STYLES[style].rename(name.trim(), attempt, maxLength)
+
+/**
+ * The first renamed `name` (see `CUSTOM_FIELD_RENAME_STYLES`) whose
+ * normalized form is not in `taken` (the normalized names already in use
+ * across every type). The base is shortened when needed so the suffixed name
+ * stays within the length limit.
  */
 export const allocateRenamedCustomFieldName = (
   name: string,
   taken: ReadonlySet<string>,
   maxLength = MAX_CUSTOM_FIELD_NAME_LENGTH,
+  style: CustomFieldRenameStyle = "numbered",
 ): string => {
-  const base = name.trim()
-  for (let suffix = 1; ; suffix++) {
-    const tail = `_${suffix}`
-    const candidate = `${base.slice(0, Math.max(1, maxLength - tail.length))}${tail}`
+  for (let attempt = 1; ; attempt++) {
+    const candidate = renamedCustomFieldName(name, attempt, maxLength, style)
     if (!taken.has(normalizeCustomFieldName(candidate))) {
       return candidate
+    }
+  }
+}
+
+/**
+ * An existing row of `field.type` under one of `field.name`'s renamed forms,
+ * walking the forms in order until the first one nobody uses.
+ */
+const findRenamedCustomFieldRow = <Row>(
+  field: { name: string; type: CustomFieldType },
+  winners: ReadonlyMap<string, Row>,
+  taken: ReadonlySet<string>,
+  style: CustomFieldRenameStyle,
+): Row | undefined => {
+  for (let attempt = 1; ; attempt++) {
+    const candidate = renamedCustomFieldName(
+      field.name,
+      attempt,
+      MAX_CUSTOM_FIELD_NAME_LENGTH,
+      style,
+    )
+    if (!taken.has(normalizeCustomFieldName(candidate))) {
+      return
+    }
+    const row = winners.get(
+      customFieldResolutionKey({ name: candidate, type: field.type }),
+    )
+    if (row) {
+      return row
     }
   }
 }
@@ -147,6 +216,7 @@ export const planCustomFieldResolution = <
 >(
   existing: readonly Row[],
   fields: readonly { name: string; type: CustomFieldType }[],
+  renameStyle: CustomFieldRenameStyle = "numbered",
 ): {
   /** In the order the install creates them. */
   requests: { name: string; type: CustomFieldType }[]
@@ -186,8 +256,21 @@ export const planCustomFieldResolution = <
     }
     const folded = normalizeCustomFieldName(field.name)
     const taken = takenNames.has(folded)
+    const renamedRow =
+      taken && CUSTOM_FIELD_RENAME_STYLES[renameStyle].reuseRenamed
+        ? findRenamedCustomFieldRow(field, winners, takenNames, renameStyle)
+        : undefined
+    if (renamedRow) {
+      plans.set(key, { action: "reuse", row: renamedRow })
+      continue
+    }
     const plannedName = taken
-      ? allocateRenamedCustomFieldName(field.name, takenNames)
+      ? allocateRenamedCustomFieldName(
+          field.name,
+          takenNames,
+          MAX_CUSTOM_FIELD_NAME_LENGTH,
+          renameStyle,
+        )
       : field.name
     takenNames.add(normalizeCustomFieldName(plannedName))
     plans.set(

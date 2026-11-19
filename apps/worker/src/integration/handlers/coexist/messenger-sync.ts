@@ -11,39 +11,35 @@ import {
   listConversations,
   type MessengerConversation,
 } from "@chatbotx.io/integration-messenger/apis/sync"
-import {
-  type BucUsage,
-  concurrencyForUsage,
-} from "@chatbotx.io/integration-messenger/apis/usage"
+import type { BucUsage } from "@chatbotx.io/integration-messenger/apis/usage"
 import type { IncomingContact } from "@chatbotx.io/sdk"
 import {
   IntegrationJobAction,
   type IntegrationJobCoexistMessengerSync,
   integrationQueue,
 } from "@chatbotx.io/worker-config"
-import pLimit from "p-limit"
+import type pLimit from "p-limit"
 import { logger } from "../../../lib/logger"
 import {
   applyCoexistActivityUpdates,
   bulkImportContacts,
-  bulkImportMessages,
   type CoexistActivityUpdate,
   type ContactImportLink,
   createHistoricalIdFactory,
-  maxNumericId,
 } from "./bulk-historical-import"
 import { filterConversationWindow } from "./conversation-window"
 import {
-  fetchConvMessages,
+  emptyTally,
+  importMessengerConversation,
+} from "./messenger-conversation-import"
+import {
   messengerAuthSchema,
   participantSourceId,
   STORE_WINDOW_MS,
   splitName,
   withInlineRetry,
 } from "./messenger-helpers"
-
-/** Default Graph concurrency when BUC usage signals "plenty of budget". */
-const DEFAULT_CONCURRENCY = 5
+import { createMessengerBucThrottle } from "./messenger-throttle"
 
 /**
  * Active wall-time budget per chunk. When exceeded, the job persists state and
@@ -358,78 +354,31 @@ async function runMessagesPhase(ctx: SyncContext): Promise<PhaseResult> {
               ? new Date(convTime.getTime() - STORE_WINDOW_MS)
               : fallbackCutoff
 
-            // Newest message time across this conv's pages — one activity bump
-            // per conv (not per page).
-            let convNewest: Date | null = null
-            let convOldest: Date | null = null
-            let convNewestIncoming: Date | null = null
-            let convNewestMessageId: string | null = null
-
+            // Pages written before a later page fails still count, as they
+            // did when this loop wrote each page itself.
+            const tally = emptyTally()
             try {
-              await fetchConvMessages({
+              const imported = await importMessengerConversation({
+                workspaceId,
+                runId,
                 conversationId: conv.id,
-                accessToken: ctx.accessToken,
-                version: ctx.version,
+                link,
                 cutoff,
                 ceiling: ctx.ceiling,
                 pageId,
+                accessToken: ctx.accessToken,
+                version: ctx.version,
                 defaultCountry: ctx.defaultCountry,
+                aiReadsSyncedHistory: ctx.aiReadsSyncedHistory,
                 applyBucThrottle: ctx.applyBucThrottle,
                 respectPause: ctx.respectPause,
-                // M3: flush each Graph page immediately — `pageDiscovered` is
-                // the live enrichment object so all data found so far is passed.
-                onPage: async (pageMessages, pageDiscovered) => {
-                  const result = await bulkImportMessages({
-                    workspaceId,
-                    runId,
-                    contactInboxId: link.contactInboxId,
-                    contactId: link.contactId,
-                    conversationId: link.conversationId,
-                    messages: pageMessages,
-                    contactEnrichment: pageDiscovered,
-                    idFactory,
-                  })
-                  pageImported += result.importedMessages
-                  pageSkipped += result.skippedMessages
-                  if (
-                    result.newestMessageAt &&
-                    (!convNewest || convNewest < result.newestMessageAt)
-                  ) {
-                    convNewest = result.newestMessageAt
-                  }
-                  if (
-                    result.oldestMessageAt &&
-                    (!convOldest || convOldest > result.oldestMessageAt)
-                  ) {
-                    convOldest = result.oldestMessageAt
-                  }
-                  if (
-                    result.newestIncomingMessageAt &&
-                    (!convNewestIncoming ||
-                      convNewestIncoming < result.newestIncomingMessageAt)
-                  ) {
-                    convNewestIncoming = result.newestIncomingMessageAt
-                  }
-                  convNewestMessageId = maxNumericId(
-                    convNewestMessageId,
-                    result.newestMessageId,
-                  )
-                },
+                idFactory,
+                tally,
               })
-
-              const aiMarkerMessageId = ctx.aiReadsSyncedHistory
-                ? null
-                : convNewestMessageId
-              if (convNewest || aiMarkerMessageId) {
-                activityUpdates.push({
-                  contactInboxId: link.contactInboxId,
-                  contactId: link.contactId,
-                  conversationId: link.conversationId,
-                  newestMessageAt: convNewest,
-                  oldestMessageAt: convOldest ?? convNewest,
-                  newestIncomingMessageAt: convNewestIncoming,
-                  aiMarkerMessageId,
-                })
+              pageImported += imported.importedMessages
+              pageSkipped += imported.skippedMessages
+              if (imported.activity) {
+                activityUpdates.push(imported.activity)
               }
 
               if (convTime && (pageOldest === null || convTime < pageOldest)) {
@@ -445,6 +394,11 @@ async function runMessagesPhase(ctx: SyncContext): Promise<PhaseResult> {
                 "[coexist] Messenger phase=messages conv failed",
               )
               ctx.errorRef.current = `conv ${conv.id} message fetch failed: ${errMsg}`
+              pageImported += tally.importedMessages
+              pageSkipped += tally.skippedMessages
+              if (tally.activity) {
+                activityUpdates.push(tally.activity)
+              }
               pageFailed += 1
             }
           }),
@@ -577,51 +531,8 @@ export const coexistMessengerSync = async (
     return
   }
 
-  // ── Adaptive concurrency state (BUC-driven) ──────────────────────────────
-  let currentConcurrency = DEFAULT_CONCURRENCY
-  let currentLimit = pLimit(currentConcurrency)
-  let pauseUntil = 0
-
-  // Maximum in-process pause duration for a BUC budget exhaustion. A larger
-  // value would hold the worker concurrency slot for too long and exceed the
-  // chunk budget. Future improvement: re-enqueue with a BullMQ delay instead.
-  const MAX_PAUSE_SEC = 300
-
-  const applyBucThrottle = (usage: BucUsage | null | undefined): void => {
-    const next = concurrencyForUsage(usage ?? null)
-    if (next === 0) {
-      const waitSec = Math.min(
-        usage?.estimatedTimeToRegainAccess ?? 60,
-        MAX_PAUSE_SEC,
-      )
-      pauseUntil = Math.max(pauseUntil, Date.now() + waitSec * 1000)
-      if (currentConcurrency !== 1) {
-        currentConcurrency = 1
-        currentLimit = pLimit(1)
-      }
-      logger.warn(
-        { waitSec, integrationId },
-        "[coexist] BUC budget exhausted — pausing Graph calls",
-      )
-      return
-    }
-    if (next !== currentConcurrency) {
-      currentConcurrency = next
-      currentLimit = pLimit(next)
-      logger.info(
-        { next, integrationId },
-        "[coexist] BUC throttle adjusted Messenger concurrency",
-      )
-    }
-  }
-
-  const respectPause = async (): Promise<void> => {
-    if (Date.now() < pauseUntil) {
-      await new Promise<void>((resolve) =>
-        setTimeout(resolve, pauseUntil - Date.now()),
-      )
-    }
-  }
+  const { applyBucThrottle, respectPause, getLimit } =
+    createMessengerBucThrottle({ integrationId })
 
   const errorRef = { current: initRow.currentError ?? undefined }
   const ctx: SyncContext = {
@@ -636,7 +547,7 @@ export const coexistMessengerSync = async (
     ceiling,
     applyBucThrottle,
     respectPause,
-    getLimit: () => currentLimit,
+    getLimit,
     jobStart,
     errorRef,
     aiReadsSyncedHistory: integration.coexistAiReadsSyncedHistory,

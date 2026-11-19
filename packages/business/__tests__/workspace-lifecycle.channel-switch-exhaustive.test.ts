@@ -43,7 +43,11 @@ vi.mock("@chatbotx.io/database/client", () => ({
 }))
 
 vi.mock("@chatbotx.io/database/repositories", () => ({
-  coexistSyncRunRepository: { cancelActiveContactScanRuns: vi.fn() },
+  coexistSyncRunRepository: {
+    cancelActiveContactScanRuns: vi.fn(),
+    lockIntegration: vi.fn(),
+  },
+  contactSyncRunRepository: { cancelForInbox: vi.fn() },
   connectionRepository: { findByInboxId: findByInboxIdMock },
   LIVE_RUN_STATUSES: [],
   PULL_CLAIMABLE_STATUSES: [],

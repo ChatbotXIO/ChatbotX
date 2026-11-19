@@ -11,6 +11,7 @@ const mocks = vi.hoisted(() => ({
   subscribePageToAppWebhook: vi.fn(),
   tearDownForIntegration: vi.fn(),
   cancelScanForIntegration: vi.fn(),
+  cancelInbox: vi.fn(),
   transaction: vi.fn(),
   tx: { marker: "tx" },
 }))
@@ -18,6 +19,7 @@ const mocks = vi.hoisted(() => ({
 vi.mock("@chatbotx.io/business", () => ({
   coexistService: { tearDownForIntegration: mocks.tearDownForIntegration },
   contactScanService: { cancelForIntegration: mocks.cancelScanForIntegration },
+  contactSyncService: { cancelForInbox: mocks.cancelInbox },
   instagramIntegrationService: { existsForPage: mocks.existsForPage },
   messengerIntegrationService: {
     disconnect: mocks.serviceDisconnect,
@@ -78,6 +80,7 @@ describe("disconnectMessengerConnection", () => {
     mocks.remoteDisconnect.mockResolvedValue(undefined)
     mocks.tearDownForIntegration.mockResolvedValue(undefined)
     mocks.cancelScanForIntegration.mockResolvedValue(undefined)
+    mocks.cancelInbox.mockResolvedValue(undefined)
     mocks.deleteByIntegration.mockResolvedValue(undefined)
     mocks.serviceDisconnect.mockResolvedValue(undefined)
     mocks.disconnectInbox.mockResolvedValue(undefined)
@@ -104,6 +107,16 @@ describe("disconnectMessengerConnection", () => {
       integrationId: BASE_INPUT.integrationId,
       tx: mocks.tx,
     })
+    // The page's open import items and owed history sync end with it, the
+    // integration row locked first (a handoff's lock order).
+    expect(mocks.cancelInbox).toHaveBeenCalledWith(
+      {
+        workspaceId: BASE_INPUT.workspaceId,
+        inboxId: BASE_INPUT.inboxId,
+        lock: { channel: "messenger", integrationId: BASE_INPUT.integrationId },
+      },
+      mocks.tx,
+    )
     expect(mocks.deleteByIntegration).toHaveBeenCalledWith(
       {
         workspaceId: BASE_INPUT.workspaceId,

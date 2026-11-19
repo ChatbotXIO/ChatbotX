@@ -149,6 +149,11 @@ export const router = {
       default: m.contactScanAPIs,
     })),
   ),
+  contactSyncAPIs: lazy(() =>
+    import("@/features/contact-sync/api").then((m) => ({
+      default: m.contactSyncAPIs,
+    })),
+  ),
   aiHandoverAPIs: lazy(() =>
     import("@/features/integration-ai-handover/api").then((m) => ({
       default: m.aiHandoverAPIs,

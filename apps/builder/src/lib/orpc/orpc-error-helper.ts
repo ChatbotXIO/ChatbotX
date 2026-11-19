@@ -1,6 +1,10 @@
 import { BROADCAST_PLAN_LIMIT_CODE } from "@chatbotx.io/business/errors"
+import type { CONTACT_SYNC_ERROR_CODES } from "@chatbotx.io/database/partials"
 import {
   broadcastPlanLimitDataSchema,
+  contactSyncAlreadyRunningDataSchema,
+  contactSyncCooldownDataSchema,
+  contactSyncMappingInvalidDataSchema,
   IMAGES_NOT_SUPPORTED_ON_CHANNEL_CODE,
   imagesNotSupportedOnChannelDataSchema,
   PRODUCT_MESSAGE_UNRESOLVABLE_CODE,
@@ -9,6 +13,8 @@ import {
 import type { ErrorMap } from "@orpc/server"
 import { z } from "zod"
 import { DENIAL_MESSAGES } from "@/lib/workspace/authorize-workspace-access"
+
+type ContactSyncErrorCodes = typeof CONTACT_SYNC_ERROR_CODES
 
 const notFound = {
   message: "Resource not found",
@@ -51,6 +57,11 @@ export const STRUCTURED_ERROR_CODES: ReadonlySet<string> = new Set([
   BROADCAST_PLAN_LIMIT_CODE,
   PRODUCT_MESSAGE_UNRESOLVABLE_CODE,
   IMAGES_NOT_SUPPORTED_ON_CHANNEL_CODE,
+  // Literals checked against the code table at compile time only: no
+  // module-scope read of a value a narrow test mock may leave out.
+  "contactSyncMappingInvalid" satisfies ContactSyncErrorCodes["mappingInvalid"],
+  "contactSyncAlreadyRunning" satisfies ContactSyncErrorCodes["alreadyRunning"],
+  "contactSyncCooldown" satisfies ContactSyncErrorCodes["cooldown"],
 ])
 
 /**
@@ -503,6 +514,11 @@ export const possibleErrorsOnSettingCoexist = {
     message: "The channel's credentials are invalid: reconnect the channel.",
     status: 409,
   },
+  coexistContactImportRunning: {
+    message:
+      "This page's contacts are still importing and its history sync follows by itself: wait for it.",
+    status: 409,
+  },
   coexistSyncNotStarted: {
     message: "Coexist is on, but Meta did not start the sync. Try again.",
     status: 502,
@@ -769,6 +785,112 @@ export const possibleErrorsOnSchedulingContactScan = {
     message: "A scan is already running for this inbox.",
     status: 409,
   },
+  ...possibleIdempotencyErrors,
+} satisfies ErrorMap
+
+/** Contact sync (`contactSyncs.*`): codes from `CONTACT_SYNC_ERROR_CODES`. */
+const contactSyncSourceErrors = {
+  contactSyncNotConfigured: {
+    message: "The AhaChat sync is not configured on this server",
+    status: 503,
+  },
+  contactSyncSourceUnavailable: {
+    message: "AhaChat could not be reached: retry shortly",
+    status: 503,
+  },
+  contactSyncSourceNotFound: { message: "Source not found", status: 404 },
+  contactSyncSourceNotEligible: {
+    message: "This source cannot be synced",
+    status: 422,
+  },
+} as const
+
+export const possibleErrorsOnReadingContactSyncSource = {
+  businessError,
+  ...contactSyncSourceErrors,
+} satisfies ErrorMap
+
+export const possibleErrorsOnContactSyncSource = {
+  businessError,
+  ...contactSyncSourceErrors,
+  contactSyncMappingInvalid: {
+    message: "Some mappings are invalid",
+    status: 422,
+    data: contactSyncMappingInvalidDataSchema,
+  },
+  ...possibleIdempotencyErrors,
+} satisfies ErrorMap
+
+export const possibleErrorsOnSchedulingContactSync = {
+  businessError,
+  ...contactSyncSourceErrors,
+  contactSyncAlreadyRunning: {
+    message: "A contact sync is already running in this workspace",
+    status: 409,
+    data: contactSyncAlreadyRunningDataSchema,
+  },
+  contactSyncCooldown: {
+    message: "Contacts can be synced once every 4 hours",
+    status: 409,
+    data: contactSyncCooldownDataSchema,
+  },
+  contactSyncNoSources: { message: "Choose at least one source", status: 422 },
+  contactSyncTooManySources: {
+    message: "Too many sources in one sync",
+    status: 422,
+  },
+  contactSyncDuplicateSource: {
+    message: "A source is listed twice",
+    status: 422,
+  },
+  ...possibleIdempotencyErrors,
+} satisfies ErrorMap
+
+/** Retrying an import's history sync: a write, so it takes an idempotency key. */
+export const possibleErrorsOnRetryingContactSyncHistory = {
+  businessError,
+  contactSyncSourceNotFound: { message: "Source not found", status: 404 },
+  ...possibleIdempotencyErrors,
+} satisfies ErrorMap
+
+/**
+ * Starting the contacts-first import at page connect: every page the service
+ * cannot import falls back with a reason instead of an error, so only a
+ * missing configuration refuses the call.
+ */
+export const possibleErrorsOnConnectingContactSyncImport = {
+  businessError,
+  contactSyncNotConfigured: {
+    message: "The AhaChat sync is not configured on this server",
+    status: 503,
+  },
+  ...possibleIdempotencyErrors,
+} satisfies ErrorMap
+
+/** The session procedures' refusal of a member who is not a workspace admin. */
+export const contactSyncNotAdminError = {
+  contactSyncNotAdmin: {
+    message: "Only a workspace admin can sync contacts from AhaChat",
+    status: 403,
+  },
+} as const
+
+/** Session procedures of the sync dialog: a workspace admin only. */
+export const possibleErrorsOnContactSyncAdmin = {
+  businessError,
+  ...contactSyncSourceErrors,
+  ...contactSyncNotAdminError,
+  contactSyncRunNotFound: { message: "Contact sync not found", status: 404 },
+} satisfies ErrorMap
+
+export const possibleErrorsOnReadingContactSyncRun = {
+  businessError,
+  contactSyncRunNotFound: { message: "Contact sync not found", status: 404 },
+} satisfies ErrorMap
+
+export const possibleErrorsOnContactSyncRun = {
+  businessError,
+  contactSyncRunNotFound: { message: "Contact sync not found", status: 404 },
   ...possibleIdempotencyErrors,
 } satisfies ErrorMap
 

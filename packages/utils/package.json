@@ -28,6 +28,7 @@
     "./conversation": "./src/conversation.ts",
     "./country-currency": "./src/country-currency.ts",
     "./coordinates": "./src/coordinates.ts",
+    "./copy-name": "./src/copy-name.ts",
     "./crypto": "./src/crypto.ts",
     "./csv": "./src/csv.ts",
     "./custom-field": "./src/custom-field.ts",

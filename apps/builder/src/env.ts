@@ -18,6 +18,16 @@ export const env = createEnv({
     BETTER_AUTH_URL: z.url(),
     LICENSE_KEY: z.string().optional(),
     WHATSAPP_OVERRIDE_CALLBACK_URI: z.url().optional(),
+    // Contact sync from AhaChat (docs/contact-sync.md): optional https base URL,
+    // path included (empty = unset, see emptyStringAsUndefined).
+    AHACHAT_API_BASE_URL: z.url({ protocol: /^https$/ }).optional(),
+    // The two AhaChat secrets: the API key sent and
+    // the hash key it signs with (never sent), each base64 of >= 32 random bytes.
+    // Validated where they are used: a bad value leaves the sync off (empty =
+    // unset). The key id names the pair for rotation (default k1).
+    AHACHAT_API_KEY: z.string().optional(),
+    AHACHAT_HASH_KEY: z.string().optional(),
+    AHACHAT_KEY_ID: z.string().optional(),
     // WhatsApp VoIP calling (docs/whatsapp-calling.md) ICE/TURN relay.
     TURN_URL: z.string().optional(),
     TURN_STATIC_SECRET: z.string().optional(),

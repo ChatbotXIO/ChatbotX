@@ -8,9 +8,11 @@ import {
   type SQL,
 } from "@chatbotx.io/database/client"
 import {
+  type ContactSource,
   contactSources,
   supportsProfileSnapshot,
 } from "@chatbotx.io/database/partials"
+import type { ContactProfilePatch } from "@chatbotx.io/database/repositories"
 import {
   contactInboxModel,
   contactModel,
@@ -121,10 +123,18 @@ export type CoexistDedupContact = {
   gender?: string
   sourceUserId?: string
   sourceUsername?: string
+  /**
+   * More `Contact` columns for a NEW contact (an existing one is never
+   * touched here). Optional and separate from the fields above so existing
+   * callers keep their exact behaviour.
+   */
+  profile?: ContactProfilePatch
 }
 
 export type ResolveOrCreateContactLinksInput = {
   captureProfileSnapshot: boolean
+  /** How the contact reached the inbox; `inboundMessage` when omitted. */
+  source?: ContactSource
   workspaceId: string
   inboxId: string
   inboxChannel: string
@@ -174,6 +184,7 @@ class CoexistImportService extends BaseService {
       sourceIds,
       sourceUserIds,
       captureProfileSnapshot,
+      source = contactSources.enum.inboundMessage,
     } = input
 
     const newContactCreatedEvents: NewContactCreatedEvent[] = []
@@ -291,6 +302,7 @@ class CoexistImportService extends BaseService {
           email: entry.email,
           phoneNumber: entry.phoneNumber,
           avatar: entry.avatar,
+          ...entry.profile,
         }))
 
         await tx.insert(contactModel).values(contactRows)
@@ -300,7 +312,7 @@ class CoexistImportService extends BaseService {
           inboxId,
           contactId: contactRows[i]?.id,
           originalContactId: contactRows[i]?.id,
-          source: contactSources.enum.inboundMessage,
+          source,
           sourceId,
           sourceUserId: entry.sourceUserId ?? null,
           sourceUsername: entry.sourceUsername ?? null,
@@ -470,7 +482,7 @@ class CoexistImportService extends BaseService {
               phoneNumber: entry.phoneNumber,
               email: entry.email,
               channel: inboxChannel,
-              source: contactSources.enum.inboundMessage,
+              source,
               createdAt: new Date(),
             })
           }

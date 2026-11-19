@@ -31,6 +31,7 @@ import {
   connectSessionsPublicRouter,
 } from "@/features/connections/api/public"
 import { contactScanPublicRouter } from "@/features/contact-scan/api/public"
+import { contactSyncPublicRouter } from "@/features/contact-sync/api/public"
 import { contactsPublicRouter } from "@/features/contacts/api/public"
 import { conversationsPublicRouter } from "@/features/conversations/api/public"
 import { couponsPublicRouter } from "@/features/coupons/api/public"
@@ -153,6 +154,7 @@ export const publicRouter = {
   connections: connectionsPublicRouter,
   connectSessions: connectSessionsPublicRouter,
   contactScans: contactScanPublicRouter,
+  contactSyncs: contactSyncPublicRouter,
   contacts: contactsPublicRouter,
   conversations: conversationsPublicRouter,
   coupons: couponsPublicRouter,

@@ -71,6 +71,32 @@ export const inboxRepository = {
     })
   },
 
+  /**
+   * The id of the inbox of one channel account in a workspace (unique per
+   * channel and source id), whatever its status: a teardown must find an
+   * inbox that is already disconnected.
+   */
+  async findIdByChannelSource(input: {
+    workspaceId: string
+    channel: string
+    sourceId: string
+    tx?: DatabaseClient
+  }): Promise<string | null> {
+    const { tx = db } = input
+    const [row] = await tx
+      .select({ id: inboxModel.id })
+      .from(inboxModel)
+      .where(
+        and(
+          eq(inboxModel.workspaceId, input.workspaceId),
+          eq(inboxModel.channel, input.channel),
+          eq(inboxModel.sourceId, input.sourceId),
+        ),
+      )
+      .limit(1)
+    return row?.id ?? null
+  },
+
   async findById(input: {
     id: string
     tx?: DatabaseClient

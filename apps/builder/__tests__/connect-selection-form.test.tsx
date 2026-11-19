@@ -135,6 +135,7 @@ describe("ConnectSelectionForm", () => {
       pageIds: ["id-0", "id-1"],
       coexistIds: [],
       aiReadsSyncedHistoryIds: [],
+      ahachatIds: [],
     })
   })
 
@@ -203,6 +204,7 @@ describe("ConnectSelectionForm", () => {
       ids: ["a", "c"],
       coexistIds: [],
       aiReadsSyncedHistoryIds: [],
+      ahachatIds: [],
     })
   })
 
@@ -375,13 +377,14 @@ describe("ConnectSelectionForm (coexist switches)", () => {
     })
   }
 
-  const render = (onSubmit = vi.fn()) => {
+  const render = (onSubmit = vi.fn(), max?: number) => {
     act(() => {
       root.render(
         <ConnectSelectionForm
           coexist={coexist}
           idsFieldName="pageIds"
           items={makeItems(3)}
+          max={max}
           onSubmit={onSubmit}
         />,
       )
@@ -403,19 +406,54 @@ describe("ConnectSelectionForm (coexist switches)", () => {
     expect(switches()).toHaveLength(0)
   })
 
-  test("every row switch defaults off and stays disabled until its row is checked", async () => {
+  test("every row switch defaults off and can be turned on before its row is checked", () => {
     render()
 
     expect(switches()).toHaveLength(3)
     expect(switches()[0]?.getAttribute("aria-checked")).toBe("false")
-    expect(switches()[0]?.getAttribute("aria-disabled")).toBe("true")
-
-    const [, first] = checkboxes()
-    await click(first)
-
-    // Base UI drops `aria-disabled` entirely once the switch is enabled.
+    // Base UI drops `aria-disabled` entirely while the switch is enabled.
     expect(switches()[0]?.getAttribute("aria-disabled")).toBeNull()
-    expect(switches()[1]?.getAttribute("aria-disabled")).toBe("true")
+  })
+
+  test("turning a row's sync on selects the row too, and turning it off keeps the selection", async () => {
+    const onSubmit = render()
+
+    await click(switches()[0])
+    const [, first] = checkboxes()
+    expect(first?.getAttribute("aria-checked")).toBe("true")
+
+    await click(switches()[0])
+    expect(first?.getAttribute("aria-checked")).toBe("true")
+
+    await click(switches()[1])
+    await act(async () => {
+      continueButton()?.dispatchEvent(
+        new MouseEvent("click", { bubbles: true, cancelable: true }),
+      )
+      await Promise.resolve()
+      await Promise.resolve()
+    })
+
+    expect(onSubmit).toHaveBeenCalledWith(
+      expect.objectContaining({
+        pageIds: ["id-0", "id-1"],
+        coexistIds: ["id-1"],
+      }),
+    )
+  })
+
+  test("once the selection is full, an unselected row's switch is disabled", async () => {
+    render(vi.fn(), 1)
+
+    await click(switches()[0])
+    // Row 1's sync switch, by name: row 0 now also shows its AI switch.
+    const second = container.querySelector<HTMLElement>(
+      '[role="switch"][aria-label="channels.connectMany.stepCoexist — Item 1"]',
+    )
+
+    expect(switches()[0]?.getAttribute("aria-checked")).toBe("true")
+    expect(second?.getAttribute("aria-disabled")).toBe("true")
+    expect(second?.getAttribute("aria-checked")).toBe("false")
   })
 
   test("turning a row switch on reveals the coexist panel with the channel description and the AI switch", async () => {
@@ -589,6 +627,7 @@ describe("ConnectSelectionForm (coexist switches)", () => {
       pageIds: ["a"],
       coexistIds: [],
       aiReadsSyncedHistoryIds: [],
+      ahachatIds: [],
     })
   })
 
@@ -642,6 +681,7 @@ describe("ConnectSelectionForm (coexist switches)", () => {
       pageIds: ["id-0"],
       coexistIds: ["id-0"],
       aiReadsSyncedHistoryIds: [],
+      ahachatIds: [],
     })
   })
 
@@ -671,6 +711,7 @@ describe("ConnectSelectionForm (coexist switches)", () => {
       pageIds: ["id-1"],
       coexistIds: [],
       aiReadsSyncedHistoryIds: [],
+      ahachatIds: [],
     })
   })
 
@@ -710,6 +751,7 @@ describe("ConnectSelectionForm (coexist switches)", () => {
       pageIds: ["id-0", "id-1"],
       coexistIds: ["id-1"],
       aiReadsSyncedHistoryIds: ["id-1"],
+      ahachatIds: [],
     })
   })
 })

@@ -1,7 +1,7 @@
 // @vitest-environment node
 
 import { ChatbotXException } from "@chatbotx.io/business/errors"
-import { isValidElement } from "react"
+import { isValidElement, type ReactNode } from "react"
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
 const {
@@ -21,6 +21,14 @@ const {
   mockSanitizeReferer: vi.fn(async (referer: string) => referer),
   mockSelectPage: vi.fn(() => null),
 }))
+
+vi.mock("@chatbotx.io/integration-ahachat", () => ({
+  isAhachatConfigured: () => true,
+}))
+
+/** The page wraps the picker in the AhaChat availability provider: tests look at the picker inside. */
+const unwrapAvailability = (node: ReactNode): ReactNode =>
+  isValidElement<{ children: ReactNode }>(node) ? node.props.children : node
 
 vi.mock("next/navigation", () => ({
   redirect: mockRedirect,
@@ -113,7 +121,7 @@ const unknownReasonTarget = {
 }
 
 const renderItems = async () => {
-  const element = await MessengerSelectPage(pageArgs)
+  const element = unwrapAvailability(await MessengerSelectPage(pageArgs))
   if (!isValidElement<SelectPageElementProps>(element)) {
     throw new Error("MessengerSelectPage did not return a valid element")
   }
@@ -133,7 +141,7 @@ describe("MessengerSelectPage", () => {
   })
 
   test("passes session targets through as picker items, ranked selectable first then already-connected", async () => {
-    const element = await MessengerSelectPage(pageArgs)
+    const element = unwrapAvailability(await MessengerSelectPage(pageArgs))
 
     expect(isValidElement<SelectPageElementProps>(element)).toBe(true)
     if (!isValidElement<SelectPageElementProps>(element)) {
@@ -251,7 +259,7 @@ describe("MessengerSelectPage", () => {
       workspace: { id: "ws-1" },
     })
 
-    const element = await MessengerSelectPage(pageArgs)
+    const element = unwrapAvailability(await MessengerSelectPage(pageArgs))
 
     if (!isValidElement<SelectPageElementProps>(element)) {
       throw new Error("MessengerSelectPage did not return a valid element")
@@ -262,7 +270,7 @@ describe("MessengerSelectPage", () => {
   })
 
   test("uses the page id as the secondary line", async () => {
-    const element = await MessengerSelectPage(pageArgs)
+    const element = unwrapAvailability(await MessengerSelectPage(pageArgs))
 
     if (!isValidElement<SelectPageElementProps>(element)) {
       throw new Error("MessengerSelectPage did not return a valid element")

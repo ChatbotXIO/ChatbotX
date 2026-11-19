@@ -13,6 +13,7 @@ export const COEXIST_KNOWN_REASONS = [
   "window_expired",
   "not_eligible",
   "trigger_failed",
+  "contact_import_running",
 ] as const
 export type CoexistKnownReason = (typeof COEXIST_KNOWN_REASONS)[number]
 
@@ -24,6 +25,7 @@ export const COEXIST_REASON_MESSAGE_KEYS: Record<
   window_expired: "coexist.errors.windowExpired",
   not_eligible: "coexist.errors.notEligible",
   trigger_failed: "coexist.errors.triggerFailed",
+  contact_import_running: "coexist.errors.contactImportRunning",
 }
 
 export function isCoexistKnownReason(

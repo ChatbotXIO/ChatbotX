@@ -30,10 +30,14 @@ vi.mock("@chatbotx.io/sequence-scheduler/dispatch-cancel", () => ({
 }))
 
 const cancelContactScanMock = vi.hoisted(() => vi.fn())
+const lockIntegrationMock = vi.hoisted(() => vi.fn())
+const cancelForInboxMock = vi.hoisted(() => vi.fn())
 vi.mock("@chatbotx.io/database/repositories", () => ({
   coexistSyncRunRepository: {
     cancelActiveContactScanRuns: cancelContactScanMock,
+    lockIntegration: lockIntegrationMock,
   },
+  contactSyncRunRepository: { cancelForInbox: cancelForInboxMock },
   connectionRepository: { findByInboxId: findByInboxIdMock },
   HEAVY_WORKSPACE_TABLES: [],
   LIVE_RUN_STATUSES: [],
@@ -252,9 +256,24 @@ test("disconnectWorkspaceChannels tears down active native Instagram coexist run
     currentError: "cancelled",
     tx,
   })
+  // The page's open contact-import items and owed history sync end with it,
+  // the integration row locked first (the order a handoff takes it in).
+  expect(lockIntegrationMock).toHaveBeenCalledWith({
+    channel: "instagram",
+    workspaceId: "workspace-1",
+    integrationId: "integration-ig-1",
+    tx,
+  })
+  expect(cancelForInboxMock).toHaveBeenCalledWith(
+    { workspaceId: "workspace-1", inboxId: expect.any(String) },
+    tx,
+  )
+  expect(lockIntegrationMock.mock.invocationCallOrder[0]).toBeLessThan(
+    cancelForInboxMock.mock.invocationCallOrder[0] ?? 0,
+  )
 })
 
-test("disconnectWorkspaceChannels does not apply native coexist teardown to instagram-facebook", async () => {
+test("disconnectWorkspaceChannels tears down coexist and contact import for the Facebook-linked Instagram variant too", async () => {
   const deleteWhereMock = vi.fn().mockResolvedValue(undefined)
   const deleteMock = vi.fn(() => ({ where: deleteWhereMock }))
   const tx = { delete: deleteMock }
@@ -283,5 +302,24 @@ test("disconnectWorkspaceChannels does not apply native coexist teardown to inst
     tx: tx as never,
   })
 
-  expect(tearDownForIntegrationMock).not.toHaveBeenCalled()
+  // A contact import hands off to coexist on both variants, so both tear down.
+  expect(tearDownForIntegrationMock).toHaveBeenCalledWith(
+    expect.objectContaining({
+      channel: "instagram",
+      integrationId: "integration-igfb-1",
+    }),
+  )
+  expect(lockIntegrationMock).toHaveBeenCalledWith({
+    channel: "instagram",
+    workspaceId: "workspace-1",
+    integrationId: "integration-igfb-1",
+    tx,
+  })
+  expect(cancelForInboxMock).toHaveBeenCalledWith(
+    { workspaceId: "workspace-1", inboxId: "inbox-igfb-1" },
+    tx,
+  )
+  expect(lockIntegrationMock.mock.invocationCallOrder[0]).toBeLessThan(
+    cancelForInboxMock.mock.invocationCallOrder[0] ?? 0,
+  )
 })

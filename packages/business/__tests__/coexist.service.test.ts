@@ -3,6 +3,8 @@ import { beforeEach, describe, expect, test, vi } from "vitest"
 const mocks = vi.hoisted(() => ({
   createRun: vi.fn(),
   findLiveRun: vi.fn(),
+  lockIntegration: vi.fn(),
+  findOpenItemForInbox: vi.fn(),
   findIntegrationForCoexist: vi.fn(),
   setIntegrationCoexistEnabled: vi.fn(),
   tearDownActiveRunsForIntegration: vi.fn(),
@@ -16,11 +18,15 @@ vi.mock("@chatbotx.io/database/client", () => ({
 }))
 
 vi.mock("@chatbotx.io/database/repositories", () => ({
+  contactSyncRunRepository: {
+    findOpenItemForInbox: mocks.findOpenItemForInbox,
+  },
   coexistSyncRunRepository: {
     claimRunWithNewToken: vi.fn(),
     createRun: mocks.createRun,
     findIntegrationForCoexist: mocks.findIntegrationForCoexist,
     findLiveRun: mocks.findLiveRun,
+    lockIntegration: mocks.lockIntegration,
     findResumeCeiling: vi.fn(),
     findRunById: vi.fn(),
     markFailed: vi.fn(),
@@ -66,9 +72,12 @@ describe("coexistService", () => {
     mocks.findIntegrationForCoexist.mockResolvedValue({
       id: "integration-1",
       channel: "instagram",
+      inboxId: "inbox-1",
     })
     mocks.createRun.mockResolvedValue({ id: "run-1" })
     mocks.findLiveRun.mockResolvedValue(null)
+    mocks.lockIntegration.mockResolvedValue(undefined)
+    mocks.findOpenItemForInbox.mockResolvedValue(null)
     mocks.tearDownActiveRunsForIntegration.mockResolvedValue(undefined)
   })
 
@@ -102,6 +111,85 @@ describe("coexistService", () => {
       triggerSource: "popup-enable",
       tx,
     })
+  })
+
+  test("enable locks the integration row before it looks at anything else", async () => {
+    await coexistService.enable({
+      workspaceId: "workspace-1",
+      integrationId: "integration-1",
+      channel: "instagram",
+    })
+
+    expect(mocks.lockIntegration).toHaveBeenCalledWith({
+      workspaceId: "workspace-1",
+      integrationId: "integration-1",
+      channel: "instagram",
+      tx,
+    })
+    expect(mocks.lockIntegration.mock.invocationCallOrder[0]).toBeLessThan(
+      mocks.setIntegrationCoexistEnabled.mock.invocationCallOrder[0] ?? 0,
+    )
+  })
+
+  test("enable is refused while the page's contacts import and a history sync is queued behind it", async () => {
+    mocks.findOpenItemForInbox.mockResolvedValue({
+      id: "item-1",
+      followUpCoexist: true,
+    })
+
+    await expect(
+      coexistService.enable({
+        workspaceId: "workspace-1",
+        integrationId: "integration-1",
+        channel: "instagram",
+      }),
+    ).resolves.toEqual({ success: false, reason: "contact_import_running" })
+    expect(mocks.findOpenItemForInbox).toHaveBeenCalledWith(
+      { workspaceId: "workspace-1", inboxId: "inbox-1" },
+      tx,
+    )
+    // Every guard runs before the switch: a refusal never leaves coexist on.
+    expect(mocks.setIntegrationCoexistEnabled).not.toHaveBeenCalled()
+    expect(mocks.createRun).not.toHaveBeenCalled()
+  })
+
+  test("an open menu-sync item (no history queued) does not refuse enable", async () => {
+    mocks.findOpenItemForInbox.mockResolvedValue({
+      id: "item-1",
+      followUpCoexist: false,
+    })
+
+    await expect(
+      coexistService.enable({
+        workspaceId: "workspace-1",
+        integrationId: "integration-1",
+        channel: "instagram",
+      }),
+    ).resolves.toEqual({ success: true, runId: "run-1" })
+  })
+
+  test("enable joins a caller-owned transaction and never opens its own", async () => {
+    const callerTx = { caller: true }
+
+    await expect(
+      coexistService.enable(
+        {
+          workspaceId: "workspace-1",
+          integrationId: "integration-1",
+          channel: "instagram",
+          aiReadsSyncedHistory: true,
+        },
+        callerTx as never,
+      ),
+    ).resolves.toEqual({ success: true, runId: "run-1" })
+
+    expect(mocks.transaction).not.toHaveBeenCalled()
+    expect(mocks.setIntegrationCoexistEnabled).toHaveBeenCalledWith(
+      expect.objectContaining({ aiReadsSyncedHistory: true, tx: callerTx }),
+    )
+    expect(mocks.createRun).toHaveBeenCalledWith(
+      expect.objectContaining({ tx: callerTx }),
+    )
   })
 
   test("enable returns not_found when the integration is invalid or not native Instagram", async () => {

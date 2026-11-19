@@ -13,6 +13,28 @@ export const env = createEnv({
   server: {
     NEXT_PUBLIC_EDITION: editionRule,
     QUOTA_SYNC_INTERVAL_SECONDS: z.coerce.number().int().min(10).default(60),
+    // Contact sync from AhaChat (docs/contact-sync.md): optional https base URL,
+    // path included. Empty counts as unset: the integration is then off.
+    AHACHAT_API_BASE_URL: z.preprocess(
+      (value) => (value === "" ? undefined : value),
+      z.url({ protocol: /^https$/ }).optional(),
+    ),
+    // The two AhaChat secrets (docs/contact-sync.md):
+    // the API key sent and the hash key it signs with (never sent), each base64
+    // of >= 32 random bytes. Validated where they are used: a bad value (a typo in the key id too) leaves
+    // the sync off instead of stopping the process. The key id names the pair for rotation (default k1).
+    AHACHAT_API_KEY: z.preprocess(
+      (value) => (value === "" ? undefined : value),
+      z.string().optional(),
+    ),
+    AHACHAT_HASH_KEY: z.preprocess(
+      (value) => (value === "" ? undefined : value),
+      z.string().optional(),
+    ),
+    AHACHAT_KEY_ID: z.preprocess(
+      (value) => (value === "" ? undefined : value),
+      z.string().optional(),
+    ),
     // How often the sequence producer polls each of its buckets. Idle Redis
     // cost is `buckets x 2 x 1000 / interval` ZRANGEBYSCORE per second (256
     // buckets: ~102/s at 5000ms). Without backlog a due dispatch waits up to

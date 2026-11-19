@@ -56,6 +56,8 @@ export const connectOutcomeSchema = z.object({
   detail: z.string().max(MAX_CONNECT_DETAIL_LENGTH).optional(),
   warning: z.enum(Object.values(CONNECT_WARNINGS)).optional(),
   integrationId: z.string().optional(),
+  /** The connected page's inbox: what the AhaChat contacts import is addressed by. */
+  inboxId: z.string().optional(),
   coexistEligible: z.boolean(),
 })
 export type ConnectOutcome = z.infer<typeof connectOutcomeSchema>
