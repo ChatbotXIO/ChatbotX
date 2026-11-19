@@ -24,6 +24,7 @@ import {
   createMessageRepository,
   getSafeSinceTime,
   insertDmConversationsIfAbsent,
+  integrationSmtpRepository,
 } from "@chatbotx.io/database/repositories"
 import { userColumnsWithoutSecrets } from "@chatbotx.io/database/repositories/user-columns"
 import { conversationModel, inboxModel } from "@chatbotx.io/database/schema"
@@ -60,6 +61,7 @@ import { withCache } from "@chatbotx.io/redis"
 import {
   createId,
   deterministicMessageId,
+  emailMessageIdDomain,
   generateMessageId,
 } from "@chatbotx.io/utils"
 import {
@@ -107,11 +109,9 @@ const resolveInboundWindow = (props: {
 
 export const BOT_DISABLE_DURATION_MS = 24 * 60 * 60 * 1000
 
-export const EMAIL_THREAD_LOOKBACK_DAYS = 90
+const EMAIL_THREAD_LOOKBACK_DAYS = 90
 const EMAIL_THREAD_LOOKBACK_MS =
   EMAIL_THREAD_LOOKBACK_DAYS * 24 * 60 * 60 * 1000
-
-const SMTP_FROM_ADDRESS = /<([^>]+)>\s*$/
 
 export type TriggerContext = {
   triggerSource: string
@@ -282,6 +282,17 @@ class ConversationService extends BaseService {
     return await tx.query.conversationModel.findFirst({
       where,
     })
+  }
+
+  async findWithContactInboxes(props: {
+    tx?: DatabaseClient
+    where: Partial<FindByProps>
+  }): Promise<ConversationWithContactInboxes | undefined> {
+    const { tx = db, where } = props
+    return (await tx.query.conversationModel.findFirst({
+      where,
+      with: { contactInboxes: true },
+    })) as ConversationWithContactInboxes | undefined
   }
 
   async findDMByContact(props: {
@@ -641,7 +652,11 @@ class ConversationService extends BaseService {
   }): Promise<ConversationWithContactInboxes | undefined> {
     const { tx = db, workspaceId, contactId } = props
     const conversation = (await tx.query.conversationModel.findFirst({
-      where: { workspaceId, contactId },
+      where: {
+        workspaceId,
+        contactId,
+        OR: [{ sourceId: { isNull: true } }, { sourceId: { like: "email:%" } }],
+      },
       orderBy: (table) =>
         sql`${table.lastActivityAt} DESC NULLS LAST, ${table.id} DESC`,
       with: { contactInboxes: true },
@@ -701,10 +716,9 @@ class ConversationService extends BaseService {
         workspaceId,
         contactInbox,
       })
-      const conversation = (await db.query.conversationModel.findFirst({
+      const conversation = await this.findWithContactInboxes({
         where: { id: opened.id, workspaceId, contactId },
-        with: { contactInboxes: true },
-      })) as ConversationWithContactInboxes | undefined
+      })
       if (!conversation) {
         throw notFoundException("Conversation not found")
       }
@@ -1120,43 +1134,126 @@ class ConversationService extends BaseService {
 
   /**
    * Opens an idempotent SMTP outreach thread using the configured inbox sender
-   * as the Message-ID domain.
+   * as the Message-ID domain. The thread's Message-ID is stored explicitly as
+   * `channelConversationId` so the first outgoing mail reuses it; a thread
+   * opened by an inbound customer mail never carries it.
    */
   async openEmailThread(props: {
     workspaceId: string
     contactId: string
     contactInboxId: string
+    contactInbox?: Pick<ContactInboxModel, "id" | "contactId" | "inboxId">
     seed?: string
     tx?: DatabaseClient
   }): Promise<ConversationModel> {
-    const { tx = db } = props
-    const contactInbox = await contactInboxService.findBy({
-      where: { id: props.contactInboxId, contactId: props.contactId },
-      tx,
-    })
+    const { tx = db, workspaceId } = props
+    const contactInbox =
+      props.contactInbox ??
+      (await contactInboxService.findByUncached({
+        where: { id: props.contactInboxId, contactId: props.contactId },
+        tx,
+      }))
     if (!contactInbox) {
       throw notFoundException("Contact inbox not found")
     }
-    const smtp = await tx.query.integrationSmtpModel.findFirst({
+    const domain = await this.resolveEmailDomain({
+      workspaceId,
+      inboxId: contactInbox.inboxId,
+      tx,
+    })
+    const sourceId = this.buildEmailThreadSourceId(domain, props.seed)
+    return await this.findOrCreate({
+      workspaceId,
+      contactId: props.contactId,
+      sourceId,
+      channelConversationId: sourceId,
+      tx,
+    })
+  }
+
+  /**
+   * Bulk variant of `openEmailThread` for broadcasts: the Message-ID domain is
+   * resolved once per inbox, missing threads are inserted in one statement and
+   * everything is read back with one query. Keyed by contact inbox id.
+   */
+  async openEmailThreads(props: {
+    workspaceId: string
+    contactInboxes: Pick<ContactInboxModel, "id" | "contactId" | "inboxId">[]
+    seedFor: (contactInbox: { id: string }) => string
+    tx?: DatabaseClient
+  }): Promise<Map<string, ConversationModel>> {
+    const { tx = db, workspaceId, contactInboxes } = props
+    const result = new Map<string, ConversationModel>()
+    if (contactInboxes.length === 0) {
+      return result
+    }
+    const domainByInbox = new Map<string, string>()
+    for (const inboxId of new Set(contactInboxes.map((ci) => ci.inboxId))) {
+      domainByInbox.set(
+        inboxId,
+        await this.resolveEmailDomain({ workspaceId, inboxId, tx }),
+      )
+    }
+    const planned = contactInboxes.map((contactInbox) => ({
+      contactInbox,
+      sourceId: this.buildEmailThreadSourceId(
+        domainByInbox.get(contactInbox.inboxId) ?? "localhost",
+        props.seedFor(contactInbox),
+      ),
+    }))
+    await tx
+      .insert(conversationModel)
+      .values(
+        planned.map(({ contactInbox, sourceId }) => ({
+          id: createId(),
+          workspaceId,
+          contactId: contactInbox.contactId,
+          sourceId,
+          additionalAttributes: { channelConversationId: sourceId },
+        })),
+      )
+      .onConflictDoNothing()
+    const rows = await tx.query.conversationModel.findMany({
       where: {
-        workspaceId: props.workspaceId,
-        inboxId: contactInbox.inboxId,
+        workspaceId,
+        contactId: {
+          in: [...new Set(planned.map((p) => p.contactInbox.contactId))],
+        },
+        sourceId: { in: planned.map((p) => p.sourceId) },
       },
     })
+    const rowByKey = new Map(
+      rows.map((row) => [`${row.contactId}|${row.sourceId}`, row] as const),
+    )
+    for (const { contactInbox, sourceId } of planned) {
+      const row = rowByKey.get(`${contactInbox.contactId}|${sourceId}`)
+      if (row) {
+        result.set(contactInbox.id, row)
+      }
+    }
+    return result
+  }
+
+  private async resolveEmailDomain(props: {
+    workspaceId: string
+    inboxId: string
+    tx: DatabaseClient
+  }): Promise<string> {
+    const smtp = await integrationSmtpRepository.findByInbox(
+      { workspaceId: props.workspaceId, inboxId: props.inboxId },
+      props.tx,
+    )
     if (!smtp) {
       throw notFoundException("SMTP integration not found")
     }
-    const addressMatch = smtp.fromAddress.match(SMTP_FROM_ADDRESS)
-    const domain = (addressMatch?.[1] ?? smtp.fromAddress).trim().split("@")[1]
-    const messageId = props.seed
-      ? deterministicMessageId(props.seed, domain || "localhost")
-      : generateMessageId(domain || "localhost")
-    return await this.findOrCreate({
-      workspaceId: props.workspaceId,
-      contactId: props.contactId,
-      sourceId: `email:${messageId}`,
-      tx,
-    })
+    return emailMessageIdDomain(smtp.fromAddress)
+  }
+
+  private buildEmailThreadSourceId(domain: string, seed?: string): string {
+    const messageId = seed
+      ? deterministicMessageId(seed, domain)
+      : generateMessageId(domain)
+    return `email:${messageId}`
   }
 
   async resolveOutreachConversation(props: {
@@ -1170,6 +1267,7 @@ class ConversationService extends BaseService {
         workspaceId: props.workspaceId,
         contactId: props.contactInbox.contactId,
         contactInboxId: props.contactInbox.id,
+        contactInbox: props.contactInbox,
         seed: props.seed,
         tx: props.tx,
       })
@@ -2163,48 +2261,6 @@ class ConversationService extends BaseService {
           message.contactInboxId === contactInboxId && message.sourceId,
       )?.sourceId ?? undefined
     )
-  }
-
-  /**
-   * The `contentAttributes.email` thread headers (subject, Message-ID,
-   * References) of the contact's latest inbound email in this conversation, so
-   * an outgoing reply can thread under it. `undefined` when the conversation has
-   * no inbound email (a brand-new outreach).
-   */
-  async findLastIncomingEmailThread(props: {
-    conversation: Pick<
-      ConversationModel,
-      "id" | "workspaceId" | "lastActivityAt" | "createdAt"
-    >
-    contactInboxId: string
-  }): Promise<Record<string, unknown> | undefined> {
-    const { conversation, contactInboxId } = props
-    const messageRepository = await createMessageRepository()
-    const messages = await messageRepository.findLastByConversation(
-      conversation.id,
-      {
-        workspaceId: conversation.workspaceId,
-        messageTypes: ["incoming"],
-        limit: 10,
-        withAttachments: false,
-        sinceTime: getSafeSinceTime(
-          conversation.lastActivityAt ?? conversation.createdAt,
-          30 * 24 * 60 * 60 * 1000,
-        ),
-      },
-    )
-
-    for (const message of messages) {
-      const email = message.contentAttributes?.email
-      if (
-        message.contactInboxId === contactInboxId &&
-        typeof email === "object" &&
-        email !== null
-      ) {
-        return email as Record<string, unknown>
-      }
-    }
-    return
   }
 
   /**

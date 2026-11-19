@@ -95,6 +95,29 @@ describe("sendMessage", () => {
     expect(result.sentCount).toBe(1)
   })
 
+  test("reuses the outreach thread's Message-ID only when one is provided", async () => {
+    await sendMessage({
+      ctx,
+      data: {
+        contact: {
+          ...contact,
+          sourceConversationId: "email:<thread@acme.test>",
+        },
+        message: { text: "Hello" },
+      },
+    } as never)
+    expect(sendMailMock.mock.calls[0][0].messageId).toBe("<thread@acme.test>")
+
+    await sendMessage({
+      ctx,
+      data: {
+        contact: { ...contact, sourceConversationId: null },
+        message: { text: "Hello" },
+      },
+    } as never)
+    expect(sendMailMock.mock.calls[1][0].messageId).toMatch(ACME_MESSAGE_ID)
+  })
+
   test("rejects a contact without an email address", async () => {
     await expect(
       sendMessage({

@@ -1,5 +1,5 @@
 // @vitest-environment node
-import { db } from "@chatbotx.io/database/client"
+import { integrationSmtpRepository } from "@chatbotx.io/database/repositories"
 import { afterEach, describe, expect, test, vi } from "vitest"
 import { contactInboxService } from "../src/contact-inbox/service"
 import { conversationService } from "../src/conversation/service"
@@ -8,6 +8,7 @@ const smtpContactInbox = {
   id: "smtp-contact-inbox",
   contactId: "contact-1",
   channel: "smtp",
+  inboxId: "inbox-1",
 } as never
 
 const messengerContactInbox = {
@@ -37,19 +38,19 @@ describe("resolveOutreachConversation", () => {
       workspaceId: "workspace-1",
       contactId: "contact-1",
       contactInboxId: "smtp-contact-inbox",
+      contactInbox: smtpContactInbox,
       seed: "broadcast-1:smtp-contact-inbox",
       tx: undefined,
     })
   })
 
   test("uses the configured sender domain and a stable seed for SMTP threads", async () => {
-    vi.spyOn(contactInboxService, "findBy").mockResolvedValue({
+    vi.spyOn(contactInboxService, "findByUncached").mockResolvedValue({
+      id: "smtp-contact-inbox",
+      contactId: "contact-1",
       inboxId: "inbox-1",
     } as never)
-    vi.spyOn(
-      db.query.integrationSmtpModel,
-      "findFirst" as never,
-    ).mockResolvedValue({
+    vi.spyOn(integrationSmtpRepository, "findByInbox").mockResolvedValue({
       fromAddress: "Support <support@example.test>",
     } as never)
     const findOrCreate = vi
@@ -67,7 +68,9 @@ describe("resolveOutreachConversation", () => {
       workspaceId: "workspace-1",
       contactId: "contact-1",
       sourceId: "email:<broadcast-1%3Asmtp-contact-inbox@example.test>",
-      tx: db,
+      channelConversationId:
+        "email:<broadcast-1%3Asmtp-contact-inbox@example.test>",
+      tx: expect.anything(),
     })
   })
 

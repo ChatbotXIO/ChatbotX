@@ -515,11 +515,20 @@ export const receiveMessage = async (
   if (!detected) {
     throw new SdkException("Unable to resolve contact and conversation")
   }
-  const { contactInbox, conversation, contact, isNewContact } = detected
-  if (conversation.archivedAt) {
+  const {
+    contactInbox,
+    conversation: detectedConversation,
+    contact,
+    isNewContact,
+  } = detected
+  // A reply to an archived email thread reopens it. Scoped to SMTP: every other
+  // channel keeps its existing archive behavior.
+  const shouldUnarchive =
+    inbox.channel === "smtp" && !!detectedConversation.archivedAt
+  if (shouldUnarchive) {
     await conversationService.unarchiveByIds({
       workspaceId: inbox.workspaceId,
-      ids: [conversation.id],
+      ids: [detectedConversation.id],
       triggerContext: {
         triggerSource: "worker",
         triggerHandler: "received-message",
@@ -527,6 +536,9 @@ export const receiveMessage = async (
       },
     })
   }
+  const conversation: ConversationModel = shouldUnarchive
+    ? { ...detectedConversation, archivedAt: null }
+    : detectedConversation
   // Zalo and Telegram echo the raw Skip payload as the message text; show the
   // label the contact pressed instead. A no-op for every other tap.
   const stepInputSkipLabel = stepInputSkipChallengeId

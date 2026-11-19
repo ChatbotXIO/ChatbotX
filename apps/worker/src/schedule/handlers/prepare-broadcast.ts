@@ -107,20 +107,11 @@ export const prepareBroadcast = async (broadcastId: string) => {
           conversation,
         ]),
       )
-      const smtpConversations = await Promise.all(
-        smtpContactInboxes.map(
-          async (contactInbox) =>
-            [
-              contactInbox.id,
-              await conversationService.openEmailThread({
-                workspaceId: broadcast.workspaceId,
-                contactId: contactInbox.contactId,
-                contactInboxId: contactInbox.id,
-                seed: `${broadcastId}:${contactInbox.id}`,
-              }),
-            ] as const,
-        ),
-      )
+      const smtpConversations = await conversationService.openEmailThreads({
+        workspaceId: broadcast.workspaceId,
+        contactInboxes: smtpContactInboxes,
+        seedFor: (contactInbox) => `${broadcastId}:${contactInbox.id}`,
+      })
       const conversationByContactInboxId = new Map<
         string,
         (typeof directConversations)[number]

@@ -425,6 +425,38 @@ describe("chat send-message handlers", () => {
       expect(sentMessage().contentAttributes).toBeUndefined()
     })
 
+    test("hands SMTP the thread id only for an outreach thread we opened", async () => {
+      await sendMessageToChannel({
+        conversation: {
+          ...conversation,
+          sourceId: "email:<customer@example.com>",
+          additionalAttributes: null,
+        } as never,
+        contactInbox: smtpInbox as never,
+        message: outgoing(),
+      })
+      expect(
+        mockRunChannelHandler.mock.calls.at(-1)?.[2].data.contact
+          .sourceConversationId,
+      ).toBeNull()
+
+      await sendMessageToChannel({
+        conversation: {
+          ...conversation,
+          sourceId: "email:<out@acme.test>",
+          additionalAttributes: {
+            channelConversationId: "email:<out@acme.test>",
+          },
+        } as never,
+        contactInbox: smtpInbox as never,
+        message: outgoing(),
+      })
+      expect(
+        mockRunChannelHandler.mock.calls.at(-1)?.[2].data.contact
+          .sourceConversationId,
+      ).toBe("email:<out@acme.test>")
+    })
+
     test("does not look up an email thread for other channels", async () => {
       await sendMessageToChannel({
         conversation: conversation as never,

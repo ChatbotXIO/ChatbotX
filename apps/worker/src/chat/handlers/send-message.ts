@@ -225,6 +225,23 @@ const recordServiceSent = async (props: {
 }
 
 /**
+ * The channel conversation id handed to the channel handler. SMTP only gets one
+ * for threads we opened (outreach), stored explicitly; a thread an inbound
+ * customer mail opened has none, so the reply threads under that mail instead
+ * of reusing the customer's Message-ID.
+ */
+function resolveSourceConversationId(
+  conversation: Pick<ConversationModel, "sourceId" | "additionalAttributes">,
+  channel: string,
+): string | null {
+  if (channel !== channelTypes.enum.smtp) {
+    return resolveChannelConversationId(conversation)
+  }
+  const stored = conversation.additionalAttributes?.channelConversationId
+  return typeof stored === "string" && stored ? stored : null
+}
+
+/**
  * Gives SMTP one complete stored parent. The caller may override only its
  * subject; raw headers never come from the outgoing request.
  */
@@ -376,7 +393,10 @@ export async function sendMessageToChannel(
       data: {
         contact: {
           ...contactInbox,
-          sourceConversationId: resolveChannelConversationId(conversation),
+          sourceConversationId: resolveSourceConversationId(
+            conversation,
+            contactInbox.channel,
+          ),
         },
         message: handlerMessage,
         quickReplies: isComment ? undefined : quickReplies,
@@ -1505,7 +1525,10 @@ export async function sendFlowStepToChannel({
       data: {
         contact: {
           ...contactInbox,
-          sourceConversationId: resolveChannelConversationId(conversation),
+          sourceConversationId: resolveSourceConversationId(
+            conversation,
+            contactInbox.channel,
+          ),
         },
         flowId,
         flowVersionId,

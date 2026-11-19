@@ -1,4 +1,6 @@
-import { flowService } from "@chatbotx.io/business"
+import { conversationService, flowService } from "@chatbotx.io/business"
+import type { ContactInboxWorkspaceRow } from "@chatbotx.io/database/repositories"
+import type { ConversationModel } from "@chatbotx.io/database/types"
 import { startExternalStepActionSchema } from "@chatbotx.io/flow-config"
 import baseLogger from "@chatbotx.io/logger"
 import {
@@ -26,6 +28,31 @@ const enqueueSendFlow = async (
     return
   }
   await integrationQueue.add(IntegrationJobAction.sendFlow, sendFlowJob)
+}
+
+/**
+ * A flow started without an event conversation (tag added, webhook, pipeline…)
+ * must not reply into whichever thread was last active: for email that is an
+ * arbitrary old thread. SMTP opens a fresh outreach thread, seeded by the
+ * occurrence so a retry reuses it.
+ */
+const resolveFlowConversationId = async (props: {
+  context: ActionExecutionContext
+  conversation: ConversationModel
+  contactInbox: ContactInboxWorkspaceRow
+}): Promise<string | ConversationModel> => {
+  const { context, conversation, contactInbox } = props
+  if (context.conversationId || contactInbox.channel !== "smtp") {
+    return conversation
+  }
+  const outreach = await conversationService.openEmailThread({
+    workspaceId: context.workspaceId,
+    contactId: context.contactId,
+    contactInboxId: contactInbox.id,
+    contactInbox: { ...contactInbox, contactId: context.contactId },
+    seed: context.occurrenceKey,
+  })
+  return outreach.id
 }
 
 export const startAnotherFlow: TriggerActionHandler = async ({
@@ -63,7 +90,11 @@ export const startAnotherFlow: TriggerActionHandler = async ({
   }
 
   const sendFlowJob = buildSendFlowJob({
-    conversationId: conversation,
+    conversationId: await resolveFlowConversationId({
+      context,
+      conversation,
+      contactInbox,
+    }),
     contactInboxId: contactInbox.id,
     flowId,
   })
@@ -108,7 +139,11 @@ export const startExternalStep: TriggerActionHandler = async ({
 
   await enqueueSendFlow(
     buildSendFlowJob({
-      conversationId: conversation,
+      conversationId: await resolveFlowConversationId({
+        context,
+        conversation,
+        contactInbox,
+      }),
       contactInboxId: contactInbox.id,
       flowId,
       nodeId,

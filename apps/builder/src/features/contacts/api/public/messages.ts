@@ -31,6 +31,32 @@ import { workspaceTokenAuthAPIForScope } from "@/orpc"
 const inboxScopedTokenAuthAPI = workspaceTokenAuthAPIForScope("inbox")
 const automationScopedTokenAuthAPI = workspaceTokenAuthAPIForScope("automation")
 
+const conversationIdInput = zodBigintAsString()
+  .optional()
+  .describe(
+    "Conversation to read. Omit for the contact's primary conversation; an email (SMTP) contact has one conversation per thread, so pass the thread's conversation id (from `messages.create` / the Inbox link) to read the others. A conversation of another contact returns 404.",
+  )
+
+async function resolveReadConversationId(props: {
+  contactId: string
+  workspaceId: string
+  conversationId?: string
+}): Promise<string> {
+  const { contactId, workspaceId, conversationId } = props
+  const conversation = conversationId
+    ? await conversationService.findByUncached({
+        where: { id: conversationId, workspaceId, contactId },
+      })
+    : await conversationService.findByContactWithInboxes({
+        contactId,
+        workspaceId,
+      })
+  if (!conversation) {
+    throw notFoundException("Conversation not found")
+  }
+  return conversation.id
+}
+
 export const contactsMessagesPublicRouter = {
   sendMessage: inboxScopedTokenAuthAPI
     .route({
@@ -97,6 +123,7 @@ export const contactsMessagesPublicRouter = {
           .describe(
             "Opaque pagination cursor from a previous response. Omit for the first page.",
           ),
+        conversationId: conversationIdInput,
         contactInboxId: zodBigintAsString()
           .optional()
           .describe(
@@ -108,16 +135,14 @@ export const contactsMessagesPublicRouter = {
     .errors(possibleErrorsOnFindingResource)
     .handler(async ({ context, input }) => {
       const contactId = await contactIdFor(context, input.identifier)
-      const conversation = await conversationService.findByContactWithInboxes({
+      const conversationId = await resolveReadConversationId({
         contactId,
         workspaceId: context.workspace.id,
+        conversationId: input.conversationId,
       })
-      if (!conversation) {
-        throw notFoundException("Conversation not found")
-      }
       return await listMessages({
         workspaceId: context.workspace.id,
-        conversationId: conversation.id,
+        conversationId,
         contactInboxId: input.contactInboxId,
         perPage: input.perPage,
         cursor: input.cursor,
@@ -137,22 +162,21 @@ export const contactsMessagesPublicRouter = {
       z.object({
         identifier: publicContactIdentifier,
         messageId: zodBigintAsString().describe("Message id (numeric string)."),
+        conversationId: conversationIdInput,
       }),
     )
     .output(messageResourceWithRelations)
     .errors(possibleErrorsOnFindingResource)
     .handler(async ({ context, input }) => {
       const contactId = await contactIdFor(context, input.identifier)
-      const conversation = await conversationService.findByContactWithInboxes({
+      const conversationId = await resolveReadConversationId({
         contactId,
         workspaceId: context.workspace.id,
+        conversationId: input.conversationId,
       })
-      if (!conversation) {
-        throw notFoundException("Conversation not found")
-      }
       return await messageService.findForContact({
         messageId: input.messageId,
-        conversationId: conversation.id,
+        conversationId,
         workspaceId: context.workspace.id,
       })
     }),
