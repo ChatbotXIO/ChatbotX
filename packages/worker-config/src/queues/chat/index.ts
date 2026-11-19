@@ -144,6 +144,12 @@ export type ChatJobSendChatMessage = {
     metadata?: MetadataPayload
     /** Marks an automatic bulk-broadcast delivery, including a flow's first prompt. */
     isBulkBroadcast?: boolean
+    /**
+     * The flow step this message asks a question for. Stored on the message as
+     * `flowId`/`stepId`, like a flow step's own messages, so an answer to it is
+     * recognised as part of that flow. Callers without a flow leave it unset.
+     */
+    flowOrigin?: { flowId: string; stepId: string }
   }
 }
 

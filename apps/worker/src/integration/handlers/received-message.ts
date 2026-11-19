@@ -34,6 +34,7 @@ import {
   normalizeLanguage,
 } from "@chatbotx.io/business/contact-locale"
 import { isInboundConversationMessage } from "@chatbotx.io/business/contact-profile-rules"
+import { toContactInfoCaptureTypes } from "@chatbotx.io/business/detect-contact-info"
 import {
   type ChannelType,
   type CommentAutomationType,
@@ -70,6 +71,7 @@ import {
 } from "@chatbotx.io/events"
 import { uploader } from "@chatbotx.io/filesystem"
 import {
+  type ContactInfoCaptureInfoType,
   decodeContactHintQuickReplyPayload,
   decodeStepInputSkipPostback,
   messageEventTypeSchema,
@@ -578,13 +580,15 @@ export const receiveMessage = async (
   // Guarded on messageType !== 'outgoing' so bot/agent-authored text never
   // feeds the libphonenumber extractor (would otherwise false-positive on
   // long order/ticket IDs in templated outbound messages).
+  let contactInfoCaptureTypes: ContactInfoCaptureInfoType[] = []
   if (incomingMessage?.text && incomingMessage.messageType !== "outgoing") {
     try {
-      await updateContactFromMessage({
+      const extracted = await updateContactFromMessage({
         contactId: contactInbox.contactId,
         workspaceId: inbox.workspaceId,
         text: incomingMessage.text,
       })
+      contactInfoCaptureTypes = toContactInfoCaptureTypes(extracted)
     } catch (error) {
       logger.warn(
         { error, contactId: contactInbox.contactId, channel: inbox.channel },
@@ -650,6 +654,7 @@ export const receiveMessage = async (
         // unread so a human agent monitors the AI (Integration Guide §5.3).
         keepUnread: threadControl?.ownerRole === "ai_agent",
         echoOrigin: parsedMessage.echoOrigin,
+        contactInfoCaptureTypes,
         ...systemFieldUpdates,
       })
 
@@ -1287,6 +1292,8 @@ export type SaveAndBroadcastMessageProps = {
   keepUnread?: boolean
   /** Channel-parser classification of an outgoing echo (who sent it). */
   echoOrigin?: EchoOrigin | null
+  /** Phone/email kinds extracted from this inbound message; empty or unset when none. */
+  contactInfoCaptureTypes?: ContactInfoCaptureInfoType[]
 }
 
 type MessageInput = CreateMessageInput & {
@@ -1440,6 +1447,8 @@ const emitMessageReceived = ({
   message,
   inbound,
   isFirstIncomingMessage,
+  contactInfoCaptureTypes,
+  conversationCreatedAt,
 }: {
   inbox: InboxModel
   contactInbox: ContactInboxModel
@@ -1447,6 +1456,8 @@ const emitMessageReceived = ({
   message: SavedMessage
   inbound: boolean
   isFirstIncomingMessage: boolean
+  contactInfoCaptureTypes?: ContactInfoCaptureInfoType[]
+  conversationCreatedAt: Date
 }): void => {
   emit(messageEventTypeSchema.enum["message:received"], {
     workspaceId: inbox.workspaceId,
@@ -1460,6 +1471,14 @@ const emitMessageReceived = ({
     origin: inbound ? "inbound" : undefined,
     messageId: message.id,
     isFirstIncomingMessage,
+    contactInfoCapture:
+      inbound && contactInfoCaptureTypes?.length
+        ? {
+            infoTypes: contactInfoCaptureTypes,
+            conversationId: message.conversationId,
+            conversationCreatedAt: conversationCreatedAt.toISOString(),
+          }
+        : undefined,
   })
 }
 
@@ -1570,6 +1589,8 @@ const persistMessage = async (
       message,
       inbound,
       isFirstIncomingMessage,
+      contactInfoCaptureTypes: props.contactInfoCaptureTypes,
+      conversationCreatedAt: conversation.createdAt,
     })
   }
 

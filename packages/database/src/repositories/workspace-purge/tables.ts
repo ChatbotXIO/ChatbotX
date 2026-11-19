@@ -49,6 +49,18 @@ export const PARTITIONED_WORKSPACE_TABLES = [
     table: "PipelineItemActivity",
   },
   {
+    // No FKs: drained here so the final workspace delete has nothing to scan.
+    primaryKey: [
+      "workspaceId",
+      "sourceType",
+      "sourceId",
+      "infoType",
+      "contactId",
+    ],
+    selector: "workspace",
+    table: "ContactInfoCapture",
+  },
+  {
     primaryKey: ["workspaceId", "hourBucket", "contactInboxId"],
     selector: "workspace",
     table: "ContactActiveHourly",
@@ -87,6 +99,10 @@ export const NO_FK_WORKSPACE_TABLES = [
   {
     stage: "ctid",
     table: "FlowAnalyticsSession",
+  },
+  {
+    stage: "partitioned",
+    table: "ContactInfoCapture",
   },
   {
     stage: "partitioned",

@@ -236,6 +236,8 @@ export type ContactActivityModel =
 export type ContactKeywordMessageModel =
   typeof schema.contactKeywordMessageModel.$inferSelect
 export type ContactStateModel = typeof schema.contactStateModel.$inferSelect
+export type ContactInfoCaptureModel =
+  typeof schema.contactInfoCaptureModel.$inferSelect
 export type ContactInboxPostModel =
   typeof schema.contactInboxPostModel.$inferSelect
 export type ChannelPostModel = typeof schema.channelPostModel.$inferSelect

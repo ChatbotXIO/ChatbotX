@@ -2376,6 +2376,32 @@ describe("sendChatMessage", () => {
     })
   })
 
+  test("stores flowId and stepId on the message when the caller names its flow step", async () => {
+    await sendChatMessage({
+      conversation: fakeConversation as never,
+      contactInbox: fakeContactInbox as never,
+      text: "what is your phone number?",
+      flowOrigin: { flowId: "flow-1", stepId: "step-1" },
+    })
+
+    expect(mockRepositoryCreate).toHaveBeenCalledTimes(1)
+    expect(mockRepositoryCreate.mock.calls[0]?.[0].contentAttributes).toEqual(
+      expect.objectContaining({ flowId: "flow-1", stepId: "step-1" }),
+    )
+  })
+
+  test("leaves contentAttributes without flow keys when the caller passes no flowOrigin", async () => {
+    await sendChatMessage({
+      conversation: fakeConversation as never,
+      contactInbox: fakeContactInbox as never,
+      text: "plain",
+    })
+
+    const attributes = mockRepositoryCreate.mock.calls[0]?.[0].contentAttributes
+    expect(attributes).not.toHaveProperty("flowId")
+    expect(attributes).not.toHaveProperty("stepId")
+  })
+
   test("never tells the send it will be retried: sendChatMessage swallows failures, so the send error must be recorded at once", async () => {
     await sendChatMessage({
       conversation: fakeConversation as never,

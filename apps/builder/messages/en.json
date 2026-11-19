@@ -2,6 +2,7 @@
   "actions": {
     "scrollToBottom": "Scroll to bottom",
     "copy": "Copy",
+    "copyId": "Copy ID",
     "copyUrl": "Copy URL",
     "chatWidget": "Chat Widget",
     "actions": "Actions",
@@ -604,6 +605,10 @@
       "seen": "Seen",
       "clicked": "Clicked",
       "failed": "Failed",
+      "leftPhone": "Left phone number",
+      "leftEmail": "Left email address",
+      "leftPhoneShort": "Left phone",
+      "leftEmailShort": "Left email",
       "noContacts": "No contacts found",
       "pageInfo": "Page {page} of {pageCount}",
       "selectedAll": "All selected",

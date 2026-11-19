@@ -100,6 +100,34 @@ export interface FindManyByConversationOptions {
   workspaceId: string
 }
 
+export interface FindOutgoingBeforeParams {
+  /**
+   * Exclusive upper bound: only messages strictly older than this
+   * `(createdAt, id)` tuple. `createdAt` is timestamptz text (an ISO string, or
+   * a row's `createdAtExact`), bound with `::timestamptz`, so a row's
+   * microseconds are never truncated by a JS `Date`.
+   */
+  before: { createdAt: string; id: string }
+  conversationId: string
+  limit: number
+  /** Inclusive lower bound on `createdAt`. */
+  since: Date
+  workspaceId: string
+}
+
+/** The columns a "what did the bot last send" classification needs. */
+export type OutgoingBotMessage = Pick<
+  MessageModel,
+  "contentAttributes" | "id"
+> & {
+  /**
+   * `createdAt` to the microsecond, as fixed-width UTC text
+   * (`YYYY-MM-DDTHH:MI:SS.USZ`): sorts lexicographically and feeds back into
+   * `before.createdAt` without loss. A JS `Date` is millisecond-only.
+   */
+  createdAtExact: string
+}
+
 export interface FindAIContextMessagesOptions {
   conversationId: string
   limit: number
@@ -379,6 +407,15 @@ export interface IMessageRepository {
   findManyBySourceIds(
     params: FindManyBySourceIdsParams,
   ): Promise<MessageSourceRow[]>
+
+  /**
+   * One bounded page, newest first, of the bot/system messages that were
+   * really sent (`sendError IS NULL`) before the `before` tuple. A failing
+   * shard throws: a decision must never rest on partial history.
+   */
+  findOutgoingBefore(
+    params: FindOutgoingBeforeParams,
+  ): Promise<OutgoingBotMessage[]>
 
   findRichResponseByButton(
     params: FindRichResponseByButtonParams,

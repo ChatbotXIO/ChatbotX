@@ -6,7 +6,9 @@ import {
   type CreateMessageInput,
   createMessageRepository,
   type FindMessageByIdParams,
+  type FindOutgoingBeforeParams,
   type MessageWithAttachments,
+  type OutgoingBotMessage,
 } from "@chatbotx.io/database/repositories"
 import type { MessageModel } from "@chatbotx.io/database/types"
 import { withCache } from "@chatbotx.io/redis"
@@ -444,6 +446,15 @@ class MessageService extends BaseService {
       workspaceId,
     })
     return [...messages].reverse()
+  }
+
+  /** One bounded page of sent bot/system messages older than `before`, newest first. */
+  async listOutgoingBefore(
+    props: FindOutgoingBeforeParams & { tx?: DatabaseClient },
+  ): Promise<OutgoingBotMessage[]> {
+    const { tx = db, ...params } = props
+    const repo = await createMessageRepository(tx)
+    return await repo.findOutgoingBefore(params)
   }
 
   async listIncomingTextsByContactInbox(props: {

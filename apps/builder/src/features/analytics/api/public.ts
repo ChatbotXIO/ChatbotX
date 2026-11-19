@@ -596,7 +596,7 @@ export const analyticsPublicRouter = {
       path: "/v1/analytics/broadcasts/{broadcastId}/stats",
       summary: "Get broadcast stats",
       description:
-        "Use this after resolving a broadcast with `broadcasts.get` to inspect sent, delivered, seen, and failed counts. Compare results with `analytics.flowStats` for automation performance.",
+        "Use this after resolving a broadcast with `broadcasts.get` to inspect sent, delivered, seen, clicked, and failed counts, plus `contactInfo:phoneCaptured` / `contactInfo:emailCaptured`: how many contacts left a phone number / an email after receiving it (counted a few seconds after the contact sends it, but these stats are cached for up to about 2 minutes, so a new capture can take that long to show; `broadcasts.listContacts` is live). Compare results with `analytics.flowStats` for automation performance.",
       tags: ["Analytics"],
       spec: mcpSpec({ visibility: "default" }),
     })
@@ -606,7 +606,7 @@ export const analyticsPublicRouter = {
     .handler(({ context, input }) => {
       const workspaceId = context.workspace.id
       return withCache(
-        `analytics:broadcast-stats:${workspaceId}:${input.broadcastId}`,
+        `analytics:broadcast-stats:v2:${workspaceId}:${input.broadcastId}`,
         async () =>
           await broadcastAnalyticsService.getStats({
             workspaceId,

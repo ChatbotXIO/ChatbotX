@@ -25,6 +25,7 @@ export async function handleBulkTagContacts(
     switch (data.source) {
       case "broadcast":
         return broadcastAnalyticsService.getContactIdsPage({
+          workspaceId: data.workspaceId,
           broadcastId: data.broadcastId,
           eventType: data.eventType,
           ...paging,

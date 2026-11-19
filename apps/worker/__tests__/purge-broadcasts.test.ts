@@ -11,6 +11,7 @@ import { beforeEach, describe, expect, test, vi } from "vitest"
 
 const listPurgeableBroadcasts = vi.fn()
 const purgeBroadcastRecipients = vi.fn()
+const purgeBroadcastCaptures = vi.fn()
 const hasBroadcastRecipients = vi.fn()
 const hardDeleteBroadcast = vi.fn()
 const runExclusive = vi.fn(async ({ fn }: { fn: () => Promise<unknown> }) =>
@@ -26,6 +27,8 @@ vi.mock("@chatbotx.io/database/repositories", () => ({
     listPurgeableBroadcasts(...args),
   purgeBroadcastRecipients: (...args: unknown[]) =>
     purgeBroadcastRecipients(...args),
+  purgeBroadcastCaptures: (...args: unknown[]) =>
+    purgeBroadcastCaptures(...args),
   hasBroadcastRecipients: (...args: unknown[]) =>
     hasBroadcastRecipients(...args),
   hardDeleteBroadcast: (...args: unknown[]) => hardDeleteBroadcast(...args),
@@ -53,6 +56,11 @@ const MAX_RUN_DURATION_MS = 4 * 60 * 1000
 beforeEach(() => {
   listPurgeableBroadcasts.mockReset()
   purgeBroadcastRecipients.mockReset()
+  purgeBroadcastCaptures.mockReset()
+  purgeBroadcastCaptures.mockResolvedValue({
+    deleted: 0,
+    stopReason: "drained",
+  })
   hasBroadcastRecipients.mockReset()
   hardDeleteBroadcast.mockReset()
   runExclusive.mockClear()
@@ -131,7 +139,9 @@ describe("purgeBroadcasts", () => {
   })
 
   test("claims candidates under the lock and hard-deletes a drained broadcast with no remaining recipients", async () => {
-    listPurgeableBroadcasts.mockResolvedValueOnce([{ id: "b1" }])
+    listPurgeableBroadcasts.mockResolvedValueOnce([
+      { id: "b1", workspaceId: "w1" },
+    ])
     purgeBroadcastRecipients.mockResolvedValueOnce({
       deleted: 500,
       stopReason: "drained",
@@ -151,11 +161,108 @@ describe("purgeBroadcasts", () => {
       }),
     )
     expect(hasBroadcastRecipients).toHaveBeenCalledWith("b1")
-    expect(hardDeleteBroadcast).toHaveBeenCalledWith("b1")
+    expect(hardDeleteBroadcast).toHaveBeenCalledWith({
+      broadcastId: "b1",
+      workspaceId: "w1",
+    })
+  })
+
+  test("drains the captures after the recipients, from the same run budget, before the hard delete", async () => {
+    listPurgeableBroadcasts.mockResolvedValueOnce([
+      { id: "b1", workspaceId: "w1" },
+    ])
+    purgeBroadcastRecipients.mockResolvedValueOnce({
+      deleted: 10,
+      stopReason: "drained",
+    })
+    purgeBroadcastCaptures.mockResolvedValueOnce({
+      deleted: 4,
+      stopReason: "drained",
+    })
+    hasBroadcastRecipients.mockResolvedValueOnce(false)
+    hardDeleteBroadcast.mockResolvedValueOnce(true)
+
+    await purgeBroadcasts()
+
+    expect(purgeBroadcastCaptures).toHaveBeenCalledWith({
+      broadcastId: "b1",
+      workspaceId: "w1",
+      chunkSize: 1000,
+      interChunkDelayMs: 100,
+      maxRunDurationMs: expect.any(Number),
+    })
+    const budget = (
+      purgeBroadcastCaptures.mock.calls[0][0] as { maxRunDurationMs: number }
+    ).maxRunDurationMs
+    expect(budget).toBeLessThanOrEqual(MAX_RUN_DURATION_MS)
+    expect(purgeBroadcastRecipients.mock.invocationCallOrder[0]).toBeLessThan(
+      purgeBroadcastCaptures.mock.invocationCallOrder[0],
+    )
+    expect(purgeBroadcastCaptures.mock.invocationCallOrder[0]).toBeLessThan(
+      hardDeleteBroadcast.mock.invocationCallOrder[0],
+    )
+    expect(info).toHaveBeenCalledWith(
+      expect.objectContaining({ recipientsDeleted: 10, capturesDeleted: 4 }),
+      expect.any(String),
+    )
+  })
+
+  test.each([
+    "deadline",
+    "chunkCap",
+  ] as const)("keeps the broadcast and never probes or deletes when the captures stop at %s", async (stopReason) => {
+    listPurgeableBroadcasts.mockResolvedValueOnce([
+      { id: "b1", workspaceId: "w1" },
+    ])
+    purgeBroadcastRecipients.mockResolvedValueOnce({
+      deleted: 10,
+      stopReason: "drained",
+    })
+    purgeBroadcastCaptures.mockResolvedValueOnce({ deleted: 7, stopReason })
+
+    await purgeBroadcasts()
+
+    expect(hasBroadcastRecipients).not.toHaveBeenCalled()
+    expect(hardDeleteBroadcast).not.toHaveBeenCalled()
+  })
+
+  test("does not touch the captures while the recipients are not drained", async () => {
+    listPurgeableBroadcasts.mockResolvedValueOnce([
+      { id: "b1", workspaceId: "w1" },
+    ])
+    purgeBroadcastRecipients.mockResolvedValueOnce({
+      deleted: 1000,
+      stopReason: "deadline",
+    })
+
+    await purgeBroadcasts()
+
+    expect(purgeBroadcastCaptures).not.toHaveBeenCalled()
+  })
+
+  test("keeps the broadcast when the hard delete finds a capture that raced the drain", async () => {
+    listPurgeableBroadcasts.mockResolvedValueOnce([
+      { id: "b1", workspaceId: "w1" },
+    ])
+    purgeBroadcastRecipients.mockResolvedValueOnce({
+      deleted: 1,
+      stopReason: "drained",
+    })
+    hasBroadcastRecipients.mockResolvedValueOnce(false)
+    hardDeleteBroadcast.mockResolvedValueOnce(false)
+
+    await purgeBroadcasts()
+
+    expect(info).toHaveBeenCalledWith(
+      expect.objectContaining({ broadcastsDeleted: 0 }),
+      expect.any(String),
+    )
   })
 
   test("keeps the broadcast when drained but the probe still finds rows", async () => {
-    listPurgeableBroadcasts.mockResolvedValueOnce([{ id: "b1" }])
+    listPurgeableBroadcasts.mockResolvedValueOnce([
+      { id: "b1", workspaceId: "w1" },
+    ])
     purgeBroadcastRecipients.mockResolvedValueOnce({
       deleted: 500,
       stopReason: "drained",
@@ -169,7 +276,9 @@ describe("purgeBroadcasts", () => {
   })
 
   test("keeps the broadcast and never probes when the run stopped at the deadline", async () => {
-    listPurgeableBroadcasts.mockResolvedValueOnce([{ id: "b1" }])
+    listPurgeableBroadcasts.mockResolvedValueOnce([
+      { id: "b1", workspaceId: "w1" },
+    ])
     purgeBroadcastRecipients.mockResolvedValueOnce({
       deleted: 1000,
       stopReason: "deadline",
@@ -182,7 +291,9 @@ describe("purgeBroadcasts", () => {
   })
 
   test("keeps the broadcast and never probes when the run stopped at the chunk cap", async () => {
-    listPurgeableBroadcasts.mockResolvedValueOnce([{ id: "b1" }])
+    listPurgeableBroadcasts.mockResolvedValueOnce([
+      { id: "b1", workspaceId: "w1" },
+    ])
     purgeBroadcastRecipients.mockResolvedValueOnce({
       deleted: 5_000_000,
       stopReason: "chunkCap",
@@ -196,8 +307,8 @@ describe("purgeBroadcasts", () => {
 
   test("continues processing other broadcasts when one purgeOne call throws", async () => {
     listPurgeableBroadcasts.mockResolvedValueOnce([
-      { id: "bad" },
-      { id: "good" },
+      { id: "bad", workspaceId: "w1" },
+      { id: "good", workspaceId: "w1" },
     ])
     purgeBroadcastRecipients.mockImplementation(
       ({ broadcastId }: { broadcastId: string }) => {
@@ -213,12 +324,20 @@ describe("purgeBroadcasts", () => {
     await expect(purgeBroadcasts()).resolves.toBeUndefined()
 
     expect(purgeBroadcastRecipients).toHaveBeenCalledTimes(2)
-    expect(hardDeleteBroadcast).toHaveBeenCalledWith("good")
-    expect(hardDeleteBroadcast).not.toHaveBeenCalledWith("bad")
+    expect(hardDeleteBroadcast).toHaveBeenCalledWith({
+      broadcastId: "good",
+      workspaceId: "w1",
+    })
+    expect(hardDeleteBroadcast).not.toHaveBeenCalledWith(
+      expect.objectContaining({ broadcastId: "bad" }),
+    )
   })
 
   test("logs one summary line with claimed / recipientsDeleted / broadcastsDeleted / stopReasons", async () => {
-    listPurgeableBroadcasts.mockResolvedValueOnce([{ id: "b1" }, { id: "b2" }])
+    listPurgeableBroadcasts.mockResolvedValueOnce([
+      { id: "b1", workspaceId: "w1" },
+      { id: "b2", workspaceId: "w1" },
+    ])
     purgeBroadcastRecipients
       .mockResolvedValueOnce({ deleted: 500, stopReason: "drained" })
       .mockResolvedValueOnce({ deleted: 1000, stopReason: "deadline" })
@@ -232,6 +351,7 @@ describe("purgeBroadcasts", () => {
       {
         claimed: 2,
         recipientsDeleted: 1500,
+        capturesDeleted: 0,
         broadcastsDeleted: 1,
         stopReasons: { drained: 1, deadline: 1 },
       },
@@ -249,6 +369,7 @@ describe("purgeBroadcasts", () => {
       {
         claimed: 0,
         recipientsDeleted: 0,
+        capturesDeleted: 0,
         broadcastsDeleted: 0,
         stopReasons: {},
       },
@@ -260,8 +381,8 @@ describe("purgeBroadcasts", () => {
     vi.useFakeTimers()
     try {
       listPurgeableBroadcasts.mockResolvedValueOnce([
-        { id: "b1" },
-        { id: "b2" },
+        { id: "b1", workspaceId: "w1" },
+        { id: "b2", workspaceId: "w1" },
       ])
       purgeBroadcastRecipients
         .mockImplementationOnce(() => {
@@ -302,7 +423,7 @@ describe("purgeBroadcasts", () => {
     let resolveCandidates: (() => void) | undefined
     listPurgeableBroadcasts.mockImplementationOnce(
       () =>
-        new Promise<{ id: string }[]>((resolve) => {
+        new Promise<{ id: string; workspaceId: string }[]>((resolve) => {
           resolveCandidates = () => resolve([])
         }),
     )

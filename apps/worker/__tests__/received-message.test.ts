@@ -3,6 +3,8 @@ import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
 
 const AVATAR_STORAGE_PATH_PATTERN = /^public\/space\/ws-1\/avatars\//
 
+const mockContactInfoCaptureAdd = vi.hoisted(() => vi.fn())
+
 const mockLockContentionPolicy = vi.hoisted(() => ({
   lockWaitSeconds: 10,
   maxDeferrals: 8,
@@ -125,7 +127,7 @@ const {
     mockresolveTenantSettings: vi
       .fn()
       .mockResolvedValue({ storageUrl: "https://files.example.test" }),
-    mockUpdateContactFromMessage: vi.fn().mockResolvedValue(undefined),
+    mockUpdateContactFromMessage: vi.fn().mockResolvedValue({}),
     mockContactUnblockIfBlocked: vi.fn().mockResolvedValue(null),
     mockContactUpdate: vi.fn().mockResolvedValue({}),
     mockAdoptPhoneNumberIfSafe,
@@ -571,6 +573,9 @@ vi.mock("@chatbotx.io/worker-config", async (importOriginal) => ({
   chatQueue: {
     add: mockChatQueueAdd,
   },
+  // Must never be touched by receiveMessage: the capture is handed over by the
+  // event listener, not by this path.
+  contactInfoCaptureQueue: { add: mockContactInfoCaptureAdd },
   IntegrationJobAction: {
     runFlowPostback: "runFlowPostback",
     runFlowQuickReply: "runFlowQuickReply",
@@ -747,6 +752,7 @@ const fakeConversation = {
   id: "conv-1",
   workspaceId: "ws-1",
   contactId: "contact-1",
+  createdAt: new Date("2026-11-18T08:00:00.000Z"),
 } as unknown as import("@chatbotx.io/database/types").ConversationModel
 
 const baseIncomingMessage = {
@@ -1462,6 +1468,163 @@ describe("receiveMessage — message repository branch", () => {
         isFirstIncomingMessage: false,
       }),
     )
+  })
+
+  describe("contactInfoCapture on message:received", () => {
+    const receiveWithText = async (text: string) => {
+      mockFindContactInbox.mockResolvedValue({
+        ...fakeContactInbox,
+        lastIncomingMessageAt: null,
+        contact: fakeContact,
+      })
+      mockRunChannelHandler.mockResolvedValue({
+        message: { ...baseIncomingMessage, text, attachments: [] },
+        contact: { sourceId: "psid-123", firstName: "Test" },
+        postbackAction: null,
+        quickReplyAction: null,
+        ref: null,
+      })
+      await receiveMessage(baseProps)
+    }
+
+    const receivedEvents = () =>
+      mockEmit.mock.calls.filter(([type]) => type === "message:received")
+
+    test("carries the info kinds and conversation, never the value", async () => {
+      mockUpdateContactFromMessage.mockResolvedValueOnce({
+        phoneNumber: "+84901234567",
+        email: "a@example.com",
+      })
+
+      await receiveWithText("0901234567 a@example.com")
+
+      expect(mockUpdateContactFromMessage).toHaveBeenCalledTimes(1)
+      expect(receivedEvents()).toHaveLength(1)
+      const payload = receivedEvents()[0]?.[1]
+      expect(payload.contactInfoCapture).toEqual({
+        infoTypes: ["phone", "email"],
+        conversationId: fakeCreatedMessage.conversationId,
+        conversationCreatedAt: fakeConversation.createdAt.toISOString(),
+      })
+      const serialized = JSON.stringify(payload)
+      expect(serialized).not.toContain("84901234567")
+      expect(serialized).not.toContain("a@example.com")
+    })
+
+    test("carries a single kind when only one was extracted", async () => {
+      mockUpdateContactFromMessage.mockResolvedValueOnce({
+        email: "a@example.com",
+      })
+
+      await receiveWithText("a@example.com")
+
+      expect(receivedEvents()[0]?.[1].contactInfoCapture?.infoTypes).toEqual([
+        "email",
+      ])
+    })
+
+    test("costs the same DB, service and queue calls with or without a phone/email; only the event payload differs", async () => {
+      const mocks: Record<string, ReturnType<typeof vi.fn>> = {
+        mockCreateOrUpdate,
+        mockCreateOrUpdateWithAttachments,
+        mockFindLastByConversation,
+        mockCreateMessageRepository,
+        mockFindContactInbox,
+        mockRunChannelHandler,
+        mockBroadcast,
+        mockEmit,
+        mockBuildContext,
+        mockresolveTenantSettings,
+        mockUpdateContactFromMessage,
+        mockContactUnblockIfBlocked,
+        mockConversationFindOrCreate,
+        mockAutomatedResponseEnqueueFlowAction,
+        mockIntegrationQueueAdd,
+        mockCreateNewContactWithMac,
+        mockWorkspaceFind,
+        mockQuotaIncrement,
+        mockContactUpdate,
+        mockAdoptPhoneNumberIfSafe,
+        mockSetAvatarIfEmptyOrSentinel,
+        mockUpdateTracking,
+        mockInvalidateTracking,
+        mockRecordInboundActivity,
+        mockWorkspaceIsActiveNow,
+        mockAppointmentCancelByToken,
+        mockParseAppointmentCancelPostback,
+        mockVerifyAppointmentCancelPostback,
+        mockChatQueueAdd,
+        mockSyncScopedIdentity,
+        mockSyncExistingContactIdentity,
+        mockIsUniqueViolationError,
+        mockDetectFlowVersion,
+        mockContactProfileRefresh,
+        mockRecordProfileRefreshFailure,
+        mockResolveIntegrationContextFromContactInbox,
+        mockUploaderPutObject,
+        mockMarkReadByOutbound,
+        mockRecordInboundDelivery,
+        mockPromoteStandbyDelivery,
+        mockDistributedLockRunExclusive,
+        mockResolveChannelPostForComment,
+        mockRecordContactInboxPostComment,
+      }
+      const counts = () =>
+        Object.fromEntries(
+          Object.entries(mocks).map(([name, mock]) => [
+            name,
+            mock.mock.calls.length,
+          ]),
+        )
+
+      mockUpdateContactFromMessage.mockResolvedValueOnce({})
+      await receiveWithText("just chatting here")
+      const withoutInfo = counts()
+      const eventWithoutInfo = receivedEvents()[0]?.[1]
+
+      vi.clearAllMocks()
+      mockFindContactInbox.mockResolvedValue({
+        ...fakeContactInbox,
+        lastIncomingMessageAt: null,
+        contact: fakeContact,
+      })
+      mockUpdateContactFromMessage.mockResolvedValueOnce({
+        phoneNumber: "+84901234567",
+        email: "a@example.com",
+      })
+      await receiveWithText("0901234567 a@example.com")
+      const withInfo = counts()
+      const eventWithInfo = receivedEvents()[0]?.[1]
+
+      expect(withInfo).toEqual(withoutInfo)
+      expect(mockContactInfoCaptureAdd).not.toHaveBeenCalled()
+      expect(eventWithoutInfo.contactInfoCapture).toBeUndefined()
+      expect(eventWithInfo.contactInfoCapture).toBeDefined()
+      expect({ ...eventWithInfo, contactInfoCapture: undefined }).toEqual({
+        ...eventWithoutInfo,
+        contactInfoCapture: undefined,
+      })
+    })
+
+    test("omits the field when nothing was extracted, with the same single extractor call", async () => {
+      mockUpdateContactFromMessage.mockResolvedValueOnce({})
+
+      await receiveWithText("just chatting here")
+
+      expect(mockUpdateContactFromMessage).toHaveBeenCalledTimes(1)
+      expect(receivedEvents()).toHaveLength(1)
+      expect(receivedEvents()[0]?.[1].contactInfoCapture).toBeUndefined()
+    })
+
+    test("an extraction failure still saves the message and emits it without the field", async () => {
+      mockUpdateContactFromMessage.mockRejectedValueOnce(new Error("db down"))
+
+      await receiveWithText("0901234567")
+
+      expect(receivedEvents()).toHaveLength(1)
+      expect(receivedEvents()[0]?.[1].contactInfoCapture).toBeUndefined()
+      expect(receivedEvents()[0]?.[1].origin).toBe("inbound")
+    })
   })
 
   test("marks a new outgoing echo read when no recent outgoing row matches", async () => {

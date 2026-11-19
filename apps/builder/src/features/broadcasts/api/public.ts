@@ -218,7 +218,7 @@ export const broadcastsPublicRouter = {
       path: "/v1/broadcasts/{id}/contacts",
       summary: "List broadcast recipients by event type",
       description:
-        "Returns contacts that reached one event for a broadcast (`message:sent`, `message:delivered`, `message:seen`, `message:failed` or `flow:clicked`; `message:received` and `flow:ref` behave like `message:delivered`).",
+        "Returns contacts that reached one event for a broadcast (`message:sent`, `message:delivered`, `message:seen`, `message:failed`, `flow:clicked`, `contactInfo:phoneCaptured` or `contactInfo:emailCaptured`; `message:received` and `flow:ref` behave like `message:delivered`).",
       tags: ["Broadcasts"],
     })
     .input(publicListBroadcastContactsRequest)

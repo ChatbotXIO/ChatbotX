@@ -44,6 +44,48 @@ background. Until the preparation has stopped and the cleanup is done,
 scheduling the draft again is refused with a message to try again shortly;
 after that, scheduling goes through.
 
+## Contacts who left a phone number or an email
+
+Next to sent, delivered, seen, clicked and failed, every broadcast reports two
+more numbers: **contacts who left a phone number** and **contacts who left an
+email**, with the list of those contacts (`analytics.broadcastStats` returns
+`contactInfo:phoneCaptured` / `contactInfo:emailCaptured`; `broadcasts.listContacts`
+and bulk tagging by stats accept the same two `eventType` values).
+
+**Counting rule.** A contact counts when they send a message containing a phone
+number or an email while the latest content the **bot** sent them belongs to the
+broadcast: the broadcast's template, or its flow (a bot message continuing the
+same flow, such as a Get User Data question, keeps the attribution). If the bot
+sent anything else afterwards (an AI reply, keyword text, another flow, a
+sequence, a comment automation), it no longer counts. Agent messages do not end
+the attribution. There is no time window.
+
+- **One row per contact, broadcast and info type.** Sending the same number
+  again, or a different one, does not change the count; a phone and an email
+  are two separate numbers.
+- Only ids, the info type and the time are stored in `ContactInfoCapture`, never
+  the phone number or the email. `occurredAt` in the list is when the contact
+  sent the message, newest first.
+- **The numbers are late** by a few seconds (a background queue writes them),
+  so reload the list to see new ones. The broadcast table, the recurring run
+  grid and the contact list read live. Only the public `analytics.broadcastStats`
+  endpoint (and the analytics route behind it) is cached for up to about
+  2 minutes, and a capture does not invalidate that cache. They may undercount
+  after an incident (a lost event or job), a recipient the broadcast never
+  marked delivered, or messages removed by retention; they never guess. On
+  WhatsApp the recipient only counts once the delivery receipt arrived, so it
+  undercounts more than other channels.
+- **Recurring broadcasts** count per run; a run's numbers are its own.
+- Captures are history: deleting a contact removes theirs, deleting an inbox or
+  a contact inbox keeps them. The contact list and its total only count contact
+  inboxes that still exist, so the total always matches the pages; the
+  `left phone` / `left email` numbers on the broadcast table keep counting the
+  kept captures, so they can be higher than the list total.
+- Moving a broadcast back to draft clears its captures in the same background
+  pass as its recipients; rescheduling is refused until both are gone. Hard
+  deleting a broadcast drains them first, and the broadcast row is only deleted
+  under a row lock once none remain.
+
 ## Automatic stop when the channel account is blocked
 
 When a **broadcast** message is refused because the channel account itself is

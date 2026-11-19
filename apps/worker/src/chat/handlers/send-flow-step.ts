@@ -1273,6 +1273,7 @@ export const sendChatMessage = async (
     trackingContext,
     metadata,
     isBulkBroadcast,
+    flowOrigin,
   } = props
   const isBulkOutbound = isBulkOutboundMetadata(metadata, isBulkBroadcast)
 
@@ -1340,6 +1341,9 @@ export const sendChatMessage = async (
       text: messageText,
       contentAttributes: {
         metadata,
+        ...(flowOrigin
+          ? { flowId: flowOrigin.flowId, stepId: flowOrigin.stepId }
+          : {}),
         ...(quickReplies && quickReplies.length > 0
           ? {
               type: "template" as const,

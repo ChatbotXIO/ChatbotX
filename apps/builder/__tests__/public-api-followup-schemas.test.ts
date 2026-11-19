@@ -116,6 +116,39 @@ describe("bulkTagByStatsPublicRequest", () => {
     }
   })
 
+  test("a broadcast also accepts the contact-info capture events, other sources do not", () => {
+    for (const eventType of [
+      "contactInfo:phoneCaptured",
+      "contactInfo:emailCaptured",
+    ]) {
+      expect(
+        bulkTagByStatsPublicRequest.safeParse({
+          source: "broadcast",
+          broadcastId: "1",
+          eventType,
+          tags: ["x"],
+        }).success,
+      ).toBe(true)
+      expect(
+        bulkTagByStatsPublicRequest.safeParse({
+          source: "sequenceStep",
+          sequenceId: "1",
+          stepId: "2",
+          eventType,
+          tags: ["x"],
+        }).success,
+      ).toBe(false)
+      expect(
+        bulkTagByStatsPublicRequest.safeParse({
+          source: "commentAutomation",
+          automationId: "1",
+          eventType,
+          tags: ["x"],
+        }).success,
+      ).toBe(false)
+    }
+  })
+
   test("a comment automation still accepts its missed event", () => {
     expect(
       bulkTagByStatsPublicRequest.safeParse({

@@ -69,8 +69,10 @@ import {
   broadcastRepository,
   contactRepository,
   hasBroadcastRecipients,
+  purgeBroadcastCaptures,
   purgeBroadcastRecipients,
 } from "@chatbotx.io/database/repositories"
+import { contactInfoCaptureRepository } from "@chatbotx.io/database/repositories/contact-info-capture"
 import {
   broadcastModel,
   broadcastTargetModel,
@@ -1378,7 +1380,12 @@ class BroadcastService extends BaseService {
 
     if (
       (await this.isPrepareJobLive(input.broadcastId)) ||
-      (await hasBroadcastRecipients(input.broadcastId))
+      (await hasBroadcastRecipients(input.broadcastId)) ||
+      (await contactInfoCaptureRepository.existsForSource({
+        workspaceId: input.workspaceId,
+        sourceType: "broadcast",
+        sourceId: input.broadcastId,
+      }))
     ) {
       await this.queueDraftRecipientsPurge({ ...input, requester: "draft" })
       throw new ChatbotXException(
@@ -1399,7 +1406,8 @@ class BroadcastService extends BaseService {
   }
 
   /**
-   * Queues the background cleanup of the recipients a prepare left on a draft.
+   * Queues the background cleanup of the recipients a prepare left on a draft
+   * and the contact-info captures of its previous run.
    * One job per draft and requester: asking again while it is queued or
    * running is a no-op, and an empty draft costs one empty pass.
    */
@@ -1424,22 +1432,37 @@ class BroadcastService extends BaseService {
   }
 
   /**
-   * One bounded pass of a draft's leftover-recipient cleanup; `done` once a
-   * pass drains. Each chunk deletes only while the broadcast is still a draft,
-   * and anything a pass misses keeps `scheduleDraft` refusing, which queues
-   * the cleanup again.
+   * One bounded pass of a draft's leftover cleanup (recipients, then the
+   * contact-info captures of the previous run, sharing one time budget); `done`
+   * once both drain. Each chunk deletes only while the broadcast is still a
+   * draft, and anything a pass misses keeps `scheduleDraft` refusing, which
+   * queues the cleanup again.
    */
   async purgeDraftRecipients(input: {
+    workspaceId: string
     broadcastId: string
   }): Promise<{ done: boolean }> {
-    const { stopReason } = await purgeBroadcastRecipients({
+    const deadline = Date.now() + DRAFT_PURGE_MAX_RUN_DURATION_MS
+    const recipients = await purgeBroadcastRecipients({
       broadcastId: input.broadcastId,
       chunkSize: DRAFT_PURGE_CHUNK_SIZE,
       interChunkDelayMs: DRAFT_PURGE_INTER_CHUNK_DELAY_MS,
       maxRunDurationMs: DRAFT_PURGE_MAX_RUN_DURATION_MS,
       onlyWhileDraft: true,
     })
-    return { done: stopReason === "drained" }
+    if (recipients.stopReason !== "drained") {
+      return { done: false }
+    }
+
+    const captures = await purgeBroadcastCaptures({
+      workspaceId: input.workspaceId,
+      broadcastId: input.broadcastId,
+      chunkSize: DRAFT_PURGE_CHUNK_SIZE,
+      interChunkDelayMs: DRAFT_PURGE_INTER_CHUNK_DELAY_MS,
+      maxRunDurationMs: Math.max(0, deadline - Date.now()),
+      onlyWhileDraft: true,
+    })
+    return { done: captures.stopReason === "drained" }
   }
 
   /** A repeating broadcast, running or paused, back to an editable draft; its series is stopped. */

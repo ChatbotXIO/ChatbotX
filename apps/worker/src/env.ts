@@ -206,6 +206,20 @@ export const env = createEnv({
       .min(1)
       .max(1000)
       .default(10),
+    // Broadcast contact-info attribution: small and rate-limited, each run is
+    // at most one bounded `Message` read.
+    CONTACT_INFO_CAPTURE_CONCURRENCY: z.coerce
+      .number()
+      .int()
+      .min(1)
+      .max(20)
+      .default(2),
+    CONTACT_INFO_CAPTURE_JOBS_PER_SECOND: z.coerce
+      .number()
+      .int()
+      .min(1)
+      .max(1000)
+      .default(20),
     PROFILE_SNAPSHOT_JOBS_PER_SECOND: z.coerce
       .number()
       .int()

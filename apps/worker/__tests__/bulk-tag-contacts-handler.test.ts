@@ -52,6 +52,7 @@ describe("handleBulkTagContacts", () => {
     })
 
     expect(getBroadcastContactIdsPage).toHaveBeenCalledWith({
+      workspaceId: "workspace-1",
       broadcastId: "broadcast-1",
       eventType: "message:sent",
       cursor: null,
@@ -66,6 +67,36 @@ describe("handleBulkTagContacts", () => {
       accessScope: undefined,
       recoverUnsyncedPairs: false,
     })
+  })
+
+  test.each([
+    "contactInfo:phoneCaptured",
+    "contactInfo:emailCaptured",
+  ] as const)("dispatches %s broadcast pages with the workspace scope the capture table needs", async (eventType) => {
+    getBroadcastContactIdsPage.mockResolvedValueOnce([
+      { id: "7", contactId: "contact-7" },
+    ])
+
+    await handleBulkTagContacts({
+      source: "broadcast",
+      workspaceId: "workspace-1",
+      requestedUserId: "user-1",
+      broadcastId: "broadcast-1",
+      eventType,
+      tagIds: ["tag-1"],
+      excludedContactIds: [],
+    })
+
+    expect(getBroadcastContactIdsPage).toHaveBeenCalledWith(
+      expect.objectContaining({
+        workspaceId: "workspace-1",
+        broadcastId: "broadcast-1",
+        eventType,
+      }),
+    )
+    expect(bulkAttachToContacts).toHaveBeenCalledWith(
+      expect.objectContaining({ contactIds: ["contact-7"] }),
+    )
   })
 
   test("dispatches sequence step pages with workspace and step scope", async () => {

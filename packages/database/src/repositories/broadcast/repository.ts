@@ -9,6 +9,7 @@ import {
   ne,
   or,
   relationsFilterToSQL,
+  sql,
 } from "../../client"
 import {
   type BroadcastScheduleType,
@@ -32,6 +33,12 @@ import {
 } from "../../utils"
 
 const NUMERIC_RE = /^\d+$/
+
+/** The delivery state of one recipient row, read while its broadcast is locked. */
+export type BroadcastRecipientAttributionState = {
+  deliveredAt: Date | null
+  failedAt: Date | null
+}
 
 export type BroadcastListInput = {
   workspaceId: string
@@ -107,6 +114,70 @@ const withBroadcastRecurrence = {
 } as const
 
 export const broadcastRepository = {
+  /**
+   * Locks the broadcast `FOR SHARE` for the life of `tx` and reads the
+   * contact's recipient row, so a contact-info capture can only be written
+   * while the broadcast is still attributable. The share lock conflicts with
+   * the `UPDATE` of move-to-draft / soft delete and with the hard `DELETE`,
+   * yet two captures never block each other. Returns `null` when the
+   * broadcast is not attributable: another workspace, soft-deleted, a draft,
+   * not sending `flowId` (when given: the flow the contact was answering), or
+   * the contact is not a recipient. Callers hold the workspace fence first.
+   */
+  async lockRecipientForAttribution(
+    input: {
+      broadcastId: string
+      contactId: string
+      flowId?: string
+      workspaceId: string
+    },
+    tx: DatabaseClient,
+  ): Promise<BroadcastRecipientAttributionState | null> {
+    const sendsFlow = input.flowId
+      ? sql`AND (
+          b."flowId" = ${input.flowId}::bigint
+          OR EXISTS (
+            SELECT 1 FROM "BroadcastTarget" t
+            WHERE t."broadcastId" = b."id" AND t."flowId" = ${input.flowId}::bigint
+          )
+        )`
+      : sql``
+
+    const locked = await tx.execute(sql`
+      SELECT b."id"
+      FROM "Broadcast" b
+      WHERE b."id" = ${input.broadcastId}::bigint
+        AND b."workspaceId" = ${input.workspaceId}::bigint
+        AND b."deletedAt" IS NULL
+        AND b."status" <> ${broadcastStatuses.enum.draft}::"broadcastStatus"
+        ${sendsFlow}
+      FOR SHARE OF b
+    `)
+    if (locked.rows.length === 0) {
+      return null
+    }
+
+    // node-postgres hands raw `execute` timestamps back as strings.
+    const recipient = await tx.execute<{
+      deliveredAt: string | null
+      failedAt: string | null
+    }>(sql`
+      SELECT "deliveredAt", "failedAt"
+      FROM "ContactOnBroadcast"
+      WHERE "broadcastId" = ${input.broadcastId}::bigint
+        AND "contactId" = ${input.contactId}::bigint
+    `)
+
+    const row = recipient.rows[0]
+    if (!row) {
+      return null
+    }
+    return {
+      deliveredAt: row.deliveredAt ? new Date(row.deliveredAt) : null,
+      failedAt: row.failedAt ? new Date(row.failedAt) : null,
+    }
+  },
+
   /**
    * Paginated broadcast list with the slim relations the list page shows,
    * including each target page (with its flow) that the "view" dialog reads

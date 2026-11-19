@@ -17,6 +17,7 @@ import {
 } from "@chatbotx.io/business"
 import { resolveLastUserInputTracking } from "@chatbotx.io/business/contact-inbox"
 import { normalizeLanguage } from "@chatbotx.io/business/contact-locale"
+import { detectContactInfoTypes } from "@chatbotx.io/business/detect-contact-info"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
 import { getPublicFileUrl } from "@chatbotx.io/business/utils"
 
@@ -313,6 +314,15 @@ export async function handleCreateWebchatMessage({
       )
     }
 
+    // Webchat does not write phone/email into the Contact from messages (other
+    // channels do); it only reports which kinds the message holds, for the
+    // "left a phone / email" statistic. Pure text scan with the workspace
+    // already in hand: no query, and no value on the event.
+    const contactInfoTypes = detectContactInfoTypes(
+      newMessage.text,
+      workspace.targetCountry,
+    )
+
     emit(messageEventTypeSchema.enum["message:received"], {
       workspaceId: conversation.workspaceId,
       contactId: contactInbox.contactId,
@@ -321,6 +331,16 @@ export async function handleCreateWebchatMessage({
       inboxId: contactInbox.inboxId,
       occurredAt: newMessage.createdAt ?? new Date(),
       sourceId: newMessage.sourceId ?? undefined,
+      origin: "inbound",
+      messageId: newMessage.id,
+      contactInfoCapture:
+        contactInfoTypes.length > 0
+          ? {
+              infoTypes: contactInfoTypes,
+              conversationId: conversation.id,
+              conversationCreatedAt: conversation.createdAt.toISOString(),
+            }
+          : undefined,
     })
 
     await queueMessageCreatedEvent(

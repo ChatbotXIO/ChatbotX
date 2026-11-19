@@ -1200,6 +1200,14 @@ describe("getUserData — date/datetime webview prompt (RF09/RF10)", () => {
     })
   })
 
+  test("names its flow step on the question so an answer is recognised as part of the flow", async () => {
+    await getUserData(makeProps(ReplyFormat.date))
+
+    expect(findChatJobCall("sendChatMessage").data).toMatchObject({
+      flowOrigin: { flowId: "flow-1", stepId: "step-1" },
+    })
+  })
+
   test("uses the Vietnamese label when workspace.language is vi", async () => {
     workspaceFindById.mockResolvedValueOnce({ language: "vi" })
     const props = makeProps(ReplyFormat.datetime)
@@ -1681,6 +1689,18 @@ describe("getUserData — WhatsApp native location request (RF08)", () => {
     )
   })
 
+  test("the native location request names its flow step too", async () => {
+    const props = makeProps(ReplyFormat.location)
+    props.ctx = { variables: { conversation: {} } }
+    props.contactInbox = { ...props.contactInbox, channel: "whatsapp" }
+
+    await getUserData(props)
+
+    expect(findChatJobCall("sendChatMessage").data).toMatchObject({
+      flowOrigin: { flowId: "flow-1", stepId: "step-1" },
+    })
+  })
+
   test("sends the Skip button as its own message after the native request, with the author's label as its text", async () => {
     const props = makeProps(ReplyFormat.location, {
       message: "Please share your location",
@@ -1785,6 +1805,21 @@ describe("getUserData — Show Hint contact quick reply (phone/email)", () => {
     )
   }
 
+  test("the contact hint prompt names its flow step like the other questions", async () => {
+    contactFindById.mockResolvedValueOnce({
+      phoneNumber: "0901234567",
+      email: null,
+    })
+
+    await getUserData(makeFirstSendProps(ReplyFormat.phone, "messenger"))
+
+    const { data } = findChatJobCall("sendChatMessage")
+    expect(data.quickReplies?.[0]?.postback).toBe(
+      "GET_USER_DATA_CONTACT_HINT|0901234567",
+    )
+    expect(data.flowOrigin).toEqual({ flowId: "flow-1", stepId: "step-1" })
+  })
+
   test("messenger offers the stored contact phone with the full value in the payload", async () => {
     contactFindById.mockResolvedValueOnce({
       phoneNumber: "0708122593",
@@ -1841,6 +1876,7 @@ describe("getUserData — Show Hint contact quick reply (phone/email)", () => {
     await getUserData(makeFirstSendProps(ReplyFormat.phone, "messenger"))
 
     const job = findChatJobCall("sendChatMessage")
+    expect(job.data.flowOrigin).toEqual({ flowId: "flow-1", stepId: "step-1" })
     expect(job.data.quickReplies).toEqual([
       {
         id: "messenger:native-quick-reply:user_phone_number",

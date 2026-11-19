@@ -2,6 +2,7 @@
   "actions": {
     "scrollToBottom": "Aşağı sürüşdür",
     "copy": "Kopyala",
+    "copyId": "ID-ni kopyala",
     "copyUrl": "URL-i kopyala",
     "chatWidget": "Çat vidceti",
     "actions": "Əməliyyatlar",
@@ -604,6 +605,10 @@
       "seen": "Görülüb",
       "clicked": "Kliklənib",
       "failed": "Uğursuz",
+      "leftPhone": "Telefon nömrəsi verdi",
+      "leftEmail": "E-poçt ünvanı verdi",
+      "leftPhoneShort": "Telefon",
+      "leftEmailShort": "E-poçt",
       "noContacts": "Kontakt tapılmadı",
       "pageInfo": "Səhifə {page} / {pageCount}",
       "selectedAll": "Hamısı seçilib",

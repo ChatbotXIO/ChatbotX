@@ -40,6 +40,7 @@ import type {
   FindManyByConversationOptions,
   FindManyBySourceIdsParams,
   FindMessageByIdParams,
+  FindOutgoingBeforeParams,
   FindRichResponseByButtonParams,
   FindThreadAnchorsBySourceIdsParams,
   FindTriggerMessageOptions,
@@ -51,6 +52,7 @@ import type {
   MessageSourceRow,
   MessageTextWithFileTypes,
   MessageWithAttachments,
+  OutgoingBotMessage,
   PaginatedMessages,
   PaginationCursor,
   UpdateAttachmentParams,
@@ -104,16 +106,23 @@ function dedupeShardsByPhysicalId<T extends { shard: { id: string } }>(
   })
 }
 
-function compareMessageDesc(
-  a: { id: string; createdAt: Date },
-  b: { id: string; createdAt: Date },
+// Fixed-width UTC text of the full microsecond timestamp. It sorts as text and
+// round-trips through `::timestamptz`, which a JS Date (milliseconds) cannot.
+const createdAtExactSql = sql<string>`to_char(${messageModel.createdAt} AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"')`
+
+function compareOutgoingDesc(
+  a: OutgoingBotMessage,
+  b: OutgoingBotMessage,
 ): number {
-  const timeDiff = b.createdAt.getTime() - a.createdAt.getTime()
-  if (timeDiff !== 0) {
-    return timeDiff
+  if (a.createdAtExact !== b.createdAtExact) {
+    return a.createdAtExact < b.createdAtExact ? 1 : -1
   }
+  return compareIdDesc(a.id, b.id)
+}
+
+function compareIdDesc(a: string, b: string): number {
   try {
-    const diff = BigInt(b.id) - BigInt(a.id)
+    const diff = BigInt(b) - BigInt(a)
     if (diff > 0n) {
       return 1
     }
@@ -122,8 +131,19 @@ function compareMessageDesc(
     }
     return 0
   } catch {
-    return b.id.localeCompare(a.id)
+    return b.localeCompare(a)
   }
+}
+
+function compareMessageDesc(
+  a: { id: string; createdAt: Date },
+  b: { id: string; createdAt: Date },
+): number {
+  const timeDiff = b.createdAt.getTime() - a.createdAt.getTime()
+  if (timeDiff !== 0) {
+    return timeDiff
+  }
+  return compareIdDesc(a.id, b.id)
 }
 
 // A row stamped by Postgres carries microseconds a JS Date cannot hold, so a
@@ -2715,6 +2735,77 @@ export class ShardedMessageRepository implements IMessageRepository {
     )
 
     return shardResults.flat().sort(compareMessageDesc).slice(0, options.limit)
+  }
+
+  async findOutgoingBefore(
+    params: FindOutgoingBeforeParams,
+  ): Promise<OutgoingBotMessage[]> {
+    const { before, conversationId, limit, since, workspaceId } = params
+
+    let shards: MessageShardTimeRangeInfo[]
+    try {
+      const timeRangeShards = await this.getShardsForRange(
+        since,
+        new Date(before.createdAt),
+      )
+      const writeShard = await this.shardManager.getWriteShardInfo(workspaceId)
+      shards = this.mergeWriteShard(timeRangeShards, writeShard)
+    } catch (error) {
+      throw this.toStorageError("select shards for outgoing history", error)
+    }
+    if (shards.length === 0) {
+      throw new MessageShardUnavailableError(
+        "No message shards are available for outgoing history read",
+      )
+    }
+
+    const beforeAt = sql`${before.createdAt}::timestamptz`
+    const olderThanBefore = or(
+      sql`${messageModel.createdAt} < ${beforeAt}`,
+      and(
+        sql`${messageModel.createdAt} = ${beforeAt}`,
+        lt(messageModel.id, before.id),
+      ),
+    )
+
+    const shardResults = await Promise.all(
+      shards.map(async (shardInfo): Promise<OutgoingBotMessage[]> => {
+        try {
+          // Always the primary: a lagging replica could miss a newer bot
+          // message and make an older broadcast message look like the latest
+          // bot content, a permanent false attribution. One bounded page per
+          // job run, so the extra primary load is small.
+          const shardClient = await this.shardManager.getShardClient(
+            shardInfo.shard,
+          )
+          return await shardClient
+            .select({
+              contentAttributes: messageModel.contentAttributes,
+              createdAtExact: createdAtExactSql,
+              id: messageModel.id,
+            })
+            .from(messageModel)
+            .where(
+              and(
+                eq(messageModel.conversationId, conversationId),
+                eq(messageModel.workspaceId, workspaceId),
+                gte(messageModel.createdAt, since),
+                olderThanBefore,
+                eq(messageModel.messageType, "outgoing"),
+                inArray(messageModel.senderType, ["bot", "system"]),
+                eq(messageModel.type, "message"),
+                isNull(messageModel.sendError),
+              ),
+            )
+            .orderBy(desc(messageModel.createdAt), desc(messageModel.id))
+            .limit(limit)
+        } catch (error) {
+          throw this.toStorageError("find outgoing messages before", error)
+        }
+      }),
+    )
+
+    return shardResults.flat().sort(compareOutgoingDesc).slice(0, limit)
   }
 
   async findManyByIds(

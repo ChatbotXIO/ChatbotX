@@ -70,6 +70,7 @@
     "./repositories": "./src/repositories/index.ts",
     "./repositories/ai-file-embedding-id": "./src/repositories/ai-file-embedding/embedding-id.ts",
     "./repositories/contact-activity": "./src/repositories/contact-activity/index.ts",
+    "./repositories/contact-info-capture": "./src/repositories/contact-info-capture/index.ts",
     "./repositories/contact-inbox-post": "./src/repositories/contact-inbox-post/index.ts",
     "./repositories/place-category": "./src/repositories/place-category/index.ts",
     "./repositories/template-installed-resource": "./src/repositories/template-installed-resource/index.ts",
