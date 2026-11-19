@@ -16,7 +16,7 @@ const {
   mockRecordPermanentGrant,
   mockMarkReadByOutbound,
   mockFindConversation,
-  mockFindEmailThread,
+  mockFindEmailReplyParent,
   mockRecordDelivered,
   mockAllIntegrations,
 } = vi.hoisted(() => {
@@ -50,7 +50,7 @@ const {
     mockRecordPermanentGrant: vi.fn().mockResolvedValue(undefined),
     mockMarkReadByOutbound: vi.fn().mockResolvedValue(true),
     mockFindConversation: vi.fn(),
-    mockFindEmailThread: vi.fn(),
+    mockFindEmailReplyParent: vi.fn(),
     mockRecordDelivered: vi.fn().mockResolvedValue(true),
     mockAllIntegrations: {} as Record<string, { deliveryReceipts: boolean }>,
   }
@@ -79,7 +79,7 @@ vi.mock("@chatbotx.io/business", () => ({
   contactService: { unblockIfBlocked: mockContactUnblockIfBlocked },
   conversationService: {
     findBy: mockFindConversation,
-    findLastIncomingEmailThread: mockFindEmailThread,
+    findEmailReplyParent: mockFindEmailReplyParent,
     markReadByOutbound: mockMarkReadByOutbound,
   },
   publishWorkspaceRealtimeEvent: mockQueueWorkspaceRealtimeEvent,
@@ -371,11 +371,11 @@ describe("chat send-message handlers", () => {
       mockRunChannelHandler.mock.calls[0]?.[2].data.message
 
     beforeEach(() => {
-      mockFindEmailThread.mockResolvedValue(undefined)
+      mockFindEmailReplyParent.mockResolvedValue(undefined)
     })
 
     test("attaches the last inbound email's thread headers to the outgoing message", async () => {
-      mockFindEmailThread.mockResolvedValue({
+      mockFindEmailReplyParent.mockResolvedValue({
         subject: "Order 1234",
         messageId: "<in@example.com>",
       })
@@ -386,9 +386,10 @@ describe("chat send-message handlers", () => {
         message: outgoing({ keep: true }),
       })
 
-      expect(mockFindEmailThread).toHaveBeenCalledWith({
+      expect(mockFindEmailReplyParent).toHaveBeenCalledWith({
         conversation,
         contactInboxId: "ci-1",
+        replyToMessageId: undefined,
       })
       expect(sentMessage().contentAttributes).toEqual({
         keep: true,
@@ -397,7 +398,7 @@ describe("chat send-message handlers", () => {
     })
 
     test("an explicit subject on the outgoing message wins over the inherited one", async () => {
-      mockFindEmailThread.mockResolvedValue({
+      mockFindEmailReplyParent.mockResolvedValue({
         subject: "Order 1234",
         messageId: "<in@example.com>",
       })
@@ -424,6 +425,38 @@ describe("chat send-message handlers", () => {
       expect(sentMessage().contentAttributes).toBeUndefined()
     })
 
+    test("hands SMTP the thread id only for an outreach thread we opened", async () => {
+      await sendMessageToChannel({
+        conversation: {
+          ...conversation,
+          sourceId: "email:<customer@example.com>",
+          additionalAttributes: null,
+        } as never,
+        contactInbox: smtpInbox as never,
+        message: outgoing(),
+      })
+      expect(
+        mockRunChannelHandler.mock.calls.at(-1)?.[2].data.contact
+          .sourceConversationId,
+      ).toBeNull()
+
+      await sendMessageToChannel({
+        conversation: {
+          ...conversation,
+          sourceId: "email:<out@acme.test>",
+          additionalAttributes: {
+            channelConversationId: "email:<out@acme.test>",
+          },
+        } as never,
+        contactInbox: smtpInbox as never,
+        message: outgoing(),
+      })
+      expect(
+        mockRunChannelHandler.mock.calls.at(-1)?.[2].data.contact
+          .sourceConversationId,
+      ).toBe("email:<out@acme.test>")
+    })
+
     test("does not look up an email thread for other channels", async () => {
       await sendMessageToChannel({
         conversation: conversation as never,
@@ -431,7 +464,7 @@ describe("chat send-message handlers", () => {
         message: outgoing(),
       })
 
-      expect(mockFindEmailThread).not.toHaveBeenCalled()
+      expect(mockFindEmailReplyParent).not.toHaveBeenCalled()
     })
 
     const flowSend = (inbox: unknown) =>
@@ -453,11 +486,11 @@ describe("chat send-message handlers", () => {
 
     test("passes the last inbound email's thread to a flow step send", async () => {
       const thread = { subject: "Order 1234", messageId: "<in@example.com>" }
-      mockFindEmailThread.mockResolvedValue(thread)
+      mockFindEmailReplyParent.mockResolvedValue(thread)
 
       await flowSend(smtpInbox)
 
-      expect(mockFindEmailThread).toHaveBeenCalledWith({
+      expect(mockFindEmailReplyParent).toHaveBeenCalledWith({
         conversation,
         contactInboxId: "ci-1",
       })
@@ -473,7 +506,7 @@ describe("chat send-message handlers", () => {
     test("does not look up an email thread for a flow step on other channels", async () => {
       await flowSend(contactInbox)
 
-      expect(mockFindEmailThread).not.toHaveBeenCalled()
+      expect(mockFindEmailReplyParent).not.toHaveBeenCalled()
       expect(mockRunChannelHandler.mock.calls[0]?.[2].data.emailThread).toBe(
         undefined,
       )

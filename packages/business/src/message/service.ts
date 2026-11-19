@@ -314,6 +314,25 @@ class MessageService extends BaseService {
     )
   }
 
+  async updateSourceIdAndEmail(props: {
+    createdAt: Date
+    id: string
+    sourceId: string
+    email: Record<string, unknown>
+    workspaceId: string
+    tx?: DatabaseClient
+  }): Promise<{ id: string } | null> {
+    const { tx = db } = props
+    const repo = await createMessageRepository(tx)
+    return await repo.updateSourceIdAndEmail(
+      props.id,
+      props.sourceId,
+      props.email,
+      props.workspaceId,
+      props.createdAt,
+    )
+  }
+
   async updateSendError(props: {
     createdAt: Date
     id: string

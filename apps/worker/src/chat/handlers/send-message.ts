@@ -225,11 +225,25 @@ const recordServiceSent = async (props: {
 }
 
 /**
- * An email reply threads under the contact's latest inbound mail (subject,
- * `In-Reply-To`, `References`). The thread headers live on the inbound message,
- * not on the agent's outgoing one, so they are attached here. An explicit
- * `contentAttributes.email` on the outgoing message (e.g. a composer subject)
- * wins over the inherited values.
+ * The channel conversation id handed to the channel handler. SMTP only gets one
+ * for threads we opened (outreach), stored explicitly; a thread an inbound
+ * customer mail opened has none, so the reply threads under that mail instead
+ * of reusing the customer's Message-ID.
+ */
+function resolveSourceConversationId(
+  conversation: Pick<ConversationModel, "sourceId" | "additionalAttributes">,
+  channel: string,
+): string | null {
+  if (channel !== channelTypes.enum.smtp) {
+    return resolveChannelConversationId(conversation)
+  }
+  const stored = conversation.additionalAttributes?.channelConversationId
+  return typeof stored === "string" && stored ? stored : null
+}
+
+/**
+ * Gives SMTP one complete stored parent. The caller may override only its
+ * subject; raw headers never come from the outgoing request.
  */
 async function withEmailThread<
   T extends { contentAttributes?: unknown },
@@ -241,26 +255,35 @@ async function withEmailThread<
   >
   contactInboxId: string
 }): Promise<T> {
-  const thread = await conversationService.findLastIncomingEmailThread({
-    conversation: props.conversation,
-    contactInboxId: props.contactInboxId,
-  })
-  if (!thread) {
-    return props.message
-  }
   const attributes = (props.message.contentAttributes ?? {}) as Record<
     string,
     unknown
   >
-  const explicit =
+  const replyToMessageId =
+    typeof attributes.emailReplyToMessageId === "string"
+      ? attributes.emailReplyToMessageId
+      : undefined
+  const parent = await conversationService.findEmailReplyParent({
+    conversation: props.conversation,
+    contactInboxId: props.contactInboxId,
+    replyToMessageId,
+  })
+  if (!parent) {
+    return props.message
+  }
+  const explicitEmail =
     typeof attributes.email === "object" && attributes.email !== null
       ? (attributes.email as Record<string, unknown>)
-      : {}
+      : undefined
+  const subject =
+    typeof explicitEmail?.subject === "string"
+      ? explicitEmail.subject
+      : undefined
   return {
     ...props.message,
     contentAttributes: {
       ...attributes,
-      email: { ...thread, ...explicit },
+      email: subject ? { ...parent, subject } : parent,
     },
   }
 }
@@ -370,7 +393,10 @@ export async function sendMessageToChannel(
       data: {
         contact: {
           ...contactInbox,
-          sourceConversationId: resolveChannelConversationId(conversation),
+          sourceConversationId: resolveSourceConversationId(
+            conversation,
+            contactInbox.channel,
+          ),
         },
         message: handlerMessage,
         quickReplies: isComment ? undefined : quickReplies,
@@ -1253,18 +1279,35 @@ async function updateMessageSourceId(
   createdAt: Date | undefined,
   result: OutgoingSendResult,
 ) {
+  const firstMessageId = result.messageIds[0]
+  if (!(messageId && firstMessageId && createdAt)) {
+    return
+  }
   try {
-    const firstMessageId = result?.messageIds?.[0]
-    if (messageId && firstMessageId && createdAt) {
-      await messageService.updateSourceId({
-        id: messageId,
-        sourceId: firstMessageId,
-        workspaceId,
-        createdAt,
-      })
+    const updated = result.email
+      ? await messageService.updateSourceIdAndEmail({
+          id: messageId,
+          sourceId: firstMessageId,
+          email: result.email,
+          workspaceId,
+          createdAt,
+        })
+      : await messageService.updateSourceId({
+          id: messageId,
+          sourceId: firstMessageId,
+          workspaceId,
+          createdAt,
+        })
+    if (!updated) {
+      throw new Error(
+        "Sent message was not found while recording its source ID",
+      )
     }
   } catch (err) {
-    logger.error(err, "Failed to update message sourceId with provider id")
+    logger.error(
+      { err, messageId, providerMessageId: firstMessageId, workspaceId },
+      "Failed to persist sent message source ID",
+    )
   }
 }
 
@@ -1463,11 +1506,11 @@ export async function sendFlowStepToChannel({
     }
   }
 
-  // Same gate as `sendMessageToChannel`: an email reply must carry the inbound
-  // mail's thread headers or it opens a new thread in the customer's client.
+  // SMTP replies use one stored message as their complete parent so flow sends
+  // and inbox sends produce identical RFC 5322 threading headers.
   const emailThread =
     contactInbox.channel === channelTypes.enum.smtp
-      ? await conversationService.findLastIncomingEmailThread({
+      ? await conversationService.findEmailReplyParent({
           conversation,
           contactInboxId: contactInbox.id,
         })
@@ -1482,7 +1525,10 @@ export async function sendFlowStepToChannel({
       data: {
         contact: {
           ...contactInbox,
-          sourceConversationId: resolveChannelConversationId(conversation),
+          sourceConversationId: resolveSourceConversationId(
+            conversation,
+            contactInbox.channel,
+          ),
         },
         flowId,
         flowVersionId,

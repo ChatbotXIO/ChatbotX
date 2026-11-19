@@ -57,6 +57,11 @@ import {
 
 const workspaceTokenAuthAPI = workspaceTokenAuthAPIForScope("inbox")
 
+const emailReplyParentNotFound = {
+  message: "The requested email reply parent was not found",
+  status: 404,
+}
+
 // Compile-time guard: `editMessagePublicResponse` is a hand-maintained mirror
 // of `editMessage`'s return shape (an inline object literal, not itself a
 // schema). oRPC output schemas silently strip unknown keys, so a field added
@@ -239,6 +244,7 @@ export const messagesPublicRouter = {
       ...possibleErrorsOnCreatingResource,
       [PRODUCT_MESSAGE_UNRESOLVABLE_CODE]: productMessageUnresolvable,
       [IMAGES_NOT_SUPPORTED_ON_CHANNEL_CODE]: imagesNotSupportedOnChannel,
+      EMAIL_REPLY_PARENT_NOT_FOUND: emailReplyParentNotFound,
     })
     .handler(async ({ context, input }) => {
       const workspaceId = context.workspace.id

@@ -17,8 +17,13 @@ export class TriggerExecutorService {
     input: TriggerExecutionInput,
   ): Promise<void> {
     const { id: triggerId, workspaceId, actions } = trigger
-    const { contactId, contactInboxId, decisionFlowOrigin, occurrenceId } =
-      input
+    const {
+      contactId,
+      contactInboxId,
+      conversationId,
+      decisionFlowOrigin,
+      occurrenceId,
+    } = input
     const runAllowed = await triggerService.tryAcquireContactRun({
       workspaceId,
       triggerId,
@@ -36,6 +41,10 @@ export class TriggerExecutorService {
         contactId,
         workspaceId,
         contactInboxId,
+        conversationId,
+        runKey: occurrenceId
+          ? `trigger:${occurrenceId}:${triggerId}`
+          : undefined,
       })
 
       for (const [index, action] of actionsArray.entries()) {
@@ -47,6 +56,7 @@ export class TriggerExecutorService {
               source: { kind: "trigger", triggerId },
               workspaceId,
               contactInboxId,
+              conversationId,
               decisionFlowOrigin,
               occurrenceKey: occurrenceId
                 ? `trigger:${occurrenceId}:${triggerId}:${index}`

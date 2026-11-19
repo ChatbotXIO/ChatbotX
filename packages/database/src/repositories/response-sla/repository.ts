@@ -6,10 +6,11 @@ import {
   eq,
   inArray,
   isNotNull,
-  isNull,
+  not,
   or,
   sql,
 } from "../../client"
+import { isDirectConversationSql } from "../../queries"
 import { conversationModel, responseSlaPolicyModel } from "../../schema"
 import type { ResponseSlaPolicyModel } from "../../types"
 
@@ -129,7 +130,7 @@ export const responseSlaRepository = {
           eq(conversationModel.workspaceId, props.workspaceId),
           inArray(conversationModel.id, [...props.ids]),
           or(
-            isNotNull(conversationModel.sourceId),
+            not(isDirectConversationSql(conversationModel.sourceId)),
             isNotNull(conversationModel.awaitingHumanReplySince),
           ),
         ),
@@ -202,7 +203,7 @@ export const responseSlaRepository = {
             conversationModel.awaitingHumanReplySince,
             sql`${props.expectedSince.toISOString()}::timestamptz`,
           ),
-          isNull(conversationModel.sourceId),
+          isDirectConversationSql(conversationModel.sourceId),
         ),
       )
       .returning({ id: conversationModel.id })

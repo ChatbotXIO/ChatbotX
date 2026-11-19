@@ -140,6 +140,7 @@ export const MessageInput = () => {
   // fewer images than a message thread on most channels. A private reply is
   // a DM to the commenter instead, so it gets the DM-like limit.
   const replyKind = resolveInboxReplyKind({
+    channel: channelTypes.safeParse(channel).data,
     hasReplyTarget: Boolean(replyToMessage ?? lastContactComment),
     isPrivateReply: Boolean(replyToMessage && isPrivateReply),
   })

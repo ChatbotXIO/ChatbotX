@@ -17,6 +17,7 @@ import {
 } from "@chatbotx.io/utils/store-incoming-image"
 import { z } from "zod"
 import { type ParsedInboundEmail, parseRawEmail } from "../../inbound/parse"
+import { emailThreadKey } from "../../inbound/thread"
 import { logger } from "../../lib/logger"
 import type { SmtpAuthValue } from "../../schema"
 import { extractEmailAddress } from "./email-headers"
@@ -100,6 +101,10 @@ export const receiveMessage: MessageHandlers<SmtpAuthValue>["receiveMessage"] =
 
     const incomingMessage: IncomingMessage = {
       sourceId: email.messageId,
+      threadSourceIds: [
+        ...(email.inReplyTo ? [email.inReplyTo] : []),
+        ...[...email.references].reverse(),
+      ],
       messageType: messageTypes.enum.incoming,
       contentType: contentTypes.enum.text,
       text: email.text,
@@ -123,6 +128,7 @@ export const receiveMessage: MessageHandlers<SmtpAuthValue>["receiveMessage"] =
       message: incomingMessage,
       contact: {
         sourceId: email.fromAddress,
+        sourceConversationId: `email:${emailThreadKey(email)}`,
         email: email.fromAddress,
         ...splitDisplayName(email.fromName),
       },

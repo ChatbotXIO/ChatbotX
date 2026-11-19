@@ -57,6 +57,10 @@ function startTriggerWorker() {
               )
 
               const contactInboxId = extractContactInboxId(eventData.eventData)
+              const conversationId =
+                typeof eventData.eventData.conversationId === "string"
+                  ? eventData.eventData.conversationId
+                  : undefined
               const decisionFlowOrigin = decisionFlowOriginSchema.safeParse(
                 eventData.eventData?.decisionFlowOrigin,
               )
@@ -69,6 +73,7 @@ function startTriggerWorker() {
                       triggerExecutor.execute(trigger, {
                         contactId: eventData.contactId,
                         contactInboxId,
+                        conversationId,
                         decisionFlowOrigin: decisionFlowOrigin.success
                           ? decisionFlowOrigin.data
                           : undefined,

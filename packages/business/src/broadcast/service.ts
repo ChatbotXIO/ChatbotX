@@ -3,7 +3,6 @@ import type { BroadcastEventType } from "@chatbotx.io/analytics/schemas"
 import {
   and,
   asc,
-  count,
   countQueryCapped,
   type DatabaseClient,
   db,
@@ -16,6 +15,7 @@ import {
   isNotNull,
   isNull,
   ne,
+  or,
   type SQL,
   sql,
 } from "@chatbotx.io/database/client"
@@ -2998,10 +2998,9 @@ class BroadcastService extends BaseService {
   }
 
   /**
-   * By default a broadcast reaches only contacts that already have a DM, so
-   * it opens no conversations. A filter on chat history (**Last interaction**)
-   * chooses the audience itself — e.g. "has no value" for contacts who never
-   * messaged, including ones with no DM yet — and the send opens their DM.
+   * Non-SMTP channels require an existing DM unless their audience filter
+   * explicitly selects contacts without one. SMTP opens one email thread per
+   * recipient, so it is eligible without a DM.
    *
    * A query that already joins the DM (`buildDmConversationJoin`) passes how,
    * so the requirement reuses that join instead of probing the DM again.
@@ -3018,13 +3017,14 @@ class BroadcastService extends BaseService {
     ) {
       return
     }
+    const isSmtp = eq(contactInboxModel.channel, "smtp")
     switch (dmJoin) {
       case "inner":
         return
       case "left":
-        return isNotNull(conversationModel.id)
+        return or(isSmtp, isNotNull(conversationModel.id))
       default:
-        return contactInboxHasDmSQL()
+        return or(isSmtp, contactInboxHasDmSQL())
     }
   }
 
@@ -3072,15 +3072,29 @@ class BroadcastService extends BaseService {
     )
   }
 
+  /**
+   * Member restricted to assigned conversations: the contact needs a direct
+   * conversation (DM or email thread) assigned to them. An EXISTS, not a join,
+   * so a contact with several assigned email threads is still counted and listed
+   * once.
+   */
   private buildAssignedConversationWhere(
     input: BroadcastAudienceInput,
   ): SQL | undefined {
-    return input.restrictToAssignedUserId
-      ? and(
-          eq(conversationModel.workspaceId, input.workspaceId),
-          eq(conversationModel.assignedUserId, input.restrictToAssignedUserId),
-        )
-      : undefined
+    if (!input.restrictToAssignedUserId) {
+      return
+    }
+    return sql`EXISTS (
+      SELECT 1 FROM ${conversationModel}
+      WHERE ${conversationModel.contactId} = ${contactInboxModel.contactId}
+        AND ${conversationModel.workspaceId} = ${input.workspaceId}
+        AND CASE
+          WHEN ${contactInboxModel.channel} = 'smtp'
+            THEN ${conversationModel.sourceId} LIKE 'email:%'
+          ELSE ${conversationModel.sourceId} IS NULL
+        END
+        AND ${conversationModel.assignedUserId} = ${input.restrictToAssignedUserId}
+    )`
   }
 
   async countAudience(
@@ -3092,42 +3106,22 @@ class BroadcastService extends BaseService {
     }
 
     const range = input.audienceRange ?? null
-    // Inner-joined to the DM below, so the join itself is the DM requirement.
-    const restricted = input.restrictToAssignedUserId
-      ? and(
-          this.buildAudienceWhere(inboxIds, input, "inner"),
-          this.buildAssignedConversationWhere(input),
-        )
-      : undefined
-    const audienceWhere = restricted
-      ? undefined
-      : this.buildAudienceWhere(inboxIds, input)
+    const baseWhere = this.buildAudienceWhere(inboxIds, input)
+    const assignedWhere = this.buildAssignedConversationWhere(input)
+    const audienceWhere = assignedWhere
+      ? and(baseWhere, assignedWhere)
+      : baseWhere
 
     const buildScopedSelect = (client: DatabaseClient) =>
-      restricted
-        ? client
-            .select({ one: sql`1` })
-            .from(contactInboxModel)
-            .innerJoin(conversationModel, this.buildDmConversationJoin())
-            .where(restricted)
-        : client
-            .select({ one: sql`1` })
-            .from(contactInboxModel)
-            .where(audienceWhere)
+      client
+        .select({ one: sql`1` })
+        .from(contactInboxModel)
+        .where(audienceWhere)
 
     const outcome = await countByMode({
       mode: input.countMode,
-      exact: async (client) => {
-        if (restricted) {
-          const [result] = await client
-            .select({ count: count() })
-            .from(contactInboxModel)
-            .innerJoin(conversationModel, this.buildDmConversationJoin())
-            .where(restricted)
-          return result?.count ?? 0
-        }
-        return await client.$count(contactInboxModel, audienceWhere)
-      },
+      exact: async (client) =>
+        await client.$count(contactInboxModel, audienceWhere),
       bounded: async (cap, client) =>
         await countQueryCapped({
           cap,

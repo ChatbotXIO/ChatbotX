@@ -79,8 +79,14 @@ export const isAutomatedMail = (
   return BOUNCE_LOCAL_PARTS.has(localPart)
 }
 
-const referencesOf = (mail: ParsedMail): string[] =>
-  toList(mail.references).slice(-MAX_REFERENCES)
+const referencesOf = (mail: ParsedMail): string[] => {
+  const references = toList(mail.references)
+  if (references.length <= MAX_REFERENCES) {
+    return references
+  }
+  const [root, ...latestReferences] = references
+  return root ? [root, ...latestReferences.slice(-(MAX_REFERENCES - 1))] : []
+}
 
 const sha256Hex = async (raw: Buffer): Promise<string> => {
   // Web Crypto, not `node:crypto`: this module is reachable from the builder's

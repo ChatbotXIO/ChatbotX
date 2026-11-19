@@ -11,6 +11,7 @@ import {
   workingHoursMemberModel,
   workingHoursModel,
 } from "../../schema"
+import { isDirectConversationSql } from "../conversation"
 import type { ContactWhere, RawTable } from "./types"
 
 const dateOverride = workingHoursDateOverrideModel
@@ -62,7 +63,7 @@ const assignedAgentOnShiftSql = (
   timezone: string,
   contactId: RawTable[string],
 ): SQL =>
-  sql`EXISTS (SELECT 1 FROM ${conversationModel} WHERE ${conversationModel.contactId} = ${contactId} AND ${conversationModel.workspaceId} = ${workspaceId} AND ${conversationModel.sourceId} IS NULL AND ${conversationModel.assignedUserId} IS NOT NULL AND (NOT EXISTS (SELECT 1 FROM ${workingHoursMemberModel} WHERE ${workingHoursMemberModel.workspaceId} = ${workspaceId} AND ${workingHoursMemberModel.userId} = ${conversationModel.assignedUserId}) OR EXISTS (SELECT 1 FROM ${workingHoursMemberModel} WHERE ${workingHoursMemberModel.workspaceId} = ${workspaceId} AND ${workingHoursMemberModel.userId} = ${conversationModel.assignedUserId} AND ${scheduleOpenNowSql(workingHoursMemberModel.workingHoursId, workspaceId, timezone)})))`
+  sql`EXISTS (SELECT 1 FROM ${conversationModel} WHERE ${conversationModel.contactId} = ${contactId} AND ${conversationModel.workspaceId} = ${workspaceId} AND ${isDirectConversationSql(conversationModel.sourceId)} AND ${conversationModel.assignedUserId} IS NOT NULL AND (NOT EXISTS (SELECT 1 FROM ${workingHoursMemberModel} WHERE ${workingHoursMemberModel.workspaceId} = ${workspaceId} AND ${workingHoursMemberModel.userId} = ${conversationModel.assignedUserId}) OR EXISTS (SELECT 1 FROM ${workingHoursMemberModel} WHERE ${workingHoursMemberModel.workspaceId} = ${workspaceId} AND ${workingHoursMemberModel.userId} = ${conversationModel.assignedUserId} AND ${scheduleOpenNowSql(workingHoursMemberModel.workingHoursId, workspaceId, timezone)})))`
 
 /**
  * `isWithinWorkingHours` — matches while any selected schedule is open now, or

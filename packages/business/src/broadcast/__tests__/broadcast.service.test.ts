@@ -191,6 +191,7 @@ vi.mock("@chatbotx.io/database/client", () => ({
   inArray: (left: unknown, right: unknown) => ({ __inArray: [left, right] }),
   isNull: (value: unknown) => ({ __isNull: value }),
   isNotNull: (value: unknown) => ({ __isNotNull: value }),
+  or: (...args: unknown[]) => ({ __or: args }),
   ne: (left: unknown, right: unknown) => ({ __ne: [left, right] }),
 }))
 
@@ -204,6 +205,7 @@ vi.mock("@chatbotx.io/database/queries", () => ({
       (condition) => (condition as { field?: unknown }).field === field,
     ) ?? false,
   contactInboxHasDmSQL: () => ({ RAW: "has-dm" }),
+  isDirectConversationSql: () => ({ RAW: "is-direct" }),
   contactInboxInteractedWithin24hSQL: mocks.contactInboxInteractedWithin24hSQL,
   pruneEmailPhoneFilterConditions: (
     contactFilter: { operator: "and" | "or"; conditions: unknown[] },
@@ -410,7 +412,9 @@ describe("broadcastService.countAudience", () => {
     })
 
     const where = mocks.count.mock.calls[0]?.[1] as { __and?: unknown[] }
-    expect(where.__and).toContainEqual({ RAW: "has-dm" })
+    expect(where.__and).toContainEqual({
+      __or: expect.arrayContaining([{ RAW: "has-dm" }]),
+    })
   })
 
   test("drops the DM requirement when the filter is on Last interaction", async () => {
@@ -446,9 +450,10 @@ describe("broadcastService.countAudience", () => {
     })
 
     const where = mocks.count.mock.calls[0]?.[1] as { __and?: unknown[] }
-    expect(where.__and).toContainEqual({ RAW: "has-dm" })
+    expect(where.__and).toContainEqual({
+      __or: expect.arrayContaining([{ RAW: "has-dm" }]),
+    })
   })
-
   test("omits the 24h predicate for non-windowed broadcast subactions", async () => {
     mocks.resolveBroadcastInboxIds.mockResolvedValue(["inbox-1"])
     mocks.count.mockResolvedValue(3)
@@ -518,9 +523,9 @@ describe("broadcastService.countAudience", () => {
     })
   })
 
-  test("counts only assigned DM conversations for restricted contact scope", async () => {
+  test("counts a restricted member's contacts through an EXISTS on assigned direct conversations", async () => {
     mocks.resolveBroadcastInboxIds.mockResolvedValue(["inbox-1"])
-    mocks.selectRows = [{ count: 2 }]
+    mocks.count.mockResolvedValue(2)
 
     const { total } = await broadcastService.countAudience({
       workspaceId: "ws-1",
@@ -529,40 +534,21 @@ describe("broadcastService.countAudience", () => {
     })
 
     expect(total).toBe(2)
-    expect(mocks.count).not.toHaveBeenCalled()
-    expect(mocks.selectInnerJoin).toHaveBeenCalledWith([
-      expect.anything(),
-      {
-        __and: [
-          { __eq: ["Conversation.contactId", "ContactInbox.contactId"] },
-          { __isNull: "Conversation.sourceId" },
-        ],
-      },
-    ])
-    expect(mocks.selectWhere).toHaveBeenCalledWith(
-      expect.objectContaining({
-        __and: expect.arrayContaining([
-          expect.objectContaining({
-            __and: expect.arrayContaining([
-              { __inArray: ["ContactInbox.inboxId", ["inbox-1"]] },
-            ]),
-          }),
-          {
-            __and: [
-              { __eq: ["Conversation.workspaceId", "ws-1"] },
-              { __eq: ["Conversation.assignedUserId", "user-1"] },
-            ],
-          },
-        ]),
-      }),
-    )
-    // The inner join is the DM requirement; no second probe of the DM.
-    expect(JSON.stringify(mocks.selectWhere.mock.calls)).not.toContain("has-dm")
+    // No DM join: a contact with several assigned threads must count once.
+    expect(mocks.selectInnerJoin).not.toHaveBeenCalled()
+    const where = JSON.stringify(mocks.count.mock.calls[0]?.[1])
+    expect(where).toContain("EXISTS")
+    // Non-SMTP counts only assigned DMs; SMTP counts assigned email threads.
+    expect(where).toContain("'smtp'")
+    expect(where).toContain("email:%")
+    expect(where).toContain("IS NULL")
+    // The default DM requirement (SMTP exempt) still applies.
+    expect(where).toContain("has-dm")
   })
 
-  test("counts null sourceId DM conversations for a restricted TikTok scope", async () => {
+  test("applies the same EXISTS scope for a restricted TikTok audience", async () => {
     mocks.resolveBroadcastInboxIds.mockResolvedValue(["inbox-tiktok"])
-    mocks.selectRows = [{ count: 3 }]
+    mocks.count.mockResolvedValue(3)
 
     const { total } = await broadcastService.countAudience({
       workspaceId: "ws-1",
@@ -572,15 +558,8 @@ describe("broadcastService.countAudience", () => {
     })
 
     expect(total).toBe(3)
-    expect(mocks.selectInnerJoin).toHaveBeenCalledWith([
-      expect.anything(),
-      {
-        __and: [
-          { __eq: ["Conversation.contactId", "ContactInbox.contactId"] },
-          { __isNull: "Conversation.sourceId" },
-        ],
-      },
-    ])
+    expect(mocks.selectInnerJoin).not.toHaveBeenCalled()
+    expect(JSON.stringify(mocks.count.mock.calls[0]?.[1])).toContain("EXISTS")
   })
 
   test("clamps the plain-branch count to the audience range", async () => {
@@ -610,7 +589,7 @@ describe("broadcastService.countAudience", () => {
 
   test("clamps the restricted-branch count to the audience range", async () => {
     mocks.resolveBroadcastInboxIds.mockResolvedValue(["inbox-1"])
-    mocks.selectRows = [{ count: 100 }]
+    mocks.count.mockResolvedValue(100)
 
     const { total } = await broadcastService.countAudience({
       workspaceId: "ws-1",
@@ -621,6 +600,7 @@ describe("broadcastService.countAudience", () => {
 
     expect(total).toBe(10)
   })
+
   describe("countMode bounded", () => {
     const CAP = 100_000
 
@@ -707,7 +687,7 @@ describe("broadcastService.countAudience", () => {
       expect(result.totalCountCapped).toBe(true)
     })
 
-    test("uses the capped helper for the restricted DM-join branch", async () => {
+    test("uses the capped helper for the restricted branch", async () => {
       mocks.resolveBroadcastInboxIds.mockResolvedValue(["inbox-1"])
       mocks.countQueryCapped.mockResolvedValue({
         total: 7,
@@ -723,7 +703,7 @@ describe("broadcastService.countAudience", () => {
       })
 
       expect(result.total).toBe(7)
-      expect(mocks.selectInnerJoin).toHaveBeenCalled()
+      expect(mocks.selectInnerJoin).not.toHaveBeenCalled()
       expect(mocks.countQueryCapped).toHaveBeenCalledTimes(1)
     })
   })
@@ -812,8 +792,12 @@ describe("broadcastService.listAudiencePreview", () => {
             __and: expect.arrayContaining([
               { __inArray: ["ContactInbox.inboxId", ["inbox-1"]] },
               { RAW: "contact-filter" },
-              // The left-joined DM is the DM requirement; no second probe.
-              { __isNotNull: "Conversation.id" },
+              // The left-joined direct conversation is the requirement; no second probe.
+              expect.objectContaining({
+                __or: expect.arrayContaining([
+                  { __isNotNull: "Conversation.id" },
+                ]),
+              }),
             ]),
           }),
           { __eq: ["Contact.workspaceId", "ws-1"] },
@@ -862,7 +846,7 @@ describe("broadcastService.listAudiencePreview", () => {
     expect(mocks.selectLimit).toHaveBeenCalledWith(50)
   })
 
-  test("filters preview rows to assigned DM conversations for restricted contact scope", async () => {
+  test("filters preview rows with an EXISTS on assigned direct conversations for restricted contact scope", async () => {
     mocks.resolveBroadcastInboxIds.mockResolvedValue(["inbox-1"])
 
     await broadcastService.listAudiencePreview({
@@ -875,12 +859,7 @@ describe("broadcastService.listAudiencePreview", () => {
       expect.objectContaining({
         __and: expect.arrayContaining([
           { __eq: ["Contact.workspaceId", "ws-1"] },
-          {
-            __and: [
-              { __eq: ["Conversation.workspaceId", "ws-1"] },
-              { __eq: ["Conversation.assignedUserId", "user-1"] },
-            ],
-          },
+          { __sql: expect.stringContaining("EXISTS") },
         ]),
       }),
     )

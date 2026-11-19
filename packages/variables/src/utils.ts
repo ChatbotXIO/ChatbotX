@@ -32,6 +32,7 @@ import { signMiniAppToken } from "@chatbotx.io/encryption/mini-app-token"
 import { signMinigamePlayToken } from "@chatbotx.io/encryption/minigame-play-token"
 import { signShopToken } from "@chatbotx.io/encryption/shop-token"
 import { signUserHash } from "@chatbotx.io/encryption/user-hash"
+import { isEmailThreadSourceId } from "@chatbotx.io/utils"
 import {
   DATE_FORMAT,
   DATE_TIME_FORMAT,
@@ -293,10 +294,12 @@ const getFlowStepValue = async (
   context: ContactVariableContext,
   key: "lastStep" | "currentStep",
 ): Promise<string | null> => {
-  const conversation = await conversationService.findDMByContact({
-    workspaceId: context.contact.workspaceId,
-    contactId: context.contact.id,
-  })
+  const conversation = isEmailThreadSourceId(context.conversation?.sourceId)
+    ? context.conversation
+    : await conversationService.findDMByContact({
+        workspaceId: context.contact.workspaceId,
+        contactId: context.contact.id,
+      })
   return conversation?.[key] ?? null
 }
 

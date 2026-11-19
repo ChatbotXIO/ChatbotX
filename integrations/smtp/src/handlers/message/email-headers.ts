@@ -47,21 +47,7 @@ export const buildReplySubject = (subject: string | undefined): string => {
   return REPLY_PREFIX.test(subject) ? subject : `Re: ${subject}`
 }
 
-const ANGLE_ADDRESS = /<([^>]+)>\s*$/
-
-/**
- * The bare, lowercase address of a `fromAddress` that may be stored as
- * `Name <email>`. Compare and derive domains from this, never from the display form.
- */
-export const extractEmailAddress = (value: string): string => {
-  const match = value.match(ANGLE_ADDRESS)
-  return (match ? match[1] : value).trim().toLowerCase()
-}
-
-export const generateMessageId = (fromAddress: string): string => {
-  const domain = extractEmailAddress(fromAddress).split("@")[1] || "localhost"
-  return `<${globalThis.crypto.randomUUID()}@${domain}>`
-}
+export { extractEmailAddress } from "@chatbotx.io/utils"
 
 /** `In-Reply-To` + bounded `References` chain for the reply. */
 export const buildThreadHeaders = (
@@ -73,9 +59,14 @@ export const buildThreadHeaders = (
   }
   const chain = [...(thread.references ?? []), parent]
   const unique = [...new Set(chain)]
+  const root = unique[0] ?? parent
+  const references =
+    unique.length <= MAX_REFERENCES
+      ? unique
+      : [root, ...unique.slice(-(MAX_REFERENCES - 1))]
   return {
     inReplyTo: parent,
-    references: unique.slice(-MAX_REFERENCES),
+    references,
   }
 }
 

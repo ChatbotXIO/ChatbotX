@@ -1,3 +1,4 @@
+import { generateMessageId } from "@chatbotx.io/utils"
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
 const sendMailMock = vi.fn()
@@ -9,7 +10,6 @@ import {
   buildReplySubject,
   buildThreadHeaders,
   extractEmailAddress,
-  generateMessageId,
   textToHtml,
 } from "../src/handlers/message/email-headers"
 import { sendFlowStep } from "../src/handlers/message/send-flow-step"
@@ -59,10 +59,8 @@ describe("email headers", () => {
     expect(extractEmailAddress("support@acme.test")).toBe("support@acme.test")
   })
 
-  test("builds a well-formed Message-ID from a 'Name <email>' from address", () => {
-    expect(generateMessageId("Acme <support@acme.test>")).toMatch(
-      ACME_MESSAGE_ID,
-    )
+  test("builds a well-formed Message-ID for the sender domain", () => {
+    expect(generateMessageId("acme.test")).toMatch(ACME_MESSAGE_ID)
   })
 
   test("escapes html", () => {
@@ -95,6 +93,29 @@ describe("sendMessage", () => {
     })
     expect(result.messageIds).toEqual([mail.messageId])
     expect(result.sentCount).toBe(1)
+  })
+
+  test("reuses the outreach thread's Message-ID only when one is provided", async () => {
+    await sendMessage({
+      ctx,
+      data: {
+        contact: {
+          ...contact,
+          sourceConversationId: "email:<thread@acme.test>",
+        },
+        message: { text: "Hello" },
+      },
+    } as never)
+    expect(sendMailMock.mock.calls[0][0].messageId).toBe("<thread@acme.test>")
+
+    await sendMessage({
+      ctx,
+      data: {
+        contact: { ...contact, sourceConversationId: null },
+        message: { text: "Hello" },
+      },
+    } as never)
+    expect(sendMailMock.mock.calls[1][0].messageId).toMatch(ACME_MESSAGE_ID)
   })
 
   test("rejects a contact without an email address", async () => {

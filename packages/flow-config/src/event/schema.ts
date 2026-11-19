@@ -152,6 +152,7 @@ export const receivedPayloadSchema = z.object({
   // existing listeners (mac-tracking, active-hourly) are unaffected.
   origin: z.literal("inbound").optional(),
   messageId: z.string().optional(),
+  conversationId: z.string().optional(),
   // Whether this was the contact's first-ever inbound message on this
   // contactInbox, computed before the tracking update runs (see
   // received-message.ts) since `ContactInbox.firstInteractionAt`/

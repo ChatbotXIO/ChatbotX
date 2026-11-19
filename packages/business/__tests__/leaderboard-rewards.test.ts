@@ -6,6 +6,7 @@ const mocks = vi.hoisted(() => ({
   claimRewardRecipient: vi.fn(),
   setRewardRecipient: vi.fn(),
   top: vi.fn(),
+  resolveOutreachConversation: vi.fn(),
   findDMByContact: vi.fn(),
   listByContactId: vi.fn(),
   integrationAdd: vi.fn(),
@@ -33,7 +34,10 @@ vi.mock("../src/contact-inbox/service", () => ({
 }))
 
 vi.mock("../src/conversation/service", () => ({
-  conversationService: { findDMByContact: mocks.findDMByContact },
+  conversationService: {
+    resolveOutreachConversation: mocks.resolveOutreachConversation,
+    findDMByContact: mocks.findDMByContact,
+  },
 }))
 
 vi.mock("../src/leaderboard/ranking", () => ({
@@ -78,8 +82,11 @@ beforeEach(() => {
   mocks.setRewardRecipient.mockResolvedValue(undefined)
   mocks.leaderboardAdd.mockResolvedValue(undefined)
   mocks.top.mockResolvedValue(winners)
+  mocks.resolveOutreachConversation.mockResolvedValue({ id: "c1" })
   mocks.findDMByContact.mockResolvedValue({ id: "c1" })
-  mocks.listByContactId.mockResolvedValue([{ id: "ci1", inboxId: "10" }])
+  mocks.listByContactId.mockResolvedValue([
+    { id: "ci1", inboxId: "10", channel: "messenger" },
+  ])
 })
 
 describe("triggerLeaderboardRewards", () => {
@@ -137,8 +144,8 @@ describe("triggerLeaderboardRewards", () => {
     await expect(trigger()).resolves.toMatchObject({ sent: 0 })
   })
 
-  test("a winner without a conversation is recorded as skipped", async () => {
-    mocks.findDMByContact.mockResolvedValueOnce(undefined)
+  test("a winner without a contact inbox is recorded as skipped", async () => {
+    mocks.listByContactId.mockResolvedValueOnce([])
     const result = await trigger()
     expect(result.skipped).toEqual(["7"])
     expect(mocks.setRewardRecipient).toHaveBeenCalledWith({
@@ -146,6 +153,30 @@ describe("triggerLeaderboardRewards", () => {
       contactId: "7",
       delivery: "skipped",
     })
+  })
+
+  test("a non-SMTP winner without a DM is skipped and no conversation is created", async () => {
+    mocks.findDMByContact.mockResolvedValueOnce(null)
+    const result = await trigger()
+    expect(result.skipped).toEqual(["7"])
+    expect(mocks.resolveOutreachConversation).not.toHaveBeenCalled()
+    expect(mocks.integrationAdd).toHaveBeenCalledTimes(2)
+  })
+
+  test("an SMTP winner gets an email thread, not a DM lookup", async () => {
+    mocks.listByContactId.mockResolvedValue([
+      { id: "ci1", inboxId: "10", channel: "smtp" },
+    ])
+    mocks.resolveOutreachConversation.mockResolvedValue({ id: "email-thread" })
+    await trigger()
+    expect(mocks.findDMByContact).not.toHaveBeenCalled()
+    expect(mocks.integrationAdd).toHaveBeenCalledWith(
+      "sendFlow",
+      expect.objectContaining({
+        data: expect.objectContaining({ conversationId: "email-thread" }),
+      }),
+      { jobId: "lb-reward-100-7" },
+    )
   })
 
   test("a failed queue releases the claim and schedules a background retry", async () => {

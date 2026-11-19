@@ -71,6 +71,15 @@ export const integrationSmtpRepository = {
     return await tx.query.integrationSmtpModel.findFirst({ where: { id } })
   },
 
+  async findByInbox(
+    props: { workspaceId: string; inboxId: string },
+    tx: DatabaseClient = db,
+  ): Promise<IntegrationSmtpModel | undefined> {
+    return await tx.query.integrationSmtpModel.findFirst({
+      where: { workspaceId: props.workspaceId, inboxId: props.inboxId },
+    })
+  },
+
   async findByInboundToken(
     token: string,
     tx: DatabaseClient = db,

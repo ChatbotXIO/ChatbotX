@@ -106,6 +106,13 @@ export type ChannelSendFlowStepProps<IAuth extends AuthValue> = {
 }
 export type OutgoingSendResult = {
   messageIds: string[]
+  /** The SMTP headers sent with this result. Other channels omit it. */
+  email?: {
+    messageId: string
+    subject: string
+    inReplyTo?: string
+    references?: string[]
+  }
   /** Number of discrete channel messages accepted by the provider. */
   sentCount: number
 }

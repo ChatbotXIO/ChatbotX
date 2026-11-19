@@ -56,6 +56,7 @@ export type ActionExecutionContext = {
    * which fall back by design.
    */
   contactInboxId?: string
+  conversationId?: string
   decisionFlowOrigin?: DecisionFlowOrigin
   /**
    * Durable key of this occurrence of the action: identical on every retry of
@@ -74,6 +75,7 @@ export type ActionExecutionContext = {
 export type TriggerExecutionInput = {
   contactId: string
   contactInboxId?: string
+  conversationId?: string
   decisionFlowOrigin?: DecisionFlowOrigin
   /** The trigger queue job id; stable across retries of that job. */
   occurrenceId?: string

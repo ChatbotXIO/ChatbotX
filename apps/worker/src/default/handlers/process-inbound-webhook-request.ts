@@ -170,6 +170,7 @@ const runActions = async (input: {
     contactId,
     workspaceId: webhook.workspaceId,
     contactInboxId,
+    runKey: `inboundWebhook:${request.id}`,
   })
 
   for (const index of webhook.actions.keys()) {

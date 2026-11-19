@@ -52,12 +52,14 @@ describe("receiveMessage", () => {
 
     expect(result?.contact).toEqual({
       sourceId: "jane@example.com",
+      sourceConversationId: "email:<m1@example.com>",
       email: "jane@example.com",
       firstName: "Jane",
       lastName: "Doe",
     })
     expect(result?.message).toMatchObject({
       sourceId: "<m1@example.com>",
+      threadSourceIds: [],
       messageType: "incoming",
       contentType: "text",
       text: "Any update?",
@@ -72,6 +74,24 @@ describe("receiveMessage", () => {
       }),
     })
     expect(result?.postbackAction).toBeNull()
+  })
+
+  test("uses the root reference as the conversation key and parents first", async () => {
+    const result = await receive([
+      ...customerMail.slice(0, 4),
+      "In-Reply-To: <parent@example.com>",
+      "References: <root@example.com> <parent@example.com>",
+      ...customerMail.slice(4),
+    ])
+
+    expect(result?.contact?.sourceConversationId).toBe(
+      "email:<root@example.com>",
+    )
+    expect(result?.message?.threadSourceIds).toEqual([
+      "<parent@example.com>",
+      "<parent@example.com>",
+      "<root@example.com>",
+    ])
   })
 
   test("drops auto-replies so a bot never answers an out-of-office", async () => {

@@ -144,6 +144,27 @@ export interface FindManyBySourceIdsParams {
   workspaceId: string
 }
 
+export interface FindThreadAnchorsBySourceIdsParams {
+  contactInboxId: string
+  sinceTime: Date
+  sourceIds: string[]
+  workspaceId: string
+}
+
+export interface FindEmailParentParams {
+  contactInboxId: string
+  conversationId: string
+  /** Restrict to this message (an explicit reply target) instead of the newest. */
+  messageId?: string
+  sinceTime: Date
+  workspaceId: string
+}
+
+export type EmailParentRow = Pick<
+  MessageModel,
+  "id" | "contactInboxId" | "sourceId" | "contentAttributes" | "createdAt"
+>
+
 export interface HardDeleteAllByContactInboxParams {
   contactInboxId: string
   sinceTime: Date
@@ -315,12 +336,28 @@ export interface IMessageRepository {
     params: FindMessageByIdParams,
   ): Promise<MessageWithAttachments | null>
 
+  findByIdForConversation(
+    id: string,
+    conversationId: string,
+    workspaceId: string,
+    sinceTime: Date,
+  ): Promise<MessageWithAttachments | null>
+
   findBySourceId(
     sourceId: string,
     conversationId: string,
     workspaceId: string,
     sinceTime?: Date,
   ): Promise<MessageModel | null>
+
+  /**
+   * The newest delivered email message (carries a `sourceId` and `email`
+   * content attributes) of one contact inbox in a conversation, or the one
+   * named by `messageId`. Filters run in SQL before the limit, and reads use
+   * shard primaries so a mail persisted a moment ago is visible: a replica
+   * miss would reuse a Message-ID. Any unavailable shard throws.
+   */
+  findEmailParent(params: FindEmailParentParams): Promise<EmailParentRow | null>
 
   findLastByConversation(
     conversationId: string,
@@ -346,6 +383,14 @@ export interface IMessageRepository {
   findRichResponseByButton(
     params: FindRichResponseByButtonParams,
   ): Promise<RichResponseContentAttributes | null>
+
+  /**
+   * Finds email thread anchors from shard primaries so a just-persisted parent
+   * is immediately visible. Any unavailable shard fails the whole lookup.
+   */
+  findThreadAnchorsBySourceIds(
+    params: FindThreadAnchorsBySourceIdsParams,
+  ): Promise<MessageSourceRow[]>
 
   findTriggerMessage(
     options: FindTriggerMessageOptions,
@@ -448,6 +493,14 @@ export interface IMessageRepository {
   updateSourceId(
     id: string,
     sourceId: string,
+    workspaceId: string,
+    createdAt: Date,
+  ): Promise<{ id: string } | null>
+
+  updateSourceIdAndEmail(
+    id: string,
+    sourceId: string,
+    email: Record<string, unknown>,
     workspaceId: string,
     createdAt: Date,
   ): Promise<{ id: string } | null>
