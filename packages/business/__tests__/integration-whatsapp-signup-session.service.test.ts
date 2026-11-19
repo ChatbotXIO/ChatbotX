@@ -91,10 +91,9 @@ describe("integrationWhatsappService signup sessions", () => {
     vi.spyOn(workspaceService, "findById").mockResolvedValue({
       ownerId: "owner-1",
     } as never)
-    vi.spyOn(
-      platformCredentialService,
-      "resolveWhatsappSystemUserToken",
-    ).mockResolvedValue(null)
+    vi.spyOn(platformCredentialService, "resolveForInbox").mockResolvedValue({
+      config: { systemUserToken: undefined },
+    } as never)
     resolveCredentialOwnerIdForWorkspace.mockResolvedValue("reseller-1")
   })
 
@@ -204,10 +203,9 @@ describe("integrationWhatsappService signup sessions", () => {
     })
     // Owner has a system-user token, so it is tried first, then the connect
     // token as fallback.
-    vi.spyOn(
-      platformCredentialService,
-      "resolveWhatsappSystemUserToken",
-    ).mockResolvedValue("sys-token")
+    vi.spyOn(platformCredentialService, "resolveForInbox").mockResolvedValue({
+      config: { systemUserToken: "sys-token" },
+    } as never)
     const provision = vi
       .fn()
       .mockRejectedValueOnce(
@@ -274,7 +272,7 @@ describe("integrationWhatsappService signup sessions", () => {
       const workspaceSpy = vi.spyOn(workspaceService, "findById")
       const credentialSpy = vi.spyOn(
         platformCredentialService,
-        "resolveWhatsappSystemUserToken",
+        "resolveForInbox",
       )
 
       const result =
@@ -292,19 +290,19 @@ describe("integrationWhatsappService signup sessions", () => {
       expect(credentialSpy).not.toHaveBeenCalled()
     })
 
-    test("embedded-signup resolves the reseller's system-user token for its sub-account workspace", async () => {
-      vi.spyOn(workspaceService, "findById").mockResolvedValue({
-        ownerId: "sub-account-1",
-        tenantId: "7",
-      } as never)
-      vi.spyOn(
-        platformCredentialService,
-        "resolveWhatsappSystemUserToken",
-      ).mockResolvedValue("sys-token")
+    test("embedded-signup resolves the pinned app's system-user token for the connection's inbox", async () => {
+      const resolveForInbox = vi
+        .spyOn(platformCredentialService, "resolveForInbox")
+        .mockResolvedValue({
+          config: { systemUserToken: "sys-token" },
+        } as never)
 
       const result =
         await integrationWhatsappService.resolveDatasetCreationTokens({
-          integration: { auth: { metadata: { wabaId: "waba-1" } } },
+          integration: {
+            auth: { clientId: "app-1", metadata: { wabaId: "waba-1" } },
+            inboxId: "inbox-1",
+          },
           workspaceId: "ws-1",
           connectToken: "connect-token",
         })
@@ -313,26 +311,20 @@ describe("integrationWhatsappService signup sessions", () => {
         primaryToken: "sys-token",
         fallbackToken: "connect-token",
       })
-      expect(resolveCredentialOwnerIdForWorkspace).toHaveBeenCalledWith(
-        "ws-1",
+      expect(resolveForInbox).toHaveBeenCalledWith(
         expect.objectContaining({
-          ownerId: "sub-account-1",
-          tenantId: "7",
+          workspaceId: "ws-1",
+          inboxId: "inbox-1",
+          integrationAuth: expect.objectContaining({ clientId: "app-1" }),
+          type: "whatsapp",
         }),
       )
-      expect(
-        platformCredentialService.resolveWhatsappSystemUserToken,
-      ).toHaveBeenCalledWith(expect.objectContaining({ ownerId: "reseller-1" }))
     })
 
-    test("uses the connect token with no fallback when the owner has no credential", async () => {
-      vi.spyOn(workspaceService, "findById").mockResolvedValue({
-        ownerId: "owner-1",
-      } as never)
-      vi.spyOn(
-        platformCredentialService,
-        "resolveWhatsappSystemUserToken",
-      ).mockResolvedValue(null)
+    test("uses the connect token with no fallback when the connection's app has no credential", async () => {
+      vi.spyOn(platformCredentialService, "resolveForInbox").mockResolvedValue(
+        undefined,
+      )
 
       const result =
         await integrationWhatsappService.resolveDatasetCreationTokens({

@@ -2,6 +2,9 @@ import { beforeEach, describe, expect, test, vi } from "vitest"
 import { ChatbotXException, WorkspacePurgeIncompleteError } from "../../errors"
 
 const mocks = vi.hoisted(() => ({
+  findOwnerForDeletion: vi.fn(
+    async (_id?: string, _tx?: unknown): Promise<unknown> => undefined,
+  ),
   businessLoggerError: vi.fn(),
   businessLoggerWarn: vi.fn(),
   resourceDeletionLog: {
@@ -34,6 +37,7 @@ vi.mock("@chatbotx.io/database/repositories", async (importOriginal) => ({
   templateUninstallStateRepository: {
     hasLiveUninstallTouchingWorkspace: mocks.hasLiveUninstallTouchingWorkspace,
   },
+  userRepository: { findForAccountDeletion: mocks.findOwnerForDeletion },
 }))
 
 vi.mock("@chatbotx.io/analytics", () => ({
@@ -281,6 +285,7 @@ beforeEach(() => {
       return callback(client)
     },
   )
+  mocks.findOwnerForDeletion.mockReset().mockResolvedValue(undefined)
   mocks.purgeWorkspaceHeavyData.mockReset()
   mocks.purgeWorkspaceHeavyData.mockResolvedValue(0)
   mocks.purgeWorkspacePosts.mockReset()
@@ -320,6 +325,62 @@ describe("WorkspaceService.create", () => {
     await expect(createWorkspace.catch((err) => err)).resolves.toBeInstanceOf(
       ChatbotXException,
     )
+    expect(mocks.workspaceInsert).not.toHaveBeenCalled()
+  })
+
+  test("names the quota level that ran out", async () => {
+    mocks.tryConsume.mockResolvedValue({ ok: false, level: "pool" })
+
+    await expect(
+      workspaceService.create({
+        data: { name: "Acme" } as never,
+        createdBy: "owner-1",
+      }),
+    ).rejects.toMatchObject({
+      code: "workspaceLimitReached",
+      data: { level: "pool" },
+    })
+  })
+
+  test("refuses to create under an owner whose account deletion is requested and hands the seat back", async () => {
+    mocks.tryConsume.mockResolvedValue({ ok: true })
+    mocks.findOwnerForDeletion.mockResolvedValue({
+      id: "owner-1",
+      deletionRequestedAt: new Date(),
+    })
+
+    await expect(
+      workspaceService.create({
+        data: { name: "Acme", tenantId: "1", ownerId: "owner-1" } as never,
+        createdBy: "reseller-1",
+      }),
+    ).rejects.toMatchObject({ code: "accountDeletionScheduled" })
+    expect(mocks.findOwnerForDeletion).toHaveBeenCalledWith(
+      "owner-1",
+      expect.anything(),
+    )
+    expect(mocks.workspaceInsert).not.toHaveBeenCalled()
+  })
+
+  test("also locks the creator when it differs from the owner, in sorted order, and refuses on its pending deletion", async () => {
+    mocks.tryConsume.mockResolvedValue({ ok: true })
+    mocks.findOwnerForDeletion
+      .mockResolvedValueOnce({ id: "owner-1", deletionRequestedAt: null })
+      .mockResolvedValueOnce({
+        id: "reseller-1",
+        deletionRequestedAt: new Date(),
+      })
+
+    await expect(
+      workspaceService.create({
+        data: { name: "Acme", tenantId: "1", ownerId: "owner-1" } as never,
+        createdBy: "reseller-1",
+      }),
+    ).rejects.toMatchObject({ code: "accountDeletionScheduled" })
+    expect(mocks.findOwnerForDeletion.mock.calls.map(([id]) => id)).toEqual([
+      "owner-1",
+      "reseller-1",
+    ])
     expect(mocks.workspaceInsert).not.toHaveBeenCalled()
   })
 

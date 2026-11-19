@@ -13,7 +13,10 @@ import {
   type WorkspaceMemberPermissions,
   workspaceMemberRoles,
 } from "@chatbotx.io/database/partials"
-import { templateUninstallStateRepository } from "@chatbotx.io/database/repositories"
+import {
+  templateUninstallStateRepository,
+  userRepository,
+} from "@chatbotx.io/database/repositories"
 import {
   type WorkspaceDeletionRequestState,
   workspaceRepository,
@@ -36,6 +39,7 @@ import { contactActivityService } from "../contact-activity/service"
 import { contactInboxPostService } from "../contact-inbox-post/service"
 import { tenantService } from "../enterprise/tenant/service"
 import {
+  ChatbotXException,
   notFoundException,
   WorkspacePurgeIncompleteError,
   workspaceDeletionStartedException,
@@ -1124,7 +1128,7 @@ class WorkspaceService extends BaseService {
       metric: "workspaces",
     })
     if (!consumed.ok) {
-      throw workspaceLimitReachedException()
+      throw workspaceLimitReachedException(consumed.level)
     }
 
     // Filled by `writeWorkspace` as it goes, so the catch below knows which
@@ -1219,6 +1223,30 @@ class WorkspaceService extends BaseService {
     hostTenantId?: string
   }): Promise<WorkspaceModel> {
     const { data, tx } = props
+
+    // Lock the owner row (same `FOR UPDATE` as account deletion) so a create
+    // racing a deletion request either finishes first (the deletion then
+    // schedules this workspace) or sees the request and is refused — never a
+    // live workspace left under an account that is being deleted. The creator
+    // (who holds the seat and the owner membership) is locked too when it is a
+    // different user; ids are taken in sorted order so two creates cannot
+    // deadlock on each other.
+    const lockedUserIds = [
+      ...new Set([data.ownerId ?? props.createdBy, props.createdBy]),
+    ].sort()
+    for (const lockedUserId of lockedUserIds) {
+      const lockedUser = await userRepository.findForAccountDeletion(
+        lockedUserId,
+        tx,
+      )
+      if (lockedUser?.deletionRequestedAt) {
+        throw new ChatbotXException(
+          "Account deletion is scheduled for the workspace owner",
+          "accountDeletionScheduled",
+          403,
+        )
+      }
+    }
 
     const tenantId =
       data.tenantId ??

@@ -36,7 +36,6 @@ import { recordRefreshedAuth } from "../connection/record-refreshed-auth"
 import { connectionStateService } from "../connection/state-service"
 import { notFoundException } from "../errors"
 import { flowService } from "../flow/service"
-import { resolveCredentialOwnerIdForWorkspace } from "../google-ads/owner"
 import { logger } from "../logger"
 import { createDatasetWithFallback } from "../meta-conversions/dataset-fallback"
 import {
@@ -47,7 +46,6 @@ import { platformCredentialService } from "../platform-credential/service"
 import { assertReferencable } from "../template/installed-resource.service"
 import { withTemplateLockedTransaction } from "../template/template-resource-locks"
 import { whatsappBusinessAccountService } from "../whatsapp-business-account/service"
-import { workspaceService } from "../workspace/service"
 import type { WhatsappAuthValue } from "./auth-schema"
 import { whatsappAuthForCapiScopeSchema } from "./auth-schema"
 import {
@@ -633,7 +631,7 @@ class IntegrationWhatsappService extends BaseService {
    * with no fallback. Either way, provisioning never regresses.
    */
   async resolveDatasetCreationTokens(input: {
-    integration: { auth: unknown }
+    integration: { auth: unknown; inboxId?: string | null }
     workspaceId: string
     connectToken: string
     tx?: DatabaseClient
@@ -645,18 +643,16 @@ class IntegrationWhatsappService extends BaseService {
       return { primaryToken: input.connectToken, fallbackToken: null }
     }
 
-    const workspace = await workspaceService.findById({
-      id: input.workspaceId,
+    // The pinned app's system user, never another app's: with no credential
+    // for the connection's app the connect token is used alone.
+    const credential = await platformCredentialService.resolveForInbox({
+      workspaceId: input.workspaceId,
+      inboxId: input.integration.inboxId,
+      integrationAuth: input.integration.auth,
+      type: "whatsapp",
       tx: input.tx,
     })
-    const systemUserToken =
-      await platformCredentialService.resolveWhatsappSystemUserToken({
-        ownerId: await resolveCredentialOwnerIdForWorkspace(
-          input.workspaceId,
-          workspace,
-        ),
-        tx: input.tx,
-      })
+    const systemUserToken = credential?.config.systemUserToken ?? null
     if (!systemUserToken) {
       return { primaryToken: input.connectToken, fallbackToken: null }
     }

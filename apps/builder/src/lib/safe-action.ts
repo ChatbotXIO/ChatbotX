@@ -30,6 +30,7 @@ import { getGuestClientIp } from "@/lib/rate-limit/guest-rate-limit"
 import {
   canOpenWorkspaceOnHost,
   resolveRequestTenantId,
+  resolveRequestUserTenancy,
 } from "@/lib/tenant/request-tenant"
 import {
   checkWorkspaceOwnerAccess,
@@ -160,6 +161,7 @@ export const workspaceActionClientAllowExpired = authActionClient.use(
       !canOpenWorkspaceOnHost({
         workspaceTenantId: workspace.tenantId,
         hostTenantId: await resolveRequestTenantId(),
+        userTenancy: await resolveRequestUserTenancy(user.id),
         isSupportSession,
       })
     ) {

@@ -11,6 +11,7 @@ const COEXIST_JOB_ID = /^wa-coexist-phone-1-/
 const findDecryptedForWebhook = vi.fn()
 const findIntegrationTiktokByOpenId = vi.fn()
 const findOwnerUserIdByWorkspaceId = vi.fn()
+const resolveCredentialOwnerIdForWorkspace = vi.fn()
 const integrationQueueAdd = vi.fn()
 const identifyInboxAndIntegrationAuthFromIdentifier = vi.fn()
 const isCloud = vi.fn(() => true)
@@ -28,6 +29,7 @@ vi.mock("@chatbotx.io/business", () => ({
   },
   tenantService: { findById: vi.fn() },
   workspaceMemberService: { findOwnerUserIdByWorkspaceId },
+  resolveCredentialOwnerIdForWorkspace,
 }))
 
 vi.mock("@chatbotx.io/channel-registry/registry", () => ({
@@ -99,6 +101,7 @@ describe("credential-scoped webhook real dispatch", () => {
     vi.clearAllMocks()
     isCloud.mockReturnValue(true)
     findOwnerUserIdByWorkspaceId.mockResolvedValue("owner-1")
+    resolveCredentialOwnerIdForWorkspace.mockResolvedValue("owner-1")
     identifyInboxAndIntegrationAuthFromIdentifier.mockResolvedValue({
       inbox: { workspaceId: "workspace-1" },
     })

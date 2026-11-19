@@ -11,6 +11,7 @@ import {
   type ConnectSessionPurpose,
   type IntegrationType,
   integrationTypes,
+  ROOT_TENANT_ID,
   userConnectionAuthorizationAad,
 } from "@chatbotx.io/database/partials"
 import {
@@ -134,6 +135,30 @@ class UserService extends BaseService {
     return await userRepository.findById(userId)
   }
 
+  /** The tenant a user belongs to (their own `User.tenantId`), or undefined if the user is gone. */
+  async findTenantId(userId: string): Promise<string | undefined> {
+    const user = await db.query.userModel.findFirst({
+      where: { id: userId },
+      columns: { tenantId: true },
+    })
+    return user?.tenantId
+  }
+
+  /**
+   * The tenant a user belongs to and, for a root-tenant user, the tenant they
+   * own (a reseller). Backs the builder's host rule.
+   */
+  async findTenancy(
+    userId: string,
+  ): Promise<{ tenantId?: string; ownedTenantId?: string }> {
+    const tenantId = await this.findTenantId(userId)
+    if (tenantId !== ROOT_TENANT_ID) {
+      return { tenantId }
+    }
+    const owned = await tenantRepository.findByOwner(userId)
+    return { tenantId, ownedTenantId: owned?.id }
+  }
+
   async findByIdOrFail(userId: string): Promise<UserModel> {
     const user = await this.findById(userId)
     if (!user) {
@@ -181,7 +206,45 @@ class UserService extends BaseService {
         403,
       )
     }
+    return await this.scheduleAccountDeletion(props)
+  }
 
+  /**
+   * A reseller removing one of their sub-accounts. Same scheduled lifecycle as
+   * a self-requested deletion (24 h wait, workspaces scheduled, sessions
+   * revoked), with the reseller recorded as the actor. The reseller must own
+   * an active tenant and the target must be a different user of that tenant.
+   */
+  async requestAccountDeletionByTenantAdmin(props: {
+    actor: { userId: string }
+    userId: string
+  }): Promise<{ scheduledDeletionAt: Date }> {
+    if (props.actor.userId === props.userId) {
+      throw new ChatbotXException(
+        "Use the account deletion flow to delete your own account",
+        "forbidden",
+        403,
+      )
+    }
+    const tenant = await tenantRepository.findByOwner(props.actor.userId)
+    if (tenant?.status !== "active") {
+      throw new ChatbotXException(
+        "Only an active reseller can remove sub-accounts",
+        "forbidden",
+        403,
+      )
+    }
+    const targetTenantId = await this.findTenantId(props.userId)
+    if (targetTenantId !== tenant.id) {
+      throw notFoundException("User not found")
+    }
+    return await this.scheduleAccountDeletion(props)
+  }
+
+  private async scheduleAccountDeletion(props: {
+    actor: { userId: string }
+    userId: string
+  }): Promise<{ scheduledDeletionAt: Date }> {
     const result = await db.transaction(async (tx) => {
       const user = await userRepository.findForAccountDeletion(props.userId, tx)
       if (!user) {

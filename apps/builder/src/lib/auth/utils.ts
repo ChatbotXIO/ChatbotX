@@ -17,6 +17,7 @@ import {
   canOpenWorkspaceOnHost,
   filterWorkspacesForHost,
   resolveRequestTenantId,
+  resolveRequestUserTenancy,
 } from "@/lib/tenant/request-tenant"
 import { auth } from "./auth"
 
@@ -114,9 +115,11 @@ const getCachedHostScopedWorkspaces = cache(async () => {
     return null
   }
   const hostTenantId = await resolveRequestTenantId()
+  const userTenancy = await resolveRequestUserTenancy(all.user.id)
   const allWorkspaceMembers = all.allWorkspaceMembers.filter(
     (member) =>
-      filterWorkspacesForHost([member.workspace], hostTenantId).length,
+      filterWorkspacesForHost([member.workspace], hostTenantId, userTenancy)
+        .length,
   )
   return {
     ...all,
@@ -164,6 +167,7 @@ const getCachedCurrentUserAndTargetWorkspace = cache(
       !canOpenWorkspaceOnHost({
         workspaceTenantId: access.workspace.tenantId,
         hostTenantId: await resolveRequestTenantId(),
+        userTenancy: await resolveRequestUserTenancy(userAndWorkspaces.user.id),
         isSupportSession: access.isSupportSession,
       })
     ) {

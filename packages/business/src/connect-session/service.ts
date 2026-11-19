@@ -149,6 +149,8 @@ class ConnectSessionService extends BaseService {
       nextAction?: (nonce: string) => ConnectSessionModel["nextAction"]
       targetConnectionId?: string | null
       platformOwnerId?: string | null
+      platformCredentialId?: string | null
+      platformClientId?: string | null
       originHost?: string | null
       returnUrl?: string | null
     } & ConnectSessionActor,
@@ -178,6 +180,8 @@ class ConnectSessionService extends BaseService {
         actorUserId: input.actorUserId ?? null,
         actorTokenId: input.actorTokenId ?? null,
         platformOwnerId: input.platformOwnerId ?? null,
+        platformCredentialId: input.platformCredentialId ?? null,
+        platformClientId: input.platformClientId ?? null,
         originHost: input.originHost ?? null,
         returnUrl,
         stateNonceHash,

@@ -123,6 +123,7 @@ const connectCandidate = async (input: {
   candidate: ConnectionCandidate
   ownerId: string | undefined
   actorUserId?: string | null
+  platformCredentialId?: string | null
 }): Promise<ConnectionModel> => {
   const { adapter } = input
   const { provider } = adapter
@@ -150,6 +151,7 @@ const connectCandidate = async (input: {
       existing,
       ownerId: input.ownerId,
       actorUserId: input.actorUserId,
+      platformCredentialId: input.platformCredentialId,
       missingOwnerError: notFoundException("Workspace owner not found"),
     })
   } catch (err) {
@@ -300,6 +302,7 @@ export const connectTargets = async (input: {
           candidate,
           ownerId,
           actorUserId: input.actorUserId,
+          platformCredentialId: session.platformCredentialId,
         })
         connections.push(connection)
         outcomes.push(

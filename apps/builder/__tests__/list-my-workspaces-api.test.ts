@@ -49,6 +49,7 @@ vi.mock("@/orpc", () => ({ authorizedAPI }))
 const hostTenant = vi.hoisted(() => ({ value: "tenant-a" }))
 vi.mock("@/lib/tenant/request-tenant", () => ({
   resolveRequestTenantId: async () => hostTenant.value,
+  resolveRequestUserTenancy: async () => ({ tenantId: "1" }),
   filterWorkspacesForHost: <T extends { tenantId: string }>(
     items: T[],
     host: string,

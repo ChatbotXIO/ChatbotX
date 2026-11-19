@@ -83,3 +83,42 @@ describe("filterWorkspacesForHost", () => {
     expect(filterWorkspacesForHost(items, ROOT_TENANT_ID)).toEqual([items[0]])
   })
 })
+
+describe("host rule with the user's own tenancy", () => {
+  const ROOT_USER = { tenantId: ROOT_TENANT_ID }
+  const RESELLER = { tenantId: ROOT_TENANT_ID, ownedTenantId: TENANT }
+  const SUB_ACCOUNT = { tenantId: TENANT }
+
+  test.each([
+    // root host: a reseller opens the tenant they own, not another tenant's
+    [TENANT, ROOT_TENANT_ID, RESELLER, true],
+    [OTHER_TENANT, ROOT_TENANT_ID, RESELLER, false],
+    [ROOT_TENANT_ID, ROOT_TENANT_ID, RESELLER, true],
+    // root host: a plain root user (member of a tenant workspace) does not
+    [TENANT, ROOT_TENANT_ID, ROOT_USER, false],
+    [ROOT_TENANT_ID, ROOT_TENANT_ID, ROOT_USER, true],
+    // root host: a sub-account never opens a tenant workspace there
+    [TENANT, ROOT_TENANT_ID, SUB_ACCOUNT, false],
+    // (a root workspace matches the host itself; membership still gates it)
+    [ROOT_TENANT_ID, ROOT_TENANT_ID, SUB_ACCOUNT, true],
+    // tenant host: only that tenant's workspaces, whoever the user is
+    [TENANT, TENANT, RESELLER, true],
+    [ROOT_TENANT_ID, TENANT, RESELLER, false],
+    [OTHER_TENANT, TENANT, RESELLER, false],
+    [TENANT, TENANT, SUB_ACCOUNT, true],
+    // unknown tenancy: the host-equals-workspace rule only
+    [TENANT, ROOT_TENANT_ID, undefined, false],
+  ])("workspace %s, host %s, user %j → %s", (workspaceTenant, host, userTenancy, expected) => {
+    expect(isWorkspaceVisibleOnHost(workspaceTenant, host, userTenancy)).toBe(
+      expected,
+    )
+    expect(
+      canOpenWorkspaceOnHost({
+        workspaceTenantId: workspaceTenant,
+        hostTenantId: host,
+        userTenancy,
+        isSupportSession: false,
+      }),
+    ).toBe(expected)
+  })
+})

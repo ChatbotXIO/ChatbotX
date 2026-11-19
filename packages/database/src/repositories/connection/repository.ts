@@ -5,7 +5,9 @@ import {
   db,
   desc,
   eq,
+  gt,
   inArray,
+  isNull,
   relationsFilterToSQL,
   sql,
 } from "../../client"
@@ -199,6 +201,55 @@ export const connectionRepository = {
       )
       .returning()
     return row
+  },
+
+  /**
+   * Keyset page of one provider's connections that have no credential pin yet
+   * (`id` ascending, after `afterId`). Backs the pin backfill script.
+   */
+  async listUnpinnedByProvider(
+    input: {
+      provider: IntegrationType
+      afterId?: string | null
+      workspaceId?: string | null
+      limit: number
+    },
+    tx: DatabaseClient = db,
+  ): Promise<ConnectionModel[]> {
+    return await tx
+      .select()
+      .from(connectionModel)
+      .where(
+        and(
+          eq(connectionModel.provider, input.provider),
+          isNull(connectionModel.platformCredentialId),
+          input.afterId ? gt(connectionModel.id, input.afterId) : undefined,
+          input.workspaceId
+            ? eq(connectionModel.workspaceId, input.workspaceId)
+            : undefined,
+        ),
+      )
+      .orderBy(connectionModel.id)
+      .limit(input.limit)
+  },
+
+  /** Writes a pin only while the connection still has none, so a concurrent connect's pin is never overwritten. Returns whether a row was pinned. */
+  async pinCredentialIfUnset(
+    input: { id: string; workspaceId: string; platformCredentialId: string },
+    tx: DatabaseClient = db,
+  ): Promise<boolean> {
+    const rows = await tx
+      .update(connectionModel)
+      .set({ platformCredentialId: input.platformCredentialId })
+      .where(
+        and(
+          eq(connectionModel.id, input.id),
+          eq(connectionModel.workspaceId, input.workspaceId),
+          isNull(connectionModel.platformCredentialId),
+        ),
+      )
+      .returning({ id: connectionModel.id })
+    return rows.length > 0
   },
 
   /** `SELECT DISTINCT provider` for the given workspace+statuses — backs `listConnectionProviderResources`'s already-connected check without paging through every matching row. */

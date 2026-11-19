@@ -41,6 +41,7 @@ const { hostTenantId } = vi.hoisted(() => ({
 vi.mock("server-only", () => ({}))
 vi.mock("@/lib/tenant/request-tenant", () => ({
   resolveRequestTenantId: async () => hostTenantId.value,
+  resolveRequestUserTenancy: async () => ({ tenantId: "1" }),
   canOpenWorkspaceOnHost: (props: {
     workspaceTenantId: string
     hostTenantId: string

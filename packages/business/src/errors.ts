@@ -427,11 +427,21 @@ export const summaryAlreadyGeneratingException = () =>
     409,
   )
 
-export const workspaceLimitReachedException = () =>
-  new ChatbotXException(
+/**
+ * `level` says whose seat ran out when known: `user` is the owner's own
+ * allowance, `pool` the tenant owner's shared plan. The message stays the same
+ * for existing callers; the level travels in `data` for those that name it.
+ */
+export const workspaceLimitReachedException = (level?: "user" | "pool") => {
+  const exception = new ChatbotXException(
     "Workspace limit reached for this plan",
     "workspaceLimitReached",
   )
+  if (level) {
+    exception.data = { level }
+  }
+  return exception
+}
 
 /** The admin console's "create workspace for an owner" flow refuses a second workspace for an owner who already has a live one — one owner, one owned workspace. */
 export const ownerAlreadyHasWorkspaceException = () =>

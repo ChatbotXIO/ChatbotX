@@ -32,6 +32,7 @@ import {
 } from "../partials/shared"
 import { userModel } from "./auth-user"
 import { connectionModel } from "./connection"
+import { platformCredentialModel } from "./platform-credential"
 import { workspaceModel } from "./workspace"
 import { workspaceApiTokenModel } from "./workspace-api-token"
 
@@ -69,6 +70,15 @@ export const connectSessionModel = pgTable(
     }),
     // White-label: the credential owner and host that started the flow.
     platformOwnerId: text(),
+    // The `PlatformCredential` the flow started with; the callback must resolve
+    // the same one, and the finished Connection pins it.
+    platformCredentialId: bigintAsString().references(
+      () => platformCredentialModel.id,
+      { onDelete: "set null", onUpdate: "cascade" },
+    ),
+    // The app's `clientId` at start: still checked at the callback when the
+    // pinned credential was deleted mid-flow (which nulls the pin above).
+    platformClientId: text(),
     originHost: text(),
     // `returnUrl` is sanitized with `sanitizeReferer`
     // (`apps/builder/src/lib/oauth-referer.ts`).
@@ -104,6 +114,9 @@ export const connectSessionModel = pgTable(
       "btree",
       table.workspaceId.asc().nullsLast(),
     ),
+    index("ConnectSession_platformCredentialId_idx")
+      .using("btree", table.platformCredentialId.asc().nullsLast())
+      .where(sql`${table.platformCredentialId} IS NOT NULL`),
     index("ConnectSession_expiresAt_idx").using(
       "btree",
       table.expiresAt.asc().nullsLast(),
