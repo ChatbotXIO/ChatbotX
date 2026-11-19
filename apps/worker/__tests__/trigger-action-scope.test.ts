@@ -4,11 +4,13 @@ const mocks = vi.hoisted(() => ({
   findLatestCreatedByContact: vi.fn(),
   findByIdForContact: vi.fn(),
   findMostRecentByContact: vi.fn(),
+  openEmailThread: vi.fn(),
 }))
 
 vi.mock("@chatbotx.io/business", () => ({
   conversationService: {
     findLatestCreatedByContact: mocks.findLatestCreatedByContact,
+    openEmailThread: mocks.openEmailThread,
   },
 }))
 vi.mock("@chatbotx.io/database/repositories", () => ({
@@ -81,5 +83,61 @@ describe("createTriggerActionScope", () => {
       id: "ci-threaded",
     })
     expect(mocks.findMostRecentByContact).not.toHaveBeenCalled()
+  })
+
+  describe("SMTP contact without a conversation", () => {
+    beforeEach(() => {
+      mocks.findLatestCreatedByContact.mockResolvedValue(undefined)
+      mocks.findMostRecentByContact.mockResolvedValue({
+        id: "ci-1",
+        inboxId: "inbox-1",
+        channel: "smtp",
+      })
+      mocks.openEmailThread.mockResolvedValue({ id: "outreach-1" })
+    })
+
+    test("falls back to one outreach thread seeded by the run key", async () => {
+      const scope = createTriggerActionScope({ ...identity, runKey: "run-1" })
+
+      expect(await scope.getConversation()).toEqual({ id: "outreach-1" })
+      expect(await scope.getOutreachConversation()).toEqual({
+        id: "outreach-1",
+      })
+      expect(mocks.openEmailThread).toHaveBeenCalledTimes(1)
+      expect(mocks.openEmailThread).toHaveBeenCalledWith(
+        expect.objectContaining({ contactInboxId: "ci-1", seed: "run-1" }),
+      )
+    })
+
+    test("a retry with the same run key asks for the same thread", async () => {
+      await createTriggerActionScope({
+        ...identity,
+        runKey: "run-1",
+      }).getOutreachConversation()
+      await createTriggerActionScope({
+        ...identity,
+        runKey: "run-1",
+      }).getOutreachConversation()
+
+      const seeds = mocks.openEmailThread.mock.calls.map(
+        ([arg]) => (arg as { seed: string }).seed,
+      )
+      expect(seeds).toEqual(["run-1", "run-1"])
+    })
+
+    test("keeps an existing conversation and skips non-SMTP contacts", async () => {
+      mocks.findLatestCreatedByContact.mockResolvedValue({ id: "conv-1" })
+      expect(
+        await createTriggerActionScope(identity).getConversation(),
+      ).toEqual({ id: "conv-1" })
+
+      mocks.findMostRecentByContact.mockResolvedValue({
+        id: "ci-2",
+        channel: "messenger",
+      })
+      const scope = createTriggerActionScope(identity)
+      expect(await scope.getOutreachConversation()).toBeUndefined()
+      expect(mocks.openEmailThread).not.toHaveBeenCalled()
+    })
   })
 })

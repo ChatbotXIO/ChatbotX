@@ -32,8 +32,10 @@ import type {
   CreateMessageInput,
   CreateMessageResult,
   DistributedLock,
+  EmailParentRow,
   FindAIContextMessagesOptions,
   FindAttachmentByIdParams,
+  FindEmailParentParams,
   FindLastByConversationOptions,
   FindManyByConversationOptions,
   FindManyBySourceIdsParams,
@@ -2237,6 +2239,56 @@ export class ShardedMessageRepository implements IMessageRepository {
       ),
     )
     return shardResults.flat()
+  }
+
+  async findEmailParent({
+    contactInboxId,
+    conversationId,
+    messageId,
+    sinceTime,
+    workspaceId,
+  }: FindEmailParentParams): Promise<EmailParentRow | null> {
+    const shards = await this.getConversationReadShards(sinceTime, workspaceId)
+    const shardResults = await Promise.all(
+      shards.map(
+        async (shardInfo): Promise<EmailParentRow | null> =>
+          await this.shardManager.withShardClientForPrimary(
+            shardInfo.shard,
+            async (shardClient) => {
+              const [row] = await shardClient
+                .select({
+                  id: messageModel.id,
+                  contactInboxId: messageModel.contactInboxId,
+                  sourceId: messageModel.sourceId,
+                  contentAttributes: messageModel.contentAttributes,
+                  createdAt: messageModel.createdAt,
+                })
+                .from(messageModel)
+                .where(
+                  and(
+                    eq(messageModel.workspaceId, workspaceId),
+                    eq(messageModel.conversationId, conversationId),
+                    eq(messageModel.contactInboxId, contactInboxId),
+                    isNotNull(messageModel.sourceId),
+                    inArray(messageModel.messageType, ["incoming", "outgoing"]),
+                    sql`${messageModel.contentAttributes} ? 'email'`,
+                    gte(messageModel.createdAt, sinceTime),
+                    messageId ? eq(messageModel.id, messageId) : undefined,
+                  ),
+                )
+                .orderBy(desc(messageModel.createdAt))
+                .limit(1)
+              return (row as EmailParentRow | undefined) ?? null
+            },
+          ),
+      ),
+    )
+    return (
+      shardResults
+        .flatMap((row) => (row ? [row] : []))
+        .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())[0] ??
+      null
+    )
   }
 
   async bulkPatchContentAttributes({

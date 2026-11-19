@@ -419,6 +419,7 @@ export const createOutgoing = async (props: {
   assertChannelAcceptsImages({
     channel: contactInbox.channel,
     kind: resolveInboxReplyKind({
+      channel: channelTypes.safeParse(contactInbox.channel).data,
       hasReplyTarget: Boolean(parsedInput.replyToMessageId),
       isPrivateReply: Boolean(parsedInput.isPrivateReply),
     }),

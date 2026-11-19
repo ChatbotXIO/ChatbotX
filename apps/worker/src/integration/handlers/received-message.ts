@@ -521,24 +521,12 @@ export const receiveMessage = async (
     contact,
     isNewContact,
   } = detected
-  // A reply to an archived email thread reopens it. Scoped to SMTP: every other
-  // channel keeps its existing archive behavior.
+  // A reply to an archived email thread reopens it, but only once the message
+  // is known to be new (see below): a redelivery of an already stored mail
+  // must not reopen a thread someone archived since. Scoped to SMTP.
   const shouldUnarchive =
     inbox.channel === "smtp" && !!detectedConversation.archivedAt
-  if (shouldUnarchive) {
-    await conversationService.unarchiveByIds({
-      workspaceId: inbox.workspaceId,
-      ids: [detectedConversation.id],
-      triggerContext: {
-        triggerSource: "worker",
-        triggerHandler: "received-message",
-        triggerType: "message_received",
-      },
-    })
-  }
-  const conversation: ConversationModel = shouldUnarchive
-    ? { ...detectedConversation, archivedAt: null }
-    : detectedConversation
+  const conversation: ConversationModel = detectedConversation
   // Zalo and Telegram echo the raw Skip payload as the message text; show the
   // label the contact pressed instead. A no-op for every other tap.
   const stepInputSkipLabel = stepInputSkipChallengeId
@@ -664,6 +652,18 @@ export const receiveMessage = async (
         echoOrigin: parsedMessage.echoOrigin,
         ...systemFieldUpdates,
       })
+
+    if (shouldUnarchive && isNewMessage) {
+      await conversationService.unarchiveByIds({
+        workspaceId: inbox.workspaceId,
+        ids: [conversation.id],
+        triggerContext: {
+          triggerSource: "worker",
+          triggerHandler: "received-message",
+          triggerType: "message_received",
+        },
+      })
+    }
 
     // Unlike the flow actions below, this also runs on a redelivery: resolving
     // is idempotent (deduplicated while a job is active, and the challenge

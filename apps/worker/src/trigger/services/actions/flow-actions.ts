@@ -1,4 +1,4 @@
-import { conversationService, flowService } from "@chatbotx.io/business"
+import { flowService } from "@chatbotx.io/business"
 import type { ContactInboxWorkspaceRow } from "@chatbotx.io/database/repositories"
 import type { ConversationModel } from "@chatbotx.io/database/types"
 import { startExternalStepActionSchema } from "@chatbotx.io/flow-config"
@@ -10,7 +10,12 @@ import {
 } from "@chatbotx.io/worker-config"
 import { buildSendFlowJob } from "../../../integration/handlers/send-flow-job"
 import type { ActionExecutionContext } from "../../types"
-import { skipped, succeeded, type TriggerActionHandler } from "./types"
+import {
+  skipped,
+  succeeded,
+  type TriggerActionHandler,
+  type TriggerActionScope,
+} from "./types"
 
 /**
  * An inbound-webhook action may run again after a retry that lost its
@@ -33,26 +38,19 @@ const enqueueSendFlow = async (
 /**
  * A flow started without an event conversation (tag added, webhook, pipeline…)
  * must not reply into whichever thread was last active: for email that is an
- * arbitrary old thread. SMTP opens a fresh outreach thread, seeded by the
- * occurrence so a retry reuses it.
+ * arbitrary old thread. SMTP uses the run's single outreach thread.
  */
 const resolveFlowConversationId = async (props: {
   context: ActionExecutionContext
   conversation: ConversationModel
   contactInbox: ContactInboxWorkspaceRow
+  scope: TriggerActionScope
 }): Promise<string | ConversationModel> => {
-  const { context, conversation, contactInbox } = props
+  const { context, conversation, contactInbox, scope } = props
   if (context.conversationId || contactInbox.channel !== "smtp") {
     return conversation
   }
-  const outreach = await conversationService.openEmailThread({
-    workspaceId: context.workspaceId,
-    contactId: context.contactId,
-    contactInboxId: contactInbox.id,
-    contactInbox: { ...contactInbox, contactId: context.contactId },
-    seed: context.occurrenceKey,
-  })
-  return outreach.id
+  return (await scope.getOutreachConversation()) ?? conversation
 }
 
 export const startAnotherFlow: TriggerActionHandler = async ({
@@ -94,6 +92,7 @@ export const startAnotherFlow: TriggerActionHandler = async ({
       context,
       conversation,
       contactInbox,
+      scope,
     }),
     contactInboxId: contactInbox.id,
     flowId,
@@ -143,6 +142,7 @@ export const startExternalStep: TriggerActionHandler = async ({
         context,
         conversation,
         contactInbox,
+        scope,
       }),
       contactInboxId: contactInbox.id,
       flowId,

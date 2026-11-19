@@ -42,6 +42,9 @@ export class TriggerExecutorService {
         workspaceId,
         contactInboxId,
         conversationId,
+        runKey: occurrenceId
+          ? `trigger:${occurrenceId}:${triggerId}`
+          : undefined,
       })
 
       for (const [index, action] of actionsArray.entries()) {

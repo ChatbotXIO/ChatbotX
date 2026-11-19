@@ -19,6 +19,11 @@ export const skipped = (reason: string): ActionExecutionOutcome => ({
  */
 export type TriggerActionScope = {
   getConversation: () => Promise<ConversationModel | undefined>
+  /**
+   * The run's single outreach email thread for an SMTP contact, `undefined`
+   * for any other channel. Opened lazily and idempotently.
+   */
+  getOutreachConversation: () => Promise<ConversationModel | undefined>
   getContactInbox: () => Promise<ContactInboxWorkspaceRow | null>
   /**
    * Conversation-state actions mutate the row; the next action must re-read it

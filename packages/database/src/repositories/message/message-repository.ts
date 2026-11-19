@@ -151,6 +151,20 @@ export interface FindThreadAnchorsBySourceIdsParams {
   workspaceId: string
 }
 
+export interface FindEmailParentParams {
+  contactInboxId: string
+  conversationId: string
+  /** Restrict to this message (an explicit reply target) instead of the newest. */
+  messageId?: string
+  sinceTime: Date
+  workspaceId: string
+}
+
+export type EmailParentRow = Pick<
+  MessageModel,
+  "id" | "contactInboxId" | "sourceId" | "contentAttributes" | "createdAt"
+>
+
 export interface HardDeleteAllByContactInboxParams {
   contactInboxId: string
   sinceTime: Date
@@ -335,6 +349,15 @@ export interface IMessageRepository {
     workspaceId: string,
     sinceTime?: Date,
   ): Promise<MessageModel | null>
+
+  /**
+   * The newest delivered email message (carries a `sourceId` and `email`
+   * content attributes) of one contact inbox in a conversation, or the one
+   * named by `messageId`. Filters run in SQL before the limit, and reads use
+   * shard primaries so a mail persisted a moment ago is visible: a replica
+   * miss would reuse a Message-ID. Any unavailable shard throws.
+   */
+  findEmailParent(params: FindEmailParentParams): Promise<EmailParentRow | null>
 
   findLastByConversation(
     conversationId: string,

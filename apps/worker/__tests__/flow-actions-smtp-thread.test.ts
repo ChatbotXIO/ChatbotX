@@ -1,13 +1,12 @@
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
 const mocks = vi.hoisted(() => ({
-  openEmailThread: vi.fn(),
+  getOutreachConversation: vi.fn(),
   findActiveById: vi.fn(),
   queueAdd: vi.fn(),
 }))
 
 vi.mock("@chatbotx.io/business", () => ({
-  conversationService: { openEmailThread: mocks.openEmailThread },
   flowService: {
     findActiveById: mocks.findActiveById,
     resolveStartTarget: vi.fn(),
@@ -39,6 +38,7 @@ const run = (overrides: Record<string, unknown>, channel = "smtp") =>
     conversation: { id: "latest-conv" },
     scope: {
       getContactInbox: async () => ({ ...smtpInbox, channel }),
+      getOutreachConversation: mocks.getOutreachConversation,
     },
   } as never)
 
@@ -46,28 +46,22 @@ describe("startAnotherFlow on an SMTP contact", () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mocks.findActiveById.mockResolvedValue({ currentVersionId: "v1" })
-    mocks.openEmailThread.mockResolvedValue({ id: "outreach-conv" })
+    mocks.getOutreachConversation.mockResolvedValue({ id: "outreach-conv" })
   })
 
-  test("opens a fresh outreach thread when the event carries no conversation", async () => {
+  test("uses the run's outreach thread when the event carries no conversation", async () => {
     await run({})
 
-    expect(mocks.openEmailThread).toHaveBeenCalledWith(
-      expect.objectContaining({
-        contactId: "contact-1",
-        contactInboxId: "ci-1",
-        seed: "trigger:occ:t-1:0",
-      }),
-    )
-    expect(mocks.queueAdd.mock.calls[0]?.[1].data.conversationId).toBe(
-      "outreach-conv",
-    )
+    expect(mocks.getOutreachConversation).toHaveBeenCalledTimes(1)
+    expect(mocks.queueAdd.mock.calls[0]?.[1].data.conversationId).toEqual({
+      id: "outreach-conv",
+    })
   })
 
   test("replies into the event's own conversation when there is one", async () => {
     await run({ conversationId: "event-conv" })
 
-    expect(mocks.openEmailThread).not.toHaveBeenCalled()
+    expect(mocks.getOutreachConversation).not.toHaveBeenCalled()
     expect(mocks.queueAdd.mock.calls[0]?.[1].data.conversationId).toEqual({
       id: "latest-conv",
     })
@@ -76,7 +70,7 @@ describe("startAnotherFlow on an SMTP contact", () => {
   test("leaves other channels on the resolved conversation", async () => {
     await run({}, "messenger")
 
-    expect(mocks.openEmailThread).not.toHaveBeenCalled()
+    expect(mocks.getOutreachConversation).not.toHaveBeenCalled()
     expect(mocks.queueAdd.mock.calls[0]?.[1].data.conversationId).toEqual({
       id: "latest-conv",
     })

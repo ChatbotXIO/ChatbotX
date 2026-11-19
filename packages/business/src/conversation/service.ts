@@ -355,6 +355,15 @@ class ConversationService extends BaseService {
       return
     }
 
+    // An SMTP contact has no DM: each email thread is its own conversation.
+    if (contactInbox.channel === "smtp") {
+      return await this.findLatestSmtpConversationByContact({
+        workspaceId,
+        contactId,
+        tx,
+      })
+    }
+
     return await this.findDMByContact({ workspaceId, contactId, tx })
   }
 
@@ -2284,49 +2293,23 @@ class ConversationService extends BaseService {
         EMAIL_THREAD_LOOKBACK_MS,
       ) ?? new Date(Date.now() - EMAIL_THREAD_LOOKBACK_MS)
 
-    if (replyToMessageId) {
-      const message = await messageRepository.findByIdForConversation(
-        replyToMessageId,
-        conversation.id,
-        conversation.workspaceId,
-        sinceTime,
-      )
-      const email = message?.contentAttributes?.email
-      if (
-        !message?.sourceId ||
-        message.contactInboxId !== contactInboxId ||
-        typeof email !== "object" ||
-        email === null
-      ) {
-        throw new ChatbotXException(
-          "The requested email reply parent was not found",
-          "EMAIL_REPLY_PARENT_NOT_FOUND",
-          404,
-        )
-      }
+    const parent = await messageRepository.findEmailParent({
+      conversationId: conversation.id,
+      workspaceId: conversation.workspaceId,
+      contactInboxId,
+      messageId: replyToMessageId,
+      sinceTime,
+    })
+    const email = parent?.contentAttributes?.email
+    if (typeof email === "object" && email !== null) {
       return email as Record<string, unknown>
     }
-
-    const messages = await messageRepository.findLastByConversation(
-      conversation.id,
-      {
-        workspaceId: conversation.workspaceId,
-        messageTypes: ["incoming", "outgoing"],
-        limit: 10,
-        withAttachments: false,
-        sinceTime,
-      },
-    )
-    for (const message of messages) {
-      const email = message.contentAttributes?.email
-      if (
-        message.contactInboxId === contactInboxId &&
-        message.sourceId &&
-        typeof email === "object" &&
-        email !== null
-      ) {
-        return email as Record<string, unknown>
-      }
+    if (replyToMessageId) {
+      throw new ChatbotXException(
+        "The requested email reply parent was not found",
+        "EMAIL_REPLY_PARENT_NOT_FOUND",
+        404,
+      )
     }
     return
   }
