@@ -117,14 +117,18 @@ export function resolveTrialEndsAt(
     : null
 }
 
+/** `planStatus` value the billing portal writes when a charge is in dunning. */
+const PAST_DUE_STATUS = planStatuses.enum.past_due
+
 /**
  * Shared blocked-state derivation for the cloud trial-expiry UX. Mirrors the
  * server-side access gate but stays pure so server components and client
  * affordances can derive the same boolean from plan fields already in hand.
  *
- * Allow-list, mirroring `userQuotaService.getAccessStateFromQuota`: only
- * `active` and a non-expired `trial` are allowed. Every other status
- * (`past_due`, `expired`, expired `trial`, unrecognized) blocks.
+ * Allow-list, mirroring `userQuotaService.getAccessStateFromQuota`: `active`,
+ * `past_due` (dunning grace; quota limits still apply) and a non-expired
+ * `trial` are allowed. Every other status (`expired`, expired `trial`,
+ * unrecognized) blocks.
  */
 export function isBlockedFromPlan(
   planStatus: string | null,
@@ -135,7 +139,7 @@ export function isBlockedFromPlan(
   }
 
   if (planStatus !== TRIAL_STATUS) {
-    return planStatus !== ACTIVE_STATUS
+    return planStatus !== ACTIVE_STATUS && planStatus !== PAST_DUE_STATUS
   }
 
   if (!trialEndsAt) {
@@ -250,9 +254,6 @@ export function buildTrialInfo(
   const daysRemaining = Math.ceil((end - now) / DAY_MS)
   return { daysRemaining, level: resolveTrialLevel(daysRemaining) }
 }
-
-/** `planStatus` value the billing portal writes when a charge is in dunning. */
-const PAST_DUE_STATUS = planStatuses.enum.past_due
 
 /**
  * Discriminated banner state derived from the plan fields on `UserQuota`. The

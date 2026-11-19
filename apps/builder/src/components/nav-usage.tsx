@@ -3,6 +3,7 @@
 import { useSidebar } from "@chatbotx.io/ui/components/ui/sidebar"
 import { cn } from "@chatbotx.io/ui/lib/utils"
 import { useTranslations } from "next-intl"
+import { UpdatePaymentButton } from "@/enterprise/features/billing/update-payment-button"
 import { UpgradePlanButton } from "@/enterprise/features/billing/upgrade-plan-dialog"
 import {
   buildPlanNotice,
@@ -90,9 +91,9 @@ export function NavUsage({
           <p className="text-center text-destructive text-xs">
             {t("billing.pastDue.message")}
           </p>
-          <UpgradePlanButton className="w-full" size="sm" variant="destructive">
+          <UpdatePaymentButton className="w-full" size="sm" variant="destructive">
             {t("actions.updatePayment")}
-          </UpgradePlanButton>
+          </UpdatePaymentButton>
         </>
       )}
     </div>

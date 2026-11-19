@@ -221,6 +221,10 @@ describe("isBlockedFromPlan", () => {
     expect(isBlockedFromPlan(EXPIRED_STATUS, null)).toBe(true)
   })
 
+  test("does not block past_due (grace while payment is recovered)", () => {
+    expect(isBlockedFromPlan(PAST_DUE_STATUS, null)).toBe(false)
+  })
+
   test("blocks when a trial end is in the past", () => {
     const realNow = Date.now
     Date.now = () => now
