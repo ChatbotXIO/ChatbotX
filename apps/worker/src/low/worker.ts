@@ -3,6 +3,7 @@ import {
   withBlockedOwnerGuard,
 } from "@chatbotx.io/business"
 import {
+  type ContactInfoCaptureJobData,
   type LeaderboardJobData,
   LowJobAction,
   type LowJobData,
@@ -14,6 +15,7 @@ import { env } from "../env"
 import { captureContactProfileSnapshot } from "../integration/handlers/capture-contact-profile-snapshot"
 import { coexistAttachmentDownload } from "../integration/handlers/coexist/attachment-download"
 import { updateContactAvatar } from "../integration/handlers/contact/update-avatar"
+import { processContactInfoCapture } from "../integration/handlers/contact-info-capture"
 import { contactMarkAsRead } from "../integration/handlers/conversation"
 import { processIncomingMessage } from "../integration/handlers/incoming-message"
 import { handleMessageStatus } from "../integration/handlers/message-status"
@@ -143,7 +145,8 @@ async function settleMissedCommentReplay(job: Job<LowJobData>): Promise<void> {
  *
  * This process also hosts the dedicated, rate-limited `profileSnapshot` consumer
  * (contact relationship snapshots) — non-urgent provider enrichment that must
- * not occupy the integration process.
+ * not occupy the integration process — and the small, rate-limited
+ * `contactInfoCapture` consumer.
  */
 function startLowWorker() {
   createQueueWorker(
@@ -197,6 +200,31 @@ function startLowWorker() {
       })
     },
     { concurrency: env.LEADERBOARD_WORKER_CONCURRENCY },
+  )
+
+  // Broadcast "left a phone/email" attribution: its own queue so a burst of
+  // replies carrying a phone number never takes `low` slots, with small
+  // concurrency and a rate limit because every run reads message history.
+  createQueueWorker(
+    queueNames.enum.contactInfoCapture,
+    async (job: Job<ContactInfoCaptureJobData>) => {
+      const workspaceId = job.data.data.workspaceId
+      await withBlockedOwnerGuard(workspaceId, async () => {
+        await runJobWithAuditContext(
+          { workspaceId, source: `contact-info-capture:${job.data.type}` },
+          async () => {
+            await processContactInfoCapture(job.data.data)
+          },
+        )
+      })
+    },
+    {
+      concurrency: env.CONTACT_INFO_CAPTURE_CONCURRENCY,
+      limiter: {
+        max: env.CONTACT_INFO_CAPTURE_JOBS_PER_SECOND,
+        duration: 1000,
+      },
+    },
   )
 }
 

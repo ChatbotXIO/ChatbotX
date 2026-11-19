@@ -10,20 +10,34 @@ import {
   or,
   sql,
 } from "@chatbotx.io/database/client"
-import type { OccurrenceBucketGranularity } from "@chatbotx.io/database/partials"
+import type {
+  ContactInfoType,
+  OccurrenceBucketGranularity,
+} from "@chatbotx.io/database/partials"
 import { zonedBucketKey } from "@chatbotx.io/database/queries/date-bucket"
+import { contactInfoCaptureRepository } from "@chatbotx.io/database/repositories/contact-info-capture"
 import {
   broadcastModel,
+  contactInfoCaptureModel,
   contactsOnBroadcastsModel,
 } from "@chatbotx.io/database/schema"
-import type {
-  BroadcastBulkUpdateItem,
-  BroadcastEventType,
-  BroadcastFailedBulkUpdateItem,
-  BroadcastStats,
+import {
+  type BroadcastBulkUpdateItem,
+  type BroadcastEventType,
+  type BroadcastFailedBulkUpdateItem,
+  type BroadcastStats,
+  CONTACT_INFO_CAPTURE_EVENT_INFO_TYPE,
+  type ContactInfoCaptureEventType,
+  isContactInfoCaptureEvent,
 } from "../../schemas/broadcast-stats"
 import type { ContactEventData } from "../../schemas/common"
 import { BaseRepository } from "./base.repository"
+
+const CAPTURE_EVENT_BY_INFO_TYPE = Object.fromEntries(
+  Object.entries(CONTACT_INFO_CAPTURE_EVENT_INFO_TYPE).map(
+    ([eventType, infoType]) => [infoType, eventType],
+  ),
+) as Record<ContactInfoType, ContactInfoCaptureEventType>
 
 export class BroadcastStatsRepository extends BaseRepository {
   async getUnreadBroadcastsForContactInboxes(input: {
@@ -156,17 +170,25 @@ export class BroadcastStatsRepository extends BaseRepository {
     const t = contactsOnBroadcastsModel
     const b = broadcastModel
 
-    const rows = await db
-      .select({ broadcastId: t.broadcastId, ...this.recipientCounts() })
-      .from(t)
-      .innerJoin(b, eq(t.broadcastId, b.id))
-      .where(
-        and(
-          inArray(t.broadcastId, input.broadcastIds),
-          eq(b.workspaceId, input.workspaceId),
-        ),
-      )
-      .groupBy(t.broadcastId)
+    // One extra grouped read for the whole page, not one per broadcast.
+    const [rows, captureRows] = await Promise.all([
+      db
+        .select({ broadcastId: t.broadcastId, ...this.recipientCounts() })
+        .from(t)
+        .innerJoin(b, eq(t.broadcastId, b.id))
+        .where(
+          and(
+            inArray(t.broadcastId, input.broadcastIds),
+            eq(b.workspaceId, input.workspaceId),
+          ),
+        )
+        .groupBy(t.broadcastId),
+      contactInfoCaptureRepository.countBySources({
+        workspaceId: input.workspaceId,
+        sourceType: "broadcast",
+        sourceIds: input.broadcastIds,
+      }),
+    ])
 
     const result: Record<string, BroadcastStats> = {}
     for (const id of input.broadcastIds) {
@@ -175,6 +197,10 @@ export class BroadcastStatsRepository extends BaseRepository {
     for (const row of rows) {
       result[row.broadcastId] = this.toStats(row)
     }
+    this.mergeCaptureCounts(
+      result,
+      captureRows.map((row) => ({ ...row, key: row.sourceId })),
+    )
     return result
   }
 
@@ -207,24 +233,55 @@ export class BroadcastStatsRepository extends BaseRepository {
       input.timezone,
     )
 
-    const rows = await db
-      .select({ bucket, ...this.recipientCounts() })
-      .from(t)
-      .innerJoin(b, eq(t.broadcastId, b.id))
-      .where(
-        and(
-          eq(b.workspaceId, input.workspaceId),
-          eq(b.parentBroadcastId, input.parentBroadcastId),
-          inArray(bucket, input.buckets),
-        ),
-      )
-      // Ordinal: the bucket expression carries bound parameters, and repeating
-      // it would render different placeholders Postgres cannot match.
-      .groupBy(sql`1`)
+    const c = contactInfoCaptureModel
+
+    const [rows, captureRows] = await Promise.all([
+      db
+        .select({ bucket, ...this.recipientCounts() })
+        .from(t)
+        .innerJoin(b, eq(t.broadcastId, b.id))
+        .where(
+          and(
+            eq(b.workspaceId, input.workspaceId),
+            eq(b.parentBroadcastId, input.parentBroadcastId),
+            inArray(bucket, input.buckets),
+          ),
+        )
+        // Ordinal: the bucket expression carries bound parameters, and
+        // repeating it would render different placeholders Postgres cannot
+        // match.
+        .groupBy(sql`1`),
+      // Captures of a run belong to the run's own broadcast row, so they are
+      // bucketed by that row's `occurrenceAt` like its recipients.
+      db
+        .select({
+          bucket,
+          infoType: c.infoType,
+          count: sql<number>`count(*)::int`,
+        })
+        .from(c)
+        .innerJoin(
+          b,
+          and(eq(c.sourceId, b.id), eq(c.workspaceId, b.workspaceId)),
+        )
+        .where(
+          and(
+            eq(c.workspaceId, input.workspaceId),
+            eq(c.sourceType, "broadcast"),
+            eq(b.parentBroadcastId, input.parentBroadcastId),
+            inArray(bucket, input.buckets),
+          ),
+        )
+        .groupBy(sql`1`, c.infoType),
+    ])
 
     for (const row of rows) {
       result[row.bucket] = this.toStats(row)
     }
+    this.mergeCaptureCounts(
+      result,
+      captureRows.map((row) => ({ ...row, key: row.bucket })),
+    )
     return result
   }
 
@@ -250,6 +307,24 @@ export class BroadcastStatsRepository extends BaseRepository {
       "message:seen": row.seen,
       "flow:clicked": row.clicked,
       "message:failed": row.failed,
+      "contactInfo:phoneCaptured": 0,
+      "contactInfo:emailCaptured": 0,
+    }
+  }
+
+  /** Writes each grouped capture count into its entry of `result`, keyed by source or bucket. */
+  private mergeCaptureCounts(
+    result: Record<string, BroadcastStats>,
+    rows: { key: string; infoType: ContactInfoType; count: number }[],
+  ): void {
+    for (const row of rows) {
+      const stats = result[row.key]
+      if (stats) {
+        result[row.key] = {
+          ...stats,
+          [CAPTURE_EVENT_BY_INFO_TYPE[row.infoType]]: row.count,
+        }
+      }
     }
   }
 
@@ -266,6 +341,15 @@ export class BroadcastStatsRepository extends BaseRepository {
   }> {
     const { workspaceId, broadcastId, eventType, page, perPage } = input
     const offset = (page - 1) * perPage
+    if (isContactInfoCaptureEvent(eventType)) {
+      return await this.getCaptureContacts({
+        workspaceId,
+        broadcastId,
+        eventType,
+        offset,
+        perPage,
+      })
+    }
     const t = contactsOnBroadcastsModel
     const b = broadcastModel
 
@@ -313,13 +397,80 @@ export class BroadcastStatsRepository extends BaseRepository {
     return { contactInboxIds, contactEventMap, total: totalRow?.total ?? 0 }
   }
 
+  /**
+   * Contacts who left a phone / an email after the broadcast, newest first,
+   * from `ContactInfoCapture`. The rows carry only ids and the time; the
+   * caller attaches contact display fields. Rows and total only cover contact
+   * inboxes that still exist (joined before paging), so the total matches the
+   * pages.
+   */
+  private async getCaptureContacts(input: {
+    workspaceId: string
+    broadcastId: string
+    eventType: ContactInfoCaptureEventType
+    offset: number
+    perPage: number
+  }): Promise<{
+    contactInboxIds: string[]
+    contactEventMap: Map<string, ContactEventData>
+    total: number
+  }> {
+    const { workspaceId, broadcastId, eventType, offset, perPage } = input
+    const infoType = CONTACT_INFO_CAPTURE_EVENT_INFO_TYPE[eventType]
+
+    const source = {
+      workspaceId,
+      sourceType: "broadcast",
+      sourceId: broadcastId,
+      infoType,
+    } as const
+    const [rows, total] = await Promise.all([
+      contactInfoCaptureRepository.listContacts({
+        ...source,
+        limit: perPage,
+        offset,
+      }),
+      contactInfoCaptureRepository.countContacts(source),
+    ])
+
+    const contactEventMap = new Map<string, ContactEventData>()
+    for (const row of rows) {
+      contactEventMap.set(row.contactInboxId, {
+        contactId: row.contactId,
+        contactInboxId: row.contactInboxId,
+        occurredAt: row.createdAt.toISOString(),
+        conversationId: row.conversationId,
+      })
+    }
+
+    return {
+      contactInboxIds: rows.map((row) => row.contactInboxId),
+      contactEventMap,
+      total,
+    }
+  }
+
   async getContactIdsPage(input: {
+    workspaceId: string
     broadcastId: string
     eventType: BroadcastEventType
     cursor: string | null
     limit: number
     excludeContactIds?: string[]
   }): Promise<{ id: string; contactId: string }[]> {
+    if (isContactInfoCaptureEvent(input.eventType)) {
+      const contactIds = await contactInfoCaptureRepository.listContactIds({
+        workspaceId: input.workspaceId,
+        sourceType: "broadcast",
+        sourceId: input.broadcastId,
+        infoType: CONTACT_INFO_CAPTURE_EVENT_INFO_TYPE[input.eventType],
+        afterContactId: input.cursor ?? undefined,
+        excludeContactIds: input.excludeContactIds,
+        limit: input.limit,
+      })
+      return contactIds.map((contactId) => ({ id: contactId, contactId }))
+    }
+
     const t = contactsOnBroadcastsModel
     const { eventCondition } = this.buildEventFilter(input.eventType)
 
@@ -408,6 +559,8 @@ export class BroadcastStatsRepository extends BaseRepository {
       "message:seen": 0,
       "flow:clicked": 0,
       "message:failed": 0,
+      "contactInfo:phoneCaptured": 0,
+      "contactInfo:emailCaptured": 0,
     }
   }
 }

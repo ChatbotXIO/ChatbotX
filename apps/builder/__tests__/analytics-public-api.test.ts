@@ -407,6 +407,8 @@ describe("GET /v1/analytics/broadcasts/{broadcastId}/stats", () => {
       "message:seen": 0,
       "flow:clicked": 0,
       "message:failed": 0,
+      "contactInfo:phoneCaptured": 1,
+      "contactInfo:emailCaptured": 0,
     })
 
     await procedure.handler?.({
@@ -419,7 +421,7 @@ describe("GET /v1/analytics/broadcasts/{broadcastId}/stats", () => {
       broadcastId: "b-1",
     })
     expect(withCache).toHaveBeenCalledWith(
-      "analytics:broadcast-stats:workspace-1:b-1",
+      "analytics:broadcast-stats:v2:workspace-1:b-1",
       expect.any(Function),
       { ttl: 120 },
     )

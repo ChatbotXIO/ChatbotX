@@ -345,7 +345,7 @@ chatbotx conversations appointment-booking-link add <conversationId> --calendarI
 chatbotx broadcasts list
 chatbotx broadcasts get <idOrName>                   # Get broadcast
 chatbotx broadcasts audience list <idOrName>         # Get broadcast audience (contacts) [--page --perPage]
-chatbotx broadcasts contacts list <id> --eventType <eventType>  # Recipients by event (message:sent, message:seen, ...); returns total and conversationId
+chatbotx broadcasts contacts list <id> --eventType <eventType>  # Recipients by event (message:sent, message:seen, ..., contactInfo:phoneCaptured / contactInfo:emailCaptured = contacts who left a phone / an email); returns total and conversationId
 chatbotx broadcasts audience-preview                 # Count (total) and list a would-be audience before sending [--inboxIds --channels --contactFilter --page --perPage ...]
 chatbotx broadcasts create --channel <channel> --subaction <subaction> --schedulesType <schedulesType>
                                                      # Cloud trial Messenger broadcasts: max 60/min and one active at a time
@@ -709,7 +709,7 @@ chatbotx analytics bot-messages-with-response          # [--granularity]
 chatbotx analytics bot-messages-no-response            # [--granularity]
 chatbotx analytics bot-messages-ai-providers
 chatbotx analytics messages-by-sender                  # [--granularity]
-chatbotx analytics broadcasts-stats <broadcastId>       # Get broadcast stats
+chatbotx analytics broadcasts-stats <broadcastId>       # Get broadcast stats (incl. contactInfo:phoneCaptured / contactInfo:emailCaptured)
 chatbotx analytics sequences-steps-stats <sequenceId> <stepId>  # Get sequence step stats
 chatbotx analytics mac-active-count                    # No time range — current billing period
 chatbotx analytics flows-stats <flowId>                # Get flow analytics

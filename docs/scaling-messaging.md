@@ -10,7 +10,7 @@ retention-formula worked example.
 | Role | Env var (falls back in order) | Image for a module-capable OSS deploy | Why |
 |---|---|---|---|
 | Queue — hot (`integration`, `chat`, `notification`, `low`, `callTranscription`, `whatsappVoipSignaling`) | `REDIS_QUEUE_URL` → `REDIS_URL` | `redis:8-alpine` or Valkey 8+ | Latency-sensitive BullMQ, event-stream, and plain-KV work. |
-| Queue — bulk (`aiAgent`, `heavy`, `default`, `schedule`, `trigger`, `webhook`, `quota`, `profileSnapshot`, `leaderboard`) | `REDIS_QUEUE_BULK_URL` → `REDIS_QUEUE_URL` → `REDIS_URL` | `redis:8-alpine` or Valkey 8+ | Background/export work that can burst; isolating it protects hot-path latency. |
+| Queue — bulk (`aiAgent`, `heavy`, `default`, `schedule`, `trigger`, `webhook`, `quota`, `profileSnapshot`, `leaderboard`, `contactInfoCapture`) | `REDIS_QUEUE_BULK_URL` → `REDIS_QUEUE_URL` → `REDIS_URL` | `redis:8-alpine` or Valkey 8+ | Background/export work that can burst; isolating it protects hot-path latency. |
 | Sequence scheduler | `REDIS_SEQUENCE_URL` → `REDIS_URL` | `redis:8-alpine` or Valkey 8+ | zset + Redlock coordination across 256 hash buckets. |
 | Cache / distributed lock / MAC bloom filter | `REDIS_CACHE_URL` → `REDIS_URL` | `redis:8-alpine`, or Dragonfly, or Valkey **with** `valkey-bloom` loaded | `packages/redis/src/bloom-filter.ts` issues `BF.RESERVE`/`BF.ADD`. Plain `valkey/valkey` rejects these commands and silently breaks MAC counting. |
 | Event streams (`events:message`, `events:analytics-dashboard`, `events:error-log`, `flow:events`) | `REDIS_QUEUE_URL` → `REDIS_URL` (shares hot) | `redis:8-alpine` or Valkey 8+ until tier-2 | Redis Streams with consumer groups; ceiling is `MAXLEN` retention, not throughput. |

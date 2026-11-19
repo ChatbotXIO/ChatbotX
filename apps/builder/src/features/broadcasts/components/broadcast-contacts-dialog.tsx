@@ -19,6 +19,8 @@ const eventTypeToLabel: Record<BroadcastEventType, string> = {
   "message:received": "received",
   "flow:clicked": "clicked",
   "flow:ref": "ref",
+  "contactInfo:phoneCaptured": "leftPhone",
+  "contactInfo:emailCaptured": "leftEmail",
 }
 
 type Props = {

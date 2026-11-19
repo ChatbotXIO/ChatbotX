@@ -36,7 +36,7 @@ export const publicListBroadcastContactsRequest = z.object({
     "Broadcast id. Get it from `broadcasts.list`.",
   ),
   eventType: broadcastEventType.describe(
-    "Event to filter recipients by: `message:sent`, `message:delivered`, `message:seen`, `message:failed` or `flow:clicked`. `message:received` and `flow:ref` are accepted but not tracked per recipient, so they return the same list as `message:delivered`.",
+    "Event to filter recipients by: `message:sent`, `message:delivered`, `message:seen`, `message:failed` or `flow:clicked`, or `contactInfo:phoneCaptured` / `contactInfo:emailCaptured` for the contacts who left a phone number / an email after the broadcast (newest first; `occurredAt` is when they sent it). `message:received` and `flow:ref` are accepted but not tracked per recipient, so they return the same list as `message:delivered`.",
   ),
   page: publicListRequest.shape.page,
   perPage: publicListRequest.shape.perPage,
@@ -362,7 +362,7 @@ export const listBroadcastRunGroupsPublicRequest = z.object({
 const runStatsResource = z
   .record(z.string(), z.number())
   .describe(
-    "Recipient counts by event: `message:sent`, `message:delivered`, `message:seen`, `flow:clicked`, `message:failed`.",
+    "Recipient counts by event: `message:sent`, `message:delivered`, `message:seen`, `flow:clicked`, `message:failed`, `contactInfo:phoneCaptured`, `contactInfo:emailCaptured`.",
   )
 
 export const listBroadcastRunGroupsPublicResponse = z.object({

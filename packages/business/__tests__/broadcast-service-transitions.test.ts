@@ -9,6 +9,7 @@ const selectProjection = vi.fn()
 const transaction = vi.fn()
 const mockHasBroadcastRecipients = vi.fn()
 const mockPurgeBroadcastRecipients = vi.fn()
+const mockPurgeBroadcastCaptures = vi.fn()
 const mockScheduleAdd = vi.fn()
 
 const update = (table: unknown) => ({
@@ -160,6 +161,12 @@ vi.mock("@chatbotx.io/database/repositories", () => ({
     mockHasBroadcastRecipients(...args),
   purgeBroadcastRecipients: (...args: unknown[]) =>
     mockPurgeBroadcastRecipients(...args),
+  purgeBroadcastCaptures: (...args: unknown[]) =>
+    mockPurgeBroadcastCaptures(...args),
+}))
+
+vi.mock("@chatbotx.io/database/repositories/contact-info-capture", () => ({
+  contactInfoCaptureRepository: { existsForSource: vi.fn() },
 }))
 
 vi.mock("@chatbotx.io/worker-config", () => ({
@@ -385,31 +392,98 @@ describe("broadcastService.queueDraftRecipientsPurge", () => {
 })
 
 describe("broadcastService.purgeDraftRecipients", () => {
+  beforeEach(() => {
+    mockPurgeBroadcastRecipients.mockReset()
+    mockPurgeBroadcastCaptures.mockReset()
+  })
+
   test("runs one bounded pass that only deletes while the broadcast is a draft", async () => {
     mockPurgeBroadcastRecipients.mockResolvedValue({
       deleted: 0,
       stopReason: "drained",
     })
+    mockPurgeBroadcastCaptures.mockResolvedValue({
+      deleted: 0,
+      stopReason: "drained",
+    })
 
-    await broadcastService.purgeDraftRecipients({ broadcastId: "b-1" })
+    await broadcastService.purgeDraftRecipients({
+      workspaceId: "ws-1",
+      broadcastId: "b-1",
+    })
 
     expect(mockPurgeBroadcastRecipients).toHaveBeenCalledWith(
       expect.objectContaining({ broadcastId: "b-1", onlyWhileDraft: true }),
     )
+    expect(mockPurgeBroadcastCaptures).toHaveBeenCalledWith(
+      expect.objectContaining({
+        workspaceId: "ws-1",
+        broadcastId: "b-1",
+        onlyWhileDraft: true,
+      }),
+    )
+  })
+
+  test("drains the captures within what is left of the pass budget", async () => {
+    mockPurgeBroadcastRecipients.mockResolvedValue({
+      deleted: 0,
+      stopReason: "drained",
+    })
+    mockPurgeBroadcastCaptures.mockResolvedValue({
+      deleted: 0,
+      stopReason: "drained",
+    })
+
+    await broadcastService.purgeDraftRecipients({
+      workspaceId: "ws-1",
+      broadcastId: "b-1",
+    })
+
+    const budget = (
+      mockPurgeBroadcastCaptures.mock.calls[0][0] as {
+        maxRunDurationMs: number
+      }
+    ).maxRunDurationMs
+    expect(budget).toBeGreaterThan(0)
+    expect(budget).toBeLessThanOrEqual(30_000)
   })
 
   test.each([
-    ["drained", true],
-    ["deadline", false],
-    ["chunkCap", false],
-  ] as const)("a pass that stops on %s is done: %s", async (stopReason, done) => {
-    mockPurgeBroadcastRecipients.mockResolvedValue({ deleted: 1, stopReason })
+    ["drained", "drained", true],
+    ["deadline", "drained", false],
+    ["chunkCap", "drained", false],
+    ["drained", "deadline", false],
+    ["drained", "chunkCap", false],
+  ] as const)("recipients %s + captures %s: done is %s", async (recipientsStop, capturesStop, done) => {
+    mockPurgeBroadcastRecipients.mockResolvedValue({
+      deleted: 1,
+      stopReason: recipientsStop,
+    })
+    mockPurgeBroadcastCaptures.mockResolvedValue({
+      deleted: 1,
+      stopReason: capturesStop,
+    })
 
     const result = await broadcastService.purgeDraftRecipients({
+      workspaceId: "ws-1",
       broadcastId: "b-1",
     })
 
     expect(result).toEqual({ done })
+  })
+
+  test("leaves the captures alone while recipients are still being drained", async () => {
+    mockPurgeBroadcastRecipients.mockResolvedValue({
+      deleted: 1,
+      stopReason: "deadline",
+    })
+
+    await broadcastService.purgeDraftRecipients({
+      workspaceId: "ws-1",
+      broadcastId: "b-1",
+    })
+
+    expect(mockPurgeBroadcastCaptures).not.toHaveBeenCalled()
   })
 })
 

@@ -24,6 +24,7 @@ import {
   contactRepository,
   pipelineActivityRepository,
 } from "@chatbotx.io/database/repositories"
+import { contactInfoCaptureRepository } from "@chatbotx.io/database/repositories/contact-info-capture"
 import {
   contactInboxModel,
   contactModel,
@@ -816,23 +817,27 @@ class ContactService extends BaseService {
       )
 
       await db.transaction(async (tx) => {
+        const contactIds = chunk.map((contact) => contact.id)
         await contactInboxPostService.deleteForContacts({
-          contactIds: chunk.map((contact) => contact.id),
+          contactIds,
           tx,
           workspaceId,
         })
         await contactActivityService.deleteForContacts({
-          contactIds: chunk.map((contact) => contact.id),
+          contactIds,
           tx,
           workspaceId,
         })
-        await messageCleanupService.record({ workspaceId, entries, tx })
-        await tx.delete(contactModel).where(
-          inArray(
-            contactModel.id,
-            chunk.map((c) => c.id),
-          ),
+        // The contacts are already locked FOR UPDATE and the workspace fence is
+        // held (taken by the activity delete above), so no lock is re-taken.
+        await contactInfoCaptureRepository.deleteByContactIds(
+          { contactIds, workspaceId },
+          tx,
         )
+        await messageCleanupService.record({ workspaceId, entries, tx })
+        await tx
+          .delete(contactModel)
+          .where(inArray(contactModel.id, contactIds))
         // Pipeline history outlives the contact (it has no FK) for analytics;
         // only the item titles that may name the contact are cleared. After
         // the delete: its item cascade waited for any writer holding an item

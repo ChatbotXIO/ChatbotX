@@ -55,6 +55,7 @@ describe("purgeDraftBroadcastRecipients", () => {
     })
 
     expect(purgeDraftRecipients).toHaveBeenCalledWith({
+      workspaceId: WORKSPACE_ID,
       broadcastId: BROADCAST_ID,
     })
     expect(job.moveToDelayed).not.toHaveBeenCalled()

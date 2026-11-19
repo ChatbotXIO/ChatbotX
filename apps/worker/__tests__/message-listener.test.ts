@@ -10,6 +10,8 @@ const {
   mockFindInstagramIntegrationByInboxId,
   mockHasEnabledTriggerRule,
   mockRecordDelivered,
+  mockAddBulk,
+  mockLoggerWarn,
 } = vi.hoisted(() => ({
   mockRecordSendFailure: vi.fn().mockResolvedValue(undefined),
   mockEnqueueContactRepliedEvaluation: vi.fn().mockResolvedValue(undefined),
@@ -18,6 +20,8 @@ const {
   mockFindInstagramIntegrationByInboxId: vi.fn(),
   mockHasEnabledTriggerRule: vi.fn(),
   mockRecordDelivered: vi.fn().mockResolvedValue(true),
+  mockAddBulk: vi.fn().mockResolvedValue([]),
+  mockLoggerWarn: vi.fn(),
 }))
 
 const makeService = (methods: string[]) =>
@@ -82,6 +86,20 @@ vi.mock("@chatbotx.io/database/repositories", () => ({
   },
 }))
 
+vi.mock("../src/lib/logger", () => ({
+  logger: {
+    debug: vi.fn(),
+    info: vi.fn(),
+    warn: mockLoggerWarn,
+    error: vi.fn(),
+  },
+}))
+
+vi.mock("@chatbotx.io/worker-config", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@chatbotx.io/worker-config")>()),
+  contactInfoCaptureQueue: { addBulk: mockAddBulk },
+}))
+
 const { messageListeners } = await import("../src/events/message/listener")
 
 function listenerNames(eventType: keyof typeof messageEventTypeSchema.enum) {
@@ -119,6 +137,7 @@ function contactRepliedListener() {
 describe("messageListeners", () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    mockAddBulk.mockResolvedValue([])
     mockRecordSendFailure.mockResolvedValue(undefined)
     mockEnqueueContactRepliedEvaluation.mockResolvedValue(undefined)
     mockFindWorkspaceIntegrationByInboxId.mockResolvedValue({
@@ -654,6 +673,179 @@ describe("messageListeners", () => {
       // The bus acks the whole batch regardless, so nothing is reported back.
       expect(result).toBeUndefined()
       expect(mockRecordDelivered).toHaveBeenCalledTimes(2)
+    })
+  })
+  describe("contact-info-capture", () => {
+    const capturePayload = (overrides: Record<string, unknown> = {}) => ({
+      workspaceId: "ws-1",
+      contactId: "contact-1",
+      contactInboxId: "ci-1",
+      channel: "messenger",
+      inboxId: "inbox-1",
+      occurredAt: new Date("2026-11-18T10:00:00.123Z"),
+      origin: "inbound" as const,
+      messageId: "msg-1",
+      contactInfoCapture: {
+        infoTypes: ["phone" as const, "email" as const],
+        conversationId: "conv-1",
+        conversationCreatedAt: "2026-11-18T09:00:00.000Z",
+      },
+      ...overrides,
+    })
+
+    const captureListener = () => {
+      const listener = messageListeners[
+        messageEventTypeSchema.enum["message:received"]
+      ]?.find((candidate) => candidate.name === "contact-info-capture")
+      if (!listener?.handler) {
+        throw new Error("contact-info-capture listener is missing")
+      }
+      return listener
+    }
+
+    test("enqueues one deduplicated job per inbound payload that carries the field", async () => {
+      await captureListener().handler?.([capturePayload()])
+
+      expect(mockAddBulk).toHaveBeenCalledTimes(1)
+      const [jobs] = mockAddBulk.mock.calls[0] as [
+        { name: string; data: unknown; opts: { jobId: string } }[],
+      ]
+      expect(jobs).toHaveLength(1)
+      expect(jobs[0]?.opts.jobId).toBe("contact-info-capture-msg-1-s0")
+      expect(jobs[0]?.opts.jobId).not.toContain(":")
+      expect(jobs[0]?.data).toEqual({
+        type: "capture",
+        data: {
+          workspaceId: "ws-1",
+          contactId: "contact-1",
+          contactInboxId: "ci-1",
+          inboxId: "inbox-1",
+          conversationId: "conv-1",
+          conversationCreatedAt: "2026-11-18T09:00:00.000Z",
+          messageId: "msg-1",
+          messageCreatedAt: "2026-11-18T10:00:00.123Z",
+          infoTypes: ["phone", "email"],
+        },
+      })
+    })
+
+    test("an event without the conversation start (queued before the field) still enqueues", async () => {
+      await captureListener().handler?.([
+        capturePayload({
+          contactInfoCapture: {
+            infoTypes: ["phone" as const],
+            conversationId: "conv-1",
+          },
+        }),
+      ])
+
+      const [jobs] = mockAddBulk.mock.calls[0] as [
+        { data: { data: Record<string, unknown> } }[],
+      ]
+      expect(jobs).toHaveLength(1)
+      expect(jobs[0]?.data.data.conversationCreatedAt).toBeUndefined()
+    })
+
+    test("accepts a date that crossed the Redis stream as a string", async () => {
+      await captureListener().handler?.([
+        capturePayload({ occurredAt: "2026-11-18T10:00:00.123Z" }),
+      ])
+
+      const [jobs] = mockAddBulk.mock.calls[0] as [
+        { data: { data: { messageCreatedAt: string } } }[],
+      ]
+      expect(jobs[0]?.data.data.messageCreatedAt).toBe(
+        "2026-11-18T10:00:00.123Z",
+      )
+    })
+
+    test("makes no queue call when the batch has no field", async () => {
+      await captureListener().handler?.([
+        capturePayload({ contactInfoCapture: undefined }),
+      ])
+
+      expect(mockAddBulk).not.toHaveBeenCalled()
+    })
+
+    test("skips non-inbound payloads, a missing message id and an invalid date", async () => {
+      await captureListener().handler?.([
+        capturePayload({ origin: undefined, messageId: "echo" }),
+        capturePayload({ messageId: undefined }),
+        capturePayload({ messageId: "bad-date", occurredAt: "not a date" }),
+      ])
+
+      expect(mockAddBulk).not.toHaveBeenCalled()
+    })
+
+    test("only the qualifying payloads of a mixed batch are enqueued", async () => {
+      await captureListener().handler?.([
+        capturePayload({ messageId: "msg-a" }),
+        capturePayload({ messageId: "msg-b", contactInfoCapture: undefined }),
+        capturePayload({ messageId: "msg-c" }),
+      ])
+
+      const [jobs] = mockAddBulk.mock.calls[0] as [
+        { opts: { jobId: string } }[],
+      ]
+      expect(jobs.map((job) => job.opts.jobId)).toEqual([
+        "contact-info-capture-msg-a-s0",
+        "contact-info-capture-msg-c-s0",
+      ])
+    })
+
+    test("a queue failure is logged with the error, not thrown", async () => {
+      const err = new Error("redis down")
+      mockAddBulk.mockRejectedValueOnce(err)
+
+      await expect(
+        captureListener().handler?.([capturePayload()]),
+      ).resolves.toBeUndefined()
+      expect(mockLoggerWarn).toHaveBeenCalledWith(
+        expect.objectContaining({ err }),
+        expect.any(String),
+      )
+    })
+
+    test("a hanging queue does not hold the batch past the timeout and the timeout is logged", async () => {
+      vi.useFakeTimers()
+      try {
+        mockAddBulk.mockReturnValueOnce(new Promise(() => undefined))
+        const done = captureListener().handler?.([capturePayload()])
+        await vi.advanceTimersByTimeAsync(2500)
+
+        await expect(done).resolves.toBeUndefined()
+        expect(mockLoggerWarn).toHaveBeenCalledWith(
+          expect.objectContaining({ count: 1, err: expect.any(Error) }),
+          expect.stringContaining("did not finish in time"),
+        )
+      } finally {
+        vi.useRealTimers()
+      }
+    })
+
+    test("a rejection that arrives after the timeout is still logged", async () => {
+      vi.useFakeTimers()
+      try {
+        const err = new Error("late redis failure")
+        let rejectLate: (reason: Error) => void = () => undefined
+        mockAddBulk.mockReturnValueOnce(
+          new Promise((_resolve, reject) => {
+            rejectLate = reject
+          }),
+        )
+        const done = captureListener().handler?.([capturePayload()])
+        await vi.advanceTimersByTimeAsync(2500)
+        await done
+        rejectLate(err)
+        await vi.advanceTimersByTimeAsync(0)
+
+        expect(mockLoggerWarn).toHaveBeenCalledWith(
+          expect.objectContaining({ err }),
+          expect.stringContaining("enqueue failed"),
+        )
+      } finally {
+        vi.useRealTimers()
+      }
     })
   })
 })
