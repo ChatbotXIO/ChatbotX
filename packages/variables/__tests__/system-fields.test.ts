@@ -1301,10 +1301,11 @@ describe("getSystemFieldValue", () => {
   })
 
   test("location and flow step fields resolve from persisted contact state", async () => {
-    mockFindDMByContact.mockResolvedValue({
+    const conversation = {
+      id: "conversation-1",
       lastStep: "step-1",
       currentStep: "step-2",
-    })
+    } as ConversationModel
 
     const locatedContact = {
       ...contact,
@@ -1313,25 +1314,25 @@ describe("getSystemFieldValue", () => {
 
     await expect(
       getSystemFieldValue(
-        createContext({ contact: locatedContact }),
+        createContext({ contact: locatedContact, conversation }),
         systemFieldTypes.enum.last_latitude,
       ),
     ).resolves.toBe("10.75")
     await expect(
       getSystemFieldValue(
-        createContext({ contact: locatedContact }),
+        createContext({ contact: locatedContact, conversation }),
         systemFieldTypes.enum.last_longitude,
       ),
     ).resolves.toBe("106.66")
     await expect(
       getSystemFieldValue(
-        createContext({ contact: locatedContact }),
+        createContext({ contact: locatedContact, conversation }),
         systemFieldTypes.enum.last_step,
       ),
     ).resolves.toBe("step-1")
     await expect(
       getSystemFieldValue(
-        createContext({ contact: locatedContact }),
+        createContext({ contact: locatedContact, conversation }),
         systemFieldTypes.enum.current_step,
       ),
     ).resolves.toBe("step-2")

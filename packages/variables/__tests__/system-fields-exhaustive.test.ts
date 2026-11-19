@@ -247,6 +247,8 @@ const conversation = {
   id: "conversation-1",
   contactId: "contact-1",
   workspaceId: "workspace-1",
+  lastStep: "step-1",
+  currentStep: "step-2",
 } as ConversationModel
 
 const fullContext = {
