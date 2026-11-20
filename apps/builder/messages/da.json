@@ -12089,7 +12089,7 @@
     "add": "Tilføj",
     "addCategory": "Tilføj kategori",
     "renameCategory": "Omdøb",
-    "editCategories": "Rediger kategorier",
+    "editListing": "Rediger opslag",
     "templateId": "Skabelon-ID",
     "template": "Skabelon",
     "categories": "Kategorier",
@@ -12097,9 +12097,12 @@
     "close": "Luk",
     "removeChip": "Fjern {name}",
     "categoriesHint": "Valgfrit. Uden kategori vises skabelonen kun under “Alle”.",
+    "languages": "Sprog",
+    "allLanguages": "Alle sprog",
+    "languagesHint": "Valgfrit. Lad feltet stå tomt for at vise skabelonen på alle sprog.",
     "noCategoriesYet": "Ingen kategorier endnu.",
     "added": "Skabelon tilføjet til butikken",
-    "updated": "Kategorier opdateret",
+    "updated": "Opslag opdateret",
     "removed": "Skabelon fjernet fra butikken",
     "removeError": "Skabelonen kunne ikke fjernes",
     "removeTitle": "Fjern {name}?",
@@ -12147,10 +12150,13 @@
       "search": "Søg efter skabeloner",
       "all": "Alle",
       "categories": "Butikkens kategorier",
-      "noResults": "Ingen skabeloner matcher din søgning.",
-      "clearSearch": "Ryd søgning",
+      "noResults": "Ingen skabeloner matcher dine filtre.",
+      "clearSearch": "Ryd filtre",
       "by": "Af {publisherName}",
-      "loadFailed": "Skabelonerne kunne ikke indlæses. Prøv igen senere."
+      "loadFailed": "Skabelonerne kunne ikke indlæses. Prøv igen senere.",
+      "language": "Sprog",
+      "allLanguages": "Alle sprog",
+      "otherLanguages": "Andre sprog"
     },
     "picker": {
       "placeholder": "Vælg en skabelon",
@@ -12159,6 +12165,16 @@
       "error": "Skabeloner kunne ikke indlæses.",
       "retry": "Prøv igen",
       "meta": "ID {id} · {workspace}"
+    },
+    "bulk": {
+      "setCategories": "Angiv kategorier",
+      "setLanguages": "Angiv sprog",
+      "categoriesHint": "Erstatter kategorierne for de valgte skabeloner ({count}). Lad feltet stå tomt for at fjerne alle kategorier.",
+      "languagesHint": "Erstatter sprogene for de valgte skabeloner ({count}). Lad feltet stå tomt for at vise dem på alle sprog.",
+      "updated": "De valgte skabeloner er opdateret",
+      "removeTitle": "Fjern de valgte skabeloner?",
+      "removeDescription": "Valgt: {count}. De forsvinder fra butikken; selve skabelonerne og deres installationer påvirkes ikke.",
+      "removed": "De valgte skabeloner er fjernet fra butikken"
     }
   },
   "accountDeletion": {

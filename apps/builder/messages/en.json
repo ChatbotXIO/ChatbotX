@@ -12105,7 +12105,7 @@
     "add": "Add",
     "addCategory": "Add category",
     "renameCategory": "Rename",
-    "editCategories": "Edit categories",
+    "editListing": "Edit listing",
     "templateId": "Template ID",
     "template": "Template",
     "categories": "Categories",
@@ -12113,9 +12113,12 @@
     "close": "Close",
     "removeChip": "Remove {name}",
     "categoriesHint": "Optional. Without a category the template only shows under “All”.",
+    "languages": "Languages",
+    "allLanguages": "All languages",
+    "languagesHint": "Optional. Leave empty to show the template in every language.",
     "noCategoriesYet": "No categories yet.",
     "added": "Template added to the store",
-    "updated": "Categories updated",
+    "updated": "Listing updated",
     "removed": "Template removed from the store",
     "removeError": "Could not remove the template",
     "removeTitle": "Remove {name}?",
@@ -12163,10 +12166,13 @@
       "search": "Search templates",
       "all": "All",
       "categories": "Store categories",
-      "noResults": "No templates match your search.",
-      "clearSearch": "Clear search",
+      "noResults": "No templates match your filters.",
+      "clearSearch": "Clear filters",
       "by": "By {publisherName}",
-      "loadFailed": "Couldn't load the templates. Please try again later."
+      "loadFailed": "Couldn't load the templates. Please try again later.",
+      "language": "Language",
+      "allLanguages": "All languages",
+      "otherLanguages": "Other languages"
     },
     "picker": {
       "placeholder": "Select a template",
@@ -12175,6 +12181,16 @@
       "error": "Could not load templates.",
       "retry": "Retry",
       "meta": "ID {id} · {workspace}"
+    },
+    "bulk": {
+      "setCategories": "Set categories",
+      "setLanguages": "Set languages",
+      "categoriesHint": "Replaces the categories of the selected templates ({count}). Leave empty to remove every category.",
+      "languagesHint": "Replaces the languages of the selected templates ({count}). Leave empty to show them in every language.",
+      "updated": "Selected templates updated",
+      "removeTitle": "Remove the selected templates?",
+      "removeDescription": "Selected: {count}. They disappear from the store; the templates themselves and their installs are not affected.",
+      "removed": "Selected templates removed from the store"
     }
   },
   "accountDeletion": {

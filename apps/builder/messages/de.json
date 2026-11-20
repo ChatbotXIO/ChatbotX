@@ -12089,7 +12089,7 @@
     "add": "Hinzufügen",
     "addCategory": "Kategorie hinzufügen",
     "renameCategory": "Umbenennen",
-    "editCategories": "Kategorien bearbeiten",
+    "editListing": "Eintrag bearbeiten",
     "templateId": "Template-ID",
     "template": "Template",
     "categories": "Kategorien",
@@ -12097,9 +12097,12 @@
     "close": "Schließen",
     "removeChip": "{name} entfernen",
     "categoriesHint": "Optional. Ohne Kategorie erscheint das Template nur unter „Alle“.",
+    "languages": "Sprachen",
+    "allLanguages": "Alle Sprachen",
+    "languagesHint": "Optional. Leer lassen, um die Vorlage in allen Sprachen anzuzeigen.",
     "noCategoriesYet": "Noch keine Kategorien.",
     "added": "Template zum Store hinzugefügt",
-    "updated": "Kategorien aktualisiert",
+    "updated": "Eintrag aktualisiert",
     "removed": "Template aus dem Store entfernt",
     "removeError": "Template konnte nicht entfernt werden",
     "removeTitle": "{name} entfernen?",
@@ -12147,10 +12150,13 @@
       "search": "Templates suchen",
       "all": "Alle",
       "categories": "Store-Kategorien",
-      "noResults": "Keine Templates passen zu Ihrer Suche.",
-      "clearSearch": "Suche zurücksetzen",
+      "noResults": "Keine Vorlagen passen zu Ihren Filtern.",
+      "clearSearch": "Filter zurücksetzen",
       "by": "Von {publisherName}",
-      "loadFailed": "Die Templates konnten nicht geladen werden. Bitte versuchen Sie es später erneut."
+      "loadFailed": "Die Templates konnten nicht geladen werden. Bitte versuchen Sie es später erneut.",
+      "language": "Sprache",
+      "allLanguages": "Alle Sprachen",
+      "otherLanguages": "Andere Sprachen"
     },
     "picker": {
       "placeholder": "Template auswählen",
@@ -12159,6 +12165,16 @@
       "error": "Templates konnten nicht geladen werden.",
       "retry": "Erneut versuchen",
       "meta": "ID {id} · {workspace}"
+    },
+    "bulk": {
+      "setCategories": "Kategorien festlegen",
+      "setLanguages": "Sprachen festlegen",
+      "categoriesHint": "Ersetzt die Kategorien der ausgewählten Vorlagen ({count}). Leer lassen, um alle Kategorien zu entfernen.",
+      "languagesHint": "Ersetzt die Sprachen der ausgewählten Vorlagen ({count}). Leer lassen, um sie in allen Sprachen anzuzeigen.",
+      "updated": "Ausgewählte Vorlagen aktualisiert",
+      "removeTitle": "Ausgewählte Vorlagen entfernen?",
+      "removeDescription": "Ausgewählt: {count}. Sie verschwinden aus dem Store; die Vorlagen selbst und ihre Installationen bleiben unberührt.",
+      "removed": "Ausgewählte Vorlagen aus dem Store entfernt"
     }
   },
   "accountDeletion": {

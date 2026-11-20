@@ -12089,7 +12089,7 @@
     "add": "Lägg till",
     "addCategory": "Lägg till kategori",
     "renameCategory": "Byt namn",
-    "editCategories": "Redigera kategorier",
+    "editListing": "Redigera post",
     "templateId": "Mall-ID",
     "template": "Mall",
     "categories": "Kategorier",
@@ -12097,9 +12097,12 @@
     "close": "Stäng",
     "removeChip": "Ta bort {name}",
     "categoriesHint": "Valfritt. Utan kategori visas mallen bara under “Alla”.",
+    "languages": "Språk",
+    "allLanguages": "Alla språk",
+    "languagesHint": "Valfritt. Lämna tomt för att visa mallen på alla språk.",
     "noCategoriesYet": "Inga kategorier ännu.",
     "added": "Mallen har lagts till i butiken",
-    "updated": "Kategorierna har uppdaterats",
+    "updated": "Posten uppdaterad",
     "removed": "Mallen har tagits bort från butiken",
     "removeError": "Det gick inte att ta bort mallen",
     "removeTitle": "Ta bort {name}?",
@@ -12147,10 +12150,13 @@
       "search": "Sök mallar",
       "all": "Alla",
       "categories": "Butikskategorier",
-      "noResults": "Inga mallar matchar din sökning.",
-      "clearSearch": "Rensa sökningen",
+      "noResults": "Inga mallar matchar dina filter.",
+      "clearSearch": "Rensa filter",
       "by": "Av {publisherName}",
-      "loadFailed": "Det gick inte att läsa in mallarna. Försök igen senare."
+      "loadFailed": "Det gick inte att läsa in mallarna. Försök igen senare.",
+      "language": "Språk",
+      "allLanguages": "Alla språk",
+      "otherLanguages": "Andra språk"
     },
     "picker": {
       "placeholder": "Välj en mall",
@@ -12159,6 +12165,16 @@
       "error": "Det gick inte att läsa in mallar.",
       "retry": "Försök igen",
       "meta": "ID {id} · {workspace}"
+    },
+    "bulk": {
+      "setCategories": "Ange kategorier",
+      "setLanguages": "Ange språk",
+      "categoriesHint": "Ersätter kategorierna för de valda mallarna ({count}). Lämna tomt för att ta bort alla kategorier.",
+      "languagesHint": "Ersätter språken för de valda mallarna ({count}). Lämna tomt för att visa dem på alla språk.",
+      "updated": "De valda mallarna har uppdaterats",
+      "removeTitle": "Ta bort de valda mallarna?",
+      "removeDescription": "Valda: {count}. De försvinner från butiken; själva mallarna och deras installationer påverkas inte.",
+      "removed": "De valda mallarna har tagits bort från butiken"
     }
   },
   "accountDeletion": {

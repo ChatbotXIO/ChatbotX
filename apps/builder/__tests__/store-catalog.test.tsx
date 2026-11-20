@@ -7,6 +7,8 @@ const mocks = vi.hoisted(() => ({
   withOptions: vi.fn(),
   setQuery: vi.fn(),
   setCategory: vi.fn(),
+  setLanguage: vi.fn(),
+  params: {} as Record<string, string | null>,
 }))
 
 /** Echoes the key back so assertions never depend on the English copy. */
@@ -47,6 +49,19 @@ vi.mock("nuqs", () => {
 import { StoreCatalog } from "@/features/template-store/components/store-catalog"
 
 const categories = [{ id: "5", name: "Flows" }]
+type CatalogTemplate = ComponentProps<typeof StoreCatalog>["templates"][number]
+
+const baseTemplate: CatalogTemplate = {
+  templateId: "11",
+  name: "Welcome flow",
+  publisherName: "Acme",
+  description: null,
+  imageUrl: "/cover.png",
+  href: "/t/template?id=11&key=tok-11",
+  categoryIds: ["5"],
+  languages: [],
+  section: "primary",
+}
 const templates = [
   {
     templateId: "11",
@@ -56,6 +71,8 @@ const templates = [
     imageUrl: "/cover.png",
     href: "/t/template?id=11&key=tok-11",
     categoryIds: ["5"],
+    languages: [],
+    section: "primary" as const,
   },
 ]
 
@@ -65,7 +82,11 @@ let root: Root | null = null
 /** The layouts the component offers, read from its own props so they cannot drift. */
 type StoreCatalogLayout = ComponentProps<typeof StoreCatalog>["layout"]
 
-const render = (layout?: StoreCatalogLayout): HTMLDivElement => {
+const render = (
+  layout?: StoreCatalogLayout,
+  items: CatalogTemplate[] = templates,
+  viewerLocale = "en",
+): HTMLDivElement => {
   container = document.createElement("div")
   document.body.appendChild(container)
   root = createRoot(container)
@@ -74,8 +95,9 @@ const render = (layout?: StoreCatalogLayout): HTMLDivElement => {
       <StoreCatalog
         categories={categories}
         layout={layout}
-        templates={templates}
+        templates={items}
         tenantName="Acme Bots"
+        viewerLocale={viewerLocale}
       />,
     )
   })
@@ -84,11 +106,16 @@ const render = (layout?: StoreCatalogLayout): HTMLDivElement => {
 
 beforeEach(() => {
   vi.clearAllMocks()
-  mocks.useQueryState.mockImplementation((key: string) =>
-    key === "q"
-      ? ["", mocks.setQuery]
-      : [null as string | null, mocks.setCategory],
-  )
+  mocks.params = {}
+  mocks.useQueryState.mockImplementation((key: string) => {
+    if (key === "q") {
+      return [mocks.params.q ?? "", mocks.setQuery]
+    }
+    if (key === "lang") {
+      return [mocks.params.lang ?? null, mocks.setLanguage]
+    }
+    return [mocks.params.category ?? null, mocks.setCategory]
+  })
 })
 
 afterEach(() => {
@@ -169,8 +196,9 @@ describe("StoreCatalog URL state", () => {
       expect.anything(),
     )
     expect(mocks.useQueryState).toHaveBeenCalledWith("q", expect.anything())
-    // One options object per parser (category, q), both client-side and replacing.
-    expect(mocks.withOptions).toHaveBeenCalledTimes(2)
+    expect(mocks.useQueryState).toHaveBeenCalledWith("lang", expect.anything())
+    // One options object per parser (category, lang, q), all client-side and replacing.
+    expect(mocks.withOptions).toHaveBeenCalledTimes(3)
     for (const [options] of mocks.withOptions.mock.calls) {
       expect(options).toEqual({
         shallow: true,
@@ -179,5 +207,175 @@ describe("StoreCatalog URL state", () => {
         clearOnDefault: true,
       })
     }
+  })
+})
+
+const multiLanguage: CatalogTemplate[] = [
+  { ...baseTemplate, templateId: "1", name: "Mine", languages: ["en"] },
+  { ...baseTemplate, templateId: "2", name: "Anywhere", languages: [] },
+  {
+    ...baseTemplate,
+    templateId: "3",
+    name: "French only",
+    languages: ["fr"],
+    section: "other",
+  },
+  {
+    ...baseTemplate,
+    templateId: "4",
+    name: "Vietnamese",
+    languages: ["vi"],
+    section: "hidden",
+  },
+]
+
+const names = (el: HTMLElement): string[] =>
+  Array.from(el.querySelectorAll("li p.font-semibold")).map(
+    (p) => p.textContent ?? "",
+  )
+
+describe("StoreCatalog languages", () => {
+  test("no language filter when every template is untagged or in the visitor's language", () => {
+    expect(render().querySelector('[aria-label="language"]')).toBeNull()
+    expect(
+      render("page", [
+        { ...baseTemplate, languages: ["en"] },
+        { ...baseTemplate, templateId: "2", languages: [] },
+      ]).querySelector('[aria-label="language"]'),
+    ).toBeNull()
+  })
+
+  test("the filter appears as soon as another language exists, and starts on the visitor's", () => {
+    const el = render("page", multiLanguage)
+    const trigger = el.querySelector('[aria-label="language"]')
+    expect(trigger).not.toBeNull()
+    expect(trigger?.textContent).toContain("English")
+  })
+
+  test("own language: own and untagged on top, other languages under a divider, Vietnamese left out", () => {
+    const el = render("page", multiLanguage)
+
+    expect(names(el)).toEqual(["Mine", "Anywhere", "French only"])
+    expect(el.querySelector("hr")).not.toBeNull()
+    expect(el.querySelector("section")?.textContent).toContain("otherLanguages")
+    expect(el.querySelector("section li")?.textContent).toContain("French only")
+  })
+
+  test("all languages: every template in one list, Vietnamese included, no divider", () => {
+    mocks.params = { lang: "all" }
+    const el = render("page", multiLanguage)
+
+    expect(names(el)).toEqual(["Mine", "Anywhere", "French only", "Vietnamese"])
+    expect(el.querySelector("hr")).toBeNull()
+    expect(el.querySelector("section")).toBeNull()
+  })
+
+  test("another language: its templates and the untagged ones, no divider", () => {
+    mocks.params = { lang: "vi" }
+    const el = render("page", multiLanguage)
+
+    expect(names(el)).toEqual(["Vietnamese", "Anywhere"])
+    expect(el.querySelector("hr")).toBeNull()
+  })
+
+  test("a Vietnamese visitor starts on Vietnamese and sees one zone only", () => {
+    const vietnamese: CatalogTemplate[] = [
+      { ...baseTemplate, templateId: "1", name: "Vn", languages: ["vi"] },
+      { ...baseTemplate, templateId: "2", name: "Anywhere", languages: [] },
+      {
+        ...baseTemplate,
+        templateId: "3",
+        name: "English",
+        languages: ["en"],
+        section: "hidden",
+      },
+    ]
+    const el = render("page", vietnamese, "vi")
+
+    expect(el.querySelector('[aria-label="language"]')?.textContent).toContain(
+      "Tiếng Việt",
+    )
+    expect(names(el)).toEqual(["Vn", "Anywhere"])
+    expect(el.querySelector("hr")).toBeNull()
+  })
+
+  test("no divider when the visitor has no templates of their own", () => {
+    const el = render("page", [multiLanguage[2] as CatalogTemplate])
+
+    expect(el.querySelector("hr")).toBeNull()
+    expect(names(el)).toEqual(["French only"])
+    expect(el.querySelector("section")?.textContent).toContain("otherLanguages")
+  })
+
+  test("the visitor's own templates come before the untagged ones on top", () => {
+    const el = render("page", [
+      { ...baseTemplate, templateId: "1", name: "Anywhere", languages: [] },
+      { ...baseTemplate, templateId: "2", name: "Mine", languages: ["en"] },
+    ])
+
+    expect(names(el)).toEqual(["Mine", "Anywhere"])
+  })
+
+  test("an unknown language in the URL falls back to the visitor's language", () => {
+    mocks.params = { lang: "ja" }
+
+    expect(names(render("page", multiLanguage))).toEqual([
+      "Mine",
+      "Anywhere",
+      "French only",
+    ])
+  })
+
+  test("category chips only list categories that have a template in the chosen language", () => {
+    const withCategories: CatalogTemplate[] = [
+      {
+        ...baseTemplate,
+        templateId: "1",
+        languages: ["en"],
+        categoryIds: ["5"],
+      },
+      {
+        ...baseTemplate,
+        templateId: "2",
+        languages: ["vi"],
+        section: "hidden",
+        categoryIds: ["6"],
+      },
+      { ...baseTemplate, templateId: "3", languages: ["en"], categoryIds: [] },
+    ]
+    container = document.createElement("div")
+    document.body.appendChild(container)
+    root = createRoot(container)
+    act(() => {
+      root?.render(
+        <StoreCatalog
+          categories={[
+            { id: "5", name: "Flows" },
+            { id: "6", name: "Viet only" },
+          ]}
+          templates={withCategories}
+          tenantName="Acme Bots"
+          viewerLocale="en"
+        />,
+      )
+    })
+
+    expect(container.textContent).toContain("Flows")
+    expect(container.textContent).not.toContain("Viet only")
+  })
+
+  test("no match offers a button that clears search and category and shows every language", () => {
+    mocks.params = { q: "zzz" }
+    const el = render("page", multiLanguage)
+
+    expect(el.textContent).toContain("noResults")
+    const clear = Array.from(el.querySelectorAll("button")).find(
+      (b) => b.textContent === "clearSearch",
+    )
+    expect(clear).toBeDefined()
+    act(() => clear?.click())
+    expect(mocks.setQuery).toHaveBeenCalledWith(null)
+    expect(mocks.setCategory).toHaveBeenCalledWith(null)
+    expect(mocks.setLanguage).toHaveBeenCalledWith("all")
   })
 })

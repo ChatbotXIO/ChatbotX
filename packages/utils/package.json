@@ -61,6 +61,7 @@
     "./store-incoming-image": "./src/store-incoming-image.ts",
     "./temporal-input": "./src/temporal-input/index.ts",
     "./timezone": "./src/timezone.ts",
+    "./ui-locale": "./src/ui-locale.ts",
     "./variables": "./src/variables.ts",
     "./web-url": "./src/web-url.ts",
     "./whatsapp-call": "./src/whatsapp-call.ts",

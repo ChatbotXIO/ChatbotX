@@ -81,6 +81,7 @@ type PanelProps = ComponentProps<typeof HomeTemplatesPanel>
 
 const catalog = {
   tenantName: "Acme",
+  viewerLocale: "en" as const,
   categories: [{ id: "5", name: "Flows" }],
   templates: [
     {
@@ -91,6 +92,8 @@ const catalog = {
       imageUrl: "/cover.png",
       href: "/?tab=templates&key=tok",
       categoryIds: ["5"],
+      languages: [],
+      section: "primary" as const,
     },
   ],
 }

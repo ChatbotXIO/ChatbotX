@@ -2,21 +2,39 @@
 
 import { Button } from "@chatbotx.io/ui/components/ui/button"
 import { Input } from "@chatbotx.io/ui/components/ui/input"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@chatbotx.io/ui/components/ui/select"
 import { cn } from "@chatbotx.io/ui/lib/utils"
+import { isLocale } from "@chatbotx.io/utils/ui-locale"
 import { SearchIcon, StoreIcon } from "lucide-react"
 import Link from "next/link"
 import { useTranslations } from "next-intl"
 import { parseAsString, useQueryState } from "nuqs"
 import type { ReactNode } from "react"
+import { localeMeta } from "@/i18n/config"
 import {
   filterStoreTemplates,
+  listStoreLanguageOptions,
+  resolveStoreLanguageView,
+  STORE_ALL_LANGUAGES,
   type StoreCatalogCategory,
   type StoreCatalogTemplate,
+  type StoreLanguageView,
   shouldShowCategoryFilter,
+  splitStoreSections,
 } from "../lib/filter-store-templates"
 
 /** What every layout shares; the variant only adds the page chrome around it. */
 const STORE_CATALOG_BASE_CLASS_NAME = "flex w-full flex-col gap-8"
+
+/** A language's own name; an unknown code (a locale since removed) shows as is. */
+const languageLabel = (language: string): string =>
+  isLocale(language) ? localeMeta[language].nativeLabel : language
 
 type StoreCatalogHeadingTag = "h1" | "h2"
 
@@ -59,6 +77,8 @@ type StoreCatalogProps = {
   tenantName: string
   categories: StoreCatalogCategory[]
   templates: StoreCatalogTemplate[]
+  /** The visitor's UI language: the language filter starts on it. */
+  viewerLocale: string
   layout?: StoreCatalogLayout
 }
 
@@ -85,6 +105,7 @@ export function StoreCatalog({
   tenantName,
   categories,
   templates,
+  viewerLocale,
   layout = "page",
 }: StoreCatalogProps) {
   const t = useTranslations("templateStore.store")
@@ -93,6 +114,10 @@ export function StoreCatalog({
   const Heading = layoutConfig.headingTag
   const [categoryParam, setCategoryParam] = useQueryState(
     "category",
+    parseAsString.withOptions(STORE_URL_STATE_OPTIONS),
+  )
+  const [languageParam, setLanguageParam] = useQueryState(
+    "lang",
     parseAsString.withOptions(STORE_URL_STATE_OPTIONS),
   )
   const [query, setQuery] = useQueryState(
@@ -104,22 +129,47 @@ export function StoreCatalog({
     return <StoreMessage icon={<StoreIcon />} text={t("empty")} />
   }
 
-  const showCategoryFilter = shouldShowCategoryFilter({ categories, templates })
+  // The filter only helps when there is another language than the visitor's.
+  const languages = listStoreLanguageOptions(templates, viewerLocale)
+  const showLanguageFilter = languages.length > 1
+  // Starts on the visitor's language; a stale value in the URL falls back to it.
+  const languageView: StoreLanguageView = resolveStoreLanguageView({
+    param: showLanguageFilter ? languageParam : null,
+    options: languages,
+    viewerLocale,
+  })
+  // Category chips and their counts follow the chosen language.
+  const inLanguage = filterStoreTemplates({
+    templates,
+    categoryId: undefined,
+    languageView,
+    query: "",
+  })
+  const countInCategory = (categoryId: string): number =>
+    inLanguage.filter((template) => template.categoryIds.includes(categoryId))
+      .length
+  // A category with nothing in this language would only lead to an empty list.
+  const languageCategories = categories.filter(
+    (category) => countInCategory(category.id) > 0,
+  )
+  const showCategoryFilter = shouldShowCategoryFilter({
+    categories: languageCategories,
+    templates: inLanguage,
+  })
 
   // No category (or an unknown or stale one in the URL) means every template.
   const activeCategory = showCategoryFilter
-    ? categories.find((category) => category.id === categoryParam)
+    ? languageCategories.find((category) => category.id === categoryParam)
     : undefined
   const visible = filterStoreTemplates({
     templates,
     categoryId: activeCategory?.id,
+    languageView,
     query,
   })
+  const { primary, other } = splitStoreSections(visible, languageView)
   const publisherOf = (template: StoreCatalogTemplate): string =>
     template.publisherName ?? tenantName
-  const countInCategory = (categoryId: string): number =>
-    templates.filter((template) => template.categoryIds.includes(categoryId))
-      .length
 
   return (
     <div className={cn(STORE_CATALOG_BASE_CLASS_NAME, layoutConfig.className)}>
@@ -130,16 +180,53 @@ export function StoreCatalog({
           </Heading>
           <p className="text-muted-foreground">{t("subtitle")}</p>
         </div>
-        <div className="relative w-full sm:max-w-xs">
-          <SearchIcon className="pointer-events-none absolute start-3 top-3 size-4 text-muted-foreground" />
-          <Input
-            aria-label={t("search")}
-            className="h-10 rounded-lg bg-background ps-9"
-            onChange={(event) => setQuery(event.target.value)}
-            placeholder={t("search")}
-            type="search"
-            value={query}
-          />
+        <div className="flex w-full flex-col gap-2 sm:max-w-md sm:flex-row">
+          {showLanguageFilter ? (
+            <Select
+              items={[
+                { value: STORE_ALL_LANGUAGES, label: t("allLanguages") },
+                ...languages.map((language) => ({
+                  value: language,
+                  label: languageLabel(language),
+                })),
+              ]}
+              onValueChange={(value) =>
+                // The visitor's own language is the default, so it leaves the URL clean.
+                setLanguageParam(
+                  String(value) === viewerLocale ? null : String(value),
+                )
+              }
+              value={languageView.value}
+            >
+              <SelectTrigger
+                aria-label={t("language")}
+                className="h-10 w-full rounded-lg bg-background sm:w-44"
+              >
+                <SelectValue placeholder={t("allLanguages")} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={STORE_ALL_LANGUAGES}>
+                  {t("allLanguages")}
+                </SelectItem>
+                {languages.map((language) => (
+                  <SelectItem key={language} value={language}>
+                    {languageLabel(language)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          ) : null}
+          <div className="relative w-full">
+            <SearchIcon className="pointer-events-none absolute start-3 top-3 size-4 text-muted-foreground" />
+            <Input
+              aria-label={t("search")}
+              className="h-10 rounded-lg bg-background ps-9"
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder={t("search")}
+              type="search"
+              value={query}
+            />
+          </div>
         </div>
       </div>
 
@@ -147,12 +234,12 @@ export function StoreCatalog({
         <fieldset className="m-0 flex min-w-0 flex-wrap gap-2 border-0 p-0">
           <legend className="sr-only">{t("categories")}</legend>
           <CategoryChip
-            count={templates.length}
+            count={inLanguage.length}
             isActive={activeCategory === undefined}
             label={t("all")}
             onSelect={() => setCategoryParam(null)}
           />
-          {categories.map((category) => (
+          {languageCategories.map((category) => (
             <CategoryChip
               count={countInCategory(category.id)}
               isActive={category.id === activeCategory?.id}
@@ -172,7 +259,11 @@ export function StoreCatalog({
       {visible.length === 0 ? (
         <StoreMessage icon={<SearchIcon />} text={t("noResults")}>
           <Button
-            onClick={() => setQuery(null)}
+            onClick={() => {
+              setQuery(null)
+              setCategoryParam(null)
+              setLanguageParam(STORE_ALL_LANGUAGES)
+            }}
             type="button"
             variant="outline"
           >
@@ -180,48 +271,85 @@ export function StoreCatalog({
           </Button>
         </StoreMessage>
       ) : (
-        <ul className={layoutConfig.gridClassName}>
-          {visible.map((template) => (
-            <li key={template.templateId}>
-              <Link
-                className="flex h-full flex-col gap-4 rounded-2xl border bg-card p-5 shadow-xs transition hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-md focus-visible:outline-2 focus-visible:outline-ring"
-                href={template.href}
-              >
-                <div className="flex items-center gap-4">
-                  {/* biome-ignore lint/performance/noImgElement: external, unoptimized template thumbnail resolved from publisher-uploaded storage */}
-                  <img
-                    alt=""
-                    className="size-14 shrink-0 rounded-xl bg-white object-cover"
-                    height={56}
-                    src={template.imageUrl}
-                    width={56}
-                  />
-                  <div className="min-w-0">
-                    <p
-                      className="line-clamp-2 break-words font-semibold leading-snug"
-                      title={template.name}
-                    >
-                      {template.name}
-                    </p>
-                    <p
-                      className="truncate text-muted-foreground text-sm"
-                      title={publisherOf(template)}
-                    >
-                      {t("by", { publisherName: publisherOf(template) })}
-                    </p>
-                  </div>
-                </div>
-                {template.description ? (
-                  <p className="line-clamp-3 text-muted-foreground text-sm">
-                    {template.description}
-                  </p>
-                ) : null}
-              </Link>
-            </li>
-          ))}
-        </ul>
+        <>
+          <StoreTemplateGrid
+            className={layoutConfig.gridClassName}
+            publisherOf={publisherOf}
+            templates={primary}
+          />
+          {other.length > 0 ? (
+            <section
+              aria-label={t("otherLanguages")}
+              className="flex flex-col gap-4"
+            >
+              {primary.length > 0 ? <hr className="border-border" /> : null}
+              <h3 className="font-medium text-muted-foreground text-sm">
+                {t("otherLanguages")}
+              </h3>
+              <StoreTemplateGrid
+                className={layoutConfig.gridClassName}
+                publisherOf={publisherOf}
+                templates={other}
+              />
+            </section>
+          ) : null}
+        </>
       )}
     </div>
+  )
+}
+
+function StoreTemplateGrid({
+  templates,
+  className,
+  publisherOf,
+}: {
+  templates: StoreCatalogTemplate[]
+  className: string
+  publisherOf: (template: StoreCatalogTemplate) => string
+}) {
+  const t = useTranslations("templateStore.store")
+  return (
+    <ul className={className}>
+      {templates.map((template) => (
+        <li key={template.templateId}>
+          <Link
+            className="flex h-full flex-col gap-4 rounded-2xl border bg-card p-5 shadow-xs transition hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-md focus-visible:outline-2 focus-visible:outline-ring"
+            href={template.href}
+          >
+            <div className="flex items-center gap-4">
+              {/* biome-ignore lint/performance/noImgElement: external, unoptimized template thumbnail resolved from publisher-uploaded storage */}
+              <img
+                alt=""
+                className="size-14 shrink-0 rounded-xl bg-white object-cover"
+                height={56}
+                src={template.imageUrl}
+                width={56}
+              />
+              <div className="min-w-0">
+                <p
+                  className="line-clamp-2 break-words font-semibold leading-snug"
+                  title={template.name}
+                >
+                  {template.name}
+                </p>
+                <p
+                  className="truncate text-muted-foreground text-sm"
+                  title={publisherOf(template)}
+                >
+                  {t("by", { publisherName: publisherOf(template) })}
+                </p>
+              </div>
+            </div>
+            {template.description ? (
+              <p className="line-clamp-3 text-muted-foreground text-sm">
+                {template.description}
+              </p>
+            ) : null}
+          </Link>
+        </li>
+      ))}
+    </ul>
   )
 }
 

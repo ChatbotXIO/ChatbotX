@@ -12089,7 +12089,7 @@
     "add": "添加",
     "addCategory": "添加分类",
     "renameCategory": "重命名",
-    "editCategories": "编辑分类",
+    "editListing": "编辑条目",
     "templateId": "模板 ID",
     "template": "模板",
     "categories": "分类",
@@ -12097,9 +12097,12 @@
     "close": "关闭",
     "removeChip": "移除 {name}",
     "categoriesHint": "可选。没有分类的模板只显示在“全部”中。",
+    "languages": "语言",
+    "allLanguages": "所有语言",
+    "languagesHint": "可选。留空则模板在所有语言下显示。",
     "noCategoriesYet": "还没有分类。",
     "added": "模板已添加到商店",
-    "updated": "分类已更新",
+    "updated": "条目已更新",
     "removed": "模板已从商店移除",
     "removeError": "无法移除模板",
     "removeTitle": "移除 {name}？",
@@ -12147,10 +12150,13 @@
       "search": "搜索模板",
       "all": "全部",
       "categories": "商店分类",
-      "noResults": "没有与搜索匹配的模板。",
-      "clearSearch": "清除搜索",
+      "noResults": "没有符合筛选条件的模板。",
+      "clearSearch": "清除筛选",
       "by": "作者：{publisherName}",
-      "loadFailed": "无法加载模板。请稍后再试。"
+      "loadFailed": "无法加载模板。请稍后再试。",
+      "language": "语言",
+      "allLanguages": "所有语言",
+      "otherLanguages": "其他语言"
     },
     "picker": {
       "placeholder": "选择模板",
@@ -12159,6 +12165,16 @@
       "error": "无法加载模板。",
       "retry": "重试",
       "meta": "ID {id} · {workspace}"
+    },
+    "bulk": {
+      "setCategories": "设置分类",
+      "setLanguages": "设置语言",
+      "categoriesHint": "替换所选模板（{count}）的分类。留空则移除所有分类。",
+      "languagesHint": "替换所选模板（{count}）的语言。留空则在所有语言下显示。",
+      "updated": "已更新所选模板",
+      "removeTitle": "移除所选模板？",
+      "removeDescription": "已选：{count}。它们将从商店消失；模板本身及其安装不受影响。",
+      "removed": "已从商店移除所选模板"
     }
   },
   "accountDeletion": {

@@ -12089,7 +12089,7 @@
     "add": "Toevoegen",
     "addCategory": "Categorie toevoegen",
     "renameCategory": "Hernoemen",
-    "editCategories": "Categorieën bewerken",
+    "editListing": "Vermelding bewerken",
     "templateId": "Template-ID",
     "template": "Template",
     "categories": "Categorieën",
@@ -12097,9 +12097,12 @@
     "close": "Sluiten",
     "removeChip": "{name} verwijderen",
     "categoriesHint": "Optioneel. Zonder categorie verschijnt de template alleen onder “Alle”.",
+    "languages": "Talen",
+    "allLanguages": "Alle talen",
+    "languagesHint": "Optioneel. Laat leeg om de sjabloon in alle talen te tonen.",
     "noCategoriesYet": "Nog geen categorieën.",
     "added": "Template toegevoegd aan de winkel",
-    "updated": "Categorieën bijgewerkt",
+    "updated": "Vermelding bijgewerkt",
     "removed": "Template uit de winkel verwijderd",
     "removeError": "Template kon niet worden verwijderd",
     "removeTitle": "{name} verwijderen?",
@@ -12147,10 +12150,13 @@
       "search": "Templates zoeken",
       "all": "Alle",
       "categories": "Winkelcategorieën",
-      "noResults": "Geen templates komen overeen met je zoekopdracht.",
-      "clearSearch": "Zoekopdracht wissen",
+      "noResults": "Geen sjablonen komen overeen met je filters.",
+      "clearSearch": "Filters wissen",
       "by": "Door {publisherName}",
-      "loadFailed": "De templates konden niet worden geladen. Probeer het later opnieuw."
+      "loadFailed": "De templates konden niet worden geladen. Probeer het later opnieuw.",
+      "language": "Taal",
+      "allLanguages": "Alle talen",
+      "otherLanguages": "Andere talen"
     },
     "picker": {
       "placeholder": "Kies een template",
@@ -12159,6 +12165,16 @@
       "error": "Templates konden niet worden geladen.",
       "retry": "Opnieuw proberen",
       "meta": "ID {id} · {workspace}"
+    },
+    "bulk": {
+      "setCategories": "Categorieën instellen",
+      "setLanguages": "Talen instellen",
+      "categoriesHint": "Vervangt de categorieën van de geselecteerde sjablonen ({count}). Laat leeg om alle categorieën te verwijderen.",
+      "languagesHint": "Vervangt de talen van de geselecteerde sjablonen ({count}). Laat leeg om ze in alle talen te tonen.",
+      "updated": "Geselecteerde sjablonen bijgewerkt",
+      "removeTitle": "Geselecteerde sjablonen verwijderen?",
+      "removeDescription": "Geselecteerd: {count}. Ze verdwijnen uit de winkel; de sjablonen zelf en hun installaties blijven ongemoeid.",
+      "removed": "Geselecteerde sjablonen uit de winkel verwijderd"
     }
   },
   "accountDeletion": {

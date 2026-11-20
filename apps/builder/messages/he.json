@@ -12089,7 +12089,7 @@
     "add": "הוספה",
     "addCategory": "הוספת קטגוריה",
     "renameCategory": "שינוי שם",
-    "editCategories": "עריכת קטגוריות",
+    "editListing": "עריכת רשומה",
     "templateId": "מזהה תבנית",
     "template": "תבנית",
     "categories": "קטגוריות",
@@ -12097,9 +12097,12 @@
     "close": "סגירה",
     "removeChip": "הסרת {name}",
     "categoriesHint": "אופציונלי. בלי קטגוריה התבנית תופיע רק תחת «הכול».",
+    "languages": "שפות",
+    "allLanguages": "כל השפות",
+    "languagesHint": "אופציונלי. השאירו ריק כדי להציג את התבנית בכל השפות.",
     "noCategoriesYet": "עדיין אין קטגוריות.",
     "added": "התבנית נוספה לחנות",
-    "updated": "הקטגוריות עודכנו",
+    "updated": "הרשומה עודכנה",
     "removed": "התבנית הוסרה מהחנות",
     "removeError": "לא ניתן להסיר את התבנית",
     "removeTitle": "להסיר את {name}?",
@@ -12147,10 +12150,13 @@
       "search": "חיפוש תבניות",
       "all": "הכול",
       "categories": "קטגוריות החנות",
-      "noResults": "אין תבניות שמתאימות לחיפוש.",
-      "clearSearch": "ניקוי החיפוש",
+      "noResults": "אין תבניות שתואמות למסננים.",
+      "clearSearch": "נקה מסננים",
       "by": "מאת {publisherName}",
-      "loadFailed": "לא ניתן לטעון את התבניות. נסו שוב מאוחר יותר."
+      "loadFailed": "לא ניתן לטעון את התבניות. נסו שוב מאוחר יותר.",
+      "language": "שפה",
+      "allLanguages": "כל השפות",
+      "otherLanguages": "שפות אחרות"
     },
     "picker": {
       "placeholder": "בחרו תבנית",
@@ -12159,6 +12165,16 @@
       "error": "לא ניתן לטעון תבניות.",
       "retry": "נסו שוב",
       "meta": "ID {id} · {workspace}"
+    },
+    "bulk": {
+      "setCategories": "הגדרת קטגוריות",
+      "setLanguages": "הגדרת שפות",
+      "categoriesHint": "מחליף את הקטגוריות של התבניות שנבחרו ({count}). השאירו ריק כדי להסיר את כל הקטגוריות.",
+      "languagesHint": "מחליף את השפות של התבניות שנבחרו ({count}). השאירו ריק כדי להציג אותן בכל השפות.",
+      "updated": "התבניות שנבחרו עודכנו",
+      "removeTitle": "להסיר את התבניות שנבחרו?",
+      "removeDescription": "נבחרו: {count}. הן ייעלמו מהחנות; התבניות עצמן וההתקנות שלהן לא מושפעות.",
+      "removed": "התבניות שנבחרו הוסרו מהחנות"
     }
   },
   "accountDeletion": {

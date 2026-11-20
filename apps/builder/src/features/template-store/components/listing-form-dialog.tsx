@@ -13,16 +13,19 @@ import {
 } from "@chatbotx.io/ui/components/ui/dialog"
 import { Label } from "@chatbotx.io/ui/components/ui/label"
 import { MultiSelect } from "@chatbotx.io/ui/components/ui/sersavan/multi-select"
+import { isLocale, type Locale, locales } from "@chatbotx.io/utils/ui-locale"
 import { PlusIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { useAction } from "next-safe-action/hooks"
 import { useState } from "react"
+import { localeMeta } from "@/i18n/config"
 import { toastActionError } from "@/lib/errors/safe-action-error-handler"
 import type { TemplateStoreScope } from "../schema"
 import {
   addTemplateStoreListingAction,
   updateTemplateStoreListingAction,
 } from "../template-store.action"
+import { useMultiSelectLabels } from "../use-multi-select-labels"
 import { useTemplateStoreOutcome } from "../use-template-store-outcome"
 import { TemplatePicker } from "./template-picker"
 
@@ -35,12 +38,13 @@ type ListingFormDialogProps = {
     templateId: string
     name: string
     categoryIds: string[]
+    languages: Locale[]
   }
   open?: boolean
   onOpenChange?: (open: boolean) => void
 }
 
-/** Adds a template to the store (pick a template, optionally categories), or edits the categories of a listed one. */
+/** Adds a template to the store (pick a template, optionally categories and languages), or edits those of a listed one. */
 export function ListingFormDialog({
   scope,
   categories,
@@ -50,19 +54,22 @@ export function ListingFormDialog({
 }: ListingFormDialogProps) {
   const t = useTranslations("templateStore")
   const tActions = useTranslations("actions")
-  const tMessages = useTranslations("messages")
   const handleOutcome = useTemplateStoreOutcome()
+  const categoryLabels = useMultiSelectLabels(t("categories"))
+  const languageLabels = useMultiSelectLabels(t("languages"))
   const [internalOpen, setInternalOpen] = useState(false)
   const open = controlledOpen ?? internalOpen
   const setOpen = onOpenChange ?? setInternalOpen
   const [template, setTemplate] = useState<TemplateStoreCandidate | null>(null)
   const [categoryIds, setCategoryIds] = useState(listing?.categoryIds ?? [])
+  const [languages, setLanguages] = useState<Locale[]>(listing?.languages ?? [])
 
   const close = () => {
     setOpen(false)
     if (!listing) {
       setTemplate(null)
       setCategoryIds([])
+      setLanguages([])
     }
   }
 
@@ -81,11 +88,21 @@ export function ListingFormDialog({
 
   const submit = () => {
     if (listing) {
-      update.execute({ scope, listingId: listing.listingId, categoryIds })
+      update.execute({
+        scope,
+        listingId: listing.listingId,
+        categoryIds,
+        languages,
+      })
       return
     }
     if (template) {
-      add.execute({ scope, templateId: template.templateId, categoryIds })
+      add.execute({
+        scope,
+        templateId: template.templateId,
+        categoryIds,
+        languages,
+      })
     }
   }
 
@@ -103,7 +120,7 @@ export function ListingFormDialog({
       )}
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{listing ? t("editCategories") : t("add")}</DialogTitle>
+          <DialogTitle>{listing ? t("editListing") : t("add")}</DialogTitle>
         </DialogHeader>
         <div className="space-y-4">
           <div className="space-y-2">
@@ -129,17 +146,7 @@ export function ListingFormDialog({
             <Label>{t("categories")}</Label>
             <MultiSelect
               defaultValue={categoryIds}
-              labels={{
-                searchPlaceholder: tActions("search"),
-                searchAriaLabel: tActions("search"),
-                optionsAriaLabel: t("categories"),
-                empty: tMessages("noResults"),
-                clear: tActions("clear"),
-                clearAllAriaLabel: () => tActions("clear"),
-                removeAriaLabel: (name) => t("removeChip", { name }),
-                close: t("close"),
-                selectAll: () => tActions("selectAll"),
-              }}
+              labels={categoryLabels}
               modalPopover
               onValueChange={setCategoryIds}
               options={categories.map((category) => ({
@@ -152,6 +159,23 @@ export function ListingFormDialog({
               {categories.length === 0
                 ? t("noCategoriesYet")
                 : t("categoriesHint")}
+            </p>
+          </div>
+          <div className="space-y-2">
+            <Label>{t("languages")}</Label>
+            <MultiSelect
+              defaultValue={languages}
+              labels={languageLabels}
+              modalPopover
+              onValueChange={(values) => setLanguages(values.filter(isLocale))}
+              options={locales.map((locale) => ({
+                label: localeMeta[locale].nativeLabel,
+                value: locale,
+              }))}
+              placeholder={t("allLanguages")}
+            />
+            <p className="text-muted-foreground text-xs">
+              {t("languagesHint")}
             </p>
           </div>
         </div>

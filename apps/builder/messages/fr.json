@@ -12089,7 +12089,7 @@
     "add": "Ajouter",
     "addCategory": "Ajouter une catégorie",
     "renameCategory": "Renommer",
-    "editCategories": "Modifier les catégories",
+    "editListing": "Modifier l'entrée",
     "templateId": "ID du modèle",
     "template": "Modèle",
     "categories": "Catégories",
@@ -12097,9 +12097,12 @@
     "close": "Fermer",
     "removeChip": "Retirer {name}",
     "categoriesHint": "Facultatif. Sans catégorie, le modèle n'apparaît que dans « Tous ».",
+    "languages": "Langues",
+    "allLanguages": "Toutes les langues",
+    "languagesHint": "Facultatif. Laissez vide pour afficher le modèle dans toutes les langues.",
     "noCategoriesYet": "Aucune catégorie pour le moment.",
     "added": "Modèle ajouté à la boutique",
-    "updated": "Catégories mises à jour",
+    "updated": "Entrée mise à jour",
     "removed": "Modèle retiré de la boutique",
     "removeError": "Impossible de retirer le modèle",
     "removeTitle": "Retirer {name} ?",
@@ -12147,10 +12150,13 @@
       "search": "Rechercher des modèles",
       "all": "Tous",
       "categories": "Catégories de la boutique",
-      "noResults": "Aucun modèle ne correspond à votre recherche.",
-      "clearSearch": "Effacer la recherche",
+      "noResults": "Aucun modèle ne correspond à vos filtres.",
+      "clearSearch": "Effacer les filtres",
       "by": "Par {publisherName}",
-      "loadFailed": "Impossible de charger les modèles. Réessayez plus tard."
+      "loadFailed": "Impossible de charger les modèles. Réessayez plus tard.",
+      "language": "Langue",
+      "allLanguages": "Toutes les langues",
+      "otherLanguages": "Autres langues"
     },
     "picker": {
       "placeholder": "Choisir un modèle",
@@ -12159,6 +12165,16 @@
       "error": "Impossible de charger les modèles.",
       "retry": "Réessayer",
       "meta": "ID {id} · {workspace}"
+    },
+    "bulk": {
+      "setCategories": "Définir les catégories",
+      "setLanguages": "Définir les langues",
+      "categoriesHint": "Remplace les catégories des modèles sélectionnés ({count}). Laissez vide pour retirer toutes les catégories.",
+      "languagesHint": "Remplace les langues des modèles sélectionnés ({count}). Laissez vide pour les afficher dans toutes les langues.",
+      "updated": "Modèles sélectionnés mis à jour",
+      "removeTitle": "Retirer les modèles sélectionnés ?",
+      "removeDescription": "Sélectionnés : {count}. Ils disparaissent de la boutique ; les modèles eux-mêmes et leurs installations ne sont pas affectés.",
+      "removed": "Modèles sélectionnés retirés de la boutique"
     }
   },
   "accountDeletion": {

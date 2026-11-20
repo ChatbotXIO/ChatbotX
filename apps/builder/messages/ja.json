@@ -12089,7 +12089,7 @@
     "add": "追加",
     "addCategory": "カテゴリを追加",
     "renameCategory": "名前を変更",
-    "editCategories": "カテゴリを編集",
+    "editListing": "掲載を編集",
     "templateId": "テンプレートID",
     "template": "テンプレート",
     "categories": "カテゴリ",
@@ -12097,9 +12097,12 @@
     "close": "閉じる",
     "removeChip": "{name}を外す",
     "categoriesHint": "任意です。カテゴリがない場合、テンプレートは「すべて」にのみ表示されます。",
+    "languages": "言語",
+    "allLanguages": "すべての言語",
+    "languagesHint": "任意。空のままにすると、すべての言語でテンプレートが表示されます。",
     "noCategoriesYet": "カテゴリはまだありません。",
     "added": "テンプレートをストアに追加しました",
-    "updated": "カテゴリを更新しました",
+    "updated": "掲載を更新しました",
     "removed": "テンプレートをストアから削除しました",
     "removeError": "テンプレートを削除できませんでした",
     "removeTitle": "{name}を削除しますか？",
@@ -12147,10 +12150,13 @@
       "search": "テンプレートを検索",
       "all": "すべて",
       "categories": "ストアのカテゴリ",
-      "noResults": "検索に一致するテンプレートはありません。",
-      "clearSearch": "検索をクリア",
+      "noResults": "フィルターに一致するテンプレートがありません。",
+      "clearSearch": "フィルターをクリア",
       "by": "作成者：{publisherName}",
-      "loadFailed": "テンプレートを読み込めませんでした。しばらくしてからもう一度お試しください。"
+      "loadFailed": "テンプレートを読み込めませんでした。しばらくしてからもう一度お試しください。",
+      "language": "言語",
+      "allLanguages": "すべての言語",
+      "otherLanguages": "その他の言語"
     },
     "picker": {
       "placeholder": "テンプレートを選択",
@@ -12159,6 +12165,16 @@
       "error": "テンプレートを読み込めませんでした。",
       "retry": "再試行",
       "meta": "ID {id} · {workspace}"
+    },
+    "bulk": {
+      "setCategories": "カテゴリを設定",
+      "setLanguages": "言語を設定",
+      "categoriesHint": "選択したテンプレート（{count}）のカテゴリを置き換えます。空にするとすべてのカテゴリが外れます。",
+      "languagesHint": "選択したテンプレート（{count}）の言語を置き換えます。空にするとすべての言語で表示されます。",
+      "updated": "選択したテンプレートを更新しました",
+      "removeTitle": "選択したテンプレートを削除しますか？",
+      "removeDescription": "選択数：{count}。ストアから消えます。テンプレート自体とそのインストールには影響しません。",
+      "removed": "選択したテンプレートをストアから削除しました"
     }
   },
   "accountDeletion": {
