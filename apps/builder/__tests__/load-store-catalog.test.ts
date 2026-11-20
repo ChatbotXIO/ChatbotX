@@ -3,7 +3,10 @@ import { beforeEach, describe, expect, test, vi } from "vitest"
 const mocks = vi.hoisted(() => ({
   listPublished: vi.fn(),
   getTenantSettings: vi.fn(),
+  getLocale: vi.fn(),
 }))
+
+vi.mock("next-intl/server", () => ({ getLocale: mocks.getLocale }))
 
 vi.mock("server-only", () => ({}))
 vi.mock("@chatbotx.io/business", () => ({
@@ -24,6 +27,8 @@ const published = (overrides: Record<string, unknown> = {}) => ({
   imageUrl: "templates/cover.png",
   publisherName: "Acme",
   categoryIds: ["5"],
+  languages: ["fr"],
+  section: "primary",
   shareToken: "tok-11",
   shareUrl: "https://app.example.test/t/template?id=11&key=tok-11",
   ...overrides,
@@ -32,6 +37,7 @@ const published = (overrides: Record<string, unknown> = {}) => ({
 describe("loadStoreCatalog", () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    mocks.getLocale.mockResolvedValue("fr")
     mocks.getTenantSettings.mockResolvedValue({
       name: "Acme Bots",
       storageUrl: "https://files.example.test",
@@ -52,7 +58,10 @@ describe("loadStoreCatalog", () => {
     const catalog = await loadStoreCatalog("777")
 
     expect(mocks.listPublished).toHaveBeenCalledTimes(1)
-    expect(mocks.listPublished).toHaveBeenCalledWith({ tenantId: "777" })
+    expect(mocks.listPublished).toHaveBeenCalledWith({
+      tenantId: "777",
+      viewerLocale: "fr",
+    })
     expect(mocks.getTenantSettings).toHaveBeenCalledTimes(1)
     expect(catalog.templates).toHaveLength(3)
   })
@@ -66,6 +75,7 @@ describe("loadStoreCatalog", () => {
     const catalog = await loadStoreCatalog("777")
 
     expect(catalog.tenantName).toBe("Acme Bots")
+    expect(catalog.viewerLocale).toBe("fr")
     expect(catalog.categories).toEqual([{ id: "5", name: "Flows" }])
     expect(catalog.templates).toEqual([
       {
@@ -76,8 +86,22 @@ describe("loadStoreCatalog", () => {
         imageUrl: "https://files.example.test/templates/cover.png",
         href: "/t/template?id=11&key=tok-11",
         categoryIds: ["5"],
+        languages: ["fr"],
+        section: "primary",
       },
     ])
+  })
+
+  test("passes the visitor's UI language, canonicalised, so each language gets its own store", async () => {
+    mocks.listPublished.mockResolvedValue({ categories: [], templates: [] })
+    mocks.getLocale.mockResolvedValue("pt")
+
+    await loadStoreCatalog("777")
+
+    expect(mocks.listPublished).toHaveBeenCalledWith({
+      tenantId: "777",
+      viewerLocale: "pt-BR",
+    })
   })
 
   test("a template without a cover shows the tenant icon", async () => {
@@ -98,6 +122,7 @@ describe("loadStoreCatalog", () => {
 
     expect(await loadStoreCatalog("777")).toEqual({
       tenantName: "Acme Bots",
+      viewerLocale: "fr",
       categories: [],
       templates: [],
     })

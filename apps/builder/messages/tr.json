@@ -12089,7 +12089,7 @@
     "add": "Ekle",
     "addCategory": "Kategori ekle",
     "renameCategory": "Yeniden adlandır",
-    "editCategories": "Kategorileri düzenle",
+    "editListing": "Girişi düzenle",
     "templateId": "Şablon kimliği",
     "template": "Şablon",
     "categories": "Kategoriler",
@@ -12097,9 +12097,12 @@
     "close": "Kapat",
     "removeChip": "{name} kaldır",
     "categoriesHint": "İsteğe bağlı. Kategori yoksa şablon yalnızca “Tümü” altında görünür.",
+    "languages": "Diller",
+    "allLanguages": "Tüm diller",
+    "languagesHint": "İsteğe bağlı. Şablonu tüm dillerde göstermek için boş bırakın.",
     "noCategoriesYet": "Henüz kategori yok.",
     "added": "Şablon mağazaya eklendi",
-    "updated": "Kategoriler güncellendi",
+    "updated": "Giriş güncellendi",
     "removed": "Şablon mağazadan kaldırıldı",
     "removeError": "Şablon kaldırılamadı",
     "removeTitle": "{name} kaldırılsın mı?",
@@ -12147,10 +12150,13 @@
       "search": "Şablon ara",
       "all": "Tümü",
       "categories": "Mağaza kategorileri",
-      "noResults": "Aramanızla eşleşen şablon yok.",
-      "clearSearch": "Aramayı temizle",
+      "noResults": "Filtrelerinizle eşleşen şablon yok.",
+      "clearSearch": "Filtreleri temizle",
       "by": "Yayıncı: {publisherName}",
-      "loadFailed": "Şablonlar yüklenemedi. Lütfen daha sonra tekrar deneyin."
+      "loadFailed": "Şablonlar yüklenemedi. Lütfen daha sonra tekrar deneyin.",
+      "language": "Dil",
+      "allLanguages": "Tüm diller",
+      "otherLanguages": "Diğer diller"
     },
     "picker": {
       "placeholder": "Bir şablon seçin",
@@ -12159,6 +12165,16 @@
       "error": "Şablonlar yüklenemedi.",
       "retry": "Tekrar dene",
       "meta": "ID {id} · {workspace}"
+    },
+    "bulk": {
+      "setCategories": "Kategorileri ayarla",
+      "setLanguages": "Dilleri ayarla",
+      "categoriesHint": "Seçili şablonların ({count}) kategorilerini değiştirir. Tüm kategorileri kaldırmak için boş bırakın.",
+      "languagesHint": "Seçili şablonların ({count}) dillerini değiştirir. Tüm dillerde göstermek için boş bırakın.",
+      "updated": "Seçili şablonlar güncellendi",
+      "removeTitle": "Seçili şablonlar kaldırılsın mı?",
+      "removeDescription": "Seçili: {count}. Mağazadan kaybolurlar; şablonların kendisi ve kurulumları etkilenmez.",
+      "removed": "Seçili şablonlar mağazadan kaldırıldı"
     }
   },
   "accountDeletion": {

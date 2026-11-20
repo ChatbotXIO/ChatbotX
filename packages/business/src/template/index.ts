@@ -83,6 +83,7 @@ export {
   type TemplateStoreCandidate,
   templateStoreService,
 } from "./store.service"
+export type { TemplateStoreAudienceSection } from "./store-audience"
 export {
   TEMPLATE_FAN_OUT_BATCH_SIZE,
   type TemplateSyncHistoryItem,

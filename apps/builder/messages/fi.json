@@ -12089,7 +12089,7 @@
     "add": "Lisää",
     "addCategory": "Lisää luokka",
     "renameCategory": "Nimeä uudelleen",
-    "editCategories": "Muokkaa luokkia",
+    "editListing": "Muokkaa kohdetta",
     "templateId": "Mallin tunnus",
     "template": "Malli",
     "categories": "Luokat",
@@ -12097,9 +12097,12 @@
     "close": "Sulje",
     "removeChip": "Poista {name}",
     "categoriesHint": "Valinnainen. Ilman luokkaa malli näkyy vain kohdassa “Kaikki”.",
+    "languages": "Kielet",
+    "allLanguages": "Kaikki kielet",
+    "languagesHint": "Valinnainen. Jätä tyhjäksi, jos malli näytetään kaikilla kielillä.",
     "noCategoriesYet": "Ei vielä luokkia.",
     "added": "Malli lisätty kauppaan",
-    "updated": "Luokat päivitetty",
+    "updated": "Kohde päivitetty",
     "removed": "Malli poistettu kaupasta",
     "removeError": "Mallia ei voitu poistaa",
     "removeTitle": "Poistetaanko {name}?",
@@ -12147,10 +12150,13 @@
       "search": "Hae malleja",
       "all": "Kaikki",
       "categories": "Kaupan luokat",
-      "noResults": "Mikään malli ei vastaa hakua.",
-      "clearSearch": "Tyhjennä haku",
+      "noResults": "Mikään malli ei vastaa suodattimia.",
+      "clearSearch": "Tyhjennä suodattimet",
       "by": "Tekijä: {publisherName}",
-      "loadFailed": "Malleja ei voitu ladata. Yritä myöhemmin uudelleen."
+      "loadFailed": "Malleja ei voitu ladata. Yritä myöhemmin uudelleen.",
+      "language": "Kieli",
+      "allLanguages": "Kaikki kielet",
+      "otherLanguages": "Muut kielet"
     },
     "picker": {
       "placeholder": "Valitse malli",
@@ -12159,6 +12165,16 @@
       "error": "Malleja ei voitu ladata.",
       "retry": "Yritä uudelleen",
       "meta": "ID {id} · {workspace}"
+    },
+    "bulk": {
+      "setCategories": "Aseta kategoriat",
+      "setLanguages": "Aseta kielet",
+      "categoriesHint": "Korvaa valittujen mallien ({count}) kategoriat. Jätä tyhjäksi poistaaksesi kaikki kategoriat.",
+      "languagesHint": "Korvaa valittujen mallien ({count}) kielet. Jätä tyhjäksi näyttääksesi ne kaikilla kielillä.",
+      "updated": "Valitut mallit päivitetty",
+      "removeTitle": "Poistetaanko valitut mallit?",
+      "removeDescription": "Valittu: {count}. Ne katoavat kaupasta; itse mallit ja niiden asennukset eivät muutu.",
+      "removed": "Valitut mallit poistettu kaupasta"
     }
   },
   "accountDeletion": {

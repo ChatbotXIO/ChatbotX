@@ -12089,7 +12089,7 @@
     "add": "Adaugă",
     "addCategory": "Adaugă categorie",
     "renameCategory": "Redenumește",
-    "editCategories": "Editează categoriile",
+    "editListing": "Editează intrarea",
     "templateId": "ID șablon",
     "template": "Șablon",
     "categories": "Categorii",
@@ -12097,9 +12097,12 @@
     "close": "Închide",
     "removeChip": "Elimină {name}",
     "categoriesHint": "Opțional. Fără categorie, șablonul apare doar la „Toate”.",
+    "languages": "Limbi",
+    "allLanguages": "Toate limbile",
+    "languagesHint": "Opțional. Lasă gol pentru a afișa șablonul în toate limbile.",
     "noCategoriesYet": "Încă nu există categorii.",
     "added": "Șablon adăugat în magazin",
-    "updated": "Categorii actualizate",
+    "updated": "Intrare actualizată",
     "removed": "Șablon eliminat din magazin",
     "removeError": "Șablonul nu a putut fi eliminat",
     "removeTitle": "Elimini {name}?",
@@ -12147,10 +12150,13 @@
       "search": "Caută șabloane",
       "all": "Toate",
       "categories": "Categoriile magazinului",
-      "noResults": "Niciun șablon nu corespunde căutării.",
-      "clearSearch": "Șterge căutarea",
+      "noResults": "Niciun șablon nu corespunde filtrelor.",
+      "clearSearch": "Șterge filtrele",
       "by": "De {publisherName}",
-      "loadFailed": "Șabloanele nu au putut fi încărcate. Încercați din nou mai târziu."
+      "loadFailed": "Șabloanele nu au putut fi încărcate. Încercați din nou mai târziu.",
+      "language": "Limbă",
+      "allLanguages": "Toate limbile",
+      "otherLanguages": "Alte limbi"
     },
     "picker": {
       "placeholder": "Alege un șablon",
@@ -12159,6 +12165,16 @@
       "error": "Șabloanele nu au putut fi încărcate.",
       "retry": "Reîncearcă",
       "meta": "ID {id} · {workspace}"
+    },
+    "bulk": {
+      "setCategories": "Setează categoriile",
+      "setLanguages": "Setează limbile",
+      "categoriesHint": "Înlocuiește categoriile șabloanelor selectate ({count}). Lasă gol pentru a elimina toate categoriile.",
+      "languagesHint": "Înlocuiește limbile șabloanelor selectate ({count}). Lasă gol pentru a le afișa în toate limbile.",
+      "updated": "Șabloanele selectate au fost actualizate",
+      "removeTitle": "Elimini șabloanele selectate?",
+      "removeDescription": "Selectate: {count}. Dispar din magazin; șabloanele în sine și instalările lor nu sunt afectate.",
+      "removed": "Șabloanele selectate au fost eliminate din magazin"
     }
   },
   "accountDeletion": {

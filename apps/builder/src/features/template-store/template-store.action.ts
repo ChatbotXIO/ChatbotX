@@ -15,10 +15,12 @@ import {
   deleteTemplateStoreCategorySchema,
   moveTemplateStoreCategorySchema,
   removeTemplateStoreListingSchema,
+  removeTemplateStoreListingsSchema,
   renameTemplateStoreCategorySchema,
   searchTemplateStoreCandidatesSchema,
   type TemplateStoreScope,
   updateTemplateStoreListingSchema,
+  updateTemplateStoreListingsSchema,
 } from "./schema"
 
 /**
@@ -62,6 +64,7 @@ export const addTemplateStoreListingAction = authActionClient
         scope: await resolveScope(parsedInput.scope, ctx.user),
         templateId: parsedInput.templateId,
         categoryIds: parsedInput.categoryIds,
+        languages: parsedInput.languages,
         actorUserId: ctx.user.id,
       }),
     ),
@@ -71,10 +74,36 @@ export const updateTemplateStoreListingAction = authActionClient
   .inputSchema(updateTemplateStoreListingSchema)
   .action(async ({ ctx, parsedInput }) =>
     runTemplateStoreMutation(async () =>
-      templateStoreService.updateListingCategories({
+      templateStoreService.updateListing({
         scope: await resolveScope(parsedInput.scope, ctx.user),
         listingId: parsedInput.listingId,
         categoryIds: parsedInput.categoryIds,
+        languages: parsedInput.languages,
+      }),
+    ),
+  )
+
+/** The table's bulk edit: the same categories and/or languages for every selected listing. */
+export const updateTemplateStoreListingsAction = authActionClient
+  .inputSchema(updateTemplateStoreListingsSchema)
+  .action(async ({ ctx, parsedInput }) =>
+    runTemplateStoreMutation(async () =>
+      templateStoreService.updateListings({
+        scope: await resolveScope(parsedInput.scope, ctx.user),
+        listingIds: parsedInput.listingIds,
+        categoryIds: parsedInput.categoryIds,
+        languages: parsedInput.languages,
+      }),
+    ),
+  )
+
+export const removeTemplateStoreListingsAction = authActionClient
+  .inputSchema(removeTemplateStoreListingsSchema)
+  .action(async ({ ctx, parsedInput }) =>
+    runTemplateStoreMutation(async () =>
+      templateStoreService.removeListings({
+        scope: await resolveScope(parsedInput.scope, ctx.user),
+        listingIds: parsedInput.listingIds,
       }),
     ),
   )

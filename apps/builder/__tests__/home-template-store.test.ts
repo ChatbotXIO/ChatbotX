@@ -32,7 +32,12 @@ vi.mock("@/lib/log", () => ({ logger: { error: mocks.loggerError } }))
 
 import { loadHomeTemplateStore } from "@/features/workspaces/lib/load-home-template-store"
 
-const catalog = { tenantName: "Acme", categories: [], templates: [] }
+const catalog = {
+  tenantName: "Acme",
+  viewerLocale: "en" as const,
+  categories: [],
+  templates: [],
+}
 const publicTemplate = {
   id: "11",
   name: "Welcome flow",

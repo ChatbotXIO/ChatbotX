@@ -12105,7 +12105,7 @@
     "add": "Thêm",
     "addCategory": "Thêm danh mục",
     "renameCategory": "Đổi tên",
-    "editCategories": "Sửa danh mục",
+    "editListing": "Sửa mục",
     "templateId": "ID mẫu",
     "template": "Mẫu",
     "categories": "Danh mục",
@@ -12113,9 +12113,12 @@
     "close": "Đóng",
     "removeChip": "Bỏ {name}",
     "categoriesHint": "Tuỳ chọn. Không chọn danh mục thì mẫu chỉ hiện ở mục “Tất cả”.",
+    "languages": "Ngôn ngữ",
+    "allLanguages": "Tất cả ngôn ngữ",
+    "languagesHint": "Không bắt buộc. Để trống để hiện template ở mọi ngôn ngữ.",
     "noCategoriesYet": "Chưa có danh mục nào.",
     "added": "Đã thêm mẫu vào cửa hàng",
-    "updated": "Đã cập nhật danh mục",
+    "updated": "Đã cập nhật mục",
     "removed": "Đã gỡ mẫu khỏi cửa hàng",
     "removeError": "Không thể gỡ mẫu",
     "removeTitle": "Gỡ {name}?",
@@ -12163,10 +12166,13 @@
       "search": "Tìm mẫu",
       "all": "Tất cả",
       "categories": "Danh mục cửa hàng",
-      "noResults": "Không có mẫu nào khớp với tìm kiếm.",
-      "clearSearch": "Xóa tìm kiếm",
+      "noResults": "Không có template nào khớp với bộ lọc của bạn.",
+      "clearSearch": "Xóa bộ lọc",
       "by": "Bởi {publisherName}",
-      "loadFailed": "Không thể tải các mẫu. Vui lòng thử lại sau."
+      "loadFailed": "Không thể tải các mẫu. Vui lòng thử lại sau.",
+      "language": "Ngôn ngữ",
+      "allLanguages": "Tất cả ngôn ngữ",
+      "otherLanguages": "Ngôn ngữ khác"
     },
     "picker": {
       "placeholder": "Chọn mẫu",
@@ -12175,6 +12181,16 @@
       "error": "Không tải được danh sách mẫu.",
       "retry": "Thử lại",
       "meta": "ID {id} · {workspace}"
+    },
+    "bulk": {
+      "setCategories": "Đặt danh mục",
+      "setLanguages": "Đặt ngôn ngữ",
+      "categoriesHint": "Thay danh mục của các template đã chọn ({count}). Để trống để bỏ mọi danh mục.",
+      "languagesHint": "Thay ngôn ngữ của các template đã chọn ({count}). Để trống để hiện ở mọi ngôn ngữ.",
+      "updated": "Đã cập nhật các template đã chọn",
+      "removeTitle": "Gỡ các template đã chọn?",
+      "removeDescription": "Đã chọn: {count}. Chúng sẽ biến mất khỏi cửa hàng; bản thân template và các lượt cài không bị ảnh hưởng.",
+      "removed": "Đã gỡ các template đã chọn khỏi cửa hàng"
     }
   },
   "accountDeletion": {

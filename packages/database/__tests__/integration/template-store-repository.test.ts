@@ -1,5 +1,6 @@
 // @vitest-environment node
 
+import type { Locale } from "@chatbotx.io/utils/ui-locale"
 import { drizzle } from "drizzle-orm/node-postgres"
 import { Pool } from "pg"
 import { afterAll, beforeAll, describe, expect, test } from "vitest"
@@ -74,16 +75,17 @@ describe.skipIf(!databaseUrl)("template store repository", () => {
     tenantId: string,
     templateId: string,
     categoryIds: string[],
+    languages: Locale[] = [],
   ) => {
     const row = await repo.createListing(
-      { tenantId, templateId, createdBy: null },
+      { tenantId, templateId, languages, createdBy: null },
       db,
     )
     if (!row) {
       throw new Error("listing exists")
     }
     await repo.replaceListingCategories(
-      { tenantId, listingId: row.id, categoryIds },
+      { tenantId, listingIds: [row.id], categoryIds },
       db,
     )
     return row.id
@@ -155,6 +157,132 @@ describe.skipIf(!databaseUrl)("template store repository", () => {
     expect(result.rows[0].rank).toBe(0)
   })
 
+  test("a raw insert that omits languages reads the database default, an empty list", async () => {
+    const t = (await insertTenant("lang-default")).tenantId
+    const templateId = await insertTemplate(t)
+    const result = await db.execute<{ languages: string[] }>(
+      sql`insert into "TemplateStoreListing" ("id","tenantId","templateId") values (${`8${Date.now()}${Math.floor(Math.random() * 1000)}`}, ${t}, ${templateId}) returning "languages"`,
+    )
+    expect(result.rows[0].languages).toEqual([])
+  })
+
+  test("a listing's languages are saved, replaced and scoped to its tenant", async () => {
+    const t = (await insertTenant("lang-update")).tenantId
+    const listingId = await approve(
+      t,
+      await insertTemplate(t),
+      [],
+      ["vi", "en"],
+    )
+    const read = async () =>
+      (
+        await repo.listListingsForAdmin(
+          { tenantId: t, page: 1, perPage: 10 },
+          db,
+        )
+      ).rows[0]?.languages
+
+    expect(await read()).toEqual(["vi", "en"])
+    expect(
+      await repo.updateListingLanguages(
+        { tenantId: t, listingIds: [listingId], languages: ["fr"] },
+        db,
+      ),
+    ).toBe(1)
+    expect(await read()).toEqual(["fr"])
+    expect(
+      await repo.updateListingLanguages(
+        { tenantId: t, listingIds: [listingId], languages: [] },
+        db,
+      ),
+    ).toBe(1)
+    expect(await read()).toEqual([])
+    expect(
+      await repo.updateListingLanguages(
+        { tenantId: tenantB, listingIds: [listingId], languages: ["de"] },
+        db,
+      ),
+    ).toBe(0)
+    expect(await read()).toEqual([])
+  })
+
+  test("bulk writes cover every listing, and refuse when one is another tenant's", async () => {
+    const t = (await insertTenant("bulk")).tenantId
+    const otherTenant = (await insertTenant("bulk-other")).tenantId
+    const a = await category(t, "A")
+    const b = await category(t, "B")
+    const first = await approve(t, await insertTemplate(t), [a])
+    const second = await approve(t, await insertTemplate(t), [])
+    const foreign = await approve(
+      otherTenant,
+      await insertTemplate(otherTenant),
+      [],
+    )
+    const linksOf = async (listingId: string) =>
+      (
+        await db
+          .select()
+          .from(schema.templateStoreListingCategoryModel)
+          .where(
+            eq(schema.templateStoreListingCategoryModel.listingId, listingId),
+          )
+      )
+        .map((link) => link.categoryId)
+        .sort()
+
+    expect(
+      await repo.replaceListingCategories(
+        {
+          tenantId: t,
+          listingIds: [first, second, first],
+          categoryIds: [a, b],
+        },
+        db,
+      ),
+    ).toBe("updated")
+    expect(await linksOf(first)).toEqual([a, b].sort())
+    expect(await linksOf(second)).toEqual([a, b].sort())
+    expect(
+      await repo.replaceListingCategories(
+        { tenantId: t, listingIds: [first, foreign], categoryIds: [] },
+        db,
+      ),
+    ).toBe("listingUnavailable")
+    expect(await linksOf(first)).toEqual([a, b].sort())
+
+    expect(
+      await repo.updateListingLanguages(
+        {
+          tenantId: t,
+          listingIds: [first, second, foreign],
+          languages: ["vi"],
+        },
+        db,
+      ),
+    ).toBe(2)
+    expect(
+      await repo.deleteListings({ tenantId: t, ids: [first, foreign] }, db),
+    ).toBe(1)
+    expect(await repo.countListings(otherTenant, db)).toBe(1)
+  })
+
+  test("the public catalog's language filter keeps the tagged and the untagged templates", async () => {
+    const t = (await insertTenant("lang-filter")).tenantId
+    await approve(t, await insertTemplate(t, { name: "En" }), [], ["en"])
+    await approve(t, await insertTemplate(t, { name: "Fr" }), [], ["fr", "en"])
+    await approve(t, await insertTemplate(t, { name: "Any" }), [], [])
+    await approve(t, await insertTemplate(t, { name: "De" }), [], ["de"])
+    const names = async (language?: Locale) =>
+      (await repo.listPublishedTemplates({ tenantId: t, language }, db))
+        .map((row) => row.name)
+        .sort()
+
+    expect(await names()).toEqual(["Any", "De", "En", "Fr"])
+    expect(await names("en")).toEqual(["Any", "En", "Fr"])
+    expect(await names("de")).toEqual(["Any", "De"])
+    expect(await names("ja")).toEqual(["Any"])
+  })
+
   test("concurrent category creates under the store lock get distinct ranks", async () => {
     const t = (await insertTenant("race")).tenantId
     await Promise.all(
@@ -193,7 +321,7 @@ describe.skipIf(!databaseUrl)("template store repository", () => {
         db.transaction(async (tx) => {
           await repo.lockTenantStore(t, tx)
           return await repo.createListing(
-            { tenantId: t, templateId, createdBy: null },
+            { tenantId: t, templateId, languages: [], createdBy: null },
             tx,
           )
         }),
@@ -211,13 +339,13 @@ describe.skipIf(!databaseUrl)("template store repository", () => {
 
     expect(
       await repo.replaceListingCategories(
-        { tenantId: t, listingId, categoryIds: [own, foreign] },
+        { tenantId: t, listingIds: [listingId], categoryIds: [own, foreign] },
         db,
       ),
     ).toBe("categoryUnavailable")
     expect(
       await repo.replaceListingCategories(
-        { tenantId: tenantB, listingId, categoryIds: [foreign] },
+        { tenantId: tenantB, listingIds: [listingId], categoryIds: [foreign] },
         db,
       ),
     ).toBe("listingUnavailable")

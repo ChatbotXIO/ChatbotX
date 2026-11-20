@@ -1,3 +1,4 @@
+import type { Locale } from "@chatbotx.io/utils/ui-locale"
 import { sql } from "drizzle-orm"
 import {
   index,
@@ -59,6 +60,12 @@ export const templateStoreListingModel = pgTable(
     templateId: bigintAsString()
       .notNull()
       .references(() => templateModel.id, cascadeFk),
+    /**
+     * UI locale codes the template is shown for; empty = every language.
+     * Text, not an enum: the set is the builder's UI locale list, which grows
+     * with each translation, and the service validates it.
+     */
+    languages: text().$type<Locale>().array().notNull().default([]),
     createdBy: bigintAsString().references(() => userModel.id, setNullFk),
   },
   (table) => [

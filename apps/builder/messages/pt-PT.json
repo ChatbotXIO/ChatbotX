@@ -12089,7 +12089,7 @@
     "add": "Adicionar",
     "addCategory": "Adicionar categoria",
     "renameCategory": "Mudar o nome",
-    "editCategories": "Editar categorias",
+    "editListing": "Editar item",
     "templateId": "ID do template",
     "template": "Template",
     "categories": "Categorias",
@@ -12097,9 +12097,12 @@
     "close": "Fechar",
     "removeChip": "Remover {name}",
     "categoriesHint": "Opcional. Sem categoria, o template aparece apenas em “Todos”.",
+    "languages": "Idiomas",
+    "allLanguages": "Todos os idiomas",
+    "languagesHint": "Opcional. Deixe vazio para mostrar o modelo em todos os idiomas.",
     "noCategoriesYet": "Ainda não há categorias.",
     "added": "Template adicionado à loja",
-    "updated": "Categorias atualizadas",
+    "updated": "Item atualizado",
     "removed": "Template removido da loja",
     "removeError": "Não foi possível remover o template",
     "removeTitle": "Remover {name}?",
@@ -12147,10 +12150,13 @@
       "search": "Pesquisar templates",
       "all": "Todos",
       "categories": "Categorias da loja",
-      "noResults": "Nenhum template corresponde à sua pesquisa.",
-      "clearSearch": "Limpar pesquisa",
+      "noResults": "Nenhum modelo corresponde aos seus filtros.",
+      "clearSearch": "Limpar filtros",
       "by": "Por {publisherName}",
-      "loadFailed": "Não foi possível carregar os templates. Tente novamente mais tarde."
+      "loadFailed": "Não foi possível carregar os templates. Tente novamente mais tarde.",
+      "language": "Idioma",
+      "allLanguages": "Todos os idiomas",
+      "otherLanguages": "Outros idiomas"
     },
     "picker": {
       "placeholder": "Selecione um template",
@@ -12159,6 +12165,16 @@
       "error": "Não foi possível carregar os templates.",
       "retry": "Tentar novamente",
       "meta": "ID {id} · {workspace}"
+    },
+    "bulk": {
+      "setCategories": "Definir categorias",
+      "setLanguages": "Definir idiomas",
+      "categoriesHint": "Substitui as categorias dos modelos selecionados ({count}). Deixe vazio para remover todas as categorias.",
+      "languagesHint": "Substitui os idiomas dos modelos selecionados ({count}). Deixe vazio para os mostrar em todos os idiomas.",
+      "updated": "Modelos selecionados atualizados",
+      "removeTitle": "Remover os modelos selecionados?",
+      "removeDescription": "Selecionados: {count}. Desaparecem da loja; os próprios modelos e as suas instalações não são afetados.",
+      "removed": "Modelos selecionados removidos da loja"
     }
   },
   "accountDeletion": {

@@ -12089,7 +12089,7 @@
     "add": "Aggiungi",
     "addCategory": "Aggiungi categoria",
     "renameCategory": "Rinomina",
-    "editCategories": "Modifica categorie",
+    "editListing": "Modifica voce",
     "templateId": "ID template",
     "template": "Template",
     "categories": "Categorie",
@@ -12097,9 +12097,12 @@
     "close": "Chiudi",
     "removeChip": "Rimuovi {name}",
     "categoriesHint": "Facoltativo. Senza categoria il template compare solo in «Tutti».",
+    "languages": "Lingue",
+    "allLanguages": "Tutte le lingue",
+    "languagesHint": "Facoltativo. Lascia vuoto per mostrare il modello in tutte le lingue.",
     "noCategoriesYet": "Ancora nessuna categoria.",
     "added": "Template aggiunto allo store",
-    "updated": "Categorie aggiornate",
+    "updated": "Voce aggiornata",
     "removed": "Template rimosso dallo store",
     "removeError": "Impossibile rimuovere il template",
     "removeTitle": "Rimuovere {name}?",
@@ -12147,10 +12150,13 @@
       "search": "Cerca template",
       "all": "Tutti",
       "categories": "Categorie dello store",
-      "noResults": "Nessun template corrisponde alla ricerca.",
-      "clearSearch": "Cancella ricerca",
+      "noResults": "Nessun modello corrisponde ai filtri.",
+      "clearSearch": "Cancella filtri",
       "by": "Di {publisherName}",
-      "loadFailed": "Impossibile caricare i template. Riprova più tardi."
+      "loadFailed": "Impossibile caricare i template. Riprova più tardi.",
+      "language": "Lingua",
+      "allLanguages": "Tutte le lingue",
+      "otherLanguages": "Altre lingue"
     },
     "picker": {
       "placeholder": "Seleziona un template",
@@ -12159,6 +12165,16 @@
       "error": "Impossibile caricare i template.",
       "retry": "Riprova",
       "meta": "ID {id} · {workspace}"
+    },
+    "bulk": {
+      "setCategories": "Imposta categorie",
+      "setLanguages": "Imposta lingue",
+      "categoriesHint": "Sostituisce le categorie dei modelli selezionati ({count}). Lascia vuoto per rimuovere tutte le categorie.",
+      "languagesHint": "Sostituisce le lingue dei modelli selezionati ({count}). Lascia vuoto per mostrarli in tutte le lingue.",
+      "updated": "Modelli selezionati aggiornati",
+      "removeTitle": "Rimuovere i modelli selezionati?",
+      "removeDescription": "Selezionati: {count}. Scompaiono dallo store; i modelli stessi e le loro installazioni non sono interessati.",
+      "removed": "Modelli selezionati rimossi dallo store"
     }
   },
   "accountDeletion": {

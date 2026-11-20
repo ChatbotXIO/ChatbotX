@@ -1,4 +1,5 @@
 import { zodBigintAsString, zodBigintIdAsString } from "@chatbotx.io/utils"
+import { locales } from "@chatbotx.io/utils/ui-locale"
 import { z } from "zod"
 
 const STORE_KEYWORD_MAX_LENGTH = 100
@@ -8,6 +9,12 @@ export const listTemplateStorePublicRequest = z.object({
     .optional()
     .describe(
       "Only templates in this category. Use an `id` from `categories` of this same response; an unknown id returns no templates.",
+    ),
+  language: z
+    .enum(locales)
+    .optional()
+    .describe(
+      "Only templates made for this UI language, plus those not tied to a language. Same codes as `languages` on each template.",
     ),
   keyword: z
     .string()
@@ -33,6 +40,11 @@ const storeTemplateResource = z.object({
   categoryIds: z
     .array(zodBigintAsString())
     .describe("Every category the template is in; empty when it has none."),
+  languages: z
+    .array(z.enum(locales))
+    .describe(
+      "UI language codes the template is made for; empty when it suits every language.",
+    ),
   shareToken: z
     .string()
     .describe(

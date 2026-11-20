@@ -8,6 +8,8 @@ const mocks = vi.hoisted(() => ({
   addListing: vi.fn(),
   createCategory: vi.fn(),
   searchCandidates: vi.fn(),
+  updateListings: vi.fn(),
+  removeListings: vi.fn(),
 }))
 
 class FakeChatbotXException extends Error {
@@ -26,6 +28,8 @@ vi.mock("@chatbotx.io/business", () => ({
     addListing: mocks.addListing,
     createCategory: mocks.createCategory,
     searchCandidates: mocks.searchCandidates,
+    updateListings: mocks.updateListings,
+    removeListings: mocks.removeListings,
   },
 }))
 vi.mock("@chatbotx.io/business/errors", () => ({
@@ -43,9 +47,11 @@ vi.mock("@/lib/safe-action", () => {
 const actions = (await import(
   "../src/features/template-store/template-store.action"
 )) as unknown as Record<string, (arg: unknown) => Promise<unknown>>
-const { addTemplateStoreListingSchema } = await import(
-  "../src/features/template-store/schema"
-)
+const {
+  addTemplateStoreListingSchema,
+  removeTemplateStoreListingsSchema,
+  updateTemplateStoreListingsSchema,
+} = await import("../src/features/template-store/schema")
 
 const user = { id: "user-1" }
 const run = (
@@ -71,6 +77,7 @@ describe("platform scope", () => {
       scope: "platform",
       templateId: "5",
       categoryIds: [],
+      languages: [],
     })
 
     expect(outcome).toEqual({ status: "done" })
@@ -117,6 +124,7 @@ describe("tenant scope", () => {
         scope: "tenant",
         templateId: "5",
         categoryIds: [],
+        languages: [],
       }),
     ).rejects.toThrow("Unauthorized")
     expect(mocks.addListing).not.toHaveBeenCalled()
@@ -147,6 +155,7 @@ describe("expected refusals become outcomes", () => {
         scope: "platform",
         templateId: "5",
         categoryIds: [],
+        languages: [],
       }),
     ).resolves.toEqual({ status: "rejected", reason: "listingExists" })
   })
@@ -160,6 +169,7 @@ describe("expected refusals become outcomes", () => {
         scope: "platform",
         templateId: "5",
         categoryIds: [],
+        languages: [],
       }),
     ).rejects.toThrow("db down")
   })
@@ -167,7 +177,12 @@ describe("expected refusals become outcomes", () => {
 
 describe("input schema", () => {
   test("accepts no category, rejects non-numeric ids and an unknown scope", () => {
-    const base = { scope: "platform", templateId: "5", categoryIds: [] }
+    const base = {
+      scope: "platform",
+      templateId: "5",
+      categoryIds: [],
+      languages: [],
+    }
     expect(addTemplateStoreListingSchema.safeParse(base).success).toBe(true)
     expect(
       addTemplateStoreListingSchema.safeParse({ ...base, templateId: "abc" })
@@ -182,6 +197,117 @@ describe("input schema", () => {
     expect(
       addTemplateStoreListingSchema.safeParse({ ...base, scope: "other" })
         .success,
+    ).toBe(false)
+  })
+
+  test("languages are UI locale codes; none is allowed, an unknown code is not", () => {
+    const base = {
+      scope: "platform",
+      templateId: "5",
+      categoryIds: [],
+      languages: [],
+    }
+    for (const languages of [[], ["vi"], ["en", "pt-BR", "zh-CN"]]) {
+      expect(
+        addTemplateStoreListingSchema.safeParse({ ...base, languages }).success,
+      ).toBe(true)
+    }
+    for (const languages of [["xx"], ["EN"], ["en", ""]]) {
+      expect(
+        addTemplateStoreListingSchema.safeParse({ ...base, languages }).success,
+      ).toBe(false)
+    }
+    expect(
+      addTemplateStoreListingSchema.safeParse({
+        scope: "platform",
+        templateId: "5",
+        categoryIds: [],
+      }).success,
+    ).toBe(false)
+  })
+})
+
+describe("bulk actions", () => {
+  test("bulk edit passes only the field being set, in the caller's scope", async () => {
+    mocks.isSuperAdmin.mockResolvedValue(true)
+    mocks.updateListings.mockResolvedValue(undefined)
+
+    const outcome = await run("updateTemplateStoreListingsAction", {
+      scope: "platform",
+      listingIds: ["1", "2"],
+      languages: ["vi"],
+    })
+
+    expect(outcome).toEqual({ status: "done" })
+    expect(mocks.updateListings).toHaveBeenCalledWith({
+      scope: { kind: "root" },
+      listingIds: ["1", "2"],
+      categoryIds: undefined,
+      languages: ["vi"],
+    })
+  })
+
+  test("bulk remove needs the same rights as one remove", async () => {
+    await expect(
+      run("removeTemplateStoreListingsAction", {
+        scope: "platform",
+        listingIds: ["1"],
+      }),
+    ).rejects.toThrow("Unauthorized")
+    expect(mocks.removeListings).not.toHaveBeenCalled()
+  })
+
+  test("a listing that vanished is a typed refusal", async () => {
+    mocks.isSuperAdmin.mockResolvedValue(true)
+    mocks.removeListings.mockRejectedValue(
+      new FakeChatbotXException("gone", "templateStoreListingUnavailable"),
+    )
+
+    await expect(
+      run("removeTemplateStoreListingsAction", {
+        scope: "platform",
+        listingIds: ["1"],
+      }),
+    ).resolves.toEqual({ status: "rejected", reason: "listingUnavailable" })
+  })
+
+  test("the bulk schemas need a listing and something to set", () => {
+    const base = { scope: "platform", listingIds: ["1"] }
+    expect(
+      updateTemplateStoreListingsSchema.safeParse({ ...base, categoryIds: [] })
+        .success,
+    ).toBe(true)
+    expect(
+      updateTemplateStoreListingsSchema.safeParse({ ...base, languages: [] })
+        .success,
+    ).toBe(true)
+    expect(updateTemplateStoreListingsSchema.safeParse(base).success).toBe(
+      false,
+    )
+    expect(
+      updateTemplateStoreListingsSchema.safeParse({
+        ...base,
+        listingIds: [],
+        languages: [],
+      }).success,
+    ).toBe(false)
+    expect(
+      updateTemplateStoreListingsSchema.safeParse({
+        ...base,
+        languages: ["xx"],
+      }).success,
+    ).toBe(false)
+    expect(
+      removeTemplateStoreListingsSchema.safeParse({
+        ...base,
+        listingIds: ["abc"],
+      }).success,
+    ).toBe(false)
+    expect(
+      removeTemplateStoreListingsSchema.safeParse({
+        ...base,
+        listingIds: Array.from({ length: 501 }, (_, i) => String(i + 1)),
+      }).success,
     ).toBe(false)
   })
 })

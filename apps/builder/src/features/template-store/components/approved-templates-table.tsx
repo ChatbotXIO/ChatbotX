@@ -7,6 +7,7 @@ import { DataTableColumnHeader } from "@chatbotx.io/ui/components/data-table/dat
 import { DataTableToolbar } from "@chatbotx.io/ui/components/data-table/data-table-toolbar"
 import { Badge } from "@chatbotx.io/ui/components/ui/badge"
 import { Button } from "@chatbotx.io/ui/components/ui/button"
+import { Checkbox } from "@chatbotx.io/ui/components/ui/checkbox"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -19,6 +20,7 @@ import {
   TooltipTrigger,
 } from "@chatbotx.io/ui/components/ui/tooltip"
 import { useDataTable } from "@chatbotx.io/ui/hooks/use-data-table"
+import { isLocale } from "@chatbotx.io/utils/ui-locale"
 import type { ColumnDef } from "@tanstack/react-table"
 import {
   ExternalLinkIcon,
@@ -32,11 +34,14 @@ import { useTranslations } from "next-intl"
 import { useAction } from "next-safe-action/hooks"
 import { useEffect, useMemo, useState } from "react"
 import { ConfirmDialog } from "@/components/confirm-dialog"
+import { localeMeta } from "@/i18n/config"
 import { toastActionError } from "@/lib/errors/safe-action-error-handler"
 import { clampPageIndex } from "../lib/clamp-page-index"
+import { selectedRowIds } from "../lib/selected-row-ids"
 import type { TemplateStoreScope } from "../schema"
 import { removeTemplateStoreListingAction } from "../template-store.action"
 import { useTemplateStoreOutcome } from "../use-template-store-outcome"
+import { BulkListingActions } from "./bulk-listing-actions"
 import { ListingFormDialog } from "./listing-form-dialog"
 
 type BadgeVariant = "default" | "secondary" | "destructive"
@@ -68,7 +73,7 @@ const STATUS_FILTER_ORDER: TemplateStoreListingStatus[] = [
 
 type RowAction = {
   listing: TemplateStoreAdminListing
-  variant: "editCategories" | "remove"
+  variant: "editListing" | "remove"
 }
 
 type ApprovedTemplatesTableProps = {
@@ -97,6 +102,31 @@ export function ApprovedTemplatesTable({
 
   const columns = useMemo<ColumnDef<TemplateStoreAdminListing>[]>(
     () => [
+      {
+        id: "select",
+        header: ({ table }) => (
+          <Checkbox
+            aria-label={t("actions.selectAll")}
+            checked={table.getIsAllPageRowsSelected()}
+            className="translate-y-0.5"
+            indeterminate={table.getIsSomePageRowsSelected()}
+            onCheckedChange={(value) =>
+              table.toggleAllPageRowsSelected(Boolean(value))
+            }
+          />
+        ),
+        cell: ({ row }) => (
+          <Checkbox
+            aria-label={t("actions.selectRow")}
+            checked={row.getIsSelected()}
+            className="translate-y-0.5"
+            onCheckedChange={(value) => row.toggleSelected(Boolean(value))}
+          />
+        ),
+        size: 40,
+        enableSorting: false,
+        enableHiding: false,
+      },
       {
         // The accessor key lets the toolbar build the filter; the id keys its URL param.
         accessorKey: "name",
@@ -143,6 +173,32 @@ export function ApprovedTemplatesTable({
                   variant="secondary"
                 >
                   <span className="truncate">{category.name}</span>
+                </Badge>
+              ))}
+            </div>
+          ),
+        enableSorting: false,
+      },
+      {
+        id: "languages",
+        header: ({ column }) => (
+          <DataTableColumnHeader
+            column={column}
+            title={t("templateStore.languages")}
+          />
+        ),
+        cell: ({ row }) =>
+          row.original.languages.length === 0 ? (
+            <span className="text-muted-foreground">
+              {t("templateStore.allLanguages")}
+            </span>
+          ) : (
+            <div className="flex flex-wrap gap-1">
+              {row.original.languages.map((language) => (
+                <Badge key={language} variant="outline">
+                  {isLocale(language)
+                    ? localeMeta[language].nativeLabel
+                    : language}
                 </Badge>
               ))}
             </div>
@@ -240,12 +296,12 @@ export function ApprovedTemplatesTable({
                 onClick={() =>
                   setRowAction({
                     listing: row.original,
-                    variant: "editCategories",
+                    variant: "editListing",
                   })
                 }
               >
                 <PencilIcon className="me-2 h-4 w-4" />
-                {t("templateStore.editCategories")}
+                {t("templateStore.editListing")}
               </DropdownMenuItem>
               {row.original.templatePageUrl ? (
                 <DropdownMenuItem
@@ -309,7 +365,7 @@ export function ApprovedTemplatesTable({
   }, [pageCount, pageIndex, pageSize, renderedPage, renderedPerPage, table])
 
   const editing =
-    rowAction?.variant === "editCategories" ? rowAction.listing : null
+    rowAction?.variant === "editListing" ? rowAction.listing : null
   const removing = rowAction?.variant === "remove" ? rowAction.listing : null
 
   return (
@@ -325,6 +381,12 @@ export function ApprovedTemplatesTable({
         table={table}
       >
         <DataTableToolbar table={table}>
+          <BulkListingActions
+            categories={categories}
+            listingIds={selectedRowIds(table.getState().rowSelection)}
+            onDone={() => table.resetRowSelection()}
+            scope={scope}
+          />
           <ListingFormDialog categories={categories} scope={scope} />
         </DataTableToolbar>
       </DataTable>
@@ -337,6 +399,7 @@ export function ApprovedTemplatesTable({
             templateId: editing.templateId,
             name: editing.name,
             categoryIds: editing.categories.map((category) => category.id),
+            languages: editing.languages,
           }}
           onOpenChange={(open) => !open && setRowAction(null)}
           open
@@ -347,6 +410,12 @@ export function ApprovedTemplatesTable({
         <RemoveListingDialog
           listing={removing}
           onOpenChange={(open) => !open && setRowAction(null)}
+          onRemoved={() =>
+            // A removed row must not stay in a selection the bulk actions read.
+            table.setRowSelection(
+              ({ [removing.listingId]: _removed, ...rest }) => rest,
+            )
+          }
           scope={scope}
         />
       ) : null}
@@ -358,10 +427,12 @@ function RemoveListingDialog({
   scope,
   listing,
   onOpenChange,
+  onRemoved,
 }: {
   scope: TemplateStoreScope
   listing: TemplateStoreAdminListing
   onOpenChange: (open: boolean) => void
+  onRemoved: () => void
 }) {
   const t = useTranslations("templateStore")
   const tActions = useTranslations("actions")
@@ -370,7 +441,10 @@ function RemoveListingDialog({
     onSuccess: ({ data }) =>
       handleOutcome(data, {
         successMessage: t("removed"),
-        onDone: () => onOpenChange(false),
+        onDone: () => {
+          onRemoved()
+          onOpenChange(false)
+        },
       }),
     onError: toastActionError(t("removeError")),
   })

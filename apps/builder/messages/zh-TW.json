@@ -12089,7 +12089,7 @@
     "add": "新增",
     "addCategory": "新增分類",
     "renameCategory": "重新命名",
-    "editCategories": "編輯分類",
+    "editListing": "編輯項目",
     "templateId": "範本 ID",
     "template": "範本",
     "categories": "分類",
@@ -12097,9 +12097,12 @@
     "close": "關閉",
     "removeChip": "移除 {name}",
     "categoriesHint": "選填。沒有分類的範本只會顯示在「全部」中。",
+    "languages": "語言",
+    "allLanguages": "所有語言",
+    "languagesHint": "選填。留空則範本會在所有語言下顯示。",
     "noCategoriesYet": "尚無分類。",
     "added": "範本已加入商店",
-    "updated": "分類已更新",
+    "updated": "項目已更新",
     "removed": "範本已從商店移除",
     "removeError": "無法移除範本",
     "removeTitle": "移除 {name}？",
@@ -12147,10 +12150,13 @@
       "search": "搜尋範本",
       "all": "全部",
       "categories": "商店分類",
-      "noResults": "沒有符合搜尋的範本。",
-      "clearSearch": "清除搜尋",
+      "noResults": "沒有符合篩選條件的範本。",
+      "clearSearch": "清除篩選",
       "by": "作者：{publisherName}",
-      "loadFailed": "無法載入範本。請稍後再試。"
+      "loadFailed": "無法載入範本。請稍後再試。",
+      "language": "語言",
+      "allLanguages": "所有語言",
+      "otherLanguages": "其他語言"
     },
     "picker": {
       "placeholder": "選擇範本",
@@ -12159,6 +12165,16 @@
       "error": "無法載入範本。",
       "retry": "重試",
       "meta": "ID {id} · {workspace}"
+    },
+    "bulk": {
+      "setCategories": "設定分類",
+      "setLanguages": "設定語言",
+      "categoriesHint": "取代所選範本（{count}）的分類。留空則移除所有分類。",
+      "languagesHint": "取代所選範本（{count}）的語言。留空則在所有語言下顯示。",
+      "updated": "已更新所選範本",
+      "removeTitle": "移除所選範本？",
+      "removeDescription": "已選：{count}。它們將從商店消失；範本本身及其安裝不受影響。",
+      "removed": "已從商店移除所選範本"
     }
   },
   "accountDeletion": {

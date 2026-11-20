@@ -1,4 +1,5 @@
 import { createId } from "@chatbotx.io/utils"
+import type { Locale } from "@chatbotx.io/utils/ui-locale"
 import { alias } from "drizzle-orm/pg-core"
 import {
   and,
@@ -49,6 +50,8 @@ export type TemplateStoreAdminRow = {
   ownerWorkspaceId: string
   ownerWorkspaceName: string
   categories: TemplateStoreCategoryRef[]
+  /** UI locale codes; empty = every language. */
+  languages: Locale[]
 }
 
 export type TemplateStoreAdminQuery = {
@@ -70,6 +73,8 @@ export type TemplateStorePublishedRow = {
   shareToken: string
   /** Every category the template is in. */
   categoryIds: string[]
+  /** UI locale codes; empty = every language. */
+  languages: Locale[]
 }
 
 export type TemplateStoreCandidateRow = {
@@ -315,7 +320,12 @@ export const templateStoreRepository = {
 
   /** Inserts the listing; `undefined` when the template is already approved for this tenant. */
   async createListing(
-    input: { tenantId: string; templateId: string; createdBy: string | null },
+    input: {
+      tenantId: string
+      templateId: string
+      languages: Locale[]
+      createdBy: string | null
+    },
     tx: DatabaseClient,
   ) {
     const [row] = await tx
@@ -331,40 +341,61 @@ export const templateStoreRepository = {
     return row
   },
 
-  async deleteListing(
-    input: { id: string; tenantId: string },
+  /** Replaces the languages of these listings of the tenant; returns how many were updated. */
+  async updateListingLanguages(
+    input: { tenantId: string; listingIds: string[]; languages: Locale[] },
     tx: DatabaseClient,
-  ) {
+  ): Promise<number> {
     const rows = await tx
-      .delete(templateStoreListingModel)
+      .update(templateStoreListingModel)
+      .set({ languages: input.languages })
       .where(
         and(
-          eq(templateStoreListingModel.id, input.id),
+          inArray(templateStoreListingModel.id, input.listingIds),
           eq(templateStoreListingModel.tenantId, input.tenantId),
         ),
       )
       .returning({ id: templateStoreListingModel.id })
-    return rows.length > 0
+    return rows.length
+  },
+
+  /** Deletes these listings of the tenant; returns how many were deleted. */
+  async deleteListings(
+    input: { tenantId: string; ids: string[] },
+    tx: DatabaseClient,
+  ): Promise<number> {
+    const rows = await tx
+      .delete(templateStoreListingModel)
+      .where(
+        and(
+          inArray(templateStoreListingModel.id, input.ids),
+          eq(templateStoreListingModel.tenantId, input.tenantId),
+        ),
+      )
+      .returning({ id: templateStoreListingModel.id })
+    return rows.length
   },
 
   /**
-   * Replaces a listing's categories. Both the listing and every category must
-   * belong to `tenantId`, otherwise nothing is written.
+   * Replaces the categories of these listings with the same set. Every
+   * listing and every category must belong to `tenantId`, otherwise nothing
+   * is written. Bounded by the listing and category caps.
    */
   async replaceListingCategories(
-    input: { tenantId: string; listingId: string; categoryIds: string[] },
+    input: { tenantId: string; listingIds: string[]; categoryIds: string[] },
     tx: DatabaseClient,
   ): Promise<TemplateStoreReplaceCategoriesStatus> {
-    const [owned] = await tx
+    const listingIds = [...new Set(input.listingIds)]
+    const owned = await tx
       .select({ id: templateStoreListingModel.id })
       .from(templateStoreListingModel)
       .where(
         and(
-          eq(templateStoreListingModel.id, input.listingId),
+          inArray(templateStoreListingModel.id, listingIds),
           eq(templateStoreListingModel.tenantId, input.tenantId),
         ),
       )
-    if (!owned) {
+    if (owned.length !== listingIds.length) {
       return "listingUnavailable"
     }
     const validIds = await templateStoreRepository.findCategoryIds(
@@ -376,14 +407,15 @@ export const templateStoreRepository = {
     }
     await tx
       .delete(templateStoreListingCategoryModel)
-      .where(eq(templateStoreListingCategoryModel.listingId, input.listingId))
+      .where(inArray(templateStoreListingCategoryModel.listingId, listingIds))
     if (validIds.length > 0) {
-      await tx.insert(templateStoreListingCategoryModel).values(
-        validIds.map((categoryId) => ({
-          listingId: input.listingId,
-          categoryId,
-        })),
-      )
+      await tx
+        .insert(templateStoreListingCategoryModel)
+        .values(
+          listingIds.flatMap((listingId) =>
+            validIds.map((categoryId) => ({ listingId, categoryId })),
+          ),
+        )
     }
     return "updated"
   },
@@ -408,6 +440,7 @@ export const templateStoreRepository = {
           shareToken: templateModel.shareToken,
           shareEnabled: templateModel.shareEnabled,
           shareExpiresAt: templateModel.shareExpiresAt,
+          languages: templateStoreListingModel.languages,
           templateDeletedAt: templateModel.deletedAt,
           templateTenantId: templateModel.tenantId,
           ownerWorkspaceId: workspaceModel.id,
@@ -568,7 +601,13 @@ export const templateStoreRepository = {
    * per-tenant listing cap, so nothing approved is ever cut off.
    */
   async listPublishedTemplates(
-    input: { tenantId: string; categoryId?: string; keyword?: string },
+    input: {
+      tenantId: string
+      categoryId?: string
+      keyword?: string
+      /** Keeps templates tagged with this language and the untagged ones. */
+      language?: Locale
+    },
     tx: DatabaseClient = db,
   ): Promise<TemplateStorePublishedRow[]> {
     const filterLink = alias(templateStoreListingCategoryModel, "filter_link")
@@ -582,6 +621,7 @@ export const templateStoreRepository = {
         imageUrl: templateModel.imageUrl,
         publisherName: templateModel.publisherName,
         shareToken: templateModel.shareToken,
+        languages: templateStoreListingModel.languages,
         // The left join gives one NULL row to a listing with no category; it must read as [].
         categoryIds: sql<
           string[]
@@ -619,6 +659,12 @@ export const templateStoreRepository = {
             ? or(
                 ilike(templateModel.name, likeContains(keyword)),
                 ilike(templateModel.publisherName, likeContains(keyword)),
+              )
+            : undefined,
+          input.language
+            ? or(
+                sql`cardinality(${templateStoreListingModel.languages}) = 0`,
+                sql`${input.language} = ANY(${templateStoreListingModel.languages})`,
               )
             : undefined,
         ),

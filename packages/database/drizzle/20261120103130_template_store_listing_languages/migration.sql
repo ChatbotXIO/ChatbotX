@@ -1,0 +1,1 @@
+ALTER TABLE "TemplateStoreListing" ADD COLUMN "languages" text[] DEFAULT '{}'::text[] NOT NULL;

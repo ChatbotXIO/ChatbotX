@@ -12089,7 +12089,7 @@
     "add": "Tambah",
     "addCategory": "Tambah kategori",
     "renameCategory": "Ubah nama",
-    "editCategories": "Edit kategori",
+    "editListing": "Edit entri",
     "templateId": "ID template",
     "template": "Template",
     "categories": "Kategori",
@@ -12097,9 +12097,12 @@
     "close": "Tutup",
     "removeChip": "Hapus {name}",
     "categoriesHint": "Opsional. Tanpa kategori, template hanya muncul di “Semua”.",
+    "languages": "Bahasa",
+    "allLanguages": "Semua bahasa",
+    "languagesHint": "Opsional. Kosongkan untuk menampilkan templat dalam semua bahasa.",
     "noCategoriesYet": "Belum ada kategori.",
     "added": "Template ditambahkan ke toko",
-    "updated": "Kategori diperbarui",
+    "updated": "Entri diperbarui",
     "removed": "Template dihapus dari toko",
     "removeError": "Tidak dapat menghapus template",
     "removeTitle": "Hapus {name}?",
@@ -12147,10 +12150,13 @@
       "search": "Cari template",
       "all": "Semua",
       "categories": "Kategori toko",
-      "noResults": "Tidak ada template yang cocok dengan pencarian Anda.",
-      "clearSearch": "Hapus pencarian",
+      "noResults": "Tidak ada templat yang cocok dengan filter Anda.",
+      "clearSearch": "Hapus filter",
       "by": "Oleh {publisherName}",
-      "loadFailed": "Template tidak dapat dimuat. Coba lagi nanti."
+      "loadFailed": "Template tidak dapat dimuat. Coba lagi nanti.",
+      "language": "Bahasa",
+      "allLanguages": "Semua bahasa",
+      "otherLanguages": "Bahasa lain"
     },
     "picker": {
       "placeholder": "Pilih template",
@@ -12159,6 +12165,16 @@
       "error": "Tidak dapat memuat template.",
       "retry": "Coba lagi",
       "meta": "ID {id} · {workspace}"
+    },
+    "bulk": {
+      "setCategories": "Atur kategori",
+      "setLanguages": "Atur bahasa",
+      "categoriesHint": "Mengganti kategori templat yang dipilih ({count}). Kosongkan untuk menghapus semua kategori.",
+      "languagesHint": "Mengganti bahasa templat yang dipilih ({count}). Kosongkan untuk menampilkannya dalam semua bahasa.",
+      "updated": "Templat yang dipilih diperbarui",
+      "removeTitle": "Hapus templat yang dipilih?",
+      "removeDescription": "Dipilih: {count}. Templat hilang dari toko; templat itu sendiri dan instalasinya tidak terpengaruh.",
+      "removed": "Templat yang dipilih dihapus dari toko"
     }
   },
   "accountDeletion": {

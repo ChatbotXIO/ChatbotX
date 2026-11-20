@@ -12089,7 +12089,7 @@
     "add": "Añadir",
     "addCategory": "Añadir categoría",
     "renameCategory": "Renombrar",
-    "editCategories": "Editar categorías",
+    "editListing": "Editar entrada",
     "templateId": "ID de plantilla",
     "template": "Plantilla",
     "categories": "Categorías",
@@ -12097,9 +12097,12 @@
     "close": "Cerrar",
     "removeChip": "Quitar {name}",
     "categoriesHint": "Opcional. Sin categoría, la plantilla solo aparece en «Todas».",
+    "languages": "Idiomas",
+    "allLanguages": "Todos los idiomas",
+    "languagesHint": "Opcional. Déjalo vacío para mostrar la plantilla en todos los idiomas.",
     "noCategoriesYet": "Aún no hay categorías.",
     "added": "Plantilla añadida a la tienda",
-    "updated": "Categorías actualizadas",
+    "updated": "Entrada actualizada",
     "removed": "Plantilla eliminada de la tienda",
     "removeError": "No se pudo eliminar la plantilla",
     "removeTitle": "¿Quitar {name}?",
@@ -12147,10 +12150,13 @@
       "search": "Buscar plantillas",
       "all": "Todas",
       "categories": "Categorías de la tienda",
-      "noResults": "Ninguna plantilla coincide con tu búsqueda.",
-      "clearSearch": "Borrar búsqueda",
+      "noResults": "Ninguna plantilla coincide con tus filtros.",
+      "clearSearch": "Borrar filtros",
       "by": "Por {publisherName}",
-      "loadFailed": "No se pudieron cargar las plantillas. Inténtalo de nuevo más tarde."
+      "loadFailed": "No se pudieron cargar las plantillas. Inténtalo de nuevo más tarde.",
+      "language": "Idioma",
+      "allLanguages": "Todos los idiomas",
+      "otherLanguages": "Otros idiomas"
     },
     "picker": {
       "placeholder": "Selecciona una plantilla",
@@ -12159,6 +12165,16 @@
       "error": "No se pudieron cargar las plantillas.",
       "retry": "Reintentar",
       "meta": "ID {id} · {workspace}"
+    },
+    "bulk": {
+      "setCategories": "Asignar categorías",
+      "setLanguages": "Asignar idiomas",
+      "categoriesHint": "Reemplaza las categorías de las plantillas seleccionadas ({count}). Déjalo vacío para quitar todas las categorías.",
+      "languagesHint": "Reemplaza los idiomas de las plantillas seleccionadas ({count}). Déjalo vacío para mostrarlas en todos los idiomas.",
+      "updated": "Plantillas seleccionadas actualizadas",
+      "removeTitle": "¿Quitar las plantillas seleccionadas?",
+      "removeDescription": "Seleccionadas: {count}. Desaparecen de la tienda; las plantillas y sus instalaciones no se ven afectadas.",
+      "removed": "Plantillas seleccionadas quitadas de la tienda"
     }
   },
   "accountDeletion": {
