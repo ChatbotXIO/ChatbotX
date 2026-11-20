@@ -9,6 +9,7 @@ const mocks = vi.hoisted(() => ({
   triggersCollect: vi.fn(),
   productsCollect: vi.fn(),
   pipelineManifest: vi.fn(),
+  miniAppFindMany: vi.fn(),
 }))
 
 vi.mock("@chatbotx.io/database/client", () => ({
@@ -16,6 +17,7 @@ vi.mock("@chatbotx.io/database/client", () => ({
     query: {
       tagModel: { findMany: mocks.tagFindMany },
       customFieldModel: { findMany: mocks.customFieldFindMany },
+      miniAppModel: { findMany: mocks.miniAppFindMany },
     },
   },
 }))
@@ -90,6 +92,7 @@ beforeEach(() => {
   mocks.tagFindMany.mockResolvedValue([])
   mocks.customFieldFindMany.mockResolvedValue([])
   mocks.pipelineManifest.mockResolvedValue({})
+  mocks.miniAppFindMany.mockResolvedValue([])
   mocks.flowsCollect.mockResolvedValue(emptyCollect)
   mocks.triggersCollect.mockResolvedValue(emptyCollect)
   mocks.productsCollect.mockResolvedValue(emptyCollect)
@@ -216,5 +219,47 @@ describe("buildTemplateSnapshot: trigger condition rows", () => {
     await triggerSnapshot()
 
     expect(mocks.pipelineManifest).toHaveBeenCalledWith("ws-1", [], rows)
+  })
+})
+
+describe("buildTemplateSnapshot: miniAppPublishedExcluded", () => {
+  test("names the flow that opens a Mini App published to WhatsApp", async () => {
+    mocks.flowsCollect.mockResolvedValue({
+      ...emptyCollect,
+      entries: [
+        {
+          ...flowEntry,
+          nodes: [
+            {
+              id: "n1",
+              data: {
+                details: {
+                  steps: [
+                    { id: "s1", stepType: "openMiniApp", miniAppId: "12" },
+                  ],
+                },
+              },
+            },
+          ],
+        },
+      ],
+    })
+    mocks.miniAppFindMany.mockResolvedValue([{ id: "12", name: "Booking" }])
+
+    const { miniAppPublishedExcluded } = await snapshot({
+      flows: { mode: "ids", ids: ["flow-1"] },
+    })
+
+    expect(miniAppPublishedExcluded).toEqual([
+      { flowName: "Welcome", miniAppName: "Booking" },
+    ])
+  })
+
+  test("is empty, with no query, when no flow names a Mini App", async () => {
+    const { miniAppPublishedExcluded } = await snapshot({
+      flows: { mode: "ids", ids: ["flow-1"] },
+    })
+    expect(miniAppPublishedExcluded).toEqual([])
+    expect(mocks.miniAppFindMany).not.toHaveBeenCalled()
   })
 })

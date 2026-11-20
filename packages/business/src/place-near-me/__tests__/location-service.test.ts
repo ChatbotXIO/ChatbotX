@@ -5,7 +5,7 @@ const mocks = vi.hoisted(() => ({
   find: vi.fn(),
   create: vi.fn(),
   update: vi.fn(),
-  delete: vi.fn(),
+  deleteManyReturningIds: vi.fn(),
   listCoordinates: vi.fn(),
   findCategory: vi.fn(),
   invalidate: vi.fn(),
@@ -21,12 +21,22 @@ vi.mock("@chatbotx.io/database/repositories", () => ({
     find: (...args: unknown[]) => mocks.find(...args),
     create: (...args: unknown[]) => mocks.create(...args),
     update: (...args: unknown[]) => mocks.update(...args),
-    delete: (...args: unknown[]) => mocks.delete(...args),
+    deleteManyReturningIds: (...args: unknown[]) =>
+      mocks.deleteManyReturningIds(...args),
     listCoordinates: (...args: unknown[]) => mocks.listCoordinates(...args),
   },
   placeCategoryRepository: {
     find: (...args: unknown[]) => mocks.findCategory(...args),
   },
+}))
+
+vi.mock("../../template/installed-resource.service", () => ({
+  assertResourceEditable: vi.fn(),
+  changedKeysOf: () => [],
+  withDeleteGuard: (_input: unknown, run: (tx: unknown) => unknown) => run({}),
+}))
+vi.mock("../../template/template-resource-locks", () => ({
+  withTemplateLockedTransaction: (run: (tx: unknown) => unknown) => run({}),
 }))
 
 const { placeLocationService } = await import("../location.service")
@@ -129,11 +139,50 @@ describe("placeLocationService", () => {
   })
 
   test("delete of a missing location throws notFound", async () => {
-    mocks.delete.mockResolvedValue(undefined)
+    mocks.deleteManyReturningIds.mockResolvedValue([])
 
     await expect(
       placeLocationService.delete({ workspaceId: "ws1", locationId: "nope" }),
     ).rejects.toMatchObject({ code: "notFound" })
+  })
+
+  test("insertInTx trims the name and writes through the given transaction", async () => {
+    mocks.create.mockResolvedValue({ id: "l9" })
+    const tx = {} as never
+
+    const created = await placeLocationService.insertInTx(tx, {
+      workspaceId: "ws1",
+      name: "  HQ  ",
+      latitude: 1,
+      longitude: 2,
+      categoryId: "c1",
+    })
+
+    expect(created).toEqual({ id: "l9" })
+    expect(mocks.create).toHaveBeenCalledWith(
+      {
+        workspaceId: "ws1",
+        name: "HQ",
+        latitude: 1,
+        longitude: 2,
+        categoryId: "c1",
+      },
+      tx,
+    )
+    // The category was resolved by the caller (an install), not re-checked.
+    expect(mocks.findCategory).not.toHaveBeenCalled()
+  })
+
+  test("insertInTx rejects a blank name", async () => {
+    await expect(
+      placeLocationService.insertInTx({} as never, {
+        workspaceId: "ws1",
+        name: "   ",
+        latitude: 1,
+        longitude: 2,
+      }),
+    ).rejects.toThrow("name is required")
+    expect(mocks.create).not.toHaveBeenCalled()
   })
 
   test("create rejects a blank name", async () => {

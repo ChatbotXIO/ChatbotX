@@ -3,13 +3,13 @@ import {
   type DatabaseClient,
   db,
   eq,
-  inArray,
   isUniqueViolationError,
   relationsFilterToSQL,
 } from "@chatbotx.io/database/client"
 import { magicLinkModel } from "@chatbotx.io/database/schema"
 import type { MagicLinkModel } from "@chatbotx.io/database/types"
 import {
+  deleteByIdsInWorkspace,
   getPaginationWithDefaults,
   likeContains,
   parseOrderByAsObject,
@@ -17,6 +17,12 @@ import {
 import { createId } from "@chatbotx.io/utils"
 import { BaseService } from "../base.service"
 import { notFoundException, validationException } from "../errors"
+import {
+  assertResourceEditable,
+  changedKeysOf,
+  withDeleteGuard,
+} from "../template/installed-resource.service"
+import { withTemplateLockedTransaction } from "../template/template-resource-locks"
 
 type CreateMagicLinkData = Omit<
   typeof magicLinkModel.$inferInsert,
@@ -46,21 +52,33 @@ class MagicLinkService extends BaseService {
   }): Promise<MagicLinkModel> {
     const { tx = db, workspaceId, data } = input
     try {
-      const [created] = await tx
-        .insert(magicLinkModel)
-        .values({
-          id: createId(),
-          workspaceId,
-          ...data,
-        })
-        .returning()
-      return created
+      return await this.insertInTx(tx, { workspaceId, data })
     } catch (error) {
       if (isUniqueViolationError(error)) {
         throw validationException("name", "Name is already taken")
       }
       throw error
     }
+  }
+
+  /**
+   * The insert core, shared with the template install so there is one
+   * implementation. A taken name surfaces as the raw unique violation: `create`
+   * maps it to a validation error, the install retries with a `-copy` name.
+   */
+  async insertInTx(
+    tx: DatabaseClient,
+    input: { workspaceId: string; data: CreateMagicLinkData },
+  ): Promise<MagicLinkModel> {
+    const [created] = await tx
+      .insert(magicLinkModel)
+      .values({
+        id: createId(),
+        workspaceId: input.workspaceId,
+        ...input.data,
+      })
+      .returning()
+    return created
   }
 
   async findOrFail(input: {
@@ -79,19 +97,41 @@ class MagicLinkService extends BaseService {
     id: string
     data: UpdateMagicLinkData
   }): Promise<MagicLinkModel> {
-    const link = await this.findOrFail(input)
     try {
-      const [updated] = await db
-        .update(magicLinkModel)
-        .set(input.data)
-        .where(
-          and(
-            eq(magicLinkModel.id, link.id),
-            eq(magicLinkModel.workspaceId, input.workspaceId),
-          ),
-        )
-        .returning()
-      return updated
+      // The row is locked before it is read, so the diff that decides the
+      // View-only guard is computed under the lock.
+      return await withTemplateLockedTransaction(
+        async (tx) => {
+          const link = await tx.query.magicLinkModel.findFirst({
+            where: { id: input.id, workspaceId: input.workspaceId },
+          })
+          if (!link) {
+            throw notFoundException("Magic link not found")
+          }
+          await assertResourceEditable({
+            workspaceId: input.workspaceId,
+            resourceKind: "magicLink",
+            resourceIds: [link.id],
+            changedKeys: changedKeysOf(link, input.data),
+            tx,
+          })
+          const [updated] = await tx
+            .update(magicLinkModel)
+            .set(input.data)
+            .where(
+              and(
+                eq(magicLinkModel.id, link.id),
+                eq(magicLinkModel.workspaceId, input.workspaceId),
+              ),
+            )
+            .returning()
+          return updated
+        },
+        {
+          workspaceId: input.workspaceId,
+          initialKeys: [{ kind: "magicLink", resourceId: input.id }],
+        },
+      )
     } catch (error) {
       if (isUniqueViolationError(error)) {
         throw validationException("name", "Name is already taken")
@@ -109,14 +149,24 @@ class MagicLinkService extends BaseService {
     if (input.ids.length === 0) {
       return
     }
-    await db
-      .delete(magicLinkModel)
-      .where(
-        and(
-          eq(magicLinkModel.workspaceId, input.workspaceId),
-          inArray(magicLinkModel.id, input.ids),
-        ),
-      )
+    await withDeleteGuard(
+      {
+        workspaceId: input.workspaceId,
+        targets: [{ resourceKind: "magicLink", resourceIds: input.ids }],
+      },
+      (tx) => this.deleteInTx(tx, input),
+    )
+  }
+
+  /**
+   * The delete core (row write only), shared with the template uninstall so
+   * there is one implementation. Returns the ids deleted.
+   */
+  async deleteInTx(
+    tx: DatabaseClient,
+    input: { workspaceId: string; ids: string[] },
+  ): Promise<string[]> {
+    return await deleteByIdsInWorkspace(tx, magicLinkModel, input)
   }
 
   async list(input: ListMagicLinksInput): Promise<ListMagicLinksResult> {

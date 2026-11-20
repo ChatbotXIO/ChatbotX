@@ -46,3 +46,7 @@ and the head of `main` (`20261108054403_whatsapp_routing_roles`), and has to sta
 `drizzle-kit` takes the newest folder as the head, so rename it past any later migration of
 `main` when rebasing. Its statements are idempotent.
 `db:check-drift` is clean.
+
+## Template tool categories
+
+`20261119123604_template_tools_enums` adds the 13 tool `templateResourceCategory` values. It was squashed from five unshipped enum migrations (`…_g1_enums` to `…_g4b_enums`), so no deployed database has the earlier names; it uses `IF NOT EXISTS`, so it is a no-op on a database that already applied them.

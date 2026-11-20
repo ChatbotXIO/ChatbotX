@@ -5,7 +5,7 @@ const mocks = vi.hoisted(() => ({
   assertReferencable: vi.fn(async () => undefined),
   find: vi.fn(),
   findForUpdate: vi.fn(),
-  insertIfMissing: vi.fn(),
+  insertOrFind: vi.fn(),
   upsert: vi.fn(),
   flowExists: vi.fn(),
   openHoursExists: vi.fn(),
@@ -28,6 +28,9 @@ vi.mock(
       typeof import("../../template/installed-resource.service")
     >()),
     assertReferencable: mocks.assertReferencable,
+    assertResourceEditable: vi.fn(),
+    withDeleteGuard: (_input: unknown, run: (tx: unknown) => unknown) =>
+      run({}),
   }),
 )
 
@@ -59,7 +62,7 @@ vi.mock("@chatbotx.io/database/repositories", () => ({
   ecommerceSettingsRepository: {
     find: (...args: unknown[]) => mocks.find(...args),
     findForUpdate: (...args: unknown[]) => mocks.findForUpdate(...args),
-    insertIfMissing: (...args: unknown[]) => mocks.insertIfMissing(...args),
+    insertOrFind: (...args: unknown[]) => mocks.insertOrFind(...args),
     upsert: (...args: unknown[]) => mocks.upsert(...args),
   },
   paymentProviderRepository: {
@@ -330,7 +333,7 @@ describe("ecommerceSettingsService", () => {
       workspaceId: "ws1",
       patch: { payments: { currency: "usd" } },
     })
-    expect(mocks.insertIfMissing).toHaveBeenCalledWith(
+    expect(mocks.insertOrFind).toHaveBeenCalledWith(
       expect.objectContaining({ workspaceId: "ws1" }),
       { name: "tx" },
     )

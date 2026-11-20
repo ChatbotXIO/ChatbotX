@@ -7385,6 +7385,7 @@
       "resourcesTitle": "Installierte Ressourcen",
       "noResources": "Es wurde noch nichts erstellt.",
       "deletedResource": "Gelöschte Ressource",
+      "wholeCategory": "{count, plural, one {# Element} other {# Elemente}}",
       "viewOnly": "Nur Ansicht",
       "created": "Erstellt",
       "reused": "Wiederverwendet",
@@ -7439,7 +7440,12 @@
           "placeCategories": "Ortskategorien"
         }
       },
-      "viewOnlyCopyIncluded": "Etwas, das du ausgewählt hast (oder das es benötigt), wurde aus einer schreibgeschützten Vorlage installiert und kann nicht in einer neuen Vorlage geteilt werden."
+      "viewOnlyCopyIncluded": "Etwas, das du ausgewählt hast (oder das es benötigt), wurde aus einer schreibgeschützten Vorlage installiert und kann nicht in einer neuen Vorlage geteilt werden.",
+      "miniAppPublishedExcluded": {
+        "title": "Mini-App ausgelassen",
+        "hint": "Diese Flows verwenden eine Mini-App, die auf WhatsApp veröffentlicht ist. Sie kann nicht geteilt werden, daher lässt die Vorlage sie aus und die Installation entfernt den Verweis.",
+        "item": "{flowName}: {miniAppName}"
+      }
     },
     "categories": {
       "flows": "Flows",
@@ -7461,7 +7467,20 @@
       "aiFiles": "KI-Wissensdateien",
       "questionnaires": "Questionnaires",
       "couponTopics": "Gutscheinthemen",
-      "pipelines": "Pipelines"
+      "pipelines": "Pipelines",
+      "magicLinks": "Magic Links",
+      "polls": "Umfragen",
+      "dynamicImages": "Dynamische Bilder",
+      "placeLocations": "Standorte",
+      "miniApps": "Mini-Apps",
+      "minigames": "Minispiele",
+      "leaderboards": "Bestenlisten",
+      "openHours": "Öffnungszeiten",
+      "vendors": "Anbieter",
+      "discountCodes": "Rabattcodes",
+      "storeSettings": "Shop-Einstellungen",
+      "storyAutomations": "Instagram-Story-Automatisierung",
+      "inboundWebhooks": "Eingehender Webhook"
     },
     "locked": {
       "flowBanner": "Dieser Flow wurde aus einer Vorlage mit reiner Ansicht installiert. Du kannst ihn ansehen, aber nicht bearbeiten.",
@@ -7538,6 +7557,7 @@
       "flowNotPublished": "Der Flow wurde als Entwurf installiert und ist nicht veröffentlicht.",
       "flowSkippedRequiredReference": "Der Flow wurde übersprungen, weil eine erforderliche Referenz nicht aufgelöst werden konnte.",
       "folder": "Ein referenziertes Element wurde in diesem Arbeitsbereich nicht gefunden, daher wurde die Verknüpfung entfernt.",
+      "inboundWebhookLimitReached": "Dieser eingehende Webhook wurde übersprungen: Der Arbeitsbereich hat bereits die maximale Anzahl eingehender Webhooks.",
       "inboxBindingRequired": "Wähle einen Posteingang für diesen Kanal; bis dahin bleibt das Element inaktiv.",
       "integration": "Ein referenziertes Element wurde in diesem Arbeitsbereich nicht gefunden, daher wurde die Verknüpfung entfernt.",
       "localModifiedOverwritten": "Ein lokal bearbeitetes Element wurde überschrieben. Ein Backup wurde gespeichert und kann wiederhergestellt werden.",
@@ -7558,7 +7578,25 @@
       "tag": "Ein referenziertes Element wurde in diesem Arbeitsbereich nicht gefunden, daher wurde die Verknüpfung entfernt.",
       "unlisted": "Element nicht vollständig übernommen: {code}",
       "workspaceMember": "Einem Mitglied zugewiesen, das nicht in diesem Workspace ist.",
-      "workspaceUnavailable": "Dieser Arbeitsbereich ist nicht mehr verfügbar, daher wurde das Element übersprungen."
+      "workspaceUnavailable": "Dieser Arbeitsbereich ist nicht mehr verfügbar, daher wurde das Element übersprungen.",
+      "scheduleExpired": "Die Daten dieses Elements liegen in der Vergangenheit; lege neue fest, bevor du es nutzt.",
+      "linkNotRemapped": "Ein Link zu einem Tool, das nicht Teil der Vorlage war, wurde unverändert gelassen.",
+      "dynamicImage": "Dieses dynamische Bild wurde übersprungen, weil sein Hintergrund nicht kopiert werden konnte.",
+      "dynamicImageFieldNotBound": "Wähle ein benutzerdefiniertes Feld, in dem das Bild zwischengespeichert wird; das ursprüngliche war bereits in deinem Workspace vorhanden.",
+      "dynamicImageRerenderFailed": "Dieses dynamische Bild wurde ausgeschaltet, weil sein Hintergrund nicht mit Ihren kopierten Links neu gerendert werden konnte. Schalten Sie es wieder ein, um es erneut zu versuchen.",
+      "pollImage": "Ein Bild konnte nicht kopiert werden.",
+      "leaderboardInvalid": "Die Konfiguration dieser Bestenliste konnte nicht installiert werden und wurde übersprungen.",
+      "placeLocationInvalid": "Dieser Ort wurde übersprungen, weil sein Name leer ist.",
+      "minigame": "Das Minispiel, aus dem diese Bestenliste ihre Punkte bezieht, gehört nicht zur Vorlage und wurde übersprungen.",
+      "minigameImage": "Ein Bild konnte nicht kopiert werden.",
+      "leaderboardImage": "Ein Bild konnte nicht kopiert werden.",
+      "leaderboardHostMissing": "Die Bestenliste braucht einen eigenen Kanal (oder ein Minispiel), den diese Installation nicht geliefert hat, und wurde übersprungen.",
+      "externalStoreSkipped": "Dieser Workspace verkauft über einen verbundenen Shop (Shopify oder WooCommerce); Produkte, Anbieter, Rabattcodes, Öffnungszeiten und Shop-Einstellungen wurden daher nicht installiert.",
+      "discountCodeSkipped": "Dieser Rabattcode wurde übersprungen: Die Produkte oder die Kategorie, für die er gilt, gehören nicht zur Vorlage, oder seine Einstellungen wurden abgelehnt.",
+      "storeSettingsKept": "Dieser Workspace hatte bereits Shop-Einstellungen, sie blieben unverändert.",
+      "vendorImage": "Ein Bild konnte nicht kopiert werden.",
+      "storeSettingsCurrencyKept": "Der Workspace hat Produkte in einer anderen Währung, daher blieb seine Währung statt der der Vorlage erhalten.",
+      "storySelectionRequired": "Wähle die Storys erneut aus: Die ursprünglichen Storys konnten nicht übernommen werden."
     },
     "tabs": {
       "mine": "Meine Vorlagen",

@@ -10,6 +10,7 @@ import { isNumericId } from "@chatbotx.io/utils/id"
 import { VARIABLE_PLACEHOLDER_SOURCE } from "@chatbotx.io/utils/variables"
 import { z } from "zod"
 import type { TemplateHardDependency } from "./adapters/types"
+import { collectResourceLinkDependencies } from "./resource-links"
 import {
   collectTriggerConditionReferences,
   triggerConditionRowSchema,
@@ -27,6 +28,11 @@ const DEPENDENCY_CATEGORY_BY_KIND = {
   sequence: "sequences",
   questionnaire: "questionnaires",
   couponTopic: "couponTopics",
+  miniApp: "miniApps",
+  minigame: "minigames",
+  leaderboard: "leaderboards",
+  openHours: "openHours",
+  vendor: "vendors",
 } as const satisfies Partial<Record<string, TemplateResourceCategory>>
 
 /** The shipped-category rows `value` names, as hard dependencies of its owner. */
@@ -37,12 +43,16 @@ export const collectResourceDependencies = (
     DEPENDENCY_CATEGORY_BY_KIND,
   ) as (keyof typeof DEPENDENCY_CATEGORY_BY_KIND)[]
   const byKind = collectReferencesByKind(value, kinds)
-  return kinds.flatMap((kind) =>
-    [...(byKind.get(kind) ?? [])].map((sourceId) => ({
-      category: DEPENDENCY_CATEGORY_BY_KIND[kind],
-      sourceId,
-    })),
-  )
+  return [
+    ...kinds.flatMap((kind) =>
+      [...(byKind.get(kind) ?? [])].map((sourceId) => ({
+        category: DEPENDENCY_CATEGORY_BY_KIND[kind],
+        sourceId,
+      })),
+    ),
+    // A public link to a tool carries its id in a URL, not in a reference slot.
+    ...collectResourceLinkDependencies(value),
+  ]
 }
 
 const COUPON_PREFIX = "coupon:"

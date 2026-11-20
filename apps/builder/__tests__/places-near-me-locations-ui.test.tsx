@@ -1,3 +1,4 @@
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { NextIntlClientProvider } from "next-intl"
 import { NuqsTestingAdapter } from "nuqs/adapters/testing"
 import { act } from "react"
@@ -5,10 +6,30 @@ import { createRoot, type Root } from "react-dom/client"
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
 import messages from "../messages/en.json"
 
+const lockState = vi.hoisted(() => ({
+  value: { lockedIds: [], undeletableIds: [] } as {
+    lockedIds: string[]
+    undeletableIds: string[]
+  },
+}))
+
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ refresh: vi.fn(), push: vi.fn(), replace: vi.fn() }),
   usePathname: () => "/",
   useSearchParams: () => new URLSearchParams(),
+}))
+// The table asks which rows came from a View-only template: none here.
+vi.mock("@/lib/orpc/query", () => ({
+  orpc: {
+    templatesAPI: {
+      listLockedIdsAPI: {
+        queryOptions: ({ input }: { input: unknown }) => ({
+          queryKey: ["locked-ids", input],
+          queryFn: () => Promise.resolve(lockState.value),
+        }),
+      },
+    },
+  },
 }))
 vi.mock(
   "../src/features/places-near-me/actions/create-place-location.action",
@@ -60,13 +81,18 @@ const categories = [
 describe("places near me locations tab", () => {
   let container: HTMLDivElement
   let root: Root
+  let queryClient: QueryClient
 
   beforeEach(() => {
     container = document.createElement("div")
     document.body.appendChild(container)
     root = createRoot(container)
+    queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false } },
+    })
   })
   afterEach(() => {
+    lockState.value = { lockedIds: [], undeletableIds: [] }
     act(() => root.unmount())
     container.remove()
     document.body.innerHTML = ""
@@ -75,15 +101,21 @@ describe("places near me locations tab", () => {
   const render = () =>
     act(() => {
       root.render(
-        <NextIntlClientProvider locale="en" messages={messages} timeZone="UTC">
-          <NuqsTestingAdapter>
-            <LocationsTable
-              categories={categories}
-              locations={locations}
-              workspaceId="9"
-            />
-          </NuqsTestingAdapter>
-        </NextIntlClientProvider>,
+        <QueryClientProvider client={queryClient}>
+          <NextIntlClientProvider
+            locale="en"
+            messages={messages}
+            timeZone="UTC"
+          >
+            <NuqsTestingAdapter>
+              <LocationsTable
+                categories={categories}
+                locations={locations}
+                workspaceId="9"
+              />
+            </NuqsTestingAdapter>
+          </NextIntlClientProvider>
+        </QueryClientProvider>,
       )
     })
 
@@ -162,5 +194,35 @@ describe("places near me locations tab", () => {
     expect(dialogInput("name")?.value).toBe("Da Nang Store")
     expect(dialogInput("latitude")?.value).toBe("16.0078")
     expect(dialogInput("longitude")?.value).toBe("108.266")
+  })
+
+  const openRowMenu = () => {
+    const trigger = Array.from(container.querySelectorAll("button")).find((b) =>
+      b.textContent?.includes("Open menu"),
+    ) as HTMLElement
+    act(() => {
+      trigger.dispatchEvent(new MouseEvent("pointerdown", { bubbles: true }))
+      trigger.click()
+    })
+  }
+
+  const deleteItem = () =>
+    Array.from(
+      document.body.querySelectorAll<HTMLElement>('[role="menuitem"]'),
+    ).find((item) => item.textContent?.includes("Delete"))
+
+  test("Delete stays enabled for a row its template allows deleting", async () => {
+    render()
+    await act(() => Promise.resolve())
+    openRowMenu()
+    expect(deleteItem()?.hasAttribute("data-disabled")).toBe(false)
+  })
+
+  test("Delete is disabled for a row its template forbids deleting", async () => {
+    lockState.value = { lockedIds: ["1"], undeletableIds: ["1"] }
+    render()
+    await act(() => Promise.resolve())
+    openRowMenu()
+    expect(deleteItem()?.hasAttribute("data-disabled")).toBe(true)
   })
 })

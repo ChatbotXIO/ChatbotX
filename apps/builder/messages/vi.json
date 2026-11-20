@@ -7619,6 +7619,7 @@
       "resourcesTitle": "Tài nguyên đã cài",
       "noResources": "Chưa tạo gì.",
       "deletedResource": "Tài nguyên đã bị xóa",
+      "wholeCategory": "{count, plural, one {# mục} other {# mục}}",
       "viewOnly": "Chỉ xem",
       "created": "Đã tạo",
       "reused": "Dùng lại",
@@ -7673,7 +7674,12 @@
           "placeCategories": "Danh mục địa điểm"
         }
       },
-      "viewOnlyCopyIncluded": "Một mục bạn chọn (hoặc mục nó cần) được cài từ mẫu chỉ xem, nên không thể chia sẻ trong mẫu mới."
+      "viewOnlyCopyIncluded": "Một mục bạn chọn (hoặc mục nó cần) được cài từ mẫu chỉ xem, nên không thể chia sẻ trong mẫu mới.",
+      "miniAppPublishedExcluded": {
+        "title": "Mini App bị loại",
+        "hint": "Các luồng này dùng một Mini App đã xuất bản lên WhatsApp. Mini App này không thể chia sẻ nên mẫu bỏ qua nó và khi cài đặt tham chiếu đó sẽ bị gỡ.",
+        "item": "{flowName}: {miniAppName}"
+      }
     },
     "categories": {
       "flows": "Luồng",
@@ -7695,7 +7701,20 @@
       "aiFiles": "Tệp kiến thức AI",
       "questionnaires": "Bộ câu hỏi",
       "couponTopics": "Chủ đề mã giảm giá",
-      "pipelines": "Pipelines"
+      "pipelines": "Pipelines",
+      "magicLinks": "Magic link",
+      "polls": "Bình chọn",
+      "dynamicImages": "Ảnh động",
+      "placeLocations": "Địa điểm",
+      "miniApps": "Mini App",
+      "minigames": "Minigame",
+      "leaderboards": "Bảng xếp hạng",
+      "openHours": "Giờ mở cửa",
+      "vendors": "Nhà cung cấp",
+      "discountCodes": "Mã giảm giá",
+      "storeSettings": "Cài đặt cửa hàng",
+      "storyAutomations": "Tự động hóa Story Instagram",
+      "inboundWebhooks": "Webhook đến"
     },
     "locked": {
       "flowBanner": "Luồng này được cài từ một mẫu chỉ xem. Bạn có thể xem nhưng không thể chỉnh sửa.",
@@ -7772,6 +7791,7 @@
       "flowNotPublished": "Flow được cài ở dạng nháp và chưa xuất bản.",
       "flowSkippedRequiredReference": "Flow bị bỏ qua vì không phân giải được một tham chiếu bắt buộc.",
       "folder": "Một mục được tham chiếu không có trong workspace này nên liên kết đã bị bỏ.",
+      "inboundWebhookLimitReached": "Đã bỏ qua webhook đến này: không gian làm việc đã đạt số webhook đến tối đa.",
       "inboxBindingRequired": "Hãy chọn inbox cho kênh này; đến lúc đó mục vẫn ở trạng thái tắt.",
       "integration": "Một mục được tham chiếu không có trong workspace này nên liên kết đã bị bỏ.",
       "localModifiedOverwritten": "Một mục đã sửa tại chỗ bị ghi đè. Bản sao lưu đã được lưu và có thể khôi phục.",
@@ -7792,7 +7812,25 @@
       "tag": "Một mục được tham chiếu không có trong workspace này nên liên kết đã bị bỏ.",
       "unlisted": "Mục chưa được mang sang đầy đủ: {code}",
       "workspaceMember": "Được gán cho thành viên không có trong workspace này.",
-      "workspaceUnavailable": "Workspace này không còn khả dụng nên mục này đã bị bỏ qua."
+      "workspaceUnavailable": "Workspace này không còn khả dụng nên mục này đã bị bỏ qua.",
+      "scheduleExpired": "Ngày của mục này đã qua; hãy đặt ngày mới trước khi dùng.",
+      "linkNotRemapped": "Một liên kết tới công cụ không nằm trong template đã được giữ nguyên.",
+      "dynamicImage": "Ảnh động này bị bỏ qua vì không sao chép được ảnh nền.",
+      "dynamicImageFieldNotBound": "Hãy chọn một trường tuỳ chỉnh để lưu cache cho ảnh này; trường gốc đã có sẵn trong workspace của bạn.",
+      "dynamicImageRerenderFailed": "Hình ảnh động này đã bị tắt vì không thể dựng lại nền bằng các liên kết đã sao chép. Hãy bật lại để thử lại.",
+      "pollImage": "Không sao chép được một hình ảnh.",
+      "leaderboardInvalid": "Không cài được cấu hình của bảng xếp hạng này nên đã bỏ qua.",
+      "placeLocationInvalid": "Địa điểm này đã bị bỏ qua vì tên để trống.",
+      "minigame": "Minigame dùng để tính điểm cho bảng xếp hạng này không nằm trong template nên đã bỏ qua.",
+      "minigameImage": "Không sao chép được một hình ảnh.",
+      "leaderboardImage": "Không sao chép được một hình ảnh.",
+      "leaderboardHostMissing": "Bảng xếp hạng cần một kênh (hoặc minigame) riêng mà lần cài này chưa có nên đã bỏ qua.",
+      "externalStoreSkipped": "Workspace này bán hàng từ một cửa hàng đã kết nối (Shopify hoặc WooCommerce) nên sản phẩm, nhà cung cấp, mã giảm giá, giờ mở cửa và cài đặt cửa hàng không được cài.",
+      "discountCodeSkipped": "Mã giảm giá này đã bị bỏ qua: sản phẩm hoặc danh mục nó áp dụng không nằm trong template, hoặc cấu hình bị từ chối.",
+      "storeSettingsKept": "Workspace này đã có cài đặt cửa hàng nên được giữ nguyên.",
+      "vendorImage": "Không sao chép được một hình ảnh.",
+      "storeSettingsCurrencyKept": "Workspace có sản phẩm bằng tiền tệ khác nên giữ nguyên tiền tệ hiện tại thay vì dùng của template.",
+      "storySelectionRequired": "Hãy chọn lại story: không thể mang các story gốc sang."
     },
     "tabs": {
       "mine": "Mẫu của tôi",

@@ -2,6 +2,10 @@ import {
   type TemplateResourceCategory,
   templateResourceCategories,
 } from "@chatbotx.io/database/partials"
+import {
+  TEMPLATE_EXPORT_FORMAT_VERSION,
+  type TemplateFormatVersion,
+} from "@chatbotx.io/flow-config"
 
 type CategoryResult = {
   entries: readonly (Record<string, unknown> & { sourceId: string })[]
@@ -12,14 +16,28 @@ type CategoryResult = {
  * no import of the adapters themselves (and callers that stub the registry get
  * the stub's view).
  */
-export const categoriesRequiringV2 = (
+/**
+ * The lowest payload version that can carry what was collected: the maximum
+ * `minFormatVersion` of the categories that have entries (1 when none needs more).
+ */
+export const requiredFormatVersion = (
   registry: Partial<
-    Record<TemplateResourceCategory, { minFormatVersion?: number }>
+    Record<
+      TemplateResourceCategory,
+      { minFormatVersion?: TemplateFormatVersion }
+    >
   >,
-): TemplateResourceCategory[] =>
-  (Object.keys(registry) as TemplateResourceCategory[]).filter(
-    (category) => (registry[category]?.minFormatVersion ?? 1) >= 2,
-  )
+  results: Partial<Record<TemplateResourceCategory, CategoryResult>>,
+): TemplateFormatVersion => {
+  let version: TemplateFormatVersion = TEMPLATE_EXPORT_FORMAT_VERSION
+  for (const category of Object.keys(registry) as TemplateResourceCategory[]) {
+    const minimum = registry[category]?.minFormatVersion ?? 1
+    if (minimum > version && (results[category]?.entries.length ?? 0) > 0) {
+      version = minimum
+    }
+  }
+  return version
+}
 
 /**
  * The payload's `resources` object: one key per resource category (a category

@@ -8263,6 +8263,7 @@
       "resourcesTitle": "Installed resources",
       "noResources": "Nothing was created yet.",
       "deletedResource": "Deleted resource",
+      "wholeCategory": "{count, plural, one {# item} other {# items}}",
       "viewOnly": "View only",
       "created": "Created",
       "reused": "Reused",
@@ -8317,7 +8318,12 @@
           "placeCategories": "Place categories"
         }
       },
-      "viewOnlyCopyIncluded": "Something you selected (or something it needs) was installed from a view-only template, so it can't be shared in a new template."
+      "viewOnlyCopyIncluded": "Something you selected (or something it needs) was installed from a view-only template, so it can't be shared in a new template.",
+      "miniAppPublishedExcluded": {
+        "title": "Mini App left out",
+        "hint": "These flows use a Mini App that is published to WhatsApp. It can't be shared, so the template leaves it out and installing removes that reference.",
+        "item": "{flowName}: {miniAppName}"
+      }
     },
     "categories": {
       "flows": "Flows",
@@ -8339,7 +8345,20 @@
       "aiFiles": "AI knowledge files",
       "questionnaires": "Questionnaires",
       "couponTopics": "Coupon topics",
-      "pipelines": "Pipelines"
+      "pipelines": "Pipelines",
+      "magicLinks": "Magic links",
+      "polls": "Polls",
+      "dynamicImages": "Dynamic images",
+      "placeLocations": "Place locations",
+      "miniApps": "Mini Apps",
+      "minigames": "Minigames",
+      "leaderboards": "Leaderboards",
+      "openHours": "Opening hours",
+      "vendors": "Vendors",
+      "discountCodes": "Discount codes",
+      "storeSettings": "Store settings",
+      "storyAutomations": "Instagram Story Automation",
+      "inboundWebhooks": "Inbound webhook"
     },
     "locked": {
       "flowBanner": "This flow was installed from a view-only template. You can look at it but not edit it.",
@@ -8416,6 +8435,7 @@
       "flowNotPublished": "The flow was installed as a draft and is not published.",
       "flowSkippedRequiredReference": "The flow was skipped because a required reference could not be resolved.",
       "folder": "A referenced item was not found in this workspace, so the link was dropped.",
+      "inboundWebhookLimitReached": "This inbound webhook was skipped: the workspace already has the maximum number of inbound webhooks.",
       "inboxBindingRequired": "Pick an inbox for this channel; until then the item stays inactive.",
       "integration": "A referenced item was not found in this workspace, so the link was dropped.",
       "localModifiedOverwritten": "A locally edited item was overwritten. A backup was saved and can be restored.",
@@ -8436,7 +8456,25 @@
       "tag": "A referenced item was not found in this workspace, so the link was dropped.",
       "unlisted": "Item not fully brought over: {code}",
       "workspaceMember": "Assigned to a member who is not in this workspace.",
-      "workspaceUnavailable": "This workspace is no longer available, so the item was skipped."
+      "workspaceUnavailable": "This workspace is no longer available, so the item was skipped.",
+      "scheduleExpired": "The dates of this item have already passed; set new ones before using it.",
+      "linkNotRemapped": "A link to a tool that was not part of the template was left unchanged.",
+      "dynamicImage": "This dynamic image was skipped because its background could not be copied.",
+      "dynamicImageFieldNotBound": "Choose a custom field for this image to cache on; the original one was already in your workspace.",
+      "dynamicImageRerenderFailed": "This dynamic image was switched off because its background could not be re-rendered with your copied links. Turn it on to try again.",
+      "pollImage": "An image could not be copied.",
+      "leaderboardInvalid": "This leaderboard's configuration could not be installed, so it was skipped.",
+      "placeLocationInvalid": "This place was skipped because its name is empty.",
+      "minigame": "The minigame this leaderboard is scored from is not part of the template, so it was skipped.",
+      "minigameImage": "An image could not be copied.",
+      "leaderboardImage": "An image could not be copied.",
+      "leaderboardHostMissing": "The leaderboard needs a channel (or minigame) of its own that this install did not provide, so it was skipped.",
+      "externalStoreSkipped": "This workspace sells from a connected store (Shopify or WooCommerce), so the products, vendors, discount codes, opening hours and store settings were not installed.",
+      "discountCodeSkipped": "This discount code was skipped: the products or category it applies to are not part of the template, or its settings were refused.",
+      "storeSettingsKept": "This workspace already had store settings, so they were kept as they are.",
+      "vendorImage": "An image could not be copied.",
+      "storeSettingsCurrencyKept": "The workspace has products in another currency, so its currency was kept instead of the template's.",
+      "storySelectionRequired": "Select the stories again: the original stories could not be carried over."
     },
     "tabs": {
       "mine": "My templates",

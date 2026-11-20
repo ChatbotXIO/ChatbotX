@@ -13,6 +13,7 @@ import { useDraggable } from "@dnd-kit/core"
 import { SearchIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { useMemo, useState } from "react"
+import { useIsEditorLocked } from "@/features/templates/components/locked-editor"
 import { componentIcon } from "../lib/component-icons"
 import { categoryLabelKey, componentLabelKey } from "../lib/labels"
 import type { DragSource } from "./dnd"
@@ -25,10 +26,12 @@ function PaletteItem({
   onAdd: (type: MiniAppComponentType) => void
 }) {
   const t = useTranslations()
+  const isLocked = useIsEditorLocked()
   const source: DragSource = { kind: "palette", type: definition.type }
   const { setNodeRef, listeners, attributes, isDragging } = useDraggable({
     id: `palette:${definition.type}`,
     data: source,
+    disabled: isLocked,
   })
   const Icon = componentIcon[definition.type]
   return (
@@ -36,7 +39,9 @@ function PaletteItem({
       className={cn(
         "flex cursor-grab items-center gap-2 rounded-md border bg-background px-2 py-1.5 text-start text-sm hover:border-primary hover:bg-primary/5",
         isDragging && "opacity-50",
+        isLocked && "cursor-not-allowed opacity-60",
       )}
+      disabled={isLocked}
       onClick={() => onAdd(definition.type)}
       ref={setNodeRef}
       title={t("miniApps.editor.paletteHint")}

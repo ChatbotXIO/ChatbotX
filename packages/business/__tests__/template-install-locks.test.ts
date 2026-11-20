@@ -37,7 +37,17 @@ vi.mock("@chatbotx.io/database/statement-timeout", () => ({
   setLocalStatementTimeout: vi.fn(),
 }))
 
+vi.mock("../src/ecommerce-open-hours/service", () => ({
+  ecommerceOpenHoursService: { invalidateWorkspaceCache: vi.fn() },
+}))
+vi.mock("../src/ecommerce-settings/service", () => ({
+  ecommerceSettingsService: { invalidateWorkspaceCache: vi.fn() },
+}))
+vi.mock("../src/vendor/service", () => ({
+  vendorService: { invalidateWorkspaceCache: vi.fn() },
+}))
 vi.mock("@chatbotx.io/database/repositories", () => ({
+  ecommerceSettingsRepository: { find: vi.fn().mockResolvedValue(undefined) },
   templateInstallationRepository: {
     claim: mocks.claim,
     complete: mocks.complete,

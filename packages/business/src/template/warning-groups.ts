@@ -13,6 +13,8 @@ export type TemplateInstallationWarningGroup = {
   /** The resource in the source workspace these warnings are about, when the warning names one. */
   sourceId: string | null
   name: string | null
+  /** Set when the warning covers the whole category rather than one resource: how many items it covers. */
+  itemCount: number | null
   /** The install left this resource out. */
   skipped: boolean
   issues: { code: string; count: number }[]
@@ -21,6 +23,14 @@ export type TemplateInstallationWarningGroup = {
 const SKIPPED_CODES: ReadonlySet<string> = new Set([
   "flowSkippedRequiredReference",
   "flowInvalidStructure",
+  "dynamicImage",
+  "dynamicImageRerenderFailed",
+  "discountCodeSkipped",
+  "externalStoreSkipped",
+  "inboundWebhookLimitReached",
+  "leaderboardHostMissing",
+  "leaderboardInvalid",
+  "placeLocationInvalid",
 ])
 
 const INSTALLER_CODES: ReadonlySet<string> = new Set(
@@ -60,6 +70,19 @@ const RESOURCE_KIND_OF_CATEGORY: Readonly<Record<string, string>> = {
   couponTopics: "couponTopic",
   pipelines: "pipeline",
   entryPointLinks: "reflink",
+  magicLinks: "magicLink",
+  polls: "poll",
+  dynamicImages: "dynamicImage",
+  placeLocations: "placeLocation",
+  miniApps: "miniApp",
+  minigames: "minigame",
+  leaderboards: "leaderboard",
+  openHours: "openHours",
+  vendors: "vendor",
+  discountCodes: "discountCode",
+  storeSettings: "storeSettings",
+  storyAutomations: "storyAutomation",
+  inboundWebhooks: "inboundWebhook",
 }
 
 const RESOURCE_PATH_PATTERN = /^[^.]+\.(\d+)/
@@ -68,6 +91,12 @@ const BARE_ID_PATTERN = /^\d+$/
 /** `flows.117.nodes[1]...` -> `117`: warnings are pathed under their resource. */
 const sourceIdOfPath = (path: string): string | null =>
   RESOURCE_PATH_PATTERN.exec(path)?.[1] ?? null
+
+/** `openHours` + value `1`: the path is the bare category and the value a count of items, not an id. */
+const itemCountOf = (warning: InstallWarning): number | null =>
+  warning.path === warning.category && BARE_ID_PATTERN.test(warning.value)
+    ? Number(warning.value)
+    : null
 
 /** A warning's value is a name for some codes and a raw id for others; an id names nothing. */
 const readableValue = (value: string): string | null =>
@@ -81,13 +110,17 @@ export const groupInstallationWarnings = (
   const groups = new Map<string, InstallWarning[]>()
   for (const warning of warnings) {
     const sourceId = sourceIdOfPath(warning.path)
-    const key = `${warning.category}|${sourceId ?? warning.value}`
+    const key =
+      itemCountOf(warning) === null
+        ? `${warning.category}|${sourceId ?? warning.value}`
+        : `${warning.category}|*`
     groups.set(key, [...(groups.get(key) ?? []), warning])
   }
   return [...groups.values()]
     .map((rows) => {
       const [first] = rows
       const sourceId = sourceIdOfPath(first.path)
+      const itemCount = itemCountOf(first)
       const counts = new Map<string, number>()
       for (const row of rows) {
         counts.set(row.entityKind, (counts.get(row.entityKind) ?? 0) + 1)
@@ -96,8 +129,11 @@ export const groupInstallationWarnings = (
         category: first.category,
         sourceId,
         name:
-          (sourceId ? labelOf(first.category, sourceId) : undefined) ??
-          readableValue(first.value),
+          itemCount === null
+            ? ((sourceId ? labelOf(first.category, sourceId) : undefined) ??
+              readableValue(first.value))
+            : null,
+        itemCount,
         skipped: rows.some((row) => SKIPPED_CODES.has(row.entityKind)),
         issues: [...counts].map(([code, count]) => ({ code, count })),
       }

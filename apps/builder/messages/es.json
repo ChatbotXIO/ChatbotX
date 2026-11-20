@@ -7385,6 +7385,7 @@
       "resourcesTitle": "Recursos instalados",
       "noResources": "Aún no se ha creado nada.",
       "deletedResource": "Recurso eliminado",
+      "wholeCategory": "{count, plural, one {# elemento} other {# elementos}}",
       "viewOnly": "Solo lectura",
       "created": "Creado",
       "reused": "Reutilizado",
@@ -7439,7 +7440,12 @@
           "placeCategories": "Categorías de lugares"
         }
       },
-      "viewOnlyCopyIncluded": "Algo que seleccionaste (o algo que necesita) se instaló desde una plantilla de solo lectura, así que no se puede compartir en una plantilla nueva."
+      "viewOnlyCopyIncluded": "Algo que seleccionaste (o algo que necesita) se instaló desde una plantilla de solo lectura, así que no se puede compartir en una plantilla nueva.",
+      "miniAppPublishedExcluded": {
+        "title": "Mini App omitida",
+        "hint": "Estos flujos usan una Mini App publicada en WhatsApp. No se puede compartir, así que la plantilla la omite y la instalación elimina esa referencia.",
+        "item": "{flowName}: {miniAppName}"
+      }
     },
     "categories": {
       "flows": "Flujos",
@@ -7461,7 +7467,20 @@
       "aiFiles": "Archivos de conocimiento de IA",
       "questionnaires": "Questionnaires",
       "couponTopics": "Temas de cupones",
-      "pipelines": "Pipelines"
+      "pipelines": "Pipelines",
+      "magicLinks": "Enlaces mágicos",
+      "polls": "Encuestas",
+      "dynamicImages": "Imágenes dinámicas",
+      "placeLocations": "Ubicaciones",
+      "miniApps": "Mini apps",
+      "minigames": "Minijuegos",
+      "leaderboards": "Clasificaciones",
+      "openHours": "Horarios",
+      "vendors": "Proveedores",
+      "discountCodes": "Códigos de descuento",
+      "storeSettings": "Ajustes de la tienda",
+      "storyAutomations": "Automatización de historias de Instagram",
+      "inboundWebhooks": "Webhook entrante"
     },
     "locked": {
       "flowBanner": "Este flujo se instaló desde una plantilla de solo lectura. Puedes verlo, pero no editarlo.",
@@ -7538,6 +7557,7 @@
       "flowNotPublished": "El Flow se instaló como borrador y no está publicado.",
       "flowSkippedRequiredReference": "Se omitió el Flow porque no se pudo resolver una referencia obligatoria.",
       "folder": "No se encontró un elemento referenciado en este espacio de trabajo, por lo que se eliminó el vínculo.",
+      "inboundWebhookLimitReached": "Se omitió este webhook entrante: el espacio de trabajo ya tiene el número máximo de webhooks entrantes.",
       "inboxBindingRequired": "Elige una bandeja de entrada para este canal; hasta entonces el elemento permanece inactivo.",
       "integration": "No se encontró un elemento referenciado en este espacio de trabajo, por lo que se eliminó el vínculo.",
       "localModifiedOverwritten": "Se sobrescribió un elemento editado localmente. Se guardó una copia de seguridad que se puede restaurar.",
@@ -7558,7 +7578,25 @@
       "tag": "No se encontró un elemento referenciado en este espacio de trabajo, por lo que se eliminó el vínculo.",
       "unlisted": "Elemento no incorporado por completo: {code}",
       "workspaceMember": "Asignado a un miembro que no está en este espacio de trabajo.",
-      "workspaceUnavailable": "Este espacio de trabajo ya no está disponible, así que se omitió el elemento."
+      "workspaceUnavailable": "Este espacio de trabajo ya no está disponible, así que se omitió el elemento.",
+      "scheduleExpired": "Las fechas de este elemento ya pasaron; define nuevas antes de usarlo.",
+      "linkNotRemapped": "Un enlace a una herramienta que no formaba parte de la plantilla se dejó sin cambios.",
+      "dynamicImage": "Esta imagen dinámica se omitió porque no se pudo copiar su fondo.",
+      "dynamicImageFieldNotBound": "Elige un campo personalizado donde guardar en caché esta imagen; el original ya existía en tu espacio de trabajo.",
+      "dynamicImageRerenderFailed": "Esta imagen dinámica se desactivó porque no se pudo volver a renderizar su fondo con tus enlaces copiados. Actívala de nuevo para volver a intentarlo.",
+      "pollImage": "No se pudo copiar una imagen.",
+      "leaderboardInvalid": "No se pudo instalar la configuración de esta clasificación, así que se omitió.",
+      "placeLocationInvalid": "Este lugar se omitió porque su nombre está vacío.",
+      "minigame": "El minijuego del que esta clasificación obtiene su puntuación no forma parte de la plantilla, así que se omitió.",
+      "minigameImage": "No se pudo copiar una imagen.",
+      "leaderboardImage": "No se pudo copiar una imagen.",
+      "leaderboardHostMissing": "La clasificación necesita un canal (o minijuego) propio que esta instalación no aportó, así que se omitió.",
+      "externalStoreSkipped": "Este espacio de trabajo vende desde una tienda conectada (Shopify o WooCommerce), por lo que no se instalaron productos, proveedores, códigos de descuento, horarios ni ajustes de la tienda.",
+      "discountCodeSkipped": "Este código de descuento se omitió: los productos o la categoría a los que se aplica no forman parte de la plantilla, o sus ajustes fueron rechazados.",
+      "storeSettingsKept": "Este espacio de trabajo ya tenía ajustes de tienda, así que se conservaron tal cual.",
+      "vendorImage": "No se pudo copiar una imagen.",
+      "storeSettingsCurrencyKept": "El espacio de trabajo tiene productos en otra moneda, así que se conservó su moneda en lugar de la de la plantilla.",
+      "storySelectionRequired": "Selecciona las historias de nuevo: no se pudieron traer las historias originales."
     },
     "tabs": {
       "mine": "Mis plantillas",

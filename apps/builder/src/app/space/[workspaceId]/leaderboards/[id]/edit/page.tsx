@@ -13,6 +13,7 @@ import {
   getDefaultRulesByPlatform,
   listMinigameOptions,
 } from "@/features/leaderboards/queries"
+import { LockedEditorGuard } from "@/features/templates/components/locked-editor-guard"
 
 export default async function EditLeaderboardPage({
   params,
@@ -45,13 +46,21 @@ export default async function EditLeaderboardPage({
         ]}
       />
       {leaderboard.availableActions.includes("edit") ? (
-        <LeaderboardWizard
-          defaultRules={getDefaultRulesByPlatform(leaderboardPlatforms.options)}
-          leaderboard={leaderboard}
-          minigameOptions={minigameOptions}
-          platformChannels={LEADERBOARD_PLATFORM_CHANNEL}
+        <LockedEditorGuard
+          resourceId={id}
+          resourceKind="leaderboard"
           workspaceId={workspaceId}
-        />
+        >
+          <LeaderboardWizard
+            defaultRules={getDefaultRulesByPlatform(
+              leaderboardPlatforms.options,
+            )}
+            leaderboard={leaderboard}
+            minigameOptions={minigameOptions}
+            platformChannels={LEADERBOARD_PLATFORM_CHANNEL}
+            workspaceId={workspaceId}
+          />
+        </LockedEditorGuard>
       ) : (
         <Card>
           <CardContent className="flex flex-col items-start gap-3">

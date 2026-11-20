@@ -11,6 +11,7 @@ import {
 import { useTranslations } from "next-intl"
 import { useState } from "react"
 import { toast } from "sonner"
+import { useIsEditorLocked } from "@/features/templates/components/locked-editor"
 import { useDefaultText } from "../lib/use-default-text"
 import { type DragSource, type DropTarget, findDropTarget } from "./dnd"
 import { useMiniAppEditor } from "./editor-context"
@@ -24,6 +25,7 @@ export function useCanvasDnd() {
   const defaultText = useDefaultText()
   const definition = useMiniAppEditor((state) => state.definition)
   const addNode = useMiniAppEditor((state) => state.addNode)
+  const isLocked = useIsEditorLocked()
   const moveNode = useMiniAppEditor((state) => state.moveNode)
   const [dragSource, setDragSource] = useState<DragSource | null>(null)
   const [dropTarget, setDropTarget] = useState<DropTarget | null>(null)
@@ -37,6 +39,11 @@ export function useCanvasDnd() {
   }
 
   const onDragEnd = (event: DragEndEvent) => {
+    // Defence in depth: draggables are disabled when locked, but a drop must never mutate a View-only copy.
+    if (isLocked) {
+      reset()
+      return
+    }
     const source = event.active.data.current as DragSource | undefined
     const target = findDropTarget(definition, event)
     reset()
@@ -61,8 +68,11 @@ export function useCanvasDnd() {
     dropTarget,
     dndContextProps: {
       sensors,
-      onDragStart: (event: DragStartEvent) =>
-        setDragSource((event.active.data.current as DragSource) ?? null),
+      onDragStart: (event: DragStartEvent) => {
+        if (!isLocked) {
+          setDragSource((event.active.data.current as DragSource) ?? null)
+        }
+      },
       onDragMove: (event: DragMoveEvent) =>
         setDropTarget(findDropTarget(definition, event)),
       onDragEnd,

@@ -9,6 +9,7 @@ import {
   or,
   sql,
 } from "../../client"
+import type { TemplateWarning } from "../../partials"
 import { templateInstallationModel } from "../../schema"
 import type { TemplateInstallationModel } from "../../types"
 import { ownedByClaim, unfinishedInstallation } from "./shared"
@@ -98,6 +99,34 @@ export const templateInstallationLeaseRepository = {
       .where(ownedByClaim(input))
       .returning({ id: templateInstallationModel.id })
     return rows.length > 0
+  },
+
+  /**
+   * Adds warnings to a finished installation: what a post-commit effect found
+   * (the apply transaction had already stored its own). A `completed` row
+   * becomes `partial`, as it would have had the warning been raised in-transaction.
+   */
+  async appendWarnings(input: {
+    id: string
+    workspaceId: string
+    warnings: TemplateWarning[]
+  }): Promise<void> {
+    if (input.warnings.length === 0) {
+      return
+    }
+    await db
+      .update(templateInstallationModel)
+      .set({
+        warnings: sql`${templateInstallationModel.warnings} || ${JSON.stringify(input.warnings)}::jsonb`,
+        warningCount: sql`${templateInstallationModel.warningCount} + ${input.warnings.length}`,
+        status: sql`CASE WHEN ${templateInstallationModel.status} = 'completed' THEN 'partial' ELSE ${templateInstallationModel.status} END`,
+      })
+      .where(
+        and(
+          eq(templateInstallationModel.id, input.id),
+          eq(templateInstallationModel.workspaceId, input.workspaceId),
+        ),
+      )
   },
 
   /** Terminal failure by the lease owner, written outside the rolled-back apply transaction. */

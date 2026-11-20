@@ -16,6 +16,8 @@ import {
   Trash2Icon,
 } from "lucide-react"
 import type { useTranslations } from "next-intl"
+import { LockBadge } from "@/features/templates/components/lock-badge"
+import { UndeletableGuard } from "@/features/templates/components/lock-context"
 
 export type LocationRowAction = {
   location: PlaceLocationItem
@@ -47,6 +49,7 @@ export const getLocationColumns = ({
         <span className="block max-w-[400px] truncate">
           {row.original.name}
         </span>
+        <LockBadge resourceId={row.original.id} />
       </Button>
     ),
     meta: { label: t("fields.name.label"), variant: "text" },
@@ -106,15 +109,20 @@ export const getLocationColumns = ({
             <ExternalLinkIcon className="me-2 h-4 w-4" />
             {t("placesNearMe.locations.preview")}
           </DropdownMenuItem>
-          <DropdownMenuItem
-            className="text-destructive"
-            onClick={() =>
-              setRowAction({ location: row.original, variant: "delete" })
-            }
-          >
-            <Trash2Icon className="me-2 h-4 w-4" />
-            {t("actions.delete")}
-          </DropdownMenuItem>
+          <UndeletableGuard resourceId={row.original.id}>
+            {(disabled) => (
+              <DropdownMenuItem
+                className="text-destructive"
+                disabled={disabled}
+                onClick={() =>
+                  setRowAction({ location: row.original, variant: "delete" })
+                }
+              >
+                <Trash2Icon className="me-2 h-4 w-4" />
+                {t("actions.delete")}
+              </DropdownMenuItem>
+            )}
+          </UndeletableGuard>
         </DropdownMenuContent>
       </DropdownMenu>
     ),

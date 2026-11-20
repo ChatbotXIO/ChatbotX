@@ -1,5 +1,11 @@
 import { type DatabaseClient, db, sql } from "../../client"
 
+/**
+ * The only predicates a probe may append, emitted through `sql.raw`: adding one
+ * means adding its literal here, so no runtime string can reach the SQL.
+ */
+export type RestrictSql = '"deletedAt" IS NULL' | '("isDraft" OR "isLatest")'
+
 /** The registry's reference slots that point at one parent kind (business owns the registries). */
 export type ReferenceSlots = {
   scalars: string[]
@@ -19,6 +25,8 @@ export type ReferenceColumnProbe = {
   workspaceColumn?: string
   /** The column is text, not bigint (`Condition.sourceId`). */
   textColumn?: boolean
+  /** A constant SQL predicate narrowing the holding rows (e.g. live rows only); never user input. */
+  restrictSql?: RestrictSql
 }
 
 /** A table whose JSON columns embed ids under the registry's field names. */
@@ -27,6 +35,14 @@ export type ReferenceContainerProbe = {
   table: string
   holderIdColumn: string
   jsonColumns: readonly string[]
+  /**
+   * JSON columns shaped `{ type, value }` whose `value` is the id of the flow or
+   * AI agent that `type` names (a comment or story reply): the key `value` is too
+   * generic for the registry, so they are matched on the pair.
+   */
+  replyColumns?: readonly string[]
+  /** JSON columns holding a bare array of ids of the probed kind (a discount code's product list). */
+  idArrayColumns?: readonly string[]
   workspaceColumn?: string
   /** No workspace column: scoped through the live broadcast the row belongs to. */
   scopeThroughBroadcast?: boolean
@@ -35,7 +51,7 @@ export type ReferenceContainerProbe = {
   /** The (single) JSON column is a contact filter `{ operator, conditions: [{ field, value }] }`. */
   contactFilterColumn?: string
   /** Static registry predicate on the holding row (trusted constant, never user input). */
-  restrictSql?: string
+  restrictSql?: RestrictSql
 }
 
 /** One reference: `parent` is pointed at by `holderId` (null for installer data, whose id is irrelevant). */
@@ -125,6 +141,9 @@ const findColumnEdges = async (
     isConditionTable && probe.column === "sourceId"
       ? sql`AND t."type" = 'trigger'`
       : sql``
+  const restrict = probe.restrictSql
+    ? sql`AND t.${sql.raw(probe.restrictSql)}`
+    : sql``
   // A holder of a tracked kind never counts against itself (a row naming its own id).
   const selfReference = probe.holderKind
     ? sql`AND t.${sql.identifier(probe.holderIdColumn)}::text IS DISTINCT FROM ${column}::text`
@@ -146,7 +165,7 @@ const findColumnEdges = async (
           FROM (VALUES ${parents}) AS p(id)
           WHERE EXISTS (
             SELECT 1 FROM ${from}
-            WHERE ${column} = ${cast} ${workspace} ${conditionOnly}
+            WHERE ${column} = ${cast} ${workspace} ${conditionOnly} ${restrict}
           )`,
     )
     return toEdges(existing.rows, probe.holderKind)
@@ -155,7 +174,7 @@ const findColumnEdges = async (
     sql`SELECT DISTINCT ${column}::text AS parent, ${holderId} AS holder_id
         FROM ${from}
         WHERE ${column} IN (${ids})
-        ${workspace} ${conditionOnly} ${selfReference}`,
+        ${workspace} ${conditionOnly} ${restrict} ${selfReference}`,
   )
   return toEdges(result.rows, probe.holderKind)
 }
@@ -286,6 +305,61 @@ const findFieldEdges = async (
   return toEdges(result.rows, container.holderKind)
 }
 
+/** `{ type, value }` replies whose `type` is the probed kind's (`flow`, `AIAgent`) and whose `value` is a probed id. */
+const findReplyEdges = async (
+  tx: DatabaseClient,
+  container: ReferenceContainerProbe,
+  replyType: string,
+  parentIds: readonly string[],
+  workspaceId: string,
+): Promise<InboundEdge[]> => {
+  if (!container.replyColumns?.length) {
+    return []
+  }
+  const source = containerSource(container, workspaceId)
+  const holder = holderSelect(
+    container.holderKind,
+    sql`t.${sql.identifier(container.holderIdColumn)}`,
+  )
+  const statements = container.replyColumns.map((column) => {
+    const reply = sql`t.${sql.identifier(column)}`
+    return sql`(SELECT DISTINCT ${reply}->>'value' AS parent, ${holder} AS holder_id
+        FROM ${source.from}
+        WHERE ${source.where}
+          AND ${reply}->>'type' = ${replyType}
+          AND ${reply}->>'value' IN (${textList(parentIds)}))`
+  })
+  const result = await tx.execute<EdgeRow>(sql.join(statements, sql` UNION `))
+  return toEdges(result.rows, container.holderKind)
+}
+
+/** Bare JSON arrays of ids: a row points at a parent when one of its elements is that parent. */
+const findIdArrayEdges = async (
+  tx: DatabaseClient,
+  container: ReferenceContainerProbe,
+  parentIds: readonly string[],
+  workspaceId: string,
+): Promise<InboundEdge[]> => {
+  if (!container.idArrayColumns?.length) {
+    return []
+  }
+  const source = containerSource(container, workspaceId)
+  const holder = holderSelect(
+    container.holderKind,
+    sql`t.${sql.identifier(container.holderIdColumn)}`,
+  )
+  const statements = container.idArrayColumns.map((column) => {
+    const ids = sql`t.${sql.identifier(column)}`
+    return sql`(SELECT DISTINCT element AS parent, ${holder} AS holder_id
+        FROM ${source.from},
+          jsonb_array_elements_text(CASE WHEN jsonb_typeof(${ids}) = 'array' THEN ${ids} ELSE '[]'::jsonb END) AS element
+        WHERE ${source.where}
+          AND element IN (${textList(parentIds)}))`
+  })
+  const result = await tx.execute<EdgeRow>(sql.join(statements, sql` UNION `))
+  return toEdges(result.rows, container.holderKind)
+}
+
 /** A contact-filter column: only the id-valued conditions of the probed kind are matched, on their `value`. */
 const findContactFilterEdges = async (
   tx: DatabaseClient,
@@ -337,6 +411,8 @@ export const templateUninstallReferenceRepository = {
       columnProbes: readonly ReferenceColumnProbe[]
       containerProbes: readonly ReferenceContainerProbe[]
       slots: ReferenceSlots
+      /** The reply `type` that points at the probed kind, when a reply can (`flow`, `AIAgent`). */
+      replyType?: string
     },
     tx: DatabaseClient = db,
   ): Promise<InboundEdge[]> {
@@ -356,6 +432,28 @@ export const templateUninstallReferenceRepository = {
       )
     }
     for (const container of input.containerProbes) {
+      if (input.replyType) {
+        edges.push(
+          ...(await findReplyEdges(
+            tx,
+            container,
+            input.replyType,
+            input.parentIds,
+            input.workspaceId,
+          )),
+        )
+      }
+      edges.push(
+        ...(await findIdArrayEdges(
+          tx,
+          container,
+          input.parentIds,
+          input.workspaceId,
+        )),
+      )
+      if (container.jsonColumns.length === 0) {
+        continue
+      }
       if (container.contactFilterColumn) {
         edges.push(
           ...(await findContactFilterEdges(

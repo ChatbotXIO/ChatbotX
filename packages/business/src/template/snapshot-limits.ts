@@ -22,3 +22,27 @@ export const templatePayloadTooManyBytesException = () =>
     "This template's data is too large to save",
     "templatePayloadTooManyBytes",
   )
+
+const encodedBytes = (value: unknown): number =>
+  new TextEncoder().encode(JSON.stringify(value)).byteLength
+
+/**
+ * The "too many bytes" error, naming the cause when Mini Apps are it: a Mini
+ * App embeds its images as base64 inside its definition, so a few of them can
+ * fill the cap alone. Blamed when they alone exceed it or make up more than
+ * half of the payload.
+ */
+export const payloadTooManyBytesExceptionFor = (
+  resources: Record<string, unknown>,
+  totalBytes: number,
+): ChatbotXException => {
+  const miniAppBytes =
+    resources.miniApps === undefined ? 0 : encodedBytes(resources.miniApps)
+  if (miniAppBytes > MAX_PAYLOAD_BYTES || miniAppBytes * 2 > totalBytes) {
+    return new ChatbotXException(
+      "This template's Mini Apps are too large to save: their embedded images take most of the space. Replace the images with smaller ones or remove some Mini Apps",
+      "templatePayloadTooManyBytesMiniApps",
+    )
+  }
+  return templatePayloadTooManyBytesException()
+}

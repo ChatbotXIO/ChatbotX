@@ -81,7 +81,7 @@ Public API first, UI last:
 13. **Verify no hardcoded strings**: all user-facing text uses `useTranslations()` + `t()`
 14. **Parity check**: list every button that creates, changes, or *returns* something. Each must map to a public procedure; any that doesn't is a gap to close or an exemption to justify in the PR
 15. Run the **`cli-mcp-docs`** skill so the CLI/MCP docs match the new surface
-16. **Templates** — if the feature adds a resource users build, a field on one, or an id that points at another resource, or it writes/deletes/lists a kind templates copy, follow the **`template-integration`** skill (adapter, lock keys, uninstall handler, reference policy, guards, lock badges). A kind or reference the template maps do not know is silently mis-copied or left editable
+16. **Templates** — if the feature adds a resource users build, a field on one, or an id that points at another resource, or it writes/deletes/lists a kind templates copy, follow the **`template-integration`** skill (adapter, lock keys, uninstall handler, reference policy, guards, lock badges). A kind or reference the template maps do not know is silently mis-copied or left editable. Two compile-time guards back this up: adding a Tools card without an entry in `TOOL_TEMPLATE_COVERAGE` (`apps/builder/src/features/tools/tool-template-coverage.ts`, categories or an excluded reason) fails type-check, and adding a column to a template-copied table without classifying it in the adapter's column map (`satisfies Record<keyof typeof model.$inferSelect, …>`) fails type-check
 
 ## References
 

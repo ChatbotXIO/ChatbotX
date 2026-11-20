@@ -5,6 +5,7 @@ import {
   productAddonService,
   productService,
 } from "../../product/service"
+import { withoutExternalStore } from "./external-store-collector"
 import {
   dependenciesOn,
   makeCollector,
@@ -155,94 +156,99 @@ export const productsAdapter: ResourceAdapter<TemplateProductEntry> = {
     ]
   },
 
-  collector: makeCollector({
-    findIds: (query) =>
-      db.query.productModel.findMany({
-        where: scopedWhere(query),
-        columns: { id: true },
-        limit: query.limit,
-      }),
+  collector: withoutExternalStore(
+    makeCollector({
+      findIds: (query) =>
+        db.query.productModel.findMany({
+          where: scopedWhere(query, { source: "chatbotx" as const }),
+          columns: { id: true },
+          limit: query.limit,
+        }),
 
-    async collectRows(workspaceId, ids) {
-      const rows = await db.query.productModel.findMany({
-        where: scopedWhere({ workspaceId, ids }),
-        with: {
-          variantOptions: true,
-          variants: true,
-          addons: true,
-          vendor: { columns: { name: true } },
-        },
-      })
+      async collectRows(workspaceId, ids) {
+        const rows = await db.query.productModel.findMany({
+          where: scopedWhere(
+            { workspaceId, ids },
+            { source: "chatbotx" as const },
+          ),
+          with: {
+            variantOptions: true,
+            variants: true,
+            addons: true,
+            vendor: { columns: { name: true } },
+          },
+        })
 
-      const entries = rows.map((row) => ({
-        sourceId: row.id,
-        name: row.name,
-        shortDescription: row.shortDescription,
-        longDescription: row.longDescription,
-        price: row.price,
-        taxes: row.taxes,
-        discount: row.discount,
-        currency: row.currency,
-        productUrl: row.productUrl,
-        sku: row.sku,
-        inventoryPolicy: row.inventoryPolicy,
-        inventoryQuantity: row.inventoryQuantity,
-        allowOutOfStockPurchase: row.allowOutOfStockPurchase,
-        images: row.images,
-        tags: row.tags,
-        vendor: row.vendor?.name ?? null,
-        rank: row.rank,
-        categoryId: row.categoryId,
-        subcategoryId: row.subcategoryId,
-        status: row.status,
-        isSearchable: row.isSearchable,
-        allowSpecialRequest: row.allowSpecialRequest,
-        isAddonOnly: row.isAddonOnly,
-        variantOptions: row.variantOptions.map((option) => ({
-          name: option.name,
-          values: option.values,
-          position: option.position,
-        })),
-        variants: row.variants.map((variant) => ({
-          combination: variant.combination,
-          price: variant.price,
-          isEnabled: variant.isEnabled,
-        })),
-        // `addonProductIds` are still the real source-workspace ids at
-        // collect time — never remapped here. A same-template addon
-        // reference that points at a product NOT in this selection becomes
-        // a hard dependency below, mirroring `entryPointLinks.flowId`
-        // (except this one is within-category, the same cyclic shape
-        // `productsAdapter.insert`'s own `deferredKinds: ["product"]`
-        // already documents).
-        addons: row.addons.map((addon) => ({
-          name: addon.name,
-          maxSelections: addon.maxSelections,
-          addonProductIds: addon.addonProductIds,
-        })),
-      }))
+        const entries = rows.map((row) => ({
+          sourceId: row.id,
+          name: row.name,
+          shortDescription: row.shortDescription,
+          longDescription: row.longDescription,
+          price: row.price,
+          taxes: row.taxes,
+          discount: row.discount,
+          currency: row.currency,
+          productUrl: row.productUrl,
+          sku: row.sku,
+          inventoryPolicy: row.inventoryPolicy,
+          inventoryQuantity: row.inventoryQuantity,
+          allowOutOfStockPurchase: row.allowOutOfStockPurchase,
+          images: row.images,
+          tags: row.tags,
+          vendor: row.vendor?.name ?? null,
+          rank: row.rank,
+          categoryId: row.categoryId,
+          subcategoryId: row.subcategoryId,
+          status: row.status,
+          isSearchable: row.isSearchable,
+          allowSpecialRequest: row.allowSpecialRequest,
+          isAddonOnly: row.isAddonOnly,
+          variantOptions: row.variantOptions.map((option) => ({
+            name: option.name,
+            values: option.values,
+            position: option.position,
+          })),
+          variants: row.variants.map((variant) => ({
+            combination: variant.combination,
+            price: variant.price,
+            isEnabled: variant.isEnabled,
+          })),
+          // `addonProductIds` are still the real source-workspace ids at
+          // collect time — never remapped here. A same-template addon
+          // reference that points at a product NOT in this selection becomes
+          // a hard dependency below, mirroring `entryPointLinks.flowId`
+          // (except this one is within-category, the same cyclic shape
+          // `productsAdapter.insert`'s own `deferredKinds: ["product"]`
+          // already documents).
+          addons: row.addons.map((addon) => ({
+            name: addon.name,
+            maxSelections: addon.maxSelections,
+            addonProductIds: addon.addonProductIds,
+          })),
+        }))
 
-      const productCategoryIds = [
-        ...new Set(
-          rows.flatMap((row) =>
-            [row.categoryId, row.subcategoryId].filter(
-              (id): id is string => id !== null,
+        const productCategoryIds = [
+          ...new Set(
+            rows.flatMap((row) =>
+              [row.categoryId, row.subcategoryId].filter(
+                (id): id is string => id !== null,
+              ),
             ),
           ),
-        ),
-      ]
+        ]
 
-      const selectedIds = new Set(ids)
-      const hardDependencies = dependenciesOn(
-        "products",
-        rows.flatMap((row) =>
-          row.addons.flatMap((addon) => addon.addonProductIds),
-        ),
-      ).filter((dependency) => !selectedIds.has(dependency.sourceId))
+        const selectedIds = new Set(ids)
+        const hardDependencies = dependenciesOn(
+          "products",
+          rows.flatMap((row) =>
+            row.addons.flatMap((addon) => addon.addonProductIds),
+          ),
+        ).filter((dependency) => !selectedIds.has(dependency.sourceId))
 
-      return { entries, productCategoryIds, hardDependencies }
-    },
-  }),
+        return { entries, productCategoryIds, hardDependencies }
+      },
+    }),
+  ),
 }
 
 const resolveCategoryReference = (

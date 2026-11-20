@@ -11,7 +11,8 @@ const mocks = vi.hoisted(() => ({
 }))
 
 vi.mock("@chatbotx.io/database/client", () => ({ db: {}, eq: vi.fn() }))
-vi.mock("@chatbotx.io/database/schema", () => ({
+vi.mock(import("@chatbotx.io/database/schema"), async (importOriginal) => ({
+  ...(await importOriginal()),
   aiFunctionModel: {},
   integrationWebchatModel: {},
 }))

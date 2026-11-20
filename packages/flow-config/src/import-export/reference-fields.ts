@@ -56,6 +56,16 @@ export const REFERENCE_FIELD_ENTITY_KIND: Record<string, string> = {
   // install has no Mini App adapter, and the worker drops a button whose Mini
   // App is not in the sending workspace.
   miniAppId: "miniApp",
+  // A flow link or a leaderboard names a minigame; its settings name the rest.
+  minigameId: "minigame",
+  sharingFlowId: "flow",
+  referralWelcomeFlowId: "flow",
+  prizeNameCustomFieldId: "customField",
+  // The store settings and a vendor name a schedule; the settings name three flows.
+  openHoursId: "openHours",
+  abandonedCartFlowId: "flow",
+  checkoutFlowId: "flow",
+  orderConfirmationFlowId: "flow",
   // Pipeline flow step (steps/pipeline.ts). The template pipelines manifest
   // fills all three maps; unresolved ids only warn.
   pipelineId: "pipeline",
@@ -89,6 +99,10 @@ export const REFERENCE_ARRAY_FIELD_ENTITY_KIND: Record<string, string> = {
   // Trigger addSequence / removeSequence actions.
   sequenceIds: "sequence",
   addonProductIds: "product",
+  // A minigame's tag groups.
+  openerTagIds: "tag",
+  playerTagIds: "tag",
+  newFriendTagIds: "tag",
   productIds: "product",
   pipelineFieldIds: "pipelineField",
   // Pipelines step assignees. Members and teams never travel between
@@ -233,6 +247,8 @@ export const REFERENCE_KIND_POLICY: Readonly<Record<string, ReferencePolicy>> =
     questionnaire: "copy",
     couponTopic: "copy",
     reflink: "copy",
+    minigame: "copy",
+    openHours: "copy",
     automatedResponse: "copy",
     customField: "naturalKey",
     [FieldReferenceKind.botField]: "naturalKey",
@@ -362,6 +378,14 @@ export const REFERENCE_SLOT_SHAPE_BY_KEY: Readonly<
   topicId: "optional",
   inboxId: "optional",
   userPersistentMenuId: "optional",
+  minigameId: "nullable",
+  sharingFlowId: "nullable",
+  referralWelcomeFlowId: "nullable",
+  prizeNameCustomFieldId: "nullable",
+  openHoursId: "nullable",
+  abandonedCartFlowId: "nullable",
+  checkoutFlowId: "nullable",
+  orderConfirmationFlowId: "nullable",
 }
 
 /**

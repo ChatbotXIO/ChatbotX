@@ -21,6 +21,8 @@
  */
 export type StagingScope = { generation: number; attemptKey?: string }
 
+const QUERY_OR_HASH = /[?#]/
+
 const scopeSegment = (scope: StagingScope): string =>
   `g${scope.generation}/${scope.attemptKey ? `${scope.attemptKey}/` : ""}`
 
@@ -35,6 +37,48 @@ const questionnaireImageRoot = (
   installationId: string,
 ): string =>
   `public/space/${workspaceId}/questionnaire-images/tpl-${installationId}`
+
+const toolImageRoot = (workspaceId: string, installationId: string): string =>
+  `public/space/${workspaceId}/template-tool-images/tpl-${installationId}`
+
+/**
+ * Images of the tools a template copies (poll, minigame, leaderboard, vendor,
+ * dynamic image...): one namespace for all of them, since they share one
+ * staging helper (`adapters/staging.ts`).
+ */
+export const toolImagePrefix = (
+  workspaceId: string,
+  installationId: string,
+  scope: StagingScope,
+): string =>
+  `${toolImageRoot(workspaceId, installationId)}/${scopeSegment(scope)}`
+
+/**
+ * The storage key of `url` when it points at an object under this
+ * installation's own tool-image root (a bare key or a public URL), else null.
+ */
+export const ownedToolImagePath = (
+  url: string,
+  workspaceId: string,
+  installationId: string,
+): string | null => {
+  const root = toolImageRoot(workspaceId, installationId)
+  const at = url.indexOf(`${root}/`)
+  if (at < 0) {
+    return null
+  }
+  const path = url.slice(at).split(QUERY_OR_HASH)[0] ?? ""
+  return path.includes("..") ? null : path
+}
+
+/** True for an object under this installation's own tool-image root (any generation). */
+export const isOwnedToolImagePath = (
+  path: string,
+  workspaceId: string,
+  installationId: string,
+): boolean =>
+  path.startsWith(`${toolImageRoot(workspaceId, installationId)}/`) &&
+  !path.includes("..")
 
 /** Saved-reply images a staging run of `scope` writes under. */
 export const savedReplyImagePrefix = (
@@ -80,6 +124,7 @@ export const installObjectPrefixes = (
   return [
     aiFileObjectPrefix(workspaceId, installationId, scope),
     questionnaireImagePrefix(workspaceId, installationId, scope),
+    toolImagePrefix(workspaceId, installationId, scope),
     savedReplyImagePrefix(workspaceId, installationId, scope),
   ]
 }

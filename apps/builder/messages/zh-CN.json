@@ -7398,6 +7398,7 @@
       "resourcesTitle": "已安装的资源",
       "noResources": "尚未创建任何内容。",
       "deletedResource": "已删除的资源",
+      "wholeCategory": "{count, plural, one {# 项} other {# 项}}",
       "viewOnly": "仅查看",
       "created": "已创建",
       "reused": "已复用",
@@ -7452,7 +7453,12 @@
           "placeCategories": "地点分类"
         }
       },
-      "viewOnlyCopyIncluded": "你选择的项目（或其依赖的项目）是从仅查看范本安装的，因此无法在新范本中共享。"
+      "viewOnlyCopyIncluded": "你选择的项目（或其依赖的项目）是从仅查看范本安装的，因此无法在新范本中共享。",
+      "miniAppPublishedExcluded": {
+        "title": "已排除的迷你应用",
+        "hint": "这些流程使用了已发布到 WhatsApp 的迷你应用。它无法共享，因此模板不包含它，安装时会移除该引用。",
+        "item": "{flowName}：{miniAppName}"
+      }
     },
     "categories": {
       "flows": "流程",
@@ -7474,7 +7480,20 @@
       "aiFiles": "AI 知识文件",
       "questionnaires": "Questionnaires",
       "couponTopics": "优惠券主题",
-      "pipelines": "管道"
+      "pipelines": "管道",
+      "magicLinks": "魔法链接",
+      "polls": "投票",
+      "dynamicImages": "动态图片",
+      "placeLocations": "地点",
+      "miniApps": "迷你应用",
+      "minigames": "小游戏",
+      "leaderboards": "排行榜",
+      "openHours": "营业时间",
+      "vendors": "供应商",
+      "discountCodes": "折扣码",
+      "storeSettings": "店铺设置",
+      "storyAutomations": "Instagram 限时动态自动化",
+      "inboundWebhooks": "入站 Webhook"
     },
     "locked": {
       "flowBanner": "此流程来自仅查看的模板。你可以查看，但无法编辑。",
@@ -7551,6 +7570,7 @@
       "flowNotPublished": "Flow 已作为草稿安装，尚未发布。",
       "flowSkippedRequiredReference": "由于无法解析必需的引用，已跳过该 Flow。",
       "folder": "在此工作区中未找到被引用的项目，因此已移除该链接。",
+      "inboundWebhookLimitReached": "已跳过此入站 Webhook：工作区的入站 Webhook 数量已达上限。",
       "inboxBindingRequired": "请为此频道选择收件匣；在此之前该项目保持未启用状态。",
       "integration": "在此工作区中未找到被引用的项目，因此已移除该链接。",
       "localModifiedOverwritten": "本地编辑过的项目已被覆盖。已保存备份，可以还原。",
@@ -7571,7 +7591,25 @@
       "tag": "在此工作区中未找到被引用的项目，因此已移除该链接。",
       "unlisted": "项目未完全导入：{code}",
       "workspaceMember": "已分配给不在此工作区的成员。",
-      "workspaceUnavailable": "此工作区已不可用，因此跳过了该项。"
+      "workspaceUnavailable": "此工作区已不可用，因此跳过了该项。",
+      "scheduleExpired": "此项目的日期已过；使用前请设置新的日期。",
+      "linkNotRemapped": "指向未包含在模板中的工具的链接已保持不变。",
+      "dynamicImage": "由于无法复制背景，已跳过此动态图片。",
+      "dynamicImageFieldNotBound": "请选择一个自定义字段来缓存此图片；原字段已存在于你的工作区中。",
+      "dynamicImageRerenderFailed": "此动态图片已关闭，因为无法使用复制后的链接重新渲染其背景。再次打开即可重试。",
+      "pollImage": "无法复制一张图片。",
+      "leaderboardInvalid": "无法安装此排行榜的配置，已跳过。",
+      "placeLocationInvalid": "此地点的名称为空，已跳过。",
+      "minigame": "此排行榜计分所用的小游戏不在模板中，已跳过。",
+      "minigameImage": "无法复制一张图片。",
+      "leaderboardImage": "无法复制一张图片。",
+      "leaderboardHostMissing": "此排行榜需要专属的渠道（或小游戏），本次安装未提供，已跳过。",
+      "externalStoreSkipped": "此工作区通过已连接的店铺（Shopify 或 WooCommerce）销售，因此未安装商品、供应商、折扣码、营业时间和店铺设置。",
+      "discountCodeSkipped": "已跳过此折扣码：它适用的商品或分类不在模板中，或其设置被拒绝。",
+      "storeSettingsKept": "此工作区已有店铺设置，已保持原样。",
+      "vendorImage": "无法复制一张图片。",
+      "storeSettingsCurrencyKept": "工作区有其他币种的商品，因此保留了其币种而非模板的币种。",
+      "storySelectionRequired": "请重新选择快拍：无法带入原有的快拍。"
     },
     "tabs": {
       "mine": "我的模板",

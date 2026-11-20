@@ -471,3 +471,38 @@ export const minigameNonWinningMessageSettingsSchema = z.object({
 export type MinigameNonWinningMessageSettings = z.infer<
   typeof minigameNonWinningMessageSettingsSchema
 >
+
+/**
+ * Every fixed image slot of a minigame: where its url sits in a JSON column.
+ * The single source for `minigameRepository.findImageUrlsUsedByOthers` (SQL) and for the
+ * template adapters' image enumeration (`minigame/image-slots`).
+ */
+export const MINIGAME_IMAGE_URL_PATHS = [
+  {
+    slot: "background",
+    column: "appearance",
+    path: ["backgroundImage", "url"],
+  },
+  {
+    slot: "prizeDescription",
+    column: "appearance",
+    path: ["prizeDescriptionImage", "url"],
+  },
+  {
+    slot: "startButton",
+    column: "appearance",
+    path: ["startButtonImage", "url"],
+  },
+  {
+    slot: "loseImage",
+    column: "prizeSettings",
+    path: ["nonWinning", "loseImage", "url"],
+  },
+] as const
+
+/** The per-prize icon: `prizeSettings.prizes[].icon.url`. */
+export const MINIGAME_PRIZE_ICON_PATH = {
+  column: "prizeSettings",
+  arrayKey: "prizes",
+  path: ["icon", "url"],
+} as const

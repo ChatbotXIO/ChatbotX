@@ -122,6 +122,57 @@ const LABEL_LOADERS: Record<TemplateResourceKind, LabelLoader> = {
   productCategory: named((w, ids, tx) =>
     tx.query.productCategoryModel.findMany({ where: where(w, ids), columns }),
   ),
+  magicLink: named((w, ids, tx) =>
+    tx.query.magicLinkModel.findMany({ where: where(w, ids), columns }),
+  ),
+  poll: named((w, ids, tx) =>
+    tx.query.pollModel.findMany({ where: where(w, ids), columns }),
+  ),
+  dynamicImage: named((w, ids, tx) =>
+    tx.query.dynamicImageModel.findMany({ where: where(w, ids), columns }),
+  ),
+  placeLocation: named((w, ids, tx) =>
+    tx.query.placeLocationModel.findMany({ where: where(w, ids), columns }),
+  ),
+  miniApp: named((w, ids, tx) =>
+    tx.query.miniAppModel.findMany({ where: where(w, ids), columns }),
+  ),
+  minigame: named((w, ids, tx) =>
+    tx.query.minigameModel.findMany({ where: where(w, ids), columns }),
+  ),
+  leaderboard: named((w, ids, tx) =>
+    tx.query.leaderboardModel.findMany({ where: liveWhere(w, ids), columns }),
+  ),
+  openHours: named((w, ids, tx) =>
+    tx.query.ecommerceOpenHoursModel.findMany({
+      where: where(w, ids),
+      columns,
+    }),
+  ),
+  vendor: named((w, ids, tx) =>
+    tx.query.vendorModel.findMany({ where: where(w, ids), columns }),
+  ),
+  discountCode: async (w, ids, tx) =>
+    (
+      await tx.query.discountCodeModel.findMany({
+        where: where(w, ids),
+        columns: { id: true, code: true },
+      })
+    ).map((row) => ({ id: row.id, label: row.code })),
+  storyAutomation: named((w, ids, tx) =>
+    tx.query.igStoryAutomationModel.findMany({
+      where: where(w, ids),
+      columns,
+    }),
+  ),
+  inboundWebhook: named((w, ids, tx) =>
+    tx.query.inboundWebhookModel.findMany({
+      where: where(w, ids),
+      columns,
+    }),
+  ),
+  storeSettings: async (_w, ids) =>
+    ids.map((id) => ({ id, label: "Store settings" })),
   placeCategory: named((w, ids, tx) =>
     tx.query.placeCategoryModel.findMany({ where: where(w, ids), columns }),
   ),

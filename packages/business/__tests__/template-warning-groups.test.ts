@@ -40,6 +40,7 @@ describe("groupInstallationWarnings", () => {
         category: "flows",
         sourceId: "2",
         name: "Sales flow",
+        itemCount: null,
         skipped: true,
         issues: [
           { code: "pipeline", count: 1 },
@@ -50,6 +51,7 @@ describe("groupInstallationWarnings", () => {
         category: "flows",
         sourceId: "1",
         name: null,
+        itemCount: null,
         skipped: false,
         issues: [{ code: "referenceRemoved", count: 2 }],
       },
@@ -63,6 +65,42 @@ describe("groupInstallationWarnings", () => {
     )
 
     expect(group).toMatchObject({ sourceId: null, name: "qa-file" })
+  })
+})
+
+describe("category-wide warnings", () => {
+  test("a bare-category path with a count groups by category, unnamed", () => {
+    const groups = groupInstallationWarnings(
+      [
+        {
+          category: "openHours",
+          entityKind: "externalStoreSkipped",
+          path: "openHours",
+          value: "1",
+        },
+        {
+          category: "openHours",
+          entityKind: "notUpdatable",
+          path: "openHours",
+          value: "1",
+        },
+      ],
+      () => undefined,
+    )
+
+    expect(groups).toEqual([
+      {
+        category: "openHours",
+        sourceId: null,
+        name: null,
+        itemCount: 1,
+        skipped: true,
+        issues: [
+          { code: "externalStoreSkipped", count: 1 },
+          { code: "notUpdatable", count: 1 },
+        ],
+      },
+    ])
   })
 })
 

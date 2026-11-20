@@ -29,6 +29,7 @@ import { useAction } from "next-safe-action/hooks"
 import { Fragment, useMemo, useState } from "react"
 import { toast } from "sonner"
 import { ConfirmDialog } from "@/components/confirm-dialog"
+import { useIsUndeletable } from "@/features/templates/components/lock-context"
 import { useClipboard } from "@/hooks/use-clipboard"
 import { changeLeaderboardStatusAction } from "../../actions/change-leaderboard-status.action"
 import { deleteLeaderboardAction } from "../../actions/delete-leaderboard.action"
@@ -121,6 +122,7 @@ export function LeaderboardRowMenu({
   const t = useTranslations()
   const router = useRouter()
   const { handleCopy } = useClipboard()
+  const undeletable = useIsUndeletable(leaderboard.id)
   const invalidateLeaderboards = useInvalidateLeaderboards()
   const [dialog, setDialog] = useState<OpenDialog>(null)
   const items = buildLeaderboardMenu(leaderboard.availableActions)
@@ -216,6 +218,7 @@ export function LeaderboardRowMenu({
               <Fragment key={item}>
                 {showSeparator ? <DropdownMenuSeparator /> : null}
                 <DropdownMenuItem
+                  disabled={item === "delete" && undeletable}
                   onClick={() => handleSelect(item)}
                   variant={isDanger ? "destructive" : "default"}
                 >

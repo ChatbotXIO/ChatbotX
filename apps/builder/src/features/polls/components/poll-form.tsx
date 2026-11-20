@@ -36,6 +36,10 @@ import { toast } from "sonner"
 import { DirectUploadOrInsertLink } from "@/components/direct-upload"
 import { useFlowSelectOptions } from "@/features/flows/provider/flow-hook"
 import { DateTimeRangeField } from "@/features/minigames/components/date-time-range-field"
+import {
+  LockedContent,
+  useIsEditorLocked,
+} from "@/features/templates/components/locked-editor"
 import { orpc } from "@/lib/orpc/query"
 import { useInvalidatePolls } from "../lib/use-invalidate-polls"
 import { POLL_NAME_MAX } from "../schema/action"
@@ -126,6 +130,7 @@ export function PollForm({ workspaceId, poll }: PollFormProps) {
       onError,
     }),
   )
+  const isLocked = useIsEditorLocked()
   const isPending = createMutation.isPending || updateMutation.isPending
 
   const save = (values: PollFormValues) => {
@@ -157,72 +162,74 @@ export function PollForm({ workspaceId, poll }: PollFormProps) {
         className="flex flex-col gap-6"
         onSubmit={form.handleSubmit(onSubmit)}
       >
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">
-              {poll
-                ? t("pollManager.form.editTitle")
-                : t("pollManager.form.createTitle")}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <InputField
-              label={t("fields.name.label")}
-              maxLength={POLL_NAME_MAX}
-              name="name"
-              required
-            />
-            <DateTimeRangeField
-              fromName="startsAt"
-              label={t("pollManager.form.votingPeriod")}
-              required
-              toName="endsAt"
-            />
-            <div className="flex flex-col gap-1.5">
-              <Label>{t("fields.image.label")}</Label>
-              <DirectUploadOrInsertLink
-                fileType={fileTypes.enum.image}
-                parentName="image"
-                uploadPath={`public/space/${workspaceId}/polls`}
-                useMediaLibrary
+        <LockedContent className="flex flex-col gap-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">
+                {poll
+                  ? t("pollManager.form.editTitle")
+                  : t("pollManager.form.createTitle")}
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <InputField
+                label={t("fields.name.label")}
+                maxLength={POLL_NAME_MAX}
+                name="name"
+                required
               />
-              {form.formState.errors.image ? (
-                <p className="text-destructive text-sm">
-                  {t("pollManager.form.imageRequired")}
-                </p>
-              ) : null}
-            </div>
-          </CardContent>
-        </Card>
-
-        <CandidatesField workspaceId={workspaceId} />
-
-        <Collapsible onOpenChange={setMoreOpen} open={moreOpen}>
-          <CollapsibleTrigger
-            render={
-              <Button size="sm" type="button" variant="ghost">
-                {t("pollManager.form.moreOptions")}
-                <ChevronDownIcon />
-              </Button>
-            }
-          />
-          <CollapsibleContent className="pt-3">
-            <Card>
-              <CardContent>
-                <ComboboxField
-                  allowClear
-                  clearLabel={t("pollManager.form.afterVoteFlowNone")}
-                  emptyText={t("actions.noRecordFound")}
-                  emptyValue={null}
-                  label={t("pollManager.form.afterVoteFlow")}
-                  name="afterVoteFlowId"
-                  options={flowOptions}
-                  placeholder={t("pollManager.form.afterVoteFlowNone")}
+              <DateTimeRangeField
+                fromName="startsAt"
+                label={t("pollManager.form.votingPeriod")}
+                required
+                toName="endsAt"
+              />
+              <div className="flex flex-col gap-1.5">
+                <Label>{t("fields.image.label")}</Label>
+                <DirectUploadOrInsertLink
+                  fileType={fileTypes.enum.image}
+                  parentName="image"
+                  uploadPath={`public/space/${workspaceId}/polls`}
+                  useMediaLibrary
                 />
-              </CardContent>
-            </Card>
-          </CollapsibleContent>
-        </Collapsible>
+                {form.formState.errors.image ? (
+                  <p className="text-destructive text-sm">
+                    {t("pollManager.form.imageRequired")}
+                  </p>
+                ) : null}
+              </div>
+            </CardContent>
+          </Card>
+
+          <CandidatesField workspaceId={workspaceId} />
+
+          <Collapsible onOpenChange={setMoreOpen} open={moreOpen}>
+            <CollapsibleTrigger
+              render={
+                <Button size="sm" type="button" variant="ghost">
+                  {t("pollManager.form.moreOptions")}
+                  <ChevronDownIcon />
+                </Button>
+              }
+            />
+            <CollapsibleContent className="pt-3">
+              <Card>
+                <CardContent>
+                  <ComboboxField
+                    allowClear
+                    clearLabel={t("pollManager.form.afterVoteFlowNone")}
+                    emptyText={t("actions.noRecordFound")}
+                    emptyValue={null}
+                    label={t("pollManager.form.afterVoteFlow")}
+                    name="afterVoteFlowId"
+                    options={flowOptions}
+                    placeholder={t("pollManager.form.afterVoteFlowNone")}
+                  />
+                </CardContent>
+              </Card>
+            </CollapsibleContent>
+          </Collapsible>
+        </LockedContent>
 
         <div className="flex justify-end gap-2">
           <Button
@@ -232,7 +239,7 @@ export function PollForm({ workspaceId, poll }: PollFormProps) {
           >
             {t("actions.cancel")}
           </Button>
-          <Button disabled={isPending} type="submit">
+          <Button disabled={isPending || isLocked} type="submit">
             {isPending ? <Loader2Icon className="animate-spin" /> : null}
             {t("actions.save")}
           </Button>

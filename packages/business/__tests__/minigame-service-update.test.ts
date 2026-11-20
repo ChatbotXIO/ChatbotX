@@ -40,6 +40,16 @@ vi.mock("@chatbotx.io/database/client", () => ({
   isUniqueViolationError: vi.fn(() => false),
 }))
 
+vi.mock("../src/template/installed-resource.service", () => ({
+  assertResourceEditable: vi.fn(),
+  changedKeysOf: () => [],
+  withDeleteGuard: (_input: unknown, run: (tx: unknown) => unknown) => run({}),
+}))
+vi.mock("../src/template/template-resource-locks", () => ({
+  withTemplateLockedTransaction: async (run: (tx: unknown) => unknown) =>
+    await dbTransactionSpy(run),
+}))
+
 vi.mock("@chatbotx.io/database/repositories", () => ({
   minigameRepository: { listNamesWithPrefix: vi.fn() },
 }))

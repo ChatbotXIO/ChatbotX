@@ -29,6 +29,7 @@ const mocks = vi.hoisted(() => ({
   flushed: [] as unknown[],
   findSyncById: vi.fn(),
   findStatusFinishedByClaim: vi.fn(),
+  appendWarnings: vi.fn(),
   deleteCopied: vi.fn(),
   acquireLocks: vi.fn(),
 }))
@@ -63,6 +64,7 @@ vi.mock("@chatbotx.io/database/statement-timeout", () => ({
   setLocalStatementTimeout: vi.fn(),
 }))
 vi.mock("@chatbotx.io/database/repositories", () => ({
+  ecommerceSettingsRepository: { find: vi.fn().mockResolvedValue(undefined) },
   loadResourceLabels: mocks.labels,
   templateInstallationRepository: {
     findByIdAndWorkspace: mocks.findInstallation,
@@ -85,6 +87,7 @@ vi.mock("@chatbotx.io/database/repositories", () => ({
     release: vi.fn(),
     findById: mocks.findSyncById,
     findStatusFinishedByClaim: mocks.findStatusFinishedByClaim,
+    appendWarnings: mocks.appendWarnings,
     findActiveByInstallation: mocks.findActiveSync,
   },
   templateResourceBackupRepository: {
@@ -133,7 +136,10 @@ vi.mock("../src/flow-version", () => ({
   flowVersionService: { afterPublish: vi.fn() },
 }))
 
-const state = vi.hoisted(() => ({ withHandler: true }))
+const state = vi.hoisted(() => ({
+  withHandler: true,
+  afterCommitTasks: [] as (() => Promise<unknown>)[],
+}))
 /** What `updateNotSupported("flows")` is: it never reads a copy and raises the warning. */
 const notUpdatableHandler = () => ({
   updatable: false as const,
@@ -201,6 +207,7 @@ vi.mock("../src/template/install.service", () => ({
       },
       tracked,
       warnings,
+      afterCommitTasks: state.afterCommitTasks,
     }
   },
   flushTracked: (
@@ -241,7 +248,7 @@ const emptyManifests = {
 const payloadWith = (flows: unknown[]) => ({
   source: { workspaceId: "src" },
   manifests: emptyManifests,
-  resources: { flows },
+  resources: { flows, magicLinks: [] },
 })
 const sync = {
   id: "sync-1",
@@ -270,6 +277,7 @@ beforeEach(() => {
   mocks.findPendingPublishEffects.mockResolvedValue([])
   mocks.flushed.length = 0
   state.withHandler = true
+  state.afterCommitTasks = []
   mocks.findInstallation.mockResolvedValue({
     id: "inst-1",
     workspaceId: "ws-1",
@@ -645,6 +653,37 @@ describe("template sync: the update rules", () => {
     mocks.finish.mockResolvedValue(false)
     await expect(run()).rejects.toMatchObject({ code: "templateSyncLeaseLost" })
     expect(mocks.completeInstallation).not.toHaveBeenCalled()
+  })
+})
+
+describe("template sync: after-commit warnings", () => {
+  const lateWarning = {
+    category: "dynamicImages",
+    entityKind: "dynamicImageRerenderFailed",
+    path: "dynamicImages.1",
+  }
+
+  test("a warning an after-commit task reports is recorded on the finished sync, fenced by its claim", async () => {
+    state.afterCommitTasks = [
+      async () => await Promise.resolve(lateWarning),
+      async () => await Promise.resolve(undefined),
+    ]
+    await run()
+    expect(mocks.appendWarnings).toHaveBeenCalledWith({
+      id: "sync-1",
+      claimToken: "token",
+      warnings: [lateWarning],
+    })
+  })
+
+  test("a task that throws neither fails the committed sync nor records a warning", async () => {
+    state.afterCommitTasks = [
+      async () => await Promise.reject(new Error("storage down")),
+    ]
+    await run()
+    expect(mocks.appendWarnings).toHaveBeenCalledWith(
+      expect.objectContaining({ warnings: [] }),
+    )
   })
 })
 

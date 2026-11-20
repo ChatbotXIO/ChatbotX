@@ -36,6 +36,7 @@ import { toast } from "sonner"
 import { DirectUploadOrInsertLink } from "@/components/direct-upload"
 import { PublicUrlSection } from "@/components/public-url-section"
 import { useTagSelectOptions } from "@/features/tags/provider/tag-hook"
+import { useIsEditorLocked } from "@/features/templates/components/locked-editor"
 import { createMinigameAction } from "./actions/create-minigame.action"
 import { updateMinigameAction } from "./actions/update-minigame.action"
 import { DateTimeRangeField } from "./components/date-time-range-field"
@@ -68,6 +69,7 @@ type MinigameFormProps =
 export function MinigameForm(props: MinigameFormProps) {
   const t = useTranslations()
   const router = useRouter()
+  const isLocked = useIsEditorLocked()
   const tagOptions = useTagSelectOptions()
   const [winningMessageDialogOpen, setWinningMessageDialogOpen] =
     useState(false)
@@ -281,7 +283,7 @@ export function MinigameForm(props: MinigameFormProps) {
               {t("actions.cancel")}
             </Button>
             <Button
-              disabled={action.isPending}
+              disabled={action.isPending || isLocked}
               onClick={onSubmit}
               type="button"
             >

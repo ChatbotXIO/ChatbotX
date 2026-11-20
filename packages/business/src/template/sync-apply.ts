@@ -13,7 +13,17 @@ import {
   TEMPLATE_INSTALL_ORDER,
   templateAdapterRegistry,
 } from "./adapters/registry"
-import type { PatchTask, StagedObjects, SyncPair } from "./adapters/types"
+import { TEMPLATE_TOOL_CATEGORIES } from "./adapters/tool-categories"
+import type {
+  AfterCommitTask,
+  PatchTask,
+  StagedObjects,
+  SyncPair,
+} from "./adapters/types"
+import {
+  isExternalStoreCategory,
+  workspaceUsesExternalStore,
+} from "./external-store"
 import {
   rewriteBotFieldTokensDeep,
   rewriteCouponTokensDeep,
@@ -28,6 +38,7 @@ import {
 } from "./install.service"
 import { placeRootEntriesInInstallRoots } from "./install-root-placement"
 import { canUseTemplateCategories, type TemplateActor } from "./permissions"
+import { rewriteEntryResourceLinks } from "./resource-links"
 import { stampSyncedHashes } from "./sync-hash"
 import { loadMapping, resolveSyncManifests, seedIdMaps } from "./sync-mapping"
 import { syncPairs } from "./sync-pairs"
@@ -57,6 +68,8 @@ const summarize = (warnings: TemplateWarning[]) => {
   return [...byCode].map(([code, count]) => ({ code, count }))
 }
 
+const TOOL_CATEGORIES: ReadonlySet<string> = new Set(TEMPLATE_TOOL_CATEGORIES)
+
 type Plan = {
   category: TemplateCategory
   adapter: Adapter
@@ -78,6 +91,8 @@ const planCategories = (
     resources: TemplateExport["resources"]
     installerActor: TemplateActor
     flowsBlockedByDeniedManifest: boolean
+    /** The workspace sells from a connected store: the Ecommerce group is left out (see `external-store.ts`). */
+    externalStoreTarget: boolean
     rowByKey: ReadonlyMap<string, InstalledRow>
     state: SyncState
   },
@@ -94,7 +109,10 @@ const planCategories = (
     if (entries.length === 0) {
       continue
     }
+    const externalStoreSkipped =
+      input.externalStoreTarget && isExternalStoreCategory(category)
     const denied =
+      externalStoreSkipped ||
       !canUseTemplateCategories(input.installerActor, { [category]: 1 }) ||
       (category === "flows" && input.flowsBlockedByDeniedManifest)
     const pairs: SyncPair[] = []
@@ -119,6 +137,16 @@ const planCategories = (
         // exists, so there is nothing to insert and nothing to update.
         pairs.push({ entry, resourceId: row.resourceId })
       }
+    }
+    if (externalStoreSkipped) {
+      // Kept governed like a denied category; only the warning differs.
+      ctx.warn({
+        category,
+        entityKind: "externalStoreSkipped",
+        path: category,
+        value: String(entries.length),
+      })
+      continue
     }
     if (denied) {
       state.counts.notUpdatable += entries.length
@@ -146,6 +174,18 @@ const rewriteSourceIdTokens = <T>(value: T, ctx: InstallCtx): T =>
     rewriteCouponTokensDeep(value, ctx.idMaps.couponTopic),
     ctx.idMaps.botField,
   )
+
+/** `rewriteSourceIdTokens` plus the public links to the copied tools, as an install rewrites them. */
+const rewriteSyncEntries = (
+  entries: readonly Entry[],
+  plan: Pick<Plan, "category" | "adapter">,
+  ctx: InstallCtx,
+): Entry[] => {
+  const withTokens = rewriteSourceIdTokens([...entries], ctx)
+  return plan.adapter.rewritesLinksInPatch
+    ? withTokens
+    : rewriteEntryResourceLinks(ctx, plan.category, withTokens)
+}
 
 /**
  * Copies the adapters actually created since the last flush. An entry an
@@ -181,7 +221,23 @@ const insertFresh = async (
     patchTasks.push(
       ...(await plan.adapter.insert(
         ctx,
-        rewriteSourceIdTokens(plan.fresh, ctx),
+        rewriteSyncEntries(plan.fresh, plan, ctx),
+      )),
+    )
+    state.counts.created += createdSinceFlush(tracked)
+    plan.fresh = []
+    await flush()
+  }
+  // The tools a version adds come next, as in an install: a text that links
+  // to one (a bot field below included) then finds the copy it must point at.
+  for (const plan of plans) {
+    if (!TOOL_CATEGORIES.has(plan.category) || plan.fresh.length === 0) {
+      continue
+    }
+    patchTasks.push(
+      ...(await plan.adapter.insert(
+        ctx,
+        rewriteSyncEntries(plan.fresh, plan, ctx),
       )),
     )
     state.counts.created += createdSinceFlush(tracked)
@@ -202,7 +258,11 @@ const insertFresh = async (
     }
     await insertEarly(
       ctx,
-      rewriteCouponTokensDeep(early, ctx.idMaps.couponTopic),
+      rewriteEntryResourceLinks(
+        ctx,
+        plan.category,
+        rewriteCouponTokensDeep(early, ctx.idMaps.couponTopic),
+      ),
     )
     state.counts.created += createdSinceFlush(tracked)
     plan.fresh = plan.fresh.filter((entry) => !earlyEntry(entry))
@@ -215,7 +275,7 @@ const insertFresh = async (
     patchTasks.push(
       ...(await plan.adapter.insert(
         ctx,
-        rewriteSourceIdTokens(plan.fresh, ctx),
+        rewriteSyncEntries(plan.fresh, plan, ctx),
       )),
     )
     state.counts.created += createdSinceFlush(tracked)
@@ -278,6 +338,9 @@ export const stageSyncObjects = async (input: {
   const known = new Set(
     rows.map((row) => `${row.resourceKind}:${row.sourceResourceId}`),
   )
+  const externalStoreTarget = await workspaceUsesExternalStore(
+    installation.workspaceId,
+  )
   return await stageTemplateObjects({
     ctx: {
       workspaceId: installation.workspaceId,
@@ -293,6 +356,9 @@ export const stageSyncObjects = async (input: {
     },
     resources: payload.resources,
     include: (category, entry) => {
+      if (externalStoreTarget && isExternalStoreCategory(category)) {
+        return false
+      }
       if (!canUseTemplateCategories(input.installerActor, { [category]: 1 })) {
         return false
       }
@@ -313,6 +379,8 @@ export const applyVersion = async (
 ): Promise<{
   outcome: TemplateSyncOutcome
   publishedFlows: PublishedFlows
+  /** Storage work the adapters owe once the caller's transaction commits. */
+  afterCommitTasks: AfterCommitTask[]
 }> => {
   const { installation, payload, version } = input
   const { liveRows, rowByKey, projections, deletedCopies, hadInstallRoots } =
@@ -328,7 +396,7 @@ export const applyVersion = async (
       installerActor: input.installerActor,
       copiedObjectPaths: input.copiedObjectPaths,
     }))
-  const { ctx, warnings, tracked } = createInstallContext({
+  const { ctx, warnings, tracked, afterCommitTasks } = createInstallContext({
     tx,
     installationId: installation.id,
     workspaceId: installation.workspaceId,
@@ -353,7 +421,12 @@ export const applyVersion = async (
   // since have deleted the first one (which clears `installFolderId`).
   const usesInstallFolder =
     Boolean(installation.installFolderId) || hadInstallRoots
+  const externalStoreTarget = await workspaceUsesExternalStore(
+    installation.workspaceId,
+    tx,
+  )
   const { flowsBlockedByDeniedManifest } = await resolveSyncManifests(ctx, {
+    externalStoreTarget,
     ...input,
     usesInstallFolder,
   })
@@ -378,6 +451,7 @@ export const applyVersion = async (
     ctx.customFieldNameBindings ?? new Map(),
   )
   const plans = planCategories(ctx, {
+    externalStoreTarget,
     resources,
     installerActor: input.installerActor,
     flowsBlockedByDeniedManifest,
@@ -390,7 +464,10 @@ export const applyVersion = async (
       await syncPairs(tx, {
         ctx,
         adapter: plan.adapter,
-        pairs: rewriteSourceIdTokens(plan.pairs, ctx),
+        pairs: plan.pairs.map((pair) => ({
+          ...pair,
+          entry: rewriteSyncEntries([pair.entry], plan, ctx)[0],
+        })),
         rowByKey,
         projections,
         category: plan.category,
@@ -424,5 +501,6 @@ export const applyVersion = async (
       warningSummary: summarize(warnings),
     },
     publishedFlows,
+    afterCommitTasks,
   }
 }

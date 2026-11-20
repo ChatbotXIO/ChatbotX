@@ -54,3 +54,7 @@ Invariants: `hasWorkspacePermission` treats missing jsonb keys as **denied** (fa
 ## Stop condition
 
 Produce a findings list (`file:line | risk | severity | fix`) ranked by severity. If a CRITICAL (secret-in-grant, wildcard exec, cross-tenant access, auth bypass) is found, state it first and recommend blocking the commit until fixed. If nothing security-relevant changed, say `SECURITY: not applicable to this diff` and stop — do not invent risks.
+
+## 5. Data that travels with a template
+
+A template snapshot is copied into other workspaces (and shared by link). Never ship credentials, tokens, signing secrets, AI Router connections, payment setup, per-contact data, or the source workspace's ids/URLs: collectors select an explicit column list, install mints new tokens and installs anything that sends messages or accepts public data switched off. Check text and JSON fields (HTTP step headers, mini-app definitions, URLs) for secrets, and that links are rewritten only through `RESOURCE_LINK_PATTERNS`. See `template-integration` section 1a.

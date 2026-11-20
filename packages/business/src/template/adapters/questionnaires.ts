@@ -19,6 +19,7 @@ import {
   updateNotSupported,
   warnStagedSkip,
 } from "./shared"
+import { parseCopyableImageUrl } from "./staging"
 import type {
   PatchTask,
   ResourceAdapter,
@@ -66,8 +67,6 @@ const resolveCustomFieldRef = (
     sourceRef: customFieldId,
   })
 
-const QUERY_OR_HASH = /[?#]/
-
 /** Parallel storage copies per questionnaire, to keep staging short. */
 const IMAGE_COPY_CONCURRENCY = 4
 
@@ -76,31 +75,6 @@ const questionImageStageKey = (
   sourceId: string,
   questionIndex: number,
 ): string => `questionnaires:${sourceId}:${questionIndex}`
-
-/**
- * Splits the URL of an image that lives in the publishing workspace's public
- * storage into the object path and the URL prefix before it. Only that prefix
- * is ever copied: the worker copies with its own privileges, so a path into any
- * other workspace (or an external link) is never followed.
- */
-const parseCopyableImageUrl = (
-  url: string,
-  sourceWorkspaceId: string | undefined,
-): { path: string; base: string } | null => {
-  if (!sourceWorkspaceId) {
-    return null
-  }
-  const marker = `/public/space/${sourceWorkspaceId}/`
-  const at = url.indexOf(marker)
-  if (at < 0) {
-    return null
-  }
-  const path = url.slice(at + 1).split(QUERY_OR_HASH)[0] ?? ""
-  if (path.includes("..") || path.length <= marker.length - 1) {
-    return null
-  }
-  return { path, base: url.slice(0, at + 1) }
-}
 
 const questionImageTarget = async (
   ctx: Pick<TemplateStageContext, "workspaceId" | "installationId" | "scope">,
