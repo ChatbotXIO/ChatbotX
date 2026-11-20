@@ -1,4 +1,4 @@
-import { SdkException } from "@chatbotx.io/sdk"
+import { AuthException, SdkException } from "@chatbotx.io/sdk"
 import { isHTTPError } from "ky"
 import { logger } from "./lib/logger"
 
@@ -79,6 +79,90 @@ export class TiktokWebhookException extends TiktokException {
 
 export class TiktokAPIException extends TiktokException {}
 
+/**
+ * TikTok rejected the access token itself — it expired (they live 24 hours) or
+ * was replaced by a newer one.
+ *
+ * An `AuthException`, not a `TiktokAPIException`, because that is the one
+ * error the SDK's `invokeWithRefresh` answers by refreshing the token and
+ * retrying. Before this existed every TikTok failure was a
+ * `TiktokAPIException`, so an expired token was never refreshed on demand and
+ * comment automation stayed silent until the scheduled refresh ran (#1754).
+ *
+ * Never thrown by the refresh call itself: a refresh that fails means the
+ * refresh token is bad, which no further refresh can fix.
+ */
+export class TiktokAuthException extends AuthException {
+  constructor(
+    message: string,
+    httpStatusCode: number,
+    code: string | number,
+    originError?: unknown,
+  ) {
+    super(message, code, httpStatusCode)
+    this.name = "TiktokAuthException"
+    if (originError !== undefined) {
+      this.setOriginError(originError)
+    }
+  }
+}
+
+/**
+ * Business API `code` for "Access token is incorrect or has been revoked."
+ * — the answer an expired token gets (#1754). The message patterns below catch
+ * it too, so a wrong number here costs nothing but the second signal.
+ */
+const TIKTOK_BUSINESS_INVALID_ACCESS_TOKEN_CODE = 40_105
+
+const ACCESS_TOKEN_REJECTED_PATTERNS = [
+  // Business API (business-api.tiktok.com)
+  "access token is incorrect",
+  "access token has expired",
+  "access token is expired",
+  // Open API (open.tiktokapis.com) error codes
+  "access_token_invalid",
+  "access_token_expired",
+]
+
+const HTTP_UNAUTHORIZED = 401
+
+/** Whether TikTok refused the call because of the access token. */
+export function isAccessTokenRejection(source: ChannelErrorSource): boolean {
+  if (source.httpStatusCode === HTTP_UNAUTHORIZED) {
+    return true
+  }
+  if (Number(source.code) === TIKTOK_BUSINESS_INVALID_ACCESS_TOKEN_CODE) {
+    return true
+  }
+  const text = `${source.code ?? ""} ${source.message ?? ""}`.toLowerCase()
+  return ACCESS_TOKEN_REJECTED_PATTERNS.some((pattern) =>
+    text.includes(pattern),
+  )
+}
+
+/**
+ * Throws for a Business API answer whose `code` is not 0.
+ *
+ * The Business API answers HTTP 200 even when it rejects the call, so the
+ * verdict and TikTok's own error number live in the body. Both are kept on the
+ * thrown error, and a rejected access token becomes a `TiktokAuthException`.
+ */
+export function throwBusinessApiError(
+  response: { code: number; message?: string },
+  fallbackMessage: string,
+): never {
+  const message = response.message || fallbackMessage
+  const source: ChannelErrorSource = {
+    httpStatusCode: FALLBACK_HTTP_STATUS,
+    code: response.code,
+    message,
+  }
+  if (isAccessTokenRejection(source)) {
+    throw new TiktokAuthException(message, HTTP_UNAUTHORIZED, response.code)
+  }
+  throw new TiktokAPIException(message, FALLBACK_HTTP_STATUS, response.code)
+}
+
 /** The `code` the OAuth callback matches on to turn this into a toast. */
 export const TIKTOK_MISSING_SCOPES_CODE = "tiktokMissingScopes"
 
@@ -115,7 +199,12 @@ export const rescue = async <T>(
   try {
     return await fn()
   } catch (error) {
-    if (error instanceof TiktokAPIException) {
+    // A `TiktokAuthException` must reach the SDK as-is: re-wrapping it would
+    // turn "refresh and retry" back into a plain failure.
+    if (
+      error instanceof TiktokAPIException ||
+      error instanceof TiktokAuthException
+    ) {
       throw error
     }
 

@@ -68,6 +68,8 @@ vi.mock("@chatbotx.io/business", () => ({
     findById: mocks.findTiktokById,
     updateAuth: mocks.updateTiktokAuth,
     markTokenRefreshError: mocks.markTiktokTokenRefreshError,
+    withTokenRefreshLock: (_integration: unknown, fn: () => Promise<unknown>) =>
+      fn(),
   },
   zaloIntegrationService: {
     findAllByWorkspaceIds: mocks.findZaloByWorkspaceIds,
@@ -97,8 +99,11 @@ vi.mock("@chatbotx.io/integration-messenger", () => ({
   isRevokedTokenError: mocks.isMessengerRevokedTokenError,
 }))
 
-vi.mock("@chatbotx.io/integration-tiktok", () => ({
+vi.mock("@chatbotx.io/integration-tiktok", async () => ({
   isRevokedTokenError: mocks.isTiktokRevokedTokenError,
+  refreshTiktokAuth: (
+    await import("@chatbotx.io/integration-tiktok/lib/refresh-auth")
+  ).refreshTiktokAuth,
 }))
 
 vi.mock("@chatbotx.io/integration-tiktok/apis/auth", () => ({

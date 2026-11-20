@@ -33,6 +33,10 @@ vi.mock("@chatbotx.io/business", () => ({
     listByWorkspaceId: mockThreadsListByWorkspaceId,
   },
   tiktokIntegrationService: { listByWorkspace: mockTiktokListByWorkspace },
+  // TikTok reads go through `runAction`, which needs a context; the token
+  // refresh around it has its own tests in the worker.
+  buildContext: ({ integration }: { integration: { auth: unknown } }) =>
+    Promise.resolve({ auth: integration.auth }),
 }))
 
 vi.mock("@chatbotx.io/integration-messenger/apis/comment", () => ({

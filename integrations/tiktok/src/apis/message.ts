@@ -1,4 +1,4 @@
-import { rescue, TiktokAPIException } from "../exception"
+import { rescue, TiktokAPIException, throwBusinessApiError } from "../exception"
 import { createTiktokBusinessClient } from "../lib/http-client"
 import { logger } from "../lib/logger"
 import type {
@@ -36,9 +36,7 @@ export const sendMessage = (
     )
 
     if (response.code !== 0) {
-      throw new TiktokAPIException(
-        response.message ?? "TikTok message send failed",
-      )
+      throwBusinessApiError(response, "TikTok message send failed")
     }
 
     const messageId =

@@ -106,6 +106,10 @@ vi.mock("../src/connection/state-service", () => ({
   },
 }))
 
+vi.mock("../src/integration-context/auth-store", () => ({
+  makeAuthStore: vi.fn(),
+}))
+
 vi.mock("../src/inbox/service", () => ({
   inboxService: {
     create: mockCreateInbox,

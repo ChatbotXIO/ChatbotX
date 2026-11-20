@@ -1904,7 +1904,12 @@ export const receiveComment = async (
   const tiktokIdentity =
     integrationType === "tiktok"
       ? await resolveTiktokCommenterIdentity({
-          auth: integrationRow.auth as TiktokAuthValue,
+          workspaceId: inbox.workspaceId,
+          integrationRow: {
+            id: integrationRow.id,
+            inboxId: integrationRow.inboxId,
+            auth: integrationRow.auth as TiktokAuthValue,
+          },
           commentId: commentData.commentId,
           videoId: commentData.postId,
         })
