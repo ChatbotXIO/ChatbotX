@@ -31,6 +31,7 @@ import {
   AutomationAccountField,
   useAccountChoiceMissing,
 } from "@/features/shared/comment-automation/automation-account-field"
+import { LockedContent } from "@/features/templates/components/locked-editor"
 import { useWorkspaceId } from "@/hooks/routing"
 import { useIgStoryPostsStore } from "../provider/ig-story-posts-store-context"
 import type { CreateIgStoryRequest, IgStoryVariant } from "../schema/action"
@@ -135,7 +136,9 @@ export function IgStoryForm({
 
   return (
     <form className="m-auto w-full max-w-200 space-y-6" onSubmit={onSubmit}>
-      <InputField label={t("fields.name.label")} name="name" required />
+      <LockedContent>
+        <InputField label={t("fields.name.label")} name="name" required />
+      </LockedContent>
 
       <Card>
         <CardHeader>
@@ -148,15 +151,17 @@ export function IgStoryForm({
             type={variant}
           />
 
-          <RadioGroupField
-            description={t("instagramStoryAutomation.triggerDescription")}
-            descriptionType="tooltip"
-            label={t("instagramStoryAutomation.trigger")}
-            name="trigger"
-            options={triggerOptions}
-            orientation="horizontal"
-            required
-          />
+          <LockedContent>
+            <RadioGroupField
+              description={t("instagramStoryAutomation.triggerDescription")}
+              descriptionType="tooltip"
+              label={t("instagramStoryAutomation.trigger")}
+              name="trigger"
+              options={triggerOptions}
+              orientation="horizontal"
+              required
+            />
+          </LockedContent>
 
           {!isStoryMention && (
             <RadioGroupField
@@ -194,7 +199,7 @@ export function IgStoryForm({
             </>
           )}
 
-          <div className="flex flex-col gap-2 space-y-2">
+          <LockedContent className="flex flex-col gap-2 space-y-2">
             <RadioGroupField
               description={t("instagramStoryAutomation.replyDescription")}
               descriptionType="tooltip"
@@ -236,10 +241,10 @@ export function IgStoryForm({
                 required
               />
             )}
-          </div>
+          </LockedContent>
 
           {!isStoryMention && (
-            <div className="flex items-start gap-2">
+            <LockedContent className="flex items-start gap-2">
               <SelectField
                 description={t(
                   "instagramStoryAutomation.includeKeywordsTypeDescription",
@@ -273,7 +278,7 @@ export function IgStoryForm({
                   />
                 </div>
               )}
-            </div>
+            </LockedContent>
           )}
         </CardContent>
       </Card>

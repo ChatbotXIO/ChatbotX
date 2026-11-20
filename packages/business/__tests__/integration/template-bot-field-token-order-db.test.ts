@@ -106,10 +106,10 @@ const couponBotFieldEntry = {
   value: `Coupon {{coupon:${SOURCE_COUPON_TOPIC_ID}}}`,
 }
 
-const parse = (resources: Record<string, unknown>) => {
+const parse = (resources: Record<string, unknown>, formatVersion = 2) => {
   const parsed = parseTemplateExport({
-    // Coupon topics need format 2.
-    formatVersion: 2,
+    // Coupon topics need format 2, the tools format 3.
+    formatVersion,
     exportedAt: new Date().toISOString(),
     source: { workspaceId: "999000", tenantId: "1" },
     manifests: {},
@@ -291,6 +291,52 @@ describe.skipIf(!databaseUrl)("bot-field tokens across install order", () => {
     expect(copied.replies.sort()).toEqual([`Code ${expected}`, "plain"])
     expect(copied.questionnaires).toEqual([`Quiz ${expected}`])
     expect(copied.products).toEqual([`Use ${expected}`])
+  })
+
+  test("a sync that adds a tool and a bot field linking to it points the field at the copy", async () => {
+    const sourceLink = "https://app.example/r/999000/promo"
+    const linkField = { ...botFieldEntry, value: `Open ${sourceLink}?x=1` }
+    const seed = await seedWorkspace([
+      parse({ settings: { savedReplies: [], botFields: [] } }, 3),
+      parse(
+        {
+          magicLinks: [
+            {
+              sourceId: "990700000000601",
+              name: "promo",
+              url: "https://x.test",
+            },
+          ],
+          settings: { savedReplies: [], botFields: [linkField] },
+        },
+        3,
+      ),
+    ])
+
+    const { syncId } = await templateSyncRequestService.request({
+      ...seed,
+      actor,
+      trigger: "manual",
+    })
+    const claimed = await templateSyncExecuteService.claim({
+      syncId,
+      workspaceId: seed.workspaceId,
+    })
+    if (!claimed) {
+      throw new Error("the sync could not be claimed")
+    }
+    await templateSyncExecuteService.run({
+      sync: claimed.sync,
+      claimToken: claimed.claimToken,
+    })
+
+    const [link] = await db.query.magicLinkModel.findMany({
+      where: { workspaceId: seed.workspaceId },
+    })
+    expect(link.name).toBe("promo")
+    expect(await botFieldValue(seed.workspaceId)).toBe(
+      `Open https://app.example/r/${seed.workspaceId}/promo?x=1`,
+    )
   })
 
   const botFieldValue = async (workspaceId: string) => {

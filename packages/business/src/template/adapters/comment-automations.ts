@@ -5,7 +5,11 @@ import type {
 } from "@chatbotx.io/database/partials"
 import { commentAutomationModel } from "@chatbotx.io/database/schema"
 import { createId } from "@chatbotx.io/utils"
-import { listAutomationAccounts } from "../../comment-automation/account-scope"
+import {
+  collectReplyDependencies,
+  resolveAutomationInbox,
+  resolveAutomationReply,
+} from "./automation-bindings"
 import {
   dependenciesOn,
   makeCollector,
@@ -18,7 +22,6 @@ import {
 import type {
   PatchTask,
   ResourceAdapter,
-  TemplateHardDependency,
   TemplateInstallContext,
 } from "./types"
 
@@ -64,85 +67,13 @@ type TemplateFBCommentEntry = {
   folderId: string | null
 }
 
-/** Reply type -> the category providing what it runs. */
-const REPLY_DEPENDENCY_CATEGORY = {
-  flow: "flows",
-  AIAgent: "aiAgents",
-} as const
-
-const collectReplyDependencies = (
-  replies: readonly (TemplateCommentReply | null | undefined)[],
-): TemplateHardDependency[] =>
-  Object.entries(REPLY_DEPENDENCY_CATEGORY).flatMap(([type, category]) =>
-    dependenciesOn(
-      category,
-      replies.map((reply) => (reply?.type === type ? reply.value : null)),
-    ),
-  )
-
-const resolveReplyValue = (
-  ctx: TemplateInstallContext,
-  entry: TemplateFBCommentEntry,
-  field: "privateReply" | "publicReply",
-  reply: TemplateCommentReply,
-): TemplateCommentReply => {
-  if (reply.type === "text" || reply.type === "none" || !reply.value) {
-    return reply
-  }
-
-  const targetId = resolveRef(ctx, {
-    category: "fbCommentAutomations",
-    kind: reply.type === "flow" ? "flow" : "aiAgent",
-    path: `fbCommentAutomations.${entry.sourceId}.${field}.value`,
-    sourceRef: reply.value,
-  })
-  return { ...reply, value: targetId }
-}
-
-/**
- * The target inbox for an automation scoped to a source inbox, or `null` for
- * "every account of its channel" when it had no scope. An automation that was
- * scoped but whose inbox is not bound (or is not an account of the automation's
- * channel here) cannot be pointed anywhere sensible, so it is reported and the
- * caller installs it inactive instead of silently widening it to every account.
- */
-const resolveInboxRef = async (
-  ctx: TemplateInstallContext,
-  entry: TemplateFBCommentEntry,
-  accountsByType: Map<string, Set<string>>,
-): Promise<{ inboxId: string | null; resolved: boolean }> => {
-  if (!entry.inboxSourceId) {
-    return { inboxId: null, resolved: true }
-  }
-  const targetId = ctx.idMaps.inbox?.get(entry.inboxSourceId)
-  if (targetId) {
-    // `Inbox.channel` is `instagram` for both Instagram connections; only the
-    // integration tables tell which kind of account this automation can see.
-    let accounts = accountsByType.get(entry.type)
-    if (!accounts) {
-      accounts = new Set(
-        (
-          await listAutomationAccounts({
-            workspaceId: ctx.workspaceId,
-            type: entry.type as CommentAutomationType,
-            tx: ctx.tx,
-          })
-        ).map((account) => account.inboxId),
-      )
-      accountsByType.set(entry.type, accounts)
-    }
-    if (accounts.has(targetId)) {
-      return { inboxId: targetId, resolved: true }
-    }
-  }
-  ctx.warn({
-    category: "fbCommentAutomations",
-    entityKind: "inboxBindingRequired",
-    path: `fbCommentAutomations.${entry.sourceId}.inboxId`,
-    value: entry.inboxSourceId,
-  })
-  return { inboxId: null, resolved: false }
-}
+/** The AI agent that moderates comments, when moderation runs on an agent. */
+const moderationAgentId = (
+  hideComments: TemplateFBCommentEntry["hideComments"],
+): string | null =>
+  hideComments?.aiModeration && hideComments.aiModeration.engine !== "decision"
+    ? (hideComments.aiModeration.aiAgentId ?? null)
+    : null
 
 /**
  * A "choose posts" automation names Facebook/Instagram post ids of the source
@@ -170,30 +101,52 @@ const clearPostSelection = (
  * ships: AI moderation that runs on one is installed switched off with its
  * connection cleared, and the installer is told to pick their own.
  */
-const clearDecisionModeration = (
+const resolveModeration = (
   ctx: TemplateInstallContext,
   entry: TemplateFBCommentEntry,
 ): TemplateFBCommentEntry["hideComments"] => {
   const { hideComments } = entry
   const aiModeration = hideComments?.aiModeration
-  // Inline, not `resolveModerationEngine`: absent `engine` is `aiAgent`.
-  if (!hideComments || aiModeration?.engine !== "decision") {
+  if (!(hideComments && aiModeration)) {
     return hideComments
   }
-  if (aiModeration.enabled) {
-    ctx.warn({
-      category: "fbCommentAutomations",
-      entityKind: "credentialRequired",
-      path: `fbCommentAutomations.${entry.sourceId}.hideComments.aiModeration`,
-      value: aiModeration.decisionModel ?? "",
-    })
+  const path = `fbCommentAutomations.${entry.sourceId}.hideComments.aiModeration`
+  // Inline, not `resolveModerationEngine`: absent `engine` is `aiAgent`.
+  if (aiModeration.engine === "decision") {
+    if (aiModeration.enabled) {
+      ctx.warn({
+        category: "fbCommentAutomations",
+        entityKind: "credentialRequired",
+        path,
+        value: aiModeration.decisionModel ?? "",
+      })
+    }
+    return {
+      ...hideComments,
+      aiModeration: {
+        ...aiModeration,
+        enabled: false,
+        decisionConnectionId: null,
+      },
+    }
   }
+  if (!aiModeration.aiAgentId) {
+    return hideComments
+  }
+  // The agent is a copied resource: point at the copy, or switch moderation
+  // off rather than keep the source workspace's agent id.
+  const aiAgentId = resolveRef(ctx, {
+    category: "fbCommentAutomations",
+    kind: "aiAgent",
+    path: `${path}.aiAgentId`,
+    sourceRef: aiModeration.aiAgentId,
+  })
   return {
     ...hideComments,
     aiModeration: {
       ...aiModeration,
-      enabled: false,
-      decisionConnectionId: null,
+      aiAgentId,
+      enabled: aiModeration.enabled && aiAgentId !== null,
     },
   }
 }
@@ -212,7 +165,7 @@ export const commentAutomationsAdapter: ResourceAdapter<TemplateFBCommentEntry> 
     consumesKinds: ["flow", "aiAgent", "folder", "inbox"],
     deferredKinds: [],
     trackedKind: "fbCommentAutomation",
-    folderTypes: ["fbComment", "igComment", "igStory"],
+    folderTypes: ["fbComment", "igComment"],
     minFormatVersion: 1,
     sync: updateNotSupported("fbCommentAutomations"),
 
@@ -222,24 +175,28 @@ export const commentAutomationsAdapter: ResourceAdapter<TemplateFBCommentEntry> 
     ): Promise<PatchTask[]> {
       const accountsByType = new Map<string, Set<string>>()
       for (const entry of entries) {
-        const privateReply = resolveReplyValue(
-          ctx,
-          entry,
-          "privateReply",
-          entry.privateReply,
-        )
-        const publicReply = resolveReplyValue(
-          ctx,
-          entry,
-          "publicReply",
-          entry.publicReply,
-        )
+        const privateReply = resolveAutomationReply(ctx, {
+          category: "fbCommentAutomations",
+          path: `fbCommentAutomations.${entry.sourceId}.privateReply.value`,
+          reply: entry.privateReply,
+        })
+        const publicReply = resolveAutomationReply(ctx, {
+          category: "fbCommentAutomations",
+          path: `fbCommentAutomations.${entry.sourceId}.publicReply.value`,
+          reply: entry.publicReply,
+        })
         const folderId = resolveFolderRef(ctx, "fbCommentAutomations", entry)
-        const { inboxId, resolved: inboxResolved } = await resolveInboxRef(
-          ctx,
-          entry,
-          accountsByType,
-        )
+        const { inboxId, resolved: inboxResolved } =
+          await resolveAutomationInbox(
+            ctx,
+            {
+              category: "fbCommentAutomations",
+              sourceId: entry.sourceId,
+              type: entry.type as CommentAutomationType,
+              inboxSourceId: entry.inboxSourceId,
+            },
+            accountsByType,
+          )
         const { post, cleared: postCleared } = clearPostSelection(ctx, entry)
 
         const [created] = await ctx.tx
@@ -262,7 +219,7 @@ export const commentAutomationsAdapter: ResourceAdapter<TemplateFBCommentEntry> 
             includeKeywords: entry.includeKeywords,
             excludeKeywords: entry.excludeKeywords,
             options: entry.options,
-            hideComments: clearDecisionModeration(ctx, entry),
+            hideComments: resolveModeration(ctx, entry),
             replyAfter: entry.replyAfter,
           })
           .returning()
@@ -323,9 +280,15 @@ export const commentAutomationsAdapter: ResourceAdapter<TemplateFBCommentEntry> 
             row.folderId ? [row.folderId] : [],
           ),
           inboxIds: rows.flatMap((row) => (row.inboxId ? [row.inboxId] : [])),
-          hardDependencies: collectReplyDependencies(
-            rows.flatMap((row) => [row.privateReply, row.publicReply]),
-          ),
+          hardDependencies: [
+            ...collectReplyDependencies(
+              rows.flatMap((row) => [row.privateReply, row.publicReply]),
+            ),
+            ...dependenciesOn(
+              "aiAgents",
+              rows.map((row) => moderationAgentId(row.hideComments)),
+            ),
+          ],
         }
       },
     }),

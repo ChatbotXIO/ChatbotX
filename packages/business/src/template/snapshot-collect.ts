@@ -4,7 +4,9 @@ import type {
 } from "@chatbotx.io/database/partials"
 import { templateSnapshotRepository } from "@chatbotx.io/database/repositories"
 import { templateAdapterRegistry } from "./adapters/registry"
+import { collectLinkedToolDependencies } from "./link-dependencies"
 import { collectManifestReferences } from "./manifest-references"
+import { collectResourceLinkDependencies } from "./resource-links"
 import {
   MAX_PAYLOAD_RESOURCES,
   templatePayloadTooLargeException,
@@ -308,6 +310,15 @@ export const collectSnapshotClosure = async (
     categoriesToCollect = foldHardDependencies(idsByCategory, [
       ...collectedThisPass.flatMap(([, result]) => result.hardDependencies),
       ...botFieldDependencies,
+      // A tool linked from any collected text travels with it: by id (a
+      // minigame, mini app, dynamic image, leaderboard), or by name or id in
+      // the source workspace (a magic link or poll; one query per kind for the
+      // whole pass). This covers chains such as flow -> magic link -> minigame.
+      ...collectResourceLinkDependencies(allEntries(results)),
+      ...(await collectLinkedToolDependencies(
+        workspaceId,
+        allEntries(results),
+      )),
     ])
     // Counted by what was actually collected: an id that matched no row ships
     // nothing, and is counted as a dropped reference instead.

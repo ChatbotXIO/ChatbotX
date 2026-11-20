@@ -36,6 +36,20 @@ export const TEMPLATE_CATEGORY_PERMISSION = {
   // Pipelines have no member permission of their own (access is per board);
   // the Pipelines flow step lives under `flows`, so the template does too.
   pipelines: "flows",
+  magicLinks: "flows",
+  polls: "flows",
+  dynamicImages: "flows",
+  placeLocations: "flows",
+  miniApps: "flows",
+  minigames: "flows",
+  leaderboards: "flows",
+  openHours: "ecommerce",
+  vendors: "ecommerce",
+  discountCodes: "ecommerce",
+  storeSettings: "ecommerce",
+  storyAutomations: "flows",
+  // The inbound webhooks pages and actions require a super admin.
+  inboundWebhooks: "superAdmin",
   customFields: "flows",
   tags: "flows",
   productCategories: "ecommerce",

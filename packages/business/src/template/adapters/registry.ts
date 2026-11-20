@@ -11,16 +11,30 @@ import { aiMcpServersAdapter } from "./ai-mcp-servers"
 import { calendarsAdapter } from "./calendars"
 import { commentAutomationsAdapter } from "./comment-automations"
 import { couponTopicsAdapter } from "./coupon-topics"
+import { discountCodesAdapter } from "./discount-codes"
+import { dynamicImagesAdapter } from "./dynamic-images"
 import { entryPointLinksAdapter } from "./entry-point-links"
 import { flowsAdapter } from "./flows"
+import { inboundWebhooksAdapter } from "./inbound-webhooks"
 import { keywordsAdapter } from "./keywords"
+import { leaderboardsAdapter } from "./leaderboards"
+import { magicLinksAdapter } from "./magic-links"
+import { miniAppsAdapter } from "./mini-apps"
+import { minigamesAdapter } from "./minigames"
+import { openHoursAdapter } from "./open-hours"
 import { pipelinesAdapter } from "./pipelines"
+import { placeLocationsAdapter } from "./place-locations"
+import { pollsAdapter } from "./polls"
 import { productsAdapter } from "./products"
 import { questionnairesAdapter } from "./questionnaires"
 import { sequencesAdapter } from "./sequences"
 import { settingsAdapter } from "./settings"
+import { storeSettingsAdapter } from "./store-settings"
+import { storyAutomationsAdapter } from "./story-automations"
+import { TEMPLATE_TOOL_CATEGORIES } from "./tool-categories"
 import { triggersAdapter } from "./triggers"
 import type { ResourceAdapter } from "./types"
+import { vendorsAdapter } from "./vendors"
 import { webchatsAdapter } from "./webchats"
 
 /**
@@ -55,6 +69,19 @@ const typedAdapters = {
   questionnaires: questionnairesAdapter,
   couponTopics: couponTopicsAdapter,
   pipelines: pipelinesAdapter,
+  magicLinks: magicLinksAdapter,
+  polls: pollsAdapter,
+  dynamicImages: dynamicImagesAdapter,
+  placeLocations: placeLocationsAdapter,
+  miniApps: miniAppsAdapter,
+  minigames: minigamesAdapter,
+  leaderboards: leaderboardsAdapter,
+  openHours: openHoursAdapter,
+  vendors: vendorsAdapter,
+  discountCodes: discountCodesAdapter,
+  storeSettings: storeSettingsAdapter,
+  storyAutomations: storyAutomationsAdapter,
+  inboundWebhooks: inboundWebhooksAdapter,
 } satisfies Record<TemplateResourceCategory, ResourceAdapter>
 
 /**
@@ -81,10 +108,18 @@ export const TEMPLATE_INSTALL_ORDER: readonly TemplateCategory[] = [
   // First: any later category can carry a `{{coupon:<id>}}` token, which the
   // install rewrites from the topic ids installed here.
   "couponTopics",
+  // Tools come before everything that can link to them (flows, saved replies,
+  // questionnaires...), so the links in those texts follow the copies. Among
+  // themselves: a magic link or a QR code may point at a poll, and a QR code at
+  // a magic link. The ones that name a flow patch it once flows exist.
+  ...TEMPLATE_TOOL_CATEGORIES,
   "questionnaires",
   // Before flows: a flow's pipeline steps resolve through the id maps it fills.
   "pipelines",
+  "openHours",
+  "vendors",
   "products",
+  "discountCodes",
   "settings",
   "aiFunctions",
   "aiMcpServers",
@@ -98,6 +133,11 @@ export const TEMPLATE_INSTALL_ORDER: readonly TemplateCategory[] = [
   "entryPointLinks",
   "triggers",
   "fbCommentAutomations",
+  "storyAutomations",
+  "inboundWebhooks",
+  // The store settings last: no kind references them, and a checkout or
+  // confirmation flow they name must exist.
+  "storeSettings",
 ]
 
 // Compile-time-adjacent guard: every category actually registered above

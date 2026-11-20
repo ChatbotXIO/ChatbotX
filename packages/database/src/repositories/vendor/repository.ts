@@ -12,7 +12,11 @@ import {
 } from "@chatbotx.io/database/client"
 import type { StoreSource } from "@chatbotx.io/database/partials"
 import { productModel, vendorModel } from "@chatbotx.io/database/schema"
-import { likeContains, parsePagination } from "@chatbotx.io/database/utils"
+import {
+  deleteByIdsInWorkspace,
+  likeContains,
+  parsePagination,
+} from "@chatbotx.io/database/utils"
 import { createId } from "@chatbotx.io/utils"
 
 /** Every column a vendor form or API writes. */
@@ -164,6 +168,37 @@ export const vendorRepository = {
       .onConflictDoNothing()
   },
 
+  /**
+   * Inserts the vendor, or finds the one that already carries the name (names
+   * are unique per workspace and source, case-insensitively). `created` says
+   * which, so a caller writes its copied fields only into a new row.
+   */
+  async insertOrFindByName(
+    input: VendorWriteValues & { workspaceId: string },
+    tx: DatabaseClient = db,
+  ): Promise<{ row: typeof vendorModel.$inferSelect; created: boolean }> {
+    const [inserted] = await tx
+      .insert(vendorModel)
+      .values({ ...input, id: createId() })
+      .onConflictDoNothing()
+      .returning()
+    if (inserted) {
+      return { row: inserted, created: true }
+    }
+    const [existing] = await tx
+      .select()
+      .from(vendorModel)
+      .where(
+        and(
+          eq(vendorModel.workspaceId, input.workspaceId),
+          eq(vendorModel.source, input.source ?? "chatbotx"),
+          eq(lowerName(), input.name.toLowerCase()),
+        ),
+      )
+      .limit(1)
+    return { row: existing, created: false }
+  },
+
   async create(
     input: VendorWriteValues & { workspaceId: string },
     tx: DatabaseClient = db,
@@ -196,19 +231,11 @@ export const vendorRepository = {
     return row
   },
 
-  async delete(
-    input: { workspaceId: string; vendorId: string },
+  /** Deletes the vendors in one statement and returns the ids that went. */
+  async deleteManyReturningIds(
+    input: { workspaceId: string; ids: string[] },
     tx: DatabaseClient = db,
-  ) {
-    const [row] = await tx
-      .delete(vendorModel)
-      .where(
-        and(
-          eq(vendorModel.id, input.vendorId),
-          eq(vendorModel.workspaceId, input.workspaceId),
-        ),
-      )
-      .returning()
-    return row
+  ): Promise<string[]> {
+    return await deleteByIdsInWorkspace(tx, vendorModel, input)
   },
 }

@@ -8263,6 +8263,7 @@
       "resourcesTitle": "Quraşdırılmış resurslar",
       "noResources": "Hələ heç nə yaradılmayıb.",
       "deletedResource": "Silinmiş resurs",
+      "wholeCategory": "{count, plural, one {# element} other {# element}}",
       "viewOnly": "Yalnız baxış",
       "created": "Yaradıldı",
       "reused": "Təkrar istifadə edildi",
@@ -8317,7 +8318,12 @@
           "placeCategories": "Məkan kateqoriyaları"
         }
       },
-      "viewOnlyCopyIncluded": "Seçdiyiniz element (və ya onun ehtiyac duyduğu element) yalnız baxış şablonundan quraşdırılıb, ona görə yeni şablonda paylaşıla bilməz."
+      "viewOnlyCopyIncluded": "Seçdiyiniz element (və ya onun ehtiyac duyduğu element) yalnız baxış şablonundan quraşdırılıb, ona görə yeni şablonda paylaşıla bilməz.",
+      "miniAppPublishedExcluded": {
+        "title": "Mini tətbiq kənarda qaldı",
+        "hint": "Bu axınlar WhatsApp-da dərc olunmuş Mini tətbiqdən istifadə edir. Onu paylaşmaq olmur, buna görə şablon onu çıxarır və quraşdırma zamanı bu istinad silinir.",
+        "item": "{flowName}: {miniAppName}"
+      }
     },
     "categories": {
       "flows": "Axınlar",
@@ -8339,7 +8345,20 @@
       "aiFiles": "AI bilik faylları",
       "questionnaires": "Questionnaires",
       "couponTopics": "Kupon mövzuları",
-      "pipelines": "Satış xətləri"
+      "pipelines": "Satış xətləri",
+      "magicLinks": "Sehrli linklər",
+      "polls": "Sorğular",
+      "dynamicImages": "Dinamik şəkillər",
+      "placeLocations": "Məkanlar",
+      "miniApps": "Mini tətbiqlər",
+      "minigames": "Mini oyunlar",
+      "leaderboards": "Liderlər cədvəli",
+      "openHours": "İş saatları",
+      "vendors": "Satıcılar",
+      "discountCodes": "Endirim kodları",
+      "storeSettings": "Mağaza ayarları",
+      "storyAutomations": "Instagram hekayə avtomatlaşdırılması",
+      "inboundWebhooks": "Daxil olan webhook"
     },
     "locked": {
       "flowBanner": "Bu axın yalnız baxış şablonundan quraşdırılıb. Onu görə bilərsiniz, lakin redaktə edə bilməzsiniz.",
@@ -8416,6 +8435,7 @@
       "flowNotPublished": "Axın qaralama kimi quraşdırıldı və dərc edilməyib.",
       "flowSkippedRequiredReference": "Tələb olunan istinad həll edilə bilmədiyi üçün axın atlandı.",
       "folder": "İstinad edilən element bu iş sahəsində tapılmadı, ona görə keçid silindi.",
+      "inboundWebhookLimitReached": "Bu daxil olan webhook buraxıldı: iş sahəsi daxil olan webhook-ların maksimum sayına çatıb.",
       "inboxBindingRequired": "Bu kanal üçün gələnlər qutusu seçin; o vaxta qədər element qeyri-aktiv qalır.",
       "integration": "İstinad edilən element bu iş sahəsində tapılmadı, ona görə keçid silindi.",
       "localModifiedOverwritten": "Yerli olaraq redaktə edilmiş element üzərinə yazıldı. Ehtiyat nüsxə saxlanıldı və bərpa edilə bilər.",
@@ -8436,7 +8456,25 @@
       "tag": "İstinad edilən element bu iş sahəsində tapılmadı, ona görə keçid silindi.",
       "unlisted": "Element tam köçürülmədi: {code}",
       "workspaceMember": "Bu iş sahəsində olmayan üzvə təyin edilib.",
-      "workspaceUnavailable": "Bu iş sahəsi artıq mövcud deyil, ona görə bu element ötürüldü."
+      "workspaceUnavailable": "Bu iş sahəsi artıq mövcud deyil, ona görə bu element ötürüldü.",
+      "scheduleExpired": "Bu elementin tarixləri keçib; istifadədən əvvəl yenilərini təyin edin.",
+      "linkNotRemapped": "Şablona daxil olmayan alətə link dəyişdirilmədən saxlanıldı.",
+      "dynamicImage": "Fon şəkli kopyalana bilmədiyi üçün bu dinamik şəkil buraxıldı.",
+      "dynamicImageFieldNotBound": "Bu şəkil üçün keş saxlanacaq xüsusi sahə seçin; orijinal sahə artıq iş sahənizdə var idi.",
+      "dynamicImageRerenderFailed": "Bu dinamik şəkil söndürüldü, çünki arxa fonu kopyalanmış keçidlərlə yenidən yaradıla bilmədi. Yenidən cəhd etmək üçün onu aktiv edin.",
+      "pollImage": "Şəkil kopyalana bilmədi.",
+      "leaderboardInvalid": "Bu liderlər cədvəlinin konfiqurasiyası quraşdırıla bilmədi, buna görə buraxıldı.",
+      "placeLocationInvalid": "Bu yer adı boş olduğu üçün atlandı.",
+      "minigame": "Bu liderlər cədvəlinin xal hesabladığı mini oyun şablona daxil deyil, buna görə buraxıldı.",
+      "minigameImage": "Şəkil kopyalana bilmədi.",
+      "leaderboardImage": "Şəkil kopyalana bilmədi.",
+      "leaderboardHostMissing": "Liderlər cədvəli bu quraşdırmanın təmin etmədiyi öz kanalına (və ya mini oyuna) ehtiyac duyur, buna görə buraxıldı.",
+      "externalStoreSkipped": "Bu iş sahəsi qoşulmuş mağazadan (Shopify və ya WooCommerce) satış edir, buna görə məhsullar, satıcılar, endirim kodları, iş saatları və mağaza ayarları quraşdırılmadı.",
+      "discountCodeSkipped": "Bu endirim kodu buraxıldı: tətbiq olunduğu məhsullar və ya kateqoriya şablona daxil deyil, yaxud ayarları rədd edildi.",
+      "storeSettingsKept": "Bu iş sahəsində artıq mağaza ayarları var idi, ona görə olduğu kimi saxlanıldı.",
+      "vendorImage": "Şəkil kopyalana bilmədi.",
+      "storeSettingsCurrencyKept": "İş sahəsində başqa valyutada məhsullar var, buna görə şablonun valyutası əvəzinə mövcud valyuta saxlanıldı.",
+      "storySelectionRequired": "Hekayələri yenidən seçin: orijinal hekayələri köçürmək mümkün olmadı."
     },
     "tabs": {
       "mine": "Şablonlarım",

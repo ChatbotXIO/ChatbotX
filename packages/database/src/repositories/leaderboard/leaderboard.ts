@@ -4,6 +4,7 @@ import {
   type DatabaseClient,
   db,
   eq,
+  inArray,
   isNull,
   relationsFilterToSQL,
   sql,
@@ -328,6 +329,26 @@ export const leaderboardRepository = {
     `)
     const value = result.rows[0]?.startsAt
     return value ? new Date(value) : null
+  },
+
+  /** Removes the rows (participants and audit log cascade) and returns the ids that went. */
+  async hardDeleteByIds(
+    input: { workspaceId: string; ids: string[] },
+    tx: DatabaseClient = db,
+  ): Promise<string[]> {
+    if (input.ids.length === 0) {
+      return []
+    }
+    const rows = await tx
+      .delete(leaderboardModel)
+      .where(
+        and(
+          eq(leaderboardModel.workspaceId, input.workspaceId),
+          inArray(leaderboardModel.id, input.ids),
+        ),
+      )
+      .returning({ id: leaderboardModel.id })
+    return rows.map((row) => String(row.id))
   },
 
   async insert(values: LeaderboardInsert, tx: DatabaseClient = db) {

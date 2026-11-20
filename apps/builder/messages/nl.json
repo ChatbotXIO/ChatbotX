@@ -7385,6 +7385,7 @@
       "resourcesTitle": "Geïnstalleerde resources",
       "noResources": "Er is nog niets aangemaakt.",
       "deletedResource": "Verwijderde resource",
+      "wholeCategory": "{count, plural, one {# item} other {# items}}",
       "viewOnly": "Alleen bekijken",
       "created": "Aangemaakt",
       "reused": "Hergebruikt",
@@ -7439,7 +7440,12 @@
           "placeCategories": "Plaatscategorieën"
         }
       },
-      "viewOnlyCopyIncluded": "Iets dat je hebt geselecteerd (of iets dat het nodig heeft) is geïnstalleerd vanuit een alleen-lezen-sjabloon en kan niet in een nieuw sjabloon worden gedeeld."
+      "viewOnlyCopyIncluded": "Iets dat je hebt geselecteerd (of iets dat het nodig heeft) is geïnstalleerd vanuit een alleen-lezen-sjabloon en kan niet in een nieuw sjabloon worden gedeeld.",
+      "miniAppPublishedExcluded": {
+        "title": "Mini-app weggelaten",
+        "hint": "Deze flows gebruiken een Mini-app die op WhatsApp is gepubliceerd. Die kan niet worden gedeeld, dus de sjabloon laat hem weg en de installatie verwijdert de verwijzing.",
+        "item": "{flowName}: {miniAppName}"
+      }
     },
     "categories": {
       "flows": "Flows",
@@ -7461,7 +7467,20 @@
       "aiFiles": "AI-kennisbestanden",
       "questionnaires": "Vragenlijsten",
       "couponTopics": "Coupononderwerpen",
-      "pipelines": "Pipelines"
+      "pipelines": "Pipelines",
+      "magicLinks": "Magische links",
+      "polls": "Peilingen",
+      "dynamicImages": "Dynamische afbeeldingen",
+      "placeLocations": "Locaties",
+      "miniApps": "Mini-apps",
+      "minigames": "Minigames",
+      "leaderboards": "Ranglijsten",
+      "openHours": "Openingstijden",
+      "vendors": "Verkopers",
+      "discountCodes": "Kortingscodes",
+      "storeSettings": "Winkelinstellingen",
+      "storyAutomations": "Instagram Story-automatisering",
+      "inboundWebhooks": "Inkomende webhook"
     },
     "locked": {
       "flowBanner": "Deze flow is geïnstalleerd vanuit een alleen-lezen sjabloon. Je kunt hem bekijken maar niet bewerken.",
@@ -7538,6 +7557,7 @@
       "flowNotPublished": "De flow is als concept geïnstalleerd en is niet gepubliceerd.",
       "flowSkippedRequiredReference": "De flow is overgeslagen omdat een vereiste verwijzing niet kon worden opgelost.",
       "folder": "Een gerefereerd item is niet gevonden in deze werkruimte, dus de koppeling is verwijderd.",
+      "inboundWebhookLimitReached": "Deze inkomende webhook is overgeslagen: de werkruimte heeft al het maximale aantal inkomende webhooks.",
       "inboxBindingRequired": "Kies een inbox voor dit kanaal; tot die tijd blijft het item inactief.",
       "integration": "Een gerefereerd item is niet gevonden in deze werkruimte, dus de koppeling is verwijderd.",
       "localModifiedOverwritten": "Een lokaal bewerkt item is overschreven. Er is een back-up opgeslagen die kan worden hersteld.",
@@ -7558,7 +7578,25 @@
       "tag": "Een gerefereerd item is niet gevonden in deze werkruimte, dus de koppeling is verwijderd.",
       "unlisted": "Item niet volledig overgenomen: {code}",
       "workspaceMember": "Toegewezen aan een lid dat niet in deze workspace zit.",
-      "workspaceUnavailable": "Deze werkruimte is niet meer beschikbaar, dus het item is overgeslagen."
+      "workspaceUnavailable": "Deze werkruimte is niet meer beschikbaar, dus het item is overgeslagen.",
+      "scheduleExpired": "De datums van dit item zijn al verstreken; stel nieuwe in voordat je het gebruikt.",
+      "linkNotRemapped": "Een link naar een tool die niet in de sjabloon zat, is ongewijzigd gelaten.",
+      "dynamicImage": "Deze dynamische afbeelding is overgeslagen omdat de achtergrond niet gekopieerd kon worden.",
+      "dynamicImageFieldNotBound": "Kies een aangepast veld om de afbeelding in te cachen; het oorspronkelijke veld bestond al in je workspace.",
+      "dynamicImageRerenderFailed": "Deze dynamische afbeelding is uitgezet omdat de achtergrond niet opnieuw kon worden gerenderd met je gekopieerde links. Zet hem weer aan om het opnieuw te proberen.",
+      "pollImage": "Een afbeelding kon niet worden gekopieerd.",
+      "leaderboardInvalid": "De configuratie van deze ranglijst kon niet worden geïnstalleerd en is overgeslagen.",
+      "placeLocationInvalid": "Deze plaats is overgeslagen omdat de naam leeg is.",
+      "minigame": "De minigame waaruit deze ranglijst zijn punten haalt, zit niet in de sjabloon en is overgeslagen.",
+      "minigameImage": "Een afbeelding kon niet worden gekopieerd.",
+      "leaderboardImage": "Een afbeelding kon niet worden gekopieerd.",
+      "leaderboardHostMissing": "De ranglijst heeft een eigen kanaal (of minigame) nodig dat deze installatie niet leverde en is overgeslagen.",
+      "externalStoreSkipped": "Deze workspace verkoopt via een gekoppelde winkel (Shopify of WooCommerce), dus producten, verkopers, kortingscodes, openingstijden en winkelinstellingen zijn niet geïnstalleerd.",
+      "discountCodeSkipped": "Deze kortingscode is overgeslagen: de producten of categorie waarvoor hij geldt zitten niet in de sjabloon, of de instellingen werden geweigerd.",
+      "storeSettingsKept": "Deze workspace had al winkelinstellingen, dus die zijn behouden zoals ze waren.",
+      "vendorImage": "Een afbeelding kon niet worden gekopieerd.",
+      "storeSettingsCurrencyKept": "De workspace heeft producten in een andere valuta, dus de eigen valuta is behouden in plaats van die van de sjabloon.",
+      "storySelectionRequired": "Selecteer de stories opnieuw: de oorspronkelijke stories konden niet worden overgenomen."
     },
     "tabs": {
       "mine": "Mijn sjablonen",

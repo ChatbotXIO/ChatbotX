@@ -7431,6 +7431,7 @@
       "resourcesTitle": "已安裝的資源",
       "noResources": "尚未建立任何內容。",
       "deletedResource": "已刪除的資源",
+      "wholeCategory": "{count, plural, one {# 項} other {# 項}}",
       "viewOnly": "僅檢視",
       "created": "已建立",
       "reused": "已重複使用",
@@ -7485,7 +7486,12 @@
           "placeCategories": "地點分類"
         }
       },
-      "viewOnlyCopyIncluded": "你選擇的項目（或其依賴的項目）是從僅檢視範本安裝的，因此無法在新範本中共享。"
+      "viewOnlyCopyIncluded": "你選擇的項目（或其依賴的項目）是從僅檢視範本安裝的，因此無法在新範本中共享。",
+      "miniAppPublishedExcluded": {
+        "title": "已排除的迷你應用程式",
+        "hint": "這些流程使用了已發布到 WhatsApp 的迷你應用程式。它無法分享，因此範本不包含它，安裝時會移除該引用。",
+        "item": "{flowName}：{miniAppName}"
+      }
     },
     "categories": {
       "flows": "流程",
@@ -7507,7 +7513,20 @@
       "aiFiles": "AI 知識檔案",
       "questionnaires": "Questionnaires",
       "couponTopics": "優惠券主題",
-      "pipelines": "管道"
+      "pipelines": "管道",
+      "magicLinks": "魔法連結",
+      "polls": "投票",
+      "dynamicImages": "動態圖片",
+      "placeLocations": "地點",
+      "miniApps": "迷你應用",
+      "minigames": "小遊戲",
+      "leaderboards": "排行榜",
+      "openHours": "營業時間",
+      "vendors": "供應商",
+      "discountCodes": "折扣碼",
+      "storeSettings": "店鋪設定",
+      "storyAutomations": "Instagram 限時動態自動化",
+      "inboundWebhooks": "入站 Webhook"
     },
     "locked": {
       "flowBanner": "此流程來自僅檢視的範本。你可以檢視，但無法編輯。",
@@ -7584,6 +7603,7 @@
       "flowNotPublished": "Flow 已以草稿安裝，尚未發布。",
       "flowSkippedRequiredReference": "由於無法解析必要的參照，已略過該 Flow。",
       "folder": "在此工作區中找不到被參照的項目，因此已移除該連結。",
+      "inboundWebhookLimitReached": "已略過此入站 Webhook：工作區的入站 Webhook 數量已達上限。",
       "inboxBindingRequired": "請為此頻道選擇收件匣；在此之前該項目會保持未啟用。",
       "integration": "在此工作區中找不到被參照的項目，因此已移除該連結。",
       "localModifiedOverwritten": "在本機編輯過的項目已被覆蓋。已儲存備份，可以還原。",
@@ -7604,7 +7624,25 @@
       "tag": "在此工作區中找不到被參照的項目，因此已移除該連結。",
       "unlisted": "項目未完整匯入：{code}",
       "workspaceMember": "已指派給不在此工作區的成員。",
-      "workspaceUnavailable": "此工作區已無法使用，因此略過了該項目。"
+      "workspaceUnavailable": "此工作區已無法使用，因此略過了該項目。",
+      "scheduleExpired": "此項目的日期已過；使用前請設定新的日期。",
+      "linkNotRemapped": "指向未包含在範本中的工具的連結已保持不變。",
+      "dynamicImage": "由於無法複製背景，已略過此動態圖片。",
+      "dynamicImageFieldNotBound": "請選擇一個自訂欄位來快取此圖片；原欄位已存在於你的工作區中。",
+      "dynamicImageRerenderFailed": "此動態圖片已關閉，因為無法使用複製後的連結重新渲染其背景。再次開啟即可重試。",
+      "pollImage": "無法複製一張圖片。",
+      "leaderboardInvalid": "無法安裝此排行榜的設定，已略過。",
+      "placeLocationInvalid": "此地點的名稱為空，已略過。",
+      "minigame": "此排行榜計分所用的小遊戲不在範本中，已略過。",
+      "minigameImage": "無法複製一張圖片。",
+      "leaderboardImage": "無法複製一張圖片。",
+      "leaderboardHostMissing": "此排行榜需要專屬的頻道（或小遊戲），本次安裝未提供，已略過。",
+      "externalStoreSkipped": "此工作區透過已連線的店鋪（Shopify 或 WooCommerce）銷售，因此未安裝商品、供應商、折扣碼、營業時間和店鋪設定。",
+      "discountCodeSkipped": "已略過此折扣碼：它適用的商品或分類不在範本中，或其設定被拒絕。",
+      "storeSettingsKept": "此工作區已有店鋪設定，已保持原樣。",
+      "vendorImage": "無法複製一張圖片。",
+      "storeSettingsCurrencyKept": "工作區有其他幣別的商品，因此保留其幣別而非範本的幣別。",
+      "storySelectionRequired": "請重新選擇限時動態：無法帶入原本的限時動態。"
     },
     "tabs": {
       "mine": "我的範本",

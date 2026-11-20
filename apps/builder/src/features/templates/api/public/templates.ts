@@ -249,7 +249,7 @@ export const templatesPublicRouter = {
       path: "/v1/templates/dependencies-preview",
       summary: "Preview template selection dependencies",
       description:
-        "Read only. Given the `selection` you would give `templates.create`, lists the resources that are included automatically because a selected one needs them (`includedDependencies`) and the tags, custom fields, folders and the like the template ships (`manifests`). Each `includedDependencies` row carries this workspace's `sourceId` and its display `name`. Refused like `templates.create` when any of those rows is in a category the token may not use. `droppedReferenceCount` is how many references to deleted or unshipped things the install would drop.",
+        "Read only. Given the `selection` you would give `templates.create`, lists the resources that are included automatically because a selected one needs them (`includedDependencies`) and the tags, custom fields, folders and the like the template ships (`manifests`). Each `includedDependencies` row carries this workspace's `sourceId` and its display `name`. Refused like `templates.create` when any of those rows is in a category the token may not use. `droppedReferenceCount` is how many references to deleted or unshipped things the install would drop. `miniAppPublishedExcluded` lists the flows (`flowName`) that open or link a Mini App published to WhatsApp (`miniAppName`): such a Mini App is never included, so the install removes that reference.",
       tags: TAGS,
       spec: mcpSpec({ hitlPolicy: "none", readOnlyHint: true }),
     })

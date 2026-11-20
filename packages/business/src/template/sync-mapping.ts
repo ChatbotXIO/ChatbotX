@@ -15,6 +15,7 @@ import {
 } from "./adapters/manifests/resolve"
 import { getTemplateAdapter } from "./adapters/registry"
 import { isUpdatable } from "./adapters/shared"
+import { isExternalStoreCategory } from "./external-store"
 import { rootLevelFolderTypes } from "./install-root-placement"
 import { canUseTemplateCategories } from "./permissions"
 import { durableFieldNameBindings } from "./sync-field-bindings"
@@ -188,6 +189,12 @@ export const seedIdMaps = async (
     map.set(row.sourceResourceId, row.resourceId)
     ctx.idMaps[row.resourceKind] = map
   }
+  ctx.magicLinkNameBindings = await durableMagicLinkNameBindings(
+    tx,
+    ctx.workspaceId,
+    payload.resources.magicLinks,
+    ctx.idMaps.magicLink ?? new Map(),
+  )
   ctx.customFieldNameBindings = await durableFieldNameBindings(
     tx,
     payload.manifests.customFields,
@@ -205,12 +212,14 @@ export const resolveSyncManifests = async (
   ctx: InstallCtx,
   input: Pick<ApplyInput, "payload" | "installerActor" | "installation"> & {
     usesInstallFolder: boolean
+    externalStoreTarget: boolean
   },
 ): Promise<{ flowsBlockedByDeniedManifest: boolean }> => {
   const { installation } = input
   const { denied } = await resolveManifests(ctx, input.payload.manifests, {
     skipMapped: true,
     mayUse: (category) =>
+      !(input.externalStoreTarget && isExternalStoreCategory(category)) &&
       canUseTemplateCategories(input.installerActor, { [category]: 1 }),
     // The install made its roots when the template asked for an install
     // folder; the sync nests new folders under the same ones.
@@ -226,4 +235,34 @@ export const resolveSyncManifests = async (
   // empty filter means every category (a live flow would start sending the
   // whole store).
   return { flowsBlockedByDeniedManifest: denied.has("productCategories") }
+}
+
+/**
+ * Source magic-link name -> the name of the copy this installation already
+ * made, so the links in a synced text keep pointing at the copy (the name is
+ * what a link is served by).
+ */
+const durableMagicLinkNameBindings = async (
+  tx: DatabaseClient,
+  workspaceId: string,
+  shipped: readonly { sourceId: string; name?: unknown }[],
+  idMap: ReadonlyMap<string, string>,
+): Promise<Map<string, string>> => {
+  const targetIds = shipped.flatMap((entry) => idMap.get(entry.sourceId) ?? [])
+  if (targetIds.length === 0) {
+    return new Map()
+  }
+  const rows = await tx.query.magicLinkModel.findMany({
+    where: { workspaceId, id: { in: targetIds } },
+    columns: { id: true, name: true },
+  })
+  const nameById = new Map(rows.map((row) => [row.id, row.name]))
+  return new Map(
+    shipped.flatMap((entry) => {
+      const target = nameById.get(idMap.get(entry.sourceId) ?? "")
+      return target === undefined || typeof entry.name !== "string"
+        ? []
+        : [[entry.name, target] as const]
+    }),
+  )
 }

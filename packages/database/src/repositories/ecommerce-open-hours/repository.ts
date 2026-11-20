@@ -8,6 +8,7 @@ import {
 } from "@chatbotx.io/database/client"
 import type { OpenHoursRange } from "@chatbotx.io/database/partials"
 import { ecommerceOpenHoursModel } from "@chatbotx.io/database/schema"
+import { deleteByIdsInWorkspace } from "@chatbotx.io/database/utils"
 import { createId } from "@chatbotx.io/utils"
 
 export const ecommerceOpenHoursRepository = {
@@ -81,19 +82,11 @@ export const ecommerceOpenHoursRepository = {
     return row
   },
 
-  async delete(
-    input: { workspaceId: string; openHoursId: string },
+  /** Deletes the schedules in one statement and returns the ids that went. */
+  async deleteManyReturningIds(
+    input: { workspaceId: string; ids: string[] },
     tx: DatabaseClient = db,
-  ) {
-    const [row] = await tx
-      .delete(ecommerceOpenHoursModel)
-      .where(
-        and(
-          eq(ecommerceOpenHoursModel.id, input.openHoursId),
-          eq(ecommerceOpenHoursModel.workspaceId, input.workspaceId),
-        ),
-      )
-      .returning()
-    return row
+  ): Promise<string[]> {
+    return await deleteByIdsInWorkspace(tx, ecommerceOpenHoursModel, input)
   },
 }

@@ -39,6 +39,8 @@ export const FLOW_INSERT_KINDS = [
   "userPersistentMenu",
   "leaderboard",
   "miniApp",
+  "minigame",
+  "openHours",
 ]
 
 // `trigger` cannot be in `FLOW_INSERT_KINDS`: `triggers` inserts *after*

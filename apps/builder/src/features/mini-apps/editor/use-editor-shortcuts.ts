@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect } from "react"
+import { useIsEditorLocked } from "@/features/templates/components/locked-editor"
 import { useMiniAppEditor } from "./editor-context"
 
 /** Keyboard focus is in a field, where keys belong to the text. */
@@ -17,6 +18,7 @@ export function useEditorShortcuts(save: () => void) {
   const redo = useMiniAppEditor((state) => state.redo)
   const removeNode = useMiniAppEditor((state) => state.removeNode)
   const selectNode = useMiniAppEditor((state) => state.selectNode)
+  const isLocked = useIsEditorLocked()
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
@@ -33,6 +35,9 @@ export function useEditorShortcuts(save: () => void) {
       }
       if (event.key === "Escape") {
         selectNode(null)
+        return
+      }
+      if (isLocked) {
         return
       }
       if (mod && event.key.toLowerCase() === "z") {
@@ -52,5 +57,5 @@ export function useEditorShortcuts(save: () => void) {
     }
     window.addEventListener("keydown", onKeyDown)
     return () => window.removeEventListener("keydown", onKeyDown)
-  }, [save, undo, redo, removeNode, selectNode, selectedNodeId])
+  }, [save, undo, redo, removeNode, selectNode, selectedNodeId, isLocked])
 }

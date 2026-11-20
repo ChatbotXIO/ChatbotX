@@ -33,5 +33,18 @@ export const categoryCountsOfPayload = (
     questionnaires: resources.questionnaires.length,
     couponTopics: resources.couponTopics.length,
     pipelines: resources.pipelines.length,
+    magicLinks: resources.magicLinks.length,
+    polls: resources.polls.length,
+    dynamicImages: resources.dynamicImages.length,
+    placeLocations: resources.placeLocations.length,
+    miniApps: resources.miniApps.length,
+    minigames: resources.minigames.length,
+    leaderboards: resources.leaderboards.length,
+    openHours: resources.openHours.length,
+    vendors: resources.vendors.length,
+    discountCodes: resources.discountCodes.length,
+    storeSettings: resources.storeSettings.length,
+    storyAutomations: resources.storyAutomations.length,
+    inboundWebhooks: resources.inboundWebhooks.length,
   }
 }

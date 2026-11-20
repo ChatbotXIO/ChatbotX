@@ -50,7 +50,7 @@ const { REFERENCE_FIELD_ENTITY_KIND, REFERENCE_ARRAY_FIELD_ENTITY_KIND } =
 const { templateAdapterRegistry } = await import(
   "../src/template/adapters/registry"
 )
-const { SHARED_KINDS } = await import(
+const { KEPT_ON_UNINSTALL_KINDS, SHARED_KINDS } = await import(
   "../src/template/adapters/manifests/kinds"
 )
 
@@ -102,6 +102,11 @@ describe("uninstall handler contract", () => {
     const tracked = Object.values(templateAdapterRegistry)
       .map((adapter) => adapter.trackedKind)
       .filter((kind): kind is NonNullable<typeof kind> => kind !== null)
+      // The store settings are kept on uninstall: no handler by design.
+      .filter(
+        (kind) =>
+          !(KEPT_ON_UNINSTALL_KINDS as readonly string[]).includes(kind),
+      )
     for (const kind of tracked) {
       expect(UNINSTALL_HANDLER_BY_KIND[kind], kind).toBeDefined()
     }
@@ -151,11 +156,42 @@ describe("uninstall handler contract", () => {
         new Set(),
         { workspaceId: "w1" },
       )
+      // A reply-only container (`{ type, value }`) is probed for flows and agents only.
       const containers = JSON_CONTAINERS.filter(
         (container) =>
-          !(container.conditionTypeColumn || container.contactFilterColumn),
+          !(container.conditionTypeColumn || container.contactFilterColumn) &&
+          container.jsonColumns.length > 0,
       )
       expect(executed.length, kind).toBeGreaterThanOrEqual(containers.length)
+    }
+  })
+
+  test("a flow or AI agent is also probed through the reply columns of a story automation", async () => {
+    for (const [kind, replyType] of [
+      ["flow", "flow"],
+      ["aiAgent", "AIAgent"],
+    ] as const) {
+      const queries: string[] = []
+      const tx = {
+        execute: (query: { queryChunks?: unknown[] }) => {
+          queries.push(JSON.stringify(query))
+          return Promise.resolve({ rows: [] })
+        },
+      }
+      await findParentsWithOutsideDependents(
+        tx as never,
+        kind,
+        ["1"],
+        new Set(),
+        { workspaceId: "w1" },
+      )
+      expect(
+        queries.some(
+          (query) =>
+            query.includes("IgStoryAutomation") && query.includes(replyType),
+        ),
+        kind,
+      ).toBe(true)
     }
   })
 

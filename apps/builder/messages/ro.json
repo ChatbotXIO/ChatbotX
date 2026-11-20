@@ -8208,6 +8208,7 @@
       "resourcesTitle": "Resurse instalate",
       "noResources": "Nu s-a creat nimic încă.",
       "deletedResource": "Resursă ștearsă",
+      "wholeCategory": "{count, plural, one {# element} other {# elemente}}",
       "viewOnly": "Doar vizualizare",
       "created": "Creat",
       "reused": "Reutilizat",
@@ -8262,7 +8263,12 @@
           "placeCategories": "Categorii de locații"
         }
       },
-      "viewOnlyCopyIncluded": "Un element selectat (sau un element de care are nevoie) a fost instalat dintr-un șablon doar pentru vizualizare, deci nu poate fi partajat într-un șablon nou."
+      "viewOnlyCopyIncluded": "Un element selectat (sau un element de care are nevoie) a fost instalat dintr-un șablon doar pentru vizualizare, deci nu poate fi partajat într-un șablon nou.",
+      "miniAppPublishedExcluded": {
+        "title": "Mini aplicație omisă",
+        "hint": "Aceste fluxuri folosesc o mini aplicație publicată pe WhatsApp. Nu poate fi partajată, deci șablonul o omite, iar instalarea elimină referința.",
+        "item": "{flowName}: {miniAppName}"
+      }
     },
     "categories": {
       "flows": "Fluxuri",
@@ -8284,7 +8290,20 @@
       "aiFiles": "Fișiere de cunoștințe AI",
       "questionnaires": "Questionnaires",
       "couponTopics": "Subiecte cupoane",
-      "pipelines": "Pipeline-uri"
+      "pipelines": "Pipeline-uri",
+      "magicLinks": "Linkuri magice",
+      "polls": "Sondaje",
+      "dynamicImages": "Imagini dinamice",
+      "placeLocations": "Locații",
+      "miniApps": "Mini aplicații",
+      "minigames": "Minijocuri",
+      "leaderboards": "Clasamente",
+      "openHours": "Program de funcționare",
+      "vendors": "Furnizori",
+      "discountCodes": "Coduri de reducere",
+      "storeSettings": "Setările magazinului",
+      "storyAutomations": "Automatizare Story-uri Instagram",
+      "inboundWebhooks": "Webhook de intrare"
     },
     "locked": {
       "flowBanner": "Acest flux a fost instalat dintr-un șablon doar pentru vizualizare. Îl poți vedea, dar nu îl poți edita.",
@@ -8361,6 +8380,7 @@
       "flowNotPublished": "Flow-ul a fost instalat ca ciornă și nu este publicat.",
       "flowSkippedRequiredReference": "Flow-ul a fost omis deoarece o referință obligatorie nu a putut fi rezolvată.",
       "folder": "Un element referit nu a fost găsit în acest spațiu de lucru, așa că legătura a fost eliminată.",
+      "inboundWebhookLimitReached": "Acest webhook de intrare a fost omis: spațiul de lucru a atins deja numărul maxim de webhook-uri de intrare.",
       "inboxBindingRequired": "Alege o căsuță de mesaje pentru acest canal; până atunci elementul rămâne inactiv.",
       "integration": "Un element referit nu a fost găsit în acest spațiu de lucru, așa că legătura a fost eliminată.",
       "localModifiedOverwritten": "Un element editat local a fost suprascris. A fost salvat un backup care poate fi restaurat.",
@@ -8381,7 +8401,25 @@
       "tag": "Un element referit nu a fost găsit în acest spațiu de lucru, așa că legătura a fost eliminată.",
       "unlisted": "Element neadus complet: {code}",
       "workspaceMember": "Atribuit unui membru care nu este în acest spațiu de lucru.",
-      "workspaceUnavailable": "Acest spațiu de lucru nu mai este disponibil, așa că elementul a fost omis."
+      "workspaceUnavailable": "Acest spațiu de lucru nu mai este disponibil, așa că elementul a fost omis.",
+      "scheduleExpired": "Datele acestui element au trecut deja; setează date noi înainte de a-l folosi.",
+      "linkNotRemapped": "Un link către un instrument care nu făcea parte din șablon a fost lăsat neschimbat.",
+      "dynamicImage": "Această imagine dinamică a fost omisă deoarece fundalul ei nu a putut fi copiat.",
+      "dynamicImageFieldNotBound": "Alege un câmp personalizat în care să se păstreze imaginea în cache; cel original exista deja în workspace-ul tău.",
+      "dynamicImageRerenderFailed": "Această imagine dinamică a fost dezactivată deoarece fundalul ei nu a putut fi redat din nou cu linkurile copiate. Activeaz-o din nou pentru a încerca iar.",
+      "pollImage": "O imagine nu a putut fi copiată.",
+      "leaderboardInvalid": "Configurația acestui clasament nu a putut fi instalată, așa că a fost omisă.",
+      "placeLocationInvalid": "Acest loc a fost omis deoarece numele său este gol.",
+      "minigame": "Minijocul din care acest clasament își ia punctele nu face parte din șablon, așa că a fost omis.",
+      "minigameImage": "O imagine nu a putut fi copiată.",
+      "leaderboardImage": "O imagine nu a putut fi copiată.",
+      "leaderboardHostMissing": "Clasamentul are nevoie de un canal (sau minijoc) propriu pe care această instalare nu l-a oferit, așa că a fost omis.",
+      "externalStoreSkipped": "Acest workspace vinde dintr-un magazin conectat (Shopify sau WooCommerce), deci produsele, furnizorii, codurile de reducere, programul și setările magazinului nu au fost instalate.",
+      "discountCodeSkipped": "Acest cod de reducere a fost omis: produsele sau categoria la care se aplică nu fac parte din șablon, sau setările lui au fost refuzate.",
+      "storeSettingsKept": "Acest workspace avea deja setările magazinului, așa că au fost păstrate neschimbate.",
+      "vendorImage": "O imagine nu a putut fi copiată.",
+      "storeSettingsCurrencyKept": "Workspace-ul are produse într-o altă monedă, așa că moneda lui a fost păstrată în locul celei din șablon.",
+      "storySelectionRequired": "Selectează din nou poveștile: poveștile originale nu au putut fi preluate."
     },
     "tabs": {
       "mine": "Șabloanele mele",

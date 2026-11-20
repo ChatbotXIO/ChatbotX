@@ -1,9 +1,16 @@
+import { type DatabaseClient, db } from "@chatbotx.io/database/client"
 import {
   placeCategoryRepository,
   placeLocationRepository,
 } from "@chatbotx.io/database/repositories"
 import { BaseService } from "../base.service"
 import { ChatbotXException, notFoundException } from "../errors"
+import {
+  assertResourceEditable,
+  changedKeysOf,
+  withDeleteGuard,
+} from "../template/installed-resource.service"
+import { withTemplateLockedTransaction } from "../template/template-resource-locks"
 import { type NearestPlace, pickNearestPlace } from "./nearest"
 import { buildGoogleMapsPreviewUrl } from "./preview-url"
 
@@ -47,6 +54,14 @@ const normalizeName = (name: string): string => {
   return trimmed
 }
 
+type PlaceLocationInsertInput = {
+  workspaceId: string
+  name: string
+  latitude: number
+  longitude: number
+  categoryId?: string | null
+}
+
 const locationNotFound = () => notFoundException("Place location not found")
 
 class PlaceLocationService extends BaseService {
@@ -71,25 +86,36 @@ class PlaceLocationService extends BaseService {
     return toItem(row)
   }
 
-  async create(input: {
-    workspaceId: string
-    name: string
-    latitude: number
-    longitude: number
-    categoryId?: string | null
-  }): Promise<PlaceLocationItem> {
-    const name = normalizeName(input.name)
-    await this.assertCategory(input.workspaceId, input.categoryId)
-    const created = await placeLocationRepository.create({
-      workspaceId: input.workspaceId,
-      name,
-      latitude: input.latitude,
-      longitude: input.longitude,
-      categoryId: input.categoryId ?? null,
-    })
+  /**
+   * The insert core (name normalisation plus the row write), shared with the
+   * template install so there is one implementation. The category check stays
+   * in `create`: an install passes a category it just resolved.
+   */
+  async insertInTx(
+    tx: DatabaseClient,
+    input: PlaceLocationInsertInput,
+  ): Promise<{ id: string }> {
+    const created = await placeLocationRepository.create(
+      {
+        workspaceId: input.workspaceId,
+        name: normalizeName(input.name),
+        latitude: input.latitude,
+        longitude: input.longitude,
+        categoryId: input.categoryId ?? null,
+      },
+      tx,
+    )
     if (!created) {
       throw new Error("Failed to create place location")
     }
+    return created
+  }
+
+  async create(input: PlaceLocationInsertInput): Promise<PlaceLocationItem> {
+    // Fails on a blank name before the category lookup, as before.
+    normalizeName(input.name)
+    await this.assertCategory(input.workspaceId, input.categoryId)
+    const created = await this.insertInTx(db, input)
     await this.invalidate(input.workspaceId)
     return await this.find({
       workspaceId: input.workspaceId,
@@ -118,11 +144,33 @@ class PlaceLocationService extends BaseService {
       return await this.find(input)
     }
     await this.assertCategory(input.workspaceId, categoryId)
-    const updated = await placeLocationRepository.update({
-      workspaceId: input.workspaceId,
-      locationId: input.locationId,
-      values,
-    })
+    const updated = await withTemplateLockedTransaction(
+      async (tx) => {
+        const current = await placeLocationRepository.find(input, tx)
+        if (!current) {
+          throw locationNotFound()
+        }
+        await assertResourceEditable({
+          workspaceId: input.workspaceId,
+          resourceKind: "placeLocation",
+          resourceIds: [current.id],
+          changedKeys: changedKeysOf(current, values),
+          tx,
+        })
+        return await placeLocationRepository.update(
+          {
+            workspaceId: input.workspaceId,
+            locationId: input.locationId,
+            values,
+          },
+          tx,
+        )
+      },
+      {
+        workspaceId: input.workspaceId,
+        initialKeys: [{ kind: "placeLocation", resourceId: input.locationId }],
+      },
+    )
     if (!updated) {
       throw locationNotFound()
     }
@@ -134,11 +182,34 @@ class PlaceLocationService extends BaseService {
     workspaceId: string
     locationId: string
   }): Promise<void> {
-    const row = await placeLocationRepository.delete(input)
-    if (!row) {
+    const deleted = await withDeleteGuard(
+      {
+        workspaceId: input.workspaceId,
+        targets: [
+          { resourceKind: "placeLocation", resourceIds: [input.locationId] },
+        ],
+      },
+      (tx) =>
+        this.deleteInTx(tx, {
+          workspaceId: input.workspaceId,
+          ids: [input.locationId],
+        }),
+    )
+    if (deleted.length === 0) {
       throw locationNotFound()
     }
     await this.invalidate(input.workspaceId)
+  }
+
+  /**
+   * The delete core (row write only), shared with the template uninstall so
+   * there is one implementation. The caller invalidates the cache after commit.
+   */
+  deleteInTx(
+    tx: DatabaseClient,
+    input: { workspaceId: string; ids: string[] },
+  ): Promise<string[]> {
+    return placeLocationRepository.deleteManyReturningIds(input, tx)
   }
 
   /** The location closest to a point, in one category or all; null if none. */
@@ -169,6 +240,11 @@ class PlaceLocationService extends BaseService {
     if (!category) {
       throw notFoundException("Place category does not exist.")
     }
+  }
+
+  /** Drops the cached location and category lists; the template uninstall runs it after its commit. */
+  async invalidateWorkspaceCache(workspaceId: string): Promise<void> {
+    await this.invalidate(workspaceId)
   }
 
   /** Category lists carry per-category location counts. */

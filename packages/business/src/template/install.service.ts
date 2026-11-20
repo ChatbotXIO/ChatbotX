@@ -16,17 +16,27 @@ import { automatedResponseService } from "../automated-response/service"
 import { botFieldService } from "../bot-field/service"
 import { couponService } from "../coupon/service"
 import { customFieldService } from "../custom-field/service"
+import { ecommerceOpenHoursService } from "../ecommerce-open-hours/service"
+import { ecommerceSettingsService } from "../ecommerce-settings/service"
 import { ChatbotXException, toPublicErrorMessage } from "../errors"
 import { logger } from "../logger"
 import { pipelineService } from "../pipeline/service"
+import { vendorService } from "../vendor/service"
 import { resolveManifests } from "./adapters/manifests/resolve"
 import { getTemplateAdapter, TEMPLATE_INSTALL_ORDER } from "./adapters/registry"
+import { TEMPLATE_TOOL_CATEGORIES } from "./adapters/tool-categories"
 import type {
+  AfterCommitTask,
   PatchTask,
   StagedObjects,
   TemplateInstallContext,
   TemplateInstallWarning,
 } from "./adapters/types"
+import { runAfterCommitTasks } from "./after-commit"
+import {
+  isExternalStoreCategory,
+  workspaceUsesExternalStore,
+} from "./external-store"
 import {
   rewriteBotFieldTokensDeep,
   rewriteCouponTokensDeep,
@@ -40,6 +50,7 @@ import {
   flushPublishEffects,
   PUBLISH_EFFECTS_SWEEP_GRACE_MS,
 } from "./publish-effects"
+import { rewriteEntryResourceLinks } from "./resource-links"
 import { inSourceOrder } from "./source-order"
 import { stampSyncedHashes } from "./sync-hash"
 import { COUPON_TOPICS_CATEGORY, entriesForCategory } from "./template-entries"
@@ -96,8 +107,10 @@ export const createInstallContext = (
   tracked: TrackedResource[]
   warnings: TemplateInstallWarning[]
   resourceCount: { value: number }
+  afterCommitTasks: AfterCommitTask[]
 } => {
   const tracked: TrackedResource[] = []
+  const afterCommitTasks: AfterCommitTask[] = []
   const warnings: TemplateInstallWarning[] = []
   const resourceCount = { value: 0 }
 
@@ -118,9 +131,12 @@ export const createInstallContext = (
         warnings.push(warning)
       }
     },
+    afterCommit: (task) => {
+      afterCommitTasks.push(task)
+    },
   }
 
-  return { ctx, tracked, warnings, resourceCount }
+  return { ctx, tracked, warnings, resourceCount, afterCommitTasks }
 }
 
 /** What a copy may do once installed; a reused row is never locked. */
@@ -184,6 +200,8 @@ type RunInstallResult = {
   installFolderId: string | null
   /** Flows installed with a published version, for the after-publish effects. */
   publishedFlows: { flowId: string; versionId: string }[]
+  /** Storage work the adapters owe once this transaction commits. */
+  afterCommitTasks: AfterCommitTask[]
 }
 
 /**
@@ -202,20 +220,28 @@ const runInstall = async (
 ): Promise<RunInstallResult> => {
   const lockOf = (entry: TrackedResource) => lockFor(entry, input)
   const payload = inSourceOrder(input.payload)
-  const { ctx, tracked, warnings, resourceCount } = createInstallContext({
-    tx,
-    installationId: input.installationId,
-    workspaceId: input.workspaceId,
-    inboxBindings: input.inboxBindings,
-    sourceWorkspaceId: payload.source.workspaceId,
-    staged,
-  })
+  const { ctx, tracked, warnings, resourceCount, afterCommitTasks } =
+    createInstallContext({
+      tx,
+      installationId: input.installationId,
+      workspaceId: input.workspaceId,
+      inboxBindings: input.inboxBindings,
+      sourceWorkspaceId: payload.source.workspaceId,
+      staged,
+    })
   const publishedFlows: RunInstallResult["publishedFlows"] = []
   ctx.publishedFlows = publishedFlows
 
+  // A workspace that sells from a connected store takes none of the Ecommerce
+  // group (see `external-store.ts`); read through this transaction.
+  const externalStoreTarget = await workspaceUsesExternalStore(
+    input.workspaceId,
+    tx,
+  )
   const { installFolderId } = await resolveManifests(ctx, payload.manifests, {
     skipMapped: false,
-    mayUse: () => true,
+    mayUse: (category) =>
+      !(externalStoreTarget && isExternalStoreCategory(category)),
     installFolder: input.createInstallFolder
       ? { templateName: input.templateName, mode: "create" }
       : undefined,
@@ -247,11 +273,23 @@ const runInstall = async (
     if (!adapter) {
       return
     }
+    if (externalStoreTarget && isExternalStoreCategory(category)) {
+      const skipped = entriesForCategory(resources, category).length
+      if (skipped > 0) {
+        ctx.warn({
+          category,
+          entityKind: "externalStoreSkipped",
+          path: category,
+          value: String(skipped),
+        })
+      }
+      return
+    }
     // Coupon topics install before every category that can name one, so the
     // `{{coupon:<id>}}` tokens in this category's text can follow them.
     // Likewise `{{bot_field:<id>}}` follows the Account Field it resolved to
     // (settings installs before every category that can carry the text).
-    const entries = rewriteBotFieldTokensDeep(
+    const withTokens = rewriteBotFieldTokensDeep(
       rewriteCouponTokensDeep(
         entriesForCategory(resources, category).filter(
           (entry) => !adapter.earlyEntry?.(entry),
@@ -260,6 +298,9 @@ const runInstall = async (
       ),
       ctx.idMaps.botField,
     )
+    const entries = adapter.rewritesLinksInPatch
+      ? withTokens
+      : rewriteEntryResourceLinks(ctx, category, withTokens)
     if (entries.length === 0) {
       return
     }
@@ -277,6 +318,12 @@ const runInstall = async (
   // carry `{{coupon:<id>}}`, which needs the installed topic's id.
   await insertCategory(COUPON_TOPICS_CATEGORY)
   insertedCategories.add(COUPON_TOPICS_CATEGORY)
+  // The tools next: every text that can link to one (including the bot fields
+  // below) then finds the copy it must point at.
+  for (const category of TEMPLATE_TOOL_CATEGORIES) {
+    await insertCategory(category)
+    insertedCategories.add(category)
+  }
 
   // Early entries (settings' bot fields) resolve before any category:
   // `{{bot_field:<id>}}` text in a questionnaire, product or saved reply must
@@ -286,9 +333,13 @@ const runInstall = async (
     if (!(adapter?.earlyEntry && adapter.insertEarly)) {
       continue
     }
-    const early = rewriteCouponTokensDeep(
-      entriesForCategory(resources, category).filter(adapter.earlyEntry),
-      ctx.idMaps.couponTopic,
+    const early = rewriteEntryResourceLinks(
+      ctx,
+      category,
+      rewriteCouponTokensDeep(
+        entriesForCategory(resources, category).filter(adapter.earlyEntry),
+        ctx.idMaps.couponTopic,
+      ),
     )
     if (early.length === 0) {
       continue
@@ -326,6 +377,7 @@ const runInstall = async (
     resourceCount: resourceCount.value,
     installFolderId,
     publishedFlows,
+    afterCommitTasks,
   }
 }
 
@@ -353,6 +405,10 @@ export const invalidateAfterCommit = async (
     aiAgentService.invalidate({ workspaceId }),
     pipelineService.invalidateList(workspaceId),
     couponService.invalidate(workspaceId),
+    // The store settings, vendors and opening hours the Ecommerce tools wrote.
+    ecommerceSettingsService.invalidateWorkspaceCache(workspaceId),
+    ecommerceOpenHoursService.invalidateWorkspaceCache(workspaceId),
+    vendorService.invalidateWorkspaceCache(workspaceId),
   ])
 }
 
@@ -479,9 +535,13 @@ export const templateInstallService = {
    * claim for a retry or records the terminal failure via `fail`.
    */
   async run(input: TemplateInstallRunInput): Promise<void> {
+    let afterCommitTasks: AfterCommitTask[] = []
     {
       // Storage I/O happens here, before the transaction: inside it the copies
       // would hold a connection idle past `idle_in_transaction_session_timeout`.
+      const externalStoreTarget = await workspaceUsesExternalStore(
+        input.workspaceId,
+      )
       const staged = await stageTemplateObjects({
         ctx: {
           workspaceId: input.workspaceId,
@@ -497,6 +557,8 @@ export const templateInstallService = {
           trackCopiedObject: () => undefined,
         },
         resources: input.payload.resources,
+        include: (category) =>
+          !(externalStoreTarget && isExternalStoreCategory(category)),
       })
       await db.transaction(async (tx) => {
         markTemplateEngineTransaction(tx)
@@ -504,6 +566,7 @@ export const templateInstallService = {
         await tx.execute(idleTimeoutStatement())
 
         const outcome = await runInstall(tx, input, staged)
+        afterCommitTasks = outcome.afterCommitTasks
         await stampSyncedHashes(tx, input.installationId, input.sourceVersion)
 
         const completed = await templateInstallationRepository.complete(
@@ -532,6 +595,14 @@ export const templateInstallService = {
     }
 
     await invalidateAfterCommit(input.workspaceId)
+    const lateWarnings = await runAfterCommitTasks(afterCommitTasks)
+    if (lateWarnings.length > 0) {
+      await templateInstallationRepository.appendWarnings({
+        id: input.installationId,
+        workspaceId: input.workspaceId,
+        warnings: lateWarnings,
+      })
+    }
     // Same effects as a manual publish (version-list cache, Meta welcome-flow
     // sync, stale quick-reply state), which only make sense once the rows are
     // committed. Recorded on the installation by the completion above, so the

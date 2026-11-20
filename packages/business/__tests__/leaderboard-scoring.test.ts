@@ -67,6 +67,16 @@ vi.mock("../src/leaderboard/ranking", () => ({
   },
 }))
 
+vi.mock("../src/template/installed-resource.service", () => ({
+  assertReferencable: vi.fn(),
+  assertResourceEditable: vi.fn(),
+  changedKeysOf: () => [],
+  withDeleteGuard: (_input: unknown, run: (tx: unknown) => unknown) => run({}),
+}))
+vi.mock("../src/template/template-resource-locks", () => ({
+  withTemplateLockedTransaction: async (run: (tx: unknown) => unknown) =>
+    await run({}),
+}))
 vi.mock("../src/flow", () => ({ flowService: {} }))
 vi.mock("../src/flow-version", () => ({ flowVersionService: {} }))
 
@@ -489,6 +499,7 @@ describe("leaderboardService status transitions", () => {
     expect(mocks.transitionStatus).toHaveBeenCalledWith(
       { workspaceId: "1", id: "100", from: "active" },
       expect.objectContaining({ status: "finished" }),
+      expect.anything(),
     )
     expect(mocks.drop).toHaveBeenCalledWith("100")
     expect(mocks.queueAdd).toHaveBeenCalledWith(

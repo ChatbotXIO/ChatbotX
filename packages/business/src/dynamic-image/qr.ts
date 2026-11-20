@@ -1,16 +1,19 @@
 import { createCanvas, loadImage } from "@napi-rs/canvas"
 import QRCode from "qrcode"
-import { loadRemoteImage } from "./render"
+import { loadRemoteImage, type RemoteImageOptions } from "./render"
 
 const LOGO_SIZE_RATIO = 0.22
 const LOGO_PADDING_RATIO = 0.1
 
-export async function renderQrCodeBuffer(input: {
-  text: string
-  size: number
-  color: string
-  logoUrl?: string
-}): Promise<Buffer> {
+export async function renderQrCodeBuffer(
+  input: {
+    text: string
+    size: number
+    color: string
+    logoUrl?: string
+  },
+  options: RemoteImageOptions = {},
+): Promise<Buffer> {
   const qrBuffer = await QRCode.toBuffer(input.text, {
     type: "png",
     width: input.size,
@@ -27,7 +30,7 @@ export async function renderQrCodeBuffer(input: {
   const qrImage = await loadImage(qrBuffer)
   ctx.drawImage(qrImage, 0, 0, input.size, input.size)
 
-  const logoImage = await loadRemoteImage(input.logoUrl)
+  const logoImage = await loadRemoteImage(input.logoUrl, options)
   const logoSize = input.size * LOGO_SIZE_RATIO
   const logoX = (input.size - logoSize) / 2
   const logoY = (input.size - logoSize) / 2

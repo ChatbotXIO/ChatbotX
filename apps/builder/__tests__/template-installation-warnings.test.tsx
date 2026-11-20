@@ -1,5 +1,6 @@
 // @vitest-environment jsdom
 
+import type { TemplateInstallationWarningGroup } from "@chatbotx.io/business"
 import { NextIntlClientProvider } from "next-intl"
 import { act } from "react"
 import { createRoot, type Root } from "react-dom/client"
@@ -7,11 +8,12 @@ import { afterEach, beforeEach, describe, expect, test } from "vitest"
 import { TemplateInstallationWarnings } from "@/features/templates/components/template-installation-warnings"
 import messages from "../messages/en.json"
 
-const groups = (count: number) =>
+const groups = (count: number): TemplateInstallationWarningGroup[] =>
   Array.from({ length: count }, (_, index) => ({
     category: "flows",
     sourceId: String(index),
     name: `flow-${index}`,
+    itemCount: null,
     skipped: false,
     issues: [{ code: "referenceRemoved", count: 2 }],
   }))
@@ -20,11 +22,14 @@ describe("template installation warnings", () => {
   let container: HTMLDivElement
   let root: Root
 
-  const render = (count: number) =>
+  const render = (
+    count: number,
+    override?: TemplateInstallationWarningGroup[],
+  ) =>
     act(() =>
       root.render(
         <NextIntlClientProvider locale="en" messages={messages} timeZone="UTC">
-          <TemplateInstallationWarnings groups={groups(count)} />
+          <TemplateInstallationWarnings groups={override ?? groups(count)} />
         </NextIntlClientProvider>,
       ),
     )
@@ -68,5 +73,21 @@ describe("template installation warnings", () => {
     render(4)
 
     expect(button("Next")).toBeUndefined()
+  })
+
+  test("a category-wide warning shows its item count, not a deleted resource", () => {
+    render(0, [
+      {
+        category: "openHours",
+        sourceId: null,
+        name: null,
+        itemCount: 1,
+        skipped: true,
+        issues: [{ code: "externalStoreSkipped", count: 1 }],
+      },
+    ])
+
+    expect(container.textContent).toContain("1 item")
+    expect(container.textContent).not.toContain("Deleted resource")
   })
 })

@@ -15,6 +15,7 @@ import { Textarea } from "@chatbotx.io/ui/components/ui/textarea"
 import { cn } from "@chatbotx.io/ui/lib/utils"
 import { useTranslations } from "next-intl"
 import { type ReactNode, useId } from "react"
+import { useIsEditorLocked } from "@/features/templates/components/locked-editor"
 import {
   type EnumPropertyKey,
   enumOptionLabelKey,
@@ -116,13 +117,19 @@ export function NumberProp({
 
 export function BooleanProp({ propKey }: { propKey: MiniAppPropertyKey }) {
   const id = useId()
+  const isLocked = useIsEditorLocked()
   const { props, setProp } = useInspector()
   return (
     <FieldRow htmlFor={id} inline propKey={propKey}>
       <Switch
         checked={props[propKey] === true}
+        disabled={isLocked}
         id={id}
-        onCheckedChange={(checked) => setProp(propKey, checked)}
+        onCheckedChange={(checked) => {
+          if (!isLocked) {
+            setProp(propKey, checked)
+          }
+        }}
       />
     </FieldRow>
   )
@@ -136,6 +143,7 @@ export function EnumProp<K extends EnumPropertyKey>({
   allowEmpty?: boolean
 }) {
   const t = useTranslations()
+  const isLocked = useIsEditorLocked()
   const { props, setProp } = useInspector()
   const labels = enumOptionLabelKey[propKey] as Record<string, string>
   const items = [
@@ -147,6 +155,7 @@ export function EnumProp<K extends EnumPropertyKey>({
   return (
     <FieldRow propKey={propKey}>
       <Select
+        disabled={isLocked}
         items={items}
         onValueChange={(value) => setProp(propKey, value ? value : undefined)}
         value={readString(props[propKey])}

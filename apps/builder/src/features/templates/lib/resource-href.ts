@@ -8,6 +8,14 @@ const HREF_BY_CATEGORY: Readonly<Record<string, HrefBuilder>> = {
   products: (base, id) => `${base}/products/${id}/edit`,
   sequences: (base, id) => `${base}/sequences/${id}`,
   questionnaires: (base, id) => `${base}/questionnaires/${id}/edit`,
+  minigames: (base, id) => `${base}/minigames/${id}/edit`,
+  miniApps: (base, id) => `${base}/mini-apps/${id}/edit`,
+  leaderboards: (base, id) => `${base}/leaderboards/${id}/edit`,
+  discountCodes: (base, id) => `${base}/discount-codes/${id}`,
+  polls: (base, id) => `${base}/polls/${id}/edit`,
+  dynamicImages: (base, id) => `${base}/dynamic-images/${id}/edit`,
+  storyAutomations: (base, id) => `${base}/ig-stories/${id}`,
+  inboundWebhooks: (base, id) => `${base}/inbound-webhooks/${id}`,
 }
 
 export const resourceHref = (

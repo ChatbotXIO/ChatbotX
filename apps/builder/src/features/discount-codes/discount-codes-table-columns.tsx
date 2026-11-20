@@ -17,6 +17,8 @@ import Link from "next/link"
 import { useRouter } from "next/navigation"
 import type { useTranslations } from "next-intl"
 import { useAction } from "next-safe-action/hooks"
+import { LockBadge } from "@/features/templates/components/lock-badge"
+import { UndeletableGuard } from "@/features/templates/components/lock-context"
 import { toastActionError } from "@/lib/errors/safe-action-error-handler"
 import { setDiscountCodeActiveAction } from "./actions/discount-code.action"
 import { formatDiscountValue } from "./lib/format-discount"
@@ -87,6 +89,7 @@ export const getDiscountCodeColumns = ({
           >
             {row.original.code}
           </Link>
+          <LockBadge resourceId={row.original.id} />
           {row.original.autoApply ? (
             <Badge variant="secondary">{t("discountCodes.automatic")}</Badge>
           ) : null}
@@ -187,13 +190,18 @@ export const getDiscountCodeColumns = ({
               <PencilIcon className="me-2 h-4 w-4" />
               {t("actions.edit")}
             </DropdownMenuItem>
-            <DropdownMenuItem
-              className="text-destructive"
-              onClick={() => setRowAction({ row, variant: "delete" })}
-            >
-              <Trash2Icon className="me-2 h-4 w-4" />
-              {t("actions.delete")}
-            </DropdownMenuItem>
+            <UndeletableGuard resourceId={row.original.id}>
+              {(disabled) => (
+                <DropdownMenuItem
+                  className="text-destructive"
+                  disabled={disabled}
+                  onClick={() => setRowAction({ row, variant: "delete" })}
+                >
+                  <Trash2Icon className="me-2 h-4 w-4" />
+                  {t("actions.delete")}
+                </DropdownMenuItem>
+              )}
+            </UndeletableGuard>
           </DropdownMenuContent>
         </DropdownMenu>
       ),

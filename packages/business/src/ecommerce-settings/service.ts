@@ -33,7 +33,11 @@ import {
   paymentProviderNotConnectedException,
 } from "../payment-provider/errors"
 import { shopifyIntegrationService } from "../shopify/integration.service"
-import { assertReferencable } from "../template/installed-resource.service"
+import {
+  assertReferencable,
+  assertResourceEditable,
+  changedKeysOf,
+} from "../template/installed-resource.service"
 import { withTemplateLockedTransaction } from "../template/template-resource-locks"
 import { wooCommerceIntegrationService } from "../woocommerce/integration.service"
 import {
@@ -183,6 +187,45 @@ class EcommerceSettingsService extends BaseService {
     return await ecommerceSettingsRepository.countProductsInOtherCurrency(input)
   }
 
+  /** The cache drop an install leaves for after its commit (the settings and the store source). */
+  async invalidateWorkspaceCache(workspaceId: string): Promise<void> {
+    await this.invalidateCacheTags(this.cacheTag(workspaceId))
+  }
+
+  /**
+   * The row values a template install writes: the defaults with the shipped
+   * groups on top, parsed by the settings schema and checked for the Pro
+   * features. The existence of a flow or schedule is not re-read here: the
+   * install resolved them to copies it has just created in its own transaction,
+   * which a read on another connection could not see.
+   */
+  async prepareTemplateValues(
+    workspaceId: string,
+    shipped: EcommerceSettingsPatch,
+  ): Promise<EcommerceSettingsValues> {
+    await this.assertProFeaturesAllowed(workspaceId, shipped)
+    return toValues(
+      ecommerceSettingsSchema.parse({
+        general: {
+          ...ECOMMERCE_SETTINGS_DEFAULTS.general,
+          ...definedOnly(shipped.general),
+        },
+        payments: {
+          ...ECOMMERCE_SETTINGS_DEFAULTS.payments,
+          ...definedOnly(shipped.payments),
+        },
+        shipping: {
+          ...ECOMMERCE_SETTINGS_DEFAULTS.shipping,
+          ...definedOnly(shipped.shipping),
+        },
+        checkout: {
+          ...ECOMMERCE_SETTINGS_DEFAULTS.checkout,
+          ...definedOnly(shipped.checkout),
+        },
+      }),
+    )
+  }
+
   /**
    * Merges a partial update into the saved settings (or the defaults) and
    * saves the whole row. Each group may be sent alone.
@@ -194,6 +237,8 @@ class EcommerceSettingsService extends BaseService {
     const { workspaceId, patch } = input
     await this.assertProFeaturesAllowed(workspaceId, patch)
 
+    // The row's id, to hold its template lock before the row itself is locked.
+    const existing = await ecommerceSettingsRepository.find(workspaceId)
     const { merged, previousSource } = await withTemplateLockedTransaction(
       async (tx) => {
         // The flows being written: their tpl-res locks are held until the
@@ -214,7 +259,7 @@ class EcommerceSettingsService extends BaseService {
         })
         // Create the row if missing, then lock it so two saves of different
         // groups queue up instead of overwriting each other's merge.
-        await ecommerceSettingsRepository.insertIfMissing(
+        await ecommerceSettingsRepository.insertOrFind(
           { workspaceId, values: toValues(ECOMMERCE_SETTINGS_DEFAULTS) },
           tx,
         )
@@ -240,11 +285,26 @@ class EcommerceSettingsService extends BaseService {
         if (Object.keys(definedOnly(patch.payments)).length > 0) {
           await this.assertPaymentMethodsUsable(workspaceId, next, tx)
         }
+        if (row) {
+          await assertResourceEditable({
+            workspaceId,
+            resourceKind: "storeSettings",
+            resourceIds: [row.id],
+            changedKeys: changedKeysOf(toValues(current), toValues(next)),
+            tx,
+          })
+        }
         await ecommerceSettingsRepository.upsert(
           { workspaceId, values: toValues(next) },
           tx,
         )
         return { merged: next, previousSource: current.general.storeSource }
+      },
+      {
+        workspaceId,
+        initialKeys: existing
+          ? [{ kind: "storeSettings", resourceId: existing.id }]
+          : [],
       },
     )
 

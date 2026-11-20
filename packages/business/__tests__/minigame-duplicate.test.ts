@@ -6,7 +6,11 @@ const {
   findFirst,
   findMany,
   isUniqueViolationError,
+  assertResourceEditable,
+  lockedTransaction,
 } = vi.hoisted(() => ({
+  assertResourceEditable: vi.fn(),
+  lockedTransaction: vi.fn(),
   insertValues: vi.fn(),
   insertReturning: vi.fn(),
   findFirst: vi.fn(),
@@ -16,22 +20,40 @@ const {
 
 vi.mock("@chatbotx.io/database/repositories", () => ({
   minigameRepository: {
-    listNamesWithPrefix: async () =>
+    listNamesWithPrefix: async (_input: unknown, _tx?: unknown) =>
       ((await findMany()) as { name: string }[]).map((row) => row.name),
   },
 }))
 
+const tx: Record<string, unknown> = {
+  insert: vi.fn(() => ({
+    values: (values: unknown) => {
+      insertValues(values)
+      return { returning: insertReturning }
+    },
+  })),
+  query: { minigameModel: { findFirst, findMany } },
+  transaction: (run: (savepoint: unknown) => unknown) => run(tx),
+}
+
+vi.mock("../src/template/template-resource-locks", () => ({
+  withTemplateLockedTransaction: async (
+    run: (tx: unknown) => unknown,
+    options: unknown,
+  ) => {
+    lockedTransaction(options)
+    return await run(tx)
+  },
+}))
+vi.mock("../src/template/installed-resource.service", () => ({
+  assertResourceEditable,
+  changedKeysOf: vi.fn(),
+  withDeleteGuard: vi.fn(),
+}))
+
 vi.mock("@chatbotx.io/database/client", () => ({
   and: vi.fn(),
-  db: {
-    insert: vi.fn(() => ({
-      values: (values: unknown) => {
-        insertValues(values)
-        return { returning: insertReturning }
-      },
-    })),
-    query: { minigameModel: { findFirst, findMany } },
-  },
+  db: tx,
   eq: vi.fn(),
   ilike: vi.fn(),
   inArray: vi.fn(),
@@ -170,6 +192,29 @@ describe("minigameService.duplicate", () => {
     await expect(
       minigameService.duplicate({ workspaceId: "ws-1", id: "1" }),
     ).rejects.toThrow("Minigame not found")
+    expect(insertValues).not.toHaveBeenCalled()
+  })
+
+  test("holds the source's template lock and refuses a copy being uninstalled", async () => {
+    findFirst.mockResolvedValue(source("X"))
+    findMany.mockResolvedValue([])
+    assertResourceEditable.mockRejectedValueOnce(new Error("uninstalling"))
+
+    await expect(
+      minigameService.duplicate({ workspaceId: "ws-1", id: "1" }),
+    ).rejects.toThrow("uninstalling")
+
+    expect(lockedTransaction).toHaveBeenCalledWith({
+      workspaceId: "ws-1",
+      initialKeys: [{ kind: "minigame", resourceId: "1" }],
+    })
+    expect(assertResourceEditable).toHaveBeenCalledWith(
+      expect.objectContaining({
+        resourceKind: "minigame",
+        resourceIds: ["1"],
+        changedKeys: [],
+      }),
+    )
     expect(insertValues).not.toHaveBeenCalled()
   })
 })

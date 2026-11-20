@@ -20,6 +20,7 @@ import {
 } from "../../schema"
 import type { PollCandidateModel, PollModel } from "../../types"
 import {
+  deleteByIdsInWorkspace,
   getPaginationWithDefaults,
   isBigintId,
   likeContains,
@@ -327,23 +328,12 @@ export const pollRepository = {
     return row
   },
 
-  async deleteMany(
+  /** Deletes the polls (candidates and votes cascade) and returns the ids that went. */
+  async deleteManyReturningIds(
     input: { workspaceId: string; ids: string[] },
     tx: DatabaseClient = db,
-  ): Promise<number> {
-    if (!input.ids.length) {
-      return 0
-    }
-    const rows = await tx
-      .delete(pollModel)
-      .where(
-        and(
-          eq(pollModel.workspaceId, input.workspaceId),
-          inArray(pollModel.id, input.ids),
-        ),
-      )
-      .returning({ id: pollModel.id })
-    return rows.length
+  ): Promise<string[]> {
+    return await deleteByIdsInWorkspace(tx, pollModel, input)
   },
 
   /**

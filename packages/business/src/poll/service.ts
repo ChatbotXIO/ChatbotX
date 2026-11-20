@@ -7,7 +7,12 @@ import {
 } from "@chatbotx.io/database/repositories"
 import { BaseService } from "../base.service"
 import { ChatbotXException, notFoundException } from "../errors"
-import { assertReferencable } from "../template/installed-resource.service"
+import {
+  assertReferencable,
+  assertResourceEditable,
+  changedKeysOf,
+  withDeleteGuard,
+} from "../template/installed-resource.service"
 import { withTemplateLockedTransaction } from "../template/template-resource-locks"
 import { computePollAnalytics } from "./analytics"
 
@@ -67,6 +72,38 @@ const assertCandidateCount = (count: number) => {
       400,
     )
   }
+}
+
+const assertPollShape = (input: PollCreateInput) => {
+  assertDateRange(input.startsAt, input.endsAt)
+  assertCandidateCount(input.candidates.length)
+}
+
+/**
+ * True when the submitted candidates differ in content or order from the stored
+ * ones, or name a stored candidate at another position. A list that is not
+ * changed (ids omitted or the same) is left alone: replacing it would delete
+ * the stored rows, and with them their votes.
+ */
+const candidatesChanged = (
+  stored: readonly (PollCandidateInput & { id?: string })[],
+  submitted: readonly (PollCandidateInput & { id?: string })[],
+): boolean => {
+  const content = (candidate: PollCandidateInput) =>
+    JSON.stringify([
+      candidate.name,
+      candidate.description ?? null,
+      candidate.imageUrl ?? null,
+    ])
+  return (
+    stored.length !== submitted.length ||
+    stored.some(
+      (candidate, index) =>
+        content(candidate) !== content(submitted[index]) ||
+        (submitted[index].id !== undefined &&
+          submitted[index].id !== candidate.id),
+    )
+  )
 }
 
 class PollService extends BaseService {
@@ -148,9 +185,21 @@ class PollService extends BaseService {
     }
   }
 
+  /**
+   * The insert core (shape rules plus the row write), shared with the template
+   * install so there is one implementation. Reference checks and template
+   * guards stay outside it.
+   */
+  insertInTx(
+    tx: DatabaseClient,
+    input: PollCreateInput,
+  ): Promise<PollWithCandidates> {
+    assertPollShape(input)
+    return pollRepository.insertWithCandidates(input, tx)
+  }
+
   async create(input: PollCreateInput): Promise<PollWithCandidates> {
-    assertDateRange(input.startsAt, input.endsAt)
-    assertCandidateCount(input.candidates.length)
+    assertPollShape(input)
     await this.assertFlowInWorkspace(input.workspaceId, input.afterVoteFlowId)
     return await withTemplateLockedTransaction(async (tx) => {
       await assertAfterVoteFlowReferencable(
@@ -158,7 +207,7 @@ class PollService extends BaseService {
         input.afterVoteFlowId,
         tx,
       )
-      return await pollRepository.insertWithCandidates(input, tx)
+      return await this.insertInTx(tx, input)
     })
   }
 
@@ -170,107 +219,134 @@ class PollService extends BaseService {
     const { candidates, ...fields } = input.data
     const { workspaceId, id } = input
 
-    return await withTemplateLockedTransaction(async (tx) => {
-      // Lock the poll row: the candidate-count and kept-id checks below read a
-      // snapshot that a concurrent edit must not change underneath them.
-      const current = await pollRepository.findWithCandidates(
-        { workspaceId, id, forUpdate: true },
-        tx,
-      )
-      if (!current) {
-        throw notFoundException("Poll not found")
-      }
-
-      assertDateRange(
-        fields.startsAt ?? current.startsAt,
-        fields.endsAt ?? current.endsAt,
-      )
-      if (fields.afterVoteFlowId) {
-        await this.assertFlowInWorkspace(workspaceId, fields.afterVoteFlowId)
-        await assertAfterVoteFlowReferencable(
-          workspaceId,
-          fields.afterVoteFlowId,
+    return await withTemplateLockedTransaction(
+      async (tx) => {
+        // Lock the poll row: the candidate-count and kept-id checks below read a
+        // snapshot that a concurrent edit must not change underneath them.
+        const current = await pollRepository.findWithCandidates(
+          { workspaceId, id, forUpdate: true },
           tx,
         )
-      }
-
-      if (candidates) {
-        assertCandidateCount(candidates.length)
-        const existingIds = new Set(current.candidates.map((c) => c.id))
-        const keptIds = new Set<string>()
-        for (const candidate of candidates) {
-          if (candidate.id === undefined) {
-            continue
-          }
-          if (!existingIds.has(candidate.id) || keptIds.has(candidate.id)) {
-            throw new ChatbotXException(
-              "Candidate does not belong to this poll",
-              "pollCandidateNotInPoll",
-              400,
-            )
-          }
-          keptIds.add(candidate.id)
+        if (!current) {
+          throw notFoundException("Poll not found")
         }
 
-        // Delete first so removed candidates (and their votes) are gone before
-        // positions are reassigned.
-        await pollRepository.deleteCandidates(
-          {
-            workspaceId,
-            pollId: id,
-            ids: [...existingIds].filter((cid) => !keptIds.has(cid)),
-          },
-          tx,
+        assertDateRange(
+          fields.startsAt ?? current.startsAt,
+          fields.endsAt ?? current.endsAt,
         )
-
-        const toInsert: (PollCandidateInput & { position: number })[] = []
-        for (const [position, candidate] of candidates.entries()) {
-          if (candidate.id === undefined) {
-            toInsert.push({ ...candidate, position })
-            continue
-          }
-          await pollRepository.updateCandidate(
-            {
-              workspaceId,
-              pollId: id,
-              id: candidate.id,
-              position,
-              candidate,
-            },
+        const replacesCandidates = Boolean(
+          candidates && candidatesChanged(current.candidates, candidates),
+        )
+        await assertResourceEditable({
+          workspaceId,
+          resourceKind: "poll",
+          resourceIds: [id],
+          changedKeys: [
+            ...changedKeysOf(current, fields),
+            ...(replacesCandidates ? ["candidates"] : []),
+          ],
+          referencedParents: fields.afterVoteFlowId
+            ? [{ kind: "flow", resourceId: fields.afterVoteFlowId }]
+            : [],
+          tx,
+        })
+        if (fields.afterVoteFlowId) {
+          await this.assertFlowInWorkspace(workspaceId, fields.afterVoteFlowId)
+          await assertAfterVoteFlowReferencable(
+            workspaceId,
+            fields.afterVoteFlowId,
             tx,
           )
         }
-        await pollRepository.insertCandidates(
-          { workspaceId, pollId: id, candidates: toInsert },
+
+        if (candidates && replacesCandidates) {
+          assertCandidateCount(candidates.length)
+          const existingIds = new Set(current.candidates.map((c) => c.id))
+          const keptIds = new Set<string>()
+          for (const candidate of candidates) {
+            if (candidate.id === undefined) {
+              continue
+            }
+            if (!existingIds.has(candidate.id) || keptIds.has(candidate.id)) {
+              throw new ChatbotXException(
+                "Candidate does not belong to this poll",
+                "pollCandidateNotInPoll",
+                400,
+              )
+            }
+            keptIds.add(candidate.id)
+          }
+
+          // Delete first so removed candidates (and their votes) are gone before
+          // positions are reassigned.
+          await pollRepository.deleteCandidates(
+            {
+              workspaceId,
+              pollId: id,
+              ids: [...existingIds].filter((cid) => !keptIds.has(cid)),
+            },
+            tx,
+          )
+
+          const toInsert: (PollCandidateInput & { position: number })[] = []
+          for (const [position, candidate] of candidates.entries()) {
+            if (candidate.id === undefined) {
+              toInsert.push({ ...candidate, position })
+              continue
+            }
+            await pollRepository.updateCandidate(
+              {
+                workspaceId,
+                pollId: id,
+                id: candidate.id,
+                position,
+                candidate,
+              },
+              tx,
+            )
+          }
+          await pollRepository.insertCandidates(
+            { workspaceId, pollId: id, candidates: toInsert },
+            tx,
+          )
+        }
+
+        // A zod-parsed partial carries `undefined` for omitted keys; drizzle
+        // throws "No values to set" when every value is undefined.
+        const definedFields = Object.fromEntries(
+          Object.entries(fields).filter(([, value]) => value !== undefined),
+        )
+        if (Object.keys(definedFields).length > 0) {
+          await pollRepository.update(
+            { workspaceId, id, data: definedFields },
+            tx,
+          )
+        }
+
+        const updated = await pollRepository.findWithCandidates(
+          { workspaceId, id },
           tx,
         )
-      }
-
-      // A zod-parsed partial carries `undefined` for omitted keys; drizzle
-      // throws "No values to set" when every value is undefined.
-      const definedFields = Object.fromEntries(
-        Object.entries(fields).filter(([, value]) => value !== undefined),
-      )
-      if (Object.keys(definedFields).length > 0) {
-        await pollRepository.update(
-          { workspaceId, id, data: definedFields },
-          tx,
-        )
-      }
-
-      const updated = await pollRepository.findWithCandidates(
-        { workspaceId, id },
-        tx,
-      )
-      if (!updated) {
-        throw notFoundException("Poll not found")
-      }
-      return updated
-    })
+        if (!updated) {
+          throw notFoundException("Poll not found")
+        }
+        return updated
+      },
+      {
+        workspaceId,
+        initialKeys: [
+          { kind: "poll", resourceId: id },
+          ...(fields.afterVoteFlowId
+            ? [{ kind: "flow" as const, resourceId: fields.afterVoteFlowId }]
+            : []),
+        ],
+      },
+    )
   }
 
   async delete(input: { workspaceId: string; id: string }): Promise<void> {
-    const deleted = await pollRepository.deleteMany({
+    const { deleted } = await this.bulkDelete({
       workspaceId: input.workspaceId,
       ids: [input.id],
     })
@@ -283,8 +359,25 @@ class PollService extends BaseService {
     workspaceId: string
     ids: string[]
   }): Promise<{ deleted: number }> {
-    const deleted = await pollRepository.deleteMany(input)
-    return { deleted }
+    const deleted = await withDeleteGuard(
+      {
+        workspaceId: input.workspaceId,
+        targets: [{ resourceKind: "poll", resourceIds: input.ids }],
+      },
+      (tx) => this.deleteInTx(tx, input),
+    )
+    return { deleted: deleted.length }
+  }
+
+  /**
+   * The delete core (row write only; candidates and votes cascade), shared with
+   * the template uninstall so there is one implementation. Returns the ids deleted.
+   */
+  deleteInTx(
+    tx: DatabaseClient,
+    input: { workspaceId: string; ids: string[] },
+  ): Promise<string[]> {
+    return pollRepository.deleteManyReturningIds(input, tx)
   }
 
   /**

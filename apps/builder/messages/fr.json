@@ -7385,6 +7385,7 @@
       "resourcesTitle": "Ressources installées",
       "noResources": "Rien n'a encore été créé.",
       "deletedResource": "Ressource supprimée",
+      "wholeCategory": "{count, plural, one {# élément} other {# éléments}}",
       "viewOnly": "Lecture seule",
       "created": "Créé",
       "reused": "Réutilisé",
@@ -7439,7 +7440,12 @@
           "placeCategories": "Catégories de lieux"
         }
       },
-      "viewOnlyCopyIncluded": "Un élément sélectionné (ou un élément dont il dépend) a été installé depuis un modèle en lecture seule et ne peut pas être partagé dans un nouveau modèle."
+      "viewOnlyCopyIncluded": "Un élément sélectionné (ou un élément dont il dépend) a été installé depuis un modèle en lecture seule et ne peut pas être partagé dans un nouveau modèle.",
+      "miniAppPublishedExcluded": {
+        "title": "Mini App exclue",
+        "hint": "Ces flux utilisent une Mini App publiée sur WhatsApp. Elle ne peut pas être partagée : le modèle l'exclut et l'installation supprime cette référence.",
+        "item": "{flowName} : {miniAppName}"
+      }
     },
     "categories": {
       "flows": "Flux",
@@ -7461,7 +7467,20 @@
       "aiFiles": "Fichiers de connaissances IA",
       "questionnaires": "Questionnaires",
       "couponTopics": "Thèmes de coupons",
-      "pipelines": "Pipelines"
+      "pipelines": "Pipelines",
+      "magicLinks": "Liens magiques",
+      "polls": "Sondages",
+      "dynamicImages": "Images dynamiques",
+      "placeLocations": "Lieux",
+      "miniApps": "Mini-applications",
+      "minigames": "Mini-jeux",
+      "leaderboards": "Classements",
+      "openHours": "Horaires d'ouverture",
+      "vendors": "Vendeurs",
+      "discountCodes": "Codes de réduction",
+      "storeSettings": "Paramètres de la boutique",
+      "storyAutomations": "Automatisation des stories Instagram",
+      "inboundWebhooks": "Webhook entrant"
     },
     "locked": {
       "flowBanner": "Ce flow a été installé depuis un modèle en lecture seule. Vous pouvez le consulter, mais pas le modifier.",
@@ -7538,6 +7557,7 @@
       "flowNotPublished": "Le Flow a été installé en brouillon et n’est pas publié.",
       "flowSkippedRequiredReference": "Le Flow a été ignoré car une référence obligatoire n’a pas pu être résolue.",
       "folder": "Un élément référencé est introuvable dans cet espace de travail, le lien a donc été supprimé.",
+      "inboundWebhookLimitReached": "Ce webhook entrant a été ignoré : l'espace de travail a déjà atteint le nombre maximal de webhooks entrants.",
       "inboxBindingRequired": "Choisissez une boîte de réception pour ce canal ; d’ici là, l’élément reste inactif.",
       "integration": "Un élément référencé est introuvable dans cet espace de travail, le lien a donc été supprimé.",
       "localModifiedOverwritten": "Un élément modifié localement a été écrasé. Une sauvegarde a été enregistrée et peut être restaurée.",
@@ -7558,7 +7578,25 @@
       "tag": "Un élément référencé est introuvable dans cet espace de travail, le lien a donc été supprimé.",
       "unlisted": "Élément non repris entièrement : {code}",
       "workspaceMember": "Attribué à un membre absent de cet espace de travail.",
-      "workspaceUnavailable": "Cet espace de travail n'est plus disponible, l'élément a donc été ignoré."
+      "workspaceUnavailable": "Cet espace de travail n'est plus disponible, l'élément a donc été ignoré.",
+      "scheduleExpired": "Les dates de cet élément sont déjà passées ; définissez-en de nouvelles avant de l'utiliser.",
+      "linkNotRemapped": "Un lien vers un outil absent du modèle a été laissé tel quel.",
+      "dynamicImage": "Cette image dynamique a été ignorée car son arrière-plan n'a pas pu être copié.",
+      "dynamicImageFieldNotBound": "Choisissez un champ personnalisé pour mettre cette image en cache ; le champ d'origine existait déjà dans votre espace de travail.",
+      "dynamicImageRerenderFailed": "Cette image dynamique a été désactivée car son arrière-plan n'a pas pu être régénéré avec vos liens copiés. Réactivez-la pour réessayer.",
+      "pollImage": "Une image n'a pas pu être copiée.",
+      "leaderboardInvalid": "La configuration de ce classement n'a pas pu être installée, il a donc été ignoré.",
+      "placeLocationInvalid": "Ce lieu a été ignoré car son nom est vide.",
+      "minigame": "Le mini-jeu dont ce classement tire ses points ne fait pas partie du modèle, il a donc été ignoré.",
+      "minigameImage": "Une image n'a pas pu être copiée.",
+      "leaderboardImage": "Une image n'a pas pu être copiée.",
+      "leaderboardHostMissing": "Le classement a besoin d'un canal (ou mini-jeu) propre que cette installation n'a pas fourni, il a donc été ignoré.",
+      "externalStoreSkipped": "Cet espace de travail vend depuis une boutique connectée (Shopify ou WooCommerce) : les produits, vendeurs, codes de réduction, horaires et paramètres de la boutique n'ont donc pas été installés.",
+      "discountCodeSkipped": "Ce code de réduction a été ignoré : les produits ou la catégorie auxquels il s'applique ne font pas partie du modèle, ou ses réglages ont été refusés.",
+      "storeSettingsKept": "Cet espace de travail avait déjà des paramètres de boutique, ils ont été conservés tels quels.",
+      "vendorImage": "Une image n'a pas pu être copiée.",
+      "storeSettingsCurrencyKept": "L'espace de travail a des produits dans une autre devise : sa devise a été conservée à la place de celle du modèle.",
+      "storySelectionRequired": "Sélectionnez à nouveau les stories : les stories d'origine n'ont pas pu être reprises."
     },
     "tabs": {
       "mine": "Mes modèles",

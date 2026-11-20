@@ -1,7 +1,11 @@
 import { and, eq, inArray, sql } from "@chatbotx.io/database/client"
-import type { TemplateResourceKind } from "@chatbotx.io/database/partials"
+import type {
+  DynamicImageDocument,
+  TemplateResourceKind,
+} from "@chatbotx.io/database/partials"
 import { PIPELINE_LIMITS } from "@chatbotx.io/database/partials"
 import {
+  minigameRepository,
   pipelineActivityRepository,
   savedReplyImageRepository,
   templateUninstallRepository,
@@ -11,11 +15,19 @@ import {
   appointmentCalendarModel,
   automatedResponseModel,
   commentAutomationModel,
+  discountCodeModel,
+  dynamicImageModel,
   flowModel,
+  igStoryAutomationModel,
+  inboundWebhookModel,
   integrationWebchatModel,
+  leaderboardModel,
+  miniAppModel,
+  minigameModel,
   productModel,
   sequenceModel,
   triggerModel,
+  vendorModel,
 } from "@chatbotx.io/database/schema"
 import { aiAgentService } from "../../ai-agent/service"
 import { aiFileService } from "../../ai-file/service"
@@ -25,17 +37,37 @@ import { appointmentCalendarService } from "../../appointment-calendar/service"
 import { automatedResponseService } from "../../automated-response/service"
 import { commentAutomationService } from "../../comment-automation/service"
 import { couponService } from "../../coupon/service"
+import { discountCodeService } from "../../discount-code/service"
+import { dynamicImageService } from "../../dynamic-image/service"
+import { ecommerceOpenHoursService } from "../../ecommerce-open-hours/service"
 import { flowService } from "../../flow/service"
+import { igStoryAutomationService } from "../../ig-story-automation/service"
+import { inboundWebhookService } from "../../inbound-webhook/service"
 import { integrationWebchatService } from "../../integration-webchat/service"
+import { leaderboardService } from "../../leaderboard/service"
+import { magicLinkService } from "../../magic-link/service"
+import { miniAppService } from "../../mini-app/service"
+import {
+  type MinigameImageSource,
+  minigameImageSlots,
+} from "../../minigame/image-slots"
+import { minigameService } from "../../minigame/service"
 import { pipelineService } from "../../pipeline/service"
+import { placeLocationService } from "../../place-near-me"
+import { pollService } from "../../poll/service"
 import { productService } from "../../product/service"
 import { questionnaireService } from "../../questionnaire/service"
 import { reflinkService } from "../../reflink/service"
 import { savedReplyService } from "../../saved-reply/service"
 import { sequenceService } from "../../sequence/service"
 import { triggerService } from "../../trigger/service"
-import type { ManifestKind } from "./manifests/kinds"
-import type { ResourceUninstallHandler } from "./types"
+import { vendorService } from "../../vendor/service"
+import { ownedToolImagePath } from "../template-object-keys"
+import type { KeptOnUninstallKind, ManifestKind } from "./manifests/kinds"
+import type {
+  ResourceUninstallHandler,
+  TemplateUninstallDeleteResult,
+} from "./types"
 import {
   cancelOpenSubmissionBatch,
   deleteResult,
@@ -241,6 +273,43 @@ const commentAutomationHandler: ResourceUninstallHandler = {
   protectedDependents: noDependents,
   uninstallDelete: deleteVia((tx, input) =>
     commentAutomationService.deleteInTx(tx, input),
+  ),
+}
+
+/**
+ * Story automations of both Instagram connection types. Nothing points at one
+ * and it owns no child table, so only the switch (stop answering) is frozen.
+ */
+const storyAutomationHandler: ResourceUninstallHandler = {
+  heavyChildren: NO_HEAVY_CHILDREN,
+  ...flagHandlers(igStoryAutomationModel, { key: "isActive", frozen: false }),
+  protectedDependents: noDependents,
+  uninstallDelete: deleteVia((tx, input) =>
+    igStoryAutomationService.deleteInTx(tx, input),
+  ),
+}
+
+/**
+ * Delivery logs drain in batches before the webhook goes; the deliveries stop
+ * with the switch. The cached intake is dropped after the commit (it also
+ * expires within seconds, so a freeze needs no effect of its own).
+ */
+const inboundWebhookHandler: ResourceUninstallHandler = {
+  ...drainTables({
+    parentColumn: "inboundWebhookId",
+    tables: ["InboundWebhookRequest"],
+  }),
+  ...flagHandlers(inboundWebhookModel, { key: "active", frozen: false }),
+  protectedDependents: noDependents,
+  uninstallDelete: deleteVia(
+    (tx, input) => inboundWebhookService.deleteInTx(tx, input),
+    (deleted) =>
+      new Map(
+        deleted.map((id) => [
+          id,
+          [effect("inboundWebhook.invalidateCache", { id })],
+        ]),
+      ),
   ),
 }
 
@@ -505,11 +574,350 @@ const aiFunctionHandler: ResourceUninstallHandler = {
 }
 
 /**
+ * One effect per deleted resource that removes the images it staged. Only a URL
+ * pointing into this installation's staging root is acted on; any other image
+ * (an external link, the creator's own file) is left alone.
+ */
+const toolImageEffects = (
+  deleted: readonly string[],
+  urlsById: ReadonlyMap<string, readonly string[]>,
+  ctx: { workspaceId: string; installationId: string },
+): TemplateUninstallDeleteResult["effects"] =>
+  new Map(
+    deleted.flatMap((id) => {
+      const paths = (urlsById.get(id) ?? []).flatMap((url) => {
+        const path = ownedToolImagePath(
+          url,
+          ctx.workspaceId,
+          ctx.installationId,
+        )
+        return path ? [path] : []
+      })
+      return paths.length === 0
+        ? []
+        : [
+            [
+              id,
+              [
+                effect("toolImage.deleteObjects", {
+                  workspaceId: ctx.workspaceId,
+                  installationId: ctx.installationId,
+                  paths: paths.join("\n"),
+                }),
+              ],
+            ] as const,
+          ]
+    }),
+  )
+
+/** The fixed images and QR logos a dynamic image's layers point at. */
+const imageUrlsOf = (document: DynamicImageDocument): string[] =>
+  document.elements.flatMap((element) => {
+    if (element.type === "image" && element.url) {
+      return [element.url]
+    }
+    return element.type === "qrCode" && element.logoUrl ? [element.logoUrl] : []
+  })
+
+/** Every image a minigame points at (appearance, lose image, prize icons). */
+const minigameImageUrls = (row: MinigameImageSource): string[] =>
+  minigameImageSlots(row).map(({ url }) => url)
+
+/** Click statistics are history: drained in batches before the link goes. */
+const magicLinkHandler: ResourceUninstallHandler = {
+  ...drainTables({
+    parentColumn: "linkId",
+    tables: ["MagicLinkStat"],
+    primaryKey: ["linkId", "occurredAt", "contactInboxId"],
+  }),
+  ...NO_PRODUCERS,
+  protectedDependents: noDependents,
+  uninstallDelete: deleteVia((tx, input) =>
+    magicLinkService.deleteInTx(tx, input),
+  ),
+}
+
+/**
+ * Votes and candidates drain in batches; a flow that names the poll as its
+ * after-vote flow is the other direction (`Poll.afterVoteFlowId`), so the poll
+ * itself can always go. The images it staged are removed after the commit.
+ */
+const pollHandler: ResourceUninstallHandler = {
+  ...drainTables({
+    parentColumn: "pollId",
+    tables: ["PollVote"],
+  }),
+  ...NO_PRODUCERS,
+  protectedDependents: noDependents,
+  uninstallDelete: async (tx, ids, ctx) => {
+    // Read before the delete: the candidate rows (and their images) cascade away with the poll.
+    const polls = await tx.query.pollModel.findMany({
+      where: { workspaceId: ctx.workspaceId, id: { in: [...ids] } },
+      columns: { id: true, imageUrl: true },
+    })
+    const candidates = await tx.query.pollCandidateModel.findMany({
+      where: { workspaceId: ctx.workspaceId, pollId: { in: [...ids] } },
+      columns: { pollId: true, imageUrl: true },
+    })
+    const urlsByPoll = new Map<string, string[]>(
+      polls.map((poll) => [poll.id, [poll.imageUrl]]),
+    )
+    for (const candidate of candidates) {
+      if (candidate.imageUrl) {
+        urlsByPoll.get(candidate.pollId)?.push(candidate.imageUrl)
+      }
+    }
+    return deleteResult(
+      ids,
+      await pollService.deleteInTx(tx, {
+        workspaceId: ctx.workspaceId,
+        ids: [...ids],
+      }),
+      (deleted) => toolImageEffects(deleted, urlsByPoll, ctx),
+    )
+  },
+}
+
+/** Rendered per-contact images and the cached field values go after the commit. */
+const dynamicImageHandler: ResourceUninstallHandler = {
+  heavyChildren: NO_HEAVY_CHILDREN,
+  ...flagHandlers(dynamicImageModel, { key: "enabled", frozen: false }),
+  protectedDependents: noDependents,
+  uninstallDelete: async (tx, ids, ctx) => {
+    const deleted = await dynamicImageService.deleteInTx(tx, {
+      workspaceId: ctx.workspaceId,
+      ids: [...ids],
+    })
+    const rowById = new Map(deleted.map((row) => [row.id, row]))
+    return deleteResult(
+      ids,
+      deleted.map((row) => row.id),
+      (deletedIds) => {
+        const stagedImages = toolImageEffects(
+          deletedIds,
+          new Map(
+            deletedIds.map((id) => {
+              const row = rowById.get(id)
+              return [
+                id,
+                [
+                  row?.backgroundUrl ?? "",
+                  ...(row ? imageUrlsOf(row.data) : []),
+                ],
+              ]
+            }),
+          ),
+          ctx,
+        )
+        return new Map(
+          deletedIds.map((id) => [
+            id,
+            [
+              effect("dynamicImage.cleanUp", {
+                workspaceId: ctx.workspaceId,
+                id,
+                customFieldId: rowById.get(id)?.customFieldId ?? null,
+              }),
+              ...(stagedImages.get(id) ?? []),
+            ],
+          ]),
+        )
+      },
+    )
+  },
+}
+
+const placeLocationHandler: ResourceUninstallHandler = {
+  heavyChildren: NO_HEAVY_CHILDREN,
+  ...NO_PRODUCERS,
+  protectedDependents: noDependents,
+  uninstallDelete: deleteVia(
+    (tx, input) => placeLocationService.deleteInTx(tx, input),
+    (deleted, ctx) =>
+      sameEffects(deleted, [
+        effect("placeLocation.invalidateCache", {
+          workspaceId: ctx.workspaceId,
+        }),
+      ]),
+  ),
+}
+
+/**
+ * A Mini App the installer published to WhatsApp has a Flow on their number
+ * that deleting the row would orphan, and removing it needs the WhatsApp
+ * integration the builder owns: such a copy is installer data and is kept
+ * (`keptHasDependents`). An unpublished copy goes with its submissions.
+ */
+const probedMiniAppDependents = probedDependents("miniApp")
+const miniAppDependents = withProbedKind(
+  "miniApp",
+  async (tx, ids, deletingSet, scope) => {
+    const published = await tx.query.miniAppPublicationModel.findMany({
+      where: { miniAppId: { in: [...ids] } },
+      columns: { miniAppId: true },
+    })
+    return new Set([
+      ...(await probedMiniAppDependents(tx, ids, deletingSet, scope)),
+      ...published.map((row) => String(row.miniAppId)),
+    ])
+  },
+)
+
+const miniAppHandler: ResourceUninstallHandler = {
+  ...drainTables({
+    parentColumn: "miniAppId",
+    tables: ["MiniAppSubmission", "MiniAppUpload"],
+  }),
+  ...flagHandlers(miniAppModel, { key: "enabled", frozen: false }),
+  protectedDependents: miniAppDependents,
+  uninstallDelete: deleteVia((tx, input) =>
+    miniAppService.deleteInTx(tx, input),
+  ),
+}
+
+/** Plays and players are history: drained in batches before the minigame goes. */
+const minigameHandler: ResourceUninstallHandler = {
+  ...drainTables({
+    parentColumn: "minigameId",
+    tables: ["MinigamePlay", "MinigameContact"],
+    // Neither table carries a workspaceId; the minigame ids are the workspace's.
+    workspaceScoped: false,
+  }),
+  ...flagHandlers(minigameModel, { key: "enabled", frozen: false }),
+  protectedDependents: probedDependents("minigame"),
+  uninstallDelete: async (tx, ids, ctx) => {
+    // Read before the delete. A duplicate of a copy shares its image files, so
+    // only files no other minigame still shows are removed.
+    const rows = await tx.query.minigameModel.findMany({
+      where: { workspaceId: ctx.workspaceId, id: { in: [...ids] } },
+      columns: { id: true, appearance: true, prizeSettings: true },
+    })
+    const stillUsed = await minigameRepository.findImageUrlsUsedByOthers(
+      {
+        workspaceId: ctx.workspaceId,
+        excludeIds: [...ids],
+        urls: [...new Set(rows.flatMap(minigameImageUrls))],
+      },
+      tx,
+    )
+    const urlsById = new Map(
+      rows.map((row) => [
+        row.id,
+        minigameImageUrls(row).filter((url) => !stillUsed.has(url)),
+      ]),
+    )
+    return deleteResult(
+      ids,
+      await minigameService.deleteInTx(tx, {
+        workspaceId: ctx.workspaceId,
+        ids: [...ids],
+      }),
+      (deleted) => toolImageEffects(deleted, urlsById, ctx),
+    )
+  },
+}
+
+/**
+ * Hard delete (the public delete is soft and would keep the row pointing at
+ * the minigame and flows it names). The partitioned score history drains in
+ * batches by its primary key; the Redis ranking is dropped after the commit.
+ */
+const leaderboardHandler: ResourceUninstallHandler = {
+  ...drainTables({
+    parentColumn: "leaderboardId",
+    // Participants (composite key) and the audit log are drained too: left to
+    // the parent's ON DELETE CASCADE they would be one unbounded delete under
+    // the uninstall's statement timeout, rolled back on every retry.
+    tables: [
+      { table: "LeaderboardScoreEvent", primaryKey: ["createdAt", "id"] },
+      {
+        table: "LeaderboardParticipant",
+        primaryKey: ["leaderboardId", "contactId"],
+      },
+      "LeaderboardAuditLog",
+    ],
+  }),
+  // A paused campaign takes no new score while it drains.
+  ...flagHandlers(leaderboardModel, { key: "status", frozen: "paused" }),
+  protectedDependents: probedDependents("leaderboard"),
+  uninstallDelete: async (tx, ids, ctx) => {
+    // Read before the delete: the cover image goes with the row.
+    const rows = await tx.query.leaderboardModel.findMany({
+      where: { workspaceId: ctx.workspaceId, id: { in: [...ids] } },
+      columns: { id: true, coverImageUrl: true },
+    })
+    const covers = new Map(rows.map((row) => [row.id, [row.coverImageUrl]]))
+    return deleteResult(
+      ids,
+      await leaderboardService.hardDeleteInTx(tx, {
+        workspaceId: ctx.workspaceId,
+        ids: [...ids],
+      }),
+      (deleted) => {
+        const images = toolImageEffects(deleted, covers, ctx)
+        return new Map(
+          deleted.map((id) => [
+            id,
+            [
+              effect("leaderboard.dropRanking", { leaderboardId: id }),
+              ...(images.get(id) ?? []),
+            ],
+          ]),
+        )
+      },
+    )
+  },
+}
+
+/** A schedule goes; the vendors and settings that pointed at it become always open (`SET NULL`). */
+const openHoursHandler: ResourceUninstallHandler = {
+  heavyChildren: NO_HEAVY_CHILDREN,
+  ...NO_PRODUCERS,
+  protectedDependents: probedDependents("openHours"),
+  uninstallDelete: deleteVia(
+    (tx, input) => ecommerceOpenHoursService.deleteInTx(tx, input),
+    (deleted, ctx) =>
+      sameEffects(deleted, [
+        effect("ecommerce.invalidateCache", { workspaceId: ctx.workspaceId }),
+      ]),
+  ),
+}
+
+/** The products of a vendor stay and lose their vendor. */
+const vendorHandler: ResourceUninstallHandler = {
+  heavyChildren: NO_HEAVY_CHILDREN,
+  ...flagHandlers(vendorModel, { key: "isActive", frozen: false }),
+  protectedDependents: probedDependents("vendor"),
+  uninstallDelete: deleteVia(
+    (tx, input) => vendorService.deleteInTx(tx, input),
+    (deleted, ctx) =>
+      sameEffects(deleted, [
+        effect("ecommerce.invalidateCache", { workspaceId: ctx.workspaceId }),
+      ]),
+  ),
+}
+
+/** Placed orders keep the code they used, as text; a code switched off applies to nothing. */
+const discountCodeHandler: ResourceUninstallHandler = {
+  // Redemptions (one per order) drain in batches rather than cascade.
+  ...drainTables({
+    parentColumn: "discountCodeId",
+    tables: ["DiscountCodeRedemption"],
+  }),
+  ...flagHandlers(discountCodeModel, { key: "isActive", frozen: false }),
+  // An order that used the code would lose it (SET NULL): the code is kept.
+  protectedDependents: probedDependents("discountCode"),
+  uninstallDelete: deleteVia((tx, input) =>
+    discountCodeService.deleteInTx(tx, input),
+  ),
+}
+
+/**
  * Every kind an install copies: all tracked kinds but the natural-key
  * manifests, plus `pipeline`, which is both a manifest and a copied category.
  */
 type CopiedResourceKind =
-  | Exclude<TemplateResourceKind, ManifestKind>
+  | Exclude<TemplateResourceKind, ManifestKind | KeptOnUninstallKind>
   | "pipeline"
 
 /**
@@ -536,6 +944,18 @@ const HANDLERS = {
   couponTopic: couponTopicHandler,
   aiAgent: aiAgentHandler,
   aiFunction: aiFunctionHandler,
+  magicLink: magicLinkHandler,
+  poll: pollHandler,
+  dynamicImage: dynamicImageHandler,
+  placeLocation: placeLocationHandler,
+  miniApp: miniAppHandler,
+  minigame: minigameHandler,
+  leaderboard: leaderboardHandler,
+  openHours: openHoursHandler,
+  vendor: vendorHandler,
+  discountCode: discountCodeHandler,
+  storyAutomation: storyAutomationHandler,
+  inboundWebhook: inboundWebhookHandler,
 } satisfies Record<CopiedResourceKind, ResourceUninstallHandler>
 
 export const UNINSTALL_HANDLER_BY_KIND: Partial<

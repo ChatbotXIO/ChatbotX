@@ -27,6 +27,7 @@ import {
   type PredictedAction,
   predictAction,
 } from "./collision-policy"
+import type { MiniAppPublishedExclusion } from "./mini-app-published-excluded"
 import { buildTemplateSnapshot } from "./snapshot.service"
 import { entriesForCategory } from "./template-entries"
 
@@ -438,11 +439,17 @@ export const previewDependencies = async (input: {
   includedDependencies: PreviewedDependency[]
   manifests: { kind: ManifestKey; count: number; names: string[] }[]
   droppedReferenceCount: number
+  /** Flows naming a Mini App left out because it is published to WhatsApp. */
+  miniAppPublishedExcluded: MiniAppPublishedExclusion[]
   /** What the save would count per category: the caller checks it against the actor, as save does. */
   categoryCounts: TemplateCategoryCounts
 }> => {
-  const { payload, droppedReferenceCount, categoryCounts } =
-    await buildTemplateSnapshot(input)
+  const {
+    payload,
+    droppedReferenceCount,
+    miniAppPublishedExcluded,
+    categoryCounts,
+  } = await buildTemplateSnapshot(input)
   const includedDependencies: PreviewedDependency[] = []
   for (const category of Object.keys(
     templateAdapterRegistry,
@@ -473,6 +480,7 @@ export const previewDependencies = async (input: {
   return {
     includedDependencies,
     droppedReferenceCount,
+    miniAppPublishedExcluded,
     categoryCounts,
     manifests: [
       summarize("folders", named(manifests.folders)),

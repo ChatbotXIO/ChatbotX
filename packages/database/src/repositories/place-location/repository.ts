@@ -11,7 +11,11 @@ import {
   placeCategoryModel,
   placeLocationModel,
 } from "@chatbotx.io/database/schema"
-import { likeContains, parsePagination } from "@chatbotx.io/database/utils"
+import {
+  deleteByIdsInWorkspace,
+  likeContains,
+  parsePagination,
+} from "@chatbotx.io/database/utils"
 import { createId } from "@chatbotx.io/utils"
 
 /** Every column a place location form or API writes. */
@@ -150,14 +154,11 @@ export const placeLocationRepository = {
     return row
   },
 
-  async delete(
-    input: { workspaceId: string; locationId: string },
+  /** Deletes the locations and returns the ids that went. */
+  async deleteManyReturningIds(
+    input: { workspaceId: string; ids: string[] },
     tx: DatabaseClient = db,
-  ) {
-    const [row] = await tx
-      .delete(placeLocationModel)
-      .where(scoped(input))
-      .returning()
-    return row
+  ): Promise<string[]> {
+    return await deleteByIdsInWorkspace(tx, placeLocationModel, input)
   },
 }

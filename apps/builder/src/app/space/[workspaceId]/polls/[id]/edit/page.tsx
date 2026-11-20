@@ -2,6 +2,7 @@ import { getIdFromParams } from "@chatbotx.io/utils"
 import { notFound } from "next/navigation"
 import { PollForm } from "@/features/polls/components/poll-form"
 import { findPoll } from "@/features/polls/queries"
+import { LockedEditorGuard } from "@/features/templates/components/locked-editor-guard"
 
 export default async function EditPollPage({
   params,
@@ -20,5 +21,13 @@ export default async function EditPollPage({
     return notFound()
   }
 
-  return <PollForm poll={poll} workspaceId={workspaceId} />
+  return (
+    <LockedEditorGuard
+      resourceId={id}
+      resourceKind="poll"
+      workspaceId={workspaceId}
+    >
+      <PollForm poll={poll} workspaceId={workspaceId} />
+    </LockedEditorGuard>
+  )
 }

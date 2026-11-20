@@ -13,6 +13,7 @@ import { useDataTable } from "@chatbotx.io/ui/hooks/use-data-table"
 import { useLocale, useTranslations } from "next-intl"
 import { useMemo, useState } from "react"
 import type { ProductCategoryResource } from "@/features/product-categories/schema/resource"
+import { TemplateLockedList } from "@/features/templates/components/lock-context"
 import { DeleteVendorDialog } from "./components/delete-vendor-dialog"
 import { VendorFormDialog } from "./components/vendor-form-dialog"
 import {
@@ -66,28 +67,34 @@ export function ProductVendorsTable({
         <CardDescription>{t("productVendors.description")}</CardDescription>
       </CardHeader>
       <CardContent>
-        <DataTable table={table}>
-          <DataTableToolbar table={table}>
+        <TemplateLockedList
+          resourceKind="vendor"
+          rows={vendors.data}
+          workspaceId={workspaceId}
+        >
+          <DataTable table={table}>
+            <DataTableToolbar table={table}>
+              <VendorFormDialog
+                categories={categories}
+                openHours={openHours}
+                workspaceId={workspaceId}
+              />
+            </DataTableToolbar>
+          </DataTable>
+          {editing ? (
             <VendorFormDialog
               categories={categories}
+              hideTrigger
+              key={editing.id}
+              onOpenChange={(open) => !open && setRowAction(null)}
+              open
               openHours={openHours}
+              vendor={editing}
               workspaceId={workspaceId}
             />
-          </DataTableToolbar>
-        </DataTable>
+          ) : null}
+        </TemplateLockedList>
 
-        {editing ? (
-          <VendorFormDialog
-            categories={categories}
-            hideTrigger
-            key={editing.id}
-            onOpenChange={(open) => !open && setRowAction(null)}
-            open
-            openHours={openHours}
-            vendor={editing}
-            workspaceId={workspaceId}
-          />
-        ) : null}
         {deleting ? (
           <DeleteVendorDialog
             onOpenChange={(open) => !open && setRowAction(null)}

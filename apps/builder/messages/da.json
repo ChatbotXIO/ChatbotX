@@ -7385,6 +7385,7 @@
       "resourcesTitle": "Installerede ressourcer",
       "noResources": "Intet er oprettet endnu.",
       "deletedResource": "Slettet ressource",
+      "wholeCategory": "{count, plural, one {# element} other {# elementer}}",
       "viewOnly": "Kun visning",
       "created": "Oprettet",
       "reused": "Genbrugt",
@@ -7439,7 +7440,12 @@
           "placeCategories": "Stedkategorier"
         }
       },
-      "viewOnlyCopyIncluded": "Noget, du har valgt (eller noget, det kræver), er installeret fra en skabelon med kun visning og kan ikke deles i en ny skabelon."
+      "viewOnlyCopyIncluded": "Noget, du har valgt (eller noget, det kræver), er installeret fra en skabelon med kun visning og kan ikke deles i en ny skabelon.",
+      "miniAppPublishedExcluded": {
+        "title": "Mini-app udeladt",
+        "hint": "Disse flows bruger en Mini-app, der er udgivet på WhatsApp. Den kan ikke deles, så skabelonen udelader den, og installationen fjerner henvisningen.",
+        "item": "{flowName}: {miniAppName}"
+      }
     },
     "categories": {
       "flows": "Flows",
@@ -7461,7 +7467,20 @@
       "aiFiles": "AI-vidensfiler",
       "questionnaires": "Questionnaires",
       "couponTopics": "Kuponemner",
-      "pipelines": "Pipelines"
+      "pipelines": "Pipelines",
+      "magicLinks": "Magiske links",
+      "polls": "Afstemninger",
+      "dynamicImages": "Dynamiske billeder",
+      "placeLocations": "Steder",
+      "miniApps": "Mini-apps",
+      "minigames": "Minispil",
+      "leaderboards": "Rangeringer",
+      "openHours": "Åbningstider",
+      "vendors": "Leverandører",
+      "discountCodes": "Rabatkoder",
+      "storeSettings": "Butiksindstillinger",
+      "storyAutomations": "Automatisering af Instagram Stories",
+      "inboundWebhooks": "Indgående webhook"
     },
     "locked": {
       "flowBanner": "Dette flow er installeret fra en skabelon med kun visning. Du kan se det, men ikke redigere det.",
@@ -7538,6 +7557,7 @@
       "flowNotPublished": "Flowet blev installeret som kladde og er ikke publiceret.",
       "flowSkippedRequiredReference": "Flowet blev sprunget over, fordi en påkrævet reference ikke kunne løses.",
       "folder": "Et refereret element blev ikke fundet i dette arbejdsområde, så linket blev fjernet.",
+      "inboundWebhookLimitReached": "Denne indgående webhook blev sprunget over: arbejdsområdet har allerede det maksimale antal indgående webhooks.",
       "inboxBindingRequired": "Vælg en indbakke til denne kanal; indtil da forbliver elementet inaktivt.",
       "integration": "Et refereret element blev ikke fundet i dette arbejdsområde, så linket blev fjernet.",
       "localModifiedOverwritten": "Et lokalt redigeret element blev overskrevet. En sikkerhedskopi blev gemt og kan gendannes.",
@@ -7558,7 +7578,25 @@
       "tag": "Et refereret element blev ikke fundet i dette arbejdsområde, så linket blev fjernet.",
       "unlisted": "Elementet blev ikke overført fuldt ud: {code}",
       "workspaceMember": "Tildelt et medlem, der ikke er i dette workspace.",
-      "workspaceUnavailable": "Dette arbejdsområde er ikke længere tilgængeligt, så elementet blev sprunget over."
+      "workspaceUnavailable": "Dette arbejdsområde er ikke længere tilgængeligt, så elementet blev sprunget over.",
+      "scheduleExpired": "Datoerne for dette element er overskredet; angiv nye, før du bruger det.",
+      "linkNotRemapped": "Et link til et værktøj, der ikke var med i skabelonen, blev ladet uændret.",
+      "dynamicImage": "Dette dynamiske billede blev sprunget over, fordi baggrunden ikke kunne kopieres.",
+      "dynamicImageFieldNotBound": "Vælg et brugerdefineret felt, som billedet kan cache på; det oprindelige findes allerede i dit workspace.",
+      "dynamicImageRerenderFailed": "Dette dynamiske billede blev slået fra, fordi dets baggrund ikke kunne gengives igen med dine kopierede links. Slå det til igen for at prøve igen.",
+      "pollImage": "Et billede kunne ikke kopieres.",
+      "leaderboardInvalid": "Rangeringens konfiguration kunne ikke installeres og blev sprunget over.",
+      "placeLocationInvalid": "Dette sted blev sprunget over, fordi dets navn er tomt.",
+      "minigame": "Det minispil, rangeringen scores fra, er ikke med i skabelonen og blev sprunget over.",
+      "minigameImage": "Et billede kunne ikke kopieres.",
+      "leaderboardImage": "Et billede kunne ikke kopieres.",
+      "leaderboardHostMissing": "Rangeringen kræver en egen kanal (eller et minispil), som denne installation ikke leverede, og blev sprunget over.",
+      "externalStoreSkipped": "Dette workspace sælger fra en forbundet butik (Shopify eller WooCommerce), så produkter, leverandører, rabatkoder, åbningstider og butiksindstillinger blev ikke installeret.",
+      "discountCodeSkipped": "Denne rabatkode blev sprunget over: de produkter eller den kategori, den gælder for, er ikke med i skabelonen, eller dens indstillinger blev afvist.",
+      "storeSettingsKept": "Dette workspace havde allerede butiksindstillinger, så de blev beholdt som de er.",
+      "vendorImage": "Et billede kunne ikke kopieres.",
+      "storeSettingsCurrencyKept": "Workspacet har produkter i en anden valuta, så dets valuta blev beholdt i stedet for skabelonens.",
+      "storySelectionRequired": "Vælg historierne igen: de oprindelige historier kunne ikke overføres."
     },
     "tabs": {
       "mine": "Mine skabeloner",

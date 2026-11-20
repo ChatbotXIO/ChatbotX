@@ -1,5 +1,14 @@
-import { type AnyColumn, asc, desc, type SQL } from "drizzle-orm"
-import type { PgTable } from "drizzle-orm/pg-core"
+import {
+  type AnyColumn,
+  and,
+  asc,
+  desc,
+  eq,
+  inArray,
+  type SQL,
+} from "drizzle-orm"
+import type { AnyPgColumn, PgTable } from "drizzle-orm/pg-core"
+import type { DatabaseClient } from "./client"
 
 type PaginationInput = {
   page?: number | null
@@ -189,4 +198,28 @@ export async function chunkById<T extends { id: string }>(
       lastId = records.at(-1)?.id ?? null
     }
   }
+}
+
+/**
+ * Deletes the rows of a workspace-scoped table by id in one statement and
+ * returns the ids that went (so a caller can tell which were already absent).
+ */
+export const deleteByIdsInWorkspace = async (
+  tx: DatabaseClient,
+  model: PgTable & { id: AnyPgColumn; workspaceId: AnyPgColumn },
+  input: { workspaceId: string; ids: string[] },
+): Promise<string[]> => {
+  if (input.ids.length === 0) {
+    return []
+  }
+  const rows = await tx
+    .delete(model)
+    .where(
+      and(
+        eq(model.workspaceId, input.workspaceId),
+        inArray(model.id, input.ids),
+      ),
+    )
+    .returning({ id: model.id })
+  return rows.map((row) => String(row.id))
 }

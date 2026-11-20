@@ -7398,6 +7398,7 @@
       "resourcesTitle": "Installerade resurser",
       "noResources": "Inget har skapats än.",
       "deletedResource": "Borttagen resurs",
+      "wholeCategory": "{count, plural, one {# objekt} other {# objekt}}",
       "viewOnly": "Endast visning",
       "created": "Skapad",
       "reused": "Återanvänd",
@@ -7452,7 +7453,12 @@
           "placeCategories": "Platskategorier"
         }
       },
-      "viewOnlyCopyIncluded": "Något du valt (eller något det behöver) installerades från en mall som bara kan visas och kan inte delas i en ny mall."
+      "viewOnlyCopyIncluded": "Något du valt (eller något det behöver) installerades från en mall som bara kan visas och kan inte delas i en ny mall.",
+      "miniAppPublishedExcluded": {
+        "title": "Mini-app utelämnad",
+        "hint": "De här flödena använder en mini-app som är publicerad på WhatsApp. Den kan inte delas, så mallen utelämnar den och installationen tar bort referensen.",
+        "item": "{flowName}: {miniAppName}"
+      }
     },
     "categories": {
       "flows": "Flöden",
@@ -7474,7 +7480,20 @@
       "aiFiles": "AI-kunskapsfiler",
       "questionnaires": "Frågeformulär",
       "couponTopics": "Kupongämnen",
-      "pipelines": "Pipelines"
+      "pipelines": "Pipelines",
+      "magicLinks": "Magiska länkar",
+      "polls": "Omröstningar",
+      "dynamicImages": "Dynamiska bilder",
+      "placeLocations": "Platser",
+      "miniApps": "Miniappar",
+      "minigames": "Minispel",
+      "leaderboards": "Topplistor",
+      "openHours": "Öppettider",
+      "vendors": "Säljare",
+      "discountCodes": "Rabattkoder",
+      "storeSettings": "Butiksinställningar",
+      "storyAutomations": "Automatisering av Instagram Stories",
+      "inboundWebhooks": "Inkommande webhook"
     },
     "locked": {
       "flowBanner": "Det här flödet installerades från en skrivskyddad mall. Du kan titta på det men inte redigera det.",
@@ -7551,6 +7570,7 @@
       "flowNotPublished": "Flowet installerades som utkast och är inte publicerat.",
       "flowSkippedRequiredReference": "Flowet hoppades över eftersom en obligatorisk referens inte kunde lösas.",
       "folder": "Ett refererat objekt hittades inte i denna arbetsyta, så länken togs bort.",
+      "inboundWebhookLimitReached": "Den här inkommande webhooken hoppades över: arbetsytan har redan det maximala antalet inkommande webhooks.",
       "inboxBindingRequired": "Välj en inkorg för denna kanal; tills dess förblir objektet inaktivt.",
       "integration": "Ett refererat objekt hittades inte i denna arbetsyta, så länken togs bort.",
       "localModifiedOverwritten": "Ett lokalt redigerat objekt skrevs över. En säkerhetskopia sparades och kan återställas.",
@@ -7571,7 +7591,25 @@
       "tag": "Ett refererat objekt hittades inte i denna arbetsyta, så länken togs bort.",
       "unlisted": "Objektet fördes inte över helt: {code}",
       "workspaceMember": "Tilldelad en medlem som inte finns i den här arbetsytan.",
-      "workspaceUnavailable": "Den här arbetsytan är inte längre tillgänglig, så objektet hoppades över."
+      "workspaceUnavailable": "Den här arbetsytan är inte längre tillgänglig, så objektet hoppades över.",
+      "scheduleExpired": "Datumen för det här objektet har redan passerat; ange nya innan du använder det.",
+      "linkNotRemapped": "En länk till ett verktyg som inte ingick i mallen lämnades oförändrad.",
+      "dynamicImage": "Den här dynamiska bilden hoppades över eftersom bakgrunden inte kunde kopieras.",
+      "dynamicImageFieldNotBound": "Välj ett anpassat fält som bilden cachas i; det ursprungliga fanns redan i din arbetsyta.",
+      "dynamicImageRerenderFailed": "Den här dynamiska bilden stängdes av eftersom bakgrunden inte kunde renderas om med dina kopierade länkar. Slå på den igen för att försöka på nytt.",
+      "pollImage": "En bild kunde inte kopieras.",
+      "leaderboardInvalid": "Den här topplistans konfiguration kunde inte installeras och hoppades över.",
+      "placeLocationInvalid": "Den här platsen hoppades över eftersom namnet är tomt.",
+      "minigame": "Minispelet som topplistan får sina poäng från ingår inte i mallen och hoppades över.",
+      "minigameImage": "En bild kunde inte kopieras.",
+      "leaderboardImage": "En bild kunde inte kopieras.",
+      "leaderboardHostMissing": "Topplistan behöver en egen kanal (eller ett minispel) som den här installationen inte gav och hoppades över.",
+      "externalStoreSkipped": "Den här arbetsytan säljer från en ansluten butik (Shopify eller WooCommerce), så produkter, säljare, rabattkoder, öppettider och butiksinställningar installerades inte.",
+      "discountCodeSkipped": "Den här rabattkoden hoppades över: produkterna eller kategorin den gäller ingår inte i mallen, eller så avvisades dess inställningar.",
+      "storeSettingsKept": "Den här arbetsytan hade redan butiksinställningar, så de behölls som de är.",
+      "vendorImage": "En bild kunde inte kopieras.",
+      "storeSettingsCurrencyKept": "Arbetsytan har produkter i en annan valuta, så dess valuta behölls i stället för mallens.",
+      "storySelectionRequired": "Välj berättelserna igen: de ursprungliga berättelserna kunde inte tas med."
     },
     "tabs": {
       "mine": "Mina mallar",

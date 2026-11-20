@@ -7385,6 +7385,7 @@
       "resourcesTitle": "Asennetut resurssit",
       "noResources": "Mitään ei ole vielä luotu.",
       "deletedResource": "Poistettu resurssi",
+      "wholeCategory": "{count, plural, one {# kohde} other {# kohdetta}}",
       "viewOnly": "Vain katselu",
       "created": "Luotu",
       "reused": "Käytetty uudelleen",
@@ -7439,7 +7440,12 @@
           "placeCategories": "Paikkakategoriat"
         }
       },
-      "viewOnlyCopyIncluded": "Jokin valitsemasi kohde (tai sen tarvitsema kohde) on asennettu vain luku -mallista, joten sitä ei voi jakaa uudessa mallissa."
+      "viewOnlyCopyIncluded": "Jokin valitsemasi kohde (tai sen tarvitsema kohde) on asennettu vain luku -mallista, joten sitä ei voi jakaa uudessa mallissa.",
+      "miniAppPublishedExcluded": {
+        "title": "Mini-sovellus jätetty pois",
+        "hint": "Nämä flow't käyttävät WhatsAppissa julkaistua mini-sovellusta. Sitä ei voi jakaa, joten malli jättää sen pois ja asennus poistaa viittauksen.",
+        "item": "{flowName}: {miniAppName}"
+      }
     },
     "categories": {
       "flows": "Flowt",
@@ -7461,7 +7467,20 @@
       "aiFiles": "Tekoälyn tietotiedostot",
       "questionnaires": "Kyselylomakkeet",
       "couponTopics": "Kuponkiaiheet",
-      "pipelines": "Pipelinet"
+      "pipelines": "Pipelinet",
+      "magicLinks": "Taikalinkit",
+      "polls": "Äänestykset",
+      "dynamicImages": "Dynaamiset kuvat",
+      "placeLocations": "Sijainnit",
+      "miniApps": "Mini-sovellukset",
+      "minigames": "Minipelit",
+      "leaderboards": "Tulostaulut",
+      "openHours": "Aukioloajat",
+      "vendors": "Myyjät",
+      "discountCodes": "Alennuskoodit",
+      "storeSettings": "Kaupan asetukset",
+      "storyAutomations": "Instagram-tarina-automaatio",
+      "inboundWebhooks": "Saapuva webhook"
     },
     "locked": {
       "flowBanner": "Tämä flow on asennettu vain katseltavasta mallista. Voit katsoa sitä, mutta et muokata sitä.",
@@ -7538,6 +7557,7 @@
       "flowNotPublished": "Flow asennettiin luonnoksena, eikä sitä ole julkaistu.",
       "flowSkippedRequiredReference": "Flow ohitettiin, koska pakollista viittausta ei voitu ratkaista.",
       "folder": "Viitattua kohdetta ei löytynyt tästä työtilasta, joten linkki poistettiin.",
+      "inboundWebhookLimitReached": "Tämä saapuva webhook ohitettiin: työtilassa on jo saapuvien webhookien enimmäismäärä.",
       "inboxBindingRequired": "Valitse tälle kanavalle saapuneet-kansio; siihen asti kohde pysyy ei-aktiivisena.",
       "integration": "Viitattua kohdetta ei löytynyt tästä työtilasta, joten linkki poistettiin.",
       "localModifiedOverwritten": "Paikallisesti muokattu kohde korvattiin. Varmuuskopio tallennettiin, ja se voidaan palauttaa.",
@@ -7558,7 +7578,25 @@
       "tag": "Viitattua kohdetta ei löytynyt tästä työtilasta, joten linkki poistettiin.",
       "unlisted": "Kohdetta ei tuotu kokonaan: {code}",
       "workspaceMember": "Määritetty jäsenelle, joka ei ole tässä työtilassa.",
-      "workspaceUnavailable": "Tämä työtila ei ole enää käytettävissä, joten kohde ohitettiin."
+      "workspaceUnavailable": "Tämä työtila ei ole enää käytettävissä, joten kohde ohitettiin.",
+      "scheduleExpired": "Tämän kohteen päivämäärät ovat jo menneet; määritä uudet ennen käyttöä.",
+      "linkNotRemapped": "Linkki työkaluun, joka ei kuulunut mallipohjaan, jätettiin ennalleen.",
+      "dynamicImage": "Tämä dynaaminen kuva ohitettiin, koska sen taustaa ei voitu kopioida.",
+      "dynamicImageFieldNotBound": "Valitse mukautettu kenttä, johon kuva tallennetaan välimuistiin; alkuperäinen oli jo työtilassasi.",
+      "dynamicImageRerenderFailed": "Tämä dynaaminen kuva poistettiin käytöstä, koska sen taustaa ei voitu piirtää uudelleen kopioiduilla linkeillä. Ota se uudelleen käyttöön yrittääksesi uudelleen.",
+      "pollImage": "Kuvaa ei voitu kopioida.",
+      "leaderboardInvalid": "Tämän tulostaulun asetuksia ei voitu asentaa, joten se ohitettiin.",
+      "placeLocationInvalid": "Tämä paikka ohitettiin, koska sen nimi on tyhjä.",
+      "minigame": "Minipeli, josta tämä tulostaulu saa pisteensä, ei kuulu mallipohjaan, joten se ohitettiin.",
+      "minigameImage": "Kuvaa ei voitu kopioida.",
+      "leaderboardImage": "Kuvaa ei voitu kopioida.",
+      "leaderboardHostMissing": "Tulostaulu tarvitsee oman kanavan (tai minipelin), jota tämä asennus ei tuonut, joten se ohitettiin.",
+      "externalStoreSkipped": "Tämä työtila myy yhdistetystä kaupasta (Shopify tai WooCommerce), joten tuotteita, myyjiä, alennuskoodeja, aukioloaikoja ja kaupan asetuksia ei asennettu.",
+      "discountCodeSkipped": "Tämä alennuskoodi ohitettiin: tuotteet tai luokka, johon se koskee, eivät kuulu mallipohjaan, tai sen asetukset hylättiin.",
+      "storeSettingsKept": "Tässä työtilassa oli jo kaupan asetukset, joten ne säilytettiin sellaisinaan.",
+      "vendorImage": "Kuvaa ei voitu kopioida.",
+      "storeSettingsCurrencyKept": "Työtilassa on tuotteita toisessa valuutassa, joten sen oma valuutta säilytettiin mallipohjan sijaan.",
+      "storySelectionRequired": "Valitse tarinat uudelleen: alkuperäisiä tarinoita ei voitu siirtää."
     },
     "tabs": {
       "mine": "Omat mallit",

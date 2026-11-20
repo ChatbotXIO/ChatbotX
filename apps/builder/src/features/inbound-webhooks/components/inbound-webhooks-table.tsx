@@ -30,6 +30,12 @@ import {
 import Link from "next/link"
 import { useFormatter, useTranslations } from "next-intl"
 import { use, useMemo, useState } from "react"
+import { LockBadge } from "@/features/templates/components/lock-badge"
+import {
+  LockedGuard,
+  TemplateLockedList,
+  UndeletableGuard,
+} from "@/features/templates/components/lock-context"
 import type { listInboundWebhooks } from "../queries"
 import { CreateInboundWebhookDialog } from "./create-inbound-webhook-dialog"
 import { DeleteInboundWebhookDialog } from "./delete-inbound-webhook-dialog"
@@ -72,12 +78,15 @@ export const InboundWebhooksTable = ({
           />
         ),
         cell: ({ row }) => (
-          <Link
-            className="inline-block max-w-[280px] truncate font-medium hover:underline"
-            href={`/space/${workspaceId}/inbound-webhooks/${row.original.id}`}
-          >
-            {row.original.name}
-          </Link>
+          <div className="flex items-center">
+            <Link
+              className="inline-block max-w-[280px] truncate font-medium hover:underline"
+              href={`/space/${workspaceId}/inbound-webhooks/${row.original.id}`}
+            >
+              {row.original.name}
+            </Link>
+            <LockBadge resourceId={row.original.id} />
+          </div>
         ),
         enableSorting: false,
       },
@@ -171,23 +180,33 @@ export const InboundWebhooksTable = ({
                 <LinkIcon />
                 {t("inboundWebhooks.getLink")}
               </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={() =>
-                  setRowAction({ row: row.original, variant: "rename" })
-                }
-              >
-                <PencilIcon />
-                {t("actions.rename")}
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={() =>
-                  setRowAction({ row: row.original, variant: "delete" })
-                }
-                variant="destructive"
-              >
-                <Trash2Icon />
-                {t("actions.delete")}
-              </DropdownMenuItem>
+              <LockedGuard resourceId={row.original.id}>
+                {(locked) => (
+                  <DropdownMenuItem
+                    disabled={locked}
+                    onClick={() =>
+                      setRowAction({ row: row.original, variant: "rename" })
+                    }
+                  >
+                    <PencilIcon />
+                    {t("actions.rename")}
+                  </DropdownMenuItem>
+                )}
+              </LockedGuard>
+              <UndeletableGuard resourceId={row.original.id}>
+                {(disabled) => (
+                  <DropdownMenuItem
+                    disabled={disabled}
+                    onClick={() =>
+                      setRowAction({ row: row.original, variant: "delete" })
+                    }
+                    variant="destructive"
+                  >
+                    <Trash2Icon />
+                    {t("actions.delete")}
+                  </DropdownMenuItem>
+                )}
+              </UndeletableGuard>
             </DropdownMenuContent>
           </DropdownMenu>
         ),
@@ -211,39 +230,45 @@ export const InboundWebhooksTable = ({
   const closeRowAction = () => setRowAction(null)
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="font-bold text-xl">
-          {t("inboundWebhooks.title")}
-        </CardTitle>
-        <CardDescription>{t("inboundWebhooks.description")}</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <DataTable table={table}>
-          <DataTableToolbar table={table}>
-            <CreateInboundWebhookDialog workspaceId={workspaceId} />
-          </DataTableToolbar>
-        </DataTable>
+    <TemplateLockedList
+      resourceKind="inboundWebhook"
+      rows={data}
+      workspaceId={workspaceId}
+    >
+      <Card>
+        <CardHeader>
+          <CardTitle className="font-bold text-xl">
+            {t("inboundWebhooks.title")}
+          </CardTitle>
+          <CardDescription>{t("inboundWebhooks.description")}</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <DataTable table={table}>
+            <DataTableToolbar table={table}>
+              <CreateInboundWebhookDialog workspaceId={workspaceId} />
+            </DataTableToolbar>
+          </DataTable>
 
-        <InboundWebhookLinkDialog
-          onOpenChange={closeRowAction}
-          open={rowAction?.variant === "link"}
-          webhook={rowAction?.variant === "link" ? rowAction.row : null}
-          workspaceId={workspaceId}
-        />
-        <RenameInboundWebhookDialog
-          onOpenChange={closeRowAction}
-          open={rowAction?.variant === "rename"}
-          webhook={rowAction?.variant === "rename" ? rowAction.row : null}
-          workspaceId={workspaceId}
-        />
-        <DeleteInboundWebhookDialog
-          onOpenChange={closeRowAction}
-          open={rowAction?.variant === "delete"}
-          webhook={rowAction?.variant === "delete" ? rowAction.row : null}
-          workspaceId={workspaceId}
-        />
-      </CardContent>
-    </Card>
+          <InboundWebhookLinkDialog
+            onOpenChange={closeRowAction}
+            open={rowAction?.variant === "link"}
+            webhook={rowAction?.variant === "link" ? rowAction.row : null}
+            workspaceId={workspaceId}
+          />
+          <RenameInboundWebhookDialog
+            onOpenChange={closeRowAction}
+            open={rowAction?.variant === "rename"}
+            webhook={rowAction?.variant === "rename" ? rowAction.row : null}
+            workspaceId={workspaceId}
+          />
+          <DeleteInboundWebhookDialog
+            onOpenChange={closeRowAction}
+            open={rowAction?.variant === "delete"}
+            webhook={rowAction?.variant === "delete" ? rowAction.row : null}
+            workspaceId={workspaceId}
+          />
+        </CardContent>
+      </Card>
+    </TemplateLockedList>
   )
 }

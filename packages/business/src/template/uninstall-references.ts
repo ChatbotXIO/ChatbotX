@@ -4,6 +4,7 @@ import type { TemplateResourceKind } from "@chatbotx.io/database/partials"
 // import graph, and the barrel drags in every repository.
 import {
   type InboundEdge,
+  type RestrictSql,
   templateUninstallReferenceRepository,
 } from "@chatbotx.io/database/repositories/template-uninstall-references"
 import {
@@ -29,7 +30,13 @@ export const uninstallKey = (kind: TemplateResourceKind, id: string): string =>
  */
 const COPIED_POLICIES: ReadonlySet<string> = new Set(["copy"])
 /** Registry kinds with `verifyInTarget` that an install nevertheless copies. */
-const COPIED_VERIFY_KINDS: readonly string[] = ["sequence", "product"]
+const COPIED_VERIFY_KINDS: readonly string[] = [
+  "sequence",
+  "product",
+  "miniApp",
+  "leaderboard",
+  "vendor",
+]
 
 /** The tracked kinds an uninstall can delete and so must probe for inbound references. */
 export const COPIED_REFERENCE_KINDS: readonly TemplateResourceKind[] = [
@@ -99,6 +106,8 @@ type ColumnSlot = {
   workspaceColumn?: string
   /** The column is text, not bigint (`Condition.sourceId`). */
   textColumn?: boolean
+  /** A constant predicate narrowing the holding rows (e.g. a soft-deleted holder is not a dependent). */
+  restrictSql?: RestrictSql
 }
 
 const WS = "workspaceId"
@@ -174,6 +183,68 @@ export const COLUMN_SLOTS: readonly ColumnSlot[] = [
     table: "Questionnaire",
     column: "triggerFlowId",
     workspaceColumn: WS,
+  },
+  {
+    parent: "flow",
+    inboundKind: "poll",
+    table: "Poll",
+    column: "afterVoteFlowId",
+    workspaceColumn: WS,
+  },
+  {
+    parent: "flow",
+    inboundKind: "leaderboard",
+    table: "Leaderboard",
+    column: "referralWelcomeFlowId",
+    workspaceColumn: WS,
+    // A soft-deleted leaderboard is not a dependent.
+    restrictSql: '"deletedAt" IS NULL',
+  },
+  {
+    parent: "openHours",
+    inboundKind: "vendor",
+    table: "Vendor",
+    column: "openHoursId",
+    workspaceColumn: WS,
+  },
+  {
+    // The settings row is kept on uninstall, so an open-hours copy it points at is kept too.
+    parent: "openHours",
+    inboundKind: null,
+    table: "EcommerceSettings",
+    column: "openHoursId",
+    workspaceColumn: WS,
+  },
+  {
+    parent: "vendor",
+    inboundKind: "product",
+    table: "Product",
+    column: "vendorId",
+    workspaceColumn: WS,
+  },
+  {
+    // Installer data: an order line keeps the vendor it was sold by.
+    parent: "vendor",
+    inboundKind: null,
+    table: "OrderItem",
+    column: "vendorId",
+    workspaceColumn: WS,
+  },
+  {
+    parent: "discountCode",
+    inboundKind: null,
+    table: "Order",
+    column: "discountCodeId",
+    workspaceColumn: WS,
+  },
+  {
+    parent: "minigame",
+    inboundKind: "leaderboard",
+    table: "Leaderboard",
+    column: "minigameId",
+    workspaceColumn: WS,
+    // A soft-deleted leaderboard is not a dependent.
+    restrictSql: '"deletedAt" IS NULL',
   },
   // Installer data below: deleting the flow would cascade it away or null it.
   {
@@ -253,13 +324,6 @@ export const COLUMN_SLOTS: readonly ColumnSlot[] = [
     workspaceColumn: WS,
   },
   {
-    parent: "flow",
-    inboundKind: null,
-    table: "Leaderboard",
-    column: "referralWelcomeFlowId",
-    workspaceColumn: WS,
-  },
-  {
     parent: "trigger",
     inboundKind: "trigger",
     table: "Condition",
@@ -287,14 +351,6 @@ export const COLUMN_SLOTS: readonly ColumnSlot[] = [
     inboundKind: null,
     table: "MetaCatalogItem",
     column: "productId",
-  },
-  // A poll is never copied: one that runs a copied flow after each vote keeps it.
-  {
-    parent: "flow",
-    inboundKind: null,
-    table: "Poll",
-    column: "afterVoteFlowId",
-    workspaceColumn: WS,
   },
   // A deal is installer data: a pipeline with any item is kept whole.
   {
@@ -331,6 +387,19 @@ export const OWN_CHILD_TABLES: readonly { table: string; column: string }[] = [
   { table: "TriggerExecution", column: "triggerId" },
   { table: "TriggerStat", column: "triggerId" },
   { table: "RefLinkStat", column: "linkId" },
+  { table: "MagicLinkStat", column: "linkId" },
+  { table: "PollCandidate", column: "pollId" },
+  { table: "PollVote", column: "pollId" },
+  { table: "PollVote", column: "candidateId" },
+  { table: "MiniAppSubmission", column: "miniAppId" },
+  { table: "MiniAppUpload", column: "miniAppId" },
+  { table: "MiniAppPublication", column: "miniAppId" },
+  { table: "MinigamePlay", column: "minigameId" },
+  { table: "DiscountCodeRedemption", column: "discountCodeId" },
+  { table: "MinigameContact", column: "minigameId" },
+  { table: "LeaderboardParticipant", column: "leaderboardId" },
+  { table: "LeaderboardAuditLog", column: "leaderboardId" },
+  { table: "InboundWebhookRequest", column: "inboundWebhookId" },
   { table: "SavedReplyImage", column: "savedReplyId" },
   { table: "ContactOnSequence", column: "sequenceId" },
   { table: "SequenceDispatch", column: "sequenceId" },
@@ -352,6 +421,10 @@ type JsonContainer = {
   /** The column that is the inbound resource's id. */
   inboundIdColumn: string
   jsonColumns: readonly string[]
+  /** `{ type, value }` reply columns that name a flow or AI agent (`REPLY_TYPE_OF_KIND`). */
+  replyColumns?: readonly string[]
+  /** Columns holding a bare array of ids of `kind` (a discount code's product list). */
+  idArrays?: { columns: readonly string[]; kind: TemplateResourceKind }
   /** The column holding the workspace, when the table has one. */
   workspaceColumn?: string
   /**
@@ -368,10 +441,38 @@ type JsonContainer = {
    */
   contactFilterColumn?: string
   /** An extra predicate on the holding row (a flow's current and draft versions only). */
-  restrictSql?: string
+  restrictSql?: RestrictSql
+}
+
+/** The `type` a `{ type, value }` reply carries when it runs a copied kind. */
+const REPLY_TYPE_OF_KIND: Partial<Record<TemplateResourceKind, string>> = {
+  flow: "flow",
+  aiAgent: "AIAgent",
 }
 
 export const JSON_CONTAINERS: readonly JsonContainer[] = [
+  {
+    // A minigame names tags, a custom field and flows in its settings.
+    inboundKind: "minigame",
+    table: "Minigame",
+    inboundIdColumn: "id",
+    jsonColumns: [
+      "generalSettings",
+      "playerSettings",
+      "prizeSettings",
+      "winningMessageSettings",
+      "nonWinningMessageSettings",
+    ],
+    workspaceColumn: WS,
+  },
+  {
+    inboundKind: "leaderboard",
+    table: "Leaderboard",
+    inboundIdColumn: "id",
+    jsonColumns: ["tagIds", "rewardSettings"],
+    workspaceColumn: WS,
+    restrictSql: '"deletedAt" IS NULL',
+  },
   {
     inboundKind: "flow",
     table: "FlowVersion",
@@ -438,11 +539,12 @@ export const JSON_CONTAINERS: readonly JsonContainer[] = [
     scopeThroughBroadcast: true,
   },
   {
-    // Installer data: a discount code's customer audience, the same shape.
+    // A discount code's audience (installer data) and its product list.
     table: "DiscountCode",
-    inboundKind: null,
+    inboundKind: "discountCode",
     inboundIdColumn: "id",
     jsonColumns: ["customerFilter"],
+    idArrays: { columns: ["productIds"], kind: "product" },
     workspaceColumn: WS,
     contactFilterColumn: "customerFilter",
   },
@@ -451,6 +553,23 @@ export const JSON_CONTAINERS: readonly JsonContainer[] = [
     table: "CommentAutomation",
     inboundIdColumn: "id",
     jsonColumns: ["privateReply", "publicReply", "options"],
+    workspaceColumn: WS,
+  },
+  {
+    // The flows its actions start and the tags and fields they change.
+    inboundKind: "inboundWebhook",
+    table: "InboundWebhook",
+    inboundIdColumn: "id",
+    jsonColumns: ["actions"],
+    workspaceColumn: WS,
+  },
+  {
+    // The flow or AI agent a story reply runs.
+    inboundKind: "storyAutomation",
+    table: "IgStoryAutomation",
+    inboundIdColumn: "id",
+    jsonColumns: [],
+    replyColumns: ["reply"],
     workspaceColumn: WS,
   },
   {
@@ -553,12 +672,19 @@ const loadEdges = async (
           holderIdColumn: slot.inboundIdColumn ?? "id",
           workspaceColumn: slot.workspaceColumn,
           textColumn: slot.textColumn,
+          restrictSql: slot.restrictSql,
         })),
+        replyType: REPLY_TYPE_OF_KIND[parentKind],
         containerProbes: JSON_CONTAINERS.map((container) => ({
           holderKind: container.inboundKind,
           table: container.table,
           holderIdColumn: container.inboundIdColumn,
           jsonColumns: container.jsonColumns,
+          replyColumns: container.replyColumns,
+          idArrayColumns:
+            container.idArrays?.kind === parentKind
+              ? container.idArrays.columns
+              : undefined,
           workspaceColumn: container.workspaceColumn,
           scopeThroughBroadcast: container.scopeThroughBroadcast,
           conditionTypeColumn: container.conditionTypeColumn,

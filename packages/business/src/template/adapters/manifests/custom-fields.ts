@@ -13,6 +13,17 @@ import type { TemplateInstallContext } from "../types"
 import { placeCreatedRows } from "./folders"
 import { pickPriorCopies } from "./prior-copies"
 
+/** Remembers a field the installer already had, for tools that must not claim it as their own. */
+const markCustomFieldReused = (
+  ctx: TemplateInstallContext,
+  fieldId: string,
+): void => {
+  ctx.reusedCustomFieldIds = new Set([
+    ...(ctx.reusedCustomFieldIds ?? []),
+    fieldId,
+  ])
+}
+
 /**
  * Find-or-create custom fields from the template's manifest, reusing
  * `customFieldService.resolveByNameAndType` verbatim — the same
@@ -88,6 +99,9 @@ export const resolveCustomFieldManifest = async (
       continue
     }
     idMap.set(sourceId, resolvedField.id)
+    if (!createdIdSet.has(resolvedField.id)) {
+      markCustomFieldReused(ctx, resolvedField.id)
+    }
     ctx.track({
       category: "customFields",
       resourceKind: "customField",
@@ -168,6 +182,7 @@ const reusePriorCopies = async (
   for (const [sourceId, field] of pickPriorCopies(prior, fields, entries)) {
     reused.set(sourceId, { name: field.name, renamed: false })
     ctx.idMaps.customField.set(sourceId, field.id)
+    markCustomFieldReused(ctx, field.id)
     ctx.track({
       category: "customFields",
       resourceKind: "customField",

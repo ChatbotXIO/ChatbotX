@@ -7385,6 +7385,7 @@
       "resourcesTitle": "インストールされたリソース",
       "noResources": "まだ何も作成されていません。",
       "deletedResource": "削除されたリソース",
+      "wholeCategory": "{count, plural, one {#件} other {#件}}",
       "viewOnly": "閲覧のみ",
       "created": "作成",
       "reused": "再利用",
@@ -7439,7 +7440,12 @@
           "placeCategories": "場所カテゴリ"
         }
       },
-      "viewOnlyCopyIncluded": "選択した項目（またはそれが必要とする項目）は閲覧専用テンプレートからインストールされたため、新しいテンプレートで共有できません。"
+      "viewOnlyCopyIncluded": "選択した項目（またはそれが必要とする項目）は閲覧専用テンプレートからインストールされたため、新しいテンプレートで共有できません。",
+      "miniAppPublishedExcluded": {
+        "title": "除外されたミニアプリ",
+        "hint": "これらのフローは WhatsApp に公開されているミニアプリを使用しています。共有できないため、テンプレートから除外され、インストール時にその参照は削除されます。",
+        "item": "{flowName}: {miniAppName}"
+      }
     },
     "categories": {
       "flows": "フロー",
@@ -7461,7 +7467,20 @@
       "aiFiles": "AIナレッジファイル",
       "questionnaires": "アンケート",
       "couponTopics": "クーポントピック",
-      "pipelines": "パイプライン"
+      "pipelines": "パイプライン",
+      "magicLinks": "マジックリンク",
+      "polls": "投票",
+      "dynamicImages": "ダイナミック画像",
+      "placeLocations": "ロケーション",
+      "miniApps": "ミニアプリ",
+      "minigames": "ミニゲーム",
+      "leaderboards": "リーダーボード",
+      "openHours": "営業時間",
+      "vendors": "ベンダー",
+      "discountCodes": "割引コード",
+      "storeSettings": "ストア設定",
+      "storyAutomations": "Instagramストーリーオートメーション",
+      "inboundWebhooks": "受信Webhook"
     },
     "locked": {
       "flowBanner": "このフローは閲覧専用のテンプレートからインストールされました。表示はできますが編集はできません。",
@@ -7538,6 +7557,7 @@
       "flowNotPublished": "Flow は下書きとしてインストールされ、公開されていません。",
       "flowSkippedRequiredReference": "必要な参照を解決できなかったため、Flow はスキップされました。",
       "folder": "参照された項目がこのワークスペースに見つからなかったため、リンクを削除しました。",
+      "inboundWebhookLimitReached": "この受信Webhookはスキップされました。ワークスペースの受信Webhook数が上限に達しています。",
       "inboxBindingRequired": "このチャネルの受信トレイを選択してください。それまでこの項目は無効のままです。",
       "integration": "参照された項目がこのワークスペースに見つからなかったため、リンクを削除しました。",
       "localModifiedOverwritten": "ローカルで編集された項目が上書きされました。バックアップが保存されており、復元できます。",
@@ -7558,7 +7578,25 @@
       "tag": "参照された項目がこのワークスペースに見つからなかったため、リンクを削除しました。",
       "unlisted": "項目を完全には取り込めませんでした: {code}",
       "workspaceMember": "このワークスペースにいないメンバーに割り当てられています。",
-      "workspaceUnavailable": "このワークスペースは利用できなくなったため、この項目はスキップされました。"
+      "workspaceUnavailable": "このワークスペースは利用できなくなったため、この項目はスキップされました。",
+      "scheduleExpired": "この項目の日付はすでに過ぎています。使用する前に新しい日付を設定してください。",
+      "linkNotRemapped": "テンプレートに含まれていないツールへのリンクはそのままにしました。",
+      "dynamicImage": "背景をコピーできなかったため、このダイナミック画像をスキップしました。",
+      "dynamicImageFieldNotBound": "この画像をキャッシュするカスタムフィールドを選択してください。元のフィールドはすでにワークスペースにありました。",
+      "dynamicImageRerenderFailed": "コピーしたリンクで背景を再生成できなかったため、このダイナミック画像はオフになりました。もう一度オンにすると再試行されます。",
+      "pollImage": "画像をコピーできませんでした。",
+      "leaderboardInvalid": "このリーダーボードの設定をインストールできなかったため、スキップしました。",
+      "placeLocationInvalid": "この場所は名前が空のため、スキップされました。",
+      "minigame": "このリーダーボードのスコア元のミニゲームがテンプレートに含まれていないため、スキップしました。",
+      "minigameImage": "画像をコピーできませんでした。",
+      "leaderboardImage": "画像をコピーできませんでした。",
+      "leaderboardHostMissing": "このリーダーボードには専用のチャネル（またはミニゲーム）が必要ですが、今回のインストールでは用意されなかったためスキップしました。",
+      "externalStoreSkipped": "このワークスペースは連携済みのストア（ShopifyまたはWooCommerce）で販売しているため、商品、ベンダー、割引コード、営業時間、ストア設定はインストールされませんでした。",
+      "discountCodeSkipped": "この割引コードはスキップされました。対象の商品やカテゴリがテンプレートに含まれていないか、設定が拒否されました。",
+      "storeSettingsKept": "このワークスペースにはすでにストア設定があったため、そのまま保持しました。",
+      "vendorImage": "画像をコピーできませんでした。",
+      "storeSettingsCurrencyKept": "このワークスペースには別の通貨の商品があるため、テンプレートの通貨ではなく現在の通貨を維持しました。",
+      "storySelectionRequired": "ストーリーを選択し直してください。元のストーリーを引き継げませんでした。"
     },
     "tabs": {
       "mine": "マイテンプレート",

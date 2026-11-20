@@ -254,6 +254,8 @@ const deleteChildBatch = async (
     parentIds: readonly string[]
     workspaceId: string
     primaryKey?: readonly string[]
+    /** False for a child table with no `workspaceId` column: the parent ids already belong to the workspace. */
+    workspaceScoped?: boolean
   },
 ): Promise<boolean> => {
   if (input.parentIds.length === 0) {
@@ -273,7 +275,7 @@ const deleteChildBatch = async (
   const result = await tx.execute(
     sql`DELETE FROM ${table} WHERE (${key}) IN (
           SELECT ${key} FROM ${table}
-          WHERE "workspaceId" = ${input.workspaceId}::bigint
+          WHERE ${input.workspaceScoped === false ? sql`TRUE` : sql`"workspaceId" = ${input.workspaceId}::bigint`}
             AND ${sql.identifier(input.parentColumn)} IN (${parents})
           LIMIT ${UNINSTALL_DRAIN_BATCH})`,
   )
@@ -347,8 +349,18 @@ const drainInOrder = async (
   return false
 }
 
-/** A heavy child table; `soft` ones are soft-deleted (`deletedAt`) instead of removed. */
-export type DrainTable = string | { table: string; soft: true }
+/**
+ * A heavy child table; `soft` ones are soft-deleted (`deletedAt`) instead of
+ * removed, and one with its own `primaryKey` (a composite key, or a partitioned
+ * table) is matched on that tuple instead of the shared one.
+ */
+export type DrainTable =
+  | string
+  | { table: string; soft: true }
+  | { table: string; primaryKey: readonly string[] }
+
+const drainTableName = (table: DrainTable): string =>
+  typeof table === "string" ? table : table.table
 
 /**
  * The `heavyChildren` names and the matching `drainHeavyChildren` for child
@@ -360,20 +372,30 @@ export const drainTables = (input: {
   tables: readonly DrainTable[]
   /** Needed for partitioned tables; see {@link deleteChildBatch}. */
   primaryKey?: readonly string[]
+  /** False when the child tables carry no `workspaceId` (see {@link deleteChildBatch}). */
+  workspaceScoped?: boolean
 }): Pick<ResourceUninstallHandler, "heavyChildren" | "drainHeavyChildren"> => ({
-  heavyChildren: input.tables.map((t) => (typeof t === "string" ? t : t.table)),
+  heavyChildren: input.tables.map(drainTableName),
   drainHeavyChildren: async (tx, ids, ctx) =>
     await drainInOrder(
       input.tables.map((t) => () => {
         const batch = {
-          table: typeof t === "string" ? t : t.table,
+          table: drainTableName(t),
           parentColumn: input.parentColumn,
           parentIds: ids,
           workspaceId: ctx.workspaceId,
         }
-        return typeof t === "string"
-          ? deleteChildBatch(tx, { ...batch, primaryKey: input.primaryKey })
-          : softDeleteChildBatch(tx, batch)
+        if (typeof t !== "string" && "soft" in t) {
+          return softDeleteChildBatch(tx, batch)
+        }
+        return deleteChildBatch(tx, {
+          ...batch,
+          primaryKey:
+            typeof t !== "string" && "primaryKey" in t
+              ? t.primaryKey
+              : input.primaryKey,
+          workspaceScoped: input.workspaceScoped,
+        })
       }),
     ),
 })

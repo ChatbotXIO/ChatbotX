@@ -1,14 +1,9 @@
 import { type DatabaseClient, db, eq } from "@chatbotx.io/database/client"
 import { conditionModel, triggerModel } from "@chatbotx.io/database/schema"
-import {
-  remapReferences,
-  type UnresolvedReference,
-} from "@chatbotx.io/flow-config"
 import { createId } from "@chatbotx.io/utils"
 import { z } from "zod"
 import { omitKeys } from "../fingerprint"
 import { collectResourceDependencies } from "../manifest-references"
-import { sanitizeEntryReferences } from "../reference-sanitizer"
 import { templateBackupNotRestorableException } from "../template-errors"
 import {
   canonicalConditionRows,
@@ -17,6 +12,7 @@ import {
   type TriggerConditionRow,
 } from "../trigger-conditions"
 import { withTriggerFieldKeysAsIds } from "../trigger-field-keys"
+import { remapEntryReferences } from "./entry-references"
 import { insertCopyNamed } from "./naming"
 import {
   assertBackupFormat,
@@ -24,7 +20,6 @@ import {
   type FindByName,
   makeCollector,
   nameTakenByOther,
-  notYetReported,
   recordCopy,
   resolveFolderRef,
   resolveSyncedName,
@@ -192,58 +187,58 @@ const TRIGGER_REMAP_KINDS = [
   "flow",
   "webhook",
   "trigger",
+  // A pipeline action's assignee arrays name members and teams; they never
+  // travel between workspaces, so they have no id map and are stripped.
+  "pipeline",
+  "pipelineStage",
+  "pipelineField",
+  "workspaceMember",
+  "inboxTeam",
 ]
 
 /** The kinds the condition rows can name, on top of what the actions name. */
-const TRIGGER_CONDITION_KINDS = [
-  "product",
-  "productCategory",
-  "pipeline",
-  "pipelineStage",
-]
+const TRIGGER_CONDITION_KINDS = ["product", "productCategory"]
 
 /** Another trigger of the same template resolves later, so it is not judged here. */
 const TRIGGER_OWN_KINDS: ReadonlySet<string> = new Set(["trigger"])
 
+/** A trigger action that assigns the conversation to a named member or team. */
+const isMemberAssignmentAction = (action: unknown): boolean =>
+  typeof action === "object" &&
+  action !== null &&
+  "type" in action &&
+  action.type === "assignConversation"
+
 /**
- * The entry's actions with every reference remapped to this workspace. One no
- * map resolved is warned about and then removed (the action that needs it is
- * dropped), so a copy never keeps the source workspace's id.
+ * The entry's actions with every reference remapped to this workspace (see
+ * `remapEntryReferences`); an action that assigns the conversation to a named
+ * member or team is dropped last, so the paths warned keep the action's own index.
  */
 const remapActions = async (
   ctx: TemplateInstallContext,
   entry: TemplateTriggerEntry,
 ): Promise<unknown[]> => {
-  const unresolved: UnresolvedReference[] = []
-  const remapped = remapReferences(entry.actions, ctx.idMaps, {
+  const actions = await remapEntryReferences(ctx, {
+    category: "triggers",
+    sourceId: entry.sourceId,
+    field: "actions",
+    value: entry.actions,
     kinds: TRIGGER_REMAP_KINDS,
-    onUnresolved: (ref) => unresolved.push(ref),
-  })
-  const sanitized = await sanitizeEntryReferences({
-    workspaceId: ctx.workspaceId,
-    tx: ctx.tx,
-    value: remapped,
-    unresolved,
     keepKinds: TRIGGER_OWN_KINDS,
   })
-  // A removed reference is reported once, as removed; the rest under their kind.
-  for (const ref of notYetReported(unresolved, sanitized.removed)) {
-    ctx.warn({
-      category: "triggers",
-      entityKind: ref.entityKind,
-      path: `triggers.${entry.sourceId}.actions.${ref.path}`,
-      value: ref.value,
-    })
-  }
-  for (const path of sanitized.removed) {
+  return actions.filter((action) => {
+    if (!isMemberAssignmentAction(action)) {
+      return true
+    }
+    // `assignedId` is a member or team of the source workspace; neither travels.
     ctx.warn({
       category: "triggers",
       entityKind: "referenceRemoved",
-      path: `triggers.${entry.sourceId}.actions.${path}`,
+      path: `triggers.${entry.sourceId}.actions.assignConversation.assignedId`,
       value: entry.sourceId,
     })
-  }
-  return sanitized.value
+    return false
+  })
 }
 
 /**

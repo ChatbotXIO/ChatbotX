@@ -3,6 +3,7 @@
 import { formatDate } from "@chatbotx.io/ui/lib/format"
 import Link from "next/link"
 import { useLocale, useTranslations } from "next-intl"
+import { LockBadge } from "@/features/templates/components/lock-badge"
 import { daysLeft } from "../../lib/format"
 import { supportsPostScope } from "../../lib/platforms"
 import type { LeaderboardRow } from "../../queries"
@@ -21,7 +22,10 @@ export function LeaderboardCampaignCell({
   leaderboard,
   href,
 }: {
-  leaderboard: Pick<LeaderboardRow, "name" | "startsAt" | "endsAt" | "status">
+  leaderboard: Pick<
+    LeaderboardRow,
+    "id" | "name" | "startsAt" | "endsAt" | "status"
+  >
   href: string
 }) {
   const t = useTranslations()
@@ -31,12 +35,12 @@ export function LeaderboardCampaignCell({
     leaderboard.status === "active" || leaderboard.status === "paused"
   return (
     <div className="flex min-w-48 flex-col gap-0.5">
-      <Link
-        className="max-w-64 truncate font-medium hover:underline"
-        href={href}
-      >
-        {leaderboard.name}
-      </Link>
+      <div className="flex max-w-64 items-center">
+        <Link className="truncate font-medium hover:underline" href={href}>
+          {leaderboard.name}
+        </Link>
+        <LockBadge resourceId={leaderboard.id} />
+      </div>
       <span className="text-muted-foreground text-xs">
         {formatDate(leaderboard.startsAt, { locale, ...DATE_TIME_FORMAT })}
         {" – "}

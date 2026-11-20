@@ -234,6 +234,7 @@ If a step returns `success`/`error`/`skip` **and** no edge is connected to that 
 ## Common Mistakes
 
 - **A step field that stores an id (flow, tag, field, sequence, product, inbox…) without a reference policy.** Templates and flow import copy the graph into another workspace; an id with no `REFERENCE_KIND_POLICY` / `STEP_REFERENCE_OVERRIDES` entry dangles there. `reference-registry-completeness.test.ts` fails on a new `*Id`/`*Ids` key — see the `template-integration` skill, section 4.
+- **A step that produces a public link to a tool (`/minigames?minigameId=…`, `/r/<workspaceId>/<name>`, `/l/<workspaceId>/p/<pollId>`, …) without a `RESOURCE_LINK_PATTERNS` entry** (`packages/flow-config/src/import-export/resource-links.ts`). Templates rewrite such links to the copied tool's id; a link with no pattern keeps the source workspace's id in the installer's flow.
 
 | Mistake | Correct approach |
 |---------|-----------------|
