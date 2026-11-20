@@ -2,7 +2,7 @@
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
 const mocks = vi.hoisted(() => {
-  const updateReturning = vi.fn(async () => [{ openId: "open-1" }])
+  const updateReturning = vi.fn(async () => [{ id: "tt-1" }])
   const updateWhere = vi.fn(() => ({ returning: updateReturning }))
   const updateSet = vi.fn(() => ({ where: updateWhere }))
   return {
@@ -23,6 +23,14 @@ vi.mock("@chatbotx.io/database/client", () => ({
   eq: vi.fn(),
   findOrFail: mocks.findOrFail,
   inArray: vi.fn(),
+  sql: (strings: TemplateStringsArray, ...values: unknown[]) => ({
+    sql: strings.join("?"),
+    values,
+  }),
+}))
+
+vi.mock("../src/integration-context/auth-store", () => ({
+  makeAuthStore: vi.fn(),
 }))
 
 vi.mock("@chatbotx.io/database/repositories", () => ({
@@ -107,16 +115,20 @@ describe("tiktokIntegrationService.setCommentToMessage", () => {
       "open-1",
       "ENABLE",
     )
-    expect(mocks.updateSet).toHaveBeenCalledWith(
-      expect.objectContaining({
-        auth: expect.objectContaining({
-          metadata: expect.objectContaining({
-            scopes: SCOPES,
-            commentToMessage: expect.objectContaining({ status: "ENABLE" }),
-          }),
-        }),
-      }),
+    // Only `metadata.commentToMessage` is written, in the database: writing
+    // back the `auth` read before the TikTok call would undo a token refresh
+    // that landed meanwhile (and TikTok revokes a used refresh token).
+    const [setArg] = mocks.updateSet.mock.calls[0] as unknown as [
+      { auth: { sql: string; values: unknown[] } },
+    ]
+    expect(setArg.auth.sql).toContain("jsonb_set")
+    const written = setArg.auth.values.find(
+      (value): value is string => typeof value === "string",
     )
+    expect(JSON.parse(written ?? "{}")).toEqual(
+      expect.objectContaining({ status: "ENABLE" }),
+    )
+    expect(JSON.stringify(setArg)).not.toContain("token-1")
     expect(mocks.auditRecord).toHaveBeenCalledWith({
       action: "update",
       detail: "enabled TikTok Comment-to-Message",

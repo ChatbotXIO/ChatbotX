@@ -1,9 +1,9 @@
-import { tiktokIntegrationService } from "@chatbotx.io/business"
-import type {
-  TiktokAuthValue,
-  TiktokComment,
+import { buildContext, tiktokIntegrationService } from "@chatbotx.io/business"
+import {
+  integration as integrationTiktok,
+  type TiktokAuthValue,
+  type TiktokComment,
 } from "@chatbotx.io/integration-tiktok"
-import { listTiktokComments } from "@chatbotx.io/integration-tiktok/apis/comment"
 import { filterIntegrationsByAccount } from "../account-filter"
 import { collectCommentsSince, toEpochSeconds } from "./paging"
 import {
@@ -35,19 +35,30 @@ export async function scanTiktokComments(
 
   let lastError: unknown
   for (const integration of integrations) {
-    const auth = integration.auth as TiktokAuthValue
     try {
+      // Through `runAction`, so an expired token is refreshed rather than
+      // failing the scan (#1754).
+      const ctx = await buildContext({
+        workspaceId,
+        integrationType: "tiktok",
+        integration: {
+          ...integration,
+          auth: integration.auth as TiktokAuthValue,
+        },
+      })
       const comments = await collectCommentsSince<TiktokComment, number>({
         fetchPage: async (cursor) => {
-          const result = await listTiktokComments(auth.tokens.accessToken, {
-            businessId: auth.metadata.openId,
-            videoId: postId,
-            includeReplies: true,
-            status: "PUBLIC",
-            sortField: "create_time",
-            sortType: "DESC",
-            cursor,
-            maxCount: TIKTOK_COMMENT_PAGE_SIZE,
+          const result = await integrationTiktok.runAction("listComments", {
+            ctx,
+            input: {
+              videoId: postId,
+              includeReplies: true,
+              status: "PUBLIC",
+              sortField: "create_time",
+              sortType: "DESC",
+              cursor,
+              maxCount: TIKTOK_COMMENT_PAGE_SIZE,
+            },
           })
           return {
             items: result.comments ?? [],

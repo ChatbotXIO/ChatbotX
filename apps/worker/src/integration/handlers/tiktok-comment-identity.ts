@@ -1,5 +1,8 @@
-import type { TiktokAuthValue } from "@chatbotx.io/integration-tiktok"
-import { listTiktokComments } from "@chatbotx.io/integration-tiktok/apis/comment"
+import { buildContext } from "@chatbotx.io/business"
+import {
+  integration as integrationTiktok,
+  type TiktokAuthValue,
+} from "@chatbotx.io/integration-tiktok"
 import { logger } from "../../lib/logger"
 
 export type TiktokCommenterIdentity = {
@@ -37,19 +40,32 @@ export type TiktokCommenterIdentity = {
  * answering a comment that might be the business's own would have the account
  * replying to itself. Every failure is therefore a warning and never a throw;
  * the caller decides what an unanswered lookup is worth, not this function.
+ *
+ * Goes through `runAction` so the SDK refreshes an expiring token first and
+ * retries once when TikTok rejects it. Calling the API with the stored token
+ * directly meant an expired token was never refreshed here, and since a
+ * withheld automation sends nothing, no other call refreshed it either (#1754).
  */
 export async function resolveTiktokCommenterIdentity(props: {
-  auth: TiktokAuthValue
+  workspaceId: string
+  integrationRow: { id: string; inboxId: string; auth: TiktokAuthValue }
   commentId: string
   videoId: string
 }): Promise<TiktokCommenterIdentity | undefined> {
   try {
-    const result = await listTiktokComments(props.auth.tokens.accessToken, {
-      businessId: props.auth.metadata.openId,
-      videoId: props.videoId,
-      commentIds: [props.commentId],
-      status: "ALL",
-      maxCount: 1,
+    const ctx = await buildContext({
+      workspaceId: props.workspaceId,
+      integrationType: "tiktok",
+      integration: props.integrationRow,
+    })
+    const result = await integrationTiktok.runAction("listComments", {
+      ctx,
+      input: {
+        videoId: props.videoId,
+        commentIds: [props.commentId],
+        status: "ALL",
+        maxCount: 1,
+      },
     })
 
     const comment = result.comments?.find(

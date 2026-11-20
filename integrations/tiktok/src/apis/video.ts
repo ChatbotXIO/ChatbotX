@@ -1,4 +1,4 @@
-import { rescue, TiktokAPIException } from "../exception"
+import { rescue, throwBusinessApiError } from "../exception"
 import { createTiktokBusinessClient } from "../lib/http-client"
 import type {
   BusinessApiResponse,
@@ -56,9 +56,7 @@ export const listTiktokVideos = (
     >("business/videos/list/", { searchParams })
 
     if (response.code !== 0) {
-      throw new TiktokAPIException(
-        response.message ?? "business/videos/list failed",
-      )
+      throwBusinessApiError(response, "business/videos/list failed")
     }
     return response.data ?? {}
   })

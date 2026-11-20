@@ -1,4 +1,9 @@
-import type { Oauth2AuthValue, Oauth2Config } from "@chatbotx.io/sdk"
+import type {
+  Context,
+  Handler,
+  Oauth2AuthValue,
+  Oauth2Config,
+} from "@chatbotx.io/sdk"
 import { z } from "zod"
 
 /**
@@ -64,7 +69,25 @@ export type TiktokAuthValue = Oauth2AuthValue & {
   }
 }
 
-export type TiktokActions = Record<string, never>
+export type TiktokListCommentsInput = {
+  videoId: string
+  commentIds?: string[]
+  includeReplies?: boolean
+} & TiktokCommentListOptions
+
+/**
+ * Called through `integration.runAction`, never as bare API functions, so the
+ * SDK refreshes an expiring token first and retries once on a
+ * `TiktokAuthException`. Code that called the API directly with the stored
+ * token kept failing after the token expired (#1754).
+ */
+export type TiktokActions = {
+  /** `business/comment/list/` for the connected account (`business_id` from auth). */
+  listComments: Handler<
+    { ctx: Context<TiktokAuthValue>; input: TiktokListCommentsInput },
+    TiktokCommentListResult
+  >
+}
 
 // ─── Webhook event schemas ────────────────────────────────────────────────────
 

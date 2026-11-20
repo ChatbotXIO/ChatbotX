@@ -1,5 +1,12 @@
 import type { DatabaseClient } from "@chatbotx.io/database/client"
-import { and, db, eq, findOrFail, inArray } from "@chatbotx.io/database/client"
+import {
+  and,
+  db,
+  eq,
+  findOrFail,
+  inArray,
+  sql,
+} from "@chatbotx.io/database/client"
 import { connectionRepository } from "@chatbotx.io/database/repositories"
 import { integrationTiktokModel } from "@chatbotx.io/database/schema"
 import type { IntegrationTiktokModel } from "@chatbotx.io/database/types"
@@ -29,6 +36,7 @@ import {
   notFoundException,
 } from "../errors"
 import { inboxService } from "../inbox/service"
+import { makeAuthStore } from "../integration-context/auth-store"
 import { logger } from "../logger"
 
 /** The post a TikTok comment conversation sits on, as far as it can be resolved. */
@@ -77,9 +85,28 @@ class TiktokIntegrationService extends BaseService {
       .select({
         id: integrationTiktokModel.id,
         workspaceId: integrationTiktokModel.workspaceId,
+        inboxId: integrationTiktokModel.inboxId,
         auth: integrationTiktokModel.auth,
       })
       .from(integrationTiktokModel)
+  }
+
+  /**
+   * Runs `fn` holding the lock every TikTok token refresh takes.
+   *
+   * It is the SDK auth store's own lock (keyed by the mirrored `Connection`,
+   * or by the row before one exists), so the scheduled job, the builder's
+   * refresh buttons and the SDK's on-demand refresh can never run at once.
+   * That matters because TikTok rotates refresh tokens from 2026-12-01: two
+   * refreshes racing on one refresh token leave the loser holding a revoked
+   * one. Read the auth inside `fn`, never before it.
+   */
+  async withTokenRefreshLock<T>(
+    integration: { id: string; inboxId?: string | null },
+    fn: () => Promise<T>,
+  ): Promise<T> {
+    const authStore = makeAuthStore<TiktokAuthValue>("tiktok", integration)
+    return authStore.withLock ? await authStore.withLock(fn) : await fn()
   }
 
   findAllByWorkspaceIds(workspaceIds: string[]) {
@@ -90,6 +117,7 @@ class TiktokIntegrationService extends BaseService {
       .select({
         id: integrationTiktokModel.id,
         workspaceId: integrationTiktokModel.workspaceId,
+        inboxId: integrationTiktokModel.inboxId,
         auth: integrationTiktokModel.auth,
       })
       .from(integrationTiktokModel)
@@ -170,7 +198,7 @@ class TiktokIntegrationService extends BaseService {
       )
     }
 
-    await this.cacheCommentToMessageStatus({ id, workspaceId, auth, status })
+    await this.cacheCommentToMessageStatus({ id, workspaceId, status })
 
     await this.audit(
       "update",
@@ -219,7 +247,7 @@ class TiktokIntegrationService extends BaseService {
       return null
     }
 
-    await this.cacheCommentToMessageStatus({ id, workspaceId, auth, status })
+    await this.cacheCommentToMessageStatus({ id, workspaceId, status })
     return status
   }
 
@@ -227,31 +255,44 @@ class TiktokIntegrationService extends BaseService {
    * Caches the status on the integration's auth metadata.
    *
    * A cache, never the authority — the owner can flip Comment-to-Message inside
-   * the TikTok app and nothing notifies us, which is why a re-check exists. The
-   * spread keeps `scopes` and the profile fields, which token refresh re-stamps
-   * onto this same object.
+   * the TikTok app and nothing notifies us, which is why a re-check exists.
+   *
+   * Writes ONLY `auth.metadata.commentToMessage`, in the database, never the
+   * whole `auth` read before the TikTok call: a token refresh landing during
+   * that call would otherwise be overwritten with the old tokens — and from
+   * 2026-12-01 TikTok revokes a refresh token once it has been used, so the
+   * restored one would leave the connection unable to refresh at all.
    */
   private async cacheCommentToMessageStatus(props: {
     id: string
     workspaceId: string
-    auth: TiktokAuthValue
     status: TiktokDirectReplyStatus
   }): Promise<void> {
-    const updatedAuth: TiktokAuthValue = {
-      ...props.auth,
-      metadata: {
-        ...props.auth.metadata,
-        commentToMessage: {
-          status: props.status,
-          checkedAt: new Date().toISOString(),
-        },
-      },
+    const commentToMessage = {
+      status: props.status,
+      checkedAt: new Date().toISOString(),
     }
-    await this.updateAuth({
-      id: props.id,
-      workspaceId: props.workspaceId,
-      auth: updatedAuth,
-    })
+    const [row] = await db
+      .update(integrationTiktokModel)
+      .set({
+        auth: sql`jsonb_set(
+          ${integrationTiktokModel.auth},
+          '{metadata}',
+          coalesce(${integrationTiktokModel.auth} -> 'metadata', '{}'::jsonb)
+            || jsonb_build_object('commentToMessage', ${JSON.stringify(commentToMessage)}::jsonb)
+        )`,
+      })
+      .where(
+        and(
+          eq(integrationTiktokModel.id, props.id),
+          eq(integrationTiktokModel.workspaceId, props.workspaceId),
+        ),
+      )
+      .returning({ id: integrationTiktokModel.id })
+
+    if (!row) {
+      throw notFoundException("TikTok integration not found")
+    }
   }
 
   async markTokenRefreshError(props: {
