@@ -438,9 +438,9 @@ class UserQuotaService extends BaseService {
 
   /**
    * Whether the user may access the app, based on the entitlement snapshot.
-   * Allow-list: only `active` and a non-expired `trial` may send/receive.
-   * `past_due`, `expired`, an expired `trial`, and any unrecognized status are
-   * blocked (`reason: "status"`). On top of the status check, this async
+   * Allow-list: `active`, `past_due` (dunning grace — quota limits still
+   * apply) and a non-expired `trial` may send/receive. `expired`, an expired
+   * `trial`, and any unrecognized status are blocked (`reason: "status"`). On top of the status check, this async
    * variant also OR-in the **live** MAC count (`reason: "mac"`) — the live
    * Redis counter is authoritative and can be ahead of the DB `macUsed`
    * column (see {@link getAccessStateFromQuota} for the pure/DB-only variant).
@@ -465,9 +465,9 @@ class UserQuotaService extends BaseService {
    * Use this when the caller has already loaded the quota (e.g. an RSC that also
    * renders usage bars) to avoid a redundant `getForUser` round-trip.
    *
-   * Allow-list: only `active` and a non-expired `trial` are allowed; every
-   * other status (`past_due`, `expired`, expired `trial`, unknown) is blocked
-   * with `reason: "status"`. A user with no quota row at all (pure OSS
+   * Allow-list: `active`, `past_due` (dunning grace; MAC/quota limits still
+   * apply) and a non-expired `trial` are allowed; every other status
+   * (`expired`, expired `trial`, unknown) is blocked with `reason: "status"`. A user with no quota row at all (pure OSS
    * install / pre-bootstrap) is never blocked.
    *
    * Also blocks when the DB `macUsed` column has already reached `macLimit`
@@ -493,7 +493,9 @@ class UserQuotaService extends BaseService {
     const trialActive =
       quota.planStatus === planStatuses.enum.trial && !trialExpired
     const statusAllowed =
-      quota.planStatus === planStatuses.enum.active || trialActive
+      quota.planStatus === planStatuses.enum.active ||
+      quota.planStatus === planStatuses.enum.past_due ||
+      trialActive
     const macLimitReached =
       quota.macLimit !== null && quota.macUsed >= quota.macLimit
 

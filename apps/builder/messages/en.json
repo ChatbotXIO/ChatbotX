@@ -556,7 +556,8 @@
       "mac": "You've reached your monthly active contact limit. Upgrade your plan to reach more."
     },
     "pastDue": {
-      "message": "Your last payment failed. Update your payment method to keep your workspace active."
+      "message": "Your last payment failed. Update your payment method to keep your workspace active.",
+      "portalError": "Could not open the billing portal. Please try again."
     },
     "trial": {
       "planName": "Trial",
