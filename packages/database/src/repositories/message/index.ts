@@ -22,6 +22,8 @@ export type {
   IMessageRepository,
   ListIncomingTextsByContactInboxParams,
   ListMessagesQuery,
+  MessageForTranslation,
+  MessageRef,
   MessageSourceRow,
   MessageTextWithFileTypes,
   MessageWithAttachments,
@@ -29,6 +31,7 @@ export type {
   PaginatedMessages,
   Pagination,
   PaginationCursor,
+  TranslationContextMessage,
   UpdateAttachmentParams,
 } from "./message-repository"
 export * from "./message-repository.factory"

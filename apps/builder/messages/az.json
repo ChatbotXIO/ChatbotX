@@ -163,6 +163,94 @@
   "errors": {
     "superAdminRequired": "Bunu etmək üçün iş sahəsinin super administratoru olmalısınız."
   },
+  "inboxTranslation": {
+    "settings": {
+      "title": "Söhbətlərin tərcüməsi",
+      "description": "Müştərilərinizin mesajlarını komandanız üçün, cavablarınızı isə müştərilər üçün birbaşa gələnlər qutusunda tərcümə edin.",
+      "saved": "Tərcümə parametrləri saxlanıldı",
+      "readOnly": "Bu parametrləri yalnız iş sahəsinin administratorları dəyişə bilər.",
+      "languageHint": "Söhbətlərin tərcüməsi aktiv olduqda müştəri mesajlarının tərcümə olunduğu dildir.",
+      "alert": {
+        "needsReconfiguration": "Yenidən konfiqurasiya tələb olunur: Sİ inteqrasiyası silinib və ya söndürülüb.",
+        "noIntegration": "Tərcümədən istifadə etmək üçün əvvəlcə Sİ inteqrasiyasını qoşun.",
+        "connect": "Sİ qoşun"
+      },
+      "enabled": {
+        "label": "Söhbətləri tərcümə et",
+        "description": "Müştəri mesajları yalnız kimsə söhbəti açdıqda tərcümə olunur. Çat mətni seçdiyiniz Sİ provayderinə göndərilir və Sİ açarınız üzərindən hesablanır."
+      },
+      "integration": {
+        "label": "Sİ inteqrasiyası",
+        "description": "Yalnız qoşulmuş Sİ provayderləri göstərilir."
+      },
+      "test": {
+        "label": "Bağlantını yoxla",
+        "button": "Yoxla",
+        "result": "{seconds} san.-də tamamlandı: «{sample}» → «{translated}»",
+        "slow": "Bu model yavaşdır: göndərilən mesajlar vaxtında tərcümə olunmaya bilər və onda göndərilməyəcək.",
+        "failed": "Yoxlama uğursuz oldu."
+      }
+    },
+    "message": {
+      "translating": "Tərcümə olunur…",
+      "stillWaiting": "Tərcümə hələ də gözlənilir",
+      "requestAgain": "Yenidən tələb et",
+      "failed": "Tərcümə etmək mümkün olmadı",
+      "translatedFrom": "{language} dilindən tərcümə edilib. Orijinalı göstər",
+      "translatedFromNoLanguage": "Tərcümə edilib. Orijinalı göstər",
+      "sentIn": "{language} dilində göndərilib. Göndərilənləri göstər",
+      "sentInNoLanguage": "Tərcümə edilərək göndərilib. Göndərilənləri göstər",
+      "hideOriginal": "Orijinalı gizlət",
+      "hideSent": "Göndərilənləri gizlət",
+      "translatedLabelNoLanguage": "Tərcümə edilib",
+      "sentLabelNoLanguage": "Tərcümə edilərək göndərilib"
+    },
+    "badge": {
+      "tooltip": "Müştəri dili: {language}"
+    },
+    "panel": {
+      "title": "Tərcümə parametrləri",
+      "statusOn": "Aktiv",
+      "statusOff": "Deaktiv",
+      "translateConversation": "Bu söhbəti tərcümə et",
+      "translateConversationHint": "Mesajları avtomatik tərcümə et",
+      "botActiveHint": "Bot bu söhbəti idarə edir, ona görə tərcümə söndürülüb. Tərcümə etmək üçün aktiv edin.",
+      "botPausedHint": "Bu söhbəti botdan götürmüsünüz, ona görə tərcümə söndürülü qalır. Tərcümə etmək üçün onu yandırın.",
+      "displayOptions": "Görünüş seçimləri",
+      "showOriginals": "Orijinal mətni göstər",
+      "previewBeforeSending": "Göndərməzdən əvvəl tərcüməyə bax"
+    },
+    "composer": {
+      "hintUnknown": "Dil müəyyən edilmədi · Yazıldığı kimi göndərilir",
+      "hintDetecting": "Müştərinin dili müəyyən edilir…",
+      "chip": {
+        "aria": "Tərcümə dili",
+        "target": "→ {language}",
+        "sameLanguage": "İş sahəsi ilə eyni dil",
+        "unknown": "Dil məlum deyil",
+        "hasFiles": "Faylı olan mesajlar tərcümə olunmur",
+        "off": "Tərcümə söndürülüb"
+      },
+      "popover": {
+        "customerLanguage": "Müştəri dili",
+        "chooseLanguage": "Dil seçin"
+      },
+      "preview": {
+        "title": "Müştəri önizləməsi · {language}",
+        "translating": "Tərcümə olunur…",
+        "needsRetranslate": "Yenidən tərcümə etmək lazımdır",
+        "retranslate": "Yenidən tərcümə et",
+        "failed": "Tərcümə etmək mümkün olmadı — göndərərkən yenidən cəhd ediləcək",
+        "done": "Hazır",
+        "ready": "Göndərməyə hazırdır"
+      }
+    },
+    "send": {
+      "translating": "Tərcümə olunur…",
+      "failed": "Tərcümə alınmadı",
+      "turnedOff": "Tərcümə əlçatan deyil. Bu söhbət üçün tərcümə söndürüldü."
+    }
+  },
   "states": {
     "success": "Uğurlu",
     "error": "Xəta",

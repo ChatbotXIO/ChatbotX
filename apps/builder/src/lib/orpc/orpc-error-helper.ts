@@ -12,6 +12,11 @@ import {
 } from "@chatbotx.io/database/partials"
 import type { ErrorMap } from "@orpc/server"
 import { z } from "zod"
+import {
+  TRANSLATION_API_ERRORS,
+  type TRANSLATION_NOT_SENT_CODE,
+  TRANSLATION_NOT_SENT_ERROR,
+} from "@/features/translation/schema/errors"
 import { DENIAL_MESSAGES } from "@/lib/workspace/authorize-workspace-access"
 
 type ContactSyncErrorCodes = typeof CONTACT_SYNC_ERROR_CODES
@@ -62,6 +67,7 @@ export const STRUCTURED_ERROR_CODES: ReadonlySet<string> = new Set([
   "contactSyncMappingInvalid" satisfies ContactSyncErrorCodes["mappingInvalid"],
   "contactSyncAlreadyRunning" satisfies ContactSyncErrorCodes["alreadyRunning"],
   "contactSyncCooldown" satisfies ContactSyncErrorCodes["cooldown"],
+  "translationNotSent" satisfies typeof TRANSLATION_NOT_SENT_CODE,
 ])
 
 /**
@@ -464,6 +470,31 @@ export const possibleErrorsOnGeneratingCallSummary = {
     status: 409,
   },
   ...possibleIdempotencyErrors,
+} satisfies ErrorMap
+
+/**
+ * Inbox translation: every way a translation can be refused or fail, each with
+ * its own code so an agent can branch on it (`translation<Name>`). Declared on
+ * the operations that surface them (settings, test, preview). A send with
+ * `translate: true` throws {@link possibleErrorsOnTranslatedSend} instead.
+ */
+export const possibleErrorsOnTranslating = {
+  notFound,
+  businessError,
+  ...Object.fromEntries(
+    Object.values(TRANSLATION_API_ERRORS).map(
+      ({ code, status, message }) => [code, { message, status }] as const,
+    ),
+  ),
+  ...possibleIdempotencyErrors,
+} satisfies ErrorMap
+
+/**
+ * A send with `translate: true` whose text could not be translated: nothing was
+ * sent, and `data` says why and whether translation was turned off.
+ */
+export const possibleErrorsOnTranslatedSend = {
+  translationNotSent: TRANSLATION_NOT_SENT_ERROR,
 } satisfies ErrorMap
 
 /** AI hand-over apply-to-all: every refusal is a 422 with its own code. */

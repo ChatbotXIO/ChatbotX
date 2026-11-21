@@ -163,6 +163,94 @@
   "errors": {
     "superAdminRequired": "この操作を行うには、ワークスペースのスーパー管理者である必要があります。"
   },
+  "inboxTranslation": {
+    "settings": {
+      "title": "会話の翻訳",
+      "description": "お客様のメッセージをチーム向けに、あなたの返信をお客様向けに、受信トレイ内で翻訳します。",
+      "saved": "翻訳設定を保存しました",
+      "readOnly": "この設定を変更できるのはワークスペースの管理者のみです。",
+      "languageHint": "会話の翻訳が有効なときに、お客様のメッセージの翻訳先となる言語でもあります。",
+      "alert": {
+        "needsReconfiguration": "再設定が必要です：AI連携が削除または無効になりました。",
+        "noIntegration": "翻訳を使うには、先にAI連携を接続してください。",
+        "connect": "AIを接続"
+      },
+      "enabled": {
+        "label": "会話を翻訳する",
+        "description": "お客様のメッセージは、誰かが会話を開いたときにのみ翻訳されます。チャットの本文は選択したAIプロバイダーに送信され、お客様のAIキーに課金されます。"
+      },
+      "integration": {
+        "label": "AI連携",
+        "description": "接続済みのAIプロバイダーのみ表示されます。"
+      },
+      "test": {
+        "label": "接続をテスト",
+        "button": "テスト",
+        "result": "{seconds} 秒で完了：「{sample}」→「{translated}」",
+        "slow": "このモデルは低速です。送信メッセージの翻訳が間に合わない場合、そのメッセージは送信されません。",
+        "failed": "テストに失敗しました。"
+      }
+    },
+    "message": {
+      "translating": "翻訳中…",
+      "stillWaiting": "翻訳をまだ待っています",
+      "requestAgain": "再リクエスト",
+      "failed": "翻訳できませんでした",
+      "translatedFrom": "{language}から翻訳。原文を表示",
+      "translatedFromNoLanguage": "翻訳済み。原文を表示",
+      "sentIn": "{language}で送信。送信内容を表示",
+      "sentInNoLanguage": "翻訳して送信。送信内容を表示",
+      "hideOriginal": "原文を隠す",
+      "hideSent": "送信内容を隠す",
+      "translatedLabelNoLanguage": "翻訳済み",
+      "sentLabelNoLanguage": "翻訳して送信"
+    },
+    "badge": {
+      "tooltip": "お客様の言語：{language}"
+    },
+    "panel": {
+      "title": "翻訳設定",
+      "statusOn": "オン",
+      "statusOff": "オフ",
+      "translateConversation": "この会話を翻訳する",
+      "translateConversationHint": "メッセージを自動的に翻訳",
+      "botActiveHint": "この会話はボットが対応中のため、翻訳はオフです。翻訳するにはオンにしてください。",
+      "botPausedHint": "このチャットはボットから引き継いだため、翻訳はオフのままです。翻訳するにはオンにしてください。",
+      "displayOptions": "表示オプション",
+      "showOriginals": "原文を表示",
+      "previewBeforeSending": "送信前に翻訳をプレビュー"
+    },
+    "composer": {
+      "hintUnknown": "言語を検出できません · そのまま送信されます",
+      "hintDetecting": "お客様の言語を検出中…",
+      "chip": {
+        "aria": "翻訳言語",
+        "target": "→ {language}",
+        "sameLanguage": "ワークスペースと同じ言語",
+        "unknown": "言語不明",
+        "hasFiles": "ファイル付きのメッセージは翻訳されません",
+        "off": "翻訳オフ"
+      },
+      "popover": {
+        "customerLanguage": "お客様の言語",
+        "chooseLanguage": "言語を選択"
+      },
+      "preview": {
+        "title": "お客様へのプレビュー · {language}",
+        "translating": "翻訳中…",
+        "needsRetranslate": "再翻訳が必要です",
+        "retranslate": "再翻訳",
+        "failed": "翻訳できませんでした。送信時に再試行します",
+        "done": "完了",
+        "ready": "送信できます"
+      }
+    },
+    "send": {
+      "translating": "翻訳中…",
+      "failed": "翻訳に失敗しました",
+      "turnedOff": "翻訳を利用できません。この会話の翻訳はオフになりました。"
+    }
+  },
   "states": {
     "success": "成功",
     "error": "エラー",

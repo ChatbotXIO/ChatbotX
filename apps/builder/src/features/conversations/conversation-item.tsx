@@ -36,6 +36,7 @@ import { InboxIcon } from "../inboxes/components/inbox-icon"
 import { useWhatsappVoipCallStore } from "../integration-whatsapp/calling/voip/voip-call-store"
 import { useOptionalWhatsappVoipCallContext } from "../integration-whatsapp/calling/voip/whatsapp-voip-call-context"
 import { useTenantSettings } from "../tenant/tenant-settings-provider"
+import { ConversationLanguageBadge } from "../translation/components/conversation-language-badge"
 import { SlaPill } from "./components/sla-pill"
 import { ThreadControlPill } from "./components/thread-control-pill"
 import { useMarkConversationRead } from "./hooks/use-mark-conversation-read"
@@ -405,6 +406,7 @@ export default function ConversationItem({
                   label={t(googleAdsBadgeLabelKey(googleAdsBadge.channel))}
                 />
               )}
+              <ConversationLanguageBadge conversation={conversation} />
               <ThreadControlPill conversation={conversation} />
               <SlaPill
                 responseDueAt={conversation.responseDueAt}

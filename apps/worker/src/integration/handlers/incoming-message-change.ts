@@ -1,10 +1,13 @@
 import {
   conversationService,
+  inboxTranslationSettingsService,
   messageService,
   queueWorkspaceRealtimeEvent,
+  translationService,
 } from "@chatbotx.io/business"
 import type { IntegrationType } from "@chatbotx.io/database/partials"
 import {
+  type RealtimeEventRoute,
   RealtimeEventType,
   routeForConversation,
 } from "@chatbotx.io/realtime-protocol"
@@ -71,6 +74,55 @@ const findRealtimeRoute = async (props: {
     )
   }
   return routeForConversation(conversation)
+}
+
+/**
+ * The customer edited or unsent a message: its stored translation (and any
+ * in-flight claim) describes content that no longer exists. Drops both, and
+ * tells the inbox so it does not keep showing the old translation.
+ *
+ * Runs before the change is published, so the inbox's re-request that follows
+ * a `messageUpdated` finds the claim already cleared and is accepted. Skipped
+ * when the workspace never switched translation on (nothing to delete, no
+ * extra query on the edit/unsend path); one that switched it off again still
+ * runs, or turning it back on would show a translation of old content. Best
+ * effort: a failure here must not fail an edit/unsend that is already stored.
+ */
+const dropTranslation = async (props: {
+  workspaceId: string
+  conversationId: string
+  messageId: string
+  route: RealtimeEventRoute
+  action: string
+}): Promise<void> => {
+  const { workspaceId, conversationId, messageId, route, action } = props
+  try {
+    if (
+      !(await inboxTranslationSettingsService.hasEverBeenEnabled(workspaceId))
+    ) {
+      return
+    }
+    const removed = await translationService.deleteForMessage({
+      workspaceId,
+      messageId,
+    })
+    if (!removed) {
+      return
+    }
+    await queueWorkspaceRealtimeEvent(workspaceId, {
+      eventType: RealtimeEventType.messageTranslationUpdated,
+      data: {
+        conversationId,
+        items: [{ messageId, status: "translated", removed: true }],
+      },
+      route,
+    })
+  } catch (err) {
+    logger.warn(
+      { err, workspaceId, conversationId, messageId, action },
+      "Failed to drop the translation of a changed message",
+    )
+  }
 }
 
 /**
@@ -160,6 +212,13 @@ export const applyIncomingTextUpdate = async (props: {
     conversationId: updated.conversationId,
     action: props.action,
   })
+  await dropTranslation({
+    workspaceId: inbox.workspaceId,
+    conversationId: updated.conversationId,
+    messageId: updated.id,
+    route,
+    action: props.action,
+  })
   await publishChange({
     conversationId: updated.conversationId,
     waitForIngress: props.waitForIngress === true,
@@ -238,6 +297,15 @@ export const deleteIncomingMessage = async (
     conversationId: first.conversationId,
     action,
   })
+  for (const row of deleted) {
+    await dropTranslation({
+      workspaceId: inbox.workspaceId,
+      conversationId: row.conversationId,
+      messageId: row.id,
+      route,
+      action,
+    })
+  }
   await publishChange({
     conversationId: first.conversationId,
     waitForIngress: props.retryIfMissing === true,

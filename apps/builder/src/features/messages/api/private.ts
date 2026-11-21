@@ -1,10 +1,12 @@
-import {
-  conversationService,
-  messageService,
-  userService,
-} from "@chatbotx.io/business"
+import { conversationService, userService } from "@chatbotx.io/business"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import z from "zod"
+import { sendOutgoing } from "@/features/translation/lib/send-outgoing"
+import {
+  assertConversationAccessForCaller,
+  lazyConversationAccessCheckForCaller,
+  type MemberScopeContext,
+} from "@/lib/public-api/member-scope"
 import { assertWorkspaceNotBlocked } from "@/lib/workspace-quota"
 import { workspaceAuthorizedMidddleware } from "@/middlewares/auth"
 import { authorizedAPI } from "@/orpc"
@@ -32,6 +34,17 @@ const workspaceIdAndConversationIdRequest = z.object({
   conversationId: zodBigintAsString(),
 })
 
+/** The session caller, as the member-scope helpers read it. */
+const memberScopeOf = (context: {
+  workspace: MemberScopeContext["workspace"]
+  workspaceMember: NonNullable<MemberScopeContext["member"]>
+  user: NonNullable<MemberScopeContext["user"]>
+}): MemberScopeContext => ({
+  workspace: context.workspace,
+  member: context.workspaceMember,
+  user: context.user,
+})
+
 export const messagesAuthenticatedAPI = {
   listMessagesAuthenticatedAPI: authorizedAPI
     .route({
@@ -43,7 +56,18 @@ export const messagesAuthenticatedAPI = {
     .input(listMessagesRequest)
     .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
     .output(listMessagesResponse)
-    .handler(async ({ input }) => await listMessages(input)),
+    // Reading messages is not member-scoped here (it never was), but their
+    // translations are: outside an agent's assigned conversations they are
+    // `null`, so an agent's original sentence never leaks.
+    .handler(
+      async ({ input, context }) =>
+        await listMessages(input, {
+          includeTranslation: true,
+          canSeeConversation: lazyConversationAccessCheckForCaller(
+            memberScopeOf(context),
+          ),
+        }),
+    ),
 
   findMessageAuthenticatedAPI: authorizedAPI
     .route({
@@ -55,7 +79,15 @@ export const messagesAuthenticatedAPI = {
     .input(findMessageRequest)
     .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
     .output(messageResourceWithRelations)
-    .handler(async ({ input }) => await findMessage(input)),
+    .handler(
+      async ({ input, context }) =>
+        await findMessage(input, {
+          includeTranslation: true,
+          canSeeConversation: lazyConversationAccessCheckForCaller(
+            memberScopeOf(context),
+          ),
+        }),
+    ),
 
   getWhatsappFlowResponseAuthenticatedAPI: authorizedAPI
     .route({
@@ -95,9 +127,20 @@ export const messagesAuthenticatedAPI = {
     .handler(async ({ input, context }) => {
       await assertWorkspaceNotBlocked(context.workspace.ownerId)
 
-      const conversation = await conversationService.findByOrFail({
-        where: { id: input.conversationId, workspaceId: input.workspaceId },
-      })
+      // A translated send spends a model call, so it is member-scoped like
+      // every other translation operation. A plain send keeps its behavior.
+      const conversation =
+        input.translate === true
+          ? await assertConversationAccessForCaller(
+              memberScopeOf(context),
+              input.conversationId,
+            )
+          : await conversationService.findByOrFail({
+              where: {
+                id: input.conversationId,
+                workspaceId: input.workspaceId,
+              },
+            })
 
       const inboxId =
         "inboxId" in input && input.inboxId ? input.inboxId : undefined
@@ -112,7 +155,8 @@ export const messagesAuthenticatedAPI = {
       // session context only carries the lighter better-auth user shape.
       const user = await userService.findByIdOrFail(context.user.id)
 
-      return messageService.createOutgoing({
+      return sendOutgoing({
+        workspaceId: input.workspaceId,
         conversation,
         contactInbox,
         input,

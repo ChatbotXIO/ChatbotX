@@ -9,6 +9,8 @@ const mocks = vi.hoisted(() => ({
   publishRealtimeEvent: vi.fn(),
   runExclusive: vi.fn(),
   isLockAcquisitionError: vi.fn(),
+  hasEverBeenEnabled: vi.fn(),
+  deleteTranslation: vi.fn(),
 }))
 
 vi.mock("../src/lib/logger", () => ({
@@ -47,6 +49,10 @@ vi.mock("@chatbotx.io/business", () => ({
       ),
   },
   queueWorkspaceRealtimeEvent: mocks.publishRealtimeEvent,
+  inboxTranslationSettingsService: {
+    hasEverBeenEnabled: mocks.hasEverBeenEnabled,
+  },
+  translationService: { deleteForMessage: mocks.deleteTranslation },
 }))
 
 const { logger } = await import("../src/lib/logger")
@@ -75,6 +81,8 @@ beforeEach(() => {
     async ({ fn }: { fn: () => Promise<unknown> }) => await fn(),
   )
   mocks.isLockAcquisitionError.mockReturnValue(false)
+  mocks.hasEverBeenEnabled.mockResolvedValue(false)
+  mocks.deleteTranslation.mockResolvedValue(true)
 })
 
 describe("updateIncomingMessage", () => {
@@ -406,5 +414,91 @@ describe("realtime events wait for the conversation's message ingress", () => {
       "redis down",
     )
     expect(mocks.publishRealtimeEvent).not.toHaveBeenCalled()
+  })
+})
+
+describe("translation of a changed message", () => {
+  const edited = { id: "msg-1", conversationId: "conv-1" }
+  const eventTypes = () =>
+    mocks.publishRealtimeEvent.mock.calls.map(
+      ([, event]) => (event as { eventType: string }).eventType,
+    )
+
+  test("a workspace that never enabled translation costs no extra work on an edit or an unsend", async () => {
+    mocks.updateTextBySourceId.mockResolvedValue(edited)
+    mocks.deleteBySourceId.mockResolvedValue([edited])
+
+    await updateIncomingMessage({ ...baseProps, newText: "x" })
+    await deleteIncomingMessage(baseProps)
+
+    expect(mocks.deleteTranslation).not.toHaveBeenCalled()
+    expect(eventTypes()).toEqual(["messageUpdated", "messageDeleted"])
+  })
+
+  test("an edit drops the translation and its claim, and tells the inbox before the update", async () => {
+    mocks.hasEverBeenEnabled.mockResolvedValue(true)
+    mocks.updateTextBySourceId.mockResolvedValue(edited)
+
+    await updateIncomingMessage({ ...baseProps, newText: "x" })
+
+    expect(mocks.deleteTranslation).toHaveBeenCalledWith({
+      workspaceId: "ws-1",
+      messageId: "msg-1",
+    })
+    expect(eventTypes()).toEqual([
+      "messageTranslationUpdated",
+      "messageUpdated",
+    ])
+    expect(mocks.publishRealtimeEvent.mock.calls[0]?.[1]).toMatchObject({
+      data: {
+        conversationId: "conv-1",
+        items: [{ messageId: "msg-1", removed: true }],
+      },
+    })
+  })
+
+  test("an unsend drops the translation of every deleted row", async () => {
+    mocks.hasEverBeenEnabled.mockResolvedValue(true)
+    mocks.deleteBySourceId.mockResolvedValue([
+      edited,
+      { id: "msg-2", conversationId: "conv-1" },
+    ])
+
+    await deleteIncomingMessage(baseProps)
+
+    expect(mocks.deleteTranslation).toHaveBeenCalledTimes(2)
+    expect(eventTypes()).toEqual([
+      "messageTranslationUpdated",
+      "messageTranslationUpdated",
+      "messageDeleted",
+    ])
+  })
+
+  test("no removed event when the message had no translation row", async () => {
+    mocks.hasEverBeenEnabled.mockResolvedValue(true)
+    mocks.deleteTranslation.mockResolvedValue(false)
+    mocks.updateTextBySourceId.mockResolvedValue(edited)
+
+    await updateIncomingMessage({ ...baseProps, newText: "x" })
+
+    expect(mocks.deleteTranslation).toHaveBeenCalledTimes(1)
+    expect(eventTypes()).toEqual(["messageUpdated"])
+  })
+
+  test("a failure to drop the translation is logged and never fails the edit", async () => {
+    mocks.hasEverBeenEnabled.mockResolvedValue(true)
+    const failure = new Error("redis down")
+    mocks.deleteTranslation.mockRejectedValue(failure)
+    mocks.updateTextBySourceId.mockResolvedValue(edited)
+
+    await expect(
+      updateIncomingMessage({ ...baseProps, newText: "x" }),
+    ).resolves.toBeUndefined()
+
+    expect(logger.warn).toHaveBeenCalledWith(
+      expect.objectContaining({ err: failure, messageId: "msg-1" }),
+      expect.stringContaining("translation"),
+    )
+    expect(eventTypes()).toEqual(["messageUpdated"])
   })
 })

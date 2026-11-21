@@ -99,6 +99,14 @@ type CreateOutgoingInput = (
    * accepted from `messages.create` input.
    */
   quickReplies?: MessageButtonTemplate[]
+  /**
+   * The text keyword/automated-response rules match against instead of the
+   * stored `text`. Inbox translation sends the customer-language translation
+   * as the message and passes the agent's own sentence here, so an automation
+   * keyed on what the agent typed still fires. Server-side only — not accepted
+   * from `messages.create` input.
+   */
+  automationText?: string
 }
 
 /**
@@ -600,7 +608,10 @@ export const createOutgoing = async (props: {
                 data: {
                   conversation: targetConversation,
                   contactInbox,
-                  message: { id: message.id, text: messageInput.text },
+                  message: {
+                    id: message.id,
+                    text: parsedInput.automationText ?? messageInput.text,
+                  },
                 },
               },
             ),

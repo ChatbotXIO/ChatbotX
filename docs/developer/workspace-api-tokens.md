@@ -57,6 +57,20 @@ The `inbox` scope also covers the Working Hours routes
 Inbox Teams. A token without `inbox` gets 403; a `read_only` token is blocked
 on the mutations. See `docs/working-hours.md`.
 
+The Inbox translation routes
+(`apps/builder/src/features/translation/api/public.ts`, router key
+`translation`) split across two scopes: `GET /v1/translation/settings` takes
+`settings` or `inbox` (agents read whether translation is on), while
+`PUT /v1/translation/settings` and `POST /v1/translation/settings/test` need
+`settings`, because they choose which AI provider receives customer chat text.
+The conversation routes (`GET/PUT /v1/conversations/{conversationId}/translation`,
+`POST .../translation/requests`, `POST .../translation/preview`) need `inbox`;
+they run the same membership scope check as the other conversation routes. A
+`read_only` token is limited to GET, so it is blocked on every other
+translation route, including the POST `test`, `requests` and `preview` calls
+that run the paid provider. See
+`docs/inbox-translation.md`.
+
 The `appointments` scope existed in the enum and UI registry for some time
 before any endpoint used it — see "Appointments scope — endpoint-to-scope
 table" below for the full surface now behind it.

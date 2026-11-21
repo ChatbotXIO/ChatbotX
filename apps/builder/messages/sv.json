@@ -1695,6 +1695,94 @@
     },
     "title": "DeepSeek"
   },
+  "inboxTranslation": {
+    "settings": {
+      "title": "Översättning av konversationer",
+      "description": "Översätt kundernas meddelanden åt ditt team, och dina svar åt dina kunder, direkt i inkorgen.",
+      "saved": "Översättningsinställningarna har sparats",
+      "readOnly": "Endast arbetsytans administratörer kan ändra dessa inställningar.",
+      "languageHint": "Det är också språket som kundmeddelanden översätts till när översättning av konversationer är på.",
+      "alert": {
+        "needsReconfiguration": "Ny konfiguration krävs: AI-integrationen har tagits bort eller stängts av.",
+        "noIntegration": "Anslut först en AI-integration för att använda översättning.",
+        "connect": "Anslut AI"
+      },
+      "enabled": {
+        "label": "Översätt konversationer",
+        "description": "Kundmeddelanden översätts bara när någon öppnar konversationen. Chattexten skickas till den AI-leverantör du väljer och debiteras på din AI-nyckel."
+      },
+      "integration": {
+        "label": "AI-integration",
+        "description": "Bara anslutna AI-leverantörer visas."
+      },
+      "test": {
+        "label": "Testa anslutning",
+        "button": "Testa",
+        "result": "Klart på {seconds} s: ”{sample}” → ”{translated}”",
+        "slow": "Den här modellen är långsam: utgående meddelanden kanske inte hinner översättas och skickas då inte.",
+        "failed": "Testet misslyckades."
+      }
+    },
+    "message": {
+      "translating": "Översätter…",
+      "stillWaiting": "Väntar fortfarande på översättningen",
+      "requestAgain": "Begär igen",
+      "failed": "Kunde inte översätta",
+      "translatedFrom": "Översatt från {language}. Visa original",
+      "translatedFromNoLanguage": "Översatt. Visa original",
+      "sentIn": "Skickat på {language}. Visa det som skickades",
+      "sentInNoLanguage": "Skickat översatt. Visa det som skickades",
+      "hideOriginal": "Dölj original",
+      "hideSent": "Dölj det som skickades",
+      "translatedLabelNoLanguage": "Översatt",
+      "sentLabelNoLanguage": "Skickat översatt"
+    },
+    "badge": {
+      "tooltip": "Kundens språk: {language}"
+    },
+    "panel": {
+      "title": "Översättningsinställningar",
+      "statusOn": "På",
+      "statusOff": "Av",
+      "translateConversation": "Översätt den här konversationen",
+      "translateConversationHint": "Översätt meddelanden automatiskt",
+      "botActiveHint": "Boten hanterar den här konversationen, så översättning är avstängd. Slå på den för att översätta konversationen.",
+      "botPausedHint": "Du har tagit över den här konversationen från boten, så översättningen förblir avstängd. Slå på den för att översätta den.",
+      "displayOptions": "Visningsalternativ",
+      "showOriginals": "Visa originaltext",
+      "previewBeforeSending": "Förhandsgranska översättningen innan du skickar"
+    },
+    "composer": {
+      "hintUnknown": "Språket kunde inte identifieras · Skickas som det är skrivet",
+      "hintDetecting": "Identifierar kundens språk…",
+      "chip": {
+        "aria": "Översättningsspråk",
+        "target": "→ {language}",
+        "sameLanguage": "Samma språk som arbetsytan",
+        "unknown": "Språket är okänt",
+        "hasFiles": "Meddelanden med filer översätts inte",
+        "off": "Översättning av"
+      },
+      "popover": {
+        "customerLanguage": "Kundens språk",
+        "chooseLanguage": "Välj ett språk"
+      },
+      "preview": {
+        "title": "Kundförhandsvisning · {language}",
+        "translating": "Översätter…",
+        "needsRetranslate": "Behöver översättas igen",
+        "retranslate": "Översätt igen",
+        "failed": "Kunde inte översätta – nytt försök görs när du skickar",
+        "done": "Klar",
+        "ready": "Redo att skickas"
+      }
+    },
+    "send": {
+      "translating": "Översätter…",
+      "failed": "Översättningen misslyckades",
+      "turnedOff": "Översättning är inte tillgänglig. Översättning har stängts av för den här konversationen."
+    }
+  },
   "muse": {
     "autoReply": {
       "description": "Aktivera automatiska AI-svar för att svara användare naturligt med AI som drivs av dina företagsdata.",

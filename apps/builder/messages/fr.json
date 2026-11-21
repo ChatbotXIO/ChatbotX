@@ -163,6 +163,94 @@
   "errors": {
     "superAdminRequired": "Vous devez être super-administrateur de l’espace de travail pour effectuer cette action."
   },
+  "inboxTranslation": {
+    "settings": {
+      "title": "Traduction des conversations",
+      "description": "Traduisez les messages de vos clients pour votre équipe, et vos réponses pour vos clients, directement dans la boîte de réception.",
+      "saved": "Paramètres de traduction enregistrés",
+      "readOnly": "Seuls les administrateurs de l'espace de travail peuvent modifier ces paramètres.",
+      "languageHint": "C'est aussi la langue dans laquelle les messages des clients sont traduits lorsque la traduction des conversations est activée.",
+      "alert": {
+        "needsReconfiguration": "Reconfiguration nécessaire : l'intégration d'IA a été supprimée ou désactivée.",
+        "noIntegration": "Connectez d'abord une intégration d'IA pour utiliser la traduction.",
+        "connect": "Connecter l'IA"
+      },
+      "enabled": {
+        "label": "Traduire les conversations",
+        "description": "Les messages des clients ne sont traduits que lorsque quelqu'un ouvre la conversation. Le texte du chat est envoyé au fournisseur d'IA que vous choisissez et facturé sur votre clé d'IA."
+      },
+      "integration": {
+        "label": "Intégration d'IA",
+        "description": "Seuls les fournisseurs d'IA connectés sont listés."
+      },
+      "test": {
+        "label": "Tester la connexion",
+        "button": "Tester",
+        "result": "Terminé en {seconds} s : « {sample} » → « {translated} »",
+        "slow": "Ce modèle est lent : les messages sortants risquent de ne pas être traduits à temps et ne seront alors pas envoyés.",
+        "failed": "Le test a échoué."
+      }
+    },
+    "message": {
+      "translating": "Traduction en cours…",
+      "stillWaiting": "Toujours en attente de la traduction",
+      "requestAgain": "Redemander",
+      "failed": "Traduction impossible",
+      "translatedFrom": "Traduit de {language}. Afficher l'original",
+      "translatedFromNoLanguage": "Traduit. Afficher l'original",
+      "sentIn": "Envoyé en {language}. Afficher ce qui a été envoyé",
+      "sentInNoLanguage": "Envoyé traduit. Afficher ce qui a été envoyé",
+      "hideOriginal": "Masquer l'original",
+      "hideSent": "Masquer ce qui a été envoyé",
+      "translatedLabelNoLanguage": "Traduit",
+      "sentLabelNoLanguage": "Envoyé traduit"
+    },
+    "badge": {
+      "tooltip": "Langue du client : {language}"
+    },
+    "panel": {
+      "title": "Paramètres de traduction",
+      "statusOn": "Activée",
+      "statusOff": "Désactivée",
+      "translateConversation": "Traduire cette conversation",
+      "translateConversationHint": "Traduire les messages automatiquement",
+      "botActiveHint": "Le bot gère cette conversation, la traduction est donc désactivée. Activez-la pour la traduire.",
+      "botPausedHint": "Vous avez repris cette conversation au bot, la traduction reste donc désactivée. Activez-la pour la traduire.",
+      "displayOptions": "Options d'affichage",
+      "showOriginals": "Afficher le texte original",
+      "previewBeforeSending": "Prévisualiser la traduction avant l'envoi"
+    },
+    "composer": {
+      "hintUnknown": "Langue non détectée · Envoi tel quel",
+      "hintDetecting": "Détection de la langue du client…",
+      "chip": {
+        "aria": "Langue de traduction",
+        "target": "→ {language}",
+        "sameLanguage": "Même langue que l'espace de travail",
+        "unknown": "Langue inconnue",
+        "hasFiles": "Les messages avec fichiers ne sont pas traduits",
+        "off": "Traduction désactivée"
+      },
+      "popover": {
+        "customerLanguage": "Langue du client",
+        "chooseLanguage": "Choisir une langue"
+      },
+      "preview": {
+        "title": "Aperçu client · {language}",
+        "translating": "Traduction en cours…",
+        "needsRetranslate": "À traduire de nouveau",
+        "retranslate": "Traduire à nouveau",
+        "failed": "Traduction impossible : une nouvelle tentative aura lieu à l'envoi",
+        "done": "Terminé",
+        "ready": "Prête à l'envoi"
+      }
+    },
+    "send": {
+      "translating": "Traduction…",
+      "failed": "Échec de la traduction",
+      "turnedOff": "Traduction indisponible. La traduction a été désactivée pour cette conversation."
+    }
+  },
   "states": {
     "success": "Réussite",
     "error": "Erreur",

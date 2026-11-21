@@ -163,6 +163,94 @@
   "errors": {
     "superAdminRequired": "Bunu yapmak için çalışma alanı süper yöneticisi olmanız gerekir."
   },
+  "inboxTranslation": {
+    "settings": {
+      "title": "Konuşma çevirisi",
+      "description": "Müşterilerinizin mesajlarını ekibiniz için, yanıtlarınızı ise müşterileriniz için doğrudan Gelen Kutusu'nda çevirin.",
+      "saved": "Çeviri ayarları kaydedildi",
+      "readOnly": "Bu ayarları yalnızca çalışma alanı yöneticileri değiştirebilir.",
+      "languageHint": "Konuşma çevirisi açıkken müşteri mesajlarının çevrildiği dil de budur.",
+      "alert": {
+        "needsReconfiguration": "Yeniden yapılandırma gerekiyor: yapay zekâ entegrasyonu kaldırıldı veya kapatıldı.",
+        "noIntegration": "Çeviriyi kullanmak için önce bir yapay zekâ entegrasyonu bağlayın.",
+        "connect": "Yapay zekâyı bağla"
+      },
+      "enabled": {
+        "label": "Konuşmaları çevir",
+        "description": "Müşteri mesajları yalnızca biri konuşmayı açtığında çevrilir. Sohbet metni seçtiğiniz yapay zekâ sağlayıcısına gönderilir ve yapay zekâ anahtarınız üzerinden faturalandırılır."
+      },
+      "integration": {
+        "label": "Yapay zekâ entegrasyonu",
+        "description": "Yalnızca bağlı yapay zekâ sağlayıcıları listelenir."
+      },
+      "test": {
+        "label": "Bağlantıyı test et",
+        "button": "Test et",
+        "result": "{seconds} sn içinde tamamlandı: “{sample}” → “{translated}”",
+        "slow": "Bu model yavaş: giden mesajlar zamanında çevrilmeyebilir ve bu durumda gönderilmez.",
+        "failed": "Test başarısız oldu."
+      }
+    },
+    "message": {
+      "translating": "Çevriliyor…",
+      "stillWaiting": "Çeviri hâlâ bekleniyor",
+      "requestAgain": "Yeniden iste",
+      "failed": "Çevrilemedi",
+      "translatedFrom": "{language} dilinden çevrildi. Orijinali göster",
+      "translatedFromNoLanguage": "Çevrildi. Orijinali göster",
+      "sentIn": "{language} dilinde gönderildi. Gönderileni göster",
+      "sentInNoLanguage": "Çevrilerek gönderildi. Gönderileni göster",
+      "hideOriginal": "Orijinali gizle",
+      "hideSent": "Gönderileni gizle",
+      "translatedLabelNoLanguage": "Çevrildi",
+      "sentLabelNoLanguage": "Çevrilerek gönderildi"
+    },
+    "badge": {
+      "tooltip": "Müşteri dili: {language}"
+    },
+    "panel": {
+      "title": "Çeviri ayarları",
+      "statusOn": "Açık",
+      "statusOff": "Kapalı",
+      "translateConversation": "Bu konuşmayı çevir",
+      "translateConversationHint": "Mesajları otomatik çevir",
+      "botActiveHint": "Bu görüşmeyi bot yönetiyor, bu yüzden çeviri kapalı. Çevirmek için açın.",
+      "botPausedHint": "Bu konuşmayı bottan devraldınız, bu yüzden çeviri kapalı kalır. Çevirmek için açın.",
+      "displayOptions": "Görüntüleme seçenekleri",
+      "showOriginals": "Orijinal metni göster",
+      "previewBeforeSending": "Göndermeden önce çeviriyi önizle"
+    },
+    "composer": {
+      "hintUnknown": "Dil algılanamadı · Yazıldığı gibi gönderilir",
+      "hintDetecting": "Müşterinin dili algılanıyor…",
+      "chip": {
+        "aria": "Çeviri dili",
+        "target": "→ {language}",
+        "sameLanguage": "Çalışma alanıyla aynı dil",
+        "unknown": "Dil bilinmiyor",
+        "hasFiles": "Dosyalı mesajlar çevrilmez",
+        "off": "Çeviri kapalı"
+      },
+      "popover": {
+        "customerLanguage": "Müşteri dili",
+        "chooseLanguage": "Bir dil seçin"
+      },
+      "preview": {
+        "title": "Müşteri önizlemesi · {language}",
+        "translating": "Çevriliyor…",
+        "needsRetranslate": "Yeniden çevrilmesi gerekiyor",
+        "retranslate": "Yeniden çevir",
+        "failed": "Çevrilemedi — gönderirken yeniden denenecek",
+        "done": "Bitti",
+        "ready": "Göndermeye hazır"
+      }
+    },
+    "send": {
+      "translating": "Çevriliyor…",
+      "failed": "Çeviri başarısız oldu",
+      "turnedOff": "Çeviri kullanılamıyor. Bu konuşma için çeviri kapatıldı."
+    }
+  },
   "states": {
     "success": "Başarılı",
     "error": "Hata",

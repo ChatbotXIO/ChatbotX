@@ -1079,6 +1079,94 @@
       "invalidApiKey": "Cheie API nevalidă. Verificați cheia API GetResponse și încercați din nou."
     }
   },
+  "inboxTranslation": {
+    "settings": {
+      "title": "Traducerea conversațiilor",
+      "description": "Traduceți mesajele clienților pentru echipa dvs. și răspunsurile dvs. pentru clienți, direct în Inbox.",
+      "saved": "Setările de traducere au fost salvate",
+      "readOnly": "Doar administratorii spațiului de lucru pot modifica aceste setări.",
+      "languageHint": "Este și limba în care sunt traduse mesajele clienților când traducerea conversațiilor este activată.",
+      "alert": {
+        "needsReconfiguration": "Este necesară reconfigurarea: integrarea AI a fost eliminată sau dezactivată.",
+        "noIntegration": "Conectați mai întâi o integrare AI pentru a folosi traducerea.",
+        "connect": "Conectați AI"
+      },
+      "enabled": {
+        "label": "Traduceți conversațiile",
+        "description": "Mesajele clienților sunt traduse doar când cineva deschide conversația. Textul conversației este trimis furnizorului de AI ales de dvs. și facturat pe cheia dvs. AI."
+      },
+      "integration": {
+        "label": "Integrare AI",
+        "description": "Sunt afișați doar furnizorii de AI conectați."
+      },
+      "test": {
+        "label": "Testați conexiunea",
+        "button": "Testați",
+        "result": "Gata în {seconds} s: „{sample}” → „{translated}”",
+        "slow": "Acest model este lent: mesajele trimise ar putea să nu fie traduse la timp și atunci nu vor fi trimise.",
+        "failed": "Testul a eșuat."
+      }
+    },
+    "message": {
+      "translating": "Se traduce…",
+      "stillWaiting": "Încă se așteaptă traducerea",
+      "requestAgain": "Cereți din nou",
+      "failed": "Nu s-a putut traduce",
+      "translatedFrom": "Tradus din {language}. Arată originalul",
+      "translatedFromNoLanguage": "Tradus. Arată originalul",
+      "sentIn": "Trimis în {language}. Arată ce s-a trimis",
+      "sentInNoLanguage": "Trimis tradus. Arată ce s-a trimis",
+      "hideOriginal": "Ascunde originalul",
+      "hideSent": "Ascunde ce s-a trimis",
+      "translatedLabelNoLanguage": "Tradus",
+      "sentLabelNoLanguage": "Trimis tradus"
+    },
+    "badge": {
+      "tooltip": "Limba clientului: {language}"
+    },
+    "panel": {
+      "title": "Setări de traducere",
+      "statusOn": "Activată",
+      "statusOff": "Dezactivată",
+      "translateConversation": "Traduceți această conversație",
+      "translateConversationHint": "Traduce mesajele automat",
+      "botActiveHint": "Botul gestionează această conversație, deci traducerea este dezactivată. Activeaz-o pentru a o traduce.",
+      "botPausedHint": "Ai preluat această conversație de la bot, așa că traducerea rămâne dezactivată. Activeaz-o pentru a o traduce.",
+      "displayOptions": "Opțiuni de afișare",
+      "showOriginals": "Arată textul original",
+      "previewBeforeSending": "Previzualizează traducerea înainte de trimitere"
+    },
+    "composer": {
+      "hintUnknown": "Limba nu a fost detectată · Se trimite așa cum este scris",
+      "hintDetecting": "Se detectează limba clientului…",
+      "chip": {
+        "aria": "Limba traducerii",
+        "target": "→ {language}",
+        "sameLanguage": "Aceeași limbă cu spațiul de lucru",
+        "unknown": "Limbă necunoscută",
+        "hasFiles": "Mesajele cu fișiere nu sunt traduse",
+        "off": "Traducere dezactivată"
+      },
+      "popover": {
+        "customerLanguage": "Limba clientului",
+        "chooseLanguage": "Alegeți o limbă"
+      },
+      "preview": {
+        "title": "Previzualizare pentru client · {language}",
+        "translating": "Se traduce…",
+        "needsRetranslate": "Trebuie tradus din nou",
+        "retranslate": "Traduceți din nou",
+        "failed": "Nu s-a putut traduce — se va reîncerca la trimitere",
+        "done": "Gata",
+        "ready": "Gata de trimis"
+      }
+    },
+    "send": {
+      "translating": "Se traduce…",
+      "failed": "Traducerea a eșuat",
+      "turnedOff": "Traducerea nu este disponibilă. Traducerea a fost dezactivată pentru această conversație."
+    }
+  },
   "mailchimp": {
     "title": "Mailchimp",
     "setting": {

@@ -163,6 +163,94 @@
   "errors": {
     "superAdminRequired": "Du skal være super admin for arbejdsområdet for at gøre dette."
   },
+  "inboxTranslation": {
+    "settings": {
+      "title": "Oversættelse af samtaler",
+      "description": "Oversæt kundernes beskeder til dit team, og dine svar til dine kunder, direkte i indbakken.",
+      "saved": "Oversættelsesindstillinger gemt",
+      "readOnly": "Kun arbejdsområdets administratorer kan ændre disse indstillinger.",
+      "languageHint": "Også det sprog, kundernes beskeder oversættes til, når oversættelse af samtaler er slået til.",
+      "alert": {
+        "needsReconfiguration": "Ny konfiguration nødvendig: AI-integrationen er fjernet eller slået fra.",
+        "noIntegration": "Tilslut først en AI-integration for at bruge oversættelse.",
+        "connect": "Tilslut AI"
+      },
+      "enabled": {
+        "label": "Oversæt samtaler",
+        "description": "Kundebeskeder oversættes kun, når nogen åbner samtalen. Chatteksten sendes til den AI-udbyder, du vælger, og faktureres på din AI-nøgle."
+      },
+      "integration": {
+        "label": "AI-integration",
+        "description": "Kun tilsluttede AI-udbydere vises."
+      },
+      "test": {
+        "label": "Test forbindelsen",
+        "button": "Test",
+        "result": "Færdig på {seconds} s: „{sample}“ → „{translated}“",
+        "slow": "Denne model er langsom: udgående beskeder bliver måske ikke oversat i tide og sendes så ikke.",
+        "failed": "Testen mislykkedes."
+      }
+    },
+    "message": {
+      "translating": "Oversætter…",
+      "stillWaiting": "Venter stadig på oversættelsen",
+      "requestAgain": "Anmod igen",
+      "failed": "Kunne ikke oversætte",
+      "translatedFrom": "Oversat fra {language}. Vis original",
+      "translatedFromNoLanguage": "Oversat. Vis original",
+      "sentIn": "Sendt på {language}. Vis det sendte",
+      "sentInNoLanguage": "Sendt oversat. Vis det sendte",
+      "hideOriginal": "Skjul original",
+      "hideSent": "Skjul det sendte",
+      "translatedLabelNoLanguage": "Oversat",
+      "sentLabelNoLanguage": "Sendt oversat"
+    },
+    "badge": {
+      "tooltip": "Kundens sprog: {language}"
+    },
+    "panel": {
+      "title": "Oversættelsesindstillinger",
+      "statusOn": "Til",
+      "statusOff": "Fra",
+      "translateConversation": "Oversæt denne samtale",
+      "translateConversationHint": "Oversæt beskeder automatisk",
+      "botActiveHint": "Botten håndterer samtalen, så oversættelse er slået fra. Slå den til for at oversætte samtalen.",
+      "botPausedHint": "Du har overtaget denne samtale fra botten, så oversættelse forbliver slået fra. Slå den til for at oversætte den.",
+      "displayOptions": "Visningsindstillinger",
+      "showOriginals": "Vis original tekst",
+      "previewBeforeSending": "Forhåndsvis oversættelsen før afsendelse"
+    },
+    "composer": {
+      "hintUnknown": "Sprog ikke registreret · Sendes som skrevet",
+      "hintDetecting": "Registrerer kundens sprog…",
+      "chip": {
+        "aria": "Oversættelsessprog",
+        "target": "→ {language}",
+        "sameLanguage": "Samme sprog som arbejdsområdet",
+        "unknown": "Sproget er ukendt",
+        "hasFiles": "Beskeder med filer oversættes ikke",
+        "off": "Oversættelse fra"
+      },
+      "popover": {
+        "customerLanguage": "Kundens sprog",
+        "chooseLanguage": "Vælg et sprog"
+      },
+      "preview": {
+        "title": "Kundeforhåndsvisning · {language}",
+        "translating": "Oversætter…",
+        "needsRetranslate": "Skal oversættes igen",
+        "retranslate": "Oversæt igen",
+        "failed": "Kunne ikke oversætte – det prøves igen, når du sender",
+        "done": "Færdig",
+        "ready": "Klar til afsendelse"
+      }
+    },
+    "send": {
+      "translating": "Oversætter…",
+      "failed": "Oversættelsen mislykkedes",
+      "turnedOff": "Oversættelse er ikke tilgængelig. Oversættelse er slået fra for denne samtale."
+    }
+  },
   "states": {
     "success": "Succes",
     "error": "Fejl",

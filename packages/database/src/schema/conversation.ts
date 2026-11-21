@@ -14,6 +14,7 @@ import {
   sharedColumns,
   timestampConfig,
 } from "../partials/shared"
+import type { ConversationTranslationState } from "../partials/translation"
 import { userModel } from "./auth-user"
 import { contactModel } from "./contact"
 import { inboxTeamModel } from "./inbox-team"
@@ -28,6 +29,7 @@ export const conversationModel = pgTable(
     archivedAt: timestamp(timestampConfig),
     additionalAttributes: jsonb().$type<{
       [x: string]: unknown
+      translation?: ConversationTranslationState
     }>(),
     contactLastReadAt: timestamp(timestampConfig),
     agentLastReadAt: timestamp(timestampConfig),

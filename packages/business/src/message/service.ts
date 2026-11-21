@@ -8,12 +8,15 @@ import {
   type FindMessageByIdParams,
   type FindOutgoingBeforeParams,
   type MessageWithAttachments,
+  messageTranslationRepository,
   type OutgoingBotMessage,
 } from "@chatbotx.io/database/repositories"
 import type { MessageModel } from "@chatbotx.io/database/types"
 import { withCache } from "@chatbotx.io/redis"
 import { BaseService } from "../base.service"
 import { ChatbotXException } from "../errors"
+import { logger } from "../logger"
+import { inboxTranslationSettingsService } from "../translation/settings-service"
 import { createOutgoing } from "./create-outgoing"
 import {
   findByIdWithUrls,
@@ -162,13 +165,18 @@ class MessageService extends BaseService {
   ): Promise<{ id: string }[]> {
     const { tx = db } = props
     const repo = await createMessageRepository(tx)
-    return props.sourceId
+    const deleted = props.sourceId
       ? await repo.deleteBySourceId(
           props.sourceId,
           props.workspaceId,
           props.createdAt,
         )
       : await repo.deleteById(props.id, props.workspaceId, props.createdAt)
+    await this.deleteTranslations(props.workspaceId, [
+      props.id,
+      ...deleted.map((row) => row.id),
+    ])
+    return deleted
   }
 
   /**
@@ -183,11 +191,50 @@ class MessageService extends BaseService {
   ): Promise<{ id: string }[]> {
     const { tx = db } = props
     const repo = await createMessageRepository(tx)
-    return await repo.hardDeleteById(
+    const deleted = await repo.hardDeleteById(
       props.id,
       props.workspaceId,
       props.createdAt,
     )
+    await this.deleteTranslations(props.workspaceId, [
+      props.id,
+      ...deleted.map((row) => row.id),
+    ])
+    return deleted
+  }
+
+  /**
+   * `MessageTranslation` has no FK to the sharded `Message`, so a deleted
+   * message's translation row (for an outbound one, the sentence the agent
+   * typed) is removed here, after the message write: the two live in different
+   * databases and cannot share a transaction. Skipped, with no query, for a
+   * workspace that never turned translation on.
+   *
+   * Best effort: the message is already deleted, so a failure here is logged
+   * and never fails the delete (its caller would skip the realtime event and
+   * report an error for a delete that happened). A row left behind belongs to
+   * a deleted message (the Inbox shows none for it) and goes with its
+   * conversation or workspace.
+   */
+  private async deleteTranslations(
+    workspaceId: string,
+    messageIds: string[],
+  ): Promise<void> {
+    try {
+      if (
+        !(await inboxTranslationSettingsService.hasEverBeenEnabled(workspaceId))
+      ) {
+        return
+      }
+      await messageTranslationRepository.deleteByMessageIds(workspaceId, [
+        ...new Set(messageIds),
+      ])
+    } catch (err) {
+      logger.warn(
+        { err, workspaceId, messageIds },
+        "Failed to delete the translations of deleted messages",
+      )
+    }
   }
 
   /**

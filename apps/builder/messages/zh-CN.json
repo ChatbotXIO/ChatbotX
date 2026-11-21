@@ -1883,6 +1883,94 @@
     },
     "title": "DeepSeek"
   },
+  "inboxTranslation": {
+    "settings": {
+      "title": "会话翻译",
+      "description": "在收件箱中，为团队翻译客户的消息，并为客户翻译你的回复。",
+      "saved": "翻译设置已保存",
+      "readOnly": "只有工作区管理员可以更改这些设置。",
+      "languageHint": "也是开启会话翻译后，客户消息所翻译成的语言。",
+      "alert": {
+        "needsReconfiguration": "需要重新配置：AI 集成已被移除或已关闭。",
+        "noIntegration": "请先连接 AI 集成以使用翻译。",
+        "connect": "连接 AI"
+      },
+      "enabled": {
+        "label": "翻译会话",
+        "description": "仅当有人打开会话时才会翻译客户消息。聊天文本会发送给你选择的 AI 提供商，并按你的 AI 密钥计费。"
+      },
+      "integration": {
+        "label": "AI 集成",
+        "description": "仅列出已连接的 AI 提供商。"
+      },
+      "test": {
+        "label": "测试连接",
+        "button": "测试",
+        "result": "用时 {seconds} 秒：“{sample}” → “{translated}”",
+        "slow": "此模型较慢：发出的消息可能来不及翻译，届时将不会发送。",
+        "failed": "测试失败。"
+      }
+    },
+    "message": {
+      "translating": "正在翻译…",
+      "stillWaiting": "仍在等待翻译",
+      "requestAgain": "重新请求",
+      "failed": "无法翻译",
+      "translatedFrom": "译自{language}。显示原文",
+      "translatedFromNoLanguage": "已翻译。显示原文",
+      "sentIn": "以{language}发送。显示已发送内容",
+      "sentInNoLanguage": "已翻译发送。显示已发送内容",
+      "hideOriginal": "隐藏原文",
+      "hideSent": "隐藏已发送内容",
+      "translatedLabelNoLanguage": "已翻译",
+      "sentLabelNoLanguage": "已翻译发送"
+    },
+    "badge": {
+      "tooltip": "客户语言：{language}"
+    },
+    "panel": {
+      "title": "翻译设置",
+      "statusOn": "开启",
+      "statusOff": "关闭",
+      "translateConversation": "翻译此会话",
+      "translateConversationHint": "自动翻译消息",
+      "botActiveHint": "此会话由机器人处理，因此翻译已关闭。开启后即可翻译此会话。",
+      "botPausedHint": "你已从机器人接管此对话，因此翻译保持关闭。开启即可翻译此对话。",
+      "displayOptions": "显示选项",
+      "showOriginals": "显示原文",
+      "previewBeforeSending": "发送前预览译文"
+    },
+    "composer": {
+      "hintUnknown": "未检测到语言 · 将按原文发送",
+      "hintDetecting": "正在识别客户的语言…",
+      "chip": {
+        "aria": "翻译语言",
+        "target": "→ {language}",
+        "sameLanguage": "与工作区语言相同",
+        "unknown": "语言未知",
+        "hasFiles": "带文件的消息不会被翻译",
+        "off": "翻译已关闭"
+      },
+      "popover": {
+        "customerLanguage": "客户语言",
+        "chooseLanguage": "选择语言"
+      },
+      "preview": {
+        "title": "客户预览 · {language}",
+        "translating": "正在翻译…",
+        "needsRetranslate": "需要重新翻译",
+        "retranslate": "重新翻译",
+        "failed": "无法翻译——发送时会再次尝试",
+        "done": "完成",
+        "ready": "可以发送"
+      }
+    },
+    "send": {
+      "translating": "正在翻译…",
+      "failed": "翻译失败",
+      "turnedOff": "翻译不可用。已为此对话关闭翻译。"
+    }
+  },
   "muse": {
     "autoReply": {
       "description": "激活人工智能自动回复，通过您的业务数据支持的人工智能自然地回复用户。",

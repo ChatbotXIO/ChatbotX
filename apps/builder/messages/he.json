@@ -163,6 +163,94 @@
   "errors": {
     "superAdminRequired": "עליכם להיות מנהל-על של סביבת העבודה כדי לבצע פעולה זו."
   },
+  "inboxTranslation": {
+    "settings": {
+      "title": "תרגום שיחות",
+      "description": "תרגמו את הודעות הלקוחות עבור הצוות שלכם ואת התשובות שלכם עבור הלקוחות, ישירות בתיבת הדואר הנכנס.",
+      "saved": "הגדרות התרגום נשמרו",
+      "readOnly": "רק מנהלי סביבת העבודה יכולים לשנות הגדרות אלה.",
+      "languageHint": "זו גם השפה שאליה מתורגמות הודעות לקוחות כשתרגום שיחות מופעל.",
+      "alert": {
+        "needsReconfiguration": "נדרשת הגדרה מחדש: אינטגרציית ה-AI הוסרה או כובתה.",
+        "noIntegration": "חברו תחילה אינטגרציית AI כדי להשתמש בתרגום.",
+        "connect": "חיבור AI"
+      },
+      "enabled": {
+        "label": "תרגום שיחות",
+        "description": "הודעות לקוחות מתורגמות רק כשמישהו פותח את השיחה. טקסט הצ'אט נשלח לספק ה-AI שבחרתם ומחויב על מפתח ה-AI שלכם."
+      },
+      "integration": {
+        "label": "אינטגרציית AI",
+        "description": "מוצגים רק ספקי AI מחוברים."
+      },
+      "test": {
+        "label": "בדיקת חיבור",
+        "button": "בדיקה",
+        "result": "הושלם תוך {seconds} שנ׳: \"{sample}\" ← \"{translated}\"",
+        "slow": "המודל הזה איטי: הודעות יוצאות עשויות שלא להיות מתורגמות בזמן, ואז הן לא יישלחו.",
+        "failed": "הבדיקה נכשלה."
+      }
+    },
+    "message": {
+      "translating": "מתרגם…",
+      "stillWaiting": "עדיין ממתין לתרגום",
+      "requestAgain": "בקשה חוזרת",
+      "failed": "לא ניתן היה לתרגם",
+      "translatedFrom": "תורגם מ{language}. הצגת המקור",
+      "translatedFromNoLanguage": "תורגם. הצגת המקור",
+      "sentIn": "נשלח ב{language}. הצגת מה שנשלח",
+      "sentInNoLanguage": "נשלח בתרגום. הצגת מה שנשלח",
+      "hideOriginal": "הסתרת המקור",
+      "hideSent": "הסתרת מה שנשלח",
+      "translatedLabelNoLanguage": "תורגם",
+      "sentLabelNoLanguage": "נשלח בתרגום"
+    },
+    "badge": {
+      "tooltip": "שפת הלקוח: {language}"
+    },
+    "panel": {
+      "title": "הגדרות תרגום",
+      "statusOn": "פעיל",
+      "statusOff": "כבוי",
+      "translateConversation": "תרגום השיחה הזו",
+      "translateConversationHint": "תרגום הודעות אוטומטי",
+      "botActiveHint": "הבוט מטפל בשיחה הזו ולכן התרגום כבוי. הפעילו אותו כדי לתרגם את השיחה.",
+      "botPausedHint": "לקחת את השיחה הזו מהבוט, ולכן התרגום נשאר כבוי. הפעל אותו כדי לתרגם אותה.",
+      "displayOptions": "אפשרויות תצוגה",
+      "showOriginals": "הצגת הטקסט המקורי",
+      "previewBeforeSending": "תצוגה מקדימה של התרגום לפני השליחה"
+    },
+    "composer": {
+      "hintUnknown": "השפה לא זוהתה · יישלח כפי שנכתב",
+      "hintDetecting": "מזהה את שפת הלקוח…",
+      "chip": {
+        "aria": "שפת התרגום",
+        "target": "← {language}",
+        "sameLanguage": "אותה שפה כמו סביבת העבודה",
+        "unknown": "שפה לא ידועה",
+        "hasFiles": "הודעות עם קבצים לא מתורגמות",
+        "off": "התרגום כבוי"
+      },
+      "popover": {
+        "customerLanguage": "שפת הלקוח",
+        "chooseLanguage": "בחרו שפה"
+      },
+      "preview": {
+        "title": "תצוגה מקדימה ללקוח · {language}",
+        "translating": "מתרגם…",
+        "needsRetranslate": "צריך לתרגם שוב",
+        "retranslate": "תרגום מחדש",
+        "failed": "לא ניתן היה לתרגם — ננסה שוב בעת השליחה",
+        "done": "סיום",
+        "ready": "מוכן לשליחה"
+      }
+    },
+    "send": {
+      "translating": "מתרגם…",
+      "failed": "התרגום נכשל",
+      "turnedOff": "התרגום אינו זמין. התרגום כובה עבור שיחה זו."
+    }
+  },
   "states": {
     "success": "הצלחה",
     "error": "שגיאה",
