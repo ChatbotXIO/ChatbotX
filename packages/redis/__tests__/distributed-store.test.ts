@@ -253,3 +253,53 @@ describe("distributedStoreFactory.reserveTimeWindow", () => {
     )
   })
 })
+
+describe("distributedStoreFactory owner-tagged markers", () => {
+  test("claimKey takes the key only when nobody holds it", async () => {
+    const set = vi
+      .fn<(...args: unknown[]) => Promise<string | null>>()
+      .mockResolvedValueOnce("OK")
+      .mockResolvedValueOnce(null)
+    const store = distributedStoreFactory(
+      async () => ({ set }) as unknown as Redis,
+    )
+
+    await expect(store.claimKey("inflight:w:1", "req-a", 180)).resolves.toBe(
+      true,
+    )
+    await expect(store.claimKey("inflight:w:1", "req-b", 180)).resolves.toBe(
+      false,
+    )
+    expect(set).toHaveBeenCalledWith("inflight:w:1", "req-a", "EX", 180, "NX")
+  })
+
+  test("renew and release pass the expected owner to the script and report whether it matched", async () => {
+    const eval_ = vi
+      .fn<(...args: unknown[]) => Promise<number>>()
+      .mockResolvedValueOnce(1)
+      .mockResolvedValueOnce(0)
+      .mockResolvedValueOnce(1)
+      .mockResolvedValueOnce(0)
+    const store = distributedStoreFactory(
+      async () => ({ eval: eval_ }) as unknown as Redis,
+    )
+
+    await expect(store.renewKeyIfOwner("k", "me", 180)).resolves.toBe(true)
+    await expect(store.renewKeyIfOwner("k", "other", 180)).resolves.toBe(false)
+    await expect(store.releaseKeyIfOwner("k", "me")).resolves.toBe(true)
+    await expect(store.releaseKeyIfOwner("k", "other")).resolves.toBe(false)
+    expect(eval_.mock.calls[0]).toEqual([
+      expect.stringContaining("EXPIRE"),
+      1,
+      "k",
+      "me",
+      180,
+    ])
+    expect(eval_.mock.calls[2]).toEqual([
+      expect.stringContaining("DEL"),
+      1,
+      "k",
+      "me",
+    ])
+  })
+})

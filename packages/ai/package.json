@@ -8,6 +8,7 @@
     "./models": "./src/models/index.ts",
     "./sam": "./src/server/sam.ts",
     "./server": "./src/server.ts",
+    "./translation": "./src/server/translation.ts",
     "./utils": "./src/utils/index.ts"
   },
   "dependencies": {

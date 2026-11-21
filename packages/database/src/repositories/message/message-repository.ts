@@ -7,6 +7,32 @@ export type MessageTextWithFileTypes = Pick<MessageModel, "id" | "text"> & {
   attachmentFileTypes: AttachmentModel["fileType"][]
 }
 
+/** A message reference as stored on `MessageTranslation` / job payloads. */
+export type MessageRef = { id: string; createdAt: Date }
+
+/** The columns translation needs to decide whether, and what, to translate. */
+export type MessageForTranslation = Pick<
+  MessageModel,
+  | "id"
+  | "createdAt"
+  | "conversationId"
+  | "contactInboxId"
+  | "contentType"
+  | "text"
+  | "deletedAt"
+  | "type"
+> & {
+  /** `Message.messageType`: `incoming` | `outgoing` | `activity`. */
+  direction: MessageModel["messageType"]
+}
+
+/** One earlier customer message, handed to the translator as language context. */
+export type TranslationContextMessage = {
+  id: string
+  createdAt: Date
+  text: string
+}
+
 export interface CreateMessageInput {
   contactInboxId: string
   contentAttributes?: Record<string, unknown> | null
@@ -387,6 +413,20 @@ export interface IMessageRepository {
    */
   findEmailParent(params: FindEmailParentParams): Promise<EmailParentRow | null>
 
+  /**
+   * The newest `limit` inbound direct-text messages of a conversation created
+   * strictly before `before` (and not older than `sinceTime`), newest first.
+   * Language context for the translator; served by
+   * `Message_conversation_history_idx`.
+   */
+  findInboundTextBefore(params: {
+    workspaceId: string
+    conversationId: string
+    before: Date
+    sinceTime: Date
+    limit: number
+  }): Promise<TranslationContextMessage[]>
+
   findLastByConversation(
     conversationId: string,
     options?: FindLastByConversationOptions,
@@ -407,6 +447,18 @@ export interface IMessageRepository {
   findManyBySourceIds(
     params: FindManyBySourceIdsParams,
   ): Promise<MessageSourceRow[]>
+
+  /**
+   * Reads messages by `{ id, createdAt }` (the shard key) for translation.
+   * Unlike `findManyByIds` it needs no contact inbox or `sinceTime`, and it
+   * returns `type`/`contentType`/`deletedAt` so the caller can filter. Always
+   * scoped by `workspaceId`. Missing messages are simply absent; a failing
+   * shard throws, so an unreadable message is never mistaken for a deleted one.
+   */
+  findManyForTranslation(
+    workspaceId: string,
+    refs: MessageRef[],
+  ): Promise<MessageForTranslation[]>
 
   /**
    * One bounded page, newest first, of the bot/system messages that were

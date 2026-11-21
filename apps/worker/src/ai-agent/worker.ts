@@ -34,6 +34,7 @@ import { processConversationSource } from "./handlers/process-conversation-sourc
 import { processConversationSourceEmbedding } from "./handlers/process-conversation-source-embedding"
 import { processPendingEmbedding } from "./handlers/process-pending-embeddings"
 import { handleSummarizeConversation } from "./handlers/summarize-conversation"
+import { handleTranslateMessages } from "./handlers/translate-messages"
 import { markEmbeddingChunkFailed } from "./lib/mark-embedding-chunk-failed"
 
 function runInboundAIJob<T>(
@@ -137,6 +138,9 @@ function startAIAgentWorker() {
               return
             case AIJobAction.processStoryMentionAutomation:
               await processStoryMentionAutomation(jobData.data)
+              return
+            case AIJobAction.translateMessages:
+              await handleTranslateMessages(job, jobData.data)
               return
             default: {
               const _exhaustive: never = jobData

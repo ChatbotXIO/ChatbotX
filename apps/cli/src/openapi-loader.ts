@@ -127,6 +127,8 @@ const METHOD_VERBED_SINGLETON_PATHS = new Set([
   "messenger/templates/{id}",
   "products/meta-catalog",
   "ecommerce/settings",
+  // GET and PUT would both derive `translation:settings` and one would be dropped.
+  "translation/settings",
 ])
 // Collections under a resource that take both a list (GET) and a create (POST)
 // on the same path, which the generic naming would collapse into one command.
@@ -190,6 +192,12 @@ function extractPathParamNames(pathTemplate: string): string[] {
  * unambiguous verb here. Keyed by `METHOD path`.
  */
 const COMMAND_NAME_OVERRIDES: Readonly<Record<string, string>> = {
+  // Verbs on the conversation's translation, not sub-resources to "add"
+  // (they would derive the unhelpful `conversations:request:add` / `:preview:add`).
+  "POST /v1/conversations/{conversationId}/translation/requests":
+    "conversations:translation:request",
+  "POST /v1/conversations/{conversationId}/translation/preview":
+    "conversations:translation:preview",
   "DELETE /v1/contacts/{identifier}/custom-fields":
     "contacts:clear-all-custom-fields",
   "PUT /v1/contacts/{identifier}/custom-fields/{idOrName}":

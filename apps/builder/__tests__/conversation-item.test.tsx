@@ -11,8 +11,14 @@ vi.mock("next-intl", () => ({
   useTranslations: () => (key: string, values?: { count?: number }) =>
     values?.count === undefined ? key : `${key}:${values.count}`,
   useFormatter: () => ({ dateTime: (at: Date) => at.toISOString() }),
+  useLocale: () => "en",
 }))
 
+vi.mock("@/features/translation/hooks/use-translation-settings", () => ({
+  // Translation off for the workspace: the inbox renders exactly as before.
+  useTranslationSettings: () => ({ data: undefined }),
+  useInvalidateTranslation: () => vi.fn(),
+}))
 const executeReadActionMock = vi.fn()
 vi.mock("@/features/conversations/hooks/use-mark-conversation-read", () => ({
   useMarkConversationRead: () => executeReadActionMock,

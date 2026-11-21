@@ -49,12 +49,15 @@ import type {
   IMessageRepository,
   ListIncomingTextsByContactInboxParams,
   ListMessagesQuery,
+  MessageForTranslation,
+  MessageRef,
   MessageSourceRow,
   MessageTextWithFileTypes,
   MessageWithAttachments,
   OutgoingBotMessage,
   PaginatedMessages,
   PaginationCursor,
+  TranslationContextMessage,
   UpdateAttachmentParams,
 } from "../../../repositories/message/message-repository"
 import type { RichResponseContentAttributes } from "../../../schema"
@@ -2883,6 +2886,134 @@ export class ShardedMessageRepository implements IMessageRepository {
       seen.add(m.id)
       return true
     })
+  }
+
+  async findManyForTranslation(
+    workspaceId: string,
+    refs: MessageRef[],
+  ): Promise<MessageForTranslation[]> {
+    if (refs.length === 0) {
+      return []
+    }
+
+    const oldest = new Date(
+      Math.min(...refs.map((ref) => ref.createdAt.getTime())),
+    )
+    const shards = await this.getConversationReadShards(oldest, workspaceId)
+    if (shards.length === 0) {
+      return []
+    }
+
+    const refMatch = or(
+      ...refs.map((ref) =>
+        and(
+          eq(messageModel.id, ref.id),
+          matchesCreatedAt(messageModel.createdAt, ref.createdAt),
+        ),
+      ),
+    )
+
+    // A failing shard throws instead of being skipped: a missing message reads
+    // as edited or deleted to the caller, which would drop a finished
+    // translation or skip the message for good. Throwing lets the job retry.
+    const shardResults = await Promise.all(
+      shards.map(
+        (shardInfo): Promise<MessageForTranslation[]> =>
+          this.shardManager.withShardClientForRead(
+            shardInfo.shard,
+            async (shardClient) =>
+              await shardClient
+                .select({
+                  id: messageModel.id,
+                  createdAt: messageModel.createdAt,
+                  conversationId: messageModel.conversationId,
+                  contactInboxId: messageModel.contactInboxId,
+                  direction: messageModel.messageType,
+                  type: messageModel.type,
+                  contentType: messageModel.contentType,
+                  text: messageModel.text,
+                  deletedAt: messageModel.deletedAt,
+                })
+                .from(messageModel)
+                .where(
+                  and(eq(messageModel.workspaceId, workspaceId), refMatch),
+                ),
+          ),
+      ),
+    )
+
+    const seen = new Set<string>()
+    return shardResults.flat().filter((message) => {
+      if (seen.has(message.id)) {
+        return false
+      }
+      seen.add(message.id)
+      return true
+    })
+  }
+
+  async findInboundTextBefore(params: {
+    workspaceId: string
+    conversationId: string
+    before: Date
+    sinceTime: Date
+    limit: number
+  }): Promise<TranslationContextMessage[]> {
+    const { workspaceId, conversationId, before, sinceTime, limit } = params
+    if (limit <= 0) {
+      return []
+    }
+    const shards = await this.getConversationReadShards(sinceTime, workspaceId)
+    if (shards.length === 0) {
+      return []
+    }
+
+    const shardResults = await Promise.all(
+      shards.map(async (shardInfo): Promise<TranslationContextMessage[]> => {
+        try {
+          return await this.shardManager.withShardClientForRead(
+            shardInfo.shard,
+            async (shardClient) => {
+              const rows = await shardClient
+                .select({
+                  id: messageModel.id,
+                  createdAt: messageModel.createdAt,
+                  text: messageModel.text,
+                })
+                .from(messageModel)
+                .where(
+                  and(
+                    eq(messageModel.conversationId, conversationId),
+                    eq(messageModel.workspaceId, workspaceId),
+                    eq(messageModel.messageType, "incoming"),
+                    eq(messageModel.type, "message"),
+                    eq(messageModel.contentType, "text"),
+                    isNotNull(messageModel.text),
+                    isNull(messageModel.deletedAt),
+                    gte(messageModel.createdAt, sinceTime),
+                    lt(messageModel.createdAt, before),
+                  ),
+                )
+                .orderBy(desc(messageModel.createdAt), desc(messageModel.id))
+                .limit(limit)
+              return rows.flatMap((row) =>
+                row.text === null
+                  ? []
+                  : [{ id: row.id, createdAt: row.createdAt, text: row.text }],
+              )
+            },
+          )
+        } catch (error) {
+          logger.warn(
+            { err: error, shardId: shardInfo.shard.id },
+            "Shard query failed in findInboundTextBefore",
+          )
+          return []
+        }
+      }),
+    )
+
+    return shardResults.flat().sort(compareMessageDesc).slice(0, limit)
   }
 
   async listByConversation(

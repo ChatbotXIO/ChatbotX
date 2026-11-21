@@ -1,6 +1,7 @@
 import { describe, expect, test } from "vitest"
 import {
   EVENT_DELIVERY,
+  messageTranslationUpdatedSchema,
   pipelineItemChangedSchema,
   RealtimeEventType,
   realtimeBatchEnvelopeSchema,
@@ -305,6 +306,57 @@ describe("pipelineItemChanged event", () => {
     ).toBe(false)
     expect(
       pipelineItemChangedSchema.safeParse({ change: "moved" }).success,
+    ).toBe(false)
+  })
+})
+
+describe("messageTranslationUpdated", () => {
+  const payload = {
+    conversationId: "c1",
+    conversationLanguage: "es",
+    items: [
+      { messageId: "m1", status: "translated", displayText: "Xin chào" },
+      { messageId: "m2", status: "translated", removed: true },
+    ],
+  }
+  const frame = {
+    batch: [
+      {
+        data: payload,
+        eventType: RealtimeEventType.messageTranslationUpdated,
+        route: { assignedTeamIds: [], assignedUserIds: [] },
+      },
+    ],
+    seq: "123-0",
+  }
+
+  test("is a conversation-scoped event", () => {
+    expect(EVENT_DELIVERY[RealtimeEventType.messageTranslationUpdated]).toBe(
+      "conversation",
+    )
+  })
+
+  test("members receive it", () => {
+    expect(realtimeMemberBatchEnvelopeSchema.safeParse(frame).success).toBe(
+      true,
+    )
+  })
+
+  test("guests never receive it: an outgoing displayText is the agent's own sentence", () => {
+    expect(realtimeGuestBatchEnvelopeSchema.safeParse(frame).success).toBe(
+      false,
+    )
+  })
+
+  test("its payload schema accepts the documented shape and rejects a bad status", () => {
+    expect(messageTranslationUpdatedSchema.safeParse(payload).success).toBe(
+      true,
+    )
+    expect(
+      messageTranslationUpdatedSchema.safeParse({
+        conversationId: "c1",
+        items: [{ messageId: "m1", status: "pending" }],
+      }).success,
     ).toBe(false)
   })
 })

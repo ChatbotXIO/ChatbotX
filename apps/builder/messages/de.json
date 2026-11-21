@@ -163,6 +163,94 @@
   "errors": {
     "superAdminRequired": "Sie müssen Super-Administrator des Arbeitsbereichs sein, um dies zu tun."
   },
+  "inboxTranslation": {
+    "settings": {
+      "title": "Konversationsübersetzung",
+      "description": "Übersetzen Sie die Nachrichten Ihrer Kunden für Ihr Team und Ihre Antworten für Ihre Kunden – direkt im Posteingang.",
+      "saved": "Übersetzungseinstellungen gespeichert",
+      "readOnly": "Nur Workspace-Admins können diese Einstellungen ändern.",
+      "languageHint": "Auch die Sprache, in die Kundennachrichten übersetzt werden, wenn die Konversationsübersetzung aktiv ist.",
+      "alert": {
+        "needsReconfiguration": "Neukonfiguration erforderlich: Die KI-Integration wurde entfernt oder deaktiviert.",
+        "noIntegration": "Verbinden Sie zuerst eine KI-Integration, um die Übersetzung zu nutzen.",
+        "connect": "KI verbinden"
+      },
+      "enabled": {
+        "label": "Konversationen übersetzen",
+        "description": "Kundennachrichten werden nur übersetzt, wenn jemand die Konversation öffnet. Der Chat-Text wird an den gewählten KI-Anbieter gesendet und über Ihren KI-Schlüssel abgerechnet."
+      },
+      "integration": {
+        "label": "KI-Integration",
+        "description": "Es werden nur verbundene KI-Anbieter angezeigt."
+      },
+      "test": {
+        "label": "Verbindung testen",
+        "button": "Testen",
+        "result": "Fertig in {seconds} s: „{sample}“ → „{translated}“",
+        "slow": "Dieses Modell ist langsam: Ausgehende Nachrichten werden eventuell nicht rechtzeitig übersetzt und dann nicht gesendet.",
+        "failed": "Der Test ist fehlgeschlagen."
+      }
+    },
+    "message": {
+      "translating": "Wird übersetzt…",
+      "stillWaiting": "Warte weiterhin auf die Übersetzung",
+      "requestAgain": "Erneut anfordern",
+      "failed": "Übersetzung nicht möglich",
+      "translatedFrom": "Aus {language} übersetzt. Original anzeigen",
+      "translatedFromNoLanguage": "Übersetzt. Original anzeigen",
+      "sentIn": "Auf {language} gesendet. Gesendeten Text anzeigen",
+      "sentInNoLanguage": "Übersetzt gesendet. Gesendeten Text anzeigen",
+      "hideOriginal": "Original ausblenden",
+      "hideSent": "Gesendeten Text ausblenden",
+      "translatedLabelNoLanguage": "Übersetzt",
+      "sentLabelNoLanguage": "Übersetzt gesendet"
+    },
+    "badge": {
+      "tooltip": "Sprache des Kunden: {language}"
+    },
+    "panel": {
+      "title": "Übersetzungseinstellungen",
+      "statusOn": "An",
+      "statusOff": "Aus",
+      "translateConversation": "Diese Konversation übersetzen",
+      "translateConversationHint": "Nachrichten automatisch übersetzen",
+      "botActiveHint": "Der Bot bearbeitet diese Konversation, daher ist die Übersetzung aus. Schalte sie ein, um sie zu übersetzen.",
+      "botPausedHint": "Sie haben diese Unterhaltung vom Bot übernommen, daher bleibt die Übersetzung aus. Schalten Sie sie ein, um sie zu übersetzen.",
+      "displayOptions": "Anzeigeoptionen",
+      "showOriginals": "Originaltext anzeigen",
+      "previewBeforeSending": "Übersetzung vor dem Senden ansehen"
+    },
+    "composer": {
+      "hintUnknown": "Sprache nicht erkannt · Wird wie geschrieben gesendet",
+      "hintDetecting": "Sprache des Kunden wird erkannt…",
+      "chip": {
+        "aria": "Übersetzungssprache",
+        "target": "→ {language}",
+        "sameLanguage": "Gleiche Sprache wie der Workspace",
+        "unknown": "Sprache unbekannt",
+        "hasFiles": "Nachrichten mit Dateien werden nicht übersetzt",
+        "off": "Übersetzung aus"
+      },
+      "popover": {
+        "customerLanguage": "Sprache des Kunden",
+        "chooseLanguage": "Sprache wählen"
+      },
+      "preview": {
+        "title": "Kundenvorschau · {language}",
+        "translating": "Wird übersetzt…",
+        "needsRetranslate": "Muss erneut übersetzt werden",
+        "retranslate": "Erneut übersetzen",
+        "failed": "Übersetzung nicht möglich – beim Senden wird es erneut versucht",
+        "done": "Fertig",
+        "ready": "Bereit zum Senden"
+      }
+    },
+    "send": {
+      "translating": "Wird übersetzt…",
+      "failed": "Übersetzung fehlgeschlagen",
+      "turnedOff": "Übersetzung nicht verfügbar. Die Übersetzung wurde für diese Unterhaltung ausgeschaltet."
+    }
+  },
   "states": {
     "success": "Erfolg",
     "error": "Fehler",

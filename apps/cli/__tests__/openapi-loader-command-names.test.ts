@@ -598,3 +598,27 @@ describe("pathAndMethodToCommandName — WhatsApp routing roles", () => {
     expect(new Set(names)).toHaveLength(names.length)
   })
 })
+
+describe("pathAndMethodToCommandName — Inbox translation", () => {
+  test("every translation operation gets a distinct, readable name", () => {
+    const names = [
+      ["/v1/translation/settings", "GET"],
+      ["/v1/translation/settings", "PUT"],
+      ["/v1/translation/settings/test", "POST"],
+      ["/v1/conversations/{conversationId}/translation", "GET"],
+      ["/v1/conversations/{conversationId}/translation", "PUT"],
+      ["/v1/conversations/{conversationId}/translation/requests", "POST"],
+      ["/v1/conversations/{conversationId}/translation/preview", "POST"],
+    ].map(([path, method]) => pathAndMethodToCommandName(path, method))
+    expect(names).toEqual([
+      "translation:settings:get",
+      "translation:settings:update",
+      "translation:settings-test",
+      "conversations:translation:list",
+      "conversations:translation:update",
+      "conversations:translation:request",
+      "conversations:translation:preview",
+    ])
+    expect(new Set(names)).toHaveLength(names.length)
+  })
+})

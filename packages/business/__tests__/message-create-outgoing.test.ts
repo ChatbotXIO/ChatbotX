@@ -747,6 +747,38 @@ describe("messageService.createOutgoing with products", () => {
       "checkOutboundAutomatedResponse",
     )
   })
+
+  const automationJobText = () =>
+    mockChatQueueAdd.mock.calls.find(
+      ([name]) => name === "checkOutboundAutomatedResponse",
+    )?.[1].data.message.text
+
+  test("keyword rules see automationText, while the stored message keeps its own text", async () => {
+    await createOutgoing({
+      conversation: conversation as never,
+      contactInbox: whatsappContactInbox as never,
+      input: { text: "Xin chao", automationText: "Hello" },
+      user: { id: "user-1" } as never,
+      sendFrom: "inbox",
+    })
+
+    expect(automationJobText()).toBe("Hello")
+    expect(mockRepositoryCreate).toHaveBeenCalledWith(
+      expect.objectContaining({ text: "Xin chao" }),
+    )
+  })
+
+  test("without automationText the rules see the message text, as before", async () => {
+    await createOutgoing({
+      conversation: conversation as never,
+      contactInbox: whatsappContactInbox as never,
+      input: { text: "Hello" },
+      user: { id: "user-1" } as never,
+      sendFrom: "inbox",
+    })
+
+    expect(automationJobText()).toBe("Hello")
+  })
 })
 
 describe("messageService.createOutgoing image limits per channel", () => {

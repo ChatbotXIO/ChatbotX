@@ -27,6 +27,8 @@ import {
 } from "@/features/messages/schema/mutation"
 import { listMessagesResponse } from "@/features/messages/schema/query"
 import { messageResourceWithRelations } from "@/features/messages/schema/resource"
+import { withMessageTranslations } from "@/features/translation/lib/message-translations"
+import { sendOutgoing } from "@/features/translation/lib/send-outgoing"
 import { mcpSpec } from "@/lib/orpc/mcp-annotations"
 import {
   imagesNotSupportedOnChannel,
@@ -35,6 +37,7 @@ import {
   possibleErrorsOnFindingResource,
   possibleErrorsOnMutatingResource,
   possibleErrorsOnResendingMessage,
+  possibleErrorsOnTranslatedSend,
   productMessageUnresolvable,
 } from "@/lib/orpc/orpc-error-helper"
 import {
@@ -166,12 +169,15 @@ export const messagesPublicRouter = {
       await conversationService.findByOrFail({
         where: { id: input.conversationId, workspaceId },
       })
-      return await listMessages({
-        workspaceId,
-        conversationId: input.conversationId,
-        perPage: input.perPage,
-        cursor: input.cursor,
-      })
+      return await listMessages(
+        {
+          workspaceId,
+          conversationId: input.conversationId,
+          perPage: input.perPage,
+          cursor: input.cursor,
+        },
+        { includeTranslation: true },
+      )
     }),
 
   get: workspaceTokenAuthAPI
@@ -199,7 +205,11 @@ export const messagesPublicRouter = {
       if (message.conversationId !== input.conversationId) {
         throw notFoundException("Message not found")
       }
-      return message
+      const [withTranslation] = await withMessageTranslations(
+        context.workspace.id,
+        [message],
+      )
+      return withTranslation
     }),
 
   getFlowResponse: workspaceTokenAuthAPI
@@ -245,6 +255,7 @@ export const messagesPublicRouter = {
       [PRODUCT_MESSAGE_UNRESOLVABLE_CODE]: productMessageUnresolvable,
       [IMAGES_NOT_SUPPORTED_ON_CHANNEL_CODE]: imagesNotSupportedOnChannel,
       EMAIL_REPLY_PARENT_NOT_FOUND: emailReplyParentNotFound,
+      ...possibleErrorsOnTranslatedSend,
     })
     .handler(async ({ context, input }) => {
       const workspaceId = context.workspace.id
@@ -271,7 +282,8 @@ export const messagesPublicRouter = {
       // workspace token has no user and sends unattributed, as before.
       const user = resolveSenderForCaller(context)
 
-      return messageService.createOutgoing({
+      return sendOutgoing({
+        workspaceId,
         conversation,
         contactInbox,
         input,

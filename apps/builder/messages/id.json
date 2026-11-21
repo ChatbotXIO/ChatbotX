@@ -163,6 +163,94 @@
   "errors": {
     "superAdminRequired": "Anda harus menjadi super admin workspace untuk melakukan ini."
   },
+  "inboxTranslation": {
+    "settings": {
+      "title": "Terjemahan percakapan",
+      "description": "Terjemahkan pesan pelanggan untuk tim Anda, dan balasan Anda untuk pelanggan, langsung di Kotak Masuk.",
+      "saved": "Pengaturan terjemahan disimpan",
+      "readOnly": "Hanya admin workspace yang dapat mengubah pengaturan ini.",
+      "languageHint": "Juga bahasa tujuan terjemahan pesan pelanggan saat terjemahan percakapan aktif.",
+      "alert": {
+        "needsReconfiguration": "Perlu dikonfigurasi ulang: integrasi AI telah dihapus atau dimatikan.",
+        "noIntegration": "Hubungkan integrasi AI terlebih dahulu untuk menggunakan terjemahan.",
+        "connect": "Hubungkan AI"
+      },
+      "enabled": {
+        "label": "Terjemahkan percakapan",
+        "description": "Pesan pelanggan hanya diterjemahkan saat seseorang membuka percakapan. Teks chat dikirim ke penyedia AI yang Anda pilih dan ditagihkan ke kunci AI Anda."
+      },
+      "integration": {
+        "label": "Integrasi AI",
+        "description": "Hanya penyedia AI yang terhubung yang ditampilkan."
+      },
+      "test": {
+        "label": "Uji koneksi",
+        "button": "Uji",
+        "result": "Selesai dalam {seconds} dtk: \"{sample}\" → \"{translated}\"",
+        "slow": "Model ini lambat: pesan keluar mungkin tidak sempat diterjemahkan dan tidak akan dikirim.",
+        "failed": "Pengujian gagal."
+      }
+    },
+    "message": {
+      "translating": "Menerjemahkan…",
+      "stillWaiting": "Masih menunggu terjemahan",
+      "requestAgain": "Minta lagi",
+      "failed": "Tidak dapat diterjemahkan",
+      "translatedFrom": "Diterjemahkan dari {language}. Tampilkan asli",
+      "translatedFromNoLanguage": "Diterjemahkan. Tampilkan asli",
+      "sentIn": "Dikirim dalam {language}. Tampilkan yang dikirim",
+      "sentInNoLanguage": "Dikirim terjemahan. Tampilkan yang dikirim",
+      "hideOriginal": "Sembunyikan asli",
+      "hideSent": "Sembunyikan yang dikirim",
+      "translatedLabelNoLanguage": "Diterjemahkan",
+      "sentLabelNoLanguage": "Dikirim terjemahan"
+    },
+    "badge": {
+      "tooltip": "Bahasa pelanggan: {language}"
+    },
+    "panel": {
+      "title": "Pengaturan terjemahan",
+      "statusOn": "Aktif",
+      "statusOff": "Nonaktif",
+      "translateConversation": "Terjemahkan percakapan ini",
+      "translateConversationHint": "Terjemahkan pesan secara otomatis",
+      "botActiveHint": "Bot sedang menangani percakapan ini sehingga terjemahan nonaktif. Aktifkan untuk menerjemahkannya.",
+      "botPausedHint": "Anda mengambil alih percakapan ini dari bot, jadi terjemahan tetap nonaktif. Aktifkan untuk menerjemahkannya.",
+      "displayOptions": "Opsi tampilan",
+      "showOriginals": "Tampilkan teks asli",
+      "previewBeforeSending": "Pratinjau terjemahan sebelum dikirim"
+    },
+    "composer": {
+      "hintUnknown": "Bahasa tidak terdeteksi · Dikirim apa adanya",
+      "hintDetecting": "Mendeteksi bahasa pelanggan…",
+      "chip": {
+        "aria": "Bahasa terjemahan",
+        "target": "→ {language}",
+        "sameLanguage": "Bahasa yang sama dengan workspace",
+        "unknown": "Bahasa tidak diketahui",
+        "hasFiles": "Pesan dengan file tidak diterjemahkan",
+        "off": "Terjemahan mati"
+      },
+      "popover": {
+        "customerLanguage": "Bahasa pelanggan",
+        "chooseLanguage": "Pilih bahasa"
+      },
+      "preview": {
+        "title": "Pratinjau pelanggan · {language}",
+        "translating": "Menerjemahkan…",
+        "needsRetranslate": "Perlu diterjemahkan ulang",
+        "retranslate": "Terjemahkan lagi",
+        "failed": "Tidak dapat diterjemahkan — akan dicoba lagi saat Anda mengirim",
+        "done": "Selesai",
+        "ready": "Siap dikirim"
+      }
+    },
+    "send": {
+      "translating": "Menerjemahkan…",
+      "failed": "Gagal menerjemahkan",
+      "turnedOff": "Terjemahan tidak tersedia. Terjemahan telah dinonaktifkan untuk percakapan ini."
+    }
+  },
   "states": {
     "success": "Berhasil",
     "error": "Kesalahan",

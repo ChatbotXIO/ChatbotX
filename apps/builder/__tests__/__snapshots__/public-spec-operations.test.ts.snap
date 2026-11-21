@@ -3808,6 +3808,41 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "path": "/v1/token",
   },
   {
+    "method": "GET",
+    "operationId": "translation.getConversationState",
+    "path": "/v1/conversations/{conversationId}/translation",
+  },
+  {
+    "method": "GET",
+    "operationId": "translation.getSettings",
+    "path": "/v1/translation/settings",
+  },
+  {
+    "method": "POST",
+    "operationId": "translation.previewText",
+    "path": "/v1/conversations/{conversationId}/translation/preview",
+  },
+  {
+    "method": "POST",
+    "operationId": "translation.requestMessages",
+    "path": "/v1/conversations/{conversationId}/translation/requests",
+  },
+  {
+    "method": "POST",
+    "operationId": "translation.testSettings",
+    "path": "/v1/translation/settings/test",
+  },
+  {
+    "method": "PUT",
+    "operationId": "translation.updateConversationState",
+    "path": "/v1/conversations/{conversationId}/translation",
+  },
+  {
+    "method": "PUT",
+    "operationId": "translation.updateSettings",
+    "path": "/v1/translation/settings",
+  },
+  {
     "method": "POST",
     "operationId": "triggers.create",
     "path": "/v1/triggers",

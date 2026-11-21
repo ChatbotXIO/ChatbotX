@@ -59,6 +59,10 @@ import { useCopyToClipboard } from "usehooks-ts"
 import type { AttachmentResource } from "@/features/attachments/schema/resource"
 import { useAttachmentSource } from "@/features/attachments/utils"
 import { contactDisplayName } from "@/features/contacts/lib/contact-display-name"
+import {
+  OutgoingTranslationStatus,
+  useOutgoingTranslationStatus,
+} from "@/features/translation/components/outgoing-translation-status"
 import { getEmailSubject } from "../lib/get-email-subject"
 import {
   getSentPaymentRequests,
@@ -123,6 +127,18 @@ type MessageItemProps = {
    * chat store, which the guest webchat view does not have.
    */
   renderResend?: (message: MessageItemProps["message"]) => ReactNode
+  /** Inbox only: omitted means the bubble renders exactly as before. */
+  translation?: MessageItemTranslation
+}
+
+/**
+ * Inbox translation for one bubble, computed by the inbox (never by the guest
+ * view). `mainText` replaces the text shown first (the translation of a
+ * customer message, or what the agent typed); `footer` is rendered under it.
+ */
+export type MessageItemTranslation = {
+  mainText?: string
+  footer: ReactNode
 }
 
 export const MessageItem = (props: MessageItemProps) => {
@@ -138,10 +154,17 @@ export const MessageItem = (props: MessageItemProps) => {
     renderResend,
     onDelete,
     onEdit,
+    translation,
   } = props
   const t = useTranslations("messages")
   const tRouting = useTranslations("conversationRouting")
   const [isEditing, setIsEditing] = useState(false)
+  // Only an agent's own message in this tab has one; the guest widget never.
+  const outgoingTranslationStatus = useOutgoingTranslationStatus(
+    !guestDisplay && message.messageType === "outgoing"
+      ? message.clientId
+      : null,
+  )
 
   const variants: Record<"left" | "right" | "full", string> = {
     left: "px-4 py-3 rounded-xl bg-secondary",
@@ -307,15 +330,19 @@ export const MessageItem = (props: MessageItemProps) => {
                   {emailSubject && !isDeleted && (
                     <p className="mb-1 font-semibold text-xs">{emailSubject}</p>
                   )}
-                  <pre className="wrap-break-word whitespace-pre-line font-sans">
+                  <pre
+                    className="wrap-break-word whitespace-pre-line font-sans"
+                    dir={translation ? "auto" : undefined}
+                  >
                     {isDeleted ? (
                       <span className="text-xs italic">
                         {t("messageDeleted")}
                       </span>
                     ) : (
-                      message.text
+                      (translation?.mainText ?? message.text)
                     )}
                   </pre>
+                  {!isDeleted && translation?.footer}
                 </div>
               )}
             {!isDeleted && hasAttachments && !whatsappCall && !flowResponse && (
@@ -330,10 +357,14 @@ export const MessageItem = (props: MessageItemProps) => {
           </>
         )}
         {RenderContentAttributes(props, paymentRequests)}
+        {outgoingTranslationStatus && (
+          <OutgoingTranslationStatus status={outgoingTranslationStatus} />
+        )}
       </div>
 
       <div className="flex">
-        {message.sendError &&
+        {!outgoingTranslationStatus &&
+          message.sendError &&
           (message.messageType === "outgoing" ||
             (guestDisplay && message.messageType === "incoming")) && (
             <MessageErrorBadge

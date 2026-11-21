@@ -1853,6 +1853,94 @@
   "errors": {
     "superAdminRequired": "Devi essere super admin dello spazio di lavoro per farlo."
   },
+  "inboxTranslation": {
+    "settings": {
+      "title": "Traduzione delle conversazioni",
+      "description": "Traduci i messaggi dei tuoi clienti per il tuo team e le tue risposte per i tuoi clienti, direttamente nella Inbox.",
+      "saved": "Impostazioni di traduzione salvate",
+      "readOnly": "Solo gli amministratori del workspace possono modificare queste impostazioni.",
+      "languageHint": "È anche la lingua in cui vengono tradotti i messaggi dei clienti quando la traduzione delle conversazioni è attiva.",
+      "alert": {
+        "needsReconfiguration": "Riconfigurazione necessaria: l'integrazione IA è stata rimossa o disattivata.",
+        "noIntegration": "Collega prima un'integrazione IA per usare la traduzione.",
+        "connect": "Collega IA"
+      },
+      "enabled": {
+        "label": "Traduci le conversazioni",
+        "description": "I messaggi dei clienti vengono tradotti solo quando qualcuno apre la conversazione. Il testo della chat viene inviato al provider IA che scegli e addebitato sulla tua chiave IA."
+      },
+      "integration": {
+        "label": "Integrazione IA",
+        "description": "Vengono mostrati solo i provider IA collegati."
+      },
+      "test": {
+        "label": "Testa la connessione",
+        "button": "Testa",
+        "result": "Fatto in {seconds} s: «{sample}» → «{translated}»",
+        "slow": "Questo modello è lento: i messaggi in uscita potrebbero non essere tradotti in tempo e in quel caso non verranno inviati.",
+        "failed": "Il test non è riuscito."
+      }
+    },
+    "message": {
+      "translating": "Traduzione in corso…",
+      "stillWaiting": "Ancora in attesa della traduzione",
+      "requestAgain": "Richiedi di nuovo",
+      "failed": "Impossibile tradurre",
+      "translatedFrom": "Tradotto da {language}. Mostra originale",
+      "translatedFromNoLanguage": "Tradotto. Mostra originale",
+      "sentIn": "Inviato in {language}. Mostra ciò che è stato inviato",
+      "sentInNoLanguage": "Inviato tradotto. Mostra ciò che è stato inviato",
+      "hideOriginal": "Nascondi originale",
+      "hideSent": "Nascondi ciò che è stato inviato",
+      "translatedLabelNoLanguage": "Tradotto",
+      "sentLabelNoLanguage": "Inviato tradotto"
+    },
+    "badge": {
+      "tooltip": "Lingua del cliente: {language}"
+    },
+    "panel": {
+      "title": "Impostazioni di traduzione",
+      "statusOn": "Attiva",
+      "statusOff": "Disattiva",
+      "translateConversation": "Traduci questa conversazione",
+      "translateConversationHint": "Traduci automaticamente i messaggi",
+      "botActiveHint": "Il bot sta gestendo questa conversazione, quindi la traduzione è disattivata. Attivala per tradurla.",
+      "botPausedHint": "Hai preso in carico questa conversazione al posto del bot, quindi la traduzione resta disattivata. Attivala per tradurla.",
+      "displayOptions": "Opzioni di visualizzazione",
+      "showOriginals": "Mostra testo originale",
+      "previewBeforeSending": "Anteprima della traduzione prima dell'invio"
+    },
+    "composer": {
+      "hintUnknown": "Lingua non rilevata · Invio così com'è",
+      "hintDetecting": "Rilevamento della lingua del cliente…",
+      "chip": {
+        "aria": "Lingua di traduzione",
+        "target": "→ {language}",
+        "sameLanguage": "Stessa lingua del workspace",
+        "unknown": "Lingua sconosciuta",
+        "hasFiles": "I messaggi con file non vengono tradotti",
+        "off": "Traduzione disattivata"
+      },
+      "popover": {
+        "customerLanguage": "Lingua del cliente",
+        "chooseLanguage": "Scegli una lingua"
+      },
+      "preview": {
+        "title": "Anteprima per il cliente · {language}",
+        "translating": "Traduzione in corso…",
+        "needsRetranslate": "Da tradurre di nuovo",
+        "retranslate": "Traduci di nuovo",
+        "failed": "Impossibile tradurre: verrà riprovato all'invio",
+        "done": "Fatto",
+        "ready": "Pronta per l'invio"
+      }
+    },
+    "send": {
+      "translating": "Traduzione in corso…",
+      "failed": "Traduzione non riuscita",
+      "turnedOff": "Traduzione non disponibile. La traduzione è stata disattivata per questa conversazione."
+    }
+  },
   "states": {
     "success": "Successo",
     "error": "Errore",

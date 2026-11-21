@@ -330,12 +330,40 @@ chatbotx conversations message delete <conversationId> <messageId> --createdAt <
 chatbotx conversations resend add <conversationId> <messageId> --createdAt <createdAt>  # Resend a failed message (409 if it did not fail or was delivered)
 chatbotx conversations attribute add <conversationId> <messageId> --createdAt <createdAt>  # [--liked --hidden]
 
+# Inbox translation (scope `inbox`; workspace switch and model: see `translation`)
+chatbotx conversations translation list <conversationId>      # The customer's language, its source and the on/off state
+chatbotx conversations translation update <conversationId>    # [--enabledOverride <true|false|null> --language <code>]
+                                                     # --enabledOverride false stops translating this conversation, true turns it on in the Inbox while the bot is on duty; null clears it
+                                                     # --language sets the customer's language by hand (never overwritten by detection)
+chatbotx conversations translation request <conversationId> --messages <messages>
+                                                     # [--retryFailed]  JSON array (max 20) of {"id","createdAt"} from `messages list`;
+                                                     # queues customer text for translation, read it back in `messages list` -> `translation`
+chatbotx conversations translation preview <conversationId> --text <text>
+                                                     # Translate a draft into the customer's language without sending it
+# `conversations message send --translate true` translates the text into the customer's language
+# (waits up to 10 s; if it cannot be translated nothing is sent and it fails with `translationNotSent`);
+# `--editedTranslation '{"text","targetLanguage"}'` sends a translation you already reviewed.
+
 # Appointment booking link (scope `appointments`; `--send true` also needs `inbox`)
 chatbotx conversations appointment-booking-link add <conversationId> --calendarId <calendarId>
                                                      # [--inboxId --send --bypassThreadControlLock]
                                                      # Returns {url, expiresAt (24 hours), calendar, messageId};
                                                      # --send true also sends it as a message with a booking button
 ```
+
+---
+
+### `translation` (scope `settings`; `settings get` also with `inbox`)
+
+```bash
+chatbotx translation settings get                    # enabled, integration + model, workspace language, status
+chatbotx translation settings update --enabled <true|false> --modelConfig <modelConfig>
+                                                     # modelConfig: JSON {"provider","model"} or {"kind":"openaiCompatible","integrationId","model"}, null clears
+                                                     # Needs a connected, enabled AI integration; the workspace pays with its own key
+chatbotx translation settings-test --modelConfig <modelConfig>  # [--sampleText] Translate a sample, report latency (warns on slow models)
+```
+
+Per-conversation commands live under `conversations translation` above.
 
 ---
 

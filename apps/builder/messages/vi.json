@@ -163,6 +163,94 @@
   "errors": {
     "superAdminRequired": "Bạn cần là super admin của workspace để thực hiện thao tác này."
   },
+  "inboxTranslation": {
+    "settings": {
+      "title": "Dịch hội thoại",
+      "description": "Dịch tin nhắn của khách cho đội ngũ của bạn và dịch câu trả lời của bạn cho khách, ngay trong Inbox.",
+      "saved": "Đã lưu cài đặt dịch hội thoại",
+      "readOnly": "Chỉ quản trị viên workspace mới đổi được cài đặt này.",
+      "languageHint": "Cũng là ngôn ngữ mà tin nhắn của khách được dịch sang khi bật dịch hội thoại.",
+      "alert": {
+        "needsReconfiguration": "Cần cấu hình lại: AI integration đã bị gỡ hoặc đã tắt.",
+        "noIntegration": "Hãy kết nối một AI integration trước để dùng tính năng dịch.",
+        "connect": "Kết nối AI"
+      },
+      "enabled": {
+        "label": "Dịch hội thoại",
+        "description": "Tin nhắn của khách chỉ được dịch khi có người mở hội thoại. Nội dung chat được gửi tới nhà cung cấp AI bạn chọn và tính phí trên AI key của bạn."
+      },
+      "integration": {
+        "label": "AI integration",
+        "description": "Chỉ hiển thị các nhà cung cấp AI đã kết nối."
+      },
+      "test": {
+        "label": "Kiểm tra kết nối",
+        "button": "Kiểm tra",
+        "result": "Xong trong {seconds} giây: \"{sample}\" → \"{translated}\"",
+        "slow": "Model này chậm: tin gửi đi có thể không kịp dịch và khi đó sẽ không được gửi.",
+        "failed": "Kiểm tra không thành công."
+      }
+    },
+    "message": {
+      "translating": "Đang dịch…",
+      "stillWaiting": "Vẫn đang chờ bản dịch",
+      "requestAgain": "Yêu cầu lại",
+      "failed": "Không dịch được",
+      "translatedFrom": "Đã dịch từ {language}. Xem bản gốc",
+      "translatedFromNoLanguage": "Đã dịch. Xem bản gốc",
+      "sentIn": "Đã gửi bằng {language}. Xem nội dung đã gửi",
+      "sentInNoLanguage": "Đã gửi bản dịch. Xem nội dung đã gửi",
+      "hideOriginal": "Ẩn bản gốc",
+      "hideSent": "Ẩn nội dung đã gửi",
+      "translatedLabelNoLanguage": "Đã dịch",
+      "sentLabelNoLanguage": "Đã gửi bản dịch"
+    },
+    "badge": {
+      "tooltip": "Ngôn ngữ của khách: {language}"
+    },
+    "panel": {
+      "title": "Cài đặt dịch",
+      "statusOn": "Bật",
+      "statusOff": "Tắt",
+      "translateConversation": "Dịch hội thoại này",
+      "translateConversationHint": "Tự động dịch tin nhắn",
+      "botActiveHint": "Bot đang xử lý hội thoại này nên dịch đang tắt. Bật để dịch hội thoại này.",
+      "botPausedHint": "Bạn đang tạm thay bot trả lời hội thoại này nên dịch vẫn tắt. Bật để dịch hội thoại này.",
+      "displayOptions": "Tùy chọn hiển thị",
+      "showOriginals": "Hiện bản gốc",
+      "previewBeforeSending": "Xem trước bản dịch trước khi gửi"
+    },
+    "composer": {
+      "hintUnknown": "Chưa nhận diện được ngôn ngữ · Gửi nguyên văn",
+      "hintDetecting": "Đang nhận diện ngôn ngữ của khách…",
+      "chip": {
+        "aria": "Ngôn ngữ dịch",
+        "target": "→ {language}",
+        "sameLanguage": "Cùng ngôn ngữ workspace",
+        "unknown": "Chưa rõ ngôn ngữ",
+        "hasFiles": "Tin có tệp đính kèm không được dịch",
+        "off": "Dịch đang tắt"
+      },
+      "popover": {
+        "customerLanguage": "Ngôn ngữ của khách",
+        "chooseLanguage": "Chọn ngôn ngữ"
+      },
+      "preview": {
+        "title": "Bản xem trước cho khách · {language}",
+        "translating": "Đang dịch…",
+        "needsRetranslate": "Cần dịch lại",
+        "retranslate": "Dịch lại",
+        "failed": "Không dịch được trước đó, sẽ thử lại khi gửi",
+        "done": "Xong",
+        "ready": "Sẵn sàng gửi"
+      }
+    },
+    "send": {
+      "translating": "Đang dịch…",
+      "failed": "Dịch thất bại",
+      "turnedOff": "Không thể dịch. Đã tắt dịch cho cuộc trò chuyện này."
+    }
+  },
   "states": {
     "success": "Thành công",
     "error": "Lỗi",

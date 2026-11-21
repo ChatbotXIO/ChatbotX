@@ -26,6 +26,7 @@ const chatStoreState = {
   settleSendResult: vi.fn(),
   assignMessageCommentId: vi.fn(),
   updateMessageText: vi.fn(),
+  applyMessageTranslations: vi.fn(),
   updateMessageContentAttributes: vi.fn(),
   updateContact: vi.fn(),
   updateConversations: vi.fn(),
@@ -119,7 +120,7 @@ describe("ChatRealtime — chat event parity", () => {
     expect(wholeStoreSelectionMock).not.toHaveBeenCalled()
   })
 
-  test("registers exactly the twelve chat events, no more, no fewer", async () => {
+  test("registers exactly the thirteen chat events, no more, no fewer", async () => {
     await render()
     expect(Object.keys(capturedHandlers ?? {}).sort()).toEqual(
       [
@@ -134,6 +135,7 @@ describe("ChatRealtime — chat event parity", () => {
         "messageFailed",
         "messageIdAssigned",
         "messageRemoved",
+        "messageTranslationUpdated",
         "messageUpdated",
       ].sort(),
     )
@@ -246,6 +248,62 @@ describe("ChatRealtime — chat event parity", () => {
     expect(chatStoreState.updateMessageContentAttributes).toHaveBeenCalledWith(
       "m1",
       { foo: "bar" },
+    )
+  })
+
+  test("messageTranslationUpdated applies the items and the conversation language", async () => {
+    await render()
+    const items = [
+      { messageId: "m1", status: "translated", displayText: "Xin chào" },
+    ]
+    act(() =>
+      emit("messageTranslationUpdated", {
+        conversationId: "c1",
+        items,
+        conversationLanguage: "es",
+      }),
+    )
+    expect(chatStoreState.applyMessageTranslations).toHaveBeenCalledWith(
+      "c1",
+      items,
+      "es",
+      undefined,
+    )
+  })
+
+  test("messageTranslationUpdated ends the translating state, so a failure shows as failed", async () => {
+    const { useTranslationUiStore } = await import(
+      "@/features/translation/store/translation-ui-store"
+    )
+    useTranslationUiStore.getState().markRequested(["m1", "m2"])
+    await render()
+
+    act(() =>
+      emit("messageTranslationUpdated", {
+        conversationId: "c1",
+        items: [{ messageId: "m1", status: "failed" }],
+      }),
+    )
+
+    expect(Object.keys(useTranslationUiStore.getState().entries)).toEqual([
+      "m2",
+    ])
+  })
+
+  test("messageTranslationUpdated passes on translation turned off for the conversation", async () => {
+    await render()
+    act(() =>
+      emit("messageTranslationUpdated", {
+        conversationId: "c1",
+        items: [],
+        conversationEnabledOverride: false,
+      }),
+    )
+    expect(chatStoreState.applyMessageTranslations).toHaveBeenCalledWith(
+      "c1",
+      [],
+      undefined,
+      false,
     )
   })
 

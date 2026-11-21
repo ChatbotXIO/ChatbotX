@@ -1,5 +1,6 @@
 import {
   contactInboxThreadControlUpdatedSchema,
+  messageTranslationUpdatedSchema,
   pipelineItemChangedSchema,
   RealtimeEventType,
   realtimeCallTransportEndedSchema,
@@ -37,4 +38,6 @@ export const REALTIME_EVENT_SCHEMAS: {
   [RealtimeEventType.contactInboxThreadControlUpdated]:
     contactInboxThreadControlUpdatedSchema,
   [RealtimeEventType.pipelineItemChanged]: pipelineItemChangedSchema,
+  [RealtimeEventType.messageTranslationUpdated]:
+    messageTranslationUpdatedSchema,
 }

@@ -11,6 +11,7 @@ const mocks = vi.hoisted(() => {
     findById: vi.fn(),
     findLastByConversation: vi.fn(),
     hardDeleteAllByContactInbox: vi.fn(),
+    hardDeleteById: vi.fn(),
     listIncomingTextsByContactInbox: vi.fn(),
     updateMessageText: vi.fn(),
     updateTextBySourceId: vi.fn(),
@@ -25,6 +26,8 @@ const mocks = vi.hoisted(() => {
     },
     repo,
     createMessageRepository: vi.fn().mockResolvedValue(repo),
+    findTranslationSettings: vi.fn(),
+    deleteTranslations: vi.fn(),
     withCache: vi.fn(
       async (
         _key: string,
@@ -41,7 +44,13 @@ vi.mock("@chatbotx.io/database/client", () => ({
 
 vi.mock("@chatbotx.io/database/repositories", () => ({
   createMessageRepository: mocks.createMessageRepository,
+  inboxTranslationSettingsRepository: {
+    findByWorkspaceId: mocks.findTranslationSettings,
+  },
   mediaLibraryFileRepository: {},
+  messageTranslationRepository: {
+    deleteByMessageIds: mocks.deleteTranslations,
+  },
 }))
 
 vi.mock("@chatbotx.io/redis", () => ({
@@ -235,6 +244,88 @@ describe("messageService", () => {
       createdAt,
     )
     expect(mocks.repo.deleteById).not.toHaveBeenCalled()
+  })
+
+  describe("deleting a message removes its translation", () => {
+    const createdAt = new Date("2026-01-01T00:00:00Z")
+
+    test("a soft delete drops the translation rows of every deleted message", async () => {
+      mocks.findTranslationSettings.mockResolvedValue({ enabledAt: createdAt })
+      mocks.repo.deleteBySourceId.mockResolvedValue([
+        { id: "message-1" },
+        { id: "message-2" },
+      ])
+
+      await messageService.delete({
+        id: "message-1",
+        sourceId: "provider-1",
+        workspaceId: "ws-1",
+        createdAt,
+      })
+
+      expect(mocks.deleteTranslations).toHaveBeenCalledWith("ws-1", [
+        "message-1",
+        "message-2",
+      ])
+    })
+
+    test("a hard delete retried after the message is gone still drops the row", async () => {
+      mocks.findTranslationSettings.mockResolvedValue({ enabledAt: createdAt })
+      mocks.repo.hardDeleteById.mockResolvedValue([])
+
+      await expect(
+        messageService.hardDelete({
+          id: "message-1",
+          workspaceId: "ws-1",
+          createdAt,
+        }),
+      ).resolves.toEqual([])
+
+      expect(mocks.deleteTranslations).toHaveBeenCalledWith("ws-1", [
+        "message-1",
+      ])
+    })
+
+    test("costs no query for a workspace that never turned translation on", async () => {
+      mocks.findTranslationSettings.mockResolvedValue(null)
+      mocks.repo.deleteById.mockResolvedValue([{ id: "message-1" }])
+
+      await messageService.delete({
+        id: "message-1",
+        workspaceId: "ws-1",
+        createdAt,
+      })
+
+      expect(mocks.deleteTranslations).not.toHaveBeenCalled()
+    })
+
+    test.each([
+      ["the translation delete", "deleteTranslations"],
+      ["the settings read", "findTranslationSettings"],
+    ] as const)("a failure of %s never fails a delete that already happened", async (_label, failing) => {
+      mocks.findTranslationSettings.mockResolvedValue({ enabledAt: createdAt })
+      // Once per delete below, so the failure does not outlive this test.
+      mocks[failing]
+        .mockRejectedValueOnce(new Error("connection reset"))
+        .mockRejectedValueOnce(new Error("connection reset"))
+      mocks.repo.deleteById.mockResolvedValue([{ id: "message-1" }])
+      mocks.repo.hardDeleteById.mockResolvedValue([{ id: "message-2" }])
+
+      await expect(
+        messageService.delete({
+          id: "message-1",
+          workspaceId: "ws-1",
+          createdAt,
+        }),
+      ).resolves.toEqual([{ id: "message-1" }])
+      await expect(
+        messageService.hardDelete({
+          id: "message-2",
+          workspaceId: "ws-1",
+          createdAt,
+        }),
+      ).resolves.toEqual([{ id: "message-2" }])
+    })
   })
 
   test("maps message write inputs to repository methods", async () => {

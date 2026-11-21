@@ -60,6 +60,23 @@ type VirtuosoMockProps = {
 
 vi.mock("next-intl", () => ({
   useTranslations: () => (key: string) => key,
+  useLocale: () => "en",
+}))
+vi.mock("@/features/translation/hooks/use-translation-settings", () => ({
+  useTranslationSettings: () => ({ data: undefined }),
+  useInvalidateTranslation: () => vi.fn(),
+}))
+vi.mock("@/features/translation/actions/preview-text.action", () => ({
+  previewTranslationAction: vi.fn(),
+}))
+vi.mock(
+  "@/features/translation/actions/update-conversation-state.action",
+  () => ({
+    updateConversationTranslationStateAction: vi.fn(),
+  }),
+)
+vi.mock("@/features/translation/actions/request-messages.action", () => ({
+  requestTranslationsAction: vi.fn(),
 }))
 
 vi.mock("next-safe-action/hooks", () => ({

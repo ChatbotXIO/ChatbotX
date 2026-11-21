@@ -149,6 +149,11 @@ export const router = {
       default: m.contactScanAPIs,
     })),
   ),
+  translationAPI: lazy(() =>
+    import("@/features/translation/api").then((m) => ({
+      default: m.translationAPI,
+    })),
+  ),
   contactSyncAPIs: lazy(() =>
     import("@/features/contact-sync/api").then((m) => ({
       default: m.contactSyncAPIs,

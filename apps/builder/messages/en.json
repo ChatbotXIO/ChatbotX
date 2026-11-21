@@ -163,6 +163,94 @@
   "errors": {
     "superAdminRequired": "You need to be a workspace super admin to do this."
   },
+  "inboxTranslation": {
+    "settings": {
+      "title": "Conversation translation",
+      "description": "Translate customers' messages for your team, and your replies for your customers, inside the Inbox.",
+      "saved": "Translation settings saved",
+      "readOnly": "Only workspace admins can change these settings.",
+      "languageHint": "Also the language customers' messages are translated into when conversation translation is on.",
+      "alert": {
+        "needsReconfiguration": "Reconfiguration needed: the AI integration was removed or turned off.",
+        "noIntegration": "Connect an AI integration first to use translation.",
+        "connect": "Connect AI"
+      },
+      "enabled": {
+        "label": "Translate conversations",
+        "description": "Customer messages are translated only when someone opens the conversation. Chat text is sent to the AI provider you choose and billed to your AI key."
+      },
+      "integration": {
+        "label": "AI integration",
+        "description": "Only connected AI providers are listed."
+      },
+      "test": {
+        "label": "Test connection",
+        "button": "Test",
+        "result": "Done in {seconds} s: \"{sample}\" → \"{translated}\"",
+        "slow": "This model is slow: outgoing messages may not be translated in time and will then not be sent.",
+        "failed": "The test failed."
+      }
+    },
+    "message": {
+      "translating": "Translating…",
+      "stillWaiting": "Still waiting for the translation",
+      "requestAgain": "Request again",
+      "failed": "Could not translate",
+      "translatedFrom": "Translated from {language}. Show original",
+      "translatedFromNoLanguage": "Translated. Show original",
+      "sentIn": "Sent in {language}. Show what was sent",
+      "sentInNoLanguage": "Sent translated. Show what was sent",
+      "hideOriginal": "Hide original",
+      "hideSent": "Hide what was sent",
+      "translatedLabelNoLanguage": "Translated",
+      "sentLabelNoLanguage": "Sent translated"
+    },
+    "badge": {
+      "tooltip": "Customer language: {language}"
+    },
+    "panel": {
+      "title": "Translation settings",
+      "statusOn": "On",
+      "statusOff": "Off",
+      "translateConversation": "Translate this conversation",
+      "translateConversationHint": "Automatically translate messages",
+      "botActiveHint": "The bot is handling this conversation, so translation is off. Turn it on to translate it.",
+      "botPausedHint": "You took this conversation over from the bot, so translation stays off. Turn it on to translate it.",
+      "displayOptions": "Display options",
+      "showOriginals": "Show original text",
+      "previewBeforeSending": "Preview translation before sending"
+    },
+    "composer": {
+      "hintUnknown": "Language not detected · Send as written",
+      "hintDetecting": "Detecting the customer's language…",
+      "chip": {
+        "aria": "Translation language",
+        "target": "→ {language}",
+        "sameLanguage": "Same language as workspace",
+        "unknown": "Language unknown",
+        "hasFiles": "Messages with files are not translated",
+        "off": "Translation off"
+      },
+      "popover": {
+        "customerLanguage": "Customer language",
+        "chooseLanguage": "Choose a language"
+      },
+      "preview": {
+        "title": "Customer preview · {language}",
+        "translating": "Translating…",
+        "needsRetranslate": "Needs translating again",
+        "retranslate": "Translate again",
+        "failed": "Could not translate — it will be tried again when you send",
+        "done": "Done",
+        "ready": "Ready to send"
+      }
+    },
+    "send": {
+      "translating": "Translating…",
+      "failed": "Translation failed",
+      "turnedOff": "Translation unavailable. Translation has been turned off for this conversation."
+    }
+  },
   "states": {
     "success": "Success",
     "error": "Error",

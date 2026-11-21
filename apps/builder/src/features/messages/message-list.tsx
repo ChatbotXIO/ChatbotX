@@ -13,6 +13,8 @@ import {
   type VirtuosoHandle,
 } from "react-virtuoso"
 import { toast } from "sonner"
+import { TranslatedMessage } from "@/features/translation/components/translated-message"
+import { useRequestTranslations } from "@/features/translation/hooks/use-request-translations"
 import { useWorkspaceId } from "@/hooks/routing"
 import { INBOX_MESSAGES_PER_PAGE } from "../chat/store/chat-store"
 import { useChatStore } from "../chat/store/chat-store-provider"
@@ -47,6 +49,10 @@ export function MessageList() {
     updateMessageText,
     updateMessageAttributes,
   } = useChatStore((state) => state)
+
+  // Asks for the visible inbound messages to be translated; a no-op while
+  // translation is off, so the Inbox is unchanged for such workspaces.
+  useRequestTranslations()
 
   // Which channel this conversation belongs to, for the private-reply gate
   // below. The same `contactInboxes[0].channel` the store reads elsewhere.
@@ -313,30 +319,35 @@ export function MessageList() {
         initialTopMostItemIndex={{ index: "LAST" }}
         itemContent={(_, message) => (
           <div className="pb-1.5">
-            <MessageItem
-              canPrivateReply={(comment) =>
-                canPrivateReplyToComment({
-                  channel: activeChannel,
-                  message: comment,
-                })
-              }
-              key={message.id}
-              message={message}
-              onChangeHide={() => handleChangeHideState(message)}
-              onChangeLike={() => handleChangeLikeState(message)}
-              onDelete={() => {
-                handleDeleteComment({
-                  id: message.id,
-                  createdAt: message.createdAt,
-                })
-              }}
-              onEdit={handleEditMessage}
-              onPrivateReply={handlePrivateReplyComment}
-              onReply={handleReplyComment}
-              renderResend={(failed) => (
-                <ResendMessageButton message={failed} />
+            <TranslatedMessage message={message}>
+              {(translation) => (
+                <MessageItem
+                  canPrivateReply={(comment) =>
+                    canPrivateReplyToComment({
+                      channel: activeChannel,
+                      message: comment,
+                    })
+                  }
+                  key={message.id}
+                  message={message}
+                  onChangeHide={() => handleChangeHideState(message)}
+                  onChangeLike={() => handleChangeLikeState(message)}
+                  onDelete={() => {
+                    handleDeleteComment({
+                      id: message.id,
+                      createdAt: message.createdAt,
+                    })
+                  }}
+                  onEdit={handleEditMessage}
+                  onPrivateReply={handlePrivateReplyComment}
+                  onReply={handleReplyComment}
+                  renderResend={(failed) => (
+                    <ResendMessageButton message={failed} />
+                  )}
+                  translation={translation}
+                />
               )}
-            />
+            </TranslatedMessage>
           </div>
         )}
         ref={virtuosoRef}

@@ -92,6 +92,7 @@ import { inboxRelations } from "./inbox"
 import { inboxContactStatsRelations } from "./inbox-contact-stats"
 import { inboxTeamRelations } from "./inbox-team"
 import { inboxTeamMemberRelations } from "./inbox-team-member"
+import { inboxTranslationSettingsRelations } from "./inbox-translation-settings"
 import { integrationRelations } from "./integration"
 import { integrationActiveCampaignRelations } from "./integration-active-campaign"
 import { integrationApiRelations } from "./integration-api"
@@ -131,6 +132,7 @@ import { magicLinkRelations } from "./magic-link"
 import { mediaLibraryFileRelations } from "./media-library-file"
 import { mediaLibraryFolderRelations } from "./media-library-folder"
 import { messageRelations } from "./message"
+import { messageTranslationRelations } from "./message-translation"
 import { messagingAdOperationRelations } from "./messaging-ad-operation"
 import { messagingAdsConnectionRelations } from "./messaging-ads-connection"
 import { messengerMessageTemplateRelations } from "./messenger-message-template"
@@ -265,6 +267,8 @@ export const relations = {
   ...integrationMessengerRelations,
   ...aiHandoverBulkRunRelations,
   ...aiHandoverSettingsRelations,
+  ...inboxTranslationSettingsRelations,
+  ...messageTranslationRelations,
   ...messengerMessageTemplateRelations,
   ...integrationWebchatRelations,
   ...integrationZaloRelations,

@@ -56,6 +56,12 @@ const messageService = {
   resendOutgoing: vi.fn(),
 }
 const resolveTemplateParams = vi.fn()
+// The translation field is covered in `translation/`; here it is a pass-through.
+vi.mock("@/features/translation/lib/message-translations", () => ({
+  withMessageTranslations: (_workspaceId: string, messages: { id: string }[]) =>
+    Promise.resolve(messages.map((m) => ({ ...m, translation: null }))),
+}))
+
 vi.mock("@chatbotx.io/business", () => ({
   conversationMemberScope: {
     resolve: vi.fn(),
@@ -158,12 +164,15 @@ describe("GET /v1/conversations/{conversationId}/messages", () => {
     expect(conversationService.findByOrFail).toHaveBeenCalledWith({
       where: { id: "conv-1", workspaceId: "ws-1" },
     })
-    expect(listMessages).toHaveBeenCalledWith({
-      workspaceId: "ws-1",
-      conversationId: "conv-1",
-      perPage: 20,
-      cursor: undefined,
-    })
+    expect(listMessages).toHaveBeenCalledWith(
+      {
+        workspaceId: "ws-1",
+        conversationId: "conv-1",
+        perPage: 20,
+        cursor: undefined,
+      },
+      { includeTranslation: true },
+    )
     expect(result).toEqual({ data: [], nextCursor: null, prevCursor: null })
   })
 
@@ -205,7 +214,11 @@ describe("GET /v1/conversations/{conversationId}/messages/{messageId}", () => {
       id: "msg-1",
       createdAt,
     })
-    expect(result).toEqual({ id: "msg-1", conversationId: "conv-1" })
+    expect(result).toEqual({
+      id: "msg-1",
+      conversationId: "conv-1",
+      translation: null,
+    })
   })
 
   test("404s when the message belongs to a different conversation", async () => {

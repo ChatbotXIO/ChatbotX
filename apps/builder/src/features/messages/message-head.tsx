@@ -12,6 +12,7 @@ import { useTranslations } from "next-intl"
 import { useAction } from "next-safe-action/hooks"
 import { toast } from "sonner"
 import { contactDisplayName } from "@/features/contacts/lib/contact-display-name"
+import { withoutTranslationTurnedOn } from "@/features/translation/lib/conversation-translation"
 import { useWorkspaceId } from "@/hooks/routing"
 import { useChatStore } from "../chat/store/chat-store-provider"
 import { enableBotAction } from "../conversations/actions/enable-bot.action"
@@ -80,6 +81,9 @@ export default function MessageHead({
           updateConversation(activeConversation.id, {
             botEnabled: true,
             botResumeAt: null,
+            additionalAttributes: withoutTranslationTurnedOn(
+              activeConversation.additionalAttributes,
+            ),
           })
         }
       },
