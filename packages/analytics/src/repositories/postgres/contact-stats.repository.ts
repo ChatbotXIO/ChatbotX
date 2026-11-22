@@ -187,7 +187,7 @@ export class ContactStatsRepository extends BaseRepository {
           )})`
         : sql``
 
-    const result = await db.execute(sql`
+    const result = await db.execute<Record<string, unknown>>(sql`
       SELECT
         time_bucket('1 minute', "occurredAt") AS bucket,
         "eventType",
@@ -263,7 +263,7 @@ export class ContactStatsRepository extends BaseRepository {
           GROUP BY 1, 2
           ORDER BY 1 ASC, 2 ASC
         `
-    const result = await db.execute(query)
+    const result = await db.execute<Record<string, unknown>>(query)
 
     return (
       result.rows as {
@@ -328,7 +328,7 @@ export class ContactStatsRepository extends BaseRepository {
           ORDER BY 1 ASC, 2 ASC
         `
 
-    const result = await db.execute(query)
+    const result = await db.execute<Record<string, unknown>>(query)
 
     const rows = (
       result.rows as {
@@ -367,7 +367,7 @@ export class ContactStatsRepository extends BaseRepository {
         : sql``
 
     // Month granularity always > 7 days — use raw hypertable
-    const result = await db.execute(sql`
+    const result = await db.execute<Record<string, unknown>>(sql`
       SELECT
         time_bucket('1 month', "occurredAt" AT TIME ZONE ${resolvedTimezone(timezone)} AT TIME ZONE 'UTC') AS bucket,
         "eventType",
@@ -420,7 +420,7 @@ export class ContactStatsRepository extends BaseRepository {
     const isInboxFiltered = normalizeAnalyticsFilters(props).inboxIds.length > 0
     // KNOWN PERF: the unfiltered baseline scans every row before `start`;
     // the inbox-filtered one scans only rows since `start`.
-    const result = await db.execute(sql`
+    const result = await db.execute<Record<string, unknown>>(sql`
       SELECT COALESCE(
         COUNT(*) FILTER (WHERE "eventType" = 'contact_created') -
         COUNT(*) FILTER (WHERE "eventType" = 'contact_deleted'),
@@ -488,7 +488,7 @@ export class ContactStatsRepository extends BaseRepository {
 
     const [baseline, seriesResult] = await Promise.all([
       this.getTotalBefore(props, dayStart),
-      db.execute(seriesQuery),
+      db.execute<Record<string, unknown>>(seriesQuery),
     ])
 
     const raw: ContactCountsSchema[] = (
@@ -518,7 +518,7 @@ export class ContactStatsRepository extends BaseRepository {
 
     const [baseline, seriesResult] = await Promise.all([
       this.getTotalBefore(props, monthStart),
-      db.execute(sql`
+      db.execute<Record<string, unknown>>(sql`
         SELECT
           time_bucket('1 month', "occurredAt" AT TIME ZONE ${resolvedTimezone(timezone)} AT TIME ZONE 'UTC') AS month,
           SUM(CASE WHEN "eventType" = 'contact_created' THEN 1 ELSE 0 END)::int -
@@ -565,7 +565,7 @@ export class ContactStatsRepository extends BaseRepository {
     // `contact_created` events for the same contact within a day collapse to
     // 1. Counts each contact once per day and keeps the sum
     // of daily values consistent with `getNewContactsCount`.
-    const result = await db.execute(sql`
+    const result = await db.execute<Record<string, unknown>>(sql`
       SELECT
         time_bucket('1 day', "occurredAt" AT TIME ZONE ${resolvedTimezone(timezone)} AT TIME ZONE 'UTC') AS day,
         COUNT(DISTINCT "contactId")::int AS new_contacts
@@ -594,7 +594,7 @@ export class ContactStatsRepository extends BaseRepository {
     const { workspaceId, from, to, timezone } = props
     const eventFilter = buildEventFilter(props)
 
-    const result = await db.execute(sql`
+    const result = await db.execute<Record<string, unknown>>(sql`
       SELECT
         time_bucket('1 month', "occurredAt" AT TIME ZONE ${resolvedTimezone(timezone)} AT TIME ZONE 'UTC') AS month,
         COUNT(DISTINCT "contactId")::int AS new_contacts
@@ -621,7 +621,7 @@ export class ContactStatsRepository extends BaseRepository {
     const { workspaceId, from, to } = props
     const eventFilter = buildEventFilter(props)
 
-    const result = await db.execute(sql`
+    const result = await db.execute<Record<string, unknown>>(sql`
       SELECT COUNT(DISTINCT "contactId")::int AS count
       FROM "AnalyticsContactEvent"
       WHERE "workspaceId" = ${workspaceId}${eventFilter}
@@ -646,7 +646,7 @@ export class ContactStatsRepository extends BaseRepository {
 
     // COUNT(DISTINCT contactId) — same contact blocked twice in a day (manual
     // path + auto-detect via message:failed) collapses to 1.
-    const result = await db.execute(sql`
+    const result = await db.execute<Record<string, unknown>>(sql`
       SELECT
         time_bucket('1 day', "occurredAt" AT TIME ZONE ${resolvedTimezone(timezone)} AT TIME ZONE 'UTC') AS day,
         COUNT(DISTINCT "contactId")::int AS blocked_contacts
@@ -675,7 +675,7 @@ export class ContactStatsRepository extends BaseRepository {
     const { workspaceId, from, to, timezone } = props
     const eventFilter = buildEventFilter(props)
 
-    const result = await db.execute(sql`
+    const result = await db.execute<Record<string, unknown>>(sql`
       SELECT
         time_bucket('1 month', "occurredAt" AT TIME ZONE ${resolvedTimezone(timezone)} AT TIME ZONE 'UTC') AS month,
         COUNT(DISTINCT "contactId")::int AS blocked_contacts
@@ -704,7 +704,7 @@ export class ContactStatsRepository extends BaseRepository {
     const { workspaceId, from, to } = props
     const eventFilter = buildEventFilter(props)
 
-    const result = await db.execute(sql`
+    const result = await db.execute<Record<string, unknown>>(sql`
       SELECT COUNT(DISTINCT "contactId")::int AS count
       FROM "AnalyticsContactEvent"
       WHERE "workspaceId" = ${workspaceId}${eventFilter}
@@ -723,7 +723,7 @@ export class ContactStatsRepository extends BaseRepository {
       inboxId: sql`ics."inboxId"`,
     })
 
-    const result = await db.execute(sql`
+    const result = await db.execute<Record<string, unknown>>(sql`
       SELECT COALESCE(SUM(ics."totalContacts"), 0)::int AS total
       FROM "InboxContactStat" ics
       INNER JOIN "Inbox" i ON i.id = ics."inboxId"
@@ -740,7 +740,7 @@ export class ContactStatsRepository extends BaseRepository {
     const isInboxFilteredTotal =
       props.metric === "total" &&
       normalizeAnalyticsFilters(props).inboxIds.length > 0
-    const result = await db.execute(
+    const result = await db.execute<Record<string, unknown>>(
       isInboxFilteredTotal
         ? inboxFilteredChannelTotals(props)
         : CONTACT_DIMENSION_QUERIES[props.metric](props, column),

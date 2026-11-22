@@ -609,7 +609,7 @@ class TriggerService extends BaseService {
 
   /** `datetime-trigger-evaluator.ts` cleanupOldExecutions: purge executions older than the cutoff. */
   async purgeExecutionsOlderThan(cutoff: Date): Promise<number> {
-    const result = await db.execute(
+    const result = await db.execute<Record<string, unknown>>(
       sql`DELETE FROM "TriggerExecution" WHERE "executedAt" < ${cutoff}`,
     )
     return Number(result.rowCount ?? 0)

@@ -93,7 +93,7 @@ export class MessageStatsRepository extends BaseRepository {
           )})`
         : sql``
 
-    const result = await db.execute(sql`
+    const result = await db.execute<Record<string, unknown>>(sql`
       SELECT
         time_bucket('1 minute', "occurredAt") AS bucket,
         "eventType",
@@ -169,7 +169,7 @@ export class MessageStatsRepository extends BaseRepository {
           GROUP BY 1, 2
           ORDER BY 1 ASC, 2 ASC
         `
-    const result = await db.execute(query)
+    const result = await db.execute<Record<string, unknown>>(query)
 
     return (
       result.rows as {
@@ -235,7 +235,7 @@ export class MessageStatsRepository extends BaseRepository {
           ORDER BY 1 ASC, 2 ASC
         `
 
-    const result = await db.execute(query)
+    const result = await db.execute<Record<string, unknown>>(query)
 
     const rows = (
       result.rows as {
@@ -274,7 +274,7 @@ export class MessageStatsRepository extends BaseRepository {
         : sql``
 
     // Month granularity always > 7 days — use raw hypertable
-    const result = await db.execute(sql`
+    const result = await db.execute<Record<string, unknown>>(sql`
       SELECT
         time_bucket('1 month', "occurredAt" AT TIME ZONE ${resolvedTimezone(timezone)} AT TIME ZONE 'UTC') AS bucket,
         "eventType",
@@ -350,7 +350,7 @@ export class MessageStatsRepository extends BaseRepository {
             ORDER BY 1 ASC, 2 ASC, 3 ASC
           `
 
-    const result = await db.execute(query)
+    const result = await db.execute<Record<string, unknown>>(query)
 
     return (
       result.rows as {
@@ -382,7 +382,7 @@ export class MessageStatsRepository extends BaseRepository {
   ): Promise<Map<string, number>> {
     const { workspaceId, from, to } = props
     const eventFilter = buildEventFilter(props)
-    const statsResult = await db.execute(sql`
+    const statsResult = await db.execute<Record<string, unknown>>(sql`
       SELECT
         "adminId",
         COUNT(*)::int AS count
@@ -411,7 +411,7 @@ export class MessageStatsRepository extends BaseRepository {
   ): Promise<Map<string, number>> {
     const { workspaceId, from, to } = props
     const eventFilter = buildEventFilter(props)
-    const statsResult = await db.execute(sql`
+    const statsResult = await db.execute<Record<string, unknown>>(sql`
       SELECT
         "adminId",
         COUNT(DISTINCT "contactId")::int AS count

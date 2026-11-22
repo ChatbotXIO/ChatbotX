@@ -1,14 +1,9 @@
 import { adsEligibleChannelTypes } from "@chatbotx.io/utils/channel"
 import { normalizeForMatch } from "@chatbotx.io/utils/normalize-for-match"
-import {
-  type AnyColumn,
-  inArray,
-  relationsFilterToSQL,
-  type SQL,
-  sql,
-} from "drizzle-orm"
+import { type AnyColumn, inArray, type SQL, sql } from "drizzle-orm"
 import { operatorTypes } from "../../partials"
 import { isContactActivityFilterField } from "../../partials/contact-activity"
+import { relationsFilterToSQL } from "../../relations-filter"
 import {
   contactInboxModel,
   contactModel,

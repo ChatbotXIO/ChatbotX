@@ -142,7 +142,7 @@ export class AgentResponseStatsRepository extends BaseRepository {
   ): Promise<AgentResponseAverages[]> {
     const { workspaceId, from, to } = props
     const eventFilter = buildEventFilter(props)
-    const result = await db.execute(sql`
+    const result = await db.execute<Record<string, unknown>>(sql`
       SELECT
         "adminId",
         ${measuresSql(workspaceId)}
@@ -161,7 +161,7 @@ export class AgentResponseStatsRepository extends BaseRepository {
   ): Promise<AgentResponseDailyAverages[]> {
     const { workspaceId, from, to, timezone } = props
     const eventFilter = buildEventFilter(props)
-    const result = await db.execute(sql`
+    const result = await db.execute<Record<string, unknown>>(sql`
       SELECT
         "adminId",
         ${zonedDateKey(analyticsAgentResponseEventModel.occurredAt, timezone)} AS "date",

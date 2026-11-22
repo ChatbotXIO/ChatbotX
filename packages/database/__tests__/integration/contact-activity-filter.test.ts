@@ -9,7 +9,7 @@
  */
 
 import { normalizeForMatch } from "@chatbotx.io/utils/normalize-for-match"
-import { and, eq, relationsFilterToSQL } from "drizzle-orm"
+import { and, eq } from "drizzle-orm"
 import { drizzle } from "drizzle-orm/node-postgres"
 import { Client } from "pg"
 import {
@@ -23,6 +23,7 @@ import {
 } from "vitest"
 import { applyContactFilter } from "../../src/queries/contact-filter"
 import { relations } from "../../src/relations"
+import { relationsFilterToSQL } from "../../src/relations-filter"
 import { contactRepository } from "../../src/repositories/contact/repository"
 import {
   type ContactActivityRecord,

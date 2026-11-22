@@ -129,10 +129,10 @@ export const leaderboardParticipantRepository = {
 
     if (input.dedupSince) {
       // Serializes concurrent attempts of the same event before the lookup.
-      await tx.execute(
+      await tx.execute<Record<string, unknown>>(
         sql`SELECT pg_advisory_xact_lock(${input.eventId}::bigint)`,
       )
-      const existing = await tx.execute(sql`
+      const existing = await tx.execute<Record<string, unknown>>(sql`
         SELECT 1 FROM "LeaderboardScoreEvent"
         WHERE "leaderboardId" = ${input.leaderboardId}::bigint
           AND "contactId" = ${input.contactId}::bigint
@@ -145,7 +145,7 @@ export const leaderboardParticipantRepository = {
       }
     }
 
-    const inserted = await tx.execute(sql`
+    const inserted = await tx.execute<Record<string, unknown>>(sql`
       INSERT INTO "LeaderboardScoreEvent"
         ("id", "createdAt", "leaderboardId", "workspaceId", "contactId",
          "delta", "source", "rule", "sourceRef")
@@ -291,7 +291,7 @@ export const leaderboardParticipantRepository = {
 
   /** Sets every score of a leaderboard to 0 (admin "reset points"). */
   async resetAll(leaderboardId: string, tx: DatabaseClient = db) {
-    const result = await tx.execute(sql`
+    const result = await tx.execute<Record<string, unknown>>(sql`
       UPDATE "LeaderboardParticipant"
       SET "score" = 0, "scoredAt" = now(), "breakdown" = '{}'::jsonb,
           "dailyCounts" = '{}'::jsonb, "dailyBucket" = NULL
@@ -502,7 +502,7 @@ export const leaderboardParticipantRepository = {
     if (input.tagIds.length === 0) {
       return true
     }
-    const result = await tx.execute(sql`
+    const result = await tx.execute<Record<string, unknown>>(sql`
       SELECT 1 FROM "ContactToTag"
       WHERE "contactId" = ${input.contactId}::bigint
         AND "tagId" = ANY(ARRAY[${sql.join(

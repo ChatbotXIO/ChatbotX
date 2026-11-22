@@ -250,7 +250,7 @@ export const leaderboardRepository = {
     input: { id: string; contactId: string },
     tx: DatabaseClient = db,
   ): Promise<boolean> {
-    const result = await tx.execute(sql`
+    const result = await tx.execute<Record<string, unknown>>(sql`
       UPDATE "Leaderboard"
       SET "rewardRecipients" = COALESCE("rewardRecipients", '{}'::jsonb)
         || jsonb_build_object(${input.contactId}::text, 'pending')
@@ -275,7 +275,7 @@ export const leaderboardRepository = {
         ? sql`COALESCE("rewardRecipients", '{}'::jsonb) - ${input.contactId}::text`
         : sql`COALESCE("rewardRecipients", '{}'::jsonb)
             || jsonb_build_object(${input.contactId}::text, ${input.delivery}::text)`
-    await tx.execute(sql`
+    await tx.execute<Record<string, unknown>>(sql`
       UPDATE "Leaderboard" SET "rewardRecipients" = ${value}
       WHERE "id" = ${input.id}::bigint
     `)

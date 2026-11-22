@@ -77,7 +77,7 @@ export class ConversationEmbeddingRepository {
     topK: number
     workspaceId: string
   }): Promise<VectorSearchRow[]> {
-    const result = await this.client.execute(sql`
+    const result = await this.client.execute<Record<string, unknown>>(sql`
       SELECT
         "id",
         "chunkIndex",
