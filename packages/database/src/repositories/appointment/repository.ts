@@ -70,12 +70,31 @@ const appointmentWhere = (input: AppointmentListInput, now = new Date()) =>
       : undefined,
   )
 
+// The list joins match on workspace as well as id, so a calendar or contact
+// from another workspace can never be joined into a workspace's list. They are
+// functions, not module constants, so importing this repository builds no SQL
+// (tests that mock `@chatbotx.io/database/client` import it transitively).
+const appointmentCalendarJoin = () =>
+  and(
+    eq(appointmentCalendarModel.id, appointmentModel.calendarId),
+    eq(appointmentCalendarModel.workspaceId, appointmentModel.workspaceId),
+  )
+
+const appointmentContactJoin = () =>
+  and(
+    eq(contactModel.id, appointmentModel.contactId),
+    eq(contactModel.workspaceId, appointmentModel.workspaceId),
+  )
+
 type AppointmentListRow = typeof appointmentModel.$inferSelect & {
-  contactAvatar: string | null
   calendarName: string
-  contactFirstName: string | null
-  contactLastName: string | null
-  contactFullName: string | null
+  contact: {
+    id: string
+    avatar: string | null
+    firstName: string | null
+    lastName: string | null
+    fullName: string | null
+  }
 }
 
 export const appointmentRepository = {
@@ -115,20 +134,17 @@ export const appointmentRepository = {
           cancelledAt: appointmentModel.cancelledAt,
           deletedAt: appointmentModel.deletedAt,
           calendarName: appointmentCalendarModel.name,
-          contactAvatar: contactModel.avatar,
-          contactFirstName: contactModel.firstName,
-          contactLastName: contactModel.lastName,
-          contactFullName: contactModel.fullName,
+          contact: {
+            id: contactModel.id,
+            avatar: contactModel.avatar,
+            firstName: contactModel.firstName,
+            lastName: contactModel.lastName,
+            fullName: contactModel.fullName,
+          },
         })
         .from(appointmentModel)
-        .innerJoin(
-          appointmentCalendarModel,
-          eq(appointmentCalendarModel.id, appointmentModel.calendarId),
-        )
-        .innerJoin(
-          contactModel,
-          eq(contactModel.id, appointmentModel.contactId),
-        )
+        .innerJoin(appointmentCalendarModel, appointmentCalendarJoin())
+        .innerJoin(contactModel, appointmentContactJoin())
         .where(where)
         .orderBy(desc(appointmentModel.startAt))
         .limit(pagination.limit)
@@ -136,14 +152,8 @@ export const appointmentRepository = {
       tx
         .select({ count: count() })
         .from(appointmentModel)
-        .innerJoin(
-          appointmentCalendarModel,
-          eq(appointmentCalendarModel.id, appointmentModel.calendarId),
-        )
-        .innerJoin(
-          contactModel,
-          eq(contactModel.id, appointmentModel.contactId),
-        )
+        .innerJoin(appointmentCalendarModel, appointmentCalendarJoin())
+        .innerJoin(contactModel, appointmentContactJoin())
         .where(where),
     ])
     const total = Number(totalRows[0]?.count ?? 0)
