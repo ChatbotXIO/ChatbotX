@@ -2,6 +2,7 @@ import {
   contactActivityService,
   contactInboxService,
   contactService,
+  conversationParticipantService,
   conversationService,
   messageService,
   queueWorkspaceRealtimeEvent,
@@ -597,7 +598,8 @@ export async function sendMessageToChannel(
       } else if (message.senderType === "user" && message.senderId) {
         // A workspace member's message from the inbox composer. `api` and
         // `system` senders are not human agents and stay out of agent stats.
-        await emitHumanMessageSentEvents({
+        await recordHumanMessageSent({
+          conversationId: message.conversationId,
           workspaceId: conversation.workspaceId,
           contactInbox,
           result,
@@ -1435,6 +1437,29 @@ export function emitHumanMessageSentEvents(input: {
   })
 }
 
+/**
+ * A member's accepted send: records the human-message analytics and that the
+ * member replied in the conversation. Both are best-effort and independent —
+ * a failure in one never skips the other, and neither fails the send, which is
+ * already live on the channel. Both are idempotent, so a re-run is safe.
+ */
+export async function recordHumanMessageSent(
+  input: Parameters<typeof emitHumanMessageSentEvents>[0] & {
+    conversationId: string
+  },
+): Promise<void> {
+  const { conversationId, ...analytics } = input
+  await Promise.allSettled([
+    emitHumanMessageSentEvents(analytics),
+    conversationParticipantService.recordReply({
+      workspaceId: analytics.workspaceId,
+      conversationId,
+      userId: analytics.adminId,
+      at: analytics.occurredAt,
+    }),
+  ])
+}
+
 export async function sendFlowStepToChannel({
   conversation,
   contactInbox,
@@ -1584,7 +1609,8 @@ export async function sendFlowStepToChannel({
 
   // A member's send is always a human message, even without a persisted id.
   if (humanSender) {
-    await emitHumanMessageSentEvents({
+    await recordHumanMessageSent({
+      conversationId: conversation.id,
       workspaceId: conversation.workspaceId,
       contactInbox,
       result,

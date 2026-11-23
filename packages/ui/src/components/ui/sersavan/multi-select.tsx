@@ -130,6 +130,8 @@ export interface MultiSelectLabels {
   selectAll?: (optionCount: number) => string
   clearAllAriaLabel?: (selectedCount: number) => string
   removeAriaLabel?: (optionLabel: string) => string
+  /** Text of the chip that stands for the selections beyond the visible ones. */
+  moreSelected?: (hiddenCount: number) => string
 }
 
 const DEFAULT_LABELS: Required<MultiSelectLabels> = {
@@ -144,6 +146,7 @@ const DEFAULT_LABELS: Required<MultiSelectLabels> = {
   clearAllAriaLabel: (selectedCount) =>
     `Clear all ${selectedCount} selected options`,
   removeAriaLabel: (optionLabel) => `Remove ${optionLabel} from selection`,
+  moreSelected: (hiddenCount) => `+ ${hiddenCount} more`,
 }
 
 /**
@@ -1044,9 +1047,9 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
                             animationDelay: `${animationConfig?.delay || 0}s`,
                           }}
                         >
-                          {`+ ${
-                            selectedValues.length - responsiveSettings.maxCount
-                          } more`}
+                          {labels.moreSelected(
+                            selectedValues.length - responsiveSettings.maxCount,
+                          )}
                           <XCircle
                             className={cn(
                               "ms-2 h-4 w-4 cursor-pointer",

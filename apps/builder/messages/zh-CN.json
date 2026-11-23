@@ -906,7 +906,8 @@
       "template": "范本",
       "title": "广播详细信息",
       "schedule": "重复计划",
-      "runOf": "<link>{name}</link> 的运行"
+      "runOf": "<link>{name}</link> 的运行",
+      "linkNotFound": "此广播已不存在。"
     },
     "flowType": {
       "flow": {
@@ -1789,6 +1790,10 @@
   "contactAdReferrals": {
     "title": "广告历史",
     "empty": "尚未记录此联系人的广告点击。"
+  },
+  "contactBroadcasts": {
+    "empty": "尚未向此联系人发送任何广播。",
+    "searchPlaceholder": "按名称或 ID 搜索"
   },
   "adsReferralStats": {
     "title": "按广告统计联系人",
@@ -7825,7 +7830,6 @@
   "templatesPublicPage": {
     "invalidTitle": "此链接已不再可用。",
     "invalidDescription": "此范本分享链接无效、已禁用或已过期。",
-    "byPublisher": "发布者：{publisherName}",
     "videoTitle": "模板预览视频",
     "preview": "预览",
     "aboutTemplate": "关于此模板",
@@ -12184,6 +12188,7 @@
     "categoriesPlaceholder": "无分类",
     "close": "关闭",
     "removeChip": "移除 {name}",
+    "moreSelected": "另外 {count} 项",
     "categoriesHint": "可选。没有分类的模板只显示在“全部”中。",
     "languages": "语言",
     "allLanguages": "所有语言",
@@ -12240,7 +12245,6 @@
       "categories": "商店分类",
       "noResults": "没有符合筛选条件的模板。",
       "clearSearch": "清除筛选",
-      "by": "作者：{publisherName}",
       "loadFailed": "无法加载模板。请稍后再试。",
       "language": "语言",
       "allLanguages": "所有语言",
@@ -12450,5 +12454,14 @@
       "onAhachat": "On AhaChat",
       "selected": "Uses AhaChat data"
     }
+  },
+  "conversationParticipants": {
+    "joined": "{names} 已参与会话",
+    "replied": "{name} 回复于 {time}",
+    "showMore": "显示更多",
+    "label": "谁在此会话中回复过",
+    "unnamedMember": "成员",
+    "loadMoreFailed": "无法加载更多成员",
+    "lastMessageBy": "{name} 的最后一条消息"
   }
 }

@@ -5500,7 +5500,6 @@
   "templatesPublicPage": {
     "invalidTitle": "קישור זה אינו זמין עוד.",
     "invalidDescription": "קישור השיתוף של התבנית הזו אינו תקין, מושבת או שפג תוקפו.",
-    "byPublisher": "מאת {publisherName}",
     "videoTitle": "סרטון תצוגה מקדימה של התבנית",
     "preview": "תצוגה מקדימה",
     "aboutTemplate": "אודות תבנית זו",
@@ -5858,6 +5857,10 @@
   "contactAdReferrals": {
     "title": "היסטוריית מודעות",
     "empty": "עדיין לא נרשמו לחיצות על מודעות עבור איש קשר זה."
+  },
+  "contactBroadcasts": {
+    "empty": "עדיין לא נשלח אל איש הקשר הזה אף שידור.",
+    "searchPlaceholder": "חיפוש לפי שם או מזהה"
   },
   "adsReferralStats": {
     "title": "אנשי קשר לפי מודעה",
@@ -8039,7 +8042,8 @@
       "template": "תבנית",
       "integration": "שילוב",
       "schedule": "לוח זמנים לחזרה",
-      "runOf": "הרצה של <link>{name}</link>"
+      "runOf": "הרצה של <link>{name}</link>",
+      "linkNotFound": "השידור הזה כבר לא קיים."
     },
     "filters": {
       "all": "All"
@@ -12184,6 +12188,7 @@
     "categoriesPlaceholder": "ללא קטגוריה",
     "close": "סגירה",
     "removeChip": "הסרת {name}",
+    "moreSelected": "+ {count} נוספים",
     "categoriesHint": "אופציונלי. בלי קטגוריה התבנית תופיע רק תחת «הכול».",
     "languages": "שפות",
     "allLanguages": "כל השפות",
@@ -12240,7 +12245,6 @@
       "categories": "קטגוריות החנות",
       "noResults": "אין תבניות שתואמות למסננים.",
       "clearSearch": "נקה מסננים",
-      "by": "מאת {publisherName}",
       "loadFailed": "לא ניתן לטעון את התבניות. נסו שוב מאוחר יותר.",
       "language": "שפה",
       "allLanguages": "כל השפות",
@@ -12450,5 +12454,14 @@
       "onAhachat": "On AhaChat",
       "selected": "Uses AhaChat data"
     }
+  },
+  "conversationParticipants": {
+    "joined": "{names} השתתפו בשיחה",
+    "replied": "{name} השיב {time}",
+    "showMore": "הצג עוד",
+    "label": "מי השיב בשיחה זו",
+    "unnamedMember": "חבר",
+    "loadMoreFailed": "לא ניתן היה לטעון עוד חברים",
+    "lastMessageBy": "ההודעה האחרונה של {name}"
   }
 }

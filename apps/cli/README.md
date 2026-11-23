@@ -222,6 +222,7 @@ chatbotx contacts filter-fields                      # Field/operator reference 
                                                      # [--surface flowCondition] also lists flow-only fields (isWithinWorkingHours)
                                                      # `pipelineItems` = pipelines + stages and the shapes of `pipelineItem` conditions
 chatbotx contacts ad-referrals <identifier>           # Ads the contact came from [--perPage --cursor]
+chatbotx contacts broadcasts list <identifier>        # Broadcasts sent to the contact, newest first [--perPage --cursor --search]
 
 # Discover IDs accepted by contactFilter.commentedOnPost
 chatbotx channel-posts list                           # [--limit --search --cursor]
@@ -304,6 +305,7 @@ chatbotx conversations list                          # [--botCategory --assigned
                                                      # Array/object filters are JSON strings: --status '["open"]'
                                                      # --view compact drops ad attribution and thread-control metadata from contactInboxes (default full)
 chatbotx conversations get <id>
+chatbotx conversations participants list <id>   # [--perPage --cursor] members who replied, newest first (see docs/inbox-participants.md)
 chatbotx conversations assign add <id> --assignedId <assignedId>  # null clears the assignee
 chatbotx conversations archive add <id>
 chatbotx conversations unarchive add <id>

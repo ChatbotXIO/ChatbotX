@@ -28,6 +28,8 @@ export const HEAVY_WORKSPACE_TABLES = [
   "ContactOnSmartDelay",
   // Child of Conversation (cascade), so it drains before it.
   "MessageTranslation",
+  // Child of Conversation (cascade), so it drains before it.
+  "ConversationParticipant",
   "Conversation",
   "Contact",
 ] as const

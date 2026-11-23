@@ -21,7 +21,6 @@ export type StoreTemplateHrefBuilder = (template: {
 }) => string
 
 export type StoreCatalogData = {
-  tenantName: string
   /** The visitor's UI language the zones were computed for; the language filter starts on it. */
   viewerLocale: Locale
   categories: StoreCatalogCategory[]
@@ -62,7 +61,6 @@ export async function loadStoreCatalog(
   ])
 
   return {
-    tenantName: branding.name,
     viewerLocale,
     categories,
     templates: templates.map((template) => ({

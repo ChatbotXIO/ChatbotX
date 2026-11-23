@@ -62,6 +62,10 @@ vi.mock("@chatbotx.io/worker-config", () => ({
   integrationQueue: { add: mockIntegrationQueueAdd },
 }))
 
+vi.mock("../src/conversation-participant/service", () => ({
+  conversationParticipantService: { recordReply: vi.fn() },
+}))
+
 vi.mock("../src/contact-inbox/service", () => ({
   contactInboxService: { updateTracking: mockUpdateTracking },
 }))

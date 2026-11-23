@@ -10,7 +10,10 @@ vi.mock("@/features/response-sla/provider/response-sla-hook", () => ({
 vi.mock("next-intl", () => ({
   useTranslations: () => (key: string, values?: { count?: number }) =>
     values?.count === undefined ? key : `${key}:${values.count}`,
-  useFormatter: () => ({ dateTime: (at: Date) => at.toISOString() }),
+  useFormatter: () => ({
+    dateTime: (at: Date) => at.toISOString(),
+    list: (items: string[]) => items.join(", "),
+  }),
   useLocale: () => "en",
 }))
 
@@ -99,6 +102,7 @@ const makeConversation = (
     lastActivityAt: null,
     assignedUserId: null,
     assignedInboxTeamId: null,
+    recentParticipants: [],
     ...overrides,
   }) as unknown as ListConversationItemResource
 
@@ -143,11 +147,13 @@ describe("ConversationItem", () => {
   const render = (
     conversation: ListConversationItemResource,
     assigneeOptionNameByValue = new Map<string, string>(),
+    canViewEmailAndPhone = true,
   ) =>
     act(() => {
       root.render(
         <ConversationItem
           assigneeOptionNameByValue={assigneeOptionNameByValue}
+          canViewEmailAndPhone={canViewEmailAndPhone}
           conversation={conversation}
           onSelect={onSelect}
         />,
@@ -165,6 +171,132 @@ describe("ConversationItem", () => {
       container.querySelector(`[aria-label="whatsapp.calls.reject"]`),
     ).toBeNull()
   })
+  test("shows an avatar for each member who replied, named in its label", async () => {
+    await render(
+      makeConversation({
+        recentParticipants: [
+          {
+            userId: "u1",
+            name: "Hoàng",
+            image: null,
+            lastRepliedAt: new Date("2026-11-20T10:00:00Z"),
+          },
+          {
+            userId: "u2",
+            name: "Hùng",
+            image: null,
+            lastRepliedAt: new Date("2026-11-19T10:00:00Z"),
+          },
+        ],
+      }),
+    )
+
+    const stack = container.querySelector(`[aria-label="joined"]`)
+    expect(stack).not.toBeNull()
+    expect(container.textContent).toContain("Ho")
+    expect(container.textContent).toContain("Hù")
+  })
+
+  describe("contact phone and email icons", () => {
+    const withContact = (contact: Record<string, unknown>) =>
+      makeConversation({
+        contact: { fullName: "Ada Lovelace", ...contact },
+      } as Partial<ListConversationItemResource>)
+    const phoneIcon = () =>
+      container.querySelector('[aria-label="fields.phoneNumber.label"]')
+    const emailIcon = () =>
+      container.querySelector('[aria-label="fields.email.label"]')
+
+    test("shows a phone icon for a contact with a saved phone number", async () => {
+      await render(withContact({ phoneNumber: "+84349566551", email: null }))
+
+      expect(phoneIcon()).not.toBeNull()
+      expect(emailIcon()).toBeNull()
+    })
+
+    test("shows an email icon for a contact with a saved email", async () => {
+      await render(withContact({ phoneNumber: null, email: "ada@example.com" }))
+
+      expect(emailIcon()).not.toBeNull()
+      expect(phoneIcon()).toBeNull()
+    })
+
+    test("shows both icons when the contact left both", async () => {
+      await render(
+        withContact({ phoneNumber: "+84349566551", email: "ada@example.com" }),
+      )
+
+      expect(phoneIcon()).not.toBeNull()
+      expect(emailIcon()).not.toBeNull()
+    })
+
+    test.each([
+      ["a numeric webchat guest id", "11700000000000001"],
+      ["a workspace-scoped webchat guest id", "1164:6f9619ff-8b86-d011"],
+      ["an empty string", ""],
+    ])("shows no email icon when the stored email is %s", async (_label, email) => {
+      await render(withContact({ phoneNumber: null, email }))
+
+      expect(emailIcon()).toBeNull()
+    })
+
+    test("shows no icon for a contact with neither", async () => {
+      await render(withContact({ phoneNumber: null, email: null }))
+
+      expect(phoneIcon()).toBeNull()
+      expect(emailIcon()).toBeNull()
+    })
+
+    test("shows neither icon to a member who may not see email and phone", async () => {
+      await render(
+        withContact({ phoneNumber: "+84349566551", email: "ada@example.com" }),
+        new Map<string, string>(),
+        false,
+      )
+
+      expect(phoneIcon()).toBeNull()
+      expect(emailIcon()).toBeNull()
+    })
+
+    test("the value is not written into the row, only into the hover text", async () => {
+      await render(
+        withContact({ phoneNumber: "+84349566551", email: "ada@example.com" }),
+      )
+
+      expect(container.textContent).not.toContain("+84349566551")
+      expect(container.textContent).not.toContain("ada@example.com")
+    })
+  })
+
+  describe("conversation type icon", () => {
+    test("a direct message shows a speech bubble, not an envelope", async () => {
+      await render(makeConversation())
+
+      expect(container.querySelector(".lucide-message-circle")).not.toBeNull()
+      expect(container.querySelector(".lucide-message-square-text")).toBeNull()
+      expect(container.querySelector(".lucide-mail")).toBeNull()
+    })
+
+    test("a comment shows the text-bubble icon", async () => {
+      await render(
+        makeConversation({
+          messages: [{ type: "comment" }],
+        } as unknown as Partial<ListConversationItemResource>),
+      )
+
+      expect(
+        container.querySelector(".lucide-message-square-text"),
+      ).not.toBeNull()
+      expect(container.querySelector(".lucide-message-circle")).toBeNull()
+    })
+  })
+
+  test("shows no participant avatars when nobody replied", async () => {
+    await render(makeConversation({ recentParticipants: [] }))
+
+    expect(container.querySelector(`[aria-label="joined"]`)).toBeNull()
+  })
+
   test("uses cached assignee initials after a realtime relation reset", async () => {
     await render(
       makeConversation({

@@ -6,7 +6,7 @@ import { cn } from "@chatbotx.io/ui/lib/utils"
 import { ArrowDownIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { useAction } from "next-safe-action/hooks"
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import {
   type GridComponents,
   Virtuoso,
@@ -16,14 +16,18 @@ import { toast } from "sonner"
 import { TranslatedMessage } from "@/features/translation/components/translated-message"
 import { useRequestTranslations } from "@/features/translation/hooks/use-request-translations"
 import { useWorkspaceId } from "@/hooks/routing"
+import { authClient } from "@/lib/auth/auth-client"
 import { INBOX_MESSAGES_PER_PAGE } from "../chat/store/chat-store"
 import { useChatStore } from "../chat/store/chat-store-provider"
 import { ConversationInfo } from "../conversations/components/conversation-info"
+import { useConversationParticipants } from "../conversations/hooks/use-conversation-participants"
+import type { ConversationParticipantResource } from "../conversations/schema/resource"
 import { changeMessageAttributesAction } from "./actions/change-message-attributes.action"
 import { deleteMessageAction } from "./actions/delete-message.action"
 import { editMessageAction } from "./actions/edit-message.action"
 import { MessageItem } from "./components/message-item"
 import { ResendMessageButton } from "./components/resend-message-button"
+import { findLatestMessageIdByAuthor } from "./lib/find-latest-message-id-by-author"
 import { canPrivateReplyToComment } from "./lib/private-reply"
 import type { MessageResourceWithRelations } from "./schema/resource"
 
@@ -49,6 +53,53 @@ export function MessageList() {
     updateMessageText,
     updateMessageAttributes,
   } = useChatStore((state) => state)
+
+  // The small avatar under each member's latest message. Their identity comes
+  // from the participants list (shared with the header, one request), the row
+  // preview while it loads, and the session user for a message just sent.
+  const session = authClient.useSession()
+  const participantsQuery = useConversationParticipants(
+    workspaceId,
+    activeConversationId ?? undefined,
+  )
+  const activeConversation = conversations.find(
+    (conversation) => conversation.id === activeConversationId,
+  )
+  const authorMarkerByMessageId = useMemo(() => {
+    const participantByUserId = new Map<
+      string,
+      ConversationParticipantResource
+    >(
+      (
+        participantsQuery.data?.pages.flatMap((page) => page.data) ??
+        activeConversation?.recentParticipants ??
+        []
+      ).map((participant) => [participant.userId, participant]),
+    )
+    const sessionUser = session.data?.user
+    const markers = new Map<string, ConversationParticipantResource>()
+    for (const [authorId, messageId] of findLatestMessageIdByAuthor(messages)) {
+      const participant =
+        participantByUserId.get(authorId) ??
+        (sessionUser?.id === authorId
+          ? {
+              userId: authorId,
+              name: sessionUser.name,
+              image: sessionUser.image ?? null,
+              lastRepliedAt: new Date(),
+            }
+          : undefined)
+      if (participant) {
+        markers.set(messageId, participant)
+      }
+    }
+    return markers
+  }, [
+    messages,
+    participantsQuery.data,
+    activeConversation?.recentParticipants,
+    session.data?.user,
+  ])
 
   // Asks for the visible inbound messages to be translated; a no-op while
   // translation is off, so the Inbox is unchanged for such workspaces.
@@ -322,6 +373,7 @@ export function MessageList() {
             <TranslatedMessage message={message}>
               {(translation) => (
                 <MessageItem
+                  authorMarker={authorMarkerByMessageId.get(message.id)}
                   canPrivateReply={(comment) =>
                     canPrivateReplyToComment({
                       channel: activeChannel,

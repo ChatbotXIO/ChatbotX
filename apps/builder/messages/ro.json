@@ -2136,7 +2136,8 @@
       "template": "Șablon",
       "integration": "Integrare",
       "schedule": "Programare repetare",
-      "runOf": "Rulare a <link>{name}</link>"
+      "runOf": "Rulare a <link>{name}</link>",
+      "linkNotFound": "Această difuzare nu mai există."
     },
     "filters": {
       "all": "All"
@@ -6824,6 +6825,10 @@
     "title": "Istoric reclame",
     "empty": "Nu a fost înregistrat încă niciun clic pe reclame pentru acest contact."
   },
+  "contactBroadcasts": {
+    "empty": "Nu a fost trimisă încă nicio difuzare către acest contact.",
+    "searchPlaceholder": "Caută după nume sau ID"
+  },
   "adsReferralStats": {
     "title": "Contacte după reclamă",
     "description": "Contactele la care a ajuns fiecare reclamă și conversiile atribuite clicurilor sale. Clicurile se numără de la începutul urmăririi.",
@@ -8546,7 +8551,6 @@
   "templatesPublicPage": {
     "invalidTitle": "Acest link nu mai este disponibil.",
     "invalidDescription": "Acest link de distribuire a șablonului este invalid, dezactivat sau expirat.",
-    "byPublisher": "De {publisherName}",
     "videoTitle": "Videoclip de previzualizare a șablonului",
     "preview": "Previzualizare",
     "aboutTemplate": "Despre acest șablon",
@@ -12184,6 +12188,7 @@
     "categoriesPlaceholder": "Fără categorie",
     "close": "Închide",
     "removeChip": "Elimină {name}",
+    "moreSelected": "+ {count} în plus",
     "categoriesHint": "Opțional. Fără categorie, șablonul apare doar la „Toate”.",
     "languages": "Limbi",
     "allLanguages": "Toate limbile",
@@ -12240,7 +12245,6 @@
       "categories": "Categoriile magazinului",
       "noResults": "Niciun șablon nu corespunde filtrelor.",
       "clearSearch": "Șterge filtrele",
-      "by": "De {publisherName}",
       "loadFailed": "Șabloanele nu au putut fi încărcate. Încercați din nou mai târziu.",
       "language": "Limbă",
       "allLanguages": "Toate limbile",
@@ -12450,5 +12454,14 @@
       "onAhachat": "On AhaChat",
       "selected": "Uses AhaChat data"
     }
+  },
+  "conversationParticipants": {
+    "joined": "{names} au participat la conversație",
+    "replied": "{name} a răspuns {time}",
+    "showMore": "Arată mai mult",
+    "label": "Cine a răspuns în această conversație",
+    "unnamedMember": "Membru",
+    "loadMoreFailed": "Nu s-au putut încărca mai mulți membri",
+    "lastMessageBy": "Ultimul mesaj de la {name}"
   }
 }

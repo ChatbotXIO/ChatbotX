@@ -74,7 +74,6 @@ describe("loadStoreCatalog", () => {
 
     const catalog = await loadStoreCatalog("777")
 
-    expect(catalog.tenantName).toBe("Acme Bots")
     expect(catalog.viewerLocale).toBe("fr")
     expect(catalog.categories).toEqual([{ id: "5", name: "Flows" }])
     expect(catalog.templates).toEqual([
@@ -117,11 +116,10 @@ describe("loadStoreCatalog", () => {
     )
   })
 
-  test("an empty store gives an empty catalog and still names the tenant", async () => {
+  test("an empty store gives an empty catalog", async () => {
     mocks.listPublished.mockResolvedValue({ categories: [], templates: [] })
 
     expect(await loadStoreCatalog("777")).toEqual({
-      tenantName: "Acme Bots",
       viewerLocale: "fr",
       categories: [],
       templates: [],

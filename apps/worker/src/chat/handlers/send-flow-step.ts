@@ -25,6 +25,7 @@ import {
   messageTypes,
   SENT_FROM_INBOX_KEY,
   senderTypes,
+  sentByUserAttributes,
 } from "@chatbotx.io/database/partials"
 import type { MessageWithAttachments } from "@chatbotx.io/database/repositories"
 import type { messageModel } from "@chatbotx.io/database/schema"
@@ -864,6 +865,7 @@ export async function sendFlowStep({
         flowId,
         flowVersionId,
         ...(sendFrom === "inbox" ? { [SENT_FROM_INBOX_KEY]: true } : {}),
+        ...(isManualSend(sendFrom) ? sentByUserAttributes(sentByUserId) : {}),
       }
 
     // The caller's own quick replies (their payloads are not flow buttons) go

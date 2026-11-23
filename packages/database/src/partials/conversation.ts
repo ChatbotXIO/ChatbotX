@@ -82,3 +82,10 @@ export type ConversationAttributes = {
   phoneNumber?: string
   challenge?: ConversationStepChallenge | ConversationQuickReplyChallenge
 }
+
+/**
+ * Members shown as avatars on a conversation row (`recentParticipants`). The
+ * server loads this many and the client keeps its live preview at the same
+ * size; the full list is paged.
+ */
+export const RECENT_PARTICIPANT_LIMIT = 3

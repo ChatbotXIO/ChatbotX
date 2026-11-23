@@ -199,6 +199,7 @@ export default function ConversationList({
             itemContent={(_, item) => (
               <ConversationItem
                 assigneeOptionNameByValue={assigneeOptionNameByValue}
+                canViewEmailAndPhone={canViewEmailAndPhone}
                 conversation={item}
                 onSelect={() => {
                   conversationIdParam.set(item.id.toString())

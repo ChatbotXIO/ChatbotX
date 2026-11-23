@@ -718,7 +718,8 @@
       "template": "Mall",
       "title": "Utskickningsinformation",
       "schedule": "Upprepningsschema",
-      "runOf": "Körning av <link>{name}</link>"
+      "runOf": "Körning av <link>{name}</link>",
+      "linkNotFound": "Det här utskicket finns inte längre."
     },
     "flowType": {
       "flow": {
@@ -1601,6 +1602,10 @@
   "contactAdReferrals": {
     "title": "Annonshistorik",
     "empty": "Inga annonsklick har registrerats för den här kontakten ännu."
+  },
+  "contactBroadcasts": {
+    "empty": "Inga utskick har skickats till den här kontakten ännu.",
+    "searchPlaceholder": "Sök på namn eller ID"
   },
   "adsReferralStats": {
     "title": "Kontakter per annons",
@@ -7825,7 +7830,6 @@
   "templatesPublicPage": {
     "invalidTitle": "Den här länken är inte längre tillgänglig.",
     "invalidDescription": "Den här mallens dellänk är ogiltig, inaktiverad eller har gått ut.",
-    "byPublisher": "Av {publisherName}",
     "videoTitle": "Förhandsgranskningsvideo för mall",
     "preview": "Förhandsgranska",
     "aboutTemplate": "Om den här mallen",
@@ -12184,6 +12188,7 @@
     "categoriesPlaceholder": "Ingen kategori",
     "close": "Stäng",
     "removeChip": "Ta bort {name}",
+    "moreSelected": "+ {count} till",
     "categoriesHint": "Valfritt. Utan kategori visas mallen bara under “Alla”.",
     "languages": "Språk",
     "allLanguages": "Alla språk",
@@ -12240,7 +12245,6 @@
       "categories": "Butikskategorier",
       "noResults": "Inga mallar matchar dina filter.",
       "clearSearch": "Rensa filter",
-      "by": "Av {publisherName}",
       "loadFailed": "Det gick inte att läsa in mallarna. Försök igen senare.",
       "language": "Språk",
       "allLanguages": "Alla språk",
@@ -12450,5 +12454,14 @@
       "onAhachat": "On AhaChat",
       "selected": "Uses AhaChat data"
     }
+  },
+  "conversationParticipants": {
+    "joined": "{names} har deltagit i konversationen",
+    "replied": "{name} svarade {time}",
+    "showMore": "Visa mer",
+    "label": "Vem som har svarat i den här konversationen",
+    "unnamedMember": "Medlem",
+    "loadMoreFailed": "Det gick inte att läsa in fler medlemmar",
+    "lastMessageBy": "Senaste meddelandet från {name}"
   }
 }

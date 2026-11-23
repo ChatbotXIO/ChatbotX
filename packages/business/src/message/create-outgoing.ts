@@ -43,6 +43,7 @@ import {
 } from "@chatbotx.io/worker-config"
 import { contactInboxService } from "../contact-inbox/service"
 import { conversationService } from "../conversation/service"
+import { conversationParticipantService } from "../conversation-participant/service"
 import {
   ChatbotXException,
   ImagesNotSupportedOnChannelError,
@@ -382,14 +383,26 @@ export const createOutgoing = async (props: {
     })
     // Claimed only after a successful enqueue so a failed send keeps the
     // window open. An inbox "send flow" counts as a human reply.
-    await recordAgentReply({
-      conversationId: conversation.id,
-      workspaceId: conversation.workspaceId,
-      contactInbox,
-      at: new Date(),
-      sender,
-      eventId: `reply:flow:${createId()}`,
-    })
+    // Sending the flow is the member's reply even if it later branches or
+    // delays, so it is recorded here, not when each step is delivered.
+    const repliedAt = new Date()
+    await Promise.all([
+      recordAgentReply({
+        conversationId: conversation.id,
+        workspaceId: conversation.workspaceId,
+        contactInbox,
+        at: repliedAt,
+        sender,
+        eventId: `reply:flow:${createId()}`,
+      }),
+      user &&
+        conversationParticipantService.recordReply({
+          workspaceId: conversation.workspaceId,
+          conversationId: conversation.id,
+          userId: user.id,
+          at: repliedAt,
+        }),
+    ])
     return null
   }
 

@@ -4,6 +4,7 @@ import { zodBigintAsString } from "@chatbotx.io/utils"
 import z from "zod"
 import { bulkUpdateIdsRequest, successResponse } from "@/features/common/schema"
 import { canViewContactEmailAndPhone } from "@/features/contacts/permissions"
+import { assertConversationAccessForCaller } from "@/lib/public-api/member-scope"
 import { assertWorkspaceNotBlocked } from "@/lib/workspace-quota"
 import { workspaceAuthorizedMidddleware } from "@/middlewares/auth"
 import { authorizedAPI } from "@/orpc"
@@ -13,11 +14,14 @@ import {
   findConversation,
   listConversations,
 } from "../queries/list-conversations.query"
+import { listConversationParticipants } from "../queries/list-participants.query"
 import { assignConversationSchema } from "../schema/action"
+import { listConversationParticipantsPrivateRequest } from "../schema/public"
 import { listConversationsRequest } from "../schema/query"
 import {
   findConversationRequest,
   findConversationResponse,
+  listConversationParticipantsResponse,
   listConversationsResponse,
 } from "../schema/resource"
 
@@ -86,6 +90,35 @@ export const conversationsAuthenticatedAPI = {
     .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
     .output(findConversationResponse)
     .handler(async ({ input }) => await findConversation(input)),
+
+  listParticipantsAuthenticatedAPI: authorizedAPI
+    .route({
+      method: "GET",
+      path: "/workspaces/{workspaceId}/conversations/{id}/participants",
+      summary: "List conversation participants",
+      tags: ["Conversations"],
+    })
+    .input(listConversationParticipantsPrivateRequest)
+    .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
+    .output(listConversationParticipantsResponse)
+    .handler(async ({ input, context }) => {
+      // Same conversation scope as the public read: a member limited to
+      // assigned conversations cannot list who replied in the others.
+      await assertConversationAccessForCaller(
+        {
+          workspace: { id: input.workspaceId },
+          member: context.workspaceMember,
+          user: context.user,
+        },
+        input.id,
+      )
+      return await listConversationParticipants({
+        workspaceId: input.workspaceId,
+        conversationId: input.id,
+        cursor: input.cursor,
+        perPage: input.perPage,
+      })
+    }),
 
   getPostDetailsAuthenticatedAPI: authorizedAPI
     .route({
