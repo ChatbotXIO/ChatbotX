@@ -271,6 +271,7 @@ const guestStore = {
   guestConversationId: "1:00000000-0000-0000-0000-000000000000",
   markMessageFailed: vi.fn(),
   sendMessage: vi.fn(),
+  showOptimisticTyping: vi.fn(),
 }
 vi.mock(
   "@/features/integration-webchat/providers/store/guest-session-provider",
@@ -402,6 +403,7 @@ describe("message composers", () => {
     guestStore.appendMessage.mockClear()
     guestStore.markMessageFailed.mockClear()
     guestStore.sendMessage.mockClear()
+    guestStore.showOptimisticTyping.mockClear()
     inboxStore.appendMessage.mockClear()
     inboxStore.markMessagesDeleted.mockClear()
     inboxStore.markMessageFailed.mockClear()
@@ -863,6 +865,7 @@ describe("message composers", () => {
       "hello",
       expect.any(String),
     )
+    expect(guestStore.showOptimisticTyping).toHaveBeenCalledTimes(1)
     expect(guestStore.markMessageFailed).toHaveBeenCalledWith(
       expect.any(String),
       "Send failed",
