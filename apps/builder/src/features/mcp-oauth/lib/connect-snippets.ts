@@ -21,10 +21,13 @@ export const buildMcpConnectSnippets = ({
   // screen, so one URL serves every account (marketplace installs included).
   const streamableUrl = `${mcpUrl}/messages`
   const sseUrl = `${mcpUrl}/sse`
+  // ChatGPT/Codex use the separate OpenAI profile (own OAuth audience), not
+  // the default endpoints.
+  const openAiUrl = `${mcpUrl}/openai`
   const httpConfig = JSON.stringify(
     {
       mcpServers: {
-        chatbotx: {
+        mcp: {
           type: "http",
           url: streamableUrl,
         },
@@ -37,10 +40,10 @@ export const buildMcpConnectSnippets = ({
   return {
     streamableUrl,
     sseUrl,
-    claudeCode: `claude mcp add chatbotx -t http -s user "${streamableUrl}"`,
+    claudeCode: `claude mcp add mcp -t http -s user "${streamableUrl}"`,
     claudeDesktop: httpConfig,
     cursor: httpConfig,
-    chatgpt: sseUrl,
+    chatgpt: openAiUrl,
     stdio: `CHATBOTX_API_URL=${builderUrl}/api CHATBOTX_API_KEY=<workspace-token> npx -y chatbotx-mcp`,
   }
 }

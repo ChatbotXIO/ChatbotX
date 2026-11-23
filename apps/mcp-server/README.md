@@ -14,14 +14,15 @@ On startup the server fetches `{CHATBOTX_API_URL}/public-spec.json` and register
 Remote MCP clients should authenticate through OAuth 2.1. The production endpoints are
 `https://app.chatbotx.io/mcp/messages` for Streamable HTTP and
 `https://app.chatbotx.io/mcp/sse` for legacy SSE — the same URL for every account, so it
-works as a Claude or ChatGPT marketplace connector. The user picks the target workspace on
+works as a Claude marketplace connector. ChatGPT and Codex use the separate OpenAI profile
+at `https://app.chatbotx.io/mcp/openai` (see [OpenAI profile](#openai-profile)). The user picks the target workspace on
 the consent screen, and every token the client holds acts on that workspace; to switch,
 disconnect and connect again. Only workspace owners and `superAdmin` members can authorize.
 An explicit `?workspace_id=<id>` (or `x-workspace-id` header) may select a
 workspace only for legacy connections that predate the picker. A different
 workspace than the one consented for a new connection is rejected; disconnect
 and connect again to switch.
-The builder settings block **Settings → Integrations → ChatbotX MCP** provides the exact
+The builder settings block **Settings → Integrations → MCP connector** provides the exact
 connection URL and lets each user revoke their OAuth grants.
 
 Legacy workspace tokens remain supported for stdio and existing connections.
@@ -203,6 +204,28 @@ Operations whose `security` names no workspace-token scheme are not tools at all
 
 `conversations_list` accepts `view: "compact"` to drop ad attribution and thread-control metadata from each conversation's contact inboxes (default `full`); `flows_list` accepts `enableInInbox: true` to return only flows that can be started from the inbox.
 
+## OpenAI profile
+
+A second, fixed profile serves OpenAI clients (ChatGPT, Codex) from the same process.
+
+| | Default profile | OpenAI profile |
+| --- | --- | --- |
+| Internal path | `/messages` | `/openai` |
+| Public path | `/mcp/messages` | `/mcp/openai` |
+| OAuth resource and audience | `<origin>/mcp` | `<origin>/mcp/openai` |
+| Tools | Scope-filtered default set plus `search_tools`, `call_tool`, `get_guide` | 36 API tools plus `get_guide` (37), identical for every token |
+
+The OpenAI tool list is the committed contract `src/profiles/openai-manifest.json`. It is served and executed without the live OpenAPI cache. Regenerate it only as a reviewed change: `pnpm tsx scripts/generate-openai-manifest.ts <public-spec.json>` (the builder test `public-spec-mcp.test.ts` fails when the manifest drifts from the live spec).
+
+Rules enforced on this profile only:
+
+- OAuth bearer tokens only. No environment-key fallback, no API keys, no query or alternate-header tokens. The token audience must be `/mcp/openai`. Failures return 401 (or 503 when verification is unavailable).
+- Sessions bind to the verified issuer, subject, client id and workspace. A different identity or workspace gets 403; session ids never cross profiles.
+- Requests with an `Origin` outside `CHATBOTX_MCP_ALLOWED_ORIGINS` (plus the public URL origin) get 403. GET (SSE), POST, DELETE and OPTIONS are supported.
+- Arguments are validated against the reviewed schema before confirmation or execution. Free-form objects and unknown properties are rejected. `contacts_create` never accepts `gender`; the adapter sends `unknown`.
+- Every response, confirmation preview and error is projected through the reviewed response schema. Raw upstream errors are replaced with fixed messages.
+- Deferred to v2: flow authoring and sending, `sequences_update`, sequence subscription.
+
 ## Prerequisites
 
 - Node.js >= 24
@@ -217,7 +240,7 @@ no workspace token belongs in the client configuration.
 
 **Claude Code:**
 ```bash
-claude mcp add chatbotx -t http -s user \
+claude mcp add mcp -t http -s user \
   "https://app.chatbotx.io/mcp/messages"
 ```
 
@@ -225,7 +248,7 @@ claude mcp add chatbotx -t http -s user \
 ```json
 {
   "mcpServers": {
-    "chatbotx": {
+    "mcp": {
       "type": "http",
       "url": "https://app.chatbotx.io/mcp/messages"
     }
@@ -233,7 +256,7 @@ claude mcp add chatbotx -t http -s user \
 }
 ```
 
-**ChatGPT:** add `https://app.chatbotx.io/mcp/sse`
+**ChatGPT / Codex:** add `https://app.chatbotx.io/mcp/openai`
 as a custom connector. ChatGPT completes OAuth in the browser.
 
 The load balancer must forward `/mcp/*` to the MCP server **without stripping the
@@ -306,21 +329,6 @@ claude mcp add chatbotx \
 }
 ```
 
-### Option D — ChatGPT.com (workspace-token SSE)
-
-ChatGPT.com connects via SSE. The server must be publicly reachable. Because ChatGPT does not support custom request headers, pass the workspace token directly in the URL:
-
-1. Start the server with `CHATBOTX_MCP_TRANSPORT=sse` (or `both`).
-2. In ChatGPT Settings → Connectors → Add custom connector, set the URL:
-   ```
-   https://your-mcp-server.com/sse?workspace_token=<your-token>
-   ```
-   When using this URL in a shell command, always quote it to prevent `?` being interpreted as a glob:
-   ```bash
-   claude mcp add chatbotx -t sse -s user "https://your-mcp-server.com/sse?workspace_token=<your-token>"
-   ```
-3. Set `CHATBOTX_MCP_SERVER_INSTRUCTIONS` so ChatGPT uses tools instead of its training data. Leave it unset unless replacing the full built-in workflow, including OAuth checkpoints.
-
 ## Token resolution order
 
 | Transport | Priority |
@@ -351,6 +359,7 @@ cp .env.example .env
 | `CHATBOTX_MCP_CORS_ORIGIN` | CORS origin allowed to call the SSE/HTTP endpoints | `*` | No |
 | `CHATBOTX_MCP_SERVER_NAME` | Display name sent to AI clients | package name | No |
 | `CHATBOTX_MCP_SERVER_INSTRUCTIONS` | Instructions sent to AI clients on connect (helps ChatGPT know when to call tools) | built-in default | No |
+| `CHATBOTX_MCP_ALLOWED_ORIGINS` | Comma-separated Origins allowed on the OpenAI endpoint. | `https://chatgpt.com,https://chat.openai.com` |
 | `CHATBOTX_MCP_OAUTH_ENABLED` | Enable OAuth 2.1 protected-resource metadata and bearer challenges | `true` | No |
 | `CHATBOTX_MCP_OAUTH_ISSUER` | Authorization server issuer URL | derived from `CHATBOTX_API_URL` | No |
 | `CHATBOTX_MCP_PUBLIC_URL` | Canonical public origin; required in production so metadata advertises the TLS endpoint | derived from request headers | Yes (production) |

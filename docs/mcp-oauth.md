@@ -53,8 +53,8 @@ that metadata and all issued access-token audiences use the single canonical
 `CHATBOTX_MCP_PUBLIC_URL` to the same public origin so bearer challenges
 advertise HTTPS rather than an internal or HTTP proxy URL.
 
-Users can copy the current workspace URL and revoke their account-level OAuth
-grants in **Settings → Integrations → ChatbotX MCP**. The grants page lists
+Users can copy the connection URLs and revoke their account-level OAuth
+grants in **Settings → Integrations → MCP connector**. The grants page lists
 consents, so a client with no live refresh token remains visible until revoked.
 Revoking a client applies to every workspace the user administers, while the
 MCP server's introspection cache can keep an already-issued access JWT usable for at most five minutes.

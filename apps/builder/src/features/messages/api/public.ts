@@ -154,7 +154,13 @@ export const messagesPublicRouter = {
       description:
         "Lists messages on the given conversation, newest-related pagination via `cursor`. Use `conversations.get` first if you only have a contact identifier.",
       tags: ["Messages"],
-      spec: mcpSpec({ visibility: "default" }),
+      spec: mcpSpec({
+        destructiveHint: false,
+        idempotentHint: true,
+        openWorldHint: false,
+        readOnlyHint: true,
+        visibility: "default",
+      }),
     })
     .input(listConversationMessagesPublicRequest)
     .output(listMessagesResponse)

@@ -12114,41 +12114,40 @@
     "noWorkspaces": "Je bent geen beheerder van een werkruimte, dus je kunt deze applicatie niet autoriseren."
   },
   "chatbotxMcp": {
-    "title": "ChatbotX MCP",
-    "workspaceId": "Workspace ID",
-    "streamableUrl": "Streamable HTTP URL",
-    "sseUrl": "Legacy SSE URL",
+    "title": "MCP-connector",
+    "streamableUrl": "Streamable HTTP-URL",
+    "sseUrl": "Verouderde SSE-URL",
     "guide": {
-      "title": "Connect an MCP client",
-      "step1": "Copy the configuration for your MCP client.",
-      "step2": "Paste it into the client.",
-      "step3": "The client opens a browser. Sign in and approve access.",
-      "step4": "Your workspace tools appear after approval.",
-      "ownerOnly": "Only workspace owners and superAdmins can authorize MCP access."
+      "title": "Een MCP-client verbinden",
+      "step1": "Kopieer de configuratie voor je MCP-client.",
+      "step2": "Plak deze in de client.",
+      "step3": "De client opent een browser. Log in en keur de toegang goed.",
+      "step4": "Na goedkeuring verschijnen de tools van je workspace.",
+      "ownerOnly": "Alleen workspace-eigenaren en superAdmins kunnen MCP-toegang autoriseren. Je kiest de workspace in het goedkeuringsscherm."
     },
     "clients": {
       "claudeCode": "Claude Code",
       "claudeDesktop": "Claude Desktop",
       "cursor": "Cursor",
       "chatgpt": "ChatGPT",
-      "stdio": "stdio fallback",
-      "stdioHint": "Use a workspace token for this fallback."
+      "stdio": "stdio-terugval",
+      "stdioHint": "Gebruik voor deze terugval een workspacetoken."
     },
     "grants": {
-      "title": "Authorized applications",
-      "description": "Grants belong to your account and apply to every workspace you administer; revoking disconnects the client everywhere.",
-      "empty": "OAuth grants appear here after you connect an MCP client.",
+      "title": "Geautoriseerde applicaties",
+      "description": "Machtigingen horen bij je account en gelden voor elke workspace die je beheert; intrekken verbreekt de client overal.",
+      "empty": "OAuth-machtigingen verschijnen hier nadat je een MCP-client hebt verbonden.",
       "client": "Client",
       "scopes": "Scopes",
-      "firstAuthorizedAt": "First authorized",
-      "lastRefreshedAt": "Last refreshed",
-      "activeUntil": "Active until",
-      "noActiveToken": "No active token",
-      "revoke": "Revoke",
-      "revokeConfirmTitle": "Revoke application access?",
-      "revokeConfirmDescription": "Revoke access for {clientName}? This disconnects the client everywhere.",
-      "revokedSuccess": "Application access revoked.",
-      "notFound": "OAuth grant no longer exists"
+      "firstAuthorizedAt": "Eerst geautoriseerd",
+      "lastRefreshedAt": "Laatst vernieuwd",
+      "activeUntil": "Actief tot",
+      "noActiveToken": "Geen actief token",
+      "revoke": "Intrekken",
+      "revokeConfirmTitle": "Toegang van de applicatie intrekken?",
+      "revokeConfirmDescription": "Toegang voor {clientName} intrekken? Hiermee wordt de client overal verbroken.",
+      "revokedSuccess": "Toegang van de applicatie ingetrokken.",
+      "notFound": "De OAuth-machtiging bestaat niet meer"
     }
   },
   "connectionStatus": {

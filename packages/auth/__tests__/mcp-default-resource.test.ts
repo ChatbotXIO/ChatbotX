@@ -9,9 +9,9 @@ import { buildMcpPluginOptions, defaultMcpResource } from "../src/mcp-config"
 const RESOURCE = "https://app.example.com/mcp"
 
 describe("buildMcpPluginOptions", () => {
-  it("caches the configured OAuth resource", () => {
+  it("caches the configured OAuth resource and the OpenAI resource", () => {
     expect(buildMcpPluginOptions(RESOURCE).cachedResources).toEqual(
-      new Set([RESOURCE]),
+      new Set([RESOURCE, `${RESOURCE}/openai`]),
     )
   })
 })

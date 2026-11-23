@@ -144,6 +144,10 @@ export const getMcpResourceUrl = (): string => {
   return resource
 }
 
+/** Fixed OAuth resource and token audience for the OpenAI MCP profile. */
+export const getMcpOpenAiResourceUrl = (): string =>
+  `${getMcpResourceUrl()}/openai`
+
 /** Whether self-service account creation is disabled. */
 export const isSignUpDisabled = (): boolean => env.AUTH_DISABLE_SIGNUP
 

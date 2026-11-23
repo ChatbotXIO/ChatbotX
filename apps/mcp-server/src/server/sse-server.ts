@@ -17,6 +17,13 @@ import {
 } from "../oauth"
 import { introspectToken } from "../token-introspection"
 import type { CreateMcpServerOptions } from "./create-mcp-server"
+import {
+  PayloadTooLargeError,
+  parseRequestBody,
+  writeJsonRpcError,
+  writePlainText,
+} from "./http-utils"
+import { handleOpenAiRequest, OPENAI_INTERNAL_PATH } from "./openai-transport"
 
 /**
  * Mutable holder for a session's current credentials. Every request may
@@ -45,10 +52,6 @@ type ResolvedSession =
 
 const sseSessions = new Map<string, SseSession>()
 const legacySseSessions = new Map<string, LegacySseSession>()
-
-const MAX_BODY_BYTES = 1024 * 1024
-
-class PayloadTooLargeError extends Error {}
 
 const resolveSession = (sessionId: string): ResolvedSession | undefined => {
   const streamableSession = sseSessions.get(sessionId)
@@ -135,26 +138,6 @@ const enableCors = (res: ServerResponse): void => {
   res.setHeader("Access-Control-Expose-Headers", "WWW-Authenticate")
 }
 
-const writeJsonRpcError = (
-  res: ServerResponse,
-  statusCode: number,
-  message: string,
-  wwwAuthenticate?: string,
-): void => {
-  if (wwwAuthenticate) {
-    res.setHeader("WWW-Authenticate", wwwAuthenticate)
-  }
-  res.statusCode = statusCode
-  res.setHeader("Content-Type", "application/json")
-  res.end(
-    JSON.stringify({
-      jsonrpc: "2.0",
-      id: null,
-      error: { code: -32_000, message },
-    }),
-  )
-}
-
 const authorizeRequest = async (
   req: IncomingMessage,
   res: ServerResponse,
@@ -191,37 +174,6 @@ const authorizeRequest = async (
   return true
 }
 
-const parseRequestBody = async (req: IncomingMessage): Promise<unknown> => {
-  const contentLength = Number(
-    resolveHeaderValue(req.headers["content-length"]),
-  )
-  if (Number.isFinite(contentLength) && contentLength > MAX_BODY_BYTES) {
-    throw new PayloadTooLargeError()
-  }
-
-  const chunks: Buffer[] = []
-  let bodyBytes = 0
-  for await (const chunk of req) {
-    const buffer = typeof chunk === "string" ? Buffer.from(chunk) : chunk
-    bodyBytes += buffer.byteLength
-    if (bodyBytes > MAX_BODY_BYTES) {
-      throw new PayloadTooLargeError()
-    }
-    chunks.push(buffer)
-  }
-
-  if (chunks.length === 0) {
-    return
-  }
-
-  const rawBody = Buffer.concat(chunks).toString("utf8").trim()
-  if (rawBody.length === 0) {
-    return
-  }
-
-  return JSON.parse(rawBody) as unknown
-}
-
 const getSessionId = (req: IncomingMessage): string | null => {
   const url = new URL(req.url ?? "", "http://localhost")
   const headerSessionId = req.headers["mcp-session-id"]
@@ -234,16 +186,6 @@ const getSessionId = (req: IncomingMessage): string | null => {
 
 const setSessionIdHeader = (req: IncomingMessage, sessionId: string): void => {
   req.headers["mcp-session-id"] = sessionId
-}
-
-const writePlainText = (
-  res: ServerResponse,
-  statusCode: number,
-  message: string,
-): void => {
-  res.statusCode = statusCode
-  res.setHeader("Content-Type", "text/plain; charset=utf-8")
-  res.end(message)
 }
 
 const handleSseRequest = async (
@@ -401,8 +343,26 @@ export const createRequestListener =
   (createMcpServer: CreateMcpServerFn) =>
   async (req: IncomingMessage, res: ServerResponse): Promise<void> => {
     try {
-      enableCors(res)
       const url = new URL(req.url ?? "", "http://localhost")
+      // OpenAI profile: own CORS, Origin check, auth and session store.
+      if (url.pathname === OPENAI_INTERNAL_PATH) {
+        await handleOpenAiRequest(req, res, createMcpServer)
+        return
+      }
+      enableCors(res)
+      if (
+        url.pathname.startsWith(`${protectedResourcePrefix}/`) &&
+        url.pathname.endsWith(OPENAI_INTERNAL_PATH)
+      ) {
+        res.statusCode = 200
+        res.setHeader("Access-Control-Allow-Origin", "*")
+        res.setHeader("Cache-Control", "no-store")
+        res.setHeader("Content-Type", "application/json")
+        res.end(
+          JSON.stringify(buildProtectedResourceMetadata(req, url.pathname)),
+        )
+        return
+      }
       if (
         env.CHATBOTX_MCP_OAUTH_ENABLED === "true" &&
         (url.pathname === protectedResourcePrefix ||
@@ -462,9 +422,27 @@ export const createRequestListener =
     }
   }
 
+/** The fixed OpenAI paths must not collide with configurable legacy paths. */
+export const assertNoOpenAiPathCollision = (): void => {
+  for (const path of [
+    env.CHATBOTX_MCP_SSE_PATH,
+    env.CHATBOTX_MCP_MESSAGES_PATH,
+  ]) {
+    if (
+      path === OPENAI_INTERNAL_PATH ||
+      path.startsWith(protectedResourcePrefix)
+    ) {
+      throw new Error(
+        `MCP transport path "${path}" collides with the fixed OpenAI path or OAuth metadata routes`,
+      )
+    }
+  }
+}
+
 export const runSseServer = async (
   createMcpServer: CreateMcpServerFn,
 ): Promise<void> => {
+  assertNoOpenAiPathCollision()
   const httpServer = createServer(createRequestListener(createMcpServer))
   const { promise: listening, resolve } = Promise.withResolvers<void>()
   httpServer.listen(env.CHATBOTX_MCP_PORT, env.CHATBOTX_MCP_HOST, resolve)

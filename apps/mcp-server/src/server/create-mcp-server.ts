@@ -14,6 +14,13 @@ import {
   getVisibleTools,
   refreshOpenApiSpecIfStale,
 } from "../openapi-loader"
+import {
+  executeOpenAiTool,
+  handleOpenAiGuide,
+  listOpenAiTools,
+  OPENAI_PROFILE_INSTRUCTIONS,
+  openAiGuideResources,
+} from "../profiles/openai"
 import { introspectToken } from "../token-introspection"
 import {
   errorResult,
@@ -27,7 +34,11 @@ import {
   META_TOOLS,
 } from "./meta-tools"
 
+export type McpProfile = "default" | "openai"
+
 export type CreateMcpServerOptions = {
+  /** Fixed tool profile. Selected by the transport path, never by arguments. */
+  profile?: McpProfile
   getCredentials?: () => RequestCredentials | undefined
 }
 
@@ -44,17 +55,60 @@ const NO_CREDENTIAL_MESSAGE =
 export const createMcpServer = (
   options?: CreateMcpServerOptions,
 ): McpServer => {
+  const isOpenAi = options?.profile === "openai"
   const mcpServer = new McpServer(
     {
       name: env.CHATBOTX_MCP_SERVER_NAME ?? packageName,
       version: packageVersion,
     },
-    { instructions: env.CHATBOTX_MCP_SERVER_INSTRUCTIONS },
+    {
+      instructions: isOpenAi
+        ? OPENAI_PROFILE_INSTRUCTIONS
+        : env.CHATBOTX_MCP_SERVER_INSTRUCTIONS,
+    },
   )
 
+  // The OpenAI profile never falls back to the environment API key.
   const getCredentials = (): RequestCredentials | undefined =>
     options?.getCredentials?.() ??
-    (env.CHATBOTX_API_KEY ? { token: env.CHATBOTX_API_KEY } : undefined)
+    (!isOpenAi && env.CHATBOTX_API_KEY
+      ? { token: env.CHATBOTX_API_KEY }
+      : undefined)
+
+  if (isOpenAi) {
+    for (const guide of openAiGuideResources()) {
+      mcpServer.registerResource(
+        `guide-${guide.name}`,
+        guide.uri,
+        { description: guide.description, mimeType: "text/markdown" },
+        async (uri) => ({
+          contents: [
+            { mimeType: "text/markdown", text: guide.content, uri: uri.href },
+          ],
+        }),
+      )
+    }
+    mcpServer.server.registerCapabilities({ tools: {} })
+    mcpServer.server.setRequestHandler(ListToolsRequestSchema, async () => ({
+      tools: listOpenAiTools(),
+    }))
+    mcpServer.server.setRequestHandler(
+      CallToolRequestSchema,
+      async (request) => {
+        const { name, arguments: args } = request.params
+        const toolArgs = (args ?? {}) as Record<string, unknown>
+        const credentials = getCredentials()
+        if (!credentials) {
+          return errorResult(NO_CREDENTIAL_MESSAGE)
+        }
+        if (name === "get_guide") {
+          return handleOpenAiGuide(toolArgs)
+        }
+        return await executeOpenAiTool(name, toolArgs, credentials)
+      },
+    )
+    return mcpServer
+  }
 
   for (const name of guideNames) {
     const guide = getGuide(name)

@@ -1,6 +1,5 @@
 "use client"
 
-import { Badge } from "@chatbotx.io/ui/components/ui/badge"
 import { Button } from "@chatbotx.io/ui/components/ui/button"
 import { Textarea } from "@chatbotx.io/ui/components/ui/textarea"
 import { CopyIcon } from "lucide-react"
@@ -72,13 +71,7 @@ export const McpConnectGuide = ({
         <p className="text-muted-foreground text-sm">{t("guide.ownerOnly")}</p>
       </div>
 
-      <dl className="grid gap-3 text-sm md:grid-cols-3">
-        <div className="space-y-1">
-          <dt className="text-muted-foreground">{t("workspaceId")}</dt>
-          <dd>
-            <Badge variant="secondary">{workspaceId}</Badge>
-          </dd>
-        </div>
+      <dl className="grid gap-3 text-sm md:grid-cols-2">
         <div className="space-y-1">
           <dt className="text-muted-foreground">{t("streamableUrl")}</dt>
           <dd className="break-all font-mono text-xs">

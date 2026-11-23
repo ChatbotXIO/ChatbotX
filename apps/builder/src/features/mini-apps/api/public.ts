@@ -57,7 +57,13 @@ export const miniAppsPublicRouter = {
       description:
         "Lists the workspace's Mini Apps (WhatsApp Flow forms) with their public link. Use `miniApps.get` for the Flow JSON. Returns `{ data, pageCount }`; page with `page`/`perPage`.",
       tags,
-      spec: mcpSpec({ visibility: "default" }),
+      spec: mcpSpec({
+        destructiveHint: false,
+        idempotentHint: true,
+        openWorldHint: false,
+        readOnlyHint: true,
+        visibility: "default",
+      }),
     })
     .input(listMiniAppsPublicRequest)
     .output(listMiniAppsPublicResponse)
@@ -123,7 +129,13 @@ export const miniAppsPublicRouter = {
         "Creates a Mini App from WhatsApp Flow JSON, or from a one-screen starter when `flowJson` is omitted. It is saved even with validation issues (returned in `validation`) so it can be fixed later; its `publicUrl` works on any channel. Use `miniApps.validate` first to check the JSON.",
       successStatus: 201,
       tags,
-      spec: mcpSpec({ visibility: "default" }),
+      spec: mcpSpec({
+        destructiveHint: false,
+        idempotentHint: false,
+        openWorldHint: false,
+        readOnlyHint: false,
+        visibility: "default",
+      }),
     })
     .input(createMiniAppPublicRequest)
     .output(miniAppPublicResource)

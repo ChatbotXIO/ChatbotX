@@ -27,6 +27,11 @@ export const env = createEnv({
     CHATBOTX_MCP_SSE_PATH: z.string().default("/sse"),
     CHATBOTX_MCP_MESSAGES_PATH: z.string().default("/messages"),
     CHATBOTX_MCP_CORS_ORIGIN: z.string().default("*"),
+    // Comma-separated Origins allowed on the OpenAI endpoint (plus the public
+    // URL origin). A request without an Origin header is allowed.
+    CHATBOTX_MCP_ALLOWED_ORIGINS: z
+      .string()
+      .default("https://chatgpt.com,https://chat.openai.com"),
     CHATBOTX_MCP_OAUTH_ENABLED: z.enum(["true", "false"]).default("true"),
     CHATBOTX_MCP_OAUTH_ISSUER: z.url().optional(),
     CHATBOTX_MCP_PUBLIC_URL: z.url().optional(),

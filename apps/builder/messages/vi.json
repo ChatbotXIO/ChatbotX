@@ -12130,41 +12130,40 @@
     "noWorkspaces": "Bạn không phải quản trị viên của workspace nào nên không thể cấp quyền cho ứng dụng này."
   },
   "chatbotxMcp": {
-    "title": "ChatbotX MCP",
-    "workspaceId": "Workspace ID",
-    "streamableUrl": "Streamable HTTP URL",
-    "sseUrl": "Legacy SSE URL",
+    "title": "MCP connector",
+    "streamableUrl": "URL Streamable HTTP",
+    "sseUrl": "URL SSE cũ",
     "guide": {
-      "title": "Connect an MCP client",
-      "step1": "Copy the configuration for your MCP client.",
-      "step2": "Paste it into the client.",
-      "step3": "The client opens a browser. Sign in and approve access.",
-      "step4": "Your workspace tools appear after approval.",
-      "ownerOnly": "Only workspace owners and superAdmins can authorize MCP access."
+      "title": "Kết nối một MCP client",
+      "step1": "Sao chép cấu hình cho MCP client của bạn.",
+      "step2": "Dán vào client.",
+      "step3": "Client sẽ mở trình duyệt. Đăng nhập và phê duyệt quyền truy cập.",
+      "step4": "Công cụ của workspace sẽ xuất hiện sau khi được phê duyệt.",
+      "ownerOnly": "Chỉ chủ sở hữu workspace và superAdmin mới có thể cấp quyền truy cập MCP. Bạn chọn workspace ở màn hình phê duyệt."
     },
     "clients": {
       "claudeCode": "Claude Code",
       "claudeDesktop": "Claude Desktop",
       "cursor": "Cursor",
       "chatgpt": "ChatGPT",
-      "stdio": "stdio fallback",
-      "stdioHint": "Use a workspace token for this fallback."
+      "stdio": "dự phòng stdio",
+      "stdioHint": "Dùng workspace token cho phương án dự phòng này."
     },
     "grants": {
-      "title": "Authorized applications",
-      "description": "Grants belong to your account and apply to every workspace you administer; revoking disconnects the client everywhere.",
-      "empty": "OAuth grants appear here after you connect an MCP client.",
+      "title": "Ứng dụng đã được cấp quyền",
+      "description": "Quyền truy cập thuộc về tài khoản của bạn và áp dụng cho mọi workspace bạn quản trị; thu hồi sẽ ngắt kết nối client ở mọi nơi.",
+      "empty": "Các quyền OAuth sẽ hiển thị ở đây sau khi bạn kết nối một MCP client.",
       "client": "Client",
-      "scopes": "Scopes",
-      "firstAuthorizedAt": "First authorized",
-      "lastRefreshedAt": "Last refreshed",
-      "activeUntil": "Active until",
-      "noActiveToken": "No active token",
-      "revoke": "Revoke",
-      "revokeConfirmTitle": "Revoke application access?",
-      "revokeConfirmDescription": "Revoke access for {clientName}? This disconnects the client everywhere.",
-      "revokedSuccess": "Application access revoked.",
-      "notFound": "OAuth grant no longer exists"
+      "scopes": "Phạm vi",
+      "firstAuthorizedAt": "Lần cấp quyền đầu tiên",
+      "lastRefreshedAt": "Lần làm mới gần nhất",
+      "activeUntil": "Hoạt động đến",
+      "noActiveToken": "Không có token đang hoạt động",
+      "revoke": "Thu hồi",
+      "revokeConfirmTitle": "Thu hồi quyền truy cập của ứng dụng?",
+      "revokeConfirmDescription": "Thu hồi quyền truy cập của {clientName}? Thao tác này sẽ ngắt kết nối client ở mọi nơi.",
+      "revokedSuccess": "Đã thu hồi quyền truy cập của ứng dụng.",
+      "notFound": "Quyền OAuth này không còn tồn tại"
     }
   },
   "connectionStatus": {

@@ -12114,41 +12114,40 @@
     "noWorkspaces": "Du er ikke administrator i noget arbejdsområde og kan derfor ikke godkende denne applikation."
   },
   "chatbotxMcp": {
-    "title": "ChatbotX MCP",
-    "workspaceId": "Workspace ID",
-    "streamableUrl": "Streamable HTTP URL",
-    "sseUrl": "Legacy SSE URL",
+    "title": "MCP-connector",
+    "streamableUrl": "Streamable HTTP-URL",
+    "sseUrl": "Ældre SSE-URL",
     "guide": {
-      "title": "Connect an MCP client",
-      "step1": "Copy the configuration for your MCP client.",
-      "step2": "Paste it into the client.",
-      "step3": "The client opens a browser. Sign in and approve access.",
-      "step4": "Your workspace tools appear after approval.",
-      "ownerOnly": "Only workspace owners and superAdmins can authorize MCP access."
+      "title": "Tilslut en MCP-klient",
+      "step1": "Kopiér konfigurationen til din MCP-klient.",
+      "step2": "Indsæt den i klienten.",
+      "step3": "Klienten åbner en browser. Log ind og godkend adgangen.",
+      "step4": "Dit workspaces værktøjer vises efter godkendelsen.",
+      "ownerOnly": "Kun workspace-ejere og superAdmins kan godkende MCP-adgang. Du vælger workspace på godkendelsesskærmen."
     },
     "clients": {
       "claudeCode": "Claude Code",
       "claudeDesktop": "Claude Desktop",
       "cursor": "Cursor",
       "chatgpt": "ChatGPT",
-      "stdio": "stdio fallback",
-      "stdioHint": "Use a workspace token for this fallback."
+      "stdio": "stdio-reserve",
+      "stdioHint": "Brug et workspace-token til denne reserve."
     },
     "grants": {
-      "title": "Authorized applications",
-      "description": "Grants belong to your account and apply to every workspace you administer; revoking disconnects the client everywhere.",
-      "empty": "OAuth grants appear here after you connect an MCP client.",
-      "client": "Client",
-      "scopes": "Scopes",
-      "firstAuthorizedAt": "First authorized",
-      "lastRefreshedAt": "Last refreshed",
-      "activeUntil": "Active until",
-      "noActiveToken": "No active token",
-      "revoke": "Revoke",
-      "revokeConfirmTitle": "Revoke application access?",
-      "revokeConfirmDescription": "Revoke access for {clientName}? This disconnects the client everywhere.",
-      "revokedSuccess": "Application access revoked.",
-      "notFound": "OAuth grant no longer exists"
+      "title": "Godkendte applikationer",
+      "description": "Tilladelser tilhører din konto og gælder for alle workspaces, du administrerer; tilbagekaldelse afbryder klienten overalt.",
+      "empty": "OAuth-tilladelser vises her, når du har tilsluttet en MCP-klient.",
+      "client": "Klient",
+      "scopes": "Omfang",
+      "firstAuthorizedAt": "Først godkendt",
+      "lastRefreshedAt": "Sidst fornyet",
+      "activeUntil": "Aktiv indtil",
+      "noActiveToken": "Intet aktivt token",
+      "revoke": "Tilbagekald",
+      "revokeConfirmTitle": "Tilbagekald applikationens adgang?",
+      "revokeConfirmDescription": "Tilbagekald adgangen for {clientName}? Det afbryder klienten overalt.",
+      "revokedSuccess": "Applikationens adgang er tilbagekaldt.",
+      "notFound": "OAuth-tilladelsen findes ikke længere"
     }
   },
   "connectionStatus": {

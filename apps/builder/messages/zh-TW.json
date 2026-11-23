@@ -12114,41 +12114,40 @@
     "noWorkspaces": "你不是任何工作區的管理員，因此無法授權此應用程式。"
   },
   "chatbotxMcp": {
-    "title": "ChatbotX MCP",
-    "workspaceId": "Workspace ID",
+    "title": "MCP 連接器",
     "streamableUrl": "Streamable HTTP URL",
-    "sseUrl": "Legacy SSE URL",
+    "sseUrl": "舊版 SSE URL",
     "guide": {
-      "title": "Connect an MCP client",
-      "step1": "Copy the configuration for your MCP client.",
-      "step2": "Paste it into the client.",
-      "step3": "The client opens a browser. Sign in and approve access.",
-      "step4": "Your workspace tools appear after approval.",
-      "ownerOnly": "Only workspace owners and superAdmins can authorize MCP access."
+      "title": "連接 MCP 用戶端",
+      "step1": "複製適用於你的 MCP 用戶端的設定。",
+      "step2": "貼到用戶端中。",
+      "step3": "用戶端會開啟瀏覽器。請登入並核准存取。",
+      "step4": "核准後，你的工作區工具會顯示出來。",
+      "ownerOnly": "只有工作區擁有者和 superAdmin 可以授權 MCP 存取。你可以在核准頁面選擇工作區。"
     },
     "clients": {
       "claudeCode": "Claude Code",
       "claudeDesktop": "Claude Desktop",
       "cursor": "Cursor",
       "chatgpt": "ChatGPT",
-      "stdio": "stdio fallback",
-      "stdioHint": "Use a workspace token for this fallback."
+      "stdio": "stdio 備援方案",
+      "stdioHint": "此備援方案請使用工作區權杖。"
     },
     "grants": {
-      "title": "Authorized applications",
-      "description": "Grants belong to your account and apply to every workspace you administer; revoking disconnects the client everywhere.",
-      "empty": "OAuth grants appear here after you connect an MCP client.",
-      "client": "Client",
-      "scopes": "Scopes",
-      "firstAuthorizedAt": "First authorized",
-      "lastRefreshedAt": "Last refreshed",
-      "activeUntil": "Active until",
-      "noActiveToken": "No active token",
-      "revoke": "Revoke",
-      "revokeConfirmTitle": "Revoke application access?",
-      "revokeConfirmDescription": "Revoke access for {clientName}? This disconnects the client everywhere.",
-      "revokedSuccess": "Application access revoked.",
-      "notFound": "OAuth grant no longer exists"
+      "title": "已授權的應用程式",
+      "description": "授權屬於你的帳號，適用於你管理的所有工作區；撤銷後用戶端會在所有位置中斷連線。",
+      "empty": "連接 MCP 用戶端後，OAuth 授權會顯示在這裡。",
+      "client": "用戶端",
+      "scopes": "權限範圍",
+      "firstAuthorizedAt": "首次授權時間",
+      "lastRefreshedAt": "上次重新整理時間",
+      "activeUntil": "有效期限至",
+      "noActiveToken": "沒有有效權杖",
+      "revoke": "撤銷",
+      "revokeConfirmTitle": "撤銷應用程式的存取權？",
+      "revokeConfirmDescription": "撤銷 {clientName} 的存取權？這會讓該用戶端在所有位置中斷連線。",
+      "revokedSuccess": "已撤銷應用程式的存取權。",
+      "notFound": "該 OAuth 授權已不存在"
     }
   },
   "connectionStatus": {

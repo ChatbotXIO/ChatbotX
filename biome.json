@@ -23,6 +23,7 @@
       "!**/packages/ui/src/components/carousel-snap.tsx",
       "!**/packages/ui/src/types/data-table.ts",
       "!**/dist",
+      "!**/apps/mcp-server/src/profiles/openai-manifest.json",
       "!**/coverage",
       "!**/.github/assets/readme",
       "!**/apps/builder/public/brand",

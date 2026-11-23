@@ -12130,41 +12130,40 @@
     "noWorkspaces": "Heç bir iş sahəsinin admini deyilsiniz, ona görə bu tətbiqə icazə verə bilməzsiniz."
   },
   "chatbotxMcp": {
-    "title": "ChatbotX MCP",
-    "workspaceId": "Workspace ID",
+    "title": "MCP bağlayıcısı",
     "streamableUrl": "Streamable HTTP URL",
-    "sseUrl": "Legacy SSE URL",
+    "sseUrl": "Köhnə SSE URL",
     "guide": {
-      "title": "Connect an MCP client",
-      "step1": "Copy the configuration for your MCP client.",
-      "step2": "Paste it into the client.",
-      "step3": "The client opens a browser. Sign in and approve access.",
-      "step4": "Your workspace tools appear after approval.",
-      "ownerOnly": "Only workspace owners and superAdmins can authorize MCP access."
+      "title": "MCP müştərisini qoşun",
+      "step1": "MCP müştəriniz üçün konfiqurasiyanı kopyalayın.",
+      "step2": "Müştəriyə yapışdırın.",
+      "step3": "Müştəri brauzer açır. Daxil olun və girişi təsdiqləyin.",
+      "step4": "Təsdiqdən sonra iş sahənizin alətləri görünür.",
+      "ownerOnly": "MCP girişini yalnız iş sahəsinin sahibləri və superAdmin-lər icazələndirə bilər. İş sahəsini təsdiq ekranında seçirsiniz."
     },
     "clients": {
       "claudeCode": "Claude Code",
       "claudeDesktop": "Claude Desktop",
       "cursor": "Cursor",
       "chatgpt": "ChatGPT",
-      "stdio": "stdio fallback",
-      "stdioHint": "Use a workspace token for this fallback."
+      "stdio": "stdio ehtiyat variantı",
+      "stdioHint": "Bu ehtiyat variant üçün iş sahəsi tokenindən istifadə edin."
     },
     "grants": {
-      "title": "Authorized applications",
-      "description": "Grants belong to your account and apply to every workspace you administer; revoking disconnects the client everywhere.",
-      "empty": "OAuth grants appear here after you connect an MCP client.",
-      "client": "Client",
-      "scopes": "Scopes",
-      "firstAuthorizedAt": "First authorized",
-      "lastRefreshedAt": "Last refreshed",
-      "activeUntil": "Active until",
-      "noActiveToken": "No active token",
-      "revoke": "Revoke",
-      "revokeConfirmTitle": "Revoke application access?",
-      "revokeConfirmDescription": "Revoke access for {clientName}? This disconnects the client everywhere.",
-      "revokedSuccess": "Application access revoked.",
-      "notFound": "OAuth grant no longer exists"
+      "title": "İcazə verilmiş tətbiqlər",
+      "description": "İcazələr hesabınıza aiddir və idarə etdiyiniz bütün iş sahələrinə şamil edilir; ləğv etmək müştərini hər yerdə əlaqəsiz edir.",
+      "empty": "MCP müştərisini qoşduqdan sonra OAuth icazələri burada görünür.",
+      "client": "Müştəri",
+      "scopes": "Əhatə dairələri",
+      "firstAuthorizedAt": "İlk dəfə icazə verilib",
+      "lastRefreshedAt": "Son yenilənmə",
+      "activeUntil": "Aktivdir (son tarix)",
+      "noActiveToken": "Aktiv token yoxdur",
+      "revoke": "Ləğv et",
+      "revokeConfirmTitle": "Tətbiqin girişi ləğv edilsin?",
+      "revokeConfirmDescription": "{clientName} üçün giriş ləğv edilsin? Bu, müştərini hər yerdə əlaqəsiz edəcək.",
+      "revokedSuccess": "Tətbiqin girişi ləğv edildi.",
+      "notFound": "OAuth icazəsi artıq mövcud deyil"
     }
   },
   "connectionStatus": {

@@ -46,7 +46,13 @@ export const aiFilesPublicRouter = {
       description:
         "Use this to find AI knowledge-base files before selecting one with `aiFiles.get` or creating another with `aiFiles.create`. Returns the uploaded files available in this workspace.",
       tags: ["AI Files"],
-      spec: mcpSpec({ visibility: "default" }),
+      spec: mcpSpec({
+        destructiveHint: false,
+        idempotentHint: true,
+        openWorldHint: false,
+        readOnlyHint: true,
+        visibility: "default",
+      }),
     })
     .input(publicListRequest)
     .output(publicListResponse(publicAIFileResource))

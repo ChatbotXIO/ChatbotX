@@ -12114,41 +12114,40 @@
     "noWorkspaces": "Du är inte administratör för någon arbetsyta och kan därför inte auktorisera den här applikationen."
   },
   "chatbotxMcp": {
-    "title": "ChatbotX MCP",
-    "workspaceId": "Workspace ID",
-    "streamableUrl": "Streamable HTTP URL",
-    "sseUrl": "Legacy SSE URL",
+    "title": "MCP-koppling",
+    "streamableUrl": "Streamable HTTP-URL",
+    "sseUrl": "Äldre SSE-URL",
     "guide": {
-      "title": "Connect an MCP client",
-      "step1": "Copy the configuration for your MCP client.",
-      "step2": "Paste it into the client.",
-      "step3": "The client opens a browser. Sign in and approve access.",
-      "step4": "Your workspace tools appear after approval.",
-      "ownerOnly": "Only workspace owners and superAdmins can authorize MCP access."
+      "title": "Anslut en MCP-klient",
+      "step1": "Kopiera konfigurationen för din MCP-klient.",
+      "step2": "Klistra in den i klienten.",
+      "step3": "Klienten öppnar en webbläsare. Logga in och godkänn åtkomsten.",
+      "step4": "Din arbetsytas verktyg visas efter godkännandet.",
+      "ownerOnly": "Endast arbetsytans ägare och superAdmins kan auktorisera MCP-åtkomst. Du väljer arbetsyta på godkännandesidan."
     },
     "clients": {
       "claudeCode": "Claude Code",
       "claudeDesktop": "Claude Desktop",
       "cursor": "Cursor",
       "chatgpt": "ChatGPT",
-      "stdio": "stdio fallback",
-      "stdioHint": "Use a workspace token for this fallback."
+      "stdio": "stdio-reserv",
+      "stdioHint": "Använd en arbetsytetoken för den här reserven."
     },
     "grants": {
-      "title": "Authorized applications",
-      "description": "Grants belong to your account and apply to every workspace you administer; revoking disconnects the client everywhere.",
-      "empty": "OAuth grants appear here after you connect an MCP client.",
-      "client": "Client",
-      "scopes": "Scopes",
-      "firstAuthorizedAt": "First authorized",
-      "lastRefreshedAt": "Last refreshed",
-      "activeUntil": "Active until",
-      "noActiveToken": "No active token",
-      "revoke": "Revoke",
-      "revokeConfirmTitle": "Revoke application access?",
-      "revokeConfirmDescription": "Revoke access for {clientName}? This disconnects the client everywhere.",
-      "revokedSuccess": "Application access revoked.",
-      "notFound": "OAuth grant no longer exists"
+      "title": "Auktoriserade program",
+      "description": "Behörigheter tillhör ditt konto och gäller alla arbetsytor du administrerar; återkallelse kopplar bort klienten överallt.",
+      "empty": "OAuth-behörigheter visas här när du har anslutit en MCP-klient.",
+      "client": "Klient",
+      "scopes": "Omfång",
+      "firstAuthorizedAt": "Först auktoriserad",
+      "lastRefreshedAt": "Senast förnyad",
+      "activeUntil": "Aktiv till",
+      "noActiveToken": "Ingen aktiv token",
+      "revoke": "Återkalla",
+      "revokeConfirmTitle": "Återkalla programmets åtkomst?",
+      "revokeConfirmDescription": "Återkalla åtkomsten för {clientName}? Det kopplar bort klienten överallt.",
+      "revokedSuccess": "Programmets åtkomst har återkallats.",
+      "notFound": "OAuth-behörigheten finns inte längre"
     }
   },
   "connectionStatus": {

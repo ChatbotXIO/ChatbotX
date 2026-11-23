@@ -23,6 +23,17 @@ const tokenPublicResponse = z.object({
     .array(workspaceApiTokenScopes)
     .nullable()
     .describe("null means unrestricted — every scope."),
+  principal: z
+    .object({
+      credentialType: z.enum(["oauth", "workspace_token", "mobile"]),
+      audience: z.string().optional(),
+      clientId: z.string().optional(),
+      issuer: z.string().optional(),
+      subject: z.string().optional(),
+    })
+    .describe(
+      "Verified identity of the caller, for transport-level binding. Not part of the OpenAI tool projection.",
+    ),
 })
 
 export const tokenPublicRouter = {
@@ -34,7 +45,14 @@ export const tokenPublicRouter = {
       description:
         "Reports the calling token's workspace id, permission, and scopes, including whether `scopes: null` grants unrestricted access. Call `capabilities.get` to discover useful resources before using the token with another operation.",
       tags: ["Capabilities"],
-      spec: mcpSpec({ visibility: "default", alwaysVisible: true }),
+      spec: mcpSpec({
+        alwaysVisible: true,
+        destructiveHint: false,
+        idempotentHint: true,
+        openWorldHint: false,
+        readOnlyHint: true,
+        visibility: "default",
+      }),
     })
     .input(z.object({}))
     .output(tokenPublicResponse)
@@ -45,10 +63,18 @@ export const tokenPublicRouter = {
       // `workspaceTokenAuthMidddleware` first (see the identical note on
       // `requireTokenScope` in `@/orpc`).
       const apiToken = context.apiToken as RequestApiToken
+      const oauth = context.oauthPrincipal
       return {
         workspaceId: context.workspace.id,
         permission: apiToken.permission as WorkspaceApiTokenPermission,
         scopes: apiToken.scopes,
+        principal: oauth
+          ? { credentialType: "oauth" as const, ...oauth }
+          : {
+              credentialType: context.mobileDeviceId
+                ? ("mobile" as const)
+                : ("workspace_token" as const),
+            },
       }
     }),
 }

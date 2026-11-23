@@ -12114,41 +12114,40 @@
     "noWorkspaces": "Não é administrador de nenhum workspace, por isso não pode autorizar esta aplicação."
   },
   "chatbotxMcp": {
-    "title": "ChatbotX MCP",
-    "workspaceId": "Workspace ID",
-    "streamableUrl": "Streamable HTTP URL",
-    "sseUrl": "Legacy SSE URL",
+    "title": "Conector MCP",
+    "streamableUrl": "URL do Streamable HTTP",
+    "sseUrl": "URL do SSE legado",
     "guide": {
-      "title": "Connect an MCP client",
-      "step1": "Copy the configuration for your MCP client.",
-      "step2": "Paste it into the client.",
-      "step3": "The client opens a browser. Sign in and approve access.",
-      "step4": "Your workspace tools appear after approval.",
-      "ownerOnly": "Only workspace owners and superAdmins can authorize MCP access."
+      "title": "Ligar um cliente MCP",
+      "step1": "Copie a configuração do seu cliente MCP.",
+      "step2": "Cole-a no cliente.",
+      "step3": "O cliente abre um navegador. Inicie sessão e aprove o acesso.",
+      "step4": "As ferramentas do seu workspace aparecem após a aprovação.",
+      "ownerOnly": "Apenas os proprietários do workspace e os superAdmins podem autorizar o acesso MCP. Escolhe o workspace no ecrã de aprovação."
     },
     "clients": {
       "claudeCode": "Claude Code",
       "claudeDesktop": "Claude Desktop",
       "cursor": "Cursor",
       "chatgpt": "ChatGPT",
-      "stdio": "stdio fallback",
-      "stdioHint": "Use a workspace token for this fallback."
+      "stdio": "alternativa stdio",
+      "stdioHint": "Utilize um token de workspace para esta alternativa."
     },
     "grants": {
-      "title": "Authorized applications",
-      "description": "Grants belong to your account and apply to every workspace you administer; revoking disconnects the client everywhere.",
-      "empty": "OAuth grants appear here after you connect an MCP client.",
-      "client": "Client",
-      "scopes": "Scopes",
-      "firstAuthorizedAt": "First authorized",
-      "lastRefreshedAt": "Last refreshed",
-      "activeUntil": "Active until",
-      "noActiveToken": "No active token",
-      "revoke": "Revoke",
-      "revokeConfirmTitle": "Revoke application access?",
-      "revokeConfirmDescription": "Revoke access for {clientName}? This disconnects the client everywhere.",
-      "revokedSuccess": "Application access revoked.",
-      "notFound": "OAuth grant no longer exists"
+      "title": "Aplicações autorizadas",
+      "description": "As autorizações pertencem à sua conta e aplicam-se a todos os workspaces que administra; revogar desliga o cliente em todo o lado.",
+      "empty": "As autorizações OAuth aparecem aqui depois de ligar um cliente MCP.",
+      "client": "Cliente",
+      "scopes": "Âmbitos",
+      "firstAuthorizedAt": "Primeira autorização",
+      "lastRefreshedAt": "Última renovação",
+      "activeUntil": "Ativo até",
+      "noActiveToken": "Sem token ativo",
+      "revoke": "Revogar",
+      "revokeConfirmTitle": "Revogar o acesso da aplicação?",
+      "revokeConfirmDescription": "Revogar o acesso de {clientName}? Isto desliga o cliente em todo o lado.",
+      "revokedSuccess": "Acesso da aplicação revogado.",
+      "notFound": "A autorização OAuth já não existe"
     }
   },
   "connectionStatus": {

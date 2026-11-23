@@ -12114,41 +12114,40 @@
     "noWorkspaces": "你不是任何工作区的管理员，因此无法授权此应用。"
   },
   "chatbotxMcp": {
-    "title": "ChatbotX MCP",
-    "workspaceId": "Workspace ID",
+    "title": "MCP 连接器",
     "streamableUrl": "Streamable HTTP URL",
-    "sseUrl": "Legacy SSE URL",
+    "sseUrl": "旧版 SSE URL",
     "guide": {
-      "title": "Connect an MCP client",
-      "step1": "Copy the configuration for your MCP client.",
-      "step2": "Paste it into the client.",
-      "step3": "The client opens a browser. Sign in and approve access.",
-      "step4": "Your workspace tools appear after approval.",
-      "ownerOnly": "Only workspace owners and superAdmins can authorize MCP access."
+      "title": "连接 MCP 客户端",
+      "step1": "复制适用于你的 MCP 客户端的配置。",
+      "step2": "粘贴到客户端中。",
+      "step3": "客户端会打开浏览器。请登录并批准访问。",
+      "step4": "批准后，你的工作区工具会显示出来。",
+      "ownerOnly": "只有工作区所有者和 superAdmin 可以授权 MCP 访问。你可以在批准页面选择工作区。"
     },
     "clients": {
       "claudeCode": "Claude Code",
       "claudeDesktop": "Claude Desktop",
       "cursor": "Cursor",
       "chatgpt": "ChatGPT",
-      "stdio": "stdio fallback",
-      "stdioHint": "Use a workspace token for this fallback."
+      "stdio": "stdio 备用方案",
+      "stdioHint": "此备用方案请使用工作区令牌。"
     },
     "grants": {
-      "title": "Authorized applications",
-      "description": "Grants belong to your account and apply to every workspace you administer; revoking disconnects the client everywhere.",
-      "empty": "OAuth grants appear here after you connect an MCP client.",
-      "client": "Client",
-      "scopes": "Scopes",
-      "firstAuthorizedAt": "First authorized",
-      "lastRefreshedAt": "Last refreshed",
-      "activeUntil": "Active until",
-      "noActiveToken": "No active token",
-      "revoke": "Revoke",
-      "revokeConfirmTitle": "Revoke application access?",
-      "revokeConfirmDescription": "Revoke access for {clientName}? This disconnects the client everywhere.",
-      "revokedSuccess": "Application access revoked.",
-      "notFound": "OAuth grant no longer exists"
+      "title": "已授权的应用",
+      "description": "授权属于你的账号，适用于你管理的所有工作区；撤销后客户端会在所有位置断开连接。",
+      "empty": "连接 MCP 客户端后，OAuth 授权会显示在这里。",
+      "client": "客户端",
+      "scopes": "权限范围",
+      "firstAuthorizedAt": "首次授权时间",
+      "lastRefreshedAt": "上次刷新时间",
+      "activeUntil": "有效期至",
+      "noActiveToken": "没有有效令牌",
+      "revoke": "撤销",
+      "revokeConfirmTitle": "撤销应用的访问权限？",
+      "revokeConfirmDescription": "撤销 {clientName} 的访问权限？这会让该客户端在所有位置断开连接。",
+      "revokedSuccess": "已撤销应用的访问权限。",
+      "notFound": "该 OAuth 授权已不存在"
     }
   },
   "connectionStatus": {

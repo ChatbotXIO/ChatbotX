@@ -79,7 +79,13 @@ const pipelinesCorePublicRouter = {
       description:
         "Pipelines (CRM kanban boards) with their item counts. Use the returned id with `pipelines.get` for stages and fields, or `pipelines.listItems` for the cards.",
       tags: TAGS,
-      spec: mcpSpec({ visibility: "default" }),
+      spec: mcpSpec({
+        destructiveHint: false,
+        idempotentHint: true,
+        openWorldHint: false,
+        readOnlyHint: true,
+        visibility: "default",
+      }),
     })
     .output(z.object({ items: z.array(publicPipelineListItemResource) }))
     .errors(possibleErrorsOnListingResource)

@@ -20,6 +20,7 @@ vi.mock("@better-auth/oauth-provider", () => ({
 vi.mock("../src/keys", () => ({
   env: { BETTER_AUTH_SECRET: "test-secret" },
   getMcpResourceUrl: () => "https://app.example.com/mcp",
+  getMcpOpenAiResourceUrl: () => "https://app.example.com/mcp/openai",
 }))
 
 vi.mock("../src/logger", () => ({ logger: { error: vi.fn() } }))
@@ -44,16 +45,25 @@ describe("verifyMcpAccessToken", () => {
   })
 
   test("returns the subject and verifies against the MCP audience, origin issuer and JWKS", async () => {
-    verifyBearerToken.mockResolvedValue({ client_id: "client-1", sub: "42" })
+    verifyBearerToken.mockResolvedValue({
+      aud: "https://app.example.com/mcp",
+      client_id: "client-1",
+      sub: "42",
+    })
 
     await expect(verifyMcpAccessToken(auth, "a.b.c")).resolves.toEqual({
+      audience: "https://app.example.com/mcp",
       clientId: "client-1",
+      issuer: "https://app.example.com",
       userId: "42",
     })
     expect(verifyBearerToken).toHaveBeenCalledWith("a.b.c", {
       jwksUrl: "https://app.example.com/api/auth/jwks",
       verifyOptions: {
-        audience: "https://app.example.com/mcp",
+        audience: [
+          "https://app.example.com/mcp",
+          "https://app.example.com/mcp/openai",
+        ],
         issuer: "https://app.example.com",
       },
     })

@@ -12130,8 +12130,7 @@
     "noWorkspaces": "You are not an admin of any workspace, so you cannot authorize this application."
   },
   "chatbotxMcp": {
-    "title": "ChatbotX MCP",
-    "workspaceId": "Workspace ID",
+    "title": "MCP connector",
     "streamableUrl": "Streamable HTTP URL",
     "sseUrl": "Legacy SSE URL",
     "guide": {
@@ -12140,7 +12139,7 @@
       "step2": "Paste it into the client.",
       "step3": "The client opens a browser. Sign in and approve access.",
       "step4": "Your workspace tools appear after approval.",
-      "ownerOnly": "Only workspace owners and superAdmins can authorize MCP access."
+      "ownerOnly": "Only workspace owners and superAdmins can authorize MCP access. You choose the workspace on the approval screen."
     },
     "clients": {
       "claudeCode": "Claude Code",

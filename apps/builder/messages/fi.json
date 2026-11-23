@@ -12114,41 +12114,40 @@
     "noWorkspaces": "Et ole minkään työtilan ylläpitäjä, joten et voi valtuuttaa tätä sovellusta."
   },
   "chatbotxMcp": {
-    "title": "ChatbotX MCP",
-    "workspaceId": "Workspace ID",
-    "streamableUrl": "Streamable HTTP URL",
-    "sseUrl": "Legacy SSE URL",
+    "title": "MCP-liitin",
+    "streamableUrl": "Streamable HTTP -URL",
+    "sseUrl": "Vanha SSE-URL",
     "guide": {
-      "title": "Connect an MCP client",
-      "step1": "Copy the configuration for your MCP client.",
-      "step2": "Paste it into the client.",
-      "step3": "The client opens a browser. Sign in and approve access.",
-      "step4": "Your workspace tools appear after approval.",
-      "ownerOnly": "Only workspace owners and superAdmins can authorize MCP access."
+      "title": "Yhdistä MCP-asiakas",
+      "step1": "Kopioi MCP-asiakkaasi määritys.",
+      "step2": "Liitä se asiakkaaseen.",
+      "step3": "Asiakas avaa selaimen. Kirjaudu sisään ja hyväksy pääsy.",
+      "step4": "Työtilasi työkalut näkyvät hyväksynnän jälkeen.",
+      "ownerOnly": "Vain työtilan omistajat ja superAdminit voivat valtuuttaa MCP-pääsyn. Valitset työtilan hyväksyntänäkymässä."
     },
     "clients": {
       "claudeCode": "Claude Code",
       "claudeDesktop": "Claude Desktop",
       "cursor": "Cursor",
       "chatgpt": "ChatGPT",
-      "stdio": "stdio fallback",
-      "stdioHint": "Use a workspace token for this fallback."
+      "stdio": "stdio-varavaihtoehto",
+      "stdioHint": "Käytä tässä varavaihtoehdossa työtilan tunnusta."
     },
     "grants": {
-      "title": "Authorized applications",
-      "description": "Grants belong to your account and apply to every workspace you administer; revoking disconnects the client everywhere.",
-      "empty": "OAuth grants appear here after you connect an MCP client.",
-      "client": "Client",
-      "scopes": "Scopes",
-      "firstAuthorizedAt": "First authorized",
-      "lastRefreshedAt": "Last refreshed",
-      "activeUntil": "Active until",
-      "noActiveToken": "No active token",
-      "revoke": "Revoke",
-      "revokeConfirmTitle": "Revoke application access?",
-      "revokeConfirmDescription": "Revoke access for {clientName}? This disconnects the client everywhere.",
-      "revokedSuccess": "Application access revoked.",
-      "notFound": "OAuth grant no longer exists"
+      "title": "Valtuutetut sovellukset",
+      "description": "Valtuudet kuuluvat tilillesi ja koskevat kaikkia ylläpitämiäsi työtiloja; peruuttaminen katkaisee asiakkaan yhteyden kaikkialla.",
+      "empty": "OAuth-valtuudet näkyvät tässä, kun olet yhdistänyt MCP-asiakkaan.",
+      "client": "Asiakas",
+      "scopes": "Laajuudet",
+      "firstAuthorizedAt": "Valtuutettu ensimmäisen kerran",
+      "lastRefreshedAt": "Päivitetty viimeksi",
+      "activeUntil": "Voimassa asti",
+      "noActiveToken": "Ei aktiivista tunnusta",
+      "revoke": "Peruuta",
+      "revokeConfirmTitle": "Peruutetaanko sovelluksen pääsy?",
+      "revokeConfirmDescription": "Peruutetaanko käyttöoikeus sovellukselle {clientName}? Tämä katkaisee asiakkaan yhteyden kaikkialla.",
+      "revokedSuccess": "Sovelluksen pääsy peruutettu.",
+      "notFound": "OAuth-valtuutta ei ole enää olemassa"
     }
   },
   "connectionStatus": {

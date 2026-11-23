@@ -141,7 +141,13 @@ export const conversationsPublicRouter = {
       description:
         'Use this to find conversations by status, channel, assignee, tags, or contact filter before inspecting one with `conversations.get`. Returns cursor-paginated workspace conversations. The array and object filters (`status`, `tags`, `contactFilter`) are query parameters whose value is a JSON-encoded string, for example `status=["open"]`; `contactFilter` is the JSON of the criteria object from `contacts.listFilterFields`; bracket (deepObject) notation such as `status[0]=open` is not understood and the filter is ignored.',
       tags: ["Conversations"],
-      spec: mcpSpec({ visibility: "default" }),
+      spec: mcpSpec({
+        destructiveHint: false,
+        idempotentHint: true,
+        openWorldHint: false,
+        readOnlyHint: true,
+        visibility: "default",
+      }),
     })
     .input(listConversationsQueryRequest)
     .output(
@@ -205,7 +211,13 @@ export const conversationsPublicRouter = {
       description:
         "Use this to inspect one conversation's contact, channel, assignee, and status after locating it with `conversations.list`. Call `conversations.assign` to change its assignee.",
       tags: ["Conversations"],
-      spec: mcpSpec({ visibility: "default" }),
+      spec: mcpSpec({
+        destructiveHint: false,
+        idempotentHint: true,
+        openWorldHint: false,
+        readOnlyHint: true,
+        visibility: "default",
+      }),
     })
     .input(conversationIdPathParam)
     .output(getConversationPublicResponse)
@@ -240,7 +252,13 @@ export const conversationsPublicRouter = {
       description:
         "Changes a conversation's user or inbox-team assignee, or clears it when `assignedId` is null. Call `conversations.get` first to inspect the current assignee and `conversations.list` to find the id.",
       tags: ["Conversations"],
-      spec: mcpSpec({ visibility: "default" }),
+      spec: mcpSpec({
+        destructiveHint: false,
+        idempotentHint: true,
+        openWorldHint: false,
+        readOnlyHint: false,
+        visibility: "default",
+      }),
     })
     .input(assignConversationPublicRequest.and(conversationIdPathParam))
     .output(successResponse)

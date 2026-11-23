@@ -399,7 +399,7 @@ function parseOperation(
   }
 }
 
-function parseToolsFromSpec(spec: OpenAPISpec): DynamicTool[] {
+export function parseToolsFromSpec(spec: OpenAPISpec): DynamicTool[] {
   const baseUrl = spec.servers?.[0]?.url ?? env.CHATBOTX_API_URL
   const tools: DynamicTool[] = []
 

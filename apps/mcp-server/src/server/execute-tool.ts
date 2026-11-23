@@ -129,7 +129,7 @@ const prepareToolArguments = (
   rawArgs: Record<string, unknown>,
 ): Record<string, unknown> => applyNullableRequiredDefaults(tool, rawArgs)
 
-const appendQueryParam = (
+export const appendQueryParam = (
   params: URLSearchParams,
   key: string,
   value: unknown,
@@ -155,7 +155,7 @@ const appendQueryParam = (
   params.append(key, String(value))
 }
 
-const buildQueryString = (params: URLSearchParams): string => {
+export const buildQueryString = (params: URLSearchParams): string => {
   const queryString = params.toString()
   return queryString ? `?${queryString}` : ""
 }

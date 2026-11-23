@@ -38,8 +38,19 @@ const resolveMcpResourceUrl = (req: IncomingMessage): string =>
 const resolveMetadataUrl = (req: IncomingMessage, pathSuffix: string): string =>
   new URL(pathSuffix, resolvePublicOrigin(req)).toString()
 
-export const buildProtectedResourceMetadata = (req: IncomingMessage) => ({
-  resource: resolveMcpResourceUrl(req),
+export const resolveOpenAiResourceUrl = (req: IncomingMessage): string =>
+  `${resolveMcpResourceUrl(req)}/openai`
+
+const isOpenAiMetadataPath = (pathname: string): boolean =>
+  pathname.endsWith("/openai")
+
+export const buildProtectedResourceMetadata = (
+  req: IncomingMessage,
+  pathname = "",
+) => ({
+  resource: isOpenAiMetadataPath(pathname)
+    ? resolveOpenAiResourceUrl(req)
+    : resolveMcpResourceUrl(req),
   authorization_servers: [resolveIssuer()],
   scopes_supported: oauthScopes,
   bearer_methods_supported: ["header"],
@@ -50,9 +61,13 @@ export const buildWwwAuthenticate = (
   pathSuffix: string,
   error?: "invalid_token",
 ) => {
-  const metadataPath = env.CHATBOTX_MCP_PUBLIC_URL
-    ? `${protectedResourcePrefix}/mcp${pathSuffix}`
-    : `${protectedResourcePrefix}${pathSuffix}`
+  // The OpenAI resource is always advertised at its exact public path.
+  let metadataPath = `${protectedResourcePrefix}${pathSuffix}`
+  if (isOpenAiMetadataPath(pathSuffix)) {
+    metadataPath = `${protectedResourcePrefix}/mcp/openai`
+  } else if (env.CHATBOTX_MCP_PUBLIC_URL) {
+    metadataPath = `${protectedResourcePrefix}/mcp${pathSuffix}`
+  }
   const metadataUrl = resolveMetadataUrl(req, metadataPath)
   const attributes = [`resource_metadata="${metadataUrl}"`]
   if (error) {

@@ -26,7 +26,13 @@ export const contactsSequencesPublicRouter = {
       description:
         "Use this to inspect a contact's current sequence subscriptions after resolving the contact with `contacts.get`. Call `contacts.subscribeSequences` to subscribe it, or `sequences.get` to inspect a sequence.",
       tags: ["Contacts"],
-      spec: mcpSpec({ visibility: "default" }),
+      spec: mcpSpec({
+        destructiveHint: false,
+        idempotentHint: true,
+        openWorldHint: false,
+        readOnlyHint: true,
+        visibility: "default",
+      }),
     })
     .input(
       z.object({
@@ -54,7 +60,13 @@ export const contactsSequencesPublicRouter = {
         "Adds the contact identified by `identifier` to each given sequence; sequences the contact is already subscribed to are left as-is. Use `sequences.list`/`sequences.create` first to resolve names to ids.",
       successStatus: 204,
       tags: ["Contacts"],
-      spec: mcpSpec({ visibility: "default" }),
+      spec: mcpSpec({
+        destructiveHint: false,
+        idempotentHint: true,
+        openWorldHint: true,
+        readOnlyHint: false,
+        visibility: "default",
+      }),
     })
     .input(
       contactSequenceIdsPublicRequest.and(

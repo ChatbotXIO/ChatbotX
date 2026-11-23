@@ -12114,41 +12114,40 @@
     "noWorkspaces": "Anda bukan admin di workspace mana pun, jadi Anda tidak dapat mengotorisasi aplikasi ini."
   },
   "chatbotxMcp": {
-    "title": "ChatbotX MCP",
-    "workspaceId": "Workspace ID",
-    "streamableUrl": "Streamable HTTP URL",
-    "sseUrl": "Legacy SSE URL",
+    "title": "Konektor MCP",
+    "streamableUrl": "URL Streamable HTTP",
+    "sseUrl": "URL SSE lama",
     "guide": {
-      "title": "Connect an MCP client",
-      "step1": "Copy the configuration for your MCP client.",
-      "step2": "Paste it into the client.",
-      "step3": "The client opens a browser. Sign in and approve access.",
-      "step4": "Your workspace tools appear after approval.",
-      "ownerOnly": "Only workspace owners and superAdmins can authorize MCP access."
+      "title": "Hubungkan klien MCP",
+      "step1": "Salin konfigurasi untuk klien MCP Anda.",
+      "step2": "Tempel ke klien.",
+      "step3": "Klien membuka browser. Masuk dan setujui akses.",
+      "step4": "Alat workspace Anda muncul setelah disetujui.",
+      "ownerOnly": "Hanya pemilik workspace dan superAdmin yang dapat mengotorisasi akses MCP. Anda memilih workspace di layar persetujuan."
     },
     "clients": {
       "claudeCode": "Claude Code",
       "claudeDesktop": "Claude Desktop",
       "cursor": "Cursor",
       "chatgpt": "ChatGPT",
-      "stdio": "stdio fallback",
-      "stdioHint": "Use a workspace token for this fallback."
+      "stdio": "cadangan stdio",
+      "stdioHint": "Gunakan token workspace untuk cadangan ini."
     },
     "grants": {
-      "title": "Authorized applications",
-      "description": "Grants belong to your account and apply to every workspace you administer; revoking disconnects the client everywhere.",
-      "empty": "OAuth grants appear here after you connect an MCP client.",
-      "client": "Client",
-      "scopes": "Scopes",
-      "firstAuthorizedAt": "First authorized",
-      "lastRefreshedAt": "Last refreshed",
-      "activeUntil": "Active until",
-      "noActiveToken": "No active token",
-      "revoke": "Revoke",
-      "revokeConfirmTitle": "Revoke application access?",
-      "revokeConfirmDescription": "Revoke access for {clientName}? This disconnects the client everywhere.",
-      "revokedSuccess": "Application access revoked.",
-      "notFound": "OAuth grant no longer exists"
+      "title": "Aplikasi yang diotorisasi",
+      "description": "Otorisasi dimiliki akun Anda dan berlaku untuk setiap workspace yang Anda kelola; pencabutan memutus klien di mana pun.",
+      "empty": "Otorisasi OAuth muncul di sini setelah Anda menghubungkan klien MCP.",
+      "client": "Klien",
+      "scopes": "Cakupan",
+      "firstAuthorizedAt": "Pertama kali diotorisasi",
+      "lastRefreshedAt": "Terakhir diperbarui",
+      "activeUntil": "Aktif hingga",
+      "noActiveToken": "Tidak ada token aktif",
+      "revoke": "Cabut",
+      "revokeConfirmTitle": "Cabut akses aplikasi?",
+      "revokeConfirmDescription": "Cabut akses untuk {clientName}? Ini memutus klien di mana pun.",
+      "revokedSuccess": "Akses aplikasi dicabut.",
+      "notFound": "Otorisasi OAuth tidak ada lagi"
     }
   },
   "connectionStatus": {

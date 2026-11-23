@@ -31,6 +31,7 @@ type McpOperationMeta = {
   alwaysVisible?: boolean
   readOnlyHint?: boolean
   destructiveHint?: boolean
+  openWorldHint?: boolean
   idempotentHint?: boolean
   hitlPolicy?:
     | "none"
@@ -303,7 +304,98 @@ describe("x-mcp outbound policy", () => {
   })
 })
 
+describe("OpenAI MCP profile manifest", () => {
+  const manifest = JSON.parse(
+    readFileSync(
+      join(MCP_SERVER_ROOT, "src", "profiles", "openai-manifest.json"),
+      "utf8",
+    ),
+  ) as {
+    tools: {
+      name: string
+      method: string
+      pathTemplate: string
+      annotations: Record<string, boolean>
+    }[]
+  }
+  const toToolName = (operationId: string) =>
+    operationId
+      .replace(/([a-z\d])([A-Z])/g, "$1_$2")
+      .replace(/\./g, "_")
+      .toLowerCase()
+
+  test("every manifest tool matches a live default operation and its hints", () => {
+    const byName = new Map(
+      operations.map((operation) => [
+        toToolName(operation.operationId),
+        operation,
+      ]),
+    )
+    for (const tool of manifest.tools) {
+      const operation = byName.get(tool.name)
+      expect(operation, tool.name).toBeDefined()
+      expect(operation?.method, tool.name).toBe(tool.method)
+      expect(operation?.path, tool.name).toBe(tool.pathTemplate)
+      const meta = operation?.["x-mcp"] as Record<string, unknown>
+      expect(meta.visibility, tool.name).toBe("default")
+      for (const hint of [
+        "readOnlyHint",
+        "destructiveHint",
+        "idempotentHint",
+        "openWorldHint",
+      ]) {
+        expect(tool.annotations[hint], `${tool.name}.${hint}`).toBe(meta[hint])
+      }
+    }
+  })
+})
+
 describe("x-mcp policy classifications", () => {
+  test("every default-visible operation declares all four hints as booleans", () => {
+    const hintNames = [
+      "readOnlyHint",
+      "destructiveHint",
+      "idempotentHint",
+      "openWorldHint",
+    ] as const
+    const missing = operations
+      .filter(
+        (operation) =>
+          isWorkspaceTokenOperation(operation) &&
+          operation["x-mcp"]?.visibility === "default",
+      )
+      .flatMap((operation) =>
+        hintNames
+          .filter(
+            (hint) =>
+              typeof (operation["x-mcp"] as Record<string, unknown>)?.[hint] !==
+              "boolean",
+          )
+          .map((hint) => `${operation.operationId}.${hint}`),
+      )
+    expect(missing).toEqual([])
+  })
+
+  test("declares complete annotations for validation and broadcast cancellation", () => {
+    const annotationByOperation = (operationId: string) =>
+      operations.find((operation) => operation.operationId === operationId)?.[
+        "x-mcp"
+      ]
+
+    expect(annotationByOperation("flows.validate")).toMatchObject({
+      readOnlyHint: true,
+      destructiveHint: false,
+      idempotentHint: true,
+      openWorldHint: false,
+    })
+    expect(annotationByOperation("broadcasts.stop")).toMatchObject({
+      readOnlyHint: false,
+      destructiveHint: true,
+      idempotentHint: true,
+      openWorldHint: false,
+    })
+  })
+
   test("marks every DELETE operation as destructive", () => {
     const nonDestructiveDeletes = operations
       .filter(isWorkspaceTokenOperation)

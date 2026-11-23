@@ -1,7 +1,7 @@
 import type { McpOptions } from "@better-auth/mcp"
 import { getMcpResourceUrl } from "./keys"
 
-export { getMcpResourceUrl } from "./keys"
+export { getMcpOpenAiResourceUrl, getMcpResourceUrl } from "./keys"
 
 /** Scopes the MCP OAuth provider advertises and grants to registered clients. */
 export const MCP_OAUTH_SCOPES = ["openid", "profile", "email", "offline_access"]
@@ -94,5 +94,7 @@ export const buildMcpPluginOptions = (
   resource,
   // Per-process cache, never expires. Nothing edits OAuthResource at runtime (seeded insertOnly;
   // admin endpoints are SERVER_ONLY and unused). After a manual DB edit, restart every builder pod.
-  cachedResources: new Set([resource]),
+  // The OpenAI profile is a distinct resource and audience; it is never
+  // canonicalized to the shared `/mcp` resource.
+  cachedResources: new Set([resource, `${resource}/openai`]),
 })
