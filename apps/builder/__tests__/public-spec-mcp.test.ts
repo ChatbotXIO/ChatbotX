@@ -12,6 +12,7 @@ import {
   withIdempotencyKeyHeader,
   withMcpHitlPolicy,
 } from "@/lib/orpc/public-spec"
+import { OPENAI_TOOL_OVERRIDES } from "../../mcp-server/src/profiles/openai-contract"
 
 // Same side-effect-free import stubs as public-spec-operations.test.ts —
 // `@/routers/public` transitively boots the real db client and better-auth
@@ -49,7 +50,37 @@ type McpSpecOperation = {
   description?: string
   security?: Record<string, string[]>[]
   "x-mcp"?: McpOperationMeta
+  parameters?: { in: string; name: string }[]
+  requestBody?: {
+    content?: { "application/json"?: { schema?: BodySchema } }
+  }
 }
+
+type BodySchema = {
+  properties?: Record<string, unknown>
+  allOf?: BodySchema[]
+  anyOf?: BodySchema[]
+  oneOf?: BodySchema[]
+}
+
+// Mirrors `resolveBodySchema` in `apps/mcp-server/src/openapi-loader.ts`:
+// top-level properties, merged across allOf / anyOf / oneOf branches.
+function bodyPropertyNames(schema: BodySchema | undefined): string[] {
+  if (!schema) {
+    return []
+  }
+  if (schema.properties) {
+    return Object.keys(schema.properties)
+  }
+  const branches = [
+    ...(schema.allOf ?? []),
+    ...(schema.anyOf ?? []),
+    ...(schema.oneOf ?? []),
+  ]
+  return [...new Set(branches.flatMap((b) => Object.keys(b.properties ?? {})))]
+}
+
+const sorted = (names: string[]): string[] => [...names].sort()
 
 // Every operation whose security includes a workspace-token scheme (i.e.
 // `isWorkspaceTokenOperation` in `apps/mcp-server/src/openapi-loader.ts`
@@ -316,6 +347,9 @@ describe("OpenAI MCP profile manifest", () => {
       method: string
       pathTemplate: string
       annotations: Record<string, boolean>
+      pathParamNames: string[]
+      queryParamNames: string[]
+      bodyParamNames: string[]
     }[]
   }
   const toToolName = (operationId: string) =>
@@ -346,6 +380,35 @@ describe("OpenAI MCP profile manifest", () => {
       ]) {
         expect(tool.annotations[hint], `${tool.name}.${hint}`).toBe(meta[hint])
       }
+    }
+  })
+
+  test("every manifest tool's path, query and body params match the live spec", () => {
+    const byName = new Map(
+      operations.map((operation) => [
+        toToolName(operation.operationId),
+        operation,
+      ]),
+    )
+    const namesIn = (operation: McpSpecOperation, where: string) =>
+      (operation.parameters ?? [])
+        .filter((parameter) => parameter.in === where)
+        .map((parameter) => parameter.name)
+    for (const tool of manifest.tools) {
+      const operation = byName.get(tool.name) as McpSpecOperation
+      const removed = OPENAI_TOOL_OVERRIDES[tool.name]?.removeProperties ?? []
+      const liveBody = bodyPropertyNames(
+        operation.requestBody?.content?.["application/json"]?.schema,
+      ).filter((name) => !removed.includes(name))
+      expect(sorted(tool.pathParamNames), `${tool.name} path`).toEqual(
+        sorted(namesIn(operation, "path")),
+      )
+      expect(sorted(tool.queryParamNames), `${tool.name} query`).toEqual(
+        sorted(namesIn(operation, "query")),
+      )
+      expect(sorted(tool.bodyParamNames), `${tool.name} body`).toEqual(
+        sorted(liveBody),
+      )
     }
   })
 })

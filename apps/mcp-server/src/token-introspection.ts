@@ -11,13 +11,17 @@ const tokenIntrospectionSchema = z.object({
   // Trusted identity from the builder. Optional so older builders still work
   // for the default profile; the OpenAI profile requires it.
   principal: z
-    .object({
-      credentialType: z.enum(["oauth", "workspace_token", "mobile"]),
-      audience: z.string().optional(),
-      clientId: z.string().optional(),
-      issuer: z.string().optional(),
-      subject: z.string().optional(),
-    })
+    .discriminatedUnion("credentialType", [
+      z.object({
+        credentialType: z.literal("oauth"),
+        audience: z.string(),
+        clientId: z.string(),
+        issuer: z.string(),
+        subject: z.string(),
+      }),
+      z.object({ credentialType: z.literal("workspace_token") }),
+      z.object({ credentialType: z.literal("mobile") }),
+    ])
     .optional(),
 })
 

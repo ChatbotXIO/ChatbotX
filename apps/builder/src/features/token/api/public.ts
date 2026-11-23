@@ -24,13 +24,17 @@ const tokenPublicResponse = z.object({
     .nullable()
     .describe("null means unrestricted — every scope."),
   principal: z
-    .object({
-      credentialType: z.enum(["oauth", "workspace_token", "mobile"]),
-      audience: z.string().optional(),
-      clientId: z.string().optional(),
-      issuer: z.string().optional(),
-      subject: z.string().optional(),
-    })
+    .discriminatedUnion("credentialType", [
+      z.object({
+        credentialType: z.literal("oauth"),
+        audience: z.string(),
+        clientId: z.string(),
+        issuer: z.string(),
+        subject: z.string(),
+      }),
+      z.object({ credentialType: z.literal("workspace_token") }),
+      z.object({ credentialType: z.literal("mobile") }),
+    ])
     .describe(
       "Verified identity of the caller, for transport-level binding. Not part of the OpenAI tool projection.",
     ),

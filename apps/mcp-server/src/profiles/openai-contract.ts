@@ -1,7 +1,7 @@
 /**
- * Reviewed inputs for the OpenAI profile manifest. v1 exposes 38 API tools
- * plus `get_guide`. Flow authoring/sending and sequence update/subscribe are
- * deferred to v2 (plan section 4.5).
+ * Reviewed inputs for the OpenAI profile manifest. v1 exposes 36 API tools
+ * (28 read, 8 write) plus `get_guide`. Flow authoring/sending and sequence
+ * update/subscribe are deferred to v2 (see `OPENAI_DEFERRED_TOOLS`).
  */
 export const OPENAI_CONTRACT_VERSION = "1.0.0"
 

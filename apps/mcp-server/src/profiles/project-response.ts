@@ -75,18 +75,20 @@ const projectNode = (
   }
   const branches = subSchemas(schema)
   if (branches.length > 0) {
-    const matching = branches.filter((branch) => {
+    // Project each branch exactly once; a throw means the branch does not match.
+    const projected: unknown[] = []
+    for (const branch of branches) {
       try {
-        projectNode(branch, value, path)
-        return true
-      } catch {
-        return false
+        projected.push(projectNode(branch, value, path))
+      } catch (error) {
+        if (!(error instanceof ResponseContractError)) {
+          throw error
+        }
       }
-    })
-    if (matching.length === 0) {
+    }
+    if (projected.length === 0) {
       return fail(path, "matches no reviewed shape")
     }
-    const projected = matching.map((branch) => projectNode(branch, value, path))
     const objects = projected.filter(
       (item): item is Record<string, unknown> =>
         item !== null && typeof item === "object" && !Array.isArray(item),

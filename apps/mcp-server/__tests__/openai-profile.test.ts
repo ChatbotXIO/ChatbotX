@@ -230,6 +230,33 @@ describe("execution", () => {
     expect(result.content[0]?.text).not.toContain("SELECT")
   })
 
+  test("a network failure is reported as unreachable", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(() => Promise.reject(new TypeError("fetch failed"))),
+    )
+    const result = await executeOpenAiTool("contacts_list", {}, credentials)
+    expect(result.isError).toBe(true)
+    expect(result.content[0]?.text).toContain("could not be reached")
+  })
+
+  test("an unreadable upstream body is not reported as unreachable", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(
+        async () =>
+          new Response("{not json", {
+            headers: { "content-type": "application/json" },
+            status: 200,
+          }),
+      ),
+    )
+    const result = await executeOpenAiTool("contacts_list", {}, credentials)
+    expect(result.isError).toBe(true)
+    expect(result.content[0]?.text).not.toContain("could not be reached")
+    expect(result.content[0]?.text).toContain("could not be read")
+  })
+
   test("a malformed mutation response warns the action may have completed", async () => {
     vi.stubGlobal(
       "fetch",
@@ -273,6 +300,39 @@ describe("projectResponse", () => {
   })
   test("rejects malformed shapes instead of returning empty success", () => {
     expect(() => projectResponse(schema, "oops")).toThrow(ResponseContractError)
+  })
+  test("projects each anyOf branch once, even when unions are nested", () => {
+    let calls = 0
+    const counted = {
+      type: "object",
+      get properties() {
+        calls += 1
+        return { id: { type: "string" } }
+      },
+    }
+    // Four levels of two-branch unions: exponential re-projection would
+    // evaluate the leaf 2^4 * 2 times; once-per-branch evaluates it 2^4 times.
+    let nested: Record<string, unknown> = counted
+    for (let level = 0; level < 4; level += 1) {
+      nested = { anyOf: [nested, nested] }
+    }
+    expect(projectResponse(nested as never, { id: "1" })).toEqual({ id: "1" })
+    expect(calls).toBeLessThanOrEqual(2 ** 4 * 2)
+  })
+  test("keeps the branches that match a union", () => {
+    const union = {
+      anyOf: [
+        { type: "object", properties: { a: { type: "string" } } },
+        { type: "string" },
+      ],
+    }
+    expect(projectResponse(union as never, { a: "x", b: 1 })).toEqual({
+      a: "x",
+    })
+    expect(projectResponse(union as never, "plain")).toBe("plain")
+    expect(() => projectResponse(union as never, 5)).toThrow(
+      ResponseContractError,
+    )
   })
   test("represents an empty body explicitly", () => {
     expect(projectResponse(null, undefined)).toEqual({ ok: true })

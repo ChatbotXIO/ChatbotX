@@ -1,7 +1,7 @@
 import type { IncomingMessage, ServerResponse } from "node:http"
 import { resolveHeaderValue } from "../http-headers"
 
-export const MAX_BODY_BYTES = 1024 * 1024
+const MAX_BODY_BYTES = 1024 * 1024
 
 export class PayloadTooLargeError extends Error {}
 

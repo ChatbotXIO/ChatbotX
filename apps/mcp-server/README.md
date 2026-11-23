@@ -360,6 +360,7 @@ cp .env.example .env
 | `CHATBOTX_MCP_SERVER_NAME` | Display name sent to AI clients | package name | No |
 | `CHATBOTX_MCP_SERVER_INSTRUCTIONS` | Instructions sent to AI clients on connect (helps ChatGPT know when to call tools) | built-in default | No |
 | `CHATBOTX_MCP_ALLOWED_ORIGINS` | Comma-separated Origins allowed on the OpenAI endpoint. | `https://chatgpt.com,https://chat.openai.com` |
+| `CHATBOTX_MCP_SESSION_IDLE_TTL_MS` | Idle time after which an HTTP session is closed and evicted (all transports). | `1800000` |
 | `CHATBOTX_MCP_OAUTH_ENABLED` | Enable OAuth 2.1 protected-resource metadata and bearer challenges | `true` | No |
 | `CHATBOTX_MCP_OAUTH_ISSUER` | Authorization server issuer URL | derived from `CHATBOTX_API_URL` | No |
 | `CHATBOTX_MCP_PUBLIC_URL` | Canonical public origin; required in production so metadata advertises the TLS endpoint | derived from request headers | Yes (production) |

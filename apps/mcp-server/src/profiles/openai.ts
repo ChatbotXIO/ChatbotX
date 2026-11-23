@@ -1,3 +1,4 @@
+import { getChildLogger } from "@chatbotx.io/logger"
 import { env } from "../env"
 import { fetchWithTimeout } from "../http"
 import {
@@ -49,7 +50,8 @@ type Manifest = { contractVersion: string; tools: OpenAiTool[] }
 const manifest = manifestJson as unknown as Manifest
 
 export const OPENAI_PROFILE_INSTRUCTIONS = OPENAI_INSTRUCTIONS
-export const OPENAI_CONTRACT_VERSION = manifest.contractVersion
+
+const logger = getChildLogger("mcp-server")
 
 const toolsByName = new Map(manifest.tools.map((tool) => [tool.name, tool]))
 const TRAILING_SLASH = /\/$/
@@ -58,7 +60,7 @@ const OPENAI_BASE_URL = (): string =>
 
 const SECURITY_SCHEMES = [{ type: "oauth2" }]
 
-export const OPENAI_GUIDE_TOOL = {
+const OPENAI_GUIDE_TOOL = {
   name: "get_guide",
   annotations: {
     title: "Get guide",
@@ -140,6 +142,12 @@ type ApiOutcome =
   | { ok: true; body: unknown }
   | { ok: false; message: string; status: number }
 
+/** Network failures, timeouts and aborts: the upstream was not reached. */
+const isTransportError = (error: unknown): boolean =>
+  error instanceof TypeError ||
+  (error instanceof Error &&
+    (error.name === "TimeoutError" || error.name === "AbortError"))
+
 const callApi = async (
   tool: OpenAiTool,
   args: Record<string, unknown>,
@@ -203,8 +211,23 @@ const callApi = async (
       return { ok: true, body: text.length === 0 ? undefined : text }
     }
     return { ok: true, body: await response.json() }
-  } catch {
-    return { ok: false, message: "ChatbotX could not be reached.", status: 502 }
+  } catch (error) {
+    if (isTransportError(error)) {
+      return {
+        ok: false,
+        message: "ChatbotX could not be reached.",
+        status: 502,
+      }
+    }
+    logger.error(
+      { err: error, tool: tool.name },
+      "OpenAI profile API call failed",
+    )
+    return {
+      ok: false,
+      message: "ChatbotX returned a response that could not be read.",
+      status: 502,
+    }
   }
 }
 
@@ -248,7 +271,13 @@ const currentState = async (
   }
   try {
     return { currentState: project(read, outcome.body) }
-  } catch {
+  } catch (error) {
+    if (!(error instanceof ResponseContractError)) {
+      logger.error(
+        { err: error, tool: read.name },
+        "OpenAI profile current-state projection failed",
+      )
+    }
     return { currentStateUnavailable: "unavailable" }
   }
 }

@@ -32,6 +32,12 @@ export const env = createEnv({
     CHATBOTX_MCP_ALLOWED_ORIGINS: z
       .string()
       .default("https://chatgpt.com,https://chat.openai.com"),
+    // Sessions idle longer than this are closed and evicted (default 30 min).
+    CHATBOTX_MCP_SESSION_IDLE_TTL_MS: z.coerce
+      .number()
+      .int()
+      .positive()
+      .default(1_800_000),
     CHATBOTX_MCP_OAUTH_ENABLED: z.enum(["true", "false"]).default("true"),
     CHATBOTX_MCP_OAUTH_ISSUER: z.url().optional(),
     CHATBOTX_MCP_PUBLIC_URL: z.url().optional(),

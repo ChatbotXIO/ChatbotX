@@ -15,6 +15,7 @@ import {
   writeJsonRpcError,
   writePlainText,
 } from "./http-utils"
+import { IdleSessionSweeper } from "./session-sweeper"
 
 /** Fixed internal path; the public path is `/mcp/openai`. */
 export const OPENAI_INTERNAL_PATH = "/openai"
@@ -37,6 +38,11 @@ type CreateMcpServerFn = (options?: CreateMcpServerOptions) => McpServer
 // Separate from the default profile's maps: a session id from either profile
 // cannot resolve on the other.
 const openAiSessions = new Map<string, OpenAiSession>()
+const sweeper = new IdleSessionSweeper(async (sessionId) => {
+  const session = openAiSessions.get(sessionId)
+  openAiSessions.delete(sessionId)
+  await session?.transport.close()
+})
 const requestCredentials = new AsyncLocalStorage<RequestCredentials>()
 
 const UNAUTHORIZED_MESSAGE = "Unauthorized: Authentication required"
@@ -142,20 +148,13 @@ const authenticate = async (
   }
 
   const { principal, workspaceId: verifiedWorkspace } = result.data
-  if (
-    principal?.credentialType !== "oauth" ||
-    !principal.issuer ||
-    !principal.subject ||
-    !principal.clientId ||
-    !principal.audience
-  ) {
+  if (principal?.credentialType !== "oauth") {
     // Not an OAuth access token, or an older builder without principal data.
-    const isOauthMissingData = principal?.credentialType === "oauth"
     writeJsonRpcError(
       res,
-      isOauthMissingData ? 503 : 401,
-      isOauthMissingData ? UNAVAILABLE_MESSAGE : UNAUTHORIZED_MESSAGE,
-      isOauthMissingData ? undefined : challenge("invalid_token"),
+      401,
+      UNAUTHORIZED_MESSAGE,
+      challenge("invalid_token"),
     )
     return
   }
@@ -205,11 +204,13 @@ const startSession = async (
         server,
         transport,
       })
+      sweeper.touch(sessionId)
     },
   })
   transport.onclose = () => {
     if (transport.sessionId) {
       openAiSessions.delete(transport.sessionId)
+      sweeper.forget(transport.sessionId)
     }
   }
   await server.connect(transport)
@@ -277,7 +278,8 @@ const dispatchOpenAiRequest = async (
     return
   }
 
-  if (session) {
+  if (session && sessionId) {
+    sweeper.touch(sessionId)
     const body = req.method === "POST" ? await parseRequestBody(req) : undefined
     await requestCredentials.run(auth.credentials, () =>
       session.transport.handleRequest(req, res, body),

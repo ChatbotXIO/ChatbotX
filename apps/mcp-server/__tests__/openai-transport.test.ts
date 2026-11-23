@@ -205,15 +205,89 @@ describe("OpenAI transport sessions", () => {
   })
 
   test("a default-profile session id does not resolve on the OpenAI path", async () => {
-    introspect.mockResolvedValue(ok())
+    introspect.mockResolvedValue(
+      ok({ audience: "https://app.example.com/mcp" }),
+    )
     const defaultStart = await post(bearer, initialize, "/messages")
     const id = defaultStart.headers.get("mcp-session-id") as string
     expect(id).toBeTruthy()
+    introspect.mockResolvedValue(ok())
     expect((await post({ ...bearer, "Mcp-Session-Id": id })).status).toBe(404)
   })
 })
 
+describe("OpenAI audience on the default transport", () => {
+  test("an OpenAI-audience token cannot authenticate the default messages path", async () => {
+    introspect.mockResolvedValue(ok())
+    const response = await post(bearer, initialize, "/messages")
+    expect(response.status).toBe(401)
+    expect(response.headers.get("www-authenticate")).toContain(
+      'error="invalid_token"',
+    )
+  })
+
+  test("a default-audience token still authenticates the default path", async () => {
+    introspect.mockResolvedValue(
+      ok({ audience: "https://app.example.com/mcp" }),
+    )
+    expect((await post(bearer, initialize, "/messages")).status).toBe(200)
+  })
+})
+
+describe("OpenAI session eviction", () => {
+  test("an idle session is closed and no longer resolves", async () => {
+    vi.stubEnv("CHATBOTX_MCP_SESSION_IDLE_TTL_MS", "1000")
+    vi.resetModules()
+    const { IdleSessionSweeper } = await import("../src/server/session-sweeper")
+    const evicted: string[] = []
+    const sweeper = new IdleSessionSweeper((id) => {
+      evicted.push(id)
+    })
+    sweeper.touch("a")
+    sweeper.touch("b")
+    expect(await sweeper.sweep(Date.now() + 500)).toBe(0)
+    sweeper.touch("b")
+    expect(await sweeper.sweep(Date.now() + 1500)).toBe(2)
+    expect(evicted.sort()).toEqual(["a", "b"])
+    sweeper.stop()
+  })
+
+  test("a forgotten session is not evicted twice", async () => {
+    vi.stubEnv("CHATBOTX_MCP_SESSION_IDLE_TTL_MS", "1000")
+    vi.resetModules()
+    const { IdleSessionSweeper } = await import("../src/server/session-sweeper")
+    const evict = vi.fn()
+    const sweeper = new IdleSessionSweeper(evict)
+    sweeper.touch("a")
+    sweeper.forget("a")
+    expect(await sweeper.sweep(Date.now() + 5000)).toBe(0)
+    expect(evict).not.toHaveBeenCalled()
+    sweeper.stop()
+  })
+})
+
 describe("OpenAI metadata and paths", () => {
+  test("OpenAI metadata is not served when OAuth is disabled", async () => {
+    vi.stubEnv("CHATBOTX_MCP_OAUTH_ENABLED", "false")
+    vi.resetModules()
+    const { createRequestListener } = await import("../src/server/sse-server")
+    const { createMcpServer } = await import("../src/server/create-mcp-server")
+    const disabled = createServer(createRequestListener(createMcpServer))
+    await new Promise<void>((resolve) =>
+      disabled.listen(0, "127.0.0.1", resolve),
+    )
+    try {
+      const url = `http://127.0.0.1:${(disabled.address() as AddressInfo).port}`
+      const response = await fetch(
+        `${url}/.well-known/oauth-protected-resource/mcp/openai`,
+      )
+      expect(response.status).toBe(404)
+    } finally {
+      disabled.closeAllConnections()
+      await new Promise((resolve) => disabled.close(resolve))
+    }
+  })
+
   test("protected-resource metadata names the OpenAI resource", async () => {
     const response = await fetch(
       `${base}/.well-known/oauth-protected-resource/mcp/openai`,

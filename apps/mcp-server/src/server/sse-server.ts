@@ -24,6 +24,7 @@ import {
   writePlainText,
 } from "./http-utils"
 import { handleOpenAiRequest, OPENAI_INTERNAL_PATH } from "./openai-transport"
+import { IdleSessionSweeper } from "./session-sweeper"
 
 /**
  * Mutable holder for a session's current credentials. Every request may
@@ -53,6 +54,23 @@ type ResolvedSession =
 const sseSessions = new Map<string, SseSession>()
 const legacySseSessions = new Map<string, LegacySseSession>()
 
+const sseSweeper = new IdleSessionSweeper(async (sessionId) => {
+  const session = sseSessions.get(sessionId)
+  sseSessions.delete(sessionId)
+  await session?.transport.close()
+})
+const legacySweeper = new IdleSessionSweeper(async (sessionId) => {
+  const session = legacySseSessions.get(sessionId)
+  legacySseSessions.delete(sessionId)
+  await session?.transport.close()
+})
+
+/** Refreshes the idle timer of whichever map owns the session. */
+const touchSession = (resolved: ResolvedSession, sessionId: string): void => {
+  const sweeper = resolved.kind === "streamable" ? sseSweeper : legacySweeper
+  sweeper.touch(sessionId)
+}
+
 const resolveSession = (sessionId: string): ResolvedSession | undefined => {
   const streamableSession = sseSessions.get(sessionId)
   if (streamableSession) {
@@ -64,6 +82,9 @@ const resolveSession = (sessionId: string): ResolvedSession | undefined => {
     return { kind: "legacy", session: legacySession }
   }
 }
+
+/** Public path suffix of the OpenAI resource audience (`<origin>/mcp/openai`). */
+const OPENAI_AUDIENCE_SUFFIX = `/mcp${OPENAI_INTERNAL_PATH}`
 
 const apiTokenHeaderNames = ["x-workspace-token", "x-chatbo-token"] as const
 
@@ -169,6 +190,22 @@ const authorizeRequest = async (
     return false
   }
 
+  // OpenAI-audience tokens are only valid on the dedicated `/mcp/openai`
+  // transport; they must not authenticate the default profile.
+  if (
+    result.status === "ok" &&
+    result.data.principal?.credentialType === "oauth" &&
+    result.data.principal.audience.endsWith(OPENAI_AUDIENCE_SUFFIX)
+  ) {
+    writeJsonRpcError(
+      res,
+      401,
+      "Unauthorized: Authentication required",
+      buildWwwAuthenticate(req, pathSuffix, "invalid_token"),
+    )
+    return false
+  }
+
   // `unavailable` fails open here and in tools/list filtering; the actual
   // API call still enforces the token before any workspace data is accessed.
   return true
@@ -219,8 +256,10 @@ const handleSseRequest = async (
       server,
       transport,
     })
+    legacySweeper.touch(transport.sessionId)
     transport.onclose = () => {
       legacySseSessions.delete(transport.sessionId)
+      legacySweeper.forget(transport.sessionId)
     }
     await server.connect(transport)
     return
@@ -233,6 +272,7 @@ const handleSseRequest = async (
   }
 
   const { session } = resolvedSession
+  touchSession(resolvedSession, sessionId)
   updateCredentialStateFromRequest(session.credentialState, req)
   setSessionIdHeader(req, sessionId)
   await session.transport.handleRequest(req, res)
@@ -256,6 +296,7 @@ const startStreamableSession = async (
         server,
         transport,
       })
+      sseSweeper.touch(initializedSessionId)
     },
   })
 
@@ -263,6 +304,7 @@ const startStreamableSession = async (
     const activeSessionId = transport.sessionId
     if (activeSessionId) {
       sseSessions.delete(activeSessionId)
+      sseSweeper.forget(activeSessionId)
     }
   }
 
@@ -298,6 +340,7 @@ const handleMessagesRequest = async (
         return
       }
 
+      touchSession(resolvedSession, sessionId)
       updateCredentialStateFromRequest(
         resolvedSession.session.credentialState,
         req,
@@ -351,11 +394,11 @@ export const createRequestListener =
       }
       enableCors(res)
       if (
+        env.CHATBOTX_MCP_OAUTH_ENABLED === "true" &&
         url.pathname.startsWith(`${protectedResourcePrefix}/`) &&
         url.pathname.endsWith(OPENAI_INTERNAL_PATH)
       ) {
         res.statusCode = 200
-        res.setHeader("Access-Control-Allow-Origin", "*")
         res.setHeader("Cache-Control", "no-store")
         res.setHeader("Content-Type", "application/json")
         res.end(
