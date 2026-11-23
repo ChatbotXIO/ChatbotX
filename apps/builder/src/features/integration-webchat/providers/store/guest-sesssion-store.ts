@@ -58,17 +58,35 @@ export type GuestSessionActions = {
   sendMessage: (content: string, clientId: string) => void
   sendPostback: (button: MessageButtonTemplate) => Promise<void>
   setIsTyping: (isTyping: boolean) => void
+  /**
+   * Shows the typing bubble the moment the guest sends something, before the
+   * server's own typing event arrives, so the bot feels responsive. It hides
+   * itself after `OPTIMISTIC_TYPING_TIMEOUT_MS` when no reply comes (e.g. no
+   * flow matched), and any reply or server typing event takes over.
+   */
+  showOptimisticTyping: () => void
 
   getMenus: () => WebchatPersistentMenu[]
 }
 
 export type GuestSessionStore = GuestSessionState & GuestSessionActions
 
+export const OPTIMISTIC_TYPING_TIMEOUT_MS = 15_000
+
 export const createGuestSessionStore = (
   props: WebchatClientConfig,
   accessToken: string | null = null,
   workspaceLogoUrl?: string,
 ) => {
+  let typingTimeout: ReturnType<typeof setTimeout> | null = null
+
+  const clearTypingTimeout = () => {
+    if (typingTimeout) {
+      clearTimeout(typingTimeout)
+      typingTimeout = null
+    }
+  }
+
   return createStore<GuestSessionStore>((set, get) => ({
     // default state
     guestConversationId: null,
@@ -216,6 +234,9 @@ export const createGuestSessionStore = (
     },
 
     markMessageFailed: (clientId: string, error: string) => {
+      // The message never reached the bot, so no reply is coming.
+      clearTypingTimeout()
+      set({ isTyping: false })
       set((state) => {
         const optimisticMessageIndex = state.messages.findIndex(
           (message) =>
@@ -255,6 +276,7 @@ export const createGuestSessionStore = (
 
       try {
         if (postback) {
+          get().showOptimisticTyping()
           await ky.post("/api/guest/messages", {
             json: {
               text: button.label,
@@ -273,6 +295,7 @@ export const createGuestSessionStore = (
           })
         }
       } catch (error) {
+        get().setIsTyping(false)
         console.error("Failed to send postback:", error)
         throw error
       }
@@ -316,7 +339,17 @@ export const createGuestSessionStore = (
     },
 
     setIsTyping: (isTyping: boolean) => {
+      clearTypingTimeout()
       set({ isTyping })
+    },
+
+    showOptimisticTyping: () => {
+      clearTypingTimeout()
+      set({ isTyping: true })
+      typingTimeout = setTimeout(() => {
+        typingTimeout = null
+        set({ isTyping: false })
+      }, OPTIMISTIC_TYPING_TIMEOUT_MS)
     },
   }))
 }

@@ -32,8 +32,13 @@ type WebchatMessageInputProps = {
 
 export const WebchatMessageInput = (props: WebchatMessageInputProps) => {
   const { workspaceId, webchatId, referral = "", accessToken } = props
-  const { sendMessage, guestConversationId, appendMessage, markMessageFailed } =
-    useGuestSessionStore((state) => state)
+  const {
+    sendMessage,
+    guestConversationId,
+    appendMessage,
+    markMessageFailed,
+    showOptimisticTyping,
+  } = useGuestSessionStore((state) => state)
 
   const t = useTranslations()
   const isTouchDevice = useIsTouchDevice()
@@ -129,6 +134,7 @@ export const WebchatMessageInput = (props: WebchatMessageInputProps) => {
     if ("text" in parsed.data && parsed.data.text) {
       sendMessage(parsed.data.text, clientId)
     }
+    showOptimisticTyping()
     setValue("text", "")
     textareaRef.current?.focus()
 

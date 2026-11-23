@@ -12,7 +12,10 @@ import {
   createWebchatAccessToken,
   verifyWebchatAccessToken,
 } from "@/features/integration-webchat/lib/webchat-access-token"
-import { createGuestSessionStore } from "@/features/integration-webchat/providers/store/guest-sesssion-store"
+import {
+  createGuestSessionStore,
+  OPTIMISTIC_TYPING_TIMEOUT_MS,
+} from "@/features/integration-webchat/providers/store/guest-sesssion-store"
 import {
   buildGuestStorageKey,
   GUEST_CONVERSATION_ID_KEY,
@@ -130,6 +133,47 @@ describe("webchat guest session store", () => {
   beforeEach(() => {
     vi.unstubAllGlobals()
     vi.clearAllMocks()
+  })
+
+  describe("optimistic typing", () => {
+    beforeEach(() => {
+      vi.useFakeTimers()
+    })
+
+    afterEach(() => {
+      vi.useRealTimers()
+    })
+
+    test("shows the typing bubble at once and hides it when no reply comes", () => {
+      const store = createGuestSessionStore(createWebchatConfig())
+
+      store.getState().showOptimisticTyping()
+      expect(store.getState().isTyping).toBe(true)
+
+      vi.advanceTimersByTime(OPTIMISTIC_TYPING_TIMEOUT_MS)
+      expect(store.getState().isTyping).toBe(false)
+    })
+
+    test("a server typing event cancels the fallback timer", () => {
+      const store = createGuestSessionStore(createWebchatConfig())
+
+      store.getState().showOptimisticTyping()
+      store.getState().setIsTyping(false)
+      store.getState().setIsTyping(true)
+
+      vi.advanceTimersByTime(OPTIMISTIC_TYPING_TIMEOUT_MS)
+      expect(store.getState().isTyping).toBe(true)
+    })
+
+    test("a failed send hides the typing bubble", () => {
+      const store = createGuestSessionStore(createWebchatConfig())
+
+      store.getState().sendMessage("hello", "client-1")
+      store.getState().showOptimisticTyping()
+      store.getState().markMessageFailed("client-1", "boom")
+
+      expect(store.getState().isTyping).toBe(false)
+    })
   })
 
   test("creates a new scoped session on first initialization", () => {
