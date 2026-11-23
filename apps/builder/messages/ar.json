@@ -739,7 +739,8 @@
       "template": "القالب",
       "integration": "التكامل",
       "schedule": "جدول التكرار",
-      "runOf": "تشغيل لـ <link>{name}</link>"
+      "runOf": "تشغيل لـ <link>{name}</link>",
+      "linkNotFound": "لم يعد هذا البث موجودًا."
     },
     "filters": {
       "all": "All"
@@ -7516,7 +7517,6 @@
   "templatesPublicPage": {
     "invalidTitle": "هذا الرابط لم يعد متاحًا.",
     "invalidDescription": "رابط مشاركة هذا القالب غير صالح أو معطَّل أو منتهي الصلاحية.",
-    "byPublisher": "بواسطة {publisherName}",
     "videoTitle": "فيديو معاينة القالب",
     "preview": "معاينة",
     "aboutTemplate": "حول هذا القالب",
@@ -7874,6 +7874,10 @@
   "contactAdReferrals": {
     "title": "سجل الإعلانات",
     "empty": "لم تُسجَّل نقرات على الإعلانات لجهة الاتصال هذه بعد."
+  },
+  "contactBroadcasts": {
+    "empty": "لم يُرسل أي بث إلى جهة الاتصال هذه بعد.",
+    "searchPlaceholder": "ابحث بالاسم أو المعرّف"
   },
   "adsReferralStats": {
     "title": "جهات الاتصال حسب الإعلان",
@@ -12184,6 +12188,7 @@
     "categoriesPlaceholder": "بلا فئة",
     "close": "إغلاق",
     "removeChip": "إزالة {name}",
+    "moreSelected": "+ {count} أخرى",
     "categoriesHint": "اختياري. بدون فئة يظهر القالب ضمن «الكل» فقط.",
     "languages": "اللغات",
     "allLanguages": "كل اللغات",
@@ -12240,7 +12245,6 @@
       "categories": "فئات المتجر",
       "noResults": "لا توجد قوالب تطابق عوامل التصفية.",
       "clearSearch": "مسح عوامل التصفية",
-      "by": "بواسطة {publisherName}",
       "loadFailed": "تعذّر تحميل القوالب. يُرجى المحاولة لاحقًا.",
       "language": "اللغة",
       "allLanguages": "كل اللغات",
@@ -12450,5 +12454,14 @@
       "onAhachat": "On AhaChat",
       "selected": "Uses AhaChat data"
     }
+  },
+  "conversationParticipants": {
+    "joined": "{names} شاركوا في المحادثة",
+    "replied": "{name} ردّ {time}",
+    "showMore": "عرض المزيد",
+    "label": "من رد في هذه المحادثة",
+    "unnamedMember": "عضو",
+    "loadMoreFailed": "تعذّر تحميل المزيد من الأعضاء",
+    "lastMessageBy": "آخر رسالة من {name}"
   }
 }

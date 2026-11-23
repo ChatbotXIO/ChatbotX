@@ -193,7 +193,7 @@ See **`.agents/rules/git.md`** for the full canonical rules (commit format, bran
 - Human-facing docs: [chatbotx.io/docs](https://chatbotx.io/docs) (including Quick Start).
 - Tech stack details: `docs/tech-stack.md`
 - Architecture decisions: `docs/adr/`
-- Broadcast audience (direct-chat-only default, reaching contacts without one by chat history with **Last interaction**, moving back to draft): `docs/broadcasts.md`
+- Broadcast audience (direct-chat-only default, reaching contacts without one by chat history with **Last interaction**, moving back to draft, the broadcasts a contact was sent: `contacts.listBroadcasts` with search and keyset paging): `docs/broadcasts.md`
 - Messaging scaling runbook: `docs/scaling-messaging.md`
 - Request flow diagrams: `docs/request-workflow.md`
 - White-label tenancy model: `docs/tenancy.md`
@@ -228,6 +228,7 @@ See **`.agents/rules/git.md`** for the full canonical rules (commit format, bran
 - Templates (creating, sharing, what an install copies, folders and list order, warning audiences, View Analytics, updates, uninstall, public API, deploy notes): `docs/templates.md`
 - Templates regression testing (rule → test map, public-API end-to-end script `scripts/templates-e2e.mjs`, manual UI checklist): `docs/templates-testing.md`
 - Inbox translation (two-way AI translation of direct text: on-view inbound only, 10 s outbound wait and a failed translation is never sent, per-conversation language, shared `aiAgent` queue, privacy and cost, public API/CLI/MCP, data lifecycle): `docs/inbox-translation.md`
+- Inbox participants (who replied in a conversation: `ConversationParticipant.lastRepliedAt`, what counts as a reply, `sentByUserId` stamp and `resolveMessageAuthorUserId`, the two `recordReply` call sites, `recentParticipants` and `conversations.listParticipants`, reuse of `messageCreated` realtime, no backfill): `docs/inbox-participants.md`
 - Failed outgoing messages (kept with `sendError` only for a member's Inbox send; every other failed send — API/CLI/MCP, automations, broadcasts — is removed with a `messageRemoved` realtime event and logged to the Error Log; `sendFrom: "inbox" | "api"`, `sentFromInbox` stamp, `settleFailedOutgoingMessage`): `docs/failed-outgoing-messages.md`
 - Email channel (SMTP inbox as a two-way channel: threading identity, send/flow support, IMAP polling cursor and fairness, inbound-parse webhooks for SendGrid/Mailgun/Postmark/Brevo, loop protection, size caps, setup guide): `docs/email-channel.md`
 - Pipelines (CRM kanban boards: data model, access scope/ACL, mutation engine and post-commit effects, locking order, queued stage deletion, keyset cursors, caching policy, pipelineItem* events/webhooks/realtime, Pipelines flow step, `pipelineItem` contact filter, `{{pipelines.*}}` variables, templates, public API/CLI/MCP, analytics, limits): `docs/pipelines.md`

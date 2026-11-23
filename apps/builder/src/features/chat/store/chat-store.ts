@@ -1,7 +1,8 @@
-import type {
-  ChannelType,
-  ConversationBotCategory,
-  ConversationStatus,
+import {
+  type ChannelType,
+  type ConversationBotCategory,
+  type ConversationStatus,
+  RECENT_PARTICIPANT_LIMIT,
 } from "@chatbotx.io/database/partials"
 import type { MessageTranslationUpdatedData } from "@chatbotx.io/realtime-protocol"
 import { resolveMessagingWindowOpenedAt } from "@chatbotx.io/sdk"
@@ -9,11 +10,13 @@ import { createStore } from "zustand/vanilla"
 import type { ContactFilterRequest } from "@/features/contact-filter/schema"
 import type { GetContactResponse } from "@/features/contacts/schema/query"
 import type { ContactResource } from "@/features/contacts/schema/resource"
+import { mergeParticipantReply } from "@/features/conversations/lib/merge-participant-reply"
 import {
   type PostDetails,
   supportsPostDetails,
 } from "@/features/conversations/schema/query"
 import type {
+  ConversationParticipantResource,
   ConversationResource,
   ListConversationItemResource,
   ListConversationsResponse,
@@ -290,6 +293,27 @@ export type ChatActions = {
   applyAgentLastReadAt: (
     conversationIds: string[],
     agentLastReadAt: Date,
+  ) => void
+  /**
+   * Applies one member's reply to a loaded conversation's `recentParticipants`
+   * preview (the row avatars). Idempotent: a duplicate or older reply changes
+   * nothing, so a re-delivered realtime event is harmless.
+   */
+  applyConversationParticipantReply: (
+    conversationId: string,
+    reply: ConversationParticipantResource,
+  ) => void
+  /** A loaded message by id (the open conversation's), or `undefined`. */
+  findLoadedMessage: (
+    messageId: string,
+  ) => MessageResourceWithRelations | undefined
+  /**
+   * Replaces a loaded conversation's `recentParticipants` preview with the
+   * server's answer (after a counted reply failed or was removed).
+   */
+  replaceConversationRecentParticipants: (
+    conversationId: string,
+    participants: readonly ConversationParticipantResource[],
   ) => void
   /**
    * Replaces the routing (thread control) fields of one contact inbox of a
@@ -1076,6 +1100,41 @@ export const createChatStore = (initialState: ChatStoreInitialState = {}) => {
           manuallyUnreadConversationIds,
           activeConversationId: null,
           ...messageThreadDefaults(),
+        })
+      },
+
+      findLoadedMessage: (messageId) =>
+        get().messages.find((message) => message.id === messageId),
+
+      replaceConversationRecentParticipants: (conversationId, participants) => {
+        get().updateConversation(conversationId, {
+          recentParticipants: participants.slice(0, RECENT_PARTICIPANT_LIMIT),
+        })
+      },
+
+      applyConversationParticipantReply: (conversationId, reply) => {
+        set((state) => {
+          const index = state.conversations.findIndex(
+            (conversation) => conversation.id === conversationId,
+          )
+          const conversation = state.conversations[index]
+          if (!conversation) {
+            return state
+          }
+          const recentParticipants = mergeParticipantReply(
+            conversation.recentParticipants,
+            reply,
+            RECENT_PARTICIPANT_LIMIT,
+          )
+          if (recentParticipants === conversation.recentParticipants) {
+            return state
+          }
+          const conversations = [...state.conversations]
+          conversations[index] = {
+            ...conversation,
+            recentParticipants: [...recentParticipants],
+          }
+          return { conversations }
         })
       },
 

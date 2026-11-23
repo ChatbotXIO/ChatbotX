@@ -5,7 +5,7 @@ import {
   channelTypes,
   countModes,
 } from "@chatbotx.io/database/partials"
-import { zodBigintAsString } from "@chatbotx.io/utils"
+import { zodBigintAsString, zodBigintIdAsString } from "@chatbotx.io/utils"
 import z from "zod"
 import { inboxTeamResource } from "@/enterprise/features/inbox-teams/schema/resource"
 import { contactFilterCriteriaSchema } from "@/features/contact-filter/schema"
@@ -251,9 +251,10 @@ export const findContactRequest = contactResource
   .partial()
 export type FindContactRequest = z.infer<typeof findContactRequest>
 
+// Bounded ids: a longer number would overflow the bigint column and fail in SQL as a 500.
 export const getContactRequest = z.object({
-  workspaceId: zodBigintAsString(),
-  contactId: zodBigintAsString(),
+  workspaceId: zodBigintIdAsString(),
+  contactId: zodBigintIdAsString(),
 })
 export type GetContactRequest = z.infer<typeof getContactRequest>
 

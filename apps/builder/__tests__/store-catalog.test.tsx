@@ -96,7 +96,6 @@ const render = (
         categories={categories}
         layout={layout}
         templates={items}
-        tenantName="Acme Bots"
         viewerLocale={viewerLocale}
       />,
     )
@@ -184,6 +183,28 @@ describe("StoreCatalog layouts", () => {
     )
     expect(grid?.className).toContain("gap-5")
     expect(grid?.className).not.toContain("lg:grid-cols-3")
+  })
+})
+
+describe("StoreCatalog cards", () => {
+  test("a card shows the cover in a 16:9 frame that it fills, then the name, and no publisher line", () => {
+    const el = render("embedded")
+
+    const card = el.querySelector("li a")
+    const [cover, name] = Array.from(card?.children ?? [])
+    expect(cover?.tagName).toBe("IMG")
+    expect(cover?.getAttribute("src")).toBe("/cover.png")
+    expect(cover?.className.split(" ")).toEqual(
+      expect.arrayContaining([
+        "aspect-video",
+        "w-full",
+        "object-cover",
+        "object-center",
+      ]),
+    )
+    expect(name?.textContent).toBe("Welcome flow")
+    expect(card?.textContent).not.toContain("by")
+    expect(card?.textContent).not.toContain("Acme")
   })
 })
 
@@ -354,7 +375,6 @@ describe("StoreCatalog languages", () => {
             { id: "6", name: "Viet only" },
           ]}
           templates={withCategories}
-          tenantName="Acme Bots"
           viewerLocale="en"
         />,
       )

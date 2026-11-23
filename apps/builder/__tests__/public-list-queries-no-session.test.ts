@@ -24,6 +24,7 @@ const mocks = vi.hoisted(() => ({
     id: "conv-1",
     contactId: "contact-1",
     contactInboxes: [],
+    conversationParticipants: [],
     lastActivityAt: null,
   }),
   findByIdWithUrls: vi.fn().mockResolvedValue({ id: "msg-1" }),
@@ -167,6 +168,7 @@ vi.mock("@chatbotx.io/business/errors", () => ({
 
 vi.mock("@chatbotx.io/database/repositories", () => ({
   contactInboxOperationalColumns: { sourceIdentityHistory: false },
+  recentParticipantsRelation: { limit: 3 },
   createMessageRepository: vi.fn().mockResolvedValue({
     findLastByConversation: mocks.findLastByConversation,
   }),
@@ -199,6 +201,7 @@ beforeEach(() => {
     id: "conv-1",
     contactId: "contact-1",
     contactInboxes: [],
+    conversationParticipants: [],
     lastActivityAt: null,
   })
   mocks.findByIdWithUrls.mockResolvedValue({ id: "msg-1" })

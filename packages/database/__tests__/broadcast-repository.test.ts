@@ -378,4 +378,32 @@ describe("broadcastRepository.findByIdOrName", () => {
     expect(call.where.name).toBe("My Broadcast")
     expect(call.where.id).toBeUndefined()
   })
+
+  test("loads the flow and the page names a legacy broadcast shows in its detail, like the list does", async () => {
+    mocks.findFirst.mockResolvedValue({ id: "123" })
+    mocks.findMany.mockResolvedValue([])
+
+    await broadcastRepository.findByIdOrName({
+      workspaceId: "ws-1",
+      idOrName: "123",
+    })
+    await broadcastRepository.listWithRelations({ workspaceId: "ws-1" })
+
+    const detail = mocks.findFirst.mock.calls[0]?.[0] as {
+      with: Record<string, unknown>
+    }
+    const list = mocks.findMany.mock.calls[0]?.[0] as {
+      with: Record<string, unknown>
+    }
+    for (const relation of [
+      "flow",
+      "integrationWhatsapp",
+      "integrationMessenger",
+    ]) {
+      expect(detail.with[relation]).toEqual({
+        columns: { id: true, name: true },
+      })
+      expect(detail.with[relation]).toEqual(list.with[relation])
+    }
+  })
 })

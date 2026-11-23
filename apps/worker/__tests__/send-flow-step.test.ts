@@ -1021,7 +1021,43 @@ describe("sendFlowStep", () => {
     )
   })
 
-  test("does not stamp an automated or API flow step", async () => {
+  test("stamps the member behind a manual flow step", async () => {
+    await sendFlowStep({
+      ...baseParams,
+      sendFrom: "inbox",
+      sentByUserId: "user-7",
+    })
+
+    expect(mockRepositoryCreate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        contentAttributes: expect.objectContaining({ sentByUserId: "user-7" }),
+      }),
+    )
+  })
+
+  test("stamps the member behind an API flow step sent with a member token", async () => {
+    await sendFlowStep({
+      ...baseParams,
+      sendFrom: "api",
+      sentByUserId: "user-7",
+    })
+
+    const [created] = mockRepositoryCreate.mock.calls[0] as [
+      { contentAttributes: Record<string, unknown> },
+    ]
+    expect(created.contentAttributes).toHaveProperty("sentByUserId", "user-7")
+  })
+
+  test("never stamps an automated flow step, even when a sender id is present", async () => {
+    await sendFlowStep({ ...baseParams, sentByUserId: "user-7" })
+
+    const [created] = mockRepositoryCreate.mock.calls[0] as [
+      { contentAttributes: Record<string, unknown> },
+    ]
+    expect(created.contentAttributes).not.toHaveProperty("sentByUserId")
+  })
+
+  test("does not mark an API flow step sentFromInbox", async () => {
     await sendFlowStep({ ...baseParams, sendFrom: "api" })
 
     const [created] = mockRepositoryCreate.mock.calls[0] as [
@@ -2352,6 +2388,19 @@ describe("sendChatMessage", () => {
       createdAt: new Date("2026-01-02T00:00:00Z"),
       updatedAt: new Date("2026-01-02T00:00:00Z"),
     })
+  })
+
+  test("never stamps a member on a chat message row", async () => {
+    await sendChatMessage({
+      conversation: fakeConversation as never,
+      contactInbox: fakeContactInbox as never,
+      text: "hello from chat",
+    })
+
+    const [created] = mockRepositoryCreate.mock.calls[0] as [
+      { contentAttributes: Record<string, unknown> },
+    ]
+    expect(created.contentAttributes).not.toHaveProperty("sentByUserId")
   })
 
   test("updates contact inbox lastMessageAt and conversation lastActivityAt after creating a chat message", async () => {

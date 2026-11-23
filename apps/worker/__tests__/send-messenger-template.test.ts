@@ -232,6 +232,32 @@ describe("processMessengerTemplate — sourceId persistence", () => {
     )
   })
 
+  test.each([
+    ["inbox", "stamps"],
+    ["api", "stamps"],
+    [undefined, "does not stamp"],
+  ] as const)("%s send %s the member on the row", async (sendFrom) => {
+    mockSendFlowStep.mockResolvedValueOnce({
+      messageIds: ["mid.XYZ"],
+      sentCount: 1,
+    })
+
+    await processMessengerTemplate({
+      conversation: CONVERSATION,
+      contactInbox: CONTACT_INBOX,
+      template: TEMPLATE,
+      sentByUserId: "user-1",
+      sendFrom,
+    } as unknown as Parameters<typeof processMessengerTemplate>[0])
+
+    const { contentAttributes } = mockMessageCreate.mock.calls[0][0]
+    if (sendFrom) {
+      expect(contentAttributes).toHaveProperty("sentByUserId", "user-1")
+    } else {
+      expect(contentAttributes).not.toHaveProperty("sentByUserId")
+    }
+  })
+
   test("persists providerMessageId to messageModel.sourceId when send succeeds", async () => {
     const PROVIDER_ID = "mid.ABC123"
     mockSendFlowStep.mockResolvedValueOnce({

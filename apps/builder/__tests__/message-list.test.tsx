@@ -87,6 +87,15 @@ vi.mock("@/hooks/routing", () => ({
   useWorkspaceId: () => "workspace-1",
 }))
 
+// The participants query and the session only feed the avatar marker; the
+// marker itself is covered by `find-latest-message-id-by-author.test.ts`.
+vi.mock("@/features/conversations/hooks/use-conversation-participants", () => ({
+  useConversationParticipants: () => ({ data: undefined }),
+}))
+vi.mock("@/lib/auth/auth-client", () => ({
+  authClient: { useSession: () => ({ data: null }) },
+}))
+
 vi.mock("@/features/chat/store/chat-store-provider", () => ({
   useChatStore: <T,>(selector: (state: typeof chatStoreState) => T) =>
     selector(chatStoreState),

@@ -322,6 +322,29 @@ describe("processWhatsappTemplate", () => {
     mockEmit.mockResolvedValue(undefined)
   })
 
+  test.each([
+    ["inbox", true],
+    ["api", true],
+    [undefined, false],
+  ] as const)("a flow template sent with sendFrom %s stamps the member: %s", async (sendFrom, stamped) => {
+    await processWhatsappTemplate({
+      conversation: fakeConversation,
+      contactInbox: fakeContactInbox,
+      template: fakeTemplate,
+      sentByUserId: "user-1",
+      sendFrom,
+    })
+
+    const [created] = mockRepositoryCreate.mock.calls[0] as [
+      { contentAttributes: Record<string, unknown> },
+    ]
+    if (stamped) {
+      expect(created.contentAttributes).toHaveProperty("sentByUserId", "user-1")
+    } else {
+      expect(created.contentAttributes).not.toHaveProperty("sentByUserId")
+    }
+  })
+
   test("calls repository.create() to insert outbound message", async () => {
     await processWhatsappTemplate({
       conversation: fakeConversation,
@@ -809,6 +832,40 @@ describe("processWhatsappTemplate", () => {
           contentAttributes: expect.objectContaining({ sentFromInbox: true }),
         }),
       )
+    })
+
+    test("a member template stamps the member on its row", async () => {
+      await sendWhatsappTemplateToConversation({
+        conversation: fakeConversation,
+        contactInbox: { ...fakeContactInbox, contactId: "contact-1" },
+        templateId: "tmpl-wa-1",
+        initiatedBy: "user",
+        adminId: "admin-1",
+        sendFrom: "api",
+      })
+
+      expect(mockRepositoryCreate).toHaveBeenCalledWith(
+        expect.objectContaining({
+          contentAttributes: expect.objectContaining({
+            sentByUserId: "admin-1",
+          }),
+        }),
+      )
+    })
+
+    test("a workspace-token template carries no member stamp", async () => {
+      await sendWhatsappTemplateToConversation({
+        conversation: fakeConversation,
+        contactInbox: { ...fakeContactInbox, contactId: "contact-1" },
+        templateId: "tmpl-wa-1",
+        initiatedBy: "api",
+        sendFrom: "api",
+      })
+
+      const [created] = mockRepositoryCreate.mock.calls[0] as [
+        { contentAttributes: Record<string, unknown> },
+      ]
+      expect(created.contentAttributes).not.toHaveProperty("sentByUserId")
     })
 
     test("an API template stamps its row sentFromInbox: false", async () => {

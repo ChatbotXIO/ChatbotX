@@ -16,6 +16,7 @@ export function useMultiSelectLabels(optionsLabel: string): MultiSelectLabels {
     clear: tActions("clear"),
     clearAllAriaLabel: () => tActions("clear"),
     removeAriaLabel: (name) => t("removeChip", { name }),
+    moreSelected: (count) => t("moreSelected", { count }),
     close: t("close"),
     selectAll: () => tActions("selectAll"),
   }

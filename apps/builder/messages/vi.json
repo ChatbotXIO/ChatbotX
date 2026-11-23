@@ -781,7 +781,8 @@
       "template": "Template",
       "integration": "Tích hợp",
       "schedule": "Lịch lặp lại",
-      "runOf": "Lần gửi của <link>{name}</link>"
+      "runOf": "Lần gửi của <link>{name}</link>",
+      "linkNotFound": "Phát sóng này không còn tồn tại."
     },
     "filters": {
       "all": "Tất cả"
@@ -8165,7 +8166,6 @@
   "templatesPublicPage": {
     "invalidTitle": "Liên kết này không còn khả dụng.",
     "invalidDescription": "Liên kết chia sẻ mẫu này không hợp lệ, đã bị vô hiệu hóa hoặc đã hết hạn.",
-    "byPublisher": "Bởi {publisherName}",
     "videoTitle": "Video xem trước mẫu",
     "preview": "Xem trước",
     "aboutTemplate": "Về mẫu này",
@@ -8624,6 +8624,10 @@
   "contactAdReferrals": {
     "title": "Lịch sử quảng cáo",
     "empty": "Chưa ghi nhận lượt click quảng cáo nào của liên hệ này."
+  },
+  "contactBroadcasts": {
+    "empty": "Chưa có broadcast nào được gửi tới liên hệ này.",
+    "searchPlaceholder": "Tìm theo tên hoặc ID"
   },
   "adsReferralStats": {
     "title": "Liên hệ theo quảng cáo",
@@ -12200,6 +12204,7 @@
     "categoriesPlaceholder": "Không có danh mục",
     "close": "Đóng",
     "removeChip": "Bỏ {name}",
+    "moreSelected": "+ {count} mục khác",
     "categoriesHint": "Tuỳ chọn. Không chọn danh mục thì mẫu chỉ hiện ở mục “Tất cả”.",
     "languages": "Ngôn ngữ",
     "allLanguages": "Tất cả ngôn ngữ",
@@ -12256,7 +12261,6 @@
       "categories": "Danh mục cửa hàng",
       "noResults": "Không có template nào khớp với bộ lọc của bạn.",
       "clearSearch": "Xóa bộ lọc",
-      "by": "Bởi {publisherName}",
       "loadFailed": "Không thể tải các mẫu. Vui lòng thử lại sau.",
       "language": "Ngôn ngữ",
       "allLanguages": "Tất cả ngôn ngữ",
@@ -12450,5 +12454,14 @@
       "onAhachat": "Có trên AhaChat",
       "selected": "Dùng dữ liệu AhaChat"
     }
+  },
+  "conversationParticipants": {
+    "joined": "{names} đã tham gia hội thoại",
+    "replied": "{name} đã trả lời {time}",
+    "showMore": "Xem thêm",
+    "label": "Ai đã trả lời trong hội thoại này",
+    "unnamedMember": "Thành viên",
+    "loadMoreFailed": "Không thể tải thêm thành viên",
+    "lastMessageBy": "Tin nhắn cuối của {name}"
   }
 }

@@ -61,7 +61,6 @@ export function HomeTemplatesPanel({
         categories={catalog.categories}
         layout="embedded"
         templates={catalog.templates}
-        tenantName={catalog.tenantName}
         viewerLocale={catalog.viewerLocale}
       />
     )

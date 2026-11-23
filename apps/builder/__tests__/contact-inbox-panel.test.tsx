@@ -155,6 +155,16 @@ vi.mock("@/features/contacts/components/update-contact-tag-field", () => ({
   default: () => null,
 }))
 
+const broadcastsListProps = vi.hoisted(() => ({
+  current: null as null | Record<string, unknown>,
+}))
+vi.mock("@/features/contacts/components/contact-broadcasts-list", () => ({
+  ContactBroadcastsList: (props: Record<string, unknown>) => {
+    broadcastsListProps.current = props
+    return <div data-testid="broadcasts-section" />
+  },
+}))
+
 vi.mock("@/features/contact-sequences/update-contact-sequence-field", () => ({
   default: () => null,
 }))
@@ -264,6 +274,7 @@ describe("ContactInboxPanel", () => {
     appointmentsMock.mockClear()
     sequencesMock.mockClear()
     latestAccordionOnValueChange = undefined
+    broadcastsListProps.current = null
     threadControlView.current = null
     seededContact = undefined
     latestConversations = [firstConversation, secondConversation]
@@ -278,12 +289,16 @@ describe("ContactInboxPanel", () => {
     queryClient.clear()
   })
 
-  const render = (activeConversationId = "conv-1") => {
+  const render = (
+    activeConversationId = "conv-1",
+    canOpenBroadcasts?: boolean,
+  ) => {
     act(() => {
       root.render(
         <QueryClientProvider client={queryClient}>
           <ContactInboxPanel
             activeConversationId={activeConversationId}
+            canOpenBroadcasts={canOpenBroadcasts}
             workspaceId="ws-1"
           />
         </QueryClientProvider>,
@@ -395,6 +410,91 @@ describe("ContactInboxPanel", () => {
     expect(
       container.querySelector('[data-testid="contact-detail"]')?.textContent,
     ).toBe("Patched Jane")
+  })
+
+  test("lists the sections with ads history and appointments first, and Broadcasts right before Sequences", () => {
+    seededContact = makeContact("contact-1", "Jane")
+
+    render()
+
+    // The accordion mock renders every trigger; the titles echo their keys.
+    const order = [
+      "contactAdReferrals.title",
+      "appointments.title",
+      "coupons.title",
+      "fields.tags.label",
+      "fields.pipelines.label",
+      "broadcasts.title",
+      "sequences.title",
+    ]
+    const text = container.textContent ?? ""
+    const positions = order.map((title) => text.indexOf(title))
+
+    expect(positions.every((position) => position >= 0)).toBe(true)
+    expect(positions).toEqual([...positions].sort((a, b) => a - b))
+  })
+
+  test("does not mount the broadcasts section before its accordion item opens", () => {
+    seededContact = makeContact("contact-1", "Jane")
+
+    render()
+
+    expect(broadcastsListProps.current).toBeNull()
+  })
+
+  test("mounts the broadcasts section for the contact once opened, linking only for a member who may open Broadcasts", () => {
+    seededContact = makeContact("contact-1", "Jane")
+
+    render("conv-1", true)
+    act(() => {
+      latestAccordionOnValueChange?.(["broadcasts.title"])
+    })
+
+    expect(
+      container.querySelector('[data-testid="broadcasts-section"]'),
+    ).not.toBeNull()
+    expect(broadcastsListProps.current).toEqual({
+      canOpenBroadcast: true,
+      contactId: "contact-1",
+      workspaceId: "ws-1",
+    })
+  })
+
+  test("another contact's broadcasts replace the previous contact's: the section closes and reopens for the new one", () => {
+    seededContact = makeContact("contact-1", "Jane")
+    render("conv-1", true)
+    act(() => {
+      latestAccordionOnValueChange?.(["broadcasts.title"])
+    })
+    expect(broadcastsListProps.current).toMatchObject({
+      contactId: "contact-1",
+    })
+
+    seededContact = makeContact("contact-2", "John")
+    render("conv-2", true)
+
+    expect(
+      container.querySelector('[data-testid="broadcasts-section"]'),
+    ).toBeNull()
+    act(() => {
+      latestAccordionOnValueChange?.(["broadcasts.title"])
+    })
+    expect(broadcastsListProps.current).toMatchObject({
+      contactId: "contact-2",
+    })
+  })
+
+  test("does not link broadcasts unless the member may open the Broadcasts section", () => {
+    seededContact = makeContact("contact-1", "Jane")
+
+    render()
+    act(() => {
+      latestAccordionOnValueChange?.(["broadcasts.title"])
+    })
+
+    expect(broadcastsListProps.current).toMatchObject({
+      canOpenBroadcast: false,
+    })
   })
 
   test("does not mount or query the coupons/appointments/sequences sections before any accordion item opens", () => {

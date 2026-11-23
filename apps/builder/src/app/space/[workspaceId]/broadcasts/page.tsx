@@ -4,6 +4,7 @@ import { notFound } from "next/navigation"
 import type { SearchParams } from "nuqs/server"
 import { Suspense } from "react"
 import { BroadcastsTable } from "@/features/broadcasts/broadcasts-table"
+import { BroadcastDeepLink } from "@/features/broadcasts/components/broadcast-deep-link"
 import { BroadcastsCalendar } from "@/features/broadcasts/components/broadcasts-calendar"
 import { BroadcastsListShell } from "@/features/broadcasts/components/broadcasts-list-shell"
 import { BROADCASTS_PANEL_COOKIE } from "@/features/broadcasts/lib/broadcast-status"
@@ -12,6 +13,7 @@ import {
   resolveEndDateParam,
 } from "@/features/broadcasts/lib/calendar-grid"
 import { listBroadcasts } from "@/features/broadcasts/queries"
+import { findDeepLinkedBroadcast } from "@/features/broadcasts/queries/find-deep-linked-broadcast"
 import { listBroadcastsForCalendar } from "@/features/broadcasts/queries/list-broadcasts-for-calendar"
 import { getBroadcastsSearchParamsCache } from "@/features/broadcasts/schema/query"
 import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
@@ -30,6 +32,13 @@ export default async function BroadcastsPage(props: {
   const panelOpen =
     (await cookies()).get(BROADCASTS_PANEL_COOKIE)?.value !== "false"
   const filtered = Boolean(search.name || search.status || search.kind)
+  const { broadcastId, ...listSearch } = search
+  const deepLink = broadcastId ? (
+    <BroadcastDeepLink
+      broadcast={await findDeepLinkedBroadcast({ workspaceId, broadcastId })}
+      broadcastId={broadcastId}
+    />
+  ) : null
 
   if (search.view === "calendar") {
     const timezone = await getUserTimezone()
@@ -53,18 +62,20 @@ export default async function BroadcastsPage(props: {
           endDate={calendarEndDate}
           range={search.range}
         />
+        {deepLink}
       </BroadcastsListShell>
     )
   }
 
   await assertCurrentUserCanAccessChatbot(workspaceId)
 
-  const promises = Promise.all([listBroadcasts({ ...search, workspaceId })])
+  const promises = Promise.all([listBroadcasts({ ...listSearch, workspaceId })])
   return (
     <BroadcastsListShell defaultPanelOpen={panelOpen}>
       <Suspense>
         <BroadcastsTable filtered={filtered} promises={promises} />
       </Suspense>
+      {deepLink}
     </BroadcastsListShell>
   )
 }

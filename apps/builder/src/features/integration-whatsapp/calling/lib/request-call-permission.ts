@@ -63,7 +63,7 @@ export async function requestWhatsappCallPermission(props: {
    * who names the sender must never get the request sent from a different one.
    */
   requireRequestedInbox?: boolean
-  user?: UserModel
+  user?: Pick<UserModel, "id">
   messages: CallPermissionMessages
   /** `inbox` from the builder's Inbox, `api` from the Public API (see `SendFrom`). */
   sendFrom: SendFrom

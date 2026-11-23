@@ -739,7 +739,8 @@
       "template": "Şablon",
       "integration": "Entegrasyon",
       "schedule": "Tekrar programı",
-      "runOf": "<link>{name}</link> çalıştırması"
+      "runOf": "<link>{name}</link> çalıştırması",
+      "linkNotFound": "Bu toplu gönderim artık mevcut değil."
     },
     "filters": {
       "all": "All"
@@ -7911,7 +7912,6 @@
   "templatesPublicPage": {
     "invalidTitle": "Bu bağlantı artık kullanılamıyor.",
     "invalidDescription": "Bu şablon paylaşım bağlantısı geçersiz, devre dışı bırakılmış veya süresi dolmuş.",
-    "byPublisher": "{publisherName} tarafından",
     "videoTitle": "Şablon önizleme videosu",
     "preview": "Önizleme",
     "aboutTemplate": "Bu şablon hakkında",
@@ -8269,6 +8269,10 @@
   "contactAdReferrals": {
     "title": "Reklam geçmişi",
     "empty": "Bu kişi için henüz reklam tıklaması kaydedilmedi."
+  },
+  "contactBroadcasts": {
+    "empty": "Bu kişiye henüz toplu gönderim yapılmadı.",
+    "searchPlaceholder": "Ada veya ID’ye göre ara"
   },
   "adsReferralStats": {
     "title": "Reklama göre kişiler",
@@ -12184,6 +12188,7 @@
     "categoriesPlaceholder": "Kategori yok",
     "close": "Kapat",
     "removeChip": "{name} kaldır",
+    "moreSelected": "+ {count} daha",
     "categoriesHint": "İsteğe bağlı. Kategori yoksa şablon yalnızca “Tümü” altında görünür.",
     "languages": "Diller",
     "allLanguages": "Tüm diller",
@@ -12240,7 +12245,6 @@
       "categories": "Mağaza kategorileri",
       "noResults": "Filtrelerinizle eşleşen şablon yok.",
       "clearSearch": "Filtreleri temizle",
-      "by": "Yayıncı: {publisherName}",
       "loadFailed": "Şablonlar yüklenemedi. Lütfen daha sonra tekrar deneyin.",
       "language": "Dil",
       "allLanguages": "Tüm diller",
@@ -12450,5 +12454,14 @@
       "onAhachat": "On AhaChat",
       "selected": "Uses AhaChat data"
     }
+  },
+  "conversationParticipants": {
+    "joined": "{names} görüşmeye katıldı",
+    "replied": "{name} yanıt verdi {time}",
+    "showMore": "Daha fazla göster",
+    "label": "Bu görüşmede kimler yanıt verdi",
+    "unnamedMember": "Üye",
+    "loadMoreFailed": "Daha fazla üye yüklenemedi",
+    "lastMessageBy": "{name} tarafından son mesaj"
   }
 }

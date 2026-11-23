@@ -739,7 +739,8 @@
       "template": "Sjabloon",
       "integration": "Integratie",
       "schedule": "Herhaalschema",
-      "runOf": "Uitvoering van <link>{name}</link>"
+      "runOf": "Uitvoering van <link>{name}</link>",
+      "linkNotFound": "Deze broadcast bestaat niet meer."
     },
     "filters": {
       "all": "All"
@@ -7911,7 +7912,6 @@
   "templatesPublicPage": {
     "invalidTitle": "Deze link is niet meer beschikbaar.",
     "invalidDescription": "Deze sjabloon-deellink is ongeldig, uitgeschakeld of verlopen.",
-    "byPublisher": "Door {publisherName}",
     "videoTitle": "Sjabloon-voorbeeldvideo",
     "preview": "Voorbeeld",
     "aboutTemplate": "Over deze sjabloon",
@@ -8269,6 +8269,10 @@
   "contactAdReferrals": {
     "title": "Advertentiegeschiedenis",
     "empty": "Voor dit contact zijn nog geen advertentieklikken geregistreerd."
+  },
+  "contactBroadcasts": {
+    "empty": "Er is nog geen broadcast naar dit contact verzonden.",
+    "searchPlaceholder": "Zoeken op naam of ID"
   },
   "adsReferralStats": {
     "title": "Contacten per advertentie",
@@ -12184,6 +12188,7 @@
     "categoriesPlaceholder": "Geen categorie",
     "close": "Sluiten",
     "removeChip": "{name} verwijderen",
+    "moreSelected": "+ {count} meer",
     "categoriesHint": "Optioneel. Zonder categorie verschijnt de template alleen onder “Alle”.",
     "languages": "Talen",
     "allLanguages": "Alle talen",
@@ -12240,7 +12245,6 @@
       "categories": "Winkelcategorieën",
       "noResults": "Geen sjablonen komen overeen met je filters.",
       "clearSearch": "Filters wissen",
-      "by": "Door {publisherName}",
       "loadFailed": "De templates konden niet worden geladen. Probeer het later opnieuw.",
       "language": "Taal",
       "allLanguages": "Alle talen",
@@ -12450,5 +12454,14 @@
       "onAhachat": "On AhaChat",
       "selected": "Uses AhaChat data"
     }
+  },
+  "conversationParticipants": {
+    "joined": "{names} hebben deelgenomen aan het gesprek",
+    "replied": "{name} heeft geantwoord {time}",
+    "showMore": "Meer weergeven",
+    "label": "Wie heeft geantwoord in dit gesprek",
+    "unnamedMember": "Lid",
+    "loadMoreFailed": "Kan geen leden meer laden",
+    "lastMessageBy": "Laatste bericht van {name}"
   }
 }

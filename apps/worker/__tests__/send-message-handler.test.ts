@@ -57,6 +57,7 @@ const {
 })
 
 const mockSettleEvent = vi.fn().mockResolvedValue(undefined)
+const mockRecordParticipantReply = vi.fn().mockResolvedValue(undefined)
 const mockHardDelete = vi.hoisted(() =>
   vi.fn().mockResolvedValue([{ id: "removed" }]),
 )
@@ -77,6 +78,7 @@ vi.mock("@chatbotx.io/business", () => ({
     recordSendFailure: mockRecordSendFailure,
   },
   contactService: { unblockIfBlocked: mockContactUnblockIfBlocked },
+  conversationParticipantService: { recordReply: mockRecordParticipantReply },
   conversationService: {
     findBy: mockFindConversation,
     findEmailReplyParent: mockFindEmailReplyParent,
@@ -908,6 +910,120 @@ describe("chat send-message handlers", () => {
       expect(humanSentCalls()).toHaveLength(0)
     })
 
+    test("records the member as a participant at the message time", async () => {
+      await sendMessageToChannel({
+        conversation: conversation as never,
+        contactInbox: contactInbox as never,
+        message: outgoing({}),
+      })
+
+      expect(mockRecordParticipantReply).toHaveBeenCalledExactlyOnceWith({
+        workspaceId: "ws-1",
+        conversationId: "conv-1",
+        userId: "admin-1",
+        at: new Date("2026-07-09T08:37:21.108Z"),
+      })
+    })
+
+    test("a private reply records the participant against the message's own conversation", async () => {
+      await sendMessageToChannel({
+        conversation: conversation as never,
+        contactInbox: contactInbox as never,
+        message: outgoing({ conversationId: "dm-conv-9" }),
+      })
+
+      expect(mockRecordParticipantReply).toHaveBeenCalledWith(
+        expect.objectContaining({ conversationId: "dm-conv-9" }),
+      )
+    })
+
+    test.each([
+      "api",
+      "system",
+      "contact",
+    ] as const)("records no participant for a %s sender", async (senderType) => {
+      await sendMessageToChannel({
+        conversation: conversation as never,
+        contactInbox: contactInbox as never,
+        message: outgoing({ senderType }),
+      })
+
+      expect(mockRecordParticipantReply).not.toHaveBeenCalled()
+    })
+
+    test("records no participant for a user message without a sender id", async () => {
+      await sendMessageToChannel({
+        conversation: conversation as never,
+        contactInbox: contactInbox as never,
+        message: outgoing({ senderId: null }),
+      })
+
+      expect(mockRecordParticipantReply).not.toHaveBeenCalled()
+    })
+
+    test("records no participant when the channel send fails", async () => {
+      mockRunChannelHandler.mockRejectedValueOnce(new Error("channel down"))
+
+      await sendMessageToChannel({
+        conversation: conversation as never,
+        contactInbox: contactInbox as never,
+        message: outgoing({}),
+      }).catch(() => undefined)
+
+      expect(mockRecordParticipantReply).not.toHaveBeenCalled()
+    })
+
+    test("still emits the human-sent analytics when recording the participant rejects", async () => {
+      mockRecordParticipantReply.mockRejectedValueOnce(new Error("db down"))
+
+      await expect(
+        sendMessageToChannel({
+          conversation: conversation as never,
+          contactInbox: contactInbox as never,
+          message: outgoing({}),
+        }),
+      ).resolves.toEqual(expect.objectContaining({ sentCount: 1 }))
+
+      expect(humanSentCalls()).toHaveLength(1)
+    })
+
+    test("records the participant even when the human-sent analytics emit rejects", async () => {
+      mockEmit.mockImplementation((type: string) =>
+        type === "analytics:dashboard"
+          ? Promise.reject(new Error("redis unavailable"))
+          : Promise.resolve(undefined),
+      )
+
+      await expect(
+        sendMessageToChannel({
+          conversation: conversation as never,
+          contactInbox: contactInbox as never,
+          message: outgoing({}),
+        }),
+      ).resolves.toEqual(expect.objectContaining({ sentCount: 1 }))
+
+      expect(humanSentCalls().length).toBeGreaterThan(0)
+      expect(mockRecordParticipantReply).toHaveBeenCalledOnce()
+      mockEmit.mockReset()
+    })
+
+    test("a re-run of the same message records the same participant time", async () => {
+      const message = outgoing({})
+      await sendMessageToChannel({
+        conversation: conversation as never,
+        contactInbox: contactInbox as never,
+        message,
+      })
+      await sendMessageToChannel({
+        conversation: conversation as never,
+        contactInbox: contactInbox as never,
+        message,
+      })
+
+      const [first, second] = mockRecordParticipantReply.mock.calls
+      expect(first).toEqual(second)
+    })
+
     test("emits nothing for a user message without a sender id", async () => {
       await sendMessageToChannel({
         conversation: conversation as never,
@@ -1264,6 +1380,13 @@ describe("chat send-message handlers", () => {
     expect(withoutId).toMatchObject({ adminId: "admin-1", occurredAt: sentAt })
     expect(withoutId).not.toHaveProperty("eventId")
     expect(mockEmit.mock.calls.filter(isBotSentDashboardCall)).toHaveLength(0)
+    expect(mockRecordParticipantReply).toHaveBeenCalledTimes(2)
+    expect(mockRecordParticipantReply).toHaveBeenCalledWith({
+      workspaceId: conversation.workspaceId,
+      conversationId: conversation.id,
+      userId: "admin-1",
+      at: sentAt,
+    })
   })
 
   test("emits flow-step bot events using supplied trigger metadata", async () => {
