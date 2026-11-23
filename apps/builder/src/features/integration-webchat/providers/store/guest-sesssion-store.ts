@@ -59,8 +59,9 @@ export type GuestSessionActions = {
   sendPostback: (button: MessageButtonTemplate) => Promise<void>
   setIsTyping: (isTyping: boolean) => void
   /**
-   * Shows the typing bubble the moment the guest sends something, before the
-   * server's own typing event arrives, so the bot feels responsive. It hides
+   * Shows the typing bubble `OPTIMISTIC_TYPING_DELAY_MS` after the guest sends
+   * something, before the server's own typing event arrives, so the bot feels
+   * responsive. A reply within that delay skips the bubble entirely. It hides
    * itself after `OPTIMISTIC_TYPING_TIMEOUT_MS` when no reply comes (e.g. no
    * flow matched), and any reply or server typing event takes over.
    */
@@ -71,6 +72,7 @@ export type GuestSessionActions = {
 
 export type GuestSessionStore = GuestSessionState & GuestSessionActions
 
+export const OPTIMISTIC_TYPING_DELAY_MS = 1000
 export const OPTIMISTIC_TYPING_TIMEOUT_MS = 15_000
 
 export const createGuestSessionStore = (
@@ -345,11 +347,15 @@ export const createGuestSessionStore = (
 
     showOptimisticTyping: () => {
       clearTypingTimeout()
-      set({ isTyping: true })
+      // One timer slot holds whichever step is pending (the show delay, then
+      // the hide fallback), so a reply or failure cancels either step.
       typingTimeout = setTimeout(() => {
-        typingTimeout = null
-        set({ isTyping: false })
-      }, OPTIMISTIC_TYPING_TIMEOUT_MS)
+        set({ isTyping: true })
+        typingTimeout = setTimeout(() => {
+          typingTimeout = null
+          set({ isTyping: false })
+        }, OPTIMISTIC_TYPING_TIMEOUT_MS)
+      }, OPTIMISTIC_TYPING_DELAY_MS)
     },
   }))
 }

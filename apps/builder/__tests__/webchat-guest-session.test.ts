@@ -14,6 +14,7 @@ import {
 } from "@/features/integration-webchat/lib/webchat-access-token"
 import {
   createGuestSessionStore,
+  OPTIMISTIC_TYPING_DELAY_MS,
   OPTIMISTIC_TYPING_TIMEOUT_MS,
 } from "@/features/integration-webchat/providers/store/guest-sesssion-store"
 import {
@@ -144,13 +145,30 @@ describe("webchat guest session store", () => {
       vi.useRealTimers()
     })
 
-    test("shows the typing bubble at once and hides it when no reply comes", () => {
+    test("shows the typing bubble after the delay and hides it when no reply comes", () => {
       const store = createGuestSessionStore(createWebchatConfig())
 
       store.getState().showOptimisticTyping()
+      expect(store.getState().isTyping).toBe(false)
+
+      vi.advanceTimersByTime(OPTIMISTIC_TYPING_DELAY_MS - 1)
+      expect(store.getState().isTyping).toBe(false)
+
+      vi.advanceTimersByTime(1)
       expect(store.getState().isTyping).toBe(true)
 
       vi.advanceTimersByTime(OPTIMISTIC_TYPING_TIMEOUT_MS)
+      expect(store.getState().isTyping).toBe(false)
+    })
+
+    test("a reply within the delay never shows the typing bubble", () => {
+      const store = createGuestSessionStore(createWebchatConfig())
+
+      store.getState().showOptimisticTyping()
+      vi.advanceTimersByTime(OPTIMISTIC_TYPING_DELAY_MS / 2)
+      store.getState().setIsTyping(false)
+
+      vi.advanceTimersByTime(OPTIMISTIC_TYPING_DELAY_MS)
       expect(store.getState().isTyping).toBe(false)
     })
 
@@ -158,6 +176,7 @@ describe("webchat guest session store", () => {
       const store = createGuestSessionStore(createWebchatConfig())
 
       store.getState().showOptimisticTyping()
+      vi.advanceTimersByTime(OPTIMISTIC_TYPING_DELAY_MS)
       store.getState().setIsTyping(false)
       store.getState().setIsTyping(true)
 
@@ -170,6 +189,7 @@ describe("webchat guest session store", () => {
 
       store.getState().sendMessage("hello", "client-1")
       store.getState().showOptimisticTyping()
+      vi.advanceTimersByTime(OPTIMISTIC_TYPING_DELAY_MS)
       store.getState().markMessageFailed("client-1", "boom")
 
       expect(store.getState().isTyping).toBe(false)
