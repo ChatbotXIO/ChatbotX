@@ -14,7 +14,8 @@ receiveMessage (integration worker)
     → deviceTokenService.findByUserIds
     → buildNotificationContent (localized title/body)
     → expo.sendPushNotificationsAsync
-    → prune stale/invalid tokens
+    → log every error ticket, prune stale/invalid tokens
+    → enqueue delayed checkPushReceipts (ok ticket ids → tokens)
 ```
 
 Conversation assignment (`conversationService.updateAssignment`) enqueues
@@ -35,6 +36,23 @@ See `docs/request-workflow.md` for the sequence diagram.
   `details.error === "DeviceNotRegistered"`, or a token fails
   `Expo.isExpoPushToken` format validation, it is deleted via
   `deviceTokenService.deleteByTokens`.
+
+## Delivery visibility (tickets and receipts)
+
+A ticket only means Expo *accepted* the push. Real delivery failures (APNs/FCM
+rejection) arrive in receipts.
+
+- **Ticket errors** — every `status: "error"` ticket is logged at warn as
+  `Expo push ticket error` with `expoError`, `expoMessage` and the token's last
+  6 chars. `DeviceNotRegistered` still prunes the token; others (e.g.
+  `MessageRateExceeded`) only log.
+- **Receipts** — ids of `ok` tickets (with their tokens) are enqueued as a
+  `checkPushReceipts` job on the `notification` queue, delayed 15 min
+  (`PUSH_RECEIPT_DELAY_MS`), `attempts: 1`. The handler
+  (`handlers/check-push-receipts.ts`) fetches receipts in chunks, logs error
+  receipts as `Expo push receipt error` (`InvalidCredentials` = no APNs key in
+  EAS for the bundle id) and prunes `DeviceNotRegistered` tokens. It runs
+  outside `withBlockedOwnerGuard` because it spans workspaces. Idempotent.
 
 ## Recipient resolution
 

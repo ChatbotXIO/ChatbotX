@@ -38,6 +38,12 @@ vi.mock("@chatbotx.io/business", () => ({
   workspaceService: { find: async () => ({ language: "vi" }) },
 }))
 
+vi.mock("@chatbotx.io/worker-config", () => ({
+  NotificationJobAction: { checkPushReceipts: "checkPushReceipts" },
+  PUSH_RECEIPT_DELAY_MS: 900_000,
+  notificationQueue: { add: vi.fn() },
+}))
+
 vi.mock("../../src/lib/logger", () => ({
   logger: { warn: vi.fn(), info: vi.fn() },
 }))
