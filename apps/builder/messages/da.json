@@ -12237,18 +12237,18 @@
       "categoryLimit": "En butik kan højst have {categoryLimit} kategorier."
     },
     "store": {
-      "subtitle": "Færdige skabeloner, du installerer med ét klik.",
       "pageTitle": "{tenantName} – Skabelonbutik",
       "empty": "Ingen skabeloner i butikken endnu.",
       "search": "Søg efter skabeloner",
-      "all": "Alle",
-      "categories": "Butikkens kategorier",
       "noResults": "Ingen skabeloner matcher dine filtre.",
       "clearSearch": "Ryd filtre",
       "loadFailed": "Skabelonerne kunne ikke indlæses. Prøv igen senere.",
-      "language": "Sprog",
+      "languageValue": "Sprog: {language}",
       "allLanguages": "Alle sprog",
-      "otherLanguages": "Andre sprog"
+      "otherLanguages": "Andre sprog",
+      "allChannels": "Alle kanaler",
+      "channel": "Kanal",
+      "uncategorized": "Andre"
     },
     "picker": {
       "placeholder": "Vælg en skabelon",
@@ -12266,8 +12266,12 @@
       "updated": "De valgte skabeloner er opdateret",
       "removeTitle": "Fjern de valgte skabeloner?",
       "removeDescription": "Valgt: {count}. De forsvinder fra butikken; selve skabelonerne og deres installationer påvirkes ikke.",
-      "removed": "De valgte skabeloner er fjernet fra butikken"
-    }
+      "removed": "De valgte skabeloner er fjernet fra butikken",
+      "setChannels": "Angiv kanaler",
+      "channelsHint": "Erstatter kanalerne for de valgte skabeloner ({count}). Lad feltet stå tomt for alle kanaler."
+    },
+    "channels": "Kanaler",
+    "channelsHint": "Valgfrit. Lad feltet stå tomt, hvis skabelonen fungerer på alle kanaler. Vises som ikoner i butikken, hvor besøgende kan filtrere efter kanal."
   },
   "accountDeletion": {
     "title": "Delete account",

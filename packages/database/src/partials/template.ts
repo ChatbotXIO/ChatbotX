@@ -1,4 +1,44 @@
+import { CHANNEL_CAPABILITIES, channelTypes } from "@chatbotx.io/utils/channel"
 import { z } from "zod"
+
+/**
+ * The channels a template can declare support for: every channel type except
+ * `omnichannel`, which is only the icon fallback for unknown channel strings,
+ * not a channel anything connects to. `api` is an integration channel and is
+ * allowed.
+ */
+export const templateChannelTypes = channelTypes.exclude(["omnichannel"])
+export type TemplateChannel = z.infer<typeof templateChannelTypes>
+
+/**
+ * A stored channel the product no longer lists (a value removed from
+ * `templateChannelTypes`) is dropped on read, so every consumer sees valid
+ * channels only. Order is kept.
+ */
+export const knownTemplateChannels = (
+  channels: readonly string[],
+): TemplateChannel[] =>
+  channels.filter(
+    (channel): channel is TemplateChannel =>
+      templateChannelTypes.safeParse(channel).success,
+  )
+
+/** Every template channel in the fixed product order of `CHANNEL_CAPABILITIES`. One source for icons, tabs and the form. */
+export const orderedTemplateChannels: readonly TemplateChannel[] = [
+  ...templateChannelTypes.options,
+].sort((a, b) => CHANNEL_CAPABILITIES[a].order - CHANNEL_CAPABILITIES[b].order)
+
+/**
+ * The channels a template supports: deduped and kept in
+ * `orderedTemplateChannels` order so icons and tabs render identically
+ * wherever they are shown. Empty = every channel.
+ */
+export const templateChannelsSchema = z
+  .array(templateChannelTypes)
+  .transform((channels) => {
+    const selected = new Set(channels)
+    return orderedTemplateChannels.filter((channel) => selected.has(channel))
+  })
 
 /**
  * Every resource category a Template can bundle. Kept as a single source of

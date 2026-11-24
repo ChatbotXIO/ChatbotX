@@ -1,3 +1,7 @@
+import {
+  type TemplateChannel,
+  templateChannelsSchema,
+} from "@chatbotx.io/database/partials"
 import { isLocale, type Locale } from "@chatbotx.io/utils/ui-locale"
 import { validationException } from "../errors"
 
@@ -43,4 +47,15 @@ export const normalizeListingLanguages = (
     throw validationException("languages", "Unknown language")
   }
   return valid
+}
+
+/** De-duplicates, checks every value against the template channels and puts them in the fixed channel order. */
+export const normalizeListingChannels = (
+  input: readonly string[],
+): TemplateChannel[] => {
+  const parsed = templateChannelsSchema.safeParse(input)
+  if (!parsed.success) {
+    throw validationException("channels", "Unknown channel")
+  }
+  return parsed.data
 }

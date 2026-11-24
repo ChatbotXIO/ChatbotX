@@ -12237,18 +12237,18 @@
       "categoryLimit": "一个商店最多可有 {categoryLimit} 个分类。"
     },
     "store": {
-      "subtitle": "可一键安装的现成模板。",
       "pageTitle": "{tenantName} – 模板商店",
       "empty": "商店里还没有模板。",
       "search": "搜索模板",
-      "all": "全部",
-      "categories": "商店分类",
       "noResults": "没有符合筛选条件的模板。",
       "clearSearch": "清除筛选",
       "loadFailed": "无法加载模板。请稍后再试。",
-      "language": "语言",
+      "languageValue": "语言：{language}",
       "allLanguages": "所有语言",
-      "otherLanguages": "其他语言"
+      "otherLanguages": "其他语言",
+      "allChannels": "所有频道",
+      "channel": "频道",
+      "uncategorized": "其他"
     },
     "picker": {
       "placeholder": "选择模板",
@@ -12266,8 +12266,12 @@
       "updated": "已更新所选模板",
       "removeTitle": "移除所选模板？",
       "removeDescription": "已选：{count}。它们将从商店消失；模板本身及其安装不受影响。",
-      "removed": "已从商店移除所选模板"
-    }
+      "removed": "已从商店移除所选模板",
+      "setChannels": "设置频道",
+      "channelsHint": "替换所选模板（{count}）的频道。留空表示所有频道。"
+    },
+    "channels": "频道",
+    "channelsHint": "可选。如果模板适用于所有频道，请留空。在商店中显示为图标，访客可按频道筛选。"
   },
   "accountDeletion": {
     "title": "Delete account",

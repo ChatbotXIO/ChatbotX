@@ -1,3 +1,4 @@
+import { templateChannelTypes } from "@chatbotx.io/database/partials"
 import { zodBigintAsString, zodBigintIdAsString } from "@chatbotx.io/utils"
 import { locales } from "@chatbotx.io/utils/ui-locale"
 import { z } from "zod"
@@ -15,6 +16,11 @@ export const listTemplateStorePublicRequest = z.object({
     .optional()
     .describe(
       "Only templates made for this UI language, plus those not tied to a language. Same codes as `languages` on each template.",
+    ),
+  channel: templateChannelTypes
+    .optional()
+    .describe(
+      "Only templates that support this channel, plus those with no channel set (they support every channel). Same values as `channels` on each template.",
     ),
   keyword: z
     .string()
@@ -44,6 +50,11 @@ const storeTemplateResource = z.object({
     .array(z.enum(locales))
     .describe(
       "UI language codes the template is made for; empty when it suits every language.",
+    ),
+  channels: z
+    .array(templateChannelTypes)
+    .describe(
+      "Channels the template supports, in display order; empty when it works on every channel.",
     ),
   shareToken: z
     .string()

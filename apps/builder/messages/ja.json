@@ -12237,18 +12237,18 @@
       "categoryLimit": "ストアのカテゴリは最大{categoryLimit}個です。"
     },
     "store": {
-      "subtitle": "ワンクリックでインストールできる既製のテンプレート。",
       "pageTitle": "{tenantName} – テンプレートストア",
       "empty": "ストアにはまだテンプレートがありません。",
       "search": "テンプレートを検索",
-      "all": "すべて",
-      "categories": "ストアのカテゴリ",
       "noResults": "フィルターに一致するテンプレートがありません。",
       "clearSearch": "フィルターをクリア",
       "loadFailed": "テンプレートを読み込めませんでした。しばらくしてからもう一度お試しください。",
-      "language": "言語",
+      "languageValue": "言語：{language}",
       "allLanguages": "すべての言語",
-      "otherLanguages": "その他の言語"
+      "otherLanguages": "その他の言語",
+      "allChannels": "すべてのチャネル",
+      "channel": "チャネル",
+      "uncategorized": "その他"
     },
     "picker": {
       "placeholder": "テンプレートを選択",
@@ -12266,8 +12266,12 @@
       "updated": "選択したテンプレートを更新しました",
       "removeTitle": "選択したテンプレートを削除しますか？",
       "removeDescription": "選択数：{count}。ストアから消えます。テンプレート自体とそのインストールには影響しません。",
-      "removed": "選択したテンプレートをストアから削除しました"
-    }
+      "removed": "選択したテンプレートをストアから削除しました",
+      "setChannels": "チャネルを設定",
+      "channelsHint": "選択したテンプレート（{count}）のチャネルを置き換えます。空にするとすべてのチャネルになります。"
+    },
+    "channels": "チャネル",
+    "channelsHint": "任意。すべてのチャネルで動作するテンプレートの場合は空のままにしてください。ストアにアイコンとして表示され、訪問者はチャネルで絞り込めます。"
   },
   "accountDeletion": {
     "title": "Delete account",

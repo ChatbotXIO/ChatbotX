@@ -1,5 +1,6 @@
 "use client"
 
+import { knownTemplateChannels } from "@chatbotx.io/database/partials"
 import { Button } from "@chatbotx.io/ui/components/ui/button"
 import {
   Dialog,
@@ -17,13 +18,17 @@ import {
   DropdownMenuTrigger,
 } from "@chatbotx.io/ui/components/ui/dropdown-menu"
 import { Label } from "@chatbotx.io/ui/components/ui/label"
-import { MultiSelect } from "@chatbotx.io/ui/components/ui/sersavan/multi-select"
+import {
+  MultiSelect,
+  type MultiSelectOption,
+} from "@chatbotx.io/ui/components/ui/sersavan/multi-select"
 import { isLocale, locales } from "@chatbotx.io/utils/ui-locale"
 import {
   ChevronDownIcon,
   FolderIcon,
   LanguagesIcon,
   PencilIcon,
+  RadioTowerIcon,
   Trash2Icon,
 } from "lucide-react"
 import { useTranslations } from "next-intl"
@@ -37,6 +42,7 @@ import {
   removeTemplateStoreListingsAction,
   updateTemplateStoreListingsAction,
 } from "../template-store.action"
+import { useChannelOptions } from "../use-channel-options"
 import { useMultiSelectLabels } from "../use-multi-select-labels"
 import { useTemplateStoreOutcome } from "../use-template-store-outcome"
 
@@ -49,18 +55,20 @@ export const clearSelectionWhenStale =
   }
 
 /** What a bulk dialog sets on every selected listing. */
-type BulkListingField = "categories" | "languages"
+type BulkListingField = "categories" | "languages" | "channels"
 
 /** The update each field sends; the other field is left out, so it is kept. */
 const BULK_FIELD_PAYLOAD = {
   categories: (values: string[]) => ({ categoryIds: values }),
   languages: (values: string[]) => ({ languages: values.filter(isLocale) }),
+  channels: (values: string[]) => ({ channels: knownTemplateChannels(values) }),
 } as const satisfies Record<BulkListingField, (values: string[]) => object>
 
 /** The menu entries of the edit button, in order. */
 const BULK_FIELD_MENU = [
   { field: "categories", Icon: FolderIcon },
   { field: "languages", Icon: LanguagesIcon },
+  { field: "channels", Icon: RadioTowerIcon },
 ] as const satisfies readonly {
   field: BulkListingField
   Icon: typeof FolderIcon
@@ -79,6 +87,12 @@ const BULK_FIELD_COPY = {
     labelKey: "languages",
     hintKey: "bulk.languagesHint",
     placeholderKey: "allLanguages",
+  },
+  channels: {
+    titleKey: "bulk.setChannels",
+    labelKey: "channels",
+    hintKey: "bulk.channelsHint",
+    placeholderKey: "store.allChannels",
   },
 } as const satisfies Record<
   BulkListingField,
@@ -99,7 +113,7 @@ type BulkListingActionsProps = {
   onDone: () => void
 }
 
-/** The table toolbar's actions on the checked rows: one edit menu (categories or languages) and remove. */
+/** The table toolbar's actions on the checked rows: one edit menu (categories, languages or channels) and remove. */
 export function BulkListingActions({
   scope,
   categories,
@@ -191,16 +205,19 @@ function BulkSetDialog({
   const copy = BULK_FIELD_COPY[field]
   const labels = useMultiSelectLabels(t(copy.labelKey))
   const [values, setValues] = useState<string[]>([])
-  const options =
-    field === "categories"
-      ? categories.map((category) => ({
-          label: category.name,
-          value: category.id,
-        }))
-      : locales.map((locale) => ({
-          label: localeMeta[locale].nativeLabel,
-          value: locale,
-        }))
+  const channelOptions = useChannelOptions()
+  const optionsByField = {
+    categories: categories.map((category) => ({
+      label: category.name,
+      value: category.id,
+    })),
+    languages: locales.map((locale) => ({
+      label: localeMeta[locale].nativeLabel,
+      value: locale,
+    })),
+    channels: channelOptions,
+  } as const satisfies Record<BulkListingField, MultiSelectOption[]>
+  const options = optionsByField[field]
   const finish = () => {
     onOpenChange(false)
     onDone()

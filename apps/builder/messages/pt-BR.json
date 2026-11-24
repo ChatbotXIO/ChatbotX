@@ -12237,18 +12237,18 @@
       "categoryLimit": "Uma loja pode ter no máximo {categoryLimit} categorias."
     },
     "store": {
-      "subtitle": "Templates prontos para instalar com um clique.",
       "pageTitle": "{tenantName} – Loja de templates",
       "empty": "Ainda não há templates na loja.",
       "search": "Buscar templates",
-      "all": "Todos",
-      "categories": "Categorias da loja",
       "noResults": "Nenhum modelo corresponde aos seus filtros.",
       "clearSearch": "Limpar filtros",
       "loadFailed": "Não foi possível carregar os templates. Tente novamente mais tarde.",
-      "language": "Idioma",
+      "languageValue": "Idioma: {language}",
       "allLanguages": "Todos os idiomas",
-      "otherLanguages": "Outros idiomas"
+      "otherLanguages": "Outros idiomas",
+      "allChannels": "Todos os canais",
+      "channel": "Canal",
+      "uncategorized": "Outros"
     },
     "picker": {
       "placeholder": "Selecione um template",
@@ -12266,8 +12266,12 @@
       "updated": "Modelos selecionados atualizados",
       "removeTitle": "Remover os modelos selecionados?",
       "removeDescription": "Selecionados: {count}. Eles somem da loja; os próprios modelos e suas instalações não são afetados.",
-      "removed": "Modelos selecionados removidos da loja"
-    }
+      "removed": "Modelos selecionados removidos da loja",
+      "setChannels": "Definir canais",
+      "channelsHint": "Substitui os canais dos modelos selecionados ({count}). Deixe vazio para todos os canais."
+    },
+    "channels": "Canais",
+    "channelsHint": "Opcional. Deixe vazio se o modelo funcionar em todos os canais. Aparece como ícones na loja, onde os visitantes podem filtrar por canal."
   },
   "accountDeletion": {
     "title": "Delete account",

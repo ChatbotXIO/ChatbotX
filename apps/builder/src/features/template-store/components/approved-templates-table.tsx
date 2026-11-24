@@ -37,12 +37,14 @@ import { ConfirmDialog } from "@/components/confirm-dialog"
 import { localeMeta } from "@/i18n/config"
 import { toastActionError } from "@/lib/errors/safe-action-error-handler"
 import { clampPageIndex } from "../lib/clamp-page-index"
+import { coversEveryTemplateChannel } from "../lib/filter-store-templates"
 import { selectedRowIds } from "../lib/selected-row-ids"
 import type { TemplateStoreScope } from "../schema"
 import { removeTemplateStoreListingAction } from "../template-store.action"
 import { useTemplateStoreOutcome } from "../use-template-store-outcome"
 import { BulkListingActions } from "./bulk-listing-actions"
 import { ListingFormDialog } from "./listing-form-dialog"
+import { TemplateChannelIcons } from "./template-channel-icons"
 
 type BadgeVariant = "default" | "secondary" | "destructive"
 
@@ -202,6 +204,27 @@ export function ApprovedTemplatesTable({
                 </Badge>
               ))}
             </div>
+          ),
+        enableSorting: false,
+      },
+      {
+        id: "channels",
+        header: ({ column }) => (
+          <DataTableColumnHeader
+            column={column}
+            title={t("templateStore.channels")}
+          />
+        ),
+        cell: ({ row }) =>
+          coversEveryTemplateChannel(row.original.channels) ? (
+            <span className="text-muted-foreground">
+              {t("templateStore.store.allChannels")}
+            </span>
+          ) : (
+            <TemplateChannelIcons
+              channels={row.original.channels}
+              iconClassName="size-4"
+            />
           ),
         enableSorting: false,
       },
@@ -400,6 +423,7 @@ export function ApprovedTemplatesTable({
             name: editing.name,
             categoryIds: editing.categories.map((category) => category.id),
             languages: editing.languages,
+            channels: editing.channels,
           }}
           onOpenChange={(open) => !open && setRowAction(null)}
           open

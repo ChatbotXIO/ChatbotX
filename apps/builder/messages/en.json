@@ -12253,18 +12253,18 @@
       "categoryLimit": "A store can have at most {categoryLimit} categories."
     },
     "store": {
-      "subtitle": "Ready-made templates you can install in one click.",
       "pageTitle": "{tenantName} – Template store",
       "empty": "No templates in the store yet.",
       "search": "Search templates",
-      "all": "All",
-      "categories": "Store categories",
       "noResults": "No templates match your filters.",
       "clearSearch": "Clear filters",
       "loadFailed": "Couldn't load the templates. Please try again later.",
-      "language": "Language",
+      "languageValue": "Language: {language}",
       "allLanguages": "All languages",
-      "otherLanguages": "Other languages"
+      "otherLanguages": "Other languages",
+      "allChannels": "All channels",
+      "channel": "Channel",
+      "uncategorized": "Other"
     },
     "picker": {
       "placeholder": "Select a template",
@@ -12282,8 +12282,12 @@
       "updated": "Selected templates updated",
       "removeTitle": "Remove the selected templates?",
       "removeDescription": "Selected: {count}. They disappear from the store; the templates themselves and their installs are not affected.",
-      "removed": "Selected templates removed from the store"
-    }
+      "removed": "Selected templates removed from the store",
+      "setChannels": "Set channels",
+      "channelsHint": "Replaces the channels of the selected templates ({count}). Leave empty for every channel."
+    },
+    "channels": "Channels",
+    "channelsHint": "Optional. Leave empty if the template works on every channel. Shown as icons in the store, where visitors can filter by channel."
   },
   "accountDeletion": {
     "title": "Delete account",

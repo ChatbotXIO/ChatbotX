@@ -65,6 +65,7 @@ export const addTemplateStoreListingAction = authActionClient
         templateId: parsedInput.templateId,
         categoryIds: parsedInput.categoryIds,
         languages: parsedInput.languages,
+        channels: parsedInput.channels,
         actorUserId: ctx.user.id,
       }),
     ),
@@ -79,11 +80,12 @@ export const updateTemplateStoreListingAction = authActionClient
         listingId: parsedInput.listingId,
         categoryIds: parsedInput.categoryIds,
         languages: parsedInput.languages,
+        channels: parsedInput.channels,
       }),
     ),
   )
 
-/** The table's bulk edit: the same categories and/or languages for every selected listing. */
+/** The table's bulk edit: the same categories, languages and/or channels for every selected listing. */
 export const updateTemplateStoreListingsAction = authActionClient
   .inputSchema(updateTemplateStoreListingsSchema)
   .action(async ({ ctx, parsedInput }) =>
@@ -93,6 +95,7 @@ export const updateTemplateStoreListingsAction = authActionClient
         listingIds: parsedInput.listingIds,
         categoryIds: parsedInput.categoryIds,
         languages: parsedInput.languages,
+        channels: parsedInput.channels,
       }),
     ),
   )

@@ -12237,18 +12237,18 @@
       "categoryLimit": "Satu toko dapat memiliki paling banyak {categoryLimit} kategori."
     },
     "store": {
-      "subtitle": "Template siap pakai yang bisa dipasang dengan satu klik.",
       "pageTitle": "{tenantName} – Toko template",
       "empty": "Belum ada template di toko.",
       "search": "Cari template",
-      "all": "Semua",
-      "categories": "Kategori toko",
       "noResults": "Tidak ada templat yang cocok dengan filter Anda.",
       "clearSearch": "Hapus filter",
       "loadFailed": "Template tidak dapat dimuat. Coba lagi nanti.",
-      "language": "Bahasa",
+      "languageValue": "Bahasa: {language}",
       "allLanguages": "Semua bahasa",
-      "otherLanguages": "Bahasa lain"
+      "otherLanguages": "Bahasa lain",
+      "allChannels": "Semua channel",
+      "channel": "Channel",
+      "uncategorized": "Lainnya"
     },
     "picker": {
       "placeholder": "Pilih template",
@@ -12266,8 +12266,12 @@
       "updated": "Templat yang dipilih diperbarui",
       "removeTitle": "Hapus templat yang dipilih?",
       "removeDescription": "Dipilih: {count}. Templat hilang dari toko; templat itu sendiri dan instalasinya tidak terpengaruh.",
-      "removed": "Templat yang dipilih dihapus dari toko"
-    }
+      "removed": "Templat yang dipilih dihapus dari toko",
+      "setChannels": "Atur channel",
+      "channelsHint": "Mengganti channel templat yang dipilih ({count}). Kosongkan untuk semua channel."
+    },
+    "channels": "Channel",
+    "channelsHint": "Opsional. Kosongkan jika templat berfungsi di semua channel. Ditampilkan sebagai ikon di toko, tempat pengunjung dapat memfilter berdasarkan channel."
   },
   "accountDeletion": {
     "title": "Delete account",

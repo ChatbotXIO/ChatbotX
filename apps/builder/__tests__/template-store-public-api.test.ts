@@ -63,6 +63,7 @@ const storedTemplate = (imageUrl: string | null) => ({
   imageUrl,
   categoryIds: ["3"],
   languages: ["en"],
+  channels: ["whatsapp", "line"],
   section: "primary",
   shareToken: "key-1",
   shareUrl: "https://app.example.test/t/template?id=11&key=key-1",
@@ -102,6 +103,37 @@ describe("template store public API", () => {
       language: "fr",
     })
     expect(listPublished.mock.calls[0]?.[0]).not.toHaveProperty("viewerLocale")
+  })
+
+  test("passes the channel filter to the store", async () => {
+    await invoke({ channel: "telegram" })
+
+    expect(listPublished).toHaveBeenCalledWith({
+      tenantId: "7",
+      channel: "telegram",
+    })
+  })
+
+  test("returns each template's channels", async () => {
+    const result = await invoke({})
+
+    expect(result.templates[0]).toMatchObject({
+      channels: ["whatsapp", "line"],
+    })
+  })
+
+  test("rejects a channel filter that is not a template channel", async () => {
+    await expect(invoke({ channel: "omnichannel" })).rejects.toThrow()
+    await expect(invoke({ channel: "fax" })).rejects.toThrow()
+  })
+
+  test("api is a valid channel filter", async () => {
+    await invoke({ channel: "api" })
+
+    expect(listPublished).toHaveBeenCalledWith({
+      tenantId: "7",
+      channel: "api",
+    })
   })
 
   test("returns each template's languages and not the store's display section", async () => {

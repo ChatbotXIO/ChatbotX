@@ -28,6 +28,7 @@ const published = (overrides: Record<string, unknown> = {}) => ({
   publisherName: "Acme",
   categoryIds: ["5"],
   languages: ["fr"],
+  channels: ["whatsapp", "line"],
   section: "primary",
   shareToken: "tok-11",
   shareUrl: "https://app.example.test/t/template?id=11&key=tok-11",
@@ -86,6 +87,7 @@ describe("loadStoreCatalog", () => {
         href: "/t/template?id=11&key=tok-11",
         categoryIds: ["5"],
         languages: ["fr"],
+        channels: ["whatsapp", "line"],
         section: "primary",
       },
     ])

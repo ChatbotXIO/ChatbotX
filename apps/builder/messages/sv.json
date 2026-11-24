@@ -12237,18 +12237,18 @@
       "categoryLimit": "En butik kan ha högst {categoryLimit} kategorier."
     },
     "store": {
-      "subtitle": "Färdiga mallar som du installerar med ett klick.",
       "pageTitle": "{tenantName} – Mallbutik",
       "empty": "Inga mallar i butiken ännu.",
       "search": "Sök mallar",
-      "all": "Alla",
-      "categories": "Butikskategorier",
       "noResults": "Inga mallar matchar dina filter.",
       "clearSearch": "Rensa filter",
       "loadFailed": "Det gick inte att läsa in mallarna. Försök igen senare.",
-      "language": "Språk",
+      "languageValue": "Språk: {language}",
       "allLanguages": "Alla språk",
-      "otherLanguages": "Andra språk"
+      "otherLanguages": "Andra språk",
+      "allChannels": "Alla kanaler",
+      "channel": "Kanal",
+      "uncategorized": "Övriga"
     },
     "picker": {
       "placeholder": "Välj en mall",
@@ -12266,8 +12266,12 @@
       "updated": "De valda mallarna har uppdaterats",
       "removeTitle": "Ta bort de valda mallarna?",
       "removeDescription": "Valda: {count}. De försvinner från butiken; själva mallarna och deras installationer påverkas inte.",
-      "removed": "De valda mallarna har tagits bort från butiken"
-    }
+      "removed": "De valda mallarna har tagits bort från butiken",
+      "setChannels": "Ange kanaler",
+      "channelsHint": "Ersätter kanalerna för de valda mallarna ({count}). Lämna tomt för alla kanaler."
+    },
+    "channels": "Kanaler",
+    "channelsHint": "Valfritt. Lämna tomt om mallen fungerar på alla kanaler. Visas som ikoner i butiken, där besökare kan filtrera på kanal."
   },
   "accountDeletion": {
     "title": "Delete account",

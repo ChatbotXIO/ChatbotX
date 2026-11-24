@@ -89,6 +89,7 @@ const catalog = {
       href: "/?tab=templates&key=tok",
       categoryIds: ["5"],
       languages: [],
+      channels: [],
       section: "primary" as const,
     },
   ],

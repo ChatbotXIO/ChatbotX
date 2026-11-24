@@ -12253,18 +12253,18 @@
       "categoryLimit": "Một cửa hàng có tối đa {categoryLimit} danh mục."
     },
     "store": {
-      "subtitle": "Mẫu dựng sẵn, cài đặt chỉ với một cú nhấp.",
       "pageTitle": "{tenantName} – Cửa hàng mẫu",
       "empty": "Cửa hàng chưa có mẫu nào.",
       "search": "Tìm mẫu",
-      "all": "Tất cả",
-      "categories": "Danh mục cửa hàng",
       "noResults": "Không có template nào khớp với bộ lọc của bạn.",
       "clearSearch": "Xóa bộ lọc",
       "loadFailed": "Không thể tải các mẫu. Vui lòng thử lại sau.",
-      "language": "Ngôn ngữ",
+      "languageValue": "Ngôn ngữ: {language}",
       "allLanguages": "Tất cả ngôn ngữ",
-      "otherLanguages": "Ngôn ngữ khác"
+      "otherLanguages": "Ngôn ngữ khác",
+      "allChannels": "Tất cả kênh",
+      "channel": "Kênh",
+      "uncategorized": "Khác"
     },
     "picker": {
       "placeholder": "Chọn mẫu",
@@ -12282,8 +12282,12 @@
       "updated": "Đã cập nhật các template đã chọn",
       "removeTitle": "Gỡ các template đã chọn?",
       "removeDescription": "Đã chọn: {count}. Chúng sẽ biến mất khỏi cửa hàng; bản thân template và các lượt cài không bị ảnh hưởng.",
-      "removed": "Đã gỡ các template đã chọn khỏi cửa hàng"
-    }
+      "removed": "Đã gỡ các template đã chọn khỏi cửa hàng",
+      "setChannels": "Đặt kênh",
+      "channelsHint": "Thay kênh của các template đã chọn ({count}). Để trống nghĩa là mọi kênh."
+    },
+    "channels": "Kênh",
+    "channelsHint": "Không bắt buộc. Để trống nếu template dùng được trên mọi kênh. Hiển thị dạng biểu tượng trong cửa hàng, nơi khách có thể lọc theo kênh."
   },
   "accountDeletion": {
     "title": "Delete account",

@@ -12237,18 +12237,18 @@
       "categoryLimit": "Une boutique peut avoir au maximum {categoryLimit} catégories."
     },
     "store": {
-      "subtitle": "Des modèles prêts à installer en un clic.",
       "pageTitle": "{tenantName} – Boutique de modèles",
       "empty": "Aucun modèle dans la boutique pour le moment.",
       "search": "Rechercher des modèles",
-      "all": "Tous",
-      "categories": "Catégories de la boutique",
       "noResults": "Aucun modèle ne correspond à vos filtres.",
       "clearSearch": "Effacer les filtres",
       "loadFailed": "Impossible de charger les modèles. Réessayez plus tard.",
-      "language": "Langue",
+      "languageValue": "Langue : {language}",
       "allLanguages": "Toutes les langues",
-      "otherLanguages": "Autres langues"
+      "otherLanguages": "Autres langues",
+      "allChannels": "Tous les canaux",
+      "channel": "Canal",
+      "uncategorized": "Autres"
     },
     "picker": {
       "placeholder": "Choisir un modèle",
@@ -12266,8 +12266,12 @@
       "updated": "Modèles sélectionnés mis à jour",
       "removeTitle": "Retirer les modèles sélectionnés ?",
       "removeDescription": "Sélectionnés : {count}. Ils disparaissent de la boutique ; les modèles eux-mêmes et leurs installations ne sont pas affectés.",
-      "removed": "Modèles sélectionnés retirés de la boutique"
-    }
+      "removed": "Modèles sélectionnés retirés de la boutique",
+      "setChannels": "Définir les canaux",
+      "channelsHint": "Remplace les canaux des modèles sélectionnés ({count}). Laissez vide pour tous les canaux."
+    },
+    "channels": "Canaux",
+    "channelsHint": "Facultatif. Laissez vide si le modèle fonctionne sur tous les canaux. Affiché sous forme d’icônes dans la boutique, où les visiteurs peuvent filtrer par canal."
   },
   "accountDeletion": {
     "title": "Delete account",

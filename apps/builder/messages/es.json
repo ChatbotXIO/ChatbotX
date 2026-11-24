@@ -12237,18 +12237,18 @@
       "categoryLimit": "Una tienda puede tener como máximo {categoryLimit} categorías."
     },
     "store": {
-      "subtitle": "Plantillas listas para instalar con un clic.",
       "pageTitle": "{tenantName} – Tienda de plantillas",
       "empty": "Aún no hay plantillas en la tienda.",
       "search": "Buscar plantillas",
-      "all": "Todas",
-      "categories": "Categorías de la tienda",
       "noResults": "Ninguna plantilla coincide con tus filtros.",
       "clearSearch": "Borrar filtros",
       "loadFailed": "No se pudieron cargar las plantillas. Inténtalo de nuevo más tarde.",
-      "language": "Idioma",
+      "languageValue": "Idioma: {language}",
       "allLanguages": "Todos los idiomas",
-      "otherLanguages": "Otros idiomas"
+      "otherLanguages": "Otros idiomas",
+      "allChannels": "Todos los canales",
+      "channel": "Canal",
+      "uncategorized": "Otras"
     },
     "picker": {
       "placeholder": "Selecciona una plantilla",
@@ -12266,8 +12266,12 @@
       "updated": "Plantillas seleccionadas actualizadas",
       "removeTitle": "¿Quitar las plantillas seleccionadas?",
       "removeDescription": "Seleccionadas: {count}. Desaparecen de la tienda; las plantillas y sus instalaciones no se ven afectadas.",
-      "removed": "Plantillas seleccionadas quitadas de la tienda"
-    }
+      "removed": "Plantillas seleccionadas quitadas de la tienda",
+      "setChannels": "Asignar canales",
+      "channelsHint": "Reemplaza los canales de las plantillas seleccionadas ({count}). Déjalo vacío para todos los canales."
+    },
+    "channels": "Canales",
+    "channelsHint": "Opcional. Déjalo vacío si la plantilla funciona en todos los canales. Se muestra como iconos en la tienda, donde los visitantes pueden filtrar por canal."
   },
   "accountDeletion": {
     "title": "Delete account",
