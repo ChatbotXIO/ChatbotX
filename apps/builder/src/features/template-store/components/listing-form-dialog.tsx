@@ -118,7 +118,8 @@ export function ListingFormDialog({
           }
         />
       )}
-      <DialogContent>
+      {/* `minmax(0, 1fr)`: the default grid track is `auto`, which a long template name (the picker is a nowrap button) stretches past the dialog. */}
+      <DialogContent className="grid-cols-[minmax(0,1fr)] sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>{listing ? t("editListing") : t("add")}</DialogTitle>
         </DialogHeader>

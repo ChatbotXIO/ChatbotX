@@ -739,7 +739,8 @@
       "template": "テンプレート",
       "integration": "連携",
       "schedule": "繰り返しスケジュール",
-      "runOf": "<link>{name}</link>の実行"
+      "runOf": "<link>{name}</link>の実行",
+      "linkNotFound": "この一斉配信は存在しません。"
     },
     "filters": {
       "all": "All"
@@ -7911,7 +7912,6 @@
   "templatesPublicPage": {
     "invalidTitle": "このリンクはご利用いただけません。",
     "invalidDescription": "このテンプレート共有リンクは無効、無効化済み、または期限切れです。",
-    "byPublisher": "{publisherName}による",
     "videoTitle": "テンプレートのプレビュー動画",
     "preview": "プレビュー",
     "aboutTemplate": "このテンプレートについて",
@@ -8269,6 +8269,10 @@
   "contactAdReferrals": {
     "title": "広告の履歴",
     "empty": "このコンタクトの広告クリックはまだ記録されていません。"
+  },
+  "contactBroadcasts": {
+    "empty": "このコンタクトにはまだ一斉配信が送信されていません。",
+    "searchPlaceholder": "名前またはIDで検索"
   },
   "adsReferralStats": {
     "title": "広告別のコンタクト",
@@ -12281,6 +12285,7 @@
     "categoriesPlaceholder": "カテゴリなし",
     "close": "閉じる",
     "removeChip": "{name}を外す",
+    "moreSelected": "他 {count} 件",
     "categoriesHint": "任意です。カテゴリがない場合、テンプレートは「すべて」にのみ表示されます。",
     "languages": "言語",
     "allLanguages": "すべての言語",
@@ -12337,7 +12342,6 @@
       "categories": "ストアのカテゴリ",
       "noResults": "フィルターに一致するテンプレートがありません。",
       "clearSearch": "フィルターをクリア",
-      "by": "作成者：{publisherName}",
       "loadFailed": "テンプレートを読み込めませんでした。しばらくしてからもう一度お試しください。",
       "language": "言語",
       "allLanguages": "すべての言語",
@@ -12547,5 +12551,14 @@
       "onAhachat": "On AhaChat",
       "selected": "Uses AhaChat data"
     }
+  },
+  "conversationParticipants": {
+    "joined": "{names} が会話に参加しました",
+    "replied": "{name} が返信しました {time}",
+    "showMore": "さらに表示",
+    "label": "この会話で返信した人",
+    "unnamedMember": "メンバー",
+    "loadMoreFailed": "メンバーをこれ以上読み込めませんでした",
+    "lastMessageBy": "{name} の最後のメッセージ"
   }
 }

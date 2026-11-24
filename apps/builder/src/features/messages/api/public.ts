@@ -105,6 +105,7 @@ export const messagesPublicRouter = {
         text: input.text,
         inboxId: input.inboxId,
         requireRequestedInbox: true,
+        user: resolveSenderForCaller(context),
         messages: ENGLISH_CALL_PERMISSION_MESSAGES,
         sendFrom: "api",
       })
@@ -136,11 +137,14 @@ export const messagesPublicRouter = {
             field: "templateParams",
           })
         : request.templateData
+      const user = resolveSenderForCaller(context)
       await sendWhatsappTemplateToConversation({
         workspaceId: context.workspace.id,
         conversationId,
         request: { ...request, templateData },
-        sender: { initiatedBy: "api" },
+        sender: user
+          ? { initiatedBy: "user", adminId: user.id }
+          : { initiatedBy: "api" },
         sendFrom: "api",
       })
       return { queued: true as const }

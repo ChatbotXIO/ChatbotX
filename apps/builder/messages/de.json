@@ -739,7 +739,8 @@
       "template": "Vorlage",
       "integration": "Integration",
       "schedule": "Wiederholungsplan",
-      "runOf": "Lauf von <link>{name}</link>"
+      "runOf": "Lauf von <link>{name}</link>",
+      "linkNotFound": "Dieser Broadcast existiert nicht mehr."
     },
     "filters": {
       "all": "All"
@@ -7911,7 +7912,6 @@
   "templatesPublicPage": {
     "invalidTitle": "Dieser Link ist nicht mehr verfügbar.",
     "invalidDescription": "Dieser Vorlagen-Freigabelink ist ungültig, deaktiviert oder abgelaufen.",
-    "byPublisher": "Von {publisherName}",
     "videoTitle": "Vorlagen-Vorschauvideo",
     "preview": "Vorschau",
     "aboutTemplate": "Über diese Vorlage",
@@ -8269,6 +8269,10 @@
   "contactAdReferrals": {
     "title": "Anzeigenverlauf",
     "empty": "Für diesen Kontakt wurden noch keine Anzeigenklicks erfasst."
+  },
+  "contactBroadcasts": {
+    "empty": "An diesen Kontakt wurde noch kein Broadcast gesendet.",
+    "searchPlaceholder": "Nach Name oder ID suchen"
   },
   "adsReferralStats": {
     "title": "Kontakte nach Anzeige",
@@ -12281,6 +12285,7 @@
     "categoriesPlaceholder": "Keine Kategorie",
     "close": "Schließen",
     "removeChip": "{name} entfernen",
+    "moreSelected": "+ {count} weitere",
     "categoriesHint": "Optional. Ohne Kategorie erscheint das Template nur unter „Alle“.",
     "languages": "Sprachen",
     "allLanguages": "Alle Sprachen",
@@ -12337,7 +12342,6 @@
       "categories": "Store-Kategorien",
       "noResults": "Keine Vorlagen passen zu Ihren Filtern.",
       "clearSearch": "Filter zurücksetzen",
-      "by": "Von {publisherName}",
       "loadFailed": "Die Templates konnten nicht geladen werden. Bitte versuchen Sie es später erneut.",
       "language": "Sprache",
       "allLanguages": "Alle Sprachen",
@@ -12547,5 +12551,14 @@
       "onAhachat": "On AhaChat",
       "selected": "Uses AhaChat data"
     }
+  },
+  "conversationParticipants": {
+    "joined": "{names} haben an der Unterhaltung teilgenommen",
+    "replied": "{name} hat geantwortet {time}",
+    "showMore": "Mehr anzeigen",
+    "label": "Wer in dieser Unterhaltung geantwortet hat",
+    "unnamedMember": "Mitglied",
+    "loadMoreFailed": "Weitere Mitglieder konnten nicht geladen werden",
+    "lastMessageBy": "Letzte Nachricht von {name}"
   }
 }

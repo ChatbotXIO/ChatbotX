@@ -781,7 +781,8 @@
       "template": "Şablon",
       "integration": "İnteqrasiya",
       "schedule": "Təkrar cədvəli",
-      "runOf": "<link>{name}</link> icrası"
+      "runOf": "<link>{name}</link> icrası",
+      "linkNotFound": "Bu kütləvi göndəriş artıq mövcud deyil."
     },
     "filters": {
       "all": "Hamısı"
@@ -8805,7 +8806,6 @@
   "templatesPublicPage": {
     "invalidTitle": "Bu keçid artıq əlçatan deyil.",
     "invalidDescription": "Bu şablonun paylaşma keçidi etibarsızdır, deaktivdir və ya vaxtı bitib.",
-    "byPublisher": "Müəllif: {publisherName}",
     "videoTitle": "Şablonun önbaxış videosu",
     "preview": "Önizləmə",
     "aboutTemplate": "Bu şablon haqqında",
@@ -9264,6 +9264,10 @@
   "contactAdReferrals": {
     "title": "Reklam tarixçəsi",
     "empty": "Bu kontakt üçün hələ reklam klikləri qeydə alınmayıb."
+  },
+  "contactBroadcasts": {
+    "empty": "Bu əlaqəyə hələ heç bir kütləvi göndəriş göndərilməyib.",
+    "searchPlaceholder": "Ad və ya ID ilə axtarın"
   },
   "adsReferralStats": {
     "title": "Reklam üzrə kontaktlar",
@@ -12297,6 +12301,7 @@
     "categoriesPlaceholder": "Kateqoriya yoxdur",
     "close": "Bağla",
     "removeChip": "{name} sil",
+    "moreSelected": "+ {count} daha",
     "categoriesHint": "İstəyə bağlı. Kateqoriyasız şablon yalnız “Hamısı” altında görünür.",
     "languages": "Dillər",
     "allLanguages": "Bütün dillər",
@@ -12353,7 +12358,6 @@
       "categories": "Mağaza kateqoriyaları",
       "noResults": "Filtrlərinizə uyğun şablon yoxdur.",
       "clearSearch": "Filtrləri təmizlə",
-      "by": "Naşir: {publisherName}",
       "loadFailed": "Şablonlar yüklənə bilmədi. Bir az sonra yenidən cəhd edin.",
       "language": "Dil",
       "allLanguages": "Bütün dillər",
@@ -12547,5 +12551,14 @@
       "onAhachat": "On AhaChat",
       "selected": "Uses AhaChat data"
     }
+  },
+  "conversationParticipants": {
+    "joined": "{names} söhbətdə iştirak etdi",
+    "replied": "{name} cavab verdi {time}",
+    "showMore": "Daha çox göstər",
+    "label": "Bu söhbətdə kim cavab verdi",
+    "unnamedMember": "Üzv",
+    "loadMoreFailed": "Daha çox üzv yüklənmədi",
+    "lastMessageBy": "{name} tərəfindən son mesaj"
   }
 }

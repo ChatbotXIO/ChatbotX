@@ -171,10 +171,11 @@ export function MessageThreadPane({
 
 export function ContactDetailPane({
   activeConversation,
+  canOpenBroadcasts = false,
   isResolvingConversation,
   shouldShowEmptyState,
   workspaceId,
-}: PaneState & { workspaceId: string }) {
+}: PaneState & { canOpenBroadcasts?: boolean; workspaceId: string }) {
   const t = useTranslations()
 
   return (
@@ -185,6 +186,7 @@ export function ContactDetailPane({
       {activeConversation && (
         <ContactInboxPanel
           activeConversationId={activeConversation.id}
+          canOpenBroadcasts={canOpenBroadcasts}
           workspaceId={workspaceId}
         />
       )}

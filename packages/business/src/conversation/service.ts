@@ -26,6 +26,7 @@ import {
   getSafeSinceTime,
   insertDmConversationsIfAbsent,
   integrationSmtpRepository,
+  recentParticipantsRelation,
 } from "@chatbotx.io/database/repositories"
 import { userColumnsWithoutSecrets } from "@chatbotx.io/database/repositories/user-columns"
 import { conversationModel, inboxModel } from "@chatbotx.io/database/schema"
@@ -129,11 +130,19 @@ type ContactWithFullRelations = ContactModel & {
   tags: TagModel[]
 }
 
+/** A member who replied in a conversation, as read with the conversation. */
+export type ConversationParticipantPreview = {
+  userId: string
+  lastRepliedAt: Date | null
+  user: Pick<UserModel, "id" | "name" | "image"> | null
+}
+
 type ConversationRelationMap = {
   contact: ContactModel | null
   contactInboxes: (ContactInboxModel & { inbox: InboxModel })[]
   assignedUser: UserModel | null
   assignedInboxTeam: InboxTeamModel | null
+  conversationParticipants: ConversationParticipantPreview[]
   messages: MessageModel[]
   attachments: AttachmentModel[]
 }
@@ -156,6 +165,7 @@ export type ConversationWithFullRelations = ConversationModel & {
   messages: MessageModel[]
   assignedUser: UserModel | null
   assignedInboxTeam: InboxTeamModel | null
+  conversationParticipants: ConversationParticipantPreview[]
 }
 
 // ─── Service ───────────────────────────────────────────────────────────────────
@@ -923,6 +933,7 @@ class ConversationService extends BaseService {
         messages: true,
         assignedUser: { columns: userColumnsWithoutSecrets },
         assignedInboxTeam: true,
+        conversationParticipants: recentParticipantsRelation,
       },
     })
     return result as ConversationWithFullRelations | undefined

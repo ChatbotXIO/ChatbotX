@@ -739,7 +739,8 @@
       "template": "Malli",
       "integration": "Integraatio",
       "schedule": "Toistoaikataulu",
-      "runOf": "Lähetyksen <link>{name}</link> ajo"
+      "runOf": "Lähetyksen <link>{name}</link> ajo",
+      "linkNotFound": "Tätä joukkolähetystä ei enää ole."
     },
     "filters": {
       "all": "All"
@@ -7911,7 +7912,6 @@
   "templatesPublicPage": {
     "invalidTitle": "Tämä linkki ei ole enää käytettävissä.",
     "invalidDescription": "Tämä mallin jakolinkki on virheellinen, poistettu käytöstä tai vanhentunut.",
-    "byPublisher": "Julkaisija: {publisherName}",
     "videoTitle": "Mallin esikatseluvideo",
     "preview": "Esikatselu",
     "aboutTemplate": "Tietoja tästä mallista",
@@ -8269,6 +8269,10 @@
   "contactAdReferrals": {
     "title": "Mainoshistoria",
     "empty": "Tälle yhteystiedolle ei ole vielä kirjattu mainosklikkauksia."
+  },
+  "contactBroadcasts": {
+    "empty": "Tälle yhteystiedolle ei ole vielä lähetetty joukkolähetyksiä.",
+    "searchPlaceholder": "Hae nimellä tai tunnuksella"
   },
   "adsReferralStats": {
     "title": "Yhteystiedot mainoksittain",
@@ -12281,6 +12285,7 @@
     "categoriesPlaceholder": "Ei luokkaa",
     "close": "Sulje",
     "removeChip": "Poista {name}",
+    "moreSelected": "+ {count} lisää",
     "categoriesHint": "Valinnainen. Ilman luokkaa malli näkyy vain kohdassa “Kaikki”.",
     "languages": "Kielet",
     "allLanguages": "Kaikki kielet",
@@ -12337,7 +12342,6 @@
       "categories": "Kaupan luokat",
       "noResults": "Mikään malli ei vastaa suodattimia.",
       "clearSearch": "Tyhjennä suodattimet",
-      "by": "Tekijä: {publisherName}",
       "loadFailed": "Malleja ei voitu ladata. Yritä myöhemmin uudelleen.",
       "language": "Kieli",
       "allLanguages": "Kaikki kielet",
@@ -12547,5 +12551,14 @@
       "onAhachat": "On AhaChat",
       "selected": "Uses AhaChat data"
     }
+  },
+  "conversationParticipants": {
+    "joined": "{names} osallistui keskusteluun",
+    "replied": "{name} vastasi {time}",
+    "showMore": "Näytä lisää",
+    "label": "Kuka vastasi tässä keskustelussa",
+    "unnamedMember": "Jäsen",
+    "loadMoreFailed": "Lisää jäseniä ei voitu ladata",
+    "lastMessageBy": "Viimeisin viesti: {name}"
   }
 }

@@ -221,4 +221,12 @@ describe("workspace purge coverage", () => {
     expect(ofTable("uniques")).toEqual([])
     expect(ofTable("pks").map(indexColumns)).toEqual([["id"]])
   })
+
+  test("drains Conversation children before Conversation", () => {
+    const order: readonly string[] = HEAVY_WORKSPACE_TABLES
+    for (const child of ["MessageTranslation", "ConversationParticipant"]) {
+      expect(order).toContain(child)
+      expect(order.indexOf(child)).toBeLessThan(order.indexOf("Conversation"))
+    }
+  })
 })

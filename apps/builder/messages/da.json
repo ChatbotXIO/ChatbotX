@@ -739,7 +739,8 @@
       "template": "Skabelon",
       "integration": "Integration",
       "schedule": "Gentagelsesplan",
-      "runOf": "Kørsel af <link>{name}</link>"
+      "runOf": "Kørsel af <link>{name}</link>",
+      "linkNotFound": "Denne udsendelse findes ikke længere."
     },
     "filters": {
       "all": "All"
@@ -7911,7 +7912,6 @@
   "templatesPublicPage": {
     "invalidTitle": "Dette link er ikke længere tilgængeligt.",
     "invalidDescription": "Dette skabelon-dellink er ugyldigt, deaktiveret eller udløbet.",
-    "byPublisher": "Af {publisherName}",
     "videoTitle": "Skabelonens forhåndsvisningsvideo",
     "preview": "Forhåndsvisning",
     "aboutTemplate": "Om denne skabelon",
@@ -8269,6 +8269,10 @@
   "contactAdReferrals": {
     "title": "Annoncehistorik",
     "empty": "Der er endnu ikke registreret annonceklik for denne kontakt."
+  },
+  "contactBroadcasts": {
+    "empty": "Der er endnu ikke sendt nogen udsendelser til denne kontakt.",
+    "searchPlaceholder": "Søg efter navn eller ID"
   },
   "adsReferralStats": {
     "title": "Kontakter pr. annonce",
@@ -12281,6 +12285,7 @@
     "categoriesPlaceholder": "Ingen kategori",
     "close": "Luk",
     "removeChip": "Fjern {name}",
+    "moreSelected": "+ {count} mere",
     "categoriesHint": "Valgfrit. Uden kategori vises skabelonen kun under “Alle”.",
     "languages": "Sprog",
     "allLanguages": "Alle sprog",
@@ -12337,7 +12342,6 @@
       "categories": "Butikkens kategorier",
       "noResults": "Ingen skabeloner matcher dine filtre.",
       "clearSearch": "Ryd filtre",
-      "by": "Af {publisherName}",
       "loadFailed": "Skabelonerne kunne ikke indlæses. Prøv igen senere.",
       "language": "Sprog",
       "allLanguages": "Alle sprog",
@@ -12547,5 +12551,14 @@
       "onAhachat": "On AhaChat",
       "selected": "Uses AhaChat data"
     }
+  },
+  "conversationParticipants": {
+    "joined": "{names} har deltaget i samtalen",
+    "replied": "{name} svarede {time}",
+    "showMore": "Vis mere",
+    "label": "Hvem har svaret i denne samtale",
+    "unnamedMember": "Medlem",
+    "loadMoreFailed": "Kunne ikke indlæse flere medlemmer",
+    "lastMessageBy": "Seneste besked fra {name}"
   }
 }

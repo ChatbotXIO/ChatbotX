@@ -74,7 +74,6 @@ const STORE_CATALOG_LAYOUTS = {
 type StoreCatalogLayout = keyof typeof STORE_CATALOG_LAYOUTS
 
 type StoreCatalogProps = {
-  tenantName: string
   categories: StoreCatalogCategory[]
   templates: StoreCatalogTemplate[]
   /** The visitor's UI language: the language filter starts on it. */
@@ -102,7 +101,6 @@ const STORE_URL_STATE_OPTIONS = {
  * client-side. Both live in the URL, so a view can be shared.
  */
 export function StoreCatalog({
-  tenantName,
   categories,
   templates,
   viewerLocale,
@@ -168,8 +166,6 @@ export function StoreCatalog({
     query,
   })
   const { primary, other } = splitStoreSections(visible, languageView)
-  const publisherOf = (template: StoreCatalogTemplate): string =>
-    template.publisherName ?? tenantName
 
   return (
     <div className={cn(STORE_CATALOG_BASE_CLASS_NAME, layoutConfig.className)}>
@@ -274,7 +270,6 @@ export function StoreCatalog({
         <>
           <StoreTemplateGrid
             className={layoutConfig.gridClassName}
-            publisherOf={publisherOf}
             templates={primary}
           />
           {other.length > 0 ? (
@@ -288,7 +283,6 @@ export function StoreCatalog({
               </h3>
               <StoreTemplateGrid
                 className={layoutConfig.gridClassName}
-                publisherOf={publisherOf}
                 templates={other}
               />
             </section>
@@ -302,13 +296,10 @@ export function StoreCatalog({
 function StoreTemplateGrid({
   templates,
   className,
-  publisherOf,
 }: {
   templates: StoreCatalogTemplate[]
   className: string
-  publisherOf: (template: StoreCatalogTemplate) => string
 }) {
-  const t = useTranslations("templateStore.store")
   return (
     <ul className={className}>
       {templates.map((template) => (
@@ -317,30 +308,20 @@ function StoreTemplateGrid({
             className="flex h-full flex-col gap-4 rounded-2xl border bg-card p-5 shadow-xs transition hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-md focus-visible:outline-2 focus-visible:outline-ring"
             href={template.href}
           >
-            <div className="flex items-center gap-4">
-              {/* biome-ignore lint/performance/noImgElement: external, unoptimized template thumbnail resolved from publisher-uploaded storage */}
-              <img
-                alt=""
-                className="size-14 shrink-0 rounded-xl bg-white object-cover"
-                height={56}
-                src={template.imageUrl}
-                width={56}
-              />
-              <div className="min-w-0">
-                <p
-                  className="line-clamp-2 break-words font-semibold leading-snug"
-                  title={template.name}
-                >
-                  {template.name}
-                </p>
-                <p
-                  className="truncate text-muted-foreground text-sm"
-                  title={publisherOf(template)}
-                >
-                  {t("by", { publisherName: publisherOf(template) })}
-                </p>
-              </div>
-            </div>
+            {/* biome-ignore lint/performance/noImgElement: external, unoptimized template thumbnail resolved from publisher-uploaded storage */}
+            <img
+              alt=""
+              className="aspect-video w-full rounded-xl bg-muted object-cover object-center"
+              height={360}
+              src={template.imageUrl}
+              width={640}
+            />
+            <p
+              className="line-clamp-2 break-words font-semibold leading-snug"
+              title={template.name}
+            >
+              {template.name}
+            </p>
             {template.description ? (
               <p className="line-clamp-3 text-muted-foreground text-sm">
                 {template.description}

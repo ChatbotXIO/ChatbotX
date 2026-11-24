@@ -2561,3 +2561,104 @@ describe("chat store send queues", () => {
     expect(store.getState()).toBe(before)
   })
 })
+
+describe("applyConversationParticipantReply", () => {
+  const at = (minute: number) => new Date(Date.UTC(2026, 10, 20, 10, minute))
+  const reply = (userId: string, minute: number) => ({
+    userId,
+    name: `Name ${userId}`,
+    image: null,
+    lastRepliedAt: at(minute),
+  })
+  const withParticipants = (participants: ReturnType<typeof reply>[]) => {
+    const store = createChatStore()
+    store.setState({
+      conversations: [
+        {
+          ...makeConversation("conv-1", at(0)),
+          recentParticipants: participants,
+        },
+        { ...makeConversation("conv-2", at(0)), recentParticipants: [] },
+      ] as never,
+    })
+    return store
+  }
+  const idsOf = (store: ReturnType<typeof createChatStore>, index = 0) =>
+    store
+      .getState()
+      .conversations[index]?.recentParticipants.map((p) => p.userId)
+
+  test("puts a new member first and keeps the preview at three", () => {
+    const store = withParticipants([
+      reply("1", 30),
+      reply("2", 20),
+      reply("3", 10),
+    ])
+
+    store.getState().applyConversationParticipantReply("conv-1", reply("4", 40))
+
+    expect(idsOf(store)).toEqual(["4", "1", "2"])
+  })
+
+  test("a newer reply moves an existing member up without duplicating them", () => {
+    const store = withParticipants([reply("1", 30), reply("2", 20)])
+
+    store.getState().applyConversationParticipantReply("conv-1", reply("2", 50))
+
+    expect(idsOf(store)).toEqual(["2", "1"])
+  })
+
+  test("a duplicate or older reply leaves the store untouched", () => {
+    const store = withParticipants([reply("1", 30), reply("2", 20)])
+    const before = store.getState()
+
+    store.getState().applyConversationParticipantReply("conv-1", reply("1", 30))
+    store.getState().applyConversationParticipantReply("conv-1", reply("2", 1))
+
+    expect(store.getState()).toBe(before)
+  })
+
+  test("an unloaded conversation is ignored and others are not touched", () => {
+    const store = withParticipants([reply("1", 30)])
+    const before = store.getState()
+
+    store
+      .getState()
+      .applyConversationParticipantReply("missing", reply("9", 60))
+
+    expect(store.getState()).toBe(before)
+    expect(idsOf(store, 1)).toEqual([])
+  })
+
+  test("replaceConversationRecentParticipants takes the server's list, capped at three", () => {
+    const store = withParticipants([reply("1", 30)])
+
+    store
+      .getState()
+      .replaceConversationRecentParticipants("conv-1", [
+        reply("5", 50),
+        reply("6", 40),
+        reply("7", 30),
+        reply("8", 20),
+      ])
+
+    expect(idsOf(store)).toEqual(["5", "6", "7"])
+  })
+
+  test("replaceConversationRecentParticipants can empty a row", () => {
+    const store = withParticipants([reply("1", 30)])
+
+    store.getState().replaceConversationRecentParticipants("conv-1", [])
+
+    expect(idsOf(store)).toEqual([])
+  })
+
+  test("only the targeted conversation changes", () => {
+    const store = withParticipants([reply("1", 30)])
+
+    store.getState().applyConversationParticipantReply("conv-2", reply("5", 60))
+
+    expect(idsOf(store, 0)).toEqual(["1"])
+    expect(idsOf(store, 1)).toEqual(["5"])
+  })
+})

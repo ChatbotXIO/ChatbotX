@@ -19,6 +19,7 @@ import { mcpSpec } from "@/lib/orpc/mcp-annotations"
 import {
   possibleErrorsOnFindingResource,
   possibleErrorsOnListingResource,
+  possibleErrorsOnListingWithCursor,
   possibleErrorsOnMutatingResource,
   possibleErrorsOnThreadControl,
 } from "@/lib/orpc/orpc-error-helper"
@@ -34,14 +35,17 @@ import {
   findConversation,
   listConversations,
 } from "../queries/list-conversations.query"
+import { listConversationParticipants } from "../queries/list-participants.query"
 import {
   assignConversationPublicRequest,
   conversationIdPathParam,
   getConversationPublicResponse,
+  listConversationParticipantsRequest,
   threadControlPublicRequest,
   threadControlPublicResponse,
 } from "../schema/public"
 import {
+  listConversationParticipantsResponse,
   listConversationsCompactResponse,
   listConversationsResponse,
 } from "../schema/resource"
@@ -237,6 +241,31 @@ export const conversationsPublicRouter = {
             : result.data.contact,
         },
       }
+    }),
+
+  listParticipants: workspaceTokenAuthAPI
+    .route({
+      method: "GET",
+      path: "/v1/conversations/{id}/participants",
+      summary: "List conversation participants",
+      description:
+        "Lists the workspace members who replied in the conversation from the Inbox (typed messages, files, products, flows, nodes and templates), most recent reply first, with the time of each member's latest reply. Only replies sent after this was introduced are counted. `conversations.list` and `conversations.get` carry a `recentParticipants` preview of the latest three; page through this for everyone with `cursor`.",
+      tags: ["Conversations"],
+    })
+    .input(listConversationParticipantsRequest)
+    .output(listConversationParticipantsResponse)
+    .errors({
+      ...possibleErrorsOnFindingResource,
+      ...possibleErrorsOnListingWithCursor,
+    })
+    .handler(async ({ context, input }) => {
+      await assertConversationAccessForCaller(context, input.id)
+      return await listConversationParticipants({
+        workspaceId: context.workspace.id,
+        conversationId: input.id,
+        cursor: input.cursor,
+        perPage: input.perPage,
+      })
     }),
 
   // Single-conversation, path-addressed — not the private bulk

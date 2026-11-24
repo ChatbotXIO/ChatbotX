@@ -781,7 +781,8 @@
       "template": "Template",
       "integration": "Integration",
       "schedule": "Repeat schedule",
-      "runOf": "Run of <link>{name}</link>"
+      "runOf": "Run of <link>{name}</link>",
+      "linkNotFound": "This broadcast no longer exists."
     },
     "filters": {
       "all": "All"
@@ -8805,7 +8806,6 @@
   "templatesPublicPage": {
     "invalidTitle": "This link is no longer available.",
     "invalidDescription": "This template share link is invalid, disabled, or has expired.",
-    "byPublisher": "By {publisherName}",
     "videoTitle": "Template preview video",
     "preview": "Preview",
     "aboutTemplate": "About this template",
@@ -9264,6 +9264,10 @@
   "contactAdReferrals": {
     "title": "Ads history",
     "empty": "No ad clicks recorded for this contact yet."
+  },
+  "contactBroadcasts": {
+    "empty": "No broadcasts have been sent to this contact yet.",
+    "searchPlaceholder": "Search by name or ID"
   },
   "adsReferralStats": {
     "title": "Contacts by ad",
@@ -12297,6 +12301,7 @@
     "categoriesPlaceholder": "No category",
     "close": "Close",
     "removeChip": "Remove {name}",
+    "moreSelected": "+ {count} more",
     "categoriesHint": "Optional. Without a category the template only shows under “All”.",
     "languages": "Languages",
     "allLanguages": "All languages",
@@ -12353,7 +12358,6 @@
       "categories": "Store categories",
       "noResults": "No templates match your filters.",
       "clearSearch": "Clear filters",
-      "by": "By {publisherName}",
       "loadFailed": "Couldn't load the templates. Please try again later.",
       "language": "Language",
       "allLanguages": "All languages",
@@ -12547,5 +12551,14 @@
       "onAhachat": "On AhaChat",
       "selected": "Uses AhaChat data"
     }
+  },
+  "conversationParticipants": {
+    "joined": "{names} joined the conversation",
+    "replied": "{name} replied {time}",
+    "showMore": "Show more",
+    "label": "Who replied in this conversation",
+    "unnamedMember": "Member",
+    "loadMoreFailed": "Couldn't load more members",
+    "lastMessageBy": "Last message by {name}"
   }
 }

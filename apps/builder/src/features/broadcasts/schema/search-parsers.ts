@@ -23,4 +23,6 @@ export const broadcastsSearchParsers = {
   range: parseAsStringEnum([...CALENDAR_RANGES]).withDefault("month"),
   date: parseAsString,
   endDate: parseAsString,
+  /** Opens that broadcast's detail dialog over the list (the link from a contact's Broadcasts section). */
+  broadcastId: parseAsString,
 }

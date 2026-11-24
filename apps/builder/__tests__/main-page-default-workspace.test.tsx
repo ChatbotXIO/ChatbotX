@@ -172,7 +172,6 @@ describe("MainPage default workspace", () => {
 })
 
 const catalog = {
-  tenantName: "Acme",
   categories: [],
   templates: [],
 }
@@ -354,7 +353,7 @@ describe("MainPage templates tab", () => {
     mocks.loadHomeTemplateStore.mockResolvedValue({
       status: "ready",
       hasTemplates: true,
-      catalog: { tenantName: "Acme", categories: [], templates: [] },
+      catalog: { categories: [], templates: [] },
       openedTemplate: null,
     })
 

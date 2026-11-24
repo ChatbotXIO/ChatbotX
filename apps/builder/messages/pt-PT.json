@@ -739,7 +739,8 @@
       "template": "Modelo",
       "integration": "Integração",
       "schedule": "Agendamento de repetição",
-      "runOf": "Execução de <link>{name}</link>"
+      "runOf": "Execução de <link>{name}</link>",
+      "linkNotFound": "Esta transmissão já não existe."
     },
     "filters": {
       "all": "All"
@@ -7911,7 +7912,6 @@
   "templatesPublicPage": {
     "invalidTitle": "Esta ligação já não está disponível.",
     "invalidDescription": "Esta ligação de partilha de modelo é inválida, está desativada ou expirou.",
-    "byPublisher": "Por {publisherName}",
     "videoTitle": "Vídeo de pré-visualização do modelo",
     "preview": "Pré-visualizar",
     "aboutTemplate": "Sobre este modelo",
@@ -8269,6 +8269,10 @@
   "contactAdReferrals": {
     "title": "Histórico de anúncios",
     "empty": "Ainda não foram registados cliques em anúncios para este contacto."
+  },
+  "contactBroadcasts": {
+    "empty": "Ainda não foi enviada nenhuma transmissão a este contacto.",
+    "searchPlaceholder": "Pesquisar por nome ou ID"
   },
   "adsReferralStats": {
     "title": "Contactos por anúncio",
@@ -12281,6 +12285,7 @@
     "categoriesPlaceholder": "Sem categoria",
     "close": "Fechar",
     "removeChip": "Remover {name}",
+    "moreSelected": "+ {count} mais",
     "categoriesHint": "Opcional. Sem categoria, o template aparece apenas em “Todos”.",
     "languages": "Idiomas",
     "allLanguages": "Todos os idiomas",
@@ -12337,7 +12342,6 @@
       "categories": "Categorias da loja",
       "noResults": "Nenhum modelo corresponde aos seus filtros.",
       "clearSearch": "Limpar filtros",
-      "by": "Por {publisherName}",
       "loadFailed": "Não foi possível carregar os templates. Tente novamente mais tarde.",
       "language": "Idioma",
       "allLanguages": "Todos os idiomas",
@@ -12547,5 +12551,14 @@
       "onAhachat": "On AhaChat",
       "selected": "Uses AhaChat data"
     }
+  },
+  "conversationParticipants": {
+    "joined": "{names} participaram na conversa",
+    "replied": "{name} respondeu {time}",
+    "showMore": "Ver mais",
+    "label": "Quem respondeu nesta conversa",
+    "unnamedMember": "Membro",
+    "loadMoreFailed": "Não foi possível carregar mais membros",
+    "lastMessageBy": "Última mensagem de {name}"
   }
 }

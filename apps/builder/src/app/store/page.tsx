@@ -17,14 +17,13 @@ export async function generateMetadata(): Promise<Metadata> {
 /** The store of the tenant whose domain is being visited; an unknown domain shows the platform's. */
 export default async function StorePage() {
   const tenantId = await resolveTenantByDomain(await getDomainFromHeader())
-  const { tenantName, viewerLocale, categories, templates } =
+  const { viewerLocale, categories, templates } =
     await loadStoreCatalog(tenantId)
 
   return (
     <StoreCatalog
       categories={categories}
       templates={templates}
-      tenantName={tenantName}
       viewerLocale={viewerLocale}
     />
   )

@@ -321,11 +321,12 @@ const WorkspacesList = async ({
         actually shrink and scroll instead of pushing past the `<main>`'s
         `max-h` — same requirement as the rail's own scrolling body in
         `account-rail.tsx`. `overscroll-contain` stops scroll-chaining into
-        the document once the grid bottoms out.
+        the document once the grid bottoms out. `scrollbar-hide` keeps
+        wheel, touch and keyboard scrolling but not the bar itself.
       */}
       <section
         aria-labelledby={showTemplatesTab ? homeTabLinkId(openTab) : undefined}
-        className="mt-5 min-h-0 flex-1 overflow-y-auto overscroll-contain pt-2"
+        className="scrollbar-hide mt-5 min-h-0 flex-1 overflow-y-auto overscroll-contain pt-2"
         key={openTab}
       >
         {tabContent[openTab]}

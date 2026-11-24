@@ -396,6 +396,25 @@ describe("pathAndMethodToCommandName — repeating broadcasts", () => {
   })
 })
 
+describe("pathAndMethodToCommandName — contact broadcasts", () => {
+  test("the contact's broadcasts get their own command, next to the ad referrals one", () => {
+    const names = [
+      pathAndMethodToCommandName("/v1/contacts/{identifier}/broadcasts", "GET"),
+      pathAndMethodToCommandName(
+        "/v1/contacts/{identifier}/ad-referrals",
+        "GET",
+      ),
+      pathAndMethodToCommandName("/v1/contacts/{identifier}/tags", "GET"),
+    ]
+    expect(names).toEqual([
+      "contacts:broadcasts:list",
+      "contacts:ad-referrals:list",
+      "contacts:tags:list",
+    ])
+    expect(new Set(names).size).toBe(names.length)
+  })
+})
+
 describe("pathAndMethodToCommandName — ecommerce", () => {
   // A command whose derived name collides is silently dropped by the CLI, so
   // every ecommerce operation is pinned here.
@@ -618,6 +637,22 @@ describe("pathAndMethodToCommandName — Inbox translation", () => {
       "conversations:translation:update",
       "conversations:translation:request",
       "conversations:translation:preview",
+    ])
+    expect(new Set(names)).toHaveLength(names.length)
+  })
+})
+
+describe("pathAndMethodToCommandName — Inbox participants", () => {
+  test("listing participants does not collide with the conversation commands", () => {
+    const names = [
+      ["/v1/conversations", "GET"],
+      ["/v1/conversations/{id}", "GET"],
+      ["/v1/conversations/{id}/participants", "GET"],
+    ].map(([path, method]) => pathAndMethodToCommandName(path, method))
+    expect(names).toEqual([
+      "conversations:list",
+      "conversations:get",
+      "conversations:participants:list",
     ])
     expect(new Set(names)).toHaveLength(names.length)
   })

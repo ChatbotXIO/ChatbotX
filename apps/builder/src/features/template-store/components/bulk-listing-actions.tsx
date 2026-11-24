@@ -217,7 +217,7 @@ function BulkSetDialog({
 
   return (
     <Dialog onOpenChange={onOpenChange} open>
-      <DialogContent>
+      <DialogContent className="grid-cols-[minmax(0,1fr)] sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>{t(copy.titleKey)}</DialogTitle>
           <DialogDescription>

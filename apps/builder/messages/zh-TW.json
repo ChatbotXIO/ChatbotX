@@ -2712,7 +2712,8 @@
       "template": "範本",
       "integration": "整合",
       "schedule": "重複排程",
-      "runOf": "<link>{name}</link> 的執行"
+      "runOf": "<link>{name}</link> 的執行",
+      "linkNotFound": "此廣播已不存在。"
     },
     "filters": {
       "all": "All"
@@ -7957,7 +7958,6 @@
   "templatesPublicPage": {
     "invalidTitle": "此連結已不再可用。",
     "invalidDescription": "此範本分享連結無效、已停用或已過期。",
-    "byPublisher": "發布者：{publisherName}",
     "videoTitle": "範本預覽影片",
     "preview": "預覽",
     "aboutTemplate": "關於此範本",
@@ -8315,6 +8315,10 @@
   "contactAdReferrals": {
     "title": "廣告歷史",
     "empty": "尚未記錄此聯絡人的廣告點擊。"
+  },
+  "contactBroadcasts": {
+    "empty": "尚未向此聯絡人發送任何廣播。",
+    "searchPlaceholder": "依名稱或 ID 搜尋"
   },
   "adsReferralStats": {
     "title": "依廣告統計聯絡人",
@@ -12281,6 +12285,7 @@
     "categoriesPlaceholder": "無分類",
     "close": "關閉",
     "removeChip": "移除 {name}",
+    "moreSelected": "另外 {count} 項",
     "categoriesHint": "選填。沒有分類的範本只會顯示在「全部」中。",
     "languages": "語言",
     "allLanguages": "所有語言",
@@ -12337,7 +12342,6 @@
       "categories": "商店分類",
       "noResults": "沒有符合篩選條件的範本。",
       "clearSearch": "清除篩選",
-      "by": "作者：{publisherName}",
       "loadFailed": "無法載入範本。請稍後再試。",
       "language": "語言",
       "allLanguages": "所有語言",
@@ -12547,5 +12551,14 @@
       "onAhachat": "On AhaChat",
       "selected": "Uses AhaChat data"
     }
+  },
+  "conversationParticipants": {
+    "joined": "{names} 已參與對話",
+    "replied": "{name} 回覆於 {time}",
+    "showMore": "顯示更多",
+    "label": "誰在此對話中回覆過",
+    "unnamedMember": "成員",
+    "loadMoreFailed": "無法載入更多成員",
+    "lastMessageBy": "{name} 的最後一則訊息"
   }
 }

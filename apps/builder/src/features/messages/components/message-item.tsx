@@ -59,6 +59,8 @@ import { useCopyToClipboard } from "usehooks-ts"
 import type { AttachmentResource } from "@/features/attachments/schema/resource"
 import { useAttachmentSource } from "@/features/attachments/utils"
 import { contactDisplayName } from "@/features/contacts/lib/contact-display-name"
+import { ParticipantAvatar } from "@/features/conversations/components/participant-avatar"
+import type { ConversationParticipantResource } from "@/features/conversations/schema/resource"
 import {
   OutgoingTranslationStatus,
   useOutgoingTranslationStatus,
@@ -129,6 +131,11 @@ type MessageItemProps = {
   renderResend?: (message: MessageItemProps["message"]) => ReactNode
   /** Inbox only: omitted means the bubble renders exactly as before. */
   translation?: MessageItemTranslation
+  /**
+   * Inbox only: set on a member's latest message so their small avatar sits
+   * under the bubble's end edge (see `findLatestMessageIdByAuthor`).
+   */
+  authorMarker?: ConversationParticipantResource
 }
 
 /**
@@ -155,6 +162,7 @@ export const MessageItem = (props: MessageItemProps) => {
     onDelete,
     onEdit,
     translation,
+    authorMarker,
   } = props
   const t = useTranslations("messages")
   const tRouting = useTranslations("conversationRouting")
@@ -360,6 +368,9 @@ export const MessageItem = (props: MessageItemProps) => {
         {outgoingTranslationStatus && (
           <OutgoingTranslationStatus status={outgoingTranslationStatus} />
         )}
+        {authorMarker && !isDeleted && (
+          <AuthorMarker participant={authorMarker} />
+        )}
       </div>
 
       <div className="flex">
@@ -481,6 +492,29 @@ export const MessageItem = (props: MessageItemProps) => {
         </Tooltip>
       )}
     </MessageBubble>
+  )
+}
+
+/** The member's avatar under their latest message, named on hover. */
+const AuthorMarker = ({
+  participant,
+}: {
+  participant: ConversationParticipantResource
+}) => {
+  const t = useTranslations("conversationParticipants")
+  return (
+    <Tooltip>
+      <TooltipTrigger
+        render={
+          <span className="self-end">
+            <ParticipantAvatar participant={participant} />
+          </span>
+        }
+      />
+      <TooltipContent side="bottom">
+        {t("lastMessageBy", { name: participant.name ?? t("unnamedMember") })}
+      </TooltipContent>
+    </Tooltip>
   )
 }
 

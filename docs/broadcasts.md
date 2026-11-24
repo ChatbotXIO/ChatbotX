@@ -44,6 +44,29 @@ background. Until the preparation has stopped and the cleanup is done,
 scheduling the draft again is refused with a message to try again shortly;
 after that, scheduling goes through.
 
+## The broadcasts a contact was sent
+
+`GET /v1/contacts/{identifier}/broadcasts` (CLI: `chatbotx contacts broadcasts list`) and
+the **Broadcasts** section of the Inbox contact panel list the broadcasts a
+contact was a recipient of, newest first by scheduled time, with keyset paging
+(`perPage`, opaque `cursor`) and an optional `search` (part of the name, or the exact id). It is read-only; read a broadcast in full with
+`broadcasts.get`.
+
+- A broadcast is listed only once it reached the channel for that contact
+  (`sent`) or failed for them. Rows written while the audience is being prepared
+  but never sent, drafts and deleted broadcasts are left out.
+- `recipientStatus` is the furthest outcome for the contact: `failed`,
+  `clicked`, `seen`, `delivered`, or `sent` (handed to the channel, no delivery
+  receipt yet). `broadcastStatus` is the status of the broadcast itself.
+- Each run of a repeating broadcast is its own row; the repeating template never
+  sends, so it never appears.
+- A member restricted to assigned contacts gets the same not-found for a contact
+  they cannot open as everywhere else.
+- `search` runs on the server, so it finds a broadcast on any page; a name match is a case-insensitive substring (`%` and `_` are plain characters), and an id matches only when the text is a valid bigint. The panel shows the list in a scrolling area of capped height with a debounced search box.
+- No new index: the read walks the contact's own `ContactOnBroadcast` rows through
+  the existing `contactId` index (a contact has few of them) and joins `Broadcast`
+  by primary key.
+
 ## Contacts who left a phone number or an email
 
 Next to sent, delivered, seen, clicked and failed, every broadcast reports two

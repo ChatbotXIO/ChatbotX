@@ -739,7 +739,8 @@
       "template": "Template",
       "integration": "Integrasi",
       "schedule": "Jadwal pengulangan",
-      "runOf": "Eksekusi dari <link>{name}</link>"
+      "runOf": "Eksekusi dari <link>{name}</link>",
+      "linkNotFound": "Broadcast ini sudah tidak ada."
     },
     "filters": {
       "all": "All"
@@ -7911,7 +7912,6 @@
   "templatesPublicPage": {
     "invalidTitle": "Tautan ini sudah tidak tersedia lagi.",
     "invalidDescription": "Tautan berbagi templat ini tidak valid, dinonaktifkan, atau telah kedaluwarsa.",
-    "byPublisher": "Oleh {publisherName}",
     "videoTitle": "Video pratinjau templat",
     "preview": "Pratinjau",
     "aboutTemplate": "Tentang templat ini",
@@ -8269,6 +8269,10 @@
   "contactAdReferrals": {
     "title": "Riwayat iklan",
     "empty": "Belum ada klik iklan yang tercatat untuk kontak ini."
+  },
+  "contactBroadcasts": {
+    "empty": "Belum ada broadcast yang dikirim ke kontak ini.",
+    "searchPlaceholder": "Cari berdasarkan nama atau ID"
   },
   "adsReferralStats": {
     "title": "Kontak per iklan",
@@ -12281,6 +12285,7 @@
     "categoriesPlaceholder": "Tanpa kategori",
     "close": "Tutup",
     "removeChip": "Hapus {name}",
+    "moreSelected": "+ {count} lainnya",
     "categoriesHint": "Opsional. Tanpa kategori, template hanya muncul di “Semua”.",
     "languages": "Bahasa",
     "allLanguages": "Semua bahasa",
@@ -12337,7 +12342,6 @@
       "categories": "Kategori toko",
       "noResults": "Tidak ada templat yang cocok dengan filter Anda.",
       "clearSearch": "Hapus filter",
-      "by": "Oleh {publisherName}",
       "loadFailed": "Template tidak dapat dimuat. Coba lagi nanti.",
       "language": "Bahasa",
       "allLanguages": "Semua bahasa",
@@ -12547,5 +12551,14 @@
       "onAhachat": "On AhaChat",
       "selected": "Uses AhaChat data"
     }
+  },
+  "conversationParticipants": {
+    "joined": "{names} telah bergabung dalam percakapan",
+    "replied": "{name} membalas {time}",
+    "showMore": "Tampilkan lebih banyak",
+    "label": "Siapa yang membalas di percakapan ini",
+    "unnamedMember": "Anggota",
+    "loadMoreFailed": "Tidak dapat memuat anggota lainnya",
+    "lastMessageBy": "Pesan terakhir dari {name}"
   }
 }
