@@ -38,15 +38,39 @@ describe("buildFacebookOAuthDialogUrl", () => {
             configId: "config-1",
             version: "v21.0",
             connectExisting,
+            showExistingNumbers: true,
           }),
         ).searchParams.get("extras") ?? "{}",
       )
 
-    // Meta only lists a WhatsApp Business app account behind this feature
-    // type; the default screen shows Cloud API WABAs and nothing else, which
-    // left such a number with nothing to select on reconnect.
+    // Meta only lists an existing WhatsApp Business app number behind this
+    // feature type. A fresh connect sends it too, or that screen never appears.
     expect(extrasFor(true).featureType).toBe("whatsapp_business_app_onboarding")
+    expect(extrasFor(false).featureType).toBe(
+      "whatsapp_business_app_onboarding",
+    )
+  })
+
+  test("CAPI omits the existing-number screen unless the number is already coexistence", async () => {
+    const { buildFacebookOAuthDialogUrl } = await loadWith({
+      NEXT_PUBLIC_BROKER_URL: BROKER_URL,
+    })
+    const extrasFor = (connectExisting: boolean) =>
+      JSON.parse(
+        new URL(
+          buildFacebookOAuthDialogUrl({
+            resellerOrigin: RESELLER_ORIGIN,
+            redirectUri: `${BROKER_URL}/integrations/whatsapp/callback`,
+            clientId: "client-1",
+            configId: "capi-config",
+            version: "v21.0",
+            connectExisting,
+          }),
+        ).searchParams.get("extras") ?? "{}",
+      )
+
     expect(extrasFor(false).featureType).toBeUndefined()
+    expect(extrasFor(true).featureType).toBe("whatsapp_business_app_onboarding")
   })
 
   test("pins every flow to Embedded Signup v4 by default", async () => {
@@ -61,19 +85,21 @@ describe("buildFacebookOAuthDialogUrl", () => {
         configId: "config-1",
         version: "v21.0",
         connectExisting: false,
+        showExistingNumbers: true,
       }),
     )
     const extras = JSON.parse(result.searchParams.get("extras") ?? "{}")
 
     expect(DEFAULT_EMBEDDED_SIGNUP_VERSION).toBe("v4")
     expect(extras.version).toBe("v4")
+    expect(extras.featureType).toBe("whatsapp_business_app_onboarding")
     // v4 dropped `marketing_messages_lite` as a feature — it is a Login
     // Configuration product there — and only v2 needs `sessionInfoVersion`.
     expect(extras.features).toBeUndefined()
     expect(extras.sessionInfoVersion).toBeUndefined()
   })
 
-  test("omits auth_type on a first connect", async () => {
+  test("re-requests permissions on a first connect", async () => {
     const { buildFacebookOAuthDialogUrl } = await loadWith({
       NEXT_PUBLIC_BROKER_URL: BROKER_URL,
     })
@@ -89,7 +115,11 @@ describe("buildFacebookOAuthDialogUrl", () => {
       }),
     )
 
-    expect(result.searchParams.get("auth_type")).toBeNull()
+    expect(result.searchParams.get("auth_type")).toBe("rerequest")
+    expect(result.searchParams.get("override_default_response_type")).toBe(
+      "true",
+    )
+    expect(result.searchParams.has("scope")).toBe(false)
   })
 
   test("asks Meta to re-request permissions when the caller is reconnecting", async () => {

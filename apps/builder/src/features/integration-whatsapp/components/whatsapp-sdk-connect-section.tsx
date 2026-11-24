@@ -69,6 +69,7 @@ export function SdkConnectSection({
       configId: settings.configId,
       version: settings.version,
       connectExisting: watchConnectExisting,
+      showExistingNumbers: true,
       locale: document.documentElement.lang || undefined,
     })
     // Open a real tab (not a popup window) — popups get blocked, and a tab keeps

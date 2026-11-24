@@ -129,11 +129,11 @@ describe("WhatsappCreate connect card", () => {
       return JSON.parse(new URL(url).searchParams.get("extras") ?? "{}")
     }
 
-    test("Continue opens the Meta dialog on Embedded Signup v4 without a featureType", () => {
+    test("Continue opens the Meta dialog on Embedded Signup v4 and shows existing numbers", () => {
       const extras = openedExtras()
 
       expect(extras.version).toBe("v4")
-      expect(extras.featureType).toBeUndefined()
+      expect(extras.featureType).toBe("whatsapp_business_app_onboarding")
     })
 
     test("connecting an existing account asks Meta for the WhatsApp Business app onboarding", () => {

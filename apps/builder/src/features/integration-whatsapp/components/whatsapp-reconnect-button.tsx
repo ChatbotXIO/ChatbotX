@@ -82,10 +82,11 @@ export function WhatsappReconnectButton({
         clientId: settings.clientId,
         configId: settings.configId,
         version: settings.version,
-        // Selects Meta's WhatsApp Business app onboarding screen, which is
-        // where a coexistence account appears. A Cloud API number keeps the
-        // default WABA selection screen.
+        // The dialog always asks for the WhatsApp Business app screen, which
+        // is where an existing number appears. This flag still tells the
+        // server whether the saved number was a coexistence account.
         connectExisting: isCoexist,
+        showExistingNumbers: true,
         locale: document.documentElement.lang || undefined,
         // A reconnect exists to pick up a permission the account is missing.
         // Without this the dialog hands back the permissions it already
