@@ -38,6 +38,8 @@ export const FLOW_INSERT_KINDS = [
   "decisionProfile",
   "userPersistentMenu",
   "leaderboard",
+  // Remapped through `idMaps.poll` (polls insert before flows).
+  "poll",
   "miniApp",
   "minigame",
   "openHours",

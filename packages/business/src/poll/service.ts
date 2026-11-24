@@ -5,8 +5,10 @@ import {
   type PollWithCandidates,
   pollRepository,
 } from "@chatbotx.io/database/repositories"
+import { pollModel } from "@chatbotx.io/database/schema"
 import { BaseService } from "../base.service"
 import { ChatbotXException, notFoundException } from "../errors"
+import { type IdLabel, selectLabelsByIds } from "../select-labels-by-ids"
 import {
   assertReferencable,
   assertResourceEditable,
@@ -106,7 +108,28 @@ const candidatesChanged = (
   )
 }
 
+/** How many polls a select list offers; saved older ids still resolve by name. */
+const POLL_OPTIONS_LIMIT = 500
+
 class PollService extends BaseService {
+  /** Names for saved "Voted on the poll" filter values; missing ids are omitted. */
+  async listLabelsByIds(input: {
+    workspaceId: string
+    ids: string[]
+    tx?: DatabaseClient
+  }): Promise<IdLabel[]> {
+    return await selectLabelsByIds(pollModel, input)
+  }
+
+  listOptions(input: {
+    workspaceId: string
+  }): Promise<{ id: string; name: string }[]> {
+    return pollRepository.listOptions({
+      workspaceId: input.workspaceId,
+      limit: POLL_OPTIONS_LIMIT,
+    })
+  }
+
   list(input: {
     workspaceId: string
     name?: string

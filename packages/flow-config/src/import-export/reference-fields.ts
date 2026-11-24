@@ -276,6 +276,9 @@ export const REFERENCE_KIND_POLICY: Readonly<Record<string, ReferencePolicy>> =
     spreadsheet: "verifyInTarget",
     miniApp: "verifyInTarget",
     leaderboard: "verifyInTarget",
+    // Polls ship with a template (remapped by `idMaps.poll`); otherwise an id
+    // is kept only when it is the target workspace's own.
+    poll: "verifyInTarget",
     webhook: "verifyInTarget",
     decisionProfile: "verifyInTarget",
     userPersistentMenu: "verifyInTarget",

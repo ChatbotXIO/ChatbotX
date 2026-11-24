@@ -35,6 +35,7 @@ const COPIED_VERIFY_KINDS: readonly string[] = [
   "product",
   "miniApp",
   "leaderboard",
+  "poll",
   "vendor",
 ]
 

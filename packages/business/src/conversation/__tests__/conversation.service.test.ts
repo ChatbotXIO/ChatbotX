@@ -85,6 +85,7 @@ vi.mock("@chatbotx.io/database/schema", () => ({
   questionnaireSubmissionModel: {},
   adsConversionEventModel: {},
   refLinkStatModel: {},
+  pollVoteModel: {},
   contactsOnSequenceModel: {},
   contactsOnBroadcastsModel: {},
   contactsToTagsModel: {},
