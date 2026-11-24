@@ -12,14 +12,14 @@
   },
   "dependencies": {
     "@aws-sdk/client-s3": "catalog:",
-    "@aws-sdk/lib-storage": "^3.1039.0",
+    "@aws-sdk/lib-storage": "^3.1175.0",
     "@chatbotx.io/database": "workspace:*",
     "@chatbotx.io/logger": "workspace:*",
     "@chatbotx.io/utils": "workspace:*",
     "@t3-oss/env-core": "catalog:",
     "aws4fetch": "^1.0.20",
     "image-size": "catalog:",
-    "probe-image-size": "^7.4.0",
+    "probe-image-size": "^7.5.0",
     "zod": "catalog:"
   },
   "exports": {

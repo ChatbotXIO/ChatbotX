@@ -5,7 +5,7 @@
   "devDependencies": {
     "@chatbotx.io/typescript-config": "workspace:*",
     "@chatbotx.io/vitest-config": "workspace:*",
-    "@types/mjml": "^5.0.0",
+    "@types/mjml": "^5.4.2",
     "@types/mjml-core": "^5.0.0",
     "@types/node": "catalog:",
     "typescript": "catalog:",
@@ -13,8 +13,8 @@
   },
   "dependencies": {
     "@t3-oss/env-core": "catalog:",
-    "mjml": "^5.2.0",
-    "nodemailer": "^10.3.1",
+    "mjml": "^5.4.1",
+    "nodemailer": "^10.6.1",
     "zod": "catalog:"
   },
   "exports": {
