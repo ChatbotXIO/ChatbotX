@@ -85,6 +85,31 @@ describe("verifyMcpAccessToken", () => {
     })
   })
 
+  test("returns null when the token carries more than one MCP audience", async () => {
+    verifyBearerToken.mockResolvedValue({
+      aud: [
+        "https://app.example.com/mcp",
+        "https://app.example.com/mcp/openai",
+      ],
+      client_id: "client-1",
+      sub: "42",
+    })
+
+    await expect(verifyMcpAccessToken(auth, "a.b.c")).resolves.toBeNull()
+  })
+
+  test("accepts an audience array holding one MCP audience plus an unrelated one", async () => {
+    verifyBearerToken.mockResolvedValue({
+      aud: ["https://other.example.com", "https://app.example.com/mcp/openai"],
+      client_id: "client-1",
+      sub: "42",
+    })
+
+    await expect(verifyMcpAccessToken(auth, "a.b.c")).resolves.toMatchObject({
+      audience: "https://app.example.com/mcp/openai",
+    })
+  })
+
   test("returns null for an expired token", async () => {
     verifyBearerToken.mockRejectedValue(
       new APIError("UNAUTHORIZED", { message: "token expired" }),

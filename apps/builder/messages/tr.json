@@ -12242,6 +12242,10 @@
       "revokeConfirmDescription": "{clientName} erişimi iptal edilsin mi? Bu işlem istemcinin bağlantısını her yerde keser.",
       "revokedSuccess": "Uygulama erişimi iptal edildi.",
       "notFound": "OAuth yetkisi artık mevcut değil"
+    },
+    "unavailableOnDomain": {
+      "title": "Bu alan adında kullanılamıyor",
+      "body": "Claude veya ChatGPT gibi yapay zekâ asistanlarını bağlamak bu alan adında henüz kullanılamıyor. Mevcut yetkilendirmeler aşağıda listelenir ve hâlâ iptal edilebilir."
     }
   },
   "connectionStatus": {

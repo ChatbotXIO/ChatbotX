@@ -67,6 +67,17 @@ export const OPENAI_DEFERRED_TOOLS = [
   "contacts_subscribe_sequences",
 ] as const
 
+/**
+ * Approval policies that keep the server-side `_confirm` round trip. ChatGPT
+ * already asks the user before any tool without `readOnlyHint`, so an ordinary
+ * update (`confirm_diff`) would be approved twice; only actions that reach a
+ * real person or stop live sending get the extra review of current state.
+ */
+export const OPENAI_CONFIRMED_POLICIES = [
+  "confirm_outbound",
+  "confirm_destructive",
+] as const
+
 export type OpenAiToolOverride = {
   adapterBody?: Record<string, unknown>
   annotations?: Partial<{
@@ -77,13 +88,9 @@ export type OpenAiToolOverride = {
   }>
   description?: string
   removeProperties?: string[]
-  /** Top-level response properties withheld from the host. */
-  omitResponseProperties?: string[]
 }
 
 export const OPENAI_TOOL_OVERRIDES: Record<string, OpenAiToolOverride> = {
-  // `principal` is transport-only verified identity, never shown to the host.
-  token_get: { omitResponseProperties: ["principal"] },
   analytics_broadcast_stats: {
     description:
       "Get delivery statistics for one broadcast. Resolve the broadcast with `broadcasts.list` first.",

@@ -12242,6 +12242,10 @@
       "revokeConfirmDescription": "Revogar o acesso de {clientName}? Isto desliga o cliente em todo o lado.",
       "revokedSuccess": "Acesso da aplicação revogado.",
       "notFound": "A autorização OAuth já não existe"
+    },
+    "unavailableOnDomain": {
+      "title": "Indisponível neste domínio",
+      "body": "A ligação de assistentes de IA como o Claude ou o ChatGPT ainda não está disponível neste domínio. As autorizações existentes estão listadas abaixo e ainda podem ser revogadas."
     }
   },
   "connectionStatus": {

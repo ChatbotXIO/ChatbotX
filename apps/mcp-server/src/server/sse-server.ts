@@ -13,8 +13,10 @@ import { resolveHeaderValue } from "../http-headers"
 import {
   buildProtectedResourceMetadata,
   buildWwwAuthenticate,
+  isConnectorProfileAudience,
   profileForPath,
   protectedResourcePrefix,
+  unverifiedJwtAudiences,
 } from "../oauth"
 import { introspectToken } from "../token-introspection"
 import type { CreateMcpServerOptions } from "./create-mcp-server"
@@ -95,11 +97,6 @@ const PROFILE_TRANSPORTS = new Map([
   [CLAUDE_INTERNAL_PATH, handleClaudeRequest],
 ])
 
-/** Public path suffixes of the profile audiences (`<origin>/mcp/<profile>`). */
-const PROFILE_AUDIENCE_SUFFIXES = [...PROFILE_TRANSPORTS.keys()].map(
-  (internalPath) => `/mcp${internalPath}`,
-)
-
 const apiTokenHeaderNames = ["x-workspace-token", "x-chatbo-token"] as const
 
 export { resolveHeaderValue } from "../http-headers"
@@ -173,6 +170,18 @@ const enableCors = (res: ServerResponse): void => {
   res.setHeader("Access-Control-Expose-Headers", "WWW-Authenticate")
 }
 
+/** Verified OAuth audience when introspection succeeded, else the raw claim. */
+const tokenAudiences = (
+  result: Awaited<ReturnType<typeof introspectToken>>,
+  token: string,
+): string[] => {
+  if (result.status !== "ok") {
+    return unverifiedJwtAudiences(token)
+  }
+  const { principal } = result.data
+  return principal?.credentialType === "oauth" ? [principal.audience] : []
+}
+
 const authorizeRequest = async (
   req: IncomingMessage,
   res: ServerResponse,
@@ -207,13 +216,9 @@ const authorizeRequest = async (
   // Connector-profile tokens are only valid on their dedicated transport
   // (`/mcp/openai`, `/mcp/claude`); they must not authenticate the default
   // profile and its `call_tool` access to every operation.
-  const principal = result.status === "ok" ? result.data.principal : undefined
-  if (
-    principal?.credentialType === "oauth" &&
-    PROFILE_AUDIENCE_SUFFIXES.some((suffix) =>
-      principal.audience.endsWith(suffix),
-    )
-  ) {
+  // While introspection is unavailable (fail-open below) the token's own,
+  // unverified `aud` still decides the reject: it can only refuse, never admit.
+  if (tokenAudiences(result, token).some(isConnectorProfileAudience)) {
     writeJsonRpcError(
       res,
       401,

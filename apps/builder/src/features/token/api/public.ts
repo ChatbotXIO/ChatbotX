@@ -36,7 +36,7 @@ const tokenPublicResponse = z.object({
       z.object({ credentialType: z.literal("mobile") }),
     ])
     .describe(
-      "Verified identity of the caller, for transport-level binding. Not part of the OpenAI tool projection.",
+      "Verified identity of the caller. MCP connector transports use it to bind a session to one identity.",
     ),
 })
 

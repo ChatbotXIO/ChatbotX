@@ -12242,6 +12242,10 @@
       "revokeConfirmDescription": "{clientName}のアクセスを取り消しますか？すべての場所でクライアントが切断されます。",
       "revokedSuccess": "アプリケーションのアクセスを取り消しました。",
       "notFound": "このOAuth許可は存在しません"
+    },
+    "unavailableOnDomain": {
+      "title": "このドメインでは利用できません",
+      "body": "Claude や ChatGPT などの AI アシスタントとの接続は、このドメインではまだ利用できません。既存の認可は下に表示されており、引き続き取り消すことができます。"
     }
   },
   "connectionStatus": {

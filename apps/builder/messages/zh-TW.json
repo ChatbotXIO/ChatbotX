@@ -12242,6 +12242,10 @@
       "revokeConfirmDescription": "撤銷 {clientName} 的存取權？這會讓該用戶端在所有位置中斷連線。",
       "revokedSuccess": "已撤銷應用程式的存取權。",
       "notFound": "該 OAuth 授權已不存在"
+    },
+    "unavailableOnDomain": {
+      "title": "此網域暫不可用",
+      "body": "此網域暫不支援連接 Claude 或 ChatGPT 等 AI 助理。現有授權列於下方，仍可撤銷。"
     }
   },
   "connectionStatus": {

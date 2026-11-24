@@ -12242,6 +12242,10 @@
       "revokeConfirmDescription": "Återkalla åtkomsten för {clientName}? Det kopplar bort klienten överallt.",
       "revokedSuccess": "Programmets åtkomst har återkallats.",
       "notFound": "OAuth-behörigheten finns inte längre"
+    },
+    "unavailableOnDomain": {
+      "title": "Inte tillgängligt på den här domänen",
+      "body": "Att ansluta AI-assistenter som Claude eller ChatGPT är ännu inte tillgängligt på den här domänen. Befintliga auktoriseringar visas nedan och kan fortfarande återkallas."
     }
   },
   "connectionStatus": {

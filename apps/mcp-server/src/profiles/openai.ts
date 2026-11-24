@@ -1,15 +1,16 @@
 import { getChildLogger } from "@chatbotx.io/logger"
 import { env } from "../env"
-import { fetchWithTimeout } from "../http"
+import { isVisibleForScope } from "../openapi-loader"
 import {
-  appendQueryParam,
-  buildQueryString,
   errorResult,
   jsonResult,
   normalizeToolArguments,
   type RequestCredentials,
+  sendApiRequest,
   type ToolCallResult,
 } from "../server/execute-tool"
+import type { TokenIntrospection } from "../token-introspection"
+import { GUIDE_URI_PREFIX } from "./guide-uri"
 import { type JsonSchema, validateAgainstSchema } from "./json-schema-validate"
 import {
   OPENAI_GUIDE_NAMES,
@@ -22,6 +23,7 @@ import { projectResponse, ResponseContractError } from "./project-response"
 
 export type OpenAiTool = {
   adapterBody: Record<string, unknown>
+  alwaysVisible: boolean
   annotations: {
     destructiveHint: boolean
     idempotentHint: boolean
@@ -43,6 +45,7 @@ export type OpenAiTool = {
   pathTemplate: string
   queryParamNames: string[]
   responseSchema: JsonSchema | null
+  scope?: string | string[]
 }
 
 type Manifest = { contractVersion: string; tools: OpenAiTool[] }
@@ -55,7 +58,7 @@ const logger = getChildLogger("mcp-server")
 
 const toolsByName = new Map(manifest.tools.map((tool) => [tool.name, tool]))
 const TRAILING_SLASH = /\/$/
-const OPENAI_BASE_URL = (): string =>
+const apiBaseUrl = (): string =>
   env.CHATBOTX_API_URL.replace(TRAILING_SLASH, "")
 
 const SECURITY_SCHEMES = [{ type: "oauth2" }]
@@ -70,7 +73,7 @@ const OPENAI_GUIDE_TOOL = {
     openWorldHint: false,
   },
   description:
-    "Read a ChatbotX usage guide for a workflow: approvals, contacts and pipelines, or inbox handling.",
+    "Read a usage guide for a workflow: approvals, contacts and pipelines, or inbox handling.",
   inputSchema: {
     type: "object",
     properties: { name: { enum: [...OPENAI_GUIDE_NAMES], type: "string" } },
@@ -81,25 +84,31 @@ const OPENAI_GUIDE_TOOL = {
   _meta: { securitySchemes: SECURITY_SCHEMES },
 } as const
 
-export const listOpenAiTools = () => [
-  ...manifest.tools.map((tool) => ({
-    name: tool.name,
-    description: tool.description,
-    inputSchema: tool.inputSchema as { type: "object"; [key: string]: unknown },
-    annotations: tool.annotations,
-    securitySchemes: SECURITY_SCHEMES,
-    _meta: { securitySchemes: SECURITY_SCHEMES },
-  })),
+/**
+ * The `tools/list` surface: manifest tools the calling token may use (same
+ * permission/scope rule as the default profile), plus `get_guide`.
+ */
+export const listOpenAiTools = (introspection: TokenIntrospection | null) => [
+  ...manifest.tools
+    .filter((tool) => isVisibleForScope(tool, introspection))
+    .map((tool) => ({
+      name: tool.name,
+      description: tool.description,
+      inputSchema: tool.inputSchema as {
+        type: "object"
+        [key: string]: unknown
+      },
+      annotations: tool.annotations,
+      securitySchemes: SECURITY_SCHEMES,
+      _meta: { securitySchemes: SECURITY_SCHEMES },
+    })),
   OPENAI_GUIDE_TOOL,
 ]
-
-export const getOpenAiTool = (name: string): OpenAiTool | undefined =>
-  toolsByName.get(name)
 
 export const openAiGuideResources = () =>
   OPENAI_GUIDE_NAMES.map((name) => ({
     name,
-    uri: `chatbotx://guides/${name}`,
+    uri: `${GUIDE_URI_PREFIX}${name}`,
     ...OPENAI_GUIDES[name],
   }))
 
@@ -122,6 +131,7 @@ export const handleOpenAiGuide = (
   }
 }
 
+// Neutral wording: one server serves every white-label tenant.
 const STATUS_MESSAGES: Record<number, string> = {
   400: "The request was not accepted. Check the arguments.",
   401: "Authorization is required. Reconnect the account.",
@@ -135,7 +145,7 @@ const STATUS_MESSAGES: Record<number, string> = {
 const statusMessage = (status: number): string =>
   STATUS_MESSAGES[status] ??
   (status >= 500
-    ? "ChatbotX is temporarily unavailable."
+    ? "The service is temporarily unavailable."
     : "The request failed.")
 
 type ApiOutcome =
@@ -148,53 +158,37 @@ const isTransportError = (error: unknown): boolean =>
   (error instanceof Error &&
     (error.name === "TimeoutError" || error.name === "AbortError"))
 
+const readBody = async (response: Response): Promise<unknown> => {
+  if (response.status === 204) {
+    return
+  }
+  const contentType = response.headers.get("content-type") ?? ""
+  if (contentType.includes("application/json")) {
+    return await response.json()
+  }
+  const text = await response.text()
+  return text.length === 0 ? undefined : text
+}
+
 const callApi = async (
   tool: OpenAiTool,
   args: Record<string, unknown>,
   credentials: RequestCredentials,
 ): Promise<ApiOutcome> => {
-  let path = tool.pathTemplate
-  for (const name of tool.pathParamNames) {
-    const value = args[name]
-    if (value === undefined || value === null) {
+  try {
+    const sent = await sendApiRequest(
+      { ...tool, baseUrl: apiBaseUrl() },
+      args,
+      credentials,
+    )
+    if ("invalidPathParam" in sent) {
       return {
         ok: false,
-        message: `Missing path parameter ${name}.`,
+        message: `Missing or invalid path parameter ${sent.invalidPathParam}.`,
         status: 400,
       }
     }
-    path = path.replace(`{${name}}`, encodeURIComponent(String(value)))
-  }
-  const query = new URLSearchParams()
-  for (const key of tool.queryParamNames) {
-    appendQueryParam(query, key, args[key])
-  }
-  const body: Record<string, unknown> = { ...tool.adapterBody }
-  for (const key of tool.bodyParamNames) {
-    if (args[key] !== undefined) {
-      body[key] = args[key]
-    }
-  }
-  const sendBody =
-    tool.method !== "GET" &&
-    tool.method !== "HEAD" &&
-    tool.bodyParamNames.length > 0
-  try {
-    const response = await fetchWithTimeout(
-      `${OPENAI_BASE_URL()}${path}${buildQueryString(query)}`,
-      {
-        body: sendBody ? JSON.stringify(body) : undefined,
-        headers: {
-          Authorization: `Bearer ${credentials.token}`,
-          "Content-Type": "application/json",
-          ...(credentials.workspaceId
-            ? { "x-workspace-id": credentials.workspaceId }
-            : {}),
-        },
-        method: tool.method,
-      },
-      env.CHATBOTX_HTTP_TIMEOUT_MS,
-    )
+    const { response } = sent
     if (!response.ok) {
       return {
         ok: false,
@@ -202,20 +196,12 @@ const callApi = async (
         status: response.status,
       }
     }
-    if (response.status === 204) {
-      return { ok: true, body: undefined }
-    }
-    const contentType = response.headers.get("content-type") ?? ""
-    if (!contentType.includes("application/json")) {
-      const text = await response.text()
-      return { ok: true, body: text.length === 0 ? undefined : text }
-    }
-    return { ok: true, body: await response.json() }
+    return { ok: true, body: await readBody(response) }
   } catch (error) {
     if (isTransportError(error)) {
       return {
         ok: false,
-        message: "ChatbotX could not be reached.",
+        message: "The service could not be reached.",
         status: 502,
       }
     }
@@ -225,7 +211,7 @@ const callApi = async (
     )
     return {
       ok: false,
-      message: "ChatbotX returned a response that could not be read.",
+      message: "The service returned a response that could not be read.",
       status: 502,
     }
   }
@@ -293,30 +279,29 @@ export const executeOpenAiTool = async (
   }
 
   const args = normalizeToolArguments(rawArgs)
-  const problems = validateAgainstSchema(tool.inputSchema, args)
+  const { _confirm, ...proposed } = args
+  // A tool without the approval step has no `_confirm` in its schema; a
+  // stray one from the model is ignored rather than rejected.
+  const problems = validateAgainstSchema(
+    tool.inputSchema,
+    tool.hitlPolicy === "none" ? proposed : args,
+  )
   if (problems.length > 0) {
     return errorResult(
       `Invalid arguments:\n${problems.slice(0, 10).join("\n")}`,
     )
   }
 
-  const { _confirm, ...proposed } = args
-  const mutates = !tool.annotations.readOnlyHint
   if (tool.hitlPolicy !== "none" && _confirm !== true) {
+    // A pending approval, not a failure: the model shows it and asks the user.
     const state = await currentState(tool, proposed, credentials)
-    return errorResult(
-      JSON.stringify(
-        {
-          code: "CONFIRMATION_REQUIRED",
-          ...state,
-          policy: tool.hitlPolicy,
-          proposed,
-          tool: tool.name,
-        },
-        null,
-        2,
-      ),
-    )
+    return jsonResult({
+      code: "CONFIRMATION_REQUIRED",
+      ...state,
+      policy: tool.hitlPolicy,
+      proposed,
+      tool: tool.name,
+    })
   }
 
   const outcome = await callApi(tool, proposed, credentials)
@@ -330,9 +315,9 @@ export const executeOpenAiTool = async (
       throw error
     }
     return errorResult(
-      mutates
-        ? "The action may have completed, but the response could not be returned safely. Do not repeat it automatically; check the current state."
-        : "The response did not match the reviewed contract and was withheld.",
+      tool.annotations.readOnlyHint
+        ? "The response did not match the reviewed contract and was withheld."
+        : "The action may have completed, but the response could not be returned safely. Do not repeat it automatically; check the current state.",
     )
   }
 }

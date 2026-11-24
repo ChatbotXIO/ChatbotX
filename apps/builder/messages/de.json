@@ -12242,6 +12242,10 @@
       "revokeConfirmDescription": "Zugriff für {clientName} widerrufen? Dadurch wird der Client überall getrennt.",
       "revokedSuccess": "Anwendungszugriff widerrufen.",
       "notFound": "Die OAuth-Berechtigung existiert nicht mehr"
+    },
+    "unavailableOnDomain": {
+      "title": "Auf dieser Domain nicht verfügbar",
+      "body": "Das Verbinden von KI-Assistenten wie Claude oder ChatGPT ist auf dieser Domain noch nicht verfügbar. Bestehende Autorisierungen sind unten aufgeführt und können weiterhin widerrufen werden."
     }
   },
   "connectionStatus": {

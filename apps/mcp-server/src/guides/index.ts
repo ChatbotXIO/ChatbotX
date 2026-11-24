@@ -1,6 +1,7 @@
 import { existsSync, readFileSync } from "node:fs"
 import { dirname, join } from "node:path"
 import { fileURLToPath } from "node:url"
+import { GUIDE_URI_PREFIX } from "../profiles/guide-uri"
 
 const guideDirectory = (() => {
   const moduleDirectory = dirname(fileURLToPath(import.meta.url))
@@ -37,7 +38,7 @@ export type Guide = {
   content: string
   description: string
   name: GuideName
-  uri: `chatbotx://guides/${GuideName}`
+  uri: `guides://${GuideName}`
 }
 
 export const guideNames = Object.keys(guideDefinitions) as GuideName[]
@@ -50,7 +51,7 @@ const loadGuide = (name: GuideName): Guide => {
       content: readFileSync(path, "utf8"),
       description: definition.description,
       name,
-      uri: `chatbotx://guides/${name}`,
+      uri: `${GUIDE_URI_PREFIX}${name}` as Guide["uri"],
     }
   } catch (error) {
     const reason = error instanceof Error ? error.message : String(error)

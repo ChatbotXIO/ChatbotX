@@ -3,7 +3,11 @@ import {
   getToolByName,
   getVisibleTools,
 } from "../openapi-loader"
-import { errorResult, type ToolCallResult } from "../server/execute-tool"
+import {
+  errorResult,
+  jsonResult,
+  type ToolCallResult,
+} from "../server/execute-tool"
 import type { TokenIntrospection } from "../token-introspection"
 import { CLAUDE_API_TOOLS } from "./claude-contract"
 import {
@@ -13,6 +17,8 @@ import {
   type ClaudeGuideName,
 } from "./claude-guides"
 import { createDescriptionFilter } from "./description-filter"
+import { GUIDE_URI_PREFIX } from "./guide-uri"
+import { TRANSPORT_ONLY_RESPONSE_PROPERTIES } from "./transport-only-fields"
 
 export const CLAUDE_PROFILE_INSTRUCTIONS = CLAUDE_INSTRUCTIONS
 
@@ -57,7 +63,7 @@ const CLAUDE_GUIDE_TOOL = {
     openWorldHint: false,
   },
   description:
-    "Read a ChatbotX usage guide for a workflow: overview and approvals, contacts and pipelines, flows and automation, or inbox handling.",
+    "Read a usage guide for a workflow: overview and approvals, contacts and pipelines, flows and automation, or inbox handling.",
   inputSchema: {
     type: "object" as const,
     properties: { name: { enum: [...CLAUDE_GUIDE_NAMES], type: "string" } },
@@ -97,7 +103,7 @@ export const listClaudeTools = (introspection: TokenIntrospection | null) => [
 export const claudeGuideResources = () =>
   CLAUDE_GUIDE_NAMES.map((name) => ({
     name,
-    uri: `chatbotx://guides/${name}`,
+    uri: `${GUIDE_URI_PREFIX}${name}`,
     ...CLAUDE_GUIDES[name],
   }))
 
@@ -118,4 +124,34 @@ export const handleClaudeGuide = (
       { text: CLAUDE_GUIDES[name as ClaudeGuideName].content, type: "text" },
     ],
   }
+}
+
+/**
+ * Drops response properties only the transport may see (e.g. `token_get`'s
+ * verified `principal`) from a successful JSON tool result. The OpenAI
+ * profile does the same through its reviewed manifest.
+ */
+export const omitTransportOnlyFields = (
+  toolName: string,
+  result: ToolCallResult,
+): ToolCallResult => {
+  const omitted = TRANSPORT_ONLY_RESPONSE_PROPERTIES[toolName]
+  const text = result.content[0]?.text
+  if (!omitted || result.isError || text === undefined) {
+    return result
+  }
+  let body: unknown
+  try {
+    body = JSON.parse(text)
+  } catch {
+    return result
+  }
+  if (body === null || typeof body !== "object" || Array.isArray(body)) {
+    return result
+  }
+  return jsonResult(
+    Object.fromEntries(
+      Object.entries(body).filter(([key]) => !omitted.includes(key)),
+    ),
+  )
 }

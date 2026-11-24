@@ -12242,6 +12242,10 @@
       "revokeConfirmDescription": "إلغاء وصول {clientName}؟ سيؤدي ذلك إلى فصل العميل في كل مكان.",
       "revokedSuccess": "تم إلغاء وصول التطبيق.",
       "notFound": "تصريح OAuth لم يعد موجودًا"
+    },
+    "unavailableOnDomain": {
+      "title": "غير متاح على هذا النطاق",
+      "body": "ربط مساعدي الذكاء الاصطناعي مثل Claude أو ChatGPT غير متاح على هذا النطاق بعد. التفويضات الحالية مدرجة أدناه ويمكن إلغاؤها."
     }
   },
   "connectionStatus": {

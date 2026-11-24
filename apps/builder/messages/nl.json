@@ -12242,6 +12242,10 @@
       "revokeConfirmDescription": "Toegang voor {clientName} intrekken? Hiermee wordt de client overal verbroken.",
       "revokedSuccess": "Toegang van de applicatie ingetrokken.",
       "notFound": "De OAuth-machtiging bestaat niet meer"
+    },
+    "unavailableOnDomain": {
+      "title": "Niet beschikbaar op dit domein",
+      "body": "Het koppelen van AI-assistenten zoals Claude of ChatGPT is nog niet beschikbaar op dit domein. Bestaande autorisaties staan hieronder en kunnen nog steeds worden ingetrokken."
     }
   },
   "connectionStatus": {

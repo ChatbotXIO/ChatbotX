@@ -12242,6 +12242,10 @@
       "revokeConfirmDescription": "Revoci accesul pentru {clientName}? Clientul va fi deconectat peste tot.",
       "revokedSuccess": "Accesul aplicației a fost revocat.",
       "notFound": "Autorizarea OAuth nu mai există"
+    },
+    "unavailableOnDomain": {
+      "title": "Indisponibil pe acest domeniu",
+      "body": "Conectarea asistenților AI precum Claude sau ChatGPT nu este încă disponibilă pe acest domeniu. Autorizațiile existente sunt listate mai jos și pot fi în continuare revocate."
     }
   },
   "connectionStatus": {

@@ -12242,6 +12242,10 @@
       "revokeConfirmDescription": "לבטל את הגישה של {clientName}? פעולה זו תנתק את הלקוח בכל מקום.",
       "revokedSuccess": "הגישה של האפליקציה בוטלה.",
       "notFound": "הרשאת ה-OAuth כבר לא קיימת"
+    },
+    "unavailableOnDomain": {
+      "title": "לא זמין בדומיין זה",
+      "body": "חיבור עוזרי בינה מלאכותית כמו Claude או ChatGPT עדיין אינו זמין בדומיין זה. ההרשאות הקיימות מופיעות למטה ועדיין ניתן לבטל אותן."
     }
   },
   "connectionStatus": {

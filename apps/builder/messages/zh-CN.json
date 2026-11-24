@@ -12242,6 +12242,10 @@
       "revokeConfirmDescription": "撤销 {clientName} 的访问权限？这会让该客户端在所有位置断开连接。",
       "revokedSuccess": "已撤销应用的访问权限。",
       "notFound": "该 OAuth 授权已不存在"
+    },
+    "unavailableOnDomain": {
+      "title": "此域名暂不可用",
+      "body": "此域名暂不支持连接 Claude 或 ChatGPT 等 AI 助手。现有授权列在下方，仍可撤销。"
     }
   },
   "connectionStatus": {

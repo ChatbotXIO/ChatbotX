@@ -12258,6 +12258,10 @@
       "revokeConfirmDescription": "{clientName} üçün giriş ləğv edilsin? Bu, müştərini hər yerdə əlaqəsiz edəcək.",
       "revokedSuccess": "Tətbiqin girişi ləğv edildi.",
       "notFound": "OAuth icazəsi artıq mövcud deyil"
+    },
+    "unavailableOnDomain": {
+      "title": "Bu domendə əlçatan deyil",
+      "body": "Claude və ya ChatGPT kimi süni intellekt köməkçilərini qoşmaq bu domendə hələ mümkün deyil. Mövcud icazələr aşağıda göstərilir və hələ də ləğv edilə bilər."
     }
   },
   "connectionStatus": {

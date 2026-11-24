@@ -2,10 +2,8 @@ import type { McpOptions } from "@better-auth/mcp"
 import { getMcpResourceUrl, MCP_CONNECTOR_PROFILES } from "./keys"
 
 export {
-  getMcpProfileResourceUrl,
   getMcpResourceUrl,
   MCP_CONNECTOR_PROFILES,
-  type McpConnectorProfile,
 } from "./keys"
 
 /** Scopes the MCP OAuth provider advertises and grants to registered clients. */

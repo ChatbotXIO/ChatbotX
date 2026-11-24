@@ -78,7 +78,7 @@ export const CLAUDE_API_TOOLS = [
 
 /**
  * Default-visible operations deliberately left out: connecting a channel
- * hands the user a provider sign-in link and is done in the ChatbotX app.
+ * hands the user a provider sign-in link and is done in the web app.
  */
 export const CLAUDE_EXCLUDED_TOOLS = [
   "connection_providers_list",

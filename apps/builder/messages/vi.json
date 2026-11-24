@@ -12258,6 +12258,10 @@
       "revokeConfirmDescription": "Thu hồi quyền truy cập của {clientName}? Thao tác này sẽ ngắt kết nối client ở mọi nơi.",
       "revokedSuccess": "Đã thu hồi quyền truy cập của ứng dụng.",
       "notFound": "Quyền OAuth này không còn tồn tại"
+    },
+    "unavailableOnDomain": {
+      "title": "Chưa khả dụng trên tên miền này",
+      "body": "Tính năng kết nối trợ lý AI như Claude hoặc ChatGPT hiện chưa khả dụng trên tên miền này. Các quyền đã cấp được liệt kê bên dưới và vẫn có thể thu hồi."
     }
   },
   "connectionStatus": {

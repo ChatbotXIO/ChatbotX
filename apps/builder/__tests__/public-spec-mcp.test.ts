@@ -2,7 +2,7 @@
 
 import { readFileSync } from "node:fs"
 import { join } from "node:path"
-
+import { MCP_CONNECTOR_PROFILES } from "@chatbotx.io/auth/mcp-config"
 import { OpenAPIGenerator } from "@orpc/openapi"
 import { ZodToJsonSchemaConverter } from "@orpc/zod/zod4"
 import { beforeAll, describe, expect, test, vi } from "vitest"
@@ -12,11 +12,13 @@ import {
   withIdempotencyKeyHeader,
   withMcpHitlPolicy,
 } from "@/lib/orpc/public-spec"
+import { CONNECTOR_PROFILES } from "../../mcp-server/src/oauth"
 import {
   CLAUDE_API_TOOLS,
   CLAUDE_EXCLUDED_TOOLS,
 } from "../../mcp-server/src/profiles/claude-contract"
 import { OPENAI_TOOL_OVERRIDES } from "../../mcp-server/src/profiles/openai-contract"
+import { buildOpenAiManifest } from "../../mcp-server/src/profiles/openai-manifest-builder"
 
 // Same side-effect-free import stubs as public-spec-operations.test.ts —
 // `@/routers/public` transitively boots the real db client and better-auth
@@ -171,6 +173,7 @@ function mcpToolNamesFromMarkdownTable(
 }
 
 let operations: McpSpecOperation[]
+let publicSpec: unknown
 
 beforeAll(async () => {
   const { publicRouter } = await import("@/routers/public")
@@ -193,6 +196,7 @@ beforeAll(async () => {
     ),
   )
 
+  publicSpec = spec
   operations = []
   for (const [path, methods] of Object.entries(spec.paths ?? {})) {
     for (const [method, operation] of Object.entries(
@@ -385,6 +389,18 @@ describe("OpenAI MCP profile manifest", () => {
         expect(tool.annotations[hint], `${tool.name}.${hint}`).toBe(meta[hint])
       }
     }
+  })
+
+  test("the committed manifest equals a rebuild from the live spec", () => {
+    // Regenerate with `pnpm --filter chatbotx-mcp generate:openai-manifest
+    // <public-spec.json>` and review the diff when this fails.
+    expect(JSON.parse(JSON.stringify(buildOpenAiManifest(publicSpec)))).toEqual(
+      manifest,
+    )
+  })
+
+  test("mcp-server and auth agree on the connector profiles", () => {
+    expect([...CONNECTOR_PROFILES]).toEqual([...MCP_CONNECTOR_PROFILES])
   })
 
   test("every manifest tool's path, query and body params match the live spec", () => {

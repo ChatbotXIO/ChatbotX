@@ -2,14 +2,16 @@ import { afterEach, describe, expect, test, vi } from "vitest"
 import { validateAgainstSchema } from "../src/profiles/json-schema-validate"
 import {
   executeOpenAiTool,
-  getOpenAiTool,
   handleOpenAiGuide,
   listOpenAiTools,
+  type OpenAiTool,
 } from "../src/profiles/openai"
 import {
+  OPENAI_CONFIRMED_POLICIES,
   OPENAI_DEFERRED_TOOLS,
   OPENAI_EXCLUDED_TOOLS,
 } from "../src/profiles/openai-contract"
+import manifestJson from "../src/profiles/openai-manifest.json"
 import {
   projectResponse,
   ResponseContractError,
@@ -18,8 +20,12 @@ import {
 const DOTTED_OPERATION = /`([a-zA-Z]+\.[a-zA-Z]+)`/g
 const DYNAMIC_TOOL_NAMES = /search_tools|call_tool/
 const UPPER = /([A-Z])/g
+const POST_REQUEST = /^POST /
 const credentials = { token: "t", workspaceId: "w1" }
-const tools = listOpenAiTools()
+const tools = listOpenAiTools(null)
+const manifestTools = (manifestJson as unknown as { tools: OpenAiTool[] }).tools
+const getOpenAiTool = (name: string) =>
+  manifestTools.find((tool) => tool.name === name)
 const names = new Set(tools.map((tool) => tool.name))
 
 const jsonResponse = (body: unknown, status = 200) =>
@@ -120,6 +126,47 @@ describe("OpenAI manifest", () => {
     }
   })
 
+  test("only outbound and destructive tools keep the _confirm round trip", () => {
+    for (const tool of manifestTools) {
+      const confirmed = (
+        OPENAI_CONFIRMED_POLICIES as readonly string[]
+      ).includes(tool.hitlPolicy)
+      expect(tool.hitlPolicy === "none" || confirmed, tool.name).toBe(true)
+      const properties = (tool.inputSchema as { properties: object }).properties
+      expect("_confirm" in properties, tool.name).toBe(confirmed)
+    }
+    expect(getOpenAiTool("contacts_send_message")?.hitlPolicy).toBe(
+      "confirm_outbound",
+    )
+    expect(getOpenAiTool("broadcasts_stop")?.hitlPolicy).toBe(
+      "confirm_destructive",
+    )
+  })
+
+  test("a read-only token lists no write tools", () => {
+    const readOnly = listOpenAiTools({
+      permission: "read_only",
+      scopes: null,
+      workspaceId: "w1",
+    })
+    for (const tool of readOnly) {
+      expect(tool.annotations.readOnlyHint, tool.name).toBe(true)
+    }
+    expect(readOnly.length).toBeGreaterThan(1)
+  })
+
+  test("a scoped token lists only its scopes plus always-visible tools", () => {
+    const scoped = listOpenAiTools({
+      permission: "full",
+      scopes: ["contacts"],
+      workspaceId: "w1",
+    })
+    const scopedNames = new Set(scoped.map((tool) => tool.name))
+    expect(scopedNames.has("contacts_list")).toBe(true)
+    expect(scopedNames.has("token_get")).toBe(true)
+    expect(scopedNames.has("broadcasts_list")).toBe(false)
+  })
+
   test("get_guide exposes only profile guides", () => {
     expect(handleOpenAiGuide({ name: "flows-and-automation" }).isError).toBe(
       true,
@@ -173,7 +220,7 @@ describe("execution", () => {
     expect(fetchMock).not.toHaveBeenCalled()
   })
 
-  test("an unconfirmed write performs no mutation and projects current state", async () => {
+  test("an unconfirmed destructive write performs no mutation and returns a pending approval", async () => {
     const calls: string[] = []
     vi.stubGlobal(
       "fetch",
@@ -188,16 +235,37 @@ describe("execution", () => {
       }),
     )
     const result = await executeOpenAiTool(
-      "contacts_add_tags_by_name",
-      { identifier: "id:7", tags: ["VIP"] },
+      "broadcasts_stop",
+      { id: "7" },
       credentials,
     )
-    expect(result.isError).toBe(true)
+    // A pending approval is not a failure.
+    expect(result.isError).toBeUndefined()
     expect(calls.every((call) => call.startsWith("GET"))).toBe(true)
     const text = result.content[0]?.text ?? ""
     expect(text).toContain("CONFIRMATION_REQUIRED")
     expect(text).not.toContain("gender")
     expect(text).not.toContain("secret")
+  })
+
+  test("an ordinary update runs without the _confirm round trip", async () => {
+    const calls: string[] = []
+    vi.stubGlobal(
+      "fetch",
+      vi.fn((url: string, init: RequestInit) => {
+        calls.push(`${init.method} ${url}`)
+        return Promise.resolve(jsonResponse({ data: [] }))
+      }),
+    )
+    const result = await executeOpenAiTool(
+      "contacts_add_tags_by_name",
+      { identifier: "id:7", tags: ["VIP"] },
+      credentials,
+    )
+    expect(result.isError).toBeUndefined()
+    expect(JSON.parse(result.content[0]?.text ?? "null")).toEqual({ ok: true })
+    expect(calls).toHaveLength(1)
+    expect(calls[0]).toMatch(POST_REQUEST)
   })
 
   test("a confirmed contact create sends gender unknown from the adapter", async () => {
@@ -333,6 +401,12 @@ describe("projectResponse", () => {
     expect(() => projectResponse(union as never, 5)).toThrow(
       ResponseContractError,
     )
+  })
+  test("withholds an unreviewed free-form body as explicit success", () => {
+    const anyShape = { anyOf: [{}, { not: {} }] }
+    expect(projectResponse(anyShape as never, { data: [1] })).toEqual({
+      ok: true,
+    })
   })
   test("represents an empty body explicitly", () => {
     expect(projectResponse(null, undefined)).toEqual({ ok: true })

@@ -2,7 +2,7 @@ import { createEnv } from "@t3-oss/env-core"
 import { z } from "zod"
 
 const defaultMcpInstructions = [
-  "Use tools for ChatbotX workspace data and actions; users do not need API names.",
+  "Use tools for workspace data and actions; users do not need API names.",
   "Call a suitable listed tool directly. Search hidden or unlisted capabilities with search_tools using one action plus one resource in English or supported Vietnamese, Spanish, French, or Chinese; inspect the returned inputSchema before call_tool.",
   "Split workflows into goals. Resolve names through filtered lists, pagination, and counts; use a user-provided stable ID, email, or phone when the schema accepts it. Ask for an observed disambiguator when names match more than once; do not select the first row or fabricate an empty result.",
   "For each requested create, modify, send, schedule, publish, or book action, wait for the result. A plan, schema lookup, validation, or natural-language answer is not completion.",

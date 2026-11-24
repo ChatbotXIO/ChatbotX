@@ -98,10 +98,14 @@ export const verifyMcpAccessToken = async (
   }
 
   const tokenAudiences = Array.isArray(claims.aud) ? claims.aud : [claims.aud]
-  const audience = supportedAudiences.find((candidate) =>
+  const matchedAudiences = supportedAudiences.filter((candidate) =>
     tokenAudiences.includes(candidate),
   )
-  if (!audience) {
+  // Exactly one MCP audience: a token minted for several resources (RFC 8707
+  // allows repeated `resource`) would otherwise let a connector-profile token
+  // authenticate the default `/mcp` endpoint, or the reverse.
+  const [audience] = matchedAudiences
+  if (!audience || matchedAudiences.length > 1) {
     return null
   }
 

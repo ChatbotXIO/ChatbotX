@@ -20,6 +20,8 @@
         "openWorldHint": false
       },
       "hitlPolicy": "none",
+      "alwaysVisible": false,
+      "scope": "automation",
       "adapterBody": {},
       "inputSchema": {
         "type": "object",
@@ -234,6 +236,8 @@
         "openWorldHint": false
       },
       "hitlPolicy": "none",
+      "alwaysVisible": false,
+      "scope": "automation",
       "adapterBody": {},
       "inputSchema": {
         "type": "object",
@@ -575,6 +579,8 @@
         "openWorldHint": false
       },
       "hitlPolicy": "none",
+      "alwaysVisible": false,
+      "scope": "analytics",
       "adapterBody": {},
       "inputSchema": {
         "type": "object",
@@ -684,6 +690,8 @@
         "openWorldHint": false
       },
       "hitlPolicy": "none",
+      "alwaysVisible": false,
+      "scope": "analytics",
       "adapterBody": {},
       "inputSchema": {
         "type": "object",
@@ -789,6 +797,8 @@
         "openWorldHint": false
       },
       "hitlPolicy": "none",
+      "alwaysVisible": false,
+      "scope": "analytics",
       "adapterBody": {},
       "inputSchema": {
         "type": "object",
@@ -861,6 +871,8 @@
         "openWorldHint": false
       },
       "hitlPolicy": "none",
+      "alwaysVisible": false,
+      "scope": "analytics",
       "adapterBody": {},
       "inputSchema": {
         "type": "object",
@@ -927,6 +939,8 @@
         "openWorldHint": false
       },
       "hitlPolicy": "none",
+      "alwaysVisible": false,
+      "scope": "analytics",
       "adapterBody": {},
       "inputSchema": {
         "type": "object",
@@ -1050,6 +1064,8 @@
         "openWorldHint": false
       },
       "hitlPolicy": "none",
+      "alwaysVisible": false,
+      "scope": "broadcasts",
       "adapterBody": {},
       "inputSchema": {
         "type": "object",
@@ -1751,6 +1767,8 @@
         "openWorldHint": false
       },
       "hitlPolicy": "none",
+      "alwaysVisible": false,
+      "scope": "broadcasts",
       "adapterBody": {},
       "inputSchema": {
         "type": "object",
@@ -2330,6 +2348,8 @@
         "openWorldHint": false
       },
       "hitlPolicy": "none",
+      "alwaysVisible": true,
+      "scope": "contacts",
       "adapterBody": {},
       "inputSchema": {
         "type": "object",
@@ -3231,6 +3251,8 @@
         "openWorldHint": false
       },
       "hitlPolicy": "none",
+      "alwaysVisible": false,
+      "scope": "contacts",
       "adapterBody": {},
       "inputSchema": {
         "type": "object",
@@ -10341,6 +10363,8 @@
         "openWorldHint": false
       },
       "hitlPolicy": "none",
+      "alwaysVisible": false,
+      "scope": "contacts",
       "adapterBody": {},
       "inputSchema": {
         "type": "object",
@@ -11551,6 +11575,8 @@
         "openWorldHint": false
       },
       "hitlPolicy": "none",
+      "alwaysVisible": false,
+      "scope": "contacts",
       "adapterBody": {},
       "inputSchema": {
         "type": "object",
@@ -11625,6 +11651,8 @@
         "openWorldHint": false
       },
       "hitlPolicy": "none",
+      "alwaysVisible": false,
+      "scope": "contacts",
       "adapterBody": {},
       "inputSchema": {
         "type": "object",
@@ -11733,6 +11761,8 @@
         "openWorldHint": false
       },
       "hitlPolicy": "none",
+      "alwaysVisible": false,
+      "scope": "inbox",
       "adapterBody": {},
       "inputSchema": {
         "type": "object",
@@ -12696,6 +12726,8 @@
         "openWorldHint": false
       },
       "hitlPolicy": "none",
+      "alwaysVisible": false,
+      "scope": "contacts",
       "adapterBody": {},
       "inputSchema": {
         "type": "object",
@@ -12769,6 +12801,8 @@
         "openWorldHint": false
       },
       "hitlPolicy": "none",
+      "alwaysVisible": false,
+      "scope": "inbox",
       "adapterBody": {},
       "inputSchema": {
         "type": "object",
@@ -22467,6 +22501,8 @@
         "openWorldHint": false
       },
       "hitlPolicy": "none",
+      "alwaysVisible": false,
+      "scope": "inbox",
       "adapterBody": {},
       "inputSchema": {
         "type": "object",
@@ -24443,6 +24479,8 @@
         "openWorldHint": false
       },
       "hitlPolicy": "none",
+      "alwaysVisible": false,
+      "scope": "automation",
       "adapterBody": {},
       "inputSchema": {
         "type": "object",
@@ -24608,6 +24646,8 @@
         "openWorldHint": false
       },
       "hitlPolicy": "none",
+      "alwaysVisible": false,
+      "scope": "automation",
       "adapterBody": {},
       "inputSchema": {
         "type": "object",
@@ -24894,6 +24934,8 @@
         "openWorldHint": false
       },
       "hitlPolicy": "none",
+      "alwaysVisible": false,
+      "scope": "automation",
       "adapterBody": {},
       "inputSchema": {
         "type": "object",
@@ -25078,6 +25120,8 @@
         "openWorldHint": false
       },
       "hitlPolicy": "none",
+      "alwaysVisible": false,
+      "scope": "inbox",
       "adapterBody": {},
       "inputSchema": {
         "type": "object",
@@ -26035,6 +26079,8 @@
         "openWorldHint": false
       },
       "hitlPolicy": "none",
+      "alwaysVisible": false,
+      "scope": "mini-apps",
       "adapterBody": {},
       "inputSchema": {
         "type": "object",
@@ -26143,6 +26189,8 @@
         "openWorldHint": false
       },
       "hitlPolicy": "none",
+      "alwaysVisible": false,
+      "scope": "pipelines",
       "adapterBody": {},
       "inputSchema": {
         "type": "object",
@@ -26424,6 +26472,8 @@
         "openWorldHint": false
       },
       "hitlPolicy": "none",
+      "alwaysVisible": false,
+      "scope": "pipelines",
       "adapterBody": {},
       "inputSchema": {
         "type": "object",
@@ -26975,6 +27025,8 @@
         "openWorldHint": false
       },
       "hitlPolicy": "none",
+      "alwaysVisible": false,
+      "scope": "broadcasts",
       "adapterBody": {},
       "inputSchema": {
         "type": "object",
@@ -27144,6 +27196,8 @@
         "openWorldHint": false
       },
       "hitlPolicy": "none",
+      "alwaysVisible": false,
+      "scope": "broadcasts",
       "adapterBody": {},
       "inputSchema": {
         "type": "object",
@@ -27361,6 +27415,8 @@
         "openWorldHint": false
       },
       "hitlPolicy": "none",
+      "alwaysVisible": true,
+      "scope": "contacts",
       "adapterBody": {},
       "inputSchema": {
         "type": "object",
@@ -27449,7 +27505,9 @@
         "idempotentHint": false,
         "openWorldHint": false
       },
-      "hitlPolicy": "confirm_diff",
+      "hitlPolicy": "none",
+      "alwaysVisible": false,
+      "scope": "contacts",
       "adapterBody": {
         "gender": "unknown"
       },
@@ -27533,10 +27591,6 @@
             "type": "string",
             "pattern": "^\\d+$",
             "description": "Inbox id (numeric string) to create the contact in."
-          },
-          "_confirm": {
-            "description": "Set to true only after the user has reviewed the proposed action and explicitly confirmed it.",
-            "type": "boolean"
           }
         },
         "required": [
@@ -28742,7 +28796,9 @@
         "idempotentHint": true,
         "openWorldHint": false
       },
-      "hitlPolicy": "confirm_diff",
+      "hitlPolicy": "none",
+      "alwaysVisible": false,
+      "scope": "contacts",
       "adapterBody": {},
       "inputSchema": {
         "type": "object",
@@ -28761,10 +28817,6 @@
               "minLength": 1
             },
             "description": "Tag names — not ids. Existing tags whose name matches are reused; unmatched names are created as new tags."
-          },
-          "_confirm": {
-            "description": "Set to true only after the user has reviewed the proposed action and explicitly confirmed it.",
-            "type": "boolean"
           }
         },
         "required": [
@@ -28803,7 +28855,9 @@
         "idempotentHint": true,
         "openWorldHint": false
       },
-      "hitlPolicy": "confirm_diff",
+      "hitlPolicy": "none",
+      "alwaysVisible": false,
+      "scope": "contacts",
       "adapterBody": {},
       "inputSchema": {
         "type": "object",
@@ -28827,10 +28881,6 @@
             "minLength": 1,
             "maxLength": 255,
             "description": "IANA timezone of the caller, e.g. `Asia/Ho_Chi_Minh`. Anchors a date-only value to that calendar day; defaults to the contact's, then the workspace's zone."
-          },
-          "_confirm": {
-            "description": "Set to true only after the user has reviewed the proposed action and explicitly confirmed it.",
-            "type": "boolean"
           }
         },
         "required": [
@@ -28883,6 +28933,8 @@
         "openWorldHint": true
       },
       "hitlPolicy": "confirm_outbound",
+      "alwaysVisible": false,
+      "scope": "inbox",
       "adapterBody": {},
       "inputSchema": {
         "type": "object",
@@ -29118,7 +29170,9 @@
         "idempotentHint": true,
         "openWorldHint": false
       },
-      "hitlPolicy": "confirm_diff",
+      "hitlPolicy": "none",
+      "alwaysVisible": false,
+      "scope": "inbox",
       "adapterBody": {},
       "inputSchema": {
         "type": "object",
@@ -29139,10 +29193,6 @@
               }
             ],
             "description": "New assignee: `u_<userId>` for a user or `t_<inboxTeamId>` for an inbox team, or null to unassign."
-          },
-          "_confirm": {
-            "description": "Set to true only after the user has reviewed the proposed action and explicitly confirmed it.",
-            "type": "boolean"
           }
         },
         "required": [
@@ -29182,6 +29232,8 @@
         "openWorldHint": false
       },
       "hitlPolicy": "confirm_destructive",
+      "alwaysVisible": false,
+      "scope": "broadcasts",
       "adapterBody": {},
       "inputSchema": {
         "type": "object",
@@ -29245,7 +29297,9 @@
         "idempotentHint": false,
         "openWorldHint": false
       },
-      "hitlPolicy": "confirm_diff",
+      "hitlPolicy": "none",
+      "alwaysVisible": false,
+      "scope": "pipelines",
       "adapterBody": {},
       "inputSchema": {
         "type": "object",
@@ -29368,10 +29422,6 @@
             "minLength": 1,
             "maxLength": 128,
             "description": "Repeating a request with the same key returns the first item instead of creating another. Reusing a key for a different contact is a 409."
-          },
-          "_confirm": {
-            "description": "Set to true only after the user has reviewed the proposed action and explicitly confirmed it.",
-            "type": "boolean"
           }
         },
         "required": [
@@ -29584,7 +29634,9 @@
         "idempotentHint": true,
         "openWorldHint": false
       },
-      "hitlPolicy": "confirm_diff",
+      "hitlPolicy": "none",
+      "alwaysVisible": false,
+      "scope": "pipelines",
       "adapterBody": {},
       "inputSchema": {
         "type": "object",
@@ -29606,10 +29658,6 @@
             "maxLength": 18,
             "pattern": "^\\d+$",
             "description": "Stage id."
-          },
-          "_confirm": {
-            "description": "Set to true only after the user has reviewed the proposed action and explicitly confirmed it.",
-            "type": "boolean"
           }
         },
         "required": [

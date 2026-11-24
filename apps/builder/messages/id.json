@@ -12242,6 +12242,10 @@
       "revokeConfirmDescription": "Cabut akses untuk {clientName}? Ini memutus klien di mana pun.",
       "revokedSuccess": "Akses aplikasi dicabut.",
       "notFound": "Otorisasi OAuth tidak ada lagi"
+    },
+    "unavailableOnDomain": {
+      "title": "Tidak tersedia di domain ini",
+      "body": "Menghubungkan asisten AI seperti Claude atau ChatGPT belum tersedia di domain ini. Otorisasi yang ada tercantum di bawah dan masih dapat dicabut."
     }
   },
   "connectionStatus": {

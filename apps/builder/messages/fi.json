@@ -12242,6 +12242,10 @@
       "revokeConfirmDescription": "Peruutetaanko käyttöoikeus sovellukselle {clientName}? Tämä katkaisee asiakkaan yhteyden kaikkialla.",
       "revokedSuccess": "Sovelluksen pääsy peruutettu.",
       "notFound": "OAuth-valtuutta ei ole enää olemassa"
+    },
+    "unavailableOnDomain": {
+      "title": "Ei käytettävissä tässä verkkotunnuksessa",
+      "body": "Tekoälyavustajien, kuten Clauden tai ChatGPT:n, yhdistäminen ei ole vielä käytettävissä tässä verkkotunnuksessa. Nykyiset valtuutukset näkyvät alla, ja ne voi edelleen peruuttaa."
     }
   },
   "connectionStatus": {

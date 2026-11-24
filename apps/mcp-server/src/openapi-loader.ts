@@ -534,8 +534,13 @@ export function getCachedTools(): DynamicTool[] {
 export const getToolByName = (name: string): DynamicTool | undefined =>
   toolsByName.get(name)
 
-function isVisibleForScope(
-  tool: DynamicTool,
+/** The fields `isVisibleForScope` reads; any profile's tool shape fits. */
+export type ScopedTool = Pick<DynamicTool, "alwaysVisible" | "scope"> & {
+  annotations: Pick<DynamicToolAnnotations, "readOnlyHint">
+}
+
+export function isVisibleForScope(
+  tool: ScopedTool,
   introspection: TokenIntrospection | null,
 ): boolean {
   // Fail OPEN: introspection unavailable (network blip, unexpected

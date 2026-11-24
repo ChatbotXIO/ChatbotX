@@ -162,5 +162,8 @@ export const projectResponse = (
       ? { ok: true }
       : fail("$", "unexpected body")
   }
-  return projectNode(schema, value, "$")
+  const projected = projectNode(schema, value, "$")
+  // An unreviewed (free-form) body is withheld entirely; report success
+  // explicitly instead of a result with no text.
+  return projected === undefined ? { ok: true } : projected
 }

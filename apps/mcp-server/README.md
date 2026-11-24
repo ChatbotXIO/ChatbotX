@@ -215,7 +215,7 @@ A second, fixed profile serves OpenAI clients (ChatGPT, Codex) from the same pro
 | Internal path | `/messages` | `/openai` |
 | Public path | `/mcp/messages` | `/mcp/openai` |
 | OAuth resource and audience | `<origin>/mcp` | `<origin>/mcp/openai` |
-| Tools | Scope-filtered default set plus `search_tools`, `call_tool`, `get_guide` | 36 API tools plus `get_guide` (37), identical for every token |
+| Tools | Scope-filtered default set plus `search_tools`, `call_tool`, `get_guide` | 36 API tools plus `get_guide` (37), filtered by the token's permission and scopes like the default profile |
 
 The OpenAI tool list is the committed contract `src/profiles/openai-manifest.json`. It is served and executed without the live OpenAPI cache. Regenerate it only as a reviewed change: `pnpm tsx scripts/generate-openai-manifest.ts <public-spec.json>` (the builder test `public-spec-mcp.test.ts` fails when the manifest drifts from the live spec).
 
@@ -223,15 +223,17 @@ For OpenAI Plugin directory submission, configure the exact challenge value from
 the OpenAI portal as the builder's `OPENAI_APPS_DOMAIN_CHALLENGE`. The builder
 then serves it as uncached plain text at
 `https://app.chatbotx.io/.well-known/openai-apps-challenge`; do not place the
-value in this service's environment or commit it.
+value in this service's environment or commit it. The token is served on the
+platform host only; a white-label domain gets 404.
 
 Rules enforced on this profile only:
 
 - OAuth bearer tokens only. No environment-key fallback, no API keys, no query or alternate-header tokens. The token audience must be `/mcp/openai`. Failures return 401 (or 503 when verification is unavailable).
 - Sessions bind to the verified issuer, subject, client id and workspace. A different identity or workspace gets 403; session ids never cross profiles.
 - Requests with an `Origin` outside `CHATBOTX_MCP_ALLOWED_ORIGINS` (plus the public URL origin) get 403. GET (SSE), POST, DELETE and OPTIONS are supported.
+- Approval: ChatGPT already asks the user before any tool without `readOnlyHint`, so only `confirm_outbound` (`contacts_send_message`) and `confirm_destructive` (`broadcasts_stop`) keep the `_confirm` round trip; ordinary updates run on the first call and have no `_confirm` argument (a stray one is ignored). `CONFIRMATION_REQUIRED` is returned as a normal result, not an error.
 - Arguments are validated against the reviewed schema before confirmation or execution. Free-form objects and unknown properties are rejected. `contacts_create` never accepts `gender`; the adapter sends `unknown`.
-- Every response, confirmation preview and error is projected through the reviewed response schema. Raw upstream errors are replaced with fixed messages.
+- Every response, confirmation preview and error is projected through the reviewed response schema; a free-form body is withheld and reported as `{ "ok": true }`. Raw upstream errors are replaced with fixed, brand-neutral messages. `token_get` never returns `principal` (transport-only, on the Claude profile too).
 - Deferred to v2: flow authoring and sending, `sequences_update`, sequence subscription.
 
 ## Claude profile
@@ -254,6 +256,12 @@ Directory rules this profile enforces (https://claude.com/docs/connectors/buildi
 - Descriptions never name an operation outside the profile, and the guides name only profile tools.
 - OAuth bearer tokens only, with audience `/mcp/claude`; the transport rules match the OpenAI profile. Origins come from `CHATBOTX_MCP_CLAUDE_ALLOWED_ORIGINS`; Claude's hosted apps and Claude Code connect server-side without one.
 - Left out: connecting channels (`connection_providers_list`, `connections_create`, `connect_sessions_get`), which is done in the app.
+
+## White-label
+
+One MCP server serves every white-label tenant, so nothing a client or model sees names the platform: the server name defaults to `mcp`, instructions, guides and errors use neutral wording, and guide resources use `guides://<name>` URIs. `__tests__/white-label-surface.test.ts` and `claude-profile.test.ts` fail on any `chatbotx` text in that surface.
+
+The MCP endpoint and its OAuth sign-in currently live on the platform host only (`MCP_PUBLIC_URL`, `BETTER_AUTH_URL`). On a white-label domain the builder's **Settings → Integrations → MCP connector** page shows an "not available on this domain" notice instead of connect URLs, and keeps the grants list so existing authorizations can be revoked. Serving MCP per custom domain needs a per-host OAuth issuer and resource; that is tracked as a separate change.
 
 ## Prerequisites
 
@@ -392,7 +400,7 @@ cp .env.example .env
 | `CHATBOTX_MCP_SSE_PATH` | SSE endpoint path | `/sse` | No |
 | `CHATBOTX_MCP_MESSAGES_PATH` | JSON-RPC messages path | `/messages` | No |
 | `CHATBOTX_MCP_CORS_ORIGIN` | CORS origin allowed to call the SSE/HTTP endpoints | `*` | No |
-| `CHATBOTX_MCP_SERVER_NAME` | Display name sent to AI clients | package name | No |
+| `CHATBOTX_MCP_SERVER_NAME` | Display name sent to AI clients | `mcp` (brand-neutral for white-label) | No |
 | `CHATBOTX_MCP_SERVER_INSTRUCTIONS` | Instructions sent to AI clients on connect (helps ChatGPT know when to call tools) | built-in default | No |
 | `CHATBOTX_MCP_ALLOWED_ORIGINS` | Comma-separated Origins allowed on the OpenAI endpoint. | `https://chatgpt.com,https://chat.openai.com` |
 | `CHATBOTX_MCP_CLAUDE_ALLOWED_ORIGINS` | Comma-separated Origins allowed on the Claude endpoint. | `https://claude.ai,https://claude.com` |

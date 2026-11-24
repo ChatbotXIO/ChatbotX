@@ -50,7 +50,7 @@ describe("META_TOOLS", () => {
 
   test("returns raw markdown from the shared guide source", () => {
     const result = handleGetGuide({ name: "overview" })
-    expect(result.content[0]?.text).toContain("# ChatbotX MCP overview")
+    expect(result.content[0]?.text).toContain("# MCP overview")
   })
 
   test("rejects invalid and prototype guide names", () => {

@@ -3,10 +3,7 @@ import {
   CallToolRequestSchema,
   ListToolsRequestSchema,
 } from "@modelcontextprotocol/sdk/types.js"
-import {
-  name as packageName,
-  version as packageVersion,
-} from "../../package.json"
+import { version as packageVersion } from "../../package.json"
 import { env } from "../env"
 import { getGuide, guideNames } from "../guides"
 import {
@@ -20,6 +17,7 @@ import {
   getClaudeTool,
   handleClaudeGuide,
   listClaudeTools,
+  omitTransportOnlyFields,
 } from "../profiles/claude"
 import {
   executeOpenAiTool,
@@ -56,6 +54,12 @@ type InputSchema = {
   [key: string]: unknown
 }
 
+/**
+ * Server name clients display. Brand-neutral by default because one server
+ * serves every white-label tenant; operators may set CHATBOTX_MCP_SERVER_NAME.
+ */
+const DEFAULT_SERVER_NAME = "mcp"
+
 const NO_CREDENTIAL_MESSAGE =
   "No credential. Authorize this MCP server with OAuth, or set CHATBOTX_API_KEY / pass ?workspace_token=."
 
@@ -84,6 +88,20 @@ const registerGuideResources = (
   }
 }
 
+/** Token permission/scopes for `tools/list` filtering; null when unknown. */
+const introspectCaller = async (
+  credentials: RequestCredentials | undefined,
+) => {
+  if (!credentials) {
+    return null
+  }
+  const result = await introspectToken(
+    credentials.token,
+    credentials.workspaceId,
+  )
+  return result.status === "ok" ? result.data : null
+}
+
 /**
  * The Claude connector profile: a fixed allow-list of live operations, each
  * its own tool, plus `get_guide`. OAuth only (the transport rejects anything
@@ -97,15 +115,7 @@ const configureClaudeProfile = (
   mcpServer.server.registerCapabilities({ tools: {} })
   mcpServer.server.setRequestHandler(ListToolsRequestSchema, async () => {
     await refreshOpenApiSpecIfStale()
-    const credentials = getCredentials()
-    const introspection = credentials
-      ? await introspectToken(credentials.token, credentials.workspaceId)
-      : null
-    return {
-      tools: listClaudeTools(
-        introspection?.status === "ok" ? introspection.data : null,
-      ),
-    }
+    return { tools: listClaudeTools(await introspectCaller(getCredentials())) }
   })
   mcpServer.server.setRequestHandler(CallToolRequestSchema, async (request) => {
     const { name, arguments: args } = request.params
@@ -122,7 +132,10 @@ const configureClaudeProfile = (
     if (!tool) {
       return errorResult(`Unknown tool: ${name}`)
     }
-    return await executeTool(tool, toolArgs, credentials)
+    return omitTransportOnlyFields(
+      name,
+      await executeTool(tool, toolArgs, credentials),
+    )
   })
 }
 
@@ -138,7 +151,7 @@ export const createMcpServer = (
   }
   const mcpServer = new McpServer(
     {
-      name: env.CHATBOTX_MCP_SERVER_NAME ?? packageName,
+      name: env.CHATBOTX_MCP_SERVER_NAME ?? DEFAULT_SERVER_NAME,
       version: packageVersion,
     },
     { instructions: instructionsByProfile[profile] },
@@ -160,19 +173,19 @@ export const createMcpServer = (
     registerGuideResources(mcpServer, openAiGuideResources())
     mcpServer.server.registerCapabilities({ tools: {} })
     mcpServer.server.setRequestHandler(ListToolsRequestSchema, async () => ({
-      tools: listOpenAiTools(),
+      tools: listOpenAiTools(await introspectCaller(getCredentials())),
     }))
     mcpServer.server.setRequestHandler(
       CallToolRequestSchema,
       async (request) => {
         const { name, arguments: args } = request.params
         const toolArgs = (args ?? {}) as Record<string, unknown>
+        if (name === "get_guide") {
+          return handleOpenAiGuide(toolArgs)
+        }
         const credentials = getCredentials()
         if (!credentials) {
           return errorResult(NO_CREDENTIAL_MESSAGE)
-        }
-        if (name === "get_guide") {
-          return handleOpenAiGuide(toolArgs)
         }
         return await executeOpenAiTool(name, toolArgs, credentials)
       },
@@ -191,23 +204,19 @@ export const createMcpServer = (
 
   mcpServer.server.setRequestHandler(ListToolsRequestSchema, async () => {
     await refreshOpenApiSpecIfStale()
-    const credentials = getCredentials()
-    const introspection = credentials
-      ? await introspectToken(credentials.token, credentials.workspaceId)
-      : null
     // `META_TOOLS` come first: they are the fixed discovery path into the
     // ~300 operations `getVisibleTools()` excludes.
     return {
       tools: [
         ...META_TOOLS,
-        ...getVisibleTools(
-          introspection?.status === "ok" ? introspection.data : null,
-        ).map((tool) => ({
-          name: tool.name,
-          description: tool.description,
-          inputSchema: tool.inputSchema as InputSchema,
-          annotations: tool.annotations,
-        })),
+        ...getVisibleTools(await introspectCaller(getCredentials())).map(
+          (tool) => ({
+            name: tool.name,
+            description: tool.description,
+            inputSchema: tool.inputSchema as InputSchema,
+            annotations: tool.annotations,
+          }),
+        ),
       ],
     }
   })

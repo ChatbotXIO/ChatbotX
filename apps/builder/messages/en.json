@@ -12258,6 +12258,10 @@
       "revokeConfirmDescription": "Revoke access for {clientName}? This disconnects the client everywhere.",
       "revokedSuccess": "Application access revoked.",
       "notFound": "OAuth grant no longer exists"
+    },
+    "unavailableOnDomain": {
+      "title": "Not available on this domain",
+      "body": "Connecting AI assistants such as Claude or ChatGPT is not available on this domain yet. Existing authorizations are listed below and can still be revoked."
     }
   },
   "connectionStatus": {

@@ -12242,6 +12242,10 @@
       "revokeConfirmDescription": "Tilbagekald adgangen for {clientName}? Det afbryder klienten overalt.",
       "revokedSuccess": "Applikationens adgang er tilbagekaldt.",
       "notFound": "OAuth-tilladelsen findes ikke længere"
+    },
+    "unavailableOnDomain": {
+      "title": "Ikke tilgængelig på dette domæne",
+      "body": "Forbindelse af AI-assistenter som Claude eller ChatGPT er endnu ikke tilgængelig på dette domæne. Eksisterende godkendelser vises nedenfor og kan stadig tilbagekaldes."
     }
   },
   "connectionStatus": {

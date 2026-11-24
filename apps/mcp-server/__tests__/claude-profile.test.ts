@@ -16,9 +16,11 @@ vi.mock("../src/openapi-loader", async (importOriginal) => {
 })
 
 import {
+  claudeGuideResources,
   getClaudeTool,
   handleClaudeGuide,
   listClaudeTools,
+  omitTransportOnlyFields,
 } from "../src/profiles/claude"
 import {
   CLAUDE_API_TOOLS,
@@ -27,8 +29,10 @@ import {
   CLAUDE_WRITE_TOOLS,
 } from "../src/profiles/claude-contract"
 import { CLAUDE_GUIDES } from "../src/profiles/claude-guides"
+import { jsonResult } from "../src/server/execute-tool"
 
 const MAX_TOOL_NAME_LENGTH = 64
+const BRAND = /chatbotx/i
 const BACKTICKED_SNAKE_NAME = /`([a-z]+(?:_[a-z]+)+)`/g
 
 describe("Claude profile contract", () => {
@@ -128,5 +132,40 @@ describe("Claude profile guides", () => {
 
   test("rejects an unknown guide", () => {
     expect(handleClaudeGuide({ name: "nope" }).isError).toBe(true)
+  })
+})
+
+describe("transport-only response fields", () => {
+  test("token_get never shows the verified principal", () => {
+    const result = omitTransportOnlyFields(
+      "token_get",
+      jsonResult({
+        permission: "full",
+        principal: { credentialType: "oauth", subject: "42" },
+        workspaceId: "w1",
+      }),
+    )
+    expect(JSON.parse(result.content[0]?.text ?? "")).toEqual({
+      permission: "full",
+      workspaceId: "w1",
+    })
+  })
+
+  test("other tools and error results pass through unchanged", () => {
+    const other = jsonResult({ principal: "kept" })
+    expect(omitTransportOnlyFields("contacts_get", other)).toBe(other)
+    const failed = { ...jsonResult({ principal: "x" }), isError: true }
+    expect(omitTransportOnlyFields("token_get", failed)).toBe(failed)
+  })
+})
+
+describe("white-label surface", () => {
+  test("tools, guides and resources never name the platform brand", () => {
+    const surface = JSON.stringify({
+      guides: CLAUDE_GUIDES,
+      resources: claudeGuideResources(),
+      tools: listClaudeTools(null),
+    })
+    expect(surface).not.toMatch(BRAND)
   })
 })

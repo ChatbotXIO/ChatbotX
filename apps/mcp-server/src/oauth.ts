@@ -52,6 +52,46 @@ export const resolveProfileResourceUrl = (
   profile: ConnectorProfile,
 ): string => `${resolveMcpResourceUrl(req)}/${profile}`
 
+/**
+ * Whether a verified token audience is a connector-profile resource
+ * (`…/mcp/<profile>`). Matched on the URL path, not the request origin, so a
+ * profile token is recognised whatever host the request arrived on.
+ */
+export const isConnectorProfileAudience = (audience: string): boolean => {
+  let pathname: string
+  try {
+    pathname = new URL(audience).pathname.replace(trailingSlashPattern, "")
+  } catch {
+    return false
+  }
+  return CONNECTOR_PROFILES.some((profile) =>
+    pathname.endsWith(`/mcp/${profile}`),
+  )
+}
+
+/**
+ * The `aud` claim of a JWT, read WITHOUT verifying it. Only for reject-only
+ * decisions (e.g. refusing a profile token while introspection is down);
+ * never grant access from it. Not a JWT, or no `aud`: an empty list.
+ */
+export const unverifiedJwtAudiences = (token: string): string[] => {
+  const payload = token.split(".")[1]
+  if (!payload) {
+    return []
+  }
+  try {
+    const claims = JSON.parse(
+      Buffer.from(payload, "base64url").toString("utf8"),
+    ) as { aud?: unknown }
+    const audiences = Array.isArray(claims.aud) ? claims.aud : [claims.aud]
+    return audiences.filter(
+      (audience): audience is string => typeof audience === "string",
+    )
+  } catch {
+    return []
+  }
+}
+
 const isPathOrBelow = (pathname: string, base: string): boolean =>
   pathname === base || pathname.startsWith(`${base}/`)
 
