@@ -12237,18 +12237,18 @@
       "categoryLimit": "Een winkel kan maximaal {categoryLimit} categorieën hebben."
     },
     "store": {
-      "subtitle": "Kant-en-klare templates die je met één klik installeert.",
       "pageTitle": "{tenantName} – Templatewinkel",
       "empty": "Nog geen templates in de winkel.",
       "search": "Templates zoeken",
-      "all": "Alle",
-      "categories": "Winkelcategorieën",
       "noResults": "Geen sjablonen komen overeen met je filters.",
       "clearSearch": "Filters wissen",
       "loadFailed": "De templates konden niet worden geladen. Probeer het later opnieuw.",
-      "language": "Taal",
+      "languageValue": "Taal: {language}",
       "allLanguages": "Alle talen",
-      "otherLanguages": "Andere talen"
+      "otherLanguages": "Andere talen",
+      "allChannels": "Alle kanalen",
+      "channel": "Kanaal",
+      "uncategorized": "Overige"
     },
     "picker": {
       "placeholder": "Kies een template",
@@ -12266,8 +12266,12 @@
       "updated": "Geselecteerde sjablonen bijgewerkt",
       "removeTitle": "Geselecteerde sjablonen verwijderen?",
       "removeDescription": "Geselecteerd: {count}. Ze verdwijnen uit de winkel; de sjablonen zelf en hun installaties blijven ongemoeid.",
-      "removed": "Geselecteerde sjablonen uit de winkel verwijderd"
-    }
+      "removed": "Geselecteerde sjablonen uit de winkel verwijderd",
+      "setChannels": "Kanalen instellen",
+      "channelsHint": "Vervangt de kanalen van de geselecteerde sjablonen ({count}). Laat leeg voor alle kanalen."
+    },
+    "channels": "Kanalen",
+    "channelsHint": "Optioneel. Laat leeg als de sjabloon op alle kanalen werkt. Wordt als pictogrammen in de winkel getoond, waar bezoekers op kanaal kunnen filteren."
   },
   "accountDeletion": {
     "title": "Delete account",

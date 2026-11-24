@@ -12237,18 +12237,18 @@
       "categoryLimit": "一個商店最多可有 {categoryLimit} 個分類。"
     },
     "store": {
-      "subtitle": "可一鍵安裝的現成範本。",
       "pageTitle": "{tenantName} – 範本商店",
       "empty": "商店裡還沒有範本。",
       "search": "搜尋範本",
-      "all": "全部",
-      "categories": "商店分類",
       "noResults": "沒有符合篩選條件的範本。",
       "clearSearch": "清除篩選",
       "loadFailed": "無法載入範本。請稍後再試。",
-      "language": "語言",
+      "languageValue": "語言：{language}",
       "allLanguages": "所有語言",
-      "otherLanguages": "其他語言"
+      "otherLanguages": "其他語言",
+      "allChannels": "所有頻道",
+      "channel": "頻道",
+      "uncategorized": "其他"
     },
     "picker": {
       "placeholder": "選擇範本",
@@ -12266,8 +12266,12 @@
       "updated": "已更新所選範本",
       "removeTitle": "移除所選範本？",
       "removeDescription": "已選：{count}。它們將從商店消失；範本本身及其安裝不受影響。",
-      "removed": "已從商店移除所選範本"
-    }
+      "removed": "已從商店移除所選範本",
+      "setChannels": "設定頻道",
+      "channelsHint": "取代所選範本（{count}）的頻道。留空表示所有頻道。"
+    },
+    "channels": "頻道",
+    "channelsHint": "選填。若範本適用於所有頻道，請留空。在商店中顯示為圖示，訪客可依頻道篩選。"
   },
   "accountDeletion": {
     "title": "Delete account",

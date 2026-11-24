@@ -12237,18 +12237,18 @@
       "categoryLimit": "Un magazin poate avea cel mult {categoryLimit} categorii."
     },
     "store": {
-      "subtitle": "Șabloane gata făcute, instalate dintr-un clic.",
       "pageTitle": "{tenantName} – Magazin de șabloane",
       "empty": "Încă nu există șabloane în magazin.",
       "search": "Caută șabloane",
-      "all": "Toate",
-      "categories": "Categoriile magazinului",
       "noResults": "Niciun șablon nu corespunde filtrelor.",
       "clearSearch": "Șterge filtrele",
       "loadFailed": "Șabloanele nu au putut fi încărcate. Încercați din nou mai târziu.",
-      "language": "Limbă",
+      "languageValue": "Limbă: {language}",
       "allLanguages": "Toate limbile",
-      "otherLanguages": "Alte limbi"
+      "otherLanguages": "Alte limbi",
+      "allChannels": "Toate canalele",
+      "channel": "Canal",
+      "uncategorized": "Altele"
     },
     "picker": {
       "placeholder": "Alege un șablon",
@@ -12266,8 +12266,12 @@
       "updated": "Șabloanele selectate au fost actualizate",
       "removeTitle": "Elimini șabloanele selectate?",
       "removeDescription": "Selectate: {count}. Dispar din magazin; șabloanele în sine și instalările lor nu sunt afectate.",
-      "removed": "Șabloanele selectate au fost eliminate din magazin"
-    }
+      "removed": "Șabloanele selectate au fost eliminate din magazin",
+      "setChannels": "Setează canalele",
+      "channelsHint": "Înlocuiește canalele șabloanelor selectate ({count}). Lasă gol pentru toate canalele."
+    },
+    "channels": "Canale",
+    "channelsHint": "Opțional. Lasă gol dacă șablonul funcționează pe toate canalele. Apare ca pictograme în magazin, unde vizitatorii pot filtra după canal."
   },
   "accountDeletion": {
     "title": "Delete account",

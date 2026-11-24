@@ -323,6 +323,7 @@ describe.skipIf(!databaseUrl)("template store service", () => {
     const add = (templateId: string, categoryIds: string[]) =>
       templateStoreService.addListing({
         languages: [],
+        channels: [],
         scope: mine.scope,
         templateId,
         categoryIds,
@@ -383,6 +384,7 @@ describe.skipIf(!databaseUrl)("template store service", () => {
       [1, 2, 3].map(() =>
         templateStoreService.addListing({
           languages: [],
+          channels: [],
           scope,
           templateId: template.id,
           categoryIds: [cat.id],
@@ -425,6 +427,7 @@ describe.skipIf(!databaseUrl)("template store service", () => {
     const add = (templateId: string) =>
       templateStoreService.addListing({
         languages: [],
+        channels: [],
         scope,
         templateId,
         categoryIds: [cat.id],
@@ -459,6 +462,7 @@ describe.skipIf(!databaseUrl)("template store service", () => {
     const tpl = await seedTemplate(tenantId)
     await templateStoreService.addListing({
       languages: [],
+      channels: [],
       scope,
       templateId: tpl.id,
       categoryIds: [cat.id],
@@ -496,6 +500,7 @@ describe.skipIf(!databaseUrl)("template store service", () => {
     await expect(
       templateStoreService.updateListing({
         languages: [],
+        channels: [],
         scope,
         listingId: bad,
         categoryIds: [cat.id],
@@ -504,6 +509,7 @@ describe.skipIf(!databaseUrl)("template store service", () => {
     await expect(
       templateStoreService.updateListing({
         languages: [],
+        channels: [],
         scope,
         listingId,
         categoryIds: [bad],
@@ -512,6 +518,7 @@ describe.skipIf(!databaseUrl)("template store service", () => {
     await expect(
       templateStoreService.addListing({
         languages: [],
+        channels: [],
         scope,
         templateId: tpl.id,
         categoryIds: [bad],
@@ -577,6 +584,7 @@ describe.skipIf(!databaseUrl)("template store service", () => {
     const tpl = await seedTemplate(tenantId)
     await templateStoreService.addListing({
       languages: [],
+      channels: [],
       scope,
       templateId: tpl.id,
       categoryIds: [a.id],
@@ -590,12 +598,14 @@ describe.skipIf(!databaseUrl)("template store service", () => {
     await Promise.all([
       templateStoreService.updateListing({
         languages: [],
+        channels: [],
         scope,
         listingId,
         categoryIds: [a.id],
       }),
       templateStoreService.updateListing({
         languages: [],
+        channels: [],
         scope,
         listingId,
         categoryIds: [b.id],
@@ -610,6 +620,7 @@ describe.skipIf(!databaseUrl)("template store service", () => {
     const [replace, remove] = await Promise.allSettled([
       templateStoreService.updateListing({
         languages: [],
+        channels: [],
         scope,
         listingId,
         categoryIds: [a.id, b.id],
@@ -664,6 +675,7 @@ describe.skipIf(!databaseUrl)("template store service", () => {
     const tpl = await seedTemplate(mine.tenantId)
     await templateStoreService.addListing({
       languages: [],
+      channels: [],
       scope: mine.scope,
       templateId: tpl.id,
       categoryIds: [cat.id],
@@ -679,6 +691,7 @@ describe.skipIf(!databaseUrl)("template store service", () => {
     await expect(
       templateStoreService.updateListing({
         languages: [],
+        channels: [],
         scope: other.scope,
         listingId,
         categoryIds: [theirCat.id],
@@ -687,6 +700,7 @@ describe.skipIf(!databaseUrl)("template store service", () => {
     await expect(
       templateStoreService.updateListing({
         languages: [],
+        channels: [],
         scope: mine.scope,
         listingId,
         categoryIds: [theirCat.id],
@@ -699,6 +713,7 @@ describe.skipIf(!databaseUrl)("template store service", () => {
     const [, second] = await categoryIdsOf(mine.scope)
     await templateStoreService.updateListing({
       languages: [],
+      channels: [],
       scope: mine.scope,
       listingId,
       categoryIds: [second.id],
@@ -738,6 +753,7 @@ describe.skipIf(!databaseUrl)("template store service", () => {
         templateId: template.id,
         categoryIds,
         languages,
+        channels: [],
         actorUserId: ownerId,
       })
     }
@@ -803,6 +819,7 @@ describe.skipIf(!databaseUrl)("template store service", () => {
       templateId: template.id,
       categoryIds: [],
       languages: ["vi"],
+      channels: [],
       actorUserId: ownerId,
     })
 
@@ -826,6 +843,7 @@ describe.skipIf(!databaseUrl)("template store service", () => {
       templateId: template.id,
       categoryIds: [],
       languages: ["vi", "en"],
+      channels: [],
       actorUserId: ownerId,
     })
     const listingOf = async () =>
@@ -839,6 +857,7 @@ describe.skipIf(!databaseUrl)("template store service", () => {
       listingId: listing.listingId,
       categoryIds: [],
       languages: ["fr", "fr"],
+      channels: [],
     })
     expect((await listingOf()).languages).toEqual(["fr"])
 
@@ -849,6 +868,7 @@ describe.skipIf(!databaseUrl)("template store service", () => {
         listingId: listing.listingId,
         categoryIds: [],
         languages: ["xx" as never],
+        channels: [],
       }),
     ).rejects.toThrow()
     await expect(
@@ -857,6 +877,7 @@ describe.skipIf(!databaseUrl)("template store service", () => {
         templateId: template.id,
         categoryIds: [],
         languages: ["xx" as never],
+        channels: [],
         actorUserId: ownerId,
       }),
     ).rejects.toThrow()
@@ -868,6 +889,7 @@ describe.skipIf(!databaseUrl)("template store service", () => {
         listingId: listing.listingId,
         categoryIds: [createId()],
         languages: ["de"],
+        channels: [],
       }),
     ).rejects.toMatchObject(categoryGoneCode)
     expect((await listingOf()).languages).toEqual(["fr"])
@@ -881,6 +903,7 @@ describe.skipIf(!databaseUrl)("template store service", () => {
       templateId: template.id,
       categoryIds: [],
       languages: ["en"],
+      channels: [],
       actorUserId: ownerId,
     })
     await db
@@ -896,6 +919,154 @@ describe.skipIf(!databaseUrl)("template store service", () => {
     expect(admin.listings[0].languages).toEqual(["en"])
     const published = await templateStoreService.listPublished({ tenantId })
     expect(published.templates[0].languages).toEqual(["en"])
+  })
+
+  test("store channels: updateListing replaces channels in the fixed order, validates them, and rolls back together", async () => {
+    const { scope, ownerId, tenantId } = await seedTenant("chanUpdate")
+    const template = await seedTemplate(tenantId, { name: "T" })
+    await templateStoreService.addListing({
+      scope,
+      templateId: template.id,
+      categoryIds: [],
+      languages: [],
+      channels: ["telegram", "whatsapp", "telegram"],
+      actorUserId: ownerId,
+    })
+    const listingOf = async () =>
+      (await templateStoreService.listForAdmin({ scope, page: 1, perPage: 5 }))
+        .listings[0]
+    const listing = await listingOf()
+    expect(listing.channels).toEqual(["whatsapp", "telegram"])
+
+    await templateStoreService.updateListing({
+      scope,
+      listingId: listing.listingId,
+      categoryIds: [],
+      languages: [],
+      channels: ["line", "line"],
+    })
+    expect((await listingOf()).channels).toEqual(["line"])
+
+    // An unknown or non-channel value is refused and nothing changes.
+    for (const channels of [["fax"], ["omnichannel"]]) {
+      await expect(
+        templateStoreService.updateListing({
+          scope,
+          listingId: listing.listingId,
+          categoryIds: [],
+          languages: [],
+          channels: channels as never,
+        }),
+      ).rejects.toThrow()
+    }
+    expect((await listingOf()).channels).toEqual(["line"])
+
+    // The api integration channel is allowed and sorts last.
+    await templateStoreService.updateListing({
+      scope,
+      listingId: listing.listingId,
+      categoryIds: [],
+      languages: [],
+      channels: ["api", "line"],
+    })
+    expect((await listingOf()).channels).toEqual(["line", "api"])
+    await templateStoreService.updateListing({
+      scope,
+      listingId: listing.listingId,
+      categoryIds: [],
+      languages: [],
+      channels: ["line"],
+    })
+
+    // A vanished category rolls the channels back too.
+    await expect(
+      templateStoreService.updateListing({
+        scope,
+        listingId: listing.listingId,
+        categoryIds: [createId()],
+        languages: [],
+        channels: ["zalo"],
+      }),
+    ).rejects.toMatchObject(categoryGoneCode)
+    expect((await listingOf()).channels).toEqual(["line"])
+  })
+
+  test("store channels: bulk edit sets only the channels and keeps the other fields; the catalog filters by channel; a stale stored value is dropped on read", async () => {
+    const { scope, ownerId, tenantId } = await seedTenant("chanBulk")
+    const ids: string[] = []
+    for (const name of ["One", "Two"]) {
+      const template = await seedTemplate(tenantId, { name })
+      await templateStoreService.addListing({
+        scope,
+        templateId: template.id,
+        categoryIds: [],
+        languages: ["en"],
+        channels: [],
+        actorUserId: ownerId,
+      })
+    }
+    const admin = () =>
+      templateStoreService.listForAdmin({ scope, page: 1, perPage: 5 })
+    for (const row of (await admin()).listings) {
+      ids.push(row.listingId)
+    }
+
+    await templateStoreService.updateListings({
+      scope,
+      listingIds: ids,
+      channels: ["instagram", "messenger"],
+    })
+    for (const row of (await admin()).listings) {
+      expect(row.channels).toEqual(["messenger", "instagram"])
+      expect(row.languages).toEqual(["en"])
+    }
+    expect(
+      (
+        await templateStoreService.listPublished({
+          tenantId,
+          channel: "instagram",
+        })
+      ).templates,
+    ).toHaveLength(2)
+    expect(
+      (
+        await templateStoreService.listPublished({
+          tenantId,
+          channel: "telegram",
+        })
+      ).templates,
+    ).toHaveLength(0)
+    // A listing with no channels works on every channel, so it joins any filter.
+    const loose = await seedTemplate(tenantId, { name: "Loose" })
+    await templateStoreService.addListing({
+      scope,
+      templateId: loose.id,
+      categoryIds: [],
+      languages: [],
+      channels: [],
+      actorUserId: ownerId,
+    })
+    expect(
+      (
+        await templateStoreService.listPublished({
+          tenantId,
+          channel: "telegram",
+        })
+      ).templates.map((t) => t.name),
+    ).toEqual(["Loose"])
+    await expect(
+      templateStoreService.updateListings({ scope, listingIds: ids }),
+    ).rejects.toThrow()
+
+    await db
+      .update(templateStoreListingModel)
+      .set({ channels: ["telegram", "fax"] as never })
+      .where(eq(templateStoreListingModel.tenantId, tenantId))
+    expect((await admin()).listings[0].channels).toEqual(["telegram"])
+    expect(
+      (await templateStoreService.listPublished({ tenantId })).templates[0]
+        .channels,
+    ).toEqual(["telegram"])
   })
 
   test("bulk: sets categories or languages of many listings, keeps the other field, all or nothing", async () => {
@@ -916,6 +1087,7 @@ describe.skipIf(!databaseUrl)("template store service", () => {
         templateId: template.id,
         categoryIds: [catA.id],
         languages: ["en"],
+        channels: [],
         actorUserId: ownerId,
       })
     }
@@ -925,6 +1097,7 @@ describe.skipIf(!databaseUrl)("template store service", () => {
       templateId: foreignTemplate.id,
       categoryIds: [],
       languages: [],
+      channels: [],
       actorUserId: other.ownerId,
     })
     const listings = async (s: typeof scope) =>
@@ -953,6 +1126,7 @@ describe.skipIf(!databaseUrl)("template store service", () => {
       scope,
       listingIds: ids,
       languages: ["vi", "fr"],
+      channels: [],
     })
     for (const listing of await listings(scope)) {
       expect(listing.categories.map((c) => c.name)).toEqual(["B"])
@@ -965,6 +1139,7 @@ describe.skipIf(!databaseUrl)("template store service", () => {
         listingIds: [...ids, foreignId],
         categoryIds: [catA.id],
         languages: ["de"],
+        channels: [],
       }),
     ).rejects.toMatchObject({ code: "templateStoreListingUnavailable" })
     await expect(
@@ -1009,6 +1184,7 @@ describe.skipIf(!databaseUrl)("template store service", () => {
     const filed = await seedTemplate(tenantId, { name: "Filed" })
     await templateStoreService.addListing({
       languages: [],
+      channels: [],
       scope,
       templateId: bare.id,
       categoryIds: [],
@@ -1016,6 +1192,7 @@ describe.skipIf(!databaseUrl)("template store service", () => {
     })
     await templateStoreService.addListing({
       languages: [],
+      channels: [],
       scope,
       templateId: filed.id,
       categoryIds: [cat.id],
@@ -1079,6 +1256,7 @@ describe.skipIf(!databaseUrl)("template store service", () => {
     await seedTemplate(other.tenantId, { name: "Alpha foreign" })
     await templateStoreService.addListing({
       languages: [],
+      channels: [],
       scope: mine.scope,
       templateId: listed.id,
       categoryIds: [cat.id],
@@ -1146,6 +1324,7 @@ describe.skipIf(!databaseUrl)("template store service", () => {
     for (const t of [live, off]) {
       await templateStoreService.addListing({
         languages: [],
+        channels: [],
         scope,
         templateId: t.id,
         categoryIds: [cat.id],
@@ -1218,6 +1397,7 @@ describe.skipIf(!databaseUrl)("template store service", () => {
     await expect(
       templateStoreService.addListing({
         languages: [],
+        channels: [],
         scope,
         templateId: "1",
         categoryIds: ["1"],

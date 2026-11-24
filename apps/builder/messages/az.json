@@ -12253,18 +12253,18 @@
       "categoryLimit": "Bir mağazada ən çox {categoryLimit} kateqoriya ola bilər."
     },
     "store": {
-      "subtitle": "Bir kliklə quraşdıra biləcəyiniz hazır şablonlar.",
       "pageTitle": "{tenantName} – Şablon mağazası",
       "empty": "Mağazada hələ şablon yoxdur.",
       "search": "Şablon axtar",
-      "all": "Hamısı",
-      "categories": "Mağaza kateqoriyaları",
       "noResults": "Filtrlərinizə uyğun şablon yoxdur.",
       "clearSearch": "Filtrləri təmizlə",
       "loadFailed": "Şablonlar yüklənə bilmədi. Bir az sonra yenidən cəhd edin.",
-      "language": "Dil",
+      "languageValue": "Dil: {language}",
       "allLanguages": "Bütün dillər",
-      "otherLanguages": "Digər dillər"
+      "otherLanguages": "Digər dillər",
+      "allChannels": "Bütün kanallar",
+      "channel": "Kanal",
+      "uncategorized": "Digər"
     },
     "picker": {
       "placeholder": "Şablon seçin",
@@ -12282,8 +12282,12 @@
       "updated": "Seçilmiş şablonlar yeniləndi",
       "removeTitle": "Seçilmiş şablonlar silinsin?",
       "removeDescription": "Seçilib: {count}. Onlar mağazadan yox olur; şablonların özləri və quraşdırmaları təsirlənmir.",
-      "removed": "Seçilmiş şablonlar mağazadan silindi"
-    }
+      "removed": "Seçilmiş şablonlar mağazadan silindi",
+      "setChannels": "Kanalları təyin et",
+      "channelsHint": "Seçilmiş şablonların ({count}) kanallarını əvəz edir. Bütün kanallar üçün boş buraxın."
+    },
+    "channels": "Kanallar",
+    "channelsHint": "İstəyə bağlı. Şablon bütün kanallarda işləyirsə boş buraxın. Mağazada ikon kimi göstərilir, ziyarətçilər kanala görə süzgəc edə bilər."
   },
   "accountDeletion": {
     "title": "Delete account",

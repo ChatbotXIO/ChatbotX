@@ -2,6 +2,7 @@ import {
   TEMPLATE_STORE_CATEGORY_NAME_MAX_LENGTH,
   TEMPLATE_STORE_MAX_CATEGORIES,
   TEMPLATE_STORE_MAX_LISTINGS,
+  templateChannelsSchema,
 } from "@chatbotx.io/database/partials"
 import { zodBigintIdAsString } from "@chatbotx.io/utils"
 import { locales } from "@chatbotx.io/utils/ui-locale"
@@ -35,6 +36,7 @@ export const addTemplateStoreListingSchema = z.object({
   templateId: zodBigintIdAsString(),
   categoryIds: categoryIdsSchema,
   languages: languagesSchema,
+  channels: templateChannelsSchema,
 })
 export type AddTemplateStoreListingSchema = z.infer<
   typeof addTemplateStoreListingSchema
@@ -45,6 +47,7 @@ export const updateTemplateStoreListingSchema = z.object({
   listingId: zodBigintIdAsString(),
   categoryIds: categoryIdsSchema,
   languages: languagesSchema,
+  channels: templateChannelsSchema,
 })
 
 /** The listings a bulk action applies to: at least one, at most a whole store. */
@@ -53,16 +56,20 @@ const listingIdsSchema = z
   .min(1)
   .max(TEMPLATE_STORE_MAX_LISTINGS)
 
-/** Sets the categories and/or languages of the selected listings; a field left out is kept. */
+/** Sets the categories, languages and/or channels of the selected listings; a field left out is kept. */
 export const updateTemplateStoreListingsSchema = z
   .object({
     scope: templateStoreScopes,
     listingIds: listingIdsSchema,
     categoryIds: categoryIdsSchema.optional(),
     languages: languagesSchema.optional(),
+    channels: templateChannelsSchema.optional(),
   })
   .refine(
-    (input) => input.categoryIds !== undefined || input.languages !== undefined,
+    (input) =>
+      input.categoryIds !== undefined ||
+      input.languages !== undefined ||
+      input.channels !== undefined,
     { message: "Nothing to update", path: ["categoryIds"] },
   )
 

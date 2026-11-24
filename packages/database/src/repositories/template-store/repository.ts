@@ -3,6 +3,8 @@ import type { Locale } from "@chatbotx.io/utils/ui-locale"
 import { alias } from "drizzle-orm/pg-core"
 import {
   and,
+  arrayContains,
+  arrayOverlaps,
   asc,
   count,
   type DatabaseClient,
@@ -21,6 +23,10 @@ import {
   type SQL,
   sql,
 } from "../../client"
+import {
+  orderedTemplateChannels,
+  type TemplateChannel,
+} from "../../partials/template"
 import {
   TEMPLATE_STORE_MAX_LISTINGS,
   type TemplateStoreListingStatus,
@@ -52,6 +58,8 @@ export type TemplateStoreAdminRow = {
   categories: TemplateStoreCategoryRef[]
   /** UI locale codes; empty = every language. */
   languages: Locale[]
+  /** Channels the template works on, in display order; empty = every channel. */
+  channels: TemplateChannel[]
 }
 
 export type TemplateStoreAdminQuery = {
@@ -75,6 +83,8 @@ export type TemplateStorePublishedRow = {
   categoryIds: string[]
   /** UI locale codes; empty = every language. */
   languages: Locale[]
+  /** Channels the template supports, in display order; empty = every channel. */
+  channels: TemplateChannel[]
 }
 
 export type TemplateStoreCandidateRow = {
@@ -324,6 +334,7 @@ export const templateStoreRepository = {
       tenantId: string
       templateId: string
       languages: Locale[]
+      channels: TemplateChannel[]
       createdBy: string | null
     },
     tx: DatabaseClient,
@@ -349,6 +360,28 @@ export const templateStoreRepository = {
     const rows = await tx
       .update(templateStoreListingModel)
       .set({ languages: input.languages })
+      .where(
+        and(
+          inArray(templateStoreListingModel.id, input.listingIds),
+          eq(templateStoreListingModel.tenantId, input.tenantId),
+        ),
+      )
+      .returning({ id: templateStoreListingModel.id })
+    return rows.length
+  },
+
+  /** Replaces the channels of these listings of the tenant; returns how many were updated. */
+  async updateListingChannels(
+    input: {
+      tenantId: string
+      listingIds: string[]
+      channels: TemplateChannel[]
+    },
+    tx: DatabaseClient,
+  ): Promise<number> {
+    const rows = await tx
+      .update(templateStoreListingModel)
+      .set({ channels: input.channels })
       .where(
         and(
           inArray(templateStoreListingModel.id, input.listingIds),
@@ -441,6 +474,7 @@ export const templateStoreRepository = {
           shareEnabled: templateModel.shareEnabled,
           shareExpiresAt: templateModel.shareExpiresAt,
           languages: templateStoreListingModel.languages,
+          channels: templateStoreListingModel.channels,
           templateDeletedAt: templateModel.deletedAt,
           templateTenantId: templateModel.tenantId,
           ownerWorkspaceId: workspaceModel.id,
@@ -607,6 +641,8 @@ export const templateStoreRepository = {
       keyword?: string
       /** Keeps templates tagged with this language and the untagged ones. */
       language?: Locale
+      /** Keeps listings tagged with this channel and the untagged ones (they work on every channel). */
+      channel?: TemplateChannel
     },
     tx: DatabaseClient = db,
   ): Promise<TemplateStorePublishedRow[]> {
@@ -622,6 +658,7 @@ export const templateStoreRepository = {
         publisherName: templateModel.publisherName,
         shareToken: templateModel.shareToken,
         languages: templateStoreListingModel.languages,
+        channels: templateStoreListingModel.channels,
         // The left join gives one NULL row to a listing with no category; it must read as [].
         categoryIds: sql<
           string[]
@@ -665,6 +702,18 @@ export const templateStoreRepository = {
             ? or(
                 sql`cardinality(${templateStoreListingModel.languages}) = 0`,
                 sql`${input.language} = ANY(${templateStoreListingModel.languages})`,
+              )
+            : undefined,
+          input.channel
+            ? or(
+                not(
+                  arrayOverlaps(templateStoreListingModel.channels, [
+                    ...orderedTemplateChannels,
+                  ]),
+                ),
+                arrayContains(templateStoreListingModel.channels, [
+                  input.channel,
+                ]),
               )
             : undefined,
         ),

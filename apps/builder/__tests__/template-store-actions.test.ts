@@ -78,6 +78,7 @@ describe("platform scope", () => {
       templateId: "5",
       categoryIds: [],
       languages: [],
+      channels: [],
     })
 
     expect(outcome).toEqual({ status: "done" })
@@ -125,6 +126,7 @@ describe("tenant scope", () => {
         templateId: "5",
         categoryIds: [],
         languages: [],
+        channels: [],
       }),
     ).rejects.toThrow("Unauthorized")
     expect(mocks.addListing).not.toHaveBeenCalled()
@@ -156,6 +158,7 @@ describe("expected refusals become outcomes", () => {
         templateId: "5",
         categoryIds: [],
         languages: [],
+        channels: [],
       }),
     ).resolves.toEqual({ status: "rejected", reason: "listingExists" })
   })
@@ -170,6 +173,7 @@ describe("expected refusals become outcomes", () => {
         templateId: "5",
         categoryIds: [],
         languages: [],
+        channels: [],
       }),
     ).rejects.toThrow("db down")
   })
@@ -182,6 +186,7 @@ describe("input schema", () => {
       templateId: "5",
       categoryIds: [],
       languages: [],
+      channels: [],
     }
     expect(addTemplateStoreListingSchema.safeParse(base).success).toBe(true)
     expect(
@@ -200,12 +205,65 @@ describe("input schema", () => {
     ).toBe(false)
   })
 
+  test("channels are template channels; none is allowed, duplicates and order are normalized, others are refused", () => {
+    const base = {
+      scope: "platform",
+      templateId: "5",
+      categoryIds: [],
+      languages: [],
+    }
+    const parsed = addTemplateStoreListingSchema.safeParse({
+      ...base,
+      channels: ["webchat", "whatsapp", "webchat"],
+    })
+    expect(parsed.success && parsed.data.channels).toEqual([
+      "whatsapp",
+      "webchat",
+    ])
+    expect(
+      addTemplateStoreListingSchema.safeParse({ ...base, channels: [] })
+        .success,
+    ).toBe(true)
+    for (const channels of [["omnichannel"], ["fax"], ["WHATSAPP"]]) {
+      expect(
+        addTemplateStoreListingSchema.safeParse({ ...base, channels }).success,
+      ).toBe(false)
+    }
+    // api is an integration channel and is allowed; it sorts last.
+    const withApi = addTemplateStoreListingSchema.safeParse({
+      ...base,
+      channels: ["api", "whatsapp"],
+    })
+    expect(withApi.success && withApi.data.channels).toEqual([
+      "whatsapp",
+      "api",
+    ])
+    expect(addTemplateStoreListingSchema.safeParse(base).success).toBe(false)
+  })
+
+  test("a bulk edit may set only the channels", () => {
+    const base = { scope: "platform", listingIds: ["1"] }
+    expect(
+      updateTemplateStoreListingsSchema.safeParse({
+        ...base,
+        channels: ["telegram"],
+      }).success,
+    ).toBe(true)
+    expect(
+      updateTemplateStoreListingsSchema.safeParse({
+        ...base,
+        channels: ["fax"],
+      }).success,
+    ).toBe(false)
+  })
+
   test("languages are UI locale codes; none is allowed, an unknown code is not", () => {
     const base = {
       scope: "platform",
       templateId: "5",
       categoryIds: [],
       languages: [],
+      channels: [],
     }
     for (const languages of [[], ["vi"], ["en", "pt-BR", "zh-CN"]]) {
       expect(
@@ -236,6 +294,7 @@ describe("bulk actions", () => {
       scope: "platform",
       listingIds: ["1", "2"],
       languages: ["vi"],
+      channels: [],
     })
 
     expect(outcome).toEqual({ status: "done" })
@@ -244,6 +303,7 @@ describe("bulk actions", () => {
       listingIds: ["1", "2"],
       categoryIds: undefined,
       languages: ["vi"],
+      channels: [],
     })
   })
 
@@ -289,12 +349,14 @@ describe("bulk actions", () => {
         ...base,
         listingIds: [],
         languages: [],
+        channels: [],
       }).success,
     ).toBe(false)
     expect(
       updateTemplateStoreListingsSchema.safeParse({
         ...base,
         languages: ["xx"],
+        channels: [],
       }).success,
     ).toBe(false)
     expect(

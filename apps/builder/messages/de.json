@@ -12237,18 +12237,18 @@
       "categoryLimit": "Ein Store kann höchstens {categoryLimit} Kategorien haben."
     },
     "store": {
-      "subtitle": "Fertige Templates, die Sie mit einem Klick installieren.",
       "pageTitle": "{tenantName} – Template-Store",
       "empty": "Noch keine Templates im Store.",
       "search": "Templates suchen",
-      "all": "Alle",
-      "categories": "Store-Kategorien",
       "noResults": "Keine Vorlagen passen zu Ihren Filtern.",
       "clearSearch": "Filter zurücksetzen",
       "loadFailed": "Die Templates konnten nicht geladen werden. Bitte versuchen Sie es später erneut.",
-      "language": "Sprache",
+      "languageValue": "Sprache: {language}",
       "allLanguages": "Alle Sprachen",
-      "otherLanguages": "Andere Sprachen"
+      "otherLanguages": "Andere Sprachen",
+      "allChannels": "Alle Kanäle",
+      "channel": "Kanal",
+      "uncategorized": "Sonstige"
     },
     "picker": {
       "placeholder": "Template auswählen",
@@ -12266,8 +12266,12 @@
       "updated": "Ausgewählte Vorlagen aktualisiert",
       "removeTitle": "Ausgewählte Vorlagen entfernen?",
       "removeDescription": "Ausgewählt: {count}. Sie verschwinden aus dem Store; die Vorlagen selbst und ihre Installationen bleiben unberührt.",
-      "removed": "Ausgewählte Vorlagen aus dem Store entfernt"
-    }
+      "removed": "Ausgewählte Vorlagen aus dem Store entfernt",
+      "setChannels": "Kanäle festlegen",
+      "channelsHint": "Ersetzt die Kanäle der ausgewählten Vorlagen ({count}). Leer lassen für alle Kanäle."
+    },
+    "channels": "Kanäle",
+    "channelsHint": "Optional. Leer lassen, wenn die Vorlage auf allen Kanälen funktioniert. Wird im Store als Symbole angezeigt, wo Besucher nach Kanal filtern können."
   },
   "accountDeletion": {
     "title": "Delete account",

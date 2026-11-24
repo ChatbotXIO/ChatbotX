@@ -12237,18 +12237,18 @@
       "categoryLimit": "Kaupassa voi olla enintään {categoryLimit} luokkaa."
     },
     "store": {
-      "subtitle": "Valmiita malleja, jotka asennat yhdellä napsautuksella.",
       "pageTitle": "{tenantName} – Mallikauppa",
       "empty": "Kaupassa ei ole vielä malleja.",
       "search": "Hae malleja",
-      "all": "Kaikki",
-      "categories": "Kaupan luokat",
       "noResults": "Mikään malli ei vastaa suodattimia.",
       "clearSearch": "Tyhjennä suodattimet",
       "loadFailed": "Malleja ei voitu ladata. Yritä myöhemmin uudelleen.",
-      "language": "Kieli",
+      "languageValue": "Kieli: {language}",
       "allLanguages": "Kaikki kielet",
-      "otherLanguages": "Muut kielet"
+      "otherLanguages": "Muut kielet",
+      "allChannels": "Kaikki kanavat",
+      "channel": "Kanava",
+      "uncategorized": "Muut"
     },
     "picker": {
       "placeholder": "Valitse malli",
@@ -12266,8 +12266,12 @@
       "updated": "Valitut mallit päivitetty",
       "removeTitle": "Poistetaanko valitut mallit?",
       "removeDescription": "Valittu: {count}. Ne katoavat kaupasta; itse mallit ja niiden asennukset eivät muutu.",
-      "removed": "Valitut mallit poistettu kaupasta"
-    }
+      "removed": "Valitut mallit poistettu kaupasta",
+      "setChannels": "Aseta kanavat",
+      "channelsHint": "Korvaa valittujen mallien ({count}) kanavat. Jätä tyhjäksi kaikille kanaville."
+    },
+    "channels": "Kanavat",
+    "channelsHint": "Valinnainen. Jätä tyhjäksi, jos malli toimii kaikilla kanavilla. Näkyy kuvakkeina kaupassa, jossa kävijät voivat suodattaa kanavan mukaan."
   },
   "accountDeletion": {
     "title": "Delete account",

@@ -1,6 +1,10 @@
 "use client"
 
 import type { TemplateStoreCandidate } from "@chatbotx.io/business"
+import {
+  knownTemplateChannels,
+  type TemplateChannel,
+} from "@chatbotx.io/database/partials"
 import { Button } from "@chatbotx.io/ui/components/ui/button"
 import {
   Dialog,
@@ -25,6 +29,7 @@ import {
   addTemplateStoreListingAction,
   updateTemplateStoreListingAction,
 } from "../template-store.action"
+import { useChannelOptions } from "../use-channel-options"
 import { useMultiSelectLabels } from "../use-multi-select-labels"
 import { useTemplateStoreOutcome } from "../use-template-store-outcome"
 import { TemplatePicker } from "./template-picker"
@@ -39,12 +44,13 @@ type ListingFormDialogProps = {
     name: string
     categoryIds: string[]
     languages: Locale[]
+    channels: TemplateChannel[]
   }
   open?: boolean
   onOpenChange?: (open: boolean) => void
 }
 
-/** Adds a template to the store (pick a template, optionally categories and languages), or edits those of a listed one. */
+/** Adds a template to the store (pick a template, optionally categories, languages and channels), or edits those of a listed one. */
 export function ListingFormDialog({
   scope,
   categories,
@@ -57,12 +63,17 @@ export function ListingFormDialog({
   const handleOutcome = useTemplateStoreOutcome()
   const categoryLabels = useMultiSelectLabels(t("categories"))
   const languageLabels = useMultiSelectLabels(t("languages"))
+  const channelLabels = useMultiSelectLabels(t("channels"))
+  const channelOptions = useChannelOptions()
   const [internalOpen, setInternalOpen] = useState(false)
   const open = controlledOpen ?? internalOpen
   const setOpen = onOpenChange ?? setInternalOpen
   const [template, setTemplate] = useState<TemplateStoreCandidate | null>(null)
   const [categoryIds, setCategoryIds] = useState(listing?.categoryIds ?? [])
   const [languages, setLanguages] = useState<Locale[]>(listing?.languages ?? [])
+  const [channels, setChannels] = useState<TemplateChannel[]>(
+    listing?.channels ?? [],
+  )
 
   const close = () => {
     setOpen(false)
@@ -70,6 +81,7 @@ export function ListingFormDialog({
       setTemplate(null)
       setCategoryIds([])
       setLanguages([])
+      setChannels([])
     }
   }
 
@@ -93,6 +105,7 @@ export function ListingFormDialog({
         listingId: listing.listingId,
         categoryIds,
         languages,
+        channels,
       })
       return
     }
@@ -102,6 +115,7 @@ export function ListingFormDialog({
         templateId: template.templateId,
         categoryIds,
         languages,
+        channels,
       })
     }
   }
@@ -178,6 +192,20 @@ export function ListingFormDialog({
             <p className="text-muted-foreground text-xs">
               {t("languagesHint")}
             </p>
+          </div>
+          <div className="space-y-2">
+            <Label>{t("channels")}</Label>
+            <MultiSelect
+              defaultValue={channels}
+              labels={channelLabels}
+              modalPopover
+              onValueChange={(values) =>
+                setChannels(knownTemplateChannels(values))
+              }
+              options={channelOptions}
+              placeholder={t("store.allChannels")}
+            />
+            <p className="text-muted-foreground text-xs">{t("channelsHint")}</p>
           </div>
         </div>
         <DialogFooter>

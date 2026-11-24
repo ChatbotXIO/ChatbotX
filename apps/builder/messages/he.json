@@ -12237,18 +12237,18 @@
       "categoryLimit": "בחנות יכולות להיות עד {categoryLimit} קטגוריות."
     },
     "store": {
-      "subtitle": "תבניות מוכנות שאפשר להתקין בלחיצה אחת.",
       "pageTitle": "{tenantName} – חנות תבניות",
       "empty": "אין עדיין תבניות בחנות.",
       "search": "חיפוש תבניות",
-      "all": "הכול",
-      "categories": "קטגוריות החנות",
       "noResults": "אין תבניות שתואמות למסננים.",
       "clearSearch": "נקה מסננים",
       "loadFailed": "לא ניתן לטעון את התבניות. נסו שוב מאוחר יותר.",
-      "language": "שפה",
+      "languageValue": "שפה: {language}",
       "allLanguages": "כל השפות",
-      "otherLanguages": "שפות אחרות"
+      "otherLanguages": "שפות אחרות",
+      "allChannels": "כל הערוצים",
+      "channel": "ערוץ",
+      "uncategorized": "אחר"
     },
     "picker": {
       "placeholder": "בחרו תבנית",
@@ -12266,8 +12266,12 @@
       "updated": "התבניות שנבחרו עודכנו",
       "removeTitle": "להסיר את התבניות שנבחרו?",
       "removeDescription": "נבחרו: {count}. הן ייעלמו מהחנות; התבניות עצמן וההתקנות שלהן לא מושפעות.",
-      "removed": "התבניות שנבחרו הוסרו מהחנות"
-    }
+      "removed": "התבניות שנבחרו הוסרו מהחנות",
+      "setChannels": "הגדרת ערוצים",
+      "channelsHint": "מחליף את הערוצים של התבניות שנבחרו ({count}). השאירו ריק לכל הערוצים."
+    },
+    "channels": "ערוצים",
+    "channelsHint": "אופציונלי. השאירו ריק אם התבנית פועלת בכל הערוצים. מוצג כסמלים בחנות, שם מבקרים יכולים לסנן לפי ערוץ."
   },
   "accountDeletion": {
     "title": "Delete account",

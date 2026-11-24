@@ -72,6 +72,7 @@ export async function loadStoreCatalog(
       href: buildTemplateHref(template),
       categoryIds: template.categoryIds,
       languages: template.languages,
+      channels: template.channels,
       section: template.section,
     })),
   }
