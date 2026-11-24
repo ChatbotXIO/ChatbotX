@@ -18981,6 +18981,54 @@
                         }
                       ]
                     },
+                    "recentParticipants": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "userId": {
+                            "type": "string",
+                            "description": "Id of the member who replied."
+                          },
+                          "name": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "description": "Display name of the member."
+                          },
+                          "image": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "description": "Avatar of the member."
+                          },
+                          "lastRepliedAt": {
+                            "type": "string",
+                            "format": "date-time",
+                            "x-native-type": "date",
+                            "description": "When this member last replied in the conversation."
+                          }
+                        },
+                        "required": [
+                          "userId",
+                          "name",
+                          "image",
+                          "lastRepliedAt"
+                        ],
+                        "additionalProperties": false
+                      },
+                      "description": "Up to the 3 members who replied most recently, newest first. Preview only: use `conversations.listParticipants` for everyone."
+                    },
                     "contactInboxes": {
                       "type": "array",
                       "items": {
@@ -20627,6 +20675,7 @@
                     "responseDueAt",
                     "responseSlaBreachingAt",
                     "responseSlaTargetSeconds",
+                    "recentParticipants",
                     "contactInboxes",
                     "messages",
                     "contact",
@@ -20939,6 +20988,54 @@
                           "type": "null"
                         }
                       ]
+                    },
+                    "recentParticipants": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "userId": {
+                            "type": "string",
+                            "description": "Id of the member who replied."
+                          },
+                          "name": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "description": "Display name of the member."
+                          },
+                          "image": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "description": "Avatar of the member."
+                          },
+                          "lastRepliedAt": {
+                            "type": "string",
+                            "format": "date-time",
+                            "x-native-type": "date",
+                            "description": "When this member last replied in the conversation."
+                          }
+                        },
+                        "required": [
+                          "userId",
+                          "name",
+                          "image",
+                          "lastRepliedAt"
+                        ],
+                        "additionalProperties": false
+                      },
+                      "description": "Up to the 3 members who replied most recently, newest first. Preview only: use `conversations.listParticipants` for everyone."
                     },
                     "contactInboxes": {
                       "type": "array",
@@ -22443,6 +22540,7 @@
                     "responseDueAt",
                     "responseSlaBreachingAt",
                     "responseSlaTargetSeconds",
+                    "recentParticipants",
                     "contactInboxes",
                     "messages",
                     "contact",
@@ -22791,6 +22889,54 @@
                     "type": "null"
                   }
                 ]
+              },
+              "recentParticipants": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "userId": {
+                      "type": "string",
+                      "description": "Id of the member who replied."
+                    },
+                    "name": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Display name of the member."
+                    },
+                    "image": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Avatar of the member."
+                    },
+                    "lastRepliedAt": {
+                      "type": "string",
+                      "format": "date-time",
+                      "x-native-type": "date",
+                      "description": "When this member last replied in the conversation."
+                    }
+                  },
+                  "required": [
+                    "userId",
+                    "name",
+                    "image",
+                    "lastRepliedAt"
+                  ],
+                  "additionalProperties": false
+                },
+                "description": "Up to the 3 members who replied most recently, newest first. Preview only: use `conversations.listParticipants` for everyone."
               },
               "contactInboxes": {
                 "type": "array",
@@ -24438,6 +24584,7 @@
               "responseDueAt",
               "responseSlaBreachingAt",
               "responseSlaTargetSeconds",
+              "recentParticipants",
               "contactInboxes",
               "messages",
               "contact",
