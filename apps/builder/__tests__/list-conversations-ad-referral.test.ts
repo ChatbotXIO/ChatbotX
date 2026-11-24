@@ -152,6 +152,35 @@ describe("listConversations / findConversation adReferral mapping", () => {
       sourceUrl: "https://fb.com/ad/xyz",
     })
     expect(mappedContactInboxes[1]?.adReferral).toBeNull()
+    expect(result.data[0]?.originInbox).toBeNull()
+  })
+
+  test("listConversations names the inbox of the latest message", async () => {
+    const conversation = {
+      id: "conv-1",
+      contactId: "contact-1",
+      lastActivityAt: new Date("2026-01-01T00:00:00Z"),
+      contactInboxes: [adAttributedContactInbox, organicContactInbox],
+      contact: null,
+      assignedUser: null,
+      assignedInboxTeam: null,
+    }
+    mocks.findManyQuery.mockResolvedValue([conversation])
+    mocks.repo.findLastByConversation.mockResolvedValue([
+      { contactInboxId: "ci-organic" },
+    ])
+
+    const result = await listConversations(
+      { workspaceId: "ws-1" },
+      { includeEmailAndPhone: true },
+    )
+
+    expect(result.data[0]?.originInbox).toEqual({
+      contactInboxId: "ci-organic",
+      inboxId: "inbox-1",
+      channel: "messenger",
+      name: "Messenger Inbox",
+    })
   })
 
   test("compact list responses omit attribution and thread-control fields", async () => {

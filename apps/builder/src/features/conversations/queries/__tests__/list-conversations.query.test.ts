@@ -117,6 +117,29 @@ describe("buildConversationWhere channel filter", () => {
     expect(where.contactInboxes).toEqual({ channel: "messenger" })
   })
 
+  test("restricts by contactInboxes.inboxId for one connected page or number", () => {
+    const where = buildConversationWhere(
+      "1",
+      { ...baseInput, channel: "whatsapp", inboxId: "42" },
+      null,
+    )
+
+    expect(where.contactInboxes).toEqual({
+      channel: "whatsapp",
+      inboxId: "42",
+    })
+  })
+
+  test("inboxId still applies when channel is the omnichannel sentinel", () => {
+    const where = buildConversationWhere(
+      "1",
+      { ...baseInput, channel: "omnichannel", inboxId: "42" },
+      null,
+    )
+
+    expect(where.contactInboxes).toEqual({ inboxId: "42" })
+  })
+
   test("composes keyword and contact filter OR branches without overwriting either", () => {
     vi.mocked(applyContactFilter).mockReturnValueOnce({
       OR: [{ email: { ilike: "%ada%" } }],

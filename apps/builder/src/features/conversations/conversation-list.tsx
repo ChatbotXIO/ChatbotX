@@ -104,6 +104,7 @@ export default function ConversationList({
       keyword: "",
       botCategory: conversationBotCategories.enum.all,
       channel: channelTypes.enum.omnichannel,
+      inboxId: undefined,
       assignedId: assignerFilterTypes.enum.all,
       tags: [],
       contactFilter: {

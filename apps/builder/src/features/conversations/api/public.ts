@@ -12,6 +12,7 @@ import {
   conversationBotCategories,
   conversationStatuses,
 } from "@chatbotx.io/database/partials"
+import { zodBigintIdAsString } from "@chatbotx.io/utils"
 import z from "zod"
 import { successResponse } from "@/features/common/schema"
 import { contactFilterCriteriaSchema } from "@/features/contact-filter"
@@ -87,6 +88,11 @@ const listConversationsQueryRequest = z.object({
   channel: channelTypes
     .optional()
     .describe("Restrict to conversations on this channel."),
+  inboxId: zodBigintIdAsString()
+    .optional()
+    .describe(
+      "Restrict to conversations that include this connected page or phone number. Use an inbox id from the workspace inbox list. Combines with `channel`.",
+    ),
   status: jsonQueryParam(
     z
       .array(conversationStatuses)
@@ -143,7 +149,7 @@ export const conversationsPublicRouter = {
       path: "/v1/conversations",
       summary: "List conversations",
       description:
-        'Use this to find conversations by status, channel, assignee, tags, or contact filter before inspecting one with `conversations.get`. Returns cursor-paginated workspace conversations. The array and object filters (`status`, `tags`, `contactFilter`) are query parameters whose value is a JSON-encoded string, for example `status=["open"]`; `contactFilter` is the JSON of the criteria object from `contacts.listFilterFields`; bracket (deepObject) notation such as `status[0]=open` is not understood and the filter is ignored.',
+        'Use this to find conversations by status, channel, inbox, assignee, tags, or contact filter before inspecting one with `conversations.get`. `inboxId` keeps only conversations that include that connected page or phone number. Returns cursor-paginated workspace conversations. Each item\'s `originInbox.name` is the page, phone, or account name of the inbox the latest message used. The array and object filters (`status`, `tags`, `contactFilter`) are query parameters whose value is a JSON-encoded string, for example `status=["open"]`; `contactFilter` is the JSON of the criteria object from `contacts.listFilterFields`; bracket (deepObject) notation such as `status[0]=open` is not understood and the filter is ignored.',
       tags: ["Conversations"],
       spec: mcpSpec({ visibility: "default" }),
     })
@@ -207,7 +213,7 @@ export const conversationsPublicRouter = {
       path: "/v1/conversations/{id}",
       summary: "Get conversation",
       description:
-        "Use this to inspect one conversation's contact, channel, assignee, and status after locating it with `conversations.list`. Call `conversations.assign` to change its assignee.",
+        "Use this to inspect one conversation's contact, channel, assignee, and status after locating it with `conversations.list`. `originInbox.name` is the page, phone, or account name of the inbox the latest message used. Call `conversations.assign` to change its assignee.",
       tags: ["Conversations"],
       spec: mcpSpec({ visibility: "default" }),
     })

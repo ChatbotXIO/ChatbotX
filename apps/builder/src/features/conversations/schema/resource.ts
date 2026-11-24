@@ -79,6 +79,19 @@ export type ConversationContactInboxResource = z.infer<
   typeof conversationContactInboxResource
 >
 
+// Page or phone display name of the inbox the latest message used.
+// Nullish so a list cached before this field existed still parses.
+export const originInboxResource = z.object({
+  contactInboxId: z.string(),
+  inboxId: z.string(),
+  channel: z.string(),
+  name: z
+    .string()
+    .describe(
+      "Page, phone, or account name of the inbox this conversation last used.",
+    ),
+})
+
 /**
  * A workspace member who replied in a conversation. `image` is the same raw
  * value as `assignedUser.image`; the builder resolves it to a URL.
@@ -109,6 +122,11 @@ export type ListConversationParticipantsResponse = z.infer<
 >
 
 export const listConversationsItemResource = conversationResource.extend({
+  originInbox: originInboxResource
+    .nullish()
+    .describe(
+      "Inbox the latest message was sent or received on. Null when the contact has several inboxes and no last message identifies one.",
+    ),
   recentParticipants: z
     .array(conversationParticipantResource)
     .describe(

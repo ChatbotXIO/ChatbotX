@@ -22,6 +22,7 @@ import z from "zod"
 import type { ListConversationsRequest } from "@/features/conversations/schema/query"
 import { decodeCursor, encodeCursor } from "@/lib/pagination"
 import { mapConversationParticipants } from "../lib/map-participants"
+import { resolveOriginInbox } from "../lib/resolve-origin-inbox"
 import type {
   ConversationCompactContactInboxResource,
   ConversationContactInboxResource,
@@ -243,6 +244,9 @@ export async function listConversations(
       data: await Promise.all(
         page.map(async (c) => {
           const lastMessage = lastMessagesByConversationId.get(c.id)
+          const contactInboxes = mapCompactConversationContactInboxes(
+            c.contactInboxes,
+          )
           return {
             ...withRecentParticipants(c),
             contact: await resolveConversationContact(
@@ -250,8 +254,10 @@ export async function listConversations(
               c.contactInboxes,
               workspaceId,
             ),
-            contactInboxes: mapCompactConversationContactInboxes(
-              c.contactInboxes,
+            contactInboxes,
+            originInbox: resolveOriginInbox(
+              contactInboxes,
+              lastMessage?.contactInboxId,
             ),
             assignedUser: c.assignedUser ?? null,
             assignedInboxTeam: c.assignedInboxTeam ?? null,
@@ -267,6 +273,7 @@ export async function listConversations(
     data: await Promise.all(
       page.map(async (c) => {
         const lastMessage = lastMessagesByConversationId.get(c.id)
+        const contactInboxes = mapConversationContactInboxes(c.contactInboxes)
         return {
           ...withRecentParticipants(c),
           contact: await resolveConversationContact(
@@ -274,7 +281,11 @@ export async function listConversations(
             c.contactInboxes,
             workspaceId,
           ),
-          contactInboxes: mapConversationContactInboxes(c.contactInboxes),
+          contactInboxes,
+          originInbox: resolveOriginInbox(
+            contactInboxes,
+            lastMessage?.contactInboxId,
+          ),
           assignedUser: c.assignedUser ?? null,
           assignedInboxTeam: c.assignedInboxTeam ?? null,
           messages: lastMessage ? [lastMessage] : [],
@@ -317,6 +328,11 @@ export const findConversation = async (
     },
   )
 
+  const contactInboxes = mapConversationContactInboxes(
+    conversation.contactInboxes,
+  )
+  const lastMessage = lastMessages[0]
+
   return {
     data: {
       ...withRecentParticipants(conversation),
@@ -325,10 +341,12 @@ export const findConversation = async (
         conversation.contactInboxes,
         input.workspaceId,
       ),
-      contactInboxes: mapConversationContactInboxes(
-        conversation.contactInboxes,
+      contactInboxes,
+      originInbox: resolveOriginInbox(
+        contactInboxes,
+        lastMessage?.contactInboxId,
       ),
-      messages: lastMessages.length > 0 ? [lastMessages[0]] : [],
+      messages: lastMessage ? [lastMessage] : [],
     },
   }
 }
