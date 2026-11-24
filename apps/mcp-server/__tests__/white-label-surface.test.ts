@@ -1,4 +1,12 @@
 import { afterEach, describe, expect, test, vi } from "vitest"
+import { openAiProfileSpec } from "./fixtures/openai-profile-spec"
+
+// Live-spec tool text is covered in apps/builder/__tests__/public-spec-mcp.test.ts.
+vi.mock("../src/openapi-loader", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../src/openapi-loader")>()),
+  getCachedSpec: () => openAiProfileSpec,
+}))
+
 import { getGuide, guideNames } from "../src/guides"
 import { CLAUDE_INSTRUCTIONS } from "../src/profiles/claude-guides"
 import {

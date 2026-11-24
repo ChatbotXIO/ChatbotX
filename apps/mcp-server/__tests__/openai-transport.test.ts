@@ -1,12 +1,22 @@
 import { createServer, type Server } from "node:http"
 import type { AddressInfo } from "node:net"
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
+import { openAiProfileSpec } from "./fixtures/openai-profile-spec"
 
 const COLLISION = /collides/
 const AUDIENCE = "https://app.example.com/mcp/openai"
 const introspect = vi.hoisted(() => vi.fn())
 
 vi.mock("../src/token-introspection", () => ({ introspectToken: introspect }))
+
+vi.mock("../src/openapi-loader", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("../src/openapi-loader")>()
+  return {
+    ...actual,
+    getCachedSpec: () => openAiProfileSpec,
+    refreshOpenApiSpecIfStale: async () => [],
+  }
+})
 
 const principal = (overrides: Record<string, unknown> = {}) => ({
   audience: AUDIENCE,

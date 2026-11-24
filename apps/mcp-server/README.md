@@ -217,7 +217,9 @@ A second, fixed profile serves OpenAI clients (ChatGPT, Codex) from the same pro
 | OAuth resource and audience | `<origin>/mcp` | `<origin>/mcp/openai` |
 | Tools | Scope-filtered default set plus `search_tools`, `call_tool`, `get_guide` | 36 API tools plus `get_guide` (37), filtered by the token's permission and scopes like the default profile |
 
-The OpenAI tool list is the committed contract `src/profiles/openai-manifest.json`. It is served and executed without the live OpenAPI cache. Regenerate it only as a reviewed change: `pnpm tsx scripts/generate-openai-manifest.ts <public-spec.json>` (the builder test `public-spec-mcp.test.ts` fails when the manifest drifts from the live spec).
+The OpenAI tool list is built at runtime from the live public spec (the same cache the default profile uses). The reviewed part is `src/profiles/openai-contract.ts`: which operations are served, description and annotation overrides, removed properties, and which approval policies keep the `_confirm` round trip. A contract operation missing from the spec is skipped and logged, not fatal. The builder test `public-spec-mcp.test.ts` checks the contract against the live spec.
+
+OpenAI stores the scanned tool definitions and re-reviews changes; while a changed definition is held, ChatGPT keeps calling with the previously approved one. Keep these operations backward compatible (no removed or newly required input fields) until the update is live.
 
 For OpenAI Plugin directory submission, configure the exact challenge value from
 the OpenAI portal as the builder's `OPENAI_APPS_DOMAIN_CHALLENGE`. The builder

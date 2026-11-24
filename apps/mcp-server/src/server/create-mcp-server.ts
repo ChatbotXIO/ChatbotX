@@ -172,9 +172,12 @@ export const createMcpServer = (
   if (isOpenAi) {
     registerGuideResources(mcpServer, openAiGuideResources())
     mcpServer.server.registerCapabilities({ tools: {} })
-    mcpServer.server.setRequestHandler(ListToolsRequestSchema, async () => ({
-      tools: listOpenAiTools(await introspectCaller(getCredentials())),
-    }))
+    mcpServer.server.setRequestHandler(ListToolsRequestSchema, async () => {
+      await refreshOpenApiSpecIfStale()
+      return {
+        tools: listOpenAiTools(await introspectCaller(getCredentials())),
+      }
+    })
     mcpServer.server.setRequestHandler(
       CallToolRequestSchema,
       async (request) => {
@@ -187,6 +190,7 @@ export const createMcpServer = (
         if (!credentials) {
           return errorResult(NO_CREDENTIAL_MESSAGE)
         }
+        await refreshOpenApiSpecIfStale()
         return await executeOpenAiTool(name, toolArgs, credentials)
       },
     )

@@ -44,7 +44,6 @@
     "start": "node dist/index.mjs",
     "test": "vitest run --passWithNoTests",
     "test:watch": "vitest",
-    "generate:openai-manifest": "tsx scripts/generate-openai-manifest.ts",
     "eval:business": "tsx evals/run.ts",
     "eval:search": "tsx evals/search-audit.ts"
   },

@@ -17,7 +17,13 @@ import {
   CLAUDE_API_TOOLS,
   CLAUDE_EXCLUDED_TOOLS,
 } from "../../mcp-server/src/profiles/claude-contract"
-import { OPENAI_TOOL_OVERRIDES } from "../../mcp-server/src/profiles/openai-contract"
+import {
+  OPENAI_API_TOOLS,
+  OPENAI_CONFIRMED_POLICIES,
+  OPENAI_DEFERRED_TOOLS,
+  OPENAI_EXCLUDED_TOOLS,
+  OPENAI_TOOL_OVERRIDES,
+} from "../../mcp-server/src/profiles/openai-contract"
 import { buildOpenAiManifest } from "../../mcp-server/src/profiles/openai-manifest-builder"
 
 // Same side-effect-free import stubs as public-spec-operations.test.ts —
@@ -136,6 +142,9 @@ const HITL_NONE_WRITE_ALLOWLIST: Record<string, true> = {
 // board without a `search_tools` round trip.
 const MAX_DEFAULT_VISIBLE_OPERATIONS = 52
 
+const DOTTED_OPERATION = /`([a-zA-Z]+\.[a-zA-Z]+)`/g
+const DYNAMIC_TOOL_NAMES = /search_tools|call_tool/
+const BRAND = /chatbotx/i
 const MCP_SERVER_ROOT = join(import.meta.dirname, "..", "..", "mcp-server")
 const MCP_README_PATH = join(MCP_SERVER_ROOT, "README.md")
 const MCP_README_TOOLS_HEADING = "## Available tools"
@@ -343,37 +352,103 @@ describe("x-mcp outbound policy", () => {
   })
 })
 
-describe("OpenAI MCP profile manifest", () => {
-  const manifest = JSON.parse(
-    readFileSync(
-      join(MCP_SERVER_ROOT, "src", "profiles", "openai-manifest.json"),
-      "utf8",
-    ),
-  ) as {
-    tools: {
-      name: string
-      method: string
-      pathTemplate: string
-      annotations: Record<string, boolean>
-      pathParamNames: string[]
-      queryParamNames: string[]
-      bodyParamNames: string[]
-    }[]
-  }
+describe("OpenAI MCP profile tools (built from the live spec)", () => {
+  // Built at runtime by the MCP server from the same spec; nothing committed.
+  const manifest = () => buildOpenAiManifest(publicSpec)
   const toToolName = (operationId: string) =>
     operationId
       .replace(/([a-z\d])([A-Z])/g, "$1_$2")
       .replace(/\./g, "_")
       .toLowerCase()
 
-  test("every manifest tool matches a live default operation and its hints", () => {
+  test("every contract operation exists in the live spec", () => {
+    expect(manifest().missing).toEqual([])
+    expect(manifest().tools.map((tool) => tool.name)).toEqual([
+      ...OPENAI_API_TOOLS,
+    ])
+  })
+
+  test("never serves deferred or excluded operations", () => {
+    const names = new Set<string>(manifest().tools.map((tool) => tool.name))
+    for (const name of [...OPENAI_DEFERRED_TOOLS, ...OPENAI_EXCLUDED_TOOLS]) {
+      expect(names.has(name), name).toBe(false)
+    }
+  })
+
+  test("descriptions only reference tools in the profile, and never the brand", () => {
+    const names = new Set<string>(manifest().tools.map((tool) => tool.name))
+    for (const tool of manifest().tools) {
+      const text = JSON.stringify({
+        description: tool.description,
+        inputSchema: tool.inputSchema,
+      })
+      for (const match of text.matchAll(DOTTED_OPERATION)) {
+        expect(
+          names.has(toToolName(match[1] as string)),
+          `${tool.name}: ${match[1]}`,
+        ).toBe(true)
+      }
+      expect(text, tool.name).not.toMatch(DYNAMIC_TOOL_NAMES)
+      expect(text, tool.name).not.toMatch(BRAND)
+    }
+  })
+
+  test("contacts_create never accepts gender", () => {
+    const tool = manifest().tools.find(
+      (item) => item.name === "contacts_create",
+    )
+    expect(tool?.inputSchema.properties).not.toHaveProperty("gender")
+    expect(tool?.inputSchema.required ?? []).not.toContain("gender")
+    expect(tool?.adapterBody).toEqual({ gender: "unknown" })
+  })
+
+  test("input schemas contain no free-form objects", () => {
+    const walk = (node: unknown, where: string): void => {
+      if (Array.isArray(node)) {
+        for (const item of node) {
+          walk(item, where)
+        }
+        return
+      }
+      if (node && typeof node === "object") {
+        const schema = node as Record<string, unknown>
+        if (schema.type === "object" && !schema.properties) {
+          expect(schema.additionalProperties, where).toBe(false)
+        }
+        for (const value of Object.values(schema)) {
+          walk(value, where)
+        }
+      }
+    }
+    for (const tool of manifest().tools) {
+      walk(tool.inputSchema, tool.name)
+    }
+  })
+
+  test("only outbound and destructive tools keep the _confirm round trip", () => {
+    for (const tool of manifest().tools) {
+      const confirmed = (
+        OPENAI_CONFIRMED_POLICIES as readonly string[]
+      ).includes(tool.hitlPolicy)
+      expect(tool.hitlPolicy === "none" || confirmed, tool.name).toBe(true)
+      expect("_confirm" in tool.inputSchema.properties, tool.name).toBe(
+        confirmed,
+      )
+    }
+    const policyOf = (name: string) =>
+      manifest().tools.find((tool) => tool.name === name)?.hitlPolicy
+    expect(policyOf("contacts_send_message")).toBe("confirm_outbound")
+    expect(policyOf("broadcasts_stop")).toBe("confirm_destructive")
+  })
+
+  test("every tool matches a live default operation and its hints", () => {
     const byName = new Map(
       operations.map((operation) => [
         toToolName(operation.operationId),
         operation,
       ]),
     )
-    for (const tool of manifest.tools) {
+    for (const tool of manifest().tools) {
       const operation = byName.get(tool.name)
       expect(operation, tool.name).toBeDefined()
       expect(operation?.method, tool.name).toBe(tool.method)
@@ -385,25 +460,17 @@ describe("OpenAI MCP profile manifest", () => {
         "destructiveHint",
         "idempotentHint",
         "openWorldHint",
-      ]) {
+      ] as const) {
         expect(tool.annotations[hint], `${tool.name}.${hint}`).toBe(meta[hint])
       }
     }
-  })
-
-  test("the committed manifest equals a rebuild from the live spec", () => {
-    // Regenerate with `pnpm --filter chatbotx-mcp generate:openai-manifest
-    // <public-spec.json>` and review the diff when this fails.
-    expect(JSON.parse(JSON.stringify(buildOpenAiManifest(publicSpec)))).toEqual(
-      manifest,
-    )
   })
 
   test("mcp-server and auth agree on the connector profiles", () => {
     expect([...CONNECTOR_PROFILES]).toEqual([...MCP_CONNECTOR_PROFILES])
   })
 
-  test("every manifest tool's path, query and body params match the live spec", () => {
+  test("every tool's path, query and body params match the live spec", () => {
     const byName = new Map(
       operations.map((operation) => [
         toToolName(operation.operationId),
@@ -414,7 +481,7 @@ describe("OpenAI MCP profile manifest", () => {
       (operation.parameters ?? [])
         .filter((parameter) => parameter.in === where)
         .map((parameter) => parameter.name)
-    for (const tool of manifest.tools) {
+    for (const tool of manifest().tools) {
       const operation = byName.get(tool.name) as McpSpecOperation
       const removed = OPENAI_TOOL_OVERRIDES[tool.name]?.removeProperties ?? []
       const liveBody = bodyPropertyNames(

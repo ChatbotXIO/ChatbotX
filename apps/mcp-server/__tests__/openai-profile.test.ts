@@ -1,31 +1,33 @@
 import { afterEach, describe, expect, test, vi } from "vitest"
+import { openAiProfileSpec } from "./fixtures/openai-profile-spec"
+
+const loader = vi.hoisted(() => ({ spec: null as unknown }))
+
+vi.mock("../src/openapi-loader", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("../src/openapi-loader")>()
+  loader.spec = openAiProfileSpec
+  return { ...actual, getCachedSpec: () => loader.spec }
+})
+
 import { validateAgainstSchema } from "../src/profiles/json-schema-validate"
 import {
   executeOpenAiTool,
   handleOpenAiGuide,
   listOpenAiTools,
-  type OpenAiTool,
 } from "../src/profiles/openai"
-import {
-  OPENAI_CONFIRMED_POLICIES,
-  OPENAI_DEFERRED_TOOLS,
-  OPENAI_EXCLUDED_TOOLS,
-} from "../src/profiles/openai-contract"
-import manifestJson from "../src/profiles/openai-manifest.json"
+import { buildOpenAiManifest } from "../src/profiles/openai-manifest-builder"
 import {
   projectResponse,
   ResponseContractError,
 } from "../src/profiles/project-response"
 
-const DOTTED_OPERATION = /`([a-zA-Z]+\.[a-zA-Z]+)`/g
 const DYNAMIC_TOOL_NAMES = /search_tools|call_tool/
-const UPPER = /([A-Z])/g
 const POST_REQUEST = /^POST /
 const credentials = { token: "t", workspaceId: "w1" }
 const tools = listOpenAiTools(null)
-const manifestTools = (manifestJson as unknown as { tools: OpenAiTool[] }).tools
+const builtTools = buildOpenAiManifest(openAiProfileSpec).tools
 const getOpenAiTool = (name: string) =>
-  manifestTools.find((tool) => tool.name === name)
+  builtTools.find((tool) => tool.name === name)
 const names = new Set(tools.map((tool) => tool.name))
 
 const jsonResponse = (body: unknown, status = 200) =>
@@ -36,62 +38,51 @@ const jsonResponse = (body: unknown, status = 200) =>
 
 afterEach(() => vi.unstubAllGlobals())
 
-describe("OpenAI manifest", () => {
-  test("lists 36 API tools plus get_guide", () => {
-    expect(tools).toHaveLength(37)
-    expect(names.has("get_guide")).toBe(true)
+describe("OpenAI profile tools", () => {
+  test("serves the contract's operations present in the spec, plus get_guide", () => {
+    expect([...names].sort()).toEqual(
+      [
+        "broadcasts_list",
+        "broadcasts_stop",
+        "contacts_add_tags_by_name",
+        "contacts_create",
+        "contacts_list",
+        "contacts_send_message",
+        "get_guide",
+        "token_get",
+      ].sort(),
+    )
   })
 
-  test("omits dynamic, deferred and excluded tools", () => {
-    for (const name of [
-      "search_tools",
-      "call_tool",
-      ...OPENAI_DEFERRED_TOOLS,
-      ...OPENAI_EXCLUDED_TOOLS,
-    ]) {
+  test("reports contract operations the spec lacks instead of throwing", () => {
+    const { missing } = buildOpenAiManifest(openAiProfileSpec)
+    expect(missing).toContain("flows_list")
+    expect(missing).not.toContain("contacts_list")
+  })
+
+  test("never serves deferred or dynamic tools", () => {
+    for (const name of ["contacts_send_flow", "search_tools", "call_tool"]) {
       expect(names.has(name)).toBe(false)
     }
   })
 
-  test("every tool has four boolean hints and an oauth2 security scheme", () => {
+  test("every tool carries an oauth2 security scheme", () => {
     for (const tool of tools) {
-      for (const hint of [
-        "readOnlyHint",
-        "destructiveHint",
-        "idempotentHint",
-        "openWorldHint",
-      ] as const) {
-        expect(typeof tool.annotations[hint], `${tool.name}.${hint}`).toBe(
-          "boolean",
-        )
-      }
       expect(tool.securitySchemes).toEqual([{ type: "oauth2" }])
     }
   })
 
-  test("outbound and irreversible tools carry the expected hints", () => {
-    expect(getOpenAiTool("contacts_send_message")?.annotations).toMatchObject({
-      destructiveHint: true,
-      openWorldHint: true,
-      readOnlyHint: false,
-    })
-    expect(getOpenAiTool("broadcasts_stop")?.annotations.destructiveHint).toBe(
-      true,
+  test("an ordinary update drops _confirm; outbound and destructive keep it", () => {
+    const hasConfirm = (name: string) =>
+      "_confirm" in
+      (getOpenAiTool(name)?.inputSchema as { properties: object }).properties
+    expect(getOpenAiTool("contacts_add_tags_by_name")?.hitlPolicy).toBe("none")
+    expect(hasConfirm("contacts_add_tags_by_name")).toBe(false)
+    expect(getOpenAiTool("contacts_send_message")?.hitlPolicy).toBe(
+      "confirm_outbound",
     )
-  })
-
-  test("descriptions only reference tools in the profile", () => {
-    const toName = (id: string) =>
-      id.replace(UPPER, "_$1").toLowerCase().replace(".", "_")
-    for (const tool of tools) {
-      for (const match of JSON.stringify(tool).matchAll(DOTTED_OPERATION)) {
-        expect(
-          names.has(toName(match[1] as string)),
-          `${tool.name}: ${match[1]}`,
-        ).toBe(true)
-      }
-      expect(JSON.stringify(tool)).not.toMatch(DYNAMIC_TOOL_NAMES)
-    }
+    expect(hasConfirm("contacts_send_message")).toBe(true)
+    expect(hasConfirm("broadcasts_stop")).toBe(true)
   })
 
   test("contacts_create never accepts gender", () => {
@@ -103,44 +94,18 @@ describe("OpenAI manifest", () => {
     expect(schema.required ?? []).not.toContain("gender")
   })
 
-  test("input schemas contain no free-form objects", () => {
-    const walk = (node: unknown, where: string): void => {
-      if (Array.isArray(node)) {
-        for (const item of node) {
-          walk(item, where)
-        }
-        return
-      }
-      if (node && typeof node === "object") {
-        const schema = node as Record<string, unknown>
-        if (schema.type === "object" && !schema.properties) {
-          expect(schema.additionalProperties, where).toBe(false)
-        }
-        for (const value of Object.values(schema)) {
-          walk(value, where)
-        }
-      }
+  test("a new spec object rebuilds the tools; with no spec only get_guide is served", () => {
+    const previous = loader.spec
+    try {
+      loader.spec = null
+      expect(listOpenAiTools(null).map((tool) => tool.name)).toEqual([
+        "get_guide",
+      ])
+      loader.spec = structuredClone(openAiProfileSpec)
+      expect(listOpenAiTools(null)).toHaveLength(tools.length)
+    } finally {
+      loader.spec = previous
     }
-    for (const tool of tools) {
-      walk(tool.inputSchema, tool.name)
-    }
-  })
-
-  test("only outbound and destructive tools keep the _confirm round trip", () => {
-    for (const tool of manifestTools) {
-      const confirmed = (
-        OPENAI_CONFIRMED_POLICIES as readonly string[]
-      ).includes(tool.hitlPolicy)
-      expect(tool.hitlPolicy === "none" || confirmed, tool.name).toBe(true)
-      const properties = (tool.inputSchema as { properties: object }).properties
-      expect("_confirm" in properties, tool.name).toBe(confirmed)
-    }
-    expect(getOpenAiTool("contacts_send_message")?.hitlPolicy).toBe(
-      "confirm_outbound",
-    )
-    expect(getOpenAiTool("broadcasts_stop")?.hitlPolicy).toBe(
-      "confirm_destructive",
-    )
   })
 
   test("a read-only token lists no write tools", () => {

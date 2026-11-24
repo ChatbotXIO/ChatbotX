@@ -3,7 +3,7 @@ import type { GuideName } from "./guides"
 import { fetchWithTimeout } from "./http"
 import type { TokenIntrospection } from "./token-introspection"
 
-interface OpenAPISpec {
+export interface OpenAPISpec {
   paths?: Record<string, Record<string, OpenAPIOperation>>
   servers?: Array<{ url: string }>
 }
@@ -125,6 +125,10 @@ export interface DynamicTool {
 }
 
 let cachedTools: DynamicTool[] | null = null
+// The document `cachedTools` was parsed from. Connector profiles build their
+// own tool shapes (e.g. response schemas) from it; a refresh replaces the
+// object, so its identity doubles as a cache key.
+let cachedSpec: OpenAPISpec | null = null
 
 const toolsByName = new Map<string, DynamicTool>()
 let cachedEtag: string | null = null
@@ -476,6 +480,7 @@ async function fetchAndParseSpec(): Promise<DynamicTool[]> {
   // dispatch to the first, permanently wasting a slot in the client's
   // context window on an unreachable tool.
   cachedTools = deduplicatedTools
+  cachedSpec = spec
   cachedEtag = response.headers.get("ETag")
   fetchedAtMs = Date.now()
   // stderr keeps this out of the stdio MCP transport stream
@@ -533,6 +538,9 @@ export function getCachedTools(): DynamicTool[] {
 
 export const getToolByName = (name: string): DynamicTool | undefined =>
   toolsByName.get(name)
+
+/** The last successfully fetched public spec, or null before the first load. */
+export const getCachedSpec = (): OpenAPISpec | null => cachedSpec
 
 /** The fields `isVisibleForScope` reads; any profile's tool shape fits. */
 export type ScopedTool = Pick<DynamicTool, "alwaysVisible" | "scope"> & {

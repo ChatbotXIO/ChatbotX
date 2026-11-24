@@ -1,6 +1,10 @@
 import { getChildLogger } from "@chatbotx.io/logger"
 import { env } from "../env"
-import { isVisibleForScope } from "../openapi-loader"
+import {
+  getCachedSpec,
+  isVisibleForScope,
+  type OpenAPISpec,
+} from "../openapi-loader"
 import {
   errorResult,
   jsonResult,
@@ -18,7 +22,7 @@ import {
   OPENAI_INSTRUCTIONS,
   type OpenAiGuideName,
 } from "./openai-guides"
-import manifestJson from "./openai-manifest.json"
+import { buildOpenAiManifest } from "./openai-manifest-builder"
 import { projectResponse, ResponseContractError } from "./project-response"
 
 export type OpenAiTool = {
@@ -48,15 +52,42 @@ export type OpenAiTool = {
   scope?: string | string[]
 }
 
-type Manifest = { contractVersion: string; tools: OpenAiTool[] }
-
-const manifest = manifestJson as unknown as Manifest
-
 export const OPENAI_PROFILE_INSTRUCTIONS = OPENAI_INSTRUCTIONS
 
 const logger = getChildLogger("mcp-server")
 
-const toolsByName = new Map(manifest.tools.map((tool) => [tool.name, tool]))
+type BuiltProfile = {
+  spec: OpenAPISpec
+  tools: OpenAiTool[]
+  byName: Map<string, OpenAiTool>
+}
+
+// Rebuilt only when the loader swaps in a new spec object.
+let built: BuiltProfile | null = null
+
+/** The profile's tools, built from the last loaded public spec. */
+const profileTools = (): BuiltProfile | null => {
+  const spec = getCachedSpec()
+  if (!spec) {
+    return null
+  }
+  if (built?.spec !== spec) {
+    const manifest = buildOpenAiManifest(spec)
+    if (manifest.missing.length > 0) {
+      logger.error(
+        { missing: manifest.missing },
+        "OpenAI profile tools missing from the public spec",
+      )
+    }
+    const tools = manifest.tools as unknown as OpenAiTool[]
+    built = {
+      spec,
+      tools,
+      byName: new Map(tools.map((tool) => [tool.name, tool])),
+    }
+  }
+  return built
+}
 const TRAILING_SLASH = /\/$/
 const apiBaseUrl = (): string =>
   env.CHATBOTX_API_URL.replace(TRAILING_SLASH, "")
@@ -85,11 +116,11 @@ const OPENAI_GUIDE_TOOL = {
 } as const
 
 /**
- * The `tools/list` surface: manifest tools the calling token may use (same
+ * The `tools/list` surface: profile tools the calling token may use (same
  * permission/scope rule as the default profile), plus `get_guide`.
  */
 export const listOpenAiTools = (introspection: TokenIntrospection | null) => [
-  ...manifest.tools
+  ...(profileTools()?.tools ?? [])
     .filter((tool) => isVisibleForScope(tool, introspection))
     .map((tool) => ({
       name: tool.name,
@@ -220,12 +251,13 @@ const callApi = async (
 const project = (tool: OpenAiTool, body: unknown): unknown =>
   projectResponse(tool.responseSchema, body)
 
-/** The read tool that shows current state for a mutation, from the manifest only. */
+/** The read tool that shows current state for a mutation, from this profile only. */
 const findConfirmationRead = (tool: OpenAiTool): OpenAiTool | undefined => {
+  const tools = profileTools()?.tools ?? []
   const segments = tool.pathTemplate.split("/")
   for (let count = segments.length; count > 1; count -= 1) {
     const prefix = segments.slice(0, count).join("/")
-    const candidate = manifest.tools.find(
+    const candidate = tools.find(
       (item) =>
         item.method === "GET" &&
         item.pathTemplate === prefix &&
@@ -273,7 +305,7 @@ export const executeOpenAiTool = async (
   rawArgs: Record<string, unknown>,
   credentials: RequestCredentials,
 ): Promise<ToolCallResult> => {
-  const tool = toolsByName.get(name)
+  const tool = profileTools()?.byName.get(name)
   if (!tool) {
     return errorResult(`Unknown tool: ${name}`)
   }
