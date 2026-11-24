@@ -19,7 +19,10 @@ import { HomeTemplatesPanel } from "@/features/workspaces/components/home-templa
 import WorkspacesList from "@/features/workspaces/components/workspaces-list"
 import { resolveHomeTemplatesView } from "@/features/workspaces/lib/home-templates-view"
 import { loadHomeTemplateStore } from "@/features/workspaces/lib/load-home-template-store"
-import { homeSearchParamsCache } from "@/features/workspaces/schema/home-search-params"
+import {
+  type HomeTab,
+  homeSearchParamsCache,
+} from "@/features/workspaces/schema/home-search-params"
 import { hasWorkspacePermission } from "@/lib/auth/permission-routes"
 import { enforcePasswordCurrent } from "@/lib/auth/require-password-current"
 import { getCurrentUserAndHostScopedWorkspaces } from "@/lib/auth/utils"
@@ -30,6 +33,12 @@ import {
   resolveTrialEndsAt,
 } from "@/lib/quota-metrics"
 import { ensureFirstWorkspace } from "@/lib/workspace/create-first-workspace"
+
+/** The Templates tab is wider so its store cards keep a readable width. */
+const HOME_CONTAINER_WIDTH_CLASS = {
+  workspaces: "max-w-7xl",
+  templates: "max-w-[92rem]",
+} satisfies Record<HomeTab, string>
 
 export default async function MainPage({
   searchParams,
@@ -120,7 +129,9 @@ export default async function MainPage({
   const userInfo = { name: user.name, email: user.email, image: user.image }
 
   return (
-    <div className="mx-auto w-full max-w-7xl px-6">
+    <div
+      className={`mx-auto w-full px-6 ${HOME_CONTAINER_WIDTH_CLASS[templatesView.activeTab]}`}
+    >
       <WorkspaceDeletionPendingToast />
       <ExpiredBanner blocked={cloud && blocked} reason={blockReason} />
       <div className="flex flex-col gap-8 py-8 md:flex-row md:items-start">

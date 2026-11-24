@@ -75,7 +75,7 @@ type StoreCatalogLayoutConfig = {
  * `embedded` is a tab of the home page, under its welcome h1: no title of its
  * own, so the category titles are the h2s, and the grid follows the width of
  * its own container (the account rail takes part of the window): as many
- * columns as fit cards of at least 17rem.
+ * columns as fit cards of at least 21rem.
  */
 const STORE_CATALOG_LAYOUTS = {
   page: {
@@ -90,7 +90,7 @@ const STORE_CATALOG_LAYOUTS = {
     title: null,
     className: "",
     gridClassName:
-      "grid grid-cols-[repeat(auto-fill,minmax(min(100%,17rem),1fr))] gap-5",
+      "grid grid-cols-[repeat(auto-fill,minmax(min(100%,21rem),1fr))] gap-5",
   },
 } as const satisfies Record<string, StoreCatalogLayoutConfig>
 
