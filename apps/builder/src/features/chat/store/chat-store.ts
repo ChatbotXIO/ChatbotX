@@ -11,6 +11,7 @@ import type { ContactFilterRequest } from "@/features/contact-filter/schema"
 import type { GetContactResponse } from "@/features/contacts/schema/query"
 import type { ContactResource } from "@/features/contacts/schema/resource"
 import { mergeParticipantReply } from "@/features/conversations/lib/merge-participant-reply"
+import { resolveOriginInbox } from "@/features/conversations/lib/resolve-origin-inbox"
 import {
   type PostDetails,
   supportsPostDetails,
@@ -69,6 +70,17 @@ const isAgentReplyMessage = (message: MessageResourceWithRelations): boolean =>
  * backwards, so an out-of-order older message can't shrink a window a newer one
  * opened.
  */
+const originInboxPatch = (
+  conversation: ListConversationItemResource,
+  contactInboxId: string | null | undefined,
+) => {
+  const originInbox = resolveOriginInbox(
+    conversation.contactInboxes ?? [],
+    contactInboxId,
+  )
+  return originInbox ? { originInbox } : {}
+}
+
 const conversationPatchForMessage = (
   conversation: ListConversationsResponse["data"][number] | undefined,
   message: MessageResourceWithRelations,
@@ -149,6 +161,7 @@ export type ConversationFilters = {
   botCategory?: ConversationBotCategory
   assignedId?: string
   channel?: ChannelType
+  inboxId?: string
   status?: ConversationStatus[]
   keyword?: string
   tags?: ConversationStatus[]
@@ -988,6 +1001,7 @@ export const createChatStore = (initialState: ChatStoreInitialState = {}) => {
 
         // fetch next conversation list
         const { filters } = get()
+        const { inboxId, ...conversationFilters } = filters
         set({ isLoadingConversation: true })
 
         try {
@@ -997,7 +1011,8 @@ export const createChatStore = (initialState: ChatStoreInitialState = {}) => {
                 workspaceId,
                 perPage: INBOX_CONVERSATIONS_PER_PAGE,
                 cursor: nextCursorConversation ?? "",
-                ...filters,
+                ...conversationFilters,
+                ...(inboxId ? { inboxId } : {}),
               },
               // This endpoint fans out into per-conversation sharded message
               // lookups, which can legitimately take longer under cold caches
@@ -1669,6 +1684,7 @@ export const createChatStore = (initialState: ChatStoreInitialState = {}) => {
           const currentConversation = state.conversations[conversationIndex]
           const conversation = {
             ...currentConversation,
+            ...originInboxPatch(currentConversation, message.contactInboxId),
             messages: [message],
             lastActivityAt: latestActivityAt(
               currentConversation.lastActivityAt,
@@ -1814,6 +1830,10 @@ export const createChatStore = (initialState: ChatStoreInitialState = {}) => {
                 ...currentConversation,
                 ...(conversationPatch ?? {}),
                 ...readStatePatch,
+                ...originInboxPatch(
+                  currentConversation,
+                  message.contactInboxId,
+                ),
                 messages: [message],
                 lastActivityAt: latestActivityAt(
                   currentConversation.lastActivityAt,

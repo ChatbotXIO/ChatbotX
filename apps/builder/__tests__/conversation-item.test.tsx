@@ -160,6 +160,21 @@ describe("ConversationItem", () => {
       )
     })
 
+  test("shows the page or phone name the latest message came from", async () => {
+    await render(
+      makeConversation({
+        originInbox: {
+          contactInboxId: "ci-1",
+          inboxId: "inbox-1",
+          channel: "messenger",
+          name: "Udbhabon Page",
+        },
+      }),
+    )
+
+    expect(container.textContent).toContain("Udbhabon Page")
+  })
+
   test("no ringing badge or Answer/Reject for a non-ringing row", async () => {
     await render(makeConversation())
 

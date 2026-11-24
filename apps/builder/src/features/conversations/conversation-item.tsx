@@ -289,6 +289,7 @@ export default function ConversationItem({
     ? CALL_PREVIEW_ICON_BY_KIND[callPreviewKind]
     : undefined
   const isUnread = isConversationUnread(conversation)
+  const originName = conversation.originInbox?.name
   // Show one "Ads" badge if ANY of this conversation's contactInboxes came
   // from a Meta ad (WhatsApp CTWA or Messenger/Instagram CTM/CTID) — mirrors
   // WATI's "CTWA" tag. `adReferral` is computed server-side per contactInbox
@@ -388,10 +389,10 @@ export default function ConversationItem({
         </div>
 
         <div className="flex-1 overflow-hidden">
-          <div className="flex items-center justify-between gap-1">
+          <div className="flex items-center gap-1.5">
             <span
               className={cn(
-                "truncate text-start",
+                "min-w-0 flex-1 truncate text-start",
                 isUnread
                   ? "font-semibold text-foreground"
                   : "font-medium text-muted-foreground",
@@ -399,6 +400,14 @@ export default function ConversationItem({
             >
               {contactName}
             </span>
+            {originName ? (
+              <span
+                className="max-w-[46%] shrink truncate text-end text-[11px] font-normal text-muted-foreground"
+                title={originName}
+              >
+                {originName}
+              </span>
+            ) : null}
             <Tooltip>
               <TooltipTrigger
                 render={

@@ -3,7 +3,7 @@ import {
   conversationBotCategories,
   conversationStatuses,
 } from "@chatbotx.io/database/partials"
-import { zodBigintAsString } from "@chatbotx.io/utils"
+import { zodBigintAsString, zodBigintIdAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
 import { contactFilterRequest } from "@/features/contact-filter/schema"
 import { cursorPaginationRequest } from "@/lib/pagination"
@@ -13,6 +13,7 @@ export const listConversationsRequest = z.object({
   botCategory: conversationBotCategories.optional(),
   assignedId: z.string().nullable().optional(),
   channel: z.union([channelTypes]).optional(),
+  inboxId: zodBigintIdAsString().optional(),
   status: z.array(conversationStatuses).optional(),
   keyword: z.string().optional(),
   botEnabled: z.boolean().nullish(),

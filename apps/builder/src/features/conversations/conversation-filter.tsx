@@ -1,6 +1,7 @@
 "use client"
 
 import {
+  channelTypes,
   contactFilterFields,
   conversationStatuses,
 } from "@chatbotx.io/database/partials"
@@ -30,9 +31,13 @@ import { useFormContext, useWatch } from "react-hook-form"
 import { useChatStore } from "../chat/store/chat-store-provider"
 import { ContactFilterDialog } from "../contact-filter"
 import { EMAIL_PHONE_RESTRICTED_FILTER_FIELDS } from "../contact-filter/lib/restricted-fields"
-import { useConfiguredInboxTypeOptions } from "../inboxes/provider/inbox-hook"
+import {
+  useConfiguredInboxTypeOptions,
+  useInboxList,
+} from "../inboxes/provider/inbox-hook"
 import { useResponseSlaEnabled } from "../response-sla/provider/response-sla-hook"
 import { useContactAssigneeOptions } from "../users/provider/user-hook"
+import { connectedInboxLabel } from "./lib/connected-inbox-label"
 
 // Channel is picked in the top-level filter above, so the contact filter's own
 // "Channel" condition is redundant here; the Inbox condition is scoped to that
@@ -47,14 +52,31 @@ export function ConversationFilter({
   const t = useTranslations()
   const [open, setOpen] = useState(false)
   const { filters } = useChatStore((state) => state)
-  const { control } = useFormContext()
+  const { control, setValue } = useFormContext()
   const watchedChannel = useWatch({ control, name: "channel" }) as
     | string
     | undefined
+  const showInboxFilter =
+    !!watchedChannel && watchedChannel !== channelTypes.enum.omnichannel
 
   const inboxOptions = useConfiguredInboxTypeOptions({ enabled: open })
+  const inboxes = useInboxList({ enabled: open })
+  const connectedInboxOptions = useMemo(() => {
+    if (!showInboxFilter || !watchedChannel) {
+      return []
+    }
+    return inboxes
+      .filter((inbox) => inbox.channel === watchedChannel)
+      .map((inbox) => ({
+        label: connectedInboxLabel(inbox),
+        value: inbox.id,
+      }))
+      .sort((a, b) => a.label.localeCompare(b.label))
+  }, [inboxes, showInboxFilter, watchedChannel])
 
-  const filterCount = filters.contactFilter?.conditions.length ?? 0
+  const filterCount =
+    (filters.contactFilter?.conditions.length ?? 0) +
+    (filters.inboxId ? 1 : 0)
   const hasFilter = filterCount > 0
   const excludedFilterFields = useMemo(
     () =>
@@ -143,7 +165,24 @@ export function ConversationFilter({
             name="channel"
             options={inboxOptions}
             required
+            triggerValueChange={() => {
+              setValue("inboxId", undefined)
+            }}
           />
+
+          {showInboxFilter && (
+            <ComboboxField
+              allowClear
+              clearLabel={t("fields.botCategory.options.all")}
+              emptyText={t("actions.noRecordFound")}
+              emptyValue={undefined}
+              label={t("fields.inbox.label")}
+              name="inboxId"
+              options={connectedInboxOptions}
+              placeholder={t("fields.inbox.placeholder")}
+              searchPlaceholder={t("actions.search")}
+            />
+          )}
 
           <ComboboxField
             emptyText={t("actions.noRecordFound")}

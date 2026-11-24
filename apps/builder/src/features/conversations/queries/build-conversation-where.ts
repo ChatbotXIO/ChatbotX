@@ -190,11 +190,21 @@ export function buildConversationWhere(
     }
   }
 
-  // ── channel (via contactInboxes relation) ────────────────────────────────
+  // ── channel / inbox (via contactInboxes relation) ────────────────────────
   // "omnichannel" is a UI-only sentinel meaning "no channel restriction" —
   // it is never a real value stored on contactInboxes.channel.
-  if (input.channel && input.channel !== channelTypes.enum.omnichannel) {
-    where.contactInboxes = { channel: input.channel }
+  // inboxId narrows further to one connected page or phone number. A contact
+  // on two pages still matches each page, because the row is per contact and
+  // the page lives on contactInboxes.
+  const channel =
+    input.channel && input.channel !== channelTypes.enum.omnichannel
+      ? input.channel
+      : undefined
+  if (channel || input.inboxId) {
+    where.contactInboxes = {
+      ...(channel ? { channel } : {}),
+      ...(input.inboxId ? { inboxId: input.inboxId } : {}),
+    }
   }
 
   // ── keyword (smart contact search, including sourceId) ───────────────────
