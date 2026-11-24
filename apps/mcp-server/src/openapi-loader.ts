@@ -153,9 +153,10 @@ function extractPathParamNames(pathTemplate: string): string[] {
 
 /**
  * `x-mcp` hints override; otherwise inferred from the HTTP method — a GET is
- * read-only and idempotent by convention, a DELETE is destructive (and still
- * idempotent: deleting twice is a no-op), everything else (POST/PUT/PATCH)
- * defaults to none of the three.
+ * read-only and idempotent by convention, a DELETE is idempotent (deleting
+ * twice is a no-op), PUT is idempotent. Every non-read-only tool defaults to
+ * `destructiveHint: true`, the MCP specification's default, so a write is
+ * never advertised as safe just because its metadata omitted the hint.
  */
 function buildAnnotations(
   method: string,
@@ -164,10 +165,11 @@ function buildAnnotations(
 ): DynamicToolAnnotations {
   const meta = operation["x-mcp"]
   const upperMethod = method.toUpperCase()
+  const readOnlyHint = meta?.readOnlyHint ?? upperMethod === "GET"
   return {
     title: operation.summary?.trim() || fallbackTitle,
-    readOnlyHint: meta?.readOnlyHint ?? upperMethod === "GET",
-    destructiveHint: meta?.destructiveHint ?? upperMethod === "DELETE",
+    readOnlyHint,
+    destructiveHint: meta?.destructiveHint ?? !readOnlyHint,
     idempotentHint:
       meta?.idempotentHint ??
       (upperMethod === "GET" ||

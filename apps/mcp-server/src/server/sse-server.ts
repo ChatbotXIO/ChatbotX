@@ -13,6 +13,7 @@ import { resolveHeaderValue } from "../http-headers"
 import {
   buildProtectedResourceMetadata,
   buildWwwAuthenticate,
+  profileForPath,
   protectedResourcePrefix,
 } from "../oauth"
 import { introspectToken } from "../token-introspection"
@@ -23,7 +24,12 @@ import {
   writeJsonRpcError,
   writePlainText,
 } from "./http-utils"
-import { handleOpenAiRequest, OPENAI_INTERNAL_PATH } from "./openai-transport"
+import {
+  CLAUDE_INTERNAL_PATH,
+  handleClaudeRequest,
+  handleOpenAiRequest,
+  OPENAI_INTERNAL_PATH,
+} from "./profile-transport"
 import { IdleSessionSweeper } from "./session-sweeper"
 
 /**
@@ -83,8 +89,16 @@ const resolveSession = (sessionId: string): ResolvedSession | undefined => {
   }
 }
 
-/** Public path suffix of the OpenAI resource audience (`<origin>/mcp/openai`). */
-const OPENAI_AUDIENCE_SUFFIX = `/mcp${OPENAI_INTERNAL_PATH}`
+/** Each connector profile's dedicated transport, keyed by internal path. */
+const PROFILE_TRANSPORTS = new Map([
+  [OPENAI_INTERNAL_PATH, handleOpenAiRequest],
+  [CLAUDE_INTERNAL_PATH, handleClaudeRequest],
+])
+
+/** Public path suffixes of the profile audiences (`<origin>/mcp/<profile>`). */
+const PROFILE_AUDIENCE_SUFFIXES = [...PROFILE_TRANSPORTS.keys()].map(
+  (internalPath) => `/mcp${internalPath}`,
+)
 
 const apiTokenHeaderNames = ["x-workspace-token", "x-chatbo-token"] as const
 
@@ -190,12 +204,15 @@ const authorizeRequest = async (
     return false
   }
 
-  // OpenAI-audience tokens are only valid on the dedicated `/mcp/openai`
-  // transport; they must not authenticate the default profile.
+  // Connector-profile tokens are only valid on their dedicated transport
+  // (`/mcp/openai`, `/mcp/claude`); they must not authenticate the default
+  // profile and its `call_tool` access to every operation.
+  const principal = result.status === "ok" ? result.data.principal : undefined
   if (
-    result.status === "ok" &&
-    result.data.principal?.credentialType === "oauth" &&
-    result.data.principal.audience.endsWith(OPENAI_AUDIENCE_SUFFIX)
+    principal?.credentialType === "oauth" &&
+    PROFILE_AUDIENCE_SUFFIXES.some((suffix) =>
+      principal.audience.endsWith(suffix),
+    )
   ) {
     writeJsonRpcError(
       res,
@@ -387,16 +404,17 @@ export const createRequestListener =
   async (req: IncomingMessage, res: ServerResponse): Promise<void> => {
     try {
       const url = new URL(req.url ?? "", "http://localhost")
-      // OpenAI profile: own CORS, Origin check, auth and session store.
-      if (url.pathname === OPENAI_INTERNAL_PATH) {
-        await handleOpenAiRequest(req, res, createMcpServer)
+      // Connector profiles: own CORS, Origin check, auth and session store.
+      const profileTransport = PROFILE_TRANSPORTS.get(url.pathname)
+      if (profileTransport) {
+        await profileTransport(req, res, createMcpServer)
         return
       }
       enableCors(res)
       if (
         env.CHATBOTX_MCP_OAUTH_ENABLED === "true" &&
         url.pathname.startsWith(`${protectedResourcePrefix}/`) &&
-        url.pathname.endsWith(OPENAI_INTERNAL_PATH)
+        profileForPath(url.pathname)
       ) {
         res.statusCode = 200
         res.setHeader("Cache-Control", "no-store")
@@ -465,18 +483,18 @@ export const createRequestListener =
     }
   }
 
-/** The fixed OpenAI paths must not collide with configurable legacy paths. */
-export const assertNoOpenAiPathCollision = (): void => {
+/** The fixed profile paths must not collide with configurable legacy paths. */
+export const assertNoProfilePathCollision = (): void => {
   for (const path of [
     env.CHATBOTX_MCP_SSE_PATH,
     env.CHATBOTX_MCP_MESSAGES_PATH,
   ]) {
     if (
-      path === OPENAI_INTERNAL_PATH ||
+      PROFILE_TRANSPORTS.has(path) ||
       path.startsWith(protectedResourcePrefix)
     ) {
       throw new Error(
-        `MCP transport path "${path}" collides with the fixed OpenAI path or OAuth metadata routes`,
+        `MCP transport path "${path}" collides with a fixed connector-profile path or OAuth metadata routes`,
       )
     }
   }
@@ -485,7 +503,7 @@ export const assertNoOpenAiPathCollision = (): void => {
 export const runSseServer = async (
   createMcpServer: CreateMcpServerFn,
 ): Promise<void> => {
-  assertNoOpenAiPathCollision()
+  assertNoProfilePathCollision()
   const httpServer = createServer(createRequestListener(createMcpServer))
   const { promise: listening, resolve } = Promise.withResolvers<void>()
   httpServer.listen(env.CHATBOTX_MCP_PORT, env.CHATBOTX_MCP_HOST, resolve)

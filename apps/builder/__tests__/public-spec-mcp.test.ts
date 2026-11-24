@@ -12,6 +12,10 @@ import {
   withIdempotencyKeyHeader,
   withMcpHitlPolicy,
 } from "@/lib/orpc/public-spec"
+import {
+  CLAUDE_API_TOOLS,
+  CLAUDE_EXCLUDED_TOOLS,
+} from "../../mcp-server/src/profiles/claude-contract"
 import { OPENAI_TOOL_OVERRIDES } from "../../mcp-server/src/profiles/openai-contract"
 
 // Same side-effect-free import stubs as public-spec-operations.test.ts —
@@ -410,6 +414,43 @@ describe("OpenAI MCP profile manifest", () => {
         sorted(liveBody),
       )
     }
+  })
+})
+
+describe("Claude MCP profile contract", () => {
+  const toToolName = (operationId: string) =>
+    operationId
+      .replace(/([a-z\d])([A-Z])/g, "$1_$2")
+      .replace(/\./g, "_")
+      .toLowerCase()
+  const defaultVisible = () =>
+    operations.filter(
+      (operation) =>
+        (operation["x-mcp"] as Record<string, unknown> | undefined)
+          ?.visibility === "default",
+    )
+
+  test("every Claude profile tool is a live default-visible operation", () => {
+    const visible = new Set(
+      defaultVisible().map((operation) => toToolName(operation.operationId)),
+    )
+    for (const name of CLAUDE_API_TOOLS) {
+      expect(visible.has(name), name).toBe(true)
+    }
+  })
+
+  test("every default-visible operation is in the Claude profile or explicitly excluded", () => {
+    // A new default tool must be a deliberate decision for the directory
+    // listing: add it to CLAUDE_READ_TOOLS / CLAUDE_WRITE_TOOLS or to
+    // CLAUDE_EXCLUDED_TOOLS in apps/mcp-server/src/profiles/claude-contract.ts.
+    const decided = new Set<string>([
+      ...CLAUDE_API_TOOLS,
+      ...CLAUDE_EXCLUDED_TOOLS,
+    ])
+    const undecided = defaultVisible()
+      .map((operation) => toToolName(operation.operationId))
+      .filter((name) => !decided.has(name))
+    expect(undecided).toEqual([])
   })
 })
 

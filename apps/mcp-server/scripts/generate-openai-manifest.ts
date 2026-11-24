@@ -5,7 +5,8 @@
  * The output is a reviewed contract: commit it, never regenerate at runtime.
  */
 import { readFileSync, writeFileSync } from "node:fs"
-import { parseToolsFromSpec, toSnakeCase } from "../src/openapi-loader"
+import { parseToolsFromSpec } from "../src/openapi-loader"
+import { createDescriptionFilter } from "../src/profiles/description-filter"
 import {
   OPENAI_API_TOOLS,
   OPENAI_CONTRACT_VERSION,
@@ -25,46 +26,8 @@ const outputSchema = (method: string, path: string): unknown => {
   return ok?.content?.["application/json"]?.schema ?? null
 }
 
-const manifestNames = new Set<string>(OPENAI_API_TOOLS)
-const SENTENCE_BREAK = /(?<=[.!?])\s+/
-const SCOPE_LINE = /\n?\s*Requires token scope:[^\n]*/g
-const BACKTICK_OP = /`([a-zA-Z]+\.[a-zA-Z]+)`/g
-const toToolName = (operationId: string) => toSnakeCase(operationId)
-
-/** Drops sentences that point at operations outside this profile. */
-const sanitizeDescription = (text: string): string =>
-  text
-    .split(SENTENCE_BREAK)
-    .filter((sentence) =>
-      [...sentence.matchAll(BACKTICK_OP)].every((match) =>
-        manifestNames.has(toToolName(match[1] as string)),
-      ),
-    )
-    .join(" ")
-    .replace(SCOPE_LINE, "")
-    .trim()
-
-/** Applies the same operation-reference filter to every nested description. */
-const cleanDescriptions = (schema: any): any => {
-  if (Array.isArray(schema)) {
-    return schema.map(cleanDescriptions)
-  }
-  if (schema && typeof schema === "object") {
-    const next: any = {}
-    for (const [key, value] of Object.entries(schema)) {
-      if (key === "description" && typeof value === "string") {
-        const cleaned = sanitizeDescription(value)
-        if (cleaned) {
-          next[key] = cleaned
-        }
-      } else {
-        next[key] = cleanDescriptions(value)
-      }
-    }
-    return next
-  }
-  return schema
-}
+const { sanitize: sanitizeDescription, cleanSchema: cleanDescriptions } =
+  createDescriptionFilter(new Set<string>(OPENAI_API_TOOLS))
 
 const strict = (schema: any): any => {
   if (Array.isArray(schema)) {

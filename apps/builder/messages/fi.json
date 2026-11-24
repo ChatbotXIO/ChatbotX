@@ -12119,19 +12119,113 @@
     "sseUrl": "Vanha SSE-URL",
     "guide": {
       "title": "Yhdistä MCP-asiakas",
-      "step1": "Kopioi MCP-asiakkaasi määritys.",
-      "step2": "Liitä se asiakkaaseen.",
-      "step3": "Asiakas avaa selaimen. Kirjaudu sisään ja hyväksy pääsy.",
-      "step4": "Työtilasi työkalut näkyvät hyväksynnän jälkeen.",
-      "ownerOnly": "Vain työtilan omistajat ja superAdminit voivat valtuuttaa MCP-pääsyn. Valitset työtilan hyväksyntänäkymässä."
+      "subtitle": "Valitse käyttämäsi sovellus ja seuraa kolmea vaihetta.",
+      "ownerOnly": "Vain työtilan omistajat ja superAdminit voivat valtuuttaa MCP-pääsyn. Valitset työtilan hyväksyntänäkymässä.",
+      "otherClients": "Myös mikä tahansa muu MCP-yhteensopiva asiakas toimii",
+      "otherIntro": "Käytä näitä päätepisteitä ja määrityksiä minkä tahansa muun MCP-yhteensopivan asiakkaan kanssa.",
+      "opensInNewTab": "(avautuu uuteen välilehteen)",
+      "actions": {
+        "addConnector": "Lisää liitin",
+        "startChatting": "Aloita keskustelu"
+      },
+      "steps": {
+        "claude": {
+          "step1": {
+            "title": "Kopioi liittimen URL-osoite",
+            "body": "Liität tämän URL-osoitteen Claudeen seuraavassa vaiheessa."
+          },
+          "step2": {
+            "title": "Siirry kohtaan Claude → Customize → Connectors → Add custom connector",
+            "body": "Alla oleva painike avaa liittimesi Claudessa. Napsauta Add custom connector, anna nimi ja liitä URL-osoite. Se näkyy myös Clauden työpöytä- ja mobiilisovelluksissa."
+          },
+          "step3": {
+            "title": "Napsauta Connect ja hyväksy käyttöoikeus",
+            "body": "Kirjaudu sisään, valitse työtila ja hyväksy. Pyydä sitten Claudea käsittelemään yhteystietoja, flow'ta ja lähetyksiä suoraan keskustelussa."
+          }
+        },
+        "chatgpt": {
+          "step1": {
+            "title": "Kopioi liittimen URL-osoite",
+            "body": "Liität tämän URL-osoitteen ChatGPT:hen seuraavassa vaiheessa."
+          },
+          "step2": {
+            "title": "Siirry kohtaan ChatGPT → Settings → Apps & Connectors → Create",
+            "body": "Alla oleva painike avaa ChatGPT:n asetukset. Jos Create puuttuu, ota Developer mode käyttöön kohdassa Advanced settings. Nimeä liitin, liitä URL-osoite ja valitse OAuth."
+          },
+          "step3": {
+            "title": "Yhdistä ja hyväksy käyttöoikeus",
+            "body": "Kirjaudu sisään, valitse työtila ja hyväksy. Ota liitin sitten käyttöön uudessa keskustelussa."
+          }
+        },
+        "claudeCode": {
+          "step1": {
+            "title": "Kopioi asennuskomento",
+            "body": "Suorita se päätteessä."
+          },
+          "step2": {
+            "title": "Kirjaudu Claude Codesta",
+            "body": "Käynnistä Claude Code, kirjoita /mcp, valitse palvelin ja valitse Authenticate. Selainikkuna avautuu."
+          },
+          "step3": {
+            "title": "Hyväksy käyttöoikeus",
+            "body": "Valitse työtila ja hyväksy. Claude Code voi nyt käyttää työtilasi työkaluja."
+          }
+        },
+        "cursor": {
+          "step1": {
+            "title": "Kopioi määritys",
+            "body": "Liität sen Cursoriin seuraavassa vaiheessa."
+          },
+          "step2": {
+            "title": "Avaa Cursor Settings → MCP → Add new MCP server",
+            "body": "Liitä määritys tiedostoon mcp.json ja tallenna. Cursor näyttää palvelimen vieressä Login-painikkeen."
+          },
+          "step3": {
+            "title": "Hyväksy käyttöoikeus",
+            "body": "Napsauta Login, valitse työtila ja hyväksy. Työkalut näkyvät Cursorin agentissa."
+          }
+        },
+        "openclaw": {
+          "step1": {
+            "title": "Asenna laajennus",
+            "body": "Suorita tämä komento päätteessä."
+          },
+          "step2": {
+            "title": "Kirjaudu sisään",
+            "body": "Suorita tämä komento. Selainikkuna avautuu."
+          },
+          "step3": {
+            "title": "Hyväksy käyttöoikeus",
+            "body": "Valitse työtila ja hyväksy. OpenClaw voi nyt käyttää työtilasi työkaluja."
+          }
+        },
+        "hermes": {
+          "step1": {
+            "title": "Kopioi määritys",
+            "body": "Lisäät sen Hermesin määritykseen seuraavassa vaiheessa."
+          },
+          "step2": {
+            "title": "Lisää se tiedostoon ~/.hermes/config.yaml",
+            "body": "Liitä se kohtaan mcp_servers tiedostossa ~/.hermes/config.yaml ja tallenna. Suorita sitten tämä komento Hermesissä."
+          },
+          "step3": {
+            "title": "Hyväksy käyttöoikeus",
+            "body": "Hermes avaa selainikkunan. Kirjaudu sisään, valitse työtila ja hyväksy. Hermes voi nyt käyttää työtilasi työkaluja."
+          }
+        }
+      }
     },
     "clients": {
+      "claude": "Claude",
       "claudeCode": "Claude Code",
       "claudeDesktop": "Claude Desktop",
       "cursor": "Cursor",
       "chatgpt": "ChatGPT",
       "stdio": "stdio-varavaihtoehto",
-      "stdioHint": "Käytä tässä varavaihtoehdossa työtilan tunnusta."
+      "stdioHint": "Käytä tässä varavaihtoehdossa työtilan tunnusta.",
+      "openclaw": "OpenClaw",
+      "hermes": "Hermes",
+      "other": "Muut asiakkaat"
     },
     "grants": {
       "title": "Valtuutetut sovellukset",

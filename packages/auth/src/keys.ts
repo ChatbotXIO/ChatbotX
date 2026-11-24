@@ -144,9 +144,22 @@ export const getMcpResourceUrl = (): string => {
   return resource
 }
 
-/** Fixed OAuth resource and token audience for the OpenAI MCP profile. */
-export const getMcpOpenAiResourceUrl = (): string =>
-  `${getMcpResourceUrl()}/openai`
+/**
+ * MCP connector profiles served on their own path, each with its own OAuth
+ * resource and token audience (`<mcp resource>/<profile>`). A token issued
+ * for one profile never authenticates another.
+ */
+export const MCP_CONNECTOR_PROFILES = ["openai", "claude"] as const
+
+export type McpConnectorProfile = (typeof MCP_CONNECTOR_PROFILES)[number]
+
+export const getMcpProfileResourceUrl = (
+  profile: McpConnectorProfile,
+): string => `${getMcpResourceUrl()}/${profile}`
+
+/** Every connector-profile resource, in `MCP_CONNECTOR_PROFILES` order. */
+export const getMcpProfileResourceUrls = (): string[] =>
+  MCP_CONNECTOR_PROFILES.map(getMcpProfileResourceUrl)
 
 /** Whether self-service account creation is disabled. */
 export const isSignUpDisabled = (): boolean => env.AUTH_DISABLE_SIGNUP

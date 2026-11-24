@@ -12119,19 +12119,113 @@
     "sseUrl": "Äldre SSE-URL",
     "guide": {
       "title": "Anslut en MCP-klient",
-      "step1": "Kopiera konfigurationen för din MCP-klient.",
-      "step2": "Klistra in den i klienten.",
-      "step3": "Klienten öppnar en webbläsare. Logga in och godkänn åtkomsten.",
-      "step4": "Din arbetsytas verktyg visas efter godkännandet.",
-      "ownerOnly": "Endast arbetsytans ägare och superAdmins kan auktorisera MCP-åtkomst. Du väljer arbetsyta på godkännandesidan."
+      "subtitle": "Välj appen du använder och följ de tre stegen.",
+      "ownerOnly": "Endast arbetsytans ägare och superAdmins kan auktorisera MCP-åtkomst. Du väljer arbetsyta på godkännandesidan.",
+      "otherClients": "Alla andra MCP-kompatibla klienter fungerar också",
+      "otherIntro": "Använd dessa endpoints och konfigurationer med alla andra MCP-kompatibla klienter.",
+      "opensInNewTab": "(öppnas i en ny flik)",
+      "actions": {
+        "addConnector": "Lägg till connector",
+        "startChatting": "Börja chatta"
+      },
+      "steps": {
+        "claude": {
+          "step1": {
+            "title": "Kopiera connector-URL:en",
+            "body": "Du klistrar in den här URL:en i Claude i nästa steg."
+          },
+          "step2": {
+            "title": "Gå till Claude → Customize → Connectors → Add custom connector",
+            "body": "Knappen nedan öppnar dina connectors i Claude. Klicka på Add custom connector, ge den ett namn och klistra in URL:en. Den visas också i Claudes dator- och mobilappar."
+          },
+          "step3": {
+            "title": "Klicka på Connect och godkänn åtkomst",
+            "body": "Logga in, välj din arbetsyta och godkänn. Be sedan Claude arbeta med dina kontakter, flöden och utskick direkt i chatten."
+          }
+        },
+        "chatgpt": {
+          "step1": {
+            "title": "Kopiera connector-URL:en",
+            "body": "Du klistrar in den här URL:en i ChatGPT i nästa steg."
+          },
+          "step2": {
+            "title": "Gå till ChatGPT → Settings → Apps & Connectors → Create",
+            "body": "Knappen nedan öppnar ChatGPT-inställningarna. Om Create saknas, slå på Developer mode under Advanced settings. Namnge connectorn, klistra in URL:en och välj OAuth."
+          },
+          "step3": {
+            "title": "Anslut och godkänn åtkomst",
+            "body": "Logga in, välj din arbetsyta och godkänn. Slå sedan på connectorn i en ny chatt för att använda den."
+          }
+        },
+        "claudeCode": {
+          "step1": {
+            "title": "Kopiera installationskommandot",
+            "body": "Kör det i din terminal."
+          },
+          "step2": {
+            "title": "Logga in från Claude Code",
+            "body": "Starta Claude Code, skriv /mcp, välj servern och välj Authenticate. Ett webbläsarfönster öppnas."
+          },
+          "step3": {
+            "title": "Godkänn åtkomst",
+            "body": "Välj din arbetsyta och godkänn. Claude Code kan nu använda arbetsytans verktyg."
+          }
+        },
+        "cursor": {
+          "step1": {
+            "title": "Kopiera konfigurationen",
+            "body": "Du klistrar in den i Cursor i nästa steg."
+          },
+          "step2": {
+            "title": "Öppna Cursor Settings → MCP → Add new MCP server",
+            "body": "Klistra in konfigurationen i mcp.json och spara. Cursor visar en Login-knapp bredvid servern."
+          },
+          "step3": {
+            "title": "Godkänn åtkomst",
+            "body": "Klicka på Login, välj din arbetsyta och godkänn. Verktygen visas i Cursors agent."
+          }
+        },
+        "openclaw": {
+          "step1": {
+            "title": "Installera pluginet",
+            "body": "Kör det här kommandot i din terminal."
+          },
+          "step2": {
+            "title": "Logga in",
+            "body": "Kör det här kommandot. Ett webbläsarfönster öppnas."
+          },
+          "step3": {
+            "title": "Godkänn åtkomst",
+            "body": "Välj din arbetsyta och godkänn. OpenClaw kan nu använda arbetsytans verktyg."
+          }
+        },
+        "hermes": {
+          "step1": {
+            "title": "Kopiera konfigurationen",
+            "body": "Du lägger till den i Hermes-konfigurationen i nästa steg."
+          },
+          "step2": {
+            "title": "Lägg till den i ~/.hermes/config.yaml",
+            "body": "Klistra in den under mcp_servers i ~/.hermes/config.yaml och spara. Kör sedan det här kommandot i Hermes."
+          },
+          "step3": {
+            "title": "Godkänn åtkomst",
+            "body": "Hermes öppnar ett webbläsarfönster. Logga in, välj din arbetsyta och godkänn. Hermes kan nu använda arbetsytans verktyg."
+          }
+        }
+      }
     },
     "clients": {
+      "claude": "Claude",
       "claudeCode": "Claude Code",
       "claudeDesktop": "Claude Desktop",
       "cursor": "Cursor",
       "chatgpt": "ChatGPT",
       "stdio": "stdio-reserv",
-      "stdioHint": "Använd en arbetsytetoken för den här reserven."
+      "stdioHint": "Använd en arbetsytetoken för den här reserven.",
+      "openclaw": "OpenClaw",
+      "hermes": "Hermes",
+      "other": "Andra klienter"
     },
     "grants": {
       "title": "Auktoriserade program",

@@ -15,7 +15,7 @@ export const ManageChatbotxMcp = ({
   mcpUrl,
   workspaceId,
 }: ManageChatbotxMcpProps) => (
-  <div className="space-y-6">
+  <div className="min-w-0 space-y-6">
     <McpConnectGuide
       builderUrl={builderUrl}
       mcpUrl={mcpUrl}

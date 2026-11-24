@@ -12119,19 +12119,113 @@
     "sseUrl": "舊版 SSE URL",
     "guide": {
       "title": "連接 MCP 用戶端",
-      "step1": "複製適用於你的 MCP 用戶端的設定。",
-      "step2": "貼到用戶端中。",
-      "step3": "用戶端會開啟瀏覽器。請登入並核准存取。",
-      "step4": "核准後，你的工作區工具會顯示出來。",
-      "ownerOnly": "只有工作區擁有者和 superAdmin 可以授權 MCP 存取。你可以在核准頁面選擇工作區。"
+      "subtitle": "選擇你使用的應用程式，依照三個步驟完成設定。",
+      "ownerOnly": "只有工作區擁有者和 superAdmin 可以授權 MCP 存取。你可以在核准頁面選擇工作區。",
+      "otherClients": "其他相容 MCP 的用戶端同樣可用",
+      "otherIntro": "在其他相容 MCP 的用戶端中使用以下端點與設定。",
+      "opensInNewTab": "（在新分頁中開啟）",
+      "actions": {
+        "addConnector": "新增連接器",
+        "startChatting": "開始聊天"
+      },
+      "steps": {
+        "claude": {
+          "step1": {
+            "title": "複製連接器 URL",
+            "body": "下一步你會將這個 URL 貼到 Claude 中。"
+          },
+          "step2": {
+            "title": "前往 Claude → Customize → Connectors → Add custom connector",
+            "body": "下方按鈕會開啟你在 Claude 中的連接器。點選 Add custom connector，命名並貼上 URL。它也會出現在 Claude 桌面版與行動版應用程式中。"
+          },
+          "step3": {
+            "title": "點選 Connect 並核准存取",
+            "body": "登入、選擇工作區並核准。之後就能直接在聊天中請 Claude 處理聯絡人、流程與群發。"
+          }
+        },
+        "chatgpt": {
+          "step1": {
+            "title": "複製連接器 URL",
+            "body": "下一步你會將這個 URL 貼到 ChatGPT 中。"
+          },
+          "step2": {
+            "title": "前往 ChatGPT → Settings → Apps & Connectors → Create",
+            "body": "下方按鈕會開啟 ChatGPT 設定。如果看不到 Create，請在 Advanced settings 中開啟 Developer mode。為連接器命名、貼上 URL 並選擇 OAuth。"
+          },
+          "step3": {
+            "title": "連線並核准存取",
+            "body": "登入、選擇工作區並核准。之後在新對話中啟用該連接器即可使用。"
+          }
+        },
+        "claudeCode": {
+          "step1": {
+            "title": "複製安裝指令",
+            "body": "在終端機中執行。"
+          },
+          "step2": {
+            "title": "在 Claude Code 中登入",
+            "body": "啟動 Claude Code，輸入 /mcp，選擇該伺服器並選擇 Authenticate。瀏覽器視窗會開啟。"
+          },
+          "step3": {
+            "title": "核准存取",
+            "body": "選擇工作區並核准。Claude Code 現在可以使用你的工作區工具了。"
+          }
+        },
+        "cursor": {
+          "step1": {
+            "title": "複製設定",
+            "body": "下一步你會將它貼到 Cursor 中。"
+          },
+          "step2": {
+            "title": "開啟 Cursor Settings → MCP → Add new MCP server",
+            "body": "將設定貼到 mcp.json 並儲存。Cursor 會在伺服器旁顯示 Login 按鈕。"
+          },
+          "step3": {
+            "title": "核准存取",
+            "body": "點選 Login，選擇工作區並核准。工具會出現在 Cursor 的代理中。"
+          }
+        },
+        "openclaw": {
+          "step1": {
+            "title": "安裝外掛",
+            "body": "在終端機中執行此指令。"
+          },
+          "step2": {
+            "title": "登入",
+            "body": "執行此指令，瀏覽器視窗會開啟。"
+          },
+          "step3": {
+            "title": "核准存取",
+            "body": "選擇工作區並核准。OpenClaw 現在可以使用你的工作區工具了。"
+          }
+        },
+        "hermes": {
+          "step1": {
+            "title": "複製設定",
+            "body": "下一步你會將它加入 Hermes 設定。"
+          },
+          "step2": {
+            "title": "加入 ~/.hermes/config.yaml",
+            "body": "將其貼到 ~/.hermes/config.yaml 的 mcp_servers 底下並儲存。然後在 Hermes 中執行此指令。"
+          },
+          "step3": {
+            "title": "核准存取",
+            "body": "Hermes 會開啟瀏覽器視窗。登入、選擇工作區並核准。Hermes 現在可以使用你的工作區工具了。"
+          }
+        }
+      }
     },
     "clients": {
+      "claude": "Claude",
       "claudeCode": "Claude Code",
       "claudeDesktop": "Claude Desktop",
       "cursor": "Cursor",
       "chatgpt": "ChatGPT",
       "stdio": "stdio 備援方案",
-      "stdioHint": "此備援方案請使用工作區權杖。"
+      "stdioHint": "此備援方案請使用工作區權杖。",
+      "openclaw": "OpenClaw",
+      "hermes": "Hermes",
+      "other": "其他用戶端"
     },
     "grants": {
       "title": "已授權的應用程式",

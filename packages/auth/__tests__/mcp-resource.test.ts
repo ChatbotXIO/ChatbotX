@@ -20,7 +20,10 @@ vi.mock("@better-auth/oauth-provider", () => ({
 vi.mock("../src/keys", () => ({
   env: { BETTER_AUTH_SECRET: "test-secret" },
   getMcpResourceUrl: () => "https://app.example.com/mcp",
-  getMcpOpenAiResourceUrl: () => "https://app.example.com/mcp/openai",
+  getMcpProfileResourceUrls: () => [
+    "https://app.example.com/mcp/openai",
+    "https://app.example.com/mcp/claude",
+  ],
 }))
 
 vi.mock("../src/logger", () => ({ logger: { error: vi.fn() } }))
@@ -63,9 +66,22 @@ describe("verifyMcpAccessToken", () => {
         audience: [
           "https://app.example.com/mcp",
           "https://app.example.com/mcp/openai",
+          "https://app.example.com/mcp/claude",
         ],
         issuer: "https://app.example.com",
       },
+    })
+  })
+
+  test("accepts the Claude connector audience and reports it", async () => {
+    verifyBearerToken.mockResolvedValue({
+      aud: "https://app.example.com/mcp/claude",
+      client_id: "client-1",
+      sub: "42",
+    })
+
+    await expect(verifyMcpAccessToken(auth, "a.b.c")).resolves.toMatchObject({
+      audience: "https://app.example.com/mcp/claude",
     })
   })
 

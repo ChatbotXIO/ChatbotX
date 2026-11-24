@@ -307,9 +307,9 @@ describe("OpenAI metadata and paths", () => {
   test("legacy paths cannot collide with /openai", async () => {
     vi.stubEnv("CHATBOTX_MCP_MESSAGES_PATH", "/openai")
     vi.resetModules()
-    const { assertNoOpenAiPathCollision } = await import(
+    const { assertNoProfilePathCollision } = await import(
       "../src/server/sse-server"
     )
-    expect(assertNoOpenAiPathCollision).toThrow(COLLISION)
+    expect(assertNoProfilePathCollision).toThrow(COLLISION)
   })
 })

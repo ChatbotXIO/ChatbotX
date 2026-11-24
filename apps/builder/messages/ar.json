@@ -12119,19 +12119,113 @@
     "sseUrl": "عنوان SSE القديم",
     "guide": {
       "title": "ربط عميل MCP",
-      "step1": "انسخ الإعدادات الخاصة بعميل MCP.",
-      "step2": "الصقها في العميل.",
-      "step3": "يفتح العميل متصفحًا. سجّل الدخول ووافق على الوصول.",
-      "step4": "تظهر أدوات مساحة العمل بعد الموافقة.",
-      "ownerOnly": "يمكن لمالكي مساحة العمل ومستخدمي superAdmin فقط التصريح بالوصول عبر MCP. تختار مساحة العمل في شاشة الموافقة."
+      "subtitle": "اختر التطبيق الذي تستخدمه واتبع الخطوات الثلاث.",
+      "ownerOnly": "يمكن لمالكي مساحة العمل ومستخدمي superAdmin فقط التصريح بالوصول عبر MCP. تختار مساحة العمل في شاشة الموافقة.",
+      "otherClients": "يعمل أي عميل آخر متوافق مع MCP أيضًا",
+      "otherIntro": "استخدم نقاط النهاية والإعدادات هذه مع أي عميل آخر متوافق مع MCP.",
+      "opensInNewTab": "(يفتح في علامة تبويب جديدة)",
+      "actions": {
+        "addConnector": "إضافة موصل",
+        "startChatting": "ابدأ الدردشة"
+      },
+      "steps": {
+        "claude": {
+          "step1": {
+            "title": "انسخ رابط الموصل",
+            "body": "ستلصق هذا الرابط في Claude في الخطوة التالية."
+          },
+          "step2": {
+            "title": "انتقل إلى Claude ← Customize ← Connectors ← Add custom connector",
+            "body": "يفتح الزر أدناه موصلاتك في Claude. انقر Add custom connector وأعطه اسمًا والصق الرابط. يظهر أيضًا في تطبيقات Claude للكمبيوتر والجوال."
+          },
+          "step3": {
+            "title": "انقر Connect ووافق على الوصول",
+            "body": "سجّل الدخول واختر مساحة العمل ووافق. ثم اطلب من Claude العمل مع جهات الاتصال والتدفقات والبث مباشرة من الدردشة."
+          }
+        },
+        "chatgpt": {
+          "step1": {
+            "title": "انسخ رابط الموصل",
+            "body": "ستلصق هذا الرابط في ChatGPT في الخطوة التالية."
+          },
+          "step2": {
+            "title": "انتقل إلى ChatGPT ← Settings ← Apps & Connectors ← Create",
+            "body": "يفتح الزر أدناه إعدادات ChatGPT. إذا لم يظهر Create، فعّل Developer mode من Advanced settings. سمِّ الموصل والصق الرابط واختر OAuth."
+          },
+          "step3": {
+            "title": "اتصل ووافق على الوصول",
+            "body": "سجّل الدخول واختر مساحة العمل ووافق. ثم فعّل الموصل في دردشة جديدة لاستخدامه."
+          }
+        },
+        "claudeCode": {
+          "step1": {
+            "title": "انسخ أمر التثبيت",
+            "body": "شغّله في الطرفية."
+          },
+          "step2": {
+            "title": "سجّل الدخول من Claude Code",
+            "body": "شغّل Claude Code واكتب /mcp واختر الخادم ثم Authenticate. ستفتح نافذة متصفح."
+          },
+          "step3": {
+            "title": "وافق على الوصول",
+            "body": "اختر مساحة العمل ووافق. يمكن لـ Claude Code الآن استخدام أدوات مساحة العمل."
+          }
+        },
+        "cursor": {
+          "step1": {
+            "title": "انسخ الإعدادات",
+            "body": "ستلصقها في Cursor في الخطوة التالية."
+          },
+          "step2": {
+            "title": "افتح Cursor Settings ← MCP ← Add new MCP server",
+            "body": "الصق الإعدادات في mcp.json واحفظ. يعرض Cursor زر Login بجانب الخادم."
+          },
+          "step3": {
+            "title": "وافق على الوصول",
+            "body": "انقر Login واختر مساحة العمل ووافق. تظهر الأدوات في وكيل Cursor."
+          }
+        },
+        "openclaw": {
+          "step1": {
+            "title": "ثبّت الإضافة",
+            "body": "شغّل هذا الأمر في الطرفية."
+          },
+          "step2": {
+            "title": "سجّل الدخول",
+            "body": "شغّل هذا الأمر. ستفتح نافذة متصفح."
+          },
+          "step3": {
+            "title": "وافق على الوصول",
+            "body": "اختر مساحة العمل ووافق. يمكن لـ OpenClaw الآن استخدام أدوات مساحة العمل."
+          }
+        },
+        "hermes": {
+          "step1": {
+            "title": "انسخ الإعدادات",
+            "body": "ستضيفها إلى إعدادات Hermes في الخطوة التالية."
+          },
+          "step2": {
+            "title": "أضفها إلى ~/.hermes/config.yaml",
+            "body": "الصقها تحت mcp_servers في ~/.hermes/config.yaml واحفظ. ثم شغّل هذا الأمر في Hermes."
+          },
+          "step3": {
+            "title": "وافق على الوصول",
+            "body": "يفتح Hermes نافذة متصفح. سجّل الدخول واختر مساحة العمل ووافق. يمكن لـ Hermes الآن استخدام أدوات مساحة العمل."
+          }
+        }
+      }
     },
     "clients": {
+      "claude": "Claude",
       "claudeCode": "Claude Code",
       "claudeDesktop": "Claude Desktop",
       "cursor": "Cursor",
       "chatgpt": "ChatGPT",
       "stdio": "بديل stdio",
-      "stdioHint": "استخدم رمز مساحة العمل لهذا البديل."
+      "stdioHint": "استخدم رمز مساحة العمل لهذا البديل.",
+      "openclaw": "OpenClaw",
+      "hermes": "Hermes",
+      "other": "عملاء آخرون"
     },
     "grants": {
       "title": "التطبيقات المصرّح لها",

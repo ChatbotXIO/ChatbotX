@@ -1,12 +1,30 @@
 "use client"
 
-import { Button } from "@chatbotx.io/ui/components/ui/button"
-import { Textarea } from "@chatbotx.io/ui/components/ui/textarea"
-import { CopyIcon } from "lucide-react"
-import Link from "next/link"
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@chatbotx.io/ui/components/ui/tabs"
+import {
+  BlocksIcon,
+  BotIcon,
+  MousePointer2Icon,
+  PlugIcon,
+  TerminalIcon,
+} from "lucide-react"
 import { useTranslations } from "next-intl"
-import { useClipboard } from "@/hooks/use-clipboard"
+import { type ReactNode, useState } from "react"
+import { ClaudeIcon } from "@/icons/claude"
+import { OpenAIIcon } from "@/icons/openai"
+import {
+  buildMcpClientGuides,
+  MCP_GUIDED_CLIENT_IDS,
+  type McpGuidedClientId,
+} from "../lib/connect-clients"
 import { buildMcpConnectSnippets } from "../lib/connect-snippets"
+import { McpAdvancedConfig } from "./mcp-advanced-config"
+import { McpGuideStepCard } from "./mcp-guide-step-card"
 
 type McpConnectGuideProps = {
   builderUrl: string
@@ -14,39 +32,34 @@ type McpConnectGuideProps = {
   workspaceId: string
 }
 
-type CopyableSnippetProps = {
-  copyLabel: string
-  label: string
-  value: string
+type McpClientTab = McpGuidedClientId | "other"
+
+const OTHER_TAB = "other" satisfies McpClientTab
+
+const CLIENT_LABEL_KEYS = {
+  claude: "clients.claude",
+  chatgpt: "clients.chatgpt",
+  claudeCode: "clients.claudeCode",
+  cursor: "clients.cursor",
+  openclaw: "clients.openclaw",
+  hermes: "clients.hermes",
+  other: "clients.other",
+} as const satisfies Record<McpClientTab, string>
+
+const CLIENT_ICONS: Record<McpClientTab, ReactNode> = {
+  claude: <ClaudeIcon className="size-4" />,
+  chatgpt: <OpenAIIcon className="size-4" fill="currentColor" />,
+  claudeCode: <TerminalIcon aria-hidden="true" className="size-4" />,
+  cursor: <MousePointer2Icon aria-hidden="true" className="size-4" />,
+  openclaw: <PlugIcon aria-hidden="true" className="size-4" />,
+  hermes: <BotIcon aria-hidden="true" className="size-4" />,
+  other: <BlocksIcon aria-hidden="true" className="size-4" />,
 }
 
-const CopyableSnippet = ({ copyLabel, label, value }: CopyableSnippetProps) => {
-  const { handleCopy } = useClipboard()
+const TAB_ORDER: readonly McpClientTab[] = [...MCP_GUIDED_CLIENT_IDS, OTHER_TAB]
 
-  return (
-    <div className="space-y-2">
-      <div className="flex items-center justify-between gap-3">
-        <p className="font-medium text-sm">{label}</p>
-        <Button
-          aria-label={`${copyLabel}: ${label}`}
-          onClick={() => handleCopy(value)}
-          size="icon"
-          type="button"
-          variant="outline"
-        >
-          <CopyIcon className="size-4" />
-        </Button>
-      </div>
-      <Textarea
-        aria-label={label}
-        className="resize-none font-mono text-sm"
-        readOnly
-        rows={value.includes("\n") ? 8 : 3}
-        value={value}
-      />
-    </div>
-  )
-}
+const TRIGGER_CLASS =
+  "h-10 gap-2 rounded-full border-0 bg-muted px-4 py-0 font-medium text-muted-foreground transition-colors hover:text-foreground data-active:bg-foreground data-active:font-medium data-active:text-background dark:data-active:text-background"
 
 export const McpConnectGuide = ({
   builderUrl,
@@ -54,73 +67,68 @@ export const McpConnectGuide = ({
   workspaceId,
 }: McpConnectGuideProps) => {
   const t = useTranslations("chatbotxMcp")
-  const common = useTranslations()
+  const [activeTab, setActiveTab] = useState<McpClientTab>("claude")
   const snippets = buildMcpConnectSnippets({ builderUrl, mcpUrl })
-  const copyLabel = common("actions.copy")
+  const guides = buildMcpClientGuides(snippets)
 
   return (
-    <section className="space-y-4 rounded-lg border p-4">
+    <section
+      aria-labelledby="mcp-connect-guide-title"
+      className="min-w-0 space-y-5 rounded-2xl border p-4 md:p-6"
+    >
       <div className="space-y-1">
-        <h2 className="font-semibold text-lg">{t("guide.title")}</h2>
-        <ol className="list-decimal space-y-1 pl-5 text-muted-foreground text-sm">
-          <li>{t("guide.step1")}</li>
-          <li>{t("guide.step2")}</li>
-          <li>{t("guide.step3")}</li>
-          <li>{t("guide.step4")}</li>
-        </ol>
-        <p className="text-muted-foreground text-sm">{t("guide.ownerOnly")}</p>
+        <h2 className="font-semibold text-lg" id="mcp-connect-guide-title">
+          {t("guide.title")}
+        </h2>
+        <p className="text-muted-foreground text-sm">{t("guide.subtitle")}</p>
       </div>
 
-      <dl className="grid gap-3 text-sm md:grid-cols-2">
-        <div className="space-y-1">
-          <dt className="text-muted-foreground">{t("streamableUrl")}</dt>
-          <dd className="break-all font-mono text-xs">
-            {snippets.streamableUrl}
-          </dd>
-        </div>
-        <div className="space-y-1">
-          <dt className="text-muted-foreground">{t("sseUrl")}</dt>
-          <dd className="break-all font-mono text-xs">{snippets.sseUrl}</dd>
-        </div>
-      </dl>
+      <Tabs
+        className="min-w-0 gap-5"
+        onValueChange={(value) => setActiveTab(value as McpClientTab)}
+        value={activeTab}
+      >
+        <TabsList className="w-full min-w-0 overflow-x-auto rounded-none border-0 bg-transparent px-0 pb-1 shadow-none [&>div]:gap-2">
+          {TAB_ORDER.map((id) => (
+            <TabsTrigger className={TRIGGER_CLASS} key={id} value={id}>
+              {CLIENT_ICONS[id]}
+              {t(CLIENT_LABEL_KEYS[id])}
+            </TabsTrigger>
+          ))}
+        </TabsList>
 
-      <div className="grid gap-4 lg:grid-cols-2">
-        <CopyableSnippet
-          copyLabel={copyLabel}
-          label={t("clients.claudeCode")}
-          value={snippets.claudeCode}
-        />
-        <CopyableSnippet
-          copyLabel={copyLabel}
-          label={t("clients.claudeDesktop")}
-          value={snippets.claudeDesktop}
-        />
-        <CopyableSnippet
-          copyLabel={copyLabel}
-          label={t("clients.cursor")}
-          value={snippets.cursor}
-        />
-        <CopyableSnippet
-          copyLabel={copyLabel}
-          label={t("clients.chatgpt")}
-          value={snippets.chatgpt}
-        />
-        <div className="space-y-2 lg:col-span-2">
-          <CopyableSnippet
-            copyLabel={copyLabel}
-            label={t("clients.stdio")}
-            value={snippets.stdio}
-          />
-          <p className="text-muted-foreground text-sm">
-            {t("clients.stdioHint")}{" "}
-            <Link
-              className="underline underline-offset-4"
-              href={`/space/${workspaceId}/settings/integrations/workspace-token`}
+        {MCP_GUIDED_CLIENT_IDS.map((id) => (
+          <TabsContent className="min-w-0" key={id} value={id}>
+            <ol className="grid grid-cols-1 gap-4 lg:grid-cols-[repeat(3,minmax(0,1fr))]">
+              {guides[id].map((step, index) => (
+                <McpGuideStepCard
+                  key={step.titleKey}
+                  number={index + 1}
+                  step={step}
+                />
+              ))}
+            </ol>
+          </TabsContent>
+        ))}
+
+        <TabsContent className="min-w-0" value={OTHER_TAB}>
+          <McpAdvancedConfig snippets={snippets} workspaceId={workspaceId} />
+        </TabsContent>
+      </Tabs>
+
+      <div className="space-y-1 text-center text-muted-foreground text-sm">
+        {activeTab === OTHER_TAB ? null : (
+          <p>
+            <button
+              className="underline-offset-4 hover:text-foreground hover:underline focus-visible:underline focus-visible:outline-none"
+              onClick={() => setActiveTab(OTHER_TAB)}
+              type="button"
             >
-              {common("workspaceToken.title")}
-            </Link>
+              {t("guide.otherClients")}
+            </button>
           </p>
-        </div>
+        )}
+        <p>{t("guide.ownerOnly")}</p>
       </div>
     </section>
   )

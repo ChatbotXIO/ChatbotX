@@ -12119,19 +12119,113 @@
     "sseUrl": "URL SSE lama",
     "guide": {
       "title": "Hubungkan klien MCP",
-      "step1": "Salin konfigurasi untuk klien MCP Anda.",
-      "step2": "Tempel ke klien.",
-      "step3": "Klien membuka browser. Masuk dan setujui akses.",
-      "step4": "Alat workspace Anda muncul setelah disetujui.",
-      "ownerOnly": "Hanya pemilik workspace dan superAdmin yang dapat mengotorisasi akses MCP. Anda memilih workspace di layar persetujuan."
+      "subtitle": "Pilih aplikasi yang Anda gunakan dan ikuti tiga langkahnya.",
+      "ownerOnly": "Hanya pemilik workspace dan superAdmin yang dapat mengotorisasi akses MCP. Anda memilih workspace di layar persetujuan.",
+      "otherClients": "Klien lain yang kompatibel dengan MCP juga bisa digunakan",
+      "otherIntro": "Gunakan endpoint dan konfigurasi ini dengan klien lain yang kompatibel dengan MCP.",
+      "opensInNewTab": "(terbuka di tab baru)",
+      "actions": {
+        "addConnector": "Tambah konektor",
+        "startChatting": "Mulai chat"
+      },
+      "steps": {
+        "claude": {
+          "step1": {
+            "title": "Salin URL konektor",
+            "body": "Anda akan menempelkan URL ini ke Claude di langkah berikutnya."
+          },
+          "step2": {
+            "title": "Buka Claude → Customize → Connectors → Add custom connector",
+            "body": "Tombol di bawah membuka konektor Anda di Claude. Klik Add custom connector, beri nama, lalu tempelkan URL. Konektor juga muncul di aplikasi Claude untuk desktop dan seluler."
+          },
+          "step3": {
+            "title": "Klik Connect dan setujui akses",
+            "body": "Masuk, pilih workspace, lalu setujui. Kemudian minta Claude bekerja dengan kontak, flow, dan broadcast Anda langsung dari chat."
+          }
+        },
+        "chatgpt": {
+          "step1": {
+            "title": "Salin URL konektor",
+            "body": "Anda akan menempelkan URL ini ke ChatGPT di langkah berikutnya."
+          },
+          "step2": {
+            "title": "Buka ChatGPT → Settings → Apps & Connectors → Create",
+            "body": "Tombol di bawah membuka pengaturan ChatGPT. Jika Create tidak terlihat, aktifkan Developer mode di Advanced settings. Beri nama konektor, tempelkan URL, dan pilih OAuth."
+          },
+          "step3": {
+            "title": "Hubungkan dan setujui akses",
+            "body": "Masuk, pilih workspace, lalu setujui. Kemudian aktifkan konektor di chat baru untuk menggunakannya."
+          }
+        },
+        "claudeCode": {
+          "step1": {
+            "title": "Salin perintah instalasi",
+            "body": "Jalankan di terminal Anda."
+          },
+          "step2": {
+            "title": "Masuk dari Claude Code",
+            "body": "Jalankan Claude Code, ketik /mcp, pilih server, lalu pilih Authenticate. Jendela browser akan terbuka."
+          },
+          "step3": {
+            "title": "Setujui akses",
+            "body": "Pilih workspace lalu setujui. Claude Code kini bisa memakai alat workspace Anda."
+          }
+        },
+        "cursor": {
+          "step1": {
+            "title": "Salin konfigurasi",
+            "body": "Anda akan menempelkannya ke Cursor di langkah berikutnya."
+          },
+          "step2": {
+            "title": "Buka Cursor Settings → MCP → Add new MCP server",
+            "body": "Tempelkan konfigurasi ke mcp.json lalu simpan. Cursor menampilkan tombol Login di samping server."
+          },
+          "step3": {
+            "title": "Setujui akses",
+            "body": "Klik Login, pilih workspace, lalu setujui. Alat akan muncul di agen Cursor."
+          }
+        },
+        "openclaw": {
+          "step1": {
+            "title": "Instal plugin",
+            "body": "Jalankan perintah ini di terminal Anda."
+          },
+          "step2": {
+            "title": "Masuk",
+            "body": "Jalankan perintah ini. Jendela browser akan terbuka."
+          },
+          "step3": {
+            "title": "Setujui akses",
+            "body": "Pilih workspace lalu setujui. OpenClaw kini bisa memakai alat workspace Anda."
+          }
+        },
+        "hermes": {
+          "step1": {
+            "title": "Salin konfigurasi",
+            "body": "Anda akan menambahkannya ke konfigurasi Hermes di langkah berikutnya."
+          },
+          "step2": {
+            "title": "Tambahkan ke ~/.hermes/config.yaml",
+            "body": "Tempelkan di bawah mcp_servers dalam ~/.hermes/config.yaml lalu simpan. Kemudian jalankan perintah ini di Hermes."
+          },
+          "step3": {
+            "title": "Setujui akses",
+            "body": "Hermes membuka jendela browser. Masuk, pilih workspace, lalu setujui. Hermes kini bisa memakai alat workspace Anda."
+          }
+        }
+      }
     },
     "clients": {
+      "claude": "Claude",
       "claudeCode": "Claude Code",
       "claudeDesktop": "Claude Desktop",
       "cursor": "Cursor",
       "chatgpt": "ChatGPT",
       "stdio": "cadangan stdio",
-      "stdioHint": "Gunakan token workspace untuk cadangan ini."
+      "stdioHint": "Gunakan token workspace untuk cadangan ini.",
+      "openclaw": "OpenClaw",
+      "hermes": "Hermes",
+      "other": "Klien lain"
     },
     "grants": {
       "title": "Aplikasi yang diotorisasi",

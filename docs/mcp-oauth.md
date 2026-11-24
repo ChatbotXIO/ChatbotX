@@ -53,6 +53,24 @@ that metadata and all issued access-token audiences use the single canonical
 `CHATBOTX_MCP_PUBLIC_URL` to the same public origin so bearer challenges
 advertise HTTPS rather than an internal or HTTP proxy URL.
 
+Connector profiles have their own resource and token audience:
+`<MCP_PUBLIC_URL>/openai` (ChatGPT, Codex) and `<MCP_PUBLIC_URL>/claude` (the
+Claude directory connector and plugin). Their `OAuthResource` rows are seeded
+from `buildMcpPluginOptions` (`resources`); a resource without a row fails
+authorize and token requests with `invalid_target`. Protected-resource
+metadata for `/mcp/openai` and `/mcp/claude` (and paths under them) names that
+exact resource, because RFC 9728 clients require it to match the URL they
+connect to. A profile token never authenticates `/mcp/messages` or another
+profile. Add a profile to `MCP_CONNECTOR_PROFILES` in
+`packages/auth/src/keys.ts` and `CONNECTOR_PROFILES` in
+`apps/mcp-server/src/oauth.ts` together.
+
+For an OpenAI Plugin directory submission, the builder also serves the portal's
+exact domain-verification token as uncached plain text at
+`/.well-known/openai-apps-challenge`. Set the server-only
+`OPENAI_APPS_DOMAIN_CHALLENGE` variable to the token supplied by the portal;
+the production URL is `https://app.chatbotx.io/.well-known/openai-apps-challenge`.
+
 Users can copy the connection URLs and revoke their account-level OAuth
 grants in **Settings → Integrations → MCP connector**. The grants page lists
 consents, so a client with no live refresh token remains visible until revoked.

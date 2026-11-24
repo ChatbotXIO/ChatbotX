@@ -12119,19 +12119,113 @@
     "sseUrl": "URL do SSE legado",
     "guide": {
       "title": "Ligar um cliente MCP",
-      "step1": "Copie a configuração do seu cliente MCP.",
-      "step2": "Cole-a no cliente.",
-      "step3": "O cliente abre um navegador. Inicie sessão e aprove o acesso.",
-      "step4": "As ferramentas do seu workspace aparecem após a aprovação.",
-      "ownerOnly": "Apenas os proprietários do workspace e os superAdmins podem autorizar o acesso MCP. Escolhe o workspace no ecrã de aprovação."
+      "subtitle": "Escolha a app que utiliza e siga os três passos.",
+      "ownerOnly": "Apenas os proprietários do workspace e os superAdmins podem autorizar o acesso MCP. Escolhe o workspace no ecrã de aprovação.",
+      "otherClients": "Qualquer outro cliente compatível com MCP também funciona",
+      "otherIntro": "Utilize estes endpoints e configurações com qualquer outro cliente compatível com MCP.",
+      "opensInNewTab": "(abre num novo separador)",
+      "actions": {
+        "addConnector": "Adicionar conector",
+        "startChatting": "Começar a conversar"
+      },
+      "steps": {
+        "claude": {
+          "step1": {
+            "title": "Copie o URL do conector",
+            "body": "Vai colar este URL no Claude no passo seguinte."
+          },
+          "step2": {
+            "title": "Aceda a Claude → Customize → Connectors → Add custom connector",
+            "body": "O botão abaixo abre os seus conectores no Claude. Clique em Add custom connector, dê-lhe um nome e cole o URL. Também aparece nas apps do Claude para computador e telemóvel."
+          },
+          "step3": {
+            "title": "Clique em Connect e aprove o acesso",
+            "body": "Inicie sessão, escolha o seu workspace e aprove. Depois peça ao Claude para trabalhar com os seus contactos, fluxos e difusões diretamente no chat."
+          }
+        },
+        "chatgpt": {
+          "step1": {
+            "title": "Copie o URL do conector",
+            "body": "Vai colar este URL no ChatGPT no passo seguinte."
+          },
+          "step2": {
+            "title": "Aceda a ChatGPT → Settings → Apps & Connectors → Create",
+            "body": "O botão abaixo abre as definições do ChatGPT. Se não vir Create, ative o Developer mode em Advanced settings. Dê um nome ao conector, cole o URL e escolha OAuth."
+          },
+          "step3": {
+            "title": "Ligue e aprove o acesso",
+            "body": "Inicie sessão, escolha o seu workspace e aprove. Depois ative o conector numa nova conversa para o utilizar."
+          }
+        },
+        "claudeCode": {
+          "step1": {
+            "title": "Copie o comando de instalação",
+            "body": "Execute-o no seu terminal."
+          },
+          "step2": {
+            "title": "Inicie sessão a partir do Claude Code",
+            "body": "Abra o Claude Code, escreva /mcp, selecione o servidor e escolha Authenticate. Abre-se uma janela do navegador."
+          },
+          "step3": {
+            "title": "Aprove o acesso",
+            "body": "Escolha o seu workspace e aprove. O Claude Code já pode utilizar as ferramentas do seu workspace."
+          }
+        },
+        "cursor": {
+          "step1": {
+            "title": "Copie a configuração",
+            "body": "Vai colá-la no Cursor no passo seguinte."
+          },
+          "step2": {
+            "title": "Abra Cursor Settings → MCP → Add new MCP server",
+            "body": "Cole a configuração em mcp.json e guarde. O Cursor mostra um botão Login junto ao servidor."
+          },
+          "step3": {
+            "title": "Aprove o acesso",
+            "body": "Clique em Login, escolha o seu workspace e aprove. As ferramentas aparecem no agente do Cursor."
+          }
+        },
+        "openclaw": {
+          "step1": {
+            "title": "Instale o plugin",
+            "body": "Execute este comando no seu terminal."
+          },
+          "step2": {
+            "title": "Inicie sessão",
+            "body": "Execute este comando. Abre-se uma janela do navegador."
+          },
+          "step3": {
+            "title": "Aprove o acesso",
+            "body": "Escolha o seu workspace e aprove. O OpenClaw já pode utilizar as ferramentas do seu workspace."
+          }
+        },
+        "hermes": {
+          "step1": {
+            "title": "Copie a configuração",
+            "body": "Vai adicioná-la à configuração do Hermes no passo seguinte."
+          },
+          "step2": {
+            "title": "Adicione a ~/.hermes/config.yaml",
+            "body": "Cole-a em mcp_servers no ficheiro ~/.hermes/config.yaml e guarde. Depois execute este comando no Hermes."
+          },
+          "step3": {
+            "title": "Aprove o acesso",
+            "body": "O Hermes abre uma janela do navegador. Inicie sessão, escolha o seu workspace e aprove. O Hermes já pode utilizar as ferramentas do seu workspace."
+          }
+        }
+      }
     },
     "clients": {
+      "claude": "Claude",
       "claudeCode": "Claude Code",
       "claudeDesktop": "Claude Desktop",
       "cursor": "Cursor",
       "chatgpt": "ChatGPT",
       "stdio": "alternativa stdio",
-      "stdioHint": "Utilize um token de workspace para esta alternativa."
+      "stdioHint": "Utilize um token de workspace para esta alternativa.",
+      "openclaw": "OpenClaw",
+      "hermes": "Hermes",
+      "other": "Outros clientes"
     },
     "grants": {
       "title": "Aplicações autorizadas",

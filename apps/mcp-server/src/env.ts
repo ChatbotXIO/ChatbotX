@@ -32,6 +32,11 @@ export const env = createEnv({
     CHATBOTX_MCP_ALLOWED_ORIGINS: z
       .string()
       .default("https://chatgpt.com,https://chat.openai.com"),
+    // Same rule for the Claude endpoint. Claude's hosted apps and Claude Code
+    // connect server-side without an Origin; browsers on claude.ai send one.
+    CHATBOTX_MCP_CLAUDE_ALLOWED_ORIGINS: z
+      .string()
+      .default("https://claude.ai,https://claude.com"),
     // Sessions idle longer than this are closed and evicted (default 30 min).
     CHATBOTX_MCP_SESSION_IDLE_TTL_MS: z.coerce
       .number()

@@ -38,33 +38,65 @@ const resolveMcpResourceUrl = (req: IncomingMessage): string =>
 const resolveMetadataUrl = (req: IncomingMessage, pathSuffix: string): string =>
   new URL(pathSuffix, resolvePublicOrigin(req)).toString()
 
-export const resolveOpenAiResourceUrl = (req: IncomingMessage): string =>
-  `${resolveMcpResourceUrl(req)}/openai`
+/**
+ * Connector profiles with their own path, OAuth resource and token audience
+ * (`<origin>/mcp/<profile>`). Keep in sync with MCP_CONNECTOR_PROFILES in
+ * packages/auth/src/keys.ts; mcp-server does not depend on @chatbotx.io/auth.
+ */
+export const CONNECTOR_PROFILES = ["openai", "claude"] as const
 
-const isOpenAiMetadataPath = (pathname: string): boolean =>
-  pathname.endsWith("/openai")
+export type ConnectorProfile = (typeof CONNECTOR_PROFILES)[number]
+
+export const resolveProfileResourceUrl = (
+  req: IncomingMessage,
+  profile: ConnectorProfile,
+): string => `${resolveMcpResourceUrl(req)}/${profile}`
+
+const isPathOrBelow = (pathname: string, base: string): boolean =>
+  pathname === base || pathname.startsWith(`${base}/`)
+
+/**
+ * The connector profile a path belongs to, if any: its internal transport
+ * path (`/claude`), or protected-resource metadata at or below
+ * `/.well-known/oauth-protected-resource[/mcp]/<profile>` (matching the
+ * builder's `resolveMcpResourceForPath`). Exact segments only, so a
+ * configured legacy path such as `/v1/claude` is never mistaken for one.
+ */
+export const profileForPath = (
+  pathname: string,
+): ConnectorProfile | undefined =>
+  CONNECTOR_PROFILES.find(
+    (profile) =>
+      pathname === `/${profile}` ||
+      isPathOrBelow(pathname, `${protectedResourcePrefix}/${profile}`) ||
+      isPathOrBelow(pathname, `${protectedResourcePrefix}/mcp/${profile}`),
+  )
 
 export const buildProtectedResourceMetadata = (
   req: IncomingMessage,
   pathname = "",
-) => ({
-  resource: isOpenAiMetadataPath(pathname)
-    ? resolveOpenAiResourceUrl(req)
-    : resolveMcpResourceUrl(req),
-  authorization_servers: [resolveIssuer()],
-  scopes_supported: oauthScopes,
-  bearer_methods_supported: ["header"],
-})
+) => {
+  const profile = profileForPath(pathname)
+  return {
+    resource: profile
+      ? resolveProfileResourceUrl(req, profile)
+      : resolveMcpResourceUrl(req),
+    authorization_servers: [resolveIssuer()],
+    scopes_supported: oauthScopes,
+    bearer_methods_supported: ["header"],
+  }
+}
 
 export const buildWwwAuthenticate = (
   req: IncomingMessage,
   pathSuffix: string,
   error?: "invalid_token",
 ) => {
-  // The OpenAI resource is always advertised at its exact public path.
+  // A connector profile is always advertised at its exact public path.
+  const profile = profileForPath(pathSuffix)
   let metadataPath = `${protectedResourcePrefix}${pathSuffix}`
-  if (isOpenAiMetadataPath(pathSuffix)) {
-    metadataPath = `${protectedResourcePrefix}/mcp/openai`
+  if (profile) {
+    metadataPath = `${protectedResourcePrefix}/mcp/${profile}`
   } else if (env.CHATBOTX_MCP_PUBLIC_URL) {
     metadataPath = `${protectedResourcePrefix}/mcp${pathSuffix}`
   }

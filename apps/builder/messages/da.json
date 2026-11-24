@@ -12119,19 +12119,113 @@
     "sseUrl": "Ældre SSE-URL",
     "guide": {
       "title": "Tilslut en MCP-klient",
-      "step1": "Kopiér konfigurationen til din MCP-klient.",
-      "step2": "Indsæt den i klienten.",
-      "step3": "Klienten åbner en browser. Log ind og godkend adgangen.",
-      "step4": "Dit workspaces værktøjer vises efter godkendelsen.",
-      "ownerOnly": "Kun workspace-ejere og superAdmins kan godkende MCP-adgang. Du vælger workspace på godkendelsesskærmen."
+      "subtitle": "Vælg den app, du bruger, og følg de tre trin.",
+      "ownerOnly": "Kun workspace-ejere og superAdmins kan godkende MCP-adgang. Du vælger workspace på godkendelsesskærmen.",
+      "otherClients": "Alle andre MCP-kompatible klienter virker også",
+      "otherIntro": "Brug disse endpoints og konfigurationer med enhver anden MCP-kompatibel klient.",
+      "opensInNewTab": "(åbner i en ny fane)",
+      "actions": {
+        "addConnector": "Tilføj connector",
+        "startChatting": "Begynd at chatte"
+      },
+      "steps": {
+        "claude": {
+          "step1": {
+            "title": "Kopiér connector-URL'en",
+            "body": "Du indsætter denne URL i Claude i næste trin."
+          },
+          "step2": {
+            "title": "Gå til Claude → Customize → Connectors → Add custom connector",
+            "body": "Knappen nedenfor åbner dine connectors i Claude. Klik på Add custom connector, giv den et navn, og indsæt URL'en. Den vises også i Claudes desktop- og mobilapps."
+          },
+          "step3": {
+            "title": "Klik på Connect, og godkend adgang",
+            "body": "Log ind, vælg dit workspace, og godkend. Bed derefter Claude om at arbejde med dine kontakter, flows og broadcasts direkte fra chatten."
+          }
+        },
+        "chatgpt": {
+          "step1": {
+            "title": "Kopiér connector-URL'en",
+            "body": "Du indsætter denne URL i ChatGPT i næste trin."
+          },
+          "step2": {
+            "title": "Gå til ChatGPT → Settings → Apps & Connectors → Create",
+            "body": "Knappen nedenfor åbner ChatGPT-indstillingerne. Kan du ikke se Create, så slå Developer mode til under Advanced settings. Navngiv connectoren, indsæt URL'en, og vælg OAuth."
+          },
+          "step3": {
+            "title": "Forbind, og godkend adgang",
+            "body": "Log ind, vælg dit workspace, og godkend. Slå derefter connectoren til i en ny chat for at bruge den."
+          }
+        },
+        "claudeCode": {
+          "step1": {
+            "title": "Kopiér installationskommandoen",
+            "body": "Kør den i din terminal."
+          },
+          "step2": {
+            "title": "Log ind fra Claude Code",
+            "body": "Start Claude Code, skriv /mcp, vælg serveren, og vælg Authenticate. Et browservindue åbner."
+          },
+          "step3": {
+            "title": "Godkend adgang",
+            "body": "Vælg dit workspace, og godkend. Claude Code kan nu bruge dine workspace-værktøjer."
+          }
+        },
+        "cursor": {
+          "step1": {
+            "title": "Kopiér konfigurationen",
+            "body": "Du indsætter den i Cursor i næste trin."
+          },
+          "step2": {
+            "title": "Åbn Cursor Settings → MCP → Add new MCP server",
+            "body": "Indsæt konfigurationen i mcp.json, og gem. Cursor viser en Login-knap ved serveren."
+          },
+          "step3": {
+            "title": "Godkend adgang",
+            "body": "Klik på Login, vælg dit workspace, og godkend. Værktøjerne vises i Cursors agent."
+          }
+        },
+        "openclaw": {
+          "step1": {
+            "title": "Installér pluginnet",
+            "body": "Kør denne kommando i din terminal."
+          },
+          "step2": {
+            "title": "Log ind",
+            "body": "Kør denne kommando. Et browservindue åbner."
+          },
+          "step3": {
+            "title": "Godkend adgang",
+            "body": "Vælg dit workspace, og godkend. OpenClaw kan nu bruge dine workspace-værktøjer."
+          }
+        },
+        "hermes": {
+          "step1": {
+            "title": "Kopiér konfigurationen",
+            "body": "Du tilføjer den til din Hermes-konfiguration i næste trin."
+          },
+          "step2": {
+            "title": "Tilføj den til ~/.hermes/config.yaml",
+            "body": "Indsæt den under mcp_servers i ~/.hermes/config.yaml, og gem. Kør derefter denne kommando i Hermes."
+          },
+          "step3": {
+            "title": "Godkend adgang",
+            "body": "Hermes åbner et browservindue. Log ind, vælg dit workspace, og godkend. Hermes kan nu bruge dine workspace-værktøjer."
+          }
+        }
+      }
     },
     "clients": {
+      "claude": "Claude",
       "claudeCode": "Claude Code",
       "claudeDesktop": "Claude Desktop",
       "cursor": "Cursor",
       "chatgpt": "ChatGPT",
       "stdio": "stdio-reserve",
-      "stdioHint": "Brug et workspace-token til denne reserve."
+      "stdioHint": "Brug et workspace-token til denne reserve.",
+      "openclaw": "OpenClaw",
+      "hermes": "Hermes",
+      "other": "Andre klienter"
     },
     "grants": {
       "title": "Godkendte applikationer",

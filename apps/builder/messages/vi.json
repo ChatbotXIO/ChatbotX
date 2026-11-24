@@ -12135,19 +12135,113 @@
     "sseUrl": "URL SSE cũ",
     "guide": {
       "title": "Kết nối một MCP client",
-      "step1": "Sao chép cấu hình cho MCP client của bạn.",
-      "step2": "Dán vào client.",
-      "step3": "Client sẽ mở trình duyệt. Đăng nhập và phê duyệt quyền truy cập.",
-      "step4": "Công cụ của workspace sẽ xuất hiện sau khi được phê duyệt.",
-      "ownerOnly": "Chỉ chủ sở hữu workspace và superAdmin mới có thể cấp quyền truy cập MCP. Bạn chọn workspace ở màn hình phê duyệt."
+      "subtitle": "Chọn ứng dụng bạn dùng và làm theo ba bước.",
+      "ownerOnly": "Chỉ chủ sở hữu workspace và superAdmin mới có thể cấp quyền truy cập MCP. Bạn chọn workspace ở màn hình phê duyệt.",
+      "otherClients": "Mọi MCP client tương thích khác cũng dùng được",
+      "otherIntro": "Dùng các endpoint và cấu hình này với bất kỳ MCP client tương thích nào khác.",
+      "opensInNewTab": "(mở trong tab mới)",
+      "actions": {
+        "addConnector": "Thêm connector",
+        "startChatting": "Bắt đầu trò chuyện"
+      },
+      "steps": {
+        "claude": {
+          "step1": {
+            "title": "Sao chép URL connector",
+            "body": "Bạn sẽ dán URL này vào Claude ở bước tiếp theo."
+          },
+          "step2": {
+            "title": "Vào Claude → Customize → Connectors → Add custom connector",
+            "body": "Nút bên dưới mở danh sách connector của bạn trong Claude. Bấm Add custom connector, đặt tên và dán URL. Connector cũng xuất hiện trong ứng dụng Claude trên máy tính và điện thoại."
+          },
+          "step3": {
+            "title": "Bấm Connect và cấp quyền truy cập",
+            "body": "Đăng nhập, chọn workspace và đồng ý. Sau đó yêu cầu Claude làm việc với liên hệ, flow và broadcast ngay trong khung chat."
+          }
+        },
+        "chatgpt": {
+          "step1": {
+            "title": "Sao chép URL connector",
+            "body": "Bạn sẽ dán URL này vào ChatGPT ở bước tiếp theo."
+          },
+          "step2": {
+            "title": "Vào ChatGPT → Settings → Apps & Connectors → Create",
+            "body": "Nút bên dưới mở phần cài đặt ChatGPT. Nếu không thấy Create, hãy bật Developer mode trong Advanced settings. Đặt tên connector, dán URL và chọn OAuth."
+          },
+          "step3": {
+            "title": "Kết nối và cấp quyền truy cập",
+            "body": "Đăng nhập, chọn workspace và đồng ý. Sau đó bật connector trong một cuộc trò chuyện mới để sử dụng."
+          }
+        },
+        "claudeCode": {
+          "step1": {
+            "title": "Sao chép lệnh cài đặt",
+            "body": "Chạy lệnh này trong terminal."
+          },
+          "step2": {
+            "title": "Đăng nhập từ Claude Code",
+            "body": "Mở Claude Code, gõ /mcp, chọn server và chọn Authenticate. Một cửa sổ trình duyệt sẽ mở ra."
+          },
+          "step3": {
+            "title": "Cấp quyền truy cập",
+            "body": "Chọn workspace và đồng ý. Claude Code giờ có thể dùng các công cụ của workspace."
+          }
+        },
+        "cursor": {
+          "step1": {
+            "title": "Sao chép cấu hình",
+            "body": "Bạn sẽ dán cấu hình này vào Cursor ở bước tiếp theo."
+          },
+          "step2": {
+            "title": "Mở Cursor Settings → MCP → Add new MCP server",
+            "body": "Dán cấu hình vào mcp.json và lưu. Cursor sẽ hiện nút Login cạnh server."
+          },
+          "step3": {
+            "title": "Cấp quyền truy cập",
+            "body": "Bấm Login, chọn workspace và đồng ý. Các công cụ sẽ xuất hiện trong agent của Cursor."
+          }
+        },
+        "openclaw": {
+          "step1": {
+            "title": "Cài đặt plugin",
+            "body": "Chạy lệnh này trong terminal."
+          },
+          "step2": {
+            "title": "Đăng nhập",
+            "body": "Chạy lệnh này. Một cửa sổ trình duyệt sẽ mở ra."
+          },
+          "step3": {
+            "title": "Cấp quyền truy cập",
+            "body": "Chọn workspace và đồng ý. OpenClaw giờ có thể dùng các công cụ của workspace."
+          }
+        },
+        "hermes": {
+          "step1": {
+            "title": "Sao chép cấu hình",
+            "body": "Bạn sẽ thêm cấu hình này vào Hermes ở bước tiếp theo."
+          },
+          "step2": {
+            "title": "Thêm vào ~/.hermes/config.yaml",
+            "body": "Dán vào mục mcp_servers trong ~/.hermes/config.yaml rồi lưu. Sau đó chạy lệnh này trong Hermes."
+          },
+          "step3": {
+            "title": "Cấp quyền truy cập",
+            "body": "Hermes mở một cửa sổ trình duyệt. Đăng nhập, chọn workspace và đồng ý. Hermes giờ có thể dùng các công cụ của workspace."
+          }
+        }
+      }
     },
     "clients": {
+      "claude": "Claude",
       "claudeCode": "Claude Code",
       "claudeDesktop": "Claude Desktop",
       "cursor": "Cursor",
       "chatgpt": "ChatGPT",
       "stdio": "dự phòng stdio",
-      "stdioHint": "Dùng workspace token cho phương án dự phòng này."
+      "stdioHint": "Dùng workspace token cho phương án dự phòng này.",
+      "openclaw": "OpenClaw",
+      "hermes": "Hermes",
+      "other": "Client khác"
     },
     "grants": {
       "title": "Ứng dụng đã được cấp quyền",

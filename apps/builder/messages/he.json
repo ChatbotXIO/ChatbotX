@@ -12119,19 +12119,113 @@
     "sseUrl": "כתובת SSE ישנה",
     "guide": {
       "title": "חיבור לקוח MCP",
-      "step1": "העתק את התצורה עבור לקוח ה-MCP שלך.",
-      "step2": "הדבק אותה בלקוח.",
-      "step3": "הלקוח פותח דפדפן. היכנס ואשר גישה.",
-      "step4": "הכלים של סביבת העבודה שלך יופיעו לאחר האישור.",
-      "ownerOnly": "רק בעלי סביבת העבודה ו-superAdmin יכולים לאשר גישת MCP. את סביבת העבודה בוחרים במסך האישור."
+      "subtitle": "בחר את האפליקציה שבה אתה משתמש ופעל לפי שלושת השלבים.",
+      "ownerOnly": "רק בעלי סביבת העבודה ו-superAdmin יכולים לאשר גישת MCP. את סביבת העבודה בוחרים במסך האישור.",
+      "otherClients": "גם כל לקוח אחר שתומך ב-MCP עובד",
+      "otherIntro": "השתמש בנקודות הקצה ובתצורות האלה עם כל לקוח אחר שתומך ב-MCP.",
+      "opensInNewTab": "(נפתח בכרטיסייה חדשה)",
+      "actions": {
+        "addConnector": "הוסף מחבר",
+        "startChatting": "התחל צ'אט"
+      },
+      "steps": {
+        "claude": {
+          "step1": {
+            "title": "העתק את כתובת המחבר",
+            "body": "תדביק את הכתובת הזו ב-Claude בשלב הבא."
+          },
+          "step2": {
+            "title": "עבור אל Claude ← Customize ← Connectors ← Add custom connector",
+            "body": "הכפתור למטה פותח את המחברים שלך ב-Claude. לחץ על Add custom connector, תן שם והדבק את הכתובת. הוא יופיע גם באפליקציות Claude למחשב ולנייד."
+          },
+          "step3": {
+            "title": "לחץ על Connect ואשר גישה",
+            "body": "התחבר, בחר את סביבת העבודה ואשר. לאחר מכן בקש מ-Claude לעבוד עם אנשי הקשר, הזרימות והשידורים ישירות מהצ'אט."
+          }
+        },
+        "chatgpt": {
+          "step1": {
+            "title": "העתק את כתובת המחבר",
+            "body": "תדביק את הכתובת הזו ב-ChatGPT בשלב הבא."
+          },
+          "step2": {
+            "title": "עבור אל ChatGPT ← Settings ← Apps & Connectors ← Create",
+            "body": "הכפתור למטה פותח את הגדרות ChatGPT. אם Create לא מופיע, הפעל את Developer mode תחת Advanced settings. תן שם למחבר, הדבק את הכתובת ובחר OAuth."
+          },
+          "step3": {
+            "title": "התחבר ואשר גישה",
+            "body": "התחבר, בחר את סביבת העבודה ואשר. לאחר מכן הפעל את המחבר בצ'אט חדש כדי להשתמש בו."
+          }
+        },
+        "claudeCode": {
+          "step1": {
+            "title": "העתק את פקודת ההתקנה",
+            "body": "הרץ אותה בטרמינל."
+          },
+          "step2": {
+            "title": "התחבר מתוך Claude Code",
+            "body": "הפעל את Claude Code, הקלד /mcp, בחר את השרת ובחר Authenticate. ייפתח חלון דפדפן."
+          },
+          "step3": {
+            "title": "אשר גישה",
+            "body": "בחר את סביבת העבודה ואשר. Claude Code יכול כעת להשתמש בכלי סביבת העבודה."
+          }
+        },
+        "cursor": {
+          "step1": {
+            "title": "העתק את התצורה",
+            "body": "תדביק אותה ב-Cursor בשלב הבא."
+          },
+          "step2": {
+            "title": "פתח את Cursor Settings ← MCP ← Add new MCP server",
+            "body": "הדבק את התצורה ב-mcp.json ושמור. Cursor יציג כפתור Login ליד השרת."
+          },
+          "step3": {
+            "title": "אשר גישה",
+            "body": "לחץ על Login, בחר את סביבת העבודה ואשר. הכלים יופיעו בסוכן של Cursor."
+          }
+        },
+        "openclaw": {
+          "step1": {
+            "title": "התקן את התוסף",
+            "body": "הרץ את הפקודה הזו בטרמינל."
+          },
+          "step2": {
+            "title": "התחבר",
+            "body": "הרץ את הפקודה הזו. ייפתח חלון דפדפן."
+          },
+          "step3": {
+            "title": "אשר גישה",
+            "body": "בחר את סביבת העבודה ואשר. OpenClaw יכול כעת להשתמש בכלי סביבת העבודה."
+          }
+        },
+        "hermes": {
+          "step1": {
+            "title": "העתק את התצורה",
+            "body": "תוסיף אותה לתצורת Hermes בשלב הבא."
+          },
+          "step2": {
+            "title": "הוסף אותה ל-~/.hermes/config.yaml",
+            "body": "הדבק אותה תחת mcp_servers בקובץ ~/.hermes/config.yaml ושמור. לאחר מכן הרץ את הפקודה הזו ב-Hermes."
+          },
+          "step3": {
+            "title": "אשר גישה",
+            "body": "Hermes פותח חלון דפדפן. התחבר, בחר את סביבת העבודה ואשר. Hermes יכול כעת להשתמש בכלי סביבת העבודה."
+          }
+        }
+      }
     },
     "clients": {
+      "claude": "Claude",
       "claudeCode": "Claude Code",
       "claudeDesktop": "Claude Desktop",
       "cursor": "Cursor",
       "chatgpt": "ChatGPT",
       "stdio": "חלופת stdio",
-      "stdioHint": "השתמש באסימון סביבת עבודה עבור חלופה זו."
+      "stdioHint": "השתמש באסימון סביבת עבודה עבור חלופה זו.",
+      "openclaw": "OpenClaw",
+      "hermes": "Hermes",
+      "other": "לקוחות אחרים"
     },
     "grants": {
       "title": "אפליקציות מורשות",

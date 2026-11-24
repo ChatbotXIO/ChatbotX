@@ -4,7 +4,7 @@ import {
 } from "@better-auth/oauth-provider"
 import { oauthProviderResourceClient } from "@better-auth/oauth-provider/resource-client"
 import { isAPIError } from "better-auth/api"
-import { env, getMcpOpenAiResourceUrl, getMcpResourceUrl } from "./keys"
+import { env, getMcpProfileResourceUrls, getMcpResourceUrl } from "./keys"
 import { logger } from "./logger"
 import type { Auth } from "./server"
 
@@ -65,7 +65,10 @@ export const verifyMcpAccessToken = async (
   // same `ctx.context.baseURL` the provider signs `iss` with. Without
   // `jwksUrl` the token is never verified and every call is a 401.
   const { baseURL } = await auth.$context
-  const supportedAudiences = [getMcpResourceUrl(), getMcpOpenAiResourceUrl()]
+  const supportedAudiences = [
+    getMcpResourceUrl(),
+    ...getMcpProfileResourceUrls(),
+  ]
   const claims = await oauthProviderResourceClient(auth)
     .getActions()
     .verifyBearerToken(accessToken, {

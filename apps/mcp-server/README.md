@@ -14,8 +14,10 @@ On startup the server fetches `{CHATBOTX_API_URL}/public-spec.json` and register
 Remote MCP clients should authenticate through OAuth 2.1. The production endpoints are
 `https://app.chatbotx.io/mcp/messages` for Streamable HTTP and
 `https://app.chatbotx.io/mcp/sse` for legacy SSE — the same URL for every account, so it
-works as a Claude marketplace connector. ChatGPT and Codex use the separate OpenAI profile
-at `https://app.chatbotx.io/mcp/openai` (see [OpenAI profile](#openai-profile)). The user picks the target workspace on
+works for any MCP client. ChatGPT and Codex use the separate OpenAI profile
+at `https://app.chatbotx.io/mcp/openai` (see [OpenAI profile](#openai-profile)); the Claude
+directory connector and plugin use the Claude profile at `https://app.chatbotx.io/mcp/claude`
+(see [Claude profile](#claude-profile)). The user picks the target workspace on
 the consent screen, and every token the client holds acts on that workspace; to switch,
 disconnect and connect again. Only workspace owners and `superAdmin` members can authorize.
 An explicit `?workspace_id=<id>` (or `x-workspace-id` header) may select a
@@ -217,6 +219,12 @@ A second, fixed profile serves OpenAI clients (ChatGPT, Codex) from the same pro
 
 The OpenAI tool list is the committed contract `src/profiles/openai-manifest.json`. It is served and executed without the live OpenAPI cache. Regenerate it only as a reviewed change: `pnpm tsx scripts/generate-openai-manifest.ts <public-spec.json>` (the builder test `public-spec-mcp.test.ts` fails when the manifest drifts from the live spec).
 
+For OpenAI Plugin directory submission, configure the exact challenge value from
+the OpenAI portal as the builder's `OPENAI_APPS_DOMAIN_CHALLENGE`. The builder
+then serves it as uncached plain text at
+`https://app.chatbotx.io/.well-known/openai-apps-challenge`; do not place the
+value in this service's environment or commit it.
+
 Rules enforced on this profile only:
 
 - OAuth bearer tokens only. No environment-key fallback, no API keys, no query or alternate-header tokens. The token audience must be `/mcp/openai`. Failures return 401 (or 503 when verification is unavailable).
@@ -225,6 +233,27 @@ Rules enforced on this profile only:
 - Arguments are validated against the reviewed schema before confirmation or execution. Free-form objects and unknown properties are rejected. `contacts_create` never accepts `gender`; the adapter sends `unknown`.
 - Every response, confirmation preview and error is projected through the reviewed response schema. Raw upstream errors are replaced with fixed messages.
 - Deferred to v2: flow authoring and sending, `sequences_update`, sequence subscription.
+
+## Claude profile
+
+A third fixed profile is the surface submitted to Anthropic's connector and plugin directory.
+
+| | Default profile | Claude profile |
+| --- | --- | --- |
+| Internal path | `/messages` | `/claude` |
+| Public path | `/mcp/messages` | `/mcp/claude` |
+| OAuth resource and audience | `<origin>/mcp` | `<origin>/mcp/claude` |
+| Tools | Scope-filtered default set plus `search_tools`, `call_tool`, `get_guide` | 49 API tools (32 read, 17 write) plus `get_guide`, scope-filtered |
+
+The tool list is `src/profiles/claude-contract.ts`. Unlike the OpenAI profile, tools are served from the live OpenAPI spec and executed exactly like the default profile (same argument handling, `_confirm` approval step and API error details); only the allow-list is fixed. The builder test `public-spec-mcp.test.ts` fails when a profile tool stops being default-visible, and when a new default-visible operation is neither added to the profile nor listed in `CLAUDE_EXCLUDED_TOOLS`.
+
+Directory rules this profile enforces (https://claude.com/docs/connectors/building/review-criteria):
+
+- No catch-all tool: no `search_tools` or `call_tool`, so every operation is its own tool and reads and writes are separate. An operation outside the allow-list is `Unknown tool`, even with a valid token.
+- Every tool has a `title`. A read is `readOnlyHint: true`; anything that changes data is `destructiveHint: true`, whatever the route metadata says, so Claude asks the user before each write.
+- Descriptions never name an operation outside the profile, and the guides name only profile tools.
+- OAuth bearer tokens only, with audience `/mcp/claude`; the transport rules match the OpenAI profile. Origins come from `CHATBOTX_MCP_CLAUDE_ALLOWED_ORIGINS`; Claude's hosted apps and Claude Code connect server-side without one.
+- Left out: connecting channels (`connection_providers_list`, `connections_create`, `connect_sessions_get`), which is done in the app.
 
 ## Prerequisites
 
@@ -258,6 +287,12 @@ claude mcp add mcp -t http -s user \
 
 **ChatGPT / Codex:** add `https://app.chatbotx.io/mcp/openai`
 as a custom connector. ChatGPT completes OAuth in the browser.
+
+**OpenClaw:** `openclaw plugins install clawhub:@chatbotx/chatbotx`, then
+`openclaw mcp login chatbotx`. The plugin (built in `ChatbotXIO/chatbotx-agent`) registers
+`/mcp/messages` with `auth: "oauth"` and signs in through dynamic client registration. For a
+hand-written `mcp.servers` entry, set `"transport": "streamable-http"` and `"auth": "oauth"`;
+without `auth`, OpenClaw sends no token and the server answers 401.
 
 The load balancer must forward `/mcp/*` to the MCP server **without stripping the
 `/mcp` prefix**. The builder serves protected-resource discovery under
@@ -360,6 +395,7 @@ cp .env.example .env
 | `CHATBOTX_MCP_SERVER_NAME` | Display name sent to AI clients | package name | No |
 | `CHATBOTX_MCP_SERVER_INSTRUCTIONS` | Instructions sent to AI clients on connect (helps ChatGPT know when to call tools) | built-in default | No |
 | `CHATBOTX_MCP_ALLOWED_ORIGINS` | Comma-separated Origins allowed on the OpenAI endpoint. | `https://chatgpt.com,https://chat.openai.com` |
+| `CHATBOTX_MCP_CLAUDE_ALLOWED_ORIGINS` | Comma-separated Origins allowed on the Claude endpoint. | `https://claude.ai,https://claude.com` |
 | `CHATBOTX_MCP_SESSION_IDLE_TTL_MS` | Idle time after which an HTTP session is closed and evicted (all transports). | `1800000` |
 | `CHATBOTX_MCP_OAUTH_ENABLED` | Enable OAuth 2.1 protected-resource metadata and bearer challenges | `true` | No |
 | `CHATBOTX_MCP_OAUTH_ISSUER` | Authorization server issuer URL | derived from `CHATBOTX_API_URL` | No |

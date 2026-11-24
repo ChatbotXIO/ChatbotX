@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from "vitest"
 
 vi.mock("../src/keys", () => ({
   getMcpResourceUrl: () => "https://app.example.com/mcp",
+  MCP_CONNECTOR_PROFILES: ["openai", "claude"],
 }))
 
 import { buildMcpPluginOptions, defaultMcpResource } from "../src/mcp-config"
@@ -9,10 +10,18 @@ import { buildMcpPluginOptions, defaultMcpResource } from "../src/mcp-config"
 const RESOURCE = "https://app.example.com/mcp"
 
 describe("buildMcpPluginOptions", () => {
-  it("caches the configured OAuth resource and the OpenAI resource", () => {
+  it("caches the configured OAuth resource and every connector profile resource", () => {
     expect(buildMcpPluginOptions(RESOURCE).cachedResources).toEqual(
-      new Set([RESOURCE, `${RESOURCE}/openai`]),
+      new Set([RESOURCE, `${RESOURCE}/openai`, `${RESOURCE}/claude`]),
     )
+  })
+
+  it("seeds an OAuthResource row for every connector profile", () => {
+    // An unseeded resource makes authorize/token fail with `invalid_target`.
+    expect(buildMcpPluginOptions(RESOURCE).resources).toEqual([
+      `${RESOURCE}/openai`,
+      `${RESOURCE}/claude`,
+    ])
   })
 })
 

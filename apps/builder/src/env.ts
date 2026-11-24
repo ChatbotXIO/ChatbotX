@@ -34,6 +34,9 @@ export const env = createEnv({
     REALTIME_PROXY_URL: z.url().optional().default("http://localhost:1999"),
     MCP_PROXY_URL: z.url().optional().default("http://localhost:3333"),
     MCP_PUBLIC_URL: z.url().optional(),
+    // Exact plain-text token supplied by the OpenAI Plugins portal when it
+    // verifies control of the public MCP domain. Keep it server-only.
+    OPENAI_APPS_DOMAIN_CHALLENGE: z.string().min(1).optional(),
   },
   client: {
     NEXT_PUBLIC_BUILDER_URL: z.url(),

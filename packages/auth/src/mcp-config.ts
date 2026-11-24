@@ -1,7 +1,12 @@
 import type { McpOptions } from "@better-auth/mcp"
-import { getMcpResourceUrl } from "./keys"
+import { getMcpResourceUrl, MCP_CONNECTOR_PROFILES } from "./keys"
 
-export { getMcpOpenAiResourceUrl, getMcpResourceUrl } from "./keys"
+export {
+  getMcpProfileResourceUrl,
+  getMcpResourceUrl,
+  MCP_CONNECTOR_PROFILES,
+  type McpConnectorProfile,
+} from "./keys"
 
 /** Scopes the MCP OAuth provider advertises and grants to registered clients. */
 export const MCP_OAUTH_SCOPES = ["openid", "profile", "email", "offline_access"]
@@ -73,6 +78,9 @@ export const defaultMcpResource = (
   return
 }
 
+const profileResources = (resource: string): string[] =>
+  MCP_CONNECTOR_PROFILES.map((profile) => `${resource}/${profile}`)
+
 /**
  * Options for Better Auth's `mcp()` plugin. Shared by `createAuth` and the
  * schema-parity test so the test always validates the production table set.
@@ -92,9 +100,12 @@ export const buildMcpPluginOptions = (
   loginPage: "/oauth/sign-in",
   refreshTokenExpiresIn: REFRESH_TOKEN_TTL_SECONDS,
   resource,
+  // Each connector profile (`/openai`, `/claude`) is a distinct resource and
+  // audience, never canonicalized to the shared `/mcp` resource. Listing them
+  // here seeds their `OAuthResource` rows; an authorize or token request for
+  // an unseeded resource fails with `invalid_target`.
+  resources: profileResources(resource),
   // Per-process cache, never expires. Nothing edits OAuthResource at runtime (seeded insertOnly;
   // admin endpoints are SERVER_ONLY and unused). After a manual DB edit, restart every builder pod.
-  // The OpenAI profile is a distinct resource and audience; it is never
-  // canonicalized to the shared `/mcp` resource.
-  cachedResources: new Set([resource, `${resource}/openai`]),
+  cachedResources: new Set([resource, ...profileResources(resource)]),
 })
