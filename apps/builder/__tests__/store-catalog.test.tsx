@@ -203,7 +203,7 @@ describe("StoreCatalog layouts", () => {
     const grid = render("embedded").querySelector("ul")
 
     expect(grid?.className).toContain(
-      "grid-cols-[repeat(auto-fill,minmax(min(100%,17rem),1fr))]",
+      "grid-cols-[repeat(auto-fill,minmax(min(100%,21rem),1fr))]",
     )
     expect(grid?.className).toContain("gap-5")
     expect(grid?.className).not.toContain("lg:grid-cols-3")
@@ -634,6 +634,35 @@ describe("StoreCatalog channels", () => {
       "fields.whatsapp.label",
       "fields.telegram.label",
     ])
+  })
+
+  test("tabs wrap onto further rows instead of scrolling sideways", () => {
+    const fieldset = render("page", channelCatalog).querySelector("fieldset")
+    const channelGroup = fieldset?.querySelector("div > div")
+
+    expect(fieldset?.className).not.toContain("overflow-x-auto")
+    expect(channelGroup?.className).toContain("flex-wrap")
+    expect(channelGroup?.className).not.toContain("grid-flow-col")
+    // Below `sm` the channels drop under "All channels" at full width.
+    expect(channelGroup?.className).toContain("basis-full")
+    expect(channelGroup?.className).toContain("sm:basis-0")
+    expect(fieldset?.querySelector("div")?.className).toContain(
+      "sm:flex-nowrap",
+    )
+    // "All channels" sits outside the wrapping group, so rows wrap under WhatsApp.
+    expect(channelGroup?.querySelectorAll("button")).toHaveLength(2)
+    expect(fieldset?.querySelectorAll("button")).toHaveLength(3)
+    const [allChannels, ...channelTabs] = Array.from(
+      fieldset?.querySelectorAll("button") ?? [],
+    )
+    expect(allChannels?.className).toContain("justify-center")
+    for (const tab of channelTabs) {
+      expect(tab.className).toContain("justify-start")
+      expect(tab.className).not.toContain("justify-center")
+    }
+    for (const tab of Array.from(fieldset?.querySelectorAll("button") ?? [])) {
+      expect(tab.className).toContain("min-w-32")
+    }
   })
 
   test("no tabs when no template has a channel", () => {
