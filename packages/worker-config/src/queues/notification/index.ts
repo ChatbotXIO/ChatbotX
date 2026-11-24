@@ -12,6 +12,7 @@ export const NotificationJobAction = {
   notifyIncomingMessage: "notifyIncomingMessage",
   notifyConversationAssigned: "notifyConversationAssigned",
   notifyNewOrder: "notifyNewOrder",
+  checkPushReceipts: "checkPushReceipts",
 } as const
 
 export type NotificationJobNotifyIncomingMessage = {
@@ -53,6 +54,22 @@ export type NotificationJobNotifyNewOrder = {
   }
 }
 
+/**
+ * Delayed follow-up to a push send: Expo tickets only say "accepted"; the
+ * delivery verdict (APNs/FCM rejection, unregistered device) lands in a
+ * receipt ~minutes later. Carries no workspace — it spans every recipient.
+ */
+export type NotificationJobCheckPushReceipts = {
+  type: typeof NotificationJobAction.checkPushReceipts
+  data: {
+    /** Expo ticket id → the device token it was sent to. */
+    tickets: { id: string; token: string }[]
+  }
+}
+
+/** Wait before asking Expo for receipts (Expo recommends ~15 min). */
+export const PUSH_RECEIPT_DELAY_MS = 15 * 60 * 1000
+
 /** The jobs about a conversation — every one but a new order. */
 export type NotificationJobConversation =
   | NotificationJobNotifyIncomingMessage
@@ -61,6 +78,7 @@ export type NotificationJobConversation =
 export type NotificationJobData =
   | NotificationJobConversation
   | NotificationJobNotifyNewOrder
+  | NotificationJobCheckPushReceipts
 
 /** One push per order, however many times placement is retried. */
 export const getNewOrderNotificationJobId = (orderId: string): string =>

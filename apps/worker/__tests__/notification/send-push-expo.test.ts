@@ -46,8 +46,16 @@ vi.mock("@chatbotx.io/business", () => ({
   workspaceService: { find: workspaceFind },
 }))
 
+const loggerWarn = vi.fn()
 vi.mock("../../src/lib/logger", () => ({
-  logger: { warn: vi.fn(), info: vi.fn() },
+  logger: { warn: loggerWarn, info: vi.fn() },
+}))
+
+const queueAdd = vi.fn().mockResolvedValue(undefined)
+vi.mock("@chatbotx.io/worker-config", () => ({
+  NotificationJobAction: { checkPushReceipts: "checkPushReceipts" },
+  PUSH_RECEIPT_DELAY_MS: 900_000,
+  notificationQueue: { add: queueAdd },
 }))
 
 const { sendPushForNotificationJob } = await import(
@@ -117,6 +125,46 @@ describe("sendPushForNotificationJob", () => {
     expect(deleteByTokens).toHaveBeenCalledWith({
       tokens: ["Expo[stale-token]"],
     })
+  })
+
+  test("logs a non-DeviceNotRegistered ticket error with a redacted token and keeps the token", async () => {
+    findByUserIds.mockResolvedValue([{ token: "Expo[abcdefghij]" }])
+    sendPushNotificationsAsync.mockResolvedValue([
+      {
+        status: "error",
+        message: "no credentials",
+        details: { error: "InvalidCredentials" },
+      },
+    ])
+
+    await sendPushForNotificationJob(baseJob())
+
+    expect(loggerWarn).toHaveBeenCalledWith(
+      {
+        expoError: "InvalidCredentials",
+        expoMessage: "no credentials",
+        token: "…fghij]",
+      },
+      "Expo push ticket error",
+    )
+    expect(deleteByTokens).not.toHaveBeenCalled()
+    expect(queueAdd).not.toHaveBeenCalled()
+  })
+
+  test("enqueues a delayed receipt check with the ok ticket ids", async () => {
+    findByUserIds.mockResolvedValue([{ token: "Expo[token-1]" }])
+    sendPushNotificationsAsync.mockResolvedValue([{ status: "ok", id: "r1" }])
+
+    await sendPushForNotificationJob(baseJob())
+
+    expect(queueAdd).toHaveBeenCalledWith(
+      "checkPushReceipts",
+      {
+        type: "checkPushReceipts",
+        data: { tickets: [{ id: "r1", token: "Expo[token-1]" }] },
+      },
+      { delay: 900_000, attempts: 1 },
+    )
   })
 
   test("filters out and prunes an invalid-format token without sending it", async () => {

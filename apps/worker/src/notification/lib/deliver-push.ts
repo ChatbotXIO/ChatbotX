@@ -1,6 +1,14 @@
 import { deviceTokenService } from "@chatbotx.io/business"
+import {
+  NotificationJobAction,
+  notificationQueue,
+  PUSH_RECEIPT_DELAY_MS,
+} from "@chatbotx.io/worker-config"
 import { Expo, type ExpoPushMessage, type ExpoPushToken } from "expo-server-sdk"
 import { logger } from "../../lib/logger"
+
+/** Last chars only — enough to match a row, not enough to replay a token. */
+export const redactPushToken = (token: string): string => `…${token.slice(-6)}`
 
 export type PushContent = {
   title: string
@@ -60,20 +68,31 @@ export const deliverPushToUsers = async (input: {
 
   const chunks = expo.chunkPushNotifications(messages)
   const staleTokens: string[] = []
+  const okTickets: { id: string; token: string }[] = []
   let failedChunkCount = 0
 
   for (const chunk of chunks) {
     try {
       const tickets = await expo.sendPushNotificationsAsync(chunk)
       for (const [index, ticket] of tickets.entries()) {
-        if (
-          ticket.status === "error" &&
-          ticket.details?.error === "DeviceNotRegistered"
-        ) {
-          const sentMessage = chunk[index]
-          if (typeof sentMessage.to === "string") {
-            staleTokens.push(sentMessage.to)
+        const sentTo = chunk[index].to
+        const token = typeof sentTo === "string" ? sentTo : null
+        if (ticket.status === "ok") {
+          if (token) {
+            okTickets.push({ id: ticket.id, token })
           }
+          continue
+        }
+        logger.warn(
+          {
+            expoError: ticket.details?.error,
+            expoMessage: ticket.message,
+            token: token ? redactPushToken(token) : undefined,
+          },
+          "Expo push ticket error",
+        )
+        if (token && ticket.details?.error === "DeviceNotRegistered") {
+          staleTokens.push(token)
         }
       }
     } catch (error) {
@@ -95,5 +114,25 @@ export const deliverPushToUsers = async (input: {
       { count: staleTokens.length },
       "pruned stale device push tokens",
     )
+  }
+
+  await scheduleReceiptCheck(okTickets)
+}
+
+/** Best effort: a failed enqueue must not fail an already-sent push. */
+const scheduleReceiptCheck = async (
+  tickets: { id: string; token: string }[],
+): Promise<void> => {
+  if (tickets.length === 0) {
+    return
+  }
+  try {
+    await notificationQueue.add(
+      NotificationJobAction.checkPushReceipts,
+      { type: NotificationJobAction.checkPushReceipts, data: { tickets } },
+      { delay: PUSH_RECEIPT_DELAY_MS, attempts: 1 },
+    )
+  } catch (err) {
+    logger.warn({ err }, "Unable to enqueue push receipt check")
   }
 }
