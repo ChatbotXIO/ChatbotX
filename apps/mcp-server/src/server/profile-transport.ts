@@ -179,6 +179,8 @@ export const createProfileTransport = (
       return
     }
     if (result.status !== "ok") {
+      // Matches how long introspection caches an `unavailable` result.
+      res.setHeader("Retry-After", "2")
       writeJsonRpcError(res, 503, UNAVAILABLE_MESSAGE)
       return
     }

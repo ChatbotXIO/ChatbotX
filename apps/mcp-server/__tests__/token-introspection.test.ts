@@ -222,9 +222,9 @@ describe("introspectToken", () => {
     expect(fetchMock).toHaveBeenCalledTimes(2)
   })
 
-  test("caches a failed introspection for 30 seconds", async () => {
+  test("caches a rejected token for 30 seconds", async () => {
     vi.useFakeTimers()
-    const fetchMock = vi.fn().mockResolvedValue({ ok: false, status: 500 })
+    const fetchMock = vi.fn().mockResolvedValue({ ok: false, status: 401 })
     globalThis.fetch = fetchMock as unknown as typeof fetch
 
     const { introspectToken } = await import("../src/token-introspection")
@@ -235,17 +235,35 @@ describe("introspectToken", () => {
     expect(fetchMock).toHaveBeenCalledTimes(1)
   })
 
-  test("re-fetches a failed introspection after 30 seconds", async () => {
+  // Callers fail closed on `unavailable`, so a long cache would turn one
+  // failed call into a lockout that outlives the outage.
+  test("caches an unavailable result for 2 seconds only", async () => {
     vi.useFakeTimers()
     const fetchMock = vi.fn().mockResolvedValue({ ok: false, status: 500 })
     globalThis.fetch = fetchMock as unknown as typeof fetch
 
     const { introspectToken } = await import("../src/token-introspection")
-    await introspectToken("token-negative-cache-expiry")
-    vi.advanceTimersByTime(30_001)
-    await introspectToken("token-negative-cache-expiry")
+    await introspectToken("token-unavailable")
+    vi.advanceTimersByTime(1999)
+    await introspectToken("token-unavailable")
+    expect(fetchMock).toHaveBeenCalledTimes(1)
 
+    vi.advanceTimersByTime(2)
+    await introspectToken("token-unavailable")
     expect(fetchMock).toHaveBeenCalledTimes(2)
+  })
+
+  test("rejects an expired JWT without calling the API", async () => {
+    const fetchMock = vi.fn()
+    globalThis.fetch = fetchMock as unknown as typeof fetch
+    const expired = `h.${Buffer.from(JSON.stringify({ exp: 1 })).toString("base64url")}.s`
+
+    const { introspectToken } = await import("../src/token-introspection")
+
+    await expect(introspectToken(expired)).resolves.toEqual({
+      status: "unauthorized",
+    })
+    expect(fetchMock).not.toHaveBeenCalled()
   })
 
   test("evicts expired cache entries once a subsequent lookup inserts a new one", async () => {

@@ -57,6 +57,32 @@ export const env = createEnv({
       .int()
       .positive()
       .default(1_800_000),
+    // Requests per minute per credential on every MCP route, counted in this
+    // process. 0 disables the limit.
+    CHATBOTX_MCP_RATE_LIMIT_PER_MINUTE: z.coerce
+      .number()
+      .int()
+      .nonnegative()
+      .default(600),
+    // Rejected credentials per minute per client IP before that IP is
+    // refused without introspecting further tokens. Off (0) by default: it is
+    // only safe once CHATBOTX_MCP_TRUSTED_PROXY_HOPS yields the real client.
+    CHATBOTX_MCP_AUTH_FAILURE_LIMIT_PER_MINUTE: z.coerce
+      .number()
+      .int()
+      .nonnegative()
+      .default(0),
+    // Proxies in front of this server that append to X-Forwarded-For. The
+    // client IP is read that many entries from the right; 0 uses the socket.
+    CHATBOTX_MCP_TRUSTED_PROXY_HOPS: z.coerce
+      .number()
+      .int()
+      .nonnegative()
+      .default(0),
+    // Accept `?workspace_token=` / `?token=` on the default profile. Tokens in
+    // URLs leak into proxy and access logs; "false" accepts header tokens
+    // only. The connector profiles never accept them.
+    CHATBOTX_MCP_ALLOW_QUERY_TOKEN: z.enum(["true", "false"]).default("true"),
     CHATBOTX_MCP_OAUTH_ENABLED: z.enum(["true", "false"]).default("true"),
     CHATBOTX_MCP_OAUTH_ISSUER: z.url().optional(),
     CHATBOTX_MCP_PUBLIC_URL: z.url().optional(),
