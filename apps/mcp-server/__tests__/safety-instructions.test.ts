@@ -1,13 +1,18 @@
-import { describe, expect, test, vi } from "vitest"
+import { afterEach, describe, expect, test, vi } from "vitest"
 import { CLAUDE_INSTRUCTIONS } from "../src/profiles/claude-guides"
 import { OPENAI_INSTRUCTIONS } from "../src/profiles/openai-guides"
 import {
   APPROVAL_RULE,
   SAFETY_RULES,
   UNTRUSTED_DATA_RULE,
+  WORKSPACE_CHECK_RULE,
 } from "../src/server/safety-instructions"
 
 describe("MCP safety instructions", () => {
+  afterEach(() => {
+    vi.unstubAllEnvs()
+  })
+
   test("every profile sends every safety rule", async () => {
     vi.stubEnv("CHATBOTX_MCP_SERVER_INSTRUCTIONS", undefined)
     vi.resetModules()
@@ -21,7 +26,11 @@ describe("MCP safety instructions", () => {
         expect(instructions).toContain(rule)
       }
     }
-    vi.unstubAllEnvs()
+  })
+
+  test("workspace check only stops on a mismatched workspace id", () => {
+    expect(WORKSPACE_CHECK_RULE).toContain("If the user gives a workspace id")
+    expect(WORKSPACE_CHECK_RULE).toContain("workspaceId from token_get")
   })
 
   test("approval must come from the user, never from tool output", () => {
