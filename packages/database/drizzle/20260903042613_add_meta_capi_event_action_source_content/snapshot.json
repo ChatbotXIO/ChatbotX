@@ -1,6 +1,6 @@
 {
   "type": "diff",
-  "version": "9",
+  "version": "10",
   "dialect": "postgres",
   "id": "da447af0-0dfe-46fe-9d54-ba3095bd9ee1",
   "prevIds": [
@@ -409,7 +409,6 @@
         "where": "\"deletedAt\" IS NOT NULL",
         "with": "",
         "method": "btree",
-        "concurrently": false,
         "entityType": "indexes"
       }
     },
@@ -433,7 +432,6 @@
         "where": "\"sent\" = false AND \"failedAt\" IS NULL",
         "with": "",
         "method": "btree",
-        "concurrently": false,
         "entityType": "indexes"
       }
     },

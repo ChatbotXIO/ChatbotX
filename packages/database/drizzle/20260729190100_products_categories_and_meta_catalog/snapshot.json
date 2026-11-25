@@ -1,6 +1,6 @@
 {
   "type": "diff",
-  "version": "9",
+  "version": "10",
   "dialect": "postgres",
   "id": "9d810992-498d-4c59-bb8c-72debb5cbedc",
   "prevIds": [
@@ -2018,7 +2018,6 @@
         "where": "\"type\" = 'products' AND \"status\" IN ('pending', 'processing')",
         "with": "",
         "method": "btree",
-        "concurrently": false,
         "entityType": "indexes"
       }
     },
@@ -2042,7 +2041,6 @@
         "where": null,
         "with": "",
         "method": "btree",
-        "concurrently": false,
         "entityType": "indexes"
       }
     },
@@ -2066,7 +2064,6 @@
         "where": null,
         "with": "",
         "method": "btree",
-        "concurrently": false,
         "entityType": "indexes"
       }
     },
@@ -2104,7 +2101,6 @@
         "where": null,
         "with": "",
         "method": "btree",
-        "concurrently": false,
         "entityType": "indexes"
       }
     },
@@ -2142,7 +2138,6 @@
         "where": null,
         "with": "",
         "method": "btree",
-        "concurrently": false,
         "entityType": "indexes"
       }
     },
@@ -2166,7 +2161,6 @@
         "where": null,
         "with": "",
         "method": "btree",
-        "concurrently": false,
         "entityType": "indexes"
       }
     },
@@ -2190,7 +2184,6 @@
         "where": "\"status\" IN ('queued', 'running')",
         "with": "",
         "method": "btree",
-        "concurrently": false,
         "entityType": "indexes"
       }
     },
@@ -2214,7 +2207,6 @@
         "where": null,
         "with": "",
         "method": "btree",
-        "concurrently": false,
         "entityType": "indexes"
       }
     },
@@ -2238,7 +2230,6 @@
         "where": null,
         "with": "",
         "method": "btree",
-        "concurrently": false,
         "entityType": "indexes"
       }
     },
@@ -2262,7 +2253,6 @@
         "where": null,
         "with": "",
         "method": "btree",
-        "concurrently": false,
         "entityType": "indexes"
       }
     },
@@ -2286,7 +2276,6 @@
         "where": null,
         "with": "",
         "method": "btree",
-        "concurrently": false,
         "entityType": "indexes"
       }
     },

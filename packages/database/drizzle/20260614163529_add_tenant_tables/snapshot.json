@@ -1,6 +1,6 @@
 {
   "type": "diff",
-  "version": "9",
+  "version": "10",
   "dialect": "postgres",
   "id": "1e1a905a-05ac-4186-921c-d71ce603e01d",
   "prevIds": [
@@ -1451,7 +1451,6 @@
         "where": null,
         "with": "",
         "method": "btree",
-        "concurrently": false,
         "entityType": "indexes"
       }
     },
@@ -1475,7 +1474,6 @@
         "where": null,
         "with": "",
         "method": "btree",
-        "concurrently": false,
         "entityType": "indexes"
       }
     },
@@ -1499,7 +1497,6 @@
         "where": null,
         "with": "",
         "method": "btree",
-        "concurrently": false,
         "entityType": "indexes"
       }
     },
@@ -1523,7 +1520,6 @@
         "where": "\"ownerId\" IS NOT NULL",
         "with": "",
         "method": "btree",
-        "concurrently": false,
         "entityType": "indexes"
       }
     },
@@ -1547,7 +1543,6 @@
         "where": "\"slug\" IS NOT NULL",
         "with": "",
         "method": "btree",
-        "concurrently": false,
         "entityType": "indexes"
       }
     },
@@ -1585,7 +1580,6 @@
         "where": null,
         "with": "",
         "method": "btree",
-        "concurrently": false,
         "entityType": "indexes"
       }
     },
@@ -1623,7 +1617,6 @@
         "where": null,
         "with": "",
         "method": "btree",
-        "concurrently": false,
         "entityType": "indexes"
       }
     },
@@ -1647,7 +1640,6 @@
         "where": null,
         "with": "",
         "method": "btree",
-        "concurrently": false,
         "entityType": "indexes"
       }
     },
@@ -1671,7 +1663,6 @@
         "where": null,
         "with": "",
         "method": "btree",
-        "concurrently": false,
         "entityType": "indexes"
       }
     },

@@ -1,6 +1,6 @@
 {
   "type": "diff",
-  "version": "9",
+  "version": "10",
   "dialect": "postgres",
   "id": "9ca0f238-71f7-4aba-a8a8-8bdc3b0bb367",
   "prevIds": [
@@ -652,7 +652,6 @@
         "where": null,
         "with": "",
         "method": "btree",
-        "concurrently": false,
         "entityType": "indexes"
       }
     },
@@ -679,7 +678,6 @@
         "where": null,
         "with": "",
         "method": "gin",
-        "concurrently": false,
         "entityType": "indexes"
       }
     },
@@ -713,7 +711,6 @@
         "where": null,
         "with": "",
         "method": "btree",
-        "concurrently": false,
         "entityType": "indexes"
       }
     },
@@ -744,7 +741,6 @@
         "where": "\"lastDeliveredAt\" IS NOT NULL",
         "with": "",
         "method": "btree",
-        "concurrently": false,
         "entityType": "indexes"
       }
     },

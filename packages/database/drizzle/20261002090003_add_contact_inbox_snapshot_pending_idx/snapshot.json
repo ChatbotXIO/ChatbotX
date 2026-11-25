@@ -1,6 +1,6 @@
 {
   "type": "diff",
-  "version": "9",
+  "version": "10",
   "dialect": "postgres",
   "id": "a1f7c613-421d-4bd6-a1eb-1f8317bc11fe",
   "prevIds": [
@@ -57,7 +57,6 @@
         "where": "\"profileSnapshotState\" = 'pending'",
         "with": "",
         "method": "btree",
-        "concurrently": false,
         "entityType": "indexes"
       }
     }

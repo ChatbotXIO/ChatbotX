@@ -1,6 +1,6 @@
 {
   "type": "diff",
-  "version": "9",
+  "version": "10",
   "dialect": "postgres",
   "id": "7e3d4c2e-9fa2-4a2b-9281-574e0f1035d1",
   "prevIds": [
@@ -57,7 +57,6 @@
         "where": "\"threadControlState\" = 'standby' AND \"threadOwnerRole\" = 'ai_agent'",
         "with": "",
         "method": "btree",
-        "concurrently": false,
         "entityType": "indexes"
       }
     }

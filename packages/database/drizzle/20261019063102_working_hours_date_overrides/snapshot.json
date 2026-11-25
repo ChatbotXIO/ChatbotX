@@ -1,6 +1,6 @@
 {
   "type": "diff",
-  "version": "9",
+  "version": "10",
   "dialect": "postgres",
   "id": "7debbd4e-649d-4b1f-86a5-aa17a941d411",
   "prevIds": [
@@ -303,7 +303,6 @@
         "where": "\"workingHoursId\" IS NULL",
         "with": "",
         "method": "btree",
-        "concurrently": false,
         "entityType": "indexes"
       }
     },
@@ -334,7 +333,6 @@
         "where": "\"workingHoursId\" IS NOT NULL",
         "with": "",
         "method": "btree",
-        "concurrently": false,
         "entityType": "indexes"
       }
     },
@@ -365,7 +363,6 @@
         "where": null,
         "with": "",
         "method": "btree",
-        "concurrently": false,
         "entityType": "indexes"
       }
     },

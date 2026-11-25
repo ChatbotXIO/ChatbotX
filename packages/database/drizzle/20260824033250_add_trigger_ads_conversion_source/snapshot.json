@@ -1,6 +1,6 @@
 {
   "type": "diff",
-  "version": "9",
+  "version": "10",
   "dialect": "postgres",
   "id": "0175a088-2db4-41f1-8c16-b85bd4c07a36",
   "prevIds": [
@@ -566,7 +566,6 @@
         "where": "\"channel\" = 'whatsapp'",
         "with": "",
         "method": "btree",
-        "concurrently": false,
         "entityType": "indexes"
       }
     },
@@ -611,7 +610,6 @@
         "where": "\"channel\" = 'messenger'",
         "with": "",
         "method": "btree",
-        "concurrently": false,
         "entityType": "indexes"
       }
     },
@@ -656,7 +654,6 @@
         "where": "\"channel\" = 'instagram'",
         "with": "",
         "method": "btree",
-        "concurrently": false,
         "entityType": "indexes"
       }
     },
@@ -680,7 +677,6 @@
         "where": "\"referral\"->>'adId' IS NOT NULL AND \"referral\"->>'source' = 'ADS'",
         "with": "",
         "method": "btree",
-        "concurrently": false,
         "entityType": "indexes"
       }
     },

@@ -1,6 +1,6 @@
 {
   "type": "diff",
-  "version": "9",
+  "version": "10",
   "dialect": "postgres",
   "id": "5d5c3a95-5b4b-47dc-af1e-76ab47d0a49c",
   "prevIds": [
@@ -283,7 +283,6 @@
         "where": "type = 'contact_scan' AND status IN ('init', 'running')",
         "with": "",
         "method": "btree",
-        "concurrently": false,
         "entityType": "indexes"
       }
     },
@@ -321,7 +320,6 @@
         "where": "type = 'contact_scan'",
         "with": "",
         "method": "btree",
-        "concurrently": false,
         "entityType": "indexes"
       }
     },

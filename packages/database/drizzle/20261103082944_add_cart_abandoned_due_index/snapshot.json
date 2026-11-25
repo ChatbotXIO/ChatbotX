@@ -1,6 +1,6 @@
 {
   "type": "diff",
-  "version": "9",
+  "version": "10",
   "dialect": "postgres",
   "id": "8952801b-1628-4f35-a127-550d73d1778f",
   "prevIds": [
@@ -67,7 +67,6 @@
         "where": "\"abandonedNotifiedAt\" IS NULL AND jsonb_array_length(\"items\") > 0",
         "with": "",
         "method": "btree",
-        "concurrently": false,
         "entityType": "indexes"
       }
     },

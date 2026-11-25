@@ -1,6 +1,6 @@
 {
   "type": "diff",
-  "version": "9",
+  "version": "10",
   "dialect": "postgres",
   "id": "1b927786-a020-4920-a811-b7a19f7bedd4",
   "prevIds": [
@@ -157,7 +157,6 @@
         "where": null,
         "with": "",
         "method": "btree",
-        "concurrently": false,
         "entityType": "indexes"
       }
     },
@@ -181,7 +180,6 @@
         "where": "\"status\" = 'pending'",
         "with": "",
         "method": "btree",
-        "concurrently": false,
         "entityType": "indexes"
       }
     },
@@ -212,7 +210,6 @@
         "where": "\"status\" = 'pending'",
         "with": "",
         "method": "btree",
-        "concurrently": false,
         "entityType": "indexes"
       }
     },
@@ -236,7 +233,6 @@
         "where": "\"status\" in ('completed', 'failed', 'canceled')",
         "with": "",
         "method": "btree",
-        "concurrently": false,
         "entityType": "indexes"
       }
     },

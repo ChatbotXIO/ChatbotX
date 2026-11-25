@@ -1,6 +1,6 @@
 {
   "type": "diff",
-  "version": "9",
+  "version": "10",
   "dialect": "postgres",
   "id": "f5f9a8a1-3382-4440-9457-2af6b3b27512",
   "prevIds": [
@@ -1775,7 +1775,6 @@
         "where": null,
         "with": "",
         "method": "btree",
-        "concurrently": false,
         "entityType": "indexes"
       }
     },
@@ -1799,7 +1798,6 @@
         "where": "\"tagId\" IS NOT NULL",
         "with": "",
         "method": "btree",
-        "concurrently": false,
         "entityType": "indexes"
       }
     },
@@ -1823,7 +1821,6 @@
         "where": "\"customFieldId\" IS NOT NULL",
         "with": "",
         "method": "btree",
-        "concurrently": false,
         "entityType": "indexes"
       }
     },
@@ -1854,7 +1851,6 @@
         "where": null,
         "with": "",
         "method": "btree",
-        "concurrently": false,
         "entityType": "indexes"
       }
     },
@@ -1878,7 +1874,6 @@
         "where": null,
         "with": "",
         "method": "btree",
-        "concurrently": false,
         "entityType": "indexes"
       }
     },
@@ -1902,7 +1897,6 @@
         "where": "\"inboxId\" IS NOT NULL",
         "with": "",
         "method": "btree",
-        "concurrently": false,
         "entityType": "indexes"
       }
     },
@@ -1926,7 +1920,6 @@
         "where": "\"followUpCoexist\" AND \"followUpRunId\" IS NULL AND \"followUpError\" IS NULL AND \"status\" NOT IN ('pending', 'running')",
         "with": "",
         "method": "btree",
-        "concurrently": false,
         "entityType": "indexes"
       }
     },
@@ -1950,7 +1943,6 @@
         "where": "status IN ('pending', 'running', 'cancelling')",
         "with": "",
         "method": "btree",
-        "concurrently": false,
         "entityType": "indexes"
       }
     },
@@ -1981,7 +1973,6 @@
         "where": null,
         "with": "",
         "method": "btree",
-        "concurrently": false,
         "entityType": "indexes"
       }
     },
@@ -2012,7 +2003,6 @@
         "where": "status IN ('pending', 'running', 'cancelling')",
         "with": "",
         "method": "btree",
-        "concurrently": false,
         "entityType": "indexes"
       }
     },

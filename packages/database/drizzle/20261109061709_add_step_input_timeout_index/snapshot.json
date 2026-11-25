@@ -1,6 +1,6 @@
 {
   "type": "diff",
-  "version": "9",
+  "version": "10",
   "dialect": "postgres",
   "id": "8a58d11f-ab83-4dc7-9495-5bdb15e41e28",
   "prevIds": [
@@ -57,7 +57,6 @@
         "where": "\"status\" NOT IN ('completed', 'failed', 'canceled') AND \"type\" = 'stepInputTimeout'",
         "with": "",
         "method": "btree",
-        "concurrently": false,
         "entityType": "indexes"
       }
     }

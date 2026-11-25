@@ -1,6 +1,6 @@
 {
   "type": "diff",
-  "version": "9",
+  "version": "10",
   "dialect": "postgres",
   "id": "3405d3ac-0034-4dc3-b17c-b8318a3899d2",
   "prevIds": [
@@ -77,7 +77,6 @@
         "where": "\"userId\" IS NOT NULL",
         "with": "",
         "method": "btree",
-        "concurrently": false,
         "entityType": "indexes"
       }
     },
@@ -101,7 +100,6 @@
         "where": "\"userId\" IS NULL",
         "with": "",
         "method": "btree",
-        "concurrently": false,
         "entityType": "indexes"
       }
     }

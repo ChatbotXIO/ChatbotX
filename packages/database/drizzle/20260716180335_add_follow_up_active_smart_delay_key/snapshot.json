@@ -1,6 +1,6 @@
 {
   "type": "diff",
-  "version": "9",
+  "version": "10",
   "dialect": "postgres",
   "id": "2625e71b-a031-4994-825a-837870278ab9",
   "prevIds": [
@@ -73,7 +73,6 @@
         "where": "\"status\" NOT IN ('completed', 'failed', 'canceled') AND \"type\" = 'followUp'",
         "with": "",
         "method": "btree",
-        "concurrently": false,
         "entityType": "indexes"
       }
     }

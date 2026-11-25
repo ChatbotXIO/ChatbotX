@@ -1,3 +1,4 @@
+import { sql } from "drizzle-orm"
 import { PgDialect } from "drizzle-orm/pg-core"
 import { describe, expect, test, vi } from "vitest"
 import type { DatabaseClient } from "../src/client"
@@ -21,7 +22,9 @@ describe("postCommentRepository.findThreads", () => {
     }
     const subquery = {
       from: vi.fn().mockReturnThis(),
-      where: vi.fn().mockReturnValue({ getSQL: () => ({}) }),
+      // drizzle-orm rc walks `getSQL().queryChunks`; one bound param stands in
+      // for the sub-select so the outer parameter numbering stays observable.
+      where: vi.fn().mockReturnValue({ getSQL: () => sql`${"semi-join"}` }),
     }
     const chain = {
       from: vi.fn().mockReturnThis(),

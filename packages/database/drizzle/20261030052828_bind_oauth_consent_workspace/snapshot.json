@@ -1,6 +1,6 @@
 {
   "type": "diff",
-  "version": "9",
+  "version": "10",
   "dialect": "postgres",
   "id": "00a8debc-ff36-468b-84b4-271242df83b0",
   "prevIds": [
@@ -126,7 +126,6 @@
         "where": "\"contextType\" = 'export'",
         "with": "",
         "method": "btree",
-        "concurrently": false,
         "entityType": "indexes"
       }
     },
@@ -150,7 +149,6 @@
         "where": "\"workspaceId\" IS NOT NULL",
         "with": "",
         "method": "btree",
-        "concurrently": false,
         "entityType": "indexes"
       }
     },
