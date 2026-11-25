@@ -32,7 +32,7 @@ catalog:
   date-fns-tz: "^3.2.0"
   dot-prop: "^10.1.0"
   dotenv-cli: "^11.0.0"
-  drizzle-kit: 1.0.0-beta.22
+  drizzle-kit: 1.0.0-rc.6
   drizzle-orm: 1.0.0-beta.22
   fast-xml-parser: ^5.7.3
   google-auth-library: "^10.6.2"
