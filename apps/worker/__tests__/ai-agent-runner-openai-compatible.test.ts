@@ -49,6 +49,7 @@ vi.mock("@chatbotx.io/ai", () => ({
 vi.mock("@chatbotx.io/ai/server", () => ({
   aiContextService: { appendHistory: appendHistoryMock },
   aiIntegrationService: { findBy: findAIIntegrationMock },
+  appendCustomerInputGuard: (prompt: string) => prompt,
   appendFabricationGuard: (prompt: string) => prompt,
   appendKnowledgeBaseGuard: (prompt: string) => prompt,
   appendToolOutputGuard: (prompt: string) => prompt,

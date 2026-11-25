@@ -53,6 +53,7 @@ vi.mock("@chatbotx.io/ai", () => ({
   toolPrefixes: { enum: { sys: "sys", file: "file", fn: "fn", mcp: "mcp" } },
   toFinalStepTextStream: vi.fn((stream: unknown) => stream),
   toStepSeparatedTextStream: vi.fn((stream: unknown) => stream),
+  appendCustomerInputGuard: (p: string) => p,
   appendFabricationGuard: (p: string) => p,
   appendHandoffPolicy: (p: string) => p,
   appendKnowledgeBaseGuard: (p: string) => p,
@@ -62,6 +63,7 @@ vi.mock("@chatbotx.io/ai", () => ({
 
 vi.mock("@chatbotx.io/ai/server", () => ({
   aiContextService: { appendHistory: appendHistoryMock },
+  appendCustomerInputGuard: (p: string) => p,
   appendFabricationGuard: (p: string) => p,
   appendHandoffPolicy: (p: string) => p,
   appendKnowledgeBaseGuard: (p: string) => p,
