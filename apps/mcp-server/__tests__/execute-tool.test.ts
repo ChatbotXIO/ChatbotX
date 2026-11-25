@@ -316,6 +316,49 @@ describe("executeTool", () => {
       policy: "confirm_diff",
       proposed: { name: "VIP" },
     })
+    // The default profile keeps reporting a pending approval as an error.
+    expect(result.isError).toBe(true)
+  })
+
+  test("returns CONFIRMATION_REQUIRED as a usual result when confirmationAsResult is set", async () => {
+    const fetchMock = vi.fn()
+    globalThis.fetch = fetchMock as unknown as typeof fetch
+    const mutationTool: DynamicTool = {
+      ...tool,
+      annotations: {
+        destructiveHint: false,
+        idempotentHint: false,
+        readOnlyHint: false,
+      },
+      bodyParamNames: ["name"],
+      hitlPolicy: "confirm_diff",
+      inputSchema: {
+        properties: {
+          _confirm: { type: "boolean" },
+          name: { type: "string" },
+        },
+        required: ["name"],
+        type: "object",
+      },
+      method: "POST",
+      name: "tags_create",
+      queryParamNames: [],
+      pathTemplate: "/v1/tags",
+    }
+
+    const result = await executeTool(
+      mutationTool,
+      { name: "VIP" },
+      { token: "api-key" },
+      { confirmationAsResult: true },
+    )
+
+    expect(fetchMock).not.toHaveBeenCalled()
+    expect(result.isError).toBeFalsy()
+    expect(JSON.parse(result.content[0]?.text ?? "{}")).toMatchObject({
+      code: "CONFIRMATION_REQUIRED",
+      proposed: { name: "VIP" },
+    })
   })
 
   test("dispatches a confirmed mutation without forwarding _confirm", async () => {

@@ -324,6 +324,15 @@ const getCurrentState = async (props: {
   }
 }
 
+export type ExecuteToolOptions = {
+  /**
+   * Return `CONFIRMATION_REQUIRED` as a usual result instead of a tool error.
+   * A pending approval is not a failure; connector profiles (Claude) set this
+   * so clients show it to the user rather than treat it as a broken call.
+   */
+  confirmationAsResult?: boolean
+}
+
 /**
  * Fires the HTTP request a `DynamicTool` describes. Shared by the normal
  * `tools/call` path (`create-mcp-server.ts`) and `call_tool`
@@ -334,6 +343,7 @@ export async function executeTool(
   tool: DynamicTool,
   rawArgs: Record<string, unknown>,
   credentials: RequestCredentials,
+  options: ExecuteToolOptions = {},
 ): Promise<ToolCallResult> {
   const preparedArguments = prepareToolArguments(tool, rawArgs)
   const preflightError = preflightArgumentError(tool, preparedArguments)
@@ -354,7 +364,9 @@ export async function executeTool(
       tool,
     })
     if (hitlGate.failure) {
-      return errorResult(JSON.stringify(hitlGate.failure, null, 2))
+      return options.confirmationAsResult
+        ? jsonResult(hitlGate.failure)
+        : errorResult(JSON.stringify(hitlGate.failure, null, 2))
     }
     args = hitlGate.args
   } catch (error) {

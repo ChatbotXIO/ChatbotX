@@ -134,7 +134,9 @@ const configureClaudeProfile = (
     }
     return omitTransportOnlyFields(
       name,
-      await executeTool(tool, toolArgs, credentials),
+      await executeTool(tool, toolArgs, credentials, {
+        confirmationAsResult: true,
+      }),
     )
   })
 }
