@@ -11,6 +11,9 @@ import { contactReferralEventModel } from "../src/schema"
 const dialect = new PgDialect()
 const render = (clause: SQL) => dialect.sqlToQuery(clause)
 
+const OCCURRED_AT_DESC = /"occurredAt" desc$/
+const ID_DESC = /"id" desc$/
+
 const createExecuteTx = (rows: unknown[]) => {
   const execute = vi.fn().mockResolvedValue({ rows })
   return { tx: { execute } as unknown as DatabaseClient, execute }
@@ -526,5 +529,82 @@ describe("contactReferralEventRepository.listAdIdsByContacts", () => {
     const { sql, params } = render(execute.mock.calls[0]?.[0] as SQL)
     expect(sql).not.toContain("DROP TABLE")
     expect(params).toContain("1); DROP TABLE x;--")
+  })
+})
+
+describe("contactReferralEventRepository.findLatestMetaAdTouch", () => {
+  const input = {
+    workspaceId: "ws-1",
+    contactId: "contact-1",
+    contactInboxId: "inbox-1",
+  }
+
+  test("returns the newest Meta touch of the inbox with its ad copy", async () => {
+    const touch = {
+      occurredAt: new Date("2026-11-24T10:00:00Z"),
+      sourceUrl: "https://fb.me/ad",
+      metadata: { adTitle: "Ad", adBody: "Body", sourcePlatform: "facebook" },
+    }
+    const { tx, orderBy, limit } = createSelectTx([touch])
+
+    const result = await contactReferralEventRepository.findLatestMetaAdTouch(
+      input,
+      tx,
+    )
+
+    expect(result).toEqual(touch)
+    expect(orderBy).toHaveBeenCalledTimes(1)
+    expect(limit).toHaveBeenCalledWith(1)
+  })
+
+  test("returns null when no Meta touch was logged", async () => {
+    const { tx } = createSelectTx([])
+
+    expect(
+      await contactReferralEventRepository.findLatestMetaAdTouch(input, tx),
+    ).toBeNull()
+  })
+
+  test("filters by provider but, unlike findLatestAdTouchAt, not by ad id", async () => {
+    const meta = createSelectTx([])
+    const adOnly = createSelectTx([])
+
+    await contactReferralEventRepository.findLatestMetaAdTouch(input, meta.tx)
+    await contactReferralEventRepository.findLatestAdTouchAt(input, adOnly.tx)
+
+    const metaSql = render(meta.where.mock.calls[0]?.[0] as SQL).sql
+    const adOnlySql = render(adOnly.where.mock.calls[0]?.[0] as SQL).sql
+
+    expect(metaSql).toContain('"provider"')
+    expect(metaSql).not.toContain('"adId" is not null')
+    expect(adOnlySql).toContain('"adId" is not null')
+  })
+
+  test("scopes to ad touches of the workspace, contact and inbox from Meta", async () => {
+    const { tx, where } = createSelectTx([])
+
+    await contactReferralEventRepository.findLatestMetaAdTouch(input, tx)
+
+    const { sql, params } = render(where.mock.calls[0]?.[0] as SQL)
+    expect(sql).toContain('"workspaceId" = $')
+    expect(sql).toContain('"type" = $')
+    expect(sql).toContain('"contactId" = $')
+    expect(sql).toContain('"contactInboxId" = $')
+    expect(sql).toContain('"provider" = $')
+    expect(params).toEqual(["ws-1", "ad", "contact-1", "inbox-1", "meta"])
+  })
+
+  test("orders newest first and breaks a same-second tie by id", async () => {
+    const { tx, orderBy } = createSelectTx([])
+
+    await contactReferralEventRepository.findLatestMetaAdTouch(input, tx)
+
+    const sortKeys = (orderBy.mock.calls[0] ?? []).map(
+      (key) => render(key as SQL).sql,
+    )
+    expect(sortKeys).toEqual([
+      expect.stringMatching(OCCURRED_AT_DESC),
+      expect.stringMatching(ID_DESC),
+    ])
   })
 })

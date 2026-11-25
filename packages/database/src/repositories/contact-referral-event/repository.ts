@@ -26,6 +26,12 @@ import {
 import type { ContactReferralEventModel } from "../../types"
 import { likeContains } from "../../utils"
 
+/** The newest Meta ad touch of an inbox: when it reached us and its ad copy. */
+export type LatestMetaAdTouch = Pick<
+  ContactReferralEventModel,
+  "occurredAt" | "sourceUrl" | "metadata"
+>
+
 /**
  * How many of a workspace's newest ad touches the ad picker looks at. A fixed
  * index range scan, so the cost does not grow with the workspace; an ad that
@@ -458,5 +464,42 @@ export const contactReferralEventRepository = {
       .orderBy(desc(contactReferralEventModel.occurredAt))
       .limit(1)
     return row?.occurredAt ?? null
+  },
+
+  /**
+   * The contact's newest Meta paid-ad touch on this inbox (when it reached us
+   * and the ad's own copy), or null when no touch was logged there. Unlike
+   * `findLatestAdTouchAt` it does not require an ad id: a Click-to-WhatsApp
+   * touch with a click id but no `source_id` is still a paid-ad arrival. Each
+   * row is a full snapshot of one touch, so the copy always belongs to the
+   * returned time, unlike the merged `ContactInbox.referral`.
+   */
+  async findLatestMetaAdTouch(
+    input: { workspaceId: string; contactId: string; contactInboxId: string },
+    tx: DatabaseClient = db,
+  ): Promise<LatestMetaAdTouch | null> {
+    const [row] = await tx
+      .select({
+        occurredAt: contactReferralEventModel.occurredAt,
+        sourceUrl: contactReferralEventModel.sourceUrl,
+        metadata: contactReferralEventModel.metadata,
+      })
+      .from(contactReferralEventModel)
+      .where(
+        and(
+          adTouchScope(input.workspaceId),
+          eq(contactReferralEventModel.contactId, input.contactId),
+          eq(contactReferralEventModel.contactInboxId, input.contactInboxId),
+          eq(contactReferralEventModel.provider, "meta"),
+        ),
+      )
+      // Meta timestamps are whole seconds, so two touches can share one: the
+      // later-inserted (time-ordered snowflake id) wins, deterministically.
+      .orderBy(
+        desc(contactReferralEventModel.occurredAt),
+        desc(contactReferralEventModel.id),
+      )
+      .limit(1)
+    return row ?? null
   },
 }

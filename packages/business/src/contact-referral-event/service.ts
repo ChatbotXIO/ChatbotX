@@ -7,6 +7,7 @@ import { CONTACT_AD_IDS_LIMIT } from "@chatbotx.io/database/partials"
 import {
   type AdStatsRange,
   contactReferralEventRepository,
+  type LatestMetaAdTouch,
   type RecentAd,
 } from "@chatbotx.io/database/repositories"
 import type {
@@ -245,6 +246,17 @@ class ContactReferralEventService {
     tx: DatabaseClient = db,
   ): Promise<Date | null> {
     return await contactReferralEventRepository.findLatestAdTouchAt(input, tx)
+  }
+
+  /**
+   * The contact's newest Meta paid-ad touch on this inbox (time and ad copy),
+   * whether or not it carries an ad id; null if never logged.
+   */
+  async findLatestMetaAdTouch(
+    input: { workspaceId: string; contactId: string; contactInboxId: string },
+    tx: DatabaseClient = db,
+  ): Promise<LatestMetaAdTouch | null> {
+    return await contactReferralEventRepository.findLatestMetaAdTouch(input, tx)
   }
 
   /**

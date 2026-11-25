@@ -68,6 +68,7 @@ import {
 } from "../shared/agent-tool-stats"
 import { logProviderAttempt } from "../shared/provider-attempt-logger"
 import { createMcpTokenResolver } from "../shared/resolve-mcp-token"
+import { resolveAdContextPrompt } from "./ad-context"
 import { triggerDefaultReplyFlow } from "./default-reply"
 import { handleRichAIReply } from "./rich-reply"
 import { createDocumentReaderExecutor } from "./system-tools/document-reader"
@@ -816,9 +817,19 @@ async function runAIReply(
           variables,
         })
       : ""
-    const completePrompt = props.summary
+    const promptWithSummary = props.summary
       ? `Conversation Context: ${props.summary}\n\n${promptBase}`
       : promptBase
+    // A customer who just clicked a paid ad gets that ad prioritised for vague
+    // messages. It goes after the workspace prompt and before every guard, so
+    // the guards still have the last word.
+    const adContextPrompt = await resolveAdContextPrompt({
+      contactInbox: props.contactInbox,
+      conversation,
+    })
+    const completePrompt = adContextPrompt
+      ? [promptWithSummary, adContextPrompt].filter(Boolean).join("\n\n")
+      : promptWithSummary
 
     const richModeEnabled =
       aiAgent.isRichResponse && Boolean(props.triggerMessageId)
