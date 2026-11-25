@@ -91,7 +91,25 @@ const resolveSession = (sessionId: string): ResolvedSession | undefined => {
   }
 }
 
-/** Each connector profile's dedicated transport, keyed by internal path. */
+const SSE_ROUTE = "/sse"
+const MESSAGES_ROUTE = "/messages"
+
+/** The full request path of a route below `CHATBOTX_MCP_BASE_PATH`. */
+const mcpPath = (route: string): string =>
+  `${env.CHATBOTX_MCP_BASE_PATH}${route}`
+
+/** The route below `CHATBOTX_MCP_BASE_PATH`, or undefined outside it. */
+const routeOf = (pathname: string): string | undefined => {
+  const base = env.CHATBOTX_MCP_BASE_PATH
+  if (!base) {
+    return pathname
+  }
+  return pathname.startsWith(`${base}/`)
+    ? pathname.slice(base.length)
+    : undefined
+}
+
+/** Each connector profile's dedicated transport, keyed by route. */
 const PROFILE_TRANSPORTS = new Map([
   [OPENAI_INTERNAL_PATH, handleOpenAiRequest],
   [CLAUDE_INTERNAL_PATH, handleClaudeRequest],
@@ -269,10 +287,7 @@ const handleSseRequest = async (
     const server = createMcpServer({
       getCredentials: getCredentialsFromState(credentialState),
     })
-    const transport = new SSEServerTransport(
-      env.CHATBOTX_MCP_MESSAGES_PATH,
-      res,
-    )
+    const transport = new SSEServerTransport(mcpPath(MESSAGES_ROUTE), res)
     legacySseSessions.set(transport.sessionId, {
       credentialState,
       server,
@@ -409,8 +424,9 @@ export const createRequestListener =
   async (req: IncomingMessage, res: ServerResponse): Promise<void> => {
     try {
       const url = new URL(req.url ?? "", "http://localhost")
+      const route = routeOf(url.pathname)
       // Connector profiles: own CORS, Origin check, auth and session store.
-      const profileTransport = PROFILE_TRANSPORTS.get(url.pathname)
+      const profileTransport = route && PROFILE_TRANSPORTS.get(route)
       if (profileTransport) {
         await profileTransport(req, res, createMcpServer)
         return
@@ -444,25 +460,24 @@ export const createRequestListener =
       if (
         env.CHATBOTX_MCP_OAUTH_ENABLED === "true" &&
         req.method !== "OPTIONS" &&
-        (url.pathname === env.CHATBOTX_MCP_SSE_PATH ||
-          url.pathname === env.CHATBOTX_MCP_MESSAGES_PATH) &&
-        !(await authorizeRequest(req, res, url.pathname))
+        (route === SSE_ROUTE || route === MESSAGES_ROUTE) &&
+        !(await authorizeRequest(req, res, route))
       ) {
         return
       }
       // A POST to the SSE path comes from a Streamable HTTP client pointed at
       // the SSE URL; serve it like the messages path instead of a 405.
-      if (url.pathname === env.CHATBOTX_MCP_SSE_PATH && req.method === "POST") {
+      if (route === SSE_ROUTE && req.method === "POST") {
         await handleMessagesRequest(req, res, createMcpServer)
         return
       }
 
-      if (url.pathname === env.CHATBOTX_MCP_SSE_PATH) {
+      if (route === SSE_ROUTE) {
         await handleSseRequest(req, res, createMcpServer)
         return
       }
 
-      if (url.pathname === env.CHATBOTX_MCP_MESSAGES_PATH) {
+      if (route === MESSAGES_ROUTE) {
         await handleMessagesRequest(req, res, createMcpServer)
         return
       }
@@ -488,33 +503,36 @@ export const createRequestListener =
     }
   }
 
-/** The fixed profile paths must not collide with configurable legacy paths. */
-export const assertNoProfilePathCollision = (): void => {
-  for (const path of [
-    env.CHATBOTX_MCP_SSE_PATH,
-    env.CHATBOTX_MCP_MESSAGES_PATH,
-  ]) {
-    if (
-      PROFILE_TRANSPORTS.has(path) ||
-      path.startsWith(protectedResourcePrefix)
-    ) {
-      throw new Error(
-        `MCP transport path "${path}" collides with a fixed connector-profile path or OAuth metadata routes`,
-      )
-    }
+const REMOVED_PATH_VARIABLES = [
+  "CHATBOTX_MCP_MESSAGES_PATH",
+  "CHATBOTX_MCP_SSE_PATH",
+] as const
+
+/**
+ * Refuses to start while a removed per-route path variable is still set:
+ * ignoring it would silently move the routes and break every client.
+ */
+export const assertMcpPathConfig = (): void => {
+  const stale = REMOVED_PATH_VARIABLES.filter(
+    (name) => process.env[name] !== undefined,
+  )
+  if (stale.length > 0) {
+    throw new Error(
+      `${stale.join(", ")} ${stale.length > 1 ? "were" : "was"} removed. Set CHATBOTX_MCP_BASE_PATH to the shared prefix instead (for example "/mcp" for /mcp/messages and /mcp/sse) and unset the old variable.`,
+    )
   }
 }
 
 export const runSseServer = async (
   createMcpServer: CreateMcpServerFn,
 ): Promise<void> => {
-  assertNoProfilePathCollision()
+  assertMcpPathConfig()
   const httpServer = createServer(createRequestListener(createMcpServer))
   const { promise: listening, resolve } = Promise.withResolvers<void>()
   httpServer.listen(env.CHATBOTX_MCP_PORT, env.CHATBOTX_MCP_HOST, resolve)
   await listening
 
   console.error(
-    `MCP Server running on http://${env.CHATBOTX_MCP_HOST}:${env.CHATBOTX_MCP_PORT}${env.CHATBOTX_MCP_SSE_PATH}`,
+    `MCP Server running on http://${env.CHATBOTX_MCP_HOST}:${env.CHATBOTX_MCP_PORT}${mcpPath(SSE_ROUTE)}`,
   )
 }

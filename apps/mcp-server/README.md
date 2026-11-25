@@ -213,7 +213,7 @@ A second, fixed profile serves OpenAI clients (ChatGPT, Codex) from the same pro
 
 | | Default profile | OpenAI profile |
 | --- | --- | --- |
-| Internal path | `/messages` | `/openai` |
+| Route (below `CHATBOTX_MCP_BASE_PATH`) | `/messages` | `/openai` |
 | Public path | `/mcp/messages` | `/mcp/openai` |
 | OAuth resource and audience | `<origin>/mcp` | `<origin>/mcp/openai` |
 | Tools | Scope-filtered default set plus `search_tools`, `call_tool`, `get_guide` | 36 API tools plus `get_guide` (37), filtered by the token's permission and scopes like the default profile |
@@ -245,7 +245,7 @@ A third fixed profile is the surface submitted to Anthropic's connector and plug
 
 | | Default profile | Claude profile |
 | --- | --- | --- |
-| Internal path | `/messages` | `/claude` |
+| Route (below `CHATBOTX_MCP_BASE_PATH`) | `/messages` | `/claude` |
 | Public path | `/mcp/messages` | `/mcp/claude` |
 | OAuth resource and audience | `<origin>/mcp` | `<origin>/mcp/claude` |
 | Tools | Scope-filtered default set plus `search_tools`, `call_tool`, `get_guide` | 50 API tools (33 read, 17 write) plus `get_guide`, scope-filtered |
@@ -306,8 +306,8 @@ hand-written `mcp.servers` entry, set `"transport": "streamable-http"` and `"aut
 without `auth`, OpenClaw sends no token and the server answers 401.
 
 The load balancer must forward `/mcp/*` to the MCP server **without stripping the
-`/mcp` prefix**. The builder serves protected-resource discovery under
-`/.well-known/oauth-protected-resource/mcp/*`.
+`/mcp` prefix**, and the server runs with `CHATBOTX_MCP_BASE_PATH=/mcp`. The builder
+serves protected-resource discovery under `/.well-known/oauth-protected-resource/mcp/*`.
 
 ### Option B — stdio (workspace token, local use)
 
@@ -400,8 +400,7 @@ cp .env.example .env
 | `CHATBOTX_MCP_TRANSPORT` | `stdio` \| `sse` \| `both` | `both` | No |
 | `CHATBOTX_MCP_HOST` | SSE server host | `0.0.0.0` | No |
 | `CHATBOTX_MCP_PORT` | SSE server port | `3333` | No |
-| `CHATBOTX_MCP_SSE_PATH` | SSE endpoint path | `/sse` | No |
-| `CHATBOTX_MCP_MESSAGES_PATH` | JSON-RPC messages path | `/messages` | No |
+| `CHATBOTX_MCP_BASE_PATH` | Prefix of every route (`<base>/messages`, `<base>/sse`, `<base>/openai`, `<base>/claude`). Empty when the proxy strips `/mcp`; `/mcp` when it forwards `/mcp/*` unchanged. Replaces `CHATBOTX_MCP_MESSAGES_PATH` and `CHATBOTX_MCP_SSE_PATH`; the server refuses to start while either is still set. | `""` | Yes (production: `/mcp`) |
 | `CHATBOTX_MCP_CORS_ORIGIN` | CORS origin allowed to call the SSE/HTTP endpoints | `*` | No |
 | `CHATBOTX_MCP_SERVER_NAME` | Display name sent to AI clients | `mcp` (brand-neutral for white-label) | No |
 | `CHATBOTX_MCP_SERVER_INSTRUCTIONS` | Instructions sent to AI clients on connect (helps ChatGPT know when to call tools) | built-in default | No |

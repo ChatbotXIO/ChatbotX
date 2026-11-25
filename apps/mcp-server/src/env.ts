@@ -16,6 +16,8 @@ const defaultMcpInstructions = [
   "Answer in the user's language. Distinguish created, queued, accepted, and delivered; state actions not performed.",
 ].join(" ")
 
+const MCP_BASE_PATH_PATTERN = /^(\/[A-Za-z0-9._~-]+)*$/
+
 export const env = createEnv({
   server: {
     CHATBOTX_API_KEY: z.string().trim().default(""),
@@ -24,8 +26,20 @@ export const env = createEnv({
     CHATBOTX_MCP_TRANSPORT: z.enum(["stdio", "sse", "both"]).default("both"),
     CHATBOTX_MCP_HOST: z.string().default("0.0.0.0"),
     CHATBOTX_MCP_PORT: z.coerce.number().int().positive().default(3333),
-    CHATBOTX_MCP_SSE_PATH: z.string().default("/sse"),
-    CHATBOTX_MCP_MESSAGES_PATH: z.string().default("/messages"),
+    // Prefix of every HTTP route: <base>/messages, <base>/sse, <base>/openai,
+    // <base>/claude. Empty when the proxy strips the prefix; "/mcp" when it
+    // forwards /mcp/* unchanged (production).
+    CHATBOTX_MCP_BASE_PATH: z
+      .string()
+      .regex(
+        MCP_BASE_PATH_PATTERN,
+        'Use "" or a path such as "/mcp": leading slash, no trailing slash',
+      )
+      .refine(
+        (value) => !value.startsWith("/.well-known"),
+        "Must not overlap the OAuth metadata routes under /.well-known",
+      )
+      .default(""),
     CHATBOTX_MCP_CORS_ORIGIN: z.string().default("*"),
     // Comma-separated Origins allowed on the OpenAI endpoint (plus the public
     // URL origin). A request without an Origin header is allowed.

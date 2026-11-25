@@ -3,7 +3,6 @@ import type { AddressInfo } from "node:net"
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
 import { openAiProfileSpec } from "./fixtures/openai-profile-spec"
 
-const COLLISION = /collides/
 const AUDIENCE = "https://app.example.com/mcp/openai"
 const introspect = vi.hoisted(() => vi.fn())
 
@@ -332,12 +331,32 @@ describe("OpenAI metadata and paths", () => {
     })
   })
 
-  test("legacy paths cannot collide with /openai", async () => {
-    vi.stubEnv("CHATBOTX_MCP_MESSAGES_PATH", "/openai")
+  test("the OpenAI profile is served under the base path", async () => {
+    vi.stubEnv("CHATBOTX_MCP_BASE_PATH", "/mcp")
     vi.resetModules()
-    const { assertNoProfilePathCollision } = await import(
-      "../src/server/sse-server"
+    const { createRequestListener } = await import("../src/server/sse-server")
+    const { createMcpServer } = await import("../src/server/create-mcp-server")
+    const prefixed = createServer(createRequestListener(createMcpServer))
+    await new Promise<void>((resolve) =>
+      prefixed.listen(0, "127.0.0.1", resolve),
     )
-    expect(assertNoProfilePathCollision).toThrow(COLLISION)
+    try {
+      const url = `http://127.0.0.1:${(prefixed.address() as AddressInfo).port}`
+      const response = await fetch(`${url}/mcp/openai`, {
+        body: JSON.stringify(initialize),
+        headers: {
+          Accept: "application/json, text/event-stream",
+          "Content-Type": "application/json",
+        },
+        method: "POST",
+      })
+      expect(response.status).toBe(401)
+      expect(response.headers.get("www-authenticate")).toContain(
+        'resource_metadata="https://app.example.com/.well-known/oauth-protected-resource/mcp/openai"',
+      )
+    } finally {
+      prefixed.closeAllConnections()
+      await new Promise((resolve) => prefixed.close(resolve))
+    }
   })
 })
