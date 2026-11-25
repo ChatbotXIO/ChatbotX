@@ -204,6 +204,7 @@ async function resolveWhatsappConnectContext({
   ownerId: string
   session: WhatsappSignupSessionAuthorized | undefined
   whatsappSettings: WhatsappCredential
+  whatsappCredentialId: string
   originUrl: string
 }> {
   // Every non-session request's `workspaceId` is client-supplied and
@@ -234,6 +235,7 @@ async function resolveWhatsappConnectContext({
     ownerId,
     session,
     whatsappSettings: whatsappCredential.config,
+    whatsappCredentialId: whatsappCredential.id,
     // Provider-facing URLs (the webhook override_callback_uri sent to Meta on
     // manual connect, and the stored OAuth redirectUrl) must live on a host
     // registered with Meta: the reseller's own custom domain for a
@@ -335,6 +337,7 @@ async function finishPreparedWhatsappConnect({
   ownerId,
   session,
   whatsappSettings,
+  whatsappCredentialId,
   originUrl,
   prepared,
   userId,
@@ -343,6 +346,7 @@ async function finishPreparedWhatsappConnect({
   ownerId: string
   session: WhatsappSignupSessionAuthorized | undefined
   whatsappSettings: WhatsappCredential
+  whatsappCredentialId: string
   originUrl: string
   prepared: DirectConnectInput
   userId: string
@@ -388,6 +392,8 @@ async function finishPreparedWhatsappConnect({
     platformType,
     ownerId,
     userId,
+    // A manual connection brings its own token and is not tied to the app.
+    platformCredentialId: isManual ? null : whatsappCredentialId,
   })
   const { integrationRow, connectedWorkspaceId, phoneName } = persisted
 
@@ -461,6 +467,7 @@ async function persistWhatsappNumber({
   platformType,
   ownerId,
   userId,
+  platformCredentialId,
 }: {
   prepared: DirectConnectInput
   whatsappSettings: WhatsappCredential
@@ -470,6 +477,7 @@ async function persistWhatsappNumber({
   platformType: Awaited<ReturnType<typeof resolveCoexistState>>["platformType"]
   ownerId: string
   userId: string
+  platformCredentialId: string | null
 }): Promise<PersistedWhatsappNumber> {
   const { accessToken, wabaId, businessId, phoneNumber, workspaceId } = prepared
 
@@ -526,6 +534,7 @@ async function persistWhatsappNumber({
       auth,
       isCoexist,
       platformType,
+      platformCredentialId,
       signupSession: prepared.signupSession,
       hostTenantId: await resolveRequestTenantId(),
     })
@@ -579,8 +588,13 @@ export async function connectWhatsappNumber({
   }
 
   try {
-    const { ownerId, session, whatsappSettings, originUrl } =
-      await resolveWhatsappConnectContext({ input, userId })
+    const {
+      ownerId,
+      session,
+      whatsappSettings,
+      whatsappCredentialId,
+      originUrl,
+    } = await resolveWhatsappConnectContext({ input, userId })
 
     const prepared = await prepareConnectInput({
       input,
@@ -601,6 +615,7 @@ export async function connectWhatsappNumber({
         ownerId,
         session,
         whatsappSettings,
+        whatsappCredentialId,
         originUrl,
         prepared,
         userId,

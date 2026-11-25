@@ -3,6 +3,7 @@ import {
   customDomainService,
   lineIntegrationService,
   platformCredentialService,
+  resolveCredentialOwnerIdForWorkspace,
   tenantService,
   workspaceMemberService,
 } from "@chatbotx.io/business"
@@ -76,6 +77,15 @@ const getCredentialScopedIntegrationRouting = (
     return {
       integrationIdentifier: payload.data.phoneNumberId,
       integrationType: "whatsapp",
+    }
+  }
+
+  // `processMarketingMessageWebhook` is a raw Page webhook change: it carries the
+  // Page id only, and only the Messenger handler emits it.
+  if ("pageId" in payload.data && typeof payload.data.pageId === "string") {
+    return {
+      integrationIdentifier: payload.data.pageId,
+      integrationType: "messenger",
     }
   }
 
@@ -154,10 +164,12 @@ const createCredentialScopedQueue = (
             integrationType as IntegrationType,
             integrationIdentifier,
           )
-        const inboxOwnerId =
-          await workspaceMemberService.findOwnerUserIdByWorkspaceId({
-            workspaceId: inbox.workspaceId,
-          })
+        // Same owner rule the connect flow and the worker use (tenant owner for
+        // a reseller-tenant workspace, else the workspace owner), so a
+        // sub-account's inbox belongs to its reseller's credential.
+        const inboxOwnerId = await resolveCredentialOwnerIdForWorkspace(
+          inbox.workspaceId,
+        )
 
         if (inboxOwnerId === ownerId) {
           return true
@@ -386,9 +398,16 @@ export const handleWebhook = async (
         // biome-ignore lint/suspicious/noExplicitAny: safe pass value
       } as any,
       req: normalizeCredentialScopedWebhookRequest(req, credentialId),
-      queue: credentialOwnerId
-        ? createCredentialScopedQueue(credentialOwnerId, routeScope)
-        : createRouteScopedQueue(routeScope),
+      // Only the broker (platform) route is unscoped: its secret is held by the
+      // platform. A reseller's secret (`/c/{id}` or custom domain) must never
+      // be able to inject jobs for an inbox it does not own.
+      queue:
+        (credentialOwnerId ?? customDomainOwnerId)
+          ? createCredentialScopedQueue(
+              (credentialOwnerId ?? customDomainOwnerId) as string,
+              routeScope,
+            )
+          : createRouteScopedQueue(routeScope),
     })
 
     return new Response(result as BodyInit)
@@ -449,7 +468,14 @@ const handleThreadsWebhook = async (req: NextRequest) => {
         // biome-ignore lint/suspicious/noExplicitAny: safe pass value
       } as any,
       req,
-      queue: integrationQueue,
+      // A reseller-owned app (found by its public appId) must only enqueue for
+      // inboxes of its own credential owner; only a platform app is unscoped.
+      queue: credential.userId
+        ? createCredentialScopedQueue(
+            credential.userId,
+            resolveRouteScope(credential.userId, credential.config),
+          )
+        : integrationQueue,
     })
 
     return new Response(result as BodyInit)
@@ -637,12 +663,19 @@ const handleTiktokWebhook = async (req: NextRequest, credentialId?: string) => {
   }
 
   const workspaceOwnerId =
-    credentialOwnerId || eventType === "authorization.removed"
+    eventType === "authorization.removed"
       ? await workspaceMemberService.findOwnerUserIdByWorkspaceId({
           workspaceId: integrationTiktok.workspaceId,
         })
       : undefined
-  if (credentialOwnerId && workspaceOwnerId !== credentialOwnerId) {
+  // Same owner rule as the other credential-scoped routes (a sub-account's
+  // inbox belongs to its reseller's credential).
+  if (
+    credentialOwnerId &&
+    (await resolveCredentialOwnerIdForWorkspace(
+      integrationTiktok.workspaceId,
+    )) !== credentialOwnerId
+  ) {
     logger.warn(
       {
         credentialOwnerId,

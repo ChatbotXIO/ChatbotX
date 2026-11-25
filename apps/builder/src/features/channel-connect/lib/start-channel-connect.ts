@@ -164,6 +164,8 @@ export async function startChannelConnect(
     callbackUrl: resolved.callbackUrl,
     actorUserId: userId,
     platformOwnerId,
+    platformCredentialId: resolved.credentialId,
+    platformClientId: resolved.clientId,
     originHost: new URL(getPublicUrlFromRequest(req)).host,
   }
 

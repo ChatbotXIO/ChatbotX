@@ -122,6 +122,8 @@ export const startSession = async (
     callbackUrl: string
     targetConnectionId?: string | null
     platformOwnerId?: string | null
+    platformCredentialId?: string | null
+    platformClientId?: string | null
     originHost?: string | null
     returnUrl?: string | null
   } & StartSessionTarget &
@@ -152,6 +154,8 @@ export const startSession = async (
     },
     targetConnectionId: input.targetConnectionId,
     platformOwnerId: input.platformOwnerId,
+    platformCredentialId: input.platformCredentialId,
+    platformClientId: input.platformClientId,
     originHost: input.originHost,
     returnUrl: input.returnUrl,
     ...actorRefOf(input),
@@ -665,6 +669,10 @@ const completeReconnect = async (input: {
                 values: {
                   authExpiresAt,
                   lastError: null,
+                  // Reconnect writes the new pin together with the new auth.
+                  ...(session.platformCredentialId
+                    ? { platformCredentialId: session.platformCredentialId }
+                    : {}),
                   integrationId: integrationId ?? connection.integrationId,
                   ...(isLegacySourceId
                     ? { sourceId: descriptor.sourceId }

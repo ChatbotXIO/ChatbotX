@@ -17,6 +17,7 @@ const { MockSendGridApiError, mockRunAction } = vi.hoisted(() => {
 // ---- mock: database client -----------------------------------------------
 vi.mock("@/lib/tenant/request-tenant", () => ({
   resolveRequestTenantId: async () => "root-tenant",
+  resolveRequestUserTenancy: async () => ({ tenantId: "1" }),
   canOpenWorkspaceOnHost: () => true,
   filterWorkspacesForHost: <T>(items: T[]) => items,
 }))

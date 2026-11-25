@@ -51,6 +51,8 @@ export type ConnectPhoneNumberInput = {
   auth: unknown
   isCoexist: boolean
   platformType: string
+  /** The WhatsApp app credential the number was connected with (OAuth/embedded signup only). */
+  platformCredentialId?: string | null
   /** Present on the session (embedded-signup picker) path: claim + bind inside the tx. */
   signupSession?: ConnectPhoneNumberSignupSession
   /** Server-resolved tenant of the request host; see `workspaceService.resolveWorkspaceTenant`. */
@@ -238,6 +240,7 @@ function insertPhoneNumber(
           quotaConsumption,
           actorUserId: input.actorUserId,
           inboxId: inbox.id,
+          platformCredentialId: input.platformCredentialId,
         })
 
         const integration =

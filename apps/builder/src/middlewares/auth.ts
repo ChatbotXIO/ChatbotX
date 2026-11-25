@@ -15,6 +15,7 @@ import { getGuestClientIp } from "@/lib/rate-limit/guest-rate-limit"
 import {
   canOpenWorkspaceOnHost,
   resolveRequestTenantId,
+  resolveRequestUserTenancy,
 } from "@/lib/tenant/request-tenant"
 import { assertWorkspaceOwnerAccessForMethod } from "@/lib/workspace/authorize-workspace-access"
 import { base } from "./context"
@@ -82,6 +83,7 @@ export const workspaceAuthorizedMidddleware = base.middleware(
       !canOpenWorkspaceOnHost({
         workspaceTenantId: workspace.tenantId,
         hostTenantId: await resolveRequestTenantId(),
+        userTenancy: await resolveRequestUserTenancy(context.user.id),
         isSupportSession: access.isSupportSession,
       })
     ) {

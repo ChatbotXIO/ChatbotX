@@ -350,14 +350,38 @@ const runConnectSessionCallback = async ({
   // for `authorizeUrl` — never from this request's own origin, which is
   // `originHost` (not the registered broker/custom-domain host) once the
   // relay above has bounced the callback.
+  // The flow resolves the app it started with (the session pin), so the code
+  // is exchanged with the app that issued it even if the owner has since added
+  // their own app. If that credential no longer resolves to the same row (it
+  // was deleted or replaced), the connect stops instead of using another app.
   const resolved = await resolveOAuthCredential({
     provider: session.provider,
     ownerId: session.platformOwnerId,
+    pinnedCredentialId: session.platformCredentialId,
   })
   if (!resolved) {
     logger.error(
       { sessionId: session.id, provider: session.provider },
       "connect session platform credential missing",
+    )
+    await failSession(session, "internal_error", ["pending"])
+    return NOT_FOUND_OUTCOME
+  }
+  // Fail closed when the pin is gone (its credential was deleted mid-flow, which
+  // nulls it): the app's clientId recorded at start must still match.
+  if (
+    (session.platformCredentialId &&
+      resolved.credentialId !== session.platformCredentialId) ||
+    (session.platformClientId && resolved.clientId !== session.platformClientId)
+  ) {
+    logger.error(
+      {
+        sessionId: session.id,
+        provider: session.provider,
+        sessionCredentialId: session.platformCredentialId,
+        resolvedCredentialId: resolved.credentialId,
+      },
+      "connect session platform credential changed during the flow",
     )
     await failSession(session, "internal_error", ["pending"])
     return NOT_FOUND_OUTCOME
@@ -1270,6 +1294,7 @@ export const handleCallback = async (
             integrationId: facebookAdsIntegration.integrationId,
             ownerId: workspace.ownerId,
             actorUserId: userId,
+            platformCredentialId: facebookAdsCredential.id,
           })
         } catch (error) {
           logger.error(
@@ -1333,6 +1358,7 @@ export const handleCallback = async (
             integrationId,
             ownerId: workspace.ownerId,
             actorUserId: userId,
+            platformCredentialId: googleCredential.id,
           })
         } catch (error) {
           logger.error(

@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, test, vi } from "vitest"
 const threadsFindDecryptedByClientId = vi.fn()
 const threadsHandleRequest = vi.fn()
 const findOwnerUserIdByWorkspaceId = vi.fn()
+const resolveCredentialOwnerIdForWorkspace = vi.fn()
 const identifyInboxAndIntegrationAuthFromIdentifier = vi.fn()
 const integrationQueueAdd = vi.fn()
 const loggerInfo = vi.fn()
@@ -19,6 +20,7 @@ vi.mock("@chatbotx.io/business", () => ({
   },
   tenantService: { findById: vi.fn() },
   workspaceMemberService: { findOwnerUserIdByWorkspaceId },
+  resolveCredentialOwnerIdForWorkspace,
 }))
 
 vi.mock("@chatbotx.io/channel-registry/registry", () => ({
@@ -91,6 +93,10 @@ const asNextRequest = (url: string, body?: string) => {
 beforeEach(() => {
   vi.clearAllMocks()
   findOwnerUserIdByWorkspaceId.mockResolvedValue("owner-1")
+  resolveCredentialOwnerIdForWorkspace.mockResolvedValue("owner-1")
+  identifyInboxAndIntegrationAuthFromIdentifier.mockResolvedValue({
+    inbox: { workspaceId: "ws-1" },
+  })
   threadsFindDecryptedByClientId.mockResolvedValue({
     config: {
       clientId: "app-1",
@@ -153,7 +159,7 @@ describe("threads webhook routing", () => {
     )
   })
 
-  test("enqueues reseller sub-account events with the shared credential queue", async () => {
+  test("enqueues events for a sub-account inbox of the reseller (owner resolved to the reseller)", async () => {
     threadsFindDecryptedByClientId.mockResolvedValueOnce({
       config: {
         clientId: "app-1",
@@ -163,7 +169,7 @@ describe("threads webhook routing", () => {
       },
       userId: "reseller-1",
     })
-    findOwnerUserIdByWorkspaceId.mockResolvedValueOnce("sub-account-1")
+    resolveCredentialOwnerIdForWorkspace.mockResolvedValueOnce("reseller-1")
     threadsHandleRequest.mockImplementationOnce(async ({ queue }) => {
       await queue.add("incomingComment", {
         type: "incomingComment",
@@ -188,8 +194,37 @@ describe("threads webhook routing", () => {
           integrationType: "threads",
         }),
       }),
+      undefined,
     )
-    expect(findOwnerUserIdByWorkspaceId).not.toHaveBeenCalled()
+    expect(resolveCredentialOwnerIdForWorkspace).toHaveBeenCalled()
+  })
+
+  test("drops events a reseller-owned app signs for another owner's inbox", async () => {
+    threadsFindDecryptedByClientId.mockResolvedValueOnce({
+      config: {
+        clientId: "app-1",
+        clientSecret: "secret-1",
+        verifyToken: "verify-1",
+        version: "v1.0",
+      },
+      userId: "reseller-1",
+    })
+    resolveCredentialOwnerIdForWorkspace.mockResolvedValueOnce("someone-else")
+    threadsHandleRequest.mockImplementationOnce(async ({ queue }) => {
+      await queue.add("incomingComment", {
+        type: "incomingComment",
+        data: {
+          integrationIdentifier: "threads-account-9",
+          integrationType: "threads",
+          payload: {},
+        },
+      })
+      return "ok"
+    })
+
+    await handleWebhook("threads", request())
+
+    expect(integrationQueueAdd).not.toHaveBeenCalled()
   })
 
   test("sanitizes secrets in logs and returns a generic client-facing error", async () => {

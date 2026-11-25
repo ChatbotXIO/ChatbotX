@@ -313,6 +313,8 @@ class ConnectionStateService extends BaseService {
     inboxId: string
     workspaceId: string
     authExpiresAt?: Date | null
+    /** The app the re-granted auth belongs to; written with the new auth. Unchanged when omitted. */
+    platformCredentialId?: string | null
     tx?: DatabaseClient
     /**
      * Supplied by a caller that owns `tx` and may still fail AFTER this
@@ -354,7 +356,13 @@ class ConnectionStateService extends BaseService {
         connectionId: connection.id,
         event: "connect.completed",
         ownerId,
-        values: { authExpiresAt: input.authExpiresAt ?? null, lastError: null },
+        values: {
+          authExpiresAt: input.authExpiresAt ?? null,
+          lastError: null,
+          ...(input.platformCredentialId
+            ? { platformCredentialId: input.platformCredentialId }
+            : {}),
+        },
         tx: input.tx,
         quotaConsumption,
       })
@@ -416,6 +424,7 @@ class ConnectionStateService extends BaseService {
     inboxId: string
     workspaceId: string
     auth: AuthValue
+    platformCredentialId?: string | null
     writeAuth: (tx: DatabaseClient) => Promise<void>
   }): Promise<void> {
     // Owned here, not inside `reconnectInbox`: a COMMIT failure happens after
@@ -443,6 +452,7 @@ class ConnectionStateService extends BaseService {
           inboxId: input.inboxId,
           workspaceId: input.workspaceId,
           authExpiresAt: authExpiresAtOf(input.auth),
+          platformCredentialId: input.platformCredentialId,
           tx,
           quotaConsumption,
           ownerId,
@@ -475,7 +485,11 @@ class ConnectionStateService extends BaseService {
     ownerId?: string
     values?: Pick<
       typeof connectionModel.$inferInsert,
-      "authExpiresAt" | "lastError" | "providerEventAt" | "providerEventKind"
+      | "authExpiresAt"
+      | "lastError"
+      | "platformCredentialId"
+      | "providerEventAt"
+      | "providerEventKind"
     >
     tx?: DatabaseClient
     /** Required for a quota-consuming transition inside a caller-owned transaction. */

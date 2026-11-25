@@ -9,6 +9,7 @@ const tiktokHandleRequest = vi.fn()
 const markUnhealthyByIdentifier = vi.fn()
 const markLegacyInboxUnhealthy = vi.fn()
 const findOwnerUserIdByWorkspaceId = vi.fn()
+const resolveCredentialOwnerIdForWorkspace = vi.fn()
 const findDecryptedForUser = vi.fn()
 const findDecryptedForWebhook = vi.fn()
 const findDecryptedPlatform = vi.fn()
@@ -25,6 +26,7 @@ vi.mock("@chatbotx.io/business", () => ({
     markLegacyInboxUnhealthy,
   },
   workspaceMemberService: { findOwnerUserIdByWorkspaceId },
+  resolveCredentialOwnerIdForWorkspace,
   customDomainService: { findActiveByDomain: findActiveCustomDomain },
   platformCredentialService: {
     findDecryptedForUser,
@@ -102,6 +104,7 @@ beforeEach(() => {
   telegramHandleRequest.mockResolvedValue("ok")
   tiktokHandleRequest.mockResolvedValue("ok")
   findOwnerUserIdByWorkspaceId.mockResolvedValue("owner-1")
+  resolveCredentialOwnerIdForWorkspace.mockResolvedValue("owner-1")
   identifyInboxAndIntegrationAuthFromIdentifier.mockResolvedValue({
     inbox: { workspaceId: "workspace-1" },
   })
@@ -235,6 +238,84 @@ describe("credential-scoped webhook routing", () => {
     })
   })
 
+  describe("custom-domain route ownership scope", () => {
+    const sendIncomingMessageOnCustomDomain = async () => {
+      isCloud.mockReturnValue(true)
+      findActiveCustomDomain.mockResolvedValue({ tenantId: "tenant-1" })
+      findTenant.mockResolvedValue({ ownerId: "reseller-1", status: "active" })
+      findDecryptedForUser.mockResolvedValue({
+        config: { clientId: "client-1", clientSecret: "secret-1" },
+        userId: "reseller-1",
+      })
+      messengerHandleRequest.mockImplementationOnce(async ({ queue }) => {
+        await queue.add("incomingMessage", {
+          type: "incomingMessage",
+          data: {
+            integrationIdentifier: "page-1",
+            integrationType: "messenger",
+            payload: {},
+          },
+        })
+        return "ok"
+      })
+      return await handleWebhook(
+        "messenger",
+        Object.assign(
+          new Request("http://localhost/integrations/messenger/webhook", {
+            headers: { "x-domain": "reseller.example.com" },
+          }),
+          {
+            nextUrl: new URL("http://localhost/integrations/messenger/webhook"),
+          },
+        ) as never,
+      )
+    }
+
+    test("drops a job signed with the reseller secret for an inbox outside the tenant", async () => {
+      resolveCredentialOwnerIdForWorkspace.mockResolvedValue("someone-else")
+
+      const response = await sendIncomingMessageOnCustomDomain()
+
+      expect(response.status).toBe(200)
+      expect(integrationQueueAdd).not.toHaveBeenCalled()
+    })
+
+    test("passes a job for a sub-account inbox of the reseller", async () => {
+      // Sub-account workspace: owner is not the tenant owner, but the shared
+      // helper resolves the tenant owner (the reseller).
+      resolveCredentialOwnerIdForWorkspace.mockResolvedValue("reseller-1")
+
+      const response = await sendIncomingMessageOnCustomDomain()
+
+      expect(response.status).toBe(200)
+      expect(integrationQueueAdd).toHaveBeenCalledOnce()
+    })
+
+    test("leaves the platform-credential route unscoped", async () => {
+      findDecryptedPlatform.mockResolvedValue({
+        config: { clientId: "client-1", clientSecret: "secret-1" },
+      })
+      messengerHandleRequest.mockImplementationOnce(async ({ queue }) => {
+        await queue.add("incomingMessage", {
+          type: "incomingMessage",
+          data: {
+            integrationIdentifier: "page-1",
+            integrationType: "messenger",
+            payload: {},
+          },
+        })
+        return "ok"
+      })
+
+      await handleWebhook(
+        "messenger",
+        asNextRequest("http://localhost/integrations/messenger/webhook"),
+      )
+
+      expect(resolveCredentialOwnerIdForWorkspace).not.toHaveBeenCalled()
+    })
+  })
+
   describe("provider account events", () => {
     const accountEventJob = {
       type: "providerAccountEvent",
@@ -313,7 +394,7 @@ describe("credential-scoped webhook routing", () => {
       config: { clientId: "client-1", clientSecret: "secret-1" },
       userId: "owner-1",
     })
-    findOwnerUserIdByWorkspaceId.mockResolvedValue("owner-2")
+    resolveCredentialOwnerIdForWorkspace.mockResolvedValue("owner-2")
     messengerHandleRequest.mockImplementationOnce(async ({ queue }) => {
       await queue.add("incomingMessage", {
         type: "incomingMessage",
@@ -337,6 +418,35 @@ describe("credential-scoped webhook routing", () => {
     ).resolves.toMatchObject({ status: 200 })
 
     expect(integrationQueueAdd).not.toHaveBeenCalled()
+  })
+
+  test("authorises a Page-only marketing message job by its page id", async () => {
+    isCloud.mockReturnValue(true)
+    findDecryptedForWebhook.mockResolvedValue({
+      config: { clientId: "client-1", clientSecret: "secret-1" },
+      userId: "owner-1",
+    })
+    messengerHandleRequest.mockImplementationOnce(async ({ queue }) => {
+      await queue.add("processMarketingMessageWebhook", {
+        type: "processMarketingMessageWebhook",
+        data: { pageId: "page-1", field: "marketing_messages", value: {} },
+      })
+      return "ok"
+    })
+
+    await handleWebhook(
+      "messenger",
+      asNextRequest(
+        "http://localhost/integrations/messenger/webhook/c/credential-1",
+      ),
+      "credential-1",
+    )
+
+    expect(identifyInboxAndIntegrationAuthFromIdentifier).toHaveBeenCalledWith(
+      "messenger",
+      "page-1",
+    )
+    expect(integrationQueueAdd).toHaveBeenCalledOnce()
   })
 
   test("validates a repeated credential-scoped inbox identifier once", async () => {
@@ -370,7 +480,7 @@ describe("credential-scoped webhook routing", () => {
     ).resolves.toMatchObject({ status: 200 })
 
     expect(identifyInboxAndIntegrationAuthFromIdentifier).toHaveBeenCalledOnce()
-    expect(findOwnerUserIdByWorkspaceId).toHaveBeenCalledOnce()
+    expect(resolveCredentialOwnerIdForWorkspace).toHaveBeenCalledOnce()
     expect(integrationQueueAdd).toHaveBeenCalledTimes(2)
   })
 
@@ -618,7 +728,7 @@ describe("credential-scoped TikTok webhook routing", () => {
       openId: "open-2",
       workspaceId: "workspace-2",
     })
-    findOwnerUserIdByWorkspaceId.mockResolvedValue("owner-2")
+    resolveCredentialOwnerIdForWorkspace.mockResolvedValue("owner-2")
 
     const response = await handleWebhook(
       "tiktok",
