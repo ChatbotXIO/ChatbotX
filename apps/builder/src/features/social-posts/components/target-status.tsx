@@ -16,6 +16,7 @@ import { ExternalLinkIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { useState } from "react"
 import { toast } from "sonner"
+import { ProviderNetworkIcon } from "@/features/social-accounts/components/provider-avatar"
 import { orpc } from "@/lib/orpc/query"
 import { type ComposerPost, PROVIDER_LABELS } from "../lib/composer-state"
 import { invalidateSocialPost } from "../lib/invalidate-social-post"
@@ -154,6 +155,7 @@ export const TargetStatusList = ({
             className="flex flex-wrap items-center gap-2 rounded-xl border bg-card p-3 text-sm"
             key={target.id}
           >
+            <ProviderNetworkIcon decorative provider={target.provider} />
             <span className="min-w-0 flex-1 truncate font-medium">
               {PROVIDER_LABELS[target.provider]} · {target.destination.name}
             </span>

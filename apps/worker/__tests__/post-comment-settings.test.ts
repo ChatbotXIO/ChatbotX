@@ -318,13 +318,11 @@ describe("countPhoneComment", () => {
     expect(mocks.recordPhoneComment).not.toHaveBeenCalled()
   })
 
-  test("a failing counter propagates so the job retries and counts it", async () => {
+  test("a failing counter never fails the job (the steps after it, such as leaderboard scoring, still run)", async () => {
     mocks.recordPhoneComment.mockRejectedValueOnce(new Error("db down"))
 
-    await expect(countPhoneComment(countInput())).rejects.toThrow("db down")
-
-    await countPhoneComment(countInput())
-    expect(mocks.recordPhoneComment).toHaveBeenCalledTimes(2)
+    await expect(countPhoneComment(countInput())).resolves.toBeUndefined()
+    expect(mocks.recordPhoneComment).toHaveBeenCalledTimes(1)
   })
 })
 

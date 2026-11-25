@@ -6,7 +6,10 @@ import { CheckIcon } from "lucide-react"
 import Link from "next/link"
 import { useTranslations } from "next-intl"
 import { useState } from "react"
-import { ProviderAvatar } from "@/features/social-accounts/components/provider-avatar"
+import {
+  ProviderAvatar,
+  ProviderNetworkIcon,
+} from "@/features/social-accounts/components/provider-avatar"
 import { connectTabPath } from "@/features/social-accounts/lib/connect-route"
 import { PROVIDER_LABELS } from "../lib/composer-state"
 import {
@@ -78,6 +81,7 @@ export const DestinationPicker = ({
             onClick={() => setProviderChoice(item)}
             type="button"
           >
+            <ProviderNetworkIcon decorative provider={item} />
             {PROVIDER_LABELS[item]}
           </button>
         ))}

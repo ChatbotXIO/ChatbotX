@@ -453,17 +453,18 @@ async function resolveJsonBodyVariables(
       if (systemValue !== null) {
         mapping[variable] = JSON.stringify(systemValue).slice(1, -1)
       }
+    } else if (customFieldsMap.has(variable)) {
+      const rawValue = String(customFieldsMap.get(variable)?.value)
+      mapping[variable] = JSON.stringify(rawValue).slice(1, -1)
     } else if (isPostCommentVariable(variable)) {
-      // Run-scoped to the comment this flow run is about; "" outside one.
+      // Run-scoped to the comment this flow run is about; "" outside one. A
+      // custom field of the same name wins, as in every other interpolation.
       const value = await resolvePostCommentVariable(
         variables,
         variable,
         getContactTimezone(variables),
       )
       mapping[variable] = JSON.stringify(value).slice(1, -1)
-    } else if (customFieldsMap.has(variable)) {
-      const rawValue = String(customFieldsMap.get(variable)?.value)
-      mapping[variable] = JSON.stringify(rawValue).slice(1, -1)
     }
   }
 

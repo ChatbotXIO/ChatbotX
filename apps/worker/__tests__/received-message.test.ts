@@ -5839,12 +5839,13 @@ describe("contact source taxonomy", () => {
       expect(automationData()).toBeDefined()
     })
 
-    test("a failing phone count fails the job so the retry counts it", async () => {
+    test("a failing phone count never fails the job, so the steps that run once per new comment still run", async () => {
       mockRecordPhoneComment.mockRejectedValueOnce(new Error("db down"))
 
-      await expect(receiveComment(comment("0912 345 678"))).rejects.toThrow(
-        "db down",
-      )
+      await expect(
+        receiveComment(comment("0912 345 678")),
+      ).resolves.not.toThrow()
+      expect(mockRecordPhoneComment).toHaveBeenCalledTimes(1)
     })
 
     test("a redelivered comment asks the counter again; its mark keeps the count to one", async () => {
