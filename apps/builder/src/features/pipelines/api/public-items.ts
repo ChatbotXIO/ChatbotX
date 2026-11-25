@@ -193,7 +193,7 @@ export const pipelineItemsPublicRouter = {
         "Moves the item to another stage of the same pipeline. Get stage ids from `pipelines.get`. To move it to another pipeline use `pipelines.transferItem`.",
       tags: TAGS,
       spec: mcpSpec({
-        destructiveHint: false,
+        destructiveHint: true,
         idempotentHint: true,
         openWorldHint: false,
         readOnlyHint: false,

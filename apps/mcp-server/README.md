@@ -213,7 +213,7 @@ A second, fixed profile serves OpenAI clients (ChatGPT, Codex) from the same pro
 
 | | Default profile | OpenAI profile |
 | --- | --- | --- |
-| Route (below `CHATBOTX_MCP_BASE_PATH`) | `/messages` | `/openai` |
+| Route below the base path | `/messages` | `/openai` |
 | Public path | `/mcp/messages` | `/mcp/openai` |
 | OAuth resource and audience | `<origin>/mcp` | `<origin>/mcp/openai` |
 | Tools | Scope-filtered default set plus `search_tools`, `call_tool`, `get_guide` | 36 API tools plus `get_guide` (37), filtered by the token's permission and scopes like the default profile |
@@ -245,7 +245,7 @@ A third fixed profile is the surface submitted to Anthropic's connector and plug
 
 | | Default profile | Claude profile |
 | --- | --- | --- |
-| Route (below `CHATBOTX_MCP_BASE_PATH`) | `/messages` | `/claude` |
+| Route below the base path | `/messages` | `/claude` |
 | Public path | `/mcp/messages` | `/mcp/claude` |
 | OAuth resource and audience | `<origin>/mcp` | `<origin>/mcp/claude` |
 | Tools | Scope-filtered default set plus `search_tools`, `call_tool`, `get_guide` | 50 API tools (33 read, 17 write) plus `get_guide`, scope-filtered |

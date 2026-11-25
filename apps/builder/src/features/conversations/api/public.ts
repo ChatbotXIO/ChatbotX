@@ -282,7 +282,7 @@ export const conversationsPublicRouter = {
         "Changes a conversation's user or inbox-team assignee, or clears it when `assignedId` is null. Call `conversations.get` first to inspect the current assignee and `conversations.list` to find the id.",
       tags: ["Conversations"],
       spec: mcpSpec({
-        destructiveHint: false,
+        destructiveHint: true,
         idempotentHint: true,
         openWorldHint: false,
         readOnlyHint: false,
