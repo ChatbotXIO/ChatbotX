@@ -202,7 +202,7 @@ importers:
         version: 9.10.1(@bull-board/ui@9.10.1(bullmq@5.78.0)(typescript@5.9.3))(bullmq@5.78.0)(typescript@5.9.3)
       '@bull-board/hono':
         specifier: ^9.10.1
-        version: 9.10.1(bullmq@5.78.0)(hono@4.13.12)(typescript@5.9.3)
+        version: 9.10.1(bullmq@5.78.0)(hono@4.13.22)(typescript@5.9.3)
       '@bull-board/ui':
         specifier: ^9.10.1
         version: 9.10.1(bullmq@5.78.0)(typescript@5.9.3)
@@ -406,7 +406,7 @@ importers:
         version: 3.4.0(react@19.2.5)
       '@hono/node-server':
         specifier: ^2.1.6
-        version: 2.1.8(hono@4.13.12)
+        version: 2.1.8(hono@4.13.22)
       '@hookform/resolvers':
         specifier: ^5.2.2
         version: 5.4.0(react-hook-form@7.77.0(react@19.2.5))
@@ -501,8 +501,8 @@ importers:
         specifier: ^4.19.1
         version: 4.19.1(react@19.2.5)
       hono:
-        specifier: ^4.13.12
-        version: 4.13.12
+        specifier: ^4.13.16
+        version: 4.13.22
       html-to-text:
         specifier: ^9.0.5
         version: 9.0.5
@@ -7044,6 +7044,9 @@ packages:
   '@types/estree@1.0.10':
     resolution: {integrity: sha512-lTyOMnOcmRBzdCv6/4zUZCrEhV0xrqQiUZBZtVcbmLHBXKLnN8q89v/wKRF/Q0HbwVsqbIG3o5HDoFl9sduM+g==}
 
+  '@types/estree@1.0.11':
+    resolution: {integrity: sha512-YBdNe5JcjYR0sPhJW1QIeRCmI11YhYvaRuGCs9+WCeTTb+Yhb2BE2XMe5/wAqF10FK5g3+q1PDhQABfT7aX0gg==}
+
   '@types/facebook-js-sdk@3.3.13':
     resolution: {integrity: sha512-UOzdxRncSSbiWAhfKsWfwtVSoCG11ap4cYhWzVJ26DLs83M2LPRlPzKKOMPjTo4Fb6pdmjfMUgNuh3UbdPtjWA==}
 
@@ -8759,12 +8762,8 @@ packages:
   help-me@5.0.0:
     resolution: {integrity: sha512-7xgomUX6ADmcYzFik0HzAxh/73YlKR9bmFzf51CZwR+b6YtzU2m0u49hQCqV6SvlqIqsaxovfwdvbnsw3b/zpg==}
 
-  hono@4.13.12:
-    resolution: {integrity: sha512-6E2QDAc9Ick9Sq77ZrGS/dk2WUYni91aufTw6LJKpV7w8kW5/GxVUc650FOADOmlwg3K+f7Pun6XlV+pYmW6gw==}
-    engines: {node: '>=16.9.0'}
-
-  hono@4.13.13:
-    resolution: {integrity: sha512-CQ46U0ZkAGmbT/4UxdzzGJpacP2IeKgY4a5/tOI9AABbpOMfK739wfDXmv1usCk+3RkKj1hQy4/fjhiwa2xlrA==}
+  hono@4.13.22:
+    resolution: {integrity: sha512-wncKd5/40Pj8grx0RZ2fgNIicFEmVFwIHT5UFLTnphR8I6AQWFf9c2JoM6ZJ9g8y4pMzg3sNlCVNe0m2Yclg0Q==}
     engines: {node: '>=16.9.0'}
 
   hookable@6.1.1:
@@ -12267,12 +12266,12 @@ snapshots:
     transitivePeerDependencies:
       - typescript
 
-  '@bull-board/hono@9.10.1(bullmq@5.78.0)(hono@4.13.12)(typescript@5.9.3)':
+  '@bull-board/hono@9.10.1(bullmq@5.78.0)(hono@4.13.22)(typescript@5.9.3)':
     dependencies:
       '@bull-board/api': 9.10.1(@bull-board/ui@9.10.1(bullmq@5.78.0)(typescript@5.9.3))(bullmq@5.78.0)(typescript@5.9.3)
       '@bull-board/ui': 9.10.1(bullmq@5.78.0)(typescript@5.9.3)
       ejs: 6.0.1
-      hono: 4.13.12
+      hono: 4.13.22
     transitivePeerDependencies:
       - bull
       - bullmq
@@ -12891,13 +12890,9 @@ snapshots:
     dependencies:
       react: 19.2.5
 
-  '@hono/node-server@2.1.8(hono@4.13.12)':
+  '@hono/node-server@2.1.8(hono@4.13.22)':
     dependencies:
-      hono: 4.13.12
-
-  '@hono/node-server@2.1.8(hono@4.13.13)':
-    dependencies:
-      hono: 4.13.13
+      hono: 4.13.22
 
   '@hookform/resolvers@5.4.0(react-hook-form@7.77.0(react@19.2.5))':
     dependencies:
@@ -13133,7 +13128,7 @@ snapshots:
 
   '@modelcontextprotocol/sdk@1.32.0(zod@4.6.7)':
     dependencies:
-      '@hono/node-server': 2.1.8(hono@4.13.13)
+      '@hono/node-server': 2.1.8(hono@4.13.22)
       ajv: 8.20.0
       ajv-formats: 3.0.1(ajv@8.20.0)
       content-type: 1.0.5
@@ -13143,7 +13138,7 @@ snapshots:
       eventsource-parser: 3.1.1
       express: 5.3.0
       express-rate-limit: 8.7.1(express@5.3.0)
-      hono: 4.13.13
+      hono: 4.13.22
       jose: 6.2.13
       json-schema-typed: 8.0.2
       pkce-challenge: 5.0.1
@@ -14433,6 +14428,8 @@ snapshots:
   '@types/deep-eql@4.0.2': {}
 
   '@types/estree@1.0.10': {}
+
+  '@types/estree@1.0.11': {}
 
   '@types/facebook-js-sdk@3.3.13': {}
 
@@ -16096,9 +16093,7 @@ snapshots:
 
   help-me@5.0.0: {}
 
-  hono@4.13.12: {}
-
-  hono@4.13.13: {}
+  hono@4.13.22: {}
 
   hookable@6.1.1: {}
 
@@ -18351,7 +18346,7 @@ snapshots:
 
   rollup@4.68.8:
     dependencies:
-      '@types/estree': 1.0.10
+      '@types/estree': 1.0.11
     optionalDependencies:
       '@rollup/rollup-android-arm-eabi': 4.68.8
       '@rollup/rollup-android-arm64': 4.68.8
