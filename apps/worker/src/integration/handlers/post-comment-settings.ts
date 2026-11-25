@@ -137,6 +137,46 @@ export async function countPhoneComment(input: {
   }
 }
 
+/**
+ * Counts a stored comment in its post's comment count when the channel's
+ * platform reports none (the capability `commentCountSource: "webhook"`, e.g.
+ * Threads); for every other channel it does nothing. Runs for every delivery
+ * right after the comment is saved: a mark on the comment guards the count, so
+ * a redelivery counts nothing more. Best effort: a failure is logged and never
+ * fails the job, for the same reason as `countPhoneComment`.
+ */
+export async function countWebhookComment(input: {
+  channel: string
+  channelPostId: string | null
+  externalPostId: string
+  inboxId: string
+  integrationId: string
+  savedComment: { createdAt: Date; id: string }
+  sourceAccountId: string
+  workspaceId: string
+}): Promise<void> {
+  try {
+    await channelPostService.recordWebhookComment({
+      channel: input.channel,
+      channelPostId: input.channelPostId,
+      comment: {
+        createdAt: input.savedComment.createdAt,
+        id: input.savedComment.id,
+      },
+      externalPostId: input.externalPostId,
+      inboxId: input.inboxId,
+      integrationId: input.integrationId,
+      sourceAccountId: input.sourceAccountId,
+      workspaceId: input.workspaceId,
+    })
+  } catch (err) {
+    logger.warn(
+      { err, externalPostId: input.externalPostId },
+      "Could not count a comment on its post; the comment is stored",
+    )
+  }
+}
+
 /** Reads the owner's message room at most once, on first use. */
 const onceRoom = (workspaceId: string): (() => Promise<boolean>) => {
   let pending: Promise<boolean> | undefined

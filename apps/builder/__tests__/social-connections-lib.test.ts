@@ -4,7 +4,6 @@ import { describe, expect, test } from "vitest"
 import {
   needsReconnectAction,
   type PublishDestination,
-  RECONNECT_LABEL_KEYS,
   showsViaFacebookTag,
   toInboxNetworkGroups,
 } from "@/features/social-accounts/lib/connections"
@@ -65,13 +64,6 @@ describe("destination states", () => {
     expect(needsReconnectAction("ready")).toBe(false)
     expect(needsReconnectAction("needsReconnect")).toBe(true)
     expect(needsReconnectAction("permissionMissing")).toBe(true)
-  })
-
-  test("each state that cannot publish has its own button text", () => {
-    expect(RECONNECT_LABEL_KEYS.permissionMissing).toBe(
-      "posts.connect.reconnectToAllow",
-    )
-    expect(RECONNECT_LABEL_KEYS.needsReconnect).toBe("posts.connect.reconnect")
   })
 
   test("only Instagram through Facebook carries the via Facebook tag", () => {

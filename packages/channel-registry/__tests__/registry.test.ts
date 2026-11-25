@@ -198,6 +198,44 @@ describe("post listing capability", () => {
     })
   })
 
+  test("a comment count comes from the webhook only where the platform reports none", () => {
+    expect(
+      Object.fromEntries(
+        POST_MANAGEMENT_CHANNELS.map((channel) => [
+          channel,
+          POST_CHANNEL_CAPABILITIES[channel].commentCountSource,
+        ]),
+      ),
+    ).toEqual({
+      instagram: "platform",
+      messenger: "platform",
+      threads: "webhook",
+      tiktok: "platform",
+    })
+  })
+
+  test("a webhook-counted channel reports no comment count in its listing", () => {
+    for (const channel of POST_MANAGEMENT_CHANNELS) {
+      if (POST_CHANNEL_CAPABILITIES[channel].commentCountSource === "webhook") {
+        expect(POST_CHANNEL_CAPABILITIES[channel].counts).toBe(false)
+      }
+    }
+  })
+
+  test("a channel is batch-readable exactly where its post handler has getPostsMetrics", () => {
+    const lookups: Record<string, HandlerLookup> = {
+      instagram: integrations.instagram as unknown as HandlerLookup,
+      messenger: integrations.messenger as unknown as HandlerLookup,
+      threads: integrations.threads as unknown as HandlerLookup,
+      tiktok: integrations.tiktok as unknown as HandlerLookup,
+    }
+    for (const channel of POST_MANAGEMENT_CHANNELS) {
+      expect(
+        lookups[channel].hasChannelHandler("post", "getPostsMetrics"),
+      ).toBe(POST_CHANNEL_CAPABILITIES[channel].metricsBatchRead)
+    }
+  })
+
   test("every channel tracked per post is listed", () => {
     for (const channel of postTrackingChannels) {
       expect(POST_MANAGEMENT_CHANNELS).toContain(channel)

@@ -2,7 +2,9 @@ import {
   channelPostCommentsService,
   channelPostExportService,
   channelPostManagementService,
+  channelPostMetricsRefreshService,
 } from "@chatbotx.io/business"
+import { refreshChannelPostNow } from "@chatbotx.io/channel-registry/channel-post-refresh"
 import type { z } from "zod"
 import type {
   bulkUpdateChannelPostManagementRequest,
@@ -38,6 +40,36 @@ export type CommentCaller = {
  * in one place.
  */
 export const channelPostManagementOperations = {
+  /**
+   * Reads the post from its channel inside the request and answers with the
+   * result and the post as it is now (`null` once removed). An unknown post is
+   * a not-found error before anything is read.
+   */
+  refreshNow: async (input: { id: string; workspaceId: string }) => {
+    await channelPostManagementService.get(input)
+    const outcome = await refreshChannelPostNow({
+      channelPostId: input.id,
+      workspaceId: input.workspaceId,
+    })
+    // `queued: true` is the deprecated acknowledgement of the earlier
+    // background refresh; old clients validate it.
+    if (outcome === "removed") {
+      return { outcome, post: null, queued: true as const }
+    }
+    return {
+      outcome,
+      post: await channelPostManagementService.get(input),
+      queued: true as const,
+    }
+  },
+
+  /** Asks for fresh counts of the posts a page shows (background read, one per inbox). */
+  refreshMetrics: async (workspaceId: string, ids: string[]) =>
+    await channelPostMetricsRefreshService.requestMetricsRefresh({
+      channelPostIds: ids,
+      workspaceId,
+    }),
+
   list: async (workspaceId: string, input: ListInput) => {
     const { cursor, hasComments = true, limit, sort, ...filters } = input
     return await channelPostManagementService.list({

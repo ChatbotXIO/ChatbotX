@@ -462,6 +462,23 @@ class MessageService extends BaseService {
   }
 
   /**
+   * Marks a comment as counted in its post's comment count; `true` only for the
+   * call that set the mark. Throws on a storage failure.
+   */
+  async markCommentCounted(props: {
+    createdAt: Date
+    id: string
+    workspaceId: string
+  }): Promise<boolean> {
+    const repo = await createMessageRepository()
+    return await repo.markCommentCounted(
+      props.id,
+      props.workspaceId,
+      props.createdAt,
+    )
+  }
+
+  /**
    * Marks a comment as counted in its post's phone-number count; `true` only
    * for the call that set the mark. Throws on a storage failure.
    */

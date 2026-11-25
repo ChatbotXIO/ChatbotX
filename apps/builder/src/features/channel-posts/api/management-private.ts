@@ -25,6 +25,8 @@ import {
   listChannelPostManagementRequest,
   listChannelPostManagementResponse,
   mergeChannelPostCommentsRequest,
+  refreshChannelPostMetricsRequest,
+  refreshChannelPostMetricsResponse,
   refreshChannelPostResponse,
   startChannelPostSyncRequest,
   startChannelPostSyncResponse,
@@ -183,10 +185,32 @@ export const channelPostManagementAPIs = {
     )
     .handler(
       async ({ input }) =>
-        await channelPostSyncService.requestPostRefresh({
+        await channelPostManagementOperations.refreshNow({
           id: input.id,
           workspaceId: input.workspaceId,
         }),
+    ),
+
+  privateRefreshChannelPostMetricsAPI: authorizedAPI
+    .route({
+      method: "POST",
+      path: `${base}/channel-posts/management/refresh-metrics`,
+      summary: "Refresh the counts of the posts a page shows",
+      tags,
+    })
+    .input(refreshChannelPostMetricsRequest.extend(inWorkspace))
+    .output(refreshChannelPostMetricsResponse)
+    .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
+    .use(
+      workspacePermissionMiddleware("broadcast"),
+      (input) => input.workspaceId,
+    )
+    .handler(
+      async ({ input }) =>
+        await channelPostManagementOperations.refreshMetrics(
+          input.workspaceId,
+          input.ids,
+        ),
     ),
 
   ...postTopicPrivateAPIs,

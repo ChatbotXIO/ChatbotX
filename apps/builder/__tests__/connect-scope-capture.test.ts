@@ -28,9 +28,11 @@ vi.mock("@chatbotx.io/business", () => ({
   tagSyncService: { enqueueChannelScan: mocks.tagSync },
 }))
 vi.mock("@chatbotx.io/integration-messenger", () => ({
-  debugToken: mocks.debugToken,
   integration: {},
   toAppAccessToken: () => "app-token",
+}))
+vi.mock("@chatbotx.io/integration-messenger/apis/token-scopes", () => ({
+  readTokenScopes: mocks.debugToken,
 }))
 vi.mock("@chatbotx.io/integration-instagram", () => ({ integration: {} }))
 vi.mock("@chatbotx.io/integration-instagram-facebook", () => ({
@@ -119,7 +121,10 @@ describe("scope capture at first connect", () => {
   })
 
   test("Messenger stores the debug_token scopes of the page token", async () => {
-    mocks.debugToken.mockResolvedValue({ scopes: ["pages_manage_posts"] })
+    mocks.debugToken.mockResolvedValue({
+      kind: "scopes",
+      scopes: ["pages_manage_posts"],
+    })
 
     await followUps.messenger?.({
       row: row({
@@ -145,7 +150,7 @@ describe("scope capture at first connect", () => {
   })
 
   test("Messenger stores null when debug_token fails, and the connect still proceeds", async () => {
-    mocks.debugToken.mockRejectedValue(new Error("graph"))
+    mocks.debugToken.mockResolvedValue({ kind: "failed" })
 
     await followUps.messenger?.({
       row: row({

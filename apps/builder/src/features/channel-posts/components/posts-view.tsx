@@ -41,6 +41,7 @@ import { usePostCounts } from "@/features/social-posts/hooks/use-calendar-posts"
 import { useDebouncedValue } from "@/hooks/use-debounced-value"
 import { orpc } from "@/lib/orpc/query"
 import { useExportFilteredComments } from "../hooks/use-export-filtered-comments"
+import { useRefreshVisiblePostMetrics } from "../hooks/use-refresh-visible-post-metrics"
 import { useRefreshWhenSyncSettles } from "../hooks/use-refresh-when-sync-settles"
 import { channelsReportLive } from "../lib/post-capability"
 import { listInputFromFilters, MAX_EXPORT_POSTS } from "../lib/posts-list-input"
@@ -240,6 +241,11 @@ export const PostsView = ({
 
   const rows = posts.data?.pages.flatMap((page) => page.items) ?? []
   const detailPost = rows.find((post) => post.id === detailPostId) ?? null
+  useRefreshVisiblePostMetrics({
+    enabled: showsChannels && !readOnly,
+    visibleIds: rows.map((post) => post.id),
+    workspaceId,
+  })
   const failedSyncs = failedConnectedSyncs(
     syncStatus.data?.items ?? [],
     inboxState.inboxes,

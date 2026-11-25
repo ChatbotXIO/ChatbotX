@@ -620,37 +620,56 @@ export class ShardedMessageRepository implements IMessageRepository {
     workspaceId: string,
     createdAt: Date,
   ): Promise<boolean> {
-    return this.setPhoneCountedMark({ createdAt, messageId, workspaceId })
+    return this.setCountedMark({
+      createdAt,
+      key: "phoneCounted",
+      messageId,
+      workspaceId,
+    })
+  }
+
+  markCommentCounted(
+    messageId: string,
+    workspaceId: string,
+    createdAt: Date,
+  ): Promise<boolean> {
+    return this.setCountedMark({
+      createdAt,
+      key: "commentCounted",
+      messageId,
+      workspaceId,
+    })
   }
 
   /**
-   * Sets the `phoneCounted` mark where it is not set yet, on every shard that
-   * may hold the message. Unlike `updateAcrossShards` it
-   * lets a shard failure propagate, so the caller can tell "already counted"
-   * from "could not write".
+   * Sets a "counted" mark (`phoneCounted`, `commentCounted`) where it is not
+   * set yet, on every shard that may hold the message. Unlike
+   * `updateAcrossShards` it lets a shard failure propagate, so the caller can
+   * tell "already counted" from "could not write".
    */
-  private async setPhoneCountedMark(input: {
+  private async setCountedMark(input: {
     createdAt: Date
+    key: "commentCounted" | "phoneCounted"
     messageId: string
     workspaceId: string
   }): Promise<boolean> {
-    const { createdAt, messageId, workspaceId } = input
-    const patch = sql`COALESCE(${messageModel.attributes}, '{}'::jsonb) || '{"phoneCounted": true}'::jsonb`
+    const { createdAt, key, messageId, workspaceId } = input
+    const patch = sql`COALESCE(${messageModel.attributes}, '{}'::jsonb) || ${JSON.stringify({ [key]: true })}::jsonb`
     let shards: MessageShardTimeRangeInfo[]
     try {
       const timeRangeShards = await this.getShardsForRange(createdAt, createdAt)
       const writeShard = await this.shardManager.getWriteShardInfo(workspaceId)
       shards = this.mergeWriteShard(timeRangeShards, writeShard)
     } catch (error) {
-      throw this.toStorageError("select shards for the phone-count mark", error)
+      throw this.toStorageError(`select shards for the ${key} mark`, error)
     }
     if (shards.length === 0) {
       throw new MessageShardUnavailableError(
-        "No message shards are available for the phone-count mark",
+        `No message shards are available for the ${key} mark`,
       )
     }
 
-    const markIsSet = sql`COALESCE(${messageModel.attributes}->>'phoneCounted', 'false') = 'true'`
+    const markIsSet = sql`COALESCE(${messageModel.attributes}->>${key}, 'false') = 'true'`
     const perShard = await Promise.all(
       shards.map(async (shardInfo) => {
         try {
@@ -668,7 +687,7 @@ export class ShardedMessageRepository implements IMessageRepository {
             )
             .returning({ id: messageModel.id })
         } catch (error) {
-          throw this.toStorageError("write the phone-count mark", error)
+          throw this.toStorageError(`write the ${key} mark`, error)
         }
       }),
     )

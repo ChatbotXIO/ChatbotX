@@ -73,9 +73,27 @@ describe("listPagePosts", () => {
       expect.objectContaining({
         headers: { Authorization: "Bearer page-token" },
         searchParams: expect.objectContaining({
-          fields: expect.stringContaining("comments.limit(0).summary(true)"),
+          // `filter(stream)`: Graph's default is `toplevel`, which leaves replies out.
+          fields: expect.stringContaining(
+            "comments.limit(0).summary(true).filter(stream)",
+          ),
           limit: "50",
         }),
+      }),
+    )
+  })
+
+  test("a single-post read asks for the same all-levels comment count", async () => {
+    mockGet.mockResolvedValue(feedPost())
+
+    await getManagedPost({ auth, postId: "page-1_100" })
+
+    expect(mockGet).toHaveBeenCalledWith(
+      expect.stringContaining("page-1_100"),
+      expect.objectContaining({
+        searchParams: {
+          fields: expect.stringContaining(".filter(stream)"),
+        },
       }),
     )
   })

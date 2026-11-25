@@ -1,10 +1,15 @@
 import { createId } from "@chatbotx.io/utils"
+import {
+  POST_CHANNEL_CAPABILITIES,
+  type PostManagementChannel,
+} from "@chatbotx.io/utils/channel"
 import type {
   ChannelPostContentType,
   ChannelPostLiveStatus,
 } from "@chatbotx.io/utils/channel-post"
 import { CHANNEL_POST_LIVE_STALE_AFTER_MS } from "@chatbotx.io/utils/channel-post"
 import {
+  CHANNEL_POST_COMMENTS_REPORTED_BITS,
   channelPostMetricBits,
   POST_METRIC_FRESH_POST_HOURS,
   POST_METRIC_WINDOW_DAYS,
@@ -114,8 +119,12 @@ const effectiveLiveRecheckAt = (observedAt: Date, recheckAt: Date): SQL =>
 
 const BIT = channelPostMetricBits
 
+/** Whether an observation at `observedAt` is newer than the stored count observation. */
+const fenceAccepts = (observedAt: Date): SQL =>
+  sql`(p."metricsFetchedAt" IS NULL OR p."metricsFetchedAt" < ${observedAt}::timestamptz)`
+
 /** The bits of the counts a `VALUES` row reports (a null count is not reported). */
-const LISTED_BITS = `((CASE WHEN v."commentsCount" IS NOT NULL THEN ${BIT.comments} ELSE 0 END) | (CASE WHEN v."reactionsCount" IS NOT NULL THEN ${BIT.reactions} ELSE 0 END) | (CASE WHEN v."sharesCount" IS NOT NULL THEN ${BIT.shares} ELSE 0 END))`
+const LISTED_BITS = `((CASE WHEN v."commentsCount" IS NOT NULL THEN ${CHANNEL_POST_COMMENTS_REPORTED_BITS} ELSE 0 END) | (CASE WHEN v."reactionsCount" IS NOT NULL THEN ${BIT.reactions} ELSE 0 END) | (CASE WHEN v."sharesCount" IS NOT NULL THEN ${BIT.shares} ELSE 0 END))`
 const listedBits = (): SQL => sql.raw(LISTED_BITS)
 
 /** The same mask as raw text, for the snapshot statement. */
@@ -131,12 +140,31 @@ const EFFECTIVE = {
 const mergedMask = (): SQL => sql.raw(MASK)
 
 /** The metric a stored count's bit stands for, as `CASE` operands. */
-type CountMetric = { bit: number; column: string }
-const COUNT_METRICS: CountMetric[] = [
-  { bit: BIT.comments, column: "commentsCount" },
-  { bit: BIT.reactions, column: "reactionsCount" },
-  { bit: BIT.shares, column: "sharesCount" },
-]
+type CountMetric = { column: string; requiredBits: number }
+
+/**
+ * `requiredBits` are the bits the PREVIOUS row must carry for a difference of
+ * this count to be a gain. For a channel whose comments total changed
+ * definition (capability `commentTotalRebaseline`) the comments total must also
+ * carry the current-definition bit: a row measured before the change is only
+ * re-baselined (gain 0) by its first read afterwards. Other channels need the
+ * plain comments bit. Decided here from the capability table, never in SQL.
+ */
+const countMetrics = (channel: string): CountMetric[] => {
+  const rebaseline =
+    POST_CHANNEL_CAPABILITIES[channel as PostManagementChannel]
+      ?.commentTotalRebaseline === true
+  return [
+    {
+      column: "commentsCount",
+      requiredBits: rebaseline
+        ? CHANNEL_POST_COMMENTS_REPORTED_BITS
+        : BIT.comments,
+    },
+    { column: "reactionsCount", requiredBits: BIT.reactions },
+    { column: "sharesCount", requiredBits: BIT.shares },
+  ]
+}
 
 /**
  * A bare row (composer or comment path, never measured) first listed soon after
@@ -152,20 +180,23 @@ const bareFreshCondition = (observedAt: Date): SQL =>
  * reported value; any other case (older bare row, newly known, not reported) is
  * 0, never a lifetime total and never a negative number made of an unknown.
  */
-const countGain = (observedAt: Date, { bit, column }: CountMetric): SQL =>
-  sql`(CASE WHEN p."metricsFetchedAt" IS NOT NULL AND (p."metricsKnownMask" & ${sql.raw(String(bit))}) > 0 AND v.${sql.identifier(column)} IS NOT NULL THEN v.${sql.identifier(column)} - p.${sql.identifier(column)} WHEN ${bareFreshCondition(observedAt)} AND v.${sql.identifier(column)} IS NOT NULL THEN v.${sql.identifier(column)} ELSE 0 END)`
+const countGain = (
+  observedAt: Date,
+  { column, requiredBits }: CountMetric,
+): SQL =>
+  sql`(CASE WHEN p."metricsFetchedAt" IS NOT NULL AND (p."metricsKnownMask" & ${requiredBits}::integer) = ${requiredBits}::integer AND v.${sql.identifier(column)} IS NOT NULL THEN v.${sql.identifier(column)} - p.${sql.identifier(column)} WHEN ${bareFreshCondition(observedAt)} AND v.${sql.identifier(column)} IS NOT NULL THEN v.${sql.identifier(column)} ELSE 0 END)`
 
 const viewsGain = (observedAt: Date): SQL =>
   sql`(CASE WHEN p."metricsFetchedAt" IS NOT NULL AND p."viewsCount" IS NOT NULL AND v."viewsCount" IS NOT NULL THEN v."viewsCount" - p."viewsCount" WHEN ${bareFreshCondition(observedAt)} AND v."viewsCount" IS NOT NULL THEN v."viewsCount" ELSE 0 END)`
-const engagementGain = (observedAt: Date): SQL =>
+const engagementGain = (observedAt: Date, metrics: CountMetric[]): SQL =>
   sql.join(
-    COUNT_METRICS.map((metric) => countGain(observedAt, metric)),
+    metrics.map((metric) => countGain(observedAt, metric)),
     sql` + `,
   )
 /** Any count moved (opposite moves of two counts must not cancel out). */
-const anyCountMoved = (observedAt: Date): SQL =>
+const anyCountMoved = (observedAt: Date, metrics: CountMetric[]): SQL =>
   sql.join(
-    COUNT_METRICS.map((metric) => sql`${countGain(observedAt, metric)} <> 0`),
+    metrics.map((metric) => sql`${countGain(observedAt, metric)} <> 0`),
     sql` OR `,
   )
 
@@ -235,12 +266,23 @@ export const upsertListedChannelPosts = async (
     observedAt?: Date
     posts: ListedChannelPost[]
     target: ListedPostsTarget
+    /**
+     * `listing` (default): a listing page, which may create posts and updates
+     * every reported column. `metricsOnly`: a read of counts for posts that
+     * already exist: it creates nothing and writes only the counts, their
+     * known mask, the engagement total and `metricsFetchedAt` (advanced on
+     * every accepted newer read, changed or not, so it is the observation
+     * fence). `metadataFetchedAt`, `removedAt`, the live columns and every
+     * description column are left exactly as they are.
+     */
+    mode?: "listing" | "metricsOnly"
     /** The workspace's IANA zone, which names the day of a snapshot (UTC when absent or unknown). */
     timezone?: string
   },
   tx: DatabaseClient = db,
 ): Promise<void> => {
   const { now, target } = input
+  const metricsOnly = input.mode === "metricsOnly"
   const posts = dedupePosts(input.posts)
   if (posts.length === 0) {
     return
@@ -253,14 +295,16 @@ export const upsertListedChannelPosts = async (
     input.timezone && isValidTimezone(input.timezone) ? input.timezone : "UTC"
   const rows = valueRows(posts)
   const day = localDay(observedAt, timezone)
+  const metrics = countMetrics(target.channel)
 
   await tx.transaction(async (client) => {
-    // New posts: a count the listing left out starts at zero (and unknown, see
-    // `metricsKnownMask`). Their first snapshot row is written by the same
-    // statement from what was inserted; a post first seen soon after it was
-    // published counts its first total as that day's gain, an older one only
-    // seeds a baseline.
-    await client.execute(sql`
+    if (!metricsOnly) {
+      // New posts: a count the listing left out starts at zero (and unknown, see
+      // `metricsKnownMask`). Their first snapshot row is written by the same
+      // statement from what was inserted; a post first seen soon after it was
+      // published counts its first total as that day's gain, an older one only
+      // seeds a baseline.
+      await client.execute(sql`
       WITH inserted AS (
         INSERT INTO "ChannelPost" (
           "id", "workspaceId", "inboxId", "channel", "integrationId", "sourceAccountId",
@@ -280,7 +324,7 @@ export const upsertListedChannelPosts = async (
           COALESCE(v."commentsCount", 0) + COALESCE(v."reactionsCount", 0) + COALESCE(v."sharesCount", 0),
           ${listedBits()},
           v."viewsCount", v."authorName", v."authorExternalId",
-          ${observedAt}::timestamptz, ${now}::timestamptz
+          ${observedAt}::timestamptz, ${observedAt}::timestamptz
         FROM (VALUES ${rows}) AS v(${valueColumns()})
         ON CONFLICT ("workspaceId", "channel", "externalPostId") DO NOTHING
         RETURNING "id", "inboxId", "channel", "publishedAt", "commentsCount", "reactionsCount",
@@ -306,6 +350,7 @@ export const upsertListedChannelPosts = async (
         AND (i."metricsKnownMask" <> 0 OR i."viewsCount" IS NOT NULL)
       ${sql.raw(DAILY_CONFLICT)}
     `)
+    }
 
     // Lock the page's existing rows in id order first, the order the bulk
     // update uses, so the two writers cannot deadlock on overlapping posts.
@@ -331,10 +376,10 @@ export const upsertListedChannelPosts = async (
         ${sql.raw(knownCount(MASK, BIT.shares, EFFECTIVE.sharesCount))},
         CASE WHEN ${sql.raw(MASK)} <> 0 THEN ${sql.raw(`${EFFECTIVE.commentsCount} + ${EFFECTIVE.reactionsCount} + ${EFFECTIVE.sharesCount}`)} END,
         ${sql.raw(EFFECTIVE.viewsCount)},
-        ${countGain(observedAt, COUNT_METRICS[0])},
-        ${countGain(observedAt, COUNT_METRICS[1])},
-        ${countGain(observedAt, COUNT_METRICS[2])},
-        ${engagementGain(observedAt)},
+        ${countGain(observedAt, metrics[0])},
+        ${countGain(observedAt, metrics[1])},
+        ${countGain(observedAt, metrics[2])},
+        ${engagementGain(observedAt, metrics)},
         ${viewsGain(observedAt)},
         (p."metricsFetchedAt" IS NULL AND NOT ${bareFreshCondition(observedAt)}),
         ${observedAt}::timestamptz
@@ -349,51 +394,106 @@ export const upsertListedChannelPosts = async (
         AND (
           p."metricsFetchedAt" IS NULL
           OR ${sql.raw(MASK)} <> p."metricsKnownMask"
-          OR ${anyCountMoved(observedAt)}
+          OR ${anyCountMoved(observedAt, metrics)}
           OR (v."viewsCount" IS NOT NULL AND p."viewsCount" IS DISTINCT FROM v."viewsCount")
         )
       ORDER BY p."id"
       ${sql.raw(DAILY_CONFLICT)}
     `)
 
+    if (metricsOnly) {
+      await client.execute(sql`
+        UPDATE "ChannelPost" AS p SET
+          "commentsCount" = ${effective("commentsCount")},
+          "reactionsCount" = ${effective("reactionsCount")},
+          "sharesCount" = ${effective("sharesCount")},
+          "engagementCount" = ${effective("commentsCount")} + ${effective("reactionsCount")} + ${effective("sharesCount")},
+          "metricsKnownMask" = ${mergedMask()},
+          "viewsCount" = ${effective("viewsCount")},
+          "metricsFetchedAt" = ${observedAt}::timestamptz,
+          "updatedAt" = ${now}::timestamptz
+        FROM (VALUES ${rows}) AS v(${valueColumns()})
+        WHERE p."workspaceId" = ${target.workspaceId}::bigint
+          AND p."channel" = ${target.channel}::text
+          AND p."externalPostId" = v."externalPostId"
+          AND (p."metricsFetchedAt" IS NULL OR p."metricsFetchedAt" < ${observedAt}::timestamptz)
+      `)
+      return
+    }
+
+    // The count columns, the known mask and `metricsFetchedAt` are fenced by
+    // the observation time; the columns only a listing reports are not: a
+    // metrics-only read that advanced the fence supplied none of them, so it
+    // must not make a listing that started earlier drop them. The live columns
+    // keep their own fence (`liveStatusObservedAt`), and a listing that contains
+    // a post is proof it exists, so the removal mark is always cleared.
+    const fenced = (value: SQL, column: string): SQL =>
+      sql`CASE WHEN ${fenceAccepts(observedAt)} THEN ${value} ELSE p.${sql.identifier(column)} END`
+    // The description columns are fenced by `metadataFetchedAt`, which only a
+    // listing or the first-comment fetch writes (a metrics-only read never
+    // does): an older listing landing after a newer one keeps the newer text,
+    // and a column that holds nothing yet is always filled.
+    const metadataAccepts = sql`(p."metadataFetchedAt" IS NULL OR p."metadataFetchedAt" < ${observedAt}::timestamptz)`
+    const described = (value: SQL, column: string): SQL =>
+      sql`CASE WHEN ${metadataAccepts} OR p.${sql.identifier(column)} IS NULL THEN ${value} ELSE p.${sql.identifier(column)} END`
+    const describedColumns: Record<string, SQL> = {
+      authorExternalId: described(
+        effective("authorExternalId"),
+        "authorExternalId",
+      ),
+      authorName: described(effective("authorName"), "authorName"),
+      caption: described(effective("caption"), "caption"),
+      contentType: described(effectiveContentType(), "contentType"),
+      mediaType: described(effective("mediaType"), "mediaType"),
+      permalink: described(effective("permalink"), "permalink"),
+      publishedAt: described(effective("publishedAt"), "publishedAt"),
+    }
+    const fencedCounts: Record<string, SQL> = {
+      commentsCount: fenced(effective("commentsCount"), "commentsCount"),
+      reactionsCount: fenced(effective("reactionsCount"), "reactionsCount"),
+      sharesCount: fenced(effective("sharesCount"), "sharesCount"),
+      viewsCount: fenced(effective("viewsCount"), "viewsCount"),
+      metricsKnownMask: fenced(mergedMask(), "metricsKnownMask"),
+    }
+
     await client.execute(sql`
       UPDATE "ChannelPost" AS p SET
-        "caption" = ${effective("caption")},
-        "mediaType" = ${effective("mediaType")},
-        "permalink" = ${effective("permalink")},
-        "publishedAt" = ${effective("publishedAt")},
-        "contentType" = ${effectiveContentType()},
+        "caption" = ${describedColumns.caption},
+        "mediaType" = ${describedColumns.mediaType},
+        "permalink" = ${describedColumns.permalink},
+        "publishedAt" = ${describedColumns.publishedAt},
+        "contentType" = ${describedColumns.contentType},
         "liveStatus" = ${effectiveLiveStatus(observedAt)},
         "liveStatusObservedAt" = ${effectiveLiveObservedAt(observedAt)},
         "liveRecheckAt" = ${effectiveLiveRecheckAt(observedAt, recheckAt)},
-        "commentsCount" = ${effective("commentsCount")},
-        "reactionsCount" = ${effective("reactionsCount")},
-        "sharesCount" = ${effective("sharesCount")},
-        "engagementCount" = ${effective("commentsCount")} + ${effective("reactionsCount")} + ${effective("sharesCount")},
-        "metricsKnownMask" = ${mergedMask()},
-        "viewsCount" = ${effective("viewsCount")},
-        "authorName" = ${effective("authorName")},
-        "authorExternalId" = ${effective("authorExternalId")},
-        "metricsFetchedAt" = ${observedAt}::timestamptz,
-        "metadataFetchedAt" = COALESCE(p."metadataFetchedAt", ${now}::timestamptz),
+        "commentsCount" = ${fencedCounts.commentsCount},
+        "reactionsCount" = ${fencedCounts.reactionsCount},
+        "sharesCount" = ${fencedCounts.sharesCount},
+        "engagementCount" = ${fenced(sql`${effective("commentsCount")} + ${effective("reactionsCount")} + ${effective("sharesCount")}`, "engagementCount")},
+        "metricsKnownMask" = ${fencedCounts.metricsKnownMask},
+        "viewsCount" = ${fencedCounts.viewsCount},
+        "authorName" = ${describedColumns.authorName},
+        "authorExternalId" = ${describedColumns.authorExternalId},
+        "metricsFetchedAt" = ${fenced(sql`${observedAt}::timestamptz`, "metricsFetchedAt")},
+        "metadataFetchedAt" = GREATEST(COALESCE(p."metadataFetchedAt", ${observedAt}::timestamptz), ${observedAt}::timestamptz),
         "removedAt" = NULL,
         "updatedAt" = ${now}::timestamptz
       FROM (VALUES ${rows}) AS v(${valueColumns()})
       WHERE p."workspaceId" = ${target.workspaceId}::bigint
         AND p."channel" = ${target.channel}::text
         AND p."externalPostId" = v."externalPostId"
-        AND (p."metricsFetchedAt" IS NULL OR p."metricsFetchedAt" < ${observedAt}::timestamptz)
         AND (
           p."metricsFetchedAt" IS NULL
+          OR p."metadataFetchedAt" IS NULL
           OR p."removedAt" IS NOT NULL
           OR (
             p."caption", p."mediaType", p."permalink", p."publishedAt", p."contentType",
             p."liveStatus", p."liveStatusObservedAt", p."liveRecheckAt", p."commentsCount", p."reactionsCount", p."sharesCount",
             p."viewsCount", p."authorName", p."authorExternalId", p."metricsKnownMask"
           ) IS DISTINCT FROM (
-            ${effective("caption")}, ${effective("mediaType")}, ${effective("permalink")}, ${effective("publishedAt")}, ${effectiveContentType()},
-            ${effectiveLiveStatus(observedAt)}, ${effectiveLiveObservedAt(observedAt)}, ${effectiveLiveRecheckAt(observedAt, recheckAt)}, ${effective("commentsCount")}, ${effective("reactionsCount")}, ${effective("sharesCount")},
-            ${effective("viewsCount")}, ${effective("authorName")}, ${effective("authorExternalId")}, ${mergedMask()}
+            ${describedColumns.caption}, ${describedColumns.mediaType}, ${describedColumns.permalink}, ${describedColumns.publishedAt}, ${describedColumns.contentType},
+            ${effectiveLiveStatus(observedAt)}, ${effectiveLiveObservedAt(observedAt)}, ${effectiveLiveRecheckAt(observedAt, recheckAt)}, ${fencedCounts.commentsCount}, ${fencedCounts.reactionsCount}, ${fencedCounts.sharesCount},
+            ${fencedCounts.viewsCount}, ${describedColumns.authorName}, ${describedColumns.authorExternalId}, ${fencedCounts.metricsKnownMask}
           )
         )
     `)

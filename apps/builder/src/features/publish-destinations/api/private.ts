@@ -19,6 +19,8 @@ import {
   listPublishDestinationsRequest,
   listPublishDestinationsResponse,
   publishDestinationIdRequest,
+  recheckPublishPermissionsRequest,
+  recheckPublishPermissionsResponse,
 } from "../schema"
 
 const tags = ["Post destinations"]
@@ -125,5 +127,24 @@ export const publishDestinationsAPIs = {
     .handler(
       async ({ input }) =>
         await postingScheduleOperations.freeSlots(input.workspaceId, input),
+    ),
+
+  privateRecheckPublishPermissionsAPI: authorizedAPI
+    .route({
+      method: "POST",
+      path: `${base}/recheck-permissions`,
+      summary: "Re-check publishing permissions",
+      tags,
+    })
+    .input(recheckPublishPermissionsRequest.extend(inWorkspace))
+    .output(recheckPublishPermissionsResponse)
+    .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
+    .use(
+      workspacePermissionMiddleware("broadcast"),
+      (input) => input.workspaceId,
+    )
+    .handler(
+      async ({ input }) =>
+        await publishDestinationOperations.recheckPermissions(input),
     ),
 }

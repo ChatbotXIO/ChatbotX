@@ -11,12 +11,17 @@ import {
 import { uploadFileFromUrl } from "@chatbotx.io/filesystem"
 import type { ChannelPostDetails } from "@chatbotx.io/sdk"
 import { createId } from "@chatbotx.io/utils"
+import {
+  isPostManagementChannel,
+  POST_CHANNEL_CAPABILITIES,
+} from "@chatbotx.io/utils/channel"
 import type { ChannelPostLiveStatus } from "@chatbotx.io/utils/channel-post"
 import { BaseService } from "../base.service"
 import { logger } from "../logger"
 import { messageService } from "../message/service"
 import { resolveTenantSettings } from "../platform/settings"
 import { getPublicFileUrl } from "../utils"
+import { channelPostMetricsRefreshService } from "./metrics-refresh.service"
 
 export const POST_METADATA_FETCH_TIMEOUT_MS = 15_000
 export const POST_METADATA_RETRY_INTERVAL_MS = 10 * 60 * 1000
@@ -160,6 +165,7 @@ class ChannelPostService extends BaseService {
     const insertedId = await channelPostRepository.insertBare(input)
     if (insertedId) {
       await this.fetchAndSaveMetadata({ ...input, id: insertedId })
+      await this.requestFreshCounts(insertedId, input.workspaceId)
       return { id: insertedId, liveStatus: null, settings: NO_COMMENT_SETTINGS }
     }
 
@@ -177,7 +183,29 @@ class ChannelPostService extends BaseService {
       throw new Error("Channel post was not available after insert race")
     }
     await this.fetchAndSaveMetadata({ ...input, id: retriedId })
+    await this.requestFreshCounts(retriedId, input.workspaceId)
     return { id: retriedId, liveStatus: null, settings: NO_COMMENT_SETTINGS }
+  }
+
+  /**
+   * A post this comment just created has no counts yet: asks for one read of
+   * them in the background. Best effort; a failure never fails the comment job.
+   */
+  private async requestFreshCounts(
+    id: string,
+    workspaceId: string,
+  ): Promise<void> {
+    try {
+      await channelPostMetricsRefreshService.requestMetricsRefresh({
+        channelPostIds: [id],
+        workspaceId,
+      })
+    } catch (err) {
+      logger.warn(
+        { err, channelPostId: id },
+        "channel-post: requesting the counts of a new post failed",
+      )
+    }
   }
 
   /**
@@ -323,6 +351,88 @@ class ChannelPostService extends BaseService {
       id: input.id,
       workspaceId: input.workspaceId,
     })
+  }
+
+  /**
+   * Counts a stored comment on its post for a channel whose platform reports
+   * no comment count (`commentCountSource: "webhook"`; any other channel is a
+   * no-op). Guarded by a mark on the comment itself (`markCommentCounted`,
+   * atomic set-if-not-set): a redelivery or a retry counts nothing more. The
+   * post is resolved (and created bare when this is its first comment, with
+   * the root post id the webhook names) BEFORE the mark, so a failure there
+   * leaves the comment uncounted and a retry counts it; a failure between the
+   * mark and the increment leaves the count one short, never over. Throws on a
+   * storage failure; the caller treats it as best effort.
+   */
+  async recordWebhookComment(input: {
+    channel: string
+    channelPostId?: string | null
+    comment: { createdAt: Date; id: string }
+    externalPostId: string
+    inboxId: string
+    integrationId: string
+    sourceAccountId: string
+    workspaceId: string
+  }): Promise<void> {
+    if (
+      !isPostManagementChannel(input.channel) ||
+      POST_CHANNEL_CAPABILITIES[input.channel].commentCountSource !== "webhook"
+    ) {
+      return
+    }
+    const postId = input.channelPostId ?? (await this.resolveBare(input))
+    if (!postId) {
+      return
+    }
+    const marked = await messageService.markCommentCounted({
+      createdAt: input.comment.createdAt,
+      id: input.comment.id,
+      workspaceId: input.workspaceId,
+    })
+    if (!marked) {
+      return
+    }
+    await channelPostRepository.incrementCommentsCount({
+      id: postId,
+      workspaceId: input.workspaceId,
+    })
+  }
+
+  /** The post's row id, created bare (no metadata fetch) when the comment is the first sign of it; `null` when its workspace is gone. */
+  private async resolveBare(input: {
+    channel: string
+    externalPostId: string
+    inboxId: string
+    integrationId: string
+    sourceAccountId: string
+    workspaceId: string
+  }): Promise<string | null> {
+    const bare = {
+      channel: input.channel,
+      externalPostId: input.externalPostId,
+      inboxId: input.inboxId,
+      integrationId: input.integrationId,
+      sourceAccountId: input.sourceAccountId,
+      workspaceId: input.workspaceId,
+    }
+    const existing = await channelPostRepository.findByExternalId(bare)
+    if (existing) {
+      return existing.id
+    }
+    try {
+      const inserted = await channelPostRepository.insertBare(bare)
+      if (inserted) {
+        return inserted
+      }
+      // Lost the insert race: the winner's row is there now.
+      return (await channelPostRepository.findByExternalId(bare))?.id ?? null
+    } catch (err) {
+      if (isDatabaseError(err) && err.cause.code === "23503") {
+        // The workspace was deleted while the comment was in flight.
+        return null
+      }
+      throw err
+    }
   }
 
   /**

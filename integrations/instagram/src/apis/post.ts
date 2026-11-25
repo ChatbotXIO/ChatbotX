@@ -1,10 +1,14 @@
 import {
+  type ChannelError,
+  ChannelErrorCategory,
   type ChannelPostContentType,
   type ChannelPostDetails,
   type ChannelPostListItem,
   type ChannelPostListPage,
+  type ChannelPostMetricsItem,
   type Context,
   clampPageSize,
+  isRateLimited,
 } from "@chatbotx.io/sdk"
 import { DEFAULT_API_VERSION } from "../constants"
 import {
@@ -294,4 +298,72 @@ export const getManagedMedia = (props: {
       ),
     ),
   )
+}
+
+/** Failures that affect the whole account, so reading the next post would fail the same way. */
+const ACCOUNT_WIDE_CATEGORIES: ReadonlySet<string> = new Set([
+  ChannelErrorCategory.AUTH_FAILED,
+  ChannelErrorCategory.RATE_LIMITED,
+  ChannelErrorCategory.QUOTA_EXCEEDED,
+])
+
+/**
+ * The counts of a batch of media, read one by one with `readOne` (the single
+ * media read the listing's fields come from), in order and bounded by the
+ * caller's batch size. Instagram has no documented batch read of media counts,
+ * so this is the bounded fallback. A media that cannot be read for its own
+ * sake (gone, hidden — Graph answers those with a permission-style error too)
+ * is left out, so its stored counts stay; an account-wide failure (auth, rate
+ * limit) stops the batch and is thrown. Permission errors only stop it when
+ * nothing has been read yet and {@link PERMISSION_FAILURES_BEFORE_STOP} came in
+ * a row, which is what an account really missing the permission looks like.
+ */
+/** Permission errors in a row, before any media was read, that end the batch. */
+const PERMISSION_FAILURES_BEFORE_STOP = 3
+
+export const collectMediaMetrics = async (props: {
+  postIds: string[]
+  readOne: (postId: string) => Promise<ChannelPostListItem>
+  /**
+   * The connector's own error mapper (`mapToChannelError`): the read throws
+   * the connector's exception, not a `ChannelError`, so it is classified here
+   * before deciding whether to go on.
+   */
+  toChannelError: (error: unknown) => ChannelError
+}): Promise<ChannelPostMetricsItem[]> => {
+  const items: ChannelPostMetricsItem[] = []
+  let permissionFailures = 0
+  for (const postId of props.postIds) {
+    try {
+      const media = await props.readOne(postId)
+      items.push({
+        commentsCount: media.commentsCount,
+        externalPostId: media.externalPostId,
+        reactionsCount: media.reactionsCount,
+        sharesCount: media.sharesCount,
+        viewsCount: media.viewsCount,
+      })
+    } catch (err) {
+      const channelError = props.toChannelError(err)
+      // A rate limit can come as a reason only (e.g. code 80002, category UNKNOWN).
+      if (
+        ACCOUNT_WIDE_CATEGORIES.has(channelError.category) ||
+        isRateLimited(channelError)
+      ) {
+        throw channelError
+      }
+      if (channelError.category !== ChannelErrorCategory.PERMISSION_DENIED) {
+        permissionFailures = 0
+        continue
+      }
+      permissionFailures += 1
+      if (
+        items.length === 0 &&
+        permissionFailures >= PERMISSION_FAILURES_BEFORE_STOP
+      ) {
+        throw channelError
+      }
+    }
+  }
+  return items
 }

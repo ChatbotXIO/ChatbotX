@@ -371,13 +371,39 @@ describe("ShardedMessageRepository phone-count mark", () => {
     const set = dialect.sqlToQuery(client.chain.set.mock.calls[0][0].attributes)
     expect(set.sql).toContain("COALESCE")
     expect(set.sql).toContain("||")
-    expect(set.sql).toContain('"phoneCounted": true')
+    expect(set.params).toContain('{"phoneCounted":true}')
     const where = dialect.sqlToQuery(client.chain.where.mock.calls[0][0])
     expect(where.sql).toContain('"Message"."id" = $1')
     expect(where.sql).toContain('"Message"."workspaceId" = $2')
     expect(where.sql).toContain("NOT (")
-    expect(where.sql).toContain("'phoneCounted'")
+    expect(where.params).toContain("phoneCounted")
     expect(where.params.slice(0, 2)).toEqual(["m1", "ws-1"])
+  })
+
+  test("the comment-count mark is its own key, set the same atomic way", async () => {
+    const client = makeUpdateClient({ rows: [{ id: "m1" }] })
+    const repository = buildUpdateRepository({ a: client })
+
+    const marked = await repository.markCommentCounted("m1", "ws-1", createdAt)
+
+    expect(marked).toBe(true)
+    const set = dialect.sqlToQuery(client.chain.set.mock.calls[0][0].attributes)
+    expect(set.sql).toContain("||")
+    expect(set.params).toContain('{"commentCounted":true}')
+    const where = dialect.sqlToQuery(client.chain.where.mock.calls[0][0])
+    expect(where.sql).toContain("NOT (")
+    expect(where.params).toContain("commentCounted")
+    expect(where.params.slice(0, 2)).toEqual(["m1", "ws-1"])
+  })
+
+  test("a comment already counted is not counted again", async () => {
+    const repository = buildUpdateRepository({
+      a: makeUpdateClient({ rows: [] }),
+    })
+
+    expect(await repository.markCommentCounted("m1", "ws-1", createdAt)).toBe(
+      false,
+    )
   })
 
   test("a message that already carries the mark is not marked again", async () => {

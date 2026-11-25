@@ -58,6 +58,110 @@ export const PUBLISH_REQUIRED_SCOPES: Record<PublisherKey, readonly string[]> =
     tiktok: ["user.info.basic", "video.publish"],
   }
 
+/**
+ * Where each publisher's granted permissions come from, as the platforms
+ * document them (pages fetched from the official documentation):
+ *
+ * - `facebook`: `GET /debug_token?input_token=<Page token>` (Graph API
+ *   reference "debug_token"). Fields: `scopes` ("List of permissions that the
+ *   user has granted for the app in this access token."), `granular_scopes`,
+ *   `is_valid` ("Whether the access token is still valid or not."). Needs "An
+ *   app access token or an app developer's user access token for the app
+ *   associated with the `input_token`".
+ *   https://developers.facebook.com/docs/graph-api/reference/debug_token/
+ * - `instagramFacebook`: the stored token is the Facebook Page token, so the
+ *   same `debug_token` answers. (`GET /{user-id}/permissions`, "Returns a list
+ *   of granted and declined permissions", is documented for a user id and does
+ *   not state which token type it accepts; it is what the connect flow reads
+ *   with the user's own login token, which is not stored.)
+ *   https://developers.facebook.com/docs/graph-api/reference/user/permissions/
+ * - `instagram` (Instagram Login, graph.instagram.com): the Business Login
+ *   code exchange returns "a list of the permissions granted by the app user"
+ *   (`permissions`). The long-lived token exchange and refresh answer only
+ *   `access_token`, `token_type`, `expires_in`; no `debug_token` or permissions
+ *   endpoint is documented for Instagram User tokens.
+ *   https://developers.facebook.com/docs/instagram-platform/instagram-api-with-instagram-login/business-login
+ * - `threads` (graph.threads.net): the token exchange answers `access_token`,
+ *   `token_type`, `user_id`; the long-lived exchange and refresh answer
+ *   `access_token`, `token_type`, `expires_in`. No documented way to read the
+ *   granted permissions of a Threads token.
+ *   https://developers.facebook.com/docs/threads/get-started/get-access-tokens-and-permissions
+ * - `tiktok`: the token and refresh responses carry `scope` ("A
+ *   comma-separated list of the scopes the user authorized."); no other
+ *   endpoint is documented. The minute refresh scan stores it.
+ *   https://developers.tiktok.com/doc/oauth-refresh-a-user-access-token
+ *
+ * `recheck` names the documented source the Connect tab can read on demand
+ * with the stored inbox token; `null`: nothing documented to call.
+ */
+export const publishScopeRecheckSources = z.enum(["debugToken"])
+export type PublishScopeRecheckSource = z.infer<
+  typeof publishScopeRecheckSources
+>
+
+export const PUBLISH_SCOPE_RECHECK_SOURCE: Record<
+  PublisherKey,
+  PublishScopeRecheckSource | null
+> = {
+  facebook: "debugToken",
+  instagram: null,
+  instagramFacebook: "debugToken",
+  threads: null,
+  tiktok: null,
+}
+
+/**
+ * The `socialPostChanged` status the permission re-check job emits after it
+ * wrote; the Connect tab refetches the destinations on it.
+ */
+export const SCOPES_RECHECKED_STATUS = "scopesRechecked"
+
+/** Most destinations one re-check request covers. */
+export const PUBLISH_SCOPE_RECHECK_MAX = 100
+/** A destination is re-read at most once per this window (its Redis claim's TTL). */
+export const PUBLISH_SCOPE_RECHECK_CLAIM_TTL_MS = 10 * 60 * 1000
+
+/** What reading a token's permissions from the platform came back with. */
+export const scopeReadKinds = z.enum([
+  "scopes",
+  "invalidToken",
+  "unreported",
+  "rateLimited",
+  "failed",
+])
+export type ScopeReadKind = z.infer<typeof scopeReadKinds>
+
+export type ScopeReadResult =
+  | { kind: "scopes"; scopes: string[] }
+  | { kind: Exclude<ScopeReadKind, "scopes"> }
+
+/** The `data` of a `debug_token` answer, the fields the permission check reads. */
+export type DebugTokenScopes = {
+  is_valid?: boolean
+  scopes?: unknown
+}
+
+/**
+ * A `debug_token` answer as a scope read: `is_valid: false` is an invalid
+ * token (its owner decides on reconnect), a `scopes` list of strings is the
+ * granted permissions, anything else claims nothing.
+ */
+export const scopesFromDebugToken = (
+  data: DebugTokenScopes,
+): ScopeReadResult => {
+  if (data.is_valid === false) {
+    return { kind: "invalidToken" }
+  }
+  const { scopes } = data
+  if (
+    Array.isArray(scopes) &&
+    scopes.every((scope): scope is string => typeof scope === "string")
+  ) {
+    return { kind: "scopes", scopes }
+  }
+  return { kind: "unreported" }
+}
+
 /** The inbox status value of a connected inbox (`Inbox.status`). */
 const INBOX_CONNECTED = "connected"
 

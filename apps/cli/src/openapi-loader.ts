@@ -290,6 +290,8 @@ const COMMAND_NAME_OVERRIDES: Readonly<Record<string, string>> = {
     "channel-posts:bulk-update-managed",
   "POST /v1/channel-posts/management/{id}/refresh":
     "channel-posts:refresh-managed",
+  "POST /v1/channel-posts/management/refresh-metrics":
+    "channel-posts:refresh-metrics",
   "GET /v1/channel-posts/management/authors": "channel-posts:list-authors",
   "GET /v1/channel-posts/management/{id}/metrics": "channel-posts:get-metrics",
   "GET /v1/post-analytics/summary": "post-analytics:summary",
@@ -349,6 +351,8 @@ const COMMAND_NAME_OVERRIDES: Readonly<Record<string, string>> = {
   // static path under `/v1/posts`, so the generic rule would name it `posts:destinations`.
   "GET /v1/posts/destinations": "post-destinations:list",
   "GET /v1/posts/destinations/{id}": "post-destinations:get",
+  "POST /v1/posts/destinations/recheck-permissions":
+    "post-destinations:recheck-permissions",
   // A destination's posting times (its queue): one schedule per destination,
   // so the read is a `get`, not a `list`.
   "GET /v1/posts/destinations/{id}/posting-schedule":

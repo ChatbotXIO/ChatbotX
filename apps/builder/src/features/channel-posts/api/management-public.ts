@@ -42,6 +42,8 @@ import {
   listChannelPostManagementRequest,
   listChannelPostManagementResponse,
   mergeChannelPostCommentsRequest,
+  refreshChannelPostMetricsRequest,
+  refreshChannelPostMetricsResponse,
   refreshChannelPostResponse,
   startChannelPostSyncRequest,
   startChannelPostSyncResponse,
@@ -218,7 +220,7 @@ export const channelPostManagementPublicRouter = {
       path: "/v1/channel-posts/management/{id}/refresh",
       summary: "Refresh one managed channel post",
       description:
-        "Re-reads one post from its channel in the background: its counts are updated, or the post is hidden from the list when the channel confirms it no longer exists. Get the id from `channelPostManagement.list`; read the result with `channelPostManagement.get`.",
+        "Re-reads one post from its channel right away (up to 15 seconds) and returns `outcome` with the post as it is now: `refreshed` (counts updated), `removed` (the channel confirmed the post no longer exists, so it is hidden; `post` is null), `channelUnavailable`, `rateLimited` (try again later) or `cooldown` (the post was refreshed in the last minute; nothing was read). Get the id from `channelPostManagement.list`. `queued: true` is deprecated (always true, kept for clients of the earlier background refresh): use `outcome` and `post`.",
       tags,
     })
     .input(channelPostManagementIdRequest)
@@ -226,10 +228,30 @@ export const channelPostManagementPublicRouter = {
     .errors(possibleErrorsOnMutatingResource)
     .handler(
       async ({ context, input }) =>
-        await channelPostSyncService.requestPostRefresh({
+        await channelPostManagementOperations.refreshNow({
           id: input.id,
           workspaceId: context.workspace.id,
         }),
+    ),
+
+  refreshMetrics: workspaceTokenAuthAPI
+    .route({
+      method: "POST",
+      path: "/v1/channel-posts/management/refresh-metrics",
+      summary: "Refresh counts of many channel posts",
+      description:
+        "Asks for fresh comment, reaction and share counts of up to 50 posts in the background, one channel read per inbox (Facebook and Instagram). Posts read in the last 5 minutes (`fresh`), unknown or removed ones, posts on a channel that is not connected and posts on Threads or TikTok (`skipped`) are left out; the rest are `queued`. Read the new counts with `channelPostManagement.list` a few seconds later. Get ids from `channelPostManagement.list`.",
+      tags,
+    })
+    .input(refreshChannelPostMetricsRequest)
+    .output(refreshChannelPostMetricsResponse)
+    .errors(possibleErrorsOnMutatingResource)
+    .handler(
+      async ({ context, input }) =>
+        await channelPostManagementOperations.refreshMetrics(
+          context.workspace.id,
+          input.ids,
+        ),
     ),
 
   listComments: workspaceTokenAuthAPI

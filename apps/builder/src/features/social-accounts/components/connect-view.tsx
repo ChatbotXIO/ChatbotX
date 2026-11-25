@@ -5,6 +5,8 @@ import { Skeleton } from "@chatbotx.io/ui/components/ui/skeleton"
 import Link from "next/link"
 import { useTranslations } from "next-intl"
 import { usePublishDestinations } from "@/features/social-posts/hooks/use-publish-destinations"
+import { usePublishDestinationsRealtimeSync } from "../hooks/use-publish-destinations-realtime-sync"
+import { useRecheckPublishPermissions } from "../hooks/use-recheck-publish-permissions"
 import { toInboxNetworkGroups } from "../lib/connections"
 import {
   ConnectLoadError,
@@ -32,6 +34,16 @@ export const ConnectView = ({
   const t = useTranslations()
   const destinations = usePublishDestinations(workspaceId)
   const groups = toInboxNetworkGroups(destinations.data?.items ?? [])
+  // Threads documents no way to read granted permissions: nothing to ask for.
+  const recheckIds = groups
+    .filter((group) => group.provider !== "threads")
+    .flatMap((group) => group.destinations.map((destination) => destination.id))
+  usePublishDestinationsRealtimeSync()
+  useRecheckPublishPermissions({
+    destinationIds: recheckIds,
+    enabled: !readOnly,
+    workspaceId,
+  })
 
   return (
     <div className="space-y-4">

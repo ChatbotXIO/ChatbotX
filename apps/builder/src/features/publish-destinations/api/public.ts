@@ -13,6 +13,7 @@ import {
   possibleErrorsOnChangingSocialPost,
   possibleErrorsOnFindingResource,
   possibleErrorsOnListingResource,
+  possibleErrorsOnMutatingResource,
   possibleErrorsOnReadingSocialAccount,
 } from "@/lib/orpc/orpc-error-helper"
 import { workspaceTokenAuthAPIForScope } from "@/orpc"
@@ -22,6 +23,8 @@ import {
   listPublishDestinationsResponse,
   publishDestinationIdRequest,
   publishDestinationResource,
+  recheckPublishPermissionsRequest,
+  recheckPublishPermissionsResponse,
 } from "../schema"
 
 const workspaceTokenAuthAPI = workspaceTokenAuthAPIForScope("posts")
@@ -142,6 +145,28 @@ export const publishDestinationsPublicRouter = {
       async ({ context, input }) =>
         await socialAccountOperations.publishingSettings({
           destinationId: input.id,
+          workspaceId: context.workspace.id,
+        }),
+    ),
+
+  recheckPermissions: workspaceTokenAuthAPI
+    .route({
+      method: "POST",
+      path: `${BASE}/recheck-permissions`,
+      // Not outbound (nothing is sent to anyone): it re-reads permissions from the platform and stores them. Hidden from the default MCP list.
+      spec: mcpSpec({ hitlPolicy: "confirm_diff" }),
+      summary: "Re-check publishing permissions",
+      description:
+        "Asks, in the background, for the permissions each destination's network currently reports for its stored token: Facebook Pages and Instagram connected through Facebook Login only (Instagram Login, Threads and TikTok document no way to read them, so they are `skipped`). Pass `ids`, or omit it for every such destination of the workspace (at most 100). Destinations checked in the last 10 minutes or already being re-checked are `fresh`; the rest are `queued`. A `permissionMissing` recorded by a real publish refusal is cleared only when the platform reports every required permission for the same token; a token the platform reports invalid is left as is. Read the updated `state` and `missingScopes` with `publishDestinations.list` a few seconds later. Not allowed in a workspace whose plan has expired.",
+      tags,
+    })
+    .input(recheckPublishPermissionsRequest)
+    .output(recheckPublishPermissionsResponse)
+    .errors(possibleErrorsOnMutatingResource)
+    .handler(
+      async ({ context, input }) =>
+        await publishDestinationOperations.recheckPermissions({
+          ids: input.ids,
           workspaceId: context.workspace.id,
         }),
     ),

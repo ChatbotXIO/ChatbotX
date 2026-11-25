@@ -630,6 +630,8 @@ export const socialAccountRepository = {
     input: {
       accessToken: EncryptedData
       fence: Required<SocialTokenFence>
+      /** The permissions the refresh reported, written with the token; absent keeps the stored list. */
+      grantedScopes?: string[]
       id: string
       /** A rotated refresh token, written in the same statement as the new access token. */
       refreshToken?: EncryptedData
@@ -643,6 +645,7 @@ export const socialAccountRepository = {
       .set({
         accessToken: input.accessToken,
         ...(input.refreshToken ? { refreshToken: input.refreshToken } : {}),
+        ...(input.grantedScopes ? { grantedScopes: input.grantedScopes } : {}),
         refreshLeaseExpiresAt: null,
         tokenExpiresAt: input.tokenExpiresAt,
         updatedAt: sql`now()`,

@@ -1,5 +1,6 @@
 "use client"
 
+import type { ChannelPostRefreshOutcome } from "@chatbotx.io/utils/channel-post"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { useTranslations } from "next-intl"
 import { toast } from "sonner"
@@ -10,6 +11,15 @@ import type { ManagedPost } from "../components/post-row"
 export type ManagedPostChanges = Partial<
   Pick<ManagedPost, "hideComments" | "hidePhoneComments" | "skipComments">
 > & { topicIds?: string[] }
+
+/** The toast message of each outcome that is not a plain success (`refreshed` shows the new numbers instead). */
+const REFRESH_OUTCOME_MESSAGES = {
+  channelUnavailable: "posts.actions.refreshUnavailable",
+  cooldown: "posts.actions.refreshCooldown",
+  rateLimited: "posts.actions.refreshRateLimited",
+  refreshed: null,
+  removed: "posts.actions.refreshRemoved",
+} as const satisfies Record<ChannelPostRefreshOutcome, string | null>
 
 /**
  * The write actions of one managed post, shared by the list row and the detail
@@ -35,7 +45,17 @@ export const useManagedPostActions = (workspaceId: string) => {
     orpc.channelPostManagementAPIs.privateRefreshManagedChannelPostAPI.mutationOptions(
       {
         onError: (error) => toast.error(error.message),
-        onSuccess: () => toast.success(t("posts.actions.refreshQueued")),
+        onSuccess: (result) => {
+          // The read already happened: the list and the open sheet show the new counts.
+          queryClient.invalidateQueries({
+            queryKey:
+              orpc.channelPostManagementAPIs.privateListManagedChannelPostsAPI.key(),
+          })
+          const messageKey = REFRESH_OUTCOME_MESSAGES[result.outcome]
+          if (messageKey) {
+            toast.warning(t(messageKey))
+          }
+        },
       },
     ),
   )

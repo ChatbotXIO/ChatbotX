@@ -58,6 +58,8 @@ export type SocialAccountProviderAdapter = {
   ) => Promise<{
     accessToken: string
     expiresAt: Date | null
+    /** The permissions the refresh response reports (TikTok `scope`); absent or `null` when it reports none. */
+    grantedScopes?: string[] | null
     refreshToken?: string
   }>
   /** The refresh needs the platform app's client key and secret (resolved by the caller). */
@@ -108,6 +110,8 @@ export const socialAccountProviders: Record<
       return {
         accessToken: tokens.accessToken,
         expiresAt: tokens.expiresAt,
+        // TikTok documents `scope` in the refresh response too.
+        grantedScopes: tokens.scopes.length > 0 ? tokens.scopes : null,
         refreshToken: tokens.refreshToken,
       }
     },

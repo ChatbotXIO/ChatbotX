@@ -1,6 +1,6 @@
 import type { PostHandlers } from "@chatbotx.io/sdk"
 import { getLiveState, readLiveBroadcast } from "../apis/live-video"
-import { getManagedPost, listPagePosts } from "../apis/post"
+import { getManagedPost, getPostsMetrics, listPagePosts } from "../apis/post"
 import type { MessengerAuthValue } from "../schema"
 
 export const postHandlers: PostHandlers<MessengerAuthValue> = {
@@ -12,6 +12,8 @@ export const postHandlers: PostHandlers<MessengerAuthValue> = {
     }),
   getPost: async ({ ctx, data }) =>
     await getManagedPost({ auth: ctx.auth, postId: data.postId }),
+  getPostsMetrics: async ({ ctx, data }) =>
+    await getPostsMetrics({ auth: ctx.auth, postIds: data.postIds }),
   getLiveState: async ({ ctx, data }) =>
     await getLiveState({ auth: ctx.auth, postId: data.postId }),
   readLiveBroadcast: async ({ ctx, data }) =>
