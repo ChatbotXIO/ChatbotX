@@ -236,15 +236,16 @@ export const throwIfExists = async <TTable extends PgTable>(props: {
 
 /**
  * A database error safe to log or record: its message and parameters carry the
- * bound values (tokens, payload data), so only the driver-level code is kept.
- * Any other error is returned unchanged.
+ * bound values (tokens, payload data), so only the driver-level code and the
+ * violated constraint's name are kept. Any other error is returned unchanged.
  */
 export const toLoggableDatabaseError = (error: unknown): unknown => {
   if (!(error instanceof DrizzleQueryError)) {
     return error
   }
-  const code = (error.cause as { code?: unknown } | undefined)?.code
-  return new Error(`Database error${code ? ` (${String(code)})` : ""}`)
+  const { code, constraint } = describeDatabaseError(error)
+  const details = [code, constraint].filter(Boolean).join(" ")
+  return new Error(`Database error${details ? ` (${details})` : ""}`)
 }
 
 export const isDatabaseError = (

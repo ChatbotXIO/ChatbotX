@@ -1,5 +1,6 @@
+import { DrizzleQueryError } from "drizzle-orm"
 import { describe, expect, test } from "vitest"
-import { describeDatabaseError } from "../src/client"
+import { describeDatabaseError, toLoggableDatabaseError } from "../src/client"
 
 describe("describeDatabaseError", () => {
   test("extracts postgres fields from a nested drizzle cause", () => {
@@ -23,5 +24,27 @@ describe("describeDatabaseError", () => {
     expect(describeDatabaseError(new Error("network failed"))).toEqual({
       message: "network failed",
     })
+  })
+})
+
+describe("toLoggableDatabaseError", () => {
+  test("keeps the code and the violated constraint, never the bound values", () => {
+    const error = new DrizzleQueryError(
+      "insert into x",
+      ["secret-token"],
+      Object.assign(new Error("duplicate key"), {
+        code: "23505",
+        constraint: "Connection_inboxId_key",
+      }),
+    )
+
+    const loggable = toLoggableDatabaseError(error) as Error
+
+    expect(loggable.message).toBe(
+      "Database error (23505 Connection_inboxId_key)",
+    )
+    expect(
+      JSON.stringify(loggable, Object.getOwnPropertyNames(loggable)),
+    ).not.toContain("secret-token")
   })
 })

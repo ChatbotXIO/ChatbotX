@@ -13,9 +13,9 @@ import { db } from "@chatbotx.io/database/client"
 import { metaCapiEventRepository } from "@chatbotx.io/database/repositories"
 import {
   type InstagramAuthValue,
-  isRevokedTokenError,
+  isDisconnectSafeError,
 } from "@chatbotx.io/integration-instagram"
-import { isRevokedTokenError as isRevokedTokenErrorFacebook } from "@chatbotx.io/integration-instagram-facebook"
+import { isDisconnectSafeError as isDisconnectSafeErrorFacebook } from "@chatbotx.io/integration-instagram-facebook"
 import { integrations } from "@/integration"
 import { logger } from "@/lib/log"
 
@@ -60,11 +60,11 @@ export const disconnectInstagram = async (ctx: {
       "Instagram disconnect API call failed — proceeding with local cleanup",
     )
 
-    const isRevoked = isFacebook
-      ? isRevokedTokenErrorFacebook(error)
-      : isRevokedTokenError(error)
+    const isSafeToIgnore = isFacebook
+      ? isDisconnectSafeErrorFacebook(error)
+      : isDisconnectSafeError(error)
 
-    if (!isRevoked) {
+    if (!isSafeToIgnore) {
       throw error
     }
   }

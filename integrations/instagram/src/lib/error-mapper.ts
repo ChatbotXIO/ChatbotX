@@ -4,6 +4,7 @@ import {
   ChannelErrorReason,
   UNKNOWN_ERROR,
 } from "@chatbotx.io/sdk"
+import { isGraphAppNotInstalled } from "@chatbotx.io/utils/graph-error"
 import {
   type ChannelErrorSource,
   InstagramException,
@@ -233,5 +234,17 @@ export function isRevokedTokenError(error: unknown): boolean {
     mappedError.category === ChannelErrorCategory.AUTH_FAILED &&
     mappedError.code === 190 &&
     REVOKED_TOKEN_SUBCODES.has(subCode)
+  )
+}
+
+// === Disconnect-safe error detection ===
+/** True when retrying the unsubscribe is pointless: the local disconnect proceeds. */
+export function isDisconnectSafeError(error: unknown): boolean {
+  if (!(error instanceof InstagramException)) {
+    return false
+  }
+  return (
+    isRevokedTokenError(error) ||
+    isGraphAppNotInstalled(mapToChannelError(error))
   )
 }

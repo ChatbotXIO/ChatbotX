@@ -9,5 +9,9 @@ export {
   listInstagramStories,
 } from "./apis/post"
 export * from "./integration"
-export { isRevokedTokenError, mapToChannelError } from "./lib/error-mapper"
+export {
+  isDisconnectSafeError,
+  isRevokedTokenError,
+  mapToChannelError,
+} from "./lib/error-mapper"
 export * from "./schema"
