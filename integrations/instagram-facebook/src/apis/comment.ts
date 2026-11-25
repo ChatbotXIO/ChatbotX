@@ -136,34 +136,6 @@ export const sendPrivateReply = (
 ): Promise<InstagramSendMessageResponse> =>
   sendPrivateReplyMessage(auth, commentId, { text: message })
 
-export const likeComment = (
-  auth: InstagramAuthValue,
-  commentId: string,
-  liked: boolean,
-): Promise<{ success: boolean }> => {
-  const version = auth.metadata.version ?? DEFAULT_API_VERSION
-  const endpoint = `${version}/${auth.metadata.igId}/likes`
-
-  const searchParams = {
-    access_token: auth.tokens.accessToken,
-    comment_id: commentId,
-  }
-
-  if (liked) {
-    return rescue(endpoint, () =>
-      instagramGraphClient.post<{ success: boolean }>(endpoint, {
-        searchParams,
-      }),
-    )
-  }
-
-  return rescue(endpoint, () =>
-    instagramGraphClient.delete<{ success: boolean }>(endpoint, {
-      searchParams,
-    }),
-  )
-}
-
 type InstagramMediaCommentFields = {
   id: string
   text?: string

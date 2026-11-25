@@ -1,5 +1,6 @@
 import { bloomFilterFactory } from "./bloom-filter"
 import { casStoreFactory } from "./cas-store"
+import { concurrencySlotsFactory as makeConcurrencySlots } from "./concurrency-slots"
 import { cacheConnections } from "./connections/cache-connection"
 import { distributedLockFactory } from "./distributed-lock"
 import { distributedStoreFactory } from "./distributed-store"
@@ -18,6 +19,11 @@ export const casStore = casStoreFactory(cacheConnections.useExisting)
 export type { PresenceStore } from "./presence-store"
 export { presenceStoreFactory } from "./presence-store"
 export const presenceStore = presenceStoreFactory(cacheConnections.useExisting)
+
+export { concurrencySlotsFactory } from "./concurrency-slots"
+export const concurrencySlots = makeConcurrencySlots(
+  cacheConnections.useExisting,
+)
 
 export { cacheConnections } from "./connections/cache-connection"
 export type {

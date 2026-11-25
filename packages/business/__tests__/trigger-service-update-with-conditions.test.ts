@@ -104,7 +104,10 @@ vi.mock("@chatbotx.io/database/schema", () => ({
   },
 }))
 
+const channelPostMocks = vi.hoisted(() => ({ findByIds: vi.fn() }))
+
 vi.mock("@chatbotx.io/database/repositories", () => ({
+  channelPostRepository: { findByIds: channelPostMocks.findByIds },
   triggerRepository: { listPaginatedWithConditions: vi.fn() },
 }))
 
@@ -113,7 +116,8 @@ vi.mock("@chatbotx.io/events", () => ({
   updateTriggerCache: mockUpdateTriggerCache,
 }))
 
-vi.mock("@chatbotx.io/utils", () => ({
+vi.mock("@chatbotx.io/utils", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@chatbotx.io/utils")>()),
   createId: mockCreateId,
 }))
 
@@ -348,5 +352,100 @@ describe("triggerService.updateWithConditions", () => {
 
       expect(referenceMocks.findInvalid).not.toHaveBeenCalled()
     })
+  })
+})
+
+describe("triggerService.updateWithConditions: post-comment posts", () => {
+  const POST_COMMENT = "contactCommentedOnPost"
+  const condition = (
+    sourceId: string | null,
+    channelPostIds: string[],
+    id?: string,
+  ) => ({
+    ...(id ? { id } : {}),
+    type: POST_COMMENT,
+    sourceId,
+    value: { scope: "selected", channelPostIds },
+  })
+  const save = (conditions: ReturnType<typeof condition>[]) =>
+    triggerService.updateWithConditions({
+      workspaceId: WS,
+      id: TRIGGER_ID,
+      actions: [],
+      conditions,
+    })
+
+  beforeEach(() => {
+    mockDbTransaction.mockImplementation(
+      async (fn: (tx: unknown) => Promise<unknown>) => fn(tx),
+    )
+    referenceMocks.lockRow.mockResolvedValue([{ id: TRIGGER_ID }])
+    referenceMocks.newIndexes.mockReturnValue(new Set<number>())
+    mockTriggerFindFirst.mockResolvedValue({ id: TRIGGER_ID, actions: [] })
+    mockConditionFindMany.mockResolvedValue([])
+    channelPostMocks.findByIds.mockResolvedValue([
+      { id: "10", inboxId: "1" },
+      { id: "11", inboxId: "2" },
+    ])
+  })
+
+  afterEach(() => {
+    vi.clearAllMocks()
+  })
+
+  test("a post of another inbox than the pinned one is rejected, at the condition's field, before any write", async () => {
+    await expect(save([condition("1", ["10", "11"])])).rejects.toMatchObject({
+      field: "conditions.0.value.channelPostIds",
+      message: "validation.trigger.postCommentPostsInvalid",
+    })
+    expect(mockTxInsert).not.toHaveBeenCalled()
+    expect(mockUpdateTriggerCache).not.toHaveBeenCalled()
+  })
+
+  test("a post that is not in the workspace is rejected, and the read is workspace-scoped, once", async () => {
+    await expect(save([condition(null, ["10", "99"])])).rejects.toMatchObject({
+      field: "conditions.0.value.channelPostIds",
+    })
+    expect(channelPostMocks.findByIds).toHaveBeenCalledTimes(1)
+    expect(channelPostMocks.findByIds).toHaveBeenCalledWith(
+      { ids: ["10", "99"], workspaceId: WS },
+      tx,
+    )
+  })
+
+  test("posts of the pinned inbox, or of any inbox when none is pinned, are accepted", async () => {
+    await expect(
+      save([condition("1", ["10"]), condition(null, ["10", "11"])]),
+    ).resolves.toBeDefined()
+    expect(channelPostMocks.findByIds).toHaveBeenCalledTimes(1)
+  })
+
+  test("a condition that keeps the pair it already stores is not checked again", async () => {
+    mockConditionFindMany.mockResolvedValue([
+      {
+        id: "5",
+        triggerId: TRIGGER_ID,
+        type: POST_COMMENT,
+        sourceId: "1",
+        operator: null,
+        value: { scope: "selected", channelPostIds: ["99"] },
+      },
+    ])
+
+    await save([condition("1", ["99"], "5")])
+
+    expect(channelPostMocks.findByIds).not.toHaveBeenCalled()
+  })
+
+  test("conditions without posts do not read the posts at all", async () => {
+    await save([
+      {
+        type: POST_COMMENT,
+        sourceId: "1",
+        value: { scope: "any", channelPostIds: [] },
+      },
+    ])
+
+    expect(channelPostMocks.findByIds).not.toHaveBeenCalled()
   })
 })

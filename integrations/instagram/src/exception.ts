@@ -31,6 +31,24 @@ export type ChannelErrorSource = {
   message?: string
 }
 
+const UNSUPPORTED_FIELD_CODE = 100
+const UNSUPPORTED_FIELD_MESSAGE = /nonexisting field|unsupported/i
+
+/**
+ * A Graph "this field is not available" answer: code 100 with no subcode (a
+ * subcode such as 33 means a missing object, which is not a field problem), or
+ * a message that names a nonexisting or unsupported field.
+ */
+export function isUnsupportedFieldError(
+  source: Pick<ChannelErrorSource, "code" | "message" | "subCode">,
+): boolean {
+  if (Number(source.code) !== UNSUPPORTED_FIELD_CODE) {
+    return false
+  }
+  const hasSubCode = source.subCode !== undefined && source.subCode !== null
+  return !hasSubCode || UNSUPPORTED_FIELD_MESSAGE.test(source.message ?? "")
+}
+
 export function parseOriginError(originError: unknown): ChannelErrorSource {
   if (isHTTPError(originError)) {
     const body = asObject<ErrorBody>(originError.data)

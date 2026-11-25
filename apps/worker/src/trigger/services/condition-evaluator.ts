@@ -1,10 +1,14 @@
 import {
+  channelPostService,
   contactCustomFieldService,
   customFieldService,
 } from "@chatbotx.io/business"
 import {
   type OperatorType,
+  type PostCommentScope,
   pipelineConditionValueSchema,
+  postCommentConditionValueSchema,
+  postCommentScopes,
   type TriggerEventType,
   triggerEventTypes,
 } from "@chatbotx.io/database/partials"
@@ -13,6 +17,7 @@ import type {
   CartItemEventMetadata,
   OrderEventMetadata,
   PipelineItemEventMetadata,
+  PostCommentEventMetadata,
   ShoppingCartSentMetadata,
   UserAskedAboutProductMetadata,
 } from "@chatbotx.io/events"
@@ -138,6 +143,17 @@ export class ConditionEvaluator {
           eventData.eventData as Partial<PipelineItemEventMetadata>,
         )
 
+      // Post-comment events: `sourceId` pins one inbox (null = any) and
+      // `value` narrows the posts.
+      case triggerEventTypes.enum.contactCommentedOnPost:
+      case triggerEventTypes.enum.contactFirstCommentedOnPost:
+        return await this.evaluatePostComment({
+          pinnedInboxId: sourceId,
+          value,
+          eventData: eventData.eventData as Partial<PostCommentEventMetadata>,
+          workspaceId,
+        })
+
       case triggerEventTypes.enum.shoppingCartSent:
       case triggerEventTypes.enum.userAskedAboutProduct:
       case triggerEventTypes.enum.productOrdered:
@@ -195,6 +211,54 @@ export class ConditionEvaluator {
     // pipeline events `value` is empty, so no stage is pinned.
     const pinned = pipelineConditionValueSchema.safeParse(value)
     return !pinned.success || pinned.data.stageId === eventData.stageId
+  }
+
+  /**
+   * A post-comment condition with nothing pinned matches every comment; one
+   * pinned to an inbox or to posts matches only a comment on those. A stored
+   * `value` that cannot be read narrows to nothing rather than widening to
+   * "any post".
+   */
+  private async evaluatePostComment(input: {
+    pinnedInboxId: string | null
+    value: unknown
+    eventData: Partial<PostCommentEventMetadata>
+    workspaceId: string
+  }): Promise<boolean> {
+    const { pinnedInboxId, value, eventData, workspaceId } = input
+    if (pinnedInboxId && pinnedInboxId !== eventData.inboxId) {
+      return false
+    }
+    if (value === null || value === undefined) {
+      return true
+    }
+    const parsed = postCommentConditionValueSchema.safeParse(value)
+    if (!parsed.success) {
+      return false
+    }
+    const { channelPostId } = eventData
+    const scope: PostCommentScope = parsed.data.scope
+    switch (scope) {
+      case postCommentScopes.enum.any:
+        return true
+      case postCommentScopes.enum.selected:
+        return (
+          channelPostId !== undefined &&
+          parsed.data.channelPostIds.includes(channelPostId)
+        )
+      case postCommentScopes.enum.publishedFromPosts:
+        return (
+          channelPostId !== undefined &&
+          (await channelPostService.isPublishedFromPosts({
+            channelPostId,
+            workspaceId,
+          }))
+        )
+      default: {
+        const exhaustive: never = scope
+        throw new Error(`Unhandled post comment scope: ${String(exhaustive)}`)
+      }
+    }
   }
 
   /** Conditions pinned to a source (tag id, contact info type, …) match only that exact source. */

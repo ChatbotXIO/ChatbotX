@@ -564,4 +564,42 @@ describe("interpolateIntoJavascript + resolveJavascriptInput", () => {
       expect(maxConcurrent).toBeGreaterThan(1)
     })
   })
+
+  describe("post-comment variables", () => {
+    const loader = (values: Record<string, string>) => ({
+      get: async () => ({
+        commentId: "c-1",
+        commentText: values.commentText ?? "",
+        postId: "p-1",
+        postLink: values.postLink ?? "",
+        postPageName: "Page",
+        postPublishedAt: new Date("2026-11-01T10:00:00.000Z"),
+        postText: "Caption",
+      }),
+    })
+
+    test("resolve to the run's comment values and are read through input[]", async () => {
+      const context = {
+        ...createContext(),
+        postComment: loader({
+          commentText: "Hi there",
+          postLink: "https://x.test/p/1",
+        }),
+      }
+      const { rewritten, input } = await runInterpolation(
+        "return {{post.link}} + ' ' + {{comment.text}} + {{post.id}};",
+        context as never,
+      )
+      expect(rewritten).toContain('input["post.link"]')
+      expect(execute(rewritten, input)).toBe("https://x.test/p/1 Hi therep-1")
+    })
+
+    test("resolve to empty strings outside a post-comment run", async () => {
+      const { input } = await runInterpolation(
+        "return {{post.text}};",
+        createContext() as never,
+      )
+      expect(input["post.text"]).toBe("")
+    })
+  })
 })

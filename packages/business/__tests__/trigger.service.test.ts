@@ -12,6 +12,12 @@ vi.mock("../src/automation-action/references", () => ({
   indexesOfNewActions: vi.fn(() => new Set<number>()),
 }))
 
+// The post-comment post check reads channel posts through the real partials,
+// which this file's narrow `@chatbotx.io/utils` mock cannot load.
+vi.mock("../src/trigger/post-comment-posts", () => ({
+  assertPostCommentPostsValid: vi.fn(async () => undefined),
+}))
+
 vi.mock("../src/broadcast/plan-policy.service", () => ({
   broadcastPlanPolicyService: {},
 }))

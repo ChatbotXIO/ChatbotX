@@ -29,6 +29,10 @@ import type {
 import { getPaginationWithDefaults } from "@chatbotx.io/database/utils"
 import { createId } from "@chatbotx.io/utils"
 import { BaseService } from "../base.service"
+import {
+  releaseParkedChannelPostSync,
+  resetChannelPostSyncAfterAuthChange,
+} from "../channel-post/sync-reset"
 import { channelLimitReachedException, notFoundException } from "../errors"
 import { logger } from "../logger"
 import { quotaEnforcementService } from "../quota-enforcement/service"
@@ -477,6 +481,13 @@ class InboxService extends BaseService {
           .where(eq(inboxModel.id, existing.id))
           .returning()
 
+        // The same page is connected again: its post sync, parked as not
+        // connected or failed while the inbox was off, is due again.
+        await resetChannelPostSyncAfterAuthChange(
+          { inboxId: existing.id, workspaceId: data.workspaceId },
+          tx,
+        )
+
         if (!skipQuota) {
           await this.creditChannelUsage(data.workspaceId)
         }
@@ -620,6 +631,10 @@ class InboxService extends BaseService {
           eq(inboxModel.workspaceId, props.workspaceId),
         ),
       )
+    await releaseParkedChannelPostSync(
+      { inboxId: props.inboxId, workspaceId: props.workspaceId },
+      client,
+    )
 
     // Display-only breakdown, mirroring `create`'s increment. Never let a
     // failure here affect the authoritative quota unit already consumed above.

@@ -10,6 +10,10 @@ import {
   pipelineItemValueChanged,
 } from "./pipeline-item"
 import {
+  contactCommentedOnPost,
+  contactFirstCommentedOnPost,
+} from "./post-comment"
+import {
   archived,
   callEnded,
   callRecorded,
@@ -67,6 +71,8 @@ export const allConditions = {
   contactReferredExistingContact,
   contactBlockedBot,
   contactUnblockedBot,
+  contactCommentedOnPost,
+  contactFirstCommentedOnPost,
   incomingCall,
   missedAudioCall,
   callEnded,

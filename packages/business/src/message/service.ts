@@ -7,6 +7,7 @@ import {
   createMessageRepository,
   type FindMessageByIdParams,
   type FindOutgoingBeforeParams,
+  type MessageQuotaMarkerKey,
   type MessageWithAttachments,
   messageTranslationRepository,
   type OutgoingBotMessage,
@@ -460,8 +461,80 @@ class MessageService extends BaseService {
     )
   }
 
+  /**
+   * Marks a comment as counted in its post's phone-number count; `true` only
+   * for the call that set the mark. Throws on a storage failure.
+   */
+  async markPhoneCounted(props: {
+    createdAt: Date
+    id: string
+    workspaceId: string
+  }): Promise<boolean> {
+    const repo = await createMessageRepository()
+    return await repo.markPhoneCounted(
+      props.id,
+      props.workspaceId,
+      props.createdAt,
+    )
+  }
+
+  /**
+   * Claims the marker that says a message-quota charge was taken for this
+   * comment; `true` only for the call that set it. Throws on a storage failure.
+   */
+  async claimQuotaMarker(props: {
+    createdAt: Date
+    id: string
+    key: MessageQuotaMarkerKey
+    workspaceId: string
+  }): Promise<boolean> {
+    const repo = await createMessageRepository()
+    return await repo.claimQuotaMarker(
+      props.id,
+      props.workspaceId,
+      props.createdAt,
+      props.key,
+    )
+  }
+
+  /** Takes a claimed quota marker back after its charge failed. Throws on a storage failure. */
+  async releaseQuotaMarker(props: {
+    createdAt: Date
+    id: string
+    key: MessageQuotaMarkerKey
+    workspaceId: string
+  }): Promise<void> {
+    const repo = await createMessageRepository()
+    await repo.releaseQuotaMarker(
+      props.id,
+      props.workspaceId,
+      props.createdAt,
+      props.key,
+    )
+  }
+
+  /**
+   * Sets only the given keys of a message's attributes with one JSON merge in
+   * the database. A concurrent write to another key (`phoneCounted`) survives,
+   * which a read-modify-write of the whole object would lose.
+   */
+  async patchAttributes(props: {
+    createdAt: Date
+    id: string
+    patch: { hidden?: boolean; liked?: boolean }
+    workspaceId: string
+  }): Promise<{ id: string } | null> {
+    const repo = await createMessageRepository()
+    return await repo.patchMessageAttributes(
+      props.id,
+      props.workspaceId,
+      props.patch,
+      props.createdAt,
+    )
+  }
+
   async updateAttributes(props: {
-    attributes: { hidden: boolean; liked: boolean }
+    attributes: { hidden: boolean; liked: boolean; phoneCounted?: boolean }
     createdAt: Date
     id: string
     workspaceId: string

@@ -108,6 +108,7 @@ function CatalogDetailsForm({
             includeBotFieldVariables
             includeCouponVariables
             includePipelineVariables
+            includePostCommentVariables
             label={t("flows.sendViewCatalog.footerLabel")}
             maxLength={limits.footer}
             name="footer"
@@ -228,6 +229,7 @@ const SendViewCatalogStepEditor = (props: SendViewCatalogStepEditorProps) => {
             includeBotFieldVariables
             includeCouponVariables
             includePipelineVariables
+            includePostCommentVariables
             maxLength={limits.text}
             name={`${parentName}.text`}
           />

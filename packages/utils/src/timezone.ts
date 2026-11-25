@@ -82,6 +82,24 @@ const isRuntimeUsableTimezone = (timezone: string): boolean => {
 }
 
 /**
+ * `Etc/UTC`, `GMT`, `Etc/GMT` and `Etc/Universal` are valid IANA names that the
+ * runtime formats with, but `Intl.supportedValuesOf` lists only canonical names
+ * and leaves them out. The workspace settings form stores `Etc/UTC` for UTC, so
+ * rejecting it made every scheduling call of a UTC workspace fail. Accepted
+ * narrowly: only a name the runtime itself resolves to UTC.
+ */
+const resolvesToUtc = (timezone: string): boolean => {
+  try {
+    return (
+      new Intl.DateTimeFormat("en", { timeZone: timezone }).resolvedOptions()
+        .timeZone === "UTC"
+    )
+  } catch {
+    return false
+  }
+}
+
+/**
  * True only for a named IANA zone this runtime can actually format with. Unlike
  * `resolveFilterTimezone`, which silently falls back to UTC, a stored schedule
  * must be rejected when its zone is unknown — and offsets such as `+07:00`,
@@ -95,6 +113,7 @@ export function isValidTimezone(timezone: string): boolean {
   const supported = getSupportedTimezones()
   return (
     isRuntimeUsableTimezone(timezone) &&
-    timezoneCandidates(timezone).some((name) => supported.has(name))
+    (timezoneCandidates(timezone).some((name) => supported.has(name)) ||
+      resolvesToUtc(timezone))
   )
 }

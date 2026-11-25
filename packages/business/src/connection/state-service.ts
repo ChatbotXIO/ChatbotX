@@ -19,6 +19,10 @@ import type { connectionModel } from "@chatbotx.io/database/schema"
 import type { ConnectionModel } from "@chatbotx.io/database/types"
 import type { AuthValue } from "@chatbotx.io/sdk"
 import { BaseService } from "../base.service"
+import {
+  releaseParkedChannelPostSync,
+  resetChannelPostSyncAfterAuthChange,
+} from "../channel-post/sync-reset"
 import { ChatbotXException, channelLimitReachedException } from "../errors"
 import { inboxService } from "../inbox/service"
 import { logger } from "../logger"
@@ -429,6 +433,12 @@ class ConnectionStateService extends BaseService {
     try {
       await db.transaction(async (tx) => {
         await input.writeAuth(tx)
+        // A post sync that failed on the old authorisation (or was parked as
+        // not connected) is due again; same tx as the auth write.
+        await resetChannelPostSyncAfterAuthChange(
+          { inboxId: input.inboxId, workspaceId: input.workspaceId },
+          tx,
+        )
         await this.reconnectInbox({
           inboxId: input.inboxId,
           workspaceId: input.workspaceId,
@@ -639,6 +649,27 @@ class ConnectionStateService extends BaseService {
           reason: result.reason,
           tx: client,
         })
+        // An inactive to active edge (a disconnected or
+        // needs-reauth page connected again; connected and degraded flaps are
+        // both active and never reset): its post sync, parked as not
+        // connected or failed, is due again. Same tx as the status write.
+        // Not on the no-op branch above, so a mere re-assertion never
+        // retries a permanently failed sync.
+        if (
+          isActiveConnectionStatus(result.to) &&
+          !isActiveConnectionStatus(existing.status)
+        ) {
+          // New credentials (a connect) fully reset; a resume brings none, so
+          // only a row parked as not connected is released.
+          const reactivate =
+            input.event === "connect.completed"
+              ? resetChannelPostSyncAfterAuthChange
+              : releaseParkedChannelPostSync
+          await reactivate(
+            { inboxId: existing.inboxId, workspaceId: existing.workspaceId },
+            client,
+          )
+        }
       }
       if (input.event === "user.disconnect") {
         await this.logUserChannelDisconnect(existing, client)

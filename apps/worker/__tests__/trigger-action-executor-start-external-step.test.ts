@@ -250,3 +250,45 @@ describe("ActionExecutor startAnotherFlow", () => {
     expect(mocks.queueAdd.mock.calls[0]).toHaveLength(2)
   })
 })
+
+describe("a flow started by a post-comment trigger", () => {
+  const postComment = {
+    channelPostId: "900",
+    commentMessageId: "5000",
+    commentMessageCreatedAt: "2026-11-24T10:00:00.000Z",
+  }
+
+  beforeEach(() => {
+    vi.clearAllMocks()
+    mocks.findLatestCreatedByContact.mockResolvedValue(conversation)
+    mocks.findMostRecentByContact.mockResolvedValue({ id: "ci-1" })
+    mocks.resolveStartTarget.mockResolvedValue("ready")
+    mocks.findActiveById.mockResolvedValue({ id: "11", currentVersionId: "v1" })
+  })
+
+  test("startExternalStep carries the comment in the run's metadata", async () => {
+    await run({ postComment })
+
+    expect(mocks.queueAdd.mock.calls[0]?.[1].data.metadata).toEqual({
+      type: "postComment",
+      ...postComment,
+    })
+  })
+
+  test("startAnotherFlow carries the comment in the run's metadata", async () => {
+    await run({ postComment }, { type: "startAnotherFlow", nodeId: undefined })
+
+    expect(mocks.queueAdd.mock.calls[0]?.[1].data).toMatchObject({
+      flowId: "11",
+      metadata: { type: "postComment", ...postComment },
+    })
+  })
+
+  test("a flow started by any other trigger carries no metadata", async () => {
+    await run()
+
+    expect(mocks.queueAdd.mock.calls[0]?.[1].data).not.toHaveProperty(
+      "metadata",
+    )
+  })
+})

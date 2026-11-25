@@ -34,10 +34,17 @@ export const ScheduleJobData = {
   reconcileMac: "reconcileMac",
   maintainMacPartitions: "maintainMacPartitions",
   maintainLeaderboardPartitions: "maintainLeaderboardPartitions",
+  maintainChannelPostMetricPartitions: "maintainChannelPostMetricPartitions",
   finishOverdueLeaderboards: "finishOverdueLeaderboards",
   maintainLeaderboardRankings: "maintainLeaderboardRankings",
   scanCoexistRuns: "scanCoexistRuns",
   scanContactScans: "scanContactScans",
+  scanChannelPostSyncs: "scanChannelPostSyncs",
+  refreshSocialAccountTokens: "refreshSocialAccountTokens",
+  enqueueSocialPostTargets: "enqueueSocialPostTargets",
+  recoverSocialPostTargets: "recoverSocialPostTargets",
+  materializeSocialPostRecurrences: "materializeSocialPostRecurrences",
+  scanSocialPostFeeds: "scanSocialPostFeeds",
   pollSmtpInboxes: "pollSmtpInboxes",
   scanAiHandoverBulkRuns: "scanAiHandoverBulkRuns",
   scanContactSyncRuns: "scanContactSyncRuns",
@@ -267,6 +274,42 @@ export type ScheduleJobScanContactScans = {
   data: Record<string, never>
 }
 
+/** Queues the channel post syncs that are due, and takes over stalled ones. */
+export type ScheduleJobScanChannelPostSyncs = {
+  type: typeof ScheduleJobData.scanChannelPostSyncs
+  data: Record<string, never>
+}
+
+/** Refreshes the tokens of connected social accounts that expire soon. */
+export type ScheduleJobRefreshSocialAccountTokens = {
+  type: typeof ScheduleJobData.refreshSocialAccountTokens
+  data: Record<string, never>
+}
+
+/** Hands the composed-post targets that are due to the `postPublish` queue. */
+export type ScheduleJobEnqueueSocialPostTargets = {
+  type: typeof ScheduleJobData.enqueueSocialPostTargets
+  data: Record<string, never>
+}
+
+/** Takes over composed-post targets whose lease ran out (crashed worker, container to read again). */
+export type ScheduleJobRecoverSocialPostTargets = {
+  type: typeof ScheduleJobData.recoverSocialPostTargets
+  data: Record<string, never>
+}
+
+/** Turns each due slot of a repeating post into a scheduled post. */
+export type ScheduleJobMaterializeSocialPostRecurrences = {
+  type: typeof ScheduleJobData.materializeSocialPostRecurrences
+  data: Record<string, never>
+}
+
+/** Hands the RSS/Atom feeds that are due to the `postPublish` queue, one job per feed. */
+export type ScheduleJobScanSocialPostFeeds = {
+  type: typeof ScheduleJobData.scanSocialPostFeeds
+  data: Record<string, never>
+}
+
 /** Enqueues one IMAP poll per due SMTP inbox. */
 export type ScheduleJobPollSmtpInboxes = {
   type: typeof ScheduleJobData.pollSmtpInboxes
@@ -300,6 +343,11 @@ export type ScheduleJobMaintainMacPartitions = {
 
 export type ScheduleJobMaintainLeaderboardPartitions = {
   type: typeof ScheduleJobData.maintainLeaderboardPartitions
+  data: Record<string, never>
+}
+
+export type ScheduleJobMaintainChannelPostMetricPartitions = {
+  type: typeof ScheduleJobData.maintainChannelPostMetricPartitions
   data: Record<string, never>
 }
 
@@ -477,10 +525,17 @@ export type ScheduleJobData =
   | ScheduleJobReconcileMac
   | ScheduleJobMaintainMacPartitions
   | ScheduleJobMaintainLeaderboardPartitions
+  | ScheduleJobMaintainChannelPostMetricPartitions
   | ScheduleJobFinishOverdueLeaderboards
   | ScheduleJobMaintainLeaderboardRankings
   | ScheduleJobScanCoexistRuns
   | ScheduleJobScanContactScans
+  | ScheduleJobScanChannelPostSyncs
+  | ScheduleJobRefreshSocialAccountTokens
+  | ScheduleJobEnqueueSocialPostTargets
+  | ScheduleJobRecoverSocialPostTargets
+  | ScheduleJobMaterializeSocialPostRecurrences
+  | ScheduleJobScanSocialPostFeeds
   | ScheduleJobPollSmtpInboxes
   | ScheduleJobScanAiHandoverBulkRuns
   | ScheduleJobScanContactSyncRuns

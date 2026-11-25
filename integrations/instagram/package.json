@@ -24,6 +24,7 @@
   "exports": {
     ".": "./src/index.ts",
     "./apis/*": "./src/apis/*.ts",
+    "./publisher": "./src/publisher.ts",
     "./schema": "./src/schema.ts",
     "./exception": "./src/exception.ts"
   },

@@ -37,13 +37,13 @@ const deleteWorkspaceRowsBatch = async (
   const tableSql = quotedTable(table)
   const result = await tx.execute(sql`
     DELETE FROM ${tableSql}
-    WHERE "ctid" IN (
+    WHERE "ctid" = ANY(ARRAY(
       SELECT "ctid"
       FROM ${tableSql}
       WHERE "workspaceId" = ${workspaceId}
       LIMIT ${limit}
       FOR UPDATE SKIP LOCKED
-    )
+    ))
   `)
   return result.rowCount ?? 0
 }
@@ -62,6 +62,18 @@ const hasWorkspaceRows = async (
   return result.rows.length > 0
 }
 
+// Link tables without a `workspaceId`, drained through the parent that has one.
+const JOINED_PARENTS = {
+  channelPostWorkspace: { childKey: "channelPostId", table: "ChannelPost" },
+  socialPostWorkspace: { childKey: "socialPostId", table: "SocialPost" },
+} as const
+
+const joinedParent = (spec: PartitionedWorkspaceTable) =>
+  spec.selector === "socialPostWorkspace" ||
+  spec.selector === "channelPostWorkspace"
+    ? JOINED_PARENTS[spec.selector]
+    : null
+
 const deletePartitionedBatch = async (
   spec: PartitionedWorkspaceTable,
   workspaceId: string,
@@ -70,35 +82,59 @@ const deletePartitionedBatch = async (
 ): Promise<number> => {
   const columns = quotedColumns(spec.primaryKey)
   const table = quotedTable(spec.table)
-  const result =
-    spec.selector === "broadcastWorkspace"
-      ? await tx.execute(sql`
-          DELETE FROM ${table}
-          WHERE (${columns}) IN (
-            SELECT ${sql.join(
-              spec.primaryKey.map(
-                (column) => sql`recipient.${sql.raw(`"${column}"`)}`,
-              ),
-              sql`, `,
-            )}
-            FROM "ContactOnBroadcast" AS recipient
-            INNER JOIN "Broadcast" AS broadcast
-              ON broadcast."id" = recipient."broadcastId"
-            WHERE broadcast."workspaceId" = ${workspaceId}
-            LIMIT ${limit}
-            FOR UPDATE OF recipient SKIP LOCKED
-          )
-        `)
-      : await tx.execute(sql`
-          DELETE FROM ${table}
-          WHERE (${columns}) IN (
-            SELECT ${columns}
-            FROM ${table}
-            WHERE "workspaceId" = ${workspaceId}
-            LIMIT ${limit}
-            FOR UPDATE SKIP LOCKED
-          )
-        `)
+  const aliased = (alias: string) =>
+    sql.join(
+      spec.primaryKey.map(
+        (column) => sql`${sql.raw(alias)}.${sql.raw(`"${column}"`)}`,
+      ),
+      sql`, `,
+    )
+  if (spec.selector === "broadcastWorkspace") {
+    const result = await tx.execute(sql`
+      DELETE FROM ${table}
+      WHERE (${columns}) IN (
+        SELECT ${aliased("recipient")}
+        FROM "ContactOnBroadcast" AS recipient
+        INNER JOIN "Broadcast" AS broadcast
+          ON broadcast."id" = recipient."broadcastId"
+        WHERE broadcast."workspaceId" = ${workspaceId}
+        LIMIT ${limit}
+        FOR UPDATE OF recipient SKIP LOCKED
+      )
+    `)
+    return result.rowCount ?? 0
+  }
+  const parent = joinedParent(spec)
+  if (parent) {
+    // These link tables have no `workspaceId`: they are selected through their
+    // parent. They are not partitioned, so `ctid = ANY(ARRAY(...))` is valid and
+    // evaluates the limited, locking subquery once; an `IN (...)` semi-join may
+    // re-run it and delete more than `limit` rows. Partitioned tables cannot use
+    // `ctid` (it is per partition), so they delete by primary-key tuple below.
+    const result = await tx.execute(sql`
+      DELETE FROM ${table}
+      WHERE "ctid" = ANY(ARRAY(
+        SELECT child."ctid"
+        FROM ${table} AS child
+        INNER JOIN ${quotedTable(parent.table)} AS parent
+          ON parent."id" = child.${sql.raw(`"${parent.childKey}"`)}
+        WHERE parent."workspaceId" = ${workspaceId}
+        LIMIT ${limit}
+        FOR UPDATE OF child SKIP LOCKED
+      ))
+    `)
+    return result.rowCount ?? 0
+  }
+  const result = await tx.execute(sql`
+    DELETE FROM ${table}
+    WHERE (${columns}) IN (
+      SELECT ${columns}
+      FROM ${table}
+      WHERE "workspaceId" = ${workspaceId}
+      LIMIT ${limit}
+      FOR UPDATE SKIP LOCKED
+    )
+  `)
   return result.rowCount ?? 0
 }
 
@@ -107,22 +143,35 @@ const hasPartitionedWorkspaceRows = async (
   workspaceId: string,
   tx: DatabaseClient = db,
 ): Promise<boolean> => {
-  const result =
-    spec.selector === "broadcastWorkspace"
-      ? await tx.execute(sql`
-          SELECT 1
-          FROM "ContactOnBroadcast" AS recipient
-          INNER JOIN "Broadcast" AS broadcast
-            ON broadcast."id" = recipient."broadcastId"
-          WHERE broadcast."workspaceId" = ${workspaceId}
-          LIMIT 1
-        `)
-      : await tx.execute(sql`
-          SELECT 1
-          FROM ${quotedTable(spec.table)}
-          WHERE "workspaceId" = ${workspaceId}
-          LIMIT 1
-        `)
+  if (spec.selector === "broadcastWorkspace") {
+    const result = await tx.execute(sql`
+      SELECT 1
+      FROM "ContactOnBroadcast" AS recipient
+      INNER JOIN "Broadcast" AS broadcast
+        ON broadcast."id" = recipient."broadcastId"
+      WHERE broadcast."workspaceId" = ${workspaceId}
+      LIMIT 1
+    `)
+    return result.rows.length > 0
+  }
+  const parent = joinedParent(spec)
+  if (parent) {
+    const result = await tx.execute(sql`
+      SELECT 1
+      FROM ${quotedTable(spec.table)} AS child
+      INNER JOIN ${quotedTable(parent.table)} AS parent
+        ON parent."id" = child.${sql.raw(`"${parent.childKey}"`)}
+      WHERE parent."workspaceId" = ${workspaceId}
+      LIMIT 1
+    `)
+    return result.rows.length > 0
+  }
+  const result = await tx.execute(sql`
+    SELECT 1
+    FROM ${quotedTable(spec.table)}
+    WHERE "workspaceId" = ${workspaceId}
+    LIMIT 1
+  `)
   return result.rows.length > 0
 }
 

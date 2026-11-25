@@ -293,6 +293,91 @@ export const isContactScanChannel = (
   (CONTACT_SCAN_CHANNELS as readonly string[]).includes(channel)
 
 /**
+ * Channels whose own posts the Posts menu lists. Subset of `channelTypes`:
+ * Instagram covers both its login flavours, which collapse to one channel.
+ */
+export const postManagementChannels = z.enum([
+  "messenger",
+  "instagram",
+  "threads",
+  "tiktok",
+])
+
+export type PostManagementChannel = z.infer<typeof postManagementChannels>
+
+export const POST_MANAGEMENT_CHANNELS = postManagementChannels.options
+
+export const isPostManagementChannel = (
+  channel: string | null | undefined,
+): channel is PostManagementChannel =>
+  channel != null &&
+  (POST_MANAGEMENT_CHANNELS as readonly string[]).includes(channel)
+
+/** What a channel's post listing reports, so the UI and the sync never guess. */
+export type PostChannelCapability = {
+  /**
+   * The listing can name the individual who created a post. Only Facebook
+   * does (`admin_creator`, when the Page has several admins); on the other
+   * channels a post belongs to the connected account itself.
+   */
+  author: boolean
+  /** A comment of this channel can be deleted on the channel from the comments window. */
+  commentDelete: boolean
+  /** A comment of this channel can be liked on the channel from the comments window. */
+  commentLike: boolean
+  /** Per-post comment settings (hide, skip) are enforced for this channel's comments. */
+  commentSettings: boolean
+  /** The listing reports comment and reaction counts. */
+  counts: boolean
+  /** The listing tells live broadcasts apart (`liveStatus`). */
+  live: boolean
+}
+
+export const POST_CHANNEL_CAPABILITIES: Record<
+  PostManagementChannel,
+  PostChannelCapability
+> = {
+  messenger: {
+    author: true,
+    commentDelete: true,
+    commentLike: true,
+    commentSettings: true,
+    counts: true,
+    live: true,
+  },
+  // Live stays false for Instagram: only the Facebook-Login connection can
+  // list (`live_media`) and end a broadcast; the Instagram-Login connection has
+  // no end signal, so a channel-wide flag would promise a lifecycle half of the
+  // accounts cannot complete. The Facebook-Login rows still carry `liveStatus`
+  // in the public API.
+  instagram: {
+    author: false,
+    commentDelete: true,
+    commentLike: false,
+    commentSettings: true,
+    counts: true,
+    live: false,
+  },
+  // Threads reports counts only through Insights, one call per post.
+  threads: {
+    author: false,
+    commentDelete: false,
+    commentLike: false,
+    commentSettings: false,
+    counts: false,
+    live: false,
+  },
+  tiktok: {
+    author: false,
+    commentDelete: true,
+    commentLike: true,
+    commentSettings: false,
+    counts: true,
+    live: false,
+  },
+}
+
+/**
  * Channels that support conversation routing (thread control: another app
  * such as Meta AI or a partner may own the thread while this app listens on
  * standby). Subset of `channelTypes`.

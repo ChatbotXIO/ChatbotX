@@ -38,6 +38,15 @@ vi.mock("@chatbotx.io/variables", () => ({
     ),
   ),
   getSystemFieldValue: vi.fn(async () => null),
+  getContactTimezone: vi.fn(() => "UTC"),
+  isPostCommentVariable: (name: string) =>
+    ["post.link", "post.text", "comment.text"].includes(name),
+  resolvePostCommentVariable: vi.fn(
+    async (
+      context: { postComment?: { get: () => Promise<{ postLink: string }> } },
+      _name: string,
+    ) => (await context.postComment?.get())?.postLink ?? "",
+  ),
   contactVariableService: {
     getAll: vi.fn(async () => ({
       contact: {},
@@ -267,6 +276,69 @@ describe("externalRequest step handler", () => {
     )
     expect(contactVariableService.getAll).toHaveBeenCalledWith(
       expect.objectContaining({ sentByUserId: "user-1" }),
+    )
+  })
+
+  test("renders post-comment variables from the run metadata, JSON-escaped, and reads no latest-post state", async () => {
+    mocks.executeAndMap.mockResolvedValue({
+      statusCode: 200,
+      durationMs: 10,
+      responseBody: "{}",
+      responseHeaders: {},
+    })
+    const postComment = {
+      channelPostId: "post-1",
+      commentMessageId: "message-1",
+      commentMessageCreatedAt: "2026-11-01T00:00:00.000Z",
+    }
+    vi.mocked(contactVariableService.getAll).mockResolvedValueOnce({
+      contact: {},
+      contactInbox: {},
+      customFieldsMap: new Map(),
+      workspace: {},
+      postComment: {
+        get: async () => ({ postLink: 'https://x.test/p?a="1"' }),
+      },
+    } as never)
+
+    const props = {
+      ...createProps(),
+      metadata: { type: "postComment", ...postComment },
+    } as Parameters<typeof externalRequest>[0]
+    props.step = {
+      ...props.step,
+      method: "POST",
+      body: { bodyType: "json", jsonBody: '{"link":"{{post.link}}"}' },
+    }
+
+    await externalRequest(props)
+
+    expect(contactVariableService.getAll).toHaveBeenCalledWith(
+      expect.objectContaining({ postComment }),
+    )
+    expect(resolveContactVariablesDeep).toHaveBeenCalledWith(
+      "contact-1",
+      expect.anything(),
+      expect.objectContaining({ postComment }),
+    )
+    const call = mocks.executeAndMap.mock.calls[0]?.[0]
+    expect(call.input.body.jsonBody).toBe(
+      '{"link":"https://x.test/p?a=\\"1\\""}',
+    )
+  })
+
+  test("a run without post-comment metadata passes no post-comment ref", async () => {
+    mocks.executeAndMap.mockResolvedValue({
+      statusCode: 200,
+      durationMs: 10,
+      responseBody: "{}",
+      responseHeaders: {},
+    })
+    await externalRequest(createProps())
+    expect(resolveContactVariablesDeep).toHaveBeenCalledWith(
+      "contact-1",
+      expect.anything(),
+      expect.not.objectContaining({ postComment: expect.anything() }),
     )
   })
 })

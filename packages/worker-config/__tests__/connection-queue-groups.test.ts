@@ -147,6 +147,7 @@ describe("getRedisConnection queue-group routing", () => {
       marketingMessage: "bulk",
       template: "bulk",
       contactInfoCapture: "bulk",
+      postPublish: "bulk",
     })
   })
 })

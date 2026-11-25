@@ -1,10 +1,10 @@
 import { parseAsInteger, parseAsString, parseAsStringEnum } from "nuqs/server"
+import { CALENDAR_RANGES } from "@/components/calendar/calendar-grid"
 import {
   BROADCAST_FILTER_STATUSES,
   BROADCAST_KINDS,
   BROADCAST_VIEWS,
 } from "../lib/broadcast-status"
-import { CALENDAR_RANGES } from "../lib/calendar-grid"
 
 /**
  * Single source of truth for the broadcasts list URL params shared between

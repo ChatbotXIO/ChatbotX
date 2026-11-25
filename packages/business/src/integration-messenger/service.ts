@@ -65,6 +65,12 @@ class MessengerIntegrationService extends BaseService {
     auth: Record<string, unknown>
     name?: string
     userInfo?: IntegrationUserInfo
+    /**
+     * Stamps the row with this time instead of now: a reconnect fan-out writes
+     * the authorization generation, so a newer reconnect is never mistaken for
+     * an older one that happened to write later.
+     */
+    updatedAt?: Date
     tx?: DatabaseClient
   }): Promise<void> {
     const client = props.tx ?? db
@@ -73,6 +79,7 @@ class MessengerIntegrationService extends BaseService {
       .set({
         auth: props.auth,
         tokenRefreshError: null,
+        ...(props.updatedAt ? { updatedAt: props.updatedAt } : {}),
         ...(props.name ? { name: props.name } : {}),
         ...(props.userInfo ? { userInfo: props.userInfo } : {}),
       })

@@ -15,8 +15,10 @@ import { CategoryReferenceCondition } from "./category-reference-condition"
 import { CustomFieldValueChanged } from "./custom-field-value-changed"
 import { DateTimeBasedTrigger } from "./date-time-based-trigger"
 import { PipelineItemCondition } from "./pipeline-item-condition"
+import { PostCommentCondition } from "./post-comment-condition"
 import { ProductReferenceCondition } from "./product-reference-condition"
 import { isPipelineItemEventType } from "./schema/pipeline-item"
+import { isPostCommentEvent } from "./schema/post-comment"
 
 export const ConditionEditor = ({
   parentName,
@@ -44,6 +46,9 @@ export const ConditionEditor = ({
 
   if (isPipelineItemEventType(type)) {
     return <PipelineItemCondition parentName={parentName} type={type} />
+  }
+  if (isPostCommentEvent(type)) {
+    return <PostCommentCondition parentName={parentName} />
   }
   switch (type) {
     case triggerEventTypes.enum.tagApplied:

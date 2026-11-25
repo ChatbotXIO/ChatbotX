@@ -12,6 +12,9 @@ const FACEBOOK_OAUTH_BASE = "https://www.facebook.com"
  */
 export const INSTAGRAM_SCOPES = [
   "instagram_basic",
+  "instagram_content_publish",
+  // Deleting a post published through the API (`DELETE /{ig-media-id}`).
+  "instagram_manage_contents",
   "instagram_manage_comments",
   "instagram_manage_engagement",
   "instagram_manage_messages",
@@ -144,6 +147,28 @@ export function debugToken({
       },
     )
     return res.data ?? {}
+  })
+}
+
+/**
+ * The permissions a Facebook user token holds, as `GET /me/permissions`
+ * reports them: only entries whose status is `granted` (a declined or expired
+ * permission is not listed).
+ */
+export function getGrantedPermissions(
+  userAccessToken: string,
+  version: string = DEFAULT_API_VERSION,
+): Promise<string[]> {
+  const endpoint = `${version}/me/permissions`
+
+  return rescue(endpoint, async () => {
+    const res: { data?: { permission: string; status: string }[] } =
+      await instagramGraphClient.get(endpoint, {
+        headers: { Authorization: `Bearer ${userAccessToken}` },
+      })
+    return (res.data ?? [])
+      .filter((entry) => entry.status === "granted")
+      .map((entry) => entry.permission)
   })
 }
 

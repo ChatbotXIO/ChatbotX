@@ -100,6 +100,19 @@ vi.mock("@chatbotx.io/events", () => ({
     const value = eventData?.[CONTACT_INBOX_METADATA_KEY]
     return typeof value === "string" && value.length > 0 ? value : undefined
   },
+  // Same contract as the real one (covered in packages/events): only a
+  // post-comment event with its three ids yields the comment's reference.
+  extractPostCommentRef: (
+    eventType: string,
+    eventData: Record<string, unknown> | undefined,
+  ) =>
+    eventType === "contactCommentedOnPost" && eventData?.channelPostId
+      ? {
+          channelPostId: eventData.channelPostId,
+          commentMessageId: eventData.commentMessageId,
+          commentMessageCreatedAt: eventData.commentMessageCreatedAt,
+        }
+      : undefined,
 }))
 
 vi.mock("../src/lib/bootstrap", () => ({
@@ -139,6 +152,7 @@ await import("../src/trigger/worker")
 
 const runTriggerJob = async (
   eventData: Record<string, unknown>,
+  eventType = "tagApplied",
 ): Promise<void> => {
   if (!state.processor) {
     throw new Error("Trigger worker processor was not captured")
@@ -149,7 +163,7 @@ const runTriggerJob = async (
       data: {
         workspaceId: "ws-1",
         contactId: "contact-1",
-        eventType: "tagApplied",
+        eventType,
         eventData,
         timestamp: new Date("2026-08-27T00:00:00Z"),
       },
@@ -182,6 +196,28 @@ describe("trigger worker — queue-to-executor contactInboxId propagation", () =
         decisionFlowOrigin: undefined,
         occurrenceId: undefined,
       }),
+    )
+  })
+
+  test("hands a post-comment event's comment to the executor, and no other event's", async () => {
+    const comment = {
+      channelPostId: "900",
+      commentMessageId: "5000",
+      commentMessageCreatedAt: "2026-11-24T10:00:00.000Z",
+    }
+
+    await runTriggerJob(comment, "contactCommentedOnPost")
+    await runTriggerJob(comment)
+
+    expect(state.triggerExecute).toHaveBeenNthCalledWith(
+      1,
+      expect.anything(),
+      expect.objectContaining({ postComment: comment }),
+    )
+    expect(state.triggerExecute).toHaveBeenNthCalledWith(
+      2,
+      expect.anything(),
+      expect.objectContaining({ postComment: undefined }),
     )
   })
 

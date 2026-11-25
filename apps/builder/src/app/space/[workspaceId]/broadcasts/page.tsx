@@ -3,15 +3,15 @@ import { cookies } from "next/headers"
 import { notFound } from "next/navigation"
 import type { SearchParams } from "nuqs/server"
 import { Suspense } from "react"
+import {
+  resolveDateParam,
+  resolveEndDateParam,
+} from "@/components/calendar/calendar-grid"
 import { BroadcastsTable } from "@/features/broadcasts/broadcasts-table"
 import { BroadcastDeepLink } from "@/features/broadcasts/components/broadcast-deep-link"
 import { BroadcastsCalendar } from "@/features/broadcasts/components/broadcasts-calendar"
 import { BroadcastsListShell } from "@/features/broadcasts/components/broadcasts-list-shell"
 import { BROADCASTS_PANEL_COOKIE } from "@/features/broadcasts/lib/broadcast-status"
-import {
-  resolveDateParam,
-  resolveEndDateParam,
-} from "@/features/broadcasts/lib/calendar-grid"
 import { listBroadcasts } from "@/features/broadcasts/queries"
 import { findDeepLinkedBroadcast } from "@/features/broadcasts/queries/find-deep-linked-broadcast"
 import { listBroadcastsForCalendar } from "@/features/broadcasts/queries/list-broadcasts-for-calendar"

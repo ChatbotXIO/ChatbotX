@@ -881,6 +881,8 @@ describe("public API spec — error response coverage", () => {
   // items to another stage before deleting it instead of deleting them.
   // `me.unregisterDeviceToken` (`token`) names which of the user's push tokens
   // to remove; a push token has no path id and the value is opaque.
+  // `channelPostManagement.deleteComment` (`createdAt`) locates the comment in
+  // sharded message storage, the same reason as `messages.delete`.
   test("DELETE operations with a request body are exactly the reviewed set", () => {
     const deletesWithBody = operations
       .filter((op) => op.method === "DELETE" && op.bodySchema)
@@ -888,6 +890,7 @@ describe("public API spec — error response coverage", () => {
       .sort()
 
     expect(deletesWithBody).toEqual([
+      "channelPostManagement.deleteComment",
       "contacts.removeTags",
       "contacts.removeTagsByName",
       "contacts.unsubscribeSequences",

@@ -109,6 +109,9 @@ const DEFAULT_MEMBER_NOTIFICATION_TYPES = {
   notifyAdmin: true,
   newMessageToHuman: true,
   newOrder: true,
+  postFailed: true,
+  postNeedsReview: true,
+  publishConnection: true,
 }
 const DEFAULT_MEMBER_NOTIFICATION_CHANNELS = {
   messenger: true,

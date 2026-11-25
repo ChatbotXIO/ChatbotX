@@ -182,6 +182,22 @@ describe("buildTemplateSnapshot: trigger condition rows", () => {
     expect((await triggerSnapshot()).droppedReferenceCount).toBe(1)
   })
 
+  test("a post-comment row pinned to a page or posts counts as dropped, one pinning nothing does not", async () => {
+    withTrigger([
+      row("contactCommentedOnPost", "21", { scope: "any", channelPostIds: [] }),
+      row("contactFirstCommentedOnPost", null, {
+        scope: "selected",
+        channelPostIds: ["31"],
+      }),
+      row("contactCommentedOnPost", null, {
+        scope: "publishedFromPosts",
+        channelPostIds: [],
+      }),
+    ])
+
+    expect((await triggerSnapshot()).droppedReferenceCount).toBe(2)
+  })
+
   test("a selected product, a shipped pipeline and its stage are carried", async () => {
     mocks.productsCollect.mockResolvedValue({
       ...emptyCollect,

@@ -38,6 +38,31 @@ export type PipelineItemsLoader = {
   lastItemId: () => Promise<string | null>
 }
 
+/**
+ * What identifies the comment a post-comment trigger run is about. Small ids
+ * only, so it rides in a flow run's metadata and survives a Wait.
+ */
+export type PostCommentVariableRef = {
+  channelPostId: string
+  commentMessageCreatedAt: string
+  commentMessageId: string
+}
+
+/** What `{{post.*}}` and `{{comment.*}}` render, loaded once per variables context. */
+export type PostCommentVariableValues = {
+  commentId: string
+  commentText: string
+  postId: string
+  postLink: string
+  postPageName: string
+  postPublishedAt: Date | null
+  postText: string
+}
+
+export type PostCommentLoader = {
+  get: () => Promise<PostCommentVariableValues | null>
+}
+
 export type ReplaceVariableProps = ContactVariableContext & {
   customFieldsMap: Map<string, ContactCustomFieldValue>
   /**
@@ -58,4 +83,10 @@ export type ReplaceVariableProps = ContactVariableContext & {
    * promise behind). `contactVariableService.getAll` adds it.
    */
   pipelineItems?: PipelineItemsLoader
+  /**
+   * The comment a post-comment trigger run is about, for `{{post.*}}` and
+   * `{{comment.*}}`. Set only by a run that has one: elsewhere those tokens
+   * render empty. Lazy and memoized like `pipelineItems`.
+   */
+  postComment?: PostCommentLoader
 }

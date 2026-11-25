@@ -161,6 +161,20 @@ describe("channel post filter option APIs", () => {
     })
   })
 
+  test("the private list passes the pinned inbox to the service", async () => {
+    listFilterOptions.mockResolvedValue({ items: [], nextCursor: undefined })
+
+    await listHandler({
+      input: { inboxId: "7", limit: 30, workspaceId: "workspace-1" },
+    })
+
+    expect(listFilterOptions).toHaveBeenCalledWith({
+      inboxId: "7",
+      limit: 30,
+      workspaceId: "workspace-1",
+    })
+  })
+
   test("resolves saved-filter labels through the same workspace-scoped service", async () => {
     const response = [{ id: "post-1" }]
     findByIds.mockResolvedValue(response)

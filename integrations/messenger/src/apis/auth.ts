@@ -553,6 +553,22 @@ export function getFacebookUser(
   })
 }
 
+/**
+ * Every Page the person has a direct role on, with its page access token and
+ * tasks, for the publishing connect. Unlike `getUserPages` it does not judge
+ * whether the Page can be connected as a messaging inbox: the caller decides
+ * from `tasks` whether the person may publish as the Page.
+ */
+export async function getUserPagesForPublishing(
+  userAccessToken: string,
+  version: string = DEFAULT_API_VERSION,
+): Promise<FacebookPage[]> {
+  const endpoint = `${version}/me/accounts`
+  return await rescue(endpoint, () =>
+    fetchDirectPages(endpoint, userAccessToken),
+  )
+}
+
 export async function getUserPages(
   userAccessToken: string,
   version: string = DEFAULT_API_VERSION,

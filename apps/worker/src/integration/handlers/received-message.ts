@@ -2,6 +2,7 @@ import { automatedResponseService } from "@chatbotx.io/automated-response"
 import {
   appointmentService,
   buildContext,
+  type ChannelPostCommentSettings,
   type ContactInboxTrackingData,
   type ContactInboxWithContact,
   channelPostService,
@@ -19,6 +20,7 @@ import {
   queueMessageCreatedEvent,
   queueWorkspaceRealtimeEvent,
   quotaEnforcementService,
+  type RecordedCommentOutcome,
   recordProfileRefreshFailure,
   resolveTenantSettings,
   syncExistingContactIdentity,
@@ -145,6 +147,7 @@ import {
   resolveIntegrationContextFromContactInbox,
 } from "../../services/integrations"
 import { isCommentReply, processCommentAutomation } from "./comment-automation"
+import type { CommentAutomationChannelType } from "./comment-automation/channel-type"
 import { resolveLiveComment } from "./comment-automation/live-comment"
 import { runAsMissedCommentReplay } from "./comment-automation/replay-priority"
 import {
@@ -175,6 +178,18 @@ import {
   awardInboundMessageLeaderboard,
   awardReactionLeaderboard,
 } from "./leaderboard-sources"
+import {
+  commentLiveState,
+  recordLiveCommentObservation,
+} from "./live-comment-observation"
+import {
+  applyPostCommentSettings,
+  countPhoneComment,
+} from "./post-comment-settings"
+import {
+  claimFirstCommentWinnerBestEffort,
+  emitPostCommentTriggersBestEffort,
+} from "./post-comment-trigger"
 import {
   syncAdLabelsIfAdReferred,
   tagAdReferralOnlyContact,
@@ -1984,6 +1999,8 @@ export const receiveComment = async (
   const { contactInbox, contact, conversation } = detected
 
   let channelPostId: string | null = null
+  let postCommentSettings: ChannelPostCommentSettings | null = null
+  let recordedComment: RecordedCommentOutcome | null = null
   if (supportsPostTracking(inbox.channel)) {
     // Post metadata fetch is best-effort (handled in channelPostService) and a
     // workspace deleted mid-flight is a no-op (resolveForComment returns null).
@@ -1992,36 +2009,65 @@ export const receiveComment = async (
     // automation, so a retry records the relationship exactly once and never
     // double-sends. Matches plan §5 ("errors propagate; retry is idempotent").
     const channel = inbox.channel
-    const postId = await channelPostService.resolveForComment({
-      channel,
-      workspaceId: inbox.workspaceId,
-      inboxId: inbox.id,
-      integrationId: integrationRow.id,
-      sourceAccountId: integrationIdentifier,
-      externalPostId: commentData.postId,
-      fetchDetails: async (): Promise<ChannelPostDetails> => {
-        // The registry picks the channel's own integration (e.g. Instagram vs
-        // Instagram-via-Facebook); the handler returns the neutral shape.
-        const { integration, ctx } =
-          await resolveIntegrationContextFromContactInbox({
-            workspaceId: inbox.workspaceId,
-            contactInbox: { channel, inboxId: inbox.id },
-          })
-        return await integration.runChannelHandler(
-          "contact",
-          "getPostDetails",
-          { ctx, data: { postId: commentData.postId } },
-        )
+    const resolvedPost = await channelPostService.resolveForCommentWithSettings(
+      {
+        channel,
+        workspaceId: inbox.workspaceId,
+        inboxId: inbox.id,
+        integrationId: integrationRow.id,
+        sourceAccountId: integrationIdentifier,
+        externalPostId: commentData.postId,
+        fetchDetails: async (): Promise<ChannelPostDetails> => {
+          // The registry picks the channel's own integration (e.g. Instagram vs
+          // Instagram-via-Facebook); the handler returns the neutral shape.
+          const { integration, ctx } =
+            await resolveIntegrationContextFromContactInbox({
+              workspaceId: inbox.workspaceId,
+              contactInbox: { channel, inboxId: inbox.id },
+            })
+          return await integration.runChannelHandler(
+            "contact",
+            "getPostDetails",
+            { ctx, data: { postId: commentData.postId } },
+          )
+        },
       },
-    })
+    )
+    const postId = resolvedPost?.id ?? null
     channelPostId = postId
+    postCommentSettings = resolvedPost?.settings ?? null
     if (postId) {
-      await contactInboxPostService.recordComment({
+      await recordLiveCommentObservation({
+        channel,
+        currentLiveStatus: resolvedPost?.liveStatus,
+        externalPostId: commentData.postId,
+        inboxId: inbox.id,
+        integrationId: integrationRow.id,
+        liveState: commentLiveState({
+          integrationType,
+          isInstagramViaFacebook:
+            integrationType === "instagram" &&
+            isInstagramViaFacebook(integrationRow),
+          isLiveComment,
+          lookupLiveState: messengerCommentLookup?.liveState,
+        }),
+        sourceAccountId: integrationIdentifier,
+        workspaceId: inbox.workspaceId,
+      })
+      recordedComment = await contactInboxPostService.recordCommentOutcome({
         workspaceId: inbox.workspaceId,
         inboxId: inbox.id,
         contactInboxId: contactInbox.id,
         postId,
         commentedAt: new Date(commentData.createdTime * 1000),
+      })
+      // Right away, before the slow steps below: names this comment the winner.
+      await claimFirstCommentWinnerBestEffort({
+        channelPostId: postId,
+        commentId: commentData.commentId,
+        contactInboxId: contactInbox.id,
+        outcome: recordedComment,
+        workspaceId: inbox.workspaceId,
       })
     }
   }
@@ -2144,6 +2190,18 @@ export const receiveComment = async (
       storageUrl,
     })
 
+  // Before every early return below, and for a redelivered comment too: the
+  // count is guarded by a mark on the stored comment, so it moves once per
+  // comment however many times this runs.
+  if (channelPostId) {
+    await countPhoneComment({
+      channelPostId,
+      savedComment,
+      text: commentData.message,
+      workspaceId: inbox.workspaceId,
+    })
+  }
+
   // Leaderboard comments/live comments, only for a newly stored comment.
   // `isCommentReply` holds on every listed channel: TikTok normalizes its
   // "no parent" sentinel at the webhook, and a top-level Threads reply's
@@ -2193,6 +2251,45 @@ export const receiveComment = async (
     return
   }
 
+  // After the workspace gate and for a live comment only (a replay re-runs one
+  // automation over an old comment and must not fire the triggers again).
+  if (channelPostId && recordedComment && !replay) {
+    await emitPostCommentTriggersBestEffort({
+      channelPostId,
+      commentId: commentData.commentId,
+      commentText: commentData.message ?? null,
+      contactId: contactInbox.contactId,
+      contactInboxId: contactInbox.id,
+      conversationId: conversation.id,
+      externalPostId: commentData.postId,
+      inbox,
+      outcome: recordedComment,
+      savedComment,
+    })
+  }
+
+  const channelType = integrationType as CommentAutomationChannelType
+  const postOutcome =
+    channelPostId && postCommentSettings
+      ? await applyPostCommentSettings({
+          channelPostId,
+          channelType,
+          commentId: commentData.commentId,
+          contactInbox,
+          conversation,
+          isReply: isCommentReply(
+            commentData.parentId,
+            commentData.postId,
+            commentData.commentId,
+          ),
+          isLive: isLiveComment,
+          savedComment,
+          settings: postCommentSettings,
+          text: commentData.message,
+          workspaceId: inbox.workspaceId,
+        })
+      : null
+
   const automationData: IntegrationJobProcessCommentAutomation["data"] = {
     integrationType,
     integrationIdentifier,
@@ -2207,6 +2304,7 @@ export const receiveComment = async (
     tags: commentData.tags,
     createdTime: commentData.createdTime,
     isLive: isLiveComment || undefined,
+    postHidesComment: postOutcome?.postHidesComment || undefined,
   }
 
   // A missed-comment replay already runs on the `low` queue, one comment per

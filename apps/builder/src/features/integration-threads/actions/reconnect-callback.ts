@@ -1,4 +1,8 @@
-import { integrationThreadsService, userService } from "@chatbotx.io/business"
+import {
+  integrationThreadsService,
+  publishDestinationService,
+  userService,
+} from "@chatbotx.io/business"
 import {
   buildThreadsAuthValue,
   getThreadsProfile,
@@ -72,6 +76,23 @@ export async function reconnectThreadsHandler(props: {
     if (!updated) {
       return { status: "error", reason: "notFound" }
     }
+
+    // Threads reports no granted scopes: unknown (null), and any earlier
+    // permission failure is cleared because the token just changed. Best effort,
+    // the reconnect itself already committed.
+    await publishDestinationService
+      .captureInboxScopes({
+        grantedScopes: null,
+        inboxId: integrationThreads.inboxId,
+        publisherKey: "threads",
+        workspaceId: props.workspaceId,
+      })
+      .catch((error) => {
+        logger.warn(
+          { err: error, workspaceId: props.workspaceId },
+          "Failed to reset the Threads publish status after reconnect",
+        )
+      })
 
     return { status: "success" }
   } catch (error) {

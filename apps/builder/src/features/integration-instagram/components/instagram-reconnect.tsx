@@ -19,7 +19,12 @@ export function InstagramReconnect({
 
   // No onSuccess: the action ends in a redirect to the OAuth dialog.
   const { execute, isPending } = useAction(
-    reconnectInstagramAction.bind(null, workspaceId, integrationInstagram.id),
+    reconnectInstagramAction.bind(
+      null,
+      workspaceId,
+      integrationInstagram.id,
+      undefined,
+    ),
     {
       onError: ({ error }) => {
         if (error.serverError) {

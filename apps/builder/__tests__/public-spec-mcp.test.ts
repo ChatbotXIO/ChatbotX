@@ -121,6 +121,8 @@ function isWorkspaceTokenOperation(operation: McpSpecOperation): boolean {
 const HITL_NONE_WRITE_ALLOWLIST: Record<string, true> = {
   "aiFiles.search": true,
   "broadcasts.previewRecurrence": true,
+  "channelPostManagement.exportComments": true,
+  "channelPostManagement.mergeComments": true,
   "contacts.search": true,
   "flows.validate": true,
   "inboundWebhooks.previewMapping": true,
@@ -139,8 +141,10 @@ const HITL_NONE_WRITE_ALLOWLIST: Record<string, true> = {
 // integration without a `search_tools` round trip. Bumped 48 -> 52 when
 // `pipelines.list`/`pipelines.listItems`/`pipelines.createItem`/
 // `pipelines.moveItem` joined the default set so an agent can drive a CRM
-// board without a `search_tools` round trip.
-const MAX_DEFAULT_VISIBLE_OPERATIONS = 52
+// board without a `search_tools` round trip. Bumped 52 -> 53 when
+// `postAnalytics.summary` joined it (the one post-analytics read an agent
+// reaches for first; the rest stay behind `search_tools`).
+const MAX_DEFAULT_VISIBLE_OPERATIONS = 53
 
 const DOTTED_OPERATION = /`([a-zA-Z]+\.[a-zA-Z]+)`/g
 const DYNAMIC_TOOL_NAMES = /search_tools|call_tool/
@@ -347,6 +351,8 @@ describe("x-mcp outbound policy", () => {
       "miniApps.publishWhatsapp",
       "miniApps.publishWhatsappDraft",
       "miniApps.pushWhatsappDraft",
+      "postFeeds.resume",
+      "socialPosts.publish",
       "whatsappChannels.sendCapiTestEvent",
     ])
   })

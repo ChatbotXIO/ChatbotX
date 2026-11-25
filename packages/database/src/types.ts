@@ -241,6 +241,40 @@ export type ContactInfoCaptureModel =
 export type ContactInboxPostModel =
   typeof schema.contactInboxPostModel.$inferSelect
 export type ChannelPostModel = typeof schema.channelPostModel.$inferSelect
+export type PostTopicModel = typeof schema.postTopicModel.$inferSelect
+export type ChannelPostSyncModel =
+  typeof schema.channelPostSyncModel.$inferSelect
+export type SocialPostModel = typeof schema.socialPostModel.$inferSelect
+export type SocialPostTargetModel =
+  typeof schema.socialPostTargetModel.$inferSelect
+export type SocialPostMediaModel =
+  typeof schema.socialPostMediaModel.$inferSelect
+export type SocialPostTargetMediaModel =
+  typeof schema.socialPostTargetMediaModel.$inferSelect
+export type SocialPostTargetPartModel =
+  typeof schema.socialPostTargetPartModel.$inferSelect
+export type SocialPostRecurrenceModel =
+  typeof schema.socialPostRecurrenceModel.$inferSelect
+export type SocialPostRecurrenceOccurrenceModel =
+  typeof schema.socialPostRecurrenceOccurrenceModel.$inferSelect
+export type SocialPostFeedModel = typeof schema.socialPostFeedModel.$inferSelect
+export type SocialPostFeedDestinationModel =
+  typeof schema.socialPostFeedDestinationModel.$inferSelect
+export type SocialPostFeedItemModel =
+  typeof schema.socialPostFeedItemModel.$inferSelect
+export type SocialPostSnippetModel =
+  typeof schema.socialPostSnippetModel.$inferSelect
+export type SocialPostTargetSetModel =
+  typeof schema.socialPostTargetSetModel.$inferSelect
+export type SocialPostTargetSetDestinationModel =
+  typeof schema.socialPostTargetSetDestinationModel.$inferSelect
+export type SocialAccountModel = typeof schema.socialAccountModel.$inferSelect
+export type PublishDestinationModel =
+  typeof schema.publishDestinationModel.$inferSelect
+export type PublishDestinationScheduleModel =
+  typeof schema.publishDestinationScheduleModel.$inferSelect
+export type SocialAccountDestinationModel =
+  typeof schema.socialAccountDestinationModel.$inferSelect
 export type ContactInboxOperationalModel = Omit<
   ContactInboxModel,
   "sourceIdentityHistory"

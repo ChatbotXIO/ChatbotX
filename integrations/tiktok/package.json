@@ -24,7 +24,10 @@
     ".": "./src/index.ts",
     "./apis/*": "./src/apis/*.ts",
     "./lib/*": "./src/lib/*.ts",
-    "./test-handlers": "./src/test-handlers.ts"
+    "./test-handlers": "./src/test-handlers.ts",
+    "./publisher": "./src/publisher.ts",
+    "./publisher-api": "./src/publisher-api.ts",
+    "./publisher-social-account": "./src/publisher-social-account.ts"
   },
   "scripts": {
     "check-types": "tsc --noEmit",

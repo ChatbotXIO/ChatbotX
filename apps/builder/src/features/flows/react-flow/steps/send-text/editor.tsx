@@ -38,6 +38,7 @@ const SendTextStepEditor = (props: SendTextStepEditorProps) => {
           includeBotFieldVariables
           includeCouponVariables
           includePipelineVariables
+          includePostCommentVariables
           maxLength={limits.text}
           name={`${parentName}.text`}
         />

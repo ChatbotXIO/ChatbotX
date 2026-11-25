@@ -83,6 +83,10 @@ export function IgCommentForm({
   const postType = useWatch({ control: form.control, name: "post.type" })
   const postValue = useWatch({ control: form.control, name: "post.value" })
   const inboxId = useWatch({ control: form.control, name: "inboxId" })
+  const likeUserCommentStored = useWatch({
+    control: form.control,
+    name: "options.likeUserComment",
+  })
   const accountChoiceMissing = useAccountChoiceMissing(variant)
   const instagramPosts = useIgCommentPostsStore((s) => s.posts)
   const findPostOwner = (id: string) =>
@@ -429,15 +433,15 @@ export function IgCommentForm({
                 name="options.replyOncePerUserPerPost"
                 required
               />
-              {/* Instagram Business (Instagram Login) has no likeComment API — the
-                option is hidden entirely rather than shown disabled, matching
-                the same treatment for every other unsupported capability. */}
-              {variant === "instagramFacebook" && showLikeComment && (
+              {/* Neither Instagram connection can like a comment (the endpoint is
+                not in Meta's reference), so the option is never offered. A rule
+                saved with it on keeps the flag and shows it as unavailable until
+                the owner turns it off; the worker skips the like at runtime. */}
+              {likeUserCommentStored && showLikeComment && (
                 <SwitchField
                   description={t(
-                    "instagramCommentAutomation.options.likeUserCommentDescription",
+                    "instagramCommentAutomation.options.likeUserCommentUnavailable",
                   )}
-                  descriptionType="tooltip"
                   label={t(
                     "instagramCommentAutomation.options.likeUserComment",
                   )}

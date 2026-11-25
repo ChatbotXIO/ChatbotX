@@ -27,6 +27,7 @@ const {
   mockAiAgentQueueAdd,
   mockIntegrationQueueAdd,
   mockChatQueueAdd,
+  mockLikeFenceNext,
   mockSendPrivateReply,
   mockIsBotMessageQuotaReached,
   mockSendInstagramPrivateReply,
@@ -68,6 +69,7 @@ const {
   mockAiAgentQueueAdd: vi.fn(),
   mockIntegrationQueueAdd: vi.fn(),
   mockChatQueueAdd: vi.fn(),
+  mockLikeFenceNext: vi.fn(),
   mockSendPrivateReply: vi.fn(),
   mockSendInstagramPrivateReply: vi.fn(),
   mockSendInstagramFacebookPrivateReply: vi.fn(),
@@ -118,6 +120,7 @@ vi.mock("@chatbotx.io/analytics", () => ({
 }))
 
 vi.mock("@chatbotx.io/business", () => ({
+  commentLikeFence: { next: mockLikeFenceNext },
   publishWorkspaceRealtimeEvent: vi.fn().mockResolvedValue(undefined),
   queueWorkspaceRealtimeEvent: vi.fn(),
   queueMessageCreatedEvent: vi.fn(),
@@ -4470,18 +4473,47 @@ describe("processCommentAutomation live comments", () => {
       claimContentAttributes: mockClaimContentAttributes,
     })
 
-  test("a post comment on Instagram still likes it (control for the Live case)", async () => {
+  test("a Messenger automation like takes a fence number so a later unlike supersedes it", async () => {
     withStoredCommentRow()
+    mockLikeFenceNext.mockResolvedValue(5)
     mockFindActiveAutomations.mockResolvedValue([
       buildAutomation({ options: { likeUserComment: true } }),
     ])
 
     await processCommentAutomation({
       ...buildJobData(),
-      integrationType: "instagram",
+      integrationType: "messenger",
     } as any)
 
+    expect(mockLikeFenceNext).toHaveBeenCalledWith(
+      expect.objectContaining({ workspaceId: expect.any(String) }),
+    )
     expect(mockChatQueueAdd).toHaveBeenCalledWith(
+      "changeChannelMessageState",
+      expect.objectContaining({
+        data: expect.objectContaining({ liked: true, likeSeq: 5 }),
+      }),
+    )
+  })
+
+  test.each([
+    "instagram",
+    "instagramFacebook",
+  ] as const)("a stored likeUserComment on %s is skipped: no like job, rule not failed", async (integrationType) => {
+    withStoredCommentRow()
+    mockFindActiveAutomations.mockResolvedValue([
+      buildAutomation({ options: { likeUserComment: true } }),
+    ])
+
+    await expect(
+      processCommentAutomation({
+        ...buildJobData(),
+        integrationType,
+      } as any),
+    ).resolves.not.toThrow()
+
+    expect(mockLikeFenceNext).not.toHaveBeenCalled()
+    expect(mockChatQueueAdd).not.toHaveBeenCalledWith(
       "changeChannelMessageState",
       expect.objectContaining({
         data: expect.objectContaining({ liked: true }),

@@ -86,6 +86,9 @@ export const countDroppedReferences = (input: {
       productCategory: input.productCategoryIds,
       pipeline,
       pipelineStage,
+      // Pages and posts belong to the source workspace and never travel.
+      inbox: new Set<string>(),
+      channelPost: new Set<string>(),
     },
   )
   const droppedResources = countDroppedResourceReferences(

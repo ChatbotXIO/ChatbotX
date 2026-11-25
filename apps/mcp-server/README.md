@@ -74,7 +74,7 @@ Every `tools/list` definition also includes a human-readable `title` and explici
 
 ## Available tools
 
-Tool names are derived from the OpenAPI `operationId` converted to `snake_case` (e.g. `tags.list` → `tags_list`). The current default set has 52 tools:
+Tool names are derived from the OpenAPI `operationId` converted to `snake_case` (e.g. `tags.list` → `tags_list`). The current default set has 53 tools:
 
 ### Capabilities
 
@@ -103,6 +103,7 @@ Tool names are derived from the OpenAPI `operationId` converted to `snake_case` 
 | `analytics_flow_stats` | Get flow analytics |
 | `analytics_broadcast_stats` | Get broadcast stats |
 | `analytics_sequence_step_stats` | Get sequence step stats |
+| `post_analytics_summary` | Get post analytics summary |
 
 ### Broadcasts
 
@@ -247,7 +248,7 @@ A third fixed profile is the surface submitted to Anthropic's connector and plug
 | Internal path | `/messages` | `/claude` |
 | Public path | `/mcp/messages` | `/mcp/claude` |
 | OAuth resource and audience | `<origin>/mcp` | `<origin>/mcp/claude` |
-| Tools | Scope-filtered default set plus `search_tools`, `call_tool`, `get_guide` | 49 API tools (32 read, 17 write) plus `get_guide`, scope-filtered |
+| Tools | Scope-filtered default set plus `search_tools`, `call_tool`, `get_guide` | 50 API tools (33 read, 17 write) plus `get_guide`, scope-filtered |
 
 The tool list is `src/profiles/claude-contract.ts`. Unlike the OpenAI profile, tools are served from the live OpenAPI spec and executed exactly like the default profile (same argument handling, `_confirm` approval step and API error details); only the allow-list is fixed. The builder test `public-spec-mcp.test.ts` fails when a profile tool stops being default-visible, and when a new default-visible operation is neither added to the profile nor listed in `CLAUDE_EXCLUDED_TOOLS`.
 

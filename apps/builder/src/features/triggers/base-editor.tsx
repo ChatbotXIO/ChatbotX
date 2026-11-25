@@ -111,6 +111,10 @@ export const BaseEditor = ({
         return t("trigger.conditions.contactBlockedBot")
       case triggerEventTypes.enum.contactUnblockedBot:
         return t("trigger.conditions.contactUnblockedBot")
+      case triggerEventTypes.enum.contactCommentedOnPost:
+        return t("trigger.conditions.contactCommentedOnPost")
+      case triggerEventTypes.enum.contactFirstCommentedOnPost:
+        return t("trigger.conditions.contactFirstCommentedOnPost")
       default:
         break
     }
