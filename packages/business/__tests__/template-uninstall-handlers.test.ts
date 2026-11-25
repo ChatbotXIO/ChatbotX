@@ -662,6 +662,8 @@ describe("uninstall handler contract", () => {
     )
     expect(referenced.length).toBeGreaterThan(8)
     expect(referenced).toContain("sequence")
+    // A contact filter's "Voted on the poll" value references an installed poll.
+    expect(referenced).toContain("poll")
     for (const kind of referenced) {
       const check = UNINSTALL_HANDLER_BY_KIND[kind]?.protectedDependents as
         | { probedKind?: string }

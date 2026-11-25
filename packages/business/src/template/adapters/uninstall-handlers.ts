@@ -638,9 +638,10 @@ const magicLinkHandler: ResourceUninstallHandler = {
 }
 
 /**
- * Votes and candidates drain in batches; a flow that names the poll as its
- * after-vote flow is the other direction (`Poll.afterVoteFlowId`), so the poll
- * itself can always go. The images it staged are removed after the commit.
+ * Votes and candidates drain in batches. A flow that names the poll as its
+ * after-vote flow is the other direction (`Poll.afterVoteFlowId`), but a
+ * contact filter ("Voted on the poll") references the poll, so it is kept
+ * while one does. The images it staged are removed after the commit.
  */
 const pollHandler: ResourceUninstallHandler = {
   ...drainTables({
@@ -648,7 +649,7 @@ const pollHandler: ResourceUninstallHandler = {
     tables: ["PollVote"],
   }),
   ...NO_PRODUCERS,
-  protectedDependents: noDependents,
+  protectedDependents: probedDependents("poll"),
   uninstallDelete: async (tx, ids, ctx) => {
     // Read before the delete: the candidate rows (and their images) cascade away with the poll.
     const polls = await tx.query.pollModel.findMany({

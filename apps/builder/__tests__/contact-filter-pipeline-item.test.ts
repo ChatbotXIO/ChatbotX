@@ -324,6 +324,7 @@ describe("pipelineItem filter UI configs", () => {
         pipelines: [],
         pipelineStages: [{ id: "21", name: "Lead" }],
         ads: [],
+        polls: [],
       },
     })
     const stage = all.find((config) => config.name === "pipelineItem:stage:11")

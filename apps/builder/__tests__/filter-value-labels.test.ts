@@ -28,6 +28,7 @@ const resolved = (
   pipelines: [],
   pipelineStages: [],
   ads: [],
+  polls: [],
   ...overrides,
 })
 
@@ -45,6 +46,12 @@ describe("collectFilterValueIds", () => {
       inboxes: ["3"],
       broadcasts: ["4", "5"],
     })
+  })
+
+  test("collects votedOnPoll values as poll ids", () => {
+    expect(
+      collectFilterValueIds([{ field: "votedOnPoll", value: ["7", "8"] }]),
+    ).toEqual({ polls: ["7", "8"] })
   })
 
   test("splits assignee values into members and teams and skips the fixed value", () => {

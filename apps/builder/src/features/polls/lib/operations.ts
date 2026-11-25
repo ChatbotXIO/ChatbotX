@@ -26,6 +26,14 @@ export const pollOperations = {
     }
   },
 
+  /**
+   * Id/name feed for the "Voted on the poll" filter dropdown. Agents get the
+   * same ids from `polls.list`, which pages and searches by name.
+   */
+  async listOptions(input: { workspaceId: string }) {
+    return { data: await pollService.listOptions(input) }
+  },
+
   async get(input: { workspaceId: string; id: string }) {
     return toPollResource(await pollService.findWithVoteCounts(input))
   },

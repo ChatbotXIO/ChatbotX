@@ -3068,6 +3068,44 @@ describe("applyContactFilter — tags relation", () => {
   })
 })
 
+describe("applyContactFilter — votedOnPoll relation", () => {
+  test.each([
+    operatorTypes.enum.eq,
+    operatorTypes.enum.ne,
+  ])("renders votedOnPoll %s as a PollVote.pollId EXISTS over the selected polls", (operator) => {
+    const query = renderContactWhere(
+      applyContactFilter({
+        operator: "and",
+        conditions: [
+          { field: "votedOnPoll", operator, value: ["poll-1", "poll-2"] },
+        ],
+      }),
+    )
+    if (operator === operatorTypes.enum.eq) {
+      expect(query.sql).toContain('EXISTS (SELECT 1 FROM "PollVote"')
+      expect(query.sql).not.toContain("NOT EXISTS")
+    } else {
+      expect(query.sql).toContain('NOT EXISTS (SELECT 1 FROM "PollVote"')
+    }
+    expect(query.sql).toContain('"PollVote"."contactId"')
+    expect(query.sql).toContain('"PollVote"."pollId" in')
+    expect(query.params).toEqual(expect.arrayContaining(["poll-1", "poll-2"]))
+  })
+
+  test("renders votedOnPoll isEmpty as NOT EXISTS any PollVote", () => {
+    const query = renderContactWhere(
+      applyContactFilter({
+        operator: "and",
+        conditions: [
+          { field: "votedOnPoll", operator: operatorTypes.enum.isEmpty },
+        ],
+      }),
+    )
+    expect(query.sql).toContain('NOT EXISTS (SELECT 1 FROM "PollVote"')
+    expect(query.sql).not.toContain('"PollVote"."pollId" in')
+  })
+})
+
 describe("applyContactFilter — conversation relation fields", () => {
   test("archived isEmpty/isNotEmpty/eq map to archivedAt null-checks", () => {
     const empty = renderContactWhere(

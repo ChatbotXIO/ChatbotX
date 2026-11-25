@@ -39,6 +39,7 @@ export type ContactFilterOptionSource =
   | "ads"
   | "broadcasts"
   | "sequences"
+  | "polls"
   | "reflinks"
   | "assignees"
   | "ctwaConversionTypes"
@@ -318,6 +319,11 @@ export const CONTACT_FILTER_FIELD_DEFINITIONS = [
     field: contactFilterFields.enum.questionnaireFinished,
     schemaKind: "boolean",
     optionSource: "none",
+  },
+  {
+    field: contactFilterFields.enum.votedOnPoll,
+    schemaKind: "multiSelect",
+    optionSource: "polls",
   },
   // --- Facebook/Instagram comment ---
   {

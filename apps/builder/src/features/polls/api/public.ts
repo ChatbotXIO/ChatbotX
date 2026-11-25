@@ -31,7 +31,7 @@ export const pollsPublicRouter = {
       path: "/v1/polls",
       summary: "List polls",
       description:
-        "Polls in this workspace, newest first, each with its total `votesCount`. Use this to find poll ids for `polls.get`, `polls.update`, `polls.getLinks` and `polls.getAnalytics`.",
+        "Polls in this workspace, newest first, each with its total `votesCount`. Use this to find poll ids for `polls.get`, `polls.update`, `polls.getLinks` and `polls.getAnalytics`, and the values of a `votedOnPoll` contact-filter condition.",
       tags,
     })
     .input(listPollsPublicRequest)

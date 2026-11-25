@@ -700,6 +700,7 @@ function buildConditionWhere(
     case "subscribedToDripCampaign":
     case "entryPointsLinks":
     case "ctwaConversion":
+    case "votedOnPoll":
       return buildRelationSetWhere(field, operator, value)
 
     case "questionnaireStarted":

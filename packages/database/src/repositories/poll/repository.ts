@@ -111,6 +111,19 @@ async function loadPollWithCandidates(
 }
 
 export const pollRepository = {
+  /** Id and name of the workspace's newest polls, for a select list. */
+  async listOptions(
+    input: { workspaceId: string; limit: number },
+    tx: DatabaseClient = db,
+  ): Promise<{ id: string; name: string }[]> {
+    return await tx
+      .select({ id: pollModel.id, name: pollModel.name })
+      .from(pollModel)
+      .where(eq(pollModel.workspaceId, input.workspaceId))
+      .orderBy(desc(pollModel.createdAt), desc(pollModel.id))
+      .limit(input.limit)
+  },
+
   async list(
     input: {
       workspaceId: string

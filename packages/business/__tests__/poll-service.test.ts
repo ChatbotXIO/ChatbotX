@@ -10,6 +10,7 @@ const mocks = vi.hoisted(() => ({
   deleteMany: vi.fn(),
   deleteManyReturningIds: vi.fn(),
   voteCounts: vi.fn(),
+  listOptions: vi.fn(),
   existsInWorkspace: vi.fn(),
   assertReferencable: vi.fn(),
   assertEditable: vi.fn(),
@@ -45,6 +46,7 @@ vi.mock("@chatbotx.io/database/repositories", () => ({
     deleteMany: mocks.deleteMany,
     deleteManyReturningIds: mocks.deleteManyReturningIds,
     voteCounts: mocks.voteCounts,
+    listOptions: mocks.listOptions,
   },
   flowRepository: { existsInWorkspace: mocks.existsInWorkspace },
 }))
@@ -69,6 +71,18 @@ describe("pollService", () => {
       id: "p1",
       ...i,
     }))
+  })
+
+  test("listOptions returns id/name of the workspace's newest polls, capped at 500", async () => {
+    mocks.listOptions.mockResolvedValue([{ id: "1", name: "A" }])
+
+    await expect(
+      pollService.listOptions({ workspaceId: "w1" }),
+    ).resolves.toEqual([{ id: "1", name: "A" }])
+    expect(mocks.listOptions).toHaveBeenCalledWith({
+      workspaceId: "w1",
+      limit: 500,
+    })
   })
 
   test("rejects 1 candidate", async () => {

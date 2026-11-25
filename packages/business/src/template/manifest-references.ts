@@ -31,6 +31,7 @@ const DEPENDENCY_CATEGORY_BY_KIND = {
   miniApp: "miniApps",
   minigame: "minigames",
   leaderboard: "leaderboards",
+  poll: "polls",
   openHours: "openHours",
   vendor: "vendors",
 } as const satisfies Partial<Record<string, TemplateResourceCategory>>

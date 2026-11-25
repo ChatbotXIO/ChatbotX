@@ -30,6 +30,7 @@ const ID_VALUED_FIELDS = [
   "clickedAd",
   "boughtItems",
   "shoppingCartContainsItems",
+  "votedOnPoll",
 ] as const satisfies readonly ContactFilterField[]
 
 describe("CONTACT_FILTER_FIELD_REFERENCE", () => {
