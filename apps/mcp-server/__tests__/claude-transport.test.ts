@@ -296,6 +296,42 @@ describe("MCP base path", () => {
     expect(assertMcpPathConfig).toThrow(BASE_PATH_MIGRATION)
   })
 
+  test("an empty removed variable does not block startup", async () => {
+    vi.stubEnv("CHATBOTX_MCP_SSE_PATH", "")
+    vi.stubEnv("CHATBOTX_MCP_MESSAGES_PATH", "")
+    vi.resetModules()
+    const { assertMcpPathConfig } = await import("../src/server/sse-server")
+    expect(assertMcpPathConfig).not.toThrow()
+  })
+
+  test("advertises prefixed metadata from the request host without a public URL", async () => {
+    vi.stubEnv("CHATBOTX_MCP_BASE_PATH", "/mcp")
+    vi.stubEnv("CHATBOTX_MCP_PUBLIC_URL", undefined)
+    vi.stubEnv("CHATBOTX_API_KEY", "")
+    vi.resetModules()
+    const prefixed = await listen()
+    try {
+      const url = `http://127.0.0.1:${(prefixed.address() as AddressInfo).port}`
+      const response = await fetch(`${url}/mcp/messages`, {
+        body: JSON.stringify(initialize),
+        headers: {
+          Accept: "application/json, text/event-stream",
+          "Content-Type": "application/json",
+          "X-Forwarded-Host": "mcp.example.com",
+          "X-Forwarded-Proto": "https",
+        },
+        method: "POST",
+      })
+      expect(response.status).toBe(401)
+      expect(response.headers.get("www-authenticate")).toContain(
+        'resource_metadata="https://mcp.example.com/.well-known/oauth-protected-resource/mcp/messages"',
+      )
+    } finally {
+      prefixed.closeAllConnections()
+      await new Promise((resolve) => prefixed.close(resolve))
+    }
+  })
+
   test.each([
     "mcp",
     "/mcp/",

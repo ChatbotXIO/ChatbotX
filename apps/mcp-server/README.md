@@ -400,7 +400,7 @@ cp .env.example .env
 | `CHATBOTX_MCP_TRANSPORT` | `stdio` \| `sse` \| `both` | `both` | No |
 | `CHATBOTX_MCP_HOST` | SSE server host | `0.0.0.0` | No |
 | `CHATBOTX_MCP_PORT` | SSE server port | `3333` | No |
-| `CHATBOTX_MCP_BASE_PATH` | Prefix of every route (`<base>/messages`, `<base>/sse`, `<base>/openai`, `<base>/claude`). Empty when the proxy strips `/mcp`; `/mcp` when it forwards `/mcp/*` unchanged. Replaces `CHATBOTX_MCP_MESSAGES_PATH` and `CHATBOTX_MCP_SSE_PATH`; the server refuses to start while either is still set. | `""` | Yes (production: `/mcp`) |
+| `CHATBOTX_MCP_BASE_PATH` | Prefix of every route (`<base>/messages`, `<base>/sse`, `<base>/openai`, `<base>/claude`). Empty when the proxy strips `/mcp`; `/mcp` when it forwards `/mcp/*` unchanged. Replaces `CHATBOTX_MCP_MESSAGES_PATH` and `CHATBOTX_MCP_SSE_PATH`; the server refuses to start while either is still set. | `""` | No (production: `/mcp`) |
 | `CHATBOTX_MCP_CORS_ORIGIN` | CORS origin allowed to call the SSE/HTTP endpoints | `*` | No |
 | `CHATBOTX_MCP_SERVER_NAME` | Display name sent to AI clients | `mcp` (brand-neutral for white-label) | No |
 | `CHATBOTX_MCP_SERVER_INSTRUCTIONS` | Instructions sent to AI clients on connect (helps ChatGPT know when to call tools) | built-in default | No |

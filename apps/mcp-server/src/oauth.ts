@@ -96,11 +96,11 @@ const isPathOrBelow = (pathname: string, base: string): boolean =>
   pathname === base || pathname.startsWith(`${base}/`)
 
 /**
- * The connector profile a path belongs to, if any: its internal transport
- * path (`/claude`), or protected-resource metadata at or below
- * `/.well-known/oauth-protected-resource[/mcp]/<profile>` (matching the
- * builder's `resolveMcpResourceForPath`). Exact segments only, so a
- * configured legacy path such as `/v1/claude` is never mistaken for one.
+ * The connector profile a path belongs to, if any: its route below
+ * `CHATBOTX_MCP_BASE_PATH` (`/claude`), or protected-resource metadata at or
+ * below `/.well-known/oauth-protected-resource[/mcp]/<profile>` (matching the
+ * builder's `resolveMcpResourceForPath`). Exact segments only, so a route
+ * such as `/claude/x` is never mistaken for one.
  */
 export const profileForPath = (
   pathname: string,

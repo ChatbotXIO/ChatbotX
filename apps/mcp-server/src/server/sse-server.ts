@@ -509,12 +509,13 @@ const REMOVED_PATH_VARIABLES = [
 ] as const
 
 /**
- * Refuses to start while a removed per-route path variable is still set:
- * ignoring it would silently move the routes and break every client.
+ * Refuses to start while a removed per-route path variable is still set to a
+ * non-empty value: ignoring it would silently move the routes and break every
+ * client. An empty value (e.g. a compose `${VAR:-}` default) names no route.
  */
 export const assertMcpPathConfig = (): void => {
-  const stale = REMOVED_PATH_VARIABLES.filter(
-    (name) => process.env[name] !== undefined,
+  const stale = REMOVED_PATH_VARIABLES.filter((name) =>
+    Boolean(process.env[name]),
   )
   if (stale.length > 0) {
     throw new Error(
