@@ -144,3 +144,15 @@ export function formatGraphError(error?: GraphErrorFields): string | undefined {
     userMessage: error.error_user_msg ?? error.error_user_title,
   })
 }
+
+const APP_NOT_INSTALLED_CODE = 100
+const APP_NOT_INSTALLED_MESSAGE = "(#100) App is not installed"
+
+/**
+ * "(#100) App is not installed: <id>": nothing is left to unsubscribe. Meta
+ * gives it no subcode and code 100 covers any invalid parameter, so the
+ * sentence is matched too.
+ */
+export const isGraphAppNotInstalled = (source: GraphErrorSource): boolean =>
+  Number(source.code) === APP_NOT_INSTALLED_CODE &&
+  Boolean(source.message?.includes(APP_NOT_INSTALLED_MESSAGE))

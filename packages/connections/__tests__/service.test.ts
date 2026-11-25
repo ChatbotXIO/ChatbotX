@@ -42,7 +42,9 @@ const mocks = vi.hoisted(() => ({
     authType: "secretText",
     secretText: "sk-live",
   })),
-  isUniqueViolationError: vi.fn(() => false),
+  isUniqueViolationError: vi.fn(
+    (_err?: unknown, _constraint?: string) => false,
+  ),
   transaction: vi.fn(async (fn: (tx: unknown) => unknown) => await fn("tx")),
   compensateWorkspaceQuota: vi.fn(async () => undefined),
   createSession: vi.fn(),
@@ -80,6 +82,8 @@ const mocks = vi.hoisted(() => ({
     wasCreated: true,
   })),
   loggerError: vi.fn(),
+  loggerWarn: vi.fn(),
+  toLoggableDatabaseError: vi.fn((err: unknown) => err),
   recordAuthorization: vi.fn(async () => undefined),
 }))
 
@@ -100,6 +104,7 @@ vi.mock("@chatbotx.io/database/repositories", () => ({
 vi.mock("@chatbotx.io/database/client", () => ({
   db: { transaction: mocks.transaction },
   isUniqueViolationError: mocks.isUniqueViolationError,
+  toLoggableDatabaseError: mocks.toLoggableDatabaseError,
 }))
 
 vi.mock("@chatbotx.io/encryption", () => ({
@@ -563,7 +568,7 @@ vi.mock("../src/registry", () => ({
 }))
 
 vi.mock("../src/logger", () => ({
-  logger: { warn: vi.fn(), error: mocks.loggerError, info: vi.fn() },
+  logger: { warn: mocks.loggerWarn, error: mocks.loggerError, info: vi.fn() },
 }))
 
 const { connectionService } = await import("../src/service")
@@ -2887,6 +2892,42 @@ describe("ConnectionService.connectTargets", () => {
         connectionIds: [],
       },
       "connectTargets: failed to record collected results",
+    )
+  })
+
+  it("logs only the violated constraint, never the error carrying the auth", async () => {
+    const loggable = new Error("Database error (23505 Connection_inboxId_key)")
+    mocks.toLoggableDatabaseError.mockReturnValueOnce(loggable)
+    // A Drizzle query error repeats the bound values, auth included.
+    const violation = new Error('params: {"accessToken":"secret-token"}', {
+      cause: { code: "23505", constraint: "Connection_inboxId_key" },
+    })
+    mocks.insertRow.mockRejectedValueOnce(violation)
+    // A constraint no store declares (e.g. `Connection_inboxId_key`).
+    mocks.isUniqueViolationError.mockImplementation(
+      (err?: unknown, constraint?: string) =>
+        err === violation && constraint === undefined,
+    )
+
+    const result = await connectionService.connectTargets({
+      sessionId: "session-1",
+      workspaceId: "ws-1",
+      targetIds: ["page-1"],
+    })
+
+    expect(result.outcomes).toEqual([
+      expect.objectContaining({ status: "duplicated" }),
+    ])
+    expect(mocks.loggerWarn).toHaveBeenCalledWith(
+      {
+        err: loggable,
+        provider: "messenger",
+        workspaceId: "ws-1",
+      },
+      "connectTargets: unique violation reported as already connected",
+    )
+    expect(JSON.stringify(mocks.loggerWarn.mock.calls)).not.toContain(
+      "secret-token",
     )
   })
 
