@@ -12,6 +12,7 @@ import {
   type AIProviderInstance,
   aiContextService,
   appendAIAgentActionToolProtocol,
+  appendCustomerInputGuard,
   appendFabricationGuard,
   appendHandoffPolicy,
   appendKnowledgeBaseGuard,
@@ -841,18 +842,20 @@ async function runAIReply(
       promptWithActions,
       Boolean(actionRules?.length),
     )
-    const guardedPrompt = appendUnavailableWebSearchPolicy(
-      appendHandoffPolicy(
-        appendKnowledgeBaseGuard(
-          appendFabricationGuard(
-            appendToolOutputGuard(promptWithActionProtocol),
+    const guardedPrompt = appendCustomerInputGuard(
+      appendUnavailableWebSearchPolicy(
+        appendHandoffPolicy(
+          appendKnowledgeBaseGuard(
+            appendFabricationGuard(
+              appendToolOutputGuard(promptWithActionProtocol),
+              tools,
+            ),
             tools,
           ),
           tools,
         ),
-        tools,
+        toolset.webSearchOmitReason,
       ),
-      toolset.webSearchOmitReason,
     )
     const systemPrompt = richModeEnabled
       ? appendRichResponseFormat(guardedPrompt)
