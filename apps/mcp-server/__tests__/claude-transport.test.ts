@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
 import { claudeProfileSpec } from "./fixtures/claude-profile-spec"
 
 const BASE_PATH_MIGRATION = /CHATBOTX_MCP_BASE_PATH/
+const TOOL_ERROR_FLAG = /"isError"\s*:\s*true/
 const ORIGIN = "https://app.example.com"
 const AUDIENCE = `${ORIGIN}/mcp/claude`
 const introspect = vi.hoisted(() => vi.fn())
@@ -192,7 +193,10 @@ describe("Claude transport tools", () => {
       method: "tools/call",
       params: { arguments: { name: "Ada" }, name: "contacts_create" },
     })
-    expect(await response.text()).toContain("CONFIRMATION_REQUIRED")
+    const text = await response.text()
+    expect(text).toContain("CONFIRMATION_REQUIRED")
+    // A pending approval is a usual result on the Claude profile, not a tool error.
+    expect(text).not.toMatch(TOOL_ERROR_FLAG)
   })
 })
 
