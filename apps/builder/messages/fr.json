@@ -12118,41 +12118,138 @@
     "noWorkspaces": "Vous n'êtes administrateur d'aucun espace de travail, vous ne pouvez donc pas autoriser cette application."
   },
   "chatbotxMcp": {
-    "title": "ChatbotX MCP",
-    "workspaceId": "Workspace ID",
-    "streamableUrl": "Streamable HTTP URL",
-    "sseUrl": "Legacy SSE URL",
+    "title": "Connecteur MCP",
+    "streamableUrl": "URL Streamable HTTP",
+    "sseUrl": "URL SSE héritée",
     "guide": {
-      "title": "Connect an MCP client",
-      "step1": "Copy the configuration for your MCP client.",
-      "step2": "Paste it into the client.",
-      "step3": "The client opens a browser. Sign in and approve access.",
-      "step4": "Your workspace tools appear after approval.",
-      "ownerOnly": "Only workspace owners and superAdmins can authorize MCP access."
+      "title": "Connecter un client MCP",
+      "subtitle": "Choisissez l'app que vous utilisez et suivez les trois étapes.",
+      "ownerOnly": "Seuls les propriétaires de l'espace de travail et les superAdmin peuvent autoriser l'accès MCP. Vous choisissez l'espace de travail sur l'écran d'approbation.",
+      "otherClients": "Tout autre client compatible MCP fonctionne aussi",
+      "otherIntro": "Utilisez ces endpoints et configurations avec tout autre client compatible MCP.",
+      "opensInNewTab": "(s'ouvre dans un nouvel onglet)",
+      "actions": {
+        "addConnector": "Ajouter le connecteur",
+        "startChatting": "Commencer à discuter"
+      },
+      "steps": {
+        "claude": {
+          "step1": {
+            "title": "Copiez l'URL du connecteur",
+            "body": "Vous collerez cette URL dans Claude à l'étape suivante."
+          },
+          "step2": {
+            "title": "Allez dans Claude → Customize → Connectors → Add custom connector",
+            "body": "Le bouton ci-dessous ouvre vos connecteurs dans Claude. Cliquez sur Add custom connector, nommez-le et collez l'URL. Il apparaît aussi dans les apps Claude pour ordinateur et mobile."
+          },
+          "step3": {
+            "title": "Cliquez sur Connect et autorisez l'accès",
+            "body": "Connectez-vous, choisissez votre espace de travail et validez. Demandez ensuite à Claude de travailler avec vos contacts, flows et diffusions directement dans le chat."
+          }
+        },
+        "chatgpt": {
+          "step1": {
+            "title": "Copiez l'URL du connecteur",
+            "body": "Vous collerez cette URL dans ChatGPT à l'étape suivante."
+          },
+          "step2": {
+            "title": "Allez dans ChatGPT → Settings → Apps & Connectors → Create",
+            "body": "Le bouton ci-dessous ouvre les paramètres de ChatGPT. Si Create n'apparaît pas, activez Developer mode dans Advanced settings. Nommez le connecteur, collez l'URL et choisissez OAuth."
+          },
+          "step3": {
+            "title": "Connectez-vous et autorisez l'accès",
+            "body": "Connectez-vous, choisissez votre espace de travail et validez. Activez ensuite le connecteur dans une nouvelle conversation pour l'utiliser."
+          }
+        },
+        "claudeCode": {
+          "step1": {
+            "title": "Copiez la commande d'installation",
+            "body": "Exécutez-la dans votre terminal."
+          },
+          "step2": {
+            "title": "Connectez-vous depuis Claude Code",
+            "body": "Lancez Claude Code, tapez /mcp, sélectionnez le serveur et choisissez Authenticate. Une fenêtre de navigateur s'ouvre."
+          },
+          "step3": {
+            "title": "Autorisez l'accès",
+            "body": "Choisissez votre espace de travail et validez. Claude Code peut maintenant utiliser les outils de votre espace de travail."
+          }
+        },
+        "cursor": {
+          "step1": {
+            "title": "Copiez la configuration",
+            "body": "Vous la collerez dans Cursor à l'étape suivante."
+          },
+          "step2": {
+            "title": "Ouvrez Cursor Settings → MCP → Add new MCP server",
+            "body": "Collez la configuration dans mcp.json et enregistrez. Cursor affiche un bouton Login à côté du serveur."
+          },
+          "step3": {
+            "title": "Autorisez l'accès",
+            "body": "Cliquez sur Login, choisissez votre espace de travail et validez. Les outils apparaissent dans l'agent de Cursor."
+          }
+        },
+        "openclaw": {
+          "step1": {
+            "title": "Installez le plugin",
+            "body": "Exécutez cette commande dans votre terminal."
+          },
+          "step2": {
+            "title": "Connectez-vous",
+            "body": "Exécutez cette commande. Une fenêtre de navigateur s'ouvre."
+          },
+          "step3": {
+            "title": "Autorisez l'accès",
+            "body": "Choisissez votre espace de travail et validez. OpenClaw peut maintenant utiliser les outils de votre espace de travail."
+          }
+        },
+        "hermes": {
+          "step1": {
+            "title": "Copiez la configuration",
+            "body": "Vous l'ajouterez à votre configuration Hermes à l'étape suivante."
+          },
+          "step2": {
+            "title": "Ajoutez-la à ~/.hermes/config.yaml",
+            "body": "Collez-la sous mcp_servers dans ~/.hermes/config.yaml et enregistrez. Exécutez ensuite cette commande dans Hermes."
+          },
+          "step3": {
+            "title": "Autorisez l'accès",
+            "body": "Hermes ouvre une fenêtre de navigateur. Connectez-vous, choisissez votre espace de travail et validez. Hermes peut maintenant utiliser les outils de votre espace de travail."
+          }
+        }
+      }
     },
     "clients": {
+      "claude": "Claude",
       "claudeCode": "Claude Code",
       "claudeDesktop": "Claude Desktop",
       "cursor": "Cursor",
       "chatgpt": "ChatGPT",
-      "stdio": "stdio fallback",
-      "stdioHint": "Use a workspace token for this fallback."
+      "stdio": "solution de repli stdio",
+      "stdioHint": "Utilisez un jeton d'espace de travail pour cette solution de repli.",
+      "openclaw": "OpenClaw",
+      "hermes": "Hermes",
+      "other": "Autres clients"
     },
     "grants": {
-      "title": "Authorized applications",
-      "description": "Grants belong to your account and apply to every workspace you administer; revoking disconnects the client everywhere.",
-      "empty": "OAuth grants appear here after you connect an MCP client.",
+      "title": "Applications autorisées",
+      "description": "Les autorisations appartiennent à votre compte et s'appliquent à chaque espace de travail que vous administrez ; la révocation déconnecte le client partout.",
+      "empty": "Les autorisations OAuth apparaissent ici une fois un client MCP connecté.",
       "client": "Client",
-      "scopes": "Scopes",
-      "firstAuthorizedAt": "First authorized",
-      "lastRefreshedAt": "Last refreshed",
-      "activeUntil": "Active until",
-      "noActiveToken": "No active token",
-      "revoke": "Revoke",
-      "revokeConfirmTitle": "Revoke application access?",
-      "revokeConfirmDescription": "Revoke access for {clientName}? This disconnects the client everywhere.",
-      "revokedSuccess": "Application access revoked.",
-      "notFound": "OAuth grant no longer exists"
+      "scopes": "Portées",
+      "firstAuthorizedAt": "Première autorisation",
+      "lastRefreshedAt": "Dernière actualisation",
+      "activeUntil": "Actif jusqu'au",
+      "noActiveToken": "Aucun jeton actif",
+      "revoke": "Révoquer",
+      "revokeConfirmTitle": "Révoquer l'accès de l'application ?",
+      "revokeConfirmDescription": "Révoquer l'accès de {clientName} ? Cela déconnecte le client partout.",
+      "revokedSuccess": "Accès de l'application révoqué.",
+      "notFound": "L'autorisation OAuth n'existe plus"
+    },
+    "unavailableOnDomain": {
+      "title": "Non disponible sur ce domaine",
+      "body": "La connexion d'assistants IA comme Claude ou ChatGPT n'est pas encore disponible sur ce domaine. Les autorisations existantes sont listées ci-dessous et peuvent toujours être révoquées."
     }
   },
   "connectionStatus": {

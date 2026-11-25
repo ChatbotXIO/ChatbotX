@@ -9,6 +9,6 @@ describe("MCP guides", () => {
 
     expect(guide.content).toMatch(MARKDOWN_HEADING_PATTERN)
     expect(guide.content.trim()).not.toBe("")
-    expect(guide.uri).toBe(`chatbotx://guides/${name}`)
+    expect(guide.uri).toBe(`guides://${name}`)
   })
 })

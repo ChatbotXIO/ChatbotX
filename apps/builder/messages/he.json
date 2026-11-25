@@ -12118,41 +12118,138 @@
     "noWorkspaces": "אינך מנהל באף סביבת עבודה, ולכן אינך יכול לאשר את האפליקציה הזו."
   },
   "chatbotxMcp": {
-    "title": "ChatbotX MCP",
-    "workspaceId": "Workspace ID",
-    "streamableUrl": "Streamable HTTP URL",
-    "sseUrl": "Legacy SSE URL",
+    "title": "מחבר MCP",
+    "streamableUrl": "כתובת Streamable HTTP",
+    "sseUrl": "כתובת SSE ישנה",
     "guide": {
-      "title": "Connect an MCP client",
-      "step1": "Copy the configuration for your MCP client.",
-      "step2": "Paste it into the client.",
-      "step3": "The client opens a browser. Sign in and approve access.",
-      "step4": "Your workspace tools appear after approval.",
-      "ownerOnly": "Only workspace owners and superAdmins can authorize MCP access."
+      "title": "חיבור לקוח MCP",
+      "subtitle": "בחר את האפליקציה שבה אתה משתמש ופעל לפי שלושת השלבים.",
+      "ownerOnly": "רק בעלי סביבת העבודה ו-superAdmin יכולים לאשר גישת MCP. את סביבת העבודה בוחרים במסך האישור.",
+      "otherClients": "גם כל לקוח אחר שתומך ב-MCP עובד",
+      "otherIntro": "השתמש בנקודות הקצה ובתצורות האלה עם כל לקוח אחר שתומך ב-MCP.",
+      "opensInNewTab": "(נפתח בכרטיסייה חדשה)",
+      "actions": {
+        "addConnector": "הוסף מחבר",
+        "startChatting": "התחל צ'אט"
+      },
+      "steps": {
+        "claude": {
+          "step1": {
+            "title": "העתק את כתובת המחבר",
+            "body": "תדביק את הכתובת הזו ב-Claude בשלב הבא."
+          },
+          "step2": {
+            "title": "עבור אל Claude ← Customize ← Connectors ← Add custom connector",
+            "body": "הכפתור למטה פותח את המחברים שלך ב-Claude. לחץ על Add custom connector, תן שם והדבק את הכתובת. הוא יופיע גם באפליקציות Claude למחשב ולנייד."
+          },
+          "step3": {
+            "title": "לחץ על Connect ואשר גישה",
+            "body": "התחבר, בחר את סביבת העבודה ואשר. לאחר מכן בקש מ-Claude לעבוד עם אנשי הקשר, הזרימות והשידורים ישירות מהצ'אט."
+          }
+        },
+        "chatgpt": {
+          "step1": {
+            "title": "העתק את כתובת המחבר",
+            "body": "תדביק את הכתובת הזו ב-ChatGPT בשלב הבא."
+          },
+          "step2": {
+            "title": "עבור אל ChatGPT ← Settings ← Apps & Connectors ← Create",
+            "body": "הכפתור למטה פותח את הגדרות ChatGPT. אם Create לא מופיע, הפעל את Developer mode תחת Advanced settings. תן שם למחבר, הדבק את הכתובת ובחר OAuth."
+          },
+          "step3": {
+            "title": "התחבר ואשר גישה",
+            "body": "התחבר, בחר את סביבת העבודה ואשר. לאחר מכן הפעל את המחבר בצ'אט חדש כדי להשתמש בו."
+          }
+        },
+        "claudeCode": {
+          "step1": {
+            "title": "העתק את פקודת ההתקנה",
+            "body": "הרץ אותה בטרמינל."
+          },
+          "step2": {
+            "title": "התחבר מתוך Claude Code",
+            "body": "הפעל את Claude Code, הקלד /mcp, בחר את השרת ובחר Authenticate. ייפתח חלון דפדפן."
+          },
+          "step3": {
+            "title": "אשר גישה",
+            "body": "בחר את סביבת העבודה ואשר. Claude Code יכול כעת להשתמש בכלי סביבת העבודה."
+          }
+        },
+        "cursor": {
+          "step1": {
+            "title": "העתק את התצורה",
+            "body": "תדביק אותה ב-Cursor בשלב הבא."
+          },
+          "step2": {
+            "title": "פתח את Cursor Settings ← MCP ← Add new MCP server",
+            "body": "הדבק את התצורה ב-mcp.json ושמור. Cursor יציג כפתור Login ליד השרת."
+          },
+          "step3": {
+            "title": "אשר גישה",
+            "body": "לחץ על Login, בחר את סביבת העבודה ואשר. הכלים יופיעו בסוכן של Cursor."
+          }
+        },
+        "openclaw": {
+          "step1": {
+            "title": "התקן את התוסף",
+            "body": "הרץ את הפקודה הזו בטרמינל."
+          },
+          "step2": {
+            "title": "התחבר",
+            "body": "הרץ את הפקודה הזו. ייפתח חלון דפדפן."
+          },
+          "step3": {
+            "title": "אשר גישה",
+            "body": "בחר את סביבת העבודה ואשר. OpenClaw יכול כעת להשתמש בכלי סביבת העבודה."
+          }
+        },
+        "hermes": {
+          "step1": {
+            "title": "העתק את התצורה",
+            "body": "תוסיף אותה לתצורת Hermes בשלב הבא."
+          },
+          "step2": {
+            "title": "הוסף אותה ל-~/.hermes/config.yaml",
+            "body": "הדבק אותה תחת mcp_servers בקובץ ~/.hermes/config.yaml ושמור. לאחר מכן הרץ את הפקודה הזו ב-Hermes."
+          },
+          "step3": {
+            "title": "אשר גישה",
+            "body": "Hermes פותח חלון דפדפן. התחבר, בחר את סביבת העבודה ואשר. Hermes יכול כעת להשתמש בכלי סביבת העבודה."
+          }
+        }
+      }
     },
     "clients": {
+      "claude": "Claude",
       "claudeCode": "Claude Code",
       "claudeDesktop": "Claude Desktop",
       "cursor": "Cursor",
       "chatgpt": "ChatGPT",
-      "stdio": "stdio fallback",
-      "stdioHint": "Use a workspace token for this fallback."
+      "stdio": "חלופת stdio",
+      "stdioHint": "השתמש באסימון סביבת עבודה עבור חלופה זו.",
+      "openclaw": "OpenClaw",
+      "hermes": "Hermes",
+      "other": "לקוחות אחרים"
     },
     "grants": {
-      "title": "Authorized applications",
-      "description": "Grants belong to your account and apply to every workspace you administer; revoking disconnects the client everywhere.",
-      "empty": "OAuth grants appear here after you connect an MCP client.",
-      "client": "Client",
-      "scopes": "Scopes",
-      "firstAuthorizedAt": "First authorized",
-      "lastRefreshedAt": "Last refreshed",
-      "activeUntil": "Active until",
-      "noActiveToken": "No active token",
-      "revoke": "Revoke",
-      "revokeConfirmTitle": "Revoke application access?",
-      "revokeConfirmDescription": "Revoke access for {clientName}? This disconnects the client everywhere.",
-      "revokedSuccess": "Application access revoked.",
-      "notFound": "OAuth grant no longer exists"
+      "title": "אפליקציות מורשות",
+      "description": "ההרשאות שייכות לחשבון שלך וחלות על כל סביבת עבודה שאתה מנהל; ביטול ינתק את הלקוח בכל מקום.",
+      "empty": "הרשאות OAuth יופיעו כאן לאחר שתחבר לקוח MCP.",
+      "client": "לקוח",
+      "scopes": "היקפים",
+      "firstAuthorizedAt": "הורשה לראשונה",
+      "lastRefreshedAt": "רוענן לאחרונה",
+      "activeUntil": "פעיל עד",
+      "noActiveToken": "אין אסימון פעיל",
+      "revoke": "ביטול",
+      "revokeConfirmTitle": "לבטל את הגישה של האפליקציה?",
+      "revokeConfirmDescription": "לבטל את הגישה של {clientName}? פעולה זו תנתק את הלקוח בכל מקום.",
+      "revokedSuccess": "הגישה של האפליקציה בוטלה.",
+      "notFound": "הרשאת ה-OAuth כבר לא קיימת"
+    },
+    "unavailableOnDomain": {
+      "title": "לא זמין בדומיין זה",
+      "body": "חיבור עוזרי בינה מלאכותית כמו Claude או ChatGPT עדיין אינו זמין בדומיין זה. ההרשאות הקיימות מופיעות למטה ועדיין ניתן לבטל אותן."
     }
   },
   "connectionStatus": {

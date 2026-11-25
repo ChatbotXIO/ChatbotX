@@ -12118,41 +12118,138 @@
     "noWorkspaces": "No eres administrador de ningún espacio de trabajo, así que no puedes autorizar esta aplicación."
   },
   "chatbotxMcp": {
-    "title": "ChatbotX MCP",
-    "workspaceId": "Workspace ID",
-    "streamableUrl": "Streamable HTTP URL",
-    "sseUrl": "Legacy SSE URL",
+    "title": "Conector MCP",
+    "streamableUrl": "URL de Streamable HTTP",
+    "sseUrl": "URL de SSE heredada",
     "guide": {
-      "title": "Connect an MCP client",
-      "step1": "Copy the configuration for your MCP client.",
-      "step2": "Paste it into the client.",
-      "step3": "The client opens a browser. Sign in and approve access.",
-      "step4": "Your workspace tools appear after approval.",
-      "ownerOnly": "Only workspace owners and superAdmins can authorize MCP access."
+      "title": "Conectar un cliente MCP",
+      "subtitle": "Elige la app que usas y sigue los tres pasos.",
+      "ownerOnly": "Solo los propietarios del espacio de trabajo y los superAdmin pueden autorizar el acceso MCP. Eliges el espacio de trabajo en la pantalla de aprobación.",
+      "otherClients": "Cualquier otro cliente compatible con MCP también funciona",
+      "otherIntro": "Usa estos endpoints y configuraciones con cualquier otro cliente compatible con MCP.",
+      "opensInNewTab": "(se abre en una pestaña nueva)",
+      "actions": {
+        "addConnector": "Añadir conector",
+        "startChatting": "Empezar a chatear"
+      },
+      "steps": {
+        "claude": {
+          "step1": {
+            "title": "Copia la URL del conector",
+            "body": "Pegarás esta URL en Claude en el siguiente paso."
+          },
+          "step2": {
+            "title": "Ve a Claude → Customize → Connectors → Add custom connector",
+            "body": "El botón de abajo abre tus conectores en Claude. Haz clic en Add custom connector, ponle un nombre y pega la URL. También aparece en las apps de escritorio y móvil de Claude."
+          },
+          "step3": {
+            "title": "Haz clic en Connect y aprueba el acceso",
+            "body": "Inicia sesión, elige tu espacio de trabajo y aprueba. Luego pide a Claude que trabaje con tus contactos, flujos y difusiones desde el chat."
+          }
+        },
+        "chatgpt": {
+          "step1": {
+            "title": "Copia la URL del conector",
+            "body": "Pegarás esta URL en ChatGPT en el siguiente paso."
+          },
+          "step2": {
+            "title": "Ve a ChatGPT → Settings → Apps & Connectors → Create",
+            "body": "El botón de abajo abre la configuración de ChatGPT. Si no ves Create, activa Developer mode en Advanced settings. Ponle nombre al conector, pega la URL y elige OAuth."
+          },
+          "step3": {
+            "title": "Conecta y aprueba el acceso",
+            "body": "Inicia sesión, elige tu espacio de trabajo y aprueba. Luego activa el conector en un chat nuevo para usarlo."
+          }
+        },
+        "claudeCode": {
+          "step1": {
+            "title": "Copia el comando de instalación",
+            "body": "Ejecútalo en tu terminal."
+          },
+          "step2": {
+            "title": "Inicia sesión desde Claude Code",
+            "body": "Abre Claude Code, escribe /mcp, selecciona el servidor y elige Authenticate. Se abrirá una ventana del navegador."
+          },
+          "step3": {
+            "title": "Aprueba el acceso",
+            "body": "Elige tu espacio de trabajo y aprueba. Claude Code ya puede usar las herramientas de tu espacio de trabajo."
+          }
+        },
+        "cursor": {
+          "step1": {
+            "title": "Copia la configuración",
+            "body": "La pegarás en Cursor en el siguiente paso."
+          },
+          "step2": {
+            "title": "Abre Cursor Settings → MCP → Add new MCP server",
+            "body": "Pega la configuración en mcp.json y guarda. Cursor muestra un botón Login junto al servidor."
+          },
+          "step3": {
+            "title": "Aprueba el acceso",
+            "body": "Haz clic en Login, elige tu espacio de trabajo y aprueba. Las herramientas aparecen en el agente de Cursor."
+          }
+        },
+        "openclaw": {
+          "step1": {
+            "title": "Instala el plugin",
+            "body": "Ejecuta este comando en tu terminal."
+          },
+          "step2": {
+            "title": "Inicia sesión",
+            "body": "Ejecuta este comando. Se abrirá una ventana del navegador."
+          },
+          "step3": {
+            "title": "Aprueba el acceso",
+            "body": "Elige tu espacio de trabajo y aprueba. OpenClaw ya puede usar las herramientas de tu espacio de trabajo."
+          }
+        },
+        "hermes": {
+          "step1": {
+            "title": "Copia la configuración",
+            "body": "La añadirás a tu configuración de Hermes en el siguiente paso."
+          },
+          "step2": {
+            "title": "Añádela a ~/.hermes/config.yaml",
+            "body": "Pégala bajo mcp_servers en ~/.hermes/config.yaml y guarda. Luego ejecuta este comando en Hermes."
+          },
+          "step3": {
+            "title": "Aprueba el acceso",
+            "body": "Hermes abre una ventana del navegador. Inicia sesión, elige tu espacio de trabajo y aprueba. Hermes ya puede usar las herramientas de tu espacio de trabajo."
+          }
+        }
+      }
     },
     "clients": {
+      "claude": "Claude",
       "claudeCode": "Claude Code",
       "claudeDesktop": "Claude Desktop",
       "cursor": "Cursor",
       "chatgpt": "ChatGPT",
-      "stdio": "stdio fallback",
-      "stdioHint": "Use a workspace token for this fallback."
+      "stdio": "alternativa stdio",
+      "stdioHint": "Usa un token del espacio de trabajo para esta alternativa.",
+      "openclaw": "OpenClaw",
+      "hermes": "Hermes",
+      "other": "Otros clientes"
     },
     "grants": {
-      "title": "Authorized applications",
-      "description": "Grants belong to your account and apply to every workspace you administer; revoking disconnects the client everywhere.",
-      "empty": "OAuth grants appear here after you connect an MCP client.",
-      "client": "Client",
-      "scopes": "Scopes",
-      "firstAuthorizedAt": "First authorized",
-      "lastRefreshedAt": "Last refreshed",
-      "activeUntil": "Active until",
-      "noActiveToken": "No active token",
-      "revoke": "Revoke",
-      "revokeConfirmTitle": "Revoke application access?",
-      "revokeConfirmDescription": "Revoke access for {clientName}? This disconnects the client everywhere.",
-      "revokedSuccess": "Application access revoked.",
-      "notFound": "OAuth grant no longer exists"
+      "title": "Aplicaciones autorizadas",
+      "description": "Las autorizaciones pertenecen a tu cuenta y se aplican a todos los espacios de trabajo que administras; al revocarlas, el cliente se desconecta en todas partes.",
+      "empty": "Las autorizaciones OAuth aparecen aquí después de conectar un cliente MCP.",
+      "client": "Cliente",
+      "scopes": "Ámbitos",
+      "firstAuthorizedAt": "Primera autorización",
+      "lastRefreshedAt": "Última renovación",
+      "activeUntil": "Activo hasta",
+      "noActiveToken": "Sin token activo",
+      "revoke": "Revocar",
+      "revokeConfirmTitle": "¿Revocar el acceso de la aplicación?",
+      "revokeConfirmDescription": "¿Revocar el acceso de {clientName}? Esto desconecta el cliente en todas partes.",
+      "revokedSuccess": "Acceso de la aplicación revocado.",
+      "notFound": "La autorización OAuth ya no existe"
+    },
+    "unavailableOnDomain": {
+      "title": "No disponible en este dominio",
+      "body": "La conexión de asistentes de IA como Claude o ChatGPT aún no está disponible en este dominio. Las autorizaciones existentes se muestran abajo y aún pueden revocarse."
     }
   },
   "connectionStatus": {

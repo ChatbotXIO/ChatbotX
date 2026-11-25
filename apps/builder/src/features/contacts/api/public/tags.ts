@@ -29,7 +29,13 @@ export const contactsTagsPublicRouter = {
       description:
         "Use this to inspect tags attached to a contact after resolving its identifier with `contacts.get`. Call `contacts.addTags` to attach more tags or `tags.list` to discover available tags.",
       tags: ["Contacts"],
-      spec: mcpSpec({ visibility: "default" }),
+      spec: mcpSpec({
+        destructiveHint: false,
+        idempotentHint: true,
+        openWorldHint: false,
+        readOnlyHint: true,
+        visibility: "default",
+      }),
     })
     .input(
       z.object({
@@ -119,7 +125,13 @@ export const contactsTagsPublicRouter = {
         'Same as `addTags` but takes tag names instead of ids — existing tags whose name matches are reused, unmatched names are created. Use this when you know the tag name but not its id (call `tags.list` first only if you need the id back). Example: `{"tags":["VIP"]}`.',
       successStatus: 204,
       tags: ["Contacts"],
-      spec: mcpSpec({ visibility: "default" }),
+      spec: mcpSpec({
+        destructiveHint: false,
+        idempotentHint: true,
+        openWorldHint: false,
+        readOnlyHint: false,
+        visibility: "default",
+      }),
     })
     .input(addTagsByNamePublicRequest)
     .errors(possibleErrorsOnMutatingResource)

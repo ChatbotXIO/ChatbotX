@@ -3,7 +3,7 @@ import type { GuideName } from "./guides"
 import { fetchWithTimeout } from "./http"
 import type { TokenIntrospection } from "./token-introspection"
 
-interface OpenAPISpec {
+export interface OpenAPISpec {
   paths?: Record<string, Record<string, OpenAPIOperation>>
   servers?: Array<{ url: string }>
 }
@@ -125,6 +125,10 @@ export interface DynamicTool {
 }
 
 let cachedTools: DynamicTool[] | null = null
+// The document `cachedTools` was parsed from. Connector profiles build their
+// own tool shapes (e.g. response schemas) from it; a refresh replaces the
+// object, so its identity doubles as a cache key.
+let cachedSpec: OpenAPISpec | null = null
 
 const toolsByName = new Map<string, DynamicTool>()
 let cachedEtag: string | null = null
@@ -153,9 +157,10 @@ function extractPathParamNames(pathTemplate: string): string[] {
 
 /**
  * `x-mcp` hints override; otherwise inferred from the HTTP method — a GET is
- * read-only and idempotent by convention, a DELETE is destructive (and still
- * idempotent: deleting twice is a no-op), everything else (POST/PUT/PATCH)
- * defaults to none of the three.
+ * read-only and idempotent by convention, a DELETE is idempotent (deleting
+ * twice is a no-op), PUT is idempotent. Every non-read-only tool defaults to
+ * `destructiveHint: true`, the MCP specification's default, so a write is
+ * never advertised as safe just because its metadata omitted the hint.
  */
 function buildAnnotations(
   method: string,
@@ -164,10 +169,11 @@ function buildAnnotations(
 ): DynamicToolAnnotations {
   const meta = operation["x-mcp"]
   const upperMethod = method.toUpperCase()
+  const readOnlyHint = meta?.readOnlyHint ?? upperMethod === "GET"
   return {
     title: operation.summary?.trim() || fallbackTitle,
-    readOnlyHint: meta?.readOnlyHint ?? upperMethod === "GET",
-    destructiveHint: meta?.destructiveHint ?? upperMethod === "DELETE",
+    readOnlyHint,
+    destructiveHint: meta?.destructiveHint ?? !readOnlyHint,
     idempotentHint:
       meta?.idempotentHint ??
       (upperMethod === "GET" ||
@@ -399,7 +405,7 @@ function parseOperation(
   }
 }
 
-function parseToolsFromSpec(spec: OpenAPISpec): DynamicTool[] {
+export function parseToolsFromSpec(spec: OpenAPISpec): DynamicTool[] {
   const baseUrl = spec.servers?.[0]?.url ?? env.CHATBOTX_API_URL
   const tools: DynamicTool[] = []
 
@@ -474,6 +480,7 @@ async function fetchAndParseSpec(): Promise<DynamicTool[]> {
   // dispatch to the first, permanently wasting a slot in the client's
   // context window on an unreachable tool.
   cachedTools = deduplicatedTools
+  cachedSpec = spec
   cachedEtag = response.headers.get("ETag")
   fetchedAtMs = Date.now()
   // stderr keeps this out of the stdio MCP transport stream
@@ -532,8 +539,16 @@ export function getCachedTools(): DynamicTool[] {
 export const getToolByName = (name: string): DynamicTool | undefined =>
   toolsByName.get(name)
 
-function isVisibleForScope(
-  tool: DynamicTool,
+/** The last successfully fetched public spec, or null before the first load. */
+export const getCachedSpec = (): OpenAPISpec | null => cachedSpec
+
+/** The fields `isVisibleForScope` reads; any profile's tool shape fits. */
+export type ScopedTool = Pick<DynamicTool, "alwaysVisible" | "scope"> & {
+  annotations: Pick<DynamicToolAnnotations, "readOnlyHint">
+}
+
+export function isVisibleForScope(
+  tool: ScopedTool,
   introspection: TokenIntrospection | null,
 ): boolean {
   // Fail OPEN: introspection unavailable (network blip, unexpected

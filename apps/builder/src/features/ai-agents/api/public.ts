@@ -33,7 +33,13 @@ export const aiAgentsPublicRouter = {
       description:
         "Use this to resolve an AI agent before referencing it in `flows.publish` or changing it with `aiAgents.update`. Returns the configured agents in the workspace. The bot reply delay shown in the agent list is not per agent: it is the workspace setting `smartResponseDelaySeconds`, shared by every agent (read it with `workspaceSettings.get`, change it with `workspaceSettings.update`).",
       tags: ["AI Agents"],
-      spec: mcpSpec({ visibility: "default" }),
+      spec: mcpSpec({
+        destructiveHint: false,
+        idempotentHint: true,
+        openWorldHint: false,
+        readOnlyHint: true,
+        visibility: "default",
+      }),
     })
     .input(publicListRequest)
     .output(publicListAIAgentsResponse)
@@ -84,7 +90,13 @@ export const aiAgentsPublicRouter = {
         "Adds a configured AI agent to the workspace. Use `aiAgents.list` first to avoid duplicating an existing agent, then use `aiAgents.update` to refine its settings.",
       successStatus: 201,
       tags: ["AI Agents"],
-      spec: mcpSpec({ visibility: "default" }),
+      spec: mcpSpec({
+        destructiveHint: false,
+        idempotentHint: false,
+        openWorldHint: false,
+        readOnlyHint: false,
+        visibility: "default",
+      }),
     })
     .input(createPublicAIAgentRequest)
     .output(publicAIAgentResourceSchema)
@@ -103,7 +115,13 @@ export const aiAgentsPublicRouter = {
       description:
         "Changes settings on an existing AI agent without replacing unrelated fields. Call `aiAgents.list` to resolve its id, and use `aiAgents.get` to inspect the saved result. It does not change the bot reply delay: that is the workspace setting `smartResponseDelaySeconds` (`workspaceSettings.update`).",
       tags: ["AI Agents"],
-      spec: mcpSpec({ visibility: "default" }),
+      spec: mcpSpec({
+        destructiveHint: true,
+        idempotentHint: true,
+        openWorldHint: false,
+        readOnlyHint: false,
+        visibility: "default",
+      }),
     })
     .input(
       updatePublicAIAgentRequest.and(

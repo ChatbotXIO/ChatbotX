@@ -12118,41 +12118,138 @@
     "noWorkspaces": "管理者であるワークスペースがないため、このアプリケーションを承認できません。"
   },
   "chatbotxMcp": {
-    "title": "ChatbotX MCP",
-    "workspaceId": "Workspace ID",
+    "title": "MCPコネクタ",
     "streamableUrl": "Streamable HTTP URL",
-    "sseUrl": "Legacy SSE URL",
+    "sseUrl": "従来のSSE URL",
     "guide": {
-      "title": "Connect an MCP client",
-      "step1": "Copy the configuration for your MCP client.",
-      "step2": "Paste it into the client.",
-      "step3": "The client opens a browser. Sign in and approve access.",
-      "step4": "Your workspace tools appear after approval.",
-      "ownerOnly": "Only workspace owners and superAdmins can authorize MCP access."
+      "title": "MCPクライアントを接続",
+      "subtitle": "使っているアプリを選び、3つのステップに沿って設定します。",
+      "ownerOnly": "MCPアクセスを承認できるのは、ワークスペースのオーナーとsuperAdminのみです。ワークスペースは承認画面で選択します。",
+      "otherClients": "その他のMCP対応クライアントも利用できます",
+      "otherIntro": "その他のMCP対応クライアントでは、以下のエンドポイントと設定を使用してください。",
+      "opensInNewTab": "（新しいタブで開きます）",
+      "actions": {
+        "addConnector": "コネクタを追加",
+        "startChatting": "チャットを始める"
+      },
+      "steps": {
+        "claude": {
+          "step1": {
+            "title": "コネクタのURLをコピー",
+            "body": "次のステップでこのURLをClaudeに貼り付けます。"
+          },
+          "step2": {
+            "title": "Claude → Customize → Connectors → Add custom connector を開く",
+            "body": "下のボタンでClaudeのコネクタ一覧が開きます。Add custom connectorをクリックし、名前を付けてURLを貼り付けてください。Claudeのデスクトップアプリとモバイルアプリにも表示されます。"
+          },
+          "step3": {
+            "title": "Connectをクリックしてアクセスを承認",
+            "body": "サインインしてワークスペースを選び、承認します。あとはチャットからClaudeに連絡先・フロー・一斉配信の作業を頼めます。"
+          }
+        },
+        "chatgpt": {
+          "step1": {
+            "title": "コネクタのURLをコピー",
+            "body": "次のステップでこのURLをChatGPTに貼り付けます。"
+          },
+          "step2": {
+            "title": "ChatGPT → Settings → Apps & Connectors → Create を開く",
+            "body": "下のボタンでChatGPTの設定が開きます。Createが見当たらない場合は、Advanced settingsでDeveloper modeをオンにしてください。コネクタに名前を付け、URLを貼り付けてOAuthを選びます。"
+          },
+          "step3": {
+            "title": "接続してアクセスを承認",
+            "body": "サインインしてワークスペースを選び、承認します。その後、新しいチャットでコネクタをオンにして使います。"
+          }
+        },
+        "claudeCode": {
+          "step1": {
+            "title": "インストールコマンドをコピー",
+            "body": "ターミナルで実行します。"
+          },
+          "step2": {
+            "title": "Claude Codeからサインイン",
+            "body": "Claude Codeを起動して /mcp と入力し、サーバーを選んでAuthenticateを選択します。ブラウザが開きます。"
+          },
+          "step3": {
+            "title": "アクセスを承認",
+            "body": "ワークスペースを選んで承認します。これでClaude Codeからワークスペースのツールを使えます。"
+          }
+        },
+        "cursor": {
+          "step1": {
+            "title": "設定をコピー",
+            "body": "次のステップでCursorに貼り付けます。"
+          },
+          "step2": {
+            "title": "Cursor Settings → MCP → Add new MCP server を開く",
+            "body": "設定をmcp.jsonに貼り付けて保存します。サーバーの横にLoginボタンが表示されます。"
+          },
+          "step3": {
+            "title": "アクセスを承認",
+            "body": "Loginをクリックし、ワークスペースを選んで承認します。Cursorのエージェントにツールが表示されます。"
+          }
+        },
+        "openclaw": {
+          "step1": {
+            "title": "プラグインをインストール",
+            "body": "ターミナルでこのコマンドを実行します。"
+          },
+          "step2": {
+            "title": "サインイン",
+            "body": "このコマンドを実行します。ブラウザが開きます。"
+          },
+          "step3": {
+            "title": "アクセスを承認",
+            "body": "ワークスペースを選んで承認します。これでOpenClawからワークスペースのツールを使えます。"
+          }
+        },
+        "hermes": {
+          "step1": {
+            "title": "設定をコピー",
+            "body": "次のステップでHermesの設定に追加します。"
+          },
+          "step2": {
+            "title": "~/.hermes/config.yaml に追加",
+            "body": "~/.hermes/config.yaml の mcp_servers の下に貼り付けて保存します。その後、Hermesでこのコマンドを実行します。"
+          },
+          "step3": {
+            "title": "アクセスを承認",
+            "body": "Hermesがブラウザを開きます。サインインしてワークスペースを選び、承認します。これでHermesからワークスペースのツールを使えます。"
+          }
+        }
+      }
     },
     "clients": {
+      "claude": "Claude",
       "claudeCode": "Claude Code",
       "claudeDesktop": "Claude Desktop",
       "cursor": "Cursor",
       "chatgpt": "ChatGPT",
-      "stdio": "stdio fallback",
-      "stdioHint": "Use a workspace token for this fallback."
+      "stdio": "stdioフォールバック",
+      "stdioHint": "このフォールバックにはワークスペーストークンを使用してください。",
+      "openclaw": "OpenClaw",
+      "hermes": "Hermes",
+      "other": "その他のクライアント"
     },
     "grants": {
-      "title": "Authorized applications",
-      "description": "Grants belong to your account and apply to every workspace you administer; revoking disconnects the client everywhere.",
-      "empty": "OAuth grants appear here after you connect an MCP client.",
-      "client": "Client",
-      "scopes": "Scopes",
-      "firstAuthorizedAt": "First authorized",
-      "lastRefreshedAt": "Last refreshed",
-      "activeUntil": "Active until",
-      "noActiveToken": "No active token",
-      "revoke": "Revoke",
-      "revokeConfirmTitle": "Revoke application access?",
-      "revokeConfirmDescription": "Revoke access for {clientName}? This disconnects the client everywhere.",
-      "revokedSuccess": "Application access revoked.",
-      "notFound": "OAuth grant no longer exists"
+      "title": "承認済みアプリケーション",
+      "description": "許可はアカウントに紐づき、管理しているすべてのワークスペースに適用されます。取り消すと、すべての場所でクライアントが切断されます。",
+      "empty": "MCPクライアントを接続すると、OAuthの許可がここに表示されます。",
+      "client": "クライアント",
+      "scopes": "スコープ",
+      "firstAuthorizedAt": "初回承認日時",
+      "lastRefreshedAt": "最終更新日時",
+      "activeUntil": "有効期限",
+      "noActiveToken": "有効なトークンなし",
+      "revoke": "取り消す",
+      "revokeConfirmTitle": "アプリケーションのアクセスを取り消しますか？",
+      "revokeConfirmDescription": "{clientName}のアクセスを取り消しますか？すべての場所でクライアントが切断されます。",
+      "revokedSuccess": "アプリケーションのアクセスを取り消しました。",
+      "notFound": "このOAuth許可は存在しません"
+    },
+    "unavailableOnDomain": {
+      "title": "このドメインでは利用できません",
+      "body": "Claude や ChatGPT などの AI アシスタントとの接続は、このドメインではまだ利用できません。既存の認可は下に表示されており、引き続き取り消すことができます。"
     }
   },
   "connectionStatus": {

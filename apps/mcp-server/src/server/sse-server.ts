@@ -13,10 +13,26 @@ import { resolveHeaderValue } from "../http-headers"
 import {
   buildProtectedResourceMetadata,
   buildWwwAuthenticate,
+  isConnectorProfileAudience,
+  profileForPath,
   protectedResourcePrefix,
+  unverifiedJwtAudiences,
 } from "../oauth"
 import { introspectToken } from "../token-introspection"
 import type { CreateMcpServerOptions } from "./create-mcp-server"
+import {
+  PayloadTooLargeError,
+  parseRequestBody,
+  writeJsonRpcError,
+  writePlainText,
+} from "./http-utils"
+import {
+  CLAUDE_INTERNAL_PATH,
+  handleClaudeRequest,
+  handleOpenAiRequest,
+  OPENAI_INTERNAL_PATH,
+} from "./profile-transport"
+import { IdleSessionSweeper } from "./session-sweeper"
 
 /**
  * Mutable holder for a session's current credentials. Every request may
@@ -46,9 +62,22 @@ type ResolvedSession =
 const sseSessions = new Map<string, SseSession>()
 const legacySseSessions = new Map<string, LegacySseSession>()
 
-const MAX_BODY_BYTES = 1024 * 1024
+const sseSweeper = new IdleSessionSweeper(async (sessionId) => {
+  const session = sseSessions.get(sessionId)
+  sseSessions.delete(sessionId)
+  await session?.transport.close()
+})
+const legacySweeper = new IdleSessionSweeper(async (sessionId) => {
+  const session = legacySseSessions.get(sessionId)
+  legacySseSessions.delete(sessionId)
+  await session?.transport.close()
+})
 
-class PayloadTooLargeError extends Error {}
+/** Refreshes the idle timer of whichever map owns the session. */
+const touchSession = (resolved: ResolvedSession, sessionId: string): void => {
+  const sweeper = resolved.kind === "streamable" ? sseSweeper : legacySweeper
+  sweeper.touch(sessionId)
+}
 
 const resolveSession = (sessionId: string): ResolvedSession | undefined => {
   const streamableSession = sseSessions.get(sessionId)
@@ -61,6 +90,12 @@ const resolveSession = (sessionId: string): ResolvedSession | undefined => {
     return { kind: "legacy", session: legacySession }
   }
 }
+
+/** Each connector profile's dedicated transport, keyed by internal path. */
+const PROFILE_TRANSPORTS = new Map([
+  [OPENAI_INTERNAL_PATH, handleOpenAiRequest],
+  [CLAUDE_INTERNAL_PATH, handleClaudeRequest],
+])
 
 const apiTokenHeaderNames = ["x-workspace-token", "x-chatbo-token"] as const
 
@@ -135,24 +170,16 @@ const enableCors = (res: ServerResponse): void => {
   res.setHeader("Access-Control-Expose-Headers", "WWW-Authenticate")
 }
 
-const writeJsonRpcError = (
-  res: ServerResponse,
-  statusCode: number,
-  message: string,
-  wwwAuthenticate?: string,
-): void => {
-  if (wwwAuthenticate) {
-    res.setHeader("WWW-Authenticate", wwwAuthenticate)
+/** Verified OAuth audience when introspection succeeded, else the raw claim. */
+const tokenAudiences = (
+  result: Awaited<ReturnType<typeof introspectToken>>,
+  token: string,
+): string[] => {
+  if (result.status !== "ok") {
+    return unverifiedJwtAudiences(token)
   }
-  res.statusCode = statusCode
-  res.setHeader("Content-Type", "application/json")
-  res.end(
-    JSON.stringify({
-      jsonrpc: "2.0",
-      id: null,
-      error: { code: -32_000, message },
-    }),
-  )
+  const { principal } = result.data
+  return principal?.credentialType === "oauth" ? [principal.audience] : []
 }
 
 const authorizeRequest = async (
@@ -186,40 +213,24 @@ const authorizeRequest = async (
     return false
   }
 
+  // Connector-profile tokens are only valid on their dedicated transport
+  // (`/mcp/openai`, `/mcp/claude`); they must not authenticate the default
+  // profile and its `call_tool` access to every operation.
+  // While introspection is unavailable (fail-open below) the token's own,
+  // unverified `aud` still decides the reject: it can only refuse, never admit.
+  if (tokenAudiences(result, token).some(isConnectorProfileAudience)) {
+    writeJsonRpcError(
+      res,
+      401,
+      "Unauthorized: Authentication required",
+      buildWwwAuthenticate(req, pathSuffix, "invalid_token"),
+    )
+    return false
+  }
+
   // `unavailable` fails open here and in tools/list filtering; the actual
   // API call still enforces the token before any workspace data is accessed.
   return true
-}
-
-const parseRequestBody = async (req: IncomingMessage): Promise<unknown> => {
-  const contentLength = Number(
-    resolveHeaderValue(req.headers["content-length"]),
-  )
-  if (Number.isFinite(contentLength) && contentLength > MAX_BODY_BYTES) {
-    throw new PayloadTooLargeError()
-  }
-
-  const chunks: Buffer[] = []
-  let bodyBytes = 0
-  for await (const chunk of req) {
-    const buffer = typeof chunk === "string" ? Buffer.from(chunk) : chunk
-    bodyBytes += buffer.byteLength
-    if (bodyBytes > MAX_BODY_BYTES) {
-      throw new PayloadTooLargeError()
-    }
-    chunks.push(buffer)
-  }
-
-  if (chunks.length === 0) {
-    return
-  }
-
-  const rawBody = Buffer.concat(chunks).toString("utf8").trim()
-  if (rawBody.length === 0) {
-    return
-  }
-
-  return JSON.parse(rawBody) as unknown
 }
 
 const getSessionId = (req: IncomingMessage): string | null => {
@@ -234,16 +245,6 @@ const getSessionId = (req: IncomingMessage): string | null => {
 
 const setSessionIdHeader = (req: IncomingMessage, sessionId: string): void => {
   req.headers["mcp-session-id"] = sessionId
-}
-
-const writePlainText = (
-  res: ServerResponse,
-  statusCode: number,
-  message: string,
-): void => {
-  res.statusCode = statusCode
-  res.setHeader("Content-Type", "text/plain; charset=utf-8")
-  res.end(message)
 }
 
 const handleSseRequest = async (
@@ -277,8 +278,10 @@ const handleSseRequest = async (
       server,
       transport,
     })
+    legacySweeper.touch(transport.sessionId)
     transport.onclose = () => {
       legacySseSessions.delete(transport.sessionId)
+      legacySweeper.forget(transport.sessionId)
     }
     await server.connect(transport)
     return
@@ -291,6 +294,7 @@ const handleSseRequest = async (
   }
 
   const { session } = resolvedSession
+  touchSession(resolvedSession, sessionId)
   updateCredentialStateFromRequest(session.credentialState, req)
   setSessionIdHeader(req, sessionId)
   await session.transport.handleRequest(req, res)
@@ -314,6 +318,7 @@ const startStreamableSession = async (
         server,
         transport,
       })
+      sseSweeper.touch(initializedSessionId)
     },
   })
 
@@ -321,6 +326,7 @@ const startStreamableSession = async (
     const activeSessionId = transport.sessionId
     if (activeSessionId) {
       sseSessions.delete(activeSessionId)
+      sseSweeper.forget(activeSessionId)
     }
   }
 
@@ -356,6 +362,7 @@ const handleMessagesRequest = async (
         return
       }
 
+      touchSession(resolvedSession, sessionId)
       updateCredentialStateFromRequest(
         resolvedSession.session.credentialState,
         req,
@@ -401,8 +408,27 @@ export const createRequestListener =
   (createMcpServer: CreateMcpServerFn) =>
   async (req: IncomingMessage, res: ServerResponse): Promise<void> => {
     try {
-      enableCors(res)
       const url = new URL(req.url ?? "", "http://localhost")
+      // Connector profiles: own CORS, Origin check, auth and session store.
+      const profileTransport = PROFILE_TRANSPORTS.get(url.pathname)
+      if (profileTransport) {
+        await profileTransport(req, res, createMcpServer)
+        return
+      }
+      enableCors(res)
+      if (
+        env.CHATBOTX_MCP_OAUTH_ENABLED === "true" &&
+        url.pathname.startsWith(`${protectedResourcePrefix}/`) &&
+        profileForPath(url.pathname)
+      ) {
+        res.statusCode = 200
+        res.setHeader("Cache-Control", "no-store")
+        res.setHeader("Content-Type", "application/json")
+        res.end(
+          JSON.stringify(buildProtectedResourceMetadata(req, url.pathname)),
+        )
+        return
+      }
       if (
         env.CHATBOTX_MCP_OAUTH_ENABLED === "true" &&
         (url.pathname === protectedResourcePrefix ||
@@ -462,9 +488,27 @@ export const createRequestListener =
     }
   }
 
+/** The fixed profile paths must not collide with configurable legacy paths. */
+export const assertNoProfilePathCollision = (): void => {
+  for (const path of [
+    env.CHATBOTX_MCP_SSE_PATH,
+    env.CHATBOTX_MCP_MESSAGES_PATH,
+  ]) {
+    if (
+      PROFILE_TRANSPORTS.has(path) ||
+      path.startsWith(protectedResourcePrefix)
+    ) {
+      throw new Error(
+        `MCP transport path "${path}" collides with a fixed connector-profile path or OAuth metadata routes`,
+      )
+    }
+  }
+}
+
 export const runSseServer = async (
   createMcpServer: CreateMcpServerFn,
 ): Promise<void> => {
+  assertNoProfilePathCollision()
   const httpServer = createServer(createRequestListener(createMcpServer))
   const { promise: listening, resolve } = Promise.withResolvers<void>()
   httpServer.listen(env.CHATBOTX_MCP_PORT, env.CHATBOTX_MCP_HOST, resolve)

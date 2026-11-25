@@ -2,7 +2,7 @@ import { createEnv } from "@t3-oss/env-core"
 import { z } from "zod"
 
 const defaultMcpInstructions = [
-  "Use tools for ChatbotX workspace data and actions; users do not need API names.",
+  "Use tools for workspace data and actions; users do not need API names.",
   "Call a suitable listed tool directly. Search hidden or unlisted capabilities with search_tools using one action plus one resource in English or supported Vietnamese, Spanish, French, or Chinese; inspect the returned inputSchema before call_tool.",
   "Split workflows into goals. Resolve names through filtered lists, pagination, and counts; use a user-provided stable ID, email, or phone when the schema accepts it. Ask for an observed disambiguator when names match more than once; do not select the first row or fabricate an empty result.",
   "For each requested create, modify, send, schedule, publish, or book action, wait for the result. A plan, schema lookup, validation, or natural-language answer is not completion.",
@@ -27,6 +27,22 @@ export const env = createEnv({
     CHATBOTX_MCP_SSE_PATH: z.string().default("/sse"),
     CHATBOTX_MCP_MESSAGES_PATH: z.string().default("/messages"),
     CHATBOTX_MCP_CORS_ORIGIN: z.string().default("*"),
+    // Comma-separated Origins allowed on the OpenAI endpoint (plus the public
+    // URL origin). A request without an Origin header is allowed.
+    CHATBOTX_MCP_ALLOWED_ORIGINS: z
+      .string()
+      .default("https://chatgpt.com,https://chat.openai.com"),
+    // Same rule for the Claude endpoint. Claude's hosted apps and Claude Code
+    // connect server-side without an Origin; browsers on claude.ai send one.
+    CHATBOTX_MCP_CLAUDE_ALLOWED_ORIGINS: z
+      .string()
+      .default("https://claude.ai,https://claude.com"),
+    // Sessions idle longer than this are closed and evicted (default 30 min).
+    CHATBOTX_MCP_SESSION_IDLE_TTL_MS: z.coerce
+      .number()
+      .int()
+      .positive()
+      .default(1_800_000),
     CHATBOTX_MCP_OAUTH_ENABLED: z.enum(["true", "false"]).default("true"),
     CHATBOTX_MCP_OAUTH_ISSUER: z.url().optional(),
     CHATBOTX_MCP_PUBLIC_URL: z.url().optional(),

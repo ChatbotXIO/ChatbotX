@@ -20,6 +20,10 @@ vi.mock("@better-auth/oauth-provider", () => ({
 vi.mock("../src/keys", () => ({
   env: { BETTER_AUTH_SECRET: "test-secret" },
   getMcpResourceUrl: () => "https://app.example.com/mcp",
+  getMcpProfileResourceUrls: () => [
+    "https://app.example.com/mcp/openai",
+    "https://app.example.com/mcp/claude",
+  ],
 }))
 
 vi.mock("../src/logger", () => ({ logger: { error: vi.fn() } }))
@@ -44,18 +48,65 @@ describe("verifyMcpAccessToken", () => {
   })
 
   test("returns the subject and verifies against the MCP audience, origin issuer and JWKS", async () => {
-    verifyBearerToken.mockResolvedValue({ client_id: "client-1", sub: "42" })
+    verifyBearerToken.mockResolvedValue({
+      aud: "https://app.example.com/mcp",
+      client_id: "client-1",
+      sub: "42",
+    })
 
     await expect(verifyMcpAccessToken(auth, "a.b.c")).resolves.toEqual({
+      audience: "https://app.example.com/mcp",
       clientId: "client-1",
+      issuer: "https://app.example.com",
       userId: "42",
     })
     expect(verifyBearerToken).toHaveBeenCalledWith("a.b.c", {
       jwksUrl: "https://app.example.com/api/auth/jwks",
       verifyOptions: {
-        audience: "https://app.example.com/mcp",
+        audience: [
+          "https://app.example.com/mcp",
+          "https://app.example.com/mcp/openai",
+          "https://app.example.com/mcp/claude",
+        ],
         issuer: "https://app.example.com",
       },
+    })
+  })
+
+  test("accepts the Claude connector audience and reports it", async () => {
+    verifyBearerToken.mockResolvedValue({
+      aud: "https://app.example.com/mcp/claude",
+      client_id: "client-1",
+      sub: "42",
+    })
+
+    await expect(verifyMcpAccessToken(auth, "a.b.c")).resolves.toMatchObject({
+      audience: "https://app.example.com/mcp/claude",
+    })
+  })
+
+  test("returns null when the token carries more than one MCP audience", async () => {
+    verifyBearerToken.mockResolvedValue({
+      aud: [
+        "https://app.example.com/mcp",
+        "https://app.example.com/mcp/openai",
+      ],
+      client_id: "client-1",
+      sub: "42",
+    })
+
+    await expect(verifyMcpAccessToken(auth, "a.b.c")).resolves.toBeNull()
+  })
+
+  test("accepts an audience array holding one MCP audience plus an unrelated one", async () => {
+    verifyBearerToken.mockResolvedValue({
+      aud: ["https://other.example.com", "https://app.example.com/mcp/openai"],
+      client_id: "client-1",
+      sub: "42",
+    })
+
+    await expect(verifyMcpAccessToken(auth, "a.b.c")).resolves.toMatchObject({
+      audience: "https://app.example.com/mcp/openai",
     })
   })
 

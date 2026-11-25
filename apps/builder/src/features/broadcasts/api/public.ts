@@ -74,7 +74,13 @@ export const broadcastsPublicRouter = {
       description:
         "Use this to find broadcasts before inspecting one with `broadcasts.get` or stopping one with `broadcasts.stop`. Filter by `status`, `name`, `channel` or a `scheduledFrom`/`scheduledTo` window; newest first unless `sort` is given. Each broadcast includes its channel, subaction, template, audience filter and per-page targets.",
       tags: ["Broadcasts"],
-      spec: mcpSpec({ visibility: "default" }),
+      spec: mcpSpec({
+        destructiveHint: false,
+        idempotentHint: true,
+        openWorldHint: false,
+        readOnlyHint: true,
+        visibility: "default",
+      }),
     })
     .input(listBroadcastsPublicRequest)
     .output(publicListBroadcastsResponse)
@@ -97,7 +103,13 @@ export const broadcastsPublicRouter = {
       description:
         "Use this to inspect a broadcast by id or name after finding it with `broadcasts.list`. Call `broadcasts.schedule` for a draft or `broadcasts.stop` for a sending broadcast.",
       tags: ["Broadcasts"],
-      spec: mcpSpec({ visibility: "default" }),
+      spec: mcpSpec({
+        destructiveHint: false,
+        idempotentHint: true,
+        openWorldHint: false,
+        readOnlyHint: true,
+        visibility: "default",
+      }),
     })
     .input(
       z.object({
@@ -394,7 +406,13 @@ export const broadcastsPublicRouter = {
       description:
         "Stops a broadcast while it is sending and returns its id. On a repeating broadcast (status `recurring`) it pauses the schedule: no new runs start, a run already sending carries on. Allowed even when the workspace trial has expired, like the builder. Call `broadcasts.get` to confirm its state first, or use `broadcasts.moveToDraft` for scheduled broadcasts. The system also stops a broadcast on its own when the channel page is blocked from sending: the broadcast then has a `statusReason` (and `statusErrorMessage`, `statusInboxId`) in `broadcasts.get`.",
       tags: ["Broadcasts"],
-      spec: mcpSpec({ visibility: "default" }),
+      spec: mcpSpec({
+        destructiveHint: true,
+        idempotentHint: true,
+        openWorldHint: false,
+        readOnlyHint: false,
+        visibility: "default",
+      }),
     })
     .input(
       z.object({

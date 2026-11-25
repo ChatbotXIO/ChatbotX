@@ -2,6 +2,7 @@ import { env } from "@/env"
 import {
   getMcpPublicPath,
   getMcpPublicUrl,
+  resolveMcpResourceForPath,
 } from "@/features/mcp-oauth/lib/mcp-oauth"
 
 export const GET = async (
@@ -24,7 +25,7 @@ export const GET = async (
 
   return Response.json(
     {
-      resource: getMcpPublicUrl(),
+      resource: resolveMcpResourceForPath(resourcePath),
       authorization_servers: [env.BETTER_AUTH_URL],
       bearer_methods_supported: ["header"],
     },

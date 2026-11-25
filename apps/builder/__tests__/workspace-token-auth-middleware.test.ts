@@ -341,7 +341,9 @@ describe("workspaceTokenAuthMidddleware", () => {
   test("authenticates an OAuth principal with user attribution and forwards x-workspace-id", async () => {
     findWorkspaceByTokenHash.mockResolvedValue(undefined)
     verifyMcpAccessToken.mockResolvedValue({
+      audience: "https://app.example.com/mcp/openai",
       clientId: "client-oauth",
+      issuer: "https://app.example.com",
       userId: "user-oauth",
     })
     resolvePrincipal.mockResolvedValue({
@@ -372,6 +374,12 @@ describe("workspaceTokenAuthMidddleware", () => {
           isDefault: false,
         },
         apiCredentialId: "mcp-oauth:client-oauth",
+        oauthPrincipal: {
+          audience: "https://app.example.com/mcp/openai",
+          clientId: "client-oauth",
+          issuer: "https://app.example.com",
+          subject: "user-oauth",
+        },
       },
     })
     expect(withAuditContext).toHaveBeenCalledWith(

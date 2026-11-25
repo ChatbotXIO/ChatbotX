@@ -53,7 +53,13 @@ export const keywordsPublicRouter = {
       description:
         "Find keyword-triggered automations by direction before inspecting one with `keywords.get` or adding one with `keywords.create`. Keyword direction: inbound matches messages from contacts; outbound matches messages sent by the Page/agent. This is not post/comment automation; use the channel's comment-automation tools for comments.",
       tags: ["Keywords"],
-      spec: mcpSpec({ visibility: "default" }),
+      spec: mcpSpec({
+        destructiveHint: false,
+        idempotentHint: true,
+        openWorldHint: false,
+        readOnlyHint: true,
+        visibility: "default",
+      }),
     })
     .input(
       publicListRequest.extend({

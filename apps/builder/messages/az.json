@@ -12134,41 +12134,138 @@
     "noWorkspaces": "Heç bir iş sahəsinin admini deyilsiniz, ona görə bu tətbiqə icazə verə bilməzsiniz."
   },
   "chatbotxMcp": {
-    "title": "ChatbotX MCP",
-    "workspaceId": "Workspace ID",
+    "title": "MCP bağlayıcısı",
     "streamableUrl": "Streamable HTTP URL",
-    "sseUrl": "Legacy SSE URL",
+    "sseUrl": "Köhnə SSE URL",
     "guide": {
-      "title": "Connect an MCP client",
-      "step1": "Copy the configuration for your MCP client.",
-      "step2": "Paste it into the client.",
-      "step3": "The client opens a browser. Sign in and approve access.",
-      "step4": "Your workspace tools appear after approval.",
-      "ownerOnly": "Only workspace owners and superAdmins can authorize MCP access."
+      "title": "MCP müştərisini qoşun",
+      "subtitle": "İstifadə etdiyiniz tətbiqi seçin və üç addımı izləyin.",
+      "ownerOnly": "MCP girişini yalnız iş sahəsinin sahibləri və superAdmin-lər icazələndirə bilər. İş sahəsini təsdiq ekranında seçirsiniz.",
+      "otherClients": "MCP ilə uyğun istənilən digər müştəri də işləyir",
+      "otherIntro": "Bu endpoint və konfiqurasiyaları MCP ilə uyğun istənilən digər müştəri ilə istifadə edin.",
+      "opensInNewTab": "(yeni tabda açılır)",
+      "actions": {
+        "addConnector": "Konnektor əlavə et",
+        "startChatting": "Söhbətə başla"
+      },
+      "steps": {
+        "claude": {
+          "step1": {
+            "title": "Konnektor URL-ni kopyalayın",
+            "body": "Növbəti addımda bu URL-ni Claude-a yapışdıracaqsınız."
+          },
+          "step2": {
+            "title": "Claude → Customize → Connectors → Add custom connector bölməsinə keçin",
+            "body": "Aşağıdakı düymə Claude-da konnektorlarınızı açır. Add custom connector basın, ad verin və URL-ni yapışdırın. O, Claude-un masaüstü və mobil tətbiqlərində də görünür."
+          },
+          "step3": {
+            "title": "Connect düyməsini basın və girişi təsdiqləyin",
+            "body": "Daxil olun, iş sahənizi seçin və təsdiqləyin. Sonra Claude-dan kontaktlar, axınlar və yayımlarla birbaşa söhbətdə işləməyi xahiş edin."
+          }
+        },
+        "chatgpt": {
+          "step1": {
+            "title": "Konnektor URL-ni kopyalayın",
+            "body": "Növbəti addımda bu URL-ni ChatGPT-yə yapışdıracaqsınız."
+          },
+          "step2": {
+            "title": "ChatGPT → Settings → Apps & Connectors → Create bölməsinə keçin",
+            "body": "Aşağıdakı düymə ChatGPT ayarlarını açır. Create görünmürsə, Advanced settings-də Developer mode-u aktiv edin. Konnektora ad verin, URL-ni yapışdırın və OAuth seçin."
+          },
+          "step3": {
+            "title": "Qoşulun və girişi təsdiqləyin",
+            "body": "Daxil olun, iş sahənizi seçin və təsdiqləyin. Sonra istifadə etmək üçün konnektoru yeni söhbətdə aktiv edin."
+          }
+        },
+        "claudeCode": {
+          "step1": {
+            "title": "Quraşdırma əmrini kopyalayın",
+            "body": "Onu terminalda işə salın."
+          },
+          "step2": {
+            "title": "Claude Code-dan daxil olun",
+            "body": "Claude Code-u açın, /mcp yazın, serveri seçin və Authenticate seçin. Brauzer pəncərəsi açılır."
+          },
+          "step3": {
+            "title": "Girişi təsdiqləyin",
+            "body": "İş sahənizi seçin və təsdiqləyin. Claude Code indi iş sahəsi alətlərindən istifadə edə bilər."
+          }
+        },
+        "cursor": {
+          "step1": {
+            "title": "Konfiqurasiyanı kopyalayın",
+            "body": "Növbəti addımda onu Cursor-a yapışdıracaqsınız."
+          },
+          "step2": {
+            "title": "Cursor Settings → MCP → Add new MCP server açın",
+            "body": "Konfiqurasiyanı mcp.json-a yapışdırın və yadda saxlayın. Cursor serverin yanında Login düyməsi göstərir."
+          },
+          "step3": {
+            "title": "Girişi təsdiqləyin",
+            "body": "Login basın, iş sahənizi seçin və təsdiqləyin. Alətlər Cursor agentində görünür."
+          }
+        },
+        "openclaw": {
+          "step1": {
+            "title": "Plaqini quraşdırın",
+            "body": "Bu əmri terminalda işə salın."
+          },
+          "step2": {
+            "title": "Daxil olun",
+            "body": "Bu əmri işə salın. Brauzer pəncərəsi açılır."
+          },
+          "step3": {
+            "title": "Girişi təsdiqləyin",
+            "body": "İş sahənizi seçin və təsdiqləyin. OpenClaw indi iş sahəsi alətlərindən istifadə edə bilər."
+          }
+        },
+        "hermes": {
+          "step1": {
+            "title": "Konfiqurasiyanı kopyalayın",
+            "body": "Növbəti addımda onu Hermes konfiqurasiyasına əlavə edəcəksiniz."
+          },
+          "step2": {
+            "title": "~/.hermes/config.yaml faylına əlavə edin",
+            "body": "Onu ~/.hermes/config.yaml faylında mcp_servers altına yapışdırın və yadda saxlayın. Sonra bu əmri Hermes-də işə salın."
+          },
+          "step3": {
+            "title": "Girişi təsdiqləyin",
+            "body": "Hermes brauzer pəncərəsi açır. Daxil olun, iş sahənizi seçin və təsdiqləyin. Hermes indi iş sahəsi alətlərindən istifadə edə bilər."
+          }
+        }
+      }
     },
     "clients": {
+      "claude": "Claude",
       "claudeCode": "Claude Code",
       "claudeDesktop": "Claude Desktop",
       "cursor": "Cursor",
       "chatgpt": "ChatGPT",
-      "stdio": "stdio fallback",
-      "stdioHint": "Use a workspace token for this fallback."
+      "stdio": "stdio ehtiyat variantı",
+      "stdioHint": "Bu ehtiyat variant üçün iş sahəsi tokenindən istifadə edin.",
+      "openclaw": "OpenClaw",
+      "hermes": "Hermes",
+      "other": "Digər müştərilər"
     },
     "grants": {
-      "title": "Authorized applications",
-      "description": "Grants belong to your account and apply to every workspace you administer; revoking disconnects the client everywhere.",
-      "empty": "OAuth grants appear here after you connect an MCP client.",
-      "client": "Client",
-      "scopes": "Scopes",
-      "firstAuthorizedAt": "First authorized",
-      "lastRefreshedAt": "Last refreshed",
-      "activeUntil": "Active until",
-      "noActiveToken": "No active token",
-      "revoke": "Revoke",
-      "revokeConfirmTitle": "Revoke application access?",
-      "revokeConfirmDescription": "Revoke access for {clientName}? This disconnects the client everywhere.",
-      "revokedSuccess": "Application access revoked.",
-      "notFound": "OAuth grant no longer exists"
+      "title": "İcazə verilmiş tətbiqlər",
+      "description": "İcazələr hesabınıza aiddir və idarə etdiyiniz bütün iş sahələrinə şamil edilir; ləğv etmək müştərini hər yerdə əlaqəsiz edir.",
+      "empty": "MCP müştərisini qoşduqdan sonra OAuth icazələri burada görünür.",
+      "client": "Müştəri",
+      "scopes": "Əhatə dairələri",
+      "firstAuthorizedAt": "İlk dəfə icazə verilib",
+      "lastRefreshedAt": "Son yenilənmə",
+      "activeUntil": "Aktivdir (son tarix)",
+      "noActiveToken": "Aktiv token yoxdur",
+      "revoke": "Ləğv et",
+      "revokeConfirmTitle": "Tətbiqin girişi ləğv edilsin?",
+      "revokeConfirmDescription": "{clientName} üçün giriş ləğv edilsin? Bu, müştərini hər yerdə əlaqəsiz edəcək.",
+      "revokedSuccess": "Tətbiqin girişi ləğv edildi.",
+      "notFound": "OAuth icazəsi artıq mövcud deyil"
+    },
+    "unavailableOnDomain": {
+      "title": "Bu domendə əlçatan deyil",
+      "body": "Claude və ya ChatGPT kimi süni intellekt köməkçilərini qoşmaq bu domendə hələ mümkün deyil. Mövcud icazələr aşağıda göstərilir və hələ də ləğv edilə bilər."
     }
   },
   "connectionStatus": {

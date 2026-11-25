@@ -70,7 +70,13 @@ export const contactsMessagesPublicRouter = {
         "Delivers a text, media or catalog product message (`products`, on channels with product messages such as WhatsApp; ids from `products.listSendable`). For SMTP, this opens a new email thread; use `messages.create` with `conversationId` to reply in an existing thread. Delivery is asynchronous: if the channel finally rejects the message (after any retries), it is removed from the conversation — reading it by id then returns 404 — and the error is written to the workspace Error Log (`errorLogs.list`). Only messages a member sends from the Inbox are kept with their error.",
       successStatus: 204,
       tags: ["Contacts"],
-      spec: mcpSpec({ visibility: "default" }),
+      spec: mcpSpec({
+        destructiveHint: true,
+        idempotentHint: false,
+        openWorldHint: true,
+        readOnlyHint: false,
+        visibility: "default",
+      }),
     })
     .input(
       createMessageRequest.and(
@@ -114,7 +120,13 @@ export const contactsMessagesPublicRouter = {
       description:
         "Use this to inspect cursor-paginated messages from a contact's existing conversation. Call `contacts.get` to resolve the contact first, or use `contacts.sendMessage` to add an outbound message.",
       tags: ["Contacts"],
-      spec: mcpSpec({ visibility: "default" }),
+      spec: mcpSpec({
+        destructiveHint: false,
+        idempotentHint: true,
+        openWorldHint: false,
+        readOnlyHint: true,
+        visibility: "default",
+      }),
     })
     .input(
       z.object({
@@ -261,7 +273,13 @@ export const contactsMessagesPublicRouter = {
         "Starts a flow for a resolved contact on the given `inboxId`, or the contact's most recently active inbox, and returns as soon as it is queued. SMTP starts in a new email thread. Returns 404 when the contact has no matching inbox or the flow is not in this workspace. Call `flows.list` to find the flow first, or use `contacts.sendMessage` for one message.",
       successStatus: 204,
       tags: ["Contacts"],
-      spec: mcpSpec({ visibility: "default" }),
+      spec: mcpSpec({
+        destructiveHint: true,
+        idempotentHint: false,
+        openWorldHint: true,
+        readOnlyHint: false,
+        visibility: "default",
+      }),
     })
     .input(
       z.object({

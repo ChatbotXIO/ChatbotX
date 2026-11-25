@@ -12118,41 +12118,138 @@
     "noWorkspaces": "Du är inte administratör för någon arbetsyta och kan därför inte auktorisera den här applikationen."
   },
   "chatbotxMcp": {
-    "title": "ChatbotX MCP",
-    "workspaceId": "Workspace ID",
-    "streamableUrl": "Streamable HTTP URL",
-    "sseUrl": "Legacy SSE URL",
+    "title": "MCP-koppling",
+    "streamableUrl": "Streamable HTTP-URL",
+    "sseUrl": "Äldre SSE-URL",
     "guide": {
-      "title": "Connect an MCP client",
-      "step1": "Copy the configuration for your MCP client.",
-      "step2": "Paste it into the client.",
-      "step3": "The client opens a browser. Sign in and approve access.",
-      "step4": "Your workspace tools appear after approval.",
-      "ownerOnly": "Only workspace owners and superAdmins can authorize MCP access."
+      "title": "Anslut en MCP-klient",
+      "subtitle": "Välj appen du använder och följ de tre stegen.",
+      "ownerOnly": "Endast arbetsytans ägare och superAdmins kan auktorisera MCP-åtkomst. Du väljer arbetsyta på godkännandesidan.",
+      "otherClients": "Alla andra MCP-kompatibla klienter fungerar också",
+      "otherIntro": "Använd dessa endpoints och konfigurationer med alla andra MCP-kompatibla klienter.",
+      "opensInNewTab": "(öppnas i en ny flik)",
+      "actions": {
+        "addConnector": "Lägg till connector",
+        "startChatting": "Börja chatta"
+      },
+      "steps": {
+        "claude": {
+          "step1": {
+            "title": "Kopiera connector-URL:en",
+            "body": "Du klistrar in den här URL:en i Claude i nästa steg."
+          },
+          "step2": {
+            "title": "Gå till Claude → Customize → Connectors → Add custom connector",
+            "body": "Knappen nedan öppnar dina connectors i Claude. Klicka på Add custom connector, ge den ett namn och klistra in URL:en. Den visas också i Claudes dator- och mobilappar."
+          },
+          "step3": {
+            "title": "Klicka på Connect och godkänn åtkomst",
+            "body": "Logga in, välj din arbetsyta och godkänn. Be sedan Claude arbeta med dina kontakter, flöden och utskick direkt i chatten."
+          }
+        },
+        "chatgpt": {
+          "step1": {
+            "title": "Kopiera connector-URL:en",
+            "body": "Du klistrar in den här URL:en i ChatGPT i nästa steg."
+          },
+          "step2": {
+            "title": "Gå till ChatGPT → Settings → Apps & Connectors → Create",
+            "body": "Knappen nedan öppnar ChatGPT-inställningarna. Om Create saknas, slå på Developer mode under Advanced settings. Namnge connectorn, klistra in URL:en och välj OAuth."
+          },
+          "step3": {
+            "title": "Anslut och godkänn åtkomst",
+            "body": "Logga in, välj din arbetsyta och godkänn. Slå sedan på connectorn i en ny chatt för att använda den."
+          }
+        },
+        "claudeCode": {
+          "step1": {
+            "title": "Kopiera installationskommandot",
+            "body": "Kör det i din terminal."
+          },
+          "step2": {
+            "title": "Logga in från Claude Code",
+            "body": "Starta Claude Code, skriv /mcp, välj servern och välj Authenticate. Ett webbläsarfönster öppnas."
+          },
+          "step3": {
+            "title": "Godkänn åtkomst",
+            "body": "Välj din arbetsyta och godkänn. Claude Code kan nu använda arbetsytans verktyg."
+          }
+        },
+        "cursor": {
+          "step1": {
+            "title": "Kopiera konfigurationen",
+            "body": "Du klistrar in den i Cursor i nästa steg."
+          },
+          "step2": {
+            "title": "Öppna Cursor Settings → MCP → Add new MCP server",
+            "body": "Klistra in konfigurationen i mcp.json och spara. Cursor visar en Login-knapp bredvid servern."
+          },
+          "step3": {
+            "title": "Godkänn åtkomst",
+            "body": "Klicka på Login, välj din arbetsyta och godkänn. Verktygen visas i Cursors agent."
+          }
+        },
+        "openclaw": {
+          "step1": {
+            "title": "Installera pluginet",
+            "body": "Kör det här kommandot i din terminal."
+          },
+          "step2": {
+            "title": "Logga in",
+            "body": "Kör det här kommandot. Ett webbläsarfönster öppnas."
+          },
+          "step3": {
+            "title": "Godkänn åtkomst",
+            "body": "Välj din arbetsyta och godkänn. OpenClaw kan nu använda arbetsytans verktyg."
+          }
+        },
+        "hermes": {
+          "step1": {
+            "title": "Kopiera konfigurationen",
+            "body": "Du lägger till den i Hermes-konfigurationen i nästa steg."
+          },
+          "step2": {
+            "title": "Lägg till den i ~/.hermes/config.yaml",
+            "body": "Klistra in den under mcp_servers i ~/.hermes/config.yaml och spara. Kör sedan det här kommandot i Hermes."
+          },
+          "step3": {
+            "title": "Godkänn åtkomst",
+            "body": "Hermes öppnar ett webbläsarfönster. Logga in, välj din arbetsyta och godkänn. Hermes kan nu använda arbetsytans verktyg."
+          }
+        }
+      }
     },
     "clients": {
+      "claude": "Claude",
       "claudeCode": "Claude Code",
       "claudeDesktop": "Claude Desktop",
       "cursor": "Cursor",
       "chatgpt": "ChatGPT",
-      "stdio": "stdio fallback",
-      "stdioHint": "Use a workspace token for this fallback."
+      "stdio": "stdio-reserv",
+      "stdioHint": "Använd en arbetsytetoken för den här reserven.",
+      "openclaw": "OpenClaw",
+      "hermes": "Hermes",
+      "other": "Andra klienter"
     },
     "grants": {
-      "title": "Authorized applications",
-      "description": "Grants belong to your account and apply to every workspace you administer; revoking disconnects the client everywhere.",
-      "empty": "OAuth grants appear here after you connect an MCP client.",
-      "client": "Client",
-      "scopes": "Scopes",
-      "firstAuthorizedAt": "First authorized",
-      "lastRefreshedAt": "Last refreshed",
-      "activeUntil": "Active until",
-      "noActiveToken": "No active token",
-      "revoke": "Revoke",
-      "revokeConfirmTitle": "Revoke application access?",
-      "revokeConfirmDescription": "Revoke access for {clientName}? This disconnects the client everywhere.",
-      "revokedSuccess": "Application access revoked.",
-      "notFound": "OAuth grant no longer exists"
+      "title": "Auktoriserade program",
+      "description": "Behörigheter tillhör ditt konto och gäller alla arbetsytor du administrerar; återkallelse kopplar bort klienten överallt.",
+      "empty": "OAuth-behörigheter visas här när du har anslutit en MCP-klient.",
+      "client": "Klient",
+      "scopes": "Omfång",
+      "firstAuthorizedAt": "Först auktoriserad",
+      "lastRefreshedAt": "Senast förnyad",
+      "activeUntil": "Aktiv till",
+      "noActiveToken": "Ingen aktiv token",
+      "revoke": "Återkalla",
+      "revokeConfirmTitle": "Återkalla programmets åtkomst?",
+      "revokeConfirmDescription": "Återkalla åtkomsten för {clientName}? Det kopplar bort klienten överallt.",
+      "revokedSuccess": "Programmets åtkomst har återkallats.",
+      "notFound": "OAuth-behörigheten finns inte längre"
+    },
+    "unavailableOnDomain": {
+      "title": "Inte tillgängligt på den här domänen",
+      "body": "Att ansluta AI-assistenter som Claude eller ChatGPT är ännu inte tillgängligt på den här domänen. Befintliga auktoriseringar visas nedan och kan fortfarande återkallas."
     }
   },
   "connectionStatus": {

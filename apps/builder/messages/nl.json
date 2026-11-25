@@ -12118,41 +12118,138 @@
     "noWorkspaces": "Je bent geen beheerder van een werkruimte, dus je kunt deze applicatie niet autoriseren."
   },
   "chatbotxMcp": {
-    "title": "ChatbotX MCP",
-    "workspaceId": "Workspace ID",
-    "streamableUrl": "Streamable HTTP URL",
-    "sseUrl": "Legacy SSE URL",
+    "title": "MCP-connector",
+    "streamableUrl": "Streamable HTTP-URL",
+    "sseUrl": "Verouderde SSE-URL",
     "guide": {
-      "title": "Connect an MCP client",
-      "step1": "Copy the configuration for your MCP client.",
-      "step2": "Paste it into the client.",
-      "step3": "The client opens a browser. Sign in and approve access.",
-      "step4": "Your workspace tools appear after approval.",
-      "ownerOnly": "Only workspace owners and superAdmins can authorize MCP access."
+      "title": "Een MCP-client verbinden",
+      "subtitle": "Kies de app die je gebruikt en volg de drie stappen.",
+      "ownerOnly": "Alleen workspace-eigenaren en superAdmins kunnen MCP-toegang autoriseren. Je kiest de workspace in het goedkeuringsscherm.",
+      "otherClients": "Elke andere MCP-compatibele client werkt ook",
+      "otherIntro": "Gebruik deze endpoints en configuraties met elke andere MCP-compatibele client.",
+      "opensInNewTab": "(opent in een nieuw tabblad)",
+      "actions": {
+        "addConnector": "Connector toevoegen",
+        "startChatting": "Begin met chatten"
+      },
+      "steps": {
+        "claude": {
+          "step1": {
+            "title": "Kopieer de connector-URL",
+            "body": "Je plakt deze URL in de volgende stap in Claude."
+          },
+          "step2": {
+            "title": "Ga naar Claude → Customize → Connectors → Add custom connector",
+            "body": "De knop hieronder opent je connectors in Claude. Klik op Add custom connector, geef een naam en plak de URL. Hij verschijnt ook in de desktop- en mobiele apps van Claude."
+          },
+          "step3": {
+            "title": "Klik op Connect en geef toegang",
+            "body": "Log in, kies je workspace en keur goed. Vraag Claude daarna om direct vanuit de chat met je contacten, flows en broadcasts te werken."
+          }
+        },
+        "chatgpt": {
+          "step1": {
+            "title": "Kopieer de connector-URL",
+            "body": "Je plakt deze URL in de volgende stap in ChatGPT."
+          },
+          "step2": {
+            "title": "Ga naar ChatGPT → Settings → Apps & Connectors → Create",
+            "body": "De knop hieronder opent de ChatGPT-instellingen. Zie je Create niet, zet dan Developer mode aan onder Advanced settings. Geef de connector een naam, plak de URL en kies OAuth."
+          },
+          "step3": {
+            "title": "Verbind en geef toegang",
+            "body": "Log in, kies je workspace en keur goed. Zet de connector daarna aan in een nieuwe chat om hem te gebruiken."
+          }
+        },
+        "claudeCode": {
+          "step1": {
+            "title": "Kopieer het installatiecommando",
+            "body": "Voer het uit in je terminal."
+          },
+          "step2": {
+            "title": "Log in vanuit Claude Code",
+            "body": "Start Claude Code, typ /mcp, selecteer de server en kies Authenticate. Er opent een browservenster."
+          },
+          "step3": {
+            "title": "Geef toegang",
+            "body": "Kies je workspace en keur goed. Claude Code kan nu je workspace-tools gebruiken."
+          }
+        },
+        "cursor": {
+          "step1": {
+            "title": "Kopieer de configuratie",
+            "body": "Je plakt deze in de volgende stap in Cursor."
+          },
+          "step2": {
+            "title": "Open Cursor Settings → MCP → Add new MCP server",
+            "body": "Plak de configuratie in mcp.json en sla op. Cursor toont een Login-knop naast de server."
+          },
+          "step3": {
+            "title": "Geef toegang",
+            "body": "Klik op Login, kies je workspace en keur goed. De tools verschijnen in de agent van Cursor."
+          }
+        },
+        "openclaw": {
+          "step1": {
+            "title": "Installeer de plugin",
+            "body": "Voer dit commando uit in je terminal."
+          },
+          "step2": {
+            "title": "Log in",
+            "body": "Voer dit commando uit. Er opent een browservenster."
+          },
+          "step3": {
+            "title": "Geef toegang",
+            "body": "Kies je workspace en keur goed. OpenClaw kan nu je workspace-tools gebruiken."
+          }
+        },
+        "hermes": {
+          "step1": {
+            "title": "Kopieer de configuratie",
+            "body": "Je voegt deze in de volgende stap toe aan je Hermes-configuratie."
+          },
+          "step2": {
+            "title": "Voeg toe aan ~/.hermes/config.yaml",
+            "body": "Plak hem onder mcp_servers in ~/.hermes/config.yaml en sla op. Voer daarna dit commando uit in Hermes."
+          },
+          "step3": {
+            "title": "Geef toegang",
+            "body": "Hermes opent een browservenster. Log in, kies je workspace en keur goed. Hermes kan nu je workspace-tools gebruiken."
+          }
+        }
+      }
     },
     "clients": {
+      "claude": "Claude",
       "claudeCode": "Claude Code",
       "claudeDesktop": "Claude Desktop",
       "cursor": "Cursor",
       "chatgpt": "ChatGPT",
-      "stdio": "stdio fallback",
-      "stdioHint": "Use a workspace token for this fallback."
+      "stdio": "stdio-terugval",
+      "stdioHint": "Gebruik voor deze terugval een workspacetoken.",
+      "openclaw": "OpenClaw",
+      "hermes": "Hermes",
+      "other": "Andere clients"
     },
     "grants": {
-      "title": "Authorized applications",
-      "description": "Grants belong to your account and apply to every workspace you administer; revoking disconnects the client everywhere.",
-      "empty": "OAuth grants appear here after you connect an MCP client.",
+      "title": "Geautoriseerde applicaties",
+      "description": "Machtigingen horen bij je account en gelden voor elke workspace die je beheert; intrekken verbreekt de client overal.",
+      "empty": "OAuth-machtigingen verschijnen hier nadat je een MCP-client hebt verbonden.",
       "client": "Client",
       "scopes": "Scopes",
-      "firstAuthorizedAt": "First authorized",
-      "lastRefreshedAt": "Last refreshed",
-      "activeUntil": "Active until",
-      "noActiveToken": "No active token",
-      "revoke": "Revoke",
-      "revokeConfirmTitle": "Revoke application access?",
-      "revokeConfirmDescription": "Revoke access for {clientName}? This disconnects the client everywhere.",
-      "revokedSuccess": "Application access revoked.",
-      "notFound": "OAuth grant no longer exists"
+      "firstAuthorizedAt": "Eerst geautoriseerd",
+      "lastRefreshedAt": "Laatst vernieuwd",
+      "activeUntil": "Actief tot",
+      "noActiveToken": "Geen actief token",
+      "revoke": "Intrekken",
+      "revokeConfirmTitle": "Toegang van de applicatie intrekken?",
+      "revokeConfirmDescription": "Toegang voor {clientName} intrekken? Hiermee wordt de client overal verbroken.",
+      "revokedSuccess": "Toegang van de applicatie ingetrokken.",
+      "notFound": "De OAuth-machtiging bestaat niet meer"
+    },
+    "unavailableOnDomain": {
+      "title": "Niet beschikbaar op dit domein",
+      "body": "Het koppelen van AI-assistenten zoals Claude of ChatGPT is nog niet beschikbaar op dit domein. Bestaande autorisaties staan hieronder en kunnen nog steeds worden ingetrokken."
     }
   },
   "connectionStatus": {

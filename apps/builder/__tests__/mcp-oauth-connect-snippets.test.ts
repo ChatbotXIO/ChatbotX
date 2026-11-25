@@ -11,11 +11,11 @@ describe("buildMcpConnectSnippets", () => {
     expect(snippets.streamableUrl).toBe("https://app.chatbotx.io/mcp/messages")
     expect(snippets.sseUrl).toBe("https://app.chatbotx.io/mcp/sse")
     expect(snippets.claudeCode).toBe(
-      'claude mcp add chatbotx -t http -s user "https://app.chatbotx.io/mcp/messages"',
+      'claude mcp add mcp -t http -s user "https://app.chatbotx.io/mcp/messages"',
     )
     expect(JSON.parse(snippets.claudeDesktop)).toEqual({
       mcpServers: {
-        chatbotx: {
+        mcp: {
           type: "http",
           url: snippets.streamableUrl,
         },
@@ -23,13 +23,26 @@ describe("buildMcpConnectSnippets", () => {
     })
     expect(JSON.parse(snippets.cursor)).toEqual({
       mcpServers: {
-        chatbotx: {
+        mcp: {
           type: "http",
           url: snippets.streamableUrl,
         },
       },
     })
-    expect(snippets.chatgpt).toBe(snippets.sseUrl)
+    expect(snippets.chatgpt).toBe("https://app.chatbotx.io/mcp/openai")
+    expect(snippets.claudeAi).toBe("https://app.chatbotx.io/mcp/claude")
+    expect(snippets.openclawInstall).toBe(
+      "openclaw plugins install clawhub:@chatbotx/chatbotx",
+    )
+    expect(snippets.openclawLogin).toBe("openclaw mcp login chatbotx")
+    expect(snippets.hermes).toBe(
+      [
+        "mcp_servers:",
+        "  mcp:",
+        '    url: "https://app.chatbotx.io/mcp/messages"',
+        "    auth: oauth",
+      ].join("\n"),
+    )
     expect(snippets.stdio).toBe(
       "CHATBOTX_API_URL=https://app.chatbotx.io/api CHATBOTX_API_KEY=<workspace-token> npx -y chatbotx-mcp",
     )

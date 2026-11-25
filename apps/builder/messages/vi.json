@@ -12134,41 +12134,138 @@
     "noWorkspaces": "Bạn không phải quản trị viên của workspace nào nên không thể cấp quyền cho ứng dụng này."
   },
   "chatbotxMcp": {
-    "title": "ChatbotX MCP",
-    "workspaceId": "Workspace ID",
-    "streamableUrl": "Streamable HTTP URL",
-    "sseUrl": "Legacy SSE URL",
+    "title": "MCP connector",
+    "streamableUrl": "URL Streamable HTTP",
+    "sseUrl": "URL SSE cũ",
     "guide": {
-      "title": "Connect an MCP client",
-      "step1": "Copy the configuration for your MCP client.",
-      "step2": "Paste it into the client.",
-      "step3": "The client opens a browser. Sign in and approve access.",
-      "step4": "Your workspace tools appear after approval.",
-      "ownerOnly": "Only workspace owners and superAdmins can authorize MCP access."
+      "title": "Kết nối một MCP client",
+      "subtitle": "Chọn ứng dụng bạn dùng và làm theo ba bước.",
+      "ownerOnly": "Chỉ chủ sở hữu workspace và superAdmin mới có thể cấp quyền truy cập MCP. Bạn chọn workspace ở màn hình phê duyệt.",
+      "otherClients": "Mọi MCP client tương thích khác cũng dùng được",
+      "otherIntro": "Dùng các endpoint và cấu hình này với bất kỳ MCP client tương thích nào khác.",
+      "opensInNewTab": "(mở trong tab mới)",
+      "actions": {
+        "addConnector": "Thêm connector",
+        "startChatting": "Bắt đầu trò chuyện"
+      },
+      "steps": {
+        "claude": {
+          "step1": {
+            "title": "Sao chép URL connector",
+            "body": "Bạn sẽ dán URL này vào Claude ở bước tiếp theo."
+          },
+          "step2": {
+            "title": "Vào Claude → Customize → Connectors → Add custom connector",
+            "body": "Nút bên dưới mở danh sách connector của bạn trong Claude. Bấm Add custom connector, đặt tên và dán URL. Connector cũng xuất hiện trong ứng dụng Claude trên máy tính và điện thoại."
+          },
+          "step3": {
+            "title": "Bấm Connect và cấp quyền truy cập",
+            "body": "Đăng nhập, chọn workspace và đồng ý. Sau đó yêu cầu Claude làm việc với liên hệ, flow và broadcast ngay trong khung chat."
+          }
+        },
+        "chatgpt": {
+          "step1": {
+            "title": "Sao chép URL connector",
+            "body": "Bạn sẽ dán URL này vào ChatGPT ở bước tiếp theo."
+          },
+          "step2": {
+            "title": "Vào ChatGPT → Settings → Apps & Connectors → Create",
+            "body": "Nút bên dưới mở phần cài đặt ChatGPT. Nếu không thấy Create, hãy bật Developer mode trong Advanced settings. Đặt tên connector, dán URL và chọn OAuth."
+          },
+          "step3": {
+            "title": "Kết nối và cấp quyền truy cập",
+            "body": "Đăng nhập, chọn workspace và đồng ý. Sau đó bật connector trong một cuộc trò chuyện mới để sử dụng."
+          }
+        },
+        "claudeCode": {
+          "step1": {
+            "title": "Sao chép lệnh cài đặt",
+            "body": "Chạy lệnh này trong terminal."
+          },
+          "step2": {
+            "title": "Đăng nhập từ Claude Code",
+            "body": "Mở Claude Code, gõ /mcp, chọn server và chọn Authenticate. Một cửa sổ trình duyệt sẽ mở ra."
+          },
+          "step3": {
+            "title": "Cấp quyền truy cập",
+            "body": "Chọn workspace và đồng ý. Claude Code giờ có thể dùng các công cụ của workspace."
+          }
+        },
+        "cursor": {
+          "step1": {
+            "title": "Sao chép cấu hình",
+            "body": "Bạn sẽ dán cấu hình này vào Cursor ở bước tiếp theo."
+          },
+          "step2": {
+            "title": "Mở Cursor Settings → MCP → Add new MCP server",
+            "body": "Dán cấu hình vào mcp.json và lưu. Cursor sẽ hiện nút Login cạnh server."
+          },
+          "step3": {
+            "title": "Cấp quyền truy cập",
+            "body": "Bấm Login, chọn workspace và đồng ý. Các công cụ sẽ xuất hiện trong agent của Cursor."
+          }
+        },
+        "openclaw": {
+          "step1": {
+            "title": "Cài đặt plugin",
+            "body": "Chạy lệnh này trong terminal."
+          },
+          "step2": {
+            "title": "Đăng nhập",
+            "body": "Chạy lệnh này. Một cửa sổ trình duyệt sẽ mở ra."
+          },
+          "step3": {
+            "title": "Cấp quyền truy cập",
+            "body": "Chọn workspace và đồng ý. OpenClaw giờ có thể dùng các công cụ của workspace."
+          }
+        },
+        "hermes": {
+          "step1": {
+            "title": "Sao chép cấu hình",
+            "body": "Bạn sẽ thêm cấu hình này vào Hermes ở bước tiếp theo."
+          },
+          "step2": {
+            "title": "Thêm vào ~/.hermes/config.yaml",
+            "body": "Dán vào mục mcp_servers trong ~/.hermes/config.yaml rồi lưu. Sau đó chạy lệnh này trong Hermes."
+          },
+          "step3": {
+            "title": "Cấp quyền truy cập",
+            "body": "Hermes mở một cửa sổ trình duyệt. Đăng nhập, chọn workspace và đồng ý. Hermes giờ có thể dùng các công cụ của workspace."
+          }
+        }
+      }
     },
     "clients": {
+      "claude": "Claude",
       "claudeCode": "Claude Code",
       "claudeDesktop": "Claude Desktop",
       "cursor": "Cursor",
       "chatgpt": "ChatGPT",
-      "stdio": "stdio fallback",
-      "stdioHint": "Use a workspace token for this fallback."
+      "stdio": "dự phòng stdio",
+      "stdioHint": "Dùng workspace token cho phương án dự phòng này.",
+      "openclaw": "OpenClaw",
+      "hermes": "Hermes",
+      "other": "Client khác"
     },
     "grants": {
-      "title": "Authorized applications",
-      "description": "Grants belong to your account and apply to every workspace you administer; revoking disconnects the client everywhere.",
-      "empty": "OAuth grants appear here after you connect an MCP client.",
+      "title": "Ứng dụng đã được cấp quyền",
+      "description": "Quyền truy cập thuộc về tài khoản của bạn và áp dụng cho mọi workspace bạn quản trị; thu hồi sẽ ngắt kết nối client ở mọi nơi.",
+      "empty": "Các quyền OAuth sẽ hiển thị ở đây sau khi bạn kết nối một MCP client.",
       "client": "Client",
-      "scopes": "Scopes",
-      "firstAuthorizedAt": "First authorized",
-      "lastRefreshedAt": "Last refreshed",
-      "activeUntil": "Active until",
-      "noActiveToken": "No active token",
-      "revoke": "Revoke",
-      "revokeConfirmTitle": "Revoke application access?",
-      "revokeConfirmDescription": "Revoke access for {clientName}? This disconnects the client everywhere.",
-      "revokedSuccess": "Application access revoked.",
-      "notFound": "OAuth grant no longer exists"
+      "scopes": "Phạm vi",
+      "firstAuthorizedAt": "Lần cấp quyền đầu tiên",
+      "lastRefreshedAt": "Lần làm mới gần nhất",
+      "activeUntil": "Hoạt động đến",
+      "noActiveToken": "Không có token đang hoạt động",
+      "revoke": "Thu hồi",
+      "revokeConfirmTitle": "Thu hồi quyền truy cập của ứng dụng?",
+      "revokeConfirmDescription": "Thu hồi quyền truy cập của {clientName}? Thao tác này sẽ ngắt kết nối client ở mọi nơi.",
+      "revokedSuccess": "Đã thu hồi quyền truy cập của ứng dụng.",
+      "notFound": "Quyền OAuth này không còn tồn tại"
+    },
+    "unavailableOnDomain": {
+      "title": "Chưa khả dụng trên tên miền này",
+      "body": "Tính năng kết nối trợ lý AI như Claude hoặc ChatGPT hiện chưa khả dụng trên tên miền này. Các quyền đã cấp được liệt kê bên dưới và vẫn có thể thu hồi."
     }
   },
   "connectionStatus": {

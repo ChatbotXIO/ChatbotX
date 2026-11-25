@@ -38,21 +38,108 @@ const resolveMcpResourceUrl = (req: IncomingMessage): string =>
 const resolveMetadataUrl = (req: IncomingMessage, pathSuffix: string): string =>
   new URL(pathSuffix, resolvePublicOrigin(req)).toString()
 
-export const buildProtectedResourceMetadata = (req: IncomingMessage) => ({
-  resource: resolveMcpResourceUrl(req),
-  authorization_servers: [resolveIssuer()],
-  scopes_supported: oauthScopes,
-  bearer_methods_supported: ["header"],
-})
+/**
+ * Connector profiles with their own path, OAuth resource and token audience
+ * (`<origin>/mcp/<profile>`). Keep in sync with MCP_CONNECTOR_PROFILES in
+ * packages/auth/src/keys.ts; mcp-server does not depend on @chatbotx.io/auth.
+ */
+export const CONNECTOR_PROFILES = ["openai", "claude"] as const
+
+export type ConnectorProfile = (typeof CONNECTOR_PROFILES)[number]
+
+export const resolveProfileResourceUrl = (
+  req: IncomingMessage,
+  profile: ConnectorProfile,
+): string => `${resolveMcpResourceUrl(req)}/${profile}`
+
+/**
+ * Whether a verified token audience is a connector-profile resource
+ * (`…/mcp/<profile>`). Matched on the URL path, not the request origin, so a
+ * profile token is recognised whatever host the request arrived on.
+ */
+export const isConnectorProfileAudience = (audience: string): boolean => {
+  let pathname: string
+  try {
+    pathname = new URL(audience).pathname.replace(trailingSlashPattern, "")
+  } catch {
+    return false
+  }
+  return CONNECTOR_PROFILES.some((profile) =>
+    pathname.endsWith(`/mcp/${profile}`),
+  )
+}
+
+/**
+ * The `aud` claim of a JWT, read WITHOUT verifying it. Only for reject-only
+ * decisions (e.g. refusing a profile token while introspection is down);
+ * never grant access from it. Not a JWT, or no `aud`: an empty list.
+ */
+export const unverifiedJwtAudiences = (token: string): string[] => {
+  const payload = token.split(".")[1]
+  if (!payload) {
+    return []
+  }
+  try {
+    const claims = JSON.parse(
+      Buffer.from(payload, "base64url").toString("utf8"),
+    ) as { aud?: unknown }
+    const audiences = Array.isArray(claims.aud) ? claims.aud : [claims.aud]
+    return audiences.filter(
+      (audience): audience is string => typeof audience === "string",
+    )
+  } catch {
+    return []
+  }
+}
+
+const isPathOrBelow = (pathname: string, base: string): boolean =>
+  pathname === base || pathname.startsWith(`${base}/`)
+
+/**
+ * The connector profile a path belongs to, if any: its internal transport
+ * path (`/claude`), or protected-resource metadata at or below
+ * `/.well-known/oauth-protected-resource[/mcp]/<profile>` (matching the
+ * builder's `resolveMcpResourceForPath`). Exact segments only, so a
+ * configured legacy path such as `/v1/claude` is never mistaken for one.
+ */
+export const profileForPath = (
+  pathname: string,
+): ConnectorProfile | undefined =>
+  CONNECTOR_PROFILES.find(
+    (profile) =>
+      pathname === `/${profile}` ||
+      isPathOrBelow(pathname, `${protectedResourcePrefix}/${profile}`) ||
+      isPathOrBelow(pathname, `${protectedResourcePrefix}/mcp/${profile}`),
+  )
+
+export const buildProtectedResourceMetadata = (
+  req: IncomingMessage,
+  pathname = "",
+) => {
+  const profile = profileForPath(pathname)
+  return {
+    resource: profile
+      ? resolveProfileResourceUrl(req, profile)
+      : resolveMcpResourceUrl(req),
+    authorization_servers: [resolveIssuer()],
+    scopes_supported: oauthScopes,
+    bearer_methods_supported: ["header"],
+  }
+}
 
 export const buildWwwAuthenticate = (
   req: IncomingMessage,
   pathSuffix: string,
   error?: "invalid_token",
 ) => {
-  const metadataPath = env.CHATBOTX_MCP_PUBLIC_URL
-    ? `${protectedResourcePrefix}/mcp${pathSuffix}`
-    : `${protectedResourcePrefix}${pathSuffix}`
+  // A connector profile is always advertised at its exact public path.
+  const profile = profileForPath(pathSuffix)
+  let metadataPath = `${protectedResourcePrefix}${pathSuffix}`
+  if (profile) {
+    metadataPath = `${protectedResourcePrefix}/mcp/${profile}`
+  } else if (env.CHATBOTX_MCP_PUBLIC_URL) {
+    metadataPath = `${protectedResourcePrefix}/mcp${pathSuffix}`
+  }
   const metadataUrl = resolveMetadataUrl(req, metadataPath)
   const attributes = [`resource_metadata="${metadataUrl}"`]
   if (error) {

@@ -8,6 +8,21 @@ const tokenIntrospectionSchema = z.object({
   workspaceId: z.string(),
   permission: z.enum(["read_only", "full"]),
   scopes: z.array(z.string()).nullable(),
+  // Trusted identity from the builder. Optional so older builders still work
+  // for the default profile; the OpenAI profile requires it.
+  principal: z
+    .discriminatedUnion("credentialType", [
+      z.object({
+        credentialType: z.literal("oauth"),
+        audience: z.string(),
+        clientId: z.string(),
+        issuer: z.string(),
+        subject: z.string(),
+      }),
+      z.object({ credentialType: z.literal("workspace_token") }),
+      z.object({ credentialType: z.literal("mobile") }),
+    ])
+    .optional(),
 })
 
 export type TokenIntrospection = z.infer<typeof tokenIntrospectionSchema>

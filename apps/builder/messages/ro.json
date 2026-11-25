@@ -12118,41 +12118,138 @@
     "noWorkspaces": "Nu ești administrator în niciun spațiu de lucru, deci nu poți autoriza această aplicație."
   },
   "chatbotxMcp": {
-    "title": "ChatbotX MCP",
-    "workspaceId": "Workspace ID",
-    "streamableUrl": "Streamable HTTP URL",
-    "sseUrl": "Legacy SSE URL",
+    "title": "Conector MCP",
+    "streamableUrl": "URL Streamable HTTP",
+    "sseUrl": "URL SSE vechi",
     "guide": {
-      "title": "Connect an MCP client",
-      "step1": "Copy the configuration for your MCP client.",
-      "step2": "Paste it into the client.",
-      "step3": "The client opens a browser. Sign in and approve access.",
-      "step4": "Your workspace tools appear after approval.",
-      "ownerOnly": "Only workspace owners and superAdmins can authorize MCP access."
+      "title": "Conectează un client MCP",
+      "subtitle": "Alege aplicația pe care o folosești și urmează cei trei pași.",
+      "ownerOnly": "Doar proprietarii workspace-ului și superAdmin pot autoriza accesul MCP. Alegi workspace-ul pe ecranul de aprobare.",
+      "otherClients": "Funcționează și orice alt client compatibil MCP",
+      "otherIntro": "Folosește aceste endpointuri și configurații cu orice alt client compatibil MCP.",
+      "opensInNewTab": "(se deschide într-o filă nouă)",
+      "actions": {
+        "addConnector": "Adaugă conectorul",
+        "startChatting": "Începe conversația"
+      },
+      "steps": {
+        "claude": {
+          "step1": {
+            "title": "Copiază URL-ul conectorului",
+            "body": "Vei lipi acest URL în Claude la pasul următor."
+          },
+          "step2": {
+            "title": "Mergi la Claude → Customize → Connectors → Add custom connector",
+            "body": "Butonul de mai jos deschide conectorii tăi în Claude. Apasă Add custom connector, dă-i un nume și lipește URL-ul. Apare și în aplicațiile Claude pentru desktop și mobil."
+          },
+          "step3": {
+            "title": "Apasă Connect și aprobă accesul",
+            "body": "Autentifică-te, alege spațiul de lucru și aprobă. Apoi cere-i lui Claude să lucreze cu contactele, fluxurile și difuzările tale direct din chat."
+          }
+        },
+        "chatgpt": {
+          "step1": {
+            "title": "Copiază URL-ul conectorului",
+            "body": "Vei lipi acest URL în ChatGPT la pasul următor."
+          },
+          "step2": {
+            "title": "Mergi la ChatGPT → Settings → Apps & Connectors → Create",
+            "body": "Butonul de mai jos deschide setările ChatGPT. Dacă nu vezi Create, activează Developer mode din Advanced settings. Denumește conectorul, lipește URL-ul și alege OAuth."
+          },
+          "step3": {
+            "title": "Conectează-te și aprobă accesul",
+            "body": "Autentifică-te, alege spațiul de lucru și aprobă. Apoi activează conectorul într-un chat nou pentru a-l folosi."
+          }
+        },
+        "claudeCode": {
+          "step1": {
+            "title": "Copiază comanda de instalare",
+            "body": "Rulează-o în terminal."
+          },
+          "step2": {
+            "title": "Autentifică-te din Claude Code",
+            "body": "Pornește Claude Code, scrie /mcp, selectează serverul și alege Authenticate. Se deschide o fereastră de browser."
+          },
+          "step3": {
+            "title": "Aprobă accesul",
+            "body": "Alege spațiul de lucru și aprobă. Claude Code poate folosi acum instrumentele spațiului tău de lucru."
+          }
+        },
+        "cursor": {
+          "step1": {
+            "title": "Copiază configurația",
+            "body": "O vei lipi în Cursor la pasul următor."
+          },
+          "step2": {
+            "title": "Deschide Cursor Settings → MCP → Add new MCP server",
+            "body": "Lipește configurația în mcp.json și salvează. Cursor afișează un buton Login lângă server."
+          },
+          "step3": {
+            "title": "Aprobă accesul",
+            "body": "Apasă Login, alege spațiul de lucru și aprobă. Instrumentele apar în agentul Cursor."
+          }
+        },
+        "openclaw": {
+          "step1": {
+            "title": "Instalează pluginul",
+            "body": "Rulează această comandă în terminal."
+          },
+          "step2": {
+            "title": "Autentifică-te",
+            "body": "Rulează această comandă. Se deschide o fereastră de browser."
+          },
+          "step3": {
+            "title": "Aprobă accesul",
+            "body": "Alege spațiul de lucru și aprobă. OpenClaw poate folosi acum instrumentele spațiului tău de lucru."
+          }
+        },
+        "hermes": {
+          "step1": {
+            "title": "Copiază configurația",
+            "body": "O vei adăuga în configurația Hermes la pasul următor."
+          },
+          "step2": {
+            "title": "Adaug-o în ~/.hermes/config.yaml",
+            "body": "Lipește-o sub mcp_servers în ~/.hermes/config.yaml și salvează. Apoi rulează această comandă în Hermes."
+          },
+          "step3": {
+            "title": "Aprobă accesul",
+            "body": "Hermes deschide o fereastră de browser. Autentifică-te, alege spațiul de lucru și aprobă. Hermes poate folosi acum instrumentele spațiului tău de lucru."
+          }
+        }
+      }
     },
     "clients": {
+      "claude": "Claude",
       "claudeCode": "Claude Code",
       "claudeDesktop": "Claude Desktop",
       "cursor": "Cursor",
       "chatgpt": "ChatGPT",
-      "stdio": "stdio fallback",
-      "stdioHint": "Use a workspace token for this fallback."
+      "stdio": "alternativă stdio",
+      "stdioHint": "Folosește un token de workspace pentru această alternativă.",
+      "openclaw": "OpenClaw",
+      "hermes": "Hermes",
+      "other": "Alți clienți"
     },
     "grants": {
-      "title": "Authorized applications",
-      "description": "Grants belong to your account and apply to every workspace you administer; revoking disconnects the client everywhere.",
-      "empty": "OAuth grants appear here after you connect an MCP client.",
+      "title": "Aplicații autorizate",
+      "description": "Autorizările aparțin contului tău și se aplică tuturor workspace-urilor pe care le administrezi; revocarea deconectează clientul peste tot.",
+      "empty": "Autorizările OAuth apar aici după ce conectezi un client MCP.",
       "client": "Client",
-      "scopes": "Scopes",
-      "firstAuthorizedAt": "First authorized",
-      "lastRefreshedAt": "Last refreshed",
-      "activeUntil": "Active until",
-      "noActiveToken": "No active token",
-      "revoke": "Revoke",
-      "revokeConfirmTitle": "Revoke application access?",
-      "revokeConfirmDescription": "Revoke access for {clientName}? This disconnects the client everywhere.",
-      "revokedSuccess": "Application access revoked.",
-      "notFound": "OAuth grant no longer exists"
+      "scopes": "Domenii de acces",
+      "firstAuthorizedAt": "Prima autorizare",
+      "lastRefreshedAt": "Ultima reîmprospătare",
+      "activeUntil": "Activ până la",
+      "noActiveToken": "Niciun token activ",
+      "revoke": "Revocă",
+      "revokeConfirmTitle": "Revoci accesul aplicației?",
+      "revokeConfirmDescription": "Revoci accesul pentru {clientName}? Clientul va fi deconectat peste tot.",
+      "revokedSuccess": "Accesul aplicației a fost revocat.",
+      "notFound": "Autorizarea OAuth nu mai există"
+    },
+    "unavailableOnDomain": {
+      "title": "Indisponibil pe acest domeniu",
+      "body": "Conectarea asistenților AI precum Claude sau ChatGPT nu este încă disponibilă pe acest domeniu. Autorizațiile existente sunt listate mai jos și pot fi în continuare revocate."
     }
   },
   "connectionStatus": {

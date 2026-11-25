@@ -12118,41 +12118,138 @@
     "noWorkspaces": "你不是任何工作区的管理员，因此无法授权此应用。"
   },
   "chatbotxMcp": {
-    "title": "ChatbotX MCP",
-    "workspaceId": "Workspace ID",
+    "title": "MCP 连接器",
     "streamableUrl": "Streamable HTTP URL",
-    "sseUrl": "Legacy SSE URL",
+    "sseUrl": "旧版 SSE URL",
     "guide": {
-      "title": "Connect an MCP client",
-      "step1": "Copy the configuration for your MCP client.",
-      "step2": "Paste it into the client.",
-      "step3": "The client opens a browser. Sign in and approve access.",
-      "step4": "Your workspace tools appear after approval.",
-      "ownerOnly": "Only workspace owners and superAdmins can authorize MCP access."
+      "title": "连接 MCP 客户端",
+      "subtitle": "选择你使用的应用，按三个步骤完成设置。",
+      "ownerOnly": "只有工作区所有者和 superAdmin 可以授权 MCP 访问。你可以在批准页面选择工作区。",
+      "otherClients": "其他兼容 MCP 的客户端同样可用",
+      "otherIntro": "在其他兼容 MCP 的客户端中使用以下端点和配置。",
+      "opensInNewTab": "（在新标签页中打开）",
+      "actions": {
+        "addConnector": "添加连接器",
+        "startChatting": "开始聊天"
+      },
+      "steps": {
+        "claude": {
+          "step1": {
+            "title": "复制连接器 URL",
+            "body": "下一步你会把这个 URL 粘贴到 Claude 中。"
+          },
+          "step2": {
+            "title": "前往 Claude → Customize → Connectors → Add custom connector",
+            "body": "下方按钮会打开你在 Claude 中的连接器。点击 Add custom connector，命名并粘贴 URL。它也会出现在 Claude 桌面端和移动端应用中。"
+          },
+          "step3": {
+            "title": "点击 Connect 并批准访问",
+            "body": "登录、选择工作区并批准。之后就可以直接在聊天中让 Claude 处理联系人、流程和群发。"
+          }
+        },
+        "chatgpt": {
+          "step1": {
+            "title": "复制连接器 URL",
+            "body": "下一步你会把这个 URL 粘贴到 ChatGPT 中。"
+          },
+          "step2": {
+            "title": "前往 ChatGPT → Settings → Apps & Connectors → Create",
+            "body": "下方按钮会打开 ChatGPT 设置。如果看不到 Create，请在 Advanced settings 中开启 Developer mode。为连接器命名、粘贴 URL 并选择 OAuth。"
+          },
+          "step3": {
+            "title": "连接并批准访问",
+            "body": "登录、选择工作区并批准。之后在新对话中启用该连接器即可使用。"
+          }
+        },
+        "claudeCode": {
+          "step1": {
+            "title": "复制安装命令",
+            "body": "在终端中运行它。"
+          },
+          "step2": {
+            "title": "在 Claude Code 中登录",
+            "body": "启动 Claude Code，输入 /mcp，选择该服务器并选择 Authenticate。浏览器窗口会打开。"
+          },
+          "step3": {
+            "title": "批准访问",
+            "body": "选择工作区并批准。Claude Code 现在可以使用你的工作区工具了。"
+          }
+        },
+        "cursor": {
+          "step1": {
+            "title": "复制配置",
+            "body": "下一步你会把它粘贴到 Cursor 中。"
+          },
+          "step2": {
+            "title": "打开 Cursor Settings → MCP → Add new MCP server",
+            "body": "将配置粘贴到 mcp.json 并保存。Cursor 会在服务器旁显示 Login 按钮。"
+          },
+          "step3": {
+            "title": "批准访问",
+            "body": "点击 Login，选择工作区并批准。工具会出现在 Cursor 的智能体中。"
+          }
+        },
+        "openclaw": {
+          "step1": {
+            "title": "安装插件",
+            "body": "在终端中运行此命令。"
+          },
+          "step2": {
+            "title": "登录",
+            "body": "运行此命令，浏览器窗口会打开。"
+          },
+          "step3": {
+            "title": "批准访问",
+            "body": "选择工作区并批准。OpenClaw 现在可以使用你的工作区工具了。"
+          }
+        },
+        "hermes": {
+          "step1": {
+            "title": "复制配置",
+            "body": "下一步你会把它添加到 Hermes 配置中。"
+          },
+          "step2": {
+            "title": "添加到 ~/.hermes/config.yaml",
+            "body": "将其粘贴到 ~/.hermes/config.yaml 的 mcp_servers 下并保存。然后在 Hermes 中运行此命令。"
+          },
+          "step3": {
+            "title": "批准访问",
+            "body": "Hermes 会打开浏览器窗口。登录、选择工作区并批准。Hermes 现在可以使用你的工作区工具了。"
+          }
+        }
+      }
     },
     "clients": {
+      "claude": "Claude",
       "claudeCode": "Claude Code",
       "claudeDesktop": "Claude Desktop",
       "cursor": "Cursor",
       "chatgpt": "ChatGPT",
-      "stdio": "stdio fallback",
-      "stdioHint": "Use a workspace token for this fallback."
+      "stdio": "stdio 备用方案",
+      "stdioHint": "此备用方案请使用工作区令牌。",
+      "openclaw": "OpenClaw",
+      "hermes": "Hermes",
+      "other": "其他客户端"
     },
     "grants": {
-      "title": "Authorized applications",
-      "description": "Grants belong to your account and apply to every workspace you administer; revoking disconnects the client everywhere.",
-      "empty": "OAuth grants appear here after you connect an MCP client.",
-      "client": "Client",
-      "scopes": "Scopes",
-      "firstAuthorizedAt": "First authorized",
-      "lastRefreshedAt": "Last refreshed",
-      "activeUntil": "Active until",
-      "noActiveToken": "No active token",
-      "revoke": "Revoke",
-      "revokeConfirmTitle": "Revoke application access?",
-      "revokeConfirmDescription": "Revoke access for {clientName}? This disconnects the client everywhere.",
-      "revokedSuccess": "Application access revoked.",
-      "notFound": "OAuth grant no longer exists"
+      "title": "已授权的应用",
+      "description": "授权属于你的账号，适用于你管理的所有工作区；撤销后客户端会在所有位置断开连接。",
+      "empty": "连接 MCP 客户端后，OAuth 授权会显示在这里。",
+      "client": "客户端",
+      "scopes": "权限范围",
+      "firstAuthorizedAt": "首次授权时间",
+      "lastRefreshedAt": "上次刷新时间",
+      "activeUntil": "有效期至",
+      "noActiveToken": "没有有效令牌",
+      "revoke": "撤销",
+      "revokeConfirmTitle": "撤销应用的访问权限？",
+      "revokeConfirmDescription": "撤销 {clientName} 的访问权限？这会让该客户端在所有位置断开连接。",
+      "revokedSuccess": "已撤销应用的访问权限。",
+      "notFound": "该 OAuth 授权已不存在"
+    },
+    "unavailableOnDomain": {
+      "title": "此域名暂不可用",
+      "body": "此域名暂不支持连接 Claude 或 ChatGPT 等 AI 助手。现有授权列在下方，仍可撤销。"
     }
   },
   "connectionStatus": {

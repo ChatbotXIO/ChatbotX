@@ -62,7 +62,13 @@ export const contactsCrudPublicRouter = {
       description:
         "Use this to find contacts by name, keyword, or filter before inspecting one with `contacts.get` or sending a message with `contacts.sendMessage`. Supports `include` and `withCount` to shape the response. Call `contacts.listFilterFields` first to discover `contactFilter` fields, including custom fields.",
       tags: ["Contacts"],
-      spec: mcpSpec({ visibility: "default" }),
+      spec: mcpSpec({
+        destructiveHint: false,
+        idempotentHint: true,
+        openWorldHint: false,
+        readOnlyHint: true,
+        visibility: "default",
+      }),
     })
     .input(listContactsPublicRequest)
     .output(listContactsResponse)
@@ -151,7 +157,13 @@ export const contactsCrudPublicRouter = {
       description:
         "Use this to look up a contact by email, phone, or id after locating a prefixed identifier. Call `contacts.list` to search first, or use `contacts.sendMessage` to contact the result.",
       tags: ["Contacts"],
-      spec: mcpSpec({ visibility: "default" }),
+      spec: mcpSpec({
+        destructiveHint: false,
+        idempotentHint: true,
+        openWorldHint: false,
+        readOnlyHint: true,
+        visibility: "default",
+      }),
     })
     .input(
       z.object({
@@ -182,7 +194,13 @@ export const contactsCrudPublicRouter = {
       description:
         "Adds a contact to the inbox given by `inboxId` and opens its conversation, so `contacts.sendMessage` works right after. Use `contacts.list` to check for an existing contact first.",
       tags: ["Contacts"],
-      spec: mcpSpec({ visibility: "default" }),
+      spec: mcpSpec({
+        destructiveHint: false,
+        idempotentHint: false,
+        openWorldHint: false,
+        readOnlyHint: false,
+        visibility: "default",
+      }),
     })
     .input(createContactRequest)
     .output(contactResponse)
