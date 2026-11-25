@@ -668,6 +668,7 @@ describe("pathAndMethodToCommandName — managed channel posts", () => {
       ["/v1/channel-posts/management/{id}", "PATCH"],
       ["/v1/channel-posts/management/bulk-update", "POST"],
       ["/v1/channel-posts/management/{id}/refresh", "POST"],
+      ["/v1/channel-posts/management/refresh-metrics", "POST"],
       ["/v1/channel-posts/management/authors", "GET"],
       ["/v1/channel-posts/management/{id}/comments", "GET"],
       ["/v1/channel-posts/management/merge-view", "POST"],
@@ -687,6 +688,7 @@ describe("pathAndMethodToCommandName — managed channel posts", () => {
       "channel-posts:update-managed",
       "channel-posts:bulk-update-managed",
       "channel-posts:refresh-managed",
+      "channel-posts:refresh-metrics",
       "channel-posts:list-authors",
       "channel-posts:list-comments",
       "channel-posts:merge-comments",
@@ -742,6 +744,11 @@ describe("post destination command names", () => {
   const operations: readonly (readonly [string, string, string])[] = [
     ["GET", "/v1/posts/destinations", "post-destinations:list"],
     ["GET", "/v1/posts/destinations/{id}", "post-destinations:get"],
+    [
+      "POST",
+      "/v1/posts/destinations/recheck-permissions",
+      "post-destinations:recheck-permissions",
+    ],
     [
       "GET",
       "/v1/posts/destinations/{id}/posting-schedule",

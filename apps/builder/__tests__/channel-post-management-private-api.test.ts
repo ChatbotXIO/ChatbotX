@@ -17,6 +17,8 @@ const { captured, authorizedGate, operations, permissionGate } = vi.hoisted(
     const operations = {
       listComments: vi.fn(),
       mergeComments: vi.fn(),
+      refreshMetrics: vi.fn(),
+      refreshNow: vi.fn(),
     }
     return { authorizedGate, captured, operations, permissionGate }
   },
@@ -78,14 +80,14 @@ const { channelPostManagementAPIs } = await import(
 )
 
 describe("the Posts page's private procedures", () => {
-  test("there are the 12 procedures the page and the comments window call", () => {
-    expect(Object.keys(channelPostManagementAPIs)).toHaveLength(12)
+  test("there are the 13 procedures the page and the comments window call", () => {
+    expect(Object.keys(channelPostManagementAPIs)).toHaveLength(13)
   })
 
   test("every one is gated by the workspace check and then the broadcast permission", () => {
     const procedures = captured.filter((procedure) => procedure.use.length > 0)
 
-    expect(procedures).toHaveLength(12)
+    expect(procedures).toHaveLength(13)
     for (const procedure of procedures) {
       expect(procedure.use).toHaveLength(2)
       expect(procedure.use[0].middleware).toBe(authorizedGate)
@@ -121,5 +123,43 @@ describe("who may see phone numbers in the comment procedures", () => {
       { canViewEmailAndPhone: true, workspaceId: "ws-1" },
       { canViewEmailAndPhone: false, workspaceId: "ws-1" },
     ])
+  })
+})
+
+describe("the refresh procedures", () => {
+  const find = (path: string) =>
+    captured.find((candidate) => candidate.path.endsWith(path))
+
+  test("the refresh button reads the post now through the shared operation", async () => {
+    operations.refreshNow.mockResolvedValue({ outcome: "refreshed", post: {} })
+
+    const result = await find("/management/{id}/refresh")?.handler?.({
+      input: { id: "9", workspaceId: "ws-1" },
+    })
+
+    expect(operations.refreshNow).toHaveBeenCalledWith({
+      id: "9",
+      workspaceId: "ws-1",
+    })
+    expect(result).toEqual({ outcome: "refreshed", post: {} })
+  })
+
+  test("the list asks fresh counts for its ids in the caller's workspace", async () => {
+    operations.refreshMetrics.mockResolvedValue({
+      fresh: 1,
+      queued: 2,
+      skipped: 0,
+    })
+
+    const result = await find("/management/refresh-metrics")?.handler?.({
+      input: { ids: ["1", "2", "3"], workspaceId: "ws-1" },
+    })
+
+    expect(operations.refreshMetrics).toHaveBeenCalledWith("ws-1", [
+      "1",
+      "2",
+      "3",
+    ])
+    expect(result).toEqual({ fresh: 1, queued: 2, skipped: 0 })
   })
 })

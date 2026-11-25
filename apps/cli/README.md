@@ -231,7 +231,8 @@ chatbotx channel-posts list-managed                    # [--channels --inboxIds 
 chatbotx channel-posts get-managed <id>
 chatbotx channel-posts update-managed <id>              # --topicIds replaces the post's topics
 chatbotx channel-posts bulk-update-managed --ids <ids>  # [--addTopicIds --removeTopicIds], up to 100 posts, all or nothing
-chatbotx channel-posts refresh-managed <id>             # Re-read one post from its channel in the background
+chatbotx channel-posts refresh-managed <id>             # Re-read one post from its channel now; returns the outcome and the updated post
+chatbotx channel-posts refresh-metrics --ids <ids>      # Ask fresh counts of up to 50 posts (background, one channel read per inbox)
 chatbotx channel-posts get-metrics <id>                 # [--from --to] Daily cumulative total and signed gain of one post (local days, default last 30, at most 366); null = never reported; scope `posts`
 chatbotx post-analytics summary                         # [--channels --inboxIds --destinationIds --contentTypes --topicIds --from --to] Gains per metric vs the previous period, posts published, `coverage`
 chatbotx post-analytics timeseries                      # [same filters --metric --groupBy none|channel|inbox] Daily gain per local day
@@ -260,6 +261,7 @@ chatbotx social-posts delete <id>                    # Deletes a draft; cancels 
 chatbotx social-posts reschedule <id> --body '{"scheduledAt":"2026-12-01T09:00:00+07:00"}'   # Move waiting destinations (`targetId` for one): `scheduledAt` (ISO 8601 with offset, 2 min to 1 year ahead, optional `timezone`) | `queue` ("next" | "top") | `timezone` alone | `unschedule: true` (back to a draft); all or nothing, 409 when a destination is about to publish
 chatbotx post-destinations list                          # Where a post can go: connected Facebook Page, Instagram and Threads inboxes (published with the inbox's own token) and TikTok accounts, grouped by network with `state` (ready | needsReconnect | permissionMissing | inboxDisconnected) and missing permissions (filters: providers, states); scope `posts`; a reconnect is done by a person in the app
 chatbotx post-destinations get <id>
+chatbotx post-destinations recheck-permissions            # [--ids <ids>] Re-read, in the background, the publishing permissions the platform reports for Facebook Pages and Instagram (Facebook Login) destinations (others are `skipped`; checked in the last 10 minutes = `fresh`); then read `post-destinations list`; scope `posts`
 chatbotx post-destinations posting-schedule get <id>      # Weekly posting times (the queue) of a destination
 chatbotx post-destinations posting-schedule update <id> --body '{"timezone":"Asia/Ho_Chi_Minh","slots":[...7 days...]}'   # Replace the times and re-seat the queue (all or nothing); reports moved and detached posts
 chatbotx post-destinations publishing-settings get <id>   # TikTok: the creator's nickname, allowed privacy levels, disabled interactions and longest video (read live; `options.privacyLevel` must be one of them)

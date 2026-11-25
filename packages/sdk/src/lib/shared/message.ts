@@ -133,6 +133,20 @@ export type ChannelPostListItem = {
 }
 
 /**
+ * The counts a batch metrics read reports for one post: the same neutral count
+ * fields as {@link ChannelPostListItem}, with the same meaning of `null`
+ * (not reported: unknown, never zero).
+ */
+export type ChannelPostMetricsItem = Pick<
+  ChannelPostListItem,
+  | "commentsCount"
+  | "externalPostId"
+  | "reactionsCount"
+  | "sharesCount"
+  | "viewsCount"
+>
+
+/**
  * A broadcast read by its own id (a live-state webhook names only that id): the
  * post it lives in and whether it is on. Never carries a scheduled or
  * unpublished broadcast, which has no post yet.

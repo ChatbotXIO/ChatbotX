@@ -118,9 +118,9 @@ describe("ConnectPageRow", () => {
     expect(buttonLabels()).toContain("posts.connect.reconnect")
   })
 
-  test("a page missing the permission asks to reconnect to allow publishing", () => {
+  test("a page missing the permission offers the same short Reconnect button", () => {
     render(destination({ state: "permissionMissing" }))
-    expect(buttonLabels()).toContain("posts.connect.reconnectToAllow")
+    expect(buttonLabels()).toContain("posts.connect.reconnect")
   })
 
   test("members without manage permission see the state and no reconnect", () => {

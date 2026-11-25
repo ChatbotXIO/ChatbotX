@@ -1,5 +1,8 @@
 import { socialProviders } from "@chatbotx.io/database/partials"
-import { publishDestinationStates } from "@chatbotx.io/utils/publish-destination"
+import {
+  PUBLISH_SCOPE_RECHECK_MAX,
+  publishDestinationStates,
+} from "@chatbotx.io/utils/publish-destination"
 import { publishPauseReasons } from "@chatbotx.io/utils/publish-limits"
 import { socialContentTypes } from "@chatbotx.io/utils/social-account"
 import { z } from "zod"
@@ -105,3 +108,40 @@ export const listPublishDestinationsResponse = z.object({
 })
 
 export const publishDestinationIdRequest = destinationScheduleRequest
+
+export const recheckPublishPermissionsRequest = z.strictObject({
+  ids: z
+    .array(z.string().min(1))
+    .max(PUBLISH_SCOPE_RECHECK_MAX)
+    .optional()
+    .describe(
+      "Destination ids to re-check (at most 100). Omit to re-check every connected Facebook Page and Instagram (Facebook Login) destination of the workspace. Get ids from `publishDestinations.list`.",
+    ),
+})
+
+export const recheckPublishPermissionsResponse = z.object({
+  failed: z
+    .number()
+    .int()
+    .describe(
+      "Destinations whose re-read could not be queued (the queue or its claim store was unavailable). Nothing was read for them; ask again later.",
+    ),
+  fresh: z
+    .number()
+    .int()
+    .describe(
+      "Destinations checked less than 10 minutes ago or already being re-checked by another request.",
+    ),
+  queued: z
+    .number()
+    .int()
+    .describe(
+      "Destinations handed to a background re-read of their permissions. Read the result with `publishDestinations.list` a few seconds later.",
+    ),
+  skipped: z
+    .number()
+    .int()
+    .describe(
+      "Destinations that cannot be re-checked now: unknown, on a disconnected or expired channel, on a network that documents no way to read granted permissions (Instagram Login, Threads, TikTok), or beyond the 100 one request covers.",
+    ),
+})

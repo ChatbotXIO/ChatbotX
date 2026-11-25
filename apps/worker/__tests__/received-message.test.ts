@@ -62,6 +62,7 @@ const {
   mockRecordContactInboxPostComment,
   mockEmitPostCommentTriggers,
   mockRecordPhoneComment,
+  mockRecordWebhookComment,
   mockMarkReadBySkippedPost,
 } = vi.hoisted(() => {
   const mockFindContactInbox = vi.fn()
@@ -194,6 +195,7 @@ const {
       async ({ fn }: { fn: () => Promise<unknown> }) => await fn(),
     ),
     mockRecordPhoneComment: vi.fn().mockResolvedValue(undefined),
+    mockRecordWebhookComment: vi.fn().mockResolvedValue(undefined),
     mockMarkReadBySkippedPost: vi.fn().mockResolvedValue(true),
     mockResolveChannelPostForComment: vi.fn().mockResolvedValue({
       id: "post-row-1",
@@ -376,6 +378,7 @@ vi.mock("@chatbotx.io/business", () => ({
   channelPostService: {
     resolveForCommentWithSettings: mockResolveChannelPostForComment,
     recordPhoneComment: mockRecordPhoneComment,
+    recordWebhookComment: mockRecordWebhookComment,
   },
   contactInboxPostService: {
     recordCommentOutcome: mockRecordContactInboxPostComment,
@@ -5834,6 +5837,44 @@ describe("contact source taxonomy", () => {
         settings({ skipComments: true }),
       )
       mockMarkReadBySkippedPost.mockRejectedValueOnce(new Error("db down"))
+
+      await expect(receiveComment(comment("hello"))).resolves.toBeUndefined()
+      expect(automationData()).toBeDefined()
+    })
+
+    test("every stored comment is offered to the webhook counter, with the post's root id and the stored comment", async () => {
+      await receiveComment(comment("hello"))
+
+      expect(mockRecordWebhookComment).toHaveBeenCalledExactlyOnceWith(
+        expect.objectContaining({
+          channelPostId: "post-row-1",
+          comment: {
+            createdAt: fakeCreatedMessage.createdAt,
+            id: fakeCreatedMessage.id,
+          },
+          externalPostId: "post-1",
+          workspaceId: "ws-1",
+        }),
+      )
+    })
+
+    test("a redelivered comment asks the webhook counter again; its mark keeps the count to one", async () => {
+      mockCreateOrUpdate.mockResolvedValue({
+        isNew: false,
+        message: fakeCreatedMessage,
+      })
+      mockCreateOrUpdateWithAttachments.mockResolvedValue({
+        isNew: false,
+        result: { ...fakeCreatedMessage, attachments: [] },
+      })
+
+      await receiveComment(comment("hello"))
+
+      expect(mockRecordWebhookComment).toHaveBeenCalledTimes(1)
+    })
+
+    test("a failing webhook count never fails the job, so the steps that run once per new comment still run", async () => {
+      mockRecordWebhookComment.mockRejectedValueOnce(new Error("db down"))
 
       await expect(receiveComment(comment("hello"))).resolves.toBeUndefined()
       expect(automationData()).toBeDefined()

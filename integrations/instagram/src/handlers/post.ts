@@ -1,5 +1,10 @@
 import type { PostHandlers } from "@chatbotx.io/sdk"
-import { getManagedMedia, listManagedMedia } from "../apis/post"
+import {
+  collectMediaMetrics,
+  getManagedMedia,
+  listManagedMedia,
+} from "../apis/post"
+import { mapToChannelError } from "../lib/error-mapper"
 import type { InstagramAuthValue } from "../schema"
 
 export const postHandlers: PostHandlers<InstagramAuthValue> = {
@@ -11,4 +16,10 @@ export const postHandlers: PostHandlers<InstagramAuthValue> = {
     }),
   getPost: async ({ ctx, data }) =>
     await getManagedMedia({ auth: ctx.auth, postId: data.postId }),
+  getPostsMetrics: async ({ ctx, data }) =>
+    await collectMediaMetrics({
+      postIds: data.postIds,
+      readOne: (postId) => getManagedMedia({ auth: ctx.auth, postId }),
+      toChannelError: mapToChannelError,
+    }),
 }

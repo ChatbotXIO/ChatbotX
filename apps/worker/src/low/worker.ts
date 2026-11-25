@@ -14,6 +14,7 @@ import {
 import type { Job } from "bullmq"
 import { recordLiveVideoStatusChange } from "../channel-post-sync/record-live-video"
 import { refreshChannelPost } from "../channel-post-sync/refresh-channel-post"
+import { refreshChannelPostMetrics } from "../channel-post-sync/refresh-channel-post-metrics"
 import { syncChannelPosts } from "../channel-post-sync/sync-channel-posts"
 import { env } from "../env"
 import { captureContactProfileSnapshot } from "../integration/handlers/capture-contact-profile-snapshot"
@@ -33,6 +34,7 @@ import { resolveWorkspaceId } from "../lib/resolve-workspace-id"
 import { runJobWithAuditContext } from "../lib/run-job-with-audit-context"
 import { runWorker } from "../lib/shutdown"
 import { processPostPublishJob } from "../post-publish/process-job"
+import { recheckPublishDestinationScopes } from "../publish-destination/recheck-scopes"
 import { processReconnectPublishFanOut } from "../publish-destination/reconnect-fan-out"
 import { refreshPublishDestinationAvatar } from "../publish-destination/refresh-avatar"
 import "../post-publish/register-feed-fetcher"
@@ -79,12 +81,20 @@ async function processLowJob(
             await processReconnectPublishFanOut(jobData.data)
             return
           }
+          case LowJobAction.recheckPublishDestinationScopes: {
+            await recheckPublishDestinationScopes(jobData.data)
+            return
+          }
           case LowJobAction.refreshPublishDestinationAvatar: {
             await refreshPublishDestinationAvatar(jobData.data)
             return
           }
           case LowJobAction.refreshChannelPost: {
             await refreshChannelPost(jobData.data)
+            return
+          }
+          case LowJobAction.refreshChannelPostMetrics: {
+            await refreshChannelPostMetrics(jobData.data)
             return
           }
           case LowJobAction.syncChannelPosts: {

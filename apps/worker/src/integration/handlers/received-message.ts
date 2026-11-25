@@ -185,6 +185,7 @@ import {
 import {
   applyPostCommentSettings,
   countPhoneComment,
+  countWebhookComment,
 } from "./post-comment-settings"
 import {
   claimFirstCommentWinnerBestEffort,
@@ -2201,6 +2202,20 @@ export const receiveComment = async (
       workspaceId: inbox.workspaceId,
     })
   }
+
+  // A channel whose platform reports no comment count is counted here, once
+  // per stored comment (a mark on the comment). It does not need the post to be
+  // tracked per contact: the post is resolved by its root id.
+  await countWebhookComment({
+    channel: inbox.channel,
+    channelPostId,
+    externalPostId: commentData.postId,
+    inboxId: inbox.id,
+    integrationId: integrationRow.id,
+    savedComment,
+    sourceAccountId: integrationIdentifier,
+    workspaceId: inbox.workspaceId,
+  })
 
   // Leaderboard comments/live comments, only for a newly stored comment.
   // `isCommentReply` holds on every listed channel: TikTok normalizes its

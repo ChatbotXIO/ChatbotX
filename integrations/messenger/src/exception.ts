@@ -1,3 +1,4 @@
+import { scrubSecretsInString } from "@chatbotx.io/logger"
 import { SdkException } from "@chatbotx.io/sdk"
 import { formatGraphError } from "@chatbotx.io/utils/graph-error"
 import { isHTTPError } from "ky"
@@ -70,7 +71,10 @@ export function parseOriginError(originError: unknown): ChannelErrorSource {
   }
   return {
     httpStatusCode: FALLBACK_HTTP_STATUS,
-    message: originError instanceof Error ? originError.message : undefined,
+    message:
+      originError instanceof Error
+        ? scrubSecretsInString(originError.message)
+        : undefined,
   }
 }
 

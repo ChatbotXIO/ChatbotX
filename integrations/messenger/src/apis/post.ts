@@ -4,16 +4,20 @@ import {
   type ChannelPostDetails,
   type ChannelPostListItem,
   type ChannelPostListPage,
+  type ChannelPostMetricsItem,
   type Context,
   clampPageSize,
+  isRateLimited,
 } from "@chatbotx.io/sdk"
 import type { ChannelPostContentType } from "@chatbotx.io/utils/channel-post"
 import { z } from "zod"
 import { DEFAULT_API_VERSION } from "../constants"
 import { MessengerException, rescue } from "../exception"
+import { mapToChannelError } from "../lib/error-mapper"
 import { facebookGraphClient } from "../lib/http-client"
 import { logger } from "../lib/logger"
 import type { MessengerAuthValue } from "../schema"
+import { sendGraphBatch } from "./batch"
 import {
   type FacebookLiveVideo,
   LIVE_BROADCAST_STATUS_FILTER,
@@ -225,6 +229,16 @@ const readWithAdminCreator = async <T>(
   }
 }
 
+/**
+ * `filter(stream)` makes the summary count comments at every level. Graph's
+ * default `filter` is `toplevel`, which leaves the replies out
+ * (https://developers.facebook.com/docs/graph-api/reference/object/comments:
+ * `toplevel` "is the default"; `stream` is "comments at all levels in
+ * chronological order").
+ */
+const COMMENTS_COUNT_FIELD = "comments.limit(0).summary(true).filter(stream)"
+const REACTIONS_COUNT_FIELD = "reactions.limit(0).summary(true)"
+
 const POST_FIELDS = [
   "id",
   "message",
@@ -234,8 +248,8 @@ const POST_FIELDS = [
   "status_type",
   "is_published",
   "shares",
-  "comments.limit(0).summary(true)",
-  "reactions.limit(0).summary(true)",
+  COMMENTS_COUNT_FIELD,
+  REACTIONS_COUNT_FIELD,
 ]
 
 const postFields = (withCreator: boolean): string =>
@@ -479,3 +493,97 @@ export const getManagedPost = (props: {
     ),
   )
 }
+
+/** The count fields of a post, the same ones the listing reads. */
+const METRICS_FIELDS = [
+  "id",
+  "shares",
+  COMMENTS_COUNT_FIELD,
+  REACTIONS_COUNT_FIELD,
+].join(",")
+
+const metricsNodeSchema = z.object({
+  comments: z
+    .object({ summary: z.object({ total_count: z.number() }).partial() })
+    .partial()
+    .optional(),
+  id: z.string(),
+  reactions: z
+    .object({ summary: z.object({ total_count: z.number() }).partial() })
+    .partial()
+    .optional(),
+  shares: z.object({ count: z.number() }).partial().optional(),
+})
+
+/** The error categories that end the whole batch: every sub-request shares the Page token. */
+const ACCOUNT_WIDE_CATEGORIES: ReadonlySet<string> = new Set([
+  ChannelErrorCategory.AUTH_FAILED,
+  ChannelErrorCategory.RATE_LIMITED,
+  ChannelErrorCategory.QUOTA_EXCEEDED,
+])
+
+/**
+ * The counts of up to 50 feed posts in ONE Graph call: a Graph batch of
+ * `GET <id>?fields=...` sub-requests. (Graph's multiple-ID read, `?ids=a,b`,
+ * is not used: Meta dropped it in Graph API v26.0 and no new app may use it,
+ * see https://developers.facebook.com/blog/post/2026/11/04/introducing-graph-api-v27-and-marketing-api-v27/ .)
+ * A sub-request that failed for its own post (gone, hidden) or timed out is
+ * left out, so its stored counts are never changed. An account-wide failure
+ * (auth, rate limit) is thrown. A permission error is per post: Graph answers
+ * a deleted or unreadable post with code 10 ("Object does not exist, cannot be
+ * loaded due to missing permission ..."), so it is thrown only when no post of
+ * the batch could be read, which is what a Page really missing the permission
+ * looks like.
+ */
+export const getPostsMetrics = async (props: {
+  auth: MessengerAuthValue
+  postIds: string[]
+}): Promise<ChannelPostMetricsItem[]> => {
+  const { auth, postIds } = props
+  const { results } = await sendGraphBatch(
+    auth,
+    postIds.map((postId) => ({
+      method: "GET" as const,
+      relativeUrl: `${encodeURIComponent(postId)}?fields=${METRICS_FIELDS}`,
+    })),
+  )
+  const items: ChannelPostMetricsItem[] = []
+  let permissionError: ChannelError | null = null
+  for (const result of results) {
+    if (result.kind === "unknown") {
+      continue
+    }
+    if (result.kind === "error") {
+      const error = mapToChannelError({
+        errorBody: result.errorBody,
+        httpStatus: result.httpStatus,
+      })
+      if (ACCOUNT_WIDE_CATEGORIES.has(error.category) || isRateLimited(error)) {
+        throw error
+      }
+      if (error.category === ChannelErrorCategory.PERMISSION_DENIED) {
+        permissionError = error
+      }
+      continue
+    }
+    const node = metricsNodeSchema.safeParse(result.body)
+    if (node.success) {
+      items.push(toMetricsItem(node.data))
+    }
+  }
+  if (items.length === 0 && permissionError) {
+    throw permissionError
+  }
+  return items
+}
+
+const toMetricsItem = (
+  node: z.infer<typeof metricsNodeSchema>,
+): ChannelPostMetricsItem => ({
+  commentsCount: node.comments?.summary?.total_count ?? null,
+  externalPostId: node.id,
+  reactionsCount: node.reactions?.summary?.total_count ?? null,
+  // Same rule as the listing: `shares` is left out of a post nobody shared.
+  sharesCount: node.shares?.count ?? 0,
+  viewsCount: null,
+})

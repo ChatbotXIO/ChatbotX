@@ -17,6 +17,7 @@ import {
 } from "../../client"
 import { CHANNEL_POST_SYNC_NOT_CONNECTED, inboxStatuses } from "../../partials"
 import {
+  channelPostModel,
   channelPostSyncModel,
   inboxModel,
   integrationInstagramModel,
@@ -659,5 +660,39 @@ export const channelPostSyncRepository = {
       )
       .returning({ id: channelPostSyncModel.id })
     return rows.length > 0
+  },
+  /**
+   * The workspace's posts among `ids` (removed ones are not returned), each
+   * flagged with whether its inbox can be read ({@link postSyncEligible}).
+   * Scoped by `workspaceId`; an id of another workspace is never returned.
+   */
+  async findMetricsRefreshCandidates(
+    input: { ids: string[]; workspaceId: string },
+    tx: DatabaseClient = db,
+  ) {
+    if (input.ids.length === 0) {
+      return []
+    }
+    return await tx
+      .select({
+        channel: channelPostModel.channel,
+        eligible: sql<boolean>`${postSyncEligible({
+          channel: channelPostModel.channel,
+          inboxId: channelPostModel.inboxId,
+          workspaceId: channelPostModel.workspaceId,
+        })}`,
+        externalPostId: channelPostModel.externalPostId,
+        id: channelPostModel.id,
+        inboxId: channelPostModel.inboxId,
+        metricsFetchedAt: channelPostModel.metricsFetchedAt,
+      })
+      .from(channelPostModel)
+      .where(
+        and(
+          eq(channelPostModel.workspaceId, input.workspaceId),
+          isNull(channelPostModel.removedAt),
+          inArray(channelPostModel.id, input.ids),
+        ),
+      )
   },
 }

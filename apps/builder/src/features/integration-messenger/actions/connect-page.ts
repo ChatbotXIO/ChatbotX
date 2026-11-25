@@ -8,10 +8,10 @@ import { channelTypes } from "@chatbotx.io/database/partials"
 import type { IntegrationMessengerModel } from "@chatbotx.io/database/types"
 import type { MessengerAuthValue } from "@chatbotx.io/integration-messenger"
 import {
-  debugToken,
   integration as integrationMessenger,
   toAppAccessToken,
 } from "@chatbotx.io/integration-messenger"
+import { readTokenScopes } from "@chatbotx.io/integration-messenger/apis/token-scopes"
 import { runBrandingFollowUps } from "@/features/channel-connect/lib/branding-follow-ups"
 import {
   captureConnectScopes,
@@ -126,6 +126,7 @@ async function runMessengerFollowUps({
 /**
  * The page token's granted scopes from `/debug_token` (needs the app token, so
  * it reads the app credentials stored on the row's auth); `null` on any failure.
+ * The same reader the Posts Connect tab's permission re-check uses.
  */
 async function readPageScopes(
   auth: MessengerAuthValue,
@@ -135,14 +136,22 @@ async function readPageScopes(
     return fromMetadata
   }
   try {
-    const debug = await debugToken({
+    const result = await readTokenScopes({
       appAccessToken: toAppAccessToken(auth),
       inputToken: auth.tokens.accessToken,
       version: auth.version,
     })
-    return debug.scopes ?? null
+    if (result.kind === "scopes") {
+      return result.scopes
+    }
+    logger.warn(
+      { reason: result.kind },
+      "Messenger debug_token gave no scopes after connect",
+    )
   } catch (err) {
+    // Building the app token can fail on a row without app credentials: the
+    // connect already succeeded, so the scopes just stay unknown.
     logger.warn({ err }, "Messenger debug_token failed after connect")
-    return null
   }
+  return null
 }

@@ -519,6 +519,90 @@ export const publishDestinationRepository = {
     return rows.length > 0
   },
 
+  /**
+   * What a scope re-check compares-and-swaps on: when the row last learned
+   * something (`checkedAt`, written by a connect, a reconnect, a publish
+   * refusal or an earlier re-check). Read BEFORE the platform call.
+   */
+  async findRecheckFence(
+    input: { id: string; workspaceId: string },
+    tx: DatabaseClient = db,
+  ): Promise<{ checkedAt: Date | null } | null> {
+    const [row] = await tx
+      .select({ checkedAt: publishDestinationModel.checkedAt })
+      .from(publishDestinationModel)
+      .where(
+        and(
+          eq(publishDestinationModel.id, input.id),
+          eq(publishDestinationModel.workspaceId, input.workspaceId),
+          isNotNull(publishDestinationModel.inboxId),
+        ),
+      )
+      .limit(1)
+    return row ?? null
+  },
+
+  /**
+   * Stores the permissions a re-check read from the platform, only while
+   * nothing newer happened: the inbox token is still the one the read used
+   * (`tokenFingerprint`) AND `checkedAt` is still what it was before the read
+   * (a reconnect, a publish refusal or another re-check moved it). Returns
+   * whether it wrote.
+   *
+   * A `permissionMissing` recorded by a real publish refusal is cleared only
+   * when it was recorded for this very token (`statusTokenFingerprint` equals
+   * `tokenFingerprint`) and the platform now reports no required scope
+   * missing (`missingScopes` empty); otherwise the status and its missing
+   * list stay as the refusal left them.
+   */
+  async recordRecheckedScopes(
+    input: {
+      expectedCheckedAt: Date | null
+      grantedScopes: string[]
+      id: string
+      missingScopes: string[]
+      now: Date
+      provider: InboxPublishProvider
+      tokenFingerprint: string
+      workspaceId: string
+    },
+    tx: DatabaseClient = db,
+  ): Promise<boolean> {
+    const refusalCleared = sql`(${publishDestinationModel.publishStatus} = 'permissionMissing'
+      AND ${publishDestinationModel.statusTokenFingerprint} = ${input.tokenFingerprint}
+      AND ${sql.raw(input.missingScopes.length === 0 ? "TRUE" : "FALSE")})`
+    const refusalKept = sql`(${publishDestinationModel.publishStatus} = 'permissionMissing' AND NOT ${refusalCleared})`
+    const checkedAtUnchanged =
+      input.expectedCheckedAt === null
+        ? sql`${publishDestinationModel.checkedAt} IS NULL`
+        : eq(publishDestinationModel.checkedAt, input.expectedCheckedAt)
+    const rows = await tx
+      .update(publishDestinationModel)
+      .set({
+        checkedAt: input.now,
+        grantedScopes: input.grantedScopes,
+        missingScopes: sql`CASE WHEN ${refusalKept} THEN ${publishDestinationModel.missingScopes}
+          ELSE ARRAY(SELECT jsonb_array_elements_text(${JSON.stringify(input.missingScopes)}::jsonb)) END`,
+        publishStatus: sql`CASE WHEN ${refusalCleared} THEN 'ok' ELSE ${publishDestinationModel.publishStatus} END`,
+        statusTokenFingerprint: sql`CASE WHEN ${refusalCleared} THEN NULL ELSE ${publishDestinationModel.statusTokenFingerprint} END`,
+        updatedAt: sql`now()`,
+      })
+      .where(
+        and(
+          eq(publishDestinationModel.id, input.id),
+          eq(publishDestinationModel.workspaceId, input.workspaceId),
+          checkedAtUnchanged,
+          inboxTokenMatches({
+            fingerprint: input.tokenFingerprint,
+            provider: input.provider,
+            workspaceId: input.workspaceId,
+          }),
+        ),
+      )
+      .returning({ id: publishDestinationModel.id })
+    return rows.length > 0
+  },
+
   /** The TikTok destination ids whose binding exists, for tests and sync checks. */
   async listTiktokBindings(
     input: { workspaceId: string },

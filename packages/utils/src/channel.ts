@@ -313,6 +313,16 @@ export const isPostManagementChannel = (
   channel != null &&
   (POST_MANAGEMENT_CHANNELS as readonly string[]).includes(channel)
 
+/**
+ * Where a channel's comment count comes from. `platform`: the channel's API
+ * reports it (listing, single read, batch read) and the stored count is
+ * whatever the last read said. `webhook`: the API does not report it, so
+ * ChatbotX counts each new stored comment itself and a platform read never
+ * touches the count.
+ */
+export const commentCountSources = z.enum(["platform", "webhook"])
+export type CommentCountSource = z.infer<typeof commentCountSources>
+
 /** What a channel's post listing reports, so the UI and the sync never guess. */
 export type PostChannelCapability = {
   /**
@@ -327,10 +337,20 @@ export type PostChannelCapability = {
   commentLike: boolean
   /** Per-post comment settings (hide, skip) are enforced for this channel's comments. */
   commentSettings: boolean
+  /** Where the post's comment count comes from (see {@link commentCountSources}). */
+  commentCountSource: CommentCountSource
+  /**
+   * The comments total this channel reports changed definition (it now counts
+   * replies), so the first read of a post measured before the change is a
+   * baseline, never a gain. False for a channel whose definition did not change.
+   */
+  commentTotalRebaseline: boolean
   /** The listing reports comment and reaction counts. */
   counts: boolean
   /** The listing tells live broadcasts apart (`liveStatus`). */
   live: boolean
+  /** The channel's `post.getPostsMetrics` handler reads the counts of several posts at once. */
+  metricsBatchRead: boolean
 }
 
 export const POST_CHANNEL_CAPABILITIES: Record<
@@ -339,11 +359,14 @@ export const POST_CHANNEL_CAPABILITIES: Record<
 > = {
   messenger: {
     author: true,
+    commentCountSource: "platform",
     commentDelete: true,
     commentLike: true,
     commentSettings: true,
+    commentTotalRebaseline: true,
     counts: true,
     live: true,
+    metricsBatchRead: true,
   },
   // Live stays false for Instagram: only the Facebook-Login connection can
   // list (`live_media`) and end a broadcast; the Instagram-Login connection has
@@ -352,28 +375,39 @@ export const POST_CHANNEL_CAPABILITIES: Record<
   // in the public API.
   instagram: {
     author: false,
+    commentCountSource: "platform",
     commentDelete: true,
     commentLike: false,
     commentSettings: true,
+    commentTotalRebaseline: false,
     counts: true,
     live: false,
+    metricsBatchRead: true,
   },
-  // Threads reports counts only through Insights, one call per post.
+  // Threads reports counts only through Insights, one call per post (a
+  // permission we do not request), so its comment count is counted at the
+  // webhook.
   threads: {
     author: false,
+    commentCountSource: "webhook",
     commentDelete: false,
     commentLike: false,
     commentSettings: false,
+    commentTotalRebaseline: false,
     counts: false,
     live: false,
+    metricsBatchRead: false,
   },
   tiktok: {
     author: false,
+    commentCountSource: "platform",
     commentDelete: true,
     commentLike: true,
     commentSettings: false,
+    commentTotalRebaseline: false,
     counts: true,
     live: false,
+    metricsBatchRead: false,
   },
 }
 

@@ -156,6 +156,7 @@ const refreshOne = async (account: {
       ...ref,
       accessToken: refreshed.accessToken,
       fence,
+      grantedScopes: refreshed.grantedScopes,
       refreshToken: refreshed.refreshToken,
       tokenExpiresAt: refreshed.expiresAt,
     })

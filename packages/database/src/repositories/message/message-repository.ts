@@ -598,6 +598,18 @@ export interface IMessageRepository {
   ): Promise<string[]>
 
   /**
+   * Marks a comment as counted in its post's comment count (a channel whose
+   * platform reports no count), atomically: `true` only for the call that set
+   * the mark, `false` when it was already set (or the comment is gone). A
+   * storage failure throws.
+   */
+  markCommentCounted(
+    messageId: string,
+    workspaceId: string,
+    createdAt: Date,
+  ): Promise<boolean>
+
+  /**
    * Marks a comment as counted in its post's phone-number count, atomically:
    * `true` only for the call that set the mark, `false` when it was already set
    * (or the comment is gone). A storage failure throws, so a caller never takes

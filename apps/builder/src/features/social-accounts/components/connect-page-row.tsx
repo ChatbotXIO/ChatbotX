@@ -11,7 +11,6 @@ import {
   type InboxProvider,
   needsReconnectAction,
   PROVIDER_LABELS,
-  RECONNECT_LABEL_KEYS,
   showsViaFacebookTag,
   type VisibleDestination,
 } from "../lib/connections"
@@ -115,7 +114,7 @@ export const ConnectPageRow = ({
           <ReconnectButton
             disabled={readOnly}
             integrationId={integrationId}
-            label={t(RECONNECT_LABEL_KEYS[state])}
+            label={t("posts.connect.reconnect")}
             name={name}
             provider={provider}
             workspaceId={workspaceId}

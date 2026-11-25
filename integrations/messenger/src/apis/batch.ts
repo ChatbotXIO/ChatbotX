@@ -16,11 +16,16 @@ export const GRAPH_BATCH_MAX_ITEMS = 50
 const GRAPH_BATCH_TIMEOUT_MS = 25_000
 
 export type GraphBatchRequest = {
-  /** Path without the version, e.g. `me/messages`. */
+  /** Path without the version, e.g. `me/messages`; a `GET` carries its query here (`<id>?fields=...`). */
   relativeUrl: string
-  /** Form fields; object values are JSON-encoded as Graph expects. */
-  body: Record<string, unknown>
-}
+} & (
+  | {
+      method?: "POST"
+      /** Form fields; object values are JSON-encoded as Graph expects. */
+      body: Record<string, unknown>
+    }
+  | { method: "GET"; body?: undefined }
+)
 
 /**
  * One sub-response. `unknown` = Graph returned `null` for it (the sub-request
@@ -140,11 +145,18 @@ export const sendGraphBatch = (
     )
   }
   const { version = DEFAULT_API_VERSION } = auth
-  const batch = requests.map((request) => ({
-    method: "POST",
-    relative_url: `${version}/${request.relativeUrl}`,
-    body: encodeForm(request.body),
-  }))
+  // Batch requests: "GET and DELETE operations can only have a relative_url
+  // and a method field, POST and PUT operations may contain an optional body
+  // field" (https://developers.facebook.com/docs/graph-api/batch-requests).
+  const batch = requests.map((request) =>
+    request.method === "GET"
+      ? { method: "GET", relative_url: `${version}/${request.relativeUrl}` }
+      : {
+          method: "POST",
+          relative_url: `${version}/${request.relativeUrl}`,
+          body: encodeForm(request.body),
+        },
+  )
 
   return rescue("batch", async () => {
     const { data, headers } =

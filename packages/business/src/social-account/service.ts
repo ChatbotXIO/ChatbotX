@@ -568,6 +568,8 @@ class SocialAccountService extends BaseService {
   async applyRefreshedToken(input: {
     accessToken: string
     fence: Required<SocialTokenFence>
+    /** The permissions the refresh response reports; stored with the token, `null`/absent keeps the stored list. */
+    grantedScopes?: string[] | null
     id: string
     /** The rotated refresh token of a network that issues a new one on every refresh. */
     refreshToken?: string
@@ -580,6 +582,7 @@ class SocialAccountService extends BaseService {
       refreshToken:
         (await encryptOptional(input.refreshToken, aad)) ?? undefined,
       fence: input.fence,
+      grantedScopes: input.grantedScopes ?? undefined,
       id: input.id,
       tokenExpiresAt: input.tokenExpiresAt,
       workspaceId: input.workspaceId,

@@ -1,5 +1,8 @@
 import type { PublishDestinationDto } from "@chatbotx.io/business"
-import { publishDestinationService } from "@chatbotx.io/business"
+import {
+  publishDestinationService,
+  publishScopeRecheckService,
+} from "@chatbotx.io/business"
 import { enabledContentTypes } from "@chatbotx.io/utils/post-publishing"
 import type { PublishDestinationState } from "@chatbotx.io/utils/publish-destination"
 import {
@@ -69,6 +72,19 @@ export const publishDestinationOperations = {
     }
     return { items }
   },
+
+  /**
+   * Asks for the granted permissions of the destinations to be re-read from the
+   * platform in the background (best effort, deduplicated per destination).
+   */
+  recheckPermissions: async (input: {
+    ids?: readonly string[]
+    workspaceId: string
+  }) =>
+    await publishScopeRecheckService.requestScopeRecheck({
+      destinationIds: input.ids,
+      workspaceId: input.workspaceId,
+    }),
 
   get: async (input: {
     id: string

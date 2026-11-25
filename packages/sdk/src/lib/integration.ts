@@ -20,6 +20,7 @@ import type {
   ChannelPostListItem,
   ChannelPostListPage,
   ChannelPostLiveState,
+  ChannelPostMetricsItem,
   CommentAnchor,
   Context,
   HandleRequestProps,
@@ -555,6 +556,18 @@ export type PostHandlers<IAuth extends AuthValue> = {
   getPost: Handler<
     { ctx: Context<IAuth>; data: { postId: string } },
     ChannelPostListItem
+  >
+  /**
+   * The counts of up to `CHANNEL_POST_METRICS_BATCH_MAX` posts in as few channel calls
+   * as the channel allows. A post the channel does not answer for (gone,
+   * hidden, a failed sub-read) is simply absent from the result: the caller
+   * leaves its stored counts alone and never marks it removed. A failure that
+   * affects the whole account (auth, rate limit, permission) is thrown as a
+   * `ChannelError`.
+   */
+  getPostsMetrics?: Handler<
+    { ctx: Context<IAuth>; data: { postIds: string[] } },
+    ChannelPostMetricsItem[]
   >
   /**
    * Reads one broadcast by its own id, for a channel whose live-state webhook

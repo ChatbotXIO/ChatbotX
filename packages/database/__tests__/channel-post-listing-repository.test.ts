@@ -39,7 +39,11 @@ const target = {
   workspaceId: "ws-1",
 }
 
-const runUpsert = async (posts: ListedChannelPost[]) => {
+const runUpsert = async (
+  posts: ListedChannelPost[],
+  mode?: "listing" | "metricsOnly",
+  channel = target.channel,
+) => {
   const execute = vi.fn().mockResolvedValue({ rowCount: 0 })
   const client = { execute }
   const tx = {
@@ -47,7 +51,10 @@ const runUpsert = async (posts: ListedChannelPost[]) => {
       await run(client),
   } as unknown as DatabaseClient
 
-  await upsertListedChannelPosts({ now: NOW, posts, target }, tx)
+  await upsertListedChannelPosts(
+    { mode, now: NOW, posts, target: { ...target, channel } },
+    tx,
+  )
 
   return execute.mock.calls.map(([statement]) => dialect.sqlToQuery(statement))
 }
@@ -90,11 +97,22 @@ describe("upsertListedChannelPosts", () => {
     const [, , , update] = await runUpsert([post()])
 
     expect(update?.sql).toContain(
-      '"reactionsCount" = COALESCE(v."reactionsCount", p."reactionsCount")',
+      'THEN COALESCE(v."reactionsCount", p."reactionsCount") ELSE p."reactionsCount" END',
     )
     expect(update?.sql).toContain(
-      '"engagementCount" = COALESCE(v."commentsCount", p."commentsCount") + COALESCE(v."reactionsCount", p."reactionsCount") + COALESCE(v."sharesCount", p."sharesCount")',
+      'THEN COALESCE(v."commentsCount", p."commentsCount") + COALESCE(v."reactionsCount", p."reactionsCount") + COALESCE(v."sharesCount", p."sharesCount") ELSE p."engagementCount" END',
     )
+  })
+
+  test("a platform read that reports no comment count leaves a webhook-counted count and its known bit alone", async () => {
+    const [, , , update] = await runUpsert([post({ commentsCount: null })])
+
+    expect(update?.sql).toContain(
+      'THEN COALESCE(v."commentsCount", p."commentsCount") ELSE p."commentsCount" END',
+    )
+    // The mask only ever gains the bits a read reports.
+    expect(update?.sql).toContain('THEN (p."metricsKnownMask" | ')
+    expect(update?.sql).not.toContain('"metricsKnownMask" = (v.')
   })
 
   test("an existing post keeps a stored description column the listing leaves out", async () => {
@@ -102,7 +120,7 @@ describe("upsertListedChannelPosts", () => {
 
     for (const column of ["caption", "mediaType", "permalink", "publishedAt"]) {
       expect(update?.sql).toContain(
-        `"${column}" = COALESCE(v."${column}", p."${column}")`,
+        `THEN COALESCE(v."${column}", p."${column}") ELSE p."${column}" END`,
       )
     }
   })
@@ -121,7 +139,7 @@ describe("upsertListedChannelPosts", () => {
     const [, , , update] = await runUpsert([post({ contentType: "video" })])
 
     expect(update?.sql).toContain(
-      `"contentType" = CASE WHEN p."contentType" IN ('reel', 'live') AND v."contentType" = 'video' THEN p."contentType" ELSE COALESCE(v."contentType", p."contentType") END`,
+      `THEN CASE WHEN p."contentType" IN ('reel', 'live') AND v."contentType" = 'video' THEN p."contentType" ELSE COALESCE(v."contentType", p."contentType") END ELSE p."contentType" END`,
     )
   })
 
@@ -207,11 +225,11 @@ describe("upsertListedChannelPosts", () => {
     )
     // Gain is reported - stored, only for a count that was known before.
     expect(snapshot?.sql).toContain('v."commentsCount" - p."commentsCount"')
-    expect(snapshot?.sql).toContain('(p."metricsKnownMask" & 1) > 0')
+    expect(snapshot?.sql).toContain('(p."metricsKnownMask" & $')
     expect(update?.sql).toContain('"metricsKnownMask" =')
   })
 
-  test("a stale observation is skipped by the snapshot and the update alike", async () => {
+  test("a stale observation is skipped by the snapshot, and fences the count columns of the update", async () => {
     const [, , snapshot, update] = await runUpsert([post()])
 
     for (const statement of [snapshot, update]) {
@@ -219,6 +237,83 @@ describe("upsertListedChannelPosts", () => {
         'p."metricsFetchedAt" IS NULL OR p."metricsFetchedAt" <',
       )
     }
+    expect(update?.sql).toContain("THEN $")
+  })
+
+  test("a listing read reports the current-definition bit together with the comments bit", async () => {
+    const [insert, , snapshot, update] = await runUpsert([post()])
+
+    for (const statement of [insert, snapshot, update]) {
+      expect(statement?.sql).toContain("THEN 9 ELSE 0 END")
+    }
+  })
+
+  test("a comments gain needs the previous row to carry the current-definition bit", async () => {
+    const [, , snapshot] = await runUpsert([post()])
+
+    expect(snapshot?.sql).toContain(
+      'AND v."commentsCount" IS NOT NULL THEN v."commentsCount" - p."commentsCount"',
+    )
+    // Required bits are bound parameters chosen from the capability table.
+    expect(snapshot?.sql).not.toContain("messenger")
+    expect(snapshot?.sql).not.toContain("instagram")
+    expect(snapshot?.params).toContain(9)
+    expect(snapshot?.params).not.toContain(1)
+    // The display bit stays the plain comments bit.
+    expect(snapshot?.sql).toContain("(CASE WHEN (")
+    expect(snapshot?.sql).toContain(" & 1) > 0 THEN")
+  })
+
+  test("a channel whose comment total did not change keeps the plain comments bit as the gain requirement", async () => {
+    const [, , snapshot] = await runUpsert([post()], undefined, "instagram")
+
+    expect(snapshot?.params).toContain(1)
+    expect(snapshot?.params).not.toContain(9)
+  })
+
+  test("the metadata fence is stamped with the observation time, not the write time", async () => {
+    const [insert, , , update] = await runUpsert([post()])
+
+    expect(update?.sql).toContain('GREATEST(COALESCE(p."metadataFetchedAt", $')
+    // insert: metricsFetchedAt and metadataFetchedAt both take observedAt (= NOW here).
+    const stamps = (insert?.params ?? []).filter(
+      (param) => param instanceof Date && param.getTime() === NOW.getTime(),
+    )
+    expect(stamps.length).toBeGreaterThan(0)
+  })
+
+  test("the full update writes the listing-only columns whatever the count fence says", async () => {
+    const [, , , update] = await runUpsert([post()])
+    const sets = update?.sql.split("FROM (VALUES")[0] ?? ""
+
+    for (const column of [
+      "caption",
+      "mediaType",
+      "permalink",
+      "publishedAt",
+      "authorName",
+      "authorExternalId",
+    ]) {
+      expect(sets).toContain(
+        `"${column}" = CASE WHEN (p."metadataFetchedAt" IS NULL OR p."metadataFetchedAt" < `,
+      )
+      expect(sets).toContain(
+        `THEN COALESCE(v."${column}", p."${column}") ELSE p."${column}" END`,
+      )
+      expect(sets).toContain(`OR p."${column}" IS NULL THEN`)
+    }
+    expect(sets).toContain('"removedAt" = NULL')
+    expect(sets).toContain('GREATEST(COALESCE(p."metadataFetchedAt", ')
+    // The row filter no longer holds the fence: only the count columns do.
+    const where = update?.sql.split("FROM (VALUES")[1] ?? ""
+    expect(where).not.toContain(
+      'AND (p."metricsFetchedAt" IS NULL OR p."metricsFetchedAt" <',
+    )
+    expect(sets).toContain(
+      '"metricsFetchedAt" = CASE WHEN (p."metricsFetchedAt" IS NULL OR p."metricsFetchedAt" < ',
+    )
+    expect(sets).toContain('ELSE p."metricsFetchedAt" END')
+    expect(sets).toContain('ELSE p."metricsKnownMask" END')
   })
 
   test("names the snapshot day in the workspace time zone and falls back to UTC for an unknown one", async () => {
@@ -264,5 +359,66 @@ describe("upsertListedChannelPosts", () => {
 
   test("writes nothing for an empty page", async () => {
     expect(await runUpsert([])).toEqual([])
+  })
+})
+
+describe("upsertListedChannelPosts in metricsOnly mode", () => {
+  test("creates no post: a lock, a snapshot and one update", async () => {
+    const statements = await runUpsert([post()], "metricsOnly")
+
+    expect(statements).toHaveLength(3)
+    expect(
+      statements.some((s) => s.sql.includes('INSERT INTO "ChannelPost"')),
+    ).toBe(false)
+    expect(statements[0]?.sql).toContain("FOR UPDATE")
+    expect(statements[1]?.sql).toContain('INSERT INTO "ChannelPostMetricDaily"')
+  })
+
+  test("writes only the counts, the mask, the engagement total and the observation time", async () => {
+    const update = (await runUpsert([post()], "metricsOnly")).at(-1)
+
+    for (const column of [
+      "commentsCount",
+      "reactionsCount",
+      "sharesCount",
+      "engagementCount",
+      "metricsKnownMask",
+      "viewsCount",
+      "metricsFetchedAt",
+    ]) {
+      expect(update?.sql).toContain(`"${column}" =`)
+    }
+    for (const column of [
+      "metadataFetchedAt",
+      "removedAt",
+      "caption",
+      "mediaType",
+      "permalink",
+      "publishedAt",
+      "contentType",
+      "liveStatus",
+      "authorName",
+    ]) {
+      expect(update?.sql).not.toContain(`"${column}" =`)
+    }
+  })
+
+  test("advances the observation time on every newer read, changed or not, and never on an older one", async () => {
+    const update = (await runUpsert([post()], "metricsOnly")).at(-1)
+
+    expect(update?.sql).toContain(
+      'p."metricsFetchedAt" IS NULL OR p."metricsFetchedAt" < ',
+    )
+    expect(update?.sql).not.toContain("IS DISTINCT FROM")
+  })
+
+  test("still keeps a stored count the read leaves out", async () => {
+    const update = (
+      await runUpsert([post({ commentsCount: null })], "metricsOnly")
+    ).at(-1)
+
+    expect(update?.sql).toContain(
+      '"commentsCount" = COALESCE(v."commentsCount", p."commentsCount")',
+    )
   })
 })

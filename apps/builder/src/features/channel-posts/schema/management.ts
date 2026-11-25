@@ -15,6 +15,10 @@ import {
 } from "@chatbotx.io/database/partials"
 import { zodBigintIdAsString } from "@chatbotx.io/utils"
 import {
+  CHANNEL_POST_METRICS_BATCH_MAX,
+  channelPostRefreshOutcomes,
+} from "@chatbotx.io/utils/channel-post"
+import {
   isValidPostgresTimestampWithOffset,
   POSTGRES_TIMESTAMP_WITH_OFFSET,
 } from "@chatbotx.io/utils/postgres-timestamp"
@@ -276,7 +280,46 @@ export const channelPostSyncStatusResponse = z.object({
 })
 
 export const refreshChannelPostResponse = z.object({
-  queued: z.literal(true),
+  outcome: channelPostRefreshOutcomes.describe(
+    "`refreshed`: the counts were just read from the channel. `removed`: the channel confirmed the post is gone and it is now hidden. `channelUnavailable`: the channel could not be read (try again later). `rateLimited`: the channel asked to slow down. `cooldown`: the post was refreshed in the last minute, nothing was read.",
+  ),
+  post: channelPostManagementItem
+    .nullable()
+    .describe("The post as it is now; `null` when it was removed."),
+  queued: z
+    .literal(true)
+    .describe(
+      "Deprecated: always `true`, kept so clients written for the earlier background refresh (`{ queued: true }`) keep validating. Read `outcome` and `post` instead.",
+    ),
+})
+
+export const refreshChannelPostMetricsRequest = z.object({
+  ids: z
+    .array(channelPostId)
+    .min(1)
+    .max(CHANNEL_POST_METRICS_BATCH_MAX)
+    .describe(
+      "Post ids whose counts to refresh (at most 50). Get them from `channelPostManagement.list`.",
+    ),
+})
+
+export const refreshChannelPostMetricsResponse = z.object({
+  fresh: z
+    .number()
+    .int()
+    .describe("Posts whose counts were read less than 5 minutes ago."),
+  queued: z
+    .number()
+    .int()
+    .describe(
+      "Posts handed to a background read of their channel (one read per inbox). Their new counts show on the next list read.",
+    ),
+  skipped: z
+    .number()
+    .int()
+    .describe(
+      "Posts that cannot be read now: unknown, removed, on a channel that is not connected, or on a channel without a batch read (Threads, TikTok).",
+    ),
 })
 
 export const bulkUpdateChannelPostManagementResponse = z.object({

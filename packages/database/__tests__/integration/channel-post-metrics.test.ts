@@ -351,7 +351,7 @@ describe.skipIf(!databaseUrl)(
           `SELECT "metricsKnownMask" FROM "ChannelPost" WHERE "id" = $1`,
           [await postId(workspace, "u")],
         )
-        expect(stored.rows[0].metricsKnownMask).toBe(3) // comments (1) + reactions (2)
+        expect(stored.rows[0].metricsKnownMask).toBe(11) // comments (1) + reactions (2) + current comments definition (8)
 
         // Now they are known: a later change is a real gain.
         await upsert(

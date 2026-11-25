@@ -8,7 +8,19 @@ export const channelPostMetricBits = {
   comments: 1,
   reactions: 2,
   shares: 4,
+  /**
+   * Not a metric of its own: set together with `comments` by every write that
+   * reports a comments total under the current definition (replies included
+   * where a platform counts them). A difference between two comment totals is
+   * a real gain only when the previous row already carries it; display and
+   * filters keep reading `comments` alone.
+   */
+  commentsTotalCurrent: 8,
 } as const
+
+/** The bits a write sets when it reports a comments total: known, and counted by the current definition. */
+export const CHANNEL_POST_COMMENTS_REPORTED_BITS: number =
+  channelPostMetricBits.comments + channelPostMetricBits.commentsTotalCurrent
 
 /** Posts published longer ago than this are not snapshotted. */
 export const POST_METRIC_WINDOW_DAYS = 90

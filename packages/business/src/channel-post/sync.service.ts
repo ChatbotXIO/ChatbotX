@@ -162,6 +162,11 @@ export type RecordPageInput = {
   integrationId: string
   items: ChannelPostListItem[]
   /**
+   * `metricsOnly`: the items carry counts of posts that already exist; only
+   * the counts and `metricsFetchedAt` are written (see `upsertListedChannelPosts`).
+   */
+  mode?: "listing" | "metricsOnly"
+  /**
    * When the channel was read (taken before the request, so a slow write is
    * not mistaken for a newer observation); defaults to the write time.
    */
@@ -177,6 +182,7 @@ export type RecordPageInput = {
 class ChannelPostSyncClaimLostError extends Error {}
 
 const toUpsert = (input: RecordPageInput) => ({
+  mode: input.mode,
   now: new Date(),
   observedAt: input.observedAt,
   timezone: input.timezone,

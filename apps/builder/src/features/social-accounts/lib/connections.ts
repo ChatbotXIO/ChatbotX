@@ -68,12 +68,6 @@ export const PROVIDER_LABELS: Record<SocialProvider, string> = {
   tiktok: "TikTok",
 }
 
-/** Reconnect button text, by the state that needs one. */
-export const RECONNECT_LABEL_KEYS = {
-  needsReconnect: "posts.connect.reconnect",
-  permissionMissing: "posts.connect.reconnectToAllow",
-} as const satisfies Record<Exclude<VisibleDestinationState, "ready">, string>
-
 /** Only a destination that cannot publish offers an action. */
 export const needsReconnectAction = (
   state: VisibleDestinationState,

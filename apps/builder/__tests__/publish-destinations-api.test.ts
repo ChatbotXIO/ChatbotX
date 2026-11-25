@@ -12,7 +12,7 @@ type Captured = {
 
 const { captured, operations, scopes, settings, schedule } = vi.hoisted(() => ({
   captured: [] as Captured[],
-  operations: { get: vi.fn(), list: vi.fn() },
+  operations: { get: vi.fn(), list: vi.fn(), recheckPermissions: vi.fn() },
   schedule: { freeSlots: vi.fn(), get: vi.fn(), update: vi.fn() },
   scopes: [] as string[],
   settings: { publishingSettings: vi.fn() },
@@ -31,6 +31,7 @@ vi.mock("@/lib/orpc/orpc-error-helper", () => ({
   possibleErrorsOnChangingSocialPost: {},
   possibleErrorsOnFindingResource: {},
   possibleErrorsOnListingResource: {},
+  possibleErrorsOnMutatingResource: {},
   possibleErrorsOnReadingSocialAccount: {},
 }))
 vi.mock("@/middlewares/auth", () => ({
@@ -75,8 +76,8 @@ const { publishDestinationsAPIs } = await import(
   "@/features/publish-destinations/api/private"
 )
 
-const publicProcedures = captured.slice(0, 6)
-const privateProcedures = captured.slice(6)
+const publicProcedures = captured.slice(0, 7)
+const privateProcedures = captured.slice(7)
 
 describe("publishDestinations public router", () => {
   test("is a posts-scope router with the static list path before /{id}", () => {
@@ -88,6 +89,7 @@ describe("publishDestinations public router", () => {
       "updatePostingSlots",
       "listFreeSlots",
       "getPublishingSettings",
+      "recheckPermissions",
     ])
     expect(
       publicProcedures.map(({ method, path }) => `${method} ${path}`),
@@ -98,7 +100,28 @@ describe("publishDestinations public router", () => {
       "PUT /v1/posts/destinations/{id}/posting-schedule",
       "GET /v1/posts/destinations/{id}/free-slots",
       "GET /v1/posts/destinations/{id}/publishing-settings",
+      "POST /v1/posts/destinations/recheck-permissions",
     ])
+  })
+
+  test("recheck-permissions asks for the token's workspace only", async () => {
+    operations.recheckPermissions.mockResolvedValue({
+      failed: 0,
+      fresh: 0,
+      queued: 2,
+      skipped: 1,
+    })
+
+    const result = await publicProcedures[6]?.handler?.({
+      context: { workspace: { id: "ws-1" } },
+      input: { ids: ["d1", "d2"] },
+    })
+
+    expect(operations.recheckPermissions).toHaveBeenCalledWith({
+      ids: ["d1", "d2"],
+      workspaceId: "ws-1",
+    })
+    expect(result).toEqual({ failed: 0, fresh: 0, queued: 2, skipped: 1 })
   })
 
   test("list reads the token's workspace", async () => {
@@ -131,8 +154,8 @@ describe("publishDestinations public router", () => {
 
 describe("publishDestinations private twins", () => {
   test("every procedure checks the workspace, then the broadcast permission", () => {
-    expect(Object.keys(publishDestinationsAPIs)).toHaveLength(5)
-    expect(privateProcedures).toHaveLength(5)
+    expect(Object.keys(publishDestinationsAPIs)).toHaveLength(6)
+    expect(privateProcedures).toHaveLength(6)
     for (const procedure of privateProcedures) {
       expect(procedure.use.map(({ middleware }) => middleware)).toEqual([
         { kind: "authorized" },
@@ -154,9 +177,34 @@ describe("publishDestinations private twins", () => {
     })
   })
 
+  test("the private re-check passes the workspace and ids through", async () => {
+    expect(
+      `${privateProcedures[5]?.method} ${privateProcedures[5]?.path}`,
+    ).toBe(
+      "POST /workspaces/{workspaceId}/post-destinations/recheck-permissions",
+    )
+    operations.recheckPermissions.mockResolvedValue({
+      failed: 0,
+      fresh: 0,
+      queued: 1,
+      skipped: 0,
+    })
+
+    await privateProcedures[5]?.handler?.({
+      input: { ids: ["d1"], workspaceId: "ws-9" },
+    })
+
+    expect(operations.recheckPermissions).toHaveBeenCalledWith({
+      ids: ["d1"],
+      workspaceId: "ws-9",
+    })
+  })
+
   test("the posting schedule reads and writes through the shared operations", async () => {
     expect(
-      privateProcedures.slice(2).map(({ method, path }) => `${method} ${path}`),
+      privateProcedures
+        .slice(2, 5)
+        .map(({ method, path }) => `${method} ${path}`),
     ).toEqual([
       "GET /workspaces/{workspaceId}/post-destinations/{id}/posting-schedule",
       "PUT /workspaces/{workspaceId}/post-destinations/{id}/posting-schedule",

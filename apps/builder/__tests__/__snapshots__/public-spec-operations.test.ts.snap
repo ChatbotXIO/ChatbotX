@@ -829,6 +829,11 @@ exports[`public API spec — operation naming guard > operation list (operationI
   },
   {
     "method": "POST",
+    "operationId": "channelPostManagement.refreshMetrics",
+    "path": "/v1/channel-posts/management/refresh-metrics",
+  },
+  {
+    "method": "POST",
     "operationId": "channelPostManagement.startSync",
     "path": "/v1/channel-posts/sync",
   },
@@ -3471,6 +3476,11 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "method": "GET",
     "operationId": "publishDestinations.listFreeSlots",
     "path": "/v1/posts/destinations/{id}/free-slots",
+  },
+  {
+    "method": "POST",
+    "operationId": "publishDestinations.recheckPermissions",
+    "path": "/v1/posts/destinations/recheck-permissions",
   },
   {
     "method": "PUT",

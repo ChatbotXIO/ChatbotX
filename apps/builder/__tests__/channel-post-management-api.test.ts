@@ -51,7 +51,8 @@ const update = vi.fn()
 const bulkUpdate = vi.fn()
 const startSync = vi.fn()
 const syncStatus = vi.fn()
-const requestPostRefresh = vi.fn()
+const refreshChannelPostNow = vi.fn()
+const requestMetricsRefresh = vi.fn()
 const topicList = vi.fn()
 const topicCreate = vi.fn()
 const topicUpdate = vi.fn()
@@ -78,10 +79,10 @@ vi.mock("@chatbotx.io/business", () => ({
   channelPostExportKinds: ["comments", "phones", "rows"],
   channelPostExportService: { build: exportBuild },
   channelPostManagementService: { bulkUpdate, get, list, listAuthors, update },
+  channelPostMetricsRefreshService: { requestMetricsRefresh },
   channelPostSyncService: {
     listStatus: syncStatus,
     request: startSync,
-    requestPostRefresh,
   },
   postTopicService: {
     create: topicCreate,
@@ -89,6 +90,9 @@ vi.mock("@chatbotx.io/business", () => ({
     list: topicList,
     update: topicUpdate,
   },
+}))
+vi.mock("@chatbotx.io/channel-registry/channel-post-refresh", () => ({
+  refreshChannelPostNow,
 }))
 vi.mock("@/orpc", () => ({ workspaceTokenAuthAPIForScope }))
 
@@ -106,6 +110,7 @@ const {
   listChannelPostCommentsRequest,
   listChannelPostManagementRequest,
   mergeChannelPostCommentsRequest,
+  refreshChannelPostMetricsRequest,
   startChannelPostSyncRequest,
   updateChannelPostManagementRequest,
 } = await import("@/features/channel-posts/schema/management")
@@ -135,7 +140,7 @@ beforeEach(() => {
 describe("posts public API surface", () => {
   test("every route is behind the posts scope", () => {
     expect(new Set(scopes)).toEqual(new Set(["posts"]))
-    expect(capturedProcedures).toHaveLength(18)
+    expect(capturedProcedures).toHaveLength(19)
   })
 
   test("paths and verbs", () => {
@@ -154,6 +159,7 @@ describe("posts public API surface", () => {
       "POST /v1/channel-posts/sync",
       "GET /v1/channel-posts/sync/status",
       "POST /v1/channel-posts/management/{id}/refresh",
+      "POST /v1/channel-posts/management/refresh-metrics",
       "GET /v1/channel-posts/management/{id}/comments",
       "POST /v1/channel-posts/management/merge-view",
       "POST /v1/channel-posts/management/{id}/comments/{commentId}/like",
@@ -440,8 +446,9 @@ describe("post sync procedures", () => {
     })
   })
 
-  test("refresh queues one post in the token's workspace", async () => {
-    requestPostRefresh.mockResolvedValue({ queued: true })
+  test("refresh reads the post now in the token's workspace and returns it", async () => {
+    get.mockResolvedValue({ id: "9", commentsCount: 8 })
+    refreshChannelPostNow.mockResolvedValue("refreshed")
 
     const result = await call(
       "POST",
@@ -449,11 +456,81 @@ describe("post sync procedures", () => {
       { id: "9" },
     )
 
-    expect(requestPostRefresh).toHaveBeenCalledWith({
-      id: "9",
+    expect(refreshChannelPostNow).toHaveBeenCalledWith({
+      channelPostId: "9",
       workspaceId: "ws-1",
     })
-    expect(result).toEqual({ queued: true })
+    expect(result).toEqual({
+      outcome: "refreshed",
+      post: { id: "9", commentsCount: 8 },
+      queued: true,
+    })
+  })
+
+  test("refresh of an unknown post fails before anything is read", async () => {
+    get.mockRejectedValue(new Error("Post not found."))
+
+    await expect(
+      call("POST", "/v1/channel-posts/management/{id}/refresh", { id: "9" }),
+    ).rejects.toThrow("Post not found.")
+    expect(refreshChannelPostNow).not.toHaveBeenCalled()
+  })
+
+  test("a post the channel says is gone comes back as removed with no post", async () => {
+    get.mockResolvedValue({ id: "9" })
+    refreshChannelPostNow.mockResolvedValue("removed")
+
+    const result = await call(
+      "POST",
+      "/v1/channel-posts/management/{id}/refresh",
+      { id: "9" },
+    )
+
+    expect(result).toEqual({ outcome: "removed", post: null, queued: true })
+    expect(get).toHaveBeenCalledTimes(1)
+  })
+
+  test.each([
+    "cooldown",
+    "rateLimited",
+    "channelUnavailable",
+  ])("refresh answers the %s outcome with the post as stored", async (outcome) => {
+    get.mockResolvedValue({ id: "9" })
+    refreshChannelPostNow.mockResolvedValue(outcome)
+
+    const result = await call(
+      "POST",
+      "/v1/channel-posts/management/{id}/refresh",
+      { id: "9" },
+    )
+
+    expect(result).toEqual({ outcome, post: { id: "9" }, queued: true })
+  })
+
+  test("refresh-metrics asks fresh counts in the token's workspace", async () => {
+    requestMetricsRefresh.mockResolvedValue({ fresh: 0, queued: 2, skipped: 1 })
+
+    const result = await call(
+      "POST",
+      "/v1/channel-posts/management/refresh-metrics",
+      { ids: ["1", "2", "3"] },
+    )
+
+    expect(requestMetricsRefresh).toHaveBeenCalledWith({
+      channelPostIds: ["1", "2", "3"],
+      workspaceId: "ws-1",
+    })
+    expect(result).toEqual({ fresh: 0, queued: 2, skipped: 1 })
+  })
+
+  test("refresh-metrics takes 1 to 50 numeric ids", () => {
+    const ok = (ids: unknown) =>
+      refreshChannelPostMetricsRequest.safeParse({ ids }).success
+
+    expect(ok([])).toBe(false)
+    expect(ok(["x"])).toBe(false)
+    expect(ok(Array.from({ length: 51 }, (_, i) => String(i + 1)))).toBe(false)
+    expect(ok(Array.from({ length: 50 }, (_, i) => String(i + 1)))).toBe(true)
   })
 
   test("the sync request caps the inbox list and rejects non-numeric ids", () => {

@@ -4,6 +4,7 @@ import {
   type ChannelPostLiveObservationSource,
   type ChannelPostLiveStatus,
 } from "@chatbotx.io/utils/channel-post"
+import { CHANNEL_POST_COMMENTS_REPORTED_BITS } from "@chatbotx.io/utils/post-metrics"
 import {
   and,
   type DatabaseClient,
@@ -326,6 +327,33 @@ export const channelPostRepository = {
       id: String(row.id),
       workspaceId: String(row.workspaceId),
     }))
+  },
+
+  /**
+   * Counts one more comment on a post whose channel reports no comment count
+   * (webhook-counted), in ONE statement: the comments count and the engagement
+   * total go up by one and the comments bits of `metricsKnownMask` are set (the known bit and the
+   * current-definition bit, so a later read is not a fake gain), so a
+   * count that was unknown (stored as 0) becomes a known one. Scoped by
+   * `workspaceId`.
+   */
+  async incrementCommentsCount(
+    input: { id: string; workspaceId: string },
+    tx: DatabaseClient = db,
+  ): Promise<void> {
+    await tx
+      .update(channelPostModel)
+      .set({
+        commentsCount: sql`${channelPostModel.commentsCount} + 1`,
+        engagementCount: sql`${channelPostModel.engagementCount} + 1`,
+        metricsKnownMask: sql`${channelPostModel.metricsKnownMask} | ${CHANNEL_POST_COMMENTS_REPORTED_BITS}::integer`,
+      })
+      .where(
+        and(
+          eq(channelPostModel.id, input.id),
+          channelPostScope(input.workspaceId),
+        ),
+      )
   },
 
   /** Counts one more comment carrying a phone number, atomically. */

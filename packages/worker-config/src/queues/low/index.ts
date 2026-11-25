@@ -30,8 +30,10 @@ export const LowJobAction = {
   replayMissedComment: "replayMissedComment",
   syncChannelPosts: "syncChannelPosts",
   refreshChannelPost: "refreshChannelPost",
+  refreshChannelPostMetrics: "refreshChannelPostMetrics",
   reconnectPublishFanOut: "reconnectPublishFanOut",
   refreshPublishDestinationAvatar: "refreshPublishDestinationAvatar",
+  recheckPublishDestinationScopes: "recheckPublishDestinationScopes",
   // Routed here by `enqueueIntegrationJob`; same strings as IntegrationJobAction.
   messageStatus: "messageStatus",
   contactMarkAsRead: "contactMarkAsRead",
@@ -124,6 +126,19 @@ export type LowJobRefreshChannelPost = {
 }
 
 /**
+ * Re-reads the counts of several posts of ONE inbox in a single channel call
+ * (at most 50 posts). Best effort: runs once, never retried.
+ */
+export type LowJobRefreshChannelPostMetrics = {
+  type: typeof LowJobAction.refreshChannelPostMetrics
+  data: {
+    channelPostIds: string[]
+    inboxId: string
+    workspaceId: string
+  }
+}
+
+/**
  * The rest of a Facebook-login reconnect fan-out that did not fit the inline
  * budget (100 pages / 20 s): refresh the other inbox integrations of the same
  * person in the same workspace. Idempotent (a refreshed row is simply matched
@@ -171,12 +186,26 @@ export type LowJobRefreshPublishDestinationAvatar = {
   data: { workspaceId: string; publishDestinationId: string }
 }
 
+/**
+ * Re-reads the granted permissions of the inbox publish destinations a Posts
+ * Connect tab showed, from the platform (`debug_token` of the stored token),
+ * one destination after the other. Ids only (the worker loads the token). One
+ * job per request with a generated job id: the per-destination Redis claims
+ * (not the job id) keep overlapping requests from reading a destination twice.
+ */
+export type LowJobRecheckPublishDestinationScopes = {
+  type: typeof LowJobAction.recheckPublishDestinationScopes
+  data: { destinationIds: string[]; workspaceId: string }
+}
+
 export type LowJobData =
+  | LowJobRecheckPublishDestinationScopes
   | LowJobReconnectPublishFanOut
   | LowJobRefreshPublishDestinationAvatar
   | LowJobCoexistAttachmentDownload
   | LowJobSyncChannelPosts
   | LowJobRefreshChannelPost
+  | LowJobRefreshChannelPostMetrics
   | LowJobUpdateContactAvatar
   | LowJobReplayMissedComment
   | LowRoutedIntegrationJob
