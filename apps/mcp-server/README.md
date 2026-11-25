@@ -379,8 +379,23 @@ claude mcp add chatbotx \
 
 | Transport | Priority |
 |-----------|----------|
-| SSE / Streamable HTTP | `Authorization: Bearer` (OAuth access token or workspace token) → `?workspace_token=` or `?token=` query param → `x-workspace-token` / `x-chatbo-token` header → `CHATBOTX_API_KEY` env |
+| SSE / Streamable HTTP | `Authorization: Bearer` (OAuth access token or workspace token) → `?workspace_token=` or `?token=` query param (deprecated; off when `CHATBOTX_MCP_ALLOW_QUERY_TOKEN=false`) → `x-workspace-token` / `x-chatbo-token` header → `CHATBOTX_API_KEY` env |
 | stdio | `CHATBOTX_API_KEY` env |
+
+Tokens in a URL end up in proxy and access logs, so send them as `Authorization: Bearer`. The server logs a warning (never the token) each time one arrives in the query.
+
+With OAuth enabled, the default profile (`/sse`, `/messages`):
+- answers `503` while token introspection is unavailable, instead of admitting the request;
+- binds each session to the identity that opened it (the OAuth user and client, or the workspace token). A request from another identity on that session gets `403`; a refreshed access token for the same user keeps the session.
+
+## Rate limits
+
+Every MCP route (`/sse`, `/messages`, `/openai`, `/claude`) is guarded in each process. OAuth metadata and `OPTIONS` preflights are not limited.
+
+- **Requests per credential:** `CHATBOTX_MCP_RATE_LIMIT_PER_MINUTE` per token (hashed, never stored raw). A request without a token is not counted: it gets a cheap `401`, and keying it by IP would put every client behind one proxy, or behind Claude's and ChatGPT's shared egress, into one bucket.
+- **Rejected credentials per client IP:** after `CHATBOTX_MCP_AUTH_FAILURE_LIMIT_PER_MINUTE` rejected tokens, an IP is refused for the rest of the minute without further token introspection. An expired JWT is not counted: it is the normal refresh path and is rejected without calling the API. **Off by default.** Enable it only after setting `CHATBOTX_MCP_TRUSTED_PROXY_HOPS` to the number of proxies that append to `X-Forwarded-For` in front of the server; the client IP is read that many entries from the right, and `0` uses the socket address. A wrong value lets a client forge its IP, either to dodge the limit or to lock out a shared egress IP.
+
+Both answer `429` with a `Retry-After` header. While token introspection is unavailable, authenticated routes answer `503` with `Retry-After: 2`; that result is cached for 2 seconds only.
 
 ## Configuration
 
@@ -407,6 +422,10 @@ cp .env.example .env
 | `CHATBOTX_MCP_ALLOWED_ORIGINS` | Comma-separated Origins allowed on the OpenAI endpoint. | `https://chatgpt.com,https://chat.openai.com` |
 | `CHATBOTX_MCP_CLAUDE_ALLOWED_ORIGINS` | Comma-separated Origins allowed on the Claude endpoint. | `https://claude.ai,https://claude.com` |
 | `CHATBOTX_MCP_SESSION_IDLE_TTL_MS` | Idle time after which an HTTP session is closed and evicted (all transports). | `1800000` |
+| `CHATBOTX_MCP_RATE_LIMIT_PER_MINUTE` | Requests per minute per credential on every MCP route; `0` disables. See [Rate limits](#rate-limits). | `600` | No |
+| `CHATBOTX_MCP_AUTH_FAILURE_LIMIT_PER_MINUTE` | Rejected credentials per minute per client IP before that IP is refused; `0` disables. Needs `CHATBOTX_MCP_TRUSTED_PROXY_HOPS`. | `0` | No |
+| `CHATBOTX_MCP_TRUSTED_PROXY_HOPS` | Proxies in front of the server that append to `X-Forwarded-For`; the client IP is read that many entries from the right. `0` uses the socket address. | `0` | No |
+| `CHATBOTX_MCP_ALLOW_QUERY_TOKEN` | Accept `?workspace_token=` / `?token=` on the default profile (deprecated). Set `false` to accept header tokens only. | `true` | No |
 | `CHATBOTX_MCP_OAUTH_ENABLED` | Enable OAuth 2.1 protected-resource metadata and bearer challenges | `true` | No |
 | `CHATBOTX_MCP_OAUTH_ISSUER` | Authorization server issuer URL | derived from `CHATBOTX_API_URL` | No |
 | `CHATBOTX_MCP_PUBLIC_URL` | Canonical public origin; required in production so metadata advertises the TLS endpoint | derived from request headers | Yes (production) |
@@ -532,4 +551,4 @@ CHATBOTX_ALLOW_SELF_SIGNED_CERT=true
 
 **ChatGPT uses its training knowledge instead of calling tools**
 - Set `CHATBOTX_MCP_SERVER_INSTRUCTIONS` to explicitly instruct ChatGPT to use tools (see `.env.example`).
-- Make sure the connector URL includes `?workspace_token=<your-token>` so authentication is handled automatically.
+- Make sure the connector is authenticated: sign in with OAuth, or send the workspace token as `Authorization: Bearer <your-token>`. A `?workspace_token=` URL still works but is deprecated (see [Token resolution order](#token-resolution-order)).

@@ -235,22 +235,18 @@ describe("OpenAI audience on the default transport", () => {
     )
   })
 
-  test("while introspection is unavailable, a profile JWT is still refused on the default path", async () => {
+  test("while introspection is unavailable, the default path admits no token", async () => {
     introspect.mockResolvedValue({ status: "unavailable" })
     const payload = Buffer.from(JSON.stringify({ aud: AUDIENCE })).toString(
       "base64url",
     )
-    const response = await post(
+    const profileJwt = await post(
       { Authorization: `Bearer h.${payload}.s` },
       initialize,
       "/messages",
     )
-    expect(response.status).toBe(401)
-  })
-
-  test("while introspection is unavailable, an opaque token still fails open on the default path", async () => {
-    introspect.mockResolvedValue({ status: "unavailable" })
-    expect((await post(bearer, initialize, "/messages")).status).toBe(200)
+    expect(profileJwt.status).toBe(503)
+    expect((await post(bearer, initialize, "/messages")).status).toBe(503)
   })
 
   test("a default-audience token still authenticates the default path", async () => {

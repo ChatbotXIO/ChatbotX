@@ -107,28 +107,3 @@ describe("isConnectorProfileAudience", () => {
     expect(isConnectorProfileAudience("not a url")).toBe(false)
   })
 })
-
-describe("unverifiedJwtAudiences", () => {
-  const jwt = (claims: object) =>
-    `h.${Buffer.from(JSON.stringify(claims)).toString("base64url")}.s`
-
-  test("reads a string or array aud without verifying", async () => {
-    const { unverifiedJwtAudiences } = await loadOAuth()
-
-    expect(
-      unverifiedJwtAudiences(jwt({ aud: "https://a/mcp/openai" })),
-    ).toEqual(["https://a/mcp/openai"])
-    expect(unverifiedJwtAudiences(jwt({ aud: ["x", 1, "y"] }))).toEqual([
-      "x",
-      "y",
-    ])
-  })
-
-  test("returns nothing for opaque tokens or malformed payloads", async () => {
-    const { unverifiedJwtAudiences } = await loadOAuth()
-
-    expect(unverifiedJwtAudiences("cbx_opaque_token")).toEqual([])
-    expect(unverifiedJwtAudiences("a.%%%.c")).toEqual([])
-    expect(unverifiedJwtAudiences(jwt({ sub: "1" }))).toEqual([])
-  })
-})

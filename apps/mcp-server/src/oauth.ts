@@ -69,29 +69,6 @@ export const isConnectorProfileAudience = (audience: string): boolean => {
   )
 }
 
-/**
- * The `aud` claim of a JWT, read WITHOUT verifying it. Only for reject-only
- * decisions (e.g. refusing a profile token while introspection is down);
- * never grant access from it. Not a JWT, or no `aud`: an empty list.
- */
-export const unverifiedJwtAudiences = (token: string): string[] => {
-  const payload = token.split(".")[1]
-  if (!payload) {
-    return []
-  }
-  try {
-    const claims = JSON.parse(
-      Buffer.from(payload, "base64url").toString("utf8"),
-    ) as { aud?: unknown }
-    const audiences = Array.isArray(claims.aud) ? claims.aud : [claims.aud]
-    return audiences.filter(
-      (audience): audience is string => typeof audience === "string",
-    )
-  } catch {
-    return []
-  }
-}
-
 const isPathOrBelow = (pathname: string, base: string): boolean =>
   pathname === base || pathname.startsWith(`${base}/`)
 
