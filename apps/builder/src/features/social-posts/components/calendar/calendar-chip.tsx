@@ -3,13 +3,10 @@
 import { cn } from "@chatbotx.io/ui/lib/utils"
 import { useDraggable } from "@dnd-kit/core"
 import { useFormatter, useTranslations } from "next-intl"
+import { ProviderNetworkIcon } from "@/features/social-accounts/components/provider-avatar"
 import { useStatusLabel } from "../../hooks/use-status-label"
 import type { CalendarItem } from "../../lib/calendar-items"
-import {
-  PROVIDER_MARKS,
-  PROVIDER_TONES,
-  STATUS_TONES,
-} from "../../lib/calendar-tones"
+import { STATUS_TONES } from "../../lib/calendar-tones"
 import { PROVIDER_LABELS } from "../../lib/composer-state"
 
 /**
@@ -82,15 +79,7 @@ export const CalendarChip = ({
       {...listeners}
       {...attributes}
     >
-      <span
-        aria-hidden="true"
-        className={cn(
-          "shrink-0 rounded px-1 font-semibold text-[10px] leading-4",
-          PROVIDER_TONES[item.provider],
-        )}
-      >
-        {PROVIDER_MARKS[item.provider]}
-      </span>
+      <ProviderNetworkIcon decorative provider={item.provider} />
       <span className="sr-only">
         {PROVIDER_LABELS[item.provider]} · {statusLabel(item.status)}
       </span>

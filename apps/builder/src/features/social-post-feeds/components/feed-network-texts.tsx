@@ -10,6 +10,7 @@ import { checkTemplate } from "@chatbotx.io/utils/feed-template"
 import { useTranslations } from "next-intl"
 import { useRef, useState } from "react"
 import type { z } from "zod"
+import { ProviderNetworkIcon } from "@/features/social-accounts/components/provider-avatar"
 import { PROVIDER_LABELS } from "@/features/social-posts/lib/composer-state"
 import type { FeedDraft } from "../lib/feed-draft"
 import { FEED_MAX_TEMPLATE_LENGTH } from "../lib/feed-options"
@@ -110,9 +111,14 @@ export const FeedNetworkTexts = ({
               type="button"
               variant={tab === name ? "secondary" : "outline"}
             >
-              {name === "shared"
-                ? t("posts.feeds.form.networkTabShared")
-                : PROVIDER_LABELS[name]}
+              {name === "shared" ? (
+                t("posts.feeds.form.networkTabShared")
+              ) : (
+                <>
+                  <ProviderNetworkIcon decorative provider={name} />
+                  {PROVIDER_LABELS[name]}
+                </>
+              )}
               {name !== "shared" && hasText(draft, name) ? (
                 <span aria-hidden="true" className="ms-1 text-primary">
                   •

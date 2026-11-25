@@ -2,6 +2,7 @@
 
 import { Button } from "@chatbotx.io/ui/components/ui/button"
 import { useTranslations } from "next-intl"
+import { ProviderNetworkIcon } from "@/features/social-accounts/components/provider-avatar"
 import { type InboxNetworkGroup, PROVIDER_LABELS } from "../lib/connections"
 import { ConnectPageRow } from "./connect-page-row"
 
@@ -26,7 +27,15 @@ export const ConnectNetworkSection = ({
       aria-labelledby={headingId}
       className="rounded-2xl border bg-card px-5 py-4"
     >
-      <h2 className="font-semibold text-base" id={headingId}>
+      <h2
+        className="flex items-center gap-2 font-semibold text-base"
+        id={headingId}
+      >
+        <ProviderNetworkIcon
+          className="size-4"
+          decorative
+          provider={provider}
+        />
         {PROVIDER_LABELS[provider]}
       </h2>
       <ul className="divide-y">

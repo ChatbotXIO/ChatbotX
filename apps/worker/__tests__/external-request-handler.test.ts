@@ -327,6 +327,43 @@ describe("externalRequest step handler", () => {
     )
   })
 
+  test("an existing custom field named like a post variable keeps its value in the JSON body", async () => {
+    mocks.executeAndMap.mockResolvedValue({
+      statusCode: 200,
+      durationMs: 10,
+      responseBody: "{}",
+      responseHeaders: {},
+    })
+    vi.mocked(contactVariableService.getAll).mockResolvedValueOnce({
+      contact: {},
+      contactInbox: {},
+      customFieldsMap: new Map([
+        [
+          "post.link",
+          {
+            key: "post.link",
+            type: "text",
+            value: "my-field-value",
+            description: "",
+          },
+        ],
+      ]),
+      workspace: {},
+    } as never)
+
+    const props = createProps()
+    props.step = {
+      ...props.step,
+      method: "POST",
+      body: { bodyType: "json", jsonBody: '{"link":"{{post.link}}"}' },
+    }
+
+    await externalRequest(props)
+
+    const call = mocks.executeAndMap.mock.calls[0]?.[0]
+    expect(call.input.body.jsonBody).toBe('{"link":"my-field-value"}')
+  })
+
   test("a run without post-comment metadata passes no post-comment ref", async () => {
     mocks.executeAndMap.mockResolvedValue({
       statusCode: 200,

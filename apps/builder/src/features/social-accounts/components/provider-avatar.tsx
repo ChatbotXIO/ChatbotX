@@ -31,28 +31,39 @@ export const PROVIDER_ICON_CONFIG: Record<SocialProvider, ProviderIconConfig> =
     tiktok: { Icon: SiTiktok, className: "fill-zinc-900 dark:fill-zinc-100" },
   }
 
+type ProviderNetworkIconProps = {
+  className?: string
+  provider: SocialProvider
+} & (
+  | {
+      /** The network's name, read by screen readers and shown as a tooltip. */
+      label: string
+      decorative?: never
+    }
+  | {
+      /** Next to the network's visible name: hidden from screen readers. */
+      decorative: true
+      label?: never
+    }
+)
+
 /** The network's brand mark alone, with its name for screen readers and as a tooltip. */
 export const ProviderNetworkIcon = ({
   className,
+  decorative,
   label,
   provider,
-}: {
-  className?: string
-  label: string
-  provider: SocialProvider
-}) => {
+}: ProviderNetworkIconProps) => {
   const {
     Icon,
     className: iconClassName,
     fill,
   } = PROVIDER_ICON_CONFIG[provider]
+  const a11y = decorative
+    ? { "aria-hidden": true }
+    : { "aria-label": label, role: "img", title: label }
   return (
-    <span
-      aria-label={label}
-      className="inline-flex shrink-0"
-      role="img"
-      title={label}
-    >
+    <span className="inline-flex shrink-0" {...a11y}>
       <Icon
         aria-hidden="true"
         className={cn("size-3.5", iconClassName, className)}

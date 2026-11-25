@@ -8,6 +8,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { useTranslations } from "next-intl"
 import { useState } from "react"
 import { toast } from "sonner"
+import { ProviderNetworkIcon } from "@/features/social-accounts/components/provider-avatar"
 import { orpc } from "@/lib/orpc/query"
 import { PROVIDER_LABELS } from "../lib/composer-state"
 import type { PublishDestinationGroup } from "../lib/publish-destination-options"
@@ -92,7 +93,8 @@ export const TargetSetEditor = ({
           .filter((group) => group.destinations.length > 0)
           .map((group) => (
             <fieldset className="space-y-1 border-0 p-0" key={group.provider}>
-              <legend className="px-1 font-medium text-xs">
+              <legend className="flex items-center gap-1.5 px-1 font-medium text-xs">
+                <ProviderNetworkIcon decorative provider={group.provider} />
                 {PROVIDER_LABELS[group.provider]}
               </legend>
               {group.destinations.map((destination) => (

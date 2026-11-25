@@ -28,9 +28,11 @@ export const updateWorkspaceMemberRequest = inviteWorkspaceMemberRequest.extend(
       notifyAdmin: z.boolean(),
       newMessageToHuman: z.boolean(),
       newOrder: z.boolean(),
-      postFailed: z.boolean(),
-      postNeedsReview: z.boolean(),
-      publishConnection: z.boolean(),
+      // Optional so a client that predates these types can still save the
+      // member: an omitted value keeps what is stored.
+      postFailed: z.boolean().optional(),
+      postNeedsReview: z.boolean().optional(),
+      publishConnection: z.boolean().optional(),
     }),
     notificationChannels: z.object({
       messenger: z.boolean(),

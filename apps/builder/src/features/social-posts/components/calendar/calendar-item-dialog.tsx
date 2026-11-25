@@ -19,14 +19,11 @@ import {
   instantToWallClock,
   wallClockToInstant,
 } from "@/components/calendar/calendar-grid"
+import { ProviderNetworkIcon } from "@/features/social-accounts/components/provider-avatar"
 import { useStatusLabel } from "../../hooks/use-status-label"
 import type { CalendarItem, RescheduleChange } from "../../lib/calendar-items"
 import { MIN_SCHEDULE_LEAD_MS } from "../../lib/calendar-items"
-import {
-  PROVIDER_MARKS,
-  PROVIDER_TONES,
-  STATUS_TONES,
-} from "../../lib/calendar-tones"
+import { STATUS_TONES } from "../../lib/calendar-tones"
 import { PROVIDER_LABELS } from "../../lib/composer-state"
 
 const PICKER_FORMAT = "yyyy-MM-dd HH:mm"
@@ -119,15 +116,11 @@ const ItemDetails = ({
     <DialogContent className="sm:max-w-md">
       <DialogHeader>
         <DialogTitle className="flex items-center gap-2">
-          <span
-            aria-hidden="true"
-            className={cn(
-              "rounded px-1.5 font-semibold text-xs leading-5",
-              PROVIDER_TONES[item.provider],
-            )}
-          >
-            {PROVIDER_MARKS[item.provider]}
-          </span>
+          <ProviderNetworkIcon
+            className="size-4"
+            decorative
+            provider={item.provider}
+          />
           {PROVIDER_LABELS[item.provider]} · {item.destinationName}
         </DialogTitle>
         <DialogDescription className="flex flex-wrap items-center gap-2">

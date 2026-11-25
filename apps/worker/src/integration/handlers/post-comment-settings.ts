@@ -102,9 +102,10 @@ export async function applyPostCommentSettings(
  * Counts a stored comment that carries a phone number on its post. Runs right
  * after the comment is saved, for every delivery: the count is guarded by a mark
  * on the comment itself (`recordPhoneComment`), so a redelivery after success
- * counts nothing and a retry after a failure counts it. A real failure
- * propagates so the job retries; swallowing it would leave the count short for
- * good, because the retry could not tell the comment was never counted.
+ * counts nothing. Best effort: a failure is logged and never fails the job,
+ * because a retry would see the comment as already stored and skip the steps
+ * that run once per new comment (leaderboard scoring). A count left short is
+ * repaired by refreshing the post, which recounts from the stored comments.
  */
 export async function countPhoneComment(input: {
   channelPostId: string
@@ -115,14 +116,25 @@ export async function countPhoneComment(input: {
   if (!(input.text && hasPhoneNumber(input.text))) {
     return
   }
-  await channelPostService.recordPhoneComment({
-    comment: {
-      createdAt: input.savedComment.createdAt,
-      id: input.savedComment.id,
-    },
-    id: input.channelPostId,
-    workspaceId: input.workspaceId,
-  })
+  try {
+    await channelPostService.recordPhoneComment({
+      comment: {
+        createdAt: input.savedComment.createdAt,
+        id: input.savedComment.id,
+      },
+      id: input.channelPostId,
+      workspaceId: input.workspaceId,
+    })
+  } catch (err) {
+    logger.warn(
+      {
+        err,
+        channelPostId: input.channelPostId,
+        workspaceId: input.workspaceId,
+      },
+      "Could not count a phone comment; refreshing the post recounts it",
+    )
+  }
 }
 
 /** Reads the owner's message room at most once, on first use. */
