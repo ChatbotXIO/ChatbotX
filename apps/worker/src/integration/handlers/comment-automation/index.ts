@@ -1,6 +1,7 @@
 import { commentAutomationAnalyticsService } from "@chatbotx.io/analytics"
 import {
   commentAutomationService,
+  commentLikeFence,
   contactInboxService,
   contactService,
   workspaceService,
@@ -586,6 +587,10 @@ export async function processCommentAutomation(
         if (automation.options.likeUserComment) {
           if (supportsCommentLike(channelType)) {
             const likeOptions = withReplayPriority()
+            const likeSeq = await commentLikeFence.next({
+              commentId: dbMessage.id,
+              workspaceId,
+            })
             chatQueue
               .add(
                 ChatJobAction.changeChannelMessageState,
@@ -596,6 +601,7 @@ export async function processCommentAutomation(
                     contactInbox,
                     message: messageRef,
                     liked: true,
+                    likeSeq,
                   },
                 },
                 ...(likeOptions ? [likeOptions] : []),

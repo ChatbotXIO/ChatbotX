@@ -53,6 +53,7 @@ export const IntegrationJobAction = {
   runRef: "runRef",
   incomingMessage: "incomingMessage",
   incomingMessageEcho: "incomingMessageEcho",
+  liveVideoStatusChange: "liveVideoStatusChange",
   incomingComment: "incomingComment",
   tiktokHighIntentComment: "tiktokHighIntentComment",
   deferredCommentPrivateReply: "deferredCommentPrivateReply",
@@ -147,6 +148,24 @@ export type IntegrationJobReceiveMessage = {
 export type IntegrationJobReceiveMessageEcho = {
   type: typeof IntegrationJobAction.incomingMessageEcho
   data: IntegrationJobReceiveMessage["data"]
+}
+
+/**
+ * A page's `live_videos` webhook: a broadcast changed state. Carries only the
+ * live video id and the status the webhook named; the worker re-reads the
+ * broadcast with the page token and records what that read says. Routed to the
+ * `low` queue (nobody waits on it); the job id names the video and status, so a
+ * redelivery adds nothing.
+ */
+export type IntegrationJobLiveVideoStatusChange = {
+  type: typeof IntegrationJobAction.liveVideoStatusChange
+  data: {
+    integrationType: string
+    integrationIdentifier: string
+    liveVideoId: string
+    /** The status the webhook reported; the read decides, this only keys the job. */
+    status: string
+  }
 }
 
 /**
@@ -1133,6 +1152,13 @@ export type IntegrationJobProcessCommentAutomation = {
      */
     moderationChecked?: boolean
     /**
+     * The post's own settings already hide this comment, so the automation's
+     * hide rules must not run: they would hide it a second time and, with
+     * `showCommentsAfter`, later unhide a comment the post wants hidden. The
+     * automation still replies.
+     */
+    postHidesComment?: boolean
+    /**
      * The run belongs to a missed-comment replay. Set on the payload the AI
      * moderation job carries, so it and the resumed run keep the replay's low
      * priority after leaving the replay's async context.
@@ -1525,6 +1551,7 @@ export type IntegrationJobAiHandoverTakeBack = {
 export type IntegrationJobData =
   | IntegrationJobReceiveMessage
   | IntegrationJobReceiveMessageEcho
+  | IntegrationJobLiveVideoStatusChange
   | IntegrationJobReceiveComment
   | IntegrationJobUpdateIncomingComment
   | IntegrationJobDeleteIncomingComment
@@ -1645,6 +1672,14 @@ const jobOptionsByAction: Partial<
   // failed, typically because the database was briefly unavailable.
   [IntegrationJobAction.recordEmailTrackingTransition]:
     adsConversionRetryOptions,
+  // One read of the broadcast; a few spaced retries, then the periodic sync and
+  // the stale-live re-read settle the post.
+  [IntegrationJobAction.liveVideoStatusChange]: {
+    attempts: 3,
+    backoff: { type: "exponential", delay: 30_000 },
+    removeOnComplete: { age: 60 * 60 },
+    removeOnFail: { age: 24 * 60 * 60 },
+  },
   [IntegrationJobAction.whatsappCallNativeRecordingFetch]:
     NATIVE_CALL_CAPTURE_RETRY_OPTIONS,
   [IntegrationJobAction.whatsappCallNativeTranscriptFetch]:
@@ -1659,6 +1694,7 @@ export type LowRoutedIntegrationJob =
   | IntegrationJobMessageStatus
   | IntegrationJobContactMarkAsRead
   | IntegrationJobReceiveMessageEcho
+  | IntegrationJobLiveVideoStatusChange
 
 /**
  * Whether a job goes to the `low` queue. A new bookkeeping action joins with a
@@ -1673,6 +1709,7 @@ const isLowRoutedIntegrationJob = (
       return job.data.continuesFlow !== true
     case IntegrationJobAction.contactMarkAsRead:
     case IntegrationJobAction.incomingMessageEcho:
+    case IntegrationJobAction.liveVideoStatusChange:
       return true
     default:
       return false

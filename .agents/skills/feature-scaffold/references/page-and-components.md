@@ -38,7 +38,7 @@ export default async function ItemsPage(props: {
 - Client components unwrap with `React.use(promises)`
 - URL state via **nuqs** (`listItemsSearchParamsCache.parse()`)
 
-### Public routes (short links, webhooks, open redirects)
+### Public routes (webhooks, open redirects)
 
 Some features expose **unauthenticated** URLs (tracking links, asset callbacks, etc.):
 

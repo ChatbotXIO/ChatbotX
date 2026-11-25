@@ -93,6 +93,8 @@ export interface MultiSelectOption {
   href?: string
   /** Optional semantic channel identifier for a feature-owned option renderer. */
   channel?: string
+  /** Extra text the search box also matches (e.g. a page or channel name). */
+  keywords?: string[]
   /** Custom styling for the option */
   style?: {
     /** Custom badge color */
@@ -102,6 +104,20 @@ export interface MultiSelectOption {
     /** Gradient background for badge */
     gradient?: string
   }
+}
+
+/** Whether the search text matches an option's label, value or keywords. */
+const optionMatchesSearch = (
+  option: MultiSelectOption,
+  search: string,
+): boolean => {
+  const needle = search.toLowerCase()
+  return (
+    option.label.toLowerCase().includes(needle) ||
+    option.value.toLowerCase().includes(needle) ||
+    (option.keywords?.some((keyword) => keyword.toLowerCase().includes(needle)) ??
+      false)
+  )
 }
 
 /**
@@ -662,20 +678,14 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
         return options
           .map((group) => ({
             ...group,
-            options: group.options.filter(
-              (option) =>
-                option.label
-                  .toLowerCase()
-                  .includes(searchValue.toLowerCase()) ||
-                option.value.toLowerCase().includes(searchValue.toLowerCase()),
+            options: group.options.filter((option) =>
+              optionMatchesSearch(option, searchValue),
             ),
           }))
           .filter((group) => group.options.length > 0)
       }
-      return options.filter(
-        (option) =>
-          option.label.toLowerCase().includes(searchValue.toLowerCase()) ||
-          option.value.toLowerCase().includes(searchValue.toLowerCase()),
+      return options.filter((option) =>
+        optionMatchesSearch(option, searchValue),
       )
     }, [options, searchValue, searchable, isGroupedOptions])
 
@@ -842,10 +852,8 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
         searchValue !== undefined
       ) {
         if (searchValue && isPopoverOpen) {
-          const filteredCount = allOptions.filter(
-            (opt) =>
-              opt.label.toLowerCase().includes(searchValue.toLowerCase()) ||
-              opt.value.toLowerCase().includes(searchValue.toLowerCase()),
+          const filteredCount = allOptions.filter((opt) =>
+            optionMatchesSearch(opt, searchValue),
           ).length
 
           announce(
@@ -1206,6 +1214,7 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
                             )}
                             disabled={option.disabled}
                             key={option.value}
+                            keywords={option.keywords}
                             onSelect={() => toggleOption(option.value)}
                             role="option"
                           >
@@ -1264,6 +1273,7 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
                           )}
                           disabled={option.disabled}
                           key={option.value}
+                          keywords={option.keywords}
                           onSelect={() => toggleOption(option.value)}
                           role="option"
                         >

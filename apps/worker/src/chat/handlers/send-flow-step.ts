@@ -38,7 +38,6 @@ import type {
 import { signAppointmentWebviewToken } from "@chatbotx.io/encryption"
 import { emit } from "@chatbotx.io/event-bus"
 import { uploadFileFromUrl } from "@chatbotx.io/filesystem"
-import type { MetadataPayload } from "@chatbotx.io/flow-config"
 import {
   appendCodeToMagicLink,
   type ButtonStepProps,
@@ -50,7 +49,9 @@ import {
   isBulkOutboundMetadata,
   isNativeButtonType,
   isProactiveOutboundMetadata,
+  type MetadataPayload,
   messageEventTypeSchema,
+  postCommentRefFromMetadata,
   type SendCardStepSchema,
   sendsAsNativeCopyButton,
   stepSupport,
@@ -709,6 +710,8 @@ export async function sendFlowStep({
     )
   }
 
+  const postCommentRef = postCommentRefFromMetadata(metadata)
+
   // Spintax is on here because only channelDeliverableStepTypes reach this
   // point — every string leaf is copy an author wrote for a contact to read.
   // Code- or data-carrying steps (external request, execute JavaScript) resolve
@@ -721,6 +724,9 @@ export async function sendFlowStep({
       conversation,
       ...(appointmentId ? { appointmentId } : {}),
       ...(sentByUserId ? { sentByUserId } : {}),
+      // A flow a post-comment trigger started renders {{post.*}} and
+      // {{comment.*}} for that one comment; any other run renders them empty.
+      ...(postCommentRef ? { postComment: postCommentRef } : {}),
     },
     { spintax: true },
   )

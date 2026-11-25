@@ -87,6 +87,26 @@ beforeEach(() => {
 })
 
 describe("handleExecuteJavascript", () => {
+  test("loads the post-comment variables of the run's comment metadata, and none otherwise", async () => {
+    const postComment = {
+      channelPostId: "post-1",
+      commentMessageId: "message-1",
+      commentMessageCreatedAt: "2026-11-01T00:00:00.000Z",
+    }
+    await handleExecuteJavascript({
+      ...createProps(),
+      metadata: { type: "postComment", ...postComment },
+    } as Parameters<typeof handleExecuteJavascript>[0])
+    expect(mocks.getAll).toHaveBeenLastCalledWith(
+      expect.objectContaining({ postComment }),
+    )
+
+    await handleExecuteJavascript(createProps())
+    expect(mocks.getAll).toHaveBeenLastCalledWith(
+      expect.not.objectContaining({ postComment: expect.anything() }),
+    )
+  })
+
   test("rewrites step.code through interpolateIntoJavascript before sending it to the sandbox", async () => {
     const knownNames = new Map([["fullname upper", "MÁ CHÁN"]])
     const rewrittenCode =

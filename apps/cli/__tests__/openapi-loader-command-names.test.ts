@@ -657,3 +657,149 @@ describe("pathAndMethodToCommandName — Inbox participants", () => {
     expect(new Set(names)).toHaveLength(names.length)
   })
 })
+
+describe("pathAndMethodToCommandName — managed channel posts", () => {
+  test("every managed-post operation gets its own command name", () => {
+    const names = [
+      ["/v1/channel-posts", "GET"],
+      ["/v1/channel-posts/options/by-ids", "GET"],
+      ["/v1/channel-posts/management", "GET"],
+      ["/v1/channel-posts/management/{id}", "GET"],
+      ["/v1/channel-posts/management/{id}", "PATCH"],
+      ["/v1/channel-posts/management/bulk-update", "POST"],
+      ["/v1/channel-posts/management/{id}/refresh", "POST"],
+      ["/v1/channel-posts/management/authors", "GET"],
+      ["/v1/channel-posts/management/{id}/comments", "GET"],
+      ["/v1/channel-posts/management/merge-view", "POST"],
+      ["/v1/channel-posts/management/{id}/comments/{commentId}/like", "POST"],
+      ["/v1/channel-posts/management/{id}/comments/{commentId}", "DELETE"],
+      ["/v1/channel-posts/management/export", "POST"],
+      ["/v1/channel-posts/sync", "POST"],
+      ["/v1/channel-posts/sync/status", "GET"],
+    ].map(([path, method]) => pathAndMethodToCommandName(path, method))
+
+    expect(new Set(names).size).toBe(names.length)
+    expect(names).toEqual([
+      "channel-posts:list",
+      "channel-posts:options-by-ids",
+      "channel-posts:list-managed",
+      "channel-posts:get-managed",
+      "channel-posts:update-managed",
+      "channel-posts:bulk-update-managed",
+      "channel-posts:refresh-managed",
+      "channel-posts:list-authors",
+      "channel-posts:list-comments",
+      "channel-posts:merge-comments",
+      "channel-posts:like-comment",
+      "channel-posts:delete-comment",
+      "channel-posts:export-comments",
+      "channel-posts:sync",
+      "channel-posts:sync-status",
+    ])
+  })
+
+  test("post snippets and target sets use the plain resource names, AI writing a verb", () => {
+    expect(pathAndMethodToCommandName("/v1/post-snippets", "GET")).toBe(
+      "post-snippets:list",
+    )
+    expect(pathAndMethodToCommandName("/v1/post-snippets", "POST")).toBe(
+      "post-snippets:create",
+    )
+    expect(pathAndMethodToCommandName("/v1/post-snippets/{id}", "GET")).toBe(
+      "post-snippets:get",
+    )
+    expect(pathAndMethodToCommandName("/v1/post-snippets/{id}", "PATCH")).toBe(
+      "post-snippets:update",
+    )
+    expect(
+      pathAndMethodToCommandName("/v1/post-target-sets/{id}", "DELETE"),
+    ).toBe("post-target-sets:delete")
+    expect(pathAndMethodToCommandName("/v1/post-target-sets", "GET")).toBe(
+      "post-target-sets:list",
+    )
+    expect(pathAndMethodToCommandName("/v1/posts/ai/generate", "POST")).toBe(
+      "social-posts:write-with-ai",
+    )
+    expect(pathAndMethodToCommandName("/v1/posts/counts", "GET")).toBe(
+      "social-posts:counts",
+    )
+  })
+
+  test("post topics use the plain resource names", () => {
+    expect(pathAndMethodToCommandName("/v1/post-topics", "GET")).toBe(
+      "post-topics:list",
+    )
+    expect(pathAndMethodToCommandName("/v1/post-topics/{id}", "PATCH")).toBe(
+      "post-topics:update",
+    )
+    expect(pathAndMethodToCommandName("/v1/post-topics/{id}", "DELETE")).toBe(
+      "post-topics:delete",
+    )
+  })
+})
+
+describe("post destination command names", () => {
+  const operations: readonly (readonly [string, string, string])[] = [
+    ["GET", "/v1/posts/destinations", "post-destinations:list"],
+    ["GET", "/v1/posts/destinations/{id}", "post-destinations:get"],
+    [
+      "GET",
+      "/v1/posts/destinations/{id}/posting-schedule",
+      "post-destinations:posting-schedule:get",
+    ],
+    [
+      "PUT",
+      "/v1/posts/destinations/{id}/posting-schedule",
+      "post-destinations:posting-schedule:update",
+    ],
+    [
+      "GET",
+      "/v1/posts/destinations/{id}/free-slots",
+      "post-destinations:free-slots:list",
+    ],
+    [
+      "GET",
+      "/v1/posts/destinations/{id}/publishing-settings",
+      "post-destinations:publishing-settings:get",
+    ],
+    ["GET", "/v1/social-accounts", "social-accounts:list"],
+    ["GET", "/v1/social-accounts/{id}", "social-accounts:get"],
+    ["DELETE", "/v1/social-accounts/{id}", "social-accounts:disconnect"],
+  ]
+
+  test.each(operations)("%s %s is `%s`", (method, path, expected) => {
+    expect(pathAndMethodToCommandName(path, method)).toBe(expected)
+  })
+
+  test("no two operations share a command name", () => {
+    const names = operations.map(([method, path]) =>
+      pathAndMethodToCommandName(path, method),
+    )
+
+    expect(new Set(names).size).toBe(names.length)
+  })
+})
+
+describe("pathAndMethodToCommandName — post analytics", () => {
+  test("every analytics and per-post metrics operation gets its own command name", () => {
+    const names = [
+      ["/v1/post-analytics/summary", "GET"],
+      ["/v1/post-analytics/timeseries", "GET"],
+      ["/v1/post-analytics/top-posts", "GET"],
+      ["/v1/post-analytics/best-times", "GET"],
+      ["/v1/channel-posts/management/{id}/metrics", "GET"],
+      ["/v1/posts/{id}", "GET"],
+      ["/v1/posts/{id}/metrics", "GET"],
+    ].map(([path, method]) => pathAndMethodToCommandName(path, method))
+
+    expect(new Set(names).size).toBe(names.length)
+    expect(names.slice(0, 5)).toEqual([
+      "post-analytics:summary",
+      "post-analytics:timeseries",
+      "post-analytics:top-posts",
+      "post-analytics:best-times",
+      "channel-posts:get-metrics",
+    ])
+    expect(names[6]).toBe("social-posts:get-metrics")
+  })
+})

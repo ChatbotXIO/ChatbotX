@@ -25,6 +25,7 @@ import type { CredentialScope } from "./scope"
 import { StripeSettings } from "./stripe/stripe-settings"
 import { ThreadsSettings } from "./threads/threads-settings"
 import { TiktokSettings } from "./tiktok/tiktok-settings"
+import { TiktokPublishingSettings } from "./tiktok-publishing/tiktok-publishing-settings"
 import { WhatsappSettings } from "./whatsapp/whatsapp-settings"
 import { ZaloSettings } from "./zalo/zalo-settings"
 
@@ -96,6 +97,7 @@ export async function ManagePlatformCredentials({
     zaloResult,
     giphyResult,
     tiktokResult,
+    tiktokPublishingResult,
     makeResult,
     stripeResult,
     stripeWebhookResult,
@@ -110,6 +112,7 @@ export async function ManagePlatformCredentials({
     resolveCard(scopedUserId, "zalo"),
     resolveCard(scopedUserId, "giphy"),
     resolveCard(scopedUserId, "tiktok"),
+    resolveCard(scopedUserId, "tiktokPublishing"),
     resolveCard(scopedUserId, "make"),
     resolveCard(scopedUserId, "stripe"),
     hasPlatformStripeWebhook({ userId: scopedUserId }),
@@ -137,6 +140,10 @@ export async function ManagePlatformCredentials({
     giphyResult.status === "fulfilled" ? giphyResult.value : emptyCard
   const tiktok =
     tiktokResult.status === "fulfilled" ? tiktokResult.value : emptyCard
+  const tiktokPublishing =
+    tiktokPublishingResult.status === "fulfilled"
+      ? tiktokPublishingResult.value
+      : emptyCard
   const make = makeResult.status === "fulfilled" ? makeResult.value : emptyCard
   const stripe =
     stripeResult.status === "fulfilled" ? stripeResult.value : emptyCard
@@ -221,6 +228,11 @@ export async function ManagePlatformCredentials({
           isInherited={tiktok.isInherited}
           publicConfig={tiktok.publicConfig}
           webhookUrl={webhookUrlFor("tiktok", tiktok)}
+        />
+        <TiktokPublishingSettings
+          callbackOrigin={providerOriginFor(tiktokPublishing.isInherited)}
+          isInherited={tiktokPublishing.isInherited}
+          publicConfig={tiktokPublishing.publicConfig}
         />
         <GiphySettings
           isConfigured={giphy.publicConfig !== null}

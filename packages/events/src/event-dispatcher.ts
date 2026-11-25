@@ -10,6 +10,7 @@ import type {
   IncomingCallMetadata,
   OrderEventMetadata,
   PipelineItemEventMetadata,
+  PostCommentEventMetadata,
   ShoppingCartSentMetadata,
   UserAskedAboutProductMetadata,
 } from "./base-emitter"
@@ -54,6 +55,37 @@ async function emitToAllEmitters<M extends EmitterEventMethod>(
     if (result.status === "rejected") {
       logger.error({ err: result.reason }, `Failed to emit event: ${eventName}`)
     }
+  }
+}
+
+/** Which emitter a post-comment event is queued to (each has its own dedupe claim). */
+export type PostCommentEmitterKind = "trigger" | "webhook"
+
+const EMITTERS_BY_KIND = {
+  trigger: TriggerEventEmitter,
+  webhook: WebhookEventEmitter,
+} as const satisfies Record<PostCommentEmitterKind, BaseEventEmitter>
+
+/**
+ * Emits to one emitter and throws when it fails, for a caller that holds a
+ * per-emitter dedupe claim it must release when the enqueue failed.
+ */
+async function emitToOneEmitterStrict<M extends EmitterEventMethod>(
+  kind: PostCommentEmitterKind,
+  eventName: M,
+  ...args: EmitterEventArgs<M>
+): Promise<void> {
+  const emitter = EMITTERS_BY_KIND[kind]
+  const method = emitter[eventName] as unknown as (
+    ...methodArgs: EmitterEventArgs<M>
+  ) => Promise<void>
+  try {
+    await method.call(emitter, ...args)
+  } catch (err) {
+    logger.error({ err }, `Failed to emit event: ${eventName} (${kind})`)
+    throw err instanceof Error
+      ? err
+      : new Error(`Failed to emit event: ${eventName}`)
   }
 }
 
@@ -243,6 +275,40 @@ export const emitContactUnblockedBot = async (
     workspaceId,
     contactId,
     channel,
+    contactInboxId,
+  )
+
+export const emitContactCommentedOnPost = async (
+  workspaceId: string,
+  contactId: string,
+  metadata: PostCommentEventMetadata,
+  contactInboxId: string | undefined,
+  emitter: PostCommentEmitterKind,
+) =>
+  await emitToOneEmitterStrict(
+    emitter,
+    "postComment",
+    triggerEventTypes.enum.contactCommentedOnPost,
+    workspaceId,
+    contactId,
+    metadata,
+    contactInboxId,
+  )
+
+export const emitContactFirstCommentedOnPost = async (
+  workspaceId: string,
+  contactId: string,
+  metadata: PostCommentEventMetadata,
+  contactInboxId: string | undefined,
+  emitter: PostCommentEmitterKind,
+) =>
+  await emitToOneEmitterStrict(
+    emitter,
+    "postComment",
+    triggerEventTypes.enum.contactFirstCommentedOnPost,
+    workspaceId,
+    contactId,
+    metadata,
     contactInboxId,
   )
 

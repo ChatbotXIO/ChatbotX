@@ -22,6 +22,8 @@ export const EMITTED_EVENT_TYPES = [
   triggerEventTypes.enum.contactReferredExistingContact,
   triggerEventTypes.enum.contactBlockedBot,
   triggerEventTypes.enum.contactUnblockedBot,
+  triggerEventTypes.enum.contactCommentedOnPost,
+  triggerEventTypes.enum.contactFirstCommentedOnPost,
   triggerEventTypes.enum.incomingCall,
   triggerEventTypes.enum.missedAudioCall,
   triggerEventTypes.enum.callEnded,
@@ -139,7 +141,25 @@ export const EVALUATOR_FILTERED_EVENT_TYPES = [
   triggerEventTypes.enum.productAddedToCart,
   triggerEventTypes.enum.productRemovedFromCart,
   triggerEventTypes.enum.categoryAddedToCart,
+  // A post-comment condition is narrowed by the evaluator (posts, inbox), and
+  // the event carries no `sourceId`.
+  triggerEventTypes.enum.contactCommentedOnPost,
+  triggerEventTypes.enum.contactFirstCommentedOnPost,
 ] as const
+
+/**
+ * Events only a contact's own action on a channel can produce, so no trigger
+ * action (which runs in worker context) can emit them and they are let through
+ * the worker-context loop guard. A trigger's own reply under a post comes back
+ * as a comment of the page itself, which ingestion drops before any event.
+ */
+export const INGRESS_ORIGINATED_EVENT_TYPES = [
+  triggerEventTypes.enum.contactCommentedOnPost,
+  triggerEventTypes.enum.contactFirstCommentedOnPost,
+] as const
+
+export const INGRESS_ORIGINATED_EVENT_TYPE_SET: ReadonlySet<TriggerEventType> =
+  new Set(INGRESS_ORIGINATED_EVENT_TYPES)
 
 export const SCANNER_VERIFIED_EVENT_TYPES = [
   triggerEventTypes.enum.dateTimeBasedTrigger,

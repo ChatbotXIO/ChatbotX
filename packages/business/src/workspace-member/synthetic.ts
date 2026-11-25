@@ -45,6 +45,9 @@ export function buildSupportMembership(props: {
       notifyAdmin: false,
       newMessageToHuman: false,
       newOrder: false,
+      postFailed: false,
+      postNeedsReview: false,
+      publishConnection: false,
     },
     permissions: FULL_WORKSPACE_MEMBER_PERMISSIONS,
     // No real row exists to update, so this stamp stays null; live online

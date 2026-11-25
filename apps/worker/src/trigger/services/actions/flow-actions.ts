@@ -1,7 +1,11 @@
 import { flowService } from "@chatbotx.io/business"
 import type { ContactInboxWorkspaceRow } from "@chatbotx.io/database/repositories"
 import type { ConversationModel } from "@chatbotx.io/database/types"
-import { startExternalStepActionSchema } from "@chatbotx.io/flow-config"
+import {
+  POST_COMMENT_PAYLOAD_TYPE,
+  type PostCommentMetadataPayload,
+  startExternalStepActionSchema,
+} from "@chatbotx.io/flow-config"
 import baseLogger from "@chatbotx.io/logger"
 import {
   IntegrationJobAction,
@@ -34,6 +38,23 @@ const enqueueSendFlow = async (
   }
   await integrationQueue.add(IntegrationJobAction.sendFlow, sendFlowJob)
 }
+
+/**
+ * What a flow started by a post-comment trigger carries so its messages can
+ * render `{{post.*}}` / `{{comment.*}}` for that one comment. Any other trigger
+ * starts its flow with no metadata, as before.
+ */
+const postCommentFlowExtras = (
+  context: ActionExecutionContext,
+): { metadata?: PostCommentMetadataPayload } =>
+  context.postComment
+    ? {
+        metadata: {
+          type: POST_COMMENT_PAYLOAD_TYPE,
+          ...context.postComment,
+        },
+      }
+    : {}
 
 /**
  * A flow started without an event conversation (tag added, webhook, pipeline…)
@@ -87,16 +108,19 @@ export const startAnotherFlow: TriggerActionHandler = async ({
     return skipped("flowInactive")
   }
 
-  const sendFlowJob = buildSendFlowJob({
-    conversationId: await resolveFlowConversationId({
-      context,
-      conversation,
-      contactInbox,
-      scope,
-    }),
-    contactInboxId: contactInbox.id,
-    flowId,
-  })
+  const sendFlowJob = buildSendFlowJob(
+    {
+      conversationId: await resolveFlowConversationId({
+        context,
+        conversation,
+        contactInbox,
+        scope,
+      }),
+      contactInboxId: contactInbox.id,
+      flowId,
+    },
+    postCommentFlowExtras(context),
+  )
   await enqueueSendFlow(sendFlowJob, context)
   return succeeded
 }
@@ -137,17 +161,20 @@ export const startExternalStep: TriggerActionHandler = async ({
   }
 
   await enqueueSendFlow(
-    buildSendFlowJob({
-      conversationId: await resolveFlowConversationId({
-        context,
-        conversation,
-        contactInbox,
-        scope,
-      }),
-      contactInboxId: contactInbox.id,
-      flowId,
-      nodeId,
-    }),
+    buildSendFlowJob(
+      {
+        conversationId: await resolveFlowConversationId({
+          context,
+          conversation,
+          contactInbox,
+          scope,
+        }),
+        contactInboxId: contactInbox.id,
+        flowId,
+        nodeId,
+      },
+      postCommentFlowExtras(context),
+    ),
     context,
   )
   return succeeded

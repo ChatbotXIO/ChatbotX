@@ -10,7 +10,7 @@
    |---|---|---|---|---|---|
    | public reply | ✅ | ✅ | ✅ | ✅ | ✅ |
    | private DM reply (`PRIVATE_REPLY_TEXT_SENDERS`) | ✅ | ✅ | ✅ | ❌ | ⚠️ |
-   | like (`supportsCommentLike`) | ✅ | ✅ | ✅ | ❌ | ✅ |
+   | like (`supportsCommentLike`) | ✅ | ❌ | ❌ | ❌ | ✅ |
    | hide (`supportsHideComments`) | ✅ | ✅ | ✅ | ✅ | ✅ |
    | attachment lookup (`hasImage`/`hasVideo` hide) | ✅ | ❌ | ❌ | ❌ | ❌ |
    | `onlyCommentsWithImage` reply filter (`commentAutomationChannelSupportsImageFilter`) | ✅ | ❌ | ❌ | ✅ | ❌ |

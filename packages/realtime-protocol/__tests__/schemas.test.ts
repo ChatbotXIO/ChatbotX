@@ -15,6 +15,7 @@ import {
   realtimeWorkspaceEventEnvelopeSchema,
   routeForAssignment,
   routeForConversation,
+  socialPostChangedSchema,
   whatsappCallClaimedElsewhereSchema,
 } from "../src/schemas"
 
@@ -357,6 +358,30 @@ describe("messageTranslationUpdated", () => {
         conversationId: "c1",
         items: [{ messageId: "m1", status: "pending" }],
       }).success,
+    ).toBe(false)
+  })
+})
+
+describe("socialPostChanged event", () => {
+  test("is a workspace-broadcast event that needs no route", () => {
+    const parsed = realtimeWorkspaceEventEnvelopeSchema.safeParse({
+      eventType: RealtimeEventType.socialPostChanged,
+      data: { socialPostId: "p1", targetId: "t1", status: "failed" },
+    })
+
+    expect(parsed.success).toBe(true)
+    expect(EVENT_DELIVERY[RealtimeEventType.socialPostChanged]).toBe(
+      "workspace",
+    )
+  })
+
+  test("needs a post id and a status; the target is optional", () => {
+    expect(
+      socialPostChangedSchema.safeParse({ socialPostId: "p1", status: "draft" })
+        .success,
+    ).toBe(true)
+    expect(
+      socialPostChangedSchema.safeParse({ socialPostId: "p1" }).success,
     ).toBe(false)
   })
 })

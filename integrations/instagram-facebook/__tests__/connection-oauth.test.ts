@@ -6,6 +6,7 @@ import { beforeEach, describe, expect, test, vi } from "vitest"
 
 const mocks = vi.hoisted(() => ({
   exchangeCodeForToken: vi.fn(),
+  getGrantedPermissions: vi.fn(),
   getUserInstagramAccounts: vi.fn(),
 }))
 
@@ -14,6 +15,7 @@ vi.mock("../src/apis/auth", async (importOriginal) => {
   return {
     ...actual,
     exchangeCodeForToken: mocks.exchangeCodeForToken,
+    getGrantedPermissions: mocks.getGrantedPermissions,
     getUserInstagramAccounts: mocks.getUserInstagramAccounts,
   }
 })
@@ -85,6 +87,37 @@ describe("Instagram Facebook connection.listCandidates", () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
+    mocks.getGrantedPermissions.mockResolvedValue(["instagram_content_publish"])
+  })
+
+  test("records the login's granted permissions on every candidate, null when the lookup fails", async () => {
+    mocks.getUserInstagramAccounts.mockResolvedValue([
+      {
+        id: "ig-1",
+        name: "One",
+        username: "one",
+        pageId: "p1",
+        pageAccessToken: "t1",
+      },
+    ])
+    const granted = await integration.connection.listCandidates?.({
+      auth: userAuth,
+    })
+    expect(mocks.getGrantedPermissions).toHaveBeenCalledWith(
+      "user-access-token",
+      "v23.0",
+    )
+    expect(granted?.[0]?.auth).toMatchObject({
+      metadata: { grantedScopes: ["instagram_content_publish"] },
+    })
+
+    mocks.getGrantedPermissions.mockRejectedValue(new Error("graph"))
+    const unknown = await integration.connection.listCandidates?.({
+      auth: userAuth,
+    })
+    expect(unknown?.[0]?.auth).toMatchObject({
+      metadata: { grantedScopes: null },
+    })
   })
 
   test("maps every Instagram account to its own page-scoped auth and metadata", async () => {
@@ -131,6 +164,7 @@ describe("Instagram Facebook connection.listCandidates", () => {
             pageId: "page-1",
             version: "v23.0",
             username: "instagram-one",
+            grantedScopes: ["instagram_content_publish"],
           },
         },
       },
@@ -150,6 +184,7 @@ describe("Instagram Facebook connection.listCandidates", () => {
             pageId: "page-2",
             version: "v23.0",
             username: "instagram-two",
+            grantedScopes: ["instagram_content_publish"],
           },
         },
       },

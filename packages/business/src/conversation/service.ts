@@ -2405,7 +2405,48 @@ class ConversationService extends BaseService {
     readAt: Date
     silent?: boolean
   }): Promise<boolean> {
-    const { conversationId, inboxId, readAt, silent, workspaceId } = props
+    const { inboxId, workspaceId, ...rest } = props
+    return await this.advanceAgentReadAt({
+      ...rest,
+      workspaceId,
+      requireCondition: exists(
+        db
+          .select({ value: sql<number>`1` })
+          .from(inboxModel)
+          .where(
+            and(
+              eq(inboxModel.id, inboxId),
+              eq(inboxModel.workspaceId, workspaceId),
+              eq(inboxModel.markReadOnOutbound, true),
+            ),
+          ),
+      ),
+    })
+  }
+
+  /**
+   * Marks a comment on a post whose comments are skipped as read, advancing
+   * agent read state only to the comment's own time, so a newer read is never
+   * overwritten and a redelivered comment changes nothing.
+   */
+  async markReadBySkippedPost(props: {
+    workspaceId: string
+    conversationId: string
+    readAt: Date
+    silent?: boolean
+  }): Promise<boolean> {
+    return await this.advanceAgentReadAt(props)
+  }
+
+  private async advanceAgentReadAt(props: {
+    workspaceId: string
+    conversationId: string
+    readAt: Date
+    requireCondition?: SQL
+    silent?: boolean
+  }): Promise<boolean> {
+    const { conversationId, readAt, requireCondition, silent, workspaceId } =
+      props
     const updated = await db
       .update(conversationModel)
       .set({ agentLastReadAt: readAt })
@@ -2417,18 +2458,7 @@ class ConversationService extends BaseService {
             isNull(conversationModel.agentLastReadAt),
             lt(conversationModel.agentLastReadAt, readAt),
           ),
-          exists(
-            db
-              .select({ value: sql<number>`1` })
-              .from(inboxModel)
-              .where(
-                and(
-                  eq(inboxModel.id, inboxId),
-                  eq(inboxModel.workspaceId, workspaceId),
-                  eq(inboxModel.markReadOnOutbound, true),
-                ),
-              ),
-          ),
+          requireCondition,
         ),
       )
       .returning({

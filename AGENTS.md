@@ -42,7 +42,7 @@ pnpm dev              # turbo dev — all dev tasks the repo wires up
 pnpm build            # turbo build
 pnpm lint             # check:agent-instructions → check:invariants → turbo run lint → ultracite check
 pnpm fix              # ultracite fix --unsafe
-pnpm check-types:cold # concurrency=1 — use on a cold run (no tsbuildinfo) or low-RAM machine; builder tsc peaks ~6 GB cold
+pnpm check-types:cold # concurrency=1 — use on a cold run (no tsbuildinfo) or low-RAM machine; builder tsc peaks ~6–8 GB cold
 pnpm check-types      # turbo run check-types --concurrency=2 — always use this, not bare `pnpm turbo check-types`
                       # (bare turbo runs 10 tsc in parallel, ~4 GB each for packages importing database/business → swaps/freezes the machine)
 pnpm test             # turbo run test --concurrency=2 — 2 suites × 4 vitest threads (VITEST_MAX_WORKERS); 50% ran 6×4 = 24 threads on a 12-core Mac
@@ -201,9 +201,10 @@ See **`.agents/rules/git.md`** for the full canonical rules (commit format, bran
 - Ads conversion tracking (CTWA/CTM/CTID, rules vs Trigger actions, CAPI, per-click ad touch history): `docs/ads-conversion-tracking.md`
 - Google Ads Click-to-Message conversion tracking (gclid/gbraid capture, Connection-engine OAuth, Data Manager API delivery, dedup, state machine, statistics dashboard, read-only public API, ops runbook): `docs/google-ads-conversion-tracking.md`
 - Google Ads conversion options for admins (dedup mode, conversion time, consent, legacy differences): `docs/google-ads-conversion-options-admin-guide.md`
-- Trigger sequence actions (`addSequence` / `removeSequence`: shape, no sequence events, template behavior) and trigger loop protection (non-emitting actions, per-trigger-per-contact run circuit breaker, blind spots): `docs/trigger-actions.md`
+- Trigger sequence actions (`addSequence` / `removeSequence`: shape, no sequence events, template behavior) and trigger loop protection (non-emitting actions, per-trigger-per-contact run circuit breaker, blind spots), and post-comment events (`contactCommentedOnPost` / `contactFirstCommentedOnPost`: Messenger + Instagram, conditions, first-claim and Redis dedupe, run-scoped `{{post.*}}` / `{{comment.*}}`, templates): `docs/trigger-actions.md`
 - Bot block trigger events (`contactBlockedBot` / `contactUnblockedBot`: Telegram `my_chat_member` source, existing contacts only, retry dedupe, re-registering older bots' webhooks with `backfill:telegram-webhooks`): `docs/bot-block-trigger-events.md`
 - Comment automation (all channels): `docs/comment-automation.md` (skill: `.agents/skills/comment-automation/`)
+- Posts (post analytics: sparse daily snapshots `ChannelPostMetricDaily`, baseline/unknown-vs-zero rules, coverage, best posting times, retention; list posts that exist on inbox channels, topics, per-post comment settings, post sync engine, comments and exports, publishing with inbox tokens (TikTok via its own login), destination states, reconnect fan-out, posting schedule, public API): `docs/posts.md`
 - LINE channel (Messaging API setup, webhook + signature, reply vs push and monthly quota, token refresh, flow-step mapping, ops runbook, open items): `docs/line.md`
 - Push notifications (Expo Push Service, device tokens): `docs/push-notifications.md`
 - Enterprise licensing (offline Ed25519 license keys): `docs/licensing.md`

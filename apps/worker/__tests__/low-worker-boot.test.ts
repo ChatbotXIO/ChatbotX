@@ -79,6 +79,7 @@ vi.mock("@chatbotx.io/worker-config", () => ({
       profileSnapshot: "profileSnapshot",
       leaderboard: "leaderboard",
       contactInfoCapture: "contactInfoCapture",
+      postPublish: "postPublish",
     },
   },
   closeAllQueueEvents: vi.fn(async () => undefined),
@@ -87,6 +88,9 @@ vi.mock("@chatbotx.io/worker-config", () => ({
   getQueueConnection: vi.fn(() => ({})),
 }))
 
+vi.mock("../src/post-publish/process-job", () => ({
+  processPostPublishJob: vi.fn(async () => undefined),
+}))
 vi.mock("../src/leaderboard/process-job", () => ({
   processLeaderboardJob: vi.fn(),
 }))
@@ -97,7 +101,17 @@ vi.mock("@chatbotx.io/business", () => ({
   },
   flushAllPendingWorkspaceRealtimeEvents:
     workerState.flushAllPendingWorkspaceRealtimeEvents,
+  registerFeedAiModelChecker: vi.fn(),
+  registerFeedArticleImageFinder: vi.fn(),
+  registerFeedFetcher: vi.fn(),
+  registerFeedImageImporter: vi.fn(),
+  registerFeedPostWriter: vi.fn(),
   withBlockedOwnerGuard: workerState.withBlockedOwnerGuard,
+}))
+
+vi.mock("@chatbotx.io/ai/feed-post-writer", () => ({
+  isFeedAiModelUsable: vi.fn(),
+  writeFeedPost: vi.fn(),
 }))
 
 vi.mock("../src/env", () => ({
@@ -172,7 +186,7 @@ vi.mock("../src/integration/handlers/received-message", () => ({
 // Importing the worker module boots it exactly once (ESM module cache).
 await import("../src/low/worker")
 await vi.waitFor(() => {
-  expect(workerState.capturedWorkers).toHaveLength(4)
+  expect(workerState.capturedWorkers).toHaveLength(5)
 })
 
 describe("low worker process boot", () => {
@@ -197,13 +211,14 @@ describe("low worker process boot", () => {
   })
 
   test("boots the low Worker at the env-tunable concurrency plus the dedicated profileSnapshot and leaderboard Workers", () => {
-    expect(workerState.capturedWorkers).toHaveLength(4)
+    expect(workerState.capturedWorkers).toHaveLength(5)
     expect(workerState.capturedWorkers[0]?.queueName).toBe("low")
     expect(workerState.capturedWorkers[0]?.options.concurrency).toBe(30)
     expect(workerState.capturedWorkers[1]?.queueName).toBe("profileSnapshot")
     expect(workerState.capturedWorkers[2]?.queueName).toBe("leaderboard")
     expect(workerState.capturedWorkers[2]?.options.concurrency).toBe(10)
     expect(workerState.capturedWorkers[3]?.queueName).toBe("contactInfoCapture")
+    expect(workerState.capturedWorkers[4]?.queueName).toBe("postPublish")
   })
 
   test("the contactInfoCapture Worker is small and rate limited", () => {
@@ -294,7 +309,7 @@ describe("low worker process boot", () => {
     await vi.waitFor(() => {
       expect(exit).toHaveBeenCalledWith(0)
     })
-    expect(workerState.workerClose).toHaveBeenCalledTimes(4)
+    expect(workerState.workerClose).toHaveBeenCalledTimes(5)
     exit.mockRestore()
   })
 

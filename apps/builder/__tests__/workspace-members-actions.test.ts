@@ -169,6 +169,9 @@ const updateInput = {
     notifyAdmin: true,
     newMessageToHuman: false,
     newOrder: false,
+    postFailed: false,
+    postNeedsReview: false,
+    publishConnection: false,
   },
   notificationChannels: {
     messenger: false,
@@ -424,6 +427,49 @@ describe("updateWorkspaceMemberAction", () => {
     })
   })
 
+  test("a request without the post notification types keeps the stored ones", async () => {
+    const storedTypes = {
+      ...updateInput.notificationTypes,
+      notifyAdmin: false,
+      postFailed: true,
+      postNeedsReview: true,
+      publishConnection: true,
+    }
+    mockFindByIdOrFail.mockResolvedValue({
+      id: MEMBER_ID,
+      userId: MEMBER_USER_ID,
+      workspaceId: WORKSPACE_ID,
+      permissions: normalizedGranularPermissions,
+      notificationTypes: storedTypes,
+      notificationChannels: updateInput.notificationChannels,
+    })
+    const legacyTypes = {
+      notifyAdmin: true,
+      newMessageToHuman: false,
+      newOrder: false,
+    }
+
+    await (updateWorkspaceMemberAction as (props: unknown) => Promise<unknown>)(
+      {
+        bindArgsParsedInputs: [WORKSPACE_ID, MEMBER_ID],
+        parsedInput: { ...updateInput, notificationTypes: legacyTypes },
+      },
+    )
+
+    expect(mockUpdateMember).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          notificationTypes: {
+            ...legacyTypes,
+            postFailed: true,
+            postNeedsReview: true,
+            publishConnection: true,
+          },
+        }),
+      }),
+    )
+  })
+
   test("skips DB update, cache invalidation, and audit when nothing changed", async () => {
     mockFindByIdOrFail.mockResolvedValue({
       id: MEMBER_ID,
@@ -456,6 +502,9 @@ describe("updateWorkspaceMemberAction", () => {
         notifyAdmin: false,
         newMessageToHuman: false,
         newOrder: false,
+        postFailed: false,
+        postNeedsReview: false,
+        publishConnection: false,
       },
       notificationChannels: {
         messenger: false,

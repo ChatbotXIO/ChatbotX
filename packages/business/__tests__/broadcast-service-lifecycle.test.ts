@@ -47,7 +47,10 @@ vi.mock("@chatbotx.io/database/client", () => ({
   ),
 }))
 
-vi.mock("@chatbotx.io/database/schema", () => ({
+// The repositories index builds query fragments from the real tables when it loads, so
+// keep them and override only the models this test controls.
+vi.mock("@chatbotx.io/database/schema", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@chatbotx.io/database/schema")>()),
   broadcastModel: {
     id: "broadcast.id",
     workspaceId: "broadcast.workspaceId",

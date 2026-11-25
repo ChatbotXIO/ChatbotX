@@ -4,6 +4,7 @@ const mocks = vi.hoisted(() => ({
   dbTransaction: vi.fn(),
   deleteByContactInboxIds: vi.fn(),
   deleteWorkspaceBatch: vi.fn(),
+  findCommentedAt: vi.fn(),
   hasWorkspaceRows: vi.fn(),
   insertIfParentExists: vi.fn(),
   lockContactInboxIdsByContactIds: vi.fn(),
@@ -19,6 +20,7 @@ vi.mock("@chatbotx.io/database/repositories/contact-inbox-post", () => ({
   contactInboxPostRepository: {
     deleteByContactInboxIds: mocks.deleteByContactInboxIds,
     deleteWorkspaceBatch: mocks.deleteWorkspaceBatch,
+    findCommentedAt: mocks.findCommentedAt,
     hasWorkspaceRows: mocks.hasWorkspaceRows,
     insertIfParentExists: mocks.insertIfParentExists,
     lockContactInboxIdsByContactIds: mocks.lockContactInboxIdsByContactIds,
@@ -44,6 +46,7 @@ describe("contactInboxPostService", () => {
     )
     mocks.lockWorkspaceForChildWrite.mockResolvedValue(true)
     mocks.insertIfParentExists.mockResolvedValue(true)
+    mocks.findCommentedAt.mockResolvedValue(null)
     mocks.lockContactsForDelete.mockResolvedValue([])
     mocks.lockContactInboxIdsByContactIds.mockResolvedValue([])
     mocks.deleteByContactInboxIds.mockResolvedValue(0)
@@ -102,6 +105,50 @@ describe("contactInboxPostService", () => {
       },
       expect.anything(),
     )
+  })
+
+  describe("recordCommentOutcome", () => {
+    const input = {
+      commentedAt: new Date("2026-09-30T00:00:00.000Z"),
+      contactInboxId: "contact-inbox-1",
+      inboxId: "inbox-1",
+      postId: "post-1",
+      workspaceId: "workspace-1",
+    }
+
+    test("is inserted for the first comment of a contact on a post", async () => {
+      await expect(
+        contactInboxPostService.recordCommentOutcome(input),
+      ).resolves.toEqual({ status: "inserted" })
+      expect(mocks.findCommentedAt).not.toHaveBeenCalled()
+    })
+
+    test("is existing, with the first comment's time, for a repeat", async () => {
+      const firstAt = new Date("2026-09-29T00:00:00.000Z")
+      mocks.insertIfParentExists.mockResolvedValue(false)
+      mocks.findCommentedAt.mockResolvedValue(firstAt)
+
+      await expect(
+        contactInboxPostService.recordCommentOutcome(input),
+      ).resolves.toEqual({ status: "existing", commentedAt: firstAt })
+    })
+
+    test("is skipped when nothing was recorded and no row exists", async () => {
+      mocks.insertIfParentExists.mockResolvedValue(false)
+
+      await expect(
+        contactInboxPostService.recordCommentOutcome(input),
+      ).resolves.toEqual({ status: "skipped" })
+    })
+
+    test("is skipped after the workspace purge fence is set", async () => {
+      mocks.lockWorkspaceForChildWrite.mockResolvedValue(false)
+
+      await expect(
+        contactInboxPostService.recordCommentOutcome(input),
+      ).resolves.toEqual({ status: "skipped" })
+      expect(mocks.insertIfParentExists).not.toHaveBeenCalled()
+    })
   })
 
   test("deletes contact-inbox post rows in 500-id sub-chunks", async () => {

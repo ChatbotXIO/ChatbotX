@@ -44,16 +44,22 @@ const EVERY_MINUTE_SECOND_OFFSETS = {
   // enqueueMarketingMessages (kept at :00) set. Running a few seconds later
   // lets a fast step land first; no ordering is required or guaranteed.
   dispatchMarketingMessages: 8,
+  materializeSocialPostRecurrences: 12,
+  scanSocialPostFeeds: 14,
   scanAbandonedCarts: 16,
   reconcileBroadcasts: 20,
   dispatchProfileSnapshots: 24,
   scanCoexistRuns: 28,
   scanContactScans: 32,
+  scanChannelPostSyncs: 34,
   scanAiHandoverBulkRuns: 36,
   scanContactSyncRuns: 38,
   finalizeBroadcasts: 40,
+  refreshSocialAccountTokens: 42,
   finalizeMarketingMessages: 44,
+  enqueueSocialPostTargets: 46,
   reconcileMetaCatalogSyncs: 48,
+  recoverSocialPostTargets: 50,
   pollSmtpInboxes: 52,
 } as const satisfies Partial<Record<keyof typeof ScheduleJobData, number>>
 
@@ -350,6 +356,20 @@ export const registerSchedules = async () => {
   )
 
   await scheduleQueue.upsertJobScheduler(
+    ScheduleJobData.maintainChannelPostMetricPartitions,
+    {
+      pattern: "40 1 * * *",
+    },
+    {
+      name: ScheduleJobData.maintainChannelPostMetricPartitions,
+      data: {
+        type: ScheduleJobData.maintainChannelPostMetricPartitions,
+        data: {},
+      },
+    },
+  )
+
+  await scheduleQueue.upsertJobScheduler(
     ScheduleJobData.maintainLeaderboardPartitions,
     {
       pattern: "20 1 * * *",
@@ -415,6 +435,92 @@ export const registerSchedules = async () => {
       name: ScheduleJobData.scanContactScans,
       data: {
         type: ScheduleJobData.scanContactScans,
+        data: {},
+      },
+    },
+  )
+
+  await scheduleQueue.upsertJobScheduler(
+    ScheduleJobData.scanChannelPostSyncs,
+    {
+      pattern: everyMinuteAtOffset(ScheduleJobData.scanChannelPostSyncs),
+    },
+    {
+      name: ScheduleJobData.scanChannelPostSyncs,
+      data: {
+        type: ScheduleJobData.scanChannelPostSyncs,
+        data: {},
+      },
+    },
+  )
+
+  await scheduleQueue.upsertJobScheduler(
+    ScheduleJobData.enqueueSocialPostTargets,
+    {
+      pattern: everyMinuteAtOffset(ScheduleJobData.enqueueSocialPostTargets),
+    },
+    {
+      name: ScheduleJobData.enqueueSocialPostTargets,
+      data: {
+        type: ScheduleJobData.enqueueSocialPostTargets,
+        data: {},
+      },
+    },
+  )
+
+  await scheduleQueue.upsertJobScheduler(
+    ScheduleJobData.recoverSocialPostTargets,
+    {
+      pattern: everyMinuteAtOffset(ScheduleJobData.recoverSocialPostTargets),
+    },
+    {
+      name: ScheduleJobData.recoverSocialPostTargets,
+      data: {
+        type: ScheduleJobData.recoverSocialPostTargets,
+        data: {},
+      },
+    },
+  )
+
+  await scheduleQueue.upsertJobScheduler(
+    ScheduleJobData.materializeSocialPostRecurrences,
+    {
+      pattern: everyMinuteAtOffset(
+        ScheduleJobData.materializeSocialPostRecurrences,
+      ),
+    },
+    {
+      name: ScheduleJobData.materializeSocialPostRecurrences,
+      data: {
+        type: ScheduleJobData.materializeSocialPostRecurrences,
+        data: {},
+      },
+    },
+  )
+
+  await scheduleQueue.upsertJobScheduler(
+    ScheduleJobData.scanSocialPostFeeds,
+    {
+      pattern: everyMinuteAtOffset(ScheduleJobData.scanSocialPostFeeds),
+    },
+    {
+      name: ScheduleJobData.scanSocialPostFeeds,
+      data: {
+        type: ScheduleJobData.scanSocialPostFeeds,
+        data: {},
+      },
+    },
+  )
+
+  await scheduleQueue.upsertJobScheduler(
+    ScheduleJobData.refreshSocialAccountTokens,
+    {
+      pattern: everyMinuteAtOffset(ScheduleJobData.refreshSocialAccountTokens),
+    },
+    {
+      name: ScheduleJobData.refreshSocialAccountTokens,
+      data: {
+        type: ScheduleJobData.refreshSocialAccountTokens,
         data: {},
       },
     },

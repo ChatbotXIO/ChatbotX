@@ -1,6 +1,7 @@
 /**
- * Re-encrypts all Credential rows and every `User.connectionAuthorizations`
- * entry from the previous key to the current key.
+ * Re-encrypts all Credential rows, every `User.connectionAuthorizations`
+ * entry and every social account / destination token from the previous key to
+ * the current key.
  *
  * Usage:
  *   pnpm --filter @chatbotx.io/database rotate:encryption-key [--dry-run]
@@ -33,6 +34,10 @@ import {
   type ConnectionAuthorizationCrypto,
   rotateConnectionAuthorizations,
 } from "./rotate-connection-authorizations"
+import {
+  rotateSocialAccountTokens,
+  type SocialAccountTokenCrypto,
+} from "./rotate-social-account-tokens"
 
 const isDryRun = process.argv.includes("--dry-run")
 const activeKid = process.env.ENCRYPTION_KEY_ID ?? "default"
@@ -41,6 +46,12 @@ const authorizationCrypto: ConnectionAuthorizationCrypto = {
   decrypt: async (blob, aad) =>
     await encryptUtils.decryptObject(blob, z.unknown(), aad),
   encrypt: async (auth, aad) => await encryptUtils.encryptObject(auth, aad),
+}
+
+const socialAccountCrypto: SocialAccountTokenCrypto = {
+  decrypt: async (blob, aad) =>
+    await encryptUtils.decryptObject(blob, z.unknown(), aad),
+  encrypt: async (value, aad) => await encryptUtils.encryptObject(value, aad),
 }
 
 const main = async (): Promise<void> => {
@@ -70,6 +81,14 @@ const main = async (): Promise<void> => {
     })
     console.log(
       `Found ${authorizations.toRotate} connection authorization entries across ${authorizations.scanned} users to rotate.`,
+    )
+    const socialAccounts = await rotateSocialAccountTokens({
+      activeKid,
+      crypto: socialAccountCrypto,
+      dryRun: true,
+    })
+    console.log(
+      `Found ${socialAccounts.toRotate} social account tokens (of ${socialAccounts.scanned} rows) to rotate.`,
     )
     console.log("Dry run — no changes written.")
     return
@@ -115,7 +134,15 @@ const main = async (): Promise<void> => {
   console.log(
     `Connection authorizations: ${authorizations.rotated} rotated, ${authorizations.skippedChanged} changed meanwhile, ${authorizations.errors} errors.`,
   )
-  if (errors > 0 || authorizations.errors > 0) {
+  const socialAccounts = await rotateSocialAccountTokens({
+    activeKid,
+    crypto: socialAccountCrypto,
+    dryRun: false,
+  })
+  console.log(
+    `Social account tokens: ${socialAccounts.rotated} rotated, ${socialAccounts.skippedChanged} changed meanwhile, ${socialAccounts.errors} errors.`,
+  )
+  if (errors > 0 || authorizations.errors > 0 || socialAccounts.errors > 0) {
     process.exit(1)
   }
 }

@@ -86,6 +86,9 @@ export const acceptInvitationAction = authActionClient
           notifyAdmin: true,
           newMessageToHuman: true,
           newOrder: hasWorkspacePermission(permissions, "ecommerce"),
+          postFailed: hasWorkspacePermission(permissions, "broadcast"),
+          postNeedsReview: hasWorkspacePermission(permissions, "broadcast"),
+          publishConnection: hasWorkspacePermission(permissions, "broadcast"),
         },
         notificationChannels: {
           messenger: true,

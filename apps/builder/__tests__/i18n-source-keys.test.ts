@@ -246,5 +246,7 @@ test("the scan actually reached the source tree", () => {
   // (roughly 90 today) keeps that escape hatch from quietly swallowing the
   // check wholesale — raise the ceiling deliberately, with a reason.
   // 210: the payment request form and card key their labels by method/field.
-  expect(dynamicKeys).toBeLessThan(210)
+  // 230: the Posts area keys its labels by enum value (post type, sort, content
+  // type, account status and reason, counters).
+  expect(dynamicKeys).toBeLessThan(230)
 })

@@ -1,3 +1,5 @@
+import { z } from "zod"
+import { connectTabPath } from "@/features/social-accounts/lib/connect-route"
 import { getBrokerOrigin } from "./oauth-broker"
 
 export const RECONNECT_ERROR_REASONS = [
@@ -71,4 +73,30 @@ export function buildChannelErrorRedirectUrl(
   error: ChannelConnectError,
 ): string {
   return appendRedirectSearchParams(safeReferer, { error })
+}
+
+/**
+ * Where a reconnect started outside Settings > Channels returns to. A closed
+ * enum, never a URL: the reconnect action turns it into a path of its own, so a
+ * caller cannot steer the OAuth round trip to another page.
+ */
+export const reconnectReturnToSchema = z.enum(["postsConnect"])
+export type ReconnectReturnTo = z.infer<typeof reconnectReturnToSchema>
+
+/**
+ * The referer a reconnect action puts in the OAuth state: the Posts Connect tab
+ * for `returnTo`, else the channel's own settings page. The callback sanitizes
+ * the referer again before redirecting.
+ */
+export function buildReconnectReferer(input: {
+  channel: "messenger" | "instagram" | "threads"
+  origin: string
+  returnTo: ReconnectReturnTo | undefined
+  workspaceId: string
+}): string {
+  const path =
+    input.returnTo === reconnectReturnToSchema.enum.postsConnect
+      ? connectTabPath(input.workspaceId)
+      : `/space/${input.workspaceId}/settings/channels?channel=${input.channel}`
+  return new URL(path, input.origin).toString()
 }

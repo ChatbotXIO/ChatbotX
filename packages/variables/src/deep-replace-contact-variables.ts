@@ -5,7 +5,7 @@ import type {
 } from "@chatbotx.io/database/types"
 import { applySpintax, containsSpintax } from "@chatbotx.io/utils/spintax"
 import { contactVariableService } from "./contact-variable"
-import type { ReplaceVariableProps } from "./schema"
+import type { PostCommentVariableRef, ReplaceVariableProps } from "./schema"
 
 const isPlainObject = (value: unknown): value is Record<string, unknown> => {
   if (typeof value !== "object" || value === null || Array.isArray(value)) {
@@ -103,6 +103,7 @@ export const resolveContactVariablesDeep = async <T>(
     workspace?: WorkspaceModel
     appointmentId?: string
     sentByUserId?: string
+    postComment?: PostCommentVariableRef
   },
   options: ResolveContactVariablesDeepOptions = {},
 ): Promise<T> => {

@@ -31,6 +31,7 @@ import type {
 import type { CommentAnchor, MessageButtonTemplate } from "@chatbotx.io/sdk"
 import type { SendFrom } from "@chatbotx.io/utils/send-from"
 import { Queue } from "bullmq"
+import { z } from "zod"
 import {
   defaultJobOptions,
   fakeQueue,
@@ -270,6 +271,9 @@ export type ChatJobEditChannelMessage = {
   }
 }
 
+export const chatJobUsageSources = z.enum(["postCommentSetting"])
+export type ChatJobUsageSource = z.infer<typeof chatJobUsageSources>
+
 export type ChatJobChangeChannelMessageState = {
   type: typeof ChatJobAction.changeChannelMessageState
   data: {
@@ -280,8 +284,12 @@ export type ChatJobChangeChannelMessageState = {
       createdAt: Date
     }
     liked?: boolean
+    /** Order of this like among the comment's queued likes; a lower one than the latest is stale. */
+    likeSeq?: number | undefined
     hidden?: boolean
     moderation?: ChatJobCommentModeration
+    /** Set only by a per-post comment setting; only that source consumes a message. */
+    usageSource?: ChatJobUsageSource
   }
 }
 

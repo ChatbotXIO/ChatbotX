@@ -39,6 +39,23 @@ export const contactInboxPostRepository = {
     return (result.rowCount ?? 0) > 0
   },
 
+  /** When the contact inbox's first comment on the post was recorded, or null when none was. */
+  async findCommentedAt(
+    input: { contactInboxId: string; postId: string; workspaceId: string },
+    tx: DatabaseClient = db,
+  ): Promise<Date | null> {
+    const result = await tx.execute<{ commentedAt: Date | string }>(sql`
+      SELECT "commentedAt"
+      FROM "ContactInboxPost"
+      WHERE "workspaceId" = ${input.workspaceId}::bigint
+        AND "contactInboxId" = ${input.contactInboxId}::bigint
+        AND "postId" = ${input.postId}::bigint
+    `)
+
+    const commentedAt = result.rows[0]?.commentedAt
+    return commentedAt ? new Date(commentedAt) : null
+  },
+
   async lockContactsForDelete(
     input: { contactIds: string[]; workspaceId: string },
     tx: DatabaseClient,

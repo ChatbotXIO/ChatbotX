@@ -1,6 +1,8 @@
 import { createOpenAPIHandler } from "@/lib/orpc/handlers"
 import { publicRouter } from "@/routers/public"
 import "@/polyfill"
+import "@/lib/feeds/register-feed-fetcher"
+import "@/lib/media/register-media-url-importer"
 
 // Runtime boundary intentionally matches the spec boundary: this handler
 // only ever serves `publicRouter` (workspace-token / channel-token auth),

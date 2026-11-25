@@ -15,6 +15,7 @@ import {
   LightbulbIcon,
   type LucideIcon,
   MessageCircleMoreIcon,
+  NewspaperIcon,
   PhoneCallIcon,
   RadioIcon,
   SlidersHorizontalIcon,
@@ -162,6 +163,12 @@ export function AppSidebar({
         url: `/space/${workspaceId}/webhooks`,
         icon: WebhookIcon,
         permission: "superAdmin",
+      },
+      {
+        title: t("posts.title"),
+        url: `/space/${workspaceId}/posts`,
+        icon: NewspaperIcon,
+        permission: PERMISSION_NAV.posts,
       },
       {
         title: t("tools.title"),

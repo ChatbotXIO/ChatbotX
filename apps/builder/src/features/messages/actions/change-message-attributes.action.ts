@@ -1,6 +1,10 @@
 "use server"
 
-import { contactInboxService, conversationService } from "@chatbotx.io/business"
+import {
+  commentLikeFence,
+  contactInboxService,
+  conversationService,
+} from "@chatbotx.io/business"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
 import { createMessageRepository } from "@chatbotx.io/database/repositories"
 import { zodBigintAsString } from "@chatbotx.io/utils"
@@ -40,6 +44,13 @@ export const changeMessageAttributes = async (props: {
     throw new ChatbotXException("Inbox not found")
   }
 
+  // Same fence as the Posts and automation producers, so a queued older
+  // like cannot land after this like/unlike.
+  const likeSeq =
+    liked === undefined
+      ? undefined
+      : await commentLikeFence.next({ commentId: messageId, workspaceId })
+
   await Promise.allSettled([
     chatQueue.add(ChatJobAction.changeChannelMessageState, {
       type: ChatJobAction.changeChannelMessageState,
@@ -48,6 +59,7 @@ export const changeMessageAttributes = async (props: {
         contactInbox,
         message: { id: messageId, createdAt: message.createdAt },
         liked,
+        likeSeq,
         hidden,
       },
     }),

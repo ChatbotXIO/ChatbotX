@@ -39,6 +39,7 @@ const Text = ({
   <PlainTextEditorField
     // The step's own texts interpolate `{{pipelines.*}}` too (flow-actions.ts).
     includePipelineVariables
+    includePostCommentVariables
     inline={!multiline}
     label={label}
     name={`${parentName}.${field}`}

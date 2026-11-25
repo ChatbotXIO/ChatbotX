@@ -225,8 +225,65 @@ chatbotx contacts ad-referrals <identifier>           # Ads the contact came fro
 chatbotx contacts broadcasts list <identifier>        # Broadcasts sent to the contact, newest first [--perPage --cursor --search]
 
 # Discover IDs accepted by contactFilter.commentedOnPost
-chatbotx channel-posts list                           # [--limit --search --cursor]
+chatbotx channel-posts list                           # [--limit --search --inboxId --cursor]
 chatbotx channel-posts options-by-ids --ids <ids>     # Resolve saved-filter post labels
+chatbotx channel-posts list-managed                    # [--channels --inboxIds --authorIds --contentTypes --liveStatus --topicIds --publishedFrom --publishedTo --search --hasComments --sort --limit --cursor] scope `posts`
+chatbotx channel-posts get-managed <id>
+chatbotx channel-posts update-managed <id>              # --topicIds replaces the post's topics
+chatbotx channel-posts bulk-update-managed --ids <ids>  # [--addTopicIds --removeTopicIds], up to 100 posts, all or nothing
+chatbotx channel-posts refresh-managed <id>             # Re-read one post from its channel in the background
+chatbotx channel-posts get-metrics <id>                 # [--from --to] Daily cumulative total and signed gain of one post (local days, default last 30, at most 366); null = never reported; scope `posts`
+chatbotx post-analytics summary                         # [--channels --inboxIds --destinationIds --contentTypes --topicIds --from --to] Gains per metric vs the previous period, posts published, `coverage`
+chatbotx post-analytics timeseries                      # [same filters --metric --groupBy none|channel|inbox] Daily gain per local day
+chatbotx post-analytics top-posts                       # [same filters --metric --rankBy gained|total --limit] Up to 50 posts
+chatbotx post-analytics best-times                      # [--channels --inboxIds --destinationIds --contentTypes --topicIds] Weekday x hour slots; `insufficientData` below 3 posts per slot / 20 overall
+chatbotx social-posts get-metrics <id>                         # [--from --to] Metrics per destination of a composed post
+chatbotx channel-posts list-authors                   # [--channels --inboxIds] Up to 100 post authors with post counts; pass an id as `list-managed --authorIds`
+chatbotx channel-posts list-comments <id>             # [--search --hasPhone --limit --cursor] Comments of one post, newest first
+chatbotx channel-posts merge-comments --postIds <ids> # [--search --hasPhone --limit --cursor] Comments of up to 20 posts as one list
+chatbotx channel-posts like-comment <id> <commentId> --createdAt <iso> --liked true|false   # Not on Instagram or Threads (409)
+chatbotx channel-posts delete-comment <id> <commentId> --createdAt <iso>                    # Not on Threads (409); cannot be undone
+chatbotx channel-posts export-comments --postIds <ids> --kind comments|phones   # Returns the CSV in the response; 20000-comment cap (`truncated`)
+chatbotx channel-posts export-comments --kind rows [--filters '{"channels":["messenger"],"sort":"newest"}']   # The post list itself, one row per post; 5000-post cap
+chatbotx channel-posts sync                             # [--inboxIds] Start syncing posts from the channels; first run loads history
+chatbotx channel-posts sync-status                      # [--inboxIds] Where each inbox's post sync stands, last error, re-authorise hint
+chatbotx post-topics list|create|update|delete          # Topics that group posts; scope `posts`
+chatbotx post-snippets list|create|get|update|delete     # Reusable post text (kind signature, hashtags, text), up to 100; scope `posts`; give a signature id as `signatureId` to `social-posts create` to append it once to the new post's text
+chatbotx post-target-sets list|create|get|update|delete # Saved selections of 1-30 destinations, up to 50, each with its current state (ready, needsReconnect, permissionMissing, inboxDisconnected); scope `posts`
+chatbotx social-posts write-with-ai --body '{"mode":"write","brief":"Announce our weekend sale","idempotencyKey":"sale-draft-1","destinationIds":["123"],"hashtags":true,"emoji":true,"variants":2}'   # Suggested post text, nothing saved or published; modes write, rewrite, shorten, expand, tone, fit, hashtags (only hashtags); the result has `variants` (1 to 3 options, or one per network with `"perNetwork":true` and `providers`/`destinationIds` on two networks), `hashtags` and `text` (= first variant); options hashtags, emoji, callToAction + callToActionText (up to 80 characters); pass `integrationId` + `model` (provider name such as `openai`, or an OpenAI-compatible integration id) to pick the AI model, else the one chosen for Inbox translation is used, else 409 `aiModelNotChosen`; idempotencyKey required (replayed 10 min); 30/min and 500/day per workspace; one paid model call
+chatbotx social-posts create --body '{"text":"Sale starts today","targets":[{"destinationId":"123"}],"idempotencyKey":"sale-1"}'   # Create a draft (publish at once with `"publish":"now"`, or schedule with `"scheduledAt"` / `"queue":"next"`; `"plannedAt"` only remembers a time on the draft for the calendar, nothing is scheduled) for one or more destinations (a target gives either `destinationId` from `post-destinations list` or an `inboxId`); scope `posts`; `idempotencyKey` makes it safe to repeat
+chatbotx social-posts list                           # Composed posts, newest first (filters: providers, destinationIds, inboxIds, statuses, bucket, topicIds, from, to, search)
+chatbotx social-posts counts                         # [--providers --destinationIds --inboxIds] How many posts each state holds: drafts, scheduled, published, needsAttention, all; `list --bucket <state>` returns exactly those posts
+chatbotx social-posts get <id>
+chatbotx social-posts update <id> --body '{"text":"New text"}'   # Draft or scheduled posts only; `targets` replaces the destinations
+chatbotx social-posts delete <id>                    # Deletes a draft; cancels a scheduled post (waiting destinations become cancelled, queue times freed). With `--removeFromChannels true` it instead takes the published destinations down from their networks (Facebook, Threads; Instagram has no delete and answers `unsupported`): per destination `queued` / `removed` / `unsupported` / `notPublished`, repeat-safe, refused (402) when the plan expired; `removedAt` or the destination error tells the result
+chatbotx social-posts reschedule <id> --body '{"scheduledAt":"2026-12-01T09:00:00+07:00"}'   # Move waiting destinations (`targetId` for one): `scheduledAt` (ISO 8601 with offset, 2 min to 1 year ahead, optional `timezone`) | `queue` ("next" | "top") | `timezone` alone | `unschedule: true` (back to a draft); all or nothing, 409 when a destination is about to publish
+chatbotx post-destinations list                          # Where a post can go: connected Facebook Page, Instagram and Threads inboxes (published with the inbox's own token) and TikTok accounts, grouped by network with `state` (ready | needsReconnect | permissionMissing | inboxDisconnected) and missing permissions (filters: providers, states); scope `posts`; a reconnect is done by a person in the app
+chatbotx post-destinations get <id>
+chatbotx post-destinations posting-schedule get <id>      # Weekly posting times (the queue) of a destination
+chatbotx post-destinations posting-schedule update <id> --body '{"timezone":"Asia/Ho_Chi_Minh","slots":[...7 days...]}'   # Replace the times and re-seat the queue (all or nothing); reports moved and detached posts
+chatbotx post-destinations publishing-settings get <id>   # TikTok: the creator's nickname, allowed privacy levels, disabled interactions and longest video (read live; `options.privacyLevel` must be one of them)
+chatbotx post-destinations free-slots list <id> --limit 5  # The next free posting times (what `queue: "next"` would take)
+chatbotx social-posts duplicate <id>                 # A new draft with the same content, destinations, files and topics
+chatbotx social-posts set-recurrence <id> --body '{"rule":{"frequency":"weekly","interval":1,"weekdays":[1],"timeOfDay":"09:00","timezone":"Asia/Ho_Chi_Minh","startsOn":"2026-12-01","end":{"kind":"never"}}}'   # Make a draft repeat: it becomes a template (never published itself) and a copy is scheduled at each run; or pass `recurrence` to `create`
+chatbotx social-posts list-occurrences <id>          # [--limit --cursor] The runs of the series newest first: created (post id + status) | excluded | missed | skipped
+chatbotx social-posts skip-occurrences <id> --body '{"dates":["2026-12-25"]}'      # Skip runs on local dates (`recurrence.upcoming[].date` of `get`) without pausing; undo with restore-occurrences
+chatbotx social-posts restore-occurrences <id> --body '{"dates":["2026-12-25"]}'
+chatbotx social-posts pause-recurrence <id>          # Stop making copies until resumed (runs during the pause are not made up); allowed when the plan expired
+chatbotx social-posts resume-recurrence <id>
+chatbotx social-posts end-recurrence <id>            # End the series for good; the copies already made stay
+chatbotx social-posts publish <id>                 # Publish a draft now on every destination (each target goes pending, then published | failed | needsReview; poll `get`)
+chatbotx social-posts retry-target <id> <targetId>  # Publish one failed or needsReview destination again; when its first post is out, resumes at the first part not published (optional `partId`), never reposting the head
+chatbotx social-posts resolve-target <id> <targetId> --body '{"outcome":"published"}'   # Settle a needsReview destination: "published" (you saw it on the network) or "retry"; with parts it acts on the first part not published (`partId` optional)
+# Threads destinations take `parts` and `firstComment` in `create`/`update` targets, e.g. {"destinationId":"123","parts":[{"text":"2/"},{"text":"3/"}],"firstComment":{"text":"Link: ..."}}; `content-types` lists which networks support them
+chatbotx social-posts validate --body '{...}'        # Every issue per destination (text length, files, formats, account status) without saving
+chatbotx social-posts preview --body '{...}'         # The normalised content per destination with character counts and issues
+chatbotx social-posts content-types                  # What each network accepts: types, file limits, text limit, settings, daily limit
+chatbotx social-accounts list                          # TikTok accounts connected for publishing with destinations, status, missing permissions (Facebook, Instagram and Threads publish with their inbox token: see `post-destinations list`); scope `posts`; connecting is done by a super admin in the app (a browser login)
+chatbotx social-accounts get <id>
+chatbotx social-accounts verify <id>                   # Prove the stored token still works; a rejected token sets `needsReauth`
+chatbotx social-accounts sync-destinations <id>        # Re-read a TikTok login's destinations from the platform
+chatbotx social-accounts disconnect <id>               # Remove a TikTok publishing login and its stored tokens
 
 # Imports & exports
 chatbotx contacts import-template                    # CSV template as text [--language]
@@ -580,7 +637,10 @@ chatbotx triggers update <id> --conditions <conditions> --actions <actions>
                                                      # Action `type`s include setCustomField (O01–O12), startExternalStep (flowId + nodeId from `flows nodes`),
                                                      # pipeline (the Pipelines flow-step actions), and addSequence / removeSequence (sequenceIds from `sequences list`, max 50;
                                                      # they fire no sequence triggers/webhooks); a NEW action that points at a missing record is rejected.
-                                                     # One trigger runs at most about 20 times per contact per minute (fixed window); further runs are skipped
+                                                     # One trigger runs at most about 20 times per contact per minute (fixed window); further runs are skipped.
+                                                     # Condition `type`s contactCommentedOnPost / contactFirstCommentedOnPost fire on a Messenger or Instagram post comment (every / the contact's first on that post);
+                                                     # optional `sourceId` (inbox, from `inboxes list`) and `value` {scope: any|selected|publishedFromPosts, channelPostIds} (ids from `channel-posts list`).
+                                                     # Those runs render {{post.link}} {{post.text}} {{post.published_at}} {{post.page_name}} {{post.id}} {{comment.text}} {{comment.id}} in their actions and flows
 chatbotx triggers settings update <id>               # [--name --active]  name/active only, conditions untouched
 chatbotx triggers delete <id>
 ```

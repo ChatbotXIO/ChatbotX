@@ -25,4 +25,13 @@ export const IDEMPOTENCY_EXEMPT_READ_PATHS: ReadonlySet<string> = new Set([
   // A one-time handoff code must not replay a prior browser sign-in URL.
   "/v1/me/web-handoff",
   "/v1/templates/locked-resources",
+  // Read-only: the comments of several posts take their ids in the body, and
+  // the export builds a file from the comments as they are now; a replay would
+  // hand back comments that were since added, hidden or deleted.
+  "/v1/channel-posts/management/merge-view",
+  "/v1/channel-posts/management/export",
+  // Dry runs of a post: nothing is written, and the verdict follows the
+  // account's current status and the workspace's files, so a replay would go stale.
+  "/v1/posts/validate",
+  "/v1/posts/preview",
 ])

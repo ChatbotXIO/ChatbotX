@@ -22,6 +22,7 @@ export const RealtimeEventType = {
   whatsappCallPermissionUpdated: "whatsappCallPermissionUpdated",
   contactInboxThreadControlUpdated: "contactInboxThreadControlUpdated",
   pipelineItemChanged: "pipelineItemChanged",
+  socialPostChanged: "socialPostChanged",
 } as const
 
 type RealtimeEventTypeValue =
@@ -51,6 +52,7 @@ export const EVENT_DELIVERY = {
   [RealtimeEventType.whatsappCallPermissionUpdated]: "conversation",
   [RealtimeEventType.contactInboxThreadControlUpdated]: "workspace",
   [RealtimeEventType.pipelineItemChanged]: "workspace",
+  [RealtimeEventType.socialPostChanged]: "workspace",
 } as const satisfies Record<RealtimeEventTypeValue, RealtimeEventDelivery>
 
 const guestRealtimeEventTypes = new Set<RealtimeEventTypeValue>([
@@ -539,6 +541,25 @@ export type RealtimeEventPipelineItemChanged = {
 }
 
 /**
+ * A composed post (or one of its targets) changed: created, edited, scheduled,
+ * cancelled, deleted, retried, resolved or settled by the publisher. Carries ids
+ * and a status only (never content), so the client refetches through its
+ * authorised read. `targetId` is omitted when the change is to the whole post;
+ * `status` is then the post's status, else the target's.
+ */
+export const socialPostChangedSchema = z.object({
+  socialPostId: z.string(),
+  targetId: z.string().optional(),
+  status: z.string(),
+})
+export type SocialPostChangedData = z.infer<typeof socialPostChangedSchema>
+
+export type RealtimeEventSocialPostChanged = {
+  eventType: typeof RealtimeEventType.socialPostChanged
+  data: SocialPostChangedData
+}
+
+/**
  * Inbox translation results for a conversation. Member-only: it is NOT in
  * `guestRealtimeEventTypes`, because an outgoing message's `displayText` is the
  * agent's original sentence and must never reach the customer.
@@ -593,6 +614,7 @@ type AllRealtimeEventData =
   | RealtimeEventWhatsappCallPermissionUpdated
   | RealtimeEventContactInboxThreadControlUpdated
   | RealtimeEventPipelineItemChanged
+  | RealtimeEventSocialPostChanged
 
 type RealtimeConversationScopedEventData = Extract<
   AllRealtimeEventData,

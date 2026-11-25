@@ -24,6 +24,8 @@ export type ConditionReferenceKind =
   | "productCategory"
   | "pipeline"
   | "pipelineStage"
+  | "inbox"
+  | "channelPost"
 
 const PIPELINE_EVENT_TYPES = [
   "pipelineItemCreated",
@@ -39,6 +41,11 @@ const PRODUCT_EVENT_TYPES = [
   "productOrdered",
   "productAddedToCart",
   "productRemovedFromCart",
+] as const satisfies readonly TriggerEventType[]
+
+const POST_COMMENT_EVENT_TYPES = [
+  "contactCommentedOnPost",
+  "contactFirstCommentedOnPost",
 ] as const satisfies readonly TriggerEventType[]
 
 const kindForEvents = (
@@ -67,6 +74,8 @@ const SOURCE_KIND_BY_EVENT_TYPE: Readonly<
   ...kindForEvents("product", PRODUCT_EVENT_TYPES),
   ...kindForEvents("productCategory", ["categoryAddedToCart"]),
   ...kindForEvents("pipeline", PIPELINE_EVENT_TYPES),
+  // A post-comment condition pins a page or account of the source workspace.
+  ...kindForEvents("inbox", POST_COMMENT_EVENT_TYPES),
 ])
 
 const stageIdOf = (row: TriggerConditionRow): string | null => {
@@ -79,6 +88,27 @@ const stageIdOf = (row: TriggerConditionRow): string | null => {
   }
   const { stageId } = value as { stageId?: unknown }
   return typeof stageId === "string" && stageId !== "" ? stageId : null
+}
+
+/**
+ * The stored posts a post-comment condition names in `value.channelPostIds`.
+ * Posts belong to a channel of the source workspace and never travel in a
+ * template, so a row that names one cannot be installed as it is.
+ */
+const channelPostIdsOf = (row: TriggerConditionRow): string[] => {
+  if (!(POST_COMMENT_EVENT_TYPES as readonly string[]).includes(row.type)) {
+    return []
+  }
+  const { value } = row
+  if (typeof value !== "object" || value === null) {
+    return []
+  }
+  const { channelPostIds } = value as { channelPostIds?: unknown }
+  return Array.isArray(channelPostIds)
+    ? channelPostIds.filter(
+        (id): id is string => typeof id === "string" && id !== "",
+      )
+    : []
 }
 
 const sourceKindOf = (
@@ -105,6 +135,11 @@ const referencesOf = (
   const stageId = stageIdOf(row)
   if (usable(stageId)) {
     references.push({ kind: "pipelineStage", id: stageId })
+  }
+  for (const postId of channelPostIdsOf(row)) {
+    if (usable(postId)) {
+      references.push({ kind: "channelPost", id: postId })
+    }
   }
   return references
 }
@@ -152,6 +187,23 @@ const withStageId = (
   value: { ...(row.value as Record<string, unknown>), stageId },
 })
 
+const withMappedChannelPostId = (
+  row: TriggerConditionRow,
+  fromId: string,
+  toId: string,
+): TriggerConditionRow => {
+  const value = row.value as { channelPostIds: string[] }
+  return {
+    ...row,
+    value: {
+      ...value,
+      channelPostIds: value.channelPostIds.map((id) =>
+        id === fromId ? toId : id,
+      ),
+    },
+  }
+}
+
 export type RemapConditionsResult = {
   conditions: TriggerConditionRow[]
   /** Rows left out because something they name did not make it to this workspace. */
@@ -178,10 +230,13 @@ export const remapTriggerConditions = (
         dropped.push({ index, kind, id })
         return
       }
-      next =
-        kind === "pipelineStage"
-          ? withStageId(next, target)
-          : { ...next, sourceId: target }
+      if (kind === "channelPost") {
+        next = withMappedChannelPostId(next, id, target)
+      } else if (kind === "pipelineStage") {
+        next = withStageId(next, target)
+      } else {
+        next = { ...next, sourceId: target }
+      }
     }
     conditions.push(next)
   })

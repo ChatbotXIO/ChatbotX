@@ -22,7 +22,16 @@ import {
   isPipelineVariable,
   resolvePipelineVariable,
 } from "./pipeline-variable"
-import type { ContactCustomFieldValue, ReplaceVariableProps } from "./schema"
+import {
+  createPostCommentLoader,
+  isPostCommentVariable,
+  resolvePostCommentVariable,
+} from "./post-comment-variable"
+import type {
+  ContactCustomFieldValue,
+  PostCommentVariableRef,
+  ReplaceVariableProps,
+} from "./schema"
 import {
   extractVariables,
   getContactTimezone,
@@ -111,12 +120,21 @@ const pipelineResolver: VariableResolver = {
     await resolvePipelineVariable(context, variable, timezone),
 }
 
+// Run-scoped: a post-comment trigger run (or a flow it started) carries the
+// comment; everywhere else these render empty, never a "latest post".
+const postCommentResolver: VariableResolver = {
+  matches: (variable) => isPostCommentVariable(variable),
+  resolve: async (variable, context, timezone) =>
+    await resolvePostCommentVariable(context, variable, timezone),
+}
+
 const variableResolvers = [
   systemFieldResolver,
   rawCustomFieldResolver,
   botFieldResolver,
   customFieldResolver,
   pipelineResolver,
+  postCommentResolver,
   couponResolver,
 ] as const satisfies readonly VariableResolver[]
 
@@ -127,6 +145,8 @@ type GetAllProps = {
   conversation?: ConversationModel | null
   appointmentId?: string
   sentByUserId?: string
+  /** The comment a post-comment trigger run is about, for `{{post.*}}` / `{{comment.*}}`. */
+  postComment?: PostCommentVariableRef
   workspace?: WorkspaceModel
 }
 
@@ -218,6 +238,14 @@ export const contactVariableService = {
       botFieldsMap,
       workspace,
       pipelineItems: createContactPipelineItemsLoader(contact),
+      ...(input.postComment
+        ? {
+            postComment: createPostCommentLoader(
+              contact.workspaceId,
+              input.postComment,
+            ),
+          }
+        : {}),
     }
   },
 

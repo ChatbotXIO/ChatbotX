@@ -45,6 +45,7 @@ export const CLAUDE_READ_TOOLS = [
   "mini_apps_list",
   "pipelines_list",
   "pipelines_list_items",
+  "post_analytics_summary",
   "schemas_flow_spec",
   "sequences_get",
   "sequences_list",

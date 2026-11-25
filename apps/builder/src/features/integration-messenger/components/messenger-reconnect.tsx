@@ -19,7 +19,12 @@ export function MessengerReconnect({
 
   // No onSuccess: the action ends in a redirect to the Facebook OAuth dialog.
   const { execute, isPending } = useAction(
-    reconnectMessengerAction.bind(null, workspaceId, integrationMessenger.id),
+    reconnectMessengerAction.bind(
+      null,
+      workspaceId,
+      integrationMessenger.id,
+      undefined,
+    ),
     {
       onError: ({ error }) => {
         if (error.serverError) {

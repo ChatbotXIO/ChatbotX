@@ -7,6 +7,7 @@ import {
   realtimeCallTransportIncomingSchema,
   realtimeCallTransportOutboundAnswerVoipSchema,
   realtimeCallTransportOutboundStatusVoipSchema,
+  socialPostChangedSchema,
   whatsappCallClaimedElsewhereSchema,
   whatsappCallPermissionUpdatedSchema,
 } from "@chatbotx.io/realtime-protocol"
@@ -38,6 +39,7 @@ export const REALTIME_EVENT_SCHEMAS: {
   [RealtimeEventType.contactInboxThreadControlUpdated]:
     contactInboxThreadControlUpdatedSchema,
   [RealtimeEventType.pipelineItemChanged]: pipelineItemChangedSchema,
+  [RealtimeEventType.socialPostChanged]: socialPostChangedSchema,
   [RealtimeEventType.messageTranslationUpdated]:
     messageTranslationUpdatedSchema,
 }
