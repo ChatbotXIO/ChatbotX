@@ -589,6 +589,24 @@ describe("x-mcp policy classifications", () => {
     })
   })
 
+  // OpenAI review: destructiveHint is true for anything that overwrites or
+  // clears existing data, even when it can be undone. These replace the
+  // current assignee, stage or field value; the approval step is unchanged.
+  test.each([
+    "conversations.assign",
+    "pipelines.moveItem",
+    "contacts.setCustomField",
+  ])("marks %s, which overwrites current state, as destructive", (operationId) => {
+    const operation = operations.find(
+      (candidate) => candidate.operationId === operationId,
+    )
+    expect(operation?.["x-mcp"]).toMatchObject({
+      readOnlyHint: false,
+      destructiveHint: true,
+    })
+    expect(operation?.["x-mcp"]?.hitlPolicy).toBe("confirm_diff")
+  })
+
   test("marks every DELETE operation as destructive", () => {
     const nonDestructiveDeletes = operations
       .filter(isWorkspaceTokenOperation)
