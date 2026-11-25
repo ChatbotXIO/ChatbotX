@@ -4,7 +4,7 @@ import {
   BOOLEAN_TRUTHY_LITERALS,
   canonicalBooleanLiteral,
 } from "@chatbotx.io/utils/custom-field"
-import { relationsFilterToSQL, type SQL } from "drizzle-orm"
+import type { SQL } from "drizzle-orm"
 import { alias, PgDialect } from "drizzle-orm/pg-core"
 import { describe, expect, test } from "vitest"
 import { operatorTypes } from "../src/partials"
@@ -20,6 +20,7 @@ import {
   pruneEmailPhoneFilterConditions,
 } from "../src/queries/contact-filter"
 import { isValidDateTimeFilterValue } from "../src/queries/contact-filter/value-format"
+import { relationsFilterToSQL } from "../src/relations-filter"
 import { contactInboxModel, contactModel } from "../src/schema"
 import { escapeLikePattern, likeContains } from "../src/utils"
 

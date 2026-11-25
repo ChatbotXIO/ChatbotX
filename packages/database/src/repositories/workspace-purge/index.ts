@@ -35,7 +35,7 @@ const deleteWorkspaceRowsBatch = async (
   tx: DatabaseClient = db,
 ): Promise<number> => {
   const tableSql = quotedTable(table)
-  const result = await tx.execute(sql`
+  const result = await tx.execute<Record<string, unknown>>(sql`
     DELETE FROM ${tableSql}
     WHERE "ctid" = ANY(ARRAY(
       SELECT "ctid"
@@ -53,7 +53,7 @@ const hasWorkspaceRows = async (
   workspaceId: string,
   tx: DatabaseClient = db,
 ): Promise<boolean> => {
-  const result = await tx.execute(sql`
+  const result = await tx.execute<Record<string, unknown>>(sql`
     SELECT 1
     FROM ${quotedTable(table)}
     WHERE "workspaceId" = ${workspaceId}
@@ -90,7 +90,7 @@ const deletePartitionedBatch = async (
       sql`, `,
     )
   if (spec.selector === "broadcastWorkspace") {
-    const result = await tx.execute(sql`
+    const result = await tx.execute<Record<string, unknown>>(sql`
       DELETE FROM ${table}
       WHERE (${columns}) IN (
         SELECT ${aliased("recipient")}
@@ -111,7 +111,7 @@ const deletePartitionedBatch = async (
     // evaluates the limited, locking subquery once; an `IN (...)` semi-join may
     // re-run it and delete more than `limit` rows. Partitioned tables cannot use
     // `ctid` (it is per partition), so they delete by primary-key tuple below.
-    const result = await tx.execute(sql`
+    const result = await tx.execute<Record<string, unknown>>(sql`
       DELETE FROM ${table}
       WHERE "ctid" = ANY(ARRAY(
         SELECT child."ctid"
@@ -125,7 +125,7 @@ const deletePartitionedBatch = async (
     `)
     return result.rowCount ?? 0
   }
-  const result = await tx.execute(sql`
+  const result = await tx.execute<Record<string, unknown>>(sql`
     DELETE FROM ${table}
     WHERE (${columns}) IN (
       SELECT ${columns}
@@ -144,7 +144,7 @@ const hasPartitionedWorkspaceRows = async (
   tx: DatabaseClient = db,
 ): Promise<boolean> => {
   if (spec.selector === "broadcastWorkspace") {
-    const result = await tx.execute(sql`
+    const result = await tx.execute<Record<string, unknown>>(sql`
       SELECT 1
       FROM "ContactOnBroadcast" AS recipient
       INNER JOIN "Broadcast" AS broadcast
@@ -156,7 +156,7 @@ const hasPartitionedWorkspaceRows = async (
   }
   const parent = joinedParent(spec)
   if (parent) {
-    const result = await tx.execute(sql`
+    const result = await tx.execute<Record<string, unknown>>(sql`
       SELECT 1
       FROM ${quotedTable(spec.table)} AS child
       INNER JOIN ${quotedTable(parent.table)} AS parent
@@ -166,7 +166,7 @@ const hasPartitionedWorkspaceRows = async (
     `)
     return result.rows.length > 0
   }
-  const result = await tx.execute(sql`
+  const result = await tx.execute<Record<string, unknown>>(sql`
     SELECT 1
     FROM ${quotedTable(spec.table)}
     WHERE "workspaceId" = ${workspaceId}
@@ -199,7 +199,7 @@ const deleteAnalyticsSlice = async (
   tx: DatabaseClient = db,
 ): Promise<number> => {
   await liftDecompressionLimit(tx)
-  const result = await tx.execute(sql`
+  const result = await tx.execute<Record<string, unknown>>(sql`
     DELETE FROM ${quotedTable(table)}
     WHERE "workspaceId" = ${workspaceId}
       AND "occurredAt" >= ${from}

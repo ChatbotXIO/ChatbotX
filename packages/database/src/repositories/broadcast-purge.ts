@@ -166,7 +166,7 @@ export async function purgeBroadcastRecipients(input: {
   return await runChunkedPurge(
     { chunkSize, interChunkDelayMs, maxChunks, maxRunDurationMs },
     async (tx) => {
-      const result = await tx.execute(sql`
+      const result = await tx.execute<Record<string, unknown>>(sql`
     DELETE FROM "ContactOnBroadcast"
     WHERE ("broadcastId", "contactId") IN (
       SELECT "broadcastId", "contactId" FROM "ContactOnBroadcast"
@@ -191,7 +191,7 @@ export async function purgeBroadcastRecipients(input: {
 export async function hasBroadcastRecipients(
   broadcastId: string,
 ): Promise<boolean> {
-  const result = await db.execute(sql`
+  const result = await db.execute<Record<string, unknown>>(sql`
     SELECT 1 FROM "ContactOnBroadcast" WHERE "broadcastId" = ${broadcastId} LIMIT 1
   `)
 

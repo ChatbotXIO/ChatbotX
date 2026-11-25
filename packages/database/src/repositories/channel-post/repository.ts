@@ -408,7 +408,7 @@ export const channelPostRepository = {
     },
     tx: DatabaseClient = db,
   ): Promise<boolean> {
-    const result = await tx.execute(sql`
+    const result = await tx.execute<Record<string, unknown>>(sql`
       UPDATE "ChannelPost"
       SET
         "integrationId" = ${input.integrationId}::bigint,
@@ -438,7 +438,7 @@ export const channelPostRepository = {
     // `maxRetryAgeMs` stops being retried, so a deleted/inaccessible post can
     // no longer spend the inline fetch budget on every future comment. The
     // bare row remains usable (the picker falls back to the external id).
-    const result = await tx.execute(sql`
+    const result = await tx.execute<Record<string, unknown>>(sql`
       UPDATE "ChannelPost"
       SET "metadataAttemptedAt" = NOW(), "updatedAt" = NOW()
       WHERE "id" = ${input.id}::bigint

@@ -88,7 +88,7 @@ export const makeAuthStoreForTable = <TAuth extends AuthValue = AuthValue>(
       return result.rows[0].auth
     },
     save: async (auth: TAuth) => {
-      const result = await db.execute(
+      const result = await db.execute<Record<string, unknown>>(
         sql`UPDATE ${sql.identifier(tableName)} SET auth = ${JSON.stringify(auth)}::jsonb WHERE "id" = ${integration.id}`,
       )
       if (result.rowCount === 0) {

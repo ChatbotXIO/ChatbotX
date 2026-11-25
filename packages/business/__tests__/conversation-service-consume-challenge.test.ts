@@ -111,10 +111,10 @@ function collectSqlText(node: unknown): string {
     }
     const obj = n as Record<string, unknown>
     if (
-      Array.isArray(obj.value) &&
-      obj.value.every((v) => typeof v === "string")
+      n.constructor?.name === "StringChunk" &&
+      typeof obj.value === "string"
     ) {
-      out.push(...(obj.value as string[]))
+      out.push(obj.value)
     }
   })
   return out.join("")

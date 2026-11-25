@@ -7,7 +7,7 @@
  * `snapshot.json` therefore leaves the chain tip describing a schema that no
  * longer matches the code: the very next `make:migration` re-emits the already
  * applied DDL, and it fails against any database that ran it ("column already
- * exists"). `db:fix-chain` cannot catch this — it skips snapshot-less folders.
+ * exists"). `drizzle-kit check` cannot catch this — it only compares snapshots.
  *
  * The probe is the generator itself, so there are no false positives: when the
  * chain is in sync drizzle-kit writes nothing at all. Any folder it does write

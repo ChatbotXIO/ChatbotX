@@ -272,7 +272,7 @@ const deleteChildBatch = async (
         sql`, `,
       )
     : sql`ctid`
-  const result = await tx.execute(
+  const result = await tx.execute<Record<string, unknown>>(
     sql`DELETE FROM ${table} WHERE (${key}) IN (
           SELECT ${key} FROM ${table}
           WHERE ${input.workspaceScoped === false ? sql`TRUE` : sql`"workspaceId" = ${input.workspaceId}::bigint`}
@@ -300,7 +300,7 @@ const softDeleteChildBatch = async (
     input.parentIds.map((id) => sql`${id}::bigint`),
     sql`, `,
   )
-  const result = await tx.execute(
+  const result = await tx.execute<Record<string, unknown>>(
     sql`UPDATE ${table} SET "deletedAt" = now() WHERE ctid IN (
           SELECT ctid FROM ${table}
           WHERE "workspaceId" = ${input.workspaceId}::bigint
@@ -323,7 +323,7 @@ export const cancelOpenSubmissionBatch = async (
     input.questionnaireIds.map((id) => sql`${id}::bigint`),
     sql`, `,
   )
-  const result = await tx.execute(
+  const result = await tx.execute<Record<string, unknown>>(
     sql`UPDATE "QuestionnaireSubmission"
         SET "status" = 'cancelled', "cancelledAt" = now(),
             "currentQuestionId" = NULL, "currentQuestionSentAt" = NULL

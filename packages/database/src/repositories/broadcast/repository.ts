@@ -194,7 +194,7 @@ export const broadcastRepository = {
         )`
       : sql``
 
-    const locked = await tx.execute(sql`
+    const locked = await tx.execute<Record<string, unknown>>(sql`
       SELECT b."id"
       FROM "Broadcast" b
       WHERE b."id" = ${input.broadcastId}::bigint

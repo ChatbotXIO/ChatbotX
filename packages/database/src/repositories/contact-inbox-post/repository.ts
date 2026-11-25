@@ -14,7 +14,7 @@ export const contactInboxPostRepository = {
     },
     tx: DatabaseClient,
   ): Promise<boolean> {
-    const result = await tx.execute(sql`
+    const result = await tx.execute<Record<string, unknown>>(sql`
       INSERT INTO "ContactInboxPost"
         ("workspaceId", "contactInboxId", "postId", "commentedAt")
       SELECT ${input.workspaceId}::bigint, ci."id", ${input.postId}::bigint, ${input.commentedAt}::timestamptz
@@ -108,7 +108,7 @@ export const contactInboxPostRepository = {
       return 0
     }
 
-    const result = await tx.execute(sql`
+    const result = await tx.execute<Record<string, unknown>>(sql`
       DELETE FROM "ContactInboxPost"
       WHERE "workspaceId" = ${input.workspaceId}::bigint
         AND "contactInboxId" = ANY(${asBigintArray(contactInboxIds)})
@@ -121,7 +121,7 @@ export const contactInboxPostRepository = {
     limit: number
     workspaceId: string
   }): Promise<number> {
-    const result = await db.execute(sql`
+    const result = await db.execute<Record<string, unknown>>(sql`
       DELETE FROM "ContactInboxPost"
       WHERE "workspaceId" = ${input.workspaceId}::bigint
         AND ("workspaceId", "contactInboxId", "postId") IN (
@@ -137,7 +137,7 @@ export const contactInboxPostRepository = {
   },
 
   async hasWorkspaceRows(input: { workspaceId: string }): Promise<boolean> {
-    const result = await db.execute(sql`
+    const result = await db.execute<Record<string, unknown>>(sql`
       SELECT 1
       FROM "ContactInboxPost"
       WHERE "workspaceId" = ${input.workspaceId}::bigint
