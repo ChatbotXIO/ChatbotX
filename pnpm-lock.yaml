@@ -73,8 +73,8 @@ catalogs:
       specifier: ^2.0.3
       version: 2.0.3
     imapflow:
-      specifier: ^2.11.0
-      version: 2.11.0
+      specifier: ^2.12.2
+      version: 2.12.2
     ioredis:
       specifier: 5.10.1
       version: 5.10.1
@@ -91,8 +91,8 @@ catalogs:
       specifier: ^1.17.0
       version: 1.17.0
     mailparser:
-      specifier: ^3.9.8
-      version: 3.9.9
+      specifier: ^3.15.0
+      version: 3.15.0
     mime-types:
       specifier: ^3.0.2
       version: 3.0.2
@@ -1041,7 +1041,7 @@ importers:
         version: 0.18.12
       mailparser:
         specifier: 'catalog:'
-        version: 3.9.9
+        version: 3.15.0
       mammoth:
         specifier: ^1.12.0
         version: 1.12.0
@@ -1086,8 +1086,8 @@ importers:
         specifier: ^9.0.4
         version: 9.0.4
       '@types/mailparser':
-        specifier: ^3.4.6
-        version: 3.4.6
+        specifier: ^3.9.0
+        version: 3.9.0
       '@types/mime-types':
         specifier: 'catalog:'
         version: 3.0.1
@@ -1947,12 +1947,12 @@ importers:
         version: link:../../packages/utils
       imapflow:
         specifier: 'catalog:'
-        version: 2.11.0
+        version: 2.12.2
       mailparser:
         specifier: 'catalog:'
-        version: 3.9.9
+        version: 3.15.0
       nodemailer:
-        specifier: ^10.3.1
+        specifier: ^10.6.1
         version: 10.6.1
       zod:
         specifier: 4.6.7
@@ -1965,8 +1965,8 @@ importers:
         specifier: workspace:*
         version: link:../../packages/vitest-config
       '@types/mailparser':
-        specifier: ^3.4.6
-        version: 3.4.6
+        specifier: ^3.9.0
+        version: 3.9.0
       '@types/node':
         specifier: 24.x
         version: 24.13.1
@@ -3358,7 +3358,7 @@ importers:
         specifier: ^5.2.0
         version: 5.3.0(svgo@4.0.1)(typescript@5.9.3)
       nodemailer:
-        specifier: ^10.3.1
+        specifier: ^10.6.1
         version: 10.6.1
       zod:
         specifier: 4.6.7
@@ -7228,8 +7228,8 @@ packages:
   '@types/lodash@4.17.24':
     resolution: {integrity: sha512-gIW7lQLZbue7lRSWEFql49QJJWThrTFFeIMJdp3eH4tKoxm1OvEPg02rm4wCCSHS0cL3/Fizimb35b7k8atwsQ==}
 
-  '@types/mailparser@3.4.6':
-    resolution: {integrity: sha512-wVV3cnIKzxTffaPH8iRnddX1zahbYB1ZEoAxyhoBo3TBCBuK6nZ8M8JYO/RhsCuuBVOw/DEN/t/ENbruwlxn6Q==}
+  '@types/mailparser@3.9.0':
+    resolution: {integrity: sha512-YnhrRiRVDiEAphFvd72hKa1n8y2b9Q3rgSQiONZQyhQz67h5g4MZHNApET3XWXVEFdInWtHqDHKEwnyjxU3QVw==}
 
   '@types/mime-types@3.0.1':
     resolution: {integrity: sha512-xRMsfuQbnRq1Ef+C+RKaENOxXX87Ygl38W1vDfPHRku02TgQr+Qd8iivLtAMcR0KF5/29xlnFihkTlbqFrGOVQ==}
@@ -7377,11 +7377,8 @@ packages:
   '@xyflow/system@0.0.77':
     resolution: {integrity: sha512-qCDCMCQAAgUu8yHnhloHG9F5mwPX5E+Wl8McpYIOPSSXfzFJJoZcwOcsDiAjitVKIg2de1WmJbCHfpcvxprsgg==}
 
-  '@zone-eu/mailsplit@5.4.12':
-    resolution: {integrity: sha512-w7Gy+NvjZ0MiXm8F6zfjImAqcTONKDImgWVBjDKQVFUXWuz3VFM5levNArkL2M877ajql5+bkS2pDV56injlmg==}
-
-  '@zone-eu/mailsplit@5.4.30':
-    resolution: {integrity: sha512-qN0KT6/ziAFvo5TzscaqpurIJaJQEXPPtqBZnpyhiGrACOKLDVMV6Lm57kXt5e/8zZUWoYiSC8oKl/aewtrJDQ==}
+  '@zone-eu/mailsplit@5.4.31':
+    resolution: {integrity: sha512-P031SeyobwXE/aZf1f/hN9RZm/t8ZSibCUYA7Us6Fory4b1p5HxNEA08YcfTynkPnvJ3nFjMFguwSp30TXc4Tw==}
     engines: {node: '>=20.0.0'}
 
   abbrev@2.0.0:
@@ -8140,9 +8137,9 @@ packages:
   decimal.js@10.6.0:
     resolution: {integrity: sha512-YpgQiITW3JXGntzdUmyUR1V812Hn8T1YVXhCu+wO3OpS4eU9l4YdD3qjyiKdV6mvV29zapkMeD390UVEf2lkUg==}
 
-  deepmerge-ts@7.1.5:
-    resolution: {integrity: sha512-HOJkrhaYsweh+W+e74Yn7YStZOilkoPb6fycpwNLKzSPtruFs48nYis0zy5yJz1+ktUhHxoRDJ27RQAWLIJVJw==}
-    engines: {node: '>=16.0.0'}
+  deepmerge-ts@8.0.2:
+    resolution: {integrity: sha512-uqbvqLUMrc6p0MO+WBRtTxY55hmyh94WRwI5a++PZe54X+bfVh59FSN7uWCBCW1CCVjzjnrwzfI8zidE2obMMw==}
+    engines: {node: '>=16.9.0'}
 
   deepmerge@4.3.1:
     resolution: {integrity: sha512-3sUqbMEc77XqpdNO7FRyRog+eW3ph+GYCbj+rK+uYyRMuwsVy0rMiVtPn+QJlKFvWP/1PYpapqYn0Me2knFn+A==}
@@ -8438,10 +8435,6 @@ packages:
   encodeurl@2.0.0:
     resolution: {integrity: sha512-Q0n9HRi4m6JuGIV1eFlmvJB7ZEVxu93IrMyiMsGC0lrMJMWzRgx6WGquyfQgZVb31vhGgXnfmPNNXmxnOkRBrg==}
     engines: {node: '>= 0.8'}
-
-  encoding-japanese@2.2.0:
-    resolution: {integrity: sha512-EuJWwlHPZ1LbADuKTClvHtwbaFn4rOD+dRAbWysqEOXRc2Uui0hJInNJrsdH0c+OhJA4nrCBdSkW4DD5YxAo6A==}
-    engines: {node: '>=8.10.0'}
 
   encoding-japanese@2.5.0:
     resolution: {integrity: sha512-5TKhaMWTUF777NQ16OrAkJFuEd1uOnEBw8ODeXFTc/Y9csZZQ6/jiIS5r4aFuzfowu9gLGrE51zqI2H0dLwlmg==}
@@ -8901,8 +8894,8 @@ packages:
   html-escaper@3.0.3:
     resolution: {integrity: sha512-RuMffC89BOWQoY0WKGpIhn5gX3iI54O6nRA0yC124NYVtzjmFWBIiFd8M0x+ZdX0P9R4lADg1mgP8C7PxGOWuQ==}
 
-  html-to-text@10.0.0:
-    resolution: {integrity: sha512-2OH59Gtprdczel+7Rxgpz9hGVJREaf8Lt1H4kZwWHpEn70VQKRuMNGsb2eDbwaTzrYzb0hheiOG1P7Dim0B4dQ==}
+  html-to-text@10.0.1:
+    resolution: {integrity: sha512-GiVhRI1BatGARSCmlXWNCjDT0cWrwBWoeduLoV0WSKAgaV/wa+hUWy5LiQLUs4UwiUrE52ZCMfBGiKD87TDPrg==}
     engines: {node: '>=20.19.0'}
 
   html-to-text@9.0.5:
@@ -8974,10 +8967,6 @@ packages:
     resolution: {integrity: sha512-4fCk79wshMdzMp2rH06qWrJE4iolqLhCUH+OiuIgU++RB0+94NlDL81atO7GX55uUKueo0txHNtvEyI6D7WdMw==}
     engines: {node: '>=0.10.0'}
 
-  iconv-lite@0.7.2:
-    resolution: {integrity: sha512-im9DjEDQ55s9fL4EYzOAv0yMqmMBSZp6G0VvFyTMPKWxiSBHUj9NW/qqLmXUwXrrM7AvqSlTCfvqRb0cM8yYqw==}
-    engines: {node: '>=0.10.0'}
-
   iconv-lite@0.7.3:
     resolution: {integrity: sha512-IKXpvIzjnC9XTAUbVBcMfGS0EPaIXtW6v+zr+RRp+hqULEpo0owZax6wyRwPOJbWbzjYspQwusTsfVr0ifh4uQ==}
     engines: {node: '>=0.10.0'}
@@ -8997,8 +8986,8 @@ packages:
     engines: {node: '>=18'}
     hasBin: true
 
-  imapflow@2.11.0:
-    resolution: {integrity: sha512-Jv/PBBbBsKjBkdN5DUbELRCo7Xm3DQz+gYBkAy4h87ObQthTRd7nu53WV/dKDf2M8imoJZY+eQFBVkQAJagC6g==}
+  imapflow@2.12.2:
+    resolution: {integrity: sha512-GnccN3rytpmsbEriYi3R1gLqWnXH2Dp4iAWYcY3sAUNRZ2zpBz8qSB0YSDTa58NSeTA6VGlAPMfbauQo0gnUGA==}
     engines: {node: '>=20.0.0'}
 
   immediate@3.0.6:
@@ -9316,28 +9305,19 @@ packages:
     resolution: {integrity: sha512-bwDaIOViTktE8kJLf9jP0p+H2/RDTlFFlc43Am2YgUsX22hI6Sq4RbzsrecwzY5y+MHTipOH7WsmWSEniePHWQ==}
     hasBin: true
 
-  libbase64@1.3.0:
-    resolution: {integrity: sha512-GgOXd0Eo6phYgh0DJtjQ2tO8dc0IVINtZJeARPeiIJqge+HdsWSuaDTe8ztQ7j/cONByDZ3zeB325AHiv5O0dg==}
-
   libbase64@1.4.1:
     resolution: {integrity: sha512-Nyh3H90B3gRtrcxIe56Ayy7635J0jmh6AbxbQgQae8wrSPQMH5wFqJChiMTB13yKG512L3YspbA5DzumhFTITA==}
     engines: {node: '>=20.0.0'}
 
-  libmime@5.3.8:
-    resolution: {integrity: sha512-ZrCY+Q66mPvasAfjsQ/IgahzoBvfE1VdtGRpo1hwRB1oK3wJKxhKA3GOcd2a6j7AH5eMFccxK9fBoCpRZTf8ng==}
-
-  libmime@5.6.4:
-    resolution: {integrity: sha512-QWiiwq3ujIUSsCCjFDldDN7FfXuLYSTnEln0oeYfOjgqyVlRV6WQ3UyJ/paguoz8Ynxy1s7k3kh6xomS3bJkCw==}
+  libmime@5.6.5:
+    resolution: {integrity: sha512-2mbKYlwUP2mWys7kUE0MBHNdOndOe++8TIdmGXtt/hMYWSgbjHkSIXyC4jCpVSc/sAox3GSxWn1dSmyiQimLNA==}
     engines: {node: '>=20.0.0'}
 
   libphonenumber-js@1.13.6:
     resolution: {integrity: sha512-NdB6O6QvlGMCoG003m0YIKG2+Xw7DjmCZhmc1RH+K6HncADUbRf8TZeLegxBBN1VFyPHcNpPTKpIhYLXzJVy1Q==}
 
-  libqp@2.1.1:
-    resolution: {integrity: sha512-0Wd+GPz1O134cP62YU2GTOPNA7Qgl09XwCqM5zpBv87ERCXdfDtyKXvV7c9U22yWJh44QZqBocFnXN11K96qow==}
-
-  libqp@3.0.1:
-    resolution: {integrity: sha512-7QZxpPX25pga1WiMueduWxmrHMVBFrZPH6ZUaozGYa/H98JH6NVBSET3qVw+4NxzoraIW7rJ81YxSU9IalvCpg==}
+  libqp@3.0.2:
+    resolution: {integrity: sha512-24oL5vCMpFd6lGLbD3vPrmcAEGFScDPX9eARY8TXsRVBSde93xP2iG7+8pg5M56Yiu9Uy14hCVN1E+yj5LMtyQ==}
     engines: {node: '>=20.0.0'}
 
   lie@3.3.0:
@@ -9433,8 +9413,8 @@ packages:
       canvas:
         optional: true
 
-  linkify-it@5.0.1:
-    resolution: {integrity: sha512-wVoTjP4Q6R0NW5hiZkVJaFZPWgtXfoGF+6LucL3/FtiNjmcHhYjEr5f1Kqjirc1nBW07J/ZuRFumqr2oqccEWg==}
+  linkify-it@6.1.0:
+    resolution: {integrity: sha512-wJ/TwpSDTLepCrQoYWYIExIKg5Zchex2Nn5yk2mFnB+6PtdkHtyLx742md9csRjjOnGkKIS/RrbY7l8D6gT9Vw==}
 
   linkifyjs@4.3.3:
     resolution: {integrity: sha512-P8aEP5U/D1/IlTY2OeYsErdwh9bGuLE30NcXtKEjgdHcahveQoQwM2yZNsioQHsWFz0P7KKudisbrzCgR0sDHg==}
@@ -9546,8 +9526,9 @@ packages:
   magicast@0.5.5:
     resolution: {integrity: sha512-UicdXN8zQ3JHlxVq+28afMXPr1z7WNY6+7EJnzTdQWkTAlMLF5fNCCKxJHBQwGaNGR11581EiQmQzx73+MvszA==}
 
-  mailparser@3.9.9:
-    resolution: {integrity: sha512-ulZi7h1eKm8WQmXibIgj8dmMQGDQCUS/g+XHkxxjcLDq4Dwn2ppo+0hz5Fi+ltvu4eN7mh3ykIp5RcpiWWav1w==}
+  mailparser@3.15.0:
+    resolution: {integrity: sha512-vGKvLx7Hp9GEl0u+C/7V0v+ryYqwUksZSfNTvIqB8MM39AzQ5jrFgSxGXbpU9rVcDkt4hgRDVGneIme9oxLe3A==}
+    engines: {node: '>=20.0.0'}
 
   mammoth@1.12.0:
     resolution: {integrity: sha512-cwnK1RIcRdDMi2HRx2EXGYlxqIEh0Oo3bLhorgnsVJi2UkbX1+jKxuBNR9PC5+JaX7EkmJxFPmo6mjLpqShI2w==}
@@ -9902,10 +9883,6 @@ packages:
   nodemailer@10.6.1:
     resolution: {integrity: sha512-d7kfFfS/tR4Aca+SBvRaQ+MXKNv7d2JiRe5TxaRcFT/kYMh4GGPnW9aKksTIEvyEbA7d/7HYWE4YPDEHxzJj/g==}
     engines: {node: '>=20.0.0'}
-
-  nodemailer@8.0.10:
-    resolution: {integrity: sha512-BLFuSth7QtHOkBzyqTehWWyub0NTRDuK2Q2SQfnGLsrJnzyU+Yeh4WpV1eZGuARFj1xQJHIdnTuJZLP+b9R1GQ==}
-    engines: {node: '>=6.0.0'}
 
   nopt@7.2.1:
     resolution: {integrity: sha512-taM24ViiimT/XntxbPyJQzCG+p4EKOpgD3mxFwW38mGjVUrfERQOeY4EDHjdnptttfHuHQXFx+lTP08Q+mLa/w==}
@@ -10955,8 +10932,8 @@ packages:
     resolution: {integrity: sha512-aqVvWoyO21L23mb+drl4RmMXbf6N7FdHjAhTRA9ZBL7apWBgfWC16KjrASI+1p9GAroljyMHj6fK67i0UiTNvQ==}
     engines: {node: '>= 18'}
 
-  socks@2.8.10:
-    resolution: {integrity: sha512-e0VyvkVTwVYViNovRkZ9aodhxVlyoMn7eJhVUPxZ+eK9P/7CBkxvvsBOHqFPEH416726W8tLXXXjKwqgTErrCQ==}
+  socks@2.8.11:
+    resolution: {integrity: sha512-2H/uQ7+SNP0hK16RorTak0mWrFoqo4AnAVGSUl2dT07obgWdWt9grml+VDl1LklgUOPWM4Abo0u86Cvp8vFjYw==}
     engines: {node: '>= 10.0.0', npm: '>= 3.0.0'}
 
   sonic-boom@4.2.1:
@@ -11340,8 +11317,8 @@ packages:
     resolution: {gitHosted: true, tarball: https://codeload.github.com/uNetworking/uWebSockets.js/tar.gz/b1092c70692ddbcc87464a77da44848614f6342a}
     version: 20.70.0
 
-  uc.micro@2.1.0:
-    resolution: {integrity: sha512-ARDJmphmdvUk6Glw7y9DQ2bFkKBHwQHLi2lsaH6PPmz/Ka9sFOBsBluozhDltWmnv9u/cF6Rt87znRTPV+yp/A==}
+  uc.micro@3.0.0:
+    resolution: {integrity: sha512-U3PppEkleoTnIfi8BozMx3yju3qc/L6SwqWo2Sw+54PX+PX0q9I+r1Um5HCmqD7n9VDX5/v3vQH/AjA6deDdtw==}
 
   uhyphen@0.2.0:
     resolution: {integrity: sha512-qz3o9CHXmJJPGBdqzab7qAYuW8kQGKNEuoHFYrBwV6hWIMcpAmxDLXojcHfFr9US1Pe6zUswEIJIbLI610fuqA==}
@@ -14692,7 +14669,7 @@ snapshots:
 
   '@types/lodash@4.17.24': {}
 
-  '@types/mailparser@3.4.6':
+  '@types/mailparser@3.9.0':
     dependencies:
       '@types/node': 24.13.1
       iconv-lite: 0.6.3
@@ -14862,17 +14839,11 @@ snapshots:
       d3-selection: 3.0.0
       d3-zoom: 3.0.0
 
-  '@zone-eu/mailsplit@5.4.12':
-    dependencies:
-      libbase64: 1.3.0
-      libmime: 5.3.8
-      libqp: 2.1.1
-
-  '@zone-eu/mailsplit@5.4.30':
+  '@zone-eu/mailsplit@5.4.31':
     dependencies:
       libbase64: 1.4.1
-      libmime: 5.6.4
-      libqp: 3.0.1
+      libmime: 5.6.5
+      libqp: 3.0.2
 
   abbrev@2.0.0: {}
 
@@ -15612,7 +15583,7 @@ snapshots:
 
   decimal.js@10.6.0: {}
 
-  deepmerge-ts@7.1.5: {}
+  deepmerge-ts@8.0.2: {}
 
   deepmerge@4.3.1: {}
 
@@ -15798,8 +15769,6 @@ snapshots:
   empathic@2.0.1: {}
 
   encodeurl@2.0.0: {}
-
-  encoding-japanese@2.2.0: {}
 
   encoding-japanese@2.5.0: {}
 
@@ -16374,10 +16343,10 @@ snapshots:
 
   html-escaper@3.0.3: {}
 
-  html-to-text@10.0.0:
+  html-to-text@10.0.1:
     dependencies:
       '@selderee/plugin-htmlparser2': 0.12.0(selderee@0.12.0)
-      deepmerge-ts: 7.1.5
+      deepmerge-ts: 8.0.2
       dom-serializer: 2.0.0
       htmlparser2: 10.1.0
       selderee: 0.12.0
@@ -16463,10 +16432,6 @@ snapshots:
     dependencies:
       safer-buffer: 2.1.2
 
-  iconv-lite@0.7.2:
-    dependencies:
-      safer-buffer: 2.1.2
-
   iconv-lite@0.7.3:
     dependencies:
       safer-buffer: 2.1.2
@@ -16481,16 +16446,16 @@ snapshots:
 
   image-size@2.0.3: {}
 
-  imapflow@2.11.0:
+  imapflow@2.12.2:
     dependencies:
-      '@zone-eu/mailsplit': 5.4.30
+      '@zone-eu/mailsplit': 5.4.31
       encoding-japanese: 2.5.0
       iconv-lite: 0.7.3
       libbase64: 1.4.1
-      libmime: 5.6.4
-      libqp: 3.0.1
+      libmime: 5.6.5
+      libqp: 3.0.2
       pino: 10.3.1
-      socks: 2.8.10
+      socks: 2.8.11
 
   immediate@3.0.6: {}
 
@@ -16799,29 +16764,18 @@ snapshots:
       lefthook-windows-arm64: 2.1.9
       lefthook-windows-x64: 2.1.9
 
-  libbase64@1.3.0: {}
-
   libbase64@1.4.1: {}
 
-  libmime@5.3.8:
-    dependencies:
-      encoding-japanese: 2.2.0
-      iconv-lite: 0.7.2
-      libbase64: 1.3.0
-      libqp: 2.1.1
-
-  libmime@5.6.4:
+  libmime@5.6.5:
     dependencies:
       encoding-japanese: 2.5.0
       iconv-lite: 0.7.3
       libbase64: 1.4.1
-      libqp: 3.0.1
+      libqp: 3.0.2
 
   libphonenumber-js@1.13.6: {}
 
-  libqp@2.1.1: {}
-
-  libqp@3.0.1: {}
+  libqp@3.0.2: {}
 
   lie@3.3.0:
     dependencies:
@@ -16888,9 +16842,9 @@ snapshots:
       htmlparser2: 10.1.0
       uhyphen: 0.2.0
 
-  linkify-it@5.0.1:
+  linkify-it@6.1.0:
     dependencies:
-      uc.micro: 2.1.0
+      uc.micro: 3.0.0
 
   linkifyjs@4.3.3: {}
 
@@ -16983,16 +16937,14 @@ snapshots:
       '@babel/types': 7.29.11
       source-map-js: 1.2.2
 
-  mailparser@3.9.9:
+  mailparser@3.15.0:
     dependencies:
-      '@zone-eu/mailsplit': 5.4.12
-      encoding-japanese: 2.2.0
+      '@zone-eu/mailsplit': 5.4.31
       he: 1.2.0
-      html-to-text: 10.0.0
-      iconv-lite: 0.7.2
-      libmime: 5.3.8
-      linkify-it: 5.0.1
-      nodemailer: 8.0.10
+      html-to-text: 10.0.1
+      libmime: 5.6.5
+      linkify-it: 6.1.0
+      nodemailer: 10.6.1
       punycode.js: 2.3.1
       tlds: 1.261.0
 
@@ -17711,8 +17663,6 @@ snapshots:
   node-releases@2.0.47: {}
 
   nodemailer@10.6.1: {}
-
-  nodemailer@8.0.10: {}
 
   nopt@7.2.1:
     dependencies:
@@ -18865,7 +18815,7 @@ snapshots:
 
   smol-toml@1.7.0: {}
 
-  socks@2.8.10:
+  socks@2.8.11:
     dependencies:
       ip-address: 10.7.4
       smart-buffer: 4.2.0
@@ -19191,7 +19141,7 @@ snapshots:
 
   uWebSockets.js@https://codeload.github.com/uNetworking/uWebSockets.js/tar.gz/b1092c70692ddbcc87464a77da44848614f6342a: {}
 
-  uc.micro@2.1.0: {}
+  uc.micro@3.0.0: {}
 
   uhyphen@0.2.0: {}
 
