@@ -96,11 +96,11 @@ const isPathOrBelow = (pathname: string, base: string): boolean =>
   pathname === base || pathname.startsWith(`${base}/`)
 
 /**
- * The connector profile a path belongs to, if any: its internal transport
- * path (`/claude`), or protected-resource metadata at or below
- * `/.well-known/oauth-protected-resource[/mcp]/<profile>` (matching the
- * builder's `resolveMcpResourceForPath`). Exact segments only, so a
- * configured legacy path such as `/v1/claude` is never mistaken for one.
+ * The connector profile a path belongs to, if any: its route below
+ * `CHATBOTX_MCP_BASE_PATH` (`/claude`), or protected-resource metadata at or
+ * below `/.well-known/oauth-protected-resource[/mcp]/<profile>` (matching the
+ * builder's `resolveMcpResourceForPath`). Exact segments only, so a route
+ * such as `/claude/x` is never mistaken for one.
  */
 export const profileForPath = (
   pathname: string,
@@ -127,18 +127,22 @@ export const buildProtectedResourceMetadata = (
   }
 }
 
+/**
+ * The bearer challenge for a route below `CHATBOTX_MCP_BASE_PATH`
+ * (`/messages`, `/sse`, `/claude`, `/openai`).
+ */
 export const buildWwwAuthenticate = (
   req: IncomingMessage,
-  pathSuffix: string,
+  route: string,
   error?: "invalid_token",
 ) => {
   // A connector profile is always advertised at its exact public path.
-  const profile = profileForPath(pathSuffix)
-  let metadataPath = `${protectedResourcePrefix}${pathSuffix}`
+  const profile = profileForPath(route)
+  let metadataPath = `${protectedResourcePrefix}${env.CHATBOTX_MCP_BASE_PATH}${route}`
   if (profile) {
     metadataPath = `${protectedResourcePrefix}/mcp/${profile}`
   } else if (env.CHATBOTX_MCP_PUBLIC_URL) {
-    metadataPath = `${protectedResourcePrefix}/mcp${pathSuffix}`
+    metadataPath = `${protectedResourcePrefix}/mcp${route}`
   }
   const metadataUrl = resolveMetadataUrl(req, metadataPath)
   const attributes = [`resource_metadata="${metadataUrl}"`]

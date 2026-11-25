@@ -3,7 +3,7 @@ import type { AddressInfo } from "node:net"
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
 import { claudeProfileSpec } from "./fixtures/claude-profile-spec"
 
-const COLLISION = /collides/
+const BASE_PATH_MIGRATION = /CHATBOTX_MCP_BASE_PATH/
 const ORIGIN = "https://app.example.com"
 const AUDIENCE = `${ORIGIN}/mcp/claude`
 const introspect = vi.hoisted(() => vi.fn())
@@ -227,14 +227,119 @@ describe("Claude metadata and paths", () => {
     )
     expect(await response.json()).toMatchObject({ resource: AUDIENCE })
   })
+})
 
-  test("legacy paths cannot collide with /claude", async () => {
-    vi.stubEnv("CHATBOTX_MCP_SSE_PATH", "/claude")
-    vi.resetModules()
-    const { assertNoProfilePathCollision } = await import(
-      "../src/server/sse-server"
+describe("MCP base path", () => {
+  // Production forwards /mcp/* unchanged, so every route lives under the
+  // configured prefix: /mcp/messages, /mcp/sse, /mcp/claude, /mcp/openai.
+  const listen = async () => {
+    const { createRequestListener } = await import("../src/server/sse-server")
+    const { createMcpServer } = await import("../src/server/create-mcp-server")
+    const prefixed = createServer(createRequestListener(createMcpServer))
+    await new Promise<void>((resolve) =>
+      prefixed.listen(0, "127.0.0.1", resolve),
     )
-    expect(assertNoProfilePathCollision).toThrow(COLLISION)
+    return prefixed
+  }
+
+  test("serves the Claude profile and the default profile under the prefix", async () => {
+    vi.stubEnv("CHATBOTX_MCP_BASE_PATH", "/mcp")
+    vi.stubEnv("CHATBOTX_API_KEY", "")
+    vi.resetModules()
+    const prefixed = await listen()
+    try {
+      const url = `http://127.0.0.1:${(prefixed.address() as AddressInfo).port}`
+      const send = (path: string, headers: Record<string, string> = {}) =>
+        fetch(`${url}${path}`, {
+          body: JSON.stringify(initialize),
+          headers: {
+            Accept: "application/json, text/event-stream",
+            "Content-Type": "application/json",
+            ...headers,
+          },
+          method: "POST",
+        })
+
+      const claude = await send("/mcp/claude")
+      expect(claude.status).toBe(401)
+      expect(claude.headers.get("www-authenticate")).toContain(
+        `resource_metadata="${ORIGIN}/.well-known/oauth-protected-resource/mcp/claude"`,
+      )
+
+      introspect.mockResolvedValue(ok())
+      const session = await send("/mcp/claude", bearer)
+      expect(session.status).toBe(200)
+      expect(session.headers.get("mcp-session-id")).toBeTruthy()
+
+      introspect.mockReset()
+      const messages = await send("/mcp/messages")
+      expect(messages.status).toBe(401)
+      expect(messages.headers.get("www-authenticate")).toContain(
+        `resource_metadata="${ORIGIN}/.well-known/oauth-protected-resource/mcp/messages"`,
+      )
+
+      expect((await send("/claude")).status).toBe(404)
+      expect((await send("/messages")).status).toBe(404)
+    } finally {
+      prefixed.closeAllConnections()
+      await new Promise((resolve) => prefixed.close(resolve))
+    }
+  })
+
+  test.each([
+    ["CHATBOTX_MCP_MESSAGES_PATH", "/mcp/messages"],
+    ["CHATBOTX_MCP_SSE_PATH", "/mcp/sse"],
+  ])("refuses to start while the removed %s is still set", async (name, value) => {
+    vi.stubEnv(name, value)
+    vi.resetModules()
+    const { assertMcpPathConfig } = await import("../src/server/sse-server")
+    expect(assertMcpPathConfig).toThrow(BASE_PATH_MIGRATION)
+  })
+
+  test("an empty removed variable does not block startup", async () => {
+    vi.stubEnv("CHATBOTX_MCP_SSE_PATH", "")
+    vi.stubEnv("CHATBOTX_MCP_MESSAGES_PATH", "")
+    vi.resetModules()
+    const { assertMcpPathConfig } = await import("../src/server/sse-server")
+    expect(assertMcpPathConfig).not.toThrow()
+  })
+
+  test("advertises prefixed metadata from the request host without a public URL", async () => {
+    vi.stubEnv("CHATBOTX_MCP_BASE_PATH", "/mcp")
+    vi.stubEnv("CHATBOTX_MCP_PUBLIC_URL", undefined)
+    vi.stubEnv("CHATBOTX_API_KEY", "")
+    vi.resetModules()
+    const prefixed = await listen()
+    try {
+      const url = `http://127.0.0.1:${(prefixed.address() as AddressInfo).port}`
+      const response = await fetch(`${url}/mcp/messages`, {
+        body: JSON.stringify(initialize),
+        headers: {
+          Accept: "application/json, text/event-stream",
+          "Content-Type": "application/json",
+          "X-Forwarded-Host": "mcp.example.com",
+          "X-Forwarded-Proto": "https",
+        },
+        method: "POST",
+      })
+      expect(response.status).toBe(401)
+      expect(response.headers.get("www-authenticate")).toContain(
+        'resource_metadata="https://mcp.example.com/.well-known/oauth-protected-resource/mcp/messages"',
+      )
+    } finally {
+      prefixed.closeAllConnections()
+      await new Promise((resolve) => prefixed.close(resolve))
+    }
+  })
+
+  test.each([
+    "mcp",
+    "/mcp/",
+    "/.well-known/oauth-protected-resource",
+  ])("rejects the base path %s", async (value) => {
+    vi.stubEnv("CHATBOTX_MCP_BASE_PATH", value)
+    vi.resetModules()
+    await expect(import("../src/server/sse-server")).rejects.toThrow()
   })
 })
 

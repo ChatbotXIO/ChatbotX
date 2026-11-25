@@ -21,7 +21,10 @@ import {
 } from "./http-utils"
 import { IdleSessionSweeper } from "./session-sweeper"
 
-/** Fixed internal paths; the public paths are `/mcp/openai` and `/mcp/claude`. */
+/**
+ * Profile routes below `CHATBOTX_MCP_BASE_PATH`; the public paths are
+ * `/mcp/openai` and `/mcp/claude`.
+ */
 export const OPENAI_INTERNAL_PATH = "/openai"
 export const CLAUDE_INTERNAL_PATH = "/claude"
 
