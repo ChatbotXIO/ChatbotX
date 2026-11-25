@@ -530,6 +530,7 @@ chatbotx ai-agents create --name <name> --prompt <prompt> --temperature <tempera
                                                      # fallback list, first entry preferred; tools: JSON array of tool names
                                                      # [--webSearchAuthorizedDomains --isRichResponse]
 chatbotx ai-agents update <id>                       # Same fields as create, all optional (partial update)
+                                                     # --isDefault true makes it the workspace default (previous default is unset)
 chatbotx ai-agents delete <id>
 ```
 

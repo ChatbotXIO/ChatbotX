@@ -113,7 +113,7 @@ export const aiAgentsPublicRouter = {
       path: "/v1/ai-agents/{id}",
       summary: "Update AI agent",
       description:
-        "Changes settings on an existing AI agent without replacing unrelated fields. Call `aiAgents.list` to resolve its id, and use `aiAgents.get` to inspect the saved result. It does not change the bot reply delay: that is the workspace setting `smartResponseDelaySeconds` (`workspaceSettings.update`).",
+        "Changes settings on an existing AI agent without replacing unrelated fields. Call `aiAgents.list` to resolve its id, and use `aiAgents.get` to inspect the saved result. To make an agent the workspace default (the agent that writes automated replies; with none set, the workspace default reply flow answers instead), send `isDefault: true`: the previous default is unset in the same step, so the workspace never has two. It does not change the bot reply delay: that is the workspace setting `smartResponseDelaySeconds` (`workspaceSettings.update`).",
       tags: ["AI Agents"],
       spec: mcpSpec({
         destructiveHint: true,
