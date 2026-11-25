@@ -26,6 +26,7 @@
   "exports": {
     ".": "./src/index.ts",
     "./apis/*": "./src/apis/*.ts",
+    "./publisher": "./src/publisher.ts",
     "./messenger-ads": "./src/messenger-ads-json.ts",
     "./schema": "./src/schema.ts",
     "./test-handlers": "./src/test-handlers.ts",

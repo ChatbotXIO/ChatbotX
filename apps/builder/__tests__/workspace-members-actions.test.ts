@@ -169,6 +169,9 @@ const updateInput = {
     notifyAdmin: true,
     newMessageToHuman: false,
     newOrder: false,
+    postFailed: false,
+    postNeedsReview: false,
+    publishConnection: false,
   },
   notificationChannels: {
     messenger: false,
@@ -456,6 +459,9 @@ describe("updateWorkspaceMemberAction", () => {
         notifyAdmin: false,
         newMessageToHuman: false,
         newOrder: false,
+        postFailed: false,
+        postNeedsReview: false,
+        publishConnection: false,
       },
       notificationChannels: {
         messenger: false,

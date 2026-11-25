@@ -22,6 +22,7 @@ import { dispatchProfileSnapshots } from "./handlers/dispatch-profile-snapshots"
 import { enqueueBroadcast } from "./handlers/enqueue-broadcast"
 import { enqueueMarketingMessages } from "./handlers/enqueue-marketing-messages"
 import { enqueueRecurringBroadcasts } from "./handlers/enqueue-recurring-broadcasts"
+import { enqueueSocialPostTargets } from "./handlers/enqueue-social-post-targets"
 import { expireUnpaidOrders } from "./handlers/expire-unpaid-orders"
 import { finalizeBroadcasts } from "./handlers/finalize-broadcasts"
 import { finalizeMarketingMessages } from "./handlers/finalize-marketing-messages"
@@ -33,9 +34,11 @@ import {
   finishOverdueLeaderboards,
   maintainLeaderboardRankings,
 } from "./handlers/leaderboard-schedules"
+import { maintainChannelPostMetricPartitions } from "./handlers/maintain-channel-post-metric-partitions"
 import { maintainLeaderboardPartitions } from "./handlers/maintain-leaderboard-partitions"
 import { maintainMacPartitions } from "./handlers/maintain-mac-partitions"
 import { materializeRecurringBroadcasts } from "./handlers/materialize-recurring-broadcasts"
+import { materializeSocialPostRecurrences } from "./handlers/materialize-social-post-recurrences"
 import { pollSmtpInboxes } from "./handlers/poll-smtp-inboxes"
 import { prepareBroadcast } from "./handlers/prepare-broadcast"
 import { processBroadcastContacts } from "./handlers/process-broadcast-contacts"
@@ -56,18 +59,22 @@ import { purgeWorkspaces } from "./handlers/purge-workspaces"
 import { reconcileBroadcasts } from "./handlers/reconcile-broadcasts"
 import { reconcileMetaCatalogSyncs } from "./handlers/reconcile-meta-catalog-syncs"
 import { reconcileTenants } from "./handlers/reconcile-tenants"
+import { recoverSocialPostTargets } from "./handlers/recover-social-post-targets"
 import { redispatchInboundWebhookRequests } from "./handlers/redispatch-inbound-webhook-requests"
 import { redispatchTemplateJobs } from "./handlers/redispatch-template-jobs"
 import { refreshChannelTokens } from "./handlers/refresh-channel-tokens"
 import { refreshLicense } from "./handlers/refresh-license"
+import { refreshSocialAccountTokens } from "./handlers/refresh-social-account-tokens"
 import { registerSchedules } from "./handlers/register-schedules"
 import { scanAbandonedCarts } from "./handlers/scan-abandoned-carts"
 import { scanAiHandoverBulkRuns } from "./handlers/scan-ai-handover-bulk-runs"
 import { scanAppointmentReminders } from "./handlers/scan-appointment-reminders"
+import { scanChannelPostSyncs } from "./handlers/scan-channel-post-syncs"
 import { scanCoexistRuns } from "./handlers/scan-coexist-runs"
 import { scanContactScans } from "./handlers/scan-contact-scans"
 import { scanContactSyncRuns } from "./handlers/scan-contact-sync-runs"
 import { scanSmartDelay } from "./handlers/scan-smart-delay"
+import { scanSocialPostFeeds } from "./handlers/scan-social-post-feeds"
 import { sweepStaleWhatsappCalls } from "./handlers/sweep-stale-whatsapp-calls"
 import { syncUserQuota } from "./handlers/sync-user-quota"
 import { teardownExpiredTrial } from "./handlers/teardown-expired-trial"
@@ -185,6 +192,10 @@ async function startScheduleWorker() {
               await maintainMacPartitions()
               return
 
+            case ScheduleJobData.maintainChannelPostMetricPartitions:
+              await maintainChannelPostMetricPartitions()
+              return
+
             case ScheduleJobData.maintainLeaderboardPartitions:
               await maintainLeaderboardPartitions()
               return
@@ -203,6 +214,30 @@ async function startScheduleWorker() {
 
             case ScheduleJobData.scanContactScans:
               await scanContactScans()
+              return
+
+            case ScheduleJobData.scanChannelPostSyncs:
+              await scanChannelPostSyncs()
+              return
+
+            case ScheduleJobData.enqueueSocialPostTargets:
+              await enqueueSocialPostTargets()
+              return
+
+            case ScheduleJobData.materializeSocialPostRecurrences:
+              await materializeSocialPostRecurrences()
+              return
+
+            case ScheduleJobData.scanSocialPostFeeds:
+              await scanSocialPostFeeds()
+              return
+
+            case ScheduleJobData.recoverSocialPostTargets:
+              await recoverSocialPostTargets()
+              return
+
+            case ScheduleJobData.refreshSocialAccountTokens:
+              await refreshSocialAccountTokens()
               return
 
             case ScheduleJobData.pollSmtpInboxes:

@@ -6,6 +6,8 @@
   "exports": {
     ".": "./src/index.ts",
     "./models": "./src/models/index.ts",
+    "./feed-post-writer": "./src/server/feed-post-writer.ts",
+    "./post-writer": "./src/server/post-writer.ts",
     "./sam": "./src/server/sam.ts",
     "./server": "./src/server.ts",
     "./translation": "./src/server/translation.ts",

@@ -11,7 +11,11 @@ import {
   type SQL,
   sql,
 } from "../../client"
-import { mediaLibraryFileModel } from "../../schema"
+import {
+  mediaLibraryFileModel,
+  socialPostMediaModel,
+  socialPostTargetMediaModel,
+} from "../../schema"
 import type { MediaLibraryFileModel } from "../../types"
 
 export type MediaLibraryFileFolderCount = {
@@ -173,6 +177,74 @@ export const mediaLibraryFileRepository = {
           eq(mediaLibraryFileModel.workspaceId, input.workspaceId),
         ),
       )
+  },
+
+  /**
+   * Deletes the row only when no social post (or target override) uses it, in
+   * one transaction that first locks the row `FOR UPDATE`. A concurrent post
+   * insert takes a `FOR KEY SHARE` lock on the row through the foreign key, so
+   * it serialises with this: it either commits first and the check below sees
+   * it (nothing is deleted), or this deletes first and its insert fails the
+   * foreign key. Only the row is deleted; the storage object is left to the caller.
+   */
+  async deleteIfUnusedByPosts(input: {
+    id: string
+    workspaceId: string
+  }): Promise<
+    | { deleted: false }
+    | { deleted: true; path: string }
+    | { deleted: false; missing: true }
+  > {
+    return await db.transaction(async (tx) => {
+      const [file] = await tx
+        .select()
+        .from(mediaLibraryFileModel)
+        .where(
+          and(
+            eq(mediaLibraryFileModel.id, input.id),
+            eq(mediaLibraryFileModel.workspaceId, input.workspaceId),
+          ),
+        )
+        .limit(1)
+        .for("update")
+      if (!file) {
+        return { deleted: false, missing: true } as const
+      }
+      const [post, target] = await Promise.all([
+        tx
+          .select({ id: socialPostMediaModel.id })
+          .from(socialPostMediaModel)
+          .where(
+            and(
+              eq(socialPostMediaModel.workspaceId, input.workspaceId),
+              eq(socialPostMediaModel.mediaLibraryFileId, input.id),
+            ),
+          )
+          .limit(1),
+        tx
+          .select({ id: socialPostTargetMediaModel.id })
+          .from(socialPostTargetMediaModel)
+          .where(
+            and(
+              eq(socialPostTargetMediaModel.workspaceId, input.workspaceId),
+              eq(socialPostTargetMediaModel.mediaLibraryFileId, input.id),
+            ),
+          )
+          .limit(1),
+      ])
+      if (post.length > 0 || target.length > 0) {
+        return { deleted: false } as const
+      }
+      await tx
+        .delete(mediaLibraryFileModel)
+        .where(
+          and(
+            eq(mediaLibraryFileModel.id, input.id),
+            eq(mediaLibraryFileModel.workspaceId, input.workspaceId),
+          ),
+        )
+      return { deleted: true, path: file.path } as const
+    })
   },
 
   async deleteByFolder(

@@ -5,6 +5,10 @@ import type { IntegrationInstagramModel } from "@chatbotx.io/database/types"
 import type { InstagramAuthValue } from "@chatbotx.io/integration-instagram-facebook"
 import { integration as integrationInstagramFacebook } from "@chatbotx.io/integration-instagram-facebook"
 import { runBrandingFollowUps } from "@/features/channel-connect/lib/branding-follow-ups"
+import {
+  captureConnectScopes,
+  grantedScopesOfAuth,
+} from "@/features/channel-connect/lib/capture-connect-scopes"
 import { connectSessionCandidate } from "@/features/channel-connect/lib/connect-session-candidate"
 import type { ResolvedConnectSession } from "@/features/channel-connect/lib/resolve-connect-session"
 import type { ConnectActionResultWire } from "@/features/channel-connect/schema"
@@ -47,6 +51,13 @@ async function runInstagramFacebookFollowUps({
   row: IntegrationInstagramModel
 }): Promise<void> {
   const auth = instagramRow.auth as InstagramAuthValue
+
+  await captureConnectScopes({
+    grantedScopes: grantedScopesOfAuth(auth),
+    inboxId: instagramRow.inboxId,
+    publisherKey: "instagramFacebook",
+    workspaceId: session.workspace.id,
+  })
 
   await runBrandingFollowUps({
     session,

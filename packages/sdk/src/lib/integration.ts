@@ -15,7 +15,11 @@ import type {
   BulkThreadControlAction,
   BulkThreadControlLimits,
   BulkThreadControlResult,
+  ChannelLiveBroadcast,
   ChannelPostDetails,
+  ChannelPostListItem,
+  ChannelPostListPage,
+  ChannelPostLiveState,
   CommentAnchor,
   Context,
   HandleRequestProps,
@@ -53,7 +57,12 @@ const sleep = (ms: number): Promise<void> =>
 // Channel handler types
 // ---------------------------------------------------------------------------
 
-export type ChannelHandlerGroup = "message" | "conversation" | "contact" | "bot"
+export type ChannelHandlerGroup =
+  | "message"
+  | "conversation"
+  | "contact"
+  | "bot"
+  | "post"
 
 export type RichResponseContentAttributes = {
   executionId: string
@@ -522,6 +531,52 @@ export type BotHandlers<IAuth extends AuthValue> = {
   >
 }
 
+/**
+ * Reading a channel's own posts for the Posts menu. Separate from the contact
+ * handlers: it lists posts of the connected account (with their counts), while
+ * `contact.getPostDetails` describes one post a contact commented on.
+ */
+export type PostHandlers<IAuth extends AuthValue> = {
+  /** One page of the account's posts, newest first. */
+  listPosts: Handler<
+    {
+      ctx: Context<IAuth>
+      data: { cursor?: string; limit: number }
+    },
+    ChannelPostListPage
+  >
+  /**
+   * One post of the account by its external id, with the same fields the
+   * listing reports. Throws a `ChannelError`; only the `NOT_FOUND` category
+   * means the channel confirmed the post is gone. A channel whose "does not
+   * exist" answer also covers a missing permission (the Graph API's) never
+   * raises it, so a caller must not mark a post removed on any other failure.
+   */
+  getPost: Handler<
+    { ctx: Context<IAuth>; data: { postId: string } },
+    ChannelPostListItem
+  >
+  /**
+   * Reads one broadcast by its own id, for a channel whose live-state webhook
+   * names only that id. `null` means nothing to record (scheduled, unpublished,
+   * or the read names no post).
+   */
+  readLiveBroadcast?: Handler<
+    { ctx: Context<IAuth>; data: { liveVideoId: string } },
+    ChannelLiveBroadcast | null
+  >
+  /**
+   * Whether the broadcast behind a post is on right now, for a channel that
+   * reports live broadcasts. Answers `unknown` when the read cannot tell (the
+   * caller then leaves the stored status alone); only an authoritative read may
+   * answer `ended`.
+   */
+  getLiveState?: Handler<
+    { ctx: Context<IAuth>; data: { postId: string } },
+    ChannelPostLiveState
+  >
+}
+
 export type IChannel<
   IAuth extends AuthValue,
   TStep extends SendFlowStepData = SendFlowStepData,
@@ -531,6 +586,7 @@ export type IChannel<
   conversation?: Partial<ConversationHandlers<IAuth>>
   contact?: Partial<ContactHandlers<IAuth>>
   bot?: Partial<BotHandlers<IAuth>>
+  post?: Partial<PostHandlers<IAuth>>
 }
 
 // ---------------------------------------------------------------------------
@@ -596,6 +652,7 @@ export type IntegrationHandlerMap<T> =
         conversation: ConversationHandlers<IAuth>
         contact: ContactHandlers<IAuth>
         bot: BotHandlers<IAuth>
+        post: PostHandlers<IAuth>
       }
     : never
 

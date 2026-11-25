@@ -19,6 +19,7 @@ import { commentHandlers } from "./handlers/comment"
 import { contactHandlers } from "./handlers/contact"
 import { conversationHandlers } from "./handlers/conversation"
 import { messageHandlers } from "./handlers/message"
+import { postHandlers } from "./handlers/post"
 import { webhookHandler } from "./handlers/webhook"
 import { isRevokedTokenError } from "./lib/error-mapper"
 import type {
@@ -51,7 +52,7 @@ const config: IntegrationDefinition<
     },
     exchangeCode: async ({ code, callbackUrl, credential }) => {
       const config = credential as InstagramConfig
-      const { accessToken } = await exchangeCodeForToken(
+      const { accessToken, grantedScopes } = await exchangeCodeForToken(
         config,
         code,
         callbackUrl,
@@ -72,6 +73,7 @@ const config: IntegrationDefinition<
           pageId: account.id,
           version: config.version,
           username: account.username,
+          grantedScopes,
         },
       ) satisfies InstagramAuthValue
     },
@@ -120,6 +122,7 @@ const config: IntegrationDefinition<
       conversation: conversationHandlers,
       contact: contactHandlers,
       bot: botHandlers,
+      post: postHandlers,
     },
   },
   actions: {

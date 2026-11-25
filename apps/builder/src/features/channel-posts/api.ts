@@ -1,4 +1,5 @@
 import { channelPostService } from "@chatbotx.io/business"
+import { zodBigintIdAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
 import { workspaceAuthorizedMidddleware } from "@/middlewares/auth"
 import { authorizedAPI } from "@/orpc"
@@ -9,6 +10,7 @@ const listRequest = z.object({
   cursor: channelPostCursor.optional(),
   limit: z.coerce.number().int().min(1).max(100).default(30),
   search: z.string().trim().min(1).max(200).optional(),
+  inboxId: zodBigintIdAsString().optional(),
 })
 
 const listResponse = z.object({

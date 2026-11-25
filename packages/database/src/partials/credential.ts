@@ -15,6 +15,7 @@ export const credentialTypes = z.enum([
   "smtp",
   "paddle",
   "tiktok",
+  "tiktokPublishing",
   "make",
 ])
 export type CredentialType = z.infer<typeof credentialTypes>
@@ -273,6 +274,23 @@ export type TiktokCredentialPublic = z.infer<
   typeof tiktokCredentialPublicSchema
 >
 
+// TikTok publishing is its OWN app (Login Kit + Content Posting API at
+// open.tiktokapis.com), separate from `tiktok` (the Business Messaging inbox
+// app). Different client key, different tokens, never shared.
+export const tiktokPublishingCredentialSchema = z.object({
+  clientId: z.string(),
+  clientSecret: z.string(),
+})
+export type TiktokPublishingCredential = z.infer<
+  typeof tiktokPublishingCredentialSchema
+>
+
+export const tiktokPublishingCredentialPublicSchema =
+  tiktokPublishingCredentialSchema.pick({ clientId: true })
+export type TiktokPublishingCredentialPublic = z.infer<
+  typeof tiktokPublishingCredentialPublicSchema
+>
+
 export const makeCredentialSchema = z.object({
   inviteUrl: z.string().url(),
 })
@@ -297,6 +315,7 @@ export const credentialSchemas = {
   smtp: smtpCredentialSchema,
   paddle: paddleCredentialSchema,
   tiktok: tiktokCredentialSchema,
+  tiktokPublishing: tiktokPublishingCredentialSchema,
   make: makeCredentialSchema,
 } as const
 
@@ -314,6 +333,7 @@ export const credentialPublicSchemas = {
   smtp: smtpCredentialPublicSchema,
   paddle: paddleCredentialPublicSchema,
   tiktok: tiktokCredentialPublicSchema,
+  tiktokPublishing: tiktokPublishingCredentialPublicSchema,
   make: makeCredentialPublicSchema,
 } as const
 
@@ -331,6 +351,7 @@ export type CredentialByType = {
   smtp: SmtpCredential
   paddle: PaddleCredential
   tiktok: TiktokCredential
+  tiktokPublishing: TiktokPublishingCredential
   make: MakeCredential
 }
 
@@ -348,6 +369,7 @@ export type CredentialPublicByType = {
   smtp: SmtpCredentialPublic
   paddle: PaddleCredentialPublic
   tiktok: TiktokCredentialPublic
+  tiktokPublishing: TiktokPublishingCredentialPublic
   make: MakeCredentialPublic
 }
 
@@ -487,6 +509,14 @@ export const tiktokCredentialUpdateSchema = z.object({
 })
 export type TiktokCredentialUpdate = z.infer<
   typeof tiktokCredentialUpdateSchema
+>
+
+export const tiktokPublishingCredentialUpdateSchema = z.object({
+  clientId: z.string().trim().min(1),
+  clientSecret: z.string().trim().min(1),
+})
+export type TiktokPublishingCredentialUpdate = z.infer<
+  typeof tiktokPublishingCredentialUpdateSchema
 >
 
 export const makeCredentialUpdateSchema = z.object({

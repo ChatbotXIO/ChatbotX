@@ -2,14 +2,19 @@ import { isDatabaseError } from "@chatbotx.io/database/client"
 import { type ChannelType, channelTypes } from "@chatbotx.io/database/partials"
 import {
   type ChannelPostFilterCursor,
+  type ChannelPostLiveObservation,
   type ChannelPostMetadata,
   channelPostRepository,
+  findListedPostsWithoutThumbnail,
+  saveListedPostThumbnail,
 } from "@chatbotx.io/database/repositories"
 import { uploadFileFromUrl } from "@chatbotx.io/filesystem"
 import type { ChannelPostDetails } from "@chatbotx.io/sdk"
 import { createId } from "@chatbotx.io/utils"
+import type { ChannelPostLiveStatus } from "@chatbotx.io/utils/channel-post"
 import { BaseService } from "../base.service"
 import { logger } from "../logger"
+import { messageService } from "../message/service"
 import { resolveTenantSettings } from "../platform/settings"
 import { getPublicFileUrl } from "../utils"
 
@@ -19,6 +24,10 @@ export const POST_METADATA_RETRY_INTERVAL_MS = 10 * 60 * 1000
 // permanently-failing post (deleted, private, wrong permissions) can keep
 // spending the inline 15s fetch budget on every subsequent comment.
 export const POST_METADATA_RETRY_MAX_AGE_MS = 24 * 60 * 60 * 1000
+/** How many listed posts have their thumbnail downloaded at the same time. */
+const THUMBNAIL_CONCURRENCY = 5
+/** Longest one listed post's thumbnail download may take. */
+const POST_THUMBNAIL_REHOST_TIMEOUT_MS = 10_000
 // Hard byte cap for a re-hosted post thumbnail. Bounds memory/connection use
 // on the ingestion path even when a CDN reports no (or a wrong) content-length.
 export const POST_THUMBNAIL_MAX_BYTES = 30 * 1024 * 1024
@@ -34,9 +43,45 @@ type ResolveForCommentInput = {
   workspaceId: string
 }
 
+/** Comment settings a post carries; applied to every new comment on it. */
+export type ChannelPostCommentSettings = {
+  hideComments: boolean
+  hidePhoneComments: boolean
+  skipComments: boolean
+}
+
+export type ResolvedChannelPost = {
+  id: string
+  /** The stored broadcast status; `null` for a post that is not a known broadcast yet. */
+  liveStatus: ChannelPostLiveStatus | null
+  settings: ChannelPostCommentSettings
+}
+
+const NO_COMMENT_SETTINGS: ChannelPostCommentSettings = {
+  hideComments: false,
+  hidePhoneComments: false,
+  skipComments: false,
+}
+
+const settingsOf = (
+  row: ChannelPostCommentSettings,
+): ChannelPostCommentSettings => ({
+  hideComments: row.hideComments,
+  hidePhoneComments: row.hidePhoneComments,
+  skipComments: row.skipComments,
+})
+
 type ExistingChannelPost = NonNullable<
   Awaited<ReturnType<typeof channelPostRepository.findByExternalId>>
 >
+
+export type PostCommentPostValues = {
+  externalPostId: string
+  pageName: string
+  permalink: string | null
+  publishedAt: Date | null
+  text: string | null
+}
 
 export type ChannelPostFilterOption = {
   caption: string | null
@@ -75,6 +120,16 @@ class ChannelPostService extends BaseService {
   async resolveForComment(
     input: ResolveForCommentInput,
   ): Promise<string | null> {
+    return (await this.resolveForCommentWithSettings(input))?.id ?? null
+  }
+
+  /**
+   * Like `resolveForComment`, and also returns the post's comment settings
+   * from the same row read, so the comment path never queries them again.
+   */
+  async resolveForCommentWithSettings(
+    input: ResolveForCommentInput,
+  ): Promise<ResolvedChannelPost | null> {
     try {
       return await this.resolveForCommentUnsafe(input)
     } catch (err) {
@@ -94,7 +149,7 @@ class ChannelPostService extends BaseService {
 
   private async resolveForCommentUnsafe(
     input: ResolveForCommentInput,
-  ): Promise<string> {
+  ): Promise<ResolvedChannelPost> {
     const existing = await channelPostRepository.findByExternalId(input)
     if (existing) {
       return await this.useExistingPost(existing, input)
@@ -105,7 +160,7 @@ class ChannelPostService extends BaseService {
     const insertedId = await channelPostRepository.insertBare(input)
     if (insertedId) {
       await this.fetchAndSaveMetadata({ ...input, id: insertedId })
-      return insertedId
+      return { id: insertedId, liveStatus: null, settings: NO_COMMENT_SETTINGS }
     }
 
     // Lost the insert race: another comment job created the row first.
@@ -122,7 +177,7 @@ class ChannelPostService extends BaseService {
       throw new Error("Channel post was not available after insert race")
     }
     await this.fetchAndSaveMetadata({ ...input, id: retriedId })
-    return retriedId
+    return { id: retriedId, liveStatus: null, settings: NO_COMMENT_SETTINGS }
   }
 
   /**
@@ -133,7 +188,7 @@ class ChannelPostService extends BaseService {
   private async useExistingPost(
     existing: ExistingChannelPost,
     input: ResolveForCommentInput,
-  ): Promise<string> {
+  ): Promise<ResolvedChannelPost> {
     if (existing.integrationId !== input.integrationId) {
       await channelPostRepository.updateIntegrationIfChanged(input)
     }
@@ -151,7 +206,123 @@ class ChannelPostService extends BaseService {
       await this.fetchAndSaveMetadata({ ...input, id: existing.id })
     }
 
-    return existing.id
+    return {
+      id: existing.id,
+      liveStatus: existing.liveStatus,
+      settings: settingsOf(existing),
+    }
+  }
+
+  /**
+   * Re-hosts the thumbnails of listed posts that still have none, a few at a
+   * time. Stops starting new downloads once `deadline` passes: a post left
+   * without one is picked up by a later sync that lists it again. Never throws:
+   * a failed thumbnail must not fail the sync.
+   */
+  async rehostListedThumbnails(input: {
+    channel: string
+    deadline: number
+    posts: { externalPostId: string; thumbnailUrl: string | null }[]
+    workspaceId: string
+  }): Promise<void> {
+    const urlByPost = new Map(
+      input.posts.flatMap((post) =>
+        post.thumbnailUrl ? [[post.externalPostId, post.thumbnailUrl]] : [],
+      ),
+    )
+    let missing: Awaited<ReturnType<typeof findListedPostsWithoutThumbnail>>
+    try {
+      missing = await findListedPostsWithoutThumbnail({
+        channel: input.channel,
+        externalPostIds: [...urlByPost.keys()],
+        workspaceId: input.workspaceId,
+      })
+    } catch (err) {
+      logger.warn(
+        { err, workspaceId: input.workspaceId },
+        "rehostListedThumbnails: could not look up posts without a thumbnail",
+      )
+      return
+    }
+
+    for (
+      let start = 0;
+      start < missing.length;
+      start += THUMBNAIL_CONCURRENCY
+    ) {
+      const budgetMs = input.deadline - Date.now()
+      if (budgetMs <= 0) {
+        return
+      }
+      await Promise.all(
+        missing
+          .slice(start, start + THUMBNAIL_CONCURRENCY)
+          .map(async (post) => {
+            try {
+              const path = await this.rehostThumbnail(
+                { id: post.id, workspaceId: input.workspaceId },
+                urlByPost.get(post.externalPostId) ?? null,
+                Math.min(budgetMs, POST_THUMBNAIL_REHOST_TIMEOUT_MS),
+              )
+              if (path) {
+                await saveListedPostThumbnail({
+                  id: post.id,
+                  thumbnail: path,
+                  workspaceId: input.workspaceId,
+                })
+              }
+            } catch (err) {
+              logger.warn(
+                { err, id: post.id, workspaceId: input.workspaceId },
+                "rehostListedThumbnails: could not store a thumbnail",
+              )
+            }
+          }),
+      )
+    }
+  }
+
+  /**
+   * Records what a live signal says about a broadcast (see
+   * `channelPostRepository.recordLiveObservation`): an older observation never
+   * overwrites a newer one and a comment never reopens an ended broadcast.
+   * Returns whether the post was written.
+   */
+  async recordLiveObservation(
+    input: ChannelPostLiveObservation,
+  ): Promise<boolean> {
+    return await channelPostRepository.recordLiveObservation(input)
+  }
+
+  /**
+   * Counts one comment that carries a phone number on its post, never twice for
+   * the same comment however often it is delivered or the job retried. The
+   * comment is marked as counted first (an atomic "set if not set") and only the
+   * call that set the mark increments. The two writes live in different
+   * databases (messages are sharded), so they cannot be one transaction; when
+   * the increment fails the mark is deliberately NOT taken back, because the
+   * outcome may be unknown (a timeout can follow a write that landed) and
+   * taking it back could count the comment twice. The count may therefore fall
+   * short, never run over, and `reconcilePhoneCount` repairs a short count from
+   * the comments themselves when the post is refreshed.
+   */
+  async recordPhoneComment(input: {
+    comment: { createdAt: Date; id: string }
+    id: string
+    workspaceId: string
+  }): Promise<void> {
+    const marked = await messageService.markPhoneCounted({
+      createdAt: input.comment.createdAt,
+      id: input.comment.id,
+      workspaceId: input.workspaceId,
+    })
+    if (!marked) {
+      return
+    }
+    await channelPostRepository.incrementPhoneCommentsCount({
+      id: input.id,
+      workspaceId: input.workspaceId,
+    })
   }
 
   /**
@@ -169,6 +340,7 @@ class ChannelPostService extends BaseService {
 
   async listFilterOptions(input: {
     cursor?: ChannelPostFilterCursor
+    inboxId?: string
     limit: number
     search?: string
     workspaceId: string
@@ -204,6 +376,37 @@ class ChannelPostService extends BaseService {
     })
 
     return this.toFilterOptions(rows, storageUrl)
+  }
+
+  /** Whether the stored post was published from Posts (a target links to it). */
+  async isPublishedFromPosts(input: {
+    channelPostId: string
+    workspaceId: string
+  }): Promise<boolean> {
+    return await channelPostRepository.isPublishedFromPosts(input)
+  }
+
+  /**
+   * What `{{post.*}}` renders for a stored post, or null when it is gone. The
+   * page name is the connected page or account's name.
+   */
+  async findCommentVariableValues(input: {
+    channelPostId: string
+    workspaceId: string
+  }): Promise<PostCommentPostValues | null> {
+    const [row] = await channelPostRepository.findByIds({
+      ids: [input.channelPostId],
+      workspaceId: input.workspaceId,
+    })
+    return row
+      ? {
+          externalPostId: row.externalPostId,
+          pageName: row.inboxName,
+          permalink: row.permalink,
+          publishedAt: row.publishedAt,
+          text: row.caption,
+        }
+      : null
   }
 
   /**

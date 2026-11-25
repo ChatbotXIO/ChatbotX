@@ -125,6 +125,9 @@ export function UpdateWorkspaceMemberForm({
               notifyAdmin: false,
               newMessageToHuman: false,
               newOrder: false,
+              postFailed: false,
+              postNeedsReview: false,
+              publishConnection: false,
             },
             notificationChannels: {
               messenger: false,
@@ -237,6 +240,24 @@ export function UpdateWorkspaceMemberForm({
               formItemClassName="flex flex-row-reverse items-center justify-end gap-2"
               label={t("fields.notificationType.newOrder")}
               name="notificationTypes.newOrder"
+              required
+            />
+            <SwitchField
+              formItemClassName="flex flex-row-reverse items-center justify-end gap-2"
+              label={t("fields.notificationType.postFailed")}
+              name="notificationTypes.postFailed"
+              required
+            />
+            <SwitchField
+              formItemClassName="flex flex-row-reverse items-center justify-end gap-2"
+              label={t("fields.notificationType.postNeedsReview")}
+              name="notificationTypes.postNeedsReview"
+              required
+            />
+            <SwitchField
+              formItemClassName="flex flex-row-reverse items-center justify-end gap-2"
+              label={t("fields.notificationType.publishConnection")}
+              name="notificationTypes.publishConnection"
               required
             />
           </div>

@@ -46,6 +46,7 @@ import {
   TRIGGER_CONTACT_RUN_WINDOW_SECONDS,
 } from "./constants"
 import { FailOpenCircuit } from "./fail-open-circuit"
+import { assertPostCommentPostsValid } from "./post-comment-posts"
 
 export type { ConditionInput } from "./condition-columns"
 
@@ -312,6 +313,13 @@ class TriggerService extends BaseService {
           next: actions,
           stored: existingTrigger.actions,
           tx,
+        })
+
+        await assertPostCommentPostsValid({
+          conditions,
+          stored: existingConditions,
+          tx,
+          workspaceId,
         })
 
         const existingIds = new Set(existingConditions.map((c) => c.id))

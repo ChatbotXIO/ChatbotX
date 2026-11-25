@@ -17,13 +17,13 @@ import {
 import { useQuery } from "@tanstack/react-query"
 import { useTranslations } from "next-intl"
 import { useMemo, useState } from "react"
+import { useDebouncedValue } from "@/hooks/use-debounced-value"
 import { orpc } from "@/lib/orpc/query"
 import type {
   CategorySelectionState,
   TemplateSelectionFormState,
 } from "../lib/selection"
 import { EMPTY_SELECTION, selectionCount } from "../lib/selection"
-import { useDebouncedValue } from "../lib/use-debounced-value"
 import { CategoryResourceList } from "./category-resource-list"
 import { IncludedAutomatically } from "./included-automatically"
 

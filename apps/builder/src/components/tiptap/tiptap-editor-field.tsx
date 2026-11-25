@@ -27,6 +27,8 @@ export type TiptapEditorFieldProps = {
   channels?: ChannelType[]
   includeCouponVariables?: boolean
   includePipelineVariables?: boolean
+  /** Adds the `{{post.*}}` / `{{comment.*}}` group of a post-comment trigger run. */
+  includePostCommentVariables?: boolean
   includeRawCustomFieldVariables?: boolean
   includeBotFieldVariables?: boolean
   description?: string
@@ -46,6 +48,7 @@ export const TiptapEditorField = ({
   channels,
   includeCouponVariables = false,
   includePipelineVariables = false,
+  includePostCommentVariables = false,
   includeRawCustomFieldVariables = false,
   includeBotFieldVariables = false,
   showEmojiPicker = true,
@@ -86,6 +89,7 @@ export const TiptapEditorField = ({
               includeBotFieldVariables={includeBotFieldVariables}
               includeCouponVariables={includeCouponVariables}
               includePipelineVariables={includePipelineVariables}
+              includePostCommentVariables={includePostCommentVariables}
               includeRawCustomFieldVariables={includeRawCustomFieldVariables}
               initValue={initValue}
               onChange={field.onChange}

@@ -27,6 +27,7 @@ const INBOUND_WEBHOOK_JOB_TYPES: ReadonlySet<string> = new Set([
   IntegrationJobAction.updateIncomingComment,
   IntegrationJobAction.deleteIncomingComment,
   IntegrationJobAction.processLeadgen,
+  IntegrationJobAction.liveVideoStatusChange,
   IntegrationJobAction.processMarketingMessageWebhook,
   IntegrationJobAction.tiktokHighIntentComment,
   IntegrationJobAction.adsAutomaticEvent,

@@ -6,6 +6,7 @@
   "dependencies": {
     "@chatbotx.io/logger": "workspace:*",
     "@chatbotx.io/sdk": "workspace:*",
+    "@chatbotx.io/utils": "workspace:*",
     "ky": "catalog:",
     "zod": "catalog:"
   },
@@ -18,7 +19,8 @@
   },
   "exports": {
     ".": "./src/index.ts",
-    "./apis/*": "./src/apis/*.ts"
+    "./apis/*": "./src/apis/*.ts",
+    "./publisher": "./src/publisher.ts"
   },
   "scripts": {
     "check-types": "tsc --noEmit",

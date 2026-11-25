@@ -1,10 +1,13 @@
 import {
+  chargeCommentActionOnce,
+  commentLikeFence,
   contactActivityService,
   contactInboxService,
   contactService,
   conversationParticipantService,
   conversationService,
   messageService,
+  messageUsageService,
   queueWorkspaceRealtimeEvent,
   threadControlService,
   whatsappFlowService,
@@ -825,8 +828,34 @@ export async function editMessageFromChannel(
 export async function changeMessageStateOnChannel(
   data: ChatJobChangeChannelMessageState["data"],
 ) {
-  const { conversation, contactInbox, message, liked, hidden, moderation } =
-    data
+  const {
+    conversation,
+    contactInbox,
+    message,
+    liked,
+    likeSeq,
+    hidden,
+    moderation,
+    usageSource,
+  } = data
+  const fenceProps = {
+    commentId: message.id,
+    seq: likeSeq,
+    workspaceId: conversation.workspaceId,
+  }
+
+  // A later like/unlike of this comment was queued: it supersedes this one.
+  if (
+    liked !== undefined &&
+    hidden === undefined &&
+    !(await commentLikeFence.isLatest(fenceProps))
+  ) {
+    logger.info(
+      { messageId: message.id },
+      "changeMessageStateOnChannel: stale like superseded by a later one, skipping",
+    )
+    return
+  }
 
   const found = await messageService.findWithAttachments({
     id: message.id,
@@ -866,17 +895,31 @@ export async function changeMessageStateOnChannel(
   await settleCommentModeration(
     conversation.workspaceId,
     moderation,
-    (async () => {
-      const current =
-        (found.attributes as { liked?: boolean; hidden?: boolean } | null) ?? {}
-      const newAttributes = {
-        liked: liked === undefined ? (current.liked ?? false) : liked,
-        hidden: hidden === undefined ? (current.hidden ?? false) : hidden,
+    commentLikeFence.serialize(fenceProps, async () => {
+      // A hide a post comment setting asked for was queued while the quota had
+      // room; the backlog must not keep hiding (and charging) once it is gone.
+      if (
+        hidden === true &&
+        usageSource === "postCommentSetting" &&
+        !(await messageUsageService.hasRoom(conversation.workspaceId))
+      ) {
+        logger.info(
+          { messageId: message.id, workspaceId: conversation.workspaceId },
+          "changeMessageStateOnChannel: message quota reached, not applying the queued hide",
+        )
+        return
       }
-      await messageService.updateAttributes({
+      // Re-check right before the writes and the provider call: the lookups
+      // above are slow, and a later like may have been queued meanwhile.
+      const likeIsCurrent =
+        liked !== undefined && (await commentLikeFence.isLatest(fenceProps))
+      // Only the keys this job changes, as one JSON merge in the database: the
+      // row may have been written meanwhile (`phoneCounted`), and a write of the
+      // whole object read earlier would erase that.
+      await messageService.patchAttributes({
         id: message.id,
         workspaceId: conversation.workspaceId,
-        attributes: newAttributes,
+        patch: { hidden, liked: likeIsCurrent ? liked : undefined },
         createdAt: found.createdAt,
       })
 
@@ -887,7 +930,7 @@ export async function changeMessageStateOnChannel(
         })
 
       const calls: Promise<void>[] = []
-      if (liked !== undefined) {
+      if (liked !== undefined && likeIsCurrent) {
         calls.push(
           integration.runChannelHandler("comment", "likeComment", {
             ctx,
@@ -913,7 +956,20 @@ export async function changeMessageStateOnChannel(
         )
       }
       await Promise.all(calls)
-    })(),
+
+      // Only a hide a per-post comment setting asked for consumes a message
+      // (moderation and every other state change are free), and only once the
+      // provider accepted it. The marker on the comment keeps a redelivery from
+      // charging again; a charge failure releases it and fails the job so the
+      // retry charges.
+      if (hidden === true && usageSource === "postCommentSetting") {
+        await chargeCommentActionOnce({
+          comment: { createdAt: found.createdAt, id: found.id },
+          key: "quotaChargedHide",
+          workspaceId: conversation.workspaceId,
+        })
+      }
+    }),
   )
 }
 

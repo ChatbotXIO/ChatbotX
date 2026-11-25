@@ -11,6 +11,7 @@ import type {
   MatchableEventType,
   OrderEventMetadata,
   PipelineItemEventMetadata,
+  PostCommentEventMetadata,
   ShoppingCartSentMetadata,
   UserAskedAboutProductMetadata,
 } from "@chatbotx.io/events"
@@ -54,6 +55,9 @@ const EVENT_NAMES = {
     "contact_referred_existing_contact",
   [triggerEventTypes.enum.contactBlockedBot]: "contact_blocked_bot",
   [triggerEventTypes.enum.contactUnblockedBot]: "contact_unblocked_bot",
+  [triggerEventTypes.enum.contactCommentedOnPost]: "contact_commented_on_post",
+  [triggerEventTypes.enum.contactFirstCommentedOnPost]:
+    "contact_first_commented_on_post",
   [triggerEventTypes.enum.dateTimeBasedTrigger]: "datetime_based_trigger",
   [triggerEventTypes.enum.incomingCall]: "incoming_call",
   [triggerEventTypes.enum.missedAudioCall]: "missed_audio_call",
@@ -137,6 +141,24 @@ function buildBotBlockPayload(
   return {
     ...basePayload,
     channel: typeof data.channel === "string" ? data.channel : null,
+  }
+}
+
+/** `contact_commented_on_post` / `contact_first_commented_on_post`: the post and the comment. */
+function buildPostCommentPayload(
+  basePayload: WebhookPayloadBase,
+  data: Record<string, unknown>,
+): WebhookPayload {
+  const comment = data as Partial<PostCommentEventMetadata>
+  return {
+    ...basePayload,
+    channel: comment.channel ?? null,
+    inbox_id: comment.inboxId ?? null,
+    post_id: comment.externalPostId ?? null,
+    channel_post_id: comment.channelPostId ?? null,
+    comment_id: comment.commentId ?? null,
+    comment_text: comment.commentText ?? null,
+    conversation_id: comment.conversationId ?? null,
   }
 }
 
@@ -400,6 +422,8 @@ const PAYLOAD_BUILDERS = {
   [triggerEventTypes.enum.contactReferredExistingContact]: buildReferralPayload,
   [triggerEventTypes.enum.contactBlockedBot]: buildBotBlockPayload,
   [triggerEventTypes.enum.contactUnblockedBot]: buildBotBlockPayload,
+  [triggerEventTypes.enum.contactCommentedOnPost]: buildPostCommentPayload,
+  [triggerEventTypes.enum.contactFirstCommentedOnPost]: buildPostCommentPayload,
   [triggerEventTypes.enum.dateTimeBasedTrigger]: (basePayload, data) => ({
     ...basePayload,
     ...data,

@@ -18,6 +18,7 @@ const {
   mockFindConversation,
   mockFindEmailReplyParent,
   mockRecordDelivered,
+  mockPatchAttributes,
   mockAllIntegrations,
 } = vi.hoisted(() => {
   const updateChain = {
@@ -52,6 +53,7 @@ const {
     mockFindConversation: vi.fn(),
     mockFindEmailReplyParent: vi.fn(),
     mockRecordDelivered: vi.fn().mockResolvedValue(true),
+    mockPatchAttributes: vi.fn().mockResolvedValue({ id: "msg-1" }),
     mockAllIntegrations: {} as Record<string, { deliveryReceipts: boolean }>,
   }
 })
@@ -71,7 +73,18 @@ vi.mock("../src/chat/handlers/account-send-blocked", () => ({
   reconcileAccountSendBlocked: mockReconcileAccountSendBlocked,
 }))
 
+const mockLikeIsLatest = vi.hoisted(() => vi.fn())
+const mockChargeCommentActionOnce = vi.hoisted(() => vi.fn())
+const mockSerializeLike = vi.hoisted(() => vi.fn())
+const mockHasRoom = vi.hoisted(() => vi.fn())
+
 vi.mock("@chatbotx.io/business", () => ({
+  chargeCommentActionOnce: mockChargeCommentActionOnce,
+  commentLikeFence: {
+    isLatest: mockLikeIsLatest,
+    serialize: mockSerializeLike,
+  },
+  messageUsageService: { hasRoom: mockHasRoom },
   contactActivityService: { recordDelivered: mockRecordDelivered },
   contactInboxService: {
     recordOutboundMessageSent: mockRecordOutboundMessageSent,
@@ -89,6 +102,7 @@ vi.mock("@chatbotx.io/business", () => ({
   messageService: {
     findWithAttachments: vi.fn().mockResolvedValue(null),
     hardDelete: mockHardDelete,
+    patchAttributes: mockPatchAttributes,
     updateAttributes: vi.fn().mockResolvedValue(undefined),
     updateSendError: (input: {
       createdAt: Date
@@ -174,6 +188,7 @@ vi.mock("@chatbotx.io/worker-config", () => ({
 }))
 
 const {
+  changeMessageStateOnChannel,
   sendFlowStepToChannel,
   sendMessageToChannel,
   settleFailedOutgoingMessage,
@@ -2593,6 +2608,226 @@ describe("chat send-message handlers", () => {
 
       expect(mockHardDelete).toHaveBeenCalledTimes(1)
       expect(mockUpdateSendError).not.toHaveBeenCalled()
+    })
+  })
+
+  describe("changing a comment's like / hidden state", () => {
+    const stored = {
+      id: "msg-1",
+      workspaceId: "ws-1",
+      type: "comment",
+      sourceId: "comment-1",
+      createdAt: new Date("2026-11-22T10:00:00.123Z"),
+      // The row as the job read it: a `phoneCounted` mark may have been added
+      // by the comment path since, which a write of this object would erase.
+      attributes: { hidden: false, liked: false },
+      contentAttributes: { postId: "post-1" },
+    }
+    const job = (overrides: Record<string, unknown> = {}) => ({
+      conversation: conversation as never,
+      contactInbox: contactInbox as never,
+      message: { id: "msg-1", createdAt: stored.createdAt },
+      ...overrides,
+    })
+
+    beforeEach(async () => {
+      const { messageService } = await import("@chatbotx.io/business")
+      vi.mocked(messageService.findWithAttachments).mockResolvedValue(
+        stored as never,
+      )
+      mockPatchAttributes.mockClear()
+      mockRunChannelHandler.mockClear()
+      mockRunChannelHandler.mockResolvedValue(undefined)
+      mockLikeIsLatest.mockReset()
+      mockLikeIsLatest.mockResolvedValue(true)
+      mockChargeCommentActionOnce.mockReset()
+      mockChargeCommentActionOnce.mockResolvedValue(true)
+      mockSerializeLike.mockReset()
+      mockSerializeLike.mockImplementation(
+        (_props: unknown, fn: () => Promise<unknown>) => fn(),
+      )
+      mockHasRoom.mockReset()
+      mockHasRoom.mockResolvedValue(true)
+    })
+
+    test("a queued post-setting hide is not applied or charged once the quota ran out", async () => {
+      mockHasRoom.mockResolvedValue(false)
+
+      await changeMessageStateOnChannel(
+        job({ hidden: true, usageSource: "postCommentSetting" }) as never,
+      )
+
+      expect(mockHasRoom).toHaveBeenCalledWith("ws-1")
+      expect(mockPatchAttributes).not.toHaveBeenCalled()
+      expect(mockRunChannelHandler).not.toHaveBeenCalled()
+      expect(mockChargeCommentActionOnce).not.toHaveBeenCalled()
+    })
+
+    test("a moderation hide ignores the message quota", async () => {
+      mockHasRoom.mockResolvedValue(false)
+
+      await changeMessageStateOnChannel(job({ hidden: true }) as never)
+
+      expect(mockHasRoom).not.toHaveBeenCalled()
+      expect(mockRunChannelHandler).toHaveBeenCalledTimes(1)
+    })
+
+    test("a like that waits for the comment lock while a newer unlike runs is stale once it gets the lock", async () => {
+      // The newer unlike was queued while this like waited for the lock.
+      mockSerializeLike.mockImplementation(
+        (_props: unknown, fn: () => Promise<unknown>) => {
+          mockLikeIsLatest.mockResolvedValue(false)
+          return fn()
+        },
+      )
+
+      await changeMessageStateOnChannel(
+        job({ liked: true, likeSeq: 1 }) as never,
+      )
+
+      expect(mockSerializeLike).toHaveBeenCalledWith(
+        { commentId: "msg-1", seq: 1, workspaceId: "ws-1" },
+        expect.any(Function),
+      )
+      expect(mockRunChannelHandler).not.toHaveBeenCalled()
+      expect(mockPatchAttributes.mock.calls[0]?.[0].patch.liked).toBeUndefined()
+    })
+
+    test("a hide asked by a post comment setting charges one message after the provider hid it", async () => {
+      mockRunChannelHandler.mockImplementation(() => {
+        expect(mockChargeCommentActionOnce).not.toHaveBeenCalled()
+        return Promise.resolve()
+      })
+
+      await changeMessageStateOnChannel(
+        job({ hidden: true, usageSource: "postCommentSetting" }) as never,
+      )
+
+      expect(mockChargeCommentActionOnce).toHaveBeenCalledTimes(1)
+      expect(mockChargeCommentActionOnce).toHaveBeenCalledWith({
+        comment: { createdAt: stored.createdAt, id: "msg-1" },
+        key: "quotaChargedHide",
+        workspaceId: "ws-1",
+      })
+    })
+
+    test("a provider failure charges nothing", async () => {
+      mockRunChannelHandler.mockRejectedValue(new Error("provider down"))
+
+      await expect(
+        changeMessageStateOnChannel(
+          job({ hidden: true, usageSource: "postCommentSetting" }) as never,
+        ),
+      ).rejects.toThrow("provider down")
+
+      expect(mockChargeCommentActionOnce).not.toHaveBeenCalled()
+    })
+
+    test("a moderation hide and any other state change are never charged", async () => {
+      await changeMessageStateOnChannel(job({ hidden: true }) as never)
+      await changeMessageStateOnChannel(job({ hidden: false }) as never)
+      await changeMessageStateOnChannel(
+        job({ liked: true, usageSource: "postCommentSetting" }) as never,
+      )
+
+      expect(mockChargeCommentActionOnce).not.toHaveBeenCalled()
+    })
+
+    test("a failing charge fails the job so the retry charges", async () => {
+      mockChargeCommentActionOnce.mockRejectedValue(new Error("redis down"))
+
+      await expect(
+        changeMessageStateOnChannel(
+          job({ hidden: true, usageSource: "postCommentSetting" }) as never,
+        ),
+      ).rejects.toThrow("redis down")
+    })
+
+    test("a stale like, superseded by a later unlike, never reaches the provider", async () => {
+      mockLikeIsLatest.mockResolvedValue(false)
+
+      await changeMessageStateOnChannel(
+        job({ liked: true, likeSeq: 1 }) as never,
+      )
+
+      expect(mockLikeIsLatest).toHaveBeenCalledWith({
+        commentId: "msg-1",
+        seq: 1,
+        workspaceId: "ws-1",
+      })
+      expect(mockRunChannelHandler).not.toHaveBeenCalled()
+      expect(mockPatchAttributes).not.toHaveBeenCalled()
+    })
+
+    test("a like that becomes stale while the job runs is not sent", async () => {
+      mockLikeIsLatest.mockResolvedValueOnce(true).mockResolvedValueOnce(false)
+
+      await changeMessageStateOnChannel(
+        job({ liked: true, likeSeq: 1 }) as never,
+      )
+
+      expect(mockRunChannelHandler).not.toHaveBeenCalled()
+      expect(mockPatchAttributes.mock.calls[0]?.[0].patch.liked).toBeUndefined()
+    })
+
+    test("the latest like is applied", async () => {
+      await changeMessageStateOnChannel(
+        job({ liked: false, likeSeq: 2 }) as never,
+      )
+
+      expect(mockRunChannelHandler).toHaveBeenCalledWith(
+        "comment",
+        "likeComment",
+        expect.objectContaining({
+          data: { commentId: "comment-1", liked: false },
+        }),
+      )
+    })
+
+    test("a hide job is never fenced", async () => {
+      mockLikeIsLatest.mockResolvedValue(false)
+
+      await changeMessageStateOnChannel(job({ hidden: true }) as never)
+
+      expect(mockRunChannelHandler).toHaveBeenCalledTimes(1)
+      expect(mockRunChannelHandler.mock.calls[0]?.[1]).toBe("hideComment")
+    })
+
+    test("patches only the key it changes, never the whole attributes object", async () => {
+      await changeMessageStateOnChannel(job({ hidden: true }) as never)
+
+      expect(mockPatchAttributes).toHaveBeenCalledTimes(1)
+      expect(mockPatchAttributes).toHaveBeenCalledWith({
+        createdAt: stored.createdAt,
+        id: "msg-1",
+        patch: { hidden: true, liked: undefined },
+        workspaceId: "ws-1",
+      })
+    })
+
+    test("a concurrent phoneCounted write survives: the job writes no copy of the row it read", async () => {
+      await changeMessageStateOnChannel(job({ liked: true }) as never)
+
+      const written = mockPatchAttributes.mock.calls[0]?.[0]
+      // The patch holds the changed key only; nothing of the stale row's
+      // attributes object (which lacks the mark) is sent back.
+      expect(
+        Object.keys(written.patch).filter(
+          (key) => written.patch[key] !== undefined,
+        ),
+      ).toEqual(["liked"])
+      expect(written).not.toHaveProperty("attributes")
+    })
+
+    test("both keys are patched when both are given", async () => {
+      await changeMessageStateOnChannel(
+        job({ hidden: false, liked: true }) as never,
+      )
+
+      expect(mockPatchAttributes.mock.calls[0]?.[0].patch).toEqual({
+        hidden: false,
+        liked: true,
+      })
     })
   })
 })

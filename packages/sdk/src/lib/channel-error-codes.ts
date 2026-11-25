@@ -6,6 +6,8 @@ export const ChannelErrorCategory = {
   PERMISSION_DENIED: "permission_denied",
   PAYLOAD_INVALID: "payload_invalid",
   QUOTA_EXCEEDED: "quota_exceeded",
+  /** The platform confirmed the object no longer exists; only raised where that answer is unambiguous. */
+  NOT_FOUND: "not_found",
   NETWORK_ERROR: "network_error",
   UNKNOWN: "unknown",
 } as const
@@ -25,6 +27,7 @@ export const PERMANENT_CATEGORIES = new Set<ChannelErrorCategory>([
   ChannelErrorCategory.PERMISSION_DENIED,
   ChannelErrorCategory.PAYLOAD_INVALID,
   ChannelErrorCategory.QUOTA_EXCEEDED,
+  ChannelErrorCategory.NOT_FOUND,
 ])
 
 /**

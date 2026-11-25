@@ -43,6 +43,10 @@ vi.mock("@chatbotx.io/database/repositories", () => ({
   inboxRepository: { listOptionsByWorkspaceAndChannel: vi.fn() },
   aiHandoverSettingsRepository: { lockExisting: vi.fn(async () => null) },
   aiHandoverBulkRunRepository: { cancelLive: vi.fn() },
+  channelPostSyncRepository: {
+    resetAfterAuthChange: vi.fn(async () => undefined),
+    releaseParkedForInbox: vi.fn(async () => undefined),
+  },
 }))
 
 vi.mock("@chatbotx.io/redis", () => ({

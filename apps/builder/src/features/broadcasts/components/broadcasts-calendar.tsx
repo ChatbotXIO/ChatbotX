@@ -13,41 +13,35 @@ import {
   ToggleGroupItem,
 } from "@chatbotx.io/ui/components/ui/toggle-group"
 import { cn } from "@chatbotx.io/ui/lib/utils"
-import {
-  addYears,
-  format,
-  isSameMonth,
-  isToday,
-  startOfDay,
-  subYears,
-} from "date-fns"
+import { addYears, format, isToday, startOfDay, subYears } from "date-fns"
 import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react"
 import { useFormatter, useTranslations } from "next-intl"
 import { useQueryStates } from "nuqs"
 import { type ReactNode, useMemo, useRef, useState } from "react"
 import type { DateRange } from "react-day-picker"
+import {
+  buildRangeDays,
+  CALENDAR_RANGES,
+  type CalendarRange,
+  DATE_PARAM_FORMAT,
+  dayKey,
+  getBrowserTimeZone,
+  parseDateParam,
+  parseEndDateParam,
+} from "@/components/calendar/calendar-grid"
+import { CalendarGrid } from "@/components/calendar/calendar-grid-view"
 import { BroadcastDetailDialog } from "../broadcast-detail-dialog"
 import {
   broadcastStatusConfig,
   parseBroadcastStatus,
 } from "../lib/broadcast-status"
 import {
-  buildMonthGrid,
-  buildRangeDays,
-  buildWeekDays,
-  CALENDAR_RANGES,
-  type CalendarRange,
   calendarRangeConfig,
-  DATE_PARAM_FORMAT,
-  dayKey,
   groupByDay,
-  parseDateParam,
-  parseEndDateParam,
   sortBySchedulesAt,
 } from "../lib/calendar-grid"
 import { broadcastsSearchParsers } from "../schema/search-parsers"
 
-const MAX_CHIPS_PER_DAY = 3
 const TIME_FORMAT_OPTIONS = { hour: "2-digit", minute: "2-digit" } as const
 
 /** How far the jump picker's month/year navigation reaches from today — a future-scheduling calendar needs more forward reach than back reach. */
@@ -55,6 +49,9 @@ const JUMP_PICKER_PAST_YEARS = 2
 const JUMP_PICKER_FUTURE_YEARS = 3
 
 type Formatter = ReturnType<typeof useFormatter>
+
+const getSchedulesAt = (row: BroadcastCalendarRow): Date => row.schedulesAt
+const getRowId = (row: BroadcastCalendarRow): string => row.id
 
 const isCalendarRange = (value: string | undefined): value is CalendarRange =>
   (CALENDAR_RANGES as readonly string[]).includes(value ?? "")
@@ -164,6 +161,7 @@ export function BroadcastsCalendar({
     () => parseEndDateParam(endDate, anchor),
     [endDate, anchor],
   )
+  const timezone = useMemo(() => getBrowserTimeZone(), [])
   const byDay = useMemo(() => groupByDay(broadcasts), [broadcasts])
   const [selected, setSelected] = useState<BroadcastCalendarRow | null>(null)
   const [jumpOpen, setJumpOpen] = useState(false)
@@ -263,7 +261,10 @@ export function BroadcastsCalendar({
     [range, anchor, endAnchor, formatter],
   )
 
-  const renderChip = (row: BroadcastCalendarRow, showTime: boolean) => (
+  const renderChip = (
+    row: BroadcastCalendarRow,
+    { showTime }: { showTime: boolean },
+  ) => (
     <button
       className="flex items-center gap-1.5 truncate rounded px-1.5 py-0.5 text-start text-xs hover:bg-accent"
       key={row.id}
@@ -298,86 +299,37 @@ export function BroadcastsCalendar({
     </button>
   )
 
-  const renderDayNumber = (day: Date) => (
-    <span
-      className={cn(
-        "self-end text-xs",
-        isToday(day) &&
-          "rounded-full bg-primary px-1.5 text-primary-foreground",
-      )}
-    >
-      {day.getDate()}
-    </span>
-  )
-
-  const renderWeekdayHeader = (days: Date[]) => (
-    <>
-      {days.map((day) => (
-        <div
-          className="border-b bg-muted px-2 py-1.5 font-medium text-muted-foreground text-xs"
-          key={`weekday-${dayKey(day)}`}
-        >
-          {formatter.dateTime(day, { weekday: "short" })}
-        </div>
-      ))}
-    </>
-  )
-
   // Map-driven bodies — one render function per range, keyed by `range`
   // itself. Add a new range's body here rather than an if/else chain.
   const bodies: Record<CalendarRange, () => ReactNode> = {
-    month: () => {
-      const weeks = buildMonthGrid(anchor)
-      return (
-        <div className="grid grid-cols-7 overflow-hidden rounded-lg border">
-          {renderWeekdayHeader(weeks[0])}
-          {weeks.flat().map((day) => {
-            const rows = byDay.get(dayKey(day)) ?? []
-            const overflow = rows.length - MAX_CHIPS_PER_DAY
-            return (
-              <div
-                className={cn(
-                  "flex min-h-28 flex-col gap-1 border-e border-b p-1.5",
-                  !isSameMonth(day, anchor) &&
-                    "bg-muted/40 text-muted-foreground",
-                )}
-                key={dayKey(day)}
-              >
-                {renderDayNumber(day)}
-                {rows
-                  .slice(0, MAX_CHIPS_PER_DAY)
-                  .map((row) => renderChip(row, false))}
-                {overflow > 0 && (
-                  <span className="px-1.5 text-muted-foreground text-xs">
-                    {t("broadcasts.calendar.more", { count: overflow })}
-                  </span>
-                )}
-              </div>
-            )
-          })}
-        </div>
-      )
-    },
-    week: () => {
-      const days = buildWeekDays(anchor)
-      return (
-        <div className="grid grid-cols-7 overflow-hidden rounded-lg border">
-          {renderWeekdayHeader(days)}
-          {days.map((day) => {
-            const rows = sortBySchedulesAt(byDay.get(dayKey(day)) ?? [])
-            return (
-              <div
-                className="flex h-96 flex-col gap-1 overflow-y-auto border-e border-b p-1.5"
-                key={dayKey(day)}
-              >
-                {renderDayNumber(day)}
-                {rows.map((row) => renderChip(row, true))}
-              </div>
-            )
-          })}
-        </div>
-      )
-    },
+    month: () => (
+      <CalendarGrid
+        anchor={anchor}
+        getDate={getSchedulesAt}
+        getKey={getRowId}
+        items={broadcasts}
+        renderItem={renderChip}
+        renderOverflow={(count) => (
+          <span className="px-1.5 text-muted-foreground text-xs">
+            {t("broadcasts.calendar.more", { count })}
+          </span>
+        )}
+        timezone={timezone}
+        view="month"
+      />
+    ),
+    week: () => (
+      <CalendarGrid
+        anchor={anchor}
+        getDate={getSchedulesAt}
+        getKey={getRowId}
+        items={broadcasts}
+        renderItem={renderChip}
+        renderOverflow={() => null}
+        timezone={timezone}
+        view="week"
+      />
+    ),
     day: () => {
       const rows = sortBySchedulesAt(byDay.get(dayKey(anchor)) ?? [])
       if (rows.length === 0) {

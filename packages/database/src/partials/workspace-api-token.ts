@@ -31,6 +31,7 @@ export const workspaceApiTokenScopes = z.enum([
   "places",
   "polls",
   "templates",
+  "posts",
 ])
 export type WorkspaceApiTokenScope = z.infer<typeof workspaceApiTokenScopes>
 

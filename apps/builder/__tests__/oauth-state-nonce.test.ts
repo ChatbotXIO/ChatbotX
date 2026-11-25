@@ -27,7 +27,7 @@ const jar = vi.hoisted(() => {
 
 vi.mock("next/headers", () => ({ cookies: async () => jar.api }))
 
-const { consumeOAuthNonce, issueOAuthNonce } = await import(
+const { consumeOAuthNonce, issueOAuthNonce, matchesOAuthNonce } = await import(
   "@/lib/oauth-state-nonce"
 )
 
@@ -82,5 +82,22 @@ describe("consumeOAuthNonce", () => {
     await issueOAuthNonce()
 
     await expect(consumeOAuthNonce(undefined)).resolves.toBe(false)
+  })
+})
+
+describe("matchesOAuthNonce", () => {
+  test("reports a match without dropping the cookie", async () => {
+    const nonce = await issueOAuthNonce()
+
+    expect(await matchesOAuthNonce(nonce)).toBe(true)
+    expect([...jar.store.values()]).toEqual([nonce])
+  })
+
+  test("a different or missing nonce does not match and keeps the cookie", async () => {
+    const nonce = await issueOAuthNonce()
+
+    expect(await matchesOAuthNonce("forged")).toBe(false)
+    expect(await matchesOAuthNonce(undefined)).toBe(false)
+    expect([...jar.store.values()]).toEqual([nonce])
   })
 })

@@ -4,6 +4,11 @@ import {
   workspaceMemberService,
 } from "@chatbotx.io/business"
 import { withAuditContext } from "@chatbotx.io/business/audit"
+import {
+  hasWorkspacePermission,
+  type PermissionsInput,
+  type WorkspacePermissionKey,
+} from "@chatbotx.io/business/workspace-member/permissions"
 import { ORPCError } from "@orpc/server"
 import { auth } from "@/lib/auth/auth"
 import { getGuestClientIp } from "@/lib/rate-limit/guest-rate-limit"
@@ -119,3 +124,47 @@ export const workspaceAuthorizedMidddleware = base.middleware(
     )
   },
 )
+
+/**
+ * Chain after `workspaceAuthorizedMidddleware` on a procedure that serves one
+ * member-permission section of the app (the Posts page's `broadcast`, say): a
+ * member without that permission gets `FORBIDDEN`, the same answer an API route
+ * gives, never Next's `notFound()` (that belongs to pages). The permission is
+ * read from the membership the gate already put in the context
+ * (`workspaceMember`, support-access sessions included), so the check costs no
+ * second lookup.
+ *
+ * ```ts
+ * .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
+ * .use(workspacePermissionMiddleware("broadcast"), (input) => input.workspaceId)
+ * ```
+ */
+export const workspacePermissionMiddleware = (key: WorkspacePermissionKey) =>
+  base.middleware(async ({ context, next }, workspaceId: string) => {
+    if (!context.user) {
+      throw new ORPCError("UNAUTHORIZED")
+    }
+    // The gate before this one already resolved the membership into the
+    // context; look it up only when this middleware is used on its own.
+    const gated = (
+      context as { workspaceMember?: { permissions: PermissionsInput } }
+    ).workspaceMember
+    const permissions =
+      gated?.permissions ??
+      (
+        await resolveWorkspaceAccess({
+          realMember: await workspaceMemberService.findMembership({
+            userId: context.user.id,
+            workspaceId,
+          }),
+          user: context.user,
+          workspaceId,
+        })
+      )?.member.permissions
+    if (!(permissions && hasWorkspacePermission(permissions, key))) {
+      throw new ORPCError("FORBIDDEN", {
+        message: "You do not have permission to perform this action",
+      })
+    }
+    return next()
+  })

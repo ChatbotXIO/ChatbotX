@@ -8,6 +8,7 @@ import type {
   ConversationModel,
 } from "@chatbotx.io/database/types"
 import { hasLink } from "@chatbotx.io/utils/has-link"
+import { hasPhoneNumber } from "@chatbotx.io/utils/has-phone-number"
 import { normalizeForMatch } from "@chatbotx.io/utils/normalize-for-match"
 import { ChatJobAction, chatQueue } from "@chatbotx.io/worker-config"
 import type { CommentAutomationChannelType } from "./channel-type"
@@ -94,7 +95,6 @@ export function hasHideRule(hideComments: CommentHideComments): boolean {
   )
 }
 
-const PHONE_RE = /\+?\d[\d\s\-().]{7,}/
 const UNHIDE_DELAY_MS: Record<string, number> = {
   "6h": 6 * 3_600_000,
   "12h": 12 * 3_600_000,
@@ -131,7 +131,7 @@ export function matchHideRule(
   if (hideComments.all) {
     return { rule: "all" }
   }
-  if (hideComments.hasPhoneNumber && PHONE_RE.test(text)) {
+  if (hideComments.hasPhoneNumber && hasPhoneNumber(text)) {
     return { rule: "phoneNumber" }
   }
   if (hideComments.hasLink && hasLink(text)) {

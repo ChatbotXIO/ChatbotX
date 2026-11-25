@@ -3,7 +3,7 @@
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
 type ReconnectActionArgs = {
-  bindArgsParsedInputs: [string, string]
+  bindArgsParsedInputs: [string, string] | [string, string, string]
   ctx: { workspace: { id: string; ownerId: string } }
 }
 
@@ -469,5 +469,52 @@ describe("reconnectThreadsAction", () => {
       "messages.needToAddSettings",
     )
     expect(mockRedirect).not.toHaveBeenCalled()
+  })
+})
+
+describe("reconnect actions — returnTo", () => {
+  const POSTS_CONNECT = "https://app.example.com/space/ws-1/posts/connect"
+  const refererOf = (generate: { mock: { calls: unknown[][] } }): unknown =>
+    (
+      generate.mock.calls.at(-1)?.[0] as {
+        stateParams: { referer: string }
+      }
+    ).stateParams.referer
+
+  beforeEach(() => {
+    vi.clearAllMocks()
+    mockResolveForOwner.mockResolvedValue({
+      userId: null,
+      config: { clientId: "c", clientSecret: "s", version: "v23.0" },
+    })
+    mockFindByOwner.mockResolvedValue(undefined)
+    mockFindActiveByTenantId.mockResolvedValue(undefined)
+    mockFindMessengerIntegration.mockResolvedValue({ id: "im-1", pageId: "p" })
+    mockFindInstagramIntegration.mockResolvedValue({
+      id: "ig-1",
+      type: "instagram",
+    })
+    mockFindThreadsIntegration.mockResolvedValue({ id: "th-1" })
+  })
+
+  test("postsConnect sends every Meta reconnect back to the Posts Connect tab", async () => {
+    const ctx = { workspace: { id: "ws-1", ownerId: "owner-1" } }
+
+    await reconnectMessengerHandler({
+      bindArgsParsedInputs: ["ws-1", "im-1", "postsConnect"],
+      ctx,
+    })
+    await reconnectInstagramHandler({
+      bindArgsParsedInputs: ["ws-1", "ig-1", "postsConnect"],
+      ctx,
+    })
+    await reconnectThreadsHandler({
+      bindArgsParsedInputs: ["ws-1", "th-1", "postsConnect"],
+      ctx,
+    })
+
+    expect(refererOf(mockGenerateMessengerAuthUrl)).toBe(POSTS_CONNECT)
+    expect(refererOf(mockGenerateInstagramAuthUrl)).toBe(POSTS_CONNECT)
+    expect(refererOf(mockGenerateThreadsAuthUrl)).toBe(POSTS_CONNECT)
   })
 })

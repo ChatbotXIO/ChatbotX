@@ -16,8 +16,15 @@ const updateAuth = vi.fn()
 const seedPersistentMenu = vi.fn()
 const commitReconnect = vi.fn()
 const recordConnectionAuthorization = vi.fn(async () => undefined)
+const captureInboxScopes = vi.fn(async () => undefined)
+const runReconnectFanOut = vi.fn(async () => null)
+
+vi.mock("@/features/channel-connect/lib/reconnect-fan-out", () => ({
+  runReconnectFanOut,
+}))
 
 vi.mock("@chatbotx.io/business", () => ({
+  publishDestinationService: { captureInboxScopes },
   messengerIntegrationService: {
     findByIdForWorkspace,
     updateAuth,
@@ -268,5 +275,67 @@ describe("reconnectMessengerHandler — connection authorization capture", () =>
 
     expect(recordConnectionAuthorization).toHaveBeenCalledTimes(1)
     expect(result).toEqual({ status: "error", reason: "failed" })
+  })
+})
+
+describe("reconnectMessengerHandler — publish scopes and fan-out", () => {
+  test("captures the debug_token scopes in the reconnect transaction", async () => {
+    await invoke()
+
+    expect(captureInboxScopes).toHaveBeenCalledWith(
+      {
+        grantedScopes: ["pages_messaging"],
+        inboxId: "inbox-1",
+        publisherKey: "facebook",
+        workspaceId: WORKSPACE_ID,
+      },
+      SENTINEL_TX,
+    )
+  })
+
+  test("stores unknown scopes when debug_token fails", async () => {
+    debugToken.mockRejectedValue(new Error("graph"))
+
+    await invoke()
+
+    expect(captureInboxScopes).toHaveBeenCalledWith(
+      expect.objectContaining({ grantedScopes: null }),
+      SENTINEL_TX,
+    )
+  })
+
+  test("fans out to the other pages of the same login, excluding the selected row", async () => {
+    getUserPages.mockResolvedValue({
+      pages: [
+        { id: "page-1", access_token: "t1", name: "One" },
+        { id: "page-2", access_token: "t2", name: "Two" },
+        { id: "page-3", name: "No token" },
+      ],
+    })
+    lookupIntegrationUserInfo.mockResolvedValue({ userId: "fb-user-7" })
+
+    await invoke()
+
+    expect(runReconnectFanOut).toHaveBeenCalledWith(
+      expect.objectContaining({
+        clientId: "client-id",
+        facebookUserId: "fb-user-7",
+        kinds: ["messenger", "instagramFacebook"],
+        pages: [
+          { accessToken: "t1", id: "page-1" },
+          { accessToken: "t2", id: "page-2" },
+        ],
+        selectedIntegrationId: INTEGRATION_ID,
+        workspaceId: WORKSPACE_ID,
+      }),
+    )
+  })
+
+  test("a reconnect that fails does not fan out", async () => {
+    commitReconnect.mockRejectedValue(new Error("boom"))
+
+    await invoke()
+
+    expect(runReconnectFanOut).not.toHaveBeenCalled()
   })
 })

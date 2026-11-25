@@ -3,6 +3,7 @@ import {
   type PipelineActorKind,
   type PipelineItemPriority,
   type PipelineItemStatus,
+  type PostCommentEventType,
   type TriggerEventType,
   triggerEventTypes,
 } from "@chatbotx.io/database/partials"
@@ -128,6 +129,51 @@ export type CartAbandonedMetadata = {
   total: number
   currency: string
   items: Array<CommerceEventProduct & { quantity: number }>
+}
+
+/**
+ * A contact's comment on a post (`contactCommentedOnPost` /
+ * `contactFirstCommentedOnPost`). There is deliberately no `sourceId`: a
+ * condition may pin posts and an inbox, and the evaluator applies both.
+ * Ids are strings so the job survives JSON.
+ */
+export type PostCommentEventMetadata = {
+  /** `ChannelPost.id`: the stored post the comment belongs to. */
+  channelPostId: string
+  /** The platform's id of the post. */
+  externalPostId: string
+  inboxId: string
+  channel: string
+  /** The platform's id of the comment. */
+  commentId: string
+  /** The stored comment message, to read its text back when rendering variables. */
+  commentMessageId: string
+  commentMessageCreatedAt: string
+  commentText: string | null
+  conversationId: string
+}
+
+/**
+ * A deterministic queue job id for a post-comment event, built from the stored
+ * comment message id and the event name, so the queue drops a redelivered
+ * duplicate of a job that is still queued even when the Redis emit claim is
+ * lost. BullMQ rejects `:` in a custom id, hence the dashes. Other events get
+ * no id (undefined) and keep a generated one.
+ */
+export const postCommentJobId = (
+  eventType: string,
+  metadata: Record<string, unknown> | undefined,
+): string | undefined => {
+  if (
+    eventType !== triggerEventTypes.enum.contactCommentedOnPost &&
+    eventType !== triggerEventTypes.enum.contactFirstCommentedOnPost
+  ) {
+    return
+  }
+  const commentMessageId = metadata?.commentMessageId
+  return typeof commentMessageId === "string" && commentMessageId
+    ? `post-comment-${eventType}-${commentMessageId}`
+    : undefined
 }
 
 /**
@@ -376,6 +422,21 @@ export abstract class BaseEventEmitter {
       workspaceId,
       contactId,
       metadata: withContactInboxMetadata({ channel }, contactInboxId),
+    })
+  }
+
+  /** A contact commented on a tracked post (every comment, or only their first on it). */
+  async postComment(
+    eventType: PostCommentEventType,
+    workspaceId: string,
+    contactId: string,
+    metadata: PostCommentEventMetadata,
+    contactInboxId?: string,
+  ): Promise<void> {
+    await this.emit(eventType, {
+      workspaceId,
+      contactId,
+      metadata: withContactInboxMetadata(metadata, contactInboxId),
     })
   }
 

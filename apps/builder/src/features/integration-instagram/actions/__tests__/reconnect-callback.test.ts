@@ -16,8 +16,15 @@ const updateAuth = vi.fn()
 const seedPersistentMenu = vi.fn()
 const commitReconnect = vi.fn()
 const recordConnectionAuthorization = vi.fn(async () => undefined)
+const captureInboxScopes = vi.fn(async () => undefined)
+const runReconnectFanOut = vi.fn(async () => null)
+
+vi.mock("@/features/channel-connect/lib/reconnect-fan-out", () => ({
+  runReconnectFanOut,
+}))
 
 vi.mock("@chatbotx.io/business", () => ({
+  publishDestinationService: { captureInboxScopes },
   instagramIntegrationService: {
     findByIdForWorkspace,
     updateAuth,
@@ -58,12 +65,14 @@ vi.mock("@chatbotx.io/integration-instagram", () => ({
 // Mock @chatbotx.io/integration-instagram-facebook (via-Facebook variant)
 // ---------------------------------------------------------------------------
 const getFacebookUser = vi.fn()
+const getGrantedPermissions = vi.fn()
 const getUserInstagramAccounts = vi.fn()
 const subscribeFacebookPageToInstagramWebhook = vi.fn()
 const instagramFacebookChannelIntegration = { runChannelHandler: vi.fn() }
 
 vi.mock("@chatbotx.io/integration-instagram-facebook", () => ({
   getFacebookUser,
+  getGrantedPermissions,
   getUserInstagramAccounts,
   subscribePageToInstagramWebhook: subscribeFacebookPageToInstagramWebhook,
   integration: instagramFacebookChannelIntegration,
@@ -140,6 +149,7 @@ function invokeDirect() {
     integrationId: INTEGRATION_ID,
     userId: USER_ID,
     userToken: "user-token",
+    grantedScopes: ["instagram_business_basic"],
   })
 }
 
@@ -186,6 +196,7 @@ beforeEach(() => {
     },
   ])
   lookupIntegrationUserInfo.mockResolvedValue(undefined)
+  getGrantedPermissions.mockResolvedValue(["instagram_content_publish"])
 })
 
 describe("reconnectInstagramHandler (direct login) — Part 1: transaction atomicity", () => {
@@ -396,5 +407,72 @@ describe("Instagram reconnect — connection authorization capture", () => {
 
     expect(result).toEqual({ status: "error", reason: "accountNotFound" })
     expect(recordConnectionAuthorization).not.toHaveBeenCalled()
+  })
+})
+
+describe("Instagram reconnect — publish scopes and fan-out", () => {
+  test("direct login stores the scopes the code exchange reported", async () => {
+    findByIdForWorkspace.mockResolvedValue(directRow())
+
+    await invokeDirect()
+
+    expect(captureInboxScopes).toHaveBeenCalledWith(
+      {
+        grantedScopes: ["instagram_business_basic"],
+        inboxId: "inbox-1",
+        publisherKey: "instagram",
+        workspaceId: WORKSPACE_ID,
+      },
+      SENTINEL_TX,
+    )
+    expect(runReconnectFanOut).not.toHaveBeenCalled()
+  })
+
+  test("Facebook login stores the granted /me/permissions", async () => {
+    findByIdForWorkspace.mockResolvedValue(facebookRow())
+
+    await invokeFacebook()
+
+    expect(getGrantedPermissions).toHaveBeenCalledWith("user-token", "v19.0")
+    expect(captureInboxScopes).toHaveBeenCalledWith(
+      {
+        grantedScopes: ["instagram_content_publish"],
+        inboxId: "inbox-1",
+        publisherKey: "instagramFacebook",
+        workspaceId: WORKSPACE_ID,
+      },
+      SENTINEL_TX,
+    )
+  })
+
+  test("Facebook login stores unknown scopes when the permission lookup fails", async () => {
+    findByIdForWorkspace.mockResolvedValue(facebookRow())
+    getGrantedPermissions.mockRejectedValue(new Error("graph"))
+
+    const result = await invokeFacebook()
+
+    expect(result).toEqual({ status: "success" })
+    expect(captureInboxScopes).toHaveBeenCalledWith(
+      expect.objectContaining({ grantedScopes: null }),
+      SENTINEL_TX,
+    )
+  })
+
+  test("Facebook login fans out to the other Instagram accounts of the login", async () => {
+    findByIdForWorkspace.mockResolvedValue(facebookRow())
+    lookupIntegrationUserInfo.mockResolvedValue({ userId: "fb-user-7" })
+
+    await invokeFacebook()
+
+    expect(runReconnectFanOut).toHaveBeenCalledWith(
+      expect.objectContaining({
+        clientId: "client-id",
+        facebookUserId: "fb-user-7",
+        kinds: ["instagramFacebook"],
+        pages: [{ accessToken: "page-access-token", id: "page-2" }],
+        selectedIntegrationId: INTEGRATION_ID,
+        workspaceId: WORKSPACE_ID,
+      }),
+    )
   })
 })

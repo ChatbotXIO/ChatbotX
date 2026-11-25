@@ -7,7 +7,10 @@
     ".": "./src/index.ts",
     "./errors": "./src/errors.ts",
     "./media-hydration": "./src/media-hydration.ts",
+    "./publish-avatar-ops": "./src/publish-avatar-ops.ts",
+    "./publish-fan-out-ops": "./src/publish-fan-out-ops.ts",
     "./registry": "./src/registry.ts",
+    "./social-account": "./src/social-account.ts",
     "./thread-control": "./src/thread-control.ts"
   },
   "scripts": {

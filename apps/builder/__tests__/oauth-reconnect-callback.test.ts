@@ -4,6 +4,7 @@ import type { NextRequest } from "next/server"
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
 const {
+  mockConsumeOAuthNonce,
   mockFindMessengerIntegration,
   mockUpdateMessengerIntegrationAuth,
   mockFindInstagramIntegration,
@@ -56,6 +57,7 @@ const {
   mockConnectionUpdate,
   mockConnectionTransition,
 } = vi.hoisted(() => ({
+  mockConsumeOAuthNonce: vi.fn(),
   mockFindMessengerIntegration: vi.fn(),
   mockUpdateMessengerIntegrationAuth: vi.fn(),
   mockFindInstagramIntegration: vi.fn(),
@@ -383,6 +385,13 @@ vi.mock("@/lib/oauth-broker", () => ({
   getBrokerOrigin: () => "https://broker.example.com",
 }))
 
+vi.mock("@/lib/oauth-state-nonce", () => ({
+  consumeOAuthNonce: mockConsumeOAuthNonce,
+  // The browser holds the nonce the state names (a forged cancel is covered in
+  // social-account-oauth-callback.test.ts).
+  matchesOAuthNonce: vi.fn(async () => true),
+}))
+
 vi.mock("@/lib/oauth-referer", () => ({
   resolveRelayTarget: vi.fn(async () => null),
   sanitizeReferer: vi.fn(async (referer: string) => referer),
@@ -518,6 +527,53 @@ describe("handleCallback OAuth reconnect", () => {
     const redirectTarget = new URL(mockRedirect.mock.calls[0][0])
     expect(redirectTarget.searchParams.get("reconnect")).toBe("error")
     expect(redirectTarget.searchParams.get("reason")).toBe("cancelled")
+  })
+
+  test("cancelled TikTok publishing consent consumes the single-use nonce", async () => {
+    const state = Buffer.from(
+      JSON.stringify({
+        workspaceId: "1",
+        referer: REFERER,
+        flow: "socialAccount",
+        socialProvider: "tiktok",
+        nonce: "n-1",
+      }),
+    ).toString("base64")
+    const request = {
+      url: `https://app.example.com/integrations/tiktok/callback?error=access_denied&state=${encodeURIComponent(state)}`,
+    } as unknown as NextRequest
+
+    await handleCallback("tiktok", request)
+
+    expect(mockConsumeOAuthNonce).toHaveBeenCalledWith("n-1")
+    expect(mockRedirect).toHaveBeenCalled()
+  })
+
+  test.each([
+    ["messenger", "facebook"],
+    ["instagram", "instagram"],
+    ["threads", "threads"],
+  ])("a socialAccount state at the %s callback is a 404: Meta networks have no publishing login", async (integrationType, socialProvider) => {
+    const state = Buffer.from(
+      JSON.stringify({
+        workspaceId: "1",
+        referer: REFERER,
+        flow: "socialAccount",
+        socialProvider,
+        nonce: "n-1",
+      }),
+    ).toString("base64")
+    const request = {
+      url: `https://app.example.com/integrations/${integrationType}/callback?code=c&state=${encodeURIComponent(state)}`,
+    } as unknown as NextRequest
+
+    await expect(
+      handleCallback(integrationType as never, request),
+    ).rejects.toThrow()
+
+    expect(mockNotFound).toHaveBeenCalled()
+    expect(mockReconnectMessengerHandler).not.toHaveBeenCalled()
+    expect(mockReconnectInstagramHandler).not.toHaveBeenCalled()
   })
 
   test("cancelled consent without reconnect state keeps the plain redirect", async () => {
@@ -1033,6 +1089,7 @@ describe("handleCallback OAuth reconnect", () => {
   test("instagram reconnect passes the exchanged user token to the handler", async () => {
     mockExchangeInstagramCode.mockResolvedValue({
       accessToken: "ig-user-token",
+      grantedScopes: ["instagram_business_basic"],
       userId: "ig-user-1",
     })
     mockReconnectInstagramHandler.mockResolvedValue({ status: "success" })
@@ -1056,6 +1113,7 @@ describe("handleCallback OAuth reconnect", () => {
       integrationId: "7",
       userId: "user-1",
       userToken: "ig-user-token",
+      grantedScopes: ["instagram_business_basic"],
     })
 
     const redirectTarget = new URL(mockRedirect.mock.calls[0][0])

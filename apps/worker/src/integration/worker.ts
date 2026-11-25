@@ -17,6 +17,7 @@ import {
   type WhatsappVoipSignalingJobData,
 } from "@chatbotx.io/worker-config"
 import type { Job } from "bullmq"
+import { recordLiveVideoStatusChange } from "../channel-post-sync/record-live-video"
 import { env } from "../env"
 import { createQueueWorker } from "../lib/create-queue-worker"
 import { isBlockedWorkspace } from "../lib/is-blocked-workspace"
@@ -274,6 +275,10 @@ function startIntegrationWorker() {
             case IntegrationJobAction.incomingMessage:
             case IntegrationJobAction.incomingMessageEcho: {
               await processIncomingMessage(job.data.data)
+              return
+            }
+            case IntegrationJobAction.liveVideoStatusChange: {
+              await recordLiveVideoStatusChange(job.data.data)
               return
             }
             case IntegrationJobAction.incomingComment: {

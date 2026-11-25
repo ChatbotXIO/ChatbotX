@@ -111,6 +111,7 @@ export const toWebResponse = (
  */
 export const pinnedGet = async (input: {
   address: string
+  headers?: Record<string, string>
   signal?: AbortSignal
   url: string
 }): Promise<Response> => {
@@ -131,6 +132,7 @@ export const pinnedGet = async (input: {
   try {
     const response = await undiciFetch(input.url, {
       dispatcher,
+      headers: input.headers,
       method: "GET",
       redirect: "manual",
       signal: input.signal,

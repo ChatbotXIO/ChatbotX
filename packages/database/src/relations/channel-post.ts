@@ -14,5 +14,13 @@ export const channelPostRelations = defineRelationsPart(schema, (r) => ({
       to: r.inboxModel.id,
       optional: false,
     }),
+    topics: r.many.postTopicModel({
+      from: r.channelPostModel.id.through(
+        r.channelPostToPostTopicModel.channelPostId,
+      ),
+      to: r.postTopicModel.id.through(
+        r.channelPostToPostTopicModel.postTopicId,
+      ),
+    }),
   },
 }))

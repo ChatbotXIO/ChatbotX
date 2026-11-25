@@ -536,6 +536,10 @@ describe("timezone helpers", () => {
     expect(canonicalizeTimezone("Europe/London")).toBe("Europe/London")
     expect(isValidTimezone("Asia/Saigon")).toBe(true)
     expect(isValidTimezone("UTC")).toBe(true)
+    // The workspace settings form stores `Etc/UTC` for UTC; Intl lists only canonical names.
+    expect(isValidTimezone("Etc/UTC")).toBe(true)
+    expect(isValidTimezone("GMT")).toBe(true)
+    expect(isValidTimezone("Etc/GMT")).toBe(true)
     expect(isValidTimezone("+07:00")).toBe(false)
     // Listed as an alias but not a zone the runtime can format with.
     expect(isValidTimezone("US")).toBe(false)

@@ -131,9 +131,10 @@ Each filter that fails calls `logAutomationSkipped(..., reason)` (logged at `inf
 | `options.replyToNewContactsOnly` | Only first-time contacts | `getPriorContactInboxCount(contactId) > 1` → skip. Counts `ContactInbox` rows. |
 | `options.replyOncePerUserPerPost` | Once per user per post | `findDedup(automationId, contactId, postId)` exists → skip (fast path, keeps the miss reason). Then `claimDedup` — an `INSERT … ON CONFLICT DO NOTHING RETURNING` on `CommentAutomationReply_dedup_idx` — is the actual guard: two comments from one person milliseconds apart both pass the read, only one wins the row. A claimed row is released (`deleteDedup`) when nothing was dispatched. |
 | `options.replyToUsersWhoCommentedOnOtherPosts` (default **true**) | If off, only engage each user on their first post | When `false`, `hasRepliedOnOtherPost` (a dedup row with a different `postId`) → skip. |
-| `options.likeUserComment` | Auto-like the comment | Runs only if the incoming comment's DB message was found (`findBySourceId`). |
+| `options.likeUserComment` | Auto-like the comment | Runs only if the incoming comment's DB message was found (`findBySourceId`) and the channel can like (`supportsCommentLike`: Messenger and TikTok). On Instagram (both connections) and Threads a stored `true` is kept but the like is skipped and logged as `like comment unsupported`; the rule is never failed or retried. |
 | `options.trackUserTags` | Count who the commenter tagged | Not a filter — never skips. Adds the comment's counts to `Contact.totalTagged`/`totalNewTagged`, which back `{{total_tagged}}`/`{{total_new_tagged}}`. Once per comment, ahead of the reply filters. See [Tag tracking](#tag-tracking). |
 | `hideComments.*` | Auto-hide matching comments | Runs after the reply filters, on a comment the automation also answers (see [Moderation](#moderation-hide-rules--ai)). `matchHideRule` — `all`, `hasPhoneNumber` (PHONE_RE), `hasLink` (LINK_RE, matches bare domains too), `hasKeywords` (case- and accent-insensitive), `hasImage`/`hasVideo`/`hasGif` (attachment lookup, see below), `hasEmoji` (`\p{Extended_Pictographic}` on the text). A row written before `hasGif`/`hasEmoji` existed lacks the keys — absent reads as off. |
+| `hideComments.*` and message quota | Moderation hides are free | Hides, unhides and deletes queued by a comment automation never consume the message quota. Only the hide of a per-post comment setting (`hideComments` / `hidePhoneComments` on a post, job `usageSource: "postCommentSetting"`) is charged, see `docs/posts.md`. |
 | `hideComments.showCommentsAfter` | Auto-unhide delay | Enqueues a delayed unhide job (`jobId = unhide-comment-${commentId}`). Hide rules only — an AI moderation hide stays hidden. |
 | `hideComments.aiModeration` | AI moderation | Optional; absent = off. `enabled`, `engine` (`aiAgent` default / `decision`), `aiAgentId` (engine `aiAgent`; only the agent's model list is used, never its prompt), `decisionConnectionId` + `decisionModel` + `decisionThreshold` (engine `decision`: an enabled AI Router connection of this workspace and one of its `modelCatalog`, checked on every write; a template install switches it off and clears the connection with a `credentialRequired` warning), `categories` (`hate`/`offensive`/`harassment`/`negative`/`spam`), `instruction`, `action` (`hide`/`delete`; the service pins `delete` → `hide` on Threads, and pins `enabled` off on an Instagram Live automation). See [Moderation](#moderation-hide-rules--ai). |
 | `publicReply` / `privateReply` | The reply | See [Reply types](#reply-types). |
@@ -811,12 +812,12 @@ fails the comment is processed immediately.
   and, conditionally, on TikTok (`PRIVATE_REPLY_TEXT_SENDERS`); Threads has no DM API at
   all. Comment liking and hiding exist on the Meta channels and TikTok but not Threads.
   Among the Meta
-  channels liking exists only on `messenger` and
-  `instagramFacebook` — Instagram Login has no like API, so its `likeComment` handler
-  is a logged no-op — and the attachment lookup behind `hideComments.hasImage` /
+  channels liking exists only on `messenger` — neither Instagram connection can like
+  (the `/{igId}/likes` endpoint is not in Meta's official reference), so both
+  `likeComment` handlers are logged no-ops and the worker never enqueues the job — and the attachment lookup behind `hideComments.hasImage` /
   `hasVideo` is implemented only for `messenger` (`comment-attachment.ts`
   short-circuits every other channel to "no attachment"). The `ig-comments` form gates
-  each toggle separately: the like switch renders only for `instagramFacebook`, while
+  each toggle separately: the like switch is never offered for either variant (a rule saved with it on shows it as unavailable until turned off), while
   `hasImage`/`hasVideo` are hidden for both Instagram variants. Keep that pattern —
   hide an unsupported toggle rather than rendering a dead one.
 - **TikTok's private reply is conditional, and deferred because of it.**

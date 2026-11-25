@@ -1,6 +1,7 @@
 import {
   connectionStateService,
   instagramIntegrationService,
+  publishDestinationService,
   userService,
 } from "@chatbotx.io/business"
 import type { InstagramAuthValue } from "@chatbotx.io/integration-instagram"
@@ -11,6 +12,7 @@ import {
 } from "@chatbotx.io/integration-instagram"
 import {
   getFacebookUser,
+  getGrantedPermissions,
   getUserInstagramAccounts,
   integration as instagramFacebookChannelIntegration,
   subscribePageToInstagramWebhook as subscribeFacebookPageToInstagramWebhook,
@@ -18,6 +20,7 @@ import {
 import { AuthType } from "@chatbotx.io/sdk"
 import { seedReconnectBranding } from "@/features/channel-connect/lib/branding-follow-ups"
 import { buildFacebookUserAuth } from "@/features/channel-connect/lib/facebook-user-auth"
+import { runReconnectFanOut } from "@/features/channel-connect/lib/reconnect-fan-out"
 import type { ReconnectResult } from "@/lib/channel-reconnect"
 import {
   buildIntegrationUserInfo,
@@ -38,6 +41,8 @@ export async function reconnectInstagramHandler(props: {
   integrationId: string
   userId: string
   userToken: string
+  /** What the Business Login code exchange reported; null when it did not. */
+  grantedScopes: string[] | null
 }): Promise<ReconnectResult> {
   const integrationInstagram =
     await instagramIntegrationService.findByIdForWorkspace({
@@ -108,6 +113,15 @@ export async function reconnectInstagramHandler(props: {
           ...(userInfo ? { userInfo } : {}),
           tx,
         })
+        await publishDestinationService.captureInboxScopes(
+          {
+            grantedScopes: props.grantedScopes,
+            inboxId: integrationInstagram.inboxId,
+            publisherKey: "instagram",
+            workspaceId: props.workspaceId,
+          },
+          tx,
+        )
       },
     })
 
@@ -155,6 +169,9 @@ export async function reconnectInstagramFacebookHandler(props: {
   userId: string
   userToken: string
 }): Promise<ReconnectResult> {
+  // Rows written after this moment belong to a newer authorization: a delayed
+  // fan-out never overwrites them.
+  const authorizedAt = new Date()
   const integrationInstagram =
     await instagramIntegrationService.findByIdForWorkspace({
       id: props.integrationId,
@@ -183,6 +200,19 @@ export async function reconnectInstagramFacebookHandler(props: {
       existingAvatar: integrationInstagram.userInfo?.avatar,
       fetchUser: () =>
         getFacebookUser(props.userToken, props.credentialConfig.version),
+    })
+
+    // Granted permissions of the login; unknown (null) when the lookup fails,
+    // which leaves the destination to be judged by its publish attempts.
+    const grantedScopes = await getGrantedPermissions(
+      props.userToken,
+      props.credentialConfig.version,
+    ).catch((error) => {
+      logger.warn(
+        { err: error },
+        "Instagram (via Facebook) permission lookup failed during reconnect",
+      )
+      return null
     })
 
     const auth: InstagramAuthValue = {
@@ -229,6 +259,15 @@ export async function reconnectInstagramFacebookHandler(props: {
           ...(userInfo ? { userInfo } : {}),
           tx,
         })
+        await publishDestinationService.captureInboxScopes(
+          {
+            grantedScopes,
+            inboxId: integrationInstagram.inboxId,
+            publisherKey: "instagramFacebook",
+            workspaceId: props.workspaceId,
+          },
+          tx,
+        )
       },
     })
 
@@ -253,6 +292,21 @@ export async function reconnectInstagramFacebookHandler(props: {
       pageId: account.pageId,
       accessToken: account.pageAccessToken,
       version: props.credentialConfig.version,
+    })
+
+    // The same login manages other Instagram accounts of this workspace.
+    await runReconnectFanOut({
+      authorizedAt,
+      clientId: props.credentialConfig.clientId,
+      facebookUserId: userInfo?.userId,
+      grantedScopes,
+      kinds: ["instagramFacebook"],
+      pages: accounts.map((candidate) => ({
+        accessToken: candidate.pageAccessToken,
+        id: candidate.pageId,
+      })),
+      selectedIntegrationId: integrationInstagram.id,
+      workspaceId: props.workspaceId,
     })
 
     return { status: "success" }

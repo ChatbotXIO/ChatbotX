@@ -1,4 +1,8 @@
-import type { Context, IncomingAttachment } from "@chatbotx.io/sdk"
+import type {
+  ChannelPostLiveState,
+  Context,
+  IncomingAttachment,
+} from "@chatbotx.io/sdk"
 import { DEFAULT_API_VERSION } from "../constants"
 import { rescue } from "../exception"
 import { facebookGraphClient } from "../lib/http-client"
@@ -238,10 +242,15 @@ const COMMENT_ATTACHMENT_FIELDS =
 const COMMENT_LIVE_FIELD = "live_broadcast_timestamp"
 
 /**
- * `live_status` of a video that is or was a live broadcast. A reel or an
- * uploaded video carries no live status.
+ * The broadcast state a video's `live_status` names: `LIVE` is on the air and
+ * `LIVE_STOPPED` is over. A reel or an uploaded video carries no live status.
+ * UNVERIFIED: the Video reference does not list the values; the two names come
+ * from observed behaviour.
  */
-const LIVE_VIDEO_STATUSES = new Set(["LIVE", "LIVE_STOPPED"])
+const LIVE_STATE_BY_VIDEO_STATUS: Record<string, ChannelPostLiveState> = {
+  LIVE: "live",
+  LIVE_STOPPED: "ended",
+}
 
 /**
  * Whether the broadcast timestamp marks a live comment. Facebook can send the
@@ -254,14 +263,16 @@ function hasLiveBroadcastTimestamp(timestamp: number | null | undefined) {
 
 /**
  * Confirms a timestamped comment sits on a live video, so a reel or uploaded
- * video comment is never answered as live. Only runs when the timestamp
- * already says live, so ordinary comments pay no extra Graph call. When
- * Facebook names no video, or the lookup fails, the timestamp stands.
+ * video comment is never answered as live, and reports the broadcast's state
+ * from the same read. Only runs when the timestamp already says live, so
+ * ordinary comments pay no extra Graph call. `null` means not a live video;
+ * when Facebook names no video, or the lookup fails, the timestamp stands and
+ * the state is `unknown`.
  */
-async function isOnLiveVideo(
+async function liveStateOfComment(
   ctx: Context<MessengerAuthValue>,
   commentId: string,
-): Promise<boolean> {
+): Promise<ChannelPostLiveState | null> {
   const { version = DEFAULT_API_VERSION } = ctx.auth
   const endpoint = `${version}/${commentId}`
   try {
@@ -274,15 +285,15 @@ async function isOnLiveVideo(
       }),
     )
     if (!res.object) {
-      return true
+      return "unknown"
     }
-    return LIVE_VIDEO_STATUSES.has(res.object.live_status ?? "")
+    return LIVE_STATE_BY_VIDEO_STATUS[res.object.live_status ?? ""] ?? null
   } catch (error) {
     logger.warn(
       { err: error, commentId },
       "Failed to confirm the comment's live video, trusting its broadcast timestamp",
     )
-    return true
+    return "unknown"
   }
 }
 
@@ -291,6 +302,11 @@ export type CommentAttachmentLookup = {
   attachment?: IncomingAttachment
   /** The comment was made on a live broadcast. */
   isLive: boolean
+  /**
+   * The broadcast's state as the same read reported it; `null` when the comment
+   * is not a live comment, `unknown` when the read could not say.
+   */
+  liveState: ChannelPostLiveState | null
 }
 
 function toHttpsUrl(link: string | undefined): string | null {
@@ -410,9 +426,10 @@ export const getCommentAttachment = async (props: {
   )
 
   const type = res.attachment?.type ?? null
-  const isLive =
-    hasLiveBroadcastTimestamp(res.live_broadcast_timestamp) &&
-    (await isOnLiveVideo(ctx, input.commentId))
+  const liveState = hasLiveBroadcastTimestamp(res.live_broadcast_timestamp)
+    ? await liveStateOfComment(ctx, input.commentId)
+    : null
+  const isLive = liveState !== null
   const imageUrl = res.attachment?.media?.image?.src
 
   if (type === "photo" && imageUrl) {
@@ -423,15 +440,15 @@ export const getCommentAttachment = async (props: {
       logger.error(error, "Failed to download comment attachment")
       return
     })
-    return { type, attachment, isLive }
+    return { type, attachment, isLive, liveState }
   }
 
   if (res.attachment && type?.startsWith("animated_image")) {
     const attachment = await downloadFirstGifCandidate(ctx, res.attachment)
-    return { type, attachment, isLive }
+    return { type, attachment, isLive, liveState }
   }
 
-  return { type, isLive }
+  return { type, isLive, liveState }
 }
 
 /**

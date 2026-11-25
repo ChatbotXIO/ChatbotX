@@ -8,9 +8,11 @@ vi.mock("@/lib/log", () => ({
 const findByIdForWorkspace = vi.fn()
 const reconnect = vi.fn()
 const recordConnectionAuthorization = vi.fn(async () => undefined)
+const captureInboxScopes = vi.fn(async () => undefined)
 
 vi.mock("@chatbotx.io/business", () => ({
   integrationThreadsService: { findByIdForWorkspace, reconnect },
+  publishDestinationService: { captureInboxScopes },
   userService: { recordConnectionAuthorization },
 }))
 
@@ -43,7 +45,11 @@ const invoke = () =>
 
 beforeEach(() => {
   vi.clearAllMocks()
-  findByIdForWorkspace.mockResolvedValue({ id: "200", threadsUserId: "th-1" })
+  findByIdForWorkspace.mockResolvedValue({
+    id: "200",
+    inboxId: "inbox-9",
+    threadsUserId: "th-1",
+  })
   getThreadsProfile.mockResolvedValue({ id: "th-1", username: "me" })
   reconnect.mockResolvedValue({ id: "200" })
 })
@@ -82,5 +88,26 @@ describe("reconnectThreadsHandler — connection authorization capture", () => {
 
     expect(recordConnectionAuthorization).toHaveBeenCalledTimes(1)
     expect(result).toEqual({ status: "error", reason: "failed" })
+  })
+})
+
+describe("reconnectThreadsHandler — publish scopes", () => {
+  test("stores unknown (null) scopes and resets the publish status for the inbox", async () => {
+    await invoke()
+
+    expect(captureInboxScopes).toHaveBeenCalledWith({
+      grantedScopes: null,
+      inboxId: "inbox-9",
+      publisherKey: "threads",
+      workspaceId: WORKSPACE_ID,
+    })
+  })
+
+  test("a failing publish-status reset never fails the reconnect", async () => {
+    captureInboxScopes.mockRejectedValueOnce(new Error("db"))
+
+    const result = await invoke()
+
+    expect(result).toEqual({ status: "success" })
   })
 })

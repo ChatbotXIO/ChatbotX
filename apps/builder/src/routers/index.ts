@@ -169,6 +169,46 @@ export const router = {
       default: m.channelPostAPIs,
     })),
   ),
+  socialPostsAPIs: lazy(() =>
+    import("@/features/social-posts/api/private").then((m) => ({
+      default: m.socialPostsAPIs,
+    })),
+  ),
+  socialPostsAiAPIs: lazy(() =>
+    import("@/features/social-posts-ai/api/private").then((m) => ({
+      default: m.socialPostsAiAPIs,
+    })),
+  ),
+  postSnippetsAPIs: lazy(() =>
+    import("@/features/social-post-snippets/api/private").then((m) => ({
+      default: m.postSnippetsAPIs,
+    })),
+  ),
+  postFeedsAPIs: lazy(() =>
+    import("@/features/social-post-feeds/api/private").then((m) => ({
+      default: m.postFeedsAPIs,
+    })),
+  ),
+  publishDestinationsAPIs: lazy(() =>
+    import("@/features/publish-destinations/api/private").then((m) => ({
+      default: m.publishDestinationsAPIs,
+    })),
+  ),
+  socialAccountsAPIs: lazy(() =>
+    import("@/features/social-accounts/api/private").then((m) => ({
+      default: m.socialAccountsAPIs,
+    })),
+  ),
+  channelPostManagementAPIs: lazy(() =>
+    import("@/features/channel-posts/api/management-private").then((m) => ({
+      default: m.channelPostManagementAPIs,
+    })),
+  ),
+  postAnalyticsAPIs: lazy(() =>
+    import("@/features/post-analytics/api/private").then((m) => ({
+      default: m.postAnalyticsAPIs,
+    })),
+  ),
   botFieldAPIs: lazy(() =>
     import("@/features/bot-fields/api").then((m) => ({
       default: m.botFieldAPIs,

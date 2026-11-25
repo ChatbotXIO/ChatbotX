@@ -1,3 +1,4 @@
+import { z } from "zod"
 import type { RichResponseContentAttributes } from "../../schema"
 import type { AttachmentModel, MessageModel } from "../../types"
 
@@ -32,6 +33,13 @@ export type TranslationContextMessage = {
   createdAt: Date
   text: string
 }
+
+/** The closed set of attribute keys that mark one message-quota charge as taken. */
+export const messageQuotaMarkerKeys = z.enum([
+  "quotaChargedHide",
+  "quotaChargedSkip",
+])
+export type MessageQuotaMarkerKey = z.infer<typeof messageQuotaMarkerKeys>
 
 export interface CreateMessageInput {
   contactInboxId: string
@@ -84,6 +92,12 @@ export interface MessageWithAttachments extends MessageModel {
 
 export interface PaginationCursor {
   createdAt: Date
+  /**
+   * `createdAt` as PostgreSQL prints it (microseconds, with offset). A comment
+   * page keeps this so its keyset compares exactly: a `Date` holds milliseconds
+   * and would skip or repeat rows created within the same millisecond.
+   */
+  createdAtText?: string
   id: string
   shardId?: string
 }
@@ -105,6 +119,43 @@ export interface ListMessagesQuery {
   pagination: Pagination
   sinceTime?: Date
   workspaceId: string
+}
+
+/** Which comments of which conversations to list. */
+export interface CommentListFilter {
+  /**
+   * Only comments whose `contactInboxId` is one of these: a post is its inbox's,
+   * so a contact who also reaches us through another inbox never leaks that
+   * inbox's comments in.
+   */
+  contactInboxIds: string[]
+  /** The conversations whose comments are listed (one per commenter of a post). */
+  conversationIds: string[]
+  /** Only comments that carry a phone number (the shared phone rule). */
+  hasPhone?: boolean
+  /**
+   * Search the text as a viewer without phone permission sees it: phone numbers
+   * masked first, so a search can never probe one (also not with separators).
+   */
+  redactPhones?: boolean
+  /** Case-insensitive substring of the comment text. */
+  search?: string
+}
+
+export interface ListCommentsQuery {
+  filter: CommentListFilter
+  pagination: Pagination
+  sinceTime?: Date
+  workspaceId: string
+}
+
+/** A listed comment with its exact creation instant, for the next page's cursor. */
+export type ListedComment = MessageModel & { createdAtText: string }
+
+export interface PaginatedComments {
+  data: ListedComment[]
+  hasPartialResults?: boolean
+  nextCursor: PaginationCursor | null
 }
 
 export interface FindLastByConversationOptions {
@@ -340,6 +391,30 @@ export interface IMessageRepository {
     createdAt: Date
   }): Promise<{ id: string } | null>
 
+  /**
+   * Claims a message-quota marker on a comment, atomically: `true` only for the
+   * call that set it, `false` when it was already set (or the comment is gone).
+   * A storage failure throws, so a caller never takes "could not write" for
+   * "already charged".
+   */
+  claimQuotaMarker(
+    messageId: string,
+    workspaceId: string,
+    createdAt: Date,
+    key: MessageQuotaMarkerKey,
+  ): Promise<boolean>
+
+  /**
+   * Counts the comments the filter matches, stopping at `limit` (`capped` is
+   * then true and `count` is only a lower bound). Bounded on purpose: it backs a
+   * repair of a counter, not a report.
+   */
+  countComments(query: {
+    filter: CommentListFilter
+    limit: number
+    workspaceId: string
+  }): Promise<{ capped: boolean; count: number }>
+
   create(message: CreateMessageInput): Promise<MessageModel>
 
   createOrUpdate(message: CreateMessageInput): Promise<CreateMessageResult>
@@ -512,9 +587,27 @@ export interface IMessageRepository {
 
   listByConversation(query: ListMessagesQuery): Promise<PaginatedMessages>
 
+  /**
+   * One newest-first keyset page of the comments of a set of conversations
+   * (removed comments excluded), for the comments of a post.
+   */
+  listComments(query: ListCommentsQuery): Promise<PaginatedComments>
+
   listIncomingTextsByContactInbox(
     params: ListIncomingTextsByContactInboxParams,
   ): Promise<string[]>
+
+  /**
+   * Marks a comment as counted in its post's phone-number count, atomically:
+   * `true` only for the call that set the mark, `false` when it was already set
+   * (or the comment is gone). A storage failure throws, so a caller never takes
+   * "could not write" for "already counted".
+   */
+  markPhoneCounted(
+    messageId: string,
+    workspaceId: string,
+    createdAt: Date,
+  ): Promise<boolean>
 
   /**
    * Atomically merges `overlay` into `contentAttributes` via a DB-side `jsonb ||`
@@ -530,6 +623,25 @@ export interface IMessageRepository {
     id: string
     contentAttributes: Record<string, unknown> | null
   } | null>
+
+  /**
+   * Sets only the given keys of a message's `attributes` with one JSON merge in
+   * the database, so a key written concurrently (`phoneCounted`) survives.
+   */
+  patchMessageAttributes(
+    messageId: string,
+    workspaceId: string,
+    patch: { hidden?: boolean; liked?: boolean },
+    createdAt: Date,
+  ): Promise<{ id: string } | null>
+
+  /** Takes a claimed message-quota marker back; a storage failure throws. */
+  releaseQuotaMarker(
+    messageId: string,
+    workspaceId: string,
+    createdAt: Date,
+    key: MessageQuotaMarkerKey,
+  ): Promise<void>
 
   /**
    * Returns how many rows were updated: 0 means no row matched, so callers
@@ -561,7 +673,7 @@ export interface IMessageRepository {
   updateMessageAttributes(
     messageId: string,
     workspaceId: string,
-    attributes: { liked: boolean; hidden: boolean },
+    attributes: { liked: boolean; hidden: boolean; phoneCounted?: boolean },
     createdAt: Date,
   ): Promise<{ id: string } | null>
 

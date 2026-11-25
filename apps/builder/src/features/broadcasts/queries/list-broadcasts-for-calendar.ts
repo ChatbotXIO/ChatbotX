@@ -6,14 +6,14 @@ import {
   type BroadcastStatus,
   broadcastScheduleTypes,
 } from "@chatbotx.io/database/partials"
-import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
-import type { BroadcastKind } from "../lib/broadcast-status"
 import {
   type CalendarRange,
   getCalendarQueryRange,
   parseDateParam,
   parseEndDateParam,
-} from "../lib/calendar-grid"
+} from "@/components/calendar/calendar-grid"
+import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
+import type { BroadcastKind } from "../lib/broadcast-status"
 
 export async function listBroadcastsForCalendar(input: {
   workspaceId: string

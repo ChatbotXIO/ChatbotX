@@ -9,15 +9,26 @@ import { generateAuthUrl } from "@chatbotx.io/integration-threads"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { redirect } from "next/navigation"
 import { getTranslations } from "next-intl/server"
+import {
+  buildReconnectReferer,
+  reconnectReturnToSchema,
+} from "@/lib/channel-reconnect"
 import { getOriginUrlFromHeader } from "@/lib/domain"
 import { resolveOwnerForWorkspace } from "@/lib/platform-credential-owner"
 import { buildProviderCallbackUrl } from "@/lib/provider-origin"
 import { workspaceActionClient } from "@/lib/safe-action"
 
 export const reconnectThreadsAction = workspaceActionClient
-  .bindArgsSchemas([zodBigintAsString(), zodBigintAsString()])
+  .bindArgsSchemas([
+    zodBigintAsString(),
+    zodBigintAsString(),
+    reconnectReturnToSchema.optional(),
+  ])
   .action(
-    async ({ bindArgsParsedInputs: [workspaceId, integrationId], ctx }) => {
+    async ({
+      bindArgsParsedInputs: [workspaceId, integrationId, returnTo],
+      ctx,
+    }) => {
       const t = await getTranslations()
       const integrationThreads =
         await integrationThreadsService.findByIdForWorkspace({
@@ -36,10 +47,12 @@ export const reconnectThreadsAction = workspaceActionClient
         throw new ChatbotXException(t("messages.needToAddSettings"))
       }
 
-      const referer = new URL(
-        `/space/${workspaceId}/settings/channels?channel=threads`,
-        await getOriginUrlFromHeader(),
-      ).toString()
+      const referer = buildReconnectReferer({
+        channel: "threads",
+        origin: await getOriginUrlFromHeader(),
+        returnTo,
+        workspaceId,
+      })
 
       // Must match the redirect_uri used at authorize time — the tenant's
       // custom domain for a tenant-owned credential, else the broker.

@@ -17,6 +17,11 @@ export type InstagramAuthValue = Oauth2AuthValue & {
     igName: string
     pageId: string
     version: string
+    /**
+     * Permissions the person granted at connect; absent or null when the
+     * platform did not report them. Read by the publish-state capture.
+     */
+    grantedScopes?: string[] | null
   }
 }
 
@@ -194,17 +199,30 @@ export type InstagramPageEntry = z.infer<typeof instagramPageEntrySchema>
 
 // Instagram only fires comment webhooks for new comments (no edit/delete events).
 // The "text" field holds the comment body; "from" is always present.
-export const instagramCommentEventValueSchema = z.object({
-  id: z.string(),
-  text: z.string().optional(),
-  from: z.object({ id: z.string(), username: z.string().optional() }),
-  media: z
-    .object({ id: z.string(), media_product_type: z.string().optional() })
-    .optional(),
-  parent_id: z.string().optional(),
-  sender_id: z.string().optional(),
-  recipient_id: z.string().optional(),
-})
+// Facebook Login for Business / Unified Login deliver the comment id as
+// `comment_id`; Instagram Login uses `id`. Normalise to `id`.
+export const normalizeCommentId = (raw: unknown): unknown => {
+  if (typeof raw !== "object" || raw === null || "id" in raw) {
+    return raw
+  }
+  const { comment_id: commentId, ...rest } = raw as Record<string, unknown>
+  return commentId === undefined ? raw : { ...rest, id: commentId }
+}
+
+export const instagramCommentEventValueSchema = z.preprocess(
+  normalizeCommentId,
+  z.object({
+    id: z.string(),
+    text: z.string().optional(),
+    from: z.object({ id: z.string(), username: z.string().optional() }),
+    media: z
+      .object({ id: z.string(), media_product_type: z.string().optional() })
+      .optional(),
+    parent_id: z.string().optional(),
+    sender_id: z.string().optional(),
+    recipient_id: z.string().optional(),
+  }),
+)
 export type InstagramCommentEventValue = z.infer<
   typeof instagramCommentEventValueSchema
 >

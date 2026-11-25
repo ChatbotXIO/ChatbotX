@@ -29,6 +29,35 @@ export async function issueOAuthNonce(): Promise<string> {
   return nonce
 }
 
+const nonceMatches = (
+  storedNonce: string | undefined,
+  presentedNonce: string | undefined,
+): boolean => {
+  if (!(storedNonce && presentedNonce)) {
+    return false
+  }
+  const stored = Buffer.from(storedNonce)
+  const presented = Buffer.from(presentedNonce)
+  return (
+    stored.length === presented.length && timingSafeEqual(stored, presented)
+  )
+}
+
+/**
+ * Whether `presentedNonce` matches the cookie, without touching the cookie.
+ * For a callback that must not let a forged `state` spend the real nonce (a
+ * cancellation); the caller consumes the nonce itself once it matched.
+ */
+export async function matchesOAuthNonce(
+  presentedNonce: string | undefined,
+): Promise<boolean> {
+  const cookieStore = await cookies()
+  return nonceMatches(
+    cookieStore.get(OAUTH_NONCE_COOKIE_NAME)?.value,
+    presentedNonce,
+  )
+}
+
 /**
  * Single use: the cookie is dropped whether or not the nonce matched, so a
  * callback can be replayed at most once. The deletion only reaches the browser
@@ -44,13 +73,5 @@ export async function consumeOAuthNonce(
     name: OAUTH_NONCE_COOKIE_NAME,
     path: OAUTH_NONCE_COOKIE_PATH,
   })
-
-  if (!(storedNonce && presentedNonce)) {
-    return false
-  }
-  const stored = Buffer.from(storedNonce)
-  const presented = Buffer.from(presentedNonce)
-  return (
-    stored.length === presented.length && timingSafeEqual(stored, presented)
-  )
+  return nonceMatches(storedNonce, presentedNonce)
 }

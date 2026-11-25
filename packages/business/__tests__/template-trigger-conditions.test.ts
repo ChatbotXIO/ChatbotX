@@ -161,3 +161,56 @@ describe("countRowsWithUnshippedReferences", () => {
     ).toBe(0)
   })
 })
+
+describe("post-comment trigger conditions", () => {
+  const pinnedInbox = row("contactCommentedOnPost", "21", {
+    scope: "any",
+    channelPostIds: [],
+  })
+  const pinnedPosts = row("contactFirstCommentedOnPost", null, {
+    scope: "selected",
+    channelPostIds: ["31", "32"],
+  })
+  const unpinned = row("contactCommentedOnPost", null, {
+    scope: "publishedFromPosts",
+    channelPostIds: [],
+  })
+
+  test("names the page and the posts it pins", () => {
+    const byKind = collectTriggerConditionReferences([pinnedInbox, pinnedPosts])
+    expect(
+      Object.fromEntries([...byKind].map(([k, v]) => [k, [...v]])),
+    ).toEqual({ inbox: ["21"], channelPost: ["31", "32"] })
+  })
+
+  test("a row that pins nothing names nothing", () => {
+    expect(collectTriggerConditionReferences([unpinned]).size).toBe(0)
+  })
+
+  test("drops a row that pins a page or posts, since neither travels", () => {
+    const { conditions, dropped } = remapTriggerConditions(
+      [pinnedInbox, pinnedPosts, unpinned],
+      {},
+    )
+    expect(conditions).toEqual([unpinned])
+    expect(dropped).toEqual([
+      { index: 0, kind: "inbox", id: "21" },
+      { index: 1, kind: "channelPost", id: "31" },
+    ])
+  })
+
+  test("a row installs unchanged when nothing it names is carried", () => {
+    expect(remapTriggerConditions([unpinned], {}).conditions).toEqual([
+      unpinned,
+    ])
+  })
+
+  test("counts the rows that pin something for the publisher's warning", () => {
+    expect(
+      countRowsWithUnshippedReferences([pinnedInbox, pinnedPosts, unpinned], {
+        inbox: new Set<string>(),
+        channelPost: new Set<string>(),
+      }),
+    ).toBe(2)
+  })
+})

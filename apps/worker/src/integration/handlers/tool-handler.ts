@@ -23,6 +23,7 @@ import {
   GenerateCodeType,
   type GetDataFromJsonStepSchema,
   parseFieldReference,
+  postCommentRefFromMetadata,
 } from "@chatbotx.io/flow-config"
 import {
   isTemporalCustomFieldType,
@@ -32,11 +33,14 @@ import {
   coerceCustomFieldValueForJavascript,
   contactVariableService,
   extractVariables,
+  getContactTimezone,
   getSystemFieldValue,
   interpolate,
   interpolateIntoJavascript,
+  isPostCommentVariable,
   resolveContactVariablesDeep,
   resolveJavascriptInput,
+  resolvePostCommentVariable,
 } from "@chatbotx.io/variables"
 import { faker } from "@faker-js/faker"
 import { formatInTimeZone } from "date-fns-tz"
@@ -421,6 +425,7 @@ async function resolveJsonBodyVariables(
   conversation: ExecuteStepProps<ExternalRequestStepSchema>["conversation"],
   jsonBody: string,
   sentByUserId: string | undefined,
+  postComment: ReturnType<typeof postCommentRefFromMetadata> | undefined,
 ): Promise<string> {
   const variableNames = extractVariables(jsonBody)
   if (variableNames.length === 0) {
@@ -432,6 +437,7 @@ async function resolveJsonBodyVariables(
     contactInbox,
     conversation,
     sentByUserId,
+    ...(postComment ? { postComment } : {}),
   })
   const { customFieldsMap } = variables
 
@@ -447,6 +453,14 @@ async function resolveJsonBodyVariables(
       if (systemValue !== null) {
         mapping[variable] = JSON.stringify(systemValue).slice(1, -1)
       }
+    } else if (isPostCommentVariable(variable)) {
+      // Run-scoped to the comment this flow run is about; "" outside one.
+      const value = await resolvePostCommentVariable(
+        variables,
+        variable,
+        getContactTimezone(variables),
+      )
+      mapping[variable] = JSON.stringify(value).slice(1, -1)
     } else if (customFieldsMap.has(variable)) {
       const rawValue = String(customFieldsMap.get(variable)?.value)
       mapping[variable] = JSON.stringify(rawValue).slice(1, -1)
@@ -461,7 +475,11 @@ export async function externalRequest({
   conversation,
   step,
   sentByUserId,
+  metadata,
 }: ExecuteStepProps<ExternalRequestStepSchema>): Promise<ExecuteStepResult> {
+  // A flow a post-comment trigger started renders {{post.*}} / {{comment.*}}
+  // for that one comment; any other run renders them empty.
+  const postComment = postCommentRefFromMetadata(metadata) ?? undefined
   // Resolve everything except body.jsonBody through the generic deep-replace
   // (raw substitution); jsonBody needs JSON-escaped substitution instead so
   // contact data can't produce invalid or maliciously-injected JSON.
@@ -469,7 +487,12 @@ export async function externalRequest({
   const resolvedStepWithoutBody = await resolveContactVariablesDeep(
     conversation.contactId,
     stepWithoutBody,
-    { contactInbox, conversation, sentByUserId },
+    {
+      contactInbox,
+      conversation,
+      sentByUserId,
+      ...(postComment ? { postComment } : {}),
+    },
   )
   const resolvedBody =
     body?.bodyType === "json"
@@ -481,12 +504,14 @@ export async function externalRequest({
             conversation,
             body.jsonBody,
             sentByUserId,
+            postComment,
           ),
         }
       : await resolveContactVariablesDeep(conversation.contactId, body, {
           contactInbox,
           conversation,
           sentByUserId,
+          ...(postComment ? { postComment } : {}),
         })
 
   const logFailure = (error: unknown, httpCode: string | null) =>
@@ -541,13 +566,16 @@ export async function handleExecuteJavascript({
   conversation,
   step,
   sentByUserId,
+  metadata,
 }: ExecuteStepProps<ExecuteJavascriptStepSchema>): Promise<ExecuteStepResult> {
   try {
+    const postComment = postCommentRefFromMetadata(metadata)
     const variables = await contactVariableService.getAll({
       contactId: conversation.contactId,
       contactInbox,
       conversation,
       sentByUserId,
+      ...(postComment ? { postComment } : {}),
     })
     // Coerced the same way resolveJavascriptInput coerces `{{name}}`
     // lookups below, so a custom field is typed consistently in `input`

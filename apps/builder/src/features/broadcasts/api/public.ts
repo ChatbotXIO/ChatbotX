@@ -7,6 +7,7 @@ import {
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import z from "zod"
 import { resolveContactAvatars } from "@/features/contacts/queries/resolve-contact-avatars"
+import { TOKEN_CALLER_CAN_VIEW_EMAIL_AND_PHONE } from "@/features/contacts/token-caller-permissions"
 import { mcpSpec } from "@/lib/orpc/mcp-annotations"
 import {
   possibleErrorsOnActivatingBroadcast,
@@ -47,10 +48,11 @@ const workspaceTokenAuthAPI = workspaceTokenAuthAPIForScope("broadcasts")
 // A workspace-token caller is a workspace-level credential mintable only by
 // a superAdmin, so it is not subject to the member-level email/phone field
 // permission the builder UI derives per-session — every public create/edit
-// route treats the caller as fully privileged rather than silently pruning
-// the audience filter it was given.
+// route treats the caller as fully privileged (`TOKEN_CALLER_CAN_VIEW_EMAIL_AND_PHONE`,
+// shared with the Posts API) rather than silently pruning the audience filter
+// it was given.
 //
-// This flag governs *write-side filter-condition pruning only*
+// That flag governs *write-side filter-condition pruning only*
 // (`pruneEmailPhoneFilterConditions`, applied in `create`/`updateDraft`/
 // `resendWithPruning`/`cloneBroadcast`). Reads are unaffected by it: `get`/
 // `list`, and in particular `getAudience` below, already return full
@@ -61,7 +63,6 @@ const workspaceTokenAuthAPI = workspaceTokenAuthAPIForScope("broadcasts")
 // here without diverging from the private route this public route mirrors
 // (invariant #9); see the "Broadcasts scope" table in
 // `docs/developer/workspace-api-tokens.md` for the caller-facing writeup.
-const TOKEN_CALLER_CAN_VIEW_EMAIL_AND_PHONE = true
 
 export const broadcastsPublicRouter = {
   ...broadcastsRecurrencePublicRouter,
