@@ -148,6 +148,7 @@ describe("getRedisConnection queue-group routing", () => {
       template: "bulk",
       contactInfoCapture: "bulk",
       postPublish: "bulk",
+      channelPostExport: "bulk",
     })
   })
 })

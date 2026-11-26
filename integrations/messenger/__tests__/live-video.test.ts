@@ -12,8 +12,12 @@ vi.mock("../src/lib/http-client", async (importOriginal) => ({
   facebookGraphClient: { get: vi.fn() },
 }))
 
-const { getLiveState, liveVideoBroadcastStatus, readLiveBroadcast } =
-  await import("../src/apis/live-video")
+const {
+  getLiveState,
+  LIVE_STATE_MAX_PAGES,
+  liveVideoBroadcastStatus,
+  readLiveBroadcast,
+} = await import("../src/apis/live-video")
 const { facebookGraphClient } = await import("../src/lib/http-client")
 
 const mockGet = facebookGraphClient.get as MockInstance
@@ -146,12 +150,85 @@ describe("getLiveState", () => {
     )
   })
 
-  test("is unknown when the post is not among the newest broadcasts", async () => {
+  test("is unknown when the post is not among the broadcasts", async () => {
     mockGet.mockResolvedValue({
       data: [{ id: "l", status: "LIVE_NOW", video: { post_id: "other" } }],
     })
 
     expect(await getLiveState({ auth, postId: "page-1_555" })).toBe("unknown")
+  })
+
+  const broadcast = (postId: string) => ({
+    id: `l-${postId}`,
+    status: "VOD",
+    video: { post_id: postId },
+  })
+  const pageWith = (postId: string, after?: string) => ({
+    data: [broadcast(postId)],
+    ...(after
+      ? {
+          paging: {
+            cursors: { after },
+            next: `https://graph/next?after=${after}`,
+          },
+        }
+      : {}),
+  })
+
+  test("finds a broadcast on a later page by following the cursor", async () => {
+    mockGet
+      .mockResolvedValueOnce(pageWith("other-1", "c1"))
+      .mockResolvedValueOnce(pageWith("page-1_555"))
+
+    expect(await getLiveState({ auth, postId: "page-1_555" })).toBe("ended")
+    expect(mockGet).toHaveBeenCalledTimes(2)
+    expect(mockGet.mock.calls[0]?.[1].searchParams.after).toBeUndefined()
+    expect(mockGet.mock.calls[1]?.[1].searchParams.after).toBe("c1")
+  })
+
+  test("is unknown after the last page does not hold the post", async () => {
+    mockGet
+      .mockResolvedValueOnce(pageWith("other-1", "c1"))
+      .mockResolvedValueOnce(pageWith("other-2"))
+
+    expect(await getLiveState({ auth, postId: "page-1_555" })).toBe("unknown")
+    expect(mockGet).toHaveBeenCalledTimes(2)
+  })
+
+  test("stops at the page cap and answers unknown", async () => {
+    let n = 0
+    mockGet.mockImplementation(() => {
+      n += 1
+      return Promise.resolve(pageWith(`other-${n}`, `c${n}`))
+    })
+
+    expect(await getLiveState({ auth, postId: "page-1_555" })).toBe("unknown")
+    expect(mockGet).toHaveBeenCalledTimes(LIVE_STATE_MAX_PAGES)
+  })
+
+  test("a cursor that repeats ends the walk as unknown", async () => {
+    mockGet.mockResolvedValue(pageWith("other-1", "same"))
+
+    expect(await getLiveState({ auth, postId: "page-1_555" })).toBe("unknown")
+    expect(mockGet).toHaveBeenCalledTimes(2)
+  })
+
+  test("a next link without a cursor ends the walk as unknown", async () => {
+    mockGet.mockResolvedValue({
+      data: [broadcast("other-1")],
+      paging: { next: "https://graph/next" },
+    })
+
+    expect(await getLiveState({ auth, postId: "page-1_555" })).toBe("unknown")
+    expect(mockGet).toHaveBeenCalledTimes(1)
+  })
+
+  test("a failure on a later page propagates and never ends the broadcast", async () => {
+    mockGet
+      .mockResolvedValueOnce(pageWith("other-1", "c1"))
+      .mockRejectedValueOnce(new Error("boom"))
+
+    await expect(getLiveState({ auth, postId: "page-1_555" })).rejects.toThrow()
   })
 
   test("a failed read propagates instead of ending the broadcast", async () => {

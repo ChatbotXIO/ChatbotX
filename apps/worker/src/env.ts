@@ -92,6 +92,16 @@ export const env = createEnv({
       .min(1)
       .max(20)
       .default(2),
+    // Channel comment exports: each reads a channel page by page and may wait
+    // minutes on its usage hints, so it mostly sleeps: I/O-bound, hence a higher
+    // default. One workspace runs at most one (a cap in the start), which bounds
+    // the load any single workspace puts on the channels.
+    CHANNEL_POST_EXPORT_WORKER_CONCURRENCY: z.coerce
+      .number()
+      .int()
+      .min(1)
+      .max(50)
+      .default(10),
     // Leaderboard scoring jobs; bounded so a livestream comment burst queues
     // up instead of flooding Postgres.
     LEADERBOARD_WORKER_CONCURRENCY: z.coerce

@@ -118,11 +118,14 @@ describe("upsertListedChannelPosts", () => {
   test("an existing post keeps a stored description column the listing leaves out", async () => {
     const [, , , update] = await runUpsert([post()])
 
-    for (const column of ["caption", "mediaType", "permalink", "publishedAt"]) {
+    for (const column of ["caption", "permalink", "publishedAt"]) {
       expect(update?.sql).toContain(
         `THEN COALESCE(v."${column}", p."${column}") ELSE p."${column}" END`,
       )
     }
+    expect(update?.sql).toContain(
+      `ELSE COALESCE(v."mediaType", p."mediaType") END ELSE p."mediaType" END`,
+    )
   })
 
   test("a listing without a live status never clears a stored one, and only a newer reading replaces it", async () => {
@@ -135,11 +138,15 @@ describe("upsertListedChannelPosts", () => {
     expect(update?.sql).toContain(`ELSE p."liveStatusObservedAt" END`)
   })
 
-  test("a post lookup reporting a plain video does not turn a stored reel or live broadcast back into a video", async () => {
+  test("a stored live broadcast keeps its type and media type whatever the feed calls it, and a stored reel is not turned back into a video", async () => {
     const [, , , update] = await runUpsert([post({ contentType: "video" })])
+    const keeps = `((p."contentType" = 'live' AND v."contentType" IS DISTINCT FROM 'live') OR (p."contentType" = 'reel' AND v."contentType" = 'video'))`
 
     expect(update?.sql).toContain(
-      `THEN CASE WHEN p."contentType" IN ('reel', 'live') AND v."contentType" = 'video' THEN p."contentType" ELSE COALESCE(v."contentType", p."contentType") END ELSE p."contentType" END`,
+      `THEN CASE WHEN ${keeps} THEN p."contentType" ELSE COALESCE(v."contentType", p."contentType") END ELSE p."contentType" END`,
+    )
+    expect(update?.sql).toContain(
+      `CASE WHEN ${keeps} THEN p."mediaType" ELSE COALESCE(v."mediaType", p."mediaType") END`,
     )
   })
 
@@ -297,8 +304,11 @@ describe("upsertListedChannelPosts", () => {
       expect(sets).toContain(
         `"${column}" = CASE WHEN (p."metadataFetchedAt" IS NULL OR p."metadataFetchedAt" < `,
       )
+      // The media type is decided with the content type (see its own test).
       expect(sets).toContain(
-        `THEN COALESCE(v."${column}", p."${column}") ELSE p."${column}" END`,
+        column === "mediaType"
+          ? `ELSE COALESCE(v."mediaType", p."mediaType") END ELSE p."mediaType" END`
+          : `THEN COALESCE(v."${column}", p."${column}") ELSE p."${column}" END`,
       )
       expect(sets).toContain(`OR p."${column}" IS NULL THEN`)
     }

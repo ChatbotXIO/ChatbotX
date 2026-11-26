@@ -12603,7 +12603,9 @@
       "menu": "Dışa aktar",
       "rowsTitle": "Gönderi listesini dışa aktar (gönderi başına bir satır)",
       "rowsDone": "Gönderi listesi dışa aktarıldı.",
-      "rowsTruncated": "Liste gönderi sınırında kesildi. Kalanını dışa aktarmak için filtreleri daraltın."
+      "rowsTruncated": "Liste gönderi sınırında kesildi. Kalanını dışa aktarmak için filtreleri daraltın.",
+      "sourceStored": "Kayıtlı veriler",
+      "sourceChannel": "Kanaldan oku"
     },
     "showAllPosts": "Yorumsuz gönderileri de göster",
     "noCaption": "Metin yok",
@@ -12700,7 +12702,9 @@
       "refreshCooldown": "Bu gönderi az önce yenilendi. Bir dakika sonra tekrar deneyin.",
       "downloadPhones": "Telefon numaralarını indir",
       "downloadComments": "Yorumları indir",
-      "viewDetails": "Ayrıntıları gör"
+      "viewDetails": "Ayrıntıları gör",
+      "download": "İndir",
+      "downloadEmails": "E-postaları indir"
     },
     "merge": {
       "title": "Gönderileri birleştir",
@@ -13286,6 +13290,24 @@
           "removed": "Kanaldan kaldırıldı."
         }
       }
+    },
+    "channelExport": {
+      "started": "Yorumlar kanaldan okunuyor. Bu biraz zaman alabilir.",
+      "progress": "Kanaldan okunuyor… şimdiye kadar {count} satır.",
+      "progressEstimate": "Kanaldan okunuyor… şimdiye kadar {count} satır (toplamda yaklaşık {expected} yorum).",
+      "ready": "Dosya hazır.",
+      "download": "İndir",
+      "truncated": "Dışa aktarma bir güvenlik sınırında durdu, bu yüzden dosya eksik. Kalanını almak için daha az gönderi dışa aktarın.",
+      "forbidden": "Telefon numaralarını ve e-postaları indirme izniniz yok.",
+      "startFailed": "Dışa aktarma başlatılamadı. Tekrar deneyin.",
+      "inProgress": "Dışa aktarma başlıyor, birazdan tekrar deneyin.",
+      "failure": {
+        "channelDisconnected": "Kanalın bağlantısı kesildi. Yeniden bağlayıp tekrar deneyin.",
+        "postNotFound": "Bir gönderi artık kanalda yok.",
+        "notSupported": "Bu kanalın yorumları kanaldan okunamıyor.",
+        "rateLimited": "Kanal yavaşlamayı istedi. Birkaç dakika sonra tekrar deneyin.",
+        "failed": "Dışa aktarma başarısız oldu. Tekrar deneyin."
+      }
     }
   },
   "socialAccounts": {
@@ -13433,7 +13455,12 @@
     "repeatScheduleOff": "Planlama ve yayınlama şablona değil, her kopyaya uygulanır.",
     "moveMediaEarlier": "Öne taşı",
     "moveMediaLater": "Arkaya taşı",
-    "removeFromChannels": "Kanallardan kaldır",
+    "removeFromAllChannels": "Tüm kanallardan kaldır",
+    "removeTarget": "Kaldır",
+    "removeTargetTitle": "Bu gönderi {destination} hesabından kaldırılsın mı?",
+    "removeTargetDescription": "Yayınlanan gönderi {network} üzerindeki {destination} hesabından kaldırılır. Diğer hedefler gönderiyi korur. Bu işlem geri alınamaz.",
+    "removeTargetConfirm": "Kaldır",
+    "removing": "Kaldırılıyor…",
     "removeFromChannelsTitle": "Bu gönderi ağlardan kaldırılsın mı?",
     "removeFromChannelsDescription": "Yayınlanan gönderi, bunu destekleyen tüm ağlardan kaldırılır. Silme işlevi olmayan ağlar gönderiyi tutar. Bu işlem geri alınamaz.",
     "removeFromChannelsConfirm": "Kaldır",
@@ -13442,6 +13469,7 @@
     "removeUnsupported": "{count, plural, one {# hedef ağın API'si üzerinden kaldırılamıyor; uygulamadan kaldırın.} other {# hedef ağların API'si üzerinden kaldırılamıyor; uygulamalardan kaldırın.}}",
     "removedFromChannel": "Ağdan kaldırıldı",
     "removalPermissionMissing": "Gönderilerin silinmesine izin vermek için bu hesabı yeniden bağlayın.",
+    "removalQueueFailed": "Kaldırma işlemi kuyruğa alınamadı. Tekrar deneyin.",
     "postMessageQuotaExceeded": "Bu hesabın mesaj kotası doldu, bu nedenle bu gönderi yayınlanmadı. Planı yükseltin veya bir sonraki fatura dönemini bekleyin, ardından yeniden deneyin.",
     "tiktokLoading": "TikTok hesap ayarları yükleniyor…",
     "tiktokUnavailable": "TikTok hesap ayarları yüklenemedi. Tekrar deneyin.",

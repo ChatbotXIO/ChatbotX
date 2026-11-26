@@ -1,6 +1,8 @@
+import {
+  READ_USAGE_EXHAUSTED_PAUSE_MS,
+  READ_USAGE_EXHAUSTED_PERCENT,
+} from "@chatbotx.io/utils/meta-usage"
 import type { CoexistUsageSignal } from "./pull-adapter"
-
-const DEFAULT_EXHAUSTED_PAUSE_MS = 30_000
 
 export type UsageThrottleDecision = {
   concurrency: number
@@ -11,7 +13,7 @@ const boundedPauseMs = (seconds: number | undefined, maxPauseMs: number) => {
   const requestedMs =
     typeof seconds === "number" && seconds > 0
       ? seconds * 1000
-      : DEFAULT_EXHAUSTED_PAUSE_MS
+      : READ_USAGE_EXHAUSTED_PAUSE_MS
   return Math.min(requestedMs, maxPauseMs)
 }
 
@@ -49,7 +51,7 @@ export const resolveUsageThrottle = (props: {
   if (peak < 75) {
     return { concurrency: Math.min(defaultConcurrency, 3), pauseMs: 0 }
   }
-  if (peak < 90) {
+  if (peak < READ_USAGE_EXHAUSTED_PERCENT) {
     return { concurrency: 1, pauseMs: 0 }
   }
   return {

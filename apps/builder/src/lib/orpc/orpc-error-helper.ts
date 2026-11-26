@@ -499,6 +499,27 @@ export const possibleErrorsOnChangingPostComment = {
   },
 } satisfies ErrorMap
 
+/**
+ * Starting a read-from-channel comment export: `channelPostCommentExportService`
+ * answers `commentExportUnsupported` (a post's channel cannot be read) and
+ * `exportInProgress` (the start lock is being taken); an owner without a message
+ * left answers 429; an expired plan is refused first by the token gate (403
+ * `trialExpired` / `macLimitReached`), then by the handler's own check (402).
+ */
+export const possibleErrorsOnStartingChannelPostCommentExport = {
+  ...possibleErrorsOnMutatingResource,
+  ...workspaceBlockedError,
+  commentExportUnsupported: {
+    message: "The comments of this channel cannot be read from the channel",
+    status: 409,
+  },
+  exportInProgress: {
+    message: "An export of these posts is starting. Try again in a moment",
+    status: 409,
+  },
+  postMessageQuotaExceeded,
+} satisfies ErrorMap
+
 /** Calling the platform for a social account: `socialAccountOperations` answers these codes. */
 export const possibleErrorsOnUsingSocialAccount = {
   ...possibleErrorsOnMutatingResource,

@@ -12603,7 +12603,9 @@
       "menu": "匯出",
       "rowsTitle": "匯出貼文清單(每則貼文一列)",
       "rowsDone": "已匯出貼文清單。",
-      "rowsTruncated": "清單已在貼文數量上限處截斷。請縮小篩選範圍以匯出其餘部分。"
+      "rowsTruncated": "清單已在貼文數量上限處截斷。請縮小篩選範圍以匯出其餘部分。",
+      "sourceStored": "已儲存的資料",
+      "sourceChannel": "從頻道讀取"
     },
     "showAllPosts": "同時顯示沒有留言的貼文",
     "noCaption": "無文字",
@@ -12700,7 +12702,9 @@
       "refreshCooldown": "此貼文剛剛更新過。請一分鐘後再試。",
       "downloadPhones": "下載電話號碼",
       "downloadComments": "下載留言",
-      "viewDetails": "查看詳情"
+      "viewDetails": "查看詳情",
+      "download": "下載",
+      "downloadEmails": "下載電子郵件"
     },
     "merge": {
       "title": "合併貼文",
@@ -13286,6 +13290,24 @@
           "removed": "已從頻道中移除。"
         }
       }
+    },
+    "channelExport": {
+      "started": "正在從頻道讀取留言，可能需要一些時間。",
+      "progress": "正在從頻道讀取… 目前已讀取 {count} 列。",
+      "progressEstimate": "正在從頻道讀取… 目前已讀取 {count} 列（留言共約 {expected} 則）。",
+      "ready": "檔案已準備好。",
+      "download": "下載",
+      "truncated": "匯出在安全上限處停止，因此檔案不完整。請減少匯出的貼文數量以取得其餘內容。",
+      "forbidden": "你沒有下載電話號碼和電子郵件的權限。",
+      "startFailed": "無法開始匯出，請再試一次。",
+      "inProgress": "匯出正在啟動，請稍後再試。",
+      "failure": {
+        "channelDisconnected": "頻道已中斷連線。請重新連線後再試一次。",
+        "postNotFound": "有一則貼文在頻道上已不存在。",
+        "notSupported": "無法從頻道讀取此頻道的留言。",
+        "rateLimited": "頻道要求放慢速度。請幾分鐘後再試一次。",
+        "failed": "匯出失敗，請再試一次。"
+      }
     }
   },
   "socialAccounts": {
@@ -13433,7 +13455,12 @@
     "repeatScheduleOff": "排程和發佈適用於每份副本，而不是範本。",
     "moveMediaEarlier": "前移",
     "moveMediaLater": "後移",
-    "removeFromChannels": "從管道中刪除",
+    "removeFromAllChannels": "從所有管道中刪除",
+    "removeTarget": "刪除",
+    "removeTargetTitle": "要從 {destination} 刪除這則貼文嗎？",
+    "removeTargetDescription": "已發布的貼文將從 {network} 上的 {destination} 刪除。其他發布目標會保留它。此操作無法復原。",
+    "removeTargetConfirm": "刪除",
+    "removing": "正在刪除…",
     "removeFromChannelsTitle": "要從各網路中刪除這篇貼文嗎？",
     "removeFromChannelsDescription": "已發佈的貼文會從所有支援刪除的網路中撤下。不支援刪除的網路會保留該貼文。此操作無法復原。",
     "removeFromChannelsConfirm": "刪除",
@@ -13442,6 +13469,7 @@
     "removeUnsupported": "{count, plural, one {# 個發佈目標無法透過網路 API 刪除，請在應用程式中刪除。} other {# 個發佈目標無法透過網路 API 刪除，請在應用程式中刪除。}}",
     "removedFromChannel": "已從網路中刪除",
     "removalPermissionMissing": "請重新連線此帳號以允許刪除貼文。",
+    "removalQueueFailed": "無法將刪除作業加入佇列。請再試一次。",
     "postMessageQuotaExceeded": "此帳號的訊息額度已用完，因此這則貼文未能發佈。請升級方案或等待下一個計費週期後再重試。",
     "tiktokLoading": "正在載入 TikTok 帳號設定…",
     "tiktokUnavailable": "無法載入 TikTok 帳號設定，請再試一次。",

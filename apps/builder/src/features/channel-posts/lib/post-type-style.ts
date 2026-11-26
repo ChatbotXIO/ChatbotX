@@ -1,4 +1,7 @@
-import type { ChannelPostContentType } from "@chatbotx.io/database/partials"
+import type {
+  ChannelPostContentType,
+  ChannelPostLiveStatus,
+} from "@chatbotx.io/database/partials"
 import {
   ClapperboardIcon,
   FileTextIcon,
@@ -36,3 +39,41 @@ export const CONTENT_TYPE_TILES: Record<ChannelPostContentType, PostTypeTile> =
     text: POST_TYPE_TILES.post,
     video: POST_TYPE_TILES.video,
   }
+
+/** The i18n key (under `posts.`) of a post badge's label. */
+type PostTileLabelKey =
+  | `contentType.${ChannelPostContentType}`
+  | "postType.pastLive"
+
+/** A tile and the label key it stands for. */
+type PostTileDisplay = { labelKey: PostTileLabelKey; tile: PostTypeTile }
+
+/**
+ * What a post's thumbnail badge shows, from its content type and live status.
+ * A broadcast that is over reads "Past live", the same entry as the filter.
+ */
+type PostTileInput = {
+  contentType: ChannelPostContentType | null
+  liveStatus: ChannelPostLiveStatus | null
+}
+
+const PAST_LIVE_DISPLAY: PostTileDisplay = {
+  labelKey: "postType.pastLive",
+  tile: POST_TYPE_TILES.pastLive,
+}
+
+export const resolvePostTile = ({
+  contentType,
+  liveStatus,
+}: PostTileInput): PostTileDisplay | undefined => {
+  if (!contentType) {
+    return
+  }
+  if (contentType === "live" && liveStatus === "ended") {
+    return PAST_LIVE_DISPLAY
+  }
+  return {
+    labelKey: `contentType.${contentType}`,
+    tile: CONTENT_TYPE_TILES[contentType],
+  }
+}

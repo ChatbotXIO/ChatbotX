@@ -12603,7 +12603,9 @@
       "menu": "İxrac",
       "rowsTitle": "Yazıların siyahısını ixrac et (hər yazı üçün bir sətir)",
       "rowsDone": "Yazıların siyahısı ixrac edildi.",
-      "rowsTruncated": "Siyahı yazı limitində kəsildi. Qalanını ixrac etmək üçün filtrləri daraldın."
+      "rowsTruncated": "Siyahı yazı limitində kəsildi. Qalanını ixrac etmək üçün filtrləri daraldın.",
+      "sourceStored": "Saxlanılmış məlumat",
+      "sourceChannel": "Kanaldan oxu"
     },
     "showAllPosts": "Şərhi olmayan paylaşımları da göstər",
     "noCaption": "Mətn yoxdur",
@@ -12700,7 +12702,9 @@
       "refreshCooldown": "Bu paylaşım indicə yeniləndi. Bir dəqiqə sonra yenidən cəhd edin.",
       "downloadPhones": "Telefon nömrələrini yüklə",
       "downloadComments": "Şərhləri yüklə",
-      "viewDetails": "Ətraflı bax"
+      "viewDetails": "Ətraflı bax",
+      "download": "Yüklə",
+      "downloadEmails": "E-poçtları yüklə"
     },
     "merge": {
       "title": "Paylaşımları birləşdir",
@@ -13286,6 +13290,24 @@
           "removed": "Kanaldan silinib."
         }
       }
+    },
+    "channelExport": {
+      "started": "Şərhlər kanaldan oxunur. Bu bir qədər çəkə bilər.",
+      "progress": "Kanaldan oxunur… indiyə qədər {count} sətir.",
+      "progressEstimate": "Kanaldan oxunur… indiyə qədər {count} sətir (ümumilikdə təxminən {expected} şərh).",
+      "ready": "Fayl hazırdır.",
+      "download": "Yüklə",
+      "truncated": "İxrac təhlükəsizlik həddində dayandı, buna görə fayl natamamdır. Qalanını almaq üçün daha az yazı ixrac edin.",
+      "forbidden": "Telefon nömrələrini və e-poçtları yükləmək icazəniz yoxdur.",
+      "startFailed": "İxracı başlatmaq mümkün olmadı. Yenidən cəhd edin.",
+      "inProgress": "İxrac başlayır, bir az sonra yenidən cəhd edin.",
+      "failure": {
+        "channelDisconnected": "Kanalın bağlantısı kəsilib. Yenidən qoşun və təkrar cəhd edin.",
+        "postNotFound": "Yazı artıq kanalda mövcud deyil.",
+        "notSupported": "Bu kanalın şərhlərini kanaldan oxumaq mümkün deyil.",
+        "rateLimited": "Kanal sürəti azaltmağı tələb etdi. Bir neçə dəqiqə sonra yenidən cəhd edin.",
+        "failed": "İxrac alınmadı. Yenidən cəhd edin."
+      }
     }
   },
   "socialAccounts": {
@@ -13433,7 +13455,12 @@
     "repeatScheduleOff": "Planlaşdırma və dərc şablona deyil, hər kopyaya aiddir.",
     "moveMediaEarlier": "Əvvələ keçir",
     "moveMediaLater": "Sonraya keçir",
-    "removeFromChannels": "Kanallardan sil",
+    "removeFromAllChannels": "Bütün kanallardan sil",
+    "removeTarget": "Sil",
+    "removeTargetTitle": "Bu yazı {destination} səhifəsindən silinsin?",
+    "removeTargetDescription": "Dərc olunmuş yazı {network} şəbəkəsində {destination} səhifəsindən götürülür. Digər təyinatlarda qalır. Bunu geri qaytarmaq olmaz.",
+    "removeTargetConfirm": "Sil",
+    "removing": "Silinir…",
     "removeFromChannelsTitle": "Bu paylaşım şəbəkələrdən silinsin?",
     "removeFromChannelsDescription": "Dərc olunmuş paylaşım bunu dəstəkləyən bütün şəbəkələrdən silinir. Silmə funksiyası olmayan şəbəkələrdə qalır. Bu əməliyyatı geri qaytarmaq olmaz.",
     "removeFromChannelsConfirm": "Sil",
@@ -13442,6 +13469,7 @@
     "removeUnsupported": "{count, plural, one {# təyinat şəbəkənin API-si ilə silinə bilmir; onu tətbiqdən silin.} other {# təyinat şəbəkələrin API-si ilə silinə bilmir; onları tətbiqlərdən silin.}}",
     "removedFromChannel": "Şəbəkədən silindi",
     "removalPermissionMissing": "Yazıların silinməsinə icazə vermək üçün bu hesabı yenidən qoşun.",
+    "removalQueueFailed": "Silmə növbəyə qoyula bilmədi. Yenidən cəhd edin.",
     "postMessageQuotaExceeded": "Bu hesabın mesaj kvotası bitib, ona görə bu yazı dərc edilmədi. Planı yüksəldin və ya növbəti ödəniş dövrünü gözləyin, sonra yenidən cəhd edin.",
     "tiktokLoading": "TikTok hesab parametrləri yüklənir…",
     "tiktokUnavailable": "TikTok hesab parametrləri yüklənə bilmədi. Yenidən cəhd edin.",

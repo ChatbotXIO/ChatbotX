@@ -794,6 +794,11 @@ exports[`public API spec — operation naming guard > operation list (operationI
   },
   {
     "method": "GET",
+    "operationId": "channelPostManagement.getCommentExport",
+    "path": "/v1/channel-posts/management/exports/{fileId}",
+  },
+  {
+    "method": "GET",
     "operationId": "channelPostManagement.getMetrics",
     "path": "/v1/channel-posts/management/{id}/metrics",
   },
@@ -831,6 +836,11 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "method": "POST",
     "operationId": "channelPostManagement.refreshMetrics",
     "path": "/v1/channel-posts/management/refresh-metrics",
+  },
+  {
+    "method": "POST",
+    "operationId": "channelPostManagement.startCommentExport",
+    "path": "/v1/channel-posts/management/exports",
   },
   {
     "method": "POST",
@@ -3856,6 +3866,11 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "method": "POST",
     "operationId": "socialPosts.publish",
     "path": "/v1/posts/{id}/publish",
+  },
+  {
+    "method": "POST",
+    "operationId": "socialPosts.removeTarget",
+    "path": "/v1/posts/{id}/targets/{targetId}/remove",
   },
   {
     "method": "POST",

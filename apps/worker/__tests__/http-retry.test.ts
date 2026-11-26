@@ -1,6 +1,68 @@
 import { SdkException } from "@chatbotx.io/sdk"
-import { describe, expect, it } from "vitest"
-import { isRetryable } from "../src/integration/handlers/shared/http-retry"
+import { afterEach, describe, expect, it, vi } from "vitest"
+import {
+  InlineRetryDeadlineExceeded,
+  isRetryable,
+  withInlineRetry,
+} from "../src/integration/handlers/shared/http-retry"
+
+vi.mock("../src/lib/logger", () => ({ logger: { warn: vi.fn() } }))
+
+describe("withInlineRetry", () => {
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  const rateLimited = () => new SdkException("rate limited", 4, 429)
+
+  it("retries a 429 after a delay and returns the later answer", async () => {
+    vi.useFakeTimers()
+    const read = vi
+      .fn()
+      .mockRejectedValueOnce(rateLimited())
+      .mockResolvedValueOnce("ok")
+
+    const result = withInlineRetry(read)
+    await vi.advanceTimersByTimeAsync(1000)
+
+    await expect(result).resolves.toBe("ok")
+    expect(read).toHaveBeenCalledTimes(2)
+  })
+
+  it("does not start a retry whose wait would end past the deadline", async () => {
+    const read = vi.fn().mockRejectedValue(rateLimited())
+
+    await expect(
+      withInlineRetry(read, { deadlineAt: Date.now() + 500 }),
+    ).rejects.toBeInstanceOf(InlineRetryDeadlineExceeded)
+    expect(read).toHaveBeenCalledTimes(1)
+  })
+
+  it("does not call again when the timer resumes past the deadline", async () => {
+    vi.useFakeTimers()
+    const read = vi.fn().mockRejectedValue(rateLimited())
+    const deadlineAt = Date.now() + 5000
+
+    const result = withInlineRetry(read, { deadlineAt })
+    const settled = expect(result).rejects.toBeInstanceOf(
+      InlineRetryDeadlineExceeded,
+    )
+    // The 1 s wait fits the deadline, but the clock jumps past it before the timer fires.
+    vi.setSystemTime(deadlineAt + 1)
+    await vi.advanceTimersByTimeAsync(1000)
+
+    await settled
+    expect(read).toHaveBeenCalledTimes(1)
+  })
+
+  it("throws a non-retryable error at once, deadline or not", async () => {
+    const read = vi.fn().mockRejectedValue(new SdkException("bad", 100, 400))
+
+    await expect(
+      withInlineRetry(read, { deadlineAt: Date.now() + 60_000 }),
+    ).rejects.toThrow("bad")
+  })
+})
 
 describe("isRetryable", () => {
   describe("wrapped SdkException (flat httpStatusCode — the shape Messenger/Instagram rescue() throws)", () => {

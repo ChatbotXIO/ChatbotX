@@ -286,6 +286,26 @@ export const socialPostsAPIs = {
       return await socialPostOperations.retryTarget(context.workspace, target)
     }),
 
+  privateRemoveSocialPostTargetAPI: authorizedAPI
+    .route({
+      method: "POST",
+      path: `${base}/social-posts/{id}/targets/{targetId}/remove`,
+      summary: "Remove post target from its network",
+      successStatus: 200,
+      tags,
+    })
+    .input(socialPostTargetIdRequest.extend(inWorkspace))
+    .output(deleteSocialPostResponse)
+    .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
+    .use(
+      workspacePermissionMiddleware("broadcast"),
+      (input) => input.workspaceId,
+    )
+    .handler(async ({ context, input }) => {
+      const { workspaceId: _workspaceId, ...target } = input
+      return await socialPostOperations.removeTarget(context.workspace, target)
+    }),
+
   privateResolveSocialPostTargetAPI: authorizedAPI
     .route({
       method: "POST",

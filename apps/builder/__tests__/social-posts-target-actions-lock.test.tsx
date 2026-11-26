@@ -21,6 +21,7 @@ vi.mock("@/lib/orpc/query", () => {
       socialPostsAPIs: {
         privateDeleteSocialPostAPI: procedure,
         privateResolveSocialPostTargetAPI: procedure,
+        privateRemoveSocialPostTargetAPI: procedure,
         privateRetrySocialPostTargetAPI: procedure,
       },
     },
@@ -56,11 +57,12 @@ const target = (status: string, extra: object = {}) => ({
   ...extra,
 })
 
-const render = (status: string, disabled: boolean) => {
-  const post = {
-    id: "p1",
-    targets: [target(status)],
-  } as unknown as ComposerPost
+const render = (
+  status: string,
+  disabled: boolean,
+  targets: object[] = [target(status)],
+) => {
+  const post = { id: "p1", targets } as unknown as ComposerPost
   act(() => {
     root.render(
       <QueryClientProvider client={new QueryClient()}>
@@ -95,10 +97,50 @@ describe("resolveComposerLocks", () => {
   })
 })
 
+const buttons = (text: string): HTMLButtonElement[] =>
+  Array.from(document.body.querySelectorAll("button")).filter(
+    (item) => item.textContent === text,
+  )
+
 describe("TargetStatusList actions", () => {
-  test("a published post can be removed from its channels", () => {
+  test("a published destination has its own Remove and, alone, no remove-all", () => {
     render("published", false)
-    expect(button("composer.removeFromChannels")?.disabled).toBe(false)
+    expect(button("composer.removeTarget")?.disabled).toBe(false)
+    expect(button("composer.removeFromAllChannels")).toBeUndefined()
+  })
+
+  test("two removable destinations each get Remove, plus Remove from all channels", () => {
+    render("published", false, [
+      target("published", { id: "t1" }),
+      target("published", { id: "t2" }),
+    ])
+    expect(buttons("composer.removeTarget")).toHaveLength(2)
+    expect(button("composer.removeFromAllChannels")?.disabled).toBe(false)
+  })
+
+  test("a removed destination offers no Remove and no View post link; the others keep theirs", () => {
+    render("published", false, [
+      target("published", {
+        id: "t1",
+        permalink: "https://example.test/1",
+        removedAt: "2026-01-01T00:00:00.000Z",
+      }),
+      target("published", {
+        id: "t2",
+        permalink: "https://example.test/2",
+      }),
+    ])
+    expect(buttons("composer.removeTarget")).toHaveLength(1)
+    expect(button("composer.removeFromAllChannels")).toBeUndefined()
+    const links = Array.from(document.body.querySelectorAll("a")).map((item) =>
+      item.getAttribute("href"),
+    )
+    expect(links).toEqual(["https://example.test/2"])
+  })
+
+  test("a network without a delete function (TikTok) offers no Remove", () => {
+    render("published", false, [target("published", { provider: "tiktok" })])
+    expect(button("composer.removeTarget")).toBeUndefined()
   })
 
   test("a target waiting for review can be retried", () => {
@@ -113,7 +155,7 @@ describe("TargetStatusList actions", () => {
 
   test("a blocked workspace disables removal and retry (402 workspaceBlocked)", () => {
     render("published", true)
-    expect(button("composer.removeFromChannels")?.disabled).toBe(true)
+    expect(button("composer.removeTarget")?.disabled).toBe(true)
     render("failed", true)
     expect(button("composer.retryTarget")?.disabled).toBe(true)
   })

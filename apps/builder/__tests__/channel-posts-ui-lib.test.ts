@@ -8,6 +8,7 @@ import {
 import {
   CONTENT_TYPE_TILES,
   POST_TYPE_TILES,
+  resolvePostTile,
 } from "@/features/channel-posts/lib/post-type-style"
 import {
   POST_TYPE_FILTERS,
@@ -55,6 +56,39 @@ describe("post type filters", () => {
     for (const contentType of channelPostContentTypes.options) {
       expect(CONTENT_TYPE_TILES[contentType]).toBeDefined()
     }
+  })
+
+  test("a live broadcast shows the live tile while on the air and the past-live tile once ended", () => {
+    expect(
+      resolvePostTile({ contentType: "live", liveStatus: "live" }),
+    ).toEqual({
+      labelKey: "contentType.live",
+      tile: POST_TYPE_TILES.liveNow,
+    })
+    expect(
+      resolvePostTile({ contentType: "live", liveStatus: "ended" }),
+    ).toEqual({
+      labelKey: "postType.pastLive",
+      tile: POST_TYPE_TILES.pastLive,
+    })
+    expect(
+      resolvePostTile({ contentType: "live", liveStatus: null })?.tile,
+    ).toBe(POST_TYPE_TILES.liveNow)
+  })
+
+  test("other content types ignore the live status", () => {
+    expect(
+      resolvePostTile({ contentType: "video", liveStatus: "ended" }),
+    ).toEqual({
+      labelKey: "contentType.video",
+      tile: CONTENT_TYPE_TILES.video,
+    })
+  })
+
+  test("a post without a content type has no tile", () => {
+    expect(
+      resolvePostTile({ contentType: null, liveStatus: null }),
+    ).toBeUndefined()
   })
 })
 

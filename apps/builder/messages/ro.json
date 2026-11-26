@@ -12603,7 +12603,9 @@
       "menu": "Exportă",
       "rowsTitle": "Exportă lista de postări (un rând pe postare)",
       "rowsDone": "Lista de postări a fost exportată.",
-      "rowsTruncated": "Lista a fost tăiată la limita de postări. Restrânge filtrele pentru a exporta restul."
+      "rowsTruncated": "Lista a fost tăiată la limita de postări. Restrânge filtrele pentru a exporta restul.",
+      "sourceStored": "Date salvate",
+      "sourceChannel": "Citește de pe canal"
     },
     "showAllPosts": "Arată și postările fără comentarii",
     "noCaption": "Fără text",
@@ -12700,7 +12702,9 @@
       "refreshCooldown": "Această postare tocmai a fost actualizată. Încearcă din nou peste un minut.",
       "downloadPhones": "Descarcă numerele de telefon",
       "downloadComments": "Descarcă comentariile",
-      "viewDetails": "Vezi detalii"
+      "viewDetails": "Vezi detalii",
+      "download": "Descarcă",
+      "downloadEmails": "Descarcă e-mailurile"
     },
     "merge": {
       "title": "Îmbină postările",
@@ -13286,6 +13290,24 @@
           "removed": "Eliminată din canal."
         }
       }
+    },
+    "channelExport": {
+      "started": "Se citesc comentariile de pe canal. Poate dura puțin.",
+      "progress": "Se citește de pe canal… {count} rânduri până acum.",
+      "progressEstimate": "Se citește de pe canal… {count} rânduri până acum (aproximativ {expected} comentarii în total).",
+      "ready": "Fișierul este gata.",
+      "download": "Descarcă",
+      "truncated": "Exportul s-a oprit la o limită de siguranță, deci fișierul este incomplet. Exportă mai puține postări pentru a obține restul.",
+      "forbidden": "Nu ai permisiunea de a descărca numere de telefon și e-mailuri.",
+      "startFailed": "Exportul nu a putut fi pornit. Încearcă din nou.",
+      "inProgress": "Exportul se pornește, încearcă din nou peste un moment.",
+      "failure": {
+        "channelDisconnected": "Canalul este deconectat. Reconectează-l și încearcă din nou.",
+        "postNotFound": "O postare nu mai există pe canal.",
+        "notSupported": "Comentariile acestui canal nu pot fi citite de pe canal.",
+        "rateLimited": "Canalul a cerut să încetinești. Încearcă din nou peste câteva minute.",
+        "failed": "Exportul a eșuat. Încearcă din nou."
+      }
     }
   },
   "socialAccounts": {
@@ -13433,7 +13455,12 @@
     "repeatScheduleOff": "Programarea și publicarea se aplică fiecărei copii, nu șablonului.",
     "moveMediaEarlier": "Mută mai devreme",
     "moveMediaLater": "Mută mai târziu",
-    "removeFromChannels": "Elimină din canale",
+    "removeFromAllChannels": "Elimină din toate canalele",
+    "removeTarget": "Elimină",
+    "removeTargetTitle": "Elimini această postare din {destination}?",
+    "removeTargetDescription": "Postarea publicată este eliminată din {destination} de pe {network}. Celelalte destinații o păstrează. Această acțiune nu poate fi anulată.",
+    "removeTargetConfirm": "Elimină",
+    "removing": "Se elimină…",
     "removeFromChannelsTitle": "Elimini această postare din rețele?",
     "removeFromChannelsDescription": "Postarea publicată este eliminată din fiecare rețea care permite acest lucru. Rețelele fără funcție de ștergere o păstrează. Acțiunea nu poate fi anulată.",
     "removeFromChannelsConfirm": "Elimină",
@@ -13442,6 +13469,7 @@
     "removeUnsupported": "{count, plural, one {# destinație nu poate fi eliminată prin API-ul rețelei; elimin-o în aplicație.} other {# destinații nu pot fi eliminate prin API-ul rețelelor; elimină-le în aplicații.}}",
     "removedFromChannel": "Eliminat din rețea",
     "removalPermissionMissing": "Reconectează acest cont pentru a permite ștergerea postărilor.",
+    "removalQueueFailed": "Ștergerea nu a putut fi pusă în coadă. Încearcă din nou.",
     "postMessageQuotaExceeded": "Cota de mesaje a acestui cont a fost epuizată, așa că această postare nu a fost publicată. Treceți la un plan superior sau așteptați următoarea perioadă de facturare, apoi încercați din nou.",
     "tiktokLoading": "Se încarcă setările contului TikTok…",
     "tiktokUnavailable": "Setările contului TikTok nu au putut fi încărcate. Încearcă din nou.",

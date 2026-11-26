@@ -12603,7 +12603,9 @@
       "menu": "ייצוא",
       "rowsTitle": "ייצוא רשימת הפוסטים (שורה אחת לכל פוסט)",
       "rowsDone": "רשימת הפוסטים יוצאה.",
-      "rowsTruncated": "הרשימה נחתכה בגבול הפוסטים. צמצמו את המסננים כדי לייצא את השאר."
+      "rowsTruncated": "הרשימה נחתכה בגבול הפוסטים. צמצמו את המסננים כדי לייצא את השאר.",
+      "sourceStored": "נתונים שמורים",
+      "sourceChannel": "קריאה מהערוץ"
     },
     "showAllPosts": "הצג גם פוסטים ללא תגובות",
     "noCaption": "ללא טקסט",
@@ -12700,7 +12702,9 @@
       "refreshCooldown": "הפוסט הזה רוענן הרגע. נסו שוב בעוד דקה.",
       "downloadPhones": "הורדת מספרי טלפון",
       "downloadComments": "הורדת תגובות",
-      "viewDetails": "הצג פרטים"
+      "viewDetails": "הצג פרטים",
+      "download": "הורדה",
+      "downloadEmails": "הורדת כתובות אימייל"
     },
     "merge": {
       "title": "מיזוג פוסטים",
@@ -13286,6 +13290,24 @@
           "removed": "הוסר מהערוץ."
         }
       }
+    },
+    "channelExport": {
+      "started": "קוראים תגובות מהערוץ. זה עשוי להימשך זמן מה.",
+      "progress": "קוראים מהערוץ… {count} שורות עד כה.",
+      "progressEstimate": "קוראים מהערוץ… {count} שורות עד כה (כ-{expected} תגובות בסך הכול).",
+      "ready": "הקובץ מוכן.",
+      "download": "הורדה",
+      "truncated": "הייצוא נעצר במגבלת בטיחות, ולכן הקובץ אינו שלם. ייצאו פחות פוסטים כדי לקבל את השאר.",
+      "forbidden": "אין לך הרשאה להוריד מספרי טלפון וכתובות אימייל.",
+      "startFailed": "לא ניתן היה להתחיל את הייצוא. נסו שוב.",
+      "inProgress": "הייצוא מתחיל כעת, נסו שוב בעוד רגע.",
+      "failure": {
+        "channelDisconnected": "הערוץ מנותק. חברו אותו מחדש ונסו שוב.",
+        "postNotFound": "פוסט כבר לא קיים בערוץ.",
+        "notSupported": "לא ניתן לקרוא את התגובות של ערוץ זה מהערוץ.",
+        "rateLimited": "הערוץ ביקש להאט. נסו שוב בעוד כמה דקות.",
+        "failed": "הייצוא נכשל. נסו שוב."
+      }
     }
   },
   "socialAccounts": {
@@ -13433,7 +13455,12 @@
     "repeatScheduleOff": "התזמון והפרסום חלים על כל עותק ולא על התבנית.",
     "moveMediaEarlier": "הזז קדימה",
     "moveMediaLater": "הזז אחורה",
-    "removeFromChannels": "הסר מהערוצים",
+    "removeFromAllChannels": "הסר מכל הערוצים",
+    "removeTarget": "הסר",
+    "removeTargetTitle": "להסיר את הפוסט הזה מ-{destination}?",
+    "removeTargetDescription": "הפוסט שפורסם יוסר מ-{destination} ב-{network}. שאר היעדים ישמרו אותו. אי אפשר לבטל פעולה זו.",
+    "removeTargetConfirm": "הסר",
+    "removing": "מסיר…",
     "removeFromChannelsTitle": "להסיר את הפוסט הזה מהרשתות?",
     "removeFromChannelsDescription": "הפוסט שפורסם יוסר מכל רשת שתומכת בכך. רשתות ללא אפשרות מחיקה ישמרו אותו. אי אפשר לבטל פעולה זו.",
     "removeFromChannelsConfirm": "הסר",
@@ -13442,6 +13469,7 @@
     "removeUnsupported": "{count, plural, one {לא ניתן להסיר יעד # דרך ה-API של הרשת; הסירו אותו באפליקציה.} other {לא ניתן להסיר # יעדים דרך ה-API של הרשתות; הסירו אותם באפליקציות.}}",
     "removedFromChannel": "הוסר מהרשת",
     "removalPermissionMissing": "חברו מחדש את החשבון הזה כדי לאפשר מחיקת פוסטים.",
+    "removalQueueFailed": "לא ניתן היה להכניס את ההסרה לתור. נסו שוב.",
     "postMessageQuotaExceeded": "מכסת ההודעות של החשבון הזה נוצלה במלואה, ולכן הפוסט לא פורסם. שדרגו את החבילה או המתינו לתקופת החיוב הבאה ונסו שוב.",
     "tiktokLoading": "טוען את הגדרות חשבון TikTok…",
     "tiktokUnavailable": "לא ניתן לטעון את הגדרות חשבון TikTok. נסו שוב.",

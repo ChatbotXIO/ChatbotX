@@ -46,6 +46,7 @@
     "./csv": "./src/csv.ts",
     "./custom-field": "./src/custom-field.ts",
     "./datetime": "./src/datetime.ts",
+    "./find-email": "./src/find-email.ts",
     "./form-answer-format": "./src/form-answer-format.ts",
     "./error-log": "./src/error-log.ts",
     "./google-click": "./src/google-click.ts",

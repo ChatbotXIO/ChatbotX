@@ -35,14 +35,14 @@ const rowsFiltersFromQuery = (searchParams: URLSearchParams) => {
 }
 
 /**
- * Downloads the comments (`kind=comments`) or the phone numbers (`kind=phones`)
- * of one or more posts (`postId` repeated) as a CSV. The same service as the
+ * Downloads the comments (`kind=comments`), the phone numbers (`kind=phones`)
+ * or the emails (`kind=emails`) of one or more posts (`postId` repeated) as a CSV. The same service as the
  * public export procedure builds the file, so a download and an API call agree.
  * `kind=rows` writes the post list itself (one row per post) for the list
  * filters given as query parameters (`channels`, `inboxIds`, `publishedFrom`, …,
  * `sort`) instead of `postId`.
- * `phones` needs the member's `emailAndPhone` permission and is refused, never
- * partly written, without it. A download consumes a message of the quota, so
+ * `phones` and `emails` need the member's `emailAndPhone` permission and are
+ * refused, never partly written, without it. A download consumes a message of the quota, so
  * an expired workspace is refused (402 `workspaceBlocked`) like a chat send.
  * A GET with the session cookie that spends quota must not be triggerable from
  * another site (a link, an image, a redirect), so only a same-origin request is

@@ -13,6 +13,7 @@ import {
 } from "@chatbotx.io/utils/post-best-times"
 import {
   channelPostMetricBits,
+  hasMetricBit,
   type PostMetricName,
   postMetricNames,
 } from "@chatbotx.io/utils/post-metrics"
@@ -594,18 +595,17 @@ class PostAnalyticsService extends BaseService {
   }
 }
 
-/** Whether `bit` (a power of two) is set in `mask`, without bitwise operators. */
-const hasBit = (mask: number, bit: number): boolean =>
-  Math.floor(mask / bit) % 2 === 1
-
 function metricKnown(post: LinkedPost, name: PostMetricName): boolean {
   switch (name) {
     case "comments":
-      return hasBit(post.metricsKnownMask, channelPostMetricBits.comments)
+      return hasMetricBit(post.metricsKnownMask, channelPostMetricBits.comments)
     case "reactions":
-      return hasBit(post.metricsKnownMask, channelPostMetricBits.reactions)
+      return hasMetricBit(
+        post.metricsKnownMask,
+        channelPostMetricBits.reactions,
+      )
     case "shares":
-      return hasBit(post.metricsKnownMask, channelPostMetricBits.shares)
+      return hasMetricBit(post.metricsKnownMask, channelPostMetricBits.shares)
     case "engagement":
       return post.metricsKnownMask !== 0
     case "views":

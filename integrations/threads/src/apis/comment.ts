@@ -259,6 +259,7 @@ export type ThreadsConversationReply = {
   username?: string
   replied_to?: { id: string }
   is_reply_owned_by_me?: boolean
+  hide_status?: string
 }
 
 export type ThreadsConversationPage = {
@@ -286,7 +287,8 @@ export const listPostConversation = (props: {
       paging?: { cursors?: { after?: string }; next?: string }
     }>(endpoint, {
       searchParams: {
-        fields: "id,text,timestamp,username,replied_to,is_reply_owned_by_me",
+        fields:
+          "id,text,timestamp,username,replied_to,is_reply_owned_by_me,hide_status",
         reverse: "true",
         limit: "100",
         access_token: auth.tokens.accessToken,

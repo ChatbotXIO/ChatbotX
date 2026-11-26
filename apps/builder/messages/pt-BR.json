@@ -12603,7 +12603,9 @@
       "menu": "Exportar",
       "rowsTitle": "Exportar a lista de publicações (uma linha por publicação)",
       "rowsDone": "Lista de publicações exportada.",
-      "rowsTruncated": "A lista foi cortada no limite de publicações. Restrinja os filtros para exportar o restante."
+      "rowsTruncated": "A lista foi cortada no limite de publicações. Restrinja os filtros para exportar o restante.",
+      "sourceStored": "Dados salvos",
+      "sourceChannel": "Ler do canal"
     },
     "showAllPosts": "Mostrar também publicações sem comentários",
     "noCaption": "Sem texto",
@@ -12700,7 +12702,9 @@
       "refreshCooldown": "Esta publicação acabou de ser atualizada. Tente novamente em um minuto.",
       "downloadPhones": "Baixar telefones",
       "downloadComments": "Baixar comentários",
-      "viewDetails": "Ver detalhes"
+      "viewDetails": "Ver detalhes",
+      "download": "Baixar",
+      "downloadEmails": "Baixar e-mails"
     },
     "merge": {
       "title": "Mesclar publicações",
@@ -13286,6 +13290,24 @@
           "removed": "Removida do canal."
         }
       }
+    },
+    "channelExport": {
+      "started": "Lendo os comentários do canal. Isso pode demorar um pouco.",
+      "progress": "Lendo do canal… {count} linhas até agora.",
+      "progressEstimate": "Lendo do canal… {count} linhas até agora (cerca de {expected} comentários no total).",
+      "ready": "O arquivo está pronto.",
+      "download": "Baixar",
+      "truncated": "A exportação parou em um limite de segurança, então o arquivo está incompleto. Exporte menos publicações para obter o restante.",
+      "forbidden": "Você não tem permissão para baixar telefones e e-mails.",
+      "startFailed": "Não foi possível iniciar a exportação. Tente novamente.",
+      "inProgress": "A exportação está sendo iniciada, tente novamente em instantes.",
+      "failure": {
+        "channelDisconnected": "O canal está desconectado. Reconecte-o e tente novamente.",
+        "postNotFound": "Uma publicação não existe mais no canal.",
+        "notSupported": "Os comentários deste canal não podem ser lidos do canal.",
+        "rateLimited": "O canal pediu para reduzir o ritmo. Tente novamente em alguns minutos.",
+        "failed": "A exportação falhou. Tente novamente."
+      }
     }
   },
   "socialAccounts": {
@@ -13433,7 +13455,12 @@
     "repeatScheduleOff": "O agendamento e a publicação valem para cada cópia, não para o modelo.",
     "moveMediaEarlier": "Mover para antes",
     "moveMediaLater": "Mover para depois",
-    "removeFromChannels": "Remover dos canais",
+    "removeFromAllChannels": "Remover de todos os canais",
+    "removeTarget": "Remover",
+    "removeTargetTitle": "Remover esta publicação de {destination}?",
+    "removeTargetDescription": "A publicação é retirada de {destination} em {network}. Os outros destinos a mantêm. Isso não pode ser desfeito.",
+    "removeTargetConfirm": "Remover",
+    "removing": "Removendo…",
     "removeFromChannelsTitle": "Remover esta publicação das redes?",
     "removeFromChannelsDescription": "A publicação é removida de todas as redes que permitem isso. Redes sem função de exclusão a mantêm. Não é possível desfazer.",
     "removeFromChannelsConfirm": "Remover",
@@ -13442,6 +13469,7 @@
     "removeUnsupported": "{count, plural, one {# destino não pode ser removido pela API da rede; remova-o no aplicativo.} other {# destinos não podem ser removidos pela API das redes; remova-os nos aplicativos.}}",
     "removedFromChannel": "Removido da rede",
     "removalPermissionMissing": "Reconecte esta conta para permitir a exclusão de publicações.",
+    "removalQueueFailed": "Não foi possível colocar a remoção na fila. Tente novamente.",
     "postMessageQuotaExceeded": "A cota de mensagens desta conta acabou, então esta publicação não foi publicada. Faça upgrade do plano ou aguarde o próximo período de cobrança e tente novamente.",
     "tiktokLoading": "Carregando as configurações da conta do TikTok…",
     "tiktokUnavailable": "Não foi possível carregar as configurações da conta do TikTok. Tente novamente.",

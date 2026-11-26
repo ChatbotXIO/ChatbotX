@@ -1,4 +1,4 @@
-import type { ChannelType } from "@chatbotx.io/database/partials"
+import type { ChannelType, MessageType } from "@chatbotx.io/database/partials"
 import {
   channelPostRepository,
   createMessageRepository,
@@ -6,6 +6,7 @@ import {
   MAX_COMMENT_THREADS_PER_READ,
   type PostCommenter,
   postCommentRepository,
+  publishDestinationStateRepository,
 } from "@chatbotx.io/database/repositories"
 import {
   RealtimeEventType,
@@ -27,6 +28,12 @@ import {
 } from "../errors"
 import { messageService } from "../message/service"
 import { queueWorkspaceRealtimeEvent } from "../platform/realtime-broadcast"
+import { resolveTenantSettings } from "../platform/settings"
+import {
+  type CommenterContactInbox,
+  resolveCommenterAvatars,
+  resolveInboxAvatars,
+} from "./comment-avatars"
 import { commentLikeFence } from "./comment-like-fence"
 
 /** Most posts one merged comment view reads. */
@@ -57,8 +64,32 @@ export type PostCommentAuthor = {
   tags: { id: string; name: string }[]
 }
 
+/** Who wrote a comment of a thread: the customer, or the page that answered. */
+export const POST_COMMENT_SENDERS = ["contact", "page"] as const
+type PostCommentSender = (typeof POST_COMMENT_SENDERS)[number]
+
+/** The sender of each stored message type; a reply the system sends is the page's. */
+const SENDER_BY_MESSAGE_TYPE: Record<MessageType, PostCommentSender> = {
+  activity: "contact",
+  incoming: "contact",
+  outgoing: "page",
+}
+
+/** The page (the post's inbox) that wrote a `page` comment. */
+type PostCommentPage = {
+  /**
+   * The page's picture (stored URL, or a signed on-view link while it is not
+   * fetched yet); `null` with no picture, then the UI shows the channel icon.
+   */
+  avatar: string | null
+  name: string
+}
+
 export type PostCommentItem = {
-  /** The commenter. `null` only if the contact was deleted after commenting. */
+  /**
+   * The contact whose thread the comment sits in, also for a reply the page
+   * sent. `null` only if the contact was deleted after commenting.
+   */
   author: PostCommentAuthor | null
   /** The channel's own id of the comment. */
   commentId: string | null
@@ -73,8 +104,12 @@ export type PostCommentItem = {
    * the `id` that parent has in this list), if it is a reply.
    */
   parentCommentId: string | null
+  /** The page that wrote the comment; `null` unless `sender` is `page`. */
+  page: PostCommentPage | null
   /** The post (`ChannelPost.id`) the comment belongs to. */
   postId: string
+  /** Who wrote it: the `contact` (author) or the `page` that answered. */
+  sender: PostCommentSender
   /** Comment text; any phone number in it is masked for a caller who may not view them. */
   text: string | null
 }
@@ -97,6 +132,8 @@ type ReaderInput = {
   canViewEmailAndPhone: boolean
   /** Only comments that carry a phone number. */
   hasPhone?: boolean
+  /** Resolve the commenters' avatars into URLs (default); an export leaves them out. */
+  includeAvatars?: boolean
   postIds: string[]
   /** Only comments whose text contains this, ignoring case. */
   search?: string
@@ -120,6 +157,12 @@ type MergeCommentsInput = ReaderInput & ReadPageInput
  * own commenters, one lookup.
  */
 export type CommentReader = {
+  /**
+   * The contact's email, for the export path only: `null` without the
+   * email-and-phone permission, for an unknown contact, or before
+   * `preloadCommenters` ran. Never part of a comment's output.
+   */
+  commenterEmail: (contactId: string) => string | null
   /**
    * How many comments of these posts carry a phone number, stopping at `limit`
    * (`capped`: the count is then only that lower bound).
@@ -145,6 +188,7 @@ type PostRef = {
   externalPostId: string
   id: string
   inboxId: string
+  inboxName: string
 }
 
 const postKey = (post: { externalPostId: string; inboxId: string }): string =>
@@ -179,6 +223,12 @@ type PostContactInbox = Awaited<
 /** What one opened reader resolves once and every page read reuses. */
 type ReaderScope = {
   contactInboxById: Map<string, PostContactInbox>
+  /** The page picture of each post inbox; empty when avatars were not asked for. */
+  inboxAvatarByInboxId: Map<string, string | null>
+  /** The tenant's storage URL, read once; `null` when avatars were not asked for. */
+  storageUrl: string | null
+  /** Each commenter's contact inboxes with their channel, for resolving avatars. */
+  contactInboxesByContactId: Map<string, CommenterContactInbox[]>
   filter: {
     contactInboxIds: string[]
     conversationIds: string[]
@@ -209,12 +259,13 @@ const findCommenters = async (
 const toAuthor = (
   commenter: PostCommenter | undefined,
   canViewEmailAndPhone: boolean,
+  avatarByContactId: Map<string, string | null>,
 ): PostCommentAuthor | null => {
   if (!commenter) {
     return null
   }
   return {
-    avatar: commenter.avatar,
+    avatar: avatarByContactId.get(commenter.id) ?? null,
     id: commenter.id,
     name: commenter.name,
     phoneNumber: canViewEmailAndPhone ? commenter.phoneNumber : null,
@@ -227,6 +278,7 @@ const toCommentItem = (
   comment: ListedComment,
   scope: ReaderScope,
   commenterById: Map<string, PostCommenter>,
+  avatarByContactId: Map<string, string | null>,
   canViewEmailAndPhone: boolean,
 ): PostCommentItem | null => {
   const thread = scope.threadByConversation.get(comment.conversationId)
@@ -243,13 +295,26 @@ const toCommentItem = (
   if (!post) {
     return null
   }
+  const sender = SENDER_BY_MESSAGE_TYPE[comment.messageType]
   return {
-    author: toAuthor(commenterById.get(thread.contactId), canViewEmailAndPhone),
+    author: toAuthor(
+      commenterById.get(thread.contactId),
+      canViewEmailAndPhone,
+      avatarByContactId,
+    ),
     commentId: comment.sourceId,
     createdAt: comment.createdAt,
     id: comment.id,
+    page:
+      sender === "page"
+        ? {
+            avatar: scope.inboxAvatarByInboxId.get(post.inboxId) ?? null,
+            name: post.inboxName,
+          }
+        : null,
     parentCommentId: comment.parentId,
     postId: post.id,
+    sender,
     text:
       comment.text !== null && !canViewEmailAndPhone
         ? redactPhoneNumbers(comment.text)
@@ -298,6 +363,10 @@ class ChannelPostCommentsService extends BaseService {
     let preloaded: Map<string, PostCommenter> | null = null
 
     return {
+      commenterEmail: (contactId) =>
+        canViewEmailAndPhone
+          ? (preloaded?.get(contactId)?.email ?? null)
+          : null,
       countPhoneComments: async (limit) => {
         // The thread lookup stops at its cap, so a count over those threads is
         // only a lower bound for a post with more commenters than that: report
@@ -354,11 +423,21 @@ class ChannelPostCommentsService extends BaseService {
             }),
           ))
 
+        const avatarByContactId = scope.storageUrl
+          ? await resolveCommenterAvatars({
+              commenters: Array.from(commenterById.values()),
+              contactInboxesByContactId: scope.contactInboxesByContactId,
+              storageUrl: scope.storageUrl,
+              workspaceId,
+            })
+          : new Map<string, string | null>()
+
         const items = page.data.flatMap((comment) => {
           const item = toCommentItem(
             comment,
             scope,
             commenterById,
+            avatarByContactId,
             canViewEmailAndPhone,
           )
           return item ? [item] : []
@@ -409,11 +488,26 @@ class ChannelPostCommentsService extends BaseService {
     const contactInboxById = new Map(
       contactInboxes.map((contactInbox) => [contactInbox.id, contactInbox]),
     )
+    const channelByInboxId = new Map(
+      posts.map((post) => [post.inboxId, post.channel]),
+    )
+    const contactInboxesByContactId = new Map<string, CommenterContactInbox[]>()
+    for (const contactInbox of contactInboxes) {
+      const channel = channelByInboxId.get(contactInbox.inboxId)
+      if (channel) {
+        const rows = contactInboxesByContactId.get(contactInbox.contactId) ?? []
+        rows.push({ channel, id: contactInbox.id })
+        contactInboxesByContactId.set(contactInbox.contactId, rows)
+      }
+    }
+    const avatars = await this.loadInboxAvatars(input, posts)
     const conversationIds = Array.from(threadByConversation.keys())
     const contactInboxIds = Array.from(contactInboxById.keys())
 
     return {
       contactInboxById,
+      contactInboxesByContactId,
+      ...avatars,
       filter: {
         contactInboxIds,
         conversationIds,
@@ -432,6 +526,36 @@ class ChannelPostCommentsService extends BaseService {
   }
 
   /**
+   * The storage URL and the pages' pictures, read once per reader (one query
+   * over at most {@link MAX_MERGE_VIEW_POSTS} inboxes). Nothing is read when the
+   * reader skips avatars.
+   */
+  private async loadInboxAvatars(
+    input: ReaderInput,
+    posts: PostRef[],
+  ): Promise<Pick<ReaderScope, "inboxAvatarByInboxId" | "storageUrl">> {
+    if (input.includeAvatars === false) {
+      return { inboxAvatarByInboxId: new Map(), storageUrl: null }
+    }
+    const { workspaceId } = input
+    const [{ storageUrl }, destinations] = await Promise.all([
+      resolveTenantSettings({ workspaceId }),
+      publishDestinationStateRepository.list({
+        inboxIds: unique(posts.map((post) => post.inboxId)),
+        workspaceId,
+      }),
+    ])
+    return {
+      inboxAvatarByInboxId: await resolveInboxAvatars({
+        destinations,
+        storageUrl,
+        workspaceId,
+      }),
+      storageUrl,
+    }
+  }
+
+  /**
    * How many comments of one post carry a phone number, stopping at `limit`
    * (`capped`). For repairing the post's stored phone-comment count.
    */
@@ -442,6 +566,7 @@ class ChannelPostCommentsService extends BaseService {
   }): Promise<{ capped: boolean; count: number }> {
     const reader = await this.openReader({
       canViewEmailAndPhone: true,
+      includeAvatars: false,
       postIds: [input.postId],
       workspaceId: input.workspaceId,
     })

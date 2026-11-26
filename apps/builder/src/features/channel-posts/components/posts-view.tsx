@@ -40,6 +40,7 @@ import { ComposedPostsTable } from "@/features/social-posts/components/composed-
 import { usePostCounts } from "@/features/social-posts/hooks/use-calendar-posts"
 import { useDebouncedValue } from "@/hooks/use-debounced-value"
 import { orpc } from "@/lib/orpc/query"
+import { useChannelCommentExport } from "../hooks/use-channel-comment-export"
 import { useExportFilteredComments } from "../hooks/use-export-filtered-comments"
 import { useRefreshVisiblePostMetrics } from "../hooks/use-refresh-visible-post-metrics"
 import { useRefreshWhenSyncSettles } from "../hooks/use-refresh-when-sync-settles"
@@ -58,7 +59,12 @@ import { MergePostsDialog } from "./merge-posts-dialog"
 import { PostCommentsDialog } from "./post-comments-dialog"
 import { PostDetailSheet } from "./post-detail-sheet"
 import { PostFilters } from "./post-filters"
-import { type ManagedPost, POST_GRID, PostRow } from "./post-row"
+import {
+  type ManagedPost,
+  POST_GRID,
+  POST_TABLE_MIN_WIDTH,
+  PostRow,
+} from "./post-row"
 import { PostsShowBar } from "./posts-show-bar"
 import { SyncFailureNotice } from "./sync-failure-notice"
 
@@ -148,6 +154,9 @@ export const PostsView = ({
   const [openedPosts, setOpenedPosts] = useState<ManagedPost[]>([])
   const [mergeOpen, setMergeOpen] = useState(false)
   const [detailPostId, setDetailPostId] = useState<string | null>(null)
+  // One follower for the whole page: a row, the detail sheet and a page change
+  // never start, stop or duplicate it.
+  const channelExport = useChannelCommentExport(workspaceId)
 
   const debouncedSearch = useDebouncedValue(
     searchText.trim() || null,
@@ -401,7 +410,7 @@ export const PostsView = ({
           scope={composedBucket ? "composed" : "channels"}
           workspaceId={workspaceId}
         />
-        <section className="min-w-0 flex-1 self-start overflow-hidden rounded-2xl border bg-card">
+        <section className="relative min-w-0 max-w-full flex-1 self-start overflow-x-auto rounded-2xl border bg-card">
           {composedBucket ? (
             <ComposedPostsTable
               bucket={composedBucket}
@@ -411,7 +420,7 @@ export const PostsView = ({
             />
           ) : (
             <>
-              <div>
+              <div className={POST_TABLE_MIN_WIDTH}>
                 <div>
                   <div
                     className={cn(
@@ -444,13 +453,14 @@ export const PostsView = ({
                             </div>
                           </div>
                           <Skeleton className="mx-auto hidden h-6 w-20 md:block" />
-                          <Skeleton className="mx-auto hidden h-8 w-28 rounded-full md:block" />
+                          <Skeleton className="hidden h-9 w-28 md:ms-4 md:block" />
                           <Skeleton className="mx-auto hidden size-8 rounded-md md:block" />
                         </div>
                       ))
                     : rows.map((post) => (
                         <PostRow
                           canViewPhones={canViewPhones}
+                          channelExport={channelExport}
                           key={post.id}
                           onOpenComments={(opened) => setOpenedPosts([opened])}
                           onOpenDetail={(opened) => setDetailPostId(opened.id)}
@@ -511,6 +521,7 @@ export const PostsView = ({
       />
       <PostDetailSheet
         canViewPhones={canViewPhones}
+        channelExport={channelExport}
         onOpenChange={(open) => {
           if (!open) {
             setDetailPostId(null)

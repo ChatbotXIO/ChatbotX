@@ -330,6 +330,7 @@ The same `posts` scope covers the composed posts
 `POST /v1/posts/{id}/duplicate`, `POST /v1/posts/{id}/publish`,
 `POST /v1/posts/{id}/reschedule`,
 `POST /v1/posts/{id}/targets/{targetId}/retry`, `POST /v1/posts/{id}/targets/{targetId}/resolve`,
+`POST /v1/posts/{id}/targets/{targetId}/remove`,
 `PUT|DELETE /v1/posts/{id}/recurrence`, `POST /v1/posts/{id}/recurrence/pause|resume`,
 `GET /v1/posts/{id}/recurrence/occurrences`, `POST /v1/posts/{id}/recurrence/occurrences/skip|restore`, `POST /v1/posts/validate`,
 `POST /v1/posts/preview`, `GET /v1/posts/content-types`). `DELETE /v1/posts/{id}`

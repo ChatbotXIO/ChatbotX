@@ -24,6 +24,8 @@ type TemplateWorkerProcessor = (job: {
 const workerState = vi.hoisted(() => ({
   defaultQueueAdd: vi.fn(),
   checkMetaCatalogSync: vi.fn(),
+  exportChannelPostComments: vi.fn(),
+  failBlockedChannelPostExport: vi.fn(),
   handleBulkTagContacts: vi.fn(),
   isBlockedWorkspace: vi.fn(),
   importMetaCatalogProducts: vi.fn(),
@@ -33,6 +35,8 @@ const workerState = vi.hoisted(() => ({
   processor: undefined as DefaultWorkerProcessor | undefined,
   templateProcessor: undefined as TemplateWorkerProcessor | undefined,
   templateConcurrency: undefined as number | undefined,
+  exportProcessor: undefined as TemplateWorkerProcessor | undefined,
+  exportConcurrency: undefined as number | undefined,
   installTemplate: vi.fn(),
   failBlockedTemplateInstall: vi.fn(),
   syncTemplateInstallation: vi.fn(),
@@ -67,6 +71,12 @@ vi.mock("bullmq", () => {
         workerState.templateProcessor =
           processor as unknown as TemplateWorkerProcessor
         workerState.templateConcurrency = options.concurrency
+        return
+      }
+      if (queueName === "channelPostExport") {
+        workerState.exportProcessor =
+          processor as unknown as TemplateWorkerProcessor
+        workerState.exportConcurrency = options.concurrency
         return
       }
       workerState.processor = processor
@@ -115,6 +125,7 @@ vi.mock("@chatbotx.io/worker-config", async (importOriginal) => {
     getQueueConnection: () => ({}),
     queueNames: {
       enum: {
+        channelPostExport: "channelPostExport",
         default: "default",
         template: "template",
       },
@@ -148,6 +159,11 @@ vi.mock("../src/lib/logger", () => ({
 vi.mock("../src/default/handlers/bulk-tag-contacts", () => ({
   handleBulkTagContacts: (...args: unknown[]) =>
     workerState.handleBulkTagContacts(...args),
+}))
+
+vi.mock("../src/default/handlers/export-channel-post-comments", () => ({
+  exportChannelPostComments: workerState.exportChannelPostComments,
+  failBlockedChannelPostExport: workerState.failBlockedChannelPostExport,
 }))
 
 vi.mock("../src/default/handlers/export-contacts", () => ({
@@ -515,6 +531,60 @@ describe("pipeline stage bulk jobs", () => {
 
     expect(workerState.processPipelineStageBulk).not.toHaveBeenCalled()
     expect(workerState.releasePipelineStageBulkClaim).toHaveBeenCalledWith(
+      job.data,
+    )
+  })
+})
+
+describe("channel post comment export", () => {
+  const processExportJob = async (data: unknown): Promise<void> => {
+    if (!workerState.exportProcessor) {
+      throw new Error("Export worker processor was not captured")
+    }
+    await workerState.exportProcessor({ data } as never)
+  }
+
+  const job = {
+    type: "exportChannelPostComments" as const,
+    data: {
+      canViewEmailAndPhone: true,
+      fileId: "file-1",
+      kind: "comments",
+      outputPath: "workspaces/workspace-1/exports/channel-posts/c.csv",
+      postIds: ["p1"],
+      workspaceId: "workspace-1",
+    },
+  }
+
+  test("runs on its own queue with a small bounded concurrency, not on the default worker", () => {
+    expect(workerState.exportProcessor).toBeDefined()
+    expect(workerState.exportConcurrency).toBe(10)
+  })
+
+  test("the default worker no longer takes the job", async () => {
+    workerState.isBlockedWorkspace.mockResolvedValue(false)
+
+    await processDefaultJob(job as unknown as DefaultJobData)
+
+    expect(workerState.exportChannelPostComments).not.toHaveBeenCalled()
+  })
+
+  test("runs the export for an active owner", async () => {
+    workerState.isBlockedWorkspace.mockResolvedValue(false)
+
+    await processExportJob(job)
+
+    expect(workerState.exportChannelPostComments).toHaveBeenCalledWith(job.data)
+    expect(workerState.failBlockedChannelPostExport).not.toHaveBeenCalled()
+  })
+
+  test("a blocked owner skips the job, settles the file and runs nothing", async () => {
+    workerState.isBlockedWorkspace.mockResolvedValue(true)
+
+    await processExportJob(job)
+
+    expect(workerState.exportChannelPostComments).not.toHaveBeenCalled()
+    expect(workerState.failBlockedChannelPostExport).toHaveBeenCalledWith(
       job.data,
     )
   })

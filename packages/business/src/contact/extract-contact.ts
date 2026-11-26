@@ -1,11 +1,10 @@
+import { EMAIL_REGEX } from "@chatbotx.io/utils/find-email"
 import {
   type CountryCode,
   type NumberFormat,
   type PhoneNumber,
   parsePhoneNumberFromString,
 } from "libphonenumber-js"
-
-const EMAIL_REGEX = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/
 
 /**
  * Region fallback list when no `defaultCountry` is supplied. Narrower than the

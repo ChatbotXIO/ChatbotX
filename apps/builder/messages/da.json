@@ -12603,7 +12603,9 @@
       "menu": "Eksportér",
       "rowsTitle": "Eksportér listen over opslag (én række pr. opslag)",
       "rowsDone": "Listen over opslag er eksporteret.",
-      "rowsTruncated": "Listen blev afkortet ved grænsen for opslag. Indsnævr filtrene for at eksportere resten."
+      "rowsTruncated": "Listen blev afkortet ved grænsen for opslag. Indsnævr filtrene for at eksportere resten.",
+      "sourceStored": "Gemte data",
+      "sourceChannel": "Læs fra kanalen"
     },
     "showAllPosts": "Vis også opslag uden kommentarer",
     "noCaption": "Ingen tekst",
@@ -12700,7 +12702,9 @@
       "refreshCooldown": "Dette opslag blev lige opdateret. Prøv igen om et minut.",
       "downloadPhones": "Download telefonnumre",
       "downloadComments": "Download kommentarer",
-      "viewDetails": "Se detaljer"
+      "viewDetails": "Se detaljer",
+      "download": "Download",
+      "downloadEmails": "Download e-mails"
     },
     "merge": {
       "title": "Slå opslag sammen",
@@ -13286,6 +13290,24 @@
           "removed": "Fjernet fra kanalen."
         }
       }
+    },
+    "channelExport": {
+      "started": "Læser kommentarer fra kanalen. Det kan tage et stykke tid.",
+      "progress": "Læser fra kanalen… {count} rækker indtil videre.",
+      "progressEstimate": "Læser fra kanalen… {count} rækker indtil videre (omkring {expected} kommentarer i alt).",
+      "ready": "Filen er klar.",
+      "download": "Download",
+      "truncated": "Eksporten stoppede ved en sikkerhedsgrænse, så filen er ufuldstændig. Eksportér færre opslag for at få resten.",
+      "forbidden": "Du har ikke tilladelse til at downloade telefonnumre og e-mails.",
+      "startFailed": "Eksporten kunne ikke startes. Prøv igen.",
+      "inProgress": "Eksporten er ved at starte, prøv igen om et øjeblik.",
+      "failure": {
+        "channelDisconnected": "Kanalen er afbrudt. Forbind den igen, og prøv igen.",
+        "postNotFound": "Et opslag findes ikke længere på kanalen.",
+        "notSupported": "Kommentarerne på denne kanal kan ikke læses fra kanalen.",
+        "rateLimited": "Kanalen bad om at sænke tempoet. Prøv igen om nogle minutter.",
+        "failed": "Eksporten mislykkedes. Prøv igen."
+      }
     }
   },
   "socialAccounts": {
@@ -13433,7 +13455,12 @@
     "repeatScheduleOff": "Planlægning og udgivelse gælder for hver kopi, ikke for skabelonen.",
     "moveMediaEarlier": "Flyt tidligere",
     "moveMediaLater": "Flyt senere",
-    "removeFromChannels": "Fjern fra kanalerne",
+    "removeFromAllChannels": "Fjern fra alle kanaler",
+    "removeTarget": "Fjern",
+    "removeTargetTitle": "Vil du fjerne dette opslag fra {destination}?",
+    "removeTargetDescription": "Det udgivne opslag fjernes fra {destination} på {network}. De andre destinationer beholder det. Det kan ikke fortrydes.",
+    "removeTargetConfirm": "Fjern",
+    "removing": "Fjerner…",
     "removeFromChannelsTitle": "Fjern dette opslag fra netværkene?",
     "removeFromChannelsDescription": "Det udgivne opslag fjernes fra alle netværk, der understøtter det. Netværk uden slettefunktion beholder det. Det kan ikke fortrydes.",
     "removeFromChannelsConfirm": "Fjern",
@@ -13442,6 +13469,7 @@
     "removeUnsupported": "{count, plural, one {# destination kan ikke fjernes via netværkets API; fjern den i appen.} other {# destinationer kan ikke fjernes via netværkenes API; fjern dem i apps'ene.}}",
     "removedFromChannel": "Fjernet fra netværket",
     "removalPermissionMissing": "Tilslut denne konto igen for at tillade sletning af opslag.",
+    "removalQueueFailed": "Fjernelsen kunne ikke sættes i kø. Prøv igen.",
     "postMessageQuotaExceeded": "Kontoens beskedkvote er brugt op, så dette opslag blev ikke udgivet. Opgrader abonnementet, eller vent til næste faktureringsperiode, og prøv igen.",
     "tiktokLoading": "Indlæser indstillinger for TikTok-kontoen…",
     "tiktokUnavailable": "Indstillingerne for TikTok-kontoen kunne ikke indlæses. Prøv igen.",

@@ -56,6 +56,8 @@ export const queueGroupByName: Record<QueueName, QueueGroup> = {
   contactInfoCapture: "bulk",
   // Composed posts published to social networks: one job per destination.
   postPublish: "bulk",
+  // Channel comment exports: long reads that wait on the channel, never latency-critical.
+  channelPostExport: "bulk",
 }
 
 function resolveGroupUrl(group: QueueGroup): string {

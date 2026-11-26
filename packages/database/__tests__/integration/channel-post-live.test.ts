@@ -62,7 +62,7 @@ describe.skipIf(!databaseUrl)(
     const row = async (externalPostId: string) =>
       (
         await client.query(
-          `SELECT "contentType", "liveStatus", "liveStatusObservedAt" FROM "ChannelPost" WHERE "workspaceId" = $1 AND "channel" = 'messenger' AND "externalPostId" = $2`,
+          `SELECT "contentType", "mediaType", "liveStatus", "liveStatusObservedAt" FROM "ChannelPost" WHERE "workspaceId" = $1 AND "channel" = 'messenger' AND "externalPostId" = $2`,
           [workspaceId, externalPostId],
         )
       ).rows[0]
@@ -292,6 +292,66 @@ describe.skipIf(!databaseUrl)(
         expect(stored.liveStatus).toBe("live")
       })
 
+      for (const type of ["other", "text", "photo", "link", "video"] as const) {
+        test(`a stored live broadcast stays live when the feed reports it as ${type}`, async () => {
+          const id = unique()
+          await sync(
+            [
+              listed(id, {
+                contentType: "live",
+                liveStatus: "live",
+                mediaType: "live_video",
+              }),
+            ],
+            at(0),
+          )
+
+          await sync([listed(id, { contentType: type })], at(5))
+
+          const stored = await row(id)
+          expect(stored.contentType).toBe("live")
+          expect(stored.mediaType).toBe("live_video")
+        })
+      }
+
+      test("the live pass fills the media type of a row a webhook created", async () => {
+        const id = unique()
+        await observe(id)
+
+        await sync(
+          [
+            listed(id, {
+              contentType: "live",
+              liveStatus: "live",
+              mediaType: "live",
+            }),
+          ],
+          at(5),
+        )
+
+        expect((await row(id)).mediaType).toBe("live")
+      })
+
+      test("a stored reel is not turned back into a video, but a reel is corrected to a live broadcast", async () => {
+        const id = unique()
+        await sync([listed(id, { contentType: "reel" })], at(0))
+
+        await sync([listed(id, { contentType: "video" })], at(5))
+        expect((await row(id)).contentType).toBe("reel")
+
+        await sync([listed(id, { contentType: "live" })], at(10))
+        expect((await row(id)).contentType).toBe("live")
+      })
+
+      test("a post that is not live is still corrected by a later listing", async () => {
+        const id = unique()
+        await sync([listed(id, { contentType: "other" })], at(0))
+
+        await sync([listed(id, { contentType: "photo" })], at(5))
+
+        expect((await row(id)).contentType).toBe("photo")
+      })
+
       test("a past broadcast listed as ended is stored ended", async () => {
         const id = unique()
 
@@ -460,23 +520,79 @@ describe.skipIf(!databaseUrl)(
         expect(await names(secondScan.map((row) => row.id))).toEqual([ids[20]])
       })
 
-      test("a broadcast older than the give-up window is cleared and not returned", async () => {
+      const recheckOf = async (externalPostId: string) =>
+        (
+          await client.query(
+            `SELECT "liveRecheckAt" FROM "ChannelPost" WHERE "workspaceId" = $1 AND "externalPostId" = $2`,
+            [workspaceId, externalPostId],
+          )
+        ).rows[0].liveRecheckAt as Date | null
+      const setColumn = async (
+        externalPostId: string,
+        column: "publishedAt" | "removedAt" | "liveStatusObservedAt",
+        value: string,
+      ) =>
+        await client.query(
+          `UPDATE "ChannelPost" SET "${column}" = $3 WHERE "workspaceId" = $1 AND "externalPostId" = $2`,
+          [workspaceId, externalPostId, value],
+        )
+
+      test("a broadcast past the give-up window is returned once for a final re-read and never queued again", async () => {
         await parkEverythingElse()
         const id = unique()
         await observe(id, { observedAt: at(-60) })
-        await client.query(
-          `UPDATE "ChannelPost" SET "publishedAt" = '2020-01-01' WHERE "workspaceId" = $1 AND "externalPostId" = $2`,
-          [workspaceId, id],
-        )
+        await setColumn(id, "publishedAt", "2020-01-01")
+        await setColumn(id, "liveStatusObservedAt", "2020-01-01")
+
+        const final = await claim(500, at(0))
+        const again = await claim(500, at(60))
+
+        expect(await names(final.map((row) => row.id))).toContain(id)
+        expect(await recheckOf(id)).toBeNull()
+        expect(await names(again.map((row) => row.id))).not.toContain(id)
+        const stored = await row(id)
+        expect(stored.liveStatus).toBe("live")
+      })
+
+      test("a final re-read that still finds the broadcast live re-arms the schedule", async () => {
+        await parkEverythingElse()
+        const id = unique()
+        await observe(id, { observedAt: at(-60) })
+        await setColumn(id, "publishedAt", "2020-01-01")
+        await setColumn(id, "liveStatusObservedAt", "2020-01-01")
+        await claim(500, at(0))
+        expect(await recheckOf(id)).toBeNull()
+
+        await observe(id, { observedAt: at(1), source: "reread" })
+        expect(await recheckOf(id)).toEqual(at(11))
+        const batch = await claim(500, at(11))
+
+        expect(await names(batch.map((row) => row.id))).toContain(id)
+        expect(await recheckOf(id)).toEqual(at(21))
+      })
+
+      test("an old broadcast that was seen live inside the window is not given up on", async () => {
+        await parkEverythingElse()
+        const id = unique()
+        await observe(id, { observedAt: at(-5) })
+        await setColumn(id, "publishedAt", "2020-01-01")
+
+        const batch = await claim(500, at(10))
+
+        expect(await names(batch.map((row) => row.id))).toContain(id)
+        expect(await recheckOf(id)).toEqual(at(20))
+      })
+
+      test("a removed broadcast is cleared and not returned", async () => {
+        await parkEverythingElse()
+        const id = unique()
+        await observe(id, { observedAt: at(-60) })
+        await setColumn(id, "removedAt", at(-30).toISOString())
 
         const batch = await claim(500, at(0))
 
         expect(await names(batch.map((row) => row.id))).not.toContain(id)
-        const stored = await client.query(
-          `SELECT "liveRecheckAt" FROM "ChannelPost" WHERE "workspaceId" = $1 AND "externalPostId" = $2`,
-          [workspaceId, id],
-        )
-        expect(stored.rows[0].liveRecheckAt).toBeNull()
+        expect(await recheckOf(id)).toBeNull()
       })
 
       test("a row that is not due is not claimed", async () => {

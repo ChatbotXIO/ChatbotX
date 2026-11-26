@@ -19,7 +19,9 @@ const mocks = vi.hoisted(() => ({
 
 vi.mock("@chatbotx.io/database/partials", () => ({
   CONTACT_EXPORT_RETENTION_DAYS: 7,
-  exportSubTypes: { enum: { contacts: "contacts" } },
+  exportSubTypes: {
+    enum: { contacts: "contacts", channelPostComments: "channelPostComments" },
+  },
   fileContextTypes: { enum: { export: "export" } },
   fileStatuses: { enum: { pending: "pending" } },
 }))
@@ -297,6 +299,10 @@ describe("contactExportService.listFiles", () => {
 })
 
 describe("contactExportService.purgeExpired", () => {
+  const SWEEP: ("contacts" | "channelPostComments")[] = [
+    "contacts",
+    "channelPostComments",
+  ]
   const now = new Date("2026-10-29T00:00:00.000Z")
   const file = (id: string) => ({
     id,
@@ -305,13 +311,17 @@ describe("contactExportService.purgeExpired", () => {
     createdAtCursor: `2026-10-01T00:00:00.00000${id.slice(-1)}Z`,
   })
 
-  test("reads only contact exports older than the retention", async () => {
+  test("reads only exports of the given kinds older than the retention", async () => {
     mocks.listExportsCreatedBefore.mockResolvedValueOnce([])
 
-    await contactExportService.purgeExpired({ batchSize: 100, now })
+    await contactExportService.purgeExpired({
+      batchSize: 100,
+      now,
+      subTypes: SWEEP,
+    })
 
     expect(mocks.listExportsCreatedBefore).toHaveBeenCalledWith({
-      subType: "contacts",
+      subTypes: SWEEP,
       before: new Date("2026-10-22T00:00:00.000Z"),
       limit: 100,
       after: undefined,
@@ -323,7 +333,11 @@ describe("contactExportService.purgeExpired", () => {
     mocks.deleteObject.mockResolvedValueOnce({})
 
     await expect(
-      contactExportService.purgeExpired({ batchSize: 100, now }),
+      contactExportService.purgeExpired({
+        batchSize: 100,
+        now,
+        subTypes: SWEEP,
+      }),
     ).resolves.toEqual({ deleted: 1, failed: 0, nextCursor: null })
 
     expect(mocks.deleteObject).toHaveBeenCalledWith(file("f-1").path)
@@ -343,7 +357,11 @@ describe("contactExportService.purgeExpired", () => {
       .mockResolvedValueOnce({})
 
     await expect(
-      contactExportService.purgeExpired({ batchSize: 100, now }),
+      contactExportService.purgeExpired({
+        batchSize: 100,
+        now,
+        subTypes: SWEEP,
+      }),
     ).resolves.toEqual({ deleted: 1, failed: 1, nextCursor: null })
 
     expect(mocks.deleteById).toHaveBeenCalledTimes(1)
@@ -362,6 +380,7 @@ describe("contactExportService.purgeExpired", () => {
     const result = await contactExportService.purgeExpired({
       batchSize: 2,
       now,
+      subTypes: SWEEP,
       after,
     })
 

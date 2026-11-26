@@ -3,6 +3,7 @@ import {
   socialPostRemovalRepository,
   socialPostRepository,
 } from "@chatbotx.io/database/repositories"
+import { distributedLock } from "@chatbotx.io/redis"
 import { publisherCanRemove } from "@chatbotx.io/utils/post-publishing"
 import type { SocialTargetRemovalStatus } from "@chatbotx.io/utils/social-post"
 import type { SocialPublisherMap } from "@chatbotx.io/utils/social-publisher"
@@ -25,6 +26,22 @@ export const SOCIAL_POST_NOT_REMOVABLE_CODE = "socialPostNotRemovable"
 export const SOCIAL_POST_REMOVAL_UNSUPPORTED_CODE = "removalUnsupported"
 /** The network refused the delete: the connection predates the permission it needs (`threads_delete`, `instagram_manage_contents`). */
 export const SOCIAL_POST_REMOVAL_PERMISSION_CODE = "removalPermissionMissing"
+/** The removal job could not be added to the queue; nothing was sent to the network. */
+const SOCIAL_POST_REMOVAL_QUEUE_FAILED_CODE = "removalQueueFailed"
+/** Job states of a removal that is over: it ran to its end, either way. */
+const FINISHED_JOB_STATES: ReadonlySet<string> = new Set([
+  "completed",
+  "failed",
+])
+const REMOVE_LOCK_TTL_SECONDS = 10
+/** Job states in which a removal is still going to run (or is running). */
+const OPEN_JOB_STATES: ReadonlySet<string> = new Set([
+  "active",
+  "delayed",
+  "prioritized",
+  "waiting",
+  "waiting-children",
+])
 /** The network's delete quota is used up (Threads: 100 per rolling 24 hours); nothing was sent. */
 const REMOVAL_QUOTA_EXHAUSTED_CODE = "removalQuotaExhausted"
 
@@ -55,22 +72,43 @@ const removalErrorFor = (
   return error
 }
 
+/**
+ * The targets a removal request acts on: all of them, or the named ones. A name
+ * that is not a target of this post is refused, never silently skipped.
+ */
+const selectRemovalRows = <T extends { id: string }>(
+  rows: T[],
+  targetIds: string[] | undefined,
+): T[] => {
+  if (!targetIds) {
+    return rows
+  }
+  const wanted = new Set(targetIds)
+  const selected = rows.filter((row) => wanted.has(row.id))
+  if (selected.length !== wanted.size) {
+    throw notFoundException("Destination not found")
+  }
+  return selected
+}
+
 /** What one worker run did with its target. */
 export type RemovalRunResult = "failed" | "removed" | "skipped"
 
 class SocialPostRemoveService extends BaseService {
   /**
-   * Asks for every published target of the post to be taken down from its
-   * network. The network calls run in the worker (one job per target), never in
-   * the request. Repeating it is safe: a removed target answers `removed`, and a
-   * job already waiting for the same target is dropped. A post with nothing
-   * published on a network that can delete answers 409.
+   * Asks for the published targets of the post to be taken down from their
+   * networks: every target, or only `targetIds` when given (each must belong to
+   * the post, else 404). The network calls run in the worker (one job per
+   * target), never in the request. Repeating it is safe: a removed target
+   * answers `removed`, and a job already waiting for the same target is dropped.
+   * A selection with nothing published answers 409.
    */
   async request(input: {
     id: string
+    targetIds?: string[]
     workspaceId: string
   }): Promise<SocialPostRemovalResult> {
-    const { id, workspaceId } = input
+    const { id, targetIds, workspaceId } = input
     const post = await socialPostRepository.findForWorkspace({
       id,
       workspaceId,
@@ -78,10 +116,11 @@ class SocialPostRemoveService extends BaseService {
     if (!post) {
       throw notFoundException("Post not found")
     }
-    const rows = await socialPostRemovalRepository.listForPost({
+    const allRows = await socialPostRemovalRepository.listForPost({
       socialPostId: id,
       workspaceId,
     })
+    const rows = selectRemovalRows(allRows, targetIds)
     const targets = rows.map((row) => {
       let status: SocialTargetRemovalStatus = "queued"
       if (row.status !== "published") {
@@ -101,7 +140,7 @@ class SocialPostRemoveService extends BaseService {
     }
     for (const target of targets) {
       if (target.status === "queued") {
-        await this.enqueue(target.targetId, workspaceId)
+        await this.start(target.targetId, workspaceId)
       }
     }
     return { targets }
@@ -242,6 +281,56 @@ class SocialPostRemoveService extends BaseService {
       status: "published",
       targetId: target.id,
       workspaceId: target.workspaceId,
+    })
+  }
+
+  /**
+   * Starts one removal. A job still waiting or running for the target is
+   * joined (its result is the answer, so its error is left alone); otherwise
+   * the earlier error is cleared and a new job added. A job that cannot be
+   * added leaves a failure on the row instead of nothing, then rethrows.
+   */
+  private async start(
+    socialPostTargetId: string,
+    workspaceId: string,
+  ): Promise<void> {
+    // One request at a time per target: the look at the job, the clearing of
+    // the old error and the add must not interleave with another request's.
+    // A lock that cannot be taken propagates, with nothing cleared.
+    await distributedLock.runExclusive({
+      fn: async () => {
+        const jobId = postRemoveJobId(socialPostTargetId)
+        const existing = await postPublishQueue.getJob(jobId)
+        const state = existing ? await existing.getState() : "unknown"
+        if (OPEN_JOB_STATES.has(state)) {
+          return
+        }
+        // A finished job keeps its id and would swallow the new request. Only a
+        // confirmed completed or failed one is removed, never a running one.
+        if (existing && FINISHED_JOB_STATES.has(state)) {
+          await existing.remove()
+        }
+        await socialPostRemovalRepository.clearError({
+          id: socialPostTargetId,
+          workspaceId,
+        })
+        try {
+          await this.enqueue(socialPostTargetId, workspaceId)
+        } catch (err) {
+          await socialPostRemovalRepository.recordFailure({
+            error: {
+              category: "unknown",
+              code: SOCIAL_POST_REMOVAL_QUEUE_FAILED_CODE,
+              message: "The removal could not be queued. Try again.",
+            },
+            id: socialPostTargetId,
+            workspaceId,
+          })
+          throw err
+        }
+      },
+      key: `social-post-remove:${workspaceId}:${socialPostTargetId}`,
+      timeoutInSeconds: REMOVE_LOCK_TTL_SECONDS,
     })
   }
 

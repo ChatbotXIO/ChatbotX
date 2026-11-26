@@ -22,6 +22,7 @@ export const queueNames = z.enum([
   "template",
   "contactInfoCapture",
   "postPublish",
+  "channelPostExport",
 ])
 
 export type QueueName = z.infer<typeof queueNames>

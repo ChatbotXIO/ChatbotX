@@ -20,7 +20,7 @@
 `quota`, which have queues but no dedicated worker entry — their jobs are consumed by the
 workers above. Some queues get their own `Worker` (own concurrency) hosted inside an existing
 process: `profileSnapshot`, `leaderboard`, `contactInfoCapture` and `postPublish` (composed-post publishing) in `src/low/worker.ts`, and `template` (template
-install, sync, uninstall and fan-out) in `src/default/worker.ts`. Marketing Messages
+install, sync, uninstall and fan-out) and `channelPostExport` (the "read from channel" comment exports of posts, concurrency `CHANNEL_POST_EXPORT_WORKER_CONCURRENCY`) in `src/default/worker.ts`. Marketing Messages
 campaign steps have their own `marketingMessage` worker, while schedule crons enqueue them.
 Check `apps/worker/tsdown.config.ts` for the authoritative entry list.
 

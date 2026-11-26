@@ -9,26 +9,17 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@chatbotx.io/ui/components/ui/alert-dialog"
-import { Button, buttonVariants } from "@chatbotx.io/ui/components/ui/button"
+import { Button } from "@chatbotx.io/ui/components/ui/button"
 import { Skeleton } from "@chatbotx.io/ui/components/ui/skeleton"
 import { cn } from "@chatbotx.io/ui/lib/utils"
 import type { SocialPostBucket } from "@chatbotx.io/utils/social-post"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
-import {
-  CopyIcon,
-  ImageIcon,
-  Loader2Icon,
-  PencilIcon,
-  RefreshCwIcon,
-  Trash2Icon,
-  VideoIcon,
-} from "lucide-react"
+import { ImageIcon, Loader2Icon, VideoIcon } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useFormatter, useTranslations } from "next-intl"
 import { useState } from "react"
 import { toast } from "sonner"
-import { POST_GRID } from "@/features/channel-posts/components/post-row"
 import type { ComposedNarrowing } from "@/features/channel-posts/lib/posts-show"
 import { ProviderAvatar } from "@/features/social-accounts/components/provider-avatar"
 import { orpc } from "@/lib/orpc/query"
@@ -43,7 +34,19 @@ import {
 } from "../lib/composed-post-row"
 import type { ComposerPost } from "../lib/composer-state"
 import { invalidateSocialPost } from "../lib/invalidate-social-post"
+import { ComposedPostActions } from "./composed-post-actions"
 import { RetryReviewConfirmDialog } from "./retry-resolve-actions"
+
+/**
+ * Column widths of the composed posts table, shared by its header, rows and
+ * skeleton. The fixed columns total 27rem and the last one fits four 28 px
+ * action buttons; the post column takes the rest.
+ */
+export const COMPOSED_POST_GRID =
+  "grid grid-cols-1 items-center gap-3 md:grid-cols-[minmax(0,1fr)_8rem_9rem_10rem] md:gap-0"
+
+/** The narrowest the table gets before its section scrolls: the fixed columns plus 20rem for the post. */
+const COMPOSED_TABLE_MIN_WIDTH = "md:min-w-[47rem]"
 
 const BADGE_TONES = {
   draft: STATUS_TONES.draft,
@@ -153,7 +156,7 @@ const ComposedPostRow = ({
   return (
     <div
       className={cn(
-        POST_GRID,
+        COMPOSED_POST_GRID,
         "border-b px-5 py-4 transition-colors last:border-b-0 focus-within:bg-muted/40 hover:bg-muted/40",
       )}
     >
@@ -212,60 +215,23 @@ const ComposedPostRow = ({
             : statusLabel(badge)}
         </span>
       </div>
-      <div className="flex items-center gap-1 md:border-s md:ps-4">
-        <Link
-          aria-label={t("actions.edit")}
-          className={buttonVariants({ size: "icon", variant: "ghost" })}
-          href={editHref}
-          title={t("actions.edit")}
-        >
-          <PencilIcon />
-        </Link>
-        <Button
-          aria-label={t("actions.duplicate")}
-          disabled={busy || readOnly}
-          onClick={() => duplicate.mutate({ id: post.id, workspaceId })}
-          size="icon"
-          title={t("actions.duplicate")}
-          variant="ghost"
-        >
-          {duplicate.isPending ? (
-            <Loader2Icon className="animate-spin" />
-          ) : (
-            <CopyIcon />
-          )}
-        </Button>
-        {retryTargets.length > 0 ? (
-          <Button
-            aria-label={t("actions.retry")}
-            disabled={busy || readOnly}
-            onClick={() => {
-              if (retryNeedsConfirm) {
-                setConfirmRetry(true)
-              } else {
-                retryAll()
-              }
-            }}
-            size="icon"
-            title={t("actions.retry")}
-            variant="ghost"
-          >
-            <RefreshCwIcon />
-          </Button>
-        ) : null}
-        {canDelete ? (
-          <Button
-            aria-label={t("actions.delete")}
-            disabled={busy || readOnly}
-            onClick={() => setConfirmDelete(true)}
-            size="icon"
-            title={t("actions.delete")}
-            variant="ghost"
-          >
-            <Trash2Icon />
-          </Button>
-        ) : null}
-      </div>
+      <ComposedPostActions
+        busy={busy}
+        canDelete={canDelete}
+        canRetry={retryTargets.length > 0}
+        duplicating={duplicate.isPending}
+        editHref={editHref}
+        onDelete={() => setConfirmDelete(true)}
+        onDuplicate={() => duplicate.mutate({ id: post.id, workspaceId })}
+        onRetry={() => {
+          if (retryNeedsConfirm) {
+            setConfirmRetry(true)
+          } else {
+            retryAll()
+          }
+        }}
+        readOnly={readOnly}
+      />
       <RetryReviewConfirmDialog
         busy={busy}
         onConfirm={retryAll}
@@ -325,40 +291,42 @@ export const ComposedPostsTable = ({
 
   return (
     <div>
-      <div
-        className={cn(
-          POST_GRID,
-          "hidden border-b px-5 py-5 font-semibold text-sm md:grid",
-        )}
-      >
-        <span>{t("posts.columns.content")}</span>
-        <span className="border-s ps-4">{t("posts.columns.pages")}</span>
-        <span className="border-s ps-4">{t("posts.columns.status")}</span>
-        <span className="border-s ps-4">{t("actions.actions")}</span>
-      </div>
-      {posts.isLoading
-        ? Array.from({ length: SKELETON_ROWS }, (_, index) => (
-            <div
-              className={cn(POST_GRID, "border-b px-5 py-4")}
-              key={`skeleton-${index.toString()}`}
-            >
-              <div className="flex gap-3">
-                <Skeleton className="size-16 rounded-lg" />
-                <Skeleton className="h-4 w-64 max-w-full" />
+      <div className={COMPOSED_TABLE_MIN_WIDTH}>
+        <div
+          className={cn(
+            COMPOSED_POST_GRID,
+            "hidden border-b px-5 py-5 font-semibold text-sm md:grid",
+          )}
+        >
+          <span>{t("posts.columns.content")}</span>
+          <span className="border-s ps-4">{t("posts.columns.pages")}</span>
+          <span className="border-s ps-4">{t("posts.columns.status")}</span>
+          <span className="border-s ps-4">{t("actions.actions")}</span>
+        </div>
+        {posts.isLoading
+          ? Array.from({ length: SKELETON_ROWS }, (_, index) => (
+              <div
+                className={cn(COMPOSED_POST_GRID, "border-b px-5 py-4")}
+                key={`skeleton-${index.toString()}`}
+              >
+                <div className="flex gap-3">
+                  <Skeleton className="size-16 rounded-lg" />
+                  <Skeleton className="h-4 w-64 max-w-full" />
+                </div>
+                <Skeleton className="hidden h-8 w-20 md:block" />
+                <Skeleton className="hidden h-6 w-20 md:block" />
+                <Skeleton className="hidden size-8 md:block" />
               </div>
-              <Skeleton className="hidden h-8 w-20 md:block" />
-              <Skeleton className="hidden h-6 w-20 md:block" />
-              <Skeleton className="hidden size-8 md:block" />
-            </div>
-          ))
-        : posts.posts.map((post) => (
-            <ComposedPostRow
-              key={post.id}
-              post={post}
-              readOnly={readOnly}
-              workspaceId={workspaceId}
-            />
-          ))}
+            ))
+          : posts.posts.map((post) => (
+              <ComposedPostRow
+                key={post.id}
+                post={post}
+                readOnly={readOnly}
+                workspaceId={workspaceId}
+              />
+            ))}
+      </div>
       {posts.isError ? (
         <div className="flex items-center justify-center gap-2 p-6 text-destructive text-sm">
           {t("posts.calendar.loadError")}

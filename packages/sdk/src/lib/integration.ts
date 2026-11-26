@@ -16,6 +16,7 @@ import type {
   BulkThreadControlLimits,
   BulkThreadControlResult,
   ChannelLiveBroadcast,
+  ChannelPostCommentPage,
   ChannelPostDetails,
   ChannelPostListItem,
   ChannelPostListPage,
@@ -587,6 +588,19 @@ export type PostHandlers<IAuth extends AuthValue> = {
   getLiveState?: Handler<
     { ctx: Context<IAuth>; data: { postId: string } },
     ChannelPostLiveState
+  >
+  /**
+   * One page of every comment and reply on a post, behind an opaque cursor
+   * (omit it for the first page). A channel returns a complete traversal: the
+   * caller pages until `nextCursor` is `null`. Errors are thrown, never
+   * swallowed, so the caller can tell a rate limit from a missing permission;
+   * a cursor the channel did not issue throws a `PAYLOAD_INVALID`
+   * `ChannelError`. A channel whose API cannot read a post's comments does not
+   * implement it.
+   */
+  listComments?: Handler<
+    { ctx: Context<IAuth>; data: { postId: string; cursor?: string } },
+    ChannelPostCommentPage
   >
 }
 

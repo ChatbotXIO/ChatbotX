@@ -11,7 +11,6 @@ import {
 import { cn } from "@chatbotx.io/ui/lib/utils"
 import {
   CopyIcon,
-  DownloadIcon,
   ExternalLinkIcon,
   EyeOffIcon,
   ImageIcon,
@@ -22,24 +21,33 @@ import {
   RefreshCwIcon,
   Share2Icon,
   SmileIcon,
-  UserIcon,
 } from "lucide-react"
 import { useFormatter, useTranslations } from "next-intl"
 import type { z } from "zod"
 import { useClipboard } from "@/hooks/use-clipboard"
+import type { useChannelCommentExport } from "../hooks/use-channel-comment-export"
 import { useDownloadPostsExport } from "../hooks/use-download-posts-export"
 import { useManagedPostActions } from "../hooks/use-managed-post-actions"
 import { capabilityOfChannel } from "../lib/post-capability"
-import { CONTENT_TYPE_TILES } from "../lib/post-type-style"
+import { resolvePostTile } from "../lib/post-type-style"
 import type { channelPostManagementItem } from "../schema/management"
-import { PostAuthorValue } from "./post-author-label"
+import { PostAuthorCell } from "./post-author-label"
+import { PostDownloadItems } from "./post-download-items"
 import { PostTopicBadges, PostTopicPicker } from "./post-topic-picker"
 
 export type ManagedPost = z.infer<typeof channelPostManagementItem>
 
-/** Column widths shared by the header and every row. */
+/**
+ * Column widths of the channel posts table, shared by its header, rows and
+ * skeleton. The fixed columns total 27.5rem (the author column's 10rem is its
+ * minimum), so the post column never collapses; the author column and the post
+ * column share what is left.
+ */
 export const POST_GRID =
-  "grid grid-cols-1 items-center gap-3 md:grid-cols-[minmax(0,1fr)_11rem_10rem_6.5rem] md:gap-0"
+  "grid grid-cols-1 items-center gap-3 md:grid-cols-[minmax(0,2fr)_11rem_minmax(10rem,1fr)_6.5rem] md:gap-0"
+
+/** The narrowest the table gets before its section scrolls: the fixed columns plus 20rem for the post. */
+export const POST_TABLE_MIN_WIDTH = "md:min-w-[47.5rem]"
 
 const MAX_VISIBLE_TOPICS = 2
 
@@ -76,6 +84,7 @@ const Counter = ({
 
 export const PostRow = ({
   canViewPhones,
+  channelExport,
   onOpenComments,
   onOpenDetail,
   post,
@@ -83,6 +92,7 @@ export const PostRow = ({
   workspaceId,
 }: {
   canViewPhones: boolean
+  channelExport: ReturnType<typeof useChannelCommentExport>
   onOpenComments: (post: ManagedPost) => void
   onOpenDetail: (post: ManagedPost) => void
   post: ManagedPost
@@ -93,15 +103,10 @@ export const PostRow = ({
   const format = useFormatter()
   const { handleCopy } = useClipboard()
   const actions = useManagedPostActions(workspaceId)
-  const { download, isDownloading } = useDownloadPostsExport(workspaceId)
+  const storedExport = useDownloadPostsExport(workspaceId)
   const capability = capabilityOfChannel(post.channel)
   const settingsEnabled = capability?.commentSettings === true && !readOnly
-  // A download spends a message, so an expired workspace is refused by the server.
-  const exportDisabled = isDownloading || readOnly
-  const exportTitle = readOnly ? t("posts.export.blocked") : undefined
-  const tile = post.contentType
-    ? CONTENT_TYPE_TILES[post.contentType]
-    : undefined
+  const display = resolvePostTile(post)
   const title = post.caption || t("posts.noCaption")
 
   return (
@@ -133,19 +138,15 @@ export const PostRow = ({
               <ImageIcon className="size-6" />
             </span>
           )}
-          {tile ? (
+          {display ? (
             <span
               className={cn(
                 "absolute -end-1 -bottom-1 flex size-6 items-center justify-center rounded-md text-white ring-2 ring-card",
-                tile.tone,
+                display.tile.tone,
               )}
-              title={
-                post.contentType
-                  ? t(`posts.contentType.${post.contentType}`)
-                  : undefined
-              }
+              title={t(`posts.${display.labelKey}`)}
             >
-              <tile.icon className="size-3.5" />
+              <display.tile.icon className="size-3.5" />
             </span>
           ) : null}
         </button>
@@ -221,14 +222,8 @@ export const PostRow = ({
         />
       </div>
 
-      <div className="flex min-w-0 items-center gap-2 px-0 text-sm md:px-4">
-        <span
-          aria-hidden="true"
-          className="flex size-8 shrink-0 items-center justify-center rounded-full bg-muted text-muted-foreground"
-        >
-          <UserIcon className="size-4" />
-        </span>
-        <PostAuthorValue post={post} />
+      <div className="min-w-0 px-0 md:px-4">
+        <PostAuthorCell post={post} />
       </div>
 
       <div className="flex items-center justify-end gap-1 md:px-2">
@@ -294,24 +289,13 @@ export const PostRow = ({
               {t("posts.actions.refreshPost")}
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            {canViewPhones ? (
-              <DropdownMenuItem
-                disabled={exportDisabled}
-                onClick={() => download("phones", [post.id])}
-                title={exportTitle}
-              >
-                <DownloadIcon />
-                {t("posts.actions.downloadPhones")}
-              </DropdownMenuItem>
-            ) : null}
-            <DropdownMenuItem
-              disabled={exportDisabled}
-              onClick={() => download("comments", [post.id])}
-              title={exportTitle}
-            >
-              <DownloadIcon />
-              {t("posts.actions.downloadComments")}
-            </DropdownMenuItem>
+            <PostDownloadItems
+              canViewContactData={canViewPhones}
+              channelExport={channelExport}
+              post={post}
+              readOnly={readOnly}
+              storedExport={storedExport}
+            />
           </DropdownMenuContent>
         </DropdownMenu>
       </div>

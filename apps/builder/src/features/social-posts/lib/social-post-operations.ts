@@ -654,6 +654,24 @@ export const socialPostOperations = {
     return { deleted: true, removal: null }
   },
 
+  /**
+   * Takes one published destination down from its network (the other
+   * destinations are left alone). Same rules and answer as `delete` with
+   * `removeFromChannels`, narrowed to one target.
+   */
+  removeTarget: async (
+    workspace: SocialPostWorkspace,
+    input: TargetInput,
+  ): Promise<DeleteResult> => {
+    await assertWorkspaceNotBlocked(workspace.ownerId)
+    const removal = await socialPostRemoveService.request({
+      id: input.id,
+      targetIds: [input.targetId],
+      workspaceId: workspace.id,
+    })
+    return { deleted: false, removal }
+  },
+
   duplicate: async (
     workspace: SocialPostWorkspace,
     author: SocialPostAuthor,

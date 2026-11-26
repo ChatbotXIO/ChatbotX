@@ -13,14 +13,12 @@ import {
   type MessageTemplateEntity,
 } from "@chatbotx.io/sdk"
 import { z } from "zod"
-import { logger } from "../../../lib/logger"
-import { isRetryable } from "../shared/http-retry"
+import { withInlineRetry } from "../shared/http-retry"
 import type { HistoricalMessage } from "./bulk-historical-import"
 
-// Re-exported so existing coexist importers keep resolving `isRetryable` from
-// here after it moved to the channel-neutral `../shared/http-retry` (the
-// `import` above is for this file's own `withInlineRetry`).
-export { isRetryable } from "../shared/http-retry"
+// `withInlineRetry` moved to the channel-neutral `../shared/http-retry`; it is
+// re-exported so the coexist importers keep resolving it from here.
+export { withInlineRetry } from "../shared/http-retry"
 
 /**
  * `IntegrationMessenger.auth` jsonb shape shared by the coexist historical
@@ -150,9 +148,6 @@ const parseApiDate = (value: string | undefined): Date | undefined => {
   }
 }
 
-/** Maximum inline retry attempts on 429 / 5xx before propagating. */
-export const MAX_INLINE_RETRIES = 4
-
 /**
  * Only store messages whose `created_time` is within this window. Older
  * messages are still scanned for phone/email discovery but not persisted.
@@ -166,32 +161,6 @@ export const STORE_WINDOW_MS = 90 * 24 * 60 * 60 * 1000
  * a conversation never contains extractable contact info.
  */
 export const MAX_DISCOVERY_PAGES = 10
-
-/**
- * Wraps a Graph API call with inline retry on 429 / 5xx. Preserves the
- * pagination cursor across retries — unlike a BullMQ-level retry which would
- * restart the entire job from scratch.
- */
-export async function withInlineRetry<T>(fn: () => Promise<T>): Promise<T> {
-  let lastError: unknown
-  for (let attempt = 0; attempt < MAX_INLINE_RETRIES; attempt++) {
-    try {
-      return await fn()
-    } catch (error) {
-      lastError = error
-      if (!isRetryable(error)) {
-        throw error
-      }
-      const delay = Math.min(2 ** attempt * 1000, 30_000)
-      logger.warn(
-        { attempt, delay },
-        "[coexist] Messenger Graph rate-limited — retrying after delay",
-      )
-      await new Promise<void>((resolve) => setTimeout(resolve, delay))
-    }
-  }
-  throw lastError
-}
 
 const WHITESPACE_RE = /\s+/
 

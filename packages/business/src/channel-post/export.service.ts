@@ -4,7 +4,6 @@ import type {
   ChannelPostManagementFilters,
 } from "@chatbotx.io/database/repositories"
 import { type CsvCell, toCsvRow } from "@chatbotx.io/utils/csv"
-import { findPhoneNumber } from "@chatbotx.io/utils/has-phone-number"
 import { BaseService } from "../base.service"
 import { ChatbotXException, validationException } from "../errors"
 import { messageUsageService } from "../message-usage/service"
@@ -13,8 +12,20 @@ import {
   MAX_COMMENTS_PAGE_SIZE,
   MAX_MERGE_VIEW_POSTS,
   type PostCommentCursor,
-  type PostCommentItem,
 } from "./comments.service"
+import {
+  CHANNEL_POST_EXPORT_KINDS,
+  type ChannelPostCommentExportKind,
+  type ChannelPostExportKind,
+  forbiddenException,
+  mayExportKind,
+  ROWS_HEADER,
+} from "./export-kinds"
+import {
+  type ExportRow,
+  keepEarliestRow,
+  STORED_ROW_BUILDERS,
+} from "./export-rows"
 import {
   type ChannelPostManagementItem,
   channelPostManagementService,
@@ -35,13 +46,6 @@ const EXPORT_POST_PAGE_SIZE = 100
 /** Longest excerpt of a post's text in a `rows` export. */
 const POST_TEXT_EXCERPT_LENGTH = 200
 
-/**
- * `comments` and `phones` read the comments of the given posts; `rows` writes
- * the post list itself (one row per post) for a set of list filters.
- */
-export const channelPostExportKinds = ["comments", "phones", "rows"] as const
-export type ChannelPostExportKind = (typeof channelPostExportKinds)[number]
-
 export type ChannelPostExport = {
   csv: string
   fileName: string
@@ -52,46 +56,20 @@ export type ChannelPostExport = {
 }
 
 type BuildExportInput = {
-  /** May the caller see phone numbers? The `phones` export is refused without it. */
+  /** May the caller see phone numbers and emails? `phones` and `emails` are refused without it. */
   canViewEmailAndPhone: boolean
   /** Narrows the `rows` export like the list does; `hasComments` defaults to the list's `true`. */
   filters?: Omit<ChannelPostManagementFilters, "hasComments"> & {
     hasComments?: boolean
   }
   kind: ChannelPostExportKind
-  /** Required for `comments` and `phones`; a `rows` export selects posts by `filters` instead. */
+  /** Required for the comment kinds; a `rows` export selects posts by `filters` instead. */
   postIds?: string[]
   search?: string
   /** Order of a `rows` export, as in the list (default `newest`). */
   sort?: ChannelPostManagementSort
   workspaceId: string
 }
-
-const COMMENTS_HEADER = [
-  "createdAt",
-  "post",
-  "customer",
-  "phone",
-  "text",
-  "hidden",
-] as const
-const PHONES_HEADER = ["customer", "phone", "firstCommentAt", "post"] as const
-
-const ROWS_HEADER = [
-  "publishedAt",
-  "channel",
-  "page",
-  "type",
-  "text",
-  "comments",
-  "reactions",
-  "shares",
-  "phones",
-  "topics",
-  "author",
-  "link",
-  "externalPostId",
-] as const
 
 const WHITESPACE_RUN = /\s+/g
 
@@ -118,13 +96,6 @@ const postRow = (post: ChannelPostManagementItem): CsvCell[] => [
   post.externalPostId,
 ]
 
-const customerLabel = (comment: PostCommentItem): string =>
-  comment.author?.name ?? comment.author?.id ?? ""
-
-/** A comment's contact phone, else the number the customer wrote in the comment. */
-const phoneOf = (comment: PostCommentItem): string =>
-  comment.author?.phoneNumber ?? findPhoneNumber(comment.text ?? "") ?? ""
-
 class ChannelPostExportService extends BaseService {
   /**
    * The comments of the given posts as a CSV: every comment (`comments`), or one
@@ -148,10 +119,11 @@ class ChannelPostExportService extends BaseService {
     /** The clock the time budget is measured on; tests pass a fake one. */
     now: () => number = Date.now,
   ): Promise<ChannelPostExport> {
-    const { canViewEmailAndPhone, kind, search, workspaceId } = input
-    if (kind === "rows") {
+    const { canViewEmailAndPhone, search, workspaceId } = input
+    if (input.kind === "rows") {
       return await this.buildRows(input, now)
     }
+    const kind: ChannelPostCommentExportKind = input.kind
     if (input.filters) {
       throw validationException(
         "filters",
@@ -165,13 +137,9 @@ class ChannelPostExportService extends BaseService {
         `Export between 1 and ${MAX_MERGE_VIEW_POSTS} posts.`,
       )
     }
-    if (kind === "phones" && !canViewEmailAndPhone) {
-      // Never a partial file: without the permission there is no phone to list.
-      throw new ChatbotXException(
-        "Phone numbers are not available to this caller.",
-        "FORBIDDEN",
-        403,
-      )
+    if (!mayExportKind(kind, canViewEmailAndPhone)) {
+      // Never a partial file: without the permission there is nothing to list.
+      throw forbiddenException()
     }
 
     await messageUsageService.assertRoom(workspaceId)
@@ -180,6 +148,7 @@ class ChannelPostExportService extends BaseService {
     const reader = await channelPostCommentsService.openReader({
       canViewEmailAndPhone,
       hasPhone: kind === "phones" ? true : undefined,
+      includeAvatars: false,
       postIds,
       search,
       workspaceId,
@@ -193,7 +162,8 @@ class ChannelPostExportService extends BaseService {
     await reader.preloadCommenters()
 
     const rows: CsvCell[][] = []
-    const phoneRows = new Map<string, CsvCell[]>()
+    const keyedRows = new Map<string, ExportRow>()
+    const buildRow = STORED_ROW_BUILDERS[kind]
     let scanned = 0
     let truncated = false
     let cursor: PostCommentCursor | undefined
@@ -209,25 +179,21 @@ class ChannelPostExportService extends BaseService {
           break
         }
         scanned += 1
-        const label = postLabel.get(comment.postId) ?? comment.postId
-        if (kind === "comments") {
-          rows.push([
-            comment.createdAt.toISOString(),
-            label,
-            customerLabel(comment),
-            comment.author?.phoneNumber ?? "",
-            comment.text,
-            comment.hidden ? "true" : "false",
-          ])
+        const entry = buildRow(comment, {
+          contactEmail: comment.author
+            ? reader.commenterEmail(comment.author.id)
+            : null,
+          postLabel: postLabel.get(comment.postId) ?? comment.postId,
+        })
+        if (entry === null) {
+          continue
+        }
+        if (entry.key === null) {
+          rows.push(entry.row)
         } else {
-          // Newest first: a later (older) comment of the same customer
-          // overwrites, so the row ends up holding their first comment.
-          phoneRows.set(comment.author?.id ?? comment.id, [
-            customerLabel(comment),
-            phoneOf(comment),
-            comment.createdAt.toISOString(),
-            label,
-          ])
+          // Newest first: a later (older) comment of the same key replaces the
+          // row, so it ends up holding the key's first comment.
+          keepEarliestRow(keyedRows, { ...entry, key: entry.key })
         }
       }
       if (page.hasPartialResults) {
@@ -250,8 +216,11 @@ class ChannelPostExportService extends BaseService {
       }
     } while (cursor)
 
-    const dataRows = kind === "comments" ? rows : Array.from(phoneRows.values())
-    const header = kind === "comments" ? COMMENTS_HEADER : PHONES_HEADER
+    const dataRows =
+      kind === "comments"
+        ? rows
+        : Array.from(keyedRows.values(), (entry) => entry.row)
+    const header = CHANNEL_POST_EXPORT_KINDS[kind].header
     const result: ChannelPostExport = {
       csv: [header, ...dataRows].map((row) => toCsvRow(row)).join(""),
       fileName: `post-${kind}-${new Date().toISOString().slice(0, 10)}.csv`,

@@ -12603,7 +12603,9 @@
       "menu": "Export",
       "rowsTitle": "Export the list of posts (one row per post)",
       "rowsDone": "Exported the list of posts.",
-      "rowsTruncated": "The list was cut short at the post limit. Narrow the filters to export the rest."
+      "rowsTruncated": "The list was cut short at the post limit. Narrow the filters to export the rest.",
+      "sourceStored": "Stored data",
+      "sourceChannel": "Read from channel"
     },
     "showAllPosts": "Show posts without comments too",
     "noCaption": "No caption",
@@ -12700,7 +12702,9 @@
       "refreshCooldown": "This post was just refreshed. Try again in a minute.",
       "downloadPhones": "Download phone numbers",
       "downloadComments": "Download comments",
-      "viewDetails": "View details"
+      "viewDetails": "View details",
+      "download": "Download",
+      "downloadEmails": "Download emails"
     },
     "merge": {
       "title": "Merge posts",
@@ -13286,6 +13290,24 @@
           "removed": "Removed from the channel."
         }
       }
+    },
+    "channelExport": {
+      "started": "Reading comments from the channel. This can take a while.",
+      "progress": "Reading from the channel… {count} rows so far.",
+      "progressEstimate": "Reading from the channel… {count} rows so far (about {expected} comments in total).",
+      "ready": "The file is ready.",
+      "download": "Download",
+      "truncated": "The export stopped at a safety limit, so the file is incomplete. Export fewer posts to get the rest.",
+      "forbidden": "You do not have permission to download phone numbers and emails.",
+      "startFailed": "Could not start the export. Try again.",
+      "inProgress": "The export is starting, try again in a moment.",
+      "failure": {
+        "channelDisconnected": "The channel is disconnected. Reconnect it and try again.",
+        "postNotFound": "A post no longer exists on the channel.",
+        "notSupported": "The comments of this channel cannot be read from the channel.",
+        "rateLimited": "The channel asked to slow down. Try again in a few minutes.",
+        "failed": "The export failed. Try again."
+      }
     }
   },
   "socialAccounts": {
@@ -13450,7 +13472,12 @@
     "repeatScheduleOff": "Scheduling and publishing apply to each copy, not to the template.",
     "moveMediaEarlier": "Move earlier",
     "moveMediaLater": "Move later",
-    "removeFromChannels": "Remove from channels",
+    "removeFromAllChannels": "Remove from all channels",
+    "removeTarget": "Remove",
+    "removeTargetTitle": "Remove this post from {destination}?",
+    "removeTargetDescription": "The published post is taken down from {destination} on {network}. The other destinations keep it. This cannot be undone.",
+    "removeTargetConfirm": "Remove",
+    "removing": "Removing…",
     "removeFromChannelsTitle": "Remove this post from the networks?",
     "removeFromChannelsDescription": "The published post is taken down from every network that supports it. Networks without a delete function keep it. This cannot be undone.",
     "removeFromChannelsConfirm": "Remove",
@@ -13459,6 +13486,7 @@
     "removeUnsupported": "{count, plural, one {# destination cannot be removed through the network's API; remove it in the app.} other {# destinations cannot be removed through the networks' API; remove them in the apps.}}",
     "removedFromChannel": "Removed from the network",
     "removalPermissionMissing": "Reconnect this account to allow deleting posts.",
+    "removalQueueFailed": "The removal could not be queued. Try again.",
     "postMessageQuotaExceeded": "The message quota of this account is used up, so this post was not published. Upgrade the plan or wait for the next billing period, then retry.",
     "tiktokLoading": "Loading TikTok account settings…",
     "tiktokUnavailable": "TikTok account settings could not be loaded. Try again.",

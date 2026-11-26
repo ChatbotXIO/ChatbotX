@@ -153,6 +153,28 @@ export const socialPostRemovalRepository = {
     return row
   },
 
+  /**
+   * Clears the error a failed removal left, when a new removal is asked for, so
+   * an error on the row always belongs to the latest attempt (a page that
+   * waits for the attempt can tell it ended even when the reason repeats).
+   */
+  async clearError(
+    input: { id: string; workspaceId: string },
+    tx: DatabaseClient = db,
+  ): Promise<void> {
+    await tx
+      .update(socialPostTargetModel)
+      .set({ errorCategory: null, errorCode: null, errorMessage: null })
+      .where(
+        and(
+          eq(socialPostTargetModel.id, input.id),
+          eq(socialPostTargetModel.workspaceId, input.workspaceId),
+          eq(socialPostTargetModel.status, "published"),
+          sql`${socialPostTargetModel.removedAt} IS NULL`,
+        ),
+      )
+  },
+
   /** The network refused; the target stays published with the reason recorded. */
   async recordFailure(
     input: { error: SocialTargetError; id: string; workspaceId: string },

@@ -227,7 +227,15 @@ describe("postCommentRepository.findCommenters", () => {
 
   test("two queries for the whole page, scoped to the workspace", async () => {
     const { select, tx, wheres } = build(
-      [{ avatar: null, id: "k1", name: "An", phoneNumber: "0901234567" }],
+      [
+        {
+          avatar: null,
+          email: "an@x.io",
+          id: "k1",
+          name: "An",
+          phoneNumber: "0901234567",
+        },
+      ],
       [{ contactId: "k1", id: "t1", name: "VIP" }],
     )
 
@@ -250,6 +258,7 @@ describe("postCommentRepository.findCommenters", () => {
     expect(commenters).toEqual([
       {
         avatar: null,
+        email: "an@x.io",
         id: "k1",
         name: "An",
         phoneNumber: "0901234567",

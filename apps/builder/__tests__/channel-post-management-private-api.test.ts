@@ -15,10 +15,12 @@ const { captured, authorizedGate, operations, permissionGate } = vi.hoisted(
     const authorizedGate = { kind: "authorized" }
     const permissionGate = (key: string) => ({ kind: "permission", key })
     const operations = {
+      getCommentExport: vi.fn(),
       listComments: vi.fn(),
       mergeComments: vi.fn(),
       refreshMetrics: vi.fn(),
       refreshNow: vi.fn(),
+      startCommentExport: vi.fn(),
     }
     return { authorizedGate, captured, operations, permissionGate }
   },
@@ -30,7 +32,9 @@ vi.mock("@chatbotx.io/business", () => ({
   MAX_EXPORT_ROWS: 20_000,
   MAX_MERGE_VIEW_POSTS: 20,
   MAX_TOPICS_PER_POST: 20,
-  channelPostExportKinds: ["comments", "phones", "rows"],
+  POST_COMMENT_SENDERS: ["contact", "page"],
+  channelPostCommentExportKinds: ["comments", "phones", "emails"],
+  channelPostExportKinds: ["comments", "phones", "emails", "rows"],
 }))
 vi.mock("@/features/contacts/permissions", () => ({
   canViewContactEmailAndPhone: (permissions: {
@@ -80,14 +84,14 @@ const { channelPostManagementAPIs } = await import(
 )
 
 describe("the Posts page's private procedures", () => {
-  test("there are the 13 procedures the page and the comments window call", () => {
-    expect(Object.keys(channelPostManagementAPIs)).toHaveLength(13)
+  test("there are the 15 procedures the page and the comments window call", () => {
+    expect(Object.keys(channelPostManagementAPIs)).toHaveLength(15)
   })
 
   test("every one is gated by the workspace check and then the broadcast permission", () => {
     const procedures = captured.filter((procedure) => procedure.use.length > 0)
 
-    expect(procedures).toHaveLength(13)
+    expect(procedures).toHaveLength(15)
     for (const procedure of procedures) {
       expect(procedure.use).toHaveLength(2)
       expect(procedure.use[0].middleware).toBe(authorizedGate)
@@ -161,5 +165,62 @@ describe("the refresh procedures", () => {
       "3",
     ])
     expect(result).toEqual({ fresh: 1, queued: 2, skipped: 0 })
+  })
+})
+
+describe("the comment export procedures", () => {
+  const find = (suffix: string) =>
+    captured.find((candidate) => candidate.path.endsWith(suffix))
+
+  const context = (permissions: object) => ({
+    user: { id: "user-1" },
+    workspace: { ownerId: "owner-1" },
+    workspaceMember: { permissions },
+  })
+
+  test.each([
+    [
+      "a member with the email-and-phone permission",
+      { emailAndPhone: true },
+      true,
+    ],
+    ["a super admin", { superAdmin: true }, true],
+    ["a member without it", { broadcast: true }, false],
+  ] as const)("starting for %s passes the permission, the owner and the member", async (_label, permissions, canViewEmailAndPhone) => {
+    operations.startCommentExport.mockResolvedValue({
+      fileId: "9",
+      status: "pending",
+    })
+    const input = { kind: "emails", postIds: ["1"], workspaceId: "ws-1" }
+
+    const result = await find("/management/exports")?.handler?.({
+      context: context(permissions),
+      input,
+    })
+
+    expect(operations.startCommentExport).toHaveBeenLastCalledWith(
+      {
+        canViewEmailAndPhone,
+        ownerId: "owner-1",
+        userId: "user-1",
+        workspaceId: "ws-1",
+      },
+      input,
+    )
+    expect(result).toEqual({ fileId: "9", status: "pending" })
+  })
+
+  test("the status is read in the member's workspace with the member's permission", async () => {
+    operations.getCommentExport.mockResolvedValue({ status: "pending" })
+
+    await find("/management/exports/{fileId}")?.handler?.({
+      context: context({ broadcast: true }),
+      input: { fileId: "9", workspaceId: "ws-1" },
+    })
+
+    expect(operations.getCommentExport).toHaveBeenCalledWith(
+      { canViewEmailAndPhone: false, workspaceId: "ws-1" },
+      "9",
+    )
   })
 })

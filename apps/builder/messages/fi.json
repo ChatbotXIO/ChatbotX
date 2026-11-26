@@ -12603,7 +12603,9 @@
       "menu": "Vie",
       "rowsTitle": "Vie julkaisujen luettelo (yksi rivi julkaisua kohti)",
       "rowsDone": "Julkaisuluettelo vietiin.",
-      "rowsTruncated": "Luettelo katkaistiin julkaisurajaan. Rajaa suodattimia viedäksesi loput."
+      "rowsTruncated": "Luettelo katkaistiin julkaisurajaan. Rajaa suodattimia viedäksesi loput.",
+      "sourceStored": "Tallennetut tiedot",
+      "sourceChannel": "Lue kanavalta"
     },
     "showAllPosts": "Näytä myös julkaisut ilman kommentteja",
     "noCaption": "Ei tekstiä",
@@ -12700,7 +12702,9 @@
       "refreshCooldown": "Tämä julkaisu päivitettiin juuri. Yritä uudelleen minuutin kuluttua.",
       "downloadPhones": "Lataa puhelinnumerot",
       "downloadComments": "Lataa kommentit",
-      "viewDetails": "Näytä tiedot"
+      "viewDetails": "Näytä tiedot",
+      "download": "Lataa",
+      "downloadEmails": "Lataa sähköpostiosoitteet"
     },
     "merge": {
       "title": "Yhdistä julkaisut",
@@ -13286,6 +13290,24 @@
           "removed": "Poistettu kanavalta."
         }
       }
+    },
+    "channelExport": {
+      "started": "Luetaan kommentteja kanavalta. Tämä voi kestää hetken.",
+      "progress": "Luetaan kanavalta… {count} riviä toistaiseksi.",
+      "progressEstimate": "Luetaan kanavalta… {count} riviä toistaiseksi (yhteensä noin {expected} kommenttia).",
+      "ready": "Tiedosto on valmis.",
+      "download": "Lataa",
+      "truncated": "Vienti pysähtyi turvarajaan, joten tiedosto on keskeneräinen. Vie vähemmän julkaisuja saadaksesi loput.",
+      "forbidden": "Sinulla ei ole oikeutta ladata puhelinnumeroita ja sähköpostiosoitteita.",
+      "startFailed": "Vientiä ei voitu aloittaa. Yritä uudelleen.",
+      "inProgress": "Vienti on käynnistymässä, yritä hetken kuluttua uudelleen.",
+      "failure": {
+        "channelDisconnected": "Kanavan yhteys on katkaistu. Yhdistä se uudelleen ja yritä uudelleen.",
+        "postNotFound": "Julkaisua ei enää ole kanavalla.",
+        "notSupported": "Tämän kanavan kommentteja ei voi lukea kanavalta.",
+        "rateLimited": "Kanava pyysi hidastamaan. Yritä uudelleen muutaman minuutin kuluttua.",
+        "failed": "Vienti epäonnistui. Yritä uudelleen."
+      }
     }
   },
   "socialAccounts": {
@@ -13433,7 +13455,12 @@
     "repeatScheduleOff": "Ajastus ja julkaisu koskevat jokaista kopiota, ei mallia.",
     "moveMediaEarlier": "Siirrä aiemmaksi",
     "moveMediaLater": "Siirrä myöhemmäksi",
-    "removeFromChannels": "Poista kanavista",
+    "removeFromAllChannels": "Poista kaikista kanavista",
+    "removeTarget": "Poista",
+    "removeTargetTitle": "Poistetaanko tämä julkaisu kohteesta {destination}?",
+    "removeTargetDescription": "Julkaistu viesti poistetaan kohteesta {destination} verkossa {network}. Muut kohteet säilyttävät sen. Tätä ei voi perua.",
+    "removeTargetConfirm": "Poista",
+    "removing": "Poistetaan…",
     "removeFromChannelsTitle": "Poistetaanko tämä julkaisu verkoista?",
     "removeFromChannelsDescription": "Julkaistu julkaisu poistetaan kaikista verkoista, jotka tukevat sitä. Verkot ilman poistotoimintoa säilyttävät sen. Tätä ei voi perua.",
     "removeFromChannelsConfirm": "Poista",
@@ -13442,6 +13469,7 @@
     "removeUnsupported": "{count, plural, one {# kohdetta ei voi poistaa verkon rajapinnan kautta; poista se sovelluksessa.} other {# kohdetta ei voi poistaa verkkojen rajapinnan kautta; poista ne sovelluksissa.}}",
     "removedFromChannel": "Poistettu verkosta",
     "removalPermissionMissing": "Yhdistä tili uudelleen, jotta julkaisujen poisto sallitaan.",
+    "removalQueueFailed": "Poistoa ei voitu lisätä jonoon. Yritä uudelleen.",
     "postMessageQuotaExceeded": "Tilin viestikiintiö on käytetty loppuun, joten tätä julkaisua ei julkaistu. Päivitä tilaus tai odota seuraavaa laskutuskautta ja yritä uudelleen.",
     "tiktokLoading": "Ladataan TikTok-tilin asetuksia…",
     "tiktokUnavailable": "TikTok-tilin asetuksia ei voitu ladata. Yritä uudelleen.",

@@ -165,13 +165,23 @@ export const readLiveBroadcast = (props: {
   })
 }
 
-/** Newest broadcasts a state re-read looks through. */
-const LIVE_STATE_LOOKBACK = 25
+/** Broadcasts one page of a state re-read asks for. */
+const LIVE_STATE_PAGE_SIZE = 25
+/** Pages a state re-read walks at most, so one post never costs unbounded calls. */
+export const LIVE_STATE_MAX_PAGES = 8
+
+type LiveVideosPage = {
+  data: FacebookLiveVideo[]
+  paging?: { cursors?: { after?: string }; next?: string }
+}
 
 /**
- * Whether a post's broadcast is on, from the Page's newest broadcasts. A
- * broadcast that is not among them, or whose read does not describe a broadcast,
- * is `unknown` (never `ended`): the listing is not an authoritative absence.
+ * Whether a post's broadcast is on, from the Page's broadcasts, newest first
+ * as far as that order is known, followed page by page up to
+ * `LIVE_STATE_MAX_PAGES`. A broadcast that is not found (the listing ended,
+ * the page cap was reached, or the cursor is missing or repeats) is `unknown`,
+ * never `ended`: a listing is not an authoritative absence. A failed read
+ * propagates, so the caller logs it and writes nothing.
  */
 export const getLiveState = (props: {
   auth: MessengerAuthValue
@@ -180,20 +190,33 @@ export const getLiveState = (props: {
   const { auth, postId } = props
   const endpoint = `${auth.version ?? DEFAULT_API_VERSION}/${auth.metadata.pageId}/live_videos`
   return rescue(endpoint, async () => {
-    const page = await facebookGraphClient.get<{ data: FacebookLiveVideo[] }>(
-      endpoint,
-      {
+    const seenCursors = new Set<string>()
+    let after: string | undefined
+    for (let page = 0; page < LIVE_STATE_MAX_PAGES; page++) {
+      const result = await facebookGraphClient.get<LiveVideosPage>(endpoint, {
         headers: { Authorization: `Bearer ${auth.tokens.accessToken}` },
         searchParams: {
+          ...(after ? { after } : {}),
           broadcast_status: LIVE_BROADCAST_STATUS_FILTER,
           fields: LIVE_VIDEO_FIELDS,
-          limit: String(LIVE_STATE_LOOKBACK),
+          limit: String(LIVE_STATE_PAGE_SIZE),
         },
-      },
-    )
-    const match = page.data
-      .map(toLiveVideoPost)
-      .find((post) => post?.externalPostId === postId)
-    return match?.liveStatus ?? "unknown"
+      })
+      const match = result.data
+        .map(toLiveVideoPost)
+        .find((post) => post?.externalPostId === postId)
+      if (match) {
+        return match.liveStatus
+      }
+      const next = result.paging?.next
+        ? result.paging.cursors?.after
+        : undefined
+      if (!next || seenCursors.has(next)) {
+        return "unknown"
+      }
+      seenCursors.add(next)
+      after = next
+    }
+    return "unknown"
   })
 }

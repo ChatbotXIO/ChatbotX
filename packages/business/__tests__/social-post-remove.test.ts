@@ -4,9 +4,12 @@ const mocks = vi.hoisted(() => ({
   emit: vi.fn(),
   enqueue: vi.fn(),
   findForRemoval: vi.fn(),
+  runExclusive: vi.fn(),
+  getJob: vi.fn(),
   findForWorkspace: vi.fn(),
   loadCredentials: vi.fn(),
   listForPost: vi.fn(),
+  clearError: vi.fn(),
   markChannelPostRemoved: vi.fn(),
   recordAuth: vi.fn(),
   markRemoved: vi.fn(),
@@ -18,6 +21,7 @@ vi.mock("@chatbotx.io/database/repositories", () => ({
     markRemoved: mocks.markChannelPostRemoved,
   },
   socialPostRemovalRepository: {
+    clearError: mocks.clearError,
     findForRemoval: mocks.findForRemoval,
     listForPost: mocks.listForPost,
     markRemoved: mocks.markRemoved,
@@ -25,9 +29,12 @@ vi.mock("@chatbotx.io/database/repositories", () => ({
   },
   socialPostRepository: { findForWorkspace: mocks.findForWorkspace },
 }))
+vi.mock("@chatbotx.io/redis", () => ({
+  distributedLock: { runExclusive: mocks.runExclusive },
+}))
 vi.mock("@chatbotx.io/worker-config", () => ({
   PostPublishJobAction: { removeTarget: "removeTarget" },
-  postPublishQueue: { add: mocks.enqueue },
+  postPublishQueue: { add: mocks.enqueue, getJob: mocks.getJob },
   postRemoveJobId: (id: string) => `social-post-remove-${id}`,
 }))
 vi.mock("../src/logger", () => ({
@@ -104,6 +111,11 @@ beforeEach(() => {
   mocks.findForWorkspace.mockResolvedValue({ id: "p-1" })
   mocks.loadCredentials.mockResolvedValue(credentials())
   mocks.markRemoved.mockResolvedValue({ channelPostId: null })
+  mocks.enqueue.mockResolvedValue(undefined)
+  mocks.runExclusive.mockImplementation(
+    ({ fn }: { fn: () => Promise<unknown> }) => fn(),
+  )
+  mocks.getJob.mockResolvedValue(undefined)
 })
 
 describe("socialPostRemoveService.request", () => {
@@ -123,6 +135,180 @@ describe("socialPostRemoveService.request", () => {
     expect(mocks.enqueue).toHaveBeenCalledTimes(2)
     expect(mocks.enqueue.mock.calls[0]?.[2]).toEqual({
       jobId: "social-post-remove-t-1",
+    })
+  })
+
+  test("with targetIds only the named targets are classified and queued", async () => {
+    mocks.listForPost.mockResolvedValue([
+      row({ id: "t-1" }),
+      row({ id: "t-2" }),
+      row({ id: "t-3" }),
+    ])
+    const result = await socialPostRemoveService.request({
+      id: "p-1",
+      targetIds: ["t-2"],
+      workspaceId: WS,
+    })
+    expect(result.targets).toEqual([{ status: "queued", targetId: "t-2" }])
+    expect(mocks.enqueue).toHaveBeenCalledTimes(1)
+    expect(mocks.enqueue.mock.calls[0]?.[2]).toEqual({
+      jobId: "social-post-remove-t-2",
+    })
+  })
+
+  test("a targetId that is not a destination of the post is refused and nothing is queued", async () => {
+    mocks.listForPost.mockResolvedValue([row({ id: "t-1" })])
+    await expect(
+      socialPostRemoveService.request({
+        id: "p-1",
+        targetIds: ["t-1", "other-post-target"],
+        workspaceId: WS,
+      }),
+    ).rejects.toThrow("Destination not found")
+    expect(mocks.enqueue).not.toHaveBeenCalled()
+  })
+
+  test("a named target that is not published answers 409 and queues nothing", async () => {
+    mocks.listForPost.mockResolvedValue([
+      row({ id: "t-1", status: "failed" }),
+      row({ id: "t-2" }),
+    ])
+    await expect(
+      socialPostRemoveService.request({
+        id: "p-1",
+        targetIds: ["t-1"],
+        workspaceId: WS,
+      }),
+    ).rejects.toMatchObject({ code: "socialPostNotRemovable" })
+    expect(mocks.enqueue).not.toHaveBeenCalled()
+  })
+
+  test("a named removed target answers removed without a job", async () => {
+    mocks.listForPost.mockResolvedValue([
+      row({ id: "t-1", removedAt: new Date() }),
+      row({ id: "t-2" }),
+    ])
+    const result = await socialPostRemoveService.request({
+      id: "p-1",
+      targetIds: ["t-1"],
+      workspaceId: WS,
+    })
+    expect(result.targets).toEqual([{ status: "removed", targetId: "t-1" }])
+    expect(mocks.enqueue).not.toHaveBeenCalled()
+  })
+
+  test("a new job: the earlier removal error is cleared, then the job is added", async () => {
+    mocks.listForPost.mockResolvedValue([
+      row({ id: "t-1" }),
+      row({ id: "t-2", removedAt: new Date() }),
+    ])
+    await socialPostRemoveService.request({ id: "p-1", workspaceId: WS })
+    expect(mocks.clearError).toHaveBeenCalledTimes(1)
+    expect(mocks.clearError).toHaveBeenCalledWith({
+      id: "t-1",
+      workspaceId: WS,
+    })
+    expect(mocks.clearError.mock.invocationCallOrder[0]).toBeLessThan(
+      mocks.enqueue.mock.invocationCallOrder[0] ?? 0,
+    )
+  })
+
+  test.each([
+    "waiting",
+    "active",
+    "delayed",
+  ])("joining a %s job keeps its error and adds nothing", async (state) => {
+    mocks.listForPost.mockResolvedValue([row({ id: "t-1" })])
+    mocks.getJob.mockResolvedValue({
+      getState: vi.fn().mockResolvedValue(state),
+      remove: vi.fn(),
+    })
+    const result = await socialPostRemoveService.request({
+      id: "p-1",
+      workspaceId: WS,
+    })
+    expect(result.targets).toEqual([{ status: "queued", targetId: "t-1" }])
+    expect(mocks.clearError).not.toHaveBeenCalled()
+    expect(mocks.enqueue).not.toHaveBeenCalled()
+  })
+
+  test("a finished job with the same id is removed so the new job is not swallowed", async () => {
+    const remove = vi.fn()
+    mocks.listForPost.mockResolvedValue([row({ id: "t-1" })])
+    mocks.getJob.mockResolvedValue({
+      getState: vi.fn().mockResolvedValue("failed"),
+      remove,
+    })
+    await socialPostRemoveService.request({ id: "p-1", workspaceId: WS })
+    expect(remove).toHaveBeenCalledTimes(1)
+    expect(mocks.clearError).toHaveBeenCalledTimes(1)
+    expect(mocks.enqueue).toHaveBeenCalledTimes(1)
+  })
+
+  test("two concurrent requests for one target: one adds the job, the other joins it and the job's error is never cleared", async () => {
+    let chain: Promise<unknown> = Promise.resolve()
+    mocks.runExclusive.mockImplementation(
+      ({ fn }: { fn: () => Promise<unknown> }) => {
+        const run = chain.then(fn)
+        chain = run.catch(() => undefined)
+        return run
+      },
+    )
+    let added = false
+    mocks.enqueue.mockImplementation(async () => {
+      await Promise.resolve()
+      added = true
+    })
+    mocks.getJob.mockImplementation(async () =>
+      added ? { getState: vi.fn().mockResolvedValue("active") } : undefined,
+    )
+    mocks.listForPost.mockResolvedValue([row({ id: "t-1" })])
+
+    await Promise.all([
+      socialPostRemoveService.request({ id: "p-1", workspaceId: WS }),
+      socialPostRemoveService.request({ id: "p-1", workspaceId: WS }),
+    ])
+
+    expect(mocks.enqueue).toHaveBeenCalledTimes(1)
+    expect(mocks.clearError).toHaveBeenCalledTimes(1)
+  })
+
+  test("a job whose state is unknown counts as absent and is not removed", async () => {
+    const remove = vi.fn()
+    mocks.listForPost.mockResolvedValue([row({ id: "t-1" })])
+    mocks.getJob.mockResolvedValue({
+      getState: vi.fn().mockResolvedValue("unknown"),
+      remove,
+    })
+    await socialPostRemoveService.request({ id: "p-1", workspaceId: WS })
+    expect(remove).not.toHaveBeenCalled()
+    expect(mocks.clearError).toHaveBeenCalledTimes(1)
+    expect(mocks.enqueue).toHaveBeenCalledTimes(1)
+  })
+
+  test("a lock that cannot be taken propagates and clears nothing", async () => {
+    mocks.listForPost.mockResolvedValue([row({ id: "t-1" })])
+    mocks.runExclusive.mockRejectedValue(new Error("lock unavailable"))
+    await expect(
+      socialPostRemoveService.request({ id: "p-1", workspaceId: WS }),
+    ).rejects.toThrow("lock unavailable")
+    expect(mocks.clearError).not.toHaveBeenCalled()
+    expect(mocks.enqueue).not.toHaveBeenCalled()
+  })
+
+  test("a job that cannot be added leaves a failure on the row and the error propagates", async () => {
+    mocks.listForPost.mockResolvedValue([row({ id: "t-1" })])
+    mocks.enqueue.mockRejectedValue(new Error("redis down"))
+    await expect(
+      socialPostRemoveService.request({ id: "p-1", workspaceId: WS }),
+    ).rejects.toThrow("redis down")
+    expect(mocks.recordFailure).toHaveBeenCalledWith({
+      error: expect.objectContaining({
+        category: "unknown",
+        code: "removalQueueFailed",
+      }),
+      id: "t-1",
+      workspaceId: WS,
     })
   })
 

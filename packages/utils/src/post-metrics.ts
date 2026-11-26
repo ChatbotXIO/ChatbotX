@@ -18,6 +18,10 @@ export const channelPostMetricBits = {
   commentsTotalCurrent: 8,
 } as const
 
+/** Whether `bit` (a power of two) is set in `mask`, without bitwise operators. */
+export const hasMetricBit = (mask: number, bit: number): boolean =>
+  Math.floor(mask / bit) % 2 === 1
+
 /** The bits a write sets when it reports a comments total: known, and counted by the current definition. */
 export const CHANNEL_POST_COMMENTS_REPORTED_BITS: number =
   channelPostMetricBits.comments + channelPostMetricBits.commentsTotalCurrent

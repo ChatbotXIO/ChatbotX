@@ -12603,7 +12603,9 @@
       "menu": "Xuất",
       "rowsTitle": "Xuất danh sách bài đăng (mỗi bài một dòng)",
       "rowsDone": "Đã xuất danh sách bài đăng.",
-      "rowsTruncated": "Danh sách bị cắt ở giới hạn bài đăng. Hãy thu hẹp bộ lọc để xuất phần còn lại."
+      "rowsTruncated": "Danh sách bị cắt ở giới hạn bài đăng. Hãy thu hẹp bộ lọc để xuất phần còn lại.",
+      "sourceStored": "Dữ liệu đã lưu",
+      "sourceChannel": "Đọc từ kênh"
     },
     "showAllPosts": "Hiện cả bài viết chưa có bình luận",
     "noCaption": "Không có nội dung",
@@ -12700,7 +12702,9 @@
       "refreshCooldown": "Bài đăng này vừa được làm mới. Hãy thử lại sau một phút.",
       "downloadPhones": "Tải xuống số điện thoại",
       "downloadComments": "Tải xuống bình luận",
-      "viewDetails": "Xem thông tin"
+      "viewDetails": "Xem thông tin",
+      "download": "Tải xuống",
+      "downloadEmails": "Tải xuống email"
     },
     "merge": {
       "title": "Gộp bài viết",
@@ -13286,6 +13290,24 @@
           "removed": "Đã gỡ khỏi kênh."
         }
       }
+    },
+    "channelExport": {
+      "started": "Đang đọc bình luận từ kênh. Việc này có thể mất một lúc.",
+      "progress": "Đang đọc từ kênh… đã có {count} dòng.",
+      "progressEstimate": "Đang đọc từ kênh… đã có {count} dòng (khoảng {expected} bình luận tất cả).",
+      "ready": "Tệp đã sẵn sàng.",
+      "download": "Tải xuống",
+      "truncated": "Quá trình xuất đã dừng ở giới hạn an toàn nên tệp chưa đầy đủ. Hãy xuất ít bài hơn để lấy phần còn lại.",
+      "forbidden": "Bạn không có quyền tải xuống số điện thoại và email.",
+      "startFailed": "Không thể bắt đầu xuất. Hãy thử lại.",
+      "inProgress": "Đang bắt đầu, hãy thử lại sau giây lát.",
+      "failure": {
+        "channelDisconnected": "Kênh đã bị ngắt kết nối. Hãy kết nối lại rồi thử lại.",
+        "postNotFound": "Một bài viết không còn tồn tại trên kênh.",
+        "notSupported": "Không thể đọc bình luận của kênh này từ kênh.",
+        "rateLimited": "Kênh yêu cầu giảm tốc độ. Hãy thử lại sau vài phút.",
+        "failed": "Xuất thất bại. Hãy thử lại."
+      }
     }
   },
   "socialAccounts": {
@@ -13433,7 +13455,12 @@
     "repeatScheduleOff": "Việc lên lịch và đăng áp dụng cho từng bản sao, không áp dụng cho bản mẫu.",
     "moveMediaEarlier": "Chuyển lên trước",
     "moveMediaLater": "Chuyển ra sau",
-    "removeFromChannels": "Gỡ khỏi các kênh",
+    "removeFromAllChannels": "Gỡ khỏi tất cả các kênh",
+    "removeTarget": "Gỡ",
+    "removeTargetTitle": "Gỡ bài viết này khỏi {destination}?",
+    "removeTargetDescription": "Bài đã đăng sẽ được gỡ khỏi {destination} trên {network}. Các điểm đến khác vẫn giữ bài. Không thể hoàn tác.",
+    "removeTargetConfirm": "Gỡ",
+    "removing": "Đang gỡ…",
     "removeFromChannelsTitle": "Gỡ bài viết này khỏi các mạng?",
     "removeFromChannelsDescription": "Bài đã đăng sẽ bị gỡ khỏi mọi mạng hỗ trợ. Mạng không có chức năng xóa sẽ giữ lại bài. Không thể hoàn tác.",
     "removeFromChannelsConfirm": "Gỡ bài",
@@ -13442,6 +13469,7 @@
     "removeUnsupported": "{count, plural, one {# điểm đăng không thể gỡ qua API của mạng; hãy gỡ trong ứng dụng.} other {# điểm đăng không thể gỡ qua API của mạng; hãy gỡ trong ứng dụng.}}",
     "removedFromChannel": "Đã gỡ khỏi mạng",
     "removalPermissionMissing": "Hãy kết nối lại tài khoản này để cho phép xóa bài đăng.",
+    "removalQueueFailed": "Không thể đưa yêu cầu gỡ bài vào hàng đợi. Hãy thử lại.",
     "postMessageQuotaExceeded": "Hạn mức tin nhắn của tài khoản này đã dùng hết nên bài đăng này chưa được đăng. Hãy nâng cấp gói hoặc chờ kỳ thanh toán tiếp theo rồi thử lại.",
     "tiktokLoading": "Đang tải cài đặt tài khoản TikTok…",
     "tiktokUnavailable": "Không thể tải cài đặt tài khoản TikTok. Hãy thử lại.",

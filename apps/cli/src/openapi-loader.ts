@@ -308,6 +308,10 @@ const COMMAND_NAME_OVERRIDES: Readonly<Record<string, string>> = {
   "DELETE /v1/channel-posts/management/{id}/comments/{commentId}":
     "channel-posts:delete-comment",
   "POST /v1/channel-posts/management/export": "channel-posts:export-comments",
+  "POST /v1/channel-posts/management/exports":
+    "channel-posts:start-comment-export",
+  "GET /v1/channel-posts/management/exports/{fileId}":
+    "channel-posts:get-comment-export",
   "POST /v1/channel-posts/sync": "channel-posts:sync",
   "GET /v1/channel-posts/sync/status": "channel-posts:sync-status",
   // Posts composed in ChatbotX for the connected social accounts.
@@ -336,6 +340,7 @@ const COMMAND_NAME_OVERRIDES: Readonly<Record<string, string>> = {
   "POST /v1/posts/{id}/targets/{targetId}/retry": "social-posts:retry-target",
   "POST /v1/posts/{id}/targets/{targetId}/resolve":
     "social-posts:resolve-target",
+  "POST /v1/posts/{id}/targets/{targetId}/remove": "social-posts:remove-target",
   // Suggested post text; a static path, so the generic rule would name it after
   // the `ai` segment.
   "POST /v1/posts/ai/generate": "social-posts:write-with-ai",
