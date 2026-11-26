@@ -17,7 +17,7 @@
     "ky": "catalog:",
     "libphonenumber-js": "catalog:",
     "remeda": "catalog:",
-    "whatsapp-api-js": "^6.2.1",
+    "whatsapp-api-js": "^6.3.0",
     "zod": "catalog:"
   },
   "devDependencies": {

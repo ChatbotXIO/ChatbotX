@@ -16,7 +16,7 @@
     "@chatbotx.io/logger": "workspace:*",
     "@t3-oss/env-core": "catalog:",
     "dotenv": "^17.4.2",
-    "isolated-vm": "^7.0.0",
+    "isolated-vm": "^7.0.2",
     "zod": "catalog:"
   },
   "devDependencies": {
