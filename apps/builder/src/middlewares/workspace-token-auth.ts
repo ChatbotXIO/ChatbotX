@@ -28,7 +28,12 @@ import {
   assertWorkspaceOwnerAccessForMethod,
   isReadOnlyTokenAllowedMethod,
 } from "@/lib/workspace/authorize-workspace-access"
-import { type BaseContext, base, type RequestApiToken } from "./context"
+import {
+  type BaseContext,
+  base,
+  type RequestApiToken,
+  type RequestOAuthPrincipal,
+} from "./context"
 
 const assertNotRateLimited = (
   workspaceId: string,
@@ -138,6 +143,7 @@ export const workspaceTokenAuthMidddleware = base.middleware(
       workspace: WorkspaceModel
       apiToken: RequestApiToken
       audit: { userId: string; source: string }
+      oauthPrincipal?: RequestOAuthPrincipal
     }
     if (workspaceTokenAuth) {
       resolved = {
@@ -226,6 +232,12 @@ export const workspaceTokenAuthMidddleware = base.middleware(
           userId: oauth.principal.user.id,
           source: `mcp-oauth:${oauth.principal.clientId}`,
         },
+        oauthPrincipal: {
+          audience: mcpAccessToken.audience,
+          clientId: mcpAccessToken.clientId,
+          issuer: mcpAccessToken.issuer,
+          subject: mcpAccessToken.userId,
+        },
       }
     }
     const { workspace, apiToken } = resolved
@@ -293,6 +305,9 @@ export const workspaceTokenAuthMidddleware = base.middleware(
             workspace,
             apiToken,
             apiCredentialId,
+            ...(resolved.oauthPrincipal && {
+              oauthPrincipal: resolved.oauthPrincipal,
+            }),
             ...(mobile && {
               user: mobile.user,
               member: mobile.member,

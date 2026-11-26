@@ -3,16 +3,18 @@ import {
   buildMonthGrid,
   buildRangeDays,
   buildWeekDays,
-  calendarRangeConfig,
   DEFAULT_CUSTOM_RANGE_DAYS,
   dayKey,
   getCalendarQueryRange,
-  groupByDay,
   MAX_CUSTOM_RANGE_DAYS,
   parseDateParam,
   parseEndDateParam,
   resolveDateParam,
   resolveEndDateParam,
+} from "@/components/calendar/calendar-grid"
+import {
+  calendarRangeConfig,
+  groupByDay,
   sortBySchedulesAt,
 } from "@/features/broadcasts/lib/calendar-grid"
 
@@ -375,5 +377,61 @@ describe("sortBySchedulesAt", () => {
     const sorted = sortBySchedulesAt(rows)
     expect(sorted.map((r) => r.id)).toEqual(["a", "b", "c"])
     expect(rows).toEqual(original)
+  })
+})
+
+describe("calendar boundaries (pinned before the shared extraction)", () => {
+  test("a month that starts on Monday and ends on Sunday is exactly four full weeks (Feb 2027)", () => {
+    const grid = buildMonthGrid(new Date("2027-02-10T00:00:00"))
+    expect(grid.length).toBe(4)
+    expect(dayKey(grid[0][0])).toBe("2027-02-01")
+    expect(dayKey((grid.at(-1) as Date[])[6])).toBe("2027-02-28")
+  })
+
+  test("a month spilling over both edges pads with neighbouring days (Mar 2027 = 5 weeks)", () => {
+    const grid = buildMonthGrid(new Date("2027-03-15T00:00:00"))
+    expect(grid.length).toBe(5)
+    expect(dayKey(grid[0][0])).toBe("2027-03-01")
+    expect(dayKey((grid.at(-1) as Date[])[6])).toBe("2027-04-04")
+  })
+
+  test("a Sunday belongs to the week that started the Monday before it", () => {
+    const days = buildWeekDays(new Date("2026-09-06T12:00:00"))
+    expect(dayKey(days[0])).toBe("2026-08-31")
+    expect(dayKey(days[6])).toBe("2026-09-06")
+  })
+
+  test("a Monday starts a new week", () => {
+    const days = buildWeekDays(new Date("2026-09-07T00:00:00"))
+    expect(dayKey(days[0])).toBe("2026-09-07")
+  })
+
+  test("week and day query ranges split at local midnight of the user's zone", () => {
+    const { from, to } = getCalendarQueryRange(
+      "day",
+      new Date("2026-09-06T00:00:00"),
+      new Date("2026-09-06T00:00:00"),
+      "Asia/Ho_Chi_Minh",
+    )
+    expect(from.toISOString()).toBe("2026-09-05T17:00:00.000Z")
+    expect(to.toISOString()).toBe("2026-09-06T16:59:59.999Z")
+  })
+
+  test("groupByDay splits rows at local midnight", () => {
+    const grouped = groupByDay([
+      { id: "late", schedulesAt: new Date("2026-08-31T23:59:59") },
+      { id: "early", schedulesAt: new Date("2026-09-01T00:00:00") },
+    ])
+    expect(grouped.get("2026-08-31")?.map((r) => r.id)).toEqual(["late"])
+    expect(grouped.get("2026-09-01")?.map((r) => r.id)).toEqual(["early"])
+  })
+
+  test("groupByDay keeps rows of one day in input order and returns empty groups as absent", () => {
+    const grouped = groupByDay([
+      { id: "b", schedulesAt: new Date("2026-09-01T18:00:00") },
+      { id: "a", schedulesAt: new Date("2026-09-01T08:00:00") },
+    ])
+    expect(grouped.get("2026-09-01")?.map((r) => r.id)).toEqual(["b", "a"])
+    expect(grouped.has("2026-09-02")).toBe(false)
   })
 })

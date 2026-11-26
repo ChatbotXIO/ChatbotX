@@ -14,7 +14,7 @@
   "dependencies": {
     "@t3-oss/env-core": "catalog:",
     "mjml": "^5.2.0",
-    "nodemailer": "^10.3.1",
+    "nodemailer": "^10.6.1",
     "zod": "catalog:"
   },
   "exports": {

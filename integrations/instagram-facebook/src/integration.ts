@@ -9,6 +9,7 @@ import {
 import {
   debugToken,
   exchangeCodeForToken,
+  getGrantedPermissions,
   getUserInstagramAccounts,
   INSTAGRAM_SCOPES,
   toAppAccessToken,
@@ -26,6 +27,7 @@ import { commentHandlers } from "./handlers/comment"
 import { contactHandlers } from "./handlers/contact"
 import { conversationHandlers } from "./handlers/conversation"
 import { messageHandlers } from "./handlers/message"
+import { postHandlers } from "./handlers/post"
 import { webhookHandler } from "./handlers/webhook"
 import { isRevokedTokenError } from "./lib/error-mapper"
 import type {
@@ -70,6 +72,11 @@ const config: IntegrationDefinition<
         auth.tokens.accessToken,
         version,
       )
+      // One lookup for the login; unknown (null) when it fails.
+      const grantedScopes = await getGrantedPermissions(
+        auth.tokens.accessToken,
+        version,
+      ).catch(() => null)
       return accounts.map((account) => ({
         sourceId: account.id,
         displayName: account.name,
@@ -83,6 +90,7 @@ const config: IntegrationDefinition<
             pageId: account.pageId,
             version,
             username: account.username,
+            grantedScopes,
           },
         ) satisfies InstagramAuthValue,
       }))
@@ -123,6 +131,7 @@ const config: IntegrationDefinition<
       conversation: conversationHandlers,
       contact: contactHandlers,
       bot: botHandlers,
+      post: postHandlers,
     },
   },
   actions: {

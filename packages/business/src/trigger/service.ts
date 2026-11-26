@@ -46,6 +46,7 @@ import {
   TRIGGER_CONTACT_RUN_WINDOW_SECONDS,
 } from "./constants"
 import { FailOpenCircuit } from "./fail-open-circuit"
+import { assertPostCommentPostsValid } from "./post-comment-posts"
 
 export type { ConditionInput } from "./condition-columns"
 
@@ -312,6 +313,13 @@ class TriggerService extends BaseService {
           next: actions,
           stored: existingTrigger.actions,
           tx,
+        })
+
+        await assertPostCommentPostsValid({
+          conditions,
+          stored: existingConditions,
+          tx,
+          workspaceId,
         })
 
         const existingIds = new Set(existingConditions.map((c) => c.id))
@@ -601,7 +609,7 @@ class TriggerService extends BaseService {
 
   /** `datetime-trigger-evaluator.ts` cleanupOldExecutions: purge executions older than the cutoff. */
   async purgeExecutionsOlderThan(cutoff: Date): Promise<number> {
-    const result = await db.execute(
+    const result = await db.execute<Record<string, unknown>>(
       sql`DELETE FROM "TriggerExecution" WHERE "executedAt" < ${cutoff}`,
     )
     return Number(result.rowCount ?? 0)

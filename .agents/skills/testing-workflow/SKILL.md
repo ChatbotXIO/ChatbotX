@@ -64,3 +64,7 @@ error surfacing without throwing, and invalidation triggering a refetch.
 ## Stop condition
 
 A change is verified only when lint + the touched packages' `check-types` + the affected tests all pass, with coverage at/above threshold (not skipped). If you cannot run a gate, say which and why — do not report "verified" on an unrun gate.
+
+## Templates tests
+
+Touching a template-copied kind requires: an adapter unit test (collect drops history/secrets; insert remaps, skips-with-warning, never widens), a service guard test, the hard-coded-list tests (`template-sync-handler-coverage`, `template-category-counts-share`, `template-service-authorization`, `template-install-order`), and a DB test (`packages/business/__tests__/integration/template-tools-*-db.test.ts` pattern: install → View-only refusal → normal `update` round trip → uninstall). Run DB tests one file at a time. See `template-integration` section 7 and `docs/templates-testing.md`.

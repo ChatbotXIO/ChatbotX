@@ -163,6 +163,94 @@
   "errors": {
     "superAdminRequired": "Bunu etmək üçün iş sahəsinin super administratoru olmalısınız."
   },
+  "inboxTranslation": {
+    "settings": {
+      "title": "Söhbətlərin tərcüməsi",
+      "description": "Müştərilərinizin mesajlarını komandanız üçün, cavablarınızı isə müştərilər üçün birbaşa gələnlər qutusunda tərcümə edin.",
+      "saved": "Tərcümə parametrləri saxlanıldı",
+      "readOnly": "Bu parametrləri yalnız iş sahəsinin administratorları dəyişə bilər.",
+      "languageHint": "Söhbətlərin tərcüməsi aktiv olduqda müştəri mesajlarının tərcümə olunduğu dildir.",
+      "alert": {
+        "needsReconfiguration": "Yenidən konfiqurasiya tələb olunur: Sİ inteqrasiyası silinib və ya söndürülüb.",
+        "noIntegration": "Tərcümədən istifadə etmək üçün əvvəlcə Sİ inteqrasiyasını qoşun.",
+        "connect": "Sİ qoşun"
+      },
+      "enabled": {
+        "label": "Söhbətləri tərcümə et",
+        "description": "Müştəri mesajları yalnız kimsə söhbəti açdıqda tərcümə olunur. Çat mətni seçdiyiniz Sİ provayderinə göndərilir və Sİ açarınız üzərindən hesablanır."
+      },
+      "integration": {
+        "label": "Sİ inteqrasiyası",
+        "description": "Yalnız qoşulmuş Sİ provayderləri göstərilir."
+      },
+      "test": {
+        "label": "Bağlantını yoxla",
+        "button": "Yoxla",
+        "result": "{seconds} san.-də tamamlandı: «{sample}» → «{translated}»",
+        "slow": "Bu model yavaşdır: göndərilən mesajlar vaxtında tərcümə olunmaya bilər və onda göndərilməyəcək.",
+        "failed": "Yoxlama uğursuz oldu."
+      }
+    },
+    "message": {
+      "translating": "Tərcümə olunur…",
+      "stillWaiting": "Tərcümə hələ də gözlənilir",
+      "requestAgain": "Yenidən tələb et",
+      "failed": "Tərcümə etmək mümkün olmadı",
+      "translatedFrom": "{language} dilindən tərcümə edilib. Orijinalı göstər",
+      "translatedFromNoLanguage": "Tərcümə edilib. Orijinalı göstər",
+      "sentIn": "{language} dilində göndərilib. Göndərilənləri göstər",
+      "sentInNoLanguage": "Tərcümə edilərək göndərilib. Göndərilənləri göstər",
+      "hideOriginal": "Orijinalı gizlət",
+      "hideSent": "Göndərilənləri gizlət",
+      "translatedLabelNoLanguage": "Tərcümə edilib",
+      "sentLabelNoLanguage": "Tərcümə edilərək göndərilib"
+    },
+    "badge": {
+      "tooltip": "Müştəri dili: {language}"
+    },
+    "panel": {
+      "title": "Tərcümə parametrləri",
+      "statusOn": "Aktiv",
+      "statusOff": "Deaktiv",
+      "translateConversation": "Bu söhbəti tərcümə et",
+      "translateConversationHint": "Mesajları avtomatik tərcümə et",
+      "botActiveHint": "Bot bu söhbəti idarə edir, ona görə tərcümə söndürülüb. Tərcümə etmək üçün aktiv edin.",
+      "botPausedHint": "Bu söhbəti botdan götürmüsünüz, ona görə tərcümə söndürülü qalır. Tərcümə etmək üçün onu yandırın.",
+      "displayOptions": "Görünüş seçimləri",
+      "showOriginals": "Orijinal mətni göstər",
+      "previewBeforeSending": "Göndərməzdən əvvəl tərcüməyə bax"
+    },
+    "composer": {
+      "hintUnknown": "Dil müəyyən edilmədi · Yazıldığı kimi göndərilir",
+      "hintDetecting": "Müştərinin dili müəyyən edilir…",
+      "chip": {
+        "aria": "Tərcümə dili",
+        "target": "→ {language}",
+        "sameLanguage": "İş sahəsi ilə eyni dil",
+        "unknown": "Dil məlum deyil",
+        "hasFiles": "Faylı olan mesajlar tərcümə olunmur",
+        "off": "Tərcümə söndürülüb"
+      },
+      "popover": {
+        "customerLanguage": "Müştəri dili",
+        "chooseLanguage": "Dil seçin"
+      },
+      "preview": {
+        "title": "Müştəri önizləməsi · {language}",
+        "translating": "Tərcümə olunur…",
+        "needsRetranslate": "Yenidən tərcümə etmək lazımdır",
+        "retranslate": "Yenidən tərcümə et",
+        "failed": "Tərcümə etmək mümkün olmadı — göndərərkən yenidən cəhd ediləcək",
+        "done": "Hazır",
+        "ready": "Göndərməyə hazırdır"
+      }
+    },
+    "send": {
+      "translating": "Tərcümə olunur…",
+      "failed": "Tərcümə alınmadı",
+      "turnedOff": "Tərcümə əlçatan deyil. Bu söhbət üçün tərcümə söndürüldü."
+    }
+  },
   "states": {
     "success": "Uğurlu",
     "error": "Xəta",
@@ -693,7 +781,8 @@
       "template": "Şablon",
       "integration": "İnteqrasiya",
       "schedule": "Təkrar cədvəli",
-      "runOf": "<link>{name}</link> icrası"
+      "runOf": "<link>{name}</link> icrası",
+      "linkNotFound": "Bu kütləvi göndəriş artıq mövcud deyil."
     },
     "filters": {
       "all": "Hamısı"
@@ -1506,7 +1595,10 @@
       "label": "Bildiriş növü",
       "notifyAdmin": "Administratora bildir",
       "newMessageToHuman": "Operatora yeni mesaj",
-      "newOrder": "Yeni sifariş"
+      "newOrder": "Yeni sifariş",
+      "postFailed": "Paylaşım uğursuz oldu",
+      "postNeedsReview": "Paylaşım yoxlama tələb edir",
+      "publishConnection": "Paylaşım bağlantısı diqqət tələb edir"
     },
     "notificationChannel": {
       "label": "Bildiriş kanalı",
@@ -2947,7 +3039,8 @@
       "pipelines": "Satış mərhələləri",
       "places": "Yerlər",
       "templates": "Şablonlar",
-      "polls": "Polls"
+      "polls": "Polls",
+      "posts": "Yazılar"
     },
     "adReferral": {
       "label": "Reklamlar",
@@ -3080,6 +3173,9 @@
         "skip": "Tapılmadı",
         "error": "Uğursuz"
       }
+    },
+    "tiktokPublishing": {
+      "label": "TikTok paylaşımı"
     }
   },
   "metaConversions": {
@@ -5739,7 +5835,8 @@
     "invalidApiKey": "Etibarsız API açarı",
     "maxMustBeGreaterThanMin": "{maxField} ən azı {minField} qədər olmalıdır",
     "trigger": {
-      "actionReferenceNotFound": "An action refers to a record that no longer exists. Re-select it in the action and save again."
+      "actionReferenceNotFound": "An action refers to a record that no longer exists. Re-select it in the action and save again.",
+      "postCommentPostsInvalid": "Seçilmiş yazılardan biri bu iş sahəsində yoxdur və ya seçilmiş gələn qutusuna aid deyil. Yazıları yenidən seçin və yenidən yadda saxlayın."
     },
     "inboundWebhook": {
       "inboxRequired": "Gələnlər qutusu seçin.",
@@ -6798,7 +6895,16 @@
       "anyPipeline": "İstənilən satış xətti",
       "anyStage": "İstənilən mərhələ",
       "unavailablePipeline": "Silinmiş və ya əlçatmaz pipeline",
-      "unavailableStage": "Silinmiş və ya əlçatmaz mərhələ"
+      "unavailableStage": "Silinmiş və ya əlçatmaz mərhələ",
+      "contactCommentedOnPost": "Kontakt paylaşıma şərh yazdı",
+      "contactFirstCommentedOnPost": "Kontakt paylaşıma ilk dəfə şərh yazdı",
+      "anyInbox": "İstənilən səhifə və ya hesab",
+      "unavailableInbox": "Silinmiş və ya əlçatmaz səhifə və ya hesab",
+      "postScope": {
+        "any": "İstənilən paylaşım",
+        "selected": "Seçilmiş paylaşımlar",
+        "publishedFromPosts": "Yalnız Paylaşımlar bölməsindən dərc edilənlər"
+      }
     },
     "actions": {
       "addTag": "Etiket əlavə et",
@@ -7630,7 +7736,8 @@
       "ignoreCommentReplies": "Şərhlərə verilən cavabları cavablama",
       "ignoreCommentRepliesDescription": "Əsas şərhlərə deyil, digər şərhlərə cavab olan şərhlərə avtomatlaşdırmanı tətbiq etməyin.",
       "trackUserTags": "İstifadəçinin digər istifadəçiləri etiketləməsini izlə",
-      "trackUserTagsDescription": "Neçə istifadəçinin etiketləndiyini öyrənmək üçün '{{total_tagged}}' dəyişənindən istifadə edin. Kontakt siyahısında olmayan neçə şəxsin etiketləndiyini öyrənmək üçün '{{total_new_tagged}}' dəyişənindən istifadə edin."
+      "trackUserTagsDescription": "Neçə istifadəçinin etiketləndiyini öyrənmək üçün '{{total_tagged}}' dəyişənindən istifadə edin. Kontakt siyahısında olmayan neçə şəxsin etiketləndiyini öyrənmək üçün '{{total_new_tagged}}' dəyişənindən istifadə edin.",
+      "likeUserCommentUnavailable": "Instagram-da mövcud deyil. Bu seçim keçilir; silmək üçün söndürün."
     },
     "hideComments": {
       "all": "Bütün şərhləri gizlət",
@@ -8263,6 +8370,7 @@
       "resourcesTitle": "Quraşdırılmış resurslar",
       "noResources": "Hələ heç nə yaradılmayıb.",
       "deletedResource": "Silinmiş resurs",
+      "wholeCategory": "{count, plural, one {# element} other {# element}}",
       "viewOnly": "Yalnız baxış",
       "created": "Yaradıldı",
       "reused": "Təkrar istifadə edildi",
@@ -8317,7 +8425,12 @@
           "placeCategories": "Məkan kateqoriyaları"
         }
       },
-      "viewOnlyCopyIncluded": "Seçdiyiniz element (və ya onun ehtiyac duyduğu element) yalnız baxış şablonundan quraşdırılıb, ona görə yeni şablonda paylaşıla bilməz."
+      "viewOnlyCopyIncluded": "Seçdiyiniz element (və ya onun ehtiyac duyduğu element) yalnız baxış şablonundan quraşdırılıb, ona görə yeni şablonda paylaşıla bilməz.",
+      "miniAppPublishedExcluded": {
+        "title": "Mini tətbiq kənarda qaldı",
+        "hint": "Bu axınlar WhatsApp-da dərc olunmuş Mini tətbiqdən istifadə edir. Onu paylaşmaq olmur, buna görə şablon onu çıxarır və quraşdırma zamanı bu istinad silinir.",
+        "item": "{flowName}: {miniAppName}"
+      }
     },
     "categories": {
       "flows": "Axınlar",
@@ -8339,7 +8452,20 @@
       "aiFiles": "AI bilik faylları",
       "questionnaires": "Questionnaires",
       "couponTopics": "Kupon mövzuları",
-      "pipelines": "Satış xətləri"
+      "pipelines": "Satış xətləri",
+      "magicLinks": "Sehrli linklər",
+      "polls": "Sorğular",
+      "dynamicImages": "Dinamik şəkillər",
+      "placeLocations": "Məkanlar",
+      "miniApps": "Mini tətbiqlər",
+      "minigames": "Mini oyunlar",
+      "leaderboards": "Liderlər cədvəli",
+      "openHours": "İş saatları",
+      "vendors": "Satıcılar",
+      "discountCodes": "Endirim kodları",
+      "storeSettings": "Mağaza ayarları",
+      "storyAutomations": "Instagram hekayə avtomatlaşdırılması",
+      "inboundWebhooks": "Daxil olan webhook"
     },
     "locked": {
       "flowBanner": "Bu axın yalnız baxış şablonundan quraşdırılıb. Onu görə bilərsiniz, lakin redaktə edə bilməzsiniz.",
@@ -8416,6 +8542,7 @@
       "flowNotPublished": "Axın qaralama kimi quraşdırıldı və dərc edilməyib.",
       "flowSkippedRequiredReference": "Tələb olunan istinad həll edilə bilmədiyi üçün axın atlandı.",
       "folder": "İstinad edilən element bu iş sahəsində tapılmadı, ona görə keçid silindi.",
+      "inboundWebhookLimitReached": "Bu daxil olan webhook buraxıldı: iş sahəsi daxil olan webhook-ların maksimum sayına çatıb.",
       "inboxBindingRequired": "Bu kanal üçün gələnlər qutusu seçin; o vaxta qədər element qeyri-aktiv qalır.",
       "integration": "İstinad edilən element bu iş sahəsində tapılmadı, ona görə keçid silindi.",
       "localModifiedOverwritten": "Yerli olaraq redaktə edilmiş element üzərinə yazıldı. Ehtiyat nüsxə saxlanıldı və bərpa edilə bilər.",
@@ -8436,7 +8563,25 @@
       "tag": "İstinad edilən element bu iş sahəsində tapılmadı, ona görə keçid silindi.",
       "unlisted": "Element tam köçürülmədi: {code}",
       "workspaceMember": "Bu iş sahəsində olmayan üzvə təyin edilib.",
-      "workspaceUnavailable": "Bu iş sahəsi artıq mövcud deyil, ona görə bu element ötürüldü."
+      "workspaceUnavailable": "Bu iş sahəsi artıq mövcud deyil, ona görə bu element ötürüldü.",
+      "scheduleExpired": "Bu elementin tarixləri keçib; istifadədən əvvəl yenilərini təyin edin.",
+      "linkNotRemapped": "Şablona daxil olmayan alətə link dəyişdirilmədən saxlanıldı.",
+      "dynamicImage": "Fon şəkli kopyalana bilmədiyi üçün bu dinamik şəkil buraxıldı.",
+      "dynamicImageFieldNotBound": "Bu şəkil üçün keş saxlanacaq xüsusi sahə seçin; orijinal sahə artıq iş sahənizdə var idi.",
+      "dynamicImageRerenderFailed": "Bu dinamik şəkil söndürüldü, çünki arxa fonu kopyalanmış keçidlərlə yenidən yaradıla bilmədi. Yenidən cəhd etmək üçün onu aktiv edin.",
+      "pollImage": "Şəkil kopyalana bilmədi.",
+      "leaderboardInvalid": "Bu liderlər cədvəlinin konfiqurasiyası quraşdırıla bilmədi, buna görə buraxıldı.",
+      "placeLocationInvalid": "Bu yer adı boş olduğu üçün atlandı.",
+      "minigame": "Bu liderlər cədvəlinin xal hesabladığı mini oyun şablona daxil deyil, buna görə buraxıldı.",
+      "minigameImage": "Şəkil kopyalana bilmədi.",
+      "leaderboardImage": "Şəkil kopyalana bilmədi.",
+      "leaderboardHostMissing": "Liderlər cədvəli bu quraşdırmanın təmin etmədiyi öz kanalına (və ya mini oyuna) ehtiyac duyur, buna görə buraxıldı.",
+      "externalStoreSkipped": "Bu iş sahəsi qoşulmuş mağazadan (Shopify və ya WooCommerce) satış edir, buna görə məhsullar, satıcılar, endirim kodları, iş saatları və mağaza ayarları quraşdırılmadı.",
+      "discountCodeSkipped": "Bu endirim kodu buraxıldı: tətbiq olunduğu məhsullar və ya kateqoriya şablona daxil deyil, yaxud ayarları rədd edildi.",
+      "storeSettingsKept": "Bu iş sahəsində artıq mağaza ayarları var idi, ona görə olduğu kimi saxlanıldı.",
+      "vendorImage": "Şəkil kopyalana bilmədi.",
+      "storeSettingsCurrencyKept": "İş sahəsində başqa valyutada məhsullar var, buna görə şablonun valyutası əvəzinə mövcud valyuta saxlanıldı.",
+      "storySelectionRequired": "Hekayələri yenidən seçin: orijinal hekayələri köçürmək mümkün olmadı."
     },
     "tabs": {
       "mine": "Şablonlarım",
@@ -8679,7 +8824,6 @@
   "templatesPublicPage": {
     "invalidTitle": "Bu keçid artıq əlçatan deyil.",
     "invalidDescription": "Bu şablonun paylaşma keçidi etibarsızdır, deaktivdir və ya vaxtı bitib.",
-    "byPublisher": "Müəllif: {publisherName}",
     "videoTitle": "Şablonun önbaxış videosu",
     "preview": "Önizləmə",
     "aboutTemplate": "Bu şablon haqqında",
@@ -9138,6 +9282,10 @@
   "contactAdReferrals": {
     "title": "Reklam tarixçəsi",
     "empty": "Bu kontakt üçün hələ reklam klikləri qeydə alınmayıb."
+  },
+  "contactBroadcasts": {
+    "empty": "Bu əlaqəyə hələ heç bir kütləvi göndəriş göndərilməyib.",
+    "searchPlaceholder": "Ad və ya ID ilə axtarın"
   },
   "adsReferralStats": {
     "title": "Reklam üzrə kontaktlar",
@@ -12004,41 +12152,138 @@
     "noWorkspaces": "Heç bir iş sahəsinin admini deyilsiniz, ona görə bu tətbiqə icazə verə bilməzsiniz."
   },
   "chatbotxMcp": {
-    "title": "ChatbotX MCP",
-    "workspaceId": "Workspace ID",
+    "title": "MCP bağlayıcısı",
     "streamableUrl": "Streamable HTTP URL",
-    "sseUrl": "Legacy SSE URL",
+    "sseUrl": "Köhnə SSE URL",
     "guide": {
-      "title": "Connect an MCP client",
-      "step1": "Copy the configuration for your MCP client.",
-      "step2": "Paste it into the client.",
-      "step3": "The client opens a browser. Sign in and approve access.",
-      "step4": "Your workspace tools appear after approval.",
-      "ownerOnly": "Only workspace owners and superAdmins can authorize MCP access."
+      "title": "MCP müştərisini qoşun",
+      "subtitle": "İstifadə etdiyiniz tətbiqi seçin və üç addımı izləyin.",
+      "ownerOnly": "MCP girişini yalnız iş sahəsinin sahibləri və superAdmin-lər icazələndirə bilər. İş sahəsini təsdiq ekranında seçirsiniz.",
+      "otherClients": "MCP ilə uyğun istənilən digər müştəri də işləyir",
+      "otherIntro": "Bu endpoint və konfiqurasiyaları MCP ilə uyğun istənilən digər müştəri ilə istifadə edin.",
+      "opensInNewTab": "(yeni tabda açılır)",
+      "actions": {
+        "addConnector": "Konnektor əlavə et",
+        "startChatting": "Söhbətə başla"
+      },
+      "steps": {
+        "claude": {
+          "step1": {
+            "title": "Konnektor URL-ni kopyalayın",
+            "body": "Növbəti addımda bu URL-ni Claude-a yapışdıracaqsınız."
+          },
+          "step2": {
+            "title": "Claude → Customize → Connectors → Add custom connector bölməsinə keçin",
+            "body": "Aşağıdakı düymə Claude-da konnektorlarınızı açır. Add custom connector basın, ad verin və URL-ni yapışdırın. O, Claude-un masaüstü və mobil tətbiqlərində də görünür."
+          },
+          "step3": {
+            "title": "Connect düyməsini basın və girişi təsdiqləyin",
+            "body": "Daxil olun, iş sahənizi seçin və təsdiqləyin. Sonra Claude-dan kontaktlar, axınlar və yayımlarla birbaşa söhbətdə işləməyi xahiş edin."
+          }
+        },
+        "chatgpt": {
+          "step1": {
+            "title": "Konnektor URL-ni kopyalayın",
+            "body": "Növbəti addımda bu URL-ni ChatGPT-yə yapışdıracaqsınız."
+          },
+          "step2": {
+            "title": "ChatGPT → Settings → Apps & Connectors → Create bölməsinə keçin",
+            "body": "Aşağıdakı düymə ChatGPT ayarlarını açır. Create görünmürsə, Advanced settings-də Developer mode-u aktiv edin. Konnektora ad verin, URL-ni yapışdırın və OAuth seçin."
+          },
+          "step3": {
+            "title": "Qoşulun və girişi təsdiqləyin",
+            "body": "Daxil olun, iş sahənizi seçin və təsdiqləyin. Sonra istifadə etmək üçün konnektoru yeni söhbətdə aktiv edin."
+          }
+        },
+        "claudeCode": {
+          "step1": {
+            "title": "Quraşdırma əmrini kopyalayın",
+            "body": "Onu terminalda işə salın."
+          },
+          "step2": {
+            "title": "Claude Code-dan daxil olun",
+            "body": "Claude Code-u açın, /mcp yazın, serveri seçin və Authenticate seçin. Brauzer pəncərəsi açılır."
+          },
+          "step3": {
+            "title": "Girişi təsdiqləyin",
+            "body": "İş sahənizi seçin və təsdiqləyin. Claude Code indi iş sahəsi alətlərindən istifadə edə bilər."
+          }
+        },
+        "cursor": {
+          "step1": {
+            "title": "Konfiqurasiyanı kopyalayın",
+            "body": "Növbəti addımda onu Cursor-a yapışdıracaqsınız."
+          },
+          "step2": {
+            "title": "Cursor Settings → MCP → Add new MCP server açın",
+            "body": "Konfiqurasiyanı mcp.json-a yapışdırın və yadda saxlayın. Cursor serverin yanında Login düyməsi göstərir."
+          },
+          "step3": {
+            "title": "Girişi təsdiqləyin",
+            "body": "Login basın, iş sahənizi seçin və təsdiqləyin. Alətlər Cursor agentində görünür."
+          }
+        },
+        "openclaw": {
+          "step1": {
+            "title": "Plaqini quraşdırın",
+            "body": "Bu əmri terminalda işə salın."
+          },
+          "step2": {
+            "title": "Daxil olun",
+            "body": "Bu əmri işə salın. Brauzer pəncərəsi açılır."
+          },
+          "step3": {
+            "title": "Girişi təsdiqləyin",
+            "body": "İş sahənizi seçin və təsdiqləyin. OpenClaw indi iş sahəsi alətlərindən istifadə edə bilər."
+          }
+        },
+        "hermes": {
+          "step1": {
+            "title": "Konfiqurasiyanı kopyalayın",
+            "body": "Növbəti addımda onu Hermes konfiqurasiyasına əlavə edəcəksiniz."
+          },
+          "step2": {
+            "title": "~/.hermes/config.yaml faylına əlavə edin",
+            "body": "Onu ~/.hermes/config.yaml faylında mcp_servers altına yapışdırın və yadda saxlayın. Sonra bu əmri Hermes-də işə salın."
+          },
+          "step3": {
+            "title": "Girişi təsdiqləyin",
+            "body": "Hermes brauzer pəncərəsi açır. Daxil olun, iş sahənizi seçin və təsdiqləyin. Hermes indi iş sahəsi alətlərindən istifadə edə bilər."
+          }
+        }
+      }
     },
     "clients": {
+      "claude": "Claude",
       "claudeCode": "Claude Code",
       "claudeDesktop": "Claude Desktop",
       "cursor": "Cursor",
       "chatgpt": "ChatGPT",
-      "stdio": "stdio fallback",
-      "stdioHint": "Use a workspace token for this fallback."
+      "stdio": "stdio ehtiyat variantı",
+      "stdioHint": "Bu ehtiyat variant üçün iş sahəsi tokenindən istifadə edin.",
+      "openclaw": "OpenClaw",
+      "hermes": "Hermes",
+      "other": "Digər müştərilər"
     },
     "grants": {
-      "title": "Authorized applications",
-      "description": "Grants belong to your account and apply to every workspace you administer; revoking disconnects the client everywhere.",
-      "empty": "OAuth grants appear here after you connect an MCP client.",
-      "client": "Client",
-      "scopes": "Scopes",
-      "firstAuthorizedAt": "First authorized",
-      "lastRefreshedAt": "Last refreshed",
-      "activeUntil": "Active until",
-      "noActiveToken": "No active token",
-      "revoke": "Revoke",
-      "revokeConfirmTitle": "Revoke application access?",
-      "revokeConfirmDescription": "Revoke access for {clientName}? This disconnects the client everywhere.",
-      "revokedSuccess": "Application access revoked.",
-      "notFound": "OAuth grant no longer exists"
+      "title": "İcazə verilmiş tətbiqlər",
+      "description": "İcazələr hesabınıza aiddir və idarə etdiyiniz bütün iş sahələrinə şamil edilir; ləğv etmək müştərini hər yerdə əlaqəsiz edir.",
+      "empty": "MCP müştərisini qoşduqdan sonra OAuth icazələri burada görünür.",
+      "client": "Müştəri",
+      "scopes": "Əhatə dairələri",
+      "firstAuthorizedAt": "İlk dəfə icazə verilib",
+      "lastRefreshedAt": "Son yenilənmə",
+      "activeUntil": "Aktivdir (son tarix)",
+      "noActiveToken": "Aktiv token yoxdur",
+      "revoke": "Ləğv et",
+      "revokeConfirmTitle": "Tətbiqin girişi ləğv edilsin?",
+      "revokeConfirmDescription": "{clientName} üçün giriş ləğv edilsin? Bu, müştərini hər yerdə əlaqəsiz edəcək.",
+      "revokedSuccess": "Tətbiqin girişi ləğv edildi.",
+      "notFound": "OAuth icazəsi artıq mövcud deyil"
+    },
+    "unavailableOnDomain": {
+      "title": "Bu domendə əlçatan deyil",
+      "body": "Claude və ya ChatGPT kimi süni intellekt köməkçilərini qoşmaq bu domendə hələ mümkün deyil. Mövcud icazələr aşağıda göstərilir və hələ də ləğv edilə bilər."
     }
   },
   "connectionStatus": {
@@ -12067,17 +12312,21 @@
     "add": "Əlavə et",
     "addCategory": "Kateqoriya əlavə et",
     "renameCategory": "Adını dəyiş",
-    "editCategories": "Kateqoriyaları redaktə et",
+    "editListing": "Qeydi redaktə et",
     "templateId": "Şablon ID-si",
     "template": "Şablon",
     "categories": "Kateqoriyalar",
     "categoriesPlaceholder": "Kateqoriya yoxdur",
     "close": "Bağla",
     "removeChip": "{name} sil",
+    "moreSelected": "+ {count} daha",
     "categoriesHint": "İstəyə bağlı. Kateqoriyasız şablon yalnız “Hamısı” altında görünür.",
+    "languages": "Dillər",
+    "allLanguages": "Bütün dillər",
+    "languagesHint": "İstəyə bağlı. Şablonu bütün dillərdə göstərmək üçün boş buraxın.",
     "noCategoriesYet": "Hələ kateqoriya yoxdur.",
     "added": "Şablon mağazaya əlavə edildi",
-    "updated": "Kateqoriyalar yeniləndi",
+    "updated": "Qeyd yeniləndi",
     "removed": "Şablon mağazadan silindi",
     "removeError": "Şablon silinə bilmədi",
     "removeTitle": "{name} silinsin?",
@@ -12119,16 +12368,18 @@
       "categoryLimit": "Bir mağazada ən çox {categoryLimit} kateqoriya ola bilər."
     },
     "store": {
-      "subtitle": "Bir kliklə quraşdıra biləcəyiniz hazır şablonlar.",
       "pageTitle": "{tenantName} – Şablon mağazası",
       "empty": "Mağazada hələ şablon yoxdur.",
       "search": "Şablon axtar",
-      "all": "Hamısı",
-      "categories": "Mağaza kateqoriyaları",
-      "noResults": "Axtarışınıza uyğun şablon yoxdur.",
-      "clearSearch": "Axtarışı təmizlə",
-      "by": "Naşir: {publisherName}",
-      "loadFailed": "Şablonlar yüklənə bilmədi. Bir az sonra yenidən cəhd edin."
+      "noResults": "Filtrlərinizə uyğun şablon yoxdur.",
+      "clearSearch": "Filtrləri təmizlə",
+      "loadFailed": "Şablonlar yüklənə bilmədi. Bir az sonra yenidən cəhd edin.",
+      "languageValue": "Dil: {language}",
+      "allLanguages": "Bütün dillər",
+      "otherLanguages": "Digər dillər",
+      "allChannels": "Bütün kanallar",
+      "channel": "Kanal",
+      "uncategorized": "Digər"
     },
     "picker": {
       "placeholder": "Şablon seçin",
@@ -12137,7 +12388,21 @@
       "error": "Şablonlar yüklənmədi.",
       "retry": "Yenidən cəhd et",
       "meta": "ID {id} · {workspace}"
-    }
+    },
+    "bulk": {
+      "setCategories": "Kateqoriyaları təyin et",
+      "setLanguages": "Dilləri təyin et",
+      "categoriesHint": "Seçilmiş şablonların ({count}) kateqoriyalarını əvəz edir. Bütün kateqoriyaları silmək üçün boş buraxın.",
+      "languagesHint": "Seçilmiş şablonların ({count}) dillərini əvəz edir. Bütün dillərdə göstərmək üçün boş buraxın.",
+      "updated": "Seçilmiş şablonlar yeniləndi",
+      "removeTitle": "Seçilmiş şablonlar silinsin?",
+      "removeDescription": "Seçilib: {count}. Onlar mağazadan yox olur; şablonların özləri və quraşdırmaları təsirlənmir.",
+      "removed": "Seçilmiş şablonlar mağazadan silindi",
+      "setChannels": "Kanalları təyin et",
+      "channelsHint": "Seçilmiş şablonların ({count}) kanallarını əvəz edir. Bütün kanallar üçün boş buraxın."
+    },
+    "channels": "Kanallar",
+    "channelsHint": "İstəyə bağlı. Şablon bütün kanallarda işləyirsə boş buraxın. Mağazada ikon kimi göstərilir, ziyarətçilər kanala görə süzgəc edə bilər."
   },
   "accountDeletion": {
     "title": "Delete account",
@@ -12308,5 +12573,1060 @@
       "onAhachat": "On AhaChat",
       "selected": "Uses AhaChat data"
     }
+  },
+  "conversationParticipants": {
+    "joined": "{names} söhbətdə iştirak etdi",
+    "replied": "{name} cavab verdi {time}",
+    "showMore": "Daha çox göstər",
+    "label": "Bu söhbətdə kim cavab verdi",
+    "unnamedMember": "Üzv",
+    "loadMoreFailed": "Daha çox üzv yüklənmədi",
+    "lastMessageBy": "{name} tərəfindən son mesaj"
+  },
+  "posts": {
+    "title": "Paylaşımlar",
+    "searchPlaceholder": "Mətn, keçid və ya paylaşım ID-si ilə axtarın",
+    "dateFrom": "Başlanğıc tarix",
+    "dateTo": "Son tarix",
+    "export": {
+      "title": "Bu tarix aralığındakı paylaşımların şərhlərini ixrac et (ən çox {count} paylaşım)",
+      "needsRange": "Şərhləri ixrac etmək üçün başlanğıc və bitmə tarixini seçin.",
+      "nothing": "Bu tarix aralığında bu filtrlərə uyğun paylaşım yoxdur.",
+      "failed": "İxrac alınmadı. Yenidən cəhd edin.",
+      "done": "{count, plural, one {# paylaşımın şərhləri ixrac edildi.} other {# paylaşımın şərhləri ixrac edildi.}}",
+      "doneLimited": "Ən yeni {count} paylaşımın şərhləri ixrac edildi. Daha çox paylaşım uyğun gəlir; qalanını ixrac etmək üçün tarixləri daraltın.",
+      "truncated": "İxrac sətir limitində yarımçıq kəsildi. Qalanını ixrac etmək üçün tarixləri və ya filtrləri daraldın.",
+      "quotaExceeded": "Bu hesabın mesaj kvotası bitib, ona görə yükləmə edilmədi. Planı yüksəldin və ya növbəti hesablaşma dövrünü gözləyin.",
+      "blocked": "Bu iş sahəsinin planı və ya sınaq müddəti başa çatıb.",
+      "menu": "İxrac",
+      "rowsTitle": "Yazıların siyahısını ixrac et (hər yazı üçün bir sətir)",
+      "rowsDone": "Yazıların siyahısı ixrac edildi.",
+      "rowsTruncated": "Siyahı yazı limitində kəsildi. Qalanını ixrac etmək üçün filtrləri daraldın."
+    },
+    "showAllPosts": "Şərhi olmayan paylaşımları da göstər",
+    "noCaption": "Mətn yoxdur",
+    "liveNow": "Canlı yayım",
+    "empty": "Bu filtrlərə uyğun paylaşım yoxdur.",
+    "loadMore": "Daha çox yüklə",
+    "columns": {
+      "content": "Paylaşım",
+      "topic": "Mövzu",
+      "author": "Müəllif",
+      "pages": "Səhifələr",
+      "status": "Status"
+    },
+    "contentType": {
+      "text": "Mətn",
+      "photo": "Foto",
+      "video": "Video",
+      "reel": "Reel",
+      "carousel": "Karusel",
+      "story": "Story",
+      "live": "Canlı yayım",
+      "link": "Keçid",
+      "audio": "Audio",
+      "other": "Digər"
+    },
+    "filters": {
+      "channel": "Kanal",
+      "allChannels": "Bütün kanallar",
+      "inbox": "Səhifə / hesab",
+      "allInboxes": "Bütün səhifələr və hesablar",
+      "postType": "Paylaşım növü",
+      "commentSettings": "Şərh parametrləri",
+      "hidden": "Gizlədilmiş şərhlər",
+      "notHidden": "Gizlədilməmiş şərhlər",
+      "phoneHidden": "Telefon nömrəli gizlədilmiş şərhlər",
+      "phoneNotHidden": "Telefon nömrəli gizlədilməmiş şərhlər",
+      "skipped": "Keçilmiş şərhlər",
+      "notSkipped": "Keçilməmiş şərhlər",
+      "sort": "Sırala",
+      "topics": "Mövzular",
+      "title": "Filtrlər",
+      "engagement": "Qarşılıqlı əlaqə",
+      "topicSearch": "Mövzu axtar",
+      "author": "Müəllif",
+      "allAuthors": "Bütün müəlliflər"
+    },
+    "postType": {
+      "all": "Hamısı",
+      "photo": "Foto",
+      "video": "Video",
+      "post": "Paylaşım",
+      "pastLive": "Bitmiş canlı yayım",
+      "liveNow": "İndi canlı"
+    },
+    "sort": {
+      "newest": "Ən yeni",
+      "mostComments": "Ən çox şərh",
+      "fewestComments": "Ən az şərh",
+      "mostPhones": "Ən çox telefon nömrəsi",
+      "fewestPhones": "Ən az telefon nömrəsi",
+      "mostEngagement": "Ən çox qarşılıqlı əlaqə",
+      "leastEngagement": "Ən az qarşılıqlı əlaqə",
+      "mostShares": "Ən çox paylaşma",
+      "fewestShares": "Ən az paylaşma"
+    },
+    "settings": {
+      "hideComments": "Bütün şərhləri gizlət",
+      "hidePhoneComments": "Telefon nömrəli şərhləri gizlət",
+      "skipComments": "Şərhləri keç (oxunmuş kimi işarələ)",
+      "unavailable": "Bu kanal hələ paylaşım üzrə şərh parametrlərini dəstəkləmir."
+    },
+    "sync": {
+      "refresh": "Paylaşımları yenilə",
+      "started": "Paylaşımlar sinxronlaşdırılır. Yeniləri tezliklə görünəcək.",
+      "alreadyRunning": "Sinxronizasiya artıq gedir və ya indicə bitib.",
+      "failedCount": "{count, plural, one {# səhifə sinxronlaşdırıla bilmədi} other {# səhifə sinxronlaşdırıla bilmədi}}",
+      "reconnect": "Kanalı yenidən qoş",
+      "reconnectWithPermission": "Yenidən qoşulun və yazılara girişə icazə verin",
+      "retry": "Yenidən cəhd edin"
+    },
+    "topics": {
+      "edit": "Mövzuları redaktə et",
+      "newPlaceholder": "Yeni mövzu adı",
+      "empty": "Hələ mövzu yoxdur. Yaratmaq üçün ad yazın."
+    },
+    "emptyHint": "Başqa filtr sınayın və ya “Şərhi olmayan paylaşımları da göstər” seçimini aktiv edin.",
+    "actions": {
+      "viewComments": "Şərhlərə bax",
+      "viewOriginal": "Orijinal paylaşıma bax",
+      "refreshPost": "Kanaldan yenilə",
+      "refreshRemoved": "Bu paylaşım artıq kanalda mövcud deyil, ona görə gizlədildi.",
+      "refreshUnavailable": "Paylaşımı kanaldan oxumaq mümkün olmadı. Sonra yenidən cəhd edin.",
+      "refreshRateLimited": "Kanal sorğuların yavaşladılmasını istədi. Bir neçə dəqiqə sonra yenidən cəhd edin.",
+      "refreshCooldown": "Bu paylaşım indicə yeniləndi. Bir dəqiqə sonra yenidən cəhd edin.",
+      "downloadPhones": "Telefon nömrələrini yüklə",
+      "downloadComments": "Şərhləri yüklə",
+      "viewDetails": "Ətraflı bax"
+    },
+    "merge": {
+      "title": "Paylaşımları birləşdir",
+      "selectAll": "Hamısını seç",
+      "selected": "{count}/{max} seçildi",
+      "confirm": "Paylaşımları birləşdir"
+    },
+    "comments": {
+      "title": "Bu paylaşımın bütün şərhləri",
+      "mergedTitle": "{count} paylaşımdan birləşdirilmiş şərhlər",
+      "searchPlaceholder": "Şərhlərdə axtar",
+      "phoneOnly": "Telefon nömrəli",
+      "empty": "Göstəriləcək şərh yoxdur.",
+      "loadOlder": "Daha köhnə şərhləri yüklə",
+      "like": "Şərhi bəyən",
+      "delete": "Şərhi sil",
+      "confirmDelete": "Silmək üçün yenidən klikləyin",
+      "hidden": "Gizlədilib",
+      "unknownAuthor": "Naməlum müştəri"
+    },
+    "state": {
+      "noChannelTitle": "Qoşulmuş kanal yoxdur",
+      "noChannelHint": "Paylaşımlarını burada görmək üçün Messenger, Instagram, Threads və ya TikTok kanalı qoşun.",
+      "connectChannel": "Kanal qoş",
+      "neverSyncedTitle": "Paylaşımlar hələ yüklənməyib",
+      "neverSyncedHint": "Qoşulmuş kanallarınızın paylaşımlarını yükləyin. Arxa planda işləyir və bir neçə dəqiqə çəkə bilər.",
+      "loadPosts": "Paylaşımları yüklə"
+    },
+    "counts": {
+      "comments": "Şərhlər",
+      "reactions": "Reaksiyalar",
+      "shares": "Paylaşmalar",
+      "phones": "Telefon nömrəli şərhlər"
+    },
+    "tabs": {
+      "posts": "Paylaşımlar",
+      "calendar": "Təqvim",
+      "connect": "Qoş",
+      "feeds": "Lentlər",
+      "analytics": "Analitika"
+    },
+    "calendar": {
+      "views": {
+        "month": "Ay",
+        "week": "Həftə",
+        "day": "Gün",
+        "list": "Siyahı"
+      },
+      "viewLabel": "Təqvim görünüşü",
+      "previous": "Əvvəlki dövr",
+      "next": "Növbəti dövr",
+      "today": "Bu gün",
+      "network": "Şəbəkə",
+      "destination": "Səhifə və ya profil",
+      "allNetworks": "Bütün şəbəkələr",
+      "allDestinations": "Bütün səhifələr və profillər",
+      "noText": "(Mətn yoxdur)",
+      "noDate": "Tarix yoxdur",
+      "noDateEmpty": "Tarixsiz qaralamalar burada görünür. Paylaşımı qaralamalara qaytarmaq üçün bura buraxın.",
+      "newPostOn": "{date} tarixində yeni paylaşım",
+      "more": "daha {count}",
+      "emptyDay": "Bu gün üçün paylaşım yoxdur.",
+      "emptyHint": "Bu dövrdə heç nə planlaşdırılmayıb.",
+      "loading": "Yüklənir…",
+      "loadError": "Təqvim yüklənə bilmədi.",
+      "retry": "Yenidən cəhd et",
+      "readOnly": "Bu iş sahəsi yalnız oxunuşdur, ona görə paylaşımları köçürmək və ya yaratmaq olmur.",
+      "truncated": "Bu dövrdəki paylaşımların yalnız bir hissəsi göstərilir. Dövrü daraldın və ya şəbəkə ya da hesab üzrə süzün.",
+      "openPost": "Paylaşımı aç",
+      "moveToDrafts": "Qaralamalara köçür",
+      "reschedule": "Yenidən planlaşdır",
+      "schedule": "Planlaşdır",
+      "rescheduleLabel": "Dərc vaxtı",
+      "scheduleLabel": "Planlaşdırma vaxtı",
+      "pickTime": "Tarix və vaxt seçin",
+      "status": {
+        "draft": "Qaralama"
+      },
+      "errors": {
+        "past": "İndidən ən azı 15 dəqiqə sonrası üçün vaxt seçin.",
+        "cannotUnschedule": "Yalnız planlaşdırılmış paylaşım qaralamalara qaytarıla bilər."
+      },
+      "list": {
+        "filterLabel": "Statusa görə süz",
+        "filterCount": "{label}, {count, plural, one {# paylaşım} other {# paylaşım}}",
+        "filters": {
+          "all": "Hamısı",
+          "drafts": "Qaralamalar",
+          "scheduled": "Planlaşdırılıb",
+          "published": "Paylaşıldı",
+          "needsAttention": "Diqqət tələb edir"
+        },
+        "empty": {
+          "all": "Paylaşım yoxdur",
+          "drafts": "Qaralama yoxdur",
+          "scheduled": "Planlaşdırılmış paylaşım yoxdur",
+          "published": "Paylaşılmış paylaşım yoxdur",
+          "needsAttention": "Diqqət tələb edən heç nə yoxdur"
+        },
+        "loadMore": "Daha çox yüklə"
+      },
+      "freeSlots": {
+        "label": "Boş paylaşım saatları",
+        "compose": "Saat {time} üçün yeni yazı",
+        "truncated": "Daha çox boş vaxt göstərilmir"
+      }
+    },
+    "connect": {
+      "title": "Qoş",
+      "connectNetwork": "{network} şəbəkəsini qoşun",
+      "reconnect": "Yenidən qoşul",
+      "reconnectName": "{label}: {name}",
+      "facebookReconnectHint": "Bir Səhifəni yenidən qoşmaq eyni Facebook girişinin bütün Səhifələrini yeniləyir.",
+      "comingSoon": "Hələ mövcud deyil",
+      "connectedAlready": "{count, plural, one {# hesab qoşulub. Başqasını əlavə etmək üçün klikləyin.} other {# hesab qoşulub. Başqasını əlavə etmək üçün klikləyin.}}",
+      "truncated": "İlk {count} səhifə göstərilir.",
+      "tiktokTitle": "TikTok paylaşım hesabları",
+      "pageCount": "{count, plural, one {# səhifə} other {# səhifə}}",
+      "verify": "Yoxla",
+      "verified": "Hesab yoxlandı.",
+      "syncDestinations": "Səhifələri sinxronlaşdır",
+      "destinationsSynced": "Səhifələr və profillər yeniləndi.",
+      "disconnect": "Əlaqəni kəs",
+      "confirmDisconnect": "Əlaqəni kəsmək üçün yenidən klikləyin",
+      "disconnected": "Hesabın əlaqəsi kəsildi.",
+      "missingScopes": "Çatışmayan icazələr: {scopes}. Vermək üçün yenidən qoşun.",
+      "lastVerified": "{date} tarixində yoxlandı",
+      "status": {
+        "connected": "Qoşulub",
+        "needsReauth": "Yenidən qoşulmalıdır",
+        "disconnected": "Əlaqə kəsilib"
+      },
+      "reason": {
+        "tokenRejected": "Platforma saxlanmış girişi rədd etdi. Hesabı yenidən qoşun.",
+        "tokenExpired": "Saxlanmış girişin müddəti bitdi. Hesabı yenidən qoşun.",
+        "refreshRejected": "Platforma girişin yenilənməsindən imtina etdi. Hesabı yenidən qoşun.",
+        "permissionNotGranted": "Bəzi icazələr çatışmır. Vermək üçün hesabı yenidən qoşun."
+      },
+      "emptyTitle": "Hələ qoşulmuş kanal yoxdur",
+      "emptyAction": "Kanallara keç",
+      "schedule": {
+        "open": "Paylaşım saatları",
+        "title": "{name} üçün paylaşım saatları",
+        "description": "Növbəyə əlavə edilən yazı bu siyahıdakı növbəti boş saatı götürür.",
+        "timezone": "Saat qurşağı: {timezone}",
+        "maxTimes": "Gündə ən çox {count} saat",
+        "dayOn": "{day} günü paylaş",
+        "noTimes": "Saat yoxdur",
+        "addTime": "Saat əlavə et",
+        "timeLabel": "{day} üçün yeni saat",
+        "removeTime": "{time} saatını sil",
+        "copyTo": "Digər günlərə kopyala",
+        "copyApply": "Kopyala",
+        "save": "Yadda saxla",
+        "saved": "Paylaşım saatları yadda saxlanıldı.",
+        "reflowMoved": "{count, plural, one {Növbədəki # yazı yeni saata köçürüldü.} other {Növbədəki # yazı yeni saatlara köçürüldü.}}",
+        "reflowDetached": "{count, plural, one {Növbədəki # yazının paylaşım saatı qalmadı. Saatını saxlayır, lakin artıq növbədə deyil (indi fərdi).} other {Növbədəki # yazının paylaşım saatı qalmadı. Saatlarını saxlayırlar, lakin artıq növbədə deyillər (indi fərdi).}}"
+      }
+    },
+    "detail": {
+      "title": "Paylaşımın təfərrüatları",
+      "caption": "Mətn",
+      "metrics": "Qarşılıqlı əlaqə",
+      "metricsUnavailable": "Bu kanal bu rəqəmləri bildirmir.",
+      "views": "Baxışlar",
+      "settings": "Şərh parametrləri",
+      "settingsHint": "Bu parametrlər paylaşımın yeni şərhlərinə aiddir. Mövcud şərhlər dəyişmir.",
+      "skipCommentsHint": "Hər yeni şərhi oxunmuş kimi işarələyir. Avtomatlaşdırmalar işləməyə davam edir.",
+      "hideCommentsHint": "Paylaşımın hər yeni şərhini gizlədir.",
+      "hidePhoneCommentsHint": "Telefon nömrəsi olan yeni şərhləri gizlədir.",
+      "topics": "Mövzular",
+      "info": "Məlumat",
+      "postId": "Paylaşım ID-si",
+      "channel": "Kanal",
+      "contentType": "Növ",
+      "author": "Müəllif",
+      "publishedAt": "Yayımlandı",
+      "metricsUpdated": "Rəqəmlər yeniləndi",
+      "never": "Hələ ölçülməyib",
+      "ownerPage": "Səhifə",
+      "ownerAccount": "Hesab"
+    },
+    "feeds": {
+      "title": "Lentlərdən avtomatik paylaşım",
+      "description": "RSS və ya Atom lentindəki yeni elementləri paylaşımlara çevirin. İlk yoxlama yalnız lentdə artıq olanları qeyd edir.",
+      "add": "Lent əlavə et",
+      "empty": "Hələ lent yoxdur. Yeni məqalələri avtomatik paylaşıma çevirmək üçün bir lent əlavə edin.",
+      "status": {
+        "active": "Aktiv",
+        "paused": "Dayandırılıb",
+        "error": "Dayandırılıb – lent xətası"
+      },
+      "mode": {
+        "draft": "Qaralama kimi saxla",
+        "queue": "Avtomatik növbəyə əlavə et"
+      },
+      "lastChecked": "Son yoxlama: {time}",
+      "neverChecked": "Hələ yoxlanmayıb",
+      "firstCheckPending": "İlk yoxlama yalnız lentdə artıq olanları qeyd edir; onlardan paylaşım yaradılmır.",
+      "every": "Hər {minutes} dəq",
+      "destinations": "{count, plural, one {# təyinat} other {# təyinat}}",
+      "actions": {
+        "checkNow": "İndi yoxla",
+        "pause": "Dayandır",
+        "resume": "Davam et",
+        "edit": "Redaktə et",
+        "delete": "Sil",
+        "items": "Elementlər",
+        "sendTest": "Test göndər"
+      },
+      "toast": {
+        "checkStarted": "Yoxlama başladı",
+        "paused": "Lent dayandırıldı",
+        "resumed": "Lent davam etdirildi",
+        "deleted": "Lent silindi",
+        "saved": "Lent saxlanıldı",
+        "testDraftCreated": "Test layihəsi yaradıldı",
+        "openDraft": "Layihəni aç",
+        "testUsedTemplate": "Süni intellekt yaza bilmədi, ona görə mətn şablonu istifadə olundu."
+      },
+      "deleteConfirm": "Bu lent və elementlərinin tarixçəsi silinsin? Artıq yaradılmış paylaşımlar qalır.",
+      "error": {
+        "blocked": "Lent ünvanına icazə verilmir.",
+        "timeout": "Lent cavab verməyə çox uzun çəkdi.",
+        "tooLarge": "Lent 2 MB-dan böyükdür.",
+        "badStatus": "Lent xəta ilə cavab verdi.",
+        "badContentType": "Bu ünvan RSS və ya Atom lenti deyil.",
+        "unreachable": "Lentə çatmaq mümkün olmadı.",
+        "tooManyRedirects": "Lent çox dəfə yönləndirir.",
+        "invalidFeed": "Lenti oxumaq mümkün olmadı.",
+        "internal": "Lent yoxlanarkən xəta baş verdi.",
+        "postRefused": "Paylaşım yaradıla bilmədi (məsələn, boş paylaşım vaxtı yoxdur və ya iş sahəsi bloklanıb). Növbəti yoxlama yenidən cəhd edəcək."
+      },
+      "apiError": {
+        "feedUrlTaken": "Bu lent artıq əlavə edilib.",
+        "feedCheckCooldown": "Lenti əl ilə yalnız 5 dəqiqədə bir dəfə yoxlamaq olar.",
+        "feedPreviewRateLimited": "Çox sayda önizləmə. Sonra yenidən cəhd edin.",
+        "feedNotParseable": "Bu ünvan RSS və ya Atom lenti deyil. Vebsayt ünvanına /feed və ya /rss əlavə etməyə çalışın.",
+        "feedUnreachable": "Bu ünvana çatmaq mümkün olmadı. Ünvanı yoxlayıb yenidən cəhd edin.",
+        "feedTestRateLimited": "Çox sayda test yazısı. Sonra yenidən cəhd edin.",
+        "feedHasNoItems": "Lentdə hələ element yoxdur.",
+        "feedFetchRateLimited": "Lent ünvanı yoxlamaları çox oldu. Bir az sonra yenidən cəhd edin.",
+        "feedCheckInProgress": "Bu lent üçün yoxlama artıq növbədə gözləyir və ya işləyir."
+      },
+      "form": {
+        "createTitle": "Lent əlavə et",
+        "editTitle": "Lenti redaktə et",
+        "name": "Ad",
+        "url": "Lent ünvanı",
+        "urlPlaceholder": "https://example.com/feed.xml",
+        "preview": "Önizləmə",
+        "previewEmpty": "Bu lentdə element tapılmadı.",
+        "destinations": "Paylaşılacaq yer",
+        "noDestinations": "Əvvəlcə sosial şəbəkə hesabını qoşun.",
+        "interval": "Yoxlama tezliyi",
+        "dailyCap": "Gündə maksimum paylaşım sayı",
+        "mode": "Yeni elementlər",
+        "modeDraftHelp": "Hər yeni element nəzərdən keçirməyiniz üçün qaralama olur.",
+        "modeQueueHelp": "Hər yeni element təyinatın paylaşım cədvəli üzrə növbəyə əlavə olunur və nəzərdən keçirilmədən dərc edilir.",
+        "template": "Paylaşım mətni",
+        "templateHelp": "İstifadə edə biləcəyiniz dəyişənlər: {variables}",
+        "save": "Saxla",
+        "cancel": "Ləğv et",
+        "didYouMean": "{url} nəzərdə tutulub?",
+        "useSuggestion": "İstifadə et",
+        "aiWrite": "Hər yazını süni intellektlə yaz",
+        "aiWriteHelp": "Süni intellekt mətni elementin başlığı, xülasəsi və linkindən yazır. Alınmasa, aşağıdakı mətn şablonu istifadə olunur.",
+        "aiInstructions": "Süni intellekt üçün əlavə təlimatlar (ixtiyari)",
+        "aiInstructionsHelp": "Məsələn: səmimi ton, mağazanın adını qeyd et. 300 simvola qədər.",
+        "postLatestOnFirstCheck": "İlk yoxlamada ən yeni elementi paylaş",
+        "postLatestOnFirstCheckHelp": "Bu seçilməsə, ilk yoxlama yalnız lentdə artıq olanları qeyd edir.",
+        "contentTitle": "Yazı məzmunu",
+        "templateInsert": "Sahə əlavə et",
+        "templateVariables": "Elementin sahələri",
+        "templateFeedFields": "Bu lentdə tapılan sahələr",
+        "templatePresets": "Hazır şablondan başla",
+        "presetTitleLink": "Başlıq və keçid",
+        "presetSummaryHashtags": "Başlıq, xülasə, keçid və heşteqlər",
+        "presetProduct": "Məhsul: başlıq, qiymət və keçid",
+        "templateLegacy": "Bu lent köhnə {token} işarələrindən istifadə edir və siz çevirənə qədər əvvəlki kimi paylaşır.",
+        "templateConvert": "Yeni sintaksisə çevir",
+        "templateHint": "Sahələri menyudan əlavə edin və ya yazın, məsələn {example}. İstifadə edə biləcəyiniz filtrlər: {filters}.",
+        "templateProblem": "Sətir {line}, sütun {column}: {message}",
+        "previewTitle": "Önbaxış",
+        "previewSample": "Nümunə element",
+        "previewHint": "Yazının necə görünəcəyini görmək üçün lent ünvanına önbaxın.",
+        "previewCharacters": "{network}: {count} simvol",
+        "previewDropped": "Bu yazıdan çıxarılan təyinatlar: {count}",
+        "previewFiltered": "Filtrlənib: {reason}",
+        "previewSkipped": "Bu element atlanacaq.",
+        "previewNoPicture": "Şəkil yoxdur",
+        "mediaTitle": "Şəkillər",
+        "mediaMode": "Şəkil mənbəyi",
+        "mediaModeAuto": "Lentdən (avtomatik)",
+        "mediaModeField": "Sahədən və ya ünvandan",
+        "mediaModeNone": "Şəkil yoxdur",
+        "mediaField": "Sahə və ya ünvan",
+        "mediaFieldHelp": "Şəkil ünvanını verən şablon, məsələn {example}.",
+        "mediaLibrary": "Ehtiyat şəkillər",
+        "mediaLibraryHelp": "Media Kitabxanasından; elementin öz şəkli olmadıqda istifadə olunur.",
+        "mediaLibraryAdd": "Şəkil əlavə et",
+        "mediaRemove": "Sil",
+        "postAs": "Bu formada paylaş",
+        "postAsPhoto": "Şəkilli yazı",
+        "postAsLink": "Keçid",
+        "postAsText": "Yalnız mətn",
+        "postAsHelpLink": "Keçid: Facebook və Threads-də məqalənin şəkli ilə önizləmə kartı.",
+        "postAsHelpPhoto": "Şəkilli paylaşım: elementin şəkli mətnlə birlikdə paylaşılır.",
+        "postAsHelpText": "Yalnız mətn: yalnız sözlər və ünvan, şəkilsiz.",
+        "postAsTextFacebookWarning": "Facebook mətnin içindəki keçid üçün önizləmə kartı (şəkil) yaratmır. Məqalə şəkli olan kart üçün Keçid seçin.",
+        "noImageFallback": "Elementin şəkli olmadıqda",
+        "fallbackLink": "Keçidi paylaş",
+        "fallbackText": "Yalnız mətn",
+        "fallbackSkip": "Elementi atla",
+        "filtersTitle": "Filtrlər",
+        "filterInclude": "Bunlardan birini ehtiva edir",
+        "filterExclude": "Bunların heç birini ehtiva etmir",
+        "filterCategories": "Kateqoriya bunlardan biridir",
+        "filterTermsHelp": "Söz yazıb Enter basın. Böyük hərflər və diakritiklər nəzərə alınmır.",
+        "filterRequireImage": "Yalnız şəkli olan elementlər",
+        "filterMaxAge": "Yalnız bundan yeni elementlər (saat)",
+        "networkTexts": "Hər şəbəkə üçün fərqli mətn",
+        "networkTextsHelp": "Bir şəbəkə üçün ayrıca mətn yazın; mətni olmayan şəbəkələr ümumi mətndən istifadə edir. Şəbəkənin qəbul etmədiyi mətn atlanır, heç vaxt qısaldılmır. Süni intellektin yazdığı paylaşımlar bir ümumi mətndən istifadə edir.",
+        "networkTabShared": "Ümumi",
+        "networkTextUsesShared": "Bu şəbəkə ümumi mətndən istifadə edir.",
+        "networkTextClear": "Ümumi mətni istifadə et",
+        "networkTextAria": "{network} üçün mətn",
+        "fetchArticleImage": "Məqalə səhifəsində şəkil axtar",
+        "fetchArticleImageHelp": "Elementin şəkli olmadıqda, onun məqalə səhifəsi əsas şəkli (og:image) üçün bir dəfə oxunur. Yalnız paylaşılacaq elementlər üçün; oxuna bilməyən səhifə paylaşımı heç vaxt bloklamır.",
+        "previewArticlePicture": "Məqalə səhifəsi oxunacaq"
+      },
+      "items": {
+        "title": "{name} elementləri",
+        "empty": "Hələ heç bir element yoxlanmayıb.",
+        "loadMore": "Daha çox yüklə",
+        "openPost": "Paylaşımı aç",
+        "reasons": {
+          "existing": "Əlavə edildiyi zaman artıq lentdə idi",
+          "undated": "Dərc tarixi yoxdur",
+          "tooOld": "Çox köhnədir",
+          "perRunLimit": "Yoxlama başına limiti aşır",
+          "noDestination": "Təyinat seçilməyib",
+          "emptyText": "Paylaşımın mətni boşdur",
+          "textTooLong": "Paylaşımın mətni çox uzundur",
+          "invalid": "Paylaşım rədd edildi",
+          "other": "Element istifadə edilə bilmədi",
+          "aiFallback": "Şablondan yazıldı (süni intellekt yaza bilmədi)",
+          "excludedKeyword": "İstisna edilmiş söz var",
+          "missingKeyword": "Tələb olunan sözlərdən heç biri yoxdur",
+          "category": "Seçilmiş kateqoriyalarda deyil",
+          "noImage": "Şəkil yoxdur",
+          "tooOldForFilter": "Yaş filtrindən köhnədir",
+          "undatedForFilter": "Yaş filtrini yoxlamaq üçün tarix yoxdur",
+          "imageFailed": "Şəkildən istifadə etmək mümkün olmadı",
+          "noImageFallback": "Şəkilsiz paylaşıldı",
+          "droppedTargets": "Bəzi təyinatlar kənarda qaldı",
+          "templateError": "Şablonu göstərmək mümkün olmadı",
+          "noDestinationAccepts": "Heç bir təyinat bu yazını daşıya bilmir",
+          "issueTextRequired": "Paylaşımın mətni yoxdur",
+          "issueTextTooLong": "Mətn şəbəkə üçün çox uzundur",
+          "issueLinkNotSupported": "Şəbəkə keçidi qəbul etmir",
+          "issueLinkRequired": "Şəbəkə keçid tələb edir",
+          "issueTooManyLinks": "Şəbəkənin icazə verdiyindən çox keçid",
+          "issueContentType": "Şəbəkə bu cür paylaşımı dərc etmir",
+          "issueMedia": "Şəkil şəbəkənin qaydalarına uyğun deyil",
+          "issueOptions": "Şəbəkə ayarı yararsızdır",
+          "issueParts": "Şəbəkə davam hissələrini qəbul etmir",
+          "issueDestination": "Təyinat hazırda paylaşım edə bilmir",
+          "alreadyPosted": "Bu element üçün paylaşım artıq mövcuddur"
+        },
+        "createPost": "Yazı yarat",
+        "picture": "Şəkil: {source}",
+        "dropped": "Kənarda qalan: {count}",
+        "imageSources": {
+          "enclosure": "Şəkil qoşması",
+          "mediaContent": "Media məzmunu",
+          "mediaThumbnail": "Miniatür",
+          "itunesImage": "Podkast üz qabığı",
+          "contentImage": "Mətndəki şəkil",
+          "jsonFeed": "JSON Feed şəkli",
+          "field": "Sahə və ya ünvan",
+          "library": "Media Kitabxanası",
+          "article": "Məqalə səhifəsi (og:image)"
+        },
+        "imageErrors": {
+          "unreachable": "Şəkli yükləmək mümkün olmadı.",
+          "blocked": "Şəkil ünvanına icazə verilmir.",
+          "tooBig": "Şəkil çox böyükdür.",
+          "notImage": "Fayl istifadə edilə bilən şəkil deyil.",
+          "storage": "Şəkli saxlamaq mümkün olmadı.",
+          "articleUnreachable": "Məqalə səhifəsi oxuna bilmədi.",
+          "articleNoImage": "Məqalə səhifəsində şəkil göstərilməyib."
+        }
+      },
+      "outcome": {
+        "created": "Paylaşım yaradıldı",
+        "skippedOld": "Atlandı: artıq var və ya çox köhnədir",
+        "skippedInvalid": "Atlandı: rədd edildi",
+        "skippedFiltered": "Atlandı: filtrlənib",
+        "skippedNoImage": "Atlandı: şəkil yoxdur"
+      },
+      "deleteConfirmTitle": "“{name}” silinsin?",
+      "sendTestConfirm": {
+        "title": "Test paylaşımı göndərilsin?",
+        "description": "Bu lentin ən yeni elementindən, lentin yazacağı kimi bir qaralama yaradılır. Heç nə dərc olunmur; qaralamanı açıb yoxlaya bilərsiniz."
+      },
+      "bulkDelete": {
+        "selectAll": "Hamısını seç",
+        "selectFeed": "{name} seç",
+        "deleteSelected": "Seçilənləri sil ({count})",
+        "confirmTitle": "{count, plural, one {# lent silinsin?} other {# lent silinsin?}}",
+        "confirmDescription": "Seçilmiş lentlər və onların element tarixçəsi silinəcək. Artıq yaradılmış paylaşımlar qalır.",
+        "success": "{count, plural, one {# lent silindi} other {# lent silindi}}"
+      },
+      "columns": {
+        "name": "Lent",
+        "status": "Status",
+        "mode": "Rejim",
+        "schedule": "Yoxlama intervalı",
+        "destinations": "Təyinatlar",
+        "lastChecked": "Son yoxlama"
+      },
+      "filters": {
+        "search": "Lentlərdə axtar",
+        "searchPlaceholder": "Ad və ya lent ünvanı ilə axtar",
+        "status": "Statusa görə süz",
+        "mode": "Rejimə görə süz",
+        "destination": "Təyinata görə süz",
+        "allStatuses": "Bütün statuslar",
+        "allModes": "Bütün rejimlər",
+        "allDestinations": "Bütün təyinatlar",
+        "destinationsSelected": "{count, plural, one {# təyinat} other {# təyinat}}",
+        "noDestinations": "Süzmək üçün hələ təyinat yoxdur.",
+        "clear": "Süzgəcləri təmizlə",
+        "noMatch": "Bu süzgəclərə uyğun lent yoxdur."
+      },
+      "destinationsDialog": {
+        "title": "{name} lentinin təyinatları",
+        "removed": "Silinmiş təyinat",
+        "close": "Bağla",
+        "edit": "Təyinatları redaktə et"
+      },
+      "lastRun": {
+        "noNew": "Mənbədə yeni element yoxdur",
+        "skippedOnly": "Yeni elementlər atlandı (çox köhnə və ya filtrlə kənarlaşdırılıb)",
+        "stale": "Mənbə daha köhnə nüsxə qaytardı; tezliklə yenidən yoxlanılacaq",
+        "notModified": "Mənbə son yoxlamadan bəri dəyişməyib",
+        "created": "{count, plural, one {# paylaşım yaradıldı} other {# paylaşım yaradıldı}}",
+        "refused": "{count, plural, one {# element şəbəkə tərəfindən rədd edildi} other {# element şəbəkə tərəfindən rədd edildi}}",
+        "waiting": "{count, plural, one {# yeni element növbəti yoxlamanı gözləyir} other {# yeni element növbəti yoxlamanı gözləyir}}",
+        "dailyCap": "Gündəlik limitə çatıldı (24 saatda {cap}) — {count, plural, one {# yeni element gözləyir} other {# yeni element gözləyir}}",
+        "dailyCapUntil": "Gündəlik limitə çatıldı (24 saatda {cap}) — {count, plural, one {# yeni element gözləyir} other {# yeni element gözləyir}}. Növbəti yer boşalır: {until}"
+      }
+    },
+    "show": {
+      "label": "Göstər",
+      "channels": "Kanallarda"
+    },
+    "composed": {
+      "deleted": "Paylaşım silindi.",
+      "deleteTitle": "Bu paylaşım silinsin?",
+      "deleteDescription": "Qaralama birdəfəlik silinir. Planlaşdırılmış paylaşım ləğv edilir və dərc olunmayacaq."
+    },
+    "analytics": {
+      "title": "Paylaşım analitikası",
+      "filters": {
+        "title": "Analitika filtrləri",
+        "allContentTypes": "Bütün məzmun növləri",
+        "allTopics": "Bütün mövzular"
+      },
+      "metrics": {
+        "comments": "Şərhlər",
+        "reactions": "Reaksiyalar",
+        "shares": "Paylaşmalar",
+        "engagement": "Cəlbolunma",
+        "views": "Baxışlar"
+      },
+      "metricsLower": {
+        "comments": "şərhlər",
+        "reactions": "reaksiyalar",
+        "shares": "paylaşmalar",
+        "engagement": "cəlbolunma",
+        "views": "baxışlar"
+      },
+      "kpi": {
+        "title": "Əsas göstəricilər",
+        "notReported": "Bildirilmir",
+        "notReportedHint": "Bu kanal bu rəqəmi bildirmir.",
+        "vsPrevious": "əvvəlki dövrlə müqayisədə",
+        "noComparison": "Müqayisə mövcud deyil",
+        "previous": "Əvvəlki dövr: {value}",
+        "postsPublished": "{count, plural, one {Bu dövrdə # paylaşım dərc edilib} other {Bu dövrdə # paylaşım dərc edilib}}"
+      },
+      "chart": {
+        "title": "Günlük artım",
+        "description": "Günlük artım: {metricLower}",
+        "groupBy": "Qrafiki qruplaşdır",
+        "group": {
+          "none": "Cəmi",
+          "channel": "Kanala görə",
+          "inbox": "Səhifə və ya hesaba görə"
+        },
+        "other": "Digər",
+        "viewTable": "Cədvəl kimi göstər",
+        "hideTable": "Cədvəli gizlət",
+        "day": "Gün",
+        "summary": "{metric}: {from} – {to} arasında gündəlik artım, cəmi {total}.",
+        "empty": "Qeydə alınmış artım yoxdur",
+        "emptyHint": "Bu dövrdə dəyişiklik olmayıb və ya izləmə hələ başlamayıb."
+      },
+      "breakdown": {
+        "title": "Bölgü",
+        "description": "{metric}: kanal və ya səhifə üzrə artım",
+        "by": {
+          "channel": "Kanallar",
+          "inbox": "Səhifələr və hesablar"
+        },
+        "empty": "Bu filtrlər üçün məlumat yoxdur"
+      },
+      "topPosts": {
+        "title": "Ən yaxşı paylaşımlar",
+        "description": "{metricLower} üzrə sıralanıb",
+        "rankBy": "Sıralama meyarı",
+        "rank_gained": "Ən çox artan",
+        "rank_total": "Ən yüksək cəmi",
+        "rank": "#",
+        "post": "Paylaşım",
+        "channel": "Kanal",
+        "gained": "Artım",
+        "total": "Cəmi",
+        "published": "Dərc edilib",
+        "open": "Paylaşımı aç",
+        "noCaption": "Başlıq yoxdur",
+        "empty": "Sıralanacaq paylaşım yoxdur",
+        "emptyHint": "Paylaşımlar rəqəmləri izlənildikdən sonra burada görünəcək."
+      },
+      "bestTimes": {
+        "title": "Paylaşmaq üçün ən yaxşı vaxtlar",
+        "description": "Paylaşımlar eyni səhifənin adi paylaşımı ilə müqayisə edilir, saat qurşağı: {timezone}.",
+        "caption": "Həftənin günü və saata görə cəlbolunma xalı",
+        "cell": "{when}: xal {score}, {posts, plural, one {# paylaşım} other {# paylaşım}}",
+        "cellEmpty": "{when}: paylaşım yoxdur",
+        "legendLow": "Aşağı",
+        "legendHigh": "Yuxarı",
+        "legendTop": "Ən yaxşı vaxt aralıqları",
+        "scoreHint": "1,0 xalı eyni səhifənin tipik paylaşımına bərabərdir.",
+        "topHeading": "Ən güclü vaxt aralıqları",
+        "slotDetail": "Xal {score} · {posts, plural, one {# paylaşım} other {# paylaşım}}",
+        "insufficientTitle": "Hələ kifayət qədər məlumat yoxdur",
+        "insufficientHint": "Ən yaxşı vaxtlar üçün 90 ilə 3 gün əvvəl arasında dərc edilmiş ən azı {min} paylaşım lazımdır. Tapılan: {count}.",
+        "capped": "Yalnız ən son paylaşımlardan nümunə istifadə edilib."
+      },
+      "coverage": {
+        "noneTitle": "Hələ tarixçə yoxdur",
+        "partialTitle": "Tarixçə hələ formalaşır",
+        "fullTitle": "Paylaşımlarınızın yalnız bir hissəsi ölçülür",
+        "since": "Artım izləmənin başladığı {date} tarixindən hesablanır. Əvvəlki fəaliyyət daxil deyil.",
+        "sinceUnknown": "Artım izləmənin başladığı vaxtdan hesablanır. Əvvəlki fəaliyyət daxil deyil.",
+        "withHistory": "Son {posts} paylaşımdan {withHistory} üçün artım tarixçəsi var.",
+        "truncated": "Eyni anda ölçülə biləcəyindən çox paylaşım var; ən yenilər göstərilir."
+      },
+      "states": {
+        "error": "Bu bölməni yükləmək mümkün olmadı.",
+        "retry": "Yenidən cəhd et",
+        "noChannelHint": "Paylaşımların nəticələrini görmək üçün Messenger, Instagram, Threads və ya TikTok kanalı qoşun."
+      },
+      "perPost": {
+        "title": "Performans",
+        "description": "Kanalın bildirdiyi rəqəmlərin gündəlik dəyişməsi, gündəlik ölçmələrimizə əsasən.",
+        "metric": "Göstərici",
+        "notReported": "Bu kanal bunu bildirmir.",
+        "empty": "Hələ artım qeydə alınmayıb",
+        "since": "{date} tarixindən izlənir. Dəyişikliklər növbəti gündəlik ölçmədən sonra görünəcək.",
+        "notTracked": "Bu paylaşım hələ izlənmir.",
+        "summary": "{metric}: gündəlik artım, cəmi {total}.",
+        "totalNow": "bu dövrdə artım · cəmi {total}"
+      },
+      "composedPost": {
+        "reasons": {
+          "notPublished": "Hələ paylaşılmayıb.",
+          "notLinked": "Hələ kanalın paylaşımı ilə uyğunlaşdırılmayıb. Rəqəmlər uyğunlaşdıqdan sonra görünəcək.",
+          "networkNotSupported": "Bu şəbəkə paylaşım rəqəmlərini bildirmir.",
+          "removed": "Kanaldan silinib."
+        }
+      }
+    }
+  },
+  "socialAccounts": {
+    "errors": {
+      "providerNotSupported": "Bu şəbəkə hələ qoşula bilmir.",
+      "appNotConfigured": "Bu şəbəkənin platforma tətbiqi iş sahəniz üçün qurulmayıb."
+    },
+    "connectResult": {
+      "success": "Hesab qoşuldu.",
+      "cancelled": "Qoşulma ləğv edildi.",
+      "notFound": "Qoşulmanı tamamlamaq mümkün olmadı.",
+      "sessionExpired": "Qoşulma sessiyasının müddəti bitdi. Yenidən qoşulmağa cəhd edin.",
+      "permissionNotGranted": "Bu icazələr verilmədiyi üçün hesab qoşulmadı: {permissions}.",
+      "accountUnsupported": "Bu hesab növü paylaşım edə bilmir. Peşəkar hesabdan istifadə edin.",
+      "notSupported": "Bu şəbəkə hələ qoşula bilmir.",
+      "failed": "Hesabı qoşmaq mümkün olmadı. Yenidən cəhd edin."
+    }
+  },
+  "composer": {
+    "publishTo": "Bura paylaş",
+    "reconnect": "Yenidən qoş",
+    "noDestinations": "Qoşulmuş heç bir səhifə və ya profil hələ paylaşım edə bilmir.",
+    "sharedContent": "Ortaq məzmun",
+    "text": "Paylaşımın mətni",
+    "textPlaceholder": "Paylaşımınızı yazın",
+    "link": "Keçid",
+    "linkPlaceholder": "https://example.com",
+    "linkInvalid": "https:// ilə başlayan tam keçid daxil edin",
+    "removeMedia": "Faylı sil",
+    "addMedia": "Foto və ya video əlavə et",
+    "removeDestination": "Təyinatı sil",
+    "customise": "Bu kanal üçün fərdiləşdir",
+    "usesSharedContent": "Ortaq məzmundan istifadə edir",
+    "channelText": "Bu kanal üçün mətn",
+    "channelTextPlaceholder": "Ortaq mətndən istifadə üçün boş saxlayın",
+    "contentType": "Məzmun növü",
+    "previewEmpty": "Önizləmə üçün təyinat seçin.",
+    "noText": "Mətn yoxdur",
+    "justNow": "İndicə",
+    "linkInCaption": "Link başlığın sonuna əlavə olunacaq.",
+    "previewMediaAlt": "Əlavə olunmuş fayl {index}",
+    "previewMoreMedia": "+{count}",
+    "previewSlideLabel": "Slayd {current} / {total}",
+    "previewPrevious": "Əvvəlki slayd",
+    "previewNext": "Növbəti slayd",
+    "publishNow": "İndi paylaş",
+    "newPost": "Yeni paylaşım",
+    "draftSaved": "Qaralama saxlanıldı",
+    "noTargets": "Başlamaq üçün ən azı bir təyinat seçin.",
+    "preview": "Önizləmə",
+    "previewError": "Önizləməni yeniləmək mümkün olmadı.",
+    "issueCount": "Düzəldiləcək problemlər: {count}",
+    "saveDraft": "Qaralamanı saxla",
+    "retry": "Yenidən cəhd et",
+    "noAccountsTitle": "Qoşulmuş hesab yoxdur",
+    "noAccountsHint": "Yazı hazırlamağa başlamaq üçün Qoşulma tabında hesab qoşun.",
+    "goToAccounts": "Qoşulmaya keç",
+    "notEditable": "Bu paylaşımı artıq redaktə etmək olmaz.",
+    "options": {
+      "shareToFeed": "Lentdə də paylaş",
+      "title": "Başlıq",
+      "thumbOffsetMs": "Üz qabığı kadrı (millisaniyə)",
+      "privacyLevel": "Bu videonu kim görə bilər",
+      "allowComment": "Şərh",
+      "allowDuet": "Düet",
+      "allowStitch": "Stitch",
+      "commercialContent": "Kommersiya məzmununu bəyan et",
+      "brandOrganic": "Brendiniz",
+      "brandContent": "Brendli məzmun",
+      "isAigc": "Süni intellekt məzmunu kimi işarələ",
+      "coverTimestampMs": "Üz qabığı kadrı (millisaniyə)"
+    },
+    "contentTypes": {
+      "text": "Mətn",
+      "link": "Keçid",
+      "image": "Şəkil",
+      "video": "Video",
+      "reel": "Reel",
+      "carousel": "Karusel",
+      "story": "Story"
+    },
+    "issues": {
+      "accountDisconnected": "Bu hesabın bağlantısı kəsilib.",
+      "accountNeedsReauth": "Bu hesab yenidən qoşulmalıdır.",
+      "inboxDisconnected": "Bu kanalın bağlantısı kəsilib.",
+      "inboxNeedsReconnect": "Bu kanalın bağlantısının müddəti bitib. Yenidən qoşun.",
+      "publishPermissionMissing": "Bu kanal üçün paylaşım icazəsi verilməyib. Paylaşıma icazə vermək üçün yenidən qoşun.",
+      "contentTypeDisabled": "Bu məzmun növü hələ əlçatan deyil.",
+      "contentTypeNotSupported": "Bu şəbəkə bu məzmun növünü dəstəkləmir.",
+      "destinationInactive": "Bu təyinat söndürülüb.",
+      "destinationNotFound": "Bu təyinat tapılmadı.",
+      "linkNotSupported": "Bu məzmun növündə keçid ola bilməz.",
+      "linkRequired": "Keçid tələb olunur.",
+      "mediaFormatNotSupported": "Dəstəklənməyən fayl formatı var.",
+      "mediaKindNotAllowed": "Burada icazə verilməyən fayl növü var.",
+      "mediaTooFew": "Daha çox fayl əlavə edin.",
+      "mediaTooLarge": "Bir fayl çox böyükdür.",
+      "mediaTooLong": "Bir video çox uzundur.",
+      "mediaTooMany": "Fayllar çox çoxdur.",
+      "mediaTooShort": "Bir video çox qısadır.",
+      "optionsInvalid": "Ayarlar yanlışdır.",
+      "textRequired": "Mətn tələb olunur.",
+      "textTooLong": "Mətn çox uzundur.",
+      "partsNotSupported": "Bu şəbəkə zəncir hissələrini dərc etmir.",
+      "firstCommentNotSupported": "Bu şəbəkə ilk şərhi dərc etmir.",
+      "tooManyParts": "Hissələrin sayı şəbəkənin icazə verdiyindən çoxdur.",
+      "partTextRequired": "Bu hissə üçün mətn lazımdır.",
+      "partTextTooLong": "Bu hissə şəbəkənin icazə verdiyindən uzundur.",
+      "tooManyLinks": "Bu mətndə Threads-in icazə verdiyindən çox keçid var (maksimum 5)."
+    },
+    "publishStarted": "Paylaşım başladı",
+    "publishRefused": "Paylaşım bu halda dərc edilə bilməz. Göstərilən problemləri düzəldin.",
+    "targetsStatus": "Təyinatlar",
+    "viewPost": "Paylaşıma bax",
+    "retryTarget": "Yenidən cəhd et",
+    "markPublished": "Paylaşılıb kimi işarələ",
+    "retryReviewTitle": "Artıq dərc olunmuş ola bilən paylaşım yenidən cəhd edilsin?",
+    "retryReviewDescription": "Bu paylaşım artıq dərc olunmuş ola bilər. Yenidən cəhd onu ikinci dəfə dərc edə bilər. Əvvəlcə səhifəni yoxlayın.",
+    "retryReviewConfirm": "Yenə də yenidən cəhd et",
+    "status": {
+      "pending": "Gözləyir",
+      "publishing": "Paylaşılır",
+      "processing": "İşlənir",
+      "published": "Paylaşıldı",
+      "failed": "Uğursuz oldu",
+      "cancelled": "Ləğv edildi",
+      "needsReview": "Baxış tələb olunur"
+    },
+    "schedule": "Planlaşdır",
+    "scheduleAt": "Dərc vaxtı",
+    "pickTime": "Tarix və vaxt seçin",
+    "scheduleTooSoon": "İndidən ən azı 2 dəqiqə sonrası üçün vaxt seçin.",
+    "scheduled": "Paylaşım planlaşdırıldı.",
+    "repeatLabel": "Təkrarla",
+    "repeatHint": "Təkrarlanan yazı şablon kimi saxlanılır və özü heç vaxt dərc olunmur. Hər təkrarda bir kopya planlaşdırılır.",
+    "repeatInvalid": "Saxlamaq üçün təkrar ayarlarını tamamlayın.",
+    "repeatStateActive": "Təkrarlanır",
+    "repeatStatePaused": "Fasilədədir",
+    "repeatStateEnded": "Seriya bitdi",
+    "repeatNextRun": "Növbəti icra: {date}",
+    "repeatPause": "Fasilə ver",
+    "repeatResume": "Davam et",
+    "repeatEnd": "Seriyanı bitir",
+    "repeatUpdated": "Təkrar seriyası yeniləndi",
+    "repeatScheduleOff": "Planlaşdırma və dərc şablona deyil, hər kopyaya aiddir.",
+    "moveMediaEarlier": "Əvvələ keçir",
+    "moveMediaLater": "Sonraya keçir",
+    "removeFromChannels": "Kanallardan sil",
+    "removeFromChannelsTitle": "Bu paylaşım şəbəkələrdən silinsin?",
+    "removeFromChannelsDescription": "Dərc olunmuş paylaşım bunu dəstəkləyən bütün şəbəkələrdən silinir. Silmə funksiyası olmayan şəbəkələrdə qalır. Bu əməliyyatı geri qaytarmaq olmaz.",
+    "removeFromChannelsConfirm": "Sil",
+    "removeCancel": "Ləğv et",
+    "removeRequested": "{count, plural, one {# təyinat üçün silmə başladıldı.} other {# təyinat üçün silmə başladıldı.}}",
+    "removeUnsupported": "{count, plural, one {# təyinat şəbəkənin API-si ilə silinə bilmir; onu tətbiqdən silin.} other {# təyinat şəbəkələrin API-si ilə silinə bilmir; onları tətbiqlərdən silin.}}",
+    "removedFromChannel": "Şəbəkədən silindi",
+    "removalPermissionMissing": "Yazıların silinməsinə icazə vermək üçün bu hesabı yenidən qoşun.",
+    "postMessageQuotaExceeded": "Bu hesabın mesaj kvotası bitib, ona görə bu yazı dərc edilmədi. Planı yüksəldin və ya növbəti ödəniş dövrünü gözləyin, sonra yenidən cəhd edin.",
+    "tiktokLoading": "TikTok hesab parametrləri yüklənir…",
+    "tiktokUnavailable": "TikTok hesab parametrləri yüklənə bilmədi. Yenidən cəhd edin.",
+    "tiktokCreator": "TikTok hesabına paylaşılır: {nickname}",
+    "tiktokCannotPost": "Bu TikTok hesabı hazırda paylaşım edə bilmir. Sonra yenidən cəhd edin.",
+    "tiktokPrivacyPlaceholder": "Kimin görə biləcəyini seçin",
+    "tiktokInteractions": "Başqalarına icazə ver",
+    "tiktokInteractionDisabled": "Bu hesabın TikTok parametrlərində söndürülüb",
+    "tiktokYourBrand": "Brendiniz",
+    "tiktokBrandedContent": "Brendli məzmun",
+    "tiktokLabelPromotional": "Videonuz “Tanıtım məzmunu” kimi işarələnəcək.",
+    "tiktokLabelPaid": "Videonuz “Ödənişli tərəfdaşlıq” kimi işarələnəcək.",
+    "tiktokCommercialRequired": "Məzmununuzun özünüzü, üçüncü tərəfi və ya hər ikisini təbliğ edib-etmədiyini göstərin.",
+    "tiktokBrandedNotPrivate": "Brendli məzmunun görünürlüyü məxfi ola bilməz.",
+    "tiktokConsentMusic": "Paylaşmaqla TikTok-un <music>Musiqidən istifadə təsdiqi</music> ilə razılaşırsınız.",
+    "tiktokConsentBranded": "Paylaşmaqla TikTok-un <branded>Brendli məzmun siyasəti</branded> və <music>Musiqidən istifadə təsdiqi</music> ilə razılaşırsınız.",
+    "tiktokMaxDuration": "Bu hesabın paylaşa biləcəyi ən uzun video {seconds} saniyədir.",
+    "tiktokProcessingNote": "Dərc etdikdən sonra videonun emalı və profildə görünməsi bir neçə dəqiqə çəkə bilər.",
+    "tiktokPrivacy": {
+      "PUBLIC_TO_EVERYONE": "Hamı",
+      "MUTUAL_FOLLOW_FRIENDS": "Dostlar",
+      "FOLLOWER_OF_CREATOR": "İzləyicilər",
+      "SELF_ONLY": "Yalnız mən"
+    },
+    "partsTitle": "Zəncir hissələri",
+    "partsHint": "Hər hissə əsas paylaşımdan dərhal sonra özündən əvvəlki hissəyə cavab kimi dərc olunur.",
+    "partLabel": "Hissə {number}",
+    "partPlaceholder": "Növbəti hissəni yazın",
+    "partMoveUp": "Hissəni yuxarı daşı",
+    "partMoveDown": "Hissəni aşağı daşı",
+    "partRemove": "Hissəni sil",
+    "partsAdd": "Hissə əlavə et",
+    "partsRemaining": "{count, plural, one {Daha # hissə əlavə etmək olar} other {Daha # hissə əlavə etmək olar}}",
+    "firstCommentTitle": "İlk şərh",
+    "firstCommentPlaceholder": "Paylaşımdan dərhal sonra şərh kimi dərc olunur",
+    "aiAssist": "Süni intellektlə yaz",
+    "aiPrivacy": "Verdiyiniz mətn aşağıda seçdiyiniz süni intellekt provayderinə göndərilir. Siz daxil etməyincə heç nə saxlanmır və ya dərc olunmur.",
+    "aiIntegration": "Süni intellekt inteqrasiyası",
+    "aiNoIntegration": "Hələ heç bir süni intellekt inteqrasiyası qoşulmayıb.",
+    "aiConnectIntegration": "Süni intellekt inteqrasiyası qoş",
+    "aiMode": "Süni intellekt nə etməlidir?",
+    "aiModes": {
+      "write": "Yeni paylaşım yaz",
+      "rewrite": "Yenidən yaz",
+      "shorten": "Qısalt",
+      "expand": "Genişləndir",
+      "tone": "Tonu dəyiş",
+      "fit": "Təyinat yerinin limitinə uyğunlaşdır",
+      "hashtags": "Hashtag təklif et"
+    },
+    "aiTone": "Ton",
+    "aiTones": {
+      "friendly": "Səmimi",
+      "professional": "Peşəkar",
+      "casual": "Rahat",
+      "playful": "Əyləncəli",
+      "formal": "Rəsmi",
+      "persuasive": "Əmin edici",
+      "inspiring": "İlhamverici"
+    },
+    "aiBrief": "Paylaşım nə haqqındadır?",
+    "aiBriefPlaceholder": "Məsələn: həftə sonu endirimini elan et, 20% endirim",
+    "aiUsesPostText": "Yuxarıdakı paylaşım mətnindən istifadə edir.",
+    "aiNeedsPostText": "Əvvəlcə paylaşım mətnini yaz.",
+    "aiFitNeedsDestination": "Əvvəlcə təyinat yeri seç.",
+    "aiGenerate": "Yarat",
+    "aiGenerating": "Yazılır…",
+    "aiSuggestion": "Təklif",
+    "aiCutToLimit": "{limit, plural, one {# simvol} other {# simvol}} limitinə görə kəsildi.",
+    "aiInsert": "Sonuna əlavə et",
+    "aiReplace": "Paylaşım mətnini əvəz et",
+    "aiHashtags": "Hashtaqlar",
+    "aiEmoji": "Emoji",
+    "aiCallToAction": "Fəaliyyətə çağırış",
+    "aiCallToActionText": "Fəaliyyətə çağırışın mətni (istəyə bağlı)",
+    "aiCallToActionPlaceholder": "Məsələn: Bu gün masanı rezerv et",
+    "aiVariants": "Variantlar",
+    "aiPerNetwork": "Hər kanal üçün ayrıca yaz",
+    "aiPerNetworkHint": "Hər şəbəkənin üslubunda bir versiya.",
+    "aiOption": "Variant {number}",
+    "aiApplyTo": "{network} üçün tətbiq et",
+    "aiApplyToEach": "Hər kanala tətbiq et",
+    "aiHashtagPick": "Paylaşıma əlavə etmək üçün hashtaqa klik edin.",
+    "aiErrors": {
+      "modelNotChosen": "Süni intellektlə yazmaq üçün süni intellekt inteqrasiyası və model seçin.",
+      "needsReconfiguration": "Seçilmiş süni intellekt inteqrasiyası yoxdur, deaktivdir və ya yanlışdır.",
+      "rateLimited": "Süni intellekt sorğuları çoxdur. Bir az sonra yenidən cəhd et.",
+      "timeout": "Süni intellekt modeli vaxtında cavab vermədi. Yenidən cəhd et.",
+      "provider": "Süni intellekt provayderi mətni yaza bilmədi. Yenidən cəhd et.",
+      "inProgress": "Artıq işləyən bir süni intellekt sorğusu var.",
+      "blocked": "Bu iş sahəsinin planı və ya sınaq müddəti başa çatıb.",
+      "generic": "Mətn yazıla bilmədi. Yenidən cəhd et."
+    },
+    "snippets": "Mətn parçaları",
+    "snippetsKinds": {
+      "signature": "İmza",
+      "hashtags": "Heşteqlər",
+      "text": "Mətn"
+    },
+    "snippetsLoadFailed": "Mətn parçaları yüklənmədi.",
+    "snippetsEmpty": "Hələ mətn parçası yoxdur.",
+    "snippetsSignature": "İmza",
+    "snippetsSignatureHint": "Paylaşımı yaradanda mətnin sonuna bir dəfə əlavə olunur. Öz mətni olan təyinat yerləri onu almır.",
+    "snippetsSignatureChosen": "İmza: {name}",
+    "snippetsManage": "Mətn parçalarını idarə et",
+    "snippetsName": "Ad",
+    "snippetsKind": "Növ",
+    "snippetsContent": "Mətn",
+    "snippetsAdd": "Parça əlavə et",
+    "snippetsSaved": "Parça saxlandı.",
+    "snippetsDeleted": "Parça silindi.",
+    "snippetsNameTaken": "Bu adlı parça artıq mövcuddur.",
+    "targetSets": "Səhifə qrupları",
+    "targetSetsLoadFailed": "Qruplar yüklənmədi.",
+    "targetSetsEmpty": "Hələ yadda saxlanmış qrup yoxdur.",
+    "targetSetsName": "Qrupun adı",
+    "targetSetsNamePlaceholder": "Qrupa ad verin…",
+    "targetSetsSave": "Saxla",
+    "targetSetsNeedsSelection": "Qrup kimi yadda saxlamaq üçün səhifələri seçin.",
+    "targetSetsSaved": "Qrup yadda saxlanıldı.",
+    "targetSetsDeleted": "Qrup silindi.",
+    "targetSetsNameTaken": "Bu adda qrup artıq var.",
+    "targetSetsApplied": "“{name}” qrupunun səhifələri seçildi.",
+    "targetSetsSkipped": "{count, plural, one {# səhifə diqqət tələb etdiyi üçün ötürüldü.} other {# səhifə diqqət tələb etdiyi üçün ötürüldü.}}",
+    "destinationState": {
+      "ready": "Paylaşıma hazırdır",
+      "inboxDisconnected": "Bağlantı kəsilib",
+      "needsReconnect": "Bağlantının müddəti bitib",
+      "permissionMissing": "Paylaşım icazəsi verilməyib"
+    },
+    "destinationPause": {
+      "until": "{time} tarixinədək dayandırılıb",
+      "reason": {
+        "limitReached": "Şəbəkə bu hesabın paylaşımlarını məhdudlaşdırdı. Yazılar gözləyəcək və fasilə bitdikdən sonra paylaşılacaq.",
+        "accountRestricted": "Şəbəkə bu hesabı məhdudlaşdırdı. Yazılar gözləyəcək və fasilə bitdikdən sonra paylaşılacaq.",
+        "spamRisk": "Şəbəkə bu hesabın fəaliyyətini spam riski kimi qeyd etdi. Yazılar gözləyəcək və fasilə bitdikdən sonra paylaşılacaq."
+      }
+    },
+    "viaFacebook": "Facebook vasitəsilə",
+    "openProfile": "{name} səhifəsini {network} şəbəkəsində aç",
+    "someNeedAttention": "Bəzi səhifələr və ya profillər yenidən qoşulana qədər paylaşım edə bilməz.",
+    "viewPosts": "Bax",
+    "queue": {
+      "modeLabel": "Nə vaxt paylaşılsın",
+      "atTime": "Vaxt seç",
+      "next": "Növbəyə əlavə et",
+      "top": "İlk paylaş",
+      "nextHint": "Hər səhifənin növbəti boş vaxtında paylaşılır.",
+      "topHint": "Ən yaxın vaxtda paylaşılır; növbədəki paylaşımlar bir vaxt geri sürüşür.",
+      "noDestination": "Paylaşım vaxtlarını görmək üçün səhifə seçin.",
+      "noSchedule": "{names} üçün paylaşım vaxtı təyin edilməyib.",
+      "setUpSlots": "Paylaşım vaxtlarını qur"
+    },
+    "targetOwnTime": "Bu kanal üçün ayrıca vaxt",
+    "targetTimeInvalid": "İndidən 2 dəqiqə ilə 1 il arasında vaxt seçin.",
+    "targetMediaOwn": "Bu kanal üçün fərqli fayllar",
+    "targetMediaNone": "Fayl yoxdur: bu kanal faylsız paylaşacaq.",
+    "occurrencesUpcoming": "Gələcək icralar",
+    "occurrencesNoUpcoming": "Gələcək icra yoxdur.",
+    "occurrenceSkip": "Keç",
+    "occurrenceRestore": "Bərpa et",
+    "occurrenceSkipped": "İcra keçildi.",
+    "occurrenceRestored": "İcra bərpa edildi.",
+    "occurrencesHistory": "Keçmiş icraları göstər",
+    "occurrencesHideHistory": "Keçmiş icraları gizlət",
+    "occurrencesLoadFailed": "İcralar yüklənmədi.",
+    "occurrencesNoHistory": "Hələ icra yoxdur.",
+    "occurrencesLoadMore": "Daha çox yüklə",
+    "occurrenceOpen": "Paylaşımı aç",
+    "targetSetsUpdated": "Qrup yeniləndi.",
+    "targetSetsMembers": "Bu qrupdakı səhifələr",
+    "targetSetsNeedsMember": "Ən azı bir səhifə saxlayın.",
+    "occurrenceOutcomes": {
+      "created": "Planlaşdırılıb",
+      "excluded": "Keçilib",
+      "missed": "Buraxılıb",
+      "skipped": "Yaradılmayıb"
+    }
+  },
+  "postCommentVariables": {
+    "group": "Post şərhi",
+    "postLink": "Post linki",
+    "postText": "Post mətni",
+    "postPublishedAt": "Postun dərc vaxtı",
+    "postPageName": "Postun səhifə adı",
+    "postId": "Post ID",
+    "commentText": "Şərh mətni",
+    "commentId": "Şərh ID"
   }
 }

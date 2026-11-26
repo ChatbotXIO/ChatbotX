@@ -24,6 +24,7 @@ import {
   createHandoverResumeFlowRoute,
   createWhatsappRoutingRolesRoutes,
 } from "@/features/channel-integrations/api/public"
+import { channelPostManagementPublicRouter } from "@/features/channel-posts/api/management-public"
 import { channelPostsPublicRouter } from "@/features/channel-posts/api/public"
 import {
   connectionProvidersPublicRouter,
@@ -94,9 +95,12 @@ import {
   placeLocationsPublicRouter,
 } from "@/features/places-near-me/api/public"
 import { pollsPublicRouter } from "@/features/polls/api/public"
+import { postAnalyticsPublicRouter } from "@/features/post-analytics/api/public"
+import { postTopicsPublicRouter } from "@/features/post-topics/api/public"
 import { productCategoriesPublicRouter } from "@/features/product-categories/api/public"
 import { productVendorsPublicRouter } from "@/features/product-vendors/api/public"
 import { productsPublicRouter } from "@/features/products/api/public"
+import { publishDestinationsPublicRouter } from "@/features/publish-destinations/api/public"
 import { qrCodesPublicRouter } from "@/features/qr-codes/api/public"
 import { questionnairesPublicRouter } from "@/features/questionnaires/api/public"
 import { realtimePublicRouter } from "@/features/realtime/api/public"
@@ -106,6 +110,14 @@ import { savedRepliesPublicRouter } from "@/features/saved-replies/api/public"
 import { sequencesPublicRouter } from "@/features/sequences/api/public"
 import { commentAutomationsPublicRouter } from "@/features/shared/comment-automation/api/public"
 import { shopifyPublicRouter } from "@/features/shopify/api/public"
+import { socialAccountsPublicRouter } from "@/features/social-accounts/api/public"
+import { postFeedsPublicRouter } from "@/features/social-post-feeds/api/public"
+import {
+  postSnippetsPublicRouter,
+  postTargetSetsPublicRouter,
+} from "@/features/social-post-snippets/api/public"
+import { socialPostsPublicRouter } from "@/features/social-posts/api/public"
+import { socialPostsAiPublicRouter } from "@/features/social-posts-ai/api/public"
 import { spreadsheetsPublicRouter } from "@/features/spreadsheets/api/public"
 import { tagsPublicRouter } from "@/features/tags/api/public"
 import {
@@ -117,6 +129,7 @@ import {
 import { threadsCommentsPublicRouter } from "@/features/threads-comments/api/public"
 import { tiktokCommentsPublicRouter } from "@/features/tiktok-comments/api/public"
 import { tokenPublicRouter } from "@/features/token/api/public"
+import { translationPublicRouter } from "@/features/translation/api/public"
 import { triggersPublicRouter } from "@/features/triggers/api/public"
 import { userPersistentMenusPublicRouter } from "@/features/user-persistent-menus/api/public"
 import { webhooksPublicRouter } from "@/features/webhooks/api/public"
@@ -135,6 +148,7 @@ export const publicRouter = {
   aiAgents: aiAgentsPublicRouter,
   aiFiles: aiFilesPublicRouter,
   aiHandover: aiHandoverPublicRouter,
+  translation: translationPublicRouter,
   aiFunctions: aiFunctionsPublicRouter,
   aiMcpServers: aiMcpServersPublicRouter,
   analytics: analyticsPublicRouter,
@@ -146,6 +160,14 @@ export const publicRouter = {
   botSimulator: botSimulatorPublicRouter,
   broadcasts: broadcastsPublicRouter,
   capabilities: capabilitiesPublicRouter,
+  channelPostManagement: channelPostManagementPublicRouter,
+  publishDestinations: publishDestinationsPublicRouter,
+  socialAccounts: socialAccountsPublicRouter,
+  socialPostsAi: socialPostsAiPublicRouter,
+  socialPosts: socialPostsPublicRouter,
+  postFeeds: postFeedsPublicRouter,
+  postSnippets: postSnippetsPublicRouter,
+  postTargetSets: postTargetSetsPublicRouter,
   channelPosts: channelPostsPublicRouter,
   carts: cartsPublicRouter,
   channels: channelsPublicRouter,
@@ -210,6 +232,8 @@ export const publicRouter = {
   placeCategories: placeCategoriesPublicRouter,
   placeLocations: placeLocationsPublicRouter,
   polls: pollsPublicRouter,
+  postTopics: postTopicsPublicRouter,
+  postAnalytics: postAnalyticsPublicRouter,
   productCategories: productCategoriesPublicRouter,
   products: productsPublicRouter,
   productVendors: productVendorsPublicRouter,

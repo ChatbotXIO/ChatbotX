@@ -1,3 +1,4 @@
+import { z } from "zod"
 import type { RichResponseContentAttributes } from "../../schema"
 import type { AttachmentModel, MessageModel } from "../../types"
 
@@ -6,6 +7,39 @@ import type { AttachmentModel, MessageModel } from "../../types"
 export type MessageTextWithFileTypes = Pick<MessageModel, "id" | "text"> & {
   attachmentFileTypes: AttachmentModel["fileType"][]
 }
+
+/** A message reference as stored on `MessageTranslation` / job payloads. */
+export type MessageRef = { id: string; createdAt: Date }
+
+/** The columns translation needs to decide whether, and what, to translate. */
+export type MessageForTranslation = Pick<
+  MessageModel,
+  | "id"
+  | "createdAt"
+  | "conversationId"
+  | "contactInboxId"
+  | "contentType"
+  | "text"
+  | "deletedAt"
+  | "type"
+> & {
+  /** `Message.messageType`: `incoming` | `outgoing` | `activity`. */
+  direction: MessageModel["messageType"]
+}
+
+/** One earlier customer message, handed to the translator as language context. */
+export type TranslationContextMessage = {
+  id: string
+  createdAt: Date
+  text: string
+}
+
+/** The closed set of attribute keys that mark one message-quota charge as taken. */
+export const messageQuotaMarkerKeys = z.enum([
+  "quotaChargedHide",
+  "quotaChargedSkip",
+])
+export type MessageQuotaMarkerKey = z.infer<typeof messageQuotaMarkerKeys>
 
 export interface CreateMessageInput {
   contactInboxId: string
@@ -58,6 +92,12 @@ export interface MessageWithAttachments extends MessageModel {
 
 export interface PaginationCursor {
   createdAt: Date
+  /**
+   * `createdAt` as PostgreSQL prints it (microseconds, with offset). A comment
+   * page keeps this so its keyset compares exactly: a `Date` holds milliseconds
+   * and would skip or repeat rows created within the same millisecond.
+   */
+  createdAtText?: string
   id: string
   shardId?: string
 }
@@ -79,6 +119,43 @@ export interface ListMessagesQuery {
   pagination: Pagination
   sinceTime?: Date
   workspaceId: string
+}
+
+/** Which comments of which conversations to list. */
+export interface CommentListFilter {
+  /**
+   * Only comments whose `contactInboxId` is one of these: a post is its inbox's,
+   * so a contact who also reaches us through another inbox never leaks that
+   * inbox's comments in.
+   */
+  contactInboxIds: string[]
+  /** The conversations whose comments are listed (one per commenter of a post). */
+  conversationIds: string[]
+  /** Only comments that carry a phone number (the shared phone rule). */
+  hasPhone?: boolean
+  /**
+   * Search the text as a viewer without phone permission sees it: phone numbers
+   * masked first, so a search can never probe one (also not with separators).
+   */
+  redactPhones?: boolean
+  /** Case-insensitive substring of the comment text. */
+  search?: string
+}
+
+export interface ListCommentsQuery {
+  filter: CommentListFilter
+  pagination: Pagination
+  sinceTime?: Date
+  workspaceId: string
+}
+
+/** A listed comment with its exact creation instant, for the next page's cursor. */
+export type ListedComment = MessageModel & { createdAtText: string }
+
+export interface PaginatedComments {
+  data: ListedComment[]
+  hasPartialResults?: boolean
+  nextCursor: PaginationCursor | null
 }
 
 export interface FindLastByConversationOptions {
@@ -314,6 +391,30 @@ export interface IMessageRepository {
     createdAt: Date
   }): Promise<{ id: string } | null>
 
+  /**
+   * Claims a message-quota marker on a comment, atomically: `true` only for the
+   * call that set it, `false` when it was already set (or the comment is gone).
+   * A storage failure throws, so a caller never takes "could not write" for
+   * "already charged".
+   */
+  claimQuotaMarker(
+    messageId: string,
+    workspaceId: string,
+    createdAt: Date,
+    key: MessageQuotaMarkerKey,
+  ): Promise<boolean>
+
+  /**
+   * Counts the comments the filter matches, stopping at `limit` (`capped` is
+   * then true and `count` is only a lower bound). Bounded on purpose: it backs a
+   * repair of a counter, not a report.
+   */
+  countComments(query: {
+    filter: CommentListFilter
+    limit: number
+    workspaceId: string
+  }): Promise<{ capped: boolean; count: number }>
+
   create(message: CreateMessageInput): Promise<MessageModel>
 
   createOrUpdate(message: CreateMessageInput): Promise<CreateMessageResult>
@@ -387,6 +488,20 @@ export interface IMessageRepository {
    */
   findEmailParent(params: FindEmailParentParams): Promise<EmailParentRow | null>
 
+  /**
+   * The newest `limit` inbound direct-text messages of a conversation created
+   * strictly before `before` (and not older than `sinceTime`), newest first.
+   * Language context for the translator; served by
+   * `Message_conversation_history_idx`.
+   */
+  findInboundTextBefore(params: {
+    workspaceId: string
+    conversationId: string
+    before: Date
+    sinceTime: Date
+    limit: number
+  }): Promise<TranslationContextMessage[]>
+
   findLastByConversation(
     conversationId: string,
     options?: FindLastByConversationOptions,
@@ -407,6 +522,18 @@ export interface IMessageRepository {
   findManyBySourceIds(
     params: FindManyBySourceIdsParams,
   ): Promise<MessageSourceRow[]>
+
+  /**
+   * Reads messages by `{ id, createdAt }` (the shard key) for translation.
+   * Unlike `findManyByIds` it needs no contact inbox or `sinceTime`, and it
+   * returns `type`/`contentType`/`deletedAt` so the caller can filter. Always
+   * scoped by `workspaceId`. Missing messages are simply absent; a failing
+   * shard throws, so an unreadable message is never mistaken for a deleted one.
+   */
+  findManyForTranslation(
+    workspaceId: string,
+    refs: MessageRef[],
+  ): Promise<MessageForTranslation[]>
 
   /**
    * One bounded page, newest first, of the bot/system messages that were
@@ -460,9 +587,39 @@ export interface IMessageRepository {
 
   listByConversation(query: ListMessagesQuery): Promise<PaginatedMessages>
 
+  /**
+   * One newest-first keyset page of the comments of a set of conversations
+   * (removed comments excluded), for the comments of a post.
+   */
+  listComments(query: ListCommentsQuery): Promise<PaginatedComments>
+
   listIncomingTextsByContactInbox(
     params: ListIncomingTextsByContactInboxParams,
   ): Promise<string[]>
+
+  /**
+   * Marks a comment as counted in its post's comment count (a channel whose
+   * platform reports no count), atomically: `true` only for the call that set
+   * the mark, `false` when it was already set (or the comment is gone). A
+   * storage failure throws.
+   */
+  markCommentCounted(
+    messageId: string,
+    workspaceId: string,
+    createdAt: Date,
+  ): Promise<boolean>
+
+  /**
+   * Marks a comment as counted in its post's phone-number count, atomically:
+   * `true` only for the call that set the mark, `false` when it was already set
+   * (or the comment is gone). A storage failure throws, so a caller never takes
+   * "could not write" for "already counted".
+   */
+  markPhoneCounted(
+    messageId: string,
+    workspaceId: string,
+    createdAt: Date,
+  ): Promise<boolean>
 
   /**
    * Atomically merges `overlay` into `contentAttributes` via a DB-side `jsonb ||`
@@ -478,6 +635,25 @@ export interface IMessageRepository {
     id: string
     contentAttributes: Record<string, unknown> | null
   } | null>
+
+  /**
+   * Sets only the given keys of a message's `attributes` with one JSON merge in
+   * the database, so a key written concurrently (`phoneCounted`) survives.
+   */
+  patchMessageAttributes(
+    messageId: string,
+    workspaceId: string,
+    patch: { hidden?: boolean; liked?: boolean },
+    createdAt: Date,
+  ): Promise<{ id: string } | null>
+
+  /** Takes a claimed message-quota marker back; a storage failure throws. */
+  releaseQuotaMarker(
+    messageId: string,
+    workspaceId: string,
+    createdAt: Date,
+    key: MessageQuotaMarkerKey,
+  ): Promise<void>
 
   /**
    * Returns how many rows were updated: 0 means no row matched, so callers
@@ -509,7 +685,7 @@ export interface IMessageRepository {
   updateMessageAttributes(
     messageId: string,
     workspaceId: string,
-    attributes: { liked: boolean; hidden: boolean },
+    attributes: { liked: boolean; hidden: boolean; phoneCounted?: boolean },
     createdAt: Date,
   ): Promise<{ id: string } | null>
 

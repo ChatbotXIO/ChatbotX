@@ -1,4 +1,4 @@
-import { db } from "@chatbotx.io/database/client"
+import { type DatabaseClient, db } from "@chatbotx.io/database/client"
 import type {
   ChannelType,
   LeaderboardPlatform,
@@ -28,7 +28,12 @@ import {
 } from "../errors"
 import { flowService } from "../flow"
 import { flowVersionService } from "../flow-version"
-import { assertReferencable } from "../template/installed-resource.service"
+import {
+  assertReferencable,
+  assertResourceEditable,
+  changedKeysOf,
+  withDeleteGuard,
+} from "../template/installed-resource.service"
 import { withTemplateLockedTransaction } from "../template/template-resource-locks"
 import { assertValidLeaderboardConfig, defaultLeaderboardRules } from "./config"
 import { purgeLeaderboardDataForWorkspace } from "./purge"
@@ -61,6 +66,19 @@ export type LeaderboardUpsertInput = {
   referralWelcomeFlowId: string | null
   rewardSettings: LeaderboardRewardSettings
 }
+
+const lockOf = (
+  input: { workspaceId: string; id: string },
+  referencedFlows: readonly { kind: "flow"; resourceId: string }[] = [],
+) => ({
+  workspaceId: input.workspaceId,
+  // One sorted acquisition: an uninstall takes the flows before the leaderboard
+  // in the same pass, so the order must not invert here.
+  initialKeys: [
+    { kind: "leaderboard" as const, resourceId: input.id },
+    ...referencedFlows,
+  ],
+})
 
 /** Which inbox channel hosts each platform. */
 export const LEADERBOARD_PLATFORM_CHANNEL: Record<
@@ -115,6 +133,18 @@ const assertActionAllowed = (
 }
 
 const sanitizeTagIds = (tagIds: string[]) => Array.from(new Set(tagIds))
+
+/**
+ * The flows a leaderboard points at: the referral welcome flow (a column) and
+ * the reward flow (inside `rewardSettings` JSON, so no foreign key guards it).
+ */
+const referencedFlowParents = (columns: {
+  referralWelcomeFlowId?: string | null
+  rewardSettings: { flowId?: string | null }
+}): { kind: "flow"; resourceId: string }[] =>
+  [columns.referralWelcomeFlowId, columns.rewardSettings.flowId]
+    .filter((id): id is string => Boolean(id))
+    .map((resourceId) => ({ kind: "flow", resourceId }))
 
 class LeaderboardService extends BaseService {
   private cacheTagsFor(
@@ -279,6 +309,23 @@ class LeaderboardService extends BaseService {
   }
 
   /**
+   * The row write of `create`, shared with the template install: validates the
+   * configuration and inserts a draft. References (channel, minigame, flows,
+   * tags) and the welcome flow are the caller's business.
+   */
+  insertDraftInTx(
+    tx: DatabaseClient,
+    input: { workspaceId: string } & LeaderboardUpsertInput,
+  ) {
+    const columns = this.toColumns(input)
+    assertValidLeaderboardConfig(columns)
+    return leaderboardRepository.insert(
+      { workspaceId: input.workspaceId, status: "draft", ...columns },
+      tx,
+    )
+  }
+
+  /**
    * Creates a draft. When referral is on and no welcome flow was chosen, a
    * published welcome flow is created alongside (spec: "the admin only edits
    * one text block") — `buildViewUrl` comes from the app so the flow's button
@@ -298,20 +345,13 @@ class LeaderboardService extends BaseService {
       Boolean(options.buildViewUrl)
 
     const row = await withTemplateLockedTransaction(async (tx) => {
-      // The welcome flow's tpl-res lock is held until the reference commits.
-      if (columns.referralWelcomeFlowId) {
-        await assertReferencable({
-          workspaceId: input.workspaceId,
-          parents: [
-            { kind: "flow", resourceId: columns.referralWelcomeFlowId },
-          ],
-          tx,
-        })
-      }
-      const inserted = await leaderboardRepository.insert(
-        { workspaceId: input.workspaceId, status: "draft", ...columns },
+      // The flows' tpl-res locks are held until the references commit.
+      await assertReferencable({
+        workspaceId: input.workspaceId,
+        parents: referencedFlowParents(columns),
         tx,
-      )
+      })
+      const inserted = await this.insertDraftInTx(tx, input)
       if (!(wantsWelcomeFlow && options.buildViewUrl)) {
         return inserted
       }
@@ -379,19 +419,26 @@ class LeaderboardService extends BaseService {
     }
     assertValidLeaderboardConfig(columns)
     await this.assertReferences(input.workspaceId, input)
-    const row = await withTemplateLockedTransaction(async (tx) => {
-      // The welcome flow's tpl-res lock is held until the reference commits.
-      if (columns.referralWelcomeFlowId) {
+    const row = await withTemplateLockedTransaction(
+      async (tx) => {
+        // The flows' tpl-res locks are held until the references commit.
         await assertReferencable({
           workspaceId: input.workspaceId,
-          parents: [
-            { kind: "flow", resourceId: columns.referralWelcomeFlowId },
-          ],
+          parents: referencedFlowParents(columns),
           tx,
         })
-      }
-      return await leaderboardRepository.update(input, columns, tx)
-    })
+        await assertResourceEditable({
+          workspaceId: input.workspaceId,
+          resourceKind: "leaderboard",
+          resourceIds: [input.id],
+          changedKeys: changedKeysOf(current, columns),
+          referencedParents: referencedFlowParents(columns),
+          tx,
+        })
+        return await leaderboardRepository.update(input, columns, tx)
+      },
+      lockOf(input, referencedFlowParents(columns)),
+    )
     if (!row) {
       throw notFoundException("Leaderboard not found")
     }
@@ -410,10 +457,22 @@ class LeaderboardService extends BaseService {
       throw notFoundException("Leaderboard not found")
     }
     assertActionAllowed(current, action)
-    const row = await leaderboardRepository.transitionStatus(
-      { ...input, from: current.status },
-      next,
-    )
+    // A status change is the installer's, so it only refuses while an uninstall
+    // runs; the guard and the write share one locked transaction.
+    const row = await withTemplateLockedTransaction(async (tx) => {
+      await assertResourceEditable({
+        workspaceId: input.workspaceId,
+        resourceKind: "leaderboard",
+        resourceIds: [input.id],
+        changedKeys: [],
+        tx,
+      })
+      return await leaderboardRepository.transitionStatus(
+        { ...input, from: current.status },
+        next,
+        tx,
+      )
+    }, lockOf(input))
     if (!row) {
       // Another transition (e.g. the finish cron) won the race.
       throw new ChatbotXException(
@@ -493,10 +552,13 @@ class LeaderboardService extends BaseService {
         })
         finished += 1
       } catch (err) {
+        // A copy being uninstalled is left alone: one such row must not stop the
+        // rest of the workspaces' leaderboards from finishing.
         if (
           !(
             err instanceof ChatbotXException &&
-            err.code === "leaderboardActionNotAllowed"
+            (err.code === "leaderboardActionNotAllowed" ||
+              err.code === "templateUninstallInProgress")
           )
         ) {
           throw err
@@ -552,11 +614,32 @@ class LeaderboardService extends BaseService {
       throw notFoundException("Leaderboard not found")
     }
     assertActionAllowed(current, "delete")
-    await leaderboardRepository.update(input, { deletedAt: new Date() })
+    await withDeleteGuard(
+      {
+        workspaceId: input.workspaceId,
+        targets: [{ resourceKind: "leaderboard", resourceIds: [input.id] }],
+      },
+      (tx) =>
+        leaderboardRepository.update(input, { deletedAt: new Date() }, tx),
+    )
     await leaderboardRankingService.drop(current.id)
     await this.invalidateLive(current)
     await this.audit("leaderboard.delete", `Deleted leaderboard ${current.id}`)
     return { id: current.id }
+  }
+
+  /**
+   * The hard delete the template uninstall uses (the public delete is soft, which
+   * would leave a row still pointing at the minigame and flows it names).
+   * Participants and the audit log cascade; the partitioned score history is
+   * drained first by the uninstall (bounded batches). The caller drops the Redis
+   * ranking after the commit. Returns the ids deleted.
+   */
+  async hardDeleteInTx(
+    tx: DatabaseClient,
+    input: { workspaceId: string; ids: string[] },
+  ): Promise<string[]> {
+    return await leaderboardRepository.hardDeleteByIds(input, tx)
   }
 
   /**

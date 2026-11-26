@@ -266,7 +266,7 @@ describe("createMcpServer", () => {
       {},
     )) as CallToolResult
     expect(guideResult.isError).toBeUndefined()
-    expect(guideResult.content[0]?.text).toContain("# ChatbotX MCP overview")
+    expect(guideResult.content[0]?.text).toContain("# MCP overview")
   })
 
   test("'toString' is not treated as a meta-tool name", async () => {
@@ -307,7 +307,7 @@ describe("createMcpServer", () => {
       expect.arrayContaining([
         expect.objectContaining({
           mimeType: "text/markdown",
-          uri: "chatbotx://guides/overview",
+          uri: "guides://overview",
         }),
       ]),
     )
@@ -316,7 +316,7 @@ describe("createMcpServer", () => {
     const readResult = (await readHandler(
       {
         method: "resources/read",
-        params: { uri: "chatbotx://guides/overview" },
+        params: { uri: "guides://overview" },
       },
       {},
     )) as {

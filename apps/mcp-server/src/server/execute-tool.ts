@@ -181,6 +181,85 @@ export const jsonResult = (value: unknown): ToolCallResult => ({
   content: [{ text: JSON.stringify(value, null, 2), type: "text" }],
 })
 
+/** The request shape of one API operation, shared by every MCP profile. */
+export type ApiRequestSpec = {
+  /** Fixed body fields sent before the caller's arguments. */
+  adapterBody?: Record<string, unknown>
+  baseUrl: string
+  bodyParamNames: string[]
+  method: string
+  pathParamNames: string[]
+  pathTemplate: string
+  queryParamNames: string[]
+}
+
+export type SentApiRequest =
+  | { invalidPathParam: string }
+  | { response: Response }
+
+/**
+ * `encodeURIComponent` leaves `.` and `..` intact, and URL parsing then
+ * collapses them (`/v1/contacts/..` → `/v1`), sending the call to another
+ * route than the one reviewed and confirmed. Such a value is no valid id.
+ */
+const isUnsafePathSegment = (value: string): boolean =>
+  value === "" || value === "." || value === ".."
+
+/**
+ * Builds the URL, query and JSON body for `spec` from `args` and sends it with
+ * the caller's credentials. Network errors and timeouts are thrown.
+ */
+export const sendApiRequest = async (
+  spec: ApiRequestSpec,
+  args: Record<string, unknown>,
+  credentials: RequestCredentials,
+): Promise<SentApiRequest> => {
+  let path = spec.pathTemplate
+  for (const paramName of spec.pathParamNames) {
+    const value = args[paramName]
+    if (
+      value === undefined ||
+      value === null ||
+      isUnsafePathSegment(String(value).trim())
+    ) {
+      return { invalidPathParam: paramName }
+    }
+    path = path.replace(`{${paramName}}`, encodeURIComponent(String(value)))
+  }
+
+  const queryParams = new URLSearchParams()
+  for (const key of spec.queryParamNames) {
+    appendQueryParam(queryParams, key, args[key])
+  }
+
+  const callerBody = Object.fromEntries(
+    spec.bodyParamNames
+      .filter((key) => args[key] !== undefined)
+      .map((key) => [key, args[key]]),
+  )
+  // Fixed adapter fields win: a caller argument never overrides them.
+  const body = { ...callerBody, ...spec.adapterBody }
+  const sendBody =
+    !NO_BODY_METHODS.has(spec.method) && spec.bodyParamNames.length > 0
+
+  const response = await fetchWithTimeout(
+    `${spec.baseUrl}${path}${buildQueryString(queryParams)}`,
+    {
+      body: sendBody ? JSON.stringify(body) : undefined,
+      headers: {
+        Authorization: `Bearer ${credentials.token}`,
+        "Content-Type": "application/json",
+        ...(credentials.workspaceId
+          ? { "x-workspace-id": credentials.workspaceId }
+          : {}),
+      },
+      method: spec.method,
+    },
+    env.CHATBOTX_HTTP_TIMEOUT_MS,
+  )
+  return { response }
+}
+
 const findCurrentStateTool = (tool: DynamicTool): DynamicTool | undefined => {
   const getToolsByPath = new Map(
     getCachedTools()
@@ -245,6 +324,15 @@ const getCurrentState = async (props: {
   }
 }
 
+export type ExecuteToolOptions = {
+  /**
+   * Return `CONFIRMATION_REQUIRED` as a usual result instead of a tool error.
+   * A pending approval is not a failure; connector profiles (Claude) set this
+   * so clients show it to the user rather than treat it as a broken call.
+   */
+  confirmationAsResult?: boolean
+}
+
 /**
  * Fires the HTTP request a `DynamicTool` describes. Shared by the normal
  * `tools/call` path (`create-mcp-server.ts`) and `call_tool`
@@ -255,6 +343,7 @@ export async function executeTool(
   tool: DynamicTool,
   rawArgs: Record<string, unknown>,
   credentials: RequestCredentials,
+  options: ExecuteToolOptions = {},
 ): Promise<ToolCallResult> {
   const preparedArguments = prepareToolArguments(tool, rawArgs)
   const preflightError = preflightArgumentError(tool, preparedArguments)
@@ -275,7 +364,9 @@ export async function executeTool(
       tool,
     })
     if (hitlGate.failure) {
-      return errorResult(JSON.stringify(hitlGate.failure, null, 2))
+      return options.confirmationAsResult
+        ? jsonResult(hitlGate.failure)
+        : errorResult(JSON.stringify(hitlGate.failure, null, 2))
     }
     args = hitlGate.args
   } catch (error) {
@@ -284,47 +375,14 @@ export async function executeTool(
     return errorResult(`Confirmation failed: ${message}`)
   }
 
-  let path = tool.pathTemplate
-  for (const paramName of tool.pathParamNames) {
-    const value = args[paramName]
-    if (value === undefined || value === null) {
-      return errorResult(`Missing required path parameter: ${paramName}`)
-    }
-    path = path.replace(`{${paramName}}`, encodeURIComponent(String(value)))
-  }
-
-  const queryParams = new URLSearchParams()
-  for (const key of tool.queryParamNames) {
-    appendQueryParam(queryParams, key, args[key])
-  }
-
-  const body: Record<string, unknown> = {}
-  for (const key of tool.bodyParamNames) {
-    if (args[key] !== undefined) {
-      body[key] = args[key]
-    }
-  }
-
-  const url = `${tool.baseUrl}${path}${buildQueryString(queryParams)}`
-  const sendBody =
-    !NO_BODY_METHODS.has(tool.method) && tool.bodyParamNames.length > 0
-
   try {
-    const response = await fetchWithTimeout(
-      url,
-      {
-        body: sendBody ? JSON.stringify(body) : undefined,
-        headers: {
-          Authorization: `Bearer ${credentials.token}`,
-          "Content-Type": "application/json",
-          ...(credentials.workspaceId
-            ? { "x-workspace-id": credentials.workspaceId }
-            : {}),
-        },
-        method: tool.method,
-      },
-      env.CHATBOTX_HTTP_TIMEOUT_MS,
-    )
+    const sent = await sendApiRequest(tool, args, credentials)
+    if ("invalidPathParam" in sent) {
+      return errorResult(
+        `Missing or invalid path parameter: ${sent.invalidPathParam}`,
+      )
+    }
+    const { response } = sent
 
     let result: unknown
     const contentType = response.headers.get("content-type") ?? ""

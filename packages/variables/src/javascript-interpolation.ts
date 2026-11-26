@@ -12,6 +12,10 @@ import {
   isPipelineVariable,
   resolvePipelineVariable,
 } from "./pipeline-variable"
+import {
+  isPostCommentVariable,
+  resolvePostCommentVariable,
+} from "./post-comment-variable"
 import type { ReplaceVariableProps } from "./schema"
 import {
   extractVariables,
@@ -455,6 +459,14 @@ const resolveJavascriptInputValue = async (
   }
   if (isPipelineVariable(name)) {
     return await resolvePipelineVariable(
+      context,
+      name,
+      getContactTimezone(context),
+    )
+  }
+  // Run-scoped: empty outside a post-comment run, like in a message.
+  if (isPostCommentVariable(name)) {
+    return await resolvePostCommentVariable(
       context,
       name,
       getContactTimezone(context),

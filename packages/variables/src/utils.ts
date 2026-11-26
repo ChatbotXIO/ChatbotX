@@ -221,7 +221,7 @@ export const formatDate = (
   return formatWithFallback(date, timezone, DATE_FORMAT)
 }
 
-const formatDateTime = (
+export const formatDateTime = (
   date: Date | string | null | undefined,
   timezone: string | null,
 ): string | null => {

@@ -35,7 +35,7 @@ describe("template adapter install order", () => {
 
   test("per-category knowledge is derived from the registry", async () => {
     const registry = await import("../src/template/adapters/registry")
-    const { categoriesRequiringV2 } = await import(
+    const { requiredFormatVersion } = await import(
       "../src/template/adapters/registry-derived"
     )
     expect(registry.TRACKED_KIND_BY_CATEGORY).toMatchObject({
@@ -50,21 +50,27 @@ describe("template adapter install order", () => {
       outboundAutomatedResponse: "keywords",
       customField: "settings",
       tag: "flows",
-      igStory: "fbCommentAutomations",
+      igStory: "storyAutomations",
     })
     expect(registry.folderTypeToCategory("nope")).toBe("flows")
-    expect(
-      [...categoriesRequiringV2(registry.templateAdapterRegistry)].sort(),
-    ).toEqual(
-      [
-        "aiFiles",
-        "aiMcpServers",
-        "couponTopics",
-        "pipelines",
-        "questionnaires",
-        "sequences",
-      ].sort(),
+    const everyCategoryHasEntries = Object.fromEntries(
+      Object.keys(registry.templateAdapterRegistry).map((category) => [
+        category,
+        { entries: [{ sourceId: "x" }] },
+      ]),
     )
+    expect(requiredFormatVersion(registry.templateAdapterRegistry, {})).toBe(1)
+    expect(
+      requiredFormatVersion(registry.templateAdapterRegistry, {
+        sequences: { entries: [{ sourceId: "x" }] },
+      }),
+    ).toBe(2)
+    expect(
+      requiredFormatVersion(
+        registry.templateAdapterRegistry,
+        everyCategoryHasEntries,
+      ),
+    ).toBeGreaterThanOrEqual(2)
     const { buildPayloadResources } = await import(
       "../src/template/adapters/registry-derived"
     )

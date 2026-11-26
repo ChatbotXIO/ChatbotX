@@ -40,6 +40,7 @@ vi.mock("@chatbotx.io/database/schema", () => ({
   integrationSmtpModel: table("smtp", ["id", "workspaceId"]),
   integrationWhatsappModel: table("integrationWhatsapp", ["id", "workspaceId"]),
   leaderboardModel: table("leaderboard", ["id", "workspaceId"]),
+  pollModel: table("poll", ["id", "workspaceId"]),
   placeCategoryModel: table("placeCategory", ["id", "workspaceId"]),
   messengerMessageTemplateModel: table("messengerTemplate", [
     "id",
@@ -101,6 +102,15 @@ describe("referenceExistenceRepository.findExistingIds", () => {
     expect(JSON.stringify(mocks.calls[0].where)).toContain(
       "product.workspaceId",
     )
+  })
+
+  test("poll (a votedOnPoll filter value) is scoped by its own workspaceId", async () => {
+    mocks.rowsByTable.set("poll", [{ id: "1" }])
+
+    const found = await find("poll", ["1", "2"])
+
+    expect([...found]).toEqual(["1"])
+    expect(JSON.stringify(mocks.calls[0].where)).toContain("poll.workspaceId")
   })
 
   test.each([

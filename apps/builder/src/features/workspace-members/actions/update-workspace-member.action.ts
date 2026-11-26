@@ -15,6 +15,13 @@ import {
 } from "../helpers"
 import { updateWorkspaceMemberRequest } from "../schema/mutation"
 
+const withoutUndefined = <T extends Record<string, unknown>>(
+  value: T,
+): Partial<T> =>
+  Object.fromEntries(
+    Object.entries(value).filter(([, entry]) => entry !== undefined),
+  ) as Partial<T>
+
 export const updateWorkspaceMemberAction = workspaceActionClient
   .inputSchema(updateWorkspaceMemberRequest)
   .bindArgsSchemas(workspaceIdAndIdRequestParams)
@@ -40,15 +47,19 @@ export const updateWorkspaceMemberAction = workspaceActionClient
       )
     }
 
-    const updateInput = isCommunity()
-      ? {
-          ...parsedInput,
-          permissions: getSuperAdminPermissions(),
-        }
-      : {
-          ...parsedInput,
-          permissions: normalizeContactsPermissions(parsedInput.permissions),
-        }
+    // A type the request leaves out keeps its stored value.
+    const notificationTypes = {
+      ...workspaceMember.notificationTypes,
+      ...withoutUndefined(parsedInput.notificationTypes),
+    }
+    const permissionsInput = isCommunity()
+      ? getSuperAdminPermissions()
+      : normalizeContactsPermissions(parsedInput.permissions)
+    const updateInput = {
+      ...parsedInput,
+      notificationTypes,
+      permissions: permissionsInput,
+    }
 
     const permissionsChanged = !isDeepStrictEqual(
       workspaceMember.permissions,

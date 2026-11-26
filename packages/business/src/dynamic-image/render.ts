@@ -3,7 +3,13 @@ import type {
   DynamicImageElement,
   DynamicImageFontFamily,
 } from "@chatbotx.io/database/partials"
+import {
+  fetchFollowingSafeRedirects,
+  readBodyWithLimit,
+} from "@chatbotx.io/filesystem"
 import { createCanvas, loadImage, type SKRSContext2D } from "@napi-rs/canvas"
+import { pinnedGet } from "../net/pinned-fetch"
+import { checkSsrfSafety } from "../net/ssrf-guard"
 import {
   ensureDynamicImageFontsRegistered,
   resolveDynamicImageFontFamily,
@@ -38,23 +44,104 @@ export function elementHasVariable(text: string): boolean {
   return VARIABLE_RE.test(text)
 }
 
+const REMOTE_IMAGE_TIMEOUT_MS = 15_000
+const REMOTE_IMAGE_MAX_BYTES = 20 * 1024 * 1024
+
+/** What an image URL may be, beyond a public address. */
+export type RemoteImageOptions = {
+  /**
+   * The workspace's public storage URL. Files under it are the app's own
+   * uploads and load as-is, so a storage on localhost or a private network
+   * (local dev, a self-hosted bucket) keeps working. Every other URL, and every
+   * redirect hop, must resolve to a public address.
+   */
+  trustedStorageUrl?: string
+}
+
+const isUnderTrustedStorage = (
+  candidate: string,
+  trustedStorageUrl: string | undefined,
+): boolean => {
+  if (!trustedStorageUrl) {
+    return false
+  }
+  try {
+    const base = new URL(
+      trustedStorageUrl.endsWith("/")
+        ? trustedStorageUrl
+        : `${trustedStorageUrl}/`,
+    )
+    const url = new URL(candidate)
+    return url.origin === base.origin && url.pathname.startsWith(base.pathname)
+  } catch {
+    return false
+  }
+}
+
+const remoteImageRedirectErrors = {
+  invalidRedirectLocation: (location: string) =>
+    new Error(`Invalid image redirect location: ${location}`),
+  noLocationHeader: () => new Error("Image redirect has no Location header"),
+  tooManyRedirects: () => new Error("Too many redirects while fetching image"),
+}
+
 /**
  * `@napi-rs/canvas`'s built-in `loadImage(url)` only follows 301/302
  * redirects, so it rejects outright on the 307/308 a storage provider (S3,
- * RustFS, CDNs) commonly issues for object URLs. `fetch` follows every
- * redirect status, so route remote URLs through it first and hand
- * `loadImage` the resulting buffer instead of the URL.
+ * RustFS, CDNs) commonly issues for object URLs. Fetch the URL here instead
+ * (following every redirect status by hand) and hand `loadImage` the
+ * resulting buffer.
+ *
+ * The URL comes from a document an author (or a template) wrote, so it is
+ * SSRF-guarded: the URL and every redirect hop must be a public address
+ * (except the workspace's own storage), with a timeout and a size cap.
  */
 export async function loadRemoteImage(
   url: string,
+  options: RemoteImageOptions = {},
 ): ReturnType<typeof loadImage> {
-  const response = await fetch(url)
+  const signal = AbortSignal.timeout(REMOTE_IMAGE_TIMEOUT_MS)
+  const { response } = await fetchFollowingSafeRedirects({
+    errors: remoteImageRedirectErrors,
+    fetchImpl: async (candidate) => {
+      if (isUnderTrustedStorage(candidate, options.trustedStorageUrl)) {
+        return fetch(candidate, { redirect: "manual", signal })
+      }
+      // Validate and connect from ONE resolution: dialling the validated
+      // address (not re-resolving the hostname) closes the DNS-rebinding
+      // window between the check and the connect, on every redirect hop.
+      const safety = await checkSsrfSafety(candidate)
+      if (safety.unsafe || safety.resolvedIps.length === 0) {
+        throw new Error(`[ssrf-guard] Image URL is not allowed: ${candidate}`)
+      }
+      return pinnedGet({
+        address: safety.resolvedIps[0],
+        signal,
+        url: candidate,
+      })
+    },
+    url,
+    validateUrl: async () => undefined,
+  })
   if (!response.ok) {
+    await response.body?.cancel().catch(() => undefined)
     throw new Error(
       `Failed to fetch image from ${url}: ${response.status} ${response.statusText}`,
     )
   }
-  return loadImage(Buffer.from(await response.arrayBuffer()))
+  const tooLarge = () =>
+    new Error(`Image at ${url} is larger than ${REMOTE_IMAGE_MAX_BYTES} bytes`)
+  const declared = Number.parseInt(
+    response.headers.get("content-length") ?? "",
+    10,
+  )
+  if (declared > REMOTE_IMAGE_MAX_BYTES) {
+    await response.body?.cancel().catch(() => undefined)
+    throw tooLarge()
+  }
+  return loadImage(
+    await readBodyWithLimit(response, REMOTE_IMAGE_MAX_BYTES, tooLarge),
+  )
 }
 
 /** Static elements are baked once into the background image at save time. */
@@ -150,11 +237,12 @@ function getContainRect(
 async function drawImageElement(
   ctx: SKRSContext2D,
   element: Extract<DynamicImageElement, { type: "image" }>,
+  options: RemoteImageOptions,
 ): Promise<void> {
   if (!element.url) {
     return
   }
-  const image = await loadRemoteImage(element.url)
+  const image = await loadRemoteImage(element.url, options)
   ctx.save()
   if (element.imageStyle === "circle") {
     const radius = Math.min(element.width, element.height) / 2
@@ -183,13 +271,17 @@ async function drawImageElement(
 async function drawQrCodeElement(
   ctx: SKRSContext2D,
   element: Extract<DynamicImageElement, { type: "qrCode" }>,
+  options: RemoteImageOptions,
 ): Promise<void> {
-  const buffer = await renderQrCodeBuffer({
-    text: element.text,
-    size: element.size,
-    color: element.color,
-    logoUrl: element.logoUrl,
-  })
+  const buffer = await renderQrCodeBuffer(
+    {
+      text: element.text,
+      size: element.size,
+      color: element.color,
+      logoUrl: element.logoUrl,
+    },
+    options,
+  )
   const image = await loadImage(buffer)
   ctx.drawImage(image, element.x, element.y, element.width, element.width)
 }
@@ -262,11 +354,12 @@ function drawTextElement(
 async function drawElement(
   ctx: SKRSContext2D,
   element: DynamicImageElement,
+  options: RemoteImageOptions,
 ): Promise<void> {
   if (element.type === "image") {
-    await drawImageElement(ctx, element)
+    await drawImageElement(ctx, element, options)
   } else if (element.type === "qrCode") {
-    await drawQrCodeElement(ctx, element)
+    await drawQrCodeElement(ctx, element, options)
   } else {
     drawTextElement(ctx, element)
   }
@@ -281,13 +374,14 @@ async function drawElement(
  */
 export async function renderStaticLayer(
   document: DynamicImageDocument,
+  options: RemoteImageOptions = {},
 ): Promise<Buffer> {
   ensureDynamicImageFontsRegistered()
   const { canvas, ctx } = createRenderCanvas(document.width, document.height)
   const dynamicElementIds = getDynamicElementIds(document)
   for (const element of document.elements) {
     if (!dynamicElementIds.has(element.id)) {
-      await drawElement(ctx, element)
+      await drawElement(ctx, element, options)
     }
   }
   return canvas.toBuffer("image/png")
@@ -310,16 +404,18 @@ export async function renderDynamicLayer(input: {
   document: DynamicImageDocument
   backgroundBuffer: Buffer
   dynamicElementIds: ReadonlySet<string>
+  remoteImages?: RemoteImageOptions
 }): Promise<Buffer> {
   ensureDynamicImageFontsRegistered()
   const { document, backgroundBuffer, dynamicElementIds } = input
+  const remoteImages = input.remoteImages ?? {}
   const { canvas, ctx } = createRenderCanvas(document.width, document.height)
   const background = await loadImage(backgroundBuffer)
   ctx.drawImage(background, 0, 0, document.width, document.height)
 
   for (const element of document.elements) {
     if (dynamicElementIds.has(element.id)) {
-      await drawElement(ctx, element)
+      await drawElement(ctx, element, remoteImages)
     }
   }
   return canvas.toBuffer("image/png")

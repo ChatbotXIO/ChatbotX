@@ -11,6 +11,7 @@ import { flowService } from "../flow/service"
 import { inboxService } from "../inbox/service"
 import type { PipelineAccessScope } from "../pipeline/access"
 import { pipelineService } from "../pipeline/service"
+import { pollService } from "../poll/service"
 import { reflinkService } from "../reflink/service"
 import type { IdLabel } from "../select-labels-by-ids"
 import { sequenceService } from "../sequence/service"
@@ -40,6 +41,8 @@ export type FilterValueLabelTypes = {
   pipelineStages: string[]
   /** Ad ids from a "Clicked ad" condition; the label is the ad's headline. */
   ads: string[]
+  /** Poll ids from a "Voted on the poll" condition. */
+  polls: string[]
 }
 
 export type FilterValueLabels = Record<keyof FilterValueLabelTypes, IdLabel[]>
@@ -76,6 +79,7 @@ const labelResolvers: Record<keyof FilterValueLabelTypes, LabelResolver> = {
   pipelineStages: (input, scope) =>
     pipelineService.listStageLabelsByIds({ ...input, scope }),
   ads: (input) => contactReferralEventService.listLabelsByIds(input),
+  polls: (input) => pollService.listLabelsByIds(input),
 }
 
 const labelTypes = Object.keys(

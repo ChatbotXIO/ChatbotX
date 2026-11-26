@@ -43,6 +43,7 @@ import {
 } from "@chatbotx.io/worker-config"
 import { contactInboxService } from "../contact-inbox/service"
 import { conversationService } from "../conversation/service"
+import { conversationParticipantService } from "../conversation-participant/service"
 import {
   ChatbotXException,
   ImagesNotSupportedOnChannelError,
@@ -99,6 +100,14 @@ type CreateOutgoingInput = (
    * accepted from `messages.create` input.
    */
   quickReplies?: MessageButtonTemplate[]
+  /**
+   * The text keyword/automated-response rules match against instead of the
+   * stored `text`. Inbox translation sends the customer-language translation
+   * as the message and passes the agent's own sentence here, so an automation
+   * keyed on what the agent typed still fires. Server-side only — not accepted
+   * from `messages.create` input.
+   */
+  automationText?: string
 }
 
 /**
@@ -374,14 +383,26 @@ export const createOutgoing = async (props: {
     })
     // Claimed only after a successful enqueue so a failed send keeps the
     // window open. An inbox "send flow" counts as a human reply.
-    await recordAgentReply({
-      conversationId: conversation.id,
-      workspaceId: conversation.workspaceId,
-      contactInbox,
-      at: new Date(),
-      sender,
-      eventId: `reply:flow:${createId()}`,
-    })
+    // Sending the flow is the member's reply even if it later branches or
+    // delays, so it is recorded here, not when each step is delivered.
+    const repliedAt = new Date()
+    await Promise.all([
+      recordAgentReply({
+        conversationId: conversation.id,
+        workspaceId: conversation.workspaceId,
+        contactInbox,
+        at: repliedAt,
+        sender,
+        eventId: `reply:flow:${createId()}`,
+      }),
+      user &&
+        conversationParticipantService.recordReply({
+          workspaceId: conversation.workspaceId,
+          conversationId: conversation.id,
+          userId: user.id,
+          at: repliedAt,
+        }),
+    ])
     return null
   }
 
@@ -600,7 +621,10 @@ export const createOutgoing = async (props: {
                 data: {
                   conversation: targetConversation,
                   contactInbox,
-                  message: { id: message.id, text: messageInput.text },
+                  message: {
+                    id: message.id,
+                    text: parsedInput.automationText ?? messageInput.text,
+                  },
                 },
               },
             ),

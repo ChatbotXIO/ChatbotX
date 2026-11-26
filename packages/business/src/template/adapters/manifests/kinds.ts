@@ -27,7 +27,17 @@ export const isManifestKind = (kind: string): kind is ManifestKind =>
 export const isLabelledManifestKind = (kind: string): boolean =>
   isManifestKind(kind) && MANIFEST_KINDS[kind].labelled
 
+/**
+ * Copied kinds an uninstall never deletes. The store settings are one row per
+ * workspace: after an install it also holds what the installer entered (payment
+ * methods, the pixel) and configures a store that may be taking orders, so
+ * deleting it would reset the store to the defaults.
+ */
+export const KEPT_ON_UNINSTALL_KINDS = ["storeSettings"] as const
+export type KeptOnUninstallKind = (typeof KEPT_ON_UNINSTALL_KINDS)[number]
+
 /** Kinds that may be in use elsewhere, so an uninstall keeps them. */
-export const SHARED_KINDS: ReadonlySet<string> = new Set(
-  Object.keys(MANIFEST_KINDS),
-)
+export const SHARED_KINDS: ReadonlySet<string> = new Set([
+  ...Object.keys(MANIFEST_KINDS),
+  ...KEPT_ON_UNINSTALL_KINDS,
+])

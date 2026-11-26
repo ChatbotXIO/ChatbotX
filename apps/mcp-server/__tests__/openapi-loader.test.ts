@@ -588,6 +588,19 @@ describe("x-mcp visibility, scope, and annotations", () => {
     expect(tool?.annotations.title).toBe("tags.list")
   })
 
+  test("a POST operation without hints defaults to destructive, not read-only", async () => {
+    globalThis.fetch = vi
+      .fn()
+      .mockResolvedValue(
+        specWithOperation({ summary: "Create tag" }, "post"),
+      ) as unknown as typeof fetch
+    const { loadOpenApiSpec } = await import("../src/openapi-loader")
+    const [tool] = await loadOpenApiSpec()
+
+    expect(tool?.annotations.readOnlyHint).toBe(false)
+    expect(tool?.annotations.destructiveHint).toBe(true)
+  })
+
   test("a POST operation defaults to a closed world", async () => {
     globalThis.fetch = vi
       .fn()

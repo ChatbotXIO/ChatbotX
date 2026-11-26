@@ -282,6 +282,40 @@ export const failSendSubmit = <TInput>(
     ? holdQueue(queue, SEND_QUEUE_HOLD_REASONS.failed, { clientId })
     : queue
 
+/**
+ * The message in flight was not sent because its translation failed. Unlike
+ * {@link failSendSubmit} the queue is not held: the agent sends a new message
+ * instead of resending this one, so the composer stays open and anything
+ * queued behind it goes on.
+ */
+export const dropUnsentSend = <TInput>(
+  queue: SendQueue<TInput>,
+  clientId: string,
+  now: number,
+): SendQueue<TInput> =>
+  queue.inFlight?.clientId === clientId
+    ? { ...queue, inFlight: null, nextAllowedAt: now }
+    : queue
+
+/**
+ * Takes the waiting messages `pick` selects out of the queue, so they are never
+ * sent (translation was turned off while they waited: they were written to be
+ * translated and must not reach the customer as written).
+ */
+export const takeWaitingSends = <TInput>(
+  queue: SendQueue<TInput>,
+  pick: (item: QueuedSend<TInput>) => boolean,
+): { queue: SendQueue<TInput>; taken: QueuedSend<TInput>[] } => {
+  const taken = queue.waiting.filter(pick)
+  if (taken.length === 0) {
+    return { queue, taken }
+  }
+  return {
+    queue: { ...queue, waiting: queue.waiting.filter((item) => !pick(item)) },
+    taken,
+  }
+}
+
 /** The time at which the in-flight message stops being waited for, if any. */
 export const sendConfirmDeadline = <TInput>(
   queue: SendQueue<TInput>,

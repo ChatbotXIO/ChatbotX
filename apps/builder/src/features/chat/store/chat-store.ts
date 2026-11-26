@@ -1,18 +1,22 @@
-import type {
-  ChannelType,
-  ConversationBotCategory,
-  ConversationStatus,
+import {
+  type ChannelType,
+  type ConversationBotCategory,
+  type ConversationStatus,
+  RECENT_PARTICIPANT_LIMIT,
 } from "@chatbotx.io/database/partials"
+import type { MessageTranslationUpdatedData } from "@chatbotx.io/realtime-protocol"
 import { resolveMessagingWindowOpenedAt } from "@chatbotx.io/sdk"
 import { createStore } from "zustand/vanilla"
 import type { ContactFilterRequest } from "@/features/contact-filter/schema"
 import type { GetContactResponse } from "@/features/contacts/schema/query"
 import type { ContactResource } from "@/features/contacts/schema/resource"
+import { mergeParticipantReply } from "@/features/conversations/lib/merge-participant-reply"
 import {
   type PostDetails,
   supportsPostDetails,
 } from "@/features/conversations/schema/query"
 import type {
+  ConversationParticipantResource,
   ConversationResource,
   ListConversationItemResource,
   ListConversationsResponse,
@@ -34,6 +38,11 @@ import type {
   MessageResource,
   MessageResourceWithRelations,
 } from "@/features/messages/schema/resource"
+import {
+  readConversationTranslation,
+  withConversationTranslation,
+} from "@/features/translation/lib/conversation-translation"
+import type { MessageTranslationResource } from "@/features/translation/schema/resource"
 import { logger } from "@/lib/log"
 import { client } from "@/lib/orpc/orpc"
 export const INBOX_CONVERSATIONS_PER_PAGE = 20
@@ -286,6 +295,27 @@ export type ChatActions = {
     agentLastReadAt: Date,
   ) => void
   /**
+   * Applies one member's reply to a loaded conversation's `recentParticipants`
+   * preview (the row avatars). Idempotent: a duplicate or older reply changes
+   * nothing, so a re-delivered realtime event is harmless.
+   */
+  applyConversationParticipantReply: (
+    conversationId: string,
+    reply: ConversationParticipantResource,
+  ) => void
+  /** A loaded message by id (the open conversation's), or `undefined`. */
+  findLoadedMessage: (
+    messageId: string,
+  ) => MessageResourceWithRelations | undefined
+  /**
+   * Replaces a loaded conversation's `recentParticipants` preview with the
+   * server's answer (after a counted reply failed or was removed).
+   */
+  replaceConversationRecentParticipants: (
+    conversationId: string,
+    participants: readonly ConversationParticipantResource[],
+  ) => void
+  /**
    * Replaces the routing (thread control) fields of one contact inbox of a
    * loaded conversation. Shared by the take/release/pass action result and the
    * `contactInboxThreadControlUpdated` realtime event; a snapshot older than
@@ -341,6 +371,28 @@ export type ChatActions = {
     messageId: string,
     attributes: { liked: boolean; hidden: boolean },
   ) => void
+  /**
+   * Inbox translation results pushed by `messageTranslationUpdated`: sets or
+   * (`removed`) drops each loaded message's translation, and records a
+   * conversation language that was just set or changed.
+   */
+  applyMessageTranslations: (
+    conversationId: string,
+    items: MessageTranslationUpdatedData["items"],
+    conversationLanguage?: string,
+    /** An agent's choice for the conversation: `false` off, `true` on, `null` cleared. */
+    conversationEnabledOverride?: boolean | null,
+  ) => void
+  /**
+   * The translation the server returned for a message this tab just sent. Looked
+   * up by `clientId` as well, because the realtime `messageCreated` may already
+   * have swapped the optimistic row for the real one (or not yet).
+   */
+  attachSentTranslation: (props: {
+    messageId?: string
+    clientId?: string
+    translation: MessageTranslationResource
+  }) => void
   updateMessageText: (
     messageId: string,
     newText: string,
@@ -1051,6 +1103,41 @@ export const createChatStore = (initialState: ChatStoreInitialState = {}) => {
         })
       },
 
+      findLoadedMessage: (messageId) =>
+        get().messages.find((message) => message.id === messageId),
+
+      replaceConversationRecentParticipants: (conversationId, participants) => {
+        get().updateConversation(conversationId, {
+          recentParticipants: participants.slice(0, RECENT_PARTICIPANT_LIMIT),
+        })
+      },
+
+      applyConversationParticipantReply: (conversationId, reply) => {
+        set((state) => {
+          const index = state.conversations.findIndex(
+            (conversation) => conversation.id === conversationId,
+          )
+          const conversation = state.conversations[index]
+          if (!conversation) {
+            return state
+          }
+          const recentParticipants = mergeParticipantReply(
+            conversation.recentParticipants,
+            reply,
+            RECENT_PARTICIPANT_LIMIT,
+          )
+          if (recentParticipants === conversation.recentParticipants) {
+            return state
+          }
+          const conversations = [...state.conversations]
+          conversations[index] = {
+            ...conversation,
+            recentParticipants: [...recentParticipants],
+          }
+          return { conversations }
+        })
+      },
+
       applyAgentLastReadAt: (conversationIds, agentLastReadAt) => {
         if (Number.isNaN(agentLastReadAt.getTime())) {
           return
@@ -1185,6 +1272,95 @@ export const createChatStore = (initialState: ChatStoreInitialState = {}) => {
             message.id === messageId ? { ...message, attributes } : message,
           ),
         }))
+      },
+
+      applyMessageTranslations: (
+        conversationId,
+        items,
+        conversationLanguage,
+        conversationEnabledOverride,
+      ) => {
+        if (items.length > 0) {
+          const byMessageId = new Map(
+            items.map((item) => [item.messageId, item]),
+          )
+          set((state) => {
+            let changed = false
+            const messages = state.messages.map((message) => {
+              const item = byMessageId.get(message.id)
+              if (!item || message.conversationId !== conversationId) {
+                return message
+              }
+              changed = true
+              if (item.removed) {
+                return { ...message, translation: undefined }
+              }
+              return {
+                ...message,
+                translation: {
+                  direction:
+                    message.messageType === "outgoing"
+                      ? ("outbound" as const)
+                      : ("inbound" as const),
+                  status: item.status,
+                  displayText: item.displayText ?? null,
+                  sourceLanguage: item.sourceLanguage ?? null,
+                  targetLanguage:
+                    item.targetLanguage ??
+                    message.translation?.targetLanguage ??
+                    "",
+                  failureCode: null,
+                },
+              }
+            })
+            return changed ? { messages } : state
+          })
+        }
+
+        if (conversationLanguage || conversationEnabledOverride !== undefined) {
+          const conversation = get().conversations.find(
+            (candidate) => candidate.id === conversationId,
+          )
+          if (conversation) {
+            const current = readConversationTranslation(conversation)
+            const enabledOverride =
+              conversationEnabledOverride === undefined
+                ? current.enabledOverride
+                : conversationEnabledOverride
+            const language = conversationLanguage ?? current.language
+            // A language pushed by the server keeps its source (or is the
+            // detected one); an on/off change keeps both as they were.
+            const languageSource = conversationLanguage
+              ? (current.languageSource ?? "auto")
+              : current.languageSource
+            get().updateConversation(conversationId, {
+              additionalAttributes: withConversationTranslation(
+                conversation.additionalAttributes,
+                {
+                  ...(enabledOverride === null ? {} : { enabledOverride }),
+                  ...(language ? { language } : {}),
+                  ...(languageSource ? { languageSource } : {}),
+                },
+              ),
+            })
+          }
+        }
+      },
+
+      attachSentTranslation: ({ messageId, clientId, translation }) => {
+        set((state) => {
+          const index = state.messages.findIndex(
+            (message) =>
+              (messageId !== undefined && message.id === messageId) ||
+              (clientId !== undefined && message.clientId === clientId),
+          )
+          if (index === -1) {
+            return state
+          }
+          const messages = [...state.messages]
+          messages[index] = { ...messages[index], translation }
+          return { messages }
+        })
       },
 
       // Merges a contentAttributes patch pushed via messageContentUpdated (e.g. a
@@ -1352,7 +1528,9 @@ export const createChatStore = (initialState: ChatStoreInitialState = {}) => {
         set(
           (state) =>
             replaceMessageById(state.messages, messageId, (message) => {
-              const base = { ...message, text: newText }
+              // A new text makes the old translation wrong: drop it here; the
+              // worker also deletes its row, and the inbox asks again.
+              const base = { ...message, text: newText, translation: undefined }
               if (!attachmentUpdate) {
                 return base
               }

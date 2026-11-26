@@ -23,6 +23,18 @@ export const UNINSTALL_PARENT_TABLE: Partial<
   couponTopic: "CouponTopic",
   aiAgent: "AIAgent",
   aiFunction: "AIFunction",
+  magicLink: "MagicLink",
+  poll: "Poll",
+  dynamicImage: "DynamicImage",
+  placeLocation: "PlaceLocation",
+  miniApp: "MiniApp",
+  minigame: "Minigame",
+  leaderboard: "Leaderboard",
+  openHours: "EcommerceOpenHours",
+  vendor: "Vendor",
+  discountCode: "DiscountCode",
+  storyAutomation: "IgStoryAutomation",
+  inboundWebhook: "InboundWebhook",
 }
 
 /**

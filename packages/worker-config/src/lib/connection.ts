@@ -54,6 +54,8 @@ export const queueGroupByName: Record<QueueName, QueueGroup> = {
   // Broadcast "left a phone/email" attribution: bounded, rate-limited, and the
   // statistic may be late, so it must never compete with chat/integration.
   contactInfoCapture: "bulk",
+  // Composed posts published to social networks: one job per destination.
+  postPublish: "bulk",
 }
 
 function resolveGroupUrl(group: QueueGroup): string {

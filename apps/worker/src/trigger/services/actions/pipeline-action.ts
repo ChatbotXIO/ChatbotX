@@ -41,6 +41,7 @@ export const pipeline: TriggerActionHandler = async ({
         contactId,
         contactInbox: context.contactInboxId ?? null,
         conversation,
+        postComment: context.postComment,
       })
       return await contactVariableService.replaceAll({ text, variables })
     },

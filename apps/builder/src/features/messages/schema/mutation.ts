@@ -1,8 +1,14 @@
+import { TRANSLATION_MAX_LENGTH } from "@chatbotx.io/business/translation/channel-limits"
 import { channelTypes } from "@chatbotx.io/database/partials"
 import { sendProductsContentSchema } from "@chatbotx.io/flow-config"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
 import { zodGuestConversationId } from "@/features/integration-webchat/lib/guest-conversation-id"
+import {
+  TRANSLATE_NON_TEXT_FIELDS,
+  TRANSLATE_PLAIN_TEXT_ONLY_MESSAGE,
+} from "@/features/translation/schema/action"
+import { translationLanguage } from "@/features/translation/schema/resource"
 
 const MAX_FILE_SIZE = 5 * 1000 * 1000
 
@@ -157,8 +163,51 @@ export const createMessageRequest = z
         .describe(
           "When true, sends as a comment-anchored private reply DM instead of a public comment reply.",
         ),
+      translate: z
+        .boolean()
+        .optional()
+        .describe(
+          "Inbox translation: translate `text` into the customer's language before sending. Only for a plain text message (no files, media, products, flow, reply or private reply). The customer's language must be known (`translation.getConversationState`). Waits at most 10 s for the translation. If translation is off for the conversation or the language is unknown, the text is sent as written and the response says why in `translationFallback`. If the translation fails (no answer in 10 s, a provider error, a rate limit, an unusable answer) nothing is sent and the call fails with `translationNotSent` (`data.reason`); a failure of the AI provider itself also turns translation off for the conversation (`data.conversationTranslation: \"off\"`), so sending again sends the text as written. The stored message is what the customer received; `translation.displayText` is what you wrote.",
+        ),
+      editedTranslation: z
+        .object({
+          // A translation can be longer than the sentence it comes from, so it
+          // is bounded by the longest channel, not by `text`'s 1000; the
+          // conversation's channel limit is checked on send (`tooLong`).
+          text: z.string().trim().min(1).max(TRANSLATION_MAX_LENGTH),
+          targetLanguage: translationLanguage,
+        })
+        .optional()
+        .describe(
+          "A translation you reviewed or edited (from `translation.previewText`), sent as is instead of translating again. Used only when `targetLanguage` still matches the conversation's language; otherwise it is discarded, the text is translated again, and the response sets `editedTranslationDiscarded`. Requires `translate: true`.",
+        ),
     }),
   )
+  .superRefine((request, context) => {
+    const wantsTranslation =
+      request.translate === true || request.editedTranslation !== undefined
+    if (!wantsTranslation) {
+      return
+    }
+    if (request.translate !== true) {
+      context.addIssue({
+        code: "custom",
+        path: ["translate"],
+        message: "`editedTranslation` requires `translate: true`",
+      })
+    }
+    const asRecord: Record<string, unknown> = request
+    const notPlainText = TRANSLATE_NON_TEXT_FIELDS.some(
+      (field) => asRecord[field] != null,
+    )
+    if (notPlainText || typeof asRecord.text !== "string") {
+      context.addIssue({
+        code: "custom",
+        path: ["translate"],
+        message: TRANSLATE_PLAIN_TEXT_ONLY_MESSAGE,
+      })
+    }
+  })
 export type CreateMessageRequest = z.infer<typeof createMessageRequest>
 
 /**

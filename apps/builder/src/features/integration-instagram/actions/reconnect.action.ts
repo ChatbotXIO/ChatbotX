@@ -10,6 +10,11 @@ import { generateAuthUrl as generateInstagramAuthUrl } from "@chatbotx.io/integr
 import { generateAuthUrl as generateInstagramFacebookAuthUrl } from "@chatbotx.io/integration-instagram-facebook"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { redirect } from "next/navigation"
+import {
+  buildReconnectReferer,
+  type ReconnectReturnTo,
+  reconnectReturnToSchema,
+} from "@/lib/channel-reconnect"
 import { getOriginUrlFromHeader } from "@/lib/domain"
 import { resolveOwnerForWorkspace } from "@/lib/platform-credential-owner"
 import { buildProviderCallbackUrl } from "@/lib/provider-origin"
@@ -23,13 +28,21 @@ import { workspaceActionClient } from "@/lib/safe-action"
  * connect flow. Mirrors `connectFacebookAds`.
  */
 export const reconnectInstagramAction = workspaceActionClient
-  .bindArgsSchemas([zodBigintAsString(), zodBigintAsString()])
+  .bindArgsSchemas([
+    zodBigintAsString(),
+    zodBigintAsString(),
+    reconnectReturnToSchema.optional(),
+  ])
   .action(
     async ({
-      bindArgsParsedInputs: [workspaceId, integrationId],
+      bindArgsParsedInputs: [workspaceId, integrationId, returnTo],
       ctx,
     }: {
-      bindArgsParsedInputs: readonly [string, string]
+      bindArgsParsedInputs: readonly [
+        string,
+        string,
+        ReconnectReturnTo | undefined,
+      ]
       ctx: { workspace: WorkspaceModel }
     }) => {
       const integrationInstagram =
@@ -58,11 +71,12 @@ export const reconnectInstagramAction = workspaceActionClient
           ? "/integrations/instagram-facebook/callback"
           : "/integrations/instagram/callback",
       )
-      const baseUrl = await getOriginUrlFromHeader()
-      const referer = new URL(
-        `/space/${workspaceId}/settings/channels?channel=instagram`,
-        baseUrl,
-      ).toString()
+      const referer = buildReconnectReferer({
+        channel: "instagram",
+        origin: await getOriginUrlFromHeader(),
+        returnTo,
+        workspaceId,
+      })
 
       const generateAuthUrl = connectedWithFacebookLogin
         ? generateInstagramFacebookAuthUrl

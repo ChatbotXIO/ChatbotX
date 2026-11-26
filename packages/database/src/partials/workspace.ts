@@ -44,10 +44,17 @@ export type WorkspaceMemberPermissions = z.infer<
   typeof workspaceMemberPermissionsSchema
 >
 
+/**
+ * `postFailed` / `postNeedsReview` / `publishConnection` were added after members existed: a stored
+ * row without them parses with them off, so no backfill is needed.
+ */
 export const workspaceMemberNotificationTypesSchema = z.object({
   notifyAdmin: z.boolean(),
   newMessageToHuman: z.boolean(),
   newOrder: z.boolean(),
+  postFailed: z.boolean().default(false),
+  postNeedsReview: z.boolean().default(false),
+  publishConnection: z.boolean().default(false),
 })
 export type WorkspaceMemberNotificationTypes = z.infer<
   typeof workspaceMemberNotificationTypesSchema

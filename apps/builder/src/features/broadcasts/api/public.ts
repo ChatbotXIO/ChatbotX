@@ -7,6 +7,7 @@ import {
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import z from "zod"
 import { resolveContactAvatars } from "@/features/contacts/queries/resolve-contact-avatars"
+import { TOKEN_CALLER_CAN_VIEW_EMAIL_AND_PHONE } from "@/features/contacts/token-caller-permissions"
 import { mcpSpec } from "@/lib/orpc/mcp-annotations"
 import {
   possibleErrorsOnActivatingBroadcast,
@@ -47,10 +48,11 @@ const workspaceTokenAuthAPI = workspaceTokenAuthAPIForScope("broadcasts")
 // A workspace-token caller is a workspace-level credential mintable only by
 // a superAdmin, so it is not subject to the member-level email/phone field
 // permission the builder UI derives per-session — every public create/edit
-// route treats the caller as fully privileged rather than silently pruning
-// the audience filter it was given.
+// route treats the caller as fully privileged (`TOKEN_CALLER_CAN_VIEW_EMAIL_AND_PHONE`,
+// shared with the Posts API) rather than silently pruning the audience filter
+// it was given.
 //
-// This flag governs *write-side filter-condition pruning only*
+// That flag governs *write-side filter-condition pruning only*
 // (`pruneEmailPhoneFilterConditions`, applied in `create`/`updateDraft`/
 // `resendWithPruning`/`cloneBroadcast`). Reads are unaffected by it: `get`/
 // `list`, and in particular `getAudience` below, already return full
@@ -61,7 +63,6 @@ const workspaceTokenAuthAPI = workspaceTokenAuthAPIForScope("broadcasts")
 // here without diverging from the private route this public route mirrors
 // (invariant #9); see the "Broadcasts scope" table in
 // `docs/developer/workspace-api-tokens.md` for the caller-facing writeup.
-const TOKEN_CALLER_CAN_VIEW_EMAIL_AND_PHONE = true
 
 export const broadcastsPublicRouter = {
   ...broadcastsRecurrencePublicRouter,
@@ -74,7 +75,13 @@ export const broadcastsPublicRouter = {
       description:
         "Use this to find broadcasts before inspecting one with `broadcasts.get` or stopping one with `broadcasts.stop`. Filter by `status`, `name`, `channel` or a `scheduledFrom`/`scheduledTo` window; newest first unless `sort` is given. Each broadcast includes its channel, subaction, template, audience filter and per-page targets.",
       tags: ["Broadcasts"],
-      spec: mcpSpec({ visibility: "default" }),
+      spec: mcpSpec({
+        destructiveHint: false,
+        idempotentHint: true,
+        openWorldHint: false,
+        readOnlyHint: true,
+        visibility: "default",
+      }),
     })
     .input(listBroadcastsPublicRequest)
     .output(publicListBroadcastsResponse)
@@ -97,7 +104,13 @@ export const broadcastsPublicRouter = {
       description:
         "Use this to inspect a broadcast by id or name after finding it with `broadcasts.list`. Call `broadcasts.schedule` for a draft or `broadcasts.stop` for a sending broadcast.",
       tags: ["Broadcasts"],
-      spec: mcpSpec({ visibility: "default" }),
+      spec: mcpSpec({
+        destructiveHint: false,
+        idempotentHint: true,
+        openWorldHint: false,
+        readOnlyHint: true,
+        visibility: "default",
+      }),
     })
     .input(
       z.object({
@@ -394,7 +407,13 @@ export const broadcastsPublicRouter = {
       description:
         "Stops a broadcast while it is sending and returns its id. On a repeating broadcast (status `recurring`) it pauses the schedule: no new runs start, a run already sending carries on. Allowed even when the workspace trial has expired, like the builder. Call `broadcasts.get` to confirm its state first, or use `broadcasts.moveToDraft` for scheduled broadcasts. The system also stops a broadcast on its own when the channel page is blocked from sending: the broadcast then has a `statusReason` (and `statusErrorMessage`, `statusInboxId`) in `broadcasts.get`.",
       tags: ["Broadcasts"],
-      spec: mcpSpec({ visibility: "default" }),
+      spec: mcpSpec({
+        destructiveHint: true,
+        idempotentHint: true,
+        openWorldHint: false,
+        readOnlyHint: false,
+        visibility: "default",
+      }),
     })
     .input(
       z.object({

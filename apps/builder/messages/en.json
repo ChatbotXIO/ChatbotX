@@ -163,6 +163,94 @@
   "errors": {
     "superAdminRequired": "You need to be a workspace super admin to do this."
   },
+  "inboxTranslation": {
+    "settings": {
+      "title": "Conversation translation",
+      "description": "Translate customers' messages for your team, and your replies for your customers, inside the Inbox.",
+      "saved": "Translation settings saved",
+      "readOnly": "Only workspace admins can change these settings.",
+      "languageHint": "Also the language customers' messages are translated into when conversation translation is on.",
+      "alert": {
+        "needsReconfiguration": "Reconfiguration needed: the AI integration was removed or turned off.",
+        "noIntegration": "Connect an AI integration first to use translation.",
+        "connect": "Connect AI"
+      },
+      "enabled": {
+        "label": "Translate conversations",
+        "description": "Customer messages are translated only when someone opens the conversation. Chat text is sent to the AI provider you choose and billed to your AI key."
+      },
+      "integration": {
+        "label": "AI integration",
+        "description": "Only connected AI providers are listed."
+      },
+      "test": {
+        "label": "Test connection",
+        "button": "Test",
+        "result": "Done in {seconds} s: \"{sample}\" → \"{translated}\"",
+        "slow": "This model is slow: outgoing messages may not be translated in time and will then not be sent.",
+        "failed": "The test failed."
+      }
+    },
+    "message": {
+      "translating": "Translating…",
+      "stillWaiting": "Still waiting for the translation",
+      "requestAgain": "Request again",
+      "failed": "Could not translate",
+      "translatedFrom": "Translated from {language}. Show original",
+      "translatedFromNoLanguage": "Translated. Show original",
+      "sentIn": "Sent in {language}. Show what was sent",
+      "sentInNoLanguage": "Sent translated. Show what was sent",
+      "hideOriginal": "Hide original",
+      "hideSent": "Hide what was sent",
+      "translatedLabelNoLanguage": "Translated",
+      "sentLabelNoLanguage": "Sent translated"
+    },
+    "badge": {
+      "tooltip": "Customer language: {language}"
+    },
+    "panel": {
+      "title": "Translation settings",
+      "statusOn": "On",
+      "statusOff": "Off",
+      "translateConversation": "Translate this conversation",
+      "translateConversationHint": "Automatically translate messages",
+      "botActiveHint": "The bot is handling this conversation, so translation is off. Turn it on to translate it.",
+      "botPausedHint": "You took this conversation over from the bot, so translation stays off. Turn it on to translate it.",
+      "displayOptions": "Display options",
+      "showOriginals": "Show original text",
+      "previewBeforeSending": "Preview translation before sending"
+    },
+    "composer": {
+      "hintUnknown": "Language not detected · Send as written",
+      "hintDetecting": "Detecting the customer's language…",
+      "chip": {
+        "aria": "Translation language",
+        "target": "→ {language}",
+        "sameLanguage": "Same language as workspace",
+        "unknown": "Language unknown",
+        "hasFiles": "Messages with files are not translated",
+        "off": "Translation off"
+      },
+      "popover": {
+        "customerLanguage": "Customer language",
+        "chooseLanguage": "Choose a language"
+      },
+      "preview": {
+        "title": "Customer preview · {language}",
+        "translating": "Translating…",
+        "needsRetranslate": "Needs translating again",
+        "retranslate": "Translate again",
+        "failed": "Could not translate — it will be tried again when you send",
+        "done": "Done",
+        "ready": "Ready to send"
+      }
+    },
+    "send": {
+      "translating": "Translating…",
+      "failed": "Translation failed",
+      "turnedOff": "Translation unavailable. Translation has been turned off for this conversation."
+    }
+  },
   "states": {
     "success": "Success",
     "error": "Error",
@@ -693,7 +781,8 @@
       "template": "Template",
       "integration": "Integration",
       "schedule": "Repeat schedule",
-      "runOf": "Run of <link>{name}</link>"
+      "runOf": "Run of <link>{name}</link>",
+      "linkNotFound": "This broadcast no longer exists."
     },
     "filters": {
       "all": "All"
@@ -1506,7 +1595,10 @@
       "label": "Notification Type",
       "notifyAdmin": "Notify Admin",
       "newMessageToHuman": "New Message to Human",
-      "newOrder": "New Order"
+      "newOrder": "New Order",
+      "postFailed": "Post Failed",
+      "postNeedsReview": "Post Needs Review",
+      "publishConnection": "Publishing Connection Needs Attention"
     },
     "notificationChannel": {
       "label": "Notification Channel",
@@ -2947,7 +3039,8 @@
       "pipelines": "Pipelines",
       "places": "Places",
       "templates": "Templates",
-      "polls": "Polls"
+      "polls": "Polls",
+      "posts": "Posts"
     },
     "adReferral": {
       "label": "Ads",
@@ -3080,6 +3173,9 @@
         "skip": "Not found",
         "error": "Failed"
       }
+    },
+    "tiktokPublishing": {
+      "label": "TikTok publishing"
     }
   },
   "metaConversions": {
@@ -5739,7 +5835,8 @@
     "invalidApiKey": "Invalid API key",
     "maxMustBeGreaterThanMin": "{maxField} must be greater than or equal to {minField}",
     "trigger": {
-      "actionReferenceNotFound": "An action refers to a record that no longer exists. Re-select it in the action and save again."
+      "actionReferenceNotFound": "An action refers to a record that no longer exists. Re-select it in the action and save again.",
+      "postCommentPostsInvalid": "A selected post does not exist in this workspace or does not belong to the chosen inbox. Re-select the posts and save again."
     },
     "inboundWebhook": {
       "inboxRequired": "Choose an inbox.",
@@ -6798,7 +6895,16 @@
       "anyPipeline": "Any pipeline",
       "anyStage": "Any stage",
       "unavailablePipeline": "Deleted or unavailable pipeline",
-      "unavailableStage": "Deleted or unavailable stage"
+      "unavailableStage": "Deleted or unavailable stage",
+      "contactCommentedOnPost": "Contact Commented On A Post",
+      "contactFirstCommentedOnPost": "Contact Commented On A Post For The First Time",
+      "anyInbox": "Any page or account",
+      "unavailableInbox": "Deleted or unavailable page or account",
+      "postScope": {
+        "any": "Any post",
+        "selected": "Specific posts",
+        "publishedFromPosts": "Only posts published from Posts"
+      }
     },
     "actions": {
       "addTag": "Add Tag",
@@ -7630,7 +7736,8 @@
       "ignoreCommentReplies": "Don't reply to replies to comments",
       "ignoreCommentRepliesDescription": "Skip automation for comments that are replies to other comments, not top-level comments.",
       "trackUserTags": "Track if a user tags other users",
-      "trackUserTagsDescription": "Counts the accounts tagged in each comment and adds them to the contact's running totals across all comments. Use '{{total_tagged}}' for every tagged account and '{{total_new_tagged}}' for accounts that have never messaged your page or been a contact."
+      "trackUserTagsDescription": "Counts the accounts tagged in each comment and adds them to the contact's running totals across all comments. Use '{{total_tagged}}' for every tagged account and '{{total_new_tagged}}' for accounts that have never messaged your page or been a contact.",
+      "likeUserCommentUnavailable": "Not available on Instagram. This option is skipped; turn it off to remove it."
     },
     "hideComments": {
       "all": "Hide all comments",
@@ -8263,6 +8370,7 @@
       "resourcesTitle": "Installed resources",
       "noResources": "Nothing was created yet.",
       "deletedResource": "Deleted resource",
+      "wholeCategory": "{count, plural, one {# item} other {# items}}",
       "viewOnly": "View only",
       "created": "Created",
       "reused": "Reused",
@@ -8317,7 +8425,12 @@
           "placeCategories": "Place categories"
         }
       },
-      "viewOnlyCopyIncluded": "Something you selected (or something it needs) was installed from a view-only template, so it can't be shared in a new template."
+      "viewOnlyCopyIncluded": "Something you selected (or something it needs) was installed from a view-only template, so it can't be shared in a new template.",
+      "miniAppPublishedExcluded": {
+        "title": "Mini App left out",
+        "hint": "These flows use a Mini App that is published to WhatsApp. It can't be shared, so the template leaves it out and installing removes that reference.",
+        "item": "{flowName}: {miniAppName}"
+      }
     },
     "categories": {
       "flows": "Flows",
@@ -8339,7 +8452,20 @@
       "aiFiles": "AI knowledge files",
       "questionnaires": "Questionnaires",
       "couponTopics": "Coupon topics",
-      "pipelines": "Pipelines"
+      "pipelines": "Pipelines",
+      "magicLinks": "Magic links",
+      "polls": "Polls",
+      "dynamicImages": "Dynamic images",
+      "placeLocations": "Place locations",
+      "miniApps": "Mini Apps",
+      "minigames": "Minigames",
+      "leaderboards": "Leaderboards",
+      "openHours": "Opening hours",
+      "vendors": "Vendors",
+      "discountCodes": "Discount codes",
+      "storeSettings": "Store settings",
+      "storyAutomations": "Instagram Story Automation",
+      "inboundWebhooks": "Inbound webhook"
     },
     "locked": {
       "flowBanner": "This flow was installed from a view-only template. You can look at it but not edit it.",
@@ -8416,6 +8542,7 @@
       "flowNotPublished": "The flow was installed as a draft and is not published.",
       "flowSkippedRequiredReference": "The flow was skipped because a required reference could not be resolved.",
       "folder": "A referenced item was not found in this workspace, so the link was dropped.",
+      "inboundWebhookLimitReached": "This inbound webhook was skipped: the workspace already has the maximum number of inbound webhooks.",
       "inboxBindingRequired": "Pick an inbox for this channel; until then the item stays inactive.",
       "integration": "A referenced item was not found in this workspace, so the link was dropped.",
       "localModifiedOverwritten": "A locally edited item was overwritten. A backup was saved and can be restored.",
@@ -8436,7 +8563,25 @@
       "tag": "A referenced item was not found in this workspace, so the link was dropped.",
       "unlisted": "Item not fully brought over: {code}",
       "workspaceMember": "Assigned to a member who is not in this workspace.",
-      "workspaceUnavailable": "This workspace is no longer available, so the item was skipped."
+      "workspaceUnavailable": "This workspace is no longer available, so the item was skipped.",
+      "scheduleExpired": "The dates of this item have already passed; set new ones before using it.",
+      "linkNotRemapped": "A link to a tool that was not part of the template was left unchanged.",
+      "dynamicImage": "This dynamic image was skipped because its background could not be copied.",
+      "dynamicImageFieldNotBound": "Choose a custom field for this image to cache on; the original one was already in your workspace.",
+      "dynamicImageRerenderFailed": "This dynamic image was switched off because its background could not be re-rendered with your copied links. Turn it on to try again.",
+      "pollImage": "An image could not be copied.",
+      "leaderboardInvalid": "This leaderboard's configuration could not be installed, so it was skipped.",
+      "placeLocationInvalid": "This place was skipped because its name is empty.",
+      "minigame": "The minigame this leaderboard is scored from is not part of the template, so it was skipped.",
+      "minigameImage": "An image could not be copied.",
+      "leaderboardImage": "An image could not be copied.",
+      "leaderboardHostMissing": "The leaderboard needs a channel (or minigame) of its own that this install did not provide, so it was skipped.",
+      "externalStoreSkipped": "This workspace sells from a connected store (Shopify or WooCommerce), so the products, vendors, discount codes, opening hours and store settings were not installed.",
+      "discountCodeSkipped": "This discount code was skipped: the products or category it applies to are not part of the template, or its settings were refused.",
+      "storeSettingsKept": "This workspace already had store settings, so they were kept as they are.",
+      "vendorImage": "An image could not be copied.",
+      "storeSettingsCurrencyKept": "The workspace has products in another currency, so its currency was kept instead of the template's.",
+      "storySelectionRequired": "Select the stories again: the original stories could not be carried over."
     },
     "tabs": {
       "mine": "My templates",
@@ -8679,7 +8824,6 @@
   "templatesPublicPage": {
     "invalidTitle": "This link is no longer available.",
     "invalidDescription": "This template share link is invalid, disabled, or has expired.",
-    "byPublisher": "By {publisherName}",
     "videoTitle": "Template preview video",
     "preview": "Preview",
     "aboutTemplate": "About this template",
@@ -9138,6 +9282,10 @@
   "contactAdReferrals": {
     "title": "Ads history",
     "empty": "No ad clicks recorded for this contact yet."
+  },
+  "contactBroadcasts": {
+    "empty": "No broadcasts have been sent to this contact yet.",
+    "searchPlaceholder": "Search by name or ID"
   },
   "adsReferralStats": {
     "title": "Contacts by ad",
@@ -12004,25 +12152,118 @@
     "noWorkspaces": "You are not an admin of any workspace, so you cannot authorize this application."
   },
   "chatbotxMcp": {
-    "title": "ChatbotX MCP",
-    "workspaceId": "Workspace ID",
+    "title": "MCP connector",
     "streamableUrl": "Streamable HTTP URL",
     "sseUrl": "Legacy SSE URL",
     "guide": {
       "title": "Connect an MCP client",
-      "step1": "Copy the configuration for your MCP client.",
-      "step2": "Paste it into the client.",
-      "step3": "The client opens a browser. Sign in and approve access.",
-      "step4": "Your workspace tools appear after approval.",
-      "ownerOnly": "Only workspace owners and superAdmins can authorize MCP access."
+      "subtitle": "Pick the app you use and follow the three steps.",
+      "ownerOnly": "Only workspace owners and superAdmins can authorize MCP access. You choose the workspace on the approval screen.",
+      "otherClients": "Any other MCP-compatible client works too",
+      "otherIntro": "Use these endpoints and configurations with any other MCP-compatible client.",
+      "opensInNewTab": "(opens in a new tab)",
+      "actions": {
+        "addConnector": "Add connector",
+        "startChatting": "Start chatting"
+      },
+      "steps": {
+        "claude": {
+          "step1": {
+            "title": "Copy the connector URL",
+            "body": "You'll paste this URL into Claude in the next step."
+          },
+          "step2": {
+            "title": "Go to Claude → Customize → Connectors → Add custom connector",
+            "body": "The button below opens your connectors in Claude. Click Add custom connector, give it a name and paste the URL. It also shows up in the Claude desktop and mobile apps."
+          },
+          "step3": {
+            "title": "Click Connect and approve access",
+            "body": "Sign in, choose your workspace and approve. Then ask Claude to work with your contacts, flows and broadcasts right from the chat."
+          }
+        },
+        "chatgpt": {
+          "step1": {
+            "title": "Copy the connector URL",
+            "body": "You'll paste this URL into ChatGPT in the next step."
+          },
+          "step2": {
+            "title": "Go to ChatGPT → Settings → Apps & Connectors → Create",
+            "body": "The button below opens ChatGPT settings. If you don't see Create, turn on Developer mode under Advanced settings. Name the connector, paste the URL and choose OAuth."
+          },
+          "step3": {
+            "title": "Connect and approve access",
+            "body": "Sign in, choose your workspace and approve. Then turn the connector on in a new chat to use it."
+          }
+        },
+        "claudeCode": {
+          "step1": {
+            "title": "Copy the install command",
+            "body": "Run it in your terminal."
+          },
+          "step2": {
+            "title": "Sign in from Claude Code",
+            "body": "Start Claude Code, type /mcp, select the server and choose Authenticate. A browser window opens."
+          },
+          "step3": {
+            "title": "Approve access",
+            "body": "Choose your workspace and approve. Claude Code can now use your workspace tools."
+          }
+        },
+        "cursor": {
+          "step1": {
+            "title": "Copy the configuration",
+            "body": "You'll paste it into Cursor in the next step."
+          },
+          "step2": {
+            "title": "Open Cursor Settings → MCP → Add new MCP server",
+            "body": "Paste the configuration into mcp.json and save. Cursor shows a Login button next to the server."
+          },
+          "step3": {
+            "title": "Approve access",
+            "body": "Click Login, choose your workspace and approve. The tools appear in Cursor's agent."
+          }
+        },
+        "openclaw": {
+          "step1": {
+            "title": "Install the plugin",
+            "body": "Run this command in your terminal."
+          },
+          "step2": {
+            "title": "Sign in",
+            "body": "Run this command. A browser window opens."
+          },
+          "step3": {
+            "title": "Approve access",
+            "body": "Choose your workspace and approve. OpenClaw can now use your workspace tools."
+          }
+        },
+        "hermes": {
+          "step1": {
+            "title": "Copy the configuration",
+            "body": "You'll add it to your Hermes config in the next step."
+          },
+          "step2": {
+            "title": "Add it to ~/.hermes/config.yaml",
+            "body": "Paste it under mcp_servers in ~/.hermes/config.yaml and save. Then run this command in Hermes."
+          },
+          "step3": {
+            "title": "Approve access",
+            "body": "Hermes opens a browser window. Sign in, choose your workspace and approve. Hermes can now use your workspace tools."
+          }
+        }
+      }
     },
     "clients": {
+      "claude": "Claude",
       "claudeCode": "Claude Code",
       "claudeDesktop": "Claude Desktop",
       "cursor": "Cursor",
       "chatgpt": "ChatGPT",
       "stdio": "stdio fallback",
-      "stdioHint": "Use a workspace token for this fallback."
+      "stdioHint": "Use a workspace token for this fallback.",
+      "openclaw": "OpenClaw",
+      "hermes": "Hermes",
+      "other": "Other clients"
     },
     "grants": {
       "title": "Authorized applications",
@@ -12039,6 +12280,10 @@
       "revokeConfirmDescription": "Revoke access for {clientName}? This disconnects the client everywhere.",
       "revokedSuccess": "Application access revoked.",
       "notFound": "OAuth grant no longer exists"
+    },
+    "unavailableOnDomain": {
+      "title": "Not available on this domain",
+      "body": "Connecting AI assistants such as Claude or ChatGPT is not available on this domain yet. Existing authorizations are listed below and can still be revoked."
     }
   },
   "connectionStatus": {
@@ -12067,17 +12312,21 @@
     "add": "Add",
     "addCategory": "Add category",
     "renameCategory": "Rename",
-    "editCategories": "Edit categories",
+    "editListing": "Edit listing",
     "templateId": "Template ID",
     "template": "Template",
     "categories": "Categories",
     "categoriesPlaceholder": "No category",
     "close": "Close",
     "removeChip": "Remove {name}",
+    "moreSelected": "+ {count} more",
     "categoriesHint": "Optional. Without a category the template only shows under “All”.",
+    "languages": "Languages",
+    "allLanguages": "All languages",
+    "languagesHint": "Optional. Leave empty to show the template in every language.",
     "noCategoriesYet": "No categories yet.",
     "added": "Template added to the store",
-    "updated": "Categories updated",
+    "updated": "Listing updated",
     "removed": "Template removed from the store",
     "removeError": "Could not remove the template",
     "removeTitle": "Remove {name}?",
@@ -12119,16 +12368,18 @@
       "categoryLimit": "A store can have at most {categoryLimit} categories."
     },
     "store": {
-      "subtitle": "Ready-made templates you can install in one click.",
       "pageTitle": "{tenantName} – Template store",
       "empty": "No templates in the store yet.",
       "search": "Search templates",
-      "all": "All",
-      "categories": "Store categories",
-      "noResults": "No templates match your search.",
-      "clearSearch": "Clear search",
-      "by": "By {publisherName}",
-      "loadFailed": "Couldn't load the templates. Please try again later."
+      "noResults": "No templates match your filters.",
+      "clearSearch": "Clear filters",
+      "loadFailed": "Couldn't load the templates. Please try again later.",
+      "languageValue": "Language: {language}",
+      "allLanguages": "All languages",
+      "otherLanguages": "Other languages",
+      "allChannels": "All channels",
+      "channel": "Channel",
+      "uncategorized": "Other"
     },
     "picker": {
       "placeholder": "Select a template",
@@ -12137,7 +12388,21 @@
       "error": "Could not load templates.",
       "retry": "Retry",
       "meta": "ID {id} · {workspace}"
-    }
+    },
+    "bulk": {
+      "setCategories": "Set categories",
+      "setLanguages": "Set languages",
+      "categoriesHint": "Replaces the categories of the selected templates ({count}). Leave empty to remove every category.",
+      "languagesHint": "Replaces the languages of the selected templates ({count}). Leave empty to show them in every language.",
+      "updated": "Selected templates updated",
+      "removeTitle": "Remove the selected templates?",
+      "removeDescription": "Selected: {count}. They disappear from the store; the templates themselves and their installs are not affected.",
+      "removed": "Selected templates removed from the store",
+      "setChannels": "Set channels",
+      "channelsHint": "Replaces the channels of the selected templates ({count}). Leave empty for every channel."
+    },
+    "channels": "Channels",
+    "channelsHint": "Optional. Leave empty if the template works on every channel. Shown as icons in the store, where visitors can filter by channel."
   },
   "accountDeletion": {
     "title": "Delete account",
@@ -12308,5 +12573,1060 @@
       "onAhachat": "On AhaChat",
       "selected": "Uses AhaChat data"
     }
+  },
+  "conversationParticipants": {
+    "joined": "{names} joined the conversation",
+    "replied": "{name} replied {time}",
+    "showMore": "Show more",
+    "label": "Who replied in this conversation",
+    "unnamedMember": "Member",
+    "loadMoreFailed": "Couldn't load more members",
+    "lastMessageBy": "Last message by {name}"
+  },
+  "posts": {
+    "title": "Posts",
+    "searchPlaceholder": "Search by text, link or post ID",
+    "dateFrom": "From date",
+    "dateTo": "To date",
+    "export": {
+      "title": "Export comments of the posts in this date range (up to {count} posts)",
+      "needsRange": "Pick a start and an end date to export comments.",
+      "nothing": "No posts match these filters in this date range.",
+      "failed": "The export failed. Try again.",
+      "done": "{count, plural, one {Exported the comments of # post.} other {Exported the comments of # posts.}}",
+      "doneLimited": "Exported the comments of the newest {count} posts. More posts match; narrow the dates to export the rest.",
+      "truncated": "The export was cut short at the row limit. Narrow the dates or filters to export the rest.",
+      "quotaExceeded": "The message quota of this account is used up, so the download was not made. Upgrade the plan or wait for the next billing period.",
+      "blocked": "The plan or trial of this workspace has expired.",
+      "menu": "Export",
+      "rowsTitle": "Export the list of posts (one row per post)",
+      "rowsDone": "Exported the list of posts.",
+      "rowsTruncated": "The list was cut short at the post limit. Narrow the filters to export the rest."
+    },
+    "showAllPosts": "Show posts without comments too",
+    "noCaption": "No caption",
+    "liveNow": "Live now",
+    "empty": "No posts match these filters.",
+    "loadMore": "Load more",
+    "columns": {
+      "content": "Post",
+      "topic": "Topic",
+      "author": "Author",
+      "pages": "Pages",
+      "status": "Status"
+    },
+    "contentType": {
+      "text": "Text",
+      "photo": "Photo",
+      "video": "Video",
+      "reel": "Reel",
+      "carousel": "Carousel",
+      "story": "Story",
+      "live": "Live",
+      "link": "Link",
+      "audio": "Audio",
+      "other": "Other"
+    },
+    "filters": {
+      "channel": "Channel",
+      "allChannels": "All channels",
+      "inbox": "Page / account",
+      "allInboxes": "All pages and accounts",
+      "postType": "Post type",
+      "commentSettings": "Comment settings",
+      "hidden": "Comments hidden",
+      "notHidden": "Comments not hidden",
+      "phoneHidden": "Phone comments hidden",
+      "phoneNotHidden": "Phone comments not hidden",
+      "skipped": "Comments skipped",
+      "notSkipped": "Comments not skipped",
+      "sort": "Sort",
+      "topics": "Topics",
+      "title": "Filters",
+      "engagement": "Engagement",
+      "topicSearch": "Search topics",
+      "author": "Author",
+      "allAuthors": "All authors"
+    },
+    "postType": {
+      "all": "All",
+      "photo": "Photo",
+      "video": "Video",
+      "post": "Post",
+      "pastLive": "Past live",
+      "liveNow": "Live now"
+    },
+    "sort": {
+      "newest": "Newest",
+      "mostComments": "Most comments",
+      "fewestComments": "Fewest comments",
+      "mostPhones": "Most phone numbers",
+      "fewestPhones": "Fewest phone numbers",
+      "mostEngagement": "Most engagement",
+      "leastEngagement": "Least engagement",
+      "mostShares": "Most shares",
+      "fewestShares": "Fewest shares"
+    },
+    "settings": {
+      "hideComments": "Hide all comments",
+      "hidePhoneComments": "Hide comments with a phone number",
+      "skipComments": "Skip comments (mark as read)",
+      "unavailable": "This channel does not support per-post comment settings yet."
+    },
+    "sync": {
+      "refresh": "Refresh posts",
+      "started": "Syncing posts. New posts appear shortly.",
+      "alreadyRunning": "A sync is already running or ran a moment ago.",
+      "failedCount": "{count, plural, one {# page could not sync} other {# pages could not sync}}",
+      "reconnect": "Reconnect the channel",
+      "reconnectWithPermission": "Reconnect and allow post access",
+      "retry": "Try again"
+    },
+    "topics": {
+      "edit": "Edit topics",
+      "newPlaceholder": "New topic name",
+      "empty": "No topics yet. Type a name to create one."
+    },
+    "emptyHint": "Try another filter, or turn on “Show posts without comments too”.",
+    "actions": {
+      "viewComments": "View comments",
+      "viewOriginal": "View original post",
+      "refreshPost": "Refresh from channel",
+      "refreshRemoved": "This post no longer exists on the channel, so it was hidden.",
+      "refreshUnavailable": "Could not read the post from the channel. Try again later.",
+      "refreshRateLimited": "The channel asked to slow down. Try again in a few minutes.",
+      "refreshCooldown": "This post was just refreshed. Try again in a minute.",
+      "downloadPhones": "Download phone numbers",
+      "downloadComments": "Download comments",
+      "viewDetails": "View details"
+    },
+    "merge": {
+      "title": "Merge posts",
+      "selectAll": "Select all",
+      "selected": "{count} of {max} selected",
+      "confirm": "Merge posts"
+    },
+    "comments": {
+      "title": "All comments on this post",
+      "mergedTitle": "Merged comments from {count} posts",
+      "searchPlaceholder": "Search comments",
+      "phoneOnly": "With phone number",
+      "empty": "No comments to show.",
+      "loadOlder": "Load older comments",
+      "like": "Like comment",
+      "delete": "Delete comment",
+      "confirmDelete": "Click again to delete",
+      "hidden": "Hidden",
+      "unknownAuthor": "Unknown customer"
+    },
+    "state": {
+      "noChannelTitle": "No channel connected",
+      "noChannelHint": "Connect a Messenger, Instagram, Threads or TikTok channel to see its posts here.",
+      "connectChannel": "Connect a channel",
+      "neverSyncedTitle": "Posts not loaded yet",
+      "neverSyncedHint": "Load the posts of your connected channels. It runs in the background and may take a few minutes.",
+      "loadPosts": "Load posts"
+    },
+    "counts": {
+      "comments": "Comments",
+      "reactions": "Reactions",
+      "shares": "Shares",
+      "phones": "Comments with a phone number"
+    },
+    "tabs": {
+      "posts": "Posts",
+      "calendar": "Calendar",
+      "connect": "Connect",
+      "feeds": "Feeds",
+      "analytics": "Analytics"
+    },
+    "calendar": {
+      "views": {
+        "month": "Month",
+        "week": "Week",
+        "day": "Day",
+        "list": "List"
+      },
+      "viewLabel": "Calendar view",
+      "previous": "Previous period",
+      "next": "Next period",
+      "today": "Today",
+      "network": "Network",
+      "destination": "Page or profile",
+      "allNetworks": "All networks",
+      "allDestinations": "All pages and profiles",
+      "noText": "(No text)",
+      "noDate": "No date",
+      "noDateEmpty": "Drafts without a date appear here. Drop a post here to move it back to drafts.",
+      "newPostOn": "New post on {date}",
+      "more": "+{count} more",
+      "emptyDay": "No posts on this day.",
+      "emptyHint": "Nothing is scheduled in this period.",
+      "loading": "Loading…",
+      "loadError": "The calendar could not be loaded.",
+      "retry": "Try again",
+      "readOnly": "This workspace is read-only, so posts cannot be moved or created.",
+      "truncated": "Only part of the posts in this period is shown. Narrow the period or filter by network or account.",
+      "openPost": "Open post",
+      "moveToDrafts": "Move to drafts",
+      "reschedule": "Reschedule",
+      "schedule": "Schedule",
+      "rescheduleLabel": "Publish time",
+      "scheduleLabel": "Schedule for",
+      "pickTime": "Pick a date and time",
+      "status": {
+        "draft": "Draft"
+      },
+      "errors": {
+        "past": "Pick a time at least 15 minutes from now.",
+        "cannotUnschedule": "Only a scheduled post can be moved back to drafts."
+      },
+      "list": {
+        "filterLabel": "Filter by status",
+        "filterCount": "{label}, {count, plural, one {# post} other {# posts}}",
+        "filters": {
+          "all": "All",
+          "drafts": "Drafts",
+          "scheduled": "Scheduled",
+          "published": "Published",
+          "needsAttention": "Needs attention"
+        },
+        "empty": {
+          "all": "No posts",
+          "drafts": "No draft posts",
+          "scheduled": "No scheduled posts",
+          "published": "No published posts",
+          "needsAttention": "Nothing needs attention"
+        },
+        "loadMore": "Load more"
+      },
+      "freeSlots": {
+        "label": "Free posting times",
+        "compose": "New post at {time}",
+        "truncated": "More free times are not shown"
+      }
+    },
+    "connect": {
+      "title": "Connect",
+      "connectNetwork": "Connect {network}",
+      "reconnect": "Reconnect",
+      "reconnectName": "{label}: {name}",
+      "facebookReconnectHint": "Reconnecting one Page updates every Page of the same Facebook login.",
+      "comingSoon": "Not available yet",
+      "connectedAlready": "{count, plural, one {# account connected. Click to add another.} other {# accounts connected. Click to add another.}}",
+      "truncated": "Showing the first {count} pages.",
+      "tiktokTitle": "TikTok publishing accounts",
+      "pageCount": "{count, plural, one {# page} other {# pages}}",
+      "verify": "Verify",
+      "verified": "Account verified.",
+      "syncDestinations": "Sync pages",
+      "destinationsSynced": "Pages and profiles updated.",
+      "disconnect": "Disconnect",
+      "confirmDisconnect": "Click again to disconnect",
+      "disconnected": "Account disconnected.",
+      "missingScopes": "Missing permissions: {scopes}. Reconnect to grant them.",
+      "lastVerified": "Verified {date}",
+      "status": {
+        "connected": "Connected",
+        "needsReauth": "Needs reconnect",
+        "disconnected": "Disconnected"
+      },
+      "reason": {
+        "tokenRejected": "The platform rejected the saved login. Reconnect the account.",
+        "tokenExpired": "The saved login expired. Reconnect the account.",
+        "refreshRejected": "The platform refused to renew the login. Reconnect the account.",
+        "permissionNotGranted": "Some permissions are missing. Reconnect the account to grant them."
+      },
+      "emptyTitle": "No channels connected yet",
+      "emptyAction": "Go to channels",
+      "schedule": {
+        "open": "Posting times",
+        "title": "Posting times for {name}",
+        "description": "A post added to the queue takes the next free time listed here.",
+        "timezone": "Time zone: {timezone}",
+        "maxTimes": "Up to {count} times a day",
+        "dayOn": "Post on {day}",
+        "noTimes": "No times",
+        "addTime": "Add time",
+        "timeLabel": "New time on {day}",
+        "removeTime": "Remove {time}",
+        "copyTo": "Copy to other days",
+        "copyApply": "Copy",
+        "save": "Save",
+        "saved": "Posting times saved.",
+        "reflowMoved": "{count, plural, one {# queued post moved to a new time.} other {# queued posts moved to new times.}}",
+        "reflowDetached": "{count, plural, one {# queued post has no posting time left. It keeps its time but is no longer queued (now custom).} other {# queued posts have no posting time left. They keep their times but are no longer queued (now custom).}}"
+      }
+    },
+    "detail": {
+      "title": "Post details",
+      "caption": "Caption",
+      "metrics": "Engagement",
+      "metricsUnavailable": "This channel does not report these numbers.",
+      "views": "Views",
+      "settings": "Comment settings",
+      "settingsHint": "These settings apply to new comments on this post. Comments already on the post are not changed.",
+      "skipCommentsHint": "Mark every new comment as read. Automations still run.",
+      "hideCommentsHint": "Hide every new comment on the post.",
+      "hidePhoneCommentsHint": "Hide new comments that contain a phone number.",
+      "topics": "Topics",
+      "info": "Information",
+      "postId": "Post ID",
+      "channel": "Channel",
+      "contentType": "Type",
+      "author": "Author",
+      "publishedAt": "Published",
+      "metricsUpdated": "Metrics updated",
+      "never": "Not measured yet",
+      "ownerPage": "Page",
+      "ownerAccount": "Account"
+    },
+    "feeds": {
+      "title": "Feed auto-posting",
+      "description": "Turn new items from an RSS or Atom feed into posts. The first check only records what the feed already has.",
+      "add": "Add feed",
+      "empty": "No feeds yet. Add one to turn new articles into posts automatically.",
+      "status": {
+        "active": "Active",
+        "paused": "Paused",
+        "error": "Paused – feed error"
+      },
+      "mode": {
+        "draft": "Save as draft",
+        "queue": "Queue automatically"
+      },
+      "lastChecked": "Last checked {time}",
+      "neverChecked": "Not checked yet",
+      "firstCheckPending": "The first check only records what the feed already has; no post is made from it.",
+      "every": "Every {minutes} min",
+      "destinations": "{count, plural, one {# destination} other {# destinations}}",
+      "actions": {
+        "checkNow": "Check now",
+        "pause": "Pause",
+        "resume": "Resume",
+        "edit": "Edit",
+        "delete": "Delete",
+        "items": "Items",
+        "sendTest": "Send test"
+      },
+      "toast": {
+        "checkStarted": "Check started",
+        "paused": "Feed paused",
+        "resumed": "Feed resumed",
+        "deleted": "Feed deleted",
+        "saved": "Feed saved",
+        "testDraftCreated": "Test draft created",
+        "openDraft": "Open draft",
+        "testUsedTemplate": "The AI could not write it, so the text template was used."
+      },
+      "deleteConfirm": "Delete this feed and its item history? Posts already made stay.",
+      "error": {
+        "blocked": "The feed address is not allowed.",
+        "timeout": "The feed took too long to answer.",
+        "tooLarge": "The feed is larger than 2 MB.",
+        "badStatus": "The feed answered with an error.",
+        "badContentType": "The address is not an RSS or Atom feed.",
+        "unreachable": "The feed could not be reached.",
+        "tooManyRedirects": "The feed redirects too often.",
+        "invalidFeed": "The feed could not be read.",
+        "internal": "Something went wrong while checking the feed.",
+        "postRefused": "A post could not be made (for example no posting time is free, or the workspace is blocked). The next check tries again."
+      },
+      "apiError": {
+        "feedUrlTaken": "This feed is already added.",
+        "feedCheckCooldown": "A feed can be checked by hand once every 5 minutes.",
+        "feedPreviewRateLimited": "Too many previews. Try again later.",
+        "feedNotParseable": "This address is not an RSS or Atom feed. Try adding /feed or /rss to the website address.",
+        "feedUnreachable": "This address could not be reached. Check it and try again.",
+        "feedTestRateLimited": "Too many test posts. Try again later.",
+        "feedHasNoItems": "The feed has no items yet.",
+        "feedFetchRateLimited": "Too many feed address checks. Try again later.",
+        "feedCheckInProgress": "A check of this feed is already waiting or running."
+      },
+      "form": {
+        "createTitle": "Add feed",
+        "editTitle": "Edit feed",
+        "name": "Name",
+        "url": "Feed address",
+        "urlPlaceholder": "https://example.com/feed.xml",
+        "preview": "Preview",
+        "previewEmpty": "No items found in this feed.",
+        "destinations": "Post to",
+        "noDestinations": "Connect a social account first.",
+        "interval": "Check every",
+        "dailyCap": "Most posts per day",
+        "mode": "New items are",
+        "modeDraftHelp": "Each new item becomes a draft for you to review.",
+        "modeQueueHelp": "Each new item is queued on the destination's posting schedule and published without review.",
+        "template": "Post text",
+        "templateHelp": "Variables you can use: {variables}",
+        "save": "Save",
+        "cancel": "Cancel",
+        "didYouMean": "Did you mean {url}?",
+        "useSuggestion": "Use",
+        "aiWrite": "Write each post with AI",
+        "aiWriteHelp": "The AI writes the text from the item's title, summary and link. If it cannot, the text template below is used.",
+        "aiInstructions": "Extra instructions for the AI (optional)",
+        "aiInstructionsHelp": "For example: friendly tone, mention the shop name. Up to 300 characters.",
+        "postLatestOnFirstCheck": "Post the newest item on the first check",
+        "postLatestOnFirstCheckHelp": "Without this, the first check only records what the feed already has.",
+        "contentTitle": "Post content",
+        "templateInsert": "Insert field",
+        "templateVariables": "Item fields",
+        "templateFeedFields": "Fields found in this feed",
+        "templatePresets": "Start from a preset",
+        "presetTitleLink": "Title and link",
+        "presetSummaryHashtags": "Title, summary, link and hashtags",
+        "presetProduct": "Product: title, price and link",
+        "templateLegacy": "This feed uses the old {token} tokens and keeps posting as before until you convert it.",
+        "templateConvert": "Convert to the new syntax",
+        "templateHint": "Insert fields from the menu or type them, for example {example}. Filters you can use: {filters}.",
+        "templateProblem": "Line {line}, column {column}: {message}",
+        "previewTitle": "Preview",
+        "previewSample": "Sample item",
+        "previewHint": "Preview the feed address to see how a post will look.",
+        "previewCharacters": "{network}: {count} characters",
+        "previewDropped": "Destinations left out of this post: {count}",
+        "previewFiltered": "Filtered out: {reason}",
+        "previewSkipped": "This item would be skipped.",
+        "previewNoPicture": "No picture",
+        "mediaTitle": "Pictures",
+        "mediaMode": "Picture source",
+        "mediaModeAuto": "From the feed (automatic)",
+        "mediaModeField": "From a field or address",
+        "mediaModeNone": "No picture",
+        "mediaField": "Field or address",
+        "mediaFieldHelp": "A template that gives the picture address, for example {example}.",
+        "mediaLibrary": "Fallback pictures",
+        "mediaLibraryHelp": "From your Media Library; used when an item has no picture of its own.",
+        "mediaLibraryAdd": "Add pictures",
+        "mediaRemove": "Remove",
+        "postAs": "Post as",
+        "postAsPhoto": "Picture post",
+        "postAsLink": "Link",
+        "postAsText": "Text only",
+        "postAsHelpLink": "Link: a preview card with the article's picture on Facebook and Threads.",
+        "postAsHelpPhoto": "Picture post: the item's picture is posted with the text.",
+        "postAsHelpText": "Text only: the words and the address only, with no picture.",
+        "postAsTextFacebookWarning": "Facebook does not build a link preview card (picture) for a link inside the text. Choose Link to get the card with the article picture.",
+        "noImageFallback": "When an item has no picture",
+        "fallbackLink": "Share the link",
+        "fallbackText": "Text only",
+        "fallbackSkip": "Skip the item",
+        "filtersTitle": "Filters",
+        "filterInclude": "Contains one of",
+        "filterExclude": "Contains none of",
+        "filterCategories": "Category is one of",
+        "filterTermsHelp": "Type a word and press Enter. Capitals and accents are ignored.",
+        "filterRequireImage": "Only items with a picture",
+        "filterMaxAge": "Only items newer than (hours)",
+        "networkTexts": "Different text per network",
+        "networkTextsHelp": "Write a separate text for a network; networks without one use the shared text. A text a network refuses is skipped, never shortened. AI-written posts use one shared text.",
+        "networkTabShared": "Shared",
+        "networkTextUsesShared": "This network uses the shared text.",
+        "networkTextClear": "Use the shared text",
+        "networkTextAria": "Text for {network}",
+        "fetchArticleImage": "Look for a picture on the article page",
+        "fetchArticleImageHelp": "When an item has no picture, its article page is read once for its main image (og:image). Only for items that will be posted; a page that cannot be read never blocks the post.",
+        "previewArticlePicture": "Article page will be read"
+      },
+      "items": {
+        "title": "Items from {name}",
+        "empty": "No items checked yet.",
+        "loadMore": "Load more",
+        "openPost": "Open post",
+        "reasons": {
+          "existing": "Already in the feed when it was added",
+          "undated": "No publish date",
+          "tooOld": "Too old",
+          "perRunLimit": "Over the per-check limit",
+          "noDestination": "No destination selected",
+          "emptyText": "The post text is empty",
+          "textTooLong": "The post text is too long",
+          "invalid": "The post was refused",
+          "other": "The item could not be used",
+          "aiFallback": "Written from the template (the AI could not write it)",
+          "excludedKeyword": "Contains an excluded word",
+          "missingKeyword": "Contains none of the required words",
+          "category": "Not in the chosen categories",
+          "noImage": "No picture",
+          "tooOldForFilter": "Older than the age filter",
+          "undatedForFilter": "No date to check the age filter",
+          "imageFailed": "The picture could not be used",
+          "noImageFallback": "Posted without a picture",
+          "droppedTargets": "Some destinations were left out",
+          "templateError": "The template could not be rendered",
+          "noDestinationAccepts": "No destination can carry this post",
+          "issueTextRequired": "The post has no text",
+          "issueTextTooLong": "The text is too long for a network",
+          "issueLinkNotSupported": "A network does not accept a link",
+          "issueLinkRequired": "A network needs a link",
+          "issueTooManyLinks": "More links than a network allows",
+          "issueContentType": "A network does not publish this kind of post",
+          "issueMedia": "The picture does not meet a network's rules",
+          "issueOptions": "A network setting is not valid",
+          "issueParts": "A network does not accept follow-up parts",
+          "issueDestination": "A destination cannot publish right now",
+          "alreadyPosted": "A post for this item already exists"
+        },
+        "createPost": "Create post",
+        "picture": "Picture: {source}",
+        "dropped": "Left out: {count}",
+        "imageSources": {
+          "enclosure": "Image attachment",
+          "mediaContent": "Media content",
+          "mediaThumbnail": "Thumbnail",
+          "itunesImage": "Podcast cover",
+          "contentImage": "Image in the text",
+          "jsonFeed": "JSON Feed image",
+          "field": "Field or address",
+          "library": "Media Library",
+          "article": "Article page (og:image)"
+        },
+        "imageErrors": {
+          "unreachable": "The picture could not be downloaded.",
+          "blocked": "The picture address is not allowed.",
+          "tooBig": "The picture is too large.",
+          "notImage": "The file is not a usable picture.",
+          "storage": "The picture could not be stored.",
+          "articleUnreachable": "The article page could not be read.",
+          "articleNoImage": "The article page names no picture."
+        }
+      },
+      "outcome": {
+        "created": "Post made",
+        "skippedOld": "Skipped: already there or too old",
+        "skippedInvalid": "Skipped: refused",
+        "skippedFiltered": "Skipped: filtered out",
+        "skippedNoImage": "Skipped: no picture"
+      },
+      "deleteConfirmTitle": "Delete “{name}”?",
+      "sendTestConfirm": {
+        "title": "Send a test post?",
+        "description": "A draft is created from the newest item in this feed, the same way the feed would write it. Nothing is published; you can open the draft to review it."
+      },
+      "bulkDelete": {
+        "selectAll": "Select all",
+        "selectFeed": "Select {name}",
+        "deleteSelected": "Delete selected ({count})",
+        "confirmTitle": "{count, plural, one {Delete # feed?} other {Delete # feeds?}}",
+        "confirmDescription": "The selected feeds and their item history are deleted. Posts already made stay.",
+        "success": "{count, plural, one {# feed deleted} other {# feeds deleted}}"
+      },
+      "columns": {
+        "name": "Feed",
+        "status": "Status",
+        "mode": "Mode",
+        "schedule": "Check interval",
+        "destinations": "Destinations",
+        "lastChecked": "Last checked"
+      },
+      "filters": {
+        "search": "Search feeds",
+        "searchPlaceholder": "Search by name or feed address",
+        "status": "Filter by status",
+        "mode": "Filter by mode",
+        "destination": "Filter by destination",
+        "allStatuses": "All statuses",
+        "allModes": "All modes",
+        "allDestinations": "All destinations",
+        "destinationsSelected": "{count, plural, one {# destination} other {# destinations}}",
+        "noDestinations": "No destinations to filter by yet.",
+        "clear": "Clear filters",
+        "noMatch": "No feeds match these filters."
+      },
+      "destinationsDialog": {
+        "title": "Destinations of {name}",
+        "removed": "Removed destination",
+        "close": "Close",
+        "edit": "Edit destinations"
+      },
+      "lastRun": {
+        "noNew": "No new items in the feed",
+        "skippedOnly": "New items were skipped (too old or filtered out)",
+        "stale": "The source returned an older copy; checking again soon",
+        "notModified": "The source has not changed since the last check",
+        "created": "{count, plural, one {# post made} other {# posts made}}",
+        "refused": "{count, plural, one {# item refused by a network} other {# items refused by a network}}",
+        "waiting": "{count, plural, one {# new item waits for the next check} other {# new items wait for the next check}}",
+        "dailyCap": "Daily limit reached ({cap} per 24 h) — {count, plural, one {# new item waits} other {# new items wait}}",
+        "dailyCapUntil": "Daily limit reached ({cap} per 24 h) — {count, plural, one {# new item waits} other {# new items wait}}. Next place frees up: {until}"
+      }
+    },
+    "show": {
+      "label": "Show",
+      "channels": "On channels"
+    },
+    "composed": {
+      "deleted": "Post deleted.",
+      "deleteTitle": "Delete this post?",
+      "deleteDescription": "A draft is deleted for good. A scheduled post is cancelled and will not be published."
+    },
+    "analytics": {
+      "title": "Post analytics",
+      "filters": {
+        "title": "Analytics filters",
+        "allContentTypes": "All content types",
+        "allTopics": "All topics"
+      },
+      "metrics": {
+        "comments": "Comments",
+        "reactions": "Reactions",
+        "shares": "Shares",
+        "engagement": "Engagement",
+        "views": "Views"
+      },
+      "metricsLower": {
+        "comments": "comments",
+        "reactions": "reactions",
+        "shares": "shares",
+        "engagement": "engagement",
+        "views": "views"
+      },
+      "kpi": {
+        "title": "Key metrics",
+        "notReported": "Not reported",
+        "notReportedHint": "This channel does not report this count.",
+        "vsPrevious": "compared with the previous period",
+        "noComparison": "No comparison available",
+        "previous": "Previous period: {value}",
+        "postsPublished": "{count, plural, one {# post published in this period} other {# posts published in this period}}"
+      },
+      "chart": {
+        "title": "Growth per day",
+        "description": "Daily gain in {metricLower}",
+        "groupBy": "Group the chart",
+        "group": {
+          "none": "Total",
+          "channel": "By channel",
+          "inbox": "By page or account"
+        },
+        "other": "Other",
+        "viewTable": "View as table",
+        "hideTable": "Hide table",
+        "day": "Day",
+        "summary": "{metric} gained per day from {from} to {to}: {total} in total.",
+        "empty": "No growth recorded",
+        "emptyHint": "Nothing changed in this period, or tracking had not started yet."
+      },
+      "breakdown": {
+        "title": "Breakdown",
+        "description": "{metric} gained per channel or page",
+        "by": {
+          "channel": "Channels",
+          "inbox": "Pages and accounts"
+        },
+        "empty": "No data for these filters"
+      },
+      "topPosts": {
+        "title": "Top posts",
+        "description": "Ranked by {metricLower}",
+        "rankBy": "Rank by",
+        "rank_gained": "Most gained",
+        "rank_total": "Highest total",
+        "rank": "#",
+        "post": "Post",
+        "channel": "Channel",
+        "gained": "Gained",
+        "total": "Total",
+        "published": "Published",
+        "open": "Open post",
+        "noCaption": "No caption",
+        "empty": "No posts to rank",
+        "emptyHint": "Posts appear here once their counts have been tracked."
+      },
+      "bestTimes": {
+        "title": "Best times to post",
+        "description": "Posts compared with the usual post of the same page, in {timezone} time.",
+        "caption": "Engagement score by weekday and hour",
+        "cell": "{when}: score {score}, {posts, plural, one {# post} other {# posts}}",
+        "cellEmpty": "{when}: no posts",
+        "legendLow": "Lower",
+        "legendHigh": "Higher",
+        "legendTop": "Best slots",
+        "scoreHint": "A score of 1.0 is a typical post of the same page.",
+        "topHeading": "Strongest slots",
+        "slotDetail": "Score {score} · {posts, plural, one {# post} other {# posts}}",
+        "insufficientTitle": "Not enough data yet",
+        "insufficientHint": "Best times need at least {min} posts published between 90 and 3 days ago. Found {count}.",
+        "capped": "Only a sample of the most recent posts was used."
+      },
+      "coverage": {
+        "noneTitle": "No history yet",
+        "partialTitle": "History is still building",
+        "fullTitle": "Only part of your posts is measured",
+        "since": "Growth is counted from {date}, when tracking started. Earlier activity is not included.",
+        "sinceUnknown": "Growth is counted from when tracking started. Earlier activity is not included.",
+        "withHistory": "{withHistory} of {posts} recent posts have a growth history.",
+        "truncated": "There are more posts than can be measured at once; the most recent are shown."
+      },
+      "states": {
+        "error": "This section could not be loaded.",
+        "retry": "Try again",
+        "noChannelHint": "Connect a Messenger, Instagram, Threads or TikTok channel to see how its posts perform."
+      },
+      "perPost": {
+        "title": "Performance",
+        "description": "Daily change in the numbers the channel reports, from our own daily snapshots.",
+        "metric": "Metric",
+        "notReported": "Not reported by this channel.",
+        "empty": "No growth recorded yet",
+        "since": "Tracking since {date}. Changes appear after the next daily snapshot.",
+        "notTracked": "This post is not tracked yet.",
+        "summary": "{metric} gained per day: {total} in total.",
+        "totalNow": "gained in this period · {total} in total"
+      },
+      "composedPost": {
+        "reasons": {
+          "notPublished": "Not published yet.",
+          "notLinked": "Not matched to a post of the channel yet. Numbers appear once it is.",
+          "networkNotSupported": "This network does not report post numbers.",
+          "removed": "Removed from the channel."
+        }
+      }
+    }
+  },
+  "socialAccounts": {
+    "errors": {
+      "providerNotSupported": "This network cannot be connected yet.",
+      "appNotConfigured": "The platform app for this network is not set up for your workspace."
+    },
+    "connectResult": {
+      "success": "Account connected.",
+      "cancelled": "The connection was cancelled.",
+      "notFound": "The connection could not be completed.",
+      "sessionExpired": "The connection session expired. Try connecting again.",
+      "permissionNotGranted": "The account was not connected because these permissions were not granted: {permissions}.",
+      "accountUnsupported": "This account type cannot publish. Use a professional account.",
+      "notSupported": "This network cannot be connected yet.",
+      "failed": "The account could not be connected. Try again."
+    }
+  },
+  "composer": {
+    "publishTo": "Publish to",
+    "destinationState": {
+      "ready": "Ready to post",
+      "inboxDisconnected": "Disconnected",
+      "needsReconnect": "Connection expired",
+      "permissionMissing": "Publishing permission not granted"
+    },
+    "destinationPause": {
+      "until": "Paused until {time}",
+      "reason": {
+        "limitReached": "The network limited this account's publishing. Posts wait and go out after the pause.",
+        "accountRestricted": "The network restricted this account. Posts wait and go out after the pause.",
+        "spamRisk": "The network flagged this account's activity as a spam risk. Posts wait and go out after the pause."
+      }
+    },
+    "viaFacebook": "via Facebook",
+    "openProfile": "Open {name} on {network}",
+    "someNeedAttention": "Some pages or profiles cannot publish until you reconnect them.",
+    "reconnect": "Reconnect",
+    "noDestinations": "No connected pages or profiles can publish yet.",
+    "sharedContent": "Shared content",
+    "text": "Post text",
+    "textPlaceholder": "Write your post",
+    "link": "Link",
+    "linkPlaceholder": "https://example.com",
+    "linkInvalid": "Enter a full link starting with https://",
+    "removeMedia": "Remove file",
+    "addMedia": "Add photo or video",
+    "removeDestination": "Remove destination",
+    "customise": "Customise for this channel",
+    "usesSharedContent": "Uses the shared content",
+    "channelText": "Text for this channel",
+    "channelTextPlaceholder": "Leave empty to use the shared text",
+    "contentType": "Content type",
+    "previewEmpty": "Pick a destination to see a preview.",
+    "noText": "No text",
+    "justNow": "Just now",
+    "linkInCaption": "The link will be added to the end of the caption.",
+    "previewMediaAlt": "Attached file {index}",
+    "previewMoreMedia": "+{count}",
+    "previewSlideLabel": "Slide {current} of {total}",
+    "previewPrevious": "Previous slide",
+    "previewNext": "Next slide",
+    "publishNow": "Publish now",
+    "newPost": "New post",
+    "draftSaved": "Draft saved",
+    "noTargets": "Pick at least one destination to start.",
+    "preview": "Preview",
+    "previewError": "The preview could not be updated.",
+    "issueCount": "Issues to fix: {count}",
+    "saveDraft": "Save draft",
+    "retry": "Try again",
+    "noAccountsTitle": "No accounts connected",
+    "noAccountsHint": "Connect an account in the Connect tab to start composing posts.",
+    "goToAccounts": "Go to Connect",
+    "notEditable": "This post can no longer be edited.",
+    "options": {
+      "shareToFeed": "Also share to the feed",
+      "title": "Title",
+      "thumbOffsetMs": "Cover frame (milliseconds)",
+      "privacyLevel": "Who can view this video",
+      "allowComment": "Comment",
+      "allowDuet": "Duet",
+      "allowStitch": "Stitch",
+      "commercialContent": "Disclose commercial content",
+      "brandOrganic": "Your brand",
+      "brandContent": "Branded content",
+      "isAigc": "Label as AI-generated content",
+      "coverTimestampMs": "Cover frame (milliseconds)"
+    },
+    "contentTypes": {
+      "text": "Text",
+      "link": "Link",
+      "image": "Image",
+      "video": "Video",
+      "reel": "Reel",
+      "carousel": "Carousel",
+      "story": "Story"
+    },
+    "issues": {
+      "accountDisconnected": "This account was disconnected.",
+      "accountNeedsReauth": "This account must be reconnected.",
+      "inboxDisconnected": "This channel is disconnected.",
+      "inboxNeedsReconnect": "This channel's connection expired. Reconnect it.",
+      "publishPermissionMissing": "Publishing permission is not granted for this channel. Reconnect it to allow publishing.",
+      "contentTypeDisabled": "This content type is not available yet.",
+      "contentTypeNotSupported": "This network does not support this content type.",
+      "destinationInactive": "This destination is turned off.",
+      "destinationNotFound": "This destination was not found.",
+      "linkNotSupported": "This content type cannot carry a link.",
+      "linkRequired": "A link is required.",
+      "mediaFormatNotSupported": "A file format is not supported.",
+      "mediaKindNotAllowed": "A file type is not allowed here.",
+      "mediaTooFew": "Add more files.",
+      "mediaTooLarge": "A file is too large.",
+      "mediaTooLong": "A video is too long.",
+      "mediaTooMany": "Too many files.",
+      "mediaTooShort": "A video is too short.",
+      "optionsInvalid": "The settings are not valid.",
+      "textRequired": "Text is required.",
+      "textTooLong": "The text is too long.",
+      "partsNotSupported": "This network does not publish thread parts.",
+      "firstCommentNotSupported": "This network does not publish a first comment.",
+      "tooManyParts": "There are more parts than the network allows.",
+      "partTextRequired": "This part needs text.",
+      "partTextTooLong": "This part is longer than the network allows.",
+      "tooManyLinks": "This text has more links than Threads allows (5 or fewer)."
+    },
+    "publishStarted": "Publishing started",
+    "publishRefused": "The post cannot be published as composed. Fix the issues shown.",
+    "targetsStatus": "Destinations",
+    "viewPost": "View post",
+    "retryTarget": "Retry",
+    "markPublished": "Mark as published",
+    "retryReviewTitle": "Retry a post that may already be live?",
+    "retryReviewDescription": "This post may already be live. Retrying can publish it a second time. Check the page first.",
+    "retryReviewConfirm": "Retry anyway",
+    "status": {
+      "pending": "Waiting",
+      "publishing": "Publishing",
+      "processing": "Processing",
+      "published": "Published",
+      "failed": "Failed",
+      "cancelled": "Cancelled",
+      "needsReview": "Needs review"
+    },
+    "schedule": "Schedule",
+    "scheduleAt": "Publish at",
+    "pickTime": "Pick a date and time",
+    "scheduleTooSoon": "Pick a time at least 2 minutes from now.",
+    "scheduled": "Post scheduled.",
+    "repeatLabel": "Repeat",
+    "repeatHint": "A repeating post is saved as a template and is never published itself. A copy is scheduled at each run.",
+    "repeatInvalid": "Complete the repeat settings to save.",
+    "repeatStateActive": "Repeating",
+    "repeatStatePaused": "Paused",
+    "repeatStateEnded": "Series ended",
+    "repeatNextRun": "Next run: {date}",
+    "repeatPause": "Pause",
+    "repeatResume": "Resume",
+    "repeatEnd": "End series",
+    "repeatUpdated": "Repeat series updated",
+    "repeatScheduleOff": "Scheduling and publishing apply to each copy, not to the template.",
+    "moveMediaEarlier": "Move earlier",
+    "moveMediaLater": "Move later",
+    "removeFromChannels": "Remove from channels",
+    "removeFromChannelsTitle": "Remove this post from the networks?",
+    "removeFromChannelsDescription": "The published post is taken down from every network that supports it. Networks without a delete function keep it. This cannot be undone.",
+    "removeFromChannelsConfirm": "Remove",
+    "removeCancel": "Cancel",
+    "removeRequested": "{count, plural, one {Removal started for # destination.} other {Removal started for # destinations.}}",
+    "removeUnsupported": "{count, plural, one {# destination cannot be removed through the network's API; remove it in the app.} other {# destinations cannot be removed through the networks' API; remove them in the apps.}}",
+    "removedFromChannel": "Removed from the network",
+    "removalPermissionMissing": "Reconnect this account to allow deleting posts.",
+    "postMessageQuotaExceeded": "The message quota of this account is used up, so this post was not published. Upgrade the plan or wait for the next billing period, then retry.",
+    "tiktokLoading": "Loading TikTok account settings…",
+    "tiktokUnavailable": "TikTok account settings could not be loaded. Try again.",
+    "tiktokCreator": "Posting to TikTok account {nickname}",
+    "tiktokCannotPost": "This TikTok account cannot post right now. Try again later.",
+    "tiktokPrivacyPlaceholder": "Select who can view",
+    "tiktokInteractions": "Allow other people to",
+    "tiktokInteractionDisabled": "Turned off in this account’s TikTok settings",
+    "tiktokYourBrand": "Your brand",
+    "tiktokBrandedContent": "Branded content",
+    "tiktokLabelPromotional": "Your video will be labeled “Promotional content”.",
+    "tiktokLabelPaid": "Your video will be labeled “Paid partnership”.",
+    "tiktokCommercialRequired": "You need to indicate if your content promotes yourself, a third party, or both.",
+    "tiktokBrandedNotPrivate": "Branded content visibility cannot be set to private.",
+    "tiktokConsentMusic": "By posting, you agree to TikTok’s <music>Music Usage Confirmation</music>.",
+    "tiktokConsentBranded": "By posting, you agree to TikTok’s <branded>Branded Content Policy</branded> and <music>Music Usage Confirmation</music>.",
+    "tiktokMaxDuration": "The longest video this account can post is {seconds} seconds.",
+    "tiktokProcessingNote": "After you publish, it may take a few minutes for the video to process and appear on the profile.",
+    "tiktokPrivacy": {
+      "PUBLIC_TO_EVERYONE": "Everyone",
+      "MUTUAL_FOLLOW_FRIENDS": "Friends",
+      "FOLLOWER_OF_CREATOR": "Followers",
+      "SELF_ONLY": "Only me"
+    },
+    "partsTitle": "Thread parts",
+    "partsHint": "Each part is posted as a reply to the one before it, right after the main post.",
+    "partLabel": "Part {number}",
+    "partPlaceholder": "Write the next part",
+    "partMoveUp": "Move part up",
+    "partMoveDown": "Move part down",
+    "partRemove": "Remove part",
+    "partsAdd": "Add part",
+    "partsRemaining": "{count, plural, one {# more part can be added} other {# more parts can be added}}",
+    "firstCommentTitle": "First comment",
+    "firstCommentPlaceholder": "Posted as a comment right after the post",
+    "aiAssist": "Write with AI",
+    "aiPrivacy": "The text you give is sent to the AI provider you choose below. Nothing is saved or published until you insert it.",
+    "aiIntegration": "AI integration",
+    "aiNoIntegration": "No AI integration is connected yet.",
+    "aiConnectIntegration": "Connect an AI integration",
+    "aiMode": "What should the AI do?",
+    "aiModes": {
+      "write": "Write a new post",
+      "rewrite": "Rewrite",
+      "shorten": "Shorten",
+      "expand": "Expand",
+      "tone": "Change the tone",
+      "fit": "Fit to the destination's limit",
+      "hashtags": "Suggest hashtags"
+    },
+    "aiTone": "Tone",
+    "aiTones": {
+      "friendly": "Friendly",
+      "professional": "Professional",
+      "casual": "Casual",
+      "playful": "Playful",
+      "formal": "Formal",
+      "persuasive": "Persuasive",
+      "inspiring": "Inspiring"
+    },
+    "aiBrief": "What is the post about?",
+    "aiBriefPlaceholder": "For example: announce our weekend sale, 20% off",
+    "aiUsesPostText": "Uses the post text above.",
+    "aiNeedsPostText": "Write the post text first.",
+    "aiFitNeedsDestination": "Choose a destination first.",
+    "aiGenerate": "Generate",
+    "aiGenerating": "Writing…",
+    "aiSuggestion": "Suggestion",
+    "aiCutToLimit": "Cut to the limit of {limit, plural, one {# character} other {# characters}}.",
+    "aiInsert": "Insert at the end",
+    "aiReplace": "Replace post text",
+    "aiHashtags": "Hashtags",
+    "aiEmoji": "Emoji",
+    "aiCallToAction": "Call to action",
+    "aiCallToActionText": "Call to action wording (optional)",
+    "aiCallToActionPlaceholder": "For example: Book your table today",
+    "aiVariants": "Options",
+    "aiPerNetwork": "Write per channel",
+    "aiPerNetworkHint": "One version in each network's style.",
+    "aiOption": "Option {number}",
+    "aiApplyTo": "Apply to {network}",
+    "aiApplyToEach": "Apply to each channel",
+    "aiHashtagPick": "Click a hashtag to add it to the post.",
+    "aiErrors": {
+      "modelNotChosen": "Choose an AI integration and model to write with AI.",
+      "needsReconfiguration": "The chosen AI integration is missing, disabled or invalid.",
+      "rateLimited": "Too many AI requests. Try again in a moment.",
+      "timeout": "The AI model did not answer in time. Try again.",
+      "provider": "The AI provider could not write the text. Try again.",
+      "inProgress": "An AI request is already running.",
+      "blocked": "The plan or trial of this workspace has expired.",
+      "generic": "Could not write the text. Try again."
+    },
+    "snippets": "Snippets",
+    "snippetsKinds": {
+      "signature": "Signature",
+      "hashtags": "Hashtags",
+      "text": "Text"
+    },
+    "snippetsLoadFailed": "Could not load snippets.",
+    "snippetsEmpty": "No snippets yet.",
+    "snippetsSignature": "Signature",
+    "snippetsSignatureHint": "Added once at the end of the text when you create the post. Destinations with their own text do not get it.",
+    "snippetsSignatureChosen": "Signature: {name}",
+    "snippetsManage": "Manage snippets",
+    "snippetsName": "Name",
+    "snippetsKind": "Kind",
+    "snippetsContent": "Text",
+    "snippetsAdd": "Add snippet",
+    "snippetsSaved": "Snippet saved.",
+    "snippetsDeleted": "Snippet deleted.",
+    "snippetsNameTaken": "A snippet with this name already exists.",
+    "targetSets": "Page groups",
+    "targetSetsLoadFailed": "Could not load groups.",
+    "targetSetsEmpty": "No saved groups yet.",
+    "targetSetsName": "Group name",
+    "targetSetsNamePlaceholder": "Name this group…",
+    "targetSetsSave": "Save",
+    "targetSetsNeedsSelection": "Select pages to save them as a group.",
+    "targetSetsSaved": "Group saved.",
+    "targetSetsDeleted": "Group deleted.",
+    "targetSetsNameTaken": "A group with this name already exists.",
+    "targetSetsApplied": "Selected the pages of “{name}”.",
+    "targetSetsSkipped": "{count, plural, one {# page was skipped because it needs attention.} other {# pages were skipped because they need attention.}}",
+    "viewPosts": "View",
+    "queue": {
+      "modeLabel": "When to post",
+      "atTime": "Pick a time",
+      "next": "Add to queue",
+      "top": "Post first",
+      "nextHint": "Posts at each page's next open time slot.",
+      "topHint": "Posts at the nearest time slot; queued posts move back one slot.",
+      "noDestination": "Select a page to see its posting times.",
+      "noSchedule": "{names} has no posting times set up.",
+      "setUpSlots": "Set up posting times"
+    },
+    "targetOwnTime": "Separate time for this channel",
+    "targetTimeInvalid": "Pick a time between 2 minutes and 1 year from now.",
+    "targetMediaOwn": "Different files for this channel",
+    "targetMediaNone": "No files: this channel publishes without files.",
+    "occurrencesUpcoming": "Upcoming runs",
+    "occurrencesNoUpcoming": "No upcoming runs.",
+    "occurrenceSkip": "Skip",
+    "occurrenceRestore": "Restore",
+    "occurrenceSkipped": "Run skipped.",
+    "occurrenceRestored": "Run restored.",
+    "occurrencesHistory": "Show past runs",
+    "occurrencesHideHistory": "Hide past runs",
+    "occurrencesLoadFailed": "Could not load the runs.",
+    "occurrencesNoHistory": "No runs yet.",
+    "occurrencesLoadMore": "Load more",
+    "occurrenceOpen": "Open post",
+    "targetSetsUpdated": "Group updated.",
+    "targetSetsMembers": "Pages in this group",
+    "targetSetsNeedsMember": "Keep at least one page.",
+    "occurrenceOutcomes": {
+      "created": "Scheduled",
+      "excluded": "Skipped",
+      "missed": "Missed",
+      "skipped": "Not made"
+    }
+  },
+  "postCommentVariables": {
+    "group": "Post comment",
+    "postLink": "Post link",
+    "postText": "Post text",
+    "postPublishedAt": "Post published at",
+    "postPageName": "Post page name",
+    "postId": "Post ID",
+    "commentText": "Comment text",
+    "commentId": "Comment ID"
   }
 }

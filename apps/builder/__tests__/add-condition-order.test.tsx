@@ -96,6 +96,9 @@ describe("AddCondition order", () => {
       "productOrdered",
       "orderPaid",
       "orderRefunded",
+      // Posts
+      "contactCommentedOnPost",
+      "contactFirstCommentedOnPost",
       // Entry point links
       "contactReferredANewContact",
       "contactReferredExistingContact",
@@ -117,6 +120,7 @@ describe("AddCondition order", () => {
       "fields.pipelines.label",
       "fields.sequences.label",
       "fields.ecommerce.label",
+      "posts.title",
       "fields.entryPointLink.label",
     ])
   })

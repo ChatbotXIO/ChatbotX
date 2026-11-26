@@ -566,14 +566,26 @@ const ContactFilterValueFields = ({
   return VALUE_INPUT_RENDERERS[kind]({ enableVariables, valueOptions })
 }
 
-const ChannelPostValueField = () => {
+/**
+ * Multi-select of the workspace's channel posts, searched and paged on the
+ * server. `name` is the form field holding the selected ids (default `value`,
+ * the contact filter's), so a trigger condition can reuse it.
+ */
+export const ChannelPostValueField = ({
+  name = "value",
+  inboxId,
+}: {
+  name?: string
+  /** Lists only the posts of this inbox (page or account). */
+  inboxId?: string
+}) => {
   const t = useTranslations()
-  const value = useWatch<ContactFilterConditionFormDraft>({ name: "value" })
+  const value: unknown = useWatch({ name })
   const selectedIds = Array.isArray(value)
     ? value.filter((item): item is string => typeof item === "string")
     : []
   const { error, isLoading, onReachEnd, onSearchValueChange, options, retry } =
-    useChannelPostSelectOptions(selectedIds)
+    useChannelPostSelectOptions(selectedIds, inboxId)
   const statusIndicator = error ? (
     <div className="px-2 py-1.5 text-center">
       <button className="text-sm underline" onClick={retry} type="button">
@@ -592,7 +604,7 @@ const ChannelPostValueField = () => {
     <MultiSelectField
       emptyIndicator={emptyIndicator}
       hideSelectAll
-      name="value"
+      name={name}
       onReachEnd={onReachEnd}
       onSearchValueChange={onSearchValueChange}
       options={options}

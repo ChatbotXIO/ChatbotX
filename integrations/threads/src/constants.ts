@@ -8,4 +8,5 @@ export const THREADS_SCOPES = [
   "threads_read_replies",
   "threads_manage_replies",
   "threads_content_publish",
+  "threads_delete",
 ]

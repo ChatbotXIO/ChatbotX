@@ -29,7 +29,13 @@ export const aiFunctionsPublicRouter = {
       description:
         "Use this to resolve configured AI functions before inspecting one with `aiFunctions.get` or adding one with `aiFunctions.create`. Returns the functions available in this workspace.",
       tags: ["AI Functions"],
-      spec: mcpSpec({ visibility: "default" }),
+      spec: mcpSpec({
+        destructiveHint: false,
+        idempotentHint: true,
+        openWorldHint: false,
+        readOnlyHint: true,
+        visibility: "default",
+      }),
     })
     .input(publicListRequest)
     .output(publicListResponse(aiFunctionResource))

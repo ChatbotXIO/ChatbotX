@@ -117,6 +117,8 @@ export const insertCopyNamed = <T>(
     category: TemplateCategory
     constraint: string
     entry: { sourceId: string; name: string }
+    /** The copy-name style and name limit, for a name with its own rules (default: `dash`, 255). */
+    nameRules?: { style: CopyNameStyle; maxLength: number }
     findTaken: (
       tx: DatabaseClient,
       nameFilter: { like: string },
@@ -128,6 +130,8 @@ export const insertCopyNamed = <T>(
     tx: ctx.tx,
     constraint: input.constraint,
     name: input.entry.name,
+    style: input.nameRules?.style,
+    maxLength: input.nameRules?.maxLength,
     loadTakenNames: async (tx, prefix) =>
       (await input.findTaken(tx, nameStartsWith(prefix))).map(
         (row) => row.name,

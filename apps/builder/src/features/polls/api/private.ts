@@ -42,6 +42,27 @@ export const pollsAuthenticatedAPI = {
     .output(listPollsPublicResponse)
     .handler(async ({ input }) => await pollOperations.list(input)),
 
+  // Declared before `getPollAPI` so `/polls/options` is not read as `/polls/{id}`.
+  // UI-only dropdown feed: its public equivalent is `polls.list`.
+  listPollOptionsAPI: authorizedAPI
+    .route({
+      method: "GET",
+      path: "/workspaces/{workspaceId}/polls/options",
+      summary: "List poll options",
+      tags,
+    })
+    .input(workspaceScope)
+    .use(workspaceAuthorizedMidddleware, byWorkspace)
+    .output(
+      z.object({
+        data: z.array(z.object({ id: z.string(), name: z.string() })),
+      }),
+    )
+    .handler(
+      async ({ input }) =>
+        await pollOperations.listOptions({ workspaceId: input.workspaceId }),
+    ),
+
   getPollAPI: authorizedAPI
     .route({
       method: "GET",

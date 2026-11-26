@@ -15,7 +15,8 @@ import { logger } from "../logger"
 import { isManifestKind } from "./adapters/manifests/kinds"
 import { getTemplateAdapter } from "./adapters/registry"
 import { isUpdatable } from "./adapters/shared"
-import type { StagedObjects } from "./adapters/types"
+import type { AfterCommitTask, StagedObjects } from "./adapters/types"
+import { runAfterCommitTasks } from "./after-commit"
 import { invalidateAfterCommit } from "./install.service"
 import { flushPublishEffects } from "./publish-effects"
 import { templateService } from "./service"
@@ -99,8 +100,9 @@ export const templateSyncExecuteService = {
     // Objects the adapters copy into storage during the transaction; deleted
     // again if it rolls back, since nothing will reference them.
     const copiedObjectPaths: string[] = []
+    let applied: ApplyResult
     try {
-      const applied = await applyLatestVersion({
+      applied = await applyLatestVersion({
         sync,
         claimToken,
         probe,
@@ -122,6 +124,14 @@ export const templateSyncExecuteService = {
       throw error
     }
     await invalidateAfterCommit(probe.workspaceId)
+    // An effect that fails is logged and leaves its copy switched off; one that
+    // reports a warning is recorded on the sync, as an install records its own.
+    const lateWarnings = await runAfterCommitTasks(applied.afterCommitTasks)
+    await templateInstallationSyncRepository.appendWarnings({
+      id: sync.id,
+      claimToken,
+      warnings: lateWarnings,
+    })
     if (sync.attempts > 1) {
       // Committed: every other claim of this sync is fenced out for good.
       await deleteLosingSyncAttempts({
@@ -254,7 +264,11 @@ const RESTAGE_CODE = "templateSyncRestage"
 const isRestage = (error: unknown): boolean =>
   error instanceof ChatbotXException && error.code === RESTAGE_CODE
 
-type ApplyResult = { published: PublishedFlows; skipped: boolean }
+type ApplyResult = {
+  published: PublishedFlows
+  skipped: boolean
+  afterCommitTasks: AfterCommitTask[]
+}
 
 /**
  * Stages outside the transaction, then applies inside it. The version is read
@@ -318,7 +332,11 @@ const applyInTransaction = async (input: {
       if (!(await finishSkipped(sync, claimToken, code, tx))) {
         throw leaseLostException()
       }
-      return { published: NO_PUBLISHED_FLOWS, skipped: true }
+      return {
+        published: NO_PUBLISHED_FLOWS,
+        skipped: true,
+        afterCommitTasks: [],
+      }
     }
 
     const installation =
@@ -459,7 +477,11 @@ const applyInTransaction = async (input: {
       { id: installation.id, effects: applied.publishedFlows },
       tx,
     )
-    return { published: applied.publishedFlows, skipped: false }
+    return {
+      published: applied.publishedFlows,
+      skipped: false,
+      afterCommitTasks: applied.afterCommitTasks,
+    }
   })
 }
 

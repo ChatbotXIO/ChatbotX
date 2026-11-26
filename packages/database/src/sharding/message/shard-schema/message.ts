@@ -38,7 +38,18 @@ export const messageModel = pgTable(
     deletedAt: timestamp(timestampConfig),
     type: messageKind().notNull().default("message"),
     parentId: text(),
-    attributes: jsonb().$type<{ liked: boolean; hidden: boolean }>(),
+    attributes: jsonb().$type<{
+      liked: boolean
+      hidden: boolean
+      /** Set once the comment's phone number was counted on its post; see `markPhoneCounted`. */
+      phoneCounted?: boolean
+      /** Set once the comment was counted in its post's comment count (a channel whose platform reports none); see `markCommentCounted`. */
+      commentCounted?: boolean
+      /** Set once the per-post hide setting's message charge was taken; see `claimQuotaMarker`. */
+      quotaChargedHide?: boolean
+      /** Set once the per-post skip setting's message charge was taken; see `claimQuotaMarker`. */
+      quotaChargedSkip?: boolean
+    }>(),
     sendError: text(),
   },
   (table) => [

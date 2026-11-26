@@ -163,6 +163,94 @@
   "errors": {
     "superAdminRequired": "Sinun täytyy olla työtilan pääylläpitäjä tehdäksesi tämän."
   },
+  "inboxTranslation": {
+    "settings": {
+      "title": "Keskustelujen käännös",
+      "description": "Käännä asiakkaiden viestit tiimillesi ja vastauksesi asiakkaille suoraan saapuneissa.",
+      "saved": "Käännösasetukset tallennettu",
+      "readOnly": "Vain työtilan ylläpitäjät voivat muuttaa näitä asetuksia.",
+      "languageHint": "Myös kieli, jolle asiakkaiden viestit käännetään, kun keskustelujen käännös on päällä.",
+      "alert": {
+        "needsReconfiguration": "Määritys on tehtävä uudelleen: tekoälyintegraatio on poistettu tai poistettu käytöstä.",
+        "noIntegration": "Yhdistä ensin tekoälyintegraatio käyttääksesi käännöstä.",
+        "connect": "Yhdistä tekoäly"
+      },
+      "enabled": {
+        "label": "Käännä keskustelut",
+        "description": "Asiakkaiden viestit käännetään vain, kun joku avaa keskustelun. Keskustelun teksti lähetetään valitsemallesi tekoälypalveluntarjoajalle ja laskutetaan tekoälyavaimellasi."
+      },
+      "integration": {
+        "label": "Tekoälyintegraatio",
+        "description": "Vain yhdistetyt tekoälypalveluntarjoajat näytetään."
+      },
+      "test": {
+        "label": "Testaa yhteys",
+        "button": "Testaa",
+        "result": "Valmis {seconds} s:ssa: ”{sample}” → ”{translated}”",
+        "slow": "Tämä malli on hidas: lähtevät viestit eivät välttämättä käänny ajoissa, jolloin niitä ei lähetetä.",
+        "failed": "Testi epäonnistui."
+      }
+    },
+    "message": {
+      "translating": "Käännetään…",
+      "stillWaiting": "Odotetaan yhä käännöstä",
+      "requestAgain": "Pyydä uudelleen",
+      "failed": "Kääntäminen ei onnistunut",
+      "translatedFrom": "Käännetty kielestä {language}. Näytä alkuperäinen",
+      "translatedFromNoLanguage": "Käännetty. Näytä alkuperäinen",
+      "sentIn": "Lähetetty kielellä {language}. Näytä lähetetty",
+      "sentInNoLanguage": "Lähetetty käännettynä. Näytä lähetetty",
+      "hideOriginal": "Piilota alkuperäinen",
+      "hideSent": "Piilota lähetetty",
+      "translatedLabelNoLanguage": "Käännetty",
+      "sentLabelNoLanguage": "Lähetetty käännettynä"
+    },
+    "badge": {
+      "tooltip": "Asiakkaan kieli: {language}"
+    },
+    "panel": {
+      "title": "Käännösasetukset",
+      "statusOn": "Päällä",
+      "statusOff": "Pois",
+      "translateConversation": "Käännä tämä keskustelu",
+      "translateConversationHint": "Käännä viestit automaattisesti",
+      "botActiveHint": "Botti hoitaa tätä keskustelua, joten käännös on pois päältä. Kytke se päälle kääntääksesi keskustelun.",
+      "botPausedHint": "Otit tämän keskustelun botilta, joten käännös pysyy pois päältä. Ota se käyttöön kääntääksesi keskustelun.",
+      "displayOptions": "Näyttöasetukset",
+      "showOriginals": "Näytä alkuperäinen teksti",
+      "previewBeforeSending": "Esikatsele käännös ennen lähettämistä"
+    },
+    "composer": {
+      "hintUnknown": "Kieltä ei tunnistettu · Lähetetään sellaisenaan",
+      "hintDetecting": "Tunnistetaan asiakkaan kieltä…",
+      "chip": {
+        "aria": "Käännöskieli",
+        "target": "→ {language}",
+        "sameLanguage": "Sama kieli kuin työtilassa",
+        "unknown": "Kieli tuntematon",
+        "hasFiles": "Tiedostollisia viestejä ei käännetä",
+        "off": "Käännös pois päältä"
+      },
+      "popover": {
+        "customerLanguage": "Asiakkaan kieli",
+        "chooseLanguage": "Valitse kieli"
+      },
+      "preview": {
+        "title": "Asiakkaan esikatselu · {language}",
+        "translating": "Käännetään…",
+        "needsRetranslate": "Pitää kääntää uudelleen",
+        "retranslate": "Käännä uudelleen",
+        "failed": "Kääntäminen ei onnistunut – yritetään uudelleen lähetettäessä",
+        "done": "Valmis",
+        "ready": "Valmis lähetettäväksi"
+      }
+    },
+    "send": {
+      "translating": "Käännetään…",
+      "failed": "Kääntäminen epäonnistui",
+      "turnedOff": "Käännös ei ole käytettävissä. Käännös on poistettu käytöstä tässä keskustelussa."
+    }
+  },
   "states": {
     "success": "Onnistui",
     "error": "Virhe",
@@ -651,7 +739,8 @@
       "template": "Malli",
       "integration": "Integraatio",
       "schedule": "Toistoaikataulu",
-      "runOf": "Lähetyksen <link>{name}</link> ajo"
+      "runOf": "Lähetyksen <link>{name}</link> ajo",
+      "linkNotFound": "Tätä joukkolähetystä ei enää ole."
     },
     "filters": {
       "all": "All"
@@ -1307,7 +1396,10 @@
       "label": "Ilmoitustyyppi",
       "notifyAdmin": "Ilmoita ylläpitäjälle",
       "newMessageToHuman": "Uusi viesti ihmiselle",
-      "newOrder": "Uusi tilaus"
+      "newOrder": "Uusi tilaus",
+      "postFailed": "Julkaisu epäonnistui",
+      "postNeedsReview": "Julkaisu vaatii tarkistuksen",
+      "publishConnection": "Julkaisuyhteys vaatii huomiota"
     },
     "notificationChannel": {
       "label": "Ilmoituskanava",
@@ -2748,7 +2840,8 @@
       "pipelines": "Myyntiputket",
       "places": "Paikat",
       "templates": "Mallit",
-      "polls": "Polls"
+      "polls": "Polls",
+      "posts": "Julkaisut"
     },
     "adReferral": {
       "label": "Ads",
@@ -2881,6 +2974,9 @@
         "skip": "Ei löytynyt",
         "error": "Epäonnistui"
       }
+    },
+    "tiktokPublishing": {
+      "label": "TikTok-julkaisu"
     }
   },
   "flows": {
@@ -5057,7 +5153,8 @@
     "invalidApiKey": "Virheellinen API-avain",
     "maxMustBeGreaterThanMin": "Kentän {maxField} arvon on oltava vähintään kentän {minField} arvo",
     "trigger": {
-      "actionReferenceNotFound": "An action refers to a record that no longer exists. Re-select it in the action and save again."
+      "actionReferenceNotFound": "An action refers to a record that no longer exists. Re-select it in the action and save again.",
+      "postCommentPostsInvalid": "Valittua julkaisua ei ole tässä työtilassa tai se ei kuulu valittuun saapuneet-kansioon. Valitse julkaisut uudelleen ja tallenna uudelleen."
     },
     "inboundWebhook": {
       "inboxRequired": "Valitse saapuneet-kansio.",
@@ -6116,7 +6213,16 @@
       "anyPipeline": "Mikä tahansa pipeline",
       "anyStage": "Mikä tahansa vaihe",
       "unavailablePipeline": "Poistettu tai ei käytettävissä oleva putki",
-      "unavailableStage": "Poistettu tai ei käytettävissä oleva vaihe"
+      "unavailableStage": "Poistettu tai ei käytettävissä oleva vaihe",
+      "contactCommentedOnPost": "Yhteystieto kommentoi julkaisua",
+      "contactFirstCommentedOnPost": "Yhteystieto kommentoi julkaisua ensimmäistä kertaa",
+      "anyInbox": "Mikä tahansa sivu tai tili",
+      "unavailableInbox": "Poistettu tai ei käytettävissä oleva sivu tai tili",
+      "postScope": {
+        "any": "Mikä tahansa julkaisu",
+        "selected": "Tietyt julkaisut",
+        "publishedFromPosts": "Vain Julkaisut-osiosta julkaistut julkaisut"
+      }
     },
     "actions": {
       "addTag": "Lisää tunniste",
@@ -6896,7 +7002,8 @@
       "ignoreCommentReplies": "Älä vastaa kommenttien vastauksiin",
       "ignoreCommentRepliesDescription": "Ohita automaatio kommenteille, jotka ovat vastauksia muihin kommentteihin eivätkä ylätason kommentteja.",
       "trackUserTags": "Seuraa, merkitseekö käyttäjä muita käyttäjiä",
-      "trackUserTagsDescription": "Laskee kussakin kommentissa merkityt tilit ja lisää ne yhteystiedon kokonaismääriin kaikista kommenteista. Käytä '{{total_tagged}}' kaikille merkityille tileille ja '{{total_new_tagged}}' tileille, jotka eivät ole koskaan viestineet sivullesi tai olleet yhteystietoja."
+      "trackUserTagsDescription": "Laskee kussakin kommentissa merkityt tilit ja lisää ne yhteystiedon kokonaismääriin kaikista kommenteista. Käytä '{{total_tagged}}' kaikille merkityille tileille ja '{{total_new_tagged}}' tileille, jotka eivät ole koskaan viestineet sivullesi tai olleet yhteystietoja.",
+      "likeUserCommentUnavailable": "Ei käytettävissä Instagramissa. Asetus ohitetaan; poista se kytkemällä pois päältä."
     },
     "hideComments": {
       "all": "Piilota kaikki kommentit",
@@ -7385,6 +7492,7 @@
       "resourcesTitle": "Asennetut resurssit",
       "noResources": "Mitään ei ole vielä luotu.",
       "deletedResource": "Poistettu resurssi",
+      "wholeCategory": "{count, plural, one {# kohde} other {# kohdetta}}",
       "viewOnly": "Vain katselu",
       "created": "Luotu",
       "reused": "Käytetty uudelleen",
@@ -7439,7 +7547,12 @@
           "placeCategories": "Paikkakategoriat"
         }
       },
-      "viewOnlyCopyIncluded": "Jokin valitsemasi kohde (tai sen tarvitsema kohde) on asennettu vain luku -mallista, joten sitä ei voi jakaa uudessa mallissa."
+      "viewOnlyCopyIncluded": "Jokin valitsemasi kohde (tai sen tarvitsema kohde) on asennettu vain luku -mallista, joten sitä ei voi jakaa uudessa mallissa.",
+      "miniAppPublishedExcluded": {
+        "title": "Mini-sovellus jätetty pois",
+        "hint": "Nämä flow't käyttävät WhatsAppissa julkaistua mini-sovellusta. Sitä ei voi jakaa, joten malli jättää sen pois ja asennus poistaa viittauksen.",
+        "item": "{flowName}: {miniAppName}"
+      }
     },
     "categories": {
       "flows": "Flowt",
@@ -7461,7 +7574,20 @@
       "aiFiles": "Tekoälyn tietotiedostot",
       "questionnaires": "Kyselylomakkeet",
       "couponTopics": "Kuponkiaiheet",
-      "pipelines": "Pipelinet"
+      "pipelines": "Pipelinet",
+      "magicLinks": "Taikalinkit",
+      "polls": "Äänestykset",
+      "dynamicImages": "Dynaamiset kuvat",
+      "placeLocations": "Sijainnit",
+      "miniApps": "Mini-sovellukset",
+      "minigames": "Minipelit",
+      "leaderboards": "Tulostaulut",
+      "openHours": "Aukioloajat",
+      "vendors": "Myyjät",
+      "discountCodes": "Alennuskoodit",
+      "storeSettings": "Kaupan asetukset",
+      "storyAutomations": "Instagram-tarina-automaatio",
+      "inboundWebhooks": "Saapuva webhook"
     },
     "locked": {
       "flowBanner": "Tämä flow on asennettu vain katseltavasta mallista. Voit katsoa sitä, mutta et muokata sitä.",
@@ -7538,6 +7664,7 @@
       "flowNotPublished": "Flow asennettiin luonnoksena, eikä sitä ole julkaistu.",
       "flowSkippedRequiredReference": "Flow ohitettiin, koska pakollista viittausta ei voitu ratkaista.",
       "folder": "Viitattua kohdetta ei löytynyt tästä työtilasta, joten linkki poistettiin.",
+      "inboundWebhookLimitReached": "Tämä saapuva webhook ohitettiin: työtilassa on jo saapuvien webhookien enimmäismäärä.",
       "inboxBindingRequired": "Valitse tälle kanavalle saapuneet-kansio; siihen asti kohde pysyy ei-aktiivisena.",
       "integration": "Viitattua kohdetta ei löytynyt tästä työtilasta, joten linkki poistettiin.",
       "localModifiedOverwritten": "Paikallisesti muokattu kohde korvattiin. Varmuuskopio tallennettiin, ja se voidaan palauttaa.",
@@ -7558,7 +7685,25 @@
       "tag": "Viitattua kohdetta ei löytynyt tästä työtilasta, joten linkki poistettiin.",
       "unlisted": "Kohdetta ei tuotu kokonaan: {code}",
       "workspaceMember": "Määritetty jäsenelle, joka ei ole tässä työtilassa.",
-      "workspaceUnavailable": "Tämä työtila ei ole enää käytettävissä, joten kohde ohitettiin."
+      "workspaceUnavailable": "Tämä työtila ei ole enää käytettävissä, joten kohde ohitettiin.",
+      "scheduleExpired": "Tämän kohteen päivämäärät ovat jo menneet; määritä uudet ennen käyttöä.",
+      "linkNotRemapped": "Linkki työkaluun, joka ei kuulunut mallipohjaan, jätettiin ennalleen.",
+      "dynamicImage": "Tämä dynaaminen kuva ohitettiin, koska sen taustaa ei voitu kopioida.",
+      "dynamicImageFieldNotBound": "Valitse mukautettu kenttä, johon kuva tallennetaan välimuistiin; alkuperäinen oli jo työtilassasi.",
+      "dynamicImageRerenderFailed": "Tämä dynaaminen kuva poistettiin käytöstä, koska sen taustaa ei voitu piirtää uudelleen kopioiduilla linkeillä. Ota se uudelleen käyttöön yrittääksesi uudelleen.",
+      "pollImage": "Kuvaa ei voitu kopioida.",
+      "leaderboardInvalid": "Tämän tulostaulun asetuksia ei voitu asentaa, joten se ohitettiin.",
+      "placeLocationInvalid": "Tämä paikka ohitettiin, koska sen nimi on tyhjä.",
+      "minigame": "Minipeli, josta tämä tulostaulu saa pisteensä, ei kuulu mallipohjaan, joten se ohitettiin.",
+      "minigameImage": "Kuvaa ei voitu kopioida.",
+      "leaderboardImage": "Kuvaa ei voitu kopioida.",
+      "leaderboardHostMissing": "Tulostaulu tarvitsee oman kanavan (tai minipelin), jota tämä asennus ei tuonut, joten se ohitettiin.",
+      "externalStoreSkipped": "Tämä työtila myy yhdistetystä kaupasta (Shopify tai WooCommerce), joten tuotteita, myyjiä, alennuskoodeja, aukioloaikoja ja kaupan asetuksia ei asennettu.",
+      "discountCodeSkipped": "Tämä alennuskoodi ohitettiin: tuotteet tai luokka, johon se koskee, eivät kuulu mallipohjaan, tai sen asetukset hylättiin.",
+      "storeSettingsKept": "Tässä työtilassa oli jo kaupan asetukset, joten ne säilytettiin sellaisinaan.",
+      "vendorImage": "Kuvaa ei voitu kopioida.",
+      "storeSettingsCurrencyKept": "Työtilassa on tuotteita toisessa valuutassa, joten sen oma valuutta säilytettiin mallipohjan sijaan.",
+      "storySelectionRequired": "Valitse tarinat uudelleen: alkuperäisiä tarinoita ei voitu siirtää."
     },
     "tabs": {
       "mine": "Omat mallit",
@@ -7785,7 +7930,6 @@
   "templatesPublicPage": {
     "invalidTitle": "Tämä linkki ei ole enää käytettävissä.",
     "invalidDescription": "Tämä mallin jakolinkki on virheellinen, poistettu käytöstä tai vanhentunut.",
-    "byPublisher": "Julkaisija: {publisherName}",
     "videoTitle": "Mallin esikatseluvideo",
     "preview": "Esikatselu",
     "aboutTemplate": "Tietoja tästä mallista",
@@ -8143,6 +8287,10 @@
   "contactAdReferrals": {
     "title": "Mainoshistoria",
     "empty": "Tälle yhteystiedolle ei ole vielä kirjattu mainosklikkauksia."
+  },
+  "contactBroadcasts": {
+    "empty": "Tälle yhteystiedolle ei ole vielä lähetetty joukkolähetyksiä.",
+    "searchPlaceholder": "Hae nimellä tai tunnuksella"
   },
   "adsReferralStats": {
     "title": "Yhteystiedot mainoksittain",
@@ -11988,41 +12136,138 @@
     "noWorkspaces": "Et ole minkään työtilan ylläpitäjä, joten et voi valtuuttaa tätä sovellusta."
   },
   "chatbotxMcp": {
-    "title": "ChatbotX MCP",
-    "workspaceId": "Workspace ID",
-    "streamableUrl": "Streamable HTTP URL",
-    "sseUrl": "Legacy SSE URL",
+    "title": "MCP-liitin",
+    "streamableUrl": "Streamable HTTP -URL",
+    "sseUrl": "Vanha SSE-URL",
     "guide": {
-      "title": "Connect an MCP client",
-      "step1": "Copy the configuration for your MCP client.",
-      "step2": "Paste it into the client.",
-      "step3": "The client opens a browser. Sign in and approve access.",
-      "step4": "Your workspace tools appear after approval.",
-      "ownerOnly": "Only workspace owners and superAdmins can authorize MCP access."
+      "title": "Yhdistä MCP-asiakas",
+      "subtitle": "Valitse käyttämäsi sovellus ja seuraa kolmea vaihetta.",
+      "ownerOnly": "Vain työtilan omistajat ja superAdminit voivat valtuuttaa MCP-pääsyn. Valitset työtilan hyväksyntänäkymässä.",
+      "otherClients": "Myös mikä tahansa muu MCP-yhteensopiva asiakas toimii",
+      "otherIntro": "Käytä näitä päätepisteitä ja määrityksiä minkä tahansa muun MCP-yhteensopivan asiakkaan kanssa.",
+      "opensInNewTab": "(avautuu uuteen välilehteen)",
+      "actions": {
+        "addConnector": "Lisää liitin",
+        "startChatting": "Aloita keskustelu"
+      },
+      "steps": {
+        "claude": {
+          "step1": {
+            "title": "Kopioi liittimen URL-osoite",
+            "body": "Liität tämän URL-osoitteen Claudeen seuraavassa vaiheessa."
+          },
+          "step2": {
+            "title": "Siirry kohtaan Claude → Customize → Connectors → Add custom connector",
+            "body": "Alla oleva painike avaa liittimesi Claudessa. Napsauta Add custom connector, anna nimi ja liitä URL-osoite. Se näkyy myös Clauden työpöytä- ja mobiilisovelluksissa."
+          },
+          "step3": {
+            "title": "Napsauta Connect ja hyväksy käyttöoikeus",
+            "body": "Kirjaudu sisään, valitse työtila ja hyväksy. Pyydä sitten Claudea käsittelemään yhteystietoja, flow'ta ja lähetyksiä suoraan keskustelussa."
+          }
+        },
+        "chatgpt": {
+          "step1": {
+            "title": "Kopioi liittimen URL-osoite",
+            "body": "Liität tämän URL-osoitteen ChatGPT:hen seuraavassa vaiheessa."
+          },
+          "step2": {
+            "title": "Siirry kohtaan ChatGPT → Settings → Apps & Connectors → Create",
+            "body": "Alla oleva painike avaa ChatGPT:n asetukset. Jos Create puuttuu, ota Developer mode käyttöön kohdassa Advanced settings. Nimeä liitin, liitä URL-osoite ja valitse OAuth."
+          },
+          "step3": {
+            "title": "Yhdistä ja hyväksy käyttöoikeus",
+            "body": "Kirjaudu sisään, valitse työtila ja hyväksy. Ota liitin sitten käyttöön uudessa keskustelussa."
+          }
+        },
+        "claudeCode": {
+          "step1": {
+            "title": "Kopioi asennuskomento",
+            "body": "Suorita se päätteessä."
+          },
+          "step2": {
+            "title": "Kirjaudu Claude Codesta",
+            "body": "Käynnistä Claude Code, kirjoita /mcp, valitse palvelin ja valitse Authenticate. Selainikkuna avautuu."
+          },
+          "step3": {
+            "title": "Hyväksy käyttöoikeus",
+            "body": "Valitse työtila ja hyväksy. Claude Code voi nyt käyttää työtilasi työkaluja."
+          }
+        },
+        "cursor": {
+          "step1": {
+            "title": "Kopioi määritys",
+            "body": "Liität sen Cursoriin seuraavassa vaiheessa."
+          },
+          "step2": {
+            "title": "Avaa Cursor Settings → MCP → Add new MCP server",
+            "body": "Liitä määritys tiedostoon mcp.json ja tallenna. Cursor näyttää palvelimen vieressä Login-painikkeen."
+          },
+          "step3": {
+            "title": "Hyväksy käyttöoikeus",
+            "body": "Napsauta Login, valitse työtila ja hyväksy. Työkalut näkyvät Cursorin agentissa."
+          }
+        },
+        "openclaw": {
+          "step1": {
+            "title": "Asenna laajennus",
+            "body": "Suorita tämä komento päätteessä."
+          },
+          "step2": {
+            "title": "Kirjaudu sisään",
+            "body": "Suorita tämä komento. Selainikkuna avautuu."
+          },
+          "step3": {
+            "title": "Hyväksy käyttöoikeus",
+            "body": "Valitse työtila ja hyväksy. OpenClaw voi nyt käyttää työtilasi työkaluja."
+          }
+        },
+        "hermes": {
+          "step1": {
+            "title": "Kopioi määritys",
+            "body": "Lisäät sen Hermesin määritykseen seuraavassa vaiheessa."
+          },
+          "step2": {
+            "title": "Lisää se tiedostoon ~/.hermes/config.yaml",
+            "body": "Liitä se kohtaan mcp_servers tiedostossa ~/.hermes/config.yaml ja tallenna. Suorita sitten tämä komento Hermesissä."
+          },
+          "step3": {
+            "title": "Hyväksy käyttöoikeus",
+            "body": "Hermes avaa selainikkunan. Kirjaudu sisään, valitse työtila ja hyväksy. Hermes voi nyt käyttää työtilasi työkaluja."
+          }
+        }
+      }
     },
     "clients": {
+      "claude": "Claude",
       "claudeCode": "Claude Code",
       "claudeDesktop": "Claude Desktop",
       "cursor": "Cursor",
       "chatgpt": "ChatGPT",
-      "stdio": "stdio fallback",
-      "stdioHint": "Use a workspace token for this fallback."
+      "stdio": "stdio-varavaihtoehto",
+      "stdioHint": "Käytä tässä varavaihtoehdossa työtilan tunnusta.",
+      "openclaw": "OpenClaw",
+      "hermes": "Hermes",
+      "other": "Muut asiakkaat"
     },
     "grants": {
-      "title": "Authorized applications",
-      "description": "Grants belong to your account and apply to every workspace you administer; revoking disconnects the client everywhere.",
-      "empty": "OAuth grants appear here after you connect an MCP client.",
-      "client": "Client",
-      "scopes": "Scopes",
-      "firstAuthorizedAt": "First authorized",
-      "lastRefreshedAt": "Last refreshed",
-      "activeUntil": "Active until",
-      "noActiveToken": "No active token",
-      "revoke": "Revoke",
-      "revokeConfirmTitle": "Revoke application access?",
-      "revokeConfirmDescription": "Revoke access for {clientName}? This disconnects the client everywhere.",
-      "revokedSuccess": "Application access revoked.",
-      "notFound": "OAuth grant no longer exists"
+      "title": "Valtuutetut sovellukset",
+      "description": "Valtuudet kuuluvat tilillesi ja koskevat kaikkia ylläpitämiäsi työtiloja; peruuttaminen katkaisee asiakkaan yhteyden kaikkialla.",
+      "empty": "OAuth-valtuudet näkyvät tässä, kun olet yhdistänyt MCP-asiakkaan.",
+      "client": "Asiakas",
+      "scopes": "Laajuudet",
+      "firstAuthorizedAt": "Valtuutettu ensimmäisen kerran",
+      "lastRefreshedAt": "Päivitetty viimeksi",
+      "activeUntil": "Voimassa asti",
+      "noActiveToken": "Ei aktiivista tunnusta",
+      "revoke": "Peruuta",
+      "revokeConfirmTitle": "Peruutetaanko sovelluksen pääsy?",
+      "revokeConfirmDescription": "Peruutetaanko käyttöoikeus sovellukselle {clientName}? Tämä katkaisee asiakkaan yhteyden kaikkialla.",
+      "revokedSuccess": "Sovelluksen pääsy peruutettu.",
+      "notFound": "OAuth-valtuutta ei ole enää olemassa"
+    },
+    "unavailableOnDomain": {
+      "title": "Ei käytettävissä tässä verkkotunnuksessa",
+      "body": "Tekoälyavustajien, kuten Clauden tai ChatGPT:n, yhdistäminen ei ole vielä käytettävissä tässä verkkotunnuksessa. Nykyiset valtuutukset näkyvät alla, ja ne voi edelleen peruuttaa."
     }
   },
   "connectionStatus": {
@@ -12051,17 +12296,21 @@
     "add": "Lisää",
     "addCategory": "Lisää luokka",
     "renameCategory": "Nimeä uudelleen",
-    "editCategories": "Muokkaa luokkia",
+    "editListing": "Muokkaa kohdetta",
     "templateId": "Mallin tunnus",
     "template": "Malli",
     "categories": "Luokat",
     "categoriesPlaceholder": "Ei luokkaa",
     "close": "Sulje",
     "removeChip": "Poista {name}",
+    "moreSelected": "+ {count} lisää",
     "categoriesHint": "Valinnainen. Ilman luokkaa malli näkyy vain kohdassa “Kaikki”.",
+    "languages": "Kielet",
+    "allLanguages": "Kaikki kielet",
+    "languagesHint": "Valinnainen. Jätä tyhjäksi, jos malli näytetään kaikilla kielillä.",
     "noCategoriesYet": "Ei vielä luokkia.",
     "added": "Malli lisätty kauppaan",
-    "updated": "Luokat päivitetty",
+    "updated": "Kohde päivitetty",
     "removed": "Malli poistettu kaupasta",
     "removeError": "Mallia ei voitu poistaa",
     "removeTitle": "Poistetaanko {name}?",
@@ -12103,16 +12352,18 @@
       "categoryLimit": "Kaupassa voi olla enintään {categoryLimit} luokkaa."
     },
     "store": {
-      "subtitle": "Valmiita malleja, jotka asennat yhdellä napsautuksella.",
       "pageTitle": "{tenantName} – Mallikauppa",
       "empty": "Kaupassa ei ole vielä malleja.",
       "search": "Hae malleja",
-      "all": "Kaikki",
-      "categories": "Kaupan luokat",
-      "noResults": "Mikään malli ei vastaa hakua.",
-      "clearSearch": "Tyhjennä haku",
-      "by": "Tekijä: {publisherName}",
-      "loadFailed": "Malleja ei voitu ladata. Yritä myöhemmin uudelleen."
+      "noResults": "Mikään malli ei vastaa suodattimia.",
+      "clearSearch": "Tyhjennä suodattimet",
+      "loadFailed": "Malleja ei voitu ladata. Yritä myöhemmin uudelleen.",
+      "languageValue": "Kieli: {language}",
+      "allLanguages": "Kaikki kielet",
+      "otherLanguages": "Muut kielet",
+      "allChannels": "Kaikki kanavat",
+      "channel": "Kanava",
+      "uncategorized": "Muut"
     },
     "picker": {
       "placeholder": "Valitse malli",
@@ -12121,7 +12372,21 @@
       "error": "Malleja ei voitu ladata.",
       "retry": "Yritä uudelleen",
       "meta": "ID {id} · {workspace}"
-    }
+    },
+    "bulk": {
+      "setCategories": "Aseta kategoriat",
+      "setLanguages": "Aseta kielet",
+      "categoriesHint": "Korvaa valittujen mallien ({count}) kategoriat. Jätä tyhjäksi poistaaksesi kaikki kategoriat.",
+      "languagesHint": "Korvaa valittujen mallien ({count}) kielet. Jätä tyhjäksi näyttääksesi ne kaikilla kielillä.",
+      "updated": "Valitut mallit päivitetty",
+      "removeTitle": "Poistetaanko valitut mallit?",
+      "removeDescription": "Valittu: {count}. Ne katoavat kaupasta; itse mallit ja niiden asennukset eivät muutu.",
+      "removed": "Valitut mallit poistettu kaupasta",
+      "setChannels": "Aseta kanavat",
+      "channelsHint": "Korvaa valittujen mallien ({count}) kanavat. Jätä tyhjäksi kaikille kanaville."
+    },
+    "channels": "Kanavat",
+    "channelsHint": "Valinnainen. Jätä tyhjäksi, jos malli toimii kaikilla kanavilla. Näkyy kuvakkeina kaupassa, jossa kävijät voivat suodattaa kanavan mukaan."
   },
   "accountDeletion": {
     "title": "Delete account",
@@ -12308,5 +12573,1060 @@
       "onAhachat": "On AhaChat",
       "selected": "Uses AhaChat data"
     }
+  },
+  "conversationParticipants": {
+    "joined": "{names} osallistui keskusteluun",
+    "replied": "{name} vastasi {time}",
+    "showMore": "Näytä lisää",
+    "label": "Kuka vastasi tässä keskustelussa",
+    "unnamedMember": "Jäsen",
+    "loadMoreFailed": "Lisää jäseniä ei voitu ladata",
+    "lastMessageBy": "Viimeisin viesti: {name}"
+  },
+  "posts": {
+    "title": "Julkaisut",
+    "searchPlaceholder": "Hae tekstillä, linkillä tai julkaisun tunnuksella",
+    "dateFrom": "Alkaen",
+    "dateTo": "Päättyen",
+    "export": {
+      "title": "Vie kommentit tämän aikavälin julkaisuista (enintään {count} julkaisua)",
+      "needsRange": "Valitse alku- ja loppupäivä kommenttien viemiseksi.",
+      "nothing": "Mikään julkaisu ei vastaa näitä suodattimia tällä aikavälillä.",
+      "failed": "Vienti epäonnistui. Yritä uudelleen.",
+      "done": "{count, plural, one {Viety # julkaisun kommentit.} other {Viety # julkaisun kommentit.}}",
+      "doneLimited": "Viety {count} uusimman julkaisun kommentit. Lisää julkaisuja vastaa suodattimia; rajaa päivämääriä viedäksesi loput.",
+      "truncated": "Vienti katkesi rivirajaan. Rajaa päivämääriä tai suodattimia viedäksesi loput.",
+      "quotaExceeded": "Tilin viestikiintiö on käytetty, joten latausta ei tehty. Päivitä tilaus tai odota seuraavaa laskutuskautta.",
+      "blocked": "Tämän työtilan tilaus tai kokeilujakso on päättynyt.",
+      "menu": "Vie",
+      "rowsTitle": "Vie julkaisujen luettelo (yksi rivi julkaisua kohti)",
+      "rowsDone": "Julkaisuluettelo vietiin.",
+      "rowsTruncated": "Luettelo katkaistiin julkaisurajaan. Rajaa suodattimia viedäksesi loput."
+    },
+    "showAllPosts": "Näytä myös julkaisut ilman kommentteja",
+    "noCaption": "Ei tekstiä",
+    "liveNow": "Suora lähetys",
+    "empty": "Mikään julkaisu ei vastaa suodattimia.",
+    "loadMore": "Lataa lisää",
+    "columns": {
+      "content": "Julkaisu",
+      "topic": "Aihe",
+      "author": "Tekijä",
+      "pages": "Sivut",
+      "status": "Tila"
+    },
+    "contentType": {
+      "text": "Teksti",
+      "photo": "Kuva",
+      "video": "Video",
+      "reel": "Reel",
+      "carousel": "Karuselli",
+      "story": "Tarina",
+      "live": "Suora lähetys",
+      "link": "Linkki",
+      "audio": "Ääni",
+      "other": "Muu"
+    },
+    "filters": {
+      "channel": "Kanava",
+      "allChannels": "Kaikki kanavat",
+      "inbox": "Sivu / tili",
+      "allInboxes": "Kaikki sivut ja tilit",
+      "postType": "Julkaisun tyyppi",
+      "commentSettings": "Kommenttiasetukset",
+      "hidden": "Kommentit piilotettu",
+      "notHidden": "Kommentteja ei piilotettu",
+      "phoneHidden": "Puhelinnumerolliset kommentit piilotettu",
+      "phoneNotHidden": "Puhelinnumerollisia kommentteja ei piilotettu",
+      "skipped": "Kommentit ohitettu",
+      "notSkipped": "Kommentteja ei ohitettu",
+      "sort": "Järjestä",
+      "topics": "Aiheet",
+      "title": "Suodattimet",
+      "engagement": "Reaktiot",
+      "topicSearch": "Hae aiheita",
+      "author": "Tekijä",
+      "allAuthors": "Kaikki tekijät"
+    },
+    "postType": {
+      "all": "Kaikki",
+      "photo": "Kuva",
+      "video": "Video",
+      "post": "Julkaisu",
+      "pastLive": "Päättynyt suora lähetys",
+      "liveNow": "Suora lähetys nyt"
+    },
+    "sort": {
+      "newest": "Uusimmat",
+      "mostComments": "Eniten kommentteja",
+      "fewestComments": "Vähiten kommentteja",
+      "mostPhones": "Eniten puhelinnumeroita",
+      "fewestPhones": "Vähiten puhelinnumeroita",
+      "mostEngagement": "Eniten reaktioita",
+      "leastEngagement": "Vähiten reaktioita",
+      "mostShares": "Eniten jakoja",
+      "fewestShares": "Vähiten jakoja"
+    },
+    "settings": {
+      "hideComments": "Piilota kaikki kommentit",
+      "hidePhoneComments": "Piilota puhelinnumerolliset kommentit",
+      "skipComments": "Ohita kommentit (merkitse luetuiksi)",
+      "unavailable": "Tämä kanava ei vielä tue julkaisukohtaisia kommenttiasetuksia."
+    },
+    "sync": {
+      "refresh": "Päivitä julkaisut",
+      "started": "Julkaisuja synkronoidaan. Uudet julkaisut näkyvät pian.",
+      "alreadyRunning": "Synkronointi on jo käynnissä tai päättyi juuri.",
+      "failedCount": "{count, plural, one {# sivua ei voitu synkronoida} other {# sivua ei voitu synkronoida}}",
+      "reconnect": "Yhdistä kanava uudelleen",
+      "reconnectWithPermission": "Yhdistä uudelleen ja salli pääsy julkaisuihin",
+      "retry": "Yritä uudelleen"
+    },
+    "topics": {
+      "edit": "Muokkaa aiheita",
+      "newPlaceholder": "Uuden aiheen nimi",
+      "empty": "Ei vielä aiheita. Kirjoita nimi luodaksesi aiheen."
+    },
+    "emptyHint": "Kokeile toista suodatinta tai ota käyttöön ”Näytä myös julkaisut ilman kommentteja”.",
+    "actions": {
+      "viewComments": "Näytä kommentit",
+      "viewOriginal": "Näytä alkuperäinen julkaisu",
+      "refreshPost": "Päivitä kanavalta",
+      "refreshRemoved": "Tätä julkaisua ei enää ole kanavalla, joten se piilotettiin.",
+      "refreshUnavailable": "Julkaisua ei voitu lukea kanavalta. Yritä myöhemmin uudelleen.",
+      "refreshRateLimited": "Kanava pyysi hidastamaan. Yritä uudelleen muutaman minuutin kuluttua.",
+      "refreshCooldown": "Tämä julkaisu päivitettiin juuri. Yritä uudelleen minuutin kuluttua.",
+      "downloadPhones": "Lataa puhelinnumerot",
+      "downloadComments": "Lataa kommentit",
+      "viewDetails": "Näytä tiedot"
+    },
+    "merge": {
+      "title": "Yhdistä julkaisut",
+      "selectAll": "Valitse kaikki",
+      "selected": "{count}/{max} valittu",
+      "confirm": "Yhdistä julkaisut"
+    },
+    "comments": {
+      "title": "Kaikki tämän julkaisun kommentit",
+      "mergedTitle": "Yhdistetyt kommentit {count} julkaisusta",
+      "searchPlaceholder": "Hae kommentteja",
+      "phoneOnly": "Puhelinnumerolla",
+      "empty": "Ei näytettäviä kommentteja.",
+      "loadOlder": "Lataa vanhempia kommentteja",
+      "like": "Tykkää kommentista",
+      "delete": "Poista kommentti",
+      "confirmDelete": "Napsauta uudelleen poistaaksesi",
+      "hidden": "Piilotettu",
+      "unknownAuthor": "Tuntematon asiakas"
+    },
+    "state": {
+      "noChannelTitle": "Ei yhdistettyä kanavaa",
+      "noChannelHint": "Yhdistä Messenger-, Instagram-, Threads- tai TikTok-kanava nähdäksesi sen julkaisut täällä.",
+      "connectChannel": "Yhdistä kanava",
+      "neverSyncedTitle": "Julkaisuja ei ole vielä ladattu",
+      "neverSyncedHint": "Lataa yhdistettyjen kanavien julkaisut. Se toimii taustalla ja voi kestää muutaman minuutin.",
+      "loadPosts": "Lataa julkaisut"
+    },
+    "counts": {
+      "comments": "Kommentit",
+      "reactions": "Reaktiot",
+      "shares": "Jaot",
+      "phones": "Puhelinnumerolliset kommentit"
+    },
+    "tabs": {
+      "posts": "Julkaisut",
+      "calendar": "Kalenteri",
+      "connect": "Yhdistä",
+      "feeds": "Syötteet",
+      "analytics": "Analytiikka"
+    },
+    "calendar": {
+      "views": {
+        "month": "Kuukausi",
+        "week": "Viikko",
+        "day": "Päivä",
+        "list": "Luettelo"
+      },
+      "viewLabel": "Kalenterinäkymä",
+      "previous": "Edellinen jakso",
+      "next": "Seuraava jakso",
+      "today": "Tänään",
+      "network": "Verkosto",
+      "destination": "Sivu tai profiili",
+      "allNetworks": "Kaikki verkostot",
+      "allDestinations": "Kaikki sivut ja profiilit",
+      "noText": "(Ei tekstiä)",
+      "noDate": "Ei päivämäärää",
+      "noDateEmpty": "Ilman päivämäärää olevat luonnokset näkyvät tässä. Pudota julkaisu tähän siirtääksesi sen takaisin luonnoksiin.",
+      "newPostOn": "Uusi julkaisu {date}",
+      "more": "+{count} lisää",
+      "emptyDay": "Ei julkaisuja tänä päivänä.",
+      "emptyHint": "Tälle jaksolle ei ole ajastettu mitään.",
+      "loading": "Ladataan…",
+      "loadError": "Kalenterin lataaminen epäonnistui.",
+      "retry": "Yritä uudelleen",
+      "readOnly": "Tämä työtila on vain luku -tilassa, joten julkaisuja ei voi siirtää tai luoda.",
+      "truncated": "Vain osa tämän jakson julkaisuista näytetään. Rajaa jaksoa tai suodata verkoston tai tilin mukaan.",
+      "openPost": "Avaa julkaisu",
+      "moveToDrafts": "Siirrä luonnoksiin",
+      "reschedule": "Ajasta uudelleen",
+      "schedule": "Ajasta",
+      "rescheduleLabel": "Julkaisuaika",
+      "scheduleLabel": "Ajasta ajankohtaan",
+      "pickTime": "Valitse päivämäärä ja aika",
+      "status": {
+        "draft": "Luonnos"
+      },
+      "errors": {
+        "past": "Valitse aika vähintään 15 minuutin päähän nykyhetkestä.",
+        "cannotUnschedule": "Vain ajastetun julkaisun voi siirtää takaisin luonnoksiin."
+      },
+      "list": {
+        "filterLabel": "Suodata tilan mukaan",
+        "filterCount": "{label}, {count, plural, one {# julkaisu} other {# julkaisua}}",
+        "filters": {
+          "all": "Kaikki",
+          "drafts": "Luonnokset",
+          "scheduled": "Ajastetut",
+          "published": "Julkaistut",
+          "needsAttention": "Vaatii huomiota"
+        },
+        "empty": {
+          "all": "Ei julkaisuja",
+          "drafts": "Ei luonnoksia",
+          "scheduled": "Ei ajastettuja julkaisuja",
+          "published": "Ei julkaistuja julkaisuja",
+          "needsAttention": "Mikään ei vaadi huomiota"
+        },
+        "loadMore": "Lataa lisää"
+      },
+      "freeSlots": {
+        "label": "Vapaat julkaisuajat",
+        "compose": "Uusi julkaisu klo {time}",
+        "truncated": "Lisää vapaita aikoja ei näytetä"
+      }
+    },
+    "connect": {
+      "title": "Yhdistä",
+      "connectNetwork": "Yhdistä {network}",
+      "reconnect": "Yhdistä uudelleen",
+      "reconnectName": "{label}: {name}",
+      "facebookReconnectHint": "Yhden Sivun yhdistäminen uudelleen päivittää kaikki saman Facebook-kirjautumisen Sivut.",
+      "comingSoon": "Ei vielä saatavilla",
+      "connectedAlready": "{count, plural, one {# tili yhdistetty. Lisää toinen napsauttamalla.} other {# tiliä yhdistetty. Lisää toinen napsauttamalla.}}",
+      "truncated": "Näytetään ensimmäiset {count} sivua.",
+      "tiktokTitle": "TikTok-julkaisutilit",
+      "pageCount": "{count, plural, one {# sivu} other {# sivua}}",
+      "verify": "Vahvista",
+      "verified": "Tili vahvistettu.",
+      "syncDestinations": "Synkronoi sivut",
+      "destinationsSynced": "Sivut ja profiilit päivitetty.",
+      "disconnect": "Katkaise yhteys",
+      "confirmDisconnect": "Napsauta uudelleen katkaistaksesi yhteyden",
+      "disconnected": "Tilin yhteys katkaistu.",
+      "missingScopes": "Puuttuvat oikeudet: {scopes}. Yhdistä uudelleen myöntääksesi ne.",
+      "lastVerified": "Vahvistettu {date}",
+      "status": {
+        "connected": "Yhdistetty",
+        "needsReauth": "Vaatii uudelleenyhdistämisen",
+        "disconnected": "Yhteys katkaistu"
+      },
+      "reason": {
+        "tokenRejected": "Alusta hylkäsi tallennetun kirjautumisen. Yhdistä tili uudelleen.",
+        "tokenExpired": "Tallennettu kirjautuminen on vanhentunut. Yhdistä tili uudelleen.",
+        "refreshRejected": "Alusta kieltäytyi uusimasta kirjautumista. Yhdistä tili uudelleen.",
+        "permissionNotGranted": "Joitakin oikeuksia puuttuu. Yhdistä tili uudelleen myöntääksesi ne."
+      },
+      "emptyTitle": "Kanavia ei ole vielä yhdistetty",
+      "emptyAction": "Siirry kanaviin",
+      "schedule": {
+        "open": "Julkaisuajat",
+        "title": "Kohteen {name} julkaisuajat",
+        "description": "Jonoon lisätty julkaisu saa tämän listan seuraavan vapaan ajan.",
+        "timezone": "Aikavyöhyke: {timezone}",
+        "maxTimes": "Enintään {count} aikaa päivässä",
+        "dayOn": "Julkaise päivänä {day}",
+        "noTimes": "Ei aikoja",
+        "addTime": "Lisää aika",
+        "timeLabel": "Uusi aika päivälle {day}",
+        "removeTime": "Poista {time}",
+        "copyTo": "Kopioi muille päiville",
+        "copyApply": "Kopioi",
+        "save": "Tallenna",
+        "saved": "Julkaisuajat tallennettu.",
+        "reflowMoved": "{count, plural, one {# jonossa ollut julkaisu siirrettiin uuteen aikaan.} other {# jonossa ollutta julkaisua siirrettiin uusiin aikoihin.}}",
+        "reflowDetached": "{count, plural, one {# jonossa olevalla julkaisulla ei ole enää julkaisuaikaa. Se säilyttää aikansa, mutta ei ole enää jonossa (nyt mukautettu).} other {# jonossa olevalla julkaisulla ei ole enää julkaisuaikaa. Ne säilyttävät aikansa, mutta eivät ole enää jonossa (nyt mukautettuja).}}"
+      }
+    },
+    "detail": {
+      "title": "Julkaisun tiedot",
+      "caption": "Teksti",
+      "metrics": "Reaktiot",
+      "metricsUnavailable": "Tämä kanava ei ilmoita näitä lukuja.",
+      "views": "Katselukerrat",
+      "settings": "Kommenttiasetukset",
+      "settingsHint": "Asetukset koskevat julkaisun uusia kommentteja. Olemassa olevia kommentteja ei muuteta.",
+      "skipCommentsHint": "Merkitsee jokaisen uuden kommentin luetuksi. Automaatiot toimivat silti.",
+      "hideCommentsHint": "Piilottaa jokaisen julkaisun uuden kommentin.",
+      "hidePhoneCommentsHint": "Piilottaa uudet kommentit, joissa on puhelinnumero.",
+      "topics": "Aiheet",
+      "info": "Tiedot",
+      "postId": "Julkaisun tunnus",
+      "channel": "Kanava",
+      "contentType": "Tyyppi",
+      "author": "Tekijä",
+      "publishedAt": "Julkaistu",
+      "metricsUpdated": "Luvut päivitetty",
+      "never": "Ei vielä mitattu",
+      "ownerPage": "Sivu",
+      "ownerAccount": "Tili"
+    },
+    "feeds": {
+      "title": "Automaattinen julkaisu syötteistä",
+      "description": "Muuta RSS- tai Atom-syötteen uudet kohteet julkaisuiksi. Ensimmäinen tarkistus vain tallentaa sen, mitä syötteessä jo on.",
+      "add": "Lisää syöte",
+      "empty": "Ei vielä syötteitä. Lisää yksi, niin uudet artikkelit muuttuvat automaattisesti julkaisuiksi.",
+      "status": {
+        "active": "Aktiivinen",
+        "paused": "Keskeytetty",
+        "error": "Keskeytetty – syötteen virhe"
+      },
+      "mode": {
+        "draft": "Tallenna luonnoksena",
+        "queue": "Lisää jonoon automaattisesti"
+      },
+      "lastChecked": "Viimeksi tarkistettu {time}",
+      "neverChecked": "Ei vielä tarkistettu",
+      "firstCheckPending": "Ensimmäinen tarkistus vain tallentaa sen, mitä syötteessä jo on; niistä ei luoda julkaisuja.",
+      "every": "{minutes} min välein",
+      "destinations": "{count, plural, one {# kohde} other {# kohdetta}}",
+      "actions": {
+        "checkNow": "Tarkista nyt",
+        "pause": "Keskeytä",
+        "resume": "Jatka",
+        "edit": "Muokkaa",
+        "delete": "Poista",
+        "items": "Kohteet",
+        "sendTest": "Lähetä testi"
+      },
+      "toast": {
+        "checkStarted": "Tarkistus käynnistetty",
+        "paused": "Syöte keskeytetty",
+        "resumed": "Syötettä jatkettu",
+        "deleted": "Syöte poistettu",
+        "saved": "Syöte tallennettu",
+        "testDraftCreated": "Testiluonnos luotu",
+        "openDraft": "Avaa luonnos",
+        "testUsedTemplate": "Tekoäly ei voinut kirjoittaa tekstiä, joten käytettiin tekstipohjaa."
+      },
+      "deleteConfirm": "Poistetaanko tämä syöte ja sen kohteiden historia? Jo luodut julkaisut säilyvät.",
+      "error": {
+        "blocked": "Syötteen osoite ei ole sallittu.",
+        "timeout": "Syöte vastasi liian hitaasti.",
+        "tooLarge": "Syöte on suurempi kuin 2 Mt.",
+        "badStatus": "Syöte vastasi virheellä.",
+        "badContentType": "Osoite ei ole RSS- tai Atom-syöte.",
+        "unreachable": "Syötettä ei tavoitettu.",
+        "tooManyRedirects": "Syöte uudelleenohjaa liian monta kertaa.",
+        "invalidFeed": "Syötettä ei voitu lukea.",
+        "internal": "Syötteen tarkistuksessa tapahtui virhe.",
+        "postRefused": "Julkaisua ei voitu luoda (esimerkiksi vapaata julkaisuaikaa ei ole tai työtila on estetty). Seuraava tarkistus yrittää uudelleen."
+      },
+      "apiError": {
+        "feedUrlTaken": "Tämä syöte on jo lisätty.",
+        "feedCheckCooldown": "Syötteen voi tarkistaa käsin vain kerran 5 minuutissa.",
+        "feedPreviewRateLimited": "Liian monta esikatselua. Yritä myöhemmin uudelleen.",
+        "feedNotParseable": "Tämä osoite ei ole RSS- tai Atom-syöte. Kokeile lisätä sivuston osoitteen perään /feed tai /rss.",
+        "feedUnreachable": "Osoitteeseen ei saatu yhteyttä. Tarkista osoite ja yritä uudelleen.",
+        "feedTestRateLimited": "Liian monta testijulkaisua. Yritä myöhemmin uudelleen.",
+        "feedHasNoItems": "Syötteessä ei ole vielä kohteita.",
+        "feedFetchRateLimited": "Liian monta syötteen osoitteen tarkistusta. Yritä myöhemmin uudelleen.",
+        "feedCheckInProgress": "Tämän syötteen tarkistus odottaa tai on jo käynnissä."
+      },
+      "form": {
+        "createTitle": "Lisää syöte",
+        "editTitle": "Muokkaa syötettä",
+        "name": "Nimi",
+        "url": "Syötteen osoite",
+        "urlPlaceholder": "https://example.com/feed.xml",
+        "preview": "Esikatsele",
+        "previewEmpty": "Tästä syötteestä ei löytynyt kohteita.",
+        "destinations": "Julkaise kohteeseen",
+        "noDestinations": "Yhdistä ensin sosiaalisen median tili.",
+        "interval": "Tarkista",
+        "dailyCap": "Julkaisuja enintään päivässä",
+        "mode": "Uudet kohteet",
+        "modeDraftHelp": "Jokaisesta uudesta kohteesta tulee luonnos, jonka voit tarkistaa.",
+        "modeQueueHelp": "Jokainen uusi kohde lisätään kohteen julkaisuaikataulun jonoon ja julkaistaan ilman tarkistusta.",
+        "template": "Julkaisun teksti",
+        "templateHelp": "Käytettävissä olevat muuttujat: {variables}",
+        "save": "Tallenna",
+        "cancel": "Peruuta",
+        "didYouMean": "Tarkoititko {url}?",
+        "useSuggestion": "Käytä",
+        "aiWrite": "Kirjoita jokainen julkaisu tekoälyllä",
+        "aiWriteHelp": "Tekoäly kirjoittaa tekstin kohteen otsikosta, tiivistelmästä ja linkistä. Jos se ei onnistu, käytetään alla olevaa tekstipohjaa.",
+        "aiInstructions": "Lisäohjeet tekoälylle (valinnainen)",
+        "aiInstructionsHelp": "Esimerkiksi: ystävällinen sävy, mainitse kaupan nimi. Enintään 300 merkkiä.",
+        "postLatestOnFirstCheck": "Julkaise uusin kohde ensimmäisellä tarkistuksella",
+        "postLatestOnFirstCheckHelp": "Ilman tätä ensimmäinen tarkistus vain tallentaa sen, mitä syötteessä jo on.",
+        "contentTitle": "Julkaisun sisältö",
+        "templateInsert": "Lisää kenttä",
+        "templateVariables": "Kohteen kentät",
+        "templateFeedFields": "Tästä syötteestä löytyneet kentät",
+        "templatePresets": "Aloita valmiista pohjasta",
+        "presetTitleLink": "Otsikko ja linkki",
+        "presetSummaryHashtags": "Otsikko, tiivistelmä, linkki ja aihetunnisteet",
+        "presetProduct": "Tuote: otsikko, hinta ja linkki",
+        "templateLegacy": "Tämä syöte käyttää vanhoja {token}-merkkejä ja julkaisee kuten ennenkin, kunnes muunnat sen.",
+        "templateConvert": "Muunna uuteen syntaksiin",
+        "templateHint": "Lisää kenttiä valikosta tai kirjoita ne, esimerkiksi {example}. Käytettävissä olevat suodattimet: {filters}.",
+        "templateProblem": "Rivi {line}, sarake {column}: {message}",
+        "previewTitle": "Esikatselu",
+        "previewSample": "Esimerkkikohde",
+        "previewHint": "Esikatsele syötteen osoite nähdäksesi, miltä julkaisu näyttää.",
+        "previewCharacters": "{network}: {count} merkkiä",
+        "previewDropped": "Tästä julkaisusta pois jätetyt kohteet: {count}",
+        "previewFiltered": "Suodatettu pois: {reason}",
+        "previewSkipped": "Tämä kohde ohitettaisiin.",
+        "previewNoPicture": "Ei kuvaa",
+        "mediaTitle": "Kuvat",
+        "mediaMode": "Kuvan lähde",
+        "mediaModeAuto": "Syötteestä (automaattisesti)",
+        "mediaModeField": "Kentästä tai osoitteesta",
+        "mediaModeNone": "Ei kuvaa",
+        "mediaField": "Kenttä tai osoite",
+        "mediaFieldHelp": "Malli, joka antaa kuvan osoitteen, esimerkiksi {example}.",
+        "mediaLibrary": "Varakuvat",
+        "mediaLibraryHelp": "Mediakirjastostasi; käytetään, kun kohteella ei ole omaa kuvaa.",
+        "mediaLibraryAdd": "Lisää kuvia",
+        "mediaRemove": "Poista",
+        "postAs": "Julkaise muodossa",
+        "postAsPhoto": "Kuvajulkaisu",
+        "postAsLink": "Linkki",
+        "postAsText": "Vain teksti",
+        "postAsHelpLink": "Linkki: esikatselukortti artikkelin kuvalla Facebookissa ja Threadsissa.",
+        "postAsHelpPhoto": "Kuvajulkaisu: kohteen kuva julkaistaan tekstin mukana.",
+        "postAsHelpText": "Vain teksti: vain sanat ja osoite, ei kuvaa.",
+        "postAsTextFacebookWarning": "Facebook ei luo linkin esikatselukorttia (kuvaa) tekstin sisällä olevalle linkille. Valitse Linkki, niin saat kortin artikkelin kuvalla.",
+        "noImageFallback": "Kun kohteella ei ole kuvaa",
+        "fallbackLink": "Jaa linkki",
+        "fallbackText": "Vain teksti",
+        "fallbackSkip": "Ohita kohde",
+        "filtersTitle": "Suodattimet",
+        "filterInclude": "Sisältää jonkin seuraavista",
+        "filterExclude": "Ei sisällä mitään seuraavista",
+        "filterCategories": "Luokka on jokin seuraavista",
+        "filterTermsHelp": "Kirjoita sana ja paina Enter. Isot kirjaimet ja aksentit ohitetaan.",
+        "filterRequireImage": "Vain kohteet, joilla on kuva",
+        "filterMaxAge": "Vain kohteet, jotka ovat uudempia kuin (tuntia)",
+        "networkTexts": "Eri teksti jokaiselle verkolle",
+        "networkTextsHelp": "Kirjoita verkolle oma teksti; verkot, joille ei ole omaa tekstiä, käyttävät yhteistä tekstiä. Teksti, jonka verkko hylkää, ohitetaan, eikä sitä koskaan lyhennetä. Tekoälyn kirjoittamat julkaisut käyttävät yhtä yhteistä tekstiä.",
+        "networkTabShared": "Yhteinen",
+        "networkTextUsesShared": "Tämä verkko käyttää yhteistä tekstiä.",
+        "networkTextClear": "Käytä yhteistä tekstiä",
+        "networkTextAria": "Teksti verkolle {network}",
+        "fetchArticleImage": "Etsi kuvaa artikkelisivulta",
+        "fetchArticleImageHelp": "Kun kohteella ei ole kuvaa, sen artikkelisivu luetaan kerran pääkuvan (og:image) löytämiseksi. Vain julkaistaville kohteille; sivu, jota ei voi lukea, ei koskaan estä julkaisua.",
+        "previewArticlePicture": "Artikkelisivu luetaan"
+      },
+      "items": {
+        "title": "Kohteet syötteestä {name}",
+        "empty": "Kohteita ei ole vielä tarkistettu.",
+        "loadMore": "Näytä lisää",
+        "openPost": "Avaa julkaisu",
+        "reasons": {
+          "existing": "Oli jo syötteessä lisäyshetkellä",
+          "undated": "Ei julkaisupäivää",
+          "tooOld": "Liian vanha",
+          "perRunLimit": "Tarkistuskohtaisen rajan ylittävä",
+          "noDestination": "Kohdetta ei ole valittu",
+          "emptyText": "Julkaisun teksti on tyhjä",
+          "textTooLong": "Julkaisun teksti on liian pitkä",
+          "invalid": "Julkaisu hylättiin",
+          "other": "Kohdetta ei voitu käyttää",
+          "aiFallback": "Kirjoitettu tekstipohjasta (tekoäly ei voinut kirjoittaa sitä)",
+          "excludedKeyword": "Sisältää kielletyn sanan",
+          "missingKeyword": "Ei sisällä yhtään vaadittua sanaa",
+          "category": "Ei valituissa luokissa",
+          "noImage": "Ei kuvaa",
+          "tooOldForFilter": "Ikäsuodatinta vanhempi",
+          "undatedForFilter": "Ei päivämäärää ikäsuodattimen tarkistamiseen",
+          "imageFailed": "Kuvaa ei voitu käyttää",
+          "noImageFallback": "Julkaistu ilman kuvaa",
+          "droppedTargets": "Joitakin kohteita jätettiin pois",
+          "templateError": "Mallia ei voitu muodostaa",
+          "noDestinationAccepts": "Mikään kohde ei voi välittää tätä julkaisua",
+          "issueTextRequired": "Julkaisussa ei ole tekstiä",
+          "issueTextTooLong": "Teksti on liian pitkä verkolle",
+          "issueLinkNotSupported": "Verkko ei hyväksy linkkiä",
+          "issueLinkRequired": "Verkko vaatii linkin",
+          "issueTooManyLinks": "Linkkejä enemmän kuin verkko sallii",
+          "issueContentType": "Verkko ei julkaise tämän tyyppistä julkaisua",
+          "issueMedia": "Kuva ei täytä verkon sääntöjä",
+          "issueOptions": "Verkon asetus ei kelpaa",
+          "issueParts": "Verkko ei hyväksy jatko-osia",
+          "issueDestination": "Kohde ei voi julkaista juuri nyt",
+          "alreadyPosted": "Tälle kohteelle on jo julkaisu"
+        },
+        "createPost": "Luo julkaisu",
+        "picture": "Kuva: {source}",
+        "dropped": "Pois jätetty: {count}",
+        "imageSources": {
+          "enclosure": "Kuvaliite",
+          "mediaContent": "Mediasisältö",
+          "mediaThumbnail": "Pikkukuva",
+          "itunesImage": "Podcastin kansi",
+          "contentImage": "Kuva tekstissä",
+          "jsonFeed": "JSON Feed -kuva",
+          "field": "Kenttä tai osoite",
+          "library": "Mediakirjasto",
+          "article": "Artikkelisivu (og:image)"
+        },
+        "imageErrors": {
+          "unreachable": "Kuvaa ei voitu ladata.",
+          "blocked": "Kuvan osoite ei ole sallittu.",
+          "tooBig": "Kuva on liian suuri.",
+          "notImage": "Tiedosto ei ole käyttökelpoinen kuva.",
+          "storage": "Kuvaa ei voitu tallentaa.",
+          "articleUnreachable": "Artikkelisivua ei voitu lukea.",
+          "articleNoImage": "Artikkelisivu ei ilmoita kuvaa."
+        }
+      },
+      "outcome": {
+        "created": "Julkaisu luotu",
+        "skippedOld": "Ohitettu: jo olemassa tai liian vanha",
+        "skippedInvalid": "Ohitettu: hylätty",
+        "skippedFiltered": "Ohitettu: suodatettu pois",
+        "skippedNoImage": "Ohitettu: ei kuvaa"
+      },
+      "deleteConfirmTitle": "Poistetaanko “{name}”?",
+      "sendTestConfirm": {
+        "title": "Lähetetäänkö testijulkaisu?",
+        "description": "Syötteen uusimmasta kohteesta luodaan luonnos samalla tavalla kuin syöte sen kirjoittaisi. Mitään ei julkaista; voit avata luonnoksen ja tarkistaa sen."
+      },
+      "bulkDelete": {
+        "selectAll": "Valitse kaikki",
+        "selectFeed": "Valitse {name}",
+        "deleteSelected": "Poista valitut ({count})",
+        "confirmTitle": "{count, plural, one {Poistetaanko # syöte?} other {Poistetaanko # syötettä?}}",
+        "confirmDescription": "Valitut syötteet ja niiden kohdehistoria poistetaan. Jo tehdyt julkaisut säilyvät.",
+        "success": "{count, plural, one {# syöte poistettu} other {# syötettä poistettu}}"
+      },
+      "columns": {
+        "name": "Syöte",
+        "status": "Tila",
+        "mode": "Tapa",
+        "schedule": "Tarkistusväli",
+        "destinations": "Kohteet",
+        "lastChecked": "Viimeksi tarkistettu"
+      },
+      "filters": {
+        "search": "Hae syötteitä",
+        "searchPlaceholder": "Hae nimellä tai syötteen osoitteella",
+        "status": "Suodata tilan mukaan",
+        "mode": "Suodata toimintatavan mukaan",
+        "destination": "Suodata kohteen mukaan",
+        "allStatuses": "Kaikki tilat",
+        "allModes": "Kaikki toimintatavat",
+        "allDestinations": "Kaikki kohteet",
+        "destinationsSelected": "{count, plural, one {# kohde} other {# kohdetta}}",
+        "noDestinations": "Suodatettavia kohteita ei vielä ole.",
+        "clear": "Tyhjennä suodattimet",
+        "noMatch": "Mikään syöte ei vastaa näitä suodattimia."
+      },
+      "destinationsDialog": {
+        "title": "Kohteet: {name}",
+        "removed": "Poistettu kohde",
+        "close": "Sulje",
+        "edit": "Muokkaa kohteita"
+      },
+      "lastRun": {
+        "noNew": "Lähteessä ei ole uusia kohteita",
+        "skippedOnly": "Uudet kohteet ohitettiin (liian vanhoja tai suodatettu pois)",
+        "stale": "Lähde palautti vanhemman kopion; tarkistetaan pian uudelleen",
+        "notModified": "Lähde ei ole muuttunut edellisen tarkistuksen jälkeen",
+        "created": "{count, plural, one {# julkaisu luotu} other {# julkaisua luotu}}",
+        "refused": "{count, plural, one {# kohde hylätty verkon toimesta} other {# kohdetta hylätty verkon toimesta}}",
+        "waiting": "{count, plural, one {# uusi kohde odottaa seuraavaa tarkistusta} other {# uutta kohdetta odottaa seuraavaa tarkistusta}}",
+        "dailyCap": "Päivittäinen raja saavutettu ({cap} / 24 h) — {count, plural, one {# uusi kohde odottaa} other {# uutta kohdetta odottaa}}",
+        "dailyCapUntil": "Päivittäinen raja saavutettu ({cap} / 24 h) — {count, plural, one {# uusi kohde odottaa} other {# uutta kohdetta odottaa}}. Seuraava paikka vapautuu: {until}"
+      }
+    },
+    "show": {
+      "label": "Näytä",
+      "channels": "Kanavilla"
+    },
+    "composed": {
+      "deleted": "Julkaisu poistettu.",
+      "deleteTitle": "Poistetaanko tämä julkaisu?",
+      "deleteDescription": "Luonnos poistetaan pysyvästi. Ajastettu julkaisu peruutetaan, eikä sitä julkaista."
+    },
+    "analytics": {
+      "title": "Julkaisuanalytiikka",
+      "filters": {
+        "title": "Analytiikan suodattimet",
+        "allContentTypes": "Kaikki sisältötyypit",
+        "allTopics": "Kaikki aiheet"
+      },
+      "metrics": {
+        "comments": "Kommentit",
+        "reactions": "Reaktiot",
+        "shares": "Jaot",
+        "engagement": "Sitoutuminen",
+        "views": "Katselut"
+      },
+      "metricsLower": {
+        "comments": "kommentit",
+        "reactions": "reaktiot",
+        "shares": "jaot",
+        "engagement": "sitoutuminen",
+        "views": "katselut"
+      },
+      "kpi": {
+        "title": "Keskeiset mittarit",
+        "notReported": "Ei raportoitu",
+        "notReportedHint": "Tämä kanava ei raportoi tätä lukua.",
+        "vsPrevious": "edelliseen jaksoon verrattuna",
+        "noComparison": "Vertailua ei ole saatavilla",
+        "previous": "Edellinen jakso: {value}",
+        "postsPublished": "{count, plural, one {# julkaisu tällä jaksolla} other {# julkaisua tällä jaksolla}}"
+      },
+      "chart": {
+        "title": "Kasvu päivittäin",
+        "description": "Päivittäinen kasvu: {metricLower}",
+        "groupBy": "Ryhmitä kaavio",
+        "group": {
+          "none": "Yhteensä",
+          "channel": "Kanavittain",
+          "inbox": "Sivuittain tai tileittäin"
+        },
+        "other": "Muut",
+        "viewTable": "Näytä taulukkona",
+        "hideTable": "Piilota taulukko",
+        "day": "Päivä",
+        "summary": "{metric} päivittäin ajalla {from}–{to}: yhteensä {total}.",
+        "empty": "Ei kirjattua kasvua",
+        "emptyHint": "Mikään ei muuttunut tällä jaksolla tai seuranta ei ollut vielä alkanut."
+      },
+      "breakdown": {
+        "title": "Erittely",
+        "description": "{metric} kanavittain tai sivuittain",
+        "by": {
+          "channel": "Kanavat",
+          "inbox": "Sivut ja tilit"
+        },
+        "empty": "Ei tietoja näillä suodattimilla"
+      },
+      "topPosts": {
+        "title": "Parhaat julkaisut",
+        "description": "Järjestetty: {metricLower}",
+        "rankBy": "Järjestä",
+        "rank_gained": "Eniten kasvanut",
+        "rank_total": "Suurin kokonaismäärä",
+        "rank": "#",
+        "post": "Julkaisu",
+        "channel": "Kanava",
+        "gained": "Kasvu",
+        "total": "Yhteensä",
+        "published": "Julkaistu",
+        "open": "Avaa julkaisu",
+        "noCaption": "Ei kuvatekstiä",
+        "empty": "Ei järjestettäviä julkaisuja",
+        "emptyHint": "Julkaisut näkyvät tässä, kun niiden luvut on seurattu."
+      },
+      "bestTimes": {
+        "title": "Parhaat julkaisuajat",
+        "description": "Julkaisut verrattuna saman sivun tavalliseen julkaisuun, aikavyöhyke {timezone}.",
+        "caption": "Sitoutumispistemäärä viikonpäivän ja tunnin mukaan",
+        "cell": "{when}: pistemäärä {score}, {posts, plural, one {# julkaisu} other {# julkaisua}}",
+        "cellEmpty": "{when}: ei julkaisuja",
+        "legendLow": "Matalampi",
+        "legendHigh": "Korkeampi",
+        "legendTop": "Parhaat ajankohdat",
+        "scoreHint": "Pistemäärä 1,0 vastaa saman sivun tyypillistä julkaisua.",
+        "topHeading": "Vahvimmat ajankohdat",
+        "slotDetail": "Pistemäärä {score} · {posts, plural, one {# julkaisu} other {# julkaisua}}",
+        "insufficientTitle": "Tietoja ei vielä ole tarpeeksi",
+        "insufficientHint": "Parhaat ajat vaativat vähintään {min} julkaisua, jotka on julkaistu 90–3 päivää sitten. Löytyi: {count}.",
+        "capped": "Käytössä oli vain otos tuoreimmista julkaisuista."
+      },
+      "coverage": {
+        "noneTitle": "Ei vielä historiaa",
+        "partialTitle": "Historia on vielä kertymässä",
+        "fullTitle": "Vain osa julkaisuistasi mitataan",
+        "since": "Kasvu lasketaan päivästä {date}, jolloin seuranta alkoi. Aiempaa toimintaa ei ole mukana.",
+        "sinceUnknown": "Kasvu lasketaan seurannan alkamisesta. Aiempaa toimintaa ei ole mukana.",
+        "withHistory": "{withHistory} / {posts} viimeaikaisesta julkaisusta on kasvuhistoriaa.",
+        "truncated": "Julkaisuja on enemmän kuin voidaan mitata kerralla; uusimmat näytetään."
+      },
+      "states": {
+        "error": "Osiota ei voitu ladata.",
+        "retry": "Yritä uudelleen",
+        "noChannelHint": "Yhdistä Messenger-, Instagram-, Threads- tai TikTok-kanava nähdäksesi julkaisujen tulokset."
+      },
+      "perPost": {
+        "title": "Suorituskyky",
+        "description": "Kanavan raportoimien lukujen päivittäinen muutos omien päivittäisten mittaustemme perusteella.",
+        "metric": "Mittari",
+        "notReported": "Tämä kanava ei raportoi tätä.",
+        "empty": "Kasvua ei ole vielä kirjattu",
+        "since": "Seurattu {date} alkaen. Muutokset näkyvät seuraavan päivittäisen mittauksen jälkeen.",
+        "notTracked": "Tätä julkaisua ei vielä seurata.",
+        "summary": "{metric} päivittäin: yhteensä {total}.",
+        "totalNow": "tällä jaksolla · yhteensä {total}"
+      },
+      "composedPost": {
+        "reasons": {
+          "notPublished": "Ei vielä julkaistu.",
+          "notLinked": "Ei vielä yhdistetty kanavan julkaisuun. Luvut näkyvät, kun yhdistäminen on tehty.",
+          "networkNotSupported": "Tämä verkosto ei raportoi julkaisujen lukuja.",
+          "removed": "Poistettu kanavalta."
+        }
+      }
+    }
+  },
+  "socialAccounts": {
+    "errors": {
+      "providerNotSupported": "Tätä verkkoa ei voi vielä yhdistää.",
+      "appNotConfigured": "Tämän verkon alustasovellusta ei ole määritetty työtilallesi."
+    },
+    "connectResult": {
+      "success": "Tili yhdistetty.",
+      "cancelled": "Yhdistäminen peruttiin.",
+      "notFound": "Yhdistämistä ei voitu viimeistellä.",
+      "sessionExpired": "Yhdistämisistunto vanheni. Yritä yhdistää uudelleen.",
+      "permissionNotGranted": "Tiliä ei yhdistetty, koska näitä oikeuksia ei myönnetty: {permissions}.",
+      "accountUnsupported": "Tämän tyyppinen tili ei voi julkaista. Käytä ammattitiliä.",
+      "notSupported": "Tätä verkkoa ei voi vielä yhdistää.",
+      "failed": "Tiliä ei voitu yhdistää. Yritä uudelleen."
+    }
+  },
+  "composer": {
+    "publishTo": "Julkaise kohteeseen",
+    "reconnect": "Yhdistä uudelleen",
+    "noDestinations": "Yhdistetyistä sivuista tai profiileista mikään ei voi vielä julkaista.",
+    "sharedContent": "Yhteinen sisältö",
+    "text": "Julkaisun teksti",
+    "textPlaceholder": "Kirjoita julkaisusi",
+    "link": "Linkki",
+    "linkPlaceholder": "https://example.com",
+    "linkInvalid": "Syötä täydellinen linkki, joka alkaa https://",
+    "removeMedia": "Poista tiedosto",
+    "addMedia": "Lisää kuva tai video",
+    "removeDestination": "Poista kohde",
+    "customise": "Mukauta tälle kanavalle",
+    "usesSharedContent": "Käyttää yhteistä sisältöä",
+    "channelText": "Teksti tälle kanavalle",
+    "channelTextPlaceholder": "Jätä tyhjäksi käyttääksesi yhteistä tekstiä",
+    "contentType": "Sisältötyyppi",
+    "previewEmpty": "Valitse kohde nähdäksesi esikatselun.",
+    "noText": "Ei tekstiä",
+    "justNow": "Juuri nyt",
+    "linkInCaption": "Linkki lisätään kuvatekstin loppuun.",
+    "previewMediaAlt": "Liitetiedosto {index}",
+    "previewMoreMedia": "+{count}",
+    "previewSlideLabel": "Dia {current} / {total}",
+    "previewPrevious": "Edellinen dia",
+    "previewNext": "Seuraava dia",
+    "publishNow": "Julkaise nyt",
+    "newPost": "Uusi julkaisu",
+    "draftSaved": "Luonnos tallennettu",
+    "noTargets": "Valitse vähintään yksi kohde aloittaaksesi.",
+    "preview": "Esikatselu",
+    "previewError": "Esikatselua ei voitu päivittää.",
+    "issueCount": "Korjattavia ongelmia: {count}",
+    "saveDraft": "Tallenna luonnos",
+    "retry": "Yritä uudelleen",
+    "noAccountsTitle": "Ei yhdistettyjä tilejä",
+    "noAccountsHint": "Yhdistä tili Yhdistä-välilehdellä aloittaaksesi julkaisujen luomisen.",
+    "goToAccounts": "Siirry kohtaan Yhdistä",
+    "notEditable": "Tätä julkaisua ei voi enää muokata.",
+    "options": {
+      "shareToFeed": "Jaa myös syötteeseen",
+      "title": "Otsikko",
+      "thumbOffsetMs": "Kansikuva (millisekuntia)",
+      "privacyLevel": "Kuka voi katsoa tämän videon",
+      "allowComment": "Kommentoi",
+      "allowDuet": "Duetto",
+      "allowStitch": "Stitch",
+      "commercialContent": "Ilmoita kaupallinen sisältö",
+      "brandOrganic": "Oma brändisi",
+      "brandContent": "Brändisisältö",
+      "isAigc": "Merkitse tekoälyn tuottamaksi sisällöksi",
+      "coverTimestampMs": "Kansikuva (millisekuntia)"
+    },
+    "contentTypes": {
+      "text": "Teksti",
+      "link": "Linkki",
+      "image": "Kuva",
+      "video": "Video",
+      "reel": "Reel",
+      "carousel": "Karuselli",
+      "story": "Story"
+    },
+    "issues": {
+      "accountDisconnected": "Tämä tili on irrotettu.",
+      "accountNeedsReauth": "Tämä tili on yhdistettävä uudelleen.",
+      "inboxDisconnected": "Tämän kanavan yhteys on katkaistu.",
+      "inboxNeedsReconnect": "Tämän kanavan yhteys on vanhentunut. Yhdistä se uudelleen.",
+      "publishPermissionMissing": "Tälle kanavalle ei ole myönnetty julkaisuoikeutta. Yhdistä se uudelleen salliaksesi julkaisemisen.",
+      "contentTypeDisabled": "Tämä sisältötyyppi ei ole vielä käytettävissä.",
+      "contentTypeNotSupported": "Tämä verkosto ei tue tätä sisältötyyppiä.",
+      "destinationInactive": "Tämä kohde on pois käytöstä.",
+      "destinationNotFound": "Kohdetta ei löytynyt.",
+      "linkNotSupported": "Tähän sisältötyyppiin ei voi liittää linkkiä.",
+      "linkRequired": "Linkki vaaditaan.",
+      "mediaFormatNotSupported": "Tiedostomuotoa ei tueta.",
+      "mediaKindNotAllowed": "Tiedostotyyppi ei ole sallittu tässä.",
+      "mediaTooFew": "Lisää tiedostoja.",
+      "mediaTooLarge": "Tiedosto on liian suuri.",
+      "mediaTooLong": "Video on liian pitkä.",
+      "mediaTooMany": "Liian monta tiedostoa.",
+      "mediaTooShort": "Video on liian lyhyt.",
+      "optionsInvalid": "Asetukset eivät kelpaa.",
+      "textRequired": "Teksti vaaditaan.",
+      "textTooLong": "Teksti on liian pitkä.",
+      "partsNotSupported": "Tämä verkosto ei julkaise ketjun osia.",
+      "firstCommentNotSupported": "Tämä verkosto ei julkaise ensimmäistä kommenttia.",
+      "tooManyParts": "Osia on enemmän kuin verkosto sallii.",
+      "partTextRequired": "Tämä osa tarvitsee tekstiä.",
+      "partTextTooLong": "Tämä osa on pidempi kuin verkosto sallii.",
+      "tooManyLinks": "Tekstissä on enemmän linkkejä kuin Threads sallii (enintään 5)."
+    },
+    "publishStarted": "Julkaisu käynnistetty",
+    "publishRefused": "Julkaisua ei voi julkaista tällaisenaan. Korjaa näytetyt ongelmat.",
+    "targetsStatus": "Kohteet",
+    "viewPost": "Näytä julkaisu",
+    "retryTarget": "Yritä uudelleen",
+    "markPublished": "Merkitse julkaistuksi",
+    "retryReviewTitle": "Yritetäänkö uudelleen julkaisua, joka voi olla jo livenä?",
+    "retryReviewDescription": "Tämä julkaisu voi olla jo livenä. Uusi yritys voi julkaista sen toisen kerran. Tarkista sivu ensin.",
+    "retryReviewConfirm": "Yritä silti uudelleen",
+    "status": {
+      "pending": "Odottaa",
+      "publishing": "Julkaistaan",
+      "processing": "Käsitellään",
+      "published": "Julkaistu",
+      "failed": "Epäonnistui",
+      "cancelled": "Peruttu",
+      "needsReview": "Vaatii tarkistuksen"
+    },
+    "schedule": "Ajasta",
+    "scheduleAt": "Julkaise",
+    "pickTime": "Valitse päivämäärä ja aika",
+    "scheduleTooSoon": "Valitse aika vähintään 2 minuutin päähän nykyhetkestä.",
+    "scheduled": "Julkaisu ajastettu.",
+    "repeatLabel": "Toista",
+    "repeatHint": "Toistuva julkaisu tallennetaan mallina, eikä sitä julkaista itse. Jokaisella ajokerralla ajastetaan kopio.",
+    "repeatInvalid": "Täytä toistoasetukset tallentaaksesi.",
+    "repeatStateActive": "Toistuu",
+    "repeatStatePaused": "Tauolla",
+    "repeatStateEnded": "Sarja päättynyt",
+    "repeatNextRun": "Seuraava ajo: {date}",
+    "repeatPause": "Tauko",
+    "repeatResume": "Jatka",
+    "repeatEnd": "Lopeta sarja",
+    "repeatUpdated": "Toistosarja päivitetty",
+    "repeatScheduleOff": "Ajastus ja julkaisu koskevat jokaista kopiota, ei mallia.",
+    "moveMediaEarlier": "Siirrä aiemmaksi",
+    "moveMediaLater": "Siirrä myöhemmäksi",
+    "removeFromChannels": "Poista kanavista",
+    "removeFromChannelsTitle": "Poistetaanko tämä julkaisu verkoista?",
+    "removeFromChannelsDescription": "Julkaistu julkaisu poistetaan kaikista verkoista, jotka tukevat sitä. Verkot ilman poistotoimintoa säilyttävät sen. Tätä ei voi perua.",
+    "removeFromChannelsConfirm": "Poista",
+    "removeCancel": "Peruuta",
+    "removeRequested": "{count, plural, one {Poisto aloitettu # kohteelle.} other {Poisto aloitettu # kohteelle.}}",
+    "removeUnsupported": "{count, plural, one {# kohdetta ei voi poistaa verkon rajapinnan kautta; poista se sovelluksessa.} other {# kohdetta ei voi poistaa verkkojen rajapinnan kautta; poista ne sovelluksissa.}}",
+    "removedFromChannel": "Poistettu verkosta",
+    "removalPermissionMissing": "Yhdistä tili uudelleen, jotta julkaisujen poisto sallitaan.",
+    "postMessageQuotaExceeded": "Tilin viestikiintiö on käytetty loppuun, joten tätä julkaisua ei julkaistu. Päivitä tilaus tai odota seuraavaa laskutuskautta ja yritä uudelleen.",
+    "tiktokLoading": "Ladataan TikTok-tilin asetuksia…",
+    "tiktokUnavailable": "TikTok-tilin asetuksia ei voitu ladata. Yritä uudelleen.",
+    "tiktokCreator": "Julkaistaan TikTok-tilille {nickname}",
+    "tiktokCannotPost": "Tämä TikTok-tili ei voi julkaista juuri nyt. Yritä myöhemmin uudelleen.",
+    "tiktokPrivacyPlaceholder": "Valitse, kuka voi katsoa",
+    "tiktokInteractions": "Salli muiden",
+    "tiktokInteractionDisabled": "Pois päältä tämän tilin TikTok-asetuksissa",
+    "tiktokYourBrand": "Oma brändisi",
+    "tiktokBrandedContent": "Brändisisältö",
+    "tiktokLabelPromotional": "Videosi merkitään “Mainossisältö”.",
+    "tiktokLabelPaid": "Videosi merkitään “Maksettu kumppanuus”.",
+    "tiktokCommercialRequired": "Ilmoita, mainostaako sisältösi sinua, kolmatta osapuolta vai molempia.",
+    "tiktokBrandedNotPrivate": "Brändisisällön näkyvyys ei voi olla yksityinen.",
+    "tiktokConsentMusic": "Julkaisemalla hyväksyt TikTokin <music>musiikinkäytön vahvistuksen</music>.",
+    "tiktokConsentBranded": "Julkaisemalla hyväksyt TikTokin <branded>brändisisältökäytännön</branded> ja <music>musiikinkäytön vahvistuksen</music>.",
+    "tiktokMaxDuration": "Pisin video, jonka tämä tili voi julkaista, on {seconds} sekuntia.",
+    "tiktokProcessingNote": "Julkaisun jälkeen videon käsittely ja näkyminen profiilissa voi kestää muutaman minuutin.",
+    "tiktokPrivacy": {
+      "PUBLIC_TO_EVERYONE": "Kaikki",
+      "MUTUAL_FOLLOW_FRIENDS": "Ystävät",
+      "FOLLOWER_OF_CREATOR": "Seuraajat",
+      "SELF_ONLY": "Vain minä"
+    },
+    "partsTitle": "Ketjun osat",
+    "partsHint": "Jokainen osa julkaistaan vastauksena edelliseen heti pääjulkaisun jälkeen.",
+    "partLabel": "Osa {number}",
+    "partPlaceholder": "Kirjoita seuraava osa",
+    "partMoveUp": "Siirrä osa ylös",
+    "partMoveDown": "Siirrä osa alas",
+    "partRemove": "Poista osa",
+    "partsAdd": "Lisää osa",
+    "partsRemaining": "{count, plural, one {# osa voidaan vielä lisätä} other {# osaa voidaan vielä lisätä}}",
+    "firstCommentTitle": "Ensimmäinen kommentti",
+    "firstCommentPlaceholder": "Julkaistaan kommenttina heti julkaisun jälkeen",
+    "aiAssist": "Kirjoita tekoälyllä",
+    "aiPrivacy": "Antamasi teksti lähetetään alla valitsemallesi tekoälypalvelun tarjoajalle. Mitään ei tallenneta tai julkaista, ennen kuin lisäät sen.",
+    "aiIntegration": "Tekoälyintegraatio",
+    "aiNoIntegration": "Tekoälyintegraatiota ei ole vielä yhdistetty.",
+    "aiConnectIntegration": "Yhdistä tekoälyintegraatio",
+    "aiMode": "Mitä tekoälyn pitää tehdä?",
+    "aiModes": {
+      "write": "Kirjoita uusi julkaisu",
+      "rewrite": "Kirjoita uudelleen",
+      "shorten": "Lyhennä",
+      "expand": "Laajenna",
+      "tone": "Vaihda sävyä",
+      "fit": "Sovita kohteen rajaan",
+      "hashtags": "Ehdota aihetunnisteita"
+    },
+    "aiTone": "Sävy",
+    "aiTones": {
+      "friendly": "Ystävällinen",
+      "professional": "Ammattimainen",
+      "casual": "Rento",
+      "playful": "Leikkisä",
+      "formal": "Muodollinen",
+      "persuasive": "Vakuuttava",
+      "inspiring": "Inspiroiva"
+    },
+    "aiBrief": "Mistä julkaisu kertoo?",
+    "aiBriefPlaceholder": "Esimerkiksi: ilmoita viikonlopun alennusmyynnistä, 20 % alennus",
+    "aiUsesPostText": "Käyttää yllä olevaa julkaisun tekstiä.",
+    "aiNeedsPostText": "Kirjoita ensin julkaisun teksti.",
+    "aiFitNeedsDestination": "Valitse ensin kohde.",
+    "aiGenerate": "Luo",
+    "aiGenerating": "Kirjoitetaan…",
+    "aiSuggestion": "Ehdotus",
+    "aiCutToLimit": "Leikattu {limit, plural, one {# merkin} other {# merkin}} rajaan.",
+    "aiInsert": "Lisää loppuun",
+    "aiReplace": "Korvaa julkaisun teksti",
+    "aiHashtags": "Aihetunnisteet",
+    "aiEmoji": "Emoji",
+    "aiCallToAction": "Toimintakehotus",
+    "aiCallToActionText": "Toimintakehotuksen sanamuoto (valinnainen)",
+    "aiCallToActionPlaceholder": "Esimerkiksi: Varaa pöytäsi tänään",
+    "aiVariants": "Vaihtoehdot",
+    "aiPerNetwork": "Kirjoita kanavakohtaisesti",
+    "aiPerNetworkHint": "Yksi versio kunkin verkon tyyliin.",
+    "aiOption": "Vaihtoehto {number}",
+    "aiApplyTo": "Käytä kohteessa {network}",
+    "aiApplyToEach": "Käytä jokaiseen kanavaan",
+    "aiHashtagPick": "Lisää aihetunniste julkaisuun napsauttamalla sitä.",
+    "aiErrors": {
+      "modelNotChosen": "Valitse tekoälyintegraatio ja malli kirjoittaaksesi tekoälyllä.",
+      "needsReconfiguration": "Valittu tekoälyintegraatio puuttuu, on poistettu käytöstä tai on virheellinen.",
+      "rateLimited": "Liian monta tekoälypyyntöä. Yritä hetken kuluttua uudelleen.",
+      "timeout": "Tekoälymalli ei vastannut ajoissa. Yritä uudelleen.",
+      "provider": "Tekoälypalveluntarjoaja ei pystynyt kirjoittamaan tekstiä. Yritä uudelleen.",
+      "inProgress": "Tekoälypyyntö on jo käynnissä.",
+      "blocked": "Tämän työtilan tilaus tai kokeilujakso on päättynyt.",
+      "generic": "Tekstiä ei voitu kirjoittaa. Yritä uudelleen."
+    },
+    "snippets": "Tekstipohjat",
+    "snippetsKinds": {
+      "signature": "Allekirjoitus",
+      "hashtags": "Aihetunnisteet",
+      "text": "Teksti"
+    },
+    "snippetsLoadFailed": "Tekstipohjien lataus epäonnistui.",
+    "snippetsEmpty": "Ei vielä tekstipohjia.",
+    "snippetsSignature": "Allekirjoitus",
+    "snippetsSignatureHint": "Lisätään kerran tekstin loppuun, kun luot julkaisun. Kohteet, joilla on oma tekstinsä, eivät saa sitä.",
+    "snippetsSignatureChosen": "Allekirjoitus: {name}",
+    "snippetsManage": "Hallinnoi tekstipohjia",
+    "snippetsName": "Nimi",
+    "snippetsKind": "Tyyppi",
+    "snippetsContent": "Teksti",
+    "snippetsAdd": "Lisää tekstipohja",
+    "snippetsSaved": "Tekstipohja tallennettu.",
+    "snippetsDeleted": "Tekstipohja poistettu.",
+    "snippetsNameTaken": "Tämän niminen tekstipohja on jo olemassa.",
+    "targetSets": "Sivuryhmät",
+    "targetSetsLoadFailed": "Ryhmien lataaminen epäonnistui.",
+    "targetSetsEmpty": "Ei vielä tallennettuja ryhmiä.",
+    "targetSetsName": "Ryhmän nimi",
+    "targetSetsNamePlaceholder": "Nimeä ryhmä…",
+    "targetSetsSave": "Tallenna",
+    "targetSetsNeedsSelection": "Valitse sivut tallentaaksesi ne ryhmäksi.",
+    "targetSetsSaved": "Ryhmä tallennettu.",
+    "targetSetsDeleted": "Ryhmä poistettu.",
+    "targetSetsNameTaken": "Tämänniminen ryhmä on jo olemassa.",
+    "targetSetsApplied": "Ryhmän ”{name}” sivut valittu.",
+    "targetSetsSkipped": "{count, plural, one {# sivu ohitettiin, koska se vaatii huomiota.} other {# sivua ohitettiin, koska ne vaativat huomiota.}}",
+    "destinationState": {
+      "ready": "Valmis julkaistavaksi",
+      "inboxDisconnected": "Yhteys katkaistu",
+      "needsReconnect": "Yhteys on vanhentunut",
+      "permissionMissing": "Julkaisuoikeutta ei ole myönnetty"
+    },
+    "destinationPause": {
+      "until": "Tauolla {time} asti",
+      "reason": {
+        "limitReached": "Verkosto rajoitti tämän tilin julkaisemista. Julkaisut odottavat ja menevät ulos tauon jälkeen.",
+        "accountRestricted": "Verkosto rajoitti tätä tiliä. Julkaisut odottavat ja menevät ulos tauon jälkeen.",
+        "spamRisk": "Verkosto merkitsi tämän tilin toiminnan roskapostiriskiksi. Julkaisut odottavat ja menevät ulos tauon jälkeen."
+      }
+    },
+    "viaFacebook": "Facebookin kautta",
+    "openProfile": "Avaa {name} palvelussa {network}",
+    "someNeedAttention": "Jotkin sivut tai profiilit eivät voi julkaista, ennen kuin yhdistät ne uudelleen.",
+    "viewPosts": "Näytä",
+    "queue": {
+      "modeLabel": "Milloin julkaistaan",
+      "atTime": "Valitse aika",
+      "next": "Lisää jonoon",
+      "top": "Julkaise ensin",
+      "nextHint": "Julkaistaan kunkin sivun seuraavana vapaana aikana.",
+      "topHint": "Julkaistaan lähimpänä aikana; jonossa olevat julkaisut siirtyvät yhden ajan myöhemmäksi.",
+      "noDestination": "Valitse sivu nähdäksesi sen julkaisuajat.",
+      "noSchedule": "Sivulle {names} ei ole asetettu julkaisuaikoja.",
+      "setUpSlots": "Aseta julkaisuajat"
+    },
+    "targetOwnTime": "Oma ajankohta tälle kanavalle",
+    "targetTimeInvalid": "Valitse ajankohta, joka on 2 minuutin ja 1 vuoden päässä nykyhetkestä.",
+    "targetMediaOwn": "Eri tiedostot tälle kanavalle",
+    "targetMediaNone": "Ei tiedostoja: tämä kanava julkaisee ilman tiedostoja.",
+    "occurrencesUpcoming": "Tulevat ajot",
+    "occurrencesNoUpcoming": "Ei tulevia ajoja.",
+    "occurrenceSkip": "Ohita",
+    "occurrenceRestore": "Palauta",
+    "occurrenceSkipped": "Ajo ohitettu.",
+    "occurrenceRestored": "Ajo palautettu.",
+    "occurrencesHistory": "Näytä aiemmat ajot",
+    "occurrencesHideHistory": "Piilota aiemmat ajot",
+    "occurrencesLoadFailed": "Ajojen lataus epäonnistui.",
+    "occurrencesNoHistory": "Ei vielä ajoja.",
+    "occurrencesLoadMore": "Lataa lisää",
+    "occurrenceOpen": "Avaa julkaisu",
+    "targetSetsUpdated": "Ryhmä päivitetty.",
+    "targetSetsMembers": "Tämän ryhmän sivut",
+    "targetSetsNeedsMember": "Säilytä vähintään yksi sivu.",
+    "occurrenceOutcomes": {
+      "created": "Ajastettu",
+      "excluded": "Ohitettu",
+      "missed": "Jäänyt väliin",
+      "skipped": "Ei luotu"
+    }
+  },
+  "postCommentVariables": {
+    "group": "Julkaisun kommentti",
+    "postLink": "Julkaisun linkki",
+    "postText": "Julkaisun teksti",
+    "postPublishedAt": "Julkaisuaika",
+    "postPageName": "Julkaisun sivun nimi",
+    "postId": "Julkaisun tunnus",
+    "commentText": "Kommentin teksti",
+    "commentId": "Kommentin tunnus"
   }
 }

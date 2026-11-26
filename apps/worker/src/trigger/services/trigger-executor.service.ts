@@ -22,6 +22,7 @@ export class TriggerExecutorService {
       contactInboxId,
       conversationId,
       decisionFlowOrigin,
+      postComment,
       occurrenceId,
     } = input
     const runAllowed = await triggerService.tryAcquireContactRun({
@@ -58,6 +59,7 @@ export class TriggerExecutorService {
               contactInboxId,
               conversationId,
               decisionFlowOrigin,
+              postComment,
               occurrenceKey: occurrenceId
                 ? `trigger:${occurrenceId}:${triggerId}:${index}`
                 : undefined,

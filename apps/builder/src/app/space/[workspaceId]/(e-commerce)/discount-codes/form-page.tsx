@@ -5,6 +5,7 @@ import {
 } from "@chatbotx.io/business"
 import { DiscountCodeForm } from "@/features/discount-codes/components/discount-code-form"
 import type { DiscountCodeResource } from "@/features/discount-codes/schema/public"
+import { LockedEditorGuard } from "@/features/templates/components/locked-editor-guard"
 
 /** The coupon form with what its pickers offer; shared by new and edit. */
 export async function DiscountCodeFormPage({
@@ -19,7 +20,7 @@ export async function DiscountCodeFormPage({
     productService.listFormOptions(workspaceId),
     ecommerceSettingsService.get(workspaceId),
   ])
-  return (
+  const form = (
     <DiscountCodeForm
       categories={categories.map((category) => ({
         id: category.id,
@@ -31,5 +32,17 @@ export async function DiscountCodeFormPage({
       products={options.products}
       workspaceId={workspaceId}
     />
+  )
+  if (!discountCode) {
+    return form
+  }
+  return (
+    <LockedEditorGuard
+      resourceId={discountCode.id}
+      resourceKind="discountCode"
+      workspaceId={workspaceId}
+    >
+      {form}
+    </LockedEditorGuard>
   )
 }

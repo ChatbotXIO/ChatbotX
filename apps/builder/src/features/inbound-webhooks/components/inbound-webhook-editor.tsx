@@ -33,6 +33,7 @@ import { type Path, useFieldArray, useForm } from "react-hook-form"
 import { toast } from "sonner"
 import { useCopyToClipboard } from "usehooks-ts"
 import { parseJsonSafely } from "@/features/flows/react-flow/steps/external-request/components/json-path"
+import { LockedContent } from "@/features/templates/components/locked-editor"
 import { AddAction } from "@/features/triggers/add-action"
 import { BaseEditor } from "@/features/triggers/base-editor"
 import { ActionEditor } from "@/features/triggers/components/actions/editor"
@@ -327,7 +328,9 @@ export const InboundWebhookEditor = ({
           </CardHeader>
           <CardContent className="flex flex-col gap-4">
             <InboxResolutionSection sample={sampleJson} />
-            <ContactLookupSection sample={sampleJson} />
+            <LockedContent>
+              <ContactLookupSection sample={sampleJson} />
+            </LockedContent>
           </CardContent>
         </Card>
 
@@ -339,7 +342,9 @@ export const InboundWebhookEditor = ({
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <FieldMappingsSection sample={sampleJson} />
+            <LockedContent>
+              <FieldMappingsSection sample={sampleJson} />
+            </LockedContent>
           </CardContent>
         </Card>
 
@@ -350,31 +355,33 @@ export const InboundWebhookEditor = ({
               {t("inboundWebhooks.actions.description")}
             </CardDescription>
           </CardHeader>
-          <CardContent className="flex flex-col gap-4">
-            {actions.map((action, index) => (
-              <BaseEditor
-                actionType={action.type}
-                key={action.id}
-                onRemove={() => removeAction(index)}
-              >
-                <ActionEditor
-                  parentName={`actions.${index}`}
-                  type={action.type}
-                />
-              </BaseEditor>
-            ))}
-            {actions.length < INBOUND_WEBHOOK_LIMITS.maxActions ? (
-              <div>
-                <AddAction
-                  allowedTypes={inboundWebhookActionTypes.options}
-                  onAdd={(option) =>
-                    appendAction(
-                      option.defaultFn() as InboundWebhookFormValues["actions"][number],
-                    )
-                  }
-                />
-              </div>
-            ) : null}
+          <CardContent>
+            <LockedContent className="flex flex-col gap-4">
+              {actions.map((action, index) => (
+                <BaseEditor
+                  actionType={action.type}
+                  key={action.id}
+                  onRemove={() => removeAction(index)}
+                >
+                  <ActionEditor
+                    parentName={`actions.${index}`}
+                    type={action.type}
+                  />
+                </BaseEditor>
+              ))}
+              {actions.length < INBOUND_WEBHOOK_LIMITS.maxActions ? (
+                <div>
+                  <AddAction
+                    allowedTypes={inboundWebhookActionTypes.options}
+                    onAdd={(option) =>
+                      appendAction(
+                        option.defaultFn() as InboundWebhookFormValues["actions"][number],
+                      )
+                    }
+                  />
+                </div>
+              ) : null}
+            </LockedContent>
           </CardContent>
         </Card>
 

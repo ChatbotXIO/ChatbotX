@@ -4,7 +4,7 @@ import type {
   TriggerModel,
   WorkspaceModel,
 } from "@chatbotx.io/database/types"
-import type { DecisionFlowOrigin } from "@chatbotx.io/events"
+import type { DecisionFlowOrigin, PostCommentRef } from "@chatbotx.io/events"
 
 export type TriggerWithConditions = TriggerModel & {
   conditions: ConditionModel[]
@@ -59,6 +59,12 @@ export type ActionExecutionContext = {
   conversationId?: string
   decisionFlowOrigin?: DecisionFlowOrigin
   /**
+   * The comment a post-comment trigger fired for. Set only by that event; it
+   * feeds `{{post.*}}` / `{{comment.*}}` in the actions and in a flow they
+   * start, and nowhere else.
+   */
+  postComment?: PostCommentRef
+  /**
    * Durable key of this occurrence of the action: identical on every retry of
    * the job that produced it, different for each run and each action. Unset
    * when the producer has no such key; `event` dedup then refuses to record.
@@ -77,6 +83,7 @@ export type TriggerExecutionInput = {
   contactInboxId?: string
   conversationId?: string
   decisionFlowOrigin?: DecisionFlowOrigin
+  postComment?: PostCommentRef
   /** The trigger queue job id; stable across retries of that job. */
   occurrenceId?: string
 }

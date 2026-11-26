@@ -5,7 +5,10 @@ import {
   messageStatusBranchService,
   queueMessageCreatedEvent,
 } from "@chatbotx.io/business"
-import { SENT_FROM_INBOX_KEY } from "@chatbotx.io/database/partials"
+import {
+  SENT_FROM_INBOX_KEY,
+  sentByUserAttributes,
+} from "@chatbotx.io/database/partials"
 import type { messageModel } from "@chatbotx.io/database/schema"
 import type {
   ContactInboxModel,
@@ -32,7 +35,7 @@ import {
 } from "@chatbotx.io/sdk"
 import { createId } from "@chatbotx.io/utils"
 import { resolveStackFrames } from "@chatbotx.io/utils/error-log"
-import type { SendFrom } from "@chatbotx.io/utils/send-from"
+import { isManualSend, type SendFrom } from "@chatbotx.io/utils/send-from"
 import { contactVariableService } from "@chatbotx.io/variables"
 import type {
   BotResponseTrackingContext,
@@ -321,6 +324,10 @@ export async function processWhatsappTemplate(
       payload: {} as MessageTemplateEntity["payload"],
       metadata,
       ...(sendFrom && { [SENT_FROM_INBOX_KEY]: sendFrom === "inbox" }),
+      ...sentByUserAttributes(
+        humanSender?.adminId ??
+          (isManualSend(sendFrom) ? sentByUserId : undefined),
+      ),
     }
 
     if (flowButtonTemplates.length > 0) {

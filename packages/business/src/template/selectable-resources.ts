@@ -1,5 +1,6 @@
 import type { TemplateCategory } from "@chatbotx.io/database/partials"
 import { templateSelectableResourceRepository } from "@chatbotx.io/database/repositories"
+import { workspaceUsesExternalStore } from "./external-store"
 import { listLockedIds } from "./installed-resource.service"
 import {
   assertCanListTemplateCategory,
@@ -12,6 +13,23 @@ import {
 import { viewOnlyCheckKinds } from "./snapshot.service"
 
 const SELECTABLE_RESOURCE_PAGE_SIZE = 100
+
+/**
+ * A category of the Ecommerce group lists nothing while the workspace sells
+ * from an external store (see `external-store.ts`).
+ */
+const listUnlessExternalStore = async (
+  input: Parameters<ListSelectableRows>[0],
+  list:
+    | "listProducts"
+    | "listOpenHours"
+    | "listVendors"
+    | "listDiscountCodes"
+    | "listStoreSettings",
+): Promise<SelectableRowsResult> =>
+  (await workspaceUsesExternalStore(input.workspaceId))
+    ? { rows: [], total: 0, allIds: [], hasMore: false }
+    : await templateSelectableResourceRepository[list](input)
 
 export type SelectableResourceItem = {
   id: string
@@ -62,7 +80,7 @@ const SELECTABLE_LIST_BY_CATEGORY: Record<
   tags: (input) => templateSelectableResourceRepository.listTags(input),
   customFields: (input) =>
     templateSelectableResourceRepository.listCustomFields(input),
-  products: (input) => templateSelectableResourceRepository.listProducts(input),
+  products: (input) => listUnlessExternalStore(input, "listProducts"),
   aiFunctions: (input) =>
     templateSelectableResourceRepository.listAIFunctions(input),
   aiAgents: (input) => templateSelectableResourceRepository.listAIAgents(input),
@@ -86,6 +104,26 @@ const SELECTABLE_LIST_BY_CATEGORY: Record<
     templateSelectableResourceRepository.listQuestionnaires(input),
   couponTopics: (input) =>
     templateSelectableResourceRepository.listCouponTopics(input),
+  magicLinks: (input) =>
+    templateSelectableResourceRepository.listMagicLinks(input),
+  polls: (input) => templateSelectableResourceRepository.listPolls(input),
+  dynamicImages: (input) =>
+    templateSelectableResourceRepository.listDynamicImages(input),
+  placeLocations: (input) =>
+    templateSelectableResourceRepository.listPlaceLocations(input),
+  miniApps: (input) => templateSelectableResourceRepository.listMiniApps(input),
+  minigames: (input) =>
+    templateSelectableResourceRepository.listMinigames(input),
+  leaderboards: (input) =>
+    templateSelectableResourceRepository.listLeaderboards(input),
+  openHours: (input) => listUnlessExternalStore(input, "listOpenHours"),
+  vendors: (input) => listUnlessExternalStore(input, "listVendors"),
+  discountCodes: (input) => listUnlessExternalStore(input, "listDiscountCodes"),
+  storeSettings: (input) => listUnlessExternalStore(input, "listStoreSettings"),
+  inboundWebhooks: (input) =>
+    templateSelectableResourceRepository.listInboundWebhooks(input),
+  storyAutomations: (input) =>
+    templateSelectableResourceRepository.listStoryAutomations(input),
 }
 
 const isPickableCategory = (

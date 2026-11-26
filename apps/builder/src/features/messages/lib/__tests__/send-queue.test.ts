@@ -4,6 +4,7 @@ import {
   AGENT_SEND_GAP_MS,
   createSendQueue,
   discardHeldSends,
+  dropUnsentSend,
   enqueueSend,
   expireInFlightSend,
   failResendSubmit,
@@ -17,6 +18,7 @@ import {
   resumeSendQueue,
   type SendQueue,
   settleSend,
+  takeWaitingSends,
 } from "../send-queue"
 
 type Input = { text: string }
@@ -377,5 +379,40 @@ describe("when the runner should look again", () => {
 
     expect(nextSendWakeAt(held, 10)).toBeNull()
     expect(nextSendWakeAt(createSendQueue<Input>(), 10)).toBeNull()
+  })
+})
+
+describe("a message not sent because its translation failed", () => {
+  test("frees the queue without holding it: the composer stays open and the next one goes", () => {
+    let queue = submitNext(queueWith("a", "b"), 0)
+    queue = dropUnsentSend(queue, "a", 50)
+
+    expect(queue.inFlight).toBeNull()
+    expect(isSendQueueLocked(queue)).toBe(false)
+    expect(nextSendToSubmit(queue, 50)?.clientId).toBe("b")
+  })
+
+  test("leaves the queue alone when the message is not the one in flight", () => {
+    const queue = submitNext(queueWith("a"), 0)
+
+    expect(dropUnsentSend(queue, "other", 50)).toBe(queue)
+  })
+
+  test("takes the waiting messages picked out of the queue, keeping the rest in order", () => {
+    const queue = queueWith("a", "b", "c")
+
+    const { queue: next, taken } = takeWaitingSends(
+      queue,
+      (item) => item.clientId !== "b",
+    )
+
+    expect(taken.map((item) => item.clientId)).toEqual(["a", "c"])
+    expect(next.waiting.map((item) => item.clientId)).toEqual(["b"])
+  })
+
+  test("taking nothing returns the same queue", () => {
+    const queue = queueWith("a")
+
+    expect(takeWaitingSends(queue, () => false)).toEqual({ queue, taken: [] })
   })
 })

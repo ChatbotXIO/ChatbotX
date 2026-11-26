@@ -4,26 +4,49 @@ const {
   insertValues,
   insertReturning,
   findByIdAndWorkspace,
+  assertResourceEditable,
+  lockedTransaction,
   listNamesWithPrefix,
   isUniqueViolationError,
 } = vi.hoisted(() => ({
   insertValues: vi.fn(),
   insertReturning: vi.fn(),
   findByIdAndWorkspace: vi.fn(),
+  assertResourceEditable: vi.fn(),
+  lockedTransaction: vi.fn(),
   listNamesWithPrefix: vi.fn(),
   isUniqueViolationError: vi.fn(),
 }))
 
+const tx: Record<string, unknown> = {
+  insert: vi.fn(() => ({
+    values: (values: unknown) => {
+      insertValues(values)
+      return { returning: insertReturning }
+    },
+  })),
+  query: { miniAppModel: { findFirst: findByIdAndWorkspace } },
+  transaction: (run: (savepoint: unknown) => unknown) => run(tx),
+}
+
+vi.mock("../src/template/template-resource-locks", () => ({
+  withTemplateLockedTransaction: async (
+    run: (tx: unknown) => unknown,
+    options: unknown,
+  ) => {
+    lockedTransaction(options)
+    return await run(tx)
+  },
+}))
+vi.mock("../src/template/installed-resource.service", () => ({
+  assertResourceEditable,
+  changedKeysOf: vi.fn(),
+  withDeleteGuard: vi.fn(),
+}))
+
 vi.mock("@chatbotx.io/database/client", () => ({
   and: vi.fn(),
-  db: {
-    insert: vi.fn(() => ({
-      values: (values: unknown) => {
-        insertValues(values)
-        return { returning: insertReturning }
-      },
-    })),
-  },
+  db: tx,
   eq: vi.fn(),
   inArray: vi.fn(),
   isUniqueViolationError,
@@ -35,7 +58,7 @@ vi.mock("@chatbotx.io/database/schema", () => ({
   miniAppSubmissionModel: {},
 }))
 vi.mock("@chatbotx.io/database/repositories", () => ({
-  miniAppRepository: { findByIdAndWorkspace, listNamesWithPrefix },
+  miniAppRepository: { listNamesWithPrefix },
   miniAppSubmissionRepository: {},
 }))
 vi.mock("../src/contact/service", () => ({ contactService: {} }))
@@ -82,10 +105,10 @@ describe("miniAppService.duplicate", () => {
 
     await miniAppService.duplicate({ workspaceId: "ws-1", id: "1" })
 
-    expect(listNamesWithPrefix).toHaveBeenCalledWith({
-      workspaceId: "ws-1",
-      prefix: "X - Copy",
-    })
+    expect(listNamesWithPrefix).toHaveBeenCalledWith(
+      { workspaceId: "ws-1", prefix: "X - Copy" },
+      tx,
+    )
     expect(insertedNames()).toEqual(["X - Copy 4"])
   })
 
@@ -123,5 +146,28 @@ describe("miniAppService.duplicate", () => {
     expect(
       name?.startsWith(listNamesWithPrefix.mock.calls[0]?.[0].prefix),
     ).toBe(true)
+  })
+
+  test("holds the source's template lock and refuses a copy being uninstalled", async () => {
+    findByIdAndWorkspace.mockResolvedValue(source("X"))
+    listNamesWithPrefix.mockResolvedValue([])
+    assertResourceEditable.mockRejectedValueOnce(new Error("uninstalling"))
+
+    await expect(
+      miniAppService.duplicate({ workspaceId: "ws-1", id: "1" }),
+    ).rejects.toThrow("uninstalling")
+
+    expect(lockedTransaction).toHaveBeenCalledWith({
+      workspaceId: "ws-1",
+      initialKeys: [{ kind: "miniApp", resourceId: "1" }],
+    })
+    expect(assertResourceEditable).toHaveBeenCalledWith(
+      expect.objectContaining({
+        resourceKind: "miniApp",
+        resourceIds: ["1"],
+        changedKeys: [],
+      }),
+    )
+    expect(insertValues).not.toHaveBeenCalled()
   })
 })

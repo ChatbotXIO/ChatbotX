@@ -172,7 +172,6 @@ describe("MainPage default workspace", () => {
 })
 
 const catalog = {
-  tenantName: "Acme",
   categories: [],
   templates: [],
 }
@@ -186,6 +185,10 @@ describe("MainPage templates tab", () => {
 
   const workspacesListProps = (tree: unknown) =>
     findElements(tree, mocks.WorkspacesList)[0]?.props
+
+  /** The class of the page's outermost container, which sets the Home width. */
+  const containerClassName = (tree: unknown) =>
+    (tree as RenderedElement).props.className as string
 
   /** The props the page hands to the Templates tab body. */
   const templatesPanelProps = (tree: unknown) =>
@@ -211,6 +214,7 @@ describe("MainPage templates tab", () => {
       showTemplatesTab: true,
     })
     expect(findElements(tree, mocks.DeletedWorkspaces)).toHaveLength(1)
+    expect(containerClassName(tree)).toContain("max-w-7xl")
     expect(templatesPanelProps(tree)).toMatchObject({
       panel: "none",
       catalog: null,
@@ -258,6 +262,8 @@ describe("MainPage templates tab", () => {
     const tree = await renderHome({ tab: "templates" })
 
     expect(mocks.loadHomeTemplateStore.mock.calls[0][0].tab).toBe("templates")
+    expect(containerClassName(tree)).toContain("max-w-[92rem]")
+    expect(containerClassName(tree)).not.toContain("max-w-7xl")
     expect(workspacesListProps(tree)).toMatchObject({
       activeTab: "templates",
       showTemplatesTab: true,
@@ -354,7 +360,7 @@ describe("MainPage templates tab", () => {
     mocks.loadHomeTemplateStore.mockResolvedValue({
       status: "ready",
       hasTemplates: true,
-      catalog: { tenantName: "Acme", categories: [], templates: [] },
+      catalog: { categories: [], templates: [] },
       openedTemplate: null,
     })
 

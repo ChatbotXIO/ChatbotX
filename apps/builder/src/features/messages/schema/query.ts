@@ -3,6 +3,7 @@ import { z } from "zod"
 import { attachmentResource } from "@/features/attachments/schema/resource"
 import { contactResource } from "@/features/contacts/schema/resource"
 import { zodGuestConversationId } from "@/features/integration-webchat/lib/guest-conversation-id"
+import { messageTranslationResource } from "@/features/translation/schema/resource"
 import { userResource } from "@/features/users/schema/resource"
 import { messageResource } from "./resource"
 
@@ -23,6 +24,7 @@ export const listMessagesResponse = z.object({
         user: userResource.optional(),
         contact: contactResource.optional(),
         clientId: z.string().optional(),
+        translation: messageTranslationResource.optional(),
       }),
     ),
   ),

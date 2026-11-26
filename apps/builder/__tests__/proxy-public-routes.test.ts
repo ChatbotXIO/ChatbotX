@@ -39,6 +39,7 @@ describe("isPublicRoute", () => {
   test("signed media proxy route families are public", () => {
     expect(isPublicRoute("/media/attachment/signed-token")).toBe(true)
     expect(isPublicRoute("/media/avatar/signed-token")).toBe(true)
+    expect(isPublicRoute("/media/destination-avatar/signed-token")).toBe(true)
     expect(isPublicRoute("/mediator")).toBe(false)
   })
 

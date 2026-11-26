@@ -82,6 +82,8 @@ type PlainTextTiptapEditorProps = {
   channels?: ChannelType[]
   includeCouponVariables?: boolean
   includePipelineVariables?: boolean
+  /** Adds the `{{post.*}}` / `{{comment.*}}` group of a post-comment trigger run. */
+  includePostCommentVariables?: boolean
   includeRawCustomFieldVariables?: boolean
   includeBotFieldVariables?: boolean
   onChange?: (content: string) => void
@@ -108,6 +110,7 @@ export const PlainTextTiptapEditor = ({
   channels,
   includeCouponVariables = false,
   includePipelineVariables = false,
+  includePostCommentVariables = false,
   includeRawCustomFieldVariables = false,
   includeBotFieldVariables = false,
   placeholder = "Type a message...",
@@ -127,6 +130,7 @@ export const PlainTextTiptapEditor = ({
     channels,
     includeCouponVariables,
     includePipelineVariables,
+    includePostCommentVariables,
     includeRawCustomFieldVariables,
     includeBotFieldVariables,
   })

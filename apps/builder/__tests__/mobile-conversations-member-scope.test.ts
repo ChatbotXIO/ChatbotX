@@ -142,6 +142,12 @@ vi.mock("@chatbotx.io/channel-registry/thread-control", () => ({
   syncConversationThreadOwner: vi.fn(),
 }))
 
+const listConversationParticipants = vi.fn()
+vi.mock(
+  "../src/features/conversations/queries/list-participants.query",
+  () => ({ listConversationParticipants }),
+)
+
 const findConversation = vi.fn()
 const listConversations = vi.fn()
 vi.mock(
@@ -401,6 +407,77 @@ describe("conversations.get for a mobile member", () => {
     await expect(
       get.handler?.({ context: { workspace }, input: { id: "conv-1" } }),
     ).resolves.toBeDefined()
+  })
+})
+
+describe("conversations.listParticipants for a mobile member", () => {
+  const listParticipants = findProcedure(
+    "GET",
+    "/v1/conversations/{id}/participants",
+  )
+  const page = { data: [], nextCursor: null }
+
+  beforeEach(() => {
+    listConversationParticipants.mockResolvedValue(page)
+  })
+
+  test("another agent's conversation is not found and nothing is listed", async () => {
+    conversationService.findByOrFail.mockResolvedValue(
+      conversationRow({ assignedUserId: "someone-else" }),
+    )
+
+    await expect(
+      listParticipants.handler?.({
+        context: memberContext(ASSIGNED_ONLY),
+        input: { id: "conv-1" },
+      }),
+    ).rejects.toThrow("Conversation not found")
+    expect(listConversationParticipants).not.toHaveBeenCalled()
+  })
+
+  test("a conversation that is not in the workspace is not found", async () => {
+    conversationService.findByOrFail.mockRejectedValue(
+      new Error("Conversation not found"),
+    )
+
+    await expect(
+      listParticipants.handler?.({
+        context: { workspace },
+        input: { id: "other-workspace-conv" },
+      }),
+    ).rejects.toThrow("Conversation not found")
+    expect(listConversationParticipants).not.toHaveBeenCalled()
+  })
+
+  test.each([
+    [
+      "their own conversation",
+      memberContext(ASSIGNED_ONLY),
+      { assignedUserId: ME },
+    ],
+    [
+      "any conversation with full chat access",
+      memberContext(ALL_CHATS),
+      { assignedUserId: "someone-else" },
+    ],
+    ["a workspace token", { workspace }, {}],
+  ])("lists for %s, scoped to the token's workspace", async (_name, context, assignment) => {
+    conversationService.findByOrFail.mockResolvedValue(
+      conversationRow(assignment),
+    )
+
+    await expect(
+      listParticipants.handler?.({
+        context,
+        input: { id: "conv-1", cursor: "c", perPage: 10 },
+      }),
+    ).resolves.toBe(page)
+    expect(listConversationParticipants).toHaveBeenCalledWith({
+      workspaceId: "ws-1",
+      conversationId: "conv-1",
+      cursor: "c",
+      perPage: 10,
+    })
   })
 })
 

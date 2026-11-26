@@ -18,6 +18,7 @@ import { useTranslations } from "next-intl"
 import { useMemo } from "react"
 import { useWatch } from "react-hook-form"
 import { useInboxList } from "@/features/inboxes/provider/inbox-hook"
+import { LockedContent } from "@/features/templates/components/locked-editor"
 import { LEADERBOARD_PLATFORM_LABEL_KEY } from "../../lib/platforms"
 import type { LeaderboardWizardInput } from "../../lib/wizard-schema"
 import { GeneralSettings, RewardSettings } from "./general-settings"
@@ -138,17 +139,21 @@ export function StepConfig({
               searchPlaceholder={t("actions.search")}
             />
           )}
-          {platform === "messenger" || platform === "instagram" ? (
-            <PostScopeField platform={platform} workspaceId={workspaceId} />
-          ) : null}
-          {platform === "telegram" ? (
-            <TelegramChatsField inboxId={inboxId} workspaceId={workspaceId} />
-          ) : null}
+          <LockedContent className="flex flex-col gap-4">
+            {platform === "messenger" || platform === "instagram" ? (
+              <PostScopeField platform={platform} workspaceId={workspaceId} />
+            ) : null}
+            {platform === "telegram" ? (
+              <TelegramChatsField inboxId={inboxId} workspaceId={workspaceId} />
+            ) : null}
+          </LockedContent>
         </CardContent>
       </Card>
-      <RulesEditor platform={platform} />
-      <GeneralSettings platform={platform} viewUrl={viewUrl} />
-      <RewardSettings />
+      <LockedContent className="flex flex-col gap-6">
+        <RulesEditor platform={platform} />
+        <GeneralSettings platform={platform} viewUrl={viewUrl} />
+        <RewardSettings />
+      </LockedContent>
     </div>
   )
 }

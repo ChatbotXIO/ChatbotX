@@ -13,6 +13,7 @@ import { useDraggable, useDroppable } from "@dnd-kit/core"
 import { CopyIcon, GripVerticalIcon, Trash2Icon, XIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { createContext, type HTMLAttributes, useContext } from "react"
+import { useIsEditorLocked } from "@/features/templates/components/locked-editor"
 import { componentLabelKey } from "../lib/labels"
 import { NodeView } from "../renderer/node-view"
 import type { DragSource, DropTarget, DropZone } from "./dnd"
@@ -50,7 +51,12 @@ function SlotList({
   const { dropTarget } = useContext(CanvasContext)
   const zone: DropZone = { kind: "slot", address, length: nodes.length }
   const slotId = slotDroppableId(address)
-  const { setNodeRef } = useDroppable({ id: slotId, data: zone })
+  const isLocked = useIsEditorLocked()
+  const { setNodeRef } = useDroppable({
+    id: slotId,
+    data: zone,
+    disabled: isLocked,
+  })
   const isTarget =
     dropTarget?.highlight.kind === "slot" &&
     dropTarget.highlight.slotId === slotId
@@ -154,6 +160,7 @@ function NodeToolbar({
   const t = useTranslations("miniApps.editor")
   const removeNode = useMiniAppEditor((state) => state.removeNode)
   const duplicateNode = useMiniAppEditor((state) => state.duplicateNode)
+  const isLocked = useIsEditorLocked()
   return (
     <div
       className={cn(
@@ -164,6 +171,7 @@ function NodeToolbar({
       <button
         aria-label={t("drag")}
         className="cursor-grab p-1 text-muted-foreground hover:text-foreground"
+        disabled={isLocked}
         type="button"
         {...dragHandle}
       >
@@ -172,7 +180,11 @@ function NodeToolbar({
       <button
         aria-label={t("duplicate")}
         className="p-1 text-muted-foreground hover:text-foreground"
+        disabled={isLocked}
         onClick={(event) => {
+          if (isLocked) {
+            return
+          }
           event.stopPropagation()
           duplicateNode(nodeId)
         }}
@@ -183,7 +195,11 @@ function NodeToolbar({
       <button
         aria-label={t("remove")}
         className="p-1 text-muted-foreground hover:text-destructive"
+        disabled={isLocked}
         onClick={(event) => {
+          if (isLocked) {
+            return
+          }
           event.stopPropagation()
           removeNode(nodeId)
         }}
@@ -212,8 +228,17 @@ function CanvasNode({
 
   const source: DragSource = { kind: "node", nodeId: node.id, type: node.type }
   const zone: DropZone = { kind: "node", nodeId: node.id, address, index }
-  const drag = useDraggable({ id: `drag:${node.id}`, data: source })
-  const drop = useDroppable({ id: `node:${node.id}`, data: zone })
+  const isLocked = useIsEditorLocked()
+  const drag = useDraggable({
+    id: `drag:${node.id}`,
+    data: source,
+    disabled: isLocked,
+  })
+  const drop = useDroppable({
+    id: `node:${node.id}`,
+    data: zone,
+    disabled: isLocked,
+  })
 
   const isSelected = selectedNodeId === node.id
   const hasError = nodesWithErrors.has(node.id)

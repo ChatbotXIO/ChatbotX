@@ -21,10 +21,12 @@ import {
   closeHumanReplyWindow,
   contactInboxOperationalColumns,
   contactInboxRepository,
+  conversationTranslationStateRepository,
   createMessageRepository,
   getSafeSinceTime,
   insertDmConversationsIfAbsent,
   integrationSmtpRepository,
+  recentParticipantsRelation,
 } from "@chatbotx.io/database/repositories"
 import { userColumnsWithoutSecrets } from "@chatbotx.io/database/repositories/user-columns"
 import { conversationModel, inboxModel } from "@chatbotx.io/database/schema"
@@ -128,11 +130,19 @@ type ContactWithFullRelations = ContactModel & {
   tags: TagModel[]
 }
 
+/** A member who replied in a conversation, as read with the conversation. */
+export type ConversationParticipantPreview = {
+  userId: string
+  lastRepliedAt: Date | null
+  user: Pick<UserModel, "id" | "name" | "image"> | null
+}
+
 type ConversationRelationMap = {
   contact: ContactModel | null
   contactInboxes: (ContactInboxModel & { inbox: InboxModel })[]
   assignedUser: UserModel | null
   assignedInboxTeam: InboxTeamModel | null
+  conversationParticipants: ConversationParticipantPreview[]
   messages: MessageModel[]
   attachments: AttachmentModel[]
 }
@@ -155,6 +165,7 @@ export type ConversationWithFullRelations = ConversationModel & {
   messages: MessageModel[]
   assignedUser: UserModel | null
   assignedInboxTeam: InboxTeamModel | null
+  conversationParticipants: ConversationParticipantPreview[]
 }
 
 // ─── Service ───────────────────────────────────────────────────────────────────
@@ -190,6 +201,15 @@ const setChallenge = (
 
 export const sqlDropQuickReplyChallenge = () =>
   sql`CASE WHEN ${isQuickReplyChallenge()} THEN ${dropChallenge()} ELSE ${conversationModel.additionalAttributes} END`
+
+/**
+ * SET fragment for the bot taking a conversation back: drops an agent's
+ * "translate this conversation" (`translation.enabledOverride: true`), so the
+ * next time an agent steps in the Inbox starts with translation off again. An
+ * agent's "off" (`false`) and the language stay.
+ */
+const sqlDropTranslationTurnedOn = () =>
+  sql`CASE WHEN ${conversationModel.additionalAttributes}->'translation'->>'enabledOverride' = 'true' THEN ${conversationModel.additionalAttributes} #- '{translation,enabledOverride}' ELSE ${conversationModel.additionalAttributes} END`
 
 type ReopenWindowOption = {
   /**
@@ -913,6 +933,7 @@ class ConversationService extends BaseService {
         messages: true,
         assignedUser: { columns: userColumnsWithoutSecrets },
         assignedInboxTeam: true,
+        conversationParticipants: recentParticipantsRelation,
       },
     })
     return result as ConversationWithFullRelations | undefined
@@ -945,10 +966,9 @@ class ConversationService extends BaseService {
     const updated = await tx
       .update(conversationModel)
       .set({
-        additionalAttributes: {
-          ...conversation.additionalAttributes,
-          channelConversationId,
-        },
+        // Write only this key atomically: spreading the snapshot read earlier
+        // would overwrite a concurrent `challenge` / `translation` write.
+        additionalAttributes: sql`jsonb_set(COALESCE(${conversationModel.additionalAttributes}, '{}'::jsonb), '{channelConversationId}', to_jsonb(${channelConversationId}::text), true)`,
       })
       .where(eq(conversationModel.id, conversation.id))
       .returning()
@@ -2020,7 +2040,11 @@ class ConversationService extends BaseService {
         .update(conversationModel)
         .set(
           botEnabled
-            ? { botEnabled, botResumeAt: props.botResumeAt ?? null }
+            ? {
+                botEnabled,
+                botResumeAt: props.botResumeAt ?? null,
+                additionalAttributes: sqlDropTranslationTurnedOn(),
+              }
             : botPauseSet(props),
         )
         .where(
@@ -2381,7 +2405,48 @@ class ConversationService extends BaseService {
     readAt: Date
     silent?: boolean
   }): Promise<boolean> {
-    const { conversationId, inboxId, readAt, silent, workspaceId } = props
+    const { inboxId, workspaceId, ...rest } = props
+    return await this.advanceAgentReadAt({
+      ...rest,
+      workspaceId,
+      requireCondition: exists(
+        db
+          .select({ value: sql<number>`1` })
+          .from(inboxModel)
+          .where(
+            and(
+              eq(inboxModel.id, inboxId),
+              eq(inboxModel.workspaceId, workspaceId),
+              eq(inboxModel.markReadOnOutbound, true),
+            ),
+          ),
+      ),
+    })
+  }
+
+  /**
+   * Marks a comment on a post whose comments are skipped as read, advancing
+   * agent read state only to the comment's own time, so a newer read is never
+   * overwritten and a redelivered comment changes nothing.
+   */
+  async markReadBySkippedPost(props: {
+    workspaceId: string
+    conversationId: string
+    readAt: Date
+    silent?: boolean
+  }): Promise<boolean> {
+    return await this.advanceAgentReadAt(props)
+  }
+
+  private async advanceAgentReadAt(props: {
+    workspaceId: string
+    conversationId: string
+    readAt: Date
+    requireCondition?: SQL
+    silent?: boolean
+  }): Promise<boolean> {
+    const { conversationId, readAt, requireCondition, silent, workspaceId } =
+      props
     const updated = await db
       .update(conversationModel)
       .set({ agentLastReadAt: readAt })
@@ -2393,18 +2458,7 @@ class ConversationService extends BaseService {
             isNull(conversationModel.agentLastReadAt),
             lt(conversationModel.agentLastReadAt, readAt),
           ),
-          exists(
-            db
-              .select({ value: sql<number>`1` })
-              .from(inboxModel)
-              .where(
-                and(
-                  eq(inboxModel.id, inboxId),
-                  eq(inboxModel.workspaceId, workspaceId),
-                  eq(inboxModel.markReadOnOutbound, true),
-                ),
-              ),
-          ),
+          requireCondition,
         ),
       )
       .returning({
@@ -2761,6 +2815,63 @@ class ConversationService extends BaseService {
   }
 
   // ─── Cache ───────────────────────────────────────────────────────────────
+
+  /**
+   * Inbox translation state lives under `additionalAttributes.translation`.
+   * The three writers below are the only way to change it: `Conversation` is
+   * read through a cache, so each one invalidates after its single atomic
+   * UPDATE (a repository call from a worker or an app would leave a stale
+   * language/override in the cache that `translateOutbound` reads).
+   * They return the updated row, or `null` when nothing was written.
+   */
+  async setTranslationOverride(props: {
+    workspaceId: string
+    conversationId: string
+    /** `null` clears the override. */
+    enabledOverride: boolean | null
+  }): Promise<ConversationModel | null> {
+    const updated =
+      await conversationTranslationStateRepository.setOverride(props)
+    await this.invalidateAfterTranslationWrite(props, updated)
+    return updated
+  }
+
+  /** An agent's choice of the customer language: always written. */
+  async setTranslationLanguage(props: {
+    workspaceId: string
+    conversationId: string
+    language: string
+  }): Promise<ConversationModel | null> {
+    const updated =
+      await conversationTranslationStateRepository.setLanguage(props)
+    await this.invalidateAfterTranslationWrite(props, updated)
+    return updated
+  }
+
+  /** A detection result: written only while unset (see the repository). */
+  async setTranslationLanguageIfUnset(props: {
+    workspaceId: string
+    conversationId: string
+    language: string
+    workspaceLanguage: string
+  }): Promise<ConversationModel | null> {
+    const updated =
+      await conversationTranslationStateRepository.setLanguageIfUnset(props)
+    await this.invalidateAfterTranslationWrite(props, updated)
+    return updated
+  }
+
+  private async invalidateAfterTranslationWrite(
+    props: { workspaceId: string; conversationId: string },
+    updated: ConversationModel | null,
+  ): Promise<void> {
+    if (updated) {
+      await this.invalidate({
+        workspaceId: props.workspaceId,
+        ids: [props.conversationId],
+      })
+    }
+  }
 
   async invalidate(props: {
     workspaceId: string

@@ -17,6 +17,7 @@ import { getPostDetails } from "./apis/post"
 import { THREADS_OAUTH_URL, THREADS_SCOPES } from "./constants"
 import { ThreadsException } from "./exception"
 import { commentHandlers } from "./handlers/comment"
+import { postHandlers } from "./handlers/post"
 import { webhookHandler } from "./handlers/webhook"
 import { isRevokedTokenError } from "./lib/error-mapper"
 import type { ThreadsActions, ThreadsAuthValue, ThreadsConfig } from "./schema"
@@ -91,6 +92,7 @@ const config: IntegrationDefinition<
   channels: {
     channel: {
       comment: commentHandlers,
+      post: postHandlers,
     },
   },
   actions: {

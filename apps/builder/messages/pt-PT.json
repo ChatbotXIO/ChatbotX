@@ -163,6 +163,94 @@
   "errors": {
     "superAdminRequired": "Tem de ser um superadministrador do espaço de trabalho para fazer isto."
   },
+  "inboxTranslation": {
+    "settings": {
+      "title": "Tradução de conversas",
+      "description": "Traduza as mensagens dos seus clientes para a sua equipa, e as suas respostas para os clientes, diretamente na caixa de entrada.",
+      "saved": "Definições de tradução guardadas",
+      "readOnly": "Apenas os administradores do espaço de trabalho podem alterar estas definições.",
+      "languageHint": "É também o idioma para o qual as mensagens dos clientes são traduzidas quando a tradução de conversas está ativa.",
+      "alert": {
+        "needsReconfiguration": "É necessária nova configuração: a integração de IA foi removida ou desativada.",
+        "noIntegration": "Ligue primeiro uma integração de IA para usar a tradução.",
+        "connect": "Ligar IA"
+      },
+      "enabled": {
+        "label": "Traduzir conversas",
+        "description": "As mensagens dos clientes só são traduzidas quando alguém abre a conversa. O texto do chat é enviado ao fornecedor de IA que escolher e cobrado na sua chave de IA."
+      },
+      "integration": {
+        "label": "Integração de IA",
+        "description": "Só são apresentados os fornecedores de IA ligados."
+      },
+      "test": {
+        "label": "Testar ligação",
+        "button": "Testar",
+        "result": "Concluído em {seconds} s: «{sample}» → «{translated}»",
+        "slow": "Este modelo é lento: as mensagens enviadas podem não ser traduzidas a tempo e, nesse caso, não serão enviadas.",
+        "failed": "O teste falhou."
+      }
+    },
+    "message": {
+      "translating": "A traduzir…",
+      "stillWaiting": "Ainda a aguardar a tradução",
+      "requestAgain": "Pedir novamente",
+      "failed": "Não foi possível traduzir",
+      "translatedFrom": "Traduzido de {language}. Mostrar original",
+      "translatedFromNoLanguage": "Traduzido. Mostrar original",
+      "sentIn": "Enviado em {language}. Mostrar o que foi enviado",
+      "sentInNoLanguage": "Enviado traduzido. Mostrar o que foi enviado",
+      "hideOriginal": "Ocultar original",
+      "hideSent": "Ocultar o que foi enviado",
+      "translatedLabelNoLanguage": "Traduzido",
+      "sentLabelNoLanguage": "Enviado traduzido"
+    },
+    "badge": {
+      "tooltip": "Idioma do cliente: {language}"
+    },
+    "panel": {
+      "title": "Definições de tradução",
+      "statusOn": "Ativada",
+      "statusOff": "Desativada",
+      "translateConversation": "Traduzir esta conversa",
+      "translateConversationHint": "Traduzir mensagens automaticamente",
+      "botActiveHint": "O bot está a tratar desta conversa, por isso a tradução está desativada. Ative-a para a traduzir.",
+      "botPausedHint": "Assumiu esta conversa no lugar do bot, por isso a tradução continua desativada. Ative-a para a traduzir.",
+      "displayOptions": "Opções de visualização",
+      "showOriginals": "Mostrar texto original",
+      "previewBeforeSending": "Pré-visualizar a tradução antes de enviar"
+    },
+    "composer": {
+      "hintUnknown": "Idioma não detetado · Envio como escrito",
+      "hintDetecting": "A detetar o idioma do cliente…",
+      "chip": {
+        "aria": "Idioma da tradução",
+        "target": "→ {language}",
+        "sameLanguage": "Mesmo idioma do espaço de trabalho",
+        "unknown": "Idioma desconhecido",
+        "hasFiles": "As mensagens com ficheiros não são traduzidas",
+        "off": "Tradução desativada"
+      },
+      "popover": {
+        "customerLanguage": "Idioma do cliente",
+        "chooseLanguage": "Escolha um idioma"
+      },
+      "preview": {
+        "title": "Pré-visualização do cliente · {language}",
+        "translating": "A traduzir…",
+        "needsRetranslate": "Tem de ser traduzida novamente",
+        "retranslate": "Traduzir novamente",
+        "failed": "Não foi possível traduzir — será tentado de novo ao enviar",
+        "done": "Concluir",
+        "ready": "Pronta para enviar"
+      }
+    },
+    "send": {
+      "translating": "A traduzir…",
+      "failed": "Falha na tradução",
+      "turnedOff": "Tradução indisponível. A tradução foi desativada nesta conversa."
+    }
+  },
   "states": {
     "success": "Sucesso",
     "error": "Erro",
@@ -651,7 +739,8 @@
       "template": "Modelo",
       "integration": "Integração",
       "schedule": "Agendamento de repetição",
-      "runOf": "Execução de <link>{name}</link>"
+      "runOf": "Execução de <link>{name}</link>",
+      "linkNotFound": "Esta transmissão já não existe."
     },
     "filters": {
       "all": "All"
@@ -1307,7 +1396,10 @@
       "label": "Tipo de notificação",
       "notifyAdmin": "Notificar administrador",
       "newMessageToHuman": "Nova mensagem para uma pessoa",
-      "newOrder": "Nova encomenda"
+      "newOrder": "Nova encomenda",
+      "postFailed": "Publicação com falha",
+      "postNeedsReview": "Publicação precisa de revisão",
+      "publishConnection": "Ligação de publicação precisa de atenção"
     },
     "notificationChannel": {
       "label": "Canal de notificação",
@@ -2748,7 +2840,8 @@
       "pipelines": "Funis",
       "places": "Locais",
       "templates": "Modelos",
-      "polls": "Polls"
+      "polls": "Polls",
+      "posts": "Publicações"
     },
     "adReferral": {
       "label": "Ads",
@@ -2881,6 +2974,9 @@
         "skip": "Não encontrado",
         "error": "Falhou"
       }
+    },
+    "tiktokPublishing": {
+      "label": "Publicação no TikTok"
     }
   },
   "flows": {
@@ -5057,7 +5153,8 @@
     "invalidApiKey": "Chave da API inválida",
     "maxMustBeGreaterThanMin": "{maxField} tem de ser maior ou igual a {minField}",
     "trigger": {
-      "actionReferenceNotFound": "An action refers to a record that no longer exists. Re-select it in the action and save again."
+      "actionReferenceNotFound": "An action refers to a record that no longer exists. Re-select it in the action and save again.",
+      "postCommentPostsInvalid": "Uma publicação selecionada não existe neste espaço de trabalho ou não pertence à caixa de entrada escolhida. Selecione novamente as publicações e guarde de novo."
     },
     "inboundWebhook": {
       "inboxRequired": "Escolha uma caixa de entrada.",
@@ -6112,7 +6209,16 @@
       "anyPipeline": "Qualquer funil",
       "anyStage": "Qualquer fase",
       "unavailablePipeline": "Pipeline eliminado ou indisponível",
-      "unavailableStage": "Etapa eliminada ou indisponível"
+      "unavailableStage": "Etapa eliminada ou indisponível",
+      "contactCommentedOnPost": "Contacto comentou uma publicação",
+      "contactFirstCommentedOnPost": "Contacto comentou uma publicação pela primeira vez",
+      "anyInbox": "Qualquer página ou conta",
+      "unavailableInbox": "Página ou conta eliminada ou indisponível",
+      "postScope": {
+        "any": "Qualquer publicação",
+        "selected": "Publicações específicas",
+        "publishedFromPosts": "Apenas publicações feitas a partir de Publicações"
+      }
     },
     "actions": {
       "addTag": "Adicionar etiqueta",
@@ -6892,7 +6998,8 @@
       "ignoreCommentReplies": "Não responder a respostas a comentários",
       "ignoreCommentRepliesDescription": "Ignorar a automatização em comentários que sejam respostas a outros comentários e não comentários de nível superior.",
       "trackUserTags": "Registar se um utilizador marca outros utilizadores",
-      "trackUserTagsDescription": "Conta as contas identificadas em cada comentário e soma-as aos totais do contacto em todos os comentários. Utilize '{{total_tagged}}' para todas as contas identificadas e '{{total_new_tagged}}' para contas que nunca enviaram mensagem à sua página nem foram contactos."
+      "trackUserTagsDescription": "Conta as contas identificadas em cada comentário e soma-as aos totais do contacto em todos os comentários. Utilize '{{total_tagged}}' para todas as contas identificadas e '{{total_new_tagged}}' para contas que nunca enviaram mensagem à sua página nem foram contactos.",
+      "likeUserCommentUnavailable": "Indisponível no Instagram. Esta opção é ignorada; desative-a para a remover."
     },
     "hideComments": {
       "all": "Ocultar todos os comentários",
@@ -7385,6 +7492,7 @@
       "resourcesTitle": "Recursos instalados",
       "noResources": "Ainda não foi criado nada.",
       "deletedResource": "Recurso eliminado",
+      "wholeCategory": "{count, plural, one {# item} other {# itens}}",
       "viewOnly": "Apenas visualização",
       "created": "Criado",
       "reused": "Reutilizado",
@@ -7439,7 +7547,12 @@
           "placeCategories": "Categorias de locais"
         }
       },
-      "viewOnlyCopyIncluded": "Algo que selecionou (ou algo de que precisa) foi instalado a partir de um modelo só de leitura, por isso não pode ser partilhado num novo modelo."
+      "viewOnlyCopyIncluded": "Algo que selecionou (ou algo de que precisa) foi instalado a partir de um modelo só de leitura, por isso não pode ser partilhado num novo modelo.",
+      "miniAppPublishedExcluded": {
+        "title": "Mini App omitida",
+        "hint": "Estes fluxos usam uma Mini App publicada no WhatsApp. Não pode ser partilhada, por isso o modelo omite-a e a instalação remove essa referência.",
+        "item": "{flowName}: {miniAppName}"
+      }
     },
     "categories": {
       "flows": "Fluxos",
@@ -7461,7 +7574,20 @@
       "aiFiles": "Ficheiros de conhecimento de IA",
       "questionnaires": "Questionnaires",
       "couponTopics": "Tópicos de cupões",
-      "pipelines": "Funis"
+      "pipelines": "Funis",
+      "magicLinks": "Ligações mágicas",
+      "polls": "Sondagens",
+      "dynamicImages": "Imagens dinâmicas",
+      "placeLocations": "Locais",
+      "miniApps": "Mini Apps",
+      "minigames": "Minijogos",
+      "leaderboards": "Classificações",
+      "openHours": "Horários de funcionamento",
+      "vendors": "Fornecedores",
+      "discountCodes": "Códigos de desconto",
+      "storeSettings": "Definições da loja",
+      "storyAutomations": "Automação de Stories do Instagram",
+      "inboundWebhooks": "Webhook de entrada"
     },
     "locked": {
       "flowBanner": "Este fluxo foi instalado a partir de um modelo apenas de visualização. Pode vê-lo, mas não editá-lo.",
@@ -7538,6 +7664,7 @@
       "flowNotPublished": "O Flow foi instalado como rascunho e não está publicado.",
       "flowSkippedRequiredReference": "O Flow foi ignorado porque não foi possível resolver uma referência obrigatória.",
       "folder": "Um item referenciado não foi encontrado neste espaço de trabalho, pelo que a ligação foi removida.",
+      "inboundWebhookLimitReached": "Este webhook de entrada foi ignorado: o espaço de trabalho já atingiu o número máximo de webhooks de entrada.",
       "inboxBindingRequired": "Escolha uma caixa de entrada para este canal; até lá, o item permanece inativo.",
       "integration": "Um item referenciado não foi encontrado neste espaço de trabalho, pelo que a ligação foi removida.",
       "localModifiedOverwritten": "Um item editado localmente foi substituído. Foi guardada uma cópia de segurança que pode ser restaurada.",
@@ -7558,7 +7685,25 @@
       "tag": "Um item referenciado não foi encontrado neste espaço de trabalho, pelo que a ligação foi removida.",
       "unlisted": "Item não foi totalmente trazido: {code}",
       "workspaceMember": "Atribuído a um membro que não está neste espaço de trabalho.",
-      "workspaceUnavailable": "Este espaço de trabalho já não está disponível, por isso o item foi ignorado."
+      "workspaceUnavailable": "Este espaço de trabalho já não está disponível, por isso o item foi ignorado.",
+      "scheduleExpired": "As datas deste item já passaram; defina novas antes de o utilizar.",
+      "linkNotRemapped": "Uma ligação a uma ferramenta que não fazia parte do modelo foi deixada sem alteração.",
+      "dynamicImage": "Esta imagem dinâmica foi ignorada porque o fundo não pôde ser copiado.",
+      "dynamicImageFieldNotBound": "Escolha um campo personalizado para guardar esta imagem em cache; o original já existia no seu workspace.",
+      "dynamicImageRerenderFailed": "Esta imagem dinâmica foi desativada porque não foi possível renderizar novamente o fundo com as ligações copiadas. Ative-a novamente para tentar de novo.",
+      "pollImage": "Não foi possível copiar uma imagem.",
+      "leaderboardInvalid": "A configuração deste ranking não pôde ser instalada, por isso foi ignorada.",
+      "placeLocationInvalid": "Este local foi ignorado porque o nome está vazio.",
+      "minigame": "O minijogo de onde este ranking tira a pontuação não faz parte do modelo, por isso foi ignorado.",
+      "minigameImage": "Não foi possível copiar uma imagem.",
+      "leaderboardImage": "Não foi possível copiar uma imagem.",
+      "leaderboardHostMissing": "O ranking precisa de um canal (ou minijogo) próprio que esta instalação não forneceu, por isso foi ignorado.",
+      "externalStoreSkipped": "Este workspace vende através de uma loja ligada (Shopify ou WooCommerce), por isso os produtos, fornecedores, códigos de desconto, horários e definições da loja não foram instalados.",
+      "discountCodeSkipped": "Este código de desconto foi ignorado: os produtos ou a categoria a que se aplica não fazem parte do modelo, ou as suas definições foram recusadas.",
+      "storeSettingsKept": "Este workspace já tinha definições da loja, por isso foram mantidas como estavam.",
+      "vendorImage": "Não foi possível copiar uma imagem.",
+      "storeSettingsCurrencyKept": "O workspace tem produtos noutra moeda, por isso a sua moeda foi mantida em vez da do modelo.",
+      "storySelectionRequired": "Selecione as stories novamente: não foi possível trazer as stories originais."
     },
     "tabs": {
       "mine": "Os meus modelos",
@@ -7785,7 +7930,6 @@
   "templatesPublicPage": {
     "invalidTitle": "Esta ligação já não está disponível.",
     "invalidDescription": "Esta ligação de partilha de modelo é inválida, está desativada ou expirou.",
-    "byPublisher": "Por {publisherName}",
     "videoTitle": "Vídeo de pré-visualização do modelo",
     "preview": "Pré-visualizar",
     "aboutTemplate": "Sobre este modelo",
@@ -8143,6 +8287,10 @@
   "contactAdReferrals": {
     "title": "Histórico de anúncios",
     "empty": "Ainda não foram registados cliques em anúncios para este contacto."
+  },
+  "contactBroadcasts": {
+    "empty": "Ainda não foi enviada nenhuma transmissão a este contacto.",
+    "searchPlaceholder": "Pesquisar por nome ou ID"
   },
   "adsReferralStats": {
     "title": "Contactos por anúncio",
@@ -11988,41 +12136,138 @@
     "noWorkspaces": "Não é administrador de nenhum workspace, por isso não pode autorizar esta aplicação."
   },
   "chatbotxMcp": {
-    "title": "ChatbotX MCP",
-    "workspaceId": "Workspace ID",
-    "streamableUrl": "Streamable HTTP URL",
-    "sseUrl": "Legacy SSE URL",
+    "title": "Conector MCP",
+    "streamableUrl": "URL do Streamable HTTP",
+    "sseUrl": "URL do SSE legado",
     "guide": {
-      "title": "Connect an MCP client",
-      "step1": "Copy the configuration for your MCP client.",
-      "step2": "Paste it into the client.",
-      "step3": "The client opens a browser. Sign in and approve access.",
-      "step4": "Your workspace tools appear after approval.",
-      "ownerOnly": "Only workspace owners and superAdmins can authorize MCP access."
+      "title": "Ligar um cliente MCP",
+      "subtitle": "Escolha a app que utiliza e siga os três passos.",
+      "ownerOnly": "Apenas os proprietários do workspace e os superAdmins podem autorizar o acesso MCP. Escolhe o workspace no ecrã de aprovação.",
+      "otherClients": "Qualquer outro cliente compatível com MCP também funciona",
+      "otherIntro": "Utilize estes endpoints e configurações com qualquer outro cliente compatível com MCP.",
+      "opensInNewTab": "(abre num novo separador)",
+      "actions": {
+        "addConnector": "Adicionar conector",
+        "startChatting": "Começar a conversar"
+      },
+      "steps": {
+        "claude": {
+          "step1": {
+            "title": "Copie o URL do conector",
+            "body": "Vai colar este URL no Claude no passo seguinte."
+          },
+          "step2": {
+            "title": "Aceda a Claude → Customize → Connectors → Add custom connector",
+            "body": "O botão abaixo abre os seus conectores no Claude. Clique em Add custom connector, dê-lhe um nome e cole o URL. Também aparece nas apps do Claude para computador e telemóvel."
+          },
+          "step3": {
+            "title": "Clique em Connect e aprove o acesso",
+            "body": "Inicie sessão, escolha o seu workspace e aprove. Depois peça ao Claude para trabalhar com os seus contactos, fluxos e difusões diretamente no chat."
+          }
+        },
+        "chatgpt": {
+          "step1": {
+            "title": "Copie o URL do conector",
+            "body": "Vai colar este URL no ChatGPT no passo seguinte."
+          },
+          "step2": {
+            "title": "Aceda a ChatGPT → Settings → Apps & Connectors → Create",
+            "body": "O botão abaixo abre as definições do ChatGPT. Se não vir Create, ative o Developer mode em Advanced settings. Dê um nome ao conector, cole o URL e escolha OAuth."
+          },
+          "step3": {
+            "title": "Ligue e aprove o acesso",
+            "body": "Inicie sessão, escolha o seu workspace e aprove. Depois ative o conector numa nova conversa para o utilizar."
+          }
+        },
+        "claudeCode": {
+          "step1": {
+            "title": "Copie o comando de instalação",
+            "body": "Execute-o no seu terminal."
+          },
+          "step2": {
+            "title": "Inicie sessão a partir do Claude Code",
+            "body": "Abra o Claude Code, escreva /mcp, selecione o servidor e escolha Authenticate. Abre-se uma janela do navegador."
+          },
+          "step3": {
+            "title": "Aprove o acesso",
+            "body": "Escolha o seu workspace e aprove. O Claude Code já pode utilizar as ferramentas do seu workspace."
+          }
+        },
+        "cursor": {
+          "step1": {
+            "title": "Copie a configuração",
+            "body": "Vai colá-la no Cursor no passo seguinte."
+          },
+          "step2": {
+            "title": "Abra Cursor Settings → MCP → Add new MCP server",
+            "body": "Cole a configuração em mcp.json e guarde. O Cursor mostra um botão Login junto ao servidor."
+          },
+          "step3": {
+            "title": "Aprove o acesso",
+            "body": "Clique em Login, escolha o seu workspace e aprove. As ferramentas aparecem no agente do Cursor."
+          }
+        },
+        "openclaw": {
+          "step1": {
+            "title": "Instale o plugin",
+            "body": "Execute este comando no seu terminal."
+          },
+          "step2": {
+            "title": "Inicie sessão",
+            "body": "Execute este comando. Abre-se uma janela do navegador."
+          },
+          "step3": {
+            "title": "Aprove o acesso",
+            "body": "Escolha o seu workspace e aprove. O OpenClaw já pode utilizar as ferramentas do seu workspace."
+          }
+        },
+        "hermes": {
+          "step1": {
+            "title": "Copie a configuração",
+            "body": "Vai adicioná-la à configuração do Hermes no passo seguinte."
+          },
+          "step2": {
+            "title": "Adicione a ~/.hermes/config.yaml",
+            "body": "Cole-a em mcp_servers no ficheiro ~/.hermes/config.yaml e guarde. Depois execute este comando no Hermes."
+          },
+          "step3": {
+            "title": "Aprove o acesso",
+            "body": "O Hermes abre uma janela do navegador. Inicie sessão, escolha o seu workspace e aprove. O Hermes já pode utilizar as ferramentas do seu workspace."
+          }
+        }
+      }
     },
     "clients": {
+      "claude": "Claude",
       "claudeCode": "Claude Code",
       "claudeDesktop": "Claude Desktop",
       "cursor": "Cursor",
       "chatgpt": "ChatGPT",
-      "stdio": "stdio fallback",
-      "stdioHint": "Use a workspace token for this fallback."
+      "stdio": "alternativa stdio",
+      "stdioHint": "Utilize um token de workspace para esta alternativa.",
+      "openclaw": "OpenClaw",
+      "hermes": "Hermes",
+      "other": "Outros clientes"
     },
     "grants": {
-      "title": "Authorized applications",
-      "description": "Grants belong to your account and apply to every workspace you administer; revoking disconnects the client everywhere.",
-      "empty": "OAuth grants appear here after you connect an MCP client.",
-      "client": "Client",
-      "scopes": "Scopes",
-      "firstAuthorizedAt": "First authorized",
-      "lastRefreshedAt": "Last refreshed",
-      "activeUntil": "Active until",
-      "noActiveToken": "No active token",
-      "revoke": "Revoke",
-      "revokeConfirmTitle": "Revoke application access?",
-      "revokeConfirmDescription": "Revoke access for {clientName}? This disconnects the client everywhere.",
-      "revokedSuccess": "Application access revoked.",
-      "notFound": "OAuth grant no longer exists"
+      "title": "Aplicações autorizadas",
+      "description": "As autorizações pertencem à sua conta e aplicam-se a todos os workspaces que administra; revogar desliga o cliente em todo o lado.",
+      "empty": "As autorizações OAuth aparecem aqui depois de ligar um cliente MCP.",
+      "client": "Cliente",
+      "scopes": "Âmbitos",
+      "firstAuthorizedAt": "Primeira autorização",
+      "lastRefreshedAt": "Última renovação",
+      "activeUntil": "Ativo até",
+      "noActiveToken": "Sem token ativo",
+      "revoke": "Revogar",
+      "revokeConfirmTitle": "Revogar o acesso da aplicação?",
+      "revokeConfirmDescription": "Revogar o acesso de {clientName}? Isto desliga o cliente em todo o lado.",
+      "revokedSuccess": "Acesso da aplicação revogado.",
+      "notFound": "A autorização OAuth já não existe"
+    },
+    "unavailableOnDomain": {
+      "title": "Indisponível neste domínio",
+      "body": "A ligação de assistentes de IA como o Claude ou o ChatGPT ainda não está disponível neste domínio. As autorizações existentes estão listadas abaixo e ainda podem ser revogadas."
     }
   },
   "connectionStatus": {
@@ -12051,17 +12296,21 @@
     "add": "Adicionar",
     "addCategory": "Adicionar categoria",
     "renameCategory": "Mudar o nome",
-    "editCategories": "Editar categorias",
+    "editListing": "Editar item",
     "templateId": "ID do template",
     "template": "Template",
     "categories": "Categorias",
     "categoriesPlaceholder": "Sem categoria",
     "close": "Fechar",
     "removeChip": "Remover {name}",
+    "moreSelected": "+ {count} mais",
     "categoriesHint": "Opcional. Sem categoria, o template aparece apenas em “Todos”.",
+    "languages": "Idiomas",
+    "allLanguages": "Todos os idiomas",
+    "languagesHint": "Opcional. Deixe vazio para mostrar o modelo em todos os idiomas.",
     "noCategoriesYet": "Ainda não há categorias.",
     "added": "Template adicionado à loja",
-    "updated": "Categorias atualizadas",
+    "updated": "Item atualizado",
     "removed": "Template removido da loja",
     "removeError": "Não foi possível remover o template",
     "removeTitle": "Remover {name}?",
@@ -12103,16 +12352,18 @@
       "categoryLimit": "Uma loja pode ter no máximo {categoryLimit} categorias."
     },
     "store": {
-      "subtitle": "Templates prontos para instalar com um clique.",
       "pageTitle": "{tenantName} – Loja de templates",
       "empty": "Ainda não há templates na loja.",
       "search": "Pesquisar templates",
-      "all": "Todos",
-      "categories": "Categorias da loja",
-      "noResults": "Nenhum template corresponde à sua pesquisa.",
-      "clearSearch": "Limpar pesquisa",
-      "by": "Por {publisherName}",
-      "loadFailed": "Não foi possível carregar os templates. Tente novamente mais tarde."
+      "noResults": "Nenhum modelo corresponde aos seus filtros.",
+      "clearSearch": "Limpar filtros",
+      "loadFailed": "Não foi possível carregar os templates. Tente novamente mais tarde.",
+      "languageValue": "Idioma: {language}",
+      "allLanguages": "Todos os idiomas",
+      "otherLanguages": "Outros idiomas",
+      "allChannels": "Todos os canais",
+      "channel": "Canal",
+      "uncategorized": "Outros"
     },
     "picker": {
       "placeholder": "Selecione um template",
@@ -12121,7 +12372,21 @@
       "error": "Não foi possível carregar os templates.",
       "retry": "Tentar novamente",
       "meta": "ID {id} · {workspace}"
-    }
+    },
+    "bulk": {
+      "setCategories": "Definir categorias",
+      "setLanguages": "Definir idiomas",
+      "categoriesHint": "Substitui as categorias dos modelos selecionados ({count}). Deixe vazio para remover todas as categorias.",
+      "languagesHint": "Substitui os idiomas dos modelos selecionados ({count}). Deixe vazio para os mostrar em todos os idiomas.",
+      "updated": "Modelos selecionados atualizados",
+      "removeTitle": "Remover os modelos selecionados?",
+      "removeDescription": "Selecionados: {count}. Desaparecem da loja; os próprios modelos e as suas instalações não são afetados.",
+      "removed": "Modelos selecionados removidos da loja",
+      "setChannels": "Definir canais",
+      "channelsHint": "Substitui os canais dos modelos selecionados ({count}). Deixe vazio para todos os canais."
+    },
+    "channels": "Canais",
+    "channelsHint": "Opcional. Deixe vazio se o modelo funcionar em todos os canais. Aparece como ícones na loja, onde os visitantes podem filtrar por canal."
   },
   "accountDeletion": {
     "title": "Delete account",
@@ -12308,5 +12573,1060 @@
       "onAhachat": "On AhaChat",
       "selected": "Uses AhaChat data"
     }
+  },
+  "conversationParticipants": {
+    "joined": "{names} participaram na conversa",
+    "replied": "{name} respondeu {time}",
+    "showMore": "Ver mais",
+    "label": "Quem respondeu nesta conversa",
+    "unnamedMember": "Membro",
+    "loadMoreFailed": "Não foi possível carregar mais membros",
+    "lastMessageBy": "Última mensagem de {name}"
+  },
+  "posts": {
+    "title": "Publicações",
+    "searchPlaceholder": "Pesquisar por texto, ligação ou ID da publicação",
+    "dateFrom": "De",
+    "dateTo": "Até",
+    "export": {
+      "title": "Exportar os comentários das publicações deste intervalo de datas (até {count} publicações)",
+      "needsRange": "Escolha uma data de início e uma de fim para exportar os comentários.",
+      "nothing": "Nenhuma publicação corresponde a estes filtros neste intervalo de datas.",
+      "failed": "A exportação falhou. Tente novamente.",
+      "done": "{count, plural, one {Comentários de # publicação exportados.} other {Comentários de # publicações exportados.}}",
+      "doneLimited": "Comentários das {count} publicações mais recentes exportados. Existem mais publicações correspondentes; reduza o intervalo de datas para exportar as restantes.",
+      "truncated": "A exportação foi cortada no limite de linhas. Restrinja as datas ou os filtros para exportar o restante.",
+      "quotaExceeded": "A quota de mensagens desta conta esgotou-se, por isso a transferência não foi feita. Melhore o plano ou aguarde pelo próximo período de faturação.",
+      "blocked": "O plano ou o período de teste deste espaço de trabalho expirou.",
+      "menu": "Exportar",
+      "rowsTitle": "Exportar a lista de publicações (uma linha por publicação)",
+      "rowsDone": "Lista de publicações exportada.",
+      "rowsTruncated": "A lista foi cortada no limite de publicações. Restrinja os filtros para exportar o resto."
+    },
+    "showAllPosts": "Mostrar também publicações sem comentários",
+    "noCaption": "Sem texto",
+    "liveNow": "Em direto",
+    "empty": "Nenhuma publicação corresponde a estes filtros.",
+    "loadMore": "Carregar mais",
+    "columns": {
+      "content": "Publicação",
+      "topic": "Tópico",
+      "author": "Autor",
+      "pages": "Páginas",
+      "status": "Estado"
+    },
+    "contentType": {
+      "text": "Texto",
+      "photo": "Foto",
+      "video": "Vídeo",
+      "reel": "Reel",
+      "carousel": "Carrossel",
+      "story": "Story",
+      "live": "Direto",
+      "link": "Ligação",
+      "audio": "Áudio",
+      "other": "Outro"
+    },
+    "filters": {
+      "channel": "Canal",
+      "allChannels": "Todos os canais",
+      "inbox": "Página / conta",
+      "allInboxes": "Todas as páginas e contas",
+      "postType": "Tipo de publicação",
+      "commentSettings": "Definições de comentários",
+      "hidden": "Comentários ocultos",
+      "notHidden": "Comentários não ocultos",
+      "phoneHidden": "Comentários com telefone ocultos",
+      "phoneNotHidden": "Comentários com telefone não ocultos",
+      "skipped": "Comentários ignorados",
+      "notSkipped": "Comentários não ignorados",
+      "sort": "Ordenar",
+      "topics": "Tópicos",
+      "title": "Filtros",
+      "engagement": "Interação",
+      "topicSearch": "Pesquisar tópicos",
+      "author": "Autor",
+      "allAuthors": "Todos os autores"
+    },
+    "postType": {
+      "all": "Todas",
+      "photo": "Foto",
+      "video": "Vídeo",
+      "post": "Publicação",
+      "pastLive": "Direto terminado",
+      "liveNow": "Em direto"
+    },
+    "sort": {
+      "newest": "Mais recentes",
+      "mostComments": "Mais comentários",
+      "fewestComments": "Menos comentários",
+      "mostPhones": "Mais telefones",
+      "fewestPhones": "Menos telefones",
+      "mostEngagement": "Mais interação",
+      "leastEngagement": "Menos interação",
+      "mostShares": "Mais partilhas",
+      "fewestShares": "Menos partilhas"
+    },
+    "settings": {
+      "hideComments": "Ocultar todos os comentários",
+      "hidePhoneComments": "Ocultar comentários com telefone",
+      "skipComments": "Ignorar comentários (marcar como lidos)",
+      "unavailable": "Este canal ainda não suporta definições de comentários por publicação."
+    },
+    "sync": {
+      "refresh": "Atualizar publicações",
+      "started": "A sincronizar publicações. As novas aparecerão em breve.",
+      "alreadyRunning": "Já existe uma sincronização em curso ou acabou de terminar.",
+      "failedCount": "{count, plural, one {# página não pôde ser sincronizada} other {# páginas não puderam ser sincronizadas}}",
+      "reconnect": "Voltar a ligar o canal",
+      "reconnectWithPermission": "Volte a ligar e permita o acesso às publicações",
+      "retry": "Tentar novamente"
+    },
+    "topics": {
+      "edit": "Editar tópicos",
+      "newPlaceholder": "Nome do novo tópico",
+      "empty": "Ainda não há tópicos. Escreva um nome para criar um."
+    },
+    "emptyHint": "Experimente outro filtro ou ative “Mostrar também publicações sem comentários”.",
+    "actions": {
+      "viewComments": "Ver comentários",
+      "viewOriginal": "Ver publicação original",
+      "refreshPost": "Atualizar a partir do canal",
+      "refreshRemoved": "Esta publicação já não existe no canal, por isso foi ocultada.",
+      "refreshUnavailable": "Não foi possível ler a publicação do canal. Tente novamente mais tarde.",
+      "refreshRateLimited": "O canal pediu para abrandar. Tente novamente dentro de alguns minutos.",
+      "refreshCooldown": "Esta publicação acabou de ser atualizada. Tente novamente dentro de um minuto.",
+      "downloadPhones": "Transferir telefones",
+      "downloadComments": "Transferir comentários",
+      "viewDetails": "Ver detalhes"
+    },
+    "merge": {
+      "title": "Juntar publicações",
+      "selectAll": "Selecionar tudo",
+      "selected": "{count} de {max} selecionadas",
+      "confirm": "Juntar publicações"
+    },
+    "comments": {
+      "title": "Todos os comentários desta publicação",
+      "mergedTitle": "Comentários juntos de {count} publicações",
+      "searchPlaceholder": "Pesquisar comentários",
+      "phoneOnly": "Com telefone",
+      "empty": "Sem comentários para mostrar.",
+      "loadOlder": "Carregar comentários anteriores",
+      "like": "Gostar do comentário",
+      "delete": "Eliminar comentário",
+      "confirmDelete": "Clique novamente para eliminar",
+      "hidden": "Oculto",
+      "unknownAuthor": "Cliente desconhecido"
+    },
+    "state": {
+      "noChannelTitle": "Nenhum canal ligado",
+      "noChannelHint": "Ligue um canal do Messenger, Instagram, Threads ou TikTok para ver as publicações aqui.",
+      "connectChannel": "Ligar um canal",
+      "neverSyncedTitle": "Publicações ainda não carregadas",
+      "neverSyncedHint": "Carregue as publicações dos canais ligados. Corre em segundo plano e pode demorar alguns minutos.",
+      "loadPosts": "Carregar publicações"
+    },
+    "counts": {
+      "comments": "Comentários",
+      "reactions": "Reações",
+      "shares": "Partilhas",
+      "phones": "Comentários com telefone"
+    },
+    "tabs": {
+      "posts": "Publicações",
+      "calendar": "Calendário",
+      "connect": "Ligar",
+      "feeds": "Feeds",
+      "analytics": "Análises"
+    },
+    "calendar": {
+      "views": {
+        "month": "Mês",
+        "week": "Semana",
+        "day": "Dia",
+        "list": "Lista"
+      },
+      "viewLabel": "Vista do calendário",
+      "previous": "Período anterior",
+      "next": "Período seguinte",
+      "today": "Hoje",
+      "network": "Rede",
+      "destination": "Página ou perfil",
+      "allNetworks": "Todas as redes",
+      "allDestinations": "Todas as páginas e perfis",
+      "noText": "(Sem texto)",
+      "noDate": "Sem data",
+      "noDateEmpty": "Os rascunhos sem data aparecem aqui. Largue uma publicação aqui para a voltar a pôr em rascunhos.",
+      "newPostOn": "Nova publicação em {date}",
+      "more": "+{count} mais",
+      "emptyDay": "Sem publicações neste dia.",
+      "emptyHint": "Não há nada agendado neste período.",
+      "loading": "A carregar…",
+      "loadError": "Não foi possível carregar o calendário.",
+      "retry": "Tentar novamente",
+      "readOnly": "Este espaço de trabalho é só de leitura, por isso não é possível mover nem criar publicações.",
+      "truncated": "Só é apresentada parte das publicações deste período. Reduza o período ou filtre por rede ou conta.",
+      "openPost": "Abrir publicação",
+      "moveToDrafts": "Mover para rascunhos",
+      "reschedule": "Reagendar",
+      "schedule": "Agendar",
+      "rescheduleLabel": "Hora de publicação",
+      "scheduleLabel": "Agendar para",
+      "pickTime": "Escolha a data e a hora",
+      "status": {
+        "draft": "Rascunho"
+      },
+      "errors": {
+        "past": "Escolha uma hora com pelo menos 15 minutos a partir de agora.",
+        "cannotUnschedule": "Só uma publicação agendada pode voltar a rascunho."
+      },
+      "list": {
+        "filterLabel": "Filtrar por estado",
+        "filterCount": "{label}, {count, plural, one {# publicação} other {# publicações}}",
+        "filters": {
+          "all": "Todas",
+          "drafts": "Rascunhos",
+          "scheduled": "Agendadas",
+          "published": "Publicadas",
+          "needsAttention": "Precisam de atenção"
+        },
+        "empty": {
+          "all": "Nenhuma publicação",
+          "drafts": "Nenhum rascunho",
+          "scheduled": "Nenhuma publicação agendada",
+          "published": "Nenhuma publicação publicada",
+          "needsAttention": "Nada precisa de atenção"
+        },
+        "loadMore": "Carregar mais"
+      },
+      "freeSlots": {
+        "label": "Horários de publicação livres",
+        "compose": "Nova publicação às {time}",
+        "truncated": "Mais horários livres não são apresentados"
+      }
+    },
+    "connect": {
+      "title": "Ligar",
+      "connectNetwork": "Ligar {network}",
+      "reconnect": "Voltar a ligar",
+      "reconnectName": "{label}: {name}",
+      "facebookReconnectHint": "Voltar a ligar uma Página atualiza todas as Páginas do mesmo início de sessão do Facebook.",
+      "comingSoon": "Ainda não disponível",
+      "connectedAlready": "{count, plural, one {# conta ligada. Clique para adicionar outra.} other {# contas ligadas. Clique para adicionar outra.}}",
+      "truncated": "A mostrar as primeiras {count} páginas.",
+      "tiktokTitle": "Contas de publicação do TikTok",
+      "pageCount": "{count, plural, one {# página} other {# páginas}}",
+      "verify": "Verificar",
+      "verified": "Conta verificada.",
+      "syncDestinations": "Sincronizar páginas",
+      "destinationsSynced": "Páginas e perfis atualizados.",
+      "disconnect": "Desligar",
+      "confirmDisconnect": "Clique novamente para desligar",
+      "disconnected": "Conta desligada.",
+      "missingScopes": "Permissões em falta: {scopes}. Volte a ligar para as conceder.",
+      "lastVerified": "Verificada {date}",
+      "status": {
+        "connected": "Ligada",
+        "needsReauth": "Precisa de nova ligação",
+        "disconnected": "Desligada"
+      },
+      "reason": {
+        "tokenRejected": "A plataforma rejeitou o início de sessão guardado. Volte a ligar a conta.",
+        "tokenExpired": "O início de sessão guardado expirou. Volte a ligar a conta.",
+        "refreshRejected": "A plataforma recusou renovar o início de sessão. Volte a ligar a conta.",
+        "permissionNotGranted": "Faltam algumas permissões. Volte a ligar a conta para as conceder."
+      },
+      "emptyTitle": "Ainda não há canais ligados",
+      "emptyAction": "Ir para canais",
+      "schedule": {
+        "open": "Horários de publicação",
+        "title": "Horários de publicação de {name}",
+        "description": "Uma publicação adicionada à fila usa o próximo horário livre desta lista.",
+        "timezone": "Fuso horário: {timezone}",
+        "maxTimes": "Até {count} horários por dia",
+        "dayOn": "Publicar em {day}",
+        "noTimes": "Sem horários",
+        "addTime": "Adicionar horário",
+        "timeLabel": "Novo horário para {day}",
+        "removeTime": "Remover {time}",
+        "copyTo": "Copiar para outros dias",
+        "copyApply": "Copiar",
+        "save": "Guardar",
+        "saved": "Horários de publicação guardados.",
+        "reflowMoved": "{count, plural, one {# publicação da fila foi movida para um novo horário.} other {# publicações da fila foram movidas para novos horários.}}",
+        "reflowDetached": "{count, plural, one {# publicação da fila ficou sem horário de publicação. Mantém o horário, mas já não está na fila (agora personalizada).} other {# publicações da fila ficaram sem horário de publicação. Mantêm os horários, mas já não estão na fila (agora personalizadas).}}"
+      }
+    },
+    "detail": {
+      "title": "Detalhes da publicação",
+      "caption": "Texto",
+      "metrics": "Interação",
+      "metricsUnavailable": "Este canal não indica estes números.",
+      "views": "Visualizações",
+      "settings": "Definições de comentários",
+      "settingsHint": "Estas definições aplicam-se aos novos comentários desta publicação. Os comentários existentes não mudam.",
+      "skipCommentsHint": "Marca como lido cada novo comentário. As automatizações continuam.",
+      "hideCommentsHint": "Oculta cada novo comentário da publicação.",
+      "hidePhoneCommentsHint": "Oculta novos comentários que contêm telefone.",
+      "topics": "Tópicos",
+      "info": "Informações",
+      "postId": "ID da publicação",
+      "channel": "Canal",
+      "contentType": "Tipo",
+      "author": "Autor",
+      "publishedAt": "Publicada",
+      "metricsUpdated": "Métricas atualizadas",
+      "never": "Ainda não medido",
+      "ownerPage": "Página",
+      "ownerAccount": "Conta"
+    },
+    "feeds": {
+      "title": "Publicação automática de feeds",
+      "description": "Transforme os novos itens de um feed RSS ou Atom em publicações. A primeira verificação apenas regista o que o feed já tem.",
+      "add": "Adicionar feed",
+      "empty": "Ainda não há feeds. Adicione um para transformar automaticamente os novos artigos em publicações.",
+      "status": {
+        "active": "Ativo",
+        "paused": "Em pausa",
+        "error": "Em pausa – erro no feed"
+      },
+      "mode": {
+        "draft": "Guardar como rascunho",
+        "queue": "Colocar em fila automaticamente"
+      },
+      "lastChecked": "Última verificação: {time}",
+      "neverChecked": "Ainda não verificado",
+      "firstCheckPending": "A primeira verificação apenas regista o que o feed já tem; não é criada nenhuma publicação a partir disso.",
+      "every": "A cada {minutes} min",
+      "destinations": "{count, plural, one {# destino} other {# destinos}}",
+      "actions": {
+        "checkNow": "Verificar agora",
+        "pause": "Pausar",
+        "resume": "Retomar",
+        "edit": "Editar",
+        "delete": "Eliminar",
+        "items": "Itens",
+        "sendTest": "Enviar teste"
+      },
+      "toast": {
+        "checkStarted": "Verificação iniciada",
+        "paused": "Feed em pausa",
+        "resumed": "Feed retomado",
+        "deleted": "Feed eliminado",
+        "saved": "Feed guardado",
+        "testDraftCreated": "Rascunho de teste criado",
+        "openDraft": "Abrir rascunho",
+        "testUsedTemplate": "A IA não conseguiu escrever, por isso foi usado o modelo de texto."
+      },
+      "deleteConfirm": "Eliminar este feed e o histórico dos seus itens? As publicações já criadas mantêm-se.",
+      "error": {
+        "blocked": "O endereço do feed não é permitido.",
+        "timeout": "O feed demorou demasiado a responder.",
+        "tooLarge": "O feed é maior do que 2 MB.",
+        "badStatus": "O feed respondeu com um erro.",
+        "badContentType": "O endereço não é um feed RSS ou Atom.",
+        "unreachable": "Não foi possível aceder ao feed.",
+        "tooManyRedirects": "O feed redireciona demasiadas vezes.",
+        "invalidFeed": "Não foi possível ler o feed.",
+        "internal": "Ocorreu um erro ao verificar o feed.",
+        "postRefused": "Não foi possível criar uma publicação (por exemplo, não há horário de publicação livre ou o espaço de trabalho está bloqueado). A próxima verificação tentará novamente."
+      },
+      "apiError": {
+        "feedUrlTaken": "Este feed já foi adicionado.",
+        "feedCheckCooldown": "Um feed só pode ser verificado manualmente uma vez a cada 5 minutos.",
+        "feedPreviewRateLimited": "Demasiadas pré-visualizações. Tente novamente mais tarde.",
+        "feedNotParseable": "Este endereço não é um feed RSS ou Atom. Experimente acrescentar /feed ou /rss ao endereço do site.",
+        "feedUnreachable": "Não foi possível aceder a este endereço. Verifique-o e tente novamente.",
+        "feedTestRateLimited": "Demasiadas publicações de teste. Tente novamente mais tarde.",
+        "feedHasNoItems": "O feed ainda não tem itens.",
+        "feedFetchRateLimited": "Demasiadas verificações de endereços de feed. Tente novamente mais tarde.",
+        "feedCheckInProgress": "Já existe uma verificação deste feed em espera ou em curso."
+      },
+      "form": {
+        "createTitle": "Adicionar feed",
+        "editTitle": "Editar feed",
+        "name": "Nome",
+        "url": "Endereço do feed",
+        "urlPlaceholder": "https://example.com/feed.xml",
+        "preview": "Pré-visualizar",
+        "previewEmpty": "Não foram encontrados itens neste feed.",
+        "destinations": "Publicar em",
+        "noDestinations": "Ligue primeiro uma conta de rede social.",
+        "interval": "Verificar a cada",
+        "dailyCap": "Máximo de publicações por dia",
+        "mode": "Os novos itens são",
+        "modeDraftHelp": "Cada novo item passa a rascunho para rever.",
+        "modeQueueHelp": "Cada novo item é colocado em fila no horário de publicação do destino e publicado sem revisão.",
+        "template": "Texto da publicação",
+        "templateHelp": "Variáveis que pode usar: {variables}",
+        "save": "Guardar",
+        "cancel": "Cancelar",
+        "didYouMean": "Queria dizer {url}?",
+        "useSuggestion": "Usar",
+        "aiWrite": "Escrever cada publicação com IA",
+        "aiWriteHelp": "A IA escreve o texto a partir do título, do resumo e da ligação do item. Se não conseguir, é usado o modelo de texto abaixo.",
+        "aiInstructions": "Instruções adicionais para a IA (opcional)",
+        "aiInstructionsHelp": "Por exemplo: tom amigável, mencionar o nome da loja. Até 300 carateres.",
+        "postLatestOnFirstCheck": "Publicar o item mais recente na primeira verificação",
+        "postLatestOnFirstCheckHelp": "Sem isto, a primeira verificação apenas regista o que o feed já tem.",
+        "contentTitle": "Conteúdo da publicação",
+        "templateInsert": "Inserir campo",
+        "templateVariables": "Campos do item",
+        "templateFeedFields": "Campos encontrados neste feed",
+        "templatePresets": "Começar a partir de um modelo",
+        "presetTitleLink": "Título e ligação",
+        "presetSummaryHashtags": "Título, resumo, ligação e hashtags",
+        "presetProduct": "Produto: título, preço e ligação",
+        "templateLegacy": "Este feed usa os marcadores antigos {token} e continua a publicar como antes até o converter.",
+        "templateConvert": "Converter para a nova sintaxe",
+        "templateHint": "Insira campos a partir do menu ou escreva-os, por exemplo {example}. Filtros disponíveis: {filters}.",
+        "templateProblem": "Linha {line}, coluna {column}: {message}",
+        "previewTitle": "Pré-visualização",
+        "previewSample": "Item de exemplo",
+        "previewHint": "Pré-visualize o endereço do feed para ver como ficará uma publicação.",
+        "previewCharacters": "{network}: {count} carateres",
+        "previewDropped": "Destinos excluídos desta publicação: {count}",
+        "previewFiltered": "Filtrado: {reason}",
+        "previewSkipped": "Este item seria ignorado.",
+        "previewNoPicture": "Sem imagem",
+        "mediaTitle": "Imagens",
+        "mediaMode": "Origem da imagem",
+        "mediaModeAuto": "Do feed (automática)",
+        "mediaModeField": "De um campo ou endereço",
+        "mediaModeNone": "Sem imagem",
+        "mediaField": "Campo ou endereço",
+        "mediaFieldHelp": "Um modelo que fornece o endereço da imagem, por exemplo {example}.",
+        "mediaLibrary": "Imagens de reserva",
+        "mediaLibraryHelp": "Da sua biblioteca de multimédia; usadas quando um item não tem imagem própria.",
+        "mediaLibraryAdd": "Adicionar imagens",
+        "mediaRemove": "Remover",
+        "postAs": "Publicar como",
+        "postAsPhoto": "Publicação com imagem",
+        "postAsLink": "Ligação",
+        "postAsText": "Apenas texto",
+        "postAsHelpLink": "Ligação: um cartão de pré-visualização com a imagem do artigo no Facebook e no Threads.",
+        "postAsHelpPhoto": "Publicação com imagem: a imagem do item é publicada juntamente com o texto.",
+        "postAsHelpText": "Apenas texto: só as palavras e o endereço, sem imagem.",
+        "postAsTextFacebookWarning": "O Facebook não cria um cartão de pré-visualização (imagem) para uma ligação dentro do texto. Escolha Ligação para obter o cartão com a imagem do artigo.",
+        "noImageFallback": "Quando um item não tem imagem",
+        "fallbackLink": "Partilhar a ligação",
+        "fallbackText": "Apenas texto",
+        "fallbackSkip": "Ignorar o item",
+        "filtersTitle": "Filtros",
+        "filterInclude": "Contém um destes",
+        "filterExclude": "Não contém nenhum destes",
+        "filterCategories": "A categoria é uma destas",
+        "filterTermsHelp": "Escreva uma palavra e prima Enter. Maiúsculas e acentos são ignorados.",
+        "filterRequireImage": "Apenas itens com imagem",
+        "filterMaxAge": "Apenas itens mais recentes que (horas)",
+        "networkTexts": "Texto diferente por rede",
+        "networkTextsHelp": "Escreva um texto separado para uma rede; as redes sem texto próprio usam o texto partilhado. Um texto que uma rede recusa é ignorado e nunca encurtado. As publicações escritas por IA usam um único texto partilhado.",
+        "networkTabShared": "Partilhado",
+        "networkTextUsesShared": "Esta rede usa o texto partilhado.",
+        "networkTextClear": "Usar o texto partilhado",
+        "networkTextAria": "Texto para {network}",
+        "fetchArticleImage": "Procurar uma imagem na página do artigo",
+        "fetchArticleImageHelp": "Quando um item não tem imagem, a página do respetivo artigo é lida uma vez para obter a imagem principal (og:image). Apenas para itens que vão ser publicados; uma página que não possa ser lida nunca bloqueia a publicação.",
+        "previewArticlePicture": "A página do artigo será lida"
+      },
+      "items": {
+        "title": "Itens de {name}",
+        "empty": "Ainda não foi verificado nenhum item.",
+        "loadMore": "Carregar mais",
+        "openPost": "Abrir publicação",
+        "reasons": {
+          "existing": "Já estava no feed quando foi adicionado",
+          "undated": "Sem data de publicação",
+          "tooOld": "Demasiado antigo",
+          "perRunLimit": "Acima do limite por verificação",
+          "noDestination": "Nenhum destino selecionado",
+          "emptyText": "O texto da publicação está vazio",
+          "textTooLong": "O texto da publicação é demasiado longo",
+          "invalid": "A publicação foi recusada",
+          "other": "Não foi possível utilizar o item",
+          "aiFallback": "Escrito com o modelo (a IA não conseguiu escrever)",
+          "excludedKeyword": "Contém uma palavra excluída",
+          "missingKeyword": "Não contém nenhuma das palavras exigidas",
+          "category": "Fora das categorias escolhidas",
+          "noImage": "Sem imagem",
+          "tooOldForFilter": "Mais antigo do que o filtro de idade",
+          "undatedForFilter": "Sem data para verificar o filtro de idade",
+          "imageFailed": "Não foi possível usar a imagem",
+          "noImageFallback": "Publicado sem imagem",
+          "droppedTargets": "Alguns destinos foram excluídos",
+          "templateError": "Não foi possível processar o modelo",
+          "noDestinationAccepts": "Nenhum destino pode levar esta publicação",
+          "issueTextRequired": "A publicação não tem texto",
+          "issueTextTooLong": "O texto é demasiado longo para uma rede",
+          "issueLinkNotSupported": "Uma rede não aceita ligações",
+          "issueLinkRequired": "Uma rede exige uma ligação",
+          "issueTooManyLinks": "Mais ligações do que uma rede permite",
+          "issueContentType": "Uma rede não publica este tipo de publicação",
+          "issueMedia": "A imagem não cumpre as regras de uma rede",
+          "issueOptions": "Uma definição de rede não é válida",
+          "issueParts": "Uma rede não aceita partes de continuação",
+          "issueDestination": "Um destino não pode publicar neste momento",
+          "alreadyPosted": "Já existe uma publicação para este item"
+        },
+        "createPost": "Criar publicação",
+        "picture": "Imagem: {source}",
+        "dropped": "Excluídos: {count}",
+        "imageSources": {
+          "enclosure": "Imagem anexada",
+          "mediaContent": "Conteúdo multimédia",
+          "mediaThumbnail": "Miniatura",
+          "itunesImage": "Capa do podcast",
+          "contentImage": "Imagem no texto",
+          "jsonFeed": "Imagem do JSON Feed",
+          "field": "Campo ou endereço",
+          "library": "Biblioteca de multimédia",
+          "article": "Página do artigo (og:image)"
+        },
+        "imageErrors": {
+          "unreachable": "Não foi possível transferir a imagem.",
+          "blocked": "O endereço da imagem não é permitido.",
+          "tooBig": "A imagem é demasiado grande.",
+          "notImage": "O ficheiro não é uma imagem utilizável.",
+          "storage": "Não foi possível guardar a imagem.",
+          "articleUnreachable": "Não foi possível ler a página do artigo.",
+          "articleNoImage": "A página do artigo não indica nenhuma imagem."
+        }
+      },
+      "outcome": {
+        "created": "Publicação criada",
+        "skippedOld": "Ignorado: já existia ou é demasiado antigo",
+        "skippedInvalid": "Ignorado: recusado",
+        "skippedFiltered": "Ignorado: filtrado",
+        "skippedNoImage": "Ignorado: sem imagem"
+      },
+      "deleteConfirmTitle": "Eliminar “{name}”?",
+      "sendTestConfirm": {
+        "title": "Enviar uma publicação de teste?",
+        "description": "É criado um rascunho a partir do item mais recente deste feed, tal como o feed o escreveria. Nada é publicado; pode abrir o rascunho para o rever."
+      },
+      "bulkDelete": {
+        "selectAll": "Selecionar tudo",
+        "selectFeed": "Selecionar {name}",
+        "deleteSelected": "Eliminar selecionados ({count})",
+        "confirmTitle": "{count, plural, one {Eliminar # feed?} other {Eliminar # feeds?}}",
+        "confirmDescription": "Os feeds selecionados e o histórico dos respetivos itens serão eliminados. As publicações já criadas mantêm-se.",
+        "success": "{count, plural, one {# feed eliminado} other {# feeds eliminados}}"
+      },
+      "columns": {
+        "name": "Feed",
+        "status": "Estado",
+        "mode": "Modo",
+        "schedule": "Intervalo de verificação",
+        "destinations": "Destinos",
+        "lastChecked": "Última verificação"
+      },
+      "filters": {
+        "search": "Pesquisar feeds",
+        "searchPlaceholder": "Pesquisar por nome ou endereço do feed",
+        "status": "Filtrar por estado",
+        "mode": "Filtrar por modo",
+        "destination": "Filtrar por destino",
+        "allStatuses": "Todos os estados",
+        "allModes": "Todos os modos",
+        "allDestinations": "Todos os destinos",
+        "destinationsSelected": "{count, plural, one {# destino} other {# destinos}}",
+        "noDestinations": "Ainda não existem destinos para filtrar.",
+        "clear": "Limpar filtros",
+        "noMatch": "Nenhum feed corresponde a estes filtros."
+      },
+      "destinationsDialog": {
+        "title": "Destinos de {name}",
+        "removed": "Destino removido",
+        "close": "Fechar",
+        "edit": "Editar destinos"
+      },
+      "lastRun": {
+        "noNew": "Nenhum item novo na fonte",
+        "skippedOnly": "Os itens novos foram ignorados (demasiado antigos ou filtrados)",
+        "stale": "A fonte devolveu uma cópia mais antiga; nova verificação em breve",
+        "notModified": "A fonte não mudou desde a última verificação",
+        "created": "{count, plural, one {# publicação criada} other {# publicações criadas}}",
+        "refused": "{count, plural, one {# item recusado por uma rede} other {# itens recusados por uma rede}}",
+        "waiting": "{count, plural, one {# item novo aguarda a próxima verificação} other {# itens novos aguardam a próxima verificação}}",
+        "dailyCap": "Limite diário atingido ({cap} por 24 h) — {count, plural, one {# item novo aguarda} other {# itens novos aguardam}}",
+        "dailyCapUntil": "Limite diário atingido ({cap} por 24 h) — {count, plural, one {# item novo aguarda} other {# itens novos aguardam}}. Próxima vaga disponível em: {until}"
+      }
+    },
+    "show": {
+      "label": "Mostrar",
+      "channels": "Nos canais"
+    },
+    "composed": {
+      "deleted": "Publicação eliminada.",
+      "deleteTitle": "Eliminar esta publicação?",
+      "deleteDescription": "Um rascunho é eliminado definitivamente. Uma publicação agendada é cancelada e não será publicada."
+    },
+    "analytics": {
+      "title": "Análise de publicações",
+      "filters": {
+        "title": "Filtros de análise",
+        "allContentTypes": "Todos os tipos de conteúdo",
+        "allTopics": "Todos os tópicos"
+      },
+      "metrics": {
+        "comments": "Comentários",
+        "reactions": "Reações",
+        "shares": "Partilhas",
+        "engagement": "Envolvimento",
+        "views": "Visualizações"
+      },
+      "metricsLower": {
+        "comments": "comentários",
+        "reactions": "reações",
+        "shares": "partilhas",
+        "engagement": "envolvimento",
+        "views": "visualizações"
+      },
+      "kpi": {
+        "title": "Métricas principais",
+        "notReported": "Não comunicado",
+        "notReportedHint": "Este canal não comunica esta contagem.",
+        "vsPrevious": "em comparação com o período anterior",
+        "noComparison": "Sem comparação disponível",
+        "previous": "Período anterior: {value}",
+        "postsPublished": "{count, plural, one {# publicação publicada neste período} other {# publicações publicadas neste período}}"
+      },
+      "chart": {
+        "title": "Crescimento por dia",
+        "description": "Ganho diário de {metricLower}",
+        "groupBy": "Agrupar o gráfico",
+        "group": {
+          "none": "Total",
+          "channel": "Por canal",
+          "inbox": "Por página ou conta"
+        },
+        "other": "Outros",
+        "viewTable": "Ver como tabela",
+        "hideTable": "Ocultar tabela",
+        "day": "Dia",
+        "summary": "{metric}: ganho por dia de {from} a {to}, {total} no total.",
+        "empty": "Nenhum crescimento registado",
+        "emptyHint": "Nada mudou neste período, ou o acompanhamento ainda não tinha começado."
+      },
+      "breakdown": {
+        "title": "Detalhe",
+        "description": "{metric}: ganho por canal ou página",
+        "by": {
+          "channel": "Canais",
+          "inbox": "Páginas e contas"
+        },
+        "empty": "Sem dados para estes filtros"
+      },
+      "topPosts": {
+        "title": "Principais publicações",
+        "description": "Classificadas por {metricLower}",
+        "rankBy": "Classificar por",
+        "rank_gained": "Maior ganho",
+        "rank_total": "Maior total",
+        "rank": "N.º",
+        "post": "Publicação",
+        "channel": "Canal",
+        "gained": "Ganho",
+        "total": "Total",
+        "published": "Publicada em",
+        "open": "Abrir publicação",
+        "noCaption": "Sem legenda",
+        "empty": "Nenhuma publicação para classificar",
+        "emptyHint": "As publicações aparecem aqui assim que as suas contagens forem acompanhadas."
+      },
+      "bestTimes": {
+        "title": "Melhores horas para publicar",
+        "description": "Publicações comparadas com a publicação habitual da mesma página, no fuso horário {timezone}.",
+        "caption": "Pontuação de envolvimento por dia da semana e hora",
+        "cell": "{when}: pontuação {score}, {posts, plural, one {# publicação} other {# publicações}}",
+        "cellEmpty": "{when}: nenhuma publicação",
+        "legendLow": "Menor",
+        "legendHigh": "Maior",
+        "legendTop": "Melhores faixas",
+        "scoreHint": "Uma pontuação de 1,0 equivale a uma publicação típica da mesma página.",
+        "topHeading": "Faixas mais fortes",
+        "slotDetail": "Pontuação {score} · {posts, plural, one {# publicação} other {# publicações}}",
+        "insufficientTitle": "Ainda não há dados suficientes",
+        "insufficientHint": "As melhores horas exigem pelo menos {min} publicações feitas entre há 90 e há 3 dias. Encontradas: {count}.",
+        "capped": "Foi usada apenas uma amostra das publicações mais recentes."
+      },
+      "coverage": {
+        "noneTitle": "Ainda não há histórico",
+        "partialTitle": "O histórico ainda está a ser construído",
+        "fullTitle": "Apenas parte das suas publicações é medida",
+        "since": "O crescimento é contado a partir de {date}, quando o acompanhamento começou. A atividade anterior não está incluída.",
+        "sinceUnknown": "O crescimento é contado desde o início do acompanhamento. A atividade anterior não está incluída.",
+        "withHistory": "{withHistory} de {posts} publicações recentes têm histórico de crescimento.",
+        "truncated": "Há mais publicações do que é possível medir de uma só vez; as mais recentes são apresentadas."
+      },
+      "states": {
+        "error": "Não foi possível carregar esta secção.",
+        "retry": "Tentar novamente",
+        "noChannelHint": "Ligue um canal do Messenger, Instagram, Threads ou TikTok para ver o desempenho das publicações."
+      },
+      "perPost": {
+        "title": "Desempenho",
+        "description": "Variação diária dos números comunicados pelo canal, com base nos nossos registos diários.",
+        "metric": "Métrica",
+        "notReported": "Este canal não o comunica.",
+        "empty": "Ainda não foi registado crescimento",
+        "since": "Acompanhado desde {date}. As alterações aparecem após o próximo registo diário.",
+        "notTracked": "Esta publicação ainda não é acompanhada.",
+        "summary": "{metric}: ganho por dia, {total} no total.",
+        "totalNow": "ganhos neste período · {total} no total"
+      },
+      "composedPost": {
+        "reasons": {
+          "notPublished": "Ainda não publicada.",
+          "notLinked": "Ainda não associada a uma publicação do canal. Os números aparecerão quando for associada.",
+          "networkNotSupported": "Esta rede não comunica os números das publicações.",
+          "removed": "Removida do canal."
+        }
+      }
+    }
+  },
+  "socialAccounts": {
+    "errors": {
+      "providerNotSupported": "Esta rede ainda não pode ser ligada.",
+      "appNotConfigured": "A aplicação da plataforma desta rede não está configurada para o seu espaço de trabalho."
+    },
+    "connectResult": {
+      "success": "Conta ligada.",
+      "cancelled": "A ligação foi cancelada.",
+      "notFound": "Não foi possível concluir a ligação.",
+      "sessionExpired": "A sessão de ligação expirou. Tente ligar novamente.",
+      "permissionNotGranted": "A conta não foi ligada porque estas permissões não foram concedidas: {permissions}.",
+      "accountUnsupported": "Este tipo de conta não pode publicar. Utilize uma conta profissional.",
+      "notSupported": "Esta rede ainda não pode ser ligada.",
+      "failed": "Não foi possível ligar a conta. Tente novamente."
+    }
+  },
+  "composer": {
+    "publishTo": "Publicar em",
+    "reconnect": "Reconectar",
+    "noDestinations": "Ainda não há páginas ou perfis ligados que possam publicar.",
+    "sharedContent": "Conteúdo partilhado",
+    "text": "Texto da publicação",
+    "textPlaceholder": "Escreva a sua publicação",
+    "link": "Ligação",
+    "linkPlaceholder": "https://example.com",
+    "linkInvalid": "Introduza uma ligação completa que comece por https://",
+    "removeMedia": "Remover ficheiro",
+    "addMedia": "Adicionar foto ou vídeo",
+    "removeDestination": "Remover destino",
+    "customise": "Personalizar para este canal",
+    "usesSharedContent": "Usa o conteúdo partilhado",
+    "channelText": "Texto para este canal",
+    "channelTextPlaceholder": "Deixe vazio para usar o texto partilhado",
+    "contentType": "Tipo de conteúdo",
+    "previewEmpty": "Escolha um destino para ver a pré-visualização.",
+    "noText": "Sem texto",
+    "justNow": "Agora mesmo",
+    "linkInCaption": "A ligação será adicionada ao final da legenda.",
+    "previewMediaAlt": "Ficheiro anexado {index}",
+    "previewMoreMedia": "+{count}",
+    "previewSlideLabel": "Diapositivo {current} de {total}",
+    "previewPrevious": "Diapositivo anterior",
+    "previewNext": "Diapositivo seguinte",
+    "publishNow": "Publicar agora",
+    "newPost": "Nova publicação",
+    "draftSaved": "Rascunho guardado",
+    "noTargets": "Escolha pelo menos um destino para começar.",
+    "preview": "Pré-visualização",
+    "previewError": "Não foi possível atualizar a pré-visualização.",
+    "issueCount": "Problemas a corrigir: {count}",
+    "saveDraft": "Guardar rascunho",
+    "retry": "Tentar novamente",
+    "noAccountsTitle": "Nenhuma conta ligada",
+    "noAccountsHint": "Ligue uma conta no separador Ligar para começar a criar publicações.",
+    "goToAccounts": "Ir para Ligar",
+    "notEditable": "Esta publicação já não pode ser editada.",
+    "options": {
+      "shareToFeed": "Partilhar também no feed",
+      "title": "Título",
+      "thumbOffsetMs": "Fotograma da capa (milissegundos)",
+      "privacyLevel": "Quem pode ver este vídeo",
+      "allowComment": "Comentar",
+      "allowDuet": "Dueto",
+      "allowStitch": "Stitch",
+      "commercialContent": "Divulgar conteúdo comercial",
+      "brandOrganic": "A sua marca",
+      "brandContent": "Conteúdo de marca",
+      "isAigc": "Identificar como conteúdo gerado por IA",
+      "coverTimestampMs": "Fotograma da capa (milissegundos)"
+    },
+    "contentTypes": {
+      "text": "Texto",
+      "link": "Ligação",
+      "image": "Imagem",
+      "video": "Vídeo",
+      "reel": "Reel",
+      "carousel": "Carrossel",
+      "story": "Story"
+    },
+    "issues": {
+      "accountDisconnected": "Esta conta foi desligada.",
+      "accountNeedsReauth": "Esta conta tem de ser reconectada.",
+      "inboxDisconnected": "Este canal está desligado.",
+      "inboxNeedsReconnect": "A ligação deste canal expirou. Volte a ligá-lo.",
+      "publishPermissionMissing": "A permissão de publicação não foi concedida para este canal. Volte a ligá-lo para permitir a publicação.",
+      "contentTypeDisabled": "Este tipo de conteúdo ainda não está disponível.",
+      "contentTypeNotSupported": "Esta rede não suporta este tipo de conteúdo.",
+      "destinationInactive": "Este destino está desativado.",
+      "destinationNotFound": "Este destino não foi encontrado.",
+      "linkNotSupported": "Este tipo de conteúdo não pode ter ligação.",
+      "linkRequired": "É necessária uma ligação.",
+      "mediaFormatNotSupported": "Um formato de ficheiro não é suportado.",
+      "mediaKindNotAllowed": "Um tipo de ficheiro não é permitido aqui.",
+      "mediaTooFew": "Adicione mais ficheiros.",
+      "mediaTooLarge": "Um ficheiro é demasiado grande.",
+      "mediaTooLong": "Um vídeo é demasiado longo.",
+      "mediaTooMany": "Demasiados ficheiros.",
+      "mediaTooShort": "Um vídeo é demasiado curto.",
+      "optionsInvalid": "As definições não são válidas.",
+      "textRequired": "O texto é obrigatório.",
+      "textTooLong": "O texto é demasiado longo.",
+      "partsNotSupported": "Esta rede não publica partes de conversa.",
+      "firstCommentNotSupported": "Esta rede não publica um primeiro comentário.",
+      "tooManyParts": "Existem mais partes do que a rede permite.",
+      "partTextRequired": "Esta parte precisa de texto.",
+      "partTextTooLong": "Esta parte é mais longa do que a rede permite.",
+      "tooManyLinks": "Este texto tem mais ligações do que o Threads permite (no máximo 5)."
+    },
+    "publishStarted": "Publicação iniciada",
+    "publishRefused": "A publicação não pode ser publicada como está. Corrija os problemas apresentados.",
+    "targetsStatus": "Destinos",
+    "viewPost": "Ver publicação",
+    "retryTarget": "Tentar novamente",
+    "markPublished": "Marcar como publicada",
+    "retryReviewTitle": "Tentar novamente uma publicação que talvez já esteja no ar?",
+    "retryReviewDescription": "Esta publicação talvez já esteja no ar. Tentar novamente pode publicá-la uma segunda vez. Verifique primeiro a página.",
+    "retryReviewConfirm": "Tentar novamente mesmo assim",
+    "status": {
+      "pending": "Em espera",
+      "publishing": "A publicar",
+      "processing": "A processar",
+      "published": "Publicada",
+      "failed": "Falhou",
+      "cancelled": "Cancelada",
+      "needsReview": "Requer revisão"
+    },
+    "schedule": "Agendar",
+    "scheduleAt": "Publicar em",
+    "pickTime": "Escolha a data e a hora",
+    "scheduleTooSoon": "Escolha uma hora com pelo menos 2 minutos a partir de agora.",
+    "scheduled": "Publicação agendada.",
+    "repeatLabel": "Repetir",
+    "repeatHint": "Uma publicação recorrente é guardada como modelo e nunca é publicada por si mesma. A cada execução, é agendada uma cópia.",
+    "repeatInvalid": "Conclua as definições de repetição para guardar.",
+    "repeatStateActive": "A repetir",
+    "repeatStatePaused": "Em pausa",
+    "repeatStateEnded": "Série terminada",
+    "repeatNextRun": "Próxima execução: {date}",
+    "repeatPause": "Pausar",
+    "repeatResume": "Retomar",
+    "repeatEnd": "Terminar série",
+    "repeatUpdated": "Série de repetição atualizada",
+    "repeatScheduleOff": "O agendamento e a publicação aplicam-se a cada cópia, não ao modelo.",
+    "moveMediaEarlier": "Mover para antes",
+    "moveMediaLater": "Mover para depois",
+    "removeFromChannels": "Remover dos canais",
+    "removeFromChannelsTitle": "Remover esta publicação das redes?",
+    "removeFromChannelsDescription": "A publicação é removida de todas as redes que o permitem. As redes sem função de eliminação mantêm-na. Não é possível anular.",
+    "removeFromChannelsConfirm": "Remover",
+    "removeCancel": "Cancelar",
+    "removeRequested": "{count, plural, one {Remoção iniciada em # destino.} other {Remoção iniciada em # destinos.}}",
+    "removeUnsupported": "{count, plural, one {# destino não pode ser removido através da API da rede; remova-o na aplicação.} other {# destinos não podem ser removidos através da API das redes; remova-os nas aplicações.}}",
+    "removedFromChannel": "Removido da rede",
+    "removalPermissionMissing": "Volte a ligar esta conta para permitir a eliminação de publicações.",
+    "postMessageQuotaExceeded": "A quota de mensagens desta conta esgotou-se, pelo que esta publicação não foi publicada. Atualize o plano ou aguarde o próximo período de faturação e tente novamente.",
+    "tiktokLoading": "A carregar as definições da conta do TikTok…",
+    "tiktokUnavailable": "Não foi possível carregar as definições da conta do TikTok. Tente novamente.",
+    "tiktokCreator": "A publicar na conta do TikTok {nickname}",
+    "tiktokCannotPost": "Esta conta do TikTok não pode publicar neste momento. Tente novamente mais tarde.",
+    "tiktokPrivacyPlaceholder": "Selecione quem pode ver",
+    "tiktokInteractions": "Permitir que outras pessoas",
+    "tiktokInteractionDisabled": "Desativado nas definições do TikTok desta conta",
+    "tiktokYourBrand": "A sua marca",
+    "tiktokBrandedContent": "Conteúdo de marca",
+    "tiktokLabelPromotional": "O seu vídeo será identificado como “Conteúdo promocional”.",
+    "tiktokLabelPaid": "O seu vídeo será identificado como “Parceria paga”.",
+    "tiktokCommercialRequired": "Indique se o seu conteúdo promove a si próprio, um terceiro ou ambos.",
+    "tiktokBrandedNotPrivate": "A visibilidade de conteúdo de marca não pode ser privada.",
+    "tiktokConsentMusic": "Ao publicar, aceita a <music>Confirmação de Utilização de Música</music> do TikTok.",
+    "tiktokConsentBranded": "Ao publicar, aceita a <branded>Política de Conteúdo de Marca</branded> e a <music>Confirmação de Utilização de Música</music> do TikTok.",
+    "tiktokMaxDuration": "O vídeo mais longo que esta conta pode publicar tem {seconds} segundos.",
+    "tiktokProcessingNote": "Após publicar, o vídeo pode demorar alguns minutos a ser processado e a aparecer no perfil.",
+    "tiktokPrivacy": {
+      "PUBLIC_TO_EVERYONE": "Todos",
+      "MUTUAL_FOLLOW_FRIENDS": "Amigos",
+      "FOLLOWER_OF_CREATOR": "Seguidores",
+      "SELF_ONLY": "Só eu"
+    },
+    "partsTitle": "Partes da conversa",
+    "partsHint": "Cada parte é publicada como resposta à anterior, logo após a publicação principal.",
+    "partLabel": "Parte {number}",
+    "partPlaceholder": "Escreva a parte seguinte",
+    "partMoveUp": "Mover a parte para cima",
+    "partMoveDown": "Mover a parte para baixo",
+    "partRemove": "Remover a parte",
+    "partsAdd": "Adicionar parte",
+    "partsRemaining": "{count, plural, one {Pode adicionar mais # parte} other {Pode adicionar mais # partes}}",
+    "firstCommentTitle": "Primeiro comentário",
+    "firstCommentPlaceholder": "Publicado como comentário logo após a publicação",
+    "aiAssist": "Escrever com IA",
+    "aiPrivacy": "O texto que indica é enviado ao fornecedor de IA que escolher abaixo. Nada é guardado nem publicado até o inserir.",
+    "aiIntegration": "Integração de IA",
+    "aiNoIntegration": "Ainda não há nenhuma integração de IA ligada.",
+    "aiConnectIntegration": "Ligar uma integração de IA",
+    "aiMode": "O que deve a IA fazer?",
+    "aiModes": {
+      "write": "Escrever uma nova publicação",
+      "rewrite": "Reescrever",
+      "shorten": "Encurtar",
+      "expand": "Alargar",
+      "tone": "Mudar o tom",
+      "fit": "Ajustar ao limite do destino",
+      "hashtags": "Sugerir hashtags"
+    },
+    "aiTone": "Tom",
+    "aiTones": {
+      "friendly": "Amigável",
+      "professional": "Profissional",
+      "casual": "Descontraído",
+      "playful": "Divertido",
+      "formal": "Formal",
+      "persuasive": "Persuasivo",
+      "inspiring": "Inspirador"
+    },
+    "aiBrief": "Sobre o que é a publicação?",
+    "aiBriefPlaceholder": "Por exemplo: anunciar a promoção do fim de semana, 20% de desconto",
+    "aiUsesPostText": "Utiliza o texto da publicação acima.",
+    "aiNeedsPostText": "Escreva primeiro o texto da publicação.",
+    "aiFitNeedsDestination": "Escolha primeiro um destino.",
+    "aiGenerate": "Gerar",
+    "aiGenerating": "A escrever…",
+    "aiSuggestion": "Sugestão",
+    "aiCutToLimit": "Cortado no limite de {limit, plural, one {# carácter} other {# caracteres}}.",
+    "aiInsert": "Inserir no fim",
+    "aiReplace": "Substituir o texto da publicação",
+    "aiHashtags": "Hashtags",
+    "aiEmoji": "Emoji",
+    "aiCallToAction": "Apelo à ação",
+    "aiCallToActionText": "Texto do apelo à ação (opcional)",
+    "aiCallToActionPlaceholder": "Por exemplo: Reserve a sua mesa hoje",
+    "aiVariants": "Opções",
+    "aiPerNetwork": "Escrever por canal",
+    "aiPerNetworkHint": "Uma versão ao estilo de cada rede.",
+    "aiOption": "Opção {number}",
+    "aiApplyTo": "Aplicar a {network}",
+    "aiApplyToEach": "Aplicar a cada canal",
+    "aiHashtagPick": "Clique numa hashtag para a adicionar à publicação.",
+    "aiErrors": {
+      "modelNotChosen": "Escolha uma integração de IA e um modelo para escrever com IA.",
+      "needsReconfiguration": "A integração de IA escolhida está em falta, desativada ou inválida.",
+      "rateLimited": "Demasiados pedidos de IA. Tente novamente dentro de instantes.",
+      "timeout": "O modelo de IA não respondeu a tempo. Tente novamente.",
+      "provider": "O fornecedor de IA não conseguiu escrever o texto. Tente novamente.",
+      "inProgress": "Já existe um pedido de IA em curso.",
+      "blocked": "O plano ou o período de teste deste espaço de trabalho expirou.",
+      "generic": "Não foi possível escrever o texto. Tente novamente."
+    },
+    "snippets": "Excertos",
+    "snippetsKinds": {
+      "signature": "Assinatura",
+      "hashtags": "Hashtags",
+      "text": "Texto"
+    },
+    "snippetsLoadFailed": "Não foi possível carregar os excertos.",
+    "snippetsEmpty": "Ainda não há excertos.",
+    "snippetsSignature": "Assinatura",
+    "snippetsSignatureHint": "Adicionada uma única vez ao fim do texto quando cria a publicação. Os destinos com texto próprio não a recebem.",
+    "snippetsSignatureChosen": "Assinatura: {name}",
+    "snippetsManage": "Gerir excertos",
+    "snippetsName": "Nome",
+    "snippetsKind": "Tipo",
+    "snippetsContent": "Texto",
+    "snippetsAdd": "Adicionar excerto",
+    "snippetsSaved": "Excerto guardado.",
+    "snippetsDeleted": "Excerto eliminado.",
+    "snippetsNameTaken": "Já existe um excerto com este nome.",
+    "targetSets": "Grupos de páginas",
+    "targetSetsLoadFailed": "Não foi possível carregar os grupos.",
+    "targetSetsEmpty": "Ainda não há grupos guardados.",
+    "targetSetsName": "Nome do grupo",
+    "targetSetsNamePlaceholder": "Dê um nome ao grupo…",
+    "targetSetsSave": "Guardar",
+    "targetSetsNeedsSelection": "Selecione páginas para as guardar como grupo.",
+    "targetSetsSaved": "Grupo guardado.",
+    "targetSetsDeleted": "Grupo eliminado.",
+    "targetSetsNameTaken": "Já existe um grupo com este nome.",
+    "targetSetsApplied": "Páginas de “{name}” selecionadas.",
+    "targetSetsSkipped": "{count, plural, one {# página foi ignorada porque precisa de atenção.} other {# páginas foram ignoradas porque precisam de atenção.}}",
+    "destinationState": {
+      "ready": "Pronto a publicar",
+      "inboxDisconnected": "Desligado",
+      "needsReconnect": "Ligação expirada",
+      "permissionMissing": "Permissão de publicação não concedida"
+    },
+    "destinationPause": {
+      "until": "Em pausa até {time}",
+      "reason": {
+        "limitReached": "A rede limitou as publicações desta conta. As publicações aguardam e saem após a pausa.",
+        "accountRestricted": "A rede restringiu esta conta. As publicações aguardam e saem após a pausa.",
+        "spamRisk": "A rede assinalou a atividade desta conta como risco de spam. As publicações aguardam e saem após a pausa."
+      }
+    },
+    "viaFacebook": "através do Facebook",
+    "openProfile": "Abrir {name} no {network}",
+    "someNeedAttention": "Algumas páginas ou perfis não podem publicar até voltar a ligá-los.",
+    "viewPosts": "Ver",
+    "queue": {
+      "modeLabel": "Quando publicar",
+      "atTime": "Escolher hora",
+      "next": "Adicionar à fila",
+      "top": "Publicar primeiro",
+      "nextHint": "Publica no próximo horário livre de cada página.",
+      "topHint": "Publica no horário mais próximo; as publicações em fila passam para o horário seguinte.",
+      "noDestination": "Selecione uma página para ver os seus horários de publicação.",
+      "noSchedule": "{names} não tem horários de publicação configurados.",
+      "setUpSlots": "Configurar horários de publicação"
+    },
+    "targetOwnTime": "Hora própria para este canal",
+    "targetTimeInvalid": "Escolha uma hora entre 2 minutos e 1 ano a partir de agora.",
+    "targetMediaOwn": "Ficheiros diferentes para este canal",
+    "targetMediaNone": "Sem ficheiros: este canal publica sem ficheiros.",
+    "occurrencesUpcoming": "Próximas execuções",
+    "occurrencesNoUpcoming": "Sem execuções futuras.",
+    "occurrenceSkip": "Ignorar",
+    "occurrenceRestore": "Repor",
+    "occurrenceSkipped": "Execução ignorada.",
+    "occurrenceRestored": "Execução reposta.",
+    "occurrencesHistory": "Mostrar execuções passadas",
+    "occurrencesHideHistory": "Ocultar execuções passadas",
+    "occurrencesLoadFailed": "Não foi possível carregar as execuções.",
+    "occurrencesNoHistory": "Ainda sem execuções.",
+    "occurrencesLoadMore": "Carregar mais",
+    "occurrenceOpen": "Abrir publicação",
+    "targetSetsUpdated": "Grupo atualizado.",
+    "targetSetsMembers": "Páginas deste grupo",
+    "targetSetsNeedsMember": "Mantenha pelo menos uma página.",
+    "occurrenceOutcomes": {
+      "created": "Agendada",
+      "excluded": "Ignorada",
+      "missed": "Perdida",
+      "skipped": "Não criada"
+    }
+  },
+  "postCommentVariables": {
+    "group": "Comentário da publicação",
+    "postLink": "Ligação da publicação",
+    "postText": "Texto da publicação",
+    "postPublishedAt": "Data de publicação",
+    "postPageName": "Nome da página da publicação",
+    "postId": "ID da publicação",
+    "commentText": "Texto do comentário",
+    "commentId": "ID do comentário"
   }
 }

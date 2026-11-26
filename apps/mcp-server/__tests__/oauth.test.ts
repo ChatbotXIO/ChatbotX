@@ -87,3 +87,23 @@ describe("OAuth protected-resource metadata", () => {
     ).toEqual(["https://builder.example.com"])
   })
 })
+
+describe("isConnectorProfileAudience", () => {
+  test("matches profile audiences by path, whatever the origin", async () => {
+    const { isConnectorProfileAudience } = await loadOAuth()
+
+    expect(
+      isConnectorProfileAudience("https://app.example.com/mcp/openai"),
+    ).toBe(true)
+    expect(
+      isConnectorProfileAudience("https://other.example.com/mcp/claude/"),
+    ).toBe(true)
+    expect(isConnectorProfileAudience("https://app.example.com/mcp")).toBe(
+      false,
+    )
+    expect(
+      isConnectorProfileAudience("https://app.example.com/mcp/openai-x"),
+    ).toBe(false)
+    expect(isConnectorProfileAudience("not a url")).toBe(false)
+  })
+})

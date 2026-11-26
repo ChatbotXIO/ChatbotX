@@ -1,44 +1,35 @@
 import type { PublicTemplateProjection } from "@chatbotx.io/business"
-import { useTranslations } from "next-intl"
 
 export type PublicTemplateHeadingTag = "h1" | "h2"
 
 /**
- * The image, name and publisher the share page and the install page open
- * with. The name is the page's h1 there; under another page's own h1 (the
- * home page's Templates tab) it is an h2.
+ * The image and name the share page and the install page open with: the
+ * cover fills a 16:9 frame, the name sits below it. The name is the page's h1
+ * there; under another page's own h1 (the home page's Templates tab) it is an
+ * h2.
  */
 export function PublicTemplateHeading({
   template,
   imageUrl,
   headingTag: Heading = "h1",
 }: {
-  template: Pick<PublicTemplateProjection, "name" | "publisherName">
+  template: Pick<PublicTemplateProjection, "name">
   imageUrl: string
   headingTag?: PublicTemplateHeadingTag
 }) {
-  const t = useTranslations("templatesPublicPage")
-
   return (
-    <div className="flex items-start gap-4 sm:gap-6">
+    <div className="flex flex-col gap-4">
       {/* biome-ignore lint/performance/noImgElement: external, unoptimized template thumbnail resolved from publisher-uploaded storage */}
       <img
         alt={template.name}
-        className="size-20 shrink-0 rounded-lg bg-white object-cover sm:size-28"
-        height={112}
+        className="aspect-video w-full max-w-3xl rounded-xl bg-muted object-cover object-center"
+        height={432}
         src={imageUrl}
-        width={112}
+        width={768}
       />
-      <div className="min-w-0">
-        <Heading className="break-words font-semibold text-2xl tracking-normal">
-          {template.name}
-        </Heading>
-        {template.publisherName ? (
-          <p className="mt-1 text-muted-foreground text-sm">
-            {t("byPublisher", { publisherName: template.publisherName })}
-          </p>
-        ) : null}
-      </div>
+      <Heading className="break-words font-semibold text-2xl tracking-normal">
+        {template.name}
+      </Heading>
     </div>
   )
 }

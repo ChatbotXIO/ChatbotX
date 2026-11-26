@@ -8,6 +8,7 @@ import {
 import {
   aiContextService,
   aiIntegrationService,
+  appendCustomerInputGuard,
   appendFabricationGuard,
   appendKnowledgeBaseGuard,
   appendToolOutputGuard,
@@ -177,9 +178,11 @@ async function runAIReplyInternal(
       ? `Conversation Context: ${props.summary}\n\n${promptBase}`
       : promptBase
 
-    const systemPrompt = appendKnowledgeBaseGuard(
-      appendFabricationGuard(appendToolOutputGuard(completePrompt), tools),
-      tools,
+    const systemPrompt = appendCustomerInputGuard(
+      appendKnowledgeBaseGuard(
+        appendFabricationGuard(appendToolOutputGuard(completePrompt), tools),
+        tools,
+      ),
     )
 
     const toolStats = createAgentToolStatsCollector({

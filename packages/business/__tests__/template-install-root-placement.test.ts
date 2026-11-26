@@ -13,6 +13,7 @@ const resources = (overrides: Record<string, unknown>) =>
     sequences: [],
     keywords: [],
     fbCommentAutomations: [],
+    storyAutomations: [],
     settings: { savedReplies: [], botFields: [] },
     ...overrides,
   }) as never
@@ -77,5 +78,23 @@ describe("install root placement", () => {
     const flow = { sourceId: "f1", folderId: null }
     placeRootEntriesInInstallRoots(resources({ flows: [flow] }))
     expect(flow.folderId).toBeNull()
+  })
+
+  test("a root-level story automation goes into the Instagram story install root", () => {
+    const input = resources({
+      storyAutomations: [
+        { sourceId: "s1", folderId: null },
+        { sourceId: "s2", folderId: "f-shipped" },
+      ],
+    })
+
+    expect(rootLevelFolderTypes(input)).toEqual(["igStory"])
+    const placed = placeRootEntriesInInstallRoots(input) as unknown as {
+      storyAutomations: { folderId?: string }[]
+    }
+    expect(placed.storyAutomations).toEqual([
+      { sourceId: "s1", folderId: installRootSourceId("igStory") },
+      { sourceId: "s2", folderId: "f-shipped" },
+    ])
   })
 })

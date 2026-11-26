@@ -91,6 +91,21 @@ function withReserveTimeWindow(client: Redis): ReserveTimeWindowClient {
   return client as ReserveTimeWindowClient
 }
 
+// Compare-and-EXPIRE / compare-and-DEL on an owner-tagged marker (`claimKey`).
+const RENEW_IF_OWNER_LUA = `
+if redis.call('GET', KEYS[1]) == ARGV[1] then
+  return redis.call('EXPIRE', KEYS[1], ARGV[2])
+end
+return 0
+`
+
+const RELEASE_IF_OWNER_LUA = `
+if redis.call('GET', KEYS[1]) == ARGV[1] then
+  return redis.call('DEL', KEYS[1])
+end
+return 0
+`
+
 // GET then DEL as one step (GETDEL needs Redis 6.2; this runs anywhere).
 const TAKE_LUA = `
 local value = redis.call('GET', KEYS[1])
@@ -431,5 +446,49 @@ export const distributedStoreFactory = (
       String(Math.max(0, Math.ceil(spanMs))),
     )
     return Number(start)
+  },
+  /**
+   * `SET key owner NX EX ttl`: takes an owner-tagged marker only when nobody
+   * holds it. Pair with {@link renewKeyIfOwner}/{@link releaseKeyIfOwner}, which
+   * act only while the stored owner is still the caller's.
+   */
+  async claimKey(
+    key: string,
+    owner: string,
+    ttlInSeconds: number,
+  ): Promise<boolean> {
+    const redisClient = await getRedisClient()
+    const result = await redisClient.set(key, owner, "EX", ttlInSeconds, "NX")
+    return result === "OK"
+  },
+
+  /** The raw owner stored by {@link claimKey}, or `null` when the key is free. */
+  async getKeyOwner(key: string): Promise<string | null> {
+    const redisClient = await getRedisClient()
+    return await redisClient.get(key)
+  },
+
+  /** Extends the marker's TTL only while `owner` still holds it. */
+  async renewKeyIfOwner(
+    key: string,
+    owner: string,
+    ttlInSeconds: number,
+  ): Promise<boolean> {
+    const redisClient = await getRedisClient()
+    const renewed = await redisClient.eval(
+      RENEW_IF_OWNER_LUA,
+      1,
+      key,
+      owner,
+      ttlInSeconds,
+    )
+    return renewed === 1
+  },
+
+  /** Deletes the marker only while `owner` still holds it (compare-and-delete). */
+  async releaseKeyIfOwner(key: string, owner: string): Promise<boolean> {
+    const redisClient = await getRedisClient()
+    const released = await redisClient.eval(RELEASE_IF_OWNER_LUA, 1, key, owner)
+    return released === 1
   },
 })

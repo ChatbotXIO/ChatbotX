@@ -10,11 +10,14 @@ import { listMessages } from "@/features/messages/queries"
 import { createMessageRequest } from "@/features/messages/schema/mutation"
 import { listMessagesResponse } from "@/features/messages/schema/query"
 import { messageResourceWithRelations } from "@/features/messages/schema/resource"
+import { withMessageTranslations } from "@/features/translation/lib/message-translations"
+import { sendOutgoing } from "@/features/translation/lib/send-outgoing"
 import { mcpSpec } from "@/lib/orpc/mcp-annotations"
 import {
   possibleErrorsOnFindingResource,
   possibleErrorsOnMutatingResource,
   possibleErrorsOnSendingMessage,
+  possibleErrorsOnTranslatedSend,
 } from "@/lib/orpc/orpc-error-helper"
 import { publicContactIdentifier } from "@/lib/public-api/contact-identifier"
 import {
@@ -67,7 +70,13 @@ export const contactsMessagesPublicRouter = {
         "Delivers a text, media or catalog product message (`products`, on channels with product messages such as WhatsApp; ids from `products.listSendable`). For SMTP, this opens a new email thread; use `messages.create` with `conversationId` to reply in an existing thread. Delivery is asynchronous: if the channel finally rejects the message (after any retries), it is removed from the conversation — reading it by id then returns 404 — and the error is written to the workspace Error Log (`errorLogs.list`). Only messages a member sends from the Inbox are kept with their error.",
       successStatus: 204,
       tags: ["Contacts"],
-      spec: mcpSpec({ visibility: "default" }),
+      spec: mcpSpec({
+        destructiveHint: true,
+        idempotentHint: false,
+        openWorldHint: true,
+        readOnlyHint: false,
+        visibility: "default",
+      }),
     })
     .input(
       createMessageRequest.and(
@@ -76,7 +85,10 @@ export const contactsMessagesPublicRouter = {
         }),
       ),
     )
-    .errors(possibleErrorsOnSendingMessage)
+    .errors({
+      ...possibleErrorsOnSendingMessage,
+      ...possibleErrorsOnTranslatedSend,
+    })
     .handler(async ({ context, input }) => {
       const contactId = await contactIdFor(context, input.identifier)
       const { conversation, contactInbox } =
@@ -90,7 +102,8 @@ export const contactsMessagesPublicRouter = {
         "flowId" in input ? input.flowId : undefined,
       )
       const user = resolveSenderForCaller(context)
-      await messageService.createOutgoing({
+      await sendOutgoing({
+        workspaceId: context.workspace.id,
         conversation,
         contactInbox,
         input,
@@ -107,7 +120,13 @@ export const contactsMessagesPublicRouter = {
       description:
         "Use this to inspect cursor-paginated messages from a contact's existing conversation. Call `contacts.get` to resolve the contact first, or use `contacts.sendMessage` to add an outbound message.",
       tags: ["Contacts"],
-      spec: mcpSpec({ visibility: "default" }),
+      spec: mcpSpec({
+        destructiveHint: false,
+        idempotentHint: true,
+        openWorldHint: false,
+        readOnlyHint: true,
+        visibility: "default",
+      }),
     })
     .input(
       z.object({
@@ -140,13 +159,16 @@ export const contactsMessagesPublicRouter = {
         workspaceId: context.workspace.id,
         conversationId: input.conversationId,
       })
-      return await listMessages({
-        workspaceId: context.workspace.id,
-        conversationId,
-        contactInboxId: input.contactInboxId,
-        perPage: input.perPage,
-        cursor: input.cursor,
-      })
+      return await listMessages(
+        {
+          workspaceId: context.workspace.id,
+          conversationId,
+          contactInboxId: input.contactInboxId,
+          perPage: input.perPage,
+          cursor: input.cursor,
+        },
+        { includeTranslation: true },
+      )
     }),
 
   getMessage: inboxScopedTokenAuthAPI
@@ -174,11 +196,16 @@ export const contactsMessagesPublicRouter = {
         workspaceId: context.workspace.id,
         conversationId: input.conversationId,
       })
-      return await messageService.findForContact({
+      const message = await messageService.findForContact({
         messageId: input.messageId,
         conversationId,
         workspaceId: context.workspace.id,
       })
+      const [withTranslation] = await withMessageTranslations(
+        context.workspace.id,
+        [message],
+      )
+      return withTranslation
     }),
 
   triggerAutoReply: automationScopedTokenAuthAPI
@@ -246,7 +273,13 @@ export const contactsMessagesPublicRouter = {
         "Starts a flow for a resolved contact on the given `inboxId`, or the contact's most recently active inbox, and returns as soon as it is queued. SMTP starts in a new email thread. Returns 404 when the contact has no matching inbox or the flow is not in this workspace. Call `flows.list` to find the flow first, or use `contacts.sendMessage` for one message.",
       successStatus: 204,
       tags: ["Contacts"],
-      spec: mcpSpec({ visibility: "default" }),
+      spec: mcpSpec({
+        destructiveHint: true,
+        idempotentHint: false,
+        openWorldHint: true,
+        readOnlyHint: false,
+        visibility: "default",
+      }),
     })
     .input(
       z.object({

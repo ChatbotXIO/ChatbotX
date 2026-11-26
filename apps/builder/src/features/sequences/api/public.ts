@@ -44,7 +44,13 @@ export const sequencesPublicRouter = {
       description:
         "Use this to find sequence ids before inspecting steps with `sequences.get` or subscribing contacts with `contacts.subscribeSequences`. Returns sequences available in the workspace; filter by `name`, `folderId` or `active`, sort with `sort`.",
       tags: ["Sequences"],
-      spec: mcpSpec({ visibility: "default" }),
+      spec: mcpSpec({
+        destructiveHint: false,
+        idempotentHint: true,
+        openWorldHint: false,
+        readOnlyHint: true,
+        visibility: "default",
+      }),
     })
     .input(listSequencesPublicRequest)
     .output(listSequencesResponse)
@@ -66,7 +72,13 @@ export const sequencesPublicRouter = {
       description:
         "Use this to inspect one sequence and its steps after finding its id with `sequences.list`. Call `sequences.update` to change its settings or `sequences.upsertStep` to edit steps.",
       tags: ["Sequences"],
-      spec: mcpSpec({ visibility: "default" }),
+      spec: mcpSpec({
+        destructiveHint: false,
+        idempotentHint: true,
+        openWorldHint: false,
+        readOnlyHint: true,
+        visibility: "default",
+      }),
     })
     .input(
       z.object({
@@ -115,7 +127,13 @@ export const sequencesPublicRouter = {
         "Changes a sequence name, active state or folder (`folderId`, from `sequences.listFolders`) without replacing its steps. Call `sequences.get` to inspect the current sequence, or use `sequences.list` to resolve its id.",
       successStatus: 204,
       tags: ["Sequences"],
-      spec: mcpSpec({ visibility: "default" }),
+      spec: mcpSpec({
+        destructiveHint: true,
+        idempotentHint: true,
+        openWorldHint: false,
+        readOnlyHint: false,
+        visibility: "default",
+      }),
     })
     .input(
       updateSequenceSchema.and(

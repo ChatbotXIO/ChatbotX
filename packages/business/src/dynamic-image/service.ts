@@ -1,5 +1,13 @@
-import { and, db, eq, ilike } from "@chatbotx.io/database/client"
+import {
+  and,
+  type DatabaseClient,
+  db,
+  eq,
+  ilike,
+  inArray,
+} from "@chatbotx.io/database/client"
 import type { DynamicImageDocument } from "@chatbotx.io/database/partials"
+import { dynamicImageStaleBackgroundRepository } from "@chatbotx.io/database/repositories"
 import {
   contactCustomFieldModel,
   dynamicImageModel,
@@ -14,11 +22,21 @@ import { uploader } from "@chatbotx.io/filesystem"
 import { createId } from "@chatbotx.io/utils"
 import { BaseService } from "../base.service"
 import { contactCustomFieldService } from "../contact-custom-field/service"
-import { notFoundException } from "../errors"
+import {
+  ChatbotXException,
+  conflictException,
+  notFoundException,
+} from "../errors"
 import { logger } from "../logger"
 import { type EnsureAvatarMirrored, resolveContactAvatarUrl } from "../media"
 import { isSsrfUnsafeUrl } from "../net/ssrf-guard"
 import { resolveTenantSettings } from "../platform/settings"
+import {
+  assertResourceEditable,
+  changedKeysOf,
+  withDeleteGuard,
+} from "../template/installed-resource.service"
+import { withTemplateLockedTransaction } from "../template/template-resource-locks"
 import { toPublicStorageUrl } from "../utils"
 import { renderDynamicLayer, renderStaticLayer } from "./render"
 
@@ -32,7 +50,7 @@ const HTTP_URL_RE = /^https?:\/\//i
 const BACKGROUND_FILES_PREFIX = (workspaceId: string, id: string) =>
   `public/space/${workspaceId}/dynamic-images/${id}/background`
 
-const BACKGROUND_PATH = (workspaceId: string, id: string, version: number) =>
+const BACKGROUND_PATH = (workspaceId: string, id: string, version: string) =>
   `${BACKGROUND_FILES_PREFIX(workspaceId, id)}_${version}.png`
 
 const CONTACT_IMAGES_FOLDER = (workspaceId: string, id: string) =>
@@ -43,6 +61,20 @@ const CONTACT_IMAGE_PATH = (
   id: string,
   contactId: string,
 ) => `${CONTACT_IMAGES_FOLDER(workspaceId, id)}${contactId}.png`
+
+const VERSION_SUFFIX_RANGE = 1_000_000_000
+const VERSION_SUFFIX_DIGITS = 9
+
+/**
+ * Milliseconds plus nine random digits (Web Crypto — no `node:crypto` in this
+ * module's graph): two writers (a save and a re-render) in the same
+ * millisecond collide with probability ~1e-9, not ~1e-3. Delete paths also
+ * refuse to remove the key just committed (see `deleteSupersededBackground`).
+ */
+const uniqueBackgroundVersion = (): string =>
+  `${Date.now()}${String(
+    crypto.getRandomValues(new Uint32Array(1))[0] % VERSION_SUFFIX_RANGE,
+  ).padStart(VERSION_SUFFIX_DIGITS, "0")}`
 
 const BACKGROUND_VERSION_RE = /background_(\d+)\.png$/
 
@@ -90,6 +122,73 @@ async function deleteObjectsByPrefix(
       { prefix, error },
       "dynamic-image: failed to clean up old files under prefix",
     )
+  }
+}
+
+/**
+ * A background the template install staged lives under the tool-image root of
+ * the workspace, not under the standard per-image prefix, so the sweep of that
+ * prefix never reaches it: it is deleted by key once the row stops using it.
+ */
+const isStagedBackground = (
+  workspaceId: string,
+  backgroundUrl: string | null,
+): boolean =>
+  Boolean(
+    backgroundUrl?.startsWith(
+      `public/space/${workspaceId}/template-tool-images/`,
+    ),
+  ) && !backgroundUrl?.includes("..")
+
+async function deleteStagedBackground(
+  workspaceId: string,
+  backgroundUrl: string | null,
+): Promise<void> {
+  if (!(backgroundUrl && isStagedBackground(workspaceId, backgroundUrl))) {
+    return
+  }
+  try {
+    await uploader.deleteObject(backgroundUrl)
+  } catch (error) {
+    logger.warn(
+      { backgroundUrl, error },
+      "dynamic-image: failed to delete a staged background",
+    )
+  }
+}
+
+/** Removes the one file a skipped re-render uploaded (best-effort, never the row's own). */
+async function deleteOwnBackground(path: string): Promise<void> {
+  try {
+    await uploader.deleteObject(path)
+  } catch (error) {
+    logger.warn({ path, error }, "dynamic-image: failed to delete a new file")
+  }
+}
+
+/**
+ * The one background a write replaced, by key (never a sweep of the folder).
+ * `committedUrl` is the key that write just stored: it is never deleted, even
+ * if a key collision made it look "superseded".
+ */
+async function deleteSupersededBackground(
+  workspaceId: string,
+  id: string,
+  backgroundUrl: string,
+  committedUrl: string,
+): Promise<void> {
+  if (backgroundUrl === committedUrl) {
+    return
+  }
+  if (isStagedBackground(workspaceId, backgroundUrl)) {
+    await deleteStagedBackground(workspaceId, backgroundUrl)
+    return
+  }
+  if (
+    backgroundUrl.startsWith(BACKGROUND_FILES_PREFIX(workspaceId, id)) &&
+    !backgroundUrl.includes("..")
+  ) {
+    await deleteOwnBackground(backgroundUrl)
   }
 }
 
@@ -169,9 +268,20 @@ class DynamicImageService extends BaseService {
     workspaceId: string
     id: string
     data: DynamicImageDocument
+    /** False when the file must only replace the old ones once the row points at it. */
+    sweepOld?: boolean
   }): Promise<string> {
-    const buffer = await renderStaticLayer(input.data)
-    const path = BACKGROUND_PATH(input.workspaceId, input.id, Date.now())
+    const { storageUrl } = await resolveTenantSettings({
+      workspaceId: input.workspaceId,
+    })
+    const buffer = await renderStaticLayer(input.data, {
+      trustedStorageUrl: storageUrl,
+    })
+    const path = BACKGROUND_PATH(
+      input.workspaceId,
+      input.id,
+      uniqueBackgroundVersion(),
+    )
     await uploader.putObject(path, buffer, {
       ACL: "public-read",
       ContentType: "image/png",
@@ -184,12 +294,21 @@ class DynamicImageService extends BaseService {
     // Old background files (including any left over from before this
     // versioned-filename scheme) are now orphaned — remove them so storage
     // doesn't accumulate one file per save forever.
-    await deleteObjectsByPrefix(
-      BACKGROUND_FILES_PREFIX(input.workspaceId, input.id),
-      { except: path },
-    )
+    if (input.sweepOld !== false) {
+      await this.sweepOldBackgrounds(input.workspaceId, input.id, path)
+    }
 
     return path
+  }
+
+  private async sweepOldBackgrounds(
+    workspaceId: string,
+    id: string,
+    keep: string,
+  ): Promise<void> {
+    await deleteObjectsByPrefix(BACKGROUND_FILES_PREFIX(workspaceId, id), {
+      except: keep,
+    })
   }
 
   async create(input: UpsertInput): Promise<DynamicImageModel> {
@@ -200,46 +319,102 @@ class DynamicImageService extends BaseService {
       data: input.data,
     })
 
-    await db.insert(dynamicImageModel).values({
-      id,
-      workspaceId: input.workspaceId,
-      name: input.name,
-      customFieldId: input.customFieldId,
-      data: input.data,
-      backgroundUrl,
-    })
+    await this.insertInTx(db, { ...input, id, backgroundUrl })
 
     return await this.find({ workspaceId: input.workspaceId, id })
+  }
+
+  /**
+   * The row write of `create`, shared with the template install. `backgroundUrl`
+   * is a storage key that is already in place: rendering and uploading happen
+   * outside any transaction.
+   */
+  async insertInTx(
+    tx: DatabaseClient,
+    input: UpsertInput & {
+      id: string
+      backgroundUrl: string
+      enabled?: boolean
+    },
+  ): Promise<DynamicImageModel> {
+    const [row] = await tx
+      .insert(dynamicImageModel)
+      .values({
+        id: input.id,
+        workspaceId: input.workspaceId,
+        name: input.name,
+        customFieldId: input.customFieldId,
+        data: input.data,
+        backgroundUrl: input.backgroundUrl,
+        enabled: input.enabled,
+      })
+      .returning()
+    return row
   }
 
   async update(
     input: UpsertInput & { id: string },
   ): Promise<DynamicImageModel> {
-    const existing = await this.find({
+    const lock = {
       workspaceId: input.workspaceId,
-      id: input.id,
-    })
+      initialKeys: [{ kind: "dynamicImage" as const, resourceId: input.id }],
+    }
+    // Checked before anything is rendered or uploaded: a View-only copy must
+    // refuse without leaving a new background file behind.
+    const existing = await withTemplateLockedTransaction(
+      (tx) => this.loadEditable(tx, input),
+      lock,
+    )
 
+    // No folder sweep: a concurrent re-render may own a file in the same
+    // folder. Only the file this save replaces is removed, after the commit.
     const backgroundUrl = await this.renderAndUploadBackground({
       workspaceId: input.workspaceId,
       id: input.id,
       data: input.data,
+      sweepOld: false,
     })
 
-    await db
-      .update(dynamicImageModel)
-      .set({
-        name: input.name,
-        customFieldId: input.customFieldId,
-        data: input.data,
+    // Re-checked under the lock that covers the write, since the install or an
+    // uninstall may have taken the row between the two transactions.
+    let replaced: string | null
+    try {
+      replaced = await withTemplateLockedTransaction(async (tx) => {
+        const locked = await this.loadEditable(tx, input)
+        await tx
+          .update(dynamicImageModel)
+          .set({
+            name: input.name,
+            customFieldId: input.customFieldId,
+            data: input.data,
+            backgroundUrl,
+          })
+          .where(
+            and(
+              eq(dynamicImageModel.id, input.id),
+              eq(dynamicImageModel.workspaceId, input.workspaceId),
+            ),
+          )
+        // The save rendered a background from the stored document itself.
+        await dynamicImageStaleBackgroundRepository.clear(
+          { workspaceId: input.workspaceId, resourceId: input.id },
+          tx,
+        )
+        return locked.backgroundUrl
+      }, lock)
+    } catch (error) {
+      await deleteOwnBackground(backgroundUrl)
+      throw error
+    }
+
+    if (replaced) {
+      await deleteSupersededBackground(
+        input.workspaceId,
+        input.id,
+        replaced,
         backgroundUrl,
-      })
-      .where(
-        and(
-          eq(dynamicImageModel.id, input.id),
-          eq(dynamicImageModel.workspaceId, input.workspaceId),
-        ),
       )
+    }
 
     // The background changed, so every previously rendered per-contact image
     // (composited on top of the OLD background) is stale — clear them so the
@@ -255,6 +430,126 @@ class DynamicImageService extends BaseService {
     })
 
     return await this.find({ workspaceId: input.workspaceId, id: input.id })
+  }
+
+  /**
+   * Re-bakes the static background of a template copy whose `data` was changed
+   * after the install wrote it (its QR or text links followed the copies), then
+   * switches the image to `enabled`. Storage I/O stays outside the transaction;
+   * the row write is a compare-and-set under the template lock: it applies only
+   * while the row is still switched off and still points at the background read
+   * first. Anything else (edited, toggled, deleted, an uninstall freezing it)
+   * means the installer moved on, so nothing is overwritten and only the file
+   * this call uploaded is removed. Idempotent. Returns whether it applied.
+   */
+  async rerenderInstalledBackground(input: {
+    workspaceId: string
+    id: string
+    enabled: boolean
+  }): Promise<boolean> {
+    const existing = await db.query.dynamicImageModel.findFirst({
+      where: { id: input.id, workspaceId: input.workspaceId },
+    })
+    if (!existing?.backgroundUrl || existing.enabled) {
+      return false
+    }
+    const readBackgroundUrl = existing.backgroundUrl
+    const path = await this.renderAndUploadBackground({
+      workspaceId: input.workspaceId,
+      id: input.id,
+      data: existing.data,
+      sweepOld: false,
+    })
+    let applied = false
+    try {
+      applied = await withTemplateLockedTransaction(
+        async (tx) => {
+          try {
+            await assertResourceEditable({
+              workspaceId: input.workspaceId,
+              resourceKind: "dynamicImage",
+              resourceIds: [input.id],
+              changedKeys: [],
+              tx,
+            })
+          } catch (error) {
+            if (
+              error instanceof ChatbotXException &&
+              error.code === "templateUninstallInProgress"
+            ) {
+              return false
+            }
+            throw error
+          }
+          const updated = await tx
+            .update(dynamicImageModel)
+            .set({ backgroundUrl: path, enabled: input.enabled })
+            .where(
+              and(
+                eq(dynamicImageModel.id, input.id),
+                eq(dynamicImageModel.workspaceId, input.workspaceId),
+                eq(dynamicImageModel.enabled, false),
+                eq(dynamicImageModel.backgroundUrl, readBackgroundUrl),
+              ),
+            )
+            .returning({ id: dynamicImageModel.id })
+          if (updated.length === 0) {
+            return false
+          }
+          await dynamicImageStaleBackgroundRepository.clear(
+            { workspaceId: input.workspaceId, resourceId: input.id },
+            tx,
+          )
+          return true
+        },
+        {
+          workspaceId: input.workspaceId,
+          initialKeys: [{ kind: "dynamicImage", resourceId: input.id }],
+        },
+      )
+    } catch (error) {
+      await deleteOwnBackground(path)
+      throw error
+    }
+    if (!applied) {
+      await deleteOwnBackground(path)
+      return false
+    }
+    // Only the file this write superseded: a prefix sweep could remove a newer
+    // background a concurrent save committed after the compare-and-set.
+    await deleteSupersededBackground(
+      input.workspaceId,
+      input.id,
+      readBackgroundUrl,
+      path,
+    )
+    await this.clearRenderedContactImages({
+      workspaceId: input.workspaceId,
+      id: input.id,
+      customFieldId: existing.customFieldId,
+    })
+    return true
+  }
+
+  /** The row, refused when a View-only copy's content would change (run under the row's lock). */
+  private async loadEditable(
+    tx: DatabaseClient,
+    input: UpsertInput & { id: string },
+  ): Promise<DynamicImageModel> {
+    const row = await tx.query.dynamicImageModel.findFirst({
+      where: { id: input.id, workspaceId: input.workspaceId },
+    })
+    if (!row) {
+      throw notFoundException("Dynamic image not found")
+    }
+    await assertResourceEditable({
+      workspaceId: input.workspaceId,
+      resourceKind: "dynamicImage",
+      resourceIds: [row.id],
+      changedKeys: changedKeysOf(row, { name: input.name, data: input.data }),
+      tx,
+    })
+    return row
   }
 
   /**
@@ -289,41 +584,149 @@ class DynamicImageService extends BaseService {
     ctx: { workspaceId: string; id: string },
     enabled: boolean,
   ): Promise<DynamicImageModel> {
-    await this.find(ctx)
-
-    await db
-      .update(dynamicImageModel)
-      .set({ enabled })
-      .where(
-        and(
-          eq(dynamicImageModel.id, ctx.id),
-          eq(dynamicImageModel.workspaceId, ctx.workspaceId),
-        ),
-      )
+    if (enabled) {
+      await this.refreshStaleBackground(ctx)
+    }
+    await withTemplateLockedTransaction(
+      async (tx) => {
+        const row = await tx.query.dynamicImageModel.findFirst({
+          where: { id: ctx.id, workspaceId: ctx.workspaceId },
+        })
+        if (!row) {
+          throw notFoundException("Dynamic image not found")
+        }
+        // The toggle is installer-owned; this only refuses while an uninstall runs.
+        await assertResourceEditable({
+          workspaceId: ctx.workspaceId,
+          resourceKind: "dynamicImage",
+          resourceIds: [row.id],
+          changedKeys: [],
+          tx,
+        })
+        await tx
+          .update(dynamicImageModel)
+          .set({ enabled })
+          .where(
+            and(
+              eq(dynamicImageModel.id, ctx.id),
+              eq(dynamicImageModel.workspaceId, ctx.workspaceId),
+            ),
+          )
+      },
+      {
+        workspaceId: ctx.workspaceId,
+        initialKeys: [{ kind: "dynamicImage", resourceId: ctx.id }],
+      },
+    )
 
     return await this.find(ctx)
+  }
+
+  /**
+   * A copy the install switched off because a baked QR or text layer was
+   * rewritten carries a marker until its background is rendered again. It is
+   * rendered again before it can be switched on, and stays off when that
+   * fails. Any other copy (source off, or switched off by the installer) has a
+   * correct background and enables with no render.
+   */
+  private async refreshStaleBackground(ctx: {
+    workspaceId: string
+    id: string
+  }): Promise<void> {
+    const row = await db.query.dynamicImageModel.findFirst({
+      where: { id: ctx.id, workspaceId: ctx.workspaceId },
+      columns: { enabled: true },
+    })
+    if (
+      !row ||
+      row.enabled ||
+      !(await dynamicImageStaleBackgroundRepository.isMarked({
+        workspaceId: ctx.workspaceId,
+        resourceId: ctx.id,
+      }))
+    ) {
+      return
+    }
+    try {
+      await this.rerenderInstalledBackground({ ...ctx, enabled: false })
+    } catch (error) {
+      logger.error(
+        { err: error, dynamicImageId: ctx.id },
+        "dynamic-image: re-rendering a template copy before enabling failed",
+      )
+      throw conflictException(
+        "This dynamic image's background could not be re-rendered, so it cannot be turned on yet. Try again.",
+        "dynamicImageBackgroundStale",
+      )
+    }
   }
 
   async delete(input: { workspaceId: string; id: string }): Promise<void> {
     const existing = await this.find(input)
 
-    await this.clearRenderedContactImages({
-      workspaceId: input.workspaceId,
-      id: input.id,
+    await withDeleteGuard(
+      {
+        workspaceId: input.workspaceId,
+        targets: [{ resourceKind: "dynamicImage", resourceIds: [input.id] }],
+      },
+      (tx) =>
+        this.deleteInTx(tx, {
+          workspaceId: input.workspaceId,
+          ids: [input.id],
+        }),
+    )
+    await this.cleanUpDeleted({
+      ...input,
       customFieldId: existing.customFieldId,
     })
-    await deleteObjectsByPrefix(
-      BACKGROUND_FILES_PREFIX(input.workspaceId, input.id),
-    )
+    await deleteStagedBackground(input.workspaceId, existing.backgroundUrl)
+  }
 
-    await db
+  /**
+   * The delete core (row write only), shared with the template uninstall so
+   * there is one implementation. Returns the deleted rows' ids and cache
+   * fields, which `cleanUpDeleted` needs after the commit.
+   */
+  async deleteInTx(
+    tx: DatabaseClient,
+    input: { workspaceId: string; ids: string[] },
+  ): Promise<
+    {
+      id: string
+      customFieldId: string | null
+      backgroundUrl: string | null
+      data: DynamicImageDocument
+    }[]
+  > {
+    if (input.ids.length === 0) {
+      return []
+    }
+    return await tx
       .delete(dynamicImageModel)
       .where(
         and(
-          eq(dynamicImageModel.id, input.id),
           eq(dynamicImageModel.workspaceId, input.workspaceId),
+          inArray(dynamicImageModel.id, input.ids),
         ),
       )
+      .returning({
+        id: dynamicImageModel.id,
+        customFieldId: dynamicImageModel.customFieldId,
+        backgroundUrl: dynamicImageModel.backgroundUrl,
+        data: dynamicImageModel.data,
+      })
+  }
+
+  /** The storage and cache work a delete leaves for after its commit; safe to repeat. */
+  async cleanUpDeleted(input: {
+    workspaceId: string
+    id: string
+    customFieldId: string | null
+  }): Promise<void> {
+    await this.clearRenderedContactImages(input)
+    await deleteObjectsByPrefix(
+      BACKGROUND_FILES_PREFIX(input.workspaceId, input.id),
+    )
   }
 
   /**
@@ -470,6 +873,7 @@ class DynamicImageService extends BaseService {
       document: resolvedDocument,
       backgroundBuffer,
       dynamicElementIds: input.dynamicElementIds,
+      remoteImages: { trustedStorageUrl: settings.storageUrl },
     })
 
     const path = CONTACT_IMAGE_PATH(workspaceId, dynamicImage.id, contactId)

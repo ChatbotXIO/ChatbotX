@@ -155,6 +155,7 @@ const buildConversationFixture = () => ({
   contact: null,
   assignedUser: null,
   assignedInboxTeam: null,
+  conversationParticipants: [],
 })
 
 const invoke = (procedure: typeof conversationsPublicRouter.get) =>

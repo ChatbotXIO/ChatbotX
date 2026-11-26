@@ -3,6 +3,8 @@ import { notFound } from "next/navigation"
 import { buildMinigamePlayUrl } from "@/features/minigames/lib/play-url"
 import { MinigameForm } from "@/features/minigames/minigame-form"
 import { findMinigame } from "@/features/minigames/queries"
+import { LockedContent } from "@/features/templates/components/locked-editor"
+import { LockedEditorGuard } from "@/features/templates/components/locked-editor-guard"
 
 export default async function EditMinigamePage({
   params,
@@ -25,11 +27,19 @@ export default async function EditMinigamePage({
   const publicUrl = buildMinigamePlayUrl(minigame.id)
 
   return (
-    <MinigameForm
-      minigame={minigame}
-      mode="edit"
-      publicUrl={publicUrl}
+    <LockedEditorGuard
+      resourceId={id}
+      resourceKind="minigame"
       workspaceId={workspaceId}
-    />
+    >
+      <LockedContent>
+        <MinigameForm
+          minigame={minigame}
+          mode="edit"
+          publicUrl={publicUrl}
+          workspaceId={workspaceId}
+        />
+      </LockedContent>
+    </LockedEditorGuard>
   )
 }

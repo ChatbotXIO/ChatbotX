@@ -89,7 +89,7 @@ export class AiFileEmbeddingRepository {
       return []
     }
     const vector = `[${input.queryVector.join(",")}]`
-    const result = await this.client.execute(sql`
+    const result = await this.client.execute<Record<string, unknown>>(sql`
       SELECT "id", "content", "aiFileId", "chunkIndex",
         1 - ("embedding" <=> ${vector}::vector) AS similarity
       FROM "AIEmbedding"
@@ -226,7 +226,7 @@ export class AiFileEmbeddingRepository {
     } else if (input.chunkingConfig !== undefined) {
       configAssignment = sql`, "chunkingConfig" = ${JSON.stringify(input.chunkingConfig)}::jsonb`
     }
-    const result = await this.client.execute(sql`
+    const result = await this.client.execute<Record<string, unknown>>(sql`
       UPDATE "AIFile"
       SET "processingRun" = ${JSON.stringify(input.run)}::jsonb${configAssignment}
       WHERE "id" = ${input.aiFileId} AND "workspaceId" = ${input.workspaceId}
@@ -252,7 +252,7 @@ export class AiFileEmbeddingRepository {
     activeStatuses: AIFileProcessingRunStatus[]
     patch: Record<string, SQL>
   }): Promise<boolean> {
-    const result = await this.client.execute(sql`
+    const result = await this.client.execute<Record<string, unknown>>(sql`
       UPDATE "AIFile"
       SET "processingRun" = "processingRun" || jsonb_build_object(${sql.join(
         Object.entries(input.patch).map(

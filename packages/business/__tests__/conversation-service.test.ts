@@ -255,10 +255,10 @@ function collectSqlText(
       }
       const obj = n as Record<string, unknown>
       if (
-        Array.isArray(obj.value) &&
-        obj.value.every((v) => typeof v === "string")
+        n.constructor?.name === "StringChunk" &&
+        typeof obj.value === "string"
       ) {
-        out.push(...(obj.value as string[]))
+        out.push(obj.value)
       }
     },
     seen,
@@ -529,6 +529,55 @@ describe("conversationService.updateReadStatus", () => {
     expect(queueWorkspaceRealtimeEvent).not.toHaveBeenCalled()
     await afterCommit?.()
     expect(queueWorkspaceRealtimeEvent).toHaveBeenCalledTimes(1)
+  })
+})
+
+describe("conversationService.markReadBySkippedPost", () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    returning.mockResolvedValue([])
+    createMessageRepository.mockResolvedValue({ findLastByConversation })
+  })
+
+  test("advances the read time to the comment's own time with no inbox-preference condition", async () => {
+    const readAt = new Date("2026-11-22T10:00:00.000Z")
+    returning.mockResolvedValueOnce([
+      { assignedInboxTeamId: null, assignedUserId: null, id: "conv-1" },
+    ])
+
+    await expect(
+      conversationService.markReadBySkippedPost({
+        workspaceId: "ws-1",
+        conversationId: "conv-1",
+        readAt,
+      }),
+    ).resolves.toBe(true)
+
+    expect(set).toHaveBeenCalledWith({ agentLastReadAt: readAt })
+    const whereExpression = where.mock.calls[0][0]
+    const whereValues = collectSqlValues(whereExpression)
+    const whereSqlText = collectSqlText(whereExpression).toLowerCase()
+    expect(whereValues).toContain("conv-1")
+    expect(whereValues).toContain("ws-1")
+    expect(whereValues).toContain(readAt)
+    expect(whereSqlText).toContain(" < ")
+    expect(whereSqlText).toContain("is null")
+    expect(whereSqlText).not.toContain("exists")
+    expect(invalidateCacheByTags).toHaveBeenCalled()
+    expect(queueWorkspaceRealtimeEvent).toHaveBeenCalledTimes(1)
+  })
+
+  test("a comment older than the current read changes nothing", async () => {
+    await expect(
+      conversationService.markReadBySkippedPost({
+        workspaceId: "ws-1",
+        conversationId: "conv-1",
+        readAt: new Date("2026-11-22T10:00:00.000Z"),
+      }),
+    ).resolves.toBe(false)
+
+    expect(invalidateCacheByTags).not.toHaveBeenCalled()
+    expect(queueWorkspaceRealtimeEvent).not.toHaveBeenCalled()
   })
 })
 

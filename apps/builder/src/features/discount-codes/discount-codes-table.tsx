@@ -19,6 +19,7 @@ import {
   formatOrderMoney,
   type StoreCurrencyFormat,
 } from "@/features/orders/lib/order-money"
+import { TemplateLockedList } from "@/features/templates/components/lock-context"
 import { DeleteDiscountCodeDialog } from "./components/delete-discount-code-dialog"
 import {
   type DiscountCodeRowAction,
@@ -73,17 +74,23 @@ export function DiscountCodesTable({
         <CardDescription>{t("discountCodes.description")}</CardDescription>
       </CardHeader>
       <CardContent>
-        <DataTable table={table}>
-          <DataTableToolbar table={table}>
-            <Link
-              className={buttonVariants()}
-              href={`/space/${workspaceId}/discount-codes/new`}
-            >
-              <PlusIcon className="h-4 w-4" />
-              {t("discountCodes.add")}
-            </Link>
-          </DataTableToolbar>
-        </DataTable>
+        <TemplateLockedList
+          resourceKind="discountCode"
+          rows={discountCodes.data}
+          workspaceId={workspaceId}
+        >
+          <DataTable table={table}>
+            <DataTableToolbar table={table}>
+              <Link
+                className={buttonVariants()}
+                href={`/space/${workspaceId}/discount-codes/new`}
+              >
+                <PlusIcon className="h-4 w-4" />
+                {t("discountCodes.add")}
+              </Link>
+            </DataTableToolbar>
+          </DataTable>
+        </TemplateLockedList>
         {deleting ? (
           <DeleteDiscountCodeDialog
             discountCode={deleting}

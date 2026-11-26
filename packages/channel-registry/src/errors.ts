@@ -11,3 +11,10 @@ export class IntegrationNotFoundError extends Error {
     this.identifier = identifier
   }
 }
+
+/**
+ * `ChannelError.code` of the error thrown when an inbox has no integration row
+ * (never connected, or its credentials were removed). Callers that treat that
+ * as "not connected" rather than a failure compare against this constant.
+ */
+export const INTEGRATION_AUTH_MISSING_CODE = "integration_auth_missing"

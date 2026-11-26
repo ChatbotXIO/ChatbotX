@@ -144,6 +144,7 @@ export const isProactiveOutboundMetadata = (metadata: unknown): boolean =>
   isBulkOutboundMetadata(metadata, true)
 
 export const COMMENT_AUTOMATION_PAYLOAD_TYPE = "commentAutomation"
+export const POST_COMMENT_PAYLOAD_TYPE = "postComment"
 export const UPDATE_STATUS_PAYLOAD_TYPE = "updateStatus"
 export const FLOW_NODE_PAYLOAD_TYPE = "flowNode"
 export const APPOINTMENT_WEBVIEW_SELECTION_PAYLOAD_TYPE =
@@ -197,6 +198,40 @@ export const commentAutomationMetadataPayload = baseMetadataPayload.extend({
   commentId: z.string(),
   replyChannel: z.enum(["public", "private"]),
 })
+
+/**
+ * Set on the `sendFlow` job when a post-comment trigger starts a flow, so the
+ * flow's steps can render `{{post.*}}` and `{{comment.*}}` for that one
+ * comment. Only ids: the post and the stored comment are read back when a
+ * message renders. It rides in `metadata` because that is what survives every
+ * continuation and a Wait.
+ */
+export const postCommentMetadataPayload = baseMetadataPayload.extend({
+  type: z.literal(POST_COMMENT_PAYLOAD_TYPE),
+  channelPostId: z.string(),
+  commentMessageId: z.string(),
+  commentMessageCreatedAt: z.iso.datetime(),
+})
+export type PostCommentMetadataPayload = z.infer<
+  typeof postCommentMetadataPayload
+>
+
+/** The comment a flow run is about, when a post-comment trigger started it. */
+export const postCommentRefFromMetadata = (
+  metadata: { type: string } | null | undefined,
+): Pick<
+  PostCommentMetadataPayload,
+  "channelPostId" | "commentMessageId" | "commentMessageCreatedAt"
+> | null => {
+  const parsed = postCommentMetadataPayload.safeParse(metadata)
+  return parsed.success
+    ? {
+        channelPostId: parsed.data.channelPostId,
+        commentMessageId: parsed.data.commentMessageId,
+        commentMessageCreatedAt: parsed.data.commentMessageCreatedAt,
+      }
+    : null
+}
 
 export const updateStatusPayload = baseMetadataPayload.extend({
   type: z.literal(UPDATE_STATUS_PAYLOAD_TYPE),
@@ -256,6 +291,7 @@ export const metadataSchema = z.discriminatedUnion("type", [
   broadcastMetadataPayload,
   sequenceScheduleMetadataPayload,
   commentAutomationMetadataPayload,
+  postCommentMetadataPayload,
   updateStatusPayload,
   appointmentWebviewSelectionPayload,
   appointmentAvailabilityRangeSelectionPayload,

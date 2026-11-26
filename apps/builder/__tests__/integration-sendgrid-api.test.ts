@@ -73,6 +73,10 @@ vi.mock("@chatbotx.io/worker-config", () => ({
     coexistMessengerSync: "coexistMessengerSync",
     coexistInstagramSync: "coexistInstagramSync",
   },
+  NotificationJobAction: {
+    notifyPostFailed: "notifyPostFailed",
+    notifyPostNeedsReview: "notifyPostNeedsReview",
+  },
   PURGE_WORKSPACES_INTERVAL_MINUTES: 30,
 }))
 

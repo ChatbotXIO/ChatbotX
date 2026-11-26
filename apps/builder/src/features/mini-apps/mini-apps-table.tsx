@@ -37,6 +37,12 @@ import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { useAction } from "next-safe-action/hooks"
 import { use, useEffect, useMemo, useState } from "react"
+import { LockBadge } from "@/features/templates/components/lock-badge"
+import {
+  TemplateLockedList,
+  useIsLocked,
+  useIsUndeletable,
+} from "@/features/templates/components/lock-context"
 import { useClipboard } from "@/hooks/use-clipboard"
 import { getMiniAppFlowJsonAction } from "./actions/get-mini-app-flow-json.action"
 import { DuplicateMiniAppDialog } from "./components/duplicate-mini-app-dialog"
@@ -103,6 +109,8 @@ function MiniAppRowActions({
   const t = useTranslations()
   const router = useRouter()
   const { handleCopy } = useClipboard()
+  const locked = useIsLocked(miniAppId)
+  const undeletable = useIsUndeletable(miniAppId)
   return (
     <DropdownMenu>
       <DropdownMenuTrigger
@@ -123,7 +131,10 @@ function MiniAppRowActions({
           <PencilIcon />
           {t("actions.edit")}
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => onAction("duplicate")}>
+        <DropdownMenuItem
+          disabled={locked}
+          onClick={() => onAction("duplicate")}
+        >
           <CopyPlusIcon />
           {t("actions.duplicate")}
         </DropdownMenuItem>
@@ -151,6 +162,7 @@ function MiniAppRowActions({
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem
+          disabled={undeletable}
           onClick={() => onAction("delete")}
           variant="destructive"
         >
@@ -205,12 +217,15 @@ export function MiniAppsTable({ workspaceId, promises }: MiniAppsTableProps) {
           />
         ),
         cell: ({ row }) => (
-          <Link
-            className="inline-block max-w-[260px] truncate font-medium hover:underline"
-            href={miniAppEditPath(workspaceId, row.original.id)}
-          >
-            {row.original.name}
-          </Link>
+          <div className="flex max-w-[260px] items-center">
+            <Link
+              className="inline-block truncate font-medium hover:underline"
+              href={miniAppEditPath(workspaceId, row.original.id)}
+            >
+              {row.original.name}
+            </Link>
+            <LockBadge resourceId={row.original.id} />
+          </div>
         ),
         meta: {
           label: t("fields.name.label"),
@@ -322,20 +337,26 @@ export function MiniAppsTable({ workspaceId, promises }: MiniAppsTableProps) {
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <DataTable table={table}>
-          <DataTableToolbar table={table}>
-            <div className="flex items-center gap-2">
-              {selected.length > 0 ? (
-                <DeleteMiniAppsDialog
-                  miniApps={selected}
-                  onSuccess={() => table.toggleAllRowsSelected(false)}
-                  workspaceId={workspaceId}
-                />
-              ) : null}
-            </div>
-            <CreateMiniAppDialog workspaceId={workspaceId} />
-          </DataTableToolbar>
-        </DataTable>
+        <TemplateLockedList
+          resourceKind="miniApp"
+          rows={data}
+          workspaceId={workspaceId}
+        >
+          <DataTable table={table}>
+            <DataTableToolbar table={table}>
+              <div className="flex items-center gap-2">
+                {selected.length > 0 ? (
+                  <DeleteMiniAppsDialog
+                    miniApps={selected}
+                    onSuccess={() => table.toggleAllRowsSelected(false)}
+                    workspaceId={workspaceId}
+                  />
+                ) : null}
+              </div>
+              <CreateMiniAppDialog workspaceId={workspaceId} />
+            </DataTableToolbar>
+          </DataTable>
+        </TemplateLockedList>
 
         {rowAction?.variant === "copyJson" ? (
           <FlowJsonLoader

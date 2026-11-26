@@ -4,6 +4,7 @@ import type {
   TemplateFolderManifestEntry,
   TemplateProductCategoryManifestEntry,
 } from "@chatbotx.io/flow-config"
+import { workspaceUsesExternalStore } from "../../external-store"
 
 /**
  * Walks each given folder id up to its root and returns manifest entries
@@ -69,6 +70,13 @@ export const collectProductCategoryAncestry = async (
   categoryIds: readonly string[],
 ): Promise<Record<string, TemplateProductCategoryManifestEntry>> => {
   const manifest: Record<string, TemplateProductCategoryManifestEntry> = {}
+  // A workspace that sells from a connected store mirrors its categories: none ships.
+  if (
+    categoryIds.length === 0 ||
+    (await workspaceUsesExternalStore(workspaceId))
+  ) {
+    return manifest
+  }
   const pending = new Set(categoryIds)
 
   while (pending.size > 0) {

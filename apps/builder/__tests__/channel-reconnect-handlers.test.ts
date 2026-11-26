@@ -85,7 +85,14 @@ vi.mock("@chatbotx.io/business", () => ({
   connectionStateService: {
     commitReconnect: mockCommitReconnect,
   },
+  publishDestinationService: {
+    captureInboxScopes: vi.fn(async () => undefined),
+  },
   userService: { recordConnectionAuthorization: vi.fn(async () => undefined) },
+}))
+
+vi.mock("@/features/channel-connect/lib/reconnect-fan-out", () => ({
+  runReconnectFanOut: vi.fn(async () => null),
 }))
 
 vi.mock("@/features/channel-connect/lib/branding-follow-ups", () => ({
@@ -120,6 +127,7 @@ vi.mock("@chatbotx.io/integration-instagram", () => ({
 
 vi.mock("@chatbotx.io/integration-instagram-facebook", () => ({
   getFacebookUser: mockGetInstagramFacebookUser,
+  getGrantedPermissions: vi.fn(async () => ["instagram_content_publish"]),
   getUserInstagramAccounts: mockGetUserInstagramAccounts,
   subscribePageToInstagramWebhook: mockSubscribeInstagramFacebookWebhook,
   integration: {},
@@ -449,6 +457,7 @@ describe("reconnectInstagramHandler", () => {
       integrationId: "ig-1",
       userId: "user-1",
       userToken: "ig-user-token",
+      grantedScopes: null,
     })
 
   test("stores the user token when the authorized account matches", async () => {

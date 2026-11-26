@@ -48,7 +48,10 @@ import {
   type IntegrationDefinition,
   SdkException,
 } from "@chatbotx.io/sdk"
-import { IntegrationNotFoundError } from "./errors"
+import {
+  INTEGRATION_AUTH_MISSING_CODE,
+  IntegrationNotFoundError,
+} from "./errors"
 
 export { IntegrationNotFoundError } from "./errors"
 
@@ -252,7 +255,7 @@ export const integrationService = {
         throw new ChannelError(
           `Unable to find integration auth for channel: ${contactInbox.channel}`,
           ChannelErrorCategory.AUTH_FAILED,
-          { code: "integration_auth_missing" },
+          { code: INTEGRATION_AUTH_MISSING_CODE },
         )
       }
 
@@ -292,7 +295,7 @@ export const integrationService = {
       throw new ChannelError(
         `Unable to find integration auth for channel: ${contactInbox.channel}`,
         ChannelErrorCategory.AUTH_FAILED,
-        { code: "integration_auth_missing" },
+        { code: INTEGRATION_AUTH_MISSING_CODE },
       )
     }
 

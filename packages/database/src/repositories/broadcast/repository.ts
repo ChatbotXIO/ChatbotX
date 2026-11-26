@@ -2,13 +2,18 @@ import {
   and,
   type DatabaseClient,
   db,
+  desc,
   eq,
   exists,
+  ilike,
   inArray,
+  isNotNull,
   isNull,
+  lt,
   ne,
   or,
   relationsFilterToSQL,
+  type SQL,
   sql,
 } from "../../client"
 import {
@@ -26,13 +31,32 @@ import {
   integrationMessengerModel,
   integrationWhatsappModel,
 } from "../../schema"
+import type { BroadcastModel } from "../../types"
 import {
   getPaginationWithDefaults,
+  isBigintId,
   likeContains,
   parseOrderByAsObject,
 } from "../../utils"
 
 const NUMERIC_RE = /^\d+$/
+
+/** A broadcast a contact was a recipient of, with that contact's own delivery state. */
+export type ContactBroadcastRow = {
+  broadcastId: string
+  name: string
+  status: BroadcastModel["status"]
+  channel: string
+  schedulesAt: Date
+  sent: boolean
+  deliveredAt: Date | null
+  seenAt: Date | null
+  clickedAt: Date | null
+  failedAt: Date | null
+}
+
+/** Keyset position in the newest-first list of a contact's broadcasts. */
+export type ContactBroadcastCursor = { schedulesAt: Date; broadcastId: string }
 
 /** The delivery state of one recipient row, read while its broadcast is locked. */
 export type BroadcastRecipientAttributionState = {
@@ -113,6 +137,33 @@ const withBroadcastRecurrence = {
   parent: { columns: { id: true, name: true } },
 } as const
 
+// A broadcast of the legacy layout (`targetMode` "channel") names its flow and
+// its page through these columns instead of through `targets`; the detail
+// dialog reads them, so every read that feeds it must load them.
+const withBroadcastLegacyPage = {
+  flow: { columns: { id: true, name: true } },
+  integrationWhatsapp: { columns: { id: true, name: true } },
+  integrationMessenger: { columns: { id: true, name: true } },
+} as const
+
+/** A broadcast whose name contains `search`, or whose id is exactly `search`. */
+const matchesBroadcastSearch = (search: string): SQL | undefined => {
+  const byName = ilike(broadcastModel.name, likeContains(search))
+  return isBigintId(search) ? or(byName, eq(broadcastModel.id, search)) : byName
+}
+
+/** The broadcasts after `cursor` in newest-first order: scheduled earlier, or at the same time with a lower id. */
+const afterContactBroadcastCursor = (
+  cursor: ContactBroadcastCursor,
+): SQL | undefined =>
+  or(
+    lt(broadcastModel.schedulesAt, cursor.schedulesAt),
+    and(
+      eq(broadcastModel.schedulesAt, cursor.schedulesAt),
+      lt(broadcastModel.id, cursor.broadcastId),
+    ),
+  )
+
 export const broadcastRepository = {
   /**
    * Locks the broadcast `FOR SHARE` for the life of `tx` and reads the
@@ -143,7 +194,7 @@ export const broadcastRepository = {
         )`
       : sql``
 
-    const locked = await tx.execute(sql`
+    const locked = await tx.execute<Record<string, unknown>>(sql`
       SELECT b."id"
       FROM "Broadcast" b
       WHERE b."id" = ${input.broadcastId}::bigint
@@ -197,24 +248,7 @@ export const broadcastRepository = {
     return await tx.query.broadcastModel.findMany({
       where,
       with: {
-        flow: {
-          columns: {
-            id: true,
-            name: true,
-          },
-        },
-        integrationWhatsapp: {
-          columns: {
-            id: true,
-            name: true,
-          },
-        },
-        integrationMessenger: {
-          columns: {
-            id: true,
-            name: true,
-          },
-        },
+        ...withBroadcastLegacyPage,
         statusInbox: { columns: { id: true, name: true } },
         ...withBroadcastTargets,
         ...withBroadcastRecurrence,
@@ -369,6 +403,68 @@ export const broadcastRepository = {
     return rows
   },
 
+  /**
+   * The broadcasts a contact was sent, newest first, keyset-paginated. Only
+   * rows that left the preparation stage count: handed to the channel (`sent`)
+   * or failed. Fetches one row past `limit` so the caller can tell whether
+   * another page exists. Served by the `contactId` index of `ContactOnBroadcast`
+   * (a contact has few recipient rows); the caller must already have checked
+   * that the contact belongs to `workspaceId`.
+   */
+  async listForContact(
+    input: {
+      workspaceId: string
+      contactId: string
+      limit: number
+      cursor?: ContactBroadcastCursor
+      /** Part of the broadcast's name, or its exact id. */
+      search?: string
+    },
+    tx: DatabaseClient = db,
+  ): Promise<ContactBroadcastRow[]> {
+    const searchCondition = input.search
+      ? matchesBroadcastSearch(input.search)
+      : undefined
+    const cursorCondition = input.cursor
+      ? afterContactBroadcastCursor(input.cursor)
+      : undefined
+
+    return await tx
+      .select({
+        broadcastId: broadcastModel.id,
+        name: broadcastModel.name,
+        status: broadcastModel.status,
+        channel: broadcastModel.channel,
+        schedulesAt: broadcastModel.schedulesAt,
+        sent: contactsOnBroadcastsModel.sent,
+        deliveredAt: contactsOnBroadcastsModel.deliveredAt,
+        seenAt: contactsOnBroadcastsModel.seenAt,
+        clickedAt: contactsOnBroadcastsModel.clickedAt,
+        failedAt: contactsOnBroadcastsModel.failedAt,
+      })
+      .from(contactsOnBroadcastsModel)
+      .innerJoin(
+        broadcastModel,
+        eq(broadcastModel.id, contactsOnBroadcastsModel.broadcastId),
+      )
+      .where(
+        and(
+          eq(contactsOnBroadcastsModel.contactId, input.contactId),
+          eq(broadcastModel.workspaceId, input.workspaceId),
+          isNull(broadcastModel.deletedAt),
+          ne(broadcastModel.status, broadcastStatuses.enum.draft),
+          or(
+            eq(contactsOnBroadcastsModel.sent, true),
+            isNotNull(contactsOnBroadcastsModel.failedAt),
+          ),
+          searchCondition,
+          cursorCondition,
+        ),
+      )
+      .orderBy(desc(broadcastModel.schedulesAt), desc(broadcastModel.id))
+      .limit(input.limit + 1)
+  },
+
   /** id-or-name lookup, scoped to a non-deleted broadcast in the workspace. */
   async findByIdOrName(
     input: { workspaceId: string; idOrName: string },
@@ -384,6 +480,7 @@ export const broadcastRepository = {
     return await tx.query.broadcastModel.findFirst({
       where,
       with: {
+        ...withBroadcastLegacyPage,
         statusInbox: { columns: { id: true, name: true } },
         ...withBroadcastTargets,
         ...withBroadcastRecurrence,

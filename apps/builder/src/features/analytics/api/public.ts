@@ -138,7 +138,13 @@ export const analyticsPublicRouter = {
       description:
         "Charts newly created contacts per day in the range. When `to` is more than 60 full days after `from`, the series uses monthly buckets (first day of the month) instead of daily ones. Compare it with `analytics.blockedContactsPerDay` to separate acquisition trends from blocked contacts.",
       tags: ["Analytics"],
-      spec: mcpSpec({ visibility: "default" }),
+      spec: mcpSpec({
+        destructiveHint: false,
+        idempotentHint: true,
+        openWorldHint: false,
+        readOnlyHint: true,
+        visibility: "default",
+      }),
     })
     .input(timeRangePublicRequest)
     .output(contactCountsPublicResponse)
@@ -159,7 +165,13 @@ export const analyticsPublicRouter = {
       description:
         "Charts contacts blocked per day in the range. When `to` is more than 60 full days after `from`, the series uses monthly buckets (first day of the month) instead of daily ones. Compare it with `analytics.newContactCountsPerDay` to distinguish blocking trends from new contacts.",
       tags: ["Analytics"],
-      spec: mcpSpec({ visibility: "default" }),
+      spec: mcpSpec({
+        destructiveHint: false,
+        idempotentHint: true,
+        openWorldHint: false,
+        readOnlyHint: true,
+        visibility: "default",
+      }),
     })
     .input(timeRangePublicRequest)
     .output(contactCountsPublicResponse)
@@ -598,7 +610,13 @@ export const analyticsPublicRouter = {
       description:
         "Use this after resolving a broadcast with `broadcasts.get` to inspect sent, delivered, seen, clicked, and failed counts, plus `contactInfo:phoneCaptured` / `contactInfo:emailCaptured`: how many contacts left a phone number / an email after receiving it (counted a few seconds after the contact sends it, but these stats are cached for up to about 2 minutes, so a new capture can take that long to show; `broadcasts.listContacts` is live). Compare results with `analytics.flowStats` for automation performance.",
       tags: ["Analytics"],
-      spec: mcpSpec({ visibility: "default" }),
+      spec: mcpSpec({
+        destructiveHint: false,
+        idempotentHint: true,
+        openWorldHint: false,
+        readOnlyHint: true,
+        visibility: "default",
+      }),
     })
     .input(broadcastStatsPublicRequest)
     .output(broadcastStatsPublicResponse)
@@ -624,7 +642,13 @@ export const analyticsPublicRouter = {
       description:
         "Use this after resolving a sequence and step to inspect delivery counts for that step. Call `sequences.get` first for step ids, or use `analytics.broadcastStats` for broadcast delivery.",
       tags: ["Analytics"],
-      spec: mcpSpec({ visibility: "default" }),
+      spec: mcpSpec({
+        destructiveHint: false,
+        idempotentHint: true,
+        openWorldHint: false,
+        readOnlyHint: true,
+        visibility: "default",
+      }),
     })
     .input(sequenceStepStatsPublicRequest)
     .output(sequenceStepStatsPublicResponse)
@@ -670,7 +694,13 @@ export const analyticsPublicRouter = {
       description:
         "Returns per-node statistics for a flow, keyed by send-message node id: `message:sent`, `message:delivered`, `message:seen`, `message:failed`, `flow:clicked` (`clicked`, and `totalUsers`, which is the delivered count) and per-button clicks, for the current analytics session (`analytics.resetFlowStats` starts a new one). Resolve the flow with `flows.get` first. Call `analytics.newContactCountsPerDay` instead for workspace contact trends.",
       tags: ["Analytics"],
-      spec: mcpSpec({ visibility: "default" }),
+      spec: mcpSpec({
+        destructiveHint: false,
+        idempotentHint: true,
+        openWorldHint: false,
+        readOnlyHint: true,
+        visibility: "default",
+      }),
     })
     .input(flowStatsPublicRequest)
     .output(flowStatsPublicResponse)

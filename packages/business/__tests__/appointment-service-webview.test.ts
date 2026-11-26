@@ -257,9 +257,13 @@ describe("appointmentService.list", () => {
         {
           ...createdAppointment,
           calendarName: "Demo Calendar",
-          contactFirstName: "Ada",
-          contactLastName: "Lovelace",
-          contactFullName: "Ada Lovelace",
+          contact: {
+            id: "contact-1",
+            avatar: null,
+            firstName: "Ada",
+            lastName: "Lovelace",
+            fullName: "Ada Lovelace",
+          },
         },
       ],
       total: 1,

@@ -4,16 +4,25 @@ import {
 } from "@chatbotx.io/database/repositories"
 import { removeTriggerCache } from "@chatbotx.io/events"
 import { uploader } from "@chatbotx.io/filesystem"
+import { leaderboardStore } from "@chatbotx.io/redis"
 import { aiAgentService } from "../ai-agent/service"
 import { aiFileService } from "../ai-file/service"
 import { automatedResponseService } from "../automated-response/service"
 import { connectionStateService } from "../connection/state-service"
 import { couponService } from "../coupon/service"
+import { dynamicImageService } from "../dynamic-image/service"
+import { ecommerceOpenHoursService } from "../ecommerce-open-hours/service"
+import { inboundWebhookService } from "../inbound-webhook/service"
 import { messengerWelcomeMessageFlowService } from "../messenger-welcome-message-flow/service"
 import { pipelineService } from "../pipeline/service"
+import { placeLocationService } from "../place-near-me"
 import { qrCodeService } from "../qr-code/qr-code.service"
+import { vendorService } from "../vendor/service"
 import { workspaceService } from "../workspace"
-import { savedReplyImageOwnedPrefixes } from "./template-object-keys"
+import {
+  isOwnedToolImagePath,
+  savedReplyImageOwnedPrefixes,
+} from "./template-object-keys"
 import { registerUninstallEffect } from "./uninstall-effects"
 
 const requireArg = (
@@ -47,6 +56,38 @@ registerUninstallEffect("aiAgent.invalidateCache", (args) =>
 registerUninstallEffect("coupon.invalidateCache", (args) =>
   couponService.invalidateWorkspaceCache(requireArg(args, "workspaceId")),
 )
+registerUninstallEffect("placeLocation.invalidateCache", (args) =>
+  placeLocationService.invalidateWorkspaceCache(
+    requireArg(args, "workspaceId"),
+  ),
+)
+registerUninstallEffect("dynamicImage.cleanUp", (args) =>
+  dynamicImageService.cleanUpDeleted({
+    workspaceId: requireArg(args, "workspaceId"),
+    id: requireArg(args, "id"),
+    customFieldId: args.customFieldId ?? null,
+  }),
+)
+registerUninstallEffect("ecommerce.invalidateCache", async (args) => {
+  const workspaceId = requireArg(args, "workspaceId")
+  await ecommerceOpenHoursService.invalidateWorkspaceCache(workspaceId)
+  await vendorService.invalidateWorkspaceCache(workspaceId)
+})
+registerUninstallEffect("inboundWebhook.invalidateCache", (args) =>
+  inboundWebhookService.invalidateCache([requireArg(args, "id")]),
+)
+registerUninstallEffect("leaderboard.dropRanking", (args) =>
+  leaderboardStore.drop(requireArg(args, "leaderboardId")),
+)
+registerUninstallEffect("toolImage.deleteObjects", async (args) => {
+  const workspaceId = requireArg(args, "workspaceId")
+  const installationId = requireArg(args, "installationId")
+  // Only objects under this installation's own staging root are ever deleted.
+  const paths = requireArg(args, "paths")
+    .split("\n")
+    .filter((path) => isOwnedToolImagePath(path, workspaceId, installationId))
+  await Promise.all(paths.map((path) => uploader.deleteObject(path)))
+})
 registerUninstallEffect("flow.welcomeCleanup", (args) =>
   messengerWelcomeMessageFlowService.enqueueDelete({
     workspaceId: requireArg(args, "workspaceId"),

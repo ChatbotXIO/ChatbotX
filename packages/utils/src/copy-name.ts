@@ -8,7 +8,17 @@ const COPY_NAME_SUFFIX = {
   underscore: " _copy",
   /** `<name> copy`, `<name> copy 2`, … */
   space: " copy",
+  /** `<name>-copy`, `<name>-copy-2`, … for names that must stay URL-safe. */
+  slug: "-copy",
 } as const
+
+/** What separates the suffix from its number; the slug style has no spaces. */
+const COPY_NUMBER_SEPARATOR: Record<keyof typeof COPY_NAME_SUFFIX, string> = {
+  dash: " ",
+  underscore: " ",
+  space: " ",
+  slug: "-",
+}
 
 export type CopyNameStyle = keyof typeof COPY_NAME_SUFFIX
 
@@ -21,7 +31,7 @@ export type CopyNameOptions = {
 const suffixFor = (style: CopyNameStyle, attempt: number): string =>
   attempt === 1
     ? COPY_NAME_SUFFIX[style]
-    : `${COPY_NAME_SUFFIX[style]} ${attempt}`
+    : `${COPY_NAME_SUFFIX[style]}${COPY_NUMBER_SEPARATOR[style]}${attempt}`
 
 /** The `attempt`-th copy name of `base`, cut to fit the name limit. */
 export const copyName = (

@@ -5,12 +5,14 @@ import { Button } from "@chatbotx.io/ui/components/ui/button"
 import { cn } from "@chatbotx.io/ui/lib/utils"
 import { CheckCircle2Icon, PlusIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
+import { useIsEditorLocked } from "@/features/templates/components/locked-editor"
 import { useDefaultText } from "../lib/use-default-text"
 import { useMiniAppEditor } from "./editor-context"
 
 /** The screen tabs: click to open one, drag to reorder, or add a screen. */
 export function ScreensBar() {
   const t = useTranslations("miniApps.editor")
+  const isLocked = useIsEditorLocked()
   const screens = useMiniAppEditor((state) => state.definition.screens)
   const selectedScreenKey = useMiniAppEditor((state) => state.selectedScreenKey)
   const selectScreen = useMiniAppEditor((state) => state.selectScreen)
@@ -27,7 +29,7 @@ export function ScreensBar() {
               ? "border-primary bg-primary/10 text-primary"
               : "hover:bg-muted",
           )}
-          draggable
+          draggable={!isLocked}
           key={screen.key}
           onClick={() => selectScreen(screen.key)}
           onDragOver={(event) => event.preventDefault()}
@@ -36,7 +38,7 @@ export function ScreensBar() {
           }
           onDrop={(event) => {
             const from = Number(event.dataTransfer.getData("text/plain"))
-            if (!Number.isNaN(from) && from !== index) {
+            if (!(isLocked || Number.isNaN(from)) && from !== index) {
               moveScreen(from, index)
             }
           }}
@@ -50,6 +52,7 @@ export function ScreensBar() {
         </button>
       ))}
       <Button
+        disabled={isLocked}
         onClick={() => addScreen(t("newScreenTitle"), defaultText)}
         size="sm"
         variant="ghost"

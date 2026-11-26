@@ -53,8 +53,37 @@ that metadata and all issued access-token audiences use the single canonical
 `CHATBOTX_MCP_PUBLIC_URL` to the same public origin so bearer challenges
 advertise HTTPS rather than an internal or HTTP proxy URL.
 
-Users can copy the current workspace URL and revoke their account-level OAuth
-grants in **Settings → Integrations → ChatbotX MCP**. The grants page lists
+Connector profiles have their own resource and token audience:
+`<MCP_PUBLIC_URL>/openai` (ChatGPT, Codex) and `<MCP_PUBLIC_URL>/claude` (the
+Claude directory connector and plugin). Their `OAuthResource` rows are seeded
+from `buildMcpPluginOptions` (`resources`); a resource without a row fails
+authorize and token requests with `invalid_target`. Protected-resource
+metadata for `/mcp/openai` and `/mcp/claude` (and paths under them) names that
+exact resource, because RFC 9728 clients require it to match the URL they
+connect to. A profile token never authenticates `/mcp/messages` or another
+profile. Add a profile to `MCP_CONNECTOR_PROFILES` in
+`packages/auth/src/keys.ts` and `CONNECTOR_PROFILES` in
+`apps/mcp-server/src/oauth.ts` together.
+
+For an OpenAI Plugin directory submission, the builder also serves the portal's
+exact domain-verification token as uncached plain text at
+`/.well-known/openai-apps-challenge`. Set the server-only
+`OPENAI_APPS_DOMAIN_CHALLENGE` variable to the token supplied by the portal;
+the production URL is `https://app.chatbotx.io/.well-known/openai-apps-challenge`.
+A white-label domain never serves it (404).
+
+An access token must carry exactly one MCP audience: a token minted for
+several MCP resources at once is rejected, so a profile token can never
+authenticate `/mcp/messages` and the reverse. While token introspection is
+unavailable, `/mcp/messages` still fails open for API keys but reads a JWT's
+unverified `aud` and refuses a connector-profile token (reject-only).
+
+Users can copy the connection URLs and revoke their account-level OAuth
+grants in **Settings → Integrations → MCP connector**
+(`/space/<id>/settings/integrations/mcp`; the old `chatbotx-mcp` slug
+redirects). On a white-label domain the page shows a "not available on this
+domain" notice instead of connect URLs, because the MCP endpoint and its OAuth
+sign-in are on the platform host only; the grants list stays. The grants page lists
 consents, so a client with no live refresh token remains visible until revoked.
 Revoking a client applies to every workspace the user administers, while the
 MCP server's introspection cache can keep an already-issued access JWT usable for at most five minutes.

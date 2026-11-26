@@ -79,7 +79,41 @@ export type ConversationContactInboxResource = z.infer<
   typeof conversationContactInboxResource
 >
 
+/**
+ * A workspace member who replied in a conversation. `image` is the same raw
+ * value as `assignedUser.image`; the builder resolves it to a URL.
+ */
+export const conversationParticipantResource = z.object({
+  userId: z.string().describe("Id of the member who replied."),
+  name: z.string().nullable().describe("Display name of the member."),
+  image: z.string().nullable().describe("Avatar of the member."),
+  lastRepliedAt: z
+    .date()
+    .describe("When this member last replied in the conversation."),
+})
+export type ConversationParticipantResource = z.infer<
+  typeof conversationParticipantResource
+>
+
+export const listConversationParticipantsResponse = z.object({
+  data: z
+    .array(conversationParticipantResource)
+    .describe("Members who replied, most recent reply first."),
+  nextCursor: z
+    .string()
+    .nullable()
+    .describe("Pass as `cursor` for the next page; null on the last page."),
+})
+export type ListConversationParticipantsResponse = z.infer<
+  typeof listConversationParticipantsResponse
+>
+
 export const listConversationsItemResource = conversationResource.extend({
+  recentParticipants: z
+    .array(conversationParticipantResource)
+    .describe(
+      "Up to the 3 members who replied most recently, newest first. Preview only: use `conversations.listParticipants` for everyone.",
+    ),
   contactInboxes: z.array(conversationContactInboxResource),
   messages: z.array(messageResourceWithRelations),
   contact: contactResource.nullable(),

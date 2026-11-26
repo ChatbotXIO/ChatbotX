@@ -73,6 +73,8 @@ vi.mock("../src/lib/logger", () => ({
 }))
 
 const {
+  applyHideRules,
+  moderateCommentWithAI,
   buildModerationInstructions,
   processCommentModeration,
   verdictCacheKey,
@@ -465,5 +467,84 @@ describe("verdictCacheKey", () => {
       }),
     ])
     expect(keys.size).toBe(4)
+  })
+})
+
+describe("applyHideRules", () => {
+  const hideAllAutomation = {
+    id: "automation-1",
+    hideComments: { all: true, showCommentsAfter: "1d" },
+  }
+  const baseProps = (postHidesComment?: boolean) => ({
+    automation: hideAllAutomation as never,
+    channelType: "messenger" as const,
+    contactInbox: { id: "contact-inbox-1", contactId: "contact-1" } as never,
+    data: {
+      ...jobData.commentAutomation,
+      integrationType: "messenger",
+      ...(postHidesComment ? { postHidesComment } : {}),
+    },
+    loadCommentMessage: vi.fn().mockResolvedValue({
+      id: "message-1",
+      createdAt: new Date("2026-11-02T00:00:00.000Z"),
+    }),
+    occurredAt: new Date("2026-11-02T00:00:00.000Z"),
+    resolveAttachmentInfo: vi.fn(),
+  })
+
+  test("the automation's own hide-all rule hides the comment and schedules the unhide", async () => {
+    await applyHideRules(baseProps())
+
+    const actions = mocks.chatQueueAdd.mock.calls.map(
+      ([, payload]) => payload.data.hidden,
+    )
+    expect(actions).toEqual([true, false])
+    expect(mocks.recordModeration).toHaveBeenCalledWith(
+      expect.objectContaining({ action: "hide", rule: "all" }),
+    )
+  })
+
+  test("a comment the post already hides is left alone: no second hide and no timed unhide", async () => {
+    const props = baseProps(true)
+
+    await applyHideRules(props)
+
+    expect(props.loadCommentMessage).not.toHaveBeenCalled()
+    expect(mocks.recordModeration).not.toHaveBeenCalled()
+    expect(mocks.chatQueueAdd).not.toHaveBeenCalled()
+  })
+
+  test("a comment the post already hides is still checked by AI moderation, and the flag survives the round trip", async () => {
+    const data = {
+      ...jobData.commentAutomation,
+      postHidesComment: true,
+    }
+
+    const outcome = await moderateCommentWithAI({
+      automation: {
+        id: "automation-1",
+        hideComments: { aiModeration },
+      } as never,
+      channelType: "instagram",
+      contactInbox: { id: "contact-inbox-1", contactId: "contact-1" } as never,
+      data,
+      loadCommentMessage: vi.fn().mockResolvedValue({
+        id: "message-1",
+        createdAt: new Date("2026-11-02T00:00:00.000Z"),
+      }),
+    })
+
+    expect(outcome).toBe("pendingAI")
+    expect(mocks.aiAgentQueueAdd).toHaveBeenCalledWith(
+      "commentModeration",
+      expect.objectContaining({
+        data: expect.objectContaining({
+          commentAutomation: expect.objectContaining({
+            postHidesComment: true,
+          }),
+        }),
+      }),
+      expect.anything(),
+    )
   })
 })

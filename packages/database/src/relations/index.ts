@@ -29,6 +29,7 @@ import { broadcastRelations } from "./broadcast"
 import { broadcastRecurrenceRelations } from "./broadcast-recurrence"
 import { broadcastTargetRelations } from "./broadcast-target"
 import { channelPostRelations } from "./channel-post"
+import { channelPostSyncRelations } from "./channel-post-sync"
 import { coexistSyncRunRelations } from "./coexist-sync-run"
 import { commentAutomationRelations } from "./comment-automation"
 import { commentAutomationEventRelations } from "./comment-automation-event"
@@ -92,6 +93,7 @@ import { inboxRelations } from "./inbox"
 import { inboxContactStatsRelations } from "./inbox-contact-stats"
 import { inboxTeamRelations } from "./inbox-team"
 import { inboxTeamMemberRelations } from "./inbox-team-member"
+import { inboxTranslationSettingsRelations } from "./inbox-translation-settings"
 import { integrationRelations } from "./integration"
 import { integrationActiveCampaignRelations } from "./integration-active-campaign"
 import { integrationApiRelations } from "./integration-api"
@@ -131,6 +133,7 @@ import { magicLinkRelations } from "./magic-link"
 import { mediaLibraryFileRelations } from "./media-library-file"
 import { mediaLibraryFolderRelations } from "./media-library-folder"
 import { messageRelations } from "./message"
+import { messageTranslationRelations } from "./message-translation"
 import { messagingAdOperationRelations } from "./messaging-ad-operation"
 import { messagingAdsConnectionRelations } from "./messaging-ads-connection"
 import { messengerMessageTemplateRelations } from "./messenger-message-template"
@@ -152,8 +155,10 @@ import { oauthResourceRelations } from "./oauth-resource"
 import { pipelineRelations } from "./pipeline"
 import { placeNearMeRelations } from "./place-near-me"
 import { pollRelations } from "./poll"
+import { postTopicRelations } from "./post-topic"
 import { productRelations } from "./product"
 import { productCategoryRelations } from "./product-category"
+import { publishDestinationRelations } from "./publish-destination"
 import { questionnaireRelations } from "./questionnaire"
 import { reflinkRelations } from "./reflink"
 import { resourceDeletionLogRelations } from "./resource-deletion-log"
@@ -162,6 +167,12 @@ import { savedReplyImageRelations } from "./saved-reply-image"
 import { sequenceRelations } from "./sequence"
 import { sequenceDispatchRelations } from "./sequence-dispatch"
 import { sequenceStepRelations } from "./sequence-step"
+import { socialAccountRelations } from "./social-account"
+import { socialPostRelations } from "./social-post"
+import { socialPostFeedRelations } from "./social-post-feed"
+import { socialPostRecurrenceRelations } from "./social-post-recurrence"
+import { socialPostSnippetRelations } from "./social-post-snippet"
+import { socialPostTargetSetRelations } from "./social-post-target-set"
 import { spreadsheetRelations } from "./spreadsheet"
 import { tagRelations } from "./tag"
 import { tagChannelRelations } from "./tag-channel"
@@ -207,6 +218,15 @@ export const relations = {
   ...adsConversionRuleRelations,
   ...integrationOpenaiRelations,
   ...channelPostRelations,
+  ...channelPostSyncRelations,
+  ...publishDestinationRelations,
+  ...socialAccountRelations,
+  ...socialPostRelations,
+  ...socialPostFeedRelations,
+  ...socialPostRecurrenceRelations,
+  ...socialPostSnippetRelations,
+  ...socialPostTargetSetRelations,
+  ...postTopicRelations,
   ...contactRelations,
   ...contactInboxPostRelations,
   ...contactReferralEventRelations,
@@ -265,6 +285,8 @@ export const relations = {
   ...integrationMessengerRelations,
   ...aiHandoverBulkRunRelations,
   ...aiHandoverSettingsRelations,
+  ...inboxTranslationSettingsRelations,
+  ...messageTranslationRelations,
   ...messengerMessageTemplateRelations,
   ...integrationWebchatRelations,
   ...integrationZaloRelations,

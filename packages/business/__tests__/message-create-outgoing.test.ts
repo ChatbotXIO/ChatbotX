@@ -62,6 +62,10 @@ vi.mock("@chatbotx.io/worker-config", () => ({
   integrationQueue: { add: mockIntegrationQueueAdd },
 }))
 
+vi.mock("../src/conversation-participant/service", () => ({
+  conversationParticipantService: { recordReply: vi.fn() },
+}))
+
 vi.mock("../src/contact-inbox/service", () => ({
   contactInboxService: { updateTracking: mockUpdateTracking },
 }))
@@ -746,6 +750,38 @@ describe("messageService.createOutgoing with products", () => {
     expect(mockChatQueueAdd.mock.calls.map(([name]) => name)).toContain(
       "checkOutboundAutomatedResponse",
     )
+  })
+
+  const automationJobText = () =>
+    mockChatQueueAdd.mock.calls.find(
+      ([name]) => name === "checkOutboundAutomatedResponse",
+    )?.[1].data.message.text
+
+  test("keyword rules see automationText, while the stored message keeps its own text", async () => {
+    await createOutgoing({
+      conversation: conversation as never,
+      contactInbox: whatsappContactInbox as never,
+      input: { text: "Xin chao", automationText: "Hello" },
+      user: { id: "user-1" } as never,
+      sendFrom: "inbox",
+    })
+
+    expect(automationJobText()).toBe("Hello")
+    expect(mockRepositoryCreate).toHaveBeenCalledWith(
+      expect.objectContaining({ text: "Xin chao" }),
+    )
+  })
+
+  test("without automationText the rules see the message text, as before", async () => {
+    await createOutgoing({
+      conversation: conversation as never,
+      contactInbox: whatsappContactInbox as never,
+      input: { text: "Hello" },
+      user: { id: "user-1" } as never,
+      sendFrom: "inbox",
+    })
+
+    expect(automationJobText()).toBe("Hello")
   })
 })
 

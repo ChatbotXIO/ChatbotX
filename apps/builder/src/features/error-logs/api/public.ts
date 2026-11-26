@@ -19,7 +19,13 @@ export const errorLogsPublicRouter = {
       description:
         "Use this to inspect recent workspace failures by `keyword` before retrying the related action. Returns newest error logs first; use `token.get` to confirm the token can access diagnostics.",
       tags: ["Error Logs"],
-      spec: mcpSpec({ visibility: "default" }),
+      spec: mcpSpec({
+        destructiveHint: false,
+        idempotentHint: true,
+        openWorldHint: false,
+        readOnlyHint: true,
+        visibility: "default",
+      }),
     })
     // `sort` is dropped, unlike the private table, and the order is pinned in
     // the handler instead — the same way the tags/bot-fields/broadcasts public

@@ -1,4 +1,3 @@
-import { relationsFilterToSQL } from "drizzle-orm"
 import { PgDialect } from "drizzle-orm/pg-core"
 import { afterEach, describe, expect, test } from "vitest"
 import { env } from "../src/keys"
@@ -7,6 +6,7 @@ import {
   type ContactActivityFilterField,
 } from "../src/partials/contact-activity"
 import { applyContactFilter } from "../src/queries/contact-filter"
+import { relationsFilterToSQL } from "../src/relations-filter"
 import { contactModel } from "../src/schema"
 
 const WORKSPACE_ID = "42"

@@ -5,6 +5,38 @@ const mocks = vi.hoisted(() => ({
   findMany: vi.fn(),
   insertValues: vi.fn(),
   updateSet: vi.fn(),
+  assertResourceEditable: vi.fn(),
+  assertReferencable: vi.fn(),
+  guardTargets: vi.fn(),
+  deleteReturning: vi.fn(),
+  lockedKeys: vi.fn(),
+}))
+
+vi.mock("../src/template/installed-resource.service", () => ({
+  assertResourceEditable: mocks.assertResourceEditable,
+  assertReferencable: mocks.assertReferencable,
+  changedKeysOf: (
+    existing: Record<string, unknown>,
+    patch: Record<string, unknown>,
+  ) => Object.keys(patch).filter((key) => patch[key] !== existing[key]),
+  withDeleteGuard: async (
+    input: unknown,
+    run: (tx: unknown) => Promise<unknown>,
+  ) => {
+    mocks.guardTargets(input)
+    const { db } = await import("@chatbotx.io/database/client")
+    return await run(db)
+  },
+}))
+vi.mock("../src/template/template-resource-locks", () => ({
+  withTemplateLockedTransaction: async (
+    run: (tx: unknown) => Promise<unknown>,
+    options: unknown,
+  ) => {
+    mocks.lockedKeys(options)
+    const { db } = await import("@chatbotx.io/database/client")
+    return await run(db)
+  },
 }))
 
 vi.mock("@chatbotx.io/database/client", () => {
@@ -28,6 +60,9 @@ vi.mock("@chatbotx.io/database/client", () => {
           mocks.updateSet(values)
           return { where: () => ({ returning }) }
         },
+      }),
+      delete: () => ({
+        where: () => ({ returning: mocks.deleteReturning }),
       }),
     },
     and: (...args: unknown[]) => ({ and: args }),
@@ -180,5 +215,121 @@ describe("igStoryAutomationService.findActiveAutomations", () => {
         OR: [{ inboxId: { isNull: true } }, { inboxId: "inbox-1" }],
       },
     })
+  })
+})
+
+describe("igStoryAutomationService template guards", () => {
+  test("update runs the View-only guard first, with the keys that changed, under the automation's lock", async () => {
+    mocks.findFirst.mockResolvedValue({
+      id: "story-1",
+      trigger: "storyReply",
+      name: "Old",
+      isActive: true,
+    })
+
+    await igStoryAutomationService.update(
+      { workspaceId: "ws-1", id: "story-1" },
+      { name: "New", isActive: true },
+    )
+
+    expect(mocks.assertResourceEditable).toHaveBeenCalledWith(
+      expect.objectContaining({
+        workspaceId: "ws-1",
+        resourceKind: "storyAutomation",
+        resourceIds: ["story-1"],
+        changedKeys: ["name"],
+        referencedParents: [],
+      }),
+    )
+    expect(mocks.lockedKeys).toHaveBeenCalledWith(
+      expect.objectContaining({
+        workspaceId: "ws-1",
+        initialKeys: [{ kind: "storyAutomation", resourceId: "story-1" }],
+      }),
+    )
+  })
+
+  test("update locks the flow or agent a new reply runs together with the automation", async () => {
+    mocks.findFirst.mockResolvedValue({ id: "story-1", trigger: "storyReply" })
+
+    await igStoryAutomationService.update(
+      { workspaceId: "ws-1", id: "story-1" },
+      { reply: { type: "flow", value: "flow-1" } },
+    )
+    await igStoryAutomationService.update(
+      { workspaceId: "ws-1", id: "story-1" },
+      { reply: { type: "AIAgent", value: "agent-1" } },
+    )
+
+    expect(mocks.assertResourceEditable).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({
+        referencedParents: [{ kind: "flow", resourceId: "flow-1" }],
+      }),
+    )
+    expect(mocks.assertResourceEditable).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({
+        referencedParents: [{ kind: "aiAgent", resourceId: "agent-1" }],
+      }),
+    )
+  })
+
+  test("a refused guard stops the write", async () => {
+    mocks.findFirst.mockResolvedValue({ id: "story-1", trigger: "storyReply" })
+    mocks.assertResourceEditable.mockRejectedValueOnce(new Error("view only"))
+
+    await expect(
+      igStoryAutomationService.update(
+        { workspaceId: "ws-1", id: "story-1" },
+        { name: "New" },
+      ),
+    ).rejects.toThrow("view only")
+    expect(mocks.updateSet).not.toHaveBeenCalled()
+  })
+
+  test("create checks that a reply's flow is not being uninstalled", async () => {
+    await igStoryAutomationService.create({
+      workspaceId: "ws-1",
+      type: "instagram",
+      data: {
+        name: "Story",
+        reply: { type: "flow", value: "flow-1" },
+      } as never,
+    })
+
+    expect(mocks.assertReferencable).toHaveBeenCalledWith(
+      expect.objectContaining({
+        workspaceId: "ws-1",
+        parents: [{ kind: "flow", resourceId: "flow-1" }],
+      }),
+    )
+  })
+
+  test("deleteMany runs the delete guard over every id, and deleteInTx returns the ids it removed", async () => {
+    mocks.deleteReturning.mockResolvedValue([{ id: "a" }, { id: "b" }])
+
+    await igStoryAutomationService.deleteMany({
+      workspaceId: "ws-1",
+      ids: ["a", "b"],
+    })
+
+    expect(mocks.guardTargets).toHaveBeenCalledWith({
+      workspaceId: "ws-1",
+      targets: [{ resourceKind: "storyAutomation", resourceIds: ["a", "b"] }],
+    })
+    const { db } = await import("@chatbotx.io/database/client")
+    await expect(
+      igStoryAutomationService.deleteInTx(db as never, {
+        workspaceId: "ws-1",
+        ids: ["a", "b"],
+      }),
+    ).resolves.toEqual(["a", "b"])
+  })
+
+  test("deleteMany with no ids touches nothing", async () => {
+    await igStoryAutomationService.deleteMany({ workspaceId: "ws-1", ids: [] })
+
+    expect(mocks.guardTargets).not.toHaveBeenCalled()
   })
 })

@@ -27,6 +27,55 @@ const mocks = vi.hoisted(() => ({
   invalidateCacheByTags: vi.fn(),
   audit: vi.fn(),
   loadExtractionContext: vi.fn(),
+  txExecute: vi.fn(),
+  isUniqueViolation: vi.fn(),
+  assertResourceEditable: vi.fn(),
+  withDeleteGuard: vi.fn(),
+  lockedTransaction: vi.fn(),
+  referencedParents: vi.fn(),
+}))
+
+const fakeTx = {
+  execute: mocks.txExecute,
+  // A savepoint: the callback runs on the same fake.
+  transaction: (fn: (tx: unknown) => Promise<unknown>) => fn(fakeTx),
+}
+
+vi.mock("@chatbotx.io/database/client", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@chatbotx.io/database/client")>()),
+  db: { transaction: (fn: (tx: unknown) => Promise<unknown>) => fn(fakeTx) },
+  isUniqueViolationError: mocks.isUniqueViolation,
+}))
+vi.mock("../src/template/installed-resource.service", () => ({
+  assertResourceEditable: mocks.assertResourceEditable,
+  changedKeysOf: (
+    existing: Record<string, unknown>,
+    patch: Record<string, unknown>,
+  ) =>
+    Object.keys(patch).filter(
+      (key) =>
+        patch[key] !== undefined &&
+        JSON.stringify(patch[key]) !== JSON.stringify(existing[key]),
+    ),
+  withDeleteGuard: async (
+    input: unknown,
+    run: (tx: unknown) => Promise<unknown>,
+  ) => {
+    mocks.withDeleteGuard(input)
+    return await run(fakeTx)
+  },
+}))
+vi.mock("../src/template/template-resource-locks", () => ({
+  withTemplateLockedTransaction: async (
+    run: (tx: unknown) => Promise<unknown>,
+    options: unknown,
+  ) => {
+    mocks.lockedTransaction(options)
+    return await run(fakeTx)
+  },
+}))
+vi.mock("../src/template/uninstall-references", () => ({
+  referencedParentsOf: mocks.referencedParents,
 }))
 
 vi.mock("@chatbotx.io/database/repositories", () => ({
@@ -113,6 +162,8 @@ beforeEach(() => {
   mocks.withCache.mockImplementation(
     (_key: string, fn: () => Promise<unknown>) => fn(),
   )
+  mocks.referencedParents.mockReturnValue([])
+  mocks.isUniqueViolation.mockReturnValue(false)
   mocks.countInboundWebhooks.mockResolvedValue(0)
   mocks.insertInboundWebhook.mockImplementation((values: object) =>
     Promise.resolve({ id: "w-new", ...values }),
@@ -129,33 +180,68 @@ beforeEach(() => {
 })
 
 describe("create", () => {
-  test("inserts an inactive-by-default webhook with explicit values under a lock", async () => {
+  test("inserts an inactive webhook with explicit values under the per-workspace transaction lock", async () => {
     const created = await inboundWebhookService.create({
       workspaceId: "ws-1",
       name: "Orders",
     })
 
-    expect(mocks.runExclusive).toHaveBeenCalledWith(
-      expect.objectContaining({
-        key: "inbound-webhook:ws-1",
-        timeoutInSeconds: 10,
-        retryTimeoutInSeconds: 10,
-      }),
-    )
+    expect(mocks.txExecute).toHaveBeenCalledTimes(1)
+    expect(mocks.countInboundWebhooks).toHaveBeenCalledWith("ws-1", fakeTx)
     const [values] = mocks.insertInboundWebhook.mock.calls[0] ?? []
     expect(values).toMatchObject({
       workspaceId: "ws-1",
       name: "Orders",
+      active: false,
       inboxResolution: null,
       identifiers: [],
       fieldMappings: [],
       actions: [],
       sampleJson: null,
     })
-    expect(values).not.toHaveProperty("active")
     expect(values.token).toMatch(WEBHOOK_TOKEN)
     expect(created.id).toBe("w-new")
     expect(mocks.audit).toHaveBeenCalled()
+  })
+
+  test("insertInTx reports a full workspace with null and writes nothing", async () => {
+    mocks.countInboundWebhooks.mockResolvedValue(100)
+
+    await expect(
+      inboundWebhookService.insertInTx(fakeTx as never, {
+        workspaceId: "ws-1",
+        name: "x",
+      }),
+    ).resolves.toBeNull()
+    expect(mocks.insertInboundWebhook).not.toHaveBeenCalled()
+  })
+
+  test("insertInTx retries a token collision with a fresh token, a bounded number of times", async () => {
+    mocks.isUniqueViolation.mockReturnValue(true)
+    mocks.insertInboundWebhook
+      .mockRejectedValueOnce(new Error("duplicate"))
+      .mockImplementation((values: object) =>
+        Promise.resolve({ id: "w-new", ...values }),
+      )
+
+    await inboundWebhookService.insertInTx(fakeTx as never, {
+      workspaceId: "ws-1",
+      name: "x",
+    })
+    const [first, second] = mocks.insertInboundWebhook.mock.calls.map(
+      ([values]) => values.token,
+    )
+    expect(first).not.toBe(second)
+
+    mocks.insertInboundWebhook.mockReset()
+    mocks.insertInboundWebhook.mockRejectedValue(new Error("duplicate"))
+    await expect(
+      inboundWebhookService.insertInTx(fakeTx as never, {
+        workspaceId: "ws-1",
+        name: "x",
+      }),
+    ).rejects.toThrow("duplicate")
+    expect(mocks.insertInboundWebhook).toHaveBeenCalledTimes(3)
   })
 
   test("mints a different token every time", async () => {
@@ -332,11 +418,10 @@ describe("update", () => {
       ...config,
     })
 
-    expect(mocks.updateInboundWebhook).toHaveBeenCalledWith({
-      id: "w-1",
-      workspaceId: "ws-1",
-      set: config,
-    })
+    expect(mocks.updateInboundWebhook).toHaveBeenCalledWith(
+      { id: "w-1", workspaceId: "ws-1", set: config },
+      fakeTx,
+    )
     expect(mocks.invalidateCacheByTags).toHaveBeenCalledWith([
       "inbound-webhooks:w-1",
     ])
@@ -406,6 +491,7 @@ describe("updateSettings", () => {
     )
     expect(mocks.updateInboundWebhook).toHaveBeenCalledWith(
       expect.objectContaining({ set: { active: true } }),
+      fakeTx,
     )
   })
 
@@ -458,6 +544,7 @@ describe("updateSettings", () => {
     expect(mocks.validateConfig).not.toHaveBeenCalled()
     expect(mocks.updateInboundWebhook).toHaveBeenCalledWith(
       expect.objectContaining({ set: { name: "New", active: false } }),
+      fakeTx,
     )
   })
 
@@ -708,6 +795,86 @@ describe("previewMapping", () => {
     expect(result.contactLookup).toEqual({
       kind: "phone",
       value: "+84901234567",
+    })
+  })
+})
+
+describe("View-only guards", () => {
+  test("a config save is judged on what changed, inside the copy's lock, with the flows it starts", async () => {
+    mocks.referencedParents.mockReturnValue([{ kind: "flow", resourceId: "9" }])
+    await inboundWebhookService.update({
+      workspaceId: "ws-1",
+      id: "w-1",
+      ...config,
+      identifiers: [{ kind: "email", jsonPath: "$.email" }],
+    })
+
+    expect(mocks.lockedTransaction).toHaveBeenCalledWith({
+      workspaceId: "ws-1",
+      initialKeys: [
+        { kind: "inboundWebhook", resourceId: "w-1" },
+        { kind: "flow", resourceId: "9" },
+      ],
+    })
+    expect(mocks.assertResourceEditable).toHaveBeenCalledWith(
+      expect.objectContaining({
+        resourceKind: "inboundWebhook",
+        resourceIds: ["w-1"],
+        changedKeys: ["identifiers", "sampleJson"],
+        tx: fakeTx,
+      }),
+    )
+  })
+
+  test("a refused edit writes nothing", async () => {
+    mocks.assertResourceEditable.mockRejectedValueOnce(new Error("view only"))
+
+    await expect(
+      inboundWebhookService.update({
+        workspaceId: "ws-1",
+        id: "w-1",
+        ...config,
+      }),
+    ).rejects.toThrow("view only")
+    expect(mocks.updateInboundWebhook).not.toHaveBeenCalled()
+  })
+
+  test("a switch is guarded too, so an uninstall in progress refuses it", async () => {
+    await inboundWebhookService.updateSettings({
+      workspaceId: "ws-1",
+      id: "w-1",
+      active: true,
+    })
+
+    expect(mocks.assertResourceEditable).toHaveBeenCalledWith(
+      expect.objectContaining({ changedKeys: ["active"] }),
+    )
+  })
+
+  test("rotating the token touches no shipped content key", async () => {
+    await inboundWebhookService.regenerateToken({
+      workspaceId: "ws-1",
+      id: "w-1",
+    })
+
+    expect(mocks.assertResourceEditable).toHaveBeenCalledWith(
+      expect.objectContaining({ changedKeys: ["token"], tx: fakeTx }),
+    )
+  })
+
+  test("both deletes run inside the delete guard", async () => {
+    mocks.deleteInboundWebhooks.mockResolvedValue([{ id: "w-1" }])
+
+    await inboundWebhookService.delete({ workspaceId: "ws-1", id: "w-1" })
+    await inboundWebhookService.deleteMany({
+      workspaceId: "ws-1",
+      ids: ["w-1"],
+    })
+
+    expect(mocks.withDeleteGuard).toHaveBeenCalledTimes(2)
+    expect(mocks.withDeleteGuard).toHaveBeenCalledWith({
+      workspaceId: "ws-1",
+      targets: [{ resourceKind: "inboundWebhook", resourceIds: ["w-1"] }],
     })
   })
 })

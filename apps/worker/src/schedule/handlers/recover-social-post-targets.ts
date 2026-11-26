@@ -1,0 +1,47 @@
+import { socialPostPublishService } from "@chatbotx.io/business"
+import { getChildLogger } from "@chatbotx.io/logger"
+import {
+  distributedLock,
+  distributedStore,
+  isLockAcquisitionError,
+} from "@chatbotx.io/redis"
+
+const LOCK_KEY = "schedule:recover-social-post-targets"
+const LOCK_TIMEOUT_SECONDS = 50
+const LOCK_ACQUIRE_RETRY_SECONDS = 5
+
+const log = getChildLogger("recover-social-post-targets")
+
+/**
+ * Runs every minute (`register-schedules.ts`). A tick that finds the previous
+ * one still holding the lock is skipped.
+ */
+export async function recoverSocialPostTargets(): Promise<void> {
+  try {
+    await distributedLock.runExclusive({
+      key: LOCK_KEY,
+      timeoutInSeconds: LOCK_TIMEOUT_SECONDS,
+      retryTimeoutInSeconds: LOCK_ACQUIRE_RETRY_SECONDS,
+      fn: async () => {
+        // Claims only: each claimed target and part is read by its own
+        // post-publish job, so a slow network does not hold this tick.
+        const recovered = await socialPostPublishService.recoverExpired()
+        if (recovered > 0) {
+          log.info({ recovered }, "recoverSocialPostTargets: processed targets")
+        }
+      },
+    })
+  } catch (err) {
+    if (
+      isLockAcquisitionError(err, LOCK_KEY) &&
+      (await distributedStore.exists(LOCK_KEY))
+    ) {
+      log.warn(
+        { err },
+        "recoverSocialPostTargets: skipped because another run still holds the lock",
+      )
+      return
+    }
+    throw err
+  }
+}

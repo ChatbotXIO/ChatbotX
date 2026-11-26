@@ -150,6 +150,12 @@ class InstagramIntegrationService extends BaseService {
     username?: string
     pageId?: string
     userInfo?: IntegrationUserInfo
+    /**
+     * Stamps the row with this time instead of now: a reconnect fan-out writes
+     * the authorization generation, so a newer reconnect is never mistaken for
+     * an older one that happened to write later.
+     */
+    updatedAt?: Date
     tx?: DatabaseClient
   }): Promise<void> {
     const client = props.tx ?? db
@@ -158,6 +164,7 @@ class InstagramIntegrationService extends BaseService {
       .set({
         auth: props.auth,
         tokenRefreshError: null,
+        ...(props.updatedAt ? { updatedAt: props.updatedAt } : {}),
         ...(props.name ? { name: props.name } : {}),
         ...(props.username ? { username: props.username } : {}),
         ...(props.pageId ? { pageId: props.pageId } : {}),

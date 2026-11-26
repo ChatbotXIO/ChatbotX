@@ -29,7 +29,7 @@ export const allInboxConfigs = {
     value: "instagram",
   },
   whatsapp: {
-    label: "Whatsapp",
+    label: "WhatsApp",
     value: "whatsapp",
   },
   zalo: {

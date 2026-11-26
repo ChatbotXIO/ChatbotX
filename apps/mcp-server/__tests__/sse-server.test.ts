@@ -211,6 +211,17 @@ const startRequestServer = async (listener: RequestListener) => {
   }
 }
 
+const initializeBody = {
+  id: 1,
+  jsonrpc: "2.0",
+  method: "initialize",
+  params: {
+    capabilities: {},
+    clientInfo: { name: "test", version: "1.0.0" },
+    protocolVersion: "2025-03-26",
+  },
+}
+
 const sendChunkedRequest = async (
   url: string,
   chunks: Buffer[],
@@ -511,8 +522,33 @@ describe("createRequestListener OAuth gate", () => {
     }
   })
 
-  test("allows an unavailable introspection response to reach the request handler", async () => {
+  test("fails closed with 503 while token introspection is unavailable", async () => {
     const introspectToken = vi.fn().mockResolvedValue({ status: "unavailable" })
+    vi.doMock("../src/token-introspection", () => ({ introspectToken }))
+    const { createRequestListener } = await import("../src/server/sse-server")
+    const createMcpServer = vi.fn()
+    const requestServer = await startRequestServer(
+      createRequestListener(createMcpServer as never),
+    )
+
+    try {
+      const response = await fetch(`${requestServer.url}/messages`, {
+        body: JSON.stringify(initializeBody),
+        headers: { Authorization: "Bearer token" },
+        method: "POST",
+      })
+
+      expect(response.status).toBe(503)
+      expect(response.headers.get("retry-after")).toBe("2")
+      expect(createMcpServer).not.toHaveBeenCalled()
+    } finally {
+      await requestServer.close()
+    }
+  })
+
+  test("ignores a query-string token when CHATBOTX_MCP_ALLOW_QUERY_TOKEN is false", async () => {
+    process.env.CHATBOTX_MCP_ALLOW_QUERY_TOKEN = "false"
+    const introspectToken = vi.fn()
     vi.doMock("../src/token-introspection", () => ({ introspectToken }))
     const { createRequestListener } = await import("../src/server/sse-server")
     const requestServer = await startRequestServer(
@@ -520,14 +556,74 @@ describe("createRequestListener OAuth gate", () => {
     )
 
     try {
-      const response = await fetch(`${requestServer.url}/messages`, {
-        body: "{not json",
-        headers: { Authorization: "Bearer token" },
+      const response = await fetch(
+        `${requestServer.url}/messages?workspace_token=leaked-in-url`,
+        { method: "POST" },
+      )
+
+      expect(response.status).toBe(401)
+      expect(introspectToken).not.toHaveBeenCalled()
+    } finally {
+      await requestServer.close()
+    }
+  })
+
+  test("binds a session to the identity that opened it", async () => {
+    const principalFor = (subject: string) => ({
+      status: "ok",
+      data: {
+        permission: "full",
+        principal: {
+          audience: "http://127.0.0.1/mcp",
+          clientId: "client-1",
+          credentialType: "oauth",
+          issuer: "https://issuer.example",
+          subject,
+        },
+        scopes: null,
+        workspaceId: "ws-1",
+      },
+    })
+    const introspectToken = vi.fn(async (token: string) =>
+      principalFor(token === "token-b" ? "user-b" : "user-a"),
+    )
+    vi.doMock("../src/token-introspection", () => ({ introspectToken }))
+    const { createRequestListener } = await import("../src/server/sse-server")
+    const { McpServer } = await import(
+      "@modelcontextprotocol/sdk/server/mcp.js"
+    )
+    const requestServer = await startRequestServer(
+      createRequestListener(
+        (() => new McpServer({ name: "test", version: "1.0.0" })) as never,
+      ),
+    )
+    const post = (token: string, body: unknown, sessionId?: string) =>
+      fetch(`${requestServer.url}/messages`, {
+        body: JSON.stringify(body),
+        headers: {
+          accept: "application/json, text/event-stream",
+          authorization: `Bearer ${token}`,
+          "content-type": "application/json",
+          ...(sessionId ? { "mcp-session-id": sessionId } : {}),
+        },
         method: "POST",
       })
+    const initialized = { jsonrpc: "2.0", method: "notifications/initialized" }
 
-      expect(response.status).toBe(400)
-      await expect(response.text()).resolves.toBe("Invalid JSON body")
+    try {
+      const initResponse = await post("token-a", initializeBody)
+      await initResponse.text()
+      const sessionId = initResponse.headers.get("mcp-session-id") ?? ""
+      expect(initResponse.status).toBe(200)
+
+      const otherUser = await post("token-b", initialized, sessionId)
+      await otherUser.text()
+      expect(otherUser.status).toBe(403)
+
+      // A refreshed access token for the same user keeps the session.
+      const refreshed = await post("token-a-refreshed", initialized, sessionId)
+      await refreshed.text()
+      expect(refreshed.status).toBe(202)
     } finally {
       await requestServer.close()
     }
@@ -569,6 +665,154 @@ describe("createRequestListener OAuth gate", () => {
 
       expect(response.status).toBe(204)
       expect(introspectToken).not.toHaveBeenCalled()
+    } finally {
+      await requestServer.close()
+    }
+  })
+})
+
+describe("createRequestListener rate limits", () => {
+  const originalEnv = { ...process.env }
+
+  beforeEach(() => {
+    vi.resetModules()
+    process.env = {
+      ...originalEnv,
+      CHATBOTX_API_KEY: "",
+      CHATBOTX_MCP_OAUTH_ENABLED: "false",
+    }
+  })
+
+  afterEach(() => {
+    process.env = { ...originalEnv }
+  })
+
+  test("refuses a credential over its per-minute limit with 429 and Retry-After", async () => {
+    process.env.CHATBOTX_MCP_RATE_LIMIT_PER_MINUTE = "2"
+    const { createRequestListener } = await import("../src/server/sse-server")
+    const requestServer = await startRequestServer(
+      createRequestListener(vi.fn() as never),
+    )
+    const post = (token: string) =>
+      fetch(`${requestServer.url}/messages`, {
+        body: "{not json",
+        headers: { "x-workspace-token": token },
+        method: "POST",
+      })
+
+    try {
+      expect((await post("token-a")).status).toBe(400)
+      expect((await post("token-a")).status).toBe(400)
+      const limited = await post("token-a")
+      expect(limited.status).toBe(429)
+      expect(Number(limited.headers.get("retry-after"))).toBeGreaterThan(0)
+      await expect(limited.json()).resolves.toMatchObject({
+        error: { message: expect.stringContaining("Too many requests") },
+      })
+
+      // Another credential has its own budget.
+      expect((await post("token-b")).status).toBe(400)
+    } finally {
+      await requestServer.close()
+    }
+  })
+
+  test("limits the connector profile routes too", async () => {
+    process.env.CHATBOTX_MCP_OAUTH_ENABLED = "true"
+    process.env.CHATBOTX_MCP_RATE_LIMIT_PER_MINUTE = "1"
+    const introspectToken = vi
+      .fn()
+      .mockResolvedValue({ status: "unauthorized" })
+    vi.doMock("../src/token-introspection", () => ({ introspectToken }))
+    const { createRequestListener } = await import("../src/server/sse-server")
+    const requestServer = await startRequestServer(
+      createRequestListener(vi.fn() as never),
+    )
+    const post = () =>
+      fetch(`${requestServer.url}/claude`, {
+        headers: { authorization: "Bearer token-a" },
+        method: "POST",
+      })
+
+    try {
+      expect((await post()).status).toBe(401)
+      expect((await post()).status).toBe(429)
+    } finally {
+      await requestServer.close()
+    }
+  })
+
+  test("stops introspecting for an IP after too many rejected credentials", async () => {
+    process.env.CHATBOTX_MCP_OAUTH_ENABLED = "true"
+    process.env.CHATBOTX_MCP_AUTH_FAILURE_LIMIT_PER_MINUTE = "2"
+    const introspectToken = vi
+      .fn()
+      .mockResolvedValue({ status: "unauthorized" })
+    vi.doMock("../src/token-introspection", () => ({ introspectToken }))
+    const { createRequestListener } = await import("../src/server/sse-server")
+    const requestServer = await startRequestServer(
+      createRequestListener(vi.fn() as never),
+    )
+    // Without a trusted proxy, a forged X-Forwarded-For cannot pick a
+    // fresh bucket for each guess.
+    const post = (token: string) =>
+      fetch(`${requestServer.url}/messages`, {
+        headers: {
+          authorization: `Bearer ${token}`,
+          "x-forwarded-for": `198.51.100.${token.length}${token.at(-1)}`,
+        },
+        method: "POST",
+      })
+
+    try {
+      expect((await post("guess-1")).status).toBe(401)
+      expect((await post("guess-2")).status).toBe(401)
+      expect((await post("guess-3")).status).toBe(429)
+      expect(introspectToken).toHaveBeenCalledTimes(2)
+    } finally {
+      await requestServer.close()
+    }
+  })
+
+  test("does not count the no-token discovery challenge as a failure", async () => {
+    process.env.CHATBOTX_MCP_OAUTH_ENABLED = "true"
+    process.env.CHATBOTX_MCP_AUTH_FAILURE_LIMIT_PER_MINUTE = "1"
+    const { createRequestListener } = await import("../src/server/sse-server")
+    const requestServer = await startRequestServer(
+      createRequestListener(vi.fn() as never),
+    )
+
+    try {
+      for (let attempt = 0; attempt < 3; attempt += 1) {
+        const response = await fetch(`${requestServer.url}/messages`, {
+          method: "POST",
+        })
+        expect(response.status).toBe(401)
+      }
+    } finally {
+      await requestServer.close()
+    }
+  })
+
+  test("does not limit OAuth metadata or OPTIONS preflights", async () => {
+    process.env.CHATBOTX_MCP_OAUTH_ENABLED = "true"
+    process.env.CHATBOTX_MCP_RATE_LIMIT_PER_MINUTE = "1"
+    const { createRequestListener } = await import("../src/server/sse-server")
+    const requestServer = await startRequestServer(
+      createRequestListener(vi.fn() as never),
+    )
+
+    try {
+      for (let attempt = 0; attempt < 3; attempt += 1) {
+        const metadata = await fetch(
+          `${requestServer.url}/.well-known/oauth-protected-resource/sse`,
+        )
+        expect(metadata.status).toBe(200)
+        const preflight = await fetch(`${requestServer.url}/messages`, {
+          method: "OPTIONS",
+        })
+        expect(preflight.status).toBe(204)
+      }
     } finally {
       await requestServer.close()
     }

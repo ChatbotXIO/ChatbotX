@@ -163,6 +163,94 @@
   "errors": {
     "superAdminRequired": "この操作を行うには、ワークスペースのスーパー管理者である必要があります。"
   },
+  "inboxTranslation": {
+    "settings": {
+      "title": "会話の翻訳",
+      "description": "お客様のメッセージをチーム向けに、あなたの返信をお客様向けに、受信トレイ内で翻訳します。",
+      "saved": "翻訳設定を保存しました",
+      "readOnly": "この設定を変更できるのはワークスペースの管理者のみです。",
+      "languageHint": "会話の翻訳が有効なときに、お客様のメッセージの翻訳先となる言語でもあります。",
+      "alert": {
+        "needsReconfiguration": "再設定が必要です：AI連携が削除または無効になりました。",
+        "noIntegration": "翻訳を使うには、先にAI連携を接続してください。",
+        "connect": "AIを接続"
+      },
+      "enabled": {
+        "label": "会話を翻訳する",
+        "description": "お客様のメッセージは、誰かが会話を開いたときにのみ翻訳されます。チャットの本文は選択したAIプロバイダーに送信され、お客様のAIキーに課金されます。"
+      },
+      "integration": {
+        "label": "AI連携",
+        "description": "接続済みのAIプロバイダーのみ表示されます。"
+      },
+      "test": {
+        "label": "接続をテスト",
+        "button": "テスト",
+        "result": "{seconds} 秒で完了：「{sample}」→「{translated}」",
+        "slow": "このモデルは低速です。送信メッセージの翻訳が間に合わない場合、そのメッセージは送信されません。",
+        "failed": "テストに失敗しました。"
+      }
+    },
+    "message": {
+      "translating": "翻訳中…",
+      "stillWaiting": "翻訳をまだ待っています",
+      "requestAgain": "再リクエスト",
+      "failed": "翻訳できませんでした",
+      "translatedFrom": "{language}から翻訳。原文を表示",
+      "translatedFromNoLanguage": "翻訳済み。原文を表示",
+      "sentIn": "{language}で送信。送信内容を表示",
+      "sentInNoLanguage": "翻訳して送信。送信内容を表示",
+      "hideOriginal": "原文を隠す",
+      "hideSent": "送信内容を隠す",
+      "translatedLabelNoLanguage": "翻訳済み",
+      "sentLabelNoLanguage": "翻訳して送信"
+    },
+    "badge": {
+      "tooltip": "お客様の言語：{language}"
+    },
+    "panel": {
+      "title": "翻訳設定",
+      "statusOn": "オン",
+      "statusOff": "オフ",
+      "translateConversation": "この会話を翻訳する",
+      "translateConversationHint": "メッセージを自動的に翻訳",
+      "botActiveHint": "この会話はボットが対応中のため、翻訳はオフです。翻訳するにはオンにしてください。",
+      "botPausedHint": "このチャットはボットから引き継いだため、翻訳はオフのままです。翻訳するにはオンにしてください。",
+      "displayOptions": "表示オプション",
+      "showOriginals": "原文を表示",
+      "previewBeforeSending": "送信前に翻訳をプレビュー"
+    },
+    "composer": {
+      "hintUnknown": "言語を検出できません · そのまま送信されます",
+      "hintDetecting": "お客様の言語を検出中…",
+      "chip": {
+        "aria": "翻訳言語",
+        "target": "→ {language}",
+        "sameLanguage": "ワークスペースと同じ言語",
+        "unknown": "言語不明",
+        "hasFiles": "ファイル付きのメッセージは翻訳されません",
+        "off": "翻訳オフ"
+      },
+      "popover": {
+        "customerLanguage": "お客様の言語",
+        "chooseLanguage": "言語を選択"
+      },
+      "preview": {
+        "title": "お客様へのプレビュー · {language}",
+        "translating": "翻訳中…",
+        "needsRetranslate": "再翻訳が必要です",
+        "retranslate": "再翻訳",
+        "failed": "翻訳できませんでした。送信時に再試行します",
+        "done": "完了",
+        "ready": "送信できます"
+      }
+    },
+    "send": {
+      "translating": "翻訳中…",
+      "failed": "翻訳に失敗しました",
+      "turnedOff": "翻訳を利用できません。この会話の翻訳はオフになりました。"
+    }
+  },
   "states": {
     "success": "成功",
     "error": "エラー",
@@ -651,7 +739,8 @@
       "template": "テンプレート",
       "integration": "連携",
       "schedule": "繰り返しスケジュール",
-      "runOf": "<link>{name}</link>の実行"
+      "runOf": "<link>{name}</link>の実行",
+      "linkNotFound": "この一斉配信は存在しません。"
     },
     "filters": {
       "all": "All"
@@ -1307,7 +1396,10 @@
       "label": "通知タイプ",
       "notifyAdmin": "管理者に通知",
       "newMessageToHuman": "有人対応への新着メッセージ",
-      "newOrder": "新規注文"
+      "newOrder": "新規注文",
+      "postFailed": "投稿の失敗",
+      "postNeedsReview": "投稿の要確認",
+      "publishConnection": "公開用の接続に対応が必要"
     },
     "notificationChannel": {
       "label": "通知チャネル",
@@ -2748,7 +2840,8 @@
       "pipelines": "パイプライン",
       "places": "場所",
       "templates": "テンプレート",
-      "polls": "Polls"
+      "polls": "Polls",
+      "posts": "投稿"
     },
     "adReferral": {
       "label": "Ads",
@@ -2881,6 +2974,9 @@
         "skip": "見つからない",
         "error": "失敗"
       }
+    },
+    "tiktokPublishing": {
+      "label": "TikTok投稿"
     }
   },
   "flows": {
@@ -5034,7 +5130,8 @@
     "invalidApiKey": "APIキーが無効です",
     "maxMustBeGreaterThanMin": "{maxField}は{minField}以上である必要があります",
     "trigger": {
-      "actionReferenceNotFound": "An action refers to a record that no longer exists. Re-select it in the action and save again."
+      "actionReferenceNotFound": "An action refers to a record that no longer exists. Re-select it in the action and save again.",
+      "postCommentPostsInvalid": "選択した投稿がこのワークスペースに存在しないか、選択した受信トレイに属していません。投稿を選び直して、もう一度保存してください。"
     },
     "inboundWebhook": {
       "inboxRequired": "受信トレイを選択してください。",
@@ -6093,7 +6190,16 @@
       "anyPipeline": "すべてのパイプライン",
       "anyStage": "すべてのステージ",
       "unavailablePipeline": "削除済みまたは利用できないパイプライン",
-      "unavailableStage": "削除済みまたは利用できないステージ"
+      "unavailableStage": "削除済みまたは利用できないステージ",
+      "contactCommentedOnPost": "連絡先が投稿にコメントした",
+      "contactFirstCommentedOnPost": "連絡先が投稿に初めてコメントした",
+      "anyInbox": "すべてのページまたはアカウント",
+      "unavailableInbox": "削除済みまたは利用できないページまたはアカウント",
+      "postScope": {
+        "any": "すべての投稿",
+        "selected": "特定の投稿",
+        "publishedFromPosts": "投稿から公開した投稿のみ"
+      }
     },
     "actions": {
       "addTag": "タグを追加",
@@ -6873,7 +6979,8 @@
       "ignoreCommentReplies": "コメントへの返信には応答しない",
       "ignoreCommentRepliesDescription": "トップレベルのコメントではなく、他のコメントへの返信には自動化を適用しません。",
       "trackUserTags": "ユーザーが他のユーザーをタグ付けしたかを記録する",
-      "trackUserTagsDescription": "各コメントでタグ付けされたアカウント数を数え、すべてのコメントを通じてコンタクトの累計に加算します。タグ付けされたすべてのアカウントには'{{total_tagged}}'を、ページにメッセージを送ったこともコンタクトになったこともないアカウントには'{{total_new_tagged}}'を使用します。"
+      "trackUserTagsDescription": "各コメントでタグ付けされたアカウント数を数え、すべてのコメントを通じてコンタクトの累計に加算します。タグ付けされたすべてのアカウントには'{{total_tagged}}'を、ページにメッセージを送ったこともコンタクトになったこともないアカウントには'{{total_new_tagged}}'を使用します。",
+      "likeUserCommentUnavailable": "Instagramでは利用できません。このオプションはスキップされます。オフにすると削除されます。"
     },
     "hideComments": {
       "all": "すべてのコメントを非表示",
@@ -7385,6 +7492,7 @@
       "resourcesTitle": "インストールされたリソース",
       "noResources": "まだ何も作成されていません。",
       "deletedResource": "削除されたリソース",
+      "wholeCategory": "{count, plural, one {#件} other {#件}}",
       "viewOnly": "閲覧のみ",
       "created": "作成",
       "reused": "再利用",
@@ -7439,7 +7547,12 @@
           "placeCategories": "場所カテゴリ"
         }
       },
-      "viewOnlyCopyIncluded": "選択した項目（またはそれが必要とする項目）は閲覧専用テンプレートからインストールされたため、新しいテンプレートで共有できません。"
+      "viewOnlyCopyIncluded": "選択した項目（またはそれが必要とする項目）は閲覧専用テンプレートからインストールされたため、新しいテンプレートで共有できません。",
+      "miniAppPublishedExcluded": {
+        "title": "除外されたミニアプリ",
+        "hint": "これらのフローは WhatsApp に公開されているミニアプリを使用しています。共有できないため、テンプレートから除外され、インストール時にその参照は削除されます。",
+        "item": "{flowName}: {miniAppName}"
+      }
     },
     "categories": {
       "flows": "フロー",
@@ -7461,7 +7574,20 @@
       "aiFiles": "AIナレッジファイル",
       "questionnaires": "アンケート",
       "couponTopics": "クーポントピック",
-      "pipelines": "パイプライン"
+      "pipelines": "パイプライン",
+      "magicLinks": "マジックリンク",
+      "polls": "投票",
+      "dynamicImages": "ダイナミック画像",
+      "placeLocations": "ロケーション",
+      "miniApps": "ミニアプリ",
+      "minigames": "ミニゲーム",
+      "leaderboards": "リーダーボード",
+      "openHours": "営業時間",
+      "vendors": "ベンダー",
+      "discountCodes": "割引コード",
+      "storeSettings": "ストア設定",
+      "storyAutomations": "Instagramストーリーオートメーション",
+      "inboundWebhooks": "受信Webhook"
     },
     "locked": {
       "flowBanner": "このフローは閲覧専用のテンプレートからインストールされました。表示はできますが編集はできません。",
@@ -7538,6 +7664,7 @@
       "flowNotPublished": "Flow は下書きとしてインストールされ、公開されていません。",
       "flowSkippedRequiredReference": "必要な参照を解決できなかったため、Flow はスキップされました。",
       "folder": "参照された項目がこのワークスペースに見つからなかったため、リンクを削除しました。",
+      "inboundWebhookLimitReached": "この受信Webhookはスキップされました。ワークスペースの受信Webhook数が上限に達しています。",
       "inboxBindingRequired": "このチャネルの受信トレイを選択してください。それまでこの項目は無効のままです。",
       "integration": "参照された項目がこのワークスペースに見つからなかったため、リンクを削除しました。",
       "localModifiedOverwritten": "ローカルで編集された項目が上書きされました。バックアップが保存されており、復元できます。",
@@ -7558,7 +7685,25 @@
       "tag": "参照された項目がこのワークスペースに見つからなかったため、リンクを削除しました。",
       "unlisted": "項目を完全には取り込めませんでした: {code}",
       "workspaceMember": "このワークスペースにいないメンバーに割り当てられています。",
-      "workspaceUnavailable": "このワークスペースは利用できなくなったため、この項目はスキップされました。"
+      "workspaceUnavailable": "このワークスペースは利用できなくなったため、この項目はスキップされました。",
+      "scheduleExpired": "この項目の日付はすでに過ぎています。使用する前に新しい日付を設定してください。",
+      "linkNotRemapped": "テンプレートに含まれていないツールへのリンクはそのままにしました。",
+      "dynamicImage": "背景をコピーできなかったため、このダイナミック画像をスキップしました。",
+      "dynamicImageFieldNotBound": "この画像をキャッシュするカスタムフィールドを選択してください。元のフィールドはすでにワークスペースにありました。",
+      "dynamicImageRerenderFailed": "コピーしたリンクで背景を再生成できなかったため、このダイナミック画像はオフになりました。もう一度オンにすると再試行されます。",
+      "pollImage": "画像をコピーできませんでした。",
+      "leaderboardInvalid": "このリーダーボードの設定をインストールできなかったため、スキップしました。",
+      "placeLocationInvalid": "この場所は名前が空のため、スキップされました。",
+      "minigame": "このリーダーボードのスコア元のミニゲームがテンプレートに含まれていないため、スキップしました。",
+      "minigameImage": "画像をコピーできませんでした。",
+      "leaderboardImage": "画像をコピーできませんでした。",
+      "leaderboardHostMissing": "このリーダーボードには専用のチャネル（またはミニゲーム）が必要ですが、今回のインストールでは用意されなかったためスキップしました。",
+      "externalStoreSkipped": "このワークスペースは連携済みのストア（ShopifyまたはWooCommerce）で販売しているため、商品、ベンダー、割引コード、営業時間、ストア設定はインストールされませんでした。",
+      "discountCodeSkipped": "この割引コードはスキップされました。対象の商品やカテゴリがテンプレートに含まれていないか、設定が拒否されました。",
+      "storeSettingsKept": "このワークスペースにはすでにストア設定があったため、そのまま保持しました。",
+      "vendorImage": "画像をコピーできませんでした。",
+      "storeSettingsCurrencyKept": "このワークスペースには別の通貨の商品があるため、テンプレートの通貨ではなく現在の通貨を維持しました。",
+      "storySelectionRequired": "ストーリーを選択し直してください。元のストーリーを引き継げませんでした。"
     },
     "tabs": {
       "mine": "マイテンプレート",
@@ -7785,7 +7930,6 @@
   "templatesPublicPage": {
     "invalidTitle": "このリンクはご利用いただけません。",
     "invalidDescription": "このテンプレート共有リンクは無効、無効化済み、または期限切れです。",
-    "byPublisher": "{publisherName}による",
     "videoTitle": "テンプレートのプレビュー動画",
     "preview": "プレビュー",
     "aboutTemplate": "このテンプレートについて",
@@ -8143,6 +8287,10 @@
   "contactAdReferrals": {
     "title": "広告の履歴",
     "empty": "このコンタクトの広告クリックはまだ記録されていません。"
+  },
+  "contactBroadcasts": {
+    "empty": "このコンタクトにはまだ一斉配信が送信されていません。",
+    "searchPlaceholder": "名前またはIDで検索"
   },
   "adsReferralStats": {
     "title": "広告別のコンタクト",
@@ -11988,41 +12136,138 @@
     "noWorkspaces": "管理者であるワークスペースがないため、このアプリケーションを承認できません。"
   },
   "chatbotxMcp": {
-    "title": "ChatbotX MCP",
-    "workspaceId": "Workspace ID",
+    "title": "MCPコネクタ",
     "streamableUrl": "Streamable HTTP URL",
-    "sseUrl": "Legacy SSE URL",
+    "sseUrl": "従来のSSE URL",
     "guide": {
-      "title": "Connect an MCP client",
-      "step1": "Copy the configuration for your MCP client.",
-      "step2": "Paste it into the client.",
-      "step3": "The client opens a browser. Sign in and approve access.",
-      "step4": "Your workspace tools appear after approval.",
-      "ownerOnly": "Only workspace owners and superAdmins can authorize MCP access."
+      "title": "MCPクライアントを接続",
+      "subtitle": "使っているアプリを選び、3つのステップに沿って設定します。",
+      "ownerOnly": "MCPアクセスを承認できるのは、ワークスペースのオーナーとsuperAdminのみです。ワークスペースは承認画面で選択します。",
+      "otherClients": "その他のMCP対応クライアントも利用できます",
+      "otherIntro": "その他のMCP対応クライアントでは、以下のエンドポイントと設定を使用してください。",
+      "opensInNewTab": "（新しいタブで開きます）",
+      "actions": {
+        "addConnector": "コネクタを追加",
+        "startChatting": "チャットを始める"
+      },
+      "steps": {
+        "claude": {
+          "step1": {
+            "title": "コネクタのURLをコピー",
+            "body": "次のステップでこのURLをClaudeに貼り付けます。"
+          },
+          "step2": {
+            "title": "Claude → Customize → Connectors → Add custom connector を開く",
+            "body": "下のボタンでClaudeのコネクタ一覧が開きます。Add custom connectorをクリックし、名前を付けてURLを貼り付けてください。Claudeのデスクトップアプリとモバイルアプリにも表示されます。"
+          },
+          "step3": {
+            "title": "Connectをクリックしてアクセスを承認",
+            "body": "サインインしてワークスペースを選び、承認します。あとはチャットからClaudeに連絡先・フロー・一斉配信の作業を頼めます。"
+          }
+        },
+        "chatgpt": {
+          "step1": {
+            "title": "コネクタのURLをコピー",
+            "body": "次のステップでこのURLをChatGPTに貼り付けます。"
+          },
+          "step2": {
+            "title": "ChatGPT → Settings → Apps & Connectors → Create を開く",
+            "body": "下のボタンでChatGPTの設定が開きます。Createが見当たらない場合は、Advanced settingsでDeveloper modeをオンにしてください。コネクタに名前を付け、URLを貼り付けてOAuthを選びます。"
+          },
+          "step3": {
+            "title": "接続してアクセスを承認",
+            "body": "サインインしてワークスペースを選び、承認します。その後、新しいチャットでコネクタをオンにして使います。"
+          }
+        },
+        "claudeCode": {
+          "step1": {
+            "title": "インストールコマンドをコピー",
+            "body": "ターミナルで実行します。"
+          },
+          "step2": {
+            "title": "Claude Codeからサインイン",
+            "body": "Claude Codeを起動して /mcp と入力し、サーバーを選んでAuthenticateを選択します。ブラウザが開きます。"
+          },
+          "step3": {
+            "title": "アクセスを承認",
+            "body": "ワークスペースを選んで承認します。これでClaude Codeからワークスペースのツールを使えます。"
+          }
+        },
+        "cursor": {
+          "step1": {
+            "title": "設定をコピー",
+            "body": "次のステップでCursorに貼り付けます。"
+          },
+          "step2": {
+            "title": "Cursor Settings → MCP → Add new MCP server を開く",
+            "body": "設定をmcp.jsonに貼り付けて保存します。サーバーの横にLoginボタンが表示されます。"
+          },
+          "step3": {
+            "title": "アクセスを承認",
+            "body": "Loginをクリックし、ワークスペースを選んで承認します。Cursorのエージェントにツールが表示されます。"
+          }
+        },
+        "openclaw": {
+          "step1": {
+            "title": "プラグインをインストール",
+            "body": "ターミナルでこのコマンドを実行します。"
+          },
+          "step2": {
+            "title": "サインイン",
+            "body": "このコマンドを実行します。ブラウザが開きます。"
+          },
+          "step3": {
+            "title": "アクセスを承認",
+            "body": "ワークスペースを選んで承認します。これでOpenClawからワークスペースのツールを使えます。"
+          }
+        },
+        "hermes": {
+          "step1": {
+            "title": "設定をコピー",
+            "body": "次のステップでHermesの設定に追加します。"
+          },
+          "step2": {
+            "title": "~/.hermes/config.yaml に追加",
+            "body": "~/.hermes/config.yaml の mcp_servers の下に貼り付けて保存します。その後、Hermesでこのコマンドを実行します。"
+          },
+          "step3": {
+            "title": "アクセスを承認",
+            "body": "Hermesがブラウザを開きます。サインインしてワークスペースを選び、承認します。これでHermesからワークスペースのツールを使えます。"
+          }
+        }
+      }
     },
     "clients": {
+      "claude": "Claude",
       "claudeCode": "Claude Code",
       "claudeDesktop": "Claude Desktop",
       "cursor": "Cursor",
       "chatgpt": "ChatGPT",
-      "stdio": "stdio fallback",
-      "stdioHint": "Use a workspace token for this fallback."
+      "stdio": "stdioフォールバック",
+      "stdioHint": "このフォールバックにはワークスペーストークンを使用してください。",
+      "openclaw": "OpenClaw",
+      "hermes": "Hermes",
+      "other": "その他のクライアント"
     },
     "grants": {
-      "title": "Authorized applications",
-      "description": "Grants belong to your account and apply to every workspace you administer; revoking disconnects the client everywhere.",
-      "empty": "OAuth grants appear here after you connect an MCP client.",
-      "client": "Client",
-      "scopes": "Scopes",
-      "firstAuthorizedAt": "First authorized",
-      "lastRefreshedAt": "Last refreshed",
-      "activeUntil": "Active until",
-      "noActiveToken": "No active token",
-      "revoke": "Revoke",
-      "revokeConfirmTitle": "Revoke application access?",
-      "revokeConfirmDescription": "Revoke access for {clientName}? This disconnects the client everywhere.",
-      "revokedSuccess": "Application access revoked.",
-      "notFound": "OAuth grant no longer exists"
+      "title": "承認済みアプリケーション",
+      "description": "許可はアカウントに紐づき、管理しているすべてのワークスペースに適用されます。取り消すと、すべての場所でクライアントが切断されます。",
+      "empty": "MCPクライアントを接続すると、OAuthの許可がここに表示されます。",
+      "client": "クライアント",
+      "scopes": "スコープ",
+      "firstAuthorizedAt": "初回承認日時",
+      "lastRefreshedAt": "最終更新日時",
+      "activeUntil": "有効期限",
+      "noActiveToken": "有効なトークンなし",
+      "revoke": "取り消す",
+      "revokeConfirmTitle": "アプリケーションのアクセスを取り消しますか？",
+      "revokeConfirmDescription": "{clientName}のアクセスを取り消しますか？すべての場所でクライアントが切断されます。",
+      "revokedSuccess": "アプリケーションのアクセスを取り消しました。",
+      "notFound": "このOAuth許可は存在しません"
+    },
+    "unavailableOnDomain": {
+      "title": "このドメインでは利用できません",
+      "body": "Claude や ChatGPT などの AI アシスタントとの接続は、このドメインではまだ利用できません。既存の認可は下に表示されており、引き続き取り消すことができます。"
     }
   },
   "connectionStatus": {
@@ -12051,17 +12296,21 @@
     "add": "追加",
     "addCategory": "カテゴリを追加",
     "renameCategory": "名前を変更",
-    "editCategories": "カテゴリを編集",
+    "editListing": "掲載を編集",
     "templateId": "テンプレートID",
     "template": "テンプレート",
     "categories": "カテゴリ",
     "categoriesPlaceholder": "カテゴリなし",
     "close": "閉じる",
     "removeChip": "{name}を外す",
+    "moreSelected": "他 {count} 件",
     "categoriesHint": "任意です。カテゴリがない場合、テンプレートは「すべて」にのみ表示されます。",
+    "languages": "言語",
+    "allLanguages": "すべての言語",
+    "languagesHint": "任意。空のままにすると、すべての言語でテンプレートが表示されます。",
     "noCategoriesYet": "カテゴリはまだありません。",
     "added": "テンプレートをストアに追加しました",
-    "updated": "カテゴリを更新しました",
+    "updated": "掲載を更新しました",
     "removed": "テンプレートをストアから削除しました",
     "removeError": "テンプレートを削除できませんでした",
     "removeTitle": "{name}を削除しますか？",
@@ -12103,16 +12352,18 @@
       "categoryLimit": "ストアのカテゴリは最大{categoryLimit}個です。"
     },
     "store": {
-      "subtitle": "ワンクリックでインストールできる既製のテンプレート。",
       "pageTitle": "{tenantName} – テンプレートストア",
       "empty": "ストアにはまだテンプレートがありません。",
       "search": "テンプレートを検索",
-      "all": "すべて",
-      "categories": "ストアのカテゴリ",
-      "noResults": "検索に一致するテンプレートはありません。",
-      "clearSearch": "検索をクリア",
-      "by": "作成者：{publisherName}",
-      "loadFailed": "テンプレートを読み込めませんでした。しばらくしてからもう一度お試しください。"
+      "noResults": "フィルターに一致するテンプレートがありません。",
+      "clearSearch": "フィルターをクリア",
+      "loadFailed": "テンプレートを読み込めませんでした。しばらくしてからもう一度お試しください。",
+      "languageValue": "言語：{language}",
+      "allLanguages": "すべての言語",
+      "otherLanguages": "その他の言語",
+      "allChannels": "すべてのチャネル",
+      "channel": "チャネル",
+      "uncategorized": "その他"
     },
     "picker": {
       "placeholder": "テンプレートを選択",
@@ -12121,7 +12372,21 @@
       "error": "テンプレートを読み込めませんでした。",
       "retry": "再試行",
       "meta": "ID {id} · {workspace}"
-    }
+    },
+    "bulk": {
+      "setCategories": "カテゴリを設定",
+      "setLanguages": "言語を設定",
+      "categoriesHint": "選択したテンプレート（{count}）のカテゴリを置き換えます。空にするとすべてのカテゴリが外れます。",
+      "languagesHint": "選択したテンプレート（{count}）の言語を置き換えます。空にするとすべての言語で表示されます。",
+      "updated": "選択したテンプレートを更新しました",
+      "removeTitle": "選択したテンプレートを削除しますか？",
+      "removeDescription": "選択数：{count}。ストアから消えます。テンプレート自体とそのインストールには影響しません。",
+      "removed": "選択したテンプレートをストアから削除しました",
+      "setChannels": "チャネルを設定",
+      "channelsHint": "選択したテンプレート（{count}）のチャネルを置き換えます。空にするとすべてのチャネルになります。"
+    },
+    "channels": "チャネル",
+    "channelsHint": "任意。すべてのチャネルで動作するテンプレートの場合は空のままにしてください。ストアにアイコンとして表示され、訪問者はチャネルで絞り込めます。"
   },
   "accountDeletion": {
     "title": "Delete account",
@@ -12308,5 +12573,1060 @@
       "onAhachat": "On AhaChat",
       "selected": "Uses AhaChat data"
     }
+  },
+  "conversationParticipants": {
+    "joined": "{names} が会話に参加しました",
+    "replied": "{name} が返信しました {time}",
+    "showMore": "さらに表示",
+    "label": "この会話で返信した人",
+    "unnamedMember": "メンバー",
+    "loadMoreFailed": "メンバーをこれ以上読み込めませんでした",
+    "lastMessageBy": "{name} の最後のメッセージ"
+  },
+  "posts": {
+    "title": "投稿",
+    "searchPlaceholder": "テキスト、リンク、投稿IDで検索",
+    "dateFrom": "開始日",
+    "dateTo": "終了日",
+    "export": {
+      "title": "この期間の投稿のコメントをエクスポート(最大{count}件)",
+      "needsRange": "コメントをエクスポートするには開始日と終了日を選択してください。",
+      "nothing": "この期間にこのフィルターに一致する投稿はありません。",
+      "failed": "エクスポートに失敗しました。もう一度お試しください。",
+      "done": "{count, plural, one {#件の投稿のコメントをエクスポートしました。} other {#件の投稿のコメントをエクスポートしました。}}",
+      "doneLimited": "最新の{count}件の投稿のコメントをエクスポートしました。ほかにも一致する投稿があります。期間を絞って残りをエクスポートしてください。",
+      "truncated": "行数の上限でエクスポートが途中で切れました。期間またはフィルターを絞って残りをエクスポートしてください。",
+      "quotaExceeded": "このアカウントのメッセージ上限に達したため、ダウンロードは行われませんでした。プランをアップグレードするか、次の請求期間までお待ちください。",
+      "blocked": "このワークスペースのプランまたはトライアルは期限切れです。",
+      "menu": "エクスポート",
+      "rowsTitle": "投稿の一覧をエクスポート(1投稿につき1行)",
+      "rowsDone": "投稿の一覧をエクスポートしました。",
+      "rowsTruncated": "投稿数の上限で一覧が途中までになりました。フィルターを絞って残りをエクスポートしてください。"
+    },
+    "showAllPosts": "コメントのない投稿も表示",
+    "noCaption": "テキストなし",
+    "liveNow": "ライブ配信中",
+    "empty": "条件に一致する投稿はありません。",
+    "loadMore": "さらに読み込む",
+    "columns": {
+      "content": "投稿",
+      "topic": "トピック",
+      "author": "作成者",
+      "pages": "ページ",
+      "status": "ステータス"
+    },
+    "contentType": {
+      "text": "テキスト",
+      "photo": "写真",
+      "video": "動画",
+      "reel": "リール",
+      "carousel": "カルーセル",
+      "story": "ストーリーズ",
+      "live": "ライブ",
+      "link": "リンク",
+      "audio": "音声",
+      "other": "その他"
+    },
+    "filters": {
+      "channel": "チャネル",
+      "allChannels": "すべてのチャネル",
+      "inbox": "ページ / アカウント",
+      "allInboxes": "すべてのページとアカウント",
+      "postType": "投稿の種類",
+      "commentSettings": "コメント設定",
+      "hidden": "非表示のコメント",
+      "notHidden": "非表示でないコメント",
+      "phoneHidden": "電話番号付きで非表示のコメント",
+      "phoneNotHidden": "電話番号付きで非表示でないコメント",
+      "skipped": "スキップしたコメント",
+      "notSkipped": "スキップしていないコメント",
+      "sort": "並べ替え",
+      "topics": "トピック",
+      "title": "フィルター",
+      "engagement": "エンゲージメント",
+      "topicSearch": "トピックを検索",
+      "author": "作成者",
+      "allAuthors": "すべての作成者"
+    },
+    "postType": {
+      "all": "すべて",
+      "photo": "写真",
+      "video": "動画",
+      "post": "投稿",
+      "pastLive": "終了したライブ",
+      "liveNow": "ライブ配信中"
+    },
+    "sort": {
+      "newest": "新しい順",
+      "mostComments": "コメントが多い順",
+      "fewestComments": "コメントが少ない順",
+      "mostPhones": "電話番号が多い順",
+      "fewestPhones": "電話番号が少ない順",
+      "mostEngagement": "エンゲージメントが多い順",
+      "leastEngagement": "エンゲージメントが少ない順",
+      "mostShares": "シェアが多い順",
+      "fewestShares": "シェアが少ない順"
+    },
+    "settings": {
+      "hideComments": "すべてのコメントを非表示",
+      "hidePhoneComments": "電話番号付きのコメントを非表示",
+      "skipComments": "コメントをスキップ（既読にする）",
+      "unavailable": "このチャネルは投稿ごとのコメント設定にまだ対応していません。"
+    },
+    "sync": {
+      "refresh": "投稿を更新",
+      "started": "投稿を同期しています。新しい投稿はまもなく表示されます。",
+      "alreadyRunning": "同期はすでに実行中か、直前に完了しました。",
+      "failedCount": "{count, plural, one {#件のページを同期できませんでした} other {#件のページを同期できませんでした}}",
+      "reconnect": "チャネルを再接続",
+      "reconnectWithPermission": "再接続して投稿へのアクセスを許可してください",
+      "retry": "再試行"
+    },
+    "topics": {
+      "edit": "トピックを編集",
+      "newPlaceholder": "新しいトピック名",
+      "empty": "トピックはまだありません。名前を入力して作成してください。"
+    },
+    "emptyHint": "別の条件を試すか、「コメントのない投稿も表示」をオンにしてください。",
+    "actions": {
+      "viewComments": "コメントを見る",
+      "viewOriginal": "元の投稿を見る",
+      "refreshPost": "チャネルから更新",
+      "refreshRemoved": "この投稿はチャンネル上に存在しなくなったため、非表示にしました。",
+      "refreshUnavailable": "チャンネルから投稿を読み取れませんでした。しばらくしてからもう一度お試しください。",
+      "refreshRateLimited": "チャンネルからリクエストの間隔を空けるよう求められました。数分後にもう一度お試しください。",
+      "refreshCooldown": "この投稿はたった今更新されました。1分後にもう一度お試しください。",
+      "downloadPhones": "電話番号をダウンロード",
+      "downloadComments": "コメントをダウンロード",
+      "viewDetails": "詳細を見る"
+    },
+    "merge": {
+      "title": "投稿を統合",
+      "selectAll": "すべて選択",
+      "selected": "{count}/{max}件を選択中",
+      "confirm": "投稿を統合"
+    },
+    "comments": {
+      "title": "この投稿のすべてのコメント",
+      "mergedTitle": "{count}件の投稿から統合したコメント",
+      "searchPlaceholder": "コメントを検索",
+      "phoneOnly": "電話番号あり",
+      "empty": "表示するコメントがありません。",
+      "loadOlder": "古いコメントを読み込む",
+      "like": "コメントにいいね",
+      "delete": "コメントを削除",
+      "confirmDelete": "もう一度クリックで削除",
+      "hidden": "非表示",
+      "unknownAuthor": "不明な顧客"
+    },
+    "state": {
+      "noChannelTitle": "接続済みのチャネルがありません",
+      "noChannelHint": "Messenger、Instagram、Threads、TikTok のチャネルを接続すると、投稿がここに表示されます。",
+      "connectChannel": "チャネルを接続",
+      "neverSyncedTitle": "投稿はまだ読み込まれていません",
+      "neverSyncedHint": "接続済みチャネルの投稿を読み込みます。バックグラウンドで実行され、数分かかる場合があります。",
+      "loadPosts": "投稿を読み込む"
+    },
+    "counts": {
+      "comments": "コメント",
+      "reactions": "リアクション",
+      "shares": "シェア",
+      "phones": "電話番号付きコメント"
+    },
+    "tabs": {
+      "posts": "投稿",
+      "calendar": "カレンダー",
+      "connect": "接続",
+      "feeds": "フィード",
+      "analytics": "分析"
+    },
+    "calendar": {
+      "views": {
+        "month": "月",
+        "week": "週",
+        "day": "日",
+        "list": "リスト"
+      },
+      "viewLabel": "カレンダー表示",
+      "previous": "前の期間",
+      "next": "次の期間",
+      "today": "今日",
+      "network": "ネットワーク",
+      "destination": "ページまたはプロフィール",
+      "allNetworks": "すべてのネットワーク",
+      "allDestinations": "すべてのページとプロフィール",
+      "noText": "（テキストなし）",
+      "noDate": "日付なし",
+      "noDateEmpty": "日付のない下書きはここに表示されます。投稿をここにドロップすると下書きに戻ります。",
+      "newPostOn": "{date}に新しい投稿",
+      "more": "他 {count} 件",
+      "emptyDay": "この日の投稿はありません。",
+      "emptyHint": "この期間に予定されているものはありません。",
+      "loading": "読み込み中…",
+      "loadError": "カレンダーを読み込めませんでした。",
+      "retry": "再試行",
+      "readOnly": "このワークスペースは読み取り専用のため、投稿の移動や作成はできません。",
+      "truncated": "この期間の投稿の一部のみ表示しています。期間を絞るか、ネットワークまたはアカウントで絞り込んでください。",
+      "openPost": "投稿を開く",
+      "moveToDrafts": "下書きに戻す",
+      "reschedule": "日時を変更",
+      "schedule": "予約する",
+      "rescheduleLabel": "公開日時",
+      "scheduleLabel": "予約日時",
+      "pickTime": "日付と時刻を選択",
+      "status": {
+        "draft": "下書き"
+      },
+      "errors": {
+        "past": "現在から15分以上先の時刻を選んでください。",
+        "cannotUnschedule": "予約済みの投稿のみ下書きに戻せます。"
+      },
+      "list": {
+        "filterLabel": "ステータスで絞り込む",
+        "filterCount": "{label}、{count, plural, one {#件の投稿} other {#件の投稿}}",
+        "filters": {
+          "all": "すべて",
+          "drafts": "下書き",
+          "scheduled": "予約済み",
+          "published": "公開済み",
+          "needsAttention": "要対応"
+        },
+        "empty": {
+          "all": "投稿はありません",
+          "drafts": "下書きの投稿はありません",
+          "scheduled": "予約済みの投稿はありません",
+          "published": "公開済みの投稿はありません",
+          "needsAttention": "対応が必要なものはありません"
+        },
+        "loadMore": "さらに読み込む"
+      },
+      "freeSlots": {
+        "label": "空き投稿時間",
+        "compose": "{time} に新規投稿",
+        "truncated": "これ以外の空き時間は表示されていません"
+      }
+    },
+    "connect": {
+      "title": "接続",
+      "connectNetwork": "{network}を連携",
+      "reconnect": "再接続",
+      "reconnectName": "{label}: {name}",
+      "facebookReconnectHint": "1つのページを再接続すると、同じFacebookログインのすべてのページが更新されます。",
+      "comingSoon": "まだ利用できません",
+      "connectedAlready": "{count, plural, one {#件のアカウントが接続済みです。クリックして別のアカウントを追加できます。} other {#件のアカウントが接続済みです。クリックして別のアカウントを追加できます。}}",
+      "truncated": "最初の{count}ページを表示しています。",
+      "tiktokTitle": "TikTok投稿用アカウント",
+      "pageCount": "{count, plural, one {#ページ} other {#ページ}}",
+      "verify": "確認",
+      "verified": "アカウントを確認しました。",
+      "syncDestinations": "ページを同期",
+      "destinationsSynced": "ページとプロフィールを更新しました。",
+      "disconnect": "接続解除",
+      "confirmDisconnect": "もう一度クリックで接続解除",
+      "disconnected": "アカウントの接続を解除しました。",
+      "missingScopes": "不足している権限: {scopes}。再接続して付与してください。",
+      "lastVerified": "{date} に確認",
+      "status": {
+        "connected": "接続済み",
+        "needsReauth": "再接続が必要",
+        "disconnected": "接続解除済み"
+      },
+      "reason": {
+        "tokenRejected": "プラットフォームが保存済みのログインを拒否しました。アカウントを再接続してください。",
+        "tokenExpired": "保存済みのログインの有効期限が切れました。アカウントを再接続してください。",
+        "refreshRejected": "プラットフォームがログインの更新を拒否しました。アカウントを再接続してください。",
+        "permissionNotGranted": "一部の権限が不足しています。アカウントを再接続して付与してください。"
+      },
+      "emptyTitle": "接続済みのチャネルはまだありません",
+      "emptyAction": "チャネルへ移動",
+      "schedule": {
+        "open": "投稿時間",
+        "title": "{name} の投稿時間",
+        "description": "キューに追加した投稿には、このリストの次の空き時間が割り当てられます。",
+        "timezone": "タイムゾーン: {timezone}",
+        "maxTimes": "1日あたり最大 {count} 件",
+        "dayOn": "{day}に投稿",
+        "noTimes": "時間なし",
+        "addTime": "時間を追加",
+        "timeLabel": "{day}の新しい時間",
+        "removeTime": "{time} を削除",
+        "copyTo": "他の曜日にコピー",
+        "copyApply": "コピー",
+        "save": "保存",
+        "saved": "投稿時間を保存しました。",
+        "reflowMoved": "{count, plural, one {キュー内の # 件の投稿を新しい時間に移動しました。} other {キュー内の # 件の投稿を新しい時間に移動しました。}}",
+        "reflowDetached": "{count, plural, one {キュー内の # 件の投稿に投稿時間がなくなりました。時間は保持されますがキューから外れます（カスタム時間になります）。} other {キュー内の # 件の投稿に投稿時間がなくなりました。時間は保持されますがキューから外れます（カスタム時間になります）。}}"
+      }
+    },
+    "detail": {
+      "title": "投稿の詳細",
+      "caption": "本文",
+      "metrics": "エンゲージメント",
+      "metricsUnavailable": "このチャネルはこれらの数値を報告しません。",
+      "views": "表示回数",
+      "settings": "コメント設定",
+      "settingsHint": "この設定は、この投稿の新しいコメントに適用されます。既存のコメントは変更されません。",
+      "skipCommentsHint": "新しいコメントをすべて既読にします。自動化は引き続き実行されます。",
+      "hideCommentsHint": "この投稿の新しいコメントをすべて非表示にします。",
+      "hidePhoneCommentsHint": "電話番号を含む新しいコメントを非表示にします。",
+      "topics": "トピック",
+      "info": "情報",
+      "postId": "投稿ID",
+      "channel": "チャネル",
+      "contentType": "種類",
+      "author": "作成者",
+      "publishedAt": "投稿日",
+      "metricsUpdated": "数値の更新",
+      "never": "未計測",
+      "ownerPage": "ページ",
+      "ownerAccount": "アカウント"
+    },
+    "feeds": {
+      "title": "フィードからの自動投稿",
+      "description": "RSS または Atom フィードの新しい項目を投稿に変換します。最初のチェックでは、フィードにすでにある項目を記録するだけです。",
+      "add": "フィードを追加",
+      "empty": "フィードはまだありません。追加すると、新しい記事が自動的に投稿になります。",
+      "status": {
+        "active": "有効",
+        "paused": "一時停止中",
+        "error": "一時停止中 – フィードエラー"
+      },
+      "mode": {
+        "draft": "下書きとして保存",
+        "queue": "自動でキューに追加"
+      },
+      "lastChecked": "最終チェック: {time}",
+      "neverChecked": "未チェック",
+      "firstCheckPending": "最初のチェックでは、フィードにすでにある項目を記録するだけで、投稿は作成されません。",
+      "every": "{minutes} 分ごと",
+      "destinations": "{count, plural, one {# 件の投稿先} other {# 件の投稿先}}",
+      "actions": {
+        "checkNow": "今すぐチェック",
+        "pause": "一時停止",
+        "resume": "再開",
+        "edit": "編集",
+        "delete": "削除",
+        "items": "項目",
+        "sendTest": "テスト送信"
+      },
+      "toast": {
+        "checkStarted": "チェックを開始しました",
+        "paused": "フィードを一時停止しました",
+        "resumed": "フィードを再開しました",
+        "deleted": "フィードを削除しました",
+        "saved": "フィードを保存しました",
+        "testDraftCreated": "テスト用の下書きを作成しました",
+        "openDraft": "下書きを開く",
+        "testUsedTemplate": "AI が文章を作成できなかったため、テキストテンプレートを使用しました。"
+      },
+      "deleteConfirm": "このフィードと項目の履歴を削除しますか？作成済みの投稿は残ります。",
+      "error": {
+        "blocked": "このフィードのアドレスは許可されていません。",
+        "timeout": "フィードの応答に時間がかかりすぎました。",
+        "tooLarge": "フィードのサイズが 2 MB を超えています。",
+        "badStatus": "フィードがエラーを返しました。",
+        "badContentType": "このアドレスは RSS または Atom フィードではありません。",
+        "unreachable": "フィードに接続できませんでした。",
+        "tooManyRedirects": "フィードのリダイレクトが多すぎます。",
+        "invalidFeed": "フィードを読み取れませんでした。",
+        "internal": "フィードのチェック中に問題が発生しました。",
+        "postRefused": "投稿を作成できませんでした（例：空いている投稿時間がない、ワークスペースがブロックされているなど）。次回のチェックで再試行します。"
+      },
+      "apiError": {
+        "feedUrlTaken": "このフィードはすでに追加されています。",
+        "feedCheckCooldown": "フィードの手動チェックは 5 分に 1 回までです。",
+        "feedPreviewRateLimited": "プレビューの回数が多すぎます。しばらくしてからもう一度お試しください。",
+        "feedNotParseable": "このアドレスは RSS または Atom フィードではありません。サイトのアドレスに /feed または /rss を付けてみてください。",
+        "feedUnreachable": "このアドレスにアクセスできませんでした。確認してもう一度お試しください。",
+        "feedTestRateLimited": "テスト投稿が多すぎます。しばらくしてからもう一度お試しください。",
+        "feedHasNoItems": "このフィードにはまだ項目がありません。",
+        "feedFetchRateLimited": "フィードのアドレス確認が多すぎます。しばらくしてからもう一度お試しください。",
+        "feedCheckInProgress": "このフィードの確認はすでに待機中または実行中です。"
+      },
+      "form": {
+        "createTitle": "フィードを追加",
+        "editTitle": "フィードを編集",
+        "name": "名前",
+        "url": "フィードのアドレス",
+        "urlPlaceholder": "https://example.com/feed.xml",
+        "preview": "プレビュー",
+        "previewEmpty": "このフィードには項目がありません。",
+        "destinations": "投稿先",
+        "noDestinations": "先にソーシャルアカウントを接続してください。",
+        "interval": "チェック間隔",
+        "dailyCap": "1 日の最大投稿数",
+        "mode": "新しい項目の扱い",
+        "modeDraftHelp": "新しい項目はそれぞれ下書きになり、確認してから投稿できます。",
+        "modeQueueHelp": "新しい項目は投稿先の投稿スケジュールに従ってキューに追加され、確認なしで公開されます。",
+        "template": "投稿テキスト",
+        "templateHelp": "使用できる変数: {variables}",
+        "save": "保存",
+        "cancel": "キャンセル",
+        "didYouMean": "{url} のことですか?",
+        "useSuggestion": "使用",
+        "aiWrite": "各投稿を AI で作成する",
+        "aiWriteHelp": "AI が項目のタイトル、概要、リンクから文章を作成します。できない場合は下のテキストテンプレートを使用します。",
+        "aiInstructions": "AI への追加指示(任意)",
+        "aiInstructionsHelp": "例: 親しみやすいトーン、店名を入れる。300 文字まで。",
+        "postLatestOnFirstCheck": "最初のチェックで最新の項目を投稿する",
+        "postLatestOnFirstCheckHelp": "オフの場合、最初のチェックではフィードにすでにある項目を記録するだけです。",
+        "contentTitle": "投稿の内容",
+        "templateInsert": "フィールドを挿入",
+        "templateVariables": "項目のフィールド",
+        "templateFeedFields": "このフィードで見つかったフィールド",
+        "templatePresets": "テンプレートから始める",
+        "presetTitleLink": "タイトルとリンク",
+        "presetSummaryHashtags": "タイトル、要約、リンク、ハッシュタグ",
+        "presetProduct": "商品：タイトル、価格、リンク",
+        "templateLegacy": "このフィードは古い {token} 記法を使用しており、変換するまで従来どおり投稿されます。",
+        "templateConvert": "新しい構文に変換",
+        "templateHint": "メニューからフィールドを挿入するか、{example} のように入力します。使えるフィルター：{filters}。",
+        "templateProblem": "{line} 行目、{column} 列目：{message}",
+        "previewTitle": "プレビュー",
+        "previewSample": "サンプル項目",
+        "previewHint": "フィードのアドレスをプレビューすると、投稿の見た目を確認できます。",
+        "previewCharacters": "{network}：{count} 文字",
+        "previewDropped": "この投稿から除外された投稿先：{count}",
+        "previewFiltered": "除外：{reason}",
+        "previewSkipped": "この項目はスキップされます。",
+        "previewNoPicture": "画像なし",
+        "mediaTitle": "画像",
+        "mediaMode": "画像の取得元",
+        "mediaModeAuto": "フィードから（自動）",
+        "mediaModeField": "フィールドまたはアドレスから",
+        "mediaModeNone": "画像なし",
+        "mediaField": "フィールドまたはアドレス",
+        "mediaFieldHelp": "画像のアドレスを返すテンプレート。例：{example}。",
+        "mediaLibrary": "予備の画像",
+        "mediaLibraryHelp": "メディアライブラリから。項目に専用の画像がない場合に使われます。",
+        "mediaLibraryAdd": "画像を追加",
+        "mediaRemove": "削除",
+        "postAs": "投稿の形式",
+        "postAsPhoto": "画像付き投稿",
+        "postAsLink": "リンク",
+        "postAsText": "テキストのみ",
+        "postAsHelpLink": "リンク：FacebookとThreadsで記事の画像付きのプレビューカードを表示します。",
+        "postAsHelpPhoto": "画像投稿：項目の画像がテキストと一緒に投稿されます。",
+        "postAsHelpText": "テキストのみ：文章とアドレスだけで、画像は付きません。",
+        "postAsTextFacebookWarning": "Facebookは、テキスト内のリンクにはリンクプレビューカード(画像)を作成しません。記事の画像付きカードを表示するには「リンク」を選んでください。",
+        "noImageFallback": "項目に画像がない場合",
+        "fallbackLink": "リンクを共有",
+        "fallbackText": "テキストのみ",
+        "fallbackSkip": "項目をスキップ",
+        "filtersTitle": "フィルター",
+        "filterInclude": "いずれかを含む",
+        "filterExclude": "いずれも含まない",
+        "filterCategories": "カテゴリーがいずれか",
+        "filterTermsHelp": "単語を入力して Enter を押してください。大文字小文字とアクセントは区別されません。",
+        "filterRequireImage": "画像のある項目のみ",
+        "filterMaxAge": "次より新しい項目のみ（時間）",
+        "networkTexts": "ネットワークごとに異なるテキスト",
+        "networkTextsHelp": "ネットワークごとに個別のテキストを書けます。テキストのないネットワークは共通テキストを使います。ネットワークが受け付けないテキストはスキップされ、短縮されることはありません。AIが書く投稿は1つの共通テキストを使います。",
+        "networkTabShared": "共通",
+        "networkTextUsesShared": "このネットワークは共通テキストを使います。",
+        "networkTextClear": "共通テキストを使う",
+        "networkTextAria": "{network}用のテキスト",
+        "fetchArticleImage": "記事ページで画像を探す",
+        "fetchArticleImageHelp": "アイテムに画像がない場合、その記事ページを1回読み込んでメイン画像（og:image）を取得します。投稿されるアイテムのみが対象で、読み込めないページが投稿を妨げることはありません。",
+        "previewArticlePicture": "記事ページを読み込みます"
+      },
+      "items": {
+        "title": "{name} の項目",
+        "empty": "チェック済みの項目はまだありません。",
+        "loadMore": "さらに読み込む",
+        "openPost": "投稿を開く",
+        "reasons": {
+          "existing": "追加時点ですでにフィードにありました",
+          "undated": "公開日がありません",
+          "tooOld": "古すぎます",
+          "perRunLimit": "1回のチェックあたりの上限を超えています",
+          "noDestination": "投稿先が選択されていません",
+          "emptyText": "投稿のテキストが空です",
+          "textTooLong": "投稿のテキストが長すぎます",
+          "invalid": "投稿が拒否されました",
+          "other": "このアイテムは使用できませんでした",
+          "aiFallback": "テンプレートから作成(AI が作成できませんでした)",
+          "excludedKeyword": "除外ワードを含む",
+          "missingKeyword": "必須ワードをひとつも含まない",
+          "category": "選択したカテゴリーに含まれない",
+          "noImage": "画像なし",
+          "tooOldForFilter": "年齢フィルターより古い",
+          "undatedForFilter": "年齢フィルターを確認する日付がない",
+          "imageFailed": "画像を使用できませんでした",
+          "noImageFallback": "画像なしで投稿されました",
+          "droppedTargets": "一部の投稿先が除外されました",
+          "templateError": "テンプレートを処理できませんでした",
+          "noDestinationAccepts": "この投稿に対応できる投稿先がありません",
+          "issueTextRequired": "投稿にテキストがありません",
+          "issueTextTooLong": "テキストがネットワークの上限を超えています",
+          "issueLinkNotSupported": "このネットワークはリンクを受け付けません",
+          "issueLinkRequired": "このネットワークにはリンクが必要です",
+          "issueTooManyLinks": "ネットワークが許可する数よりリンクが多すぎます",
+          "issueContentType": "このネットワークはこの種類の投稿を公開しません",
+          "issueMedia": "画像がネットワークの規則を満たしていません",
+          "issueOptions": "ネットワークの設定が無効です",
+          "issueParts": "このネットワークは続きのパートを受け付けません",
+          "issueDestination": "投稿先が現在公開できません",
+          "alreadyPosted": "この項目の投稿はすでに存在します"
+        },
+        "createPost": "投稿を作成",
+        "picture": "画像：{source}",
+        "dropped": "除外：{count}",
+        "imageSources": {
+          "enclosure": "添付画像",
+          "mediaContent": "メディアコンテンツ",
+          "mediaThumbnail": "サムネイル",
+          "itunesImage": "ポッドキャストのカバー",
+          "contentImage": "本文内の画像",
+          "jsonFeed": "JSON Feed の画像",
+          "field": "フィールドまたはアドレス",
+          "library": "メディアライブラリ",
+          "article": "記事ページ（og:image）"
+        },
+        "imageErrors": {
+          "unreachable": "画像をダウンロードできませんでした。",
+          "blocked": "画像のアドレスは許可されていません。",
+          "tooBig": "画像が大きすぎます。",
+          "notImage": "ファイルは使用できる画像ではありません。",
+          "storage": "画像を保存できませんでした。",
+          "articleUnreachable": "記事ページを読み込めませんでした。",
+          "articleNoImage": "記事ページに画像の指定がありません。"
+        }
+      },
+      "outcome": {
+        "created": "投稿を作成",
+        "skippedOld": "スキップ: すでに存在、または古すぎる",
+        "skippedInvalid": "スキップ: 拒否されました",
+        "skippedFiltered": "スキップ：除外されました",
+        "skippedNoImage": "スキップ：画像なし"
+      },
+      "deleteConfirmTitle": "「{name}」を削除しますか？",
+      "sendTestConfirm": {
+        "title": "テスト投稿を送信しますか？",
+        "description": "このフィードの最新アイテムから、フィードが作成するのと同じ方法で下書きが作成されます。公開はされません。下書きを開いて確認できます。"
+      },
+      "bulkDelete": {
+        "selectAll": "すべて選択",
+        "selectFeed": "{name} を選択",
+        "deleteSelected": "選択項目を削除 ({count})",
+        "confirmTitle": "{count, plural, one {# 件のフィードを削除しますか？} other {# 件のフィードを削除しますか？}}",
+        "confirmDescription": "選択したフィードとそのアイテム履歴が削除されます。すでに作成された投稿は残ります。",
+        "success": "{count, plural, one {# 件のフィードを削除しました} other {# 件のフィードを削除しました}}"
+      },
+      "columns": {
+        "name": "フィード",
+        "status": "ステータス",
+        "mode": "モード",
+        "schedule": "確認間隔",
+        "destinations": "投稿先",
+        "lastChecked": "最終確認"
+      },
+      "filters": {
+        "search": "フィードを検索",
+        "searchPlaceholder": "名前またはフィードのアドレスで検索",
+        "status": "ステータスで絞り込む",
+        "mode": "モードで絞り込む",
+        "destination": "投稿先で絞り込む",
+        "allStatuses": "すべてのステータス",
+        "allModes": "すべてのモード",
+        "allDestinations": "すべての投稿先",
+        "destinationsSelected": "{count, plural, one {# 件の投稿先} other {# 件の投稿先}}",
+        "noDestinations": "絞り込める投稿先がまだありません。",
+        "clear": "フィルターをクリア",
+        "noMatch": "これらの条件に一致するフィードはありません。"
+      },
+      "destinationsDialog": {
+        "title": "{name} の投稿先",
+        "removed": "削除された投稿先",
+        "close": "閉じる",
+        "edit": "投稿先を編集"
+      },
+      "lastRun": {
+        "noNew": "ソースに新しい項目はありません",
+        "skippedOnly": "新しい項目はスキップされました（古すぎる、またはフィルターで除外）",
+        "stale": "ソースが古いコピーを返しました。まもなく再確認します",
+        "notModified": "前回の確認以降、ソースに変更はありません",
+        "created": "{count, plural, one {投稿を#件作成} other {投稿を#件作成}}",
+        "refused": "{count, plural, one {ネットワークに拒否された項目: #件} other {ネットワークに拒否された項目: #件}}",
+        "waiting": "{count, plural, one {次回の確認を待つ新しい項目: #件} other {次回の確認を待つ新しい項目: #件}}",
+        "dailyCap": "1日の上限に達しました（24時間あたり{cap}件） — {count, plural, one {待機中の新しい項目: #件} other {待機中の新しい項目: #件}}",
+        "dailyCapUntil": "1日の上限に達しました（24時間あたり{cap}件） — {count, plural, one {待機中の新しい項目: #件} other {待機中の新しい項目: #件}}. 次に空く時刻: {until}"
+      }
+    },
+    "show": {
+      "label": "表示",
+      "channels": "チャンネル上"
+    },
+    "composed": {
+      "deleted": "投稿を削除しました。",
+      "deleteTitle": "この投稿を削除しますか？",
+      "deleteDescription": "下書きは完全に削除されます。予約済みの投稿はキャンセルされ、公開されません。"
+    },
+    "analytics": {
+      "title": "投稿の分析",
+      "filters": {
+        "title": "分析フィルター",
+        "allContentTypes": "すべてのコンテンツタイプ",
+        "allTopics": "すべてのトピック"
+      },
+      "metrics": {
+        "comments": "コメント",
+        "reactions": "リアクション",
+        "shares": "シェア",
+        "engagement": "エンゲージメント",
+        "views": "視聴回数"
+      },
+      "metricsLower": {
+        "comments": "コメント",
+        "reactions": "リアクション",
+        "shares": "シェア",
+        "engagement": "エンゲージメント",
+        "views": "視聴回数"
+      },
+      "kpi": {
+        "title": "主な指標",
+        "notReported": "報告なし",
+        "notReportedHint": "このチャネルはこの数値を報告しません。",
+        "vsPrevious": "前の期間との比較",
+        "noComparison": "比較データはありません",
+        "previous": "前の期間: {value}",
+        "postsPublished": "{count, plural, one {この期間の公開投稿: #件} other {この期間の公開投稿: #件}}"
+      },
+      "chart": {
+        "title": "1日あたりの増加",
+        "description": "{metricLower}の1日あたりの増加",
+        "groupBy": "グラフをグループ化",
+        "group": {
+          "none": "合計",
+          "channel": "チャネル別",
+          "inbox": "ページ・アカウント別"
+        },
+        "other": "その他",
+        "viewTable": "表で表示",
+        "hideTable": "表を隠す",
+        "day": "日付",
+        "summary": "{from}から{to}までの1日あたりの{metric}の増加: 合計{total}。",
+        "empty": "増加は記録されていません",
+        "emptyHint": "この期間に変化がなかったか、追跡がまだ始まっていません。"
+      },
+      "breakdown": {
+        "title": "内訳",
+        "description": "チャネル・ページ別の{metric}の増加",
+        "by": {
+          "channel": "チャネル",
+          "inbox": "ページとアカウント"
+        },
+        "empty": "このフィルターに該当するデータはありません"
+      },
+      "topPosts": {
+        "title": "トップ投稿",
+        "description": "{metricLower}順",
+        "rankBy": "並べ替え基準",
+        "rank_gained": "増加が多い順",
+        "rank_total": "合計が多い順",
+        "rank": "#",
+        "post": "投稿",
+        "channel": "チャネル",
+        "gained": "増加",
+        "total": "合計",
+        "published": "公開日",
+        "open": "投稿を開く",
+        "noCaption": "キャプションなし",
+        "empty": "ランキング対象の投稿がありません",
+        "emptyHint": "投稿の数値が追跡されると、ここに表示されます。"
+      },
+      "bestTimes": {
+        "title": "投稿に最適な時間帯",
+        "description": "同じページの通常の投稿と比較（タイムゾーン: {timezone}）。",
+        "caption": "曜日・時間帯別のエンゲージメントスコア",
+        "cell": "{when}: スコア {score}、{posts, plural, one {#件の投稿} other {#件の投稿}}",
+        "cellEmpty": "{when}: 投稿なし",
+        "legendLow": "低",
+        "legendHigh": "高",
+        "legendTop": "ベストな時間帯",
+        "scoreHint": "スコア1.0は同じページの標準的な投稿に相当します。",
+        "topHeading": "最も強い時間帯",
+        "slotDetail": "スコア {score} · {posts, plural, one {#件の投稿} other {#件の投稿}}",
+        "insufficientTitle": "データがまだ足りません",
+        "insufficientHint": "最適な時間帯の算出には、90日前から3日前の間に公開された投稿が{min}件以上必要です。現在: {count}件。",
+        "capped": "直近の投稿のサンプルのみを使用しています。"
+      },
+      "coverage": {
+        "noneTitle": "まだ履歴がありません",
+        "partialTitle": "履歴はまだ蓄積中です",
+        "fullTitle": "投稿の一部のみが計測されています",
+        "since": "増加数は追跡を開始した{date}から集計されます。それ以前の動きは含まれません。",
+        "sinceUnknown": "増加数は追跡を開始した時点から集計されます。それ以前の動きは含まれません。",
+        "withHistory": "最近の{posts}件の投稿のうち{withHistory}件に増加の履歴があります。",
+        "truncated": "一度に計測できる数より投稿が多いため、直近のものを表示しています。"
+      },
+      "states": {
+        "error": "このセクションを読み込めませんでした。",
+        "retry": "再試行",
+        "noChannelHint": "Messenger、Instagram、Threads、TikTokのチャネルを接続すると、投稿の成果を確認できます。"
+      },
+      "perPost": {
+        "title": "パフォーマンス",
+        "description": "チャネルが報告する数値の1日ごとの変化（当社の日次スナップショットに基づく）。",
+        "metric": "指標",
+        "notReported": "このチャネルは報告していません。",
+        "empty": "まだ増加は記録されていません",
+        "since": "{date}から追跡中です。変化は次回の日次スナップショット後に表示されます。",
+        "notTracked": "この投稿はまだ追跡されていません。",
+        "summary": "1日あたりの{metric}の増加: 合計{total}。",
+        "totalNow": "この期間の増加 · 合計{total}"
+      },
+      "composedPost": {
+        "reasons": {
+          "notPublished": "まだ公開されていません。",
+          "notLinked": "まだチャンネルの投稿と紐付いていません。紐付くと数値が表示されます。",
+          "networkNotSupported": "このネットワークは投稿の数値を報告しません。",
+          "removed": "チャンネルから削除されました。"
+        }
+      }
+    }
+  },
+  "socialAccounts": {
+    "errors": {
+      "providerNotSupported": "このネットワークはまだ接続できません。",
+      "appNotConfigured": "このネットワークのプラットフォームアプリは、ワークスペースに設定されていません。"
+    },
+    "connectResult": {
+      "success": "アカウントを接続しました。",
+      "cancelled": "接続がキャンセルされました。",
+      "notFound": "接続を完了できませんでした。",
+      "sessionExpired": "接続セッションの有効期限が切れました。もう一度接続してください。",
+      "permissionNotGranted": "次の権限が許可されなかったため、アカウントを接続できませんでした: {permissions}。",
+      "accountUnsupported": "このアカウントの種類では投稿できません。プロフェッショナルアカウントを使用してください。",
+      "notSupported": "このネットワークはまだ接続できません。",
+      "failed": "アカウントを接続できませんでした。もう一度お試しください。"
+    }
+  },
+  "composer": {
+    "publishTo": "公開先",
+    "reconnect": "再接続",
+    "noDestinations": "投稿できる接続済みのページまたはプロフィールはまだありません。",
+    "sharedContent": "共通コンテンツ",
+    "text": "投稿テキスト",
+    "textPlaceholder": "投稿を書く",
+    "link": "リンク",
+    "linkPlaceholder": "https://example.com",
+    "linkInvalid": "https:// で始まる完全なリンクを入力してください",
+    "removeMedia": "ファイルを削除",
+    "addMedia": "写真または動画を追加",
+    "removeDestination": "公開先を削除",
+    "customise": "このチャネル用にカスタマイズ",
+    "usesSharedContent": "共通コンテンツを使用",
+    "channelText": "このチャネル用のテキスト",
+    "channelTextPlaceholder": "空欄の場合は共通テキストを使用します",
+    "contentType": "コンテンツの種類",
+    "previewEmpty": "公開先を選ぶとプレビューが表示されます。",
+    "noText": "テキストなし",
+    "justNow": "たった今",
+    "linkInCaption": "リンクはキャプションの末尾に追加されます。",
+    "previewMediaAlt": "添付ファイル {index}",
+    "previewMoreMedia": "+{count}",
+    "previewSlideLabel": "スライド {current} / {total}",
+    "previewPrevious": "前のスライド",
+    "previewNext": "次のスライド",
+    "publishNow": "今すぐ公開",
+    "newPost": "新規投稿",
+    "draftSaved": "下書きを保存しました",
+    "noTargets": "まず公開先を1つ以上選択してください。",
+    "preview": "プレビュー",
+    "previewError": "プレビューを更新できませんでした。",
+    "issueCount": "修正が必要な問題: {count}",
+    "saveDraft": "下書きを保存",
+    "retry": "再試行",
+    "noAccountsTitle": "接続済みのアカウントがありません",
+    "noAccountsHint": "投稿を作成するには、「連携」タブでアカウントを連携してください。",
+    "goToAccounts": "連携へ移動",
+    "notEditable": "この投稿は編集できなくなりました。",
+    "options": {
+      "shareToFeed": "フィードにも共有",
+      "title": "タイトル",
+      "thumbOffsetMs": "カバーフレーム（ミリ秒）",
+      "privacyLevel": "この動画を視聴できる人",
+      "allowComment": "コメント",
+      "allowDuet": "デュエット",
+      "allowStitch": "スティッチ",
+      "commercialContent": "商用コンテンツを開示",
+      "brandOrganic": "自分のブランド",
+      "brandContent": "ブランドコンテンツ",
+      "isAigc": "AI生成コンテンツとしてラベル付け",
+      "coverTimestampMs": "カバーフレーム（ミリ秒）"
+    },
+    "contentTypes": {
+      "text": "テキスト",
+      "link": "リンク",
+      "image": "画像",
+      "video": "動画",
+      "reel": "リール",
+      "carousel": "カルーセル",
+      "story": "ストーリーズ"
+    },
+    "issues": {
+      "accountDisconnected": "このアカウントは接続解除されています。",
+      "accountNeedsReauth": "このアカウントは再接続が必要です。",
+      "inboxDisconnected": "このチャネルの接続が解除されています。",
+      "inboxNeedsReconnect": "このチャネルの接続の有効期限が切れました。再接続してください。",
+      "publishPermissionMissing": "このチャネルには投稿の権限が付与されていません。投稿を許可するには再接続してください。",
+      "contentTypeDisabled": "このコンテンツ種類はまだ利用できません。",
+      "contentTypeNotSupported": "このネットワークはこのコンテンツ種類に対応していません。",
+      "destinationInactive": "この公開先は無効です。",
+      "destinationNotFound": "この公開先が見つかりません。",
+      "linkNotSupported": "このコンテンツ種類にはリンクを付けられません。",
+      "linkRequired": "リンクが必要です。",
+      "mediaFormatNotSupported": "対応していないファイル形式があります。",
+      "mediaKindNotAllowed": "ここでは使えないファイル種類があります。",
+      "mediaTooFew": "ファイルを追加してください。",
+      "mediaTooLarge": "大きすぎるファイルがあります。",
+      "mediaTooLong": "長すぎる動画があります。",
+      "mediaTooMany": "ファイルが多すぎます。",
+      "mediaTooShort": "短すぎる動画があります。",
+      "optionsInvalid": "設定が正しくありません。",
+      "textRequired": "テキストが必要です。",
+      "textTooLong": "テキストが長すぎます。",
+      "partsNotSupported": "このネットワークはスレッドのパートを投稿できません。",
+      "firstCommentNotSupported": "このネットワークは最初のコメントを投稿できません。",
+      "tooManyParts": "パートの数がネットワークの上限を超えています。",
+      "partTextRequired": "このパートにはテキストが必要です。",
+      "partTextTooLong": "このパートはネットワークの上限より長くなっています。",
+      "tooManyLinks": "このテキストには、Threadsが許可する数(5件以下)を超えるリンクが含まれています。"
+    },
+    "publishStarted": "公開を開始しました",
+    "publishRefused": "この内容では投稿を公開できません。表示された問題を修正してください。",
+    "targetsStatus": "公開先",
+    "viewPost": "投稿を表示",
+    "retryTarget": "再試行",
+    "markPublished": "公開済みにする",
+    "retryReviewTitle": "すでに公開されている可能性のある投稿を再試行しますか？",
+    "retryReviewDescription": "この投稿はすでに公開されている可能性があります。再試行すると2回公開されるおそれがあります。先にページを確認してください。",
+    "retryReviewConfirm": "それでも再試行",
+    "status": {
+      "pending": "待機中",
+      "publishing": "公開中",
+      "processing": "処理中",
+      "published": "公開済み",
+      "failed": "失敗",
+      "cancelled": "キャンセル済み",
+      "needsReview": "要確認"
+    },
+    "schedule": "予約する",
+    "scheduleAt": "公開日時",
+    "pickTime": "日付と時刻を選択",
+    "scheduleTooSoon": "現在から2分以上先の時刻を選んでください。",
+    "scheduled": "投稿を予約しました。",
+    "repeatLabel": "繰り返し",
+    "repeatHint": "繰り返し投稿はテンプレートとして保存され、それ自体は公開されません。実行のたびにコピーが予約されます。",
+    "repeatInvalid": "保存するには繰り返し設定を完了してください。",
+    "repeatStateActive": "繰り返し中",
+    "repeatStatePaused": "一時停止中",
+    "repeatStateEnded": "シリーズ終了",
+    "repeatNextRun": "次回の実行：{date}",
+    "repeatPause": "一時停止",
+    "repeatResume": "再開",
+    "repeatEnd": "シリーズを終了",
+    "repeatUpdated": "繰り返しシリーズを更新しました",
+    "repeatScheduleOff": "予約と公開はテンプレートではなく、各コピーに適用されます。",
+    "moveMediaEarlier": "前へ移動",
+    "moveMediaLater": "後ろへ移動",
+    "removeFromChannels": "チャンネルから削除",
+    "removeFromChannelsTitle": "この投稿をネットワークから削除しますか？",
+    "removeFromChannelsDescription": "公開済みの投稿は、対応しているすべてのネットワークから削除されます。削除機能のないネットワークでは投稿が残ります。この操作は元に戻せません。",
+    "removeFromChannelsConfirm": "削除",
+    "removeCancel": "キャンセル",
+    "removeRequested": "{count, plural, one {#件の投稿先で削除を開始しました。} other {#件の投稿先で削除を開始しました。}}",
+    "removeUnsupported": "{count, plural, one {#件の投稿先はネットワークのAPIでは削除できません。アプリで削除してください。} other {#件の投稿先はネットワークのAPIでは削除できません。アプリで削除してください。}}",
+    "removedFromChannel": "ネットワークから削除済み",
+    "removalPermissionMissing": "投稿の削除を許可するには、このアカウントを再接続してください。",
+    "postMessageQuotaExceeded": "このアカウントのメッセージ上限に達したため、この投稿は公開されませんでした。プランをアップグレードするか、次の請求期間をお待ちのうえ、再試行してください。",
+    "tiktokLoading": "TikTokアカウントの設定を読み込み中…",
+    "tiktokUnavailable": "TikTokアカウントの設定を読み込めませんでした。もう一度お試しください。",
+    "tiktokCreator": "TikTokアカウント {nickname} に投稿",
+    "tiktokCannotPost": "このTikTokアカウントは現在投稿できません。しばらくしてからもう一度お試しください。",
+    "tiktokPrivacyPlaceholder": "視聴できる人を選択",
+    "tiktokInteractions": "他のユーザーに許可する操作",
+    "tiktokInteractionDisabled": "このアカウントのTikTok設定でオフになっています",
+    "tiktokYourBrand": "自分のブランド",
+    "tiktokBrandedContent": "ブランドコンテンツ",
+    "tiktokLabelPromotional": "動画には「プロモーションコンテンツ」のラベルが付きます。",
+    "tiktokLabelPaid": "動画には「有償パートナーシップ」のラベルが付きます。",
+    "tiktokCommercialRequired": "コンテンツが自分自身、第三者、またはその両方を宣伝するかどうかを指定してください。",
+    "tiktokBrandedNotPrivate": "ブランドコンテンツの公開範囲は非公開にできません。",
+    "tiktokConsentMusic": "投稿すると、TikTokの<music>音楽の使用に関する確認</music>に同意したことになります。",
+    "tiktokConsentBranded": "投稿すると、TikTokの<branded>ブランドコンテンツポリシー</branded>と<music>音楽の使用に関する確認</music>に同意したことになります。",
+    "tiktokMaxDuration": "このアカウントが投稿できる最長の動画は{seconds}秒です。",
+    "tiktokProcessingNote": "公開後、動画の処理とプロフィールへの表示に数分かかることがあります。",
+    "tiktokPrivacy": {
+      "PUBLIC_TO_EVERYONE": "全員",
+      "MUTUAL_FOLLOW_FRIENDS": "友達",
+      "FOLLOWER_OF_CREATOR": "フォロワー",
+      "SELF_ONLY": "自分のみ"
+    },
+    "partsTitle": "スレッドのパート",
+    "partsHint": "各パートは、メイン投稿の直後に、前のパートへの返信として投稿されます。",
+    "partLabel": "パート {number}",
+    "partPlaceholder": "次のパートを書く",
+    "partMoveUp": "パートを上へ移動",
+    "partMoveDown": "パートを下へ移動",
+    "partRemove": "パートを削除",
+    "partsAdd": "パートを追加",
+    "partsRemaining": "{count, plural, one {あと # パート追加できます} other {あと # パート追加できます}}",
+    "firstCommentTitle": "最初のコメント",
+    "firstCommentPlaceholder": "投稿の直後にコメントとして投稿されます",
+    "aiAssist": "AI で書く",
+    "aiPrivacy": "入力したテキストは、下で選択した AI プロバイダーに送信されます。挿入するまで、何も保存・公開されません。",
+    "aiIntegration": "AI 連携",
+    "aiNoIntegration": "AI 連携がまだ接続されていません。",
+    "aiConnectIntegration": "AI 連携を接続する",
+    "aiMode": "AI に何をさせますか？",
+    "aiModes": {
+      "write": "新しい投稿を書く",
+      "rewrite": "書き直す",
+      "shorten": "短くする",
+      "expand": "長くする",
+      "tone": "トーンを変える",
+      "fit": "投稿先の文字数制限に合わせる",
+      "hashtags": "ハッシュタグを提案"
+    },
+    "aiTone": "トーン",
+    "aiTones": {
+      "friendly": "フレンドリー",
+      "professional": "プロフェッショナル",
+      "casual": "カジュアル",
+      "playful": "遊び心のある",
+      "formal": "フォーマル",
+      "persuasive": "説得力のある",
+      "inspiring": "感動的"
+    },
+    "aiBrief": "投稿の内容は何ですか？",
+    "aiBriefPlaceholder": "例：週末セールのお知らせ、20% オフ",
+    "aiUsesPostText": "上の投稿テキストを使用します。",
+    "aiNeedsPostText": "先に投稿テキストを書いてください。",
+    "aiFitNeedsDestination": "先に投稿先を選択してください。",
+    "aiGenerate": "生成",
+    "aiGenerating": "作成中…",
+    "aiSuggestion": "提案",
+    "aiCutToLimit": "{limit, plural, one {# 文字} other {# 文字}}の制限に合わせて切り詰めました。",
+    "aiInsert": "末尾に挿入",
+    "aiReplace": "投稿テキストを置き換え",
+    "aiHashtags": "ハッシュタグ",
+    "aiEmoji": "絵文字",
+    "aiCallToAction": "行動喚起",
+    "aiCallToActionText": "行動喚起の文言（任意）",
+    "aiCallToActionPlaceholder": "例：今日のうちにテーブルを予約",
+    "aiVariants": "案の数",
+    "aiPerNetwork": "チャンネルごとに作成",
+    "aiPerNetworkHint": "各ネットワークのスタイルで1つずつ作成します。",
+    "aiOption": "案 {number}",
+    "aiApplyTo": "{network}に適用",
+    "aiApplyToEach": "各チャンネルに適用",
+    "aiHashtagPick": "ハッシュタグをクリックすると投稿に追加されます。",
+    "aiErrors": {
+      "modelNotChosen": "AI で文章を作成するには、AI 連携とモデルを選択してください。",
+      "needsReconfiguration": "選択した AI 連携が見つからないか、無効になっているか、正しくありません。",
+      "rateLimited": "AI へのリクエストが多すぎます。しばらくしてからもう一度お試しください。",
+      "timeout": "AI モデルが時間内に応答しませんでした。もう一度お試しください。",
+      "provider": "AI プロバイダーがテキストを作成できませんでした。もう一度お試しください。",
+      "inProgress": "AI リクエストがすでに実行中です。",
+      "blocked": "このワークスペースのプランまたはトライアルは期限切れです。",
+      "generic": "テキストを作成できませんでした。もう一度お試しください。"
+    },
+    "snippets": "スニペット",
+    "snippetsKinds": {
+      "signature": "署名",
+      "hashtags": "ハッシュタグ",
+      "text": "テキスト"
+    },
+    "snippetsLoadFailed": "スニペットを読み込めませんでした。",
+    "snippetsEmpty": "スニペットはまだありません。",
+    "snippetsSignature": "署名",
+    "snippetsSignatureHint": "投稿を作成するときに、テキストの末尾に一度だけ追加されます。独自のテキストを持つ投稿先には追加されません。",
+    "snippetsSignatureChosen": "署名：{name}",
+    "snippetsManage": "スニペットを管理",
+    "snippetsName": "名前",
+    "snippetsKind": "種類",
+    "snippetsContent": "テキスト",
+    "snippetsAdd": "スニペットを追加",
+    "snippetsSaved": "スニペットを保存しました。",
+    "snippetsDeleted": "スニペットを削除しました。",
+    "snippetsNameTaken": "この名前のスニペットはすでに存在します。",
+    "targetSets": "ページグループ",
+    "targetSetsLoadFailed": "グループを読み込めませんでした。",
+    "targetSetsEmpty": "保存されたグループはまだありません。",
+    "targetSetsName": "グループ名",
+    "targetSetsNamePlaceholder": "グループ名を入力…",
+    "targetSetsSave": "保存",
+    "targetSetsNeedsSelection": "ページを選択するとグループとして保存できます。",
+    "targetSetsSaved": "グループを保存しました。",
+    "targetSetsDeleted": "グループを削除しました。",
+    "targetSetsNameTaken": "この名前のグループは既にあります。",
+    "targetSetsApplied": "「{name}」のページを選択しました。",
+    "targetSetsSkipped": "{count, plural, one {対応が必要なため # 件のページをスキップしました。} other {対応が必要なため # 件のページをスキップしました。}}",
+    "destinationState": {
+      "ready": "投稿できます",
+      "inboxDisconnected": "接続が解除されています",
+      "needsReconnect": "接続の有効期限が切れました",
+      "permissionMissing": "投稿の権限が付与されていません"
+    },
+    "destinationPause": {
+      "until": "{time} まで一時停止中",
+      "reason": {
+        "limitReached": "このアカウントの投稿がネットワークにより制限されました。投稿は待機し、停止の終了後に公開されます。",
+        "accountRestricted": "このアカウントがネットワークにより制限されました。投稿は待機し、停止の終了後に公開されます。",
+        "spamRisk": "ネットワークがこのアカウントの動きをスパムの恐れありと判断しました。投稿は待機し、停止の終了後に公開されます。"
+      }
+    },
+    "viaFacebook": "Facebook経由",
+    "openProfile": "{network}で{name}を開く",
+    "someNeedAttention": "再接続するまで、投稿できないページまたはプロフィールがあります。",
+    "viewPosts": "表示",
+    "queue": {
+      "modeLabel": "投稿のタイミング",
+      "atTime": "時間を指定",
+      "next": "キューに追加",
+      "top": "最初に投稿",
+      "nextHint": "各ページの次の空き時間に投稿されます。",
+      "topHint": "最も近い時間に投稿され、キュー内の投稿は1枠ずつ後ろにずれます。",
+      "noDestination": "ページを選ぶと投稿時間が表示されます。",
+      "noSchedule": "{names} には投稿時間が設定されていません。",
+      "setUpSlots": "投稿時間を設定"
+    },
+    "targetOwnTime": "このチャンネル専用の日時",
+    "targetTimeInvalid": "現在から2分後〜1年後の間で日時を選択してください。",
+    "targetMediaOwn": "このチャンネル用の別のファイル",
+    "targetMediaNone": "ファイルなし：このチャンネルはファイルなしで投稿します。",
+    "occurrencesUpcoming": "今後の実行",
+    "occurrencesNoUpcoming": "今後の実行はありません。",
+    "occurrenceSkip": "スキップ",
+    "occurrenceRestore": "復元",
+    "occurrenceSkipped": "実行をスキップしました。",
+    "occurrenceRestored": "実行を復元しました。",
+    "occurrencesHistory": "過去の実行を表示",
+    "occurrencesHideHistory": "過去の実行を非表示",
+    "occurrencesLoadFailed": "実行を読み込めませんでした。",
+    "occurrencesNoHistory": "まだ実行はありません。",
+    "occurrencesLoadMore": "さらに読み込む",
+    "occurrenceOpen": "投稿を開く",
+    "targetSetsUpdated": "グループを更新しました。",
+    "targetSetsMembers": "このグループのページ",
+    "targetSetsNeedsMember": "ページを1つ以上残してください。",
+    "occurrenceOutcomes": {
+      "created": "予約済み",
+      "excluded": "スキップ済み",
+      "missed": "未実行",
+      "skipped": "作成なし"
+    }
+  },
+  "postCommentVariables": {
+    "group": "投稿へのコメント",
+    "postLink": "投稿のリンク",
+    "postText": "投稿のテキスト",
+    "postPublishedAt": "投稿の公開日時",
+    "postPageName": "投稿のページ名",
+    "postId": "投稿ID",
+    "commentText": "コメントのテキスト",
+    "commentId": "コメントID"
   }
 }

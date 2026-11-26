@@ -23,6 +23,7 @@ import { pipelineItemEventTypes } from "@/features/conditions/schema/pipeline-it
 import { defaultFn as addContactInfoUpdatedCondition } from "../conditions/schema/contact-info-updated"
 import { defaultFn as addCustomFieldValueChangedCondition } from "../conditions/schema/custom-field-value-changed"
 import { defaultFn as addDateTimeBaseTriggerCondition } from "../conditions/schema/date-time-based-trigger"
+import { postCommentDefaultFn } from "../conditions/schema/post-comment"
 import {
   createDefaultFn,
   createDefaultFnWithOptionalSourceId,
@@ -281,6 +282,28 @@ export function AddCondition({
             ? createDefaultFnWithOptionalSourceId(type)
             : createDefaultFn(type),
         })),
+      },
+
+      // Messenger and Instagram comments on a post: every comment, or a
+      // contact's first on a post.
+      {
+        label: t("posts.title"),
+        children: [
+          {
+            label: t("trigger.conditions.contactCommentedOnPost"),
+            value: triggerEventTypes.enum.contactCommentedOnPost,
+            defaultFn: postCommentDefaultFn(
+              triggerEventTypes.enum.contactCommentedOnPost,
+            ),
+          },
+          {
+            label: t("trigger.conditions.contactFirstCommentedOnPost"),
+            value: triggerEventTypes.enum.contactFirstCommentedOnPost,
+            defaultFn: postCommentDefaultFn(
+              triggerEventTypes.enum.contactFirstCommentedOnPost,
+            ),
+          },
+        ],
       },
 
       {

@@ -210,6 +210,8 @@ export type CollectedRows = {
   folderIds?: readonly string[]
   productCategoryIds?: readonly string[]
   inboxIds?: readonly string[]
+  placeCategoryIds?: readonly string[]
+  customFieldIds?: readonly string[]
   hardDependencies?: readonly TemplateHardDependency[]
 }
 

@@ -21,6 +21,20 @@ describe("media token", () => {
     })
   })
 
+  test("round-trips a destinationAvatar token", async () => {
+    const token = await signMediaToken({
+      workspaceId: "workspace-1",
+      kind: "destinationAvatar",
+      refId: "destination-1",
+    })
+
+    await expect(verifyMediaToken(token)).resolves.toMatchObject({
+      workspaceId: "workspace-1",
+      kind: "destinationAvatar",
+      refId: "destination-1",
+    })
+  })
+
   test("round-trips the optional messageCreatedAt shard hint", async () => {
     const messageCreatedAt = Date.parse("2026-01-03T12:00:00Z")
     const token = await signMediaToken({

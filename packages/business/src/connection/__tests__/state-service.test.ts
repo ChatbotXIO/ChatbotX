@@ -28,6 +28,8 @@ const mocks = vi.hoisted(() => ({
   listInboxIdentities: vi.fn(),
   recordDeletion: vi.fn(async () => undefined),
   loggerError: vi.fn(),
+  resetPostSync: vi.fn(async () => false),
+  releaseParked: vi.fn(async () => false),
 }))
 
 vi.mock("@chatbotx.io/database/repositories", () => ({
@@ -51,6 +53,10 @@ vi.mock("@chatbotx.io/database/repositories", () => ({
   },
   aiHandoverSettingsRepository: { lockExisting: mocks.lockExisting },
   aiHandoverBulkRunRepository: { cancelLive: mocks.cancelLive },
+  channelPostSyncRepository: {
+    resetAfterAuthChange: mocks.resetPostSync,
+    releaseParkedForInbox: mocks.releaseParked,
+  },
 }))
 
 vi.mock("@chatbotx.io/database/client", () => ({
@@ -146,6 +152,8 @@ beforeEach(() => {
   mocks.recordDeletion.mockReset()
   mocks.recordDeletion.mockResolvedValue(undefined)
   mocks.loggerError.mockReset()
+  mocks.resetPostSync.mockClear()
+  mocks.releaseParked.mockClear()
 
   mocks.tryConsume.mockResolvedValue({ ok: true })
   vi.mocked(db.transaction).mockImplementation(
@@ -400,6 +408,94 @@ describe("ConnectionStateService.transition", () => {
       userId: "owner-1",
       metric: "channels",
     })
+  })
+})
+
+describe("ConnectionStateService.transition — post sync reset on reactivation", () => {
+  test("a disconnected inbox re-activated by connect.completed makes its parked post sync due again, on the same tx", async () => {
+    mocks.findById.mockResolvedValue(
+      baseConnection({ status: "disconnected", statusReason: "user" }),
+    )
+    mocks.update.mockResolvedValue(baseConnection({ status: "connected" }))
+    const callerTx = { marker: "caller-tx" }
+
+    await connectionStateService.transition({
+      connectionId: "conn-1",
+      event: "connect.completed",
+      ownerId: "owner-1",
+      tx: callerTx as never,
+      quotaConsumption: { consumed: false, workspaceUsageIncremented: false },
+    })
+
+    expect(mocks.resetPostSync).toHaveBeenCalledWith(
+      { inboxId: "inbox-1", workspaceId: "ws-1", now: expect.any(Date) },
+      callerTx,
+    )
+  })
+
+  test("connected to degraded and degraded to connected flaps do not reset the post sync", async () => {
+    mocks.findById.mockResolvedValue(baseConnection({ status: "connected" }))
+    mocks.update.mockResolvedValue(baseConnection({ status: "degraded" }))
+    await connectionStateService.transition({
+      connectionId: "conn-1",
+      event: "refresh.transient_failure",
+    })
+    mocks.findById.mockResolvedValue(baseConnection({ status: "degraded" }))
+    mocks.update.mockResolvedValue(baseConnection({ status: "connected" }))
+    await connectionStateService.transition({
+      connectionId: "conn-1",
+      event: "verify.ok",
+    })
+
+    expect(mocks.resetPostSync).not.toHaveBeenCalled()
+  })
+
+  test("teardown.resume (no new credentials) only releases a notConnected row and never resets a failed auth row", async () => {
+    mocks.findById.mockResolvedValue(
+      baseConnection({ status: "paused", statusReason: "tenant_suspended" }),
+    )
+    mocks.update.mockResolvedValue(baseConnection({ status: "connected" }))
+    const callerTx = { marker: "caller-tx" }
+
+    await connectionStateService.transition({
+      connectionId: "conn-1",
+      event: "teardown.resume",
+      ownerId: "owner-1",
+      tx: callerTx as never,
+      quotaConsumption: { consumed: false, workspaceUsageIncremented: false },
+    })
+
+    expect(mocks.resetPostSync).not.toHaveBeenCalled()
+    expect(mocks.releaseParked).toHaveBeenCalledWith(
+      { inboxId: "inbox-1", workspaceId: "ws-1", now: expect.any(Date) },
+      callerTx,
+    )
+  })
+
+  test("a no-op re-assertion of an already active connection does not reset the post sync", async () => {
+    const active = baseConnection({ status: "connected", statusReason: null })
+    mocks.findById.mockResolvedValue(active)
+    mocks.update.mockResolvedValue(active)
+
+    await connectionStateService.transition({
+      connectionId: "conn-1",
+      event: "connect.completed",
+      ownerId: "owner-1",
+    })
+
+    expect(mocks.resetPostSync).not.toHaveBeenCalled()
+  })
+
+  test("a transition to an inactive status does not reset the post sync", async () => {
+    mocks.findById.mockResolvedValue(baseConnection({ status: "connected" }))
+    mocks.update.mockResolvedValue(baseConnection({ status: "disconnected" }))
+
+    await connectionStateService.transition({
+      connectionId: "conn-1",
+      event: "user.disconnect",
+    })
+
+    expect(mocks.resetPostSync).not.toHaveBeenCalled()
   })
 })
 

@@ -22,6 +22,10 @@ import { useState } from "react"
 import { toast } from "sonner"
 import { useCopyToClipboard } from "usehooks-ts"
 import { useCustomFieldSelectOptions } from "@/features/custom-fields/provider/custom-field-hook"
+import {
+  LockedContent,
+  useIsEditorLocked,
+} from "@/features/templates/components/locked-editor"
 import { updateDynamicImageAction } from "./actions/update-dynamic-image.action"
 import { DynamicImageEditor } from "./components/dynamic-image-editor"
 import { DynamicImageTemplatePicker } from "./components/template-picker"
@@ -75,6 +79,7 @@ export function UpdateDynamicImageForm({
   dynamicImage: DynamicImageResource
   publicUrl: string
 }) {
+  const isLocked = useIsEditorLocked()
   const t = useTranslations()
   const router = useRouter()
   const customFieldOptions = useCustomFieldSelectOptions()
@@ -86,12 +91,28 @@ export function UpdateDynamicImageForm({
     zodResolver(updateDynamicImageRequest),
     {
       actionProps: {
-        onSuccess: () => {
+        onSuccess: ({ input }) => {
           toast.success(
             t("messages.updatedSuccess", {
               feature: t("fields.dynamicImage.label"),
             }),
           )
+          // What the server saved is the new baseline; an edit made while the
+          // request was in flight keeps its value and stays dirty.
+          const current = form.getValues()
+          form.reset({
+            name: input.name,
+            customFieldId: input.customFieldId,
+            data: input.data,
+          })
+          if (current.name !== input.name) {
+            form.setValue("name", current.name, { shouldDirty: true })
+          }
+          if (current.customFieldId !== input.customFieldId) {
+            form.setValue("customFieldId", current.customFieldId, {
+              shouldDirty: true,
+            })
+          }
           router.refresh()
         },
         onError: ({ error }) => {
@@ -129,9 +150,54 @@ export function UpdateDynamicImageForm({
       <CardContent>
         <Form {...form}>
           <form className="space-y-6" onSubmit={onSubmit}>
-            <InputField label={t("fields.name.label")} name="name" required />
+            <LockedContent className="space-y-6">
+              <InputField label={t("fields.name.label")} name="name" required />
 
-            <DynamicImageTemplatePicker onSelect={setData} />
+              <DynamicImageTemplatePicker onSelect={setData} />
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="flex flex-col gap-1.5">
+                  <Label htmlFor="dynamic-image-width">
+                    {t("dynamicImages.editor.width")}
+                  </Label>
+                  <Input
+                    id="dynamic-image-width"
+                    min={1}
+                    onChange={(event) =>
+                      setData({
+                        ...data,
+                        width: Number(event.target.value) || data.width,
+                      })
+                    }
+                    type="number"
+                    value={data.width}
+                  />
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  <Label htmlFor="dynamic-image-height">
+                    {t("dynamicImages.editor.height")}
+                  </Label>
+                  <Input
+                    id="dynamic-image-height"
+                    min={1}
+                    onChange={(event) =>
+                      setData({
+                        ...data,
+                        height: Number(event.target.value) || data.height,
+                      })
+                    }
+                    type="number"
+                    value={data.height}
+                  />
+                </div>
+              </div>
+
+              <DynamicImageEditor
+                onChange={setData}
+                value={data}
+                workspaceId={workspaceId}
+              />
+            </LockedContent>
 
             <ComboboxField
               allowClear
@@ -141,49 +207,6 @@ export function UpdateDynamicImageForm({
               name="customFieldId"
               options={customFieldOptions}
               placeholder={t("actions.pleaseSelect")}
-            />
-
-            <div className="grid grid-cols-2 gap-3">
-              <div className="flex flex-col gap-1.5">
-                <Label htmlFor="dynamic-image-width">
-                  {t("dynamicImages.editor.width")}
-                </Label>
-                <Input
-                  id="dynamic-image-width"
-                  min={1}
-                  onChange={(event) =>
-                    setData({
-                      ...data,
-                      width: Number(event.target.value) || data.width,
-                    })
-                  }
-                  type="number"
-                  value={data.width}
-                />
-              </div>
-              <div className="flex flex-col gap-1.5">
-                <Label htmlFor="dynamic-image-height">
-                  {t("dynamicImages.editor.height")}
-                </Label>
-                <Input
-                  id="dynamic-image-height"
-                  min={1}
-                  onChange={(event) =>
-                    setData({
-                      ...data,
-                      height: Number(event.target.value) || data.height,
-                    })
-                  }
-                  type="number"
-                  value={data.height}
-                />
-              </div>
-            </div>
-
-            <DynamicImageEditor
-              onChange={setData}
-              value={data}
-              workspaceId={workspaceId}
             />
 
             <PublicUrlSection publicUrl={publicUrl} />
@@ -199,7 +222,12 @@ export function UpdateDynamicImageForm({
                 {t("actions.cancel")}
               </Button>
               <Button
-                disabled={!form.formState.isValid || action.isPending}
+                disabled={
+                  !form.formState.isValid ||
+                  action.isPending ||
+                  // On a View-only copy only the cache field is the installer's.
+                  (isLocked && !form.formState.dirtyFields.customFieldId)
+                }
                 type="submit"
               >
                 {action.isPending && <Loader2Icon className="animate-spin" />}

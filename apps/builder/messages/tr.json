@@ -163,6 +163,94 @@
   "errors": {
     "superAdminRequired": "Bunu yapmak için çalışma alanı süper yöneticisi olmanız gerekir."
   },
+  "inboxTranslation": {
+    "settings": {
+      "title": "Konuşma çevirisi",
+      "description": "Müşterilerinizin mesajlarını ekibiniz için, yanıtlarınızı ise müşterileriniz için doğrudan Gelen Kutusu'nda çevirin.",
+      "saved": "Çeviri ayarları kaydedildi",
+      "readOnly": "Bu ayarları yalnızca çalışma alanı yöneticileri değiştirebilir.",
+      "languageHint": "Konuşma çevirisi açıkken müşteri mesajlarının çevrildiği dil de budur.",
+      "alert": {
+        "needsReconfiguration": "Yeniden yapılandırma gerekiyor: yapay zekâ entegrasyonu kaldırıldı veya kapatıldı.",
+        "noIntegration": "Çeviriyi kullanmak için önce bir yapay zekâ entegrasyonu bağlayın.",
+        "connect": "Yapay zekâyı bağla"
+      },
+      "enabled": {
+        "label": "Konuşmaları çevir",
+        "description": "Müşteri mesajları yalnızca biri konuşmayı açtığında çevrilir. Sohbet metni seçtiğiniz yapay zekâ sağlayıcısına gönderilir ve yapay zekâ anahtarınız üzerinden faturalandırılır."
+      },
+      "integration": {
+        "label": "Yapay zekâ entegrasyonu",
+        "description": "Yalnızca bağlı yapay zekâ sağlayıcıları listelenir."
+      },
+      "test": {
+        "label": "Bağlantıyı test et",
+        "button": "Test et",
+        "result": "{seconds} sn içinde tamamlandı: “{sample}” → “{translated}”",
+        "slow": "Bu model yavaş: giden mesajlar zamanında çevrilmeyebilir ve bu durumda gönderilmez.",
+        "failed": "Test başarısız oldu."
+      }
+    },
+    "message": {
+      "translating": "Çevriliyor…",
+      "stillWaiting": "Çeviri hâlâ bekleniyor",
+      "requestAgain": "Yeniden iste",
+      "failed": "Çevrilemedi",
+      "translatedFrom": "{language} dilinden çevrildi. Orijinali göster",
+      "translatedFromNoLanguage": "Çevrildi. Orijinali göster",
+      "sentIn": "{language} dilinde gönderildi. Gönderileni göster",
+      "sentInNoLanguage": "Çevrilerek gönderildi. Gönderileni göster",
+      "hideOriginal": "Orijinali gizle",
+      "hideSent": "Gönderileni gizle",
+      "translatedLabelNoLanguage": "Çevrildi",
+      "sentLabelNoLanguage": "Çevrilerek gönderildi"
+    },
+    "badge": {
+      "tooltip": "Müşteri dili: {language}"
+    },
+    "panel": {
+      "title": "Çeviri ayarları",
+      "statusOn": "Açık",
+      "statusOff": "Kapalı",
+      "translateConversation": "Bu konuşmayı çevir",
+      "translateConversationHint": "Mesajları otomatik çevir",
+      "botActiveHint": "Bu görüşmeyi bot yönetiyor, bu yüzden çeviri kapalı. Çevirmek için açın.",
+      "botPausedHint": "Bu konuşmayı bottan devraldınız, bu yüzden çeviri kapalı kalır. Çevirmek için açın.",
+      "displayOptions": "Görüntüleme seçenekleri",
+      "showOriginals": "Orijinal metni göster",
+      "previewBeforeSending": "Göndermeden önce çeviriyi önizle"
+    },
+    "composer": {
+      "hintUnknown": "Dil algılanamadı · Yazıldığı gibi gönderilir",
+      "hintDetecting": "Müşterinin dili algılanıyor…",
+      "chip": {
+        "aria": "Çeviri dili",
+        "target": "→ {language}",
+        "sameLanguage": "Çalışma alanıyla aynı dil",
+        "unknown": "Dil bilinmiyor",
+        "hasFiles": "Dosyalı mesajlar çevrilmez",
+        "off": "Çeviri kapalı"
+      },
+      "popover": {
+        "customerLanguage": "Müşteri dili",
+        "chooseLanguage": "Bir dil seçin"
+      },
+      "preview": {
+        "title": "Müşteri önizlemesi · {language}",
+        "translating": "Çevriliyor…",
+        "needsRetranslate": "Yeniden çevrilmesi gerekiyor",
+        "retranslate": "Yeniden çevir",
+        "failed": "Çevrilemedi — gönderirken yeniden denenecek",
+        "done": "Bitti",
+        "ready": "Göndermeye hazır"
+      }
+    },
+    "send": {
+      "translating": "Çevriliyor…",
+      "failed": "Çeviri başarısız oldu",
+      "turnedOff": "Çeviri kullanılamıyor. Bu konuşma için çeviri kapatıldı."
+    }
+  },
   "states": {
     "success": "Başarılı",
     "error": "Hata",
@@ -651,7 +739,8 @@
       "template": "Şablon",
       "integration": "Entegrasyon",
       "schedule": "Tekrar programı",
-      "runOf": "<link>{name}</link> çalıştırması"
+      "runOf": "<link>{name}</link> çalıştırması",
+      "linkNotFound": "Bu toplu gönderim artık mevcut değil."
     },
     "filters": {
       "all": "All"
@@ -1464,7 +1553,10 @@
       "label": "Bildirim Türü",
       "notifyAdmin": "Yöneticiye Bildir",
       "newMessageToHuman": "İnsana Yeni Mesaj",
-      "newOrder": "Yeni Sipariş"
+      "newOrder": "Yeni Sipariş",
+      "postFailed": "Gönderi başarısız",
+      "postNeedsReview": "Gönderi incelenmeli",
+      "publishConnection": "Yayın bağlantısı dikkat gerektiriyor"
     },
     "notificationChannel": {
       "label": "Bildirim Kanalı",
@@ -2905,7 +2997,8 @@
       "pipelines": "İşlem Hatları",
       "places": "Yerler",
       "templates": "Şablonlar",
-      "polls": "Polls"
+      "polls": "Polls",
+      "posts": "Gönderiler"
     },
     "adReferral": {
       "label": "Ads",
@@ -3038,6 +3131,9 @@
         "skip": "Bulunamadı",
         "error": "Başarısız"
       }
+    },
+    "tiktokPublishing": {
+      "label": "TikTok yayını"
     }
   },
   "flows": {
@@ -5057,7 +5153,8 @@
     "invalidApiKey": "Geçersiz API anahtarı",
     "maxMustBeGreaterThanMin": "{maxField}, {minField} değerinden büyük veya ona eşit olmalıdır",
     "trigger": {
-      "actionReferenceNotFound": "An action refers to a record that no longer exists. Re-select it in the action and save again."
+      "actionReferenceNotFound": "An action refers to a record that no longer exists. Re-select it in the action and save again.",
+      "postCommentPostsInvalid": "Seçilen bir gönderi bu çalışma alanında yok veya seçilen gelen kutusuna ait değil. Gönderileri yeniden seçip tekrar kaydedin."
     },
     "inboundWebhook": {
       "inboxRequired": "Bir gelen kutusu seçin.",
@@ -6116,7 +6213,16 @@
       "anyPipeline": "Herhangi bir işlem hattı",
       "anyStage": "Herhangi bir aşama",
       "unavailablePipeline": "Silinmiş veya kullanılamayan pipeline",
-      "unavailableStage": "Silinmiş veya kullanılamayan aşama"
+      "unavailableStage": "Silinmiş veya kullanılamayan aşama",
+      "contactCommentedOnPost": "Kişi bir gönderiye yorum yaptı",
+      "contactFirstCommentedOnPost": "Kişi bir gönderiye ilk kez yorum yaptı",
+      "anyInbox": "Herhangi bir sayfa veya hesap",
+      "unavailableInbox": "Silinmiş veya kullanılamayan sayfa veya hesap",
+      "postScope": {
+        "any": "Herhangi bir gönderi",
+        "selected": "Belirli gönderiler",
+        "publishedFromPosts": "Yalnızca Gönderiler'den yayınlanan gönderiler"
+      }
     },
     "actions": {
       "addTag": "Etiket Ekle",
@@ -6896,7 +7002,8 @@
       "ignoreCommentReplies": "Yorumlara verilen yanıtlara yanıt verme",
       "ignoreCommentRepliesDescription": "Üst düzey yorumlar yerine başka yorumlara verilen yanıtlar olan yorumlar için otomasyonu atla.",
       "trackUserTags": "Bir kullanıcının başka kullanıcıları etiketleyip etiketlemediğini izle",
-      "trackUserTagsDescription": "Her yorumda etiketlenen hesapları sayar ve tüm yorumlar boyunca kişinin toplamlarına ekler. Etiketlenen tüm hesaplar için '{{total_tagged}}', sayfanıza hiç mesaj göndermemiş veya hiç kişi olmamış hesaplar için '{{total_new_tagged}}' kullanın."
+      "trackUserTagsDescription": "Her yorumda etiketlenen hesapları sayar ve tüm yorumlar boyunca kişinin toplamlarına ekler. Etiketlenen tüm hesaplar için '{{total_tagged}}', sayfanıza hiç mesaj göndermemiş veya hiç kişi olmamış hesaplar için '{{total_new_tagged}}' kullanın.",
+      "likeUserCommentUnavailable": "Instagram'da kullanılamaz. Bu seçenek atlanır; kaldırmak için kapatın."
     },
     "hideComments": {
       "all": "Tüm yorumları gizle",
@@ -7385,6 +7492,7 @@
       "resourcesTitle": "Yüklenen kaynaklar",
       "noResources": "Henüz hiçbir şey oluşturulmadı.",
       "deletedResource": "Silinmiş kaynak",
+      "wholeCategory": "{count, plural, one {# öğe} other {# öğe}}",
       "viewOnly": "Salt görüntüleme",
       "created": "Oluşturuldu",
       "reused": "Yeniden kullanıldı",
@@ -7439,7 +7547,12 @@
           "placeCategories": "Yer kategorileri"
         }
       },
-      "viewOnlyCopyIncluded": "Seçtiğiniz bir öğe (veya ihtiyaç duyduğu bir öğe) salt görüntüleme şablonundan yüklendiği için yeni bir şablonda paylaşılamaz."
+      "viewOnlyCopyIncluded": "Seçtiğiniz bir öğe (veya ihtiyaç duyduğu bir öğe) salt görüntüleme şablonundan yüklendiği için yeni bir şablonda paylaşılamaz.",
+      "miniAppPublishedExcluded": {
+        "title": "Mini uygulama dışarıda bırakıldı",
+        "hint": "Bu akışlar WhatsApp'ta yayımlanmış bir mini uygulama kullanıyor. Paylaşılamadığı için şablon onu dışarıda bırakır ve kurulum bu başvuruyu kaldırır.",
+        "item": "{flowName}: {miniAppName}"
+      }
     },
     "categories": {
       "flows": "Akışlar",
@@ -7461,7 +7574,20 @@
       "aiFiles": "Yapay zekâ bilgi dosyaları",
       "questionnaires": "Anketler",
       "couponTopics": "Kupon konuları",
-      "pipelines": "İşlem Hatları"
+      "pipelines": "İşlem Hatları",
+      "magicLinks": "Sihirli bağlantılar",
+      "polls": "Anketler",
+      "dynamicImages": "Dinamik görseller",
+      "placeLocations": "Konumlar",
+      "miniApps": "Mini uygulamalar",
+      "minigames": "Mini oyunlar",
+      "leaderboards": "Liderlik tabloları",
+      "openHours": "Çalışma saatleri",
+      "vendors": "Satıcılar",
+      "discountCodes": "İndirim kodları",
+      "storeSettings": "Mağaza ayarları",
+      "storyAutomations": "Instagram Hikaye Otomasyonu",
+      "inboundWebhooks": "Gelen webhook"
     },
     "locked": {
       "flowBanner": "Bu akış salt görüntüleme şablonundan yüklendi. Görebilirsiniz ancak düzenleyemezsiniz.",
@@ -7538,6 +7664,7 @@
       "flowNotPublished": "Flow taslak olarak yüklendi ve yayınlanmadı.",
       "flowSkippedRequiredReference": "Gerekli bir başvuru çözülemediği için Flow atlandı.",
       "folder": "Başvurulan bir öğe bu çalışma alanında bulunamadı, bu yüzden bağlantı kaldırıldı.",
+      "inboundWebhookLimitReached": "Bu gelen webhook atlandı: çalışma alanı zaten izin verilen en fazla gelen webhook sayısına ulaştı.",
       "inboxBindingRequired": "Bu kanal için bir gelen kutusu seç; o zamana kadar öğe etkin olmaz.",
       "integration": "Başvurulan bir öğe bu çalışma alanında bulunamadı, bu yüzden bağlantı kaldırıldı.",
       "localModifiedOverwritten": "Yerel olarak düzenlenmiş bir öğenin üzerine yazıldı. Bir yedek kaydedildi ve geri yüklenebilir.",
@@ -7558,7 +7685,25 @@
       "tag": "Başvurulan bir öğe bu çalışma alanında bulunamadı, bu yüzden bağlantı kaldırıldı.",
       "unlisted": "Öğe tam olarak aktarılamadı: {code}",
       "workspaceMember": "Bu çalışma alanında olmayan bir üyeye atanmış.",
-      "workspaceUnavailable": "Bu çalışma alanı artık kullanılamıyor, bu yüzden öğe atlandı."
+      "workspaceUnavailable": "Bu çalışma alanı artık kullanılamıyor, bu yüzden öğe atlandı.",
+      "scheduleExpired": "Bu öğenin tarihleri geçmiş; kullanmadan önce yenilerini belirleyin.",
+      "linkNotRemapped": "Şablonda yer almayan bir araca giden bağlantı olduğu gibi bırakıldı.",
+      "dynamicImage": "Arka planı kopyalanamadığı için bu dinamik görsel atlandı.",
+      "dynamicImageFieldNotBound": "Bu görselin önbelleğe alınacağı özel bir alan seçin; orijinal alan çalışma alanınızda zaten vardı.",
+      "dynamicImageRerenderFailed": "Bu dinamik görsel, arka planı kopyalanan bağlantılarla yeniden oluşturulamadığı için kapatıldı. Yeniden denemek için görseli tekrar açın.",
+      "pollImage": "Bir görsel kopyalanamadı.",
+      "leaderboardInvalid": "Bu liderlik tablosunun yapılandırması yüklenemedi, bu yüzden atlandı.",
+      "placeLocationInvalid": "Bu yer, adı boş olduğu için atlandı.",
+      "minigame": "Bu liderlik tablosunun puanlandığı mini oyun şablonda yok, bu yüzden atlandı.",
+      "minigameImage": "Bir görsel kopyalanamadı.",
+      "leaderboardImage": "Bir görsel kopyalanamadı.",
+      "leaderboardHostMissing": "Liderlik tablosu, bu kurulumun sağlamadığı kendi kanalına (veya mini oyununa) ihtiyaç duyuyor, bu yüzden atlandı.",
+      "externalStoreSkipped": "Bu çalışma alanı bağlı bir mağazadan (Shopify veya WooCommerce) satış yapıyor; bu yüzden ürünler, satıcılar, indirim kodları, çalışma saatleri ve mağaza ayarları yüklenmedi.",
+      "discountCodeSkipped": "Bu indirim kodu atlandı: uygulandığı ürünler veya kategori şablonda yok ya da ayarları reddedildi.",
+      "storeSettingsKept": "Bu çalışma alanında zaten mağaza ayarları vardı, bu yüzden olduğu gibi korundu.",
+      "vendorImage": "Bir görsel kopyalanamadı.",
+      "storeSettingsCurrencyKept": "Çalışma alanında başka para biriminde ürünler var; bu yüzden şablonunki yerine mevcut para birimi korundu.",
+      "storySelectionRequired": "Hikâyeleri yeniden seçin: orijinal hikâyeler aktarılamadı."
     },
     "tabs": {
       "mine": "Şablonlarım",
@@ -7785,7 +7930,6 @@
   "templatesPublicPage": {
     "invalidTitle": "Bu bağlantı artık kullanılamıyor.",
     "invalidDescription": "Bu şablon paylaşım bağlantısı geçersiz, devre dışı bırakılmış veya süresi dolmuş.",
-    "byPublisher": "{publisherName} tarafından",
     "videoTitle": "Şablon önizleme videosu",
     "preview": "Önizleme",
     "aboutTemplate": "Bu şablon hakkında",
@@ -8143,6 +8287,10 @@
   "contactAdReferrals": {
     "title": "Reklam geçmişi",
     "empty": "Bu kişi için henüz reklam tıklaması kaydedilmedi."
+  },
+  "contactBroadcasts": {
+    "empty": "Bu kişiye henüz toplu gönderim yapılmadı.",
+    "searchPlaceholder": "Ada veya ID’ye göre ara"
   },
   "adsReferralStats": {
     "title": "Reklama göre kişiler",
@@ -11988,41 +12136,138 @@
     "noWorkspaces": "Hiçbir çalışma alanında yönetici değilsiniz, bu nedenle bu uygulamayı yetkilendiremezsiniz."
   },
   "chatbotxMcp": {
-    "title": "ChatbotX MCP",
-    "workspaceId": "Workspace ID",
-    "streamableUrl": "Streamable HTTP URL",
-    "sseUrl": "Legacy SSE URL",
+    "title": "MCP bağlayıcısı",
+    "streamableUrl": "Streamable HTTP URL'si",
+    "sseUrl": "Eski SSE URL'si",
     "guide": {
-      "title": "Connect an MCP client",
-      "step1": "Copy the configuration for your MCP client.",
-      "step2": "Paste it into the client.",
-      "step3": "The client opens a browser. Sign in and approve access.",
-      "step4": "Your workspace tools appear after approval.",
-      "ownerOnly": "Only workspace owners and superAdmins can authorize MCP access."
+      "title": "Bir MCP istemcisi bağla",
+      "subtitle": "Kullandığınız uygulamayı seçin ve üç adımı izleyin.",
+      "ownerOnly": "MCP erişimini yalnızca çalışma alanı sahipleri ve superAdmin'ler yetkilendirebilir. Çalışma alanını onay ekranında seçersiniz.",
+      "otherClients": "MCP uyumlu diğer tüm istemciler de çalışır",
+      "otherIntro": "Bu uç noktaları ve yapılandırmaları MCP uyumlu diğer istemcilerle kullanın.",
+      "opensInNewTab": "(yeni sekmede açılır)",
+      "actions": {
+        "addConnector": "Bağlayıcı ekle",
+        "startChatting": "Sohbete başla"
+      },
+      "steps": {
+        "claude": {
+          "step1": {
+            "title": "Bağlayıcı URL'sini kopyalayın",
+            "body": "Bu URL'yi bir sonraki adımda Claude'a yapıştıracaksınız."
+          },
+          "step2": {
+            "title": "Claude → Customize → Connectors → Add custom connector bölümüne gidin",
+            "body": "Aşağıdaki düğme Claude'daki bağlayıcılarınızı açar. Add custom connector'a tıklayın, bir ad verin ve URL'yi yapıştırın. Claude masaüstü ve mobil uygulamalarında da görünür."
+          },
+          "step3": {
+            "title": "Connect'e tıklayın ve erişimi onaylayın",
+            "body": "Giriş yapın, çalışma alanınızı seçin ve onaylayın. Ardından Claude'dan kişileriniz, akışlarınız ve yayınlarınız üzerinde doğrudan sohbetten çalışmasını isteyin."
+          }
+        },
+        "chatgpt": {
+          "step1": {
+            "title": "Bağlayıcı URL'sini kopyalayın",
+            "body": "Bu URL'yi bir sonraki adımda ChatGPT'ye yapıştıracaksınız."
+          },
+          "step2": {
+            "title": "ChatGPT → Settings → Apps & Connectors → Create bölümüne gidin",
+            "body": "Aşağıdaki düğme ChatGPT ayarlarını açar. Create görünmüyorsa Advanced settings altında Developer mode'u açın. Bağlayıcıya ad verin, URL'yi yapıştırın ve OAuth seçin."
+          },
+          "step3": {
+            "title": "Bağlanın ve erişimi onaylayın",
+            "body": "Giriş yapın, çalışma alanınızı seçin ve onaylayın. Ardından kullanmak için bağlayıcıyı yeni bir sohbette açın."
+          }
+        },
+        "claudeCode": {
+          "step1": {
+            "title": "Kurulum komutunu kopyalayın",
+            "body": "Terminalinizde çalıştırın."
+          },
+          "step2": {
+            "title": "Claude Code'dan giriş yapın",
+            "body": "Claude Code'u başlatın, /mcp yazın, sunucuyu seçin ve Authenticate'i seçin. Bir tarayıcı penceresi açılır."
+          },
+          "step3": {
+            "title": "Erişimi onaylayın",
+            "body": "Çalışma alanınızı seçin ve onaylayın. Claude Code artık çalışma alanı araçlarınızı kullanabilir."
+          }
+        },
+        "cursor": {
+          "step1": {
+            "title": "Yapılandırmayı kopyalayın",
+            "body": "Bir sonraki adımda Cursor'a yapıştıracaksınız."
+          },
+          "step2": {
+            "title": "Cursor Settings → MCP → Add new MCP server bölümünü açın",
+            "body": "Yapılandırmayı mcp.json dosyasına yapıştırıp kaydedin. Cursor, sunucunun yanında bir Login düğmesi gösterir."
+          },
+          "step3": {
+            "title": "Erişimi onaylayın",
+            "body": "Login'e tıklayın, çalışma alanınızı seçin ve onaylayın. Araçlar Cursor ajanında görünür."
+          }
+        },
+        "openclaw": {
+          "step1": {
+            "title": "Eklentiyi kurun",
+            "body": "Bu komutu terminalinizde çalıştırın."
+          },
+          "step2": {
+            "title": "Giriş yapın",
+            "body": "Bu komutu çalıştırın. Bir tarayıcı penceresi açılır."
+          },
+          "step3": {
+            "title": "Erişimi onaylayın",
+            "body": "Çalışma alanınızı seçin ve onaylayın. OpenClaw artık çalışma alanı araçlarınızı kullanabilir."
+          }
+        },
+        "hermes": {
+          "step1": {
+            "title": "Yapılandırmayı kopyalayın",
+            "body": "Bir sonraki adımda Hermes yapılandırmanıza ekleyeceksiniz."
+          },
+          "step2": {
+            "title": "~/.hermes/config.yaml dosyasına ekleyin",
+            "body": "~/.hermes/config.yaml dosyasında mcp_servers altına yapıştırıp kaydedin. Ardından bu komutu Hermes'te çalıştırın."
+          },
+          "step3": {
+            "title": "Erişimi onaylayın",
+            "body": "Hermes bir tarayıcı penceresi açar. Giriş yapın, çalışma alanınızı seçin ve onaylayın. Hermes artık çalışma alanı araçlarınızı kullanabilir."
+          }
+        }
+      }
     },
     "clients": {
+      "claude": "Claude",
       "claudeCode": "Claude Code",
       "claudeDesktop": "Claude Desktop",
       "cursor": "Cursor",
       "chatgpt": "ChatGPT",
-      "stdio": "stdio fallback",
-      "stdioHint": "Use a workspace token for this fallback."
+      "stdio": "stdio yedeği",
+      "stdioHint": "Bu yedek için bir çalışma alanı belirteci kullanın.",
+      "openclaw": "OpenClaw",
+      "hermes": "Hermes",
+      "other": "Diğer istemciler"
     },
     "grants": {
-      "title": "Authorized applications",
-      "description": "Grants belong to your account and apply to every workspace you administer; revoking disconnects the client everywhere.",
-      "empty": "OAuth grants appear here after you connect an MCP client.",
-      "client": "Client",
-      "scopes": "Scopes",
-      "firstAuthorizedAt": "First authorized",
-      "lastRefreshedAt": "Last refreshed",
-      "activeUntil": "Active until",
-      "noActiveToken": "No active token",
-      "revoke": "Revoke",
-      "revokeConfirmTitle": "Revoke application access?",
-      "revokeConfirmDescription": "Revoke access for {clientName}? This disconnects the client everywhere.",
-      "revokedSuccess": "Application access revoked.",
-      "notFound": "OAuth grant no longer exists"
+      "title": "Yetkilendirilmiş uygulamalar",
+      "description": "Yetkiler hesabınıza aittir ve yönettiğiniz tüm çalışma alanları için geçerlidir; iptal etmek istemcinin bağlantısını her yerde keser.",
+      "empty": "Bir MCP istemcisi bağladıktan sonra OAuth yetkileri burada görünür.",
+      "client": "İstemci",
+      "scopes": "Kapsamlar",
+      "firstAuthorizedAt": "İlk yetkilendirme",
+      "lastRefreshedAt": "Son yenileme",
+      "activeUntil": "Geçerlilik sonu",
+      "noActiveToken": "Etkin belirteç yok",
+      "revoke": "İptal et",
+      "revokeConfirmTitle": "Uygulama erişimi iptal edilsin mi?",
+      "revokeConfirmDescription": "{clientName} erişimi iptal edilsin mi? Bu işlem istemcinin bağlantısını her yerde keser.",
+      "revokedSuccess": "Uygulama erişimi iptal edildi.",
+      "notFound": "OAuth yetkisi artık mevcut değil"
+    },
+    "unavailableOnDomain": {
+      "title": "Bu alan adında kullanılamıyor",
+      "body": "Claude veya ChatGPT gibi yapay zekâ asistanlarını bağlamak bu alan adında henüz kullanılamıyor. Mevcut yetkilendirmeler aşağıda listelenir ve hâlâ iptal edilebilir."
     }
   },
   "connectionStatus": {
@@ -12051,17 +12296,21 @@
     "add": "Ekle",
     "addCategory": "Kategori ekle",
     "renameCategory": "Yeniden adlandır",
-    "editCategories": "Kategorileri düzenle",
+    "editListing": "Girişi düzenle",
     "templateId": "Şablon kimliği",
     "template": "Şablon",
     "categories": "Kategoriler",
     "categoriesPlaceholder": "Kategori yok",
     "close": "Kapat",
     "removeChip": "{name} kaldır",
+    "moreSelected": "+ {count} daha",
     "categoriesHint": "İsteğe bağlı. Kategori yoksa şablon yalnızca “Tümü” altında görünür.",
+    "languages": "Diller",
+    "allLanguages": "Tüm diller",
+    "languagesHint": "İsteğe bağlı. Şablonu tüm dillerde göstermek için boş bırakın.",
     "noCategoriesYet": "Henüz kategori yok.",
     "added": "Şablon mağazaya eklendi",
-    "updated": "Kategoriler güncellendi",
+    "updated": "Giriş güncellendi",
     "removed": "Şablon mağazadan kaldırıldı",
     "removeError": "Şablon kaldırılamadı",
     "removeTitle": "{name} kaldırılsın mı?",
@@ -12103,16 +12352,18 @@
       "categoryLimit": "Bir mağazada en fazla {categoryLimit} kategori olabilir."
     },
     "store": {
-      "subtitle": "Tek tıkla kurabileceğiniz hazır şablonlar.",
       "pageTitle": "{tenantName} – Şablon mağazası",
       "empty": "Mağazada henüz şablon yok.",
       "search": "Şablon ara",
-      "all": "Tümü",
-      "categories": "Mağaza kategorileri",
-      "noResults": "Aramanızla eşleşen şablon yok.",
-      "clearSearch": "Aramayı temizle",
-      "by": "Yayıncı: {publisherName}",
-      "loadFailed": "Şablonlar yüklenemedi. Lütfen daha sonra tekrar deneyin."
+      "noResults": "Filtrelerinizle eşleşen şablon yok.",
+      "clearSearch": "Filtreleri temizle",
+      "loadFailed": "Şablonlar yüklenemedi. Lütfen daha sonra tekrar deneyin.",
+      "languageValue": "Dil: {language}",
+      "allLanguages": "Tüm diller",
+      "otherLanguages": "Diğer diller",
+      "allChannels": "Tüm kanallar",
+      "channel": "Kanal",
+      "uncategorized": "Diğer"
     },
     "picker": {
       "placeholder": "Bir şablon seçin",
@@ -12121,7 +12372,21 @@
       "error": "Şablonlar yüklenemedi.",
       "retry": "Tekrar dene",
       "meta": "ID {id} · {workspace}"
-    }
+    },
+    "bulk": {
+      "setCategories": "Kategorileri ayarla",
+      "setLanguages": "Dilleri ayarla",
+      "categoriesHint": "Seçili şablonların ({count}) kategorilerini değiştirir. Tüm kategorileri kaldırmak için boş bırakın.",
+      "languagesHint": "Seçili şablonların ({count}) dillerini değiştirir. Tüm dillerde göstermek için boş bırakın.",
+      "updated": "Seçili şablonlar güncellendi",
+      "removeTitle": "Seçili şablonlar kaldırılsın mı?",
+      "removeDescription": "Seçili: {count}. Mağazadan kaybolurlar; şablonların kendisi ve kurulumları etkilenmez.",
+      "removed": "Seçili şablonlar mağazadan kaldırıldı",
+      "setChannels": "Kanalları ayarla",
+      "channelsHint": "Seçili şablonların ({count}) kanallarını değiştirir. Tüm kanallar için boş bırakın."
+    },
+    "channels": "Kanallar",
+    "channelsHint": "İsteğe bağlı. Şablon tüm kanallarda çalışıyorsa boş bırakın. Mağazada simge olarak görünür ve ziyaretçiler kanala göre filtreleyebilir."
   },
   "accountDeletion": {
     "title": "Delete account",
@@ -12308,5 +12573,1060 @@
       "onAhachat": "On AhaChat",
       "selected": "Uses AhaChat data"
     }
+  },
+  "conversationParticipants": {
+    "joined": "{names} görüşmeye katıldı",
+    "replied": "{name} yanıt verdi {time}",
+    "showMore": "Daha fazla göster",
+    "label": "Bu görüşmede kimler yanıt verdi",
+    "unnamedMember": "Üye",
+    "loadMoreFailed": "Daha fazla üye yüklenemedi",
+    "lastMessageBy": "{name} tarafından son mesaj"
+  },
+  "posts": {
+    "title": "Gönderiler",
+    "searchPlaceholder": "Metin, bağlantı veya gönderi kimliğine göre ara",
+    "dateFrom": "Başlangıç",
+    "dateTo": "Bitiş",
+    "export": {
+      "title": "Bu tarih aralığındaki gönderilerin yorumlarını dışa aktar (en fazla {count} gönderi)",
+      "needsRange": "Yorumları dışa aktarmak için bir başlangıç ve bir bitiş tarihi seçin.",
+      "nothing": "Bu tarih aralığında bu filtrelerle eşleşen gönderi yok.",
+      "failed": "Dışa aktarma başarısız oldu. Tekrar deneyin.",
+      "done": "{count, plural, one {# gönderinin yorumları dışa aktarıldı.} other {# gönderinin yorumları dışa aktarıldı.}}",
+      "doneLimited": "En yeni {count} gönderinin yorumları dışa aktarıldı. Daha fazla gönderi eşleşiyor; kalanını dışa aktarmak için tarihleri daraltın.",
+      "truncated": "Dışa aktarma satır sınırında kesildi. Kalanını dışa aktarmak için tarihleri veya filtreleri daraltın.",
+      "quotaExceeded": "Bu hesabın mesaj kotası doldu, bu yüzden indirme yapılmadı. Planı yükseltin veya bir sonraki fatura dönemini bekleyin.",
+      "blocked": "Bu çalışma alanının planı veya deneme süresi sona erdi.",
+      "menu": "Dışa aktar",
+      "rowsTitle": "Gönderi listesini dışa aktar (gönderi başına bir satır)",
+      "rowsDone": "Gönderi listesi dışa aktarıldı.",
+      "rowsTruncated": "Liste gönderi sınırında kesildi. Kalanını dışa aktarmak için filtreleri daraltın."
+    },
+    "showAllPosts": "Yorumsuz gönderileri de göster",
+    "noCaption": "Metin yok",
+    "liveNow": "Canlı",
+    "empty": "Bu filtrelere uyan gönderi yok.",
+    "loadMore": "Daha fazla yükle",
+    "columns": {
+      "content": "Gönderi",
+      "topic": "Konu",
+      "author": "Yazar",
+      "pages": "Sayfalar",
+      "status": "Durum"
+    },
+    "contentType": {
+      "text": "Metin",
+      "photo": "Fotoğraf",
+      "video": "Video",
+      "reel": "Reel",
+      "carousel": "Karusel",
+      "story": "Hikaye",
+      "live": "Canlı",
+      "link": "Bağlantı",
+      "audio": "Ses",
+      "other": "Diğer"
+    },
+    "filters": {
+      "channel": "Kanal",
+      "allChannels": "Tüm kanallar",
+      "inbox": "Sayfa / hesap",
+      "allInboxes": "Tüm sayfalar ve hesaplar",
+      "postType": "Gönderi türü",
+      "commentSettings": "Yorum ayarları",
+      "hidden": "Yorumlar gizli",
+      "notHidden": "Yorumlar gizli değil",
+      "phoneHidden": "Telefonlu yorumlar gizli",
+      "phoneNotHidden": "Telefonlu yorumlar gizli değil",
+      "skipped": "Yorumlar atlandı",
+      "notSkipped": "Yorumlar atlanmadı",
+      "sort": "Sırala",
+      "topics": "Konular",
+      "title": "Filtreler",
+      "engagement": "Etkileşim",
+      "topicSearch": "Konu ara",
+      "author": "Yazar",
+      "allAuthors": "Tüm yazarlar"
+    },
+    "postType": {
+      "all": "Tümü",
+      "photo": "Fotoğraf",
+      "video": "Video",
+      "post": "Gönderi",
+      "pastLive": "Biten canlı yayın",
+      "liveNow": "Şu an canlı"
+    },
+    "sort": {
+      "newest": "En yeni",
+      "mostComments": "En çok yorum",
+      "fewestComments": "En az yorum",
+      "mostPhones": "En çok telefon numarası",
+      "fewestPhones": "En az telefon numarası",
+      "mostEngagement": "En çok etkileşim",
+      "leastEngagement": "En az etkileşim",
+      "mostShares": "En çok paylaşım",
+      "fewestShares": "En az paylaşım"
+    },
+    "settings": {
+      "hideComments": "Tüm yorumları gizle",
+      "hidePhoneComments": "Telefon numaralı yorumları gizle",
+      "skipComments": "Yorumları atla (okundu olarak işaretle)",
+      "unavailable": "Bu kanal henüz gönderi başına yorum ayarlarını desteklemiyor."
+    },
+    "sync": {
+      "refresh": "Gönderileri yenile",
+      "started": "Gönderiler eşitleniyor. Yenileri birazdan görünecek.",
+      "alreadyRunning": "Bir eşitleme zaten sürüyor veya az önce bitti.",
+      "failedCount": "{count, plural, one {# sayfa senkronize edilemedi} other {# sayfa senkronize edilemedi}}",
+      "reconnect": "Kanalı yeniden bağla",
+      "reconnectWithPermission": "Yeniden bağlanın ve gönderilere erişime izin verin",
+      "retry": "Tekrar dene"
+    },
+    "topics": {
+      "edit": "Konuları düzenle",
+      "newPlaceholder": "Yeni konu adı",
+      "empty": "Henüz konu yok. Oluşturmak için bir ad yazın."
+    },
+    "emptyHint": "Başka bir filtre deneyin veya “Yorumsuz gönderileri de göster” seçeneğini açın.",
+    "actions": {
+      "viewComments": "Yorumları gör",
+      "viewOriginal": "Orijinal gönderiyi gör",
+      "refreshPost": "Kanaldan yenile",
+      "refreshRemoved": "Bu gönderi artık kanalda yok, bu yüzden gizlendi.",
+      "refreshUnavailable": "Gönderi kanaldan okunamadı. Daha sonra tekrar deneyin.",
+      "refreshRateLimited": "Kanal yavaşlamamızı istedi. Birkaç dakika sonra tekrar deneyin.",
+      "refreshCooldown": "Bu gönderi az önce yenilendi. Bir dakika sonra tekrar deneyin.",
+      "downloadPhones": "Telefon numaralarını indir",
+      "downloadComments": "Yorumları indir",
+      "viewDetails": "Ayrıntıları gör"
+    },
+    "merge": {
+      "title": "Gönderileri birleştir",
+      "selectAll": "Tümünü seç",
+      "selected": "{count}/{max} seçildi",
+      "confirm": "Gönderileri birleştir"
+    },
+    "comments": {
+      "title": "Bu gönderinin tüm yorumları",
+      "mergedTitle": "{count} gönderiden birleştirilmiş yorumlar",
+      "searchPlaceholder": "Yorumlarda ara",
+      "phoneOnly": "Telefon numaralı",
+      "empty": "Gösterilecek yorum yok.",
+      "loadOlder": "Daha eski yorumları yükle",
+      "like": "Yorumu beğen",
+      "delete": "Yorumu sil",
+      "confirmDelete": "Silmek için tekrar tıklayın",
+      "hidden": "Gizli",
+      "unknownAuthor": "Bilinmeyen müşteri"
+    },
+    "state": {
+      "noChannelTitle": "Bağlı kanal yok",
+      "noChannelHint": "Gönderilerini burada görmek için bir Messenger, Instagram, Threads veya TikTok kanalı bağlayın.",
+      "connectChannel": "Kanal bağla",
+      "neverSyncedTitle": "Gönderiler henüz yüklenmedi",
+      "neverSyncedHint": "Bağlı kanallarınızın gönderilerini yükleyin. Arka planda çalışır ve birkaç dakika sürebilir.",
+      "loadPosts": "Gönderileri yükle"
+    },
+    "counts": {
+      "comments": "Yorumlar",
+      "reactions": "Tepkiler",
+      "shares": "Paylaşımlar",
+      "phones": "Telefon numaralı yorumlar"
+    },
+    "tabs": {
+      "posts": "Gönderiler",
+      "calendar": "Takvim",
+      "connect": "Bağla",
+      "feeds": "Beslemeler",
+      "analytics": "Analizler"
+    },
+    "calendar": {
+      "views": {
+        "month": "Ay",
+        "week": "Hafta",
+        "day": "Gün",
+        "list": "Liste"
+      },
+      "viewLabel": "Takvim görünümü",
+      "previous": "Önceki dönem",
+      "next": "Sonraki dönem",
+      "today": "Bugün",
+      "network": "Ağ",
+      "destination": "Sayfa veya profil",
+      "allNetworks": "Tüm ağlar",
+      "allDestinations": "Tüm sayfalar ve profiller",
+      "noText": "(Metin yok)",
+      "noDate": "Tarih yok",
+      "noDateEmpty": "Tarihi olmayan taslaklar burada görünür. Bir gönderiyi taslaklara geri taşımak için buraya bırakın.",
+      "newPostOn": "{date} tarihinde yeni gönderi",
+      "more": "+{count} tane daha",
+      "emptyDay": "Bu günde gönderi yok.",
+      "emptyHint": "Bu dönemde planlanmış bir şey yok.",
+      "loading": "Yükleniyor…",
+      "loadError": "Takvim yüklenemedi.",
+      "retry": "Tekrar dene",
+      "readOnly": "Bu çalışma alanı salt okunur olduğundan gönderiler taşınamaz veya oluşturulamaz.",
+      "truncated": "Bu dönemdeki gönderilerin yalnızca bir kısmı gösteriliyor. Dönemi daraltın veya ağa ya da hesaba göre filtreleyin.",
+      "openPost": "Gönderiyi aç",
+      "moveToDrafts": "Taslaklara taşı",
+      "reschedule": "Yeniden planla",
+      "schedule": "Planla",
+      "rescheduleLabel": "Yayın zamanı",
+      "scheduleLabel": "Şuna planla",
+      "pickTime": "Tarih ve saat seçin",
+      "status": {
+        "draft": "Taslak"
+      },
+      "errors": {
+        "past": "Şu andan en az 15 dakika sonrası için bir zaman seçin.",
+        "cannotUnschedule": "Yalnızca planlanmış bir gönderi taslaklara geri taşınabilir."
+      },
+      "list": {
+        "filterLabel": "Duruma göre filtrele",
+        "filterCount": "{label}, {count, plural, one {# gönderi} other {# gönderi}}",
+        "filters": {
+          "all": "Tümü",
+          "drafts": "Taslaklar",
+          "scheduled": "Planlanmış",
+          "published": "Yayınlanmış",
+          "needsAttention": "Dikkat gerektirenler"
+        },
+        "empty": {
+          "all": "Gönderi yok",
+          "drafts": "Taslak gönderi yok",
+          "scheduled": "Planlanmış gönderi yok",
+          "published": "Yayınlanmış gönderi yok",
+          "needsAttention": "Dikkat gerektiren bir şey yok"
+        },
+        "loadMore": "Daha fazla yükle"
+      },
+      "freeSlots": {
+        "label": "Boş paylaşım saatleri",
+        "compose": "{time} saatinde yeni gönderi",
+        "truncated": "Daha fazla boş saat gösterilmiyor"
+      }
+    },
+    "connect": {
+      "title": "Bağla",
+      "connectNetwork": "{network} bağla",
+      "reconnect": "Yeniden bağlan",
+      "reconnectName": "{label}: {name}",
+      "facebookReconnectHint": "Bir Sayfayı yeniden bağlamak, aynı Facebook girişine ait tüm Sayfaları günceller.",
+      "comingSoon": "Henüz kullanılamıyor",
+      "connectedAlready": "{count, plural, one {# hesap bağlı. Başka bir hesap eklemek için tıklayın.} other {# hesap bağlı. Başka bir hesap eklemek için tıklayın.}}",
+      "truncated": "İlk {count} sayfa gösteriliyor.",
+      "tiktokTitle": "TikTok paylaşım hesapları",
+      "pageCount": "{count, plural, one {# sayfa} other {# sayfa}}",
+      "verify": "Doğrula",
+      "verified": "Hesap doğrulandı.",
+      "syncDestinations": "Sayfaları eşitle",
+      "destinationsSynced": "Sayfalar ve profiller güncellendi.",
+      "disconnect": "Bağlantıyı kes",
+      "confirmDisconnect": "Bağlantıyı kesmek için tekrar tıklayın",
+      "disconnected": "Hesabın bağlantısı kesildi.",
+      "missingScopes": "Eksik izinler: {scopes}. Vermek için yeniden bağlayın.",
+      "lastVerified": "{date} tarihinde doğrulandı",
+      "status": {
+        "connected": "Bağlı",
+        "needsReauth": "Yeniden bağlanmalı",
+        "disconnected": "Bağlantı kesildi"
+      },
+      "reason": {
+        "tokenRejected": "Platform kayıtlı girişi reddetti. Hesabı yeniden bağlayın.",
+        "tokenExpired": "Kayıtlı giriş süresi doldu. Hesabı yeniden bağlayın.",
+        "refreshRejected": "Platform girişin yenilenmesini reddetti. Hesabı yeniden bağlayın.",
+        "permissionNotGranted": "Bazı izinler eksik. Vermek için hesabı yeniden bağlayın."
+      },
+      "emptyTitle": "Henüz bağlı kanal yok",
+      "emptyAction": "Kanallara git",
+      "schedule": {
+        "open": "Paylaşım saatleri",
+        "title": "{name} için paylaşım saatleri",
+        "description": "Kuyruğa eklenen gönderi, bu listedeki bir sonraki boş saati alır.",
+        "timezone": "Saat dilimi: {timezone}",
+        "maxTimes": "Günde en fazla {count} saat",
+        "dayOn": "{day} günü paylaş",
+        "noTimes": "Saat yok",
+        "addTime": "Saat ekle",
+        "timeLabel": "{day} için yeni saat",
+        "removeTime": "{time} saatini kaldır",
+        "copyTo": "Diğer günlere kopyala",
+        "copyApply": "Kopyala",
+        "save": "Kaydet",
+        "saved": "Paylaşım saatleri kaydedildi.",
+        "reflowMoved": "{count, plural, one {Kuyruktaki # gönderi yeni bir saate taşındı.} other {Kuyruktaki # gönderi yeni saatlere taşındı.}}",
+        "reflowDetached": "{count, plural, one {Kuyruktaki # gönderinin paylaşım saati kalmadı. Saatini korur ancak artık kuyrukta değildir (özel saat oldu).} other {Kuyruktaki # gönderinin paylaşım saati kalmadı. Saatlerini korurlar ancak artık kuyrukta değildirler (özel saat oldular).}}"
+      }
+    },
+    "detail": {
+      "title": "Gönderi ayrıntıları",
+      "caption": "Metin",
+      "metrics": "Etkileşim",
+      "metricsUnavailable": "Bu kanal bu rakamları bildirmiyor.",
+      "views": "Görüntülenme",
+      "settings": "Yorum ayarları",
+      "settingsHint": "Bu ayarlar gönderinin yeni yorumları için geçerlidir. Mevcut yorumlar değişmez.",
+      "skipCommentsHint": "Her yeni yorumu okundu olarak işaretler. Otomasyonlar çalışmaya devam eder.",
+      "hideCommentsHint": "Gönderinin her yeni yorumunu gizler.",
+      "hidePhoneCommentsHint": "Telefon numarası içeren yeni yorumları gizler.",
+      "topics": "Konular",
+      "info": "Bilgiler",
+      "postId": "Gönderi kimliği",
+      "channel": "Kanal",
+      "contentType": "Tür",
+      "author": "Yazar",
+      "publishedAt": "Yayınlandı",
+      "metricsUpdated": "Rakamlar güncellendi",
+      "never": "Henüz ölçülmedi",
+      "ownerPage": "Sayfa",
+      "ownerAccount": "Hesap"
+    },
+    "feeds": {
+      "title": "Beslemelerden otomatik paylaşım",
+      "description": "Bir RSS veya Atom beslemesindeki yeni öğeleri gönderilere dönüştürün. İlk kontrol yalnızca beslemede zaten bulunanları kaydeder.",
+      "add": "Besleme ekle",
+      "empty": "Henüz besleme yok. Yeni makaleleri otomatik olarak gönderiye dönüştürmek için bir besleme ekleyin.",
+      "status": {
+        "active": "Etkin",
+        "paused": "Duraklatıldı",
+        "error": "Duraklatıldı – besleme hatası"
+      },
+      "mode": {
+        "draft": "Taslak olarak kaydet",
+        "queue": "Otomatik olarak sıraya al"
+      },
+      "lastChecked": "Son kontrol: {time}",
+      "neverChecked": "Henüz kontrol edilmedi",
+      "firstCheckPending": "İlk kontrol yalnızca beslemede zaten bulunanları kaydeder; bunlardan gönderi oluşturulmaz.",
+      "every": "Her {minutes} dk",
+      "destinations": "{count, plural, one {# hedef} other {# hedef}}",
+      "actions": {
+        "checkNow": "Şimdi kontrol et",
+        "pause": "Duraklat",
+        "resume": "Sürdür",
+        "edit": "Düzenle",
+        "delete": "Sil",
+        "items": "Öğeler",
+        "sendTest": "Test gönder"
+      },
+      "toast": {
+        "checkStarted": "Kontrol başlatıldı",
+        "paused": "Besleme duraklatıldı",
+        "resumed": "Besleme sürdürüldü",
+        "deleted": "Besleme silindi",
+        "saved": "Besleme kaydedildi",
+        "testDraftCreated": "Test taslağı oluşturuldu",
+        "openDraft": "Taslağı aç",
+        "testUsedTemplate": "Yapay zeka metni yazamadı, bu yüzden metin şablonu kullanıldı."
+      },
+      "deleteConfirm": "Bu besleme ve öğe geçmişi silinsin mi? Önceden oluşturulmuş gönderiler kalır.",
+      "error": {
+        "blocked": "Besleme adresine izin verilmiyor.",
+        "timeout": "Besleme yanıt vermek için çok uzun sürdü.",
+        "tooLarge": "Besleme 2 MB'tan büyük.",
+        "badStatus": "Besleme bir hatayla yanıt verdi.",
+        "badContentType": "Bu adres bir RSS veya Atom beslemesi değil.",
+        "unreachable": "Beslemeye ulaşılamadı.",
+        "tooManyRedirects": "Besleme çok fazla yönlendirme yapıyor.",
+        "invalidFeed": "Besleme okunamadı.",
+        "internal": "Besleme kontrol edilirken bir şeyler ters gitti.",
+        "postRefused": "Bir gönderi oluşturulamadı (örneğin boş bir paylaşım zamanı yok veya çalışma alanı engellenmiş). Sonraki kontrol yeniden deneyecek."
+      },
+      "apiError": {
+        "feedUrlTaken": "Bu besleme zaten eklenmiş.",
+        "feedCheckCooldown": "Bir besleme elle yalnızca 5 dakikada bir kontrol edilebilir.",
+        "feedPreviewRateLimited": "Çok fazla önizleme. Daha sonra tekrar deneyin.",
+        "feedNotParseable": "Bu adres bir RSS veya Atom beslemesi değil. Web sitesi adresinin sonuna /feed veya /rss eklemeyi deneyin.",
+        "feedUnreachable": "Bu adrese ulaşılamadı. Adresi kontrol edip tekrar deneyin.",
+        "feedTestRateLimited": "Çok fazla test gönderisi. Daha sonra tekrar deneyin.",
+        "feedHasNoItems": "Beslemede henüz öğe yok.",
+        "feedFetchRateLimited": "Çok fazla besleme adresi kontrolü yapıldı. Daha sonra tekrar deneyin.",
+        "feedCheckInProgress": "Bu beslemenin bir kontrolü zaten bekliyor veya çalışıyor."
+      },
+      "form": {
+        "createTitle": "Besleme ekle",
+        "editTitle": "Beslemeyi düzenle",
+        "name": "Ad",
+        "url": "Besleme adresi",
+        "urlPlaceholder": "https://example.com/feed.xml",
+        "preview": "Önizle",
+        "previewEmpty": "Bu beslemede öğe bulunamadı.",
+        "destinations": "Paylaşılacak yer",
+        "noDestinations": "Önce bir sosyal medya hesabı bağlayın.",
+        "interval": "Kontrol sıklığı",
+        "dailyCap": "Günlük en fazla gönderi",
+        "mode": "Yeni öğeler",
+        "modeDraftHelp": "Her yeni öğe, gözden geçirmeniz için bir taslak olur.",
+        "modeQueueHelp": "Her yeni öğe, hedefin paylaşım programına göre sıraya alınır ve gözden geçirilmeden yayımlanır.",
+        "template": "Gönderi metni",
+        "templateHelp": "Kullanabileceğiniz değişkenler: {variables}",
+        "save": "Kaydet",
+        "cancel": "İptal",
+        "didYouMean": "{url} mi demek istediniz?",
+        "useSuggestion": "Kullan",
+        "aiWrite": "Her gönderiyi yapay zekayla yaz",
+        "aiWriteHelp": "Yapay zeka metni öğenin başlığı, özeti ve bağlantısından yazar. Yazamazsa aşağıdaki metin şablonu kullanılır.",
+        "aiInstructions": "Yapay zeka için ek talimatlar (isteğe bağlı)",
+        "aiInstructionsHelp": "Örneğin: samimi bir ton, mağaza adını an. En fazla 300 karakter.",
+        "postLatestOnFirstCheck": "İlk kontrolde en yeni öğeyi paylaş",
+        "postLatestOnFirstCheckHelp": "Bu seçilmezse ilk kontrol yalnızca beslemede zaten olanları kaydeder.",
+        "contentTitle": "Gönderi içeriği",
+        "templateInsert": "Alan ekle",
+        "templateVariables": "Öğenin alanları",
+        "templateFeedFields": "Bu akışta bulunan alanlar",
+        "templatePresets": "Hazır bir şablonla başla",
+        "presetTitleLink": "Başlık ve bağlantı",
+        "presetSummaryHashtags": "Başlık, özet, bağlantı ve etiketler",
+        "presetProduct": "Ürün: başlık, fiyat ve bağlantı",
+        "templateLegacy": "Bu akış eski {token} işaretlerini kullanıyor ve siz dönüştürene kadar eskisi gibi paylaşmaya devam ediyor.",
+        "templateConvert": "Yeni sözdizimine dönüştür",
+        "templateHint": "Alanları menüden ekleyin veya yazın, örneğin {example}. Kullanılabilir filtreler: {filters}.",
+        "templateProblem": "Satır {line}, sütun {column}: {message}",
+        "previewTitle": "Önizleme",
+        "previewSample": "Örnek öğe",
+        "previewHint": "Bir gönderinin nasıl görüneceğini görmek için akış adresini önizleyin.",
+        "previewCharacters": "{network}: {count} karakter",
+        "previewDropped": "Bu gönderiden çıkarılan hedefler: {count}",
+        "previewFiltered": "Filtrelendi: {reason}",
+        "previewSkipped": "Bu öğe atlanır.",
+        "previewNoPicture": "Görsel yok",
+        "mediaTitle": "Görseller",
+        "mediaMode": "Görsel kaynağı",
+        "mediaModeAuto": "Akıştan (otomatik)",
+        "mediaModeField": "Bir alandan veya adresten",
+        "mediaModeNone": "Görsel yok",
+        "mediaField": "Alan veya adres",
+        "mediaFieldHelp": "Görsel adresini veren bir şablon, örneğin {example}.",
+        "mediaLibrary": "Yedek görseller",
+        "mediaLibraryHelp": "Medya Kitaplığınızdan; bir öğenin kendi görseli olmadığında kullanılır.",
+        "mediaLibraryAdd": "Görsel ekle",
+        "mediaRemove": "Kaldır",
+        "postAs": "Şu biçimde paylaş",
+        "postAsPhoto": "Görselli gönderi",
+        "postAsLink": "Bağlantı",
+        "postAsText": "Yalnızca metin",
+        "postAsHelpLink": "Bağlantı: Facebook ve Threads'te makalenin görseliyle önizleme kartı.",
+        "postAsHelpPhoto": "Görselli gönderi: öğenin görseli metinle birlikte paylaşılır.",
+        "postAsHelpText": "Yalnızca metin: yalnızca sözcükler ve adres, görsel yok.",
+        "postAsTextFacebookWarning": "Facebook, metnin içindeki bir bağlantı için bağlantı önizleme kartı (görsel) oluşturmaz. Makale görselli kartı almak için Bağlantı'yı seçin.",
+        "noImageFallback": "Bir öğenin görseli olmadığında",
+        "fallbackLink": "Bağlantıyı paylaş",
+        "fallbackText": "Yalnızca metin",
+        "fallbackSkip": "Öğeyi atla",
+        "filtersTitle": "Filtreler",
+        "filterInclude": "Şunlardan birini içerir",
+        "filterExclude": "Şunların hiçbirini içermez",
+        "filterCategories": "Kategori şunlardan biri",
+        "filterTermsHelp": "Bir sözcük yazıp Enter'a basın. Büyük harfler ve aksanlar yok sayılır.",
+        "filterRequireImage": "Yalnızca görseli olan öğeler",
+        "filterMaxAge": "Yalnızca şundan yeni öğeler (saat)",
+        "networkTexts": "Ağ başına farklı metin",
+        "networkTextsHelp": "Bir ağ için ayrı bir metin yazın; kendi metni olmayan ağlar ortak metni kullanır. Bir ağın reddettiği metin atlanır, asla kısaltılmaz. Yapay zekâ tarafından yazılan gönderiler tek bir ortak metin kullanır.",
+        "networkTabShared": "Ortak",
+        "networkTextUsesShared": "Bu ağ ortak metni kullanır.",
+        "networkTextClear": "Ortak metni kullan",
+        "networkTextAria": "{network} için metin",
+        "fetchArticleImage": "Makale sayfasında görsel ara",
+        "fetchArticleImageHelp": "Bir öğenin görseli yoksa, ana görseli (og:image) için makale sayfası bir kez okunur. Yalnızca paylaşılacak öğeler için geçerlidir; okunamayan bir sayfa paylaşımı asla engellemez.",
+        "previewArticlePicture": "Makale sayfası okunacak"
+      },
+      "items": {
+        "title": "{name} öğeleri",
+        "empty": "Henüz kontrol edilmiş öğe yok.",
+        "loadMore": "Daha fazla yükle",
+        "openPost": "Gönderiyi aç",
+        "reasons": {
+          "existing": "Eklendiğinde zaten akıştaydı",
+          "undated": "Yayın tarihi yok",
+          "tooOld": "Çok eski",
+          "perRunLimit": "Kontrol başına sınırın üzerinde",
+          "noDestination": "Hedef seçilmedi",
+          "emptyText": "Gönderi metni boş",
+          "textTooLong": "Gönderi metni çok uzun",
+          "invalid": "Gönderi reddedildi",
+          "other": "Öğe kullanılamadı",
+          "aiFallback": "Şablondan yazıldı (yapay zeka yazamadı)",
+          "excludedKeyword": "Hariç tutulan bir sözcük içeriyor",
+          "missingKeyword": "Gerekli sözcüklerin hiçbirini içermiyor",
+          "category": "Seçilen kategorilerde değil",
+          "noImage": "Görsel yok",
+          "tooOldForFilter": "Yaş filtresinden eski",
+          "undatedForFilter": "Yaş filtresini denetlemek için tarih yok",
+          "imageFailed": "Görsel kullanılamadı",
+          "noImageFallback": "Görselsiz paylaşıldı",
+          "droppedTargets": "Bazı hedefler dışarıda bırakıldı",
+          "templateError": "Şablon işlenemedi",
+          "noDestinationAccepts": "Hiçbir hedef bu gönderiyi taşıyamıyor",
+          "issueTextRequired": "Gönderide metin yok",
+          "issueTextTooLong": "Metin bir ağ için çok uzun",
+          "issueLinkNotSupported": "Bir ağ bağlantıyı kabul etmiyor",
+          "issueLinkRequired": "Bir ağ bağlantı gerektiriyor",
+          "issueTooManyLinks": "Bir ağın izin verdiğinden fazla bağlantı",
+          "issueContentType": "Bir ağ bu tür gönderiyi yayımlamıyor",
+          "issueMedia": "Görsel bir ağın kurallarına uymuyor",
+          "issueOptions": "Bir ağ ayarı geçersiz",
+          "issueParts": "Bir ağ devam eden bölümleri kabul etmiyor",
+          "issueDestination": "Bir hedef şu anda paylaşım yapamıyor",
+          "alreadyPosted": "Bu öğe için zaten bir gönderi var"
+        },
+        "createPost": "Gönderi oluştur",
+        "picture": "Görsel: {source}",
+        "dropped": "Dışarıda bırakılan: {count}",
+        "imageSources": {
+          "enclosure": "Görsel eki",
+          "mediaContent": "Medya içeriği",
+          "mediaThumbnail": "Küçük resim",
+          "itunesImage": "Podcast kapağı",
+          "contentImage": "Metindeki görsel",
+          "jsonFeed": "JSON Feed görseli",
+          "field": "Alan veya adres",
+          "library": "Medya Kitaplığı",
+          "article": "Makale sayfası (og:image)"
+        },
+        "imageErrors": {
+          "unreachable": "Görsel indirilemedi.",
+          "blocked": "Görsel adresine izin verilmiyor.",
+          "tooBig": "Görsel çok büyük.",
+          "notImage": "Dosya kullanılabilir bir görsel değil.",
+          "storage": "Görsel kaydedilemedi.",
+          "articleUnreachable": "Makale sayfası okunamadı.",
+          "articleNoImage": "Makale sayfası bir görsel belirtmiyor."
+        }
+      },
+      "outcome": {
+        "created": "Gönderi oluşturuldu",
+        "skippedOld": "Atlandı: zaten var veya çok eski",
+        "skippedInvalid": "Atlandı: reddedildi",
+        "skippedFiltered": "Atlandı: filtrelendi",
+        "skippedNoImage": "Atlandı: görsel yok"
+      },
+      "deleteConfirmTitle": "“{name}” silinsin mi?",
+      "sendTestConfirm": {
+        "title": "Test gönderisi gönderilsin mi?",
+        "description": "Bu akıştaki en yeni öğeden, akışın yazacağı şekilde bir taslak oluşturulur. Hiçbir şey yayımlanmaz; taslağı açıp inceleyebilirsiniz."
+      },
+      "bulkDelete": {
+        "selectAll": "Tümünü seç",
+        "selectFeed": "{name} seç",
+        "deleteSelected": "Seçilenleri sil ({count})",
+        "confirmTitle": "{count, plural, one {# akış silinsin mi?} other {# akış silinsin mi?}}",
+        "confirmDescription": "Seçilen akışlar ve öğe geçmişleri silinir. Daha önce oluşturulmuş gönderiler kalır.",
+        "success": "{count, plural, one {# akış silindi} other {# akış silindi}}"
+      },
+      "columns": {
+        "name": "Akış",
+        "status": "Durum",
+        "mode": "Mod",
+        "schedule": "Kontrol aralığı",
+        "destinations": "Hedefler",
+        "lastChecked": "Son kontrol"
+      },
+      "filters": {
+        "search": "Akışlarda ara",
+        "searchPlaceholder": "Ada veya akış adresine göre ara",
+        "status": "Duruma göre filtrele",
+        "mode": "Moda göre filtrele",
+        "destination": "Hedefe göre filtrele",
+        "allStatuses": "Tüm durumlar",
+        "allModes": "Tüm modlar",
+        "allDestinations": "Tüm hedefler",
+        "destinationsSelected": "{count, plural, one {# hedef} other {# hedef}}",
+        "noDestinations": "Filtrelenecek hedef henüz yok.",
+        "clear": "Filtreleri temizle",
+        "noMatch": "Bu filtrelerle eşleşen akış yok."
+      },
+      "destinationsDialog": {
+        "title": "{name} hedefleri",
+        "removed": "Kaldırılmış hedef",
+        "close": "Kapat",
+        "edit": "Hedefleri düzenle"
+      },
+      "lastRun": {
+        "noNew": "Kaynakta yeni öğe yok",
+        "skippedOnly": "Yeni öğeler atlandı (çok eski veya filtrelendi)",
+        "stale": "Kaynak daha eski bir kopya döndürdü; kısa süre sonra yeniden denenecek",
+        "notModified": "Kaynak son denetimden beri değişmedi",
+        "created": "{count, plural, one {# gönderi oluşturuldu} other {# gönderi oluşturuldu}}",
+        "refused": "{count, plural, one {# öğe bir ağ tarafından reddedildi} other {# öğe bir ağ tarafından reddedildi}}",
+        "waiting": "{count, plural, one {# yeni öğe sonraki denetimi bekliyor} other {# yeni öğe sonraki denetimi bekliyor}}",
+        "dailyCap": "Günlük sınıra ulaşıldı (24 saatte {cap}) — {count, plural, one {# yeni öğe bekliyor} other {# yeni öğe bekliyor}}",
+        "dailyCapUntil": "Günlük sınıra ulaşıldı (24 saatte {cap}) — {count, plural, one {# yeni öğe bekliyor} other {# yeni öğe bekliyor}}. Sıradaki yer şu zaman açılır: {until}"
+      }
+    },
+    "show": {
+      "label": "Göster",
+      "channels": "Kanallarda"
+    },
+    "composed": {
+      "deleted": "Gönderi silindi.",
+      "deleteTitle": "Bu gönderi silinsin mi?",
+      "deleteDescription": "Taslak kalıcı olarak silinir. Planlanmış gönderi iptal edilir ve yayınlanmaz."
+    },
+    "analytics": {
+      "title": "Gönderi analizleri",
+      "filters": {
+        "title": "Analiz filtreleri",
+        "allContentTypes": "Tüm içerik türleri",
+        "allTopics": "Tüm konular"
+      },
+      "metrics": {
+        "comments": "Yorumlar",
+        "reactions": "Tepkiler",
+        "shares": "Paylaşımlar",
+        "engagement": "Etkileşim",
+        "views": "Görüntülenmeler"
+      },
+      "metricsLower": {
+        "comments": "yorumlar",
+        "reactions": "tepkiler",
+        "shares": "paylaşımlar",
+        "engagement": "etkileşim",
+        "views": "görüntülenmeler"
+      },
+      "kpi": {
+        "title": "Temel metrikler",
+        "notReported": "Bildirilmiyor",
+        "notReportedHint": "Bu kanal bu sayıyı bildirmiyor.",
+        "vsPrevious": "önceki dönemle karşılaştırıldığında",
+        "noComparison": "Karşılaştırma yok",
+        "previous": "Önceki dönem: {value}",
+        "postsPublished": "{count, plural, one {Bu dönemde # gönderi yayınlandı} other {Bu dönemde # gönderi yayınlandı}}"
+      },
+      "chart": {
+        "title": "Günlük artış",
+        "description": "Günlük artış: {metricLower}",
+        "groupBy": "Grafiği grupla",
+        "group": {
+          "none": "Toplam",
+          "channel": "Kanala göre",
+          "inbox": "Sayfa veya hesaba göre"
+        },
+        "other": "Diğer",
+        "viewTable": "Tablo olarak göster",
+        "hideTable": "Tabloyu gizle",
+        "day": "Gün",
+        "summary": "{metric}: {from} – {to} arasında günlük artış, toplam {total}.",
+        "empty": "Kaydedilmiş artış yok",
+        "emptyHint": "Bu dönemde değişiklik olmadı veya takip henüz başlamamıştı."
+      },
+      "breakdown": {
+        "title": "Döküm",
+        "description": "{metric}: kanal veya sayfa başına artış",
+        "by": {
+          "channel": "Kanallar",
+          "inbox": "Sayfalar ve hesaplar"
+        },
+        "empty": "Bu filtreler için veri yok"
+      },
+      "topPosts": {
+        "title": "En iyi gönderiler",
+        "description": "{metricLower} değerine göre sıralı",
+        "rankBy": "Sıralama ölçütü",
+        "rank_gained": "En çok artan",
+        "rank_total": "En yüksek toplam",
+        "rank": "#",
+        "post": "Gönderi",
+        "channel": "Kanal",
+        "gained": "Artış",
+        "total": "Toplam",
+        "published": "Yayınlanma",
+        "open": "Gönderiyi aç",
+        "noCaption": "Açıklama yok",
+        "empty": "Sıralanacak gönderi yok",
+        "emptyHint": "Gönderiler, sayıları takip edildikten sonra burada görünür."
+      },
+      "bestTimes": {
+        "title": "Paylaşım için en iyi zamanlar",
+        "description": "Gönderiler, aynı sayfanın olağan gönderisiyle karşılaştırılır; saat dilimi: {timezone}.",
+        "caption": "Haftanın günü ve saate göre etkileşim puanı",
+        "cell": "{when}: puan {score}, {posts, plural, one {# gönderi} other {# gönderi}}",
+        "cellEmpty": "{when}: gönderi yok",
+        "legendLow": "Daha düşük",
+        "legendHigh": "Daha yüksek",
+        "legendTop": "En iyi zaman dilimleri",
+        "scoreHint": "1,0 puan, aynı sayfanın tipik bir gönderisine eşittir.",
+        "topHeading": "En güçlü zaman dilimleri",
+        "slotDetail": "Puan {score} · {posts, plural, one {# gönderi} other {# gönderi}}",
+        "insufficientTitle": "Henüz yeterli veri yok",
+        "insufficientHint": "En iyi zamanlar için 90 ile 3 gün önce arasında yayınlanmış en az {min} gönderi gerekir. Bulunan: {count}.",
+        "capped": "Yalnızca en son gönderilerden bir örnek kullanıldı."
+      },
+      "coverage": {
+        "noneTitle": "Henüz geçmiş yok",
+        "partialTitle": "Geçmiş hâlâ oluşuyor",
+        "fullTitle": "Gönderilerinizin yalnızca bir kısmı ölçülüyor",
+        "since": "Artış, takibin başladığı {date} tarihinden itibaren sayılır. Daha önceki etkinlik dahil değildir.",
+        "sinceUnknown": "Artış, takibin başladığı andan itibaren sayılır. Daha önceki etkinlik dahil değildir.",
+        "withHistory": "Son {posts} gönderiden {withHistory} tanesinin büyüme geçmişi var.",
+        "truncated": "Aynı anda ölçülebilecekten fazla gönderi var; en yenileri gösteriliyor."
+      },
+      "states": {
+        "error": "Bu bölüm yüklenemedi.",
+        "retry": "Tekrar dene",
+        "noChannelHint": "Gönderilerin performansını görmek için bir Messenger, Instagram, Threads veya TikTok kanalı bağlayın."
+      },
+      "perPost": {
+        "title": "Performans",
+        "description": "Kanalın bildirdiği sayıların günlük değişimi, kendi günlük ölçümlerimize dayanır.",
+        "metric": "Metrik",
+        "notReported": "Bu kanal bunu bildirmiyor.",
+        "empty": "Henüz artış kaydedilmedi",
+        "since": "{date} tarihinden beri takip ediliyor. Değişiklikler bir sonraki günlük ölçümden sonra görünür.",
+        "notTracked": "Bu gönderi henüz takip edilmiyor.",
+        "summary": "{metric}: günlük artış, toplam {total}.",
+        "totalNow": "bu dönemde artış · toplam {total}"
+      },
+      "composedPost": {
+        "reasons": {
+          "notPublished": "Henüz yayınlanmadı.",
+          "notLinked": "Henüz kanalın bir gönderisiyle eşleşmedi. Eşleşince rakamlar görünür.",
+          "networkNotSupported": "Bu ağ gönderi rakamlarını bildirmez.",
+          "removed": "Kanaldan kaldırıldı."
+        }
+      }
+    }
+  },
+  "socialAccounts": {
+    "errors": {
+      "providerNotSupported": "Bu ağ henüz bağlanamıyor.",
+      "appNotConfigured": "Bu ağın platform uygulaması çalışma alanınız için ayarlanmamış."
+    },
+    "connectResult": {
+      "success": "Hesap bağlandı.",
+      "cancelled": "Bağlantı iptal edildi.",
+      "notFound": "Bağlantı tamamlanamadı.",
+      "sessionExpired": "Bağlantı oturumunun süresi doldu. Yeniden bağlamayı deneyin.",
+      "permissionNotGranted": "Şu izinler verilmediği için hesap bağlanmadı: {permissions}.",
+      "accountUnsupported": "Bu hesap türü paylaşım yapamaz. Profesyonel bir hesap kullanın.",
+      "notSupported": "Bu ağ henüz bağlanamıyor.",
+      "failed": "Hesap bağlanamadı. Tekrar deneyin."
+    }
+  },
+  "composer": {
+    "publishTo": "Şuraya yayınla",
+    "reconnect": "Yeniden bağla",
+    "noDestinations": "Bağlı hiçbir sayfa veya profil henüz paylaşım yapamıyor.",
+    "sharedContent": "Ortak içerik",
+    "text": "Gönderi metni",
+    "textPlaceholder": "Gönderini yaz",
+    "link": "Bağlantı",
+    "linkPlaceholder": "https://example.com",
+    "linkInvalid": "https:// ile başlayan tam bir bağlantı girin",
+    "removeMedia": "Dosyayı kaldır",
+    "addMedia": "Fotoğraf veya video ekle",
+    "removeDestination": "Hedefi kaldır",
+    "customise": "Bu kanal için özelleştir",
+    "usesSharedContent": "Ortak içeriği kullanır",
+    "channelText": "Bu kanal için metin",
+    "channelTextPlaceholder": "Ortak metni kullanmak için boş bırakın",
+    "contentType": "İçerik türü",
+    "previewEmpty": "Önizleme için bir hedef seçin.",
+    "noText": "Metin yok",
+    "justNow": "Az önce",
+    "linkInCaption": "Bağlantı, açıklamanın sonuna eklenecek.",
+    "previewMediaAlt": "Ekli dosya {index}",
+    "previewMoreMedia": "+{count}",
+    "previewSlideLabel": "Slayt {current} / {total}",
+    "previewPrevious": "Önceki slayt",
+    "previewNext": "Sonraki slayt",
+    "publishNow": "Şimdi yayınla",
+    "newPost": "Yeni gönderi",
+    "draftSaved": "Taslak kaydedildi",
+    "noTargets": "Başlamak için en az bir hedef seçin.",
+    "preview": "Önizleme",
+    "previewError": "Önizleme güncellenemedi.",
+    "issueCount": "Düzeltilecek sorun: {count}",
+    "saveDraft": "Taslağı kaydet",
+    "retry": "Tekrar dene",
+    "noAccountsTitle": "Bağlı hesap yok",
+    "noAccountsHint": "Gönderi oluşturmaya başlamak için Bağla sekmesinden bir hesap bağlayın.",
+    "goToAccounts": "Bağla sekmesine git",
+    "notEditable": "Bu gönderi artık düzenlenemez.",
+    "options": {
+      "shareToFeed": "Akışta da paylaş",
+      "title": "Başlık",
+      "thumbOffsetMs": "Kapak karesi (milisaniye)",
+      "privacyLevel": "Bu videoyu kimler görebilir",
+      "allowComment": "Yorum yap",
+      "allowDuet": "Düet",
+      "allowStitch": "Stitch",
+      "commercialContent": "Ticari içeriği bildir",
+      "brandOrganic": "Markanız",
+      "brandContent": "Markalı içerik",
+      "isAigc": "Yapay zekâ ile üretilmiş içerik olarak etiketle",
+      "coverTimestampMs": "Kapak karesi (milisaniye)"
+    },
+    "contentTypes": {
+      "text": "Metin",
+      "link": "Bağlantı",
+      "image": "Görsel",
+      "video": "Video",
+      "reel": "Reel",
+      "carousel": "Karusel",
+      "story": "Hikaye"
+    },
+    "issues": {
+      "accountDisconnected": "Bu hesabın bağlantısı kesildi.",
+      "accountNeedsReauth": "Bu hesabın yeniden bağlanması gerekiyor.",
+      "inboxDisconnected": "Bu kanalın bağlantısı kesildi.",
+      "inboxNeedsReconnect": "Bu kanalın bağlantısının süresi doldu. Yeniden bağlayın.",
+      "publishPermissionMissing": "Bu kanal için paylaşım izni verilmedi. Paylaşıma izin vermek için yeniden bağlayın.",
+      "contentTypeDisabled": "Bu içerik türü henüz kullanılamıyor.",
+      "contentTypeNotSupported": "Bu ağ bu içerik türünü desteklemiyor.",
+      "destinationInactive": "Bu hedef kapalı.",
+      "destinationNotFound": "Bu hedef bulunamadı.",
+      "linkNotSupported": "Bu içerik türü bağlantı içeremez.",
+      "linkRequired": "Bağlantı gerekli.",
+      "mediaFormatNotSupported": "Bir dosya biçimi desteklenmiyor.",
+      "mediaKindNotAllowed": "Bir dosya türüne burada izin verilmiyor.",
+      "mediaTooFew": "Daha fazla dosya ekleyin.",
+      "mediaTooLarge": "Bir dosya çok büyük.",
+      "mediaTooLong": "Bir video çok uzun.",
+      "mediaTooMany": "Çok fazla dosya.",
+      "mediaTooShort": "Bir video çok kısa.",
+      "optionsInvalid": "Ayarlar geçerli değil.",
+      "textRequired": "Metin gerekli.",
+      "textTooLong": "Metin çok uzun.",
+      "partsNotSupported": "Bu ağ zincir bölümlerini yayınlamaz.",
+      "firstCommentNotSupported": "Bu ağ ilk yorumu yayınlamaz.",
+      "tooManyParts": "Bölüm sayısı ağın izin verdiğinden fazla.",
+      "partTextRequired": "Bu bölümün metne ihtiyacı var.",
+      "partTextTooLong": "Bu bölüm ağın izin verdiğinden uzun.",
+      "tooManyLinks": "Bu metinde Threads'in izin verdiğinden fazla bağlantı var (en fazla 5)."
+    },
+    "publishStarted": "Yayınlama başladı",
+    "publishRefused": "Gönderi bu haliyle yayınlanamıyor. Gösterilen sorunları düzeltin.",
+    "targetsStatus": "Hedefler",
+    "viewPost": "Gönderiyi görüntüle",
+    "retryTarget": "Tekrar dene",
+    "markPublished": "Yayınlandı olarak işaretle",
+    "retryReviewTitle": "Zaten yayında olabilecek bir gönderi yeniden denensin mi?",
+    "retryReviewDescription": "Bu gönderi zaten yayında olabilir. Yeniden denemek onu ikinci kez yayınlayabilir. Önce sayfayı kontrol edin.",
+    "retryReviewConfirm": "Yine de yeniden dene",
+    "status": {
+      "pending": "Bekliyor",
+      "publishing": "Yayınlanıyor",
+      "processing": "İşleniyor",
+      "published": "Yayınlandı",
+      "failed": "Başarısız",
+      "cancelled": "İptal edildi",
+      "needsReview": "İnceleme gerekli"
+    },
+    "schedule": "Planla",
+    "scheduleAt": "Yayın zamanı",
+    "pickTime": "Tarih ve saat seçin",
+    "scheduleTooSoon": "Şu andan en az 2 dakika sonrası için bir zaman seçin.",
+    "scheduled": "Gönderi planlandı.",
+    "repeatLabel": "Tekrarla",
+    "repeatHint": "Tekrarlanan gönderi şablon olarak kaydedilir ve kendisi hiçbir zaman yayınlanmaz. Her çalıştırmada bir kopya planlanır.",
+    "repeatInvalid": "Kaydetmek için tekrar ayarlarını tamamlayın.",
+    "repeatStateActive": "Tekrarlanıyor",
+    "repeatStatePaused": "Duraklatıldı",
+    "repeatStateEnded": "Seri sona erdi",
+    "repeatNextRun": "Sonraki çalıştırma: {date}",
+    "repeatPause": "Duraklat",
+    "repeatResume": "Devam et",
+    "repeatEnd": "Seriyi bitir",
+    "repeatUpdated": "Tekrar serisi güncellendi",
+    "repeatScheduleOff": "Planlama ve yayınlama şablona değil, her kopyaya uygulanır.",
+    "moveMediaEarlier": "Öne taşı",
+    "moveMediaLater": "Arkaya taşı",
+    "removeFromChannels": "Kanallardan kaldır",
+    "removeFromChannelsTitle": "Bu gönderi ağlardan kaldırılsın mı?",
+    "removeFromChannelsDescription": "Yayınlanan gönderi, bunu destekleyen tüm ağlardan kaldırılır. Silme işlevi olmayan ağlar gönderiyi tutar. Bu işlem geri alınamaz.",
+    "removeFromChannelsConfirm": "Kaldır",
+    "removeCancel": "İptal",
+    "removeRequested": "{count, plural, one {# hedef için kaldırma başlatıldı.} other {# hedef için kaldırma başlatıldı.}}",
+    "removeUnsupported": "{count, plural, one {# hedef ağın API'si üzerinden kaldırılamıyor; uygulamadan kaldırın.} other {# hedef ağların API'si üzerinden kaldırılamıyor; uygulamalardan kaldırın.}}",
+    "removedFromChannel": "Ağdan kaldırıldı",
+    "removalPermissionMissing": "Gönderilerin silinmesine izin vermek için bu hesabı yeniden bağlayın.",
+    "postMessageQuotaExceeded": "Bu hesabın mesaj kotası doldu, bu nedenle bu gönderi yayınlanmadı. Planı yükseltin veya bir sonraki fatura dönemini bekleyin, ardından yeniden deneyin.",
+    "tiktokLoading": "TikTok hesap ayarları yükleniyor…",
+    "tiktokUnavailable": "TikTok hesap ayarları yüklenemedi. Tekrar deneyin.",
+    "tiktokCreator": "{nickname} TikTok hesabında paylaşılıyor",
+    "tiktokCannotPost": "Bu TikTok hesabı şu anda paylaşım yapamıyor. Daha sonra tekrar deneyin.",
+    "tiktokPrivacyPlaceholder": "Kimlerin görebileceğini seçin",
+    "tiktokInteractions": "Başkalarının şunları yapmasına izin ver",
+    "tiktokInteractionDisabled": "Bu hesabın TikTok ayarlarında kapalı",
+    "tiktokYourBrand": "Markanız",
+    "tiktokBrandedContent": "Markalı içerik",
+    "tiktokLabelPromotional": "Videonuz “Tanıtım içeriği” olarak etiketlenecek.",
+    "tiktokLabelPaid": "Videonuz “Ücretli iş birliği” olarak etiketlenecek.",
+    "tiktokCommercialRequired": "İçeriğinizin kendinizi, üçüncü bir tarafı veya her ikisini tanıtıp tanıtmadığını belirtmelisiniz.",
+    "tiktokBrandedNotPrivate": "Markalı içeriğin görünürlüğü gizli olarak ayarlanamaz.",
+    "tiktokConsentMusic": "Paylaşarak TikTok’un <music>Müzik Kullanımı Onayı</music>’nı kabul etmiş olursunuz.",
+    "tiktokConsentBranded": "Paylaşarak TikTok’un <branded>Markalı İçerik Politikası</branded>’nı ve <music>Müzik Kullanımı Onayı</music>’nı kabul etmiş olursunuz.",
+    "tiktokMaxDuration": "Bu hesabın paylaşabileceği en uzun video {seconds} saniyedir.",
+    "tiktokProcessingNote": "Yayınladıktan sonra videonun işlenip profilde görünmesi birkaç dakika sürebilir.",
+    "tiktokPrivacy": {
+      "PUBLIC_TO_EVERYONE": "Herkes",
+      "MUTUAL_FOLLOW_FRIENDS": "Arkadaşlar",
+      "FOLLOWER_OF_CREATOR": "Takipçiler",
+      "SELF_ONLY": "Sadece ben"
+    },
+    "partsTitle": "Zincir bölümleri",
+    "partsHint": "Her bölüm, ana gönderiden hemen sonra bir önceki bölüme yanıt olarak yayınlanır.",
+    "partLabel": "Bölüm {number}",
+    "partPlaceholder": "Sonraki bölümü yazın",
+    "partMoveUp": "Bölümü yukarı taşı",
+    "partMoveDown": "Bölümü aşağı taşı",
+    "partRemove": "Bölümü kaldır",
+    "partsAdd": "Bölüm ekle",
+    "partsRemaining": "{count, plural, one {# bölüm daha eklenebilir} other {# bölüm daha eklenebilir}}",
+    "firstCommentTitle": "İlk yorum",
+    "firstCommentPlaceholder": "Gönderiden hemen sonra yorum olarak yayınlanır",
+    "aiAssist": "Yapay zekâ ile yaz",
+    "aiPrivacy": "Verdiğiniz metin, aşağıda seçtiğiniz yapay zekâ sağlayıcısına gönderilir. Siz eklemeden hiçbir şey kaydedilmez veya yayınlanmaz.",
+    "aiIntegration": "Yapay zekâ entegrasyonu",
+    "aiNoIntegration": "Henüz bağlı bir yapay zekâ entegrasyonu yok.",
+    "aiConnectIntegration": "Yapay zekâ entegrasyonu bağla",
+    "aiMode": "Yapay zekâ ne yapsın?",
+    "aiModes": {
+      "write": "Yeni gönderi yaz",
+      "rewrite": "Yeniden yaz",
+      "shorten": "Kısalt",
+      "expand": "Genişlet",
+      "tone": "Tonu değiştir",
+      "fit": "Hedefin sınırına sığdır",
+      "hashtags": "Hashtag öner"
+    },
+    "aiTone": "Ton",
+    "aiTones": {
+      "friendly": "Samimi",
+      "professional": "Profesyonel",
+      "casual": "Rahat",
+      "playful": "Eğlenceli",
+      "formal": "Resmî",
+      "persuasive": "İkna edici",
+      "inspiring": "İlham verici"
+    },
+    "aiBrief": "Gönderi ne hakkında?",
+    "aiBriefPlaceholder": "Örneğin: hafta sonu indirimimizi duyur, %20 indirim",
+    "aiUsesPostText": "Yukarıdaki gönderi metnini kullanır.",
+    "aiNeedsPostText": "Önce gönderi metnini yaz.",
+    "aiFitNeedsDestination": "Önce bir hedef seç.",
+    "aiGenerate": "Oluştur",
+    "aiGenerating": "Yazılıyor…",
+    "aiSuggestion": "Öneri",
+    "aiCutToLimit": "{limit, plural, one {# karakter} other {# karakter}} sınırına göre kesildi.",
+    "aiInsert": "Sona ekle",
+    "aiReplace": "Gönderi metnini değiştir",
+    "aiHashtags": "Hashtag'ler",
+    "aiEmoji": "Emoji",
+    "aiCallToAction": "Harekete geçirici mesaj",
+    "aiCallToActionText": "Harekete geçirici mesajın ifadesi (isteğe bağlı)",
+    "aiCallToActionPlaceholder": "Örneğin: Masanı bugün ayırt",
+    "aiVariants": "Seçenekler",
+    "aiPerNetwork": "Kanal başına yaz",
+    "aiPerNetworkHint": "Her ağın tarzında bir sürüm.",
+    "aiOption": "Seçenek {number}",
+    "aiApplyTo": "{network} için uygula",
+    "aiApplyToEach": "Her kanala uygula",
+    "aiHashtagPick": "Gönderiye eklemek için bir hashtag'e tıklayın.",
+    "aiErrors": {
+      "modelNotChosen": "Yapay zekâ ile yazmak için bir yapay zekâ entegrasyonu ve model seçin.",
+      "needsReconfiguration": "Seçilen yapay zekâ entegrasyonu eksik, devre dışı veya geçersiz.",
+      "rateLimited": "Çok fazla yapay zekâ isteği. Birazdan tekrar dene.",
+      "timeout": "Yapay zekâ modeli zamanında yanıt vermedi. Tekrar dene.",
+      "provider": "Yapay zekâ sağlayıcısı metni yazamadı. Tekrar dene.",
+      "inProgress": "Zaten çalışan bir yapay zekâ isteği var.",
+      "blocked": "Bu çalışma alanının planı veya deneme süresi sona erdi.",
+      "generic": "Metin yazılamadı. Tekrar dene."
+    },
+    "snippets": "Metin parçaları",
+    "snippetsKinds": {
+      "signature": "İmza",
+      "hashtags": "Etiketler",
+      "text": "Metin"
+    },
+    "snippetsLoadFailed": "Metin parçaları yüklenemedi.",
+    "snippetsEmpty": "Henüz metin parçası yok.",
+    "snippetsSignature": "İmza",
+    "snippetsSignatureHint": "Gönderiyi oluşturduğunda metnin sonuna bir kez eklenir. Kendi metni olan hedefler bunu almaz.",
+    "snippetsSignatureChosen": "İmza: {name}",
+    "snippetsManage": "Metin parçalarını yönet",
+    "snippetsName": "Ad",
+    "snippetsKind": "Tür",
+    "snippetsContent": "Metin",
+    "snippetsAdd": "Parça ekle",
+    "snippetsSaved": "Parça kaydedildi.",
+    "snippetsDeleted": "Parça silindi.",
+    "snippetsNameTaken": "Bu adda bir parça zaten var.",
+    "targetSets": "Sayfa grupları",
+    "targetSetsLoadFailed": "Gruplar yüklenemedi.",
+    "targetSetsEmpty": "Henüz kayıtlı grup yok.",
+    "targetSetsName": "Grup adı",
+    "targetSetsNamePlaceholder": "Gruba bir ad verin…",
+    "targetSetsSave": "Kaydet",
+    "targetSetsNeedsSelection": "Grup olarak kaydetmek için sayfaları seçin.",
+    "targetSetsSaved": "Grup kaydedildi.",
+    "targetSetsDeleted": "Grup silindi.",
+    "targetSetsNameTaken": "Bu adda bir grup zaten var.",
+    "targetSetsApplied": "“{name}” grubundaki sayfalar seçildi.",
+    "targetSetsSkipped": "{count, plural, one {# sayfa ilgilenilmesi gerektiği için atlandı.} other {# sayfa ilgilenilmesi gerektiği için atlandı.}}",
+    "destinationState": {
+      "ready": "Paylaşıma hazır",
+      "inboxDisconnected": "Bağlantı kesildi",
+      "needsReconnect": "Bağlantının süresi doldu",
+      "permissionMissing": "Paylaşım izni verilmedi"
+    },
+    "destinationPause": {
+      "until": "{time} tarihine kadar duraklatıldı",
+      "reason": {
+        "limitReached": "Ağ, bu hesabın paylaşımlarını sınırladı. Gönderiler bekler ve duraklatma bittikten sonra yayınlanır.",
+        "accountRestricted": "Ağ bu hesabı kısıtladı. Gönderiler bekler ve duraklatma bittikten sonra yayınlanır.",
+        "spamRisk": "Ağ, bu hesabın etkinliğini spam riski olarak işaretledi. Gönderiler bekler ve duraklatma bittikten sonra yayınlanır."
+      }
+    },
+    "viaFacebook": "Facebook ile",
+    "openProfile": "{name} sayfasını {network} üzerinde aç",
+    "someNeedAttention": "Bazı sayfalar veya profiller, yeniden bağlayana kadar paylaşım yapamaz.",
+    "viewPosts": "Görüntüle",
+    "queue": {
+      "modeLabel": "Ne zaman paylaşılsın",
+      "atTime": "Saat seç",
+      "next": "Sıraya ekle",
+      "top": "Önce paylaş",
+      "nextHint": "Her sayfanın bir sonraki boş saatinde paylaşılır.",
+      "topHint": "En yakın saatte paylaşılır; sıradaki gönderiler bir saat dilimi geri kayar.",
+      "noDestination": "Paylaşım saatlerini görmek için bir sayfa seçin.",
+      "noSchedule": "{names} için paylaşım saati ayarlanmamış.",
+      "setUpSlots": "Paylaşım saatlerini ayarla"
+    },
+    "targetOwnTime": "Bu kanal için ayrı zaman",
+    "targetTimeInvalid": "Şu andan itibaren 2 dakika ile 1 yıl arasında bir zaman seçin.",
+    "targetMediaOwn": "Bu kanal için farklı dosyalar",
+    "targetMediaNone": "Dosya yok: bu kanal dosyasız yayınlar.",
+    "occurrencesUpcoming": "Yaklaşan çalıştırmalar",
+    "occurrencesNoUpcoming": "Yaklaşan çalıştırma yok.",
+    "occurrenceSkip": "Atla",
+    "occurrenceRestore": "Geri yükle",
+    "occurrenceSkipped": "Çalıştırma atlandı.",
+    "occurrenceRestored": "Çalıştırma geri yüklendi.",
+    "occurrencesHistory": "Geçmiş çalıştırmaları göster",
+    "occurrencesHideHistory": "Geçmiş çalıştırmaları gizle",
+    "occurrencesLoadFailed": "Çalıştırmalar yüklenemedi.",
+    "occurrencesNoHistory": "Henüz çalıştırma yok.",
+    "occurrencesLoadMore": "Daha fazla yükle",
+    "occurrenceOpen": "Gönderiyi aç",
+    "targetSetsUpdated": "Grup güncellendi.",
+    "targetSetsMembers": "Bu gruptaki sayfalar",
+    "targetSetsNeedsMember": "En az bir sayfa bırakın.",
+    "occurrenceOutcomes": {
+      "created": "Zamanlandı",
+      "excluded": "Atlandı",
+      "missed": "Kaçırıldı",
+      "skipped": "Oluşturulmadı"
+    }
+  },
+  "postCommentVariables": {
+    "group": "Gönderi yorumu",
+    "postLink": "Gönderi bağlantısı",
+    "postText": "Gönderi metni",
+    "postPublishedAt": "Gönderi yayın zamanı",
+    "postPageName": "Gönderi sayfa adı",
+    "postId": "Gönderi kimliği",
+    "commentText": "Yorum metni",
+    "commentId": "Yorum kimliği"
   }
 }

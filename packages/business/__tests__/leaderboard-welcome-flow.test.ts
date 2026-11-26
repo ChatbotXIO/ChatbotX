@@ -123,3 +123,36 @@ describe("leaderboardService.create welcome flow", () => {
     expect(mocks.createPublishedDefault).not.toHaveBeenCalled()
   })
 })
+
+describe("leaderboardService.create flow references", () => {
+  test("checks the reward flow (JSON, no foreign key) with the welcome flow", async () => {
+    await leaderboardService.create(
+      input({
+        referralWelcomeFlowId: "7",
+        rewardSettings: { flowId: "8", topN: 3, autoOnFinish: false },
+      }),
+      { buildViewUrl },
+    )
+    expect(mocks.assertReferencable).toHaveBeenCalledWith(
+      expect.objectContaining({
+        parents: [
+          { kind: "flow", resourceId: "7" },
+          { kind: "flow", resourceId: "8" },
+        ],
+      }),
+    )
+  })
+
+  test("refuses without inserting when the reward flow is being uninstalled", async () => {
+    mocks.assertReferencable.mockRejectedValueOnce(new Error("uninstalling"))
+    await expect(
+      leaderboardService.create(
+        input({
+          rewardSettings: { flowId: "8", topN: 3, autoOnFinish: false },
+        }),
+        { buildViewUrl },
+      ),
+    ).rejects.toThrow("uninstalling")
+    expect(mocks.insert).not.toHaveBeenCalled()
+  })
+})

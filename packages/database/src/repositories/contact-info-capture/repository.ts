@@ -65,7 +65,7 @@ export const contactInfoCaptureRepository = {
     }
     const infoTypes = Array.from(new Set(input.infoTypes))
 
-    const result = await tx.execute(sql`
+    const result = await tx.execute<Record<string, unknown>>(sql`
       INSERT INTO "ContactInfoCapture"
         ("workspaceId", "sourceType", "sourceId", "infoType", "contactId",
          "contactInboxId", "inboxId", "conversationId", "createdAt")
@@ -240,7 +240,7 @@ export const contactInfoCaptureRepository = {
       return 0
     }
 
-    const result = await tx.execute(sql`
+    const result = await tx.execute<Record<string, unknown>>(sql`
       DELETE FROM "ContactInfoCapture"
       WHERE "workspaceId" = ${input.workspaceId}::bigint
         AND "contactId" = ANY(${asBigintArray(contactIds)})
@@ -268,7 +268,7 @@ export const contactInfoCaptureRepository = {
     tx: DatabaseClient = db,
   ): Promise<number> {
     const extraWhere = input.extraWhere ? sql` AND ${input.extraWhere}` : sql``
-    const result = await tx.execute(sql`
+    const result = await tx.execute<Record<string, unknown>>(sql`
       DELETE FROM "ContactInfoCapture"
       WHERE "workspaceId" = ${input.workspaceId}::bigint${extraWhere}
         AND ("sourceType", "sourceId", "infoType", "contactId") IN (
@@ -289,7 +289,7 @@ export const contactInfoCaptureRepository = {
     input: ContactInfoCaptureSource,
     client: DatabaseClient = db,
   ): Promise<boolean> {
-    const result = await client.execute(sql`
+    const result = await client.execute<Record<string, unknown>>(sql`
       SELECT 1
       FROM "ContactInfoCapture"
       WHERE "workspaceId" = ${input.workspaceId}::bigint

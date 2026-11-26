@@ -36,12 +36,36 @@ Code lives in `packages/business/src/template/` (engine, adapters, guards),
 | A list page or editor for such a kind | Section 6 (UI) |
 | None of the above | Nothing; say so in the PR |
 
-Kinds templates copy today: `templateResourceKinds` in
+Kinds templates copy today (the Tools kinds magicLink, poll, dynamicImage, placeLocation, miniApp, minigame, leaderboard, openHours, vendor, discountCode, storeSettings, storyAutomation and inboundWebhook were added after the first set): `templateResourceKinds` in
 `packages/database/src/partials/template.ts` (flow, trigger, keyword, sequence,
-calendar, webchat, comment automation, reflink/QR, product, saved reply,
+calendar, webchat, comment automation, Instagram story automation, reflink/QR, product, saved reply,
 pipeline, AI agent/function/MCP server/file, questionnaire, coupon topic, and
 the natural-key manifests tag, custom field, bot field, folder, product
 category, place category, inbox).
+
+## 1a. Three questions every kind must answer
+
+Before writing an adapter, answer these and write the answers in its header comment:
+
+1. **What is bound to an external system on the source?** (a credential, a Shopify/WooCommerce store, a Meta/Google account, an inbox, a published Meta object). That part is dropped or re-bound; if the whole resource is useless without it, it is not selectable. Skip with a warning, never widen the configuration to make an install succeed.
+2. **Which target-workspace states must block the install?** (e.g. an external store source blocks the whole Ecommerce group.) Decide it **before writing**: a throw inside `adapter.insert` fails the whole install.
+3. **What does the normal service do that the install path would skip?** (validation, caps, uniqueness, defaults, cache invalidation.) The adapter must call the same shared core, not a copy of it.
+
+Every Tools card declares its template decision in
+`apps/builder/src/features/tools/tool-template-coverage.ts`
+(`TOOL_TEMPLATE_COVERAGE`): a card added without an entry is a compile error.
+A payload that uses a category added after v2 carries `formatVersion` 3
+(`minFormatVersion: 3` on the adapter; `requiredFormatVersion` picks the maximum).
+
+### Public links that carry an id
+
+A flow or message can hold a public link to a tool (`/r/<workspaceId>/<name>`,
+`/dynamic-images?dynamicImageId=<id>`, `/l/<workspaceId>/p/<pollId>`). The reference
+registry cannot see inside a URL, so a tool whose link carries an id adds ONE entry to
+`RESOURCE_LINK_PATTERNS` (`template/resource-links.ts`): the install then rewrites that
+id/workspace in every copied text and warns `linkNotRemapped` when the tool did not come along.
+Images a tool owns are copied with `adapters/staging.ts` (`stageToolImages` /
+`resolveToolImageUrl`), never re-implemented per adapter.
 
 ## 2. A new category (resource kind)
 

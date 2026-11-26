@@ -58,6 +58,7 @@ vi.mock("@chatbotx.io/business/errors", () => ({
 
 vi.mock("@chatbotx.io/database/repositories", () => ({
   contactInboxOperationalColumns: { sourceIdentityHistory: false },
+  recentParticipantsRelation: { limit: 3 },
   createMessageRepository: mocks.createMessageRepository,
   getSafeSinceTime: mocks.getSafeSinceTime,
 }))
@@ -136,6 +137,7 @@ describe("listConversations / findConversation adReferral mapping", () => {
       contact: null,
       assignedUser: null,
       assignedInboxTeam: null,
+      conversationParticipants: [],
     }
     mocks.findManyQuery.mockResolvedValue([conversation])
 
@@ -161,6 +163,7 @@ describe("listConversations / findConversation adReferral mapping", () => {
       contact: null,
       assignedUser: null,
       assignedInboxTeam: null,
+      conversationParticipants: [],
     }
     mocks.findManyQuery.mockResolvedValue([conversation])
 
@@ -190,6 +193,7 @@ describe("listConversations / findConversation adReferral mapping", () => {
       contact: null,
       assignedUser: null,
       assignedInboxTeam: null,
+      conversationParticipants: [],
     }
     mocks.findManyQuery.mockResolvedValue([conversation])
 
@@ -210,6 +214,7 @@ describe("listConversations / findConversation adReferral mapping", () => {
       contactId: "contact-1",
       lastActivityAt: new Date("2026-01-01T00:00:00Z"),
       contactInboxes: [adAttributedContactInbox, organicContactInbox],
+      conversationParticipants: [],
     }
     mocks.findWithFullRelations.mockResolvedValue(conversation)
 
@@ -230,6 +235,7 @@ describe("listConversations / findConversation adReferral mapping", () => {
       contactId: "contact-1",
       lastActivityAt: new Date("2026-01-01T00:00:00Z"),
       contactInboxes: [adAttributedContactInbox],
+      conversationParticipants: [],
     }
     mocks.findWithFullRelations.mockResolvedValue(conversation)
 
@@ -249,6 +255,7 @@ describe("listConversations / findConversation adReferral mapping", () => {
       contact: null,
       assignedUser: null,
       assignedInboxTeam: null,
+      conversationParticipants: [],
     }
     mocks.findManyQuery.mockResolvedValue([listConversation])
     const listResult = await listConversations(
@@ -261,6 +268,7 @@ describe("listConversations / findConversation adReferral mapping", () => {
       workspaceId: "ws-1",
       contactId: "contact-1",
       lastActivityAt: new Date("2026-01-01T00:00:00Z"),
+      conversationParticipants: [],
       contactInboxes: [adAttributedContactInbox],
     }
     mocks.findWithFullRelations.mockResolvedValue(findConversationRow)
@@ -303,6 +311,7 @@ describe("listConversations / findConversation googleAdsClick mapping", () => {
       contact: null,
       assignedUser: null,
       assignedInboxTeam: null,
+      conversationParticipants: [],
     }
     mocks.findManyQuery.mockResolvedValue([conversation])
     mocks.findWithFullRelations.mockResolvedValue(conversation)

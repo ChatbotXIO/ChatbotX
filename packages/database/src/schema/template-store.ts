@@ -1,3 +1,4 @@
+import type { Locale } from "@chatbotx.io/utils/ui-locale"
 import { sql } from "drizzle-orm"
 import {
   index,
@@ -8,6 +9,7 @@ import {
   uniqueIndex,
 } from "drizzle-orm/pg-core"
 import { bigintAsString, sharedColumns } from "../partials/shared"
+import type { TemplateChannel } from "../partials/template"
 import { userModel } from "./auth-user"
 import { tenantModel } from "./enterprise/tenant"
 import { templateModel } from "./template"
@@ -59,6 +61,18 @@ export const templateStoreListingModel = pgTable(
     templateId: bigintAsString()
       .notNull()
       .references(() => templateModel.id, cascadeFk),
+    /**
+     * UI locale codes the template is shown for; empty = every language.
+     * Text, not an enum: the set is the builder's UI locale list, which grows
+     * with each translation, and the service validates it.
+     */
+    languages: text().$type<Locale>().array().notNull().default([]),
+    /**
+     * Channels the template works on, in `orderedTemplateChannels` order;
+     * empty = every channel. Text, not an
+     * enum, like `languages`: the service validates it.
+     */
+    channels: text().$type<TemplateChannel>().array().notNull().default([]),
     createdBy: bigintAsString().references(() => userModel.id, setNullFk),
   },
   (table) => [

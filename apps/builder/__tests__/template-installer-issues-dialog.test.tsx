@@ -56,6 +56,7 @@ describe("installer issues dialog", () => {
             category: "flows",
             sourceId: "1",
             name: "Sales flow",
+            itemCount: null,
             skipped: false,
             issues: [{ code: "pipeline", count: 2 }],
           },

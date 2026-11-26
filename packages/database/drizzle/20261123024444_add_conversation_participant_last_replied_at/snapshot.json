@@ -1,0 +1,48 @@
+{
+  "type": "diff",
+  "version": "10",
+  "dialect": "postgres",
+  "id": "9974b6fa-495c-4941-a798-1782117264a3",
+  "prevIds": [
+    "856d6c14-fab1-4515-b8db-85873d4a0d60",
+    "4daf7986-47fe-4165-8ce6-faf1331915b6"
+  ],
+  "footprints": [
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "ConversationParticipant",
+        "lastRepliedAt"
+      ],
+      "writes": [
+        "s|col|public.ConversationParticipant.lastRepliedAt",
+        "n|col|public.ConversationParticipant.lastRepliedAt",
+        "e|col|public.ConversationParticipant.lastRepliedAt"
+      ],
+      "reads": [
+        "n|tbl|public.ConversationParticipant",
+        "n|sch|public"
+      ]
+    }
+  ],
+  "deltas": [
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "ConversationParticipant",
+        "name": "lastRepliedAt",
+        "type": "timestamp(6) with time zone",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    }
+  ]
+}

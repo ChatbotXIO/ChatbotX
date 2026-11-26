@@ -3,6 +3,7 @@ import { EditIgStoryForm } from "@/features/ig-stories/components/edit-ig-story-
 import { IgStoryPostsStoreProvider } from "@/features/ig-stories/provider/ig-story-posts-store-context"
 import { getIgStory } from "@/features/ig-stories/queries"
 import type { IgStoryVariant } from "@/features/ig-stories/schema/action"
+import { LockedEditorGuard } from "@/features/templates/components/locked-editor-guard"
 import { withWorkspaceIdAndIdSchema } from "@/features/workspaces/schema/resource"
 
 export default async function EditIgStoryPage(props: {
@@ -29,7 +30,13 @@ export default async function EditIgStoryPage(props: {
       variant={variant}
       workspaceId={workspaceId}
     >
-      <EditIgStoryForm initialData={igStory} workspaceId={workspaceId} />
+      <LockedEditorGuard
+        resourceId={id}
+        resourceKind="storyAutomation"
+        workspaceId={workspaceId}
+      >
+        <EditIgStoryForm initialData={igStory} workspaceId={workspaceId} />
+      </LockedEditorGuard>
     </IgStoryPostsStoreProvider>
   )
 }

@@ -243,7 +243,7 @@ export async function applyHideRules(
   const { commentId, postId, workspaceId, conversationId } = data
   const hideComments = automation.hideComments
 
-  if (!hasHideRule(hideComments)) {
+  if (data.postHidesComment || !hasHideRule(hideComments)) {
     return
   }
 

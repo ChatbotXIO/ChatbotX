@@ -76,3 +76,7 @@ Production sanity after deploy: comment on a normal post, a reel, a comment with
 - [references/file-map.md](references/file-map.md) — complete path table (analytics, miss, replay, live, stat columns); read when locating a file.
 - [references/add-filter-option.md](references/add-filter-option.md) — recipe; read when adding a filter option.
 - [references/add-reply-type.md](references/add-reply-type.md) — recipe plus the async-reply analytics trap; read when adding a reply type.
+
+## Templates
+
+Comment automations (and Instagram story automations) are copied with `post` ids cleared (an automation that chose posts installs inactive), the inbox re-bound only to an account of the automation's own channel type (otherwise inactive and unscoped, never widened), replies and AI moderation remapped to the copied flow/agent, and AI Router connections never shipped. Shared inbox/reply helpers live in `packages/business/src/template/adapters/automation-bindings.ts`; keep per-channel account checks in `comment-automation/account-scope.ts`, not in the adapter.

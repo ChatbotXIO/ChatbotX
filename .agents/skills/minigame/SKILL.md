@@ -58,3 +58,7 @@ No automated test covers the public play page/action or the builder CRUD UI — 
 - [references/data-flow.md](references/data-flow.md) — the play flow and the referral (share) loop step by step.
 - [references/referral-and-play-token.md](references/referral-and-play-token.md) — full text of traps 7 and 8. Read before touching referral grants or play-token/URL-button handling.
 - [references/new-type-recipe.md](references/new-type-recipe.md) — step list for adding gameplay for a new minigame type.
+
+## Templates
+
+A template copies a minigame's configuration (type, the six settings blocks, images, prizes with their current quantity, `enabled`) and drops what happened (the four counters, `MinigamePlay`, `MinigameContact`). Tag groups, `sharingFlowId`, flows inside `outcomeMessage` and `prizeNameCustomFieldId` are remapped through the reference registry; images are staged under the installation prefix. A new setting that holds an id or an image must be registered there (see `template-integration`).

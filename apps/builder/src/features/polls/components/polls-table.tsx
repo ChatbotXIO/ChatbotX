@@ -33,6 +33,11 @@ import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useLocale, useTranslations } from "next-intl"
 import React, { use, useMemo, useState } from "react"
+import { LockBadge } from "@/features/templates/components/lock-badge"
+import {
+  TemplateLockedList,
+  UndeletableGuard,
+} from "@/features/templates/components/lock-context"
 import type { PollListItem } from "../schema/resource"
 import { DeletePollsDialog } from "./delete-polls-dialog"
 import { GetLinkDialog } from "./get-link-dialog"
@@ -88,13 +93,16 @@ export function PollsTable({ workspaceId, promises }: PollsTableProps) {
           />
         ),
         cell: ({ row }) => (
-          <Link
-            className="block w-fit max-w-60 truncate"
-            href={`/space/${workspaceId}/polls/${row.original.id}/edit`}
-            title={row.original.name}
-          >
-            {row.original.name}
-          </Link>
+          <div className="flex w-fit max-w-60 items-center">
+            <Link
+              className="block truncate"
+              href={`/space/${workspaceId}/polls/${row.original.id}/edit`}
+              title={row.original.name}
+            >
+              {row.original.name}
+            </Link>
+            <LockBadge resourceId={row.original.id} />
+          </div>
         ),
         meta: {
           label: t("fields.name.label"),
@@ -185,13 +193,18 @@ export function PollsTable({ workspaceId, promises }: PollsTableProps) {
                   </Link>
                 }
               />
-              <DropdownMenuItem
-                onClick={() => setRowAction({ row, variant: "delete" })}
-                variant="destructive"
-              >
-                <Trash2Icon />
-                {t("actions.delete")}
-              </DropdownMenuItem>
+              <UndeletableGuard resourceId={row.original.id}>
+                {(disabled) => (
+                  <DropdownMenuItem
+                    disabled={disabled}
+                    onClick={() => setRowAction({ row, variant: "delete" })}
+                    variant="destructive"
+                  >
+                    <Trash2Icon />
+                    {t("actions.delete")}
+                  </DropdownMenuItem>
+                )}
+              </UndeletableGuard>
             </DropdownMenuContent>
           </DropdownMenu>
         ),
@@ -220,29 +233,35 @@ export function PollsTable({ workspaceId, promises }: PollsTableProps) {
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <DataTable table={table}>
-          <DataTableToolbar table={table}>
-            <div className="flex items-center gap-2">
-              {table.getFilteredSelectedRowModel().rows.length > 0 ? (
-                <DeletePollsDialog
-                  onSuccess={() => table.toggleAllRowsSelected(false)}
-                  polls={table
-                    .getFilteredSelectedRowModel()
-                    .rows.map((row) => row.original)}
-                  workspaceId={workspaceId}
-                />
-              ) : null}
-            </div>
-            <Button
-              nativeButton={false}
-              render={<Link href={`/space/${workspaceId}/polls/create`} />}
-              size="sm"
-            >
-              <PlusIcon />
-              {t("actions.add")}
-            </Button>
-          </DataTableToolbar>
-        </DataTable>
+        <TemplateLockedList
+          resourceKind="poll"
+          rows={data}
+          workspaceId={workspaceId}
+        >
+          <DataTable table={table}>
+            <DataTableToolbar table={table}>
+              <div className="flex items-center gap-2">
+                {table.getFilteredSelectedRowModel().rows.length > 0 ? (
+                  <DeletePollsDialog
+                    onSuccess={() => table.toggleAllRowsSelected(false)}
+                    polls={table
+                      .getFilteredSelectedRowModel()
+                      .rows.map((row) => row.original)}
+                    workspaceId={workspaceId}
+                  />
+                ) : null}
+              </div>
+              <Button
+                nativeButton={false}
+                render={<Link href={`/space/${workspaceId}/polls/create`} />}
+                size="sm"
+              >
+                <PlusIcon />
+                {t("actions.add")}
+              </Button>
+            </DataTableToolbar>
+          </DataTable>
+        </TemplateLockedList>
 
         <DeletePollsDialog
           onOpenChange={() => setRowAction(null)}

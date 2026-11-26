@@ -17,6 +17,8 @@ import { useRouter } from "next/navigation"
 import type { useTranslations } from "next-intl"
 import { useAction } from "next-safe-action/hooks"
 import { useState } from "react"
+import { LockBadge } from "@/features/templates/components/lock-badge"
+import { UndeletableGuard } from "@/features/templates/components/lock-context"
 import { WebshopLinkMenuItems } from "@/features/webshop/components/webshop-link-menu-items"
 import { toastActionError } from "@/lib/errors/safe-action-error-handler"
 import { toggleProductVendorActiveAction } from "./actions/update-product-vendor.action"
@@ -118,6 +120,7 @@ export const getProductVendorColumns = ({
           />
         ) : null}
         <span className="truncate font-medium">{row.original.name}</span>
+        <LockBadge resourceId={row.original.id} />
       </div>
     ),
     meta: {
@@ -202,13 +205,18 @@ export const getProductVendorColumns = ({
             target={{ vendorId: row.original.id }}
             workspaceId={workspaceId}
           />
-          <DropdownMenuItem
-            className="text-destructive"
-            onClick={() => setRowAction({ row, variant: "delete" })}
-          >
-            <Trash2Icon className="me-2 h-4 w-4" />
-            {t("actions.delete")}
-          </DropdownMenuItem>
+          <UndeletableGuard resourceId={row.original.id}>
+            {(disabled) => (
+              <DropdownMenuItem
+                className="text-destructive"
+                disabled={disabled}
+                onClick={() => setRowAction({ row, variant: "delete" })}
+              >
+                <Trash2Icon className="me-2 h-4 w-4" />
+                {t("actions.delete")}
+              </DropdownMenuItem>
+            )}
+          </UndeletableGuard>
         </DropdownMenuContent>
       </DropdownMenu>
     ),

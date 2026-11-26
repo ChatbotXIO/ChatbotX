@@ -22,17 +22,14 @@ vi.mock("next/link", () => ({
 vi.mock("@/features/template-store/components/store-catalog", () => ({
   StoreCatalog: ({
     layout,
-    tenantName,
     templates,
   }: {
     layout?: string
-    tenantName: string
     templates: unknown[]
   }) => (
     <div
       data-layout={layout}
       data-templates={templates.length}
-      data-tenant={tenantName}
       data-testid="store-catalog"
     />
   ),
@@ -80,7 +77,7 @@ vi.mock("@/features/templates/components/public-install-section", () => ({
 type PanelProps = ComponentProps<typeof HomeTemplatesPanel>
 
 const catalog = {
-  tenantName: "Acme",
+  viewerLocale: "en" as const,
   categories: [{ id: "5", name: "Flows" }],
   templates: [
     {
@@ -91,6 +88,9 @@ const catalog = {
       imageUrl: "/cover.png",
       href: "/?tab=templates&key=tok",
       categoryIds: ["5"],
+      languages: [],
+      channels: [],
+      section: "primary" as const,
     },
   ],
 }
@@ -138,12 +138,11 @@ afterEach(() => {
 })
 
 describe("HomeTemplatesPanel", () => {
-  test("shows the store catalog in its embedded layout, with the tenant's data", () => {
+  test("shows the store catalog in its embedded layout, with the catalog's templates", () => {
     const el = render({ panel: "catalog", catalog })
 
     const stub = el.querySelector('[data-testid="store-catalog"]')
     expect(stub?.getAttribute("data-layout")).toBe("embedded")
-    expect(stub?.getAttribute("data-tenant")).toBe("Acme")
     expect(stub?.getAttribute("data-templates")).toBe("1")
     expect(el.querySelector('[role="alert"]')).toBeNull()
   })

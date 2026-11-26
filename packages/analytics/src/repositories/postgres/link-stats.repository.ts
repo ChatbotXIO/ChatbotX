@@ -70,7 +70,7 @@ export class LinkStatsRepository extends BaseRepository {
     const { workspaceId, linkId, startDate, endDate, timezone } = input
     const { occurredAt, workspaceId: wsCol, linkId: linkCol } = this.columns
 
-    const result = await db.execute(sql`
+    const result = await db.execute<Record<string, unknown>>(sql`
       SELECT
         TO_CHAR((${occurredAt} AT TIME ZONE ${resolvedTimezone(timezone)})::date, 'YYYY-MM-DD') AS "dateReport",
         COUNT(*)::int AS count
@@ -105,7 +105,7 @@ export class LinkStatsRepository extends BaseRepository {
         ? sql` AND ${occurredAt} >= ${startDate} AND ${occurredAt} <= ${endDate}`
         : sql``
 
-    const result = await db.execute(sql`
+    const result = await db.execute<Record<string, unknown>>(sql`
       SELECT COUNT(DISTINCT ${contactInboxId})::int AS total
       FROM ${this.table}
       WHERE ${wsCol} = ${workspaceId}
@@ -139,7 +139,7 @@ export class LinkStatsRepository extends BaseRepository {
         ? sql` AND ${occurredAt} >= ${startDate} AND ${occurredAt} <= ${endDate}`
         : sql``
 
-    const result = await db.execute(sql`
+    const result = await db.execute<Record<string, unknown>>(sql`
       SELECT
         ${contactInboxId},
         MIN(${occurredAt}) AS "occurredAt"

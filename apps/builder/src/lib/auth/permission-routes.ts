@@ -23,6 +23,7 @@ export const PERMISSION_NAV = {
   pipelines: "contacts",
   broadcasts: "broadcast",
   sequences: "broadcast",
+  posts: "broadcast",
   products: "ecommerce",
 } as const satisfies Record<string, keyof WorkspaceMemberPermissions>
 
@@ -38,6 +39,7 @@ const WORKSPACE_LANDING_SEGMENTS = [
   "pipelines",
   "broadcasts",
   "sequences",
+  "posts",
   "products",
 ] as const satisfies ReadonlyArray<keyof typeof PERMISSION_NAV | "inbox">
 

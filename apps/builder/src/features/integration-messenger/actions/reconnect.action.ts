@@ -9,6 +9,11 @@ import type { WorkspaceModel } from "@chatbotx.io/database/types"
 import { generateAuthUrl } from "@chatbotx.io/integration-messenger"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { redirect } from "next/navigation"
+import {
+  buildReconnectReferer,
+  type ReconnectReturnTo,
+  reconnectReturnToSchema,
+} from "@/lib/channel-reconnect"
 import { getOriginUrlFromHeader } from "@/lib/domain"
 import { resolveOwnerForWorkspace } from "@/lib/platform-credential-owner"
 import { buildProviderCallbackUrl } from "@/lib/provider-origin"
@@ -21,13 +26,21 @@ import { workspaceActionClient } from "@/lib/safe-action"
  * the page-select connect flow. Mirrors `connectFacebookAds`.
  */
 export const reconnectMessengerAction = workspaceActionClient
-  .bindArgsSchemas([zodBigintAsString(), zodBigintAsString()])
+  .bindArgsSchemas([
+    zodBigintAsString(),
+    zodBigintAsString(),
+    reconnectReturnToSchema.optional(),
+  ])
   .action(
     async ({
-      bindArgsParsedInputs: [workspaceId, integrationId],
+      bindArgsParsedInputs: [workspaceId, integrationId, returnTo],
       ctx,
     }: {
-      bindArgsParsedInputs: readonly [string, string]
+      bindArgsParsedInputs: readonly [
+        string,
+        string,
+        ReconnectReturnTo | undefined,
+      ]
       ctx: { workspace: WorkspaceModel }
     }) => {
       const integrationMessenger =
@@ -52,11 +65,12 @@ export const reconnectMessengerAction = workspaceActionClient
         messengerCredential,
         "/integrations/messenger/callback",
       )
-      const baseUrl = await getOriginUrlFromHeader()
-      const referer = new URL(
-        `/space/${workspaceId}/settings/channels?channel=messenger`,
-        baseUrl,
-      ).toString()
+      const referer = buildReconnectReferer({
+        channel: "messenger",
+        origin: await getOriginUrlFromHeader(),
+        returnTo,
+        workspaceId,
+      })
 
       const authUrl = generateAuthUrl({
         clientId: messengerCredential.config.clientId,

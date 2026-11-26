@@ -2,6 +2,7 @@ export type {
   AttachmentLookupRow,
   BulkCreateAttachmentInput,
   BulkPatchContentAttributesParams,
+  CommentListFilter,
   CreateAttachmentInput,
   CreateMessageInput,
   CreateMessageResult,
@@ -20,16 +21,26 @@ export type {
   HardDeleteAllByContactInboxParams,
   HardDeleteAllByContactInboxResult,
   IMessageRepository,
+  ListCommentsQuery,
+  ListedComment,
   ListIncomingTextsByContactInboxParams,
   ListMessagesQuery,
+  MessageForTranslation,
+  MessageRef,
   MessageSourceRow,
   MessageTextWithFileTypes,
   MessageWithAttachments,
   OutgoingBotMessage,
+  PaginatedComments,
   PaginatedMessages,
   Pagination,
   PaginationCursor,
+  TranslationContextMessage,
   UpdateAttachmentParams,
+} from "./message-repository"
+export {
+  type MessageQuotaMarkerKey,
+  messageQuotaMarkerKeys,
 } from "./message-repository"
 export * from "./message-repository.factory"
 

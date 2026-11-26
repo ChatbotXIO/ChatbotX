@@ -20,6 +20,7 @@ import {
 } from "../../schema"
 import type { PollCandidateModel, PollModel } from "../../types"
 import {
+  deleteByIdsInWorkspace,
   getPaginationWithDefaults,
   isBigintId,
   likeContains,
@@ -110,6 +111,19 @@ async function loadPollWithCandidates(
 }
 
 export const pollRepository = {
+  /** Id and name of the workspace's newest polls, for a select list. */
+  async listOptions(
+    input: { workspaceId: string; limit: number },
+    tx: DatabaseClient = db,
+  ): Promise<{ id: string; name: string }[]> {
+    return await tx
+      .select({ id: pollModel.id, name: pollModel.name })
+      .from(pollModel)
+      .where(eq(pollModel.workspaceId, input.workspaceId))
+      .orderBy(desc(pollModel.createdAt), desc(pollModel.id))
+      .limit(input.limit)
+  },
+
   async list(
     input: {
       workspaceId: string
@@ -327,23 +341,12 @@ export const pollRepository = {
     return row
   },
 
-  async deleteMany(
+  /** Deletes the polls (candidates and votes cascade) and returns the ids that went. */
+  async deleteManyReturningIds(
     input: { workspaceId: string; ids: string[] },
     tx: DatabaseClient = db,
-  ): Promise<number> {
-    if (!input.ids.length) {
-      return 0
-    }
-    const rows = await tx
-      .delete(pollModel)
-      .where(
-        and(
-          eq(pollModel.workspaceId, input.workspaceId),
-          inArray(pollModel.id, input.ids),
-        ),
-      )
-      .returning({ id: pollModel.id })
-    return rows.length
+  ): Promise<string[]> {
+    return await deleteByIdsInWorkspace(tx, pollModel, input)
   },
 
   /**

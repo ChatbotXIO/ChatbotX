@@ -20,6 +20,7 @@ import {
   type MessengerConfig,
   messengerFeedCommentValueSchema,
   messengerLeadgenValueSchema,
+  messengerLiveVideoValueSchema,
   messengerMessagingEventSchema,
 } from "../schema"
 
@@ -339,7 +340,40 @@ const handleWebhookEvent = async (
             })
           }
         }
-        continue
+      }
+
+      const liveVideoChanges =
+        entry.changes?.filter(
+          (c: { field: string }) => c.field === "live_videos",
+        ) ?? []
+      if (liveVideoChanges.length > 0) {
+        for (const liveVideoChange of liveVideoChanges) {
+          const parsed = messengerLiveVideoValueSchema.safeParse(
+            liveVideoChange.value,
+          )
+          if (!parsed.success) {
+            logger.warn(
+              { issues: parsed.error.issues, value: liveVideoChange.value },
+              "Unrecognized live_videos webhook payload",
+            )
+            continue
+          }
+          const { id, status } = parsed.data
+          await queue?.add(
+            "liveVideoStatusChange",
+            {
+              type: "liveVideoStatusChange",
+              data: {
+                integrationType: "messenger",
+                integrationIdentifier: entry.id,
+                liveVideoId: id,
+                status,
+              },
+            },
+            // One job per video and status: a redelivery adds nothing.
+            { jobId: `live-video-${id}-${status}` },
+          )
+        }
       }
 
       const leadgenChanges =
@@ -373,6 +407,14 @@ const handleWebhookEvent = async (
             },
           })
         }
+      }
+
+      // A batched entry can carry several kinds of change; all are handled above.
+      if (
+        feedChanges.length > 0 ||
+        liveVideoChanges.length > 0 ||
+        leadgenChanges.length > 0
+      ) {
         continue
       }
 

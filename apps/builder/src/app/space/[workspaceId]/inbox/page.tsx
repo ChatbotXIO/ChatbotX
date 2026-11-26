@@ -11,8 +11,17 @@ import {
   buildContactPermissionScope,
   type ContactPermissionScope,
 } from "@/features/contacts/permissions"
+import {
+  hasWorkspacePermission,
+  PERMISSION_NAV,
+} from "@/lib/auth/permission-routes"
 import { requireContactsAccess } from "@/lib/auth/require-workspace-permission"
 import { getCurrentUserAndTargetWorkspace } from "@/lib/auth/utils"
+import { logger } from "@/lib/log"
+import {
+  conversationAccessCheckForCaller,
+  type MemberScopeContext,
+} from "@/lib/public-api/member-scope"
 
 type InboxPageProps = {
   params: Promise<{ workspaceId: string }>
@@ -57,10 +66,19 @@ export default async function InboxPage({
         }
       >
         <InboxContent
+          canOpenBroadcasts={hasWorkspacePermission(
+            targetWorkspaceMember.permissions,
+            PERMISSION_NAV.broadcasts,
+          )}
           canViewEmailAndPhone={contactPermissionScope.canViewEmailAndPhone}
           contactPermissionScope={contactPermissionScope}
           conversationId={conversationId}
           layout={savedLayout}
+          memberScope={{
+            workspace: { id: workspaceId },
+            member: targetWorkspaceMember,
+            user,
+          }}
           workspaceId={workspaceId}
         />
       </Suspense>
@@ -69,27 +87,45 @@ export default async function InboxPage({
 }
 
 async function InboxContent({
+  canOpenBroadcasts,
   canViewEmailAndPhone,
   contactPermissionScope,
   conversationId,
   layout,
+  memberScope,
   workspaceId,
 }: {
+  canOpenBroadcasts: boolean
   canViewEmailAndPhone: boolean
   contactPermissionScope: ContactPermissionScope
   conversationId?: string
   layout: [number, number, number]
+  memberScope: MemberScopeContext
   workspaceId: string
 }) {
+  // Hides seeded translations of conversations outside the member's scope. If
+  // the scope cannot be resolved, the seed carries no translation at all
+  // rather than failing the Inbox.
+  const canSeeConversation = await conversationAccessCheckForCaller(
+    memberScope,
+  ).catch((err: unknown) => {
+    logger.warn(
+      { err, workspaceId },
+      "Inbox: failed to resolve the member's conversation scope",
+    )
+    return async () => false
+  })
   const initialState = await getInboxInitialState({
     workspaceId,
     conversationId,
     contactPermissionScope,
+    canSeeConversation,
   })
 
   return (
     <ChatStoreProvider initialState={initialState ?? undefined}>
       <ChatLayout
+        canOpenBroadcasts={canOpenBroadcasts}
         canViewEmailAndPhone={canViewEmailAndPhone}
         layout={layout}
         workspaceId={workspaceId}

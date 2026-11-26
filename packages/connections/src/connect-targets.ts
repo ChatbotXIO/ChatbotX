@@ -10,7 +10,10 @@ import {
   notFoundException,
   toPublicErrorMessage,
 } from "@chatbotx.io/business/errors"
-import { isUniqueViolationError } from "@chatbotx.io/database/client"
+import {
+  isUniqueViolationError,
+  toLoggableDatabaseError,
+} from "@chatbotx.io/database/client"
 import type {
   ConnectSessionOutcome,
   IntegrationType,
@@ -160,6 +163,16 @@ const connectCandidate = async (input: {
     // row) and must report the same "duplicated" outcome instead of falling
     // through `toFailureOutcome` to a generic internal error.
     if (isUniqueViolationError(err)) {
+      // Never log `err` itself: a query error repeats the bound values, and the
+      // satellite insert binds the auth (access token, app secret).
+      logger.warn(
+        {
+          err: toLoggableDatabaseError(err),
+          provider: input.provider,
+          workspaceId: input.workspaceId,
+        },
+        "connectTargets: unique violation reported as already connected",
+      )
       throw connectionAlreadyConnectedException()
     }
     throw err

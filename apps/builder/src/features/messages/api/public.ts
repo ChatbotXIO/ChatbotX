@@ -27,6 +27,8 @@ import {
 } from "@/features/messages/schema/mutation"
 import { listMessagesResponse } from "@/features/messages/schema/query"
 import { messageResourceWithRelations } from "@/features/messages/schema/resource"
+import { withMessageTranslations } from "@/features/translation/lib/message-translations"
+import { sendOutgoing } from "@/features/translation/lib/send-outgoing"
 import { mcpSpec } from "@/lib/orpc/mcp-annotations"
 import {
   imagesNotSupportedOnChannel,
@@ -35,6 +37,7 @@ import {
   possibleErrorsOnFindingResource,
   possibleErrorsOnMutatingResource,
   possibleErrorsOnResendingMessage,
+  possibleErrorsOnTranslatedSend,
   productMessageUnresolvable,
 } from "@/lib/orpc/orpc-error-helper"
 import {
@@ -102,6 +105,7 @@ export const messagesPublicRouter = {
         text: input.text,
         inboxId: input.inboxId,
         requireRequestedInbox: true,
+        user: resolveSenderForCaller(context),
         messages: ENGLISH_CALL_PERMISSION_MESSAGES,
         sendFrom: "api",
       })
@@ -133,11 +137,14 @@ export const messagesPublicRouter = {
             field: "templateParams",
           })
         : request.templateData
+      const user = resolveSenderForCaller(context)
       await sendWhatsappTemplateToConversation({
         workspaceId: context.workspace.id,
         conversationId,
         request: { ...request, templateData },
-        sender: { initiatedBy: "api" },
+        sender: user
+          ? { initiatedBy: "user", adminId: user.id }
+          : { initiatedBy: "api" },
         sendFrom: "api",
       })
       return { queued: true as const }
@@ -151,7 +158,13 @@ export const messagesPublicRouter = {
       description:
         "Lists messages on the given conversation, newest-related pagination via `cursor`. Use `conversations.get` first if you only have a contact identifier.",
       tags: ["Messages"],
-      spec: mcpSpec({ visibility: "default" }),
+      spec: mcpSpec({
+        destructiveHint: false,
+        idempotentHint: true,
+        openWorldHint: false,
+        readOnlyHint: true,
+        visibility: "default",
+      }),
     })
     .input(listConversationMessagesPublicRequest)
     .output(listMessagesResponse)
@@ -166,12 +179,15 @@ export const messagesPublicRouter = {
       await conversationService.findByOrFail({
         where: { id: input.conversationId, workspaceId },
       })
-      return await listMessages({
-        workspaceId,
-        conversationId: input.conversationId,
-        perPage: input.perPage,
-        cursor: input.cursor,
-      })
+      return await listMessages(
+        {
+          workspaceId,
+          conversationId: input.conversationId,
+          perPage: input.perPage,
+          cursor: input.cursor,
+        },
+        { includeTranslation: true },
+      )
     }),
 
   get: workspaceTokenAuthAPI
@@ -199,7 +215,11 @@ export const messagesPublicRouter = {
       if (message.conversationId !== input.conversationId) {
         throw notFoundException("Message not found")
       }
-      return message
+      const [withTranslation] = await withMessageTranslations(
+        context.workspace.id,
+        [message],
+      )
+      return withTranslation
     }),
 
   getFlowResponse: workspaceTokenAuthAPI
@@ -245,6 +265,7 @@ export const messagesPublicRouter = {
       [PRODUCT_MESSAGE_UNRESOLVABLE_CODE]: productMessageUnresolvable,
       [IMAGES_NOT_SUPPORTED_ON_CHANNEL_CODE]: imagesNotSupportedOnChannel,
       EMAIL_REPLY_PARENT_NOT_FOUND: emailReplyParentNotFound,
+      ...possibleErrorsOnTranslatedSend,
     })
     .handler(async ({ context, input }) => {
       const workspaceId = context.workspace.id
@@ -271,7 +292,8 @@ export const messagesPublicRouter = {
       // workspace token has no user and sends unattributed, as before.
       const user = resolveSenderForCaller(context)
 
-      return messageService.createOutgoing({
+      return sendOutgoing({
+        workspaceId,
         conversation,
         contactInbox,
         input,

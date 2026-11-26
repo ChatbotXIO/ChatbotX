@@ -3,7 +3,6 @@ import {
   DrizzleQueryError,
   getTableColumns,
   type InferSelectModel,
-  relationsFilterToSQL,
   type SQLWrapper,
   sql,
 } from "drizzle-orm"
@@ -14,9 +13,7 @@ import { ModelNotfoundException } from "./errors"
 import { keys } from "./keys"
 import { logger } from "./logger"
 import { relations } from "./relations"
-
-// biome-ignore lint/performance/noNamespaceImport: drizzle schema
-import * as schema from "./schema"
+import { relationsFilterToSQL } from "./relations-filter"
 
 const env = keys()
 
@@ -33,7 +30,6 @@ pool.on("error", (error) => {
 
 export const db = drizzle({
   client: pool,
-  schema,
   relations,
   // parseEnvBool: with SKIP_ENV_CHECK=true (build scripts) this is the raw
   // string "true", which drizzle would treat as a Logger object and crash on.
@@ -41,13 +37,14 @@ export const db = drizzle({
 })
 
 export * from "drizzle-orm"
+export { relationsFilterToSQL } from "./relations-filter"
 
 type RelationsFilterArg = Parameters<typeof relationsFilterToSQL>[1]
-type RelationsFilterInternals = Parameters<typeof relationsFilterToSQL>[3]
-type RelationsFilterCasing = Parameters<typeof relationsFilterToSQL>[4]
+type RelationsFilterInternals = NonNullable<
+  Parameters<typeof relationsFilterToSQL>[3]
+>
 type DrizzleRelationInternalsClient = {
   _?: { relations: RelationsFilterInternals }
-  dialect?: { casing: RelationsFilterCasing }
 }
 export type Transaction = Parameters<
   Parameters<(typeof db)["transaction"]>[0]
@@ -160,7 +157,6 @@ const resolveRelationsFilter = <TTable extends PgTable>(props: {
     where as RelationsFilterArg,
     tableRelations,
     relationInternals,
-    internalClient.dialect?.casing ?? rootClient.dialect.casing,
   )
 }
 
@@ -240,15 +236,16 @@ export const throwIfExists = async <TTable extends PgTable>(props: {
 
 /**
  * A database error safe to log or record: its message and parameters carry the
- * bound values (tokens, payload data), so only the driver-level code is kept.
- * Any other error is returned unchanged.
+ * bound values (tokens, payload data), so only the driver-level code and the
+ * violated constraint's name are kept. Any other error is returned unchanged.
  */
 export const toLoggableDatabaseError = (error: unknown): unknown => {
   if (!(error instanceof DrizzleQueryError)) {
     return error
   }
-  const code = (error.cause as { code?: unknown } | undefined)?.code
-  return new Error(`Database error${code ? ` (${String(code)})` : ""}`)
+  const { code, constraint } = describeDatabaseError(error)
+  const details = [code, constraint].filter(Boolean).join(" ")
+  return new Error(`Database error${details ? ` (${details})` : ""}`)
 }
 
 export const isDatabaseError = (

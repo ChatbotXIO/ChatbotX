@@ -1,0 +1,484 @@
+{
+  "type": "diff",
+  "version": "10",
+  "dialect": "postgres",
+  "id": "25451959-a916-406e-9bca-bb67da1b502d",
+  "prevIds": [
+    "c039c097-1efd-4a35-8f6f-9f88e282d7cd"
+  ],
+  "footprints": [
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "ChannelPost",
+        "ChannelPost_workspaceId_commentsCount_id_idx"
+      ],
+      "writes": [
+        "s|idx|public.ChannelPost_workspaceId_commentsCount_id_idx",
+        "n|idx|public.ChannelPost_workspaceId_commentsCount_id_idx",
+        "e|idx|public.ChannelPost_workspaceId_commentsCount_id_idx",
+        "n|rel|public.ChannelPost_workspaceId_commentsCount_id_idx"
+      ],
+      "reads": [
+        "n|tbl|public.ChannelPost",
+        "n|sch|public",
+        "n|col|public.ChannelPost.workspaceId",
+        "n|col|public.ChannelPost.commentsCount",
+        "n|col|public.ChannelPost.id"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "ChannelPost",
+        "ChannelPost_workspaceId_phoneCommentsCount_id_idx"
+      ],
+      "writes": [
+        "s|idx|public.ChannelPost_workspaceId_phoneCommentsCount_id_idx",
+        "n|idx|public.ChannelPost_workspaceId_phoneCommentsCount_id_idx",
+        "e|idx|public.ChannelPost_workspaceId_phoneCommentsCount_id_idx",
+        "n|rel|public.ChannelPost_workspaceId_phoneCommentsCount_id_idx"
+      ],
+      "reads": [
+        "n|tbl|public.ChannelPost",
+        "n|sch|public",
+        "n|col|public.ChannelPost.workspaceId",
+        "n|col|public.ChannelPost.phoneCommentsCount",
+        "n|col|public.ChannelPost.id"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "ChannelPost",
+        "ChannelPost_workspaceId_engagementCount_id_idx"
+      ],
+      "writes": [
+        "s|idx|public.ChannelPost_workspaceId_engagementCount_id_idx",
+        "n|idx|public.ChannelPost_workspaceId_engagementCount_id_idx",
+        "e|idx|public.ChannelPost_workspaceId_engagementCount_id_idx",
+        "n|rel|public.ChannelPost_workspaceId_engagementCount_id_idx"
+      ],
+      "reads": [
+        "n|tbl|public.ChannelPost",
+        "n|sch|public",
+        "n|col|public.ChannelPost.workspaceId",
+        "n|col|public.ChannelPost.engagementCount",
+        "n|col|public.ChannelPost.id"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "ChannelPost",
+        "ChannelPost_workspaceId_sharesCount_id_idx"
+      ],
+      "writes": [
+        "s|idx|public.ChannelPost_workspaceId_sharesCount_id_idx",
+        "n|idx|public.ChannelPost_workspaceId_sharesCount_id_idx",
+        "e|idx|public.ChannelPost_workspaceId_sharesCount_id_idx",
+        "n|rel|public.ChannelPost_workspaceId_sharesCount_id_idx"
+      ],
+      "reads": [
+        "n|tbl|public.ChannelPost",
+        "n|sch|public",
+        "n|col|public.ChannelPost.workspaceId",
+        "n|col|public.ChannelPost.sharesCount",
+        "n|col|public.ChannelPost.id"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "ChannelPost",
+        "ChannelPost_workspaceId_authorExternalId_idx"
+      ],
+      "writes": [
+        "s|idx|public.ChannelPost_workspaceId_authorExternalId_idx",
+        "n|idx|public.ChannelPost_workspaceId_authorExternalId_idx",
+        "e|idx|public.ChannelPost_workspaceId_authorExternalId_idx",
+        "n|rel|public.ChannelPost_workspaceId_authorExternalId_idx"
+      ],
+      "reads": [
+        "n|tbl|public.ChannelPost",
+        "n|sch|public",
+        "n|col|public.ChannelPost.workspaceId",
+        "n|col|public.ChannelPost.authorExternalId"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "ChannelPost",
+        "ChannelPost_workspaceId_liveStatus_sortAt_id_idx"
+      ],
+      "writes": [
+        "s|idx|public.ChannelPost_workspaceId_liveStatus_sortAt_id_idx",
+        "n|idx|public.ChannelPost_workspaceId_liveStatus_sortAt_id_idx",
+        "e|idx|public.ChannelPost_workspaceId_liveStatus_sortAt_id_idx",
+        "n|rel|public.ChannelPost_workspaceId_liveStatus_sortAt_id_idx"
+      ],
+      "reads": [
+        "n|tbl|public.ChannelPost",
+        "n|sch|public",
+        "n|col|public.ChannelPost.workspaceId",
+        "n|col|public.ChannelPost.liveStatus",
+        "n|col|public.ChannelPost.id"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "ChannelPost",
+        "ChannelPost_liveRecheckAt_id_idx"
+      ],
+      "writes": [
+        "s|idx|public.ChannelPost_liveRecheckAt_id_idx",
+        "n|idx|public.ChannelPost_liveRecheckAt_id_idx",
+        "e|idx|public.ChannelPost_liveRecheckAt_id_idx",
+        "n|rel|public.ChannelPost_liveRecheckAt_id_idx"
+      ],
+      "reads": [
+        "n|tbl|public.ChannelPost",
+        "n|sch|public",
+        "n|col|public.ChannelPost.liveRecheckAt",
+        "n|col|public.ChannelPost.id"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "Conversation",
+        "Conversation_workspaceId_sourceId_lastActivityAt_id_idx"
+      ],
+      "writes": [
+        "s|idx|public.Conversation_workspaceId_sourceId_lastActivityAt_id_idx",
+        "n|idx|public.Conversation_workspaceId_sourceId_lastActivityAt_id_idx",
+        "e|idx|public.Conversation_workspaceId_sourceId_lastActivityAt_id_idx",
+        "n|rel|public.Conversation_workspaceId_sourceId_lastActivityAt_id_idx"
+      ],
+      "reads": [
+        "n|tbl|public.Conversation",
+        "n|sch|public",
+        "n|col|public.Conversation.workspaceId",
+        "n|col|public.Conversation.sourceId",
+        "n|col|public.Conversation.lastActivityAt",
+        "n|col|public.Conversation.id"
+      ]
+    }
+  ],
+  "deltas": [
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "ChannelPost",
+        "name": "ChannelPost_workspaceId_commentsCount_id_idx",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "workspaceId",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          },
+          {
+            "value": "commentsCount",
+            "isExpression": false,
+            "asc": false,
+            "nullsFirst": false,
+            "opclass": null
+          },
+          {
+            "value": "id",
+            "isExpression": false,
+            "asc": false,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": false,
+        "where": null,
+        "with": "",
+        "method": "btree",
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "ChannelPost",
+        "name": "ChannelPost_workspaceId_phoneCommentsCount_id_idx",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "workspaceId",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          },
+          {
+            "value": "phoneCommentsCount",
+            "isExpression": false,
+            "asc": false,
+            "nullsFirst": false,
+            "opclass": null
+          },
+          {
+            "value": "id",
+            "isExpression": false,
+            "asc": false,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": false,
+        "where": null,
+        "with": "",
+        "method": "btree",
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "ChannelPost",
+        "name": "ChannelPost_workspaceId_engagementCount_id_idx",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "workspaceId",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          },
+          {
+            "value": "engagementCount",
+            "isExpression": false,
+            "asc": false,
+            "nullsFirst": false,
+            "opclass": null
+          },
+          {
+            "value": "id",
+            "isExpression": false,
+            "asc": false,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": false,
+        "where": null,
+        "with": "",
+        "method": "btree",
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "ChannelPost",
+        "name": "ChannelPost_workspaceId_sharesCount_id_idx",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "workspaceId",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          },
+          {
+            "value": "sharesCount",
+            "isExpression": false,
+            "asc": false,
+            "nullsFirst": false,
+            "opclass": null
+          },
+          {
+            "value": "id",
+            "isExpression": false,
+            "asc": false,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": false,
+        "where": null,
+        "with": "",
+        "method": "btree",
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "ChannelPost",
+        "name": "ChannelPost_workspaceId_authorExternalId_idx",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "workspaceId",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          },
+          {
+            "value": "authorExternalId",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": false,
+        "where": "\"authorExternalId\" IS NOT NULL",
+        "with": "",
+        "method": "btree",
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "ChannelPost",
+        "name": "ChannelPost_workspaceId_liveStatus_sortAt_id_idx",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "workspaceId",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          },
+          {
+            "value": "liveStatus",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          },
+          {
+            "value": "COALESCE(\"publishedAt\", \"createdAt\") DESC",
+            "isExpression": true,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          },
+          {
+            "value": "id",
+            "isExpression": false,
+            "asc": false,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": false,
+        "where": "\"liveStatus\" IS NOT NULL",
+        "with": "",
+        "method": "btree",
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "ChannelPost",
+        "name": "ChannelPost_liveRecheckAt_id_idx",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "liveRecheckAt",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          },
+          {
+            "value": "id",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": false,
+        "where": "\"liveStatus\" = 'live' AND \"liveRecheckAt\" IS NOT NULL",
+        "with": "",
+        "method": "btree",
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "Conversation",
+        "name": "Conversation_workspaceId_sourceId_lastActivityAt_id_idx",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "workspaceId",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          },
+          {
+            "value": "sourceId",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          },
+          {
+            "value": "lastActivityAt",
+            "isExpression": false,
+            "asc": false,
+            "nullsFirst": false,
+            "opclass": null
+          },
+          {
+            "value": "id",
+            "isExpression": false,
+            "asc": false,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": false,
+        "where": "\"sourceId\" IS NOT NULL",
+        "with": "",
+        "method": "btree",
+        "entityType": "indexes"
+      }
+    }
+  ]
+}

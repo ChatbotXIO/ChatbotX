@@ -6,17 +6,21 @@ import { useWorkspaceId } from "@/hooks/routing"
 import { orpc } from "@/lib/orpc/query"
 import { maxPerPage } from "@/lib/shared-request"
 
+/** Shared by the hook and by code that needs a fresh list (realtime). */
+export const workspaceMembersQueryOptions = (workspaceId: string) =>
+  orpc.workspaceMembersAPI.listWorkspaceMembersAuthenticatedAPI.queryOptions({
+    input: { workspaceId, perPage: maxPerPage },
+  })
+
 export const useWorkspaceMembers = (
   workspaceId: string | undefined,
   options?: { enabled?: boolean },
 ) =>
-  useQuery(
-    orpc.workspaceMembersAPI.listWorkspaceMembersAuthenticatedAPI.queryOptions({
-      input: { workspaceId: workspaceId ?? "", perPage: maxPerPage },
-      enabled: Boolean(workspaceId) && (options?.enabled ?? true),
-      select: (res) => res.data,
-    }),
-  )
+  useQuery({
+    ...workspaceMembersQueryOptions(workspaceId ?? ""),
+    enabled: Boolean(workspaceId) && (options?.enabled ?? true),
+    select: (res) => res.data,
+  })
 
 export const useInboxTeams = (
   workspaceId: string | undefined,

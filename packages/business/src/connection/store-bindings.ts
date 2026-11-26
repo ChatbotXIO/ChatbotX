@@ -269,7 +269,7 @@ export const makeChannelBinding = <TTable extends ChannelSatelliteTable>(opts: {
       // generic factory cannot express the exact per-table insert type.
       const [row] = await tx
         .insert(table)
-        .values(values as InferInsertModel<TTable>)
+        .values(values as never)
         .returning({ id: table.id })
       return { id: row.id as string }
     },
@@ -439,7 +439,7 @@ export const makeWorkspaceIntegrationBinding = <
         // Same per-table shape gap as `makeChannelBinding.insertRow` above.
         const [row] = await client
           .insert(table)
-          .values(values as InferInsertModel<TTable>)
+          .values(values as never)
           .returning({ id: table.id })
         return { id: row.id as string, integrationId: parent.id as string }
       }

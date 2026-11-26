@@ -1,4 +1,10 @@
 import {
+  type DatabaseClient,
+  db,
+  isUniqueViolationError,
+  sql,
+} from "@chatbotx.io/database/client"
+import {
   INBOUND_WEBHOOK_LIMITS,
   type InboundWebhookAction,
   type InboundWebhookFieldMapping,
@@ -41,6 +47,13 @@ import { sha256Hex } from "@chatbotx.io/utils/crypto"
 import { BaseService } from "../base.service"
 import { customFieldService } from "../custom-field/service"
 import { notFoundException, validationException } from "../errors"
+import {
+  assertResourceEditable,
+  changedKeysOf,
+  withDeleteGuard,
+} from "../template/installed-resource.service"
+import { withTemplateLockedTransaction } from "../template/template-resource-locks"
+import { referencedParentsOf } from "../template/uninstall-references"
 import { generateInboundWebhookToken } from "../workspace-api-token/credentials"
 import { actionReferencesExistInWorkspace } from "./action-references"
 import {
@@ -57,8 +70,9 @@ import {
   loadExtractionContext,
 } from "./extraction-context"
 
-const CREATE_LOCK_TIMEOUT_SECONDS = 10
 const CONFIG_LOCK_TIMEOUT_SECONDS = 10
+/** Token collisions are astronomically unlikely; a few retries keep an install from failing on one. */
+const TOKEN_INSERT_ATTEMPTS = 3
 // Short on purpose: the route reads this on every delivery, and a deactivated,
 // deleted or regenerated token must stop working quickly even when a delivery
 // in flight re-caches the old row just after invalidation (cache-aside has no
@@ -99,34 +113,82 @@ class InboundWebhookService extends BaseService {
     name: string
   }): Promise<InboundWebhookModel> {
     const { workspaceId, name } = input
-    const created = await distributedLock.runExclusive({
-      key: `inbound-webhook:${workspaceId}`,
-      timeoutInSeconds: CREATE_LOCK_TIMEOUT_SECONDS,
-      retryTimeoutInSeconds: CREATE_LOCK_TIMEOUT_SECONDS,
-      fn: async () => {
-        const count = await countInboundWebhooks(workspaceId)
-        if (count >= INBOUND_WEBHOOK_LIMITS.maxWebhooksPerWorkspace) {
-          throw validationException("_", "validation.maxItemsReached", {
-            max: INBOUND_WEBHOOK_LIMITS.maxWebhooksPerWorkspace,
-            feature: "inboundWebhooks",
-          })
-        }
-        // Explicit values for every jsonb column: a drizzle `.default()` is not
-        // a database default (AGENTS.md).
-        return await insertInboundWebhook({
-          workspaceId,
-          name,
-          token: generateInboundWebhookToken(),
-          inboxResolution: null,
-          identifiers: [],
-          fieldMappings: [],
-          actions: [],
-          sampleJson: null,
-        })
-      },
-    })
+    const created = await db.transaction((tx) =>
+      this.insertInTx(tx, { workspaceId, name }),
+    )
+    if (!created) {
+      throw this.limitReachedException()
+    }
     await this.audit("create", `created a new inbound webhook (#${created.id})`)
     return created
+  }
+
+  private limitReachedException() {
+    return validationException("_", "validation.maxItemsReached", {
+      max: INBOUND_WEBHOOK_LIMITS.maxWebhooksPerWorkspace,
+      feature: "inboundWebhooks",
+    })
+  }
+
+  /**
+   * The write of `create`, shared with the template install: a per-workspace
+   * transaction lock makes the count and the insert one step (the cap is held
+   * across processes and inside an install transaction, which a Redis lock
+   * cannot do). `null` when the workspace is at its cap, for the caller to
+   * report: an install skips the webhook with a warning, `create` throws.
+   * The webhook is always inactive and gets a fresh token (a collision on the
+   * unique index retries in a savepoint, a few times).
+   */
+  async insertInTx(
+    tx: DatabaseClient,
+    input: {
+      workspaceId: string
+      name: string
+      config?: Partial<
+        Pick<
+          InboundWebhookConfigInput,
+          "inboxResolution" | "identifiers" | "fieldMappings" | "actions"
+        >
+      >
+    },
+  ): Promise<InboundWebhookModel | null> {
+    const { workspaceId, name, config } = input
+    await tx.execute(
+      sql`select pg_advisory_xact_lock(hashtextextended(${`inbound-webhook-cap:${workspaceId}`}, 0))`,
+    )
+    const count = await countInboundWebhooks(workspaceId, tx)
+    if (count >= INBOUND_WEBHOOK_LIMITS.maxWebhooksPerWorkspace) {
+      return null
+    }
+    for (let attempt = 1; ; attempt++) {
+      try {
+        // Explicit values for every jsonb column: a drizzle `.default()` is not
+        // a database default (AGENTS.md).
+        return await tx.transaction((savepoint) =>
+          insertInboundWebhook(
+            {
+              workspaceId,
+              name,
+              active: false,
+              token: generateInboundWebhookToken(),
+              inboxResolution: config?.inboxResolution ?? null,
+              identifiers: config?.identifiers ?? [],
+              fieldMappings: config?.fieldMappings ?? [],
+              actions: config?.actions ?? [],
+              sampleJson: null,
+            },
+            savepoint,
+          ),
+        )
+      } catch (error) {
+        if (
+          attempt >= TOKEN_INSERT_ATTEMPTS ||
+          !isUniqueViolationError(error, "InboundWebhook_token_key")
+        ) {
+          throw error
+        }
+      }
+    }
   }
 
   async list(input: {
@@ -142,11 +204,14 @@ class InboundWebhookService extends BaseService {
     return { data: rows, pageCount: Math.ceil(total / input.perPage) }
   }
 
-  async findOrFail(input: {
-    workspaceId: string
-    id: string
-  }): Promise<InboundWebhookModel> {
-    const webhook = await findInboundWebhookById(input)
+  async findOrFail(
+    input: {
+      workspaceId: string
+      id: string
+    },
+    tx: DatabaseClient = db,
+  ): Promise<InboundWebhookModel> {
+    const webhook = await findInboundWebhookById(input, tx)
     if (!webhook) {
       throw notFoundException("Inbound webhook not found")
     }
@@ -205,20 +270,41 @@ class InboundWebhookService extends BaseService {
     })
   }
 
+  /**
+   * The row is read and the View-only guard decided under the copy's
+   * `tpl-res:` lock (taken together with the flows the new actions start), so
+   * the diff that decides it cannot be overtaken by a sync or an uninstall.
+   * What the guard compares is the stored row against the submitted config:
+   * only a change to shipped content (`TEMPLATE_LOCKED_CONTENT_KEYS`) is
+   * refused on a View-only copy.
+   */
   private async applyUpdate(
     input: { workspaceId: string; id: string } & InboundWebhookConfigInput,
   ): Promise<InboundWebhookModel> {
     const { workspaceId, id, ...config } = input
-    await this.findOrFail({ workspaceId, id })
-
-    await this.assertConfigValid({ workspaceId, ...config })
-    await this.assertReferencesExist({ workspaceId, ...config })
-
-    const updated = await updateInboundWebhook({
-      id,
-      workspaceId,
-      set: config,
-    })
+    const updated = await withTemplateLockedTransaction(
+      async (tx) => {
+        const existing = await this.findOrFail({ workspaceId, id }, tx)
+        await assertResourceEditable({
+          workspaceId,
+          resourceKind: "inboundWebhook",
+          resourceIds: [id],
+          changedKeys: changedKeysOf(existing, config),
+          referencedParents: referencedParentsOf(config.actions),
+          tx,
+        })
+        await this.assertConfigValid({ workspaceId, ...config })
+        await this.assertReferencesExist({ workspaceId, ...config })
+        return await updateInboundWebhook({ id, workspaceId, set: config }, tx)
+      },
+      {
+        workspaceId,
+        initialKeys: [
+          { kind: "inboundWebhook", resourceId: id },
+          ...referencedParentsOf(config.actions),
+        ],
+      },
+    )
     if (!updated) {
       throw notFoundException("Inbound webhook not found")
     }
@@ -234,51 +320,90 @@ class InboundWebhookService extends BaseService {
     active?: boolean
   }): Promise<InboundWebhookModel> {
     const { workspaceId, id, name, active } = input
-    const existing = await this.findOrFail({ workspaceId, id })
-    if (name === undefined && active === undefined) {
-      return existing
-    }
-    if (active === true && !existing.active) {
-      await this.assertConfigValid({
-        workspaceId,
-        inboxResolution: existing.inboxResolution,
-        identifiers: existing.identifiers,
-        fieldMappings: existing.fieldMappings,
-      })
-    }
-    const updated = await updateInboundWebhook({
-      id,
-      workspaceId,
-      set: {
-        ...(name === undefined ? {} : { name }),
-        ...(active === undefined ? {} : { active }),
+    const result = await withTemplateLockedTransaction(
+      async (tx) => {
+        const existing = await this.findOrFail({ workspaceId, id }, tx)
+        if (name === undefined && active === undefined) {
+          return { existing, updated: null }
+        }
+        await assertResourceEditable({
+          workspaceId,
+          resourceKind: "inboundWebhook",
+          resourceIds: [id],
+          changedKeys: changedKeysOf(existing, { name, active }),
+          tx,
+        })
+        if (active === true && !existing.active) {
+          await this.assertConfigValid({
+            workspaceId,
+            inboxResolution: existing.inboxResolution,
+            identifiers: existing.identifiers,
+            fieldMappings: existing.fieldMappings,
+          })
+        }
+        const updated = await updateInboundWebhook(
+          {
+            id,
+            workspaceId,
+            set: {
+              ...(name === undefined ? {} : { name }),
+              ...(active === undefined ? {} : { active }),
+            },
+          },
+          tx,
+        )
+        return { existing, updated }
       },
-    })
-    if (!updated) {
-      throw notFoundException("Inbound webhook not found")
+      {
+        workspaceId,
+        initialKeys: [{ kind: "inboundWebhook", resourceId: id }],
+      },
+    )
+    if (!result.updated) {
+      return result.existing
     }
     await this.invalidate([id])
     await this.audit("update", `updated inbound webhook (#${id}) settings`)
-    return updated
+    return result.updated
   }
 
-  /** The old URL stops working within 10 seconds (the token cache TTL): the token is the only credential. */
+  /**
+   * The old URL stops working within 10 seconds (the token cache TTL): the
+   * token is the only credential. Rotating it is the installer's own action
+   * (the token is not shipped content), so a View-only copy allows it; an
+   * uninstall in progress does not.
+   */
   async regenerateToken(input: {
     workspaceId: string
     id: string
   }): Promise<InboundWebhookModel> {
-    const updated = await updateInboundWebhook({
-      id: input.id,
-      workspaceId: input.workspaceId,
-      set: { token: generateInboundWebhookToken() },
-    })
+    const { workspaceId, id } = input
+    const updated = await withTemplateLockedTransaction(
+      async (tx) => {
+        await assertResourceEditable({
+          workspaceId,
+          resourceKind: "inboundWebhook",
+          resourceIds: [id],
+          changedKeys: ["token"],
+          tx,
+        })
+        return await updateInboundWebhook(
+          { id, workspaceId, set: { token: generateInboundWebhookToken() } },
+          tx,
+        )
+      },
+      {
+        workspaceId,
+        initialKeys: [{ kind: "inboundWebhook", resourceId: id }],
+      },
+    )
     if (!updated) {
       throw notFoundException("Inbound webhook not found")
     }
-    await this.invalidate([input.id])
+    await this.invalidate([id])
     await this.audit(
       "update",
-      `regenerated the token of inbound webhook (#${input.id})`,
+      `regenerated the token of inbound webhook (#${id})`,
     )
     return updated
   }
@@ -287,19 +412,19 @@ class InboundWebhookService extends BaseService {
     workspaceId: string
     ids: string[]
   }): Promise<void> {
-    const deleted = await deleteInboundWebhooks(input)
+    const deleted = await this.guardedDelete(input)
     if (deleted.length === 0) {
       return
     }
-    await this.invalidate(deleted.map(({ id }) => id))
+    await this.invalidate(deleted)
     await this.audit(
       "delete",
-      `deleted inbound webhooks (${deleted.map(({ id }) => `#${id}`).join(", ")})`,
+      `deleted inbound webhooks (${deleted.map((id) => `#${id}`).join(", ")})`,
     )
   }
 
   async delete(input: { workspaceId: string; id: string }): Promise<void> {
-    const [deleted] = await deleteInboundWebhooks({
+    const [deleted] = await this.guardedDelete({
       workspaceId: input.workspaceId,
       ids: [input.id],
     })
@@ -308,6 +433,33 @@ class InboundWebhookService extends BaseService {
     }
     await this.invalidate([input.id])
     await this.audit("delete", `deleted inbound webhook (#${input.id})`)
+  }
+
+  private guardedDelete(input: {
+    workspaceId: string
+    ids: string[]
+  }): Promise<string[]> {
+    return withDeleteGuard(
+      {
+        workspaceId: input.workspaceId,
+        targets: [{ resourceKind: "inboundWebhook", resourceIds: input.ids }],
+      },
+      (tx) => this.deleteInTx(tx, input),
+    )
+  }
+
+  /**
+   * The delete core (row write only; requests go with it by cascade), shared
+   * with the template uninstall so there is one implementation. Returns the
+   * ids actually deleted. The caller drops the token cache (`invalidate`) once
+   * the transaction has committed.
+   */
+  async deleteInTx(
+    tx: DatabaseClient,
+    input: { workspaceId: string; ids: string[] },
+  ): Promise<string[]> {
+    const deleted = await deleteInboundWebhooks(input, tx)
+    return deleted.map(({ id }) => id)
   }
 
   /** Shows what a delivery of `payload` would do with this configuration; writes nothing. */
@@ -513,6 +665,11 @@ class InboundWebhookService extends BaseService {
 
   private invalidate(ids: string[]) {
     return this.invalidateCacheTags(ids.map(webhookTag))
+  }
+
+  /** Drops the cached intake of webhooks removed by a transaction that has committed (the uninstall's post-commit effect). */
+  invalidateCache(ids: string[]): Promise<void> {
+    return this.invalidate(ids)
   }
 }
 

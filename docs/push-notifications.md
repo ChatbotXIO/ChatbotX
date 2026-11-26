@@ -67,3 +67,24 @@ in the string table.
 When disabled, `getExpoClient()` (`apps/worker/src/notification/lib/expo.ts`)
 returns `null` and `sendPushForNotificationJob` returns early — the job still
 completes successfully, it just sends nothing.
+
+## Composed posts (`postFailed`, `postNeedsReview`)
+
+Two member notification types, toggled in the member settings next to "New
+order": `notificationTypes.postFailed` and `notificationTypes.postNeedsReview`.
+`announceSettledTarget` (`packages/business/src/social-post/notify.ts`) enqueues
+`notifyPostFailed` / `notifyPostNeedsReview` after a target's `failed` /
+`needsReview` result is stored; the job id is `social-post-<action>-<targetId>-<attempt>`.
+`notifyPostTarget` (`apps/worker/src/notification/handlers/notify-post-target.ts`)
+sends to members with the type on and the Posts (`broadcast`) permission, with a
+localized title (`strings.ts`) and the destination name and error as the body.
+Rows stored before these keys have none, which counts as off. See `docs/posts.md`.
+
+## Publishing connections (`publishConnection`)
+
+A third post-related member notification type. `announcePublishConnectionAttention`
+(`packages/business/src/publish-destination/notify-attention.ts`) enqueues
+`notifyPublishConnection` when a destination's token is rejected, a TikTok login
+needs reauth, a publishing permission is missing, or the destination is paused
+by the circuit breaker; `notifyPublishConnection` sends to members with the type
+on and the Posts (`broadcast`) permission. See `docs/posts.md`.

@@ -2,6 +2,7 @@
 import { z } from "zod"
 import { bytesToHex, concatBytes, hexToBytes } from "./binary"
 import { env } from "./keys"
+import { MalformedEncryptedDataError } from "./malformed"
 
 const CURRENT_VERSION = 1
 const IV_LENGTH_BYTES = 12
@@ -76,7 +77,7 @@ const getKey = (kid?: string): Promise<CryptoKey> =>
 
 const assertCurrentVersion = (v: number): void => {
   if (v !== CURRENT_VERSION) {
-    throw new Error(
+    throw new MalformedEncryptedDataError(
       `Unsupported encryption version: ${v}. Expected ${CURRENT_VERSION}.`,
     )
   }

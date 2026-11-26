@@ -163,6 +163,94 @@
   "errors": {
     "superAdminRequired": "Du skal være super admin for arbejdsområdet for at gøre dette."
   },
+  "inboxTranslation": {
+    "settings": {
+      "title": "Oversættelse af samtaler",
+      "description": "Oversæt kundernes beskeder til dit team, og dine svar til dine kunder, direkte i indbakken.",
+      "saved": "Oversættelsesindstillinger gemt",
+      "readOnly": "Kun arbejdsområdets administratorer kan ændre disse indstillinger.",
+      "languageHint": "Også det sprog, kundernes beskeder oversættes til, når oversættelse af samtaler er slået til.",
+      "alert": {
+        "needsReconfiguration": "Ny konfiguration nødvendig: AI-integrationen er fjernet eller slået fra.",
+        "noIntegration": "Tilslut først en AI-integration for at bruge oversættelse.",
+        "connect": "Tilslut AI"
+      },
+      "enabled": {
+        "label": "Oversæt samtaler",
+        "description": "Kundebeskeder oversættes kun, når nogen åbner samtalen. Chatteksten sendes til den AI-udbyder, du vælger, og faktureres på din AI-nøgle."
+      },
+      "integration": {
+        "label": "AI-integration",
+        "description": "Kun tilsluttede AI-udbydere vises."
+      },
+      "test": {
+        "label": "Test forbindelsen",
+        "button": "Test",
+        "result": "Færdig på {seconds} s: „{sample}“ → „{translated}“",
+        "slow": "Denne model er langsom: udgående beskeder bliver måske ikke oversat i tide og sendes så ikke.",
+        "failed": "Testen mislykkedes."
+      }
+    },
+    "message": {
+      "translating": "Oversætter…",
+      "stillWaiting": "Venter stadig på oversættelsen",
+      "requestAgain": "Anmod igen",
+      "failed": "Kunne ikke oversætte",
+      "translatedFrom": "Oversat fra {language}. Vis original",
+      "translatedFromNoLanguage": "Oversat. Vis original",
+      "sentIn": "Sendt på {language}. Vis det sendte",
+      "sentInNoLanguage": "Sendt oversat. Vis det sendte",
+      "hideOriginal": "Skjul original",
+      "hideSent": "Skjul det sendte",
+      "translatedLabelNoLanguage": "Oversat",
+      "sentLabelNoLanguage": "Sendt oversat"
+    },
+    "badge": {
+      "tooltip": "Kundens sprog: {language}"
+    },
+    "panel": {
+      "title": "Oversættelsesindstillinger",
+      "statusOn": "Til",
+      "statusOff": "Fra",
+      "translateConversation": "Oversæt denne samtale",
+      "translateConversationHint": "Oversæt beskeder automatisk",
+      "botActiveHint": "Botten håndterer samtalen, så oversættelse er slået fra. Slå den til for at oversætte samtalen.",
+      "botPausedHint": "Du har overtaget denne samtale fra botten, så oversættelse forbliver slået fra. Slå den til for at oversætte den.",
+      "displayOptions": "Visningsindstillinger",
+      "showOriginals": "Vis original tekst",
+      "previewBeforeSending": "Forhåndsvis oversættelsen før afsendelse"
+    },
+    "composer": {
+      "hintUnknown": "Sprog ikke registreret · Sendes som skrevet",
+      "hintDetecting": "Registrerer kundens sprog…",
+      "chip": {
+        "aria": "Oversættelsessprog",
+        "target": "→ {language}",
+        "sameLanguage": "Samme sprog som arbejdsområdet",
+        "unknown": "Sproget er ukendt",
+        "hasFiles": "Beskeder med filer oversættes ikke",
+        "off": "Oversættelse fra"
+      },
+      "popover": {
+        "customerLanguage": "Kundens sprog",
+        "chooseLanguage": "Vælg et sprog"
+      },
+      "preview": {
+        "title": "Kundeforhåndsvisning · {language}",
+        "translating": "Oversætter…",
+        "needsRetranslate": "Skal oversættes igen",
+        "retranslate": "Oversæt igen",
+        "failed": "Kunne ikke oversætte – det prøves igen, når du sender",
+        "done": "Færdig",
+        "ready": "Klar til afsendelse"
+      }
+    },
+    "send": {
+      "translating": "Oversætter…",
+      "failed": "Oversættelsen mislykkedes",
+      "turnedOff": "Oversættelse er ikke tilgængelig. Oversættelse er slået fra for denne samtale."
+    }
+  },
   "states": {
     "success": "Succes",
     "error": "Fejl",
@@ -651,7 +739,8 @@
       "template": "Skabelon",
       "integration": "Integration",
       "schedule": "Gentagelsesplan",
-      "runOf": "Kørsel af <link>{name}</link>"
+      "runOf": "Kørsel af <link>{name}</link>",
+      "linkNotFound": "Denne udsendelse findes ikke længere."
     },
     "filters": {
       "all": "All"
@@ -1307,7 +1396,10 @@
       "label": "Notification Type",
       "notifyAdmin": "Notify Admin",
       "newMessageToHuman": "Ny Besked til Human",
-      "newOrder": "Ny Ordre"
+      "newOrder": "Ny Ordre",
+      "postFailed": "Opslag mislykkedes",
+      "postNeedsReview": "Opslag kræver gennemgang",
+      "publishConnection": "Udgivelsesforbindelse kræver opmærksomhed"
     },
     "notificationChannel": {
       "label": "Notification Kanal",
@@ -2748,7 +2840,8 @@
       "pipelines": "Pipelines",
       "places": "Steder",
       "templates": "Skabeloner",
-      "polls": "Polls"
+      "polls": "Polls",
+      "posts": "Opslag"
     },
     "adReferral": {
       "label": "Ads",
@@ -2881,6 +2974,9 @@
         "skip": "Ikke fundet",
         "error": "Mislykkedes"
       }
+    },
+    "tiktokPublishing": {
+      "label": "TikTok-udgivelse"
     }
   },
   "flows": {
@@ -5057,7 +5153,8 @@
     "invalidApiKey": "Ugyldig API-nøgle",
     "maxMustBeGreaterThanMin": "{maxField} must være greater than eller equal til {minField}",
     "trigger": {
-      "actionReferenceNotFound": "An action refers to a record that no longer exists. Re-select it in the action and save again."
+      "actionReferenceNotFound": "An action refers to a record that no longer exists. Re-select it in the action and save again.",
+      "postCommentPostsInvalid": "Et valgt opslag findes ikke i dette workspace eller hører ikke til den valgte indbakke. Vælg opslagene igen, og gem igen."
     },
     "inboundWebhook": {
       "inboxRequired": "Vælg en inbox.",
@@ -6116,7 +6213,16 @@
       "anyPipeline": "Alle pipelines",
       "anyStage": "Alle faser",
       "unavailablePipeline": "Slettet eller utilgængelig pipeline",
-      "unavailableStage": "Slettet eller utilgængelig fase"
+      "unavailableStage": "Slettet eller utilgængelig fase",
+      "contactCommentedOnPost": "Kontakt kommenterede på et opslag",
+      "contactFirstCommentedOnPost": "Kontakt kommenterede på et opslag for første gang",
+      "anyInbox": "Enhver side eller konto",
+      "unavailableInbox": "Slettet eller utilgængelig side eller konto",
+      "postScope": {
+        "any": "Ethvert opslag",
+        "selected": "Bestemte opslag",
+        "publishedFromPosts": "Kun opslag udgivet fra Opslag"
+      }
     },
     "actions": {
       "addTag": "Tilføj tag",
@@ -6896,7 +7002,8 @@
       "ignoreCommentReplies": "Don't svar til replies til kommentarer",
       "ignoreCommentRepliesDescription": "Spring over automatisering for kommentarer at er replies til anden kommentarer, ikke top-level kommentarer.",
       "trackUserTags": "Spor om en bruger tagger andre brugere",
-      "trackUserTagsDescription": "Tæller de konti, der tagges i hver kommentar, og lægger dem til kontaktens samlede antal på tværs af alle kommentarer. Brug '{{total_tagged}}' for alle taggede konti og '{{total_new_tagged}}' for konti, der aldrig har skrevet til din side eller været kontakt."
+      "trackUserTagsDescription": "Tæller de konti, der tagges i hver kommentar, og lægger dem til kontaktens samlede antal på tværs af alle kommentarer. Brug '{{total_tagged}}' for alle taggede konti og '{{total_new_tagged}}' for konti, der aldrig har skrevet til din side eller været kontakt.",
+      "likeUserCommentUnavailable": "Ikke tilgængelig på Instagram. Denne indstilling springes over; slå den fra for at fjerne den."
     },
     "hideComments": {
       "all": "Hide alle kommentarer",
@@ -7385,6 +7492,7 @@
       "resourcesTitle": "Installerede ressourcer",
       "noResources": "Intet er oprettet endnu.",
       "deletedResource": "Slettet ressource",
+      "wholeCategory": "{count, plural, one {# element} other {# elementer}}",
       "viewOnly": "Kun visning",
       "created": "Oprettet",
       "reused": "Genbrugt",
@@ -7439,7 +7547,12 @@
           "placeCategories": "Stedkategorier"
         }
       },
-      "viewOnlyCopyIncluded": "Noget, du har valgt (eller noget, det kræver), er installeret fra en skabelon med kun visning og kan ikke deles i en ny skabelon."
+      "viewOnlyCopyIncluded": "Noget, du har valgt (eller noget, det kræver), er installeret fra en skabelon med kun visning og kan ikke deles i en ny skabelon.",
+      "miniAppPublishedExcluded": {
+        "title": "Mini-app udeladt",
+        "hint": "Disse flows bruger en Mini-app, der er udgivet på WhatsApp. Den kan ikke deles, så skabelonen udelader den, og installationen fjerner henvisningen.",
+        "item": "{flowName}: {miniAppName}"
+      }
     },
     "categories": {
       "flows": "Flows",
@@ -7461,7 +7574,20 @@
       "aiFiles": "AI-vidensfiler",
       "questionnaires": "Questionnaires",
       "couponTopics": "Kuponemner",
-      "pipelines": "Pipelines"
+      "pipelines": "Pipelines",
+      "magicLinks": "Magiske links",
+      "polls": "Afstemninger",
+      "dynamicImages": "Dynamiske billeder",
+      "placeLocations": "Steder",
+      "miniApps": "Mini-apps",
+      "minigames": "Minispil",
+      "leaderboards": "Rangeringer",
+      "openHours": "Åbningstider",
+      "vendors": "Leverandører",
+      "discountCodes": "Rabatkoder",
+      "storeSettings": "Butiksindstillinger",
+      "storyAutomations": "Automatisering af Instagram Stories",
+      "inboundWebhooks": "Indgående webhook"
     },
     "locked": {
       "flowBanner": "Dette flow er installeret fra en skabelon med kun visning. Du kan se det, men ikke redigere det.",
@@ -7538,6 +7664,7 @@
       "flowNotPublished": "Flowet blev installeret som kladde og er ikke publiceret.",
       "flowSkippedRequiredReference": "Flowet blev sprunget over, fordi en påkrævet reference ikke kunne løses.",
       "folder": "Et refereret element blev ikke fundet i dette arbejdsområde, så linket blev fjernet.",
+      "inboundWebhookLimitReached": "Denne indgående webhook blev sprunget over: arbejdsområdet har allerede det maksimale antal indgående webhooks.",
       "inboxBindingRequired": "Vælg en indbakke til denne kanal; indtil da forbliver elementet inaktivt.",
       "integration": "Et refereret element blev ikke fundet i dette arbejdsområde, så linket blev fjernet.",
       "localModifiedOverwritten": "Et lokalt redigeret element blev overskrevet. En sikkerhedskopi blev gemt og kan gendannes.",
@@ -7558,7 +7685,25 @@
       "tag": "Et refereret element blev ikke fundet i dette arbejdsområde, så linket blev fjernet.",
       "unlisted": "Elementet blev ikke overført fuldt ud: {code}",
       "workspaceMember": "Tildelt et medlem, der ikke er i dette workspace.",
-      "workspaceUnavailable": "Dette arbejdsområde er ikke længere tilgængeligt, så elementet blev sprunget over."
+      "workspaceUnavailable": "Dette arbejdsområde er ikke længere tilgængeligt, så elementet blev sprunget over.",
+      "scheduleExpired": "Datoerne for dette element er overskredet; angiv nye, før du bruger det.",
+      "linkNotRemapped": "Et link til et værktøj, der ikke var med i skabelonen, blev ladet uændret.",
+      "dynamicImage": "Dette dynamiske billede blev sprunget over, fordi baggrunden ikke kunne kopieres.",
+      "dynamicImageFieldNotBound": "Vælg et brugerdefineret felt, som billedet kan cache på; det oprindelige findes allerede i dit workspace.",
+      "dynamicImageRerenderFailed": "Dette dynamiske billede blev slået fra, fordi dets baggrund ikke kunne gengives igen med dine kopierede links. Slå det til igen for at prøve igen.",
+      "pollImage": "Et billede kunne ikke kopieres.",
+      "leaderboardInvalid": "Rangeringens konfiguration kunne ikke installeres og blev sprunget over.",
+      "placeLocationInvalid": "Dette sted blev sprunget over, fordi dets navn er tomt.",
+      "minigame": "Det minispil, rangeringen scores fra, er ikke med i skabelonen og blev sprunget over.",
+      "minigameImage": "Et billede kunne ikke kopieres.",
+      "leaderboardImage": "Et billede kunne ikke kopieres.",
+      "leaderboardHostMissing": "Rangeringen kræver en egen kanal (eller et minispil), som denne installation ikke leverede, og blev sprunget over.",
+      "externalStoreSkipped": "Dette workspace sælger fra en forbundet butik (Shopify eller WooCommerce), så produkter, leverandører, rabatkoder, åbningstider og butiksindstillinger blev ikke installeret.",
+      "discountCodeSkipped": "Denne rabatkode blev sprunget over: de produkter eller den kategori, den gælder for, er ikke med i skabelonen, eller dens indstillinger blev afvist.",
+      "storeSettingsKept": "Dette workspace havde allerede butiksindstillinger, så de blev beholdt som de er.",
+      "vendorImage": "Et billede kunne ikke kopieres.",
+      "storeSettingsCurrencyKept": "Workspacet har produkter i en anden valuta, så dets valuta blev beholdt i stedet for skabelonens.",
+      "storySelectionRequired": "Vælg historierne igen: de oprindelige historier kunne ikke overføres."
     },
     "tabs": {
       "mine": "Mine skabeloner",
@@ -7785,7 +7930,6 @@
   "templatesPublicPage": {
     "invalidTitle": "Dette link er ikke længere tilgængeligt.",
     "invalidDescription": "Dette skabelon-dellink er ugyldigt, deaktiveret eller udløbet.",
-    "byPublisher": "Af {publisherName}",
     "videoTitle": "Skabelonens forhåndsvisningsvideo",
     "preview": "Forhåndsvisning",
     "aboutTemplate": "Om denne skabelon",
@@ -8143,6 +8287,10 @@
   "contactAdReferrals": {
     "title": "Annoncehistorik",
     "empty": "Der er endnu ikke registreret annonceklik for denne kontakt."
+  },
+  "contactBroadcasts": {
+    "empty": "Der er endnu ikke sendt nogen udsendelser til denne kontakt.",
+    "searchPlaceholder": "Søg efter navn eller ID"
   },
   "adsReferralStats": {
     "title": "Kontakter pr. annonce",
@@ -11988,41 +12136,138 @@
     "noWorkspaces": "Du er ikke administrator i noget arbejdsområde og kan derfor ikke godkende denne applikation."
   },
   "chatbotxMcp": {
-    "title": "ChatbotX MCP",
-    "workspaceId": "Workspace ID",
-    "streamableUrl": "Streamable HTTP URL",
-    "sseUrl": "Legacy SSE URL",
+    "title": "MCP-connector",
+    "streamableUrl": "Streamable HTTP-URL",
+    "sseUrl": "Ældre SSE-URL",
     "guide": {
-      "title": "Connect an MCP client",
-      "step1": "Copy the configuration for your MCP client.",
-      "step2": "Paste it into the client.",
-      "step3": "The client opens a browser. Sign in and approve access.",
-      "step4": "Your workspace tools appear after approval.",
-      "ownerOnly": "Only workspace owners and superAdmins can authorize MCP access."
+      "title": "Tilslut en MCP-klient",
+      "subtitle": "Vælg den app, du bruger, og følg de tre trin.",
+      "ownerOnly": "Kun workspace-ejere og superAdmins kan godkende MCP-adgang. Du vælger workspace på godkendelsesskærmen.",
+      "otherClients": "Alle andre MCP-kompatible klienter virker også",
+      "otherIntro": "Brug disse endpoints og konfigurationer med enhver anden MCP-kompatibel klient.",
+      "opensInNewTab": "(åbner i en ny fane)",
+      "actions": {
+        "addConnector": "Tilføj connector",
+        "startChatting": "Begynd at chatte"
+      },
+      "steps": {
+        "claude": {
+          "step1": {
+            "title": "Kopiér connector-URL'en",
+            "body": "Du indsætter denne URL i Claude i næste trin."
+          },
+          "step2": {
+            "title": "Gå til Claude → Customize → Connectors → Add custom connector",
+            "body": "Knappen nedenfor åbner dine connectors i Claude. Klik på Add custom connector, giv den et navn, og indsæt URL'en. Den vises også i Claudes desktop- og mobilapps."
+          },
+          "step3": {
+            "title": "Klik på Connect, og godkend adgang",
+            "body": "Log ind, vælg dit workspace, og godkend. Bed derefter Claude om at arbejde med dine kontakter, flows og broadcasts direkte fra chatten."
+          }
+        },
+        "chatgpt": {
+          "step1": {
+            "title": "Kopiér connector-URL'en",
+            "body": "Du indsætter denne URL i ChatGPT i næste trin."
+          },
+          "step2": {
+            "title": "Gå til ChatGPT → Settings → Apps & Connectors → Create",
+            "body": "Knappen nedenfor åbner ChatGPT-indstillingerne. Kan du ikke se Create, så slå Developer mode til under Advanced settings. Navngiv connectoren, indsæt URL'en, og vælg OAuth."
+          },
+          "step3": {
+            "title": "Forbind, og godkend adgang",
+            "body": "Log ind, vælg dit workspace, og godkend. Slå derefter connectoren til i en ny chat for at bruge den."
+          }
+        },
+        "claudeCode": {
+          "step1": {
+            "title": "Kopiér installationskommandoen",
+            "body": "Kør den i din terminal."
+          },
+          "step2": {
+            "title": "Log ind fra Claude Code",
+            "body": "Start Claude Code, skriv /mcp, vælg serveren, og vælg Authenticate. Et browservindue åbner."
+          },
+          "step3": {
+            "title": "Godkend adgang",
+            "body": "Vælg dit workspace, og godkend. Claude Code kan nu bruge dine workspace-værktøjer."
+          }
+        },
+        "cursor": {
+          "step1": {
+            "title": "Kopiér konfigurationen",
+            "body": "Du indsætter den i Cursor i næste trin."
+          },
+          "step2": {
+            "title": "Åbn Cursor Settings → MCP → Add new MCP server",
+            "body": "Indsæt konfigurationen i mcp.json, og gem. Cursor viser en Login-knap ved serveren."
+          },
+          "step3": {
+            "title": "Godkend adgang",
+            "body": "Klik på Login, vælg dit workspace, og godkend. Værktøjerne vises i Cursors agent."
+          }
+        },
+        "openclaw": {
+          "step1": {
+            "title": "Installér pluginnet",
+            "body": "Kør denne kommando i din terminal."
+          },
+          "step2": {
+            "title": "Log ind",
+            "body": "Kør denne kommando. Et browservindue åbner."
+          },
+          "step3": {
+            "title": "Godkend adgang",
+            "body": "Vælg dit workspace, og godkend. OpenClaw kan nu bruge dine workspace-værktøjer."
+          }
+        },
+        "hermes": {
+          "step1": {
+            "title": "Kopiér konfigurationen",
+            "body": "Du tilføjer den til din Hermes-konfiguration i næste trin."
+          },
+          "step2": {
+            "title": "Tilføj den til ~/.hermes/config.yaml",
+            "body": "Indsæt den under mcp_servers i ~/.hermes/config.yaml, og gem. Kør derefter denne kommando i Hermes."
+          },
+          "step3": {
+            "title": "Godkend adgang",
+            "body": "Hermes åbner et browservindue. Log ind, vælg dit workspace, og godkend. Hermes kan nu bruge dine workspace-værktøjer."
+          }
+        }
+      }
     },
     "clients": {
+      "claude": "Claude",
       "claudeCode": "Claude Code",
       "claudeDesktop": "Claude Desktop",
       "cursor": "Cursor",
       "chatgpt": "ChatGPT",
-      "stdio": "stdio fallback",
-      "stdioHint": "Use a workspace token for this fallback."
+      "stdio": "stdio-reserve",
+      "stdioHint": "Brug et workspace-token til denne reserve.",
+      "openclaw": "OpenClaw",
+      "hermes": "Hermes",
+      "other": "Andre klienter"
     },
     "grants": {
-      "title": "Authorized applications",
-      "description": "Grants belong to your account and apply to every workspace you administer; revoking disconnects the client everywhere.",
-      "empty": "OAuth grants appear here after you connect an MCP client.",
-      "client": "Client",
-      "scopes": "Scopes",
-      "firstAuthorizedAt": "First authorized",
-      "lastRefreshedAt": "Last refreshed",
-      "activeUntil": "Active until",
-      "noActiveToken": "No active token",
-      "revoke": "Revoke",
-      "revokeConfirmTitle": "Revoke application access?",
-      "revokeConfirmDescription": "Revoke access for {clientName}? This disconnects the client everywhere.",
-      "revokedSuccess": "Application access revoked.",
-      "notFound": "OAuth grant no longer exists"
+      "title": "Godkendte applikationer",
+      "description": "Tilladelser tilhører din konto og gælder for alle workspaces, du administrerer; tilbagekaldelse afbryder klienten overalt.",
+      "empty": "OAuth-tilladelser vises her, når du har tilsluttet en MCP-klient.",
+      "client": "Klient",
+      "scopes": "Omfang",
+      "firstAuthorizedAt": "Først godkendt",
+      "lastRefreshedAt": "Sidst fornyet",
+      "activeUntil": "Aktiv indtil",
+      "noActiveToken": "Intet aktivt token",
+      "revoke": "Tilbagekald",
+      "revokeConfirmTitle": "Tilbagekald applikationens adgang?",
+      "revokeConfirmDescription": "Tilbagekald adgangen for {clientName}? Det afbryder klienten overalt.",
+      "revokedSuccess": "Applikationens adgang er tilbagekaldt.",
+      "notFound": "OAuth-tilladelsen findes ikke længere"
+    },
+    "unavailableOnDomain": {
+      "title": "Ikke tilgængelig på dette domæne",
+      "body": "Forbindelse af AI-assistenter som Claude eller ChatGPT er endnu ikke tilgængelig på dette domæne. Eksisterende godkendelser vises nedenfor og kan stadig tilbagekaldes."
     }
   },
   "connectionStatus": {
@@ -12051,17 +12296,21 @@
     "add": "Tilføj",
     "addCategory": "Tilføj kategori",
     "renameCategory": "Omdøb",
-    "editCategories": "Rediger kategorier",
+    "editListing": "Rediger opslag",
     "templateId": "Skabelon-ID",
     "template": "Skabelon",
     "categories": "Kategorier",
     "categoriesPlaceholder": "Ingen kategori",
     "close": "Luk",
     "removeChip": "Fjern {name}",
+    "moreSelected": "+ {count} mere",
     "categoriesHint": "Valgfrit. Uden kategori vises skabelonen kun under “Alle”.",
+    "languages": "Sprog",
+    "allLanguages": "Alle sprog",
+    "languagesHint": "Valgfrit. Lad feltet stå tomt for at vise skabelonen på alle sprog.",
     "noCategoriesYet": "Ingen kategorier endnu.",
     "added": "Skabelon tilføjet til butikken",
-    "updated": "Kategorier opdateret",
+    "updated": "Opslag opdateret",
     "removed": "Skabelon fjernet fra butikken",
     "removeError": "Skabelonen kunne ikke fjernes",
     "removeTitle": "Fjern {name}?",
@@ -12103,16 +12352,18 @@
       "categoryLimit": "En butik kan højst have {categoryLimit} kategorier."
     },
     "store": {
-      "subtitle": "Færdige skabeloner, du installerer med ét klik.",
       "pageTitle": "{tenantName} – Skabelonbutik",
       "empty": "Ingen skabeloner i butikken endnu.",
       "search": "Søg efter skabeloner",
-      "all": "Alle",
-      "categories": "Butikkens kategorier",
-      "noResults": "Ingen skabeloner matcher din søgning.",
-      "clearSearch": "Ryd søgning",
-      "by": "Af {publisherName}",
-      "loadFailed": "Skabelonerne kunne ikke indlæses. Prøv igen senere."
+      "noResults": "Ingen skabeloner matcher dine filtre.",
+      "clearSearch": "Ryd filtre",
+      "loadFailed": "Skabelonerne kunne ikke indlæses. Prøv igen senere.",
+      "languageValue": "Sprog: {language}",
+      "allLanguages": "Alle sprog",
+      "otherLanguages": "Andre sprog",
+      "allChannels": "Alle kanaler",
+      "channel": "Kanal",
+      "uncategorized": "Andre"
     },
     "picker": {
       "placeholder": "Vælg en skabelon",
@@ -12121,7 +12372,21 @@
       "error": "Skabeloner kunne ikke indlæses.",
       "retry": "Prøv igen",
       "meta": "ID {id} · {workspace}"
-    }
+    },
+    "bulk": {
+      "setCategories": "Angiv kategorier",
+      "setLanguages": "Angiv sprog",
+      "categoriesHint": "Erstatter kategorierne for de valgte skabeloner ({count}). Lad feltet stå tomt for at fjerne alle kategorier.",
+      "languagesHint": "Erstatter sprogene for de valgte skabeloner ({count}). Lad feltet stå tomt for at vise dem på alle sprog.",
+      "updated": "De valgte skabeloner er opdateret",
+      "removeTitle": "Fjern de valgte skabeloner?",
+      "removeDescription": "Valgt: {count}. De forsvinder fra butikken; selve skabelonerne og deres installationer påvirkes ikke.",
+      "removed": "De valgte skabeloner er fjernet fra butikken",
+      "setChannels": "Angiv kanaler",
+      "channelsHint": "Erstatter kanalerne for de valgte skabeloner ({count}). Lad feltet stå tomt for alle kanaler."
+    },
+    "channels": "Kanaler",
+    "channelsHint": "Valgfrit. Lad feltet stå tomt, hvis skabelonen fungerer på alle kanaler. Vises som ikoner i butikken, hvor besøgende kan filtrere efter kanal."
   },
   "accountDeletion": {
     "title": "Delete account",
@@ -12308,5 +12573,1060 @@
       "onAhachat": "On AhaChat",
       "selected": "Uses AhaChat data"
     }
+  },
+  "conversationParticipants": {
+    "joined": "{names} har deltaget i samtalen",
+    "replied": "{name} svarede {time}",
+    "showMore": "Vis mere",
+    "label": "Hvem har svaret i denne samtale",
+    "unnamedMember": "Medlem",
+    "loadMoreFailed": "Kunne ikke indlæse flere medlemmer",
+    "lastMessageBy": "Seneste besked fra {name}"
+  },
+  "posts": {
+    "title": "Opslag",
+    "searchPlaceholder": "Søg efter tekst, link eller opslags-ID",
+    "dateFrom": "Fra dato",
+    "dateTo": "Til dato",
+    "export": {
+      "title": "Eksportér kommentarer fra opslagene i dette datointerval (op til {count} opslag)",
+      "needsRange": "Vælg en start- og en slutdato for at eksportere kommentarer.",
+      "nothing": "Ingen opslag matcher disse filtre i dette datointerval.",
+      "failed": "Eksporten mislykkedes. Prøv igen.",
+      "done": "{count, plural, one {Kommentarer fra # opslag er eksporteret.} other {Kommentarer fra # opslag er eksporteret.}}",
+      "doneLimited": "Kommentarer fra de {count} nyeste opslag er eksporteret. Flere opslag matcher; indsnævr datoerne for at eksportere resten.",
+      "truncated": "Eksporten blev afkortet ved rækkegrænsen. Indsnævr datoerne eller filtrene for at eksportere resten.",
+      "quotaExceeded": "Kontoens beskedkvote er brugt op, så downloadet blev ikke udført. Opgrader abonnementet, eller vent til næste faktureringsperiode.",
+      "blocked": "Abonnementet eller prøveperioden for dette arbejdsområde er udløbet.",
+      "menu": "Eksportér",
+      "rowsTitle": "Eksportér listen over opslag (én række pr. opslag)",
+      "rowsDone": "Listen over opslag er eksporteret.",
+      "rowsTruncated": "Listen blev afkortet ved grænsen for opslag. Indsnævr filtrene for at eksportere resten."
+    },
+    "showAllPosts": "Vis også opslag uden kommentarer",
+    "noCaption": "Ingen tekst",
+    "liveNow": "Live",
+    "empty": "Ingen opslag matcher disse filtre.",
+    "loadMore": "Indlæs mere",
+    "columns": {
+      "content": "Opslag",
+      "topic": "Emne",
+      "author": "Forfatter",
+      "pages": "Sider",
+      "status": "Status"
+    },
+    "contentType": {
+      "text": "Tekst",
+      "photo": "Foto",
+      "video": "Video",
+      "reel": "Reel",
+      "carousel": "Karrusel",
+      "story": "Story",
+      "live": "Live",
+      "link": "Link",
+      "audio": "Lyd",
+      "other": "Andet"
+    },
+    "filters": {
+      "channel": "Kanal",
+      "allChannels": "Alle kanaler",
+      "inbox": "Side / konto",
+      "allInboxes": "Alle sider og konti",
+      "postType": "Opslagstype",
+      "commentSettings": "Kommentarindstillinger",
+      "hidden": "Kommentarer skjult",
+      "notHidden": "Kommentarer ikke skjult",
+      "phoneHidden": "Kommentarer med telefonnummer skjult",
+      "phoneNotHidden": "Kommentarer med telefonnummer ikke skjult",
+      "skipped": "Kommentarer sprunget over",
+      "notSkipped": "Kommentarer ikke sprunget over",
+      "sort": "Sortér",
+      "topics": "Emner",
+      "title": "Filtre",
+      "engagement": "Engagement",
+      "topicSearch": "Søg efter emner",
+      "author": "Forfatter",
+      "allAuthors": "Alle forfattere"
+    },
+    "postType": {
+      "all": "Alle",
+      "photo": "Foto",
+      "video": "Video",
+      "post": "Opslag",
+      "pastLive": "Afsluttet live",
+      "liveNow": "Live nu"
+    },
+    "sort": {
+      "newest": "Nyeste",
+      "mostComments": "Flest kommentarer",
+      "fewestComments": "Færrest kommentarer",
+      "mostPhones": "Flest telefonnumre",
+      "fewestPhones": "Færrest telefonnumre",
+      "mostEngagement": "Mest engagement",
+      "leastEngagement": "Mindst engagement",
+      "mostShares": "Flest delinger",
+      "fewestShares": "Færrest delinger"
+    },
+    "settings": {
+      "hideComments": "Skjul alle kommentarer",
+      "hidePhoneComments": "Skjul kommentarer med telefonnummer",
+      "skipComments": "Spring kommentarer over (markér som læst)",
+      "unavailable": "Denne kanal understøtter endnu ikke kommentarindstillinger pr. opslag."
+    },
+    "sync": {
+      "refresh": "Opdater opslag",
+      "started": "Synkroniserer opslag. Nye opslag vises om lidt.",
+      "alreadyRunning": "En synkronisering kører allerede eller er lige afsluttet.",
+      "failedCount": "{count, plural, one {# side kunne ikke synkroniseres} other {# sider kunne ikke synkroniseres}}",
+      "reconnect": "Forbind kanalen igen",
+      "reconnectWithPermission": "Genopret forbindelsen og tillad adgang til opslag",
+      "retry": "Prøv igen"
+    },
+    "topics": {
+      "edit": "Rediger emner",
+      "newPlaceholder": "Navn på nyt emne",
+      "empty": "Ingen emner endnu. Skriv et navn for at oprette et."
+    },
+    "emptyHint": "Prøv et andet filter, eller slå “Vis også opslag uden kommentarer” til.",
+    "actions": {
+      "viewComments": "Se kommentarer",
+      "viewOriginal": "Se det oprindelige opslag",
+      "refreshPost": "Opdater fra kanalen",
+      "refreshRemoved": "Dette opslag findes ikke længere på kanalen, så det er skjult.",
+      "refreshUnavailable": "Opslaget kunne ikke læses fra kanalen. Prøv igen senere.",
+      "refreshRateLimited": "Kanalen bad om, at vi sænker tempoet. Prøv igen om et par minutter.",
+      "refreshCooldown": "Dette opslag blev lige opdateret. Prøv igen om et minut.",
+      "downloadPhones": "Download telefonnumre",
+      "downloadComments": "Download kommentarer",
+      "viewDetails": "Se detaljer"
+    },
+    "merge": {
+      "title": "Slå opslag sammen",
+      "selectAll": "Vælg alle",
+      "selected": "{count} af {max} valgt",
+      "confirm": "Slå opslag sammen"
+    },
+    "comments": {
+      "title": "Alle kommentarer på dette opslag",
+      "mergedTitle": "Sammenlagte kommentarer fra {count} opslag",
+      "searchPlaceholder": "Søg i kommentarer",
+      "phoneOnly": "Med telefonnummer",
+      "empty": "Ingen kommentarer at vise.",
+      "loadOlder": "Indlæs ældre kommentarer",
+      "like": "Synes godt om kommentar",
+      "delete": "Slet kommentar",
+      "confirmDelete": "Klik igen for at slette",
+      "hidden": "Skjult",
+      "unknownAuthor": "Ukendt kunde"
+    },
+    "state": {
+      "noChannelTitle": "Ingen kanal forbundet",
+      "noChannelHint": "Forbind en Messenger-, Instagram-, Threads- eller TikTok-kanal for at se opslagene her.",
+      "connectChannel": "Forbind en kanal",
+      "neverSyncedTitle": "Opslag er ikke indlæst endnu",
+      "neverSyncedHint": "Indlæs opslag fra dine forbundne kanaler. Det kører i baggrunden og kan tage nogle minutter.",
+      "loadPosts": "Indlæs opslag"
+    },
+    "counts": {
+      "comments": "Kommentarer",
+      "reactions": "Reaktioner",
+      "shares": "Delinger",
+      "phones": "Kommentarer med telefonnummer"
+    },
+    "tabs": {
+      "posts": "Opslag",
+      "calendar": "Kalender",
+      "connect": "Forbind",
+      "feeds": "Feeds",
+      "analytics": "Analyser"
+    },
+    "calendar": {
+      "views": {
+        "month": "Måned",
+        "week": "Uge",
+        "day": "Dag",
+        "list": "Liste"
+      },
+      "viewLabel": "Kalendervisning",
+      "previous": "Forrige periode",
+      "next": "Næste periode",
+      "today": "I dag",
+      "network": "Netværk",
+      "destination": "Side eller profil",
+      "allNetworks": "Alle netværk",
+      "allDestinations": "Alle sider og profiler",
+      "noText": "(Ingen tekst)",
+      "noDate": "Ingen dato",
+      "noDateEmpty": "Kladder uden dato vises her. Slip et opslag her for at flytte det tilbage til kladder.",
+      "newPostOn": "Nyt opslag den {date}",
+      "more": "+{count} mere",
+      "emptyDay": "Ingen opslag på denne dag.",
+      "emptyHint": "Der er intet planlagt i denne periode.",
+      "loading": "Indlæser…",
+      "loadError": "Kalenderen kunne ikke indlæses.",
+      "retry": "Prøv igen",
+      "readOnly": "Dette arbejdsområde er skrivebeskyttet, så opslag kan ikke flyttes eller oprettes.",
+      "truncated": "Kun en del af opslagene i denne periode vises. Indsnævr perioden eller filtrer efter netværk eller konto.",
+      "openPost": "Åbn opslag",
+      "moveToDrafts": "Flyt til kladder",
+      "reschedule": "Planlæg igen",
+      "schedule": "Planlæg",
+      "rescheduleLabel": "Udgivelsestidspunkt",
+      "scheduleLabel": "Planlæg til",
+      "pickTime": "Vælg dato og tidspunkt",
+      "status": {
+        "draft": "Kladde"
+      },
+      "errors": {
+        "past": "Vælg et tidspunkt mindst 15 minutter fra nu.",
+        "cannotUnschedule": "Kun et planlagt opslag kan flyttes tilbage til kladder."
+      },
+      "list": {
+        "filterLabel": "Filtrer efter status",
+        "filterCount": "{label}, {count, plural, one {# opslag} other {# opslag}}",
+        "filters": {
+          "all": "Alle",
+          "drafts": "Kladder",
+          "scheduled": "Planlagte",
+          "published": "Udgivne",
+          "needsAttention": "Kræver opmærksomhed"
+        },
+        "empty": {
+          "all": "Ingen opslag",
+          "drafts": "Ingen kladder",
+          "scheduled": "Ingen planlagte opslag",
+          "published": "Ingen udgivne opslag",
+          "needsAttention": "Intet kræver opmærksomhed"
+        },
+        "loadMore": "Indlæs mere"
+      },
+      "freeSlots": {
+        "label": "Ledige opslagstidspunkter",
+        "compose": "Nyt opslag kl. {time}",
+        "truncated": "Flere ledige tidspunkter vises ikke"
+      }
+    },
+    "connect": {
+      "title": "Forbind",
+      "connectNetwork": "Forbind {network}",
+      "reconnect": "Forbind igen",
+      "reconnectName": "{label}: {name}",
+      "facebookReconnectHint": "Når du genopretter forbindelsen til én Side, opdateres alle Sider med samme Facebook-login.",
+      "comingSoon": "Ikke tilgængelig endnu",
+      "connectedAlready": "{count, plural, one {# konto forbundet. Klik for at tilføje en til.} other {# konti forbundet. Klik for at tilføje en til.}}",
+      "truncated": "Viser de første {count} sider.",
+      "tiktokTitle": "TikTok-konti til udgivelse",
+      "pageCount": "{count, plural, one {# side} other {# sider}}",
+      "verify": "Bekræft",
+      "verified": "Konto bekræftet.",
+      "syncDestinations": "Synkroniser sider",
+      "destinationsSynced": "Sider og profiler opdateret.",
+      "disconnect": "Afbryd",
+      "confirmDisconnect": "Klik igen for at afbryde",
+      "disconnected": "Konto afbrudt.",
+      "missingScopes": "Manglende tilladelser: {scopes}. Forbind igen for at give dem.",
+      "lastVerified": "Bekræftet {date}",
+      "status": {
+        "connected": "Forbundet",
+        "needsReauth": "Skal forbindes igen",
+        "disconnected": "Afbrudt"
+      },
+      "reason": {
+        "tokenRejected": "Platformen afviste den gemte login. Forbind kontoen igen.",
+        "tokenExpired": "Den gemte login er udløbet. Forbind kontoen igen.",
+        "refreshRejected": "Platformen afviste at forny login. Forbind kontoen igen.",
+        "permissionNotGranted": "Nogle tilladelser mangler. Forbind kontoen igen for at give dem."
+      },
+      "emptyTitle": "Ingen kanaler forbundet endnu",
+      "emptyAction": "Gå til kanaler",
+      "schedule": {
+        "open": "Opslagstidspunkter",
+        "title": "Opslagstidspunkter for {name}",
+        "description": "Et opslag, der føjes til køen, får det næste ledige tidspunkt på denne liste.",
+        "timezone": "Tidszone: {timezone}",
+        "maxTimes": "Op til {count} tidspunkter om dagen",
+        "dayOn": "Slå op på {day}",
+        "noTimes": "Ingen tidspunkter",
+        "addTime": "Tilføj tidspunkt",
+        "timeLabel": "Nyt tidspunkt for {day}",
+        "removeTime": "Fjern {time}",
+        "copyTo": "Kopiér til andre dage",
+        "copyApply": "Kopiér",
+        "save": "Gem",
+        "saved": "Opslagstidspunkter gemt.",
+        "reflowMoved": "{count, plural, one {# opslag i køen er flyttet til et nyt tidspunkt.} other {# opslag i køen er flyttet til nye tidspunkter.}}",
+        "reflowDetached": "{count, plural, one {# opslag i køen har ikke flere opslagstidspunkter. Det beholder sit tidspunkt, men er ikke længere i køen (nu tilpasset).} other {# opslag i køen har ikke flere opslagstidspunkter. De beholder deres tidspunkter, men er ikke længere i køen (nu tilpassede).}}"
+      }
+    },
+    "detail": {
+      "title": "Opslagsdetaljer",
+      "caption": "Tekst",
+      "metrics": "Engagement",
+      "metricsUnavailable": "Denne kanal oplyser ikke disse tal.",
+      "views": "Visninger",
+      "settings": "Kommentarindstillinger",
+      "settingsHint": "Disse indstillinger gælder for nye kommentarer på opslaget. Eksisterende kommentarer ændres ikke.",
+      "skipCommentsHint": "Markér hver ny kommentar som læst. Automatiseringer kører stadig.",
+      "hideCommentsHint": "Skjul hver ny kommentar på opslaget.",
+      "hidePhoneCommentsHint": "Skjul nye kommentarer med telefonnummer.",
+      "topics": "Emner",
+      "info": "Oplysninger",
+      "postId": "Opslags-ID",
+      "channel": "Kanal",
+      "contentType": "Type",
+      "author": "Forfatter",
+      "publishedAt": "Udgivet",
+      "metricsUpdated": "Tal opdateret",
+      "never": "Endnu ikke målt",
+      "ownerPage": "Side",
+      "ownerAccount": "Konto"
+    },
+    "feeds": {
+      "title": "Automatisk opslag fra feeds",
+      "description": "Gør nye elementer fra et RSS- eller Atom-feed til opslag. Den første kontrol registrerer kun, hvad feedet allerede indeholder.",
+      "add": "Tilføj feed",
+      "empty": "Ingen feeds endnu. Tilføj et for automatisk at gøre nye artikler til opslag.",
+      "status": {
+        "active": "Aktiv",
+        "paused": "Sat på pause",
+        "error": "Sat på pause – fejl i feed"
+      },
+      "mode": {
+        "draft": "Gem som kladde",
+        "queue": "Sæt automatisk i kø"
+      },
+      "lastChecked": "Sidst kontrolleret {time}",
+      "neverChecked": "Endnu ikke kontrolleret",
+      "firstCheckPending": "Den første kontrol registrerer kun, hvad feedet allerede indeholder; der oprettes ingen opslag ud fra det.",
+      "every": "Hvert {minutes}. min.",
+      "destinations": "{count, plural, one {# destination} other {# destinationer}}",
+      "actions": {
+        "checkNow": "Kontrollér nu",
+        "pause": "Sæt på pause",
+        "resume": "Genoptag",
+        "edit": "Rediger",
+        "delete": "Slet",
+        "items": "Elementer",
+        "sendTest": "Send test"
+      },
+      "toast": {
+        "checkStarted": "Kontrol startet",
+        "paused": "Feed sat på pause",
+        "resumed": "Feed genoptaget",
+        "deleted": "Feed slettet",
+        "saved": "Feed gemt",
+        "testDraftCreated": "Testudkast oprettet",
+        "openDraft": "Åbn udkast",
+        "testUsedTemplate": "AI kunne ikke skrive teksten, så tekstskabelonen blev brugt."
+      },
+      "deleteConfirm": "Slet dette feed og historikken for dets elementer? Opslag, der allerede er oprettet, bevares.",
+      "error": {
+        "blocked": "Feedadressen er ikke tilladt.",
+        "timeout": "Feedet var for længe om at svare.",
+        "tooLarge": "Feedet er større end 2 MB.",
+        "badStatus": "Feedet svarede med en fejl.",
+        "badContentType": "Adressen er ikke et RSS- eller Atom-feed.",
+        "unreachable": "Feedet kunne ikke nås.",
+        "tooManyRedirects": "Feedet omdirigerer for mange gange.",
+        "invalidFeed": "Feedet kunne ikke læses.",
+        "internal": "Noget gik galt under kontrol af feedet.",
+        "postRefused": "Et opslag kunne ikke oprettes (f.eks. er der ingen ledig opslagstid, eller arbejdsområdet er blokeret). Næste kontrol prøver igen."
+      },
+      "apiError": {
+        "feedUrlTaken": "Dette feed er allerede tilføjet.",
+        "feedCheckCooldown": "Et feed kan kun kontrolleres manuelt én gang hvert 5. minut.",
+        "feedPreviewRateLimited": "For mange forhåndsvisninger. Prøv igen senere.",
+        "feedNotParseable": "Denne adresse er ikke et RSS- eller Atom-feed. Prøv at tilføje /feed eller /rss til webstedets adresse.",
+        "feedUnreachable": "Adressen kunne ikke nås. Tjek den, og prøv igen.",
+        "feedTestRateLimited": "For mange testopslag. Prøv igen senere.",
+        "feedHasNoItems": "Feedet har ingen elementer endnu.",
+        "feedFetchRateLimited": "For mange kontroller af feed-adresser. Prøv igen senere.",
+        "feedCheckInProgress": "En kontrol af dette feed venter eller kører allerede."
+      },
+      "form": {
+        "createTitle": "Tilføj feed",
+        "editTitle": "Rediger feed",
+        "name": "Navn",
+        "url": "Feedadresse",
+        "urlPlaceholder": "https://example.com/feed.xml",
+        "preview": "Forhåndsvis",
+        "previewEmpty": "Der blev ikke fundet nogen elementer i dette feed.",
+        "destinations": "Slå op på",
+        "noDestinations": "Tilslut først en konto på sociale medier.",
+        "interval": "Kontrollér hvert",
+        "dailyCap": "Maks. antal opslag pr. dag",
+        "mode": "Nye elementer bliver",
+        "modeDraftHelp": "Hvert nyt element bliver en kladde, du kan gennemgå.",
+        "modeQueueHelp": "Hvert nyt element sættes i kø efter destinationens opslagsplan og udgives uden gennemgang.",
+        "template": "Opslagstekst",
+        "templateHelp": "Variabler du kan bruge: {variables}",
+        "save": "Gem",
+        "cancel": "Annuller",
+        "didYouMean": "Mente du {url}?",
+        "useSuggestion": "Brug",
+        "aiWrite": "Skriv hvert opslag med AI",
+        "aiWriteHelp": "AI skriver teksten ud fra elementets titel, resumé og link. Hvis den ikke kan, bruges tekstskabelonen nedenfor.",
+        "aiInstructions": "Ekstra instruktioner til AI (valgfrit)",
+        "aiInstructionsHelp": "For eksempel: venlig tone, nævn butikkens navn. Op til 300 tegn.",
+        "postLatestOnFirstCheck": "Opret opslag for det nyeste element ved første kontrol",
+        "postLatestOnFirstCheckHelp": "Uden dette registrerer den første kontrol kun det, feedet allerede har.",
+        "contentTitle": "Opslagets indhold",
+        "templateInsert": "Indsæt felt",
+        "templateVariables": "Elementets felter",
+        "templateFeedFields": "Felter fundet i dette feed",
+        "templatePresets": "Start fra en skabelon",
+        "presetTitleLink": "Titel og link",
+        "presetSummaryHashtags": "Titel, resumé, link og hashtags",
+        "presetProduct": "Produkt: titel, pris og link",
+        "templateLegacy": "Dette feed bruger de gamle {token}-tegn og bliver ved med at poste som før, indtil du konverterer det.",
+        "templateConvert": "Konvertér til den nye syntaks",
+        "templateHint": "Indsæt felter fra menuen, eller skriv dem, f.eks. {example}. Filtre du kan bruge: {filters}.",
+        "templateProblem": "Linje {line}, kolonne {column}: {message}",
+        "previewTitle": "Forhåndsvisning",
+        "previewSample": "Eksempelelement",
+        "previewHint": "Forhåndsvis feedets adresse for at se, hvordan et opslag bliver.",
+        "previewCharacters": "{network}: {count} tegn",
+        "previewDropped": "Destinationer udeladt fra dette opslag: {count}",
+        "previewFiltered": "Filtreret fra: {reason}",
+        "previewSkipped": "Dette element springes over.",
+        "previewNoPicture": "Intet billede",
+        "mediaTitle": "Billeder",
+        "mediaMode": "Billedkilde",
+        "mediaModeAuto": "Fra feedet (automatisk)",
+        "mediaModeField": "Fra et felt eller en adresse",
+        "mediaModeNone": "Intet billede",
+        "mediaField": "Felt eller adresse",
+        "mediaFieldHelp": "En skabelon, der giver billedets adresse, f.eks. {example}.",
+        "mediaLibrary": "Reservebilleder",
+        "mediaLibraryHelp": "Fra dit Mediebibliotek; bruges, når et element ikke har sit eget billede.",
+        "mediaLibraryAdd": "Tilføj billeder",
+        "mediaRemove": "Fjern",
+        "postAs": "Post som",
+        "postAsPhoto": "Billedopslag",
+        "postAsLink": "Link",
+        "postAsText": "Kun tekst",
+        "postAsHelpLink": "Link: et forhåndsvisningskort med artiklens billede på Facebook og Threads.",
+        "postAsHelpPhoto": "Billedopslag: elementets billede bliver slået op sammen med teksten.",
+        "postAsHelpText": "Kun tekst: kun ordene og adressen, uden billede.",
+        "postAsTextFacebookWarning": "Facebook opretter ikke et forhåndsvisningskort (billede) for et link inde i teksten. Vælg Link for at få kortet med artiklens billede.",
+        "noImageFallback": "Når et element ikke har noget billede",
+        "fallbackLink": "Del linket",
+        "fallbackText": "Kun tekst",
+        "fallbackSkip": "Spring elementet over",
+        "filtersTitle": "Filtre",
+        "filterInclude": "Indeholder et af",
+        "filterExclude": "Indeholder ingen af",
+        "filterCategories": "Kategorien er en af",
+        "filterTermsHelp": "Skriv et ord, og tryk på Enter. Store bogstaver og accenter ignoreres.",
+        "filterRequireImage": "Kun elementer med billede",
+        "filterMaxAge": "Kun elementer nyere end (timer)",
+        "networkTexts": "Forskellig tekst pr. netværk",
+        "networkTextsHelp": "Skriv en separat tekst til et netværk; netværk uden en egen tekst bruger den fælles tekst. En tekst, som et netværk afviser, springes over og forkortes aldrig. Opslag skrevet af AI bruger én fælles tekst.",
+        "networkTabShared": "Fælles",
+        "networkTextUsesShared": "Dette netværk bruger den fælles tekst.",
+        "networkTextClear": "Brug den fælles tekst",
+        "networkTextAria": "Tekst til {network}",
+        "fetchArticleImage": "Led efter et billede på artikelsiden",
+        "fetchArticleImageHelp": "Når et element ikke har noget billede, læses dets artikelside én gang for hovedbilledet (og:image). Kun for elementer, der bliver slået op; en side, der ikke kan læses, blokerer aldrig opslaget.",
+        "previewArticlePicture": "Artikelsiden bliver læst"
+      },
+      "items": {
+        "title": "Elementer fra {name}",
+        "empty": "Ingen elementer kontrolleret endnu.",
+        "loadMore": "Indlæs flere",
+        "openPost": "Åbn opslag",
+        "reasons": {
+          "existing": "Var allerede i feedet, da det blev tilføjet",
+          "undated": "Ingen udgivelsesdato",
+          "tooOld": "For gammelt",
+          "perRunLimit": "Over grænsen pr. kontrol",
+          "noDestination": "Ingen destination valgt",
+          "emptyText": "Opslagets tekst er tom",
+          "textTooLong": "Opslagets tekst er for lang",
+          "invalid": "Opslaget blev afvist",
+          "other": "Elementet kunne ikke bruges",
+          "aiFallback": "Skrevet ud fra skabelonen (AI kunne ikke skrive det)",
+          "excludedKeyword": "Indeholder et udelukket ord",
+          "missingKeyword": "Indeholder ingen af de påkrævede ord",
+          "category": "Ikke i de valgte kategorier",
+          "noImage": "Intet billede",
+          "tooOldForFilter": "Ældre end aldersfiltret",
+          "undatedForFilter": "Ingen dato at kontrollere aldersfiltret mod",
+          "imageFailed": "Billedet kunne ikke bruges",
+          "noImageFallback": "Postet uden billede",
+          "droppedTargets": "Nogle destinationer blev udeladt",
+          "templateError": "Skabelonen kunne ikke vises",
+          "noDestinationAccepts": "Ingen destination kan bære dette opslag",
+          "issueTextRequired": "Opslaget har ingen tekst",
+          "issueTextTooLong": "Teksten er for lang til et netværk",
+          "issueLinkNotSupported": "Et netværk accepterer ikke et link",
+          "issueLinkRequired": "Et netværk kræver et link",
+          "issueTooManyLinks": "Flere links, end et netværk tillader",
+          "issueContentType": "Et netværk udgiver ikke denne type opslag",
+          "issueMedia": "Billedet overholder ikke et netværks regler",
+          "issueOptions": "En netværksindstilling er ugyldig",
+          "issueParts": "Et netværk accepterer ikke opfølgende dele",
+          "issueDestination": "En destination kan ikke udgive lige nu",
+          "alreadyPosted": "Der findes allerede et opslag for dette element"
+        },
+        "createPost": "Opret opslag",
+        "picture": "Billede: {source}",
+        "dropped": "Udeladt: {count}",
+        "imageSources": {
+          "enclosure": "Billedvedhæftning",
+          "mediaContent": "Medieindhold",
+          "mediaThumbnail": "Miniaturebillede",
+          "itunesImage": "Podcast-cover",
+          "contentImage": "Billede i teksten",
+          "jsonFeed": "JSON Feed-billede",
+          "field": "Felt eller adresse",
+          "library": "Mediebibliotek",
+          "article": "Artikelside (og:image)"
+        },
+        "imageErrors": {
+          "unreachable": "Billedet kunne ikke hentes.",
+          "blocked": "Billedets adresse er ikke tilladt.",
+          "tooBig": "Billedet er for stort.",
+          "notImage": "Filen er ikke et brugbart billede.",
+          "storage": "Billedet kunne ikke gemmes.",
+          "articleUnreachable": "Artikelsiden kunne ikke læses.",
+          "articleNoImage": "Artikelsiden angiver intet billede."
+        }
+      },
+      "outcome": {
+        "created": "Opslag oprettet",
+        "skippedOld": "Sprunget over: findes allerede eller er for gammelt",
+        "skippedInvalid": "Sprunget over: afvist",
+        "skippedFiltered": "Sprunget over: filtreret fra",
+        "skippedNoImage": "Sprunget over: intet billede"
+      },
+      "deleteConfirmTitle": "Slet “{name}”?",
+      "sendTestConfirm": {
+        "title": "Send et testopslag?",
+        "description": "Der oprettes en kladde ud fra det nyeste element i dette feed, på samme måde som feedet ville skrive den. Intet bliver udgivet; du kan åbne kladden og gennemse den."
+      },
+      "bulkDelete": {
+        "selectAll": "Vælg alle",
+        "selectFeed": "Vælg {name}",
+        "deleteSelected": "Slet valgte ({count})",
+        "confirmTitle": "{count, plural, one {Slet # feed?} other {Slet # feeds?}}",
+        "confirmDescription": "De valgte feeds og deres elementhistorik slettes. Opslag, der allerede er lavet, bliver stående.",
+        "success": "{count, plural, one {# feed slettet} other {# feeds slettet}}"
+      },
+      "columns": {
+        "name": "Feed",
+        "status": "Status",
+        "mode": "Tilstand",
+        "schedule": "Tjekinterval",
+        "destinations": "Destinationer",
+        "lastChecked": "Sidst tjekket"
+      },
+      "filters": {
+        "search": "Søg i feeds",
+        "searchPlaceholder": "Søg på navn eller feedadresse",
+        "status": "Filtrer efter status",
+        "mode": "Filtrer efter tilstand",
+        "destination": "Filtrer efter destination",
+        "allStatuses": "Alle statusser",
+        "allModes": "Alle tilstande",
+        "allDestinations": "Alle destinationer",
+        "destinationsSelected": "{count, plural, one {# destination} other {# destinationer}}",
+        "noDestinations": "Der er endnu ingen destinationer at filtrere på.",
+        "clear": "Ryd filtre",
+        "noMatch": "Ingen feeds matcher disse filtre."
+      },
+      "destinationsDialog": {
+        "title": "Destinationer for {name}",
+        "removed": "Fjernet destination",
+        "close": "Luk",
+        "edit": "Rediger destinationer"
+      },
+      "lastRun": {
+        "noNew": "Ingen nye elementer i kilden",
+        "skippedOnly": "Nye elementer blev sprunget over (for gamle eller filtreret fra)",
+        "stale": "Kilden returnerede en ældre kopi; tjekker igen snart",
+        "notModified": "Kilden er uændret siden sidste kontrol",
+        "created": "{count, plural, one {# opslag oprettet} other {# opslag oprettet}}",
+        "refused": "{count, plural, one {# element afvist af et netværk} other {# elementer afvist af et netværk}}",
+        "waiting": "{count, plural, one {# nyt element venter på næste kontrol} other {# nye elementer venter på næste kontrol}}",
+        "dailyCap": "Daglig grænse nået ({cap} pr. 24 timer) — {count, plural, one {# nyt element venter} other {# nye elementer venter}}",
+        "dailyCapUntil": "Daglig grænse nået ({cap} pr. 24 timer) — {count, plural, one {# nyt element venter} other {# nye elementer venter}}. Næste plads frigøres: {until}"
+      }
+    },
+    "show": {
+      "label": "Vis",
+      "channels": "På kanaler"
+    },
+    "composed": {
+      "deleted": "Opslaget er slettet.",
+      "deleteTitle": "Slet dette opslag?",
+      "deleteDescription": "En kladde slettes for altid. Et planlagt opslag annulleres og bliver ikke udgivet."
+    },
+    "analytics": {
+      "title": "Opslagsanalyse",
+      "filters": {
+        "title": "Analysefiltre",
+        "allContentTypes": "Alle indholdstyper",
+        "allTopics": "Alle emner"
+      },
+      "metrics": {
+        "comments": "Kommentarer",
+        "reactions": "Reaktioner",
+        "shares": "Delinger",
+        "engagement": "Engagement",
+        "views": "Visninger"
+      },
+      "metricsLower": {
+        "comments": "kommentarer",
+        "reactions": "reaktioner",
+        "shares": "delinger",
+        "engagement": "engagement",
+        "views": "visninger"
+      },
+      "kpi": {
+        "title": "Nøgletal",
+        "notReported": "Ikke rapporteret",
+        "notReportedHint": "Denne kanal rapporterer ikke dette tal.",
+        "vsPrevious": "sammenlignet med forrige periode",
+        "noComparison": "Ingen sammenligning tilgængelig",
+        "previous": "Forrige periode: {value}",
+        "postsPublished": "{count, plural, one {# opslag udgivet i denne periode} other {# opslag udgivet i denne periode}}"
+      },
+      "chart": {
+        "title": "Vækst pr. dag",
+        "description": "Daglig stigning i {metricLower}",
+        "groupBy": "Gruppér diagrammet",
+        "group": {
+          "none": "I alt",
+          "channel": "Efter kanal",
+          "inbox": "Efter side eller konto"
+        },
+        "other": "Andre",
+        "viewTable": "Vis som tabel",
+        "hideTable": "Skjul tabel",
+        "day": "Dag",
+        "summary": "{metric} pr. dag fra {from} til {to}: {total} i alt.",
+        "empty": "Ingen vækst registreret",
+        "emptyHint": "Der er ikke sket ændringer i denne periode, eller sporingen var ikke startet endnu."
+      },
+      "breakdown": {
+        "title": "Fordeling",
+        "description": "{metric} pr. kanal eller side",
+        "by": {
+          "channel": "Kanaler",
+          "inbox": "Sider og konti"
+        },
+        "empty": "Ingen data for disse filtre"
+      },
+      "topPosts": {
+        "title": "Topopslag",
+        "description": "Rangeret efter {metricLower}",
+        "rankBy": "Rangér efter",
+        "rank_gained": "Største stigning",
+        "rank_total": "Højeste total",
+        "rank": "#",
+        "post": "Opslag",
+        "channel": "Kanal",
+        "gained": "Stigning",
+        "total": "I alt",
+        "published": "Udgivet",
+        "open": "Åbn opslag",
+        "noCaption": "Ingen billedtekst",
+        "empty": "Ingen opslag at rangere",
+        "emptyHint": "Opslag vises her, når deres tal er blevet sporet."
+      },
+      "bestTimes": {
+        "title": "Bedste tidspunkter at poste",
+        "description": "Opslag sammenlignet med det typiske opslag på samme side, i tidszonen {timezone}.",
+        "caption": "Engagementscore efter ugedag og time",
+        "cell": "{when}: score {score}, {posts, plural, one {# opslag} other {# opslag}}",
+        "cellEmpty": "{when}: ingen opslag",
+        "legendLow": "Lavere",
+        "legendHigh": "Højere",
+        "legendTop": "Bedste tidsrum",
+        "scoreHint": "En score på 1,0 svarer til et typisk opslag på samme side.",
+        "topHeading": "Stærkeste tidsrum",
+        "slotDetail": "Score {score} · {posts, plural, one {# opslag} other {# opslag}}",
+        "insufficientTitle": "Endnu ikke nok data",
+        "insufficientHint": "De bedste tidspunkter kræver mindst {min} opslag udgivet for 90 til 3 dage siden. Fundet: {count}.",
+        "capped": "Der er kun brugt et udsnit af de nyeste opslag."
+      },
+      "coverage": {
+        "noneTitle": "Ingen historik endnu",
+        "partialTitle": "Historikken er stadig under opbygning",
+        "fullTitle": "Kun en del af dine opslag måles",
+        "since": "Væksten tælles fra {date}, hvor sporingen startede. Tidligere aktivitet er ikke med.",
+        "sinceUnknown": "Væksten tælles fra sporingens start. Tidligere aktivitet er ikke med.",
+        "withHistory": "{withHistory} af {posts} nylige opslag har en vækstHistorik.",
+        "truncated": "Der er flere opslag, end der kan måles på én gang; de nyeste vises."
+      },
+      "states": {
+        "error": "Denne sektion kunne ikke indlæses.",
+        "retry": "Prøv igen",
+        "noChannelHint": "Tilslut en Messenger-, Instagram-, Threads- eller TikTok-kanal for at se, hvordan opslagene klarer sig."
+      },
+      "perPost": {
+        "title": "Ydeevne",
+        "description": "Daglig ændring i de tal, kanalen rapporterer, baseret på vores egne daglige målinger.",
+        "metric": "Måling",
+        "notReported": "Denne kanal rapporterer det ikke.",
+        "empty": "Ingen vækst registreret endnu",
+        "since": "Sporet siden {date}. Ændringer vises efter den næste daglige måling.",
+        "notTracked": "Dette opslag spores ikke endnu.",
+        "summary": "{metric} pr. dag: {total} i alt.",
+        "totalNow": "i denne periode · {total} i alt"
+      },
+      "composedPost": {
+        "reasons": {
+          "notPublished": "Endnu ikke udgivet.",
+          "notLinked": "Endnu ikke matchet med et opslag på kanalen. Tallene vises, når det er sket.",
+          "networkNotSupported": "Dette netværk rapporterer ikke tal for opslag.",
+          "removed": "Fjernet fra kanalen."
+        }
+      }
+    }
+  },
+  "socialAccounts": {
+    "errors": {
+      "providerNotSupported": "Dette netværk kan endnu ikke forbindes.",
+      "appNotConfigured": "Platformens app til dette netværk er ikke sat op til dit arbejdsområde."
+    },
+    "connectResult": {
+      "success": "Konto forbundet.",
+      "cancelled": "Forbindelsen blev annulleret.",
+      "notFound": "Forbindelsen kunne ikke gennemføres.",
+      "sessionExpired": "Forbindelsessessionen er udløbet. Prøv at forbinde igen.",
+      "permissionNotGranted": "Kontoen blev ikke forbundet, fordi disse tilladelser ikke blev givet: {permissions}.",
+      "accountUnsupported": "Denne kontotype kan ikke udgive. Brug en professionel konto.",
+      "notSupported": "Dette netværk kan endnu ikke forbindes.",
+      "failed": "Kontoen kunne ikke forbindes. Prøv igen."
+    }
+  },
+  "composer": {
+    "publishTo": "Udgiv på",
+    "reconnect": "Tilslut igen",
+    "noDestinations": "Ingen forbundne sider eller profiler kan udgive endnu.",
+    "sharedContent": "Delt indhold",
+    "text": "Opslagstekst",
+    "textPlaceholder": "Skriv dit opslag",
+    "link": "Link",
+    "linkPlaceholder": "https://example.com",
+    "linkInvalid": "Angiv et fuldt link, der starter med https://",
+    "removeMedia": "Fjern fil",
+    "addMedia": "Tilføj foto eller video",
+    "removeDestination": "Fjern destination",
+    "customise": "Tilpas til denne kanal",
+    "usesSharedContent": "Bruger det delte indhold",
+    "channelText": "Tekst til denne kanal",
+    "channelTextPlaceholder": "Lad feltet stå tomt for at bruge den delte tekst",
+    "contentType": "Indholdstype",
+    "previewEmpty": "Vælg en destination for at se en forhåndsvisning.",
+    "noText": "Ingen tekst",
+    "justNow": "Lige nu",
+    "linkInCaption": "Linket tilføjes til sidst i billedteksten.",
+    "previewMediaAlt": "Vedhæftet fil {index}",
+    "previewMoreMedia": "+{count}",
+    "previewSlideLabel": "Slide {current} af {total}",
+    "previewPrevious": "Forrige slide",
+    "previewNext": "Næste slide",
+    "publishNow": "Udgiv nu",
+    "newPost": "Nyt opslag",
+    "draftSaved": "Kladde gemt",
+    "noTargets": "Vælg mindst én destination for at starte.",
+    "preview": "Forhåndsvisning",
+    "previewError": "Forhåndsvisningen kunne ikke opdateres.",
+    "issueCount": "Problemer at rette: {count}",
+    "saveDraft": "Gem kladde",
+    "retry": "Prøv igen",
+    "noAccountsTitle": "Ingen konti tilsluttet",
+    "noAccountsHint": "Forbind en konto under fanen Forbind for at begynde at skrive opslag.",
+    "goToAccounts": "Gå til Forbind",
+    "notEditable": "Dette opslag kan ikke længere redigeres.",
+    "options": {
+      "shareToFeed": "Del også i feedet",
+      "title": "Titel",
+      "thumbOffsetMs": "Forsidebillede (millisekunder)",
+      "privacyLevel": "Hvem kan se denne video",
+      "allowComment": "Kommentér",
+      "allowDuet": "Duet",
+      "allowStitch": "Stitch",
+      "commercialContent": "Angiv kommercielt indhold",
+      "brandOrganic": "Dit brand",
+      "brandContent": "Brandet indhold",
+      "isAigc": "Markér som AI-genereret indhold",
+      "coverTimestampMs": "Forsidebillede (millisekunder)"
+    },
+    "contentTypes": {
+      "text": "Tekst",
+      "link": "Link",
+      "image": "Billede",
+      "video": "Video",
+      "reel": "Reel",
+      "carousel": "Karrusel",
+      "story": "Story"
+    },
+    "issues": {
+      "accountDisconnected": "Denne konto blev frakoblet.",
+      "accountNeedsReauth": "Denne konto skal tilsluttes igen.",
+      "inboxDisconnected": "Denne kanal er afbrudt.",
+      "inboxNeedsReconnect": "Forbindelsen til denne kanal er udløbet. Opret forbindelse igen.",
+      "publishPermissionMissing": "Der er ikke givet tilladelse til udgivelse for denne kanal. Opret forbindelse igen for at tillade udgivelse.",
+      "contentTypeDisabled": "Denne indholdstype er endnu ikke tilgængelig.",
+      "contentTypeNotSupported": "Dette netværk understøtter ikke denne indholdstype.",
+      "destinationInactive": "Denne destination er slået fra.",
+      "destinationNotFound": "Denne destination blev ikke fundet.",
+      "linkNotSupported": "Denne indholdstype kan ikke indeholde et link.",
+      "linkRequired": "Et link er påkrævet.",
+      "mediaFormatNotSupported": "Et filformat understøttes ikke.",
+      "mediaKindNotAllowed": "En filtype er ikke tilladt her.",
+      "mediaTooFew": "Tilføj flere filer.",
+      "mediaTooLarge": "En fil er for stor.",
+      "mediaTooLong": "En video er for lang.",
+      "mediaTooMany": "For mange filer.",
+      "mediaTooShort": "En video er for kort.",
+      "optionsInvalid": "Indstillingerne er ugyldige.",
+      "textRequired": "Tekst er påkrævet.",
+      "textTooLong": "Teksten er for lang.",
+      "partsNotSupported": "Dette netværk udgiver ikke trådens dele.",
+      "firstCommentNotSupported": "Dette netværk udgiver ikke en første kommentar.",
+      "tooManyParts": "Der er flere dele, end netværket tillader.",
+      "partTextRequired": "Denne del skal have tekst.",
+      "partTextTooLong": "Denne del er længere, end netværket tillader.",
+      "tooManyLinks": "Denne tekst har flere links, end Threads tillader (højst 5)."
+    },
+    "publishStarted": "Udgivelsen er startet",
+    "publishRefused": "Opslaget kan ikke udgives som det er. Ret de viste problemer.",
+    "targetsStatus": "Destinationer",
+    "viewPost": "Se opslag",
+    "retryTarget": "Prøv igen",
+    "markPublished": "Markér som udgivet",
+    "retryReviewTitle": "Prøv igen med et opslag, der måske allerede er live?",
+    "retryReviewDescription": "Dette opslag er måske allerede live. Et nyt forsøg kan udgive det en gang til. Tjek siden først.",
+    "retryReviewConfirm": "Prøv igen alligevel",
+    "status": {
+      "pending": "Venter",
+      "publishing": "Udgiver",
+      "processing": "Behandler",
+      "published": "Udgivet",
+      "failed": "Mislykkedes",
+      "cancelled": "Annulleret",
+      "needsReview": "Skal gennemgås"
+    },
+    "schedule": "Planlæg",
+    "scheduleAt": "Udgiv",
+    "pickTime": "Vælg dato og tidspunkt",
+    "scheduleTooSoon": "Vælg et tidspunkt mindst 2 minutter fra nu.",
+    "scheduled": "Opslag planlagt.",
+    "repeatLabel": "Gentag",
+    "repeatHint": "Et gentaget opslag gemmes som en skabelon og udgives aldrig selv. En kopi planlægges ved hver gentagelse.",
+    "repeatInvalid": "Udfyld gentagelsesindstillingerne for at gemme.",
+    "repeatStateActive": "Gentages",
+    "repeatStatePaused": "Sat på pause",
+    "repeatStateEnded": "Serien er afsluttet",
+    "repeatNextRun": "Næste kørsel: {date}",
+    "repeatPause": "Sæt på pause",
+    "repeatResume": "Genoptag",
+    "repeatEnd": "Afslut serie",
+    "repeatUpdated": "Gentagelsesserien er opdateret",
+    "repeatScheduleOff": "Planlægning og udgivelse gælder for hver kopi, ikke for skabelonen.",
+    "moveMediaEarlier": "Flyt tidligere",
+    "moveMediaLater": "Flyt senere",
+    "removeFromChannels": "Fjern fra kanalerne",
+    "removeFromChannelsTitle": "Fjern dette opslag fra netværkene?",
+    "removeFromChannelsDescription": "Det udgivne opslag fjernes fra alle netværk, der understøtter det. Netværk uden slettefunktion beholder det. Det kan ikke fortrydes.",
+    "removeFromChannelsConfirm": "Fjern",
+    "removeCancel": "Annuller",
+    "removeRequested": "{count, plural, one {Fjernelse startet for # destination.} other {Fjernelse startet for # destinationer.}}",
+    "removeUnsupported": "{count, plural, one {# destination kan ikke fjernes via netværkets API; fjern den i appen.} other {# destinationer kan ikke fjernes via netværkenes API; fjern dem i apps'ene.}}",
+    "removedFromChannel": "Fjernet fra netværket",
+    "removalPermissionMissing": "Tilslut denne konto igen for at tillade sletning af opslag.",
+    "postMessageQuotaExceeded": "Kontoens beskedkvote er brugt op, så dette opslag blev ikke udgivet. Opgrader abonnementet, eller vent til næste faktureringsperiode, og prøv igen.",
+    "tiktokLoading": "Indlæser indstillinger for TikTok-kontoen…",
+    "tiktokUnavailable": "Indstillingerne for TikTok-kontoen kunne ikke indlæses. Prøv igen.",
+    "tiktokCreator": "Opslag på TikTok-kontoen {nickname}",
+    "tiktokCannotPost": "Denne TikTok-konto kan ikke slå op lige nu. Prøv igen senere.",
+    "tiktokPrivacyPlaceholder": "Vælg hvem der kan se",
+    "tiktokInteractions": "Tillad andre at",
+    "tiktokInteractionDisabled": "Slået fra i kontoens TikTok-indstillinger",
+    "tiktokYourBrand": "Dit brand",
+    "tiktokBrandedContent": "Brandet indhold",
+    "tiktokLabelPromotional": "Din video markeres som “Reklameindhold”.",
+    "tiktokLabelPaid": "Din video markeres som “Betalt partnerskab”.",
+    "tiktokCommercialRequired": "Angiv om dit indhold promoverer dig selv, en tredjepart eller begge dele.",
+    "tiktokBrandedNotPrivate": "Synligheden af brandet indhold kan ikke være privat.",
+    "tiktokConsentMusic": "Når du opslår, accepterer du TikToks <music>bekræftelse af musikbrug</music>.",
+    "tiktokConsentBranded": "Når du opslår, accepterer du TikToks <branded>politik for brandet indhold</branded> og <music>bekræftelse af musikbrug</music>.",
+    "tiktokMaxDuration": "Den længste video, denne konto kan slå op, er {seconds} sekunder.",
+    "tiktokProcessingNote": "Efter udgivelsen kan det tage et par minutter, før videoen er behandlet og vises på profilen.",
+    "tiktokPrivacy": {
+      "PUBLIC_TO_EVERYONE": "Alle",
+      "MUTUAL_FOLLOW_FRIENDS": "Venner",
+      "FOLLOWER_OF_CREATOR": "Følgere",
+      "SELF_ONLY": "Kun mig"
+    },
+    "partsTitle": "Trådens dele",
+    "partsHint": "Hver del bliver lagt op som svar på den foregående, lige efter hovedopslaget.",
+    "partLabel": "Del {number}",
+    "partPlaceholder": "Skriv næste del",
+    "partMoveUp": "Flyt delen op",
+    "partMoveDown": "Flyt delen ned",
+    "partRemove": "Fjern delen",
+    "partsAdd": "Tilføj del",
+    "partsRemaining": "{count, plural, one {# del mere kan tilføjes} other {# dele mere kan tilføjes}}",
+    "firstCommentTitle": "Første kommentar",
+    "firstCommentPlaceholder": "Lægges op som kommentar lige efter opslaget",
+    "aiAssist": "Skriv med AI",
+    "aiPrivacy": "Teksten du angiver sendes til den AI-udbyder, du vælger nedenfor. Intet gemmes eller udgives, før du indsætter det.",
+    "aiIntegration": "AI-integration",
+    "aiNoIntegration": "Der er endnu ikke tilsluttet nogen AI-integration.",
+    "aiConnectIntegration": "Tilslut en AI-integration",
+    "aiMode": "Hvad skal AI’en gøre?",
+    "aiModes": {
+      "write": "Skrive et nyt opslag",
+      "rewrite": "Omskriv",
+      "shorten": "Forkort",
+      "expand": "Udvid",
+      "tone": "Skift tone",
+      "fit": "Tilpas til destinationens grænse",
+      "hashtags": "Foreslå hashtags"
+    },
+    "aiTone": "Tone",
+    "aiTones": {
+      "friendly": "Venlig",
+      "professional": "Professionel",
+      "casual": "Afslappet",
+      "playful": "Legende",
+      "formal": "Formel",
+      "persuasive": "Overbevisende",
+      "inspiring": "Inspirerende"
+    },
+    "aiBrief": "Hvad handler opslaget om?",
+    "aiBriefPlaceholder": "For eksempel: annoncér vores weekendudsalg, 20 % rabat",
+    "aiUsesPostText": "Bruger opslagsteksten ovenfor.",
+    "aiNeedsPostText": "Skriv først opslagsteksten.",
+    "aiFitNeedsDestination": "Vælg først en destination.",
+    "aiGenerate": "Generér",
+    "aiGenerating": "Skriver…",
+    "aiSuggestion": "Forslag",
+    "aiCutToLimit": "Afkortet til grænsen på {limit, plural, one {# tegn} other {# tegn}}.",
+    "aiInsert": "Indsæt til sidst",
+    "aiReplace": "Erstat opslagsteksten",
+    "aiHashtags": "Hashtags",
+    "aiEmoji": "Emoji",
+    "aiCallToAction": "Opfordring til handling",
+    "aiCallToActionText": "Ordlyd af opfordringen (valgfri)",
+    "aiCallToActionPlaceholder": "For eksempel: Book dit bord i dag",
+    "aiVariants": "Muligheder",
+    "aiPerNetwork": "Skriv pr. kanal",
+    "aiPerNetworkHint": "Én version i hvert netværks stil.",
+    "aiOption": "Mulighed {number}",
+    "aiApplyTo": "Anvend på {network}",
+    "aiApplyToEach": "Anvend på hver kanal",
+    "aiHashtagPick": "Klik på et hashtag for at tilføje det til opslaget.",
+    "aiErrors": {
+      "modelNotChosen": "Vælg en AI-integration og en model for at skrive med AI.",
+      "needsReconfiguration": "Den valgte AI-integration mangler, er deaktiveret eller ugyldig.",
+      "rateLimited": "For mange AI-anmodninger. Prøv igen om et øjeblik.",
+      "timeout": "AI-modellen svarede ikke i tide. Prøv igen.",
+      "provider": "AI-udbyderen kunne ikke skrive teksten. Prøv igen.",
+      "inProgress": "En AI-anmodning kører allerede.",
+      "blocked": "Abonnementet eller prøveperioden for dette arbejdsområde er udløbet.",
+      "generic": "Teksten kunne ikke skrives. Prøv igen."
+    },
+    "snippets": "Tekstblokke",
+    "snippetsKinds": {
+      "signature": "Signatur",
+      "hashtags": "Hashtags",
+      "text": "Tekst"
+    },
+    "snippetsLoadFailed": "Tekstblokke kunne ikke indlæses.",
+    "snippetsEmpty": "Ingen tekstblokke endnu.",
+    "snippetsSignature": "Signatur",
+    "snippetsSignatureHint": "Tilføjes én gang til sidst i teksten, når du opretter opslaget. Destinationer med egen tekst får den ikke.",
+    "snippetsSignatureChosen": "Signatur: {name}",
+    "snippetsManage": "Administrer tekstblokke",
+    "snippetsName": "Navn",
+    "snippetsKind": "Type",
+    "snippetsContent": "Tekst",
+    "snippetsAdd": "Tilføj tekstblok",
+    "snippetsSaved": "Tekstblok gemt.",
+    "snippetsDeleted": "Tekstblok slettet.",
+    "snippetsNameTaken": "Der findes allerede en tekstblok med dette navn.",
+    "targetSets": "Sidegrupper",
+    "targetSetsLoadFailed": "Grupperne kunne ikke indlæses.",
+    "targetSetsEmpty": "Ingen gemte grupper endnu.",
+    "targetSetsName": "Gruppenavn",
+    "targetSetsNamePlaceholder": "Navngiv gruppen…",
+    "targetSetsSave": "Gem",
+    "targetSetsNeedsSelection": "Vælg sider for at gemme dem som en gruppe.",
+    "targetSetsSaved": "Gruppen er gemt.",
+    "targetSetsDeleted": "Gruppen er slettet.",
+    "targetSetsNameTaken": "Der findes allerede en gruppe med dette navn.",
+    "targetSetsApplied": "Siderne i “{name}” er valgt.",
+    "targetSetsSkipped": "{count, plural, one {# side blev sprunget over, fordi den kræver opmærksomhed.} other {# sider blev sprunget over, fordi de kræver opmærksomhed.}}",
+    "destinationState": {
+      "ready": "Klar til udgivelse",
+      "inboxDisconnected": "Forbindelsen er afbrudt",
+      "needsReconnect": "Forbindelsen er udløbet",
+      "permissionMissing": "Tilladelse til udgivelse er ikke givet"
+    },
+    "destinationPause": {
+      "until": "Sat på pause indtil {time}",
+      "reason": {
+        "limitReached": "Netværket har begrænset denne kontos opslag. Opslag venter og bliver udgivet efter pausen.",
+        "accountRestricted": "Netværket har begrænset denne konto. Opslag venter og bliver udgivet efter pausen.",
+        "spamRisk": "Netværket har markeret denne kontos aktivitet som spamrisiko. Opslag venter og bliver udgivet efter pausen."
+      }
+    },
+    "viaFacebook": "via Facebook",
+    "openProfile": "Åbn {name} på {network}",
+    "someNeedAttention": "Nogle sider eller profiler kan ikke udgive, før du opretter forbindelse igen.",
+    "viewPosts": "Vis",
+    "queue": {
+      "modeLabel": "Hvornår der skal postes",
+      "atTime": "Vælg tidspunkt",
+      "next": "Sæt i kø",
+      "top": "Post først",
+      "nextHint": "Postes i det næste ledige tidsrum for hver side.",
+      "topHint": "Postes i det nærmeste tidsrum; opslag i køen rykker ét tidsrum senere.",
+      "noDestination": "Vælg en side for at se dens posttidspunkter.",
+      "noSchedule": "{names} har ingen posttidspunkter sat op.",
+      "setUpSlots": "Opsæt posttidspunkter"
+    },
+    "targetOwnTime": "Separat tidspunkt for denne kanal",
+    "targetTimeInvalid": "Vælg et tidspunkt mellem 2 minutter og 1 år fra nu.",
+    "targetMediaOwn": "Andre filer til denne kanal",
+    "targetMediaNone": "Ingen filer: denne kanal udgiver uden filer.",
+    "occurrencesUpcoming": "Kommende kørsler",
+    "occurrencesNoUpcoming": "Ingen kommende kørsler.",
+    "occurrenceSkip": "Spring over",
+    "occurrenceRestore": "Gendan",
+    "occurrenceSkipped": "Kørsel sprunget over.",
+    "occurrenceRestored": "Kørsel gendannet.",
+    "occurrencesHistory": "Vis tidligere kørsler",
+    "occurrencesHideHistory": "Skjul tidligere kørsler",
+    "occurrencesLoadFailed": "Kørslerne kunne ikke indlæses.",
+    "occurrencesNoHistory": "Ingen kørsler endnu.",
+    "occurrencesLoadMore": "Indlæs flere",
+    "occurrenceOpen": "Åbn opslag",
+    "targetSetsUpdated": "Gruppen er opdateret.",
+    "targetSetsMembers": "Sider i denne gruppe",
+    "targetSetsNeedsMember": "Behold mindst én side.",
+    "occurrenceOutcomes": {
+      "created": "Planlagt",
+      "excluded": "Sprunget over",
+      "missed": "Overset",
+      "skipped": "Ikke oprettet"
+    }
+  },
+  "postCommentVariables": {
+    "group": "Opslagskommentar",
+    "postLink": "Opslagslink",
+    "postText": "Opslagstekst",
+    "postPublishedAt": "Opslag udgivet",
+    "postPageName": "Opslagets sidenavn",
+    "postId": "Opslags-ID",
+    "commentText": "Kommentartekst",
+    "commentId": "Kommentar-ID"
   }
 }

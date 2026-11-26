@@ -23,6 +23,7 @@ import { useThreadControl } from "../conversations/hooks/use-thread-control"
 import type { TagResource } from "../tags/schema/resource"
 import { ContactAdReferralsList } from "./components/contact-ad-referrals-list"
 import { ContactAppointmentsList } from "./components/contact-appointments-list"
+import { ContactBroadcastsList } from "./components/contact-broadcasts-list"
 import { ContactThreadControlSection } from "./components/contact-thread-control-section"
 import UpdateContactTagField from "./components/update-contact-tag-field"
 import { ContactDetail } from "./contact-detail"
@@ -73,9 +74,12 @@ const SectionQueryState = ({
 export const ContactInboxPanel = ({
   workspaceId,
   activeConversationId,
+  canOpenBroadcasts = false,
 }: {
   workspaceId: string
   activeConversationId: string | null
+  /** Whether the member may open the Broadcasts section: a broadcast's name links there only then. */
+  canOpenBroadcasts?: boolean
 }) => {
   const t = useTranslations()
 
@@ -183,15 +187,6 @@ export const ContactInboxPanel = ({
     return [
       ...routingModules,
       {
-        keyName: t("coupons.title"),
-        content: (
-          <ContactCouponsSection
-            contactId={contactData.id}
-            workspaceId={workspaceId}
-          />
-        ),
-      },
-      {
         keyName: t("contactAdReferrals.title"),
         content: (
           <ContactAdReferralsList
@@ -207,6 +202,15 @@ export const ContactInboxPanel = ({
             contactId={contactData.id}
             conversationId={activeConversationId}
             key={contactData.id}
+            workspaceId={workspaceId}
+          />
+        ),
+      },
+      {
+        keyName: t("coupons.title"),
+        content: (
+          <ContactCouponsSection
+            contactId={contactData.id}
             workspaceId={workspaceId}
           />
         ),
@@ -243,6 +247,17 @@ export const ContactInboxPanel = ({
         ),
       },
       {
+        keyName: t("broadcasts.title"),
+        content: (
+          <ContactBroadcastsList
+            canOpenBroadcast={canOpenBroadcasts}
+            contactId={contactData.id}
+            key={contactData.id}
+            workspaceId={workspaceId}
+          />
+        ),
+      },
+      {
         keyName: t("sequences.title"),
         content: (
           <ContactSequencesSection
@@ -260,6 +275,7 @@ export const ContactInboxPanel = ({
     setContactData,
     threadControl,
     activeConversationId,
+    canOpenBroadcasts,
   ])
 
   if (!storeContact) {

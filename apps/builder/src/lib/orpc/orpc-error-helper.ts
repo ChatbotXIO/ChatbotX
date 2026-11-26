@@ -12,6 +12,11 @@ import {
 } from "@chatbotx.io/database/partials"
 import type { ErrorMap } from "@orpc/server"
 import { z } from "zod"
+import {
+  TRANSLATION_API_ERRORS,
+  type TRANSLATION_NOT_SENT_CODE,
+  TRANSLATION_NOT_SENT_ERROR,
+} from "@/features/translation/schema/errors"
 import { DENIAL_MESSAGES } from "@/lib/workspace/authorize-workspace-access"
 
 type ContactSyncErrorCodes = typeof CONTACT_SYNC_ERROR_CODES
@@ -62,6 +67,9 @@ export const STRUCTURED_ERROR_CODES: ReadonlySet<string> = new Set([
   "contactSyncMappingInvalid" satisfies ContactSyncErrorCodes["mappingInvalid"],
   "contactSyncAlreadyRunning" satisfies ContactSyncErrorCodes["alreadyRunning"],
   "contactSyncCooldown" satisfies ContactSyncErrorCodes["cooldown"],
+  "translationNotSent" satisfies typeof TRANSLATION_NOT_SENT_CODE,
+  "feedNotParseable",
+  "templateInvalid",
 ])
 
 /**
@@ -181,6 +189,19 @@ export const possibleErrorsOnFindingResource = {
   businessError,
 } satisfies ErrorMap
 
+/** Refused when the owner has no message left (a download or a publish consumes one). */
+const postMessageQuotaExceeded = {
+  message:
+    "The message quota of this account is used up. Upgrade the plan or wait for the next billing period.",
+  status: 429,
+}
+
+/** A download that consumes a message is refused when the owner has none left. */
+export const possibleErrorsOnExportingResource = {
+  ...possibleErrorsOnFindingResource,
+  postMessageQuotaExceeded,
+} satisfies ErrorMap
+
 export const possibleErrorsOnListingResource = {
   businessError,
 } satisfies ErrorMap
@@ -252,6 +273,331 @@ export const possibleErrorsOnMutatingResource = {
   notFound,
   businessError,
   ...possibleIdempotencyErrors,
+} satisfies ErrorMap
+
+/** A post topic name is unique per workspace: `postTopicService` answers `topicNameTaken`. */
+const topicNameTaken = {
+  topicNameTaken: {
+    message: "A topic with this name already exists",
+    status: 409,
+  },
+} satisfies ErrorMap
+
+export const possibleErrorsOnCreatingPostTopic = {
+  ...possibleErrorsOnCreatingResource,
+  ...topicNameTaken,
+} satisfies ErrorMap
+
+export const possibleErrorsOnMutatingPostTopic = {
+  ...possibleErrorsOnMutatingResource,
+  ...topicNameTaken,
+} satisfies ErrorMap
+
+/** An expired plan or trial refuses what spends money or creates posts (invariant 14). */
+const workspaceBlockedError = {
+  workspaceBlocked: {
+    message: "This workspace's plan or trial has expired",
+    status: 402,
+  },
+} satisfies ErrorMap
+
+/** Writing post text with AI: `generatePostText` answers these codes. */
+export const possibleErrorsOnGeneratingPostText = {
+  businessError,
+  ...workspaceBlockedError,
+  ...possibleIdempotencyErrors,
+  aiModelNotChosen: {
+    message: "Choose an AI integration and model to write with AI",
+    status: 409,
+  },
+  aiNeedsReconfiguration: {
+    message: "The chosen AI integration is missing, disabled or invalid",
+    status: 409,
+  },
+  aiRequestInProgress: {
+    message: "An AI writing request is already running",
+    status: 409,
+  },
+  aiKeyReused: {
+    message: "This idempotency key was already used with a different request",
+    status: 422,
+  },
+  aiRateLimited: { message: "Too many AI writing requests", status: 429 },
+  aiTimeout: { message: "The AI model did not answer in time", status: 504 },
+  aiProviderError: { message: "The AI provider failed", status: 502 },
+  aiEmptyOutput: { message: "The AI model returned no text", status: 502 },
+} satisfies ErrorMap
+
+/** A snippet or set name is unique per workspace: the services answer `snippetNameTaken` / `targetSetNameTaken`. */
+export const possibleErrorsOnCreatingPostSnippet = {
+  ...possibleErrorsOnCreatingResource,
+  ...workspaceBlockedError,
+  snippetNameTaken: {
+    message: "A snippet with this name already exists",
+    status: 409,
+  },
+} satisfies ErrorMap
+
+export const possibleErrorsOnMutatingPostSnippet = {
+  ...possibleErrorsOnMutatingResource,
+  ...workspaceBlockedError,
+  snippetNameTaken: {
+    message: "A snippet with this name already exists",
+    status: 409,
+  },
+} satisfies ErrorMap
+
+export const possibleErrorsOnCreatingPostTargetSet = {
+  ...possibleErrorsOnCreatingResource,
+  ...workspaceBlockedError,
+  targetSetNameTaken: {
+    message: "A set with this name already exists",
+    status: 409,
+  },
+} satisfies ErrorMap
+
+export const possibleErrorsOnMutatingPostTargetSet = {
+  ...possibleErrorsOnMutatingResource,
+  ...workspaceBlockedError,
+  targetSetNameTaken: {
+    message: "A set with this name already exists",
+    status: 409,
+  },
+} satisfies ErrorMap
+
+/**
+ * RSS/Atom feed auto-posting: `socialPostFeedService` answers these codes. A
+ * feed's address is unique per workspace, "run now" has a 5-minute cool-down
+ * and a preview is limited to 10 per hour.
+ */
+const postFeedConflicts = {
+  feedUrlTaken: {
+    message: "This feed is already registered in the workspace",
+    status: 409,
+  },
+  feedNotActive: {
+    message: "The feed is not active",
+    status: 409,
+  },
+  feedCheckCooldown: {
+    message: "A feed can be checked by hand once every 5 minutes",
+    status: 409,
+  },
+  feedCheckInProgress: {
+    message: "A check of this feed is already waiting or running",
+    status: 409,
+  },
+} satisfies ErrorMap
+
+/**
+ * An address is fetched and parsed before a feed is saved or previewed:
+ * `feedNotParseable` (not an RSS/Atom feed; `data.suggestedUrl` names the feed
+ * an HTML page advertises, when it does) and `feedUnreachable` (could not be
+ * fetched). Nothing is stored in either case.
+ */
+const postFeedAddressErrors = {
+  feedNotParseable: {
+    message: "The address is not an RSS or Atom feed",
+    status: 422,
+    data: z.object({ suggestedUrl: z.string().optional() }).optional(),
+  },
+  feedUnreachable: {
+    message: "The feed address could not be fetched",
+    status: 422,
+  },
+  feedFetchUnavailable: {
+    message: "Feed fetching is not available",
+    status: 503,
+  },
+} satisfies ErrorMap
+
+/** Saving an address fetches it; the workspace's hourly budget for outside fetches (`POST_FEED_FETCH_PER_HOUR`) can be spent. */
+const postFeedFetchRateError = {
+  feedFetchRateLimited: {
+    message: "Too many feed address checks. Try again later",
+    status: 429,
+  },
+} satisfies ErrorMap
+
+/** A feed template that does not parse: `data` says where (`line`, `column`) and in which field. */
+const postFeedTemplateErrors = {
+  templateInvalid: {
+    message: "The template is not valid",
+    status: 422,
+    data: z
+      .object({
+        code: z.string(),
+        column: z.number(),
+        field: z.string(),
+        line: z.number(),
+      })
+      .optional(),
+  },
+} satisfies ErrorMap
+
+export const possibleErrorsOnCreatingPostFeed = {
+  ...possibleErrorsOnCreatingResource,
+  ...workspaceBlockedError,
+  ...postFeedAddressErrors,
+  ...postFeedFetchRateError,
+  ...postFeedTemplateErrors,
+  feedUrlTaken: postFeedConflicts.feedUrlTaken,
+} satisfies ErrorMap
+
+export const possibleErrorsOnMutatingPostFeed = {
+  ...possibleErrorsOnMutatingResource,
+  ...workspaceBlockedError,
+  ...postFeedAddressErrors,
+  ...postFeedFetchRateError,
+  ...postFeedTemplateErrors,
+  feedUrlTaken: postFeedConflicts.feedUrlTaken,
+} satisfies ErrorMap
+
+export const possibleErrorsOnChangingPostFeed = {
+  ...possibleErrorsOnMutatingResource,
+  ...workspaceBlockedError,
+  ...postFeedConflicts,
+} satisfies ErrorMap
+
+export const possibleErrorsOnReadingPostFeedItem = {
+  ...possibleErrorsOnFindingResource,
+  ...workspaceBlockedError,
+  ...postFeedAddressErrors,
+} satisfies ErrorMap
+
+export const possibleErrorsOnTestingPostFeed = {
+  ...possibleErrorsOnMutatingResource,
+  ...workspaceBlockedError,
+  ...postFeedAddressErrors,
+  feedHasNoItems: {
+    message: "The feed has no items yet",
+    status: 422,
+  },
+  feedTestRateLimited: {
+    message: "Too many test posts. Try again later",
+    status: 429,
+  },
+} satisfies ErrorMap
+
+export const possibleErrorsOnPreviewingPostFeed = {
+  businessError,
+  ...possibleIdempotencyErrors,
+  ...workspaceBlockedError,
+  ...postFeedAddressErrors,
+  feedPreviewRateLimited: {
+    message: "Too many feed previews. Try again later",
+    status: 429,
+  },
+} satisfies ErrorMap
+
+/** Liking or deleting a comment the post's channel cannot do: `channelPostCommentsService` answers `commentActionUnsupported`. */
+export const possibleErrorsOnChangingPostComment = {
+  ...possibleErrorsOnMutatingResource,
+  commentActionUnsupported: {
+    message: "This channel does not support that action on comments",
+    status: 409,
+  },
+} satisfies ErrorMap
+
+/** Calling the platform for a social account: `socialAccountOperations` answers these codes. */
+export const possibleErrorsOnUsingSocialAccount = {
+  ...possibleErrorsOnMutatingResource,
+  providerNotSupported: {
+    message: "This network cannot be used yet",
+    status: 422,
+  },
+  providerUnavailable: {
+    message: "The platform could not be reached",
+    status: 502,
+  },
+  socialAccountDisconnected: {
+    message: "The account is disconnected",
+    status: 409,
+  },
+  socialAccountNeedsReauth: {
+    message: "The platform rejected the account's token",
+    status: 409,
+  },
+} satisfies ErrorMap
+
+/** Composing a post: `socialPostService` and `assertWorkspaceNotBlocked` raise these. */
+export const possibleErrorsOnChangingSocialPost = {
+  ...possibleErrorsOnMutatingResource,
+  // Publishing now (and retrying) refuses when the owner has no message left.
+  postMessageQuotaExceeded,
+  socialPostKeyConflict: {
+    message: "This idempotency key was already used with a different post",
+    status: 409,
+  },
+  socialPostNotRemovable: {
+    message: "The post has no published destination to remove",
+    status: 409,
+  },
+  socialPostNotDeletable: {
+    message: "Only a draft can be deleted",
+    status: 409,
+  },
+  socialPostNotPublishable: {
+    message: "Only a draft or scheduled post can be published",
+    status: 409,
+  },
+  socialPostContentInvalid: {
+    message: "A destination cannot publish the post as composed",
+    status: 422,
+  },
+  socialPostTargetNotRetryable: {
+    message: "Only a failed target, or one waiting for review, can be retried",
+    status: 409,
+  },
+  socialPostTargetNotReviewable: {
+    message: "Only a target waiting for review can be resolved",
+    status: 409,
+  },
+  socialPostNotEditable: {
+    message: "Only a draft or scheduled post can be edited",
+    status: 409,
+  },
+  socialPostNotSchedulable: {
+    message: "Only a draft or scheduled post can be scheduled",
+    status: 409,
+  },
+  socialPostTargetNotReschedulable: {
+    message:
+      "A destination is publishing, was already tried, or is due within a minute, so the post cannot be moved",
+    status: 409,
+  },
+  socialPostPartNotResumable: {
+    message:
+      "Only the first part that is not published can be retried or resolved",
+    status: 409,
+  },
+  socialPostHeadUnconfirmed: {
+    message:
+      "The first post is not confirmed, so its follow-up parts cannot be published after it",
+    status: 409,
+  },
+  duplicateFailed: {
+    message: "The post could not be duplicated",
+    status: 409,
+  },
+  socialPostNotRecurrable: {
+    message: "Only a draft that is not itself a repeated copy can repeat",
+    status: 409,
+  },
+  socialPostRecurrenceEnded: {
+    message: "The series has ended; set a rule again to start a new one",
+    status: 409,
+  },
+  socialPostOccurrenceSettled: {
+    message: "A run that already happened cannot be skipped or restored",
+    status: 409,
+  },
+  socialPostIsRecurringTemplate: {
+    message:
+      "A repeating post is a template: end its series before publishing or scheduling it",
+    status: 409,
+  },
+  ...workspaceBlockedError,
 } satisfies ErrorMap
 
 export const possibleErrorsOnSchedulingAccountDeletion = {
@@ -464,6 +810,31 @@ export const possibleErrorsOnGeneratingCallSummary = {
     status: 409,
   },
   ...possibleIdempotencyErrors,
+} satisfies ErrorMap
+
+/**
+ * Inbox translation: every way a translation can be refused or fail, each with
+ * its own code so an agent can branch on it (`translation<Name>`). Declared on
+ * the operations that surface them (settings, test, preview). A send with
+ * `translate: true` throws {@link possibleErrorsOnTranslatedSend} instead.
+ */
+export const possibleErrorsOnTranslating = {
+  notFound,
+  businessError,
+  ...Object.fromEntries(
+    Object.values(TRANSLATION_API_ERRORS).map(
+      ({ code, status, message }) => [code, { message, status }] as const,
+    ),
+  ),
+  ...possibleIdempotencyErrors,
+} satisfies ErrorMap
+
+/**
+ * A send with `translate: true` whose text could not be translated: nothing was
+ * sent, and `data` says why and whether translation was turned off.
+ */
+export const possibleErrorsOnTranslatedSend = {
+  translationNotSent: TRANSLATION_NOT_SENT_ERROR,
 } satisfies ErrorMap
 
 /** AI hand-over apply-to-all: every refusal is a 422 with its own code. */
@@ -1627,4 +1998,18 @@ export const possibleErrorsOnWooCommerce = {
     message: "A WooCommerce sync is already running",
     status: 409,
   },
+} satisfies ErrorMap
+
+/** Reading from the platform for a social account (a GET): the same codes as `possibleErrorsOnUsingSocialAccount`, with no write or idempotency codes. */
+export const possibleErrorsOnReadingSocialAccount = {
+  ...possibleErrorsOnFindingResource,
+  providerUnavailable: possibleErrorsOnUsingSocialAccount.providerUnavailable,
+  publishingSettingsNotSupported: {
+    message: "This network has no publishing settings to read",
+    status: 422,
+  },
+  socialAccountDisconnected:
+    possibleErrorsOnUsingSocialAccount.socialAccountDisconnected,
+  socialAccountNeedsReauth:
+    possibleErrorsOnUsingSocialAccount.socialAccountNeedsReauth,
 } satisfies ErrorMap

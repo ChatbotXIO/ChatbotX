@@ -39,6 +39,7 @@ import { commentHandlers } from "./handlers/comment"
 import { contactHandlers } from "./handlers/contact"
 import { conversationHandlers } from "./handlers/conversation"
 import { messageHandlers } from "./handlers/message"
+import { postHandlers } from "./handlers/post"
 import { webhookHandler } from "./handlers/webhook"
 import { isRevokedTokenError } from "./lib/error-mapper"
 import { logger } from "./lib/logger"
@@ -149,6 +150,7 @@ const config: IntegrationDefinition<
       conversation: conversationHandlers,
       contact: contactHandlers,
       bot: botHandlers,
+      post: postHandlers,
     },
   },
   actions: {

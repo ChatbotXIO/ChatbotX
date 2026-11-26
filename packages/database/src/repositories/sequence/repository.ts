@@ -114,7 +114,7 @@ export const sequenceRepository = {
     input: { workspaceId: string; limit: number },
     tx: DatabaseClient,
   ): Promise<number> {
-    const result = await tx.execute(sql`
+    const result = await tx.execute<Record<string, unknown>>(sql`
       UPDATE "ContactOnSequence"
       SET
         "status" = 'completed',

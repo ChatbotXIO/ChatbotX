@@ -30,6 +30,8 @@ import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { useState } from "react"
 import { toast } from "sonner"
+import { LockedDialogFieldset } from "@/components/locked-dialog-fieldset"
+import { useIsLocked } from "@/features/templates/components/lock-context"
 import { toastActionError } from "@/lib/errors/safe-action-error-handler"
 import { createPlaceLocationAction } from "../actions/create-place-location.action"
 import { updatePlaceLocationAction } from "../actions/update-place-location.action"
@@ -72,6 +74,7 @@ export function LocationFormDialog({
   const tActions = useTranslations("actions")
   const tFields = useTranslations("fields")
   const router = useRouter()
+  const isLocked = useIsLocked(location?.id)
   const [internalOpen, setInternalOpen] = useState(false)
   const open = controlledOpen ?? internalOpen
   const setOpen = onOpenChange ?? setInternalOpen
@@ -136,91 +139,97 @@ export function LocationFormDialog({
         </DialogHeader>
         <Form {...form}>
           <form className="space-y-4" onSubmit={handleSubmitWithAction}>
-            <InputField label={tFields("name.label")} name="name" required />
-            <div className="grid grid-cols-2 gap-4">
-              <FormFieldWrapper label={t("latitude")} name="latitude" required>
-                {(field) => (
-                  <Input
-                    name="latitude"
-                    onBlur={field.onBlur}
-                    onChange={(event) =>
-                      field.onChange(
-                        event.target.value === ""
-                          ? undefined
-                          : event.target.valueAsNumber,
-                      )
-                    }
-                    onPaste={(event) => {
-                      const pair = parseCoordinatePair(
-                        event.clipboardData.getData("text"),
-                      )
-                      if (!pair) {
-                        return
+            <LockedDialogFieldset resourceId={location?.id}>
+              <InputField label={tFields("name.label")} name="name" required />
+              <div className="grid grid-cols-2 gap-4">
+                <FormFieldWrapper
+                  label={t("latitude")}
+                  name="latitude"
+                  required
+                >
+                  {(field) => (
+                    <Input
+                      name="latitude"
+                      onBlur={field.onBlur}
+                      onChange={(event) =>
+                        field.onChange(
+                          event.target.value === ""
+                            ? undefined
+                            : event.target.valueAsNumber,
+                        )
                       }
-                      event.preventDefault()
-                      form.setValue("latitude", pair.latitude, {
-                        shouldDirty: true,
-                        shouldValidate: true,
-                      })
-                      form.setValue("longitude", pair.longitude, {
-                        shouldDirty: true,
-                        shouldValidate: true,
-                      })
-                    }}
-                    step="any"
-                    type="number"
-                    value={(field.value as number | undefined) ?? ""}
-                  />
-                )}
-              </FormFieldWrapper>
+                      onPaste={(event) => {
+                        const pair = parseCoordinatePair(
+                          event.clipboardData.getData("text"),
+                        )
+                        if (!pair) {
+                          return
+                        }
+                        event.preventDefault()
+                        form.setValue("latitude", pair.latitude, {
+                          shouldDirty: true,
+                          shouldValidate: true,
+                        })
+                        form.setValue("longitude", pair.longitude, {
+                          shouldDirty: true,
+                          shouldValidate: true,
+                        })
+                      }}
+                      step="any"
+                      type="number"
+                      value={(field.value as number | undefined) ?? ""}
+                    />
+                  )}
+                </FormFieldWrapper>
+                <FormFieldWrapper
+                  label={t("longitude")}
+                  name="longitude"
+                  required
+                >
+                  {(field) => (
+                    <Input
+                      name="longitude"
+                      onBlur={field.onBlur}
+                      onChange={(event) =>
+                        field.onChange(
+                          event.target.value === ""
+                            ? undefined
+                            : event.target.valueAsNumber,
+                        )
+                      }
+                      step="any"
+                      type="number"
+                      value={(field.value as number | undefined) ?? ""}
+                    />
+                  )}
+                </FormFieldWrapper>
+              </div>
               <FormFieldWrapper
-                label={t("longitude")}
-                name="longitude"
-                required
+                label={tFields("category.label")}
+                name="categoryId"
               >
                 {(field) => (
-                  <Input
-                    name="longitude"
-                    onBlur={field.onBlur}
-                    onChange={(event) =>
-                      field.onChange(
-                        event.target.value === ""
-                          ? undefined
-                          : event.target.valueAsNumber,
-                      )
+                  <Select
+                    items={categoryItems}
+                    onValueChange={(value) =>
+                      field.onChange(value === NO_CATEGORY ? null : value)
                     }
-                    step="any"
-                    type="number"
-                    value={(field.value as number | undefined) ?? ""}
-                  />
+                    value={(field.value as string | null) ?? NO_CATEGORY}
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {categoryItems.map((item) => (
+                        <SelectItem key={item.value} value={item.value}>
+                          {item.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 )}
               </FormFieldWrapper>
-            </div>
-            <FormFieldWrapper
-              label={tFields("category.label")}
-              name="categoryId"
-            >
-              {(field) => (
-                <Select
-                  items={categoryItems}
-                  onValueChange={(value) =>
-                    field.onChange(value === NO_CATEGORY ? null : value)
-                  }
-                  value={(field.value as string | null) ?? NO_CATEGORY}
-                >
-                  <SelectTrigger className="w-full">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {categoryItems.map((item) => (
-                      <SelectItem key={item.value} value={item.value}>
-                        {item.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              )}
-            </FormFieldWrapper>
+            </LockedDialogFieldset>
             <DialogFooter>
               <DialogClose
                 render={
@@ -229,7 +238,10 @@ export function LocationFormDialog({
                   </Button>
                 }
               />
-              <Button disabled={form.formState.isSubmitting} type="submit">
+              <Button
+                disabled={form.formState.isSubmitting || isLocked}
+                type="submit"
+              >
                 {tActions("save")}
               </Button>
             </DialogFooter>

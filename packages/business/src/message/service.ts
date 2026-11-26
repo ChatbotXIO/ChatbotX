@@ -7,13 +7,17 @@ import {
   createMessageRepository,
   type FindMessageByIdParams,
   type FindOutgoingBeforeParams,
+  type MessageQuotaMarkerKey,
   type MessageWithAttachments,
+  messageTranslationRepository,
   type OutgoingBotMessage,
 } from "@chatbotx.io/database/repositories"
 import type { MessageModel } from "@chatbotx.io/database/types"
 import { withCache } from "@chatbotx.io/redis"
 import { BaseService } from "../base.service"
 import { ChatbotXException } from "../errors"
+import { logger } from "../logger"
+import { inboxTranslationSettingsService } from "../translation/settings-service"
 import { createOutgoing } from "./create-outgoing"
 import {
   findByIdWithUrls,
@@ -162,13 +166,18 @@ class MessageService extends BaseService {
   ): Promise<{ id: string }[]> {
     const { tx = db } = props
     const repo = await createMessageRepository(tx)
-    return props.sourceId
+    const deleted = props.sourceId
       ? await repo.deleteBySourceId(
           props.sourceId,
           props.workspaceId,
           props.createdAt,
         )
       : await repo.deleteById(props.id, props.workspaceId, props.createdAt)
+    await this.deleteTranslations(props.workspaceId, [
+      props.id,
+      ...deleted.map((row) => row.id),
+    ])
+    return deleted
   }
 
   /**
@@ -183,11 +192,50 @@ class MessageService extends BaseService {
   ): Promise<{ id: string }[]> {
     const { tx = db } = props
     const repo = await createMessageRepository(tx)
-    return await repo.hardDeleteById(
+    const deleted = await repo.hardDeleteById(
       props.id,
       props.workspaceId,
       props.createdAt,
     )
+    await this.deleteTranslations(props.workspaceId, [
+      props.id,
+      ...deleted.map((row) => row.id),
+    ])
+    return deleted
+  }
+
+  /**
+   * `MessageTranslation` has no FK to the sharded `Message`, so a deleted
+   * message's translation row (for an outbound one, the sentence the agent
+   * typed) is removed here, after the message write: the two live in different
+   * databases and cannot share a transaction. Skipped, with no query, for a
+   * workspace that never turned translation on.
+   *
+   * Best effort: the message is already deleted, so a failure here is logged
+   * and never fails the delete (its caller would skip the realtime event and
+   * report an error for a delete that happened). A row left behind belongs to
+   * a deleted message (the Inbox shows none for it) and goes with its
+   * conversation or workspace.
+   */
+  private async deleteTranslations(
+    workspaceId: string,
+    messageIds: string[],
+  ): Promise<void> {
+    try {
+      if (
+        !(await inboxTranslationSettingsService.hasEverBeenEnabled(workspaceId))
+      ) {
+        return
+      }
+      await messageTranslationRepository.deleteByMessageIds(workspaceId, [
+        ...new Set(messageIds),
+      ])
+    } catch (err) {
+      logger.warn(
+        { err, workspaceId, messageIds },
+        "Failed to delete the translations of deleted messages",
+      )
+    }
   }
 
   /**
@@ -413,8 +461,97 @@ class MessageService extends BaseService {
     )
   }
 
+  /**
+   * Marks a comment as counted in its post's comment count; `true` only for the
+   * call that set the mark. Throws on a storage failure.
+   */
+  async markCommentCounted(props: {
+    createdAt: Date
+    id: string
+    workspaceId: string
+  }): Promise<boolean> {
+    const repo = await createMessageRepository()
+    return await repo.markCommentCounted(
+      props.id,
+      props.workspaceId,
+      props.createdAt,
+    )
+  }
+
+  /**
+   * Marks a comment as counted in its post's phone-number count; `true` only
+   * for the call that set the mark. Throws on a storage failure.
+   */
+  async markPhoneCounted(props: {
+    createdAt: Date
+    id: string
+    workspaceId: string
+  }): Promise<boolean> {
+    const repo = await createMessageRepository()
+    return await repo.markPhoneCounted(
+      props.id,
+      props.workspaceId,
+      props.createdAt,
+    )
+  }
+
+  /**
+   * Claims the marker that says a message-quota charge was taken for this
+   * comment; `true` only for the call that set it. Throws on a storage failure.
+   */
+  async claimQuotaMarker(props: {
+    createdAt: Date
+    id: string
+    key: MessageQuotaMarkerKey
+    workspaceId: string
+  }): Promise<boolean> {
+    const repo = await createMessageRepository()
+    return await repo.claimQuotaMarker(
+      props.id,
+      props.workspaceId,
+      props.createdAt,
+      props.key,
+    )
+  }
+
+  /** Takes a claimed quota marker back after its charge failed. Throws on a storage failure. */
+  async releaseQuotaMarker(props: {
+    createdAt: Date
+    id: string
+    key: MessageQuotaMarkerKey
+    workspaceId: string
+  }): Promise<void> {
+    const repo = await createMessageRepository()
+    await repo.releaseQuotaMarker(
+      props.id,
+      props.workspaceId,
+      props.createdAt,
+      props.key,
+    )
+  }
+
+  /**
+   * Sets only the given keys of a message's attributes with one JSON merge in
+   * the database. A concurrent write to another key (`phoneCounted`) survives,
+   * which a read-modify-write of the whole object would lose.
+   */
+  async patchAttributes(props: {
+    createdAt: Date
+    id: string
+    patch: { hidden?: boolean; liked?: boolean }
+    workspaceId: string
+  }): Promise<{ id: string } | null> {
+    const repo = await createMessageRepository()
+    return await repo.patchMessageAttributes(
+      props.id,
+      props.workspaceId,
+      props.patch,
+      props.createdAt,
+    )
+  }
+
   async updateAttributes(props: {
-    attributes: { hidden: boolean; liked: boolean }
+    attributes: { hidden: boolean; liked: boolean; phoneCounted?: boolean }
     createdAt: Date
     id: string
     workspaceId: string

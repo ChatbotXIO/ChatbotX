@@ -53,6 +53,10 @@ describe("Instagram (Facebook login) channel scopes", () => {
     expect(definitionScopes()).toEqual([...INSTAGRAM_SCOPES])
   })
 
+  test("requests the permission that deletes published media", () => {
+    expect(INSTAGRAM_SCOPES).toContain("instagram_manage_contents")
+  })
+
   test("still request everything the channel itself needs", () => {
     expect(INSTAGRAM_SCOPES).toEqual(
       expect.arrayContaining([

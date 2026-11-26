@@ -14,6 +14,7 @@ import { commentHandlers } from "./handlers/comment"
 import { contactHandlers } from "./handlers/contact"
 import { conversationHandlers } from "./handlers/conversation"
 import { messageHandlers } from "./handlers/message"
+import { postHandlers } from "./handlers/post"
 import { webhookHandler } from "./handlers/webhook"
 import { isRevokedTokenError } from "./lib/error-mapper"
 import { refreshTiktokAuth } from "./lib/refresh-auth"
@@ -33,6 +34,7 @@ const config: IntegrationDefinition<
       conversation: conversationHandlers,
       contact: contactHandlers,
       comment: commentHandlers,
+      post: postHandlers,
     },
   },
   actions: {

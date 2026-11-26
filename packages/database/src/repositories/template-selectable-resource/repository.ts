@@ -11,17 +11,30 @@ import {
   commentAutomationModel,
   couponTopicModel,
   customFieldModel,
+  discountCodeModel,
+  dynamicImageModel,
+  ecommerceOpenHoursModel,
   flowModel,
+  igStoryAutomationModel,
+  inboundWebhookModel,
   integrationWebchatModel,
+  leaderboardModel,
+  magicLinkModel,
+  miniAppModel,
+  minigameModel,
   pipelineModel,
+  placeLocationModel,
+  pollModel,
   productModel,
   questionnaireModel,
   reflinkModel,
   sequenceModel,
   tagModel,
   triggerModel,
+  vendorModel,
 } from "../../schema"
 import { likeContains } from "../../utils"
+import { miniAppNotPublishedRaw } from "../mini-app"
 
 const ALL_IDS_CAP = 1000
 
@@ -73,7 +86,7 @@ const takePage = <T>(
   hasMore: rows.length > limit,
 })
 
-type KeysetColumns = { name: SQLWrapper; id: SQLWrapper }
+type KeysetColumns = Record<string, SQLWrapper> & { id: SQLWrapper }
 
 /**
  * Shared shape behind 11 of the 12 `list*` categories below: a
@@ -90,17 +103,19 @@ function findAllQuery<TTable extends PgTable>(
       columns: Record<string, true>
       limit: number
       offset: number
-      orderBy: { name: "asc"; id: "asc" }
-    }) => Promise<({ id: string; name: string } & Record<string, unknown>)[]>
+      orderBy: Record<string, "asc">
+    }) => Promise<({ id: string } & Record<string, unknown>)[]>
   },
   table: TTable,
   extraWhere?: Record<string, unknown>,
   /** A text column to surface as each row's `badge`. */
   badgeColumn?: string,
+  /** The column the picker shows, searches and orders by (`name` unless the table has none). */
+  labelColumn = "name",
 ) {
   const columns: Record<string, true> = {
     id: true,
-    name: true,
+    [labelColumn]: true,
     ...(badgeColumn ? { [badgeColumn]: true } : {}),
   }
   return async (
@@ -111,13 +126,19 @@ function findAllQuery<TTable extends PgTable>(
     const where = {
       workspaceId,
       ...extraWhere,
-      name: keyword ? { ilike: likeContains(keyword) } : undefined,
+      [labelColumn]: keyword ? { ilike: likeContains(keyword) } : undefined,
     }
+    // The category's own raw predicate stays next to the keyset condition.
+    const extraRaw = extraWhere?.RAW as
+      | ((columnsOfTable: KeysetColumns) => SQL)
+      | undefined
     const pageWhere = after
       ? {
           ...where,
           RAW: (columnsOfTable: KeysetColumns): SQL =>
-            sql`(${columnsOfTable.name}, ${columnsOfTable.id}) > (${after.key}, ${after.id})`,
+            extraRaw
+              ? sql`${extraRaw(columnsOfTable)} AND (${columnsOfTable[labelColumn]}, ${columnsOfTable.id}) > (${after.key}, ${after.id})`
+              : sql`(${columnsOfTable[labelColumn]}, ${columnsOfTable.id}) > (${after.key}, ${after.id})`,
         }
       : where
 
@@ -127,7 +148,7 @@ function findAllQuery<TTable extends PgTable>(
         columns,
         limit: limit + 1,
         offset,
-        orderBy: { name: "asc", id: "asc" },
+        orderBy: { [labelColumn]: "asc", id: "asc" },
       }),
       tx.$count(table, relationsFilterToSQL(table, where)),
     ])
@@ -137,10 +158,10 @@ function findAllQuery<TTable extends PgTable>(
       (
         await tableQuery.findMany({
           where,
-          columns: { id: true, name: true },
+          columns: { id: true, [labelColumn]: true },
           limit: ALL_IDS_CAP,
           offset: 0,
-          orderBy: { name: "asc", id: "asc" },
+          orderBy: { [labelColumn]: "asc", id: "asc" },
         })
       ).map((row) => row.id),
     )
@@ -148,7 +169,7 @@ function findAllQuery<TTable extends PgTable>(
     return {
       rows: rows.map((row) => ({
         id: row.id,
-        name: row.name,
+        name: String(row[labelColumn]),
         ...(badgeColumn && typeof row[badgeColumn] === "string"
           ? { badge: row[badgeColumn] }
           : {}),
@@ -156,7 +177,7 @@ function findAllQuery<TTable extends PgTable>(
       total,
       allIds,
       hasMore,
-      lastKey: rows.at(-1)?.name,
+      lastKey: rows.length > 0 ? String(rows.at(-1)?.[labelColumn]) : undefined,
     }
   }
 }
@@ -204,6 +225,18 @@ export const templateSelectableResourceRepository = {
       "type",
     )(input, tx),
 
+  /** Both Instagram connection types; the type is shown as each row's badge. */
+  listStoryAutomations: (input: CategoryInput, tx: DatabaseClient = db) =>
+    findAllQuery(
+      tx.query.igStoryAutomationModel,
+      igStoryAutomationModel,
+      undefined,
+      "type",
+    )(input, tx),
+
+  listInboundWebhooks: (input: CategoryInput, tx: DatabaseClient = db) =>
+    findAllQuery(tx.query.inboundWebhookModel, inboundWebhookModel)(input, tx),
+
   listAIFiles: (input: CategoryInput, tx: DatabaseClient = db) =>
     findAllQuery(tx.query.aiFileModel, aiFileModel)(input, tx),
 
@@ -219,6 +252,79 @@ export const templateSelectableResourceRepository = {
     findAllQuery(tx.query.couponTopicModel, couponTopicModel, {
       deletedAt: { isNull: true as const },
     })(input, tx),
+
+  listMagicLinks: (input: CategoryInput, tx: DatabaseClient = db) =>
+    findAllQuery(tx.query.magicLinkModel, magicLinkModel)(input, tx),
+
+  listPolls: (input: CategoryInput, tx: DatabaseClient = db) =>
+    findAllQuery(tx.query.pollModel, pollModel)(input, tx),
+
+  listDynamicImages: (input: CategoryInput, tx: DatabaseClient = db) =>
+    findAllQuery(tx.query.dynamicImageModel, dynamicImageModel)(input, tx),
+
+  listPlaceLocations: (input: CategoryInput, tx: DatabaseClient = db) =>
+    findAllQuery(tx.query.placeLocationModel, placeLocationModel)(input, tx),
+
+  /** A Mini App published to WhatsApp lives on the creator's number: never offered. */
+  listMiniApps: (input: CategoryInput, tx: DatabaseClient = db) =>
+    findAllQuery(tx.query.miniAppModel, miniAppModel, {
+      RAW: miniAppNotPublishedRaw,
+    })(input, tx),
+
+  listMinigames: (input: CategoryInput, tx: DatabaseClient = db) =>
+    findAllQuery(tx.query.minigameModel, minigameModel)(input, tx),
+
+  listLeaderboards: (input: CategoryInput, tx: DatabaseClient = db) =>
+    findAllQuery(tx.query.leaderboardModel, leaderboardModel, {
+      deletedAt: { isNull: true as const },
+    })(input, tx),
+
+  listOpenHours: (input: CategoryInput, tx: DatabaseClient = db) =>
+    findAllQuery(tx.query.ecommerceOpenHoursModel, ecommerceOpenHoursModel)(
+      input,
+      tx,
+    ),
+
+  /** The store's own vendors; a connected store's are mirrored, never copied. */
+  listVendors: (input: CategoryInput, tx: DatabaseClient = db) =>
+    findAllQuery(tx.query.vendorModel, vendorModel, {
+      source: "chatbotx" as const,
+    })(input, tx),
+
+  /** The store's own codes, but not those limited to specific customers. */
+  listDiscountCodes: (input: CategoryInput, tx: DatabaseClient = db) =>
+    findAllQuery(
+      tx.query.discountCodeModel,
+      discountCodeModel,
+      {
+        source: "chatbotx" as const,
+        eligibility: { ne: "specificCustomers" as const },
+      },
+      undefined,
+      "code",
+    )(input, tx),
+
+  /** The one settings row of the workspace, if it has one (it has no name of its own). */
+  async listStoreSettings(
+    input: CategoryInput,
+    tx: DatabaseClient = db,
+  ): Promise<ListSelectableResourceRowsResult> {
+    const row = await tx.query.ecommerceSettingsModel.findFirst({
+      where: { workspaceId: input.workspaceId },
+      columns: { id: true },
+    })
+    const rows =
+      row && isFirstPageOf(input)
+        ? [{ id: row.id, name: "Store settings" }]
+        : []
+    return {
+      rows,
+      total: row ? 1 : 0,
+      allIds: row ? [row.id] : [],
+      hasMore: false,
+      lastKey: rows.at(-1)?.name,
+    }
+  },
 
   listPipelines: (input: CategoryInput, tx: DatabaseClient = db) =>
     findAllQuery(tx.query.pipelineModel, pipelineModel)(input, tx),

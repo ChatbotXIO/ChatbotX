@@ -1,0 +1,157 @@
+/**
+ * Meta Graph API surfaces per-business quota usage via the
+ * `X-Business-Use-Case-Usage` response header. Parsing it lets the historical
+ * sync proactively throttle concurrency before hitting 429 — the universal
+ * pattern in mature bot platforms.
+ *
+ * Header shape (JSON-encoded):
+ *   { "<businessId>": [{ call_count, total_cputime, total_time,
+ *                        estimated_time_to_regain_access }] }
+ */
+
+export type BucUsage = {
+  callCount: number
+  totalCpuTime: number
+  totalTime: number
+  estimatedTimeToRegainAccess: number
+}
+
+type RawBucEntry = {
+  call_count?: number
+  total_cputime?: number
+  total_time?: number
+  estimated_time_to_regain_access?: number
+}
+
+const MS_PER_MINUTE = 60_000
+
+/**
+ * `estimated_time_to_regain_access` is in MINUTES (Meta: Graph API "Rate
+ * Limits"), not seconds. The one place that converts it, so no caller guesses
+ * the unit again.
+ */
+export const estimatedMinutesToMs = (minutes: number): number =>
+  minutes * MS_PER_MINUTE
+
+/** Returns the first BUC entry in the header, or `null` if absent/malformed. */
+export const parseBucHeader = (header: string | null): BucUsage | null => {
+  if (!header) {
+    return null
+  }
+  try {
+    const parsed = JSON.parse(header) as Record<string, RawBucEntry[]>
+    const firstBucket = Object.values(parsed)[0]
+    const entry = firstBucket?.[0]
+    if (!entry) {
+      return null
+    }
+    return {
+      callCount: entry.call_count ?? 0,
+      totalCpuTime: entry.total_cputime ?? 0,
+      totalTime: entry.total_time ?? 0,
+      estimatedTimeToRegainAccess: entry.estimated_time_to_regain_access ?? 0,
+    }
+  } catch {
+    return null
+  }
+}
+
+/**
+ * The worst of several readings of the same Page's quota (a batch carries one
+ * per sub-request, plus the call's own): the highest of each figure, so the
+ * caller backs off for the most pressed reading. `null` when none was sent.
+ */
+export const mergeBucUsage = (
+  readings: readonly (BucUsage | null)[],
+): BucUsage | null => {
+  const present = readings.filter(
+    (reading): reading is BucUsage => reading !== null,
+  )
+  if (present.length === 0) {
+    return null
+  }
+  return {
+    callCount: Math.max(...present.map((usage) => usage.callCount)),
+    totalCpuTime: Math.max(...present.map((usage) => usage.totalCpuTime)),
+    totalTime: Math.max(...present.map((usage) => usage.totalTime)),
+    estimatedTimeToRegainAccess: Math.max(
+      ...present.map((usage) => usage.estimatedTimeToRegainAccess),
+    ),
+  }
+}
+
+/**
+ * Maps BUC usage to a recommended concurrency. Returns 0 when the bucket is
+ * exhausted (caller must pause until `estimatedTimeToRegainAccess`).
+ */
+export const concurrencyForUsage = (usage: BucUsage | null): number => {
+  if (!usage) {
+    return 5
+  }
+  if (usage.estimatedTimeToRegainAccess > 0) {
+    return 0
+  }
+  const peak = Math.max(usage.callCount, usage.totalCpuTime, usage.totalTime)
+  if (peak < 50) {
+    return 5
+  }
+  if (peak < 75) {
+    return 3
+  }
+  if (peak < 90) {
+    return 1
+  }
+  return 0
+}
+
+type RawAppUsage = {
+  call_count?: number
+  total_cputime?: number
+  total_time?: number
+}
+
+/**
+ * `X-App-Usage`: percentages of the app's rolling-hour budget. The header
+ * carries no time, so the peak is all there is to read.
+ */
+export const parseAppUsageHeader = (
+  header: string | null | undefined,
+): number | null => {
+  if (!header) {
+    return null
+  }
+  try {
+    const parsed = JSON.parse(header) as RawAppUsage
+    return Math.max(
+      parsed.call_count ?? 0,
+      parsed.total_cputime ?? 0,
+      parsed.total_time ?? 0,
+    )
+  } catch {
+    return null
+  }
+}
+
+/** The longest `estimated_time_to_regain_access` (minutes) over every bucket and entry, in ms. */
+export const maxBucRegainMs = (
+  header: string | null | undefined,
+): number | null => {
+  if (!header) {
+    return null
+  }
+  try {
+    const parsed = JSON.parse(header) as Record<string, RawBucEntry[]>
+    let maxMinutes = 0
+    for (const entries of Object.values(parsed)) {
+      for (const entry of entries) {
+        maxMinutes = Math.max(
+          maxMinutes,
+          entry.estimated_time_to_regain_access ?? 0,
+        )
+      }
+    }
+    return maxMinutes > 0 ? estimatedMinutesToMs(maxMinutes) : null
+  } catch {
+    return null
+  }
+}

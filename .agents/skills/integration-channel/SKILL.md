@@ -109,3 +109,7 @@ Run these checks **in order**:
 | [references/comment-handler-pattern.md](references/comment-handler-pattern.md) | Adding or changing a `comment` channel (handlers layout). For auto-reply/like/hide behaviour see the `comment-automation` skill |
 | [references/multi-account-pickers.md](references/multi-account-pickers.md) | Channel returns a list of connectable accounts (pages, phone numbers) |
 | [references/existing-integrations.md](references/existing-integrations.md) | Checking auth type / credentials of existing integrations, channel vs integration |
+
+## Templates
+
+A new channel that can own an inbox binding (comment, story, inbound-webhook or leaderboard scopes) must be considered by the Templates engine: every `Record<ChannelType, …>` the template adapters use (inbox binding, leaderboard platform) needs the new key, and the account-type check that decides whether a re-bound inbox fits the automation lives with the channel (`listAutomationAccounts`), not in shared template code. See `template-integration`.
