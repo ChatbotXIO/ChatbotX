@@ -33,6 +33,9 @@ vi.mock(
       typeof import("../../template/installed-resource.service")
     >()),
     assertReferencable: mocks.assertReferencable,
+    assertResourceEditable: vi.fn(),
+    withDeleteGuard: (_input: unknown, run: (tx: unknown) => unknown) =>
+      run({}),
   }),
 )
 

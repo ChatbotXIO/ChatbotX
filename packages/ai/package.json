@@ -6,8 +6,11 @@
   "exports": {
     ".": "./src/index.ts",
     "./models": "./src/models/index.ts",
+    "./feed-post-writer": "./src/server/feed-post-writer.ts",
+    "./post-writer": "./src/server/post-writer.ts",
     "./sam": "./src/server/sam.ts",
     "./server": "./src/server.ts",
+    "./translation": "./src/server/translation.ts",
     "./utils": "./src/utils/index.ts"
   },
   "dependencies": {
@@ -26,7 +29,7 @@
     "@openrouter/ai-sdk-provider": "^3.1.0",
     "@t3-oss/env-core": "catalog:",
     "ai": "catalog:",
-    "eventsource-parser": "^3.1.1",
+    "eventsource-parser": "^4.1.3",
     "ky": "catalog:",
     "mime-types": "catalog:",
     "universal-error-normalizer": "catalog:",

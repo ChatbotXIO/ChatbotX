@@ -4,6 +4,8 @@ import { BatchHandlerPlugin } from "@orpc/server/plugins"
 import { logUnexpectedOrpcErrorCallback } from "@/lib/orpc/handlers"
 import { router } from "@/routers"
 import "../../../polyfill"
+import "@/lib/feeds/register-feed-fetcher"
+import "@/lib/media/register-media-url-importer"
 
 const rpcHandler = new RPCHandler(router, {
   interceptors: [onError(logUnexpectedOrpcErrorCallback("RPC handler"))],

@@ -5,6 +5,8 @@ import {
   type CommentPost,
   type CommentReply,
   type CommentReplyAfter,
+  captionHasAnyHashtag,
+  isHashtagCommentAutomation,
   isLiveCommentAutomation,
   liveCommentCapabilities,
   resolveReplyTexts,
@@ -62,6 +64,28 @@ export function matchPost(
   }
   const target = normalizePostId(postId)
   return post.value.some((v) => v === postId || normalizePostId(v) === target)
+}
+
+export type PostHashtagMatch = "matched" | "notMatched" | "captionUnavailable"
+
+/**
+ * The second half of the post gate, for a `hashtags` target only: whether the
+ * post's caption carries one of the automation's hashtags. `matchPost` has
+ * already let the comment through as "any non-live post"; this narrows it.
+ * Any other target type answers `matched` without reading the caption.
+ */
+export async function matchPostHashtags(
+  post: CommentPost,
+  loadPostCaption: () => Promise<string | null>,
+): Promise<PostHashtagMatch> {
+  if (!isHashtagCommentAutomation(post)) {
+    return "matched"
+  }
+  const caption = await loadPostCaption()
+  if (caption === null) {
+    return "captionUnavailable"
+  }
+  return captionHasAnyHashtag(caption, post.value) ? "matched" : "notMatched"
 }
 
 export function matchKeywords(

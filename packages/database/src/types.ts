@@ -3,7 +3,11 @@ import type * as schema from "./schema"
 export type IntegrationWebchatModel =
   typeof schema.integrationWebchatModel.$inferSelect
 export type IntegrationApiModel = typeof schema.integrationApiModel.$inferSelect
-export type UserModel = typeof schema.userModel.$inferSelect
+type UserRow = typeof schema.userModel.$inferSelect
+/** Secret `User` columns; a read must go through `userColumnsWithoutSecrets`. */
+export type UserSecretColumns = Pick<UserRow, "connectionAuthorizations">
+/** A `User` row as read for app code: without the secret columns. */
+export type UserModel = Omit<UserRow, keyof UserSecretColumns>
 export type UserDeviceTokenModel =
   typeof schema.userDeviceTokenModel.$inferSelect
 export type MobileRefreshTokenModel =
@@ -232,9 +236,45 @@ export type ContactActivityModel =
 export type ContactKeywordMessageModel =
   typeof schema.contactKeywordMessageModel.$inferSelect
 export type ContactStateModel = typeof schema.contactStateModel.$inferSelect
+export type ContactInfoCaptureModel =
+  typeof schema.contactInfoCaptureModel.$inferSelect
 export type ContactInboxPostModel =
   typeof schema.contactInboxPostModel.$inferSelect
 export type ChannelPostModel = typeof schema.channelPostModel.$inferSelect
+export type PostTopicModel = typeof schema.postTopicModel.$inferSelect
+export type ChannelPostSyncModel =
+  typeof schema.channelPostSyncModel.$inferSelect
+export type SocialPostModel = typeof schema.socialPostModel.$inferSelect
+export type SocialPostTargetModel =
+  typeof schema.socialPostTargetModel.$inferSelect
+export type SocialPostMediaModel =
+  typeof schema.socialPostMediaModel.$inferSelect
+export type SocialPostTargetMediaModel =
+  typeof schema.socialPostTargetMediaModel.$inferSelect
+export type SocialPostTargetPartModel =
+  typeof schema.socialPostTargetPartModel.$inferSelect
+export type SocialPostRecurrenceModel =
+  typeof schema.socialPostRecurrenceModel.$inferSelect
+export type SocialPostRecurrenceOccurrenceModel =
+  typeof schema.socialPostRecurrenceOccurrenceModel.$inferSelect
+export type SocialPostFeedModel = typeof schema.socialPostFeedModel.$inferSelect
+export type SocialPostFeedDestinationModel =
+  typeof schema.socialPostFeedDestinationModel.$inferSelect
+export type SocialPostFeedItemModel =
+  typeof schema.socialPostFeedItemModel.$inferSelect
+export type SocialPostSnippetModel =
+  typeof schema.socialPostSnippetModel.$inferSelect
+export type SocialPostTargetSetModel =
+  typeof schema.socialPostTargetSetModel.$inferSelect
+export type SocialPostTargetSetDestinationModel =
+  typeof schema.socialPostTargetSetDestinationModel.$inferSelect
+export type SocialAccountModel = typeof schema.socialAccountModel.$inferSelect
+export type PublishDestinationModel =
+  typeof schema.publishDestinationModel.$inferSelect
+export type PublishDestinationScheduleModel =
+  typeof schema.publishDestinationScheduleModel.$inferSelect
+export type SocialAccountDestinationModel =
+  typeof schema.socialAccountDestinationModel.$inferSelect
 export type ContactInboxOperationalModel = Omit<
   ContactInboxModel,
   "sourceIdentityHistory"
@@ -272,8 +312,17 @@ export type WhatsappMessageTemplateModel =
   typeof schema.whatsappMessageTemplateModel.$inferSelect
 export type AiHandoverBulkRunModel =
   typeof schema.aiHandoverBulkRunModel.$inferSelect
+export type ContactSyncRunModel = typeof schema.contactSyncRunModel.$inferSelect
+export type ContactSyncRunItemModel =
+  typeof schema.contactSyncRunItemModel.$inferSelect
+export type ContactSyncMappingModel =
+  typeof schema.contactSyncMappingModel.$inferSelect
 export type AiHandoverSettingsModel =
   typeof schema.aiHandoverSettingsModel.$inferSelect
+export type InboxTranslationSettingsModel =
+  typeof schema.inboxTranslationSettingsModel.$inferSelect
+export type MessageTranslationModel =
+  typeof schema.messageTranslationModel.$inferSelect
 export type MessengerMessageTemplateModel =
   typeof schema.messengerMessageTemplateModel.$inferSelect
 export type WhatsappFlowModel = typeof schema.whatsappFlowModel.$inferSelect

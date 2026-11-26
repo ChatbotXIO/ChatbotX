@@ -14,6 +14,15 @@ import { beforeEach, describe, expect, test, vi } from "vitest"
 const mocks = vi.hoisted(() => ({
   execute: vi.fn(),
   setLocalStatementTimeout: vi.fn(),
+  deleteSourceBatch: vi.fn(),
+  existsForSource: vi.fn(),
+}))
+
+vi.mock("../src/repositories/contact-info-capture", () => ({
+  contactInfoCaptureRepository: {
+    deleteSourceBatch: mocks.deleteSourceBatch,
+    existsForSource: mocks.existsForSource,
+  },
 }))
 
 vi.mock("../src/client", async (importOriginal) => {
@@ -34,6 +43,7 @@ vi.mock("../src/client", async (importOriginal) => {
 const {
   DEFAULT_PURGE_MAX_CHUNKS,
   listPurgeableBroadcasts,
+  purgeBroadcastCaptures,
   purgeBroadcastRecipients,
   hasBroadcastRecipients,
   hardDeleteBroadcast,
@@ -57,14 +67,16 @@ beforeEach(() => {
 
 describe("listPurgeableBroadcasts", () => {
   test("selects soft-deleted, non-sending broadcasts ordered oldest-deleted-first, bound limit", async () => {
-    mocks.execute.mockResolvedValue({ rows: [{ id: "b-1" }] })
+    mocks.execute.mockResolvedValue({
+      rows: [{ id: "b-1", workspaceId: "w-1" }],
+    })
 
     const result = await listPurgeableBroadcasts(50)
 
-    expect(result).toEqual([{ id: "b-1" }])
+    expect(result).toEqual([{ id: "b-1", workspaceId: "w-1" }])
     const { text, params } = renderQuery(mocks.execute.mock.calls[0]?.[0])
     expect(text).toBe(
-      'SELECT "id" FROM "Broadcast" WHERE "deletedAt" IS NOT NULL AND "status" <> \'sending\' ORDER BY "deletedAt" ASC, "id" ASC LIMIT $1',
+      'SELECT "id", "workspaceId" FROM "Broadcast" WHERE "deletedAt" IS NOT NULL AND "status" <> \'sending\' ORDER BY "deletedAt" ASC, "id" ASC LIMIT $1',
     )
     expect(params).toEqual([50])
   })
@@ -275,23 +287,143 @@ describe("hasBroadcastRecipients", () => {
   })
 })
 
-describe("hardDeleteBroadcast", () => {
-  test("pins the delete to deletedAt IS NOT NULL AND status <> 'sending', bound broadcastId", async () => {
-    mocks.execute.mockResolvedValue({ rows: [{ id: "b-1" }] })
+describe("purgeBroadcastCaptures", () => {
+  const input = {
+    broadcastId: "b-1",
+    workspaceId: "w-1",
+    chunkSize: 500,
+    interChunkDelayMs: 0,
+    maxRunDurationMs: 60_000,
+  }
 
-    const result = await hardDeleteBroadcast("b-1")
+  test("deletes source batches in transactions and reports drained on a short chunk", async () => {
+    mocks.deleteSourceBatch.mockResolvedValueOnce(500).mockResolvedValueOnce(7)
 
-    expect(result).toBe(true)
-    const { text, params } = renderQuery(mocks.execute.mock.calls[0]?.[0])
-    expect(text).toBe(
-      'DELETE FROM "Broadcast" WHERE "id" = $1 AND "deletedAt" IS NOT NULL AND "status" <> \'sending\' RETURNING "id"',
+    const result = await purgeBroadcastCaptures(input)
+
+    expect(result).toEqual({ deleted: 507, stopReason: "drained" })
+    expect(mocks.deleteSourceBatch).toHaveBeenCalledTimes(2)
+    expect(mocks.deleteSourceBatch).toHaveBeenCalledWith(
+      {
+        workspaceId: "w-1",
+        sourceType: "broadcast",
+        sourceId: "b-1",
+        limit: 500,
+        extraWhere: undefined,
+      },
+      expect.anything(),
     )
-    expect(params).toEqual(["b-1"])
+    expect(mocks.setLocalStatementTimeout).toHaveBeenCalledTimes(2)
   })
 
-  test("returns false when nothing matched (already undeleted, or now sending)", async () => {
+  test("onlyWhileDraft passes the draft guard to every chunk", async () => {
+    mocks.deleteSourceBatch.mockResolvedValueOnce(0)
+
+    await purgeBroadcastCaptures({ ...input, onlyWhileDraft: true })
+
+    expect(mocks.deleteSourceBatch).toHaveBeenCalledWith(
+      expect.objectContaining({ extraWhere: expect.anything() }),
+      expect.anything(),
+    )
+  })
+
+  test("stops on the deadline before starting a chunk when the budget is spent", async () => {
+    const result = await purgeBroadcastCaptures({
+      ...input,
+      maxRunDurationMs: 0,
+    })
+
+    expect(result).toEqual({ deleted: 0, stopReason: "deadline" })
+    expect(mocks.deleteSourceBatch).not.toHaveBeenCalled()
+  })
+
+  test("stops on the chunk cap when every chunk is full", async () => {
+    mocks.deleteSourceBatch.mockResolvedValue(500)
+
+    const result = await purgeBroadcastCaptures({ ...input, maxChunks: 3 })
+
+    expect(result).toEqual({ deleted: 1500, stopReason: "chunkCap" })
+  })
+
+  test("a statement timeout ends the run as a deadline, keeping what was deleted", async () => {
+    const timeout = new DrizzleQueryError(
+      "DELETE",
+      [],
+      Object.assign(new Error("canceling statement due to statement timeout"), {
+        code: "57014",
+      }),
+    )
+    mocks.deleteSourceBatch
+      .mockResolvedValueOnce(500)
+      .mockRejectedValueOnce(timeout)
+
+    const result = await purgeBroadcastCaptures(input)
+
+    expect(result).toEqual({ deleted: 500, stopReason: "deadline" })
+  })
+
+  test("propagates any other database error", async () => {
+    mocks.deleteSourceBatch.mockRejectedValueOnce(new Error("db down"))
+
+    await expect(purgeBroadcastCaptures(input)).rejects.toThrow("db down")
+  })
+})
+
+describe("hardDeleteBroadcast", () => {
+  const args = { broadcastId: "b-1", workspaceId: "w-1" }
+
+  test("locks the row FOR UPDATE, re-checks captures, then deletes pinned to deletedAt/status", async () => {
+    mocks.execute
+      .mockResolvedValueOnce({ rows: [{ id: "b-1" }] })
+      .mockResolvedValueOnce({ rows: [{ id: "b-1" }] })
+    mocks.existsForSource.mockResolvedValue(false)
+
+    const result = await hardDeleteBroadcast(args)
+
+    expect(result).toBe(true)
+    const lock = renderQuery(mocks.execute.mock.calls[0]?.[0])
+    expect(lock.text).toBe(
+      'SELECT "id" FROM "Broadcast" WHERE "id" = $1 AND "workspaceId" = $2::bigint AND "deletedAt" IS NOT NULL AND "status" <> \'sending\' FOR UPDATE',
+    )
+    expect(lock.params).toEqual(["b-1", "w-1"])
+    expect(mocks.existsForSource).toHaveBeenCalledWith(
+      { workspaceId: "w-1", sourceType: "broadcast", sourceId: "b-1" },
+      expect.anything(),
+    )
+    const del = renderQuery(mocks.execute.mock.calls[1]?.[0])
+    expect(del.text).toBe(
+      'DELETE FROM "Broadcast" WHERE "id" = $1 AND "workspaceId" = $2::bigint AND "deletedAt" IS NOT NULL AND "status" <> \'sending\' RETURNING "id"',
+    )
+    expect(del.params).toEqual(["b-1", "w-1"])
+  })
+
+  test("a broadcast of another workspace is not locked, checked or deleted", async () => {
+    // The lock is scoped to the workspace, so a mismatched id finds no row.
     mocks.execute.mockResolvedValue({ rows: [] })
 
-    await expect(hardDeleteBroadcast("b-1")).resolves.toBe(false)
+    await expect(
+      hardDeleteBroadcast({ broadcastId: "b-1", workspaceId: "w-other" }),
+    ).resolves.toBe(false)
+
+    const lock = renderQuery(mocks.execute.mock.calls[0]?.[0])
+    expect(lock.params).toEqual(["b-1", "w-other"])
+    expect(mocks.existsForSource).not.toHaveBeenCalled()
+    expect(mocks.execute).toHaveBeenCalledTimes(1)
+  })
+
+  test("keeps the broadcast when a capture committed after the drain", async () => {
+    mocks.execute.mockResolvedValueOnce({ rows: [{ id: "b-1" }] })
+    mocks.existsForSource.mockResolvedValue(true)
+
+    await expect(hardDeleteBroadcast(args)).resolves.toBe(false)
+    expect(mocks.execute).toHaveBeenCalledTimes(1)
+  })
+
+  test("returns false without deleting when the lock finds nothing (undeleted, or now sending)", async () => {
+    mocks.execute.mockResolvedValue({ rows: [] })
+
+    await expect(hardDeleteBroadcast(args)).resolves.toBe(false)
+    expect(mocks.existsForSource).not.toHaveBeenCalled()
+    expect(mocks.execute).toHaveBeenCalledTimes(1)
   })
 })

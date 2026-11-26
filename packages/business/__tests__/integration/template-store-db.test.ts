@@ -322,6 +322,8 @@ describe.skipIf(!databaseUrl)("template store service", () => {
     const deleted = await seedTemplate(mine.tenantId, { deletedAt: new Date() })
     const add = (templateId: string, categoryIds: string[]) =>
       templateStoreService.addListing({
+        languages: [],
+        channels: [],
         scope: mine.scope,
         templateId,
         categoryIds,
@@ -381,6 +383,8 @@ describe.skipIf(!databaseUrl)("template store service", () => {
     const outcomes = await Promise.allSettled(
       [1, 2, 3].map(() =>
         templateStoreService.addListing({
+          languages: [],
+          channels: [],
           scope,
           templateId: template.id,
           categoryIds: [cat.id],
@@ -422,6 +426,8 @@ describe.skipIf(!databaseUrl)("template store service", () => {
     ]
     const add = (templateId: string) =>
       templateStoreService.addListing({
+        languages: [],
+        channels: [],
         scope,
         templateId,
         categoryIds: [cat.id],
@@ -455,6 +461,8 @@ describe.skipIf(!databaseUrl)("template store service", () => {
     const [cat] = await categoryIdsOf(scope)
     const tpl = await seedTemplate(tenantId)
     await templateStoreService.addListing({
+      languages: [],
+      channels: [],
       scope,
       templateId: tpl.id,
       categoryIds: [cat.id],
@@ -490,14 +498,18 @@ describe.skipIf(!databaseUrl)("template store service", () => {
       templateStoreService.removeListing({ scope, listingId: bad }),
     ).rejects.toMatchObject(listingGone)
     await expect(
-      templateStoreService.updateListingCategories({
+      templateStoreService.updateListing({
+        languages: [],
+        channels: [],
         scope,
         listingId: bad,
         categoryIds: [cat.id],
       }),
     ).rejects.toMatchObject(listingGone)
     await expect(
-      templateStoreService.updateListingCategories({
+      templateStoreService.updateListing({
+        languages: [],
+        channels: [],
         scope,
         listingId,
         categoryIds: [bad],
@@ -505,6 +517,8 @@ describe.skipIf(!databaseUrl)("template store service", () => {
     ).rejects.toMatchObject(categoryGone)
     await expect(
       templateStoreService.addListing({
+        languages: [],
+        channels: [],
         scope,
         templateId: tpl.id,
         categoryIds: [bad],
@@ -569,6 +583,8 @@ describe.skipIf(!databaseUrl)("template store service", () => {
     const [a, b] = await categoryIdsOf(scope)
     const tpl = await seedTemplate(tenantId)
     await templateStoreService.addListing({
+      languages: [],
+      channels: [],
       scope,
       templateId: tpl.id,
       categoryIds: [a.id],
@@ -580,12 +596,16 @@ describe.skipIf(!databaseUrl)("template store service", () => {
 
     // Two replacements at once: exactly one final set, never a mix.
     await Promise.all([
-      templateStoreService.updateListingCategories({
+      templateStoreService.updateListing({
+        languages: [],
+        channels: [],
         scope,
         listingId,
         categoryIds: [a.id],
       }),
-      templateStoreService.updateListingCategories({
+      templateStoreService.updateListing({
+        languages: [],
+        channels: [],
         scope,
         listingId,
         categoryIds: [b.id],
@@ -598,7 +618,9 @@ describe.skipIf(!databaseUrl)("template store service", () => {
 
     // Replace racing a remove: the replace either lands before it or reports the listing gone.
     const [replace, remove] = await Promise.allSettled([
-      templateStoreService.updateListingCategories({
+      templateStoreService.updateListing({
+        languages: [],
+        channels: [],
         scope,
         listingId,
         categoryIds: [a.id, b.id],
@@ -652,6 +674,8 @@ describe.skipIf(!databaseUrl)("template store service", () => {
     })
     const tpl = await seedTemplate(mine.tenantId)
     await templateStoreService.addListing({
+      languages: [],
+      channels: [],
       scope: mine.scope,
       templateId: tpl.id,
       categoryIds: [cat.id],
@@ -665,14 +689,18 @@ describe.skipIf(!databaseUrl)("template store service", () => {
     const listingId = listings[0].listingId
 
     await expect(
-      templateStoreService.updateListingCategories({
+      templateStoreService.updateListing({
+        languages: [],
+        channels: [],
         scope: other.scope,
         listingId,
         categoryIds: [theirCat.id],
       }),
     ).rejects.toMatchObject({ code: "templateStoreListingUnavailable" })
     await expect(
-      templateStoreService.updateListingCategories({
+      templateStoreService.updateListing({
+        languages: [],
+        channels: [],
         scope: mine.scope,
         listingId,
         categoryIds: [theirCat.id],
@@ -683,7 +711,9 @@ describe.skipIf(!databaseUrl)("template store service", () => {
     ).rejects.toMatchObject({ code: "templateStoreListingUnavailable" })
 
     const [, second] = await categoryIdsOf(mine.scope)
-    await templateStoreService.updateListingCategories({
+    await templateStoreService.updateListing({
+      languages: [],
+      channels: [],
       scope: mine.scope,
       listingId,
       categoryIds: [second.id],
@@ -700,6 +730,448 @@ describe.skipIf(!databaseUrl)("template store service", () => {
     ).rejects.toMatchObject({ code: "templateStoreListingUnavailable" })
   })
 
+  test("store languages: every template is returned with its zone for the visitor's language, categories untouched", async () => {
+    const { scope, ownerId, tenantId } = await seedTenant("langs")
+    for (const name of ["VnCat", "FrCat"]) {
+      await templateStoreService.createCategory({
+        scope,
+        name,
+        actorUserId: ownerId,
+      })
+    }
+    const cats = await categoryIdsOf(scope)
+    const catId = (name: string) =>
+      cats.find((c) => c.name === name)?.id as string
+    const add = async (
+      name: string,
+      languages: ("vi" | "en" | "fr")[],
+      categoryIds: string[],
+    ) => {
+      const template = await seedTemplate(tenantId, { name })
+      await templateStoreService.addListing({
+        scope,
+        templateId: template.id,
+        categoryIds,
+        languages,
+        channels: [],
+        actorUserId: ownerId,
+      })
+    }
+    await add("Vn", ["vi"], [catId("VnCat")])
+    await add("En", ["en"], [])
+    await add("Fr", ["fr"], [catId("FrCat")])
+    await add("Any", [], [])
+    await add("ViFr", ["vi", "fr"], [catId("VnCat")])
+
+    const zones = async (viewerLocale?: "vi" | "en" | "fr") => {
+      const published = await templateStoreService.listPublished({
+        tenantId,
+        viewerLocale,
+      })
+      return {
+        zones: Object.fromEntries(
+          published.templates.map((t) => [t.name, t.section]),
+        ),
+        categories: published.categories.map((c) => c.name).sort(),
+      }
+    }
+
+    // No visitor language (public API): every template on top.
+    expect((await zones()).zones).toEqual({
+      Vn: "primary",
+      En: "primary",
+      Fr: "primary",
+      Any: "primary",
+      ViFr: "primary",
+    })
+    expect((await zones("vi")).zones).toEqual({
+      Vn: "primary",
+      En: "hidden",
+      Fr: "hidden",
+      Any: "primary",
+      ViFr: "primary",
+    })
+    expect((await zones("en")).zones).toEqual({
+      Vn: "hidden",
+      En: "primary",
+      Fr: "other",
+      Any: "primary",
+      ViFr: "hidden",
+    })
+    expect((await zones("fr")).zones).toEqual({
+      Vn: "hidden",
+      En: "other",
+      Fr: "primary",
+      Any: "primary",
+      ViFr: "primary",
+    })
+    // "All languages" needs every category, so none is pruned by language.
+    for (const locale of ["vi", "en", "fr"] as const) {
+      expect((await zones(locale)).categories).toEqual(["FrCat", "VnCat"])
+    }
+  })
+
+  test("store languages: a store with only Vietnamese templates still offers the home tab to everyone", async () => {
+    const { scope, ownerId, tenantId } = await seedTenant("viOnly")
+    const template = await seedTemplate(tenantId, { name: "Vn" })
+    await templateStoreService.addListing({
+      scope,
+      templateId: template.id,
+      categoryIds: [],
+      languages: ["vi"],
+      channels: [],
+      actorUserId: ownerId,
+    })
+
+    // A visitor in any language can switch to "All languages".
+    expect(await templateStoreService.hasPublished({ tenantId })).toBe(true)
+    expect(
+      (
+        await templateStoreService.listPublished({
+          tenantId,
+          viewerLocale: "en",
+        })
+      ).templates.map((t) => t.section),
+    ).toEqual(["hidden"])
+  })
+
+  test("store languages: updateListing replaces languages with the categories, validates them, and rolls back together", async () => {
+    const { scope, ownerId, tenantId } = await seedTenant("langUpdate")
+    const template = await seedTemplate(tenantId, { name: "T" })
+    await templateStoreService.addListing({
+      scope,
+      templateId: template.id,
+      categoryIds: [],
+      languages: ["vi", "en"],
+      channels: [],
+      actorUserId: ownerId,
+    })
+    const listingOf = async () =>
+      (await templateStoreService.listForAdmin({ scope, page: 1, perPage: 5 }))
+        .listings[0]
+    const listing = await listingOf()
+    expect(listing.languages).toEqual(["vi", "en"])
+
+    await templateStoreService.updateListing({
+      scope,
+      listingId: listing.listingId,
+      categoryIds: [],
+      languages: ["fr", "fr"],
+      channels: [],
+    })
+    expect((await listingOf()).languages).toEqual(["fr"])
+
+    // An unknown code is refused and nothing changes.
+    await expect(
+      templateStoreService.updateListing({
+        scope,
+        listingId: listing.listingId,
+        categoryIds: [],
+        languages: ["xx" as never],
+        channels: [],
+      }),
+    ).rejects.toThrow()
+    await expect(
+      templateStoreService.addListing({
+        scope,
+        templateId: template.id,
+        categoryIds: [],
+        languages: ["xx" as never],
+        channels: [],
+        actorUserId: ownerId,
+      }),
+    ).rejects.toThrow()
+
+    // A vanished category rolls the languages back too.
+    await expect(
+      templateStoreService.updateListing({
+        scope,
+        listingId: listing.listingId,
+        categoryIds: [createId()],
+        languages: ["de"],
+        channels: [],
+      }),
+    ).rejects.toMatchObject(categoryGoneCode)
+    expect((await listingOf()).languages).toEqual(["fr"])
+  })
+
+  test("store languages: a stored code the UI no longer lists is dropped on read, never breaking the admin list or the catalog", async () => {
+    const { scope, ownerId, tenantId } = await seedTenant("staleLang")
+    const template = await seedTemplate(tenantId, { name: "Stale" })
+    await templateStoreService.addListing({
+      scope,
+      templateId: template.id,
+      categoryIds: [],
+      languages: ["en"],
+      channels: [],
+      actorUserId: ownerId,
+    })
+    await db
+      .update(templateStoreListingModel)
+      .set({ languages: ["en", "xx"] as never })
+      .where(eq(templateStoreListingModel.tenantId, tenantId))
+
+    const admin = await templateStoreService.listForAdmin({
+      scope,
+      page: 1,
+      perPage: 5,
+    })
+    expect(admin.listings[0].languages).toEqual(["en"])
+    const published = await templateStoreService.listPublished({ tenantId })
+    expect(published.templates[0].languages).toEqual(["en"])
+  })
+
+  test("store channels: updateListing replaces channels in the fixed order, validates them, and rolls back together", async () => {
+    const { scope, ownerId, tenantId } = await seedTenant("chanUpdate")
+    const template = await seedTemplate(tenantId, { name: "T" })
+    await templateStoreService.addListing({
+      scope,
+      templateId: template.id,
+      categoryIds: [],
+      languages: [],
+      channels: ["telegram", "whatsapp", "telegram"],
+      actorUserId: ownerId,
+    })
+    const listingOf = async () =>
+      (await templateStoreService.listForAdmin({ scope, page: 1, perPage: 5 }))
+        .listings[0]
+    const listing = await listingOf()
+    expect(listing.channels).toEqual(["whatsapp", "telegram"])
+
+    await templateStoreService.updateListing({
+      scope,
+      listingId: listing.listingId,
+      categoryIds: [],
+      languages: [],
+      channels: ["line", "line"],
+    })
+    expect((await listingOf()).channels).toEqual(["line"])
+
+    // An unknown or non-channel value is refused and nothing changes.
+    for (const channels of [["fax"], ["omnichannel"]]) {
+      await expect(
+        templateStoreService.updateListing({
+          scope,
+          listingId: listing.listingId,
+          categoryIds: [],
+          languages: [],
+          channels: channels as never,
+        }),
+      ).rejects.toThrow()
+    }
+    expect((await listingOf()).channels).toEqual(["line"])
+
+    // The api integration channel is allowed and sorts last.
+    await templateStoreService.updateListing({
+      scope,
+      listingId: listing.listingId,
+      categoryIds: [],
+      languages: [],
+      channels: ["api", "line"],
+    })
+    expect((await listingOf()).channels).toEqual(["line", "api"])
+    await templateStoreService.updateListing({
+      scope,
+      listingId: listing.listingId,
+      categoryIds: [],
+      languages: [],
+      channels: ["line"],
+    })
+
+    // A vanished category rolls the channels back too.
+    await expect(
+      templateStoreService.updateListing({
+        scope,
+        listingId: listing.listingId,
+        categoryIds: [createId()],
+        languages: [],
+        channels: ["zalo"],
+      }),
+    ).rejects.toMatchObject(categoryGoneCode)
+    expect((await listingOf()).channels).toEqual(["line"])
+  })
+
+  test("store channels: bulk edit sets only the channels and keeps the other fields; the catalog filters by channel; a stale stored value is dropped on read", async () => {
+    const { scope, ownerId, tenantId } = await seedTenant("chanBulk")
+    const ids: string[] = []
+    for (const name of ["One", "Two"]) {
+      const template = await seedTemplate(tenantId, { name })
+      await templateStoreService.addListing({
+        scope,
+        templateId: template.id,
+        categoryIds: [],
+        languages: ["en"],
+        channels: [],
+        actorUserId: ownerId,
+      })
+    }
+    const admin = () =>
+      templateStoreService.listForAdmin({ scope, page: 1, perPage: 5 })
+    for (const row of (await admin()).listings) {
+      ids.push(row.listingId)
+    }
+
+    await templateStoreService.updateListings({
+      scope,
+      listingIds: ids,
+      channels: ["instagram", "messenger"],
+    })
+    for (const row of (await admin()).listings) {
+      expect(row.channels).toEqual(["messenger", "instagram"])
+      expect(row.languages).toEqual(["en"])
+    }
+    expect(
+      (
+        await templateStoreService.listPublished({
+          tenantId,
+          channel: "instagram",
+        })
+      ).templates,
+    ).toHaveLength(2)
+    expect(
+      (
+        await templateStoreService.listPublished({
+          tenantId,
+          channel: "telegram",
+        })
+      ).templates,
+    ).toHaveLength(0)
+    // A listing with no channels works on every channel, so it joins any filter.
+    const loose = await seedTemplate(tenantId, { name: "Loose" })
+    await templateStoreService.addListing({
+      scope,
+      templateId: loose.id,
+      categoryIds: [],
+      languages: [],
+      channels: [],
+      actorUserId: ownerId,
+    })
+    expect(
+      (
+        await templateStoreService.listPublished({
+          tenantId,
+          channel: "telegram",
+        })
+      ).templates.map((t) => t.name),
+    ).toEqual(["Loose"])
+    await expect(
+      templateStoreService.updateListings({ scope, listingIds: ids }),
+    ).rejects.toThrow()
+
+    await db
+      .update(templateStoreListingModel)
+      .set({ channels: ["telegram", "fax"] as never })
+      .where(eq(templateStoreListingModel.tenantId, tenantId))
+    expect((await admin()).listings[0].channels).toEqual(["telegram"])
+    expect(
+      (await templateStoreService.listPublished({ tenantId })).templates[0]
+        .channels,
+    ).toEqual(["telegram"])
+  })
+
+  test("bulk: sets categories or languages of many listings, keeps the other field, all or nothing", async () => {
+    const { scope, ownerId, tenantId } = await seedTenant("bulkEdit")
+    const other = await seedTenant("bulkOther")
+    for (const name of ["A", "B"]) {
+      await templateStoreService.createCategory({
+        scope,
+        name,
+        actorUserId: ownerId,
+      })
+    }
+    const [catA, catB] = await categoryIdsOf(scope)
+    for (const name of ["One", "Two"]) {
+      const template = await seedTemplate(tenantId, { name })
+      await templateStoreService.addListing({
+        scope,
+        templateId: template.id,
+        categoryIds: [catA.id],
+        languages: ["en"],
+        channels: [],
+        actorUserId: ownerId,
+      })
+    }
+    const foreignTemplate = await seedTemplate(other.tenantId, { name: "X" })
+    await templateStoreService.addListing({
+      scope: other.scope,
+      templateId: foreignTemplate.id,
+      categoryIds: [],
+      languages: [],
+      channels: [],
+      actorUserId: other.ownerId,
+    })
+    const listings = async (s: typeof scope) =>
+      (
+        await templateStoreService.listForAdmin({
+          scope: s,
+          page: 1,
+          perPage: 10,
+        })
+      ).listings
+    const ids = (await listings(scope)).map((l) => l.listingId)
+    const foreignId = (await listings(other.scope))[0].listingId
+
+    // Categories only: languages kept.
+    await templateStoreService.updateListings({
+      scope,
+      listingIds: ids,
+      categoryIds: [catB.id],
+    })
+    for (const listing of await listings(scope)) {
+      expect(listing.categories.map((c) => c.name)).toEqual(["B"])
+      expect(listing.languages).toEqual(["en"])
+    }
+    // Languages only: categories kept.
+    await templateStoreService.updateListings({
+      scope,
+      listingIds: ids,
+      languages: ["vi", "fr"],
+      channels: [],
+    })
+    for (const listing of await listings(scope)) {
+      expect(listing.categories.map((c) => c.name)).toEqual(["B"])
+      expect(listing.languages).toEqual(["vi", "fr"])
+    }
+    // One listing of another tenant: nothing written, nothing removed.
+    await expect(
+      templateStoreService.updateListings({
+        scope,
+        listingIds: [...ids, foreignId],
+        categoryIds: [catA.id],
+        languages: ["de"],
+        channels: [],
+      }),
+    ).rejects.toMatchObject({ code: "templateStoreListingUnavailable" })
+    await expect(
+      templateStoreService.removeListings({
+        scope,
+        listingIds: [...ids, foreignId],
+      }),
+    ).rejects.toMatchObject({ code: "templateStoreListingUnavailable" })
+    for (const listing of await listings(scope)) {
+      expect(listing.categories.map((c) => c.name)).toEqual(["B"])
+      expect(listing.languages).toEqual(["vi", "fr"])
+    }
+    expect(await listings(other.scope)).toHaveLength(1)
+    // Nothing to update, no listing, or a non-numeric id is refused.
+    await expect(
+      templateStoreService.updateListings({ scope, listingIds: ids }),
+    ).rejects.toThrow()
+    await expect(
+      templateStoreService.removeListings({ scope, listingIds: [] }),
+    ).rejects.toThrow()
+    await expect(
+      templateStoreService.removeListings({ scope, listingIds: ["abc"] }),
+    ).rejects.toMatchObject({ code: "templateStoreListingUnavailable" })
+
+    // Removing both, a duplicate id counted once.
+    await templateStoreService.removeListings({
+      scope,
+      listingIds: [...ids, ids[0]],
+    })
+    expect(await listings(scope)).toEqual([])
+  })
+
   test("a template without a category is published and shows under All only", async () => {
     const { scope, ownerId, tenantId } = await seedTenant("nocat")
     await templateStoreService.createCategory({
@@ -711,12 +1183,16 @@ describe.skipIf(!databaseUrl)("template store service", () => {
     const bare = await seedTemplate(tenantId, { name: "Bare" })
     const filed = await seedTemplate(tenantId, { name: "Filed" })
     await templateStoreService.addListing({
+      languages: [],
+      channels: [],
       scope,
       templateId: bare.id,
       categoryIds: [],
       actorUserId: ownerId,
     })
     await templateStoreService.addListing({
+      languages: [],
+      channels: [],
       scope,
       templateId: filed.id,
       categoryIds: [cat.id],
@@ -779,6 +1255,8 @@ describe.skipIf(!databaseUrl)("template store service", () => {
     })
     await seedTemplate(other.tenantId, { name: "Alpha foreign" })
     await templateStoreService.addListing({
+      languages: [],
+      channels: [],
       scope: mine.scope,
       templateId: listed.id,
       categoryIds: [cat.id],
@@ -845,6 +1323,8 @@ describe.skipIf(!databaseUrl)("template store service", () => {
     })
     for (const t of [live, off]) {
       await templateStoreService.addListing({
+        languages: [],
+        channels: [],
         scope,
         templateId: t.id,
         categoryIds: [cat.id],
@@ -916,6 +1396,8 @@ describe.skipIf(!databaseUrl)("template store service", () => {
     ).rejects.toMatchObject({ code: "templateStoreCategoryUnavailable" })
     await expect(
       templateStoreService.addListing({
+        languages: [],
+        channels: [],
         scope,
         templateId: "1",
         categoryIds: ["1"],

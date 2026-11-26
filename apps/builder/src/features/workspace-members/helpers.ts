@@ -25,6 +25,9 @@ export function isEnableAtLeastOneNotification(
   return (
     notificationTypes.notifyAdmin ||
     notificationTypes.newMessageToHuman ||
-    notificationTypes.newOrder
+    notificationTypes.newOrder ||
+    notificationTypes.postFailed ||
+    notificationTypes.postNeedsReview ||
+    notificationTypes.publishConnection
   )
 }

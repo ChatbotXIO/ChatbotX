@@ -440,6 +440,8 @@ describe("BroadcastRunsView", () => {
               "message:seen": 60,
               "flow:clicked": 12,
               "message:failed": 0,
+              "contactInfo:phoneCaptured": 7,
+              "contactInfo:emailCaptured": 0,
             },
           },
         }),
@@ -455,6 +457,7 @@ describe("BroadcastRunsView", () => {
     await flush()
 
     expect(buttonByText("Failed: 0")?.disabled).toBe(true)
+    expect(buttonByText("Left email address: 0")?.disabled).toBe(true)
     const opened = () =>
       container.querySelector('[data-testid="contacts-dialog"]')?.textContent
     for (const [label, expected] of [
@@ -462,6 +465,7 @@ describe("BroadcastRunsView", () => {
       ["Delivered: 100", "run-1:message:delivered:100"],
       ["Seen: 60", "run-1:message:seen:60"],
       ["Clicked: 12", "run-1:flow:clicked:12"],
+      ["Left phone number: 7", "run-1:contactInfo:phoneCaptured:7"],
     ] as const) {
       act(() => {
         buttonByText(label)?.click()

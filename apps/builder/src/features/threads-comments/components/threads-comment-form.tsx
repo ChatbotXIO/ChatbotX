@@ -35,8 +35,10 @@ import {
   useAccountChoiceMissing,
 } from "@/features/shared/comment-automation/automation-account-field"
 import { ExcludeKeywordsField } from "@/features/shared/comment-automation/exclude-keywords-field"
+import { PostHashtagsField } from "@/features/shared/comment-automation/post-hashtags-field"
 import { ReplyTextsField } from "@/features/shared/comment-automation/reply-texts-field"
 import { ReplyToField } from "@/features/shared/comment-automation/reply-to-field"
+import { useClearPostValueOnHashtagsSwitch } from "@/features/shared/comment-automation/use-clear-post-value-on-hashtags-switch"
 import { LockedContent } from "@/features/templates/components/locked-editor"
 import { useWorkspaceId } from "@/hooks/routing"
 import { useThreadsPosts } from "../hooks/use-threads-posts"
@@ -97,6 +99,10 @@ export function ThreadsCommentForm({
       toast.error(t("fields.aiAgent.loadError"))
     }
   }, [isAIAgentsError, t])
+
+  useClearPostValueOnHashtagsSwitch(postType, () =>
+    form.setValue("post.value", [], { shouldDirty: true }),
+  )
 
   useEffect(() => {
     if (postType === "all") {
@@ -193,6 +199,10 @@ export function ThreadsCommentForm({
                   label: t("threadsCommentAutomation.postType.specificPosts"),
                   value: "postIds",
                 },
+                {
+                  label: t("commentAutomation.postType.hashtags"),
+                  value: "hashtags",
+                },
               ]}
               orientation="horizontal"
               required
@@ -232,6 +242,8 @@ export function ThreadsCommentForm({
                 )}
               />
             ) : null}
+
+            {postType === "hashtags" && <PostHashtagsField />}
 
             <RadioGroupField
               description={t("threadsCommentAutomation.publicReplyDescription")}

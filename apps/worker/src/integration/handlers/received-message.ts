@@ -2,6 +2,7 @@ import { automatedResponseService } from "@chatbotx.io/automated-response"
 import {
   appointmentService,
   buildContext,
+  type ChannelPostCommentSettings,
   type ContactInboxTrackingData,
   type ContactInboxWithContact,
   channelPostService,
@@ -19,6 +20,7 @@ import {
   queueMessageCreatedEvent,
   queueWorkspaceRealtimeEvent,
   quotaEnforcementService,
+  type RecordedCommentOutcome,
   recordProfileRefreshFailure,
   resolveTenantSettings,
   syncExistingContactIdentity,
@@ -34,6 +36,7 @@ import {
   normalizeLanguage,
 } from "@chatbotx.io/business/contact-locale"
 import { isInboundConversationMessage } from "@chatbotx.io/business/contact-profile-rules"
+import { toContactInfoCaptureTypes } from "@chatbotx.io/business/detect-contact-info"
 import {
   type ChannelType,
   type CommentAutomationType,
@@ -70,6 +73,7 @@ import {
 } from "@chatbotx.io/events"
 import { uploader } from "@chatbotx.io/filesystem"
 import {
+  type ContactInfoCaptureInfoType,
   decodeContactHintQuickReplyPayload,
   decodeStepInputSkipPostback,
   messageEventTypeSchema,
@@ -110,7 +114,7 @@ import {
   type SourceScopedIdentityMatchedBy,
   toKeepOriginal,
 } from "@chatbotx.io/sdk"
-import { createId } from "@chatbotx.io/utils"
+import { createId, isEmailThreadSourceId } from "@chatbotx.io/utils"
 import { hasGoogleClick } from "@chatbotx.io/utils/google-click"
 import { isLazyAvatarChannel } from "@chatbotx.io/utils/live-media"
 import { storeIncomingImage } from "@chatbotx.io/utils/store-incoming-image"
@@ -122,7 +126,6 @@ import {
   getInboundCartReplyJobId,
   IntegrationJobAction,
   type IntegrationJobDeleteIncomingComment,
-  type IntegrationJobDeleteIncomingMessage,
   type IntegrationJobMessageReaction,
   type IntegrationJobProcessCommentAutomation,
   type IntegrationJobReceiveComment,
@@ -134,6 +137,7 @@ import {
 } from "@chatbotx.io/worker-config"
 import { UnrecoverableError } from "bullmq"
 import { normalizeError } from "universal-error-normalizer"
+import { ingressConversationLockKey } from "../../lib/ingress-lock"
 import { LOCK_CONTENTION_POLICY } from "../../lib/lock-contention-deferral"
 import { logger } from "../../lib/logger"
 import {
@@ -143,6 +147,7 @@ import {
   resolveIntegrationContextFromContactInbox,
 } from "../../services/integrations"
 import { isCommentReply, processCommentAutomation } from "./comment-automation"
+import type { CommentAutomationChannelType } from "./comment-automation/channel-type"
 import { resolveLiveComment } from "./comment-automation/live-comment"
 import { runAsMissedCommentReplay } from "./comment-automation/replay-priority"
 import {
@@ -167,11 +172,25 @@ import {
   emitStoredCommerceEvent,
   enrichInboundCommerce,
 } from "./inbound-commerce"
+import { applyIncomingTextUpdate } from "./incoming-message-change"
 import {
   awardCommentLeaderboard,
   awardInboundMessageLeaderboard,
   awardReactionLeaderboard,
 } from "./leaderboard-sources"
+import {
+  commentLiveState,
+  recordLiveCommentObservation,
+} from "./live-comment-observation"
+import {
+  applyPostCommentSettings,
+  countPhoneComment,
+  countWebhookComment,
+} from "./post-comment-settings"
+import {
+  claimFirstCommentWinnerBestEffort,
+  emitPostCommentTriggersBestEffort,
+} from "./post-comment-trigger"
 import {
   syncAdLabelsIfAdReferred,
   tagAdReferralOnlyContact,
@@ -296,8 +315,13 @@ const isThirdPartyEcho = (props: {
   props.message?.messageType === messageTypes.enum.outgoing &&
   !getStoryReply(props.message.contentAttributes)
 
+type ReceiveMessageProps = IntegrationJobReceiveMessage["data"] & {
+  parsedMessage?: ReceivedMessageResult
+  smtpRouteLocked?: boolean
+}
+
 export const receiveMessage = async (
-  props: IntegrationJobReceiveMessage["data"],
+  props: ReceiveMessageProps,
 ): Promise<{
   message: MessageWithAttachments | null
   conversation: ConversationModel
@@ -366,11 +390,12 @@ export const receiveMessage = async (
     integration: integrationRow,
   })
 
-  const parsedMessage = await integration.runChannelHandler(
-    "message",
-    "receiveMessage",
-    { ctx, data: props },
-  )
+  const parsedMessage =
+    props.parsedMessage ??
+    (await integration.runChannelHandler("message", "receiveMessage", {
+      ctx,
+      data: props,
+    }))
   if (!parsedMessage) {
     // A channel parser returns null for a webhook event with nothing to store
     // (e.g. a Zalo `oa_send_template` with no text or attachment). Retrying
@@ -380,6 +405,24 @@ export const receiveMessage = async (
       "Received message has no storable content, skipping",
     )
     return null
+  }
+
+  if (inbox.channel === "smtp" && !props.smtpRouteLocked) {
+    const routeLockKey = await smtpRouteLockKey(
+      inbox.id,
+      parsedMessage.contact.sourceId,
+    )
+    return await distributedLock.runExclusive({
+      key: routeLockKey,
+      timeoutInSeconds: 300,
+      retryTimeoutInSeconds: LOCK_CONTENTION_POLICY.lockWaitSeconds,
+      fn: async () =>
+        await receiveMessage({
+          ...props,
+          parsedMessage,
+          smtpRouteLocked: true,
+        }),
+    })
   }
 
   const {
@@ -474,6 +517,7 @@ export const receiveMessage = async (
   const [detected, postbackButtonLabel] = await Promise.all([
     detectContactAndConversation({
       incomingContact,
+      incomingMessage: rawIncomingMessage ?? undefined,
       inbox,
       integrationRow,
       source: resolveContactSource(parsedMessage.referral, referralSource),
@@ -489,7 +533,18 @@ export const receiveMessage = async (
   if (!detected) {
     throw new SdkException("Unable to resolve contact and conversation")
   }
-  const { contactInbox, conversation, contact, isNewContact } = detected
+  const {
+    contactInbox,
+    conversation: detectedConversation,
+    contact,
+    isNewContact,
+  } = detected
+  // A reply to an archived email thread reopens it, but only once the message
+  // is known to be new (see below): a redelivery of an already stored mail
+  // must not reopen a thread someone archived since. Scoped to SMTP.
+  const shouldUnarchive =
+    inbox.channel === "smtp" && !!detectedConversation.archivedAt
+  const conversation: ConversationModel = detectedConversation
   // Zalo and Telegram echo the raw Skip payload as the message text; show the
   // label the contact pressed instead. A no-op for every other tap.
   const stepInputSkipLabel = stepInputSkipChallengeId
@@ -541,13 +596,15 @@ export const receiveMessage = async (
   // Guarded on messageType !== 'outgoing' so bot/agent-authored text never
   // feeds the libphonenumber extractor (would otherwise false-positive on
   // long order/ticket IDs in templated outbound messages).
+  let contactInfoCaptureTypes: ContactInfoCaptureInfoType[] = []
   if (incomingMessage?.text && incomingMessage.messageType !== "outgoing") {
     try {
-      await updateContactFromMessage({
+      const extracted = await updateContactFromMessage({
         contactId: contactInbox.contactId,
         workspaceId: inbox.workspaceId,
         text: incomingMessage.text,
       })
+      contactInfoCaptureTypes = toContactInfoCaptureTypes(extracted)
     } catch (error) {
       logger.warn(
         { error, contactId: contactInbox.contactId, channel: inbox.channel },
@@ -613,8 +670,21 @@ export const receiveMessage = async (
         // unread so a human agent monitors the AI (Integration Guide §5.3).
         keepUnread: threadControl?.ownerRole === "ai_agent",
         echoOrigin: parsedMessage.echoOrigin,
+        contactInfoCaptureTypes,
         ...systemFieldUpdates,
       })
+
+    if (shouldUnarchive && isNewMessage) {
+      await conversationService.unarchiveByIds({
+        workspaceId: inbox.workspaceId,
+        ids: [conversation.id],
+        triggerContext: {
+          triggerSource: "worker",
+          triggerHandler: "received-message",
+          triggerType: "message_received",
+        },
+      })
+    }
 
     // Unlike the flow actions below, this also runs on a redelivery: resolving
     // is idempotent (deduplicated while a job is active, and the challenge
@@ -1238,6 +1308,8 @@ export type SaveAndBroadcastMessageProps = {
   keepUnread?: boolean
   /** Channel-parser classification of an outgoing echo (who sent it). */
   echoOrigin?: EchoOrigin | null
+  /** Phone/email kinds extracted from this inbound message; empty or unset when none. */
+  contactInfoCaptureTypes?: ContactInfoCaptureInfoType[]
 }
 
 type MessageInput = CreateMessageInput & {
@@ -1387,20 +1459,27 @@ const enqueueIncomingNotification = async ({
 const emitMessageReceived = ({
   inbox,
   contactInbox,
+  conversationId,
   message,
   inbound,
   isFirstIncomingMessage,
+  contactInfoCaptureTypes,
+  conversationCreatedAt,
 }: {
   inbox: InboxModel
   contactInbox: ContactInboxModel
+  conversationId: string
   message: SavedMessage
   inbound: boolean
   isFirstIncomingMessage: boolean
+  contactInfoCaptureTypes?: ContactInfoCaptureInfoType[]
+  conversationCreatedAt: Date
 }): void => {
   emit(messageEventTypeSchema.enum["message:received"], {
     workspaceId: inbox.workspaceId,
     contactId: contactInbox.contactId,
     contactInboxId: contactInbox.id,
+    conversationId,
     channel: inbox.channel,
     inboxId: inbox.id,
     occurredAt: message.createdAt,
@@ -1408,6 +1487,14 @@ const emitMessageReceived = ({
     origin: inbound ? "inbound" : undefined,
     messageId: message.id,
     isFirstIncomingMessage,
+    contactInfoCapture:
+      inbound && contactInfoCaptureTypes?.length
+        ? {
+            infoTypes: contactInfoCaptureTypes,
+            conversationId: message.conversationId,
+            conversationCreatedAt: conversationCreatedAt.toISOString(),
+          }
+        : undefined,
   })
 }
 
@@ -1514,13 +1601,27 @@ const persistMessage = async (
     emitMessageReceived({
       inbox,
       contactInbox,
+      conversationId: conversation.id,
       message,
       inbound,
       isFirstIncomingMessage,
+      contactInfoCaptureTypes: props.contactInfoCaptureTypes,
+      conversationCreatedAt: conversation.createdAt,
     })
   }
 
   return { message, isNew }
+}
+
+const smtpRouteLockKey = async (inboxId: string, sourceAddress: string) => {
+  const digest = await globalThis.crypto.subtle.digest(
+    "SHA-256",
+    new TextEncoder().encode(sourceAddress.trim().toLowerCase()),
+  )
+  const addressHash = Array.from(new Uint8Array(digest), (byte) =>
+    byte.toString(16).padStart(2, "0"),
+  ).join("")
+  return `smtp-route:${inboxId}:${addressHash}`
 }
 
 // Creates or updates the message row (deduplicates webhook retries via sourceId),
@@ -1530,7 +1631,7 @@ const persistMessage = async (
 export const saveAndBroadcastMessage = async (
   props: SaveAndBroadcastMessageProps,
 ): Promise<SaveMessageResult> => {
-  const lockKey = `ingress:conv:${props.conversation.id}`
+  const lockKey = ingressConversationLockKey(props.conversation.id)
 
   // Serializes the insert → tracking → realtime → notification → event-bus
   // critical section. The repository's msg:upsert dedup lock is taken inside
@@ -1899,6 +2000,8 @@ export const receiveComment = async (
   const { contactInbox, contact, conversation } = detected
 
   let channelPostId: string | null = null
+  let postCommentSettings: ChannelPostCommentSettings | null = null
+  let recordedComment: RecordedCommentOutcome | null = null
   if (supportsPostTracking(inbox.channel)) {
     // Post metadata fetch is best-effort (handled in channelPostService) and a
     // workspace deleted mid-flight is a no-op (resolveForComment returns null).
@@ -1907,36 +2010,65 @@ export const receiveComment = async (
     // automation, so a retry records the relationship exactly once and never
     // double-sends. Matches plan §5 ("errors propagate; retry is idempotent").
     const channel = inbox.channel
-    const postId = await channelPostService.resolveForComment({
-      channel,
-      workspaceId: inbox.workspaceId,
-      inboxId: inbox.id,
-      integrationId: integrationRow.id,
-      sourceAccountId: integrationIdentifier,
-      externalPostId: commentData.postId,
-      fetchDetails: async (): Promise<ChannelPostDetails> => {
-        // The registry picks the channel's own integration (e.g. Instagram vs
-        // Instagram-via-Facebook); the handler returns the neutral shape.
-        const { integration, ctx } =
-          await resolveIntegrationContextFromContactInbox({
-            workspaceId: inbox.workspaceId,
-            contactInbox: { channel, inboxId: inbox.id },
-          })
-        return await integration.runChannelHandler(
-          "contact",
-          "getPostDetails",
-          { ctx, data: { postId: commentData.postId } },
-        )
+    const resolvedPost = await channelPostService.resolveForCommentWithSettings(
+      {
+        channel,
+        workspaceId: inbox.workspaceId,
+        inboxId: inbox.id,
+        integrationId: integrationRow.id,
+        sourceAccountId: integrationIdentifier,
+        externalPostId: commentData.postId,
+        fetchDetails: async (): Promise<ChannelPostDetails> => {
+          // The registry picks the channel's own integration (e.g. Instagram vs
+          // Instagram-via-Facebook); the handler returns the neutral shape.
+          const { integration, ctx } =
+            await resolveIntegrationContextFromContactInbox({
+              workspaceId: inbox.workspaceId,
+              contactInbox: { channel, inboxId: inbox.id },
+            })
+          return await integration.runChannelHandler(
+            "contact",
+            "getPostDetails",
+            { ctx, data: { postId: commentData.postId } },
+          )
+        },
       },
-    })
+    )
+    const postId = resolvedPost?.id ?? null
     channelPostId = postId
+    postCommentSettings = resolvedPost?.settings ?? null
     if (postId) {
-      await contactInboxPostService.recordComment({
+      await recordLiveCommentObservation({
+        channel,
+        currentLiveStatus: resolvedPost?.liveStatus,
+        externalPostId: commentData.postId,
+        inboxId: inbox.id,
+        integrationId: integrationRow.id,
+        liveState: commentLiveState({
+          integrationType,
+          isInstagramViaFacebook:
+            integrationType === "instagram" &&
+            isInstagramViaFacebook(integrationRow),
+          isLiveComment,
+          lookupLiveState: messengerCommentLookup?.liveState,
+        }),
+        sourceAccountId: integrationIdentifier,
+        workspaceId: inbox.workspaceId,
+      })
+      recordedComment = await contactInboxPostService.recordCommentOutcome({
         workspaceId: inbox.workspaceId,
         inboxId: inbox.id,
         contactInboxId: contactInbox.id,
         postId,
         commentedAt: new Date(commentData.createdTime * 1000),
+      })
+      // Right away, before the slow steps below: names this comment the winner.
+      await claimFirstCommentWinnerBestEffort({
+        channelPostId: postId,
+        commentId: commentData.commentId,
+        contactInboxId: contactInbox.id,
+        outcome: recordedComment,
+        workspaceId: inbox.workspaceId,
       })
     }
   }
@@ -2059,6 +2191,32 @@ export const receiveComment = async (
       storageUrl,
     })
 
+  // Before every early return below, and for a redelivered comment too: the
+  // count is guarded by a mark on the stored comment, so it moves once per
+  // comment however many times this runs.
+  if (channelPostId) {
+    await countPhoneComment({
+      channelPostId,
+      savedComment,
+      text: commentData.message,
+      workspaceId: inbox.workspaceId,
+    })
+  }
+
+  // A channel whose platform reports no comment count is counted here, once
+  // per stored comment (a mark on the comment). It does not need the post to be
+  // tracked per contact: the post is resolved by its root id.
+  await countWebhookComment({
+    channel: inbox.channel,
+    channelPostId,
+    externalPostId: commentData.postId,
+    inboxId: inbox.id,
+    integrationId: integrationRow.id,
+    savedComment,
+    sourceAccountId: integrationIdentifier,
+    workspaceId: inbox.workspaceId,
+  })
+
   // Leaderboard comments/live comments, only for a newly stored comment.
   // `isCommentReply` holds on every listed channel: TikTok normalizes its
   // "no parent" sentinel at the webhook, and a top-level Threads reply's
@@ -2108,6 +2266,45 @@ export const receiveComment = async (
     return
   }
 
+  // After the workspace gate and for a live comment only (a replay re-runs one
+  // automation over an old comment and must not fire the triggers again).
+  if (channelPostId && recordedComment && !replay) {
+    await emitPostCommentTriggersBestEffort({
+      channelPostId,
+      commentId: commentData.commentId,
+      commentText: commentData.message ?? null,
+      contactId: contactInbox.contactId,
+      contactInboxId: contactInbox.id,
+      conversationId: conversation.id,
+      externalPostId: commentData.postId,
+      inbox,
+      outcome: recordedComment,
+      savedComment,
+    })
+  }
+
+  const channelType = integrationType as CommentAutomationChannelType
+  const postOutcome =
+    channelPostId && postCommentSettings
+      ? await applyPostCommentSettings({
+          channelPostId,
+          channelType,
+          commentId: commentData.commentId,
+          contactInbox,
+          conversation,
+          isReply: isCommentReply(
+            commentData.parentId,
+            commentData.postId,
+            commentData.commentId,
+          ),
+          isLive: isLiveComment,
+          savedComment,
+          settings: postCommentSettings,
+          text: commentData.message,
+          workspaceId: inbox.workspaceId,
+        })
+      : null
+
   const automationData: IntegrationJobProcessCommentAutomation["data"] = {
     integrationType,
     integrationIdentifier,
@@ -2122,6 +2319,7 @@ export const receiveComment = async (
     tags: commentData.tags,
     createdTime: commentData.createdTime,
     isLive: isLiveComment || undefined,
+    postHidesComment: postOutcome?.postHidesComment || undefined,
   }
 
   // A missed-comment replay already runs on the `low` queue, one comment per
@@ -2179,49 +2377,19 @@ export const receiveComment = async (
 // and broadcast the change to the inbox in real-time.
 export const updateIncomingComment = async (
   props: IntegrationJobUpdateIncomingComment["data"],
-): Promise<void> => {
-  const { integrationType, integrationIdentifier, commentId, newText } = props
-
-  const { inbox } =
-    await integrationService.identifyInboxAndIntegrationAuthFromIdentifier(
-      integrationType as IntegrationType,
-      integrationIdentifier,
-    )
-
-  const repository = await createMessageRepository()
-  const updated = await repository.updateTextBySourceId(
-    commentId,
-    inbox.workspaceId,
-    newText,
-  )
-
-  if (!updated) {
-    logger.warn({ commentId }, "updateIncomingComment: comment not found")
-    return
-  }
-
-  const conversation = await conversationService.findBy({
-    where: { id: updated.conversationId, workspaceId: inbox.workspaceId },
+): Promise<void> =>
+  await applyIncomingTextUpdate({
+    integrationType: props.integrationType,
+    integrationIdentifier: props.integrationIdentifier,
+    sourceId: props.commentId,
+    newText: props.newText,
+    action: "updateIncomingComment",
+    onMissing: () =>
+      logger.warn(
+        { commentId: props.commentId },
+        "updateIncomingComment: comment not found",
+      ),
   })
-  if (!conversation) {
-    logger.warn(
-      {
-        conversationId: updated.conversationId,
-        workspaceId: inbox.workspaceId,
-      },
-      "updateIncomingComment: conversation not found for realtime route",
-    )
-  }
-  queueWorkspaceRealtimeEvent(inbox.workspaceId, {
-    eventType: RealtimeEventType.messageUpdated,
-    data: {
-      messageId: updated.id,
-      newText,
-      removedAttachment: false,
-    },
-    route: routeForConversation(conversation),
-  })
-}
 
 // When a commenter deletes their comment, soft-delete it (and any
 // child comments) in the DB and broadcast the deletion to the inbox.
@@ -2259,53 +2427,6 @@ export const deleteIncomingComment = async (
         workspaceId: inbox.workspaceId,
       },
       "deleteIncomingComment: conversation not found for realtime route",
-    )
-  }
-  queueWorkspaceRealtimeEvent(inbox.workspaceId, {
-    eventType: RealtimeEventType.messageDeleted,
-    data: { messageIds },
-    route: routeForConversation(conversation),
-  })
-}
-
-// When a contact unsends a previously-sent DM, soft-delete it in the DB and
-// broadcast the deletion to the inbox — mirrors deleteIncomingComment, keyed
-// on the message's `mid` (already stored as Message.sourceId, see
-// saveAndBroadcastMessage above).
-export const deleteIncomingMessage = async (
-  props: IntegrationJobDeleteIncomingMessage["data"],
-): Promise<void> => {
-  const { integrationType, integrationIdentifier, messageId } = props
-
-  const { inbox } =
-    await integrationService.identifyInboxAndIntegrationAuthFromIdentifier(
-      integrationType as IntegrationType,
-      integrationIdentifier,
-    )
-
-  const repository = await createMessageRepository()
-  const deleted = await repository.deleteBySourceId(
-    messageId,
-    inbox.workspaceId,
-    new Date(),
-  )
-
-  if (deleted.length === 0) {
-    logger.warn({ messageId }, "deleteIncomingMessage: message not found")
-    return
-  }
-
-  const messageIds = deleted.map((row) => row.id)
-  const conversation = await conversationService.findBy({
-    where: { id: deleted[0].conversationId, workspaceId: inbox.workspaceId },
-  })
-  if (!conversation) {
-    logger.warn(
-      {
-        conversationId: deleted[0].conversationId,
-        workspaceId: inbox.workspaceId,
-      },
-      "deleteIncomingMessage: conversation not found for realtime route",
     )
   }
   queueWorkspaceRealtimeEvent(inbox.workspaceId, {
@@ -2435,9 +2556,54 @@ export const processMessageReaction = async (
 // Shared by the direct-hit path and the unique-violation race recovery below
 // (D8): syncs newly-learned identity fields onto the matched row, then
 // resolves/opens the conversation.
+const resolveIncomingConversation = async (props: {
+  contactId: string
+  contactInboxId: string
+  conversationSourceId: string | null
+  channelConversationId?: string | null
+  incomingMessage?: IncomingMessage
+  inbox: InboxModel
+  tx?: Parameters<
+    typeof conversationService.resolveEmailThreadConversation
+  >[0]["tx"]
+}): Promise<ConversationModel> => {
+  const {
+    contactId,
+    contactInboxId,
+    conversationSourceId,
+    channelConversationId,
+    incomingMessage,
+    inbox,
+    tx,
+  } = props
+  if (
+    conversationSourceId &&
+    isEmailThreadSourceId(conversationSourceId) &&
+    incomingMessage
+  ) {
+    return await conversationService.resolveEmailThreadConversation({
+      workspaceId: inbox.workspaceId,
+      contactId,
+      contactInboxId,
+      messageSourceId: incomingMessage.sourceId,
+      threadSourceIds: incomingMessage.threadSourceIds ?? [],
+      threadKey: conversationSourceId.slice("email:".length),
+      tx,
+    })
+  }
+  return await conversationService.findOrCreate({
+    workspaceId: inbox.workspaceId,
+    contactId,
+    sourceId: conversationSourceId,
+    channelConversationId,
+    tx,
+  })
+}
+
 const buildExistingContactMatch = async (props: {
   inbox: InboxModel
   incomingContact: IncomingContact
+  incomingMessage?: IncomingMessage
   conversationSourceId: string | null
   existing: ContactInboxWithContact
   matchedBy: SourceScopedIdentityMatchedBy
@@ -2447,8 +2613,14 @@ const buildExistingContactMatch = async (props: {
   conversation: ConversationModel
   isNewContact: false
 }> => {
-  const { inbox, incomingContact, conversationSourceId, existing, matchedBy } =
-    props
+  const {
+    inbox,
+    incomingContact,
+    incomingMessage,
+    conversationSourceId,
+    existing,
+    matchedBy,
+  } = props
   const { contact, ...contactInbox } = existing
 
   const identitySync = await syncExistingContactIdentity({
@@ -2483,11 +2655,13 @@ const buildExistingContactMatch = async (props: {
     }
   }
 
-  const conversation = await conversationService.findOrCreate({
-    workspaceId: inbox.workspaceId,
+  const conversation = await resolveIncomingConversation({
+    inbox,
     contactId: syncedContactInbox.contactId,
-    sourceId: conversationSourceId,
+    contactInboxId: syncedContactInbox.id,
+    conversationSourceId,
     channelConversationId: incomingContact.channelConversationId,
+    incomingMessage,
   })
 
   return {
@@ -2501,6 +2675,7 @@ const buildExistingContactMatch = async (props: {
 export const detectContactAndConversation = async (props: {
   inbox: InboxModel
   incomingContact: IncomingContact
+  incomingMessage?: IncomingMessage
   integrationRow: {
     id: string
     auth: AuthValue
@@ -2516,7 +2691,8 @@ export const detectContactAndConversation = async (props: {
   conversation: ConversationModel
   isNewContact: boolean
 }> => {
-  const { incomingContact, inbox, integrationRow, source } = props
+  const { incomingContact, incomingMessage, inbox, integrationRow, source } =
+    props
 
   const existingContactMatch =
     props.existingContactMatch ??
@@ -2534,6 +2710,7 @@ export const detectContactAndConversation = async (props: {
     return await buildExistingContactMatch({
       inbox,
       incomingContact,
+      incomingMessage,
       conversationSourceId,
       existing: existingContactMatch.row,
       matchedBy: existingContactMatch.matchedBy,
@@ -2550,6 +2727,7 @@ export const detectContactAndConversation = async (props: {
       inbox,
       integrationRow,
       incomingContact,
+      incomingMessage,
       source,
       conversationSourceId,
       isBsuidKeyedIncomingContact,
@@ -2578,6 +2756,7 @@ export const detectContactAndConversation = async (props: {
     return await buildExistingContactMatch({
       inbox,
       incomingContact,
+      incomingMessage,
       conversationSourceId,
       existing: winner.row,
       matchedBy: winner.matchedBy,
@@ -2594,6 +2773,7 @@ const createNewContactAndContactInbox = async (props: {
     [x: string]: unknown
   }
   incomingContact: IncomingContact
+  incomingMessage?: IncomingMessage
   source: ContactSource
   conversationSourceId: string | null
   isBsuidKeyedIncomingContact: boolean
@@ -2607,6 +2787,7 @@ const createNewContactAndContactInbox = async (props: {
     inbox,
     integrationRow,
     incomingContact,
+    incomingMessage,
     source,
     conversationSourceId,
     isBsuidKeyedIncomingContact,
@@ -2793,11 +2974,13 @@ const createNewContactAndContactInbox = async (props: {
         tx,
       })
 
-      const conversation = await conversationService.findOrCreate({
-        workspaceId: inbox.workspaceId,
+      const conversation = await resolveIncomingConversation({
+        inbox,
         contactId: newContact.id,
-        sourceId: conversationSourceId,
+        contactInboxId: contactInbox.id,
+        conversationSourceId,
         channelConversationId: incomingContact.channelConversationId,
+        incomingMessage,
         tx,
       })
 

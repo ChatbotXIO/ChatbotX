@@ -773,6 +773,81 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "path": "/v1/channel-integrations",
   },
   {
+    "method": "POST",
+    "operationId": "channelPostManagement.bulkUpdate",
+    "path": "/v1/channel-posts/management/bulk-update",
+  },
+  {
+    "method": "DELETE",
+    "operationId": "channelPostManagement.deleteComment",
+    "path": "/v1/channel-posts/management/{id}/comments/{commentId}",
+  },
+  {
+    "method": "POST",
+    "operationId": "channelPostManagement.exportComments",
+    "path": "/v1/channel-posts/management/export",
+  },
+  {
+    "method": "GET",
+    "operationId": "channelPostManagement.get",
+    "path": "/v1/channel-posts/management/{id}",
+  },
+  {
+    "method": "GET",
+    "operationId": "channelPostManagement.getMetrics",
+    "path": "/v1/channel-posts/management/{id}/metrics",
+  },
+  {
+    "method": "POST",
+    "operationId": "channelPostManagement.likeComment",
+    "path": "/v1/channel-posts/management/{id}/comments/{commentId}/like",
+  },
+  {
+    "method": "GET",
+    "operationId": "channelPostManagement.list",
+    "path": "/v1/channel-posts/management",
+  },
+  {
+    "method": "GET",
+    "operationId": "channelPostManagement.listAuthors",
+    "path": "/v1/channel-posts/management/authors",
+  },
+  {
+    "method": "GET",
+    "operationId": "channelPostManagement.listComments",
+    "path": "/v1/channel-posts/management/{id}/comments",
+  },
+  {
+    "method": "POST",
+    "operationId": "channelPostManagement.mergeComments",
+    "path": "/v1/channel-posts/management/merge-view",
+  },
+  {
+    "method": "POST",
+    "operationId": "channelPostManagement.refresh",
+    "path": "/v1/channel-posts/management/{id}/refresh",
+  },
+  {
+    "method": "POST",
+    "operationId": "channelPostManagement.refreshMetrics",
+    "path": "/v1/channel-posts/management/refresh-metrics",
+  },
+  {
+    "method": "POST",
+    "operationId": "channelPostManagement.startSync",
+    "path": "/v1/channel-posts/sync",
+  },
+  {
+    "method": "GET",
+    "operationId": "channelPostManagement.syncStatus",
+    "path": "/v1/channel-posts/sync/status",
+  },
+  {
+    "method": "PATCH",
+    "operationId": "channelPostManagement.update",
+    "path": "/v1/channel-posts/management/{id}",
+  },
+  {
     "method": "GET",
     "operationId": "channelPosts.list",
     "path": "/v1/channel-posts",
@@ -1039,6 +1114,11 @@ exports[`public API spec — operation naming guard > operation list (operationI
   },
   {
     "method": "GET",
+    "operationId": "contacts.listBroadcasts",
+    "path": "/v1/contacts/{identifier}/broadcasts",
+  },
+  {
+    "method": "GET",
     "operationId": "contacts.listCustomFields",
     "path": "/v1/contacts/{identifier}/custom-fields",
   },
@@ -1204,6 +1284,56 @@ exports[`public API spec — operation naming guard > operation list (operationI
   },
   {
     "method": "POST",
+    "operationId": "contactSyncs.cancel",
+    "path": "/v1/contact-syncs/{runId}/cancel",
+  },
+  {
+    "method": "POST",
+    "operationId": "contactSyncs.create",
+    "path": "/v1/contact-syncs",
+  },
+  {
+    "method": "GET",
+    "operationId": "contactSyncs.get",
+    "path": "/v1/contact-syncs/{runId}",
+  },
+  {
+    "method": "GET",
+    "operationId": "contactSyncs.getAvailability",
+    "path": "/v1/contact-syncs/availability",
+  },
+  {
+    "method": "GET",
+    "operationId": "contactSyncs.getSchema",
+    "path": "/v1/contact-syncs/sources/{inboxId}/schema",
+  },
+  {
+    "method": "GET",
+    "operationId": "contactSyncs.list",
+    "path": "/v1/contact-syncs",
+  },
+  {
+    "method": "GET",
+    "operationId": "contactSyncs.listSources",
+    "path": "/v1/contact-syncs/sources",
+  },
+  {
+    "method": "POST",
+    "operationId": "contactSyncs.retryHistory",
+    "path": "/v1/contact-syncs/sources/{inboxId}/retry-history",
+  },
+  {
+    "method": "PUT",
+    "operationId": "contactSyncs.saveMappings",
+    "path": "/v1/contact-syncs/sources/{inboxId}/mappings",
+  },
+  {
+    "method": "POST",
+    "operationId": "contactSyncs.startConnectImport",
+    "path": "/v1/contact-syncs/connect-import",
+  },
+  {
+    "method": "POST",
     "operationId": "conversations.archive",
     "path": "/v1/conversations/{id}/archive",
   },
@@ -1236,6 +1366,11 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "method": "GET",
     "operationId": "conversations.list",
     "path": "/v1/conversations",
+  },
+  {
+    "method": "GET",
+    "operationId": "conversations.listParticipants",
+    "path": "/v1/conversations/{id}/participants",
   },
   {
     "method": "POST",
@@ -2628,6 +2763,11 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "path": "/v1/minigames/bulk-delete",
   },
   {
+    "method": "POST",
+    "operationId": "minigames.duplicate",
+    "path": "/v1/minigames/{id}/duplicate",
+  },
+  {
     "method": "GET",
     "operationId": "minigames.get",
     "path": "/v1/minigames/{id}",
@@ -3008,6 +3148,161 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "path": "/v1/polls/{id}",
   },
   {
+    "method": "GET",
+    "operationId": "postAnalytics.bestTimes",
+    "path": "/v1/post-analytics/best-times",
+  },
+  {
+    "method": "GET",
+    "operationId": "postAnalytics.summary",
+    "path": "/v1/post-analytics/summary",
+  },
+  {
+    "method": "GET",
+    "operationId": "postAnalytics.timeseries",
+    "path": "/v1/post-analytics/timeseries",
+  },
+  {
+    "method": "GET",
+    "operationId": "postAnalytics.topPosts",
+    "path": "/v1/post-analytics/top-posts",
+  },
+  {
+    "method": "POST",
+    "operationId": "postFeeds.bulkDelete",
+    "path": "/v1/post-feeds/bulk-delete",
+  },
+  {
+    "method": "POST",
+    "operationId": "postFeeds.check",
+    "path": "/v1/post-feeds/{id}/check",
+  },
+  {
+    "method": "POST",
+    "operationId": "postFeeds.create",
+    "path": "/v1/post-feeds",
+  },
+  {
+    "method": "DELETE",
+    "operationId": "postFeeds.delete",
+    "path": "/v1/post-feeds/{id}",
+  },
+  {
+    "method": "GET",
+    "operationId": "postFeeds.get",
+    "path": "/v1/post-feeds/{id}",
+  },
+  {
+    "method": "GET",
+    "operationId": "postFeeds.itemDraftContent",
+    "path": "/v1/post-feeds/{id}/items/{itemId}/draft-content",
+  },
+  {
+    "method": "GET",
+    "operationId": "postFeeds.list",
+    "path": "/v1/post-feeds",
+  },
+  {
+    "method": "GET",
+    "operationId": "postFeeds.listItems",
+    "path": "/v1/post-feeds/{id}/items",
+  },
+  {
+    "method": "POST",
+    "operationId": "postFeeds.pause",
+    "path": "/v1/post-feeds/{id}/pause",
+  },
+  {
+    "method": "POST",
+    "operationId": "postFeeds.preview",
+    "path": "/v1/post-feeds/preview",
+  },
+  {
+    "method": "POST",
+    "operationId": "postFeeds.resume",
+    "path": "/v1/post-feeds/{id}/resume",
+  },
+  {
+    "method": "POST",
+    "operationId": "postFeeds.test",
+    "path": "/v1/post-feeds/{id}/test",
+  },
+  {
+    "method": "PATCH",
+    "operationId": "postFeeds.update",
+    "path": "/v1/post-feeds/{id}",
+  },
+  {
+    "method": "POST",
+    "operationId": "postSnippets.create",
+    "path": "/v1/post-snippets",
+  },
+  {
+    "method": "DELETE",
+    "operationId": "postSnippets.delete",
+    "path": "/v1/post-snippets/{id}",
+  },
+  {
+    "method": "GET",
+    "operationId": "postSnippets.get",
+    "path": "/v1/post-snippets/{id}",
+  },
+  {
+    "method": "GET",
+    "operationId": "postSnippets.list",
+    "path": "/v1/post-snippets",
+  },
+  {
+    "method": "PATCH",
+    "operationId": "postSnippets.update",
+    "path": "/v1/post-snippets/{id}",
+  },
+  {
+    "method": "POST",
+    "operationId": "postTargetSets.create",
+    "path": "/v1/post-target-sets",
+  },
+  {
+    "method": "DELETE",
+    "operationId": "postTargetSets.delete",
+    "path": "/v1/post-target-sets/{id}",
+  },
+  {
+    "method": "GET",
+    "operationId": "postTargetSets.get",
+    "path": "/v1/post-target-sets/{id}",
+  },
+  {
+    "method": "GET",
+    "operationId": "postTargetSets.list",
+    "path": "/v1/post-target-sets",
+  },
+  {
+    "method": "PATCH",
+    "operationId": "postTargetSets.update",
+    "path": "/v1/post-target-sets/{id}",
+  },
+  {
+    "method": "POST",
+    "operationId": "postTopics.create",
+    "path": "/v1/post-topics",
+  },
+  {
+    "method": "DELETE",
+    "operationId": "postTopics.delete",
+    "path": "/v1/post-topics/{id}",
+  },
+  {
+    "method": "GET",
+    "operationId": "postTopics.list",
+    "path": "/v1/post-topics",
+  },
+  {
+    "method": "PATCH",
+    "operationId": "postTopics.update",
+    "path": "/v1/post-topics/{id}",
+  },
+  {
     "method": "POST",
     "operationId": "productCategories.create",
     "path": "/v1/product-categories",
@@ -3156,6 +3451,41 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "method": "PATCH",
     "operationId": "productVendors.update",
     "path": "/v1/product-vendors/{id}",
+  },
+  {
+    "method": "GET",
+    "operationId": "publishDestinations.get",
+    "path": "/v1/posts/destinations/{id}",
+  },
+  {
+    "method": "GET",
+    "operationId": "publishDestinations.getPostingSlots",
+    "path": "/v1/posts/destinations/{id}/posting-schedule",
+  },
+  {
+    "method": "GET",
+    "operationId": "publishDestinations.getPublishingSettings",
+    "path": "/v1/posts/destinations/{id}/publishing-settings",
+  },
+  {
+    "method": "GET",
+    "operationId": "publishDestinations.list",
+    "path": "/v1/posts/destinations",
+  },
+  {
+    "method": "GET",
+    "operationId": "publishDestinations.listFreeSlots",
+    "path": "/v1/posts/destinations/{id}/free-slots",
+  },
+  {
+    "method": "POST",
+    "operationId": "publishDestinations.recheckPermissions",
+    "path": "/v1/posts/destinations/recheck-permissions",
+  },
+  {
+    "method": "PUT",
+    "operationId": "publishDestinations.updatePostingSlots",
+    "path": "/v1/posts/destinations/{id}/posting-schedule",
   },
   {
     "method": "POST",
@@ -3419,13 +3749,168 @@ exports[`public API spec — operation naming guard > operation list (operationI
   },
   {
     "method": "GET",
+    "operationId": "smtpIntegrations.getInboundWebhook",
+    "path": "/v1/smtp-integrations/{id}/inbound-webhook",
+  },
+  {
+    "method": "GET",
     "operationId": "smtpIntegrations.list",
     "path": "/v1/smtp-integrations",
+  },
+  {
+    "method": "POST",
+    "operationId": "smtpIntegrations.rotateInboundWebhook",
+    "path": "/v1/smtp-integrations/{id}/inbound-webhook/rotate",
   },
   {
     "method": "PUT",
     "operationId": "smtpIntegrations.update",
     "path": "/v1/smtp-integrations/{id}",
+  },
+  {
+    "method": "DELETE",
+    "operationId": "socialAccounts.disconnect",
+    "path": "/v1/social-accounts/{id}",
+  },
+  {
+    "method": "GET",
+    "operationId": "socialAccounts.get",
+    "path": "/v1/social-accounts/{id}",
+  },
+  {
+    "method": "GET",
+    "operationId": "socialAccounts.list",
+    "path": "/v1/social-accounts",
+  },
+  {
+    "method": "POST",
+    "operationId": "socialAccounts.syncDestinations",
+    "path": "/v1/social-accounts/{id}/sync-destinations",
+  },
+  {
+    "method": "POST",
+    "operationId": "socialAccounts.verify",
+    "path": "/v1/social-accounts/{id}/verify",
+  },
+  {
+    "method": "GET",
+    "operationId": "socialPosts.contentTypes",
+    "path": "/v1/posts/content-types",
+  },
+  {
+    "method": "GET",
+    "operationId": "socialPosts.counts",
+    "path": "/v1/posts/counts",
+  },
+  {
+    "method": "POST",
+    "operationId": "socialPosts.create",
+    "path": "/v1/posts",
+  },
+  {
+    "method": "DELETE",
+    "operationId": "socialPosts.delete",
+    "path": "/v1/posts/{id}",
+  },
+  {
+    "method": "POST",
+    "operationId": "socialPosts.duplicate",
+    "path": "/v1/posts/{id}/duplicate",
+  },
+  {
+    "method": "DELETE",
+    "operationId": "socialPosts.endRecurrence",
+    "path": "/v1/posts/{id}/recurrence",
+  },
+  {
+    "method": "GET",
+    "operationId": "socialPosts.get",
+    "path": "/v1/posts/{id}",
+  },
+  {
+    "method": "GET",
+    "operationId": "socialPosts.getMetrics",
+    "path": "/v1/posts/{id}/metrics",
+  },
+  {
+    "method": "GET",
+    "operationId": "socialPosts.list",
+    "path": "/v1/posts",
+  },
+  {
+    "method": "GET",
+    "operationId": "socialPosts.listOccurrences",
+    "path": "/v1/posts/{id}/recurrence/occurrences",
+  },
+  {
+    "method": "POST",
+    "operationId": "socialPosts.pauseRecurrence",
+    "path": "/v1/posts/{id}/recurrence/pause",
+  },
+  {
+    "method": "POST",
+    "operationId": "socialPosts.preview",
+    "path": "/v1/posts/preview",
+  },
+  {
+    "method": "POST",
+    "operationId": "socialPosts.publish",
+    "path": "/v1/posts/{id}/publish",
+  },
+  {
+    "method": "POST",
+    "operationId": "socialPosts.reschedule",
+    "path": "/v1/posts/{id}/reschedule",
+  },
+  {
+    "method": "POST",
+    "operationId": "socialPosts.resolveTarget",
+    "path": "/v1/posts/{id}/targets/{targetId}/resolve",
+  },
+  {
+    "method": "POST",
+    "operationId": "socialPosts.restoreOccurrences",
+    "path": "/v1/posts/{id}/recurrence/occurrences/restore",
+  },
+  {
+    "method": "POST",
+    "operationId": "socialPosts.resumeRecurrence",
+    "path": "/v1/posts/{id}/recurrence/resume",
+  },
+  {
+    "method": "POST",
+    "operationId": "socialPosts.retryTarget",
+    "path": "/v1/posts/{id}/targets/{targetId}/retry",
+  },
+  {
+    "method": "PUT",
+    "operationId": "socialPosts.setRecurrence",
+    "path": "/v1/posts/{id}/recurrence",
+  },
+  {
+    "method": "POST",
+    "operationId": "socialPosts.skipOccurrences",
+    "path": "/v1/posts/{id}/recurrence/occurrences/skip",
+  },
+  {
+    "method": "POST",
+    "operationId": "socialPosts.unschedule",
+    "path": "/v1/posts/{id}/unschedule",
+  },
+  {
+    "method": "PATCH",
+    "operationId": "socialPosts.update",
+    "path": "/v1/posts/{id}",
+  },
+  {
+    "method": "POST",
+    "operationId": "socialPosts.validate",
+    "path": "/v1/posts/validate",
+  },
+  {
+    "method": "POST",
+    "operationId": "socialPostsAi.generate",
+    "path": "/v1/posts/ai/generate",
   },
   {
     "method": "POST",
@@ -3741,6 +4226,41 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "method": "GET",
     "operationId": "token.get",
     "path": "/v1/token",
+  },
+  {
+    "method": "GET",
+    "operationId": "translation.getConversationState",
+    "path": "/v1/conversations/{conversationId}/translation",
+  },
+  {
+    "method": "GET",
+    "operationId": "translation.getSettings",
+    "path": "/v1/translation/settings",
+  },
+  {
+    "method": "POST",
+    "operationId": "translation.previewText",
+    "path": "/v1/conversations/{conversationId}/translation/preview",
+  },
+  {
+    "method": "POST",
+    "operationId": "translation.requestMessages",
+    "path": "/v1/conversations/{conversationId}/translation/requests",
+  },
+  {
+    "method": "POST",
+    "operationId": "translation.testSettings",
+    "path": "/v1/translation/settings/test",
+  },
+  {
+    "method": "PUT",
+    "operationId": "translation.updateConversationState",
+    "path": "/v1/conversations/{conversationId}/translation",
+  },
+  {
+    "method": "PUT",
+    "operationId": "translation.updateSettings",
+    "path": "/v1/translation/settings",
   },
   {
     "method": "POST",

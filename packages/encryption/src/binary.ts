@@ -1,6 +1,13 @@
+import { MalformedEncryptedDataError } from "./malformed"
+
+const HEX = /^[\da-f]*$/i
+
 export const hexToBytes = (hex: string): Uint8Array<ArrayBuffer> => {
   if (hex.length % 2 !== 0) {
-    throw new Error("Invalid hex string: odd length")
+    throw new MalformedEncryptedDataError("Invalid hex string: odd length")
+  }
+  if (!HEX.test(hex)) {
+    throw new MalformedEncryptedDataError("Invalid hex string: not hex")
   }
   const bytes = new Uint8Array(hex.length / 2)
   for (let i = 0; i < bytes.length; i++) {

@@ -1,6 +1,6 @@
 "use server"
 
-import { telegramIntegrationService } from "@chatbotx.io/business"
+import { telegramIntegrationService, userService } from "@chatbotx.io/business"
 import { auditService } from "@chatbotx.io/business/audit"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
 import type { UserModel } from "@chatbotx.io/database/types"
@@ -10,6 +10,7 @@ import { integrations } from "@/integration"
 import { logger } from "@/lib/log"
 import { buildBrokerCallbackUrl } from "@/lib/oauth-broker"
 import { authActionClient } from "@/lib/safe-action"
+import { resolveRequestTenantId } from "@/lib/tenant/request-tenant"
 import {
   type ConnectTelegramRequest,
   connectTelegramRequest,
@@ -27,6 +28,7 @@ export const connectTelegramAction = authActionClient
     }) => {
       try {
         const workspaceId = parsedInput.workspaceId ?? undefined
+        const hostTenantId = await resolveRequestTenantId()
 
         // Validate bot token and fetch bot info from Telegram
         const botData = await integrations.telegram.runAction("connect", {
@@ -39,6 +41,20 @@ export const connectTelegramAction = authActionClient
           user: ctx.user,
         })
 
+        // The bot token is the authorization. Recorded before
+        // `telegramIntegrationService.connect` so a failed connect keeps the
+        // backup; a new workspace has no id yet.
+        await userService.recordConnectionAuthorization({
+          userId: ctx.user.id,
+          provider: "telegram",
+          auth: {
+            authType: "secretText",
+            secretText: parsedInput.botToken,
+          },
+          phase: "credentialsValidated",
+          workspaceId: workspaceId ?? null,
+        })
+
         const result = await telegramIntegrationService.connect({
           workspaceId,
           ownerId,
@@ -46,6 +62,7 @@ export const connectTelegramAction = authActionClient
           botId: botData.id,
           botUsername: botData.username,
           botToken: parsedInput.botToken,
+          hostTenantId,
           onConnected: async ({ webhookSecretToken }) => {
             // Register webhook URL with Telegram
             const webhookUrl = buildBrokerCallbackUrl(

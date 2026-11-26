@@ -399,6 +399,27 @@ class TiktokIntegrationService extends BaseService {
     }
   }
 
+  /**
+   * Inboxes of the workspace's TikTok connections that cannot read a video's
+   * caption (no `video.list` grant — connected before the scope was approved,
+   * or the owner unticked it). A `hashtags` comment automation skips every
+   * comment on these until the owner reconnects, so the form warns about them.
+   * Returns ids only: the rows carry tokens that must never reach a client.
+   */
+  async listInboxIdsWithoutCaptionAccess(props: {
+    workspaceId: string
+  }): Promise<string[]> {
+    const integrations = await this.listByWorkspace({
+      workspaceId: props.workspaceId,
+    })
+    return integrations
+      .filter(
+        (integration) =>
+          !tiktokCanListVideos(integration.auth as TiktokAuthValue),
+      )
+      .map((integration) => integration.inboxId)
+  }
+
   async findByOpenId(openId: string): Promise<IntegrationTiktokModel | null> {
     return (
       (await db.query.integrationTiktokModel.findFirst({

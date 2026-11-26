@@ -120,6 +120,185 @@ describe("checkWorkspaceOwnerAccess", () => {
   })
 })
 
+describe("the Posts area's read-through-POST routes", () => {
+  const dryRuns = [
+    "/v1/posts/validate",
+    "/v1/posts/preview",
+    "/workspaces/{workspaceId}/social-posts/validate",
+    "/workspaces/{workspaceId}/social-posts/preview",
+  ]
+  const commentReads = [
+    "/v1/channel-posts/management/merge-view",
+    "/workspaces/{workspaceId}/channel-posts/management/merge-view",
+  ]
+
+  test.each([
+    ...dryRuns,
+    ...commentReads,
+  ])("%s stays open on a trial-expired workspace", async (path) => {
+    isCloud.mockReturnValue(true)
+    getAccessState.mockResolvedValue({ blocked: true, reason: "status" })
+
+    await expect(
+      assertWorkspaceOwnerAccessForMethod({
+        method: "POST",
+        ownerId: "owner-1",
+        path,
+      }),
+    ).resolves.toBeUndefined()
+  })
+
+  test("the comment export consumes a message, so it is refused on a trial-expired workspace", async () => {
+    isCloud.mockReturnValue(true)
+    getAccessState.mockResolvedValue({ blocked: true, reason: "status" })
+
+    await expect(
+      assertWorkspaceOwnerAccessForMethod({
+        method: "POST",
+        ownerId: "owner-1",
+        path: "/v1/channel-posts/management/export",
+      }),
+    ).rejects.toThrow("Trial expired")
+  })
+
+  test("creating or changing a post is still refused on a trial-expired workspace", async () => {
+    isCloud.mockReturnValue(true)
+    getAccessState.mockResolvedValue({ blocked: true, reason: "status" })
+
+    for (const [method, path] of [
+      ["POST", "/v1/posts"],
+      ["PATCH", "/v1/posts/{id}"],
+      ["POST", "/v1/posts/{id}/duplicate"],
+    ] as const) {
+      await expect(
+        assertWorkspaceOwnerAccessForMethod({
+          method,
+          ownerId: "owner-1",
+          path,
+        }),
+      ).rejects.toThrow("Trial expired")
+    }
+  })
+
+  test.each([
+    "/v1/posts/validate",
+    "/v1/posts/preview",
+    "/v1/channel-posts/management/merge-view",
+  ])("a read_only token may call %s", (path) => {
+    expect(isReadOnlyTokenAllowedMethod("POST", path)).toBe(true)
+  })
+
+  test("a read_only token may not export comments or create a post", () => {
+    expect(
+      isReadOnlyTokenAllowedMethod(
+        "POST",
+        "/v1/channel-posts/management/export",
+      ),
+    ).toBe(false)
+    expect(isReadOnlyTokenAllowedMethod("POST", "/v1/posts")).toBe(false)
+    expect(isReadOnlyTokenAllowedMethod("PATCH", "/v1/posts/{id}")).toBe(false)
+    expect(
+      isReadOnlyTokenAllowedMethod("POST", "/v1/posts/{id}/duplicate"),
+    ).toBe(false)
+  })
+})
+
+describe("repeating posts on a trial-expired workspace", () => {
+  const blocked = () => {
+    isCloud.mockReturnValue(true)
+    getAccessState.mockResolvedValue({ blocked: true, reason: "status" })
+  }
+
+  test.each([
+    ["POST", "/v1/posts/{id}/recurrence/pause"],
+    ["POST", "/workspaces/{workspaceId}/social-posts/{id}/recurrence/pause"],
+    ["DELETE", "/v1/posts/{id}/recurrence"],
+    ["POST", "/v1/posts/{id}/unschedule"],
+    ["POST", "/workspaces/{workspaceId}/social-posts/{id}/unschedule"],
+  ] as const)("%s %s stays open: it only takes work away", async (method, path) => {
+    blocked()
+
+    await expect(
+      assertWorkspaceOwnerAccessForMethod({
+        method,
+        ownerId: "owner-1",
+        path,
+      }),
+    ).resolves.toBeUndefined()
+  })
+
+  test.each([
+    ["PUT", "/v1/posts/{id}/recurrence"],
+    ["POST", "/v1/posts/{id}/recurrence/resume"],
+    ["POST", "/v1/posts/{id}/reschedule"],
+    ["POST", "/v1/posts/{id}/recurrence/occurrences/skip"],
+    ["POST", "/v1/posts/{id}/recurrence/occurrences/restore"],
+  ] as const)("%s %s is refused", async (method, path) => {
+    blocked()
+
+    await expect(
+      assertWorkspaceOwnerAccessForMethod({
+        method,
+        ownerId: "owner-1",
+        path,
+      }),
+    ).rejects.toThrow("Trial expired")
+  })
+
+  test("a read_only token cannot pause or end a series", () => {
+    expect(
+      isReadOnlyTokenAllowedMethod("POST", "/v1/posts/{id}/recurrence/pause"),
+    ).toBe(false)
+    expect(
+      isReadOnlyTokenAllowedMethod("DELETE", "/v1/posts/{id}/recurrence"),
+    ).toBe(false)
+  })
+})
+
+describe("post feeds on a trial-expired workspace", () => {
+  const blocked = () => {
+    isCloud.mockReturnValue(true)
+    getAccessState.mockResolvedValue({ blocked: true, reason: "status" })
+  }
+
+  test.each([
+    ["POST", "/v1/post-feeds/{id}/pause"],
+    ["POST", "/workspaces/{workspaceId}/post-feeds/{id}/pause"],
+    ["DELETE", "/v1/post-feeds/{id}"],
+  ] as const)("%s %s stays open: it only takes work away", async (method, path) => {
+    blocked()
+
+    await expect(
+      assertWorkspaceOwnerAccessForMethod({ method, ownerId: "owner-1", path }),
+    ).resolves.toBeUndefined()
+  })
+
+  test.each([
+    ["POST", "/v1/post-feeds"],
+    ["PATCH", "/v1/post-feeds/{id}"],
+    ["POST", "/v1/post-feeds/{id}/resume"],
+    ["POST", "/v1/post-feeds/{id}/check"],
+    ["POST", "/v1/post-feeds/preview"],
+  ] as const)("%s %s is refused", async (method, path) => {
+    blocked()
+
+    await expect(
+      assertWorkspaceOwnerAccessForMethod({ method, ownerId: "owner-1", path }),
+    ).rejects.toThrow("Trial expired")
+  })
+
+  test("a read_only token cannot write feeds or run the fetching preview", () => {
+    for (const [method, path] of [
+      ["POST", "/v1/post-feeds/{id}/pause"],
+      ["POST", "/v1/post-feeds/preview"],
+      ["DELETE", "/v1/post-feeds/{id}"],
+    ] as const) {
+      expect(isReadOnlyTokenAllowedMethod(method, path)).toBe(false)
+    }
+    expect(isReadOnlyTokenAllowedMethod("GET", "/v1/post-feeds")).toBe(true)
+  })
+})
+
 describe("assertWorkspaceOwnerAccessForMethod", () => {
   test("allows the conversation list POST but denies other POST routes", async () => {
     isCloud.mockReturnValue(true)
@@ -295,7 +474,10 @@ describe("assertWorkspaceOwnerAccessForMethod", () => {
     ).toBe(false)
   })
 
-  test("allows cancelling a contact scan on a trial-expired workspace (UI parity), never for a read_only token", async () => {
+  test.each([
+    ["a contact scan", "/v1/contact-scans/cancel"],
+    ["a contact sync", "/v1/contact-syncs/{runId}/cancel"],
+  ])("allows cancelling %s on a trial-expired workspace (UI parity), never for a read_only token", async (_label, path) => {
     isCloud.mockReturnValue(true)
     getAccessState.mockResolvedValue({ blocked: true, reason: "status" })
 
@@ -303,12 +485,10 @@ describe("assertWorkspaceOwnerAccessForMethod", () => {
       assertWorkspaceOwnerAccessForMethod({
         method: "POST",
         ownerId: "owner-1",
-        path: "/v1/contact-scans/cancel",
+        path,
       }),
     ).resolves.toBeUndefined()
-    expect(
-      isReadOnlyTokenAllowedMethod("POST", "/v1/contact-scans/cancel"),
-    ).toBe(false)
+    expect(isReadOnlyTokenAllowedMethod("POST", path)).toBe(false)
   })
 
   test("blocks a different POST path for a trial-expired workspace", async () => {

@@ -1,4 +1,8 @@
 import {
+  type RecordConnectionAuthorizationInput,
+  userService,
+} from "@chatbotx.io/business"
+import {
   type ConnectSessionActor,
   connectSessionService,
 } from "@chatbotx.io/business/connect-session"
@@ -320,6 +324,23 @@ export const completeAuthorization = async (input: {
 }
 
 /**
+ * The fields every connect-session capture shares; the caller adds the phase
+ * and any listing metadata. `actorUserId` is null for a workspace API token
+ * actor, which the service skips.
+ */
+const sessionAuthorizationRecord = (
+  session: ConnectSessionModel,
+  auth: AuthValue,
+): Omit<RecordConnectionAuthorizationInput, "phase"> => ({
+  userId: session.actorUserId,
+  provider: session.provider,
+  auth,
+  workspaceId: session.workspaceId,
+  purpose: session.purpose,
+  connectSessionId: session.id,
+})
+
+/**
  * Lists connectable candidates for an already-obtained `auth` and
  * persists them as the session's `awaiting_selection` targets. Split out
  * of `completeAuthorization` so a provider whose credential can be
@@ -349,6 +370,13 @@ export const listAndAttachCandidates = async (
       { err: providerError, sessionId: session.id, provider: session.provider },
       "connection OAuth: candidate listing failed",
     )
+    // Backed up before `failSession`/the throw: the user did authorize, so the
+    // auth is kept even though no account could be listed.
+    await userService.recordConnectionAuthorization({
+      ...sessionAuthorizationRecord(session, auth),
+      phase: "candidateListingFailed",
+      connectSessionErrorCode: retryStatus ? null : "provider_error",
+    })
     if (retryStatus) {
       throw connectionProviderUnavailableException(retryStatus)
     }
@@ -365,7 +393,20 @@ export const listAndAttachCandidates = async (
     throw rejection
   }
 
-  if (candidates.length === 0) {
+  const hasNoCandidates = candidates.length === 0
+  await userService.recordConnectionAuthorization({
+    ...sessionAuthorizationRecord(session, auth),
+    phase: hasNoCandidates
+      ? "candidateListingFailed"
+      : "candidateListingSucceeded",
+    candidateCount: candidates.length,
+    unavailableCandidateCount: candidates.filter(
+      (candidate) => candidate.unavailableReason,
+    ).length,
+    connectSessionErrorCode: hasNoCandidates ? "no_candidates" : null,
+  })
+
+  if (hasNoCandidates) {
     await failSession(session, "no_candidates")
     throw connectionNoCandidatesException()
   }
@@ -412,11 +453,14 @@ export const listAndAttachCandidates = async (
     }
   }
   const targets = candidates.map((candidate) => {
+    const base = {
+      id: candidate.sourceId,
+      name: candidate.displayName,
+      avatarUrl: candidate.avatarUrl,
+    }
     if (candidate.alreadyConnected) {
       return {
-        id: candidate.sourceId,
-        name: candidate.displayName,
-        avatarUrl: candidate.avatarUrl,
+        ...base,
         selectable: false,
         alreadyConnected: candidate.alreadyConnected,
       }
@@ -436,30 +480,40 @@ export const listAndAttachCandidates = async (
           ? "this_workspace"
           : "other_workspace"
       return {
-        id: candidate.sourceId,
-        name: candidate.displayName,
-        avatarUrl: candidate.avatarUrl,
+        ...base,
         selectable: false,
         alreadyConnected: scope,
       }
     }
+    if (candidate.unavailableReason) {
+      return {
+        ...base,
+        selectable: false,
+        disabledReason: candidate.unavailableReason,
+      }
+    }
     return {
-      id: candidate.sourceId,
-      name: candidate.displayName,
-      avatarUrl: candidate.avatarUrl,
+      ...base,
       selectable: true,
     }
   })
 
-  // Encrypts the full candidate list — not just the exchanged `auth` — so
-  // each candidate's own distinct `auth` (a multi-account provider's
-  // per-page token, e.g. Messenger) survives to `connectTargets`. For a
-  // single-target/`describe()`-fallback provider this is a one-element
-  // array holding the same `auth` `exchangeCode` returned. AAD binds the
-  // ciphertext to this exact session so it cannot be replayed against
-  // another session's row.
+  // Encrypts only the selectable candidates — not the exchanged `auth` — so
+  // each one's own distinct `auth` (a multi-account provider's per-page
+  // token, e.g. Messenger) survives to `connectTargets`. Already-connected
+  // and unavailable candidates are never stored: their targets are not
+  // selectable, and `connectTargets` rejects them from the target alone.
+  // For a single-target/`describe()`-fallback provider this is a
+  // one-element array holding the same `auth` `exchangeCode` returned. AAD
+  // binds the ciphertext to this exact session so it cannot be replayed
+  // against another session's row.
+  const selectableSourceIds = new Set(
+    targets.filter((target) => target.selectable).map((target) => target.id),
+  )
   const encryptedAuth = await encryptUtils.encryptObject(
-    candidates,
+    candidates.filter((candidate) =>
+      selectableSourceIds.has(candidate.sourceId),
+    ),
     `connect-session:${session.id}`,
   )
   return await connectSessionService.attachAuthorization({
@@ -507,7 +561,11 @@ const completeReconnect = async (input: {
   let candidate: ConnectionCandidate | undefined
   try {
     if (adapter.provider.listCandidates) {
-      const candidates = await adapter.provider.listCandidates({ auth })
+      // An unavailable account is listed for display only, so it is never
+      // used for a reconnect.
+      const candidates = (
+        await adapter.provider.listCandidates({ auth })
+      ).filter(({ unavailableReason }) => !unavailableReason)
       if (isLegacySourceId) {
         candidate = candidates.length === 1 ? candidates[0] : undefined
       } else {
@@ -547,6 +605,13 @@ const completeReconnect = async (input: {
       throw connectionAlreadyConnectedException()
     }
   }
+
+  await userService.recordConnectionAuthorization({
+    // The exchanged user-level auth, not the per-account `reconnectAuth`,
+    // so the slot holds the same kind of token a listing capture stores.
+    ...sessionAuthorizationRecord(session, auth),
+    phase: "reconnectValidated",
+  })
 
   const foreignKey = resolveForeignKey(connection)
   if (!(adapter.store && foreignKey)) {

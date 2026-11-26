@@ -106,6 +106,7 @@ export class BroadcastAnalyticsService {
   }
 
   getContactIdsPage(input: {
+    workspaceId: string
     broadcastId: string
     eventType: BroadcastEventType
     cursor: string | null

@@ -1,6 +1,9 @@
 // @vitest-environment node
 
 import { beforeEach, describe, expect, test, vi } from "vitest"
+import type { SessionUser } from "@/lib/auth/utils"
+
+type MobileUserMiddlewareContext = { user: SessionUser }
 
 const MOBILE_TOKEN = "mobile.access.jwt"
 
@@ -96,6 +99,24 @@ describe("mobile user auth middleware (/v1/me)", () => {
 
     expect(sessionUser).not.toHaveProperty("deletionRequestedAt")
     expect(sessionUser).not.toHaveProperty("scheduledDeletionAt")
+  })
+
+  test("never exposes the encrypted connection authorization backup", async () => {
+    const backup = { messenger: { encryptedAuth: "ciphertext" } }
+    mocks.findUserById.mockResolvedValueOnce({
+      ...dbUser,
+      connectionAuthorizations: backup,
+    })
+
+    await run(mobileUserAuthMiddleware, bearer())
+
+    const { context } = next.mock.calls[0][0] as {
+      context: MobileUserMiddlewareContext
+    }
+    expect(context.user).not.toHaveProperty("connectionAuthorizations")
+    expect(
+      toSessionUser({ ...dbUser, connectionAuthorizations: backup } as never),
+    ).not.toHaveProperty("connectionAuthorizations")
   })
 
   test.each([

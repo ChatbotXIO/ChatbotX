@@ -6,5 +6,7 @@ export {
 export {
   type ContactExportRelations,
   type ContactExportRow,
+  type ContactMergeMode,
+  type ContactProfilePatch,
   contactRepository,
 } from "./repository"

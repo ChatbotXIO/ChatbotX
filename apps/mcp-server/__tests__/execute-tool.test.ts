@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, test, vi } from "vitest"
 import type { DynamicTool } from "../src/openapi-loader"
-import { executeTool } from "../src/server/execute-tool"
+import { executeTool, sendApiRequest } from "../src/server/execute-tool"
 
 const tool: DynamicTool = {
   alwaysVisible: false,
@@ -316,6 +316,49 @@ describe("executeTool", () => {
       policy: "confirm_diff",
       proposed: { name: "VIP" },
     })
+    // The default profile keeps reporting a pending approval as an error.
+    expect(result.isError).toBe(true)
+  })
+
+  test("returns CONFIRMATION_REQUIRED as a usual result when confirmationAsResult is set", async () => {
+    const fetchMock = vi.fn()
+    globalThis.fetch = fetchMock as unknown as typeof fetch
+    const mutationTool: DynamicTool = {
+      ...tool,
+      annotations: {
+        destructiveHint: false,
+        idempotentHint: false,
+        readOnlyHint: false,
+      },
+      bodyParamNames: ["name"],
+      hitlPolicy: "confirm_diff",
+      inputSchema: {
+        properties: {
+          _confirm: { type: "boolean" },
+          name: { type: "string" },
+        },
+        required: ["name"],
+        type: "object",
+      },
+      method: "POST",
+      name: "tags_create",
+      queryParamNames: [],
+      pathTemplate: "/v1/tags",
+    }
+
+    const result = await executeTool(
+      mutationTool,
+      { name: "VIP" },
+      { token: "api-key" },
+      { confirmationAsResult: true },
+    )
+
+    expect(fetchMock).not.toHaveBeenCalled()
+    expect(result.isError).toBeFalsy()
+    expect(JSON.parse(result.content[0]?.text ?? "{}")).toMatchObject({
+      code: "CONFIRMATION_REQUIRED",
+      proposed: { name: "VIP" },
+    })
   })
 
   test("dispatches a confirmed mutation without forwarding _confirm", async () => {
@@ -476,6 +519,62 @@ describe("executeTool", () => {
     )
     expect(JSON.parse(nonJsonResult.content[0]?.text ?? "{}")).toMatchObject({
       currentStateUnavailable: "non-JSON body",
+    })
+  })
+})
+
+describe("sendApiRequest", () => {
+  const originalFetch = globalThis.fetch
+
+  afterEach(() => {
+    globalThis.fetch = originalFetch
+  })
+
+  const getContact = {
+    baseUrl: "https://api.example.com",
+    bodyParamNames: [],
+    method: "GET",
+    pathParamNames: ["id"],
+    pathTemplate: "/v1/contacts/{id}",
+    queryParamNames: [],
+  }
+
+  test.each([
+    "..",
+    ".",
+    "",
+    " .. ",
+  ])("rejects the dot-segment path value %j without a request", async (id) => {
+    const fetchMock = vi.fn()
+    globalThis.fetch = fetchMock as unknown as typeof fetch
+
+    await expect(
+      sendApiRequest(getContact, { id }, { token: "t" }),
+    ).resolves.toEqual({ invalidPathParam: "id" })
+    expect(fetchMock).not.toHaveBeenCalled()
+  })
+
+  test("fixed adapter body fields override caller arguments", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(successfulResponse)
+    globalThis.fetch = fetchMock as unknown as typeof fetch
+
+    await sendApiRequest(
+      {
+        adapterBody: { gender: "unknown" },
+        baseUrl: "https://api.example.com",
+        bodyParamNames: ["gender", "email"],
+        method: "POST",
+        pathParamNames: [],
+        pathTemplate: "/v1/contacts",
+        queryParamNames: [],
+      },
+      { email: "a@b.co", gender: "male" },
+      { token: "t" },
+    )
+
+    expect(JSON.parse(String(fetchMock.mock.calls[0]?.[1]?.body))).toEqual({
+      email: "a@b.co",
+      gender: "unknown",
     })
   })
 })

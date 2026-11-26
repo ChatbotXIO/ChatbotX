@@ -36,6 +36,7 @@ const FOLDER_TYPE_OF: Partial<Record<TemplateCategory, FolderTypeOf>> = {
       : null,
   fbCommentAutomations: (entry) =>
     isFolderType(entry.type) ? entry.type : null,
+  storyAutomations: always("igStory"),
   settings: (entry) => (entry.kind === "botField" ? "customField" : null),
 }
 

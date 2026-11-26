@@ -9,6 +9,7 @@ import { DataTableToolbar } from "@chatbotx.io/ui/components/data-table/data-tab
 import { useDataTable } from "@chatbotx.io/ui/hooks/use-data-table"
 import { useTranslations } from "next-intl"
 import { useMemo, useState } from "react"
+import { TemplateLockedList } from "@/features/templates/components/lock-context"
 import { DeleteLocationDialog } from "./delete-location-dialog"
 import { getLocationColumns, type LocationRowAction } from "./location-columns"
 import { LocationFormDialog } from "./location-form-dialog"
@@ -44,36 +45,42 @@ export function LocationsTable({
 
   return (
     <div className="flex flex-col gap-4">
-      <DataTable
-        labels={{ noResults: t("placesNearMe.locations.empty") }}
-        table={table}
+      <TemplateLockedList
+        resourceKind="placeLocation"
+        rows={locations.data}
+        workspaceId={workspaceId}
       >
-        <DataTableToolbar table={table}>
+        <DataTable
+          labels={{ noResults: t("placesNearMe.locations.empty") }}
+          table={table}
+        >
+          <DataTableToolbar table={table}>
+            <LocationFormDialog
+              categories={categories}
+              workspaceId={workspaceId}
+            />
+          </DataTableToolbar>
+        </DataTable>
+        {editing ? (
           <LocationFormDialog
             categories={categories}
+            hideTrigger
+            key={editing.id}
+            location={editing}
+            onOpenChange={(open) => !open && setRowAction(null)}
+            open
             workspaceId={workspaceId}
           />
-        </DataTableToolbar>
-      </DataTable>
-      {editing ? (
-        <LocationFormDialog
-          categories={categories}
-          hideTrigger
-          key={editing.id}
-          location={editing}
-          onOpenChange={(open) => !open && setRowAction(null)}
-          open
-          workspaceId={workspaceId}
-        />
-      ) : null}
-      {deleting ? (
-        <DeleteLocationDialog
-          location={deleting}
-          onOpenChange={(open) => !open && setRowAction(null)}
-          open
-          workspaceId={workspaceId}
-        />
-      ) : null}
+        ) : null}
+        {deleting ? (
+          <DeleteLocationDialog
+            location={deleting}
+            onOpenChange={(open) => !open && setRowAction(null)}
+            open
+            workspaceId={workspaceId}
+          />
+        ) : null}
+      </TemplateLockedList>
     </div>
   )
 }

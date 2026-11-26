@@ -10,13 +10,15 @@ describe("conversationService.resolveContactInboxForSend", () => {
   })
 
   test("resolves the contact inbox matching an explicit inboxId", async () => {
-    const contactInboxA = { id: "ci-a", inboxId: "inbox-a" }
     const contactInboxB = { id: "ci-b", inboxId: "inbox-b" }
     vi.spyOn(conversationService, "findByContactWithInboxes").mockResolvedValue(
       {
         id: "conv-1",
-        contactInboxes: [contactInboxA, contactInboxB],
+        contactInboxes: [contactInboxB],
       } as never,
+    )
+    vi.spyOn(contactInboxService, "findBy").mockResolvedValue(
+      contactInboxB as never,
     )
 
     const result = await conversationService.resolveContactInboxForSend({
@@ -115,6 +117,10 @@ describe("conversationService.resolveContactInboxForSend", () => {
     vi.spyOn(conversationService, "findByContactWithInboxes").mockResolvedValue(
       undefined,
     )
+    vi.spyOn(contactInboxService, "findRecentByContactId").mockResolvedValue({
+      id: "ci-a",
+      inboxId: "inbox-a",
+    } as never)
 
     await expect(
       conversationService.resolveContactInboxForSend({
@@ -125,12 +131,7 @@ describe("conversationService.resolveContactInboxForSend", () => {
   })
 
   test("404s when the conversation exists but no contact inbox matches the given inboxId", async () => {
-    vi.spyOn(conversationService, "findByContactWithInboxes").mockResolvedValue(
-      {
-        id: "conv-1",
-        contactInboxes: [{ id: "ci-a", inboxId: "inbox-a" }],
-      } as never,
-    )
+    vi.spyOn(contactInboxService, "findBy").mockResolvedValue(undefined)
 
     await expect(
       conversationService.resolveContactInboxForSend({

@@ -346,6 +346,10 @@ vi.mock("../src/services/integrations", () => ({
   resolveIntegrationContextFromContactInbox: vi.fn(),
 }))
 
+const mockSettleFailedOutgoingMessage = vi.hoisted(() =>
+  vi.fn().mockResolvedValue("removed"),
+)
+
 vi.mock("../src/chat/handlers/send-message", async (importOriginal) => {
   const actual =
     await importOriginal<typeof import("../src/chat/handlers/send-message")>()
@@ -353,7 +357,7 @@ vi.mock("../src/chat/handlers/send-message", async (importOriginal) => {
     ...actual,
     sendFlowStepToChannel: mockSendFlowStepToChannel,
     sendMessageToChannel: mockSendMessageToChannel,
-    recordMessageSendError: vi.fn().mockResolvedValue(undefined),
+    settleFailedOutgoingMessage: mockSettleFailedOutgoingMessage,
     markConversationReadAfterDelivery: mockMarkReadByOutbound,
   }
 })
@@ -962,6 +966,104 @@ describe("sendFlowStep", () => {
     expect(mockRecordOutboundFlowStep).toHaveBeenCalledWith(
       expect.objectContaining({ closeHumanReplyWindow: true }),
     )
+  })
+
+  describe("a failed send", () => {
+    beforeEach(() => {
+      mockSendFlowStepToChannel.mockRejectedValueOnce(new Error("rejected"))
+    })
+
+    test("of an automated flow step settles its message without the inbox rule", async () => {
+      await sendFlowStep(baseParams)
+
+      expect(mockEmit).toHaveBeenCalledWith(
+        "message:failed",
+        expect.objectContaining({ willRetry: false }),
+      )
+      expect(mockSettleFailedOutgoingMessage).toHaveBeenCalledWith({
+        message: expect.objectContaining({ id: "msg-created" }),
+        conversationId: "conv-1",
+        workspaceId: "ws-1",
+        errorMessage: expect.any(String),
+        sendFrom: undefined,
+        silent: false,
+      })
+    })
+
+    test("of a flow sent from the inbox passes sendFrom so the message is kept", async () => {
+      await sendFlowStep({ ...baseParams, sendFrom: "inbox" })
+
+      expect(mockSettleFailedOutgoingMessage).toHaveBeenCalledWith(
+        expect.objectContaining({ sendFrom: "inbox" }),
+      )
+    })
+
+    test("of a bulk broadcast step settles silently", async () => {
+      await sendFlowStep({
+        ...baseParams,
+        isBulkBroadcast: true,
+        metadata: { type: BROADCAST_PAYLOAD_TYPE } as never,
+      })
+
+      expect(mockSettleFailedOutgoingMessage).toHaveBeenCalledWith(
+        expect.objectContaining({ silent: true }),
+      )
+    })
+  })
+
+  test("stamps a flow step sent from the inbox as sentFromInbox", async () => {
+    await sendFlowStep({ ...baseParams, sendFrom: "inbox" })
+
+    expect(mockRepositoryCreate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        contentAttributes: expect.objectContaining({ sentFromInbox: true }),
+      }),
+    )
+  })
+
+  test("stamps the member behind a manual flow step", async () => {
+    await sendFlowStep({
+      ...baseParams,
+      sendFrom: "inbox",
+      sentByUserId: "user-7",
+    })
+
+    expect(mockRepositoryCreate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        contentAttributes: expect.objectContaining({ sentByUserId: "user-7" }),
+      }),
+    )
+  })
+
+  test("stamps the member behind an API flow step sent with a member token", async () => {
+    await sendFlowStep({
+      ...baseParams,
+      sendFrom: "api",
+      sentByUserId: "user-7",
+    })
+
+    const [created] = mockRepositoryCreate.mock.calls[0] as [
+      { contentAttributes: Record<string, unknown> },
+    ]
+    expect(created.contentAttributes).toHaveProperty("sentByUserId", "user-7")
+  })
+
+  test("never stamps an automated flow step, even when a sender id is present", async () => {
+    await sendFlowStep({ ...baseParams, sentByUserId: "user-7" })
+
+    const [created] = mockRepositoryCreate.mock.calls[0] as [
+      { contentAttributes: Record<string, unknown> },
+    ]
+    expect(created.contentAttributes).not.toHaveProperty("sentByUserId")
+  })
+
+  test("does not mark an API flow step sentFromInbox", async () => {
+    await sendFlowStep({ ...baseParams, sendFrom: "api" })
+
+    const [created] = mockRepositoryCreate.mock.calls[0] as [
+      { contentAttributes: Record<string, unknown> },
+    ]
+    expect(created.contentAttributes).not.toHaveProperty("sentFromInbox")
   })
 
   test("an inbox-originated flow step leaves the window to the producer claim", async () => {
@@ -2288,6 +2390,19 @@ describe("sendChatMessage", () => {
     })
   })
 
+  test("never stamps a member on a chat message row", async () => {
+    await sendChatMessage({
+      conversation: fakeConversation as never,
+      contactInbox: fakeContactInbox as never,
+      text: "hello from chat",
+    })
+
+    const [created] = mockRepositoryCreate.mock.calls[0] as [
+      { contentAttributes: Record<string, unknown> },
+    ]
+    expect(created.contentAttributes).not.toHaveProperty("sentByUserId")
+  })
+
   test("updates contact inbox lastMessageAt and conversation lastActivityAt after creating a chat message", async () => {
     await sendChatMessage({
       conversation: fakeConversation as never,
@@ -2308,6 +2423,32 @@ describe("sendChatMessage", () => {
     expect(mockInvalidateTracking).toHaveBeenCalledWith({
       cacheTags: ["contacts:contact-1:contact-inboxes"],
     })
+  })
+
+  test("stores flowId and stepId on the message when the caller names its flow step", async () => {
+    await sendChatMessage({
+      conversation: fakeConversation as never,
+      contactInbox: fakeContactInbox as never,
+      text: "what is your phone number?",
+      flowOrigin: { flowId: "flow-1", stepId: "step-1" },
+    })
+
+    expect(mockRepositoryCreate).toHaveBeenCalledTimes(1)
+    expect(mockRepositoryCreate.mock.calls[0]?.[0].contentAttributes).toEqual(
+      expect.objectContaining({ flowId: "flow-1", stepId: "step-1" }),
+    )
+  })
+
+  test("leaves contentAttributes without flow keys when the caller passes no flowOrigin", async () => {
+    await sendChatMessage({
+      conversation: fakeConversation as never,
+      contactInbox: fakeContactInbox as never,
+      text: "plain",
+    })
+
+    const attributes = mockRepositoryCreate.mock.calls[0]?.[0].contentAttributes
+    expect(attributes).not.toHaveProperty("flowId")
+    expect(attributes).not.toHaveProperty("stepId")
   })
 
   test("never tells the send it will be retried: sendChatMessage swallows failures, so the send error must be recorded at once", async () => {

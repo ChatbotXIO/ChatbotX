@@ -123,7 +123,7 @@ Each filter that fails calls `logAutomationSkipped(..., reason)` (logged at `inf
 | `type` | `messenger` \| `instagram` \| `instagramFacebook` \| `threads` \| `tiktok` | `findActiveAutomations` filters `type === channelType`, which is the incoming `integrationType`. The builder writes it: `fb-comments` → `messenger`, `ig-comments` → the selected Instagram variant. |
 | `inboxId` | The one connected account (Page, Instagram account, Threads profile, TikTok account) the automation answers on; `NULL` = every account of `type` | `findActiveAutomations` takes the comment's `integrationRow.inboxId` and matches `inboxId IS NULL OR inboxId = :inboxId`, so another account's automation neither answers nor records a miss. See [Account scope](#account-scope). |
 | `startTime`/`endTime` | Daily active window (workspace tz) | `isWithinSchedule` — lexicographic `"HH:mm"` compare, handles overnight windows; null → always within. |
-| `post` (`all` / `postIds` / `live`) | Which posts | `matchPost(post, postId, isLive)` — `live` matches only live-broadcast comments; `all` matches only NON-live comments (Live and post automations never answer the same comment); `postIds` matches via normalized trailing id, live or not. See [Live comments](#live-comments). |
+| `post` (`all` / `postIds` / `hashtags` / `live`) | Which posts | `matchPost(post, postId, isLive)` — `live` matches only live-broadcast comments; `all` matches only NON-live comments (Live and post automations never answer the same comment); `postIds` matches via normalized trailing id, live or not; `hashtags` passes `matchPost` like `all` and is then narrowed by `matchPostHashtags` on the post caption. See [Live comments](#live-comments) and [Post hashtag targeting](#post-hashtag-targeting). |
 | `options.ignoreCommentReplies` (default **true**) | Skip replies-to-comments | Skips only when `isCommentReply(parentId, postId, commentId)` is true. |
 | `includeKeywords` (`all`/`equal`/`contain`/`mentions`) | "Reply to" | `matchKeywords` — both sides lowercased and accent-folded (`normalizeForMatch`). `equal` = whole comment equals a keyword; `contain` = substring. `mentions` ignores keywords: the comment must tag **at least** `includeKeywords.mentionCount` (1–5) accounts — `matchMentionCount`, miss reason `mentionCountNotMatched`. The mention list is the same one tag tracking uses (see [Tag tracking](#tag-tracking)). |
 | `excludeKeywords` + `excludeKeywordsType` (`equal`/`contain`, default `contain`) | Text must not match | `matchKeywords` — `contain` = substring, `equal` = the whole trimmed comment equals a keyword; lowercased and accent-folded both sides. |
@@ -131,11 +131,12 @@ Each filter that fails calls `logAutomationSkipped(..., reason)` (logged at `inf
 | `options.replyToNewContactsOnly` | Only first-time contacts | `getPriorContactInboxCount(contactId) > 1` → skip. Counts `ContactInbox` rows. |
 | `options.replyOncePerUserPerPost` | Once per user per post | `findDedup(automationId, contactId, postId)` exists → skip (fast path, keeps the miss reason). Then `claimDedup` — an `INSERT … ON CONFLICT DO NOTHING RETURNING` on `CommentAutomationReply_dedup_idx` — is the actual guard: two comments from one person milliseconds apart both pass the read, only one wins the row. A claimed row is released (`deleteDedup`) when nothing was dispatched. |
 | `options.replyToUsersWhoCommentedOnOtherPosts` (default **true**) | If off, only engage each user on their first post | When `false`, `hasRepliedOnOtherPost` (a dedup row with a different `postId`) → skip. |
-| `options.likeUserComment` | Auto-like the comment | Runs only if the incoming comment's DB message was found (`findBySourceId`). |
+| `options.likeUserComment` | Auto-like the comment | Runs only if the incoming comment's DB message was found (`findBySourceId`) and the channel can like (`supportsCommentLike`: Messenger and TikTok). On Instagram (both connections) and Threads a stored `true` is kept but the like is skipped and logged as `like comment unsupported`; the rule is never failed or retried. |
 | `options.trackUserTags` | Count who the commenter tagged | Not a filter — never skips. Adds the comment's counts to `Contact.totalTagged`/`totalNewTagged`, which back `{{total_tagged}}`/`{{total_new_tagged}}`. Once per comment, ahead of the reply filters. See [Tag tracking](#tag-tracking). |
 | `hideComments.*` | Auto-hide matching comments | Runs after the reply filters, on a comment the automation also answers (see [Moderation](#moderation-hide-rules--ai)). `matchHideRule` — `all`, `hasPhoneNumber` (PHONE_RE), `hasLink` (LINK_RE, matches bare domains too), `hasKeywords` (case- and accent-insensitive), `hasImage`/`hasVideo`/`hasGif` (attachment lookup, see below), `hasEmoji` (`\p{Extended_Pictographic}` on the text). A row written before `hasGif`/`hasEmoji` existed lacks the keys — absent reads as off. |
+| `hideComments.*` and message quota | Moderation hides are free | Hides, unhides and deletes queued by a comment automation never consume the message quota. Only the hide of a per-post comment setting (`hideComments` / `hidePhoneComments` on a post, job `usageSource: "postCommentSetting"`) is charged, see `docs/posts.md`. |
 | `hideComments.showCommentsAfter` | Auto-unhide delay | Enqueues a delayed unhide job (`jobId = unhide-comment-${commentId}`). Hide rules only — an AI moderation hide stays hidden. |
-| `hideComments.aiModeration` | AI moderation | Optional; absent = off. `enabled`, `aiAgentId` (only the agent's model list is used, never its prompt), `categories` (`hate`/`offensive`/`harassment`/`negative`/`spam`), `instruction`, `action` (`hide`/`delete`; the service pins `delete` → `hide` on Threads, and pins `enabled` off on an Instagram Live automation). See [Moderation](#moderation-hide-rules--ai). |
+| `hideComments.aiModeration` | AI moderation | Optional; absent = off. `enabled`, `engine` (`aiAgent` default / `decision`), `aiAgentId` (engine `aiAgent`; only the agent's model list is used, never its prompt), `decisionConnectionId` + `decisionModel` + `decisionThreshold` (engine `decision`: an enabled AI Router connection of this workspace and one of its `modelCatalog`, checked on every write; a template install switches it off and clears the connection with a `credentialRequired` warning), `categories` (`hate`/`offensive`/`harassment`/`negative`/`spam`), `instruction`, `action` (`hide`/`delete`; the service pins `delete` → `hide` on Threads, and pins `enabled` off on an Instagram Live automation). See [Moderation](#moderation-hide-rules--ai). |
 | `publicReply` / `privateReply` | The reply | See [Reply types](#reply-types). |
 | `replyAfter` | Delay before replying | `computeDelayMs` → passed as BullMQ `{ delay }`. |
 
@@ -219,9 +220,11 @@ Delivery and state are two different things, and a comment splits them:
   A comment does not open one, so each channel's `sendFlowStep` calls
   `assertCommentPrivateReplyFollowUpDeliverable` (`@chatbotx.io/sdk`) against
   `contact.lastIncomingMessageAt` first: inside the window it sends normally, outside it
-  throws `comment_private_reply_already_used`, which `sendFlowStep`'s catch records as the
-  message's `sendError` so the inbox says why the rest of the flow never arrived. Before
-  this the Send API simply rejected the follow-up and the error was swallowed.
+  throws `comment_private_reply_already_used`, which `sendFlowStep`'s catch settles as a
+  failed bot message: the message is removed from the conversation and the error is
+  written to the workspace Error Log, which says why the rest of the flow never arrived
+  (see [failed-outgoing-messages.md](failed-outgoing-messages.md)). Before this the Send
+  API simply rejected the follow-up and the error was swallowed.
   `replyChannel: "public"` is *not* consumed: it survives every step, node and re-enqueued
   `sendFlow` job of the run, so the whole flow answers on the post.
 
@@ -283,7 +286,8 @@ name a row by that triple. So:
 
 - **Sent +1** for the set, never +N — same as `repliesCount`.
 - If message #2 fails after #1 landed, the outcome stays **Delivered**; #2's error still surfaces
-  as a `sendError` on its `Message` row in the inbox and in the workspace Error Logs.
+  in the workspace Error Logs; its bot `Message` row is removed from the inbox (see
+  [failed-outgoing-messages.md](failed-outgoing-messages.md)).
 - Only **all** messages failing records Failed.
 
 Private reply is deliberately excluded: Meta allows one comment-anchored DM per comment.
@@ -422,6 +426,8 @@ One value per `continue` in the filter chain
 |---|---|
 | `outsideSchedule` | `isWithinSchedule` |
 | `postNotMatched` | `matchPost` |
+| `postHashtagNotMatched` | `matchPostHashtags` — caption carries none of the target hashtags |
+| `postCaptionUnavailable` | `matchPostHashtags` — caption could not be read |
 | `commentIsReply` | `ignoreCommentReplies` + `isCommentReply` |
 | `keywordsNotMatched` | `matchKeywords` |
 | `contactNotNew` | `replyToNewContactsOnly` |
@@ -586,10 +592,27 @@ The two halves of moderation run at different points of the automation loop
    `-replay-<id>` suffix, since the webhook run's completed job may still hold the fixed id.
    `processCommentModeration`:
    - restores the replay context (low priority) when `replay` is set;
-   - re-reads the automation (`findActive`) and the agent; either gone → resume;
-   - classifies with `generateText` + `Output.object` over the agent's model list (the same
-     provider fallback as `generateAIReplyText`; each failure goes to Error Logs). The comment is
-     sent as quoted data in the user message, never in the instructions;
+   - re-reads the automation (`findActive`); gone or moderation off → resume;
+   - classifies with the automation's **engine** (`aiModeration.engine`, absent = `aiAgent`):
+     - `aiAgent` — re-reads the agent (gone → resume), then `generateText` + `Output.object`
+       over the agent's model list (the same provider fallback as `generateAIReplyText`; each
+       failure goes to Error Logs). The comment is sent as quoted data in the user message,
+       never in the instructions;
+     - `decision` — an **AI Router** connection (Decision, e.g. Jev) via
+       `decisionCommentModerationService.classify`
+       ([`decision/comment-moderation-service.ts`](../packages/business/src/decision/comment-moderation-service.ts)):
+       one `noul` (yes/no) question per selected category, keyed by the category, the comment in
+       `state.currentMessage` marked as untrusted data. A category is flagged when its
+       `probabilityTrue` ≥ `decisionThreshold` (0.5–0.95, default 0.7). The guidance (`instruction`) goes inside every
+       question, so this engine caps it at 500 characters (the provider allows 1000 per
+       question, including the fixed text). The provider returns no
+       sentence, so the log's `reason` lists the probabilities ("AI Router jev-1.13.0: hate
+       92%, offensive 12%"), `provider` is the connection's `providerKind`, `modelId` the model.
+       A connection that is gone, disabled or no longer lists the model is `unavailable`; it
+       and a provider error both fail open (resume, nothing cached);
+   - the verdict is cached 10 minutes per comment, keyed by the engine's inputs (agent — or
+     connection, model, threshold — plus categories and instruction). The `aiAgent` key is the
+     same as before engines existed;
    - keeps only the categories the automation selected. Flagged → `moderated` miss, log row
      (`source: ai`, `reason`, `provider`, `modelId`), then `changeChannelMessageState` (hide) or
      `deleteChannelMessage` (delete), both with the `moderation` marker and the same
@@ -614,6 +637,39 @@ per inserted log row, exactly like `missedCount`.
 `automation`; the public list drops the commenter's name and avatar) and the
 **Moderated comments** card under the analytics dashboard
 (`moderation-log-card.tsx`), both through `lib/moderation-logs`.
+
+## Post hashtag targeting
+
+`post: { type: "hashtags", value: ["vip", "sale"] }` answers a comment only when the post's
+caption (Facebook `message`, Instagram `caption`, Threads `text`, TikTok `caption`) carries
+**at least one** listed hashtag. No webhook delivers the caption, so the worker reads it.
+
+- **Matching** (`captionHasAnyHashtag`, `packages/database/src/partials/comment-automation.ts`):
+  hashtags are cut by `#[\p{L}\p{M}\p{N}_]+` (Vietnamese with combining marks included),
+  NFC-normalized and lower-cased. Whole tag only — `#vip2` and `#vipmember` do not match `vip`.
+- **Storage**: the service stores the canonical form (`normalizeCommentPostTarget` in
+  `packages/business/src/comment-automation/post-target.ts`, on every create/update path):
+  no `#`, lower case, deduped, 1–20 tags, each ≤ 100 letters/digits/`_`. A bad list is a
+  `validationException` on `post.value`.
+- **Caption lookup** (`post-caption.ts` in the worker): `createPostCaptionResolver` is
+  memoized per comment and only called when an automation targets hashtags. Order: Redis
+  (`comment-automation:post-caption:{integrationId}:{postId}`, 10 min) → the channel API
+  (`getPostDetails` contact handler for Meta, Threads `getPostDetails` action,
+  `tiktokIntegrationService.getPostDetails`) with a 10 s timeout → on failure the caption
+  saved on `ChannelPost` (Facebook/Instagram only). "Unreadable" is cached for 60 s.
+  The 10-minute cache is why an owner who edits `#vip` into a post sees it apply within
+  ~10 minutes.
+- **Unreadable caption = not answered** (`postCaptionUnavailable`). TikTok needs the
+  `video.list` scope (`tiktokCanListVideos`); a connection made before it was approved
+  must reconnect. The TikTok form warns about such accounts
+  (`listInboxIdsWithoutCaptionAccess`).
+- **Order**: right after `matchPost`, before AI moderation — it is part of the post gate.
+  Tag tracking (`tracksTagsForComment`) applies it last, after the cheap sync gates.
+- **Live**: never matches a live comment (`matchPost` treats `hashtags` like `all`).
+- **Templates**: the hashtag list is copied as-is (only `postIds` is cleared on install).
+- **Builder**: `PostHashtagsField` (shared); switching between `postIds` and `hashtags`
+  empties `post.value` (`useClearPostValueOnHashtagsSwitch`); changing the account keeps
+  hashtags (they belong to no account).
 
 ## Process missed comments
 
@@ -756,12 +812,12 @@ fails the comment is processed immediately.
   and, conditionally, on TikTok (`PRIVATE_REPLY_TEXT_SENDERS`); Threads has no DM API at
   all. Comment liking and hiding exist on the Meta channels and TikTok but not Threads.
   Among the Meta
-  channels liking exists only on `messenger` and
-  `instagramFacebook` — Instagram Login has no like API, so its `likeComment` handler
-  is a logged no-op — and the attachment lookup behind `hideComments.hasImage` /
+  channels liking exists only on `messenger` — neither Instagram connection can like
+  (the `/{igId}/likes` endpoint is not in Meta's official reference), so both
+  `likeComment` handlers are logged no-ops and the worker never enqueues the job — and the attachment lookup behind `hideComments.hasImage` /
   `hasVideo` is implemented only for `messenger` (`comment-attachment.ts`
   short-circuits every other channel to "no attachment"). The `ig-comments` form gates
-  each toggle separately: the like switch renders only for `instagramFacebook`, while
+  each toggle separately: the like switch is never offered for either variant (a rule saved with it on shows it as unavailable until turned off), while
   `hasImage`/`hasVideo` are hidden for both Instagram variants. Keep that pattern —
   hide an unsupported toggle rather than rendering a dead one.
 - **TikTok's private reply is conditional, and deferred because of it.**
@@ -827,9 +883,10 @@ fails the comment is processed immediately.
   nothing but `message`; there is no `attachment_url` (that is a Facebook Page comment
   feature, used by `integrations/messenger`). A media step in a *public* reply flow
   therefore cannot be delivered on either Instagram variant: `sendComment` throws
-  `ChannelError(PAYLOAD_INVALID)` so the failure lands on the message row as a `sendError`
-  the inbox shows. It used to `return { messageIds: [] }` with only a `logger.warn`, which
-  made the step vanish while the inbox still displayed it. On Messenger the same step does
+  `ChannelError(PAYLOAD_INVALID)` so the failure is recorded: the bot message is removed
+  from the inbox and the error lands in the workspace Error Log. It used to
+  `return { messageIds: [] }` with only a `logger.warn`, which made the step look sent
+  while it never was. On Messenger the same step does
   post, carrying `attachments[0].url` as `attachment_url` — only the first attachment. To
   deliver media in answer to a comment, use a **private** reply: the comment_id-anchored Send
   API takes attachments and templates. (Corroborated by

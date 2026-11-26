@@ -46,6 +46,8 @@ type CustomFieldSelectProps = {
    * v1 surfaces only — see `useCustomFieldSelectOptions`.
    */
   includeBotFields?: boolean
+  /** Locks the picker (e.g. inside a View-only template copy). */
+  disabled?: boolean
 }
 
 // Language-neutral marker for the "no selection" option.
@@ -68,6 +70,7 @@ export const CustomFieldSelect = (props: CustomFieldSelectProps) => {
     createDefaultType,
     clearable,
     includeBotFields,
+    disabled,
   } = props
 
   const workspaceId = useWorkspaceId()
@@ -130,6 +133,7 @@ export const CustomFieldSelect = (props: CustomFieldSelectProps) => {
         </div>
       )}
       <ComboboxField
+        disabled={disabled}
         emptyText={t("actions.noRecordFound")}
         name={name}
         options={options}

@@ -196,6 +196,35 @@ describe("resolveLastMessagePreview", () => {
   })
 })
 
+describe("resolveLastMessagePreview — a deleted message", () => {
+  test("shows the deleted placeholder instead of the unsent text", () => {
+    const preview = resolveLastMessagePreview(
+      { text: "an unsent secret", deletedAt: new Date() } as never,
+      t,
+    )
+
+    expect(preview).toBe("The message has been deleted.")
+  })
+
+  test("hides the cart summary and the attachment count of a deleted message too", () => {
+    const preview = resolveLastMessagePreview(
+      { text: null, attachmentCount: 2, deletedAt: new Date() } as never,
+      t,
+    )
+
+    expect(preview).toBe("The message has been deleted.")
+  })
+
+  test("keeps showing a message that was not deleted", () => {
+    expect(
+      resolveLastMessagePreview(
+        { text: "still here", deletedAt: null } as never,
+        t,
+      ),
+    ).toBe("still here")
+  })
+})
+
 describe("resolveCallPreviewKind", () => {
   test("returns completedInbound for a completed userInitiated call", () => {
     expect(resolveCallPreviewKind(callMessage({ status: "completed" }))).toBe(

@@ -5,6 +5,7 @@ import { API_URL, INSTAGRAM_OAUTH_URL } from "../constants"
 import {
   type ChannelErrorSource,
   InstagramAPIException,
+  isUnsupportedFieldError,
   parseOriginError,
 } from "../exception"
 import type { InstagramAuthValue } from "../schema"
@@ -58,7 +59,7 @@ export function logChannelError(
     type: source.type,
   }
 
-  if (isExpectedPolicyError(source)) {
+  if (isExpectedPolicyError(source) || isUnsupportedFieldError(source)) {
     logger.warn(
       payload,
       `Instagram API expected policy error: ${scrubSecretsInString(source.message ?? "unknown")}`,

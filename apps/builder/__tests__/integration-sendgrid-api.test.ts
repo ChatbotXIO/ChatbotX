@@ -15,6 +15,12 @@ const { MockSendGridApiError, mockRunAction } = vi.hoisted(() => {
 })
 
 // ---- mock: database client -----------------------------------------------
+vi.mock("@/lib/tenant/request-tenant", () => ({
+  resolveRequestTenantId: async () => "root-tenant",
+  canOpenWorkspaceOnHost: () => true,
+  filterWorkspacesForHost: <T>(items: T[]) => items,
+}))
+
 vi.mock("@chatbotx.io/database/client", () => ({
   db: {
     query: {
@@ -66,6 +72,10 @@ vi.mock("@chatbotx.io/worker-config", () => ({
   IntegrationJobAction: {
     coexistMessengerSync: "coexistMessengerSync",
     coexistInstagramSync: "coexistInstagramSync",
+  },
+  NotificationJobAction: {
+    notifyPostFailed: "notifyPostFailed",
+    notifyPostNeedsReview: "notifyPostNeedsReview",
   },
   PURGE_WORKSPACES_INTERVAL_MINUTES: 30,
 }))

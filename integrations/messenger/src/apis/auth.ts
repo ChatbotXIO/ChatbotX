@@ -1,3 +1,4 @@
+import type { ConnectionCandidateUnavailableReason } from "@chatbotx.io/sdk"
 import { fetchAllCursorPages } from "@chatbotx.io/utils"
 import { DEFAULT_API_VERSION } from "../constants"
 import { MessengerAPIException, rescue } from "../exception"
@@ -201,26 +202,42 @@ async function getBusinessManagedPages(
   }
 }
 
-function hasAllAdminTasks(tasks?: string[]): boolean {
+/**
+ * A page that reports no `tasks` at all is treated as fully managed; only a
+ * page that lists tasks without every admin task lacks permissions.
+ */
+function lacksAdminTasks(tasks?: string[]): boolean {
   if (!tasks?.length) {
     return false
   }
 
-  return ADMIN_PAGE_TASKS.every((task) => tasks.includes(task))
+  return !ADMIN_PAGE_TASKS.every((task) => tasks.includes(task))
+}
+
+/** Why a page cannot be connected, in fixed precedence; `undefined` when it can. */
+function resolveUnavailableReason(
+  page: FacebookPage,
+  source: FacebookPageSource,
+): ConnectionCandidateUnavailableReason | undefined {
+  if (!page.access_token) {
+    return "missingAccessToken"
+  }
+  if (source === "direct" && lacksAdminTasks(page.tasks)) {
+    return "insufficientPermissions"
+  }
+  return
 }
 
 function classifyConnectable(
   page: FacebookPage,
   source: FacebookPageSource,
 ): ConnectableFacebookPage {
-  const hasAccessToken = Boolean(page.access_token)
+  const unavailableReason = resolveUnavailableReason(page, source)
 
   return {
     ...page,
-    isConnectable:
-      source === "direct"
-        ? hasAccessToken && hasAllAdminTasks(page.tasks)
-        : hasAccessToken,
+    isConnectable: unavailableReason === undefined,
+    ...(unavailableReason ? { unavailableReason } : {}),
   }
 }
 
@@ -534,6 +551,22 @@ export function getFacebookUser(
       avatarUrl: res.picture?.data?.url,
     }
   })
+}
+
+/**
+ * Every Page the person has a direct role on, with its page access token and
+ * tasks, for the publishing connect. Unlike `getUserPages` it does not judge
+ * whether the Page can be connected as a messaging inbox: the caller decides
+ * from `tasks` whether the person may publish as the Page.
+ */
+export async function getUserPagesForPublishing(
+  userAccessToken: string,
+  version: string = DEFAULT_API_VERSION,
+): Promise<FacebookPage[]> {
+  const endpoint = `${version}/me/accounts`
+  return await rescue(endpoint, () =>
+    fetchDirectPages(endpoint, userAccessToken),
+  )
 }
 
 export async function getUserPages(

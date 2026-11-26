@@ -29,7 +29,9 @@ vi.mock("@chatbotx.io/database/utils", () => ({
   parseOrderByAsObject: () => ({ createdAt: "desc" }),
 }))
 
-const { listAuditLogs } = await import("../src/audit/log-query")
+const { listAuditLogs, listPlatformAuditLogs } = await import(
+  "../src/audit/log-query"
+)
 
 beforeEach(() => {
   vi.clearAllMocks()
@@ -106,5 +108,33 @@ describe("listAuditLogs", () => {
 
     const where = mocks.findMany.mock.calls[0]?.[0]?.where
     expect(where).toHaveProperty("workspaceId", "")
+  })
+})
+
+describe("audit log user relation", () => {
+  const dateRange = {
+    start: new Date("2026-05-19T00:00:00.000Z"),
+    end: new Date("2026-08-16T23:59:59.999Z"),
+  }
+
+  test("a workspace listing loads the actor without the secret column", async () => {
+    await listAuditLogs({
+      workspaceId: "workspace-1",
+      page: 1,
+      perPage: 10,
+      dateRange,
+    })
+
+    expect(mocks.findMany.mock.calls[0]?.[0]?.with.user).toEqual({
+      columns: { connectionAuthorizations: false },
+    })
+  })
+
+  test("the platform listing loads the actor without the secret column", async () => {
+    await listPlatformAuditLogs({ page: 1, perPage: 10, dateRange })
+
+    expect(mocks.findMany.mock.calls[0]?.[0]?.with.user).toEqual({
+      columns: { connectionAuthorizations: false },
+    })
   })
 })

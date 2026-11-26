@@ -57,7 +57,7 @@ Condensed; the full text of every trap (reasons, file paths, edge cases) is in
 20. **`replyOncePerUserPerPost` is enforced by `claimDedup`**, not `findDedup`; release with `deleteDedup` when nothing dispatches.
 21. **Account scope is `inboxId`, `NULL` = every account** — `findActiveAutomations` requires the comment's inbox; writes go through `assertAutomationAccount`; FK is `cascade`.
 22. **An async reply type records its analytics event in TWO places** — open the row with `replyText: null`, settle in the handler, pair every `rollbackCommentDedup` with `abandonAIReply` ([add-reply-type](references/add-reply-type.md)).
-23. **AI moderation runs before the reply filters; hide rules do not** — `moderateCommentWithAI` runs after the post gate and a comment it moderates is never answered (miss `moderated`); `applyHideRules` stays after the filters and hides AND answers ("DM then hide"), never move it ahead. A new hide switch needs its own `matchHideRule` value + `commentModerationRules` (pgEnum, append only); every moderation hide/delete carries `moderation: { automationId, commentId }` so the chat handler settles the log row. See the docs' "Moderation (hide rules & AI)".
+23. **AI moderation runs before the reply filters; hide rules do not** — `moderateCommentWithAI` runs after the post gate and a comment it moderates is never answered (miss `moderated`); `applyHideRules` stays after the filters and hides AND answers ("DM then hide"), never move it ahead. A new hide switch needs its own `matchHideRule` value + `commentModerationRules` (pgEnum, append only); every moderation hide/delete carries `moderation: { automationId, commentId }` so the chat handler settles the log row. AI moderation has two engines (`aiModeration.engine`, absent = `aiAgent`; `decision` = AI Router/Jev connection) — branch through `resolveModerationEngine`, keep every engine's failure fail-open, and put every engine input in `verdictCacheKey`. See the docs' "Moderation (hide rules & AI)".
 
 ## Verify
 
@@ -76,3 +76,7 @@ Production sanity after deploy: comment on a normal post, a reel, a comment with
 - [references/file-map.md](references/file-map.md) — complete path table (analytics, miss, replay, live, stat columns); read when locating a file.
 - [references/add-filter-option.md](references/add-filter-option.md) — recipe; read when adding a filter option.
 - [references/add-reply-type.md](references/add-reply-type.md) — recipe plus the async-reply analytics trap; read when adding a reply type.
+
+## Templates
+
+Comment automations (and Instagram story automations) are copied with `post` ids cleared (an automation that chose posts installs inactive), the inbox re-bound only to an account of the automation's own channel type (otherwise inactive and unscoped, never widened), replies and AI moderation remapped to the copied flow/agent, and AI Router connections never shipped. Shared inbox/reply helpers live in `packages/business/src/template/adapters/automation-bindings.ts`; keep per-channel account checks in `comment-automation/account-scope.ts`, not in the adapter.

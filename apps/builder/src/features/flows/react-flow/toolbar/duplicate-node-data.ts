@@ -70,9 +70,22 @@ const duplicateStep = <T extends MutableRecord>(step: T): T => {
   }
 
   if (Array.isArray(nextStep.cases)) {
+    // A condition case id (and `otherwiseId`) is the edge source handle; the
+    // worker resolves edges by it, so the copy must not reuse the original's.
+    // Split-traffic cases carry no id and are routed by `nodeId` only.
     nextStep.cases = nextStep.cases.map((caseItem) =>
-      isRecord(caseItem) ? { ...clone(caseItem), nodeId: null } : caseItem,
+      isRecord(caseItem)
+        ? {
+            ...clone(caseItem),
+            ...(typeof caseItem.id === "string" ? { id: createId() } : {}),
+            nodeId: null,
+          }
+        : caseItem,
     )
+  }
+
+  if (typeof nextStep.otherwiseId === "string") {
+    nextStep.otherwiseId = createId()
   }
 
   if (typeof nextStep.buttonId === "string") {

@@ -128,14 +128,32 @@ describe("template permissions", () => {
     expect(visibleInstallCategories(member({ ecommerce: true }))).toEqual([
       "products",
       "couponTopics",
+      "openHours",
+      "vendors",
+      "discountCodes",
+      "storeSettings",
       "productCategories",
     ])
+  })
+
+  test("inbound webhooks need a super admin, like the page that manages them", () => {
+    expect(TEMPLATE_CATEGORY_PERMISSION.inboundWebhooks).toBe("superAdmin")
+    expect(
+      visibleInstallCategories(
+        member({ flows: true, ecommerce: true, broadcast: true }),
+      )?.includes("inboundWebhooks"),
+    ).toBe(false)
   })
 
   test("a member with every permission and any api token see every installation", () => {
     expect(
       visibleInstallCategories(
-        member({ flows: true, ecommerce: true, broadcast: true }),
+        member({
+          flows: true,
+          ecommerce: true,
+          broadcast: true,
+          superAdmin: true,
+        }),
       ),
     ).toBeUndefined()
     expect(

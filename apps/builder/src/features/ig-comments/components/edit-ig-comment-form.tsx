@@ -10,6 +10,7 @@ import { useAction } from "next-safe-action/hooks"
 import { type Resolver, type UseFormReturn, useForm } from "react-hook-form"
 import { toast } from "sonner"
 import { withAIModerationDefaults } from "@/features/shared/comment-automation/lib/ai-moderation-defaults"
+import { refinePostHashtags } from "@/features/shared/comment-automation/lib/post-hashtags-validation"
 import { updateIgCommentAction } from "../actions/update-ig-comment.action"
 import {
   type CreateIgCommentRequest,
@@ -32,7 +33,9 @@ export function EditIgCommentForm({
 
   const form = useForm<CreateIgCommentRequest>({
     resolver: zodResolver(
-      createIgCommentRequest,
+      createIgCommentRequest.superRefine(
+        refinePostHashtags(t("commentAutomation.postHashtags.required")),
+      ),
     ) as Resolver<CreateIgCommentRequest>,
     mode: "onChange",
     defaultValues: {

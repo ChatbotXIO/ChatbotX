@@ -57,6 +57,20 @@ The `inbox` scope also covers the Working Hours routes
 Inbox Teams. A token without `inbox` gets 403; a `read_only` token is blocked
 on the mutations. See `docs/working-hours.md`.
 
+The Inbox translation routes
+(`apps/builder/src/features/translation/api/public.ts`, router key
+`translation`) split across two scopes: `GET /v1/translation/settings` takes
+`settings` or `inbox` (agents read whether translation is on), while
+`PUT /v1/translation/settings` and `POST /v1/translation/settings/test` need
+`settings`, because they choose which AI provider receives customer chat text.
+The conversation routes (`GET/PUT /v1/conversations/{conversationId}/translation`,
+`POST .../translation/requests`, `POST .../translation/preview`) need `inbox`;
+they run the same membership scope check as the other conversation routes. A
+`read_only` token is limited to GET, so it is blocked on every other
+translation route, including the POST `test`, `requests` and `preview` calls
+that run the paid provider. See
+`docs/inbox-translation.md`.
+
 The `appointments` scope existed in the enum and UI registry for some time
 before any endpoint used it — see "Appointments scope — endpoint-to-scope
 table" below for the full surface now behind it.
@@ -288,6 +302,79 @@ The `polls` scope covers the Poll Manager routes
 `GET /v1/polls/{id}/analytics`). A `read_only` token can list, get, fetch
 links and analytics but is blocked on create, update and delete.
 
+The `posts` scope covers post management: the managed channel posts
+(`apps/builder/src/features/channel-posts/api/management-public.ts`, router
+key `channelPostManagement`: `GET /v1/channel-posts/management`,
+`GET/PATCH /v1/channel-posts/management/{id}`,
+`POST /v1/channel-posts/management/bulk-update`, `POST /v1/channel-posts/management/{id}/refresh`, `POST /v1/channel-posts/management/refresh-metrics`, `GET /v1/channel-posts/management/authors`, `GET /v1/channel-posts/management/{id}/comments`, `POST /v1/channel-posts/management/merge-view`, `POST /v1/channel-posts/management/{id}/comments/{commentId}/like`, `DELETE /v1/channel-posts/management/{id}/comments/{commentId}`, `POST /v1/channel-posts/management/export`, `GET /v1/channel-posts/management/{id}/metrics`, `POST /v1/channel-posts/sync`, `GET /v1/channel-posts/sync/status`) and post topics
+(`apps/builder/src/features/post-topics/api/public.ts`, router key
+`postTopics`: `GET/POST /v1/post-topics`,
+`PATCH/DELETE /v1/post-topics/{id}`), post analytics (`apps/builder/src/features/post-analytics/api/public.ts`, router key `postAnalytics`: `GET /v1/post-analytics/summary`, `/timeseries`, `/top-posts`, `/best-times`) and `GET /v1/posts/{id}/metrics` (`socialPosts.getMetrics`); all read-only, so a `read_only` token can call them. `sync` and `refresh-metrics` only queue background work, and `{id}/refresh` reads one post from its channel now; a `read_only` token can read the status but not start them. The comment reads (`comments`, `merge-view`, `authors`) and `export` read only: `export` builds a CSV of up to 20,000 comments or phone numbers and consumes 1 message of the quota, so it is blocked for a `read_only` token (like the audience preview) and refused on an expired plan; `like` and `delete` act on the channel and are blocked for it. A token sees phone numbers (the same policy as the broadcast API). The older `channelPosts.list` and
+`channelPosts.listSelected` stay under `contacts`. A `read_only` token can
+list and get but is blocked on update, bulk update and topic writes.
+
+The `posts` scope also covers post snippets and saved destination sets
+(`apps/builder/src/features/social-post-snippets/api/public.ts`, router keys
+`postSnippets` and `postTargetSets`: `GET/POST /v1/post-snippets`,
+`GET/PATCH/DELETE /v1/post-snippets/{id}`, `GET/POST /v1/post-target-sets`,
+`GET/PATCH/DELETE /v1/post-target-sets/{id}`) and AI writing
+(`apps/builder/src/features/social-posts-ai/api/public.ts`, router key
+`socialPostsAi`: `POST /v1/posts/ai/generate`). A `read_only` token can list
+and get snippets and sets but is blocked on writes, and on `ai/generate`: it is a
+POST that makes a paid model call with the workspace's own AI key (the integration comes from the body's `integrationId` + `model`, else the translation setting) (it is not on
+the dry-run allow-list that `validate` and `preview` use).
+
+The same `posts` scope covers the composed posts
+(`apps/builder/src/features/social-posts/api/public.ts`, router key `socialPosts`:
+`POST /v1/posts`, `GET /v1/posts` (filter `bucket`), `GET /v1/posts/counts`, `GET|PATCH|DELETE /v1/posts/{id}`,
+`POST /v1/posts/{id}/duplicate`, `POST /v1/posts/{id}/publish`,
+`POST /v1/posts/{id}/reschedule`,
+`POST /v1/posts/{id}/targets/{targetId}/retry`, `POST /v1/posts/{id}/targets/{targetId}/resolve`,
+`PUT|DELETE /v1/posts/{id}/recurrence`, `POST /v1/posts/{id}/recurrence/pause|resume`,
+`GET /v1/posts/{id}/recurrence/occurrences`, `POST /v1/posts/{id}/recurrence/occurrences/skip|restore`, `POST /v1/posts/validate`,
+`POST /v1/posts/preview`, `GET /v1/posts/content-types`). `DELETE /v1/posts/{id}`
+answers 200 `{deleted, removal}`; with the query `removeFromChannels=true` it asks every
+published destination to be taken down from its network instead (a worker does it;
+Instagram Login and TikTok offer no delete and answer `unsupported`), which is an outward action:
+refused with 402 in a workspace whose plan has expired, and blocked for a `read_only`
+token like every `DELETE`. Creating, updating,
+duplicating, publishing, scheduling, rescheduling (to a time, a queue slot or a new zone), retrying and resolving are refused in a workspace whose plan has expired; reads, deleting a draft, cancelling a scheduled post (`DELETE`) and unscheduling (`POST /v1/posts/{id}/unschedule`; `reschedule` is refused, `unschedule: true` included), pausing a repeating post (`POST …/recurrence/pause`) and ending its series (`DELETE …/recurrence`) stay open; setting a repeat rule, resuming, skipping and restoring runs are refused. A token creates posts with `createdVia: "api"` and
+no author. `validate` and `preview` are read-only POSTs (the only row they may write is an inbox's missing publishing binding, an idempotent row derived from the inbox that `GET /v1/posts/destinations` also creates) and are exempt from the
+`Idempotency-Key` header replay; `POST /v1/posts` takes its own body field
+`idempotencyKey`.
+Parts and first comment need no new route: `parts` and `firstComment` are fields of the `create` and `update` targets, `targets[].parts[]` is part of every read, and `retry` / `resolve` take an optional `partId`. They follow the existing rules of the `posts` scope: a `read_only` token can read them, create, update and retry are refused with 403 `trialExpired` (or `macLimitReached`) on an expired plan.
+
+The publishing destinations are under the same scope
+(`apps/builder/src/features/publish-destinations/api/public.ts`, router key
+`publishDestinations`: `GET /v1/posts/destinations` (filters `providers[]`, `states[]`),
+`GET /v1/posts/destinations/{id}`,
+`GET|PUT /v1/posts/destinations/{id}/posting-schedule` (procedures `getPostingSlots` /
+`updatePostingSlots`), `GET /v1/posts/destinations/{id}/free-slots` and
+`GET /v1/posts/destinations/{id}/publishing-settings`, which reads a TikTok creator's
+allowed privacy levels live and so works with a `read_only` token). A destination is a
+connected Facebook Page, Instagram or Threads inbox (published with the inbox's own
+token) or a TikTok login; a post target names one by `destinationId` or `inboxId`. A
+`read_only` token can read the destinations, the schedule and the free times but not
+set the schedule; setting it is refused in a workspace whose plan has expired. Reading
+the list creates the bindings of inboxes that have none yet (idempotent).
+
+The same `posts` scope covers the connected TikTok publishing accounts, the only
+separately connected social accounts left
+(`apps/builder/src/features/social-accounts/api/public.ts`, router key
+`socialAccounts`: `GET /v1/social-accounts`, `GET /v1/social-accounts/{id}`,
+`POST /v1/social-accounts/{id}/verify`,
+`POST /v1/social-accounts/{id}/sync-destinations`, `DELETE /v1/social-accounts/{id}`). No response carries a
+token. `verify` and `sync-destinations` call the platform and can move an
+account to `needsReauth`, so a `read_only` token cannot call them. `DELETE` removes the
+stored tokens of a TikTok login; the web page limits it to a workspace super admin, a
+token has no role, so the `posts` scope (and not `read_only`, like every `DELETE`) is what allows it.
+Connecting a TikTok account, and reconnecting an inbox so it can publish, are
+session-only on purpose: each is a browser redirect through the network's login
+dialog (the OAuth step is on invariant 23's exempt list). Tokens
+with an explicit scope list must be edited to add it; tokens with
+`scopes: null` get it automatically. The scope assignment is pinned in
+`apps/builder/__tests__/channel-post-management-api.test.ts`.
+
 What follows are the scope-assignment decisions and gotchas that aren't
 derivable from the code or those tests — read before adding or reassigning
 an endpoint's scope.
@@ -307,10 +394,19 @@ an endpoint's scope.
   `refresh-profile.ts`, `messages.ts`), some in their own owning feature's
   `api/public.ts` (`contact-notes`, `contact-sequences`, `contact-inboxes`,
   `contact-filter`, `import`) that `features/contacts/api/public.ts`
-  composes in alongside its own submodules, and `contact-scan` — the one
-  submodule composed directly into `apps/builder/src/routers/public.ts`
-  under its own `contactScans` top-level key instead of through
-  `features/contacts/api/public.ts`. Every one of them other than
+  composes in alongside its own submodules, and `contact-scan` and
+  `contact-sync` — the two submodules composed directly into
+  `apps/builder/src/routers/public.ts` under their own `contactScans` and
+  `contactSyncs` top-level keys instead of through
+  `features/contacts/api/public.ts`. `contactSyncs.*`
+  (`/v1/contact-syncs*`: sources, schema, mappings, create, get, list,
+  availability, cancel, retry-history) imports contacts from AhaChat into the
+  workspace's connected pages; AhaChat is asked about each page by itself, no
+  token or connection is needed. `contactSyncs.startConnectImport`
+  (`POST /v1/contact-syncs/connect-import`) also turns on a channel's history
+  sync, so it additionally needs the `channels` scope (checked in its
+  handler). Every
+  one of them other than
   `messages.ts` calls `workspaceTokenAuthAPIForScope("contacts")` exactly
   once at import. `messages.ts` is the one exception: sending/reading
   messages, auto-replies, and flows for a contact are conversation/automation

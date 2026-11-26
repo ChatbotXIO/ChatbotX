@@ -3,6 +3,7 @@ import {
   hasBroadcastRecipients,
   listPurgeableBroadcasts,
   type PurgeStopReason,
+  purgeBroadcastCaptures,
   purgeBroadcastRecipients,
 } from "@chatbotx.io/database/repositories"
 import { getChildLogger } from "@chatbotx.io/logger"
@@ -97,6 +98,7 @@ async function isPurgeBroadcastsLockHeld(): Promise<boolean> {
 
 type PurgeOneResult = {
   deleted: number
+  capturesDeleted: number
   stopReason: PurgeStopReason
   hardDeleted: boolean
 }
@@ -108,7 +110,7 @@ async function runPurge(): Promise<void> {
   const results = await mapWithConcurrency(
     candidates,
     PURGE_BROADCAST_CONCURRENCY,
-    (candidate) => purgeOne(candidate.id, deadline),
+    (candidate) => purgeOne(candidate, deadline),
   )
 
   const summary = results.reduce(
@@ -121,9 +123,10 @@ async function runPurge(): Promise<void> {
         return acc
       }
 
-      const { deleted, stopReason, hardDeleted } = result.value
+      const { deleted, capturesDeleted, stopReason, hardDeleted } = result.value
       return {
         recipientsDeleted: acc.recipientsDeleted + deleted,
+        capturesDeleted: acc.capturesDeleted + capturesDeleted,
         broadcastsDeleted: acc.broadcastsDeleted + (hardDeleted ? 1 : 0),
         stopReasons: {
           ...acc.stopReasons,
@@ -133,6 +136,7 @@ async function runPurge(): Promise<void> {
     },
     {
       recipientsDeleted: 0,
+      capturesDeleted: 0,
       broadcastsDeleted: 0,
       stopReasons: {} as Partial<Record<PurgeStopReason, number>>,
     },
@@ -151,28 +155,48 @@ async function runPurge(): Promise<void> {
  * path only; `deadline`/`chunkCap` exits never probe and always leave the
  * broadcast for the next tick, since an undrained broadcast still has rows
  * left by definition.
+ *
+ * `ContactInfoCapture` rows (no FK) are drained after the recipients, from the
+ * same deadline; `hardDeleteBroadcast` re-checks them under the Broadcast row
+ * lock, so a capture that raced the drain keeps the broadcast for the next tick.
  */
 async function purgeOne(
-  broadcastId: string,
+  candidate: { id: string; workspaceId: string },
   deadline: number,
 ): Promise<PurgeOneResult> {
-  const remaining = Math.max(0, deadline - Date.now())
-  const { deleted, stopReason } = await purgeBroadcastRecipients({
+  const { id: broadcastId, workspaceId } = candidate
+  const recipients = await purgeBroadcastRecipients({
     broadcastId,
     chunkSize: CHUNK_SIZE,
     interChunkDelayMs: INTER_CHUNK_DELAY_MS,
-    maxRunDurationMs: remaining,
+    maxRunDurationMs: Math.max(0, deadline - Date.now()),
   })
 
-  if (stopReason !== "drained") {
-    return { deleted, stopReason, hardDeleted: false }
+  if (recipients.stopReason !== "drained") {
+    return { ...recipients, capturesDeleted: 0, hardDeleted: false }
+  }
+
+  const captures = await purgeBroadcastCaptures({
+    broadcastId,
+    workspaceId,
+    chunkSize: CHUNK_SIZE,
+    interChunkDelayMs: INTER_CHUNK_DELAY_MS,
+    maxRunDurationMs: Math.max(0, deadline - Date.now()),
+  })
+  const result = {
+    deleted: recipients.deleted,
+    capturesDeleted: captures.deleted,
+  }
+
+  if (captures.stopReason !== "drained") {
+    return { ...result, stopReason: captures.stopReason, hardDeleted: false }
   }
 
   const stillHasRecipients = await hasBroadcastRecipients(broadcastId)
   if (stillHasRecipients) {
-    return { deleted, stopReason, hardDeleted: false }
+    return { ...result, stopReason: "drained", hardDeleted: false }
   }
 
-  const hardDeleted = await hardDeleteBroadcast(broadcastId)
-  return { deleted, stopReason, hardDeleted }
+  const hardDeleted = await hardDeleteBroadcast({ broadcastId, workspaceId })
+  return { ...result, stopReason: "drained", hardDeleted }
 }

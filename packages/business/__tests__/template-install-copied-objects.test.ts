@@ -41,7 +41,17 @@ vi.mock("@chatbotx.io/database/statement-timeout", () => ({
   setLocalStatementTimeout: vi.fn(),
 }))
 
+vi.mock("../src/ecommerce-open-hours/service", () => ({
+  ecommerceOpenHoursService: { invalidateWorkspaceCache: vi.fn() },
+}))
+vi.mock("../src/ecommerce-settings/service", () => ({
+  ecommerceSettingsService: { invalidateWorkspaceCache: vi.fn() },
+}))
+vi.mock("../src/vendor/service", () => ({
+  vendorService: { invalidateWorkspaceCache: vi.fn() },
+}))
 vi.mock("@chatbotx.io/database/repositories", () => ({
+  ecommerceSettingsRepository: { find: vi.fn().mockResolvedValue(undefined) },
   templateInstallationRepository: {
     claim: mocks.claim,
     complete: mocks.complete,
@@ -366,6 +376,7 @@ describe("failed install staged-object cleanup", () => {
   const prefixesOf = (generation: number) => [
     `workspaces/ws-1/ai-files/tpl-install-1/g${generation}/`,
     `public/space/ws-1/questionnaire-images/tpl-install-1/g${generation}/`,
+    `public/space/ws-1/template-tool-images/tpl-install-1/g${generation}/`,
     `public/space/ws-1/media-library/tpl-install-1/g${generation}/`,
   ]
 

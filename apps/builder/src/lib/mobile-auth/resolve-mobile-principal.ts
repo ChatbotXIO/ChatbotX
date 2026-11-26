@@ -7,6 +7,7 @@ import { hasContactsAccess } from "@chatbotx.io/business/workspace-member/permis
 import type { WorkspaceApiTokenScope } from "@chatbotx.io/database/partials"
 import type {
   UserModel,
+  UserSecretColumns,
   WorkspaceMemberModel,
   WorkspaceModel,
 } from "@chatbotx.io/database/types"
@@ -80,8 +81,11 @@ export const authenticateMobileBearer = async (
   return { user, deviceId: subject.deviceId }
 }
 
-export const toSessionUser = (user: UserModel): SessionUser => {
+export const toSessionUser = (
+  user: UserModel & Partial<UserSecretColumns>,
+): SessionUser => {
   const {
+    connectionAuthorizations: _connectionAuthorizations,
     deletionRequestedAt: _deletionRequestedAt,
     scheduledDeletionAt: _scheduledDeletionAt,
     tenantId: _tenantId,

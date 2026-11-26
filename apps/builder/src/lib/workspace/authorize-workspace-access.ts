@@ -9,10 +9,30 @@ import { isCloud } from "@/env"
 import { ADS_CAMPAIGNS_INSIGHTS_PATH } from "@/features/ads-campaign/lib/api-paths"
 import { BROADCAST_AUDIENCE_PREVIEW_TOKEN_PATH } from "@/features/broadcasts/lib/api-paths"
 import {
+  CHANNEL_POST_MERGE_VIEW_POST_PATH,
+  CHANNEL_POST_MERGE_VIEW_TOKEN_PATH,
+} from "@/features/channel-posts/lib/api-paths"
+import {
   FILTER_VALUE_LABELS_POST_PATH,
   FILTER_VALUE_LABELS_TOKEN_PATH,
 } from "@/features/contact-filter/lib/api-paths"
 import { CONVERSATIONS_LIST_POST_PATH } from "@/features/conversations/lib/api-paths"
+import {
+  POST_FEED_BULK_DELETE_POST_PATH,
+  POST_FEED_BULK_DELETE_TOKEN_PATH,
+  POST_FEED_PAUSE_POST_PATH,
+  POST_FEED_PAUSE_TOKEN_PATH,
+} from "@/features/social-post-feeds/lib/api-paths"
+import {
+  SOCIAL_POST_PREVIEW_POST_PATH,
+  SOCIAL_POST_PREVIEW_TOKEN_PATH,
+  SOCIAL_POST_RECURRENCE_PAUSE_POST_PATH,
+  SOCIAL_POST_RECURRENCE_PAUSE_TOKEN_PATH,
+  SOCIAL_POST_UNSCHEDULE_POST_PATH,
+  SOCIAL_POST_UNSCHEDULE_TOKEN_PATH,
+  SOCIAL_POST_VALIDATE_POST_PATH,
+  SOCIAL_POST_VALIDATE_TOKEN_PATH,
+} from "@/features/social-posts/lib/api-paths"
 
 export type WorkspaceAccessDenialReason = "trialExpired" | "macLimitReached"
 
@@ -80,6 +100,23 @@ const READ_ONLY_TOKEN_ALLOWED_METHODS = new Set<HTTPMethod>(["GET", "HEAD"])
  *   `read_only` tokens: unlike `broadcasts.getAudience` (bounded by broadcasts
  *   that already exist) they page every contact of the workspace and accept
  *   an arbitrary `contactFilter`.
+ * - Composed-post dry runs (`/v1/posts/validate`, `/v1/posts/preview` and the
+ *   session twins `/workspaces/{workspaceId}/social-posts/{validate,preview}`):
+ *   the post is a JSON body, so POST. They check and describe a post against
+ *   the network rules and the workspace's own files and accounts, and write
+ *   nothing (no import, no row). Open on a trial-expired workspace (invariant
+ *   14) and for `read_only` tokens: they reveal nothing a GET of the accounts
+ *   and files does not.
+ * - Comments of several posts (`/v1/channel-posts/management/merge-view` and
+ *   its session twin): the post ids are a body, so POST; one bounded page of
+ *   the same comments `GET .../{id}/comments` returns, with the same phone
+ *   redaction. Open on a trial-expired workspace and for `read_only` tokens.
+ * - Comment export (`/v1/channel-posts/management/export`; the web page
+ *   downloads through a GET route instead): builds a CSV of up to 20,000 comments or phone numbers from the
+ *   same reads, no data writes, but it consumes a message of the quota, so it
+ *   is refused (403 `trialExpired` / `macLimitReached`) on a trial-expired workspace, and NOT open to `read_only`
+ *   tokens: like the audience preview it extracts a whole workspace's contact
+ *   data in one call rather than page by page.
  */
 
 const READ_ONLY_TOKEN_ALLOWED_POST_PATHS = new Set<string>([
@@ -89,6 +126,10 @@ const READ_ONLY_TOKEN_ALLOWED_POST_PATHS = new Set<string>([
   // Template previews: reads that use POST for their body.
   "/v1/templates/dependencies-preview",
   "/v1/templates/locked-resources",
+  // Composed-post dry runs and the merged comment view: pure reads with a body.
+  SOCIAL_POST_VALIDATE_TOKEN_PATH,
+  SOCIAL_POST_PREVIEW_TOKEN_PATH,
+  CHANNEL_POST_MERGE_VIEW_TOKEN_PATH,
 ])
 
 /**
@@ -205,6 +246,13 @@ export const MARKETING_MESSAGE_STOP_TOKEN_PATH =
  */
 export const CONTACT_SCAN_CANCEL_TOKEN_PATH = "/v1/contact-scans/cancel"
 
+/**
+ * Cancelling a Contact Sync, like `cancelContactSyncAction`
+ * (`workspaceActionClientAllowExpired`): it only stops work. Gate-only
+ * allow-list: a `read_only` token still cannot call it.
+ */
+const CONTACT_SYNC_CANCEL_TOKEN_PATH = "/v1/contact-syncs/{runId}/cancel"
+
 const READ_ONLY_POST_PATHS = new Set<string>([
   CONVERSATIONS_LIST_POST_PATH,
   FILTER_VALUE_LABELS_POST_PATH,
@@ -212,7 +260,28 @@ const READ_ONLY_POST_PATHS = new Set<string>([
   BROADCAST_STOP_TOKEN_PATH,
   MARKETING_MESSAGE_STOP_TOKEN_PATH,
   CONTACT_SCAN_CANCEL_TOKEN_PATH,
+  CONTACT_SYNC_CANCEL_TOKEN_PATH,
   BROADCAST_AUDIENCE_PREVIEW_TOKEN_PATH,
+  // Dry runs of a composed post and the merged comment view: reads that take
+  // a body (see the notes above). The comment export is NOT here: it consumes
+  // a message of the quota, so an expired workspace is refused (403 `trialExpired`).
+  SOCIAL_POST_VALIDATE_TOKEN_PATH,
+  SOCIAL_POST_PREVIEW_TOKEN_PATH,
+  SOCIAL_POST_VALIDATE_POST_PATH,
+  SOCIAL_POST_PREVIEW_POST_PATH,
+  CHANNEL_POST_MERGE_VIEW_TOKEN_PATH,
+  CHANNEL_POST_MERGE_VIEW_POST_PATH,
+  // Pausing a repeating post only stops work: open when trial-expired.
+  SOCIAL_POST_RECURRENCE_PAUSE_TOKEN_PATH,
+  SOCIAL_POST_RECURRENCE_PAUSE_POST_PATH,
+  // Taking a post back to a draft only takes work away: open when trial-expired.
+  SOCIAL_POST_UNSCHEDULE_TOKEN_PATH,
+  SOCIAL_POST_UNSCHEDULE_POST_PATH,
+  // Pausing or deleting feeds only stops work: open when trial-expired.
+  POST_FEED_BULK_DELETE_TOKEN_PATH,
+  POST_FEED_BULK_DELETE_POST_PATH,
+  POST_FEED_PAUSE_TOKEN_PATH,
+  POST_FEED_PAUSE_POST_PATH,
   // Template uninstall and its cancel remove or give back copies: a
   // delete/cancel-type action, open on a trial-expired workspace like the UI
   // (invariant 14). Trial gate only — they are writes, never read_only-token.

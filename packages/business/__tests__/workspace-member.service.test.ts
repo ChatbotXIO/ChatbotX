@@ -1,3 +1,4 @@
+import { withCache } from "@chatbotx.io/redis"
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
 const mocks = vi.hoisted(() => {
@@ -9,6 +10,7 @@ const mocks = vi.hoisted(() => {
     deleteWhere,
     dispatchAuditRecord: vi.fn(),
     findFirst: vi.fn(),
+    findMany: vi.fn().mockResolvedValue([]),
     listPermissionsByUserIds: vi.fn(),
     markOnlineBulk: vi.fn(),
     deleteMembersForUsers: vi.fn(async () => undefined),
@@ -20,8 +22,12 @@ const mocks = vi.hoisted(() => {
 
 const makeClient = () => ({
   query: {
-    workspaceMemberModel: { findFirst: mocks.findFirst },
+    workspaceMemberModel: {
+      findFirst: mocks.findFirst,
+      findMany: mocks.findMany,
+    },
   },
+  $count: async () => 0,
   insert: vi.fn(() => ({
     values: vi.fn(() => ({ returning: mocks.insertReturning })),
   })),
@@ -49,6 +55,7 @@ vi.mock("@chatbotx.io/database/client", () => ({
   and: (...args: unknown[]) => ({ and: args }),
   db: makeClient(),
   eq: (...args: unknown[]) => ({ eq: args }),
+  relationsFilterToSQL: () => ({}),
 }))
 
 vi.mock("@chatbotx.io/database/partials", () => ({
@@ -238,6 +245,17 @@ describe("workspaceMemberService.delete", () => {
     expect(mocks.order).toEqual(["begin", "commit", "invalidate"])
   })
 
+  test("loads the member's user without the secret column", async () => {
+    await workspaceMemberService.delete({
+      id: "member-1",
+      workspaceId: "workspace-1",
+    })
+
+    expect(mocks.findFirst.mock.calls[0]?.[0]?.with.user).toEqual({
+      columns: { connectionAuthorizations: false },
+    })
+  })
+
   test("skips the working-hours cleanup when the member does not exist", async () => {
     mocks.findFirst.mockResolvedValue(undefined)
 
@@ -315,5 +333,54 @@ describe("workspaceMemberService.markOnlineBulk", () => {
       workspaceId: "ws-1",
       userIds: ["u1", "u2"],
     })
+  })
+})
+
+describe("workspaceMemberService user relation reads", () => {
+  const projection = { columns: { connectionAuthorizations: false } }
+
+  test("the cached roster loads each member's user without the secret column", async () => {
+    const findMany = vi.fn().mockResolvedValue([])
+    vi.mocked(withCache).mockImplementationOnce((_key, load) => load())
+
+    await workspaceMemberService.listByWorkspaceId({
+      workspaceId: "workspace-1",
+      tx: { query: { workspaceMemberModel: { findMany } } } as never,
+    })
+
+    expect(findMany.mock.calls[0]?.[0]?.with.user).toEqual(projection)
+  })
+
+  test("a single membership with its user loads the user without the secret column", async () => {
+    const findFirst = vi.fn().mockResolvedValue(undefined)
+
+    await workspaceMemberService.findWithUserByWorkspaceIdAndUserId({
+      workspaceId: "workspace-1",
+      userId: "user-1",
+      tx: { query: { workspaceMemberModel: { findFirst } } } as never,
+    })
+
+    expect(findFirst.mock.calls[0]?.[0]?.with.user).toEqual(projection)
+  })
+
+  test("the paginated list loads each member's user without the secret column", async () => {
+    await workspaceMemberService.listPaginated({
+      workspaceId: "workspace-1",
+      page: 1,
+      perPage: 10,
+    } as never)
+
+    expect(mocks.findMany.mock.calls[0]?.[0]?.with.user).toEqual(projection)
+  })
+
+  test("a member looked up by id loads the user without the secret column", async () => {
+    mocks.findFirst.mockResolvedValue(undefined)
+
+    await workspaceMemberService.findByIdWithUser({
+      id: "member-1",
+      workspaceId: "workspace-1",
+    })
+
+    expect(mocks.findFirst.mock.calls[0]?.[0]?.with.user).toEqual(projection)
   })
 })

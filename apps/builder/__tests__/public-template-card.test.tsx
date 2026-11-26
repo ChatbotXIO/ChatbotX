@@ -39,6 +39,16 @@ describe("public template card", () => {
     expect(html).toContain("Line one")
   })
 
+  test("opens with the cover in a 16:9 frame that it fills, then the name, and no publisher line", async () => {
+    const html = await render()
+
+    expect(html).toContain("aspect-video")
+    expect(html).toContain("object-cover")
+    expect(html.indexOf("<img")).toBeLessThan(html.indexOf("<h1"))
+    expect(html).not.toContain("byPublisher")
+    expect(html).not.toContain("Acme")
+  })
+
   test("does not list what the template includes", async () => {
     expect(await render()).not.toContain("includes")
   })

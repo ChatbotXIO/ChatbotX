@@ -52,6 +52,10 @@ vi.mock("@/lib/orpc/orpc", () => ({
   },
 }))
 
+vi.mock("@/features/polls/lib/use-poll-options", () => ({
+  usePollOptions: () => ({ options: [], isLoading: false }),
+}))
+
 vi.mock("@/features/leaderboards/lib/use-leaderboard-options", () => ({
   useLeaderboardOptions: () => ({
     leaderboards: [],

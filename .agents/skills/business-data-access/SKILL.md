@@ -21,6 +21,14 @@ alternatives for the app layer. The app layer calls a service; the service
 may call a repository. See `.agents/rules/data-access.md` for the full rule
 and the per-layer responsibility table.
 
+## Reading `User`
+
+`User.connectionAuthorizations` is an encrypted secret column. Read users through
+`userColumnsWithoutSecrets` (`@chatbotx.io/database/repositories/user-columns`) and never return the
+full row to a client, cache, log or `ctx`; write it only via
+`userService.recordConnectionAuthorization`. See AGENTS.md invariant 26 and
+`docs/agents/invariants.md`.
+
 ## Boundary Rule
 
 Do not add direct database imports in:
@@ -213,3 +221,7 @@ Before finishing:
 - Search changed app/worker/integration files for new direct `db` imports.
 - Add or update focused service/repository tests when behavior is non-trivial.
 - Run the smallest relevant test/typecheck script from the touched workspace.
+
+## Services of template-copied kinds
+
+A service whose kind Templates copy keeps its create/delete split into shared parts: a `prepare`/`insertInTx` core that validates and writes inside a passed-in transaction, a `deleteInTx(tx, …)` core shared by the delete button and the uninstall handler, and post-commit work (cache, storage, Redis, Meta) recorded as `effect(...)`. The install adapter calls the service core; it never writes straight to a repository when the service has checks (name rules, caps, reference validation), and template guards (`assertResourceEditable`, `withTemplateLockedTransaction`, `withDeleteGuard`) wrap the normal write paths from outside the core. A cap that the normal create enforces (for example the 100 inbound webhooks) is enforced inside the core, under a `pg_advisory_xact_lock`, so the install path cannot exceed it. See `template-integration` sections 2 and 5.

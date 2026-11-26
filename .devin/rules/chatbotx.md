@@ -32,7 +32,7 @@ pnpm workspaces + Turborepo · TypeScript 5 · React 19 · Next.js 16 (builder) 
 
 9. **The chain is `action | API handler → service → repository → DB`** — code in `apps/` and `integrations/` never imports `db` (lint-checked); it calls a service in `packages/business/`. The public and private paths for one resource call the same service method, passing the caller's scope as plain data. See `.agents/rules/data-access.md`.
 
-10. **White-label tenancy** — derive a new workspace's `tenantId` from its owner (`workspaceService.resolveTenantForOwner`), never from request or client input; `User` email is unique per tenant. See `docs/tenancy.md`.
+10. **White-label tenancy** — derive a new workspace's `tenantId` from its owner via `workspaceService.resolveWorkspaceTenant` (a reseller owner gets their tenant or root by the server-resolved host), never from client input; `User` email is unique per tenant. See `docs/tenancy.md`.
 
 11. **Cloud signup writes a bootstrap `UserQuota` trial row** (`ensureBootstrapPlan`) before `publishEntitlements`, so a new cloud user always has a quota row.
 
@@ -62,6 +62,10 @@ pnpm workspaces + Turborepo · TypeScript 5 · React 19 · Next.js 16 (builder) 
 24. **Workspace purge must stay bounded** — index new FKs, audit high-volume purge paths, and use bounded child-before-parent drains. Read `.agents/skills/workspace-purge/SKILL.md`.
 
 25. **Keep Node-only code out of builder router imports** — split it into a server-only package subpath; Edge instrumentation traces the full router graph. See `apps/builder/__tests__/edge-instrumentation-graph.test.ts`.
+
+26. **`User.connectionAuthorizations` is a secret column** — the encrypted backup of each user's latest provider authorization, kept independently of `Connection`/channel rows. Every `User` read that reaches a client, cache, log or `ctx` goes through `userColumnsWithoutSecrets` (`UserModel` omits the column); never declare it in better-auth `additionalFields`; write only through `userService.recordConnectionAuthorization`; guarded by `packages/database/__tests__/user-secret-projection.test.ts`.
+
+27. **Every resource a user builds has a template decision** — declare `TOOL_TEMPLATE_COVERAGE` for a new Tools card, classify every column of a template-copied table in the adapter map, and keep shared `insertInTx`/`deleteInTx` cores; see `template-integration`.
 <!-- END GENERATED: SHARED-INVARIANTS -->
 
 ## Workflow

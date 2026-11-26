@@ -32,7 +32,7 @@ export const META_TOOLS = [
       openWorldHint: false,
     },
     description:
-      "Search the full ChatbotX catalog for hidden or unlisted tool definitions; this never executes a tool. Direct listed tools may be called directly. Search with one action plus one resource, inspect each returned inputSchema, then call call_tool with the exact returned name.",
+      "Search the full catalog for hidden or unlisted tool definitions; this never executes a tool. Direct listed tools may be called directly. Search with one action plus one resource, inspect each returned inputSchema, then call call_tool with the exact returned name.",
     inputSchema: {
       type: "object",
       properties: {
@@ -87,7 +87,7 @@ export const META_TOOLS = [
       openWorldHint: false,
     },
     description:
-      "Read a ChatbotX operational safety guide. Use it for workflows that need the documented approval, OAuth, flow, inbox, contact, or pipeline procedure.",
+      "Read an operational safety guide. Use it for workflows that need the documented approval, OAuth, flow, inbox, contact, or pipeline procedure.",
     inputSchema: {
       type: "object",
       properties: {

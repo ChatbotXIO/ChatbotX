@@ -279,6 +279,13 @@ export const notFoundException = (message: string) =>
 export const conflictException = (message: string, code: string) =>
   new ChatbotXException(message, code, 409)
 
+/** A tenant's sub-account may not reuse the email of that tenant's own owner (the owner already signs in on the platform with it). */
+export const tenantOwnerEmailReservedException = () =>
+  conflictException(
+    "This email belongs to the tenant owner and cannot be used for a sub-account",
+    "tenantOwnerEmailReserved",
+  )
+
 /**
  * A field-scoped validation failure raised from inside a service. The
  * caller-facing action maps `error.field` back to a

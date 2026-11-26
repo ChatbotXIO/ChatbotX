@@ -1,9 +1,11 @@
 import { createSelectSchema, userModel } from "@chatbotx.io/database/schema"
 import { z } from "zod"
 
+// `connectionAuthorizations` is an encrypted backup column; it is never part of
+// a client-facing user.
 export const userResource = createSelectSchema(userModel, {
   id: z.string(),
-})
+}).omit({ connectionAuthorizations: true })
 export type UserResource = z.infer<typeof userResource>
 
 export type UserCollection = {

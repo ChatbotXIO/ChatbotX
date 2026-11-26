@@ -260,26 +260,31 @@ const buildChannelPostOptionsCacheKey = ({
   workspaceId,
   search,
   cursor,
+  inboxId,
 }: {
   workspaceId: string
   search: string
   cursor?: { id: string; sortAt: string }
+  inboxId?: string
 }) =>
-  `${workspaceId}:channel-posts/options:${search}:${cursor?.sortAt ?? ""}:${cursor?.id ?? ""}`
+  `${workspaceId}:channel-posts/options:${inboxId ?? ""}:${search}:${cursor?.sortAt ?? ""}:${cursor?.id ?? ""}`
 
 const loadChannelPostOptionsPage = ({
   workspaceId,
   search,
   cursor,
+  inboxId,
 }: {
   workspaceId: string
   search: string
   cursor?: { id: string; sortAt: string }
+  inboxId?: string
 }): Promise<ChannelPostOptionsPage> => {
   const cacheKey = buildChannelPostOptionsCacheKey({
     workspaceId,
     search,
     cursor,
+    inboxId,
   })
   const cached = channelPostOptionsCache.get(cacheKey)
   if (cached && cached.expiresAt > Date.now()) {
@@ -302,6 +307,7 @@ const loadChannelPostOptionsPage = ({
       workspaceId,
       cursor,
       limit: 30,
+      ...(inboxId ? { inboxId } : {}),
       ...(search ? { search } : {}),
     })
     .then((page) => {
@@ -365,6 +371,7 @@ const toChannelPostSelectOption = (
  */
 export const useChannelPostSelectOptions = (
   selectedIds: string[] = [],
+  inboxId?: string,
 ): ChannelPostOptionsResult => {
   const { workspaceId } = useParams<{ workspaceId?: string }>()
   const t = useTranslations()
@@ -392,7 +399,7 @@ export const useChannelPostSelectOptions = (
   }, [searchInput])
 
   const rootCacheKey = workspaceId
-    ? buildChannelPostOptionsCacheKey({ workspaceId, search })
+    ? buildChannelPostOptionsCacheKey({ workspaceId, search, inboxId })
     : undefined
   const currentCacheKey = useRef(rootCacheKey)
   currentCacheKey.current = rootCacheKey
@@ -409,7 +416,7 @@ export const useChannelPostSelectOptions = (
     const requestGeneration = retryNonce
     setError(false)
     setIsLoading(true)
-    loadChannelPostOptionsPage({ workspaceId, search }).then(
+    loadChannelPostOptionsPage({ workspaceId, search, inboxId }).then(
       (page) => {
         if (active && requestGeneration === retryNonce) {
           setState({ ...page, cacheKey: rootCacheKey })
@@ -428,7 +435,7 @@ export const useChannelPostSelectOptions = (
     return () => {
       active = false
     }
-  }, [retryNonce, rootCacheKey, search, workspaceId])
+  }, [inboxId, retryNonce, rootCacheKey, search, workspaceId])
 
   const onReachEnd = useCallback(() => {
     if (
@@ -446,6 +453,7 @@ export const useChannelPostSelectOptions = (
       workspaceId,
       search,
       cursor: state.nextCursor,
+      inboxId,
     })
       .then(
         (page) => {
@@ -476,7 +484,14 @@ export const useChannelPostSelectOptions = (
       .finally(() => {
         loadingNextPage.current = false
       })
-  }, [rootCacheKey, search, state.cacheKey, state.nextCursor, workspaceId])
+  }, [
+    inboxId,
+    rootCacheKey,
+    search,
+    state.cacheKey,
+    state.nextCursor,
+    workspaceId,
+  ])
 
   const selectedIdsKey = selectedIds.join(",")
   const selectedIdsForRequest = useMemo(

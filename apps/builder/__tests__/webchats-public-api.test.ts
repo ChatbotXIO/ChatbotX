@@ -82,6 +82,9 @@ vi.mock("@chatbotx.io/database/partials", async () => {
     productMessageUnresolvableDataSchema: z.object({}),
     IMAGES_NOT_SUPPORTED_ON_CHANNEL_CODE: "imagesNotSupportedOnChannel",
     imagesNotSupportedOnChannelDataSchema: z.object({}),
+    contactSyncMappingInvalidDataSchema: z.object({}),
+    contactSyncAlreadyRunningDataSchema: z.object({}),
+    contactSyncCooldownDataSchema: z.object({}),
     webchatConversationStarter: z.object({}),
     webchatPersistentMenu: z.object({}),
   }

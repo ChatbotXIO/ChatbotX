@@ -29,6 +29,7 @@ const MAX_POST_ID_LENGTH = 120
 const tiktokCommentValidationKeyNames = [
   "postIdsMustBeEmptyForAll",
   "postIdsRequired",
+  "hashtagsRequired",
   "keywordsMustBeEmptyForAll",
   "keywordsRequired",
   "delayMustBePositive",
@@ -129,7 +130,7 @@ export function createTiktokCommentRequestSchema(
 
   const tiktokPostSchema = z
     .object({
-      type: z.enum(["all", "postIds"]),
+      type: z.enum(["all", "postIds", "hashtags"]),
       value: trimmedArray(MAX_POST_IDS, MAX_POST_ID_LENGTH),
     })
     .superRefine((value, ctx) => {
@@ -145,6 +146,13 @@ export function createTiktokCommentRequestSchema(
           code: "custom",
           path: ["value"],
           message: validationMessages.postIdsRequired,
+        })
+      }
+      if (value.type === "hashtags" && value.value.length === 0) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["value"],
+          message: validationMessages.hashtagsRequired,
         })
       }
     })
@@ -272,7 +280,7 @@ export function createTiktokCommentRequestSchema(
       .describe("Automation name."),
     inboxId: automationInboxIdSchema,
     post: tiktokPostSchema.describe(
-      "Which comments to answer: `all` videos or specific `postIds`.",
+      "Which comments to answer: `all` videos, specific `postIds`, or `hashtags` — any video whose caption carries one of the hashtags in `value` (without `#`). Reading captions needs the `video.list` permission; a connection without it skips every comment.",
     ),
     publicReply: tiktokReplySchema.describe(
       "Public reply posted under the comment: `text`, a `flow`, an `AIAgent`, or `none`.",

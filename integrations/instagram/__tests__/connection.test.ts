@@ -36,6 +36,10 @@ beforeEach(() => {
   vi.clearAllMocks()
   mocks.exchangeCodeForToken.mockResolvedValue({
     accessToken: "short-lived-access-token",
+    grantedScopes: [
+      "instagram_business_basic",
+      "instagram_business_content_publish",
+    ],
     userId: "token-exchange-user-id",
   })
   mocks.fetchInstagramAccount.mockResolvedValue(account)
@@ -70,5 +74,38 @@ describe("Instagram connection identity", () => {
     ).resolves.toEqual({
       ok: true,
     })
+  })
+
+  test("carries the permissions of the code exchange in the stored auth metadata", async () => {
+    const auth = await integration.connection.exchangeCode?.({
+      code: "authorization-code",
+      callbackUrl: "https://app.example.test/connections/callback",
+      credential,
+    })
+
+    expect(auth).toMatchObject({
+      metadata: {
+        grantedScopes: [
+          "instagram_business_basic",
+          "instagram_business_content_publish",
+        ],
+      },
+    })
+  })
+
+  test("stores null when the exchange reported no permissions", async () => {
+    mocks.exchangeCodeForToken.mockResolvedValue({
+      accessToken: "t",
+      grantedScopes: null,
+      userId: "u",
+    })
+
+    const auth = await integration.connection.exchangeCode?.({
+      code: "c",
+      callbackUrl: "https://app.example.test/connections/callback",
+      credential,
+    })
+
+    expect(auth).toMatchObject({ metadata: { grantedScopes: null } })
   })
 })

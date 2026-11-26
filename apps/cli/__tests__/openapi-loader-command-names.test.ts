@@ -396,6 +396,25 @@ describe("pathAndMethodToCommandName — repeating broadcasts", () => {
   })
 })
 
+describe("pathAndMethodToCommandName — contact broadcasts", () => {
+  test("the contact's broadcasts get their own command, next to the ad referrals one", () => {
+    const names = [
+      pathAndMethodToCommandName("/v1/contacts/{identifier}/broadcasts", "GET"),
+      pathAndMethodToCommandName(
+        "/v1/contacts/{identifier}/ad-referrals",
+        "GET",
+      ),
+      pathAndMethodToCommandName("/v1/contacts/{identifier}/tags", "GET"),
+    ]
+    expect(names).toEqual([
+      "contacts:broadcasts:list",
+      "contacts:ad-referrals:list",
+      "contacts:tags:list",
+    ])
+    expect(new Set(names).size).toBe(names.length)
+  })
+})
+
 describe("pathAndMethodToCommandName — ecommerce", () => {
   // A command whose derived name collides is silently dropped by the CLI, so
   // every ecommerce operation is pinned here.
@@ -596,5 +615,198 @@ describe("pathAndMethodToCommandName — WhatsApp routing roles", () => {
       "whatsapp-channels:sync:add",
     ])
     expect(new Set(names)).toHaveLength(names.length)
+  })
+})
+
+describe("pathAndMethodToCommandName — Inbox translation", () => {
+  test("every translation operation gets a distinct, readable name", () => {
+    const names = [
+      ["/v1/translation/settings", "GET"],
+      ["/v1/translation/settings", "PUT"],
+      ["/v1/translation/settings/test", "POST"],
+      ["/v1/conversations/{conversationId}/translation", "GET"],
+      ["/v1/conversations/{conversationId}/translation", "PUT"],
+      ["/v1/conversations/{conversationId}/translation/requests", "POST"],
+      ["/v1/conversations/{conversationId}/translation/preview", "POST"],
+    ].map(([path, method]) => pathAndMethodToCommandName(path, method))
+    expect(names).toEqual([
+      "translation:settings:get",
+      "translation:settings:update",
+      "translation:settings-test",
+      "conversations:translation:list",
+      "conversations:translation:update",
+      "conversations:translation:request",
+      "conversations:translation:preview",
+    ])
+    expect(new Set(names)).toHaveLength(names.length)
+  })
+})
+
+describe("pathAndMethodToCommandName — Inbox participants", () => {
+  test("listing participants does not collide with the conversation commands", () => {
+    const names = [
+      ["/v1/conversations", "GET"],
+      ["/v1/conversations/{id}", "GET"],
+      ["/v1/conversations/{id}/participants", "GET"],
+    ].map(([path, method]) => pathAndMethodToCommandName(path, method))
+    expect(names).toEqual([
+      "conversations:list",
+      "conversations:get",
+      "conversations:participants:list",
+    ])
+    expect(new Set(names)).toHaveLength(names.length)
+  })
+})
+
+describe("pathAndMethodToCommandName — managed channel posts", () => {
+  test("every managed-post operation gets its own command name", () => {
+    const names = [
+      ["/v1/channel-posts", "GET"],
+      ["/v1/channel-posts/options/by-ids", "GET"],
+      ["/v1/channel-posts/management", "GET"],
+      ["/v1/channel-posts/management/{id}", "GET"],
+      ["/v1/channel-posts/management/{id}", "PATCH"],
+      ["/v1/channel-posts/management/bulk-update", "POST"],
+      ["/v1/channel-posts/management/{id}/refresh", "POST"],
+      ["/v1/channel-posts/management/refresh-metrics", "POST"],
+      ["/v1/channel-posts/management/authors", "GET"],
+      ["/v1/channel-posts/management/{id}/comments", "GET"],
+      ["/v1/channel-posts/management/merge-view", "POST"],
+      ["/v1/channel-posts/management/{id}/comments/{commentId}/like", "POST"],
+      ["/v1/channel-posts/management/{id}/comments/{commentId}", "DELETE"],
+      ["/v1/channel-posts/management/export", "POST"],
+      ["/v1/channel-posts/sync", "POST"],
+      ["/v1/channel-posts/sync/status", "GET"],
+    ].map(([path, method]) => pathAndMethodToCommandName(path, method))
+
+    expect(new Set(names).size).toBe(names.length)
+    expect(names).toEqual([
+      "channel-posts:list",
+      "channel-posts:options-by-ids",
+      "channel-posts:list-managed",
+      "channel-posts:get-managed",
+      "channel-posts:update-managed",
+      "channel-posts:bulk-update-managed",
+      "channel-posts:refresh-managed",
+      "channel-posts:refresh-metrics",
+      "channel-posts:list-authors",
+      "channel-posts:list-comments",
+      "channel-posts:merge-comments",
+      "channel-posts:like-comment",
+      "channel-posts:delete-comment",
+      "channel-posts:export-comments",
+      "channel-posts:sync",
+      "channel-posts:sync-status",
+    ])
+  })
+
+  test("post snippets and target sets use the plain resource names, AI writing a verb", () => {
+    expect(pathAndMethodToCommandName("/v1/post-snippets", "GET")).toBe(
+      "post-snippets:list",
+    )
+    expect(pathAndMethodToCommandName("/v1/post-snippets", "POST")).toBe(
+      "post-snippets:create",
+    )
+    expect(pathAndMethodToCommandName("/v1/post-snippets/{id}", "GET")).toBe(
+      "post-snippets:get",
+    )
+    expect(pathAndMethodToCommandName("/v1/post-snippets/{id}", "PATCH")).toBe(
+      "post-snippets:update",
+    )
+    expect(
+      pathAndMethodToCommandName("/v1/post-target-sets/{id}", "DELETE"),
+    ).toBe("post-target-sets:delete")
+    expect(pathAndMethodToCommandName("/v1/post-target-sets", "GET")).toBe(
+      "post-target-sets:list",
+    )
+    expect(pathAndMethodToCommandName("/v1/posts/ai/generate", "POST")).toBe(
+      "social-posts:write-with-ai",
+    )
+    expect(pathAndMethodToCommandName("/v1/posts/counts", "GET")).toBe(
+      "social-posts:counts",
+    )
+  })
+
+  test("post topics use the plain resource names", () => {
+    expect(pathAndMethodToCommandName("/v1/post-topics", "GET")).toBe(
+      "post-topics:list",
+    )
+    expect(pathAndMethodToCommandName("/v1/post-topics/{id}", "PATCH")).toBe(
+      "post-topics:update",
+    )
+    expect(pathAndMethodToCommandName("/v1/post-topics/{id}", "DELETE")).toBe(
+      "post-topics:delete",
+    )
+  })
+})
+
+describe("post destination command names", () => {
+  const operations: readonly (readonly [string, string, string])[] = [
+    ["GET", "/v1/posts/destinations", "post-destinations:list"],
+    ["GET", "/v1/posts/destinations/{id}", "post-destinations:get"],
+    [
+      "POST",
+      "/v1/posts/destinations/recheck-permissions",
+      "post-destinations:recheck-permissions",
+    ],
+    [
+      "GET",
+      "/v1/posts/destinations/{id}/posting-schedule",
+      "post-destinations:posting-schedule:get",
+    ],
+    [
+      "PUT",
+      "/v1/posts/destinations/{id}/posting-schedule",
+      "post-destinations:posting-schedule:update",
+    ],
+    [
+      "GET",
+      "/v1/posts/destinations/{id}/free-slots",
+      "post-destinations:free-slots:list",
+    ],
+    [
+      "GET",
+      "/v1/posts/destinations/{id}/publishing-settings",
+      "post-destinations:publishing-settings:get",
+    ],
+    ["GET", "/v1/social-accounts", "social-accounts:list"],
+    ["GET", "/v1/social-accounts/{id}", "social-accounts:get"],
+    ["DELETE", "/v1/social-accounts/{id}", "social-accounts:disconnect"],
+  ]
+
+  test.each(operations)("%s %s is `%s`", (method, path, expected) => {
+    expect(pathAndMethodToCommandName(path, method)).toBe(expected)
+  })
+
+  test("no two operations share a command name", () => {
+    const names = operations.map(([method, path]) =>
+      pathAndMethodToCommandName(path, method),
+    )
+
+    expect(new Set(names).size).toBe(names.length)
+  })
+})
+
+describe("pathAndMethodToCommandName — post analytics", () => {
+  test("every analytics and per-post metrics operation gets its own command name", () => {
+    const names = [
+      ["/v1/post-analytics/summary", "GET"],
+      ["/v1/post-analytics/timeseries", "GET"],
+      ["/v1/post-analytics/top-posts", "GET"],
+      ["/v1/post-analytics/best-times", "GET"],
+      ["/v1/channel-posts/management/{id}/metrics", "GET"],
+      ["/v1/posts/{id}", "GET"],
+      ["/v1/posts/{id}/metrics", "GET"],
+    ].map(([path, method]) => pathAndMethodToCommandName(path, method))
+
+    expect(new Set(names).size).toBe(names.length)
+    expect(names.slice(0, 5)).toEqual([
+      "post-analytics:summary",
+      "post-analytics:timeseries",
+      "post-analytics:top-posts",
+      "post-analytics:best-times",
+      "channel-posts:get-metrics",
+    ])
+    expect(names[6]).toBe("social-posts:get-metrics")
   })
 })

@@ -30,6 +30,14 @@ export function appendToolOutputGuard(systemPrompt: string): string {
   return `${systemPrompt}\n\n${helpTexts.toolOutputGuard}`.trim()
 }
 
+/**
+ * Code-owned, so an agent's editable prompt cannot drop it. Apply it to every
+ * customer-facing agent prompt.
+ */
+export function appendCustomerInputGuard(systemPrompt: string): string {
+  return `${systemPrompt}\n\n${helpTexts.customerInputGuard}`.trim()
+}
+
 export function appendFabricationGuard(
   systemPrompt: string,
   tools: ToolSet,

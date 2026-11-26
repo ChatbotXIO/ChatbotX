@@ -19,6 +19,7 @@ const resolvers = vi.hoisted(() => ({
   listWhatsappFlows: vi.fn(),
   listEmailTopics: vi.fn(),
   ads: vi.fn(),
+  polls: vi.fn(),
   listRecentAds: vi.fn(),
 }))
 
@@ -74,6 +75,10 @@ vi.mock("../src/email-topic/service", () => ({
   },
 }))
 
+vi.mock("../src/poll/service", () => ({
+  pollService: { listLabelsByIds: resolvers.polls },
+}))
+
 vi.mock("../src/contact-referral-event/service", () => ({
   contactReferralEventService: {
     listLabelsByIds: resolvers.ads,
@@ -112,6 +117,7 @@ describe("resolveContactFilterValueLabels", () => {
       resolvers.pipelines,
       resolvers.pipelineStages,
       resolvers.ads,
+      resolvers.polls,
     ]) {
       resolver.mockResolvedValue([])
     }
@@ -145,6 +151,22 @@ describe("resolveContactFilterValueLabels", () => {
     expect(labels.members).toEqual([{ id: "u1", name: "Alice" }])
   })
 
+  test("routes poll ids to the poll resolver within the workspace", async () => {
+    resolvers.polls.mockResolvedValue([{ id: "7", name: "Best dish" }])
+
+    const labels = await resolveContactFilterValueLabels({
+      workspaceId: "ws-1",
+      pipelineScope: MEMBER_SCOPE,
+      ids: { polls: ["7"] },
+    })
+
+    expect(resolvers.polls).toHaveBeenCalledWith({
+      workspaceId: "ws-1",
+      ids: ["7"],
+    })
+    expect(labels.polls).toEqual([{ id: "7", name: "Best dish" }])
+  })
+
   test("returns an empty list for every type that was not asked for", async () => {
     const labels = await resolveContactFilterValueLabels({
       workspaceId: "ws-1",
@@ -168,6 +190,7 @@ describe("resolveContactFilterValueLabels", () => {
       pipelines: [],
       pipelineStages: [],
       ads: [],
+      polls: [],
     })
     expect(resolvers.sequences).toHaveBeenCalledWith({
       workspaceId: "ws-1",

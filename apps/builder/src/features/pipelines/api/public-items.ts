@@ -56,7 +56,13 @@ export const pipelineItemsPublicRouter = {
       description:
         "Items of a pipeline, newest first by default. Filter by stage, status, priority, assignee, contact, value, a custom field, search, or date ranges (due, created, updated, last comment, status change, stage entry, won/lost closure). Page with `nextCursor`; keep `sort`, `direction` and the filters unchanged between pages. Get pipeline and stage ids from `pipelines.list` / `pipelines.get`.",
       tags: TAGS,
-      spec: mcpSpec({ visibility: "default" }),
+      spec: mcpSpec({
+        destructiveHint: false,
+        idempotentHint: true,
+        openWorldHint: false,
+        readOnlyHint: true,
+        visibility: "default",
+      }),
     })
     .input(listItemsPublicRequest)
     .output(listItemsPublicResponse)
@@ -124,7 +130,13 @@ export const pipelineItemsPublicRouter = {
         "Adds an item for a contact (get `contactId` from `contacts.list`). Without `stageId` it lands in the first stage. Pass `idempotencyKey` so a retried request does not create a second item. A pipeline may limit open items per contact (409).",
       tags: TAGS,
       successStatus: 201,
-      spec: mcpSpec({ visibility: "default" }),
+      spec: mcpSpec({
+        destructiveHint: false,
+        idempotentHint: false,
+        openWorldHint: false,
+        readOnlyHint: false,
+        visibility: "default",
+      }),
     })
     .input(createItemPublicRequest)
     .output(publicPipelineItemResource)
@@ -180,7 +192,13 @@ export const pipelineItemsPublicRouter = {
       description:
         "Moves the item to another stage of the same pipeline. Get stage ids from `pipelines.get`. To move it to another pipeline use `pipelines.transferItem`.",
       tags: TAGS,
-      spec: mcpSpec({ visibility: "default" }),
+      spec: mcpSpec({
+        destructiveHint: true,
+        idempotentHint: true,
+        openWorldHint: false,
+        readOnlyHint: false,
+        visibility: "default",
+      }),
     })
     .input(moveItemPublicRequest)
     .output(publicPipelineItemResource)

@@ -17,6 +17,7 @@ const pruneFilter = vi.fn()
 const mockDispatchAuditRecord = vi.fn().mockResolvedValue(undefined)
 const selectForUpdate = vi.fn()
 const mockHasBroadcastRecipients = vi.fn()
+const mockExistsForSource = vi.fn()
 const mockScheduleAdd = vi.fn()
 const mockScheduleGetJob = vi.fn()
 
@@ -150,6 +151,7 @@ vi.mock("@chatbotx.io/database/repositories", () => ({
   hasBroadcastRecipients: (...args: unknown[]) =>
     mockHasBroadcastRecipients(...args),
   purgeBroadcastRecipients: vi.fn(),
+  purgeBroadcastCaptures: vi.fn(),
   broadcastRepository: {
     findByIdOrName: vi.fn(),
   },
@@ -158,6 +160,12 @@ vi.mock("@chatbotx.io/database/repositories", () => ({
     lockForWrite: vi.fn().mockResolvedValue([]),
     selectDbNow: vi.fn().mockResolvedValue(new Date("2026-10-13T00:00:00Z")),
     insertIfMissing: vi.fn(),
+  },
+}))
+
+vi.mock("@chatbotx.io/database/repositories/contact-info-capture", () => ({
+  contactInfoCaptureRepository: {
+    existsForSource: (...args: unknown[]) => mockExistsForSource(...args),
   },
 }))
 
@@ -280,6 +288,7 @@ beforeEach(() => {
   mockDispatchAuditRecord.mockClear()
   selectForUpdate.mockReset()
   mockHasBroadcastRecipients.mockReset().mockResolvedValue(false)
+  mockExistsForSource.mockReset().mockResolvedValue(false)
   mockScheduleAdd.mockReset().mockResolvedValue(undefined)
   mockScheduleGetJob.mockReset().mockResolvedValue(undefined)
   vi.mocked(broadcastPlanPolicyService.appliesToChannel).mockImplementation(
@@ -383,6 +392,30 @@ describe("broadcastService.scheduleDraft", () => {
         schedulesAt: new Date("2026-09-01T09:00:00Z"),
       }),
     ).resolves.toEqual({ id: "b-1" })
+  })
+
+  // The previous run's contact-info captures count as leftovers too: they would
+  // otherwise be mixed with the numbers of the new run.
+  test("refuses while the draft still holds contact-info captures and queues their cleanup", async () => {
+    mockExistsForSource.mockResolvedValue(true)
+    findFirstBroadcast.mockResolvedValue({ resumeCount: 2 })
+
+    await expect(
+      broadcastService.scheduleDraft({
+        workspaceId: "ws-1",
+        broadcastId: "b-1",
+        schedulesType: "future",
+        schedulesAt: new Date("2026-09-01T09:00:00Z"),
+      }),
+    ).rejects.toThrow("still clearing")
+
+    expect(mockExistsForSource).toHaveBeenCalledWith({
+      workspaceId: "ws-1",
+      sourceType: "broadcast",
+      sourceId: "b-1",
+    })
+    expect(mockScheduleAdd).toHaveBeenCalledTimes(1)
+    expect(updateReturning).not.toHaveBeenCalled()
   })
 
   // Rows that are not this workspace's draft (another workspace, or a

@@ -5,9 +5,11 @@ import {
   type Transaction,
 } from "@chatbotx.io/database/client"
 import {
+  knownTemplateChannels,
   TEMPLATE_STORE_CATEGORY_NAME_MAX_LENGTH,
   TEMPLATE_STORE_MAX_CATEGORIES,
   TEMPLATE_STORE_MAX_LISTINGS,
+  type TemplateChannel,
   type TemplateStoreListingStatus,
 } from "@chatbotx.io/database/partials"
 import {
@@ -19,6 +21,7 @@ import {
   templateStoreRepository,
 } from "@chatbotx.io/database/repositories"
 import { isBigintId } from "@chatbotx.io/database/utils"
+import { isLocale, type Locale } from "@chatbotx.io/utils/ui-locale"
 import {
   resolveTenantAdminScope,
   type TenantAdminScope,
@@ -27,6 +30,12 @@ import { type ChatbotXException, validationException } from "../errors"
 import { resolveServingHost } from "../platform/settings"
 import { isShareLive } from "./share-live"
 import { buildTemplateShareUrl } from "./share-url"
+import {
+  classifyStoreListingForLocale,
+  normalizeListingChannels,
+  normalizeListingLanguages,
+  type TemplateStoreAudienceSection,
+} from "./store-audience"
 import {
   templateStoreCategoryLimitException,
   templateStoreCategoryNameTakenException,
@@ -46,6 +55,10 @@ export type TemplateStoreAdminListing = {
   publisherName: string | null
   owner: { workspaceId: string; workspaceName: string }
   categories: TemplateStoreCategoryRef[]
+  /** UI locale codes; empty = every language. */
+  languages: Locale[]
+  /** Channels the template works on, in display order; empty = every channel. */
+  channels: TemplateChannel[]
   installCount: number
   status: TemplateStoreListingStatus
   /** The template's public page; only for a published listing, so a hidden share key is never exposed. */
@@ -78,6 +91,12 @@ export type TemplateStorePublishedTemplate = {
   imageUrl: string | null
   publisherName: string | null
   categoryIds: string[]
+  /** UI locale codes; empty = every language. */
+  languages: Locale[]
+  /** Channels the template supports, in display order; empty = every channel. */
+  channels: TemplateChannel[]
+  /** Zone when the visitor views their own language; always `primary` when no visitor language is given. */
+  section: TemplateStoreAudienceSection
   shareToken: string
   shareUrl: string
 }
@@ -104,6 +123,10 @@ export const resolveTemplateStoreListingStatus = (
   }
   return isShareLive(row, now) ? "published" : "shareDisabled"
 }
+
+/** A stored code the UI no longer lists (a removed locale) is dropped on read, so every consumer sees valid codes only. */
+const knownLanguages = (languages: readonly string[]): Locale[] =>
+  languages.filter(isLocale)
 
 /** Turns the case-insensitive unique-name violation into the typed exception; rethrows anything else. */
 const rethrowCategoryNameTaken = (error: unknown): never => {
@@ -149,6 +172,19 @@ const requireBigintIds = (
 const requireCategoryIds = (categoryIds: readonly string[]): string[] => {
   const unique = [...new Set(categoryIds)]
   requireBigintIds(unique, templateStoreCategoryUnavailableException)
+  return unique
+}
+
+/** De-duplicated, valid listing ids: at least one, at most a whole store. */
+const requireListingIds = (listingIds: readonly string[]): string[] => {
+  const unique = [...new Set(listingIds)]
+  if (unique.length === 0 || unique.length > TEMPLATE_STORE_MAX_LISTINGS) {
+    throw validationException(
+      "listingIds",
+      `Select 1-${TEMPLATE_STORE_MAX_LISTINGS} templates`,
+    )
+  }
+  requireBigintIds(unique, templateStoreListingUnavailableException)
   return unique
 }
 
@@ -296,6 +332,8 @@ export const templateStoreService = {
     scope: TenantAdminScope
     templateId: string
     categoryIds: string[]
+    languages: Locale[]
+    channels: TemplateChannel[]
     actorUserId: string
   }): Promise<void> {
     const tenantId = await requireTenantId(
@@ -311,11 +349,19 @@ export const templateStoreService = {
       throw templateStoreTemplateUnavailableException()
     }
     const categoryIds = requireCategoryIds(input.categoryIds)
+    const languages = normalizeListingLanguages(input.languages)
+    const channels = normalizeListingChannels(input.channels)
     await withStoreLock(tenantId, async (tx) => {
       // A template purged since the lookup above fails the insert's foreign key.
       const listing = await templateStoreRepository
         .createListing(
-          { tenantId, templateId: template.id, createdBy: input.actorUserId },
+          {
+            tenantId,
+            templateId: template.id,
+            languages,
+            channels,
+            createdBy: input.actorUserId,
+          },
           tx,
         )
         .catch(rethrowTemplateGone)
@@ -331,7 +377,7 @@ export const templateStoreService = {
         throw templateStoreListingLimitException(TEMPLATE_STORE_MAX_LISTINGS)
       }
       const status = await templateStoreRepository.replaceListingCategories(
-        { tenantId, listingId: listing.id, categoryIds },
+        { tenantId, listingIds: [listing.id], categoryIds },
         tx,
       )
       if (status !== "updated") {
@@ -341,34 +387,91 @@ export const templateStoreService = {
     })
   },
 
-  async updateListingCategories(input: {
+  /** Replaces a listing's categories, languages and channels in one transaction. */
+  async updateListing(input: {
     scope: TenantAdminScope
     listingId: string
     categoryIds: string[]
+    languages: Locale[]
+    channels: TemplateChannel[]
+  }): Promise<void> {
+    await templateStoreService.updateListings({
+      scope: input.scope,
+      listingIds: [input.listingId],
+      categoryIds: input.categoryIds,
+      languages: input.languages,
+      channels: input.channels,
+    })
+  },
+
+  /**
+   * Sets the categories, languages and/or channels of several listings at once,
+   * replacing what each had; a field left out is kept. Every listing must be
+   * the tenant's, otherwise nothing is written.
+   */
+  async updateListings(input: {
+    scope: TenantAdminScope
+    listingIds: string[]
+    categoryIds?: string[]
+    languages?: Locale[]
+    channels?: TemplateChannel[]
   }): Promise<void> {
     const tenantId = await requireTenantId(
       input.scope,
       templateStoreListingUnavailableException,
     )
-    requireBigintIds(
-      [input.listingId],
-      templateStoreListingUnavailableException,
-    )
-    const categoryIds = requireCategoryIds(input.categoryIds)
+    const listingIds = requireListingIds(input.listingIds)
+    if (
+      input.categoryIds === undefined &&
+      input.languages === undefined &&
+      input.channels === undefined
+    ) {
+      throw validationException("listingIds", "Nothing to update")
+    }
+    const categoryIds =
+      input.categoryIds === undefined
+        ? undefined
+        : requireCategoryIds(input.categoryIds)
+    const languages =
+      input.languages === undefined
+        ? undefined
+        : normalizeListingLanguages(input.languages)
+    const channels =
+      input.channels === undefined
+        ? undefined
+        : normalizeListingChannels(input.channels)
     await withStoreLock(tenantId, async (tx) => {
-      const status = await templateStoreRepository.replaceListingCategories(
-        {
-          tenantId,
-          listingId: input.listingId,
-          categoryIds,
-        },
-        tx,
-      )
-      if (status === "listingUnavailable") {
-        throw templateStoreListingUnavailableException()
+      if (categoryIds !== undefined) {
+        const status = await templateStoreRepository.replaceListingCategories(
+          { tenantId, listingIds, categoryIds },
+          tx,
+        )
+        if (status === "listingUnavailable") {
+          throw templateStoreListingUnavailableException()
+        }
+        if (status === "categoryUnavailable") {
+          throw templateStoreCategoryUnavailableException()
+        }
       }
-      if (status === "categoryUnavailable") {
-        throw templateStoreCategoryUnavailableException()
+      if (languages !== undefined) {
+        const updated = await templateStoreRepository.updateListingLanguages(
+          { tenantId, listingIds, languages },
+          tx,
+        )
+        // Rolls back the categories too when a listing vanished meanwhile.
+        if (updated !== listingIds.length) {
+          throw templateStoreListingUnavailableException()
+        }
+      }
+      if (channels !== undefined) {
+        const updated = await templateStoreRepository.updateListingChannels(
+          { tenantId, listingIds, channels },
+          tx,
+        )
+        // Rolls back the other fields too when a listing vanished meanwhile.
+        if (updated !== listingIds.length) {
+          throw templateStoreListingUnavailableException()
+        }
       }
     })
   },
@@ -377,20 +480,28 @@ export const templateStoreService = {
     scope: TenantAdminScope
     listingId: string
   }): Promise<void> {
+    await templateStoreService.removeListings({
+      scope: input.scope,
+      listingIds: [input.listingId],
+    })
+  },
+
+  /** Removes several listings at once; every one must be the tenant's, otherwise none is removed. */
+  async removeListings(input: {
+    scope: TenantAdminScope
+    listingIds: string[]
+  }): Promise<void> {
     const tenantId = await requireTenantId(
       input.scope,
       templateStoreListingUnavailableException,
     )
-    requireBigintIds(
-      [input.listingId],
-      templateStoreListingUnavailableException,
-    )
+    const listingIds = requireListingIds(input.listingIds)
     await withStoreLock(tenantId, async (tx) => {
-      const deleted = await templateStoreRepository.deleteListing(
-        { id: input.listingId, tenantId },
+      const deleted = await templateStoreRepository.deleteListings(
+        { tenantId, ids: listingIds },
         tx,
       )
-      if (!deleted) {
+      if (deleted !== listingIds.length) {
         throw templateStoreListingUnavailableException()
       }
     })
@@ -461,6 +572,8 @@ export const templateStoreService = {
             workspaceName: row.ownerWorkspaceName,
           },
           categories: row.categories,
+          languages: knownLanguages(row.languages),
+          channels: knownTemplateChannels(row.channels),
           installCount: installCounts.get(row.templateId) ?? 0,
           status,
           templatePageUrl:
@@ -510,6 +623,12 @@ export const templateStoreService = {
     tenantId: string
     categoryId?: string
     keyword?: string
+    /** Keeps templates tagged with this language and the untagged ones. */
+    language?: Locale
+    /** Keeps listings tagged with this channel and the untagged ones (every channel). */
+    channel?: TemplateChannel
+    /** The visitor's UI language: each template gets its zone for that language. Nothing is left out, since the visitor may view every language. */
+    viewerLocale?: Locale
   }): Promise<TemplateStorePublished> {
     const matchesNothing =
       input.categoryId !== undefined && !isBigintId(input.categoryId)
@@ -521,21 +640,32 @@ export const templateStoreService = {
             tenantId: input.tenantId,
             categoryId: input.categoryId,
             keyword: input.keyword,
+            language: input.language,
+            channel: input.channel,
           }),
       resolveServingHost(input.tenantId),
     ])
+    const { viewerLocale } = input
     return {
       categories,
-      templates: rows.map((row) => ({
-        templateId: row.templateId,
-        name: row.name,
-        description: row.description,
-        imageUrl: row.imageUrl,
-        publisherName: row.publisherName,
-        categoryIds: row.categoryIds,
-        shareToken: row.shareToken,
-        shareUrl: buildTemplateShareUrl(host.appUrl, row),
-      })),
+      templates: rows.map((row) => {
+        const languages = knownLanguages(row.languages)
+        return {
+          templateId: row.templateId,
+          name: row.name,
+          description: row.description,
+          imageUrl: row.imageUrl,
+          publisherName: row.publisherName,
+          categoryIds: row.categoryIds,
+          languages,
+          channels: knownTemplateChannels(row.channels),
+          section: viewerLocale
+            ? classifyStoreListingForLocale(languages, viewerLocale)
+            : "primary",
+          shareToken: row.shareToken,
+          shareUrl: buildTemplateShareUrl(host.appUrl, row),
+        }
+      }),
     }
   },
 }

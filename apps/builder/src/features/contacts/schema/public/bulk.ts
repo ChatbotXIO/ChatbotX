@@ -1,4 +1,7 @@
-import { commentAutomationEventType } from "@chatbotx.io/analytics/schemas"
+import {
+  commentAutomationEventType,
+  contactInfoCaptureEventType,
+} from "@chatbotx.io/analytics/schemas"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
 
@@ -85,6 +88,13 @@ const trackedStatsEvent = z.enum([
   "flow:clicked",
 ])
 
+// A broadcast additionally tracks the contacts who left a phone number or an
+// email after it (`broadcasts.listContacts` accepts the same two values).
+const trackedBroadcastStatsEvent = z.enum([
+  ...trackedStatsEvent.options,
+  ...contactInfoCaptureEventType.options,
+])
+
 const statsTagFields = {
   tags: z
     .array(z.string().trim().min(1))
@@ -109,8 +119,8 @@ export const bulkTagByStatsPublicRequest = z.discriminatedUnion("source", [
     broadcastId: zodBigintAsString().describe(
       "Broadcast id. Get it from `broadcasts.list`.",
     ),
-    eventType: trackedStatsEvent.describe(
-      "Event whose recipients are tagged: `message:sent`, `message:delivered`, `message:seen`, `message:failed` or `flow:clicked`, the values `broadcasts.listContacts` tracks.",
+    eventType: trackedBroadcastStatsEvent.describe(
+      "Event whose recipients are tagged: `message:sent`, `message:delivered`, `message:seen`, `message:failed`, `flow:clicked`, `contactInfo:phoneCaptured` or `contactInfo:emailCaptured` (contacts who left a phone number or an email after the broadcast), the values `broadcasts.listContacts` tracks.",
     ),
     ...statsTagFields,
   }),

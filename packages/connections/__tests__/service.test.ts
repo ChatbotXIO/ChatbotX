@@ -42,7 +42,9 @@ const mocks = vi.hoisted(() => ({
     authType: "secretText",
     secretText: "sk-live",
   })),
-  isUniqueViolationError: vi.fn(() => false),
+  isUniqueViolationError: vi.fn(
+    (_err?: unknown, _constraint?: string) => false,
+  ),
   transaction: vi.fn(async (fn: (tx: unknown) => unknown) => await fn("tx")),
   compensateWorkspaceQuota: vi.fn(async () => undefined),
   createSession: vi.fn(),
@@ -80,6 +82,9 @@ const mocks = vi.hoisted(() => ({
     wasCreated: true,
   })),
   loggerError: vi.fn(),
+  loggerWarn: vi.fn(),
+  toLoggableDatabaseError: vi.fn((err: unknown) => err),
+  recordAuthorization: vi.fn(async () => undefined),
 }))
 
 vi.mock("@chatbotx.io/database/repositories", () => ({
@@ -99,6 +104,7 @@ vi.mock("@chatbotx.io/database/repositories", () => ({
 vi.mock("@chatbotx.io/database/client", () => ({
   db: { transaction: mocks.transaction },
   isUniqueViolationError: mocks.isUniqueViolationError,
+  toLoggableDatabaseError: mocks.toLoggableDatabaseError,
 }))
 
 vi.mock("@chatbotx.io/encryption", () => ({
@@ -113,6 +119,7 @@ vi.mock("@chatbotx.io/business", () => ({
     findOwnerUserIdByWorkspaceId: mocks.findOwnerUserIdByWorkspaceId,
   },
   inboxService: { create: mocks.inboxCreate },
+  userService: { recordConnectionAuthorization: mocks.recordAuthorization },
 }))
 vi.mock("@chatbotx.io/business/workspace", () => ({
   compensateWorkspaceQuotaConsumption: mocks.compensateWorkspaceQuota,
@@ -561,7 +568,7 @@ vi.mock("../src/registry", () => ({
 }))
 
 vi.mock("../src/logger", () => ({
-  logger: { warn: vi.fn(), error: mocks.loggerError, info: vi.fn() },
+  logger: { warn: mocks.loggerWarn, error: mocks.loggerError, info: vi.fn() },
 }))
 
 const { connectionService } = await import("../src/service")
@@ -644,6 +651,8 @@ beforeEach(() => {
     id: "session-1",
     workspaceId: "ws-1",
     provider: "messenger",
+    purpose: "connect",
+    actorUserId: "user-1",
     status: "pending",
   })
   mocks.claimAuthorization.mockImplementation(
@@ -687,6 +696,8 @@ beforeEach(() => {
       id: input.id,
       workspaceId: input.workspaceId,
       provider: "messenger",
+      purpose: "connect",
+      actorUserId: "user-1",
       status: "authorized",
       encryptedAuth: input.encryptedAuth,
     }),
@@ -2103,6 +2114,125 @@ describe("ConnectionService.completeAuthorization", () => {
     expect(result.status).toBe("awaiting_selection")
   })
 
+  it("maps an unavailable candidate to a disabled, non-selectable target and stores only selectable candidates", async () => {
+    mocks.listCandidates.mockResolvedValue([
+      { sourceId: "page-1", displayName: "Page One" },
+      {
+        sourceId: "page-2",
+        displayName: "Page Two",
+        unavailableReason: "insufficientPermissions",
+      },
+      {
+        sourceId: "page-3",
+        displayName: "Page Three",
+        unavailableReason: "missingAccessToken",
+      },
+    ])
+
+    await connectionService.completeAuthorization({
+      sessionId: "session-1",
+      nonce: "nonce-abc",
+      code: "auth-code",
+      callbackUrl: "https://app.example.test/callback",
+      credential: {},
+    })
+
+    expect(mocks.attachAuthorization).toHaveBeenCalledWith(
+      expect.objectContaining({
+        targets: [
+          expect.objectContaining({ id: "page-1", selectable: true }),
+          expect.objectContaining({
+            id: "page-2",
+            selectable: false,
+            disabledReason: "insufficientPermissions",
+          }),
+          expect.objectContaining({
+            id: "page-3",
+            selectable: false,
+            disabledReason: "missingAccessToken",
+          }),
+        ],
+      }),
+    )
+    expect(mocks.encryptObject).toHaveBeenCalledWith(
+      [expect.objectContaining({ sourceId: "page-1" })],
+      "connect-session:session-1",
+    )
+  })
+
+  it("lands on awaiting_selection with an empty encrypted list when every candidate is unavailable", async () => {
+    mocks.listCandidates.mockResolvedValue([
+      {
+        sourceId: "page-1",
+        displayName: "Page One",
+        unavailableReason: "insufficientPermissions",
+      },
+    ])
+
+    const result = await connectionService.completeAuthorization({
+      sessionId: "session-1",
+      nonce: "nonce-abc",
+      code: "auth-code",
+      callbackUrl: "https://app.example.test/callback",
+      credential: {},
+    })
+
+    expect(mocks.failSession).not.toHaveBeenCalled()
+    expect(mocks.encryptObject).toHaveBeenCalledWith(
+      [],
+      "connect-session:session-1",
+    )
+    expect(mocks.attachAuthorization).toHaveBeenCalledWith(
+      expect.objectContaining({
+        targets: [
+          expect.objectContaining({
+            id: "page-1",
+            selectable: false,
+            disabledReason: "insufficientPermissions",
+          }),
+        ],
+      }),
+    )
+    expect(result.status).toBe("awaiting_selection")
+  })
+
+  it("reports already connected ahead of an unavailable reason and drops its auth", async () => {
+    mocks.findByProviderAndSourceIdsAnyWorkspace.mockResolvedValue([
+      { sourceId: "page-1", workspaceId: "ws-1", status: "connected" },
+    ])
+    mocks.listCandidates.mockResolvedValue([
+      {
+        sourceId: "page-1",
+        displayName: "Page One",
+        unavailableReason: "insufficientPermissions",
+      },
+    ])
+
+    await connectionService.completeAuthorization({
+      sessionId: "session-1",
+      nonce: "nonce-abc",
+      code: "auth-code",
+      callbackUrl: "https://app.example.test/callback",
+      credential: {},
+    })
+
+    const [{ targets }] = mocks.attachAuthorization.mock.calls[0] as [
+      { targets: Record<string, unknown>[] },
+    ]
+    expect(targets).toEqual([
+      expect.objectContaining({
+        id: "page-1",
+        selectable: false,
+        alreadyConnected: "this_workspace",
+      }),
+    ])
+    expect(targets[0]).not.toHaveProperty("disabledReason")
+    expect(mocks.encryptObject).toHaveBeenCalledWith(
+      [],
+      "connect-session:session-1",
+    )
+  })
+
   it("falls back to describe() when the provider has no listCandidates", async () => {
     mockAdapter.provider.listCandidates = undefined as never
     await connectionService.completeAuthorization({
@@ -2163,6 +2293,7 @@ describe("ConnectionService.completeAuthorization (reconnect path)", () => {
     workspaceId: "ws-1",
     provider: "messenger",
     purpose: "reconnect",
+    actorUserId: "user-1",
     targetConnectionId: "conn-1",
     status: "pending",
   }
@@ -2568,6 +2699,83 @@ describe("ConnectionService.completeAuthorization (reconnect path)", () => {
     })
   })
 
+  it("rejects a reconnect whose only matching account is unavailable", async () => {
+    mocks.findByNonce.mockResolvedValue(reconnectSession)
+    mocks.findByIdForWorkspace.mockResolvedValue(
+      baseConnection({ sourceId: "page-1" }),
+    )
+    mocks.listCandidates.mockResolvedValue([
+      {
+        sourceId: "page-1",
+        displayName: "Page One",
+        unavailableReason: "insufficientPermissions",
+      },
+    ])
+
+    await expect(
+      connectionService.completeAuthorization({
+        sessionId: "session-1",
+        nonce: "nonce-abc",
+        code: "auth-code",
+        callbackUrl: "https://app.example.test/callback",
+        credential: {},
+      }),
+    ).rejects.toMatchObject({ code: "connectionIdentityMismatch" })
+    expect(mocks.failSession).toHaveBeenCalledWith({
+      id: "session-1",
+      workspaceId: "ws-1",
+      errorCode: "provider_denied",
+      statuses: ["authorized"],
+    })
+    expect(mocks.saveAuthByForeignKey).not.toHaveBeenCalled()
+
+    mocks.listCandidates.mockResolvedValue([
+      { sourceId: "page-1", displayName: "Page One" },
+    ])
+  })
+
+  it("ignores unavailable accounts when counting a legacy sourceId's single candidate", async () => {
+    mocks.findByNonce.mockResolvedValue(reconnectSession)
+    mocks.findByIdForWorkspace.mockResolvedValue(
+      baseConnection({ sourceId: "legacy:conn-1" }),
+    )
+    mocks.listCandidates.mockResolvedValue([
+      { sourceId: "page-1", displayName: "Page One" },
+      {
+        sourceId: "page-2",
+        displayName: "Page Two",
+        unavailableReason: "missingAccessToken",
+      },
+    ])
+    mockAdapter.provider.describe = () => ({
+      sourceId: "page-1",
+      displayName: "Page One",
+    })
+
+    await connectionService.completeAuthorization({
+      sessionId: "session-1",
+      nonce: "nonce-abc",
+      code: "auth-code",
+      callbackUrl: "https://app.example.test/callback",
+      credential: {},
+    })
+
+    expect(mocks.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        values: expect.objectContaining({ sourceId: "page-1" }),
+      }),
+      "tx",
+    )
+
+    mocks.listCandidates.mockResolvedValue([
+      { sourceId: "page-1", displayName: "Page One" },
+    ])
+    mockAdapter.provider.describe = () => ({
+      sourceId: "workspace",
+      displayName: "Test Provider",
+    })
+  })
+
   it("rejects a legacy sourceId rebind when the multi-account provider's listCandidates returns more than one candidate (ambiguous)", async () => {
     mocks.findByNonce.mockResolvedValue(reconnectSession)
     mocks.findByIdForWorkspace.mockResolvedValue(
@@ -2684,6 +2892,42 @@ describe("ConnectionService.connectTargets", () => {
         connectionIds: [],
       },
       "connectTargets: failed to record collected results",
+    )
+  })
+
+  it("logs only the violated constraint, never the error carrying the auth", async () => {
+    const loggable = new Error("Database error (23505 Connection_inboxId_key)")
+    mocks.toLoggableDatabaseError.mockReturnValueOnce(loggable)
+    // A Drizzle query error repeats the bound values, auth included.
+    const violation = new Error('params: {"accessToken":"secret-token"}', {
+      cause: { code: "23505", constraint: "Connection_inboxId_key" },
+    })
+    mocks.insertRow.mockRejectedValueOnce(violation)
+    // A constraint no store declares (e.g. `Connection_inboxId_key`).
+    mocks.isUniqueViolationError.mockImplementation(
+      (err?: unknown, constraint?: string) =>
+        err === violation && constraint === undefined,
+    )
+
+    const result = await connectionService.connectTargets({
+      sessionId: "session-1",
+      workspaceId: "ws-1",
+      targetIds: ["page-1"],
+    })
+
+    expect(result.outcomes).toEqual([
+      expect.objectContaining({ status: "duplicated" }),
+    ])
+    expect(mocks.loggerWarn).toHaveBeenCalledWith(
+      {
+        err: loggable,
+        provider: "messenger",
+        workspaceId: "ws-1",
+      },
+      "connectTargets: unique violation reported as already connected",
+    )
+    expect(JSON.stringify(mocks.loggerWarn.mock.calls)).not.toContain(
+      "secret-token",
     )
   })
 
@@ -2976,6 +3220,328 @@ describe("ConnectionService.connectTargets", () => {
     expect(mocks.insert).toHaveBeenCalledWith(
       expect.objectContaining({ createdBy: null }),
       "tx",
+    )
+  })
+})
+
+describe("connection authorization capture", () => {
+  const exchangedAuth = {
+    authType: "oauth2",
+    clientId: "id",
+    clientSecret: "secret",
+    redirectUrl: "https://x",
+    tokens: { accessToken: "tok" },
+  }
+  const completeInput = {
+    sessionId: "session-1",
+    nonce: "nonce-abc",
+    code: "auth-code",
+    callbackUrl: "https://app.example.test/callback",
+    credential: {},
+  }
+  const orderOf = (fn: { mock: { invocationCallOrder: number[] } }) =>
+    fn.mock.invocationCallOrder[0] ?? Number.POSITIVE_INFINITY
+
+  it("records the listing once, with counts, before the candidates are attached", async () => {
+    mocks.listCandidates.mockResolvedValue([
+      { sourceId: "page-1", displayName: "Page One" },
+      {
+        sourceId: "page-2",
+        displayName: "Page Two",
+        unavailableReason: "insufficientPermissions",
+      },
+      {
+        sourceId: "page-3",
+        displayName: "Page Three",
+        unavailableReason: "missingAccessToken",
+      },
+    ])
+
+    const result = await connectionService.completeAuthorization(completeInput)
+
+    expect(mocks.recordAuthorization).toHaveBeenCalledTimes(1)
+    expect(mocks.recordAuthorization).toHaveBeenCalledWith({
+      userId: "user-1",
+      provider: "messenger",
+      auth: exchangedAuth,
+      phase: "candidateListingSucceeded",
+      workspaceId: "ws-1",
+      purpose: "connect",
+      connectSessionId: "session-1",
+      candidateCount: 3,
+      unavailableCandidateCount: 2,
+      connectSessionErrorCode: null,
+    })
+    // The flow carries on to selection with the capture in place.
+    expect(result.status).toBe("awaiting_selection")
+    expect(orderOf(mocks.recordAuthorization)).toBeLessThan(
+      orderOf(mocks.attachAuthorization),
+    )
+  })
+
+  it("records a zero-candidate listing as a failure before the session is failed", async () => {
+    mocks.listCandidates.mockResolvedValue([])
+
+    await expect(
+      connectionService.completeAuthorization(completeInput),
+    ).rejects.toMatchObject({ code: "connectionNoCandidates" })
+
+    expect(mocks.recordAuthorization).toHaveBeenCalledTimes(1)
+    expect(mocks.recordAuthorization).toHaveBeenCalledWith(
+      expect.objectContaining({
+        phase: "candidateListingFailed",
+        candidateCount: 0,
+        unavailableCandidateCount: 0,
+        connectSessionErrorCode: "no_candidates",
+      }),
+    )
+    expect(orderOf(mocks.recordAuthorization)).toBeLessThan(
+      orderOf(mocks.failSession),
+    )
+  })
+
+  it("records a provider listing error before the session is failed", async () => {
+    mocks.listCandidates.mockRejectedValue(
+      new ConnectionProviderRejectedError("denied"),
+    )
+
+    await expect(
+      connectionService.completeAuthorization(completeInput),
+    ).rejects.toMatchObject({ code: "connectionCredentialsRejected" })
+
+    expect(mocks.recordAuthorization).toHaveBeenCalledTimes(1)
+    expect(mocks.recordAuthorization).toHaveBeenCalledWith(
+      expect.objectContaining({
+        phase: "candidateListingFailed",
+        auth: exchangedAuth,
+        connectSessionErrorCode: "provider_error",
+      }),
+    )
+    expect(orderOf(mocks.recordAuthorization)).toBeLessThan(
+      orderOf(mocks.failSession),
+    )
+  })
+
+  it("records a retryable listing error without an error code", async () => {
+    mocks.listCandidates.mockRejectedValue(
+      Object.assign(new Error("provider unavailable"), {
+        response: { status: 503 },
+      }),
+    )
+
+    await expect(
+      connectionService.completeAuthorization(completeInput),
+    ).rejects.toMatchObject({ code: "connectionProviderUnavailable" })
+
+    expect(mocks.recordAuthorization).toHaveBeenCalledTimes(1)
+    expect(mocks.recordAuthorization).toHaveBeenCalledWith(
+      expect.objectContaining({
+        phase: "candidateListingFailed",
+        connectSessionErrorCode: null,
+      }),
+    )
+  })
+
+  it("passes a null actor through (a workspace API token session)", async () => {
+    mocks.findByNonce.mockResolvedValue({
+      id: "session-1",
+      workspaceId: "ws-1",
+      provider: "messenger",
+      purpose: "connect",
+      actorUserId: null,
+      status: "pending",
+    })
+    mocks.storeAuthorization.mockImplementation(
+      async (input: Record<string, unknown>) => ({
+        id: input.id,
+        workspaceId: input.workspaceId,
+        provider: "messenger",
+        purpose: "connect",
+        actorUserId: null,
+        status: "authorized",
+      }),
+    )
+
+    await connectionService.completeAuthorization(completeInput)
+
+    expect(mocks.recordAuthorization).toHaveBeenCalledWith(
+      expect.objectContaining({ userId: null }),
+    )
+  })
+
+  it("does not record when the code exchange fails", async () => {
+    mocks.exchangeCode.mockRejectedValue(
+      new ConnectionProviderRejectedError("bad code"),
+    )
+
+    await expect(
+      connectionService.completeAuthorization(completeInput),
+    ).rejects.toMatchObject({ code: "connectionCredentialsRejected" })
+
+    expect(mocks.recordAuthorization).not.toHaveBeenCalled()
+  })
+
+  it("records a validated reconnect once, before the auth is saved", async () => {
+    mocks.findByNonce.mockResolvedValue({
+      id: "session-1",
+      workspaceId: "ws-1",
+      provider: "messenger",
+      purpose: "reconnect",
+      actorUserId: "user-1",
+      targetConnectionId: "conn-1",
+      status: "pending",
+    })
+    mocks.findByIdForWorkspace.mockResolvedValue(
+      baseConnection({ sourceId: "page-1" }),
+    )
+    mockAdapter.provider.describe = () => ({
+      sourceId: "page-1",
+      displayName: "Page One",
+    })
+
+    await connectionService.completeAuthorization(completeInput)
+
+    expect(mocks.recordAuthorization).toHaveBeenCalledTimes(1)
+    expect(mocks.recordAuthorization).toHaveBeenCalledWith({
+      userId: "user-1",
+      provider: "messenger",
+      auth: expect.objectContaining({ authType: "oauth2" }),
+      phase: "reconnectValidated",
+      workspaceId: "ws-1",
+      purpose: "reconnect",
+      connectSessionId: "session-1",
+    })
+    expect(orderOf(mocks.recordAuthorization)).toBeLessThan(
+      orderOf(mocks.saveAuthByForeignKey),
+    )
+  })
+
+  it("does not record a reconnect whose identity does not match", async () => {
+    mocks.findByNonce.mockResolvedValue({
+      id: "session-1",
+      workspaceId: "ws-1",
+      provider: "messenger",
+      purpose: "reconnect",
+      actorUserId: "user-1",
+      targetConnectionId: "conn-1",
+      status: "pending",
+    })
+    mocks.findByIdForWorkspace.mockResolvedValue(
+      baseConnection({ sourceId: "page-other" }),
+    )
+
+    await expect(
+      connectionService.completeAuthorization(completeInput),
+    ).rejects.toMatchObject({ code: "connectionIdentityMismatch" })
+
+    expect(mocks.recordAuthorization).not.toHaveBeenCalled()
+  })
+
+  it("does not back up the API key of a non-channel credential provider", async () => {
+    mockAdapter.provider.kind = "integration"
+
+    await connectionService.connectFromCredentials({
+      workspaceId: "ws-1",
+      provider: "claude",
+      config: { apiKey: "sk-live" },
+      actorUserId: "user-1",
+    })
+
+    expect(mocks.recordAuthorization).not.toHaveBeenCalled()
+  })
+
+  it("records accepted channel credentials once, with the acting user", async () => {
+    mockAdapter.provider.kind = "channel"
+
+    await connectionService.connectFromCredentials({
+      workspaceId: "ws-1",
+      provider: "claude",
+      config: { apiKey: "sk-live" },
+      actorUserId: "user-1",
+    })
+
+    expect(mocks.recordAuthorization).toHaveBeenCalledTimes(1)
+    expect(mocks.recordAuthorization).toHaveBeenCalledWith({
+      userId: "user-1",
+      provider: "claude",
+      auth: { authType: "secretText", secretText: "sk-live" },
+      phase: "credentialsValidated",
+      workspaceId: "ws-1",
+    })
+    expect(orderOf(mocks.recordAuthorization)).toBeGreaterThan(
+      orderOf(mocks.fromCredentials),
+    )
+  })
+
+  it("passes no user through for a credentials connect without an actor", async () => {
+    mockAdapter.provider.kind = "channel"
+
+    await connectionService.connectFromCredentials({
+      workspaceId: "ws-1",
+      provider: "claude",
+      config: { apiKey: "sk-live" },
+    })
+
+    expect(mocks.recordAuthorization).toHaveBeenCalledWith(
+      expect.objectContaining({ userId: undefined }),
+    )
+  })
+
+  it("does not record rejected credentials", async () => {
+    mockAdapter.provider.kind = "channel"
+    mocks.fromCredentials.mockRejectedValue(
+      new ConnectionProviderRejectedError("Invalid API key"),
+    )
+
+    await expect(
+      connectionService.connectFromCredentials({
+        workspaceId: "ws-1",
+        provider: "claude",
+        config: { apiKey: "sk-bad" },
+        actorUserId: "user-1",
+      }),
+    ).rejects.toMatchObject({ code: "connectionCredentialsRejected" })
+
+    expect(mocks.recordAuthorization).not.toHaveBeenCalled()
+  })
+
+  // The builder's Facebook-SSO reuse route skips the OAuth dialog and calls
+  // `listAndAttachCandidates` directly with an auth built from the user's
+  // existing login. The route's own test mocks this function, so the capture
+  // is asserted here, at the shared flow it goes through.
+  it("records an SSO-reuse listing through listAndAttachCandidates, without any code exchange", async () => {
+    const ssoAuth = {
+      authType: "oauth2",
+      clientId: "id",
+      clientSecret: "secret",
+      redirectUrl: "https://x",
+      tokens: { accessToken: "sso-token" },
+    }
+
+    await connectionService.listAndAttachCandidates(
+      {
+        id: "session-1",
+        workspaceId: "ws-1",
+        provider: "messenger",
+        purpose: "connect",
+        actorUserId: "user-1",
+        status: "pending",
+      } as never,
+      ssoAuth as never,
+    )
+
+    expect(mocks.exchangeCode).not.toHaveBeenCalled()
+    expect(mocks.recordAuthorization).toHaveBeenCalledTimes(1)
+    expect(mocks.recordAuthorization).toHaveBeenCalledWith(
+      expect.objectContaining({
+        userId: "user-1",
+        provider: "messenger",
+        auth: ssoAuth,
+        phase: "candidateListingSucceeded",
+        purpose: "connect",
+        candidateCount: 1,
+        unavailableCandidateCount: 0,
+      }),
     )
   })
 })

@@ -71,6 +71,32 @@ export const inboxRepository = {
     })
   },
 
+  /**
+   * The id of the inbox of one channel account in a workspace (unique per
+   * channel and source id), whatever its status: a teardown must find an
+   * inbox that is already disconnected.
+   */
+  async findIdByChannelSource(input: {
+    workspaceId: string
+    channel: string
+    sourceId: string
+    tx?: DatabaseClient
+  }): Promise<string | null> {
+    const { tx = db } = input
+    const [row] = await tx
+      .select({ id: inboxModel.id })
+      .from(inboxModel)
+      .where(
+        and(
+          eq(inboxModel.workspaceId, input.workspaceId),
+          eq(inboxModel.channel, input.channel),
+          eq(inboxModel.sourceId, input.sourceId),
+        ),
+      )
+      .limit(1)
+    return row?.id ?? null
+  },
+
   async findById(input: {
     id: string
     tx?: DatabaseClient
@@ -131,8 +157,8 @@ export const inboxRepository = {
   /**
    * The workspace's connected inboxes as a three-column projection for the
    * analytics Channel and Inbox filters. A disconnected inbox has lost its
-   * integration, so it is not offered; its past events still count under "All". `smtp` never carries contact or conversation
-   * traffic. No integration relations are loaded.
+   * integration, so it is not offered; its past events still count under "All".
+   * No integration relations are loaded.
    */
   async listAnalyticsOptionsByWorkspace(input: {
     workspaceId: string
@@ -144,7 +170,6 @@ export const inboxRepository = {
       where: {
         workspaceId: input.workspaceId,
         status: inboxStatuses.enum.connected,
-        channel: { ne: "smtp" },
       },
       orderBy: { name: "asc" },
     })
@@ -193,7 +218,7 @@ export const inboxRepository = {
    * `Connection` backfill's `--verify` is 0.
    */
   async listTenantSuspendedWithoutConnectionByOwner(
-    input: { ownerId: string },
+    input: { ownerId: string; tenantId?: string },
     tx: DatabaseClient = db,
   ): Promise<InboxModel[]> {
     const rows = await tx
@@ -204,6 +229,9 @@ export const inboxRepository = {
       .where(
         and(
           eq(workspaceModel.ownerId, input.ownerId),
+          input.tenantId
+            ? eq(workspaceModel.tenantId, input.tenantId)
+            : undefined,
           eq(inboxModel.status, "disconnected"),
           eq(inboxModel.disconnectReason, "tenant_suspended"),
           isNull(connectionModel.id),

@@ -93,9 +93,11 @@ const find = (method: string, path: string) => {
 }
 
 describe("line public api", () => {
+  // Loading the real business package is slow on a cold CI runner; the same
+  // allowance the other public-spec tests give their first import.
   beforeAll(async () => {
     await import("@/features/integration-line/api/public")
-  })
+  }, 120_000)
   beforeEach(() => {
     vi.clearAllMocks()
   })

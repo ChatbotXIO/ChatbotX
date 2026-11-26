@@ -12,7 +12,6 @@ import {
 import type { CustomFieldModel, TagModel } from "@chatbotx.io/database/types"
 import {
   parseTemplateExport,
-  TEMPLATE_EXPORT_FORMAT_VERSION,
   TEMPLATE_EXPORT_FORMAT_VERSION_V2,
   type TemplateCustomFieldManifestEntry,
   type TemplateExport,
@@ -29,12 +28,16 @@ import { collectPlaceCategoryManifest } from "./adapters/manifests/collect-place
 import { templateAdapterRegistry } from "./adapters/registry"
 import {
   buildPayloadResources,
-  categoriesRequiringV2,
+  requiredFormatVersion,
 } from "./adapters/registry-derived"
 import { categoryCountsOfPayload } from "./category-counts"
 import { listLockedIds } from "./installed-resource.service"
 import { buildItemPermissions } from "./item-permissions"
 import { collectManifestReferences } from "./manifest-references"
+import {
+  findMiniAppPublishedExclusions,
+  type MiniAppPublishedExclusion,
+} from "./mini-app-published-excluded"
 import {
   allEntries,
   type CollectedByCategory,
@@ -48,8 +51,8 @@ import { countDroppedReferences } from "./snapshot-dropped"
 import {
   MAX_PAYLOAD_BYTES,
   MAX_PAYLOAD_RESOURCES,
+  payloadTooManyBytesExceptionFor,
   templatePayloadTooLargeException,
-  templatePayloadTooManyBytesException,
 } from "./snapshot-limits"
 import type { TriggerConditionRow } from "./trigger-conditions"
 
@@ -186,6 +189,12 @@ type BuildSnapshotResult = {
    * reports them as `referenceRemoved`. The editor shows the count.
    */
   droppedReferenceCount: number
+  /**
+   * Flows naming a Mini App that exists here but was left out because it is
+   * published to WhatsApp: the install drops that reference. The editor warns
+   * (`miniAppPublishedExcluded`).
+   */
+  miniAppPublishedExcluded: MiniAppPublishedExclusion[]
 }
 
 /**
@@ -216,14 +225,16 @@ const finalizeSnapshotPayload = (
 ): TemplateExport => {
   const needsV2 =
     payload.permissions !== undefined ||
-    Object.keys(payload.manifests.inboxes ?? {}).length > 0 ||
-    categoriesRequiringV2(templateAdapterRegistry).some(
-      (category) => (results[category]?.entries.length ?? 0) > 0,
-    )
+    Object.keys(payload.manifests.inboxes ?? {}).length > 0
+  const categoryVersion = requiredFormatVersion(
+    templateAdapterRegistry,
+    results,
+  )
   const parsed = parseTemplateExport({
-    formatVersion: needsV2
-      ? TEMPLATE_EXPORT_FORMAT_VERSION_V2
-      : TEMPLATE_EXPORT_FORMAT_VERSION,
+    formatVersion: Math.max(
+      categoryVersion,
+      needsV2 ? TEMPLATE_EXPORT_FORMAT_VERSION_V2 : 1,
+    ),
     ...payload,
   })
   if (!parsed.ok) {
@@ -236,7 +247,7 @@ const finalizeSnapshotPayload = (
     JSON.stringify(parsed.data),
   ).byteLength
   if (payloadBytes > MAX_PAYLOAD_BYTES) {
-    throw templatePayloadTooManyBytesException()
+    throw payloadTooManyBytesExceptionFor(parsed.data.resources, payloadBytes)
   }
   return parsed.data
 }
@@ -282,7 +293,11 @@ export const buildTemplateSnapshot = async (
   )
   const tagIds = [...new Set([...selectedTagIds, ...referenced.tagIds])]
   const customFieldIds = [
-    ...new Set([...selectedCustomFieldIds, ...referenced.customFieldIds]),
+    ...new Set([
+      ...selectedCustomFieldIds,
+      ...referenced.customFieldIds,
+      ...uniqueOf(results, (result) => result.customFieldIds),
+    ]),
   ]
   if (
     collectedResourceCount(results) + tagIds.length + customFieldIds.length >
@@ -329,7 +344,11 @@ export const buildTemplateSnapshot = async (
       uniqueOf(results, (result) => result.productCategoryIds),
     ),
     collectPipelineManifest(workspaceId, flowGraphs, triggerConditions),
-    collectPlaceCategoryManifest(workspaceId, flowGraphs),
+    collectPlaceCategoryManifest(
+      workspaceId,
+      flowGraphs,
+      uniqueOf(results, (result) => result.placeCategoryIds),
+    ),
     buildInboxManifest(
       workspaceId,
       uniqueOf(results, (result) => result.inboxIds),
@@ -346,6 +365,12 @@ export const buildTemplateSnapshot = async (
     productCategoryIds: new Set(Object.keys(productCategoryManifest)),
     placeCategoryIds: new Set(Object.keys(placeCategoryManifest)),
   })
+
+  const miniAppPublishedExcluded = await findMiniAppPublishedExclusions(
+    workspaceId,
+    results.flows?.entries ?? [],
+    new Set((results.miniApps?.entries ?? []).map((entry) => entry.sourceId)),
+  )
 
   const itemPermissions = buildItemPermissions(selection, {
     ...Object.fromEntries(
@@ -383,5 +408,6 @@ export const buildTemplateSnapshot = async (
     payload,
     categoryCounts: categoryCountsOfPayload(payload),
     droppedReferenceCount,
+    miniAppPublishedExcluded,
   }
 }

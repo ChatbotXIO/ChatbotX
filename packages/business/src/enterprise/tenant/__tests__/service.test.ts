@@ -83,6 +83,9 @@ const pausedConnection = (id: string) => ({
 
 beforeEach(() => {
   vi.clearAllMocks()
+  vi.spyOn(tenantService, "findByOwner").mockResolvedValue({
+    id: "tenant-1",
+  } as never)
   mocks.returning.mockResolvedValue([{ id: "tenant-1" }])
   mocks.listTenantSuspendedWithoutConnectionByOwner.mockResolvedValue([])
   mocks.transition.mockResolvedValue(undefined)

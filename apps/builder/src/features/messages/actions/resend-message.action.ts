@@ -19,5 +19,6 @@ export const resendMessageAction = workspaceActionClient
       conversationId,
       messageId: parsedInput.id,
       createdAt: parsedInput.createdAt,
+      sendFrom: "inbox",
     })
   })

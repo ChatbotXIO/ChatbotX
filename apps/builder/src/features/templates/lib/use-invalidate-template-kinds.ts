@@ -7,6 +7,7 @@ import {
 } from "@/features/custom-fields/provider/custom-field-hook"
 import { useInvalidateFlows } from "@/features/flows/provider/flow-hook"
 import { useInvalidatePipelines } from "@/features/pipelines/lib/use-invalidate-pipelines"
+import { useInvalidatePolls } from "@/features/polls/lib/use-invalidate-polls"
 import { useInvalidateSequences } from "@/features/sequences/provider/sequence-hook"
 import { useInvalidateTags } from "@/features/tags/provider/tag-hook"
 import { orpc } from "@/lib/orpc/query"
@@ -36,6 +37,7 @@ export const useInvalidateAfterTemplateChange = () => {
       sequence: useInvalidateSequences(),
       aiAgent: useInvalidateAIAgents(),
       pipeline: useInvalidatePipelines(),
+      poll: useInvalidatePolls(),
     }
 
   const invalidateLocks = () =>

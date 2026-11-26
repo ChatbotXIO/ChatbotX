@@ -12,9 +12,11 @@ import { useTranslations } from "next-intl"
 import { useAction } from "next-safe-action/hooks"
 import { toast } from "sonner"
 import { contactDisplayName } from "@/features/contacts/lib/contact-display-name"
+import { withoutTranslationTurnedOn } from "@/features/translation/lib/conversation-translation"
 import { useWorkspaceId } from "@/hooks/routing"
 import { useChatStore } from "../chat/store/chat-store-provider"
 import { enableBotAction } from "../conversations/actions/enable-bot.action"
+import { ConversationParticipants } from "../conversations/components/conversation-participants"
 import { ThreadControlPassButton } from "../conversations/components/thread-control-pass-button"
 import { ThreadControlReleaseButton } from "../conversations/components/thread-control-release-button"
 import { UpdateConversationAssignee } from "../conversations/components/update-conversation-assignee"
@@ -80,6 +82,9 @@ export default function MessageHead({
           updateConversation(activeConversation.id, {
             botEnabled: true,
             botResumeAt: null,
+            additionalAttributes: withoutTranslationTurnedOn(
+              activeConversation.additionalAttributes,
+            ),
           })
         }
       },
@@ -109,6 +114,7 @@ export default function MessageHead({
           <div className="truncate font-medium text-semibold">
             {contactDisplayName(activeConversation?.contact)}
           </div>
+          <ConversationParticipants conversation={activeConversation} />
           <UpdateConversationAssignee
             conversation={activeConversation}
             onChange={setAssignee}

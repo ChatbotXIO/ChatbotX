@@ -154,7 +154,13 @@ export const connectionsPublicRouter = {
       description:
         'Credential-strategy providers (`token`/`api_key`/`self_serve`) connect immediately and return `connection` (`session: null`). `webchat` and `api` are self-serve channels; API returns its bearer token once in `secret.token`, and webchat accepts its branding and behavior fields in `config` using the `POST /v1/webchats` shape. OAuth providers (`oauth_redirect`/`oauth_popup`) return `connection: null` and a `session` whose `nextAction` is `{type:"open_url", url}` — show that URL to the person connecting, then poll `connectSessions.get`. The callback completes automatically when exactly one target is selectable; when multiple selectable targets remain, the session moves to `awaiting_selection` and the caller must use `connectSessions.connectTargets`. Call `connectionProviders.list` first to find the provider key and required `config` fields. The person opening the URL must have admin rights on the account being connected: the resulting token belongs to them, so hand each person their own link — a leaked URL can only connect the opener\'s account into this workspace…',
       tags: ["Connections"],
-      spec: mcpSpec({ visibility: "default" }),
+      spec: mcpSpec({
+        destructiveHint: false,
+        idempotentHint: false,
+        openWorldHint: true,
+        readOnlyHint: false,
+        visibility: "default",
+      }),
     })
     .input(createConnectionRequest)
     .output(connectEnvelope)
@@ -302,7 +308,13 @@ export const connectionProvidersPublicRouter = {
       description:
         "The full connect catalog — every provider's strategy, config fields, and whether this workspace can connect it right now. Use `configFields` to build the `config` object for `connections.create`.",
       tags: ["Connections"],
-      spec: mcpSpec({ visibility: "default" }),
+      spec: mcpSpec({
+        destructiveHint: false,
+        idempotentHint: true,
+        openWorldHint: false,
+        readOnlyHint: true,
+        visibility: "default",
+      }),
     })
     .input(listConnectionProvidersRequest)
     .output(publicListResponse(connectionProviderResource))
@@ -324,9 +336,15 @@ export const connectSessionsPublicRouter = {
       path: "/v1/connect-sessions/{id}",
       summary: "Get connect session",
       description:
-        "Poll this after `connections.create` or `connections.reconnect` returns a `session`. Once the OAuth round trip finishes, `status` moves from `pending` straight to `completed` when exactly one target is selectable, or to `awaiting_selection` when multiple selectable targets remain; it may also become `failed`, `expired`, or `cancelled`. Call `connectSessions.connectTargets` once `awaiting_selection`. Clients must tolerate unknown future values in `status`/`nextAction.type`.",
+        "Poll this after `connections.create` or `connections.reconnect` returns a `session`. Once the OAuth round trip finishes, `status` moves from `pending` straight to `completed` when exactly one target is selectable, or to `awaiting_selection` when several selectable targets remain (or none is selectable); it may also become `failed`, `expired`, or `cancelled`. Call `connectSessions.connectTargets` once `awaiting_selection`, passing only `targets[]` entries with `selectable: true`. A target with `selectable: false` is listed for display only: `alreadyConnected` marks one that is already connected, `disabledReason` explains why it cannot be connected. If no target is selectable, cancel the session (`connectSessions.cancel`), then start a new connect with `connections.create` (or `connections.reconnect` for an existing connection) and have the user grant access to the missing accounts. Clients must tolerate unknown future values in `status`/`nextAction.type`.",
       tags: ["Connections"],
-      spec: mcpSpec({ visibility: "default" }),
+      spec: mcpSpec({
+        destructiveHint: false,
+        idempotentHint: true,
+        openWorldHint: false,
+        readOnlyHint: true,
+        visibility: "default",
+      }),
     })
     .input(getConnectSessionRequest)
     .output(connectSessionResource)

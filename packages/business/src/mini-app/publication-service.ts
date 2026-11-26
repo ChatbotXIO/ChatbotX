@@ -1,4 +1,4 @@
-import { and, db, eq } from "@chatbotx.io/database/client"
+import { and, type DatabaseClient, db, eq } from "@chatbotx.io/database/client"
 import { miniAppPublicationModel } from "@chatbotx.io/database/schema"
 import type { MiniAppPublicationModel } from "@chatbotx.io/database/types"
 import { createId } from "@chatbotx.io/utils"
@@ -61,6 +61,7 @@ class MiniAppPublicationService extends BaseService {
       validationErrors: unknown[]
       published: boolean
     },
+    client: DatabaseClient = db,
   ): Promise<MiniAppPublicationModel> {
     const values = {
       whatsappFlowId: input.whatsappFlowId,
@@ -69,7 +70,7 @@ class MiniAppPublicationService extends BaseService {
       validationErrors: input.validationErrors,
       ...(input.published ? { publishedAt: new Date() } : {}),
     }
-    const [row] = await db
+    const [row] = await client
       .insert(miniAppPublicationModel)
       .values({
         id: createId(),

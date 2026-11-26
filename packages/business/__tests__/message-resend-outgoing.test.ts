@@ -74,6 +74,7 @@ const resend = () =>
     conversationId: "conv-1",
     messageId: "msg-1",
     createdAt: CREATED_AT,
+    sendFrom: "inbox",
   })
 
 describe("messageService.resendOutgoing", () => {

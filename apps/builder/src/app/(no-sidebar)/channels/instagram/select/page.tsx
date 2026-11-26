@@ -7,10 +7,12 @@ import {
 import { redirect } from "next/navigation"
 import { getTranslations } from "next-intl/server"
 import { CONNECT_PICKER_CARD_CLASS } from "@/features/channel-connect/components/connect-picker-card"
+import { AhachatImportAvailability } from "@/features/channel-connect/lib/ahachat-import-availability"
 import {
   resolveSelectSession,
   toConnectPickerItem,
 } from "@/features/channel-connect/lib/select-page"
+import { findConnectPagesOnAhachat } from "@/features/contact-sync/lib/access"
 import { SelectAccount } from "@/features/integration-instagram/components/select-accounts"
 import { SelectFacebookAccounts } from "@/features/integration-instagram/components/select-facebook-accounts"
 import { createChannelPath } from "@/lib/workspace/create-first-workspace"
@@ -18,9 +20,9 @@ import { createChannelPath } from "@/lib/workspace/create-first-workspace"
 export const dynamic = "force-dynamic"
 
 /**
- * `session.targets` always has exactly one entry for the direct-login
- * provider (its `exchangeCode` returns the final per-account auth directly,
- * with no `listCandidates` step) — no live `getInstagramAccount` re-fetch.
+ * Direct Instagram Login always yields exactly one target (the logged-in
+ * account). Unified Login can yield several (`assigned_instagram_accounts`),
+ * which get the multi-account picker. No live re-fetch in either case.
  */
 export default async function InstagramSelectPage({
   searchParams,
@@ -36,8 +38,17 @@ export default async function InstagramSelectPage({
     getTranslations(),
   ])
 
-  if (resolved.session.targets.length > 1) {
-    const items = resolved.session.targets
+  const targets = resolved.session.targets
+  const ahachatPageIds = await findConnectPagesOnAhachat({
+    workspaceId: resolved.workspace.id,
+    channel: "instagram",
+    pageIds: targets
+      .filter((target) => target.selectable)
+      .map((target) => target.id),
+  })
+
+  if (targets.length > 1) {
+    const items = targets
       .map((target) =>
         toConnectPickerItem({
           target,
@@ -55,30 +66,34 @@ export default async function InstagramSelectPage({
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <SelectFacebookAccounts
-            items={items}
-            sessionId={sessionId}
-            workspaceId={resolved.workspace.id}
-          />
+          <AhachatImportAvailability pageIds={ahachatPageIds}>
+            <SelectFacebookAccounts
+              items={items}
+              sessionId={sessionId}
+              workspaceId={resolved.workspace.id}
+            />
+          </AhachatImportAvailability>
         </CardContent>
       </Card>
     )
   }
 
-  const target = resolved.session.targets[0]
+  const target = targets[0]
   if (!target) {
     redirect(createChannelPath({ workspaceId: resolved.workspace.id }))
   }
 
   return (
-    <SelectAccount
-      account={{
-        id: target.id,
-        name: target.name,
-        avatarUrl: target.avatarUrl,
-      }}
-      sessionId={sessionId}
-      workspaceId={resolved.workspace.id}
-    />
+    <AhachatImportAvailability pageIds={ahachatPageIds}>
+      <SelectAccount
+        account={{
+          id: target.id,
+          name: target.name,
+          avatarUrl: target.avatarUrl,
+        }}
+        sessionId={sessionId}
+        workspaceId={resolved.workspace.id}
+      />
+    </AhachatImportAvailability>
   )
 }

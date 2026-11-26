@@ -1,4 +1,4 @@
-# ChatbotX MCP overview
+# MCP overview
 
 Use read tools to resolve IDs, names, permissions, and current state before requesting a change. `search_tools` discovers hidden operations; inspect the returned schema before calling `call_tool`.
 

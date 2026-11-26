@@ -62,6 +62,9 @@ const storedTemplate = (imageUrl: string | null) => ({
   publisherName: "Acme",
   imageUrl,
   categoryIds: ["3"],
+  languages: ["en"],
+  channels: ["whatsapp", "line"],
+  section: "primary",
   shareToken: "key-1",
   shareUrl: "https://app.example.test/t/template?id=11&key=key-1",
 })
@@ -92,6 +95,54 @@ describe("template store public API", () => {
     expect(resolveTenantSettings).toHaveBeenCalledWith({ workspaceId: "ws-1" })
   })
 
+  test("passes the language filter and never a visitor language", async () => {
+    await invoke({ language: "fr" })
+
+    expect(listPublished).toHaveBeenCalledWith({
+      tenantId: "7",
+      language: "fr",
+    })
+    expect(listPublished.mock.calls[0]?.[0]).not.toHaveProperty("viewerLocale")
+  })
+
+  test("passes the channel filter to the store", async () => {
+    await invoke({ channel: "telegram" })
+
+    expect(listPublished).toHaveBeenCalledWith({
+      tenantId: "7",
+      channel: "telegram",
+    })
+  })
+
+  test("returns each template's channels", async () => {
+    const result = await invoke({})
+
+    expect(result.templates[0]).toMatchObject({
+      channels: ["whatsapp", "line"],
+    })
+  })
+
+  test("rejects a channel filter that is not a template channel", async () => {
+    await expect(invoke({ channel: "omnichannel" })).rejects.toThrow()
+    await expect(invoke({ channel: "fax" })).rejects.toThrow()
+  })
+
+  test("api is a valid channel filter", async () => {
+    await invoke({ channel: "api" })
+
+    expect(listPublished).toHaveBeenCalledWith({
+      tenantId: "7",
+      channel: "api",
+    })
+  })
+
+  test("returns each template's languages and not the store's display section", async () => {
+    const result = await invoke({})
+
+    expect(result.templates[0]).toMatchObject({ languages: ["en"] })
+    expect(result.templates[0]).not.toHaveProperty("section")
+  })
+
   test("returns absolute cover urls with the store icon as fallback", async () => {
     const result = await invoke({})
 
@@ -118,6 +169,7 @@ describe("template store public API", () => {
   test("rejects a category id that is not a number or a keyword that is too long", async () => {
     await expect(invoke({ categoryId: "abc" })).rejects.toThrow()
     await expect(invoke({ keyword: "x".repeat(101) })).rejects.toThrow()
+    await expect(invoke({ language: "xx" })).rejects.toThrow()
     expect(listPublished).not.toHaveBeenCalled()
   })
 })

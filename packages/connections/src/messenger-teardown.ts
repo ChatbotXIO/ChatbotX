@@ -1,6 +1,7 @@
 import {
   coexistService,
   contactScanService,
+  contactSyncService,
   instagramIntegrationService,
   messengerIntegrationService,
 } from "@chatbotx.io/business"
@@ -41,9 +42,10 @@ import { logger } from "./logger"
 const tearDownMessengerConnection = async (input: {
   workspaceId: string
   integrationId: string
+  inboxId: string
   auth: MessengerAuthValue
 }): Promise<ConnectionTeardownResult> => {
-  const { workspaceId, integrationId, auth } = input
+  const { workspaceId, integrationId, inboxId, auth } = input
   const remoteErrors: string[] = []
 
   try {
@@ -133,6 +135,19 @@ const tearDownMessengerConnection = async (input: {
     // calls would re-run (or clobber) the same Graph API work.
     skipGenericRemoteTeardown: true,
     withinTransaction: async (tx) => {
+      // The page's open contact-import items end and its owed history sync is
+      // cancelled, so a reconnect never starts one unasked. The integration
+      // row is locked first (the order a handoff takes it in), before the
+      // coexist teardown looks for a run the handoff may have just created.
+      await contactSyncService.cancelForInbox(
+        {
+          workspaceId,
+          inboxId,
+          lock: { channel: "messenger", integrationId },
+        },
+        tx,
+      )
+
       await coexistService.tearDownForIntegration({
         workspaceId,
         integrationId,
@@ -145,7 +160,6 @@ const tearDownMessengerConnection = async (input: {
         integrationId,
         tx,
       })
-
       await metaCapiEventRepository.deleteByIntegration(
         { workspaceId, channel: "messenger", integrationId },
         tx,
@@ -176,6 +190,7 @@ export const disconnectMessengerConnection = async (input: {
   const teardown = await tearDownMessengerConnection({
     workspaceId,
     integrationId,
+    inboxId,
     auth,
   })
 
@@ -222,6 +237,7 @@ export const messengerConnectionTeardownHook: NonNullable<
   return tearDownMessengerConnection({
     workspaceId: connection.workspaceId,
     integrationId: integrationRow.id,
+    inboxId: connection.inboxId,
     auth: auth as MessengerAuthValue,
   })
 }

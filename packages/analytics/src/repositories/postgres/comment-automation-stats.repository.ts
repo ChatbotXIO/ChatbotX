@@ -67,7 +67,7 @@ type MarkDeliveredRow = {
  * table here.
  *
  * **Anything returning a timestamp goes through the query builder, never
- * `db.execute(sql...)`.** Raw execute hands back the driver's own values with
+ * `db.execute<Record<string, unknown>>(sql...)`.** Raw execute hands back the driver's own values with
  * no column mapping, so a `timestamptz` arrives as a string; a hand-written
  * `as SomeRow[]` cast then claims it is a `Date` and the first `.toISOString()`
  * downstream throws at runtime. The text/count panels below may stay raw —
@@ -169,7 +169,7 @@ export class CommentAutomationStatsRepository extends BaseRepository {
       assignments.push(sql`"errorDetail" = ${input.errorDetail}`)
     }
 
-    const result = await db.execute(sql`
+    const result = await db.execute<Record<string, unknown>>(sql`
       UPDATE "CommentAutomationEvent"
       SET ${sql.join(assignments, sql`, `)}
       WHERE "automationId" = ${input.automationId}
@@ -248,7 +248,7 @@ export class CommentAutomationStatsRepository extends BaseRepository {
     replyChannel: string
     occurredAt: Date
   }): Promise<MarkDeliveredRow[]> {
-    const result = await db.execute(sql`
+    const result = await db.execute<Record<string, unknown>>(sql`
       WITH previous AS (
         SELECT "id", "failedAt"
         FROM "CommentAutomationEvent"
@@ -309,7 +309,7 @@ export class CommentAutomationStatsRepository extends BaseRepository {
         sql`(${item.contactInboxId}::bigint, ${item.occurredAt.toISOString()}::timestamptz)`,
     )
 
-    const result = await db.execute(sql`
+    const result = await db.execute<Record<string, unknown>>(sql`
       WITH input("contactInboxId", "occurredAt") AS (
         VALUES ${sql.join(values, sql`, `)}
       )
@@ -357,7 +357,7 @@ export class CommentAutomationStatsRepository extends BaseRepository {
         sql`(${item.automationId}::bigint, ${item.contactInboxId}::bigint, ${item.occurredAt.toISOString()}::timestamptz)`,
     )
 
-    const result = await db.execute(sql`
+    const result = await db.execute<Record<string, unknown>>(sql`
       WITH input("automationId", "contactInboxId", "occurredAt") AS (
         VALUES ${sql.join(values, sql`, `)}
       ),
@@ -411,7 +411,7 @@ export class CommentAutomationStatsRepository extends BaseRepository {
         sql`(${automationId}::bigint, ${fields.sentCount ?? 0}::int, ${fields.deliveredCount ?? 0}::int, ${fields.seenCount ?? 0}::int, ${fields.clickedCount ?? 0}::int, ${fields.failedCount ?? 0}::int, ${fields.missedCount ?? 0}::int, ${fields.moderatedCount ?? 0}::int)`,
     )
 
-    await db.execute(sql`
+    await db.execute<Record<string, unknown>>(sql`
       UPDATE "CommentAutomation" automation
       SET "sentCount" = GREATEST(0, automation."sentCount" + delta."sent"),
           "deliveredCount" = GREATEST(0, automation."deliveredCount" + delta."delivered"),
@@ -478,7 +478,7 @@ export class CommentAutomationStatsRepository extends BaseRepository {
       condition,
     )
 
-    // The query builder, not `db.execute(sql...)` like the panels above: those
+    // The query builder, not `db.execute<Record<string, unknown>>(sql...)` like the panels above: those
     // return text/counts, this returns timestamps. Raw execute hands back the
     // driver's own values with no column mapping, so the timestamps arrive as
     // strings — and `getOccurredAt` calls `.toISOString()` on them. A
@@ -631,7 +631,7 @@ export class CommentAutomationStatsRepository extends BaseRepository {
   ): Promise<{ dateReport: string; count: number }[]> {
     const { workspaceId, automationId, startDate, endDate, timezone } = input
 
-    const result = await db.execute(sql`
+    const result = await db.execute<Record<string, unknown>>(sql`
       SELECT
         TO_CHAR(DATE_TRUNC('month', ("occurredAt" AT TIME ZONE ${resolvedTimezone(timezone)})::date), 'YYYY-MM-01') AS "dateReport",
         COUNT(*)::int AS count
@@ -668,7 +668,7 @@ export class CommentAutomationStatsRepository extends BaseRepository {
     // aborts the whole statement on one — which took this chart (and the
     // "replies by date" table that shares its data) down to an empty series
     // while the three panels that never touch `timezone` kept working.
-    const result = await db.execute(sql`
+    const result = await db.execute<Record<string, unknown>>(sql`
       SELECT
         TO_CHAR(("occurredAt" AT TIME ZONE ${resolvedTimezone(timezone)})::date, 'YYYY-MM-DD') AS "dateReport",
         COUNT(*)::int AS count
@@ -710,14 +710,14 @@ export class CommentAutomationStatsRepository extends BaseRepository {
     `
 
     const [rows, totals] = await Promise.all([
-      db.execute(sql`
+      db.execute<Record<string, unknown>>(sql`
         SELECT "commentText" AS text, COUNT(DISTINCT "commentId")::int AS total
         ${scope}
         GROUP BY 1
         ORDER BY total DESC, 1 ASC
         LIMIT ${perPage} OFFSET ${offset}
       `),
-      db.execute(sql`
+      db.execute<Record<string, unknown>>(sql`
         SELECT COUNT(DISTINCT "commentText")::int AS total ${scope}
       `),
     ])
@@ -750,14 +750,14 @@ export class CommentAutomationStatsRepository extends BaseRepository {
     `
 
     const [rows, totals] = await Promise.all([
-      db.execute(sql`
+      db.execute<Record<string, unknown>>(sql`
         SELECT "replyText" AS text, COUNT(*)::int AS total
         ${scope}
         GROUP BY 1
         ORDER BY total DESC, 1 ASC
         LIMIT ${perPage} OFFSET ${offset}
       `),
-      db.execute(sql`
+      db.execute<Record<string, unknown>>(sql`
         SELECT COUNT(DISTINCT "replyText")::int AS total ${scope}
       `),
     ])
@@ -788,7 +788,7 @@ export class CommentAutomationStatsRepository extends BaseRepository {
     `
 
     const [rows, totals] = await Promise.all([
-      db.execute(sql`
+      db.execute<Record<string, unknown>>(sql`
         SELECT
           "id"::text AS id,
           "contactId"::text AS "contactId",
@@ -802,7 +802,9 @@ export class CommentAutomationStatsRepository extends BaseRepository {
         ORDER BY "occurredAt" DESC
         LIMIT ${perPage} OFFSET ${offset}
       `),
-      db.execute(sql`SELECT COUNT(*)::int AS total ${scope}`),
+      db.execute<Record<string, unknown>>(
+        sql`SELECT COUNT(*)::int AS total ${scope}`,
+      ),
     ])
 
     return {

@@ -280,6 +280,66 @@ export const templateInstallationSyncRepository = {
     return rows.length > 0
   },
 
+  /**
+   * Adds warnings raised AFTER the sync's transaction committed (an after-commit
+   * task such as a dynamic-image re-render) to the row this claim finished. A
+   * `completed` row becomes `partial`, as it would have had the warning been
+   * raised in-transaction. Fenced by the claim that finished the row: a no-op
+   * when another claim did, or the row is not finished.
+   */
+  async appendWarnings(input: {
+    id: string
+    claimToken: string
+    warnings: TemplateWarning[]
+  }): Promise<void> {
+    if (input.warnings.length === 0) {
+      return
+    }
+    await db.transaction(async (tx) => {
+      const [row] = await tx
+        .select({
+          status: templateInstallationSyncModel.status,
+          warnings: templateInstallationSyncModel.warnings,
+          warningSummary: templateInstallationSyncModel.warningSummary,
+        })
+        .from(templateInstallationSyncModel)
+        .where(
+          and(
+            eq(templateInstallationSyncModel.id, input.id),
+            eq(templateInstallationSyncModel.claimToken, input.claimToken),
+            inArray(templateInstallationSyncModel.status, [
+              "completed",
+              "partial",
+            ]),
+          ),
+        )
+        .for("update")
+      if (!row) {
+        return
+      }
+      const countByCode = new Map(
+        (row.warningSummary ?? []).map(({ code, count }) => [code, count]),
+      )
+      for (const warning of input.warnings) {
+        countByCode.set(
+          warning.entityKind,
+          (countByCode.get(warning.entityKind) ?? 0) + 1,
+        )
+      }
+      await tx
+        .update(templateInstallationSyncModel)
+        .set({
+          status: row.status === "completed" ? "partial" : row.status,
+          warnings: [...row.warnings, ...input.warnings],
+          warningSummary: [...countByCode].map(([code, count]) => ({
+            code,
+            count,
+          })),
+        })
+        .where(eq(templateInstallationSyncModel.id, input.id))
+    })
+  },
+
   /** The status this claim finished the row with (its transaction committed), else `null`. */
   async findStatusFinishedByClaim(
     input: { id: string; claimToken: string },

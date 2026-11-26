@@ -6,6 +6,7 @@ import {
   contactsOnBroadcastsModel,
   contactsOnSequenceModel,
   contactsToTagsModel,
+  pollVoteModel,
   refLinkStatModel,
 } from "../../schema"
 import { contactInboxExists, existsWhere, joinTableExists } from "./exists"
@@ -23,6 +24,7 @@ const contactOnSequenceExists = joinTableExists(
   contactsOnSequenceModel,
   contactsOnSequenceModel.contactId,
 )
+const pollVoteExists = joinTableExists(pollVoteModel, pollVoteModel.contactId)
 const refLinkStatExists = joinTableExists(
   refLinkStatModel,
   refLinkStatModel.contactId,
@@ -115,6 +117,8 @@ const RELATION_SET_FILTERS: Record<string, RelationSetFilter> = {
     exists: contactOnSequenceExists,
     column: contactsOnSequenceModel.sequenceId,
   },
+  // Multi-value eq/ne mean "voted on any of" / "voted on none of" the polls.
+  votedOnPoll: { exists: pollVoteExists, column: pollVoteModel.pollId },
   entryPointsLinks: {
     exists: refLinkStatExists,
     column: refLinkStatModel.linkId,

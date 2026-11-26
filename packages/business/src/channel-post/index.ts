@@ -1,1 +1,7 @@
+export * from "./comment-like-fence"
+export * from "./comments.service"
+export * from "./export.service"
+export * from "./management.service"
+export * from "./metrics-refresh.service"
 export * from "./service"
+export * from "./sync.service"

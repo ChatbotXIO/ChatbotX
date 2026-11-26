@@ -1,5 +1,6 @@
 import { commentAutomationService } from "@chatbotx.io/business"
 import type { CommentAutomationModel } from "@chatbotx.io/database/types"
+import { toChannelPostTarget } from "@/features/shared/comment-automation/lib/channel-post-target"
 import {
   type ThreadsCommentResource,
   threadsCommentResource,
@@ -19,10 +20,7 @@ export const toThreadsResource = (
 ): ThreadsCommentResource =>
   threadsCommentResource.parse({
     ...record,
-    post: {
-      type: record.post.type === "postIds" ? "postIds" : "all",
-      value: record.post.type === "postIds" ? record.post.value : [],
-    },
+    post: toChannelPostTarget(record.post),
     privateReply: { type: "none", value: null },
     publicReply:
       record.publicReply.type === "none"

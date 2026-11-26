@@ -27,6 +27,7 @@ const {
   mockAiAgentQueueAdd,
   mockIntegrationQueueAdd,
   mockChatQueueAdd,
+  mockLikeFenceNext,
   mockSendPrivateReply,
   mockIsBotMessageQuotaReached,
   mockSendInstagramPrivateReply,
@@ -43,6 +44,8 @@ const {
   mockClaimContentAttributes,
   mockNeedsAttachmentInfo,
   mockResolveAttachmentInfo,
+  mockLoadPostCaption,
+  mockCreatePostCaptionResolver,
 } = vi.hoisted(() => ({
   mockFindContactInboxBy: vi.fn(),
   mockFindActiveAutomations: vi.fn(),
@@ -66,6 +69,7 @@ const {
   mockAiAgentQueueAdd: vi.fn(),
   mockIntegrationQueueAdd: vi.fn(),
   mockChatQueueAdd: vi.fn(),
+  mockLikeFenceNext: vi.fn(),
   mockSendPrivateReply: vi.fn(),
   mockSendInstagramPrivateReply: vi.fn(),
   mockSendInstagramFacebookPrivateReply: vi.fn(),
@@ -81,6 +85,8 @@ const {
   mockClaimContentAttributes: vi.fn(),
   mockNeedsAttachmentInfo: vi.fn(),
   mockResolveAttachmentInfo: vi.fn(),
+  mockLoadPostCaption: vi.fn(),
+  mockCreatePostCaptionResolver: vi.fn(),
   mockIsBotMessageQuotaReached: vi.fn(),
 }))
 
@@ -114,6 +120,7 @@ vi.mock("@chatbotx.io/analytics", () => ({
 }))
 
 vi.mock("@chatbotx.io/business", () => ({
+  commentLikeFence: { next: mockLikeFenceNext },
   publishWorkspaceRealtimeEvent: vi.fn().mockResolvedValue(undefined),
   queueWorkspaceRealtimeEvent: vi.fn(),
   queueMessageCreatedEvent: vi.fn(),
@@ -248,6 +255,10 @@ vi.mock(
     needsAttachmentInfo: mockNeedsAttachmentInfo,
   }),
 )
+
+vi.mock("../src/integration/handlers/comment-automation/post-caption", () => ({
+  createPostCaptionResolver: mockCreatePostCaptionResolver,
+}))
 
 vi.mock("../src/integration/handlers/automated-response/replies", () => ({
   generateAIReplyText: mockGenerateAIReplyText,
@@ -394,6 +405,8 @@ function buildJobData(
 
 beforeEach(() => {
   vi.clearAllMocks()
+  mockCreatePostCaptionResolver.mockReturnValue(mockLoadPostCaption)
+  mockLoadPostCaption.mockResolvedValue("")
   mockClaimDedup.mockResolvedValue(true)
   mockIdentifyInboxAndIntegrationAuth.mockResolvedValue({
     integrationRow: { auth: { accessToken: "token" }, inboxId: "inbox-1" },
@@ -2686,6 +2699,25 @@ describe("processCommentAIReply", () => {
         replyText: "AI answer",
         errorDetail: "token revoked",
       })
+      // The DM is sent inline and creates no message, so the Error Log is the
+      // workspace-wide record of it.
+      expect(mockLogProviderError).toHaveBeenCalledWith(
+        expect.objectContaining({
+          provider: "messenger",
+          workspaceId: "workspace-1",
+          error: expect.objectContaining({ message: "token revoked" }),
+        }),
+      )
+    })
+
+    test("public: a failure is left to the chat worker's Error Log row", async () => {
+      mockMessageCreate.mockRejectedValue(new Error("shard down"))
+
+      await expect(
+        processCommentAIReply(buildAIJobData() as any),
+      ).rejects.toThrow("shard down")
+
+      expect(mockLogProviderError).not.toHaveBeenCalled()
     })
 
     test("does not record on an attempt that will be retried", async () => {
@@ -4238,6 +4270,25 @@ describe("processCommentAutomation misses", () => {
       job: { isLive: true },
     },
     {
+      reason: "postHashtagNotMatched",
+      automation: { post: { type: "hashtags", value: ["vip"] } },
+      arrange: () =>
+        mockLoadPostCaption.mockResolvedValue("New drop #vip2 #sale"),
+    },
+    {
+      // A TikTok connection without `video.list`, a deleted post, an API
+      // outage: the caption is unknown, so the comment is not answered.
+      reason: "postCaptionUnavailable",
+      automation: { post: { type: "hashtags", value: ["vip"] } },
+      arrange: () => mockLoadPostCaption.mockResolvedValue(null),
+    },
+    {
+      // A hashtag automation still never answers a live comment.
+      reason: "postNotMatched",
+      automation: { post: { type: "hashtags", value: ["vip"] } },
+      job: { isLive: true },
+    },
+    {
       // The read said "not yet replied", but a concurrent comment from the
       // same person won the atomic claim first.
       reason: "alreadyRepliedOnPost",
@@ -4422,18 +4473,47 @@ describe("processCommentAutomation live comments", () => {
       claimContentAttributes: mockClaimContentAttributes,
     })
 
-  test("a post comment on Instagram still likes it (control for the Live case)", async () => {
+  test("a Messenger automation like takes a fence number so a later unlike supersedes it", async () => {
     withStoredCommentRow()
+    mockLikeFenceNext.mockResolvedValue(5)
     mockFindActiveAutomations.mockResolvedValue([
       buildAutomation({ options: { likeUserComment: true } }),
     ])
 
     await processCommentAutomation({
       ...buildJobData(),
-      integrationType: "instagram",
+      integrationType: "messenger",
     } as any)
 
+    expect(mockLikeFenceNext).toHaveBeenCalledWith(
+      expect.objectContaining({ workspaceId: expect.any(String) }),
+    )
     expect(mockChatQueueAdd).toHaveBeenCalledWith(
+      "changeChannelMessageState",
+      expect.objectContaining({
+        data: expect.objectContaining({ liked: true, likeSeq: 5 }),
+      }),
+    )
+  })
+
+  test.each([
+    "instagram",
+    "instagramFacebook",
+  ] as const)("a stored likeUserComment on %s is skipped: no like job, rule not failed", async (integrationType) => {
+    withStoredCommentRow()
+    mockFindActiveAutomations.mockResolvedValue([
+      buildAutomation({ options: { likeUserComment: true } }),
+    ])
+
+    await expect(
+      processCommentAutomation({
+        ...buildJobData(),
+        integrationType,
+      } as any),
+    ).resolves.not.toThrow()
+
+    expect(mockLikeFenceNext).not.toHaveBeenCalled()
+    expect(mockChatQueueAdd).not.toHaveBeenCalledWith(
       "changeChannelMessageState",
       expect.objectContaining({
         data: expect.objectContaining({ liked: true }),
@@ -4791,5 +4871,56 @@ describe("processCommentAutomation moderation", () => {
     expect(mockMessageCreate).toHaveBeenCalledWith(
       expect.objectContaining({ text: "answer" }),
     )
+  })
+})
+
+describe("processCommentAutomation post hashtags", () => {
+  test("answers a comment on a post whose caption carries a target hashtag", async () => {
+    mockLoadPostCaption.mockResolvedValue("Ưu đãi riêng cho khách #VIP!")
+    mockFindActiveAutomations.mockResolvedValue([
+      buildAutomation({
+        post: { type: "hashtags", value: ["vip"] },
+        publicReply: { type: "text", value: "answer" },
+      }),
+    ])
+
+    await processCommentAutomation(buildJobData() as any)
+
+    expect(mockRecordMisses.mock.calls[0]?.[0]).toEqual([])
+    expect(mockRecordEvent).toHaveBeenCalled()
+  })
+
+  test("reads the caption once however many hashtag automations see the comment", async () => {
+    mockLoadPostCaption.mockResolvedValue("#sale")
+    mockFindActiveAutomations.mockResolvedValue([
+      buildAutomation({
+        id: "automation-1",
+        post: { type: "hashtags", value: ["vip"] },
+      }),
+      buildAutomation({
+        id: "automation-2",
+        post: { type: "hashtags", value: ["sale"] },
+      }),
+    ])
+
+    await processCommentAutomation(buildJobData() as any)
+
+    expect(mockCreatePostCaptionResolver).toHaveBeenCalledTimes(1)
+    expect(mockRecordMisses.mock.calls[0]?.[0]).toEqual([
+      expect.objectContaining({
+        automationId: "automation-1",
+        reason: "postHashtagNotMatched",
+      }),
+    ])
+  })
+
+  test("never reads the caption when no automation targets hashtags", async () => {
+    mockFindActiveAutomations.mockResolvedValue([
+      buildAutomation({ publicReply: { type: "text", value: "answer" } }),
+    ])
+
+    await processCommentAutomation(buildJobData() as any)
+
+    expect(mockLoadPostCaption).not.toHaveBeenCalled()
   })
 })

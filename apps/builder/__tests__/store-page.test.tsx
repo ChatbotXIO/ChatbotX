@@ -29,7 +29,7 @@ vi.mock("@/features/template-store/components/store-catalog", () => ({
 import StorePage from "@/app/store/page"
 
 const catalog = {
-  tenantName: "Acme Bots",
+  viewerLocale: "vi",
   categories: [{ id: "5", name: "Flows" }],
   templates: [],
 }
@@ -60,7 +60,7 @@ describe("/store page", () => {
     expect(element.props).toEqual({
       categories: catalog.categories,
       templates: catalog.templates,
-      tenantName: "Acme Bots",
+      viewerLocale: "vi",
     })
     // No `layout` prop: the default (page) layout, so /store looks the same.
     expect("layout" in element.props).toBe(false)

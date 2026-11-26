@@ -6,6 +6,7 @@ import {
   integrationThreadsService,
   platformCredentialService,
   templateInstallIntentService,
+  userService,
   workspaceService,
 } from "@chatbotx.io/business"
 import { auditService, withAuditContext } from "@chatbotx.io/business/audit"
@@ -19,6 +20,7 @@ import {
 import {
   type IntegrationType,
   messagingAdChannelTypes,
+  socialProviders,
 } from "@chatbotx.io/database/partials"
 import type { ConnectSessionModel } from "@chatbotx.io/database/types"
 import { exchangeCodeForToken as exchangeInstagramCode } from "@chatbotx.io/integration-instagram"
@@ -57,6 +59,7 @@ import {
   CAPI_OAUTH_CHANNELS,
   type CapiConnectResult,
 } from "@/features/meta-conversions/lib/capi-connect-result"
+import { buildSocialConnectRedirectUrl } from "@/features/social-accounts/lib/social-connect-result"
 import { integrations } from "@/integration"
 import { assertWorkspaceSuperAdmin } from "@/lib/auth/assert-workspace-super-admin"
 import { getCurrentUser } from "@/lib/auth/utils"
@@ -75,6 +78,12 @@ import {
   createFirstWorkspace,
 } from "@/lib/workspace/create-first-workspace"
 import { completeMetaCapiConnect } from "./callback-meta-capi"
+import {
+  cancelSocialAccountConnect,
+  completeSocialAccountConnect,
+  isOwnSocialAccountCallback,
+  type SocialConnectOutcome,
+} from "./callback-social-account"
 import {
   messagingAdsIntegrationBelongsToWorkspace,
   storeFacebookAdsConnection,
@@ -98,6 +107,7 @@ const stateValidationSchema = z.object({
       "messagingAds",
       "facebookMarketingMessages",
       "metaCapi",
+      "socialAccount",
     ])
     .optional(),
   // Set by the channel "Reconnect" buttons: the callback refreshes the tokens
@@ -114,6 +124,10 @@ const stateValidationSchema = z.object({
   // integration. The nonce must match the httpOnly cookie set when Connect was
   // pressed; both it and the integration are re-validated before any token is
   // stored — see `completeMetaCapiConnect`.
+  // `flow: "socialAccount"` only — the publishing connect of one network. The
+  // nonce must match the httpOnly cookie set when Connect was pressed; see
+  // `completeSocialAccountConnect`.
+  socialProvider: socialProviders.optional(),
   capiChannel: z.enum(CAPI_OAUTH_CHANNELS).optional(),
   capiIntegrationId: zodBigintAsString().optional(),
   nonce: z.string().min(1).optional(),
@@ -126,6 +140,14 @@ const redirectWithMetaCapiOutcome = (
   outcome === "notFound"
     ? notFound()
     : redirect(buildCapiConnectRedirectUrl(safeReferer, outcome))
+
+const redirectWithSocialConnectOutcome = (
+  outcome: SocialConnectOutcome,
+  safeReferer: string,
+) =>
+  outcome.notFound
+    ? notFound()
+    : redirect(buildSocialConnectRedirectUrl(safeReferer, outcome.result))
 
 const CONNECT_SESSION_STATE_PATTERN = /^\d+\.[A-Za-z0-9_-]+$/
 
@@ -484,11 +506,27 @@ export const handleCallback = async (
     return notFound()
   }
 
+  // A publishing-connect state is only valid at its own network's callback; at
+  // any other (TikTok, Instagram through Facebook, a channel connect…) it must
+  // not fall through into that channel's normal connect.
+  if (
+    stateParams.flow === "socialAccount" &&
+    !isOwnSocialAccountCallback(integrationType, stateParams)
+  ) {
+    logger.debug(
+      { integrationType, socialProvider: stateParams.socialProvider },
+      "socialAccount state at a callback that is not its own",
+    )
+    return notFound()
+  }
+
   // A reconnect — and a dedicated Conversions API connect — always targets an
   // integration inside an existing workspace; without a workspaceId the
   // create-workspace branch below would run.
   if (
-    (stateParams.reconnectIntegrationId || stateParams.flow === "metaCapi") &&
+    (stateParams.reconnectIntegrationId ||
+      stateParams.flow === "metaCapi" ||
+      stateParams.flow === "socialAccount") &&
     !stateParams.workspaceId
   ) {
     logger.debug(
@@ -533,6 +571,14 @@ export const handleCallback = async (
           status: "error",
           reason: "cancelled",
         }),
+      )
+    }
+    if (stateParams.flow === "socialAccount") {
+      return redirect(
+        buildSocialConnectRedirectUrl(
+          cancelReferer,
+          await cancelSocialAccountConnect(stateParams),
+        ),
       )
     }
     return redirect(cancelReferer)
@@ -625,6 +671,7 @@ export const handleCallback = async (
               code,
               callbackUrl,
               workspaceId: workspace.id,
+              userId,
             }),
         )
         return redirect(safeReferer)
@@ -748,6 +795,7 @@ export const handleCallback = async (
           credentialConfig: messengerCredential.config,
           workspaceId: workspace.id,
           integrationId: stateParams.reconnectIntegrationId,
+          userId,
           code,
           callbackUrl,
         })
@@ -818,17 +866,20 @@ export const handleCallback = async (
         )
       }
 
-      const { accessToken: userToken } = await exchangeInstagramCode(
-        instagramCredential.config,
-        code,
-        callbackUrl,
-      )
+      const { accessToken: userToken, grantedScopes } =
+        await exchangeInstagramCode(
+          instagramCredential.config,
+          code,
+          callbackUrl,
+        )
 
       const result = await reconnectInstagramHandler({
         credentialConfig: instagramCredential.config,
         workspaceId: workspace.id,
         integrationId: stateParams.reconnectIntegrationId,
+        userId,
         userToken,
+        grantedScopes,
       })
       if (result.status === "success") {
         await auditService.record({
@@ -907,6 +958,7 @@ export const handleCallback = async (
         credentialConfig: instagramFacebookCredential.config,
         workspaceId: workspace.id,
         integrationId: stateParams.reconnectIntegrationId,
+        userId,
         userToken,
       })
       if (result.status === "success") {
@@ -939,6 +991,7 @@ export const handleCallback = async (
         threadsCredential,
         "/integrations/threads/callback",
       )
+
       const token = await exchangeThreadsCode(
         threadsCredential.config,
         code,
@@ -951,6 +1004,7 @@ export const handleCallback = async (
           callbackUrl,
           workspaceId: workspace.id,
           integrationId: stateParams.reconnectIntegrationId,
+          userId,
           accessToken: token.accessToken,
           expiresAt: token.expiresAt,
         })
@@ -980,6 +1034,14 @@ export const handleCallback = async (
         expiresAt: token.expiresAt,
         threadsUserId: profile.id,
         username: profile.username,
+      })
+
+      await userService.recordConnectionAuthorization({
+        userId,
+        provider: "threads",
+        auth,
+        phase: "authorizationObtained",
+        workspaceId: workspace.id,
       })
 
       let threadsIntegrationId: string
@@ -1022,6 +1084,37 @@ export const handleCallback = async (
     }
 
     case "tiktok": {
+      // Publishing connect from the Posts page: its own TikTok app (Login Kit +
+      // Content Posting API), resolved apart from the inbox app below.
+      if (stateParams.flow === "socialAccount") {
+        const publishingCredential =
+          await platformCredentialService.resolveForOwner({
+            ownerId: platformOwnerId,
+            type: "tiktokPublishing",
+          })
+        if (!publishingCredential) {
+          return notFound()
+        }
+        return redirectWithSocialConnectOutcome(
+          await completeSocialAccountConnect({
+            callbackUrl: await buildProviderCallbackUrl(
+              publishingCredential,
+              "/integrations/tiktok/callback",
+            ),
+            code,
+            credentialConfig: publishingCredential.config,
+            provider: "tiktok",
+            request: {
+              ipAddress: getGuestClientIp(req.headers),
+              userAgent: req.headers.get("user-agent") ?? undefined,
+            },
+            state: stateParams,
+            userId,
+            workspaceId: workspace.id,
+          }),
+          safeReferer,
+        )
+      }
       const tiktokCredential = await platformCredentialService.resolveForOwner({
         ownerId: platformOwnerId,
         type: "tiktok",
@@ -1095,6 +1188,7 @@ export const handleCallback = async (
           zaloSettings: zaloCredential.config,
           workspaceId: workspace.id,
           integrationId: stateParams.reconnectIntegrationId,
+          userId,
           req,
           callbackUrl: zaloRedirectUrl,
         })
@@ -1159,6 +1253,7 @@ export const handleCallback = async (
             code,
             callbackUrl,
             workspaceId: workspace.id,
+            userId,
           }),
       )
 
@@ -1207,6 +1302,14 @@ export const handleCallback = async (
           credentialConfig: googleCredential.config,
           req,
           callbackUrl,
+          workspaceId: workspace.id,
+        })
+
+        await userService.recordConnectionAuthorization({
+          userId,
+          provider: "googleCalendar",
+          auth: connection.auth,
+          phase: "authorizationObtained",
           workspaceId: workspace.id,
         })
 
@@ -1275,6 +1378,17 @@ export const handleCallback = async (
         req,
       })) as unknown as Oauth2AuthValue
       googleSheetsAuth = authResult
+      // Only an obtained authorization is recorded; an empty result falls
+      // through to the `notFound()` guard below.
+      if (authResult) {
+        await userService.recordConnectionAuthorization({
+          userId,
+          provider: "googleSheets",
+          auth: authResult,
+          phase: "authorizationObtained",
+          workspaceId: workspace.id,
+        })
+      }
       break
     }
 

@@ -1,0 +1,823 @@
+{
+  "type": "diff",
+  "version": "10",
+  "dialect": "postgres",
+  "id": "856d6c14-fab1-4515-b8db-85873d4a0d60",
+  "prevIds": [
+    "62e88a7b-6299-4037-87a5-4a405cf0c324"
+  ],
+  "footprints": [
+    {
+      "statementType": "create_enum",
+      "statementTarget": [
+        "enum",
+        "public",
+        "messageTranslationDirection"
+      ],
+      "writes": [
+        "s|enum|public.messageTranslationDirection",
+        "n|enum|public.messageTranslationDirection",
+        "e|enum|public.messageTranslationDirection",
+        "n|type|public.messageTranslationDirection"
+      ],
+      "reads": [
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "create_enum",
+      "statementTarget": [
+        "enum",
+        "public",
+        "messageTranslationFailureCode"
+      ],
+      "writes": [
+        "s|enum|public.messageTranslationFailureCode",
+        "n|enum|public.messageTranslationFailureCode",
+        "e|enum|public.messageTranslationFailureCode",
+        "n|type|public.messageTranslationFailureCode"
+      ],
+      "reads": [
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "create_enum",
+      "statementTarget": [
+        "enum",
+        "public",
+        "messageTranslationStatus"
+      ],
+      "writes": [
+        "s|enum|public.messageTranslationStatus",
+        "n|enum|public.messageTranslationStatus",
+        "e|enum|public.messageTranslationStatus",
+        "n|type|public.messageTranslationStatus"
+      ],
+      "reads": [
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "create_table",
+      "statementTarget": [
+        "table",
+        "public",
+        "InboxTranslationSettings"
+      ],
+      "writes": [
+        "s|tbl|public.InboxTranslationSettings",
+        "n|tbl|public.InboxTranslationSettings",
+        "e|tbl|public.InboxTranslationSettings",
+        "n|rel|public.InboxTranslationSettings",
+        "n|type|public.InboxTranslationSettings",
+        "n|rel|public.InboxTranslationSettings_pkey"
+      ],
+      "reads": [
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "create_table",
+      "statementTarget": [
+        "table",
+        "public",
+        "MessageTranslation"
+      ],
+      "writes": [
+        "s|tbl|public.MessageTranslation",
+        "n|tbl|public.MessageTranslation",
+        "e|tbl|public.MessageTranslation",
+        "n|rel|public.MessageTranslation",
+        "n|type|public.MessageTranslation",
+        "n|rel|public.MessageTranslation_pkey"
+      ],
+      "reads": [
+        "n|sch|public",
+        "n|enum|public.messageTranslationDirection",
+        "n|enum|public.messageTranslationStatus",
+        "n|enum|public.messageTranslationFailureCode"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "InboxTranslationSettings",
+        "InboxTranslationSettings_workspaceId_key"
+      ],
+      "writes": [
+        "s|idx|public.InboxTranslationSettings_workspaceId_key",
+        "n|idx|public.InboxTranslationSettings_workspaceId_key",
+        "e|idx|public.InboxTranslationSettings_workspaceId_key",
+        "n|rel|public.InboxTranslationSettings_workspaceId_key"
+      ],
+      "reads": [
+        "n|tbl|public.InboxTranslationSettings",
+        "n|sch|public",
+        "n|col|public.InboxTranslationSettings.workspaceId"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "MessageTranslation",
+        "MessageTranslation_workspaceId_messageId_key"
+      ],
+      "writes": [
+        "s|idx|public.MessageTranslation_workspaceId_messageId_key",
+        "n|idx|public.MessageTranslation_workspaceId_messageId_key",
+        "e|idx|public.MessageTranslation_workspaceId_messageId_key",
+        "n|rel|public.MessageTranslation_workspaceId_messageId_key"
+      ],
+      "reads": [
+        "n|tbl|public.MessageTranslation",
+        "n|sch|public",
+        "n|col|public.MessageTranslation.workspaceId",
+        "n|col|public.MessageTranslation.messageId"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "MessageTranslation",
+        "MessageTranslation_conversationId_idx"
+      ],
+      "writes": [
+        "s|idx|public.MessageTranslation_conversationId_idx",
+        "n|idx|public.MessageTranslation_conversationId_idx",
+        "e|idx|public.MessageTranslation_conversationId_idx",
+        "n|rel|public.MessageTranslation_conversationId_idx"
+      ],
+      "reads": [
+        "n|tbl|public.MessageTranslation",
+        "n|sch|public",
+        "n|col|public.MessageTranslation.conversationId"
+      ]
+    },
+    {
+      "statementType": "create_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "InboxTranslationSettings"
+      ],
+      "writes": [
+        "s|fk|public.InboxTranslationSettings.InboxTranslationSettings_workspaceId_Workspace_id_fkey",
+        "n|fk|public.InboxTranslationSettings.InboxTranslationSettings_workspaceId_Workspace_id_fkey",
+        "e|fk|public.InboxTranslationSettings.InboxTranslationSettings_workspaceId_Workspace_id_fkey",
+        "n|con|public.InboxTranslationSettings.InboxTranslationSettings_workspaceId_Workspace_id_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.InboxTranslationSettings",
+        "n|sch|public",
+        "n|tbl|public.Workspace",
+        "n|sch|public",
+        "n|col|public.InboxTranslationSettings.workspaceId",
+        "n|col|public.Workspace.id",
+        "e|uniqueness|public.Workspace.id"
+      ]
+    },
+    {
+      "statementType": "create_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "MessageTranslation"
+      ],
+      "writes": [
+        "s|fk|public.MessageTranslation.MessageTranslation_workspaceId_Workspace_id_fkey",
+        "n|fk|public.MessageTranslation.MessageTranslation_workspaceId_Workspace_id_fkey",
+        "e|fk|public.MessageTranslation.MessageTranslation_workspaceId_Workspace_id_fkey",
+        "n|con|public.MessageTranslation.MessageTranslation_workspaceId_Workspace_id_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.MessageTranslation",
+        "n|sch|public",
+        "n|tbl|public.Workspace",
+        "n|sch|public",
+        "n|col|public.MessageTranslation.workspaceId",
+        "n|col|public.Workspace.id",
+        "e|uniqueness|public.Workspace.id"
+      ]
+    },
+    {
+      "statementType": "create_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "MessageTranslation"
+      ],
+      "writes": [
+        "s|fk|public.MessageTranslation.MessageTranslation_conversationId_Conversation_id_fkey",
+        "n|fk|public.MessageTranslation.MessageTranslation_conversationId_Conversation_id_fkey",
+        "e|fk|public.MessageTranslation.MessageTranslation_conversationId_Conversation_id_fkey",
+        "n|con|public.MessageTranslation.MessageTranslation_conversationId_Conversation_id_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.MessageTranslation",
+        "n|sch|public",
+        "n|tbl|public.Conversation",
+        "n|sch|public",
+        "n|col|public.MessageTranslation.conversationId",
+        "n|col|public.Conversation.id",
+        "e|uniqueness|public.Conversation.id"
+      ]
+    }
+  ],
+  "deltas": [
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "name": "InboxTranslationSettings",
+        "isRlsEnabled": false,
+        "entityType": "tables"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "name": "MessageTranslation",
+        "isRlsEnabled": false,
+        "entityType": "tables"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "name": "messageTranslationDirection",
+        "values": [
+          "inbound",
+          "outbound"
+        ],
+        "entityType": "enums"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "name": "messageTranslationFailureCode",
+        "values": [
+          "integrationUnavailable",
+          "timeout",
+          "providerError",
+          "rateLimited",
+          "unsafeOutput"
+        ],
+        "entityType": "enums"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "name": "messageTranslationStatus",
+        "values": [
+          "translated",
+          "failed",
+          "skipped"
+        ],
+        "entityType": "enums"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "InboxTranslationSettings",
+        "name": "id",
+        "type": "bigint",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "InboxTranslationSettings",
+        "name": "createdAt",
+        "type": "timestamp(6) with time zone",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "now()",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "InboxTranslationSettings",
+        "name": "updatedAt",
+        "type": "timestamp(6) with time zone",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "now()",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "InboxTranslationSettings",
+        "name": "workspaceId",
+        "type": "bigint",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "InboxTranslationSettings",
+        "name": "enabled",
+        "type": "boolean",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "false",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "InboxTranslationSettings",
+        "name": "enabledAt",
+        "type": "timestamp(6) with time zone",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "InboxTranslationSettings",
+        "name": "modelConfig",
+        "type": "jsonb",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "MessageTranslation",
+        "name": "id",
+        "type": "bigint",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "MessageTranslation",
+        "name": "createdAt",
+        "type": "timestamp(6) with time zone",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "now()",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "MessageTranslation",
+        "name": "updatedAt",
+        "type": "timestamp(6) with time zone",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "now()",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "MessageTranslation",
+        "name": "workspaceId",
+        "type": "bigint",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "MessageTranslation",
+        "name": "conversationId",
+        "type": "bigint",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "MessageTranslation",
+        "name": "messageId",
+        "type": "bigint",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "MessageTranslation",
+        "name": "messageCreatedAt",
+        "type": "timestamp(6) with time zone",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "MessageTranslation",
+        "name": "direction",
+        "type": "messageTranslationDirection",
+        "typeSchema": "public",
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "MessageTranslation",
+        "name": "status",
+        "type": "messageTranslationStatus",
+        "typeSchema": "public",
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "MessageTranslation",
+        "name": "sourceLanguage",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "MessageTranslation",
+        "name": "targetLanguage",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "MessageTranslation",
+        "name": "confidence",
+        "type": "double precision",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "MessageTranslation",
+        "name": "displayText",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "MessageTranslation",
+        "name": "modelId",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "MessageTranslation",
+        "name": "failureCode",
+        "type": "messageTranslationFailureCode",
+        "typeSchema": "public",
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "MessageTranslation",
+        "name": "sourceHash",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "InboxTranslationSettings",
+        "name": "InboxTranslationSettings_workspaceId_key",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "workspaceId",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": true,
+        "where": null,
+        "with": "",
+        "method": "btree",
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "MessageTranslation",
+        "name": "MessageTranslation_workspaceId_messageId_key",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "workspaceId",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          },
+          {
+            "value": "messageId",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": true,
+        "where": null,
+        "with": "",
+        "method": "btree",
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "MessageTranslation",
+        "name": "MessageTranslation_conversationId_idx",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "conversationId",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": false,
+        "where": null,
+        "with": "",
+        "method": "btree",
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "InboxTranslationSettings",
+        "name": "InboxTranslationSettings_workspaceId_Workspace_id_fkey",
+        "nameExplicit": false,
+        "columns": [
+          "workspaceId"
+        ],
+        "schemaTo": "public",
+        "tableTo": "Workspace",
+        "columnsTo": [
+          "id"
+        ],
+        "onUpdate": "CASCADE",
+        "onDelete": "CASCADE",
+        "entityType": "fks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "MessageTranslation",
+        "name": "MessageTranslation_workspaceId_Workspace_id_fkey",
+        "nameExplicit": false,
+        "columns": [
+          "workspaceId"
+        ],
+        "schemaTo": "public",
+        "tableTo": "Workspace",
+        "columnsTo": [
+          "id"
+        ],
+        "onUpdate": "CASCADE",
+        "onDelete": "CASCADE",
+        "entityType": "fks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "MessageTranslation",
+        "name": "MessageTranslation_conversationId_Conversation_id_fkey",
+        "nameExplicit": false,
+        "columns": [
+          "conversationId"
+        ],
+        "schemaTo": "public",
+        "tableTo": "Conversation",
+        "columnsTo": [
+          "id"
+        ],
+        "onUpdate": "CASCADE",
+        "onDelete": "CASCADE",
+        "entityType": "fks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "InboxTranslationSettings",
+        "name": "InboxTranslationSettings_pkey",
+        "columns": [
+          "id"
+        ],
+        "nameExplicit": false,
+        "entityType": "pks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "MessageTranslation",
+        "name": "MessageTranslation_pkey",
+        "columns": [
+          "id"
+        ],
+        "nameExplicit": false,
+        "entityType": "pks"
+      }
+    }
+  ]
+}

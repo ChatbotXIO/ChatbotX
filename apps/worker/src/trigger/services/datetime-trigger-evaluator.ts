@@ -176,6 +176,7 @@ async function executeActions(
   const scope = createTriggerActionScope({
     contactId,
     workspaceId: triggerInfo.workspaceId,
+    runKey: `datetime:${triggerInfo.triggerId}:${contactId}:${occurrence}`,
   })
 
   for (const [index, action] of actions.entries()) {

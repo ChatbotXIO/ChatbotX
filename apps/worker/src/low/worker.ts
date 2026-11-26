@@ -3,17 +3,24 @@ import {
   withBlockedOwnerGuard,
 } from "@chatbotx.io/business"
 import {
+  type ContactInfoCaptureJobData,
   type LeaderboardJobData,
   LowJobAction,
   type LowJobData,
+  type PostPublishJobData,
   type ProfileSnapshotJobData,
   queueNames,
 } from "@chatbotx.io/worker-config"
 import type { Job } from "bullmq"
+import { recordLiveVideoStatusChange } from "../channel-post-sync/record-live-video"
+import { refreshChannelPost } from "../channel-post-sync/refresh-channel-post"
+import { refreshChannelPostMetrics } from "../channel-post-sync/refresh-channel-post-metrics"
+import { syncChannelPosts } from "../channel-post-sync/sync-channel-posts"
 import { env } from "../env"
 import { captureContactProfileSnapshot } from "../integration/handlers/capture-contact-profile-snapshot"
 import { coexistAttachmentDownload } from "../integration/handlers/coexist/attachment-download"
 import { updateContactAvatar } from "../integration/handlers/contact/update-avatar"
+import { processContactInfoCapture } from "../integration/handlers/contact-info-capture"
 import { contactMarkAsRead } from "../integration/handlers/conversation"
 import { processIncomingMessage } from "../integration/handlers/incoming-message"
 import { handleMessageStatus } from "../integration/handlers/message-status"
@@ -26,6 +33,11 @@ import { logger } from "../lib/logger"
 import { resolveWorkspaceId } from "../lib/resolve-workspace-id"
 import { runJobWithAuditContext } from "../lib/run-job-with-audit-context"
 import { runWorker } from "../lib/shutdown"
+import { processPostPublishJob } from "../post-publish/process-job"
+import { recheckPublishDestinationScopes } from "../publish-destination/recheck-scopes"
+import { processReconnectPublishFanOut } from "../publish-destination/reconnect-fan-out"
+import { refreshPublishDestinationAvatar } from "../publish-destination/refresh-avatar"
+import "../post-publish/register-feed-fetcher"
 
 /**
  * The workspace a `low` job belongs to. Jobs routed here from the integration
@@ -65,6 +77,30 @@ async function processLowJob(
             await updateContactAvatar(jobData.data)
             return
           }
+          case LowJobAction.reconnectPublishFanOut: {
+            await processReconnectPublishFanOut(jobData.data)
+            return
+          }
+          case LowJobAction.recheckPublishDestinationScopes: {
+            await recheckPublishDestinationScopes(jobData.data)
+            return
+          }
+          case LowJobAction.refreshPublishDestinationAvatar: {
+            await refreshPublishDestinationAvatar(jobData.data)
+            return
+          }
+          case LowJobAction.refreshChannelPost: {
+            await refreshChannelPost(jobData.data)
+            return
+          }
+          case LowJobAction.refreshChannelPostMetrics: {
+            await refreshChannelPostMetrics(jobData.data)
+            return
+          }
+          case LowJobAction.syncChannelPosts: {
+            await syncChannelPosts(jobData.data)
+            return
+          }
           case LowJobAction.replayMissedComment: {
             await receiveComment(jobData.data)
             return
@@ -88,6 +124,12 @@ async function processLowJob(
               runIntegrationJobWithWebhookContext(jobData, () =>
                 processIncomingMessage(jobData.data),
               ),
+            )
+            return
+          }
+          case LowJobAction.liveVideoStatusChange: {
+            await runIntegrationJobWithWebhookContext(jobData, () =>
+              recordLiveVideoStatusChange(jobData.data),
             )
             return
           }
@@ -143,8 +185,12 @@ async function settleMissedCommentReplay(job: Job<LowJobData>): Promise<void> {
  *
  * This process also hosts the dedicated, rate-limited `profileSnapshot` consumer
  * (contact relationship snapshots) — non-urgent provider enrichment that must
- * not occupy the integration process.
+ * not occupy the integration process — and the small, rate-limited
+ * `contactInfoCapture` consumer.
  */
+/** Concurrent publish attempts of one worker process. */
+const POST_PUBLISH_WORKER_CONCURRENCY = 3
+
 function startLowWorker() {
   createQueueWorker(
     queueNames.enum.low,
@@ -197,6 +243,41 @@ function startLowWorker() {
       })
     },
     { concurrency: env.LEADERBOARD_WORKER_CONCURRENCY },
+  )
+
+  // Broadcast "left a phone/email" attribution: its own queue so a burst of
+  // replies carrying a phone number never takes `low` slots, with small
+  // concurrency and a rate limit because every run reads message history.
+  createQueueWorker(
+    queueNames.enum.contactInfoCapture,
+    async (job: Job<ContactInfoCaptureJobData>) => {
+      const workspaceId = job.data.data.workspaceId
+      await withBlockedOwnerGuard(workspaceId, async () => {
+        await runJobWithAuditContext(
+          { workspaceId, source: `contact-info-capture:${job.data.type}` },
+          async () => {
+            await processContactInfoCapture(job.data.data)
+          },
+        )
+      })
+    },
+    {
+      concurrency: env.CONTACT_INFO_CAPTURE_CONCURRENCY,
+      limiter: {
+        max: env.CONTACT_INFO_CAPTURE_JOBS_PER_SECOND,
+        duration: 1000,
+      },
+    },
+  )
+
+  // Composed posts: one job per destination. The attempt, its claim and its
+  // retries live in the database, so BullMQ never retries a job.
+  createQueueWorker(
+    queueNames.enum.postPublish,
+    async (job: Job<PostPublishJobData>) => {
+      await processPostPublishJob(job.data)
+    },
+    { concurrency: POST_PUBLISH_WORKER_CONCURRENCY },
   )
 }
 

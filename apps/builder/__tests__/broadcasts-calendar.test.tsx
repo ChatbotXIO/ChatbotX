@@ -3,8 +3,8 @@ import { addDays, format } from "date-fns"
 import { act } from "react"
 import { createRoot, type Root } from "react-dom/client"
 import { afterEach, describe, expect, test, vi } from "vitest"
+import { MAX_CUSTOM_RANGE_DAYS } from "@/components/calendar/calendar-grid"
 import { BroadcastsCalendar } from "@/features/broadcasts/components/broadcasts-calendar"
-import { MAX_CUSTOM_RANGE_DAYS } from "@/features/broadcasts/lib/calendar-grid"
 
 vi.mock("next-intl", () => ({
   useTranslations: () => (key: string, values?: Record<string, unknown>) =>

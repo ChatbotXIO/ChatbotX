@@ -42,7 +42,7 @@ export const INBOX_IMAGE_SUPPORT: Record<
   api: { message: 10, comment: 0, privateReply: 0 },
   omnichannel: { message: 10, comment: 0, privateReply: 0 },
   threads: { message: 0, comment: 0, privateReply: 0 },
-  smtp: { message: 0, comment: 0, privateReply: 0 },
+  smtp: { message: 10, comment: 0, privateReply: 0 },
 }
 
 export type InboxImageCheckResult =
@@ -51,14 +51,20 @@ export type InboxImageCheckResult =
 
 /**
  * A private reply wins over the reply target: it carries a
- * `replyToMessageId` too, yet lands in the contact's DMs.
+ * `replyToMessageId` too, yet lands in the contact's DMs. An email reply is a
+ * message inside its thread, not a post comment, so SMTP always sends as
+ * a message.
  */
 export function resolveInboxReplyKind(props: {
+  channel?: ChannelType
   hasReplyTarget: boolean
   isPrivateReply: boolean
 }): InboxReplyKind {
   if (props.isPrivateReply) {
     return "privateReply"
+  }
+  if (props.channel === "smtp") {
+    return "message"
   }
   return props.hasReplyTarget ? "comment" : "message"
 }

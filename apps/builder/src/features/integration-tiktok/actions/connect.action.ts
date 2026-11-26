@@ -1,5 +1,6 @@
 import {
   tiktokIntegrationService,
+  userService,
   workspaceService,
 } from "@chatbotx.io/business"
 import { auditService } from "@chatbotx.io/business/audit"
@@ -30,6 +31,14 @@ export async function connectTiktokHandler({
     },
     req,
   })) as TiktokAuthValue
+
+  await userService.recordConnectionAuthorization({
+    userId,
+    provider: "tiktok",
+    auth: authValue,
+    phase: "authorizationObtained",
+    workspaceId,
+  })
 
   const openId = authValue.metadata.openId
   const displayName = authValue.metadata.displayName

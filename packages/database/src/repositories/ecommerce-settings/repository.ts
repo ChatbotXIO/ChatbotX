@@ -31,12 +31,19 @@ export const ecommerceSettingsRepository = {
     })
   },
 
-  /** Creates the row from the given values when the workspace has none. */
-  async insertIfMissing(
+  /**
+   * Creates the row from the given values when the workspace has none, else
+   * returns the one that is there. `created` says which, so a caller that
+   * copies into a new row never claims one another writer created first.
+   */
+  async insertOrFind(
     input: { workspaceId: string; values: EcommerceSettingsValues },
     tx: DatabaseClient = db,
-  ) {
-    await tx
+  ): Promise<{
+    row: typeof ecommerceSettingsModel.$inferSelect | undefined
+    created: boolean
+  }> {
+    const [inserted] = await tx
       .insert(ecommerceSettingsModel)
       .values({
         id: createId(),
@@ -44,6 +51,16 @@ export const ecommerceSettingsRepository = {
         ...input.values,
       })
       .onConflictDoNothing({ target: ecommerceSettingsModel.workspaceId })
+      .returning()
+    if (inserted) {
+      return { row: inserted, created: true }
+    }
+    return {
+      row: await tx.query.ecommerceSettingsModel.findFirst({
+        where: { workspaceId: input.workspaceId },
+      }),
+      created: false,
+    }
   },
 
   /** Only the store source; a workspace with no settings row has nothing to switch. */

@@ -189,6 +189,7 @@ export function ConnectPickerScreen<
       {extraAlert}
 
       <ConnectSelectionForm
+        channel={channel}
         coexist={
           isCoexistChannel(channel)
             ? { descriptionKey: config.coexistDescriptionKey }
@@ -202,12 +203,14 @@ export function ConnectPickerScreen<
           const ids: string[] = values[idsFieldName]
           const coexistIds = new Set(values.coexistIds)
           const aiIds = new Set(values.aiReadsSyncedHistoryIds)
+          const ahachatIds = new Set(values.ahachatIds)
           const selected = items
             .filter((item) => ids.includes(item.id))
             .map((item) => ({
               ...item,
               aiReadsSyncedHistory: aiIds.has(item.id),
               coexist: coexistIds.has(item.id),
+              ahachat: ahachatIds.has(item.id),
             }))
           return flow.start(selected)
         }}

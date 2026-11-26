@@ -4,6 +4,7 @@ import { getTranslations } from "next-intl/server"
 import { AppBreadcrumb } from "@/components/app-breadcrumb"
 import { InboundWebhookEditor } from "@/features/inbound-webhooks/components/inbound-webhook-editor"
 import { findInboundWebhookForEditor } from "@/features/inbound-webhooks/queries"
+import { LockedEditorGuard } from "@/features/templates/components/locked-editor-guard"
 import { withWorkspaceIdAndIdSchema } from "@/features/workspaces/schema/resource"
 import { requireWorkspacePermission } from "@/lib/auth/require-workspace-permission"
 
@@ -44,7 +45,13 @@ export default async function InboundWebhookEditorPage({
           { label: webhook.name, href: "" },
         ]}
       />
-      <InboundWebhookEditor webhook={webhook} workspaceId={workspaceId} />
+      <LockedEditorGuard
+        resourceId={id}
+        resourceKind="inboundWebhook"
+        workspaceId={workspaceId}
+      >
+        <InboundWebhookEditor webhook={webhook} workspaceId={workspaceId} />
+      </LockedEditorGuard>
     </div>
   )
 }

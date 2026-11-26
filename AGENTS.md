@@ -42,7 +42,7 @@ pnpm dev              # turbo dev — all dev tasks the repo wires up
 pnpm build            # turbo build
 pnpm lint             # check:agent-instructions → check:invariants → turbo run lint → ultracite check
 pnpm fix              # ultracite fix --unsafe
-pnpm check-types:cold # concurrency=1 — use on a cold run (no tsbuildinfo) or low-RAM machine; builder tsc peaks ~6 GB cold
+pnpm check-types:cold # concurrency=1 — use on a cold run (no tsbuildinfo) or low-RAM machine; builder tsc peaks ~6–8 GB cold
 pnpm check-types      # turbo run check-types --concurrency=2 — always use this, not bare `pnpm turbo check-types`
                       # (bare turbo runs 10 tsc in parallel, ~4 GB each for packages importing database/business → swaps/freezes the machine)
 pnpm test             # turbo run test --concurrency=2 — 2 suites × 4 vitest threads (VITEST_MAX_WORKERS); 50% ran 6×4 = 24 threads on a 12-core Mac
@@ -148,7 +148,7 @@ One line each; the full text (reasons, file paths, edge cases) is in `docs/agent
 
 9. **The chain is `action | API handler → service → repository → DB`** — code in `apps/` and `integrations/` never imports `db` (lint-checked); it calls a service in `packages/business/`. The public and private paths for one resource call the same service method, passing the caller's scope as plain data. See `.agents/rules/data-access.md`.
 
-10. **White-label tenancy** — derive a new workspace's `tenantId` from its owner (`workspaceService.resolveTenantForOwner`), never from request or client input; `User` email is unique per tenant. See `docs/tenancy.md`.
+10. **White-label tenancy** — derive a new workspace's `tenantId` from its owner via `workspaceService.resolveWorkspaceTenant` (a reseller owner gets their tenant or root by the server-resolved host), never from client input; `User` email is unique per tenant. See `docs/tenancy.md`.
 
 11. **Cloud signup writes a bootstrap `UserQuota` trial row** (`ensureBootstrapPlan`) before `publishEntitlements`, so a new cloud user always has a quota row.
 
@@ -178,6 +178,10 @@ One line each; the full text (reasons, file paths, edge cases) is in `docs/agent
 24. **Workspace purge must stay bounded** — index new FKs, audit high-volume purge paths, and use bounded child-before-parent drains. Read `.agents/skills/workspace-purge/SKILL.md`.
 
 25. **Keep Node-only code out of builder router imports** — split it into a server-only package subpath; Edge instrumentation traces the full router graph. See `apps/builder/__tests__/edge-instrumentation-graph.test.ts`.
+
+26. **`User.connectionAuthorizations` is a secret column** — the encrypted backup of each user's latest provider authorization, kept independently of `Connection`/channel rows. Every `User` read that reaches a client, cache, log or `ctx` goes through `userColumnsWithoutSecrets` (`UserModel` omits the column); never declare it in better-auth `additionalFields`; write only through `userService.recordConnectionAuthorization`; guarded by `packages/database/__tests__/user-secret-projection.test.ts`.
+
+27. **Every resource a user builds has a template decision** — declare `TOOL_TEMPLATE_COVERAGE` for a new Tools card, classify every column of a template-copied table in the adapter map, and keep shared `insertInTx`/`deleteInTx` cores; see `template-integration`.
 <!-- END GENERATED: SHARED-INVARIANTS -->
 
 ## Git conventions
@@ -189,7 +193,7 @@ See **`.agents/rules/git.md`** for the full canonical rules (commit format, bran
 - Human-facing docs: [chatbotx.io/docs](https://chatbotx.io/docs) (including Quick Start).
 - Tech stack details: `docs/tech-stack.md`
 - Architecture decisions: `docs/adr/`
-- Broadcast audience (direct-chat-only default, reaching contacts without one by chat history with **Last interaction**, moving back to draft): `docs/broadcasts.md`
+- Broadcast audience (direct-chat-only default, reaching contacts without one by chat history with **Last interaction**, moving back to draft, the broadcasts a contact was sent: `contacts.listBroadcasts` with search and keyset paging): `docs/broadcasts.md`
 - Messaging scaling runbook: `docs/scaling-messaging.md`
 - Request flow diagrams: `docs/request-workflow.md`
 - White-label tenancy model: `docs/tenancy.md`
@@ -197,9 +201,10 @@ See **`.agents/rules/git.md`** for the full canonical rules (commit format, bran
 - Ads conversion tracking (CTWA/CTM/CTID, rules vs Trigger actions, CAPI, per-click ad touch history): `docs/ads-conversion-tracking.md`
 - Google Ads Click-to-Message conversion tracking (gclid/gbraid capture, Connection-engine OAuth, Data Manager API delivery, dedup, state machine, statistics dashboard, read-only public API, ops runbook): `docs/google-ads-conversion-tracking.md`
 - Google Ads conversion options for admins (dedup mode, conversion time, consent, legacy differences): `docs/google-ads-conversion-options-admin-guide.md`
-- Trigger sequence actions (`addSequence` / `removeSequence`: shape, no sequence events, template behavior) and trigger loop protection (non-emitting actions, per-trigger-per-contact run circuit breaker, blind spots): `docs/trigger-actions.md`
+- Trigger sequence actions (`addSequence` / `removeSequence`: shape, no sequence events, template behavior) and trigger loop protection (non-emitting actions, per-trigger-per-contact run circuit breaker, blind spots), and post-comment events (`contactCommentedOnPost` / `contactFirstCommentedOnPost`: Messenger + Instagram, conditions, first-claim and Redis dedupe, run-scoped `{{post.*}}` / `{{comment.*}}`, templates): `docs/trigger-actions.md`
 - Bot block trigger events (`contactBlockedBot` / `contactUnblockedBot`: Telegram `my_chat_member` source, existing contacts only, retry dedupe, re-registering older bots' webhooks with `backfill:telegram-webhooks`): `docs/bot-block-trigger-events.md`
 - Comment automation (all channels): `docs/comment-automation.md` (skill: `.agents/skills/comment-automation/`)
+- Posts (post analytics: sparse daily snapshots `ChannelPostMetricDaily`, baseline/unknown-vs-zero rules, coverage, best posting times, retention; list posts that exist on inbox channels, topics, per-post comment settings, post sync engine, comments and exports, publishing with inbox tokens (TikTok via its own login), destination states, reconnect fan-out, posting schedule, public API): `docs/posts.md`
 - LINE channel (Messaging API setup, webhook + signature, reply vs push and monthly quota, token refresh, flow-step mapping, ops runbook, open items): `docs/line.md`
 - Push notifications (Expo Push Service, device tokens): `docs/push-notifications.md`
 - Enterprise licensing (offline Ed25519 license keys): `docs/licensing.md`
@@ -208,6 +213,7 @@ See **`.agents/rules/git.md`** for the full canonical rules (commit format, bran
 - Account deletion (request lifecycle, authentication revocation, worker purge, and migration approval): `docs/account-deletion.md`
 - Leaderboards (ranking campaigns: scoring sources, Postgres/Redis split, partitioned score history, ops): `docs/leaderboard.md`
 - Automatic Customer Scan (contact import by scanning channel conversation history; shares the `CoexistSyncRun` table via a `type` discriminator): `docs/contact-scan.md`
+- Contact Sync (silent background import of contacts, tags and custom fields from an external source such as AhaChat: provider adapters, signed shared-key export with no per-page token, pages detected by channel + page id, one live run per workspace, 4-hour menu cooldown, import at page connect with a durable history follow-up, fill/overwrite merge, mappings, chunk/lease contract, key rotation, public API): `docs/contact-sync.md`
 - Ecommerce orders, vendors, store settings and web shop (order lifecycle, money/currency rules, order numbering, stock locking, vendor rules, open-hours schedules, shop token and `/shop` pages, cart and checkout, discount codes, store trigger/webhook events, abandoned carts, product collections, product search by message, sales analytics, purchase contact filters, WhatsApp cart → CHECK OUT, order notifications, Stripe/PayPal online payments (Stripe Connect, payment deadline, refunds), public API): `docs/ecommerce.md`
 - WhatsApp payment requests (Pix, Boleto, payment link and one-click payment buttons for Brazil: templates, `templateParams` keys, the channel's Pix-with-redirect setting, pre-send guard, inbound `payment_method` confirmation, what is out of scope): `docs/whatsapp-payment-requests.md`
 - WhatsApp Flow media uploads (PhotoPicker / DocumentPicker answers: download and verification, storage, `FlowResponseFile`, saving file links to custom fields, API): `docs/whatsapp-flow-media-uploads.md`
@@ -215,12 +221,17 @@ See **`.agents/rules/git.md`** for the full canonical rules (commit format, bran
 - WooCommerce store source (mirroring a WooCommerce store over its REST API: connect with Consumer key/secret, signed webhooks + sync jobs, product/variation/coupon mapping, order status mapping and contact linking, Web Checkout via a pending order's payment page vs In-App cash-on-delivery, shared `externalStoreManaged` guards and `externalCheckoutMethod` settings, public API): `docs/woocommerce.md`
 - Product messages (`sendProducts` flow step: sendable products, per-channel display rules, WhatsApp catalog payloads, adding a channel): `docs/product-messages.md`
 - WhatsApp Conversation Routing (thread control with Meta AI / other partners: webhook backfill, send gate, handover, archive release): `docs/whatsapp-conversation-routing.md`
+- WhatsApp Business-app echoes (`smb_message_echoes`: messages, edits and revokes the business makes in the Business app reach the inbox live, echo types, identity rules, deploy order): `docs/whatsapp-business-app-echoes.md`
 - Inbound Webhooks (external systems POST JSON to a tokenised URL → find/create a contact on a chosen inbox, map payload values, run trigger actions; outbox/claim/lease processing, per-channel inbox identifiers, request log, public API): `docs/inbound-webhooks.md`
 - Working Hours (agent schedules, waiting-window state machine, response time and first response time within working hours, `agent:replied` analytics pipeline, public API): `docs/working-hours.md`
 - Messenger welcome message flows (publish/rename/delete sync of a flow's starting step to Meta Click-to-Messenger welcome flows, ad-locked behavior, table/jobs/lock): `docs/messenger-welcome-message-flows.md`
 - Contact activity store (channel-agnostic activity tables, eleven activity-backed contact filters, since-tracking semantics, bounded counts, kill switches, ops runbook): `docs/contact-activity.md`
 - Templates (creating, sharing, what an install copies, folders and list order, warning audiences, View Analytics, updates, uninstall, public API, deploy notes): `docs/templates.md`
 - Templates regression testing (rule → test map, public-API end-to-end script `scripts/templates-e2e.mjs`, manual UI checklist): `docs/templates-testing.md`
+- Inbox translation (two-way AI translation of direct text: on-view inbound only, 10 s outbound wait and a failed translation is never sent, per-conversation language, shared `aiAgent` queue, privacy and cost, public API/CLI/MCP, data lifecycle): `docs/inbox-translation.md`
+- Inbox participants (who replied in a conversation: `ConversationParticipant.lastRepliedAt`, what counts as a reply, `sentByUserId` stamp and `resolveMessageAuthorUserId`, the two `recordReply` call sites, `recentParticipants` and `conversations.listParticipants`, reuse of `messageCreated` realtime, no backfill): `docs/inbox-participants.md`
+- Failed outgoing messages (kept with `sendError` only for a member's Inbox send; every other failed send — API/CLI/MCP, automations, broadcasts — is removed with a `messageRemoved` realtime event and logged to the Error Log; `sendFrom: "inbox" | "api"`, `sentFromInbox` stamp, `settleFailedOutgoingMessage`): `docs/failed-outgoing-messages.md`
+- Email channel (SMTP inbox as a two-way channel: threading identity, send/flow support, IMAP polling cursor and fairness, inbound-parse webhooks for SendGrid/Mailgun/Postmark/Brevo, loop protection, size caps, setup guide): `docs/email-channel.md`
 - Pipelines (CRM kanban boards: data model, access scope/ACL, mutation engine and post-commit effects, locking order, queued stage deletion, keyset cursors, caching policy, pipelineItem* events/webhooks/realtime, Pipelines flow step, `pipelineItem` contact filter, `{{pipelines.*}}` variables, templates, public API/CLI/MCP, analytics, limits): `docs/pipelines.md`
 
 When unsure, search the codebase for an existing feature that resembles the request and mirror its structure, imports, and error-handling style.

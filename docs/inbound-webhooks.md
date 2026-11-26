@@ -114,6 +114,10 @@ The stored `InboundWebhookRequest` row is the outbox.
 
 The list shows how many requests each webhook has accepted since it was created (`requestCount`, also on `get` and `list`). A duplicate (same `Idempotency-Key`) is not counted, and the count moves in the same transaction as the stored request, so it cannot drift. Purging old request rows after 30 days never lowers it. Rows that existed when the counter was added were counted from the requests still retained then. The request log lives on its own screen — row menu → *View analytics* (`/space/{workspaceId}/inbound-webhooks/{id}/analytics`); agents read the same data with `listRequests` / `getRequest`.
 
+## Templates
+
+Inbound webhooks can be shared in a template (category `inboundWebhooks`, super admin only). The copy keeps its identifiers, mappings, actions and inbox rule but gets a new token and installs switched off. See `docs/templates.md` for what is re-bound, dropped and locked.
+
 ## Limits
 
 100 webhooks per workspace · 1–4 identifiers · 50 field mappings · 10 actions · JSON paths ≤ 500 characters · sample JSON ≤ 64 KiB · request body ≤ 256 KiB.

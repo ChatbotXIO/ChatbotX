@@ -119,7 +119,7 @@ export const templateUninstallInstallRootRepository = {
     if (locked.rows.length === 0) {
       return "absent"
     }
-    const children = await tx.execute(
+    const children = await tx.execute<Record<string, unknown>>(
       sql`SELECT 1 FROM "Folder" WHERE "workspaceId" = ${input.workspaceId}
           AND "paths" @> ARRAY[${input.folderId}]::bigint[]
           AND "id" <> ${input.folderId} LIMIT 1`,
@@ -128,7 +128,7 @@ export const templateUninstallInstallRootRepository = {
       return "notEmpty"
     }
     for (const reference of await listFolderReferenceColumns(tx)) {
-      const holder = await tx.execute(
+      const holder = await tx.execute<Record<string, unknown>>(
         sql`SELECT 1 FROM ${sql.raw(reference.table)}
             WHERE ${sql.identifier(reference.column)} = ${input.folderId} LIMIT 1`,
       )
@@ -136,7 +136,7 @@ export const templateUninstallInstallRootRepository = {
         return "notEmpty"
       }
     }
-    await tx.execute(
+    await tx.execute<Record<string, unknown>>(
       sql`DELETE FROM "Folder" WHERE "id" = ${input.folderId}
           AND "workspaceId" = ${input.workspaceId}`,
     )

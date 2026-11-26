@@ -2644,3 +2644,385 @@ describe("ShardedMessageRepository primary-key recovery after a transport retry"
     expect(ids[2]).toBe(ids[1])
   })
 })
+
+function makeTranslationShardManager(
+  rowsByShard: Record<string, unknown[]>,
+  options: { failShard?: string } = {},
+) {
+  const clients = new Map<
+    string,
+    { select: ReturnType<typeof vi.fn>; where: ReturnType<typeof vi.fn> }
+  >()
+  for (const [shardId, rows] of Object.entries(rowsByShard)) {
+    // `where` is the last call of findManyForTranslation, and is followed by
+    // orderBy/limit in findInboundTextBefore: resolve at whichever comes last.
+    const tail = {
+      orderBy: vi.fn().mockReturnThis(),
+      limit: vi.fn().mockResolvedValue(rows),
+      // biome-ignore lint/suspicious/noThenProperty: a Drizzle query is awaitable
+      then: (resolve: (value: unknown[]) => unknown) => resolve(rows),
+    }
+    const where = vi.fn().mockReturnValue(tail)
+    const chain = { from: vi.fn().mockReturnThis(), where }
+    clients.set(shardId, {
+      select: vi.fn().mockReturnValue(chain),
+      where,
+    })
+  }
+  const shards = Object.keys(rowsByShard).map((id) =>
+    makeShardInfo(`tr:${id}`, id),
+  )
+  return {
+    clients,
+    manager: {
+      getShardsForTimeRange: vi.fn().mockResolvedValue(shards),
+      getWriteShardInfo: vi.fn().mockResolvedValue(null),
+      withShardClientForRead: vi.fn(
+        (shard: { id: string }, fn: (client: unknown) => Promise<unknown>) => {
+          if (shard.id === options.failShard) {
+            throw new Error("shard unavailable")
+          }
+          return fn(clients.get(shard.id))
+        },
+      ),
+    },
+  }
+}
+
+describe("ShardedMessageRepository.findManyForTranslation", () => {
+  const createdAt = new Date("2026-06-01T00:00:00Z")
+  const row = (id: string) => ({
+    id,
+    createdAt,
+    conversationId: "conv-1",
+    contactInboxId: "ci-1",
+    direction: "incoming",
+    type: "message",
+    contentType: "text",
+    text: `text ${id}`,
+    deletedAt: null,
+  })
+
+  test("reads every shard in range, merges, and deduplicates by id", async () => {
+    const { manager } = makeTranslationShardManager({
+      a: [row("1"), row("2")],
+      b: [row("2"), row("3")],
+    })
+    const repo = new ShardedMessageRepository(manager as never)
+
+    const result = await repo.findManyForTranslation("ws-1", [
+      { id: "1", createdAt },
+      { id: "2", createdAt },
+      { id: "3", createdAt },
+    ])
+
+    expect(result.map((message) => message.id).sort()).toEqual(["1", "2", "3"])
+  })
+
+  test("scopes the query by workspace and starts the shard range at the oldest ref", async () => {
+    const { manager, clients } = makeTranslationShardManager({ a: [row("1")] })
+    const repo = new ShardedMessageRepository(manager as never)
+    const older = new Date("2026-05-01T00:00:00Z")
+
+    await repo.findManyForTranslation("ws-1", [
+      { id: "1", createdAt },
+      { id: "0", createdAt: older },
+    ])
+
+    const whereArg = clients.get("a")?.where.mock.calls[0]?.[0]
+    expect(objectContainsValue(whereArg, "ws-1")).toBe(true)
+    expect(manager.getShardsForTimeRange).toHaveBeenCalledWith(
+      older,
+      expect.any(Date),
+    )
+  })
+
+  test("returns nothing for no refs without touching a shard", async () => {
+    const { manager } = makeTranslationShardManager({ a: [] })
+    const repo = new ShardedMessageRepository(manager as never)
+
+    await expect(repo.findManyForTranslation("ws-1", [])).resolves.toEqual([])
+    expect(manager.withShardClientForRead).not.toHaveBeenCalled()
+  })
+
+  test("an unavailable shard fails the read instead of hiding its messages", async () => {
+    const { manager } = makeTranslationShardManager(
+      { a: [row("1")], b: [row("2")] },
+      { failShard: "b" },
+    )
+    const repo = new ShardedMessageRepository(manager as never)
+
+    await expect(
+      repo.findManyForTranslation("ws-1", [
+        { id: "1", createdAt },
+        { id: "2", createdAt },
+      ]),
+    ).rejects.toThrow("shard unavailable")
+  })
+})
+
+describe("ShardedMessageRepository.findInboundTextBefore", () => {
+  const before = new Date("2026-06-01T00:00:00Z")
+  const sinceTime = new Date("2026-05-01T00:00:00Z")
+  const context = (id: string, createdAt: string, text: string | null) => ({
+    id,
+    createdAt: new Date(createdAt),
+    text,
+  })
+
+  test("merges shards newest first, keeps `limit`, and scopes by workspace", async () => {
+    const { manager, clients } = makeTranslationShardManager({
+      a: [context("1", "2026-05-20T00:00:00Z", "old")],
+      b: [
+        context("3", "2026-05-31T00:00:00Z", "newest"),
+        context("2", "2026-05-25T00:00:00Z", "middle"),
+      ],
+    })
+    const repo = new ShardedMessageRepository(manager as never)
+
+    const result = await repo.findInboundTextBefore({
+      workspaceId: "ws-1",
+      conversationId: "conv-1",
+      before,
+      sinceTime,
+      limit: 2,
+    })
+
+    expect(result.map((message) => message.text)).toEqual(["newest", "middle"])
+    expect(
+      objectContainsValue(clients.get("a")?.where.mock.calls[0]?.[0], "ws-1"),
+    ).toBe(true)
+  })
+
+  test("drops a row with no text and returns nothing for a zero limit", async () => {
+    const { manager } = makeTranslationShardManager({
+      a: [context("1", "2026-05-20T00:00:00Z", null)],
+    })
+    const repo = new ShardedMessageRepository(manager as never)
+    const base = {
+      workspaceId: "ws-1",
+      conversationId: "conv-1",
+      before,
+      sinceTime,
+    }
+
+    await expect(
+      repo.findInboundTextBefore({ ...base, limit: 3 }),
+    ).resolves.toEqual([])
+    await expect(
+      repo.findInboundTextBefore({ ...base, limit: 0 }),
+    ).resolves.toEqual([])
+  })
+})
+
+describe("ShardedMessageRepository.findOutgoingBefore", () => {
+  const since = new Date("2026-01-01T00:00:00Z")
+  const before = { createdAt: "2026-06-01T00:00:00.123456Z", id: "500" }
+  const shardA = makeShardInfo("tr:a", "a")
+  const shardB = makeShardInfo("tr:b", "b")
+  const writeShard = makeShardInfo("tr:w", "w")
+  const exact = (date: Date) => date.toISOString().replace("Z", "000Z")
+  const baseParams = {
+    before,
+    conversationId: "conv-1",
+    limit: 2,
+    since,
+    workspaceId: "ws-1",
+  }
+
+  function makeManager(
+    clients: Map<string, ReturnType<typeof makeConversationReadClient>>,
+    options: { failShardId?: string; writeShard?: unknown } = {},
+  ) {
+    return {
+      getShardsForTimeRange: vi.fn().mockResolvedValue([shardA, shardB]),
+      getWriteShardInfo: vi.fn().mockResolvedValue(options.writeShard ?? null),
+      // The primary of each shard: the history read must never see a lagging replica.
+      getShardClient: vi.fn((shard: { id: string }) =>
+        shard.id === options.failShardId
+          ? Promise.reject(new Error("shard unavailable"))
+          : Promise.resolve(clients.get(shard.id)),
+      ),
+      withShardClientForRead: vi.fn(() => {
+        throw new Error("findOutgoingBefore must not read a replica")
+      }),
+    }
+  }
+
+  test("filters to sent bot or system messages and bounds the tuple and lower bound", async () => {
+    const client = makeConversationReadClient([])
+    const manager = makeManager(
+      new Map([
+        ["a", client],
+        ["b", client],
+      ]),
+    )
+    const repo = new ShardedMessageRepository(manager as never)
+
+    await repo.findOutgoingBefore(baseParams)
+
+    const where = client.chain.where.mock.calls[0][0]
+    const { sql, params } = new PgDialect().sqlToQuery(where)
+    expect(sql).toContain('"messageType" = $')
+    expect(sql).toContain('"senderType" in')
+    expect(sql).toContain('"type" = $')
+    expect(sql).toContain('"sendError" is null')
+    expect(sql).toContain('"createdAt" >= $')
+    expect(sql).toContain('"createdAt" < $')
+    expect(sql).toContain("::timestamptz")
+    expect(sql).toContain('"createdAt" = $')
+    // The bound is the microsecond-exact text, never a JS Date.
+    expect(params).toContain("2026-06-01T00:00:00.123456Z")
+    expect(params).toEqual(
+      expect.arrayContaining([
+        "conv-1",
+        "ws-1",
+        "outgoing",
+        "bot",
+        "system",
+        "message",
+        "500",
+      ]),
+    )
+    expect(client.chain.limit).toHaveBeenCalledWith(2)
+  })
+
+  test("queries the time-range shards for [since, before] plus the write shard", async () => {
+    const client = makeConversationReadClient([])
+    const manager = makeManager(
+      new Map([
+        ["a", client],
+        ["b", client],
+        ["w", client],
+      ]),
+      { writeShard },
+    )
+    const repo = new ShardedMessageRepository(manager as never)
+
+    await repo.findOutgoingBefore(baseParams)
+
+    expect(manager.getShardsForTimeRange).toHaveBeenCalledWith(
+      startOfHour(since),
+      endOfHour(new Date(before.createdAt)),
+    )
+    expect(manager.getShardClient).toHaveBeenCalledTimes(3)
+    expect(manager.withShardClientForRead).not.toHaveBeenCalled()
+  })
+
+  test("merges shards globally, newest first, with a numeric id tie-break, and applies the limit", async () => {
+    const t = new Date("2026-05-01T00:00:00Z")
+    const clients = new Map([
+      [
+        "a",
+        makeConversationReadClient([
+          { id: "9", createdAtExact: exact(t) } as ReadMessage,
+          {
+            id: "3",
+            createdAtExact: "2026-04-01T00:00:00.000000Z",
+          },
+        ] as ReadMessage[]),
+      ],
+      [
+        "b",
+        makeConversationReadClient([
+          { id: "10", createdAtExact: exact(t) } as ReadMessage,
+        ]),
+      ],
+    ])
+    const repo = new ShardedMessageRepository(makeManager(clients) as never)
+
+    const result = await repo.findOutgoingBefore(baseParams)
+
+    expect(result.map((message) => message.id)).toEqual(["10", "9"])
+  })
+
+  test("merges by the microsecond-exact time, not the millisecond Date", async () => {
+    // Same millisecond: shard b's row is 400us newer despite the lower id.
+    const clients = new Map([
+      [
+        "a",
+        makeConversationReadClient([
+          {
+            id: "90",
+            createdAtExact: "2026-05-01T00:00:00.123100Z",
+          },
+        ] as ReadMessage[]),
+      ],
+      [
+        "b",
+        makeConversationReadClient([
+          {
+            id: "10",
+            createdAtExact: "2026-05-01T00:00:00.123500Z",
+          },
+        ] as ReadMessage[]),
+      ],
+    ])
+    const repo = new ShardedMessageRepository(makeManager(clients) as never)
+
+    const result = await repo.findOutgoingBefore(baseParams)
+
+    expect(result.map((message) => message.id)).toEqual(["10", "90"])
+  })
+
+  test("reads the primary of every shard, so replica lag cannot hide a newer bot message", async () => {
+    const newer = {
+      id: "20",
+      createdAtExact: "2026-05-02T00:00:00.000000Z",
+    } as ReadMessage
+    const older = {
+      id: "10",
+      createdAtExact: "2026-05-01T00:00:00.000000Z",
+    } as ReadMessage
+    const primary = makeConversationReadClient([newer, older])
+    const lagging = makeConversationReadClient([older])
+    const manager = makeManager(new Map([["a", primary]]))
+    manager.getShardsForTimeRange.mockResolvedValue([shardA])
+    manager.withShardClientForRead = vi.fn(
+      (_shard: unknown, fn: (client: unknown) => Promise<unknown>) =>
+        fn(lagging),
+    )
+    const repo = new ShardedMessageRepository(manager as never)
+
+    const result = await repo.findOutgoingBefore(baseParams)
+
+    expect(result.map((message) => message.id)).toEqual(["20", "10"])
+    expect(lagging.select).not.toHaveBeenCalled()
+  })
+
+  test("throws when a shard fails instead of deciding on partial history", async () => {
+    const clients = new Map([
+      ["a", makeConversationReadClient([])],
+      ["b", makeConversationReadClient([])],
+    ])
+    const repo = new ShardedMessageRepository(
+      makeManager(clients, { failShardId: "b" }) as never,
+    )
+
+    await expect(repo.findOutgoingBefore(baseParams)).rejects.toBeInstanceOf(
+      MessageShardUnavailableError,
+    )
+  })
+
+  test("throws when shard selection fails or no shard exists", async () => {
+    const failing = {
+      getShardsForTimeRange: vi.fn().mockRejectedValue(new Error("registry")),
+      getWriteShardInfo: vi.fn().mockResolvedValue(null),
+    }
+    await expect(
+      new ShardedMessageRepository(failing as never).findOutgoingBefore(
+        baseParams,
+      ),
+    ).rejects.toBeInstanceOf(MessageShardUnavailableError)
+
+    const empty = {
+      getShardsForTimeRange: vi.fn().mockResolvedValue([]),
+      getWriteShardInfo: vi.fn().mockResolvedValue(null),
+    }
+    await expect(
+      new ShardedMessageRepository(empty as never).findOutgoingBefore(
+        baseParams,
+      ),
+    ).rejects.toBeInstanceOf(MessageShardUnavailableError)
+  })
+})

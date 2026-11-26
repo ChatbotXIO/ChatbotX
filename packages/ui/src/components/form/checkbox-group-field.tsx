@@ -12,11 +12,18 @@ export type CheckboxGroupOption = {
   disabled?: boolean
   /** Rendered before the label (e.g. an avatar or a channel icon). */
   leading?: ReactNode
+  /** Rendered right after the label text, on its line (e.g. a small badge); never truncated. */
+  labelSuffix?: ReactNode
   /**
    * Rendered at the very end of the row (e.g. a per-row Switch). Deliberately
    * outside the `<label>`, so clicking it never toggles the checkbox.
    */
   trailing?: ReactNode
+  /**
+   * Rendered under the row, aligned with the label (e.g. an input that only
+   * this row needs). Outside the `<label>`, so typing never toggles the box.
+   */
+  below?: ReactNode
 }
 
 type CheckboxGroupFieldProps<T extends FieldValues> = {
@@ -57,15 +64,18 @@ function CheckboxRowLabel({
     >
       {/* Truncated text needs a `title`: the row clips horizontally, so this
           is the only way back to the full name. */}
-      <span
-        className={cn(
-          "truncate font-normal text-sm leading-none",
-          option.disabled && "text-muted-foreground",
-        )}
-        id={labelId}
-        title={option.label}
-      >
-        {option.label}
+      <span className="flex min-w-0 items-center gap-1.5">
+        <span
+          className={cn(
+            "truncate font-normal text-sm leading-none",
+            option.disabled && "text-muted-foreground",
+          )}
+          id={labelId}
+          title={option.label}
+        >
+          {option.label}
+        </span>
+        {option.labelSuffix}
       </span>
       {option.description && (
         <p
@@ -97,28 +107,31 @@ function CheckboxGroupRow({
   const labelId = `${checkboxId}-label`
 
   return (
-    <div className="flex items-center space-x-2 pb-2">
-      <Checkbox
-        aria-labelledby={labelId}
-        checked={isChecked}
-        className="shrink-0"
-        disabled={option.disabled}
-        id={checkboxId}
-        onCheckedChange={onCheckedChange}
-      />
-      {option.leading}
-      <CheckboxRowLabel
-        labelId={labelId}
-        onToggle={() => {
-          if (!option.disabled) {
-            onCheckedChange(!isChecked)
-          }
-        }}
-        option={option}
-      />
-      {option.trailing && (
-        <div className="ms-auto shrink-0">{option.trailing}</div>
-      )}
+    <div className="pb-2">
+      <div className="flex items-center space-x-2">
+        <Checkbox
+          aria-labelledby={labelId}
+          checked={isChecked}
+          className="shrink-0"
+          disabled={option.disabled}
+          id={checkboxId}
+          onCheckedChange={onCheckedChange}
+        />
+        {option.leading}
+        <CheckboxRowLabel
+          labelId={labelId}
+          onToggle={() => {
+            if (!option.disabled) {
+              onCheckedChange(!isChecked)
+            }
+          }}
+          option={option}
+        />
+        {option.trailing && (
+          <div className="ms-auto shrink-0">{option.trailing}</div>
+        )}
+      </div>
+      {option.below && <div className="ps-6 pt-2">{option.below}</div>}
     </div>
   )
 }

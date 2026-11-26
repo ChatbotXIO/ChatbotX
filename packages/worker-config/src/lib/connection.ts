@@ -51,6 +51,11 @@ export const queueGroupByName: Record<QueueName, QueueGroup> = {
   // Template install / sync / uninstall: long transactions, bursty on a
   // widely installed template's save, never latency-critical.
   template: "bulk",
+  // Broadcast "left a phone/email" attribution: bounded, rate-limited, and the
+  // statistic may be late, so it must never compete with chat/integration.
+  contactInfoCapture: "bulk",
+  // Composed posts published to social networks: one job per destination.
+  postPublish: "bulk",
 }
 
 function resolveGroupUrl(group: QueueGroup): string {

@@ -5,6 +5,7 @@ import {
 import { createMessageRepository } from "@chatbotx.io/database/repositories"
 import type { MessageModel } from "@chatbotx.io/database/types"
 import type { MessageButtonTemplate } from "@chatbotx.io/sdk"
+import type { SendFrom } from "@chatbotx.io/utils/send-from"
 import { ChatJobAction, chatQueue } from "@chatbotx.io/worker-config"
 import { contactInboxService } from "../contact-inbox/service"
 import { conversationService } from "../conversation/service"
@@ -61,8 +62,14 @@ export const resendOutgoing = async (props: {
   conversationId: string
   messageId: string
   createdAt: Date
+  /**
+   * `inbox` for the Inbox's Resend button (a failed resend stays with its
+   * error), `api` for the Public API/CLI/MCP (a failed resend of a message not
+   * sent from the Inbox is removed).
+   */
+  sendFrom: SendFrom
 }): Promise<{ id: string; queued: true }> => {
-  const { workspaceId, conversationId, messageId, createdAt } = props
+  const { workspaceId, conversationId, messageId, createdAt, sendFrom } = props
   const repository = await createMessageRepository()
 
   const message = await repository.findById({
@@ -138,7 +145,7 @@ export const resendOutgoing = async (props: {
         contactInbox,
         message: { ...messageWithAttachments, parentCreatedAt },
         quickReplies: readStoredButtons(message.contentAttributes),
-        sendFrom: "inbox",
+        sendFrom,
       },
     })
   } catch (error) {

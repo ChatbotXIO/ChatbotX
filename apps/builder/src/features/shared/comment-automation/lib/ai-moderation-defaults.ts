@@ -1,4 +1,7 @@
-import type { CommentAIModeration } from "@chatbotx.io/database/partials"
+import {
+  COMMENT_MODERATION_DEFAULT_DECISION_THRESHOLD,
+  type CommentAIModeration,
+} from "@chatbotx.io/database/partials"
 
 /**
  * What the AI moderation block starts from: off, hiding (reversible) the three
@@ -8,15 +11,32 @@ import type { CommentAIModeration } from "@chatbotx.io/database/partials"
  */
 export const AI_MODERATION_DEFAULTS: CommentAIModeration = {
   enabled: false,
+  engine: "aiAgent",
   aiAgentId: null,
+  decisionConnectionId: null,
+  decisionModel: null,
+  decisionThreshold: COMMENT_MODERATION_DEFAULT_DECISION_THRESHOLD,
   categories: ["hate", "offensive", "harassment"],
   instruction: "",
   action: "hide",
 }
 
-/** The stored settings, or the defaults for a row written before they existed. */
+/**
+ * The stored settings, or the defaults for a row written before they existed.
+ * A row stored before engines existed is filled in as the AI agent engine.
+ */
 export function withAIModerationDefaults(
   aiModeration: CommentAIModeration | undefined,
 ): CommentAIModeration {
-  return aiModeration ?? AI_MODERATION_DEFAULTS
+  if (!aiModeration) {
+    return AI_MODERATION_DEFAULTS
+  }
+  return {
+    ...AI_MODERATION_DEFAULTS,
+    ...aiModeration,
+    engine: aiModeration.engine ?? "aiAgent",
+    decisionThreshold:
+      aiModeration.decisionThreshold ??
+      COMMENT_MODERATION_DEFAULT_DECISION_THRESHOLD,
+  }
 }

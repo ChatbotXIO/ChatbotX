@@ -1,5 +1,6 @@
 import {
   and,
+  type DatabaseClient,
   db,
   eq,
   inArray,
@@ -26,6 +27,16 @@ import { BaseService } from "../base.service"
 import { assertAutomationAccount } from "../comment-automation/account-scope"
 import { notFoundException } from "../errors"
 import { resolveFolderIdFilter } from "../lib/folder-filter"
+import {
+  assertReferencable,
+  assertResourceEditable,
+  changedKeysOf,
+  withDeleteGuard,
+} from "../template/installed-resource.service"
+import {
+  type TemplateLockKey,
+  withTemplateLockedTransaction,
+} from "../template/template-resource-locks"
 
 type ListIgStoriesInput = {
   workspaceId: string
@@ -81,6 +92,22 @@ function pinStoryMentionFilters<T extends Partial<IgStoryAutomationWriteData>>(
       includeKeywords: matchAllKeywords(),
     }),
   }
+}
+
+/** The flow or AI agent a reply runs: a parent locked together with the automation. */
+const replyParents = (data: {
+  reply?: { type: string; value: string | null } | null
+}): TemplateLockKey[] => {
+  const reply = data.reply
+  if (!reply?.value) {
+    return []
+  }
+  if (reply.type === "flow") {
+    return [{ kind: "flow", resourceId: reply.value }]
+  }
+  return reply.type === "AIAgent"
+    ? [{ kind: "aiAgent", resourceId: reply.value }]
+    : []
 }
 
 class IgStoryAutomationService extends BaseService {
@@ -153,11 +180,14 @@ class IgStoryAutomationService extends BaseService {
     return { data, pageCount }
   }
 
-  async findOrFail(input: {
-    workspaceId: string
-    id: string
-  }): Promise<IgStoryAutomationModel> {
-    const record = await db.query.igStoryAutomationModel.findFirst({
+  async findOrFail(
+    input: {
+      workspaceId: string
+      id: string
+    },
+    tx: DatabaseClient = db,
+  ): Promise<IgStoryAutomationModel> {
+    const record = await tx.query.igStoryAutomationModel.findFirst({
       where: {
         id: input.id,
         workspaceId: input.workspaceId,
@@ -178,13 +208,46 @@ class IgStoryAutomationService extends BaseService {
     trigger?: IgStoryAutomationTrigger
     data: IgStoryAutomationWriteData
   }): Promise<IgStoryAutomationModel> {
+    const parents = replyParents(input.data)
+    const write = async (tx: DatabaseClient) => {
+      // A flow or agent the reply runs must not be one that is being uninstalled.
+      await assertReferencable({
+        workspaceId: input.workspaceId,
+        parents,
+        tx,
+      })
+      await assertAutomationAccount({
+        workspaceId: input.workspaceId,
+        type: input.type,
+        inboxId: input.data.inboxId,
+        tx,
+      })
+      return await this.insertInTx(tx, input)
+    }
+    return parents.length > 0
+      ? await withTemplateLockedTransaction(write, {
+          workspaceId: input.workspaceId,
+          initialKeys: parents,
+        })
+      : await write(db)
+  }
+
+  /**
+   * The row write of `create`, shared with the template install (which has
+   * already checked the account and the references it binds): the story and
+   * keyword defaults and the story-mention pinning live here, once.
+   */
+  async insertInTx(
+    tx: DatabaseClient,
+    input: {
+      workspaceId: string
+      type: IgStoryAutomationType
+      trigger?: IgStoryAutomationTrigger
+      data: IgStoryAutomationWriteData
+    },
+  ): Promise<IgStoryAutomationModel> {
     const trigger = input.trigger ?? igStoryAutomationTriggers.enum.storyReply
-    await assertAutomationAccount({
-      workspaceId: input.workspaceId,
-      type: input.type,
-      inboxId: input.data.inboxId,
-    })
-    const [created] = await db
+    const [created] = await tx
       .insert(igStoryAutomationModel)
       .values({
         id: createId(),
@@ -207,27 +270,53 @@ class IgStoryAutomationService extends BaseService {
     ctx: { workspaceId: string; id: string },
     data: Partial<IgStoryAutomationWriteData>,
   ): Promise<IgStoryAutomationModel> {
-    const existing = await this.findOrFail(ctx)
-    await assertAutomationAccount({
-      workspaceId: ctx.workspaceId,
-      // `findOrFail` only matches `igStoryAutomationTypes`.
-      type: existing.type as IgStoryAutomationType,
-      inboxId: data.inboxId,
-      currentInboxId: existing.inboxId,
-    })
+    // The automation and the flow or agent its reply runs are locked before
+    // the stored row is read, so the diff that decides the View-only guard is
+    // computed under the lock.
+    return await withTemplateLockedTransaction(
+      async (tx) => {
+        const existing = await this.findOrFail(ctx, tx)
+        await assertResourceEditable({
+          workspaceId: ctx.workspaceId,
+          resourceKind: "storyAutomation",
+          resourceIds: [existing.id],
+          changedKeys: changedKeysOf(existing, data),
+          referencedParents: replyParents(data),
+          tx,
+        })
+        await assertAutomationAccount({
+          workspaceId: ctx.workspaceId,
+          // `findOrFail` only matches `igStoryAutomationTypes`.
+          type: existing.type as IgStoryAutomationType,
+          inboxId: data.inboxId,
+          currentInboxId: existing.inboxId,
+          tx,
+        })
 
-    const [updated] = await db
-      .update(igStoryAutomationModel)
-      .set(pinStoryMentionFilters(existing.trigger, data))
-      .where(
-        and(
-          eq(igStoryAutomationModel.id, ctx.id),
-          eq(igStoryAutomationModel.workspaceId, ctx.workspaceId),
-          inArray(igStoryAutomationModel.type, igStoryAutomationTypes.options),
-        ),
-      )
-      .returning()
-    return updated
+        const [updated] = await tx
+          .update(igStoryAutomationModel)
+          .set(pinStoryMentionFilters(existing.trigger, data))
+          .where(
+            and(
+              eq(igStoryAutomationModel.id, ctx.id),
+              eq(igStoryAutomationModel.workspaceId, ctx.workspaceId),
+              inArray(
+                igStoryAutomationModel.type,
+                igStoryAutomationTypes.options,
+              ),
+            ),
+          )
+          .returning()
+        return updated
+      },
+      {
+        workspaceId: ctx.workspaceId,
+        initialKeys: [
+          { kind: "storyAutomation", resourceId: ctx.id },
+          ...replyParents(data),
+        ],
+      },
+    )
   }
 
   async deleteMany(input: {
@@ -237,7 +326,24 @@ class IgStoryAutomationService extends BaseService {
     if (input.ids.length === 0) {
       return
     }
-    await db
+    await withDeleteGuard(
+      {
+        workspaceId: input.workspaceId,
+        targets: [{ resourceKind: "storyAutomation", resourceIds: input.ids }],
+      },
+      (tx) => this.deleteInTx(tx, input),
+    )
+  }
+
+  /**
+   * The delete core (row write only), shared with the template uninstall so
+   * there is one implementation. Returns the ids actually deleted.
+   */
+  async deleteInTx(
+    tx: DatabaseClient,
+    input: { workspaceId: string; ids: string[] },
+  ): Promise<string[]> {
+    const rows = await tx
       .delete(igStoryAutomationModel)
       .where(
         and(
@@ -246,6 +352,8 @@ class IgStoryAutomationService extends BaseService {
           inArray(igStoryAutomationModel.type, igStoryAutomationTypes.options),
         ),
       )
+      .returning({ id: igStoryAutomationModel.id })
+    return rows.map((row) => String(row.id))
   }
 
   async delete(input: { workspaceId: string; id: string }): Promise<void> {

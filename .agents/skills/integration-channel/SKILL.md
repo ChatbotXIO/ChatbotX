@@ -74,6 +74,7 @@ After confirmation, execute these 4 phases **in order**. Each phase ends with a 
 - **`ChannelType` cascade** — adding a value to `channelTypes` (defined in `packages/utils/src/channel.ts`) breaks every `Record<ChannelType, ...>`; grep `Record<ChannelType` and multiline `Record<\n\s*ChannelType` and fix ALL hits. A `CHANNEL_CAPABILITIES` entry marked `manageable` needs the Phase 4 settings page, or the row 404s.
 - **Webhook URLs on white-label** — register provider webhook URLs on the broker host (`getBrokerOrigin()` / `buildBrokerCallbackUrl()`), not the tenant's custom domain; see [webhook-flow.md](references/webhook-flow.md).
 - **Phase 3 checkpoint:** run `pnpm lint` and `pnpm --filter <touched-workspace> check-types`; fix undeclared-variable / missing-import errors before continuing.
+- **Connection authorization backup:** a new connect path must call `userService.recordConnectionAuthorization` once it holds an `AuthValue` (AGENTS.md invariant 26); a rejected credential records nothing.
 - **Logging:** use the structured logger, never `console`, and log with `{ err: error }` (AGENTS.md invariant 20).
 
 ## Post-Creation Verification
@@ -108,3 +109,7 @@ Run these checks **in order**:
 | [references/comment-handler-pattern.md](references/comment-handler-pattern.md) | Adding or changing a `comment` channel (handlers layout). For auto-reply/like/hide behaviour see the `comment-automation` skill |
 | [references/multi-account-pickers.md](references/multi-account-pickers.md) | Channel returns a list of connectable accounts (pages, phone numbers) |
 | [references/existing-integrations.md](references/existing-integrations.md) | Checking auth type / credentials of existing integrations, channel vs integration |
+
+## Templates
+
+A new channel that can own an inbox binding (comment, story, inbound-webhook or leaderboard scopes) must be considered by the Templates engine: every `Record<ChannelType, …>` the template adapters use (inbox binding, leaderboard platform) needs the new key, and the account-type check that decides whether a re-bound inbox fits the automation lives with the channel (`listAutomationAccounts`), not in shared template code. See `template-integration`.

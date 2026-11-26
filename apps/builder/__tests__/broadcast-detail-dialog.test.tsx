@@ -4,12 +4,22 @@ import { createRoot, type Root } from "react-dom/client"
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
 import type { BroadcastResourceWithRelations } from "@/features/broadcasts/schema/resource"
 
-const { mockContactFilterSummary, mockListTemplateDetails } = vi.hoisted(
-  () => ({
-    mockContactFilterSummary: vi.fn(),
-    mockListTemplateDetails: vi.fn(),
-  }),
-)
+const {
+  mockContactFilterSummary,
+  mockCopy,
+  mockListTemplateDetails,
+  mockToastSuccess,
+} = vi.hoisted(() => ({
+  mockContactFilterSummary: vi.fn(),
+  mockCopy: vi.fn(),
+  mockListTemplateDetails: vi.fn(),
+  mockToastSuccess: vi.fn(),
+}))
+
+vi.mock("sonner", () => ({ toast: { success: mockToastSuccess } }))
+vi.mock("usehooks-ts", () => ({
+  useCopyToClipboard: () => [null, mockCopy],
+}))
 
 /** Echoes the key back so assertions never depend on the English copy. */
 vi.mock("next-intl", () => ({
@@ -452,5 +462,68 @@ describe("BroadcastDetailDialog — per-page targets", () => {
     expect(text).toContain("broadcasts.sendLimit.rangeSummary")
     expect(text).toContain("fields.sendRatePerMinute.label")
     expect(text).toContain("100")
+  })
+})
+
+describe("BroadcastDetailDialog — id", () => {
+  let container: HTMLDivElement
+  let root: Root
+
+  beforeEach(() => {
+    Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true })
+    vi.clearAllMocks()
+    mockListTemplateDetails.mockResolvedValue([])
+    mockCopy.mockResolvedValue(true)
+    container = document.createElement("div")
+    document.body.appendChild(container)
+    root = createRoot(container)
+  })
+
+  afterEach(() => {
+    act(() => root.unmount())
+    container.remove()
+  })
+
+  const renderDialog = async () => {
+    await act(async () => {
+      root.render(
+        <BroadcastDetailDialog
+          broadcast={{
+            ...BASE_BROADCAST,
+            id: "11790000000000066",
+          }}
+          onOpenChange={() => undefined}
+          open={true}
+        />,
+      )
+      await Promise.resolve()
+    })
+  }
+
+  test("shows the full id in monospace", async () => {
+    await renderDialog()
+
+    expect(container.textContent).toContain("broadcasts.fields.id")
+    const id = Array.from(container.querySelectorAll("span")).find(
+      (node) => node.textContent === "11790000000000066",
+    )
+    expect(id).toBeTruthy()
+    expect(id?.className).toContain("font-mono")
+  })
+
+  test("the copy button copies the id and confirms with the toast", async () => {
+    await renderDialog()
+
+    const button = container.querySelector<HTMLButtonElement>(
+      'button[aria-label="actions.copyId"]',
+    )
+    expect(button).toBeTruthy()
+    await act(async () => {
+      button?.click()
+      await Promise.resolve()
+    })
+
+    expect(mockCopy).toHaveBeenCalledWith("11790000000000066")
+    expect(mockToastSuccess).toHaveBeenCalledWith("messages.copiedToClipboard")
   })
 })

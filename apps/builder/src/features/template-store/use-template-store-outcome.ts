@@ -31,7 +31,12 @@ export function useTemplateStoreOutcome() {
 
   return (
     outcome: TemplateStoreOutcome | undefined,
-    options: { successMessage: string; onDone?: () => void },
+    options: {
+      successMessage: string
+      onDone?: () => void
+      /** Runs after the refusal is shown, e.g. to drop a selection that went stale. */
+      onRejected?: (reason: TemplateStoreRejection) => void
+    },
   ) => {
     if (outcome?.status === "rejected") {
       toast.error(
@@ -40,6 +45,7 @@ export function useTemplateStoreOutcome() {
           categoryLimit: TEMPLATE_STORE_MAX_CATEGORIES,
         }),
       )
+      options.onRejected?.(outcome.reason)
       router.refresh()
       return
     }

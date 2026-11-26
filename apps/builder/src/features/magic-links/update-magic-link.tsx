@@ -17,6 +17,8 @@ import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { useEffect } from "react"
 import { toast } from "sonner"
+import { LockedDialogFieldset } from "@/components/locked-dialog-fieldset"
+import { useIsLocked } from "@/features/templates/components/lock-context"
 import { updateMagicLinkAction } from "./actions/update-magic-link.action"
 import { updateMagicLinkRequest } from "./schema/action"
 import type { MagicLinkResource } from "./schema/resource"
@@ -71,6 +73,7 @@ export const UpdateMagicLinkForm = (props: {
 }) => {
   const { workspaceId, magicLink, onCompletedForm } = props
   const t = useTranslations()
+  const isLocked = useIsLocked(magicLink?.id)
 
   const { form, handleSubmitWithAction } = useHookFormAction(
     updateMagicLinkAction.bind(null, workspaceId, magicLink.id),
@@ -114,28 +117,32 @@ export const UpdateMagicLinkForm = (props: {
         className="flex flex-1 flex-col space-y-6"
         onSubmit={handleSubmitWithAction}
       >
-        <InputField
-          description={t("fields.magicLink.nameHint", { workspaceId })}
-          label={t("fields.name.label")}
-          name="name"
-          required
-        />
+        <LockedDialogFieldset resourceId={magicLink?.id}>
+          <InputField
+            description={t("fields.magicLink.nameHint", { workspaceId })}
+            label={t("fields.name.label")}
+            name="name"
+            required
+          />
 
-        <TextareaField
-          description={t("fields.magicLink.urlHint")}
-          label={t("fields.url.label")}
-          name="url"
-          placeholder="https://example.com/page?utm_campaign={{campaign}}"
-          required
-          rows={3}
-        />
+          <TextareaField
+            description={t("fields.magicLink.urlHint")}
+            label={t("fields.url.label")}
+            name="url"
+            placeholder="https://example.com/page?utm_campaign={{campaign}}"
+            required
+            rows={3}
+          />
+        </LockedDialogFieldset>
 
         <div className="flex justify-end gap-2">
           <Button onClick={onCompletedForm} type="button" variant="ghost">
             {t("actions.cancel")}
           </Button>
           <Button
-            disabled={!form.formState.isValid || form.formState.isSubmitting}
+            disabled={
+              isLocked || !form.formState.isValid || form.formState.isSubmitting
+            }
             type="submit"
           >
             {form.formState.isSubmitting && (

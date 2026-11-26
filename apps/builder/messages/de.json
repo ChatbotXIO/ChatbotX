@@ -3,6 +3,7 @@
     "scrollToBottom": "Nach unten scrollen",
     "retry": "Erneut versuchen",
     "copy": "Kopieren",
+    "copyId": "ID kopieren",
     "copyUrl": "URL kopieren",
     "chatWidget": "Chat-Widget",
     "actions": "Aktionen",
@@ -161,6 +162,94 @@
   },
   "errors": {
     "superAdminRequired": "Sie müssen Super-Administrator des Arbeitsbereichs sein, um dies zu tun."
+  },
+  "inboxTranslation": {
+    "settings": {
+      "title": "Konversationsübersetzung",
+      "description": "Übersetzen Sie die Nachrichten Ihrer Kunden für Ihr Team und Ihre Antworten für Ihre Kunden – direkt im Posteingang.",
+      "saved": "Übersetzungseinstellungen gespeichert",
+      "readOnly": "Nur Workspace-Admins können diese Einstellungen ändern.",
+      "languageHint": "Auch die Sprache, in die Kundennachrichten übersetzt werden, wenn die Konversationsübersetzung aktiv ist.",
+      "alert": {
+        "needsReconfiguration": "Neukonfiguration erforderlich: Die KI-Integration wurde entfernt oder deaktiviert.",
+        "noIntegration": "Verbinden Sie zuerst eine KI-Integration, um die Übersetzung zu nutzen.",
+        "connect": "KI verbinden"
+      },
+      "enabled": {
+        "label": "Konversationen übersetzen",
+        "description": "Kundennachrichten werden nur übersetzt, wenn jemand die Konversation öffnet. Der Chat-Text wird an den gewählten KI-Anbieter gesendet und über Ihren KI-Schlüssel abgerechnet."
+      },
+      "integration": {
+        "label": "KI-Integration",
+        "description": "Es werden nur verbundene KI-Anbieter angezeigt."
+      },
+      "test": {
+        "label": "Verbindung testen",
+        "button": "Testen",
+        "result": "Fertig in {seconds} s: „{sample}“ → „{translated}“",
+        "slow": "Dieses Modell ist langsam: Ausgehende Nachrichten werden eventuell nicht rechtzeitig übersetzt und dann nicht gesendet.",
+        "failed": "Der Test ist fehlgeschlagen."
+      }
+    },
+    "message": {
+      "translating": "Wird übersetzt…",
+      "stillWaiting": "Warte weiterhin auf die Übersetzung",
+      "requestAgain": "Erneut anfordern",
+      "failed": "Übersetzung nicht möglich",
+      "translatedFrom": "Aus {language} übersetzt. Original anzeigen",
+      "translatedFromNoLanguage": "Übersetzt. Original anzeigen",
+      "sentIn": "Auf {language} gesendet. Gesendeten Text anzeigen",
+      "sentInNoLanguage": "Übersetzt gesendet. Gesendeten Text anzeigen",
+      "hideOriginal": "Original ausblenden",
+      "hideSent": "Gesendeten Text ausblenden",
+      "translatedLabelNoLanguage": "Übersetzt",
+      "sentLabelNoLanguage": "Übersetzt gesendet"
+    },
+    "badge": {
+      "tooltip": "Sprache des Kunden: {language}"
+    },
+    "panel": {
+      "title": "Übersetzungseinstellungen",
+      "statusOn": "An",
+      "statusOff": "Aus",
+      "translateConversation": "Diese Konversation übersetzen",
+      "translateConversationHint": "Nachrichten automatisch übersetzen",
+      "botActiveHint": "Der Bot bearbeitet diese Konversation, daher ist die Übersetzung aus. Schalte sie ein, um sie zu übersetzen.",
+      "botPausedHint": "Sie haben diese Unterhaltung vom Bot übernommen, daher bleibt die Übersetzung aus. Schalten Sie sie ein, um sie zu übersetzen.",
+      "displayOptions": "Anzeigeoptionen",
+      "showOriginals": "Originaltext anzeigen",
+      "previewBeforeSending": "Übersetzung vor dem Senden ansehen"
+    },
+    "composer": {
+      "hintUnknown": "Sprache nicht erkannt · Wird wie geschrieben gesendet",
+      "hintDetecting": "Sprache des Kunden wird erkannt…",
+      "chip": {
+        "aria": "Übersetzungssprache",
+        "target": "→ {language}",
+        "sameLanguage": "Gleiche Sprache wie der Workspace",
+        "unknown": "Sprache unbekannt",
+        "hasFiles": "Nachrichten mit Dateien werden nicht übersetzt",
+        "off": "Übersetzung aus"
+      },
+      "popover": {
+        "customerLanguage": "Sprache des Kunden",
+        "chooseLanguage": "Sprache wählen"
+      },
+      "preview": {
+        "title": "Kundenvorschau · {language}",
+        "translating": "Wird übersetzt…",
+        "needsRetranslate": "Muss erneut übersetzt werden",
+        "retranslate": "Erneut übersetzen",
+        "failed": "Übersetzung nicht möglich – beim Senden wird es erneut versucht",
+        "done": "Fertig",
+        "ready": "Bereit zum Senden"
+      }
+    },
+    "send": {
+      "translating": "Wird übersetzt…",
+      "failed": "Übersetzung fehlgeschlagen",
+      "turnedOff": "Übersetzung nicht verfügbar. Die Übersetzung wurde für diese Unterhaltung ausgeschaltet."
+    }
   },
   "states": {
     "success": "Erfolg",
@@ -562,6 +651,10 @@
       "seen": "Gesehen",
       "clicked": "Angeklickt",
       "failed": "Fehlgeschlagen",
+      "leftPhone": "Telefonnummer hinterlassen",
+      "leftEmail": "E-Mail-Adresse hinterlassen",
+      "leftPhoneShort": "Telefon",
+      "leftEmailShort": "E-Mail",
       "noContacts": "Keine Kontakte gefunden",
       "pageInfo": "Seite {page} von {pageCount}",
       "selectedAll": "Alle ausgewählt",
@@ -646,7 +739,8 @@
       "template": "Vorlage",
       "integration": "Integration",
       "schedule": "Wiederholungsplan",
-      "runOf": "Lauf von <link>{name}</link>"
+      "runOf": "Lauf von <link>{name}</link>",
+      "linkNotFound": "Dieser Broadcast existiert nicht mehr."
     },
     "filters": {
       "all": "All"
@@ -822,7 +916,9 @@
       "engagedOnOtherPost": "Bereits bei einem anderen Beitrag interagiert",
       "mentionCountNotMatched": "Anzahl der Erwähnungen stimmte nicht",
       "noImageAttachment": "Kein Foto angehängt",
-      "moderated": "Durch Moderation ausgeblendet oder gelöscht"
+      "moderated": "Durch Moderation ausgeblendet oder gelöscht",
+      "postHashtagNotMatched": "Beitrag hat keinen passenden Hashtag",
+      "postCaptionUnavailable": "Beitragstext konnte nicht gelesen werden"
     },
     "replyTo": {
       "mentions": "Kommentare mit genügend Erwähnungen",
@@ -868,6 +964,19 @@
       "enabled": "KI-Moderation",
       "description": "Ein KI-Agent liest jeden Kommentar, bevor der Bot antwortet, und blendet Kommentare in den unten genannten Kategorien aus oder löscht sie. Auf einen moderierten Kommentar wird nie geantwortet.",
       "aiAgentDescription": "Es wird nur das KI-Modell des Agenten verwendet, nicht dessen Prompt.",
+      "engine": "Klassifizieren mit",
+      "engines": {
+        "aiAgent": "KI-Agent",
+        "decision": "AI Router (Jev)"
+      },
+      "decisionConnection": "AI-Router-Verbindung",
+      "decisionConnectionDescription": "Nur aktive Verbindungen werden angezeigt. Mit dem API-Schlüssel der Verbindung wird jeder Kommentar klassifiziert.",
+      "decisionConnectionUnavailable": "Diese Verbindung wurde gelöscht oder deaktiviert. Wähle eine andere, sonst werden Kommentare nicht geprüft.",
+      "decisionModel": "Modell",
+      "decisionThreshold": "Treffer-Schwelle",
+      "decisionThresholdDescription": "Wie sicher sich der AI Router sein muss (0,5–0,95), bevor ein Kommentar als Kategorie zählt. Höher blockiert weniger Kommentare.",
+      "noDecisionConnection": "In diesem Workspace ist keine AI-Router-Verbindung aktiv.",
+      "addDecisionConnection": "Verbindung hinzufügen",
       "categoriesLabel": "Kommentare blockieren, die",
       "categories": {
         "hate": "Hassrede",
@@ -944,6 +1053,15 @@
       "previous": "Zurück",
       "next": "Weiter",
       "page": "Seite {page} von {pageCount}"
+    },
+    "postType": {
+      "hashtags": "Beiträge mit Hashtags"
+    },
+    "postHashtags": {
+      "label": "Hashtags",
+      "description": "Nur auf Beiträge antworten, deren Text mindestens einen dieser Hashtags enthält. Hashtag eingeben und Enter drücken. Ein später zu einem Beitrag hinzugefügter Hashtag wird innerhalb von etwa 10 Minuten erkannt.",
+      "placeholder": "z. B. automation",
+      "required": "Füge mindestens einen Hashtag hinzu."
     }
   },
   "condition": {
@@ -1278,7 +1396,10 @@
       "label": "Benachrichtigungstyp",
       "notifyAdmin": "Admin benachrichtigen",
       "newMessageToHuman": "Neue Nachricht an Mitarbeiter",
-      "newOrder": "Neue Bestellung"
+      "newOrder": "Neue Bestellung",
+      "postFailed": "Beitrag fehlgeschlagen",
+      "postNeedsReview": "Beitrag muss geprüft werden",
+      "publishConnection": "Veröffentlichungsverbindung braucht Aufmerksamkeit"
     },
     "notificationChannel": {
       "label": "Benachrichtigungskanal",
@@ -2722,7 +2843,8 @@
       "pipelines": "Pipelines",
       "places": "Orte",
       "templates": "Vorlagen",
-      "polls": "Polls"
+      "polls": "Polls",
+      "posts": "Beiträge"
     },
     "adReferral": {
       "label": "Ads",
@@ -2855,6 +2977,9 @@
         "skip": "Nicht gefunden",
         "error": "Fehlgeschlagen"
       }
+    },
+    "tiktokPublishing": {
+      "label": "TikTok-Veröffentlichung"
     }
   },
   "flows": {
@@ -4689,7 +4814,8 @@
       "windowExpired": "Das 24-Stunden-Synchronisierungsfenster ist abgelaufen. Trennen Sie diese Nummer und verbinden Sie sie erneut.",
       "notEligible": "Diese Nummer ist nicht für die historische Synchronisierung berechtigt.",
       "triggerFailed": "Die Synchronisierung konnte nicht gestartet werden. Versuchen Sie es später erneut.",
-      "unknown": "Die Synchronisierung konnte nicht aktiviert werden. Versuchen Sie es später erneut."
+      "unknown": "Die Synchronisierung konnte nicht aktiviert werden. Versuchen Sie es später erneut.",
+      "contactImportRunning": "History sync can't start while this page's contacts are importing; it starts by itself afterwards."
     }
   },
   "messenger": {
@@ -4713,7 +4839,10 @@
       "noPagesTitle": "Keine Facebook-Seiten gefunden",
       "noPagesDescription": "Seiten in einem Business Manager erfordern während der Verbindung Zugriff auf den Business Manager. Verbinden Sie Messenger erneut und erteilen Sie alle angeforderten Berechtigungen.",
       "alreadyConnectedNote": "Diese Seite ist bereits verbunden",
-      "tryAgain": "Erneute Verbindung versuchen"
+      "tryAgain": "Erneute Verbindung versuchen",
+      "unavailableInsufficientPermissions": "Du benötigst vollen Admin-Zugriff auf diese Seite, um sie zu verbinden.",
+      "unavailableMissingAccessToken": "Facebook hat keinen Zugriff auf diese Seite gewährt. Verbinde erneut und erlaube den Zugriff.",
+      "unavailableGeneric": "Diese Seite kann nicht verbunden werden."
     },
     "title": "Facebook Messenger",
     "tabs": {
@@ -5027,7 +5156,8 @@
     "invalidApiKey": "Ungültiger API-Schlüssel",
     "maxMustBeGreaterThanMin": "{maxField} muss größer als oder gleich {minField} sein",
     "trigger": {
-      "actionReferenceNotFound": "An action refers to a record that no longer exists. Re-select it in the action and save again."
+      "actionReferenceNotFound": "An action refers to a record that no longer exists. Re-select it in the action and save again.",
+      "postCommentPostsInvalid": "Ein ausgewählter Beitrag existiert in diesem Workspace nicht oder gehört nicht zum gewählten Posteingang. Wähle die Beiträge erneut aus und speichere noch einmal."
     },
     "inboundWebhook": {
       "inboxRequired": "Wählen Sie einen Posteingang.",
@@ -6086,7 +6216,16 @@
       "anyPipeline": "Beliebige Pipeline",
       "anyStage": "Beliebige Phase",
       "unavailablePipeline": "Gelöschte oder nicht verfügbare Pipeline",
-      "unavailableStage": "Gelöschte oder nicht verfügbare Phase"
+      "unavailableStage": "Gelöschte oder nicht verfügbare Phase",
+      "contactCommentedOnPost": "Kontakt hat einen Beitrag kommentiert",
+      "contactFirstCommentedOnPost": "Kontakt hat einen Beitrag zum ersten Mal kommentiert",
+      "anyInbox": "Beliebige Seite oder beliebiges Konto",
+      "unavailableInbox": "Gelöschte oder nicht verfügbare Seite bzw. nicht verfügbares Konto",
+      "postScope": {
+        "any": "Beliebiger Beitrag",
+        "selected": "Bestimmte Beiträge",
+        "publishedFromPosts": "Nur über Beiträge veröffentlichte Beiträge"
+      }
     },
     "actions": {
       "addTag": "Tag hinzufügen",
@@ -6400,11 +6539,102 @@
   },
   "smtp": {
     "setting": {
-      "description": "E-Mails über Ihren SMTP-Server senden.",
+      "description": "E-Mails über Ihren SMTP-Server, ein IMAP-Postfach oder einen eingehenden Webhook senden und empfangen.",
       "label": "(E-Mail) SMTP"
     },
     "errors": {
-      "connectionFailed": "Verbindung zum SMTP-Server nicht möglich. Überprüfen Sie Ihre Anmeldedaten und versuchen Sie es erneut."
+      "connectionFailed": "Verbindung zum SMTP-Server nicht möglich. Überprüfen Sie Ihre Anmeldedaten und versuchen Sie es erneut.",
+      "imapConnectionFailed": "Verbindung zum IMAP-Postfach nicht möglich. Bitte prüfen Sie Host, Zugangsdaten und Postfachnamen und versuchen Sie es erneut."
+    },
+    "guide": {
+      "trigger": "Einrichtungsanleitung: {provider}",
+      "openDocs": "Dokumentation von {provider} öffnen",
+      "receiveImap": "E-Mails empfangen",
+      "receiveImapDescription": "Dieses Postfach wird jede Minute abgerufen, und für jede neue E-Mail wird eine Unterhaltung eröffnet. Es werden nur E-Mails importiert, die nach dem Aktivieren eintreffen.",
+      "imapHost": "IMAP-Host",
+      "imapPort": "IMAP-Port",
+      "relayReceive": "Dieser Anbieter kann nur senden. Um Antworten zu empfangen, richten Sie das eingehende Parsing des Anbieters auf eine Webhook-URL aus.",
+      "sendOnly": "Amazon SES empfängt E-Mails über SNS, was hier nicht unterstützt wird. Dieser Posteingang kann nur E-Mails senden.",
+      "webhook": {
+        "title": "URL des eingehenden Webhooks",
+        "hint": "Fügen Sie diese URL in die Einstellungen für eingehende E-Mails Ihres Anbieters ein. Jeder, der sie kennt, kann E-Mails zu diesem Posteingang hinzufügen. Behandeln Sie sie daher wie ein Passwort.",
+        "saveFirst": "Verbinden Sie sich zuerst und öffnen Sie diesen Posteingang dann erneut, um die Webhook-URL zu erhalten.",
+        "show": "Webhook-URL anzeigen",
+        "rotate": "URL erneuern",
+        "copied": "Webhook-URL kopiert",
+        "failed": "Die Webhook-URL konnte nicht geladen werden. Bitte versuchen Sie es erneut."
+      },
+      "status": {
+        "title": "Status",
+        "sending": "Senden",
+        "receivingImap": "Empfang: IMAP",
+        "receivingWebhook": "Empfang: Webhook",
+        "receivingOff": "Empfang: aus",
+        "lastPolled": "Zuletzt geprüft {time}",
+        "neverPolled": "Noch nicht geprüft",
+        "error": "Letzter Fehler: {error}"
+      },
+      "errors": {
+        "title": "Häufige Fehler",
+        "authFailed": "535 oder Authentifizierung fehlgeschlagen: Verwenden Sie ein App-Passwort, nicht Ihr normales Kontopasswort.",
+        "timeout": "Zeitüberschreitung: Versuchen Sie Port 465 (SSL) statt 587 (STARTTLS) und prüfen Sie, ob Ihr Host ausgehende Verbindungen erlaubt.",
+        "imap": "IMAP-Anmeldung fehlgeschlagen: Aktivieren Sie IMAP in den Postfacheinstellungen und verwenden Sie dasselbe App-Passwort."
+      },
+      "providers": {
+        "google": {
+          "step1": "Aktivieren Sie die Bestätigung in zwei Schritten für das Google-Konto.",
+          "step2": "Erstellen Sie ein App-Passwort (Google-Konto > Sicherheit > App-Passwörter).",
+          "step3": "Geben Sie die vollständige Gmail-Adresse als Benutzernamen und das App-Passwort als Passwort ein.",
+          "step4": "Um E-Mails zu empfangen, aktivieren Sie IMAP in Gmail (Einstellungen > Weiterleitung und POP/IMAP) und schalten Sie unten E-Mails empfangen ein."
+        },
+        "outlook": {
+          "step1": "Aktivieren Sie die Zwei-Schritt-Verifizierung für das Microsoft-Konto.",
+          "step2": "Erstellen Sie ein App-Passwort in den Sicherheitseinstellungen Ihres Microsoft-Kontos.",
+          "step3": "Verwenden Sie die vollständige Adresse als Benutzernamen und das App-Passwort als Passwort.",
+          "note": "Microsoft stellt die Standardauthentifizierung für Exchange Online ein. Wenn die Verbindung abgelehnt wird, hat Ihre Organisation sie möglicherweise deaktiviert."
+        },
+        "yahoo": {
+          "step1": "Aktivieren Sie die Zwei-Schritt-Verifizierung in den Sicherheitseinstellungen Ihres Yahoo-Kontos.",
+          "step2": "Erzeugen Sie ein App-Passwort für diese Verbindung.",
+          "step3": "Verwenden Sie Ihre Yahoo-Adresse als Benutzernamen und das App-Passwort als Passwort."
+        },
+        "zoho": {
+          "step1": "Aktivieren Sie die Zwei-Faktor-Authentifizierung für Ihr Zoho-Konto.",
+          "step2": "Erstellen Sie ein anwendungsspezifisches Passwort.",
+          "step3": "Verwenden Sie Ihre Zoho-Adresse als Benutzernamen und dieses Passwort als Passwort. IMAP muss in den Zoho-Mail-Einstellungen aktiviert sein."
+        },
+        "sendgrid": {
+          "step1": "Erstellen Sie einen API-Schlüssel mit der Berechtigung Mail Send. Verwenden Sie den Benutzernamen apikey und den Schlüssel als Passwort.",
+          "step2": "Um E-Mails zu empfangen, verbinden Sie sich, öffnen Sie diesen Posteingang erneut und kopieren Sie die Webhook-URL.",
+          "step3": "Fügen Sie in SendGrid die URL unter Settings > Inbound Parse hinzu und aktivieren Sie \"POST the raw, full MIME message\"."
+        },
+        "mailgun": {
+          "step1": "Verwenden Sie die SMTP-Zugangsdaten Ihrer Sende-Domain (Sending > Domain settings > SMTP credentials).",
+          "step2": "Um E-Mails zu empfangen, verbinden Sie sich, öffnen Sie diesen Posteingang erneut und kopieren Sie die Webhook-URL.",
+          "step3": "Erstellen Sie in Mailgun eine Empfangsroute, die an die URL weiterleitet."
+        },
+        "postmark": {
+          "step1": "Verwenden Sie den API-Token Ihres Servers sowohl als Benutzernamen als auch als Passwort.",
+          "step2": "Um E-Mails zu empfangen, verbinden Sie sich, öffnen Sie diesen Posteingang erneut und kopieren Sie die Webhook-URL.",
+          "step3": "Legen Sie sie in Postmark als Inbound Webhook Ihres Servers fest und schließen Sie den Roh-E-Mail-Inhalt ein."
+        },
+        "brevo": {
+          "step1": "Verwenden Sie Ihren Brevo-SMTP-Login und einen SMTP-Schlüssel als Passwort.",
+          "step2": "Um E-Mails zu empfangen, verbinden Sie sich, öffnen Sie diesen Posteingang erneut und kopieren Sie die Webhook-URL.",
+          "step3": "Fügen Sie in Brevo die URL als Webhook für eingehendes Parsing für Ihre Empfangsdomain hinzu.",
+          "note": "Brevo sendet bei eingehenden E-Mails keine Anhänge mit, daher werden Anhänge nicht empfangen."
+        },
+        "amazonSes": {
+          "step1": "Erstellen Sie SMTP-Zugangsdaten in der Amazon-SES-Konsole. Sie unterscheiden sich von Ihren AWS-Zugriffsschlüsseln.",
+          "step2": "Verwenden Sie den SMTP-Endpunkt Ihrer SES-Region als Host und verifizieren Sie die Absenderadresse.",
+          "step3": "Geben Sie den SMTP-Benutzernamen und das Passwort aus der Konsole ein.",
+          "note": "Dieser Posteingang kann nur E-Mails senden."
+        },
+        "other": {
+          "step1": "Fragen Sie Ihren E-Mail-Anbieter nach SMTP-Host und -Port. Port 587 verwendet STARTTLS und 465 verwendet SSL.",
+          "step2": "Um E-Mails zu empfangen, fragen Sie auch nach IMAP-Host und -Port (meist 993) und schalten Sie dann unten E-Mails empfangen ein."
+        }
+      }
     }
   },
   "botSimulator": {
@@ -6775,7 +7005,8 @@
       "ignoreCommentReplies": "Nicht auf Antworten auf Kommentare reagieren",
       "ignoreCommentRepliesDescription": "Automatisierung für Kommentare überspringen, die Antworten auf andere Kommentare und keine Kommentare der obersten Ebene sind.",
       "trackUserTags": "Erfassen, ob ein Nutzer andere Nutzer markiert",
-      "trackUserTagsDescription": "Zählt die in jedem Kommentar markierten Konten und addiert sie über alle Kommentare zu den Summen des Kontakts. Verwende '{{total_tagged}}' für alle markierten Konten und '{{total_new_tagged}}' für Konten, die deiner Seite nie geschrieben haben oder nie Kontakt waren."
+      "trackUserTagsDescription": "Zählt die in jedem Kommentar markierten Konten und addiert sie über alle Kommentare zu den Summen des Kontakts. Verwende '{{total_tagged}}' für alle markierten Konten und '{{total_new_tagged}}' für Konten, die deiner Seite nie geschrieben haben oder nie Kontakt waren.",
+      "likeUserCommentUnavailable": "Auf Instagram nicht verfügbar. Diese Option wird übersprungen; schalte sie aus, um sie zu entfernen."
     },
     "hideComments": {
       "all": "Alle Kommentare ausblenden",
@@ -6878,7 +7109,8 @@
       "delayMustBeZero": "Delay value must be zero for the selected timing option.",
       "atLeastOneFieldRequired": "At least one field is required.",
       "replyTextRequired": "Gib mindestens eine Antwortnachricht ein.",
-      "hideKeywordsRequired": "Enter at least one keyword to hide comments by keyword."
+      "hideKeywordsRequired": "Enter at least one keyword to hide comments by keyword.",
+      "hashtagsRequired": "Füge mindestens einen Hashtag hinzu."
     },
     "hideCommentsDescription": "Nur direkte Antworten auf deine Beiträge können ausgeblendet werden.",
     "hideComments": {
@@ -6994,13 +7226,18 @@
       "delayMustBeZero": "Delay value must be zero for the selected timing option.",
       "hideKeywordsRequired": "Enter at least one keyword to hide comments by keyword.",
       "atLeastOneFieldRequired": "At least one field is required.",
-      "replyTextRequired": "Gib mindestens eine Antwortnachricht ein."
+      "replyTextRequired": "Gib mindestens eine Antwortnachricht ein.",
+      "hashtagsRequired": "Füge mindestens einen Hashtag hinzu."
     },
     "privateReply": "Private reply (Comment-to-Message)",
     "privateReplyDescription": "Send a direct message to the commenter. TikTok only allows this for comments it flags as high intent, so it will not fire for every matching comment.",
     "privateReplyMessage": "Private reply message",
     "privateReplyHighIntentTitle": "TikTok decides which comments can be messaged",
-    "privateReplyHighIntentNotice": "Comment-to-Message must be enabled on the connected TikTok account, and the account must be a Business Account registered in Vietnam, Indonesia or Thailand. TikTok sends the direct message only for first-level comments it flags as high intent, within 48 hours, once per comment, and not if the commenter already messaged you in the past 24 hours."
+    "privateReplyHighIntentNotice": "Comment-to-Message must be enabled on the connected TikTok account, and the account must be a Business Account registered in Vietnam, Indonesia or Thailand. TikTok sends the direct message only for first-level comments it flags as high intent, within 48 hours, once per comment, and not if the commenter already messaged you in the past 24 hours.",
+    "postHashtags": {
+      "reconnectRequired": "Dieses TikTok-Konto kann Videobeschreibungen noch nicht lesen, daher werden alle Kommentare übersprungen. Verbinde das Konto unter Einstellungen → Kanäle → TikTok neu, um es zu erlauben.",
+      "someAccountsReconnectRequired": "Einige deiner TikTok-Konten können Videobeschreibungen noch nicht lesen, daher werden ihre Kommentare übersprungen. Verbinde sie unter Einstellungen → Kanäle → TikTok neu."
+    }
   },
   "commentAutomationMissedComments": {
     "action": "Verpasste Kommentare verarbeiten",
@@ -7258,6 +7495,7 @@
       "resourcesTitle": "Installierte Ressourcen",
       "noResources": "Es wurde noch nichts erstellt.",
       "deletedResource": "Gelöschte Ressource",
+      "wholeCategory": "{count, plural, one {# Element} other {# Elemente}}",
       "viewOnly": "Nur Ansicht",
       "created": "Erstellt",
       "reused": "Wiederverwendet",
@@ -7312,7 +7550,12 @@
           "placeCategories": "Ortskategorien"
         }
       },
-      "viewOnlyCopyIncluded": "Etwas, das du ausgewählt hast (oder das es benötigt), wurde aus einer schreibgeschützten Vorlage installiert und kann nicht in einer neuen Vorlage geteilt werden."
+      "viewOnlyCopyIncluded": "Etwas, das du ausgewählt hast (oder das es benötigt), wurde aus einer schreibgeschützten Vorlage installiert und kann nicht in einer neuen Vorlage geteilt werden.",
+      "miniAppPublishedExcluded": {
+        "title": "Mini-App ausgelassen",
+        "hint": "Diese Flows verwenden eine Mini-App, die auf WhatsApp veröffentlicht ist. Sie kann nicht geteilt werden, daher lässt die Vorlage sie aus und die Installation entfernt den Verweis.",
+        "item": "{flowName}: {miniAppName}"
+      }
     },
     "categories": {
       "flows": "Flows",
@@ -7334,7 +7577,20 @@
       "aiFiles": "KI-Wissensdateien",
       "questionnaires": "Questionnaires",
       "couponTopics": "Gutscheinthemen",
-      "pipelines": "Pipelines"
+      "pipelines": "Pipelines",
+      "magicLinks": "Magic Links",
+      "polls": "Umfragen",
+      "dynamicImages": "Dynamische Bilder",
+      "placeLocations": "Standorte",
+      "miniApps": "Mini-Apps",
+      "minigames": "Minispiele",
+      "leaderboards": "Bestenlisten",
+      "openHours": "Öffnungszeiten",
+      "vendors": "Anbieter",
+      "discountCodes": "Rabattcodes",
+      "storeSettings": "Shop-Einstellungen",
+      "storyAutomations": "Instagram-Story-Automatisierung",
+      "inboundWebhooks": "Eingehender Webhook"
     },
     "locked": {
       "flowBanner": "Dieser Flow wurde aus einer Vorlage mit reiner Ansicht installiert. Du kannst ihn ansehen, aber nicht bearbeiten.",
@@ -7411,6 +7667,7 @@
       "flowNotPublished": "Der Flow wurde als Entwurf installiert und ist nicht veröffentlicht.",
       "flowSkippedRequiredReference": "Der Flow wurde übersprungen, weil eine erforderliche Referenz nicht aufgelöst werden konnte.",
       "folder": "Ein referenziertes Element wurde in diesem Arbeitsbereich nicht gefunden, daher wurde die Verknüpfung entfernt.",
+      "inboundWebhookLimitReached": "Dieser eingehende Webhook wurde übersprungen: Der Arbeitsbereich hat bereits die maximale Anzahl eingehender Webhooks.",
       "inboxBindingRequired": "Wähle einen Posteingang für diesen Kanal; bis dahin bleibt das Element inaktiv.",
       "integration": "Ein referenziertes Element wurde in diesem Arbeitsbereich nicht gefunden, daher wurde die Verknüpfung entfernt.",
       "localModifiedOverwritten": "Ein lokal bearbeitetes Element wurde überschrieben. Ein Backup wurde gespeichert und kann wiederhergestellt werden.",
@@ -7431,7 +7688,25 @@
       "tag": "Ein referenziertes Element wurde in diesem Arbeitsbereich nicht gefunden, daher wurde die Verknüpfung entfernt.",
       "unlisted": "Element nicht vollständig übernommen: {code}",
       "workspaceMember": "Einem Mitglied zugewiesen, das nicht in diesem Workspace ist.",
-      "workspaceUnavailable": "Dieser Arbeitsbereich ist nicht mehr verfügbar, daher wurde das Element übersprungen."
+      "workspaceUnavailable": "Dieser Arbeitsbereich ist nicht mehr verfügbar, daher wurde das Element übersprungen.",
+      "scheduleExpired": "Die Daten dieses Elements liegen in der Vergangenheit; lege neue fest, bevor du es nutzt.",
+      "linkNotRemapped": "Ein Link zu einem Tool, das nicht Teil der Vorlage war, wurde unverändert gelassen.",
+      "dynamicImage": "Dieses dynamische Bild wurde übersprungen, weil sein Hintergrund nicht kopiert werden konnte.",
+      "dynamicImageFieldNotBound": "Wähle ein benutzerdefiniertes Feld, in dem das Bild zwischengespeichert wird; das ursprüngliche war bereits in deinem Workspace vorhanden.",
+      "dynamicImageRerenderFailed": "Dieses dynamische Bild wurde ausgeschaltet, weil sein Hintergrund nicht mit Ihren kopierten Links neu gerendert werden konnte. Schalten Sie es wieder ein, um es erneut zu versuchen.",
+      "pollImage": "Ein Bild konnte nicht kopiert werden.",
+      "leaderboardInvalid": "Die Konfiguration dieser Bestenliste konnte nicht installiert werden und wurde übersprungen.",
+      "placeLocationInvalid": "Dieser Ort wurde übersprungen, weil sein Name leer ist.",
+      "minigame": "Das Minispiel, aus dem diese Bestenliste ihre Punkte bezieht, gehört nicht zur Vorlage und wurde übersprungen.",
+      "minigameImage": "Ein Bild konnte nicht kopiert werden.",
+      "leaderboardImage": "Ein Bild konnte nicht kopiert werden.",
+      "leaderboardHostMissing": "Die Bestenliste braucht einen eigenen Kanal (oder ein Minispiel), den diese Installation nicht geliefert hat, und wurde übersprungen.",
+      "externalStoreSkipped": "Dieser Workspace verkauft über einen verbundenen Shop (Shopify oder WooCommerce); Produkte, Anbieter, Rabattcodes, Öffnungszeiten und Shop-Einstellungen wurden daher nicht installiert.",
+      "discountCodeSkipped": "Dieser Rabattcode wurde übersprungen: Die Produkte oder die Kategorie, für die er gilt, gehören nicht zur Vorlage, oder seine Einstellungen wurden abgelehnt.",
+      "storeSettingsKept": "Dieser Workspace hatte bereits Shop-Einstellungen, sie blieben unverändert.",
+      "vendorImage": "Ein Bild konnte nicht kopiert werden.",
+      "storeSettingsCurrencyKept": "Der Workspace hat Produkte in einer anderen Währung, daher blieb seine Währung statt der der Vorlage erhalten.",
+      "storySelectionRequired": "Wähle die Storys erneut aus: Die ursprünglichen Storys konnten nicht übernommen werden."
     },
     "tabs": {
       "mine": "Meine Vorlagen",
@@ -7658,7 +7933,6 @@
   "templatesPublicPage": {
     "invalidTitle": "Dieser Link ist nicht mehr verfügbar.",
     "invalidDescription": "Dieser Vorlagen-Freigabelink ist ungültig, deaktiviert oder abgelaufen.",
-    "byPublisher": "Von {publisherName}",
     "videoTitle": "Vorlagen-Vorschauvideo",
     "preview": "Vorschau",
     "aboutTemplate": "Über diese Vorlage",
@@ -8016,6 +8290,10 @@
   "contactAdReferrals": {
     "title": "Anzeigenverlauf",
     "empty": "Für diesen Kontakt wurden noch keine Anzeigenklicks erfasst."
+  },
+  "contactBroadcasts": {
+    "empty": "An diesen Kontakt wurde noch kein Broadcast gesendet.",
+    "searchPlaceholder": "Nach Name oder ID suchen"
   },
   "adsReferralStats": {
     "title": "Kontakte nach Anzeige",
@@ -9406,6 +9684,11 @@
         "lose": "Kein Gewinn",
         "empty": "Noch keine Spielprotokolle"
       }
+    },
+    "duplicateDialog": {
+      "title": "Minispiel duplizieren",
+      "description": "Dadurch wird eine Kopie des Minispiels mit allen Einstellungen erstellt. Preise und das Preisbild werden nicht kopiert, und die Kopie ist zunächst deaktiviert – füge Preise hinzu und aktiviere sie dann.",
+      "success": "Minispiel erfolgreich dupliziert"
     }
   },
   "mediaLibrary": {
@@ -11856,41 +12139,138 @@
     "noWorkspaces": "Du bist in keinem Workspace Administrator und kannst diese Anwendung daher nicht autorisieren."
   },
   "chatbotxMcp": {
-    "title": "ChatbotX MCP",
-    "workspaceId": "Workspace ID",
-    "streamableUrl": "Streamable HTTP URL",
-    "sseUrl": "Legacy SSE URL",
+    "title": "MCP-Connector",
+    "streamableUrl": "Streamable-HTTP-URL",
+    "sseUrl": "Legacy-SSE-URL",
     "guide": {
-      "title": "Connect an MCP client",
-      "step1": "Copy the configuration for your MCP client.",
-      "step2": "Paste it into the client.",
-      "step3": "The client opens a browser. Sign in and approve access.",
-      "step4": "Your workspace tools appear after approval.",
-      "ownerOnly": "Only workspace owners and superAdmins can authorize MCP access."
+      "title": "MCP-Client verbinden",
+      "subtitle": "Wähle die App, die du nutzt, und folge den drei Schritten.",
+      "ownerOnly": "Nur Workspace-Eigentümer und superAdmins können den MCP-Zugriff autorisieren. Den Workspace wählst du auf dem Genehmigungsbildschirm.",
+      "otherClients": "Jeder andere MCP-kompatible Client funktioniert ebenfalls",
+      "otherIntro": "Nutze diese Endpunkte und Konfigurationen mit jedem anderen MCP-kompatiblen Client.",
+      "opensInNewTab": "(öffnet in einem neuen Tab)",
+      "actions": {
+        "addConnector": "Connector hinzufügen",
+        "startChatting": "Chat starten"
+      },
+      "steps": {
+        "claude": {
+          "step1": {
+            "title": "Connector-URL kopieren",
+            "body": "Du fügst diese URL im nächsten Schritt in Claude ein."
+          },
+          "step2": {
+            "title": "Gehe zu Claude → Customize → Connectors → Add custom connector",
+            "body": "Der Button unten öffnet deine Connectors in Claude. Klicke auf Add custom connector, gib einen Namen ein und füge die URL ein. Er erscheint auch in den Desktop- und Mobile-Apps von Claude."
+          },
+          "step3": {
+            "title": "Klicke auf Connect und erlaube den Zugriff",
+            "body": "Melde dich an, wähle deinen Workspace und bestätige. Danach kann Claude direkt im Chat mit deinen Kontakten, Flows und Broadcasts arbeiten."
+          }
+        },
+        "chatgpt": {
+          "step1": {
+            "title": "Connector-URL kopieren",
+            "body": "Du fügst diese URL im nächsten Schritt in ChatGPT ein."
+          },
+          "step2": {
+            "title": "Gehe zu ChatGPT → Settings → Apps & Connectors → Create",
+            "body": "Der Button unten öffnet die ChatGPT-Einstellungen. Wenn Create fehlt, aktiviere Developer mode unter Advanced settings. Benenne den Connector, füge die URL ein und wähle OAuth."
+          },
+          "step3": {
+            "title": "Verbinden und Zugriff erlauben",
+            "body": "Melde dich an, wähle deinen Workspace und bestätige. Aktiviere den Connector dann in einem neuen Chat, um ihn zu nutzen."
+          }
+        },
+        "claudeCode": {
+          "step1": {
+            "title": "Installationsbefehl kopieren",
+            "body": "Führe ihn in deinem Terminal aus."
+          },
+          "step2": {
+            "title": "In Claude Code anmelden",
+            "body": "Starte Claude Code, tippe /mcp, wähle den Server und dann Authenticate. Ein Browserfenster öffnet sich."
+          },
+          "step3": {
+            "title": "Zugriff erlauben",
+            "body": "Wähle deinen Workspace und bestätige. Claude Code kann jetzt deine Workspace-Tools nutzen."
+          }
+        },
+        "cursor": {
+          "step1": {
+            "title": "Konfiguration kopieren",
+            "body": "Du fügst sie im nächsten Schritt in Cursor ein."
+          },
+          "step2": {
+            "title": "Öffne Cursor Settings → MCP → Add new MCP server",
+            "body": "Füge die Konfiguration in mcp.json ein und speichere. Cursor zeigt neben dem Server einen Login-Button."
+          },
+          "step3": {
+            "title": "Zugriff erlauben",
+            "body": "Klicke auf Login, wähle deinen Workspace und bestätige. Die Tools erscheinen im Cursor-Agent."
+          }
+        },
+        "openclaw": {
+          "step1": {
+            "title": "Plugin installieren",
+            "body": "Führe diesen Befehl in deinem Terminal aus."
+          },
+          "step2": {
+            "title": "Anmelden",
+            "body": "Führe diesen Befehl aus. Ein Browserfenster öffnet sich."
+          },
+          "step3": {
+            "title": "Zugriff erlauben",
+            "body": "Wähle deinen Workspace und bestätige. OpenClaw kann jetzt deine Workspace-Tools nutzen."
+          }
+        },
+        "hermes": {
+          "step1": {
+            "title": "Konfiguration kopieren",
+            "body": "Du fügst sie im nächsten Schritt deiner Hermes-Konfiguration hinzu."
+          },
+          "step2": {
+            "title": "Zu ~/.hermes/config.yaml hinzufügen",
+            "body": "Füge sie unter mcp_servers in ~/.hermes/config.yaml ein und speichere. Führe dann diesen Befehl in Hermes aus."
+          },
+          "step3": {
+            "title": "Zugriff erlauben",
+            "body": "Hermes öffnet ein Browserfenster. Melde dich an, wähle deinen Workspace und bestätige. Hermes kann jetzt deine Workspace-Tools nutzen."
+          }
+        }
+      }
     },
     "clients": {
+      "claude": "Claude",
       "claudeCode": "Claude Code",
       "claudeDesktop": "Claude Desktop",
       "cursor": "Cursor",
       "chatgpt": "ChatGPT",
-      "stdio": "stdio fallback",
-      "stdioHint": "Use a workspace token for this fallback."
+      "stdio": "stdio-Fallback",
+      "stdioHint": "Verwende für diesen Fallback ein Workspace-Token.",
+      "openclaw": "OpenClaw",
+      "hermes": "Hermes",
+      "other": "Andere Clients"
     },
     "grants": {
-      "title": "Authorized applications",
-      "description": "Grants belong to your account and apply to every workspace you administer; revoking disconnects the client everywhere.",
-      "empty": "OAuth grants appear here after you connect an MCP client.",
+      "title": "Autorisierte Anwendungen",
+      "description": "Berechtigungen gehören zu deinem Konto und gelten für jeden Workspace, den du verwaltest; ein Widerruf trennt den Client überall.",
+      "empty": "OAuth-Berechtigungen erscheinen hier, sobald du einen MCP-Client verbindest.",
       "client": "Client",
-      "scopes": "Scopes",
-      "firstAuthorizedAt": "First authorized",
-      "lastRefreshedAt": "Last refreshed",
-      "activeUntil": "Active until",
-      "noActiveToken": "No active token",
-      "revoke": "Revoke",
-      "revokeConfirmTitle": "Revoke application access?",
-      "revokeConfirmDescription": "Revoke access for {clientName}? This disconnects the client everywhere.",
-      "revokedSuccess": "Application access revoked.",
-      "notFound": "OAuth grant no longer exists"
+      "scopes": "Bereiche",
+      "firstAuthorizedAt": "Erstmals autorisiert",
+      "lastRefreshedAt": "Zuletzt aktualisiert",
+      "activeUntil": "Aktiv bis",
+      "noActiveToken": "Kein aktives Token",
+      "revoke": "Widerrufen",
+      "revokeConfirmTitle": "Anwendungszugriff widerrufen?",
+      "revokeConfirmDescription": "Zugriff für {clientName} widerrufen? Dadurch wird der Client überall getrennt.",
+      "revokedSuccess": "Anwendungszugriff widerrufen.",
+      "notFound": "Die OAuth-Berechtigung existiert nicht mehr"
+    },
+    "unavailableOnDomain": {
+      "title": "Auf dieser Domain nicht verfügbar",
+      "body": "Das Verbinden von KI-Assistenten wie Claude oder ChatGPT ist auf dieser Domain noch nicht verfügbar. Bestehende Autorisierungen sind unten aufgeführt und können weiterhin widerrufen werden."
     }
   },
   "connectionStatus": {
@@ -11919,17 +12299,21 @@
     "add": "Hinzufügen",
     "addCategory": "Kategorie hinzufügen",
     "renameCategory": "Umbenennen",
-    "editCategories": "Kategorien bearbeiten",
+    "editListing": "Eintrag bearbeiten",
     "templateId": "Template-ID",
     "template": "Template",
     "categories": "Kategorien",
     "categoriesPlaceholder": "Keine Kategorie",
     "close": "Schließen",
     "removeChip": "{name} entfernen",
+    "moreSelected": "+ {count} weitere",
     "categoriesHint": "Optional. Ohne Kategorie erscheint das Template nur unter „Alle“.",
+    "languages": "Sprachen",
+    "allLanguages": "Alle Sprachen",
+    "languagesHint": "Optional. Leer lassen, um die Vorlage in allen Sprachen anzuzeigen.",
     "noCategoriesYet": "Noch keine Kategorien.",
     "added": "Template zum Store hinzugefügt",
-    "updated": "Kategorien aktualisiert",
+    "updated": "Eintrag aktualisiert",
     "removed": "Template aus dem Store entfernt",
     "removeError": "Template konnte nicht entfernt werden",
     "removeTitle": "{name} entfernen?",
@@ -11971,16 +12355,18 @@
       "categoryLimit": "Ein Store kann höchstens {categoryLimit} Kategorien haben."
     },
     "store": {
-      "subtitle": "Fertige Templates, die Sie mit einem Klick installieren.",
       "pageTitle": "{tenantName} – Template-Store",
       "empty": "Noch keine Templates im Store.",
       "search": "Templates suchen",
-      "all": "Alle",
-      "categories": "Store-Kategorien",
-      "noResults": "Keine Templates passen zu Ihrer Suche.",
-      "clearSearch": "Suche zurücksetzen",
-      "by": "Von {publisherName}",
-      "loadFailed": "Die Templates konnten nicht geladen werden. Bitte versuchen Sie es später erneut."
+      "noResults": "Keine Vorlagen passen zu Ihren Filtern.",
+      "clearSearch": "Filter zurücksetzen",
+      "loadFailed": "Die Templates konnten nicht geladen werden. Bitte versuchen Sie es später erneut.",
+      "languageValue": "Sprache: {language}",
+      "allLanguages": "Alle Sprachen",
+      "otherLanguages": "Andere Sprachen",
+      "allChannels": "Alle Kanäle",
+      "channel": "Kanal",
+      "uncategorized": "Sonstige"
     },
     "picker": {
       "placeholder": "Template auswählen",
@@ -11989,7 +12375,21 @@
       "error": "Templates konnten nicht geladen werden.",
       "retry": "Erneut versuchen",
       "meta": "ID {id} · {workspace}"
-    }
+    },
+    "bulk": {
+      "setCategories": "Kategorien festlegen",
+      "setLanguages": "Sprachen festlegen",
+      "categoriesHint": "Ersetzt die Kategorien der ausgewählten Vorlagen ({count}). Leer lassen, um alle Kategorien zu entfernen.",
+      "languagesHint": "Ersetzt die Sprachen der ausgewählten Vorlagen ({count}). Leer lassen, um sie in allen Sprachen anzuzeigen.",
+      "updated": "Ausgewählte Vorlagen aktualisiert",
+      "removeTitle": "Ausgewählte Vorlagen entfernen?",
+      "removeDescription": "Ausgewählt: {count}. Sie verschwinden aus dem Store; die Vorlagen selbst und ihre Installationen bleiben unberührt.",
+      "removed": "Ausgewählte Vorlagen aus dem Store entfernt",
+      "setChannels": "Kanäle festlegen",
+      "channelsHint": "Ersetzt die Kanäle der ausgewählten Vorlagen ({count}). Leer lassen für alle Kanäle."
+    },
+    "channels": "Kanäle",
+    "channelsHint": "Optional. Leer lassen, wenn die Vorlage auf allen Kanälen funktioniert. Wird im Store als Symbole angezeigt, wo Besucher nach Kanal filtern können."
   },
   "accountDeletion": {
     "title": "Delete account",
@@ -12041,5 +12441,1195 @@
       "webhookRejected": "LINE rejected the webhook URL. Please try again later or contact support.",
       "providerUnavailable": "LINE is temporarily unavailable. Please try again in a moment."
     }
+  },
+  "contactSync": {
+    "menu": "Sync with AhaChat",
+    "title": "Sync with AhaChat",
+    "description": "Quickly get contacts, tags and custom fields from AhaChat for your connected pages found there.",
+    "start": "Start sync",
+    "empty": "Connect a Messenger, Instagram, Zalo or Telegram page first.",
+    "noneInAhachat": "None of your connected pages exist in AhaChat.",
+    "cooldown": "One sync every 4 hours. Next from {time}.",
+    "options": {
+      "syncTags": "Sync tags",
+      "syncCustomFields": "Sync custom fields",
+      "overwriteExisting": "Overwrite existing data",
+      "hint": "With overwrite off, only missing data is filled. Tags are never removed and empty values never clear data."
+    },
+    "advanced": {
+      "show": "Edit mappings",
+      "hide": "Hide mappings"
+    },
+    "mapping": {
+      "auto": "Match by name",
+      "saved": "Mappings saved",
+      "tags": "Tags",
+      "fields": "Custom fields",
+      "noTags": "This page has no tags.",
+      "noFields": "This page has no custom fields.",
+      "typeMismatch": "Type differs: values are skipped.",
+      "save": "Save mappings"
+    },
+    "progress": {
+      "title": "Sync progress",
+      "source": "Source",
+      "counts": "{created} created · {updated} updated · {skipped} skipped · {failed} failed",
+      "skippedValues": "{count} Werte benutzerdefinierter Felder übersprungen (inkompatibler Typ oder ungültiger Wert)",
+      "cancel": "Cancel sync",
+      "done": "Done",
+      "requested": "Requested {time}",
+      "started": "Started {time}",
+      "finished": "finished {time}"
+    },
+    "ineligible": {
+      "notInAhachat": "Not in AhaChat",
+      "pageAmbiguous": "Matches several AhaChat pages",
+      "ahachatUnavailable": "AhaChat unavailable. Try again."
+    },
+    "status": {
+      "pending": "Waiting",
+      "running": "Running",
+      "cancelling": "Cancelling",
+      "succeeded": "Completed",
+      "partial": "Partly completed",
+      "failed": "Failed",
+      "cancelled": "Cancelled"
+    },
+    "runErrors": {
+      "inboxUnavailable": "The inbox was disconnected.",
+      "sourceUnavailable": "AhaChat returned unexpected data.",
+      "sourceDisconnected": "The AhaChat page was removed.",
+      "pageLimitReached": "Stopped at the per-page limit.",
+      "maxAttempts": "Stopped after repeated failures.",
+      "channelUnsupported": "Contacts of this channel can no longer be synced.",
+      "pageNotFound": "The page was removed from AhaChat."
+    },
+    "errors": {
+      "alreadyRunning": "A sync is already running in this workspace.",
+      "cooldown": "You can sync once every 4 hours.",
+      "noSources": "Choose at least one page.",
+      "tooManySources": "Too many pages in one sync.",
+      "sourceNotEligible": "One of the pages cannot be synced.",
+      "mappingInvalid": "Some mappings are invalid.",
+      "forbidden": "Only a workspace admin can sync contacts from AhaChat.",
+      "generic": "Something went wrong. Try again.",
+      "sourceUnavailable": "AhaChat could not be reached. Try again shortly.",
+      "notConfigured": "The AhaChat sync is not set up on this server."
+    },
+    "history": {
+      "open": "Sync history",
+      "title": "AhaChat sync history",
+      "run": "Sync details",
+      "empty": "No syncs yet.",
+      "columns": {
+        "pages": "Pages",
+        "created": "Created",
+        "updated": "Updated",
+        "skipped": "Skipped",
+        "failed": "Failed",
+        "finishedAt": "Finished"
+      }
+    },
+    "followUp": {
+      "statusLine": "History sync: {status}",
+      "pending": "History syncs after this import",
+      "linked": "History sync started",
+      "cancelled": "Cancelled: the page was disconnected",
+      "channelUnavailable": "Not started: the page is no longer connected",
+      "superseded": "A newer import of this page syncs history",
+      "workspaceUnavailable": "Not started: the workspace is unavailable",
+      "expired": "Not started: it waited too long",
+      "retry": "Retry",
+      "retried": "History sync starts shortly"
+    },
+    "source": {
+      "mapsTo": "{channel} → AhaChat: {page}"
+    }
+  },
+  "deleteAccountPage": {
+    "title": "Löschen Sie Ihr ChatbotX-Konto",
+    "intro": "Sie können Ihr Konto und seine Daten auf einem der folgenden Wege löschen.",
+    "waysTitle": "So löschen Sie Ihr Konto",
+    "wayMobile": "In der mobilen App: Einstellungen → Konto löschen.",
+    "wayWeb": "Im Web: Melden Sie sich an und öffnen Sie die Seite zur Kontolöschung.",
+    "wayWebLink": "Kontolöschung öffnen",
+    "wayEmail": "Per E-Mail: Schreiben Sie von Ihrer registrierten Adresse an {email}.",
+    "whatHappensTitle": "Was danach passiert",
+    "whatHappens": "Die Löschung beginnt nach einer Karenzzeit von 24 Stunden und kann nicht rückgängig gemacht werden. Kündigen Sie zuvor alle Abonnements.",
+    "deletedTitle": "Daten, die wir löschen",
+    "deleted": "Ihr Profil (Name und E-Mail), Anmeldedaten, Push-Benachrichtigungs-Tokens und jeder Workspace, den Sie besitzen, einschließlich Kontakten, Unterhaltungen, Nachrichten und hochgeladenen Dateien.",
+    "sharedWorkspace": "Wenn andere Personen Mitglieder eines Workspaces sind, den Sie besitzen, wird er auch für sie gelöscht.",
+    "retainedTitle": "Daten, die wir behalten",
+    "retained": "Notizen, die Sie in Workspaces anderer geschrieben haben, bleiben ohne Ihren Namen erhalten. Ein Nachweis, dass die Löschung stattgefunden hat, wird aufbewahrt. Abrechnungs- und Rechnungsdaten können so lange aufbewahrt werden, wie es gesetzlich vorgeschrieben ist."
+  },
+  "ahachatImport": {
+    "dialogTitle": "Use data from AhaChat?",
+    "dialogDescription": "{page} is already on AhaChat. Use its data so contacts arrive right away and the history sync runs faster.",
+    "importFirst": "Use AhaChat",
+    "historyOnly": "Skip AhaChat",
+    "panelDescription": "Contacts, tags and custom fields come from AhaChat; history syncs on its own.",
+    "errors": {
+      "unknown": "Couldn't start the AhaChat import. Try again later.",
+      "historyNotStarted": "Couldn't start the import or the history sync. Try again later."
+    },
+    "badge": {
+      "onAhachat": "On AhaChat",
+      "selected": "Uses AhaChat data"
+    }
+  },
+  "conversationParticipants": {
+    "joined": "{names} haben an der Unterhaltung teilgenommen",
+    "replied": "{name} hat geantwortet {time}",
+    "showMore": "Mehr anzeigen",
+    "label": "Wer in dieser Unterhaltung geantwortet hat",
+    "unnamedMember": "Mitglied",
+    "loadMoreFailed": "Weitere Mitglieder konnten nicht geladen werden",
+    "lastMessageBy": "Letzte Nachricht von {name}"
+  },
+  "posts": {
+    "title": "Beiträge",
+    "searchPlaceholder": "Nach Text, Link oder Beitrags-ID suchen",
+    "dateFrom": "Ab Datum",
+    "dateTo": "Bis Datum",
+    "export": {
+      "title": "Kommentare der Beiträge in diesem Zeitraum exportieren (bis zu {count} Beiträge)",
+      "needsRange": "Wähle ein Start- und ein Enddatum, um Kommentare zu exportieren.",
+      "nothing": "In diesem Zeitraum passt kein Beitrag zu diesen Filtern.",
+      "failed": "Der Export ist fehlgeschlagen. Versuche es erneut.",
+      "done": "{count, plural, one {Kommentare von # Beitrag exportiert.} other {Kommentare von # Beiträgen exportiert.}}",
+      "doneLimited": "Kommentare der {count} neuesten Beiträge exportiert. Es passen weitere Beiträge; grenze den Zeitraum ein, um den Rest zu exportieren.",
+      "truncated": "Der Export wurde am Zeilenlimit abgeschnitten. Grenze Datum oder Filter ein, um den Rest zu exportieren.",
+      "quotaExceeded": "Das Nachrichtenkontingent dieses Kontos ist aufgebraucht, daher wurde der Download nicht ausgeführt. Wechsle den Tarif oder warte auf den nächsten Abrechnungszeitraum.",
+      "blocked": "Der Tarif oder die Testphase dieses Arbeitsbereichs ist abgelaufen.",
+      "menu": "Exportieren",
+      "rowsTitle": "Liste der Beiträge exportieren (eine Zeile pro Beitrag)",
+      "rowsDone": "Die Beitragsliste wurde exportiert.",
+      "rowsTruncated": "Die Liste wurde am Beitragslimit abgeschnitten. Schränke die Filter ein, um den Rest zu exportieren."
+    },
+    "showAllPosts": "Auch Beiträge ohne Kommentare anzeigen",
+    "noCaption": "Kein Text",
+    "liveNow": "Live",
+    "empty": "Keine Beiträge entsprechen diesen Filtern.",
+    "loadMore": "Mehr laden",
+    "columns": {
+      "content": "Beitrag",
+      "topic": "Thema",
+      "author": "Autor",
+      "pages": "Seiten",
+      "status": "Status"
+    },
+    "contentType": {
+      "text": "Text",
+      "photo": "Foto",
+      "video": "Video",
+      "reel": "Reel",
+      "carousel": "Karussell",
+      "story": "Story",
+      "live": "Live",
+      "link": "Link",
+      "audio": "Audio",
+      "other": "Sonstiges"
+    },
+    "filters": {
+      "channel": "Kanal",
+      "allChannels": "Alle Kanäle",
+      "inbox": "Seite / Konto",
+      "allInboxes": "Alle Seiten und Konten",
+      "postType": "Beitragstyp",
+      "commentSettings": "Kommentareinstellungen",
+      "hidden": "Kommentare ausgeblendet",
+      "notHidden": "Kommentare nicht ausgeblendet",
+      "phoneHidden": "Kommentare mit Telefonnummer ausgeblendet",
+      "phoneNotHidden": "Kommentare mit Telefonnummer nicht ausgeblendet",
+      "skipped": "Kommentare übersprungen",
+      "notSkipped": "Kommentare nicht übersprungen",
+      "sort": "Sortieren",
+      "topics": "Themen",
+      "title": "Filter",
+      "engagement": "Interaktion",
+      "topicSearch": "Themen suchen",
+      "author": "Autor",
+      "allAuthors": "Alle Autoren"
+    },
+    "postType": {
+      "all": "Alle",
+      "photo": "Foto",
+      "video": "Video",
+      "post": "Beitrag",
+      "pastLive": "Beendeter Livestream",
+      "liveNow": "Jetzt live"
+    },
+    "sort": {
+      "newest": "Neueste",
+      "mostComments": "Meiste Kommentare",
+      "fewestComments": "Wenigste Kommentare",
+      "mostPhones": "Meiste Telefonnummern",
+      "fewestPhones": "Wenigste Telefonnummern",
+      "mostEngagement": "Meiste Interaktionen",
+      "leastEngagement": "Wenigste Interaktionen",
+      "mostShares": "Meiste Shares",
+      "fewestShares": "Wenigste Shares"
+    },
+    "settings": {
+      "hideComments": "Alle Kommentare ausblenden",
+      "hidePhoneComments": "Kommentare mit Telefonnummer ausblenden",
+      "skipComments": "Kommentare überspringen (als gelesen markieren)",
+      "unavailable": "Dieser Kanal unterstützt Kommentareinstellungen pro Beitrag noch nicht."
+    },
+    "sync": {
+      "refresh": "Beiträge aktualisieren",
+      "started": "Beiträge werden synchronisiert. Neue Beiträge erscheinen in Kürze.",
+      "alreadyRunning": "Eine Synchronisierung läuft bereits oder ist gerade beendet.",
+      "failedCount": "{count, plural, one {# Seite konnte nicht synchronisiert werden} other {# Seiten konnten nicht synchronisiert werden}}",
+      "reconnect": "Kanal erneut verbinden",
+      "reconnectWithPermission": "Erneut verbinden und Zugriff auf Beiträge erlauben",
+      "retry": "Erneut versuchen"
+    },
+    "topics": {
+      "edit": "Themen bearbeiten",
+      "newPlaceholder": "Name des neuen Themas",
+      "empty": "Noch keine Themen. Namen eingeben, um eines zu erstellen."
+    },
+    "emptyHint": "Versuche einen anderen Filter oder aktiviere „Auch Beiträge ohne Kommentare anzeigen“.",
+    "actions": {
+      "viewComments": "Kommentare anzeigen",
+      "viewOriginal": "Originalbeitrag ansehen",
+      "refreshPost": "Vom Kanal aktualisieren",
+      "refreshRemoved": "Dieser Beitrag existiert im Kanal nicht mehr und wurde deshalb ausgeblendet.",
+      "refreshUnavailable": "Der Beitrag konnte nicht aus dem Kanal gelesen werden. Versuche es später erneut.",
+      "refreshRateLimited": "Der Kanal hat darum gebeten, langsamer vorzugehen. Versuche es in ein paar Minuten erneut.",
+      "refreshCooldown": "Dieser Beitrag wurde gerade aktualisiert. Versuche es in einer Minute erneut.",
+      "downloadPhones": "Telefonnummern herunterladen",
+      "downloadComments": "Kommentare herunterladen",
+      "viewDetails": "Details anzeigen"
+    },
+    "merge": {
+      "title": "Beiträge zusammenführen",
+      "selectAll": "Alle auswählen",
+      "selected": "{count} von {max} ausgewählt",
+      "confirm": "Beiträge zusammenführen"
+    },
+    "comments": {
+      "title": "Alle Kommentare zu diesem Beitrag",
+      "mergedTitle": "Zusammengeführte Kommentare von {count} Beiträgen",
+      "searchPlaceholder": "Kommentare suchen",
+      "phoneOnly": "Mit Telefonnummer",
+      "empty": "Keine Kommentare vorhanden.",
+      "loadOlder": "Ältere Kommentare laden",
+      "like": "Kommentar liken",
+      "delete": "Kommentar löschen",
+      "confirmDelete": "Zum Löschen erneut klicken",
+      "hidden": "Ausgeblendet",
+      "unknownAuthor": "Unbekannter Kunde"
+    },
+    "state": {
+      "noChannelTitle": "Kein Kanal verbunden",
+      "noChannelHint": "Verbinde einen Messenger-, Instagram-, Threads- oder TikTok-Kanal, um seine Beiträge hier zu sehen.",
+      "connectChannel": "Kanal verbinden",
+      "neverSyncedTitle": "Beiträge noch nicht geladen",
+      "neverSyncedHint": "Lade die Beiträge deiner verbundenen Kanäle. Das läuft im Hintergrund und kann einige Minuten dauern.",
+      "loadPosts": "Beiträge laden"
+    },
+    "counts": {
+      "comments": "Kommentare",
+      "reactions": "Reaktionen",
+      "shares": "Shares",
+      "phones": "Kommentare mit Telefonnummer"
+    },
+    "tabs": {
+      "posts": "Beiträge",
+      "calendar": "Kalender",
+      "connect": "Verbinden",
+      "feeds": "Feeds",
+      "analytics": "Analysen"
+    },
+    "calendar": {
+      "views": {
+        "month": "Monat",
+        "week": "Woche",
+        "day": "Tag",
+        "list": "Liste"
+      },
+      "viewLabel": "Kalenderansicht",
+      "previous": "Voriger Zeitraum",
+      "next": "Nächster Zeitraum",
+      "today": "Heute",
+      "network": "Netzwerk",
+      "destination": "Seite oder Profil",
+      "allNetworks": "Alle Netzwerke",
+      "allDestinations": "Alle Seiten und Profile",
+      "noText": "(Kein Text)",
+      "noDate": "Kein Datum",
+      "noDateEmpty": "Entwürfe ohne Datum erscheinen hier. Ziehe einen Beitrag hierher, um ihn zurück in die Entwürfe zu legen.",
+      "newPostOn": "Neuer Beitrag am {date}",
+      "more": "+{count} weitere",
+      "emptyDay": "Keine Beiträge an diesem Tag.",
+      "emptyHint": "In diesem Zeitraum ist nichts geplant.",
+      "loading": "Wird geladen…",
+      "loadError": "Der Kalender konnte nicht geladen werden.",
+      "retry": "Erneut versuchen",
+      "readOnly": "Dieser Arbeitsbereich ist schreibgeschützt, daher können Beiträge nicht verschoben oder erstellt werden.",
+      "truncated": "Nur ein Teil der Beiträge dieses Zeitraums wird angezeigt. Verkleinere den Zeitraum oder filtere nach Netzwerk oder Konto.",
+      "openPost": "Beitrag öffnen",
+      "moveToDrafts": "In Entwürfe verschieben",
+      "reschedule": "Neu planen",
+      "schedule": "Planen",
+      "rescheduleLabel": "Veröffentlichungszeit",
+      "scheduleLabel": "Planen für",
+      "pickTime": "Datum und Uhrzeit wählen",
+      "status": {
+        "draft": "Entwurf"
+      },
+      "errors": {
+        "past": "Wähle eine Zeit, die mindestens 15 Minuten in der Zukunft liegt.",
+        "cannotUnschedule": "Nur ein geplanter Beitrag kann zurück in die Entwürfe verschoben werden."
+      },
+      "list": {
+        "filterLabel": "Nach Status filtern",
+        "filterCount": "{label}, {count, plural, one {# Beitrag} other {# Beiträge}}",
+        "filters": {
+          "all": "Alle",
+          "drafts": "Entwürfe",
+          "scheduled": "Geplant",
+          "published": "Veröffentlicht",
+          "needsAttention": "Erfordert Aufmerksamkeit"
+        },
+        "empty": {
+          "all": "Keine Beiträge",
+          "drafts": "Keine Entwürfe",
+          "scheduled": "Keine geplanten Beiträge",
+          "published": "Keine veröffentlichten Beiträge",
+          "needsAttention": "Nichts erfordert Aufmerksamkeit"
+        },
+        "loadMore": "Mehr laden"
+      },
+      "freeSlots": {
+        "label": "Freie Veröffentlichungszeiten",
+        "compose": "Neuer Beitrag um {time}",
+        "truncated": "Weitere freie Zeiten werden nicht angezeigt"
+      }
+    },
+    "connect": {
+      "title": "Verbinden",
+      "connectNetwork": "{network} verbinden",
+      "reconnect": "Erneut verbinden",
+      "reconnectName": "{label}: {name}",
+      "facebookReconnectHint": "Wenn du eine Seite erneut verbindest, werden alle Seiten desselben Facebook-Logins aktualisiert.",
+      "comingSoon": "Noch nicht verfügbar",
+      "connectedAlready": "{count, plural, one {# Konto verbunden. Klicken, um ein weiteres hinzuzufügen.} other {# Konten verbunden. Klicken, um ein weiteres hinzuzufügen.}}",
+      "truncated": "Die ersten {count} Seiten werden angezeigt.",
+      "tiktokTitle": "TikTok-Konten zum Veröffentlichen",
+      "pageCount": "{count, plural, one {# Seite} other {# Seiten}}",
+      "verify": "Prüfen",
+      "verified": "Konto geprüft.",
+      "syncDestinations": "Seiten synchronisieren",
+      "destinationsSynced": "Seiten und Profile aktualisiert.",
+      "disconnect": "Trennen",
+      "confirmDisconnect": "Zum Trennen erneut klicken",
+      "disconnected": "Konto getrennt.",
+      "missingScopes": "Fehlende Berechtigungen: {scopes}. Verbinde neu, um sie zu erteilen.",
+      "lastVerified": "Geprüft {date}",
+      "status": {
+        "connected": "Verbunden",
+        "needsReauth": "Neu verbinden nötig",
+        "disconnected": "Getrennt"
+      },
+      "reason": {
+        "tokenRejected": "Die Plattform hat die gespeicherte Anmeldung abgelehnt. Verbinde das Konto neu.",
+        "tokenExpired": "Die gespeicherte Anmeldung ist abgelaufen. Verbinde das Konto neu.",
+        "refreshRejected": "Die Plattform hat die Verlängerung der Anmeldung abgelehnt. Verbinde das Konto neu.",
+        "permissionNotGranted": "Einige Berechtigungen fehlen. Verbinde das Konto neu, um sie zu erteilen."
+      },
+      "emptyTitle": "Noch keine Kanäle verbunden",
+      "emptyAction": "Zu den Kanälen",
+      "schedule": {
+        "open": "Veröffentlichungszeiten",
+        "title": "Veröffentlichungszeiten für {name}",
+        "description": "Ein Beitrag, der zur Warteschlange hinzugefügt wird, nimmt die nächste freie Zeit aus dieser Liste.",
+        "timezone": "Zeitzone: {timezone}",
+        "maxTimes": "Bis zu {count} Zeiten pro Tag",
+        "dayOn": "Am {day} veröffentlichen",
+        "noTimes": "Keine Zeiten",
+        "addTime": "Zeit hinzufügen",
+        "timeLabel": "Neue Zeit für {day}",
+        "removeTime": "{time} entfernen",
+        "copyTo": "In andere Tage kopieren",
+        "copyApply": "Kopieren",
+        "save": "Speichern",
+        "saved": "Veröffentlichungszeiten gespeichert.",
+        "reflowMoved": "{count, plural, one {# Beitrag in der Warteschlange wurde auf eine neue Zeit verschoben.} other {# Beiträge in der Warteschlange wurden auf neue Zeiten verschoben.}}",
+        "reflowDetached": "{count, plural, one {# Beitrag in der Warteschlange hat keine Veröffentlichungszeit mehr. Er behält seine Zeit, steht aber nicht mehr in der Warteschlange (jetzt individuell).} other {# Beiträge in der Warteschlange haben keine Veröffentlichungszeit mehr. Sie behalten ihre Zeiten, stehen aber nicht mehr in der Warteschlange (jetzt individuell).}}"
+      }
+    },
+    "detail": {
+      "title": "Beitragsdetails",
+      "caption": "Text",
+      "metrics": "Interaktion",
+      "metricsUnavailable": "Dieser Kanal liefert diese Zahlen nicht.",
+      "views": "Aufrufe",
+      "settings": "Kommentareinstellungen",
+      "settingsHint": "Diese Einstellungen gelten für neue Kommentare zu diesem Beitrag. Vorhandene Kommentare bleiben unverändert.",
+      "skipCommentsHint": "Markiert jeden neuen Kommentar als gelesen. Automatisierungen laufen weiter.",
+      "hideCommentsHint": "Blendet jeden neuen Kommentar zum Beitrag aus.",
+      "hidePhoneCommentsHint": "Blendet neue Kommentare mit Telefonnummer aus.",
+      "topics": "Themen",
+      "info": "Informationen",
+      "postId": "Beitrags-ID",
+      "channel": "Kanal",
+      "contentType": "Typ",
+      "author": "Autor",
+      "publishedAt": "Veröffentlicht",
+      "metricsUpdated": "Kennzahlen aktualisiert",
+      "never": "Noch nicht gemessen",
+      "ownerPage": "Seite",
+      "ownerAccount": "Konto"
+    },
+    "feeds": {
+      "title": "Automatisches Posten aus Feeds",
+      "description": "Wandelt neue Einträge eines RSS- oder Atom-Feeds in Beiträge um. Die erste Prüfung erfasst nur, was der Feed bereits enthält.",
+      "add": "Feed hinzufügen",
+      "empty": "Noch keine Feeds. Fügen Sie einen hinzu, um neue Artikel automatisch in Beiträge umzuwandeln.",
+      "status": {
+        "active": "Aktiv",
+        "paused": "Pausiert",
+        "error": "Pausiert – Feed-Fehler"
+      },
+      "mode": {
+        "draft": "Als Entwurf speichern",
+        "queue": "Automatisch einreihen"
+      },
+      "lastChecked": "Zuletzt geprüft: {time}",
+      "neverChecked": "Noch nicht geprüft",
+      "firstCheckPending": "Die erste Prüfung erfasst nur, was der Feed bereits enthält; daraus wird kein Beitrag erstellt.",
+      "every": "Alle {minutes} Min.",
+      "destinations": "{count, plural, one {# Ziel} other {# Ziele}}",
+      "actions": {
+        "checkNow": "Jetzt prüfen",
+        "pause": "Pausieren",
+        "resume": "Fortsetzen",
+        "edit": "Bearbeiten",
+        "delete": "Löschen",
+        "items": "Einträge",
+        "sendTest": "Test senden"
+      },
+      "toast": {
+        "checkStarted": "Prüfung gestartet",
+        "paused": "Feed pausiert",
+        "resumed": "Feed fortgesetzt",
+        "deleted": "Feed gelöscht",
+        "saved": "Feed gespeichert",
+        "testDraftCreated": "Test-Entwurf erstellt",
+        "openDraft": "Entwurf öffnen",
+        "testUsedTemplate": "Die KI konnte den Text nicht schreiben, daher wurde die Textvorlage verwendet."
+      },
+      "deleteConfirm": "Diesen Feed und den Verlauf seiner Einträge löschen? Bereits erstellte Beiträge bleiben erhalten.",
+      "error": {
+        "blocked": "Die Feed-Adresse ist nicht zulässig.",
+        "timeout": "Der Feed hat zu lange für die Antwort gebraucht.",
+        "tooLarge": "Der Feed ist größer als 2 MB.",
+        "badStatus": "Der Feed hat mit einem Fehler geantwortet.",
+        "badContentType": "Die Adresse ist kein RSS- oder Atom-Feed.",
+        "unreachable": "Der Feed ist nicht erreichbar.",
+        "tooManyRedirects": "Der Feed leitet zu oft weiter.",
+        "invalidFeed": "Der Feed konnte nicht gelesen werden.",
+        "internal": "Beim Prüfen des Feeds ist etwas schiefgelaufen.",
+        "postRefused": "Ein Beitrag konnte nicht erstellt werden (z. B. ist kein Veröffentlichungszeitpunkt frei oder der Arbeitsbereich ist gesperrt). Die nächste Prüfung versucht es erneut."
+      },
+      "apiError": {
+        "feedUrlTaken": "Dieser Feed wurde bereits hinzugefügt.",
+        "feedCheckCooldown": "Ein Feed kann nur alle 5 Minuten manuell geprüft werden.",
+        "feedPreviewRateLimited": "Zu viele Vorschauen. Versuchen Sie es später erneut.",
+        "feedNotParseable": "Diese Adresse ist kein RSS- oder Atom-Feed. Versuchen Sie, /feed oder /rss an die Website-Adresse anzuhängen.",
+        "feedUnreachable": "Diese Adresse ist nicht erreichbar. Prüfen Sie sie und versuchen Sie es erneut.",
+        "feedTestRateLimited": "Zu viele Testbeiträge. Versuchen Sie es später erneut.",
+        "feedHasNoItems": "Der Feed enthält noch keine Einträge.",
+        "feedFetchRateLimited": "Zu viele Prüfungen von Feed-Adressen. Versuche es später erneut.",
+        "feedCheckInProgress": "Eine Prüfung dieses Feeds wartet oder läuft bereits."
+      },
+      "form": {
+        "createTitle": "Feed hinzufügen",
+        "editTitle": "Feed bearbeiten",
+        "name": "Name",
+        "url": "Feed-Adresse",
+        "urlPlaceholder": "https://example.com/feed.xml",
+        "preview": "Vorschau",
+        "previewEmpty": "In diesem Feed wurden keine Einträge gefunden.",
+        "destinations": "Posten auf",
+        "noDestinations": "Verbinden Sie zuerst ein Social-Media-Konto.",
+        "interval": "Prüfen alle",
+        "dailyCap": "Höchstzahl an Beiträgen pro Tag",
+        "mode": "Neue Einträge werden",
+        "modeDraftHelp": "Jeder neue Eintrag wird zu einem Entwurf, den Sie prüfen können.",
+        "modeQueueHelp": "Jeder neue Eintrag wird im Veröffentlichungsplan des Ziels eingereiht und ohne Prüfung veröffentlicht.",
+        "template": "Beitragstext",
+        "templateHelp": "Verfügbare Variablen: {variables}",
+        "save": "Speichern",
+        "cancel": "Abbrechen",
+        "didYouMean": "Meinten Sie {url}?",
+        "useSuggestion": "Verwenden",
+        "aiWrite": "Jeden Beitrag mit KI schreiben",
+        "aiWriteHelp": "Die KI schreibt den Text aus Titel, Zusammenfassung und Link des Eintrags. Falls das nicht klappt, wird die Textvorlage unten verwendet.",
+        "aiInstructions": "Zusätzliche Anweisungen für die KI (optional)",
+        "aiInstructionsHelp": "Zum Beispiel: freundlicher Ton, Shopnamen nennen. Bis zu 300 Zeichen.",
+        "postLatestOnFirstCheck": "Neuesten Eintrag bei der ersten Prüfung posten",
+        "postLatestOnFirstCheckHelp": "Ohne diese Option erfasst die erste Prüfung nur, was der Feed bereits enthält.",
+        "contentTitle": "Beitragsinhalt",
+        "templateInsert": "Feld einfügen",
+        "templateVariables": "Felder des Eintrags",
+        "templateFeedFields": "In diesem Feed gefundene Felder",
+        "templatePresets": "Mit einer Vorlage beginnen",
+        "presetTitleLink": "Titel und Link",
+        "presetSummaryHashtags": "Titel, Zusammenfassung, Link und Hashtags",
+        "presetProduct": "Produkt: Titel, Preis und Link",
+        "templateLegacy": "Dieser Feed nutzt die alten {token}-Platzhalter und postet weiter wie bisher, bis du ihn umwandelst.",
+        "templateConvert": "In neue Syntax umwandeln",
+        "templateHint": "Füge Felder über das Menü ein oder tippe sie, zum Beispiel {example}. Verfügbare Filter: {filters}.",
+        "templateProblem": "Zeile {line}, Spalte {column}: {message}",
+        "previewTitle": "Vorschau",
+        "previewSample": "Beispieleintrag",
+        "previewHint": "Sieh dir die Feed-Adresse in der Vorschau an, um zu sehen, wie ein Beitrag aussieht.",
+        "previewCharacters": "{network}: {count} Zeichen",
+        "previewDropped": "Aus diesem Beitrag ausgelassene Ziele: {count}",
+        "previewFiltered": "Herausgefiltert: {reason}",
+        "previewSkipped": "Dieser Eintrag würde übersprungen.",
+        "previewNoPicture": "Kein Bild",
+        "mediaTitle": "Bilder",
+        "mediaMode": "Bildquelle",
+        "mediaModeAuto": "Aus dem Feed (automatisch)",
+        "mediaModeField": "Aus einem Feld oder einer Adresse",
+        "mediaModeNone": "Kein Bild",
+        "mediaField": "Feld oder Adresse",
+        "mediaFieldHelp": "Eine Vorlage, die die Bildadresse liefert, zum Beispiel {example}.",
+        "mediaLibrary": "Ersatzbilder",
+        "mediaLibraryHelp": "Aus deiner Medienbibliothek; wird genutzt, wenn ein Eintrag kein eigenes Bild hat.",
+        "mediaLibraryAdd": "Bilder hinzufügen",
+        "mediaRemove": "Entfernen",
+        "postAs": "Veröffentlichen als",
+        "postAsPhoto": "Bildbeitrag",
+        "postAsLink": "Link",
+        "postAsText": "Nur Text",
+        "postAsHelpLink": "Link: eine Vorschaukarte mit dem Artikelbild auf Facebook und Threads.",
+        "postAsHelpPhoto": "Bildbeitrag: Das Bild des Eintrags wird zusammen mit dem Text veröffentlicht.",
+        "postAsHelpText": "Nur Text: nur die Wörter und die Adresse, ohne Bild.",
+        "postAsTextFacebookWarning": "Facebook erstellt für einen Link im Text keine Linkvorschau-Karte (Bild). Wähle Link, um die Karte mit dem Artikelbild zu erhalten.",
+        "noImageFallback": "Wenn ein Eintrag kein Bild hat",
+        "fallbackLink": "Link teilen",
+        "fallbackText": "Nur Text",
+        "fallbackSkip": "Eintrag überspringen",
+        "filtersTitle": "Filter",
+        "filterInclude": "Enthält eines von",
+        "filterExclude": "Enthält keines von",
+        "filterCategories": "Kategorie ist eine von",
+        "filterTermsHelp": "Gib ein Wort ein und drücke die Eingabetaste. Groß-/Kleinschreibung und Akzente werden ignoriert.",
+        "filterRequireImage": "Nur Einträge mit Bild",
+        "filterMaxAge": "Nur Einträge, die neuer sind als (Stunden)",
+        "networkTexts": "Unterschiedlicher Text pro Netzwerk",
+        "networkTextsHelp": "Schreiben Sie für ein Netzwerk einen eigenen Text; Netzwerke ohne eigenen Text verwenden den gemeinsamen Text. Ein Text, den ein Netzwerk ablehnt, wird übersprungen und nie gekürzt. KI-geschriebene Beiträge verwenden einen gemeinsamen Text.",
+        "networkTabShared": "Gemeinsam",
+        "networkTextUsesShared": "Dieses Netzwerk verwendet den gemeinsamen Text.",
+        "networkTextClear": "Gemeinsamen Text verwenden",
+        "networkTextAria": "Text für {network}",
+        "fetchArticleImage": "Auf der Artikelseite nach einem Bild suchen",
+        "fetchArticleImageHelp": "Hat ein Eintrag kein Bild, wird seine Artikelseite einmal nach dem Hauptbild (og:image) gelesen. Nur für Einträge, die veröffentlicht werden; eine Seite, die sich nicht lesen lässt, blockiert den Beitrag nie.",
+        "previewArticlePicture": "Artikelseite wird gelesen"
+      },
+      "items": {
+        "title": "Einträge von {name}",
+        "empty": "Noch keine Einträge geprüft.",
+        "loadMore": "Mehr laden",
+        "openPost": "Beitrag öffnen",
+        "reasons": {
+          "existing": "Beim Hinzufügen schon im Feed vorhanden",
+          "undated": "Kein Veröffentlichungsdatum",
+          "tooOld": "Zu alt",
+          "perRunLimit": "Über dem Limit pro Prüfung",
+          "noDestination": "Kein Ziel ausgewählt",
+          "emptyText": "Der Beitragstext ist leer",
+          "textTooLong": "Der Beitragstext ist zu lang",
+          "invalid": "Der Beitrag wurde abgelehnt",
+          "other": "Der Eintrag konnte nicht verwendet werden",
+          "aiFallback": "Aus der Vorlage geschrieben (die KI konnte ihn nicht schreiben)",
+          "excludedKeyword": "Enthält ein ausgeschlossenes Wort",
+          "missingKeyword": "Enthält keines der erforderlichen Wörter",
+          "category": "Nicht in den gewählten Kategorien",
+          "noImage": "Kein Bild",
+          "tooOldForFilter": "Älter als der Altersfilter",
+          "undatedForFilter": "Kein Datum zur Prüfung des Altersfilters",
+          "imageFailed": "Das Bild konnte nicht verwendet werden",
+          "noImageFallback": "Ohne Bild veröffentlicht",
+          "droppedTargets": "Einige Ziele wurden ausgelassen",
+          "templateError": "Die Vorlage konnte nicht dargestellt werden",
+          "noDestinationAccepts": "Kein Ziel kann diesen Beitrag aufnehmen",
+          "issueTextRequired": "Der Beitrag hat keinen Text",
+          "issueTextTooLong": "Der Text ist für ein Netzwerk zu lang",
+          "issueLinkNotSupported": "Ein Netzwerk akzeptiert keinen Link",
+          "issueLinkRequired": "Ein Netzwerk benötigt einen Link",
+          "issueTooManyLinks": "Mehr Links, als ein Netzwerk erlaubt",
+          "issueContentType": "Ein Netzwerk veröffentlicht diese Art von Beitrag nicht",
+          "issueMedia": "Das Bild erfüllt die Regeln eines Netzwerks nicht",
+          "issueOptions": "Eine Netzwerkeinstellung ist ungültig",
+          "issueParts": "Ein Netzwerk akzeptiert keine Folgeteile",
+          "issueDestination": "Ein Ziel kann gerade nicht veröffentlichen",
+          "alreadyPosted": "Für diesen Eintrag gibt es bereits einen Beitrag"
+        },
+        "createPost": "Beitrag erstellen",
+        "picture": "Bild: {source}",
+        "dropped": "Ausgelassen: {count}",
+        "imageSources": {
+          "enclosure": "Bildanhang",
+          "mediaContent": "Medieninhalt",
+          "mediaThumbnail": "Vorschaubild",
+          "itunesImage": "Podcast-Cover",
+          "contentImage": "Bild im Text",
+          "jsonFeed": "JSON-Feed-Bild",
+          "field": "Feld oder Adresse",
+          "library": "Medienbibliothek",
+          "article": "Artikelseite (og:image)"
+        },
+        "imageErrors": {
+          "unreachable": "Das Bild konnte nicht heruntergeladen werden.",
+          "blocked": "Die Bildadresse ist nicht erlaubt.",
+          "tooBig": "Das Bild ist zu groß.",
+          "notImage": "Die Datei ist kein verwendbares Bild.",
+          "storage": "Das Bild konnte nicht gespeichert werden.",
+          "articleUnreachable": "Die Artikelseite konnte nicht gelesen werden.",
+          "articleNoImage": "Die Artikelseite nennt kein Bild."
+        }
+      },
+      "outcome": {
+        "created": "Beitrag erstellt",
+        "skippedOld": "Übersprungen: bereits vorhanden oder zu alt",
+        "skippedInvalid": "Übersprungen: abgelehnt",
+        "skippedFiltered": "Übersprungen: herausgefiltert",
+        "skippedNoImage": "Übersprungen: kein Bild"
+      },
+      "deleteConfirmTitle": "„{name}“ löschen?",
+      "sendTestConfirm": {
+        "title": "Testbeitrag senden?",
+        "description": "Aus dem neuesten Eintrag dieses Feeds wird ein Entwurf erstellt, genau so, wie der Feed ihn schreiben würde. Es wird nichts veröffentlicht; Sie können den Entwurf öffnen und prüfen."
+      },
+      "bulkDelete": {
+        "selectAll": "Alle auswählen",
+        "selectFeed": "{name} auswählen",
+        "deleteSelected": "Ausgewählte löschen ({count})",
+        "confirmTitle": "{count, plural, one {# Feed löschen?} other {# Feeds löschen?}}",
+        "confirmDescription": "Die ausgewählten Feeds und ihr Elementverlauf werden gelöscht. Bereits erstellte Beiträge bleiben erhalten.",
+        "success": "{count, plural, one {# Feed gelöscht} other {# Feeds gelöscht}}"
+      },
+      "columns": {
+        "name": "Feed",
+        "status": "Status",
+        "mode": "Modus",
+        "schedule": "Prüfintervall",
+        "destinations": "Ziele",
+        "lastChecked": "Zuletzt geprüft"
+      },
+      "filters": {
+        "search": "Feeds durchsuchen",
+        "searchPlaceholder": "Nach Name oder Feed-Adresse suchen",
+        "status": "Nach Status filtern",
+        "mode": "Nach Modus filtern",
+        "destination": "Nach Ziel filtern",
+        "allStatuses": "Alle Status",
+        "allModes": "Alle Modi",
+        "allDestinations": "Alle Ziele",
+        "destinationsSelected": "{count, plural, one {# Ziel} other {# Ziele}}",
+        "noDestinations": "Noch keine Ziele zum Filtern vorhanden.",
+        "clear": "Filter zurücksetzen",
+        "noMatch": "Keine Feeds entsprechen diesen Filtern."
+      },
+      "destinationsDialog": {
+        "title": "Ziele von {name}",
+        "removed": "Entferntes Ziel",
+        "close": "Schließen",
+        "edit": "Ziele bearbeiten"
+      },
+      "lastRun": {
+        "noNew": "Keine neuen Einträge in der Quelle",
+        "skippedOnly": "Neue Einträge wurden übersprungen (zu alt oder herausgefiltert)",
+        "stale": "Die Quelle hat eine ältere Kopie geliefert; Prüfung wird bald wiederholt",
+        "notModified": "Die Quelle hat sich seit der letzten Prüfung nicht geändert",
+        "created": "{count, plural, one {# Beitrag erstellt} other {# Beiträge erstellt}}",
+        "refused": "{count, plural, one {# Eintrag von einem Netzwerk abgelehnt} other {# Einträge von einem Netzwerk abgelehnt}}",
+        "waiting": "{count, plural, one {# neuer Eintrag wartet auf die nächste Prüfung} other {# neue Einträge warten auf die nächste Prüfung}}",
+        "dailyCap": "Tageslimit erreicht ({cap} pro 24 Std.) — {count, plural, one {# neuer Eintrag wartet} other {# neue Einträge warten}}",
+        "dailyCapUntil": "Tageslimit erreicht ({cap} pro 24 Std.) — {count, plural, one {# neuer Eintrag wartet} other {# neue Einträge warten}}. Nächster freier Platz: {until}"
+      }
+    },
+    "show": {
+      "label": "Anzeigen",
+      "channels": "Auf Kanälen"
+    },
+    "composed": {
+      "deleted": "Beitrag gelöscht.",
+      "deleteTitle": "Diesen Beitrag löschen?",
+      "deleteDescription": "Ein Entwurf wird endgültig gelöscht. Ein geplanter Beitrag wird abgebrochen und nicht veröffentlicht."
+    },
+    "analytics": {
+      "title": "Beitragsanalysen",
+      "filters": {
+        "title": "Analysefilter",
+        "allContentTypes": "Alle Inhaltstypen",
+        "allTopics": "Alle Themen"
+      },
+      "metrics": {
+        "comments": "Kommentare",
+        "reactions": "Reaktionen",
+        "shares": "Shares",
+        "engagement": "Interaktionen",
+        "views": "Aufrufe"
+      },
+      "metricsLower": {
+        "comments": "Kommentare",
+        "reactions": "Reaktionen",
+        "shares": "Shares",
+        "engagement": "Interaktionen",
+        "views": "Aufrufe"
+      },
+      "kpi": {
+        "title": "Wichtige Kennzahlen",
+        "notReported": "Nicht gemeldet",
+        "notReportedHint": "Dieser Kanal meldet diese Zahl nicht.",
+        "vsPrevious": "im Vergleich zum Vorzeitraum",
+        "noComparison": "Kein Vergleich verfügbar",
+        "previous": "Vorzeitraum: {value}",
+        "postsPublished": "{count, plural, one {# Beitrag in diesem Zeitraum veröffentlicht} other {# Beiträge in diesem Zeitraum veröffentlicht}}"
+      },
+      "chart": {
+        "title": "Zuwachs pro Tag",
+        "description": "Täglicher Zuwachs bei {metricLower}",
+        "groupBy": "Diagramm gruppieren",
+        "group": {
+          "none": "Gesamt",
+          "channel": "Nach Kanal",
+          "inbox": "Nach Seite oder Konto"
+        },
+        "other": "Sonstige",
+        "viewTable": "Als Tabelle anzeigen",
+        "hideTable": "Tabelle ausblenden",
+        "day": "Tag",
+        "summary": "{metric} pro Tag vom {from} bis {to}: insgesamt {total}.",
+        "empty": "Kein Zuwachs erfasst",
+        "emptyHint": "In diesem Zeitraum hat sich nichts geändert, oder die Erfassung hatte noch nicht begonnen."
+      },
+      "breakdown": {
+        "title": "Aufschlüsselung",
+        "description": "{metric} pro Kanal oder Seite",
+        "by": {
+          "channel": "Kanäle",
+          "inbox": "Seiten und Konten"
+        },
+        "empty": "Keine Daten für diese Filter"
+      },
+      "topPosts": {
+        "title": "Top-Beiträge",
+        "description": "Sortiert nach {metricLower}",
+        "rankBy": "Sortieren nach",
+        "rank_gained": "Größter Zuwachs",
+        "rank_total": "Höchste Gesamtzahl",
+        "rank": "Nr.",
+        "post": "Beitrag",
+        "channel": "Kanal",
+        "gained": "Zuwachs",
+        "total": "Gesamt",
+        "published": "Veröffentlicht",
+        "open": "Beitrag öffnen",
+        "noCaption": "Keine Beschriftung",
+        "empty": "Keine Beiträge zum Sortieren",
+        "emptyHint": "Beiträge erscheinen hier, sobald ihre Zahlen erfasst wurden."
+      },
+      "bestTimes": {
+        "title": "Beste Zeiten zum Posten",
+        "description": "Beiträge im Vergleich zum üblichen Beitrag derselben Seite, in der Zeitzone {timezone}.",
+        "caption": "Interaktionswert nach Wochentag und Uhrzeit",
+        "cell": "{when}: Wert {score}, {posts, plural, one {# Beitrag} other {# Beiträge}}",
+        "cellEmpty": "{when}: keine Beiträge",
+        "legendLow": "Niedriger",
+        "legendHigh": "Höher",
+        "legendTop": "Beste Zeitfenster",
+        "scoreHint": "Ein Wert von 1,0 entspricht einem typischen Beitrag derselben Seite.",
+        "topHeading": "Stärkste Zeitfenster",
+        "slotDetail": "Wert {score} · {posts, plural, one {# Beitrag} other {# Beiträge}}",
+        "insufficientTitle": "Noch nicht genug Daten",
+        "insufficientHint": "Für die besten Zeiten werden mindestens {min} Beiträge benötigt, die vor 90 bis 3 Tagen veröffentlicht wurden. Gefunden: {count}.",
+        "capped": "Es wurde nur eine Stichprobe der neuesten Beiträge verwendet."
+      },
+      "coverage": {
+        "noneTitle": "Noch kein Verlauf",
+        "partialTitle": "Der Verlauf baut sich noch auf",
+        "fullTitle": "Nur ein Teil Ihrer Beiträge wird gemessen",
+        "since": "Der Zuwachs wird ab dem {date} gezählt, als die Erfassung begann. Frühere Aktivität ist nicht enthalten.",
+        "sinceUnknown": "Der Zuwachs wird ab Beginn der Erfassung gezählt. Frühere Aktivität ist nicht enthalten.",
+        "withHistory": "{withHistory} von {posts} aktuellen Beiträgen haben einen Wachstumsverlauf.",
+        "truncated": "Es gibt mehr Beiträge, als sich gleichzeitig messen lassen; die neuesten werden angezeigt."
+      },
+      "states": {
+        "error": "Dieser Bereich konnte nicht geladen werden.",
+        "retry": "Erneut versuchen",
+        "noChannelHint": "Verbinden Sie einen Messenger-, Instagram-, Threads- oder TikTok-Kanal, um die Leistung seiner Beiträge zu sehen."
+      },
+      "perPost": {
+        "title": "Leistung",
+        "description": "Tägliche Veränderung der vom Kanal gemeldeten Zahlen, basierend auf unseren täglichen Messungen.",
+        "metric": "Kennzahl",
+        "notReported": "Dieser Kanal meldet dies nicht.",
+        "empty": "Noch kein Zuwachs erfasst",
+        "since": "Erfassung seit {date}. Änderungen erscheinen nach der nächsten täglichen Messung.",
+        "notTracked": "Dieser Beitrag wird noch nicht erfasst.",
+        "summary": "{metric} pro Tag: insgesamt {total}.",
+        "totalNow": "in diesem Zeitraum gewonnen · insgesamt {total}"
+      },
+      "composedPost": {
+        "reasons": {
+          "notPublished": "Noch nicht veröffentlicht.",
+          "notLinked": "Noch keinem Beitrag des Kanals zugeordnet. Die Zahlen erscheinen, sobald das geschehen ist.",
+          "networkNotSupported": "Dieses Netzwerk meldet keine Beitragszahlen.",
+          "removed": "Aus dem Kanal entfernt."
+        }
+      }
+    }
+  },
+  "socialAccounts": {
+    "errors": {
+      "providerNotSupported": "Dieses Netzwerk kann noch nicht verbunden werden.",
+      "appNotConfigured": "Die Plattform-App dieses Netzwerks ist für deinen Arbeitsbereich nicht eingerichtet."
+    },
+    "connectResult": {
+      "success": "Konto verbunden.",
+      "cancelled": "Die Verbindung wurde abgebrochen.",
+      "notFound": "Die Verbindung konnte nicht abgeschlossen werden.",
+      "sessionExpired": "Die Verbindungssitzung ist abgelaufen. Versuche die Verbindung erneut.",
+      "permissionNotGranted": "Das Konto wurde nicht verbunden, weil diese Berechtigungen nicht erteilt wurden: {permissions}.",
+      "accountUnsupported": "Dieser Kontotyp kann nicht veröffentlichen. Verwende ein professionelles Konto.",
+      "notSupported": "Dieses Netzwerk kann noch nicht verbunden werden.",
+      "failed": "Das Konto konnte nicht verbunden werden. Versuche es erneut."
+    }
+  },
+  "composer": {
+    "publishTo": "Veröffentlichen auf",
+    "reconnect": "Neu verbinden",
+    "noDestinations": "Noch keine verbundenen Seiten oder Profile können veröffentlichen.",
+    "sharedContent": "Gemeinsamer Inhalt",
+    "text": "Beitragstext",
+    "textPlaceholder": "Schreibe deinen Beitrag",
+    "link": "Link",
+    "linkPlaceholder": "https://example.com",
+    "linkInvalid": "Gib einen vollständigen Link ein, der mit https:// beginnt",
+    "removeMedia": "Datei entfernen",
+    "addMedia": "Foto oder Video hinzufügen",
+    "removeDestination": "Ziel entfernen",
+    "customise": "Für diesen Kanal anpassen",
+    "usesSharedContent": "Verwendet den gemeinsamen Inhalt",
+    "channelText": "Text für diesen Kanal",
+    "channelTextPlaceholder": "Leer lassen, um den gemeinsamen Text zu verwenden",
+    "contentType": "Inhaltstyp",
+    "previewEmpty": "Wähle ein Ziel, um die Vorschau zu sehen.",
+    "noText": "Kein Text",
+    "justNow": "Gerade eben",
+    "linkInCaption": "Der Link wird am Ende der Bildunterschrift eingefügt.",
+    "previewMediaAlt": "Angehängte Datei {index}",
+    "previewMoreMedia": "+{count}",
+    "previewSlideLabel": "Folie {current} von {total}",
+    "previewPrevious": "Vorherige Folie",
+    "previewNext": "Nächste Folie",
+    "publishNow": "Jetzt veröffentlichen",
+    "newPost": "Neuer Beitrag",
+    "draftSaved": "Entwurf gespeichert",
+    "noTargets": "Wähle mindestens ein Ziel, um zu beginnen.",
+    "preview": "Vorschau",
+    "previewError": "Die Vorschau konnte nicht aktualisiert werden.",
+    "issueCount": "Zu behebende Probleme: {count}",
+    "saveDraft": "Entwurf speichern",
+    "retry": "Erneut versuchen",
+    "noAccountsTitle": "Keine Konten verbunden",
+    "noAccountsHint": "Verbinde im Tab „Verbinden“ ein Konto, um Beiträge zu verfassen.",
+    "goToAccounts": "Zu Verbinden",
+    "notEditable": "Dieser Beitrag kann nicht mehr bearbeitet werden.",
+    "options": {
+      "shareToFeed": "Auch im Feed teilen",
+      "title": "Titel",
+      "thumbOffsetMs": "Titelbild-Frame (Millisekunden)",
+      "privacyLevel": "Wer kann dieses Video ansehen",
+      "allowComment": "Kommentieren",
+      "allowDuet": "Duett",
+      "allowStitch": "Stitch",
+      "commercialContent": "Kommerziellen Inhalt offenlegen",
+      "brandOrganic": "Deine Marke",
+      "brandContent": "Markeninhalt",
+      "isAigc": "Als KI-generierten Inhalt kennzeichnen",
+      "coverTimestampMs": "Titelbild-Frame (Millisekunden)"
+    },
+    "contentTypes": {
+      "text": "Text",
+      "link": "Link",
+      "image": "Bild",
+      "video": "Video",
+      "reel": "Reel",
+      "carousel": "Karussell",
+      "story": "Story"
+    },
+    "issues": {
+      "accountDisconnected": "Dieses Konto wurde getrennt.",
+      "accountNeedsReauth": "Dieses Konto muss neu verbunden werden.",
+      "inboxDisconnected": "Dieser Kanal ist getrennt.",
+      "inboxNeedsReconnect": "Die Verbindung dieses Kanals ist abgelaufen. Verbinde ihn erneut.",
+      "publishPermissionMissing": "Für diesen Kanal wurde keine Veröffentlichungsberechtigung erteilt. Verbinde ihn erneut, um das Veröffentlichen zu erlauben.",
+      "contentTypeDisabled": "Dieser Inhaltstyp ist noch nicht verfügbar.",
+      "contentTypeNotSupported": "Dieses Netzwerk unterstützt diesen Inhaltstyp nicht.",
+      "destinationInactive": "Dieses Ziel ist deaktiviert.",
+      "destinationNotFound": "Dieses Ziel wurde nicht gefunden.",
+      "linkNotSupported": "Dieser Inhaltstyp kann keinen Link enthalten.",
+      "linkRequired": "Ein Link ist erforderlich.",
+      "mediaFormatNotSupported": "Ein Dateiformat wird nicht unterstützt.",
+      "mediaKindNotAllowed": "Ein Dateityp ist hier nicht erlaubt.",
+      "mediaTooFew": "Füge weitere Dateien hinzu.",
+      "mediaTooLarge": "Eine Datei ist zu groß.",
+      "mediaTooLong": "Ein Video ist zu lang.",
+      "mediaTooMany": "Zu viele Dateien.",
+      "mediaTooShort": "Ein Video ist zu kurz.",
+      "optionsInvalid": "Die Einstellungen sind ungültig.",
+      "textRequired": "Text ist erforderlich.",
+      "textTooLong": "Der Text ist zu lang.",
+      "partsNotSupported": "Dieses Netzwerk veröffentlicht keine Thread-Teile.",
+      "firstCommentNotSupported": "Dieses Netzwerk veröffentlicht keinen ersten Kommentar.",
+      "tooManyParts": "Es gibt mehr Teile, als das Netzwerk erlaubt.",
+      "partTextRequired": "Dieser Teil braucht Text.",
+      "partTextTooLong": "Dieser Teil ist länger, als das Netzwerk erlaubt.",
+      "tooManyLinks": "Dieser Text enthält mehr Links, als Threads erlaubt (höchstens 5)."
+    },
+    "publishStarted": "Veröffentlichung gestartet",
+    "publishRefused": "Der Beitrag kann so nicht veröffentlicht werden. Behebe die angezeigten Probleme.",
+    "targetsStatus": "Ziele",
+    "viewPost": "Beitrag ansehen",
+    "retryTarget": "Erneut versuchen",
+    "markPublished": "Als veröffentlicht markieren",
+    "retryReviewTitle": "Beitrag erneut versuchen, der evtl. schon live ist?",
+    "retryReviewDescription": "Dieser Beitrag ist möglicherweise schon live. Ein erneuter Versuch kann ihn ein zweites Mal veröffentlichen. Prüfen Sie zuerst die Seite.",
+    "retryReviewConfirm": "Trotzdem erneut versuchen",
+    "status": {
+      "pending": "Wartet",
+      "publishing": "Wird veröffentlicht",
+      "processing": "Wird verarbeitet",
+      "published": "Veröffentlicht",
+      "failed": "Fehlgeschlagen",
+      "cancelled": "Abgebrochen",
+      "needsReview": "Prüfung nötig"
+    },
+    "schedule": "Planen",
+    "scheduleAt": "Veröffentlichen am",
+    "pickTime": "Datum und Uhrzeit wählen",
+    "scheduleTooSoon": "Wähle eine Zeit, die mindestens 2 Minuten in der Zukunft liegt.",
+    "scheduled": "Beitrag geplant.",
+    "repeatLabel": "Wiederholen",
+    "repeatHint": "Ein wiederkehrender Beitrag wird als Vorlage gespeichert und nie selbst veröffentlicht. Bei jedem Durchlauf wird eine Kopie geplant.",
+    "repeatInvalid": "Vervollständige die Wiederholungseinstellungen zum Speichern.",
+    "repeatStateActive": "Wiederholt sich",
+    "repeatStatePaused": "Pausiert",
+    "repeatStateEnded": "Serie beendet",
+    "repeatNextRun": "Nächster Durchlauf: {date}",
+    "repeatPause": "Pausieren",
+    "repeatResume": "Fortsetzen",
+    "repeatEnd": "Serie beenden",
+    "repeatUpdated": "Wiederholungsserie aktualisiert",
+    "repeatScheduleOff": "Planung und Veröffentlichung gelten für jede Kopie, nicht für die Vorlage.",
+    "moveMediaEarlier": "Weiter nach vorn",
+    "moveMediaLater": "Weiter nach hinten",
+    "removeFromChannels": "Aus den Kanälen entfernen",
+    "removeFromChannelsTitle": "Diesen Beitrag aus den Netzwerken entfernen?",
+    "removeFromChannelsDescription": "Der veröffentlichte Beitrag wird aus jedem Netzwerk entfernt, das dies unterstützt. Netzwerke ohne Löschfunktion behalten ihn. Das lässt sich nicht rückgängig machen.",
+    "removeFromChannelsConfirm": "Entfernen",
+    "removeCancel": "Abbrechen",
+    "removeRequested": "{count, plural, one {Entfernen für # Ziel gestartet.} other {Entfernen für # Ziele gestartet.}}",
+    "removeUnsupported": "{count, plural, one {# Ziel kann nicht über die API des Netzwerks entfernt werden; entferne es in der App.} other {# Ziele können nicht über die API der Netzwerke entfernt werden; entferne sie in den Apps.}}",
+    "removedFromChannel": "Aus dem Netzwerk entfernt",
+    "removalPermissionMissing": "Verbinde dieses Konto erneut, um das Löschen von Beiträgen zu erlauben.",
+    "postMessageQuotaExceeded": "Das Nachrichtenkontingent dieses Kontos ist aufgebraucht, daher wurde dieser Beitrag nicht veröffentlicht. Wechseln Sie auf einen höheren Tarif oder warten Sie auf den nächsten Abrechnungszeitraum und versuchen Sie es dann erneut.",
+    "tiktokLoading": "TikTok-Kontoeinstellungen werden geladen…",
+    "tiktokUnavailable": "Die TikTok-Kontoeinstellungen konnten nicht geladen werden. Versuche es erneut.",
+    "tiktokCreator": "Veröffentlichung auf dem TikTok-Konto {nickname}",
+    "tiktokCannotPost": "Dieses TikTok-Konto kann gerade nicht posten. Versuche es später erneut.",
+    "tiktokPrivacyPlaceholder": "Auswählen, wer es ansehen kann",
+    "tiktokInteractions": "Anderen erlauben",
+    "tiktokInteractionDisabled": "In den TikTok-Einstellungen dieses Kontos deaktiviert",
+    "tiktokYourBrand": "Deine Marke",
+    "tiktokBrandedContent": "Markeninhalt",
+    "tiktokLabelPromotional": "Dein Video wird als „Werbeinhalt“ gekennzeichnet.",
+    "tiktokLabelPaid": "Dein Video wird als „Bezahlte Partnerschaft“ gekennzeichnet.",
+    "tiktokCommercialRequired": "Gib an, ob dein Inhalt für dich selbst, einen Dritten oder beides wirbt.",
+    "tiktokBrandedNotPrivate": "Die Sichtbarkeit von Markeninhalten kann nicht auf privat gestellt werden.",
+    "tiktokConsentMusic": "Mit dem Posten stimmst du der <music>Musiknutzungsbestätigung</music> von TikTok zu.",
+    "tiktokConsentBranded": "Mit dem Posten stimmst du der <branded>Richtlinie für Markeninhalte</branded> und der <music>Musiknutzungsbestätigung</music> von TikTok zu.",
+    "tiktokMaxDuration": "Das längste Video, das dieses Konto posten kann, ist {seconds} Sekunden lang.",
+    "tiktokProcessingNote": "Nach der Veröffentlichung kann es einige Minuten dauern, bis das Video verarbeitet und im Profil sichtbar ist.",
+    "tiktokPrivacy": {
+      "PUBLIC_TO_EVERYONE": "Alle",
+      "MUTUAL_FOLLOW_FRIENDS": "Freunde",
+      "FOLLOWER_OF_CREATOR": "Follower",
+      "SELF_ONLY": "Nur ich"
+    },
+    "partsTitle": "Thread-Teile",
+    "partsHint": "Jeder Teil wird direkt nach dem Hauptbeitrag als Antwort auf den vorherigen Teil veröffentlicht.",
+    "partLabel": "Teil {number}",
+    "partPlaceholder": "Nächsten Teil schreiben",
+    "partMoveUp": "Teil nach oben verschieben",
+    "partMoveDown": "Teil nach unten verschieben",
+    "partRemove": "Teil entfernen",
+    "partsAdd": "Teil hinzufügen",
+    "partsRemaining": "{count, plural, one {# weiterer Teil kann hinzugefügt werden} other {# weitere Teile können hinzugefügt werden}}",
+    "firstCommentTitle": "Erster Kommentar",
+    "firstCommentPlaceholder": "Wird direkt nach dem Beitrag als Kommentar veröffentlicht",
+    "aiAssist": "Mit KI schreiben",
+    "aiPrivacy": "Der Text, den du angibst, wird an den unten gewählten KI-Anbieter gesendet. Es wird nichts gespeichert oder veröffentlicht, bis du ihn einfügst.",
+    "aiIntegration": "KI-Integration",
+    "aiNoIntegration": "Es ist noch keine KI-Integration verbunden.",
+    "aiConnectIntegration": "KI-Integration verbinden",
+    "aiMode": "Was soll die KI tun?",
+    "aiModes": {
+      "write": "Neuen Beitrag schreiben",
+      "rewrite": "Umschreiben",
+      "shorten": "Kürzen",
+      "expand": "Erweitern",
+      "tone": "Tonfall ändern",
+      "fit": "An das Limit des Ziels anpassen",
+      "hashtags": "Hashtags vorschlagen"
+    },
+    "aiTone": "Tonfall",
+    "aiTones": {
+      "friendly": "Freundlich",
+      "professional": "Professionell",
+      "casual": "Locker",
+      "playful": "Verspielt",
+      "formal": "Förmlich",
+      "persuasive": "Überzeugend",
+      "inspiring": "Inspirierend"
+    },
+    "aiBrief": "Worum geht es im Beitrag?",
+    "aiBriefPlaceholder": "Zum Beispiel: Unsere Wochenend-Aktion ankündigen, 20 % Rabatt",
+    "aiUsesPostText": "Verwendet den Beitragstext oben.",
+    "aiNeedsPostText": "Schreibe zuerst den Beitragstext.",
+    "aiFitNeedsDestination": "Wähle zuerst ein Ziel.",
+    "aiGenerate": "Erzeugen",
+    "aiGenerating": "Schreibt…",
+    "aiSuggestion": "Vorschlag",
+    "aiCutToLimit": "Auf das Limit von {limit, plural, one {# Zeichen} other {# Zeichen}} gekürzt.",
+    "aiInsert": "Am Ende einfügen",
+    "aiReplace": "Beitragstext ersetzen",
+    "aiHashtags": "Hashtags",
+    "aiEmoji": "Emoji",
+    "aiCallToAction": "Handlungsaufforderung",
+    "aiCallToActionText": "Wortlaut der Handlungsaufforderung (optional)",
+    "aiCallToActionPlaceholder": "Zum Beispiel: Reserviere heute deinen Tisch",
+    "aiVariants": "Optionen",
+    "aiPerNetwork": "Pro Kanal schreiben",
+    "aiPerNetworkHint": "Eine Version im Stil jedes Netzwerks.",
+    "aiOption": "Option {number}",
+    "aiApplyTo": "Auf {network} anwenden",
+    "aiApplyToEach": "Auf jeden Kanal anwenden",
+    "aiHashtagPick": "Klicke auf einen Hashtag, um ihn dem Beitrag hinzuzufügen.",
+    "aiErrors": {
+      "modelNotChosen": "Wähle eine KI-Integration und ein Modell, um mit KI zu schreiben.",
+      "needsReconfiguration": "Die gewählte KI-Integration fehlt, ist deaktiviert oder ungültig.",
+      "rateLimited": "Zu viele KI-Anfragen. Versuche es gleich noch einmal.",
+      "timeout": "Das KI-Modell hat nicht rechtzeitig geantwortet. Versuche es erneut.",
+      "provider": "Der KI-Anbieter konnte den Text nicht schreiben. Versuche es erneut.",
+      "inProgress": "Eine KI-Anfrage läuft bereits.",
+      "blocked": "Der Tarif oder die Testphase dieses Arbeitsbereichs ist abgelaufen.",
+      "generic": "Der Text konnte nicht geschrieben werden. Versuche es erneut."
+    },
+    "snippets": "Textbausteine",
+    "snippetsKinds": {
+      "signature": "Signatur",
+      "hashtags": "Hashtags",
+      "text": "Text"
+    },
+    "snippetsLoadFailed": "Textbausteine konnten nicht geladen werden.",
+    "snippetsEmpty": "Noch keine Textbausteine.",
+    "snippetsSignature": "Signatur",
+    "snippetsSignatureHint": "Wird beim Erstellen des Beitrags einmal am Ende des Textes angehängt. Ziele mit eigenem Text erhalten sie nicht.",
+    "snippetsSignatureChosen": "Signatur: {name}",
+    "snippetsManage": "Textbausteine verwalten",
+    "snippetsName": "Name",
+    "snippetsKind": "Art",
+    "snippetsContent": "Text",
+    "snippetsAdd": "Textbaustein hinzufügen",
+    "snippetsSaved": "Textbaustein gespeichert.",
+    "snippetsDeleted": "Textbaustein gelöscht.",
+    "snippetsNameTaken": "Ein Textbaustein mit diesem Namen existiert bereits.",
+    "targetSets": "Seitengruppen",
+    "targetSetsLoadFailed": "Gruppen konnten nicht geladen werden.",
+    "targetSetsEmpty": "Noch keine gespeicherten Gruppen.",
+    "targetSetsName": "Gruppenname",
+    "targetSetsNamePlaceholder": "Gruppe benennen…",
+    "targetSetsSave": "Speichern",
+    "targetSetsNeedsSelection": "Wähle Seiten aus, um sie als Gruppe zu speichern.",
+    "targetSetsSaved": "Gruppe gespeichert.",
+    "targetSetsDeleted": "Gruppe gelöscht.",
+    "targetSetsNameTaken": "Eine Gruppe mit diesem Namen existiert bereits.",
+    "targetSetsApplied": "Seiten von „{name}“ ausgewählt.",
+    "targetSetsSkipped": "{count, plural, one {# Seite wurde übersprungen, weil sie Aufmerksamkeit braucht.} other {# Seiten wurden übersprungen, weil sie Aufmerksamkeit brauchen.}}",
+    "destinationState": {
+      "ready": "Bereit zum Veröffentlichen",
+      "inboxDisconnected": "Getrennt",
+      "needsReconnect": "Verbindung abgelaufen",
+      "permissionMissing": "Veröffentlichungsberechtigung nicht erteilt"
+    },
+    "destinationPause": {
+      "until": "Pausiert bis {time}",
+      "reason": {
+        "limitReached": "Das Netzwerk hat das Veröffentlichen für dieses Konto begrenzt. Beiträge warten und werden nach der Pause veröffentlicht.",
+        "accountRestricted": "Das Netzwerk hat dieses Konto eingeschränkt. Beiträge warten und werden nach der Pause veröffentlicht.",
+        "spamRisk": "Das Netzwerk hat die Aktivität dieses Kontos als Spam-Risiko markiert. Beiträge warten und werden nach der Pause veröffentlicht."
+      }
+    },
+    "viaFacebook": "über Facebook",
+    "openProfile": "{name} auf {network} öffnen",
+    "someNeedAttention": "Einige Seiten oder Profile können erst veröffentlichen, wenn du sie erneut verbindest.",
+    "viewPosts": "Ansehen",
+    "queue": {
+      "modeLabel": "Wann posten",
+      "atTime": "Uhrzeit wählen",
+      "next": "Zur Warteschlange",
+      "top": "Zuerst posten",
+      "nextHint": "Wird im nächsten freien Zeitfenster jeder Seite gepostet.",
+      "topHint": "Wird im nächsten Zeitfenster gepostet; wartende Beiträge rücken ein Zeitfenster nach hinten.",
+      "noDestination": "Wähle eine Seite, um ihre Posting-Zeiten zu sehen.",
+      "noSchedule": "{names} hat keine Posting-Zeiten eingerichtet.",
+      "setUpSlots": "Posting-Zeiten einrichten"
+    },
+    "targetOwnTime": "Eigener Zeitpunkt für diesen Kanal",
+    "targetTimeInvalid": "Wähle einen Zeitpunkt zwischen 2 Minuten und 1 Jahr ab jetzt.",
+    "targetMediaOwn": "Andere Dateien für diesen Kanal",
+    "targetMediaNone": "Keine Dateien: Dieser Kanal veröffentlicht ohne Dateien.",
+    "occurrencesUpcoming": "Kommende Ausführungen",
+    "occurrencesNoUpcoming": "Keine kommenden Ausführungen.",
+    "occurrenceSkip": "Überspringen",
+    "occurrenceRestore": "Wiederherstellen",
+    "occurrenceSkipped": "Ausführung übersprungen.",
+    "occurrenceRestored": "Ausführung wiederhergestellt.",
+    "occurrencesHistory": "Vergangene Ausführungen anzeigen",
+    "occurrencesHideHistory": "Vergangene Ausführungen ausblenden",
+    "occurrencesLoadFailed": "Die Ausführungen konnten nicht geladen werden.",
+    "occurrencesNoHistory": "Noch keine Ausführungen.",
+    "occurrencesLoadMore": "Mehr laden",
+    "occurrenceOpen": "Beitrag öffnen",
+    "targetSetsUpdated": "Gruppe aktualisiert.",
+    "targetSetsMembers": "Seiten in dieser Gruppe",
+    "targetSetsNeedsMember": "Behalte mindestens eine Seite.",
+    "occurrenceOutcomes": {
+      "created": "Geplant",
+      "excluded": "Übersprungen",
+      "missed": "Verpasst",
+      "skipped": "Nicht erstellt"
+    }
+  },
+  "postCommentVariables": {
+    "group": "Beitragskommentar",
+    "postLink": "Beitragslink",
+    "postText": "Beitragstext",
+    "postPublishedAt": "Beitrag veröffentlicht am",
+    "postPageName": "Seitenname des Beitrags",
+    "postId": "Beitrags-ID",
+    "commentText": "Kommentartext",
+    "commentId": "Kommentar-ID"
   }
 }

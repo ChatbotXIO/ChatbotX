@@ -138,6 +138,7 @@ export function PhoneNumberSelectionSection({
   const coexistSelection = useCoexistSelection<ConnectWhatsappSchema>({
     control,
     enabled: coexistEligibleMode,
+    maxSelected: MAX_CONNECT_SELECTIONS,
     names: {
       aiReadsSyncedHistoryIds:
         FORM_FIELDS.AI_READS_SYNCED_HISTORY_PHONE_NUMBER_IDS,

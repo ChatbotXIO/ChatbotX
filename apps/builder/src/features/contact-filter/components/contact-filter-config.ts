@@ -245,6 +245,7 @@ const resolveContactFilterOptions = (
     flowVersionOptions: SelectOption[]
     broadcastOptions: SelectOption[]
     sequenceOptions: SelectOption[]
+    pollOptions: SelectOption[]
     reflinkOptions: SelectOption[]
     assigneeOptions: SelectOption[]
     channelPostOptions: SelectOption[]
@@ -303,6 +304,8 @@ const resolveContactFilterOptions = (
       return ctx.broadcastOptions
     case "sequences":
       return ctx.sequenceOptions
+    case "polls":
+      return ctx.pollOptions
     case "reflinks":
       return ctx.reflinkOptions
     case "assignees":
@@ -463,6 +466,7 @@ export const getFieldConfigs = ({
   flowVersionOptions,
   broadcastOptions = [],
   sequenceOptions = [],
+  pollOptions = [],
   reflinkOptions = [],
   assigneeOptions = [],
   channelPostOptions = [],
@@ -485,6 +489,8 @@ export const getFieldConfigs = ({
   flowVersionOptions: SelectOption[]
   broadcastOptions?: SelectOption[]
   sequenceOptions?: SelectOption[]
+  /** Workspace polls, the "Voted on the poll" values. */
+  pollOptions?: SelectOption[]
   reflinkOptions?: SelectOption[]
   assigneeOptions?: SelectOption[]
   channelPostOptions?: SelectOption[]
@@ -550,6 +556,7 @@ export const getFieldConfigs = ({
         flowVersionOptions,
         broadcastOptions,
         sequenceOptions,
+        pollOptions,
         reflinkOptions,
         assigneeOptions,
         channelPostOptions,

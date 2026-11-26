@@ -22,6 +22,7 @@ import {
   ListIcon,
   MessageCirclePlusIcon,
   OctagonXIcon,
+  RefreshCwIcon,
   SaveIcon,
   SaveOffIcon,
   TagIcon,
@@ -31,6 +32,8 @@ import {
 } from "lucide-react"
 import Link from "next/link"
 import { useTranslations } from "next-intl"
+import { useState } from "react"
+import { ContactSyncDialog } from "@/features/contact-sync/components/contact-sync-dialog"
 import { useInboxList } from "@/features/inboxes/provider/inbox-hook"
 import ArchiveConversationDialog from "../conversations/components/archive-conversation"
 import AssignConversationDialog from "../conversations/components/assign-conversation-dialog"
@@ -53,6 +56,8 @@ type ContactListActionProps = {
   table: Table<ContactTableRow>
   filter?: ExportContactsFilter
   disabled?: boolean
+  /** Whether "Sync with AhaChat" is offered (the operator configured it). */
+  showContactSync?: boolean
 }
 
 export function ContactListAction({
@@ -60,6 +65,7 @@ export function ContactListAction({
   table,
   filter,
   disabled = false,
+  showContactSync = false,
 }: ContactListActionProps) {
   const t = useTranslations()
   const invalidateContacts = useInvalidateContacts()
@@ -72,258 +78,278 @@ export function ContactListAction({
     invalidateContacts()
   }
 
+  // Rendered outside the menu (see `ContactSyncDialog`): choosing the item
+  // closes the menu as usual, then opens the dialog.
+  const [contactSyncOpen, setContactSyncOpen] = useState(false)
+
   const inboxes = useInboxList()
   const hasContactScanInbox = inboxes.some((inbox) =>
     isContactScanChannel(inbox.channel),
   )
 
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger
-        render={
-          <Button disabled={disabled} variant="outline">
-            <ListIcon />
-            {t("actions.actions")}
-          </Button>
-        }
-      />
-      <DropdownMenuContent className="w-56">
-        <AssignConversationDialog
-          contactIds={rows.map((r) => r.id)}
-          onSuccess={handleMutationSuccess}
-          trigger={
-            <DropdownMenuItem
-              closeOnClick={false}
-              disabled={actionsDisabled}
-              onClick={(e) => e.preventDefault()}
-            >
-              <MessageCirclePlusIcon />
-              {t("actions.assign")}
-            </DropdownMenuItem>
+    <>
+      <DropdownMenu>
+        <DropdownMenuTrigger
+          render={
+            <Button disabled={disabled} variant="outline">
+              <ListIcon />
+              {t("actions.actions")}
+            </Button>
           }
         />
-
-        <AddContactTagDialog
-          ids={rows.map((r) => r.id)}
-          onSuccess={handleMutationSuccess}
-          trigger={
-            <DropdownMenuItem
-              closeOnClick={false}
-              disabled={actionsDisabled}
-              onClick={(e) => e.preventDefault()}
-            >
-              <TagIcon />
-              {t("actions.addTag")}
-            </DropdownMenuItem>
-          }
-        />
-
-        <AddContactSequenceDialog
-          ids={rows.map((r) => r.id)}
-          onSuccess={handleMutationSuccess}
-          trigger={
-            <DropdownMenuItem
-              closeOnClick={false}
-              disabled={actionsDisabled}
-              onClick={(e) => e.preventDefault()}
-            >
-              <Layers2Icon />
-              {t("actions.addSequence")}
-            </DropdownMenuItem>
-          }
-        />
-
-        <AddContactCustomFieldDialog
-          ids={rows.map((r) => r.id)}
-          onSuccess={handleMutationSuccess}
-          trigger={
-            <DropdownMenuItem
-              closeOnClick={false}
-              disabled={actionsDisabled}
-              onClick={(e) => e.preventDefault()}
-            >
-              <SaveIcon />
-              {t("actions.setCustomField")}
-            </DropdownMenuItem>
-          }
-        />
-
-        <DeleteContactDialog
-          ids={rows.map((r) => r.id)}
-          onSuccess={handleMutationSuccess}
-          trigger={
-            <DropdownMenuItem
-              closeOnClick={false}
-              disabled={actionsDisabled}
-              onClick={(e) => e.preventDefault()}
-            >
-              <UserRoundXIcon className="text-destructive" />
-              {t("actions.delete")}
-            </DropdownMenuItem>
-          }
-        />
-
-        <ExportContactDialog
-          contactIds={rows.map((r) => r.original.id)}
-          exportAll={exportAll}
-          filter={filter}
-          trigger={
-            <DropdownMenuItem
-              closeOnClick={false}
-              disabled={actionsDisabled}
-              onClick={(e) => e.preventDefault()}
-            >
-              <CloudDownloadIcon />
-              {t("actions.export")}
-            </DropdownMenuItem>
-          }
-          workspaceId={workspaceId}
-        />
-
-        <DropdownMenuSub>
-          <DropdownMenuSubTrigger className="px-3 py-2">
-            <CloudUploadIcon />
-            {t("actions.import")}
-          </DropdownMenuSubTrigger>
-
-          <DropdownMenuPortal>
-            <DropdownMenuSubContent className="w-56">
+        <DropdownMenuContent className="w-56">
+          <AssignConversationDialog
+            contactIds={rows.map((r) => r.id)}
+            onSuccess={handleMutationSuccess}
+            trigger={
               <DropdownMenuItem
-                render={
-                  <Link href={`/space/${workspaceId}/contacts/import`}>
-                    <CloudUploadIcon />
-                    {t("contactScan.menu.importFromFile")}
-                  </Link>
-                }
-              />
+                closeOnClick={false}
+                disabled={actionsDisabled}
+                onClick={(e) => e.preventDefault()}
+              >
+                <MessageCirclePlusIcon />
+                {t("actions.assign")}
+              </DropdownMenuItem>
+            }
+          />
 
-              {hasContactScanInbox && (
+          <AddContactTagDialog
+            ids={rows.map((r) => r.id)}
+            onSuccess={handleMutationSuccess}
+            trigger={
+              <DropdownMenuItem
+                closeOnClick={false}
+                disabled={actionsDisabled}
+                onClick={(e) => e.preventDefault()}
+              >
+                <TagIcon />
+                {t("actions.addTag")}
+              </DropdownMenuItem>
+            }
+          />
+
+          <AddContactSequenceDialog
+            ids={rows.map((r) => r.id)}
+            onSuccess={handleMutationSuccess}
+            trigger={
+              <DropdownMenuItem
+                closeOnClick={false}
+                disabled={actionsDisabled}
+                onClick={(e) => e.preventDefault()}
+              >
+                <Layers2Icon />
+                {t("actions.addSequence")}
+              </DropdownMenuItem>
+            }
+          />
+
+          <AddContactCustomFieldDialog
+            ids={rows.map((r) => r.id)}
+            onSuccess={handleMutationSuccess}
+            trigger={
+              <DropdownMenuItem
+                closeOnClick={false}
+                disabled={actionsDisabled}
+                onClick={(e) => e.preventDefault()}
+              >
+                <SaveIcon />
+                {t("actions.setCustomField")}
+              </DropdownMenuItem>
+            }
+          />
+
+          <DeleteContactDialog
+            ids={rows.map((r) => r.id)}
+            onSuccess={handleMutationSuccess}
+            trigger={
+              <DropdownMenuItem
+                closeOnClick={false}
+                disabled={actionsDisabled}
+                onClick={(e) => e.preventDefault()}
+              >
+                <UserRoundXIcon className="text-destructive" />
+                {t("actions.delete")}
+              </DropdownMenuItem>
+            }
+          />
+
+          <ExportContactDialog
+            contactIds={rows.map((r) => r.original.id)}
+            exportAll={exportAll}
+            filter={filter}
+            trigger={
+              <DropdownMenuItem
+                closeOnClick={false}
+                disabled={actionsDisabled}
+                onClick={(e) => e.preventDefault()}
+              >
+                <CloudDownloadIcon />
+                {t("actions.export")}
+              </DropdownMenuItem>
+            }
+            workspaceId={workspaceId}
+          />
+
+          <DropdownMenuSub>
+            <DropdownMenuSubTrigger className="px-3 py-2">
+              <CloudUploadIcon />
+              {t("actions.import")}
+            </DropdownMenuSubTrigger>
+
+            <DropdownMenuPortal>
+              <DropdownMenuSubContent className="w-56">
                 <DropdownMenuItem
                   render={
-                    <Link href={`/space/${workspaceId}/contacts/scan`}>
-                      <UserSearchIcon />
-                      {t("contactScan.menu.automaticScan")}
+                    <Link href={`/space/${workspaceId}/contacts/import`}>
+                      <CloudUploadIcon />
+                      {t("contactScan.menu.importFromFile")}
                     </Link>
                   }
                 />
-              )}
-            </DropdownMenuSubContent>
-          </DropdownMenuPortal>
-        </DropdownMenuSub>
 
-        <DropdownMenuSub>
-          <DropdownMenuSubTrigger className="px-3 py-2">
-            <ListIcon />
-            {t("actions.more")}
-          </DropdownMenuSubTrigger>
-
-          <DropdownMenuPortal>
-            <DropdownMenuSubContent className="w-56">
-              <RemoveContactTagDialog
-                ids={rows.map((r) => r.id)}
-                onSuccess={handleMutationSuccess}
-                trigger={
+                {hasContactScanInbox && (
                   <DropdownMenuItem
-                    closeOnClick={false}
-                    disabled={actionsDisabled}
-                    onClick={(e) => e.preventDefault()}
-                  >
-                    <OctagonXIcon />
-                    {t("actions.removeTag")}
-                  </DropdownMenuItem>
-                }
-              />
+                    render={
+                      <Link href={`/space/${workspaceId}/contacts/scan`}>
+                        <UserSearchIcon />
+                        {t("contactScan.menu.automaticScan")}
+                      </Link>
+                    }
+                  />
+                )}
 
-              <RemoveContactSequenceDialog
-                ids={rows.map((r) => r.id)}
-                onSuccess={handleMutationSuccess}
-                trigger={
-                  <DropdownMenuItem
-                    closeOnClick={false}
-                    disabled={actionsDisabled}
-                    onClick={(e) => e.preventDefault()}
-                  >
-                    <Layers2Icon />
-                    {t("actions.removeSequence")}
+                {showContactSync && (
+                  <DropdownMenuItem onClick={() => setContactSyncOpen(true)}>
+                    <RefreshCwIcon />
+                    {t("contactSync.menu")}
                   </DropdownMenuItem>
-                }
-              />
+                )}
+              </DropdownMenuSubContent>
+            </DropdownMenuPortal>
+          </DropdownMenuSub>
 
-              <ClearContactCustomFieldDialog
-                ids={rows.map((r) => r.id)}
-                onSuccess={handleMutationSuccess}
-                trigger={
-                  <DropdownMenuItem
-                    closeOnClick={false}
-                    disabled={actionsDisabled}
-                    onClick={(e) => e.preventDefault()}
-                  >
-                    <SaveOffIcon />
-                    {t("actions.clearCustomField")}
-                  </DropdownMenuItem>
-                }
-              />
+          <DropdownMenuSub>
+            <DropdownMenuSubTrigger className="px-3 py-2">
+              <ListIcon />
+              {t("actions.more")}
+            </DropdownMenuSubTrigger>
 
-              <DisableBotDialog
-                ids={
-                  rows
-                    .map((r) => r.original.conversation?.id || null)
-                    .filter(Boolean) as string[]
-                }
-                onSuccess={handleMutationSuccess}
-                trigger={
-                  <DropdownMenuItem
-                    closeOnClick={false}
-                    disabled={actionsDisabled}
-                    onClick={(e) => e.preventDefault()}
-                  >
-                    <UserIcon />
-                    {t("actions.disableBot")}
-                  </DropdownMenuItem>
-                }
-              />
+            <DropdownMenuPortal>
+              <DropdownMenuSubContent className="w-56">
+                <RemoveContactTagDialog
+                  ids={rows.map((r) => r.id)}
+                  onSuccess={handleMutationSuccess}
+                  trigger={
+                    <DropdownMenuItem
+                      closeOnClick={false}
+                      disabled={actionsDisabled}
+                      onClick={(e) => e.preventDefault()}
+                    >
+                      <OctagonXIcon />
+                      {t("actions.removeTag")}
+                    </DropdownMenuItem>
+                  }
+                />
 
-              <EnableBotDialog
-                ids={
-                  rows
-                    .map((r) => r.original.conversation?.id || null)
-                    .filter(Boolean) as string[]
-                }
-                onSuccess={handleMutationSuccess}
-                trigger={
-                  <DropdownMenuItem
-                    closeOnClick={false}
-                    disabled={actionsDisabled}
-                    onClick={(e) => e.preventDefault()}
-                  >
-                    <BotIcon />
-                    {t("actions.enableBot")}
-                  </DropdownMenuItem>
-                }
-              />
+                <RemoveContactSequenceDialog
+                  ids={rows.map((r) => r.id)}
+                  onSuccess={handleMutationSuccess}
+                  trigger={
+                    <DropdownMenuItem
+                      closeOnClick={false}
+                      disabled={actionsDisabled}
+                      onClick={(e) => e.preventDefault()}
+                    >
+                      <Layers2Icon />
+                      {t("actions.removeSequence")}
+                    </DropdownMenuItem>
+                  }
+                />
 
-              <ArchiveConversationDialog
-                ids={
-                  rows
-                    .map((r) => r.original.conversation?.id || null)
-                    .filter(Boolean) as string[]
-                }
-                onSuccess={handleMutationSuccess}
-                trigger={
-                  <DropdownMenuItem
-                    closeOnClick={false}
-                    disabled={actionsDisabled}
-                    onClick={(e) => e.preventDefault()}
-                  >
-                    <ArchiveIcon />
-                    {t("actions.archiveConversation")}
-                  </DropdownMenuItem>
-                }
-              />
-            </DropdownMenuSubContent>
-          </DropdownMenuPortal>
-        </DropdownMenuSub>
-      </DropdownMenuContent>
-    </DropdownMenu>
+                <ClearContactCustomFieldDialog
+                  ids={rows.map((r) => r.id)}
+                  onSuccess={handleMutationSuccess}
+                  trigger={
+                    <DropdownMenuItem
+                      closeOnClick={false}
+                      disabled={actionsDisabled}
+                      onClick={(e) => e.preventDefault()}
+                    >
+                      <SaveOffIcon />
+                      {t("actions.clearCustomField")}
+                    </DropdownMenuItem>
+                  }
+                />
+
+                <DisableBotDialog
+                  ids={
+                    rows
+                      .map((r) => r.original.conversation?.id || null)
+                      .filter(Boolean) as string[]
+                  }
+                  onSuccess={handleMutationSuccess}
+                  trigger={
+                    <DropdownMenuItem
+                      closeOnClick={false}
+                      disabled={actionsDisabled}
+                      onClick={(e) => e.preventDefault()}
+                    >
+                      <UserIcon />
+                      {t("actions.disableBot")}
+                    </DropdownMenuItem>
+                  }
+                />
+
+                <EnableBotDialog
+                  ids={
+                    rows
+                      .map((r) => r.original.conversation?.id || null)
+                      .filter(Boolean) as string[]
+                  }
+                  onSuccess={handleMutationSuccess}
+                  trigger={
+                    <DropdownMenuItem
+                      closeOnClick={false}
+                      disabled={actionsDisabled}
+                      onClick={(e) => e.preventDefault()}
+                    >
+                      <BotIcon />
+                      {t("actions.enableBot")}
+                    </DropdownMenuItem>
+                  }
+                />
+
+                <ArchiveConversationDialog
+                  ids={
+                    rows
+                      .map((r) => r.original.conversation?.id || null)
+                      .filter(Boolean) as string[]
+                  }
+                  onSuccess={handleMutationSuccess}
+                  trigger={
+                    <DropdownMenuItem
+                      closeOnClick={false}
+                      disabled={actionsDisabled}
+                      onClick={(e) => e.preventDefault()}
+                    >
+                      <ArchiveIcon />
+                      {t("actions.archiveConversation")}
+                    </DropdownMenuItem>
+                  }
+                />
+              </DropdownMenuSubContent>
+            </DropdownMenuPortal>
+          </DropdownMenuSub>
+        </DropdownMenuContent>
+      </DropdownMenu>
+      {showContactSync && (
+        <ContactSyncDialog
+          onOpenChange={setContactSyncOpen}
+          open={contactSyncOpen}
+          workspaceId={workspaceId}
+        />
+      )}
+    </>
   )
 }

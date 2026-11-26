@@ -152,6 +152,7 @@ describe("getCommentAttachment GIF comments", () => {
       type: "animated_image_share",
       attachment: undefined,
       isLive: false,
+      liveState: null,
     })
   })
 })
@@ -206,16 +207,20 @@ describe("getCommentAttachment live comments", () => {
 
     expect(requestedFields[0]).toContain("live_broadcast_timestamp")
     expect(requestedFields).toContain(LIVE_VIDEO_FIELDS)
-    expect(result).toEqual({ type: null, isLive: true })
+    expect(result).toEqual({ type: null, isLive: true, liveState: "live" })
   })
 
-  test("a comment on an ended live broadcast is still live", async () => {
+  test("a comment on an ended live broadcast is still live, and the read says the broadcast is over", async () => {
     mockGraphComment({
       comment: { live_broadcast_timestamp: 42 },
       video: { object: { id: "video-1", live_status: "LIVE_STOPPED" } },
     })
 
-    expect(await lookup()).toEqual({ type: null, isLive: true })
+    expect(await lookup()).toEqual({
+      type: null,
+      isLive: true,
+      liveState: "ended",
+    })
   })
 
   test.each([
@@ -226,7 +231,11 @@ describe("getCommentAttachment live comments", () => {
       comment: { live_broadcast_timestamp: timestamp },
     })
 
-    expect(await lookup()).toEqual({ type: null, isLive: false })
+    expect(await lookup()).toEqual({
+      type: null,
+      isLive: false,
+      liveState: null,
+    })
     expect(requestedFields).not.toContain(LIVE_VIDEO_FIELDS)
   })
 
@@ -236,7 +245,11 @@ describe("getCommentAttachment live comments", () => {
       video: { object: { id: "reel-video-1" } },
     })
 
-    expect(await lookup()).toEqual({ type: null, isLive: false })
+    expect(await lookup()).toEqual({
+      type: null,
+      isLive: false,
+      liveState: null,
+    })
   })
 
   test("trusts the broadcast timestamp when the video lookup fails", async () => {
@@ -245,7 +258,11 @@ describe("getCommentAttachment live comments", () => {
       video: "error",
     })
 
-    expect(await lookup()).toEqual({ type: null, isLive: true })
+    expect(await lookup()).toEqual({
+      type: null,
+      isLive: true,
+      liveState: "unknown",
+    })
   })
 
   test("a comment without live_broadcast_timestamp is not live", async () => {
@@ -260,6 +277,10 @@ describe("getCommentAttachment live comments", () => {
       input: { commentId: COMMENT_ID },
     })
 
-    expect(result).toEqual({ type: null, isLive: false })
+    expect(result).toEqual({
+      type: null,
+      isLive: false,
+      liveState: null,
+    })
   })
 })

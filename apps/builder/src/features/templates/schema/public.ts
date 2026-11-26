@@ -106,7 +106,7 @@ export const createTemplatePublicRequest = z.object({
     "URL where people can try the bot before installing.",
   ),
   selection: saved.selection.describe(
-    'Per category `{mode: "all"}` or `{mode: "ids", ids, lockedIds?}`; `lockAll` or `lockedIds` make items view-only for installers. Get ids from `templates.listSelectableResources`.',
+    'Per category `{mode: "all"}` or `{mode: "ids", ids, lockedIds?}`; `lockAll` or `lockedIds` make items view-only for installers. Get ids from `templates.listSelectableResources`. Not copied: history and runtime data (plays, scores, votes, submissions, logs, counters), tokens and credentials, payment setup, story ids and post ids. Leaderboards install as drafts; inbound webhooks (new token) and discount codes install switched off. Mini Apps published to WhatsApp and discount codes limited to specific customers are not offered. Vendors, discount codes, opening hours, store settings and products are skipped when either workspace sells from Shopify or WooCommerce.',
   ),
   defaultPermissions: saved.defaultPermissions.describe(
     "Whether installers may edit and delete what they install. Editing defaults to on, deleting to off.",
@@ -124,7 +124,9 @@ export const updateTemplatePublicRequest = createTemplatePublicRequest.extend({
 })
 
 export const listSelectableResourcesPublicRequest = z.object({
-  category: templateCategories.describe("Resource category to list."),
+  category: templateCategories.describe(
+    "Resource category to list. Includes magicLinks, polls, dynamicImages, placeLocations, miniApps, minigames, leaderboards, openHours, vendors, discountCodes, storeSettings, storyAutomations and inboundWebhooks; the Ecommerce ones list nothing when the workspace sells from Shopify or WooCommerce.",
+  ),
   keyword: z.string().trim().max(255).optional().describe("Name search."),
   cursor: z.string().optional().describe("`nextCursor` of the previous page."),
   limit: z.number().int().min(1).max(200).optional().describe("Page size."),
@@ -155,7 +157,7 @@ export const publicSelectableResourcesResponse = z.object({
 
 export const previewTemplateDependenciesPublicRequest = z.object({
   selection: saved.selection.describe(
-    "The same `selection` you would give `templates.create`.",
+    "The same `selection` you would give `templates.create`. Flow links to a selected-out tool are reported as dependencies.",
   ),
 })
 
@@ -192,6 +194,20 @@ export const templateDependenciesResponse = z.object({
     .number()
     .describe(
       "References to resources that no longer exist; the snapshot leaves them out.",
+    ),
+  miniAppPublishedExcluded: z
+    .array(
+      z.object({
+        flowName: z
+          .string()
+          .describe("Name of the flow that names the Mini App."),
+        miniAppName: z
+          .string()
+          .describe("Name of the Mini App that is left out of the template."),
+      }),
+    )
+    .describe(
+      "Flows that open or link a Mini App published to WhatsApp. Such a Mini App is never included, so the install removes that reference.",
     ),
 })
 
@@ -447,6 +463,13 @@ const installationWarningGroup = z.object({
     .string()
     .nullable()
     .describe("Null when the resource no longer exists at the source."),
+  itemCount: z
+    .number()
+    .nullable()
+    .optional()
+    .describe(
+      "Set when the warning covers a whole category rather than one resource (`sourceId` and `name` are then null): how many items it covers. Null for a warning about one resource.",
+    ),
   skipped: z.boolean().describe("The install left this resource out."),
   issues: z.array(z.object({ code: z.string(), count: z.number() })),
 })

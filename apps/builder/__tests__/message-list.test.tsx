@@ -60,6 +60,23 @@ type VirtuosoMockProps = {
 
 vi.mock("next-intl", () => ({
   useTranslations: () => (key: string) => key,
+  useLocale: () => "en",
+}))
+vi.mock("@/features/translation/hooks/use-translation-settings", () => ({
+  useTranslationSettings: () => ({ data: undefined }),
+  useInvalidateTranslation: () => vi.fn(),
+}))
+vi.mock("@/features/translation/actions/preview-text.action", () => ({
+  previewTranslationAction: vi.fn(),
+}))
+vi.mock(
+  "@/features/translation/actions/update-conversation-state.action",
+  () => ({
+    updateConversationTranslationStateAction: vi.fn(),
+  }),
+)
+vi.mock("@/features/translation/actions/request-messages.action", () => ({
+  requestTranslationsAction: vi.fn(),
 }))
 
 vi.mock("next-safe-action/hooks", () => ({
@@ -68,6 +85,15 @@ vi.mock("next-safe-action/hooks", () => ({
 
 vi.mock("@/hooks/routing", () => ({
   useWorkspaceId: () => "workspace-1",
+}))
+
+// The participants query and the session only feed the avatar marker; the
+// marker itself is covered by `find-latest-message-id-by-author.test.ts`.
+vi.mock("@/features/conversations/hooks/use-conversation-participants", () => ({
+  useConversationParticipants: () => ({ data: undefined }),
+}))
+vi.mock("@/lib/auth/auth-client", () => ({
+  authClient: { useSession: () => ({ data: null }) },
 }))
 
 vi.mock("@/features/chat/store/chat-store-provider", () => ({

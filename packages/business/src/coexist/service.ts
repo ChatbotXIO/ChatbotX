@@ -9,6 +9,7 @@ import {
   type CoexistRunWriteGuard,
   type CoexistTriggerSource,
   coexistSyncRunRepository,
+  contactSyncRunRepository,
   type IncrementProgressCounters,
   type PickedCoexistRun,
   type PullCoexistChannel,
@@ -36,6 +37,11 @@ export type CoexistEnableInput = {
 export type CoexistEnableResult =
   | { success: true; runId: string }
   | { success: false; reason: "not_found" }
+  /**
+   * The page's contacts are still importing and a history sync is queued behind
+   * them: the two never run together (the import hands off when it ends).
+   */
+  | { success: false; reason: "contact_import_running" }
 
 export type CoexistDisableResult =
   | { success: true }
@@ -69,50 +75,77 @@ export const coexistJobStrategies = {
 } satisfies Record<CoexistChannel, CoexistJobStrategy>
 
 class CoexistService extends BaseService {
-  async enable(input: CoexistEnableInput): Promise<CoexistEnableResult> {
-    const result = await db.transaction(async (tx) => {
-      const integration =
-        await coexistSyncRunRepository.findIntegrationForCoexist({
-          ...input,
-          tx,
-        })
+  /**
+   * Turns coexist on for an integration and opens its history run (or reuses
+   * the live one). `tx` joins a caller-owned transaction (the contact-import
+   * handoff does this under its own integration lock); without it the call
+   * opens its own. A refusal is a result, never a throw, so it cannot poison
+   * the caller's transaction, and every guard runs before the switch is set,
+   * so a refusal never leaves coexist on without a run.
+   */
+  async enable(
+    input: CoexistEnableInput,
+    tx?: DatabaseClient,
+  ): Promise<CoexistEnableResult> {
+    return tx
+      ? await this.enableIn(input, tx)
+      : await db.transaction((own) => this.enableIn(input, own))
+  }
 
-      if (!integration) {
-        return { success: false, reason: "not_found" } as const
-      }
+  private async enableIn(
+    input: CoexistEnableInput,
+    tx: DatabaseClient,
+  ): Promise<CoexistEnableResult> {
+    const integration =
+      await coexistSyncRunRepository.findIntegrationForCoexist({ ...input, tx })
+    if (!integration) {
+      return { success: false, reason: "not_found" }
+    }
 
-      await coexistSyncRunRepository.setIntegrationCoexistEnabled({
-        ...input,
-        enabled: true,
-        tx,
-      })
+    // The integration row is locked to the commit: a connect-import start and
+    // a follow-up handoff take the same lock before they look at a live
+    // history run, so exactly one of them gets in. Every guard runs before the
+    // switch is set, so a refusal never leaves coexist on without a run.
+    await coexistSyncRunRepository.lockIntegration({ ...input, tx })
 
-      // Reuse a run that is still alive rather than opening a second one.
-      // `CoexistSyncRun_integration_init_uq` only dedups `init`, so without
-      // this a user re-confirming the popup while a WhatsApp run is parked in
-      // `waiting` got two live runs: the buffer flush picks the newest and the
-      // older one lingers until the 24h timeout closes it `partial`.
-      const liveRun = await coexistSyncRunRepository.findLiveRun({
-        integrationId: input.integrationId,
-        channel: input.channel,
-        tx,
-      })
-      if (liveRun) {
-        return { success: true, runId: liveRun.id } as const
-      }
+    // A page whose contacts are still importing, with a history sync queued
+    // behind them, hands off by itself when the import ends.
+    const open = await contactSyncRunRepository.findOpenItemForInbox(
+      { workspaceId: input.workspaceId, inboxId: integration.inboxId },
+      tx,
+    )
+    if (open?.followUpCoexist) {
+      return { success: false, reason: "contact_import_running" }
+    }
 
-      const run = await coexistSyncRunRepository.createRun({
-        workspaceId: input.workspaceId,
-        integrationId: input.integrationId,
-        channel: input.channel,
-        triggerSource: input.triggerSource ?? "popup-enable",
-        tx,
-      })
-
-      return { success: true, runId: run.id } as const
+    await coexistSyncRunRepository.setIntegrationCoexistEnabled({
+      ...input,
+      enabled: true,
+      tx,
     })
 
-    return result
+    // Reuse a run that is still alive rather than opening a second one.
+    // `CoexistSyncRun_integration_init_uq` only dedups `init`, so without
+    // this a user re-confirming the popup while a WhatsApp run is parked in
+    // `waiting` got two live runs: the buffer flush picks the newest and the
+    // older one lingers until the 24h timeout closes it `partial`.
+    const liveRun = await coexistSyncRunRepository.findLiveRun({
+      integrationId: input.integrationId,
+      channel: input.channel,
+      tx,
+    })
+    if (liveRun) {
+      return { success: true, runId: liveRun.id }
+    }
+
+    const run = await coexistSyncRunRepository.createRun({
+      workspaceId: input.workspaceId,
+      integrationId: input.integrationId,
+      channel: input.channel,
+      triggerSource: input.triggerSource ?? "popup-enable",
+      tx,
+    })
+    return { success: true, runId: run.id }
   }
 
   /**

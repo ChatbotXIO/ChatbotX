@@ -127,6 +127,8 @@ const METHOD_VERBED_SINGLETON_PATHS = new Set([
   "messenger/templates/{id}",
   "products/meta-catalog",
   "ecommerce/settings",
+  // GET and PUT would both derive `translation:settings` and one would be dropped.
+  "translation/settings",
 ])
 // Collections under a resource that take both a list (GET) and a create (POST)
 // on the same path, which the generic naming would collapse into one command.
@@ -190,6 +192,12 @@ function extractPathParamNames(pathTemplate: string): string[] {
  * unambiguous verb here. Keyed by `METHOD path`.
  */
 const COMMAND_NAME_OVERRIDES: Readonly<Record<string, string>> = {
+  // Verbs on the conversation's translation, not sub-resources to "add"
+  // (they would derive the unhelpful `conversations:request:add` / `:preview:add`).
+  "POST /v1/conversations/{conversationId}/translation/requests":
+    "conversations:translation:request",
+  "POST /v1/conversations/{conversationId}/translation/preview":
+    "conversations:translation:preview",
   "DELETE /v1/contacts/{identifier}/custom-fields":
     "contacts:clear-all-custom-fields",
   "PUT /v1/contacts/{identifier}/custom-fields/{idOrName}":
@@ -259,6 +267,8 @@ const COMMAND_NAME_OVERRIDES: Readonly<Record<string, string>> = {
   "POST /v1/orders/{id}/ship": "orders:ship",
   "POST /v1/orders/{id}/conclude": "orders:conclude",
   "POST /v1/orders/{id}/cancel": "orders:cancel",
+  // Cancelling a contact sync run is a verb on the run, not a sub-resource.
+  "POST /v1/contact-syncs/{runId}/cancel": "contact-syncs:cancel",
   "GET /v1/marketing-messages/campaigns": "marketing-messages:list-campaigns",
   "POST /v1/marketing-messages/campaigns": "marketing-messages:create-campaign",
   "GET /v1/marketing-messages/campaigns/{id}":
@@ -271,6 +281,97 @@ const COMMAND_NAME_OVERRIDES: Readonly<Record<string, string>> = {
   "POST /v1/marketing-messages/audiences": "marketing-messages:create-audience",
   "DELETE /v1/marketing-messages/audiences/{id}":
     "marketing-messages:delete-audience",
+  // Managed channel posts live under /management, so the generic rule would
+  // name the GET and PATCH on `/management/{id}` the same.
+  "GET /v1/channel-posts/management": "channel-posts:list-managed",
+  "GET /v1/channel-posts/management/{id}": "channel-posts:get-managed",
+  "PATCH /v1/channel-posts/management/{id}": "channel-posts:update-managed",
+  "POST /v1/channel-posts/management/bulk-update":
+    "channel-posts:bulk-update-managed",
+  "POST /v1/channel-posts/management/{id}/refresh":
+    "channel-posts:refresh-managed",
+  "POST /v1/channel-posts/management/refresh-metrics":
+    "channel-posts:refresh-metrics",
+  "GET /v1/channel-posts/management/authors": "channel-posts:list-authors",
+  "GET /v1/channel-posts/management/{id}/metrics": "channel-posts:get-metrics",
+  "GET /v1/post-analytics/summary": "post-analytics:summary",
+  "GET /v1/post-analytics/timeseries": "post-analytics:timeseries",
+  "GET /v1/post-analytics/top-posts": "post-analytics:top-posts",
+  "GET /v1/post-analytics/best-times": "post-analytics:best-times",
+  "GET /v1/posts/{id}/metrics": "social-posts:get-metrics",
+  "GET /v1/channel-posts/management/{id}/comments":
+    "channel-posts:list-comments",
+  "POST /v1/channel-posts/management/merge-view":
+    "channel-posts:merge-comments",
+  "POST /v1/channel-posts/management/{id}/comments/{commentId}/like":
+    "channel-posts:like-comment",
+  "DELETE /v1/channel-posts/management/{id}/comments/{commentId}":
+    "channel-posts:delete-comment",
+  "POST /v1/channel-posts/management/export": "channel-posts:export-comments",
+  "POST /v1/channel-posts/sync": "channel-posts:sync",
+  "GET /v1/channel-posts/sync/status": "channel-posts:sync-status",
+  // Posts composed in ChatbotX for the connected social accounts.
+  "POST /v1/posts": "social-posts:create",
+  "GET /v1/posts": "social-posts:list",
+  "POST /v1/posts/validate": "social-posts:validate",
+  "POST /v1/posts/preview": "social-posts:preview",
+  "GET /v1/posts/content-types": "social-posts:content-types",
+  "GET /v1/posts/counts": "social-posts:counts",
+  "GET /v1/posts/{id}": "social-posts:get",
+  "PATCH /v1/posts/{id}": "social-posts:update",
+  "DELETE /v1/posts/{id}": "social-posts:delete",
+  "POST /v1/posts/{id}/duplicate": "social-posts:duplicate",
+  "POST /v1/posts/{id}/publish": "social-posts:publish",
+  "POST /v1/posts/{id}/reschedule": "social-posts:reschedule",
+  "POST /v1/posts/{id}/unschedule": "social-posts:unschedule",
+  "PUT /v1/posts/{id}/recurrence": "social-posts:set-recurrence",
+  "DELETE /v1/posts/{id}/recurrence": "social-posts:end-recurrence",
+  "POST /v1/posts/{id}/recurrence/pause": "social-posts:pause-recurrence",
+  "POST /v1/posts/{id}/recurrence/resume": "social-posts:resume-recurrence",
+  "GET /v1/posts/{id}/recurrence/occurrences": "social-posts:list-occurrences",
+  "POST /v1/posts/{id}/recurrence/occurrences/skip":
+    "social-posts:skip-occurrences",
+  "POST /v1/posts/{id}/recurrence/occurrences/restore":
+    "social-posts:restore-occurrences",
+  "POST /v1/posts/{id}/targets/{targetId}/retry": "social-posts:retry-target",
+  "POST /v1/posts/{id}/targets/{targetId}/resolve":
+    "social-posts:resolve-target",
+  // Suggested post text; a static path, so the generic rule would name it after
+  // the `ai` segment.
+  "POST /v1/posts/ai/generate": "social-posts:write-with-ai",
+  // Social accounts are the logins a workspace publishes through, separate
+  // from the inbox channels.
+  "GET /v1/social-accounts": "social-accounts:list",
+  "GET /v1/social-accounts/{id}": "social-accounts:get",
+  "POST /v1/social-accounts/{id}/verify": "social-accounts:verify",
+  "POST /v1/social-accounts/{id}/sync-destinations":
+    "social-accounts:sync-destinations",
+  "DELETE /v1/social-accounts/{id}": "social-accounts:disconnect",
+  // Where a post can be published (a connected inbox or a TikTok login); a
+  // static path under `/v1/posts`, so the generic rule would name it `posts:destinations`.
+  "GET /v1/posts/destinations": "post-destinations:list",
+  "GET /v1/posts/destinations/{id}": "post-destinations:get",
+  "POST /v1/posts/destinations/recheck-permissions":
+    "post-destinations:recheck-permissions",
+  // A destination's posting times (its queue): one schedule per destination,
+  // so the read is a `get`, not a `list`.
+  "GET /v1/posts/destinations/{id}/posting-schedule":
+    "post-destinations:posting-schedule:get",
+  "PUT /v1/posts/destinations/{id}/posting-schedule":
+    "post-destinations:posting-schedule:update",
+  "GET /v1/posts/destinations/{id}/free-slots":
+    "post-destinations:free-slots:list",
+  "GET /v1/posts/destinations/{id}/publishing-settings":
+    "post-destinations:publishing-settings:get",
+  // Feed auto-posting: the actions on one feed are verbs, not sub-resources.
+  "POST /v1/post-feeds/bulk-delete": "post-feeds:bulk-delete",
+  "POST /v1/post-feeds/{id}/pause": "post-feeds:pause",
+  "POST /v1/post-feeds/{id}/resume": "post-feeds:resume",
+  "POST /v1/post-feeds/{id}/check": "post-feeds:check",
+  "GET /v1/post-feeds/{id}/items": "post-feeds:list-items",
+  "POST /v1/post-feeds/{id}/test": "post-feeds:test",
+  "GET /v1/post-feeds/{id}/items/{itemId}/draft-content":
+    "post-feeds:item-draft-content",
 }
 
 export function pathAndMethodToCommandName(

@@ -29,7 +29,9 @@ import type {
   WhatsappLocationStepSchema,
 } from "@chatbotx.io/flow-config"
 import type { CommentAnchor, MessageButtonTemplate } from "@chatbotx.io/sdk"
+import type { SendFrom } from "@chatbotx.io/utils/send-from"
 import { Queue } from "bullmq"
+import { z } from "zod"
 import {
   defaultJobOptions,
   fakeQueue,
@@ -68,7 +70,7 @@ export type ChatJobSendChannelMessage = {
     quickReplies?: MessageButtonTemplate[]
     metadata?: MetadataPayload
     isBulkBroadcast?: boolean
-    sendFrom?: "inbox"
+    sendFrom?: SendFrom
   }
 }
 
@@ -122,7 +124,7 @@ export type ChatJobSendFlowStep = {
      * the send records them as status branches of the message it produces.
      */
     statusBranches?: WaTemplateStatusBranch[]
-    sendFrom?: "inbox"
+    sendFrom?: SendFrom
     /** See `IntegrationJobRunFlowNode["data"]["sentByUserId"]`. */
     sentByUserId?: string
     /** See {@link CommentAnchor}. */
@@ -143,6 +145,12 @@ export type ChatJobSendChatMessage = {
     metadata?: MetadataPayload
     /** Marks an automatic bulk-broadcast delivery, including a flow's first prompt. */
     isBulkBroadcast?: boolean
+    /**
+     * The flow step this message asks a question for. Stored on the message as
+     * `flowId`/`stepId`, like a flow step's own messages, so an answer to it is
+     * recognised as part of that flow. Callers without a flow leave it unset.
+     */
+    flowOrigin?: { flowId: string; stepId: string }
   }
 }
 
@@ -182,6 +190,12 @@ export type ChatJobSendWhatsappTemplateToConversation = {
     initiatedBy?: "user" | "api"
     /** The member behind `initiatedBy: "user"`. */
     adminId?: string
+    /**
+     * `inbox` when a member sent it from the builder's Inbox: the row is
+     * stamped and kept with its error if the send fails for good. Absent or
+     * `api` — the row is removed on a final failure.
+     */
+    sendFrom?: SendFrom
   }
 }
 
@@ -257,6 +271,9 @@ export type ChatJobEditChannelMessage = {
   }
 }
 
+export const chatJobUsageSources = z.enum(["postCommentSetting"])
+export type ChatJobUsageSource = z.infer<typeof chatJobUsageSources>
+
 export type ChatJobChangeChannelMessageState = {
   type: typeof ChatJobAction.changeChannelMessageState
   data: {
@@ -267,8 +284,12 @@ export type ChatJobChangeChannelMessageState = {
       createdAt: Date
     }
     liked?: boolean
+    /** Order of this like among the comment's queued likes; a lower one than the latest is stale. */
+    likeSeq?: number | undefined
     hidden?: boolean
     moderation?: ChatJobCommentModeration
+    /** Set only by a per-post comment setting; only that source consumes a message. */
+    usageSource?: ChatJobUsageSource
   }
 }
 

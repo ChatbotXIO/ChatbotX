@@ -82,6 +82,7 @@ vi.mock("@chatbotx.io/flow-config", () => ({
     },
   },
   UPDATE_STATUS_PAYLOAD_TYPE: "update_status",
+  isProactiveOutboundMetadata: () => false,
 }))
 
 vi.mock("@chatbotx.io/worker-config", () => ({
@@ -109,6 +110,11 @@ vi.mock("../src/services/integrations", () => ({
 
 vi.mock("../src/integration/handlers/flow", () => ({
   runFlowPostback: vi.fn(),
+}))
+
+// Failed-status settlement is covered by message-status-failed.test.ts.
+vi.mock("../src/chat/handlers/send-message", () => ({
+  settleFailedOutgoingMessage: vi.fn().mockResolvedValue("removed"),
 }))
 
 const { contactMarkAsRead } = await import(

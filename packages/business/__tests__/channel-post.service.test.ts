@@ -3,7 +3,10 @@ import { beforeEach, describe, expect, test, vi } from "vitest"
 const mocks = vi.hoisted(() => ({
   findByExternalId: vi.fn(),
   getPublicFileUrl: vi.fn((path: string) => `https://files.example/${path}`),
+  incrementCommentsCount: vi.fn(),
   insertBare: vi.fn(),
+  markCommentCounted: vi.fn(),
+  requestMetricsRefresh: vi.fn(),
   isDatabaseError: vi.fn(() => false),
   loggerInfo: vi.fn(),
   loggerWarn: vi.fn(),
@@ -14,6 +17,10 @@ const mocks = vi.hoisted(() => ({
   uploadFileFromUrl: vi.fn(),
   updateIntegrationIfChanged: vi.fn(),
   claimMetadataRetry: vi.fn(),
+  incrementPhoneCommentsCount: vi.fn(),
+  markPhoneCounted: vi.fn(),
+  findListedPostsWithoutThumbnail: vi.fn(),
+  saveListedPostThumbnail: vi.fn(),
 }))
 
 vi.mock("@chatbotx.io/database/client", () => ({
@@ -24,12 +31,16 @@ vi.mock("@chatbotx.io/database/repositories", () => ({
   channelPostRepository: {
     claimMetadataRetry: mocks.claimMetadataRetry,
     findByExternalId: mocks.findByExternalId,
+    incrementCommentsCount: mocks.incrementCommentsCount,
+    incrementPhoneCommentsCount: mocks.incrementPhoneCommentsCount,
     insertBare: mocks.insertBare,
     listFilterOptions: mocks.listFilterOptions,
     markMetadataAttempt: mocks.markMetadataAttempt,
     saveMetadata: mocks.saveMetadata,
     updateIntegrationIfChanged: mocks.updateIntegrationIfChanged,
   },
+  findListedPostsWithoutThumbnail: mocks.findListedPostsWithoutThumbnail,
+  saveListedPostThumbnail: mocks.saveListedPostThumbnail,
 }))
 
 vi.mock("@chatbotx.io/filesystem", () => ({
@@ -42,6 +53,18 @@ vi.mock("@chatbotx.io/redis", () => ({
 
 vi.mock("../src/logger", () => ({
   logger: { info: mocks.loggerInfo, warn: mocks.loggerWarn },
+}))
+vi.mock("../src/message/service", () => ({
+  messageService: {
+    markCommentCounted: mocks.markCommentCounted,
+    markPhoneCounted: mocks.markPhoneCounted,
+  },
+}))
+
+vi.mock("../src/channel-post/metrics-refresh.service", () => ({
+  channelPostMetricsRefreshService: {
+    requestMetricsRefresh: mocks.requestMetricsRefresh,
+  },
 }))
 
 vi.mock("../src/platform/settings", () => ({
@@ -75,6 +98,45 @@ describe("channelPostService.resolveForComment", () => {
     mocks.listFilterOptions.mockResolvedValue([])
     mocks.saveMetadata.mockResolvedValue(undefined)
     mocks.uploadFileFromUrl.mockResolvedValue({ originPath: "thumbnail.png" })
+    mocks.requestMetricsRefresh.mockResolvedValue({
+      fresh: 0,
+      queued: 1,
+      skipped: 0,
+    })
+  })
+
+  test("a post the comment just created gets one refresh of its counts", async () => {
+    await channelPostService.resolveForComment(input)
+
+    expect(mocks.requestMetricsRefresh).toHaveBeenCalledExactlyOnceWith({
+      channelPostIds: ["post-1"],
+      workspaceId: "workspace-1",
+    })
+  })
+
+  test("a failing refresh request never fails the comment", async () => {
+    mocks.requestMetricsRefresh.mockRejectedValueOnce(new Error("redis down"))
+
+    await expect(channelPostService.resolveForComment(input)).resolves.toBe(
+      "post-1",
+    )
+
+    expect(mocks.loggerWarn).toHaveBeenCalledWith(
+      expect.objectContaining({ channelPostId: "post-1" }),
+      "channel-post: requesting the counts of a new post failed",
+    )
+  })
+
+  test("a post that already exists is not refreshed again by a comment", async () => {
+    mocks.findByExternalId.mockResolvedValue({
+      id: "post-9",
+      integrationId: "integration-1",
+      metadataFetchedAt: new Date(),
+    })
+
+    await channelPostService.resolveForComment(input)
+
+    expect(mocks.requestMetricsRefresh).not.toHaveBeenCalled()
   })
 
   test("records the bare post even when metadata hydration fails", async () => {
@@ -332,5 +394,429 @@ describe("channelPostService.resolveForComment", () => {
     })
 
     vi.useRealTimers()
+  })
+})
+
+describe("channelPostService.resolveForCommentWithSettings", () => {
+  const storedPost = {
+    hideComments: true,
+    hidePhoneComments: false,
+    id: "post-9",
+    integrationId: "integration-1",
+    liveStatus: null,
+    metadataFetchedAt: new Date("2026-11-01T00:00:00.000Z"),
+    skipComments: true,
+  }
+
+  beforeEach(() => {
+    vi.clearAllMocks()
+    mocks.findByExternalId.mockResolvedValue(null)
+    mocks.insertBare.mockResolvedValue("post-1")
+    mocks.updateIntegrationIfChanged.mockResolvedValue(false)
+    mocks.claimMetadataRetry.mockResolvedValue(false)
+    mocks.saveMetadata.mockResolvedValue(undefined)
+  })
+
+  test("returns the stored switches of an existing post from the same read", async () => {
+    mocks.findByExternalId.mockResolvedValue(storedPost)
+
+    await expect(
+      channelPostService.resolveForCommentWithSettings(input),
+    ).resolves.toEqual({
+      id: "post-9",
+      liveStatus: null,
+      settings: {
+        hideComments: true,
+        hidePhoneComments: false,
+        skipComments: true,
+      },
+    })
+    expect(mocks.findByExternalId).toHaveBeenCalledTimes(1)
+  })
+
+  test("a post just recorded from its first comment has every switch off", async () => {
+    input.fetchDetails.mockResolvedValue({})
+
+    await expect(
+      channelPostService.resolveForCommentWithSettings(input),
+    ).resolves.toEqual({
+      id: "post-1",
+      liveStatus: null,
+      settings: {
+        hideComments: false,
+        hidePhoneComments: false,
+        skipComments: false,
+      },
+    })
+  })
+
+  test("a post a concurrent comment recorded first returns that row's switches", async () => {
+    mocks.insertBare.mockResolvedValueOnce(null)
+    mocks.findByExternalId
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce(storedPost)
+
+    const resolved =
+      await channelPostService.resolveForCommentWithSettings(input)
+
+    expect(resolved?.id).toBe("post-9")
+    expect(resolved?.settings.hideComments).toBe(true)
+  })
+
+  test("returns the stored live status so a live comment can skip a no-op write", async () => {
+    mocks.findByExternalId.mockResolvedValue({
+      ...storedPost,
+      liveStatus: "live",
+    })
+
+    const resolved =
+      await channelPostService.resolveForCommentWithSettings(input)
+
+    expect(resolved?.liveStatus).toBe("live")
+  })
+
+  test("resolveForComment still answers just the id", async () => {
+    mocks.findByExternalId.mockResolvedValue(storedPost)
+
+    await expect(channelPostService.resolveForComment(input)).resolves.toBe(
+      "post-9",
+    )
+  })
+
+  describe("recordPhoneComment", () => {
+    const comment = {
+      createdAt: new Date("2026-11-22T10:00:00.123Z"),
+      id: "m1",
+    }
+    const record = () =>
+      channelPostService.recordPhoneComment({
+        comment,
+        id: "post-9",
+        workspaceId: "workspace-1",
+      })
+    const mark = {
+      createdAt: comment.createdAt,
+      id: "m1",
+      workspaceId: "workspace-1",
+    }
+
+    beforeEach(() => {
+      mocks.markPhoneCounted.mockResolvedValue(true)
+      mocks.incrementPhoneCommentsCount.mockResolvedValue(undefined)
+    })
+
+    test("marks the comment and then counts it on the post", async () => {
+      await record()
+
+      expect(mocks.markPhoneCounted).toHaveBeenCalledWith(mark)
+      expect(mocks.incrementPhoneCommentsCount).toHaveBeenCalledWith({
+        id: "post-9",
+        workspaceId: "workspace-1",
+      })
+    })
+
+    test("a comment that is already marked counts nothing", async () => {
+      mocks.markPhoneCounted.mockResolvedValue(false)
+
+      await record()
+
+      expect(mocks.incrementPhoneCommentsCount).not.toHaveBeenCalled()
+    })
+
+    test("a failed count fails the call but never takes the mark back", async () => {
+      mocks.incrementPhoneCommentsCount.mockRejectedValueOnce(
+        new Error("db down"),
+      )
+
+      await expect(record()).rejects.toThrow("db down")
+
+      // The outcome of the failed write is unknown, so the mark stays: undoing
+      // it could count the comment twice. The count may fall short (and is
+      // repaired from the comments on a refresh), never run over.
+      expect(
+        (mocks as Record<string, unknown>).unmarkPhoneCounted,
+      ).toBeUndefined()
+    })
+
+    test("the retry of a failed count finds the mark and adds nothing, so the count never runs over", async () => {
+      mocks.incrementPhoneCommentsCount.mockRejectedValueOnce(
+        new Error("db down"),
+      )
+      await expect(record()).rejects.toThrow("db down")
+
+      mocks.markPhoneCounted.mockResolvedValue(false)
+      await record()
+
+      expect(mocks.incrementPhoneCommentsCount).toHaveBeenCalledTimes(1)
+    })
+
+    test("a storage failure on the mark propagates and counts nothing", async () => {
+      mocks.markPhoneCounted.mockRejectedValueOnce(new Error("shard down"))
+
+      await expect(record()).rejects.toThrow("shard down")
+      expect(mocks.incrementPhoneCommentsCount).not.toHaveBeenCalled()
+    })
+  })
+})
+
+describe("channelPostService.rehostListedThumbnails", () => {
+  const posts = (count: number) =>
+    Array.from({ length: count }, (_, index) => ({
+      externalPostId: `ext-${index}`,
+      thumbnailUrl: `https://cdn.example/${index}.jpg`,
+    }))
+  const missing = (count: number) =>
+    Array.from({ length: count }, (_, index) => ({
+      externalPostId: `ext-${index}`,
+      id: `post-${index}`,
+    }))
+
+  beforeEach(() => {
+    vi.clearAllMocks()
+    mocks.saveListedPostThumbnail.mockResolvedValue(undefined)
+    mocks.uploadFileFromUrl.mockResolvedValue({ originPath: "thumbnail.png" })
+  })
+
+  test("downloads and stores a thumbnail only for the listed posts that have none", async () => {
+    mocks.findListedPostsWithoutThumbnail.mockResolvedValue(missing(2))
+
+    await channelPostService.rehostListedThumbnails({
+      channel: "messenger",
+      deadline: Date.now() + 60_000,
+      posts: posts(5),
+      workspaceId: "workspace-1",
+    })
+
+    expect(mocks.findListedPostsWithoutThumbnail).toHaveBeenCalledWith({
+      channel: "messenger",
+      externalPostIds: ["ext-0", "ext-1", "ext-2", "ext-3", "ext-4"],
+      workspaceId: "workspace-1",
+    })
+    expect(mocks.uploadFileFromUrl).toHaveBeenCalledTimes(2)
+    expect(mocks.saveListedPostThumbnail).toHaveBeenCalledWith({
+      id: "post-0",
+      thumbnail: "thumbnail.png",
+      workspaceId: "workspace-1",
+    })
+  })
+
+  test("never looks up a post whose listing carried no thumbnail url", async () => {
+    mocks.findListedPostsWithoutThumbnail.mockResolvedValue([])
+
+    await channelPostService.rehostListedThumbnails({
+      channel: "messenger",
+      deadline: Date.now() + 60_000,
+      posts: [
+        { externalPostId: "a", thumbnailUrl: null },
+        { externalPostId: "b", thumbnailUrl: "https://cdn.example/b.jpg" },
+      ],
+      workspaceId: "workspace-1",
+    })
+
+    expect(mocks.findListedPostsWithoutThumbnail).toHaveBeenCalledWith(
+      expect.objectContaining({ externalPostIds: ["b"] }),
+    )
+  })
+
+  test("downloads at most five at a time", async () => {
+    mocks.findListedPostsWithoutThumbnail.mockResolvedValue(missing(12))
+    let running = 0
+    let peak = 0
+    mocks.uploadFileFromUrl.mockImplementation(async () => {
+      running += 1
+      peak = Math.max(peak, running)
+      await new Promise((resolve) => setTimeout(resolve, 5))
+      running -= 1
+      return { originPath: "thumbnail.png" }
+    })
+
+    await channelPostService.rehostListedThumbnails({
+      channel: "messenger",
+      deadline: Date.now() + 60_000,
+      posts: posts(12),
+      workspaceId: "workspace-1",
+    })
+
+    expect(mocks.uploadFileFromUrl).toHaveBeenCalledTimes(12)
+    expect(peak).toBe(5)
+  })
+
+  test("stops starting downloads once the deadline has passed", async () => {
+    mocks.findListedPostsWithoutThumbnail.mockResolvedValue(missing(10))
+
+    await channelPostService.rehostListedThumbnails({
+      channel: "messenger",
+      deadline: Date.now() - 1,
+      posts: posts(10),
+      workspaceId: "workspace-1",
+    })
+
+    expect(mocks.uploadFileFromUrl).not.toHaveBeenCalled()
+  })
+
+  test("a failed download is logged and leaves the post without a thumbnail, never throws", async () => {
+    mocks.findListedPostsWithoutThumbnail.mockResolvedValue(missing(2))
+    mocks.uploadFileFromUrl
+      .mockRejectedValueOnce(new Error("too large"))
+      .mockResolvedValueOnce({ originPath: "ok.png" })
+
+    await expect(
+      channelPostService.rehostListedThumbnails({
+        channel: "messenger",
+        deadline: Date.now() + 60_000,
+        posts: posts(2),
+        workspaceId: "workspace-1",
+      }),
+    ).resolves.toBeUndefined()
+
+    expect(mocks.saveListedPostThumbnail).toHaveBeenCalledTimes(1)
+    expect(mocks.saveListedPostThumbnail).toHaveBeenCalledWith(
+      expect.objectContaining({ id: "post-1", thumbnail: "ok.png" }),
+    )
+  })
+
+  test("a failed lookup or a failed save is swallowed, never throws", async () => {
+    mocks.findListedPostsWithoutThumbnail.mockRejectedValueOnce(
+      new Error("db down"),
+    )
+    await expect(
+      channelPostService.rehostListedThumbnails({
+        channel: "messenger",
+        deadline: Date.now() + 60_000,
+        posts: posts(1),
+        workspaceId: "workspace-1",
+      }),
+    ).resolves.toBeUndefined()
+    expect(mocks.uploadFileFromUrl).not.toHaveBeenCalled()
+
+    mocks.findListedPostsWithoutThumbnail.mockResolvedValue(missing(2))
+    mocks.saveListedPostThumbnail
+      .mockRejectedValueOnce(new Error("write failed"))
+      .mockResolvedValueOnce(undefined)
+    await expect(
+      channelPostService.rehostListedThumbnails({
+        channel: "messenger",
+        deadline: Date.now() + 60_000,
+        posts: posts(2),
+        workspaceId: "workspace-1",
+      }),
+    ).resolves.toBeUndefined()
+    expect(mocks.saveListedPostThumbnail).toHaveBeenCalledTimes(2)
+  })
+})
+
+describe("channelPostService.recordWebhookComment", () => {
+  const webhookInput = {
+    channel: "threads",
+    comment: { createdAt: new Date("2026-11-25T10:00:00.000Z"), id: "m1" },
+    externalPostId: "root-1",
+    inboxId: "inbox-1",
+    integrationId: "integration-1",
+    sourceAccountId: "account-1",
+    workspaceId: "workspace-1",
+  }
+
+  beforeEach(() => {
+    vi.clearAllMocks()
+    mocks.findByExternalId.mockResolvedValue({ id: "post-7" })
+    mocks.markCommentCounted.mockResolvedValue(true)
+    mocks.incrementCommentsCount.mockResolvedValue(undefined)
+  })
+
+  test("a new comment on a known post counts once, workspace-scoped", async () => {
+    await channelPostService.recordWebhookComment(webhookInput)
+
+    expect(mocks.markCommentCounted).toHaveBeenCalledWith({
+      createdAt: webhookInput.comment.createdAt,
+      id: "m1",
+      workspaceId: "workspace-1",
+    })
+    expect(mocks.incrementCommentsCount).toHaveBeenCalledExactlyOnceWith({
+      id: "post-7",
+      workspaceId: "workspace-1",
+    })
+    expect(mocks.insertBare).not.toHaveBeenCalled()
+  })
+
+  test("a redelivered comment (mark already set) counts nothing", async () => {
+    mocks.markCommentCounted.mockResolvedValue(false)
+
+    await channelPostService.recordWebhookComment(webhookInput)
+
+    expect(mocks.incrementCommentsCount).not.toHaveBeenCalled()
+  })
+
+  test("the first comment on an unknown post creates it bare from the root post id, then counts", async () => {
+    mocks.findByExternalId.mockResolvedValue(null)
+    mocks.insertBare.mockResolvedValue("post-new")
+
+    await channelPostService.recordWebhookComment(webhookInput)
+
+    expect(mocks.insertBare).toHaveBeenCalledWith({
+      channel: "threads",
+      externalPostId: "root-1",
+      inboxId: "inbox-1",
+      integrationId: "integration-1",
+      sourceAccountId: "account-1",
+      workspaceId: "workspace-1",
+    })
+    expect(mocks.incrementCommentsCount).toHaveBeenCalledWith({
+      id: "post-new",
+      workspaceId: "workspace-1",
+    })
+    // No metadata fetch, no refresh request: the platform has nothing to add.
+    expect(mocks.requestMetricsRefresh).not.toHaveBeenCalled()
+  })
+
+  test("losing the insert race counts on the winner's row", async () => {
+    mocks.findByExternalId
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce({ id: "post-winner" })
+    mocks.insertBare.mockResolvedValue(null)
+
+    await channelPostService.recordWebhookComment(webhookInput)
+
+    expect(mocks.incrementCommentsCount).toHaveBeenCalledWith({
+      id: "post-winner",
+      workspaceId: "workspace-1",
+    })
+  })
+
+  test("a post the comment path already resolved is not looked up again", async () => {
+    await channelPostService.recordWebhookComment({
+      ...webhookInput,
+      channelPostId: "post-9",
+    })
+
+    expect(mocks.findByExternalId).not.toHaveBeenCalled()
+    expect(mocks.incrementCommentsCount).toHaveBeenCalledWith({
+      id: "post-9",
+      workspaceId: "workspace-1",
+    })
+  })
+
+  test.each([
+    "messenger",
+    "instagram",
+    "tiktok",
+    "whatsapp",
+  ])("%s reports its own comment count, so nothing is counted here", async (channel) => {
+    await channelPostService.recordWebhookComment({
+      ...webhookInput,
+      channel,
+    })
+
+    expect(mocks.markCommentCounted).not.toHaveBeenCalled()
+    expect(mocks.incrementCommentsCount).not.toHaveBeenCalled()
+    expect(mocks.findByExternalId).not.toHaveBeenCalled()
+  })
+
+  test("a failure before the mark leaves the comment uncounted so a retry counts it", async () => {
+    mocks.findByExternalId.mockRejectedValue(new Error("db down"))
+
+    await expect(
+      channelPostService.recordWebhookComment(webhookInput),
+    ).rejects.toThrow("db down")
+    expect(mocks.markCommentCounted).not.toHaveBeenCalled()
   })
 })

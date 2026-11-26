@@ -1,13 +1,17 @@
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
 const mocks = vi.hoisted(() => ({
-  recordMessageSendError: vi.fn(),
+  settleFailedOutgoingMessage: vi.fn(),
+  logProviderErrorForChannel: vi.fn(),
   settleCommentAutomationFailure: vi.fn(),
   loggerError: vi.fn(),
 }))
 
 vi.mock("../src/chat/handlers/send-message", () => ({
-  recordMessageSendError: mocks.recordMessageSendError,
+  settleFailedOutgoingMessage: mocks.settleFailedOutgoingMessage,
+}))
+vi.mock("@chatbotx.io/business/error-log", () => ({
+  logProviderErrorForChannel: mocks.logProviderErrorForChannel,
 }))
 vi.mock("../src/lib/comment-automation-anchor", () => ({
   settleCommentAutomationFailure: mocks.settleCommentAutomationFailure,
@@ -34,8 +38,16 @@ function channelMessageJob(
   return {
     type: "sendChannelMessage",
     data: {
-      conversation: { id: "conversation-1", workspaceId: "workspace-1" },
-      contactInbox: { id: "contact-inbox-1" },
+      conversation: {
+        id: "conversation-1",
+        workspaceId: "workspace-1",
+        contactId: "contact-1",
+      },
+      contactInbox: {
+        id: "contact-inbox-1",
+        channel: "messenger",
+        sourceId: "psid-1",
+      },
       message: {
         id: "message-1",
         clientId: "client-1",
@@ -57,29 +69,36 @@ function flowMessageJob(commentAnchor?: Record<string, unknown>): JobData {
 
 beforeEach(() => {
   vi.clearAllMocks()
+  mocks.settleFailedOutgoingMessage.mockResolvedValue("removed")
 })
 
 describe("recordQuotaSkippedSend", () => {
-  test("marks an existing channel message failed with the quota reason", async () => {
+  test("removes an existing bot message and logs the quota reason to the Error Log", async () => {
     await recordQuotaSkippedSend(
       channelMessageJob({ contentAttributes: commentReplyAttributes }),
     )
 
-    expect(mocks.recordMessageSendError).toHaveBeenCalledWith(
-      "message-1",
-      "client-1",
-      "workspace-1",
-      new Date(createdAt),
-      BOT_MESSAGE_QUOTA_REACHED_ERROR,
-      { conversationId: "conversation-1", silent: false },
-    )
+    expect(mocks.settleFailedOutgoingMessage).toHaveBeenCalledWith({
+      message: expect.objectContaining({ id: "message-1", createdAt }),
+      conversationId: "conversation-1",
+      workspaceId: "workspace-1",
+      errorMessage: BOT_MESSAGE_QUOTA_REACHED_ERROR,
+      sendFrom: undefined,
+      silent: false,
+    })
+    expect(mocks.logProviderErrorForChannel).toHaveBeenCalledWith("messenger", {
+      workspaceId: "workspace-1",
+      contactId: "contact-1",
+      sourceId: "psid-1",
+      error: new Error(BOT_MESSAGE_QUOTA_REACHED_ERROR),
+    })
     expect(mocks.settleCommentAutomationFailure).toHaveBeenCalledWith({
       contentAttributes: commentReplyAttributes,
       errorDetail: BOT_MESSAGE_QUOTA_REACHED_ERROR,
     })
   })
 
-  test("keeps a bulk broadcast message out of realtime", async () => {
+  test("keeps a bulk broadcast message out of realtime and the Error Log", async () => {
     await recordQuotaSkippedSend(
       channelMessageJob(
         {},
@@ -87,14 +106,21 @@ describe("recordQuotaSkippedSend", () => {
       ),
     )
 
-    expect(mocks.recordMessageSendError).toHaveBeenCalledWith(
-      expect.anything(),
-      expect.anything(),
-      expect.anything(),
-      expect.anything(),
-      BOT_MESSAGE_QUOTA_REACHED_ERROR,
-      { conversationId: "conversation-1", silent: true },
+    expect(mocks.settleFailedOutgoingMessage).toHaveBeenCalledWith(
+      expect.objectContaining({ silent: true }),
     )
+    expect(mocks.logProviderErrorForChannel).not.toHaveBeenCalled()
+  })
+
+  test("writes no Error Log row for a message that was kept", async () => {
+    mocks.settleFailedOutgoingMessage.mockResolvedValue("kept")
+
+    await recordQuotaSkippedSend(channelMessageJob({}, { sendFrom: "inbox" }))
+
+    expect(mocks.settleFailedOutgoingMessage).toHaveBeenCalledWith(
+      expect.objectContaining({ sendFrom: "inbox" }),
+    )
+    expect(mocks.logProviderErrorForChannel).not.toHaveBeenCalled()
   })
 
   test("settles a comment-automation flow reply failed", async () => {
@@ -106,7 +132,7 @@ describe("recordQuotaSkippedSend", () => {
       }),
     )
 
-    expect(mocks.recordMessageSendError).not.toHaveBeenCalled()
+    expect(mocks.settleFailedOutgoingMessage).not.toHaveBeenCalled()
     expect(mocks.settleCommentAutomationFailure).toHaveBeenCalledWith({
       contentAttributes: {
         replyToCommentId: "comment-1",
@@ -146,12 +172,14 @@ describe("recordQuotaSkippedSend", () => {
       data: {},
     } as unknown as JobData)
 
-    expect(mocks.recordMessageSendError).not.toHaveBeenCalled()
+    expect(mocks.settleFailedOutgoingMessage).not.toHaveBeenCalled()
     expect(mocks.settleCommentAutomationFailure).not.toHaveBeenCalled()
   })
 
   test("swallows its own failures so the job is still dropped", async () => {
-    mocks.recordMessageSendError.mockRejectedValueOnce(new Error("db down"))
+    mocks.settleFailedOutgoingMessage.mockRejectedValueOnce(
+      new Error("db down"),
+    )
 
     await expect(
       recordQuotaSkippedSend(channelMessageJob({})),

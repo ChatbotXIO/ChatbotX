@@ -53,7 +53,7 @@ export const leaderboardScoreEventRepository = {
     input: { workspaceId: string; limit: number },
     tx: DatabaseClient = db,
   ) {
-    const result = await tx.execute(sql`
+    const result = await tx.execute<Record<string, unknown>>(sql`
       DELETE FROM "LeaderboardScoreEvent"
       WHERE ("createdAt", "id") IN (
         SELECT "createdAt", "id" FROM "LeaderboardScoreEvent"

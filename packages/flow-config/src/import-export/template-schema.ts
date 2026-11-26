@@ -11,9 +11,17 @@ export const TEMPLATE_EXPORT_FORMAT_VERSION = 1
  * `templatePayloadIncompatible` instead of silently stripping the new part.
  */
 export const TEMPLATE_EXPORT_FORMAT_VERSION_V2 = 2
+/**
+ * Written when a payload ships a tool category added after v2 (magic links,
+ * polls, minigames, store settings, ...). A reader that knows only v1/v2 would
+ * silently drop such a category (`resources` is a closed object), so it must
+ * refuse the payload instead.
+ */
+export const TEMPLATE_EXPORT_FORMAT_VERSION_V3 = 3
 const SUPPORTED_FORMAT_VERSIONS: readonly number[] = [
   TEMPLATE_EXPORT_FORMAT_VERSION,
   TEMPLATE_EXPORT_FORMAT_VERSION_V2,
+  TEMPLATE_EXPORT_FORMAT_VERSION_V3,
 ]
 
 /**
@@ -229,6 +237,19 @@ export const templateResourcesSchema = z.object({
   questionnaires: z.array(templateResourceEntrySchema).default([]),
   couponTopics: z.array(templateResourceEntrySchema).default([]),
   pipelines: z.array(templateResourceEntrySchema).default([]),
+  magicLinks: z.array(templateResourceEntrySchema).default([]),
+  polls: z.array(templateResourceEntrySchema).default([]),
+  dynamicImages: z.array(templateResourceEntrySchema).default([]),
+  placeLocations: z.array(templateResourceEntrySchema).default([]),
+  miniApps: z.array(templateResourceEntrySchema).default([]),
+  minigames: z.array(templateResourceEntrySchema).default([]),
+  leaderboards: z.array(templateResourceEntrySchema).default([]),
+  openHours: z.array(templateResourceEntrySchema).default([]),
+  vendors: z.array(templateResourceEntrySchema).default([]),
+  discountCodes: z.array(templateResourceEntrySchema).default([]),
+  storeSettings: z.array(templateResourceEntrySchema).default([]),
+  storyAutomations: z.array(templateResourceEntrySchema).default([]),
+  inboundWebhooks: z.array(templateResourceEntrySchema).default([]),
   settings: z
     .object({
       savedReplies: z.array(templateResourceEntrySchema).default([]),
@@ -255,6 +276,7 @@ export const templateExportSchema = z.object({
   formatVersion: z.union([
     z.literal(TEMPLATE_EXPORT_FORMAT_VERSION),
     z.literal(TEMPLATE_EXPORT_FORMAT_VERSION_V2),
+    z.literal(TEMPLATE_EXPORT_FORMAT_VERSION_V3),
   ]),
   permissions: templateItemPermissionsSchema.optional(),
   exportedAt: z.string(),
@@ -266,6 +288,8 @@ export const templateExportSchema = z.object({
   resources: templateResourcesSchema,
 })
 export type TemplateExport = z.infer<typeof templateExportSchema>
+/** The payload versions this build can read: 1, 2 or 3. */
+export type TemplateFormatVersion = TemplateExport["formatVersion"]
 
 export type TemplateExportParseResult =
   | { ok: true; data: TemplateExport }

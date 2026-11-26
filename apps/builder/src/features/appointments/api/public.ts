@@ -175,6 +175,7 @@ export const appointmentsPublicRouter = {
           ...linkInput,
           user: resolveSenderForCaller(context),
           bypassThreadControlLock: input.bypassThreadControlLock,
+          sendFrom: "api",
         })
         return {
           url: sent.url,

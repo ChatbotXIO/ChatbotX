@@ -1,6 +1,9 @@
 // @vitest-environment node
 
-import { parseTemplateExport } from "@chatbotx.io/flow-config"
+import {
+  parseTemplateExport,
+  TEMPLATE_EXPORT_FORMAT_VERSION_V3,
+} from "@chatbotx.io/flow-config"
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
 const mocks = vi.hoisted(() => ({
@@ -173,9 +176,17 @@ describe("template format versions: mixed deployments", () => {
   })
 
   test("an unknown format version is refused by the current reader too", () => {
-    expect(parseTemplateExport({ formatVersion: 3 })).toEqual({
+    expect(parseTemplateExport({ formatVersion: 4 })).toEqual({
       ok: false,
-      reason: "Unsupported template export format version: 3",
+      reason: "Unsupported template export format version: 4",
     })
+  })
+
+  test("a v3 payload carries a version a v1/v2-only reader refuses", () => {
+    expect(parseTemplateExport({ formatVersion: 3 })).toMatchObject({
+      ok: false,
+      reason: expect.not.stringContaining("Unsupported template export format"),
+    })
+    expect(TEMPLATE_EXPORT_FORMAT_VERSION_V3).toBe(3)
   })
 })

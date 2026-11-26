@@ -241,6 +241,83 @@ describe("webhookHandler signature policy (manual integrations without an app se
     )
   })
 
+  describe("Business-app echoes on an unsigned delivery", () => {
+    const echoBody = () =>
+      JSON.stringify({
+        object: "whatsapp_business_account",
+        entry: [
+          {
+            changes: [
+              {
+                field: "smb_message_echoes",
+                value: {
+                  metadata: { phone_number_id: "phone-1" },
+                  message_echoes: [
+                    {
+                      id: "wamid.sent",
+                      to: "16505551234",
+                      to_user_id: "US.1",
+                      type: "text",
+                      text: { body: "hi" },
+                    },
+                    {
+                      id: "wamid.edit",
+                      to_user_id: "US.1",
+                      type: "edit",
+                      edit: {
+                        original_message_id: "wamid.sent",
+                        message: { text: { body: "fixed" } },
+                      },
+                    },
+                    {
+                      id: "wamid.revoke",
+                      to_user_id: "US.1",
+                      type: "revoke",
+                      revoke: { original_message_id: "wamid.sent" },
+                    },
+                  ],
+                },
+              },
+            ],
+          },
+        ],
+      })
+
+    const enqueuedNames = () => queueAdd.mock.calls.map(([name]) => name)
+
+    test("still stores a sent message but ignores an edit and a revoke, which rewrite stored messages", async () => {
+      await webhookHandler(
+        makeProps({
+          rawBody: echoBody(),
+          signature: undefined,
+          queueAdd,
+          clientSecret: undefined,
+          manualIntegration: true,
+        }),
+      )
+
+      expect(enqueuedNames()).toEqual(["incomingMessageEcho"])
+      expect(mockLogger.warn).toHaveBeenCalledWith(
+        expect.objectContaining({ dropped: 2 }),
+        expect.stringContaining("not signature-verified"),
+      )
+    })
+
+    test("applies an edit and a revoke when the signature was verified", async () => {
+      const rawBody = echoBody()
+
+      await webhookHandler(
+        makeProps({ rawBody, signature: sign(rawBody), queueAdd }),
+      )
+
+      expect(enqueuedNames().sort()).toEqual([
+        "deleteIncomingMessage",
+        "incomingMessageEcho",
+        "updateIncomingMessage",
+      ])
+    })
+  })
+
   test("manual + no secret, with a call-event payload: the call event is still enqueued unverified", async () => {
     const rawBody = JSON.stringify({
       object: "whatsapp_business_account",

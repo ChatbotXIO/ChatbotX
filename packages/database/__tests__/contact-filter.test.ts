@@ -4,7 +4,7 @@ import {
   BOOLEAN_TRUTHY_LITERALS,
   canonicalBooleanLiteral,
 } from "@chatbotx.io/utils/custom-field"
-import { relationsFilterToSQL, type SQL } from "drizzle-orm"
+import type { SQL } from "drizzle-orm"
 import { alias, PgDialect } from "drizzle-orm/pg-core"
 import { describe, expect, test } from "vitest"
 import { operatorTypes } from "../src/partials"
@@ -20,6 +20,7 @@ import {
   pruneEmailPhoneFilterConditions,
 } from "../src/queries/contact-filter"
 import { isValidDateTimeFilterValue } from "../src/queries/contact-filter/value-format"
+import { relationsFilterToSQL } from "../src/relations-filter"
 import { contactInboxModel, contactModel } from "../src/schema"
 import { escapeLikePattern, likeContains } from "../src/utils"
 
@@ -3065,6 +3066,44 @@ describe("applyContactFilter — tags relation", () => {
       }),
     )
     expect(query.sql).toContain('NOT EXISTS (SELECT 1 FROM "ContactToTag"')
+  })
+})
+
+describe("applyContactFilter — votedOnPoll relation", () => {
+  test.each([
+    operatorTypes.enum.eq,
+    operatorTypes.enum.ne,
+  ])("renders votedOnPoll %s as a PollVote.pollId EXISTS over the selected polls", (operator) => {
+    const query = renderContactWhere(
+      applyContactFilter({
+        operator: "and",
+        conditions: [
+          { field: "votedOnPoll", operator, value: ["poll-1", "poll-2"] },
+        ],
+      }),
+    )
+    if (operator === operatorTypes.enum.eq) {
+      expect(query.sql).toContain('EXISTS (SELECT 1 FROM "PollVote"')
+      expect(query.sql).not.toContain("NOT EXISTS")
+    } else {
+      expect(query.sql).toContain('NOT EXISTS (SELECT 1 FROM "PollVote"')
+    }
+    expect(query.sql).toContain('"PollVote"."contactId"')
+    expect(query.sql).toContain('"PollVote"."pollId" in')
+    expect(query.params).toEqual(expect.arrayContaining(["poll-1", "poll-2"]))
+  })
+
+  test("renders votedOnPoll isEmpty as NOT EXISTS any PollVote", () => {
+    const query = renderContactWhere(
+      applyContactFilter({
+        operator: "and",
+        conditions: [
+          { field: "votedOnPoll", operator: operatorTypes.enum.isEmpty },
+        ],
+      }),
+    )
+    expect(query.sql).toContain('NOT EXISTS (SELECT 1 FROM "PollVote"')
+    expect(query.sql).not.toContain('"PollVote"."pollId" in')
   })
 })
 

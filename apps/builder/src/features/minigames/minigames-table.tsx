@@ -27,6 +27,7 @@ import { formatDate } from "@chatbotx.io/ui/lib/format"
 import type { DataTableRowAction } from "@chatbotx.io/ui/types/data-table"
 import type { ColumnDef } from "@tanstack/react-table"
 import {
+  CopyPlusIcon,
   HistoryIcon,
   MoreHorizontalIcon,
   PencilIcon,
@@ -37,7 +38,14 @@ import { useRouter } from "next/navigation"
 import { useLocale, useTranslations } from "next-intl"
 import React, { use, useMemo } from "react"
 import { EnabledSwitchCell } from "@/components/data-table/enabled-switch-cell"
+import { LockBadge } from "@/features/templates/components/lock-badge"
+import {
+  LockedGuard,
+  TemplateLockedList,
+  UndeletableGuard,
+} from "@/features/templates/components/lock-context"
 import { enableMinigameAction } from "./actions/enable-minigame.action"
+import { DuplicateMinigameDialog } from "./components/duplicate-minigame-dialog"
 import { MINIGAME_TYPE_CONFIGS } from "./constants"
 import { DeleteMinigamesDialog } from "./delete-minigames"
 import { MinigamesTableToolbarActions } from "./minigames-table-toolbar-actions"
@@ -141,8 +149,9 @@ export function MinigamesTable({ workspaceId, promises }: MinigamesTableProps) {
                   <Link
                     href={`/space/${workspaceId}/minigames/${row.original.id}/edit`}
                   >
-                    <div className="w-fit max-w-50 truncate">
-                      {row.original.name}
+                    <div className="flex w-fit max-w-50 items-center">
+                      <span className="truncate">{row.original.name}</span>
+                      <LockBadge resourceId={row.original.id} />
                     </div>
                   </Link>
                 </div>
@@ -273,6 +282,18 @@ export function MinigamesTable({ workspaceId, promises }: MinigamesTableProps) {
                 {t("actions.edit")}
               </DropdownMenuItem>
 
+              <LockedGuard resourceId={row.original.id}>
+                {(locked) => (
+                  <DropdownMenuItem
+                    disabled={locked}
+                    onClick={() => setRowAction({ row, variant: "duplicate" })}
+                  >
+                    <CopyPlusIcon />
+                    {t("actions.duplicate")}
+                  </DropdownMenuItem>
+                )}
+              </LockedGuard>
+
               <DropdownMenuItem
                 render={
                   <Link
@@ -284,13 +305,18 @@ export function MinigamesTable({ workspaceId, promises }: MinigamesTableProps) {
                 }
               />
 
-              <DropdownMenuItem
-                onClick={() => setRowAction({ row, variant: "delete" })}
-                variant="destructive"
-              >
-                <Trash2Icon />
-                {t("actions.delete")}
-              </DropdownMenuItem>
+              <UndeletableGuard resourceId={row.original.id}>
+                {(disabled) => (
+                  <DropdownMenuItem
+                    disabled={disabled}
+                    onClick={() => setRowAction({ row, variant: "delete" })}
+                    variant="destructive"
+                  >
+                    <Trash2Icon />
+                    {t("actions.delete")}
+                  </DropdownMenuItem>
+                )}
+              </UndeletableGuard>
             </DropdownMenuContent>
           </DropdownMenu>
         ),
@@ -321,20 +347,37 @@ export function MinigamesTable({ workspaceId, promises }: MinigamesTableProps) {
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <DataTable table={table}>
-          <DataTableToolbar table={table}>
-            <MinigamesTableToolbarActions
-              table={table}
-              workspaceId={workspaceId}
-            />
-          </DataTableToolbar>
-        </DataTable>
+        <TemplateLockedList
+          resourceKind="minigame"
+          rows={data}
+          workspaceId={workspaceId}
+        >
+          <DataTable table={table}>
+            <DataTableToolbar table={table}>
+              <MinigamesTableToolbarActions
+                table={table}
+                workspaceId={workspaceId}
+              />
+            </DataTableToolbar>
+          </DataTable>
+        </TemplateLockedList>
 
         <DeleteMinigamesDialog
           minigames={rowAction?.row.original ? [rowAction.row.original] : []}
           onOpenChange={() => setRowAction(null)}
           open={rowAction?.variant === "delete"}
           showTrigger={false}
+          workspaceId={workspaceId}
+        />
+
+        <DuplicateMinigameDialog
+          minigameId={
+            rowAction?.variant === "duplicate"
+              ? rowAction.row.original.id
+              : null
+          }
+          onOpenChange={() => setRowAction(null)}
+          open={rowAction?.variant === "duplicate"}
           workspaceId={workspaceId}
         />
       </CardContent>

@@ -1,7 +1,7 @@
 "use client"
 
 import type { ReactNode } from "react"
-import { useCallback, useEffect, useMemo } from "react"
+import { useCallback, useEffect, useMemo, useState } from "react"
 import type {
   Control,
   FieldPath,
@@ -10,7 +10,9 @@ import type {
   UseFormSetValue,
 } from "react-hook-form"
 import { useWatch } from "react-hook-form"
+import { AhachatImportDialog } from "../components/ahachat-import-dialog"
 import {
+  AhachatImportNote,
   CoexistOptionsPanel,
   coexistRowTrailing,
 } from "../components/coexist-controls"
@@ -28,6 +30,8 @@ type CoexistSelectionNames<TValues extends FieldValues> = {
   selectedIds: FieldPath<TValues>
   coexistIds: FieldPath<TValues>
   aiReadsSyncedHistoryIds: FieldPath<TValues>
+  /** Present only for a picker that can offer the AhaChat import-first choice. */
+  ahachatIds?: FieldPath<TValues>
 }
 
 export type UseCoexistSelectionOptions<TValues extends FieldValues> = {
@@ -44,6 +48,18 @@ export type UseCoexistSelectionOptions<TValues extends FieldValues> = {
    * eligible.
    */
   enabled?: boolean
+  /**
+   * Rows whose history sync, once turned on, also asks "use data from
+   * AhaChat?": the pages AhaChat has, when the member may use the sync and the
+   * channel supports it. Needs `names.ahachatIds`; empty, the list stays empty.
+   */
+  ahachatPageIds?: ReadonlySet<string>
+  /**
+   * The selection's cap. Turning a row's history sync on selects the row too;
+   * once this many rows are selected, an unselected row's switch is disabled.
+   * No cap when omitted.
+   */
+  maxSelected?: number
 }
 
 export type CoexistSelectionApi = {
@@ -51,6 +67,10 @@ export type CoexistSelectionApi = {
   coexistIds: string[]
   /** Always a subset of `coexistIds`. */
   aiReadsSyncedHistoryIds: string[]
+  /** Always a subset of `coexistIds`: the rows that import from AhaChat first. */
+  ahachatIds: string[]
+  /** The import-first question while one is open, or `null`. */
+  importDialog: ReactNode
   /**
    * The `trailing` node for one picker row (`CheckboxGroupField`'s option).
    * `null` for a row that cannot be selected at all (already connected
@@ -97,10 +117,26 @@ export function useCoexistSelection<TValues extends FieldValues>({
   setValue,
   names,
   enabled = true,
+  ahachatPageIds,
+  maxSelected,
 }: UseCoexistSelectionOptions<TValues>): CoexistSelectionApi {
   const selectedIds = useWatchedIds(control, names.selectedIds)
   const storedCoexistIds = useWatchedIds(control, names.coexistIds)
   const storedAiIds = useWatchedIds(control, names.aiReadsSyncedHistoryIds)
+  const storedAhachatIds = useWatchedIds(
+    control,
+    names.ahachatIds ?? names.selectedIds,
+  )
+  const ahachatOn =
+    enabled &&
+    ahachatPageIds !== undefined &&
+    ahachatPageIds.size > 0 &&
+    names.ahachatIds !== undefined
+  // The row whose "import from AhaChat first?" question is open.
+  const [pendingRow, setPendingRow] = useState<{
+    id: string
+    name: string
+  } | null>(null)
 
   // Memoised so the sync effects below only run when the lists they narrow
   // actually changed, not on every unrelated render.
@@ -115,14 +151,25 @@ export function useCoexistSelection<TValues extends FieldValues>({
     () => dropUnselectedCoexistIds(storedAiIds, coexistIds),
     [storedAiIds, coexistIds],
   )
+  // Import-first is a refinement of the history sync: a row that stops syncing
+  // stops importing, so it starts from a fresh question when turned back on.
+  const ahachatIds = useMemo(
+    () =>
+      ahachatOn
+        ? dropUnselectedCoexistIds(storedAhachatIds, coexistIds)
+        : NO_IDS,
+    [ahachatOn, storedAhachatIds, coexistIds],
+  )
 
   const write = useCallback(
     // Unavoidable: `setValue` is typed per field path, and `TValues` is only
     // known to the caller — no narrowing can prove a generic path holds
     // `string[]`. The three names this hook writes are all id lists by
     // construction (`UseCoexistSelectionOptions.names`).
-    (name: FieldPath<TValues>, ids: string[]) =>
-      setValue(name, ids as PathValue<TValues, FieldPath<TValues>>),
+    (name: FieldPath<TValues>, ids: string[], validate = false) =>
+      setValue(name, ids as PathValue<TValues, FieldPath<TValues>>, {
+        shouldValidate: validate,
+      }),
     [setValue],
   )
 
@@ -139,19 +186,58 @@ export function useCoexistSelection<TValues extends FieldValues>({
     if (aiReadsSyncedHistoryIds.length !== storedAiIds.length) {
       write(names.aiReadsSyncedHistoryIds, aiReadsSyncedHistoryIds)
     }
+    if (names.ahachatIds && ahachatIds.length !== storedAhachatIds.length) {
+      write(names.ahachatIds, ahachatIds)
+    }
   }, [
+    ahachatIds,
     aiReadsSyncedHistoryIds,
     coexistIds,
+    names.ahachatIds,
     names.aiReadsSyncedHistoryIds,
     names.coexistIds,
+    storedAhachatIds,
     storedAiIds,
     storedCoexistIds,
     write,
   ])
 
+  const selectionFull =
+    maxSelected !== undefined && selectedIds.length >= maxSelected
+  const setSync = (row: { id: string; name: string }, checked: boolean) => {
+    // Turning the sync on for a row not selected yet selects it as well, so
+    // the operator does not have to tick the row first.
+    if (checked && !selectedIds.includes(row.id)) {
+      if (selectionFull) {
+        return
+      }
+      write(names.selectedIds, [...selectedIds, row.id], true)
+    }
+    write(names.coexistIds, toggleCoexistId(coexistIds, row.id, checked))
+    // Turning the history sync ON is when the import-first question is asked.
+    if (checked && ahachatOn && ahachatPageIds?.has(row.id)) {
+      setPendingRow(row)
+    }
+  }
+  const answerImportFirst = (row: { id: string }, importFirst: boolean) => {
+    if (names.ahachatIds) {
+      write(names.ahachatIds, toggleCoexistId(ahachatIds, row.id, importFirst))
+    }
+    setPendingRow(null)
+  }
+
   return {
     coexistIds,
     aiReadsSyncedHistoryIds,
+    ahachatIds,
+    importDialog: pendingRow ? (
+      <AhachatImportDialog
+        key={pendingRow.id}
+        onHistoryOnly={() => answerImportFirst(pendingRow, false)}
+        onImportFirst={() => answerImportFirst(pendingRow, true)}
+        rowName={pendingRow.name}
+      />
+    ) : null,
     trailingFor: (item) =>
       enabled
         ? coexistRowTrailing({
@@ -162,18 +248,19 @@ export function useCoexistSelection<TValues extends FieldValues>({
                 toggleCoexistId(aiReadsSyncedHistoryIds, item.id, checked),
               ),
             onSyncChange: (checked) =>
-              write(
-                names.coexistIds,
-                toggleCoexistId(coexistIds, item.id, checked),
-              ),
+              setSync({ id: item.id, name: item.name }, checked),
             row: item,
-            syncDisabled: !selectedIds.includes(item.id),
+            syncDisabled: selectionFull && !selectedIds.includes(item.id),
             syncing: coexistIds.includes(item.id),
           })
         : null,
-    panel: (descriptionKey) =>
-      enabled && coexistIds.length > 0 ? (
-        <CoexistOptionsPanel descriptionKey={descriptionKey} />
-      ) : null,
+    panel: (descriptionKey) => (
+      <>
+        {enabled && coexistIds.length > 0 && (
+          <CoexistOptionsPanel descriptionKey={descriptionKey} />
+        )}
+        {ahachatIds.length > 0 && <AhachatImportNote />}
+      </>
+    ),
   }
 }

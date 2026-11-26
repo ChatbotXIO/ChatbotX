@@ -1,7 +1,7 @@
 import { and, db, eq } from "@chatbotx.io/database/client"
 import { contactModel } from "@chatbotx.io/database/schema"
 import { emitContactInfoChangeEvents } from "./contact-info-changes"
-import { extractContactInfo } from "./extract-contact"
+import { extractContactInfo, MIN_EXTRACT_LENGTH } from "./extract-contact"
 
 export type UpdateContactFromMessageProps = {
   contactId: string
@@ -21,11 +21,6 @@ export type UpdateContactFromMessageResult = {
   phoneNumber?: string
   email?: string
 }
-
-/** Minimum text length worth running through the extractor. Matches the
- *  internal guard in `extractContactInfo`; short-circuit here too so we skip
- *  the workspace lookup entirely on every "ok", "hi", emoji-only ping. */
-const MIN_EXTRACT_LENGTH = 5
 
 /**
  * Scan inbound message text for phone/email and overwrite the Contact row

@@ -10,7 +10,10 @@ import {
   notFoundException,
   toPublicErrorMessage,
 } from "@chatbotx.io/business/errors"
-import { isUniqueViolationError } from "@chatbotx.io/database/client"
+import {
+  isUniqueViolationError,
+  toLoggableDatabaseError,
+} from "@chatbotx.io/database/client"
 import type {
   ConnectSessionOutcome,
   IntegrationType,
@@ -160,6 +163,16 @@ const connectCandidate = async (input: {
     // row) and must report the same "duplicated" outcome instead of falling
     // through `toFailureOutcome` to a generic internal error.
     if (isUniqueViolationError(err)) {
+      // Never log `err` itself: a query error repeats the bound values, and the
+      // satellite insert binds the auth (access token, app secret).
+      logger.warn(
+        {
+          err: toLoggableDatabaseError(err),
+          provider: input.provider,
+          workspaceId: input.workspaceId,
+        },
+        "connectTargets: unique violation reported as already connected",
+      )
       throw connectionAlreadyConnectedException()
     }
     throw err
@@ -249,8 +262,7 @@ export const connectTargets = async (input: {
   try {
     for (const targetId of input.targetIds) {
       const target = targetById.get(targetId)
-      const candidate = candidateBySourceId.get(targetId)
-      if (!(target && candidate)) {
+      if (!target) {
         outcomes.push({ targetId, status: "failed", reason: "unknown" })
         continue
       }
@@ -260,6 +272,11 @@ export const connectTargets = async (input: {
             ? { targetId, status: "duplicated", reason: "alreadyConnected" }
             : { targetId, status: "failed", reason: "notSelectable" },
         )
+        continue
+      }
+      const candidate = candidateBySourceId.get(targetId)
+      if (!candidate) {
+        outcomes.push({ targetId, status: "failed", reason: "unknown" })
         continue
       }
 

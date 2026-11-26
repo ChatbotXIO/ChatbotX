@@ -17,6 +17,7 @@ import {
   type WhatsappVoipSignalingJobData,
 } from "@chatbotx.io/worker-config"
 import type { Job } from "bullmq"
+import { recordLiveVideoStatusChange } from "../channel-post-sync/record-live-video"
 import { env } from "../env"
 import { createQueueWorker } from "../lib/create-queue-worker"
 import { isBlockedWorkspace } from "../lib/is-blocked-workspace"
@@ -45,6 +46,7 @@ import { runAsMissedCommentReplay } from "./handlers/comment-automation/replay-p
 import { confirmOrderPayment } from "./handlers/confirm-order-payment"
 import { updateContactAvatar } from "./handlers/contact/update-avatar"
 import { runContactScan } from "./handlers/contact-scan/engine"
+import { runContactSync } from "./handlers/contact-sync/engine"
 import { agentMarkAsRead, contactMarkAsRead } from "./handlers/conversation"
 import {
   runFlowNode,
@@ -56,6 +58,10 @@ import { handleSendGoogleAdsConversion } from "./handlers/google-ads/send-conver
 import { resumeHeavyStep } from "./handlers/heavy-step-resume"
 import { handleChannelLabelWebhook } from "./handlers/inbox_labels"
 import { processIncomingMessage } from "./handlers/incoming-message"
+import {
+  deleteIncomingMessage,
+  updateIncomingMessage,
+} from "./handlers/incoming-message-change"
 import { processLeadgen } from "./handlers/lead-ads"
 import { processMarketingMessageWebhook } from "./handlers/marketing-message-webhook"
 import { handleMessageStatus } from "./handlers/message-status"
@@ -64,7 +70,6 @@ import { handleProviderAccountEvent } from "./handlers/provider-account-event"
 import { runQuickReplyFollowUpResume } from "./handlers/quick-reply-resume"
 import {
   deleteIncomingComment,
-  deleteIncomingMessage,
   processMessageReaction,
   receiveComment,
   updateIncomingComment,
@@ -74,6 +79,7 @@ import { replyToInboundCart } from "./handlers/reply-to-inbound-cart"
 import { recordEmailTrackingTransition } from "./handlers/send-email"
 import { handleSendSequenceFlow } from "./handlers/sequence-flow"
 import { runShopifySync, runShopifyWebhook } from "./handlers/shopify"
+import { pollSmtpInbox } from "./handlers/smtp/poll-inbox"
 import {
   runStepInputResolution,
   runStepInputTimeoutResume,
@@ -271,6 +277,10 @@ function startIntegrationWorker() {
               await processIncomingMessage(job.data.data)
               return
             }
+            case IntegrationJobAction.liveVideoStatusChange: {
+              await recordLiveVideoStatusChange(job.data.data)
+              return
+            }
             case IntegrationJobAction.incomingComment: {
               await receiveComment(job.data.data)
               return
@@ -284,7 +294,11 @@ function startIntegrationWorker() {
               return
             }
             case IntegrationJobAction.deleteIncomingMessage: {
-              await deleteIncomingMessage(job.data.data)
+              await deleteIncomingMessage(job.data.data, job)
+              return
+            }
+            case IntegrationJobAction.updateIncomingMessage: {
+              await updateIncomingMessage(job.data.data, job)
               return
             }
             case IntegrationJobAction.messageReaction: {
@@ -393,6 +407,10 @@ function startIntegrationWorker() {
             }
             case IntegrationJobAction.coexistWhatsappFlush: {
               await coexistWhatsappFlush(job.data.data)
+              return
+            }
+            case IntegrationJobAction.pollSmtpInbox: {
+              await pollSmtpInbox(job.data.data)
               return
             }
             case IntegrationJobAction.coexistMessengerSync: {
@@ -563,6 +581,10 @@ function startIntegrationWorker() {
             }
             case IntegrationJobAction.aiHandoverBulkToggle: {
               await runAiHandoverBulkToggle(job.data.data)
+              return
+            }
+            case IntegrationJobAction.contactSync: {
+              await runContactSync(job.data.data)
               return
             }
             case IntegrationJobAction.aiHandoverTakeBack: {

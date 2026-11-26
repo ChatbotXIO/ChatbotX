@@ -1,0 +1,47 @@
+{
+  "type": "diff",
+  "version": "10",
+  "dialect": "postgres",
+  "id": "4daf7986-47fe-4165-8ce6-faf1331915b6",
+  "prevIds": [
+    "62e88a7b-6299-4037-87a5-4a405cf0c324"
+  ],
+  "footprints": [
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "TemplateStoreListing",
+        "languages"
+      ],
+      "writes": [
+        "s|col|public.TemplateStoreListing.languages",
+        "n|col|public.TemplateStoreListing.languages",
+        "e|col|public.TemplateStoreListing.languages"
+      ],
+      "reads": [
+        "n|tbl|public.TemplateStoreListing",
+        "n|sch|public"
+      ]
+    }
+  ],
+  "deltas": [
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "TemplateStoreListing",
+        "name": "languages",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 1,
+        "default": "'{}'",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    }
+  ]
+}

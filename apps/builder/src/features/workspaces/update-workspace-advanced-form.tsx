@@ -151,7 +151,12 @@ export function UpdateWorkspaceAdvancedForm({
             </SettingRow>
 
             <SettingRow
-              description={t("fields.language.description")}
+              description={
+                <>
+                  <p>{t("fields.language.description")}</p>
+                  <p>{t("inboxTranslation.settings.languageHint")}</p>
+                </>
+              }
               label={t("fields.language.label")}
             >
               <ComboboxField

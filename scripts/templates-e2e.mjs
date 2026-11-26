@@ -127,6 +127,14 @@ const DELETE_PATH = {
   sequence: "sequences",
   trigger: "triggers",
   integrationWebchat: "webchats",
+  magicLink: "magic-links",
+  poll: "polls",
+  dynamicImage: "dynamic-images",
+  miniApp: "mini-apps",
+  minigame: "minigames",
+  leaderboard: "leaderboards",
+  storyAutomation: "ig-stories",
+  inboundWebhook: "inbound-webhooks",
 }
 
 /** Category a copied kind is selected under, to try republishing it. */
@@ -148,6 +156,19 @@ const KIND_CATEGORY = {
   sequence: "sequences",
   trigger: "triggers",
   integrationWebchat: "webchats",
+  magicLink: "magicLinks",
+  poll: "polls",
+  dynamicImage: "dynamicImages",
+  placeLocation: "placeLocations",
+  miniApp: "miniApps",
+  minigame: "minigames",
+  leaderboard: "leaderboards",
+  openHours: "openHours",
+  vendor: "vendors",
+  discountCode: "discountCodes",
+  storeSettings: "storeSettings",
+  storyAutomation: "storyAutomations",
+  inboundWebhook: "inboundWebhooks",
 }
 
 const CATEGORIES = Object.values(KIND_CATEGORY).filter(

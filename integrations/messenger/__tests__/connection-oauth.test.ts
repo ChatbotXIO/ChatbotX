@@ -145,7 +145,7 @@ describe("Messenger connection.listCandidates", () => {
     tokens: { accessToken: "user-token" },
   }
 
-  test("returns one candidate per connectable page, carrying that page's own access token", async () => {
+  test("returns every page: connectable ones carry their own token, unavailable ones carry a reason", async () => {
     mocks.getUserPages.mockResolvedValue({
       pages: [
         {
@@ -158,9 +158,15 @@ describe("Messenger connection.listCandidates", () => {
           id: "page-2",
           name: "Page Two",
           isConnectable: false,
+          unavailableReason: "insufficientPermissions",
           access_token: "page-2-token",
         },
-        { id: "page-3", name: "Page Three", isConnectable: true },
+        {
+          id: "page-3",
+          name: "Page Three",
+          isConnectable: false,
+          unavailableReason: "missingAccessToken",
+        },
       ],
       bmLookupFailed: false,
     })
@@ -169,26 +175,40 @@ describe("Messenger connection.listCandidates", () => {
       auth: userAuth,
     })
 
+    const authFor = (
+      accessToken: string,
+      pageId: string,
+      pageName: string,
+    ) => ({
+      authType: "oauth2",
+      clientId: "client-1",
+      clientSecret: "secret-1",
+      redirectUrl: facebookOauthCredential.redirectUrl,
+      version: "v23.0",
+      tokens: { accessToken },
+      metadata: { pageId, pageName, version: "v23.0" },
+    })
     expect(mocks.getUserPages).toHaveBeenCalledWith("user-token", "v23.0")
     expect(candidates).toEqual([
       {
         sourceId: "page-1",
         displayName: "Page One",
-        auth: {
-          authType: "oauth2",
-          clientId: "client-1",
-          clientSecret: "secret-1",
-          redirectUrl: facebookOauthCredential.redirectUrl,
-          version: "v23.0",
-          tokens: { accessToken: "page-1-token" },
-          metadata: {
-            pageId: "page-1",
-            pageName: "Page One",
-            version: "v23.0",
-          },
-        },
+        auth: authFor("page-1-token", "page-1", "Page One"),
+      },
+      {
+        sourceId: "page-2",
+        displayName: "Page Two",
+        unavailableReason: "insufficientPermissions",
+        auth: authFor("page-2-token", "page-2", "Page Two"),
+      },
+      {
+        sourceId: "page-3",
+        displayName: "Page Three",
+        unavailableReason: "missingAccessToken",
+        auth: authFor("user-token", "page-3", "Page Three"),
       },
     ])
+    expect(candidates?.[0]).not.toHaveProperty("unavailableReason")
   })
 
   test("returns no candidates for a non-oauth2 auth value", async () => {

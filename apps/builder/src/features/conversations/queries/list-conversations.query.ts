@@ -1,4 +1,5 @@
 import {
+  type ConversationParticipantPreview,
   conversationService,
   resolveContactAvatarUrl,
 } from "@chatbotx.io/business"
@@ -8,7 +9,9 @@ import { resolveGoogleAdsClick } from "@chatbotx.io/business/google-ads/click-fi
 import {
   contactInboxOperationalColumns,
   createMessageRepository,
+  recentParticipantsRelation,
 } from "@chatbotx.io/database/repositories"
+import { userColumnsWithoutSecrets } from "@chatbotx.io/database/repositories/user-columns"
 import type {
   ContactInboxOperationalModel,
   InboxModel,
@@ -18,6 +21,7 @@ import { endOfHour } from "date-fns"
 import z from "zod"
 import type { ListConversationsRequest } from "@/features/conversations/schema/query"
 import { decodeCursor, encodeCursor } from "@/lib/pagination"
+import { mapConversationParticipants } from "../lib/map-participants"
 import type {
   ConversationCompactContactInboxResource,
   ConversationContactInboxResource,
@@ -88,6 +92,17 @@ const mapCompactConversationContactInboxes = (
       channel: contactInbox.inbox.channel,
     },
   }))
+
+/** Replaces the raw relation with the public `recentParticipants` shape. */
+const withRecentParticipants = <
+  T extends { conversationParticipants: ConversationParticipantPreview[] },
+>({
+  conversationParticipants,
+  ...rest
+}: T) => ({
+  ...rest,
+  recentParticipants: mapConversationParticipants(conversationParticipants),
+})
 
 const resolveConversationContact = async <T extends { avatar: string | null }>(
   contact: T | null,
@@ -167,8 +182,9 @@ export async function listConversations(
         columns: contactInboxOperationalColumns,
         with: { inbox: true },
       },
-      assignedUser: true,
+      assignedUser: { columns: userColumnsWithoutSecrets },
       assignedInboxTeam: true,
+      conversationParticipants: recentParticipantsRelation,
     },
   })
 
@@ -228,7 +244,7 @@ export async function listConversations(
         page.map(async (c) => {
           const lastMessage = lastMessagesByConversationId.get(c.id)
           return {
-            ...c,
+            ...withRecentParticipants(c),
             contact: await resolveConversationContact(
               c.contact ?? null,
               c.contactInboxes,
@@ -252,7 +268,7 @@ export async function listConversations(
       page.map(async (c) => {
         const lastMessage = lastMessagesByConversationId.get(c.id)
         return {
-          ...c,
+          ...withRecentParticipants(c),
           contact: await resolveConversationContact(
             c.contact ?? null,
             c.contactInboxes,
@@ -303,7 +319,7 @@ export const findConversation = async (
 
   return {
     data: {
-      ...conversation,
+      ...withRecentParticipants(conversation),
       contact: await resolveConversationContact(
         conversation.contact,
         conversation.contactInboxes,

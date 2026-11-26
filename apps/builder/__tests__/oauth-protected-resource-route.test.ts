@@ -34,6 +34,25 @@ describe("OAuth protected resource discovery", () => {
     })
   })
 
+  test.each([
+    [["mcp", "openai"], "https://app.chatbotx.io/mcp/openai"],
+    [["mcp", "claude"], "https://app.chatbotx.io/mcp/claude"],
+    [["mcp", "claude", "nested"], "https://app.chatbotx.io/mcp/claude"],
+  ])("advertises the exact connector-profile resource for %j", async (path, resource) => {
+    const response = await getMetadata(path)
+
+    expect(response.status).toBe(200)
+    await expect(response.json()).resolves.toMatchObject({ resource })
+  })
+
+  test("does not treat a profile-name prefix as the profile", async () => {
+    const response = await getMetadata(["mcp", "claude-other"])
+
+    await expect(response.json()).resolves.toMatchObject({
+      resource: "https://app.chatbotx.io/mcp",
+    })
+  })
+
   test("returns 404 when the configured MCP URL has no path", async () => {
     env.MCP_PUBLIC_URL = "https://app.chatbotx.io"
 

@@ -1,7 +1,11 @@
 import { HttpResponse, http, server } from "@chatbotx.io/vitest-config/msw"
 import { describe, expect, test } from "vitest"
-import { fetchInstagramAccount, getInstagramAccount } from "../src/apis/auth"
-import { API_URL } from "../src/constants"
+import {
+  exchangeCodeForToken,
+  fetchInstagramAccount,
+  getInstagramAccount,
+} from "../src/apis/auth"
+import { API_URL, INSTAGRAM_OAUTH_URL } from "../src/constants"
 import { isRevokedTokenError } from "../src/lib/error-mapper"
 
 const ACCESS_TOKEN = "instagram-user-access-token"
@@ -92,5 +96,54 @@ describe("getInstagramAccount", () => {
     await expect(fetchInstagramAccount(ACCESS_TOKEN)).rejects.toSatisfy(
       isRevokedTokenError,
     )
+  })
+})
+
+describe("exchangeCodeForToken permissions", () => {
+  const settings = { clientId: "id", clientSecret: "secret" }
+
+  const mockExchange = (body: unknown) =>
+    server.use(
+      http.post(`${INSTAGRAM_OAUTH_URL}/oauth/access_token`, () =>
+        HttpResponse.json(body),
+      ),
+      http.get(`${API_URL}/access_token`, () =>
+        HttpResponse.json({ access_token: "long", expires_in: 1 }),
+      ),
+    )
+
+  test.each([
+    [
+      "documented data shape, comma string",
+      {
+        data: [
+          {
+            access_token: "short",
+            permissions:
+              "instagram_business_basic, instagram_business_content_publish",
+            user_id: 7,
+          },
+        ],
+      },
+      ["instagram_business_basic", "instagram_business_content_publish"],
+    ],
+    [
+      "flat shape, array",
+      {
+        access_token: "short",
+        permissions: ["instagram_business_basic"],
+        user_id: "7",
+      },
+      ["instagram_business_basic"],
+    ],
+    ["no permissions", { access_token: "short", user_id: "7" }, null],
+  ])("%s", async (_name, body, expected) => {
+    mockExchange(body)
+    const result = await exchangeCodeForToken(settings, "code", "https://r")
+    expect(result).toEqual({
+      accessToken: "long",
+      grantedScopes: expected,
+      userId: "7",
+    })
   })
 })

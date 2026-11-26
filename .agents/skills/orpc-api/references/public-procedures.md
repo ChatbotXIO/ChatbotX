@@ -145,10 +145,19 @@ import { mcpSpec } from "@/lib/orpc/mcp-annotations"
   connection. The polarity is inverted from what you'd expect: **omitting
   `spec` entirely (or `visibility` absent from it) means `"hidden"`** —
   reachable only through the `search_tools`/`call_tool` meta-tools, not the
-  default connection payload. We cannot ask every one of the ~350 public
-  operations to opt out individually, so only the ~40 operations an agent
+  default connection payload. We cannot ask every one of the ~800 public
+  operations to opt out individually, so only the ~50 operations an agent
   needs on every connection (list/get the most common resources, publish a
-  flow, etc.) opt IN.
+  flow, etc.) opt IN. **A missing `spec` is not a bug**: most routes (e.g.
+  `aiAgents.get`/`delete`) intentionally have none. Do not add `mcpSpec` to
+  "complete" a feature's CRUD set.
+- **Adding a `"default"` operation** is a deliberate act, guarded by
+  `apps/builder/__tests__/public-spec-mcp.test.ts`: stay under
+  `MAX_DEFAULT_VISIBLE_OPERATIONS` (52), declare `readOnlyHint`,
+  `destructiveHint`, `idempotentHint` and `openWorldHint` as booleans, write a
+  useful `summary`/`description`, never default-expose a DELETE, add the tool
+  to the table in `apps/mcp-server/README.md`, and update the snapshot
+  (`vitest -u`) only for that intended change.
 - `alwaysVisible: true` exempts an operation from scope-based `tools/list`
   filtering — reserved for the small set of discovery endpoints
   (`capabilities.get`, `token.get`) a token must be able to *see* even when

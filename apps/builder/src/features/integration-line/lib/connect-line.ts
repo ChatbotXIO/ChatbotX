@@ -1,6 +1,7 @@
 import {
   lineIntegrationService,
   tenantService,
+  userService,
   workspaceService,
 } from "@chatbotx.io/business"
 import { auditService } from "@chatbotx.io/business/audit"
@@ -18,6 +19,7 @@ import { assertChannelCreatable } from "@/features/connections/lib/connect-flow"
 import { integrations } from "@/integration"
 import { logger } from "@/lib/log"
 import { buildBrokerCallbackUrl } from "@/lib/oauth-broker"
+import { resolveRequestTenantId } from "@/lib/tenant/request-tenant"
 
 export type ConnectLineInput = {
   /** Omitted → a new workspace is created for the channel (Telegram parity). */
@@ -212,11 +214,23 @@ async function connectLineSteps(
   const { user, workspaceId, channelId, channelSecret } = input
 
   const integration = integrations.line
+  const hostTenantId = await resolveRequestTenantId()
   const ownerId = await resolveOwnerId({ workspaceId, user })
   await assertLineCreatable({ workspaceId, ownerId })
   const { auth, bot } = await inStage("credentials", () =>
     integration.runAction("connect", { channelId, channelSecret }),
   )
+
+  // The signed-in user, or null for a workspace-token call (skipped). Recorded
+  // before `lineIntegrationService.connect` so a failed connect keeps the
+  // backup; a new workspace has no id yet.
+  await userService.recordConnectionAuthorization({
+    userId: user?.id ?? null,
+    provider: "line",
+    auth,
+    phase: "credentialsValidated",
+    workspaceId: workspaceId ?? null,
+  })
 
   const url = buildLineWebhookUrl(channelId)
   let registered: { previousWebhookUrl: string | null } | undefined
@@ -228,6 +242,7 @@ async function connectLineSteps(
     channelId,
     auth,
     bot,
+    hostTenantId,
     onConnected: async () => {
       // Endpoint GET/PUT only; the webhook test runs after commit below.
       registered = await inStage("webhook", () =>

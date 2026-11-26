@@ -29,7 +29,12 @@ import {
   validationException,
 } from "../errors"
 import { externalStoreManagedException } from "../external-store/errors"
-import { assertReferencable } from "../template/installed-resource.service"
+import {
+  assertReferencable,
+  assertResourceEditable,
+  changedKeysOf,
+  withDeleteGuard,
+} from "../template/installed-resource.service"
 import { withTemplateLockedTransaction } from "../template/template-resource-locks"
 import { contactFilterParentsOf } from "../template/uninstall-references"
 import {
@@ -138,6 +143,13 @@ const compareListedDiscounts = (a: AvailableDiscount, b: AvailableDiscount) => {
   return endTime(b) - endTime(a)
 }
 
+const lockOf = (input: { workspaceId: string; discountCodeId: string }) => ({
+  workspaceId: input.workspaceId,
+  initialKeys: [
+    { kind: "discountCode" as const, resourceId: input.discountCodeId },
+  ],
+})
+
 const CODE_PATTERN = /^[A-Za-z0-9_-]{3,64}$/
 // No 0/O or 1/I/l, so a code read aloud or off a screen is typed right.
 const GENERATED_ALPHABET =
@@ -180,6 +192,19 @@ const normalize = (input: DiscountCodeInput): DiscountCodeWriteValues => {
     isActive: input.isActive,
   }
 }
+
+/**
+ * The copied parents a code's write must lock: the products it lists (no FK
+ * guards them, an uninstall probes them) and the ones its audience filter names.
+ * A category is a shared manifest an uninstall never deletes, so it needs none.
+ */
+const referencedParentsOf = (values: DiscountCodeWriteValues) => [
+  ...values.productIds.map((resourceId) => ({
+    kind: "product" as const,
+    resourceId,
+  })),
+  ...contactFilterParentsOf(values.customerFilter),
+]
 
 const toInput = (row: DiscountCodeModel): DiscountCodeInput => ({
   code: row.code,
@@ -259,14 +284,15 @@ class DiscountCodeService extends BaseService {
       throw externalStoreManagedException(storeSource)
     }
     const values = normalize(input)
-    await this.assertValid(input.workspaceId, values)
     try {
       const row = await withTemplateLockedTransaction(async (tx) => {
         await assertReferencable({
           workspaceId: input.workspaceId,
-          parents: contactFilterParentsOf(values.customerFilter),
+          parents: referencedParentsOf(values),
           tx,
         })
+        // Checked under the guard: an uninstall cannot delete a listed product between the check and the write.
+        await this.assertValid(input.workspaceId, values, 0, tx)
         return await discountCodeRepository.create(
           { ...values, workspaceId: input.workspaceId },
           tx,
@@ -282,6 +308,21 @@ class DiscountCodeService extends BaseService {
       }
       throw error
     }
+  }
+
+  /**
+   * The normalised, validated values of a new code, read through `tx` (the
+   * template install checks products and categories it has just created). The
+   * validation and defaults shared by `create` and the template install.
+   */
+  async prepareInTx(
+    tx: DatabaseClient,
+    workspaceId: string,
+    input: DiscountCodeInput,
+  ): Promise<DiscountCodeWriteValues> {
+    const values = normalize(input)
+    await this.assertValid(workspaceId, values, 0, tx)
+    return values
   }
 
   /** A partial change, checked as the whole code it produces. */
@@ -310,12 +351,19 @@ class DiscountCodeService extends BaseService {
       merged.productIds = merged.productIds.filter((id) => existingIds.has(id))
     }
     const values = normalize(merged)
-    await this.assertValid(input.workspaceId, values, current.usedCount)
     try {
       const row = await withTemplateLockedTransaction(async (tx) => {
         await assertReferencable({
           workspaceId: input.workspaceId,
-          parents: contactFilterParentsOf(values.customerFilter),
+          parents: referencedParentsOf(values),
+          tx,
+        })
+        await this.assertValid(input.workspaceId, values, current.usedCount, tx)
+        await assertResourceEditable({
+          workspaceId: input.workspaceId,
+          resourceKind: "discountCode",
+          resourceIds: [current.id],
+          changedKeys: changedKeysOf(current, values),
           tx,
         })
         return await discountCodeRepository.update(
@@ -326,7 +374,7 @@ class DiscountCodeService extends BaseService {
           },
           tx,
         )
-      })
+      }, lockOf(input))
       if (!row) {
         throw notFoundException("Discount code does not exist.")
       }
@@ -355,11 +403,24 @@ class DiscountCodeService extends BaseService {
         current.usedCount,
       )
     }
-    const row = await discountCodeRepository.update({
-      workspaceId: input.workspaceId,
-      discountCodeId: input.discountCodeId,
-      values: { isActive: input.isActive },
-    })
+    const row = await withTemplateLockedTransaction(async (tx) => {
+      // The switch is installer-owned; this only refuses while an uninstall runs.
+      await assertResourceEditable({
+        workspaceId: input.workspaceId,
+        resourceKind: "discountCode",
+        resourceIds: [input.discountCodeId],
+        changedKeys: [],
+        tx,
+      })
+      return await discountCodeRepository.update(
+        {
+          workspaceId: input.workspaceId,
+          discountCodeId: input.discountCodeId,
+          values: { isActive: input.isActive },
+        },
+        tx,
+      )
+    }, lockOf(input))
     if (!row) {
       throw notFoundException("Discount code does not exist.")
     }
@@ -369,11 +430,46 @@ class DiscountCodeService extends BaseService {
   /** Placed orders keep the code they used, as text. */
   async delete(input: { workspaceId: string; discountCodeId: string }) {
     await this.assertManagedHere(input)
-    const row = await discountCodeRepository.delete(input)
+    const [row] = await withDeleteGuard(
+      {
+        workspaceId: input.workspaceId,
+        targets: [
+          { resourceKind: "discountCode", resourceIds: [input.discountCodeId] },
+        ],
+      },
+      (tx) =>
+        this.deleteInTx(tx, {
+          workspaceId: input.workspaceId,
+          ids: [input.discountCodeId],
+        }),
+    )
     if (!row) {
       throw notFoundException("Discount code does not exist.")
     }
     return row
+  }
+
+  /**
+   * The insert core for the template install: inserts the code, or finds the
+   * one that already carries it (`created` says which). `values` come from
+   * `prepareInTx`.
+   */
+  insertOrFindInTx(
+    tx: DatabaseClient,
+    input: Parameters<typeof discountCodeRepository.insertOrFindByCode>[0],
+  ) {
+    return discountCodeRepository.insertOrFindByCode(input, tx)
+  }
+
+  /**
+   * The delete core (row write only; redemptions keep the code as text),
+   * shared with the template uninstall. Returns the rows deleted.
+   */
+  async deleteInTx(
+    tx: DatabaseClient,
+    input: { workspaceId: string; ids: string[] },
+  ): Promise<DiscountCodeModel[]> {
+    return await discountCodeRepository.deleteMany(input, tx)
   }
 
   /**
@@ -589,10 +685,11 @@ class DiscountCodeService extends BaseService {
     }
   }
 
-  private async assertValid(
+  async assertValid(
     workspaceId: string,
     values: DiscountCodeWriteValues,
     usedCount = 0,
+    tx?: DatabaseClient,
   ) {
     if (!CODE_PATTERN.test(values.code)) {
       throw validationException(
@@ -615,10 +712,10 @@ class DiscountCodeService extends BaseService {
     }
     if (values.appliesTo === "category") {
       const category = values.categoryId
-        ? await productCategoryRepository.find({
-            workspaceId,
-            categoryId: values.categoryId,
-          })
+        ? await productCategoryRepository.find(
+            { workspaceId, categoryId: values.categoryId },
+            tx,
+          )
         : undefined
       if (!category) {
         throw validationException(
@@ -629,10 +726,10 @@ class DiscountCodeService extends BaseService {
     }
     if (values.appliesTo === "products") {
       const productIds = values.productIds ?? []
-      const found = await productRepository.findForOrder({
-        workspaceId,
-        productIds,
-      })
+      const found = await productRepository.findForOrder(
+        { workspaceId, productIds },
+        tx,
+      )
       if (productIds.length === 0 || found.length !== productIds.length) {
         throw validationException(
           "productIds",

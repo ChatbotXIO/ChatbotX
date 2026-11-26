@@ -8,14 +8,21 @@ const mocks = vi.hoisted(() => ({
   insertCandidates: vi.fn(),
   deleteCandidates: vi.fn(),
   deleteMany: vi.fn(),
+  deleteManyReturningIds: vi.fn(),
   voteCounts: vi.fn(),
+  listOptions: vi.fn(),
   existsInWorkspace: vi.fn(),
   assertReferencable: vi.fn(),
+  assertEditable: vi.fn(),
   tx: { __tx: true },
 }))
 
 vi.mock("../src/template/installed-resource.service", () => ({
   assertReferencable: mocks.assertReferencable,
+  assertResourceEditable: mocks.assertEditable,
+  changedKeysOf: () => [],
+  withDeleteGuard: (_input: unknown, run: (tx: unknown) => unknown) =>
+    run(mocks.tx),
 }))
 vi.mock("../src/template/template-resource-locks", () => ({
   withTemplateLockedTransaction: (run: (tx: unknown) => unknown) =>
@@ -37,7 +44,9 @@ vi.mock("@chatbotx.io/database/repositories", () => ({
     insertCandidates: mocks.insertCandidates,
     deleteCandidates: mocks.deleteCandidates,
     deleteMany: mocks.deleteMany,
+    deleteManyReturningIds: mocks.deleteManyReturningIds,
     voteCounts: mocks.voteCounts,
+    listOptions: mocks.listOptions,
   },
   flowRepository: { existsInWorkspace: mocks.existsInWorkspace },
 }))
@@ -62,6 +71,18 @@ describe("pollService", () => {
       id: "p1",
       ...i,
     }))
+  })
+
+  test("listOptions returns id/name of the workspace's newest polls, capped at 500", async () => {
+    mocks.listOptions.mockResolvedValue([{ id: "1", name: "A" }])
+
+    await expect(
+      pollService.listOptions({ workspaceId: "w1" }),
+    ).resolves.toEqual([{ id: "1", name: "A" }])
+    expect(mocks.listOptions).toHaveBeenCalledWith({
+      workspaceId: "w1",
+      limit: 500,
+    })
   })
 
   test("rejects 1 candidate", async () => {
@@ -154,6 +175,45 @@ describe("pollService", () => {
       )
     })
 
+    test("a content-identical list without ids keeps every candidate (and its votes)", async () => {
+      await pollService.update({
+        workspaceId: "w1",
+        id: "p1",
+        data: { candidates: [{ name: "a" }, { name: "b" }] },
+      })
+      expect(mocks.deleteCandidates).not.toHaveBeenCalled()
+      expect(mocks.updateCandidate).not.toHaveBeenCalled()
+      expect(mocks.insertCandidates).not.toHaveBeenCalled()
+      const [{ changedKeys }] = mocks.assertEditable.mock.calls[0]
+      expect(changedKeys).not.toContain("candidates")
+    })
+
+    test("a real candidate edit is a locked edit and still replaces", async () => {
+      await pollService.update({
+        workspaceId: "w1",
+        id: "p1",
+        data: { candidates: [{ name: "a" }, { name: "changed" }] },
+      })
+      const [{ changedKeys }] = mocks.assertEditable.mock.calls[0]
+      expect(changedKeys).toContain("candidates")
+      expect(mocks.deleteCandidates).toHaveBeenCalled()
+    })
+
+    test("the same texts under swapped ids count as an edit", async () => {
+      await pollService.update({
+        workspaceId: "w1",
+        id: "p1",
+        data: {
+          candidates: [
+            { id: "c2", name: "a" },
+            { id: "c1", name: "b" },
+          ],
+        },
+      })
+      const [{ changedKeys }] = mocks.assertEditable.mock.calls[0]
+      expect(changedKeys).toContain("candidates")
+    })
+
     test("ignores keys set to undefined (no empty .set())", async () => {
       await pollService.update({
         workspaceId: "w1",
@@ -208,7 +268,7 @@ describe("pollService", () => {
   })
 
   test("bulkDelete returns the deleted count", async () => {
-    mocks.deleteMany.mockResolvedValue(2)
+    mocks.deleteManyReturningIds.mockResolvedValue(["a", "b"])
     await expect(
       pollService.bulkDelete({ workspaceId: "w1", ids: ["a", "b"] }),
     ).resolves.toEqual({ deleted: 2 })

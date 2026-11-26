@@ -1,6 +1,7 @@
 import {
   decisionFlowOriginSchema,
   extractContactInboxId,
+  extractPostCommentRef,
 } from "@chatbotx.io/events"
 import { runWithWebhookExecutionContext } from "@chatbotx.io/events/context"
 import { SdkException } from "@chatbotx.io/sdk"
@@ -57,8 +58,17 @@ function startTriggerWorker() {
               )
 
               const contactInboxId = extractContactInboxId(eventData.eventData)
+              const conversationId =
+                typeof eventData.eventData.conversationId === "string"
+                  ? eventData.eventData.conversationId
+                  : undefined
               const decisionFlowOrigin = decisionFlowOriginSchema.safeParse(
                 eventData.eventData?.decisionFlowOrigin,
+              )
+
+              const postComment = extractPostCommentRef(
+                eventData.eventType,
+                eventData.eventData,
               )
 
               await runWithWebhookExecutionContext(
@@ -69,9 +79,11 @@ function startTriggerWorker() {
                       triggerExecutor.execute(trigger, {
                         contactId: eventData.contactId,
                         contactInboxId,
+                        conversationId,
                         decisionFlowOrigin: decisionFlowOrigin.success
                           ? decisionFlowOrigin.data
                           : undefined,
+                        postComment,
                         occurrenceId: job.id
                           ? `${job.id}:${job.timestamp}`
                           : undefined,

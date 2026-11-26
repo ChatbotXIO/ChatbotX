@@ -6,6 +6,12 @@ const { mockDisable, mockEnable } = vi.hoisted(() => ({
   mockEnable: vi.fn(),
 }))
 
+vi.mock("@/lib/tenant/request-tenant", () => ({
+  resolveRequestTenantId: async () => "root-tenant",
+  canOpenWorkspaceOnHost: () => true,
+  filterWorkspacesForHost: <T>(items: T[]) => items,
+}))
+
 vi.mock("@chatbotx.io/business", () => ({
   coexistService: {
     disable: mockDisable,

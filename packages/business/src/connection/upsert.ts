@@ -188,6 +188,35 @@ export const saveOrInsertSatellite = async (input: {
 }
 
 /**
+ * Providers of one channel share its `Inbox` but not a `Connection`, and a user
+ * disconnect keeps the row (e.g. Instagram's two logins). When a new row would
+ * take an inbox another provider's row still holds, a `disconnected` one has no
+ * satellite left and is taken over (`Connection.inboxId` is unique). Any other
+ * state still owns its satellite: already connected.
+ */
+const findReplaceableInboxConnection = async (input: {
+  tx: DatabaseClient
+  existing?: ConnectionModel
+  inboxId?: string | null
+  provider: IntegrationType
+}): Promise<ConnectionModel | undefined> => {
+  if (input.existing || !input.inboxId) {
+    return
+  }
+  const holder = await connectionRepository.findByInboxId(
+    { inboxId: input.inboxId },
+    input.tx,
+  )
+  if (!holder || holder.provider === input.provider) {
+    return
+  }
+  if (holder.status !== "disconnected") {
+    throw connectionAlreadyConnectedException()
+  }
+  return holder
+}
+
+/**
  * Writes (or revives) one `Connection` row plus its satellite row and runs
  * it through the FSM, inside a transaction the caller already owns —
  * `inboxId` (channel-kind) must already exist by the time this is called
@@ -229,6 +258,14 @@ export const upsertConnectionRow = async (input: {
     inboxId,
   } = input
 
+  const replaced = await findReplaceableInboxConnection({
+    tx,
+    existing,
+    inboxId,
+    provider,
+  })
+  const revived = existing ?? replaced
+
   const integrationId = await saveOrInsertSatellite({
     tx,
     workspaceId,
@@ -241,12 +278,15 @@ export const upsertConnectionRow = async (input: {
     store,
   })
 
-  if (existing) {
+  if (revived) {
     await connectionRepository.update(
       {
-        id: existing.id,
-        workspaceId: existing.workspaceId,
+        id: revived.id,
+        workspaceId: revived.workspaceId,
         values: {
+          provider,
+          // A replaced row's expiry belonged to the other provider's token.
+          ...(replaced && { authExpiresAt: null }),
           // Keeps the revived row's identity in sync with the descriptor
           // just validated — a no-op for every provider whose `existing`
           // was found BY this exact `sourceId` (every current caller), but
@@ -256,7 +296,7 @@ export const upsertConnectionRow = async (input: {
           // above would leave `Connection.sourceId` pointing at the stale
           // value, silently desyncing the two.
           sourceId: descriptor.sourceId,
-          inboxId: inboxId ?? existing.inboxId,
+          inboxId: inboxId ?? revived.inboxId,
           integrationId: integrationId ?? null,
           displayName: descriptor.displayName,
           lastError: null,
@@ -265,7 +305,7 @@ export const upsertConnectionRow = async (input: {
       tx,
     )
     return await connectionStateService.transition({
-      connectionId: existing.id,
+      connectionId: revived.id,
       event: "connect.completed",
       ownerId,
       tx,

@@ -1,5 +1,6 @@
 "use client"
 
+import { resolveMessageAuthorUserId } from "@chatbotx.io/database/partials"
 import { getWhatsappCallPermissionReply } from "@chatbotx.io/sdk"
 import { useQueryClient } from "@tanstack/react-query"
 import { useEffect, useRef } from "react"
@@ -8,15 +9,49 @@ import type { RealtimeHandlerMap } from "@/features/realtime/types"
 import { useWorkspaceRealtimeEvents } from "@/features/realtime/use-workspace-realtime-events"
 import { useWorkspaceId } from "@/hooks/routing"
 import { createBoundedSeenSet } from "@/lib/bounded-seen-set"
+import { logger } from "@/lib/log"
 import { useConversationIdParam } from "../conversations/hooks/use-conversation-id-param"
+import { conversationParticipantsQueryOptions } from "../conversations/hooks/use-conversation-participants"
+import { mergeParticipantReplyIntoPages } from "../conversations/lib/merge-participant-reply"
+import type { ConversationParticipantResource } from "../conversations/schema/resource"
 import { outboundCallModeQueryKeys } from "../integration-whatsapp/calling/voip/outbound-call-mode-query-key"
 import { useWhatsappVoipCallStore } from "../integration-whatsapp/calling/voip/voip-call-store"
 import type { MessageResourceWithRelations } from "../messages/schema/resource"
 import { useResponseSlaEnabled } from "../response-sla/provider/response-sla-hook"
+import { useTranslationUiStore } from "../translation/store/translation-ui-store"
+import {
+  useWorkspaceMembers,
+  workspaceMembersQueryOptions,
+} from "../users/provider/user-hook"
 import { useChatStore } from "./store/chat-store-provider"
 
 /** Cap for the bubble-to-top dedupe set below. */
 const SEEN_WHATSAPP_CALL_IDS_CAPACITY = 500
+
+/** Cap for the messages whose reply was applied to the participants. */
+const COUNTED_REPLIES_CAPACITY = 500
+
+/** A reply this tab applied: `reply` is set once the author is resolved. */
+type CountedReply = {
+  conversationId: string
+  message: MessageResourceWithRelations
+  reply?: ConversationParticipantResource
+}
+
+/** Inserts into an insertion-ordered Map, evicting the oldest past `capacity`. */
+const setBounded = <TValue,>(
+  map: Map<string, TValue>,
+  key: string,
+  value: TValue,
+): void => {
+  map.set(key, value)
+  if (map.size > COUNTED_REPLIES_CAPACITY) {
+    const oldest = map.keys().next()
+    if (!oldest.done) {
+      map.delete(oldest.value)
+    }
+  }
+}
 
 /** Registers this component's chat event handlers against the shared workspace realtime socket. */
 export function ChatRealtime() {
@@ -32,6 +67,10 @@ export function ChatRealtime() {
 
   const {
     applyAgentLastReadAt,
+    applyConversationParticipantReply,
+    replaceConversationRecentParticipants,
+    findLoadedMessage,
+    applyMessageTranslations,
     assignMessageCommentId,
     bubbleConversationToTop,
     handleNewMessages,
@@ -39,6 +78,7 @@ export function ChatRealtime() {
     markMessageFailed,
     openConversation,
     patchContactInboxThreadControl,
+    removeMessages,
     resumeConversationHeadRefresh,
     scheduleConversationHeadRefresh,
     settleSendResult,
@@ -49,6 +89,12 @@ export function ChatRealtime() {
   } = useChatStore(
     useShallow((state) => ({
       applyAgentLastReadAt: state.applyAgentLastReadAt,
+      applyConversationParticipantReply:
+        state.applyConversationParticipantReply,
+      replaceConversationRecentParticipants:
+        state.replaceConversationRecentParticipants,
+      findLoadedMessage: state.findLoadedMessage,
+      applyMessageTranslations: state.applyMessageTranslations,
       assignMessageCommentId: state.assignMessageCommentId,
       bubbleConversationToTop: state.bubbleConversationToTop,
       handleNewMessages: state.handleNewMessages,
@@ -56,6 +102,7 @@ export function ChatRealtime() {
       markMessageFailed: state.markMessageFailed,
       openConversation: state.openConversation,
       patchContactInboxThreadControl: state.patchContactInboxThreadControl,
+      removeMessages: state.removeMessages,
       resumeConversationHeadRefresh: state.resumeConversationHeadRefresh,
       scheduleConversationHeadRefresh: state.scheduleConversationHeadRefresh,
       settleSendResult: state.settleSendResult,
@@ -65,8 +112,165 @@ export function ChatRealtime() {
       updateMessageText: state.updateMessageText,
     })),
   )
+  const { data: members } = useWorkspaceMembers(workspaceId)
   const conversationIdParam = useConversationIdParam()
   const responseSlaEnabled = useResponseSlaEnabled()
+
+  // The members' replies reuse `messageCreated`: its author is on the message
+  // itself, so no extra event is needed. The server is the source of truth
+  // (it records the reply once the channel accepted the message), so a message
+  // that fails or is removed refetches that conversation's list. Replies this
+  // tab counted that the worker has not recorded yet are merged back, so the
+  // refetch can never drop them. Bounded: `messageId -> counted reply`.
+  const countedRepliesRef = useRef(new Map<string, CountedReply>())
+  // Messages that failed for good: a Resend that then succeeds only publishes a
+  // success confirmation (no new `messageCreated`), so they are kept to count again.
+  const failedRepliesRef = useRef(
+    new Map<string, MessageResourceWithRelations>(),
+  )
+  const rememberCountedReply = (message: MessageResourceWithRelations) => {
+    setBounded(countedRepliesRef.current, message.id, {
+      conversationId: message.conversationId,
+      message,
+    })
+  }
+  const refetchParticipants = (conversationId: string): void => {
+    queryClient
+      .fetchInfiniteQuery({
+        ...conversationParticipantsQueryOptions(workspaceId, conversationId),
+        pages: 1,
+        staleTime: 0,
+      })
+      .then((fetched) => {
+        const stillCounted = [...countedRepliesRef.current.values()].flatMap(
+          (counted) =>
+            counted.reply && counted.conversationId === conversationId
+              ? [counted.reply]
+              : [],
+        )
+        const merged = stillCounted.reduce(
+          mergeParticipantReplyIntoPages,
+          fetched,
+        )
+        queryClient.setQueryData(
+          conversationParticipantsQueryOptions(workspaceId, conversationId)
+            .queryKey,
+          merged,
+        )
+        replaceConversationRecentParticipants(
+          conversationId,
+          merged.pages[0]?.data ?? [],
+        )
+      })
+      .catch((error: unknown) =>
+        logger.warn({ err: error }, "participants refetch failed"),
+      )
+  }
+  // A message that failed or was removed no longer counts. Only a message this
+  // tab counted can have moved the header, so a failed automated send
+  // (broadcasts can fail by the thousand) costs nothing.
+  const uncountReplies = (
+    messageIds: readonly string[],
+    { keepForResend }: { keepForResend: boolean },
+  ): void => {
+    const conversationIds = new Set<string>()
+    for (const messageId of messageIds) {
+      const counted = countedRepliesRef.current.get(messageId)
+      if (counted) {
+        conversationIds.add(counted.conversationId)
+        countedRepliesRef.current.delete(messageId)
+        if (keepForResend) {
+          setBounded(failedRepliesRef.current, messageId, counted.message)
+        }
+      }
+    }
+    for (const conversationId of conversationIds) {
+      refetchParticipants(conversationId)
+    }
+  }
+  // A send that went through: count the message locally if this tab has not
+  // (the confirmation is published before the worker records it, so no
+  // refetch). That is a Resend of a message this tab saw fail, or of one
+  // loaded from the database after a reload; the Resend button clears the
+  // message's `sendError` before it sends, so the loaded message is the signal,
+  // not its error. A message this tab already counted is skipped, and counting
+  // twice is harmless anyway (the merge is monotonic).
+  const recountResentReply = (
+    messageId: string,
+    loadedMessage: MessageResourceWithRelations | undefined,
+  ): void => {
+    const failedMessage = failedRepliesRef.current.get(messageId)
+    failedRepliesRef.current.delete(messageId)
+    const message =
+      failedMessage ??
+      (countedRepliesRef.current.has(messageId) ? undefined : loadedMessage)
+    if (message) {
+      applyParticipantReply(message)
+    }
+  }
+
+  const applyReply = (
+    message: MessageResourceWithRelations,
+    reply: ConversationParticipantResource,
+  ): void => {
+    const counted = countedRepliesRef.current.get(message.id)
+    // Uncounted while the member lookup ran: it failed or was removed.
+    if (!counted) {
+      return
+    }
+    counted.reply = reply
+    applyConversationParticipantReply(message.conversationId, reply)
+    queryClient.setQueryData(
+      conversationParticipantsQueryOptions(workspaceId, message.conversationId)
+        .queryKey,
+      (data) => data && mergeParticipantReplyIntoPages(data, reply),
+    )
+  }
+
+  const applyParticipantReply = (message: MessageResourceWithRelations) => {
+    const userId =
+      message.messageType === "outgoing"
+        ? resolveMessageAuthorUserId(message)
+        : null
+    const lastRepliedAt = new Date(message.createdAt)
+    if (!userId || Number.isNaN(lastRepliedAt.getTime())) {
+      return
+    }
+    rememberCountedReply(message)
+    const toReply = (user: {
+      name: string | null
+      image: string | null
+    }): ConversationParticipantResource => ({
+      userId,
+      name: user.name,
+      image: user.image,
+      lastRepliedAt,
+    })
+    const cachedUser = members?.find((member) => member.userId === userId)?.user
+    if (cachedUser) {
+      applyReply(message, toReply(cachedUser))
+      return
+    }
+    // A member who joined after the cached list, or the list is not loaded
+    // yet: read a fresh list rather than guess. A member still missing from it
+    // was removed; the server's list is the answer then.
+    queryClient
+      .fetchQuery({
+        ...workspaceMembersQueryOptions(workspaceId),
+        staleTime: 0,
+      })
+      .then(({ data }) => {
+        const freshUser = data.find((member) => member.userId === userId)?.user
+        if (freshUser) {
+          applyReply(message, toReply(freshUser))
+          return
+        }
+        refetchParticipants(message.conversationId)
+      })
+      .catch((error: unknown) =>
+        logger.warn({ err: error }, "members refetch failed"),
+      )
+  }
 
   const pendingCreatedMessagesRef = useRef<MessageResourceWithRelations[]>([])
   const isMessageFlushQueuedRef = useRef(false)
@@ -89,6 +293,7 @@ export function ChatRealtime() {
       scheduleConversationHeadRefresh(workspaceId)
     }
     for (const createdMessage of messages) {
+      applyParticipantReply(createdMessage)
       if (getWhatsappCallPermissionReply(createdMessage.contentAttributes)) {
         invalidateOutboundCallMode(createdMessage.conversationId)
       }
@@ -218,12 +423,20 @@ export function ChatRealtime() {
       flushPendingCreatedMessages()
       markMessagesDeleted(event.data.messageIds)
     },
+    messageRemoved: (event) => {
+      flushPendingCreatedMessages()
+      removeMessages(event.data.messageIds)
+      uncountReplies(event.data.messageIds, { keepForResend: false })
+    },
     messageIdAssigned: (event) => {
       flushPendingCreatedMessages()
       assignMessageCommentId(event.data.messageId, event.data.commentId)
     },
     messageFailed: (event) => {
       flushPendingCreatedMessages()
+      const loadedMessage = event.data.error
+        ? undefined
+        : findLoadedMessage(event.data.messageId)
       markMessageFailed(
         event.data.messageId,
         event.data.clientId,
@@ -231,6 +444,13 @@ export function ChatRealtime() {
       )
       // The same event is the composer queue's answer for the message it sent.
       settleSendResult(event.data)
+      // `error: null` is the composer queue's success confirmation, which the
+      // worker publishes before it records the reply: only a failure uncounts.
+      if (event.data.error) {
+        uncountReplies([event.data.messageId], { keepForResend: true })
+      } else {
+        recountResentReply(event.data.messageId, loadedMessage)
+      }
     },
     messageUpdated: (event) => {
       flushPendingCreatedMessages()
@@ -243,6 +463,26 @@ export function ChatRealtime() {
         newAttachmentHeight: data.newAttachmentHeight,
         removedAttachment: data.removedAttachment ?? false,
       })
+    },
+    messageTranslationUpdated: (event) => {
+      flushPendingCreatedMessages()
+      const {
+        conversationId,
+        items,
+        conversationLanguage,
+        conversationEnabledOverride,
+      } = event.data
+      applyMessageTranslations(
+        conversationId,
+        items,
+        conversationLanguage,
+        conversationEnabledOverride,
+      )
+      // The answer is in: drop "translating"/"still waiting" so a `failed` row
+      // shows as failed (with Retry) and nothing keeps waiting for it.
+      useTranslationUiStore
+        .getState()
+        .clear(items.map((item) => item.messageId))
     },
     messageContentUpdated: (event) => {
       flushPendingCreatedMessages()

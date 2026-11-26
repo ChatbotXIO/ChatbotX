@@ -1,3 +1,4 @@
+export * from "./comment-moderation-service"
 export * from "./connection-service"
 export * from "./contracts"
 export * from "./evaluation-service"

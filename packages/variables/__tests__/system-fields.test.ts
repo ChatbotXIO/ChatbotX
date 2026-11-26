@@ -1301,10 +1301,12 @@ describe("getSystemFieldValue", () => {
   })
 
   test("location and flow step fields resolve from persisted contact state", async () => {
-    mockFindDMByContact.mockResolvedValue({
+    const conversation = {
+      id: "conversation-1",
+      sourceId: "email:<thread@example.com>",
       lastStep: "step-1",
       currentStep: "step-2",
-    })
+    } as ConversationModel
 
     const locatedContact = {
       ...contact,
@@ -1313,28 +1315,48 @@ describe("getSystemFieldValue", () => {
 
     await expect(
       getSystemFieldValue(
-        createContext({ contact: locatedContact }),
+        createContext({ contact: locatedContact, conversation }),
         systemFieldTypes.enum.last_latitude,
       ),
     ).resolves.toBe("10.75")
     await expect(
       getSystemFieldValue(
-        createContext({ contact: locatedContact }),
+        createContext({ contact: locatedContact, conversation }),
         systemFieldTypes.enum.last_longitude,
       ),
     ).resolves.toBe("106.66")
     await expect(
       getSystemFieldValue(
-        createContext({ contact: locatedContact }),
+        createContext({ contact: locatedContact, conversation }),
         systemFieldTypes.enum.last_step,
       ),
     ).resolves.toBe("step-1")
     await expect(
       getSystemFieldValue(
-        createContext({ contact: locatedContact }),
+        createContext({ contact: locatedContact, conversation }),
         systemFieldTypes.enum.current_step,
       ),
     ).resolves.toBe("step-2")
+  })
+
+  test("flow step fields of a non-email conversation read the contact's DM", async () => {
+    mockFindDMByContact.mockResolvedValueOnce({
+      id: "dm-1",
+      sourceId: null,
+      lastStep: "dm-step",
+    } as ConversationModel)
+    const comment = {
+      id: "comment-thread",
+      sourceId: "post-1",
+      lastStep: "ignored",
+    } as ConversationModel
+
+    await expect(
+      getSystemFieldValue(
+        createContext({ conversation: comment }),
+        systemFieldTypes.enum.last_step,
+      ),
+    ).resolves.toBe("dm-step")
   })
 
   test("profile_pic resolves storage paths to public URLs", async () => {

@@ -7,24 +7,59 @@ vi.mock("@/hooks/routing", () => ({
   useWorkspaceId: () => "workspace-1",
 }))
 
-const { invalidateQueriesMock } = vi.hoisted(() => ({
+const {
+  invalidateQueriesMock,
+  setQueryDataMock,
+  fetchQueryMock,
+  fetchInfiniteQueryMock,
+  membersState,
+} = vi.hoisted(() => ({
   invalidateQueriesMock: vi.fn(),
+  setQueryDataMock: vi.fn(),
+  fetchQueryMock: vi.fn(),
+  fetchInfiniteQueryMock: vi.fn(),
+  membersState: {
+    data: undefined as
+      | {
+          userId: string
+          user: { name: string | null; image: string | null }
+        }[]
+      | undefined,
+  },
 }))
 vi.mock("@tanstack/react-query", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@tanstack/react-query")>()),
-  useQueryClient: () => ({ invalidateQueries: invalidateQueriesMock }),
+  useQueryClient: () => ({
+    invalidateQueries: invalidateQueriesMock,
+    setQueryData: setQueryDataMock,
+    fetchQuery: fetchQueryMock,
+    fetchInfiniteQuery: fetchInfiniteQueryMock,
+  }),
+}))
+
+vi.mock("@/features/users/provider/user-hook", () => ({
+  useWorkspaceMembers: () => ({ data: membersState.data }),
+  workspaceMembersQueryOptions: () => ({ queryKey: ["members"] }),
+}))
+vi.mock("@/lib/log", () => ({
+  logger: { warn: vi.fn(), error: vi.fn() },
 }))
 
 const bubbleConversationToTopMock = vi.fn().mockResolvedValue(undefined)
 const openConversationMock = vi.fn().mockResolvedValue(true)
 const chatStoreState = {
   applyAgentLastReadAt: vi.fn(),
+  applyConversationParticipantReply: vi.fn(),
+  findLoadedMessage: vi.fn(),
+  replaceConversationRecentParticipants: vi.fn(),
   handleNewMessages: vi.fn(),
   markMessagesDeleted: vi.fn(),
+  removeMessages: vi.fn(),
   markMessageFailed: vi.fn(),
   settleSendResult: vi.fn(),
   assignMessageCommentId: vi.fn(),
   updateMessageText: vi.fn(),
+  applyMessageTranslations: vi.fn(),
   updateMessageContentAttributes: vi.fn(),
   updateContact: vi.fn(),
   updateConversations: vi.fn(),
@@ -94,6 +129,14 @@ describe("ChatRealtime — chat event parity", () => {
   beforeEach(() => {
     Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true })
     vi.clearAllMocks()
+    fetchQueryMock.mockResolvedValue({ data: [] })
+    fetchInfiniteQueryMock.mockResolvedValue({
+      pageParams: [undefined],
+      pages: [{ data: [], nextCursor: null }],
+    })
+    membersState.data = [
+      { userId: "user-1", user: { name: "Hoàng", image: "avatar.png" } },
+    ]
     bubbleConversationToTopMock.mockResolvedValue(undefined)
     useWhatsappVoipCallStore.setState({ call: null, ringingCalls: [] })
     container = document.createElement("div")
@@ -118,7 +161,7 @@ describe("ChatRealtime — chat event parity", () => {
     expect(wholeStoreSelectionMock).not.toHaveBeenCalled()
   })
 
-  test("registers exactly the eleven chat events, no more, no fewer", async () => {
+  test("registers exactly the thirteen chat events, no more, no fewer", async () => {
     await render()
     expect(Object.keys(capturedHandlers ?? {}).sort()).toEqual(
       [
@@ -132,6 +175,8 @@ describe("ChatRealtime — chat event parity", () => {
         "messageDeleted",
         "messageFailed",
         "messageIdAssigned",
+        "messageRemoved",
+        "messageTranslationUpdated",
         "messageUpdated",
       ].sort(),
     )
@@ -151,6 +196,12 @@ describe("ChatRealtime — chat event parity", () => {
     await render()
     act(() => emit("messageDeleted", { messageIds: ["m1"] }))
     expect(chatStoreState.markMessagesDeleted).toHaveBeenCalledWith(["m1"])
+  })
+
+  test("messageRemoved drops the messages from the timeline", async () => {
+    await render()
+    act(() => emit("messageRemoved", { messageIds: ["m1"] }))
+    expect(chatStoreState.removeMessages).toHaveBeenCalledWith(["m1"])
   })
 
   test("messageIdAssigned assigns the comment id", async () => {
@@ -238,6 +289,62 @@ describe("ChatRealtime — chat event parity", () => {
     expect(chatStoreState.updateMessageContentAttributes).toHaveBeenCalledWith(
       "m1",
       { foo: "bar" },
+    )
+  })
+
+  test("messageTranslationUpdated applies the items and the conversation language", async () => {
+    await render()
+    const items = [
+      { messageId: "m1", status: "translated", displayText: "Xin chào" },
+    ]
+    act(() =>
+      emit("messageTranslationUpdated", {
+        conversationId: "c1",
+        items,
+        conversationLanguage: "es",
+      }),
+    )
+    expect(chatStoreState.applyMessageTranslations).toHaveBeenCalledWith(
+      "c1",
+      items,
+      "es",
+      undefined,
+    )
+  })
+
+  test("messageTranslationUpdated ends the translating state, so a failure shows as failed", async () => {
+    const { useTranslationUiStore } = await import(
+      "@/features/translation/store/translation-ui-store"
+    )
+    useTranslationUiStore.getState().markRequested(["m1", "m2"])
+    await render()
+
+    act(() =>
+      emit("messageTranslationUpdated", {
+        conversationId: "c1",
+        items: [{ messageId: "m1", status: "failed" }],
+      }),
+    )
+
+    expect(Object.keys(useTranslationUiStore.getState().entries)).toEqual([
+      "m2",
+    ])
+  })
+
+  test("messageTranslationUpdated passes on translation turned off for the conversation", async () => {
+    await render()
+    act(() =>
+      emit("messageTranslationUpdated", {
+        conversationId: "c1",
+        items: [],
+        conversationEnabledOverride: false,
+      }),
+    )
+    expect(chatStoreState.applyMessageTranslations).toHaveBeenCalledWith(
+      "c1",
+      [],
+      undefined,
+      false,
     )
   })
 
@@ -334,6 +441,357 @@ describe("ChatRealtime — chat event parity", () => {
       "workspace-1",
     )
     responseSlaState.enabled = false
+  })
+
+  describe("who replied", () => {
+    const outgoing = (overrides: Record<string, unknown> = {}) => ({
+      id: "message-1",
+      conversationId: "conversation-1",
+      messageType: "outgoing",
+      senderType: "user",
+      senderId: "user-1",
+      contentAttributes: {},
+      createdAt: "2026-11-20T10:00:00.000Z",
+      ...overrides,
+    })
+    const emitCreated = (message: unknown) =>
+      act(async () => {
+        emit("messageCreated", message)
+        await Promise.resolve()
+      })
+
+    test("a member's typed reply updates the row preview and the participants cache", async () => {
+      await render()
+      await emitCreated(outgoing())
+
+      expect(
+        chatStoreState.applyConversationParticipantReply,
+      ).toHaveBeenCalledWith("conversation-1", {
+        userId: "user-1",
+        name: "Hoàng",
+        image: "avatar.png",
+        lastRepliedAt: new Date("2026-11-20T10:00:00.000Z"),
+      })
+      expect(setQueryDataMock).toHaveBeenCalledOnce()
+      expect(fetchQueryMock).not.toHaveBeenCalled()
+    })
+
+    test("a flow row stamped with the member counts too", async () => {
+      await render()
+      await emitCreated(
+        outgoing({
+          senderType: "bot",
+          senderId: null,
+          contentAttributes: { sentByUserId: "user-1" },
+        }),
+      )
+
+      expect(
+        chatStoreState.applyConversationParticipantReply,
+      ).toHaveBeenCalledOnce()
+    })
+
+    test.each([
+      [
+        "a customer message",
+        { messageType: "incoming", senderType: "contact", senderId: null },
+      ],
+      ["a bot message", { senderType: "bot", senderId: null }],
+      [
+        "an API message without a member",
+        { senderType: "api", senderId: null },
+      ],
+      ["a page echo without a member", { senderType: "user", senderId: null }],
+    ])("%s changes nothing", async (_name, overrides) => {
+      await render()
+      await emitCreated(outgoing(overrides))
+
+      expect(
+        chatStoreState.applyConversationParticipantReply,
+      ).not.toHaveBeenCalled()
+      expect(setQueryDataMock).not.toHaveBeenCalled()
+      expect(fetchQueryMock).not.toHaveBeenCalled()
+    })
+
+    test("a member missing from the cache is looked up fresh, then applied", async () => {
+      fetchQueryMock.mockResolvedValue({
+        data: [{ userId: "user-9", user: { name: "Tàu", image: null } }],
+      })
+      await render()
+      await emitCreated(outgoing({ senderId: "user-9" }))
+
+      expect(fetchQueryMock).toHaveBeenCalledOnce()
+      expect(
+        chatStoreState.applyConversationParticipantReply,
+      ).toHaveBeenCalledWith(
+        "conversation-1",
+        expect.objectContaining({ userId: "user-9", name: "Tàu" }),
+      )
+      expect(fetchInfiniteQueryMock).not.toHaveBeenCalled()
+      expect(
+        chatStoreState.scheduleConversationHeadRefresh,
+      ).not.toHaveBeenCalled()
+    })
+
+    test("a member still missing from the fresh list falls back to the server's list", async () => {
+      await render()
+      await emitCreated(outgoing({ senderId: "user-9" }))
+
+      expect(
+        chatStoreState.applyConversationParticipantReply,
+      ).not.toHaveBeenCalled()
+      expect(fetchInfiniteQueryMock).toHaveBeenCalledOnce()
+      expect(
+        chatStoreState.replaceConversationRecentParticipants,
+      ).toHaveBeenCalledWith("conversation-1", [])
+    })
+
+    test("a message with an invalid time is ignored", async () => {
+      await render()
+      await emitCreated(outgoing({ createdAt: "not-a-date" }))
+
+      expect(
+        chatStoreState.applyConversationParticipantReply,
+      ).not.toHaveBeenCalled()
+      expect(fetchQueryMock).not.toHaveBeenCalled()
+    })
+
+    test("a failed counted message refetches that conversation and fixes its row", async () => {
+      const serverList = [
+        {
+          userId: "user-2",
+          name: "Hùng",
+          image: null,
+          lastRepliedAt: new Date(),
+        },
+      ]
+      fetchInfiniteQueryMock.mockResolvedValue({
+        pages: [{ data: serverList }],
+      })
+      await render()
+      await emitCreated(outgoing())
+      await act(async () => {
+        emit("messageFailed", {
+          messageId: "message-1",
+          clientId: "c1",
+          error: "boom",
+        })
+        await Promise.resolve()
+      })
+
+      expect(fetchInfiniteQueryMock).toHaveBeenCalledOnce()
+      expect(
+        chatStoreState.replaceConversationRecentParticipants,
+      ).toHaveBeenCalledWith("conversation-1", serverList)
+    })
+
+    test("a removed counted message refetches the participants", async () => {
+      await render()
+      await emitCreated(outgoing())
+      await act(async () => {
+        emit("messageRemoved", { messageIds: ["message-1"] })
+        await Promise.resolve()
+      })
+
+      expect(fetchInfiniteQueryMock).toHaveBeenCalledOnce()
+    })
+
+    test("a success confirmation (error null) never refetches the participants", async () => {
+      await render()
+      await emitCreated(outgoing())
+      await act(async () => {
+        emit("messageFailed", {
+          messageId: "message-1",
+          clientId: "c1",
+          error: null,
+        })
+        await Promise.resolve()
+      })
+
+      expect(fetchInfiniteQueryMock).not.toHaveBeenCalled()
+    })
+
+    test("a Resend that succeeds after a failure counts the reply again", async () => {
+      await render()
+      await emitCreated(outgoing())
+      await act(async () => {
+        emit("messageFailed", {
+          messageId: "message-1",
+          clientId: "c1",
+          error: "boom",
+        })
+        await Promise.resolve()
+      })
+      chatStoreState.applyConversationParticipantReply.mockClear()
+      await act(async () => {
+        emit("messageFailed", {
+          messageId: "message-1",
+          clientId: "c1",
+          error: null,
+        })
+        await Promise.resolve()
+      })
+
+      expect(
+        chatStoreState.applyConversationParticipantReply,
+      ).toHaveBeenCalledWith(
+        "conversation-1",
+        expect.objectContaining({ userId: "user-1" }),
+      )
+    })
+
+    test("a Resend after a reload counts the reply from the loaded message (its sendError is already cleared)", async () => {
+      chatStoreState.findLoadedMessage.mockReturnValue(
+        outgoing({ sendError: null }),
+      )
+      await render()
+      await act(async () => {
+        emit("messageFailed", {
+          messageId: "message-1",
+          clientId: "c1",
+          error: null,
+        })
+        await Promise.resolve()
+      })
+
+      expect(
+        chatStoreState.applyConversationParticipantReply,
+      ).toHaveBeenCalledWith(
+        "conversation-1",
+        expect.objectContaining({ userId: "user-1" }),
+      )
+    })
+
+    test("a success confirmation for a message this tab already counted adds nothing", async () => {
+      chatStoreState.findLoadedMessage.mockReturnValue(outgoing())
+      await render()
+      await emitCreated(outgoing())
+      chatStoreState.applyConversationParticipantReply.mockClear()
+      await act(async () => {
+        emit("messageFailed", {
+          messageId: "message-1",
+          clientId: "c1",
+          error: null,
+        })
+        await Promise.resolve()
+      })
+
+      expect(
+        chatStoreState.applyConversationParticipantReply,
+      ).not.toHaveBeenCalled()
+    })
+
+    test("a success confirmation for a message that is not loaded counts nothing", async () => {
+      chatStoreState.findLoadedMessage.mockReturnValue(undefined)
+      await render()
+      await act(async () => {
+        emit("messageFailed", {
+          messageId: "message-1",
+          clientId: "c1",
+          error: null,
+        })
+        await Promise.resolve()
+      })
+
+      expect(
+        chatStoreState.applyConversationParticipantReply,
+      ).not.toHaveBeenCalled()
+    })
+
+    test("a removed message is not counted again by a later confirmation", async () => {
+      await render()
+      await emitCreated(outgoing())
+      await act(async () => {
+        emit("messageRemoved", { messageIds: ["message-1"] })
+        await Promise.resolve()
+      })
+      chatStoreState.applyConversationParticipantReply.mockClear()
+      await act(async () => {
+        emit("messageFailed", {
+          messageId: "message-1",
+          clientId: "c1",
+          error: null,
+        })
+        await Promise.resolve()
+      })
+
+      expect(
+        chatStoreState.applyConversationParticipantReply,
+      ).not.toHaveBeenCalled()
+    })
+
+    test("a refetch after a failure keeps the other replies this tab counted", async () => {
+      fetchInfiniteQueryMock.mockResolvedValue({
+        pageParams: [undefined],
+        pages: [{ data: [], nextCursor: null }],
+      })
+      await render()
+      await emitCreated(outgoing())
+      await emitCreated(
+        outgoing({ id: "message-2", createdAt: "2026-11-20T10:05:00.000Z" }),
+      )
+      await act(async () => {
+        emit("messageFailed", {
+          messageId: "message-1",
+          clientId: "c1",
+          error: "boom",
+        })
+        await Promise.resolve()
+      })
+
+      expect(
+        chatStoreState.replaceConversationRecentParticipants,
+      ).toHaveBeenCalledWith("conversation-1", [
+        expect.objectContaining({
+          userId: "user-1",
+          lastRepliedAt: new Date("2026-11-20T10:05:00.000Z"),
+        }),
+      ])
+    })
+
+    test("a member lookup that resolves after the message failed does not restore it", async () => {
+      let resolveMembers: (value: unknown) => void = () => undefined
+      fetchQueryMock.mockReturnValue(
+        new Promise((resolve) => {
+          resolveMembers = resolve
+        }),
+      )
+      await render()
+      await emitCreated(outgoing({ senderId: "user-9" }))
+      await act(async () => {
+        emit("messageFailed", {
+          messageId: "message-1",
+          clientId: "c1",
+          error: "boom",
+        })
+        await Promise.resolve()
+      })
+      await act(async () => {
+        resolveMembers({
+          data: [{ userId: "user-9", user: { name: "Tàu", image: null } }],
+        })
+        await Promise.resolve()
+      })
+
+      expect(
+        chatStoreState.applyConversationParticipantReply,
+      ).not.toHaveBeenCalled()
+    })
+
+    test("a failed or removed message that never counted costs nothing", async () => {
+      await render()
+      act(() =>
+        emit("messageFailed", {
+          messageId: "broadcast-1",
+          clientId: "c1",
+          error: "boom",
+        }),
+      )
+      act(() => emit("messageRemoved", { messageIds: ["broadcast-2"] }))
+
+      expect(fetchInfiniteQueryMock).not.toHaveBeenCalled()
+      expect(invalidateQueriesMock).not.toHaveBeenCalled()
+    })
   })
 
   test("conversationUpdated applies a valid agent read timestamp", async () => {

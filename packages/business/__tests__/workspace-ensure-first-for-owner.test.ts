@@ -34,14 +34,18 @@ const existingWorkspace = { id: "ws-existing" }
 const createdWorkspace = { id: "ws-created" }
 
 const callerTx = {}
+const RESOLVED_TENANT = "tenant-resolved"
 
 describe("workspaceService.ensureFirstForOwner", () => {
   let create: MockInstance
+  let resolveTenant: MockInstance
 
   beforeEach(() => {
     vi.clearAllMocks()
     create = vi.spyOn(workspaceService, "create")
     create.mockResolvedValue(createdWorkspace as never)
+    resolveTenant = vi.spyOn(workspaceService, "resolveWorkspaceTenant")
+    resolveTenant.mockResolvedValue(RESOLVED_TENANT)
     mocks.transaction.mockImplementation(
       async (fn: (tx: unknown) => unknown) => await fn(callerTx),
     )
@@ -70,9 +74,28 @@ describe("workspaceService.ensureFirstForOwner", () => {
     expect(result).toBe(createdWorkspace)
     expect(create).toHaveBeenCalledWith(
       expect.objectContaining({
-        data: { name: "Home", ownerId: OWNER_ID },
+        data: { name: "Home", ownerId: OWNER_ID, tenantId: RESOLVED_TENANT },
         createdBy: OWNER_ID,
       }),
+    )
+  })
+
+  test("looks up and creates in the tenant of the request host", async () => {
+    mocks.findActiveByOwner.mockResolvedValue(undefined)
+
+    await workspaceService.ensureFirstForOwner({
+      ownerId: OWNER_ID,
+      name: "Home",
+      hostTenantId: "host-tenant",
+    })
+
+    expect(resolveTenant).toHaveBeenCalledWith({
+      ownerId: OWNER_ID,
+      hostTenantId: "host-tenant",
+    })
+    expect(mocks.findActiveByOwner).toHaveBeenCalledWith(
+      { ownerId: OWNER_ID, tenantId: RESOLVED_TENANT },
+      callerTx,
     )
   })
 
@@ -116,11 +139,14 @@ describe("workspaceService.ensureFirstForOwner", () => {
 
 describe("workspaceService.ensureConnectTargetForOwner", () => {
   let create: MockInstance
+  let resolveTenant: MockInstance
 
   beforeEach(() => {
     vi.clearAllMocks()
     create = vi.spyOn(workspaceService, "create")
     create.mockResolvedValue(createdWorkspace as never)
+    resolveTenant = vi.spyOn(workspaceService, "resolveWorkspaceTenant")
+    resolveTenant.mockResolvedValue(RESOLVED_TENANT)
     mocks.transaction.mockImplementation(
       async (fn: (tx: unknown) => unknown) => await fn(callerTx),
     )
@@ -153,7 +179,11 @@ describe("workspaceService.ensureConnectTargetForOwner", () => {
     expect(result).toBe(createdWorkspace)
     expect(create).toHaveBeenCalledWith(
       expect.objectContaining({
-        data: { name: "New Workspace", ownerId: OWNER_ID },
+        data: {
+          name: "New Workspace",
+          ownerId: OWNER_ID,
+          tenantId: RESOLVED_TENANT,
+        },
         createdBy: OWNER_ID,
       }),
     )
@@ -177,6 +207,30 @@ describe("workspaceService.ensureConnectTargetForOwner", () => {
     )
     expect(create).toHaveBeenCalledWith(
       expect.objectContaining({ tx: callerTx, quotaConsumption }),
+    )
+  })
+
+  test("a reseller owner on the tenant host gets a new tenant workspace, not an empty root one", async () => {
+    // The repository only returns workspaces of the resolved tenant, so an
+    // empty root workspace is invisible to the tenant-host lookup.
+    mocks.findEmptyActiveByOwner.mockResolvedValue(undefined)
+
+    const result = await workspaceService.ensureConnectTargetForOwner({
+      ownerId: OWNER_ID,
+      name: "New Workspace",
+      hostTenantId: "host-tenant",
+    })
+
+    expect(mocks.findEmptyActiveByOwner).toHaveBeenCalledWith(
+      { ownerId: OWNER_ID, tenantId: RESOLVED_TENANT },
+      callerTx,
+    )
+    expect(result).toBe(createdWorkspace)
+    expect(create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ tenantId: RESOLVED_TENANT }),
+        hostTenantId: "host-tenant",
+      }),
     )
   })
 })

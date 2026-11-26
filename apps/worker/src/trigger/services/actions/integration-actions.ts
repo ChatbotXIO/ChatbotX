@@ -125,7 +125,11 @@ export const sendMetaCapiEvent: TriggerActionHandler = async ({
       currency: parsedAction.data.currency,
       contentIds: parsedAction.data.contentIds,
     },
-    { contactInbox: contactInbox.id, conversation },
+    {
+      contactInbox: contactInbox.id,
+      conversation,
+      postComment: context.postComment,
+    },
   )
 
   await enqueueCapiEvent(

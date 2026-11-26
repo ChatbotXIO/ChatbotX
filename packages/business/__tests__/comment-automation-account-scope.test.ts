@@ -77,6 +77,10 @@ vi.mock("../src/ai-agent/service", () => ({
   aiAgentService: { findByIdForWorkspace: vi.fn() },
 }))
 
+vi.mock("../src/decision/comment-moderation-service", () => ({
+  decisionCommentModerationService: { isConnectionUsable: vi.fn() },
+}))
+
 const { assertAutomationAccount, listAutomationAccounts } = await import(
   "../src/comment-automation/account-scope"
 )

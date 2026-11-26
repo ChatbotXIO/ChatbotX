@@ -6,6 +6,7 @@ import {
 } from "@chatbotx.io/database/repositories"
 import type { ResponseSlaPolicyModel } from "@chatbotx.io/database/types"
 import { withCache } from "@chatbotx.io/redis"
+import { isEmailThreadSourceId } from "@chatbotx.io/utils"
 import { BaseService } from "../base.service"
 import { validationException } from "../errors"
 import { logger } from "../logger"
@@ -431,7 +432,11 @@ class ResponseSlaService extends BaseService {
     const changes: SlaWindowChange[] = []
     for (const current of after) {
       const since = current.awaitingHumanReplySince
-      if (current.sourceId !== null || since === null) {
+      if (
+        (current.sourceId !== null &&
+          !isEmailThreadSourceId(current.sourceId)) ||
+        since === null
+      ) {
         continue
       }
       const prior = previous.get(current.id)

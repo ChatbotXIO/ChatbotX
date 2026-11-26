@@ -84,3 +84,113 @@ describe("triggers adapter: an unresolved reference is reported once", () => {
     })
   })
 })
+
+describe("triggers adapter: actions that name pipelines and assignees", () => {
+  test("pipeline, stage and pipeline-field ids are remapped to the target workspace", async () => {
+    const inserted: { actions: unknown }[] = []
+    const ctx = {
+      ...buildContext(),
+      tx: {
+        insert: () => ({
+          values: (row: { actions: unknown }) => {
+            inserted.push(row)
+            return { returning: () => Promise.resolve([{ id: "new-trigger" }]) }
+          },
+        }),
+      } as never,
+      idMaps: {
+        pipeline: new Map([["src-pipeline", "tgt-pipeline"]]),
+        pipelineStage: new Map([["src-stage", "tgt-stage"]]),
+        pipelineField: new Map([["src-field", "tgt-field"]]),
+      },
+    }
+
+    await triggersAdapter.insert(ctx, [
+      {
+        ...entry,
+        actions: [
+          {
+            type: "pipeline",
+            pipelineId: "src-pipeline",
+            stageId: "src-stage",
+            pipelineFieldId: "src-field",
+          },
+        ],
+      },
+    ])
+
+    expect(inserted[0]?.actions).toEqual([
+      {
+        type: "pipeline",
+        pipelineId: "tgt-pipeline",
+        stageId: "tgt-stage",
+        pipelineFieldId: "tgt-field",
+      },
+    ])
+  })
+
+  test("an assign action naming a member of the source workspace is dropped with a warning", async () => {
+    const inserted: { actions: unknown }[] = []
+    const ctx = {
+      ...buildContext(),
+      tx: {
+        insert: () => ({
+          values: (row: { actions: unknown }) => {
+            inserted.push(row)
+            return { returning: () => Promise.resolve([{ id: "new-trigger" }]) }
+          },
+        }),
+      } as never,
+    }
+
+    await triggersAdapter.insert(ctx, [
+      {
+        ...entry,
+        actions: [
+          { type: "assignConversation", assignedId: "u_123" },
+          { type: "addSequence", sequenceIds: ["gone"] },
+        ],
+      },
+    ])
+
+    expect(inserted[0]?.actions).toEqual([
+      { type: "addSequence", sequenceIds: ["gone"] },
+    ])
+    expect(ctx.warn.mock.calls.map(([warning]) => warning)).toEqual([
+      expect.objectContaining({
+        entityKind: "sequence",
+        path: "triggers.src-trigger.actions.[1].sequenceIds[0]",
+      }),
+      expect.objectContaining({
+        entityKind: "referenceRemoved",
+        path: "triggers.src-trigger.actions.assignConversation.assignedId",
+      }),
+    ])
+  })
+
+  test("a pipeline action's member and team assignees are stripped, not copied", async () => {
+    const inserted: { actions: unknown }[] = []
+    const ctx = {
+      ...buildContext(),
+      tx: {
+        insert: () => ({
+          values: (row: { actions: unknown }) => {
+            inserted.push(row)
+            return { returning: () => Promise.resolve([{ id: "new-trigger" }]) }
+          },
+        }),
+      } as never,
+    }
+
+    await triggersAdapter.insert(ctx, [
+      {
+        ...entry,
+        actions: [{ type: "pipeline", assigneeMemberIds: ["777"] }],
+      },
+    ])
+
+    expect(
+      ctx.warn.mock.calls.map(([warning]) => warning.entityKind),
+    ).toContain("workspaceMember")
+  })
+})

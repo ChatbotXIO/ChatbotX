@@ -9,6 +9,9 @@ const mocks = vi.hoisted(() => ({
 
 vi.mock("../src/template/installed-resource.service", () => ({
   assertReferencable: mocks.assertReferencable,
+  assertResourceEditable: vi.fn(),
+  changedKeysOf: () => [],
+  withDeleteGuard: (_input: unknown, run: (tx: unknown) => unknown) => run({}),
 }))
 vi.mock("../src/ecommerce-settings/store-source", () => ({
   resolveStoreSource: async () => "chatbotx",
@@ -128,6 +131,69 @@ describe("discount code writers guard the customer filter's references", () => {
     expect(mocks.assertReferencable.mock.invocationCallOrder[0]).toBeLessThan(
       mocks.update.mock.invocationCallOrder[0],
     )
+  })
+
+  test("create and update lock the listed products and validate under the guard", async () => {
+    mocks.create.mockResolvedValue({ id: "d1" })
+    mocks.update.mockResolvedValue({ id: "d1" })
+    mocks.findFirst.mockResolvedValue({
+      ...base,
+      usedCount: 0,
+      appliesTo: "entireOrder",
+      eligibility: "everyone",
+      customerFilter: null,
+    })
+    const assertValid = vi.spyOn(
+      discountCodeService as unknown as {
+        assertValid: (...args: unknown[]) => Promise<void>
+      },
+      "assertValid",
+    )
+    const listed = {
+      ...base,
+      discountType: "percentage",
+      discountValue: 10,
+      appliesTo: "products",
+      productIds: ["501", "502"],
+      eligibility: "everyone",
+      customerFilter: null,
+    }
+
+    await discountCodeService.create(listed as never)
+    await discountCodeService.update({
+      workspaceId: "w1",
+      discountCodeId: "d1",
+      data: { appliesTo: "products", productIds: ["501", "502"] } as never,
+    })
+
+    for (const index of [0, 1]) {
+      expect(mocks.assertReferencable.mock.calls[index][0].parents).toEqual([
+        { kind: "product", resourceId: "501" },
+        { kind: "product", resourceId: "502" },
+      ])
+      // The existence check runs with the locked transaction, after the guard.
+      expect(assertValid.mock.calls[index][3]).toBeDefined()
+      expect(
+        mocks.assertReferencable.mock.invocationCallOrder[index],
+      ).toBeLessThan(assertValid.mock.invocationCallOrder[index])
+    }
+  })
+
+  test("a product that is being uninstalled refuses the create before it writes", async () => {
+    mocks.assertReferencable.mockRejectedValueOnce(
+      new Error("the product is being uninstalled"),
+    )
+
+    await expect(
+      discountCodeService.create({
+        ...base,
+        appliesTo: "products",
+        productIds: ["501"],
+        eligibility: "everyone",
+        customerFilter: null,
+      } as never),
+    ).rejects.toThrow("being uninstalled")
+    expect(mocks.create).not.toHaveBeenCalled()
   })
 
   test("a failing guard stops the write", async () => {

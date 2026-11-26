@@ -46,6 +46,15 @@ const { authorizedAPI, capturedProcedures } = vi.hoisted(() => {
 
 vi.mock("@/orpc", () => ({ authorizedAPI }))
 
+const hostTenant = vi.hoisted(() => ({ value: "tenant-a" }))
+vi.mock("@/lib/tenant/request-tenant", () => ({
+  resolveRequestTenantId: async () => hostTenant.value,
+  filterWorkspacesForHost: <T extends { tenantId: string }>(
+    items: T[],
+    host: string,
+  ) => items.filter((item) => item.tenantId === host),
+}))
+
 const listByUserId = vi.fn()
 vi.mock("@chatbotx.io/business", () => ({
   workspaceMemberService: { listByUserId },
@@ -110,7 +119,7 @@ describe("GET /users/me/workspaces", () => {
 
   test("delegates to workspaceMemberService.listByUserId and unwraps member.workspace", async () => {
     listByUserId.mockResolvedValueOnce([
-      { workspace: { id: "ws-1", name: "Acme" } },
+      { workspace: { id: "ws-1", name: "Acme", tenantId: "tenant-a" } },
     ])
 
     const result = await procedure.handler?.({
@@ -119,7 +128,20 @@ describe("GET /users/me/workspaces", () => {
 
     expect(listByUserId).toHaveBeenCalledWith({ userId: "user-1" })
     expect(result).toEqual({
-      workspaces: [{ id: "ws-1", name: "Acme" }],
+      workspaces: [{ id: "ws-1", name: "Acme", tenantId: "tenant-a" }],
     })
+  })
+
+  test("lists only the workspaces of the request host's tenant", async () => {
+    listByUserId.mockResolvedValueOnce([
+      { workspace: { id: "ws-root", name: "Root", tenantId: "root" } },
+      { workspace: { id: "ws-a", name: "A", tenantId: "tenant-a" } },
+    ])
+
+    const result = await procedure.handler?.({
+      context: { user: { id: "user-1" } },
+    })
+
+    expect(result.workspaces.map((w: { id: string }) => w.id)).toEqual(["ws-a"])
   })
 })

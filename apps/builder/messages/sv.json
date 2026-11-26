@@ -44,6 +44,7 @@
     "connectFeature": "Anslut {feature}",
     "continue": "Fortsätt",
     "copy": "Kopiera",
+    "copyId": "Kopiera ID",
     "copyUrl": "Kopiera URL",
     "chatWidget": "Chattwidget",
     "create": "Skapa",
@@ -717,7 +718,8 @@
       "template": "Mall",
       "title": "Utskickningsinformation",
       "schedule": "Upprepningsschema",
-      "runOf": "Körning av <link>{name}</link>"
+      "runOf": "Körning av <link>{name}</link>",
+      "linkNotFound": "Det här utskicket finns inte längre."
     },
     "flowType": {
       "flow": {
@@ -765,6 +767,10 @@
       "clicked": "Klickat",
       "delivered": "Levererat",
       "failed": "Misslyckades",
+      "leftEmail": "Lämnade e-postadress",
+      "leftPhoneShort": "Telefon",
+      "leftEmailShort": "E-post",
+      "leftPhone": "Lämnade telefonnummer",
       "loadingMore": "Läser in fler...",
       "noContacts": "Inga kontakter hittades",
       "pageInfo": "Sida {page} av {pageCount}",
@@ -988,7 +994,9 @@
       "engagedOnOtherPost": "Har redan interagerat på ett annat inlägg",
       "mentionCountNotMatched": "Antalet omnämnanden stämde inte",
       "noImageAttachment": "Ingen bild bifogad",
-      "moderated": "Dold eller borttagen av moderering"
+      "moderated": "Dold eller borttagen av moderering",
+      "postHashtagNotMatched": "Inlägget har ingen matchande hashtagg",
+      "postCaptionUnavailable": "Inläggets text kunde inte läsas"
     },
     "replyTo": {
       "mentions": "Kommentarer med tillräckligt många omnämnanden",
@@ -1034,6 +1042,19 @@
       "enabled": "AI-moderering",
       "description": "En AI-agent läser varje kommentar innan boten svarar och döljer eller tar bort dem i kategorierna nedan. En modererad kommentar får aldrig något svar.",
       "aiAgentDescription": "Endast agentens AI-modell används, inte dess prompt.",
+      "engine": "Klassificera med",
+      "engines": {
+        "aiAgent": "AI-agent",
+        "decision": "AI Router (Jev)"
+      },
+      "decisionConnection": "AI Router-anslutning",
+      "decisionConnectionDescription": "Endast aktiverade anslutningar visas. Anslutningens API-nyckel används för att klassificera varje kommentar.",
+      "decisionConnectionUnavailable": "Den här anslutningen har tagits bort eller stängts av. Välj en annan, annars kontrolleras inte kommentarer.",
+      "decisionModel": "Modell",
+      "decisionThreshold": "Tröskel för träff",
+      "decisionThresholdDescription": "Hur säker AI Router måste vara (0,5–0,95) innan en kommentar räknas som en kategori. Högre blockerar färre kommentarer.",
+      "noDecisionConnection": "Ingen AI Router-anslutning är aktiverad i den här arbetsytan.",
+      "addDecisionConnection": "Lägg till en anslutning",
       "categoriesLabel": "Blockera kommentarer som är",
       "categories": {
         "hate": "Hatpropaganda",
@@ -1110,6 +1131,15 @@
       "previous": "Föregående",
       "next": "Nästa",
       "page": "Sida {page} av {pageCount}"
+    },
+    "postType": {
+      "hashtags": "Inlägg med hashtaggar"
+    },
+    "postHashtags": {
+      "label": "Hashtaggar",
+      "description": "Svara bara på inlägg vars text innehåller minst en av dessa hashtaggar. Skriv en hashtagg och tryck på Enter. En hashtagg som läggs till i ett inlägg senare upptäcks inom cirka 10 minuter.",
+      "placeholder": "t.ex. automation",
+      "required": "Lägg till minst en hashtagg."
     }
   },
   "channels": {
@@ -1235,7 +1265,8 @@
       "notEligible": "Det här numret är inte berättigat till historisk synkronisering.",
       "triggerFailed": "Det gick inte att starta synkroniseringen. Försök igen senare.",
       "unknown": "Det gick inte att aktivera synkroniseringen. Försök igen senare.",
-      "windowExpired": "Synkroniseringsperioden på 24 timmar har löpt ut. Koppla från och återanslut numret för att synkronisera igen."
+      "windowExpired": "Synkroniseringsperioden på 24 timmar har löpt ut. Koppla från och återanslut numret för att synkronisera igen.",
+      "contactImportRunning": "History sync can't start while this page's contacts are importing; it starts by itself afterwards."
     },
     "success": {
       "disabled": "Synkroniseringen har inaktiverats.",
@@ -1572,6 +1603,10 @@
     "title": "Annonshistorik",
     "empty": "Inga annonsklick har registrerats för den här kontakten ännu."
   },
+  "contactBroadcasts": {
+    "empty": "Inga utskick har skickats till den här kontakten ännu.",
+    "searchPlaceholder": "Sök på namn eller ID"
+  },
   "adsReferralStats": {
     "title": "Kontakter per annons",
     "description": "Kontakter som varje annons nått och konverteringar som tillskrivs dess klick. Klick räknas sedan spårningen startade.",
@@ -1664,6 +1699,94 @@
       "label": "DeepSeek"
     },
     "title": "DeepSeek"
+  },
+  "inboxTranslation": {
+    "settings": {
+      "title": "Översättning av konversationer",
+      "description": "Översätt kundernas meddelanden åt ditt team, och dina svar åt dina kunder, direkt i inkorgen.",
+      "saved": "Översättningsinställningarna har sparats",
+      "readOnly": "Endast arbetsytans administratörer kan ändra dessa inställningar.",
+      "languageHint": "Det är också språket som kundmeddelanden översätts till när översättning av konversationer är på.",
+      "alert": {
+        "needsReconfiguration": "Ny konfiguration krävs: AI-integrationen har tagits bort eller stängts av.",
+        "noIntegration": "Anslut först en AI-integration för att använda översättning.",
+        "connect": "Anslut AI"
+      },
+      "enabled": {
+        "label": "Översätt konversationer",
+        "description": "Kundmeddelanden översätts bara när någon öppnar konversationen. Chattexten skickas till den AI-leverantör du väljer och debiteras på din AI-nyckel."
+      },
+      "integration": {
+        "label": "AI-integration",
+        "description": "Bara anslutna AI-leverantörer visas."
+      },
+      "test": {
+        "label": "Testa anslutning",
+        "button": "Testa",
+        "result": "Klart på {seconds} s: ”{sample}” → ”{translated}”",
+        "slow": "Den här modellen är långsam: utgående meddelanden kanske inte hinner översättas och skickas då inte.",
+        "failed": "Testet misslyckades."
+      }
+    },
+    "message": {
+      "translating": "Översätter…",
+      "stillWaiting": "Väntar fortfarande på översättningen",
+      "requestAgain": "Begär igen",
+      "failed": "Kunde inte översätta",
+      "translatedFrom": "Översatt från {language}. Visa original",
+      "translatedFromNoLanguage": "Översatt. Visa original",
+      "sentIn": "Skickat på {language}. Visa det som skickades",
+      "sentInNoLanguage": "Skickat översatt. Visa det som skickades",
+      "hideOriginal": "Dölj original",
+      "hideSent": "Dölj det som skickades",
+      "translatedLabelNoLanguage": "Översatt",
+      "sentLabelNoLanguage": "Skickat översatt"
+    },
+    "badge": {
+      "tooltip": "Kundens språk: {language}"
+    },
+    "panel": {
+      "title": "Översättningsinställningar",
+      "statusOn": "På",
+      "statusOff": "Av",
+      "translateConversation": "Översätt den här konversationen",
+      "translateConversationHint": "Översätt meddelanden automatiskt",
+      "botActiveHint": "Boten hanterar den här konversationen, så översättning är avstängd. Slå på den för att översätta konversationen.",
+      "botPausedHint": "Du har tagit över den här konversationen från boten, så översättningen förblir avstängd. Slå på den för att översätta den.",
+      "displayOptions": "Visningsalternativ",
+      "showOriginals": "Visa originaltext",
+      "previewBeforeSending": "Förhandsgranska översättningen innan du skickar"
+    },
+    "composer": {
+      "hintUnknown": "Språket kunde inte identifieras · Skickas som det är skrivet",
+      "hintDetecting": "Identifierar kundens språk…",
+      "chip": {
+        "aria": "Översättningsspråk",
+        "target": "→ {language}",
+        "sameLanguage": "Samma språk som arbetsytan",
+        "unknown": "Språket är okänt",
+        "hasFiles": "Meddelanden med filer översätts inte",
+        "off": "Översättning av"
+      },
+      "popover": {
+        "customerLanguage": "Kundens språk",
+        "chooseLanguage": "Välj ett språk"
+      },
+      "preview": {
+        "title": "Kundförhandsvisning · {language}",
+        "translating": "Översätter…",
+        "needsRetranslate": "Behöver översättas igen",
+        "retranslate": "Översätt igen",
+        "failed": "Kunde inte översätta – nytt försök görs när du skickar",
+        "done": "Klar",
+        "ready": "Redo att skickas"
+      }
+    },
+    "send": {
+      "translating": "Översätter…",
+      "failed": "Översättningen misslyckades",
+      "turnedOff": "Översättning är inte tillgänglig. Översättning har stängts av för den här konversationen."
+    }
   },
   "muse": {
     "autoReply": {
@@ -3224,7 +3347,10 @@
       "label": "Aviseringstyp",
       "newMessageToHuman": "Nytt meddelande till människa",
       "newOrder": "Ny beställning",
-      "notifyAdmin": "Avisera administratör"
+      "notifyAdmin": "Avisera administratör",
+      "postFailed": "Inlägg misslyckades",
+      "postNeedsReview": "Inlägg behöver granskas",
+      "publishConnection": "Publiceringsanslutning behöver uppmärksamhet"
     },
     "number": {
       "label": "Nummer",
@@ -3891,7 +4017,8 @@
       "pipelines": "Pipelines",
       "places": "Platser",
       "templates": "Mallar",
-      "polls": "Polls"
+      "polls": "Polls",
+      "posts": "Inlägg"
     },
     "adReferral": {
       "label": "Ads",
@@ -4024,6 +4151,9 @@
         "skip": "Hittades inte",
         "error": "Misslyckades"
       }
+    },
+    "tiktokPublishing": {
+      "label": "TikTok-publicering"
     }
   },
   "flowAnalytics": {
@@ -4743,7 +4873,8 @@
       "replyToNewContactsOnly": "Svara endast nya kontakter",
       "replyToNewContactsOnlyDescription": "Svara automatiskt endast personer som aldrig tidigare har varit en kontakt i din arbetsyta.",
       "replyToUsersWhoCommentedOnOtherPosts": "Svara användare som har kommenterat andra inlägg",
-      "replyToUsersWhoCommentedOnOtherPostsDescription": "Fortsätt svara användare som redan har kommenterat dina andra inlägg."
+      "replyToUsersWhoCommentedOnOtherPostsDescription": "Fortsätt svara användare som redan har kommenterat dina andra inlägg.",
+      "likeUserCommentUnavailable": "Inte tillgängligt på Instagram. Alternativet hoppas över; stäng av det för att ta bort det."
     },
     "postIdPlaceholder": "Ange ett inläggs-ID per rad...",
     "postIdTab": "Inläggs-ID",
@@ -4875,7 +5006,8 @@
       "delayMustBeZero": "Delay value must be zero for the selected timing option.",
       "atLeastOneFieldRequired": "At least one field is required.",
       "replyTextRequired": "Ange minst ett svarsmeddelande.",
-      "hideKeywordsRequired": "Enter at least one keyword to hide comments by keyword."
+      "hideKeywordsRequired": "Enter at least one keyword to hide comments by keyword.",
+      "hashtagsRequired": "Lägg till minst en hashtagg."
     },
     "hideCommentsDescription": "Endast svar på översta nivån till dina inlägg kan döljas.",
     "hideComments": {
@@ -4991,13 +5123,18 @@
       "delayMustBeZero": "Delay value must be zero for the selected timing option.",
       "hideKeywordsRequired": "Enter at least one keyword to hide comments by keyword.",
       "atLeastOneFieldRequired": "At least one field is required.",
-      "replyTextRequired": "Ange minst ett svarsmeddelande."
+      "replyTextRequired": "Ange minst ett svarsmeddelande.",
+      "hashtagsRequired": "Lägg till minst en hashtagg."
     },
     "privateReply": "Private reply (Comment-to-Message)",
     "privateReplyDescription": "Send a direct message to the commenter. TikTok only allows this for comments it flags as high intent, so it will not fire for every matching comment.",
     "privateReplyMessage": "Private reply message",
     "privateReplyHighIntentTitle": "TikTok decides which comments can be messaged",
-    "privateReplyHighIntentNotice": "Comment-to-Message must be enabled on the connected TikTok account, and the account must be a Business Account registered in Vietnam, Indonesia or Thailand. TikTok sends the direct message only for first-level comments it flags as high intent, within 48 hours, once per comment, and not if the commenter already messaged you in the past 24 hours."
+    "privateReplyHighIntentNotice": "Comment-to-Message must be enabled on the connected TikTok account, and the account must be a Business Account registered in Vietnam, Indonesia or Thailand. TikTok sends the direct message only for first-level comments it flags as high intent, within 48 hours, once per comment, and not if the commenter already messaged you in the past 24 hours.",
+    "postHashtags": {
+      "reconnectRequired": "Det här TikTok-kontot kan ännu inte läsa videobeskrivningar, så alla kommentarer hoppas över. Anslut kontot igen under Inställningar → Kanaler → TikTok för att tillåta det.",
+      "someAccountsReconnectRequired": "Några av dina TikTok-konton kan ännu inte läsa videobeskrivningar, så deras kommentarer hoppas över. Anslut dem igen under Inställningar → Kanaler → TikTok."
+    }
   },
   "commentAutomationMissedComments": {
     "action": "Bearbeta missade kommentarer",
@@ -5865,7 +6002,10 @@
       "alreadyConnectedNote": "Den här sidan är redan ansluten",
       "noPagesDescription": "Sidor i Business Manager kräver åtkomst till Business Manager under anslutningen. Återanslut Messenger och bevilja alla begärda behörigheter.",
       "noPagesTitle": "Inga Facebook-sidor hittades",
-      "tryAgain": "Försök återansluta"
+      "tryAgain": "Försök återansluta",
+      "unavailableInsufficientPermissions": "Du behöver full administratörsåtkomst till den här sidan för att ansluta den.",
+      "unavailableMissingAccessToken": "Facebook beviljade inte åtkomst till den här sidan. Anslut igen och tillåt åtkomst.",
+      "unavailableGeneric": "Den här sidan kan inte anslutas."
     },
     "tabs": {
       "generalSettings": "Allmänna inställningar",
@@ -7132,11 +7272,102 @@
   },
   "smtp": {
     "errors": {
-      "connectionFailed": "Det går inte att ansluta till SMTP-servern. Kontrollera dina inloggningsuppgifter och försök igen."
+      "connectionFailed": "Det går inte att ansluta till SMTP-servern. Kontrollera dina inloggningsuppgifter och försök igen.",
+      "imapConnectionFailed": "Det går inte att ansluta till IMAP-postlådan. Kontrollera värd, inloggningsuppgifter och postlådans namn och försök igen."
     },
     "setting": {
-      "description": "Skicka e-post med din SMTP-server.",
+      "description": "Skicka och ta emot e-post via din SMTP-server, en IMAP-brevlåda eller en inkommande webhook.",
       "label": "(E-post) SMTP"
+    },
+    "guide": {
+      "trigger": "Installationsguide: {provider}",
+      "openDocs": "Öppna dokumentationen för {provider}",
+      "receiveImap": "Ta emot e-post",
+      "receiveImapDescription": "Kontrollera den här brevlådan varje minut och öppna en konversation för varje ny e-post. Endast e-post som kommer in efter att du aktiverat detta importeras.",
+      "imapHost": "IMAP-värd",
+      "imapPort": "IMAP-port",
+      "relayReceive": "Den här leverantören skickar bara e-post. För att ta emot svar, peka leverantörens inkommande bearbetning mot en webhook-URL.",
+      "sendOnly": "Amazon SES tar emot e-post via SNS, vilket inte stöds här. Den här inkorgen kan bara skicka e-post.",
+      "webhook": {
+        "title": "Inkommande webhook-URL",
+        "hint": "Klistra in den här URL:en i leverantörens inställningar för inkommande e-post. Alla som har den kan lägga till e-post i den här inkorgen, så behandla den som ett lösenord.",
+        "saveFirst": "Anslut först och öppna sedan den här inkorgen igen för att hämta webhook-URL:en.",
+        "show": "Visa webhook-URL",
+        "rotate": "Byt URL",
+        "copied": "Webhook-URL kopierad",
+        "failed": "Det gick inte att läsa in webhook-URL:en. Försök igen."
+      },
+      "status": {
+        "title": "Status",
+        "sending": "Skickar",
+        "receivingImap": "Tar emot: IMAP",
+        "receivingWebhook": "Tar emot: webhook",
+        "receivingOff": "Tar emot: av",
+        "lastPolled": "Senast kontrollerad {time}",
+        "neverPolled": "Inte kontrollerad än",
+        "error": "Senaste fel: {error}"
+      },
+      "errors": {
+        "title": "Vanliga fel",
+        "authFailed": "535 eller autentiseringen misslyckades: använd ett applösenord, inte ditt vanliga kontolösenord.",
+        "timeout": "Timeout: prova port 465 (SSL) i stället för 587 (STARTTLS) och kontrollera att din värd tillåter utgående anslutningar.",
+        "imap": "IMAP-inloggningen misslyckades: aktivera IMAP i brevlådans inställningar och använd samma applösenord."
+      },
+      "providers": {
+        "google": {
+          "step1": "Aktivera tvåstegsverifiering för Google-kontot.",
+          "step2": "Skapa ett applösenord (Google-konto > Säkerhet > Applösenord).",
+          "step3": "Ange hela Gmail-adressen som användarnamn och applösenordet som lösenord.",
+          "step4": "För att ta emot e-post, aktivera IMAP i Gmail (Inställningar > Vidarebefordran och POP/IMAP) och slå på Ta emot e-post nedan."
+        },
+        "outlook": {
+          "step1": "Aktivera tvåstegsverifiering för Microsoft-kontot.",
+          "step2": "Skapa ett applösenord i säkerhetsinställningarna för ditt Microsoft-konto.",
+          "step3": "Använd hela adressen som användarnamn och applösenordet som lösenord.",
+          "note": "Microsoft fasar ut grundläggande autentisering för Exchange Online. Om anslutningen nekas kan din organisation ha stängt av den."
+        },
+        "yahoo": {
+          "step1": "Aktivera tvåstegsverifiering i säkerhetsinställningarna för ditt Yahoo-konto.",
+          "step2": "Generera ett applösenord för den här anslutningen.",
+          "step3": "Använd din Yahoo-adress som användarnamn och applösenordet som lösenord."
+        },
+        "zoho": {
+          "step1": "Aktivera tvåfaktorsautentisering för ditt Zoho-konto.",
+          "step2": "Skapa ett applikationsspecifikt lösenord.",
+          "step3": "Använd din Zoho-adress som användarnamn och det lösenordet som lösenord. IMAP måste vara aktiverat i Zoho Mails inställningar."
+        },
+        "sendgrid": {
+          "step1": "Skapa en API-nyckel med behörigheten Mail Send. Använd användarnamnet apikey och nyckeln som lösenord.",
+          "step2": "För att ta emot e-post, anslut, öppna sedan den här inkorgen igen och kopiera webhook-URL:en.",
+          "step3": "Lägg i SendGrid till URL:en under Settings > Inbound Parse och bocka i \"POST the raw, full MIME message\"."
+        },
+        "mailgun": {
+          "step1": "Använd SMTP-uppgifterna för din skickande domän (Sending > Domain settings > SMTP credentials).",
+          "step2": "För att ta emot e-post, anslut, öppna sedan den här inkorgen igen och kopiera webhook-URL:en.",
+          "step3": "Skapa i Mailgun en mottagningsregel som vidarebefordrar till URL:en."
+        },
+        "postmark": {
+          "step1": "Använd din servers API-token som både användarnamn och lösenord.",
+          "step2": "För att ta emot e-post, anslut, öppna sedan den här inkorgen igen och kopiera webhook-URL:en.",
+          "step3": "Ange den i Postmark som Inbound Webhook för din server och inkludera det råa e-postinnehållet."
+        },
+        "brevo": {
+          "step1": "Använd din SMTP-inloggning för Brevo och en SMTP-nyckel som lösenord.",
+          "step2": "För att ta emot e-post, anslut, öppna sedan den här inkorgen igen och kopiera webhook-URL:en.",
+          "step3": "Lägg i Brevo till URL:en som en webhook för inkommande bearbetning för din mottagande domän.",
+          "note": "Brevo skickar inte med bilagor i inkommande e-post, så bilagor tas inte emot."
+        },
+        "amazonSes": {
+          "step1": "Skapa SMTP-uppgifter i Amazon SES-konsolen. De skiljer sig från dina AWS-åtkomstnycklar.",
+          "step2": "Använd SMTP-slutpunkten för din SES-region som värd och verifiera avsändaradressen.",
+          "step3": "Ange SMTP-användarnamnet och lösenordet från konsolen.",
+          "note": "Den här inkorgen kan bara skicka e-post."
+        },
+        "other": {
+          "step1": "Fråga din e-postleverantör efter SMTP-värd och port. Port 587 använder STARTTLS och 465 använder SSL.",
+          "step2": "För att ta emot e-post, fråga också efter IMAP-värd och port (vanligtvis 993) och slå sedan på Ta emot e-post nedan."
+        }
+      }
     }
   },
   "states": {
@@ -7271,6 +7502,7 @@
       "resourcesTitle": "Installerade resurser",
       "noResources": "Inget har skapats än.",
       "deletedResource": "Borttagen resurs",
+      "wholeCategory": "{count, plural, one {# objekt} other {# objekt}}",
       "viewOnly": "Endast visning",
       "created": "Skapad",
       "reused": "Återanvänd",
@@ -7325,7 +7557,12 @@
           "placeCategories": "Platskategorier"
         }
       },
-      "viewOnlyCopyIncluded": "Något du valt (eller något det behöver) installerades från en mall som bara kan visas och kan inte delas i en ny mall."
+      "viewOnlyCopyIncluded": "Något du valt (eller något det behöver) installerades från en mall som bara kan visas och kan inte delas i en ny mall.",
+      "miniAppPublishedExcluded": {
+        "title": "Mini-app utelämnad",
+        "hint": "De här flödena använder en mini-app som är publicerad på WhatsApp. Den kan inte delas, så mallen utelämnar den och installationen tar bort referensen.",
+        "item": "{flowName}: {miniAppName}"
+      }
     },
     "categories": {
       "flows": "Flöden",
@@ -7347,7 +7584,20 @@
       "aiFiles": "AI-kunskapsfiler",
       "questionnaires": "Frågeformulär",
       "couponTopics": "Kupongämnen",
-      "pipelines": "Pipelines"
+      "pipelines": "Pipelines",
+      "magicLinks": "Magiska länkar",
+      "polls": "Omröstningar",
+      "dynamicImages": "Dynamiska bilder",
+      "placeLocations": "Platser",
+      "miniApps": "Miniappar",
+      "minigames": "Minispel",
+      "leaderboards": "Topplistor",
+      "openHours": "Öppettider",
+      "vendors": "Säljare",
+      "discountCodes": "Rabattkoder",
+      "storeSettings": "Butiksinställningar",
+      "storyAutomations": "Automatisering av Instagram Stories",
+      "inboundWebhooks": "Inkommande webhook"
     },
     "locked": {
       "flowBanner": "Det här flödet installerades från en skrivskyddad mall. Du kan titta på det men inte redigera det.",
@@ -7424,6 +7674,7 @@
       "flowNotPublished": "Flowet installerades som utkast och är inte publicerat.",
       "flowSkippedRequiredReference": "Flowet hoppades över eftersom en obligatorisk referens inte kunde lösas.",
       "folder": "Ett refererat objekt hittades inte i denna arbetsyta, så länken togs bort.",
+      "inboundWebhookLimitReached": "Den här inkommande webhooken hoppades över: arbetsytan har redan det maximala antalet inkommande webhooks.",
       "inboxBindingRequired": "Välj en inkorg för denna kanal; tills dess förblir objektet inaktivt.",
       "integration": "Ett refererat objekt hittades inte i denna arbetsyta, så länken togs bort.",
       "localModifiedOverwritten": "Ett lokalt redigerat objekt skrevs över. En säkerhetskopia sparades och kan återställas.",
@@ -7444,7 +7695,25 @@
       "tag": "Ett refererat objekt hittades inte i denna arbetsyta, så länken togs bort.",
       "unlisted": "Objektet fördes inte över helt: {code}",
       "workspaceMember": "Tilldelad en medlem som inte finns i den här arbetsytan.",
-      "workspaceUnavailable": "Den här arbetsytan är inte längre tillgänglig, så objektet hoppades över."
+      "workspaceUnavailable": "Den här arbetsytan är inte längre tillgänglig, så objektet hoppades över.",
+      "scheduleExpired": "Datumen för det här objektet har redan passerat; ange nya innan du använder det.",
+      "linkNotRemapped": "En länk till ett verktyg som inte ingick i mallen lämnades oförändrad.",
+      "dynamicImage": "Den här dynamiska bilden hoppades över eftersom bakgrunden inte kunde kopieras.",
+      "dynamicImageFieldNotBound": "Välj ett anpassat fält som bilden cachas i; det ursprungliga fanns redan i din arbetsyta.",
+      "dynamicImageRerenderFailed": "Den här dynamiska bilden stängdes av eftersom bakgrunden inte kunde renderas om med dina kopierade länkar. Slå på den igen för att försöka på nytt.",
+      "pollImage": "En bild kunde inte kopieras.",
+      "leaderboardInvalid": "Den här topplistans konfiguration kunde inte installeras och hoppades över.",
+      "placeLocationInvalid": "Den här platsen hoppades över eftersom namnet är tomt.",
+      "minigame": "Minispelet som topplistan får sina poäng från ingår inte i mallen och hoppades över.",
+      "minigameImage": "En bild kunde inte kopieras.",
+      "leaderboardImage": "En bild kunde inte kopieras.",
+      "leaderboardHostMissing": "Topplistan behöver en egen kanal (eller ett minispel) som den här installationen inte gav och hoppades över.",
+      "externalStoreSkipped": "Den här arbetsytan säljer från en ansluten butik (Shopify eller WooCommerce), så produkter, säljare, rabattkoder, öppettider och butiksinställningar installerades inte.",
+      "discountCodeSkipped": "Den här rabattkoden hoppades över: produkterna eller kategorin den gäller ingår inte i mallen, eller så avvisades dess inställningar.",
+      "storeSettingsKept": "Den här arbetsytan hade redan butiksinställningar, så de behölls som de är.",
+      "vendorImage": "En bild kunde inte kopieras.",
+      "storeSettingsCurrencyKept": "Arbetsytan har produkter i en annan valuta, så dess valuta behölls i stället för mallens.",
+      "storySelectionRequired": "Välj berättelserna igen: de ursprungliga berättelserna kunde inte tas med."
     },
     "tabs": {
       "mine": "Mina mallar",
@@ -7535,7 +7804,16 @@
       "anyPipeline": "Valfri pipeline",
       "anyStage": "Valfri fas",
       "unavailablePipeline": "Borttagen eller otillgänglig pipeline",
-      "unavailableStage": "Borttaget eller otillgängligt steg"
+      "unavailableStage": "Borttaget eller otillgängligt steg",
+      "contactCommentedOnPost": "Kontakt kommenterade ett inlägg",
+      "contactFirstCommentedOnPost": "Kontakt kommenterade ett inlägg för första gången",
+      "anyInbox": "Valfri sida eller valfritt konto",
+      "unavailableInbox": "Borttagen eller otillgänglig sida eller konto",
+      "postScope": {
+        "any": "Valfritt inlägg",
+        "selected": "Specifika inlägg",
+        "publishedFromPosts": "Endast inlägg som publicerats från Inlägg"
+      }
     },
     "day": "Dag",
     "hour": "Timme",
@@ -7572,7 +7850,6 @@
   "templatesPublicPage": {
     "invalidTitle": "Den här länken är inte längre tillgänglig.",
     "invalidDescription": "Den här mallens dellänk är ogiltig, inaktiverad eller har gått ut.",
-    "byPublisher": "Av {publisherName}",
     "videoTitle": "Förhandsgranskningsvideo för mall",
     "preview": "Förhandsgranska",
     "aboutTemplate": "Om den här mallen",
@@ -7620,7 +7897,8 @@
     "maxMustBeGreaterThanMin": "{maxField} måste vara större än eller lika med {minField}",
     "maxSize": "Filstorleken överskrider maxgränsen",
     "trigger": {
-      "actionReferenceNotFound": "An action refers to a record that no longer exists. Re-select it in the action and save again."
+      "actionReferenceNotFound": "An action refers to a record that no longer exists. Re-select it in the action and save again.",
+      "postCommentPostsInvalid": "Ett valt inlägg finns inte i den här arbetsytan eller tillhör inte den valda inkorgen. Välj inläggen igen och spara igen."
     },
     "inboundWebhook": {
       "inboxRequired": "Välj en inkorg.",
@@ -9406,6 +9684,11 @@
         "lose": "Ingen vinst",
         "empty": "Inga spelloggar ännu"
       }
+    },
+    "duplicateDialog": {
+      "title": "Duplicera minispel",
+      "description": "Detta skapar en kopia av minispelet med alla inställningar. Priser och prisbilden kopieras inte, och kopian är avstängd från början – lägg till priser och slå sedan på den.",
+      "success": "Minispelet har duplicerats"
     }
   },
   "mediaLibrary": {
@@ -11856,41 +12139,138 @@
     "noWorkspaces": "Du är inte administratör för någon arbetsyta och kan därför inte auktorisera den här applikationen."
   },
   "chatbotxMcp": {
-    "title": "ChatbotX MCP",
-    "workspaceId": "Workspace ID",
-    "streamableUrl": "Streamable HTTP URL",
-    "sseUrl": "Legacy SSE URL",
+    "title": "MCP-koppling",
+    "streamableUrl": "Streamable HTTP-URL",
+    "sseUrl": "Äldre SSE-URL",
     "guide": {
-      "title": "Connect an MCP client",
-      "step1": "Copy the configuration for your MCP client.",
-      "step2": "Paste it into the client.",
-      "step3": "The client opens a browser. Sign in and approve access.",
-      "step4": "Your workspace tools appear after approval.",
-      "ownerOnly": "Only workspace owners and superAdmins can authorize MCP access."
+      "title": "Anslut en MCP-klient",
+      "subtitle": "Välj appen du använder och följ de tre stegen.",
+      "ownerOnly": "Endast arbetsytans ägare och superAdmins kan auktorisera MCP-åtkomst. Du väljer arbetsyta på godkännandesidan.",
+      "otherClients": "Alla andra MCP-kompatibla klienter fungerar också",
+      "otherIntro": "Använd dessa endpoints och konfigurationer med alla andra MCP-kompatibla klienter.",
+      "opensInNewTab": "(öppnas i en ny flik)",
+      "actions": {
+        "addConnector": "Lägg till connector",
+        "startChatting": "Börja chatta"
+      },
+      "steps": {
+        "claude": {
+          "step1": {
+            "title": "Kopiera connector-URL:en",
+            "body": "Du klistrar in den här URL:en i Claude i nästa steg."
+          },
+          "step2": {
+            "title": "Gå till Claude → Customize → Connectors → Add custom connector",
+            "body": "Knappen nedan öppnar dina connectors i Claude. Klicka på Add custom connector, ge den ett namn och klistra in URL:en. Den visas också i Claudes dator- och mobilappar."
+          },
+          "step3": {
+            "title": "Klicka på Connect och godkänn åtkomst",
+            "body": "Logga in, välj din arbetsyta och godkänn. Be sedan Claude arbeta med dina kontakter, flöden och utskick direkt i chatten."
+          }
+        },
+        "chatgpt": {
+          "step1": {
+            "title": "Kopiera connector-URL:en",
+            "body": "Du klistrar in den här URL:en i ChatGPT i nästa steg."
+          },
+          "step2": {
+            "title": "Gå till ChatGPT → Settings → Apps & Connectors → Create",
+            "body": "Knappen nedan öppnar ChatGPT-inställningarna. Om Create saknas, slå på Developer mode under Advanced settings. Namnge connectorn, klistra in URL:en och välj OAuth."
+          },
+          "step3": {
+            "title": "Anslut och godkänn åtkomst",
+            "body": "Logga in, välj din arbetsyta och godkänn. Slå sedan på connectorn i en ny chatt för att använda den."
+          }
+        },
+        "claudeCode": {
+          "step1": {
+            "title": "Kopiera installationskommandot",
+            "body": "Kör det i din terminal."
+          },
+          "step2": {
+            "title": "Logga in från Claude Code",
+            "body": "Starta Claude Code, skriv /mcp, välj servern och välj Authenticate. Ett webbläsarfönster öppnas."
+          },
+          "step3": {
+            "title": "Godkänn åtkomst",
+            "body": "Välj din arbetsyta och godkänn. Claude Code kan nu använda arbetsytans verktyg."
+          }
+        },
+        "cursor": {
+          "step1": {
+            "title": "Kopiera konfigurationen",
+            "body": "Du klistrar in den i Cursor i nästa steg."
+          },
+          "step2": {
+            "title": "Öppna Cursor Settings → MCP → Add new MCP server",
+            "body": "Klistra in konfigurationen i mcp.json och spara. Cursor visar en Login-knapp bredvid servern."
+          },
+          "step3": {
+            "title": "Godkänn åtkomst",
+            "body": "Klicka på Login, välj din arbetsyta och godkänn. Verktygen visas i Cursors agent."
+          }
+        },
+        "openclaw": {
+          "step1": {
+            "title": "Installera pluginet",
+            "body": "Kör det här kommandot i din terminal."
+          },
+          "step2": {
+            "title": "Logga in",
+            "body": "Kör det här kommandot. Ett webbläsarfönster öppnas."
+          },
+          "step3": {
+            "title": "Godkänn åtkomst",
+            "body": "Välj din arbetsyta och godkänn. OpenClaw kan nu använda arbetsytans verktyg."
+          }
+        },
+        "hermes": {
+          "step1": {
+            "title": "Kopiera konfigurationen",
+            "body": "Du lägger till den i Hermes-konfigurationen i nästa steg."
+          },
+          "step2": {
+            "title": "Lägg till den i ~/.hermes/config.yaml",
+            "body": "Klistra in den under mcp_servers i ~/.hermes/config.yaml och spara. Kör sedan det här kommandot i Hermes."
+          },
+          "step3": {
+            "title": "Godkänn åtkomst",
+            "body": "Hermes öppnar ett webbläsarfönster. Logga in, välj din arbetsyta och godkänn. Hermes kan nu använda arbetsytans verktyg."
+          }
+        }
+      }
     },
     "clients": {
+      "claude": "Claude",
       "claudeCode": "Claude Code",
       "claudeDesktop": "Claude Desktop",
       "cursor": "Cursor",
       "chatgpt": "ChatGPT",
-      "stdio": "stdio fallback",
-      "stdioHint": "Use a workspace token for this fallback."
+      "stdio": "stdio-reserv",
+      "stdioHint": "Använd en arbetsytetoken för den här reserven.",
+      "openclaw": "OpenClaw",
+      "hermes": "Hermes",
+      "other": "Andra klienter"
     },
     "grants": {
-      "title": "Authorized applications",
-      "description": "Grants belong to your account and apply to every workspace you administer; revoking disconnects the client everywhere.",
-      "empty": "OAuth grants appear here after you connect an MCP client.",
-      "client": "Client",
-      "scopes": "Scopes",
-      "firstAuthorizedAt": "First authorized",
-      "lastRefreshedAt": "Last refreshed",
-      "activeUntil": "Active until",
-      "noActiveToken": "No active token",
-      "revoke": "Revoke",
-      "revokeConfirmTitle": "Revoke application access?",
-      "revokeConfirmDescription": "Revoke access for {clientName}? This disconnects the client everywhere.",
-      "revokedSuccess": "Application access revoked.",
-      "notFound": "OAuth grant no longer exists"
+      "title": "Auktoriserade program",
+      "description": "Behörigheter tillhör ditt konto och gäller alla arbetsytor du administrerar; återkallelse kopplar bort klienten överallt.",
+      "empty": "OAuth-behörigheter visas här när du har anslutit en MCP-klient.",
+      "client": "Klient",
+      "scopes": "Omfång",
+      "firstAuthorizedAt": "Först auktoriserad",
+      "lastRefreshedAt": "Senast förnyad",
+      "activeUntil": "Aktiv till",
+      "noActiveToken": "Ingen aktiv token",
+      "revoke": "Återkalla",
+      "revokeConfirmTitle": "Återkalla programmets åtkomst?",
+      "revokeConfirmDescription": "Återkalla åtkomsten för {clientName}? Det kopplar bort klienten överallt.",
+      "revokedSuccess": "Programmets åtkomst har återkallats.",
+      "notFound": "OAuth-behörigheten finns inte längre"
+    },
+    "unavailableOnDomain": {
+      "title": "Inte tillgängligt på den här domänen",
+      "body": "Att ansluta AI-assistenter som Claude eller ChatGPT är ännu inte tillgängligt på den här domänen. Befintliga auktoriseringar visas nedan och kan fortfarande återkallas."
     }
   },
   "connectionStatus": {
@@ -11919,17 +12299,21 @@
     "add": "Lägg till",
     "addCategory": "Lägg till kategori",
     "renameCategory": "Byt namn",
-    "editCategories": "Redigera kategorier",
+    "editListing": "Redigera post",
     "templateId": "Mall-ID",
     "template": "Mall",
     "categories": "Kategorier",
     "categoriesPlaceholder": "Ingen kategori",
     "close": "Stäng",
     "removeChip": "Ta bort {name}",
+    "moreSelected": "+ {count} till",
     "categoriesHint": "Valfritt. Utan kategori visas mallen bara under “Alla”.",
+    "languages": "Språk",
+    "allLanguages": "Alla språk",
+    "languagesHint": "Valfritt. Lämna tomt för att visa mallen på alla språk.",
     "noCategoriesYet": "Inga kategorier ännu.",
     "added": "Mallen har lagts till i butiken",
-    "updated": "Kategorierna har uppdaterats",
+    "updated": "Posten uppdaterad",
     "removed": "Mallen har tagits bort från butiken",
     "removeError": "Det gick inte att ta bort mallen",
     "removeTitle": "Ta bort {name}?",
@@ -11971,16 +12355,18 @@
       "categoryLimit": "En butik kan ha högst {categoryLimit} kategorier."
     },
     "store": {
-      "subtitle": "Färdiga mallar som du installerar med ett klick.",
       "pageTitle": "{tenantName} – Mallbutik",
       "empty": "Inga mallar i butiken ännu.",
       "search": "Sök mallar",
-      "all": "Alla",
-      "categories": "Butikskategorier",
-      "noResults": "Inga mallar matchar din sökning.",
-      "clearSearch": "Rensa sökningen",
-      "by": "Av {publisherName}",
-      "loadFailed": "Det gick inte att läsa in mallarna. Försök igen senare."
+      "noResults": "Inga mallar matchar dina filter.",
+      "clearSearch": "Rensa filter",
+      "loadFailed": "Det gick inte att läsa in mallarna. Försök igen senare.",
+      "languageValue": "Språk: {language}",
+      "allLanguages": "Alla språk",
+      "otherLanguages": "Andra språk",
+      "allChannels": "Alla kanaler",
+      "channel": "Kanal",
+      "uncategorized": "Övriga"
     },
     "picker": {
       "placeholder": "Välj en mall",
@@ -11989,7 +12375,21 @@
       "error": "Det gick inte att läsa in mallar.",
       "retry": "Försök igen",
       "meta": "ID {id} · {workspace}"
-    }
+    },
+    "bulk": {
+      "setCategories": "Ange kategorier",
+      "setLanguages": "Ange språk",
+      "categoriesHint": "Ersätter kategorierna för de valda mallarna ({count}). Lämna tomt för att ta bort alla kategorier.",
+      "languagesHint": "Ersätter språken för de valda mallarna ({count}). Lämna tomt för att visa dem på alla språk.",
+      "updated": "De valda mallarna har uppdaterats",
+      "removeTitle": "Ta bort de valda mallarna?",
+      "removeDescription": "Valda: {count}. De försvinner från butiken; själva mallarna och deras installationer påverkas inte.",
+      "removed": "De valda mallarna har tagits bort från butiken",
+      "setChannels": "Ange kanaler",
+      "channelsHint": "Ersätter kanalerna för de valda mallarna ({count}). Lämna tomt för alla kanaler."
+    },
+    "channels": "Kanaler",
+    "channelsHint": "Valfritt. Lämna tomt om mallen fungerar på alla kanaler. Visas som ikoner i butiken, där besökare kan filtrera på kanal."
   },
   "accountDeletion": {
     "title": "Delete account",
@@ -12041,5 +12441,1195 @@
       "webhookRejected": "LINE rejected the webhook URL. Please try again later or contact support.",
       "providerUnavailable": "LINE is temporarily unavailable. Please try again in a moment."
     }
+  },
+  "contactSync": {
+    "menu": "Sync with AhaChat",
+    "title": "Sync with AhaChat",
+    "description": "Quickly get contacts, tags and custom fields from AhaChat for your connected pages found there.",
+    "start": "Start sync",
+    "empty": "Connect a Messenger, Instagram, Zalo or Telegram page first.",
+    "noneInAhachat": "None of your connected pages exist in AhaChat.",
+    "cooldown": "One sync every 4 hours. Next from {time}.",
+    "options": {
+      "syncTags": "Sync tags",
+      "syncCustomFields": "Sync custom fields",
+      "overwriteExisting": "Overwrite existing data",
+      "hint": "With overwrite off, only missing data is filled. Tags are never removed and empty values never clear data."
+    },
+    "advanced": {
+      "show": "Edit mappings",
+      "hide": "Hide mappings"
+    },
+    "mapping": {
+      "auto": "Match by name",
+      "saved": "Mappings saved",
+      "tags": "Tags",
+      "fields": "Custom fields",
+      "noTags": "This page has no tags.",
+      "noFields": "This page has no custom fields.",
+      "typeMismatch": "Type differs: values are skipped.",
+      "save": "Save mappings"
+    },
+    "progress": {
+      "title": "Sync progress",
+      "source": "Source",
+      "counts": "{created} created · {updated} updated · {skipped} skipped · {failed} failed",
+      "skippedValues": "{count} värden i anpassade fält hoppades över (inkompatibel typ eller ogiltigt värde)",
+      "cancel": "Cancel sync",
+      "done": "Done",
+      "requested": "Requested {time}",
+      "started": "Started {time}",
+      "finished": "finished {time}"
+    },
+    "ineligible": {
+      "notInAhachat": "Not in AhaChat",
+      "pageAmbiguous": "Matches several AhaChat pages",
+      "ahachatUnavailable": "AhaChat unavailable. Try again."
+    },
+    "status": {
+      "pending": "Waiting",
+      "running": "Running",
+      "cancelling": "Cancelling",
+      "succeeded": "Completed",
+      "partial": "Partly completed",
+      "failed": "Failed",
+      "cancelled": "Cancelled"
+    },
+    "runErrors": {
+      "inboxUnavailable": "The inbox was disconnected.",
+      "sourceUnavailable": "AhaChat returned unexpected data.",
+      "sourceDisconnected": "The AhaChat page was removed.",
+      "pageLimitReached": "Stopped at the per-page limit.",
+      "maxAttempts": "Stopped after repeated failures.",
+      "channelUnsupported": "Contacts of this channel can no longer be synced.",
+      "pageNotFound": "The page was removed from AhaChat."
+    },
+    "errors": {
+      "alreadyRunning": "A sync is already running in this workspace.",
+      "cooldown": "You can sync once every 4 hours.",
+      "noSources": "Choose at least one page.",
+      "tooManySources": "Too many pages in one sync.",
+      "sourceNotEligible": "One of the pages cannot be synced.",
+      "mappingInvalid": "Some mappings are invalid.",
+      "forbidden": "Only a workspace admin can sync contacts from AhaChat.",
+      "generic": "Something went wrong. Try again.",
+      "sourceUnavailable": "AhaChat could not be reached. Try again shortly.",
+      "notConfigured": "The AhaChat sync is not set up on this server."
+    },
+    "history": {
+      "open": "Sync history",
+      "title": "AhaChat sync history",
+      "run": "Sync details",
+      "empty": "No syncs yet.",
+      "columns": {
+        "pages": "Pages",
+        "created": "Created",
+        "updated": "Updated",
+        "skipped": "Skipped",
+        "failed": "Failed",
+        "finishedAt": "Finished"
+      }
+    },
+    "followUp": {
+      "statusLine": "History sync: {status}",
+      "pending": "History syncs after this import",
+      "linked": "History sync started",
+      "cancelled": "Cancelled: the page was disconnected",
+      "channelUnavailable": "Not started: the page is no longer connected",
+      "superseded": "A newer import of this page syncs history",
+      "workspaceUnavailable": "Not started: the workspace is unavailable",
+      "expired": "Not started: it waited too long",
+      "retry": "Retry",
+      "retried": "History sync starts shortly"
+    },
+    "source": {
+      "mapsTo": "{channel} → AhaChat: {page}"
+    }
+  },
+  "deleteAccountPage": {
+    "title": "Radera ditt ChatbotX-konto",
+    "intro": "Du kan radera ditt konto och dess data på något av följande sätt.",
+    "waysTitle": "Så raderar du ditt konto",
+    "wayMobile": "I mobilappen: Inställningar → Radera konto.",
+    "wayWeb": "På webben: logga in och öppna sidan för kontoradering.",
+    "wayWebLink": "Öppna kontoradering",
+    "wayEmail": "Via e-post: skriv till {email} från din registrerade adress.",
+    "whatHappensTitle": "Vad som händer sedan",
+    "whatHappens": "Raderingen startar efter en respitperiod på 24 timmar och kan inte ångras. Avsluta alla prenumerationer först.",
+    "deletedTitle": "Data vi raderar",
+    "deleted": "Din profil (namn och e-post), inloggningsuppgifter, tokens för pushnotiser och varje workspace du äger, inklusive kontakter, konversationer, meddelanden och uppladdade filer.",
+    "sharedWorkspace": "Om andra är medlemmar i en workspace du äger raderas den även för dem.",
+    "retainedTitle": "Data vi behåller",
+    "retained": "Anteckningar du skrivit i andras workspaces finns kvar, utan ditt namn. En post om att raderingen har skett behålls. Faktureringsuppgifter kan behållas så länge lagen kräver."
+  },
+  "ahachatImport": {
+    "dialogTitle": "Use data from AhaChat?",
+    "dialogDescription": "{page} is already on AhaChat. Use its data so contacts arrive right away and the history sync runs faster.",
+    "importFirst": "Use AhaChat",
+    "historyOnly": "Skip AhaChat",
+    "panelDescription": "Contacts, tags and custom fields come from AhaChat; history syncs on its own.",
+    "errors": {
+      "unknown": "Couldn't start the AhaChat import. Try again later.",
+      "historyNotStarted": "Couldn't start the import or the history sync. Try again later."
+    },
+    "badge": {
+      "onAhachat": "On AhaChat",
+      "selected": "Uses AhaChat data"
+    }
+  },
+  "conversationParticipants": {
+    "joined": "{names} har deltagit i konversationen",
+    "replied": "{name} svarade {time}",
+    "showMore": "Visa mer",
+    "label": "Vem som har svarat i den här konversationen",
+    "unnamedMember": "Medlem",
+    "loadMoreFailed": "Det gick inte att läsa in fler medlemmar",
+    "lastMessageBy": "Senaste meddelandet från {name}"
+  },
+  "posts": {
+    "title": "Inlägg",
+    "searchPlaceholder": "Sök på text, länk eller inläggs-ID",
+    "dateFrom": "Från datum",
+    "dateTo": "Till datum",
+    "export": {
+      "title": "Exportera kommentarer från inläggen i detta datumintervall (upp till {count} inlägg)",
+      "needsRange": "Välj ett startdatum och ett slutdatum för att exportera kommentarer.",
+      "nothing": "Inga inlägg matchar dessa filter i detta datumintervall.",
+      "failed": "Exporten misslyckades. Försök igen.",
+      "done": "{count, plural, one {Kommentarer från # inlägg exporterades.} other {Kommentarer från # inlägg exporterades.}}",
+      "doneLimited": "Kommentarer från de {count} senaste inläggen exporterades. Fler inlägg matchar; begränsa datumen för att exportera resten.",
+      "truncated": "Exporten avkortades vid radgränsen. Begränsa datumen eller filtren för att exportera resten.",
+      "quotaExceeded": "Kontots meddelandekvot är förbrukad, så nedladdningen genomfördes inte. Uppgradera abonnemanget eller vänta till nästa faktureringsperiod.",
+      "blocked": "Planen eller provperioden för den här arbetsytan har gått ut.",
+      "menu": "Exportera",
+      "rowsTitle": "Exportera listan över inlägg (en rad per inlägg)",
+      "rowsDone": "Listan över inlägg exporterades.",
+      "rowsTruncated": "Listan kortades vid gränsen för inlägg. Begränsa filtren för att exportera resten."
+    },
+    "showAllPosts": "Visa även inlägg utan kommentarer",
+    "noCaption": "Ingen text",
+    "liveNow": "Live",
+    "empty": "Inga inlägg matchar filtren.",
+    "loadMore": "Ladda fler",
+    "columns": {
+      "content": "Inlägg",
+      "topic": "Ämne",
+      "author": "Författare",
+      "pages": "Sidor",
+      "status": "Status"
+    },
+    "contentType": {
+      "text": "Text",
+      "photo": "Foto",
+      "video": "Video",
+      "reel": "Reel",
+      "carousel": "Karusell",
+      "story": "Story",
+      "live": "Live",
+      "link": "Länk",
+      "audio": "Ljud",
+      "other": "Övrigt"
+    },
+    "filters": {
+      "channel": "Kanal",
+      "allChannels": "Alla kanaler",
+      "inbox": "Sida / konto",
+      "allInboxes": "Alla sidor och konton",
+      "postType": "Inläggstyp",
+      "commentSettings": "Kommentarsinställningar",
+      "hidden": "Kommentarer dolda",
+      "notHidden": "Kommentarer inte dolda",
+      "phoneHidden": "Kommentarer med telefonnummer dolda",
+      "phoneNotHidden": "Kommentarer med telefonnummer inte dolda",
+      "skipped": "Kommentarer överhoppade",
+      "notSkipped": "Kommentarer inte överhoppade",
+      "sort": "Sortera",
+      "topics": "Ämnen",
+      "title": "Filter",
+      "engagement": "Engagemang",
+      "topicSearch": "Sök ämnen",
+      "author": "Författare",
+      "allAuthors": "Alla författare"
+    },
+    "postType": {
+      "all": "Alla",
+      "photo": "Foto",
+      "video": "Video",
+      "post": "Inlägg",
+      "pastLive": "Avslutad livesändning",
+      "liveNow": "Live nu"
+    },
+    "sort": {
+      "newest": "Senaste",
+      "mostComments": "Flest kommentarer",
+      "fewestComments": "Färrest kommentarer",
+      "mostPhones": "Flest telefonnummer",
+      "fewestPhones": "Färrest telefonnummer",
+      "mostEngagement": "Mest engagemang",
+      "leastEngagement": "Minst engagemang",
+      "mostShares": "Flest delningar",
+      "fewestShares": "Färrest delningar"
+    },
+    "settings": {
+      "hideComments": "Dölj alla kommentarer",
+      "hidePhoneComments": "Dölj kommentarer med telefonnummer",
+      "skipComments": "Hoppa över kommentarer (markera som lästa)",
+      "unavailable": "Den här kanalen stöder ännu inte kommentarsinställningar per inlägg."
+    },
+    "sync": {
+      "refresh": "Uppdatera inlägg",
+      "started": "Synkroniserar inlägg. Nya inlägg visas inom kort.",
+      "alreadyRunning": "En synkronisering pågår redan eller blev nyss klar.",
+      "failedCount": "{count, plural, one {# sida kunde inte synkroniseras} other {# sidor kunde inte synkroniseras}}",
+      "reconnect": "Anslut kanalen igen",
+      "reconnectWithPermission": "Anslut igen och tillåt åtkomst till inlägg",
+      "retry": "Försök igen"
+    },
+    "topics": {
+      "edit": "Redigera ämnen",
+      "newPlaceholder": "Namn på nytt ämne",
+      "empty": "Inga ämnen än. Skriv ett namn för att skapa ett."
+    },
+    "emptyHint": "Prova ett annat filter eller slå på ”Visa även inlägg utan kommentarer”.",
+    "actions": {
+      "viewComments": "Visa kommentarer",
+      "viewOriginal": "Visa originalinlägget",
+      "refreshPost": "Uppdatera från kanalen",
+      "refreshRemoved": "Det här inlägget finns inte längre på kanalen och har därför dolts.",
+      "refreshUnavailable": "Inlägget kunde inte läsas från kanalen. Försök igen senare.",
+      "refreshRateLimited": "Kanalen bad oss sakta ner. Försök igen om några minuter.",
+      "refreshCooldown": "Det här inlägget uppdaterades nyss. Försök igen om en minut.",
+      "downloadPhones": "Ladda ner telefonnummer",
+      "downloadComments": "Ladda ner kommentarer",
+      "viewDetails": "Visa detaljer"
+    },
+    "merge": {
+      "title": "Slå ihop inlägg",
+      "selectAll": "Markera alla",
+      "selected": "{count} av {max} markerade",
+      "confirm": "Slå ihop inlägg"
+    },
+    "comments": {
+      "title": "Alla kommentarer på det här inlägget",
+      "mergedTitle": "Sammanslagna kommentarer från {count} inlägg",
+      "searchPlaceholder": "Sök kommentarer",
+      "phoneOnly": "Med telefonnummer",
+      "empty": "Inga kommentarer att visa.",
+      "loadOlder": "Ladda äldre kommentarer",
+      "like": "Gilla kommentar",
+      "delete": "Ta bort kommentar",
+      "confirmDelete": "Klicka igen för att ta bort",
+      "hidden": "Dold",
+      "unknownAuthor": "Okänd kund"
+    },
+    "state": {
+      "noChannelTitle": "Ingen kanal ansluten",
+      "noChannelHint": "Anslut en Messenger-, Instagram-, Threads- eller TikTok-kanal för att se inläggen här.",
+      "connectChannel": "Anslut en kanal",
+      "neverSyncedTitle": "Inlägg inte inlästa ännu",
+      "neverSyncedHint": "Läs in inläggen från dina anslutna kanaler. Det körs i bakgrunden och kan ta några minuter.",
+      "loadPosts": "Läs in inlägg"
+    },
+    "counts": {
+      "comments": "Kommentarer",
+      "reactions": "Reaktioner",
+      "shares": "Delningar",
+      "phones": "Kommentarer med telefonnummer"
+    },
+    "tabs": {
+      "posts": "Inlägg",
+      "calendar": "Kalender",
+      "connect": "Anslut",
+      "feeds": "Flöden",
+      "analytics": "Analys"
+    },
+    "calendar": {
+      "views": {
+        "month": "Månad",
+        "week": "Vecka",
+        "day": "Dag",
+        "list": "Lista"
+      },
+      "viewLabel": "Kalendervy",
+      "previous": "Föregående period",
+      "next": "Nästa period",
+      "today": "Idag",
+      "network": "Nätverk",
+      "destination": "Sida eller profil",
+      "allNetworks": "Alla nätverk",
+      "allDestinations": "Alla sidor och profiler",
+      "noText": "(Ingen text)",
+      "noDate": "Inget datum",
+      "noDateEmpty": "Utkast utan datum visas här. Släpp ett inlägg här för att flytta tillbaka det till utkast.",
+      "newPostOn": "Nytt inlägg den {date}",
+      "more": "+{count} till",
+      "emptyDay": "Inga inlägg den här dagen.",
+      "emptyHint": "Inget är schemalagt under den här perioden.",
+      "loading": "Läser in…",
+      "loadError": "Kalendern kunde inte läsas in.",
+      "retry": "Försök igen",
+      "readOnly": "Den här arbetsytan är skrivskyddad, så inlägg kan inte flyttas eller skapas.",
+      "truncated": "Bara en del av inläggen under den här perioden visas. Begränsa perioden eller filtrera efter nätverk eller konto.",
+      "openPost": "Öppna inlägg",
+      "moveToDrafts": "Flytta till utkast",
+      "reschedule": "Schemalägg om",
+      "schedule": "Schemalägg",
+      "rescheduleLabel": "Publiceringstid",
+      "scheduleLabel": "Schemalägg för",
+      "pickTime": "Välj datum och tid",
+      "status": {
+        "draft": "Utkast"
+      },
+      "errors": {
+        "past": "Välj en tid minst 15 minuter från nu.",
+        "cannotUnschedule": "Bara ett schemalagt inlägg kan flyttas tillbaka till utkast."
+      },
+      "list": {
+        "filterLabel": "Filtrera efter status",
+        "filterCount": "{label}, {count, plural, one {# inlägg} other {# inlägg}}",
+        "filters": {
+          "all": "Alla",
+          "drafts": "Utkast",
+          "scheduled": "Schemalagda",
+          "published": "Publicerade",
+          "needsAttention": "Kräver uppmärksamhet"
+        },
+        "empty": {
+          "all": "Inga inlägg",
+          "drafts": "Inga utkast",
+          "scheduled": "Inga schemalagda inlägg",
+          "published": "Inga publicerade inlägg",
+          "needsAttention": "Inget kräver uppmärksamhet"
+        },
+        "loadMore": "Ladda fler"
+      },
+      "freeSlots": {
+        "label": "Lediga publiceringstider",
+        "compose": "Nytt inlägg kl. {time}",
+        "truncated": "Fler lediga tider visas inte"
+      }
+    },
+    "connect": {
+      "title": "Anslut",
+      "connectNetwork": "Anslut {network}",
+      "reconnect": "Anslut igen",
+      "reconnectName": "{label}: {name}",
+      "facebookReconnectHint": "När du ansluter en Sida igen uppdateras alla Sidor med samma Facebook-inloggning.",
+      "comingSoon": "Inte tillgängligt än",
+      "connectedAlready": "{count, plural, one {# konto anslutet. Klicka för att lägga till ett till.} other {# konton anslutna. Klicka för att lägga till ett till.}}",
+      "truncated": "Visar de första {count} sidorna.",
+      "tiktokTitle": "TikTok-konton för publicering",
+      "pageCount": "{count, plural, one {# sida} other {# sidor}}",
+      "verify": "Verifiera",
+      "verified": "Kontot verifierat.",
+      "syncDestinations": "Synkronisera sidor",
+      "destinationsSynced": "Sidor och profiler uppdaterade.",
+      "disconnect": "Koppla från",
+      "confirmDisconnect": "Klicka igen för att koppla från",
+      "disconnected": "Kontot frånkopplat.",
+      "missingScopes": "Behörigheter saknas: {scopes}. Anslut igen för att ge dem.",
+      "lastVerified": "Verifierat {date}",
+      "status": {
+        "connected": "Ansluten",
+        "needsReauth": "Måste anslutas igen",
+        "disconnected": "Frånkopplad"
+      },
+      "reason": {
+        "tokenRejected": "Plattformen avvisade den sparade inloggningen. Anslut kontot igen.",
+        "tokenExpired": "Den sparade inloggningen har gått ut. Anslut kontot igen.",
+        "refreshRejected": "Plattformen vägrade förnya inloggningen. Anslut kontot igen.",
+        "permissionNotGranted": "Vissa behörigheter saknas. Anslut kontot igen för att ge dem."
+      },
+      "emptyTitle": "Inga kanaler anslutna än",
+      "emptyAction": "Gå till kanaler",
+      "schedule": {
+        "open": "Publiceringstider",
+        "title": "Publiceringstider för {name}",
+        "description": "Ett inlägg som läggs i kön får nästa lediga tid i den här listan.",
+        "timezone": "Tidszon: {timezone}",
+        "maxTimes": "Upp till {count} tider per dag",
+        "dayOn": "Publicera på {day}",
+        "noTimes": "Inga tider",
+        "addTime": "Lägg till tid",
+        "timeLabel": "Ny tid för {day}",
+        "removeTime": "Ta bort {time}",
+        "copyTo": "Kopiera till andra dagar",
+        "copyApply": "Kopiera",
+        "save": "Spara",
+        "saved": "Publiceringstiderna sparades.",
+        "reflowMoved": "{count, plural, one {# köat inlägg flyttades till en ny tid.} other {# köade inlägg flyttades till nya tider.}}",
+        "reflowDetached": "{count, plural, one {# köat inlägg har ingen publiceringstid kvar. Det behåller sin tid men ligger inte längre i kön (nu anpassat).} other {# köade inlägg har ingen publiceringstid kvar. De behåller sina tider men ligger inte längre i kön (nu anpassade).}}"
+      }
+    },
+    "detail": {
+      "title": "Inläggsdetaljer",
+      "caption": "Text",
+      "metrics": "Engagemang",
+      "metricsUnavailable": "Den här kanalen rapporterar inte dessa siffror.",
+      "views": "Visningar",
+      "settings": "Kommentarsinställningar",
+      "settingsHint": "Inställningarna gäller nya kommentarer på inlägget. Befintliga kommentarer ändras inte.",
+      "skipCommentsHint": "Markera varje ny kommentar som läst. Automatiseringar körs ändå.",
+      "hideCommentsHint": "Dölj varje ny kommentar på inlägget.",
+      "hidePhoneCommentsHint": "Dölj nya kommentarer med telefonnummer.",
+      "topics": "Ämnen",
+      "info": "Information",
+      "postId": "Inläggs-ID",
+      "channel": "Kanal",
+      "contentType": "Typ",
+      "author": "Författare",
+      "publishedAt": "Publicerat",
+      "metricsUpdated": "Siffror uppdaterade",
+      "never": "Inte mätt än",
+      "ownerPage": "Sida",
+      "ownerAccount": "Konto"
+    },
+    "feeds": {
+      "title": "Automatisk publicering från flöden",
+      "description": "Gör nya objekt från ett RSS- eller Atom-flöde till inlägg. Den första kontrollen registrerar bara vad flödet redan innehåller.",
+      "add": "Lägg till flöde",
+      "empty": "Inga flöden än. Lägg till ett för att automatiskt göra nya artiklar till inlägg.",
+      "status": {
+        "active": "Aktivt",
+        "paused": "Pausat",
+        "error": "Pausad – fel i flödet"
+      },
+      "mode": {
+        "draft": "Spara som utkast",
+        "queue": "Köa automatiskt"
+      },
+      "lastChecked": "Senast kontrollerad {time}",
+      "neverChecked": "Inte kontrollerad än",
+      "firstCheckPending": "Den första kontrollen registrerar bara vad flödet redan innehåller; inga inlägg skapas av det.",
+      "every": "Var {minutes}:e min",
+      "destinations": "{count, plural, one {# destination} other {# destinationer}}",
+      "actions": {
+        "checkNow": "Kontrollera nu",
+        "pause": "Pausa",
+        "resume": "Återuppta",
+        "edit": "Redigera",
+        "delete": "Ta bort",
+        "items": "Objekt",
+        "sendTest": "Skicka test"
+      },
+      "toast": {
+        "checkStarted": "Kontrollen har startat",
+        "paused": "Flödet pausat",
+        "resumed": "Flödet återupptaget",
+        "deleted": "Flödet borttaget",
+        "saved": "Flödet sparat",
+        "testDraftCreated": "Testutkast skapat",
+        "openDraft": "Öppna utkast",
+        "testUsedTemplate": "AI kunde inte skriva texten, så textmallen användes."
+      },
+      "deleteConfirm": "Ta bort det här flödet och historiken för dess objekt? Redan skapade inlägg finns kvar.",
+      "error": {
+        "blocked": "Flödesadressen är inte tillåten.",
+        "timeout": "Flödet tog för lång tid på sig att svara.",
+        "tooLarge": "Flödet är större än 2 MB.",
+        "badStatus": "Flödet svarade med ett fel.",
+        "badContentType": "Adressen är inte ett RSS- eller Atom-flöde.",
+        "unreachable": "Flödet kunde inte nås.",
+        "tooManyRedirects": "Flödet omdirigerar för många gånger.",
+        "invalidFeed": "Flödet kunde inte läsas.",
+        "internal": "Något gick fel när flödet kontrollerades.",
+        "postRefused": "Ett inlägg kunde inte skapas (till exempel finns ingen ledig publiceringstid, eller så är arbetsytan blockerad). Nästa kontroll försöker igen."
+      },
+      "apiError": {
+        "feedUrlTaken": "Det här flödet är redan tillagt.",
+        "feedCheckCooldown": "Ett flöde kan bara kontrolleras manuellt en gång var 5:e minut.",
+        "feedPreviewRateLimited": "För många förhandsvisningar. Försök igen senare.",
+        "feedNotParseable": "Den här adressen är inte ett RSS- eller Atom-flöde. Prova att lägga till /feed eller /rss i webbplatsens adress.",
+        "feedUnreachable": "Adressen gick inte att nå. Kontrollera den och försök igen.",
+        "feedTestRateLimited": "För många testinlägg. Försök igen senare.",
+        "feedHasNoItems": "Flödet har inga objekt ännu.",
+        "feedFetchRateLimited": "För många kontroller av flödesadresser. Försök igen senare.",
+        "feedCheckInProgress": "En kontroll av det här flödet väntar eller pågår redan."
+      },
+      "form": {
+        "createTitle": "Lägg till flöde",
+        "editTitle": "Redigera flöde",
+        "name": "Namn",
+        "url": "Flödesadress",
+        "urlPlaceholder": "https://example.com/feed.xml",
+        "preview": "Förhandsgranska",
+        "previewEmpty": "Inga objekt hittades i det här flödet.",
+        "destinations": "Publicera på",
+        "noDestinations": "Anslut först ett konto i sociala medier.",
+        "interval": "Kontrollera var",
+        "dailyCap": "Max antal inlägg per dag",
+        "mode": "Nya objekt blir",
+        "modeDraftHelp": "Varje nytt objekt blir ett utkast som du kan granska.",
+        "modeQueueHelp": "Varje nytt objekt köas enligt destinationens publiceringsschema och publiceras utan granskning.",
+        "template": "Inläggstext",
+        "templateHelp": "Variabler du kan använda: {variables}",
+        "save": "Spara",
+        "cancel": "Avbryt",
+        "didYouMean": "Menade du {url}?",
+        "useSuggestion": "Använd",
+        "aiWrite": "Skriv varje inlägg med AI",
+        "aiWriteHelp": "AI skriver texten utifrån objektets rubrik, sammanfattning och länk. Om det inte går används textmallen nedan.",
+        "aiInstructions": "Extra instruktioner till AI (valfritt)",
+        "aiInstructionsHelp": "Till exempel: vänlig ton, nämn butikens namn. Upp till 300 tecken.",
+        "postLatestOnFirstCheck": "Publicera det senaste objektet vid första kontrollen",
+        "postLatestOnFirstCheckHelp": "Utan detta registrerar den första kontrollen bara det flödet redan har.",
+        "contentTitle": "Inläggets innehåll",
+        "templateInsert": "Infoga fält",
+        "templateVariables": "Objektets fält",
+        "templateFeedFields": "Fält som hittats i detta flöde",
+        "templatePresets": "Börja från en mall",
+        "presetTitleLink": "Rubrik och länk",
+        "presetSummaryHashtags": "Rubrik, sammanfattning, länk och hashtaggar",
+        "presetProduct": "Produkt: rubrik, pris och länk",
+        "templateLegacy": "Det här flödet använder de gamla {token}-tecknen och fortsätter publicera som förut tills du konverterar det.",
+        "templateConvert": "Konvertera till den nya syntaxen",
+        "templateHint": "Infoga fält från menyn eller skriv dem, till exempel {example}. Tillgängliga filter: {filters}.",
+        "templateProblem": "Rad {line}, kolumn {column}: {message}",
+        "previewTitle": "Förhandsvisning",
+        "previewSample": "Exempelobjekt",
+        "previewHint": "Förhandsgranska flödets adress för att se hur ett inlägg ser ut.",
+        "previewCharacters": "{network}: {count} tecken",
+        "previewDropped": "Destinationer som utelämnats från detta inlägg: {count}",
+        "previewFiltered": "Filtrerat bort: {reason}",
+        "previewSkipped": "Det här objektet skulle hoppas över.",
+        "previewNoPicture": "Ingen bild",
+        "mediaTitle": "Bilder",
+        "mediaMode": "Bildkälla",
+        "mediaModeAuto": "Från flödet (automatiskt)",
+        "mediaModeField": "Från ett fält eller en adress",
+        "mediaModeNone": "Ingen bild",
+        "mediaField": "Fält eller adress",
+        "mediaFieldHelp": "En mall som ger bildens adress, till exempel {example}.",
+        "mediaLibrary": "Reservbilder",
+        "mediaLibraryHelp": "Från ditt mediebibliotek; används när ett objekt saknar egen bild.",
+        "mediaLibraryAdd": "Lägg till bilder",
+        "mediaRemove": "Ta bort",
+        "postAs": "Publicera som",
+        "postAsPhoto": "Bildinlägg",
+        "postAsLink": "Länk",
+        "postAsText": "Endast text",
+        "postAsHelpLink": "Länk: ett förhandsgranskningskort med artikelns bild på Facebook och Threads.",
+        "postAsHelpPhoto": "Bildinlägg: objektets bild publiceras tillsammans med texten.",
+        "postAsHelpText": "Endast text: bara orden och adressen, utan bild.",
+        "postAsTextFacebookWarning": "Facebook skapar inget förhandsgranskningskort (bild) för en länk i texten. Välj Länk för att få kortet med artikelns bild.",
+        "noImageFallback": "När ett objekt saknar bild",
+        "fallbackLink": "Dela länken",
+        "fallbackText": "Endast text",
+        "fallbackSkip": "Hoppa över objektet",
+        "filtersTitle": "Filter",
+        "filterInclude": "Innehåller något av",
+        "filterExclude": "Innehåller inget av",
+        "filterCategories": "Kategorin är någon av",
+        "filterTermsHelp": "Skriv ett ord och tryck på Enter. Versaler och accenter ignoreras.",
+        "filterRequireImage": "Endast objekt med bild",
+        "filterMaxAge": "Endast objekt nyare än (timmar)",
+        "networkTexts": "Olika text per nätverk",
+        "networkTextsHelp": "Skriv en separat text för ett nätverk; nätverk utan egen text använder den gemensamma texten. En text som ett nätverk avvisar hoppas över och förkortas aldrig. Inlägg skrivna av AI använder en gemensam text.",
+        "networkTabShared": "Gemensam",
+        "networkTextUsesShared": "Det här nätverket använder den gemensamma texten.",
+        "networkTextClear": "Använd den gemensamma texten",
+        "networkTextAria": "Text för {network}",
+        "fetchArticleImage": "Leta efter en bild på artikelsidan",
+        "fetchArticleImageHelp": "När ett objekt saknar bild läses dess artikelsida en gång för huvudbilden (og:image). Bara för objekt som ska publiceras; en sida som inte går att läsa blockerar aldrig inlägget.",
+        "previewArticlePicture": "Artikelsidan kommer att läsas"
+      },
+      "items": {
+        "title": "Objekt från {name}",
+        "empty": "Inga objekt har kontrollerats än.",
+        "loadMore": "Visa fler",
+        "openPost": "Öppna inlägg",
+        "reasons": {
+          "existing": "Fanns redan i flödet när det lades till",
+          "undated": "Inget publiceringsdatum",
+          "tooOld": "För gammalt",
+          "perRunLimit": "Över gränsen per kontroll",
+          "noDestination": "Ingen destination vald",
+          "emptyText": "Inläggets text är tom",
+          "textTooLong": "Inläggets text är för lång",
+          "invalid": "Inlägget avvisades",
+          "other": "Objektet kunde inte användas",
+          "aiFallback": "Skrivet från mallen (AI kunde inte skriva det)",
+          "excludedKeyword": "Innehåller ett undantaget ord",
+          "missingKeyword": "Innehåller inget av de obligatoriska orden",
+          "category": "Inte i de valda kategorierna",
+          "noImage": "Ingen bild",
+          "tooOldForFilter": "Äldre än åldersfiltret",
+          "undatedForFilter": "Inget datum att kontrollera åldersfiltret mot",
+          "imageFailed": "Bilden kunde inte användas",
+          "noImageFallback": "Publicerat utan bild",
+          "droppedTargets": "Vissa destinationer utelämnades",
+          "templateError": "Mallen kunde inte återges",
+          "noDestinationAccepts": "Ingen destination kan bära det här inlägget",
+          "issueTextRequired": "Inlägget har ingen text",
+          "issueTextTooLong": "Texten är för lång för ett nätverk",
+          "issueLinkNotSupported": "Ett nätverk accepterar inte länkar",
+          "issueLinkRequired": "Ett nätverk kräver en länk",
+          "issueTooManyLinks": "Fler länkar än ett nätverk tillåter",
+          "issueContentType": "Ett nätverk publicerar inte den här typen av inlägg",
+          "issueMedia": "Bilden uppfyller inte ett nätverks regler",
+          "issueOptions": "En nätverksinställning är ogiltig",
+          "issueParts": "Ett nätverk accepterar inte fortsättningsdelar",
+          "issueDestination": "En destination kan inte publicera just nu",
+          "alreadyPosted": "Det finns redan ett inlägg för det här objektet"
+        },
+        "createPost": "Skapa inlägg",
+        "picture": "Bild: {source}",
+        "dropped": "Utelämnade: {count}",
+        "imageSources": {
+          "enclosure": "Bildbilaga",
+          "mediaContent": "Mediainnehåll",
+          "mediaThumbnail": "Miniatyr",
+          "itunesImage": "Podcastomslag",
+          "contentImage": "Bild i texten",
+          "jsonFeed": "JSON Feed-bild",
+          "field": "Fält eller adress",
+          "library": "Mediabibliotek",
+          "article": "Artikelsida (og:image)"
+        },
+        "imageErrors": {
+          "unreachable": "Bilden kunde inte hämtas.",
+          "blocked": "Bildens adress är inte tillåten.",
+          "tooBig": "Bilden är för stor.",
+          "notImage": "Filen är inte en användbar bild.",
+          "storage": "Bilden kunde inte sparas.",
+          "articleUnreachable": "Artikelsidan kunde inte läsas.",
+          "articleNoImage": "Artikelsidan anger ingen bild."
+        }
+      },
+      "outcome": {
+        "created": "Inlägg skapat",
+        "skippedOld": "Hoppades över: finns redan eller är för gammalt",
+        "skippedInvalid": "Hoppades över: nekat",
+        "skippedFiltered": "Överhoppat: filtrerat bort",
+        "skippedNoImage": "Överhoppat: ingen bild"
+      },
+      "deleteConfirmTitle": "Ta bort “{name}”?",
+      "sendTestConfirm": {
+        "title": "Skicka ett testinlägg?",
+        "description": "Ett utkast skapas från det senaste objektet i flödet, på samma sätt som flödet skulle skriva det. Inget publiceras; du kan öppna utkastet och granska det."
+      },
+      "bulkDelete": {
+        "selectAll": "Markera alla",
+        "selectFeed": "Markera {name}",
+        "deleteSelected": "Radera markerade ({count})",
+        "confirmTitle": "{count, plural, one {Radera # flöde?} other {Radera # flöden?}}",
+        "confirmDescription": "De markerade flödena och deras objekthistorik raderas. Inlägg som redan har skapats finns kvar.",
+        "success": "{count, plural, one {# flöde raderat} other {# flöden raderade}}"
+      },
+      "columns": {
+        "name": "Flöde",
+        "status": "Status",
+        "mode": "Läge",
+        "schedule": "Kontrollintervall",
+        "destinations": "Destinationer",
+        "lastChecked": "Senast kontrollerad"
+      },
+      "filters": {
+        "search": "Sök i flöden",
+        "searchPlaceholder": "Sök på namn eller flödesadress",
+        "status": "Filtrera på status",
+        "mode": "Filtrera på läge",
+        "destination": "Filtrera på destination",
+        "allStatuses": "Alla statusar",
+        "allModes": "Alla lägen",
+        "allDestinations": "Alla destinationer",
+        "destinationsSelected": "{count, plural, one {# destination} other {# destinationer}}",
+        "noDestinations": "Det finns inga destinationer att filtrera på ännu.",
+        "clear": "Rensa filter",
+        "noMatch": "Inga flöden matchar de här filtren."
+      },
+      "destinationsDialog": {
+        "title": "Destinationer för {name}",
+        "removed": "Borttagen destination",
+        "close": "Stäng",
+        "edit": "Redigera destinationer"
+      },
+      "lastRun": {
+        "noNew": "Inga nya objekt i källan",
+        "skippedOnly": "Nya objekt hoppades över (för gamla eller bortfiltrerade)",
+        "stale": "Källan returnerade en äldre kopia; kontrolleras snart igen",
+        "notModified": "Källan har inte ändrats sedan senaste kontrollen",
+        "created": "{count, plural, one {# inlägg skapat} other {# inlägg skapade}}",
+        "refused": "{count, plural, one {# objekt nekades av ett nätverk} other {# objekt nekades av ett nätverk}}",
+        "waiting": "{count, plural, one {# nytt objekt väntar på nästa kontroll} other {# nya objekt väntar på nästa kontroll}}",
+        "dailyCap": "Daglig gräns nådd ({cap} per 24 timmar) — {count, plural, one {# nytt objekt väntar} other {# nya objekt väntar}}",
+        "dailyCapUntil": "Daglig gräns nådd ({cap} per 24 timmar) — {count, plural, one {# nytt objekt väntar} other {# nya objekt väntar}}. Nästa plats frigörs: {until}"
+      }
+    },
+    "show": {
+      "label": "Visa",
+      "channels": "På kanaler"
+    },
+    "composed": {
+      "deleted": "Inlägget har tagits bort.",
+      "deleteTitle": "Ta bort det här inlägget?",
+      "deleteDescription": "Ett utkast tas bort för gott. Ett schemalagt inlägg avbryts och publiceras inte."
+    },
+    "analytics": {
+      "title": "Inläggsanalys",
+      "filters": {
+        "title": "Analysfilter",
+        "allContentTypes": "Alla innehållstyper",
+        "allTopics": "Alla ämnen"
+      },
+      "metrics": {
+        "comments": "Kommentarer",
+        "reactions": "Reaktioner",
+        "shares": "Delningar",
+        "engagement": "Engagemang",
+        "views": "Visningar"
+      },
+      "metricsLower": {
+        "comments": "kommentarer",
+        "reactions": "reaktioner",
+        "shares": "delningar",
+        "engagement": "engagemang",
+        "views": "visningar"
+      },
+      "kpi": {
+        "title": "Nyckeltal",
+        "notReported": "Rapporteras inte",
+        "notReportedHint": "Den här kanalen rapporterar inte det här värdet.",
+        "vsPrevious": "jämfört med föregående period",
+        "noComparison": "Ingen jämförelse tillgänglig",
+        "previous": "Föregående period: {value}",
+        "postsPublished": "{count, plural, one {# inlägg publicerat under perioden} other {# inlägg publicerade under perioden}}"
+      },
+      "chart": {
+        "title": "Tillväxt per dag",
+        "description": "Daglig ökning av {metricLower}",
+        "groupBy": "Gruppera diagrammet",
+        "group": {
+          "none": "Totalt",
+          "channel": "Per kanal",
+          "inbox": "Per sida eller konto"
+        },
+        "other": "Övriga",
+        "viewTable": "Visa som tabell",
+        "hideTable": "Dölj tabell",
+        "day": "Dag",
+        "summary": "{metric} per dag från {from} till {to}: {total} totalt.",
+        "empty": "Ingen tillväxt registrerad",
+        "emptyHint": "Inget förändrades under perioden, eller så hade uppföljningen inte börjat än."
+      },
+      "breakdown": {
+        "title": "Fördelning",
+        "description": "{metric} per kanal eller sida",
+        "by": {
+          "channel": "Kanaler",
+          "inbox": "Sidor och konton"
+        },
+        "empty": "Inga data för dessa filter"
+      },
+      "topPosts": {
+        "title": "Toppinlägg",
+        "description": "Rangordnade efter {metricLower}",
+        "rankBy": "Rangordna efter",
+        "rank_gained": "Störst ökning",
+        "rank_total": "Högst totalt",
+        "rank": "#",
+        "post": "Inlägg",
+        "channel": "Kanal",
+        "gained": "Ökning",
+        "total": "Totalt",
+        "published": "Publicerad",
+        "open": "Öppna inlägg",
+        "noCaption": "Ingen bildtext",
+        "empty": "Inga inlägg att rangordna",
+        "emptyHint": "Inlägg visas här när deras värden har följts upp."
+      },
+      "bestTimes": {
+        "title": "Bästa tiderna att publicera",
+        "description": "Inlägg jämförda med ett typiskt inlägg på samma sida, i tidszonen {timezone}.",
+        "caption": "Engagemangspoäng per veckodag och timme",
+        "cell": "{when}: poäng {score}, {posts, plural, one {# inlägg} other {# inlägg}}",
+        "cellEmpty": "{when}: inga inlägg",
+        "legendLow": "Lägre",
+        "legendHigh": "Högre",
+        "legendTop": "Bästa tidsluckorna",
+        "scoreHint": "Poängen 1,0 motsvarar ett typiskt inlägg på samma sida.",
+        "topHeading": "Starkaste tidsluckorna",
+        "slotDetail": "Poäng {score} · {posts, plural, one {# inlägg} other {# inlägg}}",
+        "insufficientTitle": "Inte tillräckligt med data än",
+        "insufficientHint": "För de bästa tiderna krävs minst {min} inlägg som publicerats för 90 till 3 dagar sedan. Hittade: {count}.",
+        "capped": "Endast ett urval av de senaste inläggen användes."
+      },
+      "coverage": {
+        "noneTitle": "Ingen historik än",
+        "partialTitle": "Historiken byggs fortfarande upp",
+        "fullTitle": "Bara en del av dina inlägg mäts",
+        "since": "Tillväxten räknas från {date}, då uppföljningen startade. Tidigare aktivitet ingår inte.",
+        "sinceUnknown": "Tillväxten räknas från det att uppföljningen startade. Tidigare aktivitet ingår inte.",
+        "withHistory": "{withHistory} av {posts} nya inlägg har en tillväxthistorik.",
+        "truncated": "Det finns fler inlägg än som kan mätas på en gång; de senaste visas."
+      },
+      "states": {
+        "error": "Det gick inte att läsa in avsnittet.",
+        "retry": "Försök igen",
+        "noChannelHint": "Anslut en Messenger-, Instagram-, Threads- eller TikTok-kanal för att se hur inläggen presterar."
+      },
+      "perPost": {
+        "title": "Prestanda",
+        "description": "Daglig förändring i de siffror kanalen rapporterar, baserat på våra egna dagliga mätningar.",
+        "metric": "Mätvärde",
+        "notReported": "Den här kanalen rapporterar inte detta.",
+        "empty": "Ingen tillväxt registrerad än",
+        "since": "Följs sedan {date}. Förändringar visas efter nästa dagliga mätning.",
+        "notTracked": "Det här inlägget följs inte än.",
+        "summary": "{metric} per dag: {total} totalt.",
+        "totalNow": "i den här perioden · {total} totalt"
+      },
+      "composedPost": {
+        "reasons": {
+          "notPublished": "Inte publicerat ännu.",
+          "notLinked": "Inte kopplat till ett inlägg i kanalen ännu. Siffrorna visas när det är kopplat.",
+          "networkNotSupported": "Det här nätverket rapporterar inte inläggssiffror.",
+          "removed": "Borttaget från kanalen."
+        }
+      }
+    }
+  },
+  "socialAccounts": {
+    "errors": {
+      "providerNotSupported": "Det här nätverket kan inte anslutas ännu.",
+      "appNotConfigured": "Plattformens app för det här nätverket är inte konfigurerad för din arbetsyta."
+    },
+    "connectResult": {
+      "success": "Kontot är anslutet.",
+      "cancelled": "Anslutningen avbröts.",
+      "notFound": "Anslutningen kunde inte slutföras.",
+      "sessionExpired": "Anslutningssessionen har gått ut. Försök ansluta igen.",
+      "permissionNotGranted": "Kontot anslöts inte eftersom dessa behörigheter inte beviljades: {permissions}.",
+      "accountUnsupported": "Den här kontotypen kan inte publicera. Använd ett professionellt konto.",
+      "notSupported": "Det här nätverket kan inte anslutas ännu.",
+      "failed": "Kontot kunde inte anslutas. Försök igen."
+    }
+  },
+  "composer": {
+    "publishTo": "Publicera på",
+    "reconnect": "Anslut igen",
+    "noDestinations": "Inga anslutna sidor eller profiler kan publicera än.",
+    "sharedContent": "Delat innehåll",
+    "text": "Inläggstext",
+    "textPlaceholder": "Skriv ditt inlägg",
+    "link": "Länk",
+    "linkPlaceholder": "https://example.com",
+    "linkInvalid": "Ange en fullständig länk som börjar med https://",
+    "removeMedia": "Ta bort fil",
+    "addMedia": "Lägg till foto eller video",
+    "removeDestination": "Ta bort mål",
+    "customise": "Anpassa för den här kanalen",
+    "usesSharedContent": "Använder det delade innehållet",
+    "channelText": "Text för den här kanalen",
+    "channelTextPlaceholder": "Lämna tomt för att använda den delade texten",
+    "contentType": "Innehållstyp",
+    "previewEmpty": "Välj ett mål för att se en förhandsvisning.",
+    "noText": "Ingen text",
+    "justNow": "Just nu",
+    "linkInCaption": "Länken läggs till i slutet av bildtexten.",
+    "previewMediaAlt": "Bifogad fil {index}",
+    "previewMoreMedia": "+{count}",
+    "previewSlideLabel": "Bild {current} av {total}",
+    "previewPrevious": "Föregående bild",
+    "previewNext": "Nästa bild",
+    "publishNow": "Publicera nu",
+    "newPost": "Nytt inlägg",
+    "draftSaved": "Utkast sparat",
+    "noTargets": "Välj minst ett mål för att börja.",
+    "preview": "Förhandsvisning",
+    "previewError": "Förhandsvisningen kunde inte uppdateras.",
+    "issueCount": "Problem att åtgärda: {count}",
+    "saveDraft": "Spara utkast",
+    "retry": "Försök igen",
+    "noAccountsTitle": "Inga konton anslutna",
+    "noAccountsHint": "Anslut ett konto på fliken Anslut för att börja skriva inlägg.",
+    "goToAccounts": "Gå till Anslut",
+    "notEditable": "Det här inlägget kan inte längre redigeras.",
+    "options": {
+      "shareToFeed": "Dela även i flödet",
+      "title": "Titel",
+      "thumbOffsetMs": "Omslagsbildruta (millisekunder)",
+      "privacyLevel": "Vem kan se den här videon",
+      "allowComment": "Kommentera",
+      "allowDuet": "Duett",
+      "allowStitch": "Stitch",
+      "commercialContent": "Ange kommersiellt innehåll",
+      "brandOrganic": "Ditt varumärke",
+      "brandContent": "Varumärkesinnehåll",
+      "isAigc": "Märk som AI-genererat innehåll",
+      "coverTimestampMs": "Omslagsbild (millisekunder)"
+    },
+    "contentTypes": {
+      "text": "Text",
+      "link": "Länk",
+      "image": "Bild",
+      "video": "Video",
+      "reel": "Reel",
+      "carousel": "Karusell",
+      "story": "Story"
+    },
+    "issues": {
+      "accountDisconnected": "Det här kontot kopplades bort.",
+      "accountNeedsReauth": "Det här kontot måste anslutas igen.",
+      "inboxDisconnected": "Den här kanalen är frånkopplad.",
+      "inboxNeedsReconnect": "Anslutningen för den här kanalen har gått ut. Anslut den igen.",
+      "publishPermissionMissing": "Behörighet att publicera har inte beviljats för den här kanalen. Anslut den igen för att tillåta publicering.",
+      "contentTypeDisabled": "Den här innehållstypen är inte tillgänglig ännu.",
+      "contentTypeNotSupported": "Det här nätverket stöder inte den här innehållstypen.",
+      "destinationInactive": "Det här målet är avstängt.",
+      "destinationNotFound": "Det här målet hittades inte.",
+      "linkNotSupported": "Den här innehållstypen kan inte innehålla en länk.",
+      "linkRequired": "En länk krävs.",
+      "mediaFormatNotSupported": "Ett filformat stöds inte.",
+      "mediaKindNotAllowed": "En filtyp är inte tillåten här.",
+      "mediaTooFew": "Lägg till fler filer.",
+      "mediaTooLarge": "En fil är för stor.",
+      "mediaTooLong": "En video är för lång.",
+      "mediaTooMany": "För många filer.",
+      "mediaTooShort": "En video är för kort.",
+      "optionsInvalid": "Inställningarna är ogiltiga.",
+      "textRequired": "Text krävs.",
+      "textTooLong": "Texten är för lång.",
+      "partsNotSupported": "Det här nätverket publicerar inte trådens delar.",
+      "firstCommentNotSupported": "Det här nätverket publicerar inte en första kommentar.",
+      "tooManyParts": "Det finns fler delar än nätverket tillåter.",
+      "partTextRequired": "Den här delen behöver text.",
+      "partTextTooLong": "Den här delen är längre än nätverket tillåter.",
+      "tooManyLinks": "Texten har fler länkar än Threads tillåter (högst 5)."
+    },
+    "publishStarted": "Publiceringen har startat",
+    "publishRefused": "Inlägget kan inte publiceras som det är. Åtgärda problemen som visas.",
+    "targetsStatus": "Mål",
+    "viewPost": "Visa inlägg",
+    "retryTarget": "Försök igen",
+    "markPublished": "Markera som publicerat",
+    "retryReviewTitle": "Försöka igen med ett inlägg som kanske redan är live?",
+    "retryReviewDescription": "Det här inlägget kan redan vara live. Ett nytt försök kan publicera det en gång till. Kontrollera sidan först.",
+    "retryReviewConfirm": "Försök igen ändå",
+    "status": {
+      "pending": "Väntar",
+      "publishing": "Publicerar",
+      "processing": "Bearbetar",
+      "published": "Publicerat",
+      "failed": "Misslyckades",
+      "cancelled": "Avbrutet",
+      "needsReview": "Behöver granskas"
+    },
+    "schedule": "Schemalägg",
+    "scheduleAt": "Publicera",
+    "pickTime": "Välj datum och tid",
+    "scheduleTooSoon": "Välj en tid minst 2 minuter från nu.",
+    "scheduled": "Inlägget är schemalagt.",
+    "repeatLabel": "Upprepa",
+    "repeatHint": "Ett återkommande inlägg sparas som en mall och publiceras aldrig självt. En kopia schemaläggs vid varje körning.",
+    "repeatInvalid": "Fyll i upprepningsinställningarna för att spara.",
+    "repeatStateActive": "Upprepas",
+    "repeatStatePaused": "Pausad",
+    "repeatStateEnded": "Serien avslutad",
+    "repeatNextRun": "Nästa körning: {date}",
+    "repeatPause": "Pausa",
+    "repeatResume": "Återuppta",
+    "repeatEnd": "Avsluta serie",
+    "repeatUpdated": "Upprepningsserien uppdaterad",
+    "repeatScheduleOff": "Schemaläggning och publicering gäller varje kopia, inte mallen.",
+    "moveMediaEarlier": "Flytta tidigare",
+    "moveMediaLater": "Flytta senare",
+    "removeFromChannels": "Ta bort från kanalerna",
+    "removeFromChannelsTitle": "Ta bort det här inlägget från nätverken?",
+    "removeFromChannelsDescription": "Det publicerade inlägget tas bort från alla nätverk som stöder det. Nätverk utan raderingsfunktion behåller det. Det går inte att ångra.",
+    "removeFromChannelsConfirm": "Ta bort",
+    "removeCancel": "Avbryt",
+    "removeRequested": "{count, plural, one {Borttagning startad för # mål.} other {Borttagning startad för # mål.}}",
+    "removeUnsupported": "{count, plural, one {# mål kan inte tas bort via nätverkets API; ta bort det i appen.} other {# mål kan inte tas bort via nätverkens API; ta bort dem i apparna.}}",
+    "removedFromChannel": "Borttaget från nätverket",
+    "removalPermissionMissing": "Anslut kontot igen för att tillåta radering av inlägg.",
+    "postMessageQuotaExceeded": "Kontots meddelandekvot är förbrukad, så det här inlägget publicerades inte. Uppgradera planen eller vänta till nästa faktureringsperiod och försök igen.",
+    "tiktokLoading": "Laddar inställningar för TikTok-kontot…",
+    "tiktokUnavailable": "Det gick inte att ladda inställningarna för TikTok-kontot. Försök igen.",
+    "tiktokCreator": "Publicerar på TikTok-kontot {nickname}",
+    "tiktokCannotPost": "Det här TikTok-kontot kan inte publicera just nu. Försök igen senare.",
+    "tiktokPrivacyPlaceholder": "Välj vem som kan se",
+    "tiktokInteractions": "Tillåt andra att",
+    "tiktokInteractionDisabled": "Avstängt i det här kontots TikTok-inställningar",
+    "tiktokYourBrand": "Ditt varumärke",
+    "tiktokBrandedContent": "Varumärkesinnehåll",
+    "tiktokLabelPromotional": "Din video märks som ”Reklaminnehåll”.",
+    "tiktokLabelPaid": "Din video märks som ”Betalt partnerskap”.",
+    "tiktokCommercialRequired": "Ange om ditt innehåll marknadsför dig själv, en tredje part eller båda.",
+    "tiktokBrandedNotPrivate": "Synligheten för varumärkesinnehåll kan inte vara privat.",
+    "tiktokConsentMusic": "Genom att publicera godkänner du TikToks <music>bekräftelse av musikanvändning</music>.",
+    "tiktokConsentBranded": "Genom att publicera godkänner du TikToks <branded>policy för varumärkesinnehåll</branded> och <music>bekräftelse av musikanvändning</music>.",
+    "tiktokMaxDuration": "Den längsta videon det här kontot kan publicera är {seconds} sekunder.",
+    "tiktokProcessingNote": "Efter publicering kan det ta några minuter innan videon har bearbetats och visas på profilen.",
+    "tiktokPrivacy": {
+      "PUBLIC_TO_EVERYONE": "Alla",
+      "MUTUAL_FOLLOW_FRIENDS": "Vänner",
+      "FOLLOWER_OF_CREATOR": "Följare",
+      "SELF_ONLY": "Bara jag"
+    },
+    "partsTitle": "Trådens delar",
+    "partsHint": "Varje del publiceras som svar på den föregående, direkt efter huvudinlägget.",
+    "partLabel": "Del {number}",
+    "partPlaceholder": "Skriv nästa del",
+    "partMoveUp": "Flytta delen uppåt",
+    "partMoveDown": "Flytta delen nedåt",
+    "partRemove": "Ta bort delen",
+    "partsAdd": "Lägg till del",
+    "partsRemaining": "{count, plural, one {# del till kan läggas till} other {# delar till kan läggas till}}",
+    "firstCommentTitle": "Första kommentaren",
+    "firstCommentPlaceholder": "Publiceras som kommentar direkt efter inlägget",
+    "aiAssist": "Skriv med AI",
+    "aiPrivacy": "Texten du anger skickas till den AI-leverantör du väljer nedan. Ingenting sparas eller publiceras förrän du infogar det.",
+    "aiIntegration": "AI-integration",
+    "aiNoIntegration": "Ingen AI-integration är ansluten än.",
+    "aiConnectIntegration": "Anslut en AI-integration",
+    "aiMode": "Vad ska AI:n göra?",
+    "aiModes": {
+      "write": "Skriva ett nytt inlägg",
+      "rewrite": "Skriv om",
+      "shorten": "Förkorta",
+      "expand": "Utöka",
+      "tone": "Ändra tonen",
+      "fit": "Anpassa till destinationens gräns",
+      "hashtags": "Föreslå hashtags"
+    },
+    "aiTone": "Ton",
+    "aiTones": {
+      "friendly": "Vänlig",
+      "professional": "Professionell",
+      "casual": "Avslappnad",
+      "playful": "Lekfull",
+      "formal": "Formell",
+      "persuasive": "Övertygande",
+      "inspiring": "Inspirerande"
+    },
+    "aiBrief": "Vad handlar inlägget om?",
+    "aiBriefPlaceholder": "Till exempel: tillkännage vår helgrea, 20 % rabatt",
+    "aiUsesPostText": "Använder inläggstexten ovan.",
+    "aiNeedsPostText": "Skriv inläggstexten först.",
+    "aiFitNeedsDestination": "Välj en destination först.",
+    "aiGenerate": "Generera",
+    "aiGenerating": "Skriver…",
+    "aiSuggestion": "Förslag",
+    "aiCutToLimit": "Avkortad till gränsen på {limit, plural, one {# tecken} other {# tecken}}.",
+    "aiInsert": "Infoga i slutet",
+    "aiReplace": "Ersätt inläggstexten",
+    "aiHashtags": "Hashtags",
+    "aiEmoji": "Emoji",
+    "aiCallToAction": "Uppmaning till handling",
+    "aiCallToActionText": "Formulering av uppmaningen (valfritt)",
+    "aiCallToActionPlaceholder": "Till exempel: Boka ditt bord idag",
+    "aiVariants": "Alternativ",
+    "aiPerNetwork": "Skriv per kanal",
+    "aiPerNetworkHint": "En version i varje nätverks stil.",
+    "aiOption": "Alternativ {number}",
+    "aiApplyTo": "Använd på {network}",
+    "aiApplyToEach": "Använd på varje kanal",
+    "aiHashtagPick": "Klicka på en hashtag för att lägga till den i inlägget.",
+    "aiErrors": {
+      "modelNotChosen": "Välj en AI-integration och en modell för att skriva med AI.",
+      "needsReconfiguration": "Den valda AI-integrationen saknas, är inaktiverad eller ogiltig.",
+      "rateLimited": "För många AI-förfrågningar. Försök igen om en stund.",
+      "timeout": "AI-modellen svarade inte i tid. Försök igen.",
+      "provider": "AI-leverantören kunde inte skriva texten. Försök igen.",
+      "inProgress": "En AI-förfrågan pågår redan.",
+      "blocked": "Planen eller provperioden för den här arbetsytan har gått ut.",
+      "generic": "Det gick inte att skriva texten. Försök igen."
+    },
+    "snippets": "Textmallar",
+    "snippetsKinds": {
+      "signature": "Signatur",
+      "hashtags": "Hashtaggar",
+      "text": "Text"
+    },
+    "snippetsLoadFailed": "Det gick inte att läsa in textmallar.",
+    "snippetsEmpty": "Inga textmallar än.",
+    "snippetsSignature": "Signatur",
+    "snippetsSignatureHint": "Läggs till en gång i slutet av texten när du skapar inlägget. Destinationer med egen text får den inte.",
+    "snippetsSignatureChosen": "Signatur: {name}",
+    "snippetsManage": "Hantera textmallar",
+    "snippetsName": "Namn",
+    "snippetsKind": "Typ",
+    "snippetsContent": "Text",
+    "snippetsAdd": "Lägg till textmall",
+    "snippetsSaved": "Textmallen sparades.",
+    "snippetsDeleted": "Textmallen togs bort.",
+    "snippetsNameTaken": "Det finns redan en textmall med det namnet.",
+    "targetSets": "Sidgrupper",
+    "targetSetsLoadFailed": "Det gick inte att läsa in grupperna.",
+    "targetSetsEmpty": "Inga sparade grupper ännu.",
+    "targetSetsName": "Gruppnamn",
+    "targetSetsNamePlaceholder": "Namnge gruppen…",
+    "targetSetsSave": "Spara",
+    "targetSetsNeedsSelection": "Välj sidor för att spara dem som en grupp.",
+    "targetSetsSaved": "Gruppen har sparats.",
+    "targetSetsDeleted": "Gruppen har tagits bort.",
+    "targetSetsNameTaken": "Det finns redan en grupp med det här namnet.",
+    "targetSetsApplied": "Sidorna i ”{name}” har valts.",
+    "targetSetsSkipped": "{count, plural, one {# sida hoppades över eftersom den behöver åtgärdas.} other {# sidor hoppades över eftersom de behöver åtgärdas.}}",
+    "destinationState": {
+      "ready": "Redo att publicera",
+      "inboxDisconnected": "Frånkopplad",
+      "needsReconnect": "Anslutningen har gått ut",
+      "permissionMissing": "Behörighet att publicera har inte beviljats"
+    },
+    "destinationPause": {
+      "until": "Pausad till {time}",
+      "reason": {
+        "limitReached": "Nätverket har begränsat publiceringen för det här kontot. Inlägg väntar och publiceras efter pausen.",
+        "accountRestricted": "Nätverket har begränsat det här kontot. Inlägg väntar och publiceras efter pausen.",
+        "spamRisk": "Nätverket har flaggat kontots aktivitet som spamrisk. Inlägg väntar och publiceras efter pausen."
+      }
+    },
+    "viaFacebook": "via Facebook",
+    "openProfile": "Öppna {name} på {network}",
+    "someNeedAttention": "Vissa sidor eller profiler kan inte publicera förrän du ansluter dem igen.",
+    "viewPosts": "Visa",
+    "queue": {
+      "modeLabel": "När ska det publiceras",
+      "atTime": "Välj tid",
+      "next": "Lägg i kön",
+      "top": "Publicera först",
+      "nextHint": "Publiceras vid varje sidas nästa lediga tid.",
+      "topHint": "Publiceras vid närmaste tid; inlägg i kön flyttas en tid senare.",
+      "noDestination": "Välj en sida för att se dess publiceringstider.",
+      "noSchedule": "{names} har inga publiceringstider inställda.",
+      "setUpSlots": "Ställ in publiceringstider"
+    },
+    "targetOwnTime": "Egen tid för den här kanalen",
+    "targetTimeInvalid": "Välj en tid mellan 2 minuter och 1 år framåt.",
+    "targetMediaOwn": "Andra filer för den här kanalen",
+    "targetMediaNone": "Inga filer: kanalen publicerar utan filer.",
+    "occurrencesUpcoming": "Kommande körningar",
+    "occurrencesNoUpcoming": "Inga kommande körningar.",
+    "occurrenceSkip": "Hoppa över",
+    "occurrenceRestore": "Återställ",
+    "occurrenceSkipped": "Körningen hoppades över.",
+    "occurrenceRestored": "Körningen återställdes.",
+    "occurrencesHistory": "Visa tidigare körningar",
+    "occurrencesHideHistory": "Dölj tidigare körningar",
+    "occurrencesLoadFailed": "Körningarna kunde inte laddas.",
+    "occurrencesNoHistory": "Inga körningar ännu.",
+    "occurrencesLoadMore": "Ladda fler",
+    "occurrenceOpen": "Öppna inlägget",
+    "targetSetsUpdated": "Gruppen har uppdaterats.",
+    "targetSetsMembers": "Sidor i den här gruppen",
+    "targetSetsNeedsMember": "Behåll minst en sida.",
+    "occurrenceOutcomes": {
+      "created": "Schemalagd",
+      "excluded": "Överhoppad",
+      "missed": "Missad",
+      "skipped": "Inte skapad"
+    }
+  },
+  "postCommentVariables": {
+    "group": "Inläggskommentar",
+    "postLink": "Inläggslänk",
+    "postText": "Inläggstext",
+    "postPublishedAt": "Inlägg publicerat",
+    "postPageName": "Inläggets sidnamn",
+    "postId": "Inläggs-ID",
+    "commentText": "Kommentartext",
+    "commentId": "Kommentar-ID"
   }
 }

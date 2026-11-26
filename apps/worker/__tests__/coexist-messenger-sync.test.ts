@@ -941,6 +941,69 @@ describe("coexistMessengerSync", () => {
     expect(pageIncrementWithFailure?.increments?.failedCount).toBe(1)
   })
 
+  it("pages written before a later page fails still count as imported", async () => {
+    mockFindByIdMessenger.mockResolvedValue(fakeIntegration)
+    mockFindOrFail.mockResolvedValue(fakeInbox)
+    wireSelectChain(defaultRunRow(), [
+      { ...defaultContactLink, sourceId: "user-partial" },
+    ])
+    mockListConversations.mockResolvedValueOnce({
+      data: [makeConversation("conv-partial", "user-partial")],
+      after: undefined,
+    })
+    mockListMessages
+      .mockResolvedValueOnce({
+        data: [makeMessage("msg-1", "user-partial", new Date().toISOString())],
+        after: "page-2",
+      })
+      .mockRejectedValueOnce(new Error("Graph 500"))
+    mockBulkImportMessages.mockResolvedValueOnce({
+      ...emptyBulkMessagesResult(),
+      importedMessages: 7,
+      skippedMessages: 2,
+    })
+
+    await coexistMessengerSync({ runId, integrationId, workspaceId })
+
+    const increments = mockIncrementProgress.mock.calls
+      .map((args) => args[0] as { increments?: Record<string, number> })
+      .find((payload) => payload.increments?.failedCount === 1)?.increments
+    expect(increments?.importedMessageCount).toBe(7)
+    expect(increments?.skippedCount).toBe(2)
+    expect(increments?.failedCount).toBe(1)
+  })
+
+  it("the activity and AI marker of pages written before a failure are still applied", async () => {
+    mockFindByIdMessenger.mockResolvedValue(fakeIntegration)
+    mockFindOrFail.mockResolvedValue(fakeInbox)
+    wireSelectChain(defaultRunRow(), [
+      { ...defaultContactLink, sourceId: "user-partial" },
+    ])
+    mockListConversations.mockResolvedValueOnce({
+      data: [makeConversation("conv-partial", "user-partial")],
+      after: undefined,
+    })
+    mockListMessages
+      .mockResolvedValueOnce({
+        data: [makeMessage("msg-1", "user-partial", new Date().toISOString())],
+        after: "page-2",
+      })
+      .mockRejectedValueOnce(new Error("Graph 500"))
+    mockBulkImportMessages.mockResolvedValueOnce({
+      ...emptyBulkMessagesResult(),
+      importedMessages: 1,
+      newestMessageAt: new Date("2026-01-02T00:00:00Z"),
+      newestMessageId: "900",
+    })
+
+    await coexistMessengerSync({ runId, integrationId, workspaceId })
+
+    expect(mockApplyCoexistActivityUpdates).toHaveBeenCalledWith(
+      [expect.objectContaining({ aiMarkerMessageId: "900" })],
+      expect.anything(),
+    )
+  })
+
   // ---------------------------------------------------------------------------
   // H1 — respectPause BUC sleep cap
   // ---------------------------------------------------------------------------

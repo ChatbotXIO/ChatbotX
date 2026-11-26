@@ -7,6 +7,7 @@ import {
 import { getAuditActor, withAuditContext } from "@chatbotx.io/business/audit"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
 import { findOrFail, isDatabaseError } from "@chatbotx.io/database/client"
+import { userColumnsWithoutSecrets } from "@chatbotx.io/database/repositories/user-columns"
 import { userModel } from "@chatbotx.io/database/schema"
 import { FlowAuthoringException } from "@chatbotx.io/flow-config"
 import { SdkException } from "@chatbotx.io/sdk"
@@ -26,6 +27,10 @@ import {
 } from "@/lib/auth/permission-routes"
 import { getCurrentUserId } from "@/lib/auth/utils"
 import { getGuestClientIp } from "@/lib/rate-limit/guest-rate-limit"
+import {
+  canOpenWorkspaceOnHost,
+  resolveRequestTenantId,
+} from "@/lib/tenant/request-tenant"
 import {
   checkWorkspaceOwnerAccess,
   workspaceAccessDenialException,
@@ -71,11 +76,14 @@ export const actionClient = createSafeActionClient({
 export const authActionClient = actionClient.use(async ({ next }) => {
   const id = await getCurrentUserId()
 
+  // `ctx.user` reaches every authenticated action, so the encrypted
+  // `connectionAuthorizations` backup is left out of the read.
   const user = await findOrFail({
     table: userModel,
     where: {
       id,
     },
+    columns: userColumnsWithoutSecrets,
   })
 
   // Forced-password-change gate — the single chokepoint for EVERY authenticated
@@ -148,6 +156,15 @@ export const workspaceActionClientAllowExpired = authActionClient.use(
       throw new Error("Workspace not found")
     }
     const { workspace, member, isSupportSession } = access
+    if (
+      !canOpenWorkspaceOnHost({
+        workspaceTenantId: workspace.tenantId,
+        hostTenantId: await resolveRequestTenantId(),
+        isSupportSession,
+      })
+    ) {
+      throw new Error("Workspace not found")
+    }
 
     // permissions is exposed so actions can gate on it (e.g. superAdmin)
     // without a second user+member round-trip — the same rows are already

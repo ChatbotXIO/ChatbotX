@@ -415,6 +415,56 @@ describe("handleCondition", () => {
     expect(refreshOrder).toBeLessThan(firstMatchOrder as number)
   })
 
+  test("follows this node's edge when a duplicated condition node shares its case ids", async () => {
+    // Regression: Duplicate kept case ids, so the copy's "first-case" handle
+    // is also on the original node. The edge listed first belongs to the
+    // other node; a handle-only lookup sent the contact down its branch.
+    const step = makeStep()
+    const duplicatedStep = { ...makeStep(), id: "condition-step-copy" }
+    matchesContactFilter.mockResolvedValueOnce(true)
+
+    await handleCondition({
+      ...makeProps(step, []),
+      flowVersion: {
+        ...makeFlowVersion([
+          {
+            id: "edge-original",
+            source: "condition-node-original",
+            sourceHandle: "first-case",
+            target: "original-target",
+            targetHandle: "original-target",
+          },
+          {
+            id: "edge-copy",
+            source: "condition-node-copy",
+            sourceHandle: "first-case",
+            target: "copy-target",
+            targetHandle: "copy-target",
+          },
+        ]),
+        nodes: [
+          {
+            id: "condition-node-original",
+            data: { details: { steps: [duplicatedStep] } },
+          },
+          {
+            id: "condition-node-copy",
+            data: { details: { steps: [step] } },
+          },
+        ],
+      } as unknown as FlowVersionModel,
+    })
+
+    expect(integrationQueueAdd).toHaveBeenCalledWith(
+      "sendFlow",
+      {
+        type: "sendFlow",
+        data: expect.objectContaining({ nodeId: "copy-target" }),
+      },
+      {},
+    )
+  })
+
   test("does not refresh the profile snapshot when no case reads it", async () => {
     matchesContactFilter.mockResolvedValue(false)
 

@@ -14,6 +14,8 @@ import type { ConnectionStoreBinding } from "../store-bindings"
 
 const mocks = vi.hoisted(() => ({
   connectionRepositoryUpdate: vi.fn(),
+  connectionRepositoryInsert: vi.fn(),
+  connectionRepositoryFindByInboxId: vi.fn(),
   transition: vi.fn(),
   compensateQuotaConsumption: vi.fn(async () => undefined),
   compensateWorkspaceQuota: vi.fn(async () => undefined),
@@ -27,7 +29,11 @@ vi.mock("@chatbotx.io/database/client", () => ({
 }))
 
 vi.mock("@chatbotx.io/database/repositories", () => ({
-  connectionRepository: { update: mocks.connectionRepositoryUpdate },
+  connectionRepository: {
+    update: mocks.connectionRepositoryUpdate,
+    insert: mocks.connectionRepositoryInsert,
+    findByInboxId: mocks.connectionRepositoryFindByInboxId,
+  },
 }))
 
 vi.mock("../../errors", () => ({
@@ -124,6 +130,98 @@ describe("upsertConnectionRow — revive-in-place sourceId sync", () => {
     expect(mocks.connectionRepositoryUpdate).toHaveBeenCalledTimes(1)
     const [updateInput] = mocks.connectionRepositoryUpdate.mock.calls[0]
     expect(updateInput.values.sourceId).toBe("https://new.example.com")
+  })
+})
+
+describe("upsertConnectionRow — switching Instagram login on a disconnected inbox", () => {
+  const siblingConnection = (status: string) =>
+    ({
+      id: "connection-facebook",
+      workspaceId: "workspace-1",
+      provider: "instagramFacebook",
+      inboxId: "inbox-1",
+      integrationId: null,
+      sourceId: "ig-1",
+      status,
+    }) as unknown as ConnectionModel
+
+  const connectInstagram = async () => {
+    const store: ConnectionStoreBinding = {
+      loadAuthByForeignKey: vi.fn(),
+      saveAuthByForeignKey: vi.fn(async () => true),
+      insertRow: vi.fn(async () => ({ id: "satellite-1" })),
+      deleteRowByForeignKey: vi.fn(),
+      configColumns: [],
+    }
+    await upsertConnectionRow({
+      tx: {} as never,
+      workspaceId: "workspace-1",
+      provider: "instagram",
+      kind: "channel",
+      descriptor: { sourceId: "ig-1", displayName: "Instagram" },
+      auth,
+      extraConfig: {},
+      existing: undefined,
+      store,
+      ownerId: "owner-1",
+      quotaConsumption: { consumed: false, workspaceUsageIncremented: false },
+      inboxId: "inbox-1",
+    })
+    return store
+  }
+
+  it("takes over the disconnected row that still holds the inbox", async () => {
+    mocks.connectionRepositoryFindByInboxId.mockResolvedValue(
+      siblingConnection("disconnected"),
+    )
+
+    const store = await connectInstagram()
+
+    expect(mocks.connectionRepositoryInsert).not.toHaveBeenCalled()
+    expect(store.insertRow).toHaveBeenCalledTimes(1)
+    expect(store.saveAuthByForeignKey).not.toHaveBeenCalled()
+    expect(mocks.connectionRepositoryUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: "connection-facebook",
+        values: expect.objectContaining({
+          provider: "instagram",
+          inboxId: "inbox-1",
+          // The expiry belonged to the other login's token.
+          authExpiresAt: null,
+        }),
+      }),
+      expect.anything(),
+    )
+    expect(mocks.transition).toHaveBeenCalledWith(
+      expect.objectContaining({
+        connectionId: "connection-facebook",
+        event: "connect.completed",
+      }),
+    )
+  })
+
+  it.each([
+    "connected",
+    "degraded",
+    "needs_reauth",
+    "paused",
+  ])("reports already connected while that row is %s", async (status) => {
+    mocks.connectionRepositoryFindByInboxId.mockResolvedValue(
+      siblingConnection(status),
+    )
+
+    await expect(connectInstagram()).rejects.toThrow("already connected")
+    expect(mocks.connectionRepositoryUpdate).not.toHaveBeenCalled()
+    expect(mocks.connectionRepositoryInsert).not.toHaveBeenCalled()
+  })
+
+  it("inserts a new row when nothing holds the inbox", async () => {
+    mocks.connectionRepositoryFindByInboxId.mockResolvedValue(undefined)
+    mocks.connectionRepositoryInsert.mockResolvedValue({ id: "connection-new" })
+
+    await connectInstagram()
+
+    expect(mocks.connectionRepositoryInsert).toHaveBeenCalledTimes(1)
   })
 })
 

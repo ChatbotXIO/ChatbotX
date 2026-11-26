@@ -41,6 +41,7 @@ describe("deleteLosingSyncAttempts", () => {
     expect(mocks.listObjects.mock.calls.map(([prefix]) => prefix)).toEqual([
       "workspaces/1/ai-files/tpl-2/g3/4:",
       "public/space/1/questionnaire-images/tpl-2/g3/4:",
+      "public/space/1/template-tool-images/tpl-2/g3/4:",
       "public/space/1/media-library/tpl-2/g3/4:",
     ])
   })

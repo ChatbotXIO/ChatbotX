@@ -281,6 +281,7 @@ describe("activity fields in the picker", () => {
         whatsappFlows: [],
         emailTopics: [],
         ads: [{ id: "120", name: "Summer sale (120)" }],
+        polls: [],
       },
     })
     const config = configs.find((item) => item.name === "clickedAd")
@@ -308,6 +309,7 @@ describe("activity fields in the picker", () => {
         whatsappFlows: [],
         emailTopics: [{ id: "12", name: "Newsletter" }],
         ads: [],
+        polls: [],
       },
     })
     const labels = configs.find(

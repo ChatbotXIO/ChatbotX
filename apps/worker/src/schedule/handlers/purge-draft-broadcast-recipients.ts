@@ -38,7 +38,10 @@ export const purgeDraftBroadcastRecipients = async ({
     return
   }
 
-  const { done } = await broadcastService.purgeDraftRecipients({ broadcastId })
+  const { done } = await broadcastService.purgeDraftRecipients({
+    workspaceId,
+    broadcastId,
+  })
   if (done) {
     return
   }

@@ -955,10 +955,19 @@ class MinigameContactService extends BaseService {
       // (contactInbox comes from ContactInbox.sourceId, matched from the
       // ?userId= on the play link) — not just "any" conversation for the
       // contact, which could be an unrelated comment thread.
-      const conversation = await conversationService.findDMByContact({
-        workspaceId,
-        contactId,
-      })
+      // Email has no DM: each outcome opens its own thread.
+      const conversation =
+        contactInbox.channel === "smtp"
+          ? await conversationService.openEmailThread({
+              workspaceId,
+              contactId,
+              contactInboxId: contactInbox.id,
+              contactInbox,
+            })
+          : await conversationService.findDMByContact({
+              workspaceId,
+              contactId,
+            })
       if (!conversation) {
         return
       }

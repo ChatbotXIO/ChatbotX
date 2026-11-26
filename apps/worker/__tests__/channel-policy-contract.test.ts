@@ -11,6 +11,7 @@ import { handledFlowStepTypes as apiHandledFlowStepTypes } from "../../../integr
 import { handledFlowStepTypes as instagramHandledFlowStepTypes } from "../../../integrations/instagram/src/handlers/message/outgoing-message"
 import { handledFlowStepTypes as instagramFacebookHandledFlowStepTypes } from "../../../integrations/instagram-facebook/src/handlers/message/outgoing-message"
 import { handledFlowStepTypes as messengerHandledFlowStepTypes } from "../../../integrations/messenger/src/handlers/message/outgoing-message"
+import { handledFlowStepTypes as smtpHandledFlowStepTypes } from "../../../integrations/smtp/src/handlers/message/send-flow-step"
 import { handledFlowStepTypes as telegramHandledFlowStepTypes } from "../../../integrations/telegram/src/handlers/message/outgoing-message"
 import { handledFlowStepTypes as tiktokHandledFlowStepTypes } from "../../../integrations/tiktok/src/handlers/message/outgoing-message"
 import {
@@ -50,7 +51,7 @@ const HANDLED_STEP_TYPES: ReadonlyArray<{
   { channel: "instagram", steps: instagramFacebookHandledFlowStepTypes },
   { channel: "messenger", steps: messengerHandledFlowStepTypes },
   { channel: "telegram", steps: telegramHandledFlowStepTypes },
-  { channel: "smtp", steps: [] },
+  { channel: "smtp", steps: smtpHandledFlowStepTypes },
   { channel: "threads", steps: [] },
   { channel: "tiktok", steps: tiktokHandledFlowStepTypes },
   { channel: "whatsapp", steps: whatsappHandledFlowStepTypes },

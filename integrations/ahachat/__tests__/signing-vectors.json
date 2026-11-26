@@ -1,0 +1,24 @@
+{
+  "apiKey": "QEFCQ0RFRkdISUpLTE1OT1BRUlNUVVZXWFlaW1xdXl8=",
+  "vectors": [
+    {
+      "keyId": "k1",
+      "timestamp": 1790000000,
+      "nonce": "00112233445566778899aabbccddeeff",
+      "path": "/api/contact-export/page",
+      "body": "{\"workspace_id\":\"11640681410281472\",\"actor\":{\"type\":\"user\",\"id\":\"u_1\"},\"page\":{\"channel\":\"messenger\",\"id\":\"1001\"}}",
+      "canonical": "AHACHAT-EXPORT-HMAC-V1\nk1\nahachat-v1\ncontact-export\n1790000000\n00112233445566778899aabbccddeeff\nPOST\n/api/contact-export/page\napplication/json\n921fb02aa1b1ce8188741d1f45ccf5c676b09fcdbb9e145318e3c88472f5186d",
+      "signature": "7946acac5f822d286d0446c1c0565d5f56e7114694fa4e09a2fc1cf1670c7092"
+    },
+    {
+      "keyId": "k1",
+      "timestamp": 1790000001,
+      "nonce": "ffeeddccbbaa99887766554433221100",
+      "path": "/api/contact-export/users",
+      "body": "{\"workspace_id\":\"11640681410281472\",\"actor\":{\"type\":\"user\",\"id\":\"u_1\"},\"page\":{\"channel\":\"messenger\",\"id\":\"1001\"}}",
+      "canonical": "AHACHAT-EXPORT-HMAC-V1\nk1\nahachat-v1\ncontact-export\n1790000001\nffeeddccbbaa99887766554433221100\nPOST\n/api/contact-export/users\napplication/json\n921fb02aa1b1ce8188741d1f45ccf5c676b09fcdbb9e145318e3c88472f5186d",
+      "signature": "9558798849b3736934f8274072d50cb8e558525d7906a7b5ddb96e6e9a0500e8"
+    }
+  ],
+  "hashKey": "ICEiIyQlJicoKSorLC0uLzAxMjM0NTY3ODk6Ozw9Pj8="
+}

@@ -1,5 +1,6 @@
 import { commentAutomationService } from "@chatbotx.io/business"
 import type { CommentAutomationModel } from "@chatbotx.io/database/types"
+import { toChannelPostTarget } from "@/features/shared/comment-automation/lib/channel-post-target"
 import {
   type TiktokCommentResource,
   tiktokCommentResource,
@@ -21,10 +22,7 @@ export const toTiktokResource = (
 ): TiktokCommentResource =>
   tiktokCommentResource.parse({
     ...record,
-    post: {
-      type: record.post.type === "postIds" ? "postIds" : "all",
-      value: record.post.type === "postIds" ? record.post.value : [],
-    },
+    post: toChannelPostTarget(record.post),
     // `flow` is the one private-reply variant TikTok cannot deliver — see the
     // resource schema — and the shared table can still hold one from a row
     // written before this channel gained a private branch at all.

@@ -1,4 +1,7 @@
-import { REPLY_TARGET_CREATED_AT_KEY } from "@chatbotx.io/database/partials"
+import {
+  REPLY_TARGET_CREATED_AT_KEY,
+  SENT_FROM_INBOX_KEY,
+} from "@chatbotx.io/database/partials"
 import {
   createMessageRepository,
   flowRepository,
@@ -31,6 +34,7 @@ import {
   isImageMimeType,
   resolveInboxReplyKind,
 } from "@chatbotx.io/utils/inbox-image-support"
+import type { SendFrom } from "@chatbotx.io/utils/send-from"
 import {
   ChatJobAction,
   chatQueue,
@@ -39,6 +43,7 @@ import {
 } from "@chatbotx.io/worker-config"
 import { contactInboxService } from "../contact-inbox/service"
 import { conversationService } from "../conversation/service"
+import { conversationParticipantService } from "../conversation-participant/service"
 import {
   ChatbotXException,
   ImagesNotSupportedOnChannelError,
@@ -95,6 +100,14 @@ type CreateOutgoingInput = (
    * accepted from `messages.create` input.
    */
   quickReplies?: MessageButtonTemplate[]
+  /**
+   * The text keyword/automated-response rules match against instead of the
+   * stored `text`. Inbox translation sends the customer-language translation
+   * as the message and passes the agent's own sentence here, so an automation
+   * keyed on what the agent typed still fires. Server-side only — not accepted
+   * from `messages.create` input.
+   */
+  automationText?: string
 }
 
 /**
@@ -240,18 +253,34 @@ const ENQUEUE_FAILED_SEND_ERROR = "Could not queue the message for delivery"
 
 /**
  * The row exists and `messageCreated` has already gone to every open tab, so a
- * failed enqueue must leave the failed state on the row and tell those tabs,
- * or they would show a message that is neither sent nor marked failed (and that
- * cannot be resent). Bookkeeping only: it never replaces the enqueue error.
+ * failed enqueue must settle the row and tell those tabs, or they would show a
+ * message that is neither sent nor marked failed. A member's Inbox message
+ * keeps the failed state (it can be resent); any other (`api`) is removed for
+ * good — its caller gets the enqueue error back directly. Bookkeeping only: it
+ * never replaces the enqueue error.
  */
 const recordEnqueueFailure = async (input: {
   repository: Awaited<ReturnType<typeof createMessageRepository>>
   message: Pick<MessageModel, "id" | "createdAt" | "workspaceId">
   conversation: ConversationModel
   clientId: string | undefined
+  sendFrom: SendFrom
 }): Promise<void> => {
   const { repository, message, conversation, clientId } = input
   try {
+    if (input.sendFrom !== "inbox") {
+      await repository.hardDeleteById(
+        message.id,
+        message.workspaceId,
+        message.createdAt,
+      )
+      await queueWorkspaceRealtimeEvent(message.workspaceId, {
+        eventType: RealtimeEventType.messageRemoved,
+        data: { messageIds: [message.id] },
+        route: routeForConversation(conversation),
+      })
+      return
+    }
     await repository.updateSendError(
       message.id,
       ENQUEUE_FAILED_SEND_ERROR,
@@ -276,6 +305,19 @@ const recordEnqueueFailure = async (input: {
 }
 
 /**
+ * Stamps where a message was sent from: `true` for a member's Inbox message, so
+ * a failed send keeps it (see `isSentFromInbox`), `false` for the API. A row
+ * with no stamp at all is older than the marker (see `isLegacyMemberMessage`).
+ */
+const withSentFromInbox = (
+  contentAttributes: Record<string, unknown> | null,
+  sendFrom: SendFrom,
+): Record<string, unknown> | null => ({
+  ...contentAttributes,
+  [SENT_FROM_INBOX_KEY]: sendFrom === "inbox",
+})
+
+/**
  * A private reply answers a comment stored in the commenter's own conversation,
  * and the row keeps only that comment's id. Its createdAt (the shard key needed
  * to find it again) is kept here so a failed private reply can be resent.
@@ -297,8 +339,21 @@ export const createOutgoing = async (props: {
   contactInbox: ContactInboxModel
   input: CreateOutgoingInput
   user?: Pick<UserModel, "id">
+  /**
+   * `inbox` — a member in the builder's Inbox: a failed send keeps the
+   * message with its error. `api` — the Public API/CLI/MCP or a system send
+   * (order notifications): a failed message is removed and its error goes to
+   * the Error Log.
+   */
+  sendFrom: SendFrom
 }) => {
-  const { conversation, input: parsedInput, user, contactInbox } = props
+  const {
+    conversation,
+    input: parsedInput,
+    user,
+    contactInbox,
+    sendFrom,
+  } = props
   const sender = user
     ? ({ kind: "agent", userId: user.id } as const)
     : ({ kind: "other" } as const)
@@ -322,20 +377,32 @@ export const createOutgoing = async (props: {
         contactInboxId: contactInbox,
         flowId: parsedInput.flowId,
         nodeId: parsedInput.nodeId,
-        sendFrom: "inbox",
+        sendFrom,
         sentByUserId: user?.id,
       },
     })
     // Claimed only after a successful enqueue so a failed send keeps the
     // window open. An inbox "send flow" counts as a human reply.
-    await recordAgentReply({
-      conversationId: conversation.id,
-      workspaceId: conversation.workspaceId,
-      contactInbox,
-      at: new Date(),
-      sender,
-      eventId: `reply:flow:${createId()}`,
-    })
+    // Sending the flow is the member's reply even if it later branches or
+    // delays, so it is recorded here, not when each step is delivered.
+    const repliedAt = new Date()
+    await Promise.all([
+      recordAgentReply({
+        conversationId: conversation.id,
+        workspaceId: conversation.workspaceId,
+        contactInbox,
+        at: repliedAt,
+        sender,
+        eventId: `reply:flow:${createId()}`,
+      }),
+      user &&
+        conversationParticipantService.recordReply({
+          workspaceId: conversation.workspaceId,
+          conversationId: conversation.id,
+          userId: user.id,
+          at: repliedAt,
+        }),
+    ])
     return null
   }
 
@@ -373,6 +440,7 @@ export const createOutgoing = async (props: {
   assertChannelAcceptsImages({
     channel: contactInbox.channel,
     kind: resolveInboxReplyKind({
+      channel: channelTypes.safeParse(contactInbox.channel).data,
       hasReplyTarget: Boolean(parsedInput.replyToMessageId),
       isPrivateReply: Boolean(parsedInput.isPrivateReply),
     }),
@@ -395,6 +463,16 @@ export const createOutgoing = async (props: {
         sourceId: null,
       })
     : conversation
+
+  const isSmtpEmailReply =
+    contactInbox.channel === "smtp" && Boolean(parsedInput.replyToMessageId)
+  if (isSmtpEmailReply && parsedInput.replyToMessageId) {
+    await conversationService.findEmailReplyParent({
+      conversation: targetConversation,
+      contactInboxId: contactInbox.id,
+      replyToMessageId: parsedInput.replyToMessageId,
+    })
+  }
 
   let uploadedFiles: UploadedFile[] = []
   if (
@@ -419,12 +497,32 @@ export const createOutgoing = async (props: {
   }
 
   const repository = await createMessageRepository()
-
-  const parentId = parsedInput.replyToMessageId ?? null
+  const parentId = isSmtpEmailReply
+    ? null
+    : (parsedInput.replyToMessageId ?? null)
 
   const plainText = "text" in parsedInput ? (parsedInput.text ?? null) : null
 
   const now = new Date()
+  const baseContentAttributes = withSentFromInbox(
+    withReplyTargetCreatedAt(
+      withBypassThreadControlLock(
+        productMessage?.contentAttributes ??
+          parsedInput.contentAttributes ??
+          (parsedInput.isPrivateReply ? { isPrivateReply: true } : null),
+        parsedInput.bypassThreadControlLock,
+      ),
+      parsedInput.isPrivateReply,
+      parsedInput.replyToMessageCreatedAt,
+    ),
+    sendFrom,
+  )
+  const contentAttributes = isSmtpEmailReply
+    ? {
+        ...(baseContentAttributes ?? {}),
+        emailReplyToMessageId: parsedInput.replyToMessageId,
+      }
+    : baseContentAttributes
   const messageInput = {
     text: productMessage ? productMessage.text : plainText,
     messageType: "outgoing" as const,
@@ -435,20 +533,12 @@ export const createOutgoing = async (props: {
     contactInboxId: contactInbox.id,
     contentType: "text" as const,
     createdAt: now,
-    type: parsedInput.replyToMessageId
-      ? ("comment" as const)
-      : ("message" as const),
+    type:
+      parsedInput.replyToMessageId && !isSmtpEmailReply
+        ? ("comment" as const)
+        : ("message" as const),
     parentId,
-    contentAttributes: withReplyTargetCreatedAt(
-      withBypassThreadControlLock(
-        productMessage?.contentAttributes ??
-          parsedInput.contentAttributes ??
-          (parsedInput.isPrivateReply ? { isPrivateReply: true } : null),
-        parsedInput.bypassThreadControlLock,
-      ),
-      parsedInput.isPrivateReply,
-      parsedInput.replyToMessageCreatedAt,
-    ),
+    contentAttributes,
   }
 
   const attachmentInputs = uploadedFiles.map((file) => ({
@@ -512,7 +602,7 @@ export const createOutgoing = async (props: {
               parentCreatedAt: parsedInput.replyToMessageCreatedAt ?? null,
             },
             quickReplies: parsedInput.quickReplies,
-            sendFrom: "inbox",
+            sendFrom,
           },
         },
         ...(contactInbox.channel === "threads" && message.type === "comment"
@@ -531,7 +621,10 @@ export const createOutgoing = async (props: {
                 data: {
                   conversation: targetConversation,
                   contactInbox,
-                  message: { id: message.id, text: messageInput.text },
+                  message: {
+                    id: message.id,
+                    text: parsedInput.automationText ?? messageInput.text,
+                  },
                 },
               },
             ),
@@ -571,6 +664,7 @@ export const createOutgoing = async (props: {
       message,
       conversation: targetConversation,
       clientId: parsedInput.clientId,
+      sendFrom,
     })
     throw sendChannelMessageError
   }

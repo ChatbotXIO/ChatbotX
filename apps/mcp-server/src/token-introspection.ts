@@ -2,12 +2,28 @@ import { getChildLogger } from "@chatbotx.io/logger"
 import { z } from "zod"
 import { env } from "./env"
 import { fetchWithTimeout } from "./http"
+import { isExpiredJwt, unverifiedJwtExpiryMs } from "./jwt-claims"
 
 const logger = getChildLogger("mcp-server")
 const tokenIntrospectionSchema = z.object({
   workspaceId: z.string(),
   permission: z.enum(["read_only", "full"]),
   scopes: z.array(z.string()).nullable(),
+  // Trusted identity from the builder. Optional so older builders still work
+  // for the default profile; the OpenAI profile requires it.
+  principal: z
+    .discriminatedUnion("credentialType", [
+      z.object({
+        credentialType: z.literal("oauth"),
+        audience: z.string(),
+        clientId: z.string(),
+        issuer: z.string(),
+        subject: z.string(),
+      }),
+      z.object({ credentialType: z.literal("workspace_token") }),
+      z.object({ credentialType: z.literal("mobile") }),
+    ])
+    .optional(),
 })
 
 export type TokenIntrospection = z.infer<typeof tokenIntrospectionSchema>
@@ -21,7 +37,13 @@ export type IntrospectionResult =
    */
   | { status: "unavailable" }
 
+// A rejected token stays rejected; cache it long enough to absorb retries.
 const NEGATIVE_CACHE_TTL_MS = 30_000
+// Callers fail closed on `unavailable`, so it is cached only long enough to
+// spare the API a burst of identical calls, not to outlive a short outage.
+const UNAVAILABLE_CACHE_TTL_MS = 2000
+// The expiry sweep scans the whole cache, so it runs at most this often.
+const EVICTION_INTERVAL_MS = 1000
 
 type IntrospectionCacheEntry = {
   result: IntrospectionResult
@@ -31,9 +53,19 @@ type IntrospectionCacheEntry = {
 
 const introspectionCache = new Map<string, IntrospectionCacheEntry>()
 
-/** Sweeps entries whose TTL has already elapsed so the cache can't grow unbounded across distinct token/workspace pairs. */
+let nextEvictionAtMs = 0
+
+/**
+ * Sweeps entries whose TTL has already elapsed so the cache can't grow
+ * unbounded across distinct token/workspace pairs. Throttled, so a flood of
+ * one-off tokens does not make every insert a full scan.
+ */
 const evictExpiredEntries = (): void => {
   const nowMs = Date.now()
+  if (nowMs < nextEvictionAtMs) {
+    return
+  }
+  nextEvictionAtMs = nowMs + EVICTION_INTERVAL_MS
   for (const [key, entry] of introspectionCache) {
     if (nowMs - entry.fetchedAtMs >= entry.ttlMs) {
       introspectionCache.delete(key)
@@ -58,26 +90,10 @@ const cacheResult = (
  * configured cache TTL.
  */
 const getPositiveCacheTtl = (token: string): number => {
-  const payload = token.split(".")[1]
-  if (!payload) {
-    return env.CHATBOTX_SPEC_TTL_MS
-  }
-
-  try {
-    const decoded = JSON.parse(
-      Buffer.from(payload, "base64url").toString("utf8"),
-    ) as { exp?: unknown }
-    if (typeof decoded.exp !== "number" || !Number.isFinite(decoded.exp)) {
-      return env.CHATBOTX_SPEC_TTL_MS
-    }
-
-    return Math.max(
-      0,
-      Math.min(env.CHATBOTX_SPEC_TTL_MS, decoded.exp * 1000 - Date.now()),
-    )
-  } catch {
-    return env.CHATBOTX_SPEC_TTL_MS
-  }
+  const expiryMs = unverifiedJwtExpiryMs(token)
+  return expiryMs === undefined
+    ? env.CHATBOTX_SPEC_TTL_MS
+    : Math.max(0, Math.min(env.CHATBOTX_SPEC_TTL_MS, expiryMs - Date.now()))
 }
 
 export const introspectToken = async (
@@ -88,6 +104,10 @@ export const introspectToken = async (
   const cached = introspectionCache.get(cacheKey)
   if (cached && Date.now() - cached.fetchedAtMs < cached.ttlMs) {
     return cached.result
+  }
+  // Expired whether or not its signature is valid; the client refreshes it.
+  if (isExpiredJwt(token)) {
+    return { status: "unauthorized" }
   }
 
   try {
@@ -135,7 +155,7 @@ export const introspectToken = async (
       return cacheResult(
         cacheKey,
         { status: "unavailable" },
-        NEGATIVE_CACHE_TTL_MS,
+        UNAVAILABLE_CACHE_TTL_MS,
       )
     }
     const parsed = tokenIntrospectionSchema.safeParse(await response.json())
@@ -147,7 +167,7 @@ export const introspectToken = async (
       return cacheResult(
         cacheKey,
         { status: "unavailable" },
-        NEGATIVE_CACHE_TTL_MS,
+        UNAVAILABLE_CACHE_TTL_MS,
       )
     }
     const ttlMs = getPositiveCacheTtl(token)
@@ -159,7 +179,7 @@ export const introspectToken = async (
     return cacheResult(
       cacheKey,
       { status: "unavailable" },
-      NEGATIVE_CACHE_TTL_MS,
+      UNAVAILABLE_CACHE_TTL_MS,
     )
   }
 }

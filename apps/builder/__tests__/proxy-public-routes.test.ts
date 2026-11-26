@@ -39,6 +39,7 @@ describe("isPublicRoute", () => {
   test("signed media proxy route families are public", () => {
     expect(isPublicRoute("/media/attachment/signed-token")).toBe(true)
     expect(isPublicRoute("/media/avatar/signed-token")).toBe(true)
+    expect(isPublicRoute("/media/destination-avatar/signed-token")).toBe(true)
     expect(isPublicRoute("/mediator")).toBe(false)
   })
 
@@ -99,5 +100,10 @@ describe("isPublicRoute", () => {
     expect(isPublicRoute("/account")).toBe(false)
     expect(isPublicRoute("/account/settings")).toBe(false)
     expect(isPublicRoute("/account/deletex")).toBe(false)
+  })
+
+  test("/delete-account info page is public, siblings are not", () => {
+    expect(isPublicRoute("/delete-account")).toBe(true)
+    expect(isPublicRoute("/delete-accounts")).toBe(false)
   })
 })

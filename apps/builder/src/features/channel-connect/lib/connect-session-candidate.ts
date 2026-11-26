@@ -154,6 +154,7 @@ export async function connectSessionCandidate<
       name,
       warning,
       integrationId: row?.id,
+      inboxId: connection.inboxId ?? undefined,
       coexistEligible: Boolean(row),
     })
   } catch (error) {

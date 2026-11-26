@@ -15,6 +15,7 @@ import {
   SelectValue,
 } from "@chatbotx.io/ui/components/ui/select"
 import { useTranslations } from "next-intl"
+import { useIsEditorLocked } from "@/features/templates/components/locked-editor"
 import { actionLabelKey } from "../../lib/labels"
 import { useMiniAppEditor } from "../editor-context"
 import { FieldRow, InspectorHint, useInspector } from "./field-row"
@@ -52,6 +53,7 @@ export function ActionPicker({
 }) {
   const t = useTranslations()
   const screens = useMiniAppEditor((state) => state.definition.screens)
+  const isLocked = useIsEditorLocked()
   const action = readMiniAppAction(value)
   const NONE = "none"
   const actionItems = [
@@ -69,6 +71,7 @@ export function ActionPicker({
   return (
     <div className="flex flex-col gap-2">
       <Select
+        disabled={isLocked}
         items={actionItems}
         onValueChange={(name) =>
           onChange(newAction(String(name), targets[0]?.key))
@@ -88,6 +91,7 @@ export function ActionPicker({
       </Select>
       {action?.name === "navigate" && targets.length > 0 ? (
         <Select
+          disabled={isLocked}
           items={screenItems}
           onValueChange={(next) =>
             onChange({ name: "navigate", next: String(next) })

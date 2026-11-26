@@ -1,5 +1,6 @@
 import {
   connectionStateService,
+  userService,
   zaloIntegrationService,
 } from "@chatbotx.io/business"
 import type { ZaloCredential } from "@chatbotx.io/database/partials"
@@ -18,6 +19,7 @@ export async function reconnectZaloHandler(props: {
   zaloSettings: ZaloCredential
   workspaceId: string
   integrationId: string
+  userId: string
   req: Request
   callbackUrl: string
 }): Promise<ReconnectResult> {
@@ -45,6 +47,14 @@ export async function reconnectZaloHandler(props: {
     if (authValue.oaId !== integrationZalo.oaId) {
       return { status: "error", reason: "accountNotFound" }
     }
+
+    await userService.recordConnectionAuthorization({
+      userId: props.userId,
+      provider: "zalo",
+      auth: authValue,
+      phase: "reconnectValidated",
+      workspaceId: props.workspaceId,
+    })
 
     await connectionStateService.commitReconnect({
       inboxId: integrationZalo.inboxId,

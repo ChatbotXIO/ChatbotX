@@ -63,7 +63,7 @@ export const createIgCommentRequest = z.object({
     .nullish()
     .describe("Folder to place the automation in, or null for root-level."),
   post: commentPostSchema.describe(
-    "Which comments to answer: `all` media, specific `postIds` (get them from `igComments.listMedia`), or `live` for every Instagram Live. A `live` automation is private-reply-only; public reply, like, hide and reply delay are ignored.",
+    "Which comments to answer: `all` media, specific `postIds` (get them from `igComments.listMedia`), `hashtags` (any media whose caption carries one of the hashtags in `value`, without `#`), or `live` for every Instagram Live. A `live` automation is private-reply-only; public reply, like, hide and reply delay are ignored.",
   ),
   privateReply: commentReplySchema.describe(
     "Private message reply sent to the commenter, if any.",

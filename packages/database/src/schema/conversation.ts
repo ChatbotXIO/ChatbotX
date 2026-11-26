@@ -14,6 +14,7 @@ import {
   sharedColumns,
   timestampConfig,
 } from "../partials/shared"
+import type { ConversationTranslationState } from "../partials/translation"
 import { userModel } from "./auth-user"
 import { contactModel } from "./contact"
 import { inboxTeamModel } from "./inbox-team"
@@ -28,6 +29,7 @@ export const conversationModel = pgTable(
     archivedAt: timestamp(timestampConfig),
     additionalAttributes: jsonb().$type<{
       [x: string]: unknown
+      translation?: ConversationTranslationState
     }>(),
     contactLastReadAt: timestamp(timestampConfig),
     agentLastReadAt: timestamp(timestampConfig),
@@ -87,6 +89,19 @@ export const conversationModel = pgTable(
       .on(table.contactId)
       .where(sql`${table.sourceId} IS NULL`),
     index("Conversation_contactId_idx").on(table.contactId),
+    // The comment threads of one post: a post's comments live on one conversation
+    // per commenter, all sharing `sourceId = externalPostId`. The trailing
+    // columns match the read order (newest-active first), so one post's threads
+    // come off the index already sorted and the capped read stops early.
+    index("Conversation_workspaceId_sourceId_lastActivityAt_id_idx")
+      .using(
+        "btree",
+        table.workspaceId.asc().nullsLast(),
+        table.sourceId.asc().nullsLast(),
+        table.lastActivityAt.desc().nullsLast(),
+        table.id.desc(),
+      )
+      .where(sql`${table.sourceId} IS NOT NULL`),
     index("Conversation_assignedUserId_idx")
       .on(table.assignedUserId)
       .where(sql`${table.assignedUserId} IS NOT NULL`),

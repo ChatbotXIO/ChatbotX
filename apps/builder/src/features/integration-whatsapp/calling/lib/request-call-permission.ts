@@ -13,6 +13,7 @@ import type { UserModel } from "@chatbotx.io/database/types"
 import type { WhatsappAuthValue } from "@chatbotx.io/integration-whatsapp"
 import { invalidateCacheKeys } from "@chatbotx.io/redis"
 import type { MessageWhatsappCallPermissionRequestEntity } from "@chatbotx.io/sdk"
+import type { SendFrom } from "@chatbotx.io/utils/send-from"
 import { logger } from "@/lib/log"
 import { resolveDialIdentity } from "../actions/outbound-dial-target"
 import {
@@ -62,8 +63,10 @@ export async function requestWhatsappCallPermission(props: {
    * who names the sender must never get the request sent from a different one.
    */
   requireRequestedInbox?: boolean
-  user?: UserModel
+  user?: Pick<UserModel, "id">
   messages: CallPermissionMessages
+  /** `inbox` from the builder's Inbox, `api` from the Public API (see `SendFrom`). */
+  sendFrom: SendFrom
 }): Promise<void> {
   const { workspaceId, conversation, messages } = props
 
@@ -137,6 +140,7 @@ export async function requestWhatsappCallPermission(props: {
     contactInbox,
     input: { text: props.text, contentAttributes: entity },
     user: props.user,
+    sendFrom: props.sendFrom,
   })
 
   // Best effort: drop the cached Meta counter so the next call re-reads Meta.

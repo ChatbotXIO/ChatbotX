@@ -7,7 +7,7 @@ import {
 } from "../lib/http-client"
 import { logger } from "../lib/logger"
 
-const INSTAGRAM_OAUTH_AUTHORIZE_URL =
+export const INSTAGRAM_OAUTH_AUTHORIZE_URL =
   "https://www.instagram.com/oauth/authorize"
 
 // Meta's Graph API renamed the Creator account_type value from "CREATOR" to
@@ -146,16 +146,64 @@ export async function getUnifiedInstagramAccounts(
   return accounts
 }
 
+export type InstagramCodeExchange = {
+  accessToken: string
+  /** Permissions the Business Login token exchange reports; null when absent. */
+  grantedScopes: string[] | null
+  userId: string
+}
+
+type RawCodeExchangeEntry = {
+  access_token: string
+  permissions?: string | string[]
+  user_id: string | number
+}
+
+const parsePermissions = (
+  permissions: string | string[] | undefined,
+): string[] | null => {
+  if (permissions === undefined) {
+    return null
+  }
+  const list =
+    typeof permissions === "string" ? permissions.split(",") : permissions
+  const scopes = list.map((scope) => scope.trim()).filter(Boolean)
+  return scopes.length > 0 ? scopes : null
+}
+
+/**
+ * The code exchange answers either with `{ data: [{ access_token, user_id,
+ * permissions }] }` (documented) or with the same fields at the top level;
+ * `permissions` is a comma-separated string or an array.
+ */
+export const readCodeExchange = (response: {
+  data?: RawCodeExchangeEntry[]
+  access_token?: string
+  permissions?: string | string[]
+  user_id?: string | number
+}): InstagramCodeExchange => {
+  const entry: Partial<RawCodeExchangeEntry> = response.data?.[0] ?? response
+  if (!(entry.access_token && entry.user_id)) {
+    throw new Error("Instagram code exchange returned no access token")
+  }
+  return {
+    accessToken: entry.access_token,
+    grantedScopes: parsePermissions(entry.permissions),
+    userId: String(entry.user_id),
+  }
+}
+
 // Step 1: exchange authorization code → short-lived user access token + user ID
+// (+ the permissions the user granted, when the platform reports them)
 export function exchangeCodeForToken(
   settings: { clientId: string; clientSecret: string; version?: string },
   code: string,
   redirectUrl: string,
-): Promise<{ accessToken: string; userId: string }> {
+): Promise<InstagramCodeExchange> {
   const endpoint = "oauth/access_token"
 
   return rescue(endpoint, async () => {
-    const res: { access_token: string; user_id: string | number } =
+    const exchanged = readCodeExchange(
       await instagramOAuthClient.post(endpoint, {
         body: new URLSearchParams({
           client_id: settings.clientId,
@@ -164,16 +212,17 @@ export function exchangeCodeForToken(
           code,
           grant_type: "authorization_code",
         }),
-      })
+      }),
+    )
     const longLivedToken = await exchangeLongLivedToken(
       {
         clientId: settings.clientId,
         clientSecret: settings.clientSecret,
         version: settings.version,
       },
-      res.access_token,
+      exchanged.accessToken,
     )
-    return { accessToken: longLivedToken, userId: String(res.user_id) }
+    return { ...exchanged, accessToken: longLivedToken }
   })
 }
 

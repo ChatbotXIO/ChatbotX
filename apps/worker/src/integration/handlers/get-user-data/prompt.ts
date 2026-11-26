@@ -252,6 +252,7 @@ async function sendDateTimePrompt(
       trackingContext: props.trackingContext,
       metadata,
       isBulkBroadcast: props.isBulkBroadcast,
+      flowOrigin: { flowId: flowVersion.flowId, stepId: step.id },
     },
   })
 }
@@ -282,7 +283,7 @@ async function sendWhatsappLocationRequestPrompt(
   props: ExecuteStepProps<GetUserDataStepSchema>,
   text: string,
 ): Promise<void> {
-  const { conversation, contactInbox, step, metadata } = props
+  const { conversation, contactInbox, flowVersion, step, metadata } = props
 
   const workspace = await workspaceService.findById({
     id: conversation.workspaceId,
@@ -306,6 +307,7 @@ async function sendWhatsappLocationRequestPrompt(
       trackingContext: props.trackingContext,
       metadata,
       isBulkBroadcast: props.isBulkBroadcast,
+      flowOrigin: { flowId: flowVersion.flowId, stepId: step.id },
     },
   })
 
@@ -431,7 +433,7 @@ async function sendContactHintPrompt(
   text: string,
   quickReplies: MessageButtonTemplate[],
 ): Promise<void> {
-  const { conversation, contactInbox, step, metadata } = props
+  const { conversation, contactInbox, flowVersion, step, metadata } = props
 
   const job = await chatQueue.add(ChatJobAction.sendChatMessage, {
     type: ChatJobAction.sendChatMessage,
@@ -443,6 +445,7 @@ async function sendContactHintPrompt(
       trackingContext: props.trackingContext,
       metadata,
       isBulkBroadcast: props.isBulkBroadcast,
+      flowOrigin: { flowId: flowVersion.flowId, stepId: step.id },
     },
   })
 

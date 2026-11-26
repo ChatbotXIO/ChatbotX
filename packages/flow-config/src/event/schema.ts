@@ -138,6 +138,28 @@ export const deliveredPayloadSchema = baseMessagePayloadSchema.extend({
 })
 export const seenPayloadSchema = baseMessagePayloadSchema.extend({})
 
+/** The contact-info kinds a message can carry; mirrors the database `contactInfoTypes`. */
+export const contactInfoCaptureInfoTypeSchema = z.enum(["phone", "email"])
+export type ContactInfoCaptureInfoType = z.infer<
+  typeof contactInfoCaptureInfoTypeSchema
+>
+
+/**
+ * Set on an inbound message in which a phone number and/or an email address
+ * was extracted. Carries only the kinds and the conversation, never the value;
+ * everything else the capture job needs is already on the payload.
+ */
+export const contactInfoCapturePayloadSchema = z.object({
+  infoTypes: z.array(contactInfoCaptureInfoTypeSchema).min(1),
+  conversationId: z.string(),
+  /**
+   * When the conversation was created (ISO). Lets the capture search stop at the
+   * conversation's first message without reading the conversation. Optional so
+   * events already on the stream keep working.
+   */
+  conversationCreatedAt: z.iso.datetime().optional(),
+})
+
 export const receivedPayloadSchema = z.object({
   workspaceId: z.string(),
   contactId: z.string(),
@@ -152,12 +174,16 @@ export const receivedPayloadSchema = z.object({
   // existing listeners (mac-tracking, active-hourly) are unaffected.
   origin: z.literal("inbound").optional(),
   messageId: z.string().optional(),
+  conversationId: z.string().optional(),
   // Whether this was the contact's first-ever inbound message on this
   // contactInbox, computed before the tracking update runs (see
   // received-message.ts) since `ContactInbox.firstInteractionAt`/
   // `lastIncomingMessageAt` get set by outbound sends too and can't be used
   // to infer this after the fact.
   isFirstIncomingMessage: z.boolean().optional(),
+  // Present only when the inbound message carried a phone/email; consumed by
+  // the `contact-info-capture` listener. Absent costs nothing on the wire.
+  contactInfoCapture: contactInfoCapturePayloadSchema.optional(),
 })
 export type MessageReceivedPayload = z.infer<typeof receivedPayloadSchema>
 

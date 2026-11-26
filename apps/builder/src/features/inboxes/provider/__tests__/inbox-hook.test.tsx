@@ -383,7 +383,7 @@ describe("derived inbox option hooks", () => {
     })
   }
 
-  test("useConfiguredInboxTypeOptions always includes omnichannel plus every distinct non-smtp channel present", async () => {
+  test("useConfiguredInboxTypeOptions always includes omnichannel plus every distinct channel present", async () => {
     renderProbe(
       <ConfiguredInboxTypeOptionsProbe onData={(next) => (data = next)} />,
     )
@@ -393,6 +393,7 @@ describe("derived inbox option hooks", () => {
         allInboxConfigs.omnichannel,
         allInboxConfigs.messenger,
         allInboxConfigs.whatsapp,
+        allInboxConfigs.smtp,
       ])
     })
   })

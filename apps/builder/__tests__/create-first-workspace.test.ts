@@ -4,6 +4,7 @@ import enMessages from "../messages/en.json"
 const mocks = vi.hoisted(() => ({
   mockEnsureConnectTargetForOwner: vi.fn(),
   mockEnsureFirstForOwner: vi.fn(),
+  mockResolveRequestTenantId: vi.fn(async () => "tenant-host"),
   mockRedirect: vi.fn((path: string) => {
     throw new Error(`redirect:${path}`)
   }),
@@ -15,6 +16,9 @@ vi.mock("@chatbotx.io/business", () => ({
     ensureConnectTargetForOwner: mocks.mockEnsureConnectTargetForOwner,
     ensureFirstForOwner: mocks.mockEnsureFirstForOwner,
   },
+}))
+vi.mock("../src/lib/tenant/request-tenant", () => ({
+  resolveRequestTenantId: mocks.mockResolveRequestTenantId,
 }))
 vi.mock("next/navigation", () => ({ redirect: mocks.mockRedirect }))
 
@@ -68,6 +72,7 @@ describe("create-first-workspace", () => {
       name: "New Workspace",
       tx: undefined,
       quotaConsumption: undefined,
+      hostTenantId: "tenant-host",
     })
     expect(mocks.mockEnsureFirstForOwner).not.toHaveBeenCalled()
   })
@@ -80,6 +85,15 @@ describe("create-first-workspace", () => {
       expect.objectContaining({ name: "Ann's workspace" }),
     )
     expect(mocks.mockEnsureConnectTargetForOwner).not.toHaveBeenCalled()
+  })
+
+  test("ensureFirstWorkspace passes the server-resolved host tenant down", async () => {
+    mocks.mockEnsureFirstForOwner.mockResolvedValue({ id: "ws-1" })
+
+    await ensureFirstWorkspace("user-1")
+    expect(mocks.mockEnsureFirstForOwner).toHaveBeenCalledWith(
+      expect.objectContaining({ hostTenantId: "tenant-host" }),
+    )
   })
 
   test("ensureFirstWorkspace returns null on a plan-limit failure instead of redirecting", async () => {

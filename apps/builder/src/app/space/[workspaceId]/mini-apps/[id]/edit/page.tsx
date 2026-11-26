@@ -6,6 +6,7 @@ import {
   findMiniApp,
   listWhatsappPublishTargets,
 } from "@/features/mini-apps/queries"
+import { LockedEditorGuard } from "@/features/templates/components/locked-editor-guard"
 
 export default async function EditMiniAppPage({
   params,
@@ -27,15 +28,21 @@ export default async function EditMiniAppPage({
   }
 
   return (
-    <MiniAppEditor
-      initialDefinition={miniApp.definition}
-      initialName={miniApp.name}
-      // Remount after a save so the editor starts from the stored version.
-      key={miniApp.updatedAt.toISOString()}
-      miniAppId={miniApp.id}
-      publicUrl={buildMiniAppPublicUrl(miniApp.id)}
-      publishTargets={publishTargets}
+    <LockedEditorGuard
+      resourceId={id}
+      resourceKind="miniApp"
       workspaceId={workspaceId}
-    />
+    >
+      <MiniAppEditor
+        initialDefinition={miniApp.definition}
+        initialName={miniApp.name}
+        // Remount after a save so the editor starts from the stored version.
+        key={miniApp.updatedAt.toISOString()}
+        miniAppId={miniApp.id}
+        publicUrl={buildMiniAppPublicUrl(miniApp.id)}
+        publishTargets={publishTargets}
+        workspaceId={workspaceId}
+      />
+    </LockedEditorGuard>
   )
 }

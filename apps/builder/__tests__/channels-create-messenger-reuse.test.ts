@@ -4,7 +4,10 @@ import type * as ChatbotxUtilsModule from "@chatbotx.io/utils"
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
 const {
+  mockConnectSessionCancel,
+  mockLoggerWarn,
   mockConnectSessionCreate,
+  mockFailSession,
   mockFindWorkspaceById,
   mockGetCurrentUserId,
   mockListAndAttachCandidates,
@@ -17,7 +20,10 @@ const {
   mockWorkspaceCreate,
   mockEnsureConnectTargetForOwner,
 } = vi.hoisted(() => ({
+  mockConnectSessionCancel: vi.fn(),
+  mockLoggerWarn: vi.fn(),
   mockConnectSessionCreate: vi.fn(),
+  mockFailSession: vi.fn(),
   mockFindWorkspaceById: vi.fn(async () => ({
     id: "ws-1",
     ownerId: "owner-1",
@@ -39,6 +45,10 @@ const {
     ownerId: "user-1",
   })),
   mockEnsureConnectTargetForOwner: vi.fn(),
+}))
+
+vi.mock("@/lib/tenant/request-tenant", () => ({
+  resolveRequestTenantId: vi.fn(async () => "1"),
 }))
 
 vi.mock("next/navigation", () => ({
@@ -79,6 +89,7 @@ vi.mock("@chatbotx.io/business", () => ({
 
 vi.mock("@chatbotx.io/business/connect-session", () => ({
   connectSessionService: {
+    cancel: mockConnectSessionCancel,
     create: mockConnectSessionCreate,
     updateReturnUrl: mockUpdateReturnUrl,
   },
@@ -91,7 +102,7 @@ vi.mock("@chatbotx.io/connections", () => ({
   },
   // `startChannelConnect`'s error paths call `failSession` — unused by these
   // happy/plan-limit-only tests, but the module must export it.
-  failSession: vi.fn(),
+  failSession: mockFailSession,
 }))
 
 vi.mock("@/features/connections/lib/resolve-connect-credential", () => ({
@@ -115,7 +126,7 @@ vi.mock("@/features/integration-messenger/libs/sso-reuse", () => ({
 }))
 
 vi.mock("@/lib/log", () => ({
-  logger: { warn: vi.fn(), error: vi.fn(), info: vi.fn() },
+  logger: { warn: mockLoggerWarn, error: vi.fn(), info: vi.fn() },
 }))
 
 const { GET } = await import(
@@ -155,6 +166,12 @@ describe("GET /channels/create/messenger — Facebook SSO token reuse", () => {
         }),
     )
     mockConnectSessionCreate.mockResolvedValue({ session: { id: "session-1" } })
+    mockFailSession.mockResolvedValue(undefined)
+    mockConnectSessionCancel.mockResolvedValue({ id: "session-1" })
+    mockListAndAttachCandidates.mockResolvedValue({
+      id: "session-1",
+      targets: [{ id: "page-1", name: "Page One", selectable: true }],
+    })
     // One resolve, shared by the SSO pre-check and the OAuth fallback — no
     // more duplicate `platformCredentialService.resolveForOwner("messenger")`.
     mockResolveOAuthCredential.mockResolvedValue({
@@ -212,6 +229,104 @@ describe("GET /channels/create/messenger — Facebook SSO token reuse", () => {
     expect(mockStartSession).not.toHaveBeenCalled()
   })
 
+  test.each([
+    [
+      "every listed page is unavailable",
+      [
+        {
+          id: "page-1",
+          name: "Page One",
+          selectable: false,
+          disabledReason: "insufficientPermissions",
+        },
+        {
+          id: "page-2",
+          name: "Page Two",
+          selectable: false,
+          disabledReason: "insufficientPermissions",
+        },
+      ],
+    ],
+    [
+      "every listed page is already connected",
+      [
+        {
+          id: "page-1",
+          name: "Page One",
+          selectable: false,
+          alreadyConnected: "this_workspace",
+        },
+      ],
+    ],
+  ])("falls back to the OAuth dialog and cancels the session when %s", async (_label, targets) => {
+    mockTryReuseFacebookSsoToken.mockResolvedValue({
+      reusable: true,
+      userToken: "long-lived-user-token",
+    })
+    mockListAndAttachCandidates.mockResolvedValue({ id: "session-1", targets })
+
+    await expect(GET(requestWithWorkspaceId("ws-1"))).rejects.toThrow(
+      "redirect:https://facebook.com/oauth-dialog",
+    )
+
+    expect(mockConnectSessionCancel).toHaveBeenCalledWith({
+      id: "session-1",
+      workspaceId: "ws-1",
+    })
+    expect(mockFailSession).not.toHaveBeenCalled()
+    expect(mockStartSession).toHaveBeenCalled()
+  })
+
+  test("still falls back to OAuth and logs a warning when cancelling the session fails", async () => {
+    mockTryReuseFacebookSsoToken.mockResolvedValue({
+      reusable: true,
+      userToken: "long-lived-user-token",
+    })
+    mockListAndAttachCandidates.mockResolvedValue({
+      id: "session-1",
+      targets: [{ id: "page-1", name: "Page One", selectable: false }],
+    })
+    const cancelError = new Error("cancel failed")
+    mockConnectSessionCancel.mockRejectedValue(cancelError)
+
+    await expect(GET(requestWithWorkspaceId("ws-1"))).rejects.toThrow(
+      "redirect:https://facebook.com/oauth-dialog",
+    )
+
+    expect(mockLoggerWarn).toHaveBeenCalledWith(
+      { err: cancelError, workspaceId: "ws-1", sessionId: "session-1" },
+      "Failed to cancel the superseded Facebook SSO reuse session",
+    )
+    expect(mockStartSession).toHaveBeenCalled()
+  })
+
+  test("still redirects to the Page picker when only some listed pages are selectable", async () => {
+    mockTryReuseFacebookSsoToken.mockResolvedValue({
+      reusable: true,
+      userToken: "long-lived-user-token",
+    })
+    mockListAndAttachCandidates.mockResolvedValue({
+      id: "session-1",
+      targets: [
+        {
+          id: "page-1",
+          name: "Page One",
+          selectable: false,
+          disabledReason: "insufficientPermissions",
+        },
+        { id: "page-2", name: "Page Two", selectable: true },
+      ],
+    })
+
+    await expect(GET(requestWithWorkspaceId("ws-1"))).rejects.toThrow(
+      "redirect:/channels/messenger/select?session=session-1",
+    )
+
+    expect(mockFailSession).not.toHaveBeenCalled()
+    expect(mockConnectSessionCancel).not.toHaveBeenCalled()
+    expect(mockStartSession).not.toHaveBeenCalled()
+  })
+
   test("starts the SSO-reuse session in the target returned by the service", async () => {
     const ownerId = "user-1"
     const connectTarget = { id: "ws-new", ownerId }
@@ -230,6 +345,7 @@ describe("GET /channels/create/messenger — Facebook SSO token reuse", () => {
       ownerId,
       name: "New Workspace",
       quotaConsumption: undefined,
+      hostTenantId: "1",
       tx: undefined,
     })
     const sessionInput = mockConnectSessionCreate.mock.calls[0]?.[0]

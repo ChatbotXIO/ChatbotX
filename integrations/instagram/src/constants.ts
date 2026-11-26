@@ -10,4 +10,10 @@ export const INSTAGRAM_BUSINESS_SCOPES = [
   "instagram_business_basic",
   "instagram_business_manage_messages",
   "instagram_business_manage_comments",
+  "instagram_business_content_publish",
 ]
+
+export const FACEBOOK_GRAPH_API_URL = "https://graph.facebook.com"
+
+/** Graph version used when publishing through the Facebook Login flavour. */
+export const FACEBOOK_GRAPH_API_VERSION = "v23.0"

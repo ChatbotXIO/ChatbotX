@@ -8,6 +8,7 @@ import {
   isRecurringTemplate,
   resolveBroadcastSendRatePerMinute,
 } from "@chatbotx.io/database/partials"
+import { Button } from "@chatbotx.io/ui/components/ui/button"
 import {
   Dialog,
   DialogContent,
@@ -15,6 +16,7 @@ import {
   DialogTitle,
 } from "@chatbotx.io/ui/components/ui/dialog"
 import { format } from "date-fns"
+import { CopyIcon } from "lucide-react"
 import Link from "next/link"
 import { useFormatter, useTranslations } from "next-intl"
 import { useMemo } from "react"
@@ -29,6 +31,7 @@ import { BroadcastDetailTemplates } from "./components/broadcast-detail-template
 import { BroadcastStatusBadge } from "./components/broadcast-status-badge"
 import { BroadcastStatusReason } from "./components/broadcast-status-reason"
 import { useBroadcastTemplateDetails } from "./hooks/use-broadcast-template-details"
+import { useCopyBroadcastId } from "./hooks/use-copy-broadcast-id"
 import {
   resolveBroadcastPageFlows,
   resolveBroadcastPageNames,
@@ -53,6 +56,7 @@ export function BroadcastDetailDialog({
   const t = useTranslations()
   const formatter = useFormatter()
   const workspaceId = useWorkspaceId()
+  const handleCopyId = useCopyBroadcastId()
 
   const sendsTemplate = broadcast ? broadcastSendsTemplate(broadcast) : false
   const templateDetailsState = useBroadcastTemplateDetails({
@@ -103,6 +107,25 @@ export function BroadcastDetailDialog({
 
         <div className="min-h-0 flex-1 space-y-6 overflow-y-auto pe-1">
           <div className="grid gap-3 text-sm sm:grid-cols-2">
+            <BroadcastDetailField
+              label={t("broadcasts.fields.id")}
+              value={
+                <div className="flex items-center gap-1">
+                  <span className="break-all font-mono text-xs">
+                    {broadcast.id}
+                  </span>
+                  <Button
+                    aria-label={t("actions.copyId")}
+                    className="size-6 shrink-0"
+                    onClick={() => handleCopyId(broadcast.id)}
+                    size="icon"
+                    variant="ghost"
+                  >
+                    <CopyIcon className="size-3" />
+                  </Button>
+                </div>
+              }
+            />
             <BroadcastDetailField
               label={t("fields.name.label")}
               value={broadcast.name}

@@ -135,6 +135,8 @@ class LineIntegrationService extends BaseService {
     channelId: string
     auth: LineIntegrationAuth
     bot: LineBotProfile
+    /** Server-resolved tenant of the request host; see `workspaceService.resolveWorkspaceTenant`. */
+    hostTenantId?: string
     onConnected: (ctx: { integrationId: string }) => Promise<void>
   }): Promise<{
     workspaceId: string
@@ -179,6 +181,7 @@ class LineIntegrationService extends BaseService {
                   ownerId: createdBy,
                 },
                 quotaConsumption: workspaceQuotaConsumption,
+                hostTenantId: input.hostTenantId,
               })
               workspaceId = workspace.id
             }

@@ -1,3 +1,4 @@
+import { userService } from "@chatbotx.io/business"
 import type { ConnectSessionActor } from "@chatbotx.io/business/connect-session"
 import {
   isActiveConnectionStatus,
@@ -135,6 +136,19 @@ export const connectFromCredentials = async (input: {
       workspaceId: input.workspaceId,
     }),
   ])
+  // Only reached when `fromCredentials` accepted the credentials; a rejected
+  // credential throws above and is never backed up. Only channel credentials
+  // are backed up: raw API keys of non-channel integrations (AI and marketing
+  // providers) are never copied into the user's authorization backup.
+  if (provider.kind === "channel") {
+    await userService.recordConnectionAuthorization({
+      userId: input.actorUserId,
+      provider: input.provider,
+      auth,
+      phase: "credentialsValidated",
+      workspaceId: input.workspaceId,
+    })
+  }
   if ("baseURL" in auth && typeof auth.baseURL === "string") {
     extraConfig.baseURL = auth.baseURL
   }

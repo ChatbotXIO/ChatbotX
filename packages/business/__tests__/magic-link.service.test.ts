@@ -18,6 +18,19 @@ const mocks = vi.hoisted(() => ({
   findFirst: vi.fn(),
   count: vi.fn(),
   relationsFilterToSQL: vi.fn(),
+  deleteReturning: vi.fn(),
+  database: {} as Record<string, unknown>,
+}))
+
+vi.mock("../src/template/installed-resource.service", () => ({
+  assertResourceEditable: vi.fn(),
+  changedKeysOf: () => [],
+  withDeleteGuard: (_input: unknown, run: (tx: unknown) => unknown) =>
+    run(mocks.database),
+}))
+vi.mock("../src/template/template-resource-locks", () => ({
+  withTemplateLockedTransaction: (run: (tx: unknown) => unknown) =>
+    run(mocks.database),
 }))
 
 vi.mock("@chatbotx.io/database/client", () => ({
@@ -26,18 +39,7 @@ vi.mock("@chatbotx.io/database/client", () => ({
   inArray: (column: unknown, values: unknown) => ({
     inArray: [column, values],
   }),
-  db: {
-    insert: mocks.insert,
-    update: () => ({ set: mocks.updateSet }),
-    delete: () => ({ where: mocks.deleteWhere }),
-    query: {
-      magicLinkModel: {
-        findMany: mocks.findMany,
-        findFirst: mocks.findFirst,
-      },
-    },
-    $count: mocks.count,
-  },
+  db: mocks.database,
   isUniqueViolationError: mocks.isUniqueViolationError,
   relationsFilterToSQL: mocks.relationsFilterToSQL,
 }))
@@ -51,6 +53,23 @@ vi.mock("@chatbotx.io/database/schema", () => ({
 }))
 
 vi.mock("@chatbotx.io/database/utils", () => ({
+  // The shared delete helper, reduced to the predicate it builds.
+  deleteByIdsInWorkspace: async (
+    _tx: unknown,
+    model: { id: string; workspaceId: string },
+    input: { workspaceId: string; ids: string[] },
+  ) => {
+    if (input.ids.length === 0) {
+      return []
+    }
+    await mocks.deleteWhere({
+      and: [
+        { eq: [model.workspaceId, input.workspaceId] },
+        { inArray: [model.id, input.ids] },
+      ],
+    })
+    return input.ids
+  },
   getPaginationWithDefaults: (input: { page: number; perPage: number }) => ({
     limit: input.perPage,
     offset: (input.page - 1) * input.perPage,
@@ -58,6 +77,19 @@ vi.mock("@chatbotx.io/database/utils", () => ({
   likeContains: (value: string) => `%${value}%`,
   parseOrderByAsObject: () => ({}),
 }))
+
+Object.assign(mocks.database, {
+  insert: mocks.insert,
+  update: () => ({ set: mocks.updateSet }),
+  delete: () => ({ where: mocks.deleteWhere }),
+  query: {
+    magicLinkModel: {
+      findMany: mocks.findMany,
+      findFirst: mocks.findFirst,
+    },
+  },
+  $count: mocks.count,
+})
 
 let nextId = 0
 vi.mock("@chatbotx.io/utils", () => ({
@@ -75,7 +107,8 @@ beforeEach(() => {
   mocks.updateSet.mockReturnValue({ where: mocks.updateWhere })
   mocks.updateWhere.mockReturnValue({ returning: mocks.updateReturning })
   mocks.updateReturning.mockResolvedValue([{ id: "ml-1", name: "renamed" }])
-  mocks.deleteWhere.mockResolvedValue(undefined)
+  mocks.deleteWhere.mockReturnValue({ returning: mocks.deleteReturning })
+  mocks.deleteReturning.mockResolvedValue([{ id: "ml-1" }])
   mocks.findMany.mockResolvedValue([])
   mocks.count.mockResolvedValue(0)
 })

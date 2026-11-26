@@ -2,6 +2,8 @@ import {
   type ChannelType,
   PIPELINE_VARIABLE_ATTRIBUTES,
   type PipelineVariableAttribute,
+  POST_COMMENT_VARIABLE_NAMES,
+  type PostCommentVariableName,
 } from "@chatbotx.io/database/partials"
 import { formatBotFieldReference } from "@chatbotx.io/flow-config"
 import { useTranslations } from "next-intl"
@@ -22,6 +24,8 @@ type UsePromptVariableOptionsProps = {
   includeCouponVariables?: boolean
   /** Adds the Pipelines group: `{{pipelines.<reference_name>.<attribute>}}` tokens. */
   includePipelineVariables?: boolean
+  /** Adds the Post comment group: `{{post.*}}` / `{{comment.*}}` of a post-comment trigger run. */
+  includePostCommentVariables?: boolean
   includeRawCustomFieldVariables?: boolean
   /**
    * Adds the Account Fields (bot fields) group, inserted as
@@ -80,11 +84,37 @@ export const buildPipelinePromptVariableOptions = (
     })),
   )
 
+const POST_COMMENT_LABEL_KEYS = {
+  "post.link": "postCommentVariables.postLink",
+  "post.text": "postCommentVariables.postText",
+  "post.published_at": "postCommentVariables.postPublishedAt",
+  "post.page_name": "postCommentVariables.postPageName",
+  "post.id": "postCommentVariables.postId",
+  "comment.text": "postCommentVariables.commentText",
+  "comment.id": "postCommentVariables.commentId",
+} as const satisfies Record<PostCommentVariableName, string>
+
+/**
+ * One option per `{{post.*}}` / `{{comment.*}}` token. They only carry a value
+ * in a run of a post-comment trigger (or a flow it started) and render empty
+ * anywhere else, never a "latest post".
+ */
+export const buildPostCommentPromptVariableOptions = (
+  group: string,
+  nameLabel: (name: PostCommentVariableName) => string,
+): PromptVariableOption[] =>
+  POST_COMMENT_VARIABLE_NAMES.map((name) => ({
+    group,
+    label: `${group} › ${nameLabel(name)}`,
+    value: name,
+  }))
+
 export function usePromptVariableOptions({
   botFieldsOnly = false,
   channels,
   includeCouponVariables = false,
   includePipelineVariables = false,
+  includePostCommentVariables = false,
   includeRawCustomFieldVariables = false,
   includeBotFieldVariables = false,
 }: UsePromptVariableOptionsProps): PromptVariableOption[] {
@@ -143,6 +173,16 @@ export function usePromptVariableOptions({
         : [],
     [isPipelineVariablesEnabled, pipelines, t],
   )
+  const postCommentOptions = useMemo(
+    () =>
+      includePostCommentVariables && !botFieldsOnly
+        ? buildPostCommentPromptVariableOptions(
+            t("postCommentVariables.group"),
+            (name) => t(POST_COMMENT_LABEL_KEYS[name]),
+          )
+        : [],
+    [includePostCommentVariables, botFieldsOnly, t],
+  )
   const { topics } = useCouponTopicOptions({
     enabled: includeCouponVariables && !botFieldsOnly,
   })
@@ -166,11 +206,13 @@ export function usePromptVariableOptions({
             ...botFieldOptions,
             ...couponOptions,
             ...pipelineOptions,
+            ...postCommentOptions,
           ],
     [
       botFieldsOnly,
       couponOptions,
       pipelineOptions,
+      postCommentOptions,
       customFieldSelectOptions,
       rawCustomFieldOptions,
       botFieldOptions,

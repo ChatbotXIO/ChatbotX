@@ -84,6 +84,7 @@ export function TemplatePicker({
           >
             <span
               className={value ? "truncate" : "truncate text-muted-foreground"}
+              title={value?.name}
             >
               {value?.name ?? t("placeholder")}
             </span>

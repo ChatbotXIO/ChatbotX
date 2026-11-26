@@ -110,6 +110,83 @@ const isPrivateReplyAttributes = (contentAttributes: unknown): boolean =>
   contentAttributes.isPrivateReply === true
 
 /**
+ * `contentAttributes` key marking a message a workspace member sent from the
+ * builder's Inbox (`sendFrom: "inbox"`). Stamped when the row is created so a
+ * retry or a late delivery-status callback can still tell it apart.
+ */
+export const SENT_FROM_INBOX_KEY = "sentFromInbox"
+
+/**
+ * `contentAttributes` key naming the workspace member who started a bot-typed
+ * outgoing row (a flow step or template a member sent from the Inbox or with a
+ * member token). `senderType`/`senderId` stay untouched so bot quota and
+ * analytics are unchanged. Typed rows already carry the member in `senderId`.
+ */
+export const SENT_BY_USER_ID_KEY = "sentByUserId"
+
+/** The `contentAttributes` fragment that stamps the member behind a row. */
+export const sentByUserAttributes = (
+  userId: string | null | undefined,
+): { [SENT_BY_USER_ID_KEY]?: string } =>
+  userId ? { [SENT_BY_USER_ID_KEY]: userId } : {}
+
+/**
+ * The workspace member who authored a message, or `null` when none can be
+ * named (a contact, a bot, the API with a workspace token, a page echo).
+ * Pure, so the server and the realtime client resolve authorship identically.
+ */
+export const resolveMessageAuthorUserId = (message: {
+  /** A `SenderType`; typed `string` because message rows carry it as text. */
+  senderType: string
+  /** Typed `unknown` because the client message resource does not narrow it. */
+  senderId: unknown
+  contentAttributes: unknown
+}): string | null => {
+  if (message.senderType === senderTypes.enum.user) {
+    return typeof message.senderId === "string" ? message.senderId : null
+  }
+  const attributes = message.contentAttributes
+  if (
+    typeof attributes === "object" &&
+    attributes !== null &&
+    SENT_BY_USER_ID_KEY in attributes &&
+    typeof attributes[SENT_BY_USER_ID_KEY] === "string"
+  ) {
+    return attributes[SENT_BY_USER_ID_KEY]
+  }
+  return null
+}
+
+/**
+ * Whether a message was sent by a workspace member from the Inbox. Only such a
+ * message is kept, with its error, when its send fails for good; every other
+ * failed outgoing message is removed and its error goes to the Error Log.
+ */
+export const isSentFromInbox = (contentAttributes: unknown): boolean =>
+  typeof contentAttributes === "object" &&
+  contentAttributes !== null &&
+  SENT_FROM_INBOX_KEY in contentAttributes &&
+  contentAttributes[SENT_FROM_INBOX_KEY] === true
+
+/**
+ * Whether a message was created before the Inbox marker existed, and was typed
+ * by a member. Every row created since carries `sentFromInbox` (`true` from the
+ * Inbox, `false` from the API), so a row with no marker at all is older. Such a
+ * row sent by a member (`senderType: "user"`) is kept when its send fails late:
+ * it was an Inbox message then, and removing it would lose what the member typed.
+ */
+export const isLegacyMemberMessage = (input: {
+  contentAttributes?: unknown
+  senderType?: string | null | undefined
+}): boolean =>
+  input.senderType === "user" &&
+  !(
+    typeof input.contentAttributes === "object" &&
+    input.contentAttributes !== null &&
+    SENT_FROM_INBOX_KEY in input.contentAttributes
+  )
+
+/**
  * A message that can be sent again: an outgoing message a person or the API
  * typed (never a bot or a flow), a DM or a private reply (stored as a `comment`
  * but delivered as a DM), that failed and was never given a provider id. A

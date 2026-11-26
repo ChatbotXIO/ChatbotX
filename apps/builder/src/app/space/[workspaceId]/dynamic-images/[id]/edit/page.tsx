@@ -5,6 +5,7 @@ import { AppBreadcrumb } from "@/components/app-breadcrumb"
 
 import { findDynamicImage } from "@/features/dynamic-images/queries"
 import { UpdateDynamicImageForm } from "@/features/dynamic-images/update-dynamic-image-form"
+import { LockedEditorGuard } from "@/features/templates/components/locked-editor-guard"
 import { getBrokerOrigin } from "@/lib/oauth-broker"
 
 export default async function EditDynamicImagePage({
@@ -44,11 +45,17 @@ export default async function EditDynamicImagePage({
           { label: t("actions.edit"), href: "" },
         ]}
       />
-      <UpdateDynamicImageForm
-        dynamicImage={dynamicImage}
-        publicUrl={publicUrl}
+      <LockedEditorGuard
+        resourceId={id}
+        resourceKind="dynamicImage"
         workspaceId={workspaceId}
-      />
+      >
+        <UpdateDynamicImageForm
+          dynamicImage={dynamicImage}
+          publicUrl={publicUrl}
+          workspaceId={workspaceId}
+        />
+      </LockedEditorGuard>
     </div>
   )
 }

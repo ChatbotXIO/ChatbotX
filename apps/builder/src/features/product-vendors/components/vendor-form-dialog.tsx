@@ -22,6 +22,7 @@ import { useAction } from "next-safe-action/hooks"
 import { useState } from "react"
 import { useForm } from "react-hook-form"
 import { toast } from "sonner"
+import { LockedDialogFieldset } from "@/components/locked-dialog-fieldset"
 import {
   ALWAYS_OPEN,
   OpenHoursSelectField,
@@ -38,6 +39,7 @@ import {
   PRICE_INPUT_PROPS,
 } from "@/features/products/constants"
 import { useInvalidateProductFormOptions } from "@/features/products/provider/use-invalidate-product-form-options"
+import { useIsLocked } from "@/features/templates/components/lock-context"
 import { toastActionError } from "@/lib/errors/safe-action-error-handler"
 import {
   useInvalidFormToast,
@@ -123,6 +125,7 @@ export function VendorFormDialog({
 }: VendorFormDialogProps) {
   const t = useTranslations("productVendors")
   const router = useRouter()
+  const isLocked = useIsLocked(vendor?.id)
   const invalidateProductFormOptions = useInvalidateProductFormOptions()
   const [internalOpen, setInternalOpen] = useState(false)
   const open = controlledOpen ?? internalOpen
@@ -193,70 +196,72 @@ export function VendorFormDialog({
         </DialogHeader>
         <Form {...form}>
           <form className="space-y-6" onSubmit={onSubmit}>
-            <div className="space-y-4">
-              <InputField label={t("fields.name")} name="name" required />
-              <InputField
-                label={t("fields.shortDescription")}
-                name="shortDescription"
-                placeholder={t("fields.optional")}
-              />
-              <InputField
-                label={t("fields.phone")}
-                name="phone"
-                placeholder={t("fields.optional")}
-                type="tel"
-              />
-              <TextareaField
-                label={t("fields.storeAddress")}
-                name="storeAddress"
-                placeholder={t("fields.optional")}
-              />
-              <SingleImageField
-                label={t("fields.image")}
-                name="imageUrl"
-                uploadPath={`public/space/${workspaceId}/product-vendors`}
-              />
-            </div>
-
-            <div className="space-y-4">
-              <p className="font-medium text-primary text-sm">
-                {t("moreOptions")}
-              </p>
-              <div className="grid items-start gap-4 sm:grid-cols-3">
-                <InputNumberField
-                  label={t("fields.discountPercent")}
-                  name="discountPercent"
-                  {...PERCENT_INPUT_PROPS}
+            <LockedDialogFieldset resourceId={vendor?.id}>
+              <div className="space-y-4">
+                <InputField label={t("fields.name")} name="name" required />
+                <InputField
+                  label={t("fields.shortDescription")}
+                  name="shortDescription"
+                  placeholder={t("fields.optional")}
                 />
-                <InputNumberField
-                  label={t("fields.minimumOrderValue")}
-                  min={0}
-                  name="minimumOrderValue"
-                  {...PRICE_INPUT_PROPS}
+                <InputField
+                  label={t("fields.phone")}
+                  name="phone"
+                  placeholder={t("fields.optional")}
+                  type="tel"
                 />
-                <OpenHoursSelectField
-                  label={t("fields.openHours")}
-                  name="openHoursId"
-                  schedules={openHours}
-                  workspaceId={workspaceId}
+                <TextareaField
+                  label={t("fields.storeAddress")}
+                  name="storeAddress"
+                  placeholder={t("fields.optional")}
                 />
-                <RankSelectField />
-                <SelectField
-                  label={t("fields.category")}
-                  name="categoryId"
-                  options={categoryOptions}
-                  triggerValueChange={() =>
-                    form.setValue("subcategoryId", NO_CATEGORY)
-                  }
-                />
-                <SelectField
-                  disabled={categoryId === NO_CATEGORY}
-                  label={t("fields.subcategory")}
-                  name="subcategoryId"
-                  options={subcategoryOptions}
+                <SingleImageField
+                  label={t("fields.image")}
+                  name="imageUrl"
+                  uploadPath={`public/space/${workspaceId}/product-vendors`}
                 />
               </div>
-            </div>
+
+              <div className="space-y-4">
+                <p className="font-medium text-primary text-sm">
+                  {t("moreOptions")}
+                </p>
+                <div className="grid items-start gap-4 sm:grid-cols-3">
+                  <InputNumberField
+                    label={t("fields.discountPercent")}
+                    name="discountPercent"
+                    {...PERCENT_INPUT_PROPS}
+                  />
+                  <InputNumberField
+                    label={t("fields.minimumOrderValue")}
+                    min={0}
+                    name="minimumOrderValue"
+                    {...PRICE_INPUT_PROPS}
+                  />
+                  <OpenHoursSelectField
+                    label={t("fields.openHours")}
+                    name="openHoursId"
+                    schedules={openHours}
+                    workspaceId={workspaceId}
+                  />
+                  <RankSelectField />
+                  <SelectField
+                    label={t("fields.category")}
+                    name="categoryId"
+                    options={categoryOptions}
+                    triggerValueChange={() =>
+                      form.setValue("subcategoryId", NO_CATEGORY)
+                    }
+                  />
+                  <SelectField
+                    disabled={categoryId === NO_CATEGORY}
+                    label={t("fields.subcategory")}
+                    name="subcategoryId"
+                    options={subcategoryOptions}
+                  />
+                </div>
+              </div>
+            </LockedDialogFieldset>
 
             <DialogFooter>
               <DialogClose
@@ -266,7 +271,7 @@ export function VendorFormDialog({
                   </Button>
                 }
               />
-              <Button disabled={isPending} type="submit">
+              <Button disabled={isPending || isLocked} type="submit">
                 {t("save")}
               </Button>
             </DialogFooter>

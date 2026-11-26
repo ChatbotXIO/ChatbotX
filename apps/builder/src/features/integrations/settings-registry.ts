@@ -38,7 +38,7 @@ export const INTEGRATION_SETTINGS_REGISTRY: readonly IntegrationSettingsEntry[] 
       titleKey: "workspaceToken.title",
       icon: CodeIcon,
     },
-    { slug: "chatbotx-mcp", titleKey: "chatbotxMcp.title", icon: PlugIcon },
+    { slug: "mcp", titleKey: "chatbotxMcp.title", icon: PlugIcon },
     { slug: "openai", titleKey: "openai.title", icon: BotIcon },
     { slug: "muse", titleKey: "muse.title", icon: SiMeta },
     { slug: "gemini", titleKey: "gemini.title", icon: BotIcon },

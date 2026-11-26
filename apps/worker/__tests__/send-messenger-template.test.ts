@@ -81,12 +81,17 @@ vi.mock("@chatbotx.io/database/client", () => ({
 // delivered; mark-read forwards to conversationService.markReadByOutbound) so
 // this file checks the handler's wiring; the helpers themselves are covered by
 // send-message-handler.test.ts.
+const mockSettleFailedTemplateMessage = vi.hoisted(() =>
+  vi.fn().mockResolvedValue("removed"),
+)
+
 vi.mock("../src/chat/handlers/send-message", () => ({
   isDeliveredDirectMessage: ({ result }: { result: { sentCount: number } }) =>
     result.sentCount > 0,
   markConversationReadAfterDelivery: (props: unknown) =>
     mockMarkReadByOutbound(props),
   sendFlowStepToChannel: vi.fn(),
+  settleFailedTemplateMessage: mockSettleFailedTemplateMessage,
 }))
 
 vi.mock("../src/integration/handlers/messenger-template-handler", () => ({
@@ -225,6 +230,32 @@ describe("processMessengerTemplate — sourceId persistence", () => {
     expect(contactVariableService.getAll).toHaveBeenCalledWith(
       expect.objectContaining({ sentByUserId: "user-1" }),
     )
+  })
+
+  test.each([
+    ["inbox", "stamps"],
+    ["api", "stamps"],
+    [undefined, "does not stamp"],
+  ] as const)("%s send %s the member on the row", async (sendFrom) => {
+    mockSendFlowStep.mockResolvedValueOnce({
+      messageIds: ["mid.XYZ"],
+      sentCount: 1,
+    })
+
+    await processMessengerTemplate({
+      conversation: CONVERSATION,
+      contactInbox: CONTACT_INBOX,
+      template: TEMPLATE,
+      sentByUserId: "user-1",
+      sendFrom,
+    } as unknown as Parameters<typeof processMessengerTemplate>[0])
+
+    const { contentAttributes } = mockMessageCreate.mock.calls[0][0]
+    if (sendFrom) {
+      expect(contentAttributes).toHaveProperty("sentByUserId", "user-1")
+    } else {
+      expect(contentAttributes).not.toHaveProperty("sentByUserId")
+    }
   })
 
   test("persists providerMessageId to messageModel.sourceId when send succeeds", async () => {

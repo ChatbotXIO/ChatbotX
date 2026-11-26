@@ -413,4 +413,70 @@ describe.skipIf(!databaseUrl)("template sync on a real database", () => {
       })
     expect(stored?.id).toBe(first.syncId)
   })
+
+  test("warnings raised after a sync committed are appended to it, fenced by the claim that finished it", async () => {
+    const seed = await installThenPublish({
+      name: "On order",
+      conditions: [conditionRow("newOrder", null)],
+    })
+    const { syncId } = await templateSyncRequestService.request({
+      ...seed,
+      actor,
+      trigger: "manual",
+    })
+    const claimed = await templateSyncExecuteService.claim({
+      syncId,
+      workspaceId: seed.workspaceId,
+    })
+    if (!claimed) {
+      throw new Error("the sync could not be claimed")
+    }
+    await templateSyncExecuteService.run({
+      sync: claimed.sync,
+      claimToken: claimed.claimToken,
+    })
+    const late = {
+      category: "dynamicImages",
+      entityKind: "dynamicImageRerenderFailed",
+      path: "dynamicImages.1",
+    } as const
+    const before = await templateInstallationSyncRepository.findById({
+      id: syncId,
+      workspaceId: seed.workspaceId,
+    })
+    expect(before?.status).toBe("completed")
+    const baseline = before?.warnings ?? []
+
+    // Another claim's late warnings never land on this sync.
+    await templateInstallationSyncRepository.appendWarnings({
+      id: syncId,
+      claimToken: "someone-else",
+      warnings: [late],
+    })
+    expect(
+      (
+        await templateInstallationSyncRepository.findById({
+          id: syncId,
+          workspaceId: seed.workspaceId,
+        })
+      )?.warnings,
+    ).toEqual(baseline)
+
+    await templateInstallationSyncRepository.appendWarnings({
+      id: syncId,
+      claimToken: claimed.claimToken,
+      warnings: [late, late],
+    })
+    const after = await templateInstallationSyncRepository.findById({
+      id: syncId,
+      workspaceId: seed.workspaceId,
+    })
+    expect(after?.status).toBe("partial")
+    expect(after?.warnings).toEqual([...baseline, late, late])
+    expect(
+      after?.warningSummary?.find(
+        ({ code }) => code === "dynamicImageRerenderFailed",
+      ),
+    ).toEqual({ code: "dynamicImageRerenderFailed", count: 2 })
+  })
 })

@@ -60,7 +60,7 @@ export const createFbCommentRequest = z.object({
     .nullish()
     .describe("Folder to place the automation in, or null for root-level."),
   post: commentPostSchema.describe(
-    "Which comments to answer: `all` posts, specific `postIds` (get them from `fbComments.listPosts`), or `live` for every Live video. Live and post automations never answer the same comment.",
+    "Which comments to answer: `all` posts, specific `postIds` (get them from `fbComments.listPosts`), `hashtags` (any post whose caption carries one of the hashtags in `value`, without `#`), or `live` for every Live video. Live and post automations never answer the same comment.",
   ),
   privateReply: commentReplySchema.describe(
     "Private message reply sent to the commenter, if any.",

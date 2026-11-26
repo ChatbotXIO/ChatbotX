@@ -54,6 +54,12 @@ const mocks = vi.hoisted(() => ({
   listMessages: vi.fn(),
 }))
 
+// The translation field is covered in `translation/`; here it is a pass-through.
+vi.mock("@/features/translation/lib/message-translations", () => ({
+  withMessageTranslations: (_workspaceId: string, messages: { id: string }[]) =>
+    Promise.resolve(messages.map((m) => ({ ...m, translation: null }))),
+}))
+
 vi.mock("@chatbotx.io/business", () => ({
   contactService: { resolveIdByIdentifier: mocks.resolveIdByIdentifier },
   conversationService: {
@@ -123,6 +129,7 @@ describe("POST /v1/contacts/{identifier}/messages", () => {
       conversation,
       contactInbox,
       input: { identifier: "id:1", text: "hello", inboxId: "inbox-1" },
+      sendFrom: "api",
     })
   })
 
@@ -152,6 +159,7 @@ describe("POST /v1/contacts/{identifier}/messages", () => {
       conversation,
       contactInbox,
       input,
+      sendFrom: "api",
     })
   })
 
@@ -206,13 +214,16 @@ describe("GET /v1/contacts/{identifier}/messages", () => {
       input: { identifier: "id:1", perPage: 20 },
     })
 
-    expect(mocks.listMessages).toHaveBeenCalledWith({
-      workspaceId: WORKSPACE_ID,
-      conversationId: "conv-1",
-      contactInboxId: undefined,
-      perPage: 20,
-      cursor: undefined,
-    })
+    expect(mocks.listMessages).toHaveBeenCalledWith(
+      {
+        workspaceId: WORKSPACE_ID,
+        conversationId: "conv-1",
+        contactInboxId: undefined,
+        perPage: 20,
+        cursor: undefined,
+      },
+      { includeTranslation: true },
+    )
     expect(result).toEqual({ data: [], pageCount: 1 })
   })
 
@@ -230,6 +241,7 @@ describe("GET /v1/contacts/{identifier}/messages", () => {
         conversationId: "conv-1",
         contactInboxId: "ci-9",
       }),
+      { includeTranslation: true },
     )
   })
 
@@ -267,7 +279,7 @@ describe("GET /v1/contacts/{identifier}/messages/{messageId}", () => {
       conversationId: "conv-1",
       workspaceId: WORKSPACE_ID,
     })
-    expect(result).toEqual({ id: "msg-1" })
+    expect(result).toEqual({ id: "msg-1", translation: null })
   })
 
   test("404s when the contact has no conversation", async () => {
@@ -341,6 +353,7 @@ describe("POST /v1/contacts/{identifier}/auto-replies", () => {
       conversation,
       contactInbox,
       input: { text: "Welcome!", inboxId: undefined },
+      sendFrom: "api",
     })
   })
 })
@@ -380,6 +393,7 @@ describe("POST /v1/contacts/{identifier}/flows", () => {
       conversation,
       contactInbox,
       input: { flowId: "flow-1", inboxId: "inbox-1" },
+      sendFrom: "api",
     })
   })
 })

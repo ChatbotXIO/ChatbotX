@@ -1,6 +1,7 @@
 import {
   coexistService,
   contactScanService,
+  contactSyncService,
   instagramIntegrationService,
   messengerIntegrationService,
   workspaceService,
@@ -12,9 +13,9 @@ import { db } from "@chatbotx.io/database/client"
 import { metaCapiEventRepository } from "@chatbotx.io/database/repositories"
 import {
   type InstagramAuthValue,
-  isRevokedTokenError,
+  isDisconnectSafeError,
 } from "@chatbotx.io/integration-instagram"
-import { isRevokedTokenError as isRevokedTokenErrorFacebook } from "@chatbotx.io/integration-instagram-facebook"
+import { isDisconnectSafeError as isDisconnectSafeErrorFacebook } from "@chatbotx.io/integration-instagram-facebook"
 import { integrations } from "@/integration"
 import { logger } from "@/lib/log"
 
@@ -59,37 +60,44 @@ export const disconnectInstagram = async (ctx: {
       "Instagram disconnect API call failed — proceeding with local cleanup",
     )
 
-    const isRevoked = isFacebook
-      ? isRevokedTokenErrorFacebook(error)
-      : isRevokedTokenError(error)
+    const isSafeToIgnore = isFacebook
+      ? isDisconnectSafeErrorFacebook(error)
+      : isDisconnectSafeError(error)
 
-    if (!isRevoked) {
+    if (!isSafeToIgnore) {
       throw error
     }
   }
 
   await db.transaction(async (tx) => {
-    // Coexist only exists for the native Instagram integration; the Facebook-
-    // mediated variant (type "facebook") never has coexist runs. Gate explicitly
-    // so the intent is clear at the call site (mirrors workspace-lifecycle).
-    if (!isFacebook) {
-      await coexistService.tearDownForIntegration({
+    // The page's open contact-import items end and its owed history sync is
+    // cancelled, so a reconnect never starts one unasked (the integration row is
+    // locked first, the order a handoff takes it in).
+    await contactSyncService.cancelForInbox(
+      {
         workspaceId: ctx.workspaceId,
-        integrationId: integrationInstagram.id,
-        channel: "instagram",
-        currentError: "Integration disconnected",
-        tx,
-      })
-    }
+        inboxId: integrationInstagram.inboxId,
+        lock: { channel: "instagram", integrationId: integrationInstagram.id },
+      },
+      tx,
+    )
 
-    // The contact scan supports both Instagram variants, so unlike coexist
-    // this is not gated on the integration type.
+    // Both Instagram variants run coexist history (the Facebook-linked one too,
+    // which a contacts import hands off to), so neither is skipped.
+    await coexistService.tearDownForIntegration({
+      workspaceId: ctx.workspaceId,
+      integrationId: integrationInstagram.id,
+      channel: "instagram",
+      currentError: "Integration disconnected",
+      tx,
+    })
+
+    // The contact scan supports both Instagram variants too.
     await contactScanService.cancelForIntegration({
       channel: "instagram",
       integrationId: integrationInstagram.id,
       tx,
     })
-
     // Polymorphic FK cleanup — stale MetaCapiEvent rows would keep occupying
     // the (workspaceId, channel, sourceKey) dedup slot after a reconnect.
     await metaCapiEventRepository.deleteByIntegration(

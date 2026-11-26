@@ -12,6 +12,7 @@ export const PUBLIC_ROUTES = [
   "/go",
   "/media/attachment",
   "/media/avatar",
+  "/media/destination-avatar",
   "/minigames",
   // Public leaderboard page; the personal bar is attributed only via a signed token.
   "/leaderboards",
@@ -50,6 +51,8 @@ export const PUBLIC_ROUTES = [
   // capability token (see `app/connect/[sessionId]/page.tsx`'s doc comment).
   "/connect",
   "/account/delete",
+  // Static info page for app-store data-deletion disclosures; no session data.
+  "/delete-account",
 ]
 
 /**

@@ -1,0 +1,1 @@
+ALTER TABLE "ConversationParticipant" ADD COLUMN "lastRepliedAt" timestamp(6) with time zone;

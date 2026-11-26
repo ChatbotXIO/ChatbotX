@@ -259,6 +259,37 @@ export const discountCodeRepository = {
     return row
   },
 
+  /**
+   * Inserts the code, or finds the one that already carries it (codes are
+   * unique per workspace and source, case-insensitively). `created` says which,
+   * so a caller writes its copied fields only into a new row.
+   */
+  async insertOrFindByCode(
+    input: DiscountCodeWriteValues & { workspaceId: string },
+    tx: DatabaseClient = db,
+  ): Promise<{ row: typeof discountCodeModel.$inferSelect; created: boolean }> {
+    const [inserted] = await tx
+      .insert(discountCodeModel)
+      .values({ id: createId(), ...input })
+      .onConflictDoNothing()
+      .returning()
+    if (inserted) {
+      return { row: inserted, created: true }
+    }
+    const [existing] = await tx
+      .select()
+      .from(discountCodeModel)
+      .where(
+        and(
+          eq(discountCodeModel.workspaceId, input.workspaceId),
+          eq(discountCodeModel.source, input.source ?? "chatbotx"),
+          sql`lower(${discountCodeModel.code}) = ${input.code.toLowerCase()}`,
+        ),
+      )
+      .limit(1)
+    return { row: existing, created: false }
+  },
+
   async update(
     input: {
       workspaceId: string
@@ -280,20 +311,23 @@ export const discountCodeRepository = {
     return row
   },
 
-  async delete(
-    input: { workspaceId: string; discountCodeId: string },
+  /** Deletes the codes in one statement and returns the rows that went. */
+  async deleteMany(
+    input: { workspaceId: string; ids: string[] },
     tx: DatabaseClient = db,
   ) {
-    const [row] = await tx
+    if (input.ids.length === 0) {
+      return []
+    }
+    return await tx
       .delete(discountCodeModel)
       .where(
         and(
-          eq(discountCodeModel.id, input.discountCodeId),
           eq(discountCodeModel.workspaceId, input.workspaceId),
+          inArray(discountCodeModel.id, input.ids),
         ),
       )
       .returning()
-    return row
   },
 
   /** One more use; `undefined` when the limit is already reached. */

@@ -1007,6 +1007,200 @@ describe("chat store conversation updates", () => {
     unsubscribe()
   })
 
+  describe("edit and unsend keep the conversation list preview in step", () => {
+    const withPreview = (conversationId: string, previewId: string) => ({
+      ...makeConversation(conversationId, new Date("2026-01-01T00:00:00Z")),
+      messages: [
+        {
+          ...makeMessage(
+            conversationId,
+            new Date("2026-01-01T00:00:00Z"),
+            previewId,
+          ),
+          text: "original",
+          deletedAt: null,
+        },
+      ],
+    })
+
+    const seed = () => {
+      const store = createChatStore()
+      store.setState({
+        conversations: [
+          withPreview("conv-1", "msg-last"),
+          withPreview("conv-2", "msg-other"),
+        ] as never,
+        activeConversationId: "conv-1",
+        messages: [
+          {
+            ...makeMessage(
+              "conv-1",
+              new Date("2026-01-01T00:00:00Z"),
+              "msg-last",
+            ),
+            text: "original",
+            deletedAt: null,
+          },
+        ] as never,
+      })
+      return store
+    }
+
+    const previewOf = (
+      store: ReturnType<typeof createChatStore>,
+      conversationId: string,
+    ) =>
+      store
+        .getState()
+        .conversations.find(
+          (conversation) => conversation.id === conversationId,
+        )?.messages[0]
+
+    test("an edit changes the preview text as well as the open timeline", () => {
+      const store = seed()
+
+      store.getState().updateMessageText("msg-last", "edited", {
+        newAttachmentPath: null,
+        removedAttachment: false,
+      })
+
+      expect(store.getState().messages[0]?.text).toBe("edited")
+      expect(previewOf(store, "conv-1")?.text).toBe("edited")
+    })
+
+    test("an edit changes the preview of a conversation that is not open", () => {
+      const store = seed()
+
+      store.getState().updateMessageText("msg-other", "edited elsewhere", {
+        newAttachmentPath: null,
+        removedAttachment: false,
+      })
+
+      expect(previewOf(store, "conv-2")?.text).toBe("edited elsewhere")
+      expect(store.getState().messages[0]?.text).toBe("original")
+    })
+
+    test("an unsend marks the preview deleted as well as the open timeline", () => {
+      const store = seed()
+
+      store.getState().markMessagesDeleted(["msg-last"])
+
+      expect(store.getState().messages[0]?.deletedAt).toBeInstanceOf(Date)
+      expect(previewOf(store, "conv-1")?.deletedAt).toBeInstanceOf(Date)
+    })
+
+    test("restoring a message whose unsend failed clears the preview mark as well", () => {
+      const store = seed()
+      store.getState().markMessagesDeleted(["msg-last"])
+
+      store.getState().markMessagesRestored(["msg-last"])
+
+      expect(store.getState().messages[0]?.deletedAt).toBeNull()
+      expect(previewOf(store, "conv-1")?.deletedAt).toBeNull()
+    })
+
+    test("an edit or unsend of a message that is not a preview leaves the previews alone", () => {
+      const store = seed()
+      const before = store.getState().conversations
+
+      store.getState().updateMessageText("msg-older", "edited", {
+        newAttachmentPath: null,
+        removedAttachment: false,
+      })
+      store.getState().markMessagesDeleted(["msg-older"])
+
+      expect(store.getState().conversations).toBe(before)
+    })
+
+    test("only the matching preview changes, the other conversations keep their reference", () => {
+      const store = seed()
+      const untouched = previewOf(store, "conv-2")
+
+      store.getState().markMessagesDeleted(["msg-last"])
+
+      expect(previewOf(store, "conv-2")).toBe(untouched)
+    })
+  })
+
+  describe("removeMessages drops messages the server removed for good", () => {
+    const preview = (conversationId: string, previewId: string) => ({
+      ...makeConversation(conversationId, new Date("2026-01-01T00:00:00Z")),
+      messages: [
+        makeMessage(
+          conversationId,
+          new Date("2026-01-01T00:02:00Z"),
+          previewId,
+        ),
+      ],
+    })
+
+    const seed = () => {
+      const store = createChatStore()
+      store.setState({
+        conversations: [
+          preview("conv-1", "msg-failed"),
+          preview("conv-2", "msg-failed-elsewhere"),
+        ] as never,
+        activeConversationId: "conv-1",
+        messages: [
+          makeMessage("conv-1", new Date("2026-01-01T00:00:00Z"), "msg-older"),
+          makeMessage("conv-1", new Date("2026-01-01T00:01:00Z"), "msg-kept"),
+          makeMessage("conv-1", new Date("2026-01-01T00:02:00Z"), "msg-failed"),
+        ] as never,
+      })
+      return store
+    }
+
+    const previewIdOf = (
+      store: ReturnType<typeof createChatStore>,
+      conversationId: string,
+    ) =>
+      (
+        store
+          .getState()
+          .conversations.find(
+            (conversation) => conversation.id === conversationId,
+          )?.messages[0] as { id: string } | undefined
+      )?.id
+
+    test("takes the message out of the open timeline, with no placeholder", () => {
+      const store = seed()
+
+      store.getState().removeMessages(["msg-failed"])
+
+      expect(store.getState().messages.map((message) => message.id)).toEqual([
+        "msg-older",
+        "msg-kept",
+      ])
+    })
+
+    test("the open conversation's preview falls back to its last remaining message", () => {
+      const store = seed()
+
+      store.getState().removeMessages(["msg-failed"])
+
+      expect(previewIdOf(store, "conv-1")).toBe("msg-kept")
+    })
+
+    test("a conversation that is not open keeps its preview until reloaded", () => {
+      const store = seed()
+
+      store.getState().removeMessages(["msg-failed-elsewhere"])
+
+      expect(previewIdOf(store, "conv-2")).toBe("msg-failed-elsewhere")
+      expect(store.getState().messages).toHaveLength(3)
+    })
+
+    test("keeps the state reference when no loaded message matches", () => {
+      const store = seed()
+      const before = store.getState()
+
+      store.getState().removeMessages(["missing"])
+
+      expect(store.getState()).toBe(before)
+    })
+  })
+
   test("keeps the state reference for unmatched realtime mutations", () => {
     const store = createChatStore()
     const before = store.getState()
@@ -2365,5 +2559,106 @@ describe("chat store send queues", () => {
     store.getState().settleSendResult({ clientId: "stray", error: null })
 
     expect(store.getState()).toBe(before)
+  })
+})
+
+describe("applyConversationParticipantReply", () => {
+  const at = (minute: number) => new Date(Date.UTC(2026, 10, 20, 10, minute))
+  const reply = (userId: string, minute: number) => ({
+    userId,
+    name: `Name ${userId}`,
+    image: null,
+    lastRepliedAt: at(minute),
+  })
+  const withParticipants = (participants: ReturnType<typeof reply>[]) => {
+    const store = createChatStore()
+    store.setState({
+      conversations: [
+        {
+          ...makeConversation("conv-1", at(0)),
+          recentParticipants: participants,
+        },
+        { ...makeConversation("conv-2", at(0)), recentParticipants: [] },
+      ] as never,
+    })
+    return store
+  }
+  const idsOf = (store: ReturnType<typeof createChatStore>, index = 0) =>
+    store
+      .getState()
+      .conversations[index]?.recentParticipants.map((p) => p.userId)
+
+  test("puts a new member first and keeps the preview at three", () => {
+    const store = withParticipants([
+      reply("1", 30),
+      reply("2", 20),
+      reply("3", 10),
+    ])
+
+    store.getState().applyConversationParticipantReply("conv-1", reply("4", 40))
+
+    expect(idsOf(store)).toEqual(["4", "1", "2"])
+  })
+
+  test("a newer reply moves an existing member up without duplicating them", () => {
+    const store = withParticipants([reply("1", 30), reply("2", 20)])
+
+    store.getState().applyConversationParticipantReply("conv-1", reply("2", 50))
+
+    expect(idsOf(store)).toEqual(["2", "1"])
+  })
+
+  test("a duplicate or older reply leaves the store untouched", () => {
+    const store = withParticipants([reply("1", 30), reply("2", 20)])
+    const before = store.getState()
+
+    store.getState().applyConversationParticipantReply("conv-1", reply("1", 30))
+    store.getState().applyConversationParticipantReply("conv-1", reply("2", 1))
+
+    expect(store.getState()).toBe(before)
+  })
+
+  test("an unloaded conversation is ignored and others are not touched", () => {
+    const store = withParticipants([reply("1", 30)])
+    const before = store.getState()
+
+    store
+      .getState()
+      .applyConversationParticipantReply("missing", reply("9", 60))
+
+    expect(store.getState()).toBe(before)
+    expect(idsOf(store, 1)).toEqual([])
+  })
+
+  test("replaceConversationRecentParticipants takes the server's list, capped at three", () => {
+    const store = withParticipants([reply("1", 30)])
+
+    store
+      .getState()
+      .replaceConversationRecentParticipants("conv-1", [
+        reply("5", 50),
+        reply("6", 40),
+        reply("7", 30),
+        reply("8", 20),
+      ])
+
+    expect(idsOf(store)).toEqual(["5", "6", "7"])
+  })
+
+  test("replaceConversationRecentParticipants can empty a row", () => {
+    const store = withParticipants([reply("1", 30)])
+
+    store.getState().replaceConversationRecentParticipants("conv-1", [])
+
+    expect(idsOf(store)).toEqual([])
+  })
+
+  test("only the targeted conversation changes", () => {
+    const store = withParticipants([reply("1", 30)])
+
+    store.getState().applyConversationParticipantReply("conv-2", reply("5", 60))
+
+    expect(idsOf(store, 0)).toEqual(["1"])
+    expect(idsOf(store, 1)).toEqual(["5"])
   })
 })

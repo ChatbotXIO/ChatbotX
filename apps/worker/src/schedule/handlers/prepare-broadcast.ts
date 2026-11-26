@@ -88,26 +88,47 @@ export const prepareBroadcast = async (broadcastId: string) => {
       audienceRange: resolveBroadcastAudienceRange(broadcast),
     },
     async (contactInboxes): Promise<boolean | undefined> => {
-      // A contact with no DM yet (it only commented, or was imported) is part
-      // of the audience the form counted, so it gets its DM here rather than
-      // being dropped before the send.
-      const conversations =
+      const smtpContactInboxes = contactInboxes.filter(
+        (contactInbox) => contactInbox.channel === "smtp",
+      )
+      const directContactInboxes = contactInboxes.filter(
+        (contactInbox) => contactInbox.channel !== "smtp",
+      )
+      const directConversations =
         await conversationService.findOrCreateDMByContactIds({
           workspaceId: broadcast.workspaceId,
-          contactIds: contactInboxes.map(
+          contactIds: directContactInboxes.map(
             (contactInbox) => contactInbox.contactId,
           ),
         })
-
-      const conversationMap = new Map(
-        conversations.map((conversation) => [
+      const directConversationByContactId = new Map(
+        directConversations.map((conversation) => [
           conversation.contactId,
           conversation,
         ]),
       )
-
+      const smtpConversations = await conversationService.openEmailThreads({
+        workspaceId: broadcast.workspaceId,
+        contactInboxes: smtpContactInboxes,
+        seedFor: (contactInbox) => `${broadcastId}:${contactInbox.id}`,
+      })
+      const conversationByContactInboxId = new Map<
+        string,
+        (typeof directConversations)[number]
+      >()
+      for (const contactInbox of directContactInboxes) {
+        const conversation = directConversationByContactId.get(
+          contactInbox.contactId,
+        )
+        if (conversation) {
+          conversationByContactInboxId.set(contactInbox.id, conversation)
+        }
+      }
+      for (const [contactInboxId, conversation] of smtpConversations) {
+        conversationByContactInboxId.set(contactInboxId, conversation)
+      }
       const recipients = contactInboxes.flatMap((contactInbox) => {
-        const conversation = conversationMap.get(contactInbox.contactId)
+        const conversation = conversationByContactInboxId.get(contactInbox.id)
         return conversation
           ? [
               {

@@ -33,6 +33,7 @@ const GUARDED: Record<string, string> = {
   IntegrationMessenger: "integration-messenger/service.ts",
   IntegrationWhatsapp: "integration-whatsapp/service.ts",
   Leaderboard: "leaderboard/service.ts",
+  Vendor: "vendor/service.ts",
   PipelineItem: "pipeline/item.service.ts",
   Poll: "poll/service.ts",
 }
@@ -44,6 +45,10 @@ const ALLOWLIST: Record<string, string> = {
     "aiAgentId has no writer in the codebase today (update only takes autoReply); add the guard with the first writer",
   OrderItem:
     "high-volume checkout insert; the FK insert takes KEY SHARE on the product row, which waits on the commit transaction's parent-row FOR UPDATE, and every holder is probed again under that lock",
+  Product:
+    "Product.vendorId is written by the product forms and the catalog imports; a vendor delete only nulls it, and an uninstall probes the product holder before it deletes a vendor",
+  Order:
+    "high-volume checkout insert; the FK insert takes KEY SHARE on the discount code row, which waits on the commit transaction's parent-row FOR UPDATE, and every holder is probed again under that lock",
   MetaCatalogItem:
     "catalog sync insert; same FK KEY SHARE vs parent-row FOR UPDATE protection as OrderItem, and the commit probe sees the holder",
 }
@@ -99,6 +104,10 @@ const JSON_GUARDED: Record<string, string> = {
   Broadcast: "broadcast/service.ts",
   BroadcastTarget: "broadcast/service.ts",
   DiscountCode: "discount-code/service.ts",
+  Minigame: "minigame/service.ts",
+  Leaderboard: "leaderboard/service.ts",
+  IgStoryAutomation: "ig-story-automation/service.ts",
+  InboundWebhook: "inbound-webhook/service.ts",
 }
 
 describe("JSON_CONTAINERS tables are written through a guard", () => {
@@ -121,5 +130,23 @@ describe("JSON_CONTAINERS tables are written through a guard", () => {
       "utf8",
     )
     expect(source).toMatch(GUARD_CALL)
+  })
+})
+
+describe("registry slots are unique", () => {
+  test("COLUMN_SLOTS has one slot per (parent, table, column)", () => {
+    const keys = COLUMN_SLOTS.map(
+      (slot) => `${slot.parent}:${slot.table}.${slot.column}`,
+    )
+    const duplicates = keys.filter((key, index) => keys.indexOf(key) !== index)
+    expect(duplicates).toEqual([])
+  })
+
+  test("JSON_CONTAINERS has one probe per (table, JSON column)", () => {
+    const keys = JSON_CONTAINERS.flatMap((container) =>
+      container.jsonColumns.map((column) => `${container.table}.${column}`),
+    )
+    const duplicates = keys.filter((key, index) => keys.indexOf(key) !== index)
+    expect(duplicates).toEqual([])
   })
 })

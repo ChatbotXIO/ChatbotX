@@ -49,6 +49,8 @@ vi.mock("@chatbotx.io/database/client", () => ({
 
 vi.mock("@chatbotx.io/database/repositories", () => ({
   connectionRepository: { findByInboxId: mockFindByInboxId },
+  coexistSyncRunRepository: { lockIntegration: vi.fn() },
+  contactSyncRunRepository: { cancelForInbox: vi.fn() },
   HEAVY_WORKSPACE_TABLES: ["ErrorLog"],
   LIVE_RUN_STATUSES: [],
   NO_FK_WORKSPACE_TABLES: [],

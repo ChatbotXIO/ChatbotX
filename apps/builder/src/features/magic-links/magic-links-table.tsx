@@ -37,6 +37,11 @@ import { useTranslations } from "next-intl"
 import React, { use, useMemo } from "react"
 import { toast } from "sonner"
 import { useCopyToClipboard } from "usehooks-ts"
+import { LockBadge } from "@/features/templates/components/lock-badge"
+import {
+  TemplateLockedList,
+  UndeletableGuard,
+} from "@/features/templates/components/lock-context"
 
 import { DeleteMagicLinksDialog } from "./delete-magic-links"
 import { buildMagicLinkUrl } from "./lib/magic-link-url"
@@ -118,8 +123,9 @@ export const MagicLinksTable = ({
           <Tooltip>
             <TooltipTrigger
               render={
-                <div className="inline-block max-w-[200px] truncate">
-                  {row.original.name}
+                <div className="flex max-w-[200px] items-center">
+                  <span className="truncate">{row.original.name}</span>
+                  <LockBadge resourceId={row.original.id} />
                 </div>
               }
             />
@@ -213,13 +219,18 @@ export const MagicLinksTable = ({
                 {t("actions.edit")}
               </DropdownMenuItem>
 
-              <DropdownMenuItem
-                onClick={() => setRowAction({ row, variant: "delete" })}
-                variant="destructive"
-              >
-                <Trash2Icon />
-                {t("actions.delete")}
-              </DropdownMenuItem>
+              <UndeletableGuard resourceId={row.original.id}>
+                {(disabled) => (
+                  <DropdownMenuItem
+                    disabled={disabled}
+                    onClick={() => setRowAction({ row, variant: "delete" })}
+                    variant="destructive"
+                  >
+                    <Trash2Icon />
+                    {t("actions.delete")}
+                  </DropdownMenuItem>
+                )}
+              </UndeletableGuard>
             </DropdownMenuContent>
           </DropdownMenu>
         ),
@@ -251,44 +262,50 @@ export const MagicLinksTable = ({
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <DataTable table={table}>
-          <DataTableToolbar table={table}>
-            <MagicLinksTableToolbarActions
-              table={table}
-              workspaceId={workspaceId}
-            />
-          </DataTableToolbar>
-        </DataTable>
-
-        <MagicLinkQrDialog
-          onOpenChange={() => setRowAction(null)}
-          open={rowAction?.variant === "qr"}
-          publicUrl={
-            rowAction?.row.original
-              ? getMagicLinkUrl(rowAction.row.original)
-              : null
-          }
-        />
-
-        <UpdateMagicLinkDialog
-          magicLink={
-            rowAction?.variant === "update" ? rowAction.row.original : null
-          }
-          onOpenChange={() => setRowAction(null)}
-          open={rowAction?.variant === "update"}
+        <TemplateLockedList
+          resourceKind="magicLink"
+          rows={data}
           workspaceId={workspaceId}
-        />
+        >
+          <DataTable table={table}>
+            <DataTableToolbar table={table}>
+              <MagicLinksTableToolbarActions
+                table={table}
+                workspaceId={workspaceId}
+              />
+            </DataTableToolbar>
+          </DataTable>
 
-        <DeleteMagicLinksDialog
-          magicLinks={rowAction?.row.original ? [rowAction.row.original] : []}
-          onOpenChange={() => setRowAction(null)}
-          onSuccess={() => {
-            router.refresh()
-          }}
-          open={rowAction?.variant === "delete"}
-          showTrigger={false}
-          workspaceId={workspaceId}
-        />
+          <MagicLinkQrDialog
+            onOpenChange={() => setRowAction(null)}
+            open={rowAction?.variant === "qr"}
+            publicUrl={
+              rowAction?.row.original
+                ? getMagicLinkUrl(rowAction.row.original)
+                : null
+            }
+          />
+
+          <UpdateMagicLinkDialog
+            magicLink={
+              rowAction?.variant === "update" ? rowAction.row.original : null
+            }
+            onOpenChange={() => setRowAction(null)}
+            open={rowAction?.variant === "update"}
+            workspaceId={workspaceId}
+          />
+
+          <DeleteMagicLinksDialog
+            magicLinks={rowAction?.row.original ? [rowAction.row.original] : []}
+            onOpenChange={() => setRowAction(null)}
+            onSuccess={() => {
+              router.refresh()
+            }}
+            open={rowAction?.variant === "delete"}
+            showTrigger={false}
+            workspaceId={workspaceId}
+          />
+        </TemplateLockedList>
       </CardContent>
     </Card>
   )

@@ -1762,6 +1762,8 @@ class OrderService extends BaseService {
         conversation,
         contactInbox,
         input: { text },
+        // A system notification: a failed one is removed, not kept.
+        sendFrom: "api",
       })
     } catch (err) {
       logger.warn(

@@ -59,6 +59,26 @@ const action = vi.hoisted(() => {
 })
 vi.mock("next-intl", () => ({
   useTranslations: () => (key: string) => key,
+  useLocale: () => "en",
+}))
+// Translation actions pull the server-side env chain; the composer only
+// renders the chip/preview here.
+vi.mock("@/features/translation/actions/preview-text.action", () => ({
+  previewTranslationAction: vi.fn(),
+}))
+vi.mock(
+  "@/features/translation/actions/update-conversation-state.action",
+  () => ({
+    updateConversationTranslationStateAction: vi.fn(),
+  }),
+)
+vi.mock("@/features/translation/actions/request-messages.action", () => ({
+  requestTranslationsAction: vi.fn(),
+}))
+vi.mock("@/features/translation/hooks/use-translation-settings", () => ({
+  // Translation off for the workspace: the inbox renders exactly as before.
+  useTranslationSettings: () => ({ data: undefined }),
+  useInvalidateTranslation: () => vi.fn(),
 }))
 vi.mock("sonner", () => ({ toast }))
 vi.mock("@chatbotx.io/utils", async (importOriginal) => {
@@ -251,6 +271,7 @@ const guestStore = {
   guestConversationId: "1:00000000-0000-0000-0000-000000000000",
   markMessageFailed: vi.fn(),
   sendMessage: vi.fn(),
+  showOptimisticTyping: vi.fn(),
 }
 vi.mock(
   "@/features/integration-webchat/providers/store/guest-session-provider",
@@ -382,6 +403,7 @@ describe("message composers", () => {
     guestStore.appendMessage.mockClear()
     guestStore.markMessageFailed.mockClear()
     guestStore.sendMessage.mockClear()
+    guestStore.showOptimisticTyping.mockClear()
     inboxStore.appendMessage.mockClear()
     inboxStore.markMessagesDeleted.mockClear()
     inboxStore.markMessageFailed.mockClear()
@@ -843,6 +865,7 @@ describe("message composers", () => {
       "hello",
       expect.any(String),
     )
+    expect(guestStore.showOptimisticTyping).toHaveBeenCalledTimes(1)
     expect(guestStore.markMessageFailed).toHaveBeenCalledWith(
       expect.any(String),
       "Send failed",

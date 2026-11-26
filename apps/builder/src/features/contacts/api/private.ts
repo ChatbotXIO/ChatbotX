@@ -4,6 +4,7 @@ import { withWorkspaceIdSchema } from "@/features/workspaces/schema/resource"
 import { workspaceAuthorizedMidddleware } from "@/middlewares/auth"
 import { authorizedAPI } from "@/orpc"
 import { listContactAdReferrals } from "../lib/list-contact-ad-referrals"
+import { listContactBroadcastsPage } from "../lib/list-contact-broadcasts"
 import { listContactExportFiles } from "../lib/list-contact-export-files"
 import {
   buildContactPermissionScope,
@@ -22,6 +23,10 @@ import {
   listContactAdReferralsRequest,
   listContactAdReferralsResponse,
 } from "../schema/ad-referral"
+import {
+  listContactBroadcastsRequest,
+  listContactBroadcastsResponse,
+} from "../schema/contact-broadcast"
 import {
   listContactExportFilesRequest,
   listContactExportFilesResponse,
@@ -81,6 +86,33 @@ export const contactsAuthenticatedAPI = {
         contactId: input.contactId,
         perPage: input.perPage,
         cursor: input.cursor,
+        accessScope: {
+          restrictToAssignedUserId: scope.restrictToAssignedUserId,
+        },
+      })
+    }),
+
+  listContactBroadcastsAuthenticatedAPI: authorizedAPI
+    .route({
+      method: "GET",
+      path: "/workspaces/{workspaceId}/contacts/{contactId}/broadcasts",
+      summary: "List the broadcasts sent to a contact",
+      tags: ["Contacts"],
+    })
+    .input(listContactBroadcastsRequest.and(getContactRequest))
+    .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
+    .output(listContactBroadcastsResponse)
+    .handler(async ({ input, context }) => {
+      const scope = requireContactPermissionScopeForMember({
+        permissions: context.workspaceMember.permissions,
+        userId: context.user.id,
+      })
+      return await listContactBroadcastsPage({
+        workspaceId: input.workspaceId,
+        contactId: input.contactId,
+        perPage: input.perPage,
+        cursor: input.cursor,
+        search: input.search,
         accessScope: {
           restrictToAssignedUserId: scope.restrictToAssignedUserId,
         },

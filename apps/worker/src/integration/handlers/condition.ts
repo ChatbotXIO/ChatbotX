@@ -12,7 +12,11 @@ import {
   integrationQueue,
 } from "@chatbotx.io/worker-config"
 import { logger } from "../../lib/logger"
-import { type ExecuteStepProps, seekConnectedNode } from "./flow-utils"
+import {
+  type ExecuteStepProps,
+  findNodeIdContainingStep,
+  seekConnectedNode,
+} from "./flow-utils"
 
 /** Filter fields read from the channel profile snapshot columns. */
 const profileSnapshotFilterFields: ReadonlySet<string> = new Set([
@@ -101,7 +105,14 @@ export async function handleCondition(
   }
 
   const matchedHandleId = await resolveMatchedHandleId()
-  const connectedNodeId = seekConnectedNode(flowVersion, matchedHandleId)
+  // Scoped to this condition node: a duplicated condition node shares its
+  // case ids with the original, so the handle id alone can match the other
+  // node's edge and route the contact down a branch it never matched.
+  const connectedNodeId = seekConnectedNode(
+    flowVersion,
+    matchedHandleId,
+    findNodeIdContainingStep(flowVersion, step.id),
+  )
   if (!connectedNodeId) {
     return
   }

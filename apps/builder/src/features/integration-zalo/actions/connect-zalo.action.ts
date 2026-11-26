@@ -1,4 +1,8 @@
-import { workspaceService, zaloIntegrationService } from "@chatbotx.io/business"
+import {
+  userService,
+  workspaceService,
+  zaloIntegrationService,
+} from "@chatbotx.io/business"
 import { auditService } from "@chatbotx.io/business/audit"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
 import type { ZaloCredential } from "@chatbotx.io/database/partials"
@@ -31,6 +35,14 @@ export async function connectZaloHandler({
     },
     req,
   })) as ZaloAuthValue
+
+  await userService.recordConnectionAuthorization({
+    userId,
+    provider: "zalo",
+    auth: authValue,
+    phase: "authorizationObtained",
+    workspaceId,
+  })
 
   const { ownerId } = await workspaceService.findById({ id: workspaceId })
 

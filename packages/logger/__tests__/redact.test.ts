@@ -221,3 +221,31 @@ describe("toLogSafeError", () => {
     })
   })
 })
+
+describe("debug_token request secrets", () => {
+  const URL_WITH_TOKENS =
+    "Request timed out: GET https://graph.facebook.com/v25.0/debug_token?input_token=PAGE-SECRET&access_token=APP-SECRET&appsecret_proof=PROOF-SECRET&client_secret=CS-SECRET"
+
+  test("scrubs input_token, access_token, appsecret_proof and client_secret in a URL string", () => {
+    const result = scrubSecretsInString(URL_WITH_TOKENS)
+
+    for (const secret of [
+      "PAGE-SECRET",
+      "APP-SECRET",
+      "PROOF-SECRET",
+      "CS-SECRET",
+    ]) {
+      expect(result).not.toContain(secret)
+    }
+  })
+
+  test("redacts input_token and appsecret_proof by key name", () => {
+    expect(
+      redactSecrets({ appsecret_proof: "p", input_token: "t", keep: "ok" }),
+    ).toEqual({
+      appsecret_proof: "[redacted]",
+      input_token: "[redacted]",
+      keep: "ok",
+    })
+  })
+})

@@ -25,6 +25,7 @@ import {
 import { withCache } from "@chatbotx.io/redis"
 import { createId, isNumericId } from "@chatbotx.io/utils"
 import {
+  type CustomFieldRenameStyle,
   customFieldResolutionKey,
   normalizeCustomFieldName,
   pickCustomFieldRow,
@@ -273,6 +274,8 @@ class CustomFieldService extends BaseService {
     workspaceId: string
     fields: { name: string; type: CustomFieldType }[]
     tx?: DatabaseClient
+    /** How a name already used by another type is renamed; `numbered` by default. */
+    renameStyle?: CustomFieldRenameStyle
   }): Promise<{
     idMap: Map<string, string>
     createdIds: string[]
@@ -290,7 +293,12 @@ class CustomFieldService extends BaseService {
     }
 
     return await withCustomFieldNameLock(props.tx, workspaceId, (tx) =>
-      this.resolveLocked({ workspaceId, uniqueFields, tx }),
+      this.resolveLocked({
+        workspaceId,
+        uniqueFields,
+        tx,
+        renameStyle: props.renameStyle ?? "numbered",
+      }),
     )
   }
 
@@ -305,6 +313,7 @@ class CustomFieldService extends BaseService {
     workspaceId: string
     uniqueFields: { name: string; type: CustomFieldType }[]
     tx: DatabaseClient
+    renameStyle: CustomFieldRenameStyle
   }): Promise<{
     idMap: Map<string, string>
     createdIds: string[]
@@ -327,7 +336,11 @@ class CustomFieldService extends BaseService {
     })) as CustomFieldModel[]
     // What to reuse, create and rename is decided by one pure function the
     // install preview shares, so the preview cannot predict something else.
-    const { plans, winners } = planCustomFieldResolution(existing, uniqueFields)
+    const { plans, winners } = planCustomFieldResolution(
+      existing,
+      uniqueFields,
+      props.renameStyle,
+    )
     const byKey = new Map<string, CustomFieldModel>(winners)
     const remember = (row: CustomFieldModel): void => {
       const key = customFieldResolutionKey(row)
@@ -393,15 +406,20 @@ class CustomFieldService extends BaseService {
     const resolved = new Map<string, ResolvedCustomField>()
     for (const field of uniqueFields) {
       const requestedKey = customFieldResolutionKey(field)
-      const plannedName = plannedNameByKey.get(requestedKey)
+      const plan = plans.get(requestedKey)
+      // A reused row may sit under a renamed form of the requested name.
+      const resolvedName =
+        plan?.action === "reuse"
+          ? plan.row.name
+          : plannedNameByKey.get(requestedKey)
       const renamed =
-        plannedName !== undefined &&
-        normalizeCustomFieldName(plannedName) !==
+        resolvedName !== undefined &&
+        normalizeCustomFieldName(resolvedName) !==
           normalizeCustomFieldName(field.name)
       const row = byKey.get(
-        plannedName === undefined
+        resolvedName === undefined
           ? requestedKey
-          : customFieldResolutionKey({ name: plannedName, type: field.type }),
+          : customFieldResolutionKey({ name: resolvedName, type: field.type }),
       )
       if (row) {
         resolved.set(requestedKey, { id: row.id, name: row.name, renamed })

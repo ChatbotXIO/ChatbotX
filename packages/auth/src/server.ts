@@ -14,6 +14,7 @@ import {
   toSmtpTransport,
   userService,
 } from "@chatbotx.io/business"
+import { ChatbotXException } from "@chatbotx.io/business/errors"
 import { db } from "@chatbotx.io/database/client"
 import {
   accountModel,
@@ -76,6 +77,7 @@ import {
   type SignUpGateContext,
 } from "./signup-gate"
 import { getTenantId, resolveTenantOwnerId } from "./tenant-context"
+import { assertNotTenantOwnerEmail } from "./tenant-owner-email"
 
 const NATIVE_ONLY_PROVIDERS: Record<string, true> = { apple: true }
 
@@ -512,6 +514,24 @@ function buildDatabaseHooks({
           // `error` parameter.
           throw new APIError("FORBIDDEN", { message: SIGNUP_DISABLED_CODE })
         }
+        // Defense in depth: never let a tenant's owner email be re-created as
+        // a sub-account row in that tenant through any better-auth path.
+        if (typeof user.email === "string") {
+          try {
+            await assertNotTenantOwnerEmail({
+              email: user.email,
+              tenantId: getTenantId(),
+            })
+          } catch (err) {
+            if (
+              err instanceof ChatbotXException &&
+              err.code === "tenantOwnerEmailReserved"
+            ) {
+              throw new APIError("CONFLICT", { message: err.code })
+            }
+            throw err
+          }
+        }
       },
       ...(onUserCreated && {
         after: async (user: Record<string, unknown>) => {
@@ -894,6 +914,8 @@ export function createAuth(config: AuthConfig) {
                 ...(ownerId ? [{ id: ownerId, tenantId: ROOT_TENANT_ID }] : []),
               ],
             },
+            // Only the display name is used, so never read the whole row.
+            columns: { name: true },
           })
           if (!user) {
             throw new APIError(400, {

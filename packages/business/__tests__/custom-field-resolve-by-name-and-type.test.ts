@@ -126,6 +126,29 @@ describe("customFieldService.resolveByNameAndType", () => {
     expect(mockInsert).not.toHaveBeenCalled()
   })
 
+  test("the copy style resolves to an existing `<name> copy` of the requested type without creating another", async () => {
+    mockFindMany.mockResolvedValue([
+      { id: "1", workspaceId: "ws-1", name: "Score", type: "shortText" },
+      { id: "2", workspaceId: "ws-1", name: "Score copy", type: "number" },
+    ])
+
+    const { idMap, createdIds, resolved } =
+      await customFieldService.resolveByNameAndType({
+        workspaceId: "ws-1",
+        fields: [{ name: "Score", type: "number" }],
+        renameStyle: "copy",
+      })
+
+    expect(idMap.get("number:score")).toBe("2")
+    expect(resolved.get("number:score")).toEqual({
+      id: "2",
+      name: "Score copy",
+      renamed: true,
+    })
+    expect(createdIds).toEqual([])
+    expect(mockInsert).not.toHaveBeenCalled()
+  })
+
   test("matches case-insensitively without creating a duplicate", async () => {
     mockFindMany.mockResolvedValue([
       { id: "1", workspaceId: "ws-1", name: "Birthday", type: "date" },

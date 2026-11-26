@@ -27,6 +27,7 @@ export const CONTACT_FILTER_FIELD_REFERENCE = {
   keywordsReceived: { kind: "automatedResponse" },
   executedFlow: { kind: "flow" },
   executedStep: { kind: "flowNode" },
+  votedOnPoll: { kind: "poll" },
   // Broadcasts are one-off sends that never travel with a template.
   broadcastSent: { kind: "broadcast" },
   broadcastDelivered: { kind: "broadcast" },

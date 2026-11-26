@@ -31,11 +31,15 @@ export function TemplateInstallationWarnings({
         {shown.map((group) => (
           <li
             className="flex flex-col gap-1 px-3 py-2 text-sm"
-            key={`${group.category}|${group.sourceId ?? group.name}`}
+            key={`${group.category}|${group.sourceId ?? group.name ?? group.itemCount}`}
           >
             <span className="flex items-center justify-between gap-3">
               <span className="min-w-0 truncate font-medium">
-                {group.name ?? t("templates.installs.deletedResource")}
+                {typeof group.itemCount === "number"
+                  ? t("templates.installs.wholeCategory", {
+                      count: group.itemCount,
+                    })
+                  : (group.name ?? t("templates.installs.deletedResource"))}
               </span>
               <Badge className="flex-none" variant="outline">
                 {categoryLabel(group.category)}

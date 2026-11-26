@@ -25,3 +25,12 @@ export async function parseSdkError(
 
   return UNKNOWN_ERROR
 }
+
+/**
+ * A page size the platform will accept: a whole number from 1 up to the
+ * platform's own maximum. A caller-supplied `limit` is never trusted as is.
+ */
+export function clampPageSize(limit: number, max: number): number {
+  const whole = Math.trunc(limit)
+  return Number.isNaN(whole) ? 1 : Math.max(1, Math.min(whole, max))
+}

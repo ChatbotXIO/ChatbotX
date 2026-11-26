@@ -19,6 +19,7 @@ import { mcpSpec } from "@/lib/orpc/mcp-annotations"
 import {
   possibleErrorsOnFindingResource,
   possibleErrorsOnListingResource,
+  possibleErrorsOnListingWithCursor,
   possibleErrorsOnMutatingResource,
   possibleErrorsOnThreadControl,
 } from "@/lib/orpc/orpc-error-helper"
@@ -34,14 +35,17 @@ import {
   findConversation,
   listConversations,
 } from "../queries/list-conversations.query"
+import { listConversationParticipants } from "../queries/list-participants.query"
 import {
   assignConversationPublicRequest,
   conversationIdPathParam,
   getConversationPublicResponse,
+  listConversationParticipantsRequest,
   threadControlPublicRequest,
   threadControlPublicResponse,
 } from "../schema/public"
 import {
+  listConversationParticipantsResponse,
   listConversationsCompactResponse,
   listConversationsResponse,
 } from "../schema/resource"
@@ -141,7 +145,13 @@ export const conversationsPublicRouter = {
       description:
         'Use this to find conversations by status, channel, assignee, tags, or contact filter before inspecting one with `conversations.get`. Returns cursor-paginated workspace conversations. The array and object filters (`status`, `tags`, `contactFilter`) are query parameters whose value is a JSON-encoded string, for example `status=["open"]`; `contactFilter` is the JSON of the criteria object from `contacts.listFilterFields`; bracket (deepObject) notation such as `status[0]=open` is not understood and the filter is ignored.',
       tags: ["Conversations"],
-      spec: mcpSpec({ visibility: "default" }),
+      spec: mcpSpec({
+        destructiveHint: false,
+        idempotentHint: true,
+        openWorldHint: false,
+        readOnlyHint: true,
+        visibility: "default",
+      }),
     })
     .input(listConversationsQueryRequest)
     .output(
@@ -205,7 +215,13 @@ export const conversationsPublicRouter = {
       description:
         "Use this to inspect one conversation's contact, channel, assignee, and status after locating it with `conversations.list`. Call `conversations.assign` to change its assignee.",
       tags: ["Conversations"],
-      spec: mcpSpec({ visibility: "default" }),
+      spec: mcpSpec({
+        destructiveHint: false,
+        idempotentHint: true,
+        openWorldHint: false,
+        readOnlyHint: true,
+        visibility: "default",
+      }),
     })
     .input(conversationIdPathParam)
     .output(getConversationPublicResponse)
@@ -227,6 +243,31 @@ export const conversationsPublicRouter = {
       }
     }),
 
+  listParticipants: workspaceTokenAuthAPI
+    .route({
+      method: "GET",
+      path: "/v1/conversations/{id}/participants",
+      summary: "List conversation participants",
+      description:
+        "Lists the workspace members who replied in the conversation from the Inbox (typed messages, files, products, flows, nodes and templates), most recent reply first, with the time of each member's latest reply. Only replies sent after this was introduced are counted. `conversations.list` and `conversations.get` carry a `recentParticipants` preview of the latest three; page through this for everyone with `cursor`.",
+      tags: ["Conversations"],
+    })
+    .input(listConversationParticipantsRequest)
+    .output(listConversationParticipantsResponse)
+    .errors({
+      ...possibleErrorsOnFindingResource,
+      ...possibleErrorsOnListingWithCursor,
+    })
+    .handler(async ({ context, input }) => {
+      await assertConversationAccessForCaller(context, input.id)
+      return await listConversationParticipants({
+        workspaceId: context.workspace.id,
+        conversationId: input.id,
+        cursor: input.cursor,
+        perPage: input.perPage,
+      })
+    }),
+
   // Single-conversation, path-addressed — not the private bulk
   // `POST /conversations/assign` shape, which takes contact ids directly.
   // `assignedBy`/`userId` are omitted throughout this router: a workspace
@@ -240,7 +281,13 @@ export const conversationsPublicRouter = {
       description:
         "Changes a conversation's user or inbox-team assignee, or clears it when `assignedId` is null. Call `conversations.get` first to inspect the current assignee and `conversations.list` to find the id.",
       tags: ["Conversations"],
-      spec: mcpSpec({ visibility: "default" }),
+      spec: mcpSpec({
+        destructiveHint: true,
+        idempotentHint: true,
+        openWorldHint: false,
+        readOnlyHint: false,
+        visibility: "default",
+      }),
     })
     .input(assignConversationPublicRequest.and(conversationIdPathParam))
     .output(successResponse)

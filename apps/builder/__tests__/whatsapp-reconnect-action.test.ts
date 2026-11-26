@@ -5,7 +5,7 @@ import { reconnectWhatsappAction } from "../src/features/integration-whatsapp/ac
 
 type ReconnectWhatsappActionArgs = {
   bindArgsParsedInputs: readonly [string, string]
-  ctx: { workspace: { id: string; ownerId: string } }
+  ctx: { workspace: { id: string; ownerId: string }; user: { id: string } }
   parsedInput: { code: string }
 }
 
@@ -28,6 +28,7 @@ const {
   upsertCurrentCredentialMock,
   commitReconnectMock,
   authExpiresAtOfMock,
+  recordConnectionAuthorizationMock,
 } = vi.hoisted(() => ({
   exchangeAccessTokenMock: vi.fn(),
   findWabaMock: vi.fn(),
@@ -42,6 +43,7 @@ const {
   upsertCurrentCredentialMock: vi.fn(),
   commitReconnectMock: vi.fn(),
   authExpiresAtOfMock: vi.fn(() => null),
+  recordConnectionAuthorizationMock: vi.fn(async () => undefined),
 }))
 
 vi.mock("@/lib/safe-action", () => {
@@ -79,6 +81,9 @@ vi.mock("@chatbotx.io/business", () => ({
   },
   whatsappBusinessAccountService: {
     upsertCurrentCredential: upsertCurrentCredentialMock,
+  },
+  userService: {
+    recordConnectionAuthorization: recordConnectionAuthorizationMock,
   },
   connectionStateService: {
     commitReconnect: commitReconnectMock,
@@ -207,7 +212,10 @@ describe("reconnectWhatsappAction", () => {
     await expect(
       callReconnectWhatsappAction({
         bindArgsParsedInputs: ["ws-1", "iw-1"],
-        ctx: { workspace: { id: "ws-1", ownerId: "owner-1" } },
+        ctx: {
+          workspace: { id: "ws-1", ownerId: "owner-1" },
+          user: { id: "user-1" },
+        },
         parsedInput: { code: "oauth-code-1" },
       }),
     ).rejects.toThrow("errors.superAdminRequired")
@@ -222,7 +230,10 @@ describe("reconnectWhatsappAction", () => {
   test("resubscribes with automatic_events during ads reconnect", async () => {
     await callReconnectWhatsappAction({
       bindArgsParsedInputs: ["ws-1", "iw-1"],
-      ctx: { workspace: { id: "ws-1", ownerId: "owner-1" } },
+      ctx: {
+        workspace: { id: "ws-1", ownerId: "owner-1" },
+        user: { id: "user-1" },
+      },
       parsedInput: { code: "oauth-code-1" },
     })
 
@@ -237,7 +248,10 @@ describe("reconnectWhatsappAction", () => {
   test("creates or updates one WABA credential from the validated grant", async () => {
     await callReconnectWhatsappAction({
       bindArgsParsedInputs: ["ws-1", "iw-1"],
-      ctx: { workspace: { id: "ws-1", ownerId: "owner-1" } },
+      ctx: {
+        workspace: { id: "ws-1", ownerId: "owner-1" },
+        user: { id: "user-1" },
+      },
       parsedInput: { code: "oauth-code-1" },
     })
 
@@ -254,7 +268,10 @@ describe("reconnectWhatsappAction", () => {
   test("hints the WABA resolver with the number this integration already owns", async () => {
     await callReconnectWhatsappAction({
       bindArgsParsedInputs: ["ws-1", "iw-1"],
-      ctx: { workspace: { id: "ws-1", ownerId: "owner-1" } },
+      ctx: {
+        workspace: { id: "ws-1", ownerId: "owner-1" },
+        user: { id: "user-1" },
+      },
       parsedInput: { code: "oauth-code-1" },
     })
 
@@ -270,7 +287,10 @@ describe("reconnectWhatsappAction", () => {
   test("mirrors the Connection row's Inbox back to connected after a successful reconnect", async () => {
     await callReconnectWhatsappAction({
       bindArgsParsedInputs: ["ws-1", "iw-1"],
-      ctx: { workspace: { id: "ws-1", ownerId: "owner-1" } },
+      ctx: {
+        workspace: { id: "ws-1", ownerId: "owner-1" },
+        user: { id: "user-1" },
+      },
       parsedInput: { code: "oauth-code-1" },
     })
 
@@ -283,5 +303,48 @@ describe("reconnectWhatsappAction", () => {
     expect(replaceAuthMock).toHaveBeenCalledWith(
       expect.objectContaining({ tx: SENTINEL_TX }),
     )
+  })
+
+  test("records the validated auth once, before it is committed", async () => {
+    await callReconnectWhatsappAction({
+      bindArgsParsedInputs: ["ws-1", "iw-1"],
+      ctx: {
+        workspace: { id: "ws-1", ownerId: "owner-1" },
+        user: { id: "user-1" },
+      },
+      parsedInput: { code: "oauth-code-1" },
+    })
+
+    expect(recordConnectionAuthorizationMock).toHaveBeenCalledTimes(1)
+    expect(recordConnectionAuthorizationMock).toHaveBeenCalledWith({
+      userId: "user-1",
+      provider: "whatsapp",
+      auth: expect.objectContaining({
+        tokens: { accessToken: "access-token-1" },
+        metadata: expect.objectContaining({ wabaId: "waba-1" }),
+      }),
+      phase: "reconnectValidated",
+      workspaceId: "ws-1",
+    })
+    expect(
+      recordConnectionAuthorizationMock.mock.invocationCallOrder[0],
+    ).toBeLessThan(commitReconnectMock.mock.invocationCallOrder[0] as number)
+  })
+
+  test("records nothing when the authorized account does not own the connected number", async () => {
+    listPhoneNumbersMock.mockResolvedValue({ data: [] })
+
+    await expect(
+      callReconnectWhatsappAction({
+        bindArgsParsedInputs: ["ws-1", "iw-1"],
+        ctx: {
+          workspace: { id: "ws-1", ownerId: "owner-1" },
+          user: { id: "user-1" },
+        },
+        parsedInput: { code: "oauth-code-1" },
+      }),
+    ).rejects.toThrow()
+
+    expect(recordConnectionAuthorizationMock).not.toHaveBeenCalled()
   })
 })

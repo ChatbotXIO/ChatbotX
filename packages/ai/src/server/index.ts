@@ -12,6 +12,8 @@ export * from "./prompt-utils"
 export * from "./services/ai-context-service"
 export * from "./services/call-summarizer"
 export * from "./services/summarizer"
+export * from "./services/translation-model"
+export * from "./services/translator"
 export * from "./tools"
 export * from "./toolset"
 

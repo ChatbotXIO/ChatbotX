@@ -81,10 +81,12 @@ export function connectedOutcome({
   sourceId,
   name,
   integrationId,
+  inboxId,
   warning,
   coexistEligible,
 }: OutcomeIdentity & {
   integrationId: string | undefined
+  inboxId?: string
   warning: ConnectWarning | undefined
   coexistEligible: boolean
 }): ConnectActionResultWire {
@@ -96,6 +98,7 @@ export function connectedOutcome({
       status: "connected",
       warning,
       integrationId,
+      inboxId,
       coexistEligible,
     },
   }

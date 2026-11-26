@@ -20,6 +20,7 @@ vi.mock("@chatbotx.io/business/leaderboard", () => ({
 
 // ── business services ───────────────────────────────────────────────────────
 const runAction = vi.fn().mockResolvedValue(undefined)
+const mockLogProviderError = vi.hoisted(() => vi.fn())
 
 vi.mock("@chatbotx.io/business", () => ({
   buildContext: vi.fn().mockResolvedValue({ ctx: true }),
@@ -54,6 +55,7 @@ vi.mock("@chatbotx.io/business", () => ({
   workspaceService: {
     findById: vi.fn().mockResolvedValue({ id: "ws-1", name: "WS" }),
   },
+  logProviderError: mockLogProviderError,
 }))
 
 vi.mock("@chatbotx.io/integration-smtp", () => ({
@@ -113,6 +115,7 @@ function makeProps(overrides: Record<string, unknown> = {}) {
 }
 
 beforeEach(() => {
+  mockLogProviderError.mockClear()
   createRecipient.mockResolvedValue({ token: "test-token-xyz" })
   runAction.mockResolvedValue(undefined)
   renderDynamicEmailHtmlMock.mockReturnValue("<html/>")
@@ -161,6 +164,24 @@ describe("with topicId", () => {
     expect(markFailed).toHaveBeenCalledOnce()
     expect(markFailed).toHaveBeenCalledWith("test-token-xyz")
     expect(recordTransitionOrEnqueueRepair).not.toHaveBeenCalled()
+  })
+
+  test("writes a failed SMTP send to the workspace Error Log as an smtp failure", async () => {
+    const error = new Error("SMTP error")
+    runAction.mockRejectedValueOnce(error)
+    await sendEmail(makeProps() as never)
+    expect(mockLogProviderError).toHaveBeenCalledWith(
+      expect.objectContaining({ provider: "smtp", workspaceId: "ws-1", error }),
+    )
+  })
+
+  test("keeps a broadcast's failed SMTP send out of the Error Log", async () => {
+    runAction.mockRejectedValueOnce(new Error("SMTP error"))
+    await sendEmail({
+      ...makeProps(),
+      metadata: { type: "broadcast", broadcastId: "b-1" },
+    } as never)
+    expect(mockLogProviderError).not.toHaveBeenCalled()
   })
 
   test("never marks the send failed when only the tracking step fails", async () => {

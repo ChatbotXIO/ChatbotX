@@ -32,6 +32,8 @@ import { useChatStore } from "./store/chat-store-provider"
 
 type ChatLayoutProps = {
   canViewEmailAndPhone?: boolean
+  /** Whether the member may open the Broadcasts section, so a contact's broadcast names can link there. */
+  canOpenBroadcasts?: boolean
   workspaceId: string
   layout?: [number, number, number]
 }
@@ -40,6 +42,7 @@ export const ChatLayout = (props: ChatLayoutProps) => {
   const t = useTranslations()
   const {
     canViewEmailAndPhone = true,
+    canOpenBroadcasts = false,
     workspaceId,
     layout = [25, 50, 25],
   } = props
@@ -187,7 +190,11 @@ export const ChatLayout = (props: ChatLayoutProps) => {
                   {t("messages.selectConversationContactDescription")}
                 </SheetDescription>
               </SheetHeader>
-              <ContactDetailPane {...paneState} workspaceId={workspaceId} />
+              <ContactDetailPane
+                {...paneState}
+                canOpenBroadcasts={canOpenBroadcasts}
+                workspaceId={workspaceId}
+              />
             </SheetContent>
           </Sheet>
         </div>
@@ -228,7 +235,11 @@ export const ChatLayout = (props: ChatLayoutProps) => {
             maxSize={"30%"}
             minSize={"20%"}
           >
-            <ContactDetailPane {...paneState} workspaceId={workspaceId} />
+            <ContactDetailPane
+              {...paneState}
+              canOpenBroadcasts={canOpenBroadcasts}
+              workspaceId={workspaceId}
+            />
           </ResizablePanel>
         </ResizablePanelGroup>
       )}

@@ -203,6 +203,7 @@ export class McpOAuthService extends BaseService {
         { kind: "forbidden" | "workspaceSelectionRequired" }
       >
   > {
+    // Not host-scoped: OAuth/MCP clients have no browser host.
     const workspaces = await this.listAuthorizableWorkspaces({ userId })
     const [onlyWorkspace] = workspaces
     if (workspaces.length === 1 && onlyWorkspace) {

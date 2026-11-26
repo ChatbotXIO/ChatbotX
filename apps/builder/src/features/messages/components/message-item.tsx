@@ -59,6 +59,13 @@ import { useCopyToClipboard } from "usehooks-ts"
 import type { AttachmentResource } from "@/features/attachments/schema/resource"
 import { useAttachmentSource } from "@/features/attachments/utils"
 import { contactDisplayName } from "@/features/contacts/lib/contact-display-name"
+import { ParticipantAvatar } from "@/features/conversations/components/participant-avatar"
+import type { ConversationParticipantResource } from "@/features/conversations/schema/resource"
+import {
+  OutgoingTranslationStatus,
+  useOutgoingTranslationStatus,
+} from "@/features/translation/components/outgoing-translation-status"
+import { getEmailSubject } from "../lib/get-email-subject"
 import {
   getSentPaymentRequests,
   getSentTemplateName,
@@ -122,6 +129,23 @@ type MessageItemProps = {
    * chat store, which the guest webchat view does not have.
    */
   renderResend?: (message: MessageItemProps["message"]) => ReactNode
+  /** Inbox only: omitted means the bubble renders exactly as before. */
+  translation?: MessageItemTranslation
+  /**
+   * Inbox only: set on a member's latest message so their small avatar sits
+   * under the bubble's end edge (see `findLatestMessageIdByAuthor`).
+   */
+  authorMarker?: ConversationParticipantResource
+}
+
+/**
+ * Inbox translation for one bubble, computed by the inbox (never by the guest
+ * view). `mainText` replaces the text shown first (the translation of a
+ * customer message, or what the agent typed); `footer` is rendered under it.
+ */
+export type MessageItemTranslation = {
+  mainText?: string
+  footer: ReactNode
 }
 
 export const MessageItem = (props: MessageItemProps) => {
@@ -137,10 +161,18 @@ export const MessageItem = (props: MessageItemProps) => {
     renderResend,
     onDelete,
     onEdit,
+    translation,
+    authorMarker,
   } = props
   const t = useTranslations("messages")
   const tRouting = useTranslations("conversationRouting")
   const [isEditing, setIsEditing] = useState(false)
+  // Only an agent's own message in this tab has one; the guest widget never.
+  const outgoingTranslationStatus = useOutgoingTranslationStatus(
+    !guestDisplay && message.messageType === "outgoing"
+      ? message.clientId
+      : null,
+  )
 
   const variants: Record<"left" | "right" | "full", string> = {
     left: "px-4 py-3 rounded-xl bg-secondary",
@@ -170,6 +202,7 @@ export const MessageItem = (props: MessageItemProps) => {
   const isLiked = attributes?.liked === true
   const isHidden = attributes?.hidden === true
   const hasAttachments = !!message.attachments?.length
+  const emailSubject = getEmailSubject(message.contentAttributes)
   const storyReply = getStoryReplyEntity(message.contentAttributes)
   // Call rows render localized labels from contentAttributes; the stored
   // text is only an English fallback for previews and must not double-render.
@@ -302,15 +335,22 @@ export const MessageItem = (props: MessageItemProps) => {
                     isDeleted && "opacity-50",
                   )}
                 >
-                  <pre className="wrap-break-word whitespace-pre-line font-sans">
+                  {emailSubject && !isDeleted && (
+                    <p className="mb-1 font-semibold text-xs">{emailSubject}</p>
+                  )}
+                  <pre
+                    className="wrap-break-word whitespace-pre-line font-sans"
+                    dir={translation ? "auto" : undefined}
+                  >
                     {isDeleted ? (
                       <span className="text-xs italic">
                         {t("messageDeleted")}
                       </span>
                     ) : (
-                      message.text
+                      (translation?.mainText ?? message.text)
                     )}
                   </pre>
+                  {!isDeleted && translation?.footer}
                 </div>
               )}
             {!isDeleted && hasAttachments && !whatsappCall && !flowResponse && (
@@ -325,10 +365,17 @@ export const MessageItem = (props: MessageItemProps) => {
           </>
         )}
         {RenderContentAttributes(props, paymentRequests)}
+        {outgoingTranslationStatus && (
+          <OutgoingTranslationStatus status={outgoingTranslationStatus} />
+        )}
+        {authorMarker && !isDeleted && (
+          <AuthorMarker participant={authorMarker} />
+        )}
       </div>
 
       <div className="flex">
-        {message.sendError &&
+        {!outgoingTranslationStatus &&
+          message.sendError &&
           (message.messageType === "outgoing" ||
             (guestDisplay && message.messageType === "incoming")) && (
             <MessageErrorBadge
@@ -445,6 +492,29 @@ export const MessageItem = (props: MessageItemProps) => {
         </Tooltip>
       )}
     </MessageBubble>
+  )
+}
+
+/** The member's avatar under their latest message, named on hover. */
+const AuthorMarker = ({
+  participant,
+}: {
+  participant: ConversationParticipantResource
+}) => {
+  const t = useTranslations("conversationParticipants")
+  return (
+    <Tooltip>
+      <TooltipTrigger
+        render={
+          <span className="self-end">
+            <ParticipantAvatar participant={participant} />
+          </span>
+        }
+      />
+      <TooltipContent side="bottom">
+        {t("lastMessageBy", { name: participant.name ?? t("unnamedMember") })}
+      </TooltipContent>
+    </Tooltip>
   )
 }
 

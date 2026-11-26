@@ -26,6 +26,7 @@ import type {
   MessageInboundOrderEntity,
   OutgoingMessage,
 } from "@chatbotx.io/sdk"
+import type { SendFrom } from "@chatbotx.io/utils/send-from"
 import { type JobsOptions, Queue } from "bullmq"
 import {
   defaultJobOptions,
@@ -41,7 +42,9 @@ import type { ResolvedFlowFile } from "./flow-response-files"
 export * from "./ai-handover-bulk-job-ids"
 export * from "./coexist-job-ids"
 export * from "./contact-scan-job-ids"
+export * from "./contact-sync-job-ids"
 export * from "./flow-response-files"
+export * from "./smtp-job-ids"
 
 export const IntegrationJobAction = {
   sendFlow: "sendFlow",
@@ -50,12 +53,14 @@ export const IntegrationJobAction = {
   runRef: "runRef",
   incomingMessage: "incomingMessage",
   incomingMessageEcho: "incomingMessageEcho",
+  liveVideoStatusChange: "liveVideoStatusChange",
   incomingComment: "incomingComment",
   tiktokHighIntentComment: "tiktokHighIntentComment",
   deferredCommentPrivateReply: "deferredCommentPrivateReply",
   updateIncomingComment: "updateIncomingComment",
   deleteIncomingComment: "deleteIncomingComment",
   deleteIncomingMessage: "deleteIncomingMessage",
+  updateIncomingMessage: "updateIncomingMessage",
   messageReaction: "messageReaction",
   messageStatus: "messageStatus",
   runFlowPostback: "runFlowPostback",
@@ -78,6 +83,7 @@ export const IntegrationJobAction = {
   coexistWhatsappBuffer: "coexistWhatsappBuffer",
   coexistWhatsappFlush: "coexistWhatsappFlush",
   coexistMessengerSync: "coexistMessengerSync",
+  pollSmtpInbox: "pollSmtpInbox",
   coexistInstagramSync: "coexistInstagramSync",
   coexistAttachmentDownload: "coexistAttachmentDownload",
   adsAutomaticEvent: "adsAutomaticEvent",
@@ -114,6 +120,8 @@ export const IntegrationJobAction = {
   threadControlAction: "threadControlAction",
   aiHandoverTakeBack: "aiHandoverTakeBack",
   aiHandoverBulkToggle: "aiHandoverBulkToggle",
+  // One budgeted chunk of a contact sync from an external system.
+  contactSync: "contactSync",
   // Follow/unfollow, group join/leave, group messages and the bot's own group
   // membership — audience events that are not 1:1 messages (leaderboard scoring).
   channelAudienceEvent: "channelAudienceEvent",
@@ -140,6 +148,24 @@ export type IntegrationJobReceiveMessage = {
 export type IntegrationJobReceiveMessageEcho = {
   type: typeof IntegrationJobAction.incomingMessageEcho
   data: IntegrationJobReceiveMessage["data"]
+}
+
+/**
+ * A page's `live_videos` webhook: a broadcast changed state. Carries only the
+ * live video id and the status the webhook named; the worker re-reads the
+ * broadcast with the page token and records what that read says. Routed to the
+ * `low` queue (nobody waits on it); the job id names the video and status, so a
+ * redelivery adds nothing.
+ */
+export type IntegrationJobLiveVideoStatusChange = {
+  type: typeof IntegrationJobAction.liveVideoStatusChange
+  data: {
+    integrationType: string
+    integrationIdentifier: string
+    liveVideoId: string
+    /** The status the webhook reported; the read decides, this only keys the job. */
+    status: string
+  }
 }
 
 /**
@@ -271,13 +297,39 @@ export type IntegrationJobDeleteIncomingComment = {
   }
 }
 
+/**
+ * Optional for the producers that change a stored message by its provider id.
+ * Absent (a Messenger unsend, a job queued before it existed) keeps the original
+ * behavior: a missing row only warns.
+ */
+export type IncomingMessageChangeOptions = {
+  /**
+   * The message may still be on its way (its own job has not stored it yet):
+   * throw on a missing row so the job retries, warn once on the last attempt,
+   * and wait for the conversation's message ingress before publishing the
+   * change (best effort: it is published anyway when the wait times out).
+   */
+  retryIfMissing?: boolean
+}
+
 export type IntegrationJobDeleteIncomingMessage = {
   type: typeof IntegrationJobAction.deleteIncomingMessage
   data: {
     integrationType: string
     integrationIdentifier: string
     messageId: string
-  }
+  } & IncomingMessageChangeOptions
+}
+
+/** The provider edited a message already stored: replace its text. */
+export type IntegrationJobUpdateIncomingMessage = {
+  type: typeof IntegrationJobAction.updateIncomingMessage
+  data: {
+    integrationType: string
+    integrationIdentifier: string
+    messageId: string
+    newText: string
+  } & IncomingMessageChangeOptions
 }
 
 export type IntegrationJobMessageReaction = {
@@ -391,7 +443,7 @@ export type IntegrationJobRunFlowNode = {
      */
     isBulkBroadcast?: boolean
     appointmentId?: string
-    sendFrom?: "inbox"
+    sendFrom?: SendFrom
     /**
      * The inbox user who sent the flow (`sendFrom: "inbox"`), for the
      * `{{admin_name}}` / `{{admin_team_name}}` variables. Like `sendFrom` it is
@@ -641,6 +693,15 @@ export type IntegrationJobCoexistWhatsappFlush = {
   data: {
     runId?: string
     phoneNumberId: string
+  }
+}
+
+/** Reads new mail for one IMAP-enabled SMTP inbox and enqueues it as incoming messages. */
+export type IntegrationJobPollSmtpInbox = {
+  type: typeof IntegrationJobAction.pollSmtpInbox
+  data: {
+    integrationId: string
+    workspaceId: string
   }
 }
 
@@ -1091,6 +1152,13 @@ export type IntegrationJobProcessCommentAutomation = {
      */
     moderationChecked?: boolean
     /**
+     * The post's own settings already hide this comment, so the automation's
+     * hide rules must not run: they would hide it a second time and, with
+     * `showCommentsAfter`, later unhide a comment the post wants hidden. The
+     * automation still replies.
+     */
+    postHidesComment?: boolean
+    /**
      * The run belongs to a missed-comment replay. Set on the payload the AI
      * moderation job carries, so it and the resumed run keep the replay's low
      * priority after leaving the replay's async context.
@@ -1405,6 +1473,19 @@ export type IntegrationJobAiHandoverBulkToggle = {
 }
 
 /**
+ * Runs one budgeted chunk of a contact sync run. Only `runId`/`workspaceId`
+ * travel: sources, options and cursors are read off the claimed run row, so a
+ * stale or forged job cannot steer the engine.
+ */
+export type IntegrationJobContactSync = {
+  type: typeof IntegrationJobAction.contactSync
+  data: {
+    runId: string
+    workspaceId: string
+  }
+}
+
+/**
  * One conversation-routing webhook item (handover, standby message or echo).
  * The channel decides what `payload` means; the worker only forwards it.
  * Same data shape as {@link IntegrationJobReceiveMessage}.
@@ -1470,10 +1551,12 @@ export type IntegrationJobAiHandoverTakeBack = {
 export type IntegrationJobData =
   | IntegrationJobReceiveMessage
   | IntegrationJobReceiveMessageEcho
+  | IntegrationJobLiveVideoStatusChange
   | IntegrationJobReceiveComment
   | IntegrationJobUpdateIncomingComment
   | IntegrationJobDeleteIncomingComment
   | IntegrationJobDeleteIncomingMessage
+  | IntegrationJobUpdateIncomingMessage
   | IntegrationJobMessageReaction
   | IntegrationJobMessageStatus
   | IntegrationJobRecordEmailTrackingTransition
@@ -1496,6 +1579,7 @@ export type IntegrationJobData =
   | IntegrationJobCoexistWhatsappBuffer
   | IntegrationJobCoexistWhatsappFlush
   | IntegrationJobCoexistMessengerSync
+  | IntegrationJobPollSmtpInbox
   | IntegrationJobCoexistInstagramSync
   | IntegrationJobCoexistAttachmentDownload
   | IntegrationJobAdsAutomaticEvent
@@ -1532,6 +1616,7 @@ export type IntegrationJobData =
   | IntegrationJobThreadControlAction
   | IntegrationJobAiHandoverTakeBack
   | IntegrationJobAiHandoverBulkToggle
+  | IntegrationJobContactSync
   | IntegrationJobChannelAudienceEvent
 
 export const integrationQueue = isNoRedisEnv()
@@ -1587,6 +1672,14 @@ const jobOptionsByAction: Partial<
   // failed, typically because the database was briefly unavailable.
   [IntegrationJobAction.recordEmailTrackingTransition]:
     adsConversionRetryOptions,
+  // One read of the broadcast; a few spaced retries, then the periodic sync and
+  // the stale-live re-read settle the post.
+  [IntegrationJobAction.liveVideoStatusChange]: {
+    attempts: 3,
+    backoff: { type: "exponential", delay: 30_000 },
+    removeOnComplete: { age: 60 * 60 },
+    removeOnFail: { age: 24 * 60 * 60 },
+  },
   [IntegrationJobAction.whatsappCallNativeRecordingFetch]:
     NATIVE_CALL_CAPTURE_RETRY_OPTIONS,
   [IntegrationJobAction.whatsappCallNativeTranscriptFetch]:
@@ -1601,6 +1694,7 @@ export type LowRoutedIntegrationJob =
   | IntegrationJobMessageStatus
   | IntegrationJobContactMarkAsRead
   | IntegrationJobReceiveMessageEcho
+  | IntegrationJobLiveVideoStatusChange
 
 /**
  * Whether a job goes to the `low` queue. A new bookkeeping action joins with a
@@ -1615,6 +1709,7 @@ const isLowRoutedIntegrationJob = (
       return job.data.continuesFlow !== true
     case IntegrationJobAction.contactMarkAsRead:
     case IntegrationJobAction.incomingMessageEcho:
+    case IntegrationJobAction.liveVideoStatusChange:
       return true
     default:
       return false

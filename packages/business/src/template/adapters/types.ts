@@ -6,6 +6,7 @@ import type {
   TemplateResourceKind,
   TemplateUninstallEffect,
 } from "@chatbotx.io/database/partials"
+import type { TemplateFormatVersion } from "@chatbotx.io/flow-config"
 import type { ResourceFingerprint } from "../fingerprint"
 import type { StagingScope } from "../template-object-keys"
 
@@ -50,6 +51,13 @@ export type TemplateInstallWarning = {
  * cyclic (Flow -> AIAgent -> AIFunction -> Flow), so some references cannot
  * be resolved at the moment their owning row is first inserted.
  */
+/**
+ * Work an adapter owes once the install or sync transaction has committed
+ * (storage I/O that must not hold a connection). Never throws for an expected
+ * failure: it returns the warning to record instead.
+ */
+export type AfterCommitTask = () => Promise<TemplateInstallWarning | undefined>
+
 export type PatchTask = {
   category: TemplateCategory
   apply: (ctx: TemplateInstallContext) => Promise<void>
@@ -79,12 +87,26 @@ export type TemplateInstallContext = {
     wasExisting: boolean
   }) => void
   warn: (warning: TemplateInstallWarning) => void
+  /** Queues work to run after the surrounding transaction commits (see `AfterCommitTask`). */
+  afterCommit?: (task: AfterCommitTask) => void
   /**
    * Source custom-field name -> the exact name of the target field, filled by
    * the custom-field manifest for every field whose name changed. The install
    * rewrites `{{name}}` tokens in the shipped resources from it.
    */
   customFieldNameBindings?: Map<string, string>
+  /**
+   * Target custom fields the installer already had (matched by name and type,
+   * not created by this install). A tool that caches per-contact values on a
+   * field must not claim one of these.
+   */
+  reusedCustomFieldIds?: Set<string>
+  /**
+   * Source magic-link name -> the name its copy got, for every copied link. A
+   * magic link is served by name (and renamed when the name is taken), so the
+   * links in shipped text (`/r/<workspaceId>/<name>`) follow it.
+   */
+  magicLinkNameBindings?: Map<string, string>
   /**
    * Storage objects the pre-phase already copied (see `stage` on
    * `ResourceAdapter`). Adapters only read it: there is no storage I/O inside
@@ -134,6 +156,14 @@ export type TemplateCollectResult = {
   productCategoryIds: readonly string[]
   /** Source inboxes the entries are scoped to; shipped as the `inboxes` manifest. */
   inboxIds?: readonly string[]
+  /** Source Places Near Me categories the entries point at; shipped as the `placeCategories` manifest (names only). */
+  placeCategoryIds?: readonly string[]
+  /**
+   * Custom fields the entries name in a slot the reference registry cannot see
+   * (a key too generic to register, e.g. an inbound webhook's mapping `target`);
+   * shipped in the `customFields` manifest like any referenced field.
+   */
+  customFieldIds?: readonly string[]
   hardDependencies: readonly TemplateHardDependency[]
 }
 
@@ -351,8 +381,14 @@ export type ResourceAdapter<E extends TemplateEntry = TemplateEntry> = {
   readonly trackedKind: TemplateResourceKind | null
   /** The folder namespaces whose folders belong to this category (provenance only). */
   readonly folderTypes: readonly FolderType[]
+  /**
+   * The adapter rewrites the public links in its own text after every tool is
+   * installed (a Phase-2 patch), because its text may point at a tool installed
+   * after it. The engine then skips its insert-time link rewrite.
+   */
+  readonly rewritesLinksInPatch?: boolean
   /** The lowest payload `formatVersion` that can carry this category. */
-  readonly minFormatVersion: 1 | 2
+  readonly minFormatVersion: TemplateFormatVersion
   /**
    * Copies the storage objects `entries` ship into the installing workspace
    * at deterministic keys, BEFORE the apply transaction opens (storage I/O

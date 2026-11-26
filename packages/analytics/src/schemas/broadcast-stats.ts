@@ -1,17 +1,48 @@
-import { channelTypes } from "@chatbotx.io/database/partials"
-import type { FlowEventType, MessageEventType } from "@chatbotx.io/flow-config"
+import {
+  type ContactInfoType,
+  channelTypes,
+} from "@chatbotx.io/database/partials"
 import {
   flowEventTypeSchema,
   messageEventTypeSchema,
 } from "@chatbotx.io/flow-config"
 import { z } from "zod"
 
+/**
+ * Contact-info capture events: a contact left a phone number / an email while
+ * the last bot content they got was the broadcast. Counted from
+ * `ContactInfoCapture`, not from `ContactOnBroadcast`.
+ */
+export const contactInfoCaptureEventType = z.enum([
+  "contactInfo:phoneCaptured",
+  "contactInfo:emailCaptured",
+])
+
+export type ContactInfoCaptureEventType = z.infer<
+  typeof contactInfoCaptureEventType
+>
+
+/** The captured info type each capture event reads. */
+export const CONTACT_INFO_CAPTURE_EVENT_INFO_TYPE: Record<
+  ContactInfoCaptureEventType,
+  ContactInfoType
+> = {
+  "contactInfo:phoneCaptured": "phone",
+  "contactInfo:emailCaptured": "email",
+}
+
+export const isContactInfoCaptureEvent = (
+  eventType: BroadcastEventType,
+): eventType is ContactInfoCaptureEventType =>
+  contactInfoCaptureEventType.safeParse(eventType).success
+
 export const broadcastEventType = z.enum([
   ...messageEventTypeSchema.options,
   ...flowEventTypeSchema.options,
+  ...contactInfoCaptureEventType.options,
 ])
 
-export type BroadcastEventType = MessageEventType | FlowEventType
+export type BroadcastEventType = z.infer<typeof broadcastEventType>
 
 export const getBroadcastStatsRequest = z.object({
   workspaceId: z.string(),
@@ -28,6 +59,12 @@ export const getBroadcastStatsResponse = z.object({
   "message:seen": z.number(),
   "flow:clicked": z.number(),
   "message:failed": z.number(),
+  "contactInfo:phoneCaptured": z
+    .number()
+    .describe("Contacts who left a phone number after this broadcast."),
+  "contactInfo:emailCaptured": z
+    .number()
+    .describe("Contacts who left an email after this broadcast."),
 })
 
 export type GetBroadcastStatsResponse = z.infer<

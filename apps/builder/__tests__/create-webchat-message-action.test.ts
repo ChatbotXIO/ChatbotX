@@ -328,6 +328,7 @@ const conversation = {
   id: "conv-1",
   workspaceId: "ws-1",
   contactId: "contact-1",
+  createdAt: new Date("2026-11-18T08:00:00.000Z"),
   additionalAttributes: null,
 }
 const contactInbox = {
@@ -1056,5 +1057,96 @@ describe("handleCreateWebchatMessage — MAC quota", () => {
     })
 
     expect(tx.insert).not.toHaveBeenCalled()
+  })
+})
+
+describe("handleCreateWebchatMessage — contact info capture event", () => {
+  const send = (text: string, targetCountry: string | null = "VN") => {
+    mockWorkspaceFind.mockResolvedValue({ ownerId: "owner-1", targetCountry })
+    return handleCreateWebchatMessage({
+      parsedInput: {
+        text,
+        workspaceId: "ws-1",
+        webchatId: "webchat-1",
+        guestConversationId: "guest-1",
+      },
+    })
+  }
+  const receivedPayload = () =>
+    mockEmit.mock.calls.find(([type]) => type === "message:received")?.[1]
+
+  beforeEach(() => {
+    resetCommonMocks()
+    mockContactInboxFindLatest.mockResolvedValue(contactInbox)
+  })
+
+  test("carries the kinds, conversation and its creation time, never the values", async () => {
+    await send("call me on +84901234567 or a@example.com")
+
+    const payload = receivedPayload()
+    expect(payload.origin).toBe("inbound")
+    expect(payload.messageId).toBe("msg-1")
+    expect(payload.contactInfoCapture).toEqual({
+      infoTypes: ["phone", "email"],
+      conversationId: "conv-1",
+      conversationCreatedAt: "2026-11-18T08:00:00.000Z",
+    })
+    const serialized = JSON.stringify(payload)
+    expect(serialized).not.toContain("84901234567")
+    expect(serialized).not.toContain("a@example.com")
+  })
+
+  test("a phone alone and an email alone each carry a single kind", async () => {
+    await send("+84901234567")
+    expect(receivedPayload().contactInfoCapture.infoTypes).toEqual(["phone"])
+
+    mockEmit.mockClear()
+    await send("write to a@example.com please")
+    expect(receivedPayload().contactInfoCapture.infoTypes).toEqual(["email"])
+  })
+
+  test("a national number is detected with the workspace target country and with none", async () => {
+    await send("0901234567", "VN")
+    expect(receivedPayload().contactInfoCapture.infoTypes).toEqual(["phone"])
+
+    mockEmit.mockClear()
+    await send("0901234567", null)
+    expect(receivedPayload().contactInfoCapture.infoTypes).toEqual(["phone"])
+  })
+
+  test("omits the field when the text holds neither, and for very short text", async () => {
+    await send("just chatting here")
+    expect(receivedPayload().contactInfoCapture).toBeUndefined()
+
+    mockEmit.mockClear()
+    await send("ok")
+    expect(receivedPayload().contactInfoCapture).toBeUndefined()
+  })
+
+  test("never writes the contact: webchat keeps not storing phone/email from messages", async () => {
+    await send("+84901234567 a@example.com")
+
+    expect(mockDbUpdate).not.toHaveBeenCalled()
+  })
+
+  test("adds no queries, queue jobs or lookups to the hot path", async () => {
+    const counts = () => ({
+      workspace: mockWorkspaceFind.mock.calls.length,
+      conversation: mockConversationFindBy.mock.calls.length,
+      contact: mockContactFindById.mock.calls.length,
+      dbUpdate: mockDbUpdate.mock.calls.length,
+      create: mockRepositoryCreate.mock.calls.length,
+      activity: mockRecordInboundActivity.mock.calls.length,
+      chat: mockChatQueueAdd.mock.calls.length,
+      integration: mockIntegrationQueueAdd.mock.calls.length,
+    })
+
+    await send("just chatting here")
+    const without = counts()
+    resetCommonMocks()
+    mockContactInboxFindLatest.mockResolvedValue(contactInbox)
+    await send("+84901234567 a@example.com")
+
+    expect(counts()).toEqual(without)
   })
 })

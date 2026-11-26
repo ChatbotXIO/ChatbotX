@@ -19,6 +19,14 @@ export type RequestApiToken = Pick<
   "id" | "workspaceId" | "permission" | "scopes" | "isDefault"
 >
 
+/** Verified MCP OAuth identity; set only for an OAuth access token. */
+export type RequestOAuthPrincipal = {
+  audience: string
+  clientId: string
+  issuer: string
+  subject: string
+}
+
 export type BaseContext = ResponseHeadersPluginContext & {
   headers: Headers
   url?: string
@@ -48,6 +56,8 @@ export type BaseContext = ResponseHeadersPluginContext & {
    * keys to it.
    */
   apiCredentialId?: string
+  /** Set only when an MCP OAuth access token authenticated the request. */
+  oauthPrincipal?: RequestOAuthPrincipal
 }
 
 export const base = os.$context<BaseContext>()

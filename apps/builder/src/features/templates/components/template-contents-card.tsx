@@ -17,13 +17,13 @@ import {
 import { useQuery } from "@tanstack/react-query"
 import { useTranslations } from "next-intl"
 import { useMemo, useState } from "react"
+import { useDebouncedValue } from "@/hooks/use-debounced-value"
 import { orpc } from "@/lib/orpc/query"
 import type {
   CategorySelectionState,
   TemplateSelectionFormState,
 } from "../lib/selection"
 import { EMPTY_SELECTION, selectionCount } from "../lib/selection"
-import { useDebouncedValue } from "../lib/use-debounced-value"
 import { CategoryResourceList } from "./category-resource-list"
 import { IncludedAutomatically } from "./included-automatically"
 
@@ -123,6 +123,26 @@ export function TemplateContentsCard({
           dependencies={dependencies.data}
           excludeKinds={manifestKinds}
         />
+        {dependencies.data?.miniAppPublishedExcluded.length ? (
+          <section
+            className="mt-3 flex flex-col gap-1 rounded-md border border-amber-500/50 p-3 text-sm"
+            role="status"
+          >
+            <p className="font-medium">
+              {t("templates.form.miniAppPublishedExcluded.title")}
+            </p>
+            <p className="text-muted-foreground text-xs">
+              {t("templates.form.miniAppPublishedExcluded.hint")}
+            </p>
+            <ul className="ml-4 list-disc text-muted-foreground text-xs">
+              {dependencies.data.miniAppPublishedExcluded.map((row) => (
+                <li key={`${row.flowName}:${row.miniAppName}`}>
+                  {t("templates.form.miniAppPublishedExcluded.item", row)}
+                </li>
+              ))}
+            </ul>
+          </section>
+        ) : null}
       </CardContent>
     </Card>
   )

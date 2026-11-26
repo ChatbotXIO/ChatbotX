@@ -1,8 +1,8 @@
 import type { TemplateCategory } from "@chatbotx.io/database/partials"
 import { useInfiniteQuery, useQueryClient } from "@tanstack/react-query"
 import { useEffect, useRef } from "react"
+import { useDebouncedValue } from "@/hooks/use-debounced-value"
 import { orpc } from "@/lib/orpc/query"
-import { useDebouncedValue } from "./use-debounced-value"
 
 const PAGE_SIZE = 100
 /** The largest page `listSelectableResourcesAPI` accepts. */

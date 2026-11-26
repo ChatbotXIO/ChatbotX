@@ -13,6 +13,7 @@ const invalidators = vi.hoisted(() => ({
   sequence: vi.fn(),
   aiAgent: vi.fn(),
   pipeline: vi.fn(),
+  poll: vi.fn(),
 }))
 
 vi.mock("@/features/flows/provider/flow-hook", () => ({
@@ -33,6 +34,9 @@ vi.mock("@/features/ai-agents/hooks/use-ai-agents", () => ({
 }))
 vi.mock("@/features/pipelines/lib/use-invalidate-pipelines", () => ({
   useInvalidatePipelines: () => invalidators.pipeline,
+}))
+vi.mock("@/features/polls/lib/use-invalidate-polls", () => ({
+  useInvalidatePolls: () => invalidators.poll,
 }))
 vi.mock("@/lib/orpc/query", () => ({
   orpc: { templatesAPI: { key: () => ["templatesAPI"] } },

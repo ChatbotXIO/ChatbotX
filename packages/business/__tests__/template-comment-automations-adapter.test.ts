@@ -137,6 +137,87 @@ describe("comment automations adapter: inbox scope and posts", () => {
     ])
   })
 
+  test("AI moderation on an AI Router connection installs off, without the source's connection", async () => {
+    const hideComments = {
+      all: false,
+      hasPhoneNumber: false,
+      hasImage: false,
+      hasVideo: false,
+      hasLink: false,
+      hasKeywords: false,
+      keywords: [],
+      showCommentsAfter: "none" as const,
+      aiModeration: {
+        enabled: true,
+        engine: "decision" as const,
+        aiAgentId: null,
+        decisionConnectionId: "source-connection",
+        decisionModel: "jev-1.13.0",
+        categories: ["hate" as const],
+        action: "hide" as const,
+      },
+    }
+
+    const { inserted, warnings } = await install({ hideComments })
+
+    expect(inserted).toMatchObject({
+      hideComments: {
+        aiModeration: {
+          enabled: false,
+          engine: "decision",
+          decisionConnectionId: null,
+          decisionModel: "jev-1.13.0",
+        },
+      },
+    })
+    expect(warnings).toEqual([
+      expect.objectContaining({ entityKind: "credentialRequired" }),
+    ])
+  })
+
+  const agentModeration = (aiAgentId: string) => ({
+    all: false,
+    hasPhoneNumber: false,
+    hasImage: false,
+    hasVideo: false,
+    hasLink: false,
+    hasKeywords: false,
+    keywords: [],
+    showCommentsAfter: "none" as const,
+    aiModeration: {
+      enabled: true,
+      engine: "aiAgent" as const,
+      aiAgentId,
+      categories: ["hate" as const],
+      action: "hide" as const,
+    },
+  })
+
+  test("AI moderation on an AI agent is remapped to the copied agent", async () => {
+    const { inserted, warnings } = await install(
+      { hideComments: agentModeration("src-agent") },
+      { aiAgent: new Map([["src-agent", "tgt-agent"]]) },
+    )
+
+    expect(inserted).toMatchObject({
+      hideComments: { aiModeration: { enabled: true, aiAgentId: "tgt-agent" } },
+    })
+    expect(warnings).toEqual([])
+  })
+
+  test("AI moderation whose agent did not come along installs off, never with the source's agent id", async () => {
+    const { inserted, warnings } = await install({
+      hideComments: agentModeration("src-agent"),
+    })
+
+    expect(inserted).toMatchObject({
+      hideComments: { aiModeration: { enabled: false, aiAgentId: null } },
+    })
+    expect(warnings).toEqual([
+      expect.objectContaining({ entityKind: "aiAgent" }),
+    ])
+  })
+
   test("an automation covering all posts keeps its post setting", async () => {
     const { inserted } = await install({
       post: { type: "published", value: [] },
@@ -148,6 +229,18 @@ describe("comment automations adapter: inbox scope and posts", () => {
     })
   })
 
+  test("a hashtag automation keeps its hashtags and stays on", async () => {
+    const { inserted, warnings } = await install({
+      post: { type: "hashtags", value: ["vip", "sale"] },
+    })
+
+    expect(inserted).toMatchObject({
+      post: { type: "hashtags", value: ["vip", "sale"] },
+      isActive: true,
+    })
+    expect(warnings).toEqual([])
+  })
+
   test("an automation that was switched off stays off even when fully bound", async () => {
     const { inserted } = await install(
       { isActive: false, inboxSourceId: "src-inbox" },
@@ -155,5 +248,37 @@ describe("comment automations adapter: inbox scope and posts", () => {
     )
 
     expect(inserted).toMatchObject({ inboxId: "tgt-1", isActive: false })
+  })
+})
+
+describe("comment automations adapter: collection", () => {
+  test("the AI agent that moderates comments ships with the automation", async () => {
+    const { db } = await import("@chatbotx.io/database/client")
+    const row = {
+      ...entry(),
+      id: "src-auto",
+      folderId: null,
+      inboxId: null,
+      hideComments: {
+        aiModeration: {
+          enabled: true,
+          engine: "aiAgent",
+          aiAgentId: "agent-1",
+        },
+      },
+    }
+    ;(db as unknown as { query: unknown }).query = {
+      commentAutomationModel: { findMany: () => Promise.resolve([row]) },
+    }
+
+    const collected = await commentAutomationsAdapter.collector.collect(
+      "ws-1",
+      ["src-auto"],
+    )
+
+    expect(collected.hardDependencies).toContainEqual({
+      category: "aiAgents",
+      sourceId: "agent-1",
+    })
   })
 })

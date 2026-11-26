@@ -62,6 +62,12 @@ export function resolveLastMessagePreview(
   t: ReturnType<typeof useTranslations>,
   brand = "",
 ): string {
+  // An unsent message keeps its text in the database, so the list must not show
+  // it: it reads the same placeholder the open timeline renders.
+  if (message?.deletedAt) {
+    return t("messages.messageDeleted")
+  }
+
   // A call activity message stores its English fallback in `message.text` (see
   // `buildCallActivityText`) so it can never come out empty for a legacy client
   // — but the inbox list must localize it via next-intl, not show that stored

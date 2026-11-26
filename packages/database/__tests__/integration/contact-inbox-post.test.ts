@@ -8,7 +8,7 @@
  * they are safe to run alongside the other integration catalog checks.
  */
 
-import { and, eq, relationsFilterToSQL } from "drizzle-orm"
+import { and, eq } from "drizzle-orm"
 import { drizzle } from "drizzle-orm/node-postgres"
 import { Client } from "pg"
 import {
@@ -22,6 +22,7 @@ import {
 } from "vitest"
 import { applyContactFilter } from "../../src/queries/contact-filter"
 import { relations } from "../../src/relations"
+import { relationsFilterToSQL } from "../../src/relations-filter"
 import { channelPostRepository } from "../../src/repositories/channel-post/repository"
 import { contactInboxPostRepository } from "../../src/repositories/contact-inbox-post/repository"
 import { workspaceRepository } from "../../src/repositories/workspace/repository"

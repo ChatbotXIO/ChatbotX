@@ -25,8 +25,6 @@ import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import React, { useCallback, useMemo, useState } from "react"
-import { toast } from "sonner"
-import { useCopyToClipboard } from "usehooks-ts"
 import type { listBroadcasts } from "@/features/broadcasts/queries"
 import { useWorkspaceId } from "@/hooks/routing"
 import { useIntervalRouterRefresh } from "@/hooks/use-interval-router-refresh"
@@ -43,6 +41,7 @@ import { MoveBroadcastToDraftDialog } from "./components/move-broadcast-to-draft
 import { ResumeBroadcastDialog } from "./components/resume-broadcast-dialog"
 import { ScheduleBroadcastDialog } from "./components/schedule-broadcast-dialog"
 import { StopBroadcastDialog } from "./components/stop-broadcast-dialog"
+import { useCopyBroadcastId } from "./hooks/use-copy-broadcast-id"
 import { broadcastRunsHref } from "./lib/broadcast-links"
 import {
   type BroadcastRowActionVariant,
@@ -110,15 +109,7 @@ export function BroadcastsTable({ promises, filtered }: BroadcastsTableProps) {
 
   const [rowAction, setRowAction] = useState<BroadcastRowAction | null>(null)
 
-  const [, copyToClipboard] = useCopyToClipboard()
-  const handleCopyId = useCallback(
-    (id: string) => {
-      copyToClipboard(id).then(() => {
-        toast.success(t("messages.copiedToClipboard"))
-      })
-    },
-    [copyToClipboard, t],
-  )
+  const handleCopyId = useCopyBroadcastId()
 
   // A series shows its run count (a link to the runs page) where the first
   // stat would be, and nothing in the others: its runs carry the stats.
@@ -173,33 +164,6 @@ export function BroadcastsTable({ promises, filtered }: BroadcastsTableProps) {
         size: 20,
         enableSorting: false,
         enableHiding: false,
-      },
-      {
-        id: "id",
-        accessorKey: "id",
-        header: ({ column }) => (
-          <DataTableColumnHeader
-            column={column}
-            title={t("broadcasts.fields.id")}
-          />
-        ),
-        cell: ({ row }) => (
-          <div className="flex items-center gap-1">
-            <span className="max-w-[100px] truncate font-mono text-xs">
-              {row.original.id}
-            </span>
-            <Button
-              aria-label={t("actions.copy")}
-              className="size-6 shrink-0"
-              onClick={() => handleCopyId(row.original.id)}
-              size="icon"
-              variant="ghost"
-            >
-              <CopyIcon className="size-3" />
-            </Button>
-          </div>
-        ),
-        enableSorting: false,
       },
       {
         id: "name",
@@ -385,6 +349,38 @@ export function BroadcastsTable({ promises, filtered }: BroadcastsTableProps) {
         enableHiding: false,
       },
       {
+        id: "leftPhone",
+        header: ({ column }) => (
+          <DataTableColumnHeader
+            column={column}
+            title={t("broadcasts.stats.leftPhoneShort")}
+          />
+        ),
+        cell: ({ row }) =>
+          renderStatsCell(row.original, "contactInfo:phoneCaptured"),
+        meta: {
+          label: t("broadcasts.stats.leftPhone"),
+        },
+        enableSorting: false,
+        enableHiding: false,
+      },
+      {
+        id: "leftEmail",
+        header: ({ column }) => (
+          <DataTableColumnHeader
+            column={column}
+            title={t("broadcasts.stats.leftEmailShort")}
+          />
+        ),
+        cell: ({ row }) =>
+          renderStatsCell(row.original, "contactInfo:emailCaptured"),
+        meta: {
+          label: t("broadcasts.stats.leftEmail"),
+        },
+        enableSorting: false,
+        enableHiding: false,
+      },
+      {
         accessorKey: "schedulesAt",
         header: ({ column }) => (
           <DataTableColumnHeader
@@ -455,6 +451,10 @@ export function BroadcastsTable({ promises, filtered }: BroadcastsTableProps) {
                   </DropdownMenuItem>
                 )
               })}
+              <DropdownMenuItem onClick={() => handleCopyId(row.original.id)}>
+                <CopyIcon className="me-2" />
+                {t("actions.copyId")}
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         ),

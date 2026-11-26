@@ -1,3 +1,4 @@
+import { scrubSecretsInString } from "@chatbotx.io/logger"
 import { UNKNOWN_ERROR } from "@chatbotx.io/sdk"
 import ky, { isHTTPError, type KyInstance, type ShouldRetryState } from "ky"
 import {
@@ -99,12 +100,15 @@ export function logChannelError(
   if (isExpectedPolicyError(source)) {
     logger.warn(
       payload,
-      `Messenger API expected policy error: ${source.message ?? "unknown"}`,
+      `Messenger API expected policy error: ${scrubSecretsInString(source.message ?? "unknown")}`,
     )
     return
   }
 
-  logger.error(payload, `Messenger API error: ${source.message ?? "unknown"}`)
+  logger.error(
+    payload,
+    `Messenger API error: ${scrubSecretsInString(source.message ?? "unknown")}`,
+  )
 }
 
 type HttpClientConfig = {

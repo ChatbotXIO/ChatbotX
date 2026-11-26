@@ -1,0 +1,69 @@
+{
+  "type": "diff",
+  "version": "10",
+  "dialect": "postgres",
+  "id": "62e88a7b-6299-4037-87a5-4a405cf0c324",
+  "prevIds": [
+    "f5f9a8a1-3382-4440-9457-2af6b3b27512",
+    "22f8668e-26c7-464d-affb-0dea2aa11174"
+  ],
+  "footprints": [
+    {
+      "statementType": "alter_enum",
+      "statementTarget": [
+        "enum",
+        "public",
+        "templateResourceCategory"
+      ],
+      "writes": [
+        "s|enum|public.templateResourceCategory"
+      ],
+      "reads": [
+        "n|sch|public"
+      ]
+    }
+  ],
+  "deltas": [
+    {
+      "op": "alter",
+      "key": "enums\u0000[\"public\",\"templateResourceCategory\"]",
+      "set": {
+        "values": [
+          "flows",
+          "products",
+          "aiFunctions",
+          "aiAgents",
+          "calendars",
+          "webchats",
+          "keywords",
+          "entryPointLinks",
+          "triggers",
+          "fbCommentAutomations",
+          "settings",
+          "sequences",
+          "aiMcpServers",
+          "aiFiles",
+          "questionnaires",
+          "couponTopics",
+          "pipelines",
+          "magicLinks",
+          "polls",
+          "dynamicImages",
+          "placeLocations",
+          "miniApps",
+          "minigames",
+          "leaderboards",
+          "openHours",
+          "vendors",
+          "discountCodes",
+          "storeSettings",
+          "storyAutomations",
+          "inboundWebhooks",
+          "customFields",
+          "tags",
+          "productCategories"
+        ]
+      }
+    }
+  ]
+}

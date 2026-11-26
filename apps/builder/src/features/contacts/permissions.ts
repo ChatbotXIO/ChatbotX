@@ -20,6 +20,7 @@ export {
 } from "@chatbotx.io/business"
 export { maskContactEmailAndPhone } from "@chatbotx.io/business/contact-utils"
 export { stripContactPIIFields } from "@chatbotx.io/worker-config/contact-pii"
+export { TOKEN_CALLER_CAN_VIEW_EMAIL_AND_PHONE } from "./token-caller-permissions"
 
 type Permissions = PermissionsInput
 

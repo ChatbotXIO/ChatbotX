@@ -133,7 +133,7 @@ export async function purgeStaleAutomationThrottles(
   olderThanHours: number = STALE_RETENTION_HOURS,
 ): Promise<number> {
   const cutoff = new Date(Date.now() - olderThanHours * 60 * 60 * 1000)
-  const result = await db.execute(
+  const result = await db.execute<Record<string, unknown>>(
     sql`DELETE FROM ${automationThrottleModel} WHERE ${automationThrottleModel.lastTriggeredAt} < ${cutoff}`,
   )
 

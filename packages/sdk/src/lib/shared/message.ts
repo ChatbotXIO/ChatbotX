@@ -1,4 +1,8 @@
 import type { ButtonPayload } from "@chatbotx.io/flow-config"
+import type {
+  ChannelPostContentType,
+  ChannelPostLiveStatus,
+} from "@chatbotx.io/utils/channel-post"
 import { z } from "zod"
 import type { ChannelError } from "../channel-error"
 import { guessFileTypeFromMimeType } from "../util"
@@ -31,6 +35,10 @@ export type MessageReferral = {
 
 export type IncomingContact = {
   sourceId: string
+  /**
+   * Channel-defined key that selects the conversation for an incoming message:
+   * a comment post id or an SMTP email thread (`email:<Message-ID>`).
+   */
   sourceConversationId?: string
   phoneNumber?: string
   phoneNumberId?: string
@@ -92,6 +100,74 @@ export type ChannelPostDetails = {
   permalink?: string | null
   publishedAt?: Date | null
   thumbnailUrl?: string | null
+}
+
+export type {
+  ChannelPostContentType,
+  ChannelPostLiveState,
+  ChannelPostLiveStatus,
+} from "@chatbotx.io/utils/channel-post"
+
+/**
+ * One post in a channel's own listing, in channel-neutral terms. A count is
+ * `null` when the platform does not report it in the listing: "unknown",
+ * never zero, so a sync never overwrites a known count with a guess.
+ */
+export type ChannelPostListItem = {
+  authorExternalId: string | null
+  authorName: string | null
+  caption: string | null
+  commentsCount: number | null
+  contentType: ChannelPostContentType | null
+  /** The id the channel's comment events report for this post. */
+  externalPostId: string
+  liveStatus: ChannelPostLiveStatus | null
+  /** The raw provider media kind, kept next to the neutral `contentType`. */
+  mediaType: string | null
+  permalink: string | null
+  publishedAt: Date | null
+  reactionsCount: number | null
+  sharesCount: number | null
+  thumbnailUrl: string | null
+  viewsCount: number | null
+}
+
+/**
+ * The counts a batch metrics read reports for one post: the same neutral count
+ * fields as {@link ChannelPostListItem}, with the same meaning of `null`
+ * (not reported: unknown, never zero).
+ */
+export type ChannelPostMetricsItem = Pick<
+  ChannelPostListItem,
+  | "commentsCount"
+  | "externalPostId"
+  | "reactionsCount"
+  | "sharesCount"
+  | "viewsCount"
+>
+
+/**
+ * A broadcast read by its own id (a live-state webhook names only that id): the
+ * post it lives in and whether it is on. Never carries a scheduled or
+ * unpublished broadcast, which has no post yet.
+ */
+export type ChannelLiveBroadcast = {
+  caption: string | null
+  /** The id the channel's comment events report for the post. */
+  externalPostId: string
+  liveStatus: Extract<ChannelPostLiveStatus, "live" | "ended">
+  permalink: string | null
+  publishedAt: Date | null
+}
+
+/**
+ * One page of a channel's post listing, newest first. `nextCursor` is opaque
+ * to the caller: it is handed back unchanged to fetch the following page, and
+ * is `null` after the last page.
+ */
+export type ChannelPostListPage = {
+  items: ChannelPostListItem[]
+  nextCursor: string | null
 }
 
 /**
@@ -499,6 +575,11 @@ export type MessageType = z.infer<typeof messageTypes>
 
 export type IncomingMessage = {
   sourceId: string
+  /**
+   * Source IDs of messages in the provider's ancestry, ordered closest parent
+   * first. SMTP uses these to resolve a thread before its root arrives.
+   */
+  threadSourceIds?: string[]
   messageType: MessageType
   contentType: ContentType
   text?: string

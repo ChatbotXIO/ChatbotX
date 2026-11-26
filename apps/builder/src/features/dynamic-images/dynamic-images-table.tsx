@@ -33,6 +33,11 @@ import { useRouter } from "next/navigation"
 import { useLocale, useTranslations } from "next-intl"
 import React, { use, useMemo } from "react"
 import { EnabledSwitchCell } from "@/components/data-table/enabled-switch-cell"
+import { LockBadge } from "@/features/templates/components/lock-badge"
+import {
+  TemplateLockedList,
+  UndeletableGuard,
+} from "@/features/templates/components/lock-context"
 import { useTenantSettings } from "@/features/tenant"
 import { enableDynamicImageAction } from "./actions/enable-dynamic-image.action"
 import { DeleteDynamicImagesDialog } from "./delete-dynamic-images"
@@ -146,8 +151,9 @@ export function DynamicImagesTable({
                   <Link
                     href={`/space/${workspaceId}/dynamic-images/${row.original.id}/edit`}
                   >
-                    <div className="w-fit max-w-50 truncate">
-                      {row.original.name}
+                    <div className="flex w-fit max-w-50 items-center">
+                      <span className="truncate">{row.original.name}</span>
+                      <LockBadge resourceId={row.original.id} />
                     </div>
                   </Link>
                 </div>
@@ -230,13 +236,18 @@ export function DynamicImagesTable({
                 {t("actions.edit")}
               </DropdownMenuItem>
 
-              <DropdownMenuItem
-                onClick={() => setRowAction({ row, variant: "delete" })}
-                variant="destructive"
-              >
-                <Trash2Icon />
-                {t("actions.delete")}
-              </DropdownMenuItem>
+              <UndeletableGuard resourceId={row.original.id}>
+                {(disabled) => (
+                  <DropdownMenuItem
+                    disabled={disabled}
+                    onClick={() => setRowAction({ row, variant: "delete" })}
+                    variant="destructive"
+                  >
+                    <Trash2Icon />
+                    {t("actions.delete")}
+                  </DropdownMenuItem>
+                )}
+              </UndeletableGuard>
             </DropdownMenuContent>
           </DropdownMenu>
         ),
@@ -267,14 +278,20 @@ export function DynamicImagesTable({
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <DataTable table={table}>
-          <DataTableToolbar table={table}>
-            <DynamicImagesTableToolbarActions
-              table={table}
-              workspaceId={workspaceId}
-            />
-          </DataTableToolbar>
-        </DataTable>
+        <TemplateLockedList
+          resourceKind="dynamicImage"
+          rows={data}
+          workspaceId={workspaceId}
+        >
+          <DataTable table={table}>
+            <DataTableToolbar table={table}>
+              <DynamicImagesTableToolbarActions
+                table={table}
+                workspaceId={workspaceId}
+              />
+            </DataTableToolbar>
+          </DataTable>
+        </TemplateLockedList>
 
         <DeleteDynamicImagesDialog
           dynamicImages={
