@@ -210,34 +210,29 @@ export async function listConversations(
   const hasMore = conversations.length > limit
   const page = hasMore ? conversations.slice(0, limit) : conversations
 
-  // ── Shard-aware message lookups (parallelized) ──────────────────────────
+  // ── Shard-aware last-message previews (one query per shard) ─────────────
   const messageRepository = await createMessageRepository()
-  const lastMessagesResults = await Promise.all(
-    page.map((c) => {
-      // Anchor on this conversation's own lastActivityAt, not a contactInbox's
-      // lastMessageAt — a contact's ContactInbox is shared across their DM and
-      // every comment-thread conversation, so its lastMessageAt reflects
-      // whichever of those was most recently active, not this specific one.
-      // Using the wrong (later) anchor excludes this conversation's real last
-      // message from the sharded time window, returning an empty preview.
-      // Don't bail when lastActivityAt is missing: historical imports populate
-      // messages but never set it, so bailing hid the last-message preview.
-      // resolveLastMessageSinceTime falls back to a full-history scan instead.
-      return messageRepository.findLastByConversation(c.id, {
-        attachmentCountOnly: true,
-        limit: 1,
+  const lastMessagesByConversationId =
+    await messageRepository.findLastByConversations(
+      page.map((c) => ({
+        conversationId: c.id,
+        // Anchor on this conversation's own lastActivityAt, not a contactInbox's
+        // lastMessageAt — a contact's ContactInbox is shared across their DM and
+        // every comment-thread conversation, so its lastMessageAt reflects
+        // whichever of those was most recently active, not this specific one.
+        // Using the wrong (later) anchor excludes this conversation's real last
+        // message from the sharded time window, returning an empty preview.
+        // Don't bail when lastActivityAt is missing: historical imports populate
+        // messages but never set it, so bailing hid the last-message preview.
+        // resolveLastMessageSinceTime falls back to a full-history scan instead.
+        // The batched read keeps each conversation's own window per row.
         sinceTime: resolveLastMessageSinceTime(c.lastActivityAt),
-        workspaceId,
-      })
-    }),
-  )
+      })),
+      { attachmentCountOnly: true, workspaceId },
+    )
   const resolveContact = createConversationContactResolver(
     workspaceId,
     createAvatarFinalizer(workspaceId, { publicUrls: access.publicUrls }),
-  )
-
-  const lastMessagesByConversationId = new Map(
-    page.map((c, index) => [c.id, lastMessagesResults[index]?.[0] ?? null]),
   )
 
   // ── Build cursor pagination response ────────────────────────────────────

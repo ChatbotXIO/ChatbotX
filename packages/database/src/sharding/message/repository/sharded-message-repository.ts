@@ -43,6 +43,7 @@ import type {
   FindAttachmentByIdParams,
   FindEmailParentParams,
   FindLastByConversationOptions,
+  FindLastByConversationsOptions,
   FindManyByConversationOptions,
   FindManyBySourceIdsParams,
   FindMessageByIdParams,
@@ -53,6 +54,7 @@ import type {
   HardDeleteAllByContactInboxParams,
   HardDeleteAllByContactInboxResult,
   IMessageRepository,
+  LastMessageTarget,
   ListCommentsQuery,
   ListedComment,
   ListIncomingTextsByContactInboxParams,
@@ -2855,6 +2857,158 @@ export class ShardedMessageRepository implements IMessageRepository {
     )
 
     return shardResults.flat().sort(compareMessageDesc).slice(0, limit)
+  }
+
+  async findLastByConversations(
+    targets: readonly LastMessageTarget[],
+    options: FindLastByConversationsOptions,
+  ): Promise<Map<string, MessageWithAttachments | null>> {
+    // A conversation listed twice keeps its widest (earliest) window.
+    const sinceByConversation = new Map<string, Date>()
+    for (const { conversationId, sinceTime } of targets) {
+      const known = sinceByConversation.get(conversationId)
+      if (!known || sinceTime < known) {
+        sinceByConversation.set(conversationId, sinceTime)
+      }
+    }
+    const result = new Map<string, MessageWithAttachments | null>(
+      [...sinceByConversation.keys()].map((id) => [id, null]),
+    )
+    if (sinceByConversation.size === 0) {
+      return result
+    }
+
+    // One shard selection for the whole batch, covering the earliest window;
+    // each conversation's own window is still applied inside the shard query.
+    const earliest = new Date(
+      Math.min(...[...sinceByConversation.values()].map((d) => d.getTime())),
+    )
+    let shards: MessageShardTimeRangeInfo[]
+    try {
+      shards = await this.getConversationReadShards(
+        earliest,
+        options.workspaceId,
+      )
+    } catch (error) {
+      if (options.requireCompleteResults) {
+        throw this.toStorageError(
+          "select shards for last messages by conversations",
+          error,
+        )
+      }
+      logger.warn(
+        { err: error },
+        "Shard selection failed in findLastByConversations",
+      )
+      return result
+    }
+    if (shards.length === 0) {
+      if (options.requireCompleteResults) {
+        throw new MessageShardUnavailableError(
+          "No message shards are available for last-message read",
+        )
+      }
+      return result
+    }
+
+    const shardResults = await Promise.all(
+      shards.map(async (shardInfo): Promise<MessageWithAttachments[]> => {
+        try {
+          return await this.shardManager.withShardClientForRead(
+            shardInfo.shard,
+            (shardClient) =>
+              this.queryLastMessagesOnShard(
+                shardClient,
+                sinceByConversation,
+                options,
+              ),
+          )
+        } catch (error) {
+          if (options.requireCompleteResults) {
+            throw this.toStorageError(
+              "find last messages by conversations",
+              error,
+            )
+          }
+          logger.warn(
+            { err: error, shardId: shardInfo.shard.id },
+            "Shard query failed in findLastByConversations",
+          )
+          return []
+        }
+      }),
+    )
+
+    // A conversation can have rows on several shards (time-range rollover):
+    // keep the newest per conversation, same tie-break as the single read.
+    for (const message of shardResults.flat()) {
+      const current = result.get(message.conversationId)
+      if (!current || compareMessageDesc(message, current) < 0) {
+        result.set(message.conversationId, message)
+      }
+    }
+    return result
+  }
+
+  /**
+   * The newest message of each conversation on one shard, in ONE statement:
+   *
+   *   SELECT last.* FROM unnest($ids::bigint[], $since::timestamptz[])
+   *     AS target("conversationId", "sinceTime")
+   *   CROSS JOIN LATERAL (
+   *     SELECT * FROM "Message"
+   *     WHERE "conversationId" = target."conversationId"
+   *       AND "createdAt" >= target."sinceTime" AND "workspaceId" = $ws ...
+   *     ORDER BY "createdAt" DESC, id DESC LIMIT 1) last
+   *
+   * Each lateral probe matches `Message_conversation_history_idx`
+   * (conversationId, createdAt DESC, id DESC) exactly, so it reads one index
+   * entry per conversation, and the per-row `sinceTime` keeps every
+   * conversation's own window (runtime chunk exclusion on the hypertable). A
+   * `DISTINCT ON ("conversationId")` over the earliest window would instead
+   * read every message of every listed conversation in that window — the full
+   * history whenever one conversation has no `lastActivityAt`.
+   */
+  private async queryLastMessagesOnShard(
+    shardClient: MessageShardDatabaseClient,
+    sinceByConversation: ReadonlyMap<string, Date>,
+    options: FindLastByConversationsOptions,
+  ): Promise<MessageWithAttachments[]> {
+    const conversationIds = [...sinceByConversation.keys()]
+    const sinceTimes = [...sinceByConversation.values()].map((d) =>
+      d.toISOString(),
+    )
+    const target = sql`unnest(${sql.param(conversationIds)}::bigint[], ${sql.param(sinceTimes)}::timestamptz[]) AS "target"("conversationId", "sinceTime")`
+    const conditions: (SQL | undefined)[] = [
+      eq(messageModel.workspaceId, options.workspaceId),
+      sql`${messageModel.conversationId} = "target"."conversationId"`,
+      sql`${messageModel.createdAt} >= "target"."sinceTime"`,
+    ]
+    if (options.messageTypes && options.messageTypes.length > 0) {
+      conditions.push(inArray(messageModel.messageType, options.messageTypes))
+    }
+    const last = shardClient
+      .select()
+      .from(messageModel)
+      .where(and(...conditions))
+      .orderBy(desc(messageModel.createdAt), desc(messageModel.id))
+      .limit(1)
+      .as("last")
+    const rows = await shardClient
+      .select(last._.selectedFields)
+      .from(target)
+      .crossJoinLateral(last)
+    const messages = rows as MessageModel[]
+    if (messages.length === 0) {
+      return []
+    }
+    if (options.attachmentCountOnly) {
+      return this.mapMessagesToWithAttachmentCounts(
+        messages,
+        await this.fetchAttachmentCounts(shardClient, messages),
+      )
+    }
+    return this.mapMessagesToWithAttachments(messages, {})
   }
 
   async findManyByConversation(

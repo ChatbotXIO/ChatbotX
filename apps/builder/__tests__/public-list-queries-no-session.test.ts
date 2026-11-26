@@ -20,6 +20,7 @@ const mocks = vi.hoisted(() => ({
   listByWorkspace: vi.fn().mockResolvedValue([]),
   findManyQuery: vi.fn().mockResolvedValue([]),
   findLastByConversation: vi.fn().mockResolvedValue([]),
+  findLastByConversations: vi.fn().mockResolvedValue(new Map()),
   findWithFullRelations: vi.fn().mockResolvedValue({
     id: "conv-1",
     contactId: "contact-1",
@@ -171,6 +172,7 @@ vi.mock("@chatbotx.io/database/repositories", () => ({
   recentParticipantsRelation: { limit: 3 },
   createMessageRepository: vi.fn().mockResolvedValue({
     findLastByConversation: mocks.findLastByConversation,
+    findLastByConversations: mocks.findLastByConversations,
   }),
   broadcastRepository: {
     listWithRelations: mocks.broadcastListWithRelations,
@@ -197,6 +199,7 @@ beforeEach(() => {
   mocks.listByWorkspace.mockResolvedValue([])
   mocks.findManyQuery.mockResolvedValue([])
   mocks.findLastByConversation.mockResolvedValue([])
+  mocks.findLastByConversations.mockResolvedValue(new Map())
   mocks.findWithFullRelations.mockResolvedValue({
     id: "conv-1",
     contactId: "contact-1",

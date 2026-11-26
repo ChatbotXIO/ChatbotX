@@ -7,6 +7,7 @@ import type {
   CreateMessageInput,
 } from "../src/repositories/message"
 import { attachmentModel, messageModel } from "../src/sharding/message"
+import { createMessageShardClient } from "../src/sharding/message/client"
 import { ShardedMessageRepository } from "../src/sharding/message/repository/sharded-message-repository"
 
 // getShardsForRange wraps shard lookups in withCache(); the read path also needs
@@ -3024,5 +3025,270 @@ describe("ShardedMessageRepository.findOutgoingBefore", () => {
         baseParams,
       ),
     ).rejects.toBeInstanceOf(MessageShardUnavailableError)
+  })
+})
+
+// ---------------------------------------------------------------------------
+// findLastByConversations — the batched last-message read behind the inbox list
+// ---------------------------------------------------------------------------
+
+type BatchRow = {
+  id: string
+  conversationId: string
+  createdAt: Date
+}
+
+/**
+ * Mock shard client for findLastByConversations: the lateral statement
+ * resolves at `.crossJoinLateral()`, the attachment count at `.groupBy()`.
+ */
+function makeBatchReadClient(
+  rows: BatchRow[],
+  counts: { messageId: string; count: number }[] = [],
+) {
+  const chain = {
+    from: vi.fn().mockReturnThis(),
+    where: vi.fn().mockReturnThis(),
+    orderBy: vi.fn().mockReturnThis(),
+    limit: vi.fn().mockReturnThis(),
+    as: vi.fn(() => ({ _: { selectedFields: {} } })),
+    crossJoinLateral: vi.fn().mockResolvedValue(rows),
+    groupBy: vi.fn().mockResolvedValue(counts),
+  }
+  return { select: vi.fn().mockReturnValue(chain), chain }
+}
+
+function makeBatchShardManager(
+  shards: ReturnType<typeof makeShardInfo>[],
+  clients: Map<string, unknown>,
+) {
+  return {
+    getShardsForTimeRange: vi.fn().mockResolvedValue(shards),
+    getWriteShardInfo: vi.fn().mockResolvedValue(null),
+    withShardClientForRead: vi.fn(
+      (shard: { id: string }, fn: (client: unknown) => Promise<unknown>) => {
+        const client = clients.get(shard.id)
+        if (client instanceof Error) {
+          throw client
+        }
+        return fn(client)
+      },
+    ),
+  }
+}
+
+describe("ShardedMessageRepository.findLastByConversations", () => {
+  const shardA = makeShardInfo("tr:a", "a")
+  const shardB = makeShardInfo("tr:b", "b")
+  const at = (iso: string) => new Date(iso)
+
+  test("empty input returns an empty map without selecting shards", async () => {
+    const shardManager = makeBatchShardManager([shardA], new Map())
+    const repo = new ShardedMessageRepository(shardManager as never)
+
+    const result = await repo.findLastByConversations([], {
+      workspaceId: "ws-1",
+    })
+
+    expect(result.size).toBe(0)
+    expect(shardManager.getShardsForTimeRange).not.toHaveBeenCalled()
+    expect(shardManager.withShardClientForRead).not.toHaveBeenCalled()
+  })
+
+  test("selects shards once for the earliest window and runs ONE statement per shard", async () => {
+    const clientA = makeBatchReadClient([])
+    const clientB = makeBatchReadClient([])
+    const shardManager = makeBatchShardManager(
+      [shardA, shardB],
+      new Map<string, unknown>([
+        ["a", clientA],
+        ["b", clientB],
+      ]),
+    )
+    const repo = new ShardedMessageRepository(shardManager as never)
+
+    await repo.findLastByConversations(
+      [
+        { conversationId: "1", sinceTime: at("2026-06-01T00:00:00Z") },
+        { conversationId: "2", sinceTime: at("2026-01-01T00:00:00Z") },
+        { conversationId: "3", sinceTime: at("2026-03-01T00:00:00Z") },
+      ],
+      { workspaceId: "ws-1" },
+    )
+
+    expect(shardManager.getShardsForTimeRange).toHaveBeenCalledTimes(1)
+    expect(shardManager.getShardsForTimeRange.mock.calls[0]?.[0]).toEqual(
+      startOfHour(at("2026-01-01T00:00:00Z")),
+    )
+    expect(clientA.chain.crossJoinLateral).toHaveBeenCalledTimes(1)
+    expect(clientB.chain.crossJoinLateral).toHaveBeenCalledTimes(1)
+    // No rows found -> no attachment count query.
+    expect(clientA.chain.groupBy).not.toHaveBeenCalled()
+  })
+
+  test("maps every requested id, keeping the newest row per conversation across shards", async () => {
+    const clientA = makeBatchReadClient(
+      [
+        {
+          id: "10",
+          conversationId: "1",
+          createdAt: at("2026-06-01T00:00:00Z"),
+        },
+        {
+          id: "20",
+          conversationId: "2",
+          createdAt: at("2026-06-05T00:00:00Z"),
+        },
+      ],
+      [{ messageId: "10", count: 3 }],
+    )
+    const clientB = makeBatchReadClient([
+      { id: "11", conversationId: "1", createdAt: at("2026-06-02T00:00:00Z") },
+      // Same instant as shard A's row for conv 2: the larger bigint id wins.
+      { id: "9", conversationId: "2", createdAt: at("2026-06-05T00:00:00Z") },
+    ])
+    const shardManager = makeBatchShardManager(
+      [shardA, shardB],
+      new Map<string, unknown>([
+        ["a", clientA],
+        ["b", clientB],
+      ]),
+    )
+    const repo = new ShardedMessageRepository(shardManager as never)
+    const sinceTime = at("2026-01-01T00:00:00Z")
+
+    const result = await repo.findLastByConversations(
+      [
+        { conversationId: "1", sinceTime },
+        { conversationId: "2", sinceTime },
+        { conversationId: "3", sinceTime },
+      ],
+      { workspaceId: "ws-1", attachmentCountOnly: true },
+    )
+
+    expect(result.get("1")?.id).toBe("11")
+    expect(result.get("2")?.id).toBe("20")
+    expect(result.get("2")?.attachmentCount).toBe(0)
+    expect(result.get("3")).toBeNull()
+    expect([...result.keys()]).toEqual(["1", "2", "3"])
+    // One attachment count query per shard that found rows.
+    expect(clientA.chain.groupBy).toHaveBeenCalledTimes(1)
+    expect(clientB.chain.groupBy).toHaveBeenCalledTimes(1)
+  })
+
+  test("carries the attachment count of the found message", async () => {
+    const client = makeBatchReadClient(
+      [
+        {
+          id: "10",
+          conversationId: "1",
+          createdAt: at("2026-06-01T00:00:00Z"),
+        },
+      ],
+      [{ messageId: "10", count: 2 }],
+    )
+    const shardManager = makeBatchShardManager(
+      [shardA],
+      new Map<string, unknown>([["a", client]]),
+    )
+    const repo = new ShardedMessageRepository(shardManager as never)
+
+    const result = await repo.findLastByConversations(
+      [{ conversationId: "1", sinceTime: at("2026-01-01T00:00:00Z") }],
+      { workspaceId: "ws-1", attachmentCountOnly: true },
+    )
+
+    expect(result.get("1")).toMatchObject({
+      id: "10",
+      attachmentCount: 2,
+      attachments: [],
+    })
+  })
+
+  test("returns partial results by default and rejects when completeness is required", async () => {
+    const client = makeBatchReadClient([
+      { id: "10", conversationId: "1", createdAt: at("2026-06-01T00:00:00Z") },
+    ])
+    const shardManager = makeBatchShardManager(
+      [shardA, shardB],
+      new Map<string, unknown>([
+        ["a", client],
+        ["b", new Error("shard unavailable")],
+      ]),
+    )
+    const repo = new ShardedMessageRepository(shardManager as never)
+    const call = (requireCompleteResults?: boolean) =>
+      repo.findLastByConversations(
+        [{ conversationId: "1", sinceTime: at("2026-01-01T00:00:00Z") }],
+        { requireCompleteResults, workspaceId: "ws-1" },
+      )
+
+    await expect(call()).resolves.toEqual(
+      new Map([["1", expect.objectContaining({ id: "10" })]]),
+    )
+    await expect(call(true)).rejects.toBeInstanceOf(
+      MessageShardUnavailableError,
+    )
+  })
+
+  test("a failed shard selection yields all-null by default and throws when completeness is required", async () => {
+    const shardManager = makeBatchShardManager([], new Map())
+    shardManager.getShardsForTimeRange.mockRejectedValue(new Error("down"))
+    const repo = new ShardedMessageRepository(shardManager as never)
+    const call = (requireCompleteResults?: boolean) =>
+      repo.findLastByConversations(
+        [{ conversationId: "1", sinceTime: at("2026-01-01T00:00:00Z") }],
+        { requireCompleteResults, workspaceId: "ws-1" },
+      )
+
+    await expect(call()).resolves.toEqual(new Map([["1", null]]))
+    await expect(call(true)).rejects.toBeInstanceOf(
+      MessageShardUnavailableError,
+    )
+  })
+
+  test("builds one lateral statement that keeps each conversation's own window", async () => {
+    const query = vi.fn(async () => ({ rows: [] }))
+    const client = createMessageShardClient({ query } as never)
+    const shardManager = makeBatchShardManager(
+      [shardA],
+      new Map<string, unknown>([["a", client]]),
+    )
+    const repo = new ShardedMessageRepository(shardManager as never)
+
+    await repo.findLastByConversations(
+      [
+        { conversationId: "1", sinceTime: at("2026-06-01T00:00:00Z") },
+        { conversationId: "2", sinceTime: new Date(0) },
+        // Listed twice: the widest window wins, the id is sent once.
+        { conversationId: "1", sinceTime: at("2026-05-01T00:00:00Z") },
+      ],
+      { workspaceId: "ws-1", messageTypes: ["incoming", "outgoing"] },
+    )
+
+    expect(query).toHaveBeenCalledTimes(1)
+    const [config, params] = query.mock.calls[0] as unknown as [
+      { text: string },
+      unknown[],
+    ]
+    const text = config.text.replace(/\s+/g, " ")
+    expect(text).toContain(
+      'from unnest($1::bigint[], $2::timestamptz[]) AS "target"("conversationId", "sinceTime") cross join lateral (',
+    )
+    expect(text).toContain(
+      '"Message"."conversationId" = "target"."conversationId"',
+    )
+    expect(text).toContain('"Message"."createdAt" >= "target"."sinceTime"')
+    expect(text).toContain(
+      'order by "Message"."createdAt" desc, "Message"."id" desc limit',
+    )
+    expect(text.toLowerCase()).not.toContain("distinct on")
+    expect(params[0]).toEqual(["1", "2"])
+    expect(params[1]).toEqual([
+      "2026-05-01T00:00:00.000Z",
+      "1970-01-01T00:00:00.000Z",
+    ])
+    expect(params).toContain("ws-1")
+    expect(params).toContain(1)
   })
 })

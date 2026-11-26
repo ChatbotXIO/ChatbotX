@@ -67,6 +67,7 @@ vi.mock("@chatbotx.io/business", () => ({
 vi.mock("@chatbotx.io/database/repositories", () => ({
   createMessageRepository: vi.fn().mockResolvedValue({
     findLastByConversation: vi.fn().mockResolvedValue([]),
+    findLastByConversations: vi.fn().mockResolvedValue(new Map()),
   }),
 }))
 

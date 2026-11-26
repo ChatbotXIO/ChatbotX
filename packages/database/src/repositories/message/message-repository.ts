@@ -168,6 +168,20 @@ export interface FindLastByConversationOptions {
   workspaceId: string
 }
 
+/** One conversation in a batched last-message read, with its own window. */
+export interface LastMessageTarget {
+  conversationId: string
+  /** Inclusive lower bound on `createdAt` for THIS conversation only. */
+  sinceTime: Date
+}
+
+export interface FindLastByConversationsOptions {
+  attachmentCountOnly?: boolean
+  messageTypes?: ("incoming" | "outgoing" | "activity")[]
+  requireCompleteResults?: boolean
+  workspaceId: string
+}
+
 export interface FindManyByConversationOptions {
   limit: number
   messageTypes?: ("incoming" | "outgoing" | "activity")[]
@@ -506,6 +520,19 @@ export interface IMessageRepository {
     conversationId: string,
     options?: FindLastByConversationOptions,
   ): Promise<MessageWithAttachments[]>
+
+  /**
+   * The latest message of each target conversation, each read within its own
+   * `sinceTime` window. One query per selected shard (plus one attachment
+   * count query per shard that found rows) however many targets there are.
+   * Every requested conversation id is a key of the result; it maps to `null`
+   * when no message was found (or, without `requireCompleteResults`, when its
+   * shard could not be read). Empty input runs no query.
+   */
+  findLastByConversations(
+    targets: readonly LastMessageTarget[],
+    options: FindLastByConversationsOptions,
+  ): Promise<Map<string, MessageWithAttachments | null>>
 
   findManyByConversation(
     conversationId: string,
