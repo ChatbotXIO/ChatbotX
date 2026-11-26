@@ -1,4 +1,4 @@
-import { rescue, TiktokAPIException } from "../exception"
+import { rescue, throwBusinessApiError } from "../exception"
 import { createTiktokBusinessClient } from "../lib/http-client"
 import {
   type BusinessApiResponse,
@@ -41,9 +41,9 @@ export const getTiktokDirectReplyStatus = (
     })
 
     if (response.code !== 0) {
-      throw new TiktokAPIException(
-        response.message ??
-          "Failed to read the TikTok Comment-to-Message setting",
+      throwBusinessApiError(
+        response,
+        "Failed to read the TikTok Comment-to-Message setting",
       )
     }
 
@@ -69,9 +69,9 @@ export const updateTiktokDirectReplyStatus = (
     )
 
     if (response.code !== 0) {
-      throw new TiktokAPIException(
-        response.message ??
-          "Failed to update the TikTok Comment-to-Message setting",
+      throwBusinessApiError(
+        response,
+        "Failed to update the TikTok Comment-to-Message setting",
       )
     }
   })

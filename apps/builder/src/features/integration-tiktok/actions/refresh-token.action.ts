@@ -5,11 +5,9 @@ import { auditService } from "@chatbotx.io/business/audit"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
 import {
   isRevokedTokenError,
+  refreshTiktokAuth,
   type TiktokAuthValue,
 } from "@chatbotx.io/integration-tiktok"
-import { refreshAccessToken } from "@chatbotx.io/integration-tiktok/apis/auth"
-import { buildTokenTimestamps } from "@chatbotx.io/integration-tiktok/lib/token-utils"
-import { distributedLock } from "@chatbotx.io/redis"
 import {
   type WorkspaceIdAndIdRequestParams,
   workspaceIdAndIdRequestParams,
@@ -29,64 +27,52 @@ export const refreshTiktokTokenAction = workspaceActionClient
     },
   )
 
-const REFRESH_LOCK_TIMEOUT_SECONDS = 10
-
 const refreshTiktokToken = async (ctx: { workspaceId: string; id: string }) => {
-  await distributedLock.runExclusive({
-    key: `auth:refresh:tiktok:${ctx.id}`,
-    timeoutInSeconds: REFRESH_LOCK_TIMEOUT_SECONDS,
-    fn: async () => {
-      const integrationTiktok = await tiktokIntegrationService.findById({
+  const integration = await tiktokIntegrationService.findById({
+    id: ctx.id,
+    workspaceId: ctx.workspaceId,
+  })
+
+  // The SDK auth store's lock, shared with the scheduled job and on-demand
+  // refreshes: TikTok rotates refresh tokens, so two refreshes must never race.
+  await tiktokIntegrationService.withTokenRefreshLock(integration, async () => {
+    // Re-read inside the lock: the refresh token may have rotated meanwhile.
+    const current = await tiktokIntegrationService.findById({
+      id: ctx.id,
+      workspaceId: ctx.workspaceId,
+    })
+    const auth = current.auth as TiktokAuthValue
+
+    if (!auth.tokens.refreshToken) {
+      throw new ChatbotXException("TikTok refresh token not available")
+    }
+
+    try {
+      const updatedAuth = await refreshTiktokAuth(auth)
+
+      await tiktokIntegrationService.updateAuth({
         id: ctx.id,
         workspaceId: ctx.workspaceId,
+        auth: updatedAuth,
       })
 
-      const auth = integrationTiktok.auth as TiktokAuthValue
-
-      if (!auth.tokens.refreshToken) {
-        throw new ChatbotXException("TikTok refresh token not available")
-      }
-
-      try {
-        const newTokens = await refreshAccessToken(
-          { clientId: auth.clientId, clientSecret: auth.clientSecret },
-          auth.tokens.refreshToken,
-        )
-
-        const updatedAuth: TiktokAuthValue = {
-          ...auth,
-          tokens: {
-            ...auth.tokens,
-            accessToken: newTokens.access_token,
-            refreshToken: newTokens.refresh_token,
-            ...buildTokenTimestamps(
-              newTokens.expires_in,
-              newTokens.refresh_expires_in,
-            ),
-          },
-        }
-
-        await tiktokIntegrationService.updateAuth({
-          id: ctx.id,
-          workspaceId: ctx.workspaceId,
-          auth: updatedAuth,
-        })
-
-        await auditService.record({
-          workspaceId: ctx.workspaceId,
-          action: "refresh",
-          detail: "refreshed the TikTok channel token",
-        })
-      } catch (error) {
-        logger.error(error, "Failed to refresh TikTok token")
-        await tiktokIntegrationService.markTokenRefreshError({
-          id: ctx.id,
-          workspaceId: ctx.workspaceId,
-          error: error instanceof Error ? error.message : String(error),
-          isRevoked: isRevokedTokenError(error),
-        })
-        throw new ChatbotXException("Failed to refresh TikTok token")
-      }
-    },
+      await auditService.record({
+        workspaceId: ctx.workspaceId,
+        action: "refresh",
+        detail: "refreshed the TikTok channel token",
+      })
+    } catch (error) {
+      logger.error(
+        { err: error, integrationId: ctx.id, workspaceId: ctx.workspaceId },
+        "Failed to refresh TikTok token",
+      )
+      await tiktokIntegrationService.markTokenRefreshError({
+        id: ctx.id,
+        workspaceId: ctx.workspaceId,
+        error: error instanceof Error ? error.message : String(error),
+        isRevoked: isRevokedTokenError(error),
+      })
+      throw new ChatbotXException("Failed to refresh TikTok token")
+    }
   })
 }

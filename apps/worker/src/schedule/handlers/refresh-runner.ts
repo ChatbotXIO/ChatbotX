@@ -25,6 +25,10 @@ export type RefreshWithErrorHandlingInput<TAuth> = {
   label: string
   lockKey: string
   lockTimeout: number
+  // Runs the refresh under a lock the caller provides instead of `lockKey` —
+  // for channels whose SDK refresh takes the auth store's lock, which every
+  // other refresh path must share (TikTok rotates refresh tokens).
+  withLock?: (fn: () => Promise<void>) => Promise<void>
   // Performs the lookup and the provider's refresh call. Return `undefined`
   // to skip this integration silently (no audit record, no error).
   refresh: () => Promise<TAuth | undefined>
@@ -47,6 +51,7 @@ export async function refreshWithErrorHandling<TAuth>(
     label,
     lockKey,
     lockTimeout,
+    withLock,
     refresh,
     apply,
     markError,
@@ -55,47 +60,51 @@ export async function refreshWithErrorHandling<TAuth>(
   } = input
 
   await runJobWithAuditContext({ workspaceId, source: REFRESH_SOURCE }, () => {
-    const run = distributedLock.runExclusive({
-      key: lockKey,
-      timeoutInSeconds: lockTimeout,
-      fn: async () => {
-        try {
-          const newAuth = await refresh()
-          if (newAuth === undefined) {
-            return
-          }
-
-          await apply(newAuth)
-
-          await auditService.record({
-            action: "refresh",
-            detail: auditDetail,
-            workspaceId,
-            source: REFRESH_SOURCE,
+    const lock = (fn: () => Promise<void>): Promise<void> =>
+      withLock
+        ? withLock(fn)
+        : distributedLock.runExclusive({
+            key: lockKey,
+            timeoutInSeconds: lockTimeout,
+            fn,
           })
-        } catch (error) {
-          logger.error(
-            { err: error, id, workspaceId },
-            `[${label}] refresh failed`,
-          )
-          try {
-            await markError(error)
-          } catch (markErrorError) {
-            logger.error(
-              { err: markErrorError, id, workspaceId },
-              `[${label}] markError failed`,
-            )
-          }
-          try {
-            await logProviderError({ provider, workspaceId, error })
-          } catch (logProviderErrorError) {
-            logger.error(
-              { err: logProviderErrorError, id, workspaceId },
-              `[${label}] logProviderError failed`,
-            )
-          }
+    const run = lock(async () => {
+      try {
+        const newAuth = await refresh()
+        if (newAuth === undefined) {
+          return
         }
-      },
+
+        await apply(newAuth)
+
+        await auditService.record({
+          action: "refresh",
+          detail: auditDetail,
+          workspaceId,
+          source: REFRESH_SOURCE,
+        })
+      } catch (error) {
+        logger.error(
+          { err: error, id, workspaceId },
+          `[${label}] refresh failed`,
+        )
+        try {
+          await markError(error)
+        } catch (markErrorError) {
+          logger.error(
+            { err: markErrorError, id, workspaceId },
+            `[${label}] markError failed`,
+          )
+        }
+        try {
+          await logProviderError({ provider, workspaceId, error })
+        } catch (logProviderErrorError) {
+          logger.error(
+            { err: logProviderErrorError, id, workspaceId },
+            `[${label}] logProviderError failed`,
+          )
+        }
+      }
     })
 
     return run.catch((error) => {

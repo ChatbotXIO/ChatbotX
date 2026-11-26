@@ -26,11 +26,9 @@ import {
 } from "@chatbotx.io/integration-messenger"
 import {
   isRevokedTokenError as isTiktokRevokedTokenError,
+  refreshTiktokAuth,
   type TiktokAuthValue,
 } from "@chatbotx.io/integration-tiktok"
-import { refreshAccessToken as refreshTiktokAccessToken } from "@chatbotx.io/integration-tiktok/apis/auth"
-import { parseTiktokScopes } from "@chatbotx.io/integration-tiktok/lib/scopes"
-import { buildTokenTimestamps } from "@chatbotx.io/integration-tiktok/lib/token-utils"
 import {
   integration as integrationWhatsapp,
   isRevokedTokenError as isWhatsappRevokedTokenError,
@@ -123,7 +121,15 @@ type RefreshGuardConfig<TIntegration, TAuth> = {
     isRevoked: boolean
   }) => Promise<unknown>
   isRevokedTokenError: (error: unknown) => boolean
+  /**
+   * Takes the lock the channel's SDK refresh takes instead of the
+   * `auth:refresh:<channel>:<id>` default. TikTok needs it: it rotates refresh
+   * tokens, so this button must never race the SDK on one.
+   */
+  withLock?: <T>(integration: RefreshTarget, fn: () => Promise<T>) => Promise<T>
 }
+
+type RefreshTarget = { id: string; workspaceId: string; inboxId?: string }
 
 /**
  * Shared lock-acquire → fetch → refresh-or-skip → persist → audit backbone
@@ -134,58 +140,63 @@ type RefreshGuardConfig<TIntegration, TAuth> = {
  * profile read) can run it after the lock is released.
  */
 async function refreshGuarded<TIntegration, TAuth>(
-  id: string,
-  workspaceId: string,
+  target: RefreshTarget,
   config: RefreshGuardConfig<TIntegration, TAuth>,
 ): Promise<{ result: RefreshResult; auth?: TAuth }> {
+  const { id, workspaceId } = target
   if (config.canAttempt && !config.canAttempt()) {
     return { result: "skipped" }
   }
 
-  return await distributedLock.runExclusive({
-    key: `auth:refresh:${config.channel}:${id}`,
-    timeoutInSeconds: REFRESH_LOCK_TIMEOUT_SECONDS,
-    fn: async () => {
-      try {
-        const integration = await config.fetchIntegration(id, workspaceId)
-        if (!integration) {
-          return { result: "skipped" as const }
-        }
-
-        const auth = config.getAuth(integration)
-        if (config.shouldSkip?.(auth)) {
-          return { result: "skipped" as const }
-        }
-
-        const newAuth = await config.refresh(auth)
-        await config.updateAuth(id, workspaceId, newAuth)
-        await auditService.record({
-          workspaceId,
-          action: "refresh",
-          detail: config.auditDetail,
+  const lock = <T>(fn: () => Promise<T>): Promise<T> =>
+    config.withLock
+      ? config.withLock(target, fn)
+      : distributedLock.runExclusive({
+          key: `auth:refresh:${config.channel}:${id}`,
+          timeoutInSeconds: REFRESH_LOCK_TIMEOUT_SECONDS,
+          fn,
         })
-        return { result: "refreshed" as const, auth: newAuth }
-      } catch (error) {
-        logger.error(
-          { err: error, integrationId: id, workspaceId },
-          `Failed to refresh ${config.errorLabel} channel token`,
-        )
-        try {
-          await config.markTokenRefreshError({
-            id,
-            workspaceId,
-            error: error instanceof Error ? error.message : String(error),
-            isRevoked: config.isRevokedTokenError(error),
-          })
-        } catch (markError) {
-          logger.error(
-            { err: markError, integrationId: id, workspaceId },
-            `Failed to record ${config.errorLabel} token refresh error`,
-          )
-        }
-        return { result: "failed" as const }
+
+  return await lock(async () => {
+    try {
+      const integration = await config.fetchIntegration(id, workspaceId)
+      if (!integration) {
+        return { result: "skipped" as const }
       }
-    },
+
+      const auth = config.getAuth(integration)
+      if (config.shouldSkip?.(auth)) {
+        return { result: "skipped" as const }
+      }
+
+      const newAuth = await config.refresh(auth)
+      await config.updateAuth(id, workspaceId, newAuth)
+      await auditService.record({
+        workspaceId,
+        action: "refresh",
+        detail: config.auditDetail,
+      })
+      return { result: "refreshed" as const, auth: newAuth }
+    } catch (error) {
+      logger.error(
+        { err: error, integrationId: id, workspaceId },
+        `Failed to refresh ${config.errorLabel} channel token`,
+      )
+      try {
+        await config.markTokenRefreshError({
+          id,
+          workspaceId,
+          error: error instanceof Error ? error.message : String(error),
+          isRevoked: config.isRevokedTokenError(error),
+        })
+      } catch (markError) {
+        logger.error(
+          { err: markError, integrationId: id, workspaceId },
+          `Failed to record ${config.errorLabel} token refresh error`,
+        )
+      }
+      return { result: "failed" as const }
+    }
   })
 }
 
@@ -195,7 +206,7 @@ type ChannelRefreshConfig<TIntegration, TAuth> = RefreshGuardConfig<
 > & {
   findWorkspaceIntegrations: (
     workspaceIds: string[],
-  ) => Promise<Array<{ id: string; workspaceId: string }>>
+  ) => Promise<RefreshTarget[]>
   /** Runs once the lock has been released on a successful refresh. */
   afterRefresh?: (auth: TAuth) => Promise<void>
 }
@@ -206,11 +217,7 @@ async function refreshChannel<TIntegration, TAuth>(
 ): Promise<RefreshSummary> {
   const integrations = await config.findWorkspaceIntegrations(workspaceIds)
   const results = await runInBatches(integrations, async (integration) => {
-    const { result, auth } = await refreshGuarded(
-      integration.id,
-      integration.workspaceId,
-      config,
-    )
+    const { result, auth } = await refreshGuarded(integration, config)
     if (auth) {
       await config.afterRefresh?.(auth)
     }
@@ -263,33 +270,14 @@ const refreshTiktokIntegrations = (workspaceIds: string[]) =>
       tiktokIntegrationService.findById({ id, workspaceId }),
     getAuth: (integration) => integration.auth as TiktokAuthValue,
     shouldSkip: (auth) => !auth.tokens.refreshToken,
-    refresh: async (auth) => {
-      const newTokens = await refreshTiktokAccessToken(
-        { clientId: auth.clientId, clientSecret: auth.clientSecret },
-        auth.tokens.refreshToken as string,
-      )
-      return {
-        ...auth,
-        tokens: {
-          ...auth.tokens,
-          accessToken: newTokens.access_token,
-          refreshToken: newTokens.refresh_token,
-          ...buildTokenTimestamps(
-            newTokens.expires_in,
-            newTokens.refresh_expires_in,
-          ),
-        },
-        metadata: {
-          ...auth.metadata,
-          scopes: parseTiktokScopes(newTokens.scope),
-        },
-      }
-    },
+    refresh: (auth) => refreshTiktokAuth(auth),
     updateAuth: (id, workspaceId, auth) =>
       tiktokIntegrationService.updateAuth({ id, workspaceId, auth }),
     markTokenRefreshError: (params) =>
       tiktokIntegrationService.markTokenRefreshError(params),
     isRevokedTokenError: isTiktokRevokedTokenError,
+    withLock: (integration, fn) =>
+      tiktokIntegrationService.withTokenRefreshLock(integration, fn),
   })
 
 const refreshInstagramIntegrations = (workspaceIds: string[]) =>

@@ -7,6 +7,7 @@ import {
   type ChannelErrorSource,
   parseOriginError,
   TiktokAPIException,
+  TiktokAuthException,
 } from "../exception"
 
 function extractApiFields(exc: TiktokAPIException): ChannelErrorSource {
@@ -128,7 +129,18 @@ function mapTiktokStatus(fields: ChannelErrorSource): ChannelError {
   })
 }
 
+/**
+ * Whether the error means the connection's credentials no longer work.
+ *
+ * Only consulted where a refresh has already been tried or is the failing
+ * call itself (connection verify, the refresh paths), so a rejected access
+ * token there is terminal. An ordinary expired token on a send never gets
+ * here: the SDK refreshes and retries on the `TiktokAuthException` first.
+ */
 export function isRevokedTokenError(error: unknown): boolean {
+  if (error instanceof TiktokAuthException) {
+    return true
+  }
   if (error instanceof TiktokAPIException) {
     const code = String(error.code ?? "").toLowerCase()
     const msg = (error.message ?? "").toLowerCase()
@@ -144,6 +156,17 @@ export function isRevokedTokenError(error: unknown): boolean {
 export function mapToChannelError(rawError: unknown): ChannelError {
   if (rawError instanceof ChannelError) {
     return rawError
+  }
+
+  if (rawError instanceof TiktokAuthException) {
+    return new ChannelError(
+      rawError.message,
+      ChannelErrorCategory.AUTH_FAILED,
+      {
+        code: rawError.code,
+        httpStatusCode: rawError.httpStatusCode,
+      },
+    )
   }
 
   if (rawError instanceof TiktokAPIException) {

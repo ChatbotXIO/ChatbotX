@@ -5,7 +5,7 @@ import {
   type ChannelPostListPage,
   clampPageSize,
 } from "@chatbotx.io/sdk"
-import { rescue, TiktokAPIException } from "../exception"
+import { rescue, throwBusinessApiError } from "../exception"
 import { createTiktokBusinessClient } from "../lib/http-client"
 import { tiktokCanListVideos } from "../lib/scopes"
 import type {
@@ -65,9 +65,7 @@ export const listTiktokVideos = (
     >("business/videos/list/", { searchParams })
 
     if (response.code !== 0) {
-      throw new TiktokAPIException(
-        response.message ?? "business/videos/list failed",
-      )
+      throwBusinessApiError(response, "business/videos/list failed")
     }
     return response.data ?? {}
   })
