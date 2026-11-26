@@ -30,6 +30,7 @@ import type {
   ListConversationsCompactResponse,
   ListConversationsResponse,
 } from "../schema/resource"
+import { type AvatarFinalizer, createAvatarFinalizer } from "./avatar-finalizer"
 import { buildConversationWhere } from "./build-conversation-where"
 import { resolveLastMessageSinceTime } from "./last-message-window"
 
@@ -110,6 +111,7 @@ const resolveConversationContact = async <T extends { avatar: string | null }>(
     inbox: InboxModel
   })[],
   workspaceId: string,
+  finalize: AvatarFinalizer,
 ): Promise<T | null> => {
   if (!contact) {
     return null
@@ -122,7 +124,7 @@ const resolveConversationContact = async <T extends { avatar: string | null }>(
         contact,
         contactInboxes,
       },
-      (key) => key,
+      finalize,
     ),
   }
 }
@@ -138,6 +140,9 @@ type ListConversationsAccess = {
   /** Restricts the list to a member's chat scope (mobile API only). */
   scopeWhere?: Record<string, unknown>
   view?: "compact" | "full"
+  /** Return contact avatars as absolute URLs (public API) instead of storage
+   * keys (builder UI) — see `createAvatarFinalizer`. */
+  publicUrls?: boolean
 }
 
 export function listConversations(
@@ -213,6 +218,10 @@ export async function listConversations(
     }),
   )
 
+  const finalizeAvatar = await createAvatarFinalizer(workspaceId, {
+    publicUrls: access.publicUrls,
+  })
+
   const lastMessagesByConversationId = new Map(
     page.map((c, index) => [c.id, lastMessagesResults[index]?.[0] ?? null]),
   )
@@ -249,6 +258,7 @@ export async function listConversations(
               c.contact ?? null,
               c.contactInboxes,
               workspaceId,
+              finalizeAvatar,
             ),
             contactInboxes: mapCompactConversationContactInboxes(
               c.contactInboxes,
@@ -273,6 +283,7 @@ export async function listConversations(
             c.contact ?? null,
             c.contactInboxes,
             workspaceId,
+            finalizeAvatar,
           ),
           contactInboxes: mapConversationContactInboxes(c.contactInboxes),
           assignedUser: c.assignedUser ?? null,
@@ -289,6 +300,7 @@ export async function listConversations(
 
 export const findConversation = async (
   input: FindConversationRequest,
+  options: { publicUrls?: boolean } = {},
 ): Promise<FindConversationResponse> => {
   const conversation = await conversationService.findWithFullRelations({
     where: input,
@@ -324,6 +336,7 @@ export const findConversation = async (
         conversation.contact,
         conversation.contactInboxes,
         input.workspaceId,
+        await createAvatarFinalizer(input.workspaceId, options),
       ),
       contactInboxes: mapConversationContactInboxes(
         conversation.contactInboxes,
