@@ -14,7 +14,7 @@ const isPlainObject = (value: unknown): value is Record<string, unknown> => {
   return proto === Object.prototype || proto === null
 }
 
-const stripUndefined = (value: unknown): unknown => {
+export const stripUndefined = (value: unknown): unknown => {
   if (Array.isArray(value)) {
     return value.map(stripUndefined)
   }
