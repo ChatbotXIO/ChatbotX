@@ -122,10 +122,10 @@ describe("GET /v1/conversations/{id}", () => {
       input: { id: "1" },
     })
 
-    expect(findConversation).toHaveBeenCalledWith({
-      id: "1",
-      workspaceId: "ws-1",
-    })
+    expect(findConversation).toHaveBeenCalledWith(
+      { id: "1", workspaceId: "ws-1" },
+      { publicUrls: true },
+    )
     expect(result).toEqual({ data: { id: "1" } })
   })
 })
