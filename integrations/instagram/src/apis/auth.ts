@@ -29,21 +29,41 @@ export type UnifiedInstagramAuthorization = {
   clientBusinessId?: string
 }
 
+/**
+ * The legacy (non-session) authorize URL, used by the builder's Reconnect
+ * button. With `unifiedLoginConfigId` it opens Meta Unified Login, matching
+ * what the connection engine's `authorizeUrl` opens for the same credential:
+ * once a credential holds a Unified Login configuration its `clientId` is the
+ * Meta app id, which `instagram.com/oauth/authorize` rejects.
+ */
 export function generateAuthUrl({
   clientId,
   redirectUrl,
   stateParams,
+  unifiedLoginConfigId,
 }: {
   clientId: string
   version?: string
   redirectUrl: string
   stateParams?: Record<string, unknown>
+  unifiedLoginConfigId?: string
 }): string {
+  const state = Buffer.from(JSON.stringify(stateParams ?? {})).toString(
+    "base64",
+  )
+  if (unifiedLoginConfigId) {
+    return generateUnifiedAuthUrl({
+      clientId,
+      configId: unifiedLoginConfigId,
+      redirectUrl,
+      state,
+    })
+  }
   const params = new URLSearchParams({
     client_id: clientId,
     redirect_uri: redirectUrl,
     response_type: "code",
-    state: Buffer.from(JSON.stringify(stateParams ?? {})).toString("base64"),
+    state,
     scope: INSTAGRAM_BUSINESS_SCOPES.join(","),
   })
   return `${INSTAGRAM_OAUTH_AUTHORIZE_URL}?${params.toString()}`

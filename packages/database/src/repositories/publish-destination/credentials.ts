@@ -1,4 +1,7 @@
-import { publisherKeyForInbox } from "@chatbotx.io/utils/publish-destination"
+import {
+  isInstagramOnFacebookGraph,
+  publisherKeyForInbox,
+} from "@chatbotx.io/utils/publish-destination"
 import type { PublisherKey } from "@chatbotx.io/utils/social-publisher"
 import { and, type DatabaseClient, db, eq, isNull } from "../../client"
 import type { SocialProvider } from "../../partials/social-account"
@@ -294,7 +297,10 @@ const toCredentialSource = (
       provider: "instagram",
       publisherKey: publisherKeyForInbox({
         provider: "instagram",
-        viaFacebook: row.igType === "facebook",
+        viaFacebook: isInstagramOnFacebookGraph({
+          auth: row.igAuth,
+          type: row.igType,
+        }),
       }),
       tokenRefreshError: row.igErr,
     }

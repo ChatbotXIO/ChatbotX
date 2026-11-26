@@ -7,6 +7,8 @@ import {
 import type { InstagramAuthValue } from "@chatbotx.io/integration-instagram"
 import {
   getInstagramAccount,
+  getUnifiedInstagramAccounts,
+  type InstagramAccount,
   integration as instagramChannelIntegration,
   subscribePageToInstagramWebhook,
 } from "@chatbotx.io/integration-instagram"
@@ -29,11 +31,36 @@ import {
 import { logger } from "@/lib/log"
 
 /**
- * Complete an OAuth reconnect for an Instagram integration connected with the
- * direct Instagram login (`type === "instagram"`). The freshly authorized
- * account must be the one already stored (matched by `igId` — never by
- * anything from OAuth state); its long-lived user token replaces the stored
- * one. The account-select screen is skipped entirely.
+ * The account behind a freshly exchanged token that matches the stored
+ * `igId`: the one account a direct Instagram Login token belongs to, or one of
+ * the accounts a Unified Login system-user token was assigned.
+ */
+const findReconnectedAccount = async (props: {
+  igId: string
+  loginType: "direct" | "unified"
+  userToken: string
+  version: string
+}): Promise<InstagramAccount | undefined> => {
+  if (props.loginType === "unified") {
+    const accounts = await getUnifiedInstagramAccounts(
+      props.userToken,
+      props.version,
+    )
+    return accounts.find((account) => account.userId === props.igId)
+  }
+  const account = await getInstagramAccount(props.userToken)
+  return account?.userId === props.igId ? account : undefined
+}
+
+/**
+ * Complete an OAuth reconnect for an Instagram integration connected through
+ * the `instagram` credential (`type === "instagram"`): the direct Instagram
+ * Login, or Meta Unified Login when the credential holds a Unified Login
+ * configuration (`loginType`, decided by the callback from the same
+ * credential the authorize URL used). The freshly authorized account must be
+ * the one already stored (matched by `igId` — never by anything from OAuth
+ * state); its token replaces the stored one. The account-select screen is
+ * skipped entirely.
  */
 export async function reconnectInstagramHandler(props: {
   credentialConfig: { clientId: string; clientSecret: string; version: string }
@@ -43,6 +70,9 @@ export async function reconnectInstagramHandler(props: {
   userToken: string
   /** What the Business Login code exchange reported; null when it did not. */
   grantedScopes: string[] | null
+  loginType: "direct" | "unified"
+  /** Unified Login only: the business the system-user token belongs to. */
+  clientBusinessId?: string
 }): Promise<ReconnectResult> {
   const integrationInstagram =
     await instagramIntegrationService.findByIdForWorkspace({
@@ -54,10 +84,22 @@ export async function reconnectInstagramHandler(props: {
   }
 
   try {
-    const account = await getInstagramAccount(props.userToken)
-    if (!account || account.userId !== integrationInstagram.igId) {
+    const account = await findReconnectedAccount({
+      igId: integrationInstagram.igId,
+      loginType: props.loginType,
+      userToken: props.userToken,
+      version: props.credentialConfig.version,
+    })
+    if (!account) {
       return { status: "error", reason: "accountNotFound" }
     }
+    // Unified Login addresses the account by its id on graph.facebook.com
+    // (webhook subscription included), where the direct login's app-scoped
+    // `pageId` means nothing.
+    const pageId =
+      props.loginType === "unified"
+        ? integrationInstagram.igId
+        : integrationInstagram.pageId
 
     const auth: InstagramAuthValue = {
       authType: AuthType.oauth2,
@@ -70,8 +112,12 @@ export async function reconnectInstagramHandler(props: {
       metadata: {
         igId: integrationInstagram.igId,
         igName: account.name,
-        pageId: integrationInstagram.pageId,
+        pageId,
         version: props.credentialConfig.version,
+        loginType: props.loginType,
+        ...(props.clientBusinessId
+          ? { clientBusinessId: props.clientBusinessId }
+          : {}),
       },
     }
 
@@ -143,9 +189,10 @@ export async function reconnectInstagramHandler(props: {
     })
 
     await subscribePageToInstagramWebhook({
-      igId: integrationInstagram.pageId,
+      igId: pageId,
       accessToken: props.userToken,
       version: props.credentialConfig.version,
+      loginType: props.loginType,
     })
 
     return { status: "success" }

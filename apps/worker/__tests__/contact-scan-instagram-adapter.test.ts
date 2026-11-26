@@ -168,6 +168,30 @@ describe("instagramContactScanAdapter", () => {
       })
     })
 
+    it("carries the Unified Login type of a native context", async () => {
+      mockFindByIdForWorkspace.mockResolvedValue({
+        ...fakeNativeIntegration,
+        auth: {
+          tokens: { accessToken: "system-user-token" },
+          metadata: { version: "v20.0", loginType: "unified" },
+        },
+      })
+      mockFindInbox.mockResolvedValue(fakeInbox)
+
+      const context = await instagramContactScanAdapter.loadContext({
+        workspaceId,
+        integrationId,
+      })
+
+      expect(context).toEqual(
+        expect.objectContaining({
+          providerType: "instagram",
+          accessToken: "system-user-token",
+          loginType: "unified",
+        }),
+      )
+    })
+
     it("resolves a Facebook-linked (type: facebook) context with pageId", async () => {
       mockFindByIdForWorkspace.mockResolvedValue(fakeFacebookIntegration)
       mockFindInbox.mockResolvedValue(fakeInbox)
@@ -201,6 +225,18 @@ describe("instagramContactScanAdapter", () => {
         after: undefined,
       })
       expect(mockListInstagramFacebookConversations).not.toHaveBeenCalled()
+    })
+
+    it("passes the Unified Login type so the native read goes to graph.facebook.com", async () => {
+      mockListInstagramConversations.mockResolvedValue({ data: [] })
+
+      await instagramContactScanAdapter.listPage({
+        context: { ...nativeContext, loginType: "unified" as const },
+      })
+
+      expect(mockListInstagramConversations).toHaveBeenCalledWith(
+        expect.objectContaining({ igUserId: igId, loginType: "unified" }),
+      )
     })
 
     it("dispatches to listInstagramFacebookConversations for a Facebook-linked context", async () => {

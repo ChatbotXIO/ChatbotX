@@ -2,6 +2,7 @@ import { HttpResponse, http, server } from "@chatbotx.io/vitest-config/msw"
 import { describe, expect, test } from "vitest"
 import {
   exchangeUnifiedCodeForToken,
+  generateAuthUrl,
   generateUnifiedAuthUrl,
   getUnifiedInstagramAccounts,
 } from "../src/apis/auth"
@@ -51,6 +52,42 @@ describe("Instagram Unified Login", () => {
       state: "opaque-state",
     })
     expect(url.searchParams.has("scope")).toBe(false)
+  })
+
+  test("opens Unified Login for a reconnect when the credential has a configuration", () => {
+    const stateParams = { workspaceId: "1", reconnectIntegrationId: "2" }
+    const unified = new URL(
+      generateAuthUrl({
+        clientId: "meta-app-id",
+        redirectUrl: "https://app.example/integrations/instagram/callback",
+        stateParams,
+        unifiedLoginConfigId: "config-1",
+      }),
+    )
+    expect(`${unified.origin}${unified.pathname}`).toBe(
+      "https://www.facebook.com/dialog/oauth",
+    )
+    expect(unified.searchParams.get("config_id")).toBe("config-1")
+    expect(
+      JSON.parse(
+        Buffer.from(
+          unified.searchParams.get("state") ?? "",
+          "base64",
+        ).toString(),
+      ),
+    ).toEqual(stateParams)
+
+    const direct = new URL(
+      generateAuthUrl({
+        clientId: "instagram-app-id",
+        redirectUrl: "https://app.example/integrations/instagram/callback",
+        stateParams,
+      }),
+    )
+    expect(`${direct.origin}${direct.pathname}`).toBe(
+      "https://www.instagram.com/oauth/authorize",
+    )
+    expect(direct.searchParams.has("config_id")).toBe(false)
   })
 
   test("exchanges the code for a BISU token and resolves the client business", async () => {

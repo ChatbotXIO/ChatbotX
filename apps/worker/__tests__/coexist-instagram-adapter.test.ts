@@ -1,7 +1,21 @@
 import { beforeEach, describe, expect, it, vi } from "vitest"
 
-const { mockExtractContactInfo } = vi.hoisted(() => ({
+const {
+  mockExtractContactInfo,
+  mockFetchConversationMessages,
+  mockFetchParticipantProfile,
+  mockListConversations,
+} = vi.hoisted(() => ({
   mockExtractContactInfo: vi.fn(),
+  mockFetchConversationMessages: vi.fn(),
+  mockFetchParticipantProfile: vi.fn(),
+  mockListConversations: vi.fn(),
+}))
+
+vi.mock("@chatbotx.io/integration-instagram/apis/sync", () => ({
+  fetchInstagramConversationMessages: mockFetchConversationMessages,
+  fetchInstagramParticipantProfile: mockFetchParticipantProfile,
+  listInstagramConversations: mockListConversations,
 }))
 
 vi.mock("@chatbotx.io/business", () => ({
@@ -11,6 +25,11 @@ vi.mock("@chatbotx.io/business", () => ({
   workspaceService: { find: vi.fn() },
 }))
 
+import {
+  coexistService,
+  inboxService,
+  workspaceService,
+} from "@chatbotx.io/business"
 import {
   type InstagramCoexistContext,
   instagramCoexistAdapter,
@@ -151,5 +170,80 @@ describe("instagramCoexistAdapter", () => {
       "VN",
       { skipPhone: true, skipEmail: false },
     )
+  })
+})
+
+describe("instagramCoexistAdapter with Meta Unified Login", () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  it("loads the Unified login type from the stored auth", async () => {
+    vi.mocked(coexistService.findIntegrationForCoexist).mockResolvedValue({
+      id: "ig-int-1",
+      channel: "instagram",
+      type: "instagram",
+      coexistEnabled: true,
+      inboxId: "inbox-1",
+      auth: {
+        tokens: { accessToken: "system-user-token" },
+        metadata: {
+          igId: "ig-business-1",
+          version: "v22.0",
+          loginType: "unified",
+        },
+      },
+    } as never)
+    vi.mocked(inboxService.find).mockResolvedValue({ id: "inbox-1" } as never)
+    vi.mocked(workspaceService.find).mockResolvedValue({
+      targetCountry: "VN",
+    } as never)
+
+    const loaded = await instagramCoexistAdapter.loadContext({
+      workspaceId: "ws-1",
+      integrationId: "ig-int-1",
+    })
+
+    expect(loaded).toEqual(
+      expect.objectContaining({
+        accessToken: "system-user-token",
+        igId: "ig-business-1",
+        loginType: "unified",
+      }),
+    )
+  })
+
+  it("passes the Unified login type to every Graph read", async () => {
+    const unifiedContext = { ...context, loginType: "unified" as const }
+    mockListConversations.mockResolvedValue({ data: [], after: undefined })
+    mockFetchConversationMessages.mockResolvedValue({
+      data: [],
+      after: undefined,
+    })
+    mockFetchParticipantProfile.mockResolvedValue({ profile: {} })
+
+    await instagramCoexistAdapter.listConversations({
+      context: unifiedContext,
+      cursor: undefined,
+    } as never)
+    await instagramCoexistAdapter.fetchConversationMessages({
+      context: unifiedContext,
+      conversationId: "conversation-1",
+      cursor: undefined,
+    } as never)
+    await instagramCoexistAdapter.resolveContactProfile?.({
+      context: unifiedContext,
+      sourceId: "customer-1",
+    } as never)
+
+    for (const mock of [
+      mockListConversations,
+      mockFetchConversationMessages,
+      mockFetchParticipantProfile,
+    ]) {
+      expect(mock).toHaveBeenCalledWith(
+        expect.objectContaining({ loginType: "unified" }),
+      )
+    }
   })
 })

@@ -9,6 +9,7 @@ const {
   mockRedirect,
   mockResolveConnectSessionForSelect,
   mockSelectAccount,
+  mockSelectFacebookAccounts,
 } = vi.hoisted(() => ({
   mockGetCurrentUserId: vi.fn(),
   mockRedirect: vi.fn((path: string) => {
@@ -16,6 +17,7 @@ const {
   }),
   mockResolveConnectSessionForSelect: vi.fn(),
   mockSelectAccount: vi.fn(() => null),
+  mockSelectFacebookAccounts: vi.fn(() => null),
 }))
 
 vi.mock("@chatbotx.io/integration-ahachat", () => ({
@@ -29,6 +31,19 @@ const unwrapAvailability = (node: ReactNode): ReactNode =>
 vi.mock("next/navigation", () => ({
   redirect: mockRedirect,
 }))
+
+vi.mock("next-intl/server", () => ({
+  getTranslations: async () => (key: string) => key,
+}))
+
+vi.mock("@/features/contact-sync/lib/access", () => ({
+  findConnectPagesOnAhachat: async () => [],
+}))
+
+vi.mock(
+  "@/features/integration-instagram/components/select-facebook-accounts",
+  () => ({ SelectFacebookAccounts: mockSelectFacebookAccounts }),
+)
 
 vi.mock("@/lib/auth/utils", () => ({
   getCurrentUserId: mockGetCurrentUserId,
@@ -97,6 +112,43 @@ describe("InstagramSelectPage", () => {
     })
     expect(element.props.sessionId).toBe("session-1")
     expect(element.props.workspaceId).toBe("ws-1")
+  })
+
+  test("renders the multi-account picker on the direct-login route for several Unified Login accounts", async () => {
+    mockResolveConnectSessionForSelect.mockResolvedValue({
+      session: {
+        targets: [account, { ...account, id: "ig-2", name: "Second" }],
+      },
+      workspace: { id: "ws-1" },
+    })
+
+    const page = await InstagramSelectPage(pageArgs)
+    const findPicker = (node: ReactNode): ReactNode => {
+      if (!isValidElement<{ children?: ReactNode }>(node)) {
+        return null
+      }
+      if (node.type === mockSelectFacebookAccounts) {
+        return node
+      }
+      const children = Array.isArray(node.props.children)
+        ? node.props.children
+        : [node.props.children]
+      for (const child of children) {
+        const found = findPicker(child)
+        if (found) {
+          return found
+        }
+      }
+      return null
+    }
+    const picker = findPicker(page)
+
+    expect(isValidElement(picker)).toBe(true)
+    if (!isValidElement<{ provider: string; items: unknown[] }>(picker)) {
+      throw new Error("the multi-account picker was not rendered")
+    }
+    expect(picker.props.provider).toBe("instagram")
+    expect(picker.props.items).toHaveLength(2)
   })
 
   test("redirects to channel creation when the session id is missing", async () => {

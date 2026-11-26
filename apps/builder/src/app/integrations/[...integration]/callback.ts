@@ -23,7 +23,10 @@ import {
   socialProviders,
 } from "@chatbotx.io/database/partials"
 import type { ConnectSessionModel } from "@chatbotx.io/database/types"
-import { exchangeCodeForToken as exchangeInstagramCode } from "@chatbotx.io/integration-instagram"
+import {
+  exchangeCodeForToken as exchangeInstagramCode,
+  exchangeUnifiedCodeForToken as exchangeUnifiedInstagramCode,
+} from "@chatbotx.io/integration-instagram"
 import { exchangeCodeForToken as exchangeInstagramFacebookCode } from "@chatbotx.io/integration-instagram-facebook"
 import {
   buildThreadsAuthValue,
@@ -866,20 +869,39 @@ export const handleCallback = async (
         )
       }
 
-      const { accessToken: userToken, grantedScopes } =
-        await exchangeInstagramCode(
-          instagramCredential.config,
-          code,
-          callbackUrl,
-        )
+      // The same credential decided the authorize URL
+      // (`reconnectInstagramAction`): a Unified Login configuration means the
+      // code came from Unified Login and must be exchanged on
+      // graph.facebook.com.
+      const exchanged = instagramCredential.config.unifiedLoginConfigId
+        ? {
+            loginType: "unified" as const,
+            grantedScopes: null,
+            ...(await exchangeUnifiedInstagramCode(
+              instagramCredential.config,
+              code,
+              callbackUrl,
+            )),
+          }
+        : {
+            loginType: "direct" as const,
+            clientBusinessId: undefined,
+            ...(await exchangeInstagramCode(
+              instagramCredential.config,
+              code,
+              callbackUrl,
+            )),
+          }
 
       const result = await reconnectInstagramHandler({
         credentialConfig: instagramCredential.config,
         workspaceId: workspace.id,
         integrationId: stateParams.reconnectIntegrationId,
         userId,
-        userToken,
-        grantedScopes,
+        userToken: exchanged.accessToken,
+        grantedScopes: exchanged.grantedScopes,
+        loginType: exchanged.loginType,
+        clientBusinessId: exchanged.clientBusinessId,
       })
       if (result.status === "success") {
         await auditService.record({

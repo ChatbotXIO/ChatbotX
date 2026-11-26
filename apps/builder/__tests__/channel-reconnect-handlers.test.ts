@@ -458,6 +458,7 @@ describe("reconnectInstagramHandler", () => {
       userId: "user-1",
       userToken: "ig-user-token",
       grantedScopes: null,
+      loginType: "direct",
     })
 
   test("stores the user token when the authorized account matches", async () => {
@@ -468,6 +469,7 @@ describe("reconnectInstagramHandler", () => {
       igId: "me-1",
       accessToken: "ig-user-token",
       version: "v23.0",
+      loginType: "direct",
     })
     expect(mockUpdateInstagramIntegrationAuth).toHaveBeenCalledWith({
       id: "ig-1",
@@ -479,6 +481,7 @@ describe("reconnectInstagramHandler", () => {
           igName: "IG Account",
           pageId: "me-1",
           version: "v23.0",
+          loginType: "direct",
         },
       }),
       name: "IG Account",

@@ -1,5 +1,6 @@
 import {
   derivePublishState,
+  isInstagramOnFacebookGraph,
   missingPublishScopes,
   PUBLISH_REQUIRED_SCOPES,
   type PublishStateInput,
@@ -182,6 +183,30 @@ describe("publish scope vocabulary", () => {
       "threads_manage_replies",
       "threads_delete",
     ])
+  })
+
+  test("publishes a Unified Login Instagram inbox through graph.facebook.com", () => {
+    expect(isInstagramOnFacebookGraph({ auth: null, type: "facebook" })).toBe(
+      true,
+    )
+    expect(
+      isInstagramOnFacebookGraph({
+        auth: { metadata: { loginType: "unified" } },
+        type: "instagram",
+      }),
+    ).toBe(true)
+    expect(
+      isInstagramOnFacebookGraph({
+        auth: { metadata: { loginType: "direct" } },
+        type: "instagram",
+      }),
+    ).toBe(false)
+    expect(
+      isInstagramOnFacebookGraph({ auth: { metadata: {} }, type: "instagram" }),
+    ).toBe(false)
+    expect(isInstagramOnFacebookGraph({ auth: "x", type: "instagram" })).toBe(
+      false,
+    )
   })
 
   test("maps the Instagram flavour to its publisher", () => {

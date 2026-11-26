@@ -69,6 +69,7 @@ export default async function InstagramSelectPage({
           <AhachatImportAvailability pageIds={ahachatPageIds}>
             <SelectFacebookAccounts
               items={items}
+              provider="instagram"
               sessionId={sessionId}
               workspaceId={resolved.workspace.id}
             />
