@@ -1,19 +1,21 @@
 import { ContactsDashboard } from "@chatbotx.io/analytics-nextjs/components/contacts-dashboard"
-import { inboxService } from "@chatbotx.io/business"
 import { getIdFromParams } from "@chatbotx.io/utils"
 import { notFound } from "next/navigation"
-import { AnalyticsChannelFilter } from "@/features/analytics/components/analytics-channel-filter"
-import { AnalyticsNav } from "@/features/analytics/components/analytics-nav"
-import { resolveAdsDashboardChannels } from "@/features/analytics/lib/ads-dashboard-channels"
-import { resolveGoogleAdsDashboardEntry } from "@/features/analytics/lib/google-ads-dashboard-entry"
+import type { SearchParams } from "nuqs/server"
+import { AnalyticsFilterStoreSync } from "@/features/analytics/components/analytics-channel-filter"
+import { loadSharedFilters } from "@/features/analytics/lib/shared-filter-params"
 import { hasWorkspacePermission } from "@/lib/auth/permission-routes"
 import { getCurrentUserAndTargetWorkspace } from "@/lib/auth/utils"
 
+type PageProps = {
+  params: Promise<{ workspaceId: string }>
+  searchParams: Promise<SearchParams>
+}
+
 export default async function ContactsAnalyticsPage({
   params,
-}: {
-  params: Promise<{ workspaceId: string }>
-}) {
+  searchParams,
+}: PageProps) {
   const workspaceId = getIdFromParams(await params, "workspaceId")
   if (!workspaceId) {
     return notFound()
@@ -34,23 +36,13 @@ export default async function ContactsAnalyticsPage({
 
   const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone
   const { targetWorkspace } = userAndWorkspace
-  const isSuperAdmin = hasWorkspacePermission(
-    userAndWorkspace.targetWorkspaceMember.permissions,
-    "superAdmin",
-  )
-  const [adsChannels, showGoogleAds, filterInboxes] = await Promise.all([
-    resolveAdsDashboardChannels({ workspaceId, isSuperAdmin }),
-    resolveGoogleAdsDashboardEntry({ workspaceId, isSuperAdmin }),
-    inboxService.listAnalyticsFilterOptions(workspaceId),
-  ])
+  const initialFilters = await loadSharedFilters(searchParams)
 
   return (
     <ContactsDashboard
-      channelFilter={<AnalyticsChannelFilter options={filterInboxes} />}
+      channelFilter={<AnalyticsFilterStoreSync />}
       defaultSearchParams={{ workspaceId, timezone }}
-      nav={
-        <AnalyticsNav adsChannels={adsChannels} showGoogleAds={showGoogleAds} />
-      }
+      initialFilters={initialFilters}
       workspaceCreatedAt={targetWorkspace.createdAt}
     />
   )

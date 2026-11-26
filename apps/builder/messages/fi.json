@@ -543,8 +543,10 @@
       "close": "Sulje",
       "options": "Käytettävissä olevat vaihtoehdot",
       "remove": "Poista",
-      "filterHint": "Suodattimet laskevat vain suodatuksen lisäämisen jälkeen tallennetut tapahtumat: vanhemmilla tapahtumilla ei ole saapuneet-kansiota, eikä vanhemmilla botti- ja keskustelutapahtumilla myöskään kanavaa. Kaikki laskee aina kaiken.",
       "tooManyInboxes": "Valitse enintään {max} saapuneet-kansiota tai valitse Kaikki."
+    },
+    "sections": {
+      "posts": "Julkaisut"
     }
   },
   "flowAnalytics": {
@@ -3912,13 +3914,13 @@
       },
       "channelFilter": {
         "label": "Kanava",
-        "allAccounts": "Kaikki tilit",
         "allChannels": "Kaikki kanavat"
       },
       "retarget": "Kohdista uudelleen",
       "thoseWhoPurchased": "Ostotapahtuman tehneet",
       "thoseWhoStartedConversation": "Keskustelun aloittaneet",
       "sendWhatsappBroadcast": "Lähetä WhatsApp-joukkoviesti",
+      "singleInboxActionsHint": "Vienti ja uudelleenkohdennus koskevat yhtä postilaatikkoa kerrallaan. Valitse yksi postilaatikko käyttääksesi niitä.",
       "retargetOnChannel": "Uudelleenkohdistus kanavalla {channel}",
       "from": "Alkaen",
       "to": "Päättyen",

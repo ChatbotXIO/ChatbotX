@@ -543,8 +543,10 @@
       "close": "Fechar",
       "options": "Opções disponíveis",
       "remove": "Remover",
-      "filterHint": "Os filtros só contam eventos registrados após a inclusão da filtragem: eventos antigos não têm caixa de entrada, e eventos antigos de bot e de conversa também não têm canal. Todos sempre conta tudo.",
       "tooManyInboxes": "Escolha no máximo {max} caixas de entrada ou marque Todas."
+    },
+    "sections": {
+      "posts": "Publicações"
     }
   },
   "flowAnalytics": {
@@ -3912,13 +3914,13 @@
       },
       "channelFilter": {
         "label": "Canal",
-        "allAccounts": "Todas as contas",
         "allChannels": "Todos os canais"
       },
       "retarget": "Retargeting",
       "thoseWhoPurchased": "Quem comprou",
       "thoseWhoStartedConversation": "Quem iniciou uma conversa",
       "sendWhatsappBroadcast": "Enviar transmissão do WhatsApp",
+      "singleInboxActionsHint": "A exportação e o retargeting cobrem uma caixa de entrada por vez. Selecione uma única caixa de entrada para usá-los.",
       "retargetOnChannel": "Retargeting no {channel}",
       "from": "De",
       "to": "Até",

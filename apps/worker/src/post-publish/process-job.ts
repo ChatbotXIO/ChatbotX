@@ -13,6 +13,10 @@ import { logger } from "../lib/logger"
 import { runJobWithAuditContext } from "../lib/run-job-with-audit-context"
 import { socialPublishers } from "./publishers"
 
+/** A job queued before delayed checks existed has no `expectedDueAtMs`. */
+const toOptionalDate = (ms: number | undefined): Date | undefined =>
+  ms === undefined ? undefined : new Date(ms)
+
 /**
  * One attempt for one destination of a composed post: publish it, or take it
  * down from its network. A blocked workspace is a bare return: the target stays
@@ -29,6 +33,7 @@ export async function processPostPublishJob(
         if (job.type === PostPublishJobAction.checkTarget) {
           await socialPostPublishService.runTargetCheck(
             {
+              expectedDueAt: toOptionalDate(job.data.expectedDueAtMs),
               id: job.data.socialPostTargetId,
               leaseUntil: new Date(job.data.leaseUntilMs),
               workspaceId,
@@ -40,6 +45,7 @@ export async function processPostPublishJob(
         if (job.type === PostPublishJobAction.checkPart) {
           await socialPostPartPublishService.runPartCheck(
             {
+              expectedDueAt: toOptionalDate(job.data.expectedDueAtMs),
               id: job.data.socialPostPartId,
               leaseUntil: new Date(job.data.leaseUntilMs),
               workspaceId,

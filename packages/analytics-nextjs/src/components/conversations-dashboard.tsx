@@ -23,17 +23,21 @@ export function ConversationsDashboard({
   workspaceCreatedAt,
   nav,
   channelFilter,
+  initialFilters,
 }: {
   defaultSearchParams: AnalysisStoreProviderProps["defaultSearchParams"]
   workspaceCreatedAt?: Date
   /** Optional side navigation, rendered one row below the filter bar. */
   nav?: ReactNode
-  /** Optional Channel / Inbox filter row, rendered below the date range row. */
+  /** Optional Channel / Inbox filter row, rendered below the date range row. Rendered inside the store provider, so it may also be a headless sync. */
   channelFilter?: ReactNode
+  /** Channel / inbox filter the first load starts with (empty = All). */
+  initialFilters?: AnalysisStoreProviderProps["initialFilters"]
 }) {
   return (
     <AnalysisStoreProvider
       defaultSearchParams={defaultSearchParams}
+      initialFilters={initialFilters}
       type="conversations"
     >
       <AnalysisFilterForm

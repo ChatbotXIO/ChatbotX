@@ -33,6 +33,14 @@ vi.mock("@/lib/auth/utils", () => ({
   getCurrentUserId: mockGetCurrentUserId,
 }))
 
+vi.mock("@/features/analytics/components/analytics-channel-filter", () => ({
+  AnalyticsChannelFilter: () => null,
+}))
+
+vi.mock("@/features/analytics/lib/resolve-analytics-sections", () => ({
+  resolveAnalyticsSections: async () => [],
+}))
+
 vi.mock("next/navigation", () => ({
   notFound: mockNotFound,
   redirect: mockRedirect,
@@ -46,10 +54,6 @@ vi.mock("@chatbotx.io/analytics-nextjs/components/contacts-dashboard", () => ({
   ContactsDashboard: () => null,
 }))
 
-vi.mock("@/features/analytics/components/analytics-nav", () => ({
-  AnalyticsNav: () => null,
-}))
-
 vi.mock("@chatbotx.io/business", () => ({
   templateInstallIntentService: { clear: vi.fn(async () => undefined) },
   isWorkspaceScheduledForDeletion: (
@@ -60,6 +64,7 @@ vi.mock("@chatbotx.io/business", () => ({
   ) => Boolean(workspace?.scheduledDeletionAt),
   inboxService: {
     distinctConnectedChannels: vi.fn(async () => []),
+    listAnalyticsFilterOptions: vi.fn(async () => []),
     find: vi.fn(async () => ({ markReadOnOutbound: false })),
   },
   integrationWebchatService: {

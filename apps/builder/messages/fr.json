@@ -543,8 +543,10 @@
       "close": "Fermer",
       "options": "Options disponibles",
       "remove": "Retirer",
-      "filterHint": "Les filtres ne comptent que les événements enregistrés après l'ajout du filtrage : les événements plus anciens n'ont pas de boîte de réception, et les anciens événements de bot et de conversation n'ont pas non plus de canal. Tous compte toujours tout.",
       "tooManyInboxes": "Choisissez au maximum {max} boîtes de réception, ou cochez Toutes."
+    },
+    "sections": {
+      "posts": "Publications"
     }
   },
   "flowAnalytics": {
@@ -3912,13 +3914,13 @@
       },
       "channelFilter": {
         "label": "Canal",
-        "allAccounts": "Tous les comptes",
         "allChannels": "Tous les canaux"
       },
       "retarget": "Recibler",
       "thoseWhoPurchased": "Ceux qui ont acheté",
       "thoseWhoStartedConversation": "Ceux qui ont démarré une conversation",
       "sendWhatsappBroadcast": "Envoyer une diffusion WhatsApp",
+      "singleInboxActionsHint": "L'export et le reciblage couvrent une seule boîte de réception à la fois. Sélectionnez une seule boîte pour les utiliser.",
       "retargetOnChannel": "Recibler sur {channel}",
       "from": "Du",
       "to": "Au",

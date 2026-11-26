@@ -1,5 +1,5 @@
 import type { SocialPublishRequest } from "@chatbotx.io/utils/social-publisher"
-import { afterEach, describe, expect, test, vi } from "vitest"
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
 import { instagramPublisher } from "../src/publisher"
 
 const DIGITS = /^\d+$/
@@ -455,6 +455,7 @@ describe("instagramPublisher.checkStatus (carousel children)", () => {
     const result = await instagramPublisher.checkStatus(childRequest)
     expect(result).toMatchObject({
       continuation: { containerId: "car1" },
+      retryAfterMs: 60_000,
       status: "pending",
     })
     const post = calls.find((call) => call.method === "POST")
@@ -532,13 +533,21 @@ describe("instagramPublisher container polling", () => {
     vi.useRealTimers()
   })
 
-  test("a new container is read again after one minute, and its clock starts", async () => {
+  test("a new container is first read after 20 seconds, and its clock starts", async () => {
     mockFetch(() => respond(200, { id: "c1" }))
     const result = await instagramPublisher.publish(request())
-    expect(result).toMatchObject({ retryAfterMs: 60_000, status: "pending" })
+    expect(result).toMatchObject({ retryAfterMs: 20_000, status: "pending" })
     if (result.status === "pending") {
       expect(Number(result.continuation.pollStartedAt)).toBeGreaterThan(0)
     }
+  })
+
+  test("a carousel's children are first read after 20 seconds", async () => {
+    mockFetch(() => respond(200, { id: "child" }))
+    const result = await instagramPublisher.publish(
+      request({ contentType: "carousel", media: [photo(1), photo(2)] }),
+    )
+    expect(result).toMatchObject({ retryAfterMs: 20_000, status: "pending" })
   })
 
   test("IN_PROGRESS inside five minutes keeps its clock and waits one minute", async () => {
@@ -596,6 +605,149 @@ describe("instagramPublisher container polling", () => {
     expect(result).toMatchObject({
       code: "container_poll_timeout",
       provablyNotCreated: true,
+    })
+  })
+
+  describe("the five-minute cap", () => {
+    const CAP = 5 * 60_000
+    const FIXED_NOW = 1_800_000_000_000
+
+    beforeEach(() => {
+      vi.useFakeTimers({ toFake: ["Date"] })
+      vi.setSystemTime(FIXED_NOW)
+    })
+
+    afterEach(() => {
+      vi.useRealTimers()
+    })
+
+    test("a FINISHED read after the cap neither reads nor publishes", async () => {
+      mockFetch(() => respond(200, { status_code: "FINISHED" }))
+      const result = await instagramPublisher.checkStatus({
+        ...statusRequest,
+        continuation: {
+          containerId: "c1",
+          pollStartedAt: String(FIXED_NOW - CAP - 1000),
+        },
+      })
+      expect(result).toMatchObject({
+        code: "container_poll_timeout",
+        provablyNotCreated: true,
+        status: "failed",
+      })
+      expect(calls).toHaveLength(0)
+    })
+
+    test("exactly at the cap is already expired", async () => {
+      mockFetch(() => respond(200, { status_code: "FINISHED" }))
+      const result = await instagramPublisher.checkStatus({
+        ...statusRequest,
+        continuation: {
+          containerId: "c1",
+          pollStartedAt: String(FIXED_NOW - CAP),
+        },
+      })
+      expect(result).toMatchObject({ code: "container_poll_timeout" })
+      expect(calls).toHaveLength(0)
+    })
+
+    test("one millisecond inside the cap still publishes", async () => {
+      mockFetch((call) =>
+        call.url.includes("status_code")
+          ? respond(200, { status_code: "FINISHED" })
+          : respond(200, { id: "m1", permalink: "https://ig/p/1" }),
+      )
+      const result = await instagramPublisher.checkStatus({
+        ...statusRequest,
+        continuation: {
+          containerId: "c1",
+          pollStartedAt: String(FIXED_NOW - CAP + 1),
+        },
+      })
+      expect(result.status).toBe("published")
+    })
+
+    test("a checkpoint that crosses the deadline sends no publish call", async () => {
+      mockFetch(() => respond(200, { status_code: "FINISHED" }))
+      const checkpoint = vi.fn(() => {
+        vi.setSystemTime(FIXED_NOW + 2000)
+        return Promise.resolve(true)
+      })
+      const result = await instagramPublisher.checkStatus({
+        ...statusRequest,
+        checkpoint,
+        continuation: {
+          containerId: "c1",
+          pollStartedAt: String(FIXED_NOW - CAP + 1000),
+        },
+      })
+      expect(checkpoint).toHaveBeenCalledTimes(1)
+      expect(result).toMatchObject({
+        code: "container_poll_timeout",
+        status: "failed",
+      })
+      expect(calls.some((call) => call.url.includes("media_publish"))).toBe(
+        false,
+      )
+    })
+
+    test("a carousel past the cap creates no container", async () => {
+      mockFetch(() => respond(200, { status_code: "FINISHED" }))
+      const result = await instagramPublisher.checkStatus({
+        ...statusRequest,
+        contentType: "carousel",
+        continuation: {
+          childIds: "k1,k2",
+          phase: "children",
+          pollStartedAt: String(FIXED_NOW - CAP),
+        },
+      })
+      expect(result).toMatchObject({ code: "container_poll_timeout" })
+      expect(calls).toHaveLength(0)
+    })
+
+    test("children read across the deadline create no carousel container", async () => {
+      mockFetch((call) => {
+        // The reads end after the five minutes ran out.
+        vi.setSystemTime(FIXED_NOW + 2000)
+        return call.url.includes("status_code")
+          ? respond(200, { status_code: "FINISHED" })
+          : respond(200, { id: "parent-1" })
+      })
+      const result = await instagramPublisher.checkStatus({
+        ...statusRequest,
+        contentType: "carousel",
+        continuation: {
+          childIds: "k1,k2",
+          phase: "children",
+          pollStartedAt: String(FIXED_NOW - CAP + 1000),
+        },
+      })
+      expect(result).toMatchObject({ code: "container_poll_timeout" })
+      expect(calls.every((call) => call.url.includes("status_code"))).toBe(true)
+    })
+
+    test("the carousel parent keeps the children's clock", async () => {
+      const startedAt = String(FIXED_NOW - 60_000)
+      mockFetch((call) =>
+        call.url.includes("status_code")
+          ? respond(200, { status_code: "FINISHED" })
+          : respond(200, { id: "parent-1" }),
+      )
+      const result = await instagramPublisher.checkStatus({
+        ...statusRequest,
+        contentType: "carousel",
+        continuation: {
+          childIds: "k1,k2",
+          phase: "children",
+          pollStartedAt: startedAt,
+        },
+      })
+      expect(result).toMatchObject({
+        continuation: { containerId: "parent-1", pollStartedAt: startedAt },
+        retryAfterMs: 60_000,
+        status: "pending",
+      })
     })
   })
 
@@ -672,6 +824,7 @@ describe("instagramPublisher container polling", () => {
     })
     expect(result).toMatchObject({
       continuation: { pollStartedAt: startedAt },
+      retryAfterMs: 60_000,
       status: "pending",
     })
   })

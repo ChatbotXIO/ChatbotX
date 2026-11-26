@@ -235,10 +235,11 @@ describe("AdsAnalyticsView — single-channel retarget row actions", () => {
         <QueryClientProvider client={queryClient}>
           <AdsAnalyticsView
             channel="whatsapp"
-            channelIntegrations={[]}
+            matchesNoIntegration={false}
             promises={Promise.resolve([data, deliverySummary, timeseries])}
             range={{ ...baseRange }}
             selectedChannelIntegrationId={null}
+            selectedChannelIntegrationIds={[]}
             workspaceCreatedAt={new Date("2024-01-01T00:00:00.000Z")}
             workspaceId="ws-1"
           />
@@ -266,10 +267,11 @@ describe("AdsAnalyticsView — single-channel retarget row actions", () => {
         <QueryClientProvider client={queryClient}>
           <AdsAnalyticsView
             channel="whatsapp"
-            channelIntegrations={[]}
+            matchesNoIntegration={false}
             promises={Promise.resolve([data, deliverySummary, timeseries])}
             range={{ ...baseRange }}
             selectedChannelIntegrationId="iw-1"
+            selectedChannelIntegrationIds={["iw-1"]}
             workspaceCreatedAt={new Date("2024-01-01T00:00:00.000Z")}
             workspaceId="ws-1"
           />
@@ -314,5 +316,76 @@ describe("AdsAnalyticsView — single-channel retarget row actions", () => {
         integrationInstagramId: undefined,
       }),
     )
+  })
+
+  describe("single-integration actions under a multi-inbox selection", () => {
+    const renderView = async (props: {
+      ids: string[]
+      single: string | null
+      matchesNoIntegration?: boolean
+    }) => {
+      const data: AdsAnalyticsData = {
+        totals: emptyTotals,
+        perAd: [singleChannelRow],
+        spendCurrency: null,
+      }
+      await act(async () => {
+        root.render(
+          <QueryClientProvider client={queryClient}>
+            <AdsAnalyticsView
+              channel="whatsapp"
+              matchesNoIntegration={props.matchesNoIntegration ?? false}
+              promises={Promise.resolve([data, deliverySummary, timeseries])}
+              range={{ ...baseRange }}
+              selectedChannelIntegrationId={props.single}
+              selectedChannelIntegrationIds={props.ids}
+              workspaceCreatedAt={new Date("2024-01-01T00:00:00.000Z")}
+              workspaceId="ws-1"
+            />
+          </QueryClientProvider>,
+        )
+        await flush()
+      })
+    }
+    const exportLink = () =>
+      container.querySelector('a[href*="/dashboard/ads/export"]')
+    const retargetButton = () =>
+      Array.from(container.querySelectorAll<HTMLButtonElement>("button")).find(
+        (button) => button.textContent?.includes("ads.analytics.retarget"),
+      )
+    const hint = () =>
+      container.querySelector('[data-testid="ads-single-inbox-hint"]')
+
+    test("two selected integrations (a third excluded) disable export and retargeting instead of covering the whole channel", async () => {
+      await renderView({ ids: ["iw-1", "iw-2"], single: null })
+
+      expect(exportLink()).toBeNull()
+      expect(retargetButton()?.disabled).toBe(true)
+      expect(hint()?.textContent).toBe("ads.analytics.singleInboxActionsHint")
+    })
+
+    test("an explicit selection that matches nothing disables them too", async () => {
+      await renderView({ ids: [], single: null, matchesNoIntegration: true })
+
+      expect(exportLink()).toBeNull()
+      expect(retargetButton()?.disabled).toBe(true)
+    })
+
+    test("one selected integration keeps export (scoped to it) and retargeting", async () => {
+      await renderView({ ids: ["iw-1"], single: "iw-1" })
+
+      expect(exportLink()?.getAttribute("href")).toContain(
+        "integrationWhatsappId=iw-1",
+      )
+      expect(retargetButton()?.disabled).toBe(false)
+      expect(hint()).toBeNull()
+    })
+
+    test("no selection (all accounts) keeps them enabled", async () => {
+      await renderView({ ids: [], single: null })
+
+      expect(exportLink()).not.toBeNull()
+      expect(retargetButton()?.disabled).toBe(false)
+    })
   })
 })

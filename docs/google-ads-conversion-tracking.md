@@ -1064,6 +1064,14 @@ view `GoogleAdsStatsView`; a filter change is a `useTransition`-wrapped navigati
 unknown `channel` or non-numeric `action` parses to `null` ("all") instead of reaching the
 service.
 
+The section has no channel control of its own: the channel comes from the Analytics
+dashboard's shared Channel filter (`channels` URL param). The service filters by one
+channel, so the page applies the selection only when exactly one channel is selected and
+it is a Google channel (`resolveGoogleStatsChannel`); several channels, or a channel Google
+has no conversions for, show every channel. The older `channel` link param is used only
+while `channels` is absent, and is dropped when the user changes the shared selection.
+Changing the shared selection re-renders this server page (`shallow: false`).
+
 The Analytics nav shows the "Google Ads" entry only when
 `resolveGoogleAdsDashboardEntry` (`features/analytics/lib/google-ads-dashboard-entry.ts`)
 is true: the caller is a super admin and the workspace has a Google Ads connection or any

@@ -543,8 +543,10 @@
       "close": "Tutup",
       "options": "Opsi tersedia",
       "remove": "Hapus",
-      "filterHint": "Filter hanya menghitung peristiwa yang dicatat setelah pemfilteran ditambahkan: peristiwa lama tidak memiliki kotak masuk, dan peristiwa bot serta percakapan lama juga tidak memiliki saluran. Semua selalu menghitung semuanya.",
       "tooManyInboxes": "Pilih maksimal {max} kotak masuk, atau centang Semua."
+    },
+    "sections": {
+      "posts": "Postingan"
     }
   },
   "flowAnalytics": {
@@ -3912,13 +3914,13 @@
       },
       "channelFilter": {
         "label": "Saluran",
-        "allAccounts": "Semua akun",
         "allChannels": "Semua saluran"
       },
       "retarget": "Retarget",
       "thoseWhoPurchased": "Mereka yang membeli",
       "thoseWhoStartedConversation": "Mereka yang memulai percakapan",
       "sendWhatsappBroadcast": "Kirim broadcast WhatsApp",
+      "singleInboxActionsHint": "Ekspor dan retargeting hanya mencakup satu kotak masuk dalam satu waktu. Pilih satu kotak masuk untuk menggunakannya.",
       "retargetOnChannel": "Retarget di {channel}",
       "from": "Dari",
       "to": "Hingga",

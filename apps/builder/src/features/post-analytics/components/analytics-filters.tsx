@@ -24,15 +24,23 @@ import {
   MAX_RANGE_DAYS,
   resolveFilterRange,
 } from "../lib/day-range"
+import type { PostAnalyticsScopeFilters } from "../lib/scope-filters"
 import { analyticsSearchParsers } from "../lib/search-params"
 
-/** The scope filters of the Analytics tab; every change is written to the URL. */
+/**
+ * The filters of the post analytics view; every change is written to the URL.
+ * With `scopeFilters="own"` (Posts > Analytics) the Channel and inbox filters
+ * are part of the row; with `"shared"` (the Analytics dashboard) they are left
+ * out because the dashboard's shared row drives the same URL params.
+ */
 export const AnalyticsFilters = ({
   resolved,
+  scopeFilters,
   workspaceId,
 }: {
   /** The range and current day the server resolved in the workspace time zone (once loaded). */
   resolved?: { range: { from: string; to: string }; today: string }
+  scopeFilters: PostAnalyticsScopeFilters
   workspaceId: string
 }) => {
   const t = useTranslations()
@@ -45,7 +53,7 @@ export const AnalyticsFilters = ({
       : [],
   )
   const topics = useQuery(
-    orpc.channelPostManagementAPIs.privateListPostTopicsAPI.queryOptions({
+    orpc.postAnalyticsAPIs.privatePostAnalyticsTopicsAPI.queryOptions({
       input: { workspaceId },
     }),
   )
@@ -89,34 +97,38 @@ export const AnalyticsFilters = ({
       aria-label={t("posts.analytics.filters.title")}
       className="flex min-w-0 flex-wrap items-end gap-3"
     >
-      <div className="w-full sm:w-52">
-        <MultiSelect
-          defaultValue={filters.channels}
-          hideSelectAll
-          maxCount={2}
-          onValueChange={(value) =>
-            setFilters({
-              channels: POST_MANAGEMENT_CHANNELS.filter((channel) =>
-                value.includes(channel),
-              ),
-              inboxIds: [],
-            })
-          }
-          options={channelOptions}
-          placeholder={t("posts.filters.allChannels")}
-        />
-      </div>
-      <div className="w-full sm:w-56">
-        <MultiSelect
-          defaultValue={filters.inboxIds}
-          hideSelectAll
-          key={filters.channels.join(",")}
-          maxCount={2}
-          onValueChange={(inboxIds) => setFilters({ inboxIds })}
-          options={inboxOptions}
-          placeholder={t("posts.filters.allInboxes")}
-        />
-      </div>
+      {scopeFilters === "own" ? (
+        <>
+          <div className="w-full sm:w-52">
+            <MultiSelect
+              defaultValue={filters.channels}
+              hideSelectAll
+              maxCount={2}
+              onValueChange={(value) =>
+                setFilters({
+                  channels: POST_MANAGEMENT_CHANNELS.filter((channel) =>
+                    value.includes(channel),
+                  ),
+                  inboxIds: [],
+                })
+              }
+              options={channelOptions}
+              placeholder={t("posts.filters.allChannels")}
+            />
+          </div>
+          <div className="w-full sm:w-56">
+            <MultiSelect
+              defaultValue={filters.inboxIds}
+              hideSelectAll
+              key={filters.channels.join(",")}
+              maxCount={2}
+              onValueChange={(inboxIds) => setFilters({ inboxIds })}
+              options={inboxOptions}
+              placeholder={t("posts.filters.allInboxes")}
+            />
+          </div>
+        </>
+      ) : null}
       <div className="w-full sm:w-52">
         <MultiSelect
           defaultValue={filters.contentTypes}

@@ -543,8 +543,10 @@
       "close": "סגור",
       "options": "אפשרויות זמינות",
       "remove": "הסר",
-      "filterHint": "מסננים סופרים רק אירועים שנרשמו אחרי הוספת הסינון: לאירועים ישנים אין תיבת דואר נכנס, ולאירועי בוט ושיחה ישנים גם אין ערוץ. הכול תמיד סופר הכול.",
       "tooManyInboxes": "בחרו עד {max} תיבות דואר נכנס, או סמנו הכול."
+    },
+    "sections": {
+      "posts": "פוסטים"
     }
   },
   "flowAnalytics": {
@@ -1493,13 +1495,13 @@
       },
       "channelFilter": {
         "label": "ערוץ",
-        "allAccounts": "כל החשבונות",
         "allChannels": "כל הערוצים"
       },
       "retarget": "רימרקטינג",
       "thoseWhoPurchased": "מי שרכשו",
       "thoseWhoStartedConversation": "מי שהתחילו שיחה",
       "sendWhatsappBroadcast": "שליחת שידור WhatsApp",
+      "singleInboxActionsHint": "הייצוא והמיקוד מחדש פועלים על תיבת דואר נכנס אחת בכל פעם. בחרו תיבה אחת כדי להשתמש בהם.",
       "retargetOnChannel": "מיקוד מחדש ב-{channel}",
       "from": "מ",
       "to": "עד",

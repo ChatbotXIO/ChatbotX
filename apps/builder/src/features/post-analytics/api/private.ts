@@ -1,5 +1,12 @@
+import { postTopicService } from "@chatbotx.io/business"
+import type { WorkspacePermissionKey } from "@chatbotx.io/business/workspace-member/permissions"
 import { z } from "zod"
 import {
+  listPostTopicsRequest,
+  listPostTopicsResponse,
+} from "@/features/post-topics/schema"
+import {
+  workspaceAnyPermissionMiddleware,
   workspaceAuthorizedMidddleware,
   workspacePermissionMiddleware,
 } from "@/middlewares/auth"
@@ -23,12 +30,23 @@ import {
 const tags = ["Posts"]
 const inWorkspace = { workspaceId: z.string() }
 const base = "/workspaces/{workspaceId}"
+/** Dashboard > Posts needs `analytics`; Posts > Analytics needs `broadcast`. */
+const OVERVIEW_PERMISSIONS: readonly WorkspacePermissionKey[] = [
+  "analytics",
+  "broadcast",
+]
 
 /**
- * The Analytics tab's session-authed procedures. Each needs the member's
- * `broadcast` permission (the Posts page's own gate), parses the same request
- * as its public counterpart (`api/public.ts`) plus the workspace id, and calls
- * the same operation.
+ * The session-authed post analytics procedures. The four overview ones
+ * (summary, timeseries, top posts, best times) and the topic list serve two
+ * screens, the Posts section of the Analytics dashboard (`analytics`) and the
+ * Analytics tab of Posts (`broadcast`), so a member with either permission
+ * passes; the two per-post metrics ones are used inside the Posts pages (detail
+ * sheet and composer) and keep the `broadcast` permission of those pages. The
+ * topic list is the read-only twin of the Posts management one
+ * (`post-topics/api`); its public counterpart is the `posts`-scope topic list.
+ * Each parses the same request as its public counterpart (`api/public.ts`) plus
+ * the workspace id, and calls the same operation.
  */
 export const postAnalyticsAPIs = {
   privatePostAnalyticsSummaryAPI: authorizedAPI
@@ -42,7 +60,7 @@ export const postAnalyticsAPIs = {
     .output(postAnalyticsSummaryResponse)
     .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
     .use(
-      workspacePermissionMiddleware("broadcast"),
+      workspaceAnyPermissionMiddleware(OVERVIEW_PERMISSIONS),
       (input) => input.workspaceId,
     )
     .handler(
@@ -61,7 +79,7 @@ export const postAnalyticsAPIs = {
     .output(postAnalyticsTimeseriesResponse)
     .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
     .use(
-      workspacePermissionMiddleware("broadcast"),
+      workspaceAnyPermissionMiddleware(OVERVIEW_PERMISSIONS),
       (input) => input.workspaceId,
     )
     .handler(
@@ -80,7 +98,7 @@ export const postAnalyticsAPIs = {
     .output(postAnalyticsTopPostsResponse)
     .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
     .use(
-      workspacePermissionMiddleware("broadcast"),
+      workspaceAnyPermissionMiddleware(OVERVIEW_PERMISSIONS),
       (input) => input.workspaceId,
     )
     .handler(
@@ -99,12 +117,34 @@ export const postAnalyticsAPIs = {
     .output(postAnalyticsBestTimesResponse)
     .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
     .use(
-      workspacePermissionMiddleware("broadcast"),
+      workspaceAnyPermissionMiddleware(OVERVIEW_PERMISSIONS),
       (input) => input.workspaceId,
     )
     .handler(
       async ({ input }) =>
         await postAnalyticsOperations.bestTimes(input.workspaceId, input),
+    ),
+
+  privatePostAnalyticsTopicsAPI: authorizedAPI
+    .route({
+      method: "GET",
+      path: `${base}/post-analytics/topics`,
+      summary: "List post topics for the analytics filter",
+      tags,
+    })
+    .input(listPostTopicsRequest.extend(inWorkspace))
+    .output(listPostTopicsResponse)
+    .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
+    .use(
+      workspaceAnyPermissionMiddleware(OVERVIEW_PERMISSIONS),
+      (input) => input.workspaceId,
+    )
+    .handler(
+      async ({ input }) =>
+        await postTopicService.list({
+          search: input.search,
+          workspaceId: input.workspaceId,
+        }),
     ),
 
   privateChannelPostMetricsAPI: authorizedAPI

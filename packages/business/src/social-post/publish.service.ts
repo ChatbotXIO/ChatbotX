@@ -17,7 +17,10 @@ import type {
   SocialPublishResult,
 } from "@chatbotx.io/utils/social-publisher"
 import {
+  type CheckJobFence,
+  NEVER_MATCHING_LEASE_MS,
   PostPublishJobAction,
+  postCheckTargetDueJobId,
   postCheckTargetJobId,
   postPublishJobId,
   postPublishQueue,
@@ -74,7 +77,11 @@ import {
   SOCIAL_POST_QUOTA_ERROR,
   sweepPendingQuotaCharges,
 } from "./publish-quota"
-import { claimExpiredTargets, recoverClaimedTarget } from "./publish-recovery"
+import {
+  claimDueTarget,
+  claimExpiredTargets,
+  recoverClaimedTarget,
+} from "./publish-recovery"
 import { lateCutoffAt } from "./schedule-policy"
 import { socialPostService } from "./service"
 import type { SocialPostDto, SocialPostIssue } from "./types"
@@ -484,38 +491,83 @@ class SocialPostPublishService extends BaseService {
 
   /** One recovery job: reads the network for one claimed target while its lease is held. */
   async runTargetCheck(
-    input: { id: string; leaseUntil: Date; workspaceId: string },
+    input: {
+      /** The delayed job's stored check time: claimed first, no claim means no network call. */
+      expectedDueAt?: Date
+      id: string
+      leaseUntil: Date
+      workspaceId: string
+    },
     publishers: SocialPublisherMap,
   ): Promise<boolean> {
+    const { expectedDueAt, ...claim } = input
+    if (expectedDueAt) {
+      const claimed = await claimDueTarget({
+        expectedDueAt,
+        id: claim.id,
+        now: new Date(),
+        workspaceId: claim.workspaceId,
+      })
+      if (!claimed) {
+        return false
+      }
+      return await this.runTargetCheck(
+        { ...claim, leaseUntil: claimed.leaseUntil },
+        publishers,
+      )
+    }
     return await recoverClaimedTarget(
       {
         applyResult: (target, fence, result, credentials) =>
           this.applyResult(target, fence, result, credentials),
         settle: (target, fence, outcome) => this.settle(target, fence, outcome),
       },
-      input,
+      claim,
       publishers,
     )
   }
 
-  private async enqueueCheck(target: {
-    id: string
-    leaseUntil: Date
-    workspaceId: string
-  }): Promise<void> {
-    const leaseUntilMs = target.leaseUntil.getTime()
+  /**
+   * Queues the read of a target. The cron passes the lease it just took; a
+   * `pending` answer passes `expectedDueAt` (its stored check time, also its
+   * lease) and the job waits until then, claiming the target itself.
+   */
+  private async enqueueCheck(
+    target: { id: string; leaseUntil: Date; workspaceId: string },
+    expectedDueAt?: Date,
+  ): Promise<void> {
+    const expectedDueAtMs = expectedDueAt?.getTime()
+    // A delayed job's stored fence is `expectedDueAtMs`, which a worker from
+    // before delayed checks would read as its claimed lease and act on while
+    // the cron may be doing the same. The legacy field therefore carries a
+    // value no stored lease can equal, so such a worker finds no claim and
+    // does nothing; current workers fence on `expectedDueAtMs` instead.
+    const fence: CheckJobFence =
+      expectedDueAtMs === undefined
+        ? { leaseUntilMs: target.leaseUntil.getTime() }
+        : { expectedDueAtMs, leaseUntilMs: NEVER_MATCHING_LEASE_MS }
     try {
       await postPublishQueue.add(
         PostPublishJobAction.checkTarget,
         {
           data: {
-            leaseUntilMs,
+            ...fence,
             socialPostTargetId: target.id,
             workspaceId: target.workspaceId,
           },
           type: PostPublishJobAction.checkTarget,
         },
-        { jobId: postCheckTargetJobId(target.id, leaseUntilMs) },
+        expectedDueAtMs === undefined
+          ? {
+              jobId: postCheckTargetJobId(
+                target.id,
+                target.leaseUntil.getTime(),
+              ),
+            }
+          : {
+              delay: Math.max(0, expectedDueAtMs - Date.now()),
+              jobId: postCheckTargetDueJobId(target.id, expectedDueAtMs),
+            },
       )
     } catch (err) {
       // The lease expires and the next tick claims the target again.
@@ -746,13 +798,27 @@ class SocialPostPublishService extends BaseService {
     if (result.status === "pending") {
       // Stored before the next call: the container id is the identity a
       // recovery reads.
-      return await this.settle(target, fence, {
+      const nextCheckAt = new Date(
+        now.getTime() + Math.max(result.retryAfterMs, MIN_POLL_MS),
+      )
+      const stored = await this.settle(target, fence, {
         continuation: result.continuation,
         kind: "processing",
-        nextCheckAt: new Date(
-          now.getTime() + Math.max(result.retryAfterMs, MIN_POLL_MS),
-        ),
+        nextCheckAt,
       })
+      if (stored) {
+        // The stored check time is the lease: the delayed job claims it when
+        // due, and the minute scan stays the fallback if it is lost.
+        await this.enqueueCheck(
+          {
+            id: target.id,
+            leaseUntil: nextCheckAt,
+            workspaceId: target.workspaceId,
+          },
+          nextCheckAt,
+        )
+      }
+      return stored
     }
     const classified = classifyFailure(result, {
       attemptCount: target.attemptCount,

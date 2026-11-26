@@ -34,18 +34,52 @@ export type RemoveTargetJobData = {
 }
 
 /**
+ * The `leaseUntilMs` of a delayed check job. No stored lease can equal the
+ * epoch, so a worker that predates `expectedDueAtMs` claims nothing and no-ops.
+ */
+export const NEVER_MATCHING_LEASE_MS = 0
+
+/**
+ * The fence fields of a check job, one of two shapes so the unsafe mix (a real
+ * lease next to `expectedDueAtMs`, which an older worker would act on while a
+ * current one claims) cannot be built.
+ */
+export type CheckJobFence =
+  | {
+      /** Recovery scan: the lease the scan stored. */
+      leaseUntilMs: number
+      expectedDueAtMs?: never
+    }
+  | {
+      /** Delayed check: the stored check time that is claimed. */
+      expectedDueAtMs: number
+      leaseUntilMs: typeof NEVER_MATCHING_LEASE_MS
+    }
+
+/**
  * One read of a target the recovery scan took over. `leaseUntilMs` is the lease
  * the scan gave it: the job acts only while that lease is still the stored one.
+ *
+ * A delayed job (queued right after a `pending` answer) also carries
+ * `expectedDueAtMs`, the check time stored as the lease. It first claims the
+ * target by swapping that lease for a recovery lease; a job that finds another
+ * lease (the cron got there first, or the target moved on) does nothing.
+ * `leaseUntilMs` is then `NEVER_MATCHING_LEASE_MS` (so a worker that
+ * predates `expectedDueAtMs` does nothing) and is not used. A job queued
+ * without `expectedDueAtMs` behaves as before.
  */
 export type CheckTargetJobData = {
   type: typeof PostPublishJobAction.checkTarget
-  data: PostTargetJobPayload & { leaseUntilMs: number }
+  data: PostTargetJobPayload & CheckJobFence
 }
 
-/** One read of a part the recovery scan took over (same lease rule as a target). */
+/** One read of a part the recovery scan took over (same lease rules as a target). */
 export type CheckPartJobData = {
   type: typeof PostPublishJobAction.checkPart
-  data: { leaseUntilMs: number; socialPostPartId: string; workspaceId: string }
+  data: CheckJobFence & {
+    socialPostPartId: string
+    workspaceId: string
+  }
 }
 
 /** One follow-up part (thread reply or first comment) of a target whose head is published. */
@@ -85,6 +119,23 @@ export const postCheckTargetJobId = (
   socialPostTargetId: string,
   leaseUntilMs: number,
 ): string => `social-post-check-target-${socialPostTargetId}-${leaseUntilMs}`
+
+/**
+ * The delayed check of a `pending` answer, one per target and stored check time:
+ * a repeated enqueue of the same due time is dropped, a later due time (the next
+ * `pending`) gets a fresh job. It never equals a cron id (those carry the
+ * recovery lease); the duplicate work of both is cut by the lease claim.
+ */
+export const postCheckTargetDueJobId = (
+  socialPostTargetId: string,
+  expectedDueAtMs: number,
+): string =>
+  `social-post-check-target-${socialPostTargetId}-due-${expectedDueAtMs}`
+
+export const postCheckPartDueJobId = (
+  socialPostPartId: string,
+  expectedDueAtMs: number,
+): string => `social-post-check-part-${socialPostPartId}-due-${expectedDueAtMs}`
 
 export const postCheckPartJobId = (
   socialPostPartId: string,

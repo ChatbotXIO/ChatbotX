@@ -2,6 +2,7 @@ import { DataTableSkeleton } from "@chatbotx.io/ui/components/data-table/data-ta
 import { Skeleton } from "@chatbotx.io/ui/components/ui/skeleton"
 import type { ReactNode } from "react"
 import { FullBleed } from "@/components/full-bleed"
+import { resolveActiveAnalyticsSection } from "@/features/analytics/lib/analytics-sections"
 
 const TAB_PLACEHOLDERS = ["a", "b", "c", "d"]
 const STAT_PLACEHOLDERS = ["a", "b", "c", "d"]
@@ -149,8 +150,30 @@ export function DashboardContentSkeleton() {
   )
 }
 
-/** The whole analytics page: the shared inbox cards plus its content. */
-export function DashboardSkeleton() {
+/**
+ * The shared Channel / Inbox / section row the dashboard layout renders above
+ * every section (same width and alignment as the real row).
+ */
+export function DashboardSharedFilterSkeleton() {
+  return (
+    <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:justify-end">
+      <Skeleton className="h-9 w-full sm:w-72" />
+      <Skeleton className="h-9 w-full sm:w-72" />
+      <Skeleton className="h-9 w-full sm:w-80" />
+    </div>
+  )
+}
+
+/**
+ * The whole analytics page: the shared inbox cards, the shared filter row and
+ * its content. Dashboard pages that are not an Analytics section (they have no
+ * shared row) pass `withSharedFilter={false}`.
+ */
+export function DashboardSkeleton({
+  withSharedFilter = true,
+}: {
+  withSharedFilter?: boolean
+}) {
   return (
     <div className="flex flex-col gap-4">
       <div className="flex gap-4 overflow-hidden">
@@ -158,6 +181,7 @@ export function DashboardSkeleton() {
           <Skeleton className="h-20 w-56 shrink-0 rounded-xl" key={key} />
         ))}
       </div>
+      {withSharedFilter ? <DashboardSharedFilterSkeleton /> : null}
       <DashboardContentSkeleton />
     </div>
   )
@@ -189,6 +213,7 @@ function isFormRoute(segments: string[]) {
 
 type WorkspaceSkeletonKind =
   | "dashboard"
+  | "dashboardPage"
   | "flowEditor"
   | "form"
   | "inbox"
@@ -207,7 +232,10 @@ export function resolveWorkspaceSkeletonKind(
     return "inbox"
   }
   if (section === "dashboard") {
-    return "dashboard"
+    // Only an Analytics section has the shared Channel / Inbox / section row.
+    return resolveActiveAnalyticsSection(pathname)
+      ? "dashboard"
+      : "dashboardPage"
   }
   // The flow builder canvas (`/flows/<id>`), outside the workspace shell.
   if (
@@ -232,7 +260,8 @@ export function resolveWorkspaceSkeletonKind(
 }
 
 const SKELETON_BY_KIND: Record<WorkspaceSkeletonKind, () => ReactNode> = {
-  dashboard: DashboardSkeleton,
+  dashboard: () => <DashboardSkeleton />,
+  dashboardPage: () => <DashboardSkeleton withSharedFilter={false} />,
   flowEditor: FlowEditorSkeleton,
   form: FormPageSkeleton,
   inbox: InboxSkeleton,

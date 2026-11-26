@@ -13,6 +13,7 @@ import {
   eq,
   gt,
   gte,
+  inArray,
   isNull,
   lte,
   type SQL,
@@ -178,6 +179,15 @@ type DateRangeInput = {
   integrationMessengerId?: string
   integrationInstagramId?: string
   /**
+   * A LIST of integration ids of the one `channel` being queried (the
+   * Analytics dashboard's multi-inbox selection): the counts aggregate
+   * exactly those integrations. Interpreted through `channel` (omitted means
+   * the whatsapp default, like every other channel-scoped filter here), so
+   * it never mixes channels. Takes precedence over the single id of the same
+   * channel; empty or omitted leaves the single-id behavior untouched.
+   */
+  integrationIds?: string[]
+  /**
    * "All channels" (Ads Analytics default) — drops the channel eq-filter in
    * `dateRangeEventFilters` entirely instead of resolving to the
    * `DEFAULT_ADS_CONVERSION_CHANNEL` whatsapp fallback. Deliberately a
@@ -208,6 +218,8 @@ type AdConversationDateRangeInput = {
   channel: Extract<AdsConversionChannel, AdReferralChannelType>
   integrationMessengerId?: string
   integrationInstagramId?: string
+  /** See `DateRangeInput.integrationIds`. */
+  integrationIds?: string[]
   /** See `DateRangeInput.timezone`. */
   timezone?: string
 }
@@ -325,13 +337,66 @@ function adReferralIntegrationId(
 function adIntegrationScope(
   input: AdConversationDateRangeInput,
 ): SQL | undefined {
-  const integrationId = adReferralIntegrationId(input)
-  if (!integrationId) {
+  const singleId = adReferralIntegrationId(input)
+  let integrationIds: string[] | undefined
+  if (input.integrationIds?.length) {
+    integrationIds = input.integrationIds
+  } else if (singleId) {
+    integrationIds = [singleId]
+  }
+  if (!integrationIds) {
     return
   }
 
   const model = adReferralIntegrationModel(input.channel)
-  return sql`EXISTS (SELECT 1 FROM ${model} WHERE ${model.id} = ${integrationId} AND ${model.workspaceId} = ${input.workspaceId} AND ${model.inboxId} = ${contactInboxModel.inboxId})`
+  return sql`EXISTS (SELECT 1 FROM ${model} WHERE ${inArray(model.id, integrationIds)} AND ${model.workspaceId} = ${input.workspaceId} AND ${model.inboxId} = ${contactInboxModel.inboxId})`
+}
+
+/**
+ * The WhatsApp integrations a CTWA conversation count is scoped to: the
+ * `integrationIds` list when the query is for the whatsapp channel (omitted
+ * `channel` is whatsapp), else the single `integrationWhatsappId`.
+ */
+function whatsappIntegrationIds(
+  input: Pick<
+    DateRangeInput,
+    "channel" | "integrationIds" | "integrationWhatsappId"
+  >,
+): string[] | undefined {
+  const channel = input.channel ?? DEFAULT_ADS_CONVERSION_CHANNEL
+  if (input.integrationIds?.length && channel === "whatsapp") {
+    return input.integrationIds
+  }
+  return input.integrationWhatsappId ? [input.integrationWhatsappId] : undefined
+}
+
+// Event FK column per ads-eligible channel (factories: see
+// `conflictTargetFactoryByChannel` for why table columns are not dereferenced
+// at import time).
+const eventIntegrationColumnByChannel = {
+  whatsapp: () => adsConversionEventModel.integrationWhatsappId,
+  messenger: () => adsConversionEventModel.integrationMessengerId,
+  instagram: () => adsConversionEventModel.integrationInstagramId,
+} satisfies Record<AdEligibleInboxChannel, () => unknown>
+
+/**
+ * `integrationIds` filter for the event aggregates: the list is matched
+ * against the FK column of the query's channel. A channel with no
+ * integration FK (the dead "facebook" value) matches nothing rather than
+ * silently dropping the narrowing.
+ */
+function eventIntegrationIdsFilter(input: DateRangeInput): SQL | undefined {
+  if (!input.integrationIds?.length) {
+    return
+  }
+  const channel = input.channel ?? DEFAULT_ADS_CONVERSION_CHANNEL
+  if (channel === "facebook") {
+    return sql`false`
+  }
+  return inArray(
+    eventIntegrationColumnByChannel[channel](),
+    input.integrationIds,
+  )
 }
 
 /**
@@ -376,40 +441,47 @@ const adConversationBaseFilters = (input: AdConversationDateRangeInput) => [
  * filter returns exactly what those callers always got, while keeping
  * post-flip messenger/instagram events from silently inflating their counts.
  */
-const dateRangeEventFilters = (input: DateRangeInput) => [
-  eq(adsConversionEventModel.workspaceId, input.workspaceId),
-  gte(adsConversionEventModel.occurredAt, input.since),
-  lte(adsConversionEventModel.occurredAt, input.until),
-  input.integrationWhatsappId
-    ? eq(
-        adsConversionEventModel.integrationWhatsappId,
-        input.integrationWhatsappId,
-      )
-    : undefined,
-  // `allChannels` drops this eq-filter entirely — the ONLY way "no channel
-  // filter" is reached. `channel` omitted WITHOUT `allChannels` still
-  // resolves to the whatsapp default below, unchanged for every existing
-  // caller (insertIgnoreDuplicate's conflict-target selection relies on this
-  // same default and is untouched by this flag).
-  input.allChannels
-    ? undefined
-    : eq(
-        adsConversionEventModel.channel,
-        input.channel ?? DEFAULT_ADS_CONVERSION_CHANNEL,
-      ),
-  input.integrationMessengerId
-    ? eq(
-        adsConversionEventModel.integrationMessengerId,
-        input.integrationMessengerId,
-      )
-    : undefined,
-  input.integrationInstagramId
-    ? eq(
-        adsConversionEventModel.integrationInstagramId,
-        input.integrationInstagramId,
-      )
-    : undefined,
-]
+const dateRangeEventFilters = (input: DateRangeInput) => {
+  // A non-empty `integrationIds` list overrides every single-id predicate (the
+  // conversation counts and the spend side already read it that way), so
+  // conflicting inputs can never intersect into an empty result.
+  const hasIntegrationList = Boolean(input.integrationIds?.length)
+  return [
+    eq(adsConversionEventModel.workspaceId, input.workspaceId),
+    gte(adsConversionEventModel.occurredAt, input.since),
+    lte(adsConversionEventModel.occurredAt, input.until),
+    input.integrationWhatsappId && !hasIntegrationList
+      ? eq(
+          adsConversionEventModel.integrationWhatsappId,
+          input.integrationWhatsappId,
+        )
+      : undefined,
+    // `allChannels` drops this eq-filter entirely — the ONLY way "no channel
+    // filter" is reached. `channel` omitted WITHOUT `allChannels` still
+    // resolves to the whatsapp default below, unchanged for every existing
+    // caller (insertIgnoreDuplicate's conflict-target selection relies on this
+    // same default and is untouched by this flag).
+    input.allChannels
+      ? undefined
+      : eq(
+          adsConversionEventModel.channel,
+          input.channel ?? DEFAULT_ADS_CONVERSION_CHANNEL,
+        ),
+    input.integrationMessengerId && !hasIntegrationList
+      ? eq(
+          adsConversionEventModel.integrationMessengerId,
+          input.integrationMessengerId,
+        )
+      : undefined,
+    input.integrationInstagramId && !hasIntegrationList
+      ? eq(
+          adsConversionEventModel.integrationInstagramId,
+          input.integrationInstagramId,
+        )
+      : undefined,
+    eventIntegrationIdsFilter(input),
+  ]
+}
 
 export const adsConversionEventRepository = {
   async insertIgnoreDuplicate(
@@ -690,10 +762,11 @@ export const adsConversionEventRepository = {
     tx: DatabaseClient = db,
   ): Promise<CtwaConversationCountByAd[]> {
     const filters = and(...ctwaConversationBaseFilters(input))
+    const whatsappIds = whatsappIntegrationIds(input)
     const adIdExpression = sql<
       string | null
     >`${contactInboxModel.referral}->>'adId'`
-    const rows = input.integrationWhatsappId
+    const rows = whatsappIds
       ? await tx
           .select({
             adId: adIdExpression,
@@ -704,7 +777,7 @@ export const adsConversionEventRepository = {
             integrationWhatsappModel,
             and(
               eq(contactInboxModel.inboxId, integrationWhatsappModel.inboxId),
-              eq(integrationWhatsappModel.id, input.integrationWhatsappId),
+              inArray(integrationWhatsappModel.id, whatsappIds),
               eq(integrationWhatsappModel.workspaceId, input.workspaceId),
             ),
           )
@@ -756,7 +829,8 @@ export const adsConversionEventRepository = {
       contactInboxModel.firstInteractionAt,
       timezone,
     )
-    const rows = input.integrationWhatsappId
+    const whatsappIds = whatsappIntegrationIds(input)
+    const rows = whatsappIds
       ? await tx
           .select({
             date: dateExpression,
@@ -768,7 +842,7 @@ export const adsConversionEventRepository = {
             integrationWhatsappModel,
             and(
               eq(contactInboxModel.inboxId, integrationWhatsappModel.inboxId),
-              eq(integrationWhatsappModel.id, input.integrationWhatsappId),
+              inArray(integrationWhatsappModel.id, whatsappIds),
               eq(integrationWhatsappModel.workspaceId, input.workspaceId),
             ),
           )

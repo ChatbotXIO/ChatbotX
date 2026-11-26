@@ -385,6 +385,99 @@ describe.skipIf(!databaseUrl)("publishing against a real database", () => {
     expect(taken[0]?.publishStartedAt).toBeNull()
   })
 
+  describe("the delayed check's compare-and-set claim", () => {
+    /** A target settled as `processing` whose lease is its next check time. */
+    const processingDueAt = async (due: Date) => {
+      const { targetId } = await dueTarget()
+      await client.query(
+        `UPDATE "SocialPostTarget" SET "status" = 'processing', "leaseExpiresAt" = $2 WHERE id = $1`,
+        [targetId, due],
+      )
+      return targetId
+    }
+    const claimDue = (
+      id: string,
+      expectedDueAt: Date,
+      leaseUntil: Date,
+      workspace: string = workspaceId,
+    ) =>
+      repo.claimExpired({
+        leaseUntil,
+        limit: 1,
+        now: new Date(),
+        only: { expectedDueAt, id, workspaceId: workspace },
+      })
+
+    test("swaps the stored check time for a recovery lease, once, even when the check time is still ahead", async () => {
+      const due = new Date(Date.now() + 20_000)
+      const targetId = await processingDueAt(due)
+      const lease = new Date(Date.now() + 10 * MINUTE)
+
+      const [first] = await claimDue(targetId, due, lease)
+      const second = await claimDue(
+        targetId,
+        due,
+        new Date(lease.getTime() + 1),
+      )
+
+      expect(first?.id).toBe(targetId)
+      expect(first?.leaseUntil).toEqual(lease)
+      expect(second).toEqual([])
+      expect((await row(targetId)).leaseExpiresAt).toEqual(lease)
+    })
+
+    test("two claimers racing on one check time: exactly one wins", async () => {
+      const due = new Date(Date.now() - 1000)
+      const targetId = await processingDueAt(due)
+      const base = Date.now() + 10 * MINUTE
+
+      const results = await Promise.all([
+        claimDue(targetId, due, new Date(base)),
+        claimDue(targetId, due, new Date(base + 1000)),
+      ])
+
+      expect(results.flat()).toHaveLength(1)
+    })
+
+    test("the minute scan winning first leaves a stale delayed job without a claim", async () => {
+      const due = new Date(Date.now() - 1000)
+      const targetId = await processingDueAt(due)
+      const now = new Date()
+      const scanLease = new Date(now.getTime() + 10 * MINUTE)
+      const scanned = await repo.claimExpired({
+        leaseUntil: scanLease,
+        limit: 1000,
+        now,
+      })
+      expect(scanned.map((target) => target.id)).toContain(targetId)
+
+      const late = await claimDue(
+        targetId,
+        due,
+        new Date(Date.now() + 20 * MINUTE),
+      )
+
+      expect(late).toEqual([])
+      expect((await row(targetId)).leaseExpiresAt).toEqual(scanLease)
+    })
+
+    test("a different check time, another workspace or a settled target is never claimed", async () => {
+      const due = new Date(Date.now() - 1000)
+      const targetId = await processingDueAt(due)
+      const lease = new Date(Date.now() + 10 * MINUTE)
+
+      expect(
+        await claimDue(targetId, new Date(due.getTime() + 1), lease),
+      ).toEqual([])
+      expect(await claimDue(targetId, due, lease, "1")).toEqual([])
+      await client.query(
+        `UPDATE "SocialPostTarget" SET "status" = 'published' WHERE id = $1`,
+        [targetId],
+      )
+      expect(await claimDue(targetId, due, lease)).toEqual([])
+    })
+  })
+
   test("resetForRetry only takes failed or unconfirmed targets", async () => {
     const { targetId } = await dueTarget()
     const database0 = database() as never

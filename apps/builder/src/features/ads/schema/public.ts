@@ -107,7 +107,42 @@ const withPublicDateRange = <Schema extends typeof dateRangeShape>(
       },
     )
 
+/** Upper bound for an `integrationIds` list (the dashboard's inbox selection cap). */
+const MAX_INTEGRATION_IDS = 200
+
+const splitCommaList = (value: unknown) => {
+  if (typeof value !== "string") {
+    return value
+  }
+  const parts = value
+    .split(",")
+    .map((part) => part.trim())
+    .filter(Boolean)
+  return parts.length > 0 ? parts : undefined
+}
+
+/**
+ * Several integrations of the one `channel` (comma-separated in a query
+ * string, or an array from MCP clients). Totals aggregate exactly those; it
+ * takes precedence over the single integration id of the same channel and
+ * needs `channel` so a list can never span channels.
+ */
+const integrationIdsField = z
+  .preprocess(
+    splitCommaList,
+    z.array(zodBigintAsString()).min(1).max(MAX_INTEGRATION_IDS).optional(),
+  )
+  .describe(
+    "Restrict to these integrations of `channel` (comma-separated ids; at most 200). Takes precedence over the single integration id. Requires `channel`.",
+  )
+
+const requiresChannelForIntegrationIds = (input: {
+  channel?: string
+  integrationIds?: string[]
+}): boolean => !input.integrationIds?.length || Boolean(input.channel)
+
 const ctwaFunnelPublicShape = dateRangeShape.extend({
+  integrationIds: integrationIdsField,
   integrationWhatsappId: zodBigintAsString()
     .optional()
     .describe("Restrict to this WhatsApp integration."),
@@ -160,7 +195,8 @@ export const getCtwaFunnelPublicRequest = withPublicDateRange(
         (input.channel ||
           input.integrationWhatsappId ||
           input.integrationMessengerId ||
-          input.integrationInstagramId)
+          input.integrationInstagramId ||
+          input.integrationIds?.length)
       ),
     {
       message:
@@ -168,6 +204,10 @@ export const getCtwaFunnelPublicRequest = withPublicDateRange(
       path: ["allChannels"],
     },
   )
+  .refine(requiresChannelForIntegrationIds, {
+    message: "integrationIds requires channel",
+    path: ["integrationIds"],
+  })
   .refine((input) => countIntegrationIds(input) <= 1, {
     message:
       "Only one of integrationWhatsappId, integrationMessengerId, integrationInstagramId may be provided",
@@ -300,6 +340,9 @@ export const listReferralAdsPublicResponse = z.object({
 })
 
 export const listChannelAdAccountsPublicRequest = z.object({
+  integrationIds: integrationIdsField.describe(
+    "Restrict to these integrations' own connections (comma-separated ids; at most 200). Takes precedence over `integrationId`; the channel is the `{channel}` path segment.",
+  ),
   integrationId: zodBigintAsString()
     .optional()
     .describe(
@@ -387,6 +430,7 @@ export const adsAnalyticsPublicRequest = z
     channel: adsEligibleChannelTypes
       .optional()
       .describe("Restrict to this channel."),
+    integrationIds: integrationIdsField,
     integrationWhatsappId: zodBigintAsString()
       .optional()
       .describe("Restrict to this WhatsApp integration."),
@@ -410,7 +454,8 @@ export const adsAnalyticsPublicRequest = z
         (input.channel ||
           input.integrationWhatsappId ||
           input.integrationMessengerId ||
-          input.integrationInstagramId)
+          input.integrationInstagramId ||
+          input.integrationIds?.length)
       ),
     {
       message:
@@ -418,6 +463,10 @@ export const adsAnalyticsPublicRequest = z
       path: ["allChannels"],
     },
   )
+  .refine(requiresChannelForIntegrationIds, {
+    message: "integrationIds requires channel",
+    path: ["integrationIds"],
+  })
   .refine((input) => countIntegrationIds(input) <= 1, {
     message:
       "Only one of integrationWhatsappId, integrationMessengerId, integrationInstagramId may be provided",

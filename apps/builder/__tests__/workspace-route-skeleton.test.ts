@@ -4,8 +4,11 @@ import { resolveWorkspaceSkeletonKind } from "@/components/workspace-skeletons"
 describe("resolveWorkspaceSkeletonKind", () => {
   test.each([
     ["/space/1/inbox", "inbox"],
-    ["/space/1/dashboard", "dashboard"],
+    ["/space/1/dashboard", "dashboardPage"],
     ["/space/1/dashboard/contacts", "dashboard"],
+    ["/space/1/dashboard/posts", "dashboard"],
+    ["/space/1/dashboard/ads/messenger", "dashboard"],
+    ["/space/1/dashboard/ads/conversion-events", "dashboardPage"],
     ["/space/1/flows", "tabbed"],
     ["/space/1/tags", "tabbed"],
     ["/space/1/flows/12", "flowEditor"],

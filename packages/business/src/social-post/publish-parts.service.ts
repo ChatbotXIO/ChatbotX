@@ -16,7 +16,10 @@ import {
   type SocialPublishResult,
 } from "@chatbotx.io/utils/social-publisher"
 import {
+  type CheckJobFence,
+  NEVER_MATCHING_LEASE_MS,
   PostPublishJobAction,
+  postCheckPartDueJobId,
   postCheckPartJobId,
   postPartJobId,
   postPublishQueue,
@@ -288,13 +291,26 @@ class SocialPostPartPublishService extends BaseService {
       })
     }
     if (result.status === "pending") {
-      return await this.settle(part, fence, {
+      const nextCheckAt = new Date(
+        now.getTime() + Math.max(result.retryAfterMs, MIN_POLL_MS),
+      )
+      const stored = await this.settle(part, fence, {
         continuation: result.continuation,
         kind: "processing",
-        nextCheckAt: new Date(
-          now.getTime() + Math.max(result.retryAfterMs, MIN_POLL_MS),
-        ),
+        nextCheckAt,
       })
+      if (stored) {
+        // Same as a target: the delayed job claims the stored check time.
+        await this.enqueuePartCheck(
+          {
+            id: part.id,
+            leaseUntil: nextCheckAt,
+            workspaceId: part.workspaceId,
+          },
+          nextCheckAt,
+        )
+      }
+      return stored
     }
     const classified = classifyFailure(result, {
       attemptCount: part.attemptCount,
@@ -522,24 +538,37 @@ class SocialPostPartPublishService extends BaseService {
     })
   }
 
-  private async enqueuePartCheck(part: {
-    id: string
-    leaseUntil: Date
-    workspaceId: string
-  }): Promise<void> {
-    const leaseUntilMs = part.leaseUntil.getTime()
+  private async enqueuePartCheck(
+    part: { id: string; leaseUntil: Date; workspaceId: string },
+    expectedDueAt?: Date,
+  ): Promise<void> {
+    const expectedDueAtMs = expectedDueAt?.getTime()
+    // A delayed job's stored fence is `expectedDueAtMs`, which a worker from
+    // before delayed checks would read as its claimed lease and act on while
+    // the cron may be doing the same. The legacy field therefore carries a
+    // value no stored lease can equal, so such a worker finds no claim and
+    // does nothing; current workers fence on `expectedDueAtMs` instead.
+    const fence: CheckJobFence =
+      expectedDueAtMs === undefined
+        ? { leaseUntilMs: part.leaseUntil.getTime() }
+        : { expectedDueAtMs, leaseUntilMs: NEVER_MATCHING_LEASE_MS }
     try {
       await postPublishQueue.add(
         PostPublishJobAction.checkPart,
         {
           data: {
-            leaseUntilMs,
+            ...fence,
             socialPostPartId: part.id,
             workspaceId: part.workspaceId,
           },
           type: PostPublishJobAction.checkPart,
         },
-        { jobId: postCheckPartJobId(part.id, leaseUntilMs) },
+        expectedDueAtMs === undefined
+          ? { jobId: postCheckPartJobId(part.id, part.leaseUntil.getTime()) }
+          : {
+              delay: Math.max(0, expectedDueAtMs - Date.now()),
+              jobId: postCheckPartDueJobId(part.id, expectedDueAtMs),
+            },
       )
     } catch (err) {
       logger.warn(
@@ -554,10 +583,36 @@ class SocialPostPartPublishService extends BaseService {
    * lease the scan gave it is still the stored one. Returns whether it was held.
    */
   async runPartCheck(
-    input: { id: string; leaseUntil: Date; workspaceId: string },
+    input: {
+      /** The delayed job's stored check time: claimed first, no claim means no network call. */
+      expectedDueAt?: Date
+      id: string
+      leaseUntil: Date
+      workspaceId: string
+    },
     publishers: SocialPublisherMap,
   ): Promise<boolean> {
-    const expired = await socialPostPartRepository.findExpiredClaim(input)
+    const { expectedDueAt, ...claim } = input
+    if (expectedDueAt) {
+      const [claimed] = await socialPostPartRepository.claimExpired({
+        leaseUntil: new Date(Date.now() + SOCIAL_POST_PART_LEASE_MS),
+        limit: 1,
+        now: new Date(),
+        only: {
+          expectedDueAt,
+          id: claim.id,
+          workspaceId: claim.workspaceId,
+        },
+      })
+      if (!claimed) {
+        return false
+      }
+      return await this.runPartCheck(
+        { ...claim, leaseUntil: claimed.leaseUntil },
+        publishers,
+      )
+    }
+    const expired = await socialPostPartRepository.findExpiredClaim(claim)
     if (!expired) {
       return false
     }

@@ -234,6 +234,19 @@ can supply.
 
 ## Where Ads dashboard metrics come from
 
+**Scope of a per-channel Ads section.** The section's channel is fixed by its route; the
+Analytics dashboard's shared Inbox filter (`inboxIds` URL param) narrows it: each selected
+inbox is mapped to this channel's integration bound to it
+(`resolveSelectedIntegrationIds`), inboxes of other channels are ignored, and none
+selected means every connected integration ("All accounts"). Totals, the daily series and
+the ad-account list aggregate exactly the selected integrations (`integrationIds` on the
+ads analytics scope; the single `integration*Id` inputs still work for the public API and
+CLI). The "All ad accounts" filter has no shared equivalent and stays in the section. The
+older `channelAccount` / `account` link params apply only while no inbox is selected and are
+dropped when the shared selection changes. The CSV export and retarget follow the
+integration only when exactly one is selected; with several they cover the whole channel.
+Changing the shared selection re-renders the server page (`shallow: false`).
+
 The Ads dashboard (`apps/builder/src/features/ads/components/ads-analytics-view.tsx`)
 merges two sources per request, not one:
 

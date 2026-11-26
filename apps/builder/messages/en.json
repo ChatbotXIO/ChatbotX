@@ -585,8 +585,10 @@
       "close": "Close",
       "options": "Available options",
       "remove": "Remove",
-      "filterHint": "Filters only count events recorded after filtering was added: older events have no inbox, and older bot and conversation events have no channel either. All always counts everything.",
       "tooManyInboxes": "Pick at most {max} inboxes, or tick All."
+    },
+    "sections": {
+      "posts": "Posts"
     }
   },
   "flowAnalytics": {
@@ -4751,13 +4753,13 @@
       },
       "channelFilter": {
         "label": "Channel",
-        "allAccounts": "All accounts",
         "allChannels": "All channels"
       },
       "retarget": "Retarget",
       "thoseWhoPurchased": "Those who purchased",
       "thoseWhoStartedConversation": "Those who started a conversation",
       "sendWhatsappBroadcast": "Send WhatsApp broadcast",
+      "singleInboxActionsHint": "Export and retargeting cover one inbox at a time. Select a single inbox to use them.",
       "retargetOnChannel": "Retarget on {channel}",
       "from": "From",
       "to": "To",

@@ -9,6 +9,9 @@ export const listChannelAdAccountsRequest = z.object({
   // connection for the channel, plus the workspace-wide fallback ("All
   // accounts"). Present -> narrows to that one integration's own connection.
   integrationId: zodBigintAsString().optional(),
+  // Several integrations (the Analytics dashboard's inbox selection); wins
+  // over `integrationId`. The union of exactly those integrations' accounts.
+  integrationIds: z.array(zodBigintAsString()).min(1).max(200).optional(),
 })
 export type ListChannelAdAccountsRequest = z.infer<
   typeof listChannelAdAccountsRequest

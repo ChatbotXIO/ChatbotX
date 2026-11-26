@@ -6,5 +6,5 @@ export default async function PostAnalyticsPage(props: {
 }) {
   const workspaceId = await resolveGuardedWorkspaceId(props.params, "broadcast")
 
-  return <PostAnalyticsView workspaceId={workspaceId} />
+  return <PostAnalyticsView scopeFilters="own" workspaceId={workspaceId} />
 }

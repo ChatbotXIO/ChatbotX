@@ -543,8 +543,10 @@
       "close": "Kapat",
       "options": "Kullanılabilir seçenekler",
       "remove": "Kaldır",
-      "filterHint": "Filtreler yalnızca filtreleme eklendikten sonra kaydedilen olayları sayar: eski olayların gelen kutusu yoktur, eski bot ve konuşma olaylarının da kanalı yoktur. Tümü her zaman her şeyi sayar.",
       "tooManyInboxes": "En fazla {max} gelen kutusu seçin veya Tümü'nü işaretleyin."
+    },
+    "sections": {
+      "posts": "Gönderiler"
     }
   },
   "flowAnalytics": {
@@ -4069,13 +4071,13 @@
       },
       "channelFilter": {
         "label": "Kanal",
-        "allAccounts": "Tüm hesaplar",
         "allChannels": "Tüm kanallar"
       },
       "retarget": "Yeniden Hedefle",
       "thoseWhoPurchased": "Satın alanlar",
       "thoseWhoStartedConversation": "Sohbet başlatanlar",
       "sendWhatsappBroadcast": "WhatsApp toplu mesajı gönder",
+      "singleInboxActionsHint": "Dışa aktarma ve yeniden hedefleme aynı anda yalnızca tek bir gelen kutusunu kapsar. Kullanmak için tek bir gelen kutusu seçin.",
       "retargetOnChannel": "{channel} üzerinde yeniden hedefleme",
       "from": "Başlangıç",
       "to": "Bitiş",
