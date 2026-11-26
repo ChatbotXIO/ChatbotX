@@ -1,24 +1,21 @@
 import { createId } from "@chatbotx.io/utils"
 import { sql } from "drizzle-orm"
 import {
-  customType,
+  bigint,
   numeric,
   type PgTimestampConfig,
   timestamp,
 } from "drizzle-orm/pg-core"
 import { z } from "zod"
 
-export const bigintAsString = customType<{
-  data: string
-  driverData: string
-}>({
-  dataType() {
-    return "bigint"
-  },
-  fromDriver(value) {
-    return String(value)
-  },
-})
+/**
+ * A Postgres `bigint` read and written as a string. Keep this the built-in
+ * column, not a `customType`: since drizzle-orm 1.0.0-rc.2 a custom column
+ * gets no JSON cast unless it declares a codec, so relational queries would
+ * load nested `with:` ids through `row_to_json` as JS numbers and round every
+ * snowflake id above 2^53 — and writes by such an id silently miss their row.
+ */
+export const bigintAsString = () => bigint({ mode: "string" })
 
 export const timestampConfig: PgTimestampConfig<"date"> = {
   precision: 6,

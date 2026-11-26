@@ -22,6 +22,10 @@ import {
 import { connectionStateService } from "../connection/state-service"
 import { ChatbotXException } from "../errors"
 import { inboxService } from "../inbox/service"
+
+export { toResource } from "./resource"
+
+import { toResource } from "./resource"
 import type { IntegrationSmtpResource } from "./schema"
 
 /**
@@ -122,48 +126,6 @@ const generateInboundToken = (): string => {
 /** Pause before an IMAP inbox that failed to poll is tried again. */
 const IMAP_FAILURE_BACKOFF_MS = 10 * 60 * 1000
 const MAX_POLL_ERROR_LENGTH = 500
-
-/** Only the provider name of the stored auth; the rest of it is secret. */
-const readProvider = (auth: unknown): string => {
-  const provider =
-    typeof auth === "object" && auth !== null
-      ? (auth as { provider?: unknown }).provider
-      : undefined
-  return typeof provider === "string" ? provider : "other"
-}
-
-/**
- * Public projection of a row. Never spread the row: it carries `auth`
- * (the SMTP/IMAP passwords).
- */
-export const toResource = (
-  row: Pick<
-    IntegrationSmtpModel,
-    | "id"
-    | "name"
-    | "fromAddress"
-    | "imapEnabled"
-    | "imapHost"
-    | "imapPort"
-    | "imapMailbox"
-    | "lastPolledAt"
-    | "lastPollError"
-    | "auth"
-    | "inboundToken"
-  >,
-): IntegrationSmtpResource => ({
-  id: row.id,
-  name: row.name,
-  fromAddress: row.fromAddress,
-  imapEnabled: row.imapEnabled,
-  imapHost: row.imapHost,
-  imapPort: row.imapPort,
-  imapMailbox: row.imapMailbox,
-  lastPolledAt: row.lastPolledAt,
-  lastPollError: row.lastPollError,
-  provider: readProvider(row.auth),
-  inboundWebhookIssued: Boolean(row.inboundToken),
-})
 
 class IntegrationSmtpService extends BaseService {
   listDueImapInboxes(props: {
