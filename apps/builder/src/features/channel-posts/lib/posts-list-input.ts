@@ -1,3 +1,4 @@
+import type { ChannelPostCommentExportKind } from "@chatbotx.io/business"
 import type { inferParserType } from "nuqs"
 import type { z } from "zod"
 import type {
@@ -78,7 +79,8 @@ export const selectExportPosts = (
   postIds: items.slice(0, MAX_EXPORT_POSTS).map((item) => item.id),
 })
 
-export type PostsExportKind = "comments" | "phones"
+/** What a download writes: the comments, or one row per phone number or email. */
+export type PostsExportKind = ChannelPostCommentExportKind
 
 /**
  * The download route of the posts list itself (`kind=rows`) for the current
@@ -104,7 +106,7 @@ export const postsRowsExportUrl = (
   return `/space/${workspaceId}/posts/export?${params.toString()}`
 }
 
-/** The download route of the comments or phone numbers of these posts. */
+/** The download route of the comments, phone numbers or emails of these posts. */
 export const postsExportUrl = (
   workspaceId: string,
   kind: PostsExportKind,

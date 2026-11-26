@@ -1,4 +1,6 @@
 import {
+  ChannelPostExportJobAction,
+  type ChannelPostExportJobData,
   DefaultJobAction,
   type DefaultJobData,
   queueNames,
@@ -14,6 +16,10 @@ import { resolveWorkspaceId } from "../lib/resolve-workspace-id"
 import { runJobWithAuditContext } from "../lib/run-job-with-audit-context"
 import { runWorker } from "../lib/shutdown"
 import { handleBulkTagContacts } from "./handlers/bulk-tag-contacts"
+import {
+  exportChannelPostComments,
+  failBlockedChannelPostExport,
+} from "./handlers/export-channel-post-comments"
 import { loopableExportContacts } from "./handlers/export-contacts"
 import { exportCoupons } from "./handlers/export-coupons"
 import { exportLeaderboardParticipants } from "./handlers/export-leaderboard-participants"
@@ -317,9 +323,44 @@ function startTemplateWorker() {
   )
 }
 
-const startDefaultAndTemplateWorkers = () => {
-  startDefaultWorker()
-  startTemplateWorker()
+/**
+ * Channel comment exports run off their own queue with a small concurrency,
+ * hosted in this process: each can wait minutes on a channel's usage hints, and
+ * on the `default` queue a few of them would hold every slot. A worker that
+ * predates this queue never consumes it, so during a rolling deploy a new job
+ * waits for a new worker instead of being completed as a no-op by an old one.
+ */
+function startChannelPostExportWorker() {
+  createQueueWorker(
+    queueNames.enum.channelPostExport,
+    async (job: Job<ChannelPostExportJobData>) => {
+      switch (job.data.type) {
+        case ChannelPostExportJobAction.exportChannelPostComments: {
+          const { type, data } = job.data
+          await runGuardedJob(
+            data,
+            {
+              source: `channelPostExport:${type}`,
+              requestedUserId: data.requestedUserId,
+            },
+            () => exportChannelPostComments(data),
+            () => failBlockedChannelPostExport(data),
+          )
+          return
+        }
+        default:
+          logger.warn({ jobId: job.id }, "Unknown channel post export job")
+          return
+      }
+    },
+    { concurrency: env.CHANNEL_POST_EXPORT_WORKER_CONCURRENCY },
+  )
 }
 
-runWorker("default", startDefaultAndTemplateWorkers)
+const startDefaultAndHostedWorkers = () => {
+  startDefaultWorker()
+  startTemplateWorker()
+  startChannelPostExportWorker()
+}
+
+runWorker("default", startDefaultAndHostedWorkers)

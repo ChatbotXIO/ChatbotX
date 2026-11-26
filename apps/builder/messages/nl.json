@@ -12603,7 +12603,9 @@
       "menu": "Exporteren",
       "rowsTitle": "Lijst met berichten exporteren (één rij per bericht)",
       "rowsDone": "De lijst met berichten is geëxporteerd.",
-      "rowsTruncated": "De lijst is afgekapt bij de berichtlimiet. Verfijn de filters om de rest te exporteren."
+      "rowsTruncated": "De lijst is afgekapt bij de berichtlimiet. Verfijn de filters om de rest te exporteren.",
+      "sourceStored": "Opgeslagen gegevens",
+      "sourceChannel": "Lezen vanaf het kanaal"
     },
     "showAllPosts": "Ook berichten zonder reacties tonen",
     "noCaption": "Geen tekst",
@@ -12700,7 +12702,9 @@
       "refreshCooldown": "Dit bericht is net vernieuwd. Probeer het over een minuut opnieuw.",
       "downloadPhones": "Telefoonnummers downloaden",
       "downloadComments": "Reacties downloaden",
-      "viewDetails": "Details bekijken"
+      "viewDetails": "Details bekijken",
+      "download": "Downloaden",
+      "downloadEmails": "E-mailadressen downloaden"
     },
     "merge": {
       "title": "Berichten samenvoegen",
@@ -13286,6 +13290,24 @@
           "removed": "Van het kanaal verwijderd."
         }
       }
+    },
+    "channelExport": {
+      "started": "Reacties worden van het kanaal gelezen. Dit kan even duren.",
+      "progress": "Lezen vanaf het kanaal… tot nu toe {count} rijen.",
+      "progressEstimate": "Lezen vanaf het kanaal… tot nu toe {count} rijen (in totaal ongeveer {expected} reacties).",
+      "ready": "Het bestand is klaar.",
+      "download": "Downloaden",
+      "truncated": "De export is gestopt bij een veiligheidslimiet, dus het bestand is onvolledig. Exporteer minder berichten om de rest te krijgen.",
+      "forbidden": "Je hebt geen toestemming om telefoonnummers en e-mailadressen te downloaden.",
+      "startFailed": "De export kon niet worden gestart. Probeer het opnieuw.",
+      "inProgress": "De export wordt gestart, probeer het zo opnieuw.",
+      "failure": {
+        "channelDisconnected": "Het kanaal is losgekoppeld. Verbind het opnieuw en probeer het nog eens.",
+        "postNotFound": "Een bericht bestaat niet meer op het kanaal.",
+        "notSupported": "De reacties van dit kanaal kunnen niet vanaf het kanaal worden gelezen.",
+        "rateLimited": "Het kanaal vroeg om te vertragen. Probeer het over een paar minuten opnieuw.",
+        "failed": "De export is mislukt. Probeer het opnieuw."
+      }
     }
   },
   "socialAccounts": {
@@ -13433,7 +13455,12 @@
     "repeatScheduleOff": "Inplannen en publiceren gelden voor elke kopie, niet voor het sjabloon.",
     "moveMediaEarlier": "Eerder plaatsen",
     "moveMediaLater": "Later plaatsen",
-    "removeFromChannels": "Van de kanalen verwijderen",
+    "removeFromAllChannels": "Van alle kanalen verwijderen",
+    "removeTarget": "Verwijderen",
+    "removeTargetTitle": "Dit bericht van {destination} verwijderen?",
+    "removeTargetDescription": "Het gepubliceerde bericht wordt van {destination} op {network} gehaald. De andere bestemmingen houden het. Dit kan niet ongedaan worden gemaakt.",
+    "removeTargetConfirm": "Verwijderen",
+    "removing": "Wordt verwijderd…",
     "removeFromChannelsTitle": "Dit bericht van de netwerken verwijderen?",
     "removeFromChannelsDescription": "Het gepubliceerde bericht wordt verwijderd van elk netwerk dat dit ondersteunt. Netwerken zonder verwijderfunctie behouden het. Dit kan niet ongedaan worden gemaakt.",
     "removeFromChannelsConfirm": "Verwijderen",
@@ -13442,6 +13469,7 @@
     "removeUnsupported": "{count, plural, one {# bestemming kan niet via de API van het netwerk worden verwijderd; verwijder het in de app.} other {# bestemmingen kunnen niet via de API van de netwerken worden verwijderd; verwijder ze in de apps.}}",
     "removedFromChannel": "Van het netwerk verwijderd",
     "removalPermissionMissing": "Verbind dit account opnieuw om het verwijderen van berichten toe te staan.",
+    "removalQueueFailed": "De verwijdering kon niet in de wachtrij worden gezet. Probeer het opnieuw.",
     "postMessageQuotaExceeded": "Het berichtenquotum van dit account is op, dus deze post is niet gepubliceerd. Upgrade het abonnement of wacht op de volgende factureringsperiode en probeer het opnieuw.",
     "tiktokLoading": "TikTok-accountinstellingen laden…",
     "tiktokUnavailable": "De TikTok-accountinstellingen konden niet worden geladen. Probeer het opnieuw.",

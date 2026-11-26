@@ -2,11 +2,21 @@ import { ORPCError } from "@orpc/client"
 
 const POST_MESSAGE_QUOTA_EXCEEDED = "postMessageQuotaExceeded"
 
-type Translate = (
-  key:
-    | "composer.postMessageQuotaExceeded"
-    | "composer.removalPermissionMissing",
-) => string
+/** Failure codes the server stores that have a translated text, by message key. */
+const FAILURE_TEXT_KEYS = {
+  postMessageQuotaExceeded: "composer.postMessageQuotaExceeded",
+  removalPermissionMissing: "composer.removalPermissionMissing",
+  removalQueueFailed: "composer.removalQueueFailed",
+} as const
+
+type FailureTextCode = keyof typeof FAILURE_TEXT_KEYS
+
+type Translate = (key: (typeof FAILURE_TEXT_KEYS)[FailureTextCode]) => string
+
+const hasTranslatedText = (
+  code: string | null | undefined,
+): code is FailureTextCode =>
+  code !== null && code !== undefined && Object.hasOwn(FAILURE_TEXT_KEYS, code)
 
 /** True when the error is the oRPC refusal for a used-up message quota. */
 const isQuotaExceededError = (error: Error): boolean =>
@@ -26,11 +36,8 @@ export const failureText = (
   },
   t: Translate,
 ): string | null | undefined => {
-  if (failure.errorCode === POST_MESSAGE_QUOTA_EXCEEDED) {
-    return t("composer.postMessageQuotaExceeded")
-  }
-  if (failure.errorCode === "removalPermissionMissing") {
-    return t("composer.removalPermissionMissing")
+  if (hasTranslatedText(failure.errorCode)) {
+    return t(FAILURE_TEXT_KEYS[failure.errorCode])
   }
   return failure.errorMessage
 }

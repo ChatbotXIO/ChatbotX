@@ -165,7 +165,7 @@ describe("the composed post procedures", () => {
   })
 
   test("every session procedure checks the workspace, then the broadcast permission", () => {
-    expect(privateProcedures).toHaveLength(19)
+    expect(privateProcedures).toHaveLength(20)
     for (const procedure of privateProcedures) {
       expect(procedure.use.map(({ middleware }) => middleware)).toEqual([
         authorizedGate,
@@ -258,6 +258,7 @@ describe("the composed post procedures", () => {
       "reschedule",
       "unschedule",
       "retryTarget",
+      "removeTarget",
       "resolveTarget",
       "setRecurrence",
       "endRecurrence",
@@ -1189,6 +1190,58 @@ describe("the composed post procedures", () => {
 
       expect(result).toEqual({ deleted: false, removal })
       expect(assertNotBlocked).toHaveBeenCalledWith("owner-1")
+    })
+
+    test("the public remove-target route asks for that one destination only, after the block check", async () => {
+      removeService.request.mockResolvedValue(removal)
+
+      const result = await handlerOf(
+        publicProcedures,
+        "POST",
+        "/v1/posts/{id}/targets/{targetId}/remove",
+      )({ context: { workspace }, input: { id: "p1", targetId: "t1" } })
+
+      expect(assertNotBlocked).toHaveBeenCalledWith("owner-1")
+      expect(removeService.request).toHaveBeenCalledWith({
+        id: "p1",
+        targetIds: ["t1"],
+        workspaceId: "ws-1",
+      })
+      expect(service.delete).not.toHaveBeenCalled()
+      expect(result).toEqual({ deleted: false, removal })
+    })
+
+    test("remove-target is refused in a blocked workspace before anything is queued", async () => {
+      assertNotBlocked.mockRejectedValue(new Error("workspaceBlocked"))
+
+      await expect(
+        handlerOf(
+          publicProcedures,
+          "POST",
+          "/v1/posts/{id}/targets/{targetId}/remove",
+        )({ context: { workspace }, input: { id: "p1", targetId: "t1" } }),
+      ).rejects.toThrow("workspaceBlocked")
+      expect(removeService.request).not.toHaveBeenCalled()
+    })
+
+    test("the session twin of remove-target answers the same shape in the workspace of the session", async () => {
+      removeService.request.mockResolvedValue(removal)
+
+      const result = await handlerOf(
+        privateProcedures,
+        "POST",
+        "/workspaces/{workspaceId}/social-posts/{id}/targets/{targetId}/remove",
+      )({
+        context: { workspace },
+        input: { id: "p1", targetId: "t1", workspaceId: "ws-1" },
+      })
+
+      expect(result).toEqual({ deleted: false, removal })
+      expect(removeService.request).toHaveBeenCalledWith({
+        id: "p1",
+        targetIds: ["t1"],
+        workspaceId: "ws-1",
+      })
     })
 
     test("a plain delete still never checks the block and reports deleted", async () => {

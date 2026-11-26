@@ -97,6 +97,7 @@ describe.skipIf(!databaseUrl)("post comments against a real database", () => {
         {
           firstName: "An",
           lastName: "Nguyen",
+          email: `an-${suffix}@example.test`,
           phoneNumber: "0901234567",
           workspaceId: workspace.id,
         },
@@ -500,13 +501,19 @@ describe.skipIf(!databaseUrl)("post comments against a real database", () => {
       )
       expect(an).toMatchObject({
         name: "An Nguyen",
+        email: `an-${suffix}@example.test`,
         phoneNumber: "0901234567",
       })
       // The soft-deleted tag is not shown.
       expect(an?.tags.map((tag) => tag.name)).toEqual([`VIP ${suffix}`])
       expect(
         commenters.find((commenter) => commenter.id === fixture.contactIds[1]),
-      ).toMatchObject({ name: "Binh", phoneNumber: null, tags: [] })
+      ).toMatchObject({
+        name: "Binh",
+        email: null,
+        phoneNumber: null,
+        tags: [],
+      })
     })
 
     test("another workspace's workspace id returns nothing", async () => {

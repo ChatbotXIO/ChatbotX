@@ -12603,7 +12603,9 @@
       "menu": "Exportar",
       "rowsTitle": "Exportar a lista de publicações (uma linha por publicação)",
       "rowsDone": "Lista de publicações exportada.",
-      "rowsTruncated": "A lista foi cortada no limite de publicações. Restrinja os filtros para exportar o resto."
+      "rowsTruncated": "A lista foi cortada no limite de publicações. Restrinja os filtros para exportar o resto.",
+      "sourceStored": "Dados guardados",
+      "sourceChannel": "Ler do canal"
     },
     "showAllPosts": "Mostrar também publicações sem comentários",
     "noCaption": "Sem texto",
@@ -12700,7 +12702,9 @@
       "refreshCooldown": "Esta publicação acabou de ser atualizada. Tente novamente dentro de um minuto.",
       "downloadPhones": "Transferir telefones",
       "downloadComments": "Transferir comentários",
-      "viewDetails": "Ver detalhes"
+      "viewDetails": "Ver detalhes",
+      "download": "Transferir",
+      "downloadEmails": "Transferir e-mails"
     },
     "merge": {
       "title": "Juntar publicações",
@@ -13286,6 +13290,24 @@
           "removed": "Removida do canal."
         }
       }
+    },
+    "channelExport": {
+      "started": "A ler os comentários do canal. Isto pode demorar um pouco.",
+      "progress": "A ler do canal… {count} linhas até agora.",
+      "progressEstimate": "A ler do canal… {count} linhas até agora (cerca de {expected} comentários no total).",
+      "ready": "O ficheiro está pronto.",
+      "download": "Transferir",
+      "truncated": "A exportação parou num limite de segurança, pelo que o ficheiro está incompleto. Exporte menos publicações para obter o resto.",
+      "forbidden": "Não tem permissão para transferir números de telefone e e-mails.",
+      "startFailed": "Não foi possível iniciar a exportação. Tente novamente.",
+      "inProgress": "A exportação está a ser iniciada, tente novamente dentro de instantes.",
+      "failure": {
+        "channelDisconnected": "O canal está desligado. Volte a ligá-lo e tente novamente.",
+        "postNotFound": "Uma publicação já não existe no canal.",
+        "notSupported": "Os comentários deste canal não podem ser lidos do canal.",
+        "rateLimited": "O canal pediu para abrandar. Tente novamente dentro de alguns minutos.",
+        "failed": "A exportação falhou. Tente novamente."
+      }
     }
   },
   "socialAccounts": {
@@ -13433,7 +13455,12 @@
     "repeatScheduleOff": "O agendamento e a publicação aplicam-se a cada cópia, não ao modelo.",
     "moveMediaEarlier": "Mover para antes",
     "moveMediaLater": "Mover para depois",
-    "removeFromChannels": "Remover dos canais",
+    "removeFromAllChannels": "Remover de todos os canais",
+    "removeTarget": "Remover",
+    "removeTargetTitle": "Remover esta publicação de {destination}?",
+    "removeTargetDescription": "A publicação é retirada de {destination} em {network}. Os outros destinos mantêm-na. Esta ação não pode ser anulada.",
+    "removeTargetConfirm": "Remover",
+    "removing": "A remover…",
     "removeFromChannelsTitle": "Remover esta publicação das redes?",
     "removeFromChannelsDescription": "A publicação é removida de todas as redes que o permitem. As redes sem função de eliminação mantêm-na. Não é possível anular.",
     "removeFromChannelsConfirm": "Remover",
@@ -13442,6 +13469,7 @@
     "removeUnsupported": "{count, plural, one {# destino não pode ser removido através da API da rede; remova-o na aplicação.} other {# destinos não podem ser removidos através da API das redes; remova-os nas aplicações.}}",
     "removedFromChannel": "Removido da rede",
     "removalPermissionMissing": "Volte a ligar esta conta para permitir a eliminação de publicações.",
+    "removalQueueFailed": "Não foi possível colocar a remoção na fila. Tente novamente.",
     "postMessageQuotaExceeded": "A quota de mensagens desta conta esgotou-se, pelo que esta publicação não foi publicada. Atualize o plano ou aguarde o próximo período de faturação e tente novamente.",
     "tiktokLoading": "A carregar as definições da conta do TikTok…",
     "tiktokUnavailable": "Não foi possível carregar as definições da conta do TikTok. Tente novamente.",

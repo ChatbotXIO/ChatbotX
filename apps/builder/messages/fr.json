@@ -12603,7 +12603,9 @@
       "menu": "Exporter",
       "rowsTitle": "Exporter la liste des publications (une ligne par publication)",
       "rowsDone": "La liste des publications a été exportée.",
-      "rowsTruncated": "La liste a été tronquée à la limite de publications. Affinez les filtres pour exporter le reste."
+      "rowsTruncated": "La liste a été tronquée à la limite de publications. Affinez les filtres pour exporter le reste.",
+      "sourceStored": "Données enregistrées",
+      "sourceChannel": "Lire depuis le canal"
     },
     "showAllPosts": "Afficher aussi les publications sans commentaires",
     "noCaption": "Sans texte",
@@ -12700,7 +12702,9 @@
       "refreshCooldown": "Cette publication vient d’être actualisée. Réessayez dans une minute.",
       "downloadPhones": "Télécharger les numéros de téléphone",
       "downloadComments": "Télécharger les commentaires",
-      "viewDetails": "Voir les détails"
+      "viewDetails": "Voir les détails",
+      "download": "Télécharger",
+      "downloadEmails": "Télécharger les e-mails"
     },
     "merge": {
       "title": "Fusionner des publications",
@@ -13286,6 +13290,24 @@
           "removed": "Supprimée du canal."
         }
       }
+    },
+    "channelExport": {
+      "started": "Lecture des commentaires depuis le canal. Cela peut prendre un moment.",
+      "progress": "Lecture depuis le canal… {count} lignes jusqu'à présent.",
+      "progressEstimate": "Lecture depuis le canal… {count} lignes jusqu'à présent (environ {expected} commentaires au total).",
+      "ready": "Le fichier est prêt.",
+      "download": "Télécharger",
+      "truncated": "L'export s'est arrêté à une limite de sécurité, le fichier est donc incomplet. Exportez moins de publications pour obtenir le reste.",
+      "forbidden": "Vous n'avez pas l'autorisation de télécharger les numéros de téléphone et les e-mails.",
+      "startFailed": "Impossible de démarrer l'export. Réessayez.",
+      "inProgress": "L'export est en cours de démarrage, réessayez dans un instant.",
+      "failure": {
+        "channelDisconnected": "Le canal est déconnecté. Reconnectez-le puis réessayez.",
+        "postNotFound": "Une publication n'existe plus sur le canal.",
+        "notSupported": "Les commentaires de ce canal ne peuvent pas être lus depuis le canal.",
+        "rateLimited": "Le canal a demandé de ralentir. Réessayez dans quelques minutes.",
+        "failed": "L'export a échoué. Réessayez."
+      }
     }
   },
   "socialAccounts": {
@@ -13433,7 +13455,12 @@
     "repeatScheduleOff": "La programmation et la publication s'appliquent à chaque copie, pas au modèle.",
     "moveMediaEarlier": "Déplacer avant",
     "moveMediaLater": "Déplacer après",
-    "removeFromChannels": "Retirer des canaux",
+    "removeFromAllChannels": "Retirer de tous les canaux",
+    "removeTarget": "Retirer",
+    "removeTargetTitle": "Retirer cette publication de {destination} ?",
+    "removeTargetDescription": "La publication est retirée de {destination} sur {network}. Les autres destinations la conservent. Cette action est irréversible.",
+    "removeTargetConfirm": "Retirer",
+    "removing": "Retrait en cours…",
     "removeFromChannelsTitle": "Retirer cette publication des réseaux ?",
     "removeFromChannelsDescription": "La publication est retirée de tous les réseaux qui le permettent. Les réseaux sans fonction de suppression la conservent. Cette action est irréversible.",
     "removeFromChannelsConfirm": "Retirer",
@@ -13442,6 +13469,7 @@
     "removeUnsupported": "{count, plural, one {# destination ne peut pas être retirée via l'API du réseau ; retirez-la dans l'application.} other {# destinations ne peuvent pas être retirées via l'API des réseaux ; retirez-les dans les applications.}}",
     "removedFromChannel": "Retiré du réseau",
     "removalPermissionMissing": "Reconnectez ce compte pour autoriser la suppression des publications.",
+    "removalQueueFailed": "La suppression n'a pas pu être mise en file d'attente. Réessayez.",
     "postMessageQuotaExceeded": "Le quota de messages de ce compte est épuisé, cette publication n'a donc pas été publiée. Passez à une offre supérieure ou attendez la prochaine période de facturation, puis réessayez.",
     "tiktokLoading": "Chargement des paramètres du compte TikTok…",
     "tiktokUnavailable": "Impossible de charger les paramètres du compte TikTok. Réessayez.",

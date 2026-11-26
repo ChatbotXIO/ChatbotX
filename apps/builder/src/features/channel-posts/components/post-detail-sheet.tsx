@@ -3,6 +3,11 @@
 import { Badge } from "@chatbotx.io/ui/components/ui/badge"
 import { Button } from "@chatbotx.io/ui/components/ui/button"
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuTrigger,
+} from "@chatbotx.io/ui/components/ui/dropdown-menu"
+import {
   Sheet,
   SheetContent,
   SheetDescription,
@@ -28,11 +33,13 @@ import type { ReactNode } from "react"
 import { channelLabel } from "@/features/inboxes/lib/channel-label"
 import { PostPerformance } from "@/features/post-analytics/components/post-performance"
 import { useClipboard } from "@/hooks/use-clipboard"
+import type { useChannelCommentExport } from "../hooks/use-channel-comment-export"
 import { useDownloadPostsExport } from "../hooks/use-download-posts-export"
 import { useManagedPostActions } from "../hooks/use-managed-post-actions"
 import { capabilityOfChannel } from "../lib/post-capability"
-import { CONTENT_TYPE_TILES } from "../lib/post-type-style"
+import { resolvePostTile } from "../lib/post-type-style"
 import { PostAuthorValue } from "./post-author-label"
+import { PostDownloadItems } from "./post-download-items"
 import type { ManagedPost } from "./post-row"
 import { PostTopicBadges, PostTopicPicker } from "./post-topic-picker"
 
@@ -78,6 +85,7 @@ const InfoRow = ({
 
 type PostDetailBodyProps = {
   canViewPhones: boolean
+  channelExport: ReturnType<typeof useChannelCommentExport>
   onOpenComments: (post: ManagedPost) => void
   post: ManagedPost
   readOnly: boolean
@@ -86,6 +94,7 @@ type PostDetailBodyProps = {
 
 const PostDetailBody = ({
   canViewPhones,
+  channelExport,
   onOpenComments,
   post,
   readOnly,
@@ -95,14 +104,12 @@ const PostDetailBody = ({
   const format = useFormatter()
   const { handleCopy } = useClipboard()
   const actions = useManagedPostActions(workspaceId)
-  const { download, isDownloading } = useDownloadPostsExport(workspaceId)
+  const storedExport = useDownloadPostsExport(workspaceId)
 
   const capability = capabilityOfChannel(post.channel)
   const reportsCounts = capability?.counts === true
   const settingsEnabled = capability?.commentSettings === true && !readOnly
-  const tile = post.contentType
-    ? CONTENT_TYPE_TILES[post.contentType]
-    : undefined
+  const display = resolvePostTile(post)
 
   const settings: SettingRow[] = [
     {
@@ -150,10 +157,10 @@ const PostDetailBody = ({
               </div>
             )}
             <div className="absolute start-3 top-3 flex gap-1.5">
-              {tile && post.contentType ? (
+              {display ? (
                 <Badge className="gap-1 border-0 bg-background/90 text-foreground">
-                  <tile.icon className="size-3" />
-                  {t(`posts.contentType.${post.contentType}`)}
+                  <display.tile.icon className="size-3" />
+                  {t(`posts.${display.labelKey}`)}
                 </Badge>
               ) : null}
               {post.liveStatus === "live" ? (
@@ -357,28 +364,25 @@ const PostDetailBody = ({
             <RefreshCwIcon />
             {t("posts.actions.refreshPost")}
           </Button>
-          {canViewPhones ? (
-            <Button
-              disabled={isDownloading || readOnly}
-              onClick={() => download("phones", [post.id])}
-              size="sm"
-              title={readOnly ? t("posts.export.blocked") : undefined}
-              variant="outline"
-            >
-              <DownloadIcon />
-              {t("posts.actions.downloadPhones")}
-            </Button>
-          ) : null}
-          <Button
-            disabled={isDownloading || readOnly}
-            onClick={() => download("comments", [post.id])}
-            size="sm"
-            title={readOnly ? t("posts.export.blocked") : undefined}
-            variant="outline"
-          >
-            <DownloadIcon />
-            {t("posts.actions.downloadComments")}
-          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger
+              render={
+                <Button size="sm" variant="outline">
+                  <DownloadIcon />
+                  {t("posts.actions.download")}
+                </Button>
+              }
+            />
+            <DropdownMenuContent align="start" className="w-60">
+              <PostDownloadItems
+                canViewContactData={canViewPhones}
+                channelExport={channelExport}
+                post={post}
+                readOnly={readOnly}
+                storedExport={storedExport}
+              />
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
     </>
@@ -391,6 +395,7 @@ const PostDetailBody = ({
  */
 export const PostDetailSheet = ({
   canViewPhones,
+  channelExport,
   onOpenChange,
   onOpenComments,
   post,
@@ -398,6 +403,7 @@ export const PostDetailSheet = ({
   workspaceId,
 }: {
   canViewPhones: boolean
+  channelExport: ReturnType<typeof useChannelCommentExport>
   onOpenChange: (open: boolean) => void
   onOpenComments: (post: ManagedPost) => void
   post: ManagedPost | null
@@ -409,6 +415,7 @@ export const PostDetailSheet = ({
       {post ? (
         <PostDetailBody
           canViewPhones={canViewPhones}
+          channelExport={channelExport}
           onOpenComments={onOpenComments}
           post={post}
           readOnly={readOnly}

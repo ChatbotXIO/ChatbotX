@@ -63,6 +63,9 @@ const mergeView = vi.fn()
 const likeComment = vi.fn()
 const deleteComment = vi.fn()
 const exportBuild = vi.fn()
+const startCommentExport = vi.fn()
+const getCommentExportStatus = vi.fn()
+const assertWorkspaceNotBlocked = vi.fn()
 
 vi.mock("@chatbotx.io/business", () => ({
   MAX_BULK_UPDATE_POSTS: 100,
@@ -76,7 +79,13 @@ vi.mock("@chatbotx.io/business", () => ({
     list: listComments,
     mergeView,
   },
-  channelPostExportKinds: ["comments", "phones", "rows"],
+  POST_COMMENT_SENDERS: ["contact", "page"],
+  channelPostCommentExportKinds: ["comments", "phones", "emails"],
+  channelPostCommentExportService: {
+    getStatus: getCommentExportStatus,
+    start: startCommentExport,
+  },
+  channelPostExportKinds: ["comments", "phones", "emails", "rows"],
   channelPostExportService: { build: exportBuild },
   channelPostManagementService: { bulkUpdate, get, list, listAuthors, update },
   channelPostMetricsRefreshService: { requestMetricsRefresh },
@@ -94,6 +103,7 @@ vi.mock("@chatbotx.io/business", () => ({
 vi.mock("@chatbotx.io/channel-registry/channel-post-refresh", () => ({
   refreshChannelPostNow,
 }))
+vi.mock("@/lib/workspace-quota", () => ({ assertWorkspaceNotBlocked }))
 vi.mock("@/orpc", () => ({ workspaceTokenAuthAPIForScope }))
 
 await import("@/features/channel-posts/api/management-public")
@@ -105,12 +115,14 @@ const {
   channelPostSyncInboxFilter,
   deleteChannelPostCommentRequest,
   exportChannelPostCommentsRequest,
+  getChannelPostCommentExportRequest,
   likeChannelPostCommentRequest,
   listChannelPostAuthorsRequest,
   listChannelPostCommentsRequest,
   listChannelPostManagementRequest,
   mergeChannelPostCommentsRequest,
   refreshChannelPostMetricsRequest,
+  startChannelPostCommentExportRequest,
   startChannelPostSyncRequest,
   updateChannelPostManagementRequest,
 } = await import("@/features/channel-posts/schema/management")
@@ -129,7 +141,7 @@ const procedure = (method: string, path: string): CapturedProcedure => {
 
 const call = async (method: string, path: string, input: unknown) =>
   await procedure(method, path).handler?.({
-    context: { workspace: { id: "ws-1" } },
+    context: { workspace: { id: "ws-1", ownerId: "owner-1" } },
     input,
   })
 
@@ -140,7 +152,7 @@ beforeEach(() => {
 describe("posts public API surface", () => {
   test("every route is behind the posts scope", () => {
     expect(new Set(scopes)).toEqual(new Set(["posts"]))
-    expect(capturedProcedures).toHaveLength(19)
+    expect(capturedProcedures).toHaveLength(21)
   })
 
   test("paths and verbs", () => {
@@ -165,6 +177,8 @@ describe("posts public API surface", () => {
       "POST /v1/channel-posts/management/{id}/comments/{commentId}/like",
       "DELETE /v1/channel-posts/management/{id}/comments/{commentId}",
       "POST /v1/channel-posts/management/export",
+      "POST /v1/channel-posts/management/exports",
+      "GET /v1/channel-posts/management/exports/{fileId}",
       "GET /v1/post-topics",
       "POST /v1/post-topics",
       "PATCH /v1/post-topics/{id}",
@@ -845,7 +859,7 @@ describe("POST /v1/channel-posts/management/export", () => {
     )
   })
 
-  test("accepts only the two kinds and 1-20 posts", () => {
+  test("accepts the three comment kinds and 1-20 posts", () => {
     expect(
       exportChannelPostCommentsRequest.safeParse({
         kind: "comments",
@@ -857,11 +871,133 @@ describe("POST /v1/channel-posts/management/export", () => {
         kind: "emails",
         postIds: ["1"],
       }).success,
-    ).toBe(false)
+    ).toBe(true)
     expect(
       exportChannelPostCommentsRequest.safeParse({
         kind: "comments",
         postIds: [],
+      }).success,
+    ).toBe(false)
+  })
+})
+
+describe("POST /v1/channel-posts/management/exports", () => {
+  const start = async (input: unknown) =>
+    await call("POST", "/v1/channel-posts/management/exports", input)
+
+  test("answers 202 and is declared as such", () => {
+    expect(
+      procedure("POST", "/v1/channel-posts/management/exports").route
+        .successStatus,
+    ).toBe(202)
+  })
+
+  test("starts the export for the token's workspace as a caller with full contact data and no session user", async () => {
+    startCommentExport.mockResolvedValue({ fileId: "9", status: "pending" })
+
+    const result = await start({ kind: "emails", postIds: ["1", "2"] })
+
+    expect(assertWorkspaceNotBlocked).toHaveBeenCalledWith("owner-1")
+    expect(startCommentExport).toHaveBeenCalledWith({
+      canViewEmailAndPhone: true,
+      kind: "emails",
+      postIds: ["1", "2"],
+      userId: null,
+      workspaceId: "ws-1",
+    })
+    expect(result).toEqual({ fileId: "9", status: "pending" })
+  })
+
+  test("returns the running export's id when the same posts are already being read", async () => {
+    startCommentExport.mockResolvedValue({ fileId: "7", status: "pending" })
+
+    expect(await start({ kind: "comments", postIds: ["1"] })).toEqual({
+      fileId: "7",
+      status: "pending",
+    })
+  })
+
+  test("a blocked workspace is refused before anything is validated or queued", async () => {
+    assertWorkspaceNotBlocked.mockRejectedValueOnce(new Error("blocked"))
+
+    await expect(start({ kind: "comments", postIds: ["1"] })).rejects.toThrow(
+      "blocked",
+    )
+    expect(startCommentExport).not.toHaveBeenCalled()
+  })
+
+  test("a refusal of the service (permission, unsupported channel, quota) reaches the caller", async () => {
+    startCommentExport.mockRejectedValueOnce(new Error("forbidden"))
+
+    await expect(start({ kind: "phones", postIds: ["1"] })).rejects.toThrow(
+      "forbidden",
+    )
+  })
+
+  test("accepts the three comment kinds, never rows, and 1-20 posts", () => {
+    const parse = (input: unknown) =>
+      startChannelPostCommentExportRequest.safeParse(input).success
+
+    for (const kind of ["comments", "phones", "emails"]) {
+      expect(parse({ kind, postIds: ["1"] })).toBe(true)
+    }
+    expect(parse({ kind: "rows", postIds: ["1"] })).toBe(false)
+    expect(parse({ kind: "comments", postIds: [] })).toBe(false)
+    expect(
+      parse({
+        kind: "comments",
+        postIds: Array.from({ length: 21 }, (_, index) => String(index + 1)),
+      }),
+    ).toBe(false)
+    expect(parse({ kind: "comments" })).toBe(false)
+  })
+})
+
+describe("GET /v1/channel-posts/management/exports/{fileId}", () => {
+  const status = async (fileId: string) =>
+    await call("GET", "/v1/channel-posts/management/exports/{fileId}", {
+      fileId,
+    })
+
+  test("reads the status in the token's workspace as a caller with full contact data", async () => {
+    const settled = {
+      downloadUrl: "https://files.example/x.csv",
+      expectedRows: null,
+      failureReason: null,
+      fileId: "9",
+      kind: "comments",
+      rowCount: 3,
+      status: "uploaded",
+      truncated: false,
+    }
+    getCommentExportStatus.mockResolvedValue(settled)
+
+    expect(await status("9")).toEqual(settled)
+    expect(getCommentExportStatus).toHaveBeenCalledWith({
+      canViewEmailAndPhone: true,
+      fileId: "9",
+      workspaceId: "ws-1",
+    })
+    expect(assertWorkspaceNotBlocked).not.toHaveBeenCalled()
+  })
+
+  test("an unknown file, or another workspace's, is the service's not-found error", async () => {
+    getCommentExportStatus.mockRejectedValueOnce(new Error("not found"))
+
+    await expect(status("404")).rejects.toThrow("not found")
+  })
+
+  test("the file id must be a numeric string", () => {
+    expect(
+      getChannelPostCommentExportRequest.safeParse({ fileId: "123" }).success,
+    ).toBe(true)
+    expect(
+      getChannelPostCommentExportRequest.safeParse({ fileId: "abc" }).success,
+    ).toBe(false)
+    // An id longer than a bigint is a 422, not a 500 from the database.
+    expect(
+      getChannelPostCommentExportRequest.safeParse({
+        fileId: "9".repeat(40),
       }).success,
     ).toBe(false)
   })

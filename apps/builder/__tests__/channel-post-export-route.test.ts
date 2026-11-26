@@ -25,7 +25,9 @@ vi.mock("@chatbotx.io/business", () => ({
   MAX_EXPORT_POST_ROWS: 5000,
   MAX_EXPORT_ROWS: 20_000,
   MAX_MERGE_VIEW_POSTS: 20,
-  channelPostExportKinds: ["comments", "phones", "rows"],
+  POST_COMMENT_SENDERS: ["contact", "page"],
+  channelPostCommentExportKinds: ["comments", "phones", "emails"],
+  channelPostExportKinds: ["comments", "phones", "emails", "rows"],
   channelPostExportService: { build: mocks.build },
 }))
 vi.mock("@chatbotx.io/business/errors", () => ({
@@ -121,7 +123,7 @@ describe("posts export route", () => {
 
   test.each([
     "postId=1",
-    "kind=emails&postId=1",
+    "kind=bogus&postId=1",
     "kind=comments",
     "kind=comments&postId=abc",
     `kind=comments&${Array.from({ length: 21 }, (_, index) => `postId=${index + 1}`).join("&")}`,
@@ -149,6 +151,19 @@ describe("posts export route", () => {
       sort: undefined,
       workspaceId: "ws-1",
     })
+  })
+
+  test("builds the stored emails of a post for a member who may see them", async () => {
+    const response = await callRoute("kind=emails&postId=1")
+
+    expect(response.status).toBe(200)
+    expect(mocks.build).toHaveBeenCalledWith(
+      expect.objectContaining({
+        canViewEmailAndPhone: true,
+        kind: "emails",
+        postIds: ["1"],
+      }),
+    )
   })
 
   test("builds a posts-list export from the list filters, never from post ids", async () => {

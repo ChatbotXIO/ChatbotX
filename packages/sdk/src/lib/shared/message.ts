@@ -171,6 +171,39 @@ export type ChannelPostListPage = {
 }
 
 /**
+ * One comment (or reply) read from a channel's own comment edge, in
+ * channel-neutral terms. A flag is `null` when the platform does not report it:
+ * "unknown", never `false`.
+ */
+export type ChannelPostComment = {
+  author: { id: string | null; name: string | null }
+  /** `null` when the platform reports no creation time. */
+  createdAt: Date | null
+  /** Whether the account that owns the post wrote it. */
+  fromOwner: boolean | null
+  hidden: boolean | null
+  id: string
+  /** The comment this one answers; `null` for a top-level comment. */
+  parentId: string | null
+  text: string
+}
+
+/**
+ * One page of a post's comments. Replies are part of the same traversal. The
+ * cursor is opaque to the caller: handed back unchanged to fetch the next page,
+ * `null` after the last one.
+ */
+export type ChannelPostCommentPage = {
+  items: ChannelPostComment[]
+  nextCursor: string | null
+  /**
+   * The channel's own hint that the next read should wait this many ms (its
+   * usage budget is nearly spent); `null` or absent when it sent none.
+   */
+  pauseMs?: number | null
+}
+
+/**
  * Channel-neutral relationship facts about a contact, stored on ContactInbox
  * columns of the same names. A channel fills what its API exposes; `null`
  * means "unknown", never false/0.

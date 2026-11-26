@@ -331,6 +331,11 @@ export type PostChannelCapability = {
    * channels a post belongs to the connected account itself.
    */
   author: boolean
+  /**
+   * The channel's `post.listComments` handler reads every comment of a post from
+   * the platform, so "Read from channel" downloads are offered.
+   */
+  commentExport: boolean
   /** A comment of this channel can be deleted on the channel from the comments window. */
   commentDelete: boolean
   /** A comment of this channel can be liked on the channel from the comments window. */
@@ -360,6 +365,7 @@ export const POST_CHANNEL_CAPABILITIES: Record<
   messenger: {
     author: true,
     commentCountSource: "platform",
+    commentExport: true,
     commentDelete: true,
     commentLike: true,
     commentSettings: true,
@@ -376,6 +382,7 @@ export const POST_CHANNEL_CAPABILITIES: Record<
   instagram: {
     author: false,
     commentCountSource: "platform",
+    commentExport: true,
     commentDelete: true,
     commentLike: false,
     commentSettings: true,
@@ -390,6 +397,7 @@ export const POST_CHANNEL_CAPABILITIES: Record<
   threads: {
     author: false,
     commentCountSource: "webhook",
+    commentExport: true,
     commentDelete: false,
     commentLike: false,
     commentSettings: false,
@@ -401,6 +409,7 @@ export const POST_CHANNEL_CAPABILITIES: Record<
   tiktok: {
     author: false,
     commentCountSource: "platform",
+    commentExport: true,
     commentDelete: true,
     commentLike: true,
     commentSettings: false,

@@ -287,10 +287,14 @@ export const channelPostRepository = {
    * `liveRecheckAt` first, `FOR UPDATE SKIP LOCKED`, so two scanners never take
    * the same row) and moves each one's `liveRecheckAt` a window ahead. A row
    * whose re-read fails therefore goes to the back of the line and cannot
-   * starve the others. A broadcast older than `giveUpBefore` (by its sort
-   * time), or one that was removed, has its `liveRecheckAt` cleared instead and
-   * is not returned: it is left as it is. Served by the partial index on
-   * `("liveRecheckAt", "id")`, so the batch limit bounds the rows examined.
+   * starve the others. The give-up window counts from the later of the
+   * broadcast's sort time and its last live observation, so a stream that is
+   * still being seen live is never given up on. A broadcast past `giveUpBefore`
+   * has its `liveRecheckAt` cleared in the same statement and is returned this
+   * one last time for a final re-read; nothing queues it again, so an answer
+   * of `unknown` leaves it as it is for good. A removed broadcast is cleared
+   * and not returned. Served by the partial index on `("liveRecheckAt", "id")`,
+   * so the batch limit bounds the rows examined.
    */
   async claimLiveRechecks(
     input: {
@@ -314,14 +318,14 @@ export const channelPostRepository = {
       ), claimed AS (
         UPDATE "ChannelPost" AS p SET
           "liveRecheckAt" = CASE
-            WHEN p."removedAt" IS NULL AND COALESCE(p."publishedAt", p."createdAt") >= ${input.giveUpBefore}::timestamptz
+            WHEN p."removedAt" IS NULL AND GREATEST(COALESCE(p."publishedAt", p."createdAt"), p."liveStatusObservedAt") >= ${input.giveUpBefore}::timestamptz
             THEN ${nextAt}::timestamptz
           END
         FROM due
         WHERE p."id" = due."id"
-        RETURNING p."id", p."workspaceId", (p."liveRecheckAt" IS NOT NULL) AS "keep"
+        RETURNING p."id", p."workspaceId", (p."removedAt" IS NULL) AS "readable"
       )
-      SELECT "id", "workspaceId" FROM claimed WHERE "keep"
+      SELECT "id", "workspaceId" FROM claimed WHERE "readable"
     `)
     return result.rows.map((row) => ({
       id: String(row.id),
@@ -569,11 +573,13 @@ export const channelPostRepository = {
     return await tx
       .select({
         caption: channelPostModel.caption,
+        commentsCount: channelPostModel.commentsCount,
         externalPostId: channelPostModel.externalPostId,
         id: channelPostModel.id,
         inboxId: channelPostModel.inboxId,
         inboxName: inboxModel.name,
         channel: channelPostModel.channel,
+        metricsKnownMask: channelPostModel.metricsKnownMask,
         permalink: channelPostModel.permalink,
         publishedAt: channelPostModel.publishedAt,
         thumbnail: channelPostModel.thumbnail,

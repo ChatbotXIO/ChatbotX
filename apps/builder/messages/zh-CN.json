@@ -12603,7 +12603,9 @@
       "menu": "导出",
       "rowsTitle": "导出帖子列表(每个帖子一行)",
       "rowsDone": "已导出帖子列表。",
-      "rowsTruncated": "列表已在帖子数量上限处截断。请缩小筛选范围以导出其余部分。"
+      "rowsTruncated": "列表已在帖子数量上限处截断。请缩小筛选范围以导出其余部分。",
+      "sourceStored": "已存储的数据",
+      "sourceChannel": "从渠道读取"
     },
     "showAllPosts": "同时显示没有评论的帖子",
     "noCaption": "无文字",
@@ -12700,7 +12702,9 @@
       "refreshCooldown": "该帖子刚刚刷新过。请一分钟后再试。",
       "downloadPhones": "下载电话号码",
       "downloadComments": "下载评论",
-      "viewDetails": "查看详情"
+      "viewDetails": "查看详情",
+      "download": "下载",
+      "downloadEmails": "下载邮箱"
     },
     "merge": {
       "title": "合并帖子",
@@ -13286,6 +13290,24 @@
           "removed": "已从渠道中移除。"
         }
       }
+    },
+    "channelExport": {
+      "started": "正在从渠道读取评论，可能需要一些时间。",
+      "progress": "正在从渠道读取… 目前已读取 {count} 行。",
+      "progressEstimate": "正在从渠道读取… 目前已读取 {count} 行（评论共约 {expected} 条）。",
+      "ready": "文件已准备好。",
+      "download": "下载",
+      "truncated": "导出在安全上限处停止，因此文件不完整。请减少导出的帖子数量以获取其余内容。",
+      "forbidden": "你没有下载电话号码和邮箱的权限。",
+      "startFailed": "无法开始导出，请重试。",
+      "inProgress": "导出正在启动，请稍后再试。",
+      "failure": {
+        "channelDisconnected": "渠道已断开连接。请重新连接后重试。",
+        "postNotFound": "有一篇帖子在渠道上已不存在。",
+        "notSupported": "无法从渠道读取此渠道的评论。",
+        "rateLimited": "渠道要求降低速度。请几分钟后重试。",
+        "failed": "导出失败，请重试。"
+      }
     }
   },
   "socialAccounts": {
@@ -13433,7 +13455,12 @@
     "repeatScheduleOff": "定时和发布适用于每份副本，而不是模板。",
     "moveMediaEarlier": "前移",
     "moveMediaLater": "后移",
-    "removeFromChannels": "从渠道中删除",
+    "removeFromAllChannels": "从所有渠道中删除",
+    "removeTarget": "删除",
+    "removeTargetTitle": "要从 {destination} 删除此帖子吗？",
+    "removeTargetDescription": "已发布的帖子将从 {network} 上的 {destination} 删除。其他发布目标会保留它。此操作无法撤销。",
+    "removeTargetConfirm": "删除",
+    "removing": "正在删除…",
     "removeFromChannelsTitle": "要从各网络中删除这篇帖子吗？",
     "removeFromChannelsDescription": "已发布的帖子会从所有支持删除的网络中撤下。不支持删除的网络会保留该帖子。此操作无法撤销。",
     "removeFromChannelsConfirm": "删除",
@@ -13442,6 +13469,7 @@
     "removeUnsupported": "{count, plural, one {# 个发布目标无法通过网络 API 删除，请在应用中删除。} other {# 个发布目标无法通过网络 API 删除，请在应用中删除。}}",
     "removedFromChannel": "已从网络中删除",
     "removalPermissionMissing": "请重新连接此账号以允许删除帖子。",
+    "removalQueueFailed": "无法将删除任务加入队列。请重试。",
     "postMessageQuotaExceeded": "此账号的消息额度已用完，因此该帖子未能发布。请升级套餐或等待下一个计费周期后重试。",
     "tiktokLoading": "正在加载 TikTok 账号设置…",
     "tiktokUnavailable": "无法加载 TikTok 账号设置，请重试。",

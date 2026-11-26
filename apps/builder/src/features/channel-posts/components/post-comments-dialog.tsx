@@ -1,6 +1,5 @@
 "use client"
 
-import { Badge } from "@chatbotx.io/ui/components/ui/badge"
 import { Button } from "@chatbotx.io/ui/components/ui/button"
 import {
   Dialog,
@@ -9,21 +8,13 @@ import {
   DialogTitle,
 } from "@chatbotx.io/ui/components/ui/dialog"
 import { Input } from "@chatbotx.io/ui/components/ui/input"
-import { cn } from "@chatbotx.io/ui/lib/utils"
 import {
   useInfiniteQuery,
   useMutation,
   useQueryClient,
 } from "@tanstack/react-query"
-import {
-  EyeOffIcon,
-  HeartIcon,
-  Loader2Icon,
-  PhoneIcon,
-  SearchIcon,
-  Trash2Icon,
-} from "lucide-react"
-import { useFormatter, useTranslations } from "next-intl"
+import { Loader2Icon, PhoneIcon, SearchIcon } from "lucide-react"
+import { useTranslations } from "next-intl"
 import { useEffect, useMemo, useRef, useState } from "react"
 import { toast } from "sonner"
 import type { z } from "zod"
@@ -31,13 +22,10 @@ import { useDebouncedValue } from "@/hooks/use-debounced-value"
 import { orpc } from "@/lib/orpc/query"
 import { type CommentsCache, withCommentLiked } from "../lib/comment-like-cache"
 import { capabilityOfChannel } from "../lib/post-capability"
-import type {
-  channelPostComment,
-  channelPostCommentCursor,
-} from "../schema/management"
+import type { channelPostCommentCursor } from "../schema/management"
+import { CommentBubble } from "./comment-bubble"
 import type { ManagedPost } from "./post-row"
 
-type PostComment = z.infer<typeof channelPostComment>
 type CommentsCursor = z.infer<typeof channelPostCommentCursor>
 
 const COMMENTS_PAGE_SIZE = 30
@@ -46,129 +34,6 @@ const SEARCH_DEBOUNCE_MS = 400
 
 /** The cached comment pages a like replaced, put back if the like fails. */
 type LikeContext = { snapshot: [readonly unknown[], unknown][] }
-
-const CommentBubble = ({
-  canDelete,
-  canLike,
-  comment,
-  likeDisabled,
-  onDelete,
-  onLike,
-  postCaption,
-}: {
-  canDelete: boolean
-  canLike: boolean
-  comment: PostComment
-  likeDisabled: boolean
-  onDelete: (comment: PostComment) => void
-  onLike: (comment: PostComment) => void
-  postCaption: string | null
-}) => {
-  const t = useTranslations()
-  const format = useFormatter()
-  const [confirming, setConfirming] = useState(false)
-  const name = comment.author?.name ?? t("posts.comments.unknownAuthor")
-
-  return (
-    <div className="group flex items-start gap-2">
-      <span
-        aria-hidden="true"
-        className="flex size-8 shrink-0 items-center justify-center overflow-hidden rounded-full bg-muted font-medium text-xs"
-      >
-        {comment.author?.avatar ? (
-          // biome-ignore lint/performance/noImgElement: external avatar
-          <img
-            alt=""
-            className="size-8 object-cover"
-            height={32}
-            loading="lazy"
-            src={comment.author.avatar}
-            width={32}
-          />
-        ) : (
-          name.slice(0, 1).toUpperCase()
-        )}
-      </span>
-      <div
-        className={cn(
-          "max-w-[85%] space-y-1 rounded-xl border bg-card px-3 py-2 text-sm shadow-xs",
-          comment.hidden && "opacity-60",
-        )}
-      >
-        <div className="flex flex-wrap items-center gap-1.5">
-          <span className="font-semibold">{name}</span>
-          {comment.author?.phoneNumber ? (
-            <Badge className="gap-1" variant="outline">
-              <PhoneIcon className="size-3" />
-              {comment.author.phoneNumber}
-            </Badge>
-          ) : null}
-          {comment.author?.tags.map((tag) => (
-            <Badge key={tag.id} variant="secondary">
-              {tag.name}
-            </Badge>
-          ))}
-          {comment.hidden ? (
-            <Badge className="gap-1" variant="outline">
-              <EyeOffIcon className="size-3" />
-              {t("posts.comments.hidden")}
-            </Badge>
-          ) : null}
-        </div>
-        {postCaption ? (
-          <p className="truncate text-muted-foreground text-xs">
-            {postCaption}
-          </p>
-        ) : null}
-        <p className="whitespace-pre-wrap break-words">{comment.text}</p>
-        <div className="flex items-center gap-1 text-muted-foreground text-xs">
-          {canLike ? (
-            <Button
-              aria-label={t("posts.comments.like")}
-              aria-pressed={comment.liked}
-              className={cn("size-7", comment.liked && "text-red-500")}
-              disabled={likeDisabled}
-              onClick={() => onLike(comment)}
-              size="icon"
-              variant="ghost"
-            >
-              <HeartIcon className={cn(comment.liked && "fill-current")} />
-            </Button>
-          ) : null}
-          <Button
-            aria-label={t("posts.comments.delete")}
-            className={cn("size-7", confirming && "text-destructive")}
-            disabled={!canDelete}
-            onBlur={() => setConfirming(false)}
-            onClick={() => {
-              if (confirming) {
-                onDelete(comment)
-              }
-              setConfirming((value) => !value)
-            }}
-            size="icon"
-            title={
-              confirming
-                ? t("posts.comments.confirmDelete")
-                : t("posts.comments.delete")
-            }
-            variant="ghost"
-          >
-            <Trash2Icon />
-          </Button>
-          <time dateTime={comment.createdAt.toISOString()}>
-            {format.dateTime(comment.createdAt, {
-              day: "numeric",
-              hour: "2-digit",
-              minute: "2-digit",
-              month: "short",
-            })}
-          </time>
-        </div>
-      </div>
-    </div>
-  )
-}
 
 /**
  * All comments of one post, or of several posts merged into one thread. Shown
@@ -385,7 +250,7 @@ export const PostCommentsDialog = ({
             </Button>
           ) : null}
         </div>
-        <div className="min-h-0 flex-1 space-y-3 overflow-y-auto rounded-lg bg-muted/60 p-3">
+        <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto rounded-lg bg-muted/60 p-3">
           {comments.hasNextPage ? (
             <div className="flex justify-center">
               <Button
@@ -431,6 +296,7 @@ export const PostCommentsDialog = ({
               <CommentBubble
                 canDelete={capability?.commentDelete === true}
                 canLike={capability?.commentLike === true}
+                channel={postsById.get(comment.postId)?.channel ?? ""}
                 comment={comment}
                 key={comment.id}
                 likeDisabled={readOnly}

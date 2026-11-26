@@ -1,10 +1,12 @@
 import {
+  channelPostCommentExportKinds,
   channelPostExportKinds,
   MAX_BULK_UPDATE_POSTS,
   MAX_EXPORT_POST_ROWS,
   MAX_EXPORT_ROWS,
   MAX_MERGE_VIEW_POSTS,
   MAX_TOPICS_PER_POST,
+  POST_COMMENT_SENDERS,
 } from "@chatbotx.io/business"
 import {
   channelPostContentTypes,
@@ -12,6 +14,8 @@ import {
   channelPostManagementSorts,
   channelPostSyncStatuses,
   channelTypes,
+  exportFailureReasons,
+  fileStatuses,
 } from "@chatbotx.io/database/partials"
 import { zodBigintIdAsString } from "@chatbotx.io/utils"
 import {
@@ -393,7 +397,12 @@ const commentPageFields = {
 }
 
 const channelPostCommentAuthor = z.object({
-  avatar: z.string().nullable(),
+  avatar: z
+    .string()
+    .nullable()
+    .describe(
+      "The commenter's picture as an absolute URL (a signed, expiring media link when the picture is fetched on view); null when none.",
+    ),
   id: z.string().describe("The commenter's contact id."),
   name: z.string().nullable(),
   phoneNumber: z
@@ -405,10 +414,22 @@ const channelPostCommentAuthor = z.object({
   tags: z.array(z.object({ id: z.string(), name: z.string() })),
 })
 
+const channelPostCommentPage = z.object({
+  avatar: z
+    .string()
+    .nullable()
+    .describe(
+      "The page's picture as an absolute URL (a signed, expiring media link when it is fetched on view); null when there is none (a TikTok account, or a page not bound for publishing).",
+    ),
+  name: z.string().describe("The name of the page or account."),
+})
+
 export const channelPostComment = z.object({
   author: channelPostCommentAuthor
     .nullable()
-    .describe("Null only if the contact was deleted after commenting."),
+    .describe(
+      "The contact whose thread the comment sits in, also for a reply the page sent. Null only if the contact was deleted after commenting.",
+    ),
   commentId: z
     .string()
     .nullable()
@@ -425,7 +446,17 @@ export const channelPostComment = z.object({
     .describe(
       "The `id` of the comment this one replies to (the parent's own id in this list), if it is a reply.",
     ),
+  page: channelPostCommentPage
+    .nullable()
+    .describe(
+      "The page that wrote the comment; null unless `sender` is `page`.",
+    ),
   postId: z.string().describe("The post the comment belongs to."),
+  sender: z
+    .enum(POST_COMMENT_SENDERS)
+    .describe(
+      "Who wrote the comment: `contact` (the customer, see `author`) or `page` (a reply the page or its bot or agent sent).",
+    ),
   text: z
     .string()
     .nullable()
@@ -522,7 +553,7 @@ export const exportChannelPostCommentsRequest = z.object({
   kind: z
     .enum(channelPostExportKinds)
     .describe(
-      "`comments` writes every comment of the posts; `phones` writes one row per customer who left a phone number and needs permission to view phone numbers; `rows` writes the post list itself, one row per post, for `filters`.",
+      "`comments` writes every comment of the posts; `phones` writes one row per customer who left a phone number and needs permission to view phone numbers; `emails` writes one row per distinct email (the contact's, else the first address written in a comment) and needs the same permission; `rows` writes the post list itself, one row per post, for `filters`.",
     ),
   postIds: z
     .array(channelPostId)
@@ -530,7 +561,7 @@ export const exportChannelPostCommentsRequest = z.object({
     .max(MAX_MERGE_VIEW_POSTS)
     .optional()
     .describe(
-      `Required for \`comments\` and \`phones\`: the posts to export (1-${MAX_MERGE_VIEW_POSTS}, no repeats). Get ids from \`channelPostManagement.list\`. Not allowed for \`rows\`.`,
+      `Required for \`comments\`, \`phones\` and \`emails\`: the posts to export (1-${MAX_MERGE_VIEW_POSTS}, no repeats). Get ids from \`channelPostManagement.list\`. Not allowed for \`rows\`.`,
     ),
   search: z
     .string()
@@ -557,3 +588,78 @@ export const exportChannelPostCommentsResponse = z.object({
       `\`true\` when the file stops early: the posts have more than ${MAX_EXPORT_ROWS} comments (or the list more than ${MAX_EXPORT_POST_ROWS} posts for \`rows\`), or the export ran out of its time budget.`,
     ),
 })
+
+export const startChannelPostCommentExportRequest = z.object({
+  kind: z
+    .enum(channelPostCommentExportKinds)
+    .describe(
+      "`comments` writes every comment of the posts; `phones` writes one row per customer who left a phone number; `emails` writes one row per distinct email. The channel has no saved phone or email of a customer, so `phones` and `emails` hold only what customers typed in comments (the first value of each comment). `phones` and `emails` need permission to view phone numbers and emails.",
+    ),
+  postIds: z
+    .array(channelPostId)
+    .min(1)
+    .max(MAX_MERGE_VIEW_POSTS)
+    .describe(
+      `The posts to read, 1-${MAX_MERGE_VIEW_POSTS}, no repeats. Get ids from \`channelPostManagement.list\`. Every post must be on a channel that can be read for its comments.`,
+    ),
+})
+
+export const startChannelPostCommentExportResponse = z.object({
+  fileId: z
+    .string()
+    .describe(
+      "The export's id. Pass it to `channelPostManagement.getCommentExport`. When the same posts and kind are already being read, this is the running export's id.",
+    ),
+  status: fileStatuses.describe(
+    "`pending` while the export runs (a start that joins a running export reports its current state).",
+  ),
+})
+
+export const getChannelPostCommentExportRequest = z.object({
+  fileId: zodBigintIdAsString().describe(
+    "Export id returned by `channelPostManagement.startCommentExport`.",
+  ),
+})
+
+export const channelPostCommentExportStatusResponse = z.object({
+  downloadUrl: z
+    .string()
+    .nullable()
+    .describe(
+      "A signed link to the CSV, valid for 5 minutes, only once `status` is `uploaded`. Call again for a fresh link.",
+    ),
+  expectedRows: z
+    .number()
+    .int()
+    .nullable()
+    .describe(
+      "A rough estimate from the posts' stored comment counts, never exact; `null` when unknown.",
+    ),
+  expiresAt: z
+    .date()
+    .describe("When the file is deleted (exports are kept for 7 days)."),
+  failureReason: exportFailureReasons
+    .nullable()
+    .describe(
+      "Why a `failed` export failed: `channelDisconnected` (reconnect the channel), `postNotFound` (a post was removed meanwhile), `notSupported`, `rateLimited` (try again later) or `failed`.",
+    ),
+  fileId: z.string(),
+  fileName: z.string(),
+  kind: z.enum(channelPostCommentExportKinds),
+  rowCount: z
+    .number()
+    .int()
+    .describe("Rows read so far; final once the export has settled."),
+  status: fileStatuses.describe(
+    "`pending` while reading, `uploaded` when the file is ready, `failed` otherwise.",
+  ),
+  truncated: z
+    .boolean()
+    .describe(
+      "`true` when the export stopped at a safety limit (rows, time, pages or distinct values): the file is complete only up to that point.",
+    ),
+})
+
+export type ChannelPostCommentExportStatus = z.infer<
+  typeof channelPostCommentExportStatusResponse
+>

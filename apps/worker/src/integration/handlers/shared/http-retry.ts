@@ -1,4 +1,5 @@
 import { SdkException } from "@chatbotx.io/sdk"
+import { logger } from "../../../lib/logger"
 
 /** A 429 (rate limit) or any 5xx is worth retrying; anything else is not. */
 const isRetryableStatus = (status: number): boolean =>
@@ -116,4 +117,70 @@ export function isRetryable(error: unknown): boolean {
   // Last resort: a wrapper that is not literally an `SdkException` (a test
   // double, a future wrapper class) but still nests the raw transport error.
   return isTransientTransportError(readOriginError(error))
+}
+
+/** Maximum inline retry attempts on 429 / 5xx before propagating. */
+const MAX_INLINE_RETRIES = 4
+
+/**
+ * Thrown by {@link withInlineRetry} when the next retry would wait past the
+ * caller's deadline: the caller decides what to do with what it already has.
+ */
+export class InlineRetryDeadlineExceeded extends Error {
+  constructor() {
+    super("The retry wait would pass the deadline")
+    this.name = "InlineRetryDeadlineExceeded"
+  }
+}
+
+type InlineRetryOptions = {
+  /** Names the call in the retry log line. */
+  context?: string
+  /** Epoch ms after which no wait or retry starts; see {@link InlineRetryDeadlineExceeded}. */
+  deadlineAt?: number
+}
+
+/**
+ * Wraps a channel call with inline retry on 429 / 5xx and transport failures.
+ * Preserves the pagination cursor across retries - unlike a BullMQ-level retry
+ * which would restart the entire job from scratch. With `deadlineAt`, a retry
+ * whose wait would end past it is not started
+ * ({@link InlineRetryDeadlineExceeded}).
+ */
+export async function withInlineRetry<T>(
+  fn: () => Promise<T>,
+  options: InlineRetryOptions = {},
+): Promise<T> {
+  let lastError: unknown
+  for (let attempt = 0; attempt < MAX_INLINE_RETRIES; attempt++) {
+    // A timer that resumed late must not start a call past the deadline.
+    if (
+      attempt > 0 &&
+      options.deadlineAt !== undefined &&
+      Date.now() >= options.deadlineAt
+    ) {
+      throw new InlineRetryDeadlineExceeded()
+    }
+    try {
+      return await fn()
+    } catch (error) {
+      lastError = error
+      if (!isRetryable(error)) {
+        throw error
+      }
+      const delay = Math.min(2 ** attempt * 1000, 30_000)
+      if (
+        options.deadlineAt !== undefined &&
+        Date.now() + delay >= options.deadlineAt
+      ) {
+        throw new InlineRetryDeadlineExceeded()
+      }
+      logger.warn(
+        { attempt, context: options.context, delay },
+        "[retry] channel call rate-limited or failed transiently - retrying after delay",
+      )
+      await new Promise<void>((resolve) => setTimeout(resolve, delay))
+    }
+  }
+  throw lastError
 }

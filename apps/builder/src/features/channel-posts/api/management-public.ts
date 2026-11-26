@@ -15,9 +15,11 @@ import {
   possibleErrorsOnFindingResource,
   possibleErrorsOnListingResource,
   possibleErrorsOnMutatingResource,
+  possibleErrorsOnStartingChannelPostCommentExport,
 } from "@/lib/orpc/orpc-error-helper"
 import { workspaceTokenAuthAPIForScope } from "@/orpc"
 import {
+  CHANNEL_POST_COMMENT_EXPORTS_TOKEN_PATH,
   CHANNEL_POST_EXPORT_TOKEN_PATH,
   CHANNEL_POST_MERGE_VIEW_TOKEN_PATH,
 } from "../lib/api-paths"
@@ -25,6 +27,7 @@ import { channelPostManagementOperations } from "../lib/management-operations"
 import {
   bulkUpdateChannelPostManagementRequest,
   bulkUpdateChannelPostManagementResponse,
+  channelPostCommentExportStatusResponse,
   channelPostManagementIdRequest,
   channelPostManagementItem,
   channelPostSyncInboxFilter,
@@ -33,6 +36,7 @@ import {
   deleteChannelPostCommentResponse,
   exportChannelPostCommentsRequest,
   exportChannelPostCommentsResponse,
+  getChannelPostCommentExportRequest,
   likeChannelPostCommentRequest,
   likeChannelPostCommentResponse,
   listChannelPostAuthorsRequest,
@@ -45,6 +49,8 @@ import {
   refreshChannelPostMetricsRequest,
   refreshChannelPostMetricsResponse,
   refreshChannelPostResponse,
+  startChannelPostCommentExportRequest,
+  startChannelPostCommentExportResponse,
   startChannelPostSyncRequest,
   startChannelPostSyncResponse,
   updateChannelPostManagementRequest,
@@ -260,7 +266,7 @@ export const channelPostManagementPublicRouter = {
       path: "/v1/channel-posts/management/{id}/comments",
       summary: "List channel post comments",
       description:
-        "Lists the comments customers left on one post, newest first, with the commenter's name, avatar, tags and phone number. Filter with `search` (text) and `hasPhone` (comments that carry a phone number). Page with `nextCursor`. Get the post id from `channelPostManagement.list`.",
+        "Lists the comments customers left on one post, newest first, with the commenter's name, avatar, tags and phone number. Each comment has a `sender` (`contact` or `page`); a `page` comment is a reply the page, its bot or an agent sent, and carries the page's name in `page` while `author` stays the customer of the thread. Filter with `search` (text) and `hasPhone` (comments that carry a phone number). Page with `nextCursor`. Get the post id from `channelPostManagement.list`.",
       tags,
     })
     .input(listChannelPostCommentsRequest)
@@ -348,7 +354,7 @@ export const channelPostManagementPublicRouter = {
       spec: chargedExportPost,
       summary: "Export channel post comments",
       description:
-        "Builds a CSV and returns it in the response (`csv`, `fileName`, `rowCount`). `kind: rows` writes the post list itself, one row per post (publishedAt, channel, page, type, text excerpt, comments, reactions, shares, phones, topics, author, link, externalPostId), for the same `filters` and `sort` as `channelPostManagement.list` (no `postIds`; first 5000 posts). `kind: comments` and `phones` take the comments of up to 20 posts (`postIds`): `kind: comments` has one row per comment (createdAt, post, customer, phone, text, hidden); `kind: phones` has one row per customer who left a phone number (customer, phone, firstCommentAt, post). Stops at 20000 comments (5000 posts for `rows`), or when its time budget runs out, and then sets `truncated`. Optional `search` narrows the comments. Cells that start with a formula character are prefixed with a quote. A completed download consumes 1 message of the account's message quota; answers 429 `postMessageQuotaExceeded` (and builds nothing) when none is left. Not allowed in a workspace whose plan has expired (403 `trialExpired` or `macLimitReached`).",
+        "Builds a CSV and returns it in the response (`csv`, `fileName`, `rowCount`). `kind: rows` writes the post list itself, one row per post (publishedAt, channel, page, type, text excerpt, comments, reactions, shares, phones, topics, author, link, externalPostId), for the same `filters` and `sort` as `channelPostManagement.list` (no `postIds`; first 5000 posts). `kind: comments`, `phones` and `emails` take the comments of up to 20 posts (`postIds`): `kind: comments` has one row per comment (createdAt, post, customer, phone, text, hidden); `kind: phones` has one row per customer who left a phone number (customer, phone, firstCommentAt, post); `kind: emails` has one row per distinct email, lower-cased (customer, email, firstCommentAt, post). Contact data kinds need email-and-phone permission. Stops at 20000 comments (5000 posts for `rows`), or when its time budget runs out, and then sets `truncated`. Optional `search` narrows the comments. Cells that start with a formula character are prefixed with a quote. A completed download consumes 1 message of the account's message quota; answers 429 `postMessageQuotaExceeded` (and builds nothing) when none is left. Not allowed in a workspace whose plan has expired (403 `trialExpired` or `macLimitReached`).",
       tags,
     })
     .input(exportChannelPostCommentsRequest)
@@ -362,6 +368,56 @@ export const channelPostManagementPublicRouter = {
             workspaceId: context.workspace.id,
           },
           input,
+        ),
+    ),
+
+  startCommentExport: workspaceTokenAuthAPI
+    .route({
+      method: "POST",
+      path: CHANNEL_POST_COMMENT_EXPORTS_TOKEN_PATH,
+      successStatus: 202,
+      summary: "Start channel post comment export",
+      description:
+        "Starts a background export that reads the comments of up to 20 posts (`postIds`, from `channelPostManagement.list`) from their channels and writes a CSV, and answers 202 with the export's `fileId` straight away. Follow it with `channelPostManagement.getCommentExport`. Unlike `channelPostManagement.exportComments`, which writes the comments already stored here, this reads everything the channel has, including comments never stored, and has no 20000-comment limit; it stops only at safety limits (rows, time, pages, distinct values) and then sets `truncated`. `kind: comments` has one row per comment, `phones` one row per distinct phone number and `emails` one row per distinct email; the channel keeps no phone or email of a customer, so `phones` and `emails` hold only what is written in comment texts. `phones` and `emails` need email-and-phone permission (403 otherwise). Only channels that can be read for comments are allowed (409 `commentExportUnsupported`). Starting the same posts and kind while one is running answers with the running `fileId`. A finished export consumes 1 message of the account's message quota (429 `postMessageQuotaExceeded` and nothing started when none is left); not allowed in a workspace whose plan has expired (403 `trialExpired` or `macLimitReached`; 402 `workspaceBlocked` from the handler's own check). The file is kept for 7 days.",
+      tags,
+    })
+    .input(startChannelPostCommentExportRequest)
+    .output(startChannelPostCommentExportResponse)
+    .errors(possibleErrorsOnStartingChannelPostCommentExport)
+    .handler(
+      async ({ context, input }) =>
+        await channelPostManagementOperations.startCommentExport(
+          {
+            canViewEmailAndPhone: TOKEN_CALLER_CAN_VIEW_EMAIL_AND_PHONE,
+            ownerId: context.workspace.ownerId,
+            // A workspace token has no session user to record on the file.
+            userId: null,
+            workspaceId: context.workspace.id,
+          },
+          input,
+        ),
+    ),
+
+  getCommentExport: workspaceTokenAuthAPI
+    .route({
+      method: "GET",
+      path: `${CHANNEL_POST_COMMENT_EXPORTS_TOKEN_PATH}/{fileId}`,
+      summary: "Get channel post comment export",
+      description:
+        "Returns where an export started with `channelPostManagement.startCommentExport` stands: `status` (`pending`, `uploaded` or `failed`), `rowCount` read so far, a rough `expectedRows` estimate (null when unknown), `truncated`, `failureReason` of a failed export and `expiresAt`. `downloadUrl` is a signed link to the CSV, valid for 5 minutes, present only once `status` is `uploaded`; call again for a fresh one. Poll every few seconds until `status` is not `pending`. The `fileId` comes from `channelPostManagement.startCommentExport`; an unknown id, or one of another workspace, answers 404.",
+      tags,
+    })
+    .input(getChannelPostCommentExportRequest)
+    .output(channelPostCommentExportStatusResponse)
+    .errors(possibleErrorsOnFindingResource)
+    .handler(
+      async ({ context, input }) =>
+        await channelPostManagementOperations.getCommentExport(
+          {
+            canViewEmailAndPhone: TOKEN_CALLER_CAN_VIEW_EMAIL_AND_PHONE,
+            workspaceId: context.workspace.id,
+          },
+          input.fileId,
         ),
     ),
 }

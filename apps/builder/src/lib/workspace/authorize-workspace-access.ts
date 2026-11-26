@@ -117,6 +117,10 @@ const READ_ONLY_TOKEN_ALLOWED_METHODS = new Set<HTTPMethod>(["GET", "HEAD"])
  *   is refused (403 `trialExpired` / `macLimitReached`) on a trial-expired workspace, and NOT open to `read_only`
  *   tokens: like the audience preview it extracts a whole workspace's contact
  *   data in one call rather than page by page.
+ * - Starting a read-from-channel comment export (`/v1/channel-posts/management/exports`
+ *   and its session twin): queues a background read that consumes a message of
+ *   the quota, so it is refused on a trial-expired workspace and for `read_only`
+ *   tokens like the export above. Its status is a GET and stays open.
  */
 
 const READ_ONLY_TOKEN_ALLOWED_POST_PATHS = new Set<string>([

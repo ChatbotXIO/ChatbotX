@@ -12603,7 +12603,9 @@
       "menu": "Exportieren",
       "rowsTitle": "Liste der Beiträge exportieren (eine Zeile pro Beitrag)",
       "rowsDone": "Die Beitragsliste wurde exportiert.",
-      "rowsTruncated": "Die Liste wurde am Beitragslimit abgeschnitten. Schränke die Filter ein, um den Rest zu exportieren."
+      "rowsTruncated": "Die Liste wurde am Beitragslimit abgeschnitten. Schränke die Filter ein, um den Rest zu exportieren.",
+      "sourceStored": "Gespeicherte Daten",
+      "sourceChannel": "Vom Kanal lesen"
     },
     "showAllPosts": "Auch Beiträge ohne Kommentare anzeigen",
     "noCaption": "Kein Text",
@@ -12700,7 +12702,9 @@
       "refreshCooldown": "Dieser Beitrag wurde gerade aktualisiert. Versuche es in einer Minute erneut.",
       "downloadPhones": "Telefonnummern herunterladen",
       "downloadComments": "Kommentare herunterladen",
-      "viewDetails": "Details anzeigen"
+      "viewDetails": "Details anzeigen",
+      "download": "Herunterladen",
+      "downloadEmails": "E-Mails herunterladen"
     },
     "merge": {
       "title": "Beiträge zusammenführen",
@@ -13286,6 +13290,24 @@
           "removed": "Aus dem Kanal entfernt."
         }
       }
+    },
+    "channelExport": {
+      "started": "Kommentare werden vom Kanal gelesen. Das kann etwas dauern.",
+      "progress": "Lese vom Kanal… bisher {count} Zeilen.",
+      "progressEstimate": "Lese vom Kanal… bisher {count} Zeilen (insgesamt etwa {expected} Kommentare).",
+      "ready": "Die Datei ist fertig.",
+      "download": "Herunterladen",
+      "truncated": "Der Export wurde an einer Sicherheitsgrenze beendet, daher ist die Datei unvollständig. Exportiere weniger Beiträge, um den Rest zu erhalten.",
+      "forbidden": "Du hast keine Berechtigung, Telefonnummern und E-Mails herunterzuladen.",
+      "startFailed": "Der Export konnte nicht gestartet werden. Versuche es erneut.",
+      "inProgress": "Der Export wird gerade gestartet, versuche es gleich noch einmal.",
+      "failure": {
+        "channelDisconnected": "Der Kanal ist getrennt. Verbinde ihn erneut und versuche es noch einmal.",
+        "postNotFound": "Ein Beitrag existiert auf dem Kanal nicht mehr.",
+        "notSupported": "Die Kommentare dieses Kanals können nicht vom Kanal gelesen werden.",
+        "rateLimited": "Der Kanal hat darum gebeten, langsamer zu machen. Versuche es in einigen Minuten erneut.",
+        "failed": "Der Export ist fehlgeschlagen. Versuche es erneut."
+      }
     }
   },
   "socialAccounts": {
@@ -13433,7 +13455,12 @@
     "repeatScheduleOff": "Planung und Veröffentlichung gelten für jede Kopie, nicht für die Vorlage.",
     "moveMediaEarlier": "Weiter nach vorn",
     "moveMediaLater": "Weiter nach hinten",
-    "removeFromChannels": "Aus den Kanälen entfernen",
+    "removeFromAllChannels": "Aus allen Kanälen entfernen",
+    "removeTarget": "Entfernen",
+    "removeTargetTitle": "Diesen Beitrag von {destination} entfernen?",
+    "removeTargetDescription": "Der veröffentlichte Beitrag wird bei {destination} auf {network} entfernt. Die anderen Ziele behalten ihn. Das lässt sich nicht rückgängig machen.",
+    "removeTargetConfirm": "Entfernen",
+    "removing": "Wird entfernt…",
     "removeFromChannelsTitle": "Diesen Beitrag aus den Netzwerken entfernen?",
     "removeFromChannelsDescription": "Der veröffentlichte Beitrag wird aus jedem Netzwerk entfernt, das dies unterstützt. Netzwerke ohne Löschfunktion behalten ihn. Das lässt sich nicht rückgängig machen.",
     "removeFromChannelsConfirm": "Entfernen",
@@ -13442,6 +13469,7 @@
     "removeUnsupported": "{count, plural, one {# Ziel kann nicht über die API des Netzwerks entfernt werden; entferne es in der App.} other {# Ziele können nicht über die API der Netzwerke entfernt werden; entferne sie in den Apps.}}",
     "removedFromChannel": "Aus dem Netzwerk entfernt",
     "removalPermissionMissing": "Verbinde dieses Konto erneut, um das Löschen von Beiträgen zu erlauben.",
+    "removalQueueFailed": "Das Entfernen konnte nicht eingereiht werden. Versuche es erneut.",
     "postMessageQuotaExceeded": "Das Nachrichtenkontingent dieses Kontos ist aufgebraucht, daher wurde dieser Beitrag nicht veröffentlicht. Wechseln Sie auf einen höheren Tarif oder warten Sie auf den nächsten Abrechnungszeitraum und versuchen Sie es dann erneut.",
     "tiktokLoading": "TikTok-Kontoeinstellungen werden geladen…",
     "tiktokUnavailable": "Die TikTok-Kontoeinstellungen konnten nicht geladen werden. Versuche es erneut.",

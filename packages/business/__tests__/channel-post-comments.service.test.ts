@@ -13,6 +13,18 @@ const mocks = vi.hoisted(() => ({
   findThreads: vi.fn(),
   listComments: vi.fn(),
   queueRealtime: vi.fn(),
+  resolveCommenterAvatars: vi.fn(),
+  resolveInboxAvatars: vi.fn(),
+  listDestinations: vi.fn(),
+  resolveTenantSettings: vi.fn(),
+}))
+
+vi.mock("../src/channel-post/comment-avatars", () => ({
+  resolveCommenterAvatars: mocks.resolveCommenterAvatars,
+  resolveInboxAvatars: mocks.resolveInboxAvatars,
+}))
+vi.mock("../src/platform/settings", () => ({
+  resolveTenantSettings: mocks.resolveTenantSettings,
 }))
 
 vi.mock("@chatbotx.io/database/repositories", () => ({
@@ -29,6 +41,7 @@ vi.mock("@chatbotx.io/database/repositories", () => ({
     findContactInboxes: mocks.findContactInboxes,
     findThreads: mocks.findThreads,
   },
+  publishDestinationStateRepository: { list: mocks.listDestinations },
 }))
 vi.mock("@chatbotx.io/worker-config", () => ({
   ChatJobAction: {
@@ -77,6 +90,7 @@ const post = (
   externalPostId,
   id,
   inboxId,
+  inboxName: "Page One",
 })
 
 const comment = (overrides: Record<string, unknown> = {}) => ({
@@ -86,6 +100,7 @@ const comment = (overrides: Record<string, unknown> = {}) => ({
   createdAt: new Date("2026-11-22T10:00:00.123Z"),
   createdAtText: "2026-11-22 10:00:00.123456+00",
   id: "m1",
+  messageType: "incoming",
   parentId: null,
   sourceId: "fb-comment-1",
   text: "Call me 0901 234 567",
@@ -100,6 +115,16 @@ const base = {
 
 beforeEach(() => {
   vi.clearAllMocks()
+  mocks.resolveTenantSettings.mockResolvedValue({
+    storageUrl: "https://storage.test",
+  })
+  mocks.listDestinations.mockResolvedValue([])
+  mocks.resolveInboxAvatars.mockResolvedValue(
+    new Map([["inbox-1", "https://cdn.test/page.png"]]),
+  )
+  mocks.resolveCommenterAvatars.mockResolvedValue(
+    new Map([["k1", "https://cdn.test/a.png"]]),
+  )
   mocks.findByIds.mockResolvedValue([post("p1", "ext-1")])
   mocks.findThreads.mockResolvedValue([
     {
@@ -140,7 +165,7 @@ describe("channelPostCommentsService.list", () => {
     expect(page.items).toEqual([
       {
         author: {
-          avatar: "a.png",
+          avatar: "https://cdn.test/a.png",
           id: "k1",
           name: "An",
           phoneNumber: "0901234567",
@@ -151,12 +176,116 @@ describe("channelPostCommentsService.list", () => {
         hidden: true,
         id: "m1",
         liked: true,
+        page: null,
         parentCommentId: null,
         postId: "p1",
+        sender: "contact",
         text: "Call me 0901 234 567",
       },
     ])
     expect(page.nextCursor).toBeUndefined()
+  })
+
+  test("a reply the system sent is the page's: sender page, the post's inbox as page, the contact still the author", async () => {
+    mocks.listComments.mockResolvedValue({
+      data: [
+        comment({ id: "m2", messageType: "outgoing", parentId: "m1" }),
+        comment(),
+      ],
+      nextCursor: null,
+    })
+
+    const page = await channelPostCommentsService.list({
+      ...base,
+      postId: "p1",
+    })
+
+    const [reply, customer] = page.items
+    expect(reply?.sender).toBe("page")
+    expect(reply?.page).toEqual({
+      avatar: "https://cdn.test/page.png",
+      name: "Page One",
+    })
+    expect(reply?.author?.id).toBe("k1")
+    expect(customer?.sender).toBe("contact")
+    expect(customer?.page).toBeNull()
+    expect(customer?.author?.name).toBe("An")
+  })
+
+  test("a page with no resolved picture has none, so the UI shows the channel icon", async () => {
+    mocks.resolveInboxAvatars.mockResolvedValue(new Map())
+    mocks.listComments.mockResolvedValue({
+      data: [comment({ messageType: "outgoing" })],
+      nextCursor: null,
+    })
+
+    const page = await channelPostCommentsService.list({
+      ...base,
+      postId: "p1",
+    })
+
+    expect(page.items[0]?.page).toEqual({ avatar: null, name: "Page One" })
+  })
+
+  test("reads the posts' destinations once, by their inbox ids", async () => {
+    await channelPostCommentsService.list({ ...base, postId: "p1" })
+
+    expect(mocks.listDestinations).toHaveBeenCalledTimes(1)
+    expect(mocks.listDestinations).toHaveBeenCalledWith({
+      inboxIds: ["inbox-1"],
+      workspaceId: "ws-1",
+    })
+    expect(mocks.resolveInboxAvatars).toHaveBeenCalledWith(
+      expect.objectContaining({ storageUrl: "https://storage.test" }),
+    )
+  })
+
+  test("an activity message is never shown as the page", async () => {
+    mocks.listComments.mockResolvedValue({
+      data: [comment({ messageType: "activity" })],
+      nextCursor: null,
+    })
+
+    const page = await channelPostCommentsService.list({
+      ...base,
+      postId: "p1",
+    })
+
+    expect(page.items[0]?.sender).toBe("contact")
+  })
+
+  test("resolves the page's commenters once, with their contact inboxes and channel", async () => {
+    await channelPostCommentsService.list({ ...base, postId: "p1" })
+
+    expect(mocks.resolveCommenterAvatars).toHaveBeenCalledTimes(1)
+    const call = mocks.resolveCommenterAvatars.mock.calls[0]?.[0]
+    expect(call.workspaceId).toBe("ws-1")
+    expect(call.commenters.map((c: { id: string }) => c.id)).toEqual(["k1"])
+    expect(call.contactInboxesByContactId.get("k1")).toEqual([
+      { channel: "messenger", id: "ci-1" },
+    ])
+  })
+
+  test("a commenter with no resolved avatar has none, and a caller that skips avatars never resolves any", async () => {
+    mocks.resolveCommenterAvatars.mockResolvedValue(new Map())
+    const withNone = await channelPostCommentsService.list({
+      ...base,
+      postId: "p1",
+    })
+    expect(withNone.items[0]?.author?.avatar).toBeNull()
+
+    vi.clearAllMocks()
+    const reader = await channelPostCommentsService.openReader({
+      ...base,
+      includeAvatars: false,
+      postIds: ["p1"],
+    })
+    const page = await reader.readPage({ limit: 30 })
+
+    expect(mocks.resolveCommenterAvatars).not.toHaveBeenCalled()
+    expect(mocks.listDestinations).not.toHaveBeenCalled()
+    expect(mocks.resolveTenantSettings).not.toHaveBeenCalled()
+    expect(page.items[0]?.author?.avatar).toBeNull()
   })
 
   test("reads the threads of the post's external id and the message page in the workspace", async () => {
@@ -903,6 +1032,20 @@ describe("channelPostCommentsService.countPhoneComments", () => {
       limit: 100,
       workspaceId: "ws-1",
     })
+  })
+
+  test("reads no avatars, tenant settings or destinations: the count shows none", async () => {
+    mocks.countComments.mockResolvedValue({ capped: false, count: 1 })
+
+    await channelPostCommentsService.countPhoneComments({
+      limit: 100,
+      postId: "p1",
+      workspaceId: "ws-1",
+    })
+
+    expect(mocks.resolveCommenterAvatars).not.toHaveBeenCalled()
+    expect(mocks.listDestinations).not.toHaveBeenCalled()
+    expect(mocks.resolveTenantSettings).not.toHaveBeenCalled()
   })
 
   test("counts nothing for a post with no threads", async () => {

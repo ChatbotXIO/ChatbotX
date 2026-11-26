@@ -25,6 +25,7 @@ export const exportSubTypes = z.enum([
   "contacts",
   "coupons",
   "leaderboardParticipants",
+  "channelPostComments",
 ])
 export type ExportSubType = z.infer<typeof exportSubTypes>
 
@@ -33,3 +34,16 @@ export type ExportSubType = z.infer<typeof exportSubTypes>
  * so it is not kept forever; the daily sweep deletes the file and its row.
  */
 export const CONTACT_EXPORT_RETENTION_DAYS = 7
+
+/**
+ * Why a background export ended as `failed`: a closed set, never raw error
+ * text, so a user sees a reason-specific message and an API client can branch.
+ */
+export const exportFailureReasons = z.enum([
+  "channelDisconnected",
+  "postNotFound",
+  "notSupported",
+  "rateLimited",
+  "failed",
+])
+export type ExportFailureReason = z.infer<typeof exportFailureReasons>

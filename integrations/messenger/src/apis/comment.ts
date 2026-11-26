@@ -3,6 +3,7 @@ import type {
   Context,
   IncomingAttachment,
 } from "@chatbotx.io/sdk"
+import { usagePauseMs } from "@chatbotx.io/utils/meta-usage"
 import { DEFAULT_API_VERSION } from "../constants"
 import { rescue } from "../exception"
 import { facebookGraphClient } from "../lib/http-client"
@@ -480,12 +481,15 @@ export type FacebookPostComment = {
   from?: { id: string; name?: string }
   parent?: { id: string }
   message_tags?: { id?: string; name?: string }[]
+  is_hidden?: boolean
 }
 
 export type FacebookPostCommentPage = {
   comments: FacebookPostComment[]
   /** Cursor for the next page; absent on the last one. */
   nextCursor?: string
+  /** How long the usage headers ask the next read to wait; `null` when none. */
+  pauseMs: number | null
 }
 
 /**
@@ -505,13 +509,14 @@ export const listPostComments = (props: {
   const endpoint = `${version}/${postId}/comments`
 
   return rescue(endpoint, async () => {
-    const res = await facebookGraphClient.get<{
+    const { data: res, headers } = await facebookGraphClient.getWithHeaders<{
       data: FacebookPostComment[]
       paging?: { cursors?: { after?: string }; next?: string }
     }>(endpoint, {
       headers: { Authorization: `Bearer ${auth.tokens.accessToken}` },
       searchParams: {
-        fields: "id,message,created_time,from{id,name},parent{id},message_tags",
+        fields:
+          "id,message,created_time,from{id,name},parent{id},message_tags,is_hidden",
         order: "reverse_chronological",
         filter: "stream",
         limit: "100",
@@ -521,6 +526,7 @@ export const listPostComments = (props: {
     return {
       comments: res.data,
       nextCursor: res.paging?.next ? res.paging.cursors?.after : undefined,
+      pauseMs: usagePauseMs(headers),
     }
   })
 }

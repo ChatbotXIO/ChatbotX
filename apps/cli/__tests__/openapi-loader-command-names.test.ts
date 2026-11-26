@@ -675,6 +675,8 @@ describe("pathAndMethodToCommandName — managed channel posts", () => {
       ["/v1/channel-posts/management/{id}/comments/{commentId}/like", "POST"],
       ["/v1/channel-posts/management/{id}/comments/{commentId}", "DELETE"],
       ["/v1/channel-posts/management/export", "POST"],
+      ["/v1/channel-posts/management/exports", "POST"],
+      ["/v1/channel-posts/management/exports/{fileId}", "GET"],
       ["/v1/channel-posts/sync", "POST"],
       ["/v1/channel-posts/sync/status", "GET"],
     ].map(([path, method]) => pathAndMethodToCommandName(path, method))
@@ -695,6 +697,8 @@ describe("pathAndMethodToCommandName — managed channel posts", () => {
       "channel-posts:like-comment",
       "channel-posts:delete-comment",
       "channel-posts:export-comments",
+      "channel-posts:start-comment-export",
+      "channel-posts:get-comment-export",
       "channel-posts:sync",
       "channel-posts:sync-status",
     ])

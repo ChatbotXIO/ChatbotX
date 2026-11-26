@@ -24,6 +24,7 @@ import {
 } from "../../src/partials/channel-post"
 import { relations } from "../../src/relations"
 import { channelPostManagementRepository } from "../../src/repositories/channel-post/management"
+import { channelPostRepository } from "../../src/repositories/channel-post/repository"
 import { postTopicRepository } from "../../src/repositories/post-topic/repository"
 // biome-ignore lint/performance/noNamespaceImport: mirrors the database client schema registration
 import * as schema from "../../src/schema"
@@ -193,6 +194,20 @@ describe.skipIf(!databaseUrl)("post management against a real database", () => {
 
       expect(new Set(counts).size).toBeLessThan(POST_COUNT / PAGE_SIZE)
       expect(new Set(paged).size).toBe(POST_COUNT - 1)
+    })
+  })
+
+  describe("findByIds", () => {
+    test("returns each post's stored commentsCount, scoped to the workspace", async () => {
+      const rows = await channelPostRepository.findByIds({
+        ids: [postIds[1], postIds[2]],
+        workspaceId: fixture.workspaceId,
+      })
+
+      const counts = Object.fromEntries(
+        rows.map((row) => [row.id, row.commentsCount]),
+      )
+      expect(counts).toEqual({ [postIds[1]]: 1, [postIds[2]]: 2 })
     })
   })
 

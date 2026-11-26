@@ -1,6 +1,7 @@
 import type { PostManagementChannel } from "@chatbotx.io/utils/channel"
 import type { SocialProvider } from "@chatbotx.io/utils/social-account"
 import type { SocialPostBucket } from "@chatbotx.io/utils/social-post"
+import { PROVIDER_BY_POST_CHANNEL } from "./post-provider"
 
 /**
  * What the Posts tab shows, left to right: the posts on the channels (the
@@ -18,14 +19,6 @@ export type PostsShow = (typeof POSTS_SHOW_OPTIONS)[number]
 /** The composed-post bucket a choice lists, or `undefined` for the channel table. */
 export const bucketOfShow = (show: PostsShow): SocialPostBucket | undefined =>
   show === "channels" ? undefined : show
-
-/** The publishing network of each channel that has composed posts (a Messenger inbox publishes to its Facebook Page). */
-const PROVIDER_OF_CHANNEL: Record<PostManagementChannel, SocialProvider> = {
-  instagram: "instagram",
-  messenger: "facebook",
-  threads: "threads",
-  tiktok: "tiktok",
-}
 
 /** What the Posts tab's shared filters narrow a composed-post list by. */
 export type ComposedNarrowing = {
@@ -56,7 +49,7 @@ export const composedNarrowingOf = (filters: {
   from: startOfDay(filters.from),
   inboxIds: filters.inboxIds.length ? [...filters.inboxIds] : undefined,
   providers: filters.channels.length
-    ? filters.channels.map((channel) => PROVIDER_OF_CHANNEL[channel])
+    ? filters.channels.map((channel) => PROVIDER_BY_POST_CHANNEL[channel])
     : undefined,
   search: filters.search ?? undefined,
   to: endOfDay(filters.to),

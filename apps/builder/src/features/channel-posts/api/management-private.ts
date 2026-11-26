@@ -7,15 +7,20 @@ import {
   workspacePermissionMiddleware,
 } from "@/middlewares/auth"
 import { authorizedAPI } from "@/orpc"
-import { CHANNEL_POST_MERGE_VIEW_POST_PATH } from "../lib/api-paths"
+import {
+  CHANNEL_POST_COMMENT_EXPORTS_POST_PATH,
+  CHANNEL_POST_MERGE_VIEW_POST_PATH,
+} from "../lib/api-paths"
 import { channelPostManagementOperations } from "../lib/management-operations"
 import {
+  channelPostCommentExportStatusResponse,
   channelPostManagementIdRequest,
   channelPostManagementItem,
   channelPostSyncInboxFilter,
   channelPostSyncStatusResponse,
   deleteChannelPostCommentRequest,
   deleteChannelPostCommentResponse,
+  getChannelPostCommentExportRequest,
   likeChannelPostCommentRequest,
   likeChannelPostCommentResponse,
   listChannelPostAuthorsRequest,
@@ -28,6 +33,8 @@ import {
   refreshChannelPostMetricsRequest,
   refreshChannelPostMetricsResponse,
   refreshChannelPostResponse,
+  startChannelPostCommentExportRequest,
+  startChannelPostCommentExportResponse,
   startChannelPostSyncRequest,
   startChannelPostSyncResponse,
   updateChannelPostManagementRequest,
@@ -300,6 +307,55 @@ export const channelPostManagementAPIs = {
         await channelPostManagementOperations.deleteComment(
           input.workspaceId,
           input,
+        ),
+    ),
+
+  privateStartChannelPostCommentExportAPI: authorizedAPI
+    .route({
+      method: "POST",
+      path: CHANNEL_POST_COMMENT_EXPORTS_POST_PATH,
+      successStatus: 202,
+      summary: "Start channel post comment export",
+      tags,
+    })
+    .input(startChannelPostCommentExportRequest.extend(inWorkspace))
+    .output(startChannelPostCommentExportResponse)
+    .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
+    .use(
+      workspacePermissionMiddleware("broadcast"),
+      (input) => input.workspaceId,
+    )
+    .handler(
+      async ({ context, input }) =>
+        await channelPostManagementOperations.startCommentExport(
+          {
+            ...commentCaller(input.workspaceId, context.workspaceMember),
+            ownerId: context.workspace.ownerId,
+            userId: context.user.id,
+          },
+          input,
+        ),
+    ),
+
+  privateGetChannelPostCommentExportAPI: authorizedAPI
+    .route({
+      method: "GET",
+      path: `${CHANNEL_POST_COMMENT_EXPORTS_POST_PATH}/{fileId}`,
+      summary: "Get channel post comment export",
+      tags,
+    })
+    .input(getChannelPostCommentExportRequest.extend(inWorkspace))
+    .output(channelPostCommentExportStatusResponse)
+    .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
+    .use(
+      workspacePermissionMiddleware("broadcast"),
+      (input) => input.workspaceId,
+    )
+    .handler(
+      async ({ context, input }) =>
+        await channelPostManagementOperations.getCommentExport(
+          commentCaller(input.workspaceId, context.workspaceMember),
+          input.fileId,
         ),
     ),
 }

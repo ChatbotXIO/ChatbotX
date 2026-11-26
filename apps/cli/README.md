@@ -244,8 +244,10 @@ chatbotx channel-posts list-comments <id>             # [--search --hasPhone --l
 chatbotx channel-posts merge-comments --postIds <ids> # [--search --hasPhone --limit --cursor] Comments of up to 20 posts as one list
 chatbotx channel-posts like-comment <id> <commentId> --createdAt <iso> --liked true|false   # Not on Instagram or Threads (409)
 chatbotx channel-posts delete-comment <id> <commentId> --createdAt <iso>                    # Not on Threads (409); cannot be undone
-chatbotx channel-posts export-comments --postIds <ids> --kind comments|phones   # Returns the CSV in the response; 20000-comment cap (`truncated`)
+chatbotx channel-posts export-comments --postIds <ids> --kind comments|phones|emails   # Returns the CSV in the response; 20000-comment cap (`truncated`)
 chatbotx channel-posts export-comments --kind rows [--filters '{"channels":["messenger"],"sort":"newest"}']   # The post list itself, one row per post; 5000-post cap
+chatbotx channel-posts start-comment-export --postIds <ids> --kind comments|phones|emails   # Background read of every comment from the channel (no 20000 cap); returns `fileId` (202)
+chatbotx channel-posts get-comment-export <fileId>      # Status, rows read, `truncated`, `failureReason` and, once `uploaded`, a 5-minute `downloadUrl`
 chatbotx channel-posts sync                             # [--inboxIds] Start syncing posts from the channels; first run loads history
 chatbotx channel-posts sync-status                      # [--inboxIds] Where each inbox's post sync stands, last error, re-authorise hint
 chatbotx post-topics list|create|update|delete          # Topics that group posts; scope `posts`
@@ -276,6 +278,7 @@ chatbotx social-posts resume-recurrence <id>
 chatbotx social-posts end-recurrence <id>            # End the series for good; the copies already made stay
 chatbotx social-posts publish <id>                 # Publish a draft now on every destination (each target goes pending, then published | failed | needsReview; poll `get`)
 chatbotx social-posts retry-target <id> <targetId>  # Publish one failed or needsReview destination again; when its first post is out, resumes at the first part not published (optional `partId`), never reposting the head
+chatbotx social-posts remove-target <id> <targetId>  # Take one published destination down from its network, leaving the others published (`social-posts delete <id> --removeFromChannels true` removes every destination)
 chatbotx social-posts resolve-target <id> <targetId> --body '{"outcome":"published"}'   # Settle a needsReview destination: "published" (you saw it on the network) or "retry"; with parts it acts on the first part not published (`partId` optional)
 # Threads destinations take `parts` and `firstComment` in `create`/`update` targets, e.g. {"destinationId":"123","parts":[{"text":"2/"},{"text":"3/"}],"firstComment":{"text":"Link: ..."}}; `content-types` lists which networks support them
 chatbotx social-posts validate --body '{...}'        # Every issue per destination (text length, files, formats, account status) without saving

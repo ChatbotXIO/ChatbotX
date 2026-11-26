@@ -53,7 +53,7 @@ const INBOX_PROVIDERS: readonly InboxPublishProvider[] = [
  * stale is served through the on-view route; a recorded "no picture" or a
  * recent failure, and a destination that cannot be fetched, are not.
  */
-const needsAvatarProxy = (row: PublishDestinationStateRow): boolean =>
+export const needsAvatarProxy = (row: PublishDestinationStateRow): boolean =>
   row.inboxId !== null &&
   !row.avatar &&
   row.state !== "inboxDisconnected" &&

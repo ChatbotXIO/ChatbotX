@@ -1,5 +1,6 @@
 import {
   CONTACT_EXPORT_RETENTION_DAYS,
+  type ExportSubType,
   exportSubTypes,
   type FileStatus,
   fileContextTypes,
@@ -183,7 +184,7 @@ class ContactExportService extends BaseService {
   }
 
   /**
-   * Deletes one batch of contact exports older than the retention: the stored
+   * Deletes one batch of exports of the given kinds older than the retention: the stored
    * CSV first, then its row. A failed object delete keeps the row so the next
    * sweep retries it; S3 treats a missing object as deleted, so a retry after
    * a half-done pass is safe. Returns how many rows were removed, how many
@@ -192,6 +193,8 @@ class ContactExportService extends BaseService {
    */
   async purgeExpired(props: {
     batchSize: number
+    /** The export kinds this sweep covers; they share the retention. */
+    subTypes: ExportSubType[]
     now?: Date
     after?: ContactExportCursor
   }): Promise<{
@@ -201,7 +204,7 @@ class ContactExportService extends BaseService {
   }> {
     const now = props.now ?? new Date()
     const expired = await fileRepository.listExportsCreatedBefore({
-      subType: exportSubTypes.enum.contacts,
+      subTypes: props.subTypes,
       before: new Date(now.getTime() - RETENTION_MS),
       limit: props.batchSize,
       after: props.after,

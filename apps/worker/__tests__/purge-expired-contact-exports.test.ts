@@ -42,11 +42,13 @@ describe("purgeExpiredContactExports", () => {
     expect(mocks.purgeExpired).toHaveBeenCalledTimes(2)
     expect(mocks.purgeExpired).toHaveBeenNthCalledWith(1, {
       batchSize: 500,
+      subTypes: ["contacts", "channelPostComments"],
       now: expect.any(Date),
       after: undefined,
     })
     expect(mocks.purgeExpired).toHaveBeenNthCalledWith(2, {
       batchSize: 500,
+      subTypes: ["contacts", "channelPostComments"],
       now: mocks.purgeExpired.mock.calls[0]?.[0].now,
       after: cursor("a"),
     })

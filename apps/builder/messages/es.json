@@ -12603,7 +12603,9 @@
       "menu": "Exportar",
       "rowsTitle": "Exportar la lista de publicaciones (una fila por publicación)",
       "rowsDone": "Se exportó la lista de publicaciones.",
-      "rowsTruncated": "La lista se cortó en el límite de publicaciones. Acota los filtros para exportar el resto."
+      "rowsTruncated": "La lista se cortó en el límite de publicaciones. Acota los filtros para exportar el resto.",
+      "sourceStored": "Datos guardados",
+      "sourceChannel": "Leer del canal"
     },
     "showAllPosts": "Mostrar también publicaciones sin comentarios",
     "noCaption": "Sin texto",
@@ -12700,7 +12702,9 @@
       "refreshCooldown": "Esta publicación se acaba de actualizar. Inténtalo de nuevo en un minuto.",
       "downloadPhones": "Descargar teléfonos",
       "downloadComments": "Descargar comentarios",
-      "viewDetails": "Ver detalles"
+      "viewDetails": "Ver detalles",
+      "download": "Descargar",
+      "downloadEmails": "Descargar correos electrónicos"
     },
     "merge": {
       "title": "Combinar publicaciones",
@@ -13286,6 +13290,24 @@
           "removed": "Eliminada del canal."
         }
       }
+    },
+    "channelExport": {
+      "started": "Leyendo los comentarios del canal. Puede tardar un poco.",
+      "progress": "Leyendo del canal… {count} filas hasta ahora.",
+      "progressEstimate": "Leyendo del canal… {count} filas hasta ahora (unos {expected} comentarios en total).",
+      "ready": "El archivo está listo.",
+      "download": "Descargar",
+      "truncated": "La exportación se detuvo en un límite de seguridad, por lo que el archivo está incompleto. Exporta menos publicaciones para obtener el resto.",
+      "forbidden": "No tienes permiso para descargar números de teléfono ni correos electrónicos.",
+      "startFailed": "No se pudo iniciar la exportación. Inténtalo de nuevo.",
+      "inProgress": "La exportación se está iniciando, inténtalo de nuevo en un momento.",
+      "failure": {
+        "channelDisconnected": "El canal está desconectado. Vuelve a conectarlo e inténtalo de nuevo.",
+        "postNotFound": "Una publicación ya no existe en el canal.",
+        "notSupported": "Los comentarios de este canal no se pueden leer del canal.",
+        "rateLimited": "El canal pidió reducir la velocidad. Inténtalo de nuevo en unos minutos.",
+        "failed": "La exportación falló. Inténtalo de nuevo."
+      }
     }
   },
   "socialAccounts": {
@@ -13433,7 +13455,12 @@
     "repeatScheduleOff": "La programación y la publicación se aplican a cada copia, no a la plantilla.",
     "moveMediaEarlier": "Mover antes",
     "moveMediaLater": "Mover después",
-    "removeFromChannels": "Quitar de los canales",
+    "removeFromAllChannels": "Quitar de todos los canales",
+    "removeTarget": "Quitar",
+    "removeTargetTitle": "¿Quitar esta publicación de {destination}?",
+    "removeTargetDescription": "La publicación se retira de {destination} en {network}. Los demás destinos la conservan. No se puede deshacer.",
+    "removeTargetConfirm": "Quitar",
+    "removing": "Quitando…",
     "removeFromChannelsTitle": "¿Quitar esta publicación de las redes?",
     "removeFromChannelsDescription": "La publicación se retira de todas las redes que lo permiten. Las redes sin función de eliminación la conservan. No se puede deshacer.",
     "removeFromChannelsConfirm": "Quitar",
@@ -13442,6 +13469,7 @@
     "removeUnsupported": "{count, plural, one {# destino no se puede retirar mediante la API de la red; retíralo en la aplicación.} other {# destinos no se pueden retirar mediante la API de las redes; retíralos en las aplicaciones.}}",
     "removedFromChannel": "Retirada de la red",
     "removalPermissionMissing": "Vuelve a conectar esta cuenta para permitir eliminar publicaciones.",
+    "removalQueueFailed": "No se pudo poner en cola la eliminación. Inténtalo de nuevo.",
     "postMessageQuotaExceeded": "Se agotó la cuota de mensajes de esta cuenta, por lo que esta publicación no se publicó. Mejora el plan o espera al próximo período de facturación y vuelve a intentarlo.",
     "tiktokLoading": "Cargando la configuración de la cuenta de TikTok…",
     "tiktokUnavailable": "No se pudo cargar la configuración de la cuenta de TikTok. Inténtalo de nuevo.",

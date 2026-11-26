@@ -12603,7 +12603,9 @@
       "menu": "Exportera",
       "rowsTitle": "Exportera listan över inlägg (en rad per inlägg)",
       "rowsDone": "Listan över inlägg exporterades.",
-      "rowsTruncated": "Listan kortades vid gränsen för inlägg. Begränsa filtren för att exportera resten."
+      "rowsTruncated": "Listan kortades vid gränsen för inlägg. Begränsa filtren för att exportera resten.",
+      "sourceStored": "Sparad data",
+      "sourceChannel": "Läs från kanalen"
     },
     "showAllPosts": "Visa även inlägg utan kommentarer",
     "noCaption": "Ingen text",
@@ -12700,7 +12702,9 @@
       "refreshCooldown": "Det här inlägget uppdaterades nyss. Försök igen om en minut.",
       "downloadPhones": "Ladda ner telefonnummer",
       "downloadComments": "Ladda ner kommentarer",
-      "viewDetails": "Visa detaljer"
+      "viewDetails": "Visa detaljer",
+      "download": "Ladda ned",
+      "downloadEmails": "Ladda ned e-postadresser"
     },
     "merge": {
       "title": "Slå ihop inlägg",
@@ -13286,6 +13290,24 @@
           "removed": "Borttaget från kanalen."
         }
       }
+    },
+    "channelExport": {
+      "started": "Läser kommentarer från kanalen. Det kan ta en stund.",
+      "progress": "Läser från kanalen… {count} rader hittills.",
+      "progressEstimate": "Läser från kanalen… {count} rader hittills (cirka {expected} kommentarer totalt).",
+      "ready": "Filen är klar.",
+      "download": "Ladda ned",
+      "truncated": "Exporten stoppades vid en säkerhetsgräns, så filen är ofullständig. Exportera färre inlägg för att få resten.",
+      "forbidden": "Du har inte behörighet att ladda ned telefonnummer och e-postadresser.",
+      "startFailed": "Det gick inte att starta exporten. Försök igen.",
+      "inProgress": "Exporten startar, försök igen om en stund.",
+      "failure": {
+        "channelDisconnected": "Kanalen är frånkopplad. Anslut den igen och försök på nytt.",
+        "postNotFound": "Ett inlägg finns inte längre på kanalen.",
+        "notSupported": "Kommentarerna på den här kanalen kan inte läsas från kanalen.",
+        "rateLimited": "Kanalen bad om lägre hastighet. Försök igen om några minuter.",
+        "failed": "Exporten misslyckades. Försök igen."
+      }
     }
   },
   "socialAccounts": {
@@ -13433,7 +13455,12 @@
     "repeatScheduleOff": "Schemaläggning och publicering gäller varje kopia, inte mallen.",
     "moveMediaEarlier": "Flytta tidigare",
     "moveMediaLater": "Flytta senare",
-    "removeFromChannels": "Ta bort från kanalerna",
+    "removeFromAllChannels": "Ta bort från alla kanaler",
+    "removeTarget": "Ta bort",
+    "removeTargetTitle": "Ta bort det här inlägget från {destination}?",
+    "removeTargetDescription": "Det publicerade inlägget tas bort från {destination} på {network}. De andra destinationerna behåller det. Det går inte att ångra.",
+    "removeTargetConfirm": "Ta bort",
+    "removing": "Tar bort…",
     "removeFromChannelsTitle": "Ta bort det här inlägget från nätverken?",
     "removeFromChannelsDescription": "Det publicerade inlägget tas bort från alla nätverk som stöder det. Nätverk utan raderingsfunktion behåller det. Det går inte att ångra.",
     "removeFromChannelsConfirm": "Ta bort",
@@ -13442,6 +13469,7 @@
     "removeUnsupported": "{count, plural, one {# mål kan inte tas bort via nätverkets API; ta bort det i appen.} other {# mål kan inte tas bort via nätverkens API; ta bort dem i apparna.}}",
     "removedFromChannel": "Borttaget från nätverket",
     "removalPermissionMissing": "Anslut kontot igen för att tillåta radering av inlägg.",
+    "removalQueueFailed": "Borttagningen kunde inte köas. Försök igen.",
     "postMessageQuotaExceeded": "Kontots meddelandekvot är förbrukad, så det här inlägget publicerades inte. Uppgradera planen eller vänta till nästa faktureringsperiod och försök igen.",
     "tiktokLoading": "Laddar inställningar för TikTok-kontot…",
     "tiktokUnavailable": "Det gick inte att ladda inställningarna för TikTok-kontot. Försök igen.",

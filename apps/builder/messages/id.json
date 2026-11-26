@@ -12603,7 +12603,9 @@
       "menu": "Ekspor",
       "rowsTitle": "Ekspor daftar postingan (satu baris per postingan)",
       "rowsDone": "Daftar postingan diekspor.",
-      "rowsTruncated": "Daftar terpotong pada batas postingan. Persempit filter untuk mengekspor sisanya."
+      "rowsTruncated": "Daftar terpotong pada batas postingan. Persempit filter untuk mengekspor sisanya.",
+      "sourceStored": "Data tersimpan",
+      "sourceChannel": "Baca dari kanal"
     },
     "showAllPosts": "Tampilkan juga postingan tanpa komentar",
     "noCaption": "Tanpa teks",
@@ -12700,7 +12702,9 @@
       "refreshCooldown": "Postingan ini baru saja diperbarui. Coba lagi dalam satu menit.",
       "downloadPhones": "Unduh nomor telepon",
       "downloadComments": "Unduh komentar",
-      "viewDetails": "Lihat detail"
+      "viewDetails": "Lihat detail",
+      "download": "Unduh",
+      "downloadEmails": "Unduh email"
     },
     "merge": {
       "title": "Gabungkan postingan",
@@ -13286,6 +13290,24 @@
           "removed": "Dihapus dari kanal."
         }
       }
+    },
+    "channelExport": {
+      "started": "Membaca komentar dari kanal. Ini mungkin memakan waktu.",
+      "progress": "Membaca dari kanal… {count} baris sejauh ini.",
+      "progressEstimate": "Membaca dari kanal… {count} baris sejauh ini (sekitar {expected} komentar secara keseluruhan).",
+      "ready": "File siap.",
+      "download": "Unduh",
+      "truncated": "Ekspor berhenti pada batas keamanan, sehingga file tidak lengkap. Ekspor lebih sedikit postingan untuk mendapatkan sisanya.",
+      "forbidden": "Anda tidak memiliki izin untuk mengunduh nomor telepon dan email.",
+      "startFailed": "Tidak dapat memulai ekspor. Coba lagi.",
+      "inProgress": "Ekspor sedang dimulai, coba lagi sebentar lagi.",
+      "failure": {
+        "channelDisconnected": "Kanal terputus. Hubungkan kembali lalu coba lagi.",
+        "postNotFound": "Sebuah postingan sudah tidak ada di kanal.",
+        "notSupported": "Komentar kanal ini tidak dapat dibaca dari kanal.",
+        "rateLimited": "Kanal meminta untuk memperlambat. Coba lagi dalam beberapa menit.",
+        "failed": "Ekspor gagal. Coba lagi."
+      }
     }
   },
   "socialAccounts": {
@@ -13433,7 +13455,12 @@
     "repeatScheduleOff": "Penjadwalan dan publikasi berlaku untuk setiap salinan, bukan templat.",
     "moveMediaEarlier": "Pindahkan lebih awal",
     "moveMediaLater": "Pindahkan lebih akhir",
-    "removeFromChannels": "Hapus dari kanal",
+    "removeFromAllChannels": "Hapus dari semua kanal",
+    "removeTarget": "Hapus",
+    "removeTargetTitle": "Hapus postingan ini dari {destination}?",
+    "removeTargetDescription": "Postingan yang sudah terbit akan dihapus dari {destination} di {network}. Tujuan lainnya tetap menyimpannya. Tindakan ini tidak dapat dibatalkan.",
+    "removeTargetConfirm": "Hapus",
+    "removing": "Menghapus…",
     "removeFromChannelsTitle": "Hapus kiriman ini dari jaringan?",
     "removeFromChannelsDescription": "Kiriman yang sudah dipublikasikan dihapus dari setiap jaringan yang mendukungnya. Jaringan tanpa fungsi hapus tetap menyimpannya. Tindakan ini tidak dapat dibatalkan.",
     "removeFromChannelsConfirm": "Hapus",
@@ -13442,6 +13469,7 @@
     "removeUnsupported": "{count, plural, one {# tujuan tidak dapat dihapus melalui API jaringan; hapus di aplikasinya.} other {# tujuan tidak dapat dihapus melalui API jaringan; hapus di aplikasinya.}}",
     "removedFromChannel": "Dihapus dari jaringan",
     "removalPermissionMissing": "Hubungkan ulang akun ini untuk mengizinkan penghapusan postingan.",
+    "removalQueueFailed": "Penghapusan tidak dapat dimasukkan ke antrean. Coba lagi.",
     "postMessageQuotaExceeded": "Kuota pesan akun ini sudah habis, sehingga postingan ini tidak dipublikasikan. Tingkatkan paket atau tunggu periode tagihan berikutnya, lalu coba lagi.",
     "tiktokLoading": "Memuat pengaturan akun TikTok…",
     "tiktokUnavailable": "Pengaturan akun TikTok tidak dapat dimuat. Coba lagi.",

@@ -12603,7 +12603,9 @@
       "menu": "エクスポート",
       "rowsTitle": "投稿の一覧をエクスポート(1投稿につき1行)",
       "rowsDone": "投稿の一覧をエクスポートしました。",
-      "rowsTruncated": "投稿数の上限で一覧が途中までになりました。フィルターを絞って残りをエクスポートしてください。"
+      "rowsTruncated": "投稿数の上限で一覧が途中までになりました。フィルターを絞って残りをエクスポートしてください。",
+      "sourceStored": "保存済みデータ",
+      "sourceChannel": "チャネルから読み込む"
     },
     "showAllPosts": "コメントのない投稿も表示",
     "noCaption": "テキストなし",
@@ -12700,7 +12702,9 @@
       "refreshCooldown": "この投稿はたった今更新されました。1分後にもう一度お試しください。",
       "downloadPhones": "電話番号をダウンロード",
       "downloadComments": "コメントをダウンロード",
-      "viewDetails": "詳細を見る"
+      "viewDetails": "詳細を見る",
+      "download": "ダウンロード",
+      "downloadEmails": "メールアドレスをダウンロード"
     },
     "merge": {
       "title": "投稿を統合",
@@ -13286,6 +13290,24 @@
           "removed": "チャンネルから削除されました。"
         }
       }
+    },
+    "channelExport": {
+      "started": "チャネルからコメントを読み込んでいます。しばらくかかる場合があります。",
+      "progress": "チャネルから読み込み中… 現在 {count} 行。",
+      "progressEstimate": "チャネルから読み込み中… 現在 {count} 行（コメントは全体で約 {expected} 件）。",
+      "ready": "ファイルの準備ができました。",
+      "download": "ダウンロード",
+      "truncated": "エクスポートが安全上の上限で停止したため、ファイルは不完全です。残りを取得するには、投稿の数を減らしてエクスポートしてください。",
+      "forbidden": "電話番号とメールアドレスをダウンロードする権限がありません。",
+      "startFailed": "エクスポートを開始できませんでした。もう一度お試しください。",
+      "inProgress": "エクスポートを開始しています。しばらくしてからもう一度お試しください。",
+      "failure": {
+        "channelDisconnected": "チャネルの接続が切れています。再接続してからもう一度お試しください。",
+        "postNotFound": "投稿がチャネル上に存在しなくなりました。",
+        "notSupported": "このチャネルのコメントはチャネルから読み込めません。",
+        "rateLimited": "チャネルから速度を落とすよう求められました。数分後にもう一度お試しください。",
+        "failed": "エクスポートに失敗しました。もう一度お試しください。"
+      }
     }
   },
   "socialAccounts": {
@@ -13433,7 +13455,12 @@
     "repeatScheduleOff": "予約と公開はテンプレートではなく、各コピーに適用されます。",
     "moveMediaEarlier": "前へ移動",
     "moveMediaLater": "後ろへ移動",
-    "removeFromChannels": "チャンネルから削除",
+    "removeFromAllChannels": "すべてのチャンネルから削除",
+    "removeTarget": "削除",
+    "removeTargetTitle": "この投稿を {destination} から削除しますか？",
+    "removeTargetDescription": "公開済みの投稿を {network} 上の {destination} から削除します。他の投稿先には残ります。この操作は元に戻せません。",
+    "removeTargetConfirm": "削除",
+    "removing": "削除中…",
     "removeFromChannelsTitle": "この投稿をネットワークから削除しますか？",
     "removeFromChannelsDescription": "公開済みの投稿は、対応しているすべてのネットワークから削除されます。削除機能のないネットワークでは投稿が残ります。この操作は元に戻せません。",
     "removeFromChannelsConfirm": "削除",
@@ -13442,6 +13469,7 @@
     "removeUnsupported": "{count, plural, one {#件の投稿先はネットワークのAPIでは削除できません。アプリで削除してください。} other {#件の投稿先はネットワークのAPIでは削除できません。アプリで削除してください。}}",
     "removedFromChannel": "ネットワークから削除済み",
     "removalPermissionMissing": "投稿の削除を許可するには、このアカウントを再接続してください。",
+    "removalQueueFailed": "削除をキューに追加できませんでした。もう一度お試しください。",
     "postMessageQuotaExceeded": "このアカウントのメッセージ上限に達したため、この投稿は公開されませんでした。プランをアップグレードするか、次の請求期間をお待ちのうえ、再試行してください。",
     "tiktokLoading": "TikTokアカウントの設定を読み込み中…",
     "tiktokUnavailable": "TikTokアカウントの設定を読み込めませんでした。もう一度お試しください。",

@@ -8,7 +8,12 @@ import {
   timestamp,
   uniqueIndex,
 } from "drizzle-orm/pg-core"
-import { type FileStatus, fileContextTypes, fileStatuses } from "../partials"
+import {
+  type ExportFailureReason,
+  type FileStatus,
+  fileContextTypes,
+  fileStatuses,
+} from "../partials"
 import {
   bigintAsString,
   sharedColumns,
@@ -19,6 +24,30 @@ import { workspaceModel } from "./workspace"
 
 export type FileMeta = {
   totalRecords?: number
+  /** Export-generic: what the export holds (e.g. `comments`, `phones`, `emails`). */
+  kind?: string
+  /** Export-generic: the ids of the records the export was started from. */
+  sourceIds?: string[]
+  /** Export-generic: an estimate of the rows the export will hold; never exact. */
+  expectedRecords?: number
+  /** Export-generic: the export stopped at a safety ceiling and is incomplete. */
+  truncated?: boolean
+  /**
+   * Export-generic: the file holds contact data the requester was allowed to
+   * see (a snapshot taken at the start); its link is only issued to a caller
+   * who may still see it.
+   */
+  containsContactData?: boolean
+  /**
+   * Export-generic: ISO time of the last sign of life of the running job (its
+   * pickup, then each progress save). A pending file that started reads as dead
+   * once its heartbeat is older than the start lock's TTL; one that never
+   * started, once it is older than the export's maximum queue wait, counted from
+   * its creation.
+   */
+  heartbeatAt?: string
+  /** Export-generic: why the export failed. */
+  failureReason?: ExportFailureReason
 }
 
 export const fileContextType = pgEnum(

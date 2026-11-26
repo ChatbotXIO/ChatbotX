@@ -41,6 +41,7 @@ import {
   workspaceDeletionStartedException,
   workspaceLimitReachedException,
 } from "../errors"
+import { exportFileService } from "../export-file/service"
 import { isCommunity } from "../keys"
 import { logger } from "../logger"
 import { notifyWorkspaceCurrencyChange } from "../pipeline/currency-refresh"
@@ -827,6 +828,15 @@ class WorkspaceService extends BaseService {
       })
       if (Date.now() >= deadlineAt) {
         throw new WorkspacePurgeIncompleteError(fencedWorkspace.id, "deadline")
+      }
+
+      // Export files hold stored objects the cascade would orphan.
+      const exportFilePurge = await exportFileService.purgeWorkspace({
+        deadlineAt,
+        workspaceId: fencedWorkspace.id,
+      })
+      if (!exportFilePurge.complete) {
+        throw new WorkspacePurgeIncompleteError(fencedWorkspace.id, "File")
       }
 
       const postPurge = await contactInboxPostService.purgeWorkspace({

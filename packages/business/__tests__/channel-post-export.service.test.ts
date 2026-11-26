@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, test, vi } from "vitest"
 
 const mocks = vi.hoisted(() => ({
   assertRoom: vi.fn(),
+  commenterEmail: vi.fn(),
   charge: vi.fn(),
   findByIds: vi.fn(),
   listPosts: vi.fn(),
@@ -34,6 +35,7 @@ const {
 const COMMENTS_FILE_NAME = /^post-comments-\d{4}-\d{2}-\d{2}\.csv$/
 const ROWS_FILE_NAME = /^post-rows-\d{4}-\d{2}-\d{2}\.csv$/
 const PHONES_FILE_NAME = /^post-phones-/
+const EMAILS_FILE_NAME = /^post-emails-/
 const ENDS_WITH_TRUE = /"true"$/
 
 const author = (
@@ -49,8 +51,10 @@ const comment = (overrides: Record<string, unknown> = {}) => ({
   hidden: false,
   id: "m1",
   liked: false,
+  page: null,
   parentCommentId: null,
   postId: "p1",
+  sender: "contact",
   text: "hello",
   ...overrides,
 })
@@ -71,7 +75,9 @@ beforeEach(() => {
   mocks.charge.mockResolvedValue(undefined)
   // The reader the service opens: its posts come from `findByIds`, and each
   // page read is recorded on `mergeView` together with what the reader was opened with.
+  mocks.commenterEmail.mockReturnValue(null)
   mocks.openReader.mockImplementation(async (readerInput: object) => ({
+    commenterEmail: mocks.commenterEmail,
     posts: await mocks.findByIds(),
     preloadCommenters: mocks.preloadCommenters,
     readPage: (pageInput: object) =>
@@ -124,6 +130,23 @@ describe("channelPostExportService.build — comments", () => {
 
     expect(lines(file.csv)[1]).toContain('"k9"')
     expect(lines(file.csv)[2]).toContain('"","","hello"')
+  })
+
+  test("a reply the page sent shows the page's name as the customer and no phone", async () => {
+    mocks.mergeView.mockResolvedValue({
+      items: [
+        comment({
+          author: author("k1", "An", "0901234567"),
+          page: { avatar: null, name: "Shop Page" },
+          sender: "page",
+          text: "Thanks!",
+        }),
+      ],
+    })
+
+    const file = await channelPostExportService.build(base)
+
+    expect(lines(file.csv)[1]).toContain('"Shop Page","","Thanks!"')
   })
 
   test("without the phone permission the phone column is blank, and the export still works", async () => {
@@ -280,6 +303,40 @@ describe("channelPostExportService.build — phones", () => {
     expect(mocks.mergeView).not.toHaveBeenCalled()
   })
 
+  test("a reply the page sent is not a customer: the phones file skips it", async () => {
+    mocks.mergeView.mockResolvedValue({
+      items: [
+        comment({
+          author: author("k1", "An", "0901234567"),
+          id: "m2",
+          page: { avatar: null, name: "Shop Page" },
+          sender: "page",
+          text: "Call us on 0987 654 321",
+        }),
+        comment({ author: author("k1", "An", "0901234567") }),
+      ],
+    })
+
+    const file = await channelPostExportService.build({
+      ...phones,
+      postIds: ["p1"],
+    })
+
+    expect(lines(file.csv)).toEqual([
+      '"customer","phone","firstCommentAt","post"',
+      '"An","0901234567","2026-11-22T10:00:00.000Z","Flash sale"',
+    ])
+    expect(file.rowCount).toBe(1)
+  })
+
+  test("the export reads comments without resolving avatars", async () => {
+    await channelPostExportService.build(base)
+
+    expect(mocks.openReader).toHaveBeenCalledWith(
+      expect.objectContaining({ includeAvatars: false }),
+    )
+  })
+
   test("writes one row per customer, holding their first comment's time and post", async () => {
     // Newest first, so the older comment of k1 comes later and wins; rows keep the
     // order customers first appeared in.
@@ -317,6 +374,101 @@ describe("channelPostExportService.build — phones", () => {
     ])
     expect(file.rowCount).toBe(2)
     expect(file.fileName).toMatch(PHONES_FILE_NAME)
+  })
+})
+
+describe("channelPostExportService.build — emails", () => {
+  const emails = { ...base, kind: "emails" as const }
+
+  test("is refused, never partial, without the phone-and-email permission", async () => {
+    await expect(
+      channelPostExportService.build({
+        ...emails,
+        canViewEmailAndPhone: false,
+      }),
+    ).rejects.toMatchObject({ code: "FORBIDDEN", httpStatusCode: 403 })
+    expect(mocks.openReader).not.toHaveBeenCalled()
+    expect(mocks.assertRoom).not.toHaveBeenCalled()
+  })
+
+  test("reads every comment, not only those with a phone number", async () => {
+    await channelPostExportService.build(emails)
+
+    expect(mocks.mergeView.mock.calls[0][0].hasPhone).toBeUndefined()
+  })
+
+  test("uses the contact's email, lower-cased, before an address in the text", async () => {
+    mocks.commenterEmail.mockReturnValue("An@Example.COM")
+    mocks.mergeView.mockResolvedValue({
+      items: [comment({ text: "write to other@site.vn" })],
+    })
+
+    const file = await channelPostExportService.build(emails)
+
+    expect(lines(file.csv)).toEqual([
+      '"customer","email","firstCommentAt","post"',
+      '"An","an@example.com","2026-11-22T10:00:00.000Z","Flash sale"',
+    ])
+    expect(mocks.commenterEmail).toHaveBeenCalledWith("k1")
+    expect(file.fileName).toMatch(EMAILS_FILE_NAME)
+  })
+
+  test("falls back to the first address written in the comment", async () => {
+    mocks.mergeView.mockResolvedValue({
+      items: [comment({ text: "mail me: Binh.Tran@Shop.vn or b@x.io" })],
+    })
+
+    const file = await channelPostExportService.build(emails)
+
+    expect(lines(file.csv)[1]).toContain('"binh.tran@shop.vn"')
+  })
+
+  test("a comment with no email adds no row", async () => {
+    const file = await channelPostExportService.build(emails)
+
+    expect(file.rowCount).toBe(0)
+    expect(lines(file.csv)).toHaveLength(1)
+  })
+
+  test("one row per distinct email, holding its first comment", async () => {
+    mocks.mergeView.mockResolvedValue({
+      items: [
+        comment({
+          createdAt: new Date("2026-11-22T12:00:00.000Z"),
+          id: "m2",
+          text: "a@x.io",
+        }),
+        comment({
+          author: author("k2", "Binh"),
+          createdAt: new Date("2026-11-22T09:00:00.000Z"),
+          id: "m1",
+          text: "A@X.io",
+        }),
+      ],
+    })
+
+    const file = await channelPostExportService.build(emails)
+
+    expect(lines(file.csv)).toEqual([
+      '"customer","email","firstCommentAt","post"',
+      '"Binh","a@x.io","2026-11-22T09:00:00.000Z","Flash sale"',
+    ])
+  })
+
+  test("a reply the page sent is not a customer's email", async () => {
+    mocks.mergeView.mockResolvedValue({
+      items: [
+        comment({
+          page: { avatar: null, name: "Shop" },
+          sender: "page",
+          text: "Mail us at shop@x.io",
+        }),
+      ],
+    })
+
+    const file = await channelPostExportService.build(emails)
+
+    expect(file.rowCount).toBe(0)
   })
 })
 
@@ -404,6 +556,7 @@ describe("channelPostExportService.build — cost", () => {
     expect(mocks.openReader).toHaveBeenCalledWith({
       canViewEmailAndPhone: false,
       hasPhone: undefined,
+      includeAvatars: false,
       postIds: ["p1"],
       search: "hello",
       workspaceId: "ws-1",
@@ -473,6 +626,7 @@ describe("channelPostExportService.build — time budget", () => {
 
   test("a reader whose thread lookup hit its cap flags the file truncated below the row cap", async () => {
     mocks.openReader.mockImplementation(async () => ({
+      commenterEmail: mocks.commenterEmail,
       posts: await mocks.findByIds(),
       preloadCommenters: mocks.preloadCommenters,
       readPage: (pageInput: object) => mocks.mergeView(pageInput),

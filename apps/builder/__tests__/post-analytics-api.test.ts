@@ -55,7 +55,9 @@ vi.mock("@chatbotx.io/business", () => ({
   MAX_EXPORT_ROWS: 20_000,
   MAX_MERGE_VIEW_POSTS: 20,
   MAX_TOPICS_PER_POST: 20,
-  channelPostExportKinds: ["comments", "phones"],
+  POST_COMMENT_SENDERS: ["contact", "page"],
+  channelPostCommentExportKinds: ["comments", "phones", "emails"],
+  channelPostExportKinds: ["comments", "phones", "emails", "rows"],
   postAnalyticsService: service,
 }))
 vi.mock("@/orpc", () => ({ workspaceTokenAuthAPIForScope }))

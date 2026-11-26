@@ -84,13 +84,26 @@ const effective = (column: string): SQL =>
   sql.raw(`COALESCE(v."${column}", p."${column}")`)
 
 /**
- * The content type a row holds after the update. Only the Reels listing knows a
- * Reel (a single post lookup reports the same id as a plain video), so a stored
- * `reel` is not turned back into `video` by such a lookup.
+ * Whether the stored content type outranks what this listing row says. Only the
+ * Reels listing knows a Reel (a single post lookup reports the same id as a
+ * plain video), and only the live edge, a webhook or a comment ever says `live`
+ * (a feed read cannot): a stored `reel` is not turned back into `video`, and a
+ * stored `live` is not replaced by whatever the feed calls the post, unless
+ * the listing row itself says `live` (the live pass), which may still fill the
+ * media type a webhook-made row lacks.
  */
+const KEEPS_STORED_TYPE = `((p."contentType" = 'live' AND v."contentType" IS DISTINCT FROM 'live') OR (p."contentType" = 'reel' AND v."contentType" = 'video'))`
+
+/** The content type a row holds after the update. */
 const effectiveContentType = (): SQL =>
   sql.raw(
-    `CASE WHEN p."contentType" IN ('reel', 'live') AND v."contentType" = 'video' THEN p."contentType" ELSE COALESCE(v."contentType", p."contentType") END`,
+    `CASE WHEN ${KEEPS_STORED_TYPE} THEN p."contentType" ELSE COALESCE(v."contentType", p."contentType") END`,
+  )
+
+/** The media type follows the content type decision above. */
+const effectiveMediaType = (): SQL =>
+  sql.raw(
+    `CASE WHEN ${KEEPS_STORED_TYPE} THEN p."mediaType" ELSE COALESCE(v."mediaType", p."mediaType") END`,
   )
 
 /**
@@ -444,7 +457,7 @@ export const upsertListedChannelPosts = async (
       authorName: described(effective("authorName"), "authorName"),
       caption: described(effective("caption"), "caption"),
       contentType: described(effectiveContentType(), "contentType"),
-      mediaType: described(effective("mediaType"), "mediaType"),
+      mediaType: described(effectiveMediaType(), "mediaType"),
       permalink: described(effective("permalink"), "permalink"),
       publishedAt: described(effective("publishedAt"), "publishedAt"),
     }

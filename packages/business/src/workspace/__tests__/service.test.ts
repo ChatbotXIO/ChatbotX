@@ -23,6 +23,7 @@ const mocks = vi.hoisted(() => ({
   purgeWorkspaceHeavyData: vi.fn(),
   purgeWorkspaceActivity: vi.fn(),
   purgeWorkspacePosts: vi.fn(),
+  purgeWorkspaceExportFiles: vi.fn(),
   dispatchAuditRecord: vi.fn(),
   hasLiveUninstallTouchingWorkspace: vi.fn(async () => false),
 }))
@@ -203,6 +204,12 @@ vi.mock("../../contact-activity/service", () => ({
   },
 }))
 
+vi.mock("../../export-file/service", () => ({
+  exportFileService: {
+    purgeWorkspace: mocks.purgeWorkspaceExportFiles,
+  },
+}))
+
 vi.mock("../../contact-inbox-post/service", () => ({
   contactInboxPostService: {
     purgeWorkspace: mocks.purgeWorkspacePosts,
@@ -283,6 +290,11 @@ beforeEach(() => {
   )
   mocks.purgeWorkspaceHeavyData.mockReset()
   mocks.purgeWorkspaceHeavyData.mockResolvedValue(0)
+  mocks.purgeWorkspaceExportFiles.mockReset()
+  mocks.purgeWorkspaceExportFiles.mockResolvedValue({
+    complete: true,
+    deleted: 0,
+  })
   mocks.purgeWorkspacePosts.mockReset()
   mocks.purgeWorkspacePosts.mockResolvedValue({ complete: true, deleted: 0 })
   mocks.purgeWorkspaceActivity.mockReset()
@@ -557,6 +569,26 @@ describe("WorkspaceService.purgeDueScheduled", () => {
       }),
       "workspace-purge: teardown failed, deferring to next run",
     )
+  })
+
+  test("defers a fenced workspace when its export file drain is incomplete", async () => {
+    const claimedRows = [{ id: "w1", ownerId: "o1", tenantId: "t1" }]
+    setupPurgeTransactions(claimedRows)
+    mocks.purgeWorkspaceExportFiles.mockResolvedValue({
+      complete: false,
+      deleted: 3,
+    })
+
+    await expect(
+      workspaceService.purgeDueScheduled({ chunkSize: 1, maxChunks: 1 }),
+    ).resolves.toBe(0)
+
+    expect(mocks.purgeWorkspaceExportFiles).toHaveBeenCalledWith({
+      deadlineAt: expect.any(Number),
+      workspaceId: "w1",
+    })
+    expect(mocks.workspaceDelete).not.toHaveBeenCalled()
+    expect(mocks.purgeWorkspacePosts).not.toHaveBeenCalled()
   })
 
   test("defers a fenced workspace when its post drain is incomplete", async () => {

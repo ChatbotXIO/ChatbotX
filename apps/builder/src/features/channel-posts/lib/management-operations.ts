@@ -1,4 +1,5 @@
 import {
+  channelPostCommentExportService,
   channelPostCommentsService,
   channelPostExportService,
   channelPostManagementService,
@@ -6,6 +7,7 @@ import {
 } from "@chatbotx.io/business"
 import { refreshChannelPostNow } from "@chatbotx.io/channel-registry/channel-post-refresh"
 import type { z } from "zod"
+import { assertWorkspaceNotBlocked } from "@/lib/workspace-quota"
 import type {
   bulkUpdateChannelPostManagementRequest,
   deleteChannelPostCommentRequest,
@@ -15,6 +17,7 @@ import type {
   listChannelPostCommentsRequest,
   listChannelPostManagementRequest,
   mergeChannelPostCommentsRequest,
+  startChannelPostCommentExportRequest,
   updateChannelPostManagementRequest,
 } from "../schema/management"
 
@@ -27,11 +30,24 @@ type MergeCommentsInput = z.output<typeof mergeChannelPostCommentsRequest>
 type LikeCommentInput = z.output<typeof likeChannelPostCommentRequest>
 type ExportCommentsInput = z.output<typeof exportChannelPostCommentsRequest>
 type DeleteCommentInput = z.output<typeof deleteChannelPostCommentRequest>
+type StartCommentExportInput = z.output<
+  typeof startChannelPostCommentExportRequest
+>
 
 /** Who is asking, as far as comment data goes: may they see phone numbers? */
 export type CommentCaller = {
   canViewEmailAndPhone: boolean
   workspaceId: string
+}
+
+/**
+ * Who starts a read-from-channel export: the comment caller plus the workspace
+ * owner (whose plan gates the start) and the member to record on the file
+ * (`null` for a workspace token, which has no session user).
+ */
+type CommentExportCaller = CommentCaller & {
+  ownerId: string
+  userId: string | null
 }
 
 /**
@@ -169,4 +185,32 @@ export const channelPostManagementOperations = {
       workspaceId: caller.workspaceId,
     })
   },
+
+  /**
+   * Starts the background export that reads the comments from the channel. An
+   * expired plan or trial is refused before anything is validated or queued.
+   * Answers with the running export's id when the same posts and kind are
+   * already being read.
+   */
+  startCommentExport: async (
+    caller: CommentExportCaller,
+    input: StartCommentExportInput,
+  ) => {
+    await assertWorkspaceNotBlocked(caller.ownerId)
+    return await channelPostCommentExportService.start({
+      canViewEmailAndPhone: caller.canViewEmailAndPhone,
+      kind: input.kind,
+      postIds: input.postIds,
+      userId: caller.userId,
+      workspaceId: caller.workspaceId,
+    })
+  },
+
+  /** The state of a started export, with a fresh signed link once it is uploaded. */
+  getCommentExport: async (caller: CommentCaller, fileId: string) =>
+    await channelPostCommentExportService.getStatus({
+      canViewEmailAndPhone: caller.canViewEmailAndPhone,
+      fileId,
+      workspaceId: caller.workspaceId,
+    }),
 }

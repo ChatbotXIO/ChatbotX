@@ -1,3 +1,4 @@
+import { usagePauseMs } from "@chatbotx.io/utils/meta-usage"
 import { DEFAULT_API_VERSION } from "../constants"
 import { InstagramException, rescue } from "../exception"
 import { instagramGraphClient } from "../lib/http-client"
@@ -143,20 +144,39 @@ type InstagramMediaCommentFields = {
   username?: string
   from?: { id: string; username?: string }
   parent_id?: string
+  hidden?: boolean
+}
+
+type InstagramGraphPaging = {
+  cursors?: { after?: string }
+  next?: string
 }
 
 export type InstagramMediaComment = InstagramMediaCommentFields & {
-  replies?: { data: InstagramMediaCommentFields[] }
+  replies?: {
+    data: InstagramMediaCommentFields[]
+    paging?: InstagramGraphPaging
+  }
+}
+
+type InstagramCommentRepliesPage = {
+  comments: InstagramMediaCommentFields[]
+  /** Cursor for the next page; absent on the last one. */
+  nextCursor?: string
+  /** How long the usage headers ask the next read to wait; `null` when none. */
+  pauseMs: number | null
 }
 
 export type InstagramMediaCommentPage = {
   comments: InstagramMediaComment[]
   /** Cursor for the next page; absent on the last one. */
   nextCursor?: string
+  /** How long the usage headers ask the next read to wait; `null` when none. */
+  pauseMs: number | null
 }
 
 const MEDIA_COMMENT_FIELDS =
-  "id,text,timestamp,username,from{id,username},parent_id"
+  "id,text,timestamp,username,from{id,username},parent_id,hidden"
 
 /**
  * One page of a media's top-level comments, each carrying its replies. The
@@ -172,9 +192,9 @@ export const listMediaComments = (props: {
   const endpoint = `${version}/${mediaId}/comments`
 
   return rescue(endpoint, async () => {
-    const res = await instagramGraphClient.get<{
+    const { data: res, headers } = await instagramGraphClient.getWithHeaders<{
       data: InstagramMediaComment[]
-      paging?: { cursors?: { after?: string }; next?: string }
+      paging?: InstagramGraphPaging
     }>(endpoint, {
       headers: { Authorization: `Bearer ${auth.tokens.accessToken}` },
       searchParams: {
@@ -186,6 +206,40 @@ export const listMediaComments = (props: {
     return {
       comments: res.data,
       nextCursor: res.paging?.next ? res.paging.cursors?.after : undefined,
+      pauseMs: usagePauseMs(headers),
+    }
+  })
+}
+
+/**
+ * One page of the replies of one comment, for a comment whose nested `replies`
+ * (in {@link listMediaComments}) came back with a next page.
+ */
+export const listMediaCommentReplies = (props: {
+  auth: InstagramAuthValue
+  commentId: string
+  after?: string
+}): Promise<InstagramCommentRepliesPage> => {
+  const { auth, commentId, after } = props
+  const version = auth.metadata.version ?? DEFAULT_API_VERSION
+  const endpoint = `${version}/${commentId}/replies`
+
+  return rescue(endpoint, async () => {
+    const { data: res, headers } = await instagramGraphClient.getWithHeaders<{
+      data: InstagramMediaCommentFields[]
+      paging?: InstagramGraphPaging
+    }>(endpoint, {
+      headers: { Authorization: `Bearer ${auth.tokens.accessToken}` },
+      searchParams: {
+        fields: MEDIA_COMMENT_FIELDS,
+        limit: "50",
+        ...(after ? { after } : {}),
+      },
+    })
+    return {
+      comments: res.data,
+      nextCursor: res.paging?.next ? res.paging.cursors?.after : undefined,
+      pauseMs: usagePauseMs(headers),
     }
   })
 }

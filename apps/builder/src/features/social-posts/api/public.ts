@@ -318,6 +318,24 @@ export const socialPostsPublicRouter = {
         await socialPostOperations.retryTarget(context.workspace, input),
     ),
 
+  removeTarget: workspaceTokenAuthAPI
+    .route({
+      method: "POST",
+      path: "/v1/posts/{id}/targets/{targetId}/remove",
+      summary: "Remove post target from its network",
+      description:
+        "Takes one published destination down from its network and leaves the other destinations of the post published; call it once per destination to remove several (`socialPosts.delete` with `removeFromChannels=true` removes every destination at once). Same rules and answer as that call, narrowed to the one destination: `removal.targets` has one entry, `queued` (a worker removes it; `removedAt` or the destination's error fields tell the result), `removed` (already gone), `unsupported` (the network or login offers no delete, so it stays published) or `notPublished` (answers 409 `socialPostNotRemovable`, nothing is on the network). A `targetId` that is not a destination of the post answers 404. Repeating it is safe. A workspace whose plan has expired is refused (402).",
+      successStatus: 200,
+      tags,
+    })
+    .input(socialPostTargetIdRequest)
+    .output(deleteSocialPostResponse)
+    .errors(possibleErrorsOnChangingSocialPost)
+    .handler(
+      async ({ context, input }) =>
+        await socialPostOperations.removeTarget(context.workspace, input),
+    ),
+
   resolveTarget: workspaceTokenAuthAPI
     .route({
       method: "POST",

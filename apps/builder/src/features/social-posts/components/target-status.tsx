@@ -1,30 +1,30 @@
 "use client"
 
-import {
-  AlertDialog,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@chatbotx.io/ui/components/ui/alert-dialog"
-import { Button } from "@chatbotx.io/ui/components/ui/button"
+import { POST_PUBLISHING_RULES } from "@chatbotx.io/utils/post-publishing"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
-import { ExternalLinkIcon } from "lucide-react"
+import { ExternalLinkIcon, Loader2Icon } from "lucide-react"
 import { useTranslations } from "next-intl"
-import { useState } from "react"
 import { toast } from "sonner"
 import { ProviderNetworkIcon } from "@/features/social-accounts/components/provider-avatar"
 import { orpc } from "@/lib/orpc/query"
+import { useRemovalTracker } from "../hooks/use-removal-tracker"
+import { useRemoveFromChannels } from "../hooks/use-remove-from-channels"
 import { type ComposerPost, PROVIDER_LABELS } from "../lib/composer-state"
 import { invalidateSocialPost } from "../lib/invalidate-social-post"
 import { failureText, postActionErrorMessage } from "../lib/quota-message"
 import { PartStatusList } from "./part-status-list"
+import { RemoveDialog } from "./remove-dialog"
 import { RetryResolveActions } from "./retry-resolve-actions"
 
 type TargetStatus = ComposerPost["targets"][number]["status"]
+
+type PostTarget = ComposerPost["targets"][number]
+
+/** A published destination on a network with a delete function, not yet taken down. */
+const isRemovable = (target: PostTarget): boolean =>
+  target.status === "published" &&
+  !target.removedAt &&
+  POST_PUBLISHING_RULES[target.provider].canRemove
 
 const useStatusLabels = (): Record<TargetStatus, string> => {
   const t = useTranslations()
@@ -70,84 +70,45 @@ export const TargetStatusList = ({
       mutationOptions,
     ),
   )
-  const [removeOpen, setRemoveOpen] = useState(false)
-  const remove = useMutation(
-    orpc.socialPostsAPIs.privateDeleteSocialPostAPI.mutationOptions({
-      ...mutationOptions,
-      onSuccess: async (result) => {
-        setRemoveOpen(false)
-        const targets = result.removal?.targets ?? []
-        const queued = targets.filter((item) => item.status === "queued")
-        const unsupported = targets.filter(
-          (item) => item.status === "unsupported",
-        )
-        if (queued.length > 0) {
-          toast.success(t("composer.removeRequested", { count: queued.length }))
-        }
-        if (unsupported.length > 0) {
-          toast.warning(
-            t("composer.removeUnsupported", { count: unsupported.length }),
-          )
-        }
-        await refresh()
-      },
-    }),
-  )
+  const { removing, track } = useRemovalTracker({
+    post,
+    refetch: async () => {
+      const startedAt = Date.now()
+      const queryKey = orpc.socialPostsAPIs.privateGetSocialPostAPI.key({
+        input: { id: post.id, workspaceId },
+      })
+      await queryClient.refetchQueries({ queryKey }, { cancelRefetch: false })
+      const state = queryClient.getQueryState(
+        orpc.socialPostsAPIs.privateGetSocialPostAPI.queryKey({
+          input: { id: post.id, workspaceId },
+        }),
+      )
+      return state?.status === "success" && state.dataUpdatedAt >= startedAt
+    },
+  })
+  const removal = useRemoveFromChannels({
+    onQueued: track,
+    postId: post.id,
+    workspaceId,
+  })
   const busy =
-    disabled || retry.isPending || resolve.isPending || remove.isPending
-  const canRemoveSome = post.targets.some(
-    (target) => target.status === "published" && !target.removedAt,
-  )
+    disabled || retry.isPending || resolve.isPending || removal.isPending
+  const removableCount = post.targets.filter(isRemovable).length
 
   return (
     <section aria-labelledby="composer-status" className="space-y-2">
       <h2 className="font-semibold text-sm" id="composer-status">
         {t("composer.targetsStatus")}
       </h2>
-      {canRemoveSome ? (
-        <AlertDialog onOpenChange={setRemoveOpen} open={removeOpen}>
-          <AlertDialogTrigger
-            render={
-              <Button
-                disabled={busy}
-                size="sm"
-                type="button"
-                variant="outline"
-              />
-            }
-          >
-            {t("composer.removeFromChannels")}
-          </AlertDialogTrigger>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>
-                {t("composer.removeFromChannelsTitle")}
-              </AlertDialogTitle>
-              <AlertDialogDescription>
-                {t("composer.removeFromChannelsDescription")}
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel>
-                {t("composer.removeCancel")}
-              </AlertDialogCancel>
-              <Button
-                disabled={busy}
-                onClick={() =>
-                  remove.mutate({
-                    id: post.id,
-                    removeFromChannels: true,
-                    workspaceId,
-                  })
-                }
-                type="button"
-                variant="destructive"
-              >
-                {t("composer.removeFromChannelsConfirm")}
-              </Button>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
+      {removableCount > 1 ? (
+        <RemoveDialog
+          busy={busy}
+          confirmLabel={t("composer.removeFromChannelsConfirm")}
+          description={t("composer.removeFromChannelsDescription")}
+          onConfirm={removal.removeAll}
+          title={t("composer.removeFromChannelsTitle")}
+          triggerLabel={t("composer.removeFromAllChannels")}
+        />
       ) : null}
       <ul className="space-y-2">
         {post.targets.map((target) => (
@@ -167,7 +128,7 @@ export const TargetStatusList = ({
                 {t("composer.removedFromChannel")}
               </span>
             ) : null}
-            {target.permalink ? (
+            {target.permalink && !target.removedAt ? (
               <a
                 className="inline-flex items-center gap-1 text-primary underline"
                 href={target.permalink}
@@ -177,6 +138,27 @@ export const TargetStatusList = ({
                 {t("composer.viewPost")}
                 <ExternalLinkIcon className="size-3" />
               </a>
+            ) : null}
+            {removing.has(target.id) ? (
+              <span className="inline-flex items-center gap-1 text-muted-foreground">
+                <Loader2Icon aria-hidden className="size-3 animate-spin" />
+                {t("composer.removing")}
+              </span>
+            ) : null}
+            {isRemovable(target) ? (
+              <RemoveDialog
+                busy={busy || removing.has(target.id)}
+                confirmLabel={t("composer.removeTargetConfirm")}
+                description={t("composer.removeTargetDescription", {
+                  destination: target.destination.name,
+                  network: PROVIDER_LABELS[target.provider],
+                })}
+                onConfirm={() => removal.removeOne(target.id)}
+                title={t("composer.removeTargetTitle", {
+                  destination: target.destination.name,
+                })}
+                triggerLabel={t("composer.removeTarget")}
+              />
             ) : null}
             {failureText(target, t) ? (
               <p className="w-full text-destructive">

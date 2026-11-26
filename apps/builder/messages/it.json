@@ -12603,7 +12603,9 @@
       "menu": "Esporta",
       "rowsTitle": "Esporta l'elenco dei post (una riga per post)",
       "rowsDone": "Elenco dei post esportato.",
-      "rowsTruncated": "L'elenco è stato troncato al limite di post. Restringi i filtri per esportare il resto."
+      "rowsTruncated": "L'elenco è stato troncato al limite di post. Restringi i filtri per esportare il resto.",
+      "sourceStored": "Dati salvati",
+      "sourceChannel": "Leggi dal canale"
     },
     "showAllPosts": "Mostra anche i post senza commenti",
     "noCaption": "Senza testo",
@@ -12700,7 +12702,9 @@
       "refreshCooldown": "Questo post è stato appena aggiornato. Riprova tra un minuto.",
       "downloadPhones": "Scarica i numeri di telefono",
       "downloadComments": "Scarica i commenti",
-      "viewDetails": "Vedi dettagli"
+      "viewDetails": "Vedi dettagli",
+      "download": "Scarica",
+      "downloadEmails": "Scarica le e-mail"
     },
     "merge": {
       "title": "Unisci post",
@@ -13286,6 +13290,24 @@
           "removed": "Rimosso dal canale."
         }
       }
+    },
+    "channelExport": {
+      "started": "Lettura dei commenti dal canale. Potrebbe richiedere un po' di tempo.",
+      "progress": "Lettura dal canale… {count} righe finora.",
+      "progressEstimate": "Lettura dal canale… {count} righe finora (circa {expected} commenti in totale).",
+      "ready": "Il file è pronto.",
+      "download": "Scarica",
+      "truncated": "L'esportazione si è fermata a un limite di sicurezza, quindi il file è incompleto. Esporta meno post per ottenere il resto.",
+      "forbidden": "Non hai l'autorizzazione per scaricare numeri di telefono ed e-mail.",
+      "startFailed": "Impossibile avviare l'esportazione. Riprova.",
+      "inProgress": "L'esportazione sta per iniziare, riprova tra un momento.",
+      "failure": {
+        "channelDisconnected": "Il canale è disconnesso. Riconnettilo e riprova.",
+        "postNotFound": "Un post non esiste più sul canale.",
+        "notSupported": "I commenti di questo canale non possono essere letti dal canale.",
+        "rateLimited": "Il canale ha chiesto di rallentare. Riprova tra qualche minuto.",
+        "failed": "Esportazione non riuscita. Riprova."
+      }
     }
   },
   "socialAccounts": {
@@ -13433,7 +13455,12 @@
     "repeatScheduleOff": "La programmazione e la pubblicazione valgono per ogni copia, non per il modello.",
     "moveMediaEarlier": "Sposta prima",
     "moveMediaLater": "Sposta dopo",
-    "removeFromChannels": "Rimuovi dai canali",
+    "removeFromAllChannels": "Rimuovi da tutti i canali",
+    "removeTarget": "Rimuovi",
+    "removeTargetTitle": "Rimuovere questo post da {destination}?",
+    "removeTargetDescription": "Il post pubblicato viene rimosso da {destination} su {network}. Le altre destinazioni lo mantengono. L'operazione non può essere annullata.",
+    "removeTargetConfirm": "Rimuovi",
+    "removing": "Rimozione in corso…",
     "removeFromChannelsTitle": "Rimuovere questo post dalle reti?",
     "removeFromChannelsDescription": "Il post pubblicato viene rimosso da ogni rete che lo consente. Le reti senza funzione di eliminazione lo mantengono. L'operazione non può essere annullata.",
     "removeFromChannelsConfirm": "Rimuovi",
@@ -13442,6 +13469,7 @@
     "removeUnsupported": "{count, plural, one {# destinazione non può essere rimossa tramite l'API della rete; rimuovila nell'app.} other {# destinazioni non possono essere rimosse tramite l'API delle reti; rimuovile nelle app.}}",
     "removedFromChannel": "Rimosso dalla rete",
     "removalPermissionMissing": "Ricollega questo account per consentire l'eliminazione dei post.",
+    "removalQueueFailed": "Non è stato possibile mettere in coda la rimozione. Riprova.",
     "postMessageQuotaExceeded": "La quota di messaggi di questo account è esaurita, quindi questo post non è stato pubblicato. Passa a un piano superiore o attendi il prossimo periodo di fatturazione, poi riprova.",
     "tiktokLoading": "Caricamento delle impostazioni dell’account TikTok…",
     "tiktokUnavailable": "Impossibile caricare le impostazioni dell’account TikTok. Riprova.",

@@ -38,6 +38,8 @@ export type CommenterContactInbox = {
 
 export type PostCommenter = {
   avatar: string | null
+  /** For the export path only, behind the email-and-phone permission; never in a comment's output. */
+  email: string | null
   id: string
   name: string | null
   phoneNumber: string | null
@@ -145,7 +147,7 @@ export const postCommentRepository = {
   },
 
   /**
-   * Name, avatar, phone number and tags of the given contacts, two queries for
+   * Name, avatar, phone number, email and tags of the given contacts, two queries for
    * the whole page (never one per comment). A soft-deleted tag is not shown.
    */
   async findCommenters(
@@ -160,6 +162,7 @@ export const postCommentRepository = {
       tx
         .select({
           avatar: contactModel.avatar,
+          email: contactModel.email,
           id: contactModel.id,
           name: contactModel.fullName,
           phoneNumber: contactModel.phoneNumber,
