@@ -1,9 +1,8 @@
 import {
   contactInboxService,
   resolveContactAvatarUrl,
-  resolveTenantSettings,
 } from "@chatbotx.io/business"
-import { toPublicStorageUrl } from "@chatbotx.io/business/utils"
+import { createAvatarFinalizer } from "./avatar-finalizer"
 
 type ContactWithAvatar = {
   id: string
@@ -20,12 +19,10 @@ export async function resolveContactAvatars<T extends ContactWithAvatar>(
   workspaceId: string,
   options: { publicUrls?: boolean } = {},
 ): Promise<T[]> {
-  const storageUrl = options.publicUrls
-    ? (await resolveTenantSettings({ workspaceId })).storageUrl
-    : null
-  const finalize = (key: string) =>
-    storageUrl ? toPublicStorageUrl(key, storageUrl) : key
-
+  if (contacts.length === 0) {
+    return []
+  }
+  const finalize = createAvatarFinalizer(workspaceId, options)
   const contactInboxes = await contactInboxService.listByContactIds({
     workspaceId,
     contactIds: contacts.map((contact) => contact.id),

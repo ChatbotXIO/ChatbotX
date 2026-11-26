@@ -5,6 +5,7 @@ import { beforeEach, describe, expect, test, vi } from "vitest"
 const mocks = vi.hoisted(() => {
   const repo = {
     findLastByConversation: vi.fn().mockResolvedValue([]),
+    findLastByConversations: vi.fn().mockResolvedValue(new Map()),
   }
   return {
     assertCurrentUserCanAccessChatbot: vi.fn().mockResolvedValue(undefined),
@@ -125,6 +126,7 @@ describe("listConversations / findConversation adReferral mapping", () => {
     vi.clearAllMocks()
     mocks.createMessageRepository.mockResolvedValue(mocks.repo)
     mocks.repo.findLastByConversation.mockResolvedValue([])
+    mocks.repo.findLastByConversations.mockResolvedValue(new Map())
     mocks.buildConversationWhere.mockReturnValue({})
   })
 
@@ -298,6 +300,7 @@ describe("listConversations / findConversation googleAdsClick mapping", () => {
     vi.clearAllMocks()
     mocks.createMessageRepository.mockResolvedValue(mocks.repo)
     mocks.repo.findLastByConversation.mockResolvedValue([])
+    mocks.repo.findLastByConversations.mockResolvedValue(new Map())
     mocks.buildConversationWhere.mockReturnValue({})
   })
 

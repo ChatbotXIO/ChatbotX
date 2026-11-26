@@ -169,6 +169,8 @@ export const conversationsPublicRouter = {
           context.member.permissions.emailAndPhone === true ||
           context.member.permissions.superAdmin === true,
         scopeWhere: conversationMemberScope.where(access),
+        // No client-side storage resolver on API callers: return full URLs.
+        publicUrls: true,
       }
       if (view === "compact") {
         const result = await listConversations(
@@ -228,10 +230,13 @@ export const conversationsPublicRouter = {
     .errors(possibleErrorsOnFindingResource)
     .handler(async ({ context, input }) => {
       await assertConversationAccessForCaller(context, input.id)
-      const result = await findConversation({
-        id: input.id,
-        workspaceId: context.workspace.id,
-      })
+      const result = await findConversation(
+        {
+          id: input.id,
+          workspaceId: context.workspace.id,
+        },
+        { publicUrls: true },
+      )
       return {
         ...result,
         data: {
