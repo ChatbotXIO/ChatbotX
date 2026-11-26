@@ -104,8 +104,11 @@ vi.mock("../src/audit/dispatcher", () => ({
   dispatchAuditRecord: mockDispatchAuditRecord,
 }))
 
-const { integrationSmtpService, toResource } = await import(
+const { integrationSmtpService } = await import(
   "../src/integration-smtp/service"
+)
+const { projectIntegrationSmtp, toResource } = await import(
+  "../src/integration-smtp/resource"
 )
 
 const auth = {
@@ -565,6 +568,44 @@ describe("toResource", () => {
       inboundWebhookIssued: true,
     })
     expect(JSON.stringify(resource)).not.toContain("secret")
+  })
+})
+
+describe("projectIntegrationSmtp", () => {
+  const smtpRow = {
+    id: "1001",
+    name: "Support",
+    fromAddress: "from@example.com",
+    imapEnabled: false,
+    imapHost: null,
+    imapPort: null,
+    imapMailbox: null,
+    lastPolledAt: null,
+    lastPollError: null,
+    auth: { provider: "gmail", password: "super-secret" },
+    inboundToken: null,
+  }
+
+  test("swaps an eager-loaded integrationSmtp for its public projection", () => {
+    const [row] = projectIntegrationSmtp([
+      { id: "2001", integrationSmtp: smtpRow } as never,
+    ])
+
+    expect(row).toMatchObject({
+      id: "2001",
+      integrationSmtp: { id: "1001", provider: "gmail" },
+    })
+    expect(JSON.stringify(row)).not.toContain("secret")
+  })
+
+  test("passes rows without the relation through unchanged", () => {
+    const withoutRelation = { id: "2002" }
+    const withNull = { id: "2003", integrationSmtp: null }
+
+    expect(projectIntegrationSmtp([withoutRelation, withNull])).toEqual([
+      withoutRelation,
+      withNull,
+    ])
   })
 })
 

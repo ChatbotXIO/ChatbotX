@@ -182,12 +182,13 @@ describe("real router: broadcasts public API scope wiring", () => {
     test("resend scopes to the token's workspace, not any workspace implied by the id", async () => {
       const { broadcastService } = await import("@chatbotx.io/business")
       vi.mocked(broadcastService.resendWithPruning).mockResolvedValue({
-        id: "new-b-1",
+        // Digit strings: the output schema validates bigint ids as int64.
+        id: "1000001",
         name: "My broadcast (Resend)",
         status: "scheduled",
         schedulesType: "now",
         schedulesAt: new Date("2026-01-01T00:00:00.000Z"),
-        flowId: "flow-1",
+        flowId: "2000001",
         contactCount: 0,
         audienceRangeStart: null,
         audienceRangeEnd: null,

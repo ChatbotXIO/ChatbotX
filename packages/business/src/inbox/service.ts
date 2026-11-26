@@ -34,6 +34,7 @@ import {
   resetChannelPostSyncAfterAuthChange,
 } from "../channel-post/sync-reset"
 import { channelLimitReachedException, notFoundException } from "../errors"
+import { projectIntegrationSmtp } from "../integration-smtp/resource"
 import { logger } from "../logger"
 import { quotaEnforcementService } from "../quota-enforcement/service"
 import { type IdLabel, selectLabelsByIds } from "../select-labels-by-ids"
@@ -119,7 +120,7 @@ class InboxService extends BaseService {
     const limit = input.perPage ?? 10
     const pageCount = Math.ceil(totalRows / limit)
 
-    return { data, pageCount }
+    return { data: projectIntegrationSmtp(data), pageCount }
   }
 
   /**
@@ -138,7 +139,7 @@ class InboxService extends BaseService {
       with: InboxService.integrationsWith(input.includes),
     })
 
-    return { data }
+    return { data: projectIntegrationSmtp(data) }
   }
 
   /**
