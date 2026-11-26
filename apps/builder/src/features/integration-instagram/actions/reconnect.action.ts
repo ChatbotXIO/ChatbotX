@@ -78,10 +78,7 @@ export const reconnectInstagramAction = workspaceActionClient
         workspaceId,
       })
 
-      const generateAuthUrl = connectedWithFacebookLogin
-        ? generateInstagramFacebookAuthUrl
-        : generateInstagramAuthUrl
-      const authUrl = generateAuthUrl({
+      const authUrlParams = {
         clientId: instagramCredential.config.clientId,
         version: instagramCredential.config.version,
         redirectUrl,
@@ -90,7 +87,18 @@ export const reconnectInstagramAction = workspaceActionClient
           referer,
           reconnectIntegrationId: integrationId,
         },
-      })
+      }
+      // A credential with a Unified Login configuration reconnects through
+      // Unified Login, the same dialog its connect opens.
+      const authUrl = connectedWithFacebookLogin
+        ? generateInstagramFacebookAuthUrl(authUrlParams)
+        : generateInstagramAuthUrl({
+            ...authUrlParams,
+            unifiedLoginConfigId:
+              "unifiedLoginConfigId" in instagramCredential.config
+                ? instagramCredential.config.unifiedLoginConfigId
+                : undefined,
+          })
 
       return redirect(authUrl)
     },

@@ -1,6 +1,7 @@
 import {
   buildPublishDestinationProfileUrl,
   derivePublishState,
+  isInstagramOnFacebookGraph,
   type PublishDestinationState,
   publisherKeyForInbox,
 } from "@chatbotx.io/utils/publish-destination"
@@ -85,6 +86,11 @@ const stateColumns = () => ({
   igId: integrationInstagramModel.igId,
   inboxAvatar: publishDestinationModel.avatar,
   igType: integrationInstagramModel.type,
+  // Only the login type, never the token: a Unified Login channel publishes
+  // on graph.facebook.com like a Facebook-linked one.
+  igLoginType: sql<
+    string | null
+  >`${integrationInstagramModel.auth}->'metadata'->>'loginType'`,
   igUsername: integrationInstagramModel.username,
   inboxId: publishDestinationModel.inboxId,
   inboxName: inboxModel.name,
@@ -115,7 +121,10 @@ const stateColumns = () => ({
 type RawStateRow = Awaited<ReturnType<typeof selectRaw>>[number]
 
 const toStateRow = (row: RawStateRow): PublishDestinationStateRow => {
-  const viaFacebook = row.igType === "facebook"
+  const viaFacebook = isInstagramOnFacebookGraph({
+    auth: { metadata: { loginType: row.igLoginType } },
+    type: row.igType,
+  })
   const publisherKey: PublisherKey =
     row.provider === "tiktok"
       ? "tiktok"

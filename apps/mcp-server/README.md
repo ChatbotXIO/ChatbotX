@@ -123,6 +123,20 @@ Tool names are derived from the OpenAPI `operationId` converted to `snake_case` 
 
 For `connections_create` with `provider: "api"`, the response includes a one-time `secret.token`. Store it before discarding the response; it is never retrievable again.
 
+OAuth sessions complete automatically when their callback returns exactly one
+selectable target. If several targets are selectable, poll
+`connect_sessions_get` until `awaiting_selection`, discover the hidden
+`connect_sessions_connect_targets` operation with `search_tools`, and call it
+with the chosen target IDs.
+
+Instagram Unified Login is configured by a platform administrator in
+**Admin → Platform credentials → Instagram**. Its optional
+`unifiedLoginConfigId` is Meta's Login for Business `config_id`; leaving it
+empty preserves the legacy direct Instagram OAuth flow. The Meta configuration
+must issue a non-expiring Business Integration System User token because the
+current Instagram integration neither refreshes user tokens nor rotates
+expiring system-user tokens.
+
 ### Contacts
 
 | Tool | Description |

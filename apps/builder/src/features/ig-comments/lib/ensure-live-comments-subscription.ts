@@ -40,6 +40,7 @@ export async function ensureInstagramLiveCommentsSubscription(
         igId: integration.igId,
         accessToken: auth.tokens.accessToken,
         version: auth.metadata.version,
+        loginType: auth.metadata.loginType,
       })
       return []
     },

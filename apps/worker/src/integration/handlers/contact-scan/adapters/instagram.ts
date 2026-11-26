@@ -35,7 +35,12 @@ const instagramContactScanAuthSchema = z
   .object({
     tokens: z.object({ accessToken: z.string() }).passthrough(),
     metadata: z
-      .object({ version: z.string().optional() })
+      .object({
+        version: z.string().optional(),
+        // Unified Login channels live on graph.facebook.com; absent means
+        // the direct Instagram Login (graph.instagram.com).
+        loginType: z.enum(["direct", "unified"]).optional(),
+      })
       .passthrough()
       .optional(),
   })
@@ -46,6 +51,8 @@ type NativeInstagramContactScanContext = {
   inbox: InboxModel
   accessToken: string
   version: string | undefined
+  /** `unified`: Meta Unified Login, read on graph.facebook.com. */
+  loginType?: "direct" | "unified"
   igId: string
 }
 
@@ -81,7 +88,12 @@ const buildContextByProviderType: Record<
     integration: IntegrationInstagramModel,
   ) => InstagramContactScanContext
 > = {
-  instagram: (shared) => ({ ...shared, providerType: "instagram" }),
+  instagram: (shared, integration) => ({
+    ...shared,
+    providerType: "instagram",
+    loginType: instagramContactScanAuthSchema.safeParse(integration.auth).data
+      ?.metadata?.loginType,
+  }),
   facebook: (shared, integration) => ({
     ...shared,
     providerType: "facebook",
@@ -106,14 +118,16 @@ const listConversationsByProviderType: Record<
     pageId: string | undefined
     accessToken: string
     version: string | undefined
+    loginType: "direct" | "unified" | undefined
     cursor: string | undefined
   }) => ReturnType<typeof listInstagramConversations>
 > = {
-  instagram: ({ igId, accessToken, version, cursor }) =>
+  instagram: ({ igId, accessToken, version, loginType, cursor }) =>
     listInstagramConversations({
       igUserId: igId,
       accessToken,
       version,
+      loginType,
       after: cursor,
     }),
   facebook: ({ pageId, accessToken, version, cursor }) => {
@@ -193,6 +207,8 @@ export const instagramContactScanAdapter: ContactScanAdapter<InstagramContactSca
           context.providerType === "facebook" ? context.pageId : undefined,
         accessToken: context.accessToken,
         version: context.version,
+        loginType:
+          context.providerType === "instagram" ? context.loginType : undefined,
         cursor,
       })
 

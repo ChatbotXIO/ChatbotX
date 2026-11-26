@@ -2705,6 +2705,9 @@
     "configId": {
       "label": "Tətbiqin konfiqurasiya ID-si"
     },
+    "unifiedLoginConfigId": {
+      "label": "Unified Login Configuration ID"
+    },
     "systemUserId": {
       "label": "Sistem istifadəçisinin ID-si"
     },

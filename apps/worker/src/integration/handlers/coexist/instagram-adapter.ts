@@ -30,6 +30,9 @@ const instagramAuthSchema = z
       .object({
         igId: z.string(),
         version: z.string().optional(),
+        // Unified Login channels live on graph.facebook.com; absent means
+        // the direct Instagram Login (graph.instagram.com).
+        loginType: z.enum(["direct", "unified"]).optional(),
       })
       .passthrough(),
   })
@@ -41,6 +44,7 @@ export type InstagramCoexistContext = {
   workspaceId: string
   accessToken: string
   version?: string
+  loginType?: "direct" | "unified"
   igId: string
   defaultCountry: string | null
 }
@@ -90,6 +94,7 @@ export const instagramCoexistAdapter = {
       workspaceId,
       accessToken: parsedAuth.data.tokens.accessToken,
       version: parsedAuth.data.metadata.version,
+      loginType: parsedAuth.data.metadata.loginType,
       igId: parsedAuth.data.metadata.igId,
       defaultCountry: workspace?.targetCountry ?? null,
     }
@@ -99,6 +104,7 @@ export const instagramCoexistAdapter = {
       igUserId: context.igId,
       accessToken: context.accessToken,
       version: context.version,
+      loginType: context.loginType,
       after: cursor,
     })
     return {
@@ -112,6 +118,7 @@ export const instagramCoexistAdapter = {
       conversationId,
       accessToken: context.accessToken,
       version: context.version,
+      loginType: context.loginType,
       after: cursor,
     })
     return {
@@ -133,6 +140,7 @@ export const instagramCoexistAdapter = {
       userId: sourceId,
       accessToken: context.accessToken,
       version: context.version,
+      loginType: context.loginType,
     })
     return {
       name: profile.name ?? null,

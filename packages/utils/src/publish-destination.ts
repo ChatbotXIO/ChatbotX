@@ -245,6 +245,31 @@ export const derivePublishState = (
 }
 
 /** The publisher of an inbox-bound destination (`null` provider combinations never occur). */
+/**
+ * Whether an Instagram inbox talks to graph.facebook.com: one connected through
+ * Facebook Login (`type: "facebook"`), or one connected through Meta Unified
+ * Login (`auth.metadata.loginType: "unified"`, a system-user token that
+ * graph.instagram.com rejects). Only the direct Instagram Login uses
+ * graph.instagram.com.
+ */
+export const isInstagramOnFacebookGraph = (input: {
+  auth: unknown
+  type: "instagram" | "facebook" | null
+}): boolean => {
+  if (input.type === "facebook") {
+    return true
+  }
+  const metadata =
+    typeof input.auth === "object" && input.auth !== null
+      ? (input.auth as { metadata?: unknown }).metadata
+      : undefined
+  return (
+    typeof metadata === "object" &&
+    metadata !== null &&
+    (metadata as { loginType?: unknown }).loginType === "unified"
+  )
+}
+
 export const publisherKeyForInbox = (input: {
   provider: Exclude<SocialProvider, "tiktok">
   viaFacebook: boolean

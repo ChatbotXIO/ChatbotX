@@ -52,11 +52,13 @@ const SENTINEL_TX = { __tx: true }
 // Mock @chatbotx.io/integration-instagram (direct Instagram Business Login)
 // ---------------------------------------------------------------------------
 const getInstagramAccount = vi.fn()
+const getUnifiedInstagramAccounts = vi.fn()
 const subscribePageToInstagramWebhook = vi.fn()
 const instagramChannelIntegration = { runChannelHandler: vi.fn() }
 
 vi.mock("@chatbotx.io/integration-instagram", () => ({
   getInstagramAccount,
+  getUnifiedInstagramAccounts,
   subscribePageToInstagramWebhook,
   integration: instagramChannelIntegration,
 }))
@@ -150,6 +152,24 @@ function invokeDirect() {
     userId: USER_ID,
     userToken: "user-token",
     grantedScopes: ["instagram_business_basic"],
+    loginType: "direct",
+  })
+}
+
+function invokeUnified() {
+  return reconnectInstagramHandler({
+    credentialConfig: {
+      clientId: "meta-app-id",
+      clientSecret: "meta-app-secret",
+      version: "v19.0",
+    },
+    workspaceId: WORKSPACE_ID,
+    integrationId: INTEGRATION_ID,
+    userId: USER_ID,
+    userToken: "system-user-token",
+    grantedScopes: null,
+    loginType: "unified",
+    clientBusinessId: "business-1",
   })
 }
 
@@ -281,6 +301,79 @@ describe("reconnectInstagramHandler (direct login) — Part 2: branding follow-u
 
     const call = seedReconnectBranding.mock.calls[0][0]
     expect(call.persistBrandingMenu).toBeUndefined()
+  })
+})
+
+describe("reconnectInstagramHandler (Unified Login)", () => {
+  beforeEach(() => {
+    findByIdForWorkspace.mockResolvedValue(directRow({ pageId: "ig-1" }))
+    getUnifiedInstagramAccounts.mockResolvedValue([
+      {
+        id: "ig-2",
+        userId: "ig-2",
+        name: "other",
+        username: "other",
+        accessToken: "system-user-token",
+      },
+      {
+        id: "ig-1",
+        userId: "ig-1",
+        name: "myaccount",
+        username: "myaccount",
+        accessToken: "system-user-token",
+      },
+    ])
+  })
+
+  test("finds the stored account among the assigned accounts and keeps the Unified login type", async () => {
+    const result = await invokeUnified()
+
+    expect(result).toEqual({ status: "success" })
+    expect(getUnifiedInstagramAccounts).toHaveBeenCalledWith(
+      "system-user-token",
+      "v19.0",
+    )
+    expect(getInstagramAccount).not.toHaveBeenCalled()
+    const { auth } = updateAuth.mock.calls[0][0]
+    expect(auth.tokens.accessToken).toBe("system-user-token")
+    expect(auth.metadata).toEqual(
+      expect.objectContaining({
+        igId: "ig-1",
+        pageId: "ig-1",
+        loginType: "unified",
+        clientBusinessId: "business-1",
+      }),
+    )
+    expect(subscribePageToInstagramWebhook).toHaveBeenCalledWith({
+      igId: "ig-1",
+      accessToken: "system-user-token",
+      version: "v19.0",
+      loginType: "unified",
+    })
+  })
+
+  test("addresses a channel first connected with the direct login by its igId", async () => {
+    findByIdForWorkspace.mockResolvedValue(directRow({ pageId: "app-scoped" }))
+
+    await invokeUnified()
+
+    const { auth } = updateAuth.mock.calls[0][0]
+    expect(auth.metadata.pageId).toBe("ig-1")
+    expect(subscribePageToInstagramWebhook).toHaveBeenCalledWith(
+      expect.objectContaining({ igId: "ig-1", loginType: "unified" }),
+    )
+  })
+
+  test("rejects a token that was not assigned the stored account", async () => {
+    getUnifiedInstagramAccounts.mockResolvedValue([
+      { id: "ig-2", userId: "ig-2", name: "other", username: "other" },
+    ])
+
+    const result = await invokeUnified()
+
+    expect(result).toEqual({ status: "error", reason: "accountNotFound" })
+    expect(commitReconnect).not.toHaveBeenCalled()
+    expect(subscribePageToInstagramWebhook).not.toHaveBeenCalled()
   })
 })
 

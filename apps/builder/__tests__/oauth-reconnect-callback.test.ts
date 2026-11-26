@@ -22,6 +22,7 @@ const {
   mockExchangeMessengerLongLivedToken,
   mockSubscribePageToAppWebhook,
   mockExchangeInstagramCode,
+  mockExchangeUnifiedInstagramCode,
   mockGetInstagramAccount,
   mockSubscribeInstagramWebhook,
   mockExchangeInstagramFacebookCode,
@@ -75,6 +76,7 @@ const {
   mockExchangeMessengerLongLivedToken: vi.fn(),
   mockSubscribePageToAppWebhook: vi.fn(),
   mockExchangeInstagramCode: vi.fn(),
+  mockExchangeUnifiedInstagramCode: vi.fn(),
   mockGetInstagramAccount: vi.fn(),
   mockSubscribeInstagramWebhook: vi.fn(),
   mockExchangeInstagramFacebookCode: vi.fn(),
@@ -264,6 +266,7 @@ vi.mock("@chatbotx.io/integration-facebook-ads", () => ({
 
 vi.mock("@chatbotx.io/integration-instagram", () => ({
   exchangeCodeForToken: mockExchangeInstagramCode,
+  exchangeUnifiedCodeForToken: mockExchangeUnifiedInstagramCode,
   getInstagramAccount: mockGetInstagramAccount,
   subscribePageToInstagramWebhook: mockSubscribeInstagramWebhook,
 }))
@@ -1114,10 +1117,48 @@ describe("handleCallback OAuth reconnect", () => {
       userId: "user-1",
       userToken: "ig-user-token",
       grantedScopes: ["instagram_business_basic"],
+      loginType: "direct",
+      clientBusinessId: undefined,
     })
+    expect(mockExchangeUnifiedInstagramCode).not.toHaveBeenCalled()
 
     const redirectTarget = new URL(mockRedirect.mock.calls[0][0])
     expect(redirectTarget.searchParams.get("reconnect")).toBe("success")
+  })
+
+  test("instagram reconnect exchanges a Unified Login code when the credential has a configuration", async () => {
+    const unifiedConfig = {
+      clientId: "meta-app-1",
+      clientSecret: "meta-secret-1",
+      version: "v23.0",
+      unifiedLoginConfigId: "config-1",
+    }
+    mockResolveForOwner.mockResolvedValue({ config: unifiedConfig })
+    mockExchangeUnifiedInstagramCode.mockResolvedValue({
+      accessToken: "system-user-token",
+      clientBusinessId: "business-1",
+    })
+    mockReconnectInstagramHandler.mockResolvedValue({ status: "success" })
+
+    await handleCallback(
+      "instagram",
+      buildCallbackRequest("instagram", {
+        workspaceId: "1",
+        referer: REFERER,
+        reconnectIntegrationId: "7",
+      }),
+    )
+
+    expect(mockExchangeInstagramCode).not.toHaveBeenCalled()
+    expect(mockReconnectInstagramHandler).toHaveBeenCalledWith(
+      expect.objectContaining({
+        credentialConfig: unifiedConfig,
+        userToken: "system-user-token",
+        grantedScopes: null,
+        loginType: "unified",
+        clientBusinessId: "business-1",
+      }),
+    )
   })
 
   test("instagram-facebook reconnect passes the exchanged user token to the handler", async () => {

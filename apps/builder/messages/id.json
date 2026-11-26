@@ -2497,6 +2497,9 @@
     "configId": {
       "label": "ID Konfigurasi Aplikasi"
     },
+    "unifiedLoginConfigId": {
+      "label": "Unified Login Configuration ID"
+    },
     "systemUserId": {
       "label": "ID Pengguna Sistem"
     },

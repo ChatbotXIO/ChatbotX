@@ -13,6 +13,7 @@ const getProfileSnapshot: NonNullable<
     igsid: sourceId,
     accessToken: ctx.auth.tokens.accessToken,
     version: ctx.auth.metadata.version,
+    loginType: ctx.auth.metadata.loginType,
   })
   return {
     followsBusiness: profile.followsBusiness,

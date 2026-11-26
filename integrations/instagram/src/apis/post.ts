@@ -16,7 +16,10 @@ import {
   isUnsupportedFieldError,
   rescue,
 } from "../exception"
-import { instagramBusinessClient } from "../lib/http-client"
+import {
+  getInstagramAccountNode,
+  getInstagramGraphClient,
+} from "../lib/http-client"
 import type { InstagramAuthValue } from "../schema"
 
 export type InstagramMediaDetails = {
@@ -65,13 +68,13 @@ export const listInstagramMedia = (props: {
 }): Promise<InstagramMediaListItem[]> => {
   const { auth } = props
   const version = auth.metadata.version ?? DEFAULT_API_VERSION
-  const endpoint = `${version}/me/media`
+  const endpoint = `${version}/${getInstagramAccountNode(auth)}/media`
 
   return rescue(endpoint, async () => {
     const res = await getWithFieldFallback(
       "id,caption,media_product_type,media_type,media_url,thumbnail_url,timestamp,permalink",
       (fields) =>
-        instagramBusinessClient.get<
+        getInstagramGraphClient(auth).get<
           InstagramPaginatedResponse<InstagramMediaListItem>
         >(endpoint, {
           headers: {
@@ -94,10 +97,10 @@ export const listInstagramStories = (props: {
 }): Promise<InstagramMediaListItem[]> => {
   const { auth } = props
   const version = auth.metadata.version ?? DEFAULT_API_VERSION
-  const endpoint = `${version}/me/stories`
+  const endpoint = `${version}/${getInstagramAccountNode(auth)}/stories`
 
   return rescue(endpoint, async () => {
-    const res = await instagramBusinessClient.get<
+    const res = await getInstagramGraphClient(auth).get<
       InstagramPaginatedResponse<InstagramMediaListItem>
     >(endpoint, {
       headers: {
@@ -122,7 +125,7 @@ export const getPostDetails = (props: {
   const endpoint = `${version}/${input.postId}`
 
   return rescue(endpoint, () =>
-    instagramBusinessClient.get<InstagramMediaDetails>(endpoint, {
+    getInstagramGraphClient(ctx.auth).get<InstagramMediaDetails>(endpoint, {
       headers: {
         Authorization: `Bearer ${ctx.auth.tokens.accessToken}`,
       },
@@ -256,7 +259,7 @@ export const listManagedMedia = (props: {
 }): Promise<ChannelPostListPage> => {
   const { auth, cursor, limit } = props
   const version = auth.metadata.version ?? DEFAULT_API_VERSION
-  const endpoint = `${version}/me/media`
+  const endpoint = `${version}/${getInstagramAccountNode(auth)}/media`
 
   return rescue(endpoint, async () => {
     const page = await getWithFieldFallback(MANAGED_MEDIA_FIELDS, (fields) => {
@@ -267,10 +270,13 @@ export const listManagedMedia = (props: {
       if (cursor) {
         searchParams.after = cursor
       }
-      return instagramBusinessClient.get<InstagramManagedMediaPage>(endpoint, {
-        headers: { Authorization: `Bearer ${auth.tokens.accessToken}` },
-        searchParams,
-      })
+      return getInstagramGraphClient(auth).get<InstagramManagedMediaPage>(
+        endpoint,
+        {
+          headers: { Authorization: `Bearer ${auth.tokens.accessToken}` },
+          searchParams,
+        },
+      )
     })
     const after = page.paging?.cursors?.after
     return {
@@ -291,7 +297,7 @@ export const getManagedMedia = (props: {
   return rescue(endpoint, async () =>
     toManagedPostListItem(
       await getWithFieldFallback(MANAGED_MEDIA_FIELDS, (fields) =>
-        instagramBusinessClient.get<InstagramManagedMedia>(endpoint, {
+        getInstagramGraphClient(auth).get<InstagramManagedMedia>(endpoint, {
           headers: { Authorization: `Bearer ${auth.tokens.accessToken}` },
           searchParams: { fields },
         }),

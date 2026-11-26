@@ -1,7 +1,7 @@
 import { DEFAULT_API_VERSION } from "../constants"
 import { rescue } from "../exception"
-import { instagramBusinessClient } from "../lib/http-client"
-import type { InstagramContactProfile } from "../schema"
+import { getInstagramGraphClientForLoginType } from "../lib/http-client"
+import type { InstagramAuthValue, InstagramContactProfile } from "../schema"
 
 type RawContactProfileResponse = {
   id: string
@@ -16,6 +16,7 @@ export const fetchInstagramContactProfile = (props: {
   igsid: string
   accessToken: string
   version?: string
+  loginType?: InstagramAuthValue["metadata"]["loginType"]
 }): Promise<InstagramContactProfile> => {
   const { igsid, accessToken, version = DEFAULT_API_VERSION } = props
   const endpoint = `${version}/${igsid}`
@@ -29,11 +30,11 @@ export const fetchInstagramContactProfile = (props: {
         "username,follower_count,is_user_follow_business,is_business_follow_user,is_verified_user",
     })
 
-    const response =
-      await instagramBusinessClient.get<RawContactProfileResponse>(
-        `${endpoint}?${queries.toString()}`,
-        { headers: { Authorization: `Bearer ${accessToken}` } },
-      )
+    const response = await getInstagramGraphClientForLoginType(
+      props.loginType,
+    ).get<RawContactProfileResponse>(`${endpoint}?${queries.toString()}`, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    })
 
     return {
       username: response.username ?? null,

@@ -23,7 +23,10 @@ import {
   socialProviders,
 } from "@chatbotx.io/database/partials"
 import type { ConnectSessionModel } from "@chatbotx.io/database/types"
-import { exchangeCodeForToken as exchangeInstagramCode } from "@chatbotx.io/integration-instagram"
+import {
+  exchangeCodeForToken as exchangeInstagramCode,
+  exchangeUnifiedCodeForToken as exchangeUnifiedInstagramCode,
+} from "@chatbotx.io/integration-instagram"
 import { exchangeCodeForToken as exchangeInstagramFacebookCode } from "@chatbotx.io/integration-instagram-facebook"
 import {
   buildThreadsAuthValue,
@@ -378,28 +381,27 @@ const runConnectSessionCallback = async ({
       credential: resolved.credential,
     })
 
-    // A non-multi-account provider's grant always resolves to exactly one
-    // selectable target — finish the connect immediately so an API/MCP
-    // caller (one with no builder session, `actorTokenId` set) never has to
-    // make a second `targets` call for it. A builder-initiated session
-    // (`actorUserId` set) skips this: its picker page — Instagram's direct
-    // login is non-multi-account too, but still shows a confirm screen with
-    // per-row coexist/sync-history opt-ins the person must set before the
-    // connect actually runs — owns finishing the connect itself via its own
-    // `connectTargets` call from the "Continue" button.
+    // Finish any API/MCP connect immediately when the provider returned
+    // exactly one selectable target. This preserves the one-step behavior of
+    // legacy providers even when a new credential mode makes the provider
+    // multi-account capable (Instagram Unified Login is the first example).
+    // Multiple selectable targets still require the caller to choose through
+    // the session targets operation. A builder-initiated session
+    // (`actorUserId` set) always skips this because its picker page owns the
+    // final `connectTargets` call and any per-row options.
+    const selectableTargets = completed.targets.filter(
+      (target) => target.selectable,
+    )
     if (
       completed.status === "awaiting_selection" &&
-      !adapter.provider.multiAccount &&
+      selectableTargets.length === 1 &&
       !completed.actorUserId
     ) {
-      const onlyTarget = completed.targets[0]
-      if (onlyTarget?.selectable) {
-        await connectionService.connectTargets({
-          sessionId: completed.id,
-          workspaceId: completed.workspaceId,
-          targetIds: [onlyTarget.id],
-        })
-      }
+      await connectionService.connectTargets({
+        sessionId: completed.id,
+        workspaceId: completed.workspaceId,
+        targetIds: [selectableTargets[0].id],
+      })
     }
   } catch (err) {
     // `completeAuthorization` already marks the session `failed` for its own
@@ -867,20 +869,39 @@ export const handleCallback = async (
         )
       }
 
-      const { accessToken: userToken, grantedScopes } =
-        await exchangeInstagramCode(
-          instagramCredential.config,
-          code,
-          callbackUrl,
-        )
+      // The same credential decided the authorize URL
+      // (`reconnectInstagramAction`): a Unified Login configuration means the
+      // code came from Unified Login and must be exchanged on
+      // graph.facebook.com.
+      const exchanged = instagramCredential.config.unifiedLoginConfigId
+        ? {
+            loginType: "unified" as const,
+            grantedScopes: null,
+            ...(await exchangeUnifiedInstagramCode(
+              instagramCredential.config,
+              code,
+              callbackUrl,
+            )),
+          }
+        : {
+            loginType: "direct" as const,
+            clientBusinessId: undefined,
+            ...(await exchangeInstagramCode(
+              instagramCredential.config,
+              code,
+              callbackUrl,
+            )),
+          }
 
       const result = await reconnectInstagramHandler({
         credentialConfig: instagramCredential.config,
         workspaceId: workspace.id,
         integrationId: stateParams.reconnectIntegrationId,
         userId,
-        userToken,
-        grantedScopes,
+        userToken: exchanged.accessToken,
+        grantedScopes: exchanged.grantedScopes,
+        loginType: exchanged.loginType,
+        clientBusinessId: exchanged.clientBusinessId,
       })
       if (result.status === "success") {
         await auditService.record({

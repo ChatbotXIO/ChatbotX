@@ -6,6 +6,8 @@ vi.mock("../src/lib/http-client", () => ({
   instagramBusinessClient: {
     get: instagramGet,
   },
+  getInstagramGraphClient: () => ({ get: instagramGet }),
+  getInstagramGraphClientForLoginType: () => ({ get: instagramGet }),
 }))
 
 const { fetchInstagramContactProfile } = await import(

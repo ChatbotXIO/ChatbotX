@@ -2690,6 +2690,9 @@
     "configId": {
       "label": "App Config ID"
     },
+    "unifiedLoginConfigId": {
+      "label": "Unified Login Configuration ID"
+    },
     "currency": {
       "label": "Currency"
     },

@@ -126,9 +126,6 @@ const writeInstagramSettings = async (
       if (integrationInstagramData) {
         const auth = integrationInstagramData.auth as InstagramAuthValue
         const isFacebook = integrationInstagramData.type === "facebook"
-        const channelIntegration = isFacebook
-          ? integrationInstagramFacebook
-          : integrationInstagram
         const botContext = await buildContext({
           workspaceId: ctx.workspaceId,
           integrationType: isFacebook ? "instagramFacebook" : "instagram",
@@ -137,14 +134,23 @@ const writeInstagramSettings = async (
 
         const fieldsToDelete = getInstagramFieldsToDelete(input)
         if (fieldsToDelete.length > 0) {
-          await channelIntegration.runChannelHandler(
-            "bot",
-            "deleteProfileFields",
-            {
-              ctx: botContext,
-              fields: fieldsToDelete,
-            },
-          )
+          const props = {
+            ctx: botContext,
+            fields: fieldsToDelete,
+          }
+          if (isFacebook) {
+            await integrationInstagramFacebook.runChannelHandler(
+              "bot",
+              "deleteProfileFields",
+              props,
+            )
+          } else {
+            await integrationInstagram.runChannelHandler(
+              "bot",
+              "deleteProfileFields",
+              props,
+            )
+          }
         }
 
         const profileData: Partial<InstagramProfileRequest> = {}
@@ -163,10 +169,23 @@ const writeInstagramSettings = async (
         }
 
         if (Object.keys(profileData).length > 0) {
-          await channelIntegration.runChannelHandler("bot", "updateProfile", {
+          const props = {
             ctx: botContext,
             data: profileData as InstagramProfileRequest,
-          })
+          }
+          if (isFacebook) {
+            await integrationInstagramFacebook.runChannelHandler(
+              "bot",
+              "updateProfile",
+              props,
+            )
+          } else {
+            await integrationInstagram.runChannelHandler(
+              "bot",
+              "updateProfile",
+              props,
+            )
+          }
         }
       }
 

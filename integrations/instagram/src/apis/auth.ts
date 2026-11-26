@@ -1,8 +1,9 @@
-import { INSTAGRAM_BUSINESS_SCOPES } from "../constants"
+import { DEFAULT_API_VERSION, INSTAGRAM_BUSINESS_SCOPES } from "../constants"
 import { InstagramException, rescue } from "../exception"
 import {
   instagramBusinessClient,
   instagramOAuthClient,
+  instagramUnifiedGraphClient,
 } from "../lib/http-client"
 import { logger } from "../lib/logger"
 
@@ -23,24 +24,146 @@ export type InstagramAccount = {
   accessToken: string
 }
 
+export type UnifiedInstagramAuthorization = {
+  accessToken: string
+  clientBusinessId?: string
+}
+
+/**
+ * The legacy (non-session) authorize URL, used by the builder's Reconnect
+ * button. With `unifiedLoginConfigId` it opens Meta Unified Login, matching
+ * what the connection engine's `authorizeUrl` opens for the same credential:
+ * once a credential holds a Unified Login configuration its `clientId` is the
+ * Meta app id, which `instagram.com/oauth/authorize` rejects.
+ */
 export function generateAuthUrl({
   clientId,
   redirectUrl,
   stateParams,
+  unifiedLoginConfigId,
 }: {
   clientId: string
   version?: string
   redirectUrl: string
   stateParams?: Record<string, unknown>
+  unifiedLoginConfigId?: string
 }): string {
+  const state = Buffer.from(JSON.stringify(stateParams ?? {})).toString(
+    "base64",
+  )
+  if (unifiedLoginConfigId) {
+    return generateUnifiedAuthUrl({
+      clientId,
+      configId: unifiedLoginConfigId,
+      redirectUrl,
+      state,
+    })
+  }
   const params = new URLSearchParams({
     client_id: clientId,
     redirect_uri: redirectUrl,
     response_type: "code",
-    state: Buffer.from(JSON.stringify(stateParams ?? {})).toString("base64"),
+    state,
     scope: INSTAGRAM_BUSINESS_SCOPES.join(","),
   })
   return `${INSTAGRAM_OAUTH_AUTHORIZE_URL}?${params.toString()}`
+}
+
+export function generateUnifiedAuthUrl({
+  clientId,
+  configId,
+  redirectUrl,
+  state,
+}: {
+  clientId: string
+  configId: string
+  redirectUrl: string
+  state: string
+}): string {
+  const params = new URLSearchParams({
+    client_id: clientId,
+    config_id: configId,
+    redirect_uri: redirectUrl,
+    response_type: "code",
+    override_default_response_type: "true",
+    state,
+  })
+  return `https://www.facebook.com/dialog/oauth?${params.toString()}`
+}
+
+export function exchangeUnifiedCodeForToken(
+  settings: { clientId: string; clientSecret: string; version?: string },
+  code: string,
+  redirectUrl: string,
+): Promise<UnifiedInstagramAuthorization> {
+  const version = settings.version ?? DEFAULT_API_VERSION
+  const endpoint = `${version}/oauth/access_token`
+  return rescue(endpoint, async () => {
+    const token = await instagramUnifiedGraphClient.get<{
+      access_token: string
+    }>(endpoint, {
+      searchParams: {
+        client_id: settings.clientId,
+        client_secret: settings.clientSecret,
+        code,
+        redirect_uri: redirectUrl,
+      },
+    })
+    const business = await instagramUnifiedGraphClient.get<{
+      client_business_id?: string
+    }>(`${version}/me`, {
+      searchParams: {
+        fields: "client_business_id",
+        access_token: token.access_token,
+      },
+    })
+    return {
+      accessToken: token.access_token,
+      clientBusinessId: business.client_business_id,
+    }
+  })
+}
+
+export async function getUnifiedInstagramAccounts(
+  accessToken: string,
+  version = DEFAULT_API_VERSION,
+): Promise<InstagramAccount[]> {
+  const endpoint = `${version}/me/assigned_instagram_accounts`
+  const accounts: InstagramAccount[] = []
+  let after: string | undefined
+
+  do {
+    const response = await rescue(endpoint, () =>
+      instagramUnifiedGraphClient.get<{
+        data: Array<{
+          id: string
+          username?: string
+        }>
+        paging?: { cursors?: { after?: string }; next?: string }
+      }>(endpoint, {
+        searchParams: {
+          fields: "id,username",
+          access_token: accessToken,
+          ...(after ? { after } : {}),
+        },
+      }),
+    )
+    accounts.push(
+      ...response.data.map((account) => ({
+        id: account.id,
+        userId: account.id,
+        name: account.username ?? account.id,
+        username: account.username ?? account.id,
+        accessToken,
+      })),
+    )
+    const nextAfter = response.paging?.next
+      ? response.paging.cursors?.after
+      : undefined
+    after = nextAfter && nextAfter !== after ? nextAfter : undefined
+  } while (after)
+
+  return accounts
 }
 
 export type InstagramCodeExchange = {
