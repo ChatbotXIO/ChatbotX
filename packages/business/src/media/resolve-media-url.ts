@@ -99,8 +99,9 @@ const buildProxyUrl = async (
       : await signMediaToken(props, ttlMs)
   // White-label: proxied media must resolve on the workspace's own (custom)
   // domain, not the platform default, so the branded origin is preserved for
-  // tenants on a custom domain. resolveWorkspaceAppUrl is withCache-backed, so
-  // repeat lookups while resolving a list of pending media stay cheap.
+  // tenants on a custom domain. Both lookups behind resolveWorkspaceAppUrl
+  // (workspace, active custom domain — including "none") are cached, so this
+  // stays off the database when called per row while resolving a list.
   const appUrl = await resolveWorkspaceAppUrl({
     workspaceId: props.workspaceId,
   })

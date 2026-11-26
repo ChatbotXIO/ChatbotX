@@ -8,13 +8,15 @@ const { mockFindFirst, mockWithCache } = vi.hoisted(() => ({
       callback: () => Promise<unknown> | unknown,
       options: {
         tags?: string[]
+        ttlFor?: (result: unknown) => number | undefined
         dynamicTags?: (result: unknown) => string[] | undefined
       },
     ) => {
       const result = await callback()
-      // Exercise the same tag-derivation path the real withCache uses, so a
-      // dynamicTags bug (e.g. throwing on `undefined`) surfaces in tests.
+      // Exercise the same tag/TTL-derivation path the real withCache uses, so
+      // a bug in either (e.g. throwing on a miss) surfaces in tests.
       options.dynamicTags?.(result)
+      options.ttlFor?.(result)
       return result
     },
   ),
@@ -79,7 +81,7 @@ describe("customDomainService.findActiveByTenantId", () => {
     await customDomainService.findActiveByTenantId("t1")
 
     expect(mockWithCache).toHaveBeenCalledWith(
-      "custom-domain:active-tenant:t1",
+      "custom-domain:active-tenant:v2:t1",
       expect.any(Function),
       expect.objectContaining({ tags: ["cd:tenant:t1"] }),
     )
@@ -96,9 +98,23 @@ describe("customDomainService.findActiveByTenantId", () => {
     await customDomainService.findActiveByTenantId("t1")
 
     const dynamicTags = mockWithCache.mock.calls[0]?.[2]?.dynamicTags
-    expect(dynamicTags?.({ domain: "chat.acme.com" })).toEqual([
+    expect(dynamicTags?.({ domain: { domain: "chat.acme.com" } })).toEqual([
       "cd:domain:chat.acme.com",
     ])
-    expect(dynamicTags?.(undefined)).toEqual([])
+    expect(dynamicTags?.({ domain: null })).toEqual([])
+  })
+
+  test("caches a miss as a wrapped null with a short TTL, so it is not re-queried per call", async () => {
+    mockFindFirst.mockResolvedValue(undefined)
+    const { customDomainService } = await loadModule()
+    await customDomainService.findActiveByTenantId("t1")
+
+    const callback = mockWithCache.mock.calls[0]?.[1]
+    const ttlFor = mockWithCache.mock.calls[0]?.[2]?.ttlFor
+    // withCache skips storing null/undefined — the callback must return an
+    // object even when the tenant has no active domain.
+    expect(await callback?.()).toEqual({ domain: null })
+    expect(ttlFor?.({ domain: null })).toBe(60)
+    expect(ttlFor?.({ domain: { domain: "chat.acme.com" } })).toBeUndefined()
   })
 })
