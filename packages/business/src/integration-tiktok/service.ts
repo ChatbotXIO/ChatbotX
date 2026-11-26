@@ -20,6 +20,7 @@ import {
   tiktokCanMessage,
   updateTiktokDirectReplyStatus,
 } from "@chatbotx.io/integration-tiktok"
+import { distributedStore } from "@chatbotx.io/redis"
 import type { AuthValue } from "@chatbotx.io/sdk"
 import { BaseService } from "../base.service"
 import {
@@ -38,6 +39,18 @@ import {
 import { inboxService } from "../inbox/service"
 import { makeAuthStore } from "../integration-context/auth-store"
 import { logger } from "../logger"
+
+/**
+ * How long a withheld comment stays eligible for a re-check. Covers the
+ * scheduled re-checks (a few minutes) with room for a late `set_to_public`.
+ */
+const COMMENT_IDENTITY_WITHHELD_TTL_SECONDS = 60 * 60
+
+const commentIdentityWithheldKey = (props: {
+  integrationIdentifier: string
+  commentId: string
+}) =>
+  `tiktok:comment-identity-withheld:${props.integrationIdentifier}:${props.commentId}`
 
 /** The post a TikTok comment conversation sits on, as far as it can be resolved. */
 export type TiktokPostDetails = {
@@ -293,6 +306,75 @@ class TiktokIntegrationService extends BaseService {
     if (!row) {
       throw notFoundException("TikTok integration not found")
     }
+  }
+
+  /**
+   * Remembers the `unique_identifier` this account comments under, so a comment
+   * whose lookup comes back empty can still be told apart from the account's
+   * own (see `TiktokAuthValue.metadata.ownerUniqueIdentifier`).
+   *
+   * Writes ONLY that one metadata field, in the database, for the same reason
+   * `cacheCommentToMessageStatus` does: writing back a whole `auth` read
+   * earlier could restore tokens a refresh has just replaced. A refresh racing
+   * this write may drop the field; the next own comment records it again.
+   */
+  async rememberOwnerUniqueIdentifier(props: {
+    id: string
+    workspaceId: string
+    uniqueIdentifier: string
+  }): Promise<void> {
+    await db
+      .update(integrationTiktokModel)
+      .set({
+        auth: sql`jsonb_set(
+          ${integrationTiktokModel.auth},
+          '{metadata}',
+          coalesce(${integrationTiktokModel.auth} -> 'metadata', '{}'::jsonb)
+            || jsonb_build_object('ownerUniqueIdentifier', ${props.uniqueIdentifier}::text)
+        )`,
+      })
+      .where(
+        and(
+          eq(integrationTiktokModel.id, props.id),
+          eq(integrationTiktokModel.workspaceId, props.workspaceId),
+        ),
+      )
+  }
+
+  /**
+   * Marks a comment whose commenter lookup came back empty, so its automation
+   * was withheld. Only a marked comment is looked at again — by the scheduled
+   * re-checks, or when TikTok reports it `set_to_public` — which keeps a shop
+   * un-hiding an old comment from triggering a reply to it.
+   *
+   * Holds the comment as first delivered: a later `set_to_public` event is
+   * not documented to carry the text, and the automation matches on it.
+   */
+  markCommentIdentityWithheld<T>(props: {
+    integrationIdentifier: string
+    commentId: string
+    comment: T
+  }): Promise<void> {
+    return distributedStore.put(
+      commentIdentityWithheldKey(props),
+      props.comment,
+      COMMENT_IDENTITY_WITHHELD_TTL_SECONDS,
+    )
+  }
+
+  /** The comment `markCommentIdentityWithheld` stored, or `null` once settled or expired. */
+  findCommentIdentityWithheld<T>(props: {
+    integrationIdentifier: string
+    commentId: string
+  }): Promise<T | null> {
+    return distributedStore.get<T>(commentIdentityWithheldKey(props))
+  }
+
+  clearCommentIdentityWithheld(props: {
+    integrationIdentifier: string
+    commentId: string
+  }): Promise<void> {
+    return distributedStore.delete(commentIdentityWithheldKey(props))
   }
 
   async markTokenRefreshError(props: {

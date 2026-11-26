@@ -22,30 +22,43 @@ const WEBHOOK_TIMESTAMP_WINDOW_SECONDS = 300
 // Allow 2s of clock skew between TikTok servers and ours
 const WEBHOOK_CLOCK_SKEW_SECONDS = 2
 
+/**
+ * Why a signature was rejected. `ageSeconds` is our clock minus TikTok's
+ * timestamp: negative means TikTok's clock is ahead of ours — the usual sign
+ * that this server's clock has drifted behind (for example, NTP blocked).
+ */
+type SignatureRejection =
+  | { reason: "missing" | "malformed" | "mismatch" }
+  | { reason: "timestamp"; ageSeconds: number }
+
 async function verifySignature(
   clientSecret: string,
   signature: string,
   body: string,
-): Promise<boolean> {
+): Promise<SignatureRejection | undefined> {
+  if (!signature) {
+    return { reason: "missing" }
+  }
+
   const parts = signature.split(",").map((p) => p.trim())
   const tPart = parts.find((p) => p.startsWith("t="))
   const sPart = parts.find((p) => p.startsWith("s="))
 
   if (!(tPart && sPart)) {
-    return false
+    return { reason: "malformed" }
   }
 
   const timestamp = Number(tPart.slice(2))
   if (!Number.isFinite(timestamp)) {
-    return false
+    return { reason: "malformed" }
   }
 
-  const diffSeconds = Math.floor(Date.now() / 1000) - timestamp
+  const ageSeconds = Math.floor(Date.now() / 1000) - timestamp
   if (
-    diffSeconds < -WEBHOOK_CLOCK_SKEW_SECONDS ||
-    diffSeconds > WEBHOOK_TIMESTAMP_WINDOW_SECONDS
+    ageSeconds < -WEBHOOK_CLOCK_SKEW_SECONDS ||
+    ageSeconds > WEBHOOK_TIMESTAMP_WINDOW_SECONDS
   ) {
-    return false
+    return { reason: "timestamp", ageSeconds }
   }
 
   const receivedSig = sPart.slice(2)
@@ -53,6 +66,8 @@ async function verifySignature(
   const expected = await hmacSha256Hex(clientSecret, payload)
 
   return timingSafeStringEqual(expected, receivedSig)
+    ? undefined
+    : { reason: "mismatch" }
 }
 
 /**
@@ -88,11 +103,13 @@ function resolveParentCommentId(
  * Routes a `comment.update` event to the right job.
  *
  * One event type carries five different things, told apart by `comment_action`
- * — so only `insert` is "a new comment arrived". The three visibility actions
- * (`set_to_hidden`, `set_to_friends_only`, `set_to_public`) are deliberately
- * dropped: the only job that could take them, `updateIncomingComment`, rewrites
- * the message text, which is not what changed. They are logged so a visibility
- * feature can be built on real traffic rather than guesses.
+ * — so only `insert` is "a new comment arrived". `set_to_public` is sent on as
+ * a re-check of a comment whose automation may have been withheld (see below).
+ * The other visibility actions (`set_to_hidden`, `set_to_friends_only`) are
+ * deliberately dropped: the only job that could take them,
+ * `updateIncomingComment`, rewrites the message text, which is not what
+ * changed. They are logged so a visibility feature can be built on real
+ * traffic rather than guesses.
  *
  * Never throws. TikTok retries a non-2xx webhook, and none of these failures
  * get better on a retry.
@@ -126,7 +143,8 @@ async function handleCommentEvent(props: {
     return
   }
 
-  if (content.comment_action !== "insert") {
+  const isRecheck = content.comment_action === "set_to_public"
+  if (content.comment_action !== "insert" && !isRecheck) {
     logger.info(
       {
         integrationIdentifier,
@@ -143,8 +161,9 @@ async function handleCommentEvent(props: {
   // `comment_id` would key the contact by the comment itself, so the same
   // person would become a brand-new Contact on every comment they write —
   // inflating MAC quota and making `replyToNewContactsOnly` fire every time.
-  // A comment nobody can be attributed to is dropped instead.
-  if (!content.unique_identifier) {
+  // A comment nobody can be attributed to is dropped instead. A re-check does
+  // not need it: the worker runs on the comment stored at first delivery.
+  if (!(content.unique_identifier || isRecheck)) {
     logger.warn(
       { integrationIdentifier, commentId: content.comment_id },
       "TikTok comment has no unique_identifier; cannot identify commenter",
@@ -163,7 +182,7 @@ async function handleCommentEvent(props: {
         // The webhook carries no open id, name or avatar — only this stable
         // per-commenter identifier. `receiveComment` enriches it from
         // `business/comment/list/` before a contact is created.
-        fromId: content.unique_identifier,
+        fromId: content.unique_identifier ?? "",
         message: content.text,
         // `timestamp` is milliseconds; the envelope's `create_time` is already
         // seconds. Prefer the comment's own time so a webhook delayed by
@@ -172,6 +191,14 @@ async function handleCommentEvent(props: {
           ? Math.floor(content.timestamp / 1000)
           : event.create_time,
       },
+      // A comment made public right after it arrived (seen on photo posts,
+      // #1715) may have been missing from TikTok's comment lookup a moment
+      // earlier. The worker re-checks it only if its automation was withheld
+      // for that reason, and runs on the comment as first delivered — so an
+      // old comment the shop un-hides is never answered.
+      ...(isRecheck
+        ? { tiktokIdentityRecheck: { source: "visibility" as const } }
+        : {}),
     },
   })
 }
@@ -253,11 +280,20 @@ export const webhookHandler = async (
   }
 
   const signature = req.headers.get("TikTok-Signature") ?? ""
-  if (
-    !(
-      signature && (await verifySignature(config.clientSecret, signature, body))
+  const rejection = await verifySignature(config.clientSecret, signature, body)
+  if (rejection) {
+    // The reason (and, for a timestamp outside the window, how far off it
+    // was) turns "every webhook is rejected" into a one-line diagnosis — a
+    // server clock a few seconds behind looks exactly like a bad secret
+    // otherwise.
+    logger.warn(
+      {
+        ...rejection,
+        allowedFutureSeconds: WEBHOOK_CLOCK_SKEW_SECONDS,
+        allowedAgeSeconds: WEBHOOK_TIMESTAMP_WINDOW_SECONDS,
+      },
+      "TikTok webhook signature rejected",
     )
-  ) {
     throw new TiktokWebhookException("Invalid or missing webhook signature")
   }
 

@@ -66,6 +66,16 @@ export type TiktokAuthValue = Oauth2AuthValue & {
       /** ISO-8601; when the status above was last read back from TikTok. */
       checkedAt: string
     }
+    /**
+     * The `unique_identifier` TikTok's comment webhook reports when this
+     * account comments itself, learned from a comment lookup that answered
+     * `owner: true`. Lets the worker tell the account's own comments apart
+     * when a lookup returns nothing (seen on photo posts, #1715). Absent until
+     * the account's first own comment has been looked up.
+     *
+     * Must be preserved across token refresh, which re-stamps `metadata`.
+     */
+    ownerUniqueIdentifier?: string
   }
 }
 
