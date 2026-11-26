@@ -4,8 +4,9 @@ description: >-
   Use when creating or changing a table in `packages/database/src/schema`,
   generating a migration (`make:migration`), adding relations to
   `relations/index.ts`, fixing `db:check-drift`, or writing Drizzle queries in a
-  repository. Covers migration safety (never auto-apply `db:migrate`) and the
-  `.default()`-is-not-a-DB-default trap.
+  repository, or upgrading `drizzle-orm`/`drizzle-kit`. Covers migration safety
+  (never auto-apply `db:migrate`), the `.default()`-is-not-a-DB-default trap, and
+  the drizzle-orm rc `undefined`-in-`where` trap.
 ---
 
 # Drizzle Database
@@ -200,6 +201,22 @@ const item = await db.query.myModel.findFirst({
 })
 ```
 
+### Trap — `undefined` in a relational `where`
+
+drizzle-orm 1.0.0-rc **throws** `Unexpected 'undefined' in filter value. Use 'EmptyFilter'…` when a relational filter holds `undefined`, at the top level or inside `with: { x: { where } }`. Beta skipped those keys, and many repositories build `where` objects with optional filters (`name: input.name ? { ilike: … } : undefined`). After #1759 bumped drizzle to rc, that took down the Flows list in production.
+
+The fix is now central, so do not copy it per repository:
+
+- `packages/database/src/client.ts` wraps `findMany`/`findFirst` on the shared relational query builder prototype. The config goes through `stripUndefined` (`relations-filter.ts`), which covers every `db.query.*` and `tx.query.*`.
+- `relationsFilterToSQL` from `@chatbotx.io/database/client` (used by `$count`, `countWithRelationsFilter`) strips them too. Import it from there, never straight from `drizzle-orm`.
+- Guarded by `packages/database/__tests__/relational-query-undefined.test.ts` and `relations-filter.test.ts`.
+
+Rules:
+
+- Optional filter keys may stay `undefined`. Do not use `null` to mean "skip": `null` is a real value (`{ isNull: true }` is the explicit form).
+- Any query path that bypasses `db.query.*` and the wrapped `relationsFilterToSQL` (a new drizzle instance, raw drizzle `relationsFilterToSQL`) must strip `undefined` itself.
+- A repository test should run the query **without** its optional filters (`findMany(...).toSQL()` is enough, no database needed). Most `undefined` bugs only show up on the unfiltered default view.
+
 ### SQL Builder (inside a service or repository)
 
 ```typescript
@@ -222,6 +239,14 @@ import { myModel } from "@chatbotx.io/database/schema"
 
 const item = await findOrFail({ table: myModel, where: { id } })
 ```
+
+## Upgrading `drizzle-orm` / `drizzle-kit`
+
+The versions are pinned in the `catalog:` of `pnpm-workspace.yaml`. Before merging a bump, especially beta → rc → stable:
+
+1. Read the drizzle release notes for changes to relational-query filter semantics (`undefined`/`EmptyFilter`, `null`), the `relationsFilterToSQL` return shape, and the `db.execute` result shape.
+2. Keep the guard tests green: `relational-query-undefined.test.ts`, `relations-filter.test.ts`, and the `db.execute` shape test. If a bump breaks the prototype wrap in `client.ts` (the class or method names changed), fix the wrap. Do not delete the test.
+3. Mocked repository and service tests do not exercise drizzle's query builder. Also smoke-test the main list pages (Flows, Contacts, Broadcasts, Inbox) with **no filters** against a real database before deploying.
 
 ## Soft-delete convention
 
