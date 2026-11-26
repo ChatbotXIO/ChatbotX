@@ -116,12 +116,22 @@ describe("getAccessStateFromQuota (pure, DB-only)", () => {
     expect(state).toMatchObject({ blocked: true, reason: "status" })
   })
 
-  test("past_due blocks with reason status", () => {
+  test("past_due is allowed by status (grace while payment is recovered)", () => {
     const state = userQuotaService.getAccessStateFromQuota({
       ...baseQuota,
       planStatus: "past_due",
     })
-    expect(state).toMatchObject({ blocked: true, reason: "status" })
+    expect(state).toMatchObject({ blocked: false, reason: null })
+  })
+
+  test("past_due still blocks at the mac limit", () => {
+    const state = userQuotaService.getAccessStateFromQuota({
+      ...baseQuota,
+      planStatus: "past_due",
+      macLimit: 100,
+      macUsed: 100,
+    })
+    expect(state).toMatchObject({ blocked: true, reason: "mac" })
   })
 
   test("an unrecognized status blocks with reason status", () => {
@@ -155,7 +165,7 @@ describe("getAccessStateFromQuota (pure, DB-only)", () => {
   test("status block takes precedence over a mac block", () => {
     const state = userQuotaService.getAccessStateFromQuota({
       ...baseQuota,
-      planStatus: "past_due",
+      planStatus: "expired",
       macLimit: 100,
       macUsed: 100,
     })
@@ -175,7 +185,7 @@ describe("getAccessStateFromQuota (pure, DB-only)", () => {
 
 describe("getAccessState (async, live-count authoritative)", () => {
   test("blocked by status short-circuits before checking the live mac count", async () => {
-    findFirstQuota.mockResolvedValue({ ...baseQuota, planStatus: "past_due" })
+    findFirstQuota.mockResolvedValue({ ...baseQuota, planStatus: "expired" })
 
     const state = await userQuotaService.getAccessState(USER)
 
