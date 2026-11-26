@@ -11815,7 +11815,17 @@
       "error": "无法加载看板",
       "processing": "正在处理此阶段…",
       "moveFailed": "无法移动卡片",
+      "reorderNeedsManualSort": "将排序切换为“手动顺序”，即可在阶段内重新排列卡片。",
+      "dragHandle": "拖动以移动卡片",
+      "dragInstructions": "要拿起卡片，请在其拖动手柄上按空格键或回车键。使用方向键移动，按空格键或回车键放下，按 Esc 取消。",
+      "announce": {
+        "pickedUp": "已拿起 {name}。",
+        "over": "{name} 位于 {stage} 上方。",
+        "dropped": "已将 {name} 放入 {stage}。",
+        "cancelled": "已取消移动。{name} 已回到原位。"
+      },
       "sortOptions": {
+        "manualAsc": "手动顺序",
         "createdAtDesc": "创建日期 (从新到旧)",
         "createdAtAsc": "创建日期 (从旧到新)",
         "updatedAtDesc": "更新日期 (从新到旧)",

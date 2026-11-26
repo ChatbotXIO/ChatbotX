@@ -2,7 +2,10 @@ import type { SQL } from "@chatbotx.io/database/client"
 import { sql } from "@chatbotx.io/database/client"
 import { pipelineItemModel } from "@chatbotx.io/database/schema"
 import type { AnyPgColumn } from "drizzle-orm/pg-core"
-import type { PipelineItemSortKey } from "../../partials/pipeline"
+import type {
+  PipelineItemSortDirection,
+  PipelineItemSortKey,
+} from "../../partials/pipeline"
 import { isBigintId } from "../../utils"
 
 const TIMESTAMP_TEXT_PATTERN =
@@ -14,6 +17,10 @@ const MAX_NUMERIC_INTEGER_DIGITS = 30
 const MAX_OFFSET_HOURS = 15
 const DAYS_IN_MONTH = [31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
 const PRIORITY_RANK_TEXT_PATTERN = /^[1-3]$/
+// Postgres `float8::text` is the shortest exact round trip: digits, an optional
+// fraction and an optional signed exponent ("-0", "1e-05", "1.5e+300").
+const FLOAT8_TEXT_PATTERN = /^-?\d+(\.\d+)?(e[+-]\d{1,3})?$/
+const MAX_FLOAT8_TEXT_LENGTH = 32
 
 /** Priority ordering: high > medium > low. */
 const priorityRank = () =>
@@ -45,11 +52,16 @@ const sortSpecs = (): Record<PipelineItemSortKey, SortSpec> => ({
     nullable: true,
   },
   priority: { expression: priorityRank(), cast: "int", nullable: false },
+  manual: {
+    expression: sql`${pipelineItemModel.position}`,
+    cast: "float8",
+    nullable: false,
+  },
 })
 
 export type PipelineItemSort = {
   key: PipelineItemSortKey
-  direction: "asc" | "desc"
+  direction: PipelineItemSortDirection
 }
 
 export type PipelineItemCursor = {
@@ -63,6 +75,15 @@ export type PipelineItemCursor = {
 
 export class InvalidPipelineCursorError extends Error {}
 
+/** `manual` order is per stage: a list across stages has no such order. */
+export class ManualSortRequiresStageError extends Error {
+  constructor() {
+    super(
+      "Sorting by manual order requires exactly one stage: pass exactly one stageId",
+    )
+  }
+}
+
 export function encodePipelineItemCursor(cursor: PipelineItemCursor): string {
   return Buffer.from(JSON.stringify(cursor)).toString("base64url")
 }
@@ -72,6 +93,7 @@ const CURSOR_VALUE_PATTERNS_BY_CAST: Record<string, RegExp> = {
   timestamptz: TIMESTAMP_TEXT_PATTERN,
   numeric: NUMERIC_TEXT_PATTERN,
   int: PRIORITY_RANK_TEXT_PATTERN,
+  float8: FLOAT8_TEXT_PATTERN,
 }
 
 const inRange = (value: number, min: number, max: number) =>
@@ -133,6 +155,9 @@ function isSortValueValid(
   }
   if (cast === "numeric") {
     return isNumericSane(sortValue)
+  }
+  if (cast === "float8") {
+    return sortValue.length <= MAX_FLOAT8_TEXT_LENGTH
   }
   return true
 }

@@ -8,7 +8,7 @@
  * the pipelines migration applied (`pnpm --filter @chatbotx.io/database test:db`).
  */
 
-import { eq } from "drizzle-orm"
+import { eq, inArray } from "drizzle-orm"
 import { drizzle } from "drizzle-orm/node-postgres"
 import { Client } from "pg"
 import {
@@ -24,12 +24,15 @@ import type { PipelineItemSortKey } from "../../src/partials/pipeline"
 import { pipelineSettingsSchema } from "../../src/partials/pipeline"
 import { relations } from "../../src/relations"
 import {
+  decodePipelineItemCursor,
+  ManualSortRequiresStageError,
   pipelineActivityRepository,
   pipelineItemContentRepository,
   pipelineItemRepository,
   pipelineRepository,
   pipelineStageRepository,
   pipelineVariableTargetRepository,
+  RESPACE_EXISTING_MAX,
 } from "../../src/repositories/pipeline"
 // biome-ignore lint/performance/noNamespaceImport: mirrors the database client schema registration
 import * as schema from "../../src/schema"
@@ -37,6 +40,8 @@ import { realDatabaseUrl } from "./database-url"
 
 const databaseUrl = realDatabaseUrl()
 const ONE_TARGET_CHECK = /PipelineItemAssignee_one_target_check/
+const POSITION_FINITE_CHECK = /PipelineItem_position_finite_check/
+const POSITION_INDEX = "PipelineItem_stage_position_idx"
 
 type Fixture = {
   contactIds: string[]
@@ -311,6 +316,8 @@ describe.skipIf(!databaseUrl)("pipeline repositories", () => {
       ["dueDate", "desc"],
       ["priority", "asc"],
       ["priority", "desc"],
+      ["manual", "asc"],
+      ["manual", "desc"],
     ] as const)("pages every item exactly once sorted by %s %s", async (key, direction) => {
       await seed()
 
@@ -614,22 +621,28 @@ describe.skipIf(!databaseUrl)("pipeline repositories", () => {
       ).map((row) => [row.id, +row.updatedAt]),
     )
     let afterId: string | undefined
-    const strip = async (limit: number) => {
-      const batch = await db.transaction((tx) =>
-        pipelineRepository.stripFieldKeyBatch(
+    const strip = async (limit: number) =>
+      await db.transaction(async (tx) => {
+        const scope = {
+          workspaceId: own.workspaceId,
+          pipelineId: own.pipelineId,
+          fieldId: "7",
+        }
+        const holders = await pipelineRepository.listFieldKeyHolders(
+          { ...scope, limit, afterId },
+          tx,
+        )
+        await pipelineRepository.stripFieldKeyFromItems(
           {
-            workspaceId: own.workspaceId,
-            pipelineId: own.pipelineId,
-            fieldId: "7",
-            limit,
-            afterId,
+            ...scope,
+            ids: holders.map((holder) => holder.id),
+            stageIds: [...new Set(holders.map((holder) => holder.stageId))],
           },
           tx,
-        ),
-      )
-      afterId = batch.lastId ?? afterId
-      return batch.scanned
-    }
+        )
+        afterId = holders.at(-1)?.id ?? afterId
+        return holders.length
+      })
 
     expect(await strip(2)).toBe(2)
     expect(await strip(2)).toBe(2)
@@ -1048,5 +1061,744 @@ describe.skipIf(!databaseUrl)("pipeline repositories", () => {
       "statusChanged",
     ])
     expect(byActor.every((row) => row.actorUserId === own.userId)).toBe(true)
+  })
+
+  describe("manual order", () => {
+    const sortAsc = { key: "manual", direction: "asc" } as const
+    const sortDesc = { key: "manual", direction: "desc" } as const
+    const stage = (index: number) => own.stageIds[index]
+
+    const scope = (stageId: string = stage(0)) => ({
+      workspaceId: own.workspaceId,
+      pipelineId: own.pipelineId,
+      stageId,
+    })
+
+    const insertAt = async (position: number, stageId: string = stage(0)) =>
+      await insertItem(own, { position, stageId, title: `p${position}` })
+
+    // One connection serves the whole suite: seed one row at a time.
+    const insertAll = async (positions: number[]) => {
+      const rows: Awaited<ReturnType<typeof insertItem>>[] = []
+      for (const position of positions) {
+        rows.push(await insertAt(position))
+      }
+      return rows
+    }
+
+    const readPositions = async (ids: string[]) => {
+      const rows = await database()
+        .select({
+          id: schema.pipelineItemModel.id,
+          position: schema.pipelineItemModel.position,
+          updatedAt: schema.pipelineItemModel.updatedAt,
+        })
+        .from(schema.pipelineItemModel)
+        .where(inArray(schema.pipelineItemModel.id, ids))
+      return new Map(rows.map((row) => [row.id, row]))
+    }
+
+    const pageManual = async (
+      sort: typeof sortAsc | typeof sortDesc,
+      limit: number,
+      stageId: string = stage(0),
+    ) => {
+      const ids: string[] = []
+      let cursor: string | undefined
+      for (let guard = 0; guard < 50; guard += 1) {
+        const page = await pipelineItemRepository.listStagePage({
+          ...scope(stageId),
+          sort,
+          limit,
+          cursor,
+        })
+        ids.push(...page.items.map((item) => item.id))
+        if (!page.nextCursor) {
+          return ids
+        }
+        cursor = page.nextCursor
+      }
+      throw new Error("paging did not terminate")
+    }
+
+    test("a new item with no explicit position lands on top of the stage", async () => {
+      const first = await insertItem(own, { title: "first" })
+      const second = await insertItem(own, { title: "second" })
+      const third = await insertItem(own, { title: "third" })
+
+      expect(await pageManual(sortAsc, 10)).toEqual([
+        third.id,
+        second.id,
+        first.id,
+      ])
+      expect(await pageManual(sortDesc, 10)).toEqual([
+        first.id,
+        second.id,
+        third.id,
+      ])
+    })
+
+    test("insertIdempotent writes an explicit position and keeps it on replay", async () => {
+      const row = await insertItem(own, {
+        position: -77.5,
+        idempotencyKey: "pos-1",
+      })
+      const replay = await insertItem(own, {
+        position: 999,
+        idempotencyKey: "pos-1",
+      })
+
+      expect(row.position).toBe(-77.5)
+      expect(replay.id).toBe(row.id)
+      expect(replay.position).toBe(-77.5)
+    })
+
+    test("orders equal positions by id and pages them without gaps or repeats", async () => {
+      const ids: string[] = []
+      for (const position of [10, 10, 10, 5, 20, 10]) {
+        ids.push((await insertAt(position)).id)
+      }
+      const byId = (a: string, b: string) => Number(BigInt(a) - BigInt(b))
+      const expected = [
+        ids[3],
+        ...[ids[0], ids[1], ids[2], ids[5]].sort(byId),
+        ids[4],
+      ]
+
+      expect(await pageManual(sortAsc, 2)).toEqual(expected)
+      expect(await pageManual(sortDesc, 2)).toEqual([...expected].reverse())
+    })
+
+    test("the board first page of a stage is ordered by manual position and resumes from its cursor", async () => {
+      const high = await insertAt(30)
+      const low = await insertAt(10)
+      const mid = await insertAt(20)
+      const elsewhere = await insertAt(5, stage(1))
+
+      const pages = await pipelineItemRepository.listBoardFirstPage({
+        workspaceId: own.workspaceId,
+        pipelineId: own.pipelineId,
+        sort: sortAsc,
+        perStageLimit: 2,
+      })
+      const first = pages.find((page) => page.stageId === stage(0))
+      const second = pages.find((page) => page.stageId === stage(1))
+
+      expect(first?.items.map((item) => item.id)).toEqual([low.id, mid.id])
+      expect(second?.items.map((item) => item.id)).toEqual([elsewhere.id])
+      expect(second?.nextCursor).toBeNull()
+      const rest = await pipelineItemRepository.listStagePage({
+        ...scope(),
+        sort: sortAsc,
+        limit: 2,
+        cursor: first?.nextCursor as string,
+      })
+      expect(rest.items.map((item) => item.id)).toEqual([high.id])
+      expect(rest.nextCursor).toBeNull()
+    })
+
+    test("a pipeline-wide list cannot be sorted manually", async () => {
+      await insertAt(1)
+
+      await expect(
+        pipelineItemRepository.listStagePage({
+          workspaceId: own.workspaceId,
+          pipelineId: own.pipelineId,
+          sort: sortAsc,
+          limit: 10,
+        }),
+      ).rejects.toBeInstanceOf(ManualSortRequiresStageError)
+    })
+
+    test("a single stageId in the filter makes a manual list stage-scoped", async () => {
+      const second = await insertAt(2)
+      const first = await insertAt(1)
+      await insertAt(0, stage(1))
+      const list = (stageIds: string[]) =>
+        pipelineItemRepository.listStagePage({
+          workspaceId: own.workspaceId,
+          pipelineId: own.pipelineId,
+          filter: { stageIds },
+          sort: sortAsc,
+          limit: 1,
+        })
+
+      const page = await list([stage(0)])
+      const next = await pipelineItemRepository.listStagePage({
+        workspaceId: own.workspaceId,
+        pipelineId: own.pipelineId,
+        filter: { stageIds: [stage(0)] },
+        sort: sortAsc,
+        limit: 1,
+        cursor: page.nextCursor as string,
+      })
+
+      expect(page.items.map((item) => item.id)).toEqual([first.id])
+      expect(next.items.map((item) => item.id)).toEqual([second.id])
+      await expect(list([stage(0), stage(1)])).rejects.toBeInstanceOf(
+        ManualSortRequiresStageError,
+      )
+      await expect(list([])).rejects.toBeInstanceOf(
+        ManualSortRequiresStageError,
+      )
+    })
+
+    test("round-trips float8 positions through the text cursor for every exponent form", async () => {
+      const positions = [
+        -1.797_693_134_862_315_7e308, -1_769_425_200_000.123, -1e21, -0.1, -0,
+        5e-324, 1e-5, 0.1, 123_456_789.123_456_79, 1e21,
+        1.797_693_134_862_315_7e308,
+      ]
+      const rows = await insertAll(positions)
+      const expected = rows
+        .map((row, index) => ({
+          id: row.id,
+          value: positions[index] as number,
+        }))
+        .sort(
+          (a, b) => a.value - b.value || Number(BigInt(a.id) - BigInt(b.id)),
+        )
+        .map((row) => row.id)
+
+      expect(await pageManual(sortAsc, 1)).toEqual(expected)
+      expect(await pageManual(sortDesc, 1)).toEqual([...expected].reverse())
+      // JS never sends a negative zero, so write it in SQL: Postgres prints it
+      // as "-0" and the cursor must accept that text.
+      const negativeZero = await insertAt(0)
+      await client.query(
+        `UPDATE "PipelineItem" SET "position" = '-0'::float8 WHERE id = $1`,
+        [negativeZero.id],
+      )
+      expect(await pageManual(sortAsc, 1)).toContain(negativeZero.id)
+      const textRows = await client.query<{ text: string }>(
+        `SELECT "position"::text AS text FROM "PipelineItem" WHERE "stageId" = $1`,
+        [stage(0)],
+      )
+      expect(textRows.rows.map((row) => row.text)).toEqual(
+        expect.arrayContaining(["5e-324", "1e-05", "-0", "1e+21"]),
+      )
+      for (const { text } of textRows.rows) {
+        const cursor = Buffer.from(
+          JSON.stringify({
+            v: 1,
+            sort: "manual",
+            dir: "asc",
+            nullRank: 0,
+            sortValue: text,
+            id: "1",
+          }),
+        ).toString("base64url")
+        expect(() => decodePipelineItemCursor(cursor, sortAsc)).not.toThrow()
+      }
+    })
+
+    test.each([
+      ["NaN"],
+      ["Infinity"],
+      ["-Infinity"],
+    ])("the finite check rejects %s", async (value) => {
+      const item = await insertAt(1)
+
+      await expect(
+        client.query(
+          `UPDATE "PipelineItem" SET "position" = $1 WHERE id = $2`,
+          [value, item.id],
+        ),
+      ).rejects.toThrow(POSITION_FINITE_CHECK)
+      await expect(
+        client.query(
+          `INSERT INTO "PipelineItem" ("id","workspaceId","pipelineId","stageId","contactId","number","title","status","priority","fieldValues","stageEnteredAt","position","updatedAt") VALUES (987654321,$1,$2,$3,$4,987654,'x','open','medium','{}',now(),$5,now())`,
+          [own.workspaceId, own.pipelineId, stage(0), own.contactIds[0], value],
+        ),
+      ).rejects.toThrow(POSITION_FINITE_CHECK)
+    })
+
+    test("a row written without a position takes the newest-on-top default", async () => {
+      const before = Date.now()
+      const result = await client.query<{ position: number }>(
+        `INSERT INTO "PipelineItem" ("id","workspaceId","pipelineId","stageId","contactId","number","title","status","priority","fieldValues","stageEnteredAt","updatedAt") VALUES (987654322,$1,$2,$3,$4,987655,'raw','open','medium','{}',now(),now()) RETURNING "position"`,
+        [own.workspaceId, own.pipelineId, stage(0), own.contactIds[0]],
+      )
+      const written = result.rows[0]?.position as number
+
+      expect(written).toBeLessThan(0)
+      expect(Math.abs(Math.abs(written) - before)).toBeLessThan(60_000)
+    })
+
+    describe("repository methods", () => {
+      test("stageEdgeAnchor reads the top and bottom, optionally leaving an item out", async () => {
+        const low = await insertAt(-5)
+        await insertAt(3)
+        const high = await insertAt(9)
+        await insertAt(100, stage(1))
+
+        const edge = (
+          edge: "top" | "bottom",
+          excludeItemId?: string,
+          stageId: string = stage(0),
+        ) =>
+          database().transaction((tx) =>
+            pipelineItemRepository
+              .stageEdgeAnchor({ ...scope(stageId), edge, excludeItemId }, tx)
+              .then((anchor) => anchor?.position ?? null),
+          )
+
+        expect(await edge("top")).toBe(-5)
+        expect(await edge("bottom")).toBe(9)
+        expect(await edge("top", low.id)).toBe(3)
+        expect(await edge("bottom", high.id)).toBe(3)
+        expect(await edge("top", undefined, stage(1))).toBe(100)
+      })
+
+      test("stageEdgeAnchor is null for an empty stage and for a stage holding only the excluded item", async () => {
+        const only = await insertAt(4, stage(1))
+        const edge = (stageId: string, excludeItemId?: string) =>
+          database().transaction((tx) =>
+            pipelineItemRepository.stageEdgeAnchor(
+              { ...scope(stageId), edge: "top", excludeItemId },
+              tx,
+            ),
+          )
+
+        expect(await edge(stage(0))).toBeNull()
+        expect(await edge(stage(1), only.id)).toBeNull()
+      })
+
+      test("findPlacementAnchor only finds an item of this stage and pipeline", async () => {
+        const inStage = await insertAt(7)
+        const inOtherStage = await insertAt(8, stage(1))
+        const foreign = await insertItem(other, { position: 1 })
+        const find = (itemId: string, stageId: string = stage(0)) =>
+          database().transaction((tx) =>
+            pipelineItemRepository.findPlacementAnchor(
+              { ...scope(stageId), itemId },
+              tx,
+            ),
+          )
+
+        expect(await find(inStage.id)).toEqual({ id: inStage.id, position: 7 })
+        expect(await find(inOtherStage.id)).toBeUndefined()
+        expect(await find(foreign.id)).toBeUndefined()
+        expect(await find("9223372036854775807")).toBeUndefined()
+      })
+
+      test("neighbour returns the adjacent row in (position, id) order and null at the ends", async () => {
+        const a = await insertAt(10)
+        const b = await insertAt(20)
+        const c = await insertAt(20)
+        const d = await insertAt(30)
+        const tied = [b, c].sort((x, y) => Number(BigInt(x.id) - BigInt(y.id)))
+        const near = (
+          anchor: { id: string; position: number },
+          direction: "before" | "after",
+          excludeItemId?: string,
+        ) =>
+          database().transaction((tx) =>
+            pipelineItemRepository.neighbour(
+              { ...scope(), anchor, direction, excludeItemId },
+              tx,
+            ),
+          )
+
+        expect(await near({ id: a.id, position: 10 }, "before")).toBeNull()
+        expect(await near({ id: a.id, position: 10 }, "after")).toEqual({
+          id: tied[0].id,
+          position: 20,
+        })
+        expect(await near({ id: tied[0].id, position: 20 }, "after")).toEqual({
+          id: tied[1].id,
+          position: 20,
+        })
+        expect(await near({ id: tied[1].id, position: 20 }, "before")).toEqual({
+          id: tied[0].id,
+          position: 20,
+        })
+        expect(await near({ id: d.id, position: 30 }, "after")).toBeNull()
+        expect(await near({ id: d.id, position: 30 }, "before")).toEqual({
+          id: tied[1].id,
+          position: 20,
+        })
+        expect(
+          await near({ id: d.id, position: 30 }, "before", tied[1].id),
+        ).toEqual({ id: tied[0].id, position: 20 })
+        // The anchor never neighbours itself, and other stages are not read.
+        await insertAt(25, stage(1))
+        expect(await near({ id: tied[1].id, position: 20 }, "after")).toEqual({
+          id: d.id,
+          position: 30,
+        })
+      })
+
+      describe("listRespaceWindow", () => {
+        const seedSeven = async () =>
+          await insertAll([10, 20, 30, 40, 50, 60, 70])
+        const window = (input: {
+          lower: { id: string; position: number } | null
+          upper: { id: string; position: number } | null
+          belowLimit: number
+          aboveLimit: number
+          excludeItemId?: string
+        }) =>
+          database().transaction((tx) =>
+            pipelineItemRepository.listRespaceWindow(
+              { ...scope(), ...input },
+              tx,
+            ),
+          )
+        const anchorOf = (row: { id: string; position: number }) => ({
+          id: row.id,
+          position: row.position,
+        })
+
+        test("reads rows on both sides of the slot with the bound just outside each", async () => {
+          const rows = await seedSeven()
+
+          const result = await window({
+            lower: anchorOf(rows[2]),
+            upper: anchorOf(rows[3]),
+            belowLimit: 2,
+            aboveLimit: 2,
+          })
+
+          expect(result.below.map((row) => row.position)).toEqual([20, 30])
+          expect(result.above.map((row) => row.position)).toEqual([40, 50])
+          expect(result.lowerBound).toBe(10)
+          expect(result.upperBound).toBe(60)
+        })
+
+        test("has no bound where the stage ends inside the window", async () => {
+          const rows = await seedSeven()
+
+          const result = await window({
+            lower: anchorOf(rows[2]),
+            upper: anchorOf(rows[3]),
+            belowLimit: 3,
+            aboveLimit: 4,
+          })
+
+          expect(result.below.map((row) => row.position)).toEqual([10, 20, 30])
+          expect(result.above.map((row) => row.position)).toEqual([
+            40, 50, 60, 70,
+          ])
+          expect(result.lowerBound).toBeNull()
+          expect(result.upperBound).toBeNull()
+        })
+
+        test("reads only the upper side for a slot at the top", async () => {
+          const rows = await seedSeven()
+
+          const result = await window({
+            lower: null,
+            upper: anchorOf(rows[0]),
+            belowLimit: 5,
+            aboveLimit: 2,
+          })
+
+          expect(result.below).toEqual([])
+          expect(result.lowerBound).toBeNull()
+          expect(result.above.map((row) => row.position)).toEqual([10, 20])
+          expect(result.upperBound).toBe(30)
+        })
+
+        test("reads only the lower side for a slot at the bottom", async () => {
+          const rows = await seedSeven()
+
+          const result = await window({
+            lower: anchorOf(rows[6]),
+            upper: null,
+            belowLimit: 2,
+            aboveLimit: 5,
+          })
+
+          expect(result.above).toEqual([])
+          expect(result.upperBound).toBeNull()
+          expect(result.below.map((row) => row.position)).toEqual([60, 70])
+          expect(result.lowerBound).toBe(50)
+        })
+
+        test("an empty stage has an empty window", async () => {
+          const result = await window({
+            lower: null,
+            upper: null,
+            belowLimit: 5,
+            aboveLimit: 5,
+          })
+
+          expect(result).toEqual({
+            below: [],
+            above: [],
+            lowerBound: null,
+            upperBound: null,
+          })
+        })
+
+        test("leaves the moved item out, so it is neither window row nor bound", async () => {
+          const rows = await seedSeven()
+
+          const result = await window({
+            lower: anchorOf(rows[1]),
+            upper: anchorOf(rows[3]),
+            belowLimit: 1,
+            aboveLimit: 1,
+            excludeItemId: rows[2].id,
+          })
+
+          expect(result.below.map((row) => row.position)).toEqual([20])
+          expect(result.above.map((row) => row.position)).toEqual([40])
+          expect(result.lowerBound).toBe(10)
+          expect(result.upperBound).toBe(50)
+        })
+
+        test("orders rows that share a position by id and reads them all", async () => {
+          const tied = await insertAll([100, 100, 100, 100])
+          const sorted = [...tied].sort((a, b) =>
+            Number(BigInt(a.id) - BigInt(b.id)),
+          )
+
+          const result = await window({
+            lower: anchorOf(sorted[1]),
+            upper: anchorOf(sorted[2]),
+            belowLimit: 5,
+            aboveLimit: 5,
+          })
+
+          expect(result.below.map((row) => row.id)).toEqual([
+            sorted[0].id,
+            sorted[1].id,
+          ])
+          expect(result.above.map((row) => row.id)).toEqual([
+            sorted[2].id,
+            sorted[3].id,
+          ])
+        })
+
+        test("bounds the whole window, not each side, to RESPACE_EXISTING_MAX rows", async () => {
+          await client.query(
+            `INSERT INTO "PipelineItem" ("id","workspaceId","pipelineId","stageId","contactId","number","title","status","priority","fieldValues","stageEnteredAt","updatedAt","position") SELECT 880000 + g, $1, $2, $3, $4, 880000 + g, 'bulk', 'open', 'medium', '{}', now(), now(), g FROM generate_series(1, 700) AS g`,
+            [own.workspaceId, own.pipelineId, stage(0), own.contactIds[0]],
+          )
+          const at = (position: number) => ({
+            id: String(880_000 + position),
+            position,
+          })
+
+          const result = await window({
+            lower: at(500),
+            upper: at(501),
+            belowLimit: 400,
+            aboveLimit: 400,
+          })
+
+          expect(result.below).toHaveLength(400)
+          expect(result.above).toHaveLength(RESPACE_EXISTING_MAX - 400)
+          expect(result.below.length + result.above.length).toBe(
+            RESPACE_EXISTING_MAX,
+          )
+          expect(result.lowerBound).toBe(500 - 400)
+        })
+
+        test("never reads another stage's rows and clamps an oversized limit", async () => {
+          const rows = await seedSeven()
+          await insertAt(15, stage(1))
+
+          const result = await window({
+            lower: anchorOf(rows[0]),
+            upper: anchorOf(rows[1]),
+            belowLimit: 1,
+            aboveLimit: 1_000_000,
+          })
+
+          expect(result.below.map((row) => row.position)).toEqual([10])
+          expect(result.above).toHaveLength(6)
+        })
+      })
+
+      describe("setPositions", () => {
+        const setPositions = (
+          rows: { id: string; position: number }[],
+          stageId: string = stage(0),
+          fixture: Fixture = own,
+        ) =>
+          database().transaction((tx) =>
+            pipelineItemRepository.setPositions(
+              {
+                workspaceId: fixture.workspaceId,
+                pipelineId: fixture.pipelineId,
+                stageId,
+                rows,
+              },
+              tx,
+            ),
+          )
+
+        test("writes every row in one call and leaves updatedAt alone", async () => {
+          const rows = await insertAll([1, 2, 3, 4])
+          const old = new Date("2026-01-02T03:04:05.678Z")
+          await client.query(
+            `UPDATE "PipelineItem" SET "updatedAt" = $1 WHERE "stageId" = $2`,
+            [old, stage(0)],
+          )
+
+          const written = await setPositions(
+            rows.map((row, index) => ({
+              id: row.id,
+              position: -(index + 1) * 0.5,
+            })),
+          )
+          const after = await readPositions(rows.map((row) => row.id))
+
+          expect(written).toBe(4)
+          expect(rows.map((row) => after.get(row.id)?.position)).toEqual([
+            -0.5, -1, -1.5, -2,
+          ])
+          expect(
+            rows.every((row) => +(after.get(row.id)?.updatedAt ?? 0) === +old),
+          ).toBe(true)
+        })
+
+        test("does nothing for an empty list", async () => {
+          expect(await setPositions([])).toBe(0)
+        })
+
+        test("tolerates a row deleted meanwhile and writes the rest", async () => {
+          const [keep, gone] = await insertAll([1, 2])
+          await pipelineItemRepository.delete({
+            workspaceId: own.workspaceId,
+            id: gone.id,
+          })
+
+          const written = await setPositions([
+            { id: keep.id, position: 11 },
+            { id: gone.id, position: 12 },
+          ])
+
+          expect(written).toBe(1)
+          expect((await readPositions([keep.id])).get(keep.id)?.position).toBe(
+            11,
+          )
+        })
+
+        test("never writes a row of another workspace", async () => {
+          const foreign = await insertItem(other, { position: 5 })
+
+          const written = await setPositions(
+            [{ id: foreign.id, position: 99 }],
+            stage(0),
+          )
+
+          expect(written).toBe(0)
+          expect(
+            (await readPositions([foreign.id])).get(foreign.id)?.position,
+          ).toBe(5)
+        })
+
+        test("never writes a row of another stage", async () => {
+          const here = await insertAt(1)
+          const elsewhere = await insertAt(2, stage(1))
+
+          const written = await setPositions([
+            { id: here.id, position: 11 },
+            { id: elsewhere.id, position: 22 },
+          ])
+          const after = await readPositions([here.id, elsewhere.id])
+
+          expect(written).toBe(1)
+          expect(after.get(here.id)?.position).toBe(11)
+          expect(after.get(elsewhere.id)?.position).toBe(2)
+        })
+
+        test("rejects more rows than a respace may rewrite", async () => {
+          const rows = Array.from(
+            { length: RESPACE_EXISTING_MAX + 2 },
+            (_, index) => ({ id: String(index + 1), position: index }),
+          )
+
+          await expect(setPositions(rows)).rejects.toThrow(RangeError)
+        })
+
+        test("rejects a non-finite position before touching the database", async () => {
+          const row = await insertAt(1)
+
+          await expect(
+            setPositions([{ id: row.id, position: Number.NaN }]),
+          ).rejects.toThrow(RangeError)
+          await expect(
+            setPositions([{ id: row.id, position: Number.POSITIVE_INFINITY }]),
+          ).rejects.toThrow(RangeError)
+          expect((await readPositions([row.id])).get(row.id)?.position).toBe(1)
+        })
+
+        test("rolls every row back with the transaction", async () => {
+          const rows = await insertAll([1, 2])
+          const db = database()
+
+          await expect(
+            db.transaction(async (tx) => {
+              await pipelineItemRepository.setPositions(
+                {
+                  ...scope(),
+                  rows: rows.map((row) => ({ id: row.id, position: 500 })),
+                },
+                tx,
+              )
+              throw new Error("abort")
+            }),
+          ).rejects.toThrow("abort")
+
+          const after = await readPositions(rows.map((row) => row.id))
+          expect(rows.map((row) => after.get(row.id)?.position)).toEqual([1, 2])
+        })
+      })
+    })
+
+    describe("index use", () => {
+      const explain = async (sort: typeof sortAsc | typeof sortDesc) => {
+        const captured: { params: unknown[]; query: string }[] = []
+        const logged = drizzle({
+          client,
+          logger: {
+            logQuery: (query, params) => captured.push({ params, query }),
+          },
+          relations,
+          schema,
+        })
+        await pipelineItemRepository.listStagePage(
+          { ...scope(), sort, limit: 10 },
+          logged as unknown as Parameters<
+            typeof pipelineItemRepository.listStagePage
+          >[1],
+        )
+        const statement = captured.at(-1)
+        if (!statement) {
+          throw new Error("the list query was not captured")
+        }
+        // Forbid sorting, table scans and bitmaps: a plan only exists if the
+        // index already yields the ORDER BY, whatever the table size.
+        await client.query("BEGIN")
+        try {
+          await client.query("SET LOCAL enable_sort = off")
+          await client.query("SET LOCAL enable_seqscan = off")
+          await client.query("SET LOCAL enable_bitmapscan = off")
+          const plan = await client.query<{ "QUERY PLAN": unknown }>(
+            `EXPLAIN (FORMAT JSON) ${statement.query}`,
+            statement.params,
+          )
+          return JSON.stringify(plan.rows[0]?.["QUERY PLAN"])
+        } finally {
+          await client.query("ROLLBACK")
+        }
+      }
+
+      test.each([
+        ["asc", false],
+        ["desc", true],
+      ] as const)("manual %s reads the (position, id) index with no Sort node", async (direction, backward) => {
+        const plan = await explain({ key: "manual", direction })
+
+        expect(plan).toContain(POSITION_INDEX)
+        expect(plan).not.toContain('"Node Type":"Sort"')
+        expect(plan.includes('"Scan Direction":"Backward"')).toBe(backward)
+      })
+    })
   })
 })

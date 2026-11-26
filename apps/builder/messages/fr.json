@@ -11815,7 +11815,17 @@
       "error": "Impossible de charger le tableau",
       "processing": "Traitement de cette étape…",
       "moveFailed": "Impossible de déplacer la carte",
+      "reorderNeedsManualSort": "Passez le tri sur Ordre manuel pour réorganiser les cartes au sein d'une étape.",
+      "dragHandle": "Faire glisser pour déplacer la carte",
+      "dragInstructions": "Pour saisir une carte, appuyez sur Espace ou Entrée sur sa poignée. Utilisez les flèches pour la déplacer, Espace ou Entrée pour la déposer et Échap pour annuler.",
+      "announce": {
+        "pickedUp": "{name} saisie.",
+        "over": "{name} est au-dessus de {stage}.",
+        "dropped": "{name} déposée dans {stage}.",
+        "cancelled": "Déplacement annulé. {name} est revenue à sa place."
+      },
       "sortOptions": {
+        "manualAsc": "Ordre manuel",
         "createdAtDesc": "Date de création (Récent à Ancien)",
         "createdAtAsc": "Date de création (Ancien à Récent)",
         "updatedAtDesc": "Date de mise à jour (Récent à Ancien)",

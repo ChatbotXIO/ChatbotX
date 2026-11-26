@@ -35,6 +35,7 @@ type JsonSchema = {
   allOf?: JsonSchema[]
   anyOf?: JsonSchema[]
   description?: string
+  enum?: string[]
   oneOf?: JsonSchema[]
   properties?: Record<string, JsonSchema>
   required?: string[]
@@ -903,6 +904,72 @@ describe("public API spec — error response coverage", () => {
       "miniApps.delete",
       "pipelines.deleteStage",
     ])
+  })
+})
+
+describe("public API spec — pipeline manual item order", () => {
+  const operation = (operationId: string) =>
+    operations.find((op) => op.operationId === operationId)
+
+  test("pipelines.moveItem documents the three placement fields", () => {
+    const body = operation("pipelines.moveItem")?.bodySchema
+    const properties = body?.properties ?? {}
+
+    expect(Object.keys(properties)).toEqual(
+      expect.arrayContaining(["beforeItemId", "afterItemId", "placement"]),
+    )
+    expect(body?.required ?? []).not.toEqual(
+      expect.arrayContaining(["beforeItemId", "afterItemId", "placement"]),
+    )
+    expect(properties.beforeItemId?.description).toContain("directly above")
+    expect(properties.afterItemId?.description).toContain("directly below")
+    expect(properties.placement?.description).toContain("`top` or `bottom`")
+    expect(properties.placement?.enum).toEqual(["top", "bottom"])
+  })
+
+  test("pipelines.moveItem says it reorders and lists its errors", () => {
+    const description = operation("pipelines.moveItem")?.description ?? ""
+
+    expect(operation("pipelines.moveItem")?.summary).toBe(
+      "Move or reorder item",
+    )
+    for (const phrase of [
+      "422",
+      "stageBusy",
+      "conflict",
+      "does nothing",
+      "lower position",
+    ]) {
+      expect(description.toLowerCase()).toContain(phrase.toLowerCase())
+    }
+  })
+
+  test("pipelines.listItems documents the manual sort and its stage rule", () => {
+    const description = operation("pipelines.listItems")?.description ?? ""
+    const sort = operation("pipelines.listItems")?.parameters.find(
+      (param) => param.name === "sort",
+    )
+
+    expect(description).toContain("sort=manual")
+    expect(description).toContain("stageId")
+    expect(sort?.schema?.enum).toContain("manual")
+    expect(sort?.description ?? sort?.schema?.description).toContain("stageId")
+    const direction = operation("pipelines.listItems")?.parameters.find(
+      (param) => param.name === "direction",
+    )
+    expect(direction?.schema).not.toHaveProperty("default")
+    expect(direction?.description ?? direction?.schema?.description).toContain(
+      "`asc` for `sort=manual`",
+    )
+  })
+
+  test("the item resource exposes position", () => {
+    const schema = responseSchemasByOperationId["pipelines.moveItem"] as {
+      properties?: Record<string, { type?: string; description?: string }>
+    }
+
+    expect(schema.properties?.position?.type).toBe("number")
+    expect(schema.properties?.position?.description).toContain("moveItem")
   })
 })
 

@@ -4,6 +4,7 @@ import {
   mergePipelineSettings,
   pipelineSettingsSchema,
 } from "@chatbotx.io/database/partials"
+import { createSafeActionClient } from "next-safe-action"
 import { describe, expect, test } from "vitest"
 import { toItemListQuery } from "../src/features/pipelines/lib/list-items-query"
 import { toPublicPipeline } from "../src/features/pipelines/lib/map-public"
@@ -11,12 +12,16 @@ import {
   createItemPublicRequest,
   deleteStagePublicRequest,
   listItemsPublicRequest,
+  moveItemPublicRequest,
   pipelineStatsPublicRequest,
   setMemberPublicRequest,
   updatePipelinePublicRequest,
 } from "../src/features/pipelines/schema/public"
 import { pipelineItemFilterRequest } from "../src/features/pipelines/schema/query"
-import { publicPipelineResource } from "../src/features/pipelines/schema/resource"
+import {
+  publicPipelineItemResource,
+  publicPipelineResource,
+} from "../src/features/pipelines/schema/resource"
 
 describe("pipelines public request schemas", () => {
   test("a settings patch keeps only what the caller sent", () => {
@@ -354,11 +359,8 @@ describe("pipelines public request schemas", () => {
   test("listItems defaults to newest first with a bounded page", () => {
     const parsed = listItemsPublicRequest.parse({ id: "1" })
 
-    expect(parsed).toMatchObject({
-      sort: "createdAt",
-      direction: "desc",
-      limit: 50,
-    })
+    expect(parsed).toMatchObject({ sort: "createdAt", limit: 50 })
+    expect(toItemListQuery(parsed).sort.direction).toBe("desc")
     expect(
       listItemsPublicRequest.safeParse({ id: "1", limit: 101 }).success,
     ).toBe(false)
@@ -523,5 +525,114 @@ describe("pipelines public request schemas", () => {
       listItemsPublicRequest.safeParse({ id: "1", activityActor: "bob" })
         .success,
     ).toBe(false)
+  })
+})
+
+describe("moveItemPublicRequest placement", () => {
+  const base = { id: "1", itemId: "2", stageId: "3" }
+
+  test.each([
+    ["nothing", {}],
+    ["beforeItemId", { beforeItemId: "9" }],
+    ["afterItemId", { afterItemId: "9" }],
+    ["placement top", { placement: "top" }],
+    ["placement bottom", { placement: "bottom" }],
+  ])("accepts %s", (_name, placement) => {
+    expect(
+      moveItemPublicRequest.parse({ ...base, ...placement }),
+    ).toMatchObject(placement)
+  })
+
+  test.each([
+    ["before and after", { beforeItemId: "8", afterItemId: "9" }],
+    ["before and placement", { beforeItemId: "8", placement: "top" }],
+    ["after and placement", { afterItemId: "9", placement: "bottom" }],
+    ["all three", { beforeItemId: "7", afterItemId: "8", placement: "top" }],
+  ])("rejects %s with one message on placement", (_name, placement) => {
+    const result = moveItemPublicRequest.safeParse({ ...base, ...placement })
+
+    expect(result.success).toBe(false)
+    expect(result.error?.issues).toEqual([
+      expect.objectContaining({
+        path: ["placement"],
+        message: "Use only one of beforeItemId, afterItemId, placement",
+      }),
+    ])
+  })
+
+  test.each([
+    ["placement", { placement: "middle" }],
+    ["beforeItemId", { beforeItemId: "abc" }],
+    ["afterItemId", { afterItemId: "" }],
+  ])("rejects a malformed %s", (_name, placement) => {
+    expect(
+      moveItemPublicRequest.safeParse({ ...base, ...placement }).success,
+    ).toBe(false)
+  })
+
+  test("a next-safe-action action parses the refined schema and returns the issue", async () => {
+    const received: unknown[] = []
+    const action = createSafeActionClient()
+      .inputSchema(moveItemPublicRequest)
+      .action(({ parsedInput }) => {
+        received.push(parsedInput)
+        return Promise.resolve()
+      })
+
+    const ok = await action({ ...base, beforeItemId: "9" })
+    const bad = await action({
+      ...base,
+      beforeItemId: "9",
+      placement: "top",
+    })
+
+    expect(ok.validationErrors).toBeUndefined()
+    expect(received).toEqual([{ ...base, beforeItemId: "9" }])
+    expect(bad.validationErrors).toMatchObject({
+      placement: {
+        _errors: ["Use only one of beforeItemId, afterItemId, placement"],
+      },
+    })
+  })
+
+  test("the item resource carries a numeric position", () => {
+    expect(
+      publicPipelineItemResource.shape.position.safeParse(-1.5e12).success,
+    ).toBe(true)
+    expect(
+      publicPipelineItemResource.shape.position.safeParse("1").success,
+    ).toBe(false)
+  })
+
+  test("listItems without a direction is asc for manual and desc otherwise", () => {
+    const manual = listItemsPublicRequest.parse({
+      id: "1",
+      stageId: "11",
+      sort: "manual",
+    })
+    const created = listItemsPublicRequest.parse({ id: "1" })
+
+    expect(toItemListQuery(manual).sort).toEqual({
+      key: "manual",
+      direction: "asc",
+    })
+    expect(toItemListQuery(created).sort).toEqual({
+      key: "createdAt",
+      direction: "desc",
+    })
+  })
+
+  test("listItems accepts the manual sort and forwards it to the query", () => {
+    const parsed = listItemsPublicRequest.parse({
+      id: "1",
+      stageId: "11",
+      sort: "manual",
+      direction: "asc",
+    })
+
+    expect(toItemListQuery(parsed).sort).toEqual({
+      key: "manual",
+      direction: "asc",
+    })
   })
 })

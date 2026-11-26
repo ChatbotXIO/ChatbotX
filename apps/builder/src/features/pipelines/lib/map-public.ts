@@ -94,6 +94,7 @@ export const toPublicItem = (view: PipelineItemView): PublicItem => {
     stageEnteredAt: item.stageEnteredAt,
     closedAt: item.closedAt,
     lastCommentAt: item.lastCommentAt,
+    position: item.position,
     createdAt: item.createdAt,
     updatedAt: item.updatedAt,
   }

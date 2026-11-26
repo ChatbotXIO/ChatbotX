@@ -1,5 +1,8 @@
 import { describe, expect, test } from "vitest"
-import { parseBoardFilter } from "../src/features/pipelines/lib/search-params"
+import {
+  parseBoardFilter,
+  sortDirection,
+} from "../src/features/pipelines/lib/search-params"
 
 describe("parseBoardFilter (board filter from the URL)", () => {
   test("round-trips a filter through JSON, with dates back as Date", () => {
@@ -74,5 +77,17 @@ describe("parseBoardFilter (board filter from the URL)", () => {
     expect(
       parseBoardFilter({ activityMatch: { kinds: ["nonsense"] } }),
     ).toBeNull()
+  })
+})
+
+describe("sortDirection (board sort direction from the URL)", () => {
+  test("manual order always reads ascending, whatever the URL says", () => {
+    expect(sortDirection("manual", null)).toBe("asc")
+    expect(sortDirection("manual", "desc")).toBe("asc")
+  })
+
+  test("other sorts keep the URL direction, newest/highest first by default", () => {
+    expect(sortDirection("createdAt", null)).toBe("desc")
+    expect(sortDirection("value", "asc")).toBe("asc")
   })
 })

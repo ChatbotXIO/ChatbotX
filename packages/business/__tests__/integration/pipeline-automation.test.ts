@@ -54,6 +54,7 @@ vi.mock("../../src/conversation/service", () => ({
   conversationService: {
     assignByContactIds: mocks.assignByContactIds,
     findDMByContactIds: vi.fn().mockResolvedValue([]),
+    findLatestSmtpConversationByContact: vi.fn().mockResolvedValue(undefined),
   },
 }))
 vi.mock("../../src/audit/dispatcher", () => ({

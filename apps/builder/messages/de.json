@@ -11815,7 +11815,17 @@
       "error": "Das Board konnte nicht geladen werden",
       "processing": "Diese Phase wird verarbeitet…",
       "moveFailed": "Die Karte konnte nicht verschoben werden",
+      "reorderNeedsManualSort": "Stellen Sie die Sortierung auf Manuelle Reihenfolge um, um Karten innerhalb einer Phase neu anzuordnen.",
+      "dragHandle": "Ziehen, um die Karte zu verschieben",
+      "dragInstructions": "Um eine Karte aufzunehmen, drücken Sie die Leertaste oder die Eingabetaste auf ihrem Ziehgriff. Mit den Pfeiltasten verschieben, mit Leertaste oder Eingabetaste ablegen, mit Escape abbrechen.",
+      "announce": {
+        "pickedUp": "{name} aufgenommen.",
+        "over": "{name} befindet sich über {stage}.",
+        "dropped": "{name} in {stage} abgelegt.",
+        "cancelled": "Verschieben abgebrochen. {name} ist wieder an seinem Platz."
+      },
       "sortOptions": {
+        "manualAsc": "Manuelle Reihenfolge",
         "createdAtDesc": "Erstellungsdatum (Neu nach Alt)",
         "createdAtAsc": "Erstellungsdatum (Alt nach Neu)",
         "updatedAtDesc": "Aktualisierungsdatum (Neu nach Alt)",

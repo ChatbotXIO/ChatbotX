@@ -8,9 +8,11 @@
  * explicitly configured local database with the pipelines migration applied.
  */
 
-import { db, eq, inArray } from "@chatbotx.io/database/client"
+import { db, eq, inArray, sql } from "@chatbotx.io/database/client"
 import {
   pipelineActivityRepository,
+  pipelineItemRepository,
+  pipelineRepository,
   templateInstallationRepository,
 } from "@chatbotx.io/database/repositories"
 import {
@@ -27,8 +29,14 @@ import {
   workspaceMemberModel,
   workspaceModel,
 } from "@chatbotx.io/database/schema"
+import { DrizzleQueryError } from "drizzle-orm"
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
-import { barrier, heldBy, within } from "../helpers/template-concurrency"
+import {
+  barrier,
+  heldBy,
+  waitUntilSomeoneWaitsOnAnAdvisoryLock,
+  within,
+} from "../helpers/template-concurrency"
 
 const realDatabaseUrl = (): string | null => {
   const url = process.env.DATABASE_URL
@@ -60,6 +68,7 @@ vi.mock("../../src/conversation/service", () => ({
   conversationService: {
     assignByContactIds: mocks.assignByContactIds,
     findDMByContactIds: vi.fn().mockResolvedValue([]),
+    findLatestSmtpConversationByContact: vi.fn().mockResolvedValue(undefined),
   },
 }))
 vi.mock("../../src/audit/dispatcher", () => ({
@@ -100,6 +109,12 @@ const { pipelineItemQueryService } = await import(
 const { pipelineAnalyticsService } = await import(
   "../../src/pipeline/analytics.service"
 )
+const { pipelineStageBulkService } = await import(
+  "../../src/pipeline/stage-bulk.service"
+)
+const { lockStageOrder, stageOrderLockKey } = await import(
+  "../../src/pipeline/stage-order"
+)
 const { assertReferencable } = await import(
   "../../src/template/installed-resource.service"
 )
@@ -124,6 +139,8 @@ type Fixture = {
 const databaseUrl = realDatabaseUrl()
 const token = { kind: "workspaceToken" } as const
 const actor = { kind: "user", userId: null, sourceId: null } as const
+
+const SEEDED_OR_MOVED_TITLE = /^(e\d{4}|m)$/
 
 const statusOf = (reason: unknown) =>
   (reason as { httpStatusCode?: number }).httpStatusCode
@@ -1143,6 +1160,1080 @@ describe.skipIf(!databaseUrl)("pipeline services: hardening", () => {
 
       expect(utc.byDay).toEqual({ "2026-03-08": 0, "2026-03-09": 1 })
       expect(newYork.byDay).toEqual({ "2026-03-08": 1, "2026-03-09": 0 })
+    })
+  })
+
+  describe("manual order concurrency", () => {
+    type Placement = {
+      beforeItemId?: string
+      afterItemId?: string
+      placement?: "top" | "bottom"
+    }
+    type Race = { pipelineId: string; stageA: string; stageB: string }
+
+    const eTitle = (index: number) => `e${String(index).padStart(4, "0")}`
+
+    const raceSetup = async (name: string): Promise<Race> => {
+      const pipeline = await newPipeline(own, name)
+      const second = await pipelineStructureService.createStage({
+        workspaceId: own.workspaceId,
+        pipelineId: pipeline.id,
+        scope: token,
+        name: "Second",
+      })
+      const [first] = await stagesOf(own, pipeline.id)
+      return { pipelineId: pipeline.id, stageA: first.id, stageB: second.id }
+    }
+
+    const create = (pipelineId: string, title: string, stageId?: string) =>
+      newItem(own, pipelineId, { fields: { title, stageId } })
+
+    const place = (
+      race: Pick<Race, "pipelineId">,
+      itemId: string,
+      stageId: string,
+      placement: Placement,
+    ) =>
+      pipelineItemService.move({
+        workspaceId: own.workspaceId,
+        pipelineId: race.pipelineId,
+        itemId,
+        stageId,
+        ...placement,
+        scope: token,
+        actor,
+      })
+
+    const rowsOf = async (stageId: string) =>
+      (
+        await db.execute(
+          sql`SELECT "id"::text AS id, "title" AS title, "position"::float8 AS position FROM "PipelineItem" WHERE "stageId" = ${stageId}::bigint ORDER BY "position", "id"`,
+        )
+      ).rows as { id: string; title: string; position: number }[]
+
+    const orderOf = async (stageId: string) =>
+      (await rowsOf(stageId)).map((row) => row.title)
+
+    // Raw rows need ids and numbers no earlier seed of this run used.
+    let seeded = 0
+    const seedEqual = async (race: Race, count: number, fieldId?: string) => {
+      seeded += 1
+      const base = seeded * 10_000
+      await db.execute(sql`
+        INSERT INTO "PipelineItem" ("id","workspaceId","pipelineId","stageId","contactId","number","title","status","priority","fieldValues","stageEnteredAt","updatedAt","position")
+        SELECT (2000000000000 + ${base}::bigint + g)::bigint, ${own.workspaceId}::bigint, ${race.pipelineId}::bigint, ${race.stageA}::bigint, ${own.contactIds[0]}::bigint, 100000 + ${base}::int + g, 'e' || lpad(g::text, 4, '0'), 'lost', 'low',
+          CASE WHEN ${fieldId ?? null}::text IS NULL THEN '{}'::jsonb ELSE jsonb_build_object(${fieldId ?? null}::text, 'v') END,
+          now(), now(), 100::float8
+        FROM generate_series(1, ${count}::int) AS g`)
+    }
+
+    const idOfTitle = async (stageId: string, title: string) =>
+      (await rowsOf(stageId)).find((row) => row.title === title)?.id as string
+
+    /** Every outcome must be a success: a lock regression would show as a deadlock or a hang. */
+    const expectAllFulfilled = (results: PromiseSettledResult<unknown>[]) => {
+      for (const result of results) {
+        if (result.status === "rejected") {
+          throw result.reason
+        }
+      }
+    }
+
+    const expectDistinctAscending = async (stageId: string) => {
+      const rows = await rowsOf(stageId)
+      const positions = rows.map((row) => row.position)
+      expect(new Set(positions).size).toBe(positions.length)
+    }
+
+    /** A test transaction that holds the stage-order locks until released. */
+    const holdStageOrder = (stageIds: string[]) => {
+      const held = barrier()
+      const release = barrier()
+      const done = db.transaction(async (tx) => {
+        await lockStageOrder(tx, own.workspaceId, stageIds)
+        held.open()
+        await release.promise
+      })
+      return { held, release, done }
+    }
+
+    test("two placements into the same gap both land between its neighbours", async () => {
+      for (let round = 0; round < 3; round += 1) {
+        const race = await raceSetup(`Gap ${round}`)
+        const a = await create(race.pipelineId, "a")
+        await create(race.pipelineId, "b")
+        const x = await create(race.pipelineId, "x")
+        const y = await create(race.pipelineId, "y")
+        // Board order: y, x, b, a. Both go directly above a, below b.
+        expectAllFulfilled(
+          await within(
+            Promise.allSettled([
+              place(race, x.id, race.stageA, { beforeItemId: a.id }),
+              place(race, y.id, race.stageA, { beforeItemId: a.id }),
+            ]),
+          ),
+        )
+
+        const titles = await orderOf(race.stageA)
+        expect(titles[0]).toBe("b")
+        expect(titles.slice(1, 3).sort()).toEqual(["x", "y"])
+        expect(titles[3]).toBe("a")
+        await expectDistinctAscending(race.stageA)
+      }
+    })
+
+    test("a respace racing a pipeline delete never deadlocks and the pipeline ends deleted", async () => {
+      for (let round = 0; round < 3; round += 1) {
+        const race = await raceSetup(`Delete ${round}`)
+        await seedEqual(race, 8)
+        const [mover, anchor] = [
+          await idOfTitle(race.stageA, eTitle(5)),
+          await idOfTitle(race.stageA, eTitle(2)),
+        ]
+
+        const results = await within(
+          Promise.allSettled([
+            place(race, mover, race.stageA, { beforeItemId: anchor }),
+            pipelineService.delete({
+              workspaceId: own.workspaceId,
+              id: race.pipelineId,
+              scope: token,
+            }),
+          ]),
+        )
+
+        // The delete always wins eventually; the placement either landed or
+        // lost to it with a domain error, never a Postgres deadlock (40P01).
+        expect(results[1]?.status).toBe("fulfilled")
+        const placed = results[0]
+        if (placed?.status === "rejected") {
+          expect(placed.reason).toMatchObject({
+            httpStatusCode: expect.any(Number),
+          })
+        }
+        const left = await db.execute(
+          sql`SELECT count(*)::int AS n FROM "PipelineItem" WHERE "pipelineId" = ${race.pipelineId}::bigint`,
+        )
+        expect(Number(left.rows[0]?.n)).toBe(0)
+      }
+    })
+
+    test("a create racing a placement to the top keeps both on top with distinct positions", async () => {
+      for (let round = 0; round < 3; round += 1) {
+        const race = await raceSetup(`Top ${round}`)
+        await create(race.pipelineId, "a")
+        const b = await create(race.pipelineId, "b")
+
+        expectAllFulfilled(
+          await within(
+            Promise.allSettled([
+              create(race.pipelineId, "n"),
+              place(race, b.id, race.stageA, { placement: "bottom" }),
+            ]),
+          ),
+        )
+
+        expect((await orderOf(race.stageA)).sort()).toEqual(["a", "b", "n"])
+        await expectDistinctAscending(race.stageA)
+      }
+    })
+
+    describe("a respace racing", () => {
+      type Competitor = (race: Race) => Promise<unknown>
+
+      const competitors: [string, Competitor][] = [
+        ["a create", (race) => create(race.pipelineId, "fresh", race.stageA)],
+        [
+          "a transfer into the stage",
+          async (race) => {
+            const elsewhere = await newPipeline(own, "Elsewhere")
+            const moved = await newItem(own, elsewhere.id)
+            return await pipelineItemService.transfer({
+              workspaceId: own.workspaceId,
+              pipelineId: elsewhere.id,
+              itemId: moved.id,
+              destinationPipelineId: race.pipelineId,
+              destinationStageId: race.stageA,
+              scope: token,
+              actor,
+            })
+          },
+        ],
+        [
+          "a stage change into the stage",
+          async (race) => {
+            const z = await create(race.pipelineId, "z", race.stageB)
+            return await pipelineItemService.update({
+              workspaceId: own.workspaceId,
+              pipelineId: race.pipelineId,
+              itemId: z.id,
+              fields: { stageId: race.stageA },
+              scope: token,
+              actor,
+            })
+          },
+        ],
+        [
+          "a drain batch into the stage",
+          async (race) => {
+            await create(race.pipelineId, "z1", race.stageB)
+            await create(race.pipelineId, "z2", race.stageB)
+            return await pipelineStageBulkService.deleteStage({
+              workspaceId: own.workspaceId,
+              pipelineId: race.pipelineId,
+              stageId: race.stageB,
+              moveItemsToStageId: race.stageA,
+              scope: token,
+              actor,
+            })
+          },
+        ],
+      ]
+
+      test.each(competitors)(
+        "%s keeps the placed item exactly in its spot",
+        async (_name, competitor) => {
+          for (let round = 0; round < 2; round += 1) {
+            const race = await raceSetup(`Respace ${round}`)
+            await seedEqual(race, 20)
+            const m = await create(race.pipelineId, "m", race.stageA)
+            await db.execute(
+              sql`UPDATE "PipelineItem" SET "position" = 5000 WHERE "id" = ${m.id}::bigint`,
+            )
+            const anchor = await idOfTitle(race.stageA, eTitle(10))
+
+            expectAllFulfilled(
+              await within(
+                Promise.allSettled([
+                  place(race, m.id, race.stageA, { afterItemId: anchor }),
+                  competitor(race),
+                ]),
+              ),
+            )
+
+            const titles = (await orderOf(race.stageA)).filter((title) =>
+              SEEDED_OR_MOVED_TITLE.test(title),
+            )
+            expect(titles).toEqual([
+              ...Array.from({ length: 10 }, (_, i) => eTitle(i + 1)),
+              "m",
+              ...Array.from({ length: 10 }, (_, i) => eTitle(i + 11)),
+            ])
+            await expectDistinctAscending(race.stageA)
+          }
+        },
+        60_000,
+      )
+    })
+
+    test("two opposite moves between the same two stages never deadlock", async () => {
+      for (let round = 0; round < 3; round += 1) {
+        const race = await raceSetup(`Opposite ${round}`)
+        const p = await create(race.pipelineId, "p", race.stageA)
+        const q = await create(race.pipelineId, "q", race.stageB)
+
+        expectAllFulfilled(
+          await within(
+            Promise.allSettled([
+              place(race, p.id, race.stageB, { placement: "top" }),
+              place(race, q.id, race.stageA, { placement: "top" }),
+            ]),
+          ),
+        )
+
+        expect(await orderOf(race.stageA)).toEqual(["q"])
+        expect(await orderOf(race.stageB)).toEqual(["p"])
+      }
+    })
+
+    test("a reorder racing the deletion of its stage never deadlocks", async () => {
+      for (let round = 0; round < 3; round += 1) {
+        const race = await raceSetup(`Stage delete ${round}`)
+        const a1 = await create(race.pipelineId, "a1", race.stageA)
+        const a2 = await create(race.pipelineId, "a2", race.stageA)
+
+        const [reorder, removal] = await within(
+          Promise.allSettled([
+            place(race, a1.id, race.stageA, { beforeItemId: a2.id }),
+            pipelineStageBulkService.deleteStage({
+              workspaceId: own.workspaceId,
+              pipelineId: race.pipelineId,
+              stageId: race.stageA,
+              moveItemsToStageId: race.stageB,
+              scope: token,
+              actor,
+            }),
+          ]),
+        )
+
+        expect(removal.status).toBe("fulfilled")
+        if (reorder.status === "rejected") {
+          expect(String(reorder.reason)).not.toContain("deadlock")
+          expect([404, 409, 422]).toContain(statusOf(reorder.reason))
+        }
+        expect((await orderOf(race.stageB)).sort()).toEqual(["a1", "a2"])
+      }
+    })
+
+    test("a field-key strip racing a respace never deadlocks and strips every row", async () => {
+      for (let round = 0; round < 2; round += 1) {
+        const race = await raceSetup(`Strip ${round}`)
+        const field = await pipelineStructureService.createField({
+          workspaceId: own.workspaceId,
+          pipelineId: race.pipelineId,
+          scope: token,
+          values: {
+            name: "Plan",
+            referenceName: `plan_${round}`,
+            type: "shortText",
+            required: false,
+          },
+        })
+        await seedEqual(race, 20, field.id)
+        const m = await create(race.pipelineId, "m", race.stageA)
+        const anchor = await idOfTitle(race.stageA, eTitle(10))
+
+        expectAllFulfilled(
+          await within(
+            Promise.allSettled([
+              place(race, m.id, race.stageA, { afterItemId: anchor }),
+              pipelineStructureService.deleteField({
+                workspaceId: own.workspaceId,
+                pipelineId: race.pipelineId,
+                fieldId: field.id,
+                scope: token,
+              }),
+            ]),
+          ),
+        )
+
+        const left = await db.execute(
+          sql`SELECT count(*)::int AS n FROM "PipelineItem" WHERE "pipelineId" = ${race.pipelineId}::bigint AND "fieldValues" ? ${field.id}::text`,
+        )
+        expect(Number(left.rows[0]?.n)).toBe(0)
+      }
+    }, 60_000)
+
+    test("a queued drain batch racing a placement into its destination keeps both consistent", async () => {
+      const race = await raceSetup("Queued race")
+      const m = await create(race.pipelineId, "m", race.stageA)
+      for (let index = 0; index < 4; index += 1) {
+        await create(race.pipelineId, `q${index}`, race.stageB)
+      }
+      await db.execute(
+        sql`UPDATE "PipelineStage" SET "bulkJobId" = 'job-q' WHERE "id" = ${race.stageB}::bigint`,
+      )
+
+      expectAllFulfilled(
+        await within(
+          Promise.allSettled([
+            place(race, m.id, race.stageA, { placement: "top" }),
+            pipelineStageBulkService.processQueued({
+              workspaceId: own.workspaceId,
+              pipelineId: race.pipelineId,
+              stageId: race.stageB,
+              bulkJobId: "job-q",
+              moveItemsToStageId: race.stageA,
+              actorUserId: null,
+              actorKind: "user",
+              actorSourceId: null,
+            }),
+          ]),
+        ),
+      )
+
+      expect((await orderOf(race.stageA)).sort()).toEqual([
+        "m",
+        "q0",
+        "q1",
+        "q2",
+        "q3",
+      ])
+      await expectDistinctAscending(race.stageA)
+    })
+
+    test("placing next to an item that is being deleted is a success or a 422, never a server error", async () => {
+      for (let round = 0; round < 3; round += 1) {
+        const race = await raceSetup(`Anchor delete ${round}`)
+        const a = await create(race.pipelineId, "a", race.stageA)
+        const b = await create(race.pipelineId, "b", race.stageA)
+
+        const [placed, removed] = await within(
+          Promise.allSettled([
+            place(race, a.id, race.stageA, { afterItemId: b.id }),
+            pipelineItemService.delete({
+              workspaceId: own.workspaceId,
+              pipelineId: race.pipelineId,
+              itemId: b.id,
+              scope: token,
+              actor,
+            }),
+          ]),
+        )
+
+        expect(removed.status).toBe("fulfilled")
+        if (placed.status === "rejected") {
+          expect(statusOf(placed.reason)).toBe(422)
+        }
+        expect(await orderOf(race.stageA)).toEqual(["a"])
+      }
+    })
+
+    test("a respace skips a row that is deleted while it runs", async () => {
+      for (let round = 0; round < 2; round += 1) {
+        const race = await raceSetup(`Respace delete ${round}`)
+        await seedEqual(race, 20)
+        const m = await create(race.pipelineId, "m", race.stageA)
+        await db.execute(
+          sql`UPDATE "PipelineItem" SET "position" = 5000 WHERE "id" = ${m.id}::bigint`,
+        )
+        const anchor = await idOfTitle(race.stageA, eTitle(10))
+        const doomed = await idOfTitle(race.stageA, eTitle(9))
+        const original = pipelineItemRepository.listRespaceWindow.bind(
+          pipelineItemRepository,
+        )
+        let windowHeldDoomed = false
+        const spy = vi
+          .spyOn(pipelineItemRepository, "listRespaceWindow")
+          .mockImplementation(async (input, tx) => {
+            const window = await original(input, tx)
+            if (!windowHeldDoomed) {
+              windowHeldDoomed = [...window.below, ...window.above].some(
+                (row) => row.id === doomed,
+              )
+              // The respace has read its window with the doomed row in it;
+              // the delete (no stage-order key) commits before it writes.
+              await pipelineItemService.delete({
+                workspaceId: own.workspaceId,
+                pipelineId: race.pipelineId,
+                itemId: doomed,
+                scope: token,
+                actor,
+              })
+            }
+            return window
+          })
+        try {
+          await within(place(race, m.id, race.stageA, { afterItemId: anchor }))
+        } finally {
+          spy.mockRestore()
+        }
+
+        expect(windowHeldDoomed).toBe(true)
+        const titles = await orderOf(race.stageA)
+        expect(titles).toEqual([
+          ...[1, 2, 3, 4, 5, 6, 7, 8].map(eTitle),
+          eTitle(10),
+          "m",
+          ...Array.from({ length: 10 }, (_, i) => eTitle(i + 11)),
+        ])
+        await expectDistinctAscending(race.stageA)
+      }
+    }, 60_000)
+
+    describe("every position or membership writer waits for the stage-order lock", () => {
+      type Waiter = {
+        /** The stage whose stage-order lock the test holds. */
+        heldStageId: string
+        run: () => Promise<unknown>
+      }
+
+      const writers: [string, (race: Race) => Promise<Waiter>][] = [
+        [
+          "create",
+          async (race) => ({
+            heldStageId: race.stageA,
+            run: () => create(race.pipelineId, "n", race.stageA),
+          }),
+        ],
+        [
+          "a placement",
+          async (race) => {
+            const x = await create(race.pipelineId, "x", race.stageA)
+            const y = await create(race.pipelineId, "y", race.stageA)
+            return {
+              heldStageId: race.stageA,
+              run: () => place(race, x.id, race.stageA, { beforeItemId: y.id }),
+            }
+          },
+        ],
+        [
+          "a stage change",
+          async (race) => {
+            const z = await create(race.pipelineId, "z", race.stageB)
+            return {
+              heldStageId: race.stageA,
+              run: () =>
+                pipelineItemService.update({
+                  workspaceId: own.workspaceId,
+                  pipelineId: race.pipelineId,
+                  itemId: z.id,
+                  fields: { stageId: race.stageA },
+                  scope: token,
+                  actor,
+                }),
+            }
+          },
+        ],
+        [
+          "a transfer into the stage",
+          async (race) => {
+            const elsewhere = await newPipeline(own, "Elsewhere")
+            const moved = await newItem(own, elsewhere.id)
+            return {
+              heldStageId: race.stageA,
+              run: () =>
+                pipelineItemService.transfer({
+                  workspaceId: own.workspaceId,
+                  pipelineId: elsewhere.id,
+                  itemId: moved.id,
+                  destinationPipelineId: race.pipelineId,
+                  destinationStageId: race.stageA,
+                  scope: token,
+                  actor,
+                }),
+            }
+          },
+        ],
+        [
+          "a pipeline delete drain batch",
+          async (race) => {
+            await create(race.pipelineId, "z")
+            return {
+              heldStageId: race.stageA,
+              run: () =>
+                pipelineService.delete({
+                  workspaceId: own.workspaceId,
+                  id: race.pipelineId,
+                  scope: token,
+                }),
+            }
+          },
+        ],
+        [
+          "an inline stage drain",
+          async (race) => {
+            await create(race.pipelineId, "z", race.stageB)
+            return {
+              heldStageId: race.stageA,
+              run: () =>
+                pipelineStageBulkService.deleteStage({
+                  workspaceId: own.workspaceId,
+                  pipelineId: race.pipelineId,
+                  stageId: race.stageB,
+                  moveItemsToStageId: race.stageA,
+                  scope: token,
+                  actor,
+                }),
+            }
+          },
+        ],
+        [
+          "a queued drain batch",
+          async (race) => {
+            await create(race.pipelineId, "z", race.stageB)
+            await db.execute(
+              sql`UPDATE "PipelineStage" SET "bulkJobId" = 'job-w' WHERE "id" = ${race.stageB}::bigint`,
+            )
+            return {
+              heldStageId: race.stageA,
+              run: () =>
+                pipelineStageBulkService.processQueued({
+                  workspaceId: own.workspaceId,
+                  pipelineId: race.pipelineId,
+                  stageId: race.stageB,
+                  bulkJobId: "job-w",
+                  moveItemsToStageId: race.stageA,
+                  actorUserId: null,
+                  actorKind: "user",
+                  actorSourceId: null,
+                }),
+            }
+          },
+        ],
+        [
+          "a field-key strip",
+          async (race) => {
+            const field = await pipelineStructureService.createField({
+              workspaceId: own.workspaceId,
+              pipelineId: race.pipelineId,
+              scope: token,
+              values: {
+                name: "Plan",
+                referenceName: "plan_wait",
+                type: "shortText",
+                required: false,
+              },
+            })
+            await seedEqual(race, 3, field.id)
+            return {
+              heldStageId: race.stageA,
+              run: () =>
+                pipelineStructureService.deleteField({
+                  workspaceId: own.workspaceId,
+                  pipelineId: race.pipelineId,
+                  fieldId: field.id,
+                  scope: token,
+                }),
+            }
+          },
+        ],
+      ]
+
+      test.each(writers)(
+        "%s",
+        async (_name, prepare) => {
+          const race = await raceSetup("Waits")
+          const writer = await prepare(race)
+          const hold = holdStageOrder([writer.heldStageId])
+          let outcome: Promise<unknown> | undefined
+          try {
+            await within(heldBy(hold.held.promise, hold.done))
+            outcome = writer.run()
+            // The writer reached the held key and queues behind it.
+            await within(
+              waitUntilSomeoneWaitsOnAnAdvisoryLock(
+                stageOrderLockKey(own.workspaceId, writer.heldStageId),
+              ),
+            )
+          } finally {
+            hold.release.open()
+            await Promise.allSettled([hold.done, outcome])
+          }
+
+          await within(outcome as Promise<unknown>)
+        },
+        30_000,
+      )
+    })
+
+    test("a holder that changes stage before the strip's re-read is stripped by the next batch, even the lowest id", async () => {
+      const race = await raceSetup("Strip moved")
+      const field = await pipelineStructureService.createField({
+        workspaceId: own.workspaceId,
+        pipelineId: race.pipelineId,
+        scope: token,
+        values: {
+          name: "Plan",
+          referenceName: "plan_moved",
+          type: "shortText",
+          required: false,
+        },
+      })
+      await seedEqual(race, 6, field.id)
+      const movedId = await idOfTitle(race.stageA, eTitle(1))
+      const original =
+        pipelineRepository.listFieldKeyHolders.bind(pipelineRepository)
+      let moved = false
+      const spy = vi
+        .spyOn(pipelineRepository, "listFieldKeyHolders")
+        .mockImplementation(async (input, tx) => {
+          if ("ids" in input && !moved) {
+            moved = true
+            // Committed on another connection, after the candidates were read.
+            await db.execute(
+              sql`UPDATE "PipelineItem" SET "stageId" = ${race.stageB}::bigint WHERE "id" = ${movedId}::bigint`,
+            )
+          }
+          return await original(input, tx)
+        })
+      try {
+        await within(
+          pipelineStructureService.deleteField({
+            workspaceId: own.workspaceId,
+            pipelineId: race.pipelineId,
+            fieldId: field.id,
+            scope: token,
+          }),
+        )
+      } finally {
+        spy.mockRestore()
+      }
+
+      expect(moved).toBe(true)
+      const left = await db.execute(
+        sql`SELECT count(*)::int AS n FROM "PipelineItem" WHERE "pipelineId" = ${race.pipelineId}::bigint AND "fieldValues" ? ${field.id}::text`,
+      )
+      expect(Number(left.rows[0]?.n)).toBe(0)
+    })
+
+    test("a holder that changes stage on every batch is still stripped", async () => {
+      const race = await raceSetup("Strip chasing")
+      const field = await pipelineStructureService.createField({
+        workspaceId: own.workspaceId,
+        pipelineId: race.pipelineId,
+        scope: token,
+        values: {
+          name: "Plan",
+          referenceName: "plan_chase",
+          type: "shortText",
+          required: false,
+        },
+      })
+      await seedEqual(race, 1, field.id)
+      const holderId = await idOfTitle(race.stageA, eTitle(1))
+      const original =
+        pipelineRepository.listFieldKeyHolders.bind(pipelineRepository)
+      let moves = 0
+      const spy = vi
+        .spyOn(pipelineRepository, "listFieldKeyHolders")
+        .mockImplementation(async (input, tx) => {
+          if ("ids" in input) {
+            moves += 1
+            // Flip the holder to the other stage after every candidate read.
+            await db.execute(
+              sql`UPDATE "PipelineItem" SET "stageId" = CASE WHEN "stageId" = ${race.stageA}::bigint THEN ${race.stageB}::bigint ELSE ${race.stageA}::bigint END WHERE "id" = ${holderId}::bigint`,
+            )
+          }
+          return await original(input, tx)
+        })
+      try {
+        await within(
+          pipelineStructureService.deleteField({
+            workspaceId: own.workspaceId,
+            pipelineId: race.pipelineId,
+            fieldId: field.id,
+            scope: token,
+          }),
+        )
+      } finally {
+        spy.mockRestore()
+      }
+
+      expect(moves).toBeGreaterThanOrEqual(5)
+      const left = await db.execute(
+        sql`SELECT count(*)::int AS n FROM "PipelineItem" WHERE "pipelineId" = ${race.pipelineId}::bigint AND "fieldValues" ? ${field.id}::text`,
+      )
+      expect(Number(left.rows[0]?.n)).toBe(0)
+    })
+
+    test("a respace that cannot lock its neighbours in time is a 409, not a server error", async () => {
+      const race = await raceSetup("Respace timeout")
+      await seedEqual(race, 5)
+      const m = await create(race.pipelineId, "m", race.stageA)
+      await db.execute(
+        sql`UPDATE "PipelineItem" SET "position" = 5000 WHERE "id" = ${m.id}::bigint`,
+      )
+      const anchor = await idOfTitle(race.stageA, eTitle(2))
+      const neighbour = await idOfTitle(race.stageA, eTitle(3))
+      const held = barrier()
+      const release = barrier()
+      // Another connection keeps a window row locked past the respace's cap.
+      const holder = db.transaction(async (tx) => {
+        await tx.execute(
+          sql`SELECT 1 FROM "PipelineItem" WHERE "id" = ${neighbour}::bigint FOR UPDATE`,
+        )
+        held.open()
+        await release.promise
+      })
+      try {
+        await within(heldBy(held.promise, holder))
+        await expect(
+          within(
+            place(race, m.id, race.stageA, { afterItemId: anchor }),
+            30_000,
+          ),
+        ).rejects.toMatchObject({ httpStatusCode: 409, code: "conflict" })
+      } finally {
+        release.open()
+        await holder
+      }
+    }, 60_000)
+
+    test("a stage-order lock held past the lock timeout is a 409 with no writes or effects", async () => {
+      const race = await raceSetup("Lock timeout")
+      const a = await create(race.pipelineId, "a")
+      const b = await create(race.pipelineId, "b")
+      const before = await rowsOf(race.stageA)
+      mocks.queueWorkspaceRealtimeEvent.mockClear()
+      const hold = holdStageOrder([race.stageA])
+      try {
+        await within(heldBy(hold.held.promise, hold.done))
+        await expect(
+          within(place(race, a.id, race.stageA, { afterItemId: b.id }), 30_000),
+        ).rejects.toMatchObject({ httpStatusCode: 409, code: "conflict" })
+        await expect(
+          within(create(race.pipelineId, "c", race.stageA), 30_000),
+        ).rejects.toMatchObject({ httpStatusCode: 409, code: "conflict" })
+      } finally {
+        hold.release.open()
+        await hold.done
+      }
+
+      expect(await rowsOf(race.stageA)).toEqual(before)
+      expect(mocks.queueWorkspaceRealtimeEvent).not.toHaveBeenCalled()
+    }, 60_000)
+
+    test("background batches wait on a stage-order key past the request timeout instead of failing", async () => {
+      const race = await raceSetup("Unbounded")
+      const field = await pipelineStructureService.createField({
+        workspaceId: own.workspaceId,
+        pipelineId: race.pipelineId,
+        scope: token,
+        values: {
+          name: "Plan",
+          referenceName: "plan_unbounded",
+          type: "shortText",
+          required: false,
+        },
+      })
+      await seedEqual(race, 3, field.id)
+      await create(race.pipelineId, "z", race.stageB)
+      await db.execute(
+        sql`UPDATE "PipelineStage" SET "bulkJobId" = 'job-u' WHERE "id" = ${race.stageB}::bigint`,
+      )
+      const hold = holdStageOrder([race.stageA])
+      let strip: Promise<unknown> | undefined
+      let drain: Promise<unknown> | undefined
+      try {
+        await within(heldBy(hold.held.promise, hold.done))
+        strip = pipelineStructureService.deleteField({
+          workspaceId: own.workspaceId,
+          pipelineId: race.pipelineId,
+          fieldId: field.id,
+          scope: token,
+        })
+        // The strip alone first: it must be the one queued on stage A's key,
+        // not on the structure lock a drain taking it first would hold.
+        const keyA = stageOrderLockKey(own.workspaceId, race.stageA)
+        await within(waitUntilSomeoneWaitsOnAnAdvisoryLock(keyA))
+        drain = pipelineStageBulkService.processQueued({
+          workspaceId: own.workspaceId,
+          pipelineId: race.pipelineId,
+          stageId: race.stageB,
+          bulkJobId: "job-u",
+          moveItemsToStageId: race.stageA,
+          actorUserId: null,
+          actorKind: "user",
+          actorSourceId: null,
+        })
+        await within(waitUntilSomeoneWaitsOnAnAdvisoryLock(keyA, 2))
+        // Longer than the 10s a request path would wait.
+        await new Promise((resolve) => setTimeout(resolve, 11_000))
+      } finally {
+        hold.release.open()
+        await Promise.allSettled([hold.done, strip, drain])
+      }
+
+      await within(strip as Promise<unknown>)
+      await within(drain as Promise<unknown>)
+      const left = await db.execute(
+        sql`SELECT count(*)::int AS n FROM "PipelineItem" WHERE "pipelineId" = ${race.pipelineId}::bigint AND "fieldValues" ? ${field.id}::text`,
+      )
+      expect(Number(left.rows[0]?.n)).toBe(0)
+      expect(await orderOf(race.stageB)).toEqual([])
+    }, 60_000)
+
+    test("flow and trigger writes (system scope) wait past the request timeout instead of failing", async () => {
+      const race = await raceSetup("System wait")
+      const system = { kind: "system" } as const
+      const inB = await create(race.pipelineId, "b", race.stageB)
+      const elsewhere = await newPipeline(own, "Elsewhere")
+      // Its own contact, and a non-open create: no shared open-limit key
+      // queues one write behind another before they reach stage A's key.
+      const foreign = await newItem(own, elsewhere.id, {
+        contactId: own.contactIds[1],
+      })
+      const keyA = stageOrderLockKey(own.workspaceId, race.stageA)
+      const hold = holdStageOrder([race.stageA])
+      let writes: Promise<unknown>[] = []
+      try {
+        await within(heldBy(hold.held.promise, hold.done))
+        writes = [
+          newItem(own, race.pipelineId, {
+            fields: {
+              title: "flow-created",
+              stageId: race.stageA,
+              status: "won",
+            },
+            scope: system,
+          }),
+          pipelineItemService.update({
+            workspaceId: own.workspaceId,
+            pipelineId: race.pipelineId,
+            itemId: inB.id,
+            fields: { stageId: race.stageA },
+            scope: system,
+            actor,
+          }),
+          pipelineItemService.transfer({
+            workspaceId: own.workspaceId,
+            pipelineId: elsewhere.id,
+            itemId: foreign.id,
+            destinationPipelineId: race.pipelineId,
+            destinationStageId: race.stageA,
+            scope: system,
+            actor,
+          }),
+        ]
+        await within(waitUntilSomeoneWaitsOnAnAdvisoryLock(keyA, 3))
+        // Longer than the 10s a request path would wait.
+        await new Promise((resolve) => setTimeout(resolve, 11_000))
+      } finally {
+        hold.release.open()
+        await Promise.allSettled([hold.done, ...writes])
+      }
+
+      expectAllFulfilled(await within(Promise.allSettled(writes)))
+      expect((await rowsOf(race.stageA)).length).toBe(3)
+    }, 60_000)
+
+    test("a deadlock inside a respace is a 409 that rolls everything back", async () => {
+      const race = await raceSetup("Respace deadlock")
+      await seedEqual(race, 5)
+      const m = await create(race.pipelineId, "m", race.stageA)
+      await db.execute(
+        sql`UPDATE "PipelineItem" SET "position" = 5000 WHERE "id" = ${m.id}::bigint`,
+      )
+      const anchor = await idOfTitle(race.stageA, eTitle(2))
+      const before = await rowsOf(race.stageA)
+      mocks.queueWorkspaceRealtimeEvent.mockClear()
+      const original = pipelineItemRepository.setPositions.bind(
+        pipelineItemRepository,
+      )
+      let writes = 0
+      const spy = vi
+        .spyOn(pipelineItemRepository, "setPositions")
+        .mockImplementation(async (input, tx) => {
+          // Write first, so only the rollback can explain unchanged rows.
+          await original(input, tx)
+          throw new DrizzleQueryError(
+            "update PipelineItem",
+            [],
+            Object.assign(new Error("deadlock detected"), { code: "40P01" }),
+          )
+        })
+      try {
+        await expect(
+          within(place(race, m.id, race.stageA, { afterItemId: anchor })),
+        ).rejects.toMatchObject({ httpStatusCode: 409, code: "conflict" })
+      } finally {
+        writes = spy.mock.calls.length
+        spy.mockRestore()
+      }
+
+      expect(writes).toBeGreaterThan(0)
+      expect(await rowsOf(race.stageA)).toEqual(before)
+      expect(mocks.queueWorkspaceRealtimeEvent).not.toHaveBeenCalled()
+    })
+
+    describe("a stage that changes between the peek and the row lock", () => {
+      const withStageChangedBeforeLock = async (
+        changes: number,
+        itemId: string,
+        stageIds: string[],
+        run: () => Promise<unknown>,
+      ) => {
+        const original = pipelineItemRepository.lockForUpdate.bind(
+          pipelineItemRepository,
+        )
+        let calls = 0
+        const spy = vi
+          .spyOn(pipelineItemRepository, "lockForUpdate")
+          .mockImplementation(async (input, tx) => {
+            if (calls < changes) {
+              // Another writer commits a stage change right before our lock.
+              await db.execute(
+                sql`UPDATE "PipelineItem" SET "stageId" = ${stageIds[calls % stageIds.length]}::bigint WHERE "id" = ${itemId}::bigint`,
+              )
+            }
+            calls += 1
+            return await original(input, tx)
+          })
+        try {
+          return await Promise.allSettled([run()]).then(([result]) => ({
+            result,
+            lockAttempts: spy.mock.calls.length,
+          }))
+        } finally {
+          spy.mockRestore()
+        }
+      }
+
+      test("restarts the transaction once and then succeeds, emitting the event once", async () => {
+        const race = await raceSetup("Retry")
+        const third = await pipelineStructureService.createStage({
+          workspaceId: own.workspaceId,
+          pipelineId: race.pipelineId,
+          scope: token,
+          name: "Third",
+        })
+        const x = await create(race.pipelineId, "x", race.stageA)
+        mocks.emitPipelineItemEvent.mockClear()
+
+        const { result, lockAttempts } = await withStageChangedBeforeLock(
+          1,
+          x.id,
+          [third.id],
+          () => place(race, x.id, race.stageB, { placement: "top" }),
+        )
+
+        expect(result.status).toBe("fulfilled")
+        expect(lockAttempts).toBe(2)
+        expect(await orderOf(race.stageB)).toEqual(["x"])
+        const moved = mocks.emitPipelineItemEvent.mock.calls.filter(
+          ([type]) => type === "pipelineItemMovedToStage",
+        )
+        expect(moved).toHaveLength(1)
+        expect(moved[0]?.[3]).toMatchObject({ fromStageName: "Third" })
+      })
+
+      test("a second mismatch is a 409 with nothing emitted", async () => {
+        const race = await raceSetup("Retry twice")
+        const third = await pipelineStructureService.createStage({
+          workspaceId: own.workspaceId,
+          pipelineId: race.pipelineId,
+          scope: token,
+          name: "Third",
+        })
+        const x = await create(race.pipelineId, "x", race.stageA)
+        mocks.emitPipelineItemEvent.mockClear()
+        mocks.queueWorkspaceRealtimeEvent.mockClear()
+
+        const { result, lockAttempts } = await withStageChangedBeforeLock(
+          2,
+          x.id,
+          [third.id, race.stageA],
+          () => place(race, x.id, race.stageB, { placement: "top" }),
+        )
+
+        expect(result.status).toBe("rejected")
+        expect(statusOf((result as PromiseRejectedResult).reason)).toBe(409)
+        expect(lockAttempts).toBe(2)
+        expect(mocks.emitPipelineItemEvent).not.toHaveBeenCalled()
+        expect(mocks.queueWorkspaceRealtimeEvent).not.toHaveBeenCalled()
+        expect(await orderOf(race.stageB)).toEqual([])
+      })
+
+      test("a transfer restarts the same way", async () => {
+        const race = await raceSetup("Retry transfer")
+        const third = await pipelineStructureService.createStage({
+          workspaceId: own.workspaceId,
+          pipelineId: race.pipelineId,
+          scope: token,
+          name: "Third",
+        })
+        const destination = await newPipeline(own, "Destination")
+        const x = await create(race.pipelineId, "x", race.stageA)
+
+        const { result, lockAttempts } = await withStageChangedBeforeLock(
+          1,
+          x.id,
+          [third.id],
+          () =>
+            pipelineItemService.transfer({
+              workspaceId: own.workspaceId,
+              pipelineId: race.pipelineId,
+              itemId: x.id,
+              destinationPipelineId: destination.id,
+              scope: token,
+              actor,
+            }),
+        )
+
+        expect(result.status).toBe("fulfilled")
+        expect(lockAttempts).toBe(2)
+      })
     })
   })
 })

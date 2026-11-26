@@ -11815,7 +11815,17 @@
       "error": "Impossibile caricare la bacheca",
       "processing": "Elaborazione di questa fase…",
       "moveFailed": "Impossibile spostare la scheda",
+      "reorderNeedsManualSort": "Imposta l'ordinamento su Ordine manuale per riordinare le schede all'interno di una fase.",
+      "dragHandle": "Trascina per spostare la scheda",
+      "dragInstructions": "Per prendere una scheda, premi Spazio o Invio sulla sua maniglia di trascinamento. Usa le frecce per spostarla, Spazio o Invio per rilasciarla ed Esc per annullare.",
+      "announce": {
+        "pickedUp": "{name} presa.",
+        "over": "{name} è sopra {stage}.",
+        "dropped": "{name} rilasciata in {stage}.",
+        "cancelled": "Spostamento annullato. {name} è tornata al suo posto."
+      },
       "sortOptions": {
+        "manualAsc": "Ordine manuale",
         "createdAtDesc": "Data di creazione (Recente a Meno recente)",
         "createdAtAsc": "Data di creazione (Meno recente a Recente)",
         "updatedAtDesc": "Data di aggiornamento (Recente a Meno recente)",

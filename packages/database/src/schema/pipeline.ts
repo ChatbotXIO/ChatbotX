@@ -4,6 +4,7 @@ import {
   bigint,
   boolean,
   check,
+  doublePrecision,
   index,
   integer,
   jsonb,
@@ -174,8 +175,17 @@ export const pipelineItemModel = pgTable(
     closedAt: timestamp(timestampConfig),
     lastCommentAt: timestamp(timestampConfig),
     idempotencyKey: text(),
+    // Manual board order within a stage (lower = higher). The default is
+    // "newest on top": negative epoch milliseconds, a metadata-only default.
+    position: doublePrecision()
+      .default(sql`(-(extract(epoch from now()) * 1000))`)
+      .notNull(),
   },
   (table) => [
+    check(
+      "PipelineItem_position_finite_check",
+      sql`${table.position} > '-Infinity'::float8 AND ${table.position} < 'Infinity'::float8`,
+    ),
     uniqueIndex("PipelineItem_workspaceId_number_key").on(
       table.workspaceId,
       table.number,
@@ -195,6 +205,13 @@ export const pipelineItemModel = pgTable(
       table.stageId,
       sql`${table.createdAt} DESC`,
       sql`${table.id} DESC`,
+    ),
+    // Manual order within one stage; keyset-paged by (position, id).
+    index("PipelineItem_stage_position_idx").on(
+      table.pipelineId,
+      table.stageId,
+      table.position,
+      table.id,
     ),
     // Pipeline-wide lists (no stage) in the default newest-first order.
     index("PipelineItem_pipeline_createdAt_idx").on(

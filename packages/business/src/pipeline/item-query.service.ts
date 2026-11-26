@@ -6,6 +6,7 @@ import {
 import {
   contactInboxRepository,
   InvalidPipelineCursorError,
+  ManualSortRequiresStageError,
   type PipelineItemCommentPage,
   type PipelineItemFilter,
   type PipelineItemSort,
@@ -98,7 +99,10 @@ function isPgDataError(error: unknown): boolean {
   return false
 }
 
-/** A cursor from another sort, version or caller is the caller's error, not ours. */
+/**
+ * A cursor from another sort, version or caller, or a `manual` sort without a
+ * stage, is the caller's error, not ours.
+ */
 async function withValidCursor<T>(
   read: () => Promise<T>,
   cursor: string | undefined,
@@ -108,6 +112,9 @@ async function withValidCursor<T>(
   } catch (error) {
     if (error instanceof InvalidPipelineCursorError) {
       throw validationException("cursor", "Invalid cursor")
+    }
+    if (error instanceof ManualSortRequiresStageError) {
+      throw validationException("sort", error.message)
     }
     // A data exception can only be blamed on the cursor when one was sent;
     // other inputs are validated at the API boundary.

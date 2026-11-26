@@ -9,7 +9,10 @@
  */
 
 import { db, eq, sql } from "@chatbotx.io/database/client"
-import { pipelineStageRepository } from "@chatbotx.io/database/repositories"
+import {
+  pipelineItemRepository,
+  pipelineStageRepository,
+} from "@chatbotx.io/database/repositories"
 import {
   contactInboxModel,
   contactModel,
@@ -51,6 +54,7 @@ vi.mock("../../src/conversation/service", () => ({
   conversationService: {
     assignByContactIds: mocks.assignByContactIds,
     findDMByContactIds: vi.fn().mockResolvedValue([]),
+    findLatestSmtpConversationByContact: vi.fn().mockResolvedValue(undefined),
   },
 }))
 vi.mock("../../src/audit/dispatcher", () => ({
@@ -1183,6 +1187,31 @@ describe.skipIf(!databaseUrl)("pipeline services", () => {
       expect(mocks.assignByContactIds).not.toHaveBeenCalled()
     })
 
+    test("listItems sorted by manual order needs exactly one stage and gives a 422 on sort otherwise", async () => {
+      const pipeline = await newPipeline(own)
+      const [only] = await stagesOf(own, pipeline.id)
+      await newItem(own, pipeline.id, { fields: { title: "a" } })
+      const sort = { key: "manual", direction: "asc" } as const
+      const list = (stageIds?: string[]) =>
+        pipelineItemQueryService.listItems({
+          workspaceId: own.workspaceId,
+          pipelineId: pipeline.id,
+          scope: token,
+          sort,
+          filter: stageIds ? { stageIds } : undefined,
+        })
+
+      await expect(list()).rejects.toMatchObject({
+        httpStatusCode: 422,
+        field: "sort",
+      })
+      await expect(list([only.id, "999999999"])).rejects.toMatchObject({
+        httpStatusCode: 422,
+        field: "sort",
+      })
+      expect((await list([only.id])).items).toHaveLength(1)
+    })
+
     test("the board returns per-stage items, totals and contact summaries", async () => {
       const pipeline = await newPipeline(own)
       await newItem(own, pipeline.id, { fields: { title: "a", value: 10 } })
@@ -1236,6 +1265,656 @@ describe.skipIf(!databaseUrl)("pipeline services", () => {
       )
       expect(channelByContact.get(connected)).toBe("telegram")
       expect(channelByContact.get(own.contactIds[0])).toBeNull()
+    })
+  })
+
+  describe("manual order", () => {
+    type OrderRow = { id: string; title: string; position: number }
+    type Placement = {
+      beforeItemId?: string
+      afterItemId?: string
+      placement?: "top" | "bottom"
+    }
+
+    const newTwoStagePipeline = async (fixture: Fixture) => {
+      const pipeline = await newPipeline(fixture)
+      const second = await pipelineStructureService.createStage({
+        workspaceId: fixture.workspaceId,
+        pipelineId: pipeline.id,
+        scope: token,
+        name: "Second",
+      })
+      const [first] = await stagesOf(fixture, pipeline.id)
+      return { pipeline, first, second }
+    }
+
+    const rowsOf = async (stageId: string): Promise<OrderRow[]> =>
+      (
+        await db.execute(
+          sql`SELECT "id"::text AS id, "title" AS title, "position"::float8 AS position FROM "PipelineItem" WHERE "stageId" = ${stageId}::bigint ORDER BY "position", "id"`,
+        )
+      ).rows as OrderRow[]
+
+    /** Titles of a stage in manual order, straight from the table. */
+    const orderOf = async (stageId: string): Promise<string[]> =>
+      (await rowsOf(stageId)).map((row) => row.title)
+
+    /** Creates items one after another (each lands on top), optionally in a stage. */
+    const createAll = async (
+      pipelineId: string,
+      titles: string[],
+      stageId?: string,
+    ) => {
+      const created: Awaited<ReturnType<typeof newItem>>[] = []
+      for (const title of titles) {
+        created.push(
+          await newItem(own, pipelineId, { fields: { title, stageId } }),
+        )
+      }
+      return created
+    }
+
+    const place = (
+      pipelineId: string,
+      itemId: string,
+      stageId: string,
+      placement: Placement = {},
+    ) =>
+      pipelineItemService.move({
+        workspaceId: own.workspaceId,
+        pipelineId,
+        itemId,
+        stageId,
+        ...placement,
+        scope: token,
+        actor,
+      })
+
+    const setPosition = async (itemId: string, position: number) => {
+      await db.execute(
+        sql`UPDATE "PipelineItem" SET "position" = ${position}::float8 WHERE "id" = ${itemId}::bigint`,
+      )
+    }
+
+    const titled = async (stageId: string, title: string) =>
+      (await rowsOf(stageId)).find((row) => row.title === title) as OrderRow
+
+    /** `count` items titled e0001..eNNNN in a stage, all sharing one position. */
+    const seedEqual = async (
+      pipelineId: string,
+      stageId: string,
+      count: number,
+      position: number,
+    ) => {
+      await db.execute(sql`
+        INSERT INTO "PipelineItem" ("id","workspaceId","pipelineId","stageId","contactId","number","title","status","priority","fieldValues","stageEnteredAt","updatedAt","position")
+        SELECT (2000000000000 + g)::bigint, ${own.workspaceId}::bigint, ${pipelineId}::bigint, ${stageId}::bigint, ${own.contactIds[0]}::bigint, 100000 + g, 'e' || lpad(g::text, 4, '0'), 'lost', 'low', '{}'::jsonb, now(), now(), ${position}::float8
+        FROM generate_series(1, ${count}::int) AS g`)
+    }
+
+    /** How many respace windows `run` read (0 when it never needed one). */
+    const countRespaces = async (run: () => Promise<unknown>) => {
+      const spy = vi.spyOn(pipelineItemRepository, "listRespaceWindow")
+      try {
+        await run()
+        return spy.mock.calls.length
+      } finally {
+        spy.mockRestore()
+      }
+    }
+
+    const eTitle = (index: number) => `e${String(index).padStart(4, "0")}`
+
+    const activityCount = async (itemId: string): Promise<number> =>
+      Number(
+        (
+          await db.execute(
+            sql`SELECT count(*)::int AS n FROM "PipelineItemActivity" WHERE "itemId" = ${itemId}::bigint`,
+          )
+        ).rows[0]?.n,
+      )
+
+    const realtimeChanges = () =>
+      mocks.queueWorkspaceRealtimeEvent.mock.calls.map(
+        ([, event]) => event.data,
+      )
+
+    test("a new item goes on top of its stage, also in an empty one", async () => {
+      const { pipeline, first, second } = await newTwoStagePipeline(own)
+
+      await createAll(pipeline.id, ["a", "b", "c"])
+      await createAll(pipeline.id, ["lone"], second.id)
+
+      expect(await orderOf(first.id)).toEqual(["c", "b", "a"])
+      expect(await orderOf(second.id)).toEqual(["lone"])
+    })
+
+    test("places an item before, after, at the top and at the bottom of its own stage", async () => {
+      const { pipeline, first } = await newTwoStagePipeline(own)
+      const [a, b, c, d] = await createAll(pipeline.id, ["a", "b", "c", "d"])
+      expect(await orderOf(first.id)).toEqual(["d", "c", "b", "a"])
+
+      await place(pipeline.id, a.id, first.id, { beforeItemId: c.id })
+      expect(await orderOf(first.id)).toEqual(["d", "a", "c", "b"])
+
+      await place(pipeline.id, d.id, first.id, { afterItemId: b.id })
+      expect(await orderOf(first.id)).toEqual(["a", "c", "b", "d"])
+
+      await place(pipeline.id, d.id, first.id, { placement: "top" })
+      expect(await orderOf(first.id)).toEqual(["d", "a", "c", "b"])
+
+      await place(pipeline.id, d.id, first.id, { placement: "bottom" })
+      expect(await orderOf(first.id)).toEqual(["a", "c", "b", "d"])
+    })
+
+    describe("top placement and the clock", () => {
+      /** Runs `fn` with `Date.now()` reading `ms`, restoring it right after. */
+      const atClock = async <T>(ms: number, fn: () => Promise<T>) => {
+        const spy = vi.spyOn(Date, "now").mockReturnValue(ms)
+        try {
+          return await fn()
+        } finally {
+          spy.mockRestore()
+        }
+      }
+
+      const positionOf = async (stageId: string, title: string) =>
+        (await titled(stageId, title)).position
+
+      /** An item written the way the previous release did: the column default. */
+      let oldWriterSeq = 0
+      const insertWithDefaultPosition = async (
+        pipelineId: string,
+        stageId: string,
+        title: string,
+      ) => {
+        oldWriterSeq += 1
+        await db.execute(sql`
+          INSERT INTO "PipelineItem" ("id","workspaceId","pipelineId","stageId","contactId","number","title","status","priority","fieldValues","stageEnteredAt","updatedAt")
+          VALUES ((2100000000000 + ${oldWriterSeq}::int)::bigint, ${own.workspaceId}::bigint, ${pipelineId}::bigint, ${stageId}::bigint, ${own.contactIds[0]}::bigint, 200000 + ${oldWriterSeq}::int, ${title}, 'lost', 'low', '{}'::jsonb, now(), now())`)
+      }
+
+      test("new-code and default-position writers keep time order while the clock moves forward", async () => {
+        const { pipeline, first } = await newTwoStagePipeline(own)
+        // The database clock is the reference: the default writes from it.
+        const reference = await db.execute(
+          sql`SELECT (extract(epoch from now()) * 1000)::float8 AS ms`,
+        )
+        const dbNow = Math.floor(Number(reference.rows[0]?.ms))
+        await atClock(dbNow - 5000, () => createAll(pipeline.id, ["t0"]))
+        await insertWithDefaultPosition(pipeline.id, first.id, "t1")
+        const defaultPosition = await positionOf(first.id, "t1")
+        await atClock(Math.ceil(-defaultPosition) + 1, () =>
+          createAll(pipeline.id, ["t2"]),
+        )
+
+        expect(await orderOf(first.id)).toEqual(["t2", "t1", "t0"])
+      })
+
+      test("within the same millisecond, or while the top runs ahead of the clock, the fallback is top - 1024; a long enough pause recovers the clock", async () => {
+        const { pipeline, first } = await newTwoStagePipeline(own)
+        const base = Date.now()
+        const at = (offset: number, title: string) =>
+          atClock(base + offset, () => createAll(pipeline.id, [title]))
+
+        await at(0, "a")
+        expect(await positionOf(first.id, "a")).toBe(-base)
+        await at(0, "b")
+        expect(await positionOf(first.id, "b")).toBe(-base - 1024)
+        await at(1000, "c")
+        expect(await positionOf(first.id, "c")).toBe(-base - 2048)
+        await at(2000, "d")
+        expect(await positionOf(first.id, "d")).toBe(-base - 3072)
+        await at(10_000, "e")
+        expect(await positionOf(first.id, "e")).toBe(-(base + 10_000))
+        expect(await orderOf(first.id)).toEqual(["e", "d", "c", "b", "a"])
+      })
+
+      test("create, stage change, transfer and an explicit same-stage top all use the clock when eligible", async () => {
+        const { pipeline, first, second } = await newTwoStagePipeline(own)
+        const otherPipeline = await newPipeline(own, "Elsewhere")
+        const base = Date.now() + 100_000
+        const [a] = await createAll(pipeline.id, ["a", "b"])
+        const moving = await newItem(own, pipeline.id, {
+          fields: { title: "moving", stageId: second.id },
+        })
+        const foreign = await newItem(own, otherPipeline.id, {
+          fields: { title: "foreign" },
+        })
+
+        await atClock(base, () => createAll(pipeline.id, ["created"]))
+        expect(await positionOf(first.id, "created")).toBe(-base)
+
+        await atClock(base + 10_000, () =>
+          pipelineItemService.update({
+            workspaceId: own.workspaceId,
+            pipelineId: pipeline.id,
+            itemId: moving.id,
+            fields: { stageId: first.id },
+            scope: token,
+            actor,
+          }),
+        )
+        expect(await positionOf(first.id, "moving")).toBe(-(base + 10_000))
+
+        await atClock(base + 20_000, () =>
+          pipelineItemService.transfer({
+            workspaceId: own.workspaceId,
+            pipelineId: otherPipeline.id,
+            itemId: foreign.id,
+            destinationPipelineId: pipeline.id,
+            destinationStageId: first.id,
+            scope: token,
+            actor,
+          }),
+        )
+        expect(await positionOf(first.id, "foreign")).toBe(-(base + 20_000))
+
+        await atClock(base + 30_000, () =>
+          place(pipeline.id, a.id, first.id, { placement: "top" }),
+        )
+        expect(await positionOf(first.id, "a")).toBe(-(base + 30_000))
+      })
+
+      test("dropping the top card on top, or a lone card, stays a no-op after time advances", async () => {
+        const { pipeline, first, second } = await newTwoStagePipeline(own)
+        const [, b] = await createAll(pipeline.id, ["a", "b"])
+        const [lone] = await createAll(pipeline.id, ["lone"], second.id)
+        const rowsBefore = await rowsOf(first.id)
+        const loneBefore = await rowsOf(second.id)
+        mocks.queueWorkspaceRealtimeEvent.mockClear()
+
+        await atClock(Date.now() + 500_000, async () => {
+          await place(pipeline.id, b.id, first.id, { placement: "top" })
+          await place(pipeline.id, lone.id, second.id, { placement: "top" })
+        })
+
+        expect(await rowsOf(first.id)).toEqual(rowsBefore)
+        expect(await rowsOf(second.id)).toEqual(loneBefore)
+        expect(mocks.queueWorkspaceRealtimeEvent).not.toHaveBeenCalled()
+      })
+
+      test("bottom, before and after (including before the first card) keep the sparse arithmetic whatever the clock says", async () => {
+        const { pipeline, first } = await newTwoStagePipeline(own)
+        const [a, b, , d] = await createAll(pipeline.id, ["a", "b", "c", "d"])
+        // Board order: d, c, b, a. The clock is far past every position.
+        const later = Date.now() + 500_000
+        const topPosition = await positionOf(first.id, "d")
+
+        await atClock(later, () =>
+          place(pipeline.id, a.id, first.id, { beforeItemId: d.id }),
+        )
+        expect(await positionOf(first.id, "a")).toBe(topPosition - 1024)
+
+        await atClock(later, () =>
+          place(pipeline.id, d.id, first.id, { placement: "bottom" }),
+        )
+        const remaining = await rowsOf(first.id)
+        expect(remaining.at(-1)?.title).toBe("d")
+        expect(await positionOf(first.id, "d")).toBe(
+          (remaining.at(-2)?.position as number) + 1024,
+        )
+
+        await atClock(later, () =>
+          place(pipeline.id, b.id, first.id, { afterItemId: a.id }),
+        )
+        const [x, y, z] = await rowsOf(first.id)
+        expect(x?.title).toBe("a")
+        expect(y?.title).toBe("b")
+        expect(y?.position).toBeGreaterThan(x?.position as number)
+        expect(y?.position).toBeLessThan(z?.position as number)
+      })
+
+      test("a top that is far more negative than the clock is beaten by exactly one step", async () => {
+        const { pipeline, first } = await newTwoStagePipeline(own)
+        const [a] = await createAll(pipeline.id, ["a"])
+        await setPosition(a.id, -Date.now() - 1_000_000)
+        const before = await positionOf(first.id, "a")
+        await createAll(pipeline.id, ["b"])
+
+        expect(await positionOf(first.id, "b")).toBe(before - 1024)
+        expect(await orderOf(first.id)).toEqual(["b", "a"])
+      })
+    })
+
+    test("drops an item into an exact spot of another stage, or at its top or bottom", async () => {
+      const { pipeline, first, second } = await newTwoStagePipeline(own)
+      const [, y] = await createAll(pipeline.id, ["x", "y"], second.id)
+      const [m, n, o, p] = await createAll(pipeline.id, ["m", "n", "o", "p"])
+
+      await place(pipeline.id, m.id, second.id, { afterItemId: y.id })
+      await place(pipeline.id, n.id, second.id, { beforeItemId: y.id })
+      await place(pipeline.id, o.id, second.id, { placement: "top" })
+      await place(pipeline.id, p.id, second.id, { placement: "bottom" })
+
+      // Before the drops the stage read y, x.
+      expect(await orderOf(second.id)).toEqual(["o", "n", "y", "m", "x", "p"])
+      expect(await orderOf(first.id)).toEqual([])
+    })
+
+    test("a stage change without a placement lands on top, the same stage is a no-op", async () => {
+      const { pipeline, first, second } = await newTwoStagePipeline(own)
+      const [a] = await createAll(pipeline.id, ["a", "b"])
+      await createAll(pipeline.id, ["z"], second.id)
+      mocks.queueWorkspaceRealtimeEvent.mockClear()
+
+      const unchanged = await place(pipeline.id, a.id, first.id)
+      expect(unchanged.updatedAt).toEqual(a.updatedAt)
+      expect(mocks.queueWorkspaceRealtimeEvent).not.toHaveBeenCalled()
+
+      await place(pipeline.id, a.id, second.id)
+      expect(await orderOf(second.id)).toEqual(["a", "z"])
+      expect(await orderOf(first.id)).toEqual(["b"])
+    })
+
+    test("a same-stage move without a placement is allowed on a busy stage", async () => {
+      const { pipeline, first } = await newTwoStagePipeline(own)
+      const [a] = await createAll(pipeline.id, ["a"])
+      await db.execute(
+        sql`UPDATE "PipelineStage" SET "bulkJobId" = 'job-1' WHERE "id" = ${first.id}::bigint`,
+      )
+
+      const moved = await place(pipeline.id, a.id, first.id)
+
+      expect(moved.stageId).toBe(first.id)
+    })
+
+    test("a reorder keeps updatedAt, writes no activity or event and only refreshes boards", async () => {
+      const { pipeline, first } = await newTwoStagePipeline(own)
+      const [a] = await createAll(pipeline.id, ["a", "b"])
+      const stored = () =>
+        db.execute(
+          sql`SELECT "updatedAt" FROM "PipelineItem" WHERE "id" = ${a.id}::bigint`,
+        )
+      const updatedAtBefore = (await stored()).rows[0]
+      const activitiesBefore = await activityCount(a.id)
+      mocks.queueWorkspaceRealtimeEvent.mockClear()
+      mocks.emitPipelineItemEvent.mockClear()
+
+      const reordered = await place(pipeline.id, a.id, first.id, {
+        placement: "top",
+      })
+
+      expect(await orderOf(first.id)).toEqual(["a", "b"])
+      expect(reordered.updatedAt).toEqual(a.updatedAt)
+      expect((await stored()).rows[0]).toEqual(updatedAtBefore)
+      expect(await activityCount(a.id)).toBe(activitiesBefore)
+      expect(mocks.emitPipelineItemEvent).not.toHaveBeenCalled()
+      expect(realtimeChanges()).toEqual([
+        expect.objectContaining({ itemId: a.id, change: "updated" }),
+      ])
+    })
+
+    test("dropping an item where it already is writes and emits nothing", async () => {
+      const { pipeline, first } = await newTwoStagePipeline(own)
+      const [a, b, c] = await createAll(pipeline.id, ["a", "b", "c"])
+      // Board order: c, b, a.
+      const rowsBefore = await rowsOf(first.id)
+      mocks.queueWorkspaceRealtimeEvent.mockClear()
+
+      await place(pipeline.id, b.id, first.id, { afterItemId: c.id })
+      await place(pipeline.id, b.id, first.id, { beforeItemId: a.id })
+      await place(pipeline.id, c.id, first.id, { placement: "top" })
+      await place(pipeline.id, a.id, first.id, { placement: "bottom" })
+
+      expect(await rowsOf(first.id)).toEqual(rowsBefore)
+      expect(mocks.queueWorkspaceRealtimeEvent).not.toHaveBeenCalled()
+    })
+
+    test("rejects an anchor that is unknown, itself, in another stage or pipeline with a 422", async () => {
+      const { pipeline, first, second } = await newTwoStagePipeline(own)
+      const [a] = await createAll(pipeline.id, ["a"])
+      const [elsewhere] = await createAll(pipeline.id, ["elsewhere"], second.id)
+      const otherPipeline = await newPipeline(own, "Other")
+      const foreign = await newItem(own, otherPipeline.id)
+
+      for (const anchor of [
+        "999999999999",
+        "not-an-id",
+        a.id,
+        elsewhere.id,
+        foreign.id,
+      ]) {
+        await expect(
+          place(pipeline.id, a.id, first.id, { beforeItemId: anchor }),
+        ).rejects.toMatchObject({ httpStatusCode: 422, field: "beforeItemId" })
+        await expect(
+          place(pipeline.id, a.id, first.id, { afterItemId: anchor }),
+        ).rejects.toMatchObject({ httpStatusCode: 422, field: "afterItemId" })
+      }
+    })
+
+    test("a self-anchor written with leading zeros is still the item itself: 422, no write", async () => {
+      const { pipeline, first } = await newTwoStagePipeline(own)
+      const [a, b] = await createAll(pipeline.id, ["a", "b"])
+      const rowsBefore = await rowsOf(first.id)
+      const padded = `00${a.id}`
+      mocks.queueWorkspaceRealtimeEvent.mockClear()
+
+      await expect(
+        place(pipeline.id, a.id, first.id, { beforeItemId: padded }),
+      ).rejects.toMatchObject({ httpStatusCode: 422, field: "beforeItemId" })
+      await expect(
+        place(pipeline.id, a.id, first.id, { afterItemId: padded }),
+      ).rejects.toMatchObject({ httpStatusCode: 422, field: "afterItemId" })
+      expect(await rowsOf(first.id)).toEqual(rowsBefore)
+      expect(mocks.queueWorkspaceRealtimeEvent).not.toHaveBeenCalled()
+      // A padded id of another item is still a valid anchor.
+      await place(pipeline.id, a.id, first.id, { beforeItemId: `00${b.id}` })
+    })
+
+    test("rejects more than one placement field with a 422", async () => {
+      const { pipeline, first } = await newTwoStagePipeline(own)
+      const [a, b] = await createAll(pipeline.id, ["a", "b"])
+
+      await expect(
+        place(pipeline.id, a.id, first.id, {
+          beforeItemId: b.id,
+          placement: "top",
+        }),
+      ).rejects.toMatchObject({ httpStatusCode: 422, field: "placement" })
+      await expect(
+        place(pipeline.id, a.id, first.id, {
+          beforeItemId: b.id,
+          afterItemId: b.id,
+        }),
+      ).rejects.toMatchObject({ httpStatusCode: 422, field: "placement" })
+    })
+
+    test("an explicit placement into a busy stage is a 409 stageBusy, within the stage or into another", async () => {
+      const { pipeline, first, second } = await newTwoStagePipeline(own)
+      const [a, b] = await createAll(pipeline.id, ["a", "b"])
+      const setBusy = (stageId: string, job: string | null) =>
+        db.execute(
+          sql`UPDATE "PipelineStage" SET "bulkJobId" = ${job} WHERE "id" = ${stageId}::bigint`,
+        )
+      await setBusy(first.id, "job-1")
+
+      await expect(
+        place(pipeline.id, a.id, first.id, { beforeItemId: b.id }),
+      ).rejects.toMatchObject({ httpStatusCode: 409, code: "stageBusy" })
+
+      await setBusy(first.id, null)
+      await setBusy(second.id, "job-2")
+      await expect(
+        place(pipeline.id, a.id, second.id, { placement: "top" }),
+      ).rejects.toMatchObject({ httpStatusCode: 409, code: "stageBusy" })
+    })
+
+    test("spreads equal neighbours apart so the item lands exactly between them", async () => {
+      const { pipeline, first } = await newTwoStagePipeline(own)
+      await seedEqual(pipeline.id, first.id, 5, 100)
+      const [m] = await createAll(pipeline.id, ["m"])
+      await setPosition(m.id, 5000)
+      const anchor = await titled(first.id, eTitle(2))
+
+      await place(pipeline.id, m.id, first.id, { afterItemId: anchor.id })
+
+      expect(await orderOf(first.id)).toEqual([
+        eTitle(1),
+        eTitle(2),
+        "m",
+        eTitle(3),
+        eTitle(4),
+        eTitle(5),
+      ])
+    })
+
+    test("a respace grows its window and leaves the rows just outside it alone", async () => {
+      const { pipeline, first } = await newTwoStagePipeline(own)
+      await seedEqual(pipeline.id, first.id, 60, 100)
+      // Three rows on each side: the 63-row window takes two, the third is the bound.
+      const [m, ...sentinels] = await createAll(pipeline.id, [
+        "m",
+        "low1",
+        "low2",
+        "low3",
+        "high1",
+        "high2",
+        "high3",
+      ])
+      const sentinelPositions = [50, 49, 48, 150, 151, 152]
+      for (const [index, sentinel] of sentinels.entries()) {
+        await setPosition(sentinel.id, sentinelPositions[index] as number)
+      }
+      await setPosition(m.id, 9000)
+      const anchor = await titled(first.id, eTitle(30))
+
+      await place(pipeline.id, m.id, first.id, { afterItemId: anchor.id })
+
+      const rows = await rowsOf(first.id)
+      expect(rows.map((row) => row.title)).toEqual([
+        "low3",
+        "low2",
+        "low1",
+        ...Array.from({ length: 30 }, (_, i) => eTitle(i + 1)),
+        "m",
+        ...Array.from({ length: 30 }, (_, i) => eTitle(i + 31)),
+        "high1",
+        "high2",
+        "high3",
+      ])
+      expect(rows[0]?.position).toBe(48)
+      expect(rows.at(-1)?.position).toBe(152)
+      const positions = rows.map((row) => row.position)
+      expect(new Set(positions).size).toBe(positions.length)
+    })
+
+    test("respaces at an open end when float precision is exhausted", async () => {
+      const { pipeline, first } = await newTwoStagePipeline(own)
+      // Created first, so only the move below can respace.
+      const [m] = await createAll(pipeline.id, ["m"])
+      await setPosition(m.id, 7)
+      // Far more negative than the clock, so the top placement cannot use it
+      // and the step below the top is lost to float precision.
+      await seedEqual(pipeline.id, first.id, 3, -1e300)
+
+      const respaces = await countRespaces(() =>
+        place(pipeline.id, m.id, first.id, { placement: "top" }),
+      )
+
+      expect(respaces).toBeGreaterThan(0)
+      expect(await orderOf(first.id)).toEqual([
+        "m",
+        eTitle(1),
+        eTitle(2),
+        eTitle(3),
+      ])
+      const positions = (await rowsOf(first.id)).map((row) => row.position)
+      expect(new Set(positions).size).toBe(4)
+      expect(positions).toEqual([...positions].sort((x, y) => x - y))
+    })
+
+    test("respaces before the first card when float precision is exhausted above it", async () => {
+      const { pipeline, first } = await newTwoStagePipeline(own)
+      const [m] = await createAll(pipeline.id, ["m"])
+      // Below the seeded cards, which share a position too large to step under.
+      await setPosition(m.id, 1e301)
+      await seedEqual(pipeline.id, first.id, 3, 1e300)
+      const firstSeeded = await titled(first.id, eTitle(1))
+
+      const respaces = await countRespaces(() =>
+        place(pipeline.id, m.id, first.id, { beforeItemId: firstSeeded.id }),
+      )
+
+      expect(respaces).toBeGreaterThan(0)
+      expect(await orderOf(first.id)).toEqual([
+        "m",
+        eTitle(1),
+        eTitle(2),
+        eTitle(3),
+      ])
+      const positions = (await rowsOf(first.id)).map((row) => row.position)
+      expect(new Set(positions).size).toBe(4)
+    })
+
+    test("a spot shared by more than 511 rows is a 409 conflict and writes nothing", async () => {
+      const { pipeline, first } = await newTwoStagePipeline(own)
+      await seedEqual(pipeline.id, first.id, 600, 100)
+      const [m] = await createAll(pipeline.id, ["m"])
+      await setPosition(m.id, 5000)
+      const rowsBefore = await rowsOf(first.id)
+      const anchor = await titled(first.id, eTitle(300))
+
+      await expect(
+        place(pipeline.id, m.id, first.id, { afterItemId: anchor.id }),
+      ).rejects.toMatchObject({ httpStatusCode: 409, code: "conflict" })
+
+      expect(await rowsOf(first.id)).toEqual(rowsBefore)
+    }, 30_000)
+
+    test("a transfer puts the item on top of the destination stage", async () => {
+      const source = await newPipeline(own)
+      const destination = await newPipeline(own, "Destination")
+      const [destinationStage] = await stagesOf(own, destination.id)
+      await createAll(destination.id, ["d1", "d2"])
+      const [item] = await createAll(source.id, ["t"])
+
+      await pipelineItemService.transfer({
+        workspaceId: own.workspaceId,
+        pipelineId: source.id,
+        itemId: item.id,
+        destinationPipelineId: destination.id,
+        scope: token,
+        actor,
+      })
+
+      expect(await orderOf(destinationStage.id)).toEqual(["t", "d2", "d1"])
+    })
+
+    test("updating the stage, as the move-to-stage step does, puts the item on top", async () => {
+      const { pipeline, first, second } = await newTwoStagePipeline(own)
+      const [a] = await createAll(pipeline.id, ["a"])
+      await createAll(pipeline.id, ["z1", "z2"], second.id)
+
+      await pipelineItemService.update({
+        workspaceId: own.workspaceId,
+        pipelineId: pipeline.id,
+        itemId: a.id,
+        fields: { stageId: second.id },
+        scope: token,
+        actor,
+      })
+
+      expect(await orderOf(second.id)).toEqual(["a", "z2", "z1"])
+      expect(await orderOf(first.id)).toEqual([])
+    })
+
+    test("draining a stage into another keeps every item's position", async () => {
+      const { pipeline, first, second } = await newTwoStagePipeline(own)
+      await createAll(pipeline.id, ["a", "b", "c"])
+      const before = await rowsOf(first.id)
+
+      await pipelineStageBulkService.deleteStage({
+        workspaceId: own.workspaceId,
+        pipelineId: pipeline.id,
+        stageId: first.id,
+        moveItemsToStageId: second.id,
+        scope: token,
+        actor,
+      })
+
+      expect(await rowsOf(second.id)).toEqual(before)
     })
   })
 

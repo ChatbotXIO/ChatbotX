@@ -11815,7 +11815,17 @@
       "error": "No se pudo cargar el tablero",
       "processing": "Procesando esta etapa…",
       "moveFailed": "No se pudo mover la tarjeta",
+      "reorderNeedsManualSort": "Cambia la ordenación a Orden manual para reorganizar las tarjetas dentro de una etapa.",
+      "dragHandle": "Arrastrar para mover la tarjeta",
+      "dragInstructions": "Para recoger una tarjeta, pulsa Espacio o Intro en su asa de arrastre. Usa las flechas para moverla, Espacio o Intro para soltarla y Escape para cancelar.",
+      "announce": {
+        "pickedUp": "Has recogido {name}.",
+        "over": "{name} está sobre {stage}.",
+        "dropped": "{name} soltada en {stage}.",
+        "cancelled": "Movimiento cancelado. {name} vuelve a su lugar."
+      },
       "sortOptions": {
+        "manualAsc": "Orden manual",
         "createdAtDesc": "Fecha de creación (Reciente a Antiguo)",
         "createdAtAsc": "Fecha de creación (Antiguo a Reciente)",
         "updatedAtDesc": "Fecha de actualización (Reciente a Antiguo)",

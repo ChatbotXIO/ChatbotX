@@ -439,6 +439,31 @@ describe("pipelines server actions", () => {
     )
   })
 
+  test.each([
+    ["beforeItemId", { beforeItemId: "9" }],
+    ["afterItemId", { afterItemId: "9" }],
+    ["placement top", { placement: "top" }],
+    ["placement bottom", { placement: "bottom" }],
+    ["no placement", {}],
+  ])("moveItem forwards %s identically from the action and the public API", async (_name, placement) => {
+    const input = { id: "1", itemId: "2", stageId: "3", ...placement }
+    const move = mocks.pipelineItemService.move
+
+    await runAction("moveItemAction", input)
+    await invokePublic(router.moveItem, input).catch(() => undefined)
+
+    expect(move).toHaveBeenCalledTimes(2)
+    const fromAction = withoutCaller(move.mock.calls[0]?.[0])
+    const fromPublic = withoutCaller(move.mock.calls[1]?.[0])
+    expect(fromPublic).toEqual(fromAction)
+    expect(fromAction).toMatchObject({
+      pipelineId: "1",
+      itemId: "2",
+      stageId: "3",
+      ...placement,
+    })
+  })
+
   test("an unknown member role is never treated as admin", async () => {
     await runAction(
       "deleteItemAction",

@@ -11815,7 +11815,17 @@
       "error": "Kunne ikke indlæse tavlen",
       "processing": "Behandler denne fase…",
       "moveFailed": "Kunne ikke flytte kortet",
+      "reorderNeedsManualSort": "Skift sorteringen til Manuel rækkefølge for at omarrangere kort inden for en fase.",
+      "dragHandle": "Træk for at flytte kortet",
+      "dragInstructions": "For at tage et kort skal du trykke på mellemrum eller Enter på dets trækhåndtag. Brug piletasterne til at flytte det, mellemrum eller Enter til at slippe det og Escape til at annullere.",
+      "announce": {
+        "pickedUp": "{name} er taget op.",
+        "over": "{name} er over {stage}.",
+        "dropped": "{name} er sluppet i {stage}.",
+        "cancelled": "Flytning annulleret. {name} er tilbage på sin plads."
+      },
       "sortOptions": {
+        "manualAsc": "Manuel rækkefølge",
         "createdAtDesc": "Oprettelsesdato (Ny til Gammel)",
         "createdAtAsc": "Oprettelsesdato (Gammel til Ny)",
         "updatedAtDesc": "Opdateringsdato (Ny til Gammel)",

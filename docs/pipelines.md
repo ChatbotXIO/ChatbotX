@@ -24,7 +24,7 @@ Ten tables (migration `20261025155532_pipelines`):
 | `Pipeline` | Name, `type`, stable `referenceName`, `currency` (nullable override, see [Currency](#currency)), `settings` jsonb. Unique per workspace on `referenceName` and on `name`. |
 | `PipelineStage` | Ordered by `position`; colors, description. `bulkJobId` is set while a queued stage job owns the stage. |
 | `PipelineItemCounter` | One row per workspace holding `lastNumber`; mirrors `EcommerceOrderCounter`. |
-| `PipelineItem` | The card: `number` (unique per workspace), title, plain-text description, `value` (`numeric(19,4)`; writes are rounded half away from zero to four decimals with `roundToMoneyScale` before the diff, so repeating an over-precise amount is a no-op, not a new `valueChanged`), `status`, `priority`, `dueDate`, `fieldValues` jsonb (`Record<PipelineField id, string>`), `stageEnteredAt`, `statusChangedAt`, current-closure `closedAt`, `lastCommentAt`, `idempotencyKey`. |
+| `PipelineItem` | The card: `number` (unique per workspace), title, plain-text description, `value` (`numeric(19,4)`; writes are rounded half away from zero to four decimals with `roundToMoneyScale` before the diff, so repeating an over-precise amount is a no-op, not a new `valueChanged`), `status`, `priority`, `dueDate`, `fieldValues` jsonb (`Record<PipelineField id, string>`), `stageEnteredAt`, `statusChangedAt`, current-closure `closedAt`, `lastCommentAt`, `idempotencyKey`, `position` (manual order within the stage, see [Manual card order](#manual-card-order)). |
 | `PipelineItemAssignee` | Workspace members and inbox teams assigned to an item (one unique index per kind). |
 | `PipelineItemComment` | Comments; optional `idempotencyKey`. |
 | `PipelineItemAttachment` | Links an item to a media-library file (unique per item and file). |
@@ -52,6 +52,17 @@ Rules worth knowing:
   `visibleFeatures` (priority, value, dueDate), `cardElements`, `statusLabels`.
   Updates go through `pipelineSettingsPatchSchema` and `mergePipelineSettings`,
   which merges key by key so an untouched group is never reset.
+- **Manual order.** `PipelineItem.position` is `double precision NOT NULL`
+  with a real database default of **negative epoch milliseconds**
+  (`-(extract(epoch from now()) * 1000)`): lower is higher on the board, like
+  `PipelineStage.position`, and a row written without a position (old code
+  during a rolling deploy, a raw fixture insert) normally lands on top of its
+  stage, the "newest first" order boards had before (see "Mixed-version
+  deploys" under the placement rules). The CHECK
+  `PipelineItem_position_finite_check` rejects `+-Infinity` and NaN. The index
+  `PipelineItem_stage_position_idx (pipelineId, stageId, position, id)` serves
+  the stage's page reads and every neighbour lookup. Positions are only
+  compared within one stage; see [Manual card order](#manual-card-order).
 - Deleting a contact cascades its items (FK); activity rows stay.
 
 ## Currency
@@ -183,39 +194,107 @@ change for the source pipeline and a `created` one for the destination.
 
 ## Locking order
 
-Always take advisory locks first, then row locks, in the order the path below
-lists. The orders differ per path and are the ones the code actually uses:
+Always take advisory locks first, then row locks, in the global order below.
+The orders differ per path and are the ones the code actually uses:
 
-- **create**: advisory -> stage (shared) -> field rows (shared, id order).
-- **update / transfer**: advisory -> item `FOR UPDATE` -> target (destination)
-  stage `FOR SHARE` (only when the stage changes) -> field rows `FOR SHARE`
+- **create**: advisory (open-item, if the item is `open`) -> stage-order (target
+  stage) -> stage (shared) -> field rows (shared, id order) -> item counter.
+- **update / move / transfer**: advisory (open-item: a transfer takes both
+  pipelines' keys, sorted; update/move only when `open` is requested) ->
+  stage-order (item's stage + target stage, sorted together; update/move only
+  when the stage changes or a placement is given, a transfer always) -> item
+  `FOR UPDATE` -> target (destination) stage `FOR SHARE` (when the stage
+  changes, or an explicit placement writes into it) -> field rows `FOR SHARE`
   (id order).
-- **stage drain** (inline or queued batch): advisory structure lock -> the
-  source stage exclusively, then only the items in it.
+- **stage drain** (inline or queued batch): advisory structure lock ->
+  stage-order (source + destination, sorted) -> the source stage exclusively
+  (inline) or the `bulkJobId` claim (queued), then only the items in it.
+- **pipeline delete** (every drain batch of the items step, and the final
+  delete of what is left): advisory structure lock -> stage-order of **every
+  stage of the pipeline** (sorted, one pass) -> item rows. The keys come before
+  the rows because a live respace holds a stage-order key and then locks rows;
+  deleting unordered rows without the keys could form a row-lock cycle with it
+  (`40P01`). The activity step takes no stage-order key (it touches no items).
+  Other multi-row `PipelineItem` writers: workspace purge only runs on a frozen
+  workspace (writes are blocked, nothing to race); a template uninstall never
+  drains items (a pipeline with items is kept whole); a contact's delete
+  cascade removes that contact's items without the keys (not ordered with a
+  respace; a rare deadlock aborts one side). A respace that loses such a
+  deadlock (`40P01`) rolls back and answers `409 conflict` ("Too many items
+  share this spot. Try again."), so the caller retries; nothing retries
+  automatically.
+- **field-key strip batch** (`deleteField`): read the next holders, stage-order
+  keys of their distinct stages (sorted), re-read, update in ascending id.
 - **comment / attachment writes**: the item row only.
 - **field delete**: advisory structure lock -> the field row (exclusive, so it
   waits for writers holding the share lock).
+- **item delete**: exempt from the stage-order key. It only removes a row: a
+  respace `UPDATE` skips a row deleted meanwhile, and a deleted anchor answers
+  422.
 
-1. **Advisory** (`acquirePipelineAdvisoryLock`), by purpose:
+1. **Advisory** (`acquirePipelineAdvisoryLock`), by purpose, in this order:
    - a workspace naming lock for create/rename/duplicate/template resolution;
    - a per-pipeline structure lock (`structureLockKey`) for stage/field edits,
      stage deletion and every batch of the queued stage job;
    - a per-(workspace, pipeline, contact) "open item" lock, taken whenever an
      item is created or asked to become `open`, so `maxOpenItemsPerContact`
      cannot be raced. A transfer takes the lock of both pipelines in sorted
-     order so two opposite transfers cannot deadlock.
-2. **Stage**: writers put an item into a stage under a **shared** row lock
+     order so two opposite transfers cannot deadlock;
+   - **stage-order** locks (`stageOrderLockKey(workspaceId, stageId)`,
+     `pipeline/stage-order.ts`): everything that reads a stage's positions or
+     changes its membership (create, stage change, placement, transfer, drain,
+     field-key strip) holds the key of every stage it touches. `lockStageOrder`
+     takes all of them in **one sorted pass**, so two writers that need the same
+     pair queue in the same order and cannot deadlock. Each wait is bounded
+     by `lock_timeout = 10s` (`STAGE_ORDER_LOCK_TIMEOUT`, set with `SET LOCAL`
+     around just these waits and reset after; Postgres applies `lock_timeout`
+     to advisory-lock waits too): past it the statement fails with SQLSTATE
+     `55P03` and the caller gets `409 conflict` ("The stage is busy. Try
+     again."), the transaction rolled back with no writes or events. The limit is for request
+     paths only: the field-key strip (the field is already deleted), the
+     queued stage drain job and every write made with the `system` scope (flow
+     steps and trigger actions, which nobody retries; `stageOrderWaitFor`) take
+     their keys with `wait = "unbounded"` and wait as long as needed.
+2. **Item**: `lockForUpdate`. The item is re-checked after the lock because it
+   may have been transferred between the peek and the lock. (Update and
+   transfer lock the item before the target stage; create has no item yet.)
+3. **Stage**: writers put an item into a stage under a **shared** row lock
    (`lockShared`) and refuse a stage whose `bulkJobId` is set; stage deletion
    takes the **exclusive** lock (`lockExclusive`), so a writer in flight
    finishes first and later writers find the stage gone. An item that does not
-   change stage skips the stage lock.
-3. **Item**: `lockForUpdate`. The item is re-checked after the lock because it
-   may have been transferred between the peek and the lock. (Update and
-   transfer lock the item before the target stage; create has no item yet.)
+   change stage and has no placement skips the stage lock; an explicit
+   same-stage placement takes it and answers `409 stageBusy` on a busy stage.
 4. **Field rows**: writers that store custom field values take `FOR SHARE` on
    the `PipelineField` rows they write, in id order, and reject a field that
    was deleted meanwhile; `deleteField` deletes the row (exclusive) before
    stripping the key.
+5. **Item counter** (`PipelineItemCounter`), last, on create.
+
+- **The stage is unknown until the item is read** (an update or move that
+  names a `stageId`, and every transfer: the item's current stage is only known
+  from an unlocked read). The service reads the item unlocked, takes the
+  keys of its stage and the requested one, locks the row and re-checks
+  `stageId`. If it changed, it throws `StageOrderRetry`: `mutate`
+  (`withStageOrderRetry`) **restarts the whole transaction once** with a fresh
+  effects list, so the stale keys are released and never re-acquired out of
+  order. A second mismatch answers `409 conflict`.
+- **Multi-row item writers lock rows in ascending `id`** (respace windows via
+  `setPositions`, strip batches), so two of them cannot form a row-lock cycle.
+  Drain batches (stage drain and pipeline delete) do not order their row locks;
+  they hold the stage-order keys of every stage they delete from, so no
+  placement or respace in those stages runs at the same time.
+- **Field-key strip.** Holders that changed stage between the first read and
+  the keys are not locked: the batch strips the confirmed rows before the first
+  moved holder (ascending id), reports it as `movedId`, and the next batch (a
+  new transaction) finds it with the right keys. A holder that keeps changing
+  stage for 5 batches in a row (`MAX_STALLED_STRIP_BATCHES`) is stripped alone
+  in its own transaction: one row lock that waits on nothing else cannot form a
+  cycle with a respace.
+- **Anchors and neighbours** are read after the stage-order, item, stage and
+  field locks are held (on create, before the item counter).
+- Contention on the create path is negligible: creates in one workspace already
+  serialise on the counter row until commit, and the stage-order key is taken
+  earlier in the same transaction.
 
 ## Stage deletion and bulk moves
 
@@ -243,6 +322,11 @@ new delete request; a live job, or a younger claim whose request may still be
 enqueueing, answers `409 stageBusy`. The claim time is read from the job id.
 
 Moving items to another stage emits the same events as a single move, per item.
+A drain **keeps each item's `position`**: positions default to time order, so
+the two stages merge in time order without re-sequencing any row. That is a
+documented trade-off: after a drain the merged stage is not "moved items on
+top"; a hand-placed order of the source stage interleaves with the
+destination's by position value.
 
 Drain batches are `UPDATE/DELETE ... WHERE id IN (subselect LIMIT n)` with the
 stage, pipeline and workspace repeated on the **outer** WHERE, so a candidate
@@ -260,7 +344,9 @@ if it still holds it), so the stage is not left busy.
 
 Naming the item's current stage in an update (for example a flow "move to
 stage" onto the stage it is already in) is a no-op and is allowed even while
-that stage is busy.
+that stage is busy. An explicit placement (`beforeItemId`, `afterItemId`,
+`placement`) is not a no-op: it writes into the stage, so a busy stage answers
+`409 stageBusy`.
 
 ## Pipeline and field deletion
 
@@ -317,16 +403,30 @@ plus the stage's total count and value; `listStagePage`, `listItems` and
 has no cursor.
 
 - **Sort keys** (`pipelineItemSortKeys`): `createdAt`, `updatedAt`, `value`,
-  `dueDate`, `priority` (rank high 3 > medium 2 > low 1), each `asc | desc`;
-  default `createdAt desc`.
+  `dueDate`, `priority` (rank high 3 > medium 2 > low 1) and `manual` (the
+  card's `position`), each `asc | desc`; the API and repository default is
+  `createdAt desc`. The **board** opens on `manual` (`asc`, top to bottom); a
+  shared link that names another `sort` keeps its own direction default
+  (`desc`).
 - **Order tuple** `(nullRank, sortValue, id)`. `NULLS LAST` in **both**
-  directions (only `value` and `dueDate` are nullable); `id` is the tie-breaker,
-  so ordering is total and stable.
+  directions (only `value` and `dueDate` are nullable; `position` is not); `id`
+  is the tie-breaker, so ordering is total and stable. `manual` reads
+  `(position, id)` through `PipelineItem_stage_position_idx`.
 - **Cursor** is opaque base64url JSON `{v:1, sort, dir, nullRank, sortValue, id}`
   built from the last row, with the sort value read as text from Postgres so
   timestamps keep microseconds. It is bound to its sort key and direction; a
   cursor from another sort, version or malformed value fails closed as
   `422 validation` on `cursor` (`InvalidPipelineCursorError`).
+- **`manual` is stage-scoped.** Positions are per stage, so a pipeline-wide
+  manual order is undefined and the stage index cannot serve it. `manual` needs
+  **exactly one stage**: `stageId` (or a filter naming a single stage) on
+  `listItems` and `listStagePage`. Without one the request fails
+  `422 validation` on `sort` ("... pass exactly one stageId"); the repository
+  guard is `ManualSortRequiresStageError`. The board always reads per stage.
+  The UI offers `manual` ascending only, and
+  `manual` is never hidden by the visible-features setting. Its cursor value is
+  `float8::text` (shortest exact round trip, at most 32 characters, exponent
+  forms and `-0` accepted).
 - **Predicate.** A non-nullable key continues with a row comparison
   `(sortValue, id) < (cursor.sortValue, cursor.id)` (or `>`), so the btree
   starts at the cursor instead of re-reading earlier rows; `value` and
@@ -398,6 +498,113 @@ subset, in display order (`PIPELINE_FIELD_OPERATORS_BY_TYPE`):
 - The old `fieldValues` (exact equality) and `fieldDateRanges` filter params
   and the relative presets of date fields were removed with this model.
 
+## Manual card order
+
+Cards are ordered by hand inside a stage. `PipelineItem.position` is a sparse
+`double precision`: a drop writes the **midpoint** of its
+two new neighbours, so one drag rewrites one row. The pure math lives in
+`@chatbotx.io/utils/sparse-position` (`SPARSE_POSITION_STEP = 1024`,
+`positionBetween`, `spreadPositions`; no locking, SQL or pipeline semantics).
+`positionBetween` returns `null` when no value lies strictly between the
+neighbours (equal, or float precision exhausted), which triggers a respace.
+
+**Placement rules** (`pipeline/item-placement.ts`, one rule set in the
+service):
+
+| Path | Position written |
+|---|---|
+| create (UI, flows, triggers, API) | top of the stage: `-(now ms)` when that sorts strictly before the current top, else `min(position) - 1024`; `-(now ms)` when the stage is empty |
+| `update` that changes the stage (flow `moveToStage`, `updateItem`) | top of the target stage |
+| `move`, no placement, stage changes | top of the target stage |
+| `move`, no placement, same stage | no-op: nothing written, nothing emitted, allowed on a busy stage |
+| `move` with `beforeItemId` / `afterItemId` / `placement`, same or other stage | the exact spot |
+| transfer to another pipeline | top of the destination stage |
+| stage-delete drain | keeps each item's position (see [Stage deletion and bulk moves](#stage-deletion-and-bulk-moves)) |
+
+- **Top placement and the clock.** A top placement (create, stage change,
+  transfer, explicit `placement: "top"`) uses negative application-clock
+  milliseconds when that value sorts strictly before the current top;
+  otherwise it uses the checked sparse-position fallback (top - 1024), with
+  bounded respacing when necessary. Empty stages use negative application-clock
+  milliseconds. `beforeItemId` of the first card is not a top placement and
+  keeps the sparse arithmetic. Once all writers use the stage-lock protocol, a
+  top placement always lands above every other card in the stage.
+- **Mixed-version deploys.** During a rolling deploy the order is best-effort:
+  inserts by old code use the column default and do not take part in the
+  stage-lock protocol; their order agrees with new-code inserts while
+  timestamps are increasing and the top has not run ahead of the clock. Cards
+  misordered during the overlap can be dragged back.
+- **One anchor is enough.** `beforeItemId` puts the item directly above that
+  item, `afterItemId` directly below it. The server reads the other neighbour
+  under the stage-order lock, excluding the moved item, so callers never compute
+  positions. `placement: "top" | "bottom"` uses the stage's first or last card
+  (an empty stage gets `-(now ms)`). At most one of the three: more is
+  `422` on `placement`.
+- **Anchor errors are 422** on `beforeItemId` / `afterItemId`: unknown or
+  malformed id, the item itself, or an item that is not in `stageId` of this
+  pipeline (the message says to pass an id from `listItems` with that
+  `stageId`).
+- **Dropped where it already is.** A placement whose slot is the item's current
+  slot writes nothing and emits nothing.
+- **Reorder side effects.** Moving within the stage changes only `position`:
+  `updatedAt` is kept (the `$onUpdate` hook is overridden), **no activity row**,
+  **no trigger or webhook event**, only one realtime `pipelineItemChanged`
+  `updated`. A stage change keeps its usual effects (activity, events, webhooks,
+  `stageEnteredAt`).
+- **Respace.** When `positionBetween` finds no room under the stage-order lock,
+  the service reads a window of existing rows around the slot (excluding the
+  moved item) in `(position, id)` order and spreads them evenly, with the moved
+  item, between the rows just outside the window (`listRespaceWindow`,
+  `setPositions`). The window starts at 15 existing rows (half above, half
+  below; all on one side at an open end) and grows 15 -> 31 -> 63 -> ... up to
+  `RESPACE_EXISTING_MAX = 511`, so at most **511 existing (neighbour) rows**
+  are rewritten, in one statement (`UPDATE ... FROM (VALUES ...)`) after locking
+  them in ascending id, plus the moved item's own write; `updatedAt` is kept.
+  At an open end the values are spaced 1024 apart from the remaining bound,
+  finite-checked. A row deleted meanwhile is simply absent, the
+  rest still ascend. The whole step runs under `SET LOCAL statement_timeout =
+  10s`. If 511 rows still leave no room (hundreds of rows sharing one
+  position: pathological) or the statement times out (also bounding row-lock
+  waits), the move answers `409 conflict` ("Too many items share this spot. Try
+  again."), logged with `{ err }`.
+- **Locking.** See [Locking order](#locking-order): the stage-order key of the
+  item's stage and the target stage is held for the whole write.
+
+### `pipelines.moveItem`
+
+`POST /v1/pipelines/{id}/items/{itemId}/move`, CLI `pipelines item move`, MCP
+`pipelines_move_item` (default tool; summary "Move or reorder item"). Body:
+
+| Field | Meaning |
+|---|---|
+| `stageId` (required) | Target stage. The current stage reorders in place. |
+| `beforeItemId` | Put the item directly above this item (it must be in `stageId`). |
+| `afterItemId` | Put the item directly below this item. |
+| `placement` | `top` or `bottom` of `stageId`. |
+
+Send at most one of the last three. The response is the item with its new
+`stageId` and `position` (`position` is also on `getItem`/`listItems`; lower is
+higher on the board). Read the whole order with `listItems` using
+`sort=manual` and a single `stageId` (`direction` defaults to `asc` for
+`manual`, `desc` for every other sort).
+
+```bash
+# put item 42 directly above item 17 in stage 5
+chatbotx pipelines item move <pipelineId> 42 --stageId 5 --beforeItemId 17
+# put it at the bottom of stage 5
+chatbotx pipelines item move <pipelineId> 42 --stageId 5 --placement bottom
+# read the stage top to bottom
+chatbotx pipelines items list <pipelineId> --stageId 5 --sort manual
+```
+
+Errors: `404` item or stage not in this pipeline; `422` unknown anchor, the item
+itself, anchor outside `stageId`, more than one placement field, or `sort=manual`
+without exactly one `stageId`; `409 stageBusy` while the item's stage or
+`stageId` is being deleted; `409 conflict` for a crowded spot, a busy stage (its
+stage-order lock was held for over 10 s) or an item that kept changing stage
+(retry). The private `moveItemAction` forwards the same
+fields to the same `pipelineItemService.move`.
+
 ## Caching policy
 
 - **Two workspace-level entries are cached**, both for the whole workspace and
@@ -424,8 +631,11 @@ subset, in display order (`PIPELINE_FIELD_OPERATORS_BY_TYPE`):
   Postgres through indexes.
 - Indexes backing the reads: `PipelineItem_contact_status_idx`
   `(workspaceId, pipelineId, contactId, status, createdAt DESC)`,
+  `PipelineItem_stage_position_idx` `(pipelineId, stageId, position, id)`
+  (the board's default manual order: per-stage `LATERAL … LIMIT` first page,
+  "Load more" and the placement neighbour lookups),
   `PipelineItem_stage_createdAt_idx` `(pipelineId, stageId, createdAt DESC, id DESC)`
-  (serves the board's per-stage `LATERAL … LIMIT` first page and "Load more"),
+  (per-stage pages sorted by `createdAt`),
   `PipelineItem_pipeline_createdAt_idx` `(pipelineId, createdAt DESC, id DESC)`
   (pipeline-wide `listItems` in the default order),
   `PipelineItem_pipeline_id_idx` `(pipelineId, id)` (the field-key strip's
@@ -674,12 +884,12 @@ Scope **`pipelines`** (`workspaceTokenAuthAPIForScope("pipelines")`), routers
 | listFields / createField / updateField / deleteField | `GET`/`POST /v1/pipelines/{id}/fields`, `PATCH`/`DELETE .../fields/{fieldId}` | |
 | listMembers / setMember / removeMember | `GET .../members`, `PUT`/`DELETE .../members/{workspaceMemberId}` | |
 | getStats | `GET /v1/pipelines/{id}/stats` | |
-| listItems | `GET /v1/pipelines/{id}/items` (filters mirror the board: `stageId`, `status`, `priority`, `assigneeMemberId`, `assigneeInboxTeamId` as comma-separated "any of" lists, contact, value, `fieldConditions` (JSON object keyed by field id, AND-ed) and/or one `fieldId`+`fieldOperator`+`fieldValue`/`fieldValueTo`, `timezone`, search, and `<name>From`/`<name>To` ranges for `due`, `created`, `updated`, `lastComment`, `statusChanged`, `stageEntered`, `wonClosed`, `lostClosed`; activity: `activityGroups` (comma-separated groups), `activityActor` (comma-separated workspace user ids from `workspaceMembers.list` `userId`, or `automation`), `activityFrom`/`activityTo`) | yes |
+| listItems | `GET /v1/pipelines/{id}/items` (filters mirror the board: `stageId`, `status`, `priority`, `assigneeMemberId`, `assigneeInboxTeamId` as comma-separated "any of" lists, contact, value, `fieldConditions` (JSON object keyed by field id, AND-ed) and/or one `fieldId`+`fieldOperator`+`fieldValue`/`fieldValueTo`, `timezone`, `sort` (incl. `manual`, one `stageId` only) with `direction`, search, and `<name>From`/`<name>To` ranges for `due`, `created`, `updated`, `lastComment`, `statusChanged`, `stageEntered`, `wonClosed`, `lostClosed`; activity: `activityGroups` (comma-separated groups), `activityActor` (comma-separated workspace user ids from `workspaceMembers.list` `userId`, or `automation`), `activityFrom`/`activityTo`) | yes |
 | stageTotals | `GET /v1/pipelines/{id}/stage-totals` — item count and total value per stage in board order (the board's column headers), with the same filters as `listItems` | no |
 | getItem | `GET /v1/pipelines/{id}/items/{itemId}` | |
 | createItem | `POST /v1/pipelines/{id}/items` (accepts `idempotencyKey`) | yes |
 | updateItem / deleteItem | `PATCH`/`DELETE .../items/{itemId}` | |
-| moveItem | `POST .../items/{itemId}/move` | yes |
+| moveItem | `POST .../items/{itemId}/move` (moves and reorders; see [Manual card order](#manual-card-order)) | yes |
 | transferItem | `POST .../items/{itemId}/transfer` | |
 | listComments / addComment / deleteComment | `.../comments` (list: newest first, 100 per page, `cursor` → `nextCursor`), `.../comments/{commentId}` | |
 | addAttachment / removeAttachment | `POST .../attachments` (body `mediaLibraryFileId`, one file per call), `DELETE .../attachments/{mediaLibraryFileId}` | |
@@ -700,6 +910,11 @@ sub-resources are overridden in `apps/cli/src/openapi-loader.ts`:
 `apps/cli/README.md` ("pipelines"); MCP default tools:
 `apps/mcp-server/README.md` ("Pipelines"); scope notes:
 `docs/developer/workspace-api-tokens.md`.
+
+The CLI registers one flag per body or query field under its exact name:
+`pipelines item move <id> <itemId> --stageId <id>` plus `--beforeItemId`,
+`--afterItemId` or `--placement top|bottom`. yargs' default camel-case
+expansion also accepts `--before-item-id` and `--after-item-id`.
 
 Changes made through a token are attributed `actorKind: workspaceToken`.
 
@@ -756,6 +971,21 @@ Colors must match `#rrggbb`, currency `^[A-Z]{3}$`.
   `IF EXISTS`, so a database that ran this branch's earlier pipeline migrations
   is rebuilt cleanly (their pipeline data is lost); on production every drop is
   a no-op. Deploy order: migrate, then worker + builder.
+- **Manual-order migrations** (two, apply only with explicit approval):
+  `*_pipeline_item_position` adds the column, its default and the CHECK
+  (`NOT VALID`) in a transaction under `lock_timeout = 5s`: metadata only, no
+  rewrite and no NOT NULL scan on PostgreSQL 11+.
+  `*_pipeline_item_position_backfill_and_index` has a `CONCURRENTLY` index, so
+  the runner executes it **unwrapped** (each statement autocommits) and a
+  top-level `DO` block can `COMMIT` per batch: it backfills
+  `position = -(epoch ms of createdAt)` in keyset batches of 5000 ids (each batch
+  locks and commits on its own, skips rows that already match, so WAL and
+  replica lag stay bounded and inserts are never blocked), `VALIDATE`s the
+  CHECK, drops an `INVALID` leftover index and builds the index
+  `CONCURRENTLY`. Every statement is re-runnable. Deploy order: migrate, then
+  worker + builder. Old code never reads `position` and its inserts take the
+  default, so a rolling deploy is safe. Before running it on a large table,
+  time a batch on a production-sized copy (duration, WAL, replica lag).
 - **Stuck stage.** A stage with `bulkJobId` set and no live job is reclaimable
   one minute after the claim: repeat the delete. A live job answers
   `409 stageBusy`; inspect the `default` queue for `processPipelineStageBulk`
@@ -801,6 +1031,15 @@ Colors must match `#rrggbb`, currency `^[A-Z]{3}$`.
   show the change kind only, since bodies are never stored.
 - **No pipeline conditions in the flow Condition step** (stored conditions
   there cannot express them).
+- **Equal-`createdAt` ties.** `createdAt` is `timestamp(6)` and the backfill
+  keeps the sub-millisecond part, so it reproduces the old `createdAt desc`
+  order except for rows with an identical `createdAt` (for example several
+  items created in one transaction, where `now()` is equal). They tie on
+  `position` and order by `id` ascending under `manual asc`, where the old
+  tie-break was `id` descending.
+  The generic cursor applies one direction to the value and the id, and a
+  per-key tie direction is not worth the cursor and index complexity for such
+  ties.
 - **Locales:** all 21 locales are translated.
 
 ## Item writes: concurrency, required fields, references

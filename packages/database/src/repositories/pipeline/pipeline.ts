@@ -49,6 +49,11 @@ export async function acquirePipelineAdvisoryLock(
   )
 }
 
+/** Which items of a pipeline to look at: the next page by id, or these ids again. */
+type FieldKeyHolderSelection =
+  | { limit: number; afterId?: string }
+  | { ids: string[] }
+
 export const pipelineRepository = {
   async findById(
     input: { workspaceId: string; id: string },
@@ -357,64 +362,80 @@ export const pipelineRepository = {
   },
 
   /**
-   * Removes a deleted field's key from the next `limit` items (by id, after
-   * `afterId`) that still hold it. A keyset walk: the caller passes back
-   * `lastId` and stops when `scanned < limit`, so no batch rescans earlier
-   * rows. Maintenance only: `updatedAt` is kept, and the outer WHERE repeats
-   * the scope so a row that changed while waiting on its lock is re-checked.
+   * Items still holding a deleted field's key with the stage each sits in, no
+   * lock. Either the next `limit` by id after `afterId` (a keyset walk, so no
+   * batch rescans earlier rows) or the given `ids` again (the re-read once the
+   * stage-order locks are held).
    */
-  async stripFieldKeyBatch(
+  async listFieldKeyHolders(
     input: {
       workspaceId: string
       pipelineId: string
       fieldId: string
-      limit: number
-      afterId?: string
-    },
+    } & FieldKeyHolderSelection,
     tx: DatabaseClient = db,
   ) {
-    const hasKey = sql`${pipelineItemModel.fieldValues} ? ${input.fieldId}::text`
-    const candidates = await tx
-      .select({ id: pipelineItemModel.id })
+    const holders = tx
+      .select({ id: pipelineItemModel.id, stageId: pipelineItemModel.stageId })
       .from(pipelineItemModel)
       .where(
         and(
           eq(pipelineItemModel.workspaceId, input.workspaceId),
           eq(pipelineItemModel.pipelineId, input.pipelineId),
-          hasKey,
-          input.afterId
+          sql`${pipelineItemModel.fieldValues} ? ${input.fieldId}::text`,
+          "ids" in input ? inArray(pipelineItemModel.id, input.ids) : undefined,
+          "afterId" in input && input.afterId
             ? sql`${pipelineItemModel.id} > ${input.afterId}::bigint`
             : undefined,
         ),
       )
       .orderBy(pipelineItemModel.id)
-      .limit(input.limit)
-    if (candidates.length === 0) {
-      return { scanned: 0, stripped: 0, lastId: input.afterId ?? null }
+    return await ("limit" in input ? holders.limit(input.limit) : holders)
+  },
+
+  /**
+   * Removes a deleted field's key from the given items, only those in
+   * `stageIds` when given. Maintenance only: `updatedAt` is kept. The rows are locked in ascending id
+   * (the multi-row writer order) and the scope is repeated, so a row that
+   * left its stage or lost the key while waiting is re-checked, not touched.
+   */
+  async stripFieldKeyFromItems(
+    input: {
+      workspaceId: string
+      pipelineId: string
+      fieldId: string
+      ids: string[]
+      stageIds?: string[]
+    },
+    tx: DatabaseClient,
+  ) {
+    if (input.ids.length === 0) {
+      return 0
     }
+    const scope = and(
+      inArray(pipelineItemModel.id, input.ids),
+      input.stageIds
+        ? inArray(pipelineItemModel.stageId, input.stageIds)
+        : undefined,
+      eq(pipelineItemModel.workspaceId, input.workspaceId),
+      eq(pipelineItemModel.pipelineId, input.pipelineId),
+      sql`${pipelineItemModel.fieldValues} ? ${input.fieldId}::text`,
+    )
+    await tx
+      .select({ id: pipelineItemModel.id })
+      .from(pipelineItemModel)
+      .where(scope)
+      .orderBy(pipelineItemModel.id)
+      .for("update")
     const rows = await tx
       .update(pipelineItemModel)
       .set({
         fieldValues: sql`${pipelineItemModel.fieldValues} - ${input.fieldId}::text`,
         updatedAt: sql`${pipelineItemModel.updatedAt}`,
       })
-      .where(
-        and(
-          inArray(
-            pipelineItemModel.id,
-            candidates.map((row) => row.id),
-          ),
-          eq(pipelineItemModel.workspaceId, input.workspaceId),
-          eq(pipelineItemModel.pipelineId, input.pipelineId),
-          hasKey,
-        ),
-      )
+      .where(scope)
       .returning({ id: pipelineItemModel.id })
-    return {
-      scanned: candidates.length,
-      stripped: rows.length,
-      lastId: candidates.at(-1)?.id ?? null,
-    }
+    return rows.length
   },
 
   async listMembers(

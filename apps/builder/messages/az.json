@@ -11831,7 +11831,17 @@
       "error": "Lövhəni yükləmək mümkün olmadı",
       "processing": "Bu mərhələ emal olunur…",
       "moveFailed": "Kartı köçürmək mümkün olmadı",
+      "reorderNeedsManualSort": "Bir mərhələ daxilində kartları yenidən düzmək üçün çeşidləməni Əl ilə sıralama olaraq dəyişin.",
+      "dragHandle": "Kartı köçürmək üçün sürüşdürün",
+      "dragInstructions": "Kartı götürmək üçün sürükləmə tutacağında Boşluq və ya Enter düyməsinə basın. Köçürmək üçün ox düymələrindən, buraxmaq üçün Boşluq və ya Enter düyməsindən, ləğv etmək üçün Escape düyməsindən istifadə edin.",
+      "announce": {
+        "pickedUp": "{name} götürüldü.",
+        "over": "{name}, {stage} üzərindədir.",
+        "dropped": "{name}, {stage} mərhələsinə buraxıldı.",
+        "cancelled": "Köçürmə ləğv edildi. {name} əvvəlki yerinə qayıtdı."
+      },
       "sortOptions": {
+        "manualAsc": "Əl ilə sıralama",
         "createdAtDesc": "Yaradılma tarixi (Yenidən Köhnəyə)",
         "createdAtAsc": "Yaradılma tarixi (Köhnədən Yeniyə)",
         "updatedAtDesc": "Yenilənmə tarixi (Yenidən Köhnəyə)",

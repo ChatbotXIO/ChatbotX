@@ -11815,7 +11815,17 @@
       "error": "Nu s-a putut încărca tabla",
       "processing": "Se procesează această etapă…",
       "moveFailed": "Nu s-a putut muta cardul",
+      "reorderNeedsManualSort": "Schimbă sortarea pe Ordine manuală pentru a rearanja cardurile dintr-o etapă.",
+      "dragHandle": "Trage pentru a muta cardul",
+      "dragInstructions": "Pentru a ridica un card, apasă Spațiu sau Enter pe mânerul de tragere. Folosește săgețile pentru a-l muta, Spațiu sau Enter pentru a-l plasa și Escape pentru a anula.",
+      "announce": {
+        "pickedUp": "{name} a fost ridicat.",
+        "over": "{name} se află deasupra {stage}.",
+        "dropped": "{name} a fost plasat în {stage}.",
+        "cancelled": "Mutare anulată. {name} a revenit la locul inițial."
+      },
       "sortOptions": {
+        "manualAsc": "Ordine manuală",
         "createdAtDesc": "Data creării (Nou la Vechi)",
         "createdAtAsc": "Data creării (Vechi la Nou)",
         "updatedAtDesc": "Data actualizării (Nou la Vechi)",

@@ -11815,7 +11815,17 @@
       "error": "Tidak dapat memuat papan",
       "processing": "Memproses tahap ini…",
       "moveFailed": "Tidak dapat memindahkan kartu",
+      "reorderNeedsManualSort": "Ubah pengurutan ke Urutan manual untuk menyusun ulang kartu dalam satu tahap.",
+      "dragHandle": "Seret untuk memindahkan kartu",
+      "dragInstructions": "Untuk mengambil kartu, tekan Spasi atau Enter pada gagang seretnya. Gunakan tombol panah untuk memindahkan, Spasi atau Enter untuk menjatuhkan, dan Escape untuk membatalkan.",
+      "announce": {
+        "pickedUp": "{name} diambil.",
+        "over": "{name} berada di atas {stage}.",
+        "dropped": "{name} dijatuhkan di {stage}.",
+        "cancelled": "Pemindahan dibatalkan. {name} kembali ke tempat semula."
+      },
       "sortOptions": {
+        "manualAsc": "Urutan manual",
         "createdAtDesc": "Tanggal dibuat (Baru ke Lama)",
         "createdAtAsc": "Tanggal dibuat (Lama ke Baru)",
         "updatedAtDesc": "Tanggal pembaruan (Baru ke Lama)",

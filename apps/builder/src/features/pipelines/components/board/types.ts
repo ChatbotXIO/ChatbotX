@@ -24,7 +24,8 @@ export type BoardColumn = PipelineBoardStage
 export type BoardFilterInput = z.infer<typeof boardFilterState>
 /** The filter as the API takes it: presets already resolved to ranges. */
 export type BoardFilterRequest = z.infer<typeof pipelineItemFilterRequest>
-export type BoardSortInput = z.infer<typeof pipelineItemSortRequest>
+/** The sort the board holds: the direction is always resolved. */
+export type BoardSortInput = Required<z.infer<typeof pipelineItemSortRequest>>
 
 /** The pipeline facts the board panels (settings, filter, analytics, add) read. */
 export type BoardPipeline = {

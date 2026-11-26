@@ -313,6 +313,14 @@ export const isUniqueViolationError = (
 export const isStatementTimeoutError = (error: unknown): boolean =>
   isConstraintViolationError(error, "57014")
 
+/** Detects a transaction aborted as a deadlock victim (SQLSTATE 40P01). */
+export const isDeadlockError = (error: unknown): boolean =>
+  isConstraintViolationError(error, "40P01")
+
+/** Detects a lock wait that exceeded `lock_timeout` (SQLSTATE 55P03). */
+export const isLockTimeoutError = (error: unknown): boolean =>
+  isConstraintViolationError(error, "55P03")
+
 /**
  * Detects a foreign-key violation (SQLSTATE 23503).
  *

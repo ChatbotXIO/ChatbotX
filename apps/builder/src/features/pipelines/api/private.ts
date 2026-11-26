@@ -11,6 +11,7 @@ import { z } from "zod"
 import { workspaceAuthorizedMidddleware } from "@/middlewares/auth"
 import { authorizedAPI } from "@/orpc"
 import { pipelineScopeFromMember } from "../lib/access"
+import { toBoardSort } from "../lib/list-items-query"
 import {
   activityPageRequest,
   boardRequest,
@@ -85,7 +86,7 @@ export const pipelinesAuthenticatedAPI = {
           pipelineId: input.pipelineId,
           scope: pipelineScopeFromMember(context),
           filter: input.filter,
-          sort: input.sort,
+          sort: toBoardSort(input.sort),
         }),
     ),
 
@@ -104,7 +105,7 @@ export const pipelinesAuthenticatedAPI = {
           stageId: input.stageId,
           scope: pipelineScopeFromMember(context),
           filter: input.filter,
-          sort: input.sort,
+          sort: toBoardSort(input.sort),
           cursor: input.cursor,
         }),
     ),

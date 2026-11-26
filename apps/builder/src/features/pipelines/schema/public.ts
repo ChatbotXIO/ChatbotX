@@ -4,7 +4,9 @@ import {
   PIPELINE_LIMITS,
   pipelineActivityGroups,
   pipelineFieldOperators,
+  pipelineItemPlacementEdges,
   pipelineItemPriorities,
+  pipelineItemSortDirections,
   pipelineItemSortKeys,
   pipelineItemStatuses,
   pipelineReferenceNameSchema,
@@ -313,9 +315,37 @@ export const updateItemPublicRequest = pipelineItemRequest.extend({
   ...itemWriteFields,
 })
 
-export const moveItemPublicRequest = pipelineItemRequest.extend({
-  stageId,
-})
+const PLACEMENT_FIELDS = ["beforeItemId", "afterItemId", "placement"] as const
+
+export const moveItemPublicRequest = pipelineItemRequest
+  .extend({
+    stageId,
+    beforeItemId: itemId
+      .optional()
+      .describe(
+        'Put the item directly above this item (lower position = higher on the board). That item must be in `stageId` of this pipeline; get ids from `pipelines.listItems` with `sort=manual` and `stageId`. Example: to put item 42 directly above item 17 in stage 5, call with path `itemId` 42 and body `stageId: "5"`, `beforeItemId: "17"`. Send at most one of `beforeItemId`, `afterItemId`, `placement`.',
+      ),
+    afterItemId: itemId
+      .optional()
+      .describe(
+        'Put the item directly below this item. That item must be in `stageId` of this pipeline; get ids from `pipelines.listItems` with `sort=manual` and `stageId`. Example: to put item 42 directly below item 17 in stage 5, call with path `itemId` 42 and body `stageId: "5"`, `afterItemId: "17"`. Send at most one of `beforeItemId`, `afterItemId`, `placement`.',
+      ),
+    placement: z
+      .enum(pipelineItemPlacementEdges)
+      .optional()
+      .describe(
+        'Put the item at the `top` or `bottom` of `stageId`. Example: to move item 42 to the bottom of stage 5, call with path `itemId` 42 and body `stageId: "5"`, `placement: "bottom"`. When none of `beforeItemId`, `afterItemId`, `placement` is sent, a stage change puts the item on top and moving within the same stage does nothing.',
+      ),
+  })
+  .refine(
+    (input) =>
+      PLACEMENT_FIELDS.filter((field) => input[field] !== undefined).length <=
+      1,
+    {
+      path: ["placement"],
+      message: "Use only one of beforeItemId, afterItemId, placement",
+    },
+  )
 
 export const transferItemPublicRequest = pipelineItemRequest.extend({
   destinationPipelineId: zodBigintIdAsString().describe(
@@ -570,11 +600,15 @@ export const listItemsPublicRequest = itemFilterQuery
   .extend({
     sort: pipelineItemSortKeys
       .default("createdAt")
-      .describe("Sort key. Items without a value for it come last."),
+      .describe(
+        "Sort key. Items without a value for it come last. `manual` is the order of cards on the board (top to bottom is the default direction `asc`; set by `pipelines.moveItem`) and needs exactly one `stageId`.",
+      ),
     direction: z
-      .enum(["asc", "desc"])
-      .default("desc")
-      .describe("Sort direction."),
+      .enum(pipelineItemSortDirections)
+      .optional()
+      .describe(
+        "Sort direction. Defaults to `asc` for `sort=manual` (top to bottom), `desc` otherwise.",
+      ),
     limit: z.coerce
       .number()
       .int()

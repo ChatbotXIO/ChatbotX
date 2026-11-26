@@ -63,6 +63,7 @@ export const heldBy = async (
  */
 export const waitUntilSomeoneWaitsOnAnAdvisoryLock = async (
   key?: string,
+  minWaiters = 1,
 ): Promise<void> => {
   const onKey = key
     ? sql`and objsubid = 1 and ((classid::bigint << 32) | objid::bigint) = hashtextextended(${key}, 0)`
@@ -71,10 +72,12 @@ export const waitUntilSomeoneWaitsOnAnAdvisoryLock = async (
     const result = await db.execute(
       sql`select count(*)::int as waiting from pg_locks where locktype = 'advisory' and not granted and database = (select oid from pg_database where datname = current_database()) ${onKey}`,
     )
-    if (Number((result.rows[0] as { waiting: number }).waiting) > 0) {
+    if (Number((result.rows[0] as { waiting: number }).waiting) >= minWaiters) {
       return
     }
     await new Promise((resolve) => setTimeout(resolve, WAIT_STEP_MS))
   }
-  throw new Error(`no session ever waited on the advisory lock ${key ?? ""}`)
+  throw new Error(
+    `fewer than ${minWaiters} session(s) ever waited on the advisory lock ${key ?? ""}`,
+  )
 }

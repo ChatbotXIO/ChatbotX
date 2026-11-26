@@ -74,6 +74,9 @@ export const moveItemAction = workspaceActionClient
       pipelineId: parsedInput.id,
       itemId: parsedInput.itemId,
       stageId: parsedInput.stageId,
+      beforeItemId: parsedInput.beforeItemId,
+      afterItemId: parsedInput.afterItemId,
+      placement: parsedInput.placement,
       scope,
       actor,
     })

@@ -55,8 +55,28 @@ export const pipelineItemSortKeys = z.enum([
   "value",
   "dueDate",
   "priority",
+  // Hand-placed order within one stage; stage-scoped lists only.
+  "manual",
 ])
 export type PipelineItemSortKey = z.infer<typeof pipelineItemSortKeys>
+
+export const pipelineItemSortDirections = ["asc", "desc"] as const
+export type PipelineItemSortDirection =
+  (typeof pipelineItemSortDirections)[number]
+
+/** Direction a sort takes when none is given: manual order reads top to bottom, the rest newest/highest first. */
+export const defaultPipelineItemSortDirection = (
+  key: PipelineItemSortKey,
+): PipelineItemSortDirection => (key === "manual" ? "asc" : "desc")
+
+/**
+ * Edges of a stage a card can be put at by `pipelines.moveItem`. Lives with
+ * the other pipeline partials so request schemas can use it without loading
+ * the business package (and the database client behind it).
+ */
+export const pipelineItemPlacementEdges = ["top", "bottom"] as const
+export type PipelineItemPlacementEdge =
+  (typeof pipelineItemPlacementEdges)[number]
 
 /** Comparison of the item's own `value` ("Equal" / "Greater than" / "Less than" / "Different" / "Interval"). */
 export const pipelineValueOperators = z.enum([

@@ -1,4 +1,7 @@
-import { activityKindsOf } from "@chatbotx.io/database/partials"
+import {
+  activityKindsOf,
+  defaultPipelineItemSortDirection,
+} from "@chatbotx.io/database/partials"
 import type {
   PipelineItemFilter,
   PipelineItemSort,
@@ -8,6 +11,7 @@ import type {
   listItemsPublicRequest,
   stageTotalsPublicRequest,
 } from "../schema/public"
+import type { pipelineItemSortRequest } from "../schema/query"
 
 type ItemFilterRequest = z.infer<typeof stageTotalsPublicRequest>
 type ListItemsRequest = z.infer<typeof listItemsPublicRequest>
@@ -110,8 +114,21 @@ export function toItemListQuery(input: ListItemsRequest): {
 } {
   return {
     filter: toItemFilter(input),
-    sort: { key: input.sort, direction: input.direction },
+    sort: {
+      key: input.sort,
+      direction:
+        input.direction ?? defaultPipelineItemSortDirection(input.sort),
+    },
     limit: input.limit,
     cursor: input.cursor,
   }
 }
+
+/** The private board request's sort as the repository sort: direction defaults by key. */
+export const toBoardSort = (
+  sort: z.infer<typeof pipelineItemSortRequest> | undefined,
+): PipelineItemSort | undefined =>
+  sort && {
+    key: sort.key,
+    direction: sort.direction ?? defaultPipelineItemSortDirection(sort.key),
+  }

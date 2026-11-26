@@ -1,5 +1,9 @@
 import {
+  defaultPipelineItemSortDirection,
+  type PipelineItemSortDirection,
+  type PipelineItemSortKey,
   type PipelineType,
+  pipelineItemSortDirections,
   pipelineItemSortKeys,
   pipelineTypes,
 } from "@chatbotx.io/database/partials"
@@ -30,10 +34,19 @@ export const boardSearchParsers = {
   q: parseAsString.withDefault(""),
   filter: parseAsJson(parseBoardFilter),
   sort: parseAsStringLiteral(pipelineItemSortKeys.options).withDefault(
-    "createdAt",
+    "manual",
   ),
-  dir: parseAsStringLiteral(["asc", "desc"] as const).withDefault("desc"),
+  // No default of its own: it follows the sort (see `sortDirection`), so a
+  // shared link that only names `sort=value` keeps its old newest/highest-first meaning.
+  dir: parseAsStringLiteral(pipelineItemSortDirections),
 }
+
+/** The URL's direction, or the sort's own default; manual order only reads top to bottom. */
+export const sortDirection = (
+  key: PipelineItemSortKey,
+  dir: PipelineItemSortDirection | null,
+): PipelineItemSortDirection =>
+  key === "manual" ? "asc" : (dir ?? defaultPipelineItemSortDirection(key))
 
 /**
  * List URL state, keyed by the filterable column ids so it is the same state

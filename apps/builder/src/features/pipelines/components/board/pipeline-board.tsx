@@ -12,25 +12,27 @@ import {
   useSensor,
   useSensors,
 } from "@dnd-kit/core"
+import { sortableKeyboardCoordinates } from "@dnd-kit/sortable"
 import {
   keepPreviousData,
   useQuery,
   useQueryClient,
 } from "@tanstack/react-query"
 import { useTranslations } from "next-intl"
-import { useAction } from "next-safe-action/hooks"
 import { useQueryStates } from "nuqs"
 import { useCallback, useMemo, useState } from "react"
+import { toast } from "sonner"
 import { browserTimeZone } from "@/features/custom-fields/lib/field-date"
 import { client } from "@/lib/orpc/orpc"
 import { orpc } from "@/lib/orpc/query"
-import { moveItemAction } from "../../actions/item.action"
 import { appendStagePage } from "../../lib/append-stage-page"
+import { cardCollisionDetection } from "../../lib/card-collision-detection"
 import { itemNounKeys } from "../../lib/item-noun"
-import { moveItemInBoard } from "../../lib/move-item-in-board"
-import { boardSearchParsers } from "../../lib/search-params"
+import { resolveCardDrop } from "../../lib/move-item-in-board"
+import { boardSearchParsers, sortDirection } from "../../lib/search-params"
 import { useAssigneeOptions } from "../../lib/use-assignee-options"
-import { usePipelineAction } from "../../lib/use-pipeline-action"
+import { useBoardMove } from "../../lib/use-board-move"
+import { useCardDragAnnouncements } from "../../lib/use-card-drag-announcements"
 import { usePipelineDetail } from "../../lib/use-pipeline-detail"
 import { usePipelineRealtimeRefetch } from "../../lib/use-pipeline-realtime-refetch"
 import {
@@ -55,6 +57,7 @@ import { FilterSheet } from "./filter-sheet"
 import { ItemCard } from "./item-card"
 import { StageColumn } from "./stage-column"
 import type {
+  BoardColumn,
   BoardFilterInput,
   BoardFilterRequest,
   BoardSortInput,
@@ -62,7 +65,10 @@ import type {
 
 type ItemDialogState = { kind: "transfer" | "delete"; itemId: string } | null
 
-const DEFAULT_SORT: BoardSortInput = { key: "createdAt", direction: "desc" }
+const DEFAULT_SORT: BoardSortInput = { key: "manual", direction: "asc" }
+
+/** Stable empty column list for hooks that run before the board has loaded. */
+const NO_COLUMNS: BoardColumn[] = []
 
 /** Stable empty filter, so memos keyed on it do not rerun every render. */
 const NO_FILTER: BoardFilterInput = {}
@@ -111,9 +117,13 @@ export function PipelineBoard({
     () =>
       hiddenSortKeys.has(params.sort)
         ? DEFAULT_SORT
-        : { key: params.sort, direction: params.dir },
+        : {
+            key: params.sort,
+            direction: sortDirection(params.sort, params.dir),
+          },
     [params.sort, params.dir, hiddenSortKeys],
   )
+  const isManualSort = sort.key === "manual"
   const fieldIds = useMemo<ReadonlySet<string>>(
     () => new Set((detail.data?.fields ?? []).map((field) => field.id)),
     [detail.data?.fields],
@@ -142,7 +152,12 @@ export function PipelineBoard({
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
-    useSensor(KeyboardSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    }),
+  )
+  const dragAccessibility = useCardDragAnnouncements(
+    board.data?.stages ?? NO_COLUMNS,
   )
 
   // Another member (or a flow) changed this board: refetch, debounced.
@@ -150,10 +165,11 @@ export function PipelineBoard({
 
   // A move also changes the item's detail and activity, so every pipeline
   // query is invalidated; only the ones on screen refetch.
-  const move = useAction(
-    moveItemAction.bind(null, workspaceId),
-    usePipelineAction({ errorMessage: "board.moveFailed" }),
-  )
+  const moveItem = useBoardMove({
+    workspaceId,
+    pipelineId,
+    boardKey: boardOptions.queryKey,
+  })
 
   // Stable across renders, so the memoized columns and cards skip renders
   // caused by unrelated board state (drag start, dialogs, panels).
@@ -235,30 +251,32 @@ export function PipelineBoard({
     : undefined
   const closeItemDialog = () => setItemDialog(null)
 
-  const moveItem = async (itemId: string, toStageId: string) => {
-    // An in-flight refetch would otherwise overwrite the optimistic state.
-    await queryClient.cancelQueries({ queryKey: boardOptions.queryKey })
-    queryClient.setQueryData(
-      boardOptions.queryKey,
-      (current) =>
-        current ? moveItemInBoard(current, itemId, toStageId) : current,
-      { updatedAt: boardFetchedAt() },
-    )
-    move.execute({ id: pipelineId, itemId, stageId: toStageId })
-  }
-
   const handleDragStart = (event: DragStartEvent) =>
     setDraggingId(String(event.active.id))
 
   const handleDragEnd = async (event: DragEndEvent) => {
     setDraggingId(null)
-    const itemId = String(event.active.id)
-    const toStageId = event.over ? String(event.over.id) : null
-    const fromStageId = event.active.data.current?.stageId
-    if (!toStageId || toStageId === fromStageId || !permissions.canEdit) {
+    if (!permissions.canEdit) {
       return
     }
-    await moveItem(itemId, toStageId)
+    const { active, over } = event
+    const drop = resolveCardDrop(
+      columns,
+      {
+        itemId: String(active.id),
+        stageId: String(active.data.current?.stageId),
+        rect: active.rect.current.translated,
+      },
+      over ? { id: String(over.id), rect: over.rect } : null,
+      isManualSort,
+    )
+    if (drop.kind === "needs-manual-sort") {
+      toast.info(t("board.reorderNeedsManualSort"))
+      return
+    }
+    if (drop.kind === "move") {
+      await moveItem(String(active.id), drop.stageId, drop.placement)
+    }
   }
 
   const itemDialogProps = {
@@ -278,7 +296,13 @@ export function PipelineBoard({
         onOpenPanel={openPanel}
         onQueryChange={(query) => setParams({ q: query || null })}
         onSortChange={(next) =>
-          setParams({ sort: next.key, dir: next.direction })
+          setParams({
+            sort: next.key,
+            dir:
+              next.direction === sortDirection(next.key, null)
+                ? null
+                : next.direction,
+          })
         }
         pipeline={pipeline}
         query={params.q}
@@ -301,6 +325,8 @@ export function PipelineBoard({
       ) : null}
 
       <DndContext
+        accessibility={dragAccessibility}
+        collisionDetection={cardCollisionDetection}
         onDragCancel={() => setDraggingId(null)}
         onDragEnd={handleDragEnd}
         onDragStart={handleDragStart}
@@ -323,6 +349,7 @@ export function PipelineBoard({
               columns={columns}
               currency={pipeline.currency}
               elements={cardElements}
+              isManualSort={isManualSort}
               key={column.stage.id}
               onAddItem={openAddItem}
               onItemDialog={openItemDialog}

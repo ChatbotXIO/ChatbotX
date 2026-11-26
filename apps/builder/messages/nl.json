@@ -11815,7 +11815,17 @@
       "error": "Het bord laden is mislukt",
       "processing": "Deze fase wordt verwerkt…",
       "moveFailed": "De kaart verplaatsen is mislukt",
+      "reorderNeedsManualSort": "Zet de sortering op Handmatige volgorde om kaarten binnen een fase te herschikken.",
+      "dragHandle": "Sleep om de kaart te verplaatsen",
+      "dragInstructions": "Om een kaart op te pakken, druk je op Spatie of Enter op de sleepgreep. Gebruik de pijltjestoetsen om te verplaatsen, Spatie of Enter om neer te zetten en Escape om te annuleren.",
+      "announce": {
+        "pickedUp": "{name} opgepakt.",
+        "over": "{name} bevindt zich boven {stage}.",
+        "dropped": "{name} neergezet in {stage}.",
+        "cancelled": "Verplaatsen geannuleerd. {name} staat weer op de oorspronkelijke plek."
+      },
       "sortOptions": {
+        "manualAsc": "Handmatige volgorde",
         "createdAtDesc": "Aanmaakdatum (Nieuw naar Oud)",
         "createdAtAsc": "Aanmaakdatum (Oud naar Nieuw)",
         "updatedAtDesc": "Bijwerkdatum (Nieuw naar Oud)",

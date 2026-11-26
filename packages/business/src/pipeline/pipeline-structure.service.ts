@@ -1,4 +1,4 @@
-import { db } from "@chatbotx.io/database/client"
+import { type DatabaseClient, db } from "@chatbotx.io/database/client"
 import { PIPELINE_LIMITS } from "@chatbotx.io/database/partials"
 import {
   type PipelineFieldInsert,
@@ -15,6 +15,7 @@ import type { PipelineAccessScope } from "./access"
 import { sameIdSet } from "./equality"
 import { nextFieldPosition } from "./naming"
 import { PipelineBaseService } from "./pipeline-base.service"
+import { lockStageOrder } from "./stage-order"
 
 export type StageValues = {
   name?: string
@@ -27,6 +28,19 @@ export type PipelineFieldValues = Pick<
   PipelineFieldInsert,
   "name" | "referenceName" | "type" | "required"
 >
+
+/** What one strip batch did and where the walk goes next. */
+type StripBatchOutcome = {
+  hasMore: boolean
+  /** Where the next batch resumes; undefined rescans from the start. */
+  lastId: string | undefined
+  /** A holder that changed stage before its stage was locked, left for the next batch. */
+  movedId?: string
+  stripped: number
+}
+
+/** Batches in a row that made no progress because a holder kept changing stage. */
+const MAX_STALLED_STRIP_BATCHES = 5
 
 const DUPLICATE_FIELD_REFERENCE =
   "A field with this reference name already exists"
@@ -241,23 +255,88 @@ export class PipelineStructureService extends PipelineBaseService {
     fieldId: string,
   ) {
     let afterId: string | undefined
+    let stalledBatches = 0
     for (;;) {
       const batch = await db.transaction((tx) =>
-        pipelineRepository.stripFieldKeyBatch(
-          {
-            workspaceId,
-            pipelineId,
-            fieldId,
-            limit: PIPELINE_LIMITS.bulkBatchSize,
-            afterId,
-          },
-          tx,
-        ),
+        this.stripKeyBatch({ workspaceId, pipelineId, fieldId, afterId }, tx),
       )
-      if (batch.scanned < PIPELINE_LIMITS.bulkBatchSize || !batch.lastId) {
+      if (!batch.hasMore) {
         return
       }
+      stalledBatches =
+        batch.movedId && batch.stripped === 0 ? stalledBatches + 1 : 0
+      const { movedId } = batch
+      if (movedId && stalledBatches >= MAX_STALLED_STRIP_BATCHES) {
+        // A holder that changes stage on every attempt: strip it alone. One
+        // row lock that waits on nothing else cannot form a cycle with a
+        // respace, so no stage-order key is needed.
+        await db.transaction((tx) =>
+          pipelineRepository.stripFieldKeyFromItems(
+            { workspaceId, pipelineId, fieldId, ids: [movedId] },
+            tx,
+          ),
+        )
+        afterId = movedId
+        stalledBatches = 0
+        continue
+      }
       afterId = batch.lastId
+    }
+  }
+
+  /**
+   * One batch: read the next holders, take the stage-order keys of their
+   * stages, then re-read them. A holder that changed stage before the keys were
+   * held is not locked: the batch strips the confirmed rows before it and
+   * reports it as `movedId`, and the next batch (a fresh transaction) finds it
+   * with the right keys. Rows are locked in ascending id, so this cannot form a
+   * lock cycle with a respace.
+   */
+  private async stripKeyBatch(
+    input: {
+      workspaceId: string
+      pipelineId: string
+      fieldId: string
+      afterId?: string
+    },
+    tx: DatabaseClient,
+  ): Promise<StripBatchOutcome> {
+    const { workspaceId, pipelineId, fieldId, afterId } = input
+    const scope = { workspaceId, pipelineId, fieldId }
+    const candidates = await pipelineRepository.listFieldKeyHolders(
+      { ...scope, limit: PIPELINE_LIMITS.bulkBatchSize, afterId },
+      tx,
+    )
+    if (candidates.length === 0) {
+      return { hasMore: false, lastId: afterId, stripped: 0 }
+    }
+    const stageIds = [...new Set(candidates.map((row) => row.stageId))]
+    // The field is already deleted: a 409 here would strand its stale keys.
+    await lockStageOrder(tx, workspaceId, stageIds, "unbounded")
+    const confirmed = await pipelineRepository.listFieldKeyHolders(
+      { ...scope, ids: candidates.map((row) => row.id) },
+      tx,
+    )
+    const moved = confirmed.find((row) => !stageIds.includes(row.stageId))
+    const strippable = moved
+      ? confirmed.filter((row) => BigInt(row.id) < BigInt(moved.id))
+      : confirmed
+    const stripped = await pipelineRepository.stripFieldKeyFromItems(
+      { ...scope, ids: strippable.map((row) => row.id), stageIds },
+      tx,
+    )
+    if (moved) {
+      return {
+        hasMore: true,
+        lastId: strippable.at(-1)?.id ?? afterId,
+        movedId: moved.id,
+        stripped,
+      }
+    }
+    return {
+      hasMore: candidates.length >= PIPELINE_LIMITS.bulkBatchSize,
+      lastId: candidates.at(-1)?.id,
+      stripped,
     }
   }
 }
