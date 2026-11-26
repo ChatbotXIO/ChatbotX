@@ -44,6 +44,7 @@ const mocks = vi.hoisted(() => {
 
 vi.mock("@chatbotx.io/business", () => ({
   AVATAR_HYDRATION_CHANNELS: new Set(["messenger", "instagram"]),
+  conversationMemberScope: { allows: () => true },
   conversationService: {
     findManyQuery: mocks.findManyQuery,
     findWithFullRelations: mocks.findWithFullRelations,

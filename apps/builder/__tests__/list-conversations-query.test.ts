@@ -18,6 +18,10 @@ const mocks = vi.hoisted(() => {
     // against each conversation's own lastActivityAt.
     getSafeSinceTime: vi.fn((value: Date | undefined) => value),
     notFoundException: (message: string) => new Error(message),
+    allowsConversation: vi.fn(() => true),
+    resolveTenantSettings: vi.fn(async () => ({
+      storageUrl: "https://cdn.example.com",
+    })),
     resolveContactAvatarUrl: vi.fn(
       async (
         input: {
@@ -35,11 +39,16 @@ const mocks = vi.hoisted(() => {
 })
 
 vi.mock("@chatbotx.io/business", () => ({
+  conversationMemberScope: { allows: mocks.allowsConversation },
   conversationService: {
     findManyQuery: mocks.findManyQuery,
     findWithFullRelations: mocks.findWithFullRelations,
   },
   resolveContactAvatarUrl: mocks.resolveContactAvatarUrl,
+  resolveTenantSettings: mocks.resolveTenantSettings,
+}))
+vi.mock("@chatbotx.io/business/utils", () => ({
+  toPublicStorageUrl: (key: string, base: string) => `${base}/${key}`,
 }))
 
 vi.mock("@chatbotx.io/business/errors", () => ({
@@ -465,5 +474,150 @@ describe("listConversations / findConversation attachment count", () => {
     )
 
     expect(result.data[0]?.contact?.avatar).toBeNull()
+  })
+
+  test("publicUrls returns a stored avatar key as an absolute URL", async () => {
+    mocks.findManyQuery.mockResolvedValue([
+      {
+        id: "conv-1",
+        contactId: "contact-1",
+        lastActivityAt: new Date("2026-01-01T00:00:00Z"),
+        contactInboxes: [],
+        contact: { id: "contact-1", avatar: "avatars/contact-1.png" },
+        assignedUser: null,
+        assignedInboxTeam: null,
+        conversationParticipants: [],
+      },
+    ])
+
+    const result = await listConversations(
+      { workspaceId: "ws-1" },
+      { includeEmailAndPhone: true, publicUrls: true },
+    )
+
+    expect(result.data[0]?.contact?.avatar).toBe(
+      "https://cdn.example.com/avatars/contact-1.png",
+    )
+  })
+
+  const conversationRow = (
+    id: string,
+    contact: { id: string; avatar: string | null },
+  ) => ({
+    id,
+    contactId: contact.id,
+    lastActivityAt: new Date("2026-01-01T00:00:00Z"),
+    contactInboxes: [],
+    contact,
+    assignedUser: null,
+    assignedInboxTeam: null,
+    conversationParticipants: [],
+  })
+
+  test("publicUrls reads tenant settings once for the whole page, not per row", async () => {
+    mocks.findManyQuery.mockResolvedValue([
+      conversationRow("conv-1", { id: "contact-1", avatar: "a/1.png" }),
+      conversationRow("conv-2", { id: "contact-2", avatar: "a/2.png" }),
+      conversationRow("conv-3", { id: "contact-3", avatar: "a/3.png" }),
+    ])
+
+    await listConversations(
+      { workspaceId: "ws-1" },
+      { includeEmailAndPhone: true, publicUrls: true },
+    )
+
+    expect(mocks.resolveTenantSettings).toHaveBeenCalledTimes(1)
+  })
+
+  test("without publicUrls tenant settings are never read", async () => {
+    mocks.findManyQuery.mockResolvedValue([
+      conversationRow("conv-1", { id: "contact-1", avatar: "a/1.png" }),
+    ])
+
+    await listConversations(
+      { workspaceId: "ws-1" },
+      { includeEmailAndPhone: true },
+    )
+
+    expect(mocks.resolveTenantSettings).not.toHaveBeenCalled()
+  })
+
+  test("publicUrls on an empty page does not read tenant settings", async () => {
+    mocks.findManyQuery.mockResolvedValue([])
+
+    await listConversations(
+      { workspaceId: "ws-1" },
+      { includeEmailAndPhone: true, publicUrls: true },
+    )
+
+    expect(mocks.resolveTenantSettings).not.toHaveBeenCalled()
+  })
+
+  test("resolves one contact's avatar once when it appears in several conversations", async () => {
+    const contact = { id: "contact-1", avatar: "a/1.png" }
+    mocks.findManyQuery.mockResolvedValue([
+      conversationRow("conv-dm", contact),
+      conversationRow("conv-comment-1", contact),
+      conversationRow("conv-comment-2", contact),
+    ])
+
+    const result = await listConversations(
+      { workspaceId: "ws-1" },
+      { includeEmailAndPhone: true, publicUrls: true },
+    )
+
+    expect(mocks.resolveContactAvatarUrl).toHaveBeenCalledTimes(1)
+    expect(result.data.map((c) => c.contact?.avatar)).toEqual([
+      "https://cdn.example.com/a/1.png",
+      "https://cdn.example.com/a/1.png",
+      "https://cdn.example.com/a/1.png",
+    ])
+  })
+
+  test("findConversation reports a conversation outside the member scope as not found", async () => {
+    const memberScope = {
+      chatScope: "assigned" as const,
+      teamIds: [],
+      userId: "me",
+    }
+    const conversation = {
+      id: "conv-1",
+      assignedUserId: "someone-else",
+      lastActivityAt: new Date("2026-01-01T00:00:00Z"),
+      contactInboxes: [],
+      contact: null,
+      conversationParticipants: [],
+    }
+    mocks.findWithFullRelations.mockResolvedValue(conversation)
+    mocks.allowsConversation.mockReturnValueOnce(false)
+
+    await expect(
+      findConversation({ id: "conv-1", workspaceId: "ws-1" }, { memberScope }),
+    ).rejects.toThrow("Conversation not found")
+    expect(mocks.allowsConversation).toHaveBeenCalledWith(
+      memberScope,
+      conversation,
+    )
+    expect(mocks.findWithFullRelations).toHaveBeenCalledTimes(1)
+    expect(mocks.repo.findLastByConversation).not.toHaveBeenCalled()
+  })
+
+  test("findConversation with publicUrls returns an absolute avatar URL", async () => {
+    mocks.findWithFullRelations.mockResolvedValue({
+      id: "conv-1",
+      lastActivityAt: new Date("2026-01-01T00:00:00Z"),
+      contactInboxes: [],
+      contact: { id: "contact-1", avatar: "avatars/contact-1.png" },
+      conversationParticipants: [],
+    })
+
+    const result = await findConversation(
+      { id: "conv-1", workspaceId: "ws-1" },
+      { publicUrls: true },
+    )
+
+    expect(result.data.contact?.avatar).toBe(
+      "https://cdn.example.com/avatars/contact-1.png",
+    )
   })
 })
