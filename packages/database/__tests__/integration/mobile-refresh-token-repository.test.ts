@@ -112,20 +112,20 @@ describe.skipIf(!databaseUrl)(
     test("serializes replay revocation against successor rotation", async () => {
       const familyId = "family-race"
       await insert({
-        tokenHash: "replayed",
+        tokenHash: "replayed-race",
         familyId,
         rotatedAt: new Date(Date.now() - 60_000),
       })
-      await insert({ tokenHash: "active", familyId })
+      await insert({ tokenHash: "active-race", familyId })
 
       const replayLocked = Promise.withResolvers<void>()
       const releaseReplay = Promise.withResolvers<void>()
       const replay = dbA.transaction(async (tx) => {
-        await mobileRefreshTokenRepository.lockFamilyByHash("replayed", tx)
+        await mobileRefreshTokenRepository.lockFamilyByHash("replayed-race", tx)
         replayLocked.resolve()
         await releaseReplay.promise
         await mobileRefreshTokenRepository.revokeFamilyByHash(
-          "replayed",
+          "replayed-race",
           new Date(),
           tx,
         )
@@ -133,9 +133,9 @@ describe.skipIf(!databaseUrl)(
 
       await replayLocked.promise
       const successorRotation = dbB.transaction(async (tx) => {
-        await mobileRefreshTokenRepository.lockFamilyByHash("active", tx)
+        await mobileRefreshTokenRepository.lockFamilyByHash("active-race", tx)
         const spent = await mobileRefreshTokenRepository.spendActive(
-          "active",
+          "active-race",
           new Date(),
           tx,
         )
@@ -147,7 +147,7 @@ describe.skipIf(!databaseUrl)(
             userId,
             deviceId: "device-a",
             familyId,
-            tokenHash: "successor",
+            tokenHash: "successor-race",
             expiresAt: new Date(Date.now() + 60_000),
           },
           tx,

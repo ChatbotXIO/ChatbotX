@@ -19,6 +19,10 @@ import type {
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { endOfHour } from "date-fns"
 import z from "zod"
+import {
+  type AvatarFinalizer,
+  createAvatarFinalizer,
+} from "@/features/contacts/queries/avatar-finalizer"
 import type { ListConversationsRequest } from "@/features/conversations/schema/query"
 import { decodeCursor, encodeCursor } from "@/lib/pagination"
 import { mapConversationParticipants } from "../lib/map-participants"
@@ -104,26 +108,38 @@ const withRecentParticipants = <
   recentParticipants: mapConversationParticipants(conversationParticipants),
 })
 
-const resolveConversationContact = async <T extends { avatar: string | null }>(
-  contact: T | null,
-  contactInboxes: readonly (ContactInboxOperationalModel & {
-    inbox: InboxModel
-  })[],
+type ConversationContactInbox = ContactInboxOperationalModel & {
+  inbox: InboxModel
+}
+
+/**
+ * Resolves a conversation's contact avatar. One contact often shows up in
+ * several conversations of a page (a DM plus its comment threads); the avatar
+ * for the same contact and contact inboxes is resolved once and shared, not
+ * once per conversation.
+ */
+const createConversationContactResolver = (
   workspaceId: string,
-): Promise<T | null> => {
-  if (!contact) {
-    return null
-  }
-  return {
-    ...contact,
-    avatar: await resolveContactAvatarUrl(
-      {
-        workspaceId,
-        contact,
-        contactInboxes,
-      },
-      (key) => key,
-    ),
+  finalize: AvatarFinalizer,
+) => {
+  const avatars = new Map<string, Promise<string | null>>()
+  return async <T extends { id: string; avatar: string | null }>(
+    contact: T | null,
+    contactInboxes: readonly ConversationContactInbox[],
+  ): Promise<T | null> => {
+    if (!contact) {
+      return null
+    }
+    const key = [contact.id, ...contactInboxes.map((ci) => ci.id)].join(":")
+    let avatar = avatars.get(key)
+    if (!avatar) {
+      avatar = resolveContactAvatarUrl(
+        { workspaceId, contact, contactInboxes },
+        finalize,
+      )
+      avatars.set(key, avatar)
+    }
+    return { ...contact, avatar: await avatar }
   }
 }
 
@@ -138,6 +154,9 @@ type ListConversationsAccess = {
   /** Restricts the list to a member's chat scope (mobile API only). */
   scopeWhere?: Record<string, unknown>
   view?: "compact" | "full"
+  /** Return contact avatars as absolute URLs (public API) instead of storage
+   * keys (builder UI); see `createAvatarFinalizer`. */
+  publicUrls?: boolean
 }
 
 export function listConversations(
@@ -212,6 +231,10 @@ export async function listConversations(
       })
     }),
   )
+  const resolveContact = createConversationContactResolver(
+    workspaceId,
+    createAvatarFinalizer(workspaceId, { publicUrls: access.publicUrls }),
+  )
 
   const lastMessagesByConversationId = new Map(
     page.map((c, index) => [c.id, lastMessagesResults[index]?.[0] ?? null]),
@@ -245,11 +268,7 @@ export async function listConversations(
           const lastMessage = lastMessagesByConversationId.get(c.id)
           return {
             ...withRecentParticipants(c),
-            contact: await resolveConversationContact(
-              c.contact ?? null,
-              c.contactInboxes,
-              workspaceId,
-            ),
+            contact: await resolveContact(c.contact ?? null, c.contactInboxes),
             contactInboxes: mapCompactConversationContactInboxes(
               c.contactInboxes,
             ),
@@ -269,11 +288,7 @@ export async function listConversations(
         const lastMessage = lastMessagesByConversationId.get(c.id)
         return {
           ...withRecentParticipants(c),
-          contact: await resolveConversationContact(
-            c.contact ?? null,
-            c.contactInboxes,
-            workspaceId,
-          ),
+          contact: await resolveContact(c.contact ?? null, c.contactInboxes),
           contactInboxes: mapConversationContactInboxes(c.contactInboxes),
           assignedUser: c.assignedUser ?? null,
           assignedInboxTeam: c.assignedInboxTeam ?? null,
@@ -289,6 +304,7 @@ export async function listConversations(
 
 export const findConversation = async (
   input: FindConversationRequest,
+  options: { publicUrls?: boolean } = {},
 ): Promise<FindConversationResponse> => {
   const conversation = await conversationService.findWithFullRelations({
     where: input,
@@ -320,11 +336,10 @@ export const findConversation = async (
   return {
     data: {
       ...withRecentParticipants(conversation),
-      contact: await resolveConversationContact(
-        conversation.contact,
-        conversation.contactInboxes,
+      contact: await createConversationContactResolver(
         input.workspaceId,
-      ),
+        createAvatarFinalizer(input.workspaceId, options),
+      )(conversation.contact, conversation.contactInboxes),
       contactInboxes: mapConversationContactInboxes(
         conversation.contactInboxes,
       ),

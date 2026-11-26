@@ -251,6 +251,7 @@ describe("conversations.list for a mobile member", () => {
       { perPage: 20, workspaceId: "ws-1" },
       {
         includeEmailAndPhone: false,
+        publicUrls: true,
         scopeWhere: {
           OR: [
             { assignedUserId: ME },
@@ -333,7 +334,7 @@ describe("conversations.list for a mobile member", () => {
 
     expect(listConversations).toHaveBeenCalledWith(
       { workspaceId: "ws-1" },
-      { includeEmailAndPhone: true, scopeWhere: undefined },
+      { includeEmailAndPhone: true, scopeWhere: undefined, publicUrls: true },
     )
     expect(inboxTeamService.listTeamIdsByUserId).not.toHaveBeenCalled()
   })

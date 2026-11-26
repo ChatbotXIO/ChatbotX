@@ -42,9 +42,9 @@ import { realDatabaseUrl } from "./database-url"
 const databaseUrl = realDatabaseUrl()
 
 const RANGE_INDEX =
-  /"Index Name":"ChannelPostMetricDaily_\w*(pkey|workspaceId_\w+_idx)"/
+  /"Index Name":"ChannelPostMetricDaily_\w*(pkey|workspaceId_\w+_idx\d*)"/
 const WORKSPACE_INDEX =
-  /"Index Name":"ChannelPostMetricDaily_\w*workspaceId_\w+_idx"/
+  /"Index Name":"ChannelPostMetricDaily_\w*workspaceId_\w+_idx\d*"/
 const PARTITION_SCAN = /"Relation Name":"ChannelPostMetricDaily_/g
 
 const MINUTE = 60_000
