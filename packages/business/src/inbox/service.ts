@@ -34,7 +34,7 @@ import {
   resetChannelPostSyncAfterAuthChange,
 } from "../channel-post/sync-reset"
 import { channelLimitReachedException, notFoundException } from "../errors"
-import { toResource as toSmtpResource } from "../integration-smtp/resource"
+import { projectIntegrationSmtp } from "../integration-smtp/resource"
 import { logger } from "../logger"
 import { quotaEnforcementService } from "../quota-enforcement/service"
 import { type IdLabel, selectLabelsByIds } from "../select-labels-by-ids"
@@ -98,23 +98,6 @@ class InboxService extends BaseService {
     }
   }
 
-  /**
-   * Swaps the raw `integrationSmtp` row (which carries `auth`, the SMTP/IMAP
-   * passwords) for its public projection, which the response schema expects.
-   */
-  private static projectSmtp<T extends object>(rows: T[]): T[] {
-    return rows.map((row) => {
-      if (!("integrationSmtp" in row)) {
-        return row
-      }
-      const smtp = row.integrationSmtp as
-        | Parameters<typeof toSmtpResource>[0]
-        | null
-        | undefined
-      return { ...row, integrationSmtp: smtp ? toSmtpResource(smtp) : smtp }
-    })
-  }
-
   private static integrationsWith(includes: ListInboxesRequest["includes"]) {
     return includes?.includes("integration")
       ? InboxService.withIntegrations
@@ -137,7 +120,7 @@ class InboxService extends BaseService {
     const limit = input.perPage ?? 10
     const pageCount = Math.ceil(totalRows / limit)
 
-    return { data: InboxService.projectSmtp(data), pageCount }
+    return { data: projectIntegrationSmtp(data), pageCount }
   }
 
   /**
@@ -156,7 +139,7 @@ class InboxService extends BaseService {
       with: InboxService.integrationsWith(input.includes),
     })
 
-    return { data: InboxService.projectSmtp(data) }
+    return { data: projectIntegrationSmtp(data) }
   }
 
   /**

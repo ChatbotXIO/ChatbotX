@@ -22,9 +22,6 @@ import {
 import { connectionStateService } from "../connection/state-service"
 import { ChatbotXException } from "../errors"
 import { inboxService } from "../inbox/service"
-
-export { toResource } from "./resource"
-
 import { toResource } from "./resource"
 import type { IntegrationSmtpResource } from "./schema"
 
