@@ -5,6 +5,7 @@ import { Badge } from "@chatbotx.io/ui/components/ui/badge"
 import { Button } from "@chatbotx.io/ui/components/ui/button"
 import { Input } from "@chatbotx.io/ui/components/ui/input"
 import { useDroppable } from "@dnd-kit/core"
+import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable"
 import { Loader2Icon, PlusIcon, XIcon } from "lucide-react"
 import { useLocale, useTranslations } from "next-intl"
 import { useAction } from "next-safe-action/hooks"
@@ -27,6 +28,8 @@ type StageColumnProps = {
   elements: PipelineSettings["cardElements"]
   canManage: boolean
   canDrag: boolean
+  /** The board sorts by manual order: cards are drop targets. */
+  isManualSort: boolean
   canDelete: boolean
   showValue: boolean
   assigneeNames: Map<string, string>
@@ -49,6 +52,7 @@ export const StageColumn = memo(function StageColumn({
   elements,
   canManage,
   canDrag,
+  isManualSort,
   canDelete,
   showValue,
   assigneeNames,
@@ -62,10 +66,14 @@ export const StageColumn = memo(function StageColumn({
   const t = useTranslations("pipelines")
   const locale = useLocale()
   const { stage } = column
-  const { setNodeRef, isOver } = useDroppable({
+  const { setNodeRef, isOver, over } = useDroppable({
     id: stage.id,
     disabled: Boolean(stage.bulkJobId),
   })
+  // Under manual sort the pointer is over one of the column's cards, not the column.
+  const isDropTarget =
+    !stage.bulkJobId &&
+    (isOver || over?.data.current?.sortable?.containerId === stage.id)
   const [isRenaming, setIsRenaming] = useState(false)
 
   const style = {
@@ -101,7 +109,7 @@ export const StageColumn = memo(function StageColumn({
     <section
       aria-label={stage.name}
       className={`flex w-[300px] shrink-0 flex-col rounded-xl border bg-muted/40 transition-colors ${
-        isOver ? "border-primary bg-primary/5" : ""
+        isDropTarget ? "border-primary bg-primary/5" : ""
       }`}
       data-testid="pipeline-stage"
     >
@@ -169,6 +177,7 @@ export const StageColumn = memo(function StageColumn({
           column={column}
           currency={currency}
           elements={elements}
+          isManualSort={isManualSort}
           onAddItem={onAddItem}
           onLoadMore={onLoadMore}
           onOpenItem={onOpenItem}
@@ -185,6 +194,7 @@ type StageCardsProps = Pick<
   | "elements"
   | "assigneeNames"
   | "canDrag"
+  | "isManualSort"
   | "onOpenItem"
   | "addItemLabel"
   | "onAddItem"
@@ -201,6 +211,7 @@ function StageCards({
   elements,
   assigneeNames,
   canDrag,
+  isManualSort,
   actions,
   onOpenItem,
   addItemLabel,
@@ -211,6 +222,7 @@ function StageCards({
   const { stage } = column
   const { items, nextCursor: cursor } = column
   const [isLoadingMore, setIsLoadingMore] = useState(false)
+  const itemIds = useMemo(() => items.map((view) => view.item.id), [items])
 
   const loadMore = async () => {
     if (!cursor) {
@@ -241,18 +253,26 @@ function StageCards({
           ) : null}
         </div>
       ) : null}
-      {items.map((view) => (
-        <ItemCard
-          actions={actions}
-          assigneeNames={assigneeNames}
-          canDrag={canDrag}
-          currency={currency}
-          elements={elements}
-          key={view.item.id}
-          onOpen={onOpenItem}
-          view={view}
-        />
-      ))}
+      <SortableContext
+        id={stage.id}
+        items={itemIds}
+        strategy={verticalListSortingStrategy}
+      >
+        {items.map((view) => (
+          <ItemCard
+            actions={actions}
+            assigneeNames={assigneeNames}
+            canDrag={canDrag}
+            currency={currency}
+            elements={elements}
+            // A stage running a bulk job takes no drops, its cards included.
+            isManualSort={isManualSort && !stage.bulkJobId}
+            key={view.item.id}
+            onOpen={onOpenItem}
+            view={view}
+          />
+        ))}
+      </SortableContext>
       {cursor ? (
         <Button
           disabled={isLoadingMore}

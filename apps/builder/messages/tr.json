@@ -11815,7 +11815,17 @@
       "error": "Pano yüklenemedi",
       "processing": "Bu aşama işleniyor…",
       "moveFailed": "Kart taşınamadı",
+      "reorderNeedsManualSort": "Bir aşama içindeki kartları yeniden sıralamak için sıralamayı Manuel sıra olarak değiştirin.",
+      "dragHandle": "Kartı taşımak için sürükleyin",
+      "dragInstructions": "Bir kartı almak için sürükleme tutamacında Boşluk veya Enter tuşuna basın. Taşımak için ok tuşlarını, bırakmak için Boşluk veya Enter tuşunu, iptal etmek için Escape tuşunu kullanın.",
+      "announce": {
+        "pickedUp": "{name} alındı.",
+        "over": "{name}, {stage} üzerinde.",
+        "dropped": "{name}, {stage} aşamasına bırakıldı.",
+        "cancelled": "Taşıma iptal edildi. {name} eski yerine döndü."
+      },
       "sortOptions": {
+        "manualAsc": "Manuel sıra",
         "createdAtDesc": "Oluşturulma tarihi (Yeniden Eskiye)",
         "createdAtAsc": "Oluşturulma tarihi (Eskiden Yeniye)",
         "updatedAtDesc": "Güncellenme tarihi (Yeniden Eskiye)",

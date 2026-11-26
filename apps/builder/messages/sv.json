@@ -11815,7 +11815,17 @@
       "error": "Det gick inte att läsa in tavlan",
       "processing": "Bearbetar den här fasen…",
       "moveFailed": "Det gick inte att flytta kortet",
+      "reorderNeedsManualSort": "Byt sortering till Manuell ordning för att ordna om kort inom ett steg.",
+      "dragHandle": "Dra för att flytta kortet",
+      "dragInstructions": "För att ta upp ett kort trycker du på mellanslag eller Enter på dess dragreglage. Använd piltangenterna för att flytta det, mellanslag eller Enter för att släppa det och Escape för att avbryta.",
+      "announce": {
+        "pickedUp": "{name} upplockad.",
+        "over": "{name} är över {stage}.",
+        "dropped": "{name} släppt i {stage}.",
+        "cancelled": "Flytten avbröts. {name} är tillbaka där det var."
+      },
       "sortOptions": {
+        "manualAsc": "Manuell ordning",
         "createdAtDesc": "Skapandedatum (Ny till Gammal)",
         "createdAtAsc": "Skapandedatum (Gammal till Ny)",
         "updatedAtDesc": "Uppdateringsdatum (Ny till Gammal)",

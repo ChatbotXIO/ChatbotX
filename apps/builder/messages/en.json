@@ -11831,7 +11831,17 @@
       "error": "Could not load the board",
       "processing": "Processing this stage…",
       "moveFailed": "Could not move the card",
+      "reorderNeedsManualSort": "Switch the sort to Manual order to rearrange cards within a stage.",
+      "dragHandle": "Drag to move card",
+      "dragInstructions": "To pick up a card, press Space or Enter on its drag handle. Use the arrow keys to move it, Space or Enter to drop it, and Escape to cancel.",
+      "announce": {
+        "pickedUp": "Picked up {name}.",
+        "over": "{name} is over {stage}.",
+        "dropped": "{name} dropped in {stage}.",
+        "cancelled": "Move cancelled. {name} is back where it was."
+      },
       "sortOptions": {
+        "manualAsc": "Manual order",
         "createdAtDesc": "Date created (New to Old)",
         "createdAtAsc": "Date created (Old to New)",
         "updatedAtDesc": "Update date (New to Old)",

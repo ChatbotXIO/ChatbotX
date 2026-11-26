@@ -41,6 +41,16 @@ import {
   mergeFieldValues,
   remapFieldValues,
 } from "./item-fields"
+import {
+  type ItemPlacement,
+  isAlreadyInSlot,
+  type PipelineItemPlacementInput,
+  parsePlacement,
+  positionForPlacement,
+  positionInSlot,
+  slotForPlacement,
+  TOP_PLACEMENT,
+} from "./item-placement"
 import type {
   CreatePipelineItemInput,
   PipelineItemWriteFields,
@@ -56,6 +66,11 @@ import {
   realtimeEffect,
 } from "./mutation-engine"
 import { pipelineService } from "./service"
+import {
+  lockStageOrder,
+  StageOrderRetry,
+  stageOrderWaitFor,
+} from "./stage-order"
 import type { PipelineActor } from "./types"
 
 export type {
@@ -70,6 +85,11 @@ type UpdatePipelineItemInput = {
   fields: PipelineItemWriteFields
   scope: PipelineAccessScope
   actor: PipelineActor
+}
+
+/** An update that also says where in the target stage the item lands. */
+type PlacedUpdateInput = UpdatePipelineItemInput & {
+  placement: ItemPlacement | null
 }
 
 const isOpen = (status: PipelineItemStatus) => status === "open"
@@ -149,10 +169,14 @@ export class PipelineItemService extends PipelineItemBaseService {
       { workspaceId, pipelineId },
       tx,
     )
-    const stage = await this.lockStage(
-      this.resolveStage(stages, input.fields.stageId),
+    const target = this.resolveStage(stages, input.fields.stageId)
+    await lockStageOrder(
       tx,
+      workspaceId,
+      [target.id],
+      stageOrderWaitFor(input.scope),
     )
+    const stage = await this.lockStage(target, tx)
     await this.assertReferences({ ...input, tx })
     const definitions = await pipelineRepository.listFields(
       { workspaceId, pipelineId },
@@ -174,11 +198,17 @@ export class PipelineItemService extends PipelineItemBaseService {
     }
 
     const now = new Date()
+    const position = await positionForPlacement(
+      tx,
+      { workspaceId, pipelineId, stageId: stage.id },
+      TOP_PLACEMENT,
+    )
     const { row, inserted } = await pipelineItemRepository.insertIdempotent(
       {
         workspaceId,
         pipelineId,
         stageId: stage.id,
+        position,
         contactId,
         number: await pipelineRepository.nextItemNumber(workspaceId, tx),
         title: input.fields.title,
@@ -255,6 +285,12 @@ export class PipelineItemService extends PipelineItemBaseService {
   // Update / move -------------------------------------------------------------
 
   async update(input: UpdatePipelineItemInput): Promise<PipelineItemModel> {
+    return await this.updateWithPlacement({ ...input, placement: null })
+  }
+
+  private async updateWithPlacement(
+    input: PlacedUpdateInput,
+  ): Promise<PipelineItemModel> {
     const pipeline = await withEffectiveCurrency(
       input.workspaceId,
       await pipelineService.requireAccess({
@@ -270,11 +306,11 @@ export class PipelineItemService extends PipelineItemBaseService {
   }
 
   private async updateInTransaction(
-    input: UpdatePipelineItemInput,
+    input: PlacedUpdateInput,
     pipeline: PipelineWithCurrency,
     { tx, effects }: MutationContext,
   ): Promise<PipelineItemModel> {
-    const { workspaceId, pipelineId, itemId, fields, actor } = input
+    const { workspaceId, pipelineId, itemId, fields, actor, placement } = input
     const before = await this.lockForUpdate(input, tx)
     const reopens = fields.status === "open" && !isOpen(before.status)
     const stages = await pipelineStageRepository.listByPipeline(
@@ -285,8 +321,12 @@ export class PipelineItemService extends PipelineItemBaseService {
       stages,
       before,
       fields.stageId,
+      placement !== null,
       tx,
     )
+    if (placement && stage.id === before.stageId) {
+      return await this.reorderInStage({ before, placement, effects }, tx)
+    }
     const assigneePatched = hasAssigneePatch(fields)
     // Read only for an assignee patch: nothing else uses the previous set.
     const assigneesBefore = assigneePatched
@@ -321,6 +361,15 @@ export class PipelineItemService extends PipelineItemBaseService {
       fieldValues,
     }
     const diff = diffPipelineItem(before, next)
+    // The stage-order lock of both stages is held (see `lockForUpdate`).
+    const position = diff.stage
+      ? await positionForPlacement(
+          tx,
+          { workspaceId, pipelineId, stageId: stage.id },
+          placement ?? TOP_PLACEMENT,
+          itemId,
+        )
+      : undefined
     // A patch that changes nothing writes nothing: no updatedAt bump, activity or effects.
     let row: PipelineItemModel | undefined = isEmptyDiff(diff)
       ? before
@@ -330,7 +379,7 @@ export class PipelineItemService extends PipelineItemBaseService {
             id: itemId,
             values: {
               ...next,
-              ...(diff.stage ? { stageEnteredAt: now } : {}),
+              ...(diff.stage ? { stageEnteredAt: now, position } : {}),
               ...(diff.status
                 ? this.statusBookkeeping(status, now, actor)
                 : {}),
@@ -397,30 +446,57 @@ export class PipelineItemService extends PipelineItemBaseService {
   }
 
   /**
-   * Row-locks the item for an update. The open-limit advisory lock is taken
-   * whenever the caller asks for `open`: whether that is a reopen is only known
-   * after the row lock, and advisory locks must come before row locks to keep
-   * the order transfer uses.
+   * Row-locks the item for an update, after the advisory locks (global order:
+   * open-limit key, then stage-order keys, then the row). The open-limit key is
+   * taken whenever the caller asks for `open`: whether that is a reopen is only
+   * known after the row lock. The stage-order keys cover the item's stage and
+   * the requested one; the item is read unlocked to choose them, so a stage
+   * that changed before the row lock restarts the transaction (`StageOrderRetry`).
    */
   private async lockForUpdate(
-    input: UpdatePipelineItemInput,
+    input: PlacedUpdateInput,
     tx: DatabaseClient,
   ): Promise<PipelineItemModel> {
     const { workspaceId, pipelineId, itemId } = input
-    if (input.fields.status === "open") {
-      const peek = await this.findItemOrFail({
-        workspaceId,
-        pipelineId,
-        itemId,
-        tx,
-      })
+    const requestedStageId = input.fields.stageId
+    const asksForOpen = input.fields.status === "open"
+    if (!asksForOpen && requestedStageId === undefined) {
+      return await this.lockItemOrFail({ workspaceId, pipelineId, itemId, tx })
+    }
+    const peek = await this.findItemOrFail({
+      workspaceId,
+      pipelineId,
+      itemId,
+      tx,
+    })
+    if (asksForOpen) {
       await acquirePipelineAdvisoryLock(
         tx,
         this.openLockKey(workspaceId, pipelineId, peek.contactId),
       )
     }
+    const movesOrPlaces =
+      requestedStageId !== undefined &&
+      (requestedStageId !== peek.stageId || input.placement !== null)
+    if (movesOrPlaces) {
+      await lockStageOrder(
+        tx,
+        workspaceId,
+        [peek.stageId, requestedStageId],
+        stageOrderWaitFor(input.scope),
+      )
+    }
     // The item may have been transferred between the peek and the lock.
-    return await this.lockItemOrFail({ workspaceId, pipelineId, itemId, tx })
+    const locked = await this.lockItemOrFail({
+      workspaceId,
+      pipelineId,
+      itemId,
+      tx,
+    })
+    if (requestedStageId !== undefined && locked.stageId !== peek.stageId) {
+      throw new StageOrderRetry()
+    }
+    return locked
   }
 
   /**
@@ -428,21 +504,54 @@ export class PipelineItemService extends PipelineItemBaseService {
    * changes stage keeps the lock order (stage before item) away from an inline
    * stage delete, which locks the stage first and then its items. Naming the
    * stage the item is already in moves nothing, so a busy stage is not an
-   * error there.
+   * error there, unless an explicit placement writes into it.
    */
   private async resolveUpdateStage(
     stages: PipelineStageModel[],
     before: PipelineItemModel,
     requestedStageId: string | undefined,
+    isPlacing: boolean,
     tx: DatabaseClient,
   ): Promise<PipelineStageModel> {
     const current = this.stageById(stages, before.stageId)
     if (!requestedStageId || requestedStageId === before.stageId) {
-      return current
+      return isPlacing ? await this.lockStage(current, tx) : current
     }
     const target = this.resolveStage(stages, requestedStageId)
     this.assertStageNotBulkOwned(current)
     return await this.lockStage(target, tx)
+  }
+
+  /**
+   * Moves the item within its own stage. Dropping it where it already is
+   * writes and emits nothing; otherwise only `position` changes: `updatedAt`
+   * stays, no activity row, no trigger or webhook, only a realtime refresh.
+   */
+  private async reorderInStage(
+    input: {
+      before: PipelineItemModel
+      placement: ItemPlacement
+      effects: MutationContext["effects"]
+    },
+    tx: DatabaseClient,
+  ): Promise<PipelineItemModel> {
+    const { before, placement, effects } = input
+    const scope = {
+      workspaceId: before.workspaceId,
+      pipelineId: before.pipelineId,
+      stageId: before.stageId,
+    }
+    const slot = await slotForPlacement(tx, scope, placement, before.id)
+    if (isAlreadyInSlot(slot, { id: before.id, position: before.position })) {
+      return before
+    }
+    const position = await positionInSlot(tx, scope, slot, placement, before.id)
+    await pipelineItemRepository.setPositions(
+      { ...scope, rows: [{ id: before.id, position }] },
+      tx,
+    )
+    effects.push(realtimeEffect(before, "updated"))
+    return { ...before, position }
   }
 
   /**
@@ -476,21 +585,28 @@ export class PipelineItemService extends PipelineItemBaseService {
     return merged
   }
 
-  async move(input: {
-    workspaceId: string
-    pipelineId: string
-    itemId: string
-    stageId: string
-    scope: PipelineAccessScope
-    actor: PipelineActor
-  }): Promise<PipelineItemModel> {
-    return await this.update({
+  /**
+   * Moves an item to a stage and, when asked, to an exact spot in it. Without a
+   * placement a stage change goes to the top and the same stage is a no-op.
+   */
+  async move(
+    input: PipelineItemPlacementInput & {
+      workspaceId: string
+      pipelineId: string
+      itemId: string
+      stageId: string
+      scope: PipelineAccessScope
+      actor: PipelineActor
+    },
+  ): Promise<PipelineItemModel> {
+    return await this.updateWithPlacement({
       workspaceId: input.workspaceId,
       pipelineId: input.pipelineId,
       itemId: input.itemId,
       fields: { stageId: input.stageId },
       scope: input.scope,
       actor: input.actor,
+      placement: parsePlacement(input),
     })
   }
 
@@ -544,6 +660,7 @@ export class PipelineItemService extends PipelineItemBaseService {
       pipelineId: string
       itemId: string
       destinationStageId?: string
+      scope: PipelineAccessScope
       actor: PipelineActor
     },
     destination: PipelineWithCurrency,
@@ -564,30 +681,42 @@ export class PipelineItemService extends PipelineItemBaseService {
     for (const key of keys) {
       await acquirePipelineAdvisoryLock(tx, key)
     }
+    // Stage-order keys of the item's stage and the destination stage, chosen
+    // from an unlocked read: a stage that changes before the row lock restarts
+    // the transaction.
+    const destinationStages = await pipelineStageRepository.listByPipeline(
+      { workspaceId, pipelineId: destination.id },
+      tx,
+    )
+    const destinationStage = this.resolveStage(
+      destinationStages,
+      input.destinationStageId,
+    )
+    await lockStageOrder(
+      tx,
+      workspaceId,
+      [peek.stageId, destinationStage.id],
+      stageOrderWaitFor(input.scope),
+    )
     const before = await this.lockItemOrFail({
       workspaceId,
       pipelineId,
       itemId,
       tx,
     })
-    const [sourceStages, destinationStages, sourceFields, destinationFields] =
-      await Promise.all([
-        pipelineStageRepository.listByPipeline({ workspaceId, pipelineId }, tx),
-        pipelineStageRepository.listByPipeline(
-          { workspaceId, pipelineId: destination.id },
-          tx,
-        ),
-        pipelineRepository.listFields({ workspaceId, pipelineId }, tx),
-        pipelineRepository.listFields(
-          { workspaceId, pipelineId: destination.id },
-          tx,
-        ),
-      ])
+    if (before.stageId !== peek.stageId) {
+      throw new StageOrderRetry()
+    }
+    const [sourceStages, sourceFields, destinationFields] = await Promise.all([
+      pipelineStageRepository.listByPipeline({ workspaceId, pipelineId }, tx),
+      pipelineRepository.listFields({ workspaceId, pipelineId }, tx),
+      pipelineRepository.listFields(
+        { workspaceId, pipelineId: destination.id },
+        tx,
+      ),
+    ])
     this.assertStageNotBulkOwned(this.stageById(sourceStages, before.stageId))
-    const stage = await this.lockStage(
-      this.resolveStage(destinationStages, input.destinationStageId),
-      tx,
-    )
+    const stage = await this.lockStage(destinationStage, tx)
     const fieldValues = remapFieldValues(
       sourceFields,
       destinationFields,
@@ -611,6 +740,11 @@ export class PipelineItemService extends PipelineItemBaseService {
     }
 
     const now = new Date()
+    const position = await positionForPlacement(
+      tx,
+      { workspaceId, pipelineId: destination.id, stageId: stage.id },
+      TOP_PLACEMENT,
+    )
     const row = await pipelineItemRepository.update(
       {
         workspaceId,
@@ -618,6 +752,7 @@ export class PipelineItemService extends PipelineItemBaseService {
         values: {
           pipelineId: destination.id,
           stageId: stage.id,
+          position,
           stageEnteredAt: now,
           fieldValues,
           // Keys are unique per pipeline; the item leaves the source's scope.

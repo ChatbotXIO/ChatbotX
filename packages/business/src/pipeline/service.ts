@@ -46,6 +46,7 @@ import {
 import { pipelineCountsCacheTag } from "./mutation-engine"
 import { PipelineBaseService } from "./pipeline-base.service"
 import { membersForCopy } from "./pipeline-member.service"
+import { lockStageOrder } from "./stage-order"
 import type { PipelineActor } from "./types"
 
 export type {
@@ -532,7 +533,18 @@ export class PipelineService extends PipelineBaseService {
           tx,
           this.structureLockKey(input.workspaceId, input.id),
         )
-        await this.assertNoBulkJob(input.workspaceId, input.id, tx)
+        const stages = await this.assertNoBulkJob(
+          input.workspaceId,
+          input.id,
+          tx,
+        )
+        // The cascade below deletes item rows: take the stage-order keys first
+        // so a live respace (stage-order key, then rows) cannot deadlock it.
+        await lockStageOrder(
+          tx,
+          input.workspaceId,
+          stages.map((stage) => stage.id),
+        )
         // What is left (rows written since the last batch) is small, so the
         // cascade of this final statement is bounded.
         const deleted = await this.deleteInTx(tx, {
@@ -588,6 +600,7 @@ export class PipelineService extends PipelineBaseService {
         "stageBusy",
       )
     }
+    return stages
   }
 
   /**
@@ -611,16 +624,24 @@ export class PipelineService extends PipelineBaseService {
             action: "view",
             tx,
           })
-          await this.assertNoBulkJob(workspaceId, pipelineId, tx)
-          return step === "items"
-            ? await pipelineItemRepository.deletePipelineItemsBatch(
-                { workspaceId, pipelineId, limit },
-                tx,
-              )
-            : await pipelineActivityRepository.deleteByPipelineBatch(
-                { workspaceId, pipelineId, limit },
-                tx,
-              )
+          const stages = await this.assertNoBulkJob(workspaceId, pipelineId, tx)
+          if (step === "items") {
+            // Structure lock, then every stage's order lock, then the rows: a
+            // live respace holds a stage-order key before it locks rows.
+            await lockStageOrder(
+              tx,
+              workspaceId,
+              stages.map((stage) => stage.id),
+            )
+            return await pipelineItemRepository.deletePipelineItemsBatch(
+              { workspaceId, pipelineId, limit },
+              tx,
+            )
+          }
+          return await pipelineActivityRepository.deleteByPipelineBatch(
+            { workspaceId, pipelineId, limit },
+            tx,
+          )
         })
         if (removed === 0) {
           break

@@ -11815,7 +11815,17 @@
       "error": "Não foi possível carregar o quadro",
       "processing": "Processando esta etapa…",
       "moveFailed": "Não foi possível mover o cartão",
+      "reorderNeedsManualSort": "Mude a ordenação para Ordem manual para reorganizar os cartões dentro de uma etapa.",
+      "dragHandle": "Arraste para mover o cartão",
+      "dragInstructions": "Para pegar um cartão, pressione Espaço ou Enter na alça de arrastar. Use as setas para movê-lo, Espaço ou Enter para soltá-lo e Esc para cancelar.",
+      "announce": {
+        "pickedUp": "{name} pego.",
+        "over": "{name} está sobre {stage}.",
+        "dropped": "{name} solto em {stage}.",
+        "cancelled": "Movimento cancelado. {name} voltou ao lugar de origem."
+      },
       "sortOptions": {
+        "manualAsc": "Ordem manual",
         "createdAtDesc": "Data de criação (Novo para Antigo)",
         "createdAtAsc": "Data de criação (Antigo para Novo)",
         "updatedAtDesc": "Data de atualização (Novo para Antigo)",

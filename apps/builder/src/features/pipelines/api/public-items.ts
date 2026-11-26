@@ -54,7 +54,7 @@ export const pipelineItemsPublicRouter = {
       path: "/v1/pipelines/{id}/items",
       summary: "List pipeline items",
       description:
-        "Items of a pipeline, newest first by default. Filter by stage, status, priority, assignee, contact, value, a custom field, search, or date ranges (due, created, updated, last comment, status change, stage entry, won/lost closure). Page with `nextCursor`; keep `sort`, `direction` and the filters unchanged between pages. Get pipeline and stage ids from `pipelines.list` / `pipelines.get`.",
+        "Items of a pipeline, newest first by default. `sort=manual` returns the board order set by `pipelines.moveItem` (top to bottom by default) and needs exactly one `stageId`; without it the request is a 422 on `sort`. Filter by stage, status, priority, assignee, contact, value, a custom field, search, or date ranges (due, created, updated, last comment, status change, stage entry, won/lost closure). Page with `nextCursor`; keep `sort`, `direction` and the filters unchanged between pages. Get pipeline and stage ids from `pipelines.list` / `pipelines.get`.",
       tags: TAGS,
       spec: mcpSpec({
         destructiveHint: false,
@@ -188,9 +188,9 @@ export const pipelineItemsPublicRouter = {
     .route({
       method: "POST",
       path: "/v1/pipelines/{id}/items/{itemId}/move",
-      summary: "Move item to stage",
+      summary: "Move or reorder item",
       description:
-        "Moves the item to another stage of the same pipeline. Get stage ids from `pipelines.get`. To move it to another pipeline use `pipelines.transferItem`.",
+        "Moves the item to a stage of the same pipeline and/or places it among that stage's items. Get stage ids from `pipelines.get`. Send at most one of `beforeItemId` (directly above that item), `afterItemId` (directly below it) or `placement` (`top` or `bottom`); the anchor item must be in `stageId`. With none of them, a stage change puts the item on top of the stage and moving within the same stage does nothing. Reordering within the stage is allowed (`stageId` is the current stage) and does not change `updatedAt`. Errors: 404 when the item or `stageId` is not in this pipeline; 422 for an unknown anchor, the item itself, an anchor outside `stageId`, or more than one placement field; 409 `stageBusy` while the item's stage or `stageId` is being deleted; 409 `conflict` when the spot is too crowded, the stage is busy or the item changed stage at the same time (retry). The response is the moved item with its new `stageId` and `position`; read the whole order with `pipelines.listItems` using `sort=manual` and `stageId` (lower position = higher on the board). To move it to another pipeline use `pipelines.transferItem`.",
       tags: TAGS,
       spec: mcpSpec({
         destructiveHint: true,
@@ -208,6 +208,9 @@ export const pipelineItemsPublicRouter = {
         ...tokenCtx(context, input),
         itemId: input.itemId,
         stageId: input.stageId,
+        beforeItemId: input.beforeItemId,
+        afterItemId: input.afterItemId,
+        placement: input.placement,
       })
       return await readItem(context.workspace.id, input.id, input.itemId)
     }),

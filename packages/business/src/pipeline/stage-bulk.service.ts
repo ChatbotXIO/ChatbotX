@@ -38,6 +38,7 @@ import {
   realtimeEffect,
 } from "./mutation-engine"
 import { pipelineService } from "./service"
+import { lockStageOrder } from "./stage-order"
 import type { PipelineActor } from "./types"
 
 export type StageRemovalMode =
@@ -142,6 +143,13 @@ export class PipelineStageBulkService extends BaseService {
           "stageBusy",
         )
       }
+      // Stage-order keys (global order: structure lock, then these, then the
+      // stage row): placements into either stage finish first, later ones wait.
+      await lockStageOrder(
+        tx,
+        workspaceId,
+        removal.kind === "move" ? [stageId, removal.target.id] : [stageId],
+      )
       // Exclusive lock: a writer holding the shared lock finishes first, so the
       // drain below sees its item; later writers find the stage gone.
       await pipelineStageRepository.lockExclusive(
@@ -302,6 +310,14 @@ export class PipelineStageBulkService extends BaseService {
           )
           return { kind: "aborted" }
         }
+        // The claim (`bulkJobId`) stands in for the exclusive stage lock here;
+        // the stage-order keys keep placements out while the batch moves rows.
+        await lockStageOrder(
+          tx,
+          workspaceId,
+          removal.kind === "move" ? [stageId, removal.target.id] : [stageId],
+          "unbounded",
+        )
         const row = await pipelineService.requireAccess({
           workspaceId,
           pipelineId,

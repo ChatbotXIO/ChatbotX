@@ -12,12 +12,14 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@chatbotx.io/ui/components/ui/dropdown-menu"
-import { useDraggable } from "@dnd-kit/core"
+import { useSortable } from "@dnd-kit/sortable"
+import { CSS } from "@dnd-kit/utilities"
 import {
   ArrowRightLeftIcon,
   CalendarIcon,
   ClockIcon,
   FlagIcon,
+  GripVerticalIcon,
   HistoryIcon,
   MessageSquareIcon,
   MoreVerticalIcon,
@@ -57,7 +59,12 @@ type ItemCardProps = {
   actions?: ItemCardActions
   isOverlay?: boolean
   canDrag?: boolean
+  /** Manual order is on: cards are drop targets and a drop writes the order. */
+  isManualSort?: boolean
 }
+
+/** What `useSortable` hands the card frame; absent on the drag overlay. */
+type CardSortable = ReturnType<typeof useSortable>
 
 // The menu popup is portaled but still bubbles React events to the draggable wrapper.
 const stopDrag = {
@@ -67,7 +74,27 @@ const stopDrag = {
     event.stopPropagation(),
 }
 
-export const ItemCard = memo(function ItemCard({
+export const ItemCard = memo(function ItemCard(props: ItemCardProps) {
+  // The overlay copy shares the card's id: it must not register as sortable.
+  return props.isOverlay ? (
+    <CardFrame {...props} />
+  ) : (
+    <SortableCard {...props} />
+  )
+})
+
+function SortableCard(props: ItemCardProps) {
+  const { view, canDrag = true, isManualSort = false } = props
+  const sortable = useSortable({
+    id: view.item.id,
+    data: { stageId: view.item.stageId },
+    // Outside manual sort a card is not a drop target: nothing reflows and snaps back.
+    disabled: { draggable: !canDrag, droppable: !isManualSort },
+  })
+  return <CardFrame {...props} sortable={sortable} />
+}
+
+function CardFrame({
   view,
   currency,
   elements,
@@ -76,18 +103,13 @@ export const ItemCard = memo(function ItemCard({
   actions,
   isOverlay,
   canDrag = true,
-}: ItemCardProps) {
+  sortable,
+}: ItemCardProps & { sortable?: CardSortable }) {
   const locale = useLocale()
   const format = useFormatter()
   const t = useTranslations("pipelines")
   const { item, contact } = view
-  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
-    id: item.id,
-    data: { stageId: item.stageId },
-    disabled: isOverlay || !canDrag,
-  })
-  // The card holds real buttons, so the wrapper must not also be a button/tab stop.
-  const { role: _role, tabIndex: _tabIndex, ...dragAttributes } = attributes
+  const isDragging = sortable?.isDragging ?? false
   const { workspaceMemberIds: memberIds, inboxTeamIds: teamIds } =
     view.assignees
   const assigneeOptions: AssigneeOption[] = [
@@ -111,13 +133,25 @@ export const ItemCard = memo(function ItemCard({
 
   return (
     <div
-      className={`flex cursor-grab touch-none flex-col rounded-lg border bg-card text-left text-sm shadow-xs transition-[box-shadow,border-color] hover:border-ring/40 hover:shadow-md active:cursor-grabbing ${
+      className={`group/card flex cursor-grab touch-none flex-col rounded-lg border bg-card text-left text-sm shadow-xs transition-[box-shadow,border-color] hover:border-ring/40 hover:shadow-md active:cursor-grabbing ${
         isDragging ? "opacity-40" : ""
       } ${isOverlay ? "w-[274px] shadow-lg" : ""}`}
       data-testid="pipeline-item-card"
-      ref={setNodeRef}
-      {...dragAttributes}
-      {...listeners}
+      // The card body drags with the pointer; the keyboard goes through the handle.
+      onPointerDown={
+        sortable?.listeners
+          ? (event) => sortable.listeners?.onPointerDown?.(event)
+          : undefined
+      }
+      ref={sortable?.setNodeRef}
+      style={
+        sortable
+          ? {
+              transform: CSS.Transform.toString(sortable.transform),
+              transition: sortable.transition,
+            }
+          : undefined
+      }
     >
       <div className="flex items-start gap-1 p-3">
         <button
@@ -142,6 +176,7 @@ export const ItemCard = memo(function ItemCard({
             ) : null}
           </span>
         </button>
+        {sortable && canDrag ? <DragHandle sortable={sortable} /> : null}
         {showMenu ? (
           <CardMenu
             actions={actions}
@@ -231,7 +266,28 @@ export const ItemCard = memo(function ItemCard({
       </div>
     </div>
   )
-})
+}
+
+/**
+ * The keyboard and screen-reader way to reorder: a real button carrying the
+ * sortable attributes and listeners. Shown on hover and focus (always on touch
+ * screens); the wrapper itself stays a plain container around the nested buttons.
+ */
+function DragHandle({ sortable }: { sortable: CardSortable }) {
+  const t = useTranslations("pipelines")
+  return (
+    <button
+      aria-label={t("board.dragHandle")}
+      className="flex h-7 w-5 shrink-0 cursor-grab items-center justify-center rounded-md text-muted-foreground opacity-0 outline-none transition-opacity hover:bg-accent hover:text-foreground focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-ring active:cursor-grabbing group-hover/card:opacity-100 [@media(hover:none)]:opacity-100"
+      ref={sortable.setActivatorNodeRef}
+      type="button"
+      {...sortable.attributes}
+      {...sortable.listeners}
+    >
+      <GripVerticalIcon aria-hidden className="size-4" />
+    </button>
+  )
+}
 
 function FooterStat({
   icon,

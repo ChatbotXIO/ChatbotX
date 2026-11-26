@@ -175,6 +175,7 @@ describe("real router: pipelines public API scope wiring", () => {
         stageEnteredAt: new Date(),
         closedAt: null,
         lastCommentAt: null,
+        position: -1000,
         createdAt: new Date(),
         updatedAt: new Date(),
       },

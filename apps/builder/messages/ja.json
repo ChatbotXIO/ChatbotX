@@ -11815,7 +11815,17 @@
       "error": "ボードを読み込めませんでした",
       "processing": "このステージを処理中…",
       "moveFailed": "カードを移動できませんでした",
+      "reorderNeedsManualSort": "並べ替えを「手動の順序」に切り替えると、ステージ内でカードを並べ替えられます。",
+      "dragHandle": "ドラッグしてカードを移動",
+      "dragInstructions": "カードを持ち上げるには、ドラッグハンドルでスペースキーまたはEnterキーを押します。矢印キーで移動し、スペースキーまたはEnterキーで置き、Escapeキーでキャンセルします。",
+      "announce": {
+        "pickedUp": "{name} を持ち上げました。",
+        "over": "{name} は {stage} の上にあります。",
+        "dropped": "{name} を {stage} に置きました。",
+        "cancelled": "移動をキャンセルしました。{name} は元の位置に戻りました。"
+      },
       "sortOptions": {
+        "manualAsc": "手動の順序",
         "createdAtDesc": "作成日 (新しい順)",
         "createdAtAsc": "作成日 (古い順)",
         "updatedAtDesc": "更新日 (新しい順)",

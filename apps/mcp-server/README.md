@@ -191,7 +191,7 @@ For `connections_create` with `provider: "api"`, the response includes a one-tim
 | `pipelines_list` | List pipelines |
 | `pipelines_list_items` | List pipeline items |
 | `pipelines_create_item` | Create pipeline item |
-| `pipelines_move_item` | Move item to stage |
+| `pipelines_move_item` | Move or reorder item |
 
 ### Sequences
 

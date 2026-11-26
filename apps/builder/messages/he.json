@@ -11815,7 +11815,17 @@
       "error": "לא ניתן לטעון את הלוח",
       "processing": "מעבד את השלב…",
       "moveFailed": "לא ניתן להעביר את הכרטיס",
+      "reorderNeedsManualSort": "החליפו את המיון לסדר ידני כדי לסדר מחדש כרטיסים בתוך שלב.",
+      "dragHandle": "גררו כדי להזיז את הכרטיס",
+      "dragInstructions": "כדי להרים כרטיס, לחצו על רווח או Enter בידית הגרירה שלו. השתמשו במקשי החיצים כדי להזיז, ברווח או ב-Enter כדי להניח וב-Escape כדי לבטל.",
+      "announce": {
+        "pickedUp": "{name} הורם.",
+        "over": "{name} מעל {stage}.",
+        "dropped": "{name} הונח ב-{stage}.",
+        "cancelled": "ההזזה בוטלה. {name} חזר למקומו."
+      },
       "sortOptions": {
+        "manualAsc": "סדר ידני",
         "createdAtDesc": "תאריך יצירה (מחדש לישן)",
         "createdAtAsc": "תאריך יצירה (מישן לחדש)",
         "updatedAtDesc": "תאריך עדכון (מחדש לישן)",

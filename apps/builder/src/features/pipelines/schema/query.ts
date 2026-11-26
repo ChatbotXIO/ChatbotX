@@ -4,6 +4,7 @@ import {
   pipelineActivityKinds,
   pipelineFieldOperators,
   pipelineItemPriorities,
+  pipelineItemSortDirections,
   pipelineItemSortKeys,
   pipelineItemStatuses,
   pipelineValueOperators,
@@ -130,7 +131,7 @@ export const boardFilterState = pipelineItemFilterRequest.extend({
 
 export const pipelineItemSortRequest = z.object({
   key: pipelineItemSortKeys.default("createdAt"),
-  direction: z.enum(["asc", "desc"]).default("desc"),
+  direction: z.enum(pipelineItemSortDirections).optional(),
 })
 
 export const workspacePipelineRequest = z.object({

@@ -11831,7 +11831,17 @@
       "error": "Không thể tải bảng",
       "processing": "Đang xử lý giai đoạn này…",
       "moveFailed": "Không thể chuyển thẻ",
+      "reorderNeedsManualSort": "Chuyển cách sắp xếp sang Thứ tự thủ công để sắp xếp lại các thẻ trong một giai đoạn.",
+      "dragHandle": "Kéo để di chuyển thẻ",
+      "dragInstructions": "Để nhấc một thẻ, nhấn Phím cách hoặc Enter trên tay cầm kéo của thẻ. Dùng phím mũi tên để di chuyển, Phím cách hoặc Enter để thả và Escape để hủy.",
+      "announce": {
+        "pickedUp": "Đã nhấc {name}.",
+        "over": "{name} đang ở trên {stage}.",
+        "dropped": "Đã thả {name} vào {stage}.",
+        "cancelled": "Đã hủy di chuyển. {name} đã trở về vị trí cũ."
+      },
       "sortOptions": {
+        "manualAsc": "Thứ tự thủ công",
         "createdAtDesc": "Ngày tạo (Mới đến Cũ)",
         "createdAtAsc": "Ngày tạo (Cũ đến Mới)",
         "updatedAtDesc": "Ngày cập nhật (Mới đến Cũ)",

@@ -21,6 +21,7 @@ import {
 import type { PipelineAccessScope, PipelineAction } from "./access"
 import { dispatchPipelineEffects, type PipelineEffect } from "./mutation-engine"
 import { pipelineService } from "./service"
+import { withStageOrderRetry } from "./stage-order"
 
 export type MutationContext = {
   tx: DatabaseClient
@@ -42,19 +43,24 @@ export class PipelineItemBaseService extends BaseService {
   protected async mutate<T>(
     work: (context: MutationContext) => Promise<T>,
   ): Promise<T> {
-    const effects: PipelineEffect[] = []
-    const result = await db
-      .transaction(async (tx) => await work({ tx, effects }))
-      .catch((error: unknown) => {
-        // A contact, admin, team or file checked a moment ago was deleted
-        // before the write: a 404 like the check itself, not a 500 and retry.
-        if (isForeignKeyViolationError(error)) {
-          throw notFoundException(
-            "A record this change refers to no longer exists",
-          )
-        }
-        throw error
-      })
+    // Each attempt gets its own effects: a restarted transaction (see
+    // `withStageOrderRetry`) must not dispatch what the aborted one queued.
+    const { result, effects } = await withStageOrderRetry(async () => {
+      const attemptEffects: PipelineEffect[] = []
+      const attemptResult = await db
+        .transaction(async (tx) => await work({ tx, effects: attemptEffects }))
+        .catch((error: unknown) => {
+          // A contact, admin, team or file checked a moment ago was deleted
+          // before the write: a 404 like the check itself, not a 500 and retry.
+          if (isForeignKeyViolationError(error)) {
+            throw notFoundException(
+              "A record this change refers to no longer exists",
+            )
+          }
+          throw error
+        })
+      return { result: attemptResult, effects: attemptEffects }
+    })
     await dispatchPipelineEffects(effects)
     return result
   }

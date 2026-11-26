@@ -14,12 +14,17 @@ import { ArrowDownUpIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
 import type { BoardSortInput } from "./types"
 
-/** Display order: value, due date, priority, update date, date created. */
+/** Display order: manual, value, due date, priority, update date, date created. */
 const SORT_OPTIONS: ReadonlyArray<{
   value: string
   sort: BoardSortInput
   labelKey: string
 }> = [
+  {
+    value: "manual:asc",
+    sort: { key: "manual", direction: "asc" },
+    labelKey: "board.sortOptions.manualAsc",
+  },
   {
     value: "value:desc",
     sort: { key: "value", direction: "desc" },

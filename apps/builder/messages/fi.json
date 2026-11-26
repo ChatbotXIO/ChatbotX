@@ -11815,7 +11815,17 @@
       "error": "Taulun lataaminen epäonnistui",
       "processing": "Käsitellään tätä vaihetta…",
       "moveFailed": "Kortin siirtäminen epäonnistui",
+      "reorderNeedsManualSort": "Vaihda lajittelu Manuaaliseen järjestykseen järjestääksesi kortit uudelleen vaiheen sisällä.",
+      "dragHandle": "Siirrä korttia vetämällä",
+      "dragInstructions": "Poimi kortti painamalla sen vetokahvassa välilyöntiä tai Enteriä. Siirrä nuolinäppäimillä, pudota välilyönnillä tai Enterillä ja peruuta Escapella.",
+      "announce": {
+        "pickedUp": "{name} poimittu.",
+        "over": "{name} on kohdassa {stage}.",
+        "dropped": "{name} pudotettu vaiheeseen {stage}.",
+        "cancelled": "Siirto peruttu. {name} palasi paikalleen."
+      },
       "sortOptions": {
+        "manualAsc": "Manuaalinen järjestys",
         "createdAtDesc": "Luontipäivä (Uusimmasta Vanhimpaan)",
         "createdAtAsc": "Luontipäivä (Vanhimmasta Uusimpaan)",
         "updatedAtDesc": "Päivityspäivä (Uusimmasta Vanhimpaan)",

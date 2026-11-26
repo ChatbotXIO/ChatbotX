@@ -109,6 +109,11 @@ export const publicPipelineItemResource = z.object({
   stageEnteredAt: z.date(),
   closedAt: z.date().nullable(),
   lastCommentAt: z.date().nullable(),
+  position: z
+    .number()
+    .describe(
+      "Place of the item among the items of its stage. Lower is higher on the board. Sort by it with `pipelines.listItems` `sort=manual`; change it with `pipelines.moveItem`.",
+    ),
   createdAt: z.date(),
   updatedAt: z.date(),
 })

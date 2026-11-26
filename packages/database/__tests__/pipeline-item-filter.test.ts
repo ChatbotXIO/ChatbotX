@@ -22,6 +22,9 @@ const SORT_CREATED_ASC: PipelineItemSort = {
   direction: "asc",
 }
 
+const SORT_MANUAL_ASC: PipelineItemSort = { key: "manual", direction: "asc" }
+const SORT_MANUAL_DESC: PipelineItemSort = { key: "manual", direction: "desc" }
+
 const GUARDED_CAST = /case when .* ~ \$\d+ then .*::timestamptz end/
 const GUARDED_NUMERIC_CAST = /case when .* ~ \$\d+ then .*::numeric end/
 
@@ -123,6 +126,94 @@ describe("pipeline item cursor", () => {
     expect(() => decodePipelineItemCursor(encodeFor(overrides), sort)).toThrow(
       InvalidPipelineCursorError,
     )
+  })
+
+  describe("manual sort cursor", () => {
+    const manualCursor = (
+      sortValue: string | null,
+      overrides: Partial<PipelineItemCursor> = {},
+    ): string =>
+      encodeFor({
+        sort: "manual",
+        dir: "asc",
+        nullRank: 0,
+        sortValue,
+        ...overrides,
+      })
+
+    test.each([
+      "-1024",
+      "0",
+      "-0",
+      "1024.5",
+      "-1769425200000",
+      "-1769425200000.123",
+      "1e-05",
+      "5e-324",
+      "1.5e+300",
+      "-1.7976931348623157e+308",
+    ])("round-trips the float8 text %s", (sortValue) => {
+      const raw = manualCursor(sortValue)
+
+      expect(decodePipelineItemCursor(raw, SORT_MANUAL_ASC).sortValue).toBe(
+        sortValue,
+      )
+    })
+
+    test("a cursor issued for the other direction is rejected", () => {
+      expect(() =>
+        decodePipelineItemCursor(manualCursor("1"), SORT_MANUAL_DESC),
+      ).toThrow(InvalidPipelineCursorError)
+    })
+
+    test.each([
+      ["NaN", "NaN"],
+      ["Infinity", "Infinity"],
+      ["-Infinity", "-Infinity"],
+      ["a dangling exponent", "1e"],
+      ["an unsigned exponent", "1e5"],
+      ["an exponent of four digits", "1e+1000"],
+      ["a leading plus", "+1"],
+      ["a bare dot", "1."],
+      ["text", "abc"],
+      ["an empty string", ""],
+      ["an injected statement", "1; drop table"],
+      ["an overlong number", `${"9".repeat(40)}.5`],
+      ["an overlong fraction", `1.${"0".repeat(40)}e+10`],
+    ])("rejects %s as a manual sort value", (_name, sortValue) => {
+      expect(() =>
+        decodePipelineItemCursor(manualCursor(sortValue), SORT_MANUAL_ASC),
+      ).toThrow(InvalidPipelineCursorError)
+    })
+
+    test("rejects a non-null rank without a value", () => {
+      expect(() =>
+        decodePipelineItemCursor(manualCursor(null), SORT_MANUAL_ASC),
+      ).toThrow(InvalidPipelineCursorError)
+    })
+
+    test("orders by position then id with no NULL term and a float8 row comparison", () => {
+      const orderBy = pipelineItemOrderBy(SORT_MANUAL_ASC).map(
+        (part) => render(part).sql,
+      )
+
+      expect(orderBy).toHaveLength(2)
+      expect(orderBy[0]).toContain('"position" asc')
+      expect(orderBy[1]).toContain('"id" asc')
+      const after = render(
+        pipelineItemAfterCursor(SORT_MANUAL_ASC, {
+          v: 1,
+          sort: "manual",
+          dir: "asc",
+          nullRank: 0,
+          sortValue: "-1024",
+          id: "7",
+        }),
+      )
+      expect(after.sql).toMatch(ROW_COMPARISON_AFTER)
+      expect(after.sql).toContain("::float8")
+      expect(after.params).toContain("-1024")
+    })
   })
 
   test("accepts the largest signed bigint id", () => {
