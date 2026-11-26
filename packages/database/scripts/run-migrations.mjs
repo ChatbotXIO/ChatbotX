@@ -12,7 +12,9 @@ import { readMigrationFiles } from "drizzle-orm/migrator"
 import { getMigrationsToRun } from "drizzle-orm/migrator.utils"
 import { drizzle } from "drizzle-orm/node-postgres"
 import { migrate } from "drizzle-orm/node-postgres/migrator"
-import { upgradeIfNeeded } from "drizzle-orm/up-migrations/pg"
+import { runAsyncProgram } from "drizzle-orm/runtime/async"
+import { pgMigrationRunner } from "drizzle-orm/up-migrations/pg"
+import { upgradeIfNeeded } from "drizzle-orm/up-migrations/pg-program"
 import { Pool } from "pg"
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
@@ -79,11 +81,12 @@ const runMigrationsSequentially = async (db) => {
   )
 
   const localMigrations = readMigrationFiles({ migrationsFolder })
-  const { newDb } = await upgradeIfNeeded(
-    migrationsSchema,
-    migrationsTable,
-    db,
-    localMigrations,
+  // Since drizzle-orm 1.0.0-rc, `upgradeIfNeeded` is a query program (a
+  // generator) driven by a migration runner, not an async function taking the
+  // database. This mirrors what drizzle's own `migrate` does internally.
+  const runner = pgMigrationRunner(db)
+  const { newDb } = await runAsyncProgram(() =>
+    upgradeIfNeeded(migrationsSchema, migrationsTable, runner, localMigrations),
   )
 
   if (newDb) {
@@ -98,8 +101,9 @@ const runMigrationsSequentially = async (db) => {
     `)
   }
 
-  const dbMigrations = await db.session.all(
+  const dbMigrations = await runner.objects(
     sql`select id, hash, created_at, name from ${sql.identifier(migrationsSchema)}.${sql.identifier(migrationsTable)}`,
+    ["id", "hash", "created_at", "name"],
   )
   const migrationsToRun = getMigrationsToRun({
     localMigrations,
