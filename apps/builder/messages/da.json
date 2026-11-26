@@ -543,8 +543,10 @@
       "close": "Luk",
       "options": "Tilgængelige valg",
       "remove": "Fjern",
-      "filterHint": "Filtre tæller kun hændelser registreret efter filtrering blev tilføjet: ældre hændelser har ingen indbakke, og ældre bot- og samtalehændelser har heller ingen kanal. Alle tæller altid alt.",
       "tooManyInboxes": "Vælg højst {max} indbakker, eller markér Alle."
+    },
+    "sections": {
+      "posts": "Opslag"
     }
   },
   "flowAnalytics": {
@@ -3912,13 +3914,13 @@
       },
       "channelFilter": {
         "label": "Kanal",
-        "allAccounts": "Alle konti",
         "allChannels": "Alle kanaler"
       },
       "retarget": "Retarget",
       "thoseWhoPurchased": "De, der har købt",
       "thoseWhoStartedConversation": "De, der har startet en samtale",
       "sendWhatsappBroadcast": "Send WhatsApp-broadcast",
+      "singleInboxActionsHint": "Eksport og retargeting dækker én indbakke ad gangen. Vælg én indbakke for at bruge dem.",
       "retargetOnChannel": "Retarget på {channel}",
       "from": "Fra",
       "to": "Til",

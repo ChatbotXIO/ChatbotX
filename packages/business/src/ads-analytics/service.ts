@@ -44,6 +44,20 @@ export type AdsAnalyticsScope = {
   integrationWhatsappId?: string
   integrationMessengerId?: string
   integrationInstagramId?: string
+  /**
+   * Several integrations of `channel` (the Analytics dashboard's inbox
+   * selection mapped to this channel's integrations). Funnel and spend both
+   * aggregate exactly these; it wins over the single id above. Needs
+   * `channel`; omitted or empty keeps the single-id / all-accounts behavior.
+   */
+  integrationIds?: string[]
+  /**
+   * An explicit integration selection that matches no current integration (a
+   * bookmarked inbox that was disconnected): the result is empty, with no
+   * funnel or spend query, instead of falling back to "all accounts". Set by
+   * the dashboard only; `integrationIds` stays absent then.
+   */
+  matchesNoIntegration?: boolean
   // "All channels" (Ads Analytics default) — the caller resolves `channel ===
   // "all"` into this SEPARATE flag before ever building this scope, so
   // `channel`/every integration id above are always undefined when this is
@@ -64,23 +78,29 @@ function channelScope(scope: AdsAnalyticsScope) {
     channel: scope.channel,
     integrationMessengerId: scope.integrationMessengerId,
     integrationInstagramId: scope.integrationInstagramId,
+    integrationIds: scope.integrationIds,
     allChannels: scope.allChannels,
   }
 }
 
 /**
- * The one channel-integration id selected on `scope`, whichever channel's FK
- * column it landed in — same "pick whichever of the three is set" shape
+ * The channel-integration ids selected on `scope` (the list, else the one id
+ * in whichever channel's FK column it landed) — same "pick whichever of the three is set" shape
  * `channelScope` already threads to the funnel side; this is its spend-side
  * counterpart (Codex HIGH-3) for `resolveSelectedAdAccounts`'s
  * `integrationId` narrowing.
  */
-function selectedIntegrationId(scope: AdsAnalyticsScope): string | undefined {
-  return (
+function selectedIntegrationIds(
+  scope: AdsAnalyticsScope,
+): string[] | undefined {
+  if (scope.integrationIds?.length) {
+    return scope.integrationIds
+  }
+  const single =
     scope.integrationWhatsappId ??
     scope.integrationMessengerId ??
     scope.integrationInstagramId
-  )
+  return single ? [single] : undefined
 }
 
 // Facebook Graph API enforces per-access-token rate limits; capping fan-out
@@ -121,7 +141,7 @@ type SelectedAdAccounts = {
 async function resolveSelectedAdAccounts(input: {
   workspaceId: string
   channel?: AdsConversionChannel
-  integrationId?: string
+  integrationIds?: string[]
   adAccountId?: string
 }): Promise<SelectedAdAccounts | null> {
   if (!isAdsEligibleChannel(input.channel)) {
@@ -132,7 +152,7 @@ async function resolveSelectedAdAccounts(input: {
     const accounts = await resolveChannelAdAccountSources({
       workspaceId: input.workspaceId,
       channel: input.channel,
-      integrationId: input.integrationId,
+      integrationIds: input.integrationIds,
     })
     const selectedAdAccounts = filterAdAccountsByIds(
       accounts,
@@ -205,7 +225,7 @@ function buildContextResolverBySource(input: {
 async function listInsightsForConnectedAdAccounts(input: {
   workspaceId: string
   channel?: AdsConversionChannel
-  integrationId?: string
+  integrationIds?: string[]
   since: string
   until: string
   adAccountId?: string
@@ -273,7 +293,7 @@ type DailyInsightRow = {
 async function listDailyInsightsForConnectedAdAccounts(input: {
   workspaceId: string
   channel?: AdsConversionChannel
-  integrationId?: string
+  integrationIds?: string[]
   since: string
   until: string
   adAccountId?: string
@@ -334,12 +354,35 @@ export type AdsAnalyticsTimeseriesRow = {
   spend: number | null
 }
 
+type FunnelTimeseriesRows = Awaited<
+  ReturnType<typeof adsConversionService.getCtwaFunnelTimeseries>
+>
+
+const EMPTY_DAILY_INSIGHTS: {
+  insights: DailyInsightRow[]
+  adAccountFilterApplied: boolean
+} = { insights: [], adAccountFilterApplied: false }
+
+const EMPTY_FUNNEL = {
+  totals: { conversations: 0, leads: 0, purchases: 0, revenue: 0 },
+  perAd: [],
+}
+
 class AdsAnalyticsService {
   async getOverview(scope: AdsAnalyticsScope): Promise<AdsAnalyticsData> {
     const { since, until, from, to } = parseAnalyticsDateRange(scope)
     const adAccountId = AD_ACCOUNT_ID_RE.test(scope.adAccountId ?? "")
       ? scope.adAccountId
       : undefined
+
+    if (scope.matchesNoIntegration) {
+      return mergeAdsAnalytics({
+        funnel: EMPTY_FUNNEL,
+        insights: [],
+        integrationFilterActive: true,
+        adAccountFilterActive: false,
+      })
+    }
 
     const [funnel, insightsResult] = await Promise.all([
       adsConversionService.getCtwaFunnel({
@@ -356,7 +399,7 @@ class AdsAnalyticsService {
       listInsightsForConnectedAdAccounts({
         workspaceId: scope.workspaceId,
         channel: scope.channel,
-        integrationId: selectedIntegrationId(scope),
+        integrationIds: selectedIntegrationIds(scope),
         since: from,
         until: to,
         adAccountId,
@@ -366,11 +409,7 @@ class AdsAnalyticsService {
     return mergeAdsAnalytics({
       funnel,
       insights: insightsResult.insights,
-      integrationFilterActive: Boolean(
-        scope.integrationWhatsappId ||
-          scope.integrationMessengerId ||
-          scope.integrationInstagramId,
-      ),
+      integrationFilterActive: Boolean(selectedIntegrationIds(scope)),
       adAccountFilterActive: insightsResult.adAccountFilterApplied,
     })
   }
@@ -394,24 +433,29 @@ class AdsAnalyticsService {
       ? scope.adAccountId
       : undefined
 
+    const noMatch = Boolean(scope.matchesNoIntegration)
     const [funnelRows, dailyInsightsResult] = await Promise.all([
-      adsConversionService.getCtwaFunnelTimeseries({
-        workspaceId: scope.workspaceId,
-        since,
-        until,
-        timezone,
-        ...channelScope(scope),
-      }),
+      noMatch
+        ? Promise.resolve<FunnelTimeseriesRows>([])
+        : adsConversionService.getCtwaFunnelTimeseries({
+            workspaceId: scope.workspaceId,
+            since,
+            until,
+            timezone,
+            ...channelScope(scope),
+          }),
       // `from`/`to` date-KEYS, interpreted by Meta in the ad account's own
       // reporting timezone — see the comment in `getOverview` above.
-      listDailyInsightsForConnectedAdAccounts({
-        workspaceId: scope.workspaceId,
-        channel: scope.channel,
-        integrationId: selectedIntegrationId(scope),
-        since: from,
-        until: to,
-        adAccountId,
-      }),
+      noMatch
+        ? Promise.resolve(EMPTY_DAILY_INSIGHTS)
+        : listDailyInsightsForConnectedAdAccounts({
+            workspaceId: scope.workspaceId,
+            channel: scope.channel,
+            integrationIds: selectedIntegrationIds(scope),
+            since: from,
+            until: to,
+            adAccountId,
+          }),
     ])
 
     // Same survivor semantics as mergeAdsAnalytics: when an ad-account filter

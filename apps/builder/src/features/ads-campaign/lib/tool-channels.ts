@@ -10,7 +10,7 @@ import { notFound } from "next/navigation"
  * order (WhatsApp, Messenger, Instagram) — re-exported from
  * `adsEligibleChannelTypes` (`@chatbotx.io/utils/channel`) rather than
  * redeclared, so the tool's tabs can never drift from the Ads dashboard's
- * channel set/order (`AnalyticsNav` renders the same order).
+ * channel set/order (`AnalyticsSectionSelect` lists them in the same order).
  */
 export const MESSAGING_ADS_TOOL_CHANNELS = adsEligibleChannelTypes.options
 

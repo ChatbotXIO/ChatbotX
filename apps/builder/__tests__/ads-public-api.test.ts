@@ -462,6 +462,70 @@ describe("GET /v1/ads/{channel}/ad-accounts", () => {
   })
 })
 
+describe("integrationIds on the public handlers", () => {
+  test("ad-accounts forwards the list alongside the single id, workspace from context", async () => {
+    resolveChannelAdAccountSources.mockResolvedValueOnce([])
+    const procedure = findProcedure("GET", "/v1/ads/{channel}/ad-accounts")
+
+    await procedure.handler?.({
+      context: { workspace: { id: "workspace-1" } },
+      input: { channel: "messenger", integrationIds: ["10", "11"] },
+    })
+
+    expect(resolveChannelAdAccountSources).toHaveBeenCalledWith(
+      expect.objectContaining({
+        workspaceId: "workspace-1",
+        channel: "messenger",
+        integrationIds: ["10", "11"],
+      }),
+    )
+  })
+
+  test.each([
+    ["GET", "/v1/ads/funnel", "getCtwaFunnel", adsConversionService],
+    [
+      "GET",
+      "/v1/ads/funnel/timeseries",
+      "getCtwaFunnelTimeseries",
+      adsConversionService,
+    ],
+    ["GET", "/v1/ads/analytics/overview", "getOverview", adsAnalyticsService],
+    [
+      "GET",
+      "/v1/ads/analytics/timeseries",
+      "getTimeseries",
+      adsAnalyticsService,
+    ],
+  ] as const)("%s %s forwards the list to %s with the context workspace", async (method, path, serviceMethod, service) => {
+    const procedure = findProcedure(method, path)
+    ;(service as Record<string, ReturnType<typeof vi.fn>>)[
+      serviceMethod
+    ]?.mockResolvedValueOnce({ totals: {}, perAd: [] })
+
+    await procedure.handler?.({
+      context: { workspace: { id: "workspace-1" } },
+      input: {
+        from: "2026-08-01",
+        to: "2026-08-02",
+        since: new Date("2026-08-01"),
+        until: new Date("2026-08-02"),
+        channel: "messenger",
+        integrationIds: ["10", "11"],
+      },
+    })
+
+    expect(
+      (service as Record<string, ReturnType<typeof vi.fn>>)[serviceMethod],
+    ).toHaveBeenCalledWith(
+      expect.objectContaining({
+        workspaceId: "workspace-1",
+        channel: "messenger",
+        integrationIds: ["10", "11"],
+      }),
+    )
+  })
+})
+
 describe("POST /v1/ads/retarget-audiences", () => {
   const procedure = findProcedure("POST", "/v1/ads/retarget-audiences")
 

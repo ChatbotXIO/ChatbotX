@@ -118,7 +118,7 @@ describe("AdAccountFilter", () => {
   })
 
   async function renderFilter(
-    selectedChannelIntegrationId: string | null = "iw-1",
+    selectedChannelIntegrationIds: readonly string[] = ["iw-1"],
   ) {
     const callsBefore = listChannelAdAccounts.mock.calls.length
     act(() => {
@@ -126,8 +126,9 @@ describe("AdAccountFilter", () => {
         <QueryClientProvider client={queryClient}>
           <AdAccountFilter
             channel="messenger"
+            matchesNoIntegration={false}
             range={range}
-            selectedChannelIntegrationId={selectedChannelIntegrationId}
+            selectedChannelIntegrationIds={selectedChannelIntegrationIds}
             workspaceId="ws-1"
           />
         </QueryClientProvider>,
@@ -166,31 +167,71 @@ describe("AdAccountFilter", () => {
     )
   })
 
-  test("fetches with workspaceId, channel and the selected integration", async () => {
-    await renderFilter("iw-1")
+  test("fetches with workspaceId, channel and the selected integrations", async () => {
+    await renderFilter(["iw-1"])
 
     expect(listChannelAdAccounts.mock.calls.at(-1)?.[0]).toEqual({
       workspaceId: "ws-1",
       channel: "messenger",
-      integrationId: "iw-1",
+      integrationIds: ["iw-1"],
     })
   })
 
-  test("switching the selected integration refetches with the new integrationId", async () => {
-    await renderFilter("iw-1")
-    await renderFilter("iw-2")
+  test("switching the selected integration refetches with the new integrationIds", async () => {
+    await renderFilter(["iw-1"])
+    await renderFilter(["iw-2"])
 
     expect(listChannelAdAccounts).toHaveBeenCalledTimes(2)
     expect(listChannelAdAccounts.mock.calls[0]?.[0]).toEqual({
       workspaceId: "ws-1",
       channel: "messenger",
-      integrationId: "iw-1",
+      integrationIds: ["iw-1"],
     })
     expect(listChannelAdAccounts.mock.calls[1]?.[0]).toEqual({
       workspaceId: "ws-1",
       channel: "messenger",
-      integrationId: "iw-2",
+      integrationIds: ["iw-2"],
     })
+  })
+
+  test("several selected integrations are sent as one list", async () => {
+    await renderFilter(["iw-1", "iw-2"])
+
+    expect(listChannelAdAccounts.mock.calls.at(-1)?.[0]).toEqual({
+      workspaceId: "ws-1",
+      channel: "messenger",
+      integrationIds: ["iw-1", "iw-2"],
+    })
+  })
+
+  test("no selected integration asks for every account of the channel", async () => {
+    await renderFilter([])
+
+    expect(listChannelAdAccounts.mock.calls.at(-1)?.[0]).toEqual({
+      workspaceId: "ws-1",
+      channel: "messenger",
+    })
+  })
+
+  test("an explicit selection that matches no integration offers no ad accounts and asks for none", async () => {
+    const callsBefore = listChannelAdAccounts.mock.calls.length
+    act(() => {
+      root.render(
+        <QueryClientProvider client={queryClient}>
+          <AdAccountFilter
+            channel="messenger"
+            matchesNoIntegration
+            range={range}
+            selectedChannelIntegrationIds={[]}
+            workspaceId="ws-1"
+          />
+        </QueryClientProvider>,
+      )
+    })
+    await flushMicrotasks()
+
+    expect(listChannelAdAccounts.mock.calls.length).toBe(callsBefore)
+    expect(container.textContent).not.toContain("Primary Ads")
   })
 
   test("falls back to All ad accounts when the selected adAccount isn't in the narrowed list", async () => {
@@ -203,8 +244,9 @@ describe("AdAccountFilter", () => {
         <QueryClientProvider client={queryClient}>
           <AdAccountFilter
             channel="messenger"
+            matchesNoIntegration={false}
             range={{ ...range, adAccount: "act_1" }}
-            selectedChannelIntegrationId="iw-2"
+            selectedChannelIntegrationIds={["iw-2"]}
             workspaceId="ws-1"
           />
         </QueryClientProvider>,

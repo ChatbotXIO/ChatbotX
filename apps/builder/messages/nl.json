@@ -543,8 +543,10 @@
       "close": "Sluiten",
       "options": "Beschikbare opties",
       "remove": "Verwijderen",
-      "filterHint": "Filters tellen alleen gebeurtenissen die zijn vastgelegd nadat filteren is toegevoegd: oudere gebeurtenissen hebben geen postvak, en oudere bot- en gesprekgebeurtenissen ook geen kanaal. Alle telt altijd alles.",
       "tooManyInboxes": "Kies maximaal {max} postvakken, of vink Alle aan."
+    },
+    "sections": {
+      "posts": "Berichten"
     }
   },
   "flowAnalytics": {
@@ -3912,13 +3914,13 @@
       },
       "channelFilter": {
         "label": "Kanaal",
-        "allAccounts": "Alle accounts",
         "allChannels": "Alle kanalen"
       },
       "retarget": "Retargeten",
       "thoseWhoPurchased": "Degenen die hebben gekocht",
       "thoseWhoStartedConversation": "Degenen die een gesprek zijn gestart",
       "sendWhatsappBroadcast": "WhatsApp-broadcast versturen",
+      "singleInboxActionsHint": "Export en retargeting gelden voor één inbox tegelijk. Selecteer één inbox om ze te gebruiken.",
       "retargetOnChannel": "Retargeten op {channel}",
       "from": "Van",
       "to": "Tot",

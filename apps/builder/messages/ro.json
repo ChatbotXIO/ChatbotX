@@ -932,13 +932,13 @@
       },
       "channelFilter": {
         "label": "Canal",
-        "allAccounts": "Toate conturile",
         "allChannels": "Toate canalele"
       },
       "retarget": "Retargetare",
       "thoseWhoPurchased": "Cei care au achiziționat",
       "thoseWhoStartedConversation": "Cei care au început o conversație",
       "sendWhatsappBroadcast": "Trimite difuzare WhatsApp",
+      "singleInboxActionsHint": "Exportul și retargetingul acoperă o singură căsuță de mesaje pe rând. Selectați o singură căsuță pentru a le folosi.",
       "retargetOnChannel": "Retargetare pe {channel}",
       "from": "De la",
       "to": "Până la",
@@ -1940,8 +1940,10 @@
       "close": "Închide",
       "options": "Opțiuni disponibile",
       "remove": "Elimină",
-      "filterHint": "Filtrele numără doar evenimentele înregistrate după adăugarea filtrării: evenimentele mai vechi nu au Inbox, iar evenimentele mai vechi de bot și conversație nu au nici canal. Toate numără mereu tot.",
       "tooManyInboxes": "Alege cel mult {max} Inbox-uri sau bifează Toate."
+    },
+    "sections": {
+      "posts": "Postări"
     }
   },
   "flowAnalytics": {

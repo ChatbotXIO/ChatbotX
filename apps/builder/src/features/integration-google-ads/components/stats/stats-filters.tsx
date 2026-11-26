@@ -8,11 +8,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@chatbotx.io/ui/components/ui/select"
-import { GOOGLE_ADS_CHANNEL_VALUES } from "@chatbotx.io/utils/google-click"
 import { useTranslations } from "next-intl"
 import { parseLocalDateKey } from "@/features/ads/lib/ads-date-key"
 import { resolveRangePreset } from "../../lib/stats-preset"
-import { channelLabel } from "../../lib/status"
 
 const ALL = ""
 
@@ -54,18 +52,16 @@ type StatsFiltersProps = {
   workspaceCreatedAt: Date
   /** The server's reference instant (ISO), shared by render and hydration. */
   referenceNow: string
-  channel: string | null
   action: string | null
   actions: readonly StatsActionOption[]
   onRangeChange: (range: { from: Date; to: Date }) => void
-  onParamChange: (param: "channel" | "action", value: string) => void
+  onParamChange: (param: "action", value: string) => void
 }
 
 export function StatsFilters({
   range,
   workspaceCreatedAt,
   referenceNow,
-  channel,
   action,
   actions,
   onRangeChange,
@@ -77,13 +73,6 @@ export function StatsFilters({
     to: parseLocalDateKey(range.to),
   }
 
-  const channelOptions = [
-    { value: ALL, label: t("googleAds.stats.filters.allChannels") },
-    ...GOOGLE_ADS_CHANNEL_VALUES.map((value) => ({
-      value,
-      label: channelLabel(value),
-    })),
-  ]
   // A selected action that is neither synced nor in the data (a stale link)
   // still needs an option, or the select would show a blank value.
   const knownActions =
@@ -115,12 +104,6 @@ export function StatsFilters({
         workspaceCreatedAt={workspaceCreatedAt}
       />
       <div className="flex flex-wrap items-center justify-end gap-3">
-        <FilterSelect
-          label={t("googleAds.stats.filters.channelLabel")}
-          onChange={(value) => onParamChange("channel", value)}
-          options={channelOptions}
-          value={channel ?? ALL}
-        />
         <FilterSelect
           label={t("googleAds.stats.filters.actionLabel")}
           onChange={(value) => onParamChange("action", value)}

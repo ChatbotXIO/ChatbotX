@@ -208,7 +208,6 @@ const renderView = (
   ui.render(
     <GoogleAdsStatsView
       action={null}
-      channel={null}
       connected
       referenceNow="2026-09-02T12:00:00.000Z"
       stats={stats()}
@@ -558,30 +557,13 @@ describe("GoogleAdsStatsView states", () => {
 })
 
 describe("GoogleAdsStatsView filters", () => {
-  test("channel and action selects carry accessible labels", () => {
+  test("only the action select carries an accessible label: the channel comes from the shared filter", () => {
     renderView()
 
     const labels = Array.from(
       ui.container.querySelectorAll('[data-testid="select-label"]'),
     ).map((label) => label.textContent)
-    expect(labels).toEqual([
-      "googleAds.stats.filters.channelLabel",
-      "googleAds.stats.filters.actionLabel",
-    ])
-  })
-
-  test("picking a channel keeps the other params and sets channel", () => {
-    mocks.search = new URLSearchParams(
-      "from=2026-09-01&to=2026-09-02&tz=Asia%2FHo_Chi_Minh",
-    )
-    renderView()
-
-    const [channelSelect] = Array.from(ui.container.querySelectorAll("select"))
-    choose(channelSelect, "messenger")
-
-    expect(mocks.push).toHaveBeenCalledWith(
-      "/space/ws-1/dashboard/ads/google?from=2026-09-01&to=2026-09-02&tz=Asia%2FHo_Chi_Minh&channel=messenger",
-    )
+    expect(labels).toEqual(["googleAds.stats.filters.actionLabel"])
   })
 
   test("choosing All actions removes the action param", () => {
@@ -589,7 +571,7 @@ describe("GoogleAdsStatsView filters", () => {
     renderView({ action: "111" })
 
     const selects = Array.from(ui.container.querySelectorAll("select"))
-    choose(selects[1], "")
+    choose(selects[0], "")
 
     expect(mocks.push).toHaveBeenCalledWith(
       "/space/ws-1/dashboard/ads/google?tz=Asia%2FHo_Chi_Minh",
@@ -600,7 +582,7 @@ describe("GoogleAdsStatsView filters", () => {
     renderView()
 
     const options = Array.from(
-      ui.container.querySelectorAll("select")[1].querySelectorAll("option"),
+      ui.container.querySelectorAll("select")[0].querySelectorAll("option"),
     ).map((option) => [option.value, option.textContent])
     expect(options).toEqual([
       ["", "googleAds.stats.filters.allActions"],
@@ -612,13 +594,13 @@ describe("GoogleAdsStatsView filters", () => {
   test("a stale selected action still has an option", () => {
     renderView({ action: "999" })
 
-    const select = ui.container.querySelectorAll("select")[1]
+    const select = ui.container.querySelectorAll("select")[0]
     expect(select.value).toBe("999")
   })
 
   test("picking a date range pushes local day keys and the browser timezone", () => {
     mocks.search = new URLSearchParams("tz=Asia%2FHo_Chi_Minh&channel=whatsapp")
-    renderView({ channel: "whatsapp" })
+    renderView()
 
     click(ui.container.querySelector('[data-testid="pick-range"]'))
 
@@ -658,7 +640,6 @@ describe("GoogleAdsStatsView timezone", () => {
     const element = () => (
       <GoogleAdsStatsView
         action={null}
-        channel={null}
         connected
         referenceNow="2026-09-02T12:00:00.000Z"
         stats={stats({
@@ -691,7 +672,7 @@ describe("GoogleAdsStatsView timezone", () => {
     expect(mocks.replace).toHaveBeenCalledTimes(1)
 
     // The URL has not updated yet: the search params are still tz-less.
-    choose(ui.container.querySelectorAll("select")[1], "111")
+    choose(ui.container.querySelectorAll("select")[0], "111")
 
     const url = new URL(mocks.push.mock.calls[0][0], "http://x")
     expect(url.searchParams.get("tz")).toBe("Asia/Ho_Chi_Minh")

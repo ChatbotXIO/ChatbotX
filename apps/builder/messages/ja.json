@@ -543,8 +543,10 @@
       "close": "閉じる",
       "options": "利用可能なオプション",
       "remove": "削除",
-      "filterHint": "フィルターはフィルター機能の追加後に記録されたイベントのみを集計します。それ以前のイベントには受信箱がなく、以前のボットと会話のイベントにはチャネルもありません。すべてを選ぶと常にすべてを集計します。",
       "tooManyInboxes": "受信箱は最大 {max} 件まで選択するか、すべてを選択してください。"
+    },
+    "sections": {
+      "posts": "投稿"
     }
   },
   "flowAnalytics": {
@@ -3912,13 +3914,13 @@
       },
       "channelFilter": {
         "label": "チャネル",
-        "allAccounts": "すべてのアカウント",
         "allChannels": "すべてのチャネル"
       },
       "retarget": "リターゲット",
       "thoseWhoPurchased": "購入したユーザー",
       "thoseWhoStartedConversation": "会話を開始したユーザー",
       "sendWhatsappBroadcast": "WhatsApp一斉配信を送信",
+      "singleInboxActionsHint": "エクスポートとリターゲティングは一度に1つの受信トレイが対象です。使用するには受信トレイを1つ選択してください。",
       "retargetOnChannel": "{channel}でリターゲット",
       "from": "開始",
       "to": "終了",

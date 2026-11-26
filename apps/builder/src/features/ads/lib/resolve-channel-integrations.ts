@@ -22,6 +22,7 @@ export function resolveChannelIntegrations(
       switcherData.integrations.map((integration) => ({
         id: integration.id,
         name: formatWhatsappIntegrationLabel(integration),
+        inboxId: integration.inboxId,
       })),
     messenger: () => switcherData.messengerIntegrations,
     instagram: () => switcherData.instagramIntegrations,

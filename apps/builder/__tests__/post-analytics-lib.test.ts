@@ -252,6 +252,22 @@ describe("toAnalyticsScope", () => {
   })
 })
 
+describe("toAnalyticsScope with the dashboard's shared selection", () => {
+  test("keeps a channel that cannot post, so the read is empty instead of unfiltered", () => {
+    const scope = toAnalyticsScope({
+      channels: ["whatsapp"],
+      contentTypes: [],
+      from: null,
+      inboxIds: ["5"],
+      to: null,
+      topicIds: [],
+    })
+
+    expect(scope.channels).toEqual(["whatsapp"])
+    expect(scope.inboxIds).toEqual(["5"])
+  })
+})
+
 describe("series labels", () => {
   const inboxes = [{ channel: "instagram", id: "7", name: "Shop" }]
   const labels = { all: "Total", other: "Other" }

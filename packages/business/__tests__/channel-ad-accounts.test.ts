@@ -83,6 +83,72 @@ describe("resolveChannelAdAccountSources", () => {
     })
   })
 
+  test("integrationIds given -> unions exactly those integrations' accounts, deduped, with no workspace-wide fallback", async () => {
+    mocks.listForChannel.mockResolvedValue([
+      {
+        integrationWhatsappId: null,
+        integrationMessengerId: "im-1",
+        integrationInstagramId: null,
+      },
+      {
+        integrationWhatsappId: null,
+        integrationMessengerId: "im-2",
+        integrationInstagramId: null,
+      },
+      {
+        integrationWhatsappId: null,
+        integrationMessengerId: "im-3",
+        integrationInstagramId: null,
+      },
+    ])
+    mocks.listCachedMessagingAdAccounts.mockImplementation(
+      (input: { integrationId: string }) => {
+        if (input.integrationId === "im-1") {
+          return Promise.resolve([{ id: "act_1", name: "One" }])
+        }
+        return Promise.resolve([
+          { id: "act_1", name: "One" },
+          { id: "act_2", name: "Two" },
+        ])
+      },
+    )
+
+    const result = await resolveChannelAdAccountSources({
+      workspaceId: "ws-1",
+      channel: "messenger",
+      integrationIds: ["im-1", "im-2"],
+    })
+
+    expect(result.map((account) => account.id).sort()).toEqual([
+      "act_1",
+      "act_2",
+    ])
+    expect(mocks.listCachedMessagingAdAccounts).toHaveBeenCalledTimes(2)
+    expect(mocks.getCachedAdAccounts).not.toHaveBeenCalled()
+  })
+
+  test("integrationIds skips an integration this workspace does not own", async () => {
+    mocks.listForChannel.mockResolvedValue([
+      {
+        integrationWhatsappId: null,
+        integrationMessengerId: "im-1",
+        integrationInstagramId: null,
+      },
+    ])
+    mocks.listCachedMessagingAdAccounts.mockResolvedValue([
+      { id: "act_1", name: "One" },
+    ])
+
+    const result = await resolveChannelAdAccountSources({
+      workspaceId: "ws-1",
+      channel: "messenger",
+      integrationIds: ["im-1", "im-foreign"],
+    })
+
+    expect(result.map((account) => account.id)).toEqual(["act_1"])
+    expect(mocks.listCachedMessagingAdAccounts).toHaveBeenCalledTimes(1)
+  })
+
   test("a foreign or non-active integrationId NEVER reaches the shared cache (cross-workspace / invalid-connection guard)", async () => {
     // `listCachedMessagingAdAccounts` keys Redis by channel:integrationId
     // only — a warm cache would happily serve another workspace's list. The

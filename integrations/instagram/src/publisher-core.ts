@@ -52,11 +52,15 @@ import {
 /**
  * The content publishing guide recommends reading a container's status once a
  * minute, for no more than 5 minutes:
- * https://developers.facebook.com/docs/instagram-platform/content-publishing
+ * https://developers.facebook.com/documentation/instagram-platform/content-publishing#container-publishing-status
+ * Every `pending` answered by a status check keeps that cadence. The first
+ * check, right after the container(s) are created, comes sooner: a short image
+ * or reel is often finished within seconds, so waiting a full minute only
+ * delays the post. It is one read, then the minute cadence applies.
  */
+const FIRST_STATUS_CHECK_MS = 20_000
 const STATUS_POLL_MS = 60_000
 const STATUS_POLL_MAX_MS = 5 * 60_000
-const NOT_READY_RETRY_MS = 5000
 const CONTAINER_ID_KEY = "containerId"
 /** Continuation key: epoch milliseconds when the container's status polling began. */
 const POLL_STARTED_KEY = "pollStartedAt"
@@ -95,7 +99,7 @@ const isPollExpired = (
   now: number,
 ): boolean => {
   const startedAt = Number(continuation[POLL_STARTED_KEY])
-  return Number.isFinite(startedAt) && now - startedAt > STATUS_POLL_MAX_MS
+  return Number.isFinite(startedAt) && now - startedAt >= STATUS_POLL_MAX_MS
 }
 
 /** The continuation of a still pending poll: keeps its clock, or starts one for an older continuation. */
@@ -134,14 +138,20 @@ export const createInstagramPublisher = (
   transport: InstagramGraphTransport,
 ): SocialPublisher => {
   const { callGraph, canDelete, via } = transport
+  /**
+   * A container waiting to be published. `pollClock` keeps an earlier clock
+   * (the carousel parent continues the children's five minutes); without it
+   * the clock starts now.
+   */
   const pendingContainer = (
     containerId: string,
     retryAfterMs: number,
+    pollClock: Record<string, string> = pollClockOf(Date.now()),
   ): SocialPublishResult => ({
     continuation: {
       [CONTAINER_ID_KEY]: containerId,
       [VIA_KEY]: via,
-      ...pollClockOf(Date.now()),
+      ...pollClock,
     },
     retryAfterMs,
     status: "pending",
@@ -284,7 +294,7 @@ export const createInstagramPublisher = (
         [VIA_KEY]: via,
         ...pollClockOf(Date.now()),
       },
-      retryAfterMs: STATUS_POLL_MS,
+      retryAfterMs: FIRST_STATUS_CHECK_MS,
       status: "pending",
     }
   }
@@ -303,7 +313,7 @@ export const createInstagramPublisher = (
     if (!created.ok) {
       return created.failure
     }
-    return pendingContainer(created.containerId, STATUS_POLL_MS)
+    return pendingContainer(created.containerId, FIRST_STATUS_CHECK_MS)
   }
 
   /** Reads the children of a carousel; when all are ready, creates the carousel container. */
@@ -352,6 +362,12 @@ export const createInstagramPublisher = (
         status: "pending",
       }
     }
+    // The children's reads may have finished after the deadline: the parent is
+    // only created inside it, and it keeps the same clock.
+    const now = Date.now()
+    if (isPollExpired(request.continuation, now)) {
+      return pollTimeout()
+    }
     const created = await createContainer(
       request,
       withCaption(
@@ -365,7 +381,9 @@ export const createInstagramPublisher = (
     if (!created.ok) {
       return created.failure
     }
-    return pendingContainer(created.containerId, STATUS_POLL_MS)
+    return pendingContainer(created.containerId, STATUS_POLL_MS, {
+      [POLL_STARTED_KEY]: request.continuation[POLL_STARTED_KEY] ?? String(now),
+    })
   }
 
   const fetchPermalink = async (
@@ -388,6 +406,11 @@ export const createInstagramPublisher = (
     request: SocialPublishStatusRequest,
     containerId: string,
   ): Promise<SocialPublishResult> => {
+    // The cap holds for the final publish attempt too: after it nothing is
+    // published, so a retry may start a new container.
+    if (isPollExpired(request.continuation, Date.now())) {
+      return pollTimeout()
+    }
     // Stored before the call: if the worker dies in it, recovery sees the marker
     // and hands the target to a person instead of publishing again.
     if (!(await checkpointFinalCall(request))) {
@@ -396,6 +419,11 @@ export const createInstagramPublisher = (
         retryAfterMs: STATUS_POLL_MS,
         status: "pending",
       }
+    }
+    // The checkpoint write can be slow: re-check the cap before the call that
+    // publishes, so a checkpoint crossing the deadline sends nothing.
+    if (isPollExpired(request.continuation, Date.now())) {
+      return pollTimeout()
     }
     const outcome = await callGraph({
       accessToken: request.accessToken,
@@ -414,7 +442,7 @@ export const createInstagramPublisher = (
         }
         return {
           continuation: keepPolling(request.continuation, now),
-          retryAfterMs: NOT_READY_RETRY_MS,
+          retryAfterMs: STATUS_POLL_MS,
           status: "pending",
         }
       }
@@ -436,6 +464,11 @@ export const createInstagramPublisher = (
   ): Promise<SocialPublishResult> => {
     if (request.continuation[FINAL_CALL_KEY] !== undefined) {
       return finalCallUnconfirmed()
+    }
+    // The cap is enforced before any further status read, container creation
+    // or publish: a FINISHED answer after the deadline is not acted on.
+    if (isPollExpired(request.continuation, Date.now())) {
+      return pollTimeout()
     }
     if (request.continuation[PHASE_KEY] === CHILDREN_PHASE) {
       const childIds = (request.continuation[CHILDREN_KEY] ?? "")

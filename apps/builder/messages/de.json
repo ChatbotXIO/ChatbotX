@@ -543,8 +543,10 @@
       "close": "Schließen",
       "options": "Verfügbare Optionen",
       "remove": "Entfernen",
-      "filterHint": "Filter zählen nur Ereignisse, die nach Einführung der Filterung erfasst wurden: Ältere Ereignisse haben keinen Posteingang, ältere Bot- und Unterhaltungsereignisse auch keinen Kanal. Alle zählt immer alles.",
       "tooManyInboxes": "Wählen Sie höchstens {max} Posteingänge oder markieren Sie Alle."
+    },
+    "sections": {
+      "posts": "Beiträge"
     }
   },
   "flowAnalytics": {
@@ -3912,13 +3914,13 @@
       },
       "channelFilter": {
         "label": "Kanal",
-        "allAccounts": "Alle Konten",
         "allChannels": "Alle Kanäle"
       },
       "retarget": "Retargeting",
       "thoseWhoPurchased": "Diejenigen, die gekauft haben",
       "thoseWhoStartedConversation": "Diejenigen, die ein Gespräch begonnen haben",
       "sendWhatsappBroadcast": "WhatsApp-Broadcast senden",
+      "singleInboxActionsHint": "Export und Retargeting gelten jeweils für einen Posteingang. Wähle einen einzelnen Posteingang, um sie zu nutzen.",
       "retargetOnChannel": "Retargeting auf {channel}",
       "from": "Von",
       "to": "Bis",

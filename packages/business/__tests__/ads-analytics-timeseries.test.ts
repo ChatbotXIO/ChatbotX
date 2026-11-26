@@ -328,4 +328,41 @@ describe("adsAnalyticsService.getTimeseries", () => {
       spend: null,
     })
   })
+
+  test("an explicit selection that matches no integration yields zero days with no funnel query and no spend", async () => {
+    const result = await adsAnalyticsService.getTimeseries({
+      ...RANGE,
+      channel: "messenger",
+      matchesNoIntegration: true,
+    })
+
+    expect(mocks.getCtwaFunnelTimeseries).not.toHaveBeenCalled()
+    expect(mocks.listForChannel).not.toHaveBeenCalled()
+    expect(result.map((row) => row.date)).toEqual([
+      "2026-08-01",
+      "2026-08-02",
+      "2026-08-03",
+    ])
+    expect(result.every((row) => row.conversations === 0)).toBe(true)
+    expect(result.every((row) => row.spend === null)).toBe(true)
+  })
+
+  test("conflicting single id and list: the funnel and the spend both use the list", async () => {
+    mocks.getCtwaFunnelTimeseries.mockResolvedValue([])
+    mocks.runAction.mockResolvedValue([])
+
+    await adsAnalyticsService.getTimeseries({
+      ...RANGE,
+      channel: "messenger",
+      integrationMessengerId: "9",
+      integrationIds: ["10", "11"],
+    })
+
+    expect(mocks.getCtwaFunnelTimeseries).toHaveBeenCalledWith(
+      expect.objectContaining({
+        integrationMessengerId: "9",
+        integrationIds: ["10", "11"],
+      }),
+    )
+  })
 })

@@ -543,8 +543,10 @@
       "close": "Cerrar",
       "options": "Opciones disponibles",
       "remove": "Quitar",
-      "filterHint": "Los filtros solo cuentan eventos registrados tras añadir el filtrado: los eventos antiguos no tienen bandeja de entrada y los eventos antiguos de bot y conversación tampoco tienen canal. Todos siempre cuenta todo.",
       "tooManyInboxes": "Elige como máximo {max} bandejas de entrada o marca Todas."
+    },
+    "sections": {
+      "posts": "Publicaciones"
     }
   },
   "flowAnalytics": {
@@ -4069,13 +4071,13 @@
       },
       "channelFilter": {
         "label": "Canal",
-        "allAccounts": "Todas las cuentas",
         "allChannels": "Todos los canales"
       },
       "retarget": "Reorientar",
       "thoseWhoPurchased": "Quienes compraron",
       "thoseWhoStartedConversation": "Quienes iniciaron una conversación",
       "sendWhatsappBroadcast": "Enviar difusión de WhatsApp",
+      "singleInboxActionsHint": "La exportación y el retargeting cubren una bandeja de entrada a la vez. Selecciona una sola bandeja para usarlos.",
       "retargetOnChannel": "Retargeting en {channel}",
       "from": "Desde",
       "to": "Hasta",

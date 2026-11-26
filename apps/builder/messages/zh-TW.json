@@ -2523,8 +2523,10 @@
       "close": "關閉",
       "options": "可用選項",
       "remove": "移除",
-      "filterHint": "篩選只統計新增篩選功能後記錄的事件：較早的事件沒有收件匣，較早的機器人與對話事件也沒有管道。「全部」一律統計所有資料。",
       "tooManyInboxes": "最多選擇 {max} 個收件匣，或勾選全部。"
+    },
+    "sections": {
+      "posts": "貼文"
     }
   },
   "flowAnalytics": {
@@ -4352,13 +4354,13 @@
       },
       "channelFilter": {
         "label": "頻道",
-        "allAccounts": "所有帳戶",
         "allChannels": "所有頻道"
       },
       "retarget": "再行銷",
       "thoseWhoPurchased": "已購買的使用者",
       "thoseWhoStartedConversation": "已發起對話的使用者",
       "sendWhatsappBroadcast": "傳送 WhatsApp 廣播",
+      "singleInboxActionsHint": "匯出與再行銷一次僅針對一個收件匣。請選擇單一收件匣後再使用。",
       "retargetOnChannel": "在{channel}上重新定位",
       "from": "從",
       "to": "到",

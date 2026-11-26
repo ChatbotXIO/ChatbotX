@@ -1,5 +1,7 @@
-import { channelPostContentTypes } from "@chatbotx.io/database/partials"
-import { POST_MANAGEMENT_CHANNELS } from "@chatbotx.io/utils/channel"
+import {
+  channelPostContentTypes,
+  channelTypes,
+} from "@chatbotx.io/database/partials"
 import { parseAsArrayOf, parseAsString, parseAsStringEnum } from "nuqs"
 import type { z } from "zod"
 import {
@@ -14,10 +16,13 @@ export type PostAnalyticsScope = Pick<
   "channels" | "contentTypes" | "from" | "inboxIds" | "to" | "topicIds"
 >
 
-/** The Analytics tab's URL state: every filter is shareable and survives reload. */
+/**
+ * The Posts analytics section's URL state: every filter is shareable and
+ * survives reload. `channels` and `inboxIds` are the dashboard's shared row.
+ */
 export const analyticsSearchParsers = {
   channels: parseAsArrayOf(
-    parseAsStringEnum([...POST_MANAGEMENT_CHANNELS]),
+    parseAsStringEnum([...channelTypes.options]),
   ).withDefault([]),
   contentTypes: parseAsArrayOf(
     parseAsStringEnum([...channelPostContentTypes.options]),
@@ -57,7 +62,10 @@ const orUndefined = <Item>(items: readonly Item[]): Item[] | undefined =>
 export const toAnalyticsScope = (
   filters: AnalyticsFilterState,
 ): PostAnalyticsScope => {
-  const channels = POST_MANAGEMENT_CHANNELS.filter((channel) =>
+  // Not narrowed to post-capable channels: the dashboard's shared row can pick
+  // any channel, and a channel without posts must read as "no data", not as
+  // "all channels".
+  const channels = channelTypes.options.filter((channel) =>
     filters.channels.includes(channel),
   )
   const contentTypes = channelPostContentTypes.options.filter((type) =>

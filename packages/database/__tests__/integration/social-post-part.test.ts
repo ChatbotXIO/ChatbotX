@@ -149,6 +149,40 @@ describe.skipIf(!databaseUrl)("target parts against a real database", () => {
     )
   })
 
+  test("the delayed check claims a part only while its stored check time is the lease", async () => {
+    const { parts } = await targetWithParts(1)
+    const partId = parts[0]?.id as string
+    const due = new Date(Date.now() + 20_000)
+    await client.query(
+      `UPDATE "SocialPostTargetPart" SET "status" = 'processing', "leaseExpiresAt" = $2 WHERE "id" = $1`,
+      [partId, due],
+    )
+    const lease = new Date(Date.now() + 10 * 60_000)
+    const claim = (expectedDueAt: Date, leaseUntil: Date) =>
+      socialPostPartRepository.claimExpired({
+        leaseUntil,
+        limit: 1,
+        now: new Date(),
+        only: { expectedDueAt, id: partId, workspaceId },
+      })
+
+    const stale = await claim(new Date(due.getTime() + 1), lease)
+    const [won, lost] = await Promise.all([
+      claim(due, lease),
+      claim(due, new Date(lease.getTime() + 1)),
+    ])
+
+    expect(stale).toEqual([])
+    expect([...won, ...lost]).toHaveLength(1)
+    const stored = await client.query(
+      `SELECT "leaseExpiresAt" FROM "SocialPostTargetPart" WHERE "id" = $1`,
+      [partId],
+    )
+    expect(stored.rows[0].leaseExpiresAt.getTime()).toBeGreaterThanOrEqual(
+      lease.getTime(),
+    )
+  })
+
   test("a position is unique per target and a target has one first comment", async () => {
     const { targetId } = await targetWithParts(1)
     const db = database()

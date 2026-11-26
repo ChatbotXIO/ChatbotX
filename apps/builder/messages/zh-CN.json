@@ -240,7 +240,6 @@
       },
       "channelFilter": {
         "label": "渠道",
-        "allAccounts": "所有账号",
         "allChannels": "所有渠道"
       },
       "adSpend": "广告花费",
@@ -310,6 +309,7 @@
       "revenueCurrencyNote": "营收默认按单一币种（USD）计算。混合币种广告账号目前还无法汇总。",
       "roas": "ROAS",
       "sendWhatsappBroadcast": "发送 WhatsApp 广播",
+      "singleInboxActionsHint": "导出和再营销一次只针对一个收件箱。请选择单个收件箱后再使用。",
       "retargetOnChannel": "在{channel}上重新定向",
       "spendAccountLevelNote": "花费按 Meta 广告账号层级统计；选择账号后，该账号下只有花费但没有漏斗活动的广告会被隐藏。",
       "thoseWhoPurchased": "已购买的人",
@@ -700,8 +700,10 @@
       "close": "关闭",
       "options": "可用选项",
       "remove": "移除",
-      "filterHint": "筛选只统计添加筛选功能后记录的事件：较早的事件没有收件箱，较早的机器人和对话事件也没有渠道。“全部”始终统计所有数据。",
       "tooManyInboxes": "最多选择 {max} 个收件箱，或勾选全部。"
+    },
+    "sections": {
+      "posts": "帖子"
     }
   },
   "appointmentScheduling": {

@@ -1629,6 +1629,7 @@ class AdsConversionService extends BaseService {
           channel: parsed.channel,
           integrationMessengerId: parsed.integrationMessengerId,
           integrationInstagramId: parsed.integrationInstagramId,
+          integrationIds: parsed.integrationIds,
         },
         tx,
       )
@@ -1669,6 +1670,7 @@ class AdsConversionService extends BaseService {
           channel: parsed.channel,
           integrationMessengerId: parsed.integrationMessengerId,
           integrationInstagramId: parsed.integrationInstagramId,
+          integrationIds: parsed.integrationIds,
           timezone: parsed.timezone,
         },
         tx,

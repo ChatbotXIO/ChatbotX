@@ -140,6 +140,17 @@ export const workspaceAuthorizedMidddleware = base.middleware(
  * ```
  */
 export const workspacePermissionMiddleware = (key: WorkspacePermissionKey) =>
+  workspaceAnyPermissionMiddleware([key])
+
+/**
+ * Like `workspacePermissionMiddleware`, for a procedure two sections of the app
+ * share (post analytics serves Dashboard > Posts, which needs `analytics`, and
+ * Posts > Analytics, which needs `broadcast`): a member holding any one of the
+ * listed permissions passes.
+ */
+export const workspaceAnyPermissionMiddleware = (
+  keys: readonly WorkspacePermissionKey[],
+) =>
   base.middleware(async ({ context, next }, workspaceId: string) => {
     if (!context.user) {
       throw new ORPCError("UNAUTHORIZED")
@@ -161,7 +172,12 @@ export const workspacePermissionMiddleware = (key: WorkspacePermissionKey) =>
           workspaceId,
         })
       )?.member.permissions
-    if (!(permissions && hasWorkspacePermission(permissions, key))) {
+    if (
+      !(
+        permissions &&
+        keys.some((key) => hasWorkspacePermission(permissions, key))
+      )
+    ) {
       throw new ORPCError("FORBIDDEN", {
         message: "You do not have permission to perform this action",
       })

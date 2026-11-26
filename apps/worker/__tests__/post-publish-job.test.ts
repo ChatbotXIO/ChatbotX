@@ -132,10 +132,66 @@ describe("processPostPublishJob", () => {
     })
 
     expect(mocks.runTargetCheck).toHaveBeenCalledWith(
-      { id: "t-1", leaseUntil: new Date(1000), workspaceId: "ws-1" },
+      {
+        expectedDueAt: undefined,
+        id: "t-1",
+        leaseUntil: new Date(1000),
+        workspaceId: "ws-1",
+      },
       { facebook: "fb" },
     )
     expect(mocks.runTarget).not.toHaveBeenCalled()
+  })
+
+  test("a delayed target check carries its expected due time to the claim", async () => {
+    mocks.withBlockedOwnerGuard.mockImplementationOnce(
+      async (_id: string, run: () => Promise<unknown>) => await run(),
+    )
+    await processPostPublishJob({
+      data: {
+        expectedDueAtMs: 5000,
+        leaseUntilMs: 0,
+        socialPostTargetId: "t-1",
+        workspaceId: "ws-1",
+      },
+      type: "checkTarget",
+    })
+
+    expect(mocks.runTargetCheck).toHaveBeenCalledWith(
+      {
+        expectedDueAt: new Date(5000),
+        id: "t-1",
+        leaseUntil: new Date(0),
+        workspaceId: "ws-1",
+      },
+      { facebook: "fb" },
+    )
+  })
+
+  test("a delayed part check passes its due time, the zero legacy lease, id and workspace", async () => {
+    mocks.withBlockedOwnerGuard.mockImplementationOnce(
+      async (_id: string, run: () => Promise<unknown>) => await run(),
+    )
+
+    await processPostPublishJob({
+      data: {
+        expectedDueAtMs: 7000,
+        leaseUntilMs: 0,
+        socialPostPartId: "p-9",
+        workspaceId: "ws-2",
+      },
+      type: "checkPart",
+    })
+
+    expect(mocks.runPartCheck).toHaveBeenCalledWith(
+      {
+        expectedDueAt: new Date(7000),
+        id: "p-9",
+        leaseUntil: new Date(0),
+        workspaceId: "ws-2",
+      },
+      { facebook: "fb" },
+    )
   })
 
   test("a part check job reads that claim, and a blocked owner's check is a bare return", async () => {

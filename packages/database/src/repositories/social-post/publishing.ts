@@ -367,9 +367,25 @@ export const socialPostPublishRepository = {
    * due to be read again) and gives each a new lease.
    */
   async claimExpired(
-    input: { leaseUntil: Date; limit: number; now: Date },
+    input: {
+      /**
+       * Claims exactly this target, and only while its stored lease still is
+       * `expectedDueAt` (the delayed check job's compare-and-set); `now` is
+       * then not used as the bound. Without it the scan claims every expired lease.
+       */
+      only?: { expectedDueAt: Date; id: string; workspaceId: string }
+      leaseUntil: Date
+      limit: number
+      now: Date
+    },
     tx: DatabaseClient = db,
   ): Promise<ExpiredSocialTarget[]> {
+    const { only } = input
+    const dueFilter = only
+      ? sql`s."id" = ${only.id}::bigint
+          AND s."workspaceId" = ${only.workspaceId}::bigint
+          AND s."leaseExpiresAt" = ${only.expectedDueAt}::timestamptz`
+      : sql`s."leaseExpiresAt" < ${input.now}::timestamptz`
     const result = await tx.execute<{
       attemptCount: number
       continuation: SocialTargetContinuation | null
@@ -384,7 +400,7 @@ export const socialPostPublishRepository = {
       WHERE t."id" IN (
         SELECT s."id" FROM "SocialPostTarget" AS s
         WHERE s."status" IN ('publishing', 'processing')
-          AND s."leaseExpiresAt" < ${input.now}::timestamptz
+          AND ${dueFilter}
         ORDER BY s."leaseExpiresAt" ASC, s."id" ASC
         LIMIT ${input.limit}
         FOR UPDATE SKIP LOCKED

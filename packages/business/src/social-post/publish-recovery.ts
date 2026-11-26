@@ -291,6 +291,31 @@ export const claimExpiredTargets = async (
   })
 
 /**
+ * The delayed check job's claim: swaps the check time stored as the lease
+ * (`expectedDueAt`) for a recovery lease, atomically with the minute scan's
+ * claim. `null` when another claimer or a settlement got there first: the
+ * caller then makes no network call.
+ */
+export const claimDueTarget = async (input: {
+  expectedDueAt: Date
+  id: string
+  now: Date
+  workspaceId: string
+}): Promise<ExpiredSocialTarget | null> => {
+  const [claimed] = await socialPostPublishRepository.claimExpired({
+    leaseUntil: new Date(input.now.getTime() + SOCIAL_POST_LEASE_MS),
+    limit: 1,
+    now: input.now,
+    only: {
+      expectedDueAt: input.expectedDueAt,
+      id: input.id,
+      workspaceId: input.workspaceId,
+    },
+  })
+  return claimed ?? null
+}
+
+/**
  * One recovery job: a container is read again; an attempt that never reached the
  * network goes back to the queue; one that did and left no provider-side
  * identity is retried too (it may post twice). Acts only while `leaseUntil` is still the stored

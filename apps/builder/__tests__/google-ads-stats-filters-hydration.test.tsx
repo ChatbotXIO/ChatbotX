@@ -68,7 +68,6 @@ const filters = (
   <StatsFilters
     action={null}
     actions={[]}
-    channel={null}
     onParamChange={vi.fn()}
     onRangeChange={vi.fn()}
     range={range}

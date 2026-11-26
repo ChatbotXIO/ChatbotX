@@ -447,9 +447,21 @@ export const socialPostPartRepository = {
 
   /** Takes parts whose lease ran out (a crashed worker, or a container due to be read again). */
   async claimExpired(
-    input: { leaseUntil: Date; limit: number; now: Date },
+    input: {
+      /** Claims exactly this part while its stored lease still is `expectedDueAt` (compare-and-set of the delayed check job). */
+      only?: { expectedDueAt: Date; id: string; workspaceId: string }
+      leaseUntil: Date
+      limit: number
+      now: Date
+    },
     tx: DatabaseClient = db,
   ): Promise<ExpiredSocialPart[]> {
+    const { only } = input
+    const dueFilter = only
+      ? sql`s."id" = ${only.id}::bigint
+          AND s."workspaceId" = ${only.workspaceId}::bigint
+          AND s."leaseExpiresAt" = ${only.expectedDueAt}::timestamptz`
+      : sql`s."leaseExpiresAt" < ${input.now}::timestamptz`
     const result = await tx.execute<{
       attemptCount: number
       continuation: SocialTargetContinuation | null
@@ -466,7 +478,7 @@ export const socialPostPartRepository = {
       WHERE p."id" IN (
         SELECT s."id" FROM "SocialPostTargetPart" AS s
         WHERE s."status" IN ('publishing', 'processing')
-          AND s."leaseExpiresAt" < ${input.now}::timestamptz
+          AND ${dueFilter}
         ORDER BY s."leaseExpiresAt" ASC, s."id" ASC
         LIMIT ${input.limit}
         FOR UPDATE SKIP LOCKED

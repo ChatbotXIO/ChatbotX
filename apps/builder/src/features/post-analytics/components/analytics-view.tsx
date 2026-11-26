@@ -9,6 +9,7 @@ import { useTranslations } from "next-intl"
 import { useQueryStates } from "nuqs"
 import { useInboxListState } from "@/features/inboxes/provider/inbox-hook"
 import { orpc } from "@/lib/orpc/query"
+import type { PostAnalyticsScopeFilters } from "../lib/scope-filters"
 import { analyticsSearchParsers, toAnalyticsScope } from "../lib/search-params"
 import { AnalyticsFilters } from "./analytics-filters"
 import { BestTimesCard } from "./best-times-card"
@@ -41,10 +42,20 @@ const NoChannelState = ({ workspaceId }: { workspaceId: string }) => {
 }
 
 /**
- * Posts > Analytics. Everything here is a read, so the page works the same in a
+ * Post analytics, shown in two places with this one implementation: Posts >
+ * Analytics (`scopeFilters="own"`, the view renders its own Channel and inbox
+ * filters) and the Posts section of the Analytics dashboard
+ * (`scopeFilters="shared"`, the dashboard's shared row drives `channels` and
+ * `inboxIds`). Everything here is a read, so the page works the same in a
  * workspace whose plan has expired.
  */
-export const PostAnalyticsView = ({ workspaceId }: { workspaceId: string }) => {
+export const PostAnalyticsView = ({
+  scopeFilters,
+  workspaceId,
+}: {
+  scopeFilters: PostAnalyticsScopeFilters
+  workspaceId: string
+}) => {
   const t = useTranslations("posts.analytics")
   const [filters, setFilters] = useQueryStates(analyticsSearchParsers, {
     clearOnDefault: true,
@@ -73,6 +84,7 @@ export const PostAnalyticsView = ({ workspaceId }: { workspaceId: string }) => {
             ? { range: summary.data.range, today: summary.data.today }
             : undefined
         }
+        scopeFilters={scopeFilters}
         workspaceId={workspaceId}
       />
       <CoverageNotice coverage={summary.data?.coverage} />

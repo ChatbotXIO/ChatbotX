@@ -4,7 +4,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation"
 import { useEffect, useRef, useTransition } from "react"
 import { useAdsRangeUrl } from "@/features/ads/hooks/use-ads-range-url"
 
-type StatsFilterParam = "channel" | "action"
+type StatsFilterParam = "action"
 
 /**
  * URL-driven filters of the statistics page. Every change is a navigation

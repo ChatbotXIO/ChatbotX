@@ -543,8 +543,10 @@
       "close": "إغلاق",
       "options": "الخيارات المتاحة",
       "remove": "إزالة",
-      "filterHint": "لا تحتسب عوامل التصفية إلا الأحداث المسجلة بعد إضافة التصفية: الأحداث الأقدم بلا صندوق وارد، وأحداث البوت والمحادثات الأقدم بلا قناة أيضًا. الكل يحتسب كل شيء دائمًا.",
       "tooManyInboxes": "اختر {max} صندوق وارد كحد أقصى، أو حدد الكل."
+    },
+    "sections": {
+      "posts": "المنشورات"
     }
   },
   "flowAnalytics": {
@@ -4069,13 +4071,13 @@
       },
       "channelFilter": {
         "label": "القناة",
-        "allAccounts": "كل الحسابات",
         "allChannels": "جميع القنوات"
       },
       "retarget": "إعادة الاستهداف",
       "thoseWhoPurchased": "من قاموا بالشراء",
       "thoseWhoStartedConversation": "من بدؤوا محادثة",
       "sendWhatsappBroadcast": "إرسال بث WhatsApp",
+      "singleInboxActionsHint": "يعمل التصدير وإعادة الاستهداف على صندوق وارد واحد في كل مرة. اختر صندوق وارد واحدًا لاستخدامهما.",
       "retargetOnChannel": "استهداف مجدد على {channel}",
       "from": "من",
       "to": "إلى",

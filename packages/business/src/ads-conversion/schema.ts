@@ -279,11 +279,22 @@ const withOrderedDateRange = <Schema extends typeof ctwaDateRangeShape>(
  * retarget writer schemas below (`listAdsConversionExportRowsInput`,
  * `listRetargetContactsInput`) deliberately do not.
  */
+/** Upper bound for `integrationIds` — the dashboard's inbox selection is capped below this. */
+const MAX_FUNNEL_INTEGRATION_IDS = 200
+
 const ctwaFunnelShape = ctwaDateRangeShape.extend({
   integrationWhatsappId: zodBigintAsString().optional(),
   channel: adsConversionChannelSchema.optional(),
   integrationMessengerId: zodBigintAsString().optional(),
   integrationInstagramId: zodBigintAsString().optional(),
+  // Several integrations of the one `channel` (the Analytics dashboard's
+  // multi-inbox selection): totals aggregate exactly those. Takes precedence
+  // over the single id of that channel; requires `channel` so a list can
+  // never span channels. Bounded like the dashboard's own selection cap.
+  integrationIds: z
+    .array(zodBigintAsString())
+    .max(MAX_FUNNEL_INTEGRATION_IDS)
+    .optional(),
   allChannels: z.boolean().optional(),
   // Viewer IANA timezone for day-bucketing (`getCtwaFunnelTimeseries`'s
   // repository queries) — mirrors `message-stats.repository.ts`'s
@@ -301,19 +312,25 @@ const ctwaFunnelShape = ctwaDateRangeShape.extend({
 // integration id is a caller bug (the builder page resolves `channel ===
 // "all"` into `allChannels` BEFORE ever calling `perChannelIntegrationIds`,
 // so a well-behaved caller never hits this).
-export const getCtwaFunnelInput = withOrderedDateRange(ctwaFunnelShape).refine(
-  (input) =>
-    !(
-      input.allChannels &&
-      (input.integrationWhatsappId ||
-        input.integrationMessengerId ||
-        input.integrationInstagramId)
-    ),
-  {
-    message: "allChannels cannot be combined with an integration id",
-    path: ["allChannels"],
-  },
-)
+export const getCtwaFunnelInput = withOrderedDateRange(ctwaFunnelShape)
+  .refine(
+    (input) =>
+      !(
+        input.allChannels &&
+        (input.integrationWhatsappId ||
+          input.integrationMessengerId ||
+          input.integrationInstagramId ||
+          input.integrationIds?.length)
+      ),
+    {
+      message: "allChannels cannot be combined with an integration id",
+      path: ["allChannels"],
+    },
+  )
+  .refine((input) => !input.integrationIds?.length || input.channel, {
+    message: "integrationIds requires a channel",
+    path: ["integrationIds"],
+  })
 export type GetCtwaFunnelInput = z.input<typeof getCtwaFunnelInput>
 
 export const adsConversionExportSegments = z.enum([

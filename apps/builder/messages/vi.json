@@ -585,8 +585,10 @@
       "close": "Đóng",
       "options": "Các tùy chọn",
       "remove": "Bỏ",
-      "filterHint": "Bộ lọc chỉ tính sự kiện ghi nhận sau khi có tính năng lọc: sự kiện cũ không có hộp thư, và sự kiện bot, hội thoại cũ cũng không có kênh. Tất cả luôn tính toàn bộ.",
       "tooManyInboxes": "Chọn tối đa {max} hộp thư, hoặc tick Tất cả."
+    },
+    "sections": {
+      "posts": "Bài viết"
     }
   },
   "flowAnalytics": {
@@ -4111,13 +4113,13 @@
       },
       "channelFilter": {
         "label": "Kênh",
-        "allAccounts": "Tất cả tài khoản",
         "allChannels": "Tất cả kênh"
       },
       "retarget": "Tiếp thị lại",
       "thoseWhoPurchased": "Những người đã mua",
       "thoseWhoStartedConversation": "Những người đã bắt đầu cuộc hội thoại",
       "sendWhatsappBroadcast": "Gửi broadcast WhatsApp",
+      "singleInboxActionsHint": "Xuất dữ liệu và retargeting chỉ áp dụng cho một hộp thư mỗi lần. Hãy chọn một hộp thư để dùng.",
       "retargetOnChannel": "Tiếp thị lại trên {channel}",
       "from": "Từ ngày",
       "to": "Đến ngày",

@@ -585,8 +585,10 @@
       "close": "Bağla",
       "options": "Mövcud seçimlər",
       "remove": "Sil",
-      "filterHint": "Filtrlər yalnız filtrləmə əlavə olunduqdan sonra qeydə alınan hadisələri sayır: köhnə hadisələrin gələnlər qutusu yoxdur, köhnə bot və söhbət hadisələrinin isə kanalı da yoxdur. Hamısı həmişə hər şeyi sayır.",
       "tooManyInboxes": "Ən çox {max} gələnlər qutusu seçin və ya Hamısını işarələyin."
+    },
+    "sections": {
+      "posts": "Paylaşımlar"
     }
   },
   "flowAnalytics": {
@@ -4751,13 +4753,13 @@
       },
       "channelFilter": {
         "label": "Kanal",
-        "allAccounts": "Bütün hesablar",
         "allChannels": "Bütün kanallar"
       },
       "retarget": "Yenidən hədəflə",
       "thoseWhoPurchased": "Alış edənlər",
       "thoseWhoStartedConversation": "Söhbət başladanlar",
       "sendWhatsappBroadcast": "WhatsApp kütləvi göndərişini göndər",
+      "singleInboxActionsHint": "İxrac və retarqetinq eyni anda yalnız bir gələn qutusu üçün işləyir. Onlardan istifadə etmək üçün tək bir gələn qutusu seçin.",
       "retargetOnChannel": "{channel} kanalında yenidən hədəflə",
       "from": "Başlanğıc",
       "to": "Son",

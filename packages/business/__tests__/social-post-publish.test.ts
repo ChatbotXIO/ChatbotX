@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, test, vi } from "vitest"
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
 
 const quota = vi.hoisted(() => ({ room: true }))
 
@@ -119,6 +119,7 @@ vi.mock("@chatbotx.io/database/repositories", () => ({
   },
 }))
 vi.mock("@chatbotx.io/worker-config", () => ({
+  NEVER_MATCHING_LEASE_MS: 0,
   PostPublishJobAction: {
     checkPart: "checkPart",
     checkTarget: "checkTarget",
@@ -127,6 +128,8 @@ vi.mock("@chatbotx.io/worker-config", () => ({
   },
   postCheckPartJobId: (id: string, lease: number) =>
     `social-post-check-part-${id}-${lease}`,
+  postCheckTargetDueJobId: (id: string, due: number) =>
+    `social-post-check-target-${id}-due-${due}`,
   postCheckTargetJobId: (id: string, lease: number) =>
     `social-post-check-target-${id}-${lease}`,
   postPartJobId: (id: string) => `social-post-part-${id}`,
@@ -177,6 +180,7 @@ vi.mock("../src/social-post/service", () => ({
   socialPostService: { get: mocks.get },
 }))
 
+const { logger } = await import("../src/logger")
 const { socialPostPublishService } = await import(
   "../src/social-post/publish.service"
 )
@@ -989,6 +993,108 @@ describe("runTarget", () => {
     })
   })
 
+  describe("the delayed check of a pending answer", () => {
+    const START = new Date("2026-03-01T10:00:00.000Z")
+    const pending = (retryAfterMs: number) => ({
+      continuation: { containerId: "c1" },
+      retryAfterMs,
+      status: "pending",
+    })
+    const runPending = async (retryAfterMs: number) => {
+      const fake = publisher()
+      fake.publish.mockResolvedValue(pending(retryAfterMs))
+      await socialPostPublishService.runTarget(
+        { id: "t-1", workspaceId: WS },
+        { facebook: fake },
+      )
+    }
+
+    beforeEach(() => {
+      vi.useFakeTimers({ toFake: ["Date"] })
+      vi.setSystemTime(START)
+    })
+
+    afterEach(() => {
+      vi.useRealTimers()
+    })
+
+    test("is queued at the stored check time, carrying it as the expected due time", async () => {
+      await runPending(20_000)
+
+      const stored = outcomeOf().nextCheckAt as Date
+      expect(stored.getTime()).toBe(START.getTime() + 20_000)
+      expect(mocks.enqueue).toHaveBeenCalledWith(
+        "checkTarget",
+        expect.objectContaining({
+          data: expect.objectContaining({
+            expectedDueAtMs: stored.getTime(),
+            socialPostTargetId: "t-1",
+            workspaceId: WS,
+          }),
+        }),
+        {
+          delay: 20_000,
+          jobId: `social-post-check-target-t-1-due-${stored.getTime()}`,
+        },
+      )
+    })
+
+    test("carries a legacy lease that never equals the stored fence, so a previous worker no-ops", async () => {
+      await runPending(20_000)
+
+      const stored = (outcomeOf().nextCheckAt as Date).getTime()
+      const data = (
+        mocks.enqueue.mock.calls[0]?.[1] as {
+          data: { expectedDueAtMs: number; leaseUntilMs: number }
+        }
+      ).data
+      expect(data.expectedDueAtMs).toBe(stored)
+      expect(data.leaseUntilMs).not.toBe(stored)
+      expect(data.leaseUntilMs).toBe(0)
+    })
+
+    test("a later pending answer queues a fresh job under a later due id", async () => {
+      await runPending(20_000)
+      vi.setSystemTime(new Date(START.getTime() + 20_000))
+      await runPending(60_000)
+
+      const ids = mocks.enqueue.mock.calls.map(
+        (call) => (call[2] as { jobId: string }).jobId,
+      )
+      expect(ids).toHaveLength(2)
+      expect(new Set(ids).size).toBe(2)
+      expect(mocks.enqueue.mock.calls[1]?.[2]).toMatchObject({ delay: 60_000 })
+    })
+
+    test("is not queued when the claim was lost", async () => {
+      mocks.settle.mockResolvedValue(null)
+
+      await runPending(20_000)
+
+      expect(mocks.enqueue).not.toHaveBeenCalled()
+    })
+
+    test("a queue that refuses it is logged and the scan stays the fallback", async () => {
+      mocks.enqueue.mockRejectedValue(new Error("redis down"))
+
+      await expect(runPending(20_000)).resolves.toBeUndefined()
+
+      expect(logger.warn).toHaveBeenCalled()
+      expect(outcomeOf()).toMatchObject({ kind: "processing" })
+    })
+
+    test("a check time already past gets a zero delay, never a negative one", async () => {
+      mocks.settle.mockImplementation(() => {
+        vi.setSystemTime(new Date(START.getTime() + 90_000))
+        return Promise.resolve("p-1")
+      })
+
+      await runPending(20_000)
+
+      expect(mocks.enqueue.mock.calls[0]?.[2]).toMatchObject({ delay: 0 })
+    })
+  })
+
   test("the pace gate defers the target before anything is sent and spends no attempt", async () => {
     const fake = publisher()
     const until = new Date("2026-01-01T00:20:00Z")
@@ -1622,6 +1728,117 @@ describe("recoverExpired", () => {
     expect(held).toBe(false)
     expect(fake.checkStatus).not.toHaveBeenCalled()
     expect(mocks.settle).not.toHaveBeenCalled()
+  })
+
+  describe("a delayed check job", () => {
+    const DUE = new Date("2026-01-01T00:01:00Z")
+    const NEW_LEASE = new Date("2026-01-01T00:11:00Z")
+    const delayed = () =>
+      socialPostPublishService.runTargetCheck(
+        { expectedDueAt: DUE, id: "t-1", leaseUntil: DUE, workspaceId: WS },
+        { facebook: fake },
+      )
+    let fake: ReturnType<typeof publisher>
+
+    beforeEach(() => {
+      fake = publisher()
+    })
+
+    test("that wins the claim reads the network under the new lease", async () => {
+      const claim = expired({
+        continuation: { containerId: "c1" },
+        leaseUntil: NEW_LEASE,
+        publishStartedAt: new Date(),
+        status: "processing",
+      })
+      mocks.claimExpired.mockResolvedValue([claim])
+      mocks.findExpiredClaim.mockResolvedValue(claim)
+      mocks.findForPublish.mockResolvedValue(target({ status: "processing" }))
+      mocks.loadCredentials.mockResolvedValue(credentials())
+      fake.checkStatus.mockResolvedValue({
+        externalPostId: "fb-1",
+        permalink: null,
+        status: "published",
+      })
+
+      const held = await delayed()
+
+      expect(held).toBe(true)
+      expect(mocks.claimExpired).toHaveBeenCalledWith(
+        expect.objectContaining({
+          limit: 1,
+          only: { expectedDueAt: DUE, id: "t-1", workspaceId: WS },
+        }),
+      )
+      expect(mocks.findExpiredClaim).toHaveBeenCalledWith({
+        id: "t-1",
+        leaseUntil: NEW_LEASE,
+        workspaceId: WS,
+      })
+      expect(fake.checkStatus).toHaveBeenCalledTimes(1)
+      expect(mocks.settle.mock.calls[0]?.[0].fence).toEqual(NEW_LEASE)
+    })
+
+    test("that lost the claim to the scan, or is stale, makes no network call", async () => {
+      mocks.claimExpired.mockResolvedValue([])
+
+      const held = await delayed()
+
+      expect(held).toBe(false)
+      expect(mocks.findExpiredClaim).not.toHaveBeenCalled()
+      expect(fake.checkStatus).not.toHaveBeenCalled()
+      expect(mocks.settle).not.toHaveBeenCalled()
+    })
+
+    test("queued before delayed checks existed (no expected due time) is read as before, with no claim", async () => {
+      mocks.findExpiredClaim.mockResolvedValue(null)
+
+      const held = await socialPostPublishService.runTargetCheck(
+        { id: "t-1", leaseUntil: LEASE, workspaceId: WS },
+        { facebook: fake },
+      )
+
+      expect(held).toBe(false)
+      expect(mocks.claimExpired).not.toHaveBeenCalled()
+      expect(mocks.findExpiredClaim).toHaveBeenCalledWith({
+        id: "t-1",
+        leaseUntil: LEASE,
+        workspaceId: WS,
+      })
+    })
+
+    test("whose read is pending again queues the next delayed check", async () => {
+      const claim = expired({
+        continuation: { containerId: "c1" },
+        leaseUntil: NEW_LEASE,
+        publishStartedAt: new Date(),
+        status: "processing",
+      })
+      mocks.claimExpired.mockResolvedValue([claim])
+      mocks.findExpiredClaim.mockResolvedValue(claim)
+      mocks.findForPublish.mockResolvedValue(target({ status: "processing" }))
+      mocks.loadCredentials.mockResolvedValue(credentials())
+      fake.checkStatus.mockResolvedValue({
+        continuation: { containerId: "c1" },
+        retryAfterMs: 60_000,
+        status: "pending",
+      })
+
+      await delayed()
+
+      const nextCheckAt = outcomeOf().nextCheckAt as Date
+      expect(mocks.enqueue).toHaveBeenCalledWith(
+        "checkTarget",
+        expect.objectContaining({
+          data: expect.objectContaining({
+            expectedDueAtMs: nextCheckAt.getTime(),
+          }),
+        }),
+        expect.objectContaining({
+          jobId: `social-post-check-target-t-1-due-${nextCheckAt.getTime()}`,
+        }),
+      )
+    })
   })
 
   test("a queue that refuses the job loses nothing: the claim just expires again", async () => {

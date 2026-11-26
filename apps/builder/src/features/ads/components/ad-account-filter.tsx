@@ -24,16 +24,20 @@ import type { AdsAnalyticsSearchParams } from "../schema/analytics"
 export function AdAccountFilter({
   channel,
   range,
-  selectedChannelIntegrationId,
+  matchesNoIntegration,
+  selectedChannelIntegrationIds,
   workspaceId,
 }: {
   channel: AdsEligibleChannelType
   range: AdsAnalyticsSearchParams
-  /** Narrows the ad-account list (and its cache key) to one channel
-   * integration's own messaging-ads connection; `null` unions across every
-   * connected integration for the channel plus the workspace-wide fallback
-   * ("All accounts" — see `resolveChannelAdAccountSources`). */
-  selectedChannelIntegrationId: string | null
+  /** Narrows the ad-account list (and its cache key) to these channel
+   * integrations' own messaging-ads connections (the shared Inbox filter's
+   * selection); empty unions across every connected integration for the
+   * channel plus the workspace-wide fallback ("All accounts" — see
+   * `resolveChannelAdAccountSources`). */
+  selectedChannelIntegrationIds: readonly string[]
+  /** An explicit inbox selection that matches no integration: no ad accounts to offer. */
+  matchesNoIntegration: boolean
   workspaceId: string
 }) {
   const pathname = usePathname()
@@ -45,11 +49,16 @@ export function AdAccountFilter({
       input: {
         workspaceId,
         channel,
-        integrationId: selectedChannelIntegrationId ?? undefined,
+        integrationIds:
+          selectedChannelIntegrationIds.length > 0
+            ? [...selectedChannelIntegrationIds]
+            : undefined,
       },
+      // No integration matches the explicit selection: nothing to offer.
+      enabled: !matchesNoIntegration,
     }),
   )
-  const accounts = adAccounts.data?.data ?? []
+  const accounts = matchesNoIntegration ? [] : (adAccounts.data?.data ?? [])
   // The previously selected ad account may not exist in a newly narrowed
   // list (e.g. after switching the integration filter) — fall back to "All
   // ad accounts" instead of handing the Select an unknown value; the stale
@@ -80,12 +89,13 @@ export function AdAccountFilter({
   if (adAccounts.isLoading) {
     return null
   }
-  const isUnavailable = adAccounts.isError || !adAccounts.data
+  const isUnavailable =
+    !matchesNoIntegration && (adAccounts.isError || !adAccounts.data)
 
   return (
     <div className="flex items-center gap-1.5">
       <Select
-        disabled={isUnavailable}
+        disabled={isUnavailable || matchesNoIntegration}
         items={options}
         onValueChange={(value) => {
           const nextAdAccount = value as string

@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, test, vi } from "vitest"
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
 
 const quota = vi.hoisted(() => ({ room: true }))
 
@@ -74,12 +74,15 @@ vi.mock("@chatbotx.io/database/repositories", () => ({
   socialPostSchedulingRepository: { countWaiting: async () => 0 },
 }))
 vi.mock("@chatbotx.io/worker-config", () => ({
+  NEVER_MATCHING_LEASE_MS: 0,
   PostPublishJobAction: {
     checkPart: "checkPart",
     checkTarget: "checkTarget",
     publishPart: "publishPart",
     publishTarget: "publishTarget",
   },
+  postCheckPartDueJobId: (id: string, due: number) =>
+    `social-post-check-part-${id}-due-${due}`,
   postCheckPartJobId: (id: string, lease: number) =>
     `social-post-check-part-${id}-${lease}`,
   postPartJobId: (id: string) => `social-post-part-${id}`,
@@ -121,6 +124,7 @@ vi.mock("../src/social-post/link-channel-post", () => ({
   linkPublishedChannelPost: mocks.link,
 }))
 
+const { logger } = await import("../src/logger")
 const { socialPostPartPublishService, replyTargetOf } = await import(
   "../src/social-post/publish-parts.service"
 )
@@ -336,6 +340,92 @@ describe("runPart", () => {
 
     expect(results.sort()).toEqual(["settled", "skipped"])
     expect(fake.publishPart).toHaveBeenCalledTimes(1)
+  })
+
+  describe("the delayed check of a pending answer", () => {
+    const START = new Date("2026-03-01T10:00:00.000Z")
+    const runPending = async () => {
+      const fake = publisher()
+      fake.publishPart.mockResolvedValue({
+        continuation: { containerId: "c1" },
+        retryAfterMs: 30_000,
+        status: "pending",
+      })
+      await socialPostPartPublishService.runPart(
+        { id: "part-1", workspaceId: WS },
+        { threads: fake },
+      )
+    }
+
+    beforeEach(() => {
+      vi.useFakeTimers({ toFake: ["Date"] })
+      vi.setSystemTime(START)
+    })
+
+    afterEach(() => {
+      vi.useRealTimers()
+    })
+
+    test("is queued at the stored check time with it as the expected due time", async () => {
+      await runPending()
+
+      const stored = partOutcome().nextCheckAt as Date
+      expect(stored.getTime()).toBe(START.getTime() + 30_000)
+      expect(mocks.enqueue).toHaveBeenCalledWith(
+        "checkPart",
+        expect.objectContaining({
+          data: expect.objectContaining({
+            expectedDueAtMs: stored.getTime(),
+            socialPostPartId: "part-1",
+            workspaceId: WS,
+          }),
+        }),
+        {
+          delay: 30_000,
+          jobId: `social-post-check-part-part-1-due-${stored.getTime()}`,
+        },
+      )
+    })
+
+    test("carries a legacy lease that never equals the stored fence, so a previous worker no-ops", async () => {
+      await runPending()
+
+      const stored = (partOutcome().nextCheckAt as Date).getTime()
+      const data = (
+        mocks.enqueue.mock.calls[0]?.[1] as {
+          data: { expectedDueAtMs: number; leaseUntilMs: number }
+        }
+      ).data
+      expect(data.leaseUntilMs).not.toBe(stored)
+      expect(data.leaseUntilMs).toBe(0)
+    })
+
+    test("is not queued when the claim was lost", async () => {
+      mocks.partSettle.mockResolvedValue(null)
+
+      await runPending()
+
+      expect(mocks.enqueue).not.toHaveBeenCalled()
+    })
+
+    test("a queue that refuses it is logged and the scan stays the fallback", async () => {
+      mocks.enqueue.mockRejectedValue(new Error("redis down"))
+
+      await expect(runPending()).resolves.toBeUndefined()
+
+      expect(logger.warn).toHaveBeenCalled()
+    })
+
+    test("a check time already past gets a zero delay", async () => {
+      mocks.partSettle.mockImplementation(() => {
+        vi.setSystemTime(new Date(START.getTime() + 90_000))
+        return Promise.resolve("t-1")
+      })
+
+      await runPending()
+
+      expect(mocks.enqueue.mock.calls[0]?.[2]).toMatchObject({ delay: 0 })
+    })
   })
 
   test("the marker is written before the call; the first part replies to the head", async () => {
@@ -693,6 +783,84 @@ describe("recoverExpired (parts)", () => {
     expect(held).toBe(false)
     expect(fake.checkStatus).not.toHaveBeenCalled()
     expect(mocks.partSettle).not.toHaveBeenCalled()
+  })
+
+  describe("a delayed part check job", () => {
+    const DUE = new Date("2026-01-01T00:01:00Z")
+    const NEW_LEASE = new Date("2026-01-01T00:11:00Z")
+    const delayed = (fake: ReturnType<typeof publisher>) =>
+      socialPostPartPublishService.runPartCheck(
+        {
+          expectedDueAt: DUE,
+          id: "part-1",
+          leaseUntil: DUE,
+          workspaceId: WS,
+        },
+        { threads: fake },
+      )
+
+    test("that wins the claim reads the network under the new lease", async () => {
+      const claim = expired({
+        continuation: { containerId: "c1" },
+        leaseUntil: NEW_LEASE,
+        publishStartedAt: new Date(),
+        status: "processing",
+      })
+      mocks.claimExpired.mockResolvedValue([claim])
+      mocks.findExpiredClaim.mockResolvedValue(claim)
+      mocks.findPartForPublish.mockResolvedValue(part({ status: "processing" }))
+      mocks.loadCredentials.mockResolvedValue(credentials("t"))
+      mocks.firstUnsettled.mockResolvedValue(null)
+      mocks.findForPublish.mockResolvedValue({
+        externalPostId: "head-1",
+        id: "t-1",
+      })
+      const fake = publisher()
+      fake.checkStatus.mockResolvedValue({
+        externalPostId: "r1",
+        permalink: null,
+        status: "published",
+      })
+
+      const held = await delayed(fake)
+
+      expect(held).toBe(true)
+      expect(mocks.claimExpired).toHaveBeenCalledWith(
+        expect.objectContaining({
+          limit: 1,
+          only: { expectedDueAt: DUE, id: "part-1", workspaceId: WS },
+        }),
+      )
+      expect(mocks.findExpiredClaim).toHaveBeenCalledWith({
+        id: "part-1",
+        leaseUntil: NEW_LEASE,
+        workspaceId: WS,
+      })
+      expect(fake.checkStatus).toHaveBeenCalledTimes(1)
+    })
+
+    test("that lost the claim (the scan took it, or it is stale) makes no network call", async () => {
+      mocks.claimExpired.mockResolvedValue([])
+      const fake = publisher()
+
+      const held = await delayed(fake)
+
+      expect(held).toBe(false)
+      expect(mocks.findExpiredClaim).not.toHaveBeenCalled()
+      expect(fake.checkStatus).not.toHaveBeenCalled()
+    })
+
+    test("queued without an expected due time is read as before, with no claim", async () => {
+      mocks.findExpiredClaim.mockResolvedValue(null)
+
+      const held = await socialPostPartPublishService.runPartCheck(
+        { id: "part-1", leaseUntil: LEASE, workspaceId: WS },
+        { threads: publisher() },
+      )
+
+      expect(held).toBe(false)
+      expect(mocks.claimExpired).not.toHaveBeenCalled()
+    })
   })
 
   test("a part that never reached the network goes back to the queue", async () => {
