@@ -13,7 +13,7 @@ import { ModelNotfoundException } from "./errors"
 import { keys } from "./keys"
 import { logger } from "./logger"
 import { relations } from "./relations"
-import { relationsFilterToSQL } from "./relations-filter"
+import { relationsFilterToSQL, stripUndefined } from "./relations-filter"
 
 const env = keys()
 
@@ -35,6 +35,29 @@ export const db = drizzle({
   // string "true", which drizzle would treat as a Logger object and crash on.
   logger: parseEnvBool(env.DATABASE_DEBUG),
 })
+
+// drizzle-orm 1.0.0-rc throws "Unexpected 'undefined' in filter value" for
+// any `undefined` inside a relational `where` (top level or in `with`); beta
+// skipped those keys and many repositories build `where` objects with
+// optional filters (`name: input.name ? … : undefined`). Strip them once on
+// the shared builder prototype so every `db.query.*` and `tx.query.*`
+// find keeps beta semantics. Guarded by __tests__/relational-query-undefined.test.ts.
+type RelationalFind = (config?: unknown) => unknown
+const relationalQueryBuilderPrototype = Object.getPrototypeOf(
+  Object.values(db.query)[0],
+) as { findMany: RelationalFind; findFirst: RelationalFind }
+for (const method of ["findMany", "findFirst"] as const) {
+  const original = relationalQueryBuilderPrototype[method]
+  relationalQueryBuilderPrototype[method] = function (
+    this: unknown,
+    config?: unknown,
+  ) {
+    return original.call(
+      this,
+      config === undefined ? undefined : stripUndefined(config),
+    )
+  }
+}
 
 export * from "drizzle-orm"
 export { relationsFilterToSQL } from "./relations-filter"
