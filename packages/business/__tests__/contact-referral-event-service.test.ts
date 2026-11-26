@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, test, vi } from "vitest"
 const mocks = vi.hoisted(() => ({
   insertIgnoreDuplicate: vi.fn(),
   findLatestAdTouchId: vi.fn(),
+  findLatestMetaAdTouch: vi.fn(),
   listRecentAds: vi.fn(),
   listAdIdsByContacts: vi.fn(),
   recordActivity: vi.fn(),
@@ -26,6 +27,7 @@ vi.mock("@chatbotx.io/database/repositories", () => ({
   contactReferralEventRepository: {
     insertIgnoreDuplicate: mocks.insertIgnoreDuplicate,
     findLatestAdTouchId: mocks.findLatestAdTouchId,
+    findLatestMetaAdTouch: mocks.findLatestMetaAdTouch,
     listRecentAds: mocks.listRecentAds,
     listAdIdsByContacts: mocks.listAdIdsByContacts,
     aggregateAdTouchStats: mocks.aggregateAdTouchStats,
@@ -419,5 +421,33 @@ describe("contactReferralEventService.listAdIdsByContacts", () => {
         contactIds: ["1"],
       }),
     ).rejects.toThrow("statement timeout")
+  })
+})
+
+describe("contactReferralEventService.findLatestMetaAdTouch", () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  test("returns what the repository finds for the inbox", async () => {
+    const touch = {
+      occurredAt: new Date("2026-11-24T10:00:00Z"),
+      sourceUrl: "https://fb.me/ad",
+      metadata: { adTitle: "Ad", adBody: null, sourcePlatform: "facebook" },
+    }
+    mocks.findLatestMetaAdTouch.mockResolvedValueOnce(touch)
+    const input = {
+      workspaceId: "1",
+      contactId: "2",
+      contactInboxId: "3",
+    }
+
+    await expect(
+      contactReferralEventService.findLatestMetaAdTouch(input),
+    ).resolves.toEqual(touch)
+    expect(mocks.findLatestMetaAdTouch).toHaveBeenCalledWith(
+      input,
+      expect.anything(),
+    )
   })
 })

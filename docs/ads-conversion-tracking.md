@@ -57,6 +57,38 @@ There is no backfill: history starts when the writer ships.
   drained in bounded batches before the final cascade (it sits after the conversion
   tables it is the parent of).
 
+## AI Agent ad context
+
+A customer who just clicked a paid ad often opens with a vague message ("tell me
+more", "how much?"). The AI Agent chat reply therefore receives the ad as extra
+system-prompt context and **prioritises it** for vague messages. Always on, no
+setting.
+
+| Concept | Where | Notes |
+|---------|-------|-------|
+| Block | `buildAdContextPrompt` (`packages/business/src/ads-conversion/ad-context-prompt.ts`) | Pure. Renders one ad's headline (`adTitle`), text (`adBody`), platform and link (`sourceUrl`) as JSON-quoted values, plus a short rule: treat the ad as the customer's current interest, answer about it when the message is vague even if earlier messages discussed another product, but follow the customer if they clearly name a different product. Never contains `adId` or `ctwaClid`. |
+| Gate | `resolveAdContextPrompt` (`apps/worker/src/integration/handlers/automated-response/ad-context.ts`) | Cheapest check first: (1) `isAdContextCandidate` on the `ContactInbox.referral` snapshot, in memory: `resolveAdReferral` is non-null (the same paid-ad test as attribution; an ig.me `SHORTLINK`, a ref link or a Google click is not an ad) and the snapshot carries a headline, text or link (an ad id alone is useless to a model, so a Messenger/Instagram referral with only an `adId` costs no query), (2) the latest Meta ad touch (`contactReferralEventService.findLatestMetaAdTouch`, which, unlike `findLatestAdTouchAt`, does not require an `adId`, so a Click-to-WhatsApp click with a click id but no `source_id` still counts) is fresh: at most `AD_CONTEXT_WINDOW_MS` = 72 hours old and at most `AD_CONTEXT_CLOCK_SKEW_MS` = 5 minutes in the future (the time is Meta's timestamp, not our clock); a never-logged touch counts as stale, (3) that touch carries a headline, text or link. An organic customer costs no query. |
+| Copy source | `adCreativeFromTouch` | The block is rendered from the **newest logged touch** (`ContactReferralEvent.sourceUrl` + `metadata`), never from the snapshot. The snapshot is a jsonb merge that can keep an older ad's copy (a CTWA click without `source_id` does not clear `adTitle`/`adBody`; `sourceUrl`/`sourcePlatform` are never cleared) and is last-processed-wins, so out-of-order webhooks can leave it behind or ahead of the log. Only the touch row pairs the copy with its own time. |
+| Placement | `runAIReply` (`apps/worker/src/integration/handlers/automated-response/replies.ts`) | After the workspace prompt (and the `Conversation Context` summary), before every guard, so the guards keep the last word. Rebuilt on every reply; never written to the AI history. |
+| Failure | `resolveAdContextPrompt` | Any error returns no block and logs a `warn` with `reason: "ad_context_unavailable"`; the reply is never blocked. |
+
+- **Scope**: only the AI Agent chat reply (`replyByAI`, reached by the Default Agent
+  and the Global Router through `runAgentReply`). The AI Generate Text flow step,
+  comment automation and story reply do not get it.
+- **Sanitising**: ad copy comes from the advertiser and Meta, but is still outside
+  input headed for a prompt. Each field is flattened to one line, stripped of control
+  characters and capped (headline 200, text 600, link 300 characters).
+- **Known limits**: Messenger and Instagram referrals often carry only an `adId`
+  (the title is optional), so they get no block until an ad name is available. The
+  priority is not tied to the message order: within the 72 hours a vague message is
+  answered about the ad even if the conversation has since moved to another product.
+  The Messenger/Instagram `messaging_referrals` event can arrive separately from the
+  message, so the first reply may miss the block if the job runs first.
+  The in-memory gate reads the snapshot, so in the rare out-of-order case where
+  the snapshot holds a copy-less ad (only an `adId`) while the log's newest touch
+  has copy, no block is shown; this keeps adId-only referrals free of a query on
+  every reply.
+
 ## How conversions get produced
 
 Two independent producers write the same `AdsConversionEvent` table:
