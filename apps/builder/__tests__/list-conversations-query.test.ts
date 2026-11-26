@@ -18,6 +18,7 @@ const mocks = vi.hoisted(() => {
     // against each conversation's own lastActivityAt.
     getSafeSinceTime: vi.fn((value: Date | undefined) => value),
     notFoundException: (message: string) => new Error(message),
+    allowsConversation: vi.fn(() => true),
     resolveTenantSettings: vi.fn(async () => ({
       storageUrl: "https://cdn.example.com",
     })),
@@ -38,6 +39,7 @@ const mocks = vi.hoisted(() => {
 })
 
 vi.mock("@chatbotx.io/business", () => ({
+  conversationMemberScope: { allows: mocks.allowsConversation },
   conversationService: {
     findManyQuery: mocks.findManyQuery,
     findWithFullRelations: mocks.findWithFullRelations,
@@ -570,6 +572,34 @@ describe("listConversations / findConversation attachment count", () => {
       "https://cdn.example.com/a/1.png",
       "https://cdn.example.com/a/1.png",
     ])
+  })
+
+  test("findConversation reports a conversation outside the member scope as not found", async () => {
+    const memberScope = {
+      chatScope: "assigned" as const,
+      teamIds: [],
+      userId: "me",
+    }
+    const conversation = {
+      id: "conv-1",
+      assignedUserId: "someone-else",
+      lastActivityAt: new Date("2026-01-01T00:00:00Z"),
+      contactInboxes: [],
+      contact: null,
+      conversationParticipants: [],
+    }
+    mocks.findWithFullRelations.mockResolvedValue(conversation)
+    mocks.allowsConversation.mockReturnValueOnce(false)
+
+    await expect(
+      findConversation({ id: "conv-1", workspaceId: "ws-1" }, { memberScope }),
+    ).rejects.toThrow("Conversation not found")
+    expect(mocks.allowsConversation).toHaveBeenCalledWith(
+      memberScope,
+      conversation,
+    )
+    expect(mocks.findWithFullRelations).toHaveBeenCalledTimes(1)
+    expect(mocks.repo.findLastByConversation).not.toHaveBeenCalled()
   })
 
   test("findConversation with publicUrls returns an absolute avatar URL", async () => {

@@ -111,6 +111,7 @@ vi.mock("@chatbotx.io/utils/error-log", () => ({
 
 vi.mock("@chatbotx.io/business", () => ({
   AVATAR_HYDRATION_CHANNELS: new Set(["messenger", "instagram"]),
+  conversationMemberScope: { allows: () => true },
   inboxTeamService: { listByWorkspace: mocks.listByWorkspace },
   conversationService: {
     findManyQuery: mocks.findManyQuery,

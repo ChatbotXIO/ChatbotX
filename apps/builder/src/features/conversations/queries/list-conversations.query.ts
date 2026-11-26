@@ -1,5 +1,7 @@
 import {
+  type ConversationMemberScope,
   type ConversationParticipantPreview,
+  conversationMemberScope,
   conversationService,
   resolveContactAvatarUrl,
 } from "@chatbotx.io/business"
@@ -302,14 +304,29 @@ export async function listConversations(
 
 // ── Find single conversation ──────────────────────────────────────────────────
 
+type FindConversationOptions = {
+  /** Absolute avatar URLs for API callers; see `createAvatarFinalizer`. */
+  publicUrls?: boolean
+  /**
+   * A mobile member's conversation scope. A conversation outside it is
+   * reported as not found, exactly like a missing one. Unset = unscoped.
+   */
+  memberScope?: ConversationMemberScope
+}
+
 export const findConversation = async (
   input: FindConversationRequest,
-  options: { publicUrls?: boolean } = {},
+  options: FindConversationOptions = {},
 ): Promise<FindConversationResponse> => {
   const conversation = await conversationService.findWithFullRelations({
     where: input,
   })
-  if (!conversation) {
+  if (
+    !(
+      conversation &&
+      conversationMemberScope.allows(options.memberScope, conversation)
+    )
+  ) {
     throw notFoundException("Conversation not found")
   }
 
@@ -338,7 +355,9 @@ export const findConversation = async (
       ...withRecentParticipants(conversation),
       contact: await createConversationContactResolver(
         input.workspaceId,
-        createAvatarFinalizer(input.workspaceId, options),
+        createAvatarFinalizer(input.workspaceId, {
+          publicUrls: options.publicUrls,
+        }),
       )(conversation.contact, conversation.contactInboxes),
       contactInboxes: mapConversationContactInboxes(
         conversation.contactInboxes,

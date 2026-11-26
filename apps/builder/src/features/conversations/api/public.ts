@@ -229,13 +229,18 @@ export const conversationsPublicRouter = {
     .output(getConversationPublicResponse)
     .errors(possibleErrorsOnFindingResource)
     .handler(async ({ context, input }) => {
-      await assertConversationAccessForCaller(context, input.id)
+      // findConversation checks the member scope on the row it loads, so the
+      // conversation is read once instead of once for the scope check and
+      // again for the response.
       const result = await findConversation(
         {
           id: input.id,
           workspaceId: context.workspace.id,
         },
-        { publicUrls: true },
+        {
+          publicUrls: true,
+          memberScope: await conversationScopeForCaller(context),
+        },
       )
       return {
         ...result,

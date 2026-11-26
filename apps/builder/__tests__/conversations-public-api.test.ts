@@ -124,8 +124,10 @@ describe("GET /v1/conversations/{id}", () => {
 
     expect(findConversation).toHaveBeenCalledWith(
       { id: "1", workspaceId: "ws-1" },
-      { publicUrls: true },
+      { publicUrls: true, memberScope: undefined },
     )
+    // One conversation read: the scope check happens inside findConversation.
+    expect(conversationService.findByOrFail).not.toHaveBeenCalled()
     expect(result).toEqual({ data: { id: "1" } })
   })
 })

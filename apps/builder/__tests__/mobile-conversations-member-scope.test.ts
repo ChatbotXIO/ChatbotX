@@ -348,11 +348,29 @@ describe("conversations.get for a mobile member", () => {
       contact: { id: "c1", email: "a@b.c", phoneNumber: "+84" },
     },
   })
+  // findConversation applies the member scope it is given to the row it
+  // loads (one conversation read); emulate that so these tests prove the
+  // handler hands it the caller's scope.
+  const findConversationReturning = (
+    assignment: Parameters<typeof conversationRow>[0],
+  ) =>
+    findConversation.mockImplementation(
+      (
+        _input: unknown,
+        options: {
+          memberScope?: Parameters<typeof conversationMemberScope.allows>[0]
+        },
+      ) => {
+        const result = found(assignment)
+        if (!conversationMemberScope.allows(options.memberScope, result.data)) {
+          return Promise.reject(new Error("Conversation not found"))
+        }
+        return Promise.resolve(result)
+      },
+    )
 
   test("another agent's conversation is not found for an assigned-only agent", async () => {
-    findConversation.mockResolvedValue(
-      found({ assignedUserId: "someone-else" }),
-    )
+    findConversationReturning({ assignedUserId: "someone-else" })
 
     await expect(
       get.handler?.({
@@ -363,7 +381,7 @@ describe("conversations.get for a mobile member", () => {
   })
 
   test("an unassigned conversation is not visible to an assigned-only agent", async () => {
-    findConversation.mockResolvedValue(found({}))
+    findConversationReturning({})
 
     await expect(
       get.handler?.({
@@ -377,10 +395,7 @@ describe("conversations.get for a mobile member", () => {
     ["their own", { assignedUserId: ME }],
     ["their team's", { assignedInboxTeamId: "team-1" }],
   ])("%s conversation is returned, with PII masked", async (_name, assignment) => {
-    conversationService.findByOrFail.mockResolvedValue(
-      conversationRow(assignment),
-    )
-    findConversation.mockResolvedValue(found(assignment))
+    findConversationReturning(assignment)
 
     const result = await get.handler?.({
       context: memberContext(ASSIGNED_ONLY),
@@ -388,6 +403,8 @@ describe("conversations.get for a mobile member", () => {
     })
 
     expect(result.data.id).toBe("conv-1")
+    // The scope check rides on findConversation's own load: no second read.
+    expect(conversationService.findByOrFail).not.toHaveBeenCalled()
     expect(result.data.contact).toMatchObject({
       email: null,
       phoneNumber: null,
@@ -395,9 +412,7 @@ describe("conversations.get for a mobile member", () => {
   })
 
   test("an agent with full chat access sees any conversation; a token is unaffected", async () => {
-    findConversation.mockResolvedValue(
-      found({ assignedUserId: "someone-else" }),
-    )
+    findConversationReturning({ assignedUserId: "someone-else" })
 
     await expect(
       get.handler?.({
