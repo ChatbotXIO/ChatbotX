@@ -837,6 +837,13 @@ export class Integration<
     } catch (error) {
       if (error instanceof AuthException && this.props.refreshAuth) {
         ctx = await this.refreshAndPersist(ctx, { force: true })
+        // Without this line a token the provider rejected and the refresh that
+        // recovered it leave no trace, so operators cannot tell a self-healed
+        // channel from one that never failed.
+        sdkLogger.info(
+          { integration: this.name, reason: error.message },
+          "Access token rejected; refreshed it and retrying the call",
+        )
         return await handler({ ...(props as object), ctx })
       }
       throw error

@@ -10,6 +10,7 @@ import {
   type Oauth2AuthValue,
   SdkException,
 } from "../src"
+import { sdkLogger } from "../src/lib/logger"
 
 const baseAuth = (expiresAt: string): Oauth2AuthValue => ({
   authType: AuthType.oauth2,
@@ -159,6 +160,46 @@ describe("Integration.ensureFreshAuth", () => {
     )
     expect(refreshAuth).toHaveBeenCalledExactlyOnceWith({ auth: ctx.auth })
     expect(save).toHaveBeenCalledExactlyOnceWith(refreshedAuth)
+  })
+
+  test("logs at info level when a rejected token is refreshed on demand", async () => {
+    const infoSpy = vi
+      .spyOn(sdkLogger, "info")
+      .mockImplementation(() => undefined)
+    try {
+      const farFuture = new Date(Date.now() + 60 * 60 * 1000).toISOString()
+      const refreshedAuth = {
+        ...baseAuth(farFuture),
+        tokens: { accessToken: "token-2", expiresAt: farFuture },
+      }
+      const integration = new Integration({
+        name: "reactive-refresh-log-fixture",
+        actions: {
+          send: ({ ctx }: { ctx: Context<Oauth2AuthValue> }) => {
+            if (ctx.auth.tokens.accessToken === "token-1") {
+              throw new AuthException("token rejected")
+            }
+            return ctx.auth.tokens.accessToken
+          },
+        },
+        handleRequest: async () => "ok",
+        disconnect: async () => undefined,
+        refreshAuth: async () => refreshedAuth,
+      })
+      const { ctx } = makeContext(baseAuth(farFuture))
+
+      await integration.runAction("send", { ctx })
+
+      expect(infoSpy).toHaveBeenCalledExactlyOnceWith(
+        {
+          integration: "reactive-refresh-log-fixture",
+          reason: "token rejected",
+        },
+        "Access token rejected; refreshed it and retrying the call",
+      )
+    } finally {
+      infoSpy.mockRestore()
+    }
   })
   test("force:true does not refresh non-oauth2 auth", async () => {
     const refreshAuth = vi.fn(async ({ auth }: { auth: AuthValue }) => auth)
