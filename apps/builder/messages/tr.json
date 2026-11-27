@@ -12607,7 +12607,7 @@
   },
   "conversationParticipants": {
     "joined": "{names} görüşmeye katıldı",
-    "joinedShort": "{names} katıldı",
+    "joinedShort": "{count, plural, one {{names} katıldı} other {{names} katıldı}}",
     "replied": "{name} yanıt verdi {time}",
     "showMore": "Daha fazla göster",
     "label": "Bu görüşmede kimler yanıt verdi",

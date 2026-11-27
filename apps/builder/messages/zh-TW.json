@@ -12607,7 +12607,7 @@
   },
   "conversationParticipants": {
     "joined": "{names} 已參與對話",
-    "joinedShort": "{names} 已加入",
+    "joinedShort": "{count, plural, one {{names} 已加入} other {{names} 已加入}}",
     "replied": "{name} 回覆於 {time}",
     "showMore": "顯示更多",
     "label": "誰在此對話中回覆過",

@@ -12607,7 +12607,7 @@
   },
   "conversationParticipants": {
     "joined": "{names} が会話に参加しました",
-    "joinedShort": "{names} が参加",
+    "joinedShort": "{count, plural, one {{names} が参加} other {{names} が参加}}",
     "replied": "{name} が返信しました {time}",
     "showMore": "さらに表示",
     "label": "この会話で返信した人",

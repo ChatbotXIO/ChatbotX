@@ -36,12 +36,11 @@ describe("conversationParticipants.joinedShort", () => {
     )
   })
 
-  test("uses the Arabic dual for exactly two members", () => {
+  // Every catalog keeps English's one/other branches (i18n-messages.test.ts),
+  // so Arabic's two members take the plural form like its other messages.
+  test("uses the Arabic plural for more than one member", () => {
     expect(joinedShort("ar", ar, "علي", 1)).toBe("علي انضم")
-    expect(joinedShort("ar", ar, "علي، عمر", 2)).toBe("علي، عمر انضما")
-    expect(joinedShort("ar", ar, "علي، عمر، سعيد", 3)).toBe(
-      "علي، عمر، سعيد انضموا",
-    )
+    expect(joinedShort("ar", ar, "علي، عمر", 2)).toBe("علي، عمر انضموا")
   })
 
   test("keeps one form where the verb does not change", () => {

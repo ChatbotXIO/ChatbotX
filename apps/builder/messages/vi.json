@@ -12607,7 +12607,7 @@
   },
   "conversationParticipants": {
     "joined": "{names} đã tham gia hội thoại",
-    "joinedShort": "{names} đã tham gia",
+    "joinedShort": "{count, plural, one {{names} đã tham gia} other {{names} đã tham gia}}",
     "replied": "{name} đã trả lời {time}",
     "showMore": "Xem thêm",
     "label": "Ai đã trả lời trong hội thoại này",

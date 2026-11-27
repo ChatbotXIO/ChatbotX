@@ -12607,7 +12607,7 @@
   },
   "conversationParticipants": {
     "joined": "{names} har deltaget i samtalen",
-    "joinedShort": "{names} deltog",
+    "joinedShort": "{count, plural, one {{names} deltog} other {{names} deltog}}",
     "replied": "{name} svarede {time}",
     "showMore": "Vis mere",
     "label": "Hvem har svaret i denne samtale",
