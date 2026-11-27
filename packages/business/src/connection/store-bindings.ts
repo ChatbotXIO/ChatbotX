@@ -1,5 +1,5 @@
 import type { DatabaseClient } from "@chatbotx.io/database/client"
-import { and, db, eq } from "@chatbotx.io/database/client"
+import { and, db, eq, inArray, sql } from "@chatbotx.io/database/client"
 import type { IntegrationType } from "@chatbotx.io/database/partials"
 import { integrationModel } from "@chatbotx.io/database/schema"
 import { type AuthValue, authValueSchema, SdkException } from "@chatbotx.io/sdk"
@@ -24,6 +24,16 @@ type ConnectionStoreInsertInput =
       descriptor: { sourceId: string; displayName: string }
       config?: Record<string, unknown>
     }
+
+/** A workspace whose satellite row already holds a provider account identity. */
+export type ConnectionIdentityHolder = {
+  sourceId: string
+  workspaceId: string
+  /** The holder row's foreign key — what a `Connection` row's `inboxId` must equal to revive it. */
+  inboxId: string
+  /** Whether the row also satisfies the binding's own `extraWhere` slice (always true without one). */
+  matchesBinding: boolean
+}
 
 /**
  * Per-`IntegrationType` DB adapter the Connection domain drives instead of
@@ -87,6 +97,23 @@ export type ConnectionStoreBinding<TConfigColumn extends string = string> = {
   ) => Promise<void>
   /** Unique-constraint name a duplicate insert violates — lets callers map it to `alreadyConnected` instead of a raw DB error. */
   duplicateConstraint?: string
+  /**
+   * Which workspaces' satellite rows already hold each of `sourceIds`.
+   * Present only on a binding whose identity column carries a GLOBAL unique
+   * index (`identityColumn` + `duplicateConstraint`): such a row reserves the
+   * account for its workspace whatever the `Connection` status is — or even
+   * when no `Connection` row exists (a legacy satellite never backfilled) —
+   * so a connect from another workspace would hit that index. Lets the
+   * connect picker disable those accounts up front instead of failing at
+   * connect time. Each holder also reports its `inboxId` and whether it
+   * `matchesBinding` (the binding's `extraWhere` slice), because only a row
+   * this binding itself can load and update in place is revivable. Empty
+   * input resolves to `[]`.
+   */
+  findIdentityHolders?: (
+    sourceIds: readonly string[],
+    tx?: DatabaseClient,
+  ) => Promise<ConnectionIdentityHolder[]>
   /**
    * Allow-list of extra satellite columns a credential-strategy `connect`
    * request may set via `config` beyond the provider's own `configFields`
@@ -205,6 +232,36 @@ export const makeChannelBinding = <TTable extends ChannelSatelliteTable>(opts: {
       ...extraConditions(),
     ) as SQL
 
+  // Only a binding with a global unique index on its identity column can
+  // reserve an account across workspaces. Deliberately NOT filtered by
+  // `extraWhere`: the index spans the whole table, so `instagram` and
+  // `instagramFacebook` (same `IntegrationInstagram.igId`) reserve each
+  // other's accounts. `extraWhere` is reported per row as `matchesBinding`.
+  const bindingSlice = and(...extraConditions()) ?? sql`true`
+  const findIdentityHolders: ConnectionStoreBinding["findIdentityHolders"] =
+    identityCol && opts.duplicateConstraint
+      ? async (sourceIds, tx = db) => {
+          if (sourceIds.length === 0) {
+            return []
+          }
+          const rows = await tx
+            .select({
+              sourceId: identityCol,
+              workspaceId: table.workspaceId,
+              inboxId: table.inboxId,
+              matchesBinding: sql<boolean>`${bindingSlice}`,
+            })
+            .from(rawTable)
+            .where(inArray(identityCol, [...sourceIds]))
+          return rows.map((row) => ({
+            sourceId: String(row.sourceId),
+            workspaceId: String(row.workspaceId),
+            inboxId: String(row.inboxId),
+            matchesBinding: row.matchesBinding === true,
+          }))
+        }
+      : undefined
+
   return {
     loadAuthByForeignKey: async (inboxId, workspaceId, tx = db) => {
       const [row] = await tx
@@ -282,6 +339,7 @@ export const makeChannelBinding = <TTable extends ChannelSatelliteTable>(opts: {
         .where(withExtraWhere(eq(table.inboxId, inboxId), workspaceId))
     },
     duplicateConstraint: opts.duplicateConstraint,
+    ...(findIdentityHolders ? { findIdentityHolders } : {}),
     configColumns: opts.configColumns,
   }
 }

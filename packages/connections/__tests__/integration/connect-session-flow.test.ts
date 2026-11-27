@@ -8,10 +8,11 @@
  *   `onDisconnect: "delete_row"`) must pass the provider's
  *   `candidateToConfig(reconnectAuth)` as `extraConfig`, not `{}` — IG's
  *   `pageId`/`username` columns are NOT NULL with no database default.
- * - `listAndAttachCandidates` IG picker: a sibling-provider satellite row
- *   existing is not enough to grey out a candidate — only an ACTUALLY
- *   ACTIVE `Connection` row should. The raw cross-provider query now lives
- *   on `integrationInstagramRepository.findActiveWorkspacesByIgIds`.
+ * - `listAndAttachCandidates` IG picker: an account is selectable only when
+ *   connect can revive the satellite row holding it (same-provider
+ *   `Connection` pointing at that row's inbox); a sibling provider's
+ *   satellite blocks it. The active cross-provider query lives on
+ *   `integrationInstagramRepository.findActiveWorkspacesByIgIds`.
  * - `completeReconnect`'s `connectionRepository.update` result: a no-match
  *   update must be treated as an error, not silently ignored.
  * - `completeReconnect`, legacy sourceId: a `legacy:`-prefixed
@@ -60,6 +61,8 @@ const mocks = vi.hoisted(() => ({
   instagramWebhookSubscribe: vi.fn(async () => undefined),
   instagramWebhookUnsubscribe: vi.fn(async () => undefined),
   instagramFacebookListCandidates: vi.fn(),
+  instagramFacebookWebhookSubscribe: vi.fn(async () => undefined),
+  instagramFacebookWebhookUnsubscribe: vi.fn(async () => undefined),
 }))
 
 // Keeps the REAL store binding (so Postgres sees the actual NOT NULL/CHECK
@@ -98,6 +101,10 @@ vi.mock("../../src/registry", async (importOriginal) => {
         provider: {
           ...realInstagramFacebook.provider,
           listCandidates: mocks.instagramFacebookListCandidates,
+          webhook: {
+            subscribe: mocks.instagramFacebookWebhookSubscribe,
+            unsubscribe: mocks.instagramFacebookWebhookUnsubscribe,
+          },
         },
       },
     },
@@ -111,6 +118,7 @@ vi.mock("../../src/registry", async (importOriginal) => {
 const { completeAuthorization, listAndAttachCandidates } = await import(
   "../../src/connect-session-flow"
 )
+const { connectTargets } = await import("../../src/connect-targets")
 
 const buildInstagramAuth = (metadata: {
   igId: string
@@ -203,7 +211,7 @@ const insertInstagramConnection = async (input: {
   workspaceId: string
   inboxId: string
   sourceId: string
-  provider: string
+  provider: "instagram" | "instagramFacebook"
   status: "disconnected" | "needs_reauth"
 }): Promise<string> => {
   const id = createId()
@@ -229,6 +237,7 @@ const insertInstagramSatellite = async (input: {
   igId: string
   pageId: string
   username: string
+  type?: "instagram" | "facebook"
 }): Promise<string> => {
   const id = createId()
   await db.insert(integrationInstagramModel).values({
@@ -242,7 +251,7 @@ const insertInstagramSatellite = async (input: {
     auth: buildInstagramAuth(input),
     conversationStarters: [],
     persistentMenus: [],
-    type: "instagram",
+    type: input.type ?? "instagram",
   })
   return id
 }
@@ -307,7 +316,17 @@ describe.skipIf(!databaseUrl)(
       }
     })
 
-    test("the IG picker keeps a candidate selectable when the sibling-provider satellite's Connection is needs_reauth, not just because the satellite row exists", async () => {
+    const igCandidate = (igId: string) => ({
+      sourceId: igId,
+      displayName: "Linked via Facebook Page",
+      auth: buildInstagramAuth({
+        igId,
+        pageId: `page-${igId}`,
+        username: `user_${igId}`,
+      }),
+    })
+
+    test("the IG picker blocks a candidate whose satellite belongs to the sibling provider's needs_reauth Connection, since connect cannot revive it", async () => {
       const { workspaceId, ownerId } = await seedWorkspaceWithOwner()
       const igId = `ig-${createId()}`
       try {
@@ -327,15 +346,7 @@ describe.skipIf(!databaseUrl)(
           username: `user_${igId}`,
         })
         mocks.instagramFacebookListCandidates.mockResolvedValueOnce([
-          {
-            sourceId: igId,
-            displayName: "Linked via Facebook Page",
-            auth: buildInstagramAuth({
-              igId,
-              pageId: `page-${igId}`,
-              username: `user_${igId}`,
-            }),
-          },
+          igCandidate(igId),
         ])
 
         const { session } = await connectSessionService.create({
@@ -347,17 +358,71 @@ describe.skipIf(!databaseUrl)(
 
         const result = await listAndAttachCandidates(
           session,
-          buildInstagramAuth({
-            igId,
-            pageId: `page-${igId}`,
-            username: `user_${igId}`,
-          }),
+          igCandidate(igId).auth,
         )
 
         const target = result.targets.find((t) => t.id === igId)
-        expect(target).toBeDefined()
+        expect(target?.selectable).toBe(false)
+        expect(target?.alreadyConnected).toBe("this_workspace")
+      } finally {
+        await cleanupWorkspace({ workspaceId, ownerId })
+      }
+    })
+
+    test("a same-provider needs_reauth Connection holding the satellite stays selectable and connectTargets revives it in place", async () => {
+      const { workspaceId, ownerId } = await seedWorkspaceWithOwner()
+      const igId = `ig-${createId()}`
+      try {
+        const inboxId = await insertInbox({ workspaceId, sourceId: igId })
+        const connectionId = await insertInstagramConnection({
+          workspaceId,
+          inboxId,
+          sourceId: igId,
+          provider: "instagramFacebook",
+          status: "needs_reauth",
+        })
+        await insertInstagramSatellite({
+          workspaceId,
+          inboxId,
+          igId,
+          pageId: `page-${igId}`,
+          username: `user_${igId}`,
+          type: "facebook",
+        })
+        mocks.instagramFacebookListCandidates.mockResolvedValueOnce([
+          igCandidate(igId),
+        ])
+
+        const { session } = await connectSessionService.create({
+          workspaceId,
+          provider: "instagramFacebook",
+          purpose: "connect",
+          actorUserId: ownerId,
+        })
+        const listed = await listAndAttachCandidates(
+          session,
+          igCandidate(igId).auth,
+        )
+        const target = listed.targets.find((t) => t.id === igId)
         expect(target?.selectable).toBe(true)
         expect(target?.alreadyConnected).toBeUndefined()
+
+        const { outcomes } = await connectTargets({
+          sessionId: session.id,
+          workspaceId,
+          targetIds: [igId],
+          actorUserId: ownerId,
+        })
+        expect(outcomes).toEqual([
+          expect.objectContaining({ targetId: igId, status: "connected" }),
+        ])
+
+        const [connectionRow] = await db
+          .select()
+          .from(connectionModel)
+          .where(eq(connectionModel.id, connectionId))
+          .limit(1)
+        expect(connectionRow?.status).toBe("connected")
       } finally {
         await cleanupWorkspace({ workspaceId, ownerId })
       }

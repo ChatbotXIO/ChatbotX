@@ -8,6 +8,7 @@ import {
 } from "@chatbotx.io/business/connect-session"
 import {
   authExpiresAtOf,
+  type ConnectionIdentityHolder,
   type ConnectionQuotaConsumption,
   connectionStateService,
   isActiveConnectionStatus,
@@ -340,6 +341,39 @@ const sessionAuthorizationRecord = (
   connectSessionId: session.id,
 })
 
+type AlreadyConnectedScope = NonNullable<
+  ConnectionCandidate["alreadyConnected"]
+>
+
+/**
+ * Whether the satellite row holding an account blocks connecting it from
+ * `workspaceId`. The row reserves the account through a global unique index
+ * whatever its `Connection` status is, so connect can only succeed by
+ * reviving that exact row: a holder in another workspace always blocks, and a
+ * holder here blocks unless it is the binding's own slice AND this
+ * workspace's same-provider `Connection` points at the holder's inbox (what
+ * `saveOrInsertSatellite` updates in place). Anything else would insert a
+ * second row and hit the unique index.
+ */
+const reservedIdentityScope = (input: {
+  holder: ConnectionIdentityHolder | undefined
+  ownConnection: ConnectionModel | undefined
+  workspaceId: string
+}): AlreadyConnectedScope | null => {
+  const { holder, ownConnection, workspaceId } = input
+  if (!holder) {
+    return null
+  }
+  if (holder.workspaceId !== workspaceId) {
+    return "other_workspace"
+  }
+  const isRevivable =
+    holder.matchesBinding &&
+    ownConnection !== undefined &&
+    resolveForeignKey(ownConnection) === holder.inboxId
+  return isRevivable ? null : "this_workspace"
+}
+
 /**
  * Lists connectable candidates for an already-obtained `auth` and
  * persists them as the session's `awaiting_selection` targets. Split out
@@ -414,15 +448,30 @@ export const listAndAttachCandidates = async (
   const sourceIds = candidates
     .filter((candidate) => !candidate.alreadyConnected)
     .map((candidate) => candidate.sourceId)
-  const existingConnections =
-    await connectionRepository.findByProviderAndSourceIdsAnyWorkspace({
+  const [existingConnections, identityHolders] = await Promise.all([
+    connectionRepository.findByProviderAndSourceIdsAnyWorkspace({
       provider: session.provider,
       sourceIds,
-    })
-  const existingBySourceId = new Map<string, ConnectionModel>()
+    }),
+    adapter.store?.findIdentityHolders && sourceIds.length > 0
+      ? adapter.store.findIdentityHolders(sourceIds)
+      : [],
+  ])
+  // One satellite row per account (unique index), so one holder per sourceId.
+  const holderBySourceId = new Map(
+    identityHolders.map((holder) => [holder.sourceId, holder]),
+  )
+  const activeConnectionBySourceId = new Map<string, ConnectionModel>()
+  const ownConnectionBySourceId = new Map<string, ConnectionModel>()
   for (const existing of existingConnections) {
-    if (!existingBySourceId.has(existing.sourceId)) {
-      existingBySourceId.set(existing.sourceId, existing)
+    if (
+      isActiveConnectionStatus(existing.status) &&
+      !activeConnectionBySourceId.has(existing.sourceId)
+    ) {
+      activeConnectionBySourceId.set(existing.sourceId, existing)
+    }
+    if (existing.workspaceId === session.workspaceId) {
+      ownConnectionBySourceId.set(existing.sourceId, existing)
     }
   }
 
@@ -433,11 +482,11 @@ export const listAndAttachCandidates = async (
   // under the sibling provider — even once every legacy row has been
   // backfilled into `Connection`. Cross-check the shared satellite column
   // directly so the picker still greys out an account connected via the
-  // other login path. A satellite row surviving a `needs_reauth`/`paused`
-  // connection must NOT grey out the candidate — only an ACTIVE sibling
-  // connection does (`findActiveWorkspacesByIgIds` joins through to the
-  // real `Connection` status so a needs_reauth/paused row stays selectable
-  // for reconnect).
+  // other login path. Only an ACTIVE sibling connection counts here
+  // (`findActiveWorkspacesByIgIds` joins through to the real `Connection`
+  // status); a sibling satellite whose connection is `needs_reauth`/`paused`
+  // is caught by the identity-holder rule below instead, which blocks it
+  // because connect through this provider cannot revive the sibling's row.
   const crossProviderWorkspaceByIgId = new Map<string, string>()
   if (
     (session.provider === "instagram" ||
@@ -465,24 +514,33 @@ export const listAndAttachCandidates = async (
         alreadyConnected: candidate.alreadyConnected,
       }
     }
-    const existing = existingBySourceId.get(candidate.sourceId)
+    const activeConnection = activeConnectionBySourceId.get(candidate.sourceId)
     const crossProviderWorkspaceId = crossProviderWorkspaceByIgId.get(
       candidate.sourceId,
     )
-    if (
-      (existing && isActiveConnectionStatus(existing.status)) ||
-      crossProviderWorkspaceId
-    ) {
-      const connectedWorkspaceId =
-        existing?.workspaceId ?? crossProviderWorkspaceId
-      const scope: "this_workspace" | "other_workspace" =
+    const connectedWorkspaceId =
+      activeConnection?.workspaceId ?? crossProviderWorkspaceId
+    if (connectedWorkspaceId) {
+      const connectedScope: AlreadyConnectedScope =
         connectedWorkspaceId === session.workspaceId
           ? "this_workspace"
           : "other_workspace"
       return {
         ...base,
         selectable: false,
-        alreadyConnected: scope,
+        alreadyConnected: connectedScope,
+      }
+    }
+    const reservedScope = reservedIdentityScope({
+      holder: holderBySourceId.get(candidate.sourceId),
+      ownConnection: ownConnectionBySourceId.get(candidate.sourceId),
+      workspaceId: session.workspaceId,
+    })
+    if (reservedScope) {
+      return {
+        ...base,
+        selectable: false,
+        alreadyConnected: reservedScope,
       }
     }
     if (candidate.unavailableReason) {

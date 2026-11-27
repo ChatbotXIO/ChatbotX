@@ -12,6 +12,12 @@ const mocks = vi.hoisted(() => ({
   findByProviderSourceId: vi.fn(),
   findByProviderAndSourceIdAnyWorkspace: vi.fn(async () => undefined),
   findByProviderAndSourceIdsAnyWorkspace: vi.fn(async () => []),
+  findActiveWorkspacesByIgIds: vi.fn(
+    async (_input: { igIds: string[] }): Promise<unknown[]> => [],
+  ),
+  findIdentityHolders: vi.fn(
+    async (_sourceIds: readonly string[]): Promise<unknown[]> => [],
+  ),
   insert: vi.fn(),
   update: vi.fn(async () => undefined),
   findOwnerUserIdByWorkspaceId: vi.fn(async () => "owner-1"),
@@ -98,6 +104,9 @@ vi.mock("@chatbotx.io/database/repositories", () => ({
       mocks.findByProviderAndSourceIdsAnyWorkspace,
     insert: mocks.insert,
     update: mocks.update,
+  },
+  integrationInstagramRepository: {
+    findActiveWorkspacesByIgIds: mocks.findActiveWorkspacesByIgIds,
   },
 }))
 
@@ -546,6 +555,7 @@ const mockAdapter = {
     saveAuthByForeignKey: mocks.saveAuthByForeignKey,
     deleteRowByForeignKey: mocks.deleteRowByForeignKey,
     insertRow: mocks.insertRow,
+    findIdentityHolders: mocks.findIdentityHolders,
     onDisconnect: "delete_row",
     duplicateConstraint: "Test_workspaceId_key",
   },
@@ -601,6 +611,8 @@ beforeEach(() => {
   mocks.findByProviderSourceId.mockResolvedValue(undefined)
   mocks.findByProviderAndSourceIdAnyWorkspace.mockResolvedValue(undefined)
   mocks.findByProviderAndSourceIdsAnyWorkspace.mockResolvedValue([])
+  mocks.findIdentityHolders.mockResolvedValue([])
+  mocks.findActiveWorkspacesByIgIds.mockResolvedValue([])
   mocks.insertRow.mockResolvedValue({ id: "sat-1", integrationId: "int-1" })
   mocks.insert.mockImplementation(async (values: Record<string, unknown>) => ({
     id: "conn-new",
@@ -2079,6 +2091,307 @@ describe("ConnectionService.completeAuthorization", () => {
         ],
       }),
     )
+  })
+
+  describe("accounts reserved by a satellite row", () => {
+    const holderRow = (overrides: Partial<Record<string, unknown>> = {}) => ({
+      sourceId: "page-1",
+      workspaceId: "ws-1",
+      inboxId: "inbox-1",
+      matchesBinding: true,
+      ...overrides,
+    })
+
+    const authorize = async () =>
+      await connectionService.completeAuthorization({
+        sessionId: "session-1",
+        nonce: "nonce-abc",
+        code: "auth-code",
+        callbackUrl: "https://app.example.test/callback",
+        credential: {},
+      })
+
+    const useSessionProvider = (provider: string) => {
+      mocks.findByNonce.mockResolvedValue({
+        id: "session-1",
+        workspaceId: "ws-1",
+        provider,
+        purpose: "connect",
+        actorUserId: "user-1",
+        status: "pending",
+      })
+      mocks.claimAuthorization.mockImplementation(
+        async (input: Record<string, unknown>) => ({
+          id: input.id,
+          workspaceId: input.workspaceId,
+          provider,
+          status: "authorized",
+        }),
+      )
+      mocks.storeAuthorization.mockImplementation(
+        async (input: Record<string, unknown>) => ({
+          id: input.id,
+          workspaceId: input.workspaceId,
+          provider,
+          purpose: "connect",
+          actorUserId: "user-1",
+          status: "authorized",
+        }),
+      )
+    }
+
+    const attachedTargets = () => {
+      const [{ targets }] = mocks.attachAuthorization.mock.calls[0] as [
+        { targets: Record<string, unknown>[] },
+      ]
+      return targets
+    }
+
+    it("blocks an account held by another workspace with no Connection", async () => {
+      mocks.findIdentityHolders.mockResolvedValue([
+        holderRow({ workspaceId: "ws-2" }),
+      ])
+      await authorize()
+
+      expect(mocks.findIdentityHolders).toHaveBeenCalledTimes(1)
+      expect(mocks.findIdentityHolders).toHaveBeenCalledWith(["page-1"])
+      expect(attachedTargets()).toEqual([
+        expect.objectContaining({
+          id: "page-1",
+          selectable: false,
+          alreadyConnected: "other_workspace",
+        }),
+      ])
+      expect(mocks.encryptObject).toHaveBeenCalledWith(
+        [],
+        "connect-session:session-1",
+      )
+    })
+
+    it("blocks an account held by another workspace through an inactive Connection", async () => {
+      mocks.findByProviderAndSourceIdsAnyWorkspace.mockResolvedValue([
+        { sourceId: "page-1", workspaceId: "ws-2", status: "needs_reauth" },
+      ])
+      mocks.findIdentityHolders.mockResolvedValue([
+        holderRow({ workspaceId: "ws-2" }),
+      ])
+      await authorize()
+
+      expect(attachedTargets()).toEqual([
+        expect.objectContaining({
+          selectable: false,
+          alreadyConnected: "other_workspace",
+        }),
+      ])
+    })
+
+    it("reports this_workspace for a satellite row here with no Connection", async () => {
+      mocks.findIdentityHolders.mockResolvedValue([holderRow()])
+      await authorize()
+
+      expect(attachedTargets()).toEqual([
+        expect.objectContaining({
+          selectable: false,
+          alreadyConnected: "this_workspace",
+        }),
+      ])
+    })
+
+    it("keeps an account selectable when this workspace's Connection points at the holder's inbox", async () => {
+      mocks.findByProviderAndSourceIdsAnyWorkspace.mockResolvedValue([
+        {
+          sourceId: "page-1",
+          workspaceId: "ws-1",
+          status: "needs_reauth",
+          inboxId: "inbox-1",
+        },
+      ])
+      mocks.findIdentityHolders.mockResolvedValue([holderRow()])
+      await authorize()
+
+      expect(attachedTargets()).toEqual([
+        expect.objectContaining({ id: "page-1", selectable: true }),
+      ])
+    })
+
+    it("blocks when this workspace's Connection points at a different inbox than the holder", async () => {
+      mocks.findByProviderAndSourceIdsAnyWorkspace.mockResolvedValue([
+        {
+          sourceId: "page-1",
+          workspaceId: "ws-1",
+          status: "needs_reauth",
+          inboxId: "inbox-other",
+        },
+      ])
+      mocks.findIdentityHolders.mockResolvedValue([holderRow()])
+      await authorize()
+
+      expect(attachedTargets()).toEqual([
+        expect.objectContaining({
+          selectable: false,
+          alreadyConnected: "this_workspace",
+        }),
+      ])
+    })
+
+    it("blocks when the holder row is outside the binding's own slice", async () => {
+      mocks.findByProviderAndSourceIdsAnyWorkspace.mockResolvedValue([
+        {
+          sourceId: "page-1",
+          workspaceId: "ws-1",
+          status: "needs_reauth",
+          inboxId: "inbox-1",
+        },
+      ])
+      mocks.findIdentityHolders.mockResolvedValue([
+        holderRow({ matchesBinding: false }),
+      ])
+      await authorize()
+
+      expect(attachedTargets()).toEqual([
+        expect.objectContaining({
+          selectable: false,
+          alreadyConnected: "this_workspace",
+        }),
+      ])
+    })
+
+    it("keeps the active Connection scope ahead of a foreign identity holder", async () => {
+      mocks.findByProviderAndSourceIdsAnyWorkspace.mockResolvedValue([
+        { sourceId: "page-1", workspaceId: "ws-1", status: "connected" },
+      ])
+      mocks.findIdentityHolders.mockResolvedValue([
+        holderRow({ workspaceId: "ws-2" }),
+      ])
+      await authorize()
+
+      expect(attachedTargets()).toEqual([
+        expect.objectContaining({ alreadyConnected: "this_workspace" }),
+      ])
+    })
+
+    it("reports the active Connection's workspace, not an inactive one's", async () => {
+      mocks.findByProviderAndSourceIdsAnyWorkspace.mockResolvedValue([
+        { sourceId: "page-1", workspaceId: "ws-1", status: "needs_reauth" },
+        { sourceId: "page-1", workspaceId: "ws-2", status: "connected" },
+      ])
+      await authorize()
+
+      expect(attachedTargets()).toEqual([
+        expect.objectContaining({ alreadyConnected: "other_workspace" }),
+      ])
+    })
+
+    it("reports the active sibling's workspace when this provider's Connection is inactive", async () => {
+      useSessionProvider("instagram")
+      mocks.findByProviderAndSourceIdsAnyWorkspace.mockResolvedValue([
+        { sourceId: "page-1", workspaceId: "ws-1", status: "needs_reauth" },
+      ])
+      mocks.findActiveWorkspacesByIgIds.mockResolvedValue([
+        { igId: "page-1", workspaceId: "ws-2" },
+      ])
+      await authorize()
+
+      expect(attachedTargets()).toEqual([
+        expect.objectContaining({ alreadyConnected: "other_workspace" }),
+      ])
+    })
+
+    it("reports this_workspace when this provider's Connection is inactive and the sibling is active here", async () => {
+      useSessionProvider("instagram")
+      mocks.findByProviderAndSourceIdsAnyWorkspace.mockResolvedValue([
+        { sourceId: "page-1", workspaceId: "ws-2", status: "needs_reauth" },
+      ])
+      mocks.findActiveWorkspacesByIgIds.mockResolvedValue([
+        { igId: "page-1", workspaceId: "ws-1" },
+      ])
+      await authorize()
+
+      expect(attachedTargets()).toEqual([
+        expect.objectContaining({ alreadyConnected: "this_workspace" }),
+      ])
+    })
+
+    it("keeps the sibling-provider cross-check ahead of the identity holder", async () => {
+      useSessionProvider("instagramFacebook")
+      mocks.findActiveWorkspacesByIgIds.mockResolvedValue([
+        { igId: "page-1", workspaceId: "ws-2" },
+      ])
+      mocks.findIdentityHolders.mockResolvedValue([
+        holderRow({ workspaceId: "ws-1", matchesBinding: false }),
+      ])
+      await authorize()
+
+      expect(attachedTargets()).toEqual([
+        expect.objectContaining({ alreadyConnected: "other_workspace" }),
+      ])
+    })
+
+    it("reports a holder ahead of an unavailable reason", async () => {
+      mocks.listCandidates.mockResolvedValue([
+        {
+          sourceId: "page-1",
+          displayName: "Page One",
+          unavailableReason: "insufficientPermissions",
+        },
+      ])
+      mocks.findIdentityHolders.mockResolvedValue([
+        holderRow({ workspaceId: "ws-2" }),
+      ])
+      await authorize()
+
+      const [target] = attachedTargets()
+      expect(target).toMatchObject({
+        selectable: false,
+        alreadyConnected: "other_workspace",
+      })
+      expect(target).not.toHaveProperty("disabledReason")
+    })
+
+    it("only looks up candidates the provider did not already mark connected", async () => {
+      mocks.listCandidates.mockResolvedValue([
+        {
+          sourceId: "page-1",
+          displayName: "One",
+          alreadyConnected: "this_workspace",
+        },
+        { sourceId: "page-2", displayName: "Two" },
+      ])
+      await authorize()
+
+      expect(mocks.findIdentityHolders).toHaveBeenCalledWith(["page-2"])
+    })
+
+    it("skips the lookup when every candidate is already marked connected", async () => {
+      mocks.listCandidates.mockResolvedValue([
+        {
+          sourceId: "page-1",
+          displayName: "One",
+          alreadyConnected: "this_workspace",
+        },
+      ])
+      await authorize()
+
+      expect(mocks.findIdentityHolders).not.toHaveBeenCalled()
+    })
+
+    it("leaves a provider whose binding has no findIdentityHolders unchanged", async () => {
+      Reflect.set(mockAdapter.store, "findIdentityHolders", undefined)
+      try {
+        await authorize()
+      } finally {
+        Reflect.set(
+          mockAdapter.store,
+          "findIdentityHolders",
+          mocks.findIdentityHolders,
+        )
+      }
+
+      expect(mocks.findIdentityHolders).not.toHaveBeenCalled()
+      expect(attachedTargets()).toEqual([
+        expect.objectContaining({ id: "page-1", selectable: true }),
+      ])
+    })
   })
 
   it("encrypts the exchanged auth and attaches selectable targets on success", async () => {
