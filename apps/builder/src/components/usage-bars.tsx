@@ -1,6 +1,7 @@
 import { Progress } from "@chatbotx.io/ui/components/ui/progress"
 import { cn } from "@chatbotx.io/ui/lib/utils"
 import { useFormatter } from "next-intl"
+import { formatCompactCount } from "@/lib/format-compact-count"
 import {
   type QuotaMetric,
   type QuotaMetricKey,
@@ -8,9 +9,6 @@ import {
 } from "@/lib/quota-metrics"
 
 export type { QuotaMetric, QuotaMetricKey } from "@/lib/quota-metrics"
-
-/** Values at or above this are abbreviated (500,000,000 → 500M) to fit the narrow rail. */
-const COMPACT_THRESHOLD = 10_000
 
 /**
  * Presentational quota usage bars. Renders in both the client sidebar
@@ -28,13 +26,7 @@ export function UsageBars({
   className?: string
 }) {
   const formatter = useFormatter()
-  const formatCount = (value: number) =>
-    value >= COMPACT_THRESHOLD
-      ? formatter.number(value, {
-          notation: "compact",
-          maximumFractionDigits: 1,
-        })
-      : formatter.number(value)
+  const formatCount = (value: number) => formatCompactCount(formatter, value)
   return (
     <div className={cn("flex flex-col gap-3", className)}>
       {metrics.map((metric) => {
@@ -53,7 +45,10 @@ export function UsageBars({
                   "ml-2 shrink-0 whitespace-nowrap text-muted-foreground tabular-nums",
                   isOverLimit && "font-medium text-destructive",
                 )}
-                title={`${formatter.number(metric.used)} / ${formatter.number(metric.limit)}`}
+                title={[metric.workspaceUsed, metric.used, metric.limit]
+                  .filter((value) => value !== undefined)
+                  .map((value) => formatter.number(value))
+                  .join(" / ")}
               >
                 {metric.workspaceUsed !== undefined && (
                   <>{formatCount(metric.workspaceUsed)} / </>

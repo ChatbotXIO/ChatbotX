@@ -85,14 +85,26 @@ describe("usage number formatting", () => {
       "vi",
       <UsageBars labels={LABELS} metrics={metrics} />,
     )
-    expect(viHtml).toContain("5.678")
-    expect(viHtml).toContain("100.000")
+    expect(viHtml).toContain('title="5.678 / 100.000"')
 
     const enHtml = renderWithLocale(
       "en",
       <UsageBars labels={LABELS} metrics={metrics} />,
     )
-    expect(enHtml).toContain("5,678")
-    expect(enHtml).toContain("100,000")
+    expect(enHtml).toContain('title="5,678 / 100,000"')
+    expect(enHtml).toContain("5.7K / 100K")
+  })
+
+  test("UsageBars abbreviates large values and keeps full values in the tooltip", () => {
+    const html = renderWithLocale(
+      "en",
+      <UsageBars
+        labels={LABELS}
+        metrics={[{ key: "mac" as const, used: 1_200_000, limit: 500_000_000 }]}
+      />,
+    )
+
+    expect(html).toContain("1.2M / 500M")
+    expect(html).toContain('title="1,200,000 / 500,000,000"')
   })
 })

@@ -1,5 +1,6 @@
 import { cn } from "@chatbotx.io/ui/lib/utils"
 import { useFormatter } from "next-intl"
+import { formatCompactCount } from "@/lib/format-compact-count"
 import { quotaUsageState } from "@/lib/quota-metrics"
 
 interface UsageRingProps {
@@ -42,17 +43,8 @@ export function UsageRing({
               isOverLimit && "font-medium text-destructive",
             )}
           >
-            {formatter.number(workspaceUsed, {
-              notation: "compact",
-              compactDisplay: "short",
-              maximumFractionDigits: 1,
-            })}{" "}
-            /{" "}
-            {formatter.number(limit, {
-              notation: "compact",
-              compactDisplay: "short",
-              maximumFractionDigits: 1,
-            })}
+            {formatCompactCount(formatter, workspaceUsed)} /{" "}
+            {formatCompactCount(formatter, limit)}
           </span>
         </div>
         <div
