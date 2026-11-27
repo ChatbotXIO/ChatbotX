@@ -1,6 +1,11 @@
 "use client"
 
 import type { ChannelType } from "@chatbotx.io/database/partials"
+import { stepTypes } from "@chatbotx.io/flow-config"
+import {
+  isDirectConversationSource,
+  resolveMessagingWindow,
+} from "@chatbotx.io/sdk"
 import { Button } from "@chatbotx.io/ui/components/ui/button"
 import { Form } from "@chatbotx.io/ui/components/ui/form"
 import { Textarea } from "@chatbotx.io/ui/components/ui/textarea"
@@ -25,6 +30,7 @@ import {
   PaperclipIcon,
   ReplyIcon,
   SendHorizonalIcon,
+  WorkflowIcon,
   XIcon,
 } from "lucide-react"
 import { useTranslations } from "next-intl"
@@ -68,27 +74,10 @@ import {
 import { createMessageWithRoutingBypassRequest } from "../schema/mutation"
 import type { MessageResource } from "../schema/resource"
 import { FileUploadPreview } from "./file-upload"
-import { InputMenu } from "./input-menu"
+import { InputMenu, SendFlowDialogTrigger } from "./input-menu"
 import { MediaFilePreview } from "./media-file-preview"
 import { SendQueueNotice } from "./send-queue-notice"
 import { ThreadControlLockedComposer } from "./thread-control-locked-composer"
-
-const CHANNEL_WINDOW_SECONDS: Record<ChannelType, number> = {
-  api: 0,
-  omnichannel: 0,
-  webchat: 0,
-  messenger: 24 * 60 * 60,
-  whatsapp: 24 * 60 * 60,
-  zalo: 0,
-  smtp: 0,
-  telegram: 0,
-  line: 0,
-  instagram: 24 * 60 * 60,
-  threads: 0,
-  tiktok: 24 * 60 * 60,
-}
-
-const MESSENGER_HUMAN_AGENT_WINDOW_SECONDS = 7 * 24 * 60 * 60
 
 // Media Library selection metadata kept for preview purposes only. The form
 // field only carries `mediaFileIds` (the DB ids sent to the server) — the
@@ -559,86 +548,52 @@ export const MessageInput = () => {
     conversation?.contactInboxes[0]?.channel === "instagram" &&
     conversation?.sourceId != null
 
-  // Meta DM = messenger or instagram that is NOT a post comment.
-  // sourceId != null on the conversation means it's a post comment for both channels.
-  const isMetaDm =
-    (channel === "messenger" || channel === "instagram") &&
-    conversation?.sourceId == null
+  // The messaging window is the one `resolveMessagingWindow` the server's send
+  // gate and the API's `messagingWindow` field use, run here on the contact
+  // inbox the store already holds: the realtime patch of
+  // `lastIncomingMessageAt` therefore reopens the composer without a refetch.
+  const lastIncomingMessageAt =
+    conversation?.contactInboxes[0]?.lastIncomingMessageAt
+  const sourceId = conversation?.sourceId
 
-  // Parse lastIncomingMessageAt into a numeric timestamp once. Using a scalar
-  // as a memo dependency is more stable than the whole contactInboxes array.
-  // Returns null if the field is absent or not a valid date (NaN guard).
-  const lastIncomingTs = useMemo(() => {
-    const raw = conversation?.contactInboxes[0]?.lastIncomingMessageAt
-    if (!raw) {
-      return null
-    }
-    const ts = new Date(raw).getTime()
-    return Number.isFinite(ts) ? ts : null
-  }, [conversation?.contactInboxes])
-
-  // clockTick is a counter that exists solely to invalidate the window-expiry
-  // memos below. Because Date.now() is called inside useMemo and captured at
-  // render time, the memos would never detect expiry on their own. We schedule
-  // a single setTimeout to fire at the next window boundary; when it fires,
-  // clockTick increments, causing the memos to recompute with the current time.
+  // clockTick only invalidates `messagingWindow` at the next boundary: `now`
+  // is read at render time, so without it a window that expires while the
+  // composer is open would never be noticed.
   const [clockTick, setClockTick] = useState(0)
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: clockTick is the invalidation trigger
+  const messagingWindow = useMemo(() => {
+    const parsed = channelTypes.safeParse(channel)
+    if (!parsed.success) {
+      return null
+    }
+    return resolveMessagingWindow({
+      channel: parsed.data,
+      isDirect: isDirectConversationSource(sourceId),
+      lastIncomingMessageAt,
+    })
+  }, [channel, sourceId, lastIncomingMessageAt, clockTick])
+
+  const windowChangesAtMs = messagingWindow?.changesAt?.getTime() ?? null
   useEffect(() => {
-    if (!(lastIncomingTs && channel)) {
+    if (windowChangesAtMs === null) {
       return
     }
-    // Collect all upcoming window boundaries for this channel/contact pair.
-    const windowSeconds = CHANNEL_WINDOW_SECONDS[channel as ChannelType]
-    const deadlines: number[] = []
-    if (windowSeconds) {
-      deadlines.push(lastIncomingTs + windowSeconds * 1000)
-    }
-    if (isMetaDm) {
-      deadlines.push(
-        lastIncomingTs + MESSENGER_HUMAN_AGENT_WINDOW_SECONDS * 1000,
-      )
-    }
-    // Schedule a timeout for the nearest future boundary. When it fires,
-    // clockTick increments and the effect re-runs to schedule the next one.
-    const next = deadlines.filter((d) => d > Date.now()).sort()[0]
-    if (!next) {
+    // +1ms: the window is still open at exactly `changesAt`.
+    const delay = windowChangesAtMs + 1 - Date.now()
+    if (delay <= 0) {
       return
     }
-    const timeout = setTimeout(
-      () => setClockTick((t) => t + 1),
-      next - Date.now(),
-    )
+    // setTimeout overflows past ~24.8 days; the longest boundary is 7 days.
+    const timeout = setTimeout(() => setClockTick((t) => t + 1), delay)
     return () => clearTimeout(timeout)
-  }, [lastIncomingTs, channel, isMetaDm, clockTick])
+  }, [windowChangesAtMs])
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: clockTick forces recompute at window boundary
-  const isWindowExpired = useMemo(() => {
-    if (!(lastIncomingTs && channel)) {
-      return false
-    }
-    const windowSeconds = CHANNEL_WINDOW_SECONDS[channel as ChannelType]
-    if (!windowSeconds) {
-      return false
-    }
-    return Date.now() - lastIncomingTs > windowSeconds * 1000
-  }, [channel, lastIncomingTs, clockTick])
-
-  // biome-ignore lint/correctness/useExhaustiveDependencies: clockTick forces recompute at window boundary
-  const isMessengerHumanAgentWindowExpired = useMemo(() => {
-    if (!(isMetaDm && lastIncomingTs)) {
-      return false
-    }
-    return (
-      Date.now() - lastIncomingTs > MESSENGER_HUMAN_AGENT_WINDOW_SECONDS * 1000
-    )
-  }, [isMetaDm, lastIncomingTs, clockTick])
-
-  const isDirectChannelWindowClosed = useMemo(
-    () => (channel === "whatsapp" || channel === "tiktok") && isWindowExpired,
-    [channel, isWindowExpired],
-  )
+  const isMessagingWindowClosed = messagingWindow?.state === "closed"
+  // Meta DMs close after the 7-day human-agent window; the copy differs.
+  const isMetaDmWindowClosed =
+    isMessagingWindowClosed &&
+    (channel === "messenger" || channel === "instagram")
 
   // Check if a media file (device upload or Media Library pick) is attached
   const files = useWatch({
@@ -690,7 +645,7 @@ export const MessageInput = () => {
       </div>
     ) : null
 
-  if (isMessengerHumanAgentWindowExpired) {
+  if (isMetaDmWindowClosed) {
     return (
       <div className="m-3 shrink-0 rounded-xl border pt-2">
         <div className="flex flex-col items-center justify-center gap-3 px-4 py-6 text-center">
@@ -703,13 +658,24 @@ export const MessageInput = () => {
     )
   }
 
-  if (isDirectChannelWindowClosed) {
+  if (isMessagingWindowClosed) {
     return (
       <div className="m-3 shrink-0 rounded-xl border pt-2">
         <div className="flex flex-col items-center justify-center gap-3 px-4 py-6 text-center">
           <p className="text-muted-foreground text-sm">
             {t("messages.messagingWindowClosed")}
           </p>
+          {channel === "whatsapp" && (
+            // Outside the window only an approved template goes out.
+            <SendFlowDialogTrigger
+              templateStartType={stepTypes.enum.sendWaTemplateMessage}
+            >
+              <Button type="button" variant="outline">
+                <WorkflowIcon aria-hidden />
+                {t("actions.sendFlow")}
+              </Button>
+            </SendFlowDialogTrigger>
+          )}
         </div>
         {translationSettingsEntry}
       </div>

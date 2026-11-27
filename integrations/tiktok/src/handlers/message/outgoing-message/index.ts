@@ -5,7 +5,10 @@ import {
   type StepType,
   stepTypes,
 } from "@chatbotx.io/flow-config"
-import type { MessageHandlers } from "@chatbotx.io/sdk"
+import {
+  assertManualSendWindowOpen,
+  type MessageHandlers,
+} from "@chatbotx.io/sdk"
 import { sendMessage as sendMessageApi } from "../../../apis/message"
 import { mapToChannelError } from "../../../lib/error-mapper"
 import { requireConversationId } from "../../../lib/guards"
@@ -24,8 +27,18 @@ export const sendMessage: MessageHandlers<TiktokAuthValue>["sendMessage"] =
   async (props) => {
     const {
       ctx,
-      data: { contact, message },
+      data: { contact, message, sendFrom },
     } = props
+
+    // Last-line gate: the window can close while the job waits in the queue.
+    assertManualSendWindowOpen({
+      channel: "tiktok",
+      sendFrom,
+      lastIncomingMessageAt: contact.lastIncomingMessageAt,
+      code: "tiktok_messaging_window_closed",
+      message:
+        "Cannot send a TikTok message more than 48 hours after the contact's last message",
+    })
 
     const businessId = ctx.auth.metadata.openId
     const messageIds: string[] = []
@@ -81,8 +94,17 @@ export const sendFlowStep: MessageHandlers<TiktokAuthValue>["sendFlowStep"] =
   async (props) => {
     const {
       ctx,
-      data: { contact, step },
+      data: { contact, step, sendFrom },
     } = props
+
+    assertManualSendWindowOpen({
+      channel: "tiktok",
+      sendFrom,
+      lastIncomingMessageAt: contact.lastIncomingMessageAt,
+      code: "tiktok_messaging_window_closed",
+      message:
+        "Cannot send a TikTok message more than 48 hours after the contact's last message",
+    })
 
     const businessId = ctx.auth.metadata.openId
     const messageIds: string[] = []

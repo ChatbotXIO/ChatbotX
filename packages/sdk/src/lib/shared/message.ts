@@ -313,6 +313,8 @@ export const resolveSourceScopedIdentityMatch = async <T>(
 export type OutgoingContact = {
   sourceId: string
   id: string
+  /** Workspace owning this contact inbox; supplied by worker dispatchers. */
+  workspaceId?: string
   sourceConversationId?: string | null
   lastIncomingMessageAt?: Date | string | null
   /**

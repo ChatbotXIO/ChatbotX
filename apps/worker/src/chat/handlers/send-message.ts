@@ -86,6 +86,22 @@ const isDirectMessage = (
   message.type !== "comment" ||
   message.contentAttributes?.isPrivateReply === true
 
+async function refreshManualSendContactInbox(props: {
+  contactInbox: ContactInboxModel
+  sendFrom?: SendFrom
+  workspaceId: string
+}): Promise<ContactInboxModel> {
+  if (!isManualSend(props.sendFrom)) {
+    return props.contactInbox
+  }
+  return (
+    (await contactInboxService.findByIdForWorkspace({
+      id: props.contactInbox.id,
+      workspaceId: props.workspaceId,
+    })) ?? props.contactInbox
+  )
+}
+
 // Broadcasts and templates are deliberately NOT excluded: the inbox option
 // means "the bot's own direct messages count as read", and every bot send —
 // flow reply, broadcast, template — is one. Excluding any of them would leave
@@ -392,11 +408,17 @@ export async function sendMessageToChannel(
       })
     }
 
+    const dispatchContactInbox = await refreshManualSendContactInbox({
+      contactInbox,
+      sendFrom,
+      workspaceId: conversation.workspaceId,
+    })
     const handlerData = {
       ctx,
       data: {
         contact: {
-          ...contactInbox,
+          ...dispatchContactInbox,
+          workspaceId: conversation.workspaceId,
           sourceConversationId: resolveSourceConversationId(
             conversation,
             contactInbox.channel,
@@ -1601,11 +1623,17 @@ export async function sendFlowStepToChannel({
   const dispatchedAt = new Date()
   let result: OutgoingSendResult
   try {
+    const dispatchContactInbox = await refreshManualSendContactInbox({
+      contactInbox,
+      sendFrom,
+      workspaceId: conversation.workspaceId,
+    })
     result = await integration.runChannelHandler("message", "sendFlowStep", {
       ctx,
       data: {
         contact: {
-          ...contactInbox,
+          ...dispatchContactInbox,
+          workspaceId: conversation.workspaceId,
           sourceConversationId: resolveSourceConversationId(
             conversation,
             contactInbox.channel,

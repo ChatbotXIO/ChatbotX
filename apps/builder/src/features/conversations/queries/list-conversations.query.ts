@@ -16,7 +16,12 @@ import type {
   ContactInboxOperationalModel,
   InboxModel,
 } from "@chatbotx.io/database/types"
+import {
+  isDirectConversationSource,
+  resolveMessagingWindow,
+} from "@chatbotx.io/sdk"
 import { zodBigintAsString } from "@chatbotx.io/utils"
+import { channelTypes } from "@chatbotx.io/utils/channel"
 import { endOfHour } from "date-fns"
 import z from "zod"
 import {
@@ -45,9 +50,29 @@ const DEFAULT_PER_PAGE = 20
 // same `conversationContactInboxResource` shape (output validation requires
 // this). The explicit projection keeps internal jsonb columns out of the
 // response object entirely rather than relying on output validation to strip them.
+const resolveContactInboxMessagingWindow = (
+  contactInbox: ContactInboxOperationalModel,
+  conversationSourceId: string | null,
+) => {
+  const channel = channelTypes.safeParse(contactInbox.channel)
+  if (!channel.success) {
+    return { state: "unlimited", changesAt: null, closesAt: null } as const
+  }
+  return resolveMessagingWindow({
+    channel: channel.data,
+    isDirect: isDirectConversationSource(conversationSourceId),
+    lastIncomingMessageAt: contactInbox.lastIncomingMessageAt,
+  })
+}
+
 const mapConversationContactInbox = (
   contactInbox: ContactInboxOperationalModel & { inbox: InboxModel },
+  conversationSourceId: string | null,
 ) => ({
+  messagingWindow: resolveContactInboxMessagingWindow(
+    contactInbox,
+    conversationSourceId,
+  ),
   id: contactInbox.id,
   contactId: contactInbox.contactId,
   inboxId: contactInbox.inboxId,
@@ -66,9 +91,10 @@ const mapConversationContactInboxes = (
   contactInboxes: readonly (ContactInboxOperationalModel & {
     inbox: InboxModel
   })[],
+  conversationSourceId: string | null,
 ): ConversationContactInboxResource[] =>
   contactInboxes.map((contactInbox) => ({
-    ...mapConversationContactInbox(contactInbox),
+    ...mapConversationContactInbox(contactInbox, conversationSourceId),
     inbox: contactInbox.inbox,
     adReferral: resolveAdReferral(contactInbox.referral),
     googleAdsClick: resolveGoogleAdsClick(contactInbox.referral),
@@ -87,9 +113,10 @@ const mapCompactConversationContactInboxes = (
   contactInboxes: readonly (ContactInboxOperationalModel & {
     inbox: InboxModel
   })[],
+  conversationSourceId: string | null,
 ): ConversationCompactContactInboxResource[] =>
   contactInboxes.map((contactInbox) => ({
-    ...mapConversationContactInbox(contactInbox),
+    ...mapConversationContactInbox(contactInbox, conversationSourceId),
     inbox: {
       id: contactInbox.inbox.id,
       name: contactInbox.inbox.name,
@@ -271,6 +298,7 @@ export async function listConversations(
             contact: await resolveContact(c.contact ?? null, c.contactInboxes),
             contactInboxes: mapCompactConversationContactInboxes(
               c.contactInboxes,
+              c.sourceId,
             ),
             assignedUser: c.assignedUser ?? null,
             assignedInboxTeam: c.assignedInboxTeam ?? null,
@@ -289,7 +317,10 @@ export async function listConversations(
         return {
           ...withRecentParticipants(c),
           contact: await resolveContact(c.contact ?? null, c.contactInboxes),
-          contactInboxes: mapConversationContactInboxes(c.contactInboxes),
+          contactInboxes: mapConversationContactInboxes(
+            c.contactInboxes,
+            c.sourceId,
+          ),
           assignedUser: c.assignedUser ?? null,
           assignedInboxTeam: c.assignedInboxTeam ?? null,
           messages: lastMessage ? [lastMessage] : [],
@@ -342,6 +373,7 @@ export const findConversation = async (
       )(conversation.contact, conversation.contactInboxes),
       contactInboxes: mapConversationContactInboxes(
         conversation.contactInboxes,
+        conversation.sourceId,
       ),
       messages: lastMessages.length > 0 ? [lastMessages[0]] : [],
     },

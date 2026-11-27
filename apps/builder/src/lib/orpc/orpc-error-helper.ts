@@ -691,11 +691,24 @@ export const possibleErrorsOnMutatingDecisionProfile = {
   ...possibleIdempotencyErrors,
 } satisfies ErrorMap
 
+/**
+ * A manual send refused up front because the channel's messaging window is
+ * closed (`messagingWindowClosedException` in `@chatbotx.io/business`). On
+ * WhatsApp, send a template with `messages.sendWhatsappTemplate` instead.
+ */
+export const possibleErrorsOnClosedMessagingWindow = {
+  messagingWindowClosed: {
+    message: "The messaging window is closed for this conversation",
+    status: 409,
+  },
+} satisfies ErrorMap
+
 /** Sending a message that may carry products (`contacts.sendMessage`). */
 export const possibleErrorsOnSendingMessage = {
   ...possibleErrorsOnMutatingResource,
   [PRODUCT_MESSAGE_UNRESOLVABLE_CODE]: productMessageUnresolvable,
   [IMAGES_NOT_SUPPORTED_ON_CHANNEL_CODE]: imagesNotSupportedOnChannel,
+  ...possibleErrorsOnClosedMessagingWindow,
 } satisfies ErrorMap
 
 /** WhatsApp calling settings/hours: Meta or the local mirror failing is a 502. */

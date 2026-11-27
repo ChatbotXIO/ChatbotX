@@ -15,6 +15,8 @@ const contactInboxPayload = {
   inbox: { name: "Messenger Inbox" },
 }
 
+const messagingWindow = { state: "unknown", changesAt: null, closesAt: null }
+
 describe("contactInboxResource", () => {
   test("strips internal identity-change history", () => {
     const parsed = contactInboxResource.parse({
@@ -45,6 +47,7 @@ describe("conversationContactInboxResource", () => {
       ...contactInboxPayload,
       lastMessageAt: new Date("2026-06-10T00:00:00Z"),
       adReferral: null,
+      messagingWindow,
     })
 
     expect(parsed.lastMessageAt).toEqual(new Date("2026-06-10T00:00:00Z"))
@@ -55,6 +58,7 @@ describe("conversationContactInboxResource", () => {
       ...contactInboxPayload,
       lastMessageAt: null,
       adReferral: null,
+      messagingWindow,
     })
 
     expect(parsed.lastMessageAt).toBeNull()

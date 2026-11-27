@@ -19,13 +19,11 @@ import {
   contentTypes,
   getCanonicalReplyPayload,
   MESSENGER_NATIVE_QUICK_REPLY,
-  META_HUMAN_AGENT_WINDOW_MS,
-  META_RESPONSE_WINDOW_MS,
   type MessageButtonTemplate,
   type MessageHandlers,
-  normalizeLastIncomingMessageAt,
   type OutgoingContact,
   type OutgoingMessage,
+  resolveMessagingWindow,
   type SendFlowStepProps,
 } from "@chatbotx.io/sdk"
 import { isManualSend, type SendFrom } from "@chatbotx.io/utils/send-from"
@@ -551,28 +549,19 @@ export function resolveMessagingPolicy(props: {
     return { messagingType: "RESPONSE" }
   }
 
-  const lastIncomingMessageAt = normalizeLastIncomingMessageAt(
-    contact.lastIncomingMessageAt,
-  )
+  const { state } = resolveMessagingWindow({
+    channel: "messenger",
+    isDirect: true,
+    lastIncomingMessageAt: contact.lastIncomingMessageAt,
+    now: props.now,
+  })
 
-  if (!lastIncomingMessageAt) {
-    return { messagingType: "RESPONSE" }
-  }
-
-  let nowMs = Date.now()
-  if (props.now instanceof Date) {
-    nowMs = props.now.getTime()
-  } else if (typeof props.now === "number") {
-    nowMs = props.now
-  }
-  const elapsedMs = nowMs - lastIncomingMessageAt.getTime()
-
-  if (elapsedMs <= META_HUMAN_AGENT_WINDOW_MS) {
+  if (state === "humanAgent" || (state === "open" && forceHumanAgent)) {
     // A take-over reply is always HUMAN_AGENT; a normal inbox reply only needs
     // the tag once it is past the 24h standard window.
-    if (forceHumanAgent || elapsedMs > META_RESPONSE_WINDOW_MS) {
-      return { messagingType: "MESSAGE_TAG", tag: "HUMAN_AGENT" }
-    }
+    return { messagingType: "MESSAGE_TAG", tag: "HUMAN_AGENT" }
+  }
+  if (state !== "closed") {
     return { messagingType: "RESPONSE" }
   }
 
