@@ -21,7 +21,6 @@ import {
   templateStoreRepository,
 } from "@chatbotx.io/database/repositories"
 import { isBigintId } from "@chatbotx.io/database/utils"
-import { getChildLogger } from "@chatbotx.io/logger"
 import type { Locale } from "@chatbotx.io/utils/ui-locale"
 import {
   resolveTenantAdminScope,
@@ -63,8 +62,6 @@ export type {
   TemplateStorePublished,
   TemplateStorePublishedTemplate,
 } from "./store-snapshot"
-
-const log = getChildLogger("template-store")
 
 export type TemplateStoreMoveDirection = "up" | "down"
 
@@ -654,10 +651,6 @@ export const templateStoreService = {
       input.tenantId,
     )
     if (isSnapshotOverCap(snapshot)) {
-      log.warn(
-        { tenantId: input.tenantId },
-        "Template store snapshot is over the listing cap; probing the database",
-      )
       return await templateStoreRepository.hasPublishedTemplates(input.tenantId)
     }
     return hasVisible(snapshot, requestNowMicros)
@@ -687,10 +680,6 @@ export const templateStoreService = {
       resolveServingHost(input.tenantId),
     ])
     if (isSnapshotOverCap(read.snapshot)) {
-      log.warn(
-        { tenantId: input.tenantId },
-        "Template store snapshot is over the listing cap; querying the database",
-      )
       return await listPublishedFromSql(input, Promise.resolve(host))
     }
     return projectPublished(

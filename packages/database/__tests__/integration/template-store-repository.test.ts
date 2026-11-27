@@ -909,6 +909,34 @@ describe.skipIf(!databaseUrl)("template store repository", () => {
     })
   })
 
+  describe("hasListingsForWorkspace", () => {
+    test("is true for a workspace whose template has a listing, false otherwise", async () => {
+      const [other] = await db
+        .insert(schema.workspaceModel)
+        .values({ name: `store-other-${suffix}`, ownerId: actorId })
+        .returning({ id: schema.workspaceModel.id })
+      try {
+        await expect(repo.hasListingsForWorkspace(other.id, db)).resolves.toBe(
+          false,
+        )
+        const unlisted = await insertTemplate(tenantB, {
+          workspaceId: other.id,
+        })
+        await expect(repo.hasListingsForWorkspace(other.id, db)).resolves.toBe(
+          false,
+        )
+        await approve(tenantB, unlisted, [])
+        await expect(repo.hasListingsForWorkspace(other.id, db)).resolves.toBe(
+          true,
+        )
+      } finally {
+        await db
+          .delete(schema.workspaceModel)
+          .where(eq(schema.workspaceModel.id, other.id))
+      }
+    })
+  })
+
   describe("readKeywordCollationSupport", () => {
     test("reports a UTF-8 database with deterministic collations", async () => {
       await expect(repo.readKeywordCollationSupport(db)).resolves.toEqual({

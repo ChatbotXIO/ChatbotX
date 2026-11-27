@@ -3,6 +3,7 @@ import {
   db,
   type Transaction,
 } from "@chatbotx.io/database/client"
+import { TEMPLATE_STORE_MAX_LISTINGS } from "@chatbotx.io/database/partials"
 import {
   cacheVersionRepository,
   type TemplateStoreSnapshotData,
@@ -127,6 +128,14 @@ const loadSnapshot = async (
   tenantId: string,
 ): Promise<{ version: string; value: TemplateStoreSnapshotData }> => {
   const value = await templateStoreRepository.readSnapshot(tenantId)
+  // Once per snapshot load, not per request: readers of an over-cap snapshot
+  // fall back to the SQL queries.
+  if (value.rows.length > TEMPLATE_STORE_MAX_LISTINGS) {
+    log.warn(
+      { tenantId },
+      "Template store snapshot is over the listing cap; reads use the database",
+    )
+  }
   return { version: value.version, value }
 }
 
@@ -134,7 +143,8 @@ const loadSnapshot = async (
  * Whether `keyword` (none or blank counts as no keyword) can be searched on a
  * snapshot. False when a keyword was given and this database cannot reproduce
  * `ILIKE` outside SQL: the caller must then use the SQL query and not read the
- * snapshot at all. Logs that once per process.
+ * snapshot at all. Logs that once per process. A failed support read also
+ * returns false (for this call only).
  */
 export const canSearchKeywordOnSnapshot = async (
   keyword?: string,
@@ -142,7 +152,18 @@ export const canSearchKeywordOnSnapshot = async (
   if (!keyword?.trim()) {
     return true
   }
-  const supported = await isKeywordSearchSupported()
+  let supported: boolean
+  try {
+    supported = await isKeywordSearchSupported()
+  } catch (err) {
+    // A transient read failure must not fail the request: this call uses the
+    // SQL keyword path, and the next call reads the support again.
+    log.error(
+      { err },
+      "Could not read template store keyword collation support; keyword search uses SQL for this request",
+    )
+    return false
+  }
   if (!(supported || unsupportedKeywordLogged)) {
     unsupportedKeywordLogged = true
     log.error(

@@ -98,7 +98,7 @@ CacheVersion
 | 3 | Sharing enabled / expiry | `templateService.updateShareSettings`: same |
 | 4 | Saving an existing template (name, description, image, publisher, content) | `saveTemplate` in `template-save.ts`: `saveWithVersion` runs in the service's transaction, then the bump; `onVersionAdvanced` runs after commit |
 | 5 | Soft delete | `templateService.softDelete`: `softDelete` (with installation stamping) runs in the service's transaction and returns the tenant, then the bump |
-| 6 | Workspace purge | the final `DELETE FROM "Workspace"` transaction: after a successful delete, bumps `workspace.tenantId` (the cascade removes that workspace's Templates, listings and links) |
+| 6 | Workspace purge | the final `DELETE FROM "Workspace"` transaction: takes `lockTenantStore(workspace.tenantId)`, checks `hasListingsForWorkspace`, deletes, and after a successful delete bumps `workspace.tenantId` only when the workspace had a listing (the cascade removes that workspace's Templates, listings and links; the lock keeps a concurrent store write from adding a listing between the check and the delete) |
 
 An edit always bumps the template's own tenant and never asks whether the template is listed: that closes the race with a listing attached at the same time. Whichever of the edit and the attach commits second took the version row after the other's bump, so it holds the higher version, and a snapshot read at that version shows both changes. Template creation (unlisted, share off), template install/uninstall/sync and account deletion (only `createdBy` is nulled, which the store never reads) change nothing the store shows and do not bump.
 
@@ -238,7 +238,7 @@ A warning is logged with the `tenantId`. Only data inserted around the service c
 ### 5. White-label
 
 - **Scope.** The scope is the `tenantId`, taken from the same trusted source as today: the request host for `/store` and home, and the token workspace's `tenantId` for the public API (`api/public/store.ts`). Cache keys and version rows are per tenant.
-- **Which tenant is bumped.** Store writes bump the tenant whose store they change (the scope's tenant); template edits, share changes and soft deletes bump the template's own `tenantId`; the workspace purge bumps the workspace's `tenantId`.
+- **Which tenant is bumped.** Store writes bump the tenant whose store they change (the scope's tenant); template edits, share changes and soft deletes bump the template's own `tenantId`; the workspace purge bumps the workspace's `tenantId`, only when the workspace had store listings.
 - **Not cached.** Host and branding values are never cached (`resolveServingHost`, `getTenantSettings`, `resolveTenantSettings`). Tenant `suspend`, `downgrade` and `reactivate` (`enterprise/tenant/service.ts:217-328`) and custom-domain changes take effect exactly as they do today.
 - **The cache sits behind the tenant decision.** Callers resolve `tenantId` before they call the service (`load-store-catalog.ts:59`, `load-home-template-store.ts:69`, `api/public/store.ts:33`), and the cache lives inside the service. It cannot pick a tenant: it only keys by the one it is given, so a host still sees exactly the store it sees today.
 - **Self-check.** The snapshot stores the `tenantId` it was loaded for. The snapshot is read with `accept: (v) => v.tenantId === requested`. A cached value that fails it is dropped, treated as a miss and logged at `error` once, and the reload replaces the bad entry, so a key bug can never show one tenant's store to another.
@@ -249,7 +249,7 @@ A warning is logged with the `tenantId`. Only data inserted around the service c
 
 | Case | Behaviour |
 |---|---|
-| Redis down, slow (over 150 ms) or returning garbage | Counts as a miss. The memory tier still serves; otherwise the request loads from the database. Logged at `debug`. |
+| Redis down, slow (over 150 ms) or returning garbage | Counts as a miss. The memory tier still serves; otherwise the request loads from the database. Logged at `debug`. With Redis slow or down, each memory miss can add up to about 2 x `redisTimeoutMs` (150 ms for the read plus 150 ms for the write); memory hits are unaffected. |
 | PostgreSQL down | Fails as it does today. The cache never serves without a version. |
 | A write commits while a read is in flight | The read returns data at the version it read, the same ordering a SQL read racing a write gives. The next read sees the new version. |
 | A slow loader finishes after a newer entry is stored | The Lua compare-and-set rejects the older version. |

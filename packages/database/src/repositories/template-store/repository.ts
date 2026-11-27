@@ -640,6 +640,27 @@ export const templateStoreRepository = {
     return first !== undefined
   },
 
+  /**
+   * Whether any store listing belongs to a template of this workspace (any
+   * status). Indexed: `Template_workspaceId_idx` finds the workspace's
+   * templates and `TemplateStoreListing_templateId_idx` their listings.
+   */
+  async hasListingsForWorkspace(
+    workspaceId: string,
+    tx: DatabaseClient = db,
+  ): Promise<boolean> {
+    const [first] = await tx
+      .select({ one: sql<number>`1` })
+      .from(templateStoreListingModel)
+      .innerJoin(
+        templateModel,
+        eq(templateModel.id, templateStoreListingModel.templateId),
+      )
+      .where(eq(templateModel.workspaceId, workspaceId))
+      .limit(1)
+    return first !== undefined
+  },
+
   /** Categories that have at least one template a visitor can open, in tab order. */
   async listPublishedCategories(tenantId: string, tx: DatabaseClient = db) {
     return await tx

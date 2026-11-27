@@ -27,12 +27,18 @@ const mocks = vi.hoisted(() => ({
   dispatchAuditRecord: vi.fn(),
   hasLiveUninstallTouchingWorkspace: vi.fn(async () => false),
   bumpTemplateStoreVersion: vi.fn(async () => undefined),
+  lockTenantStore: vi.fn(async () => undefined),
+  hasListingsForWorkspace: vi.fn(async () => true),
 }))
 
 vi.mock("@chatbotx.io/database/repositories", async (importOriginal) => ({
   ...(await importOriginal<
     typeof import("@chatbotx.io/database/repositories")
   >()),
+  templateStoreRepository: {
+    lockTenantStore: mocks.lockTenantStore,
+    hasListingsForWorkspace: mocks.hasListingsForWorkspace,
+  },
   templateUninstallStateRepository: {
     hasLiveUninstallTouchingWorkspace: mocks.hasLiveUninstallTouchingWorkspace,
   },
@@ -307,6 +313,10 @@ beforeEach(() => {
   mocks.dispatchAuditRecord.mockReset()
   mocks.bumpTemplateStoreVersion.mockReset()
   mocks.bumpTemplateStoreVersion.mockResolvedValue(undefined)
+  mocks.lockTenantStore.mockReset()
+  mocks.lockTenantStore.mockResolvedValue(undefined)
+  mocks.hasListingsForWorkspace.mockReset()
+  mocks.hasListingsForWorkspace.mockResolvedValue(true)
 
   mocks.workspaceInsert.mockReturnValue({
     values: mocks.workspaceInsertValues.mockReturnValue({
@@ -455,10 +465,18 @@ describe("WorkspaceService.purgeDueScheduled", () => {
     expect(mocks.workspaceDelete).not.toHaveBeenCalled()
   })
 
-  test("bumps the workspace tenant's store version last, after the delete and the deletion log, in the same transaction", async () => {
+  test("locks the tenant's store, checks for listings, deletes, then bumps last, in the same transaction", async () => {
     setupPurgeTransactions([{ id: "w1", ownerId: "o1", tenantId: "t1" }])
     mocks.purgeWorkspaceHeavyData.mockResolvedValue(0)
     const order: string[] = []
+    mocks.lockTenantStore.mockImplementation(() => {
+      order.push("lock")
+      return Promise.resolve(undefined)
+    })
+    mocks.hasListingsForWorkspace.mockImplementation(() => {
+      order.push("check")
+      return Promise.resolve(true)
+    })
     mocks.workspaceDelete.mockImplementation(() => {
       order.push("delete")
       return {
@@ -479,11 +497,31 @@ describe("WorkspaceService.purgeDueScheduled", () => {
 
     await workspaceService.purgeDueScheduled()
 
-    expect(order).toEqual(["delete", "complete-log", "bump"])
+    expect(order).toEqual(["lock", "check", "delete", "complete-log", "bump"])
     expect(mocks.bumpTemplateStoreVersion).toHaveBeenCalledWith(
       "t1",
       expect.anything(),
     )
+  })
+
+  test("does not bump when the workspace had no store listing", async () => {
+    setupPurgeTransactions([{ id: "w1", ownerId: "o1", tenantId: "t1" }])
+    mocks.purgeWorkspaceHeavyData.mockResolvedValue(0)
+    mocks.hasListingsForWorkspace.mockResolvedValue(false)
+    mocks.workspaceDelete.mockReturnValue({
+      where: () => ({
+        returning: () => Promise.resolve([{ id: "w1" }]),
+      }),
+    })
+
+    await workspaceService.purgeDueScheduled()
+
+    expect(mocks.lockTenantStore).toHaveBeenCalledWith("t1", expect.anything())
+    expect(mocks.hasListingsForWorkspace).toHaveBeenCalledWith(
+      "w1",
+      expect.anything(),
+    )
+    expect(mocks.bumpTemplateStoreVersion).not.toHaveBeenCalled()
   })
 
   test("does not bump when the Workspace delete removed nothing", async () => {

@@ -191,11 +191,33 @@ describe("readTemplateStoreSnapshot", () => {
     hit(snapshotOf([]))
     mocks.readKeywordCollationSupport.mockRejectedValueOnce(new Error("down"))
 
-    await expect(canSearchKeywordOnSnapshot("a")).rejects.toThrow("down")
+    await expect(canSearchKeywordOnSnapshot("a")).resolves.toBe(false)
     await canSearchKeywordOnSnapshot("a")
     await canSearchKeywordOnSnapshot("b")
 
     expect(mocks.readKeywordCollationSupport).toHaveBeenCalledTimes(2)
+  })
+
+  test("a failed collation read falls back to SQL for that call, logs the error and is not memoized", async () => {
+    const failure = new Error("down")
+    mocks.readKeywordCollationSupport.mockRejectedValueOnce(failure)
+
+    expect(await canSearchKeywordOnSnapshot("a")).toBe(false)
+    expect(mocks.logError).toHaveBeenCalledWith(
+      { err: failure },
+      expect.any(String),
+    )
+    expect(await canSearchKeywordOnSnapshot("a")).toBe(true)
+    expect(mocks.readKeywordCollationSupport).toHaveBeenCalledTimes(2)
+  })
+
+  test("listPublished falls back to the SQL queries when the collation read fails", async () => {
+    mocks.readKeywordCollationSupport.mockRejectedValueOnce(new Error("down"))
+
+    await service.listPublished({ tenantId: "1", keyword: "shop" })
+
+    expect(mocks.listPublishedTemplates).toHaveBeenCalled()
+    expect(mocks.versionRead).not.toHaveBeenCalled()
   })
 
   test("an unsupported database reports it for a keyword and logs once", async () => {
@@ -403,8 +425,18 @@ describe("templateStoreService on the cache", () => {
         "hidden",
       ])
       expect(mocks.hasPublishedTemplates).not.toHaveBeenCalled()
+      expect(mocks.logWarn).not.toHaveBeenCalled()
+    })
+
+    test("the over-cap warning is logged once per snapshot load, with the tenant", async () => {
+      miss()
+      mocks.readSnapshot.mockResolvedValue(overCap())
+
+      await readTemplateStoreSnapshot("1")
+
+      expect(mocks.logWarn).toHaveBeenCalledTimes(1)
       expect(mocks.logWarn).toHaveBeenCalledWith(
-        expect.objectContaining({ tenantId: "1" }),
+        { tenantId: "1" },
         expect.any(String),
       )
     })
