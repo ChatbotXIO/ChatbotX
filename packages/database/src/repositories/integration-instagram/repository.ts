@@ -1,15 +1,6 @@
 import type { EncryptedData } from "@chatbotx.io/encryption"
-import {
-  and,
-  type DatabaseClient,
-  db,
-  eq,
-  inArray,
-  isNull,
-  sql,
-} from "../../client"
-import { ACTIVE_CONNECTION_STATUSES } from "../../partials/connection"
-import { connectionModel, integrationInstagramModel } from "../../schema"
+import { and, type DatabaseClient, db, eq, isNull, sql } from "../../client"
+import { integrationInstagramModel } from "../../schema"
 import type { IntegrationInstagramModel } from "../../types"
 
 type WorkspaceIntegrationRef = {
@@ -92,45 +83,6 @@ export const integrationInstagramRepository = {
       .limit(1)
 
     return row ?? null
-  },
-
-  /**
-   * Cross-provider check for the `instagram`/`instagramFacebook` picker
-   * (`connect-session-flow.ts`'s `listAndAttachCandidates`): both providers
-   * share one physical `igId` identity under this satellite table but are
-   * stored under distinct `Connection.provider` values, so a provider-scoped
-   * `Connection.sourceId` lookup can never see an account already connected
-   * under the sibling provider. The satellite row's mere existence is NOT
-   * enough to tell, though — it survives a `needs_reauth`/`paused`
-   * connection (only an actual disconnect deletes it, per
-   * `onDisconnect: "delete_row"`), so join through to the real `Connection`
-   * row by `inboxId` and only report an `igId` whose connection is still in
-   * an ACTIVE status. A `needs_reauth`/`paused` connection must stay
-   * selectable for reconnect, not grey out as "already connected".
-   */
-  async findActiveWorkspacesByIgIds(
-    input: { igIds: string[] },
-    tx: DatabaseClient = db,
-  ): Promise<{ igId: string; workspaceId: string }[]> {
-    if (input.igIds.length === 0) {
-      return []
-    }
-    return await tx
-      .select({
-        igId: integrationInstagramModel.igId,
-        workspaceId: integrationInstagramModel.workspaceId,
-      })
-      .from(integrationInstagramModel)
-      .innerJoin(
-        connectionModel,
-        eq(connectionModel.inboxId, integrationInstagramModel.inboxId),
-      )
-      .where(
-        and(
-          inArray(integrationInstagramModel.igId, input.igIds),
-          inArray(connectionModel.status, ACTIVE_CONNECTION_STATUSES),
-        ),
-      )
   },
 
   async findByInboxIdForWorkspace(

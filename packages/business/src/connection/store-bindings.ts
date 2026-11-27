@@ -1,7 +1,7 @@
 import type { DatabaseClient } from "@chatbotx.io/database/client"
 import { and, db, eq, inArray, sql } from "@chatbotx.io/database/client"
 import type { IntegrationType } from "@chatbotx.io/database/partials"
-import { integrationModel } from "@chatbotx.io/database/schema"
+import { inboxModel, integrationModel } from "@chatbotx.io/database/schema"
 import { type AuthValue, authValueSchema, SdkException } from "@chatbotx.io/sdk"
 import type { InferInsertModel, SQL } from "drizzle-orm"
 import type { AnyPgColumn, PgTable } from "drizzle-orm/pg-core"
@@ -32,6 +32,15 @@ export type ConnectionIdentityHolder = {
   /** The holder row's foreign key — what a `Connection` row's `inboxId` must equal to revive it. */
   inboxId: string
   /** Whether the row also satisfies the binding's own `extraWhere` slice (always true without one). */
+  matchesBinding: boolean
+}
+
+/** A satellite row sitting on an inbox, as far as the connect picker needs to know. */
+export type ConnectionInboxSatellite = {
+  inboxId: string
+  /** The row's identity-column value (`null` for a binding without one). */
+  identity: string | null
+  /** Whether the row also satisfies the binding's own `extraWhere` slice. */
   matchesBinding: boolean
 }
 
@@ -114,6 +123,17 @@ export type ConnectionStoreBinding<TConfigColumn extends string = string> = {
     sourceIds: readonly string[],
     tx?: DatabaseClient,
   ) => Promise<ConnectionIdentityHolder[]>
+  /**
+   * The satellite rows this binding's table keeps on the workspace's inboxes
+   * whose `Inbox.sourceId` is among `sourceIds`, whatever the slice: a new
+   * satellite cannot be inserted on an inbox that already has one (`inboxId` is
+   * unique). Reports each row's identity and whether it is in this binding's own
+   * slice, never its auth. Present on channel-satellite bindings only.
+   */
+  findInboxSatellites?: (
+    input: { workspaceId: string; sourceIds: readonly string[] },
+    tx?: DatabaseClient,
+  ) => Promise<ConnectionInboxSatellite[]>
   /**
    * Allow-list of extra satellite columns a credential-strategy `connect`
    * request may set via `config` beyond the provider's own `configFields`
@@ -262,7 +282,34 @@ export const makeChannelBinding = <TTable extends ChannelSatelliteTable>(opts: {
         }
       : undefined
 
+  const findInboxSatellites: ConnectionStoreBinding["findInboxSatellites"] =
+    async (input, tx = db) => {
+      if (input.sourceIds.length === 0) {
+        return []
+      }
+      const rows = await tx
+        .select({
+          inboxId: table.inboxId,
+          identity: identityCol ?? sql<null>`null`,
+          matchesBinding: sql<boolean>`${bindingSlice}`,
+        })
+        .from(rawTable)
+        .innerJoin(inboxModel, eq(inboxModel.id, table.inboxId))
+        .where(
+          and(
+            eq(table.workspaceId, input.workspaceId),
+            inArray(inboxModel.sourceId, [...input.sourceIds]),
+          ),
+        )
+      return rows.map((row) => ({
+        inboxId: String(row.inboxId),
+        identity: row.identity === null ? null : String(row.identity),
+        matchesBinding: row.matchesBinding === true,
+      }))
+    }
+
   return {
+    findInboxSatellites,
     loadAuthByForeignKey: async (inboxId, workspaceId, tx = db) => {
       const [row] = await tx
         .select({ auth: table.auth })

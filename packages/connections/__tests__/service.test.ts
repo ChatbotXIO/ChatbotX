@@ -12,11 +12,14 @@ const mocks = vi.hoisted(() => ({
   findByProviderSourceId: vi.fn(),
   findByProviderAndSourceIdAnyWorkspace: vi.fn(async () => undefined),
   findByProviderAndSourceIdsAnyWorkspace: vi.fn(async () => []),
-  findActiveWorkspacesByIgIds: vi.fn(
-    async (_input: { igIds: string[] }): Promise<unknown[]> => [],
-  ),
   findIdentityHolders: vi.fn(
     async (_sourceIds: readonly string[]): Promise<unknown[]> => [],
+  ),
+  listConnectionOccupancy: vi.fn(
+    async (_input: Record<string, unknown>): Promise<unknown[]> => [],
+  ),
+  findInboxSatellites: vi.fn(
+    async (_input: Record<string, unknown>): Promise<unknown[]> => [],
   ),
   insert: vi.fn(),
   update: vi.fn(async () => undefined),
@@ -105,8 +108,8 @@ vi.mock("@chatbotx.io/database/repositories", () => ({
     insert: mocks.insert,
     update: mocks.update,
   },
-  integrationInstagramRepository: {
-    findActiveWorkspacesByIgIds: mocks.findActiveWorkspacesByIgIds,
+  inboxRepository: {
+    listConnectionOccupancyByChannelSources: mocks.listConnectionOccupancy,
   },
 }))
 
@@ -556,6 +559,7 @@ const mockAdapter = {
     deleteRowByForeignKey: mocks.deleteRowByForeignKey,
     insertRow: mocks.insertRow,
     findIdentityHolders: mocks.findIdentityHolders,
+    findInboxSatellites: mocks.findInboxSatellites,
     onDisconnect: "delete_row",
     duplicateConstraint: "Test_workspaceId_key",
   },
@@ -612,7 +616,8 @@ beforeEach(() => {
   mocks.findByProviderAndSourceIdAnyWorkspace.mockResolvedValue(undefined)
   mocks.findByProviderAndSourceIdsAnyWorkspace.mockResolvedValue([])
   mocks.findIdentityHolders.mockResolvedValue([])
-  mocks.findActiveWorkspacesByIgIds.mockResolvedValue([])
+  mocks.listConnectionOccupancy.mockResolvedValue([])
+  mocks.findInboxSatellites.mockResolvedValue([])
   mocks.insertRow.mockResolvedValue({ id: "sat-1", integrationId: "int-1" })
   mocks.insert.mockImplementation(async (values: Record<string, unknown>) => ({
     id: "conn-new",
@@ -2282,49 +2287,213 @@ describe("ConnectionService.completeAuthorization", () => {
       ])
     })
 
-    it("reports the active sibling's workspace when this provider's Connection is inactive", async () => {
-      useSessionProvider("instagram")
-      mocks.findByProviderAndSourceIdsAnyWorkspace.mockResolvedValue([
-        { sourceId: "page-1", workspaceId: "ws-1", status: "needs_reauth" },
-      ])
-      mocks.findActiveWorkspacesByIgIds.mockResolvedValue([
-        { igId: "page-1", workspaceId: "ws-2" },
-      ])
-      await authorize()
+    describe("reused Inbox already occupied", () => {
+      type Satellite = { identity: string | null; matchesBinding: boolean }
+      const occupiedBy = (
+        connection: Record<string, string> | null,
+        satellite?: Satellite,
+      ) => {
+        mocks.listConnectionOccupancy.mockResolvedValue([
+          { sourceId: "page-1", inboxId: "inbox-1", connection },
+        ])
+        mocks.findInboxSatellites.mockResolvedValue(
+          satellite ? [{ inboxId: "inbox-1", ...satellite }] : [],
+        )
+      }
+      const ownSatellite: Satellite = {
+        identity: "page-1",
+        matchesBinding: true,
+      }
+      const own = { provider: "messenger", sourceId: "page-1" }
+      const ownConnectionOn = (inboxId: string, status = "needs_reauth") =>
+        mocks.findByProviderAndSourceIdsAnyWorkspace.mockResolvedValue([
+          { sourceId: "page-1", workspaceId: "ws-1", status, inboxId },
+        ])
+      const expectBlocked = () =>
+        expect(attachedTargets()).toEqual([
+          expect.objectContaining({
+            selectable: false,
+            alreadyConnected: "this_workspace",
+          }),
+        ])
+      const expectSelectable = () =>
+        expect(attachedTargets()).toEqual([
+          expect.objectContaining({ id: "page-1", selectable: true }),
+        ])
 
-      expect(attachedTargets()).toEqual([
-        expect.objectContaining({ alreadyConnected: "other_workspace" }),
-      ])
-    })
+      it("looks the Inbox up once per listing, scoped to the session workspace and the provider's channel", async () => {
+        await authorize()
 
-    it("reports this_workspace when this provider's Connection is inactive and the sibling is active here", async () => {
-      useSessionProvider("instagram")
-      mocks.findByProviderAndSourceIdsAnyWorkspace.mockResolvedValue([
-        { sourceId: "page-1", workspaceId: "ws-2", status: "needs_reauth" },
-      ])
-      mocks.findActiveWorkspacesByIgIds.mockResolvedValue([
-        { igId: "page-1", workspaceId: "ws-1" },
-      ])
-      await authorize()
+        expect(mocks.listConnectionOccupancy).toHaveBeenCalledTimes(1)
+        expect(mocks.listConnectionOccupancy).toHaveBeenCalledWith({
+          workspaceId: "ws-1",
+          channel: "messenger",
+          sourceIds: ["page-1"],
+        })
+        expect(mocks.findInboxSatellites).toHaveBeenCalledTimes(1)
+        expect(mocks.findInboxSatellites).toHaveBeenCalledWith({
+          workspaceId: "ws-1",
+          sourceIds: ["page-1"],
+        })
+      })
 
-      expect(attachedTargets()).toEqual([
-        expect.objectContaining({ alreadyConnected: "this_workspace" }),
-      ])
-    })
+      it("keeps an account selectable when it has no Inbox", async () => {
+        await authorize()
+        expectSelectable()
+      })
 
-    it("keeps the sibling-provider cross-check ahead of the identity holder", async () => {
-      useSessionProvider("instagramFacebook")
-      mocks.findActiveWorkspacesByIgIds.mockResolvedValue([
-        { igId: "page-1", workspaceId: "ws-2" },
-      ])
-      mocks.findIdentityHolders.mockResolvedValue([
-        holderRow({ workspaceId: "ws-1", matchesBinding: false }),
-      ])
-      await authorize()
+      it("keeps an account selectable when its Inbox is empty", async () => {
+        occupiedBy(null)
+        await authorize()
+        expectSelectable()
+      })
 
-      expect(attachedTargets()).toEqual([
-        expect.objectContaining({ alreadyConnected: "other_workspace" }),
-      ])
+      it("keeps this provider's own inactive Connection revivable when its satellite is the account's own row", async () => {
+        occupiedBy({ ...own, status: "needs_reauth" }, ownSatellite)
+        ownConnectionOn("inbox-1")
+        await authorize()
+        expectSelectable()
+      })
+
+      it("keeps this provider's own inactive Connection selectable on an Inbox without satellite", async () => {
+        occupiedBy({ ...own, status: "needs_reauth" })
+        ownConnectionOn("inbox-1")
+        await authorize()
+        expectSelectable()
+      })
+
+      it.each([
+        ["another identity", { identity: "page-2", matchesBinding: true }],
+        ["another slice", { identity: "page-1", matchesBinding: false }],
+        ["no identity column", { identity: null, matchesBinding: true }],
+      ])("blocks an own Connection when the Inbox's satellite has %s", async (_label, satellite) => {
+        occupiedBy({ ...own, status: "needs_reauth" }, satellite)
+        ownConnectionOn("inbox-1")
+        await authorize()
+        expectBlocked()
+      })
+
+      it("blocks the account's own satellite when this workspace's Connection points at another inbox", async () => {
+        occupiedBy(null, ownSatellite)
+        ownConnectionOn("inbox-other")
+        await authorize()
+        expectBlocked()
+      })
+
+      it("blocks an Inbox carrying the account's satellite but no Connection", async () => {
+        occupiedBy(null, ownSatellite)
+        await authorize()
+        expectBlocked()
+      })
+
+      it("blocks an Inbox carrying another account's satellite but no Connection", async () => {
+        occupiedBy(null, { identity: "page-2", matchesBinding: true })
+        await authorize()
+        expectBlocked()
+      })
+
+      it("matches satellites by inbox id, not by source id", async () => {
+        occupiedBy(null)
+        mocks.findInboxSatellites.mockResolvedValue([
+          { inboxId: "inbox-elsewhere", ...ownSatellite },
+        ])
+        await authorize()
+        expectSelectable()
+      })
+
+      it("blocks an Inbox held by this provider's Connection for another account", async () => {
+        occupiedBy({
+          provider: "messenger",
+          sourceId: "page-2",
+          status: "paused",
+        })
+        await authorize()
+        expectBlocked()
+      })
+
+      it("keeps an Inbox selectable when a sibling provider's Connection is disconnected and nothing else exists", async () => {
+        useSessionProvider("instagram")
+        occupiedBy({
+          provider: "instagramFacebook",
+          sourceId: "page-1",
+          status: "disconnected",
+        })
+        await authorize()
+        expectSelectable()
+      })
+
+      it("blocks the disconnected sibling takeover when this workspace already has a same-provider Connection for the account", async () => {
+        useSessionProvider("instagram")
+        occupiedBy({
+          provider: "instagramFacebook",
+          sourceId: "page-1",
+          status: "disconnected",
+        })
+        ownConnectionOn("inbox-other")
+        await authorize()
+        expectBlocked()
+      })
+
+      it.each([
+        "connected",
+        "degraded",
+        "needs_reauth",
+        "paused",
+      ])("blocks an Inbox held by a %s sibling provider Connection", async (status) => {
+        useSessionProvider("instagram")
+        occupiedBy({
+          provider: "instagramFacebook",
+          sourceId: "page-1",
+          status,
+        })
+        await authorize()
+        expectBlocked()
+      })
+
+      it("blocks a disconnected sibling Connection whose satellite is still on the Inbox", async () => {
+        useSessionProvider("instagram")
+        occupiedBy(
+          {
+            provider: "instagramFacebook",
+            sourceId: "page-1",
+            status: "disconnected",
+          },
+          { identity: "page-1", matchesBinding: false },
+        )
+        await authorize()
+        expectBlocked()
+      })
+
+      it("reports the occupied Inbox ahead of an unavailable reason", async () => {
+        mocks.listCandidates.mockResolvedValue([
+          {
+            sourceId: "page-1",
+            displayName: "Page One",
+            unavailableReason: "insufficientPermissions",
+          },
+        ])
+        occupiedBy(null, ownSatellite)
+        await authorize()
+        expectBlocked()
+        expect(attachedTargets()[0]).not.toHaveProperty("disabledReason")
+      })
+
+      it("lets a foreign identity holder win over the occupied Inbox", async () => {
+        mocks.findIdentityHolders.mockResolvedValue([
+          holderRow({ workspaceId: "ws-2" }),
+        ])
+        occupiedBy(null, ownSatellite)
+        await authorize()
+        expect(attachedTargets()).toEqual([
+          expect.objectContaining({ alreadyConnected: "other_workspace" }),
+        ])
+      })
+
+      it("skips the Inbox lookup for a provider that is not a channel", async () => {
+        mockAdapter.provider.kind = "integration"
+        await authorize()
+        expect(mocks.listConnectionOccupancy).not.toHaveBeenCalled()
+      })
     })
 
     it("reports a holder ahead of an unavailable reason", async () => {
@@ -2362,7 +2531,7 @@ describe("ConnectionService.completeAuthorization", () => {
       expect(mocks.findIdentityHolders).toHaveBeenCalledWith(["page-2"])
     })
 
-    it("skips the lookup when every candidate is already marked connected", async () => {
+    it("looks up no accounts when every candidate is already marked connected", async () => {
       mocks.listCandidates.mockResolvedValue([
         {
           sourceId: "page-1",
@@ -2372,7 +2541,8 @@ describe("ConnectionService.completeAuthorization", () => {
       ])
       await authorize()
 
-      expect(mocks.findIdentityHolders).not.toHaveBeenCalled()
+      // The binding resolves an empty list without querying.
+      expect(mocks.findIdentityHolders).toHaveBeenCalledWith([])
     })
 
     it("leaves a provider whose binding has no findIdentityHolders unchanged", async () => {
