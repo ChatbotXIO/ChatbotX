@@ -1120,7 +1120,7 @@ chatbotx ig-stories instagram-stories --variant <instagram|facebook>  # List eli
 ```bash
 chatbotx inboxes list                                 # Connected inboxes; use `id` as `inboxId` elsewhere
 chatbotx inboxes update <id> --markReadOnOutbound <true|false>
-chatbotx inboxes avatars --inboxIds <id> [--inboxIds <id> ...]  # Page picture URL of each Facebook/Instagram/Threads inbox (max 50); other channels are left out
+chatbotx inboxes avatars --inboxIds <id> [--inboxIds <id> ...]  # Page picture URL and page link (`profileUrl`) and network (`provider`) of each Facebook/Instagram/Threads inbox (max 50); other channels are left out
 ```
 
 ---

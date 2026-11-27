@@ -76,7 +76,7 @@ describe("publishDestinationService.listInboxAvatars", () => {
         avatar: "public/space/w1/publish-destinations/d1/abc",
         avatarFetchedAt: new Date(),
       }),
-      row(2),
+      row(2, { profileUrl: "https://www.facebook.com/2" }),
       row(3, { state: "inboxDisconnected" }),
     ])
 
@@ -98,12 +98,16 @@ describe("publishDestinationService.listInboxAvatars", () => {
         avatar:
           "https://cdn.example.com/bucket/public/space/w1/publish-destinations/d1/abc",
         inboxId: "i1",
+        profileUrl: null,
+        provider: "facebook",
       },
       {
         avatar: "https://app.example/media/destination-avatar/d2",
         inboxId: "i2",
+        profileUrl: "https://www.facebook.com/2",
+        provider: "facebook",
       },
-      { avatar: null, inboxId: "i3" },
+      { avatar: null, inboxId: "i3", profileUrl: null, provider: "facebook" },
     ])
   })
 

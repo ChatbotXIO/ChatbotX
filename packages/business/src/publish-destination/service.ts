@@ -46,6 +46,10 @@ export type PublishDestinationList = {
 export type InboxAvatar = {
   avatar: string | null
   inboxId: string
+  /** The page's public URL on its network; `null` when it cannot be built. */
+  profileUrl: string | null
+  /** The network the page is on (a Messenger inbox is on `facebook`). */
+  provider: SocialProvider
 }
 
 /** Inboxes one avatar read resolves: a conversation header asks for a handful. */
@@ -215,20 +219,17 @@ class PublishDestinationService extends BaseService {
       publishDestinationIds: rows.filter(needsAvatarProxy).map((row) => row.id),
       workspaceId,
     })
-    return rows.flatMap((row) =>
-      row.inboxId
-        ? [
-            {
-              avatar: toPublishDestinationDto(
-                row,
-                storageUrl,
-                proxyUrls.get(row.id) ?? null,
-              ).avatar,
-              inboxId: row.inboxId,
-            },
-          ]
-        : [],
-    )
+    return rows.flatMap((row) => {
+      if (!row.inboxId) {
+        return []
+      }
+      const { avatar, profileUrl, provider } = toPublishDestinationDto(
+        row,
+        storageUrl,
+        proxyUrls.get(row.id) ?? null,
+      )
+      return [{ avatar, inboxId: row.inboxId, profileUrl, provider }]
+    })
   }
 
   /** The destinations of the workspace with the state a person sees; never a token. */
