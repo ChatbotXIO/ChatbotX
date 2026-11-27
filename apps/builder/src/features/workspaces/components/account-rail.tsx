@@ -13,6 +13,8 @@ import {
 } from "lucide-react"
 import Link from "next/link"
 import { getTranslations } from "next-intl/server"
+import { LangSelector } from "@/components/lang-selector"
+import { ThemeSwitcher } from "@/components/theme-switcher"
 import type { QuotaMetric } from "@/components/usage-bars"
 import { UsageBars } from "@/components/usage-bars"
 import { UpgradePlanButton } from "@/enterprise/features/billing/upgrade-plan-dialog"
@@ -74,6 +76,7 @@ export const AccountRail = async ({
   const avatarUrl = getUserAvatarUrl(user.image, storageUrl)
 
   const usageLabels = buildUsageLabels(t)
+  const hasMenu = isSuperAdmin || cloud
 
   return (
     // `md:top-8` must match the host page's row padding (page.tsx's
@@ -148,51 +151,67 @@ export const AccountRail = async ({
         )}
 
         {/*
-          `mt-auto` is the layout's single flexible spacer — it pushes this
-          menu block to the bottom of the scrollable body instead of sitting
-          right under plan/usage. Exactly one `mt-auto` must exist in this
-          component; a second one would split the free space and reopen the
-          dead-gap bug this replaces.
+          `mt-auto` is the layout's single flexible spacer — it pushes the
+          preferences + Admin/Manage block to the bottom of the scrollable
+          body instead of sitting right under plan/usage. Exactly one
+          `mt-auto` must exist in this component; a second one would split the
+          free space and reopen the dead-gap bug this replaces.
         */}
-        <div
-          className={cn(
-            "mt-auto flex flex-col gap-1",
-            // Community edition with no super admin renders none of the
-            // items below — skip the divider so it doesn't float with
-            // nothing underneath it.
-            (isSuperAdmin || cloud) && "border-t pt-4",
-          )}
-          id="account-rail-menu"
-        >
-          {isSuperAdmin && (
-            <Link className={railMenuItemClassName} href="/admin">
-              <ShieldCheckIcon aria-hidden className="size-4" />
-              {t("actions.admin")}
-            </Link>
-          )}
-          {cloud && canAccessManage && (
-            <Link className={railMenuItemClassName} href="/manage">
-              <Settings2Icon aria-hidden className="size-4" />
-              {t("actions.manage")}
-            </Link>
-          )}
-          {/*
-            Plain anchors, not next/link: these cross into the portal app via
-            the OSS builder's proxy, so next/link prefetch is wasted and
-            client-side navigation would fail. Mirrors the portal, where the
-            cross-zone dashboard link is a plain anchor.
-          */}
-          {cloud && (
-            <a className={railMenuItemClassName} href="/portal/billing">
-              <CreditCardIcon aria-hidden className="size-4" />
-              {t("actions.billing")}
-            </a>
-          )}
-          {cloud && isPlatformContext && (
-            <a className={railMenuItemClassName} href="/portal/redeem">
-              <TicketIcon aria-hidden className="size-4" />
-              {t("actions.redeem")}
-            </a>
+        <div className="mt-auto flex flex-col gap-4">
+          <div
+            className="flex flex-col gap-2 border-t pt-4"
+            id="account-rail-preferences"
+          >
+            <div className="flex items-center justify-between gap-2 px-2">
+              <span className="text-muted-foreground text-sm">
+                {t("fields.language.label")}
+              </span>
+              <LangSelector className="w-36" />
+            </div>
+            <div className="flex items-center justify-between gap-2 px-2">
+              <span className="text-muted-foreground text-sm">
+                {t("fields.theme.label")}
+              </span>
+              <ThemeSwitcher />
+            </div>
+          </div>
+
+          {hasMenu && (
+            <div
+              className="flex flex-col gap-1 border-t pt-4"
+              id="account-rail-menu"
+            >
+              {isSuperAdmin && (
+                <Link className={railMenuItemClassName} href="/admin">
+                  <ShieldCheckIcon aria-hidden className="size-4" />
+                  {t("actions.admin")}
+                </Link>
+              )}
+              {cloud && canAccessManage && (
+                <Link className={railMenuItemClassName} href="/manage">
+                  <Settings2Icon aria-hidden className="size-4" />
+                  {t("actions.manage")}
+                </Link>
+              )}
+              {/*
+                Plain anchors, not next/link: these cross into the portal app
+                via the OSS builder's proxy, so next/link prefetch is wasted and
+                client-side navigation would fail. Mirrors the portal, where the
+                cross-zone dashboard link is a plain anchor.
+              */}
+              {cloud && (
+                <a className={railMenuItemClassName} href="/portal/billing">
+                  <CreditCardIcon aria-hidden className="size-4" />
+                  {t("actions.billing")}
+                </a>
+              )}
+              {cloud && isPlatformContext && (
+                <a className={railMenuItemClassName} href="/portal/redeem">
+                  <TicketIcon aria-hidden className="size-4" />
+                  {t("actions.redeem")}
+                </a>
+              )}
+            </div>
           )}
         </div>
       </div>
