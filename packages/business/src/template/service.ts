@@ -48,6 +48,7 @@ import {
 } from "./selectable-resources"
 import { isShareLive } from "./share-live"
 import { generateShareToken } from "./share-token"
+import { withTemplateStoreBump } from "./store-cache"
 import { templateSourceMissingException } from "./template-errors"
 import { INSTALL_LEASE_MS } from "./template-leases"
 import { type SaveTemplateInput, saveTemplate } from "./template-save"
@@ -217,11 +218,16 @@ class TemplateService {
     actor: TemplateActor
   }): Promise<TemplateModel> {
     assertCanManageTemplates(input.actor)
-    const updated = await templateRepository.rotateShareToken({
-      id: input.templateId,
-      workspaceId: input.workspaceId,
-      shareToken: generateShareToken(),
-    })
+    const updated = await withTemplateStoreBump((tx) =>
+      templateRepository.rotateShareToken(
+        {
+          id: input.templateId,
+          workspaceId: input.workspaceId,
+          shareToken: generateShareToken(),
+        },
+        tx,
+      ),
+    )
     if (!updated) {
       throw notFoundException("Template not found")
     }
@@ -403,12 +409,17 @@ class TemplateService {
     actor: TemplateActor
   }): Promise<TemplateModel> {
     assertCanManageTemplates(input.actor)
-    const updated = await templateRepository.updateShareSettings({
-      id: input.templateId,
-      workspaceId: input.workspaceId,
-      shareEnabled: input.shareEnabled,
-      shareExpiresAt: input.shareExpiresAt,
-    })
+    const updated = await withTemplateStoreBump((tx) =>
+      templateRepository.updateShareSettings(
+        {
+          id: input.templateId,
+          workspaceId: input.workspaceId,
+          shareEnabled: input.shareEnabled,
+          shareExpiresAt: input.shareExpiresAt,
+        },
+        tx,
+      ),
+    )
     if (!updated) {
       throw notFoundException("Template not found")
     }
@@ -549,10 +560,12 @@ class TemplateService {
     actor: TemplateActor
   }): Promise<void> {
     assertCanManageTemplates(input.actor)
-    const deleted = await templateRepository.softDelete({
-      id: input.templateId,
-      workspaceId: input.workspaceId,
-    })
+    const deleted = await withTemplateStoreBump((tx) =>
+      templateRepository.softDelete(
+        { id: input.templateId, workspaceId: input.workspaceId },
+        tx,
+      ),
+    )
     if (!deleted) {
       throw notFoundException("Template not found")
     }

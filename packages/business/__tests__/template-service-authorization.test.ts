@@ -19,6 +19,7 @@ const mocks = vi.hoisted(() => ({
   saveWithVersion: vi.fn(),
   softDelete: vi.fn(),
   rotateShareToken: vi.fn(),
+  bumpCacheVersion: vi.fn(),
   findMediaFileByPath: vi.fn(),
 }))
 
@@ -52,6 +53,7 @@ vi.mock("@chatbotx.io/database/schema", () => ({
   templateModel: {},
 }))
 vi.mock("@chatbotx.io/database/repositories", () => ({
+  cacheVersionRepository: { bump: mocks.bumpCacheVersion },
   templateInstallationRepository: {
     failUnclaimed: mocks.failUnclaimed,
     findByIdAndWorkspace: mocks.installationFindFirst,
@@ -274,7 +276,11 @@ describe("templateService authorization and soft-delete guards", () => {
       payload: {},
       imageUrl: null,
     })
-    mocks.saveWithVersion.mockResolvedValue({ id: "tpl-1", version: 1 })
+    mocks.saveWithVersion.mockResolvedValue({
+      id: "tpl-1",
+      tenantId: "t-1",
+      version: 1,
+    })
 
     await templateService.createOrUpdate({
       ...(saveInput as object),
@@ -288,6 +294,7 @@ describe("templateService authorization and soft-delete guards", () => {
           imageUrl: "public/space/ws-1/media/cover.png",
         }),
       }),
+      expect.anything(),
     )
   })
 
@@ -298,7 +305,11 @@ describe("templateService authorization and soft-delete guards", () => {
       payload: {},
       imageUrl: "public/space/ws-1/templates/old.png",
     })
-    mocks.saveWithVersion.mockResolvedValue({ id: "tpl-1", version: 1 })
+    mocks.saveWithVersion.mockResolvedValue({
+      id: "tpl-1",
+      tenantId: "t-1",
+      version: 1,
+    })
 
     await templateService.createOrUpdate({
       ...(saveInput as object),
@@ -318,6 +329,7 @@ describe("templateService authorization and soft-delete guards", () => {
     mocks.templateFindFirst.mockResolvedValue({ id: "tpl-1", payload: {} })
     mocks.saveWithVersion.mockResolvedValue({
       id: "tpl-1",
+      tenantId: "t-1",
       workspaceId: "ws-1",
       version: 4,
     })
@@ -334,6 +346,11 @@ describe("templateService authorization and soft-delete guards", () => {
         workspaceId: "ws-1",
         snapshot: expect.objectContaining({ payloadHash: expect.any(String) }),
       }),
+      expect.anything(),
+    )
+    expect(mocks.bumpCacheVersion).toHaveBeenCalledWith(
+      { namespace: "template-store", scopeId: "t-1" },
+      expect.anything(),
     )
   })
 
@@ -345,6 +362,7 @@ describe("templateService authorization and soft-delete guards", () => {
     mocks.templateFindFirst.mockResolvedValue({ id: "tpl-1", payload: {} })
     mocks.saveWithVersion.mockResolvedValue({
       id: "tpl-1",
+      tenantId: "t-1",
       workspaceId: "ws-1",
       version: 1,
     })
@@ -356,6 +374,7 @@ describe("templateService authorization and soft-delete guards", () => {
 
     expect(mocks.saveWithVersion).toHaveBeenCalledWith(
       expect.objectContaining({ legacyPayloadHash: expect.any(String) }),
+      expect.anything(),
     )
   })
 
@@ -371,6 +390,7 @@ describe("templateService authorization and soft-delete guards", () => {
     })
     mocks.saveWithVersion.mockResolvedValue({
       id: "tpl-1",
+      tenantId: "t-1",
       workspaceId: "ws-1",
       version: 1,
     })
@@ -382,6 +402,7 @@ describe("templateService authorization and soft-delete guards", () => {
 
     expect(mocks.saveWithVersion).toHaveBeenCalledWith(
       expect.objectContaining({ legacyPayloadHash: expect.any(String) }),
+      expect.anything(),
     )
   })
 
@@ -397,6 +418,7 @@ describe("templateService authorization and soft-delete guards", () => {
     })
     mocks.saveWithVersion.mockResolvedValue({
       id: "tpl-1",
+      tenantId: "t-1",
       workspaceId: "ws-1",
       version: 4,
     })
@@ -422,6 +444,7 @@ describe("templateService authorization and soft-delete guards", () => {
     })
     mocks.saveWithVersion.mockResolvedValue({
       id: "tpl-1",
+      tenantId: "t-1",
       workspaceId: "ws-1",
       version: 4,
     })
@@ -433,7 +456,7 @@ describe("templateService authorization and soft-delete guards", () => {
   })
 
   test("softDelete cannot delete an already deleted template", async () => {
-    mocks.softDelete.mockResolvedValue(false)
+    mocks.softDelete.mockResolvedValue(undefined)
 
     await expect(
       templateService.softDelete({
@@ -496,7 +519,11 @@ describe("templateService authorization and soft-delete guards", () => {
   })
 
   test("rotateShareToken replaces the token of a live template", async () => {
-    mocks.rotateShareToken.mockResolvedValue({ id: "tpl-1", shareToken: "new" })
+    mocks.rotateShareToken.mockResolvedValue({
+      id: "tpl-1",
+      tenantId: "t-1",
+      shareToken: "new",
+    })
 
     await expect(
       templateService.rotateShareToken({
@@ -505,6 +532,38 @@ describe("templateService authorization and soft-delete guards", () => {
         actor: flowsActor,
       }),
     ).resolves.toMatchObject({ shareToken: "new" })
+    expect(mocks.bumpCacheVersion).toHaveBeenCalledWith(
+      { namespace: "template-store", scopeId: "t-1" },
+      expect.anything(),
+    )
+  })
+
+  test("rotateShareToken that finds no live template bumps nothing", async () => {
+    mocks.rotateShareToken.mockResolvedValue(undefined)
+
+    await expect(
+      templateService.rotateShareToken({
+        workspaceId: "ws-1",
+        templateId: "tpl-1",
+        actor: flowsActor,
+      }),
+    ).rejects.toMatchObject({ message: "Template not found" })
+    expect(mocks.bumpCacheVersion).not.toHaveBeenCalled()
+  })
+
+  test("softDelete bumps the deleted template's tenant in the same transaction", async () => {
+    mocks.softDelete.mockResolvedValue({ tenantId: "t-9" })
+
+    await templateService.softDelete({
+      workspaceId: "ws-1",
+      templateId: "tpl-1",
+      actor: flowsActor,
+    })
+
+    expect(mocks.bumpCacheVersion).toHaveBeenCalledWith(
+      { namespace: "template-store", scopeId: "t-9" },
+      expect.anything(),
+    )
   })
 
   test("an installation made through an API token skips the per-user permission re-check", async () => {

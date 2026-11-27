@@ -23,6 +23,7 @@ import * as schema from "../../src/schema"
 import { realDatabaseUrl } from "./database-url"
 
 const databaseUrl = realDatabaseUrl()
+const INTEGRAL_MICROS = /^\d+$/
 const suffix = `${Date.now()}-${Math.floor(Math.random() * 1e6)}`
 
 describe.skipIf(!databaseUrl)("template store repository", () => {
@@ -745,5 +746,176 @@ describe.skipIf(!databaseUrl)("template store repository", () => {
 
   test("the listing cap constant bounds the public query", () => {
     expect(TEMPLATE_STORE_MAX_LISTINGS).toBe(500)
+  })
+
+  describe("readSnapshot", () => {
+    const EXPIRY_MICROS = 1_800_000_000_123_456n
+    let snapshotTenantCount = 0
+    const snapshotTenant = async () => {
+      snapshotTenantCount += 1
+      const t = (await insertTenant(`snapshot-${snapshotTenantCount}`)).tenantId
+      const catA = await category(t, "A")
+      const catB = await category(t, "B")
+      const live = await insertTemplate(t, {
+        name: "Live ΣΑΣ",
+        publisherName: "Pub İ",
+      })
+      const expired = await insertTemplate(t, {
+        name: "Expired",
+        shareExpiresAt: new Date(Date.now() - 3_600_000),
+      })
+      const dated = await insertTemplate(t, {
+        name: "Dated",
+      })
+      // A JS Date holds milliseconds; the column keeps microseconds.
+      await db.execute(
+        sql`update "Template" set "shareExpiresAt" = to_timestamp(${EXPIRY_MICROS.toString()}::numeric / 1000000) where "id" = ${dated}`,
+      )
+      const shareOff = await insertTemplate(t, {
+        name: "Off",
+        shareEnabled: false,
+      })
+      const deleted = await insertTemplate(t, {
+        name: "Deleted",
+        deletedAt: new Date(),
+      })
+      const foreign = await insertTemplate(tenantB, { name: "Foreign" })
+      const listingIds = {
+        live: await approve(t, live, [catB, catA]),
+        expired: await approve(t, expired, []),
+        dated: await approve(t, dated, [catA]),
+        off: await approve(t, shareOff, []),
+        deleted: await approve(t, deleted, []),
+      }
+      // A listing in this tenant whose template belongs to another tenant.
+      await repo.createListing(
+        {
+          tenantId: t,
+          templateId: foreign,
+          languages: [],
+          channels: [],
+          createdBy: null,
+        },
+        db,
+      )
+      return { t, catA, catB, listingIds }
+    }
+
+    test("returns the tenant's non-gone, share-enabled rows, newest first, expiry not applied", async () => {
+      const { t, catA, catB, listingIds } = await snapshotTenant()
+      const snapshot = await repo.readSnapshot(t)
+      expect(snapshot.tenantId).toBe(t)
+      expect(snapshot.rows.map((row) => row.listingId)).toEqual([
+        listingIds.dated,
+        listingIds.expired,
+        listingIds.live,
+      ])
+      const live = snapshot.rows.find(
+        (row) => row.listingId === listingIds.live,
+      )
+      expect(live?.categoryIds).toEqual([catA, catB].sort())
+      expect(live?.searchName).toBe("live σασ")
+      expect(live?.searchPublisherName).toBe(
+        (await db.execute<{ l: string }>(sql`select lower('Pub İ') as l`))
+          .rows[0].l,
+      )
+      expect(live?.shareExpiresAtMicros).toBeNull()
+      const dated = snapshot.rows.find(
+        (row) => row.listingId === listingIds.dated,
+      )
+      expect(dated?.shareExpiresAtMicros).toBe(EXPIRY_MICROS.toString())
+      const expired = snapshot.rows.find(
+        (row) => row.listingId === listingIds.expired,
+      )
+      expect(expired?.shareExpiresAtMicros).toMatch(INTEGRAL_MICROS)
+      expect(
+        BigInt(expired?.shareExpiresAtMicros ?? "0") <
+          BigInt(snapshot.loadedAtMicros),
+      ).toBe(true)
+    })
+
+    test("rows match listPublishedTemplates on every shared column once expiry is applied", async () => {
+      const { t } = await snapshotTenant()
+      const snapshot = await repo.readSnapshot(t)
+      const visible = snapshot.rows
+        .filter(
+          (row) =>
+            row.shareExpiresAtMicros === null ||
+            BigInt(row.shareExpiresAtMicros) >= BigInt(snapshot.loadedAtMicros),
+        )
+        .map(
+          ({
+            shareExpiresAtMicros: _expiry,
+            searchName: _name,
+            searchPublisherName: _publisher,
+            ...published
+          }) => published,
+        )
+      expect(visible).toEqual(
+        await repo.listPublishedTemplates({ tenantId: t }, db),
+      )
+    })
+
+    test("categories are all of the tenant's, rank then id, and other tenants are isolated", async () => {
+      const { t, catA, catB } = await snapshotTenant()
+      const snapshot = await repo.readSnapshot(t)
+      expect(snapshot.categories).toEqual([
+        { id: catA, name: "A" },
+        { id: catB, name: "B" },
+      ])
+      const other = await repo.readSnapshot(tenantB)
+      expect(other.tenantId).toBe(tenantB)
+      expect(other.rows.every((row) => row.name !== "Live ΣΑΣ")).toBe(true)
+      expect(other.categories.map((c) => c.id)).not.toContain(catA)
+    })
+
+    test("the clock is integral microseconds", async () => {
+      const { t } = await snapshotTenant()
+      const snapshot = await repo.readSnapshot(t)
+      expect(snapshot.loadedAtMicros).toMatch(INTEGRAL_MICROS)
+    })
+
+    test("infinity expiry reads as never expiring and -infinity rows are left out, like the live query", async () => {
+      const t = (await insertTenant("snapshot-infinity")).tenantId
+      const forever = await insertTemplate(t, { name: "Forever" })
+      const never = await insertTemplate(t, { name: "Never" })
+      const foreverListing = await approve(t, forever, [])
+      await approve(t, never, [])
+      await db.execute(
+        sql`update "Template" set "shareExpiresAt" = 'infinity' where "id" = ${forever}`,
+      )
+      await db.execute(
+        sql`update "Template" set "shareExpiresAt" = '-infinity' where "id" = ${never}`,
+      )
+      const snapshot = await repo.readSnapshot(t)
+      expect(snapshot.rows.map((row) => row.listingId)).toEqual([
+        foreverListing,
+      ])
+      expect(snapshot.rows[0].shareExpiresAtMicros).toBeNull()
+      expect(
+        (await repo.listPublishedTemplates({ tenantId: t }, db)).map(
+          (row) => row.listingId,
+        ),
+      ).toEqual([foreverListing])
+    })
+
+    test("a tenant with no store has version 0 and nothing else", async () => {
+      const empty = (await insertTenant("snapshot-empty")).tenantId
+      await expect(repo.readSnapshot(empty)).resolves.toMatchObject({
+        version: "0",
+        rows: [],
+        categories: [],
+      })
+    })
+  })
+
+  describe("readKeywordCollationSupport", () => {
+    test("reports a UTF-8 database with deterministic collations", async () => {
+      await expect(repo.readKeywordCollationSupport(db)).resolves.toEqual({
+        isUtf8: true,
+        nameUsesDefaultDeterministicCollation: true,
+        publisherNameUsesDefaultDeterministicCollation: true,
+      })
+    })
   })
 })

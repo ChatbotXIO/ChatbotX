@@ -445,3 +445,4 @@ export type TemplateStoreListingModel =
   typeof schema.templateStoreListingModel.$inferSelect
 export type TemplateStoreListingCategoryModel =
   typeof schema.templateStoreListingCategoryModel.$inferSelect
+export type CacheVersionModel = typeof schema.cacheVersionModel.$inferSelect

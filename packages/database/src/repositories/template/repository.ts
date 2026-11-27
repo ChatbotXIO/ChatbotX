@@ -250,12 +250,15 @@ export const templateRepository = {
     })
   },
 
-  async rotateShareToken(input: {
-    id: string
-    workspaceId: string
-    shareToken: string
-  }): Promise<TemplateModel | undefined> {
-    const [row] = await db
+  async rotateShareToken(
+    input: {
+      id: string
+      workspaceId: string
+      shareToken: string
+    },
+    tx: DatabaseClient,
+  ): Promise<TemplateModel | undefined> {
+    const [row] = await tx
       .update(templateModel)
       .set({ shareToken: input.shareToken })
       .where(liveWhere(input))
@@ -264,13 +267,16 @@ export const templateRepository = {
   },
 
   /** `shareExpiresAt` undefined keeps the current expiry; `null` clears it. */
-  async updateShareSettings(input: {
-    id: string
-    workspaceId: string
-    shareEnabled: boolean
-    shareExpiresAt?: Date | null
-  }): Promise<TemplateModel | undefined> {
-    const [row] = await db
+  async updateShareSettings(
+    input: {
+      id: string
+      workspaceId: string
+      shareEnabled: boolean
+      shareExpiresAt?: Date | null
+    },
+    tx: DatabaseClient,
+  ): Promise<TemplateModel | undefined> {
+    const [row] = await tx
       .update(templateModel)
       .set({
         shareEnabled: input.shareEnabled,
@@ -310,70 +316,74 @@ export const templateRepository = {
    * Saves new contents and records the version they produce. The version
    * advances only when the content hash changed; `legacyPayloadHash` stands in
    * for a template saved before hashes were stored. Returns `undefined` when
-   * the template is gone.
+   * the template is gone. Runs inside the caller's transaction `tx` (the
+   * caller bumps the store's CacheVersion in it).
    */
-  async saveWithVersion(input: {
-    id: string
-    workspaceId: string
-    versionId: string
-    set: Omit<Partial<NewTemplate>, "version" | "payloadHash">
-    snapshot: TemplateVersionSnapshot
-    legacyPayloadHash: string | null
-    /** The version `legacyPayloadHash` was read from: a save that landed since always advances. */
-    basedOnVersion: number
-  }): Promise<TemplateModel | undefined> {
+  async saveWithVersion(
+    input: {
+      id: string
+      workspaceId: string
+      versionId: string
+      set: Omit<Partial<NewTemplate>, "version" | "payloadHash">
+      snapshot: TemplateVersionSnapshot
+      legacyPayloadHash: string | null
+      /** The version `legacyPayloadHash` was read from: a save that landed since always advances. */
+      basedOnVersion: number
+    },
+    tx: DatabaseClient,
+  ): Promise<TemplateModel | undefined> {
     const { snapshot } = input
-    return await db.transaction(async (tx) => {
-      // Pinning and pruning versions share this lock (see the version repository).
-      await templateVersionRepository.lockVersions(input.id, tx)
-      const [updated] = await tx
-        .update(templateModel)
-        .set({
-          ...input.set,
-          payloadHash: snapshot.payloadHash,
-          version: sql`CASE WHEN ${templateModel.version} <> ${input.basedOnVersion} OR coalesce(${input.legacyPayloadHash}::text, ${templateModel.payloadHash}) IS DISTINCT FROM ${snapshot.payloadHash} THEN ${templateModel.version} + 1 ELSE ${templateModel.version} END`,
-        })
-        .where(liveWhere(input))
-        .returning()
-      if (!updated) {
-        return
-      }
-      await templateVersionRepository.insert(
-        {
-          id: input.versionId,
-          templateId: updated.id,
-          workspaceId: updated.workspaceId,
-          version: updated.version,
-          ...snapshot,
-        },
-        tx,
-      )
-      await templateVersionRepository.prune(
-        { templateId: updated.id, latestVersion: updated.version },
-        tx,
-      )
-      return updated
-    })
+    // Pinning and pruning versions share this lock (see the version repository).
+    await templateVersionRepository.lockVersions(input.id, tx)
+    const [updated] = await tx
+      .update(templateModel)
+      .set({
+        ...input.set,
+        payloadHash: snapshot.payloadHash,
+        version: sql`CASE WHEN ${templateModel.version} <> ${input.basedOnVersion} OR coalesce(${input.legacyPayloadHash}::text, ${templateModel.payloadHash}) IS DISTINCT FROM ${snapshot.payloadHash} THEN ${templateModel.version} + 1 ELSE ${templateModel.version} END`,
+      })
+      .where(liveWhere(input))
+      .returning()
+    if (!updated) {
+      return
+    }
+    await templateVersionRepository.insert(
+      {
+        id: input.versionId,
+        templateId: updated.id,
+        workspaceId: updated.workspaceId,
+        version: updated.version,
+        ...snapshot,
+      },
+      tx,
+    )
+    await templateVersionRepository.prune(
+      { templateId: updated.id, latestVersion: updated.version },
+      tx,
+    )
+    return updated
   },
 
   /**
-   * Soft-deletes a template; its installations are stamped in the same
-   * transaction so none stays locked by a template that is gone. `false` when
-   * it was already gone.
+   * Soft-deletes a template inside the caller's transaction `tx`; its
+   * installations are stamped in the same transaction so none stays locked by
+   * a template that is gone. Returns the deleted template's tenant, or
+   * `undefined` when it was already gone.
    */
-  async softDelete(key: { id: string; workspaceId: string }): Promise<boolean> {
-    return await db.transaction(async (tx) => {
-      const [deleted] = await tx
-        .update(templateModel)
-        .set({ deletedAt: new Date() })
-        .where(liveWhere(key))
-        .returning({ id: templateModel.id })
-      if (!deleted) {
-        return false
-      }
-      await templateInstallationRepository.markSourceDeleted(key.id, tx)
-      return true
-    })
+  async softDelete(
+    key: { id: string; workspaceId: string },
+    tx: DatabaseClient,
+  ): Promise<{ tenantId: string } | undefined> {
+    const [deleted] = await tx
+      .update(templateModel)
+      .set({ deletedAt: new Date() })
+      .where(liveWhere(key))
+      .returning({ tenantId: templateModel.tenantId })
+    if (!deleted) {
+      return
+    }
+    await templateInstallationRepository.markSourceDeleted(key.id, tx)
+    return deleted
   },
 
   /**

@@ -21,7 +21,8 @@ import {
   templateStoreRepository,
 } from "@chatbotx.io/database/repositories"
 import { isBigintId } from "@chatbotx.io/database/utils"
-import { isLocale, type Locale } from "@chatbotx.io/utils/ui-locale"
+import { getChildLogger } from "@chatbotx.io/logger"
+import type { Locale } from "@chatbotx.io/utils/ui-locale"
 import {
   resolveTenantAdminScope,
   type TenantAdminScope,
@@ -31,11 +32,23 @@ import { resolveServingHost } from "../platform/settings"
 import { isShareLive } from "./share-live"
 import { buildTemplateShareUrl } from "./share-url"
 import {
-  classifyStoreListingForLocale,
   normalizeListingChannels,
   normalizeListingLanguages,
-  type TemplateStoreAudienceSection,
 } from "./store-audience"
+import {
+  bumpTemplateStoreVersion,
+  canSearchKeywordOnSnapshot,
+  readTemplateStoreSnapshot,
+} from "./store-cache"
+import {
+  hasVisible,
+  isSnapshotOverCap,
+  knownLanguages,
+  matchesNoCategory,
+  projectPublished,
+  type TemplateStorePublished,
+  toPublishedTemplate,
+} from "./store-snapshot"
 import {
   templateStoreCategoryLimitException,
   templateStoreCategoryNameTakenException,
@@ -45,6 +58,13 @@ import {
   templateStoreListingUnavailableException,
   templateStoreTemplateUnavailableException,
 } from "./template-errors"
+
+export type {
+  TemplateStorePublished,
+  TemplateStorePublishedTemplate,
+} from "./store-snapshot"
+
+const log = getChildLogger("template-store")
 
 export type TemplateStoreMoveDirection = "up" | "down"
 
@@ -84,28 +104,6 @@ export type TemplateStoreAdminList = {
   storeUrl: string | null
 }
 
-export type TemplateStorePublishedTemplate = {
-  templateId: string
-  name: string
-  description: string | null
-  imageUrl: string | null
-  publisherName: string | null
-  categoryIds: string[]
-  /** UI locale codes; empty = every language. */
-  languages: Locale[]
-  /** Channels the template supports, in display order; empty = every channel. */
-  channels: TemplateChannel[]
-  /** Zone when the visitor views their own language; always `primary` when no visitor language is given. */
-  section: TemplateStoreAudienceSection
-  shareToken: string
-  shareUrl: string
-}
-
-export type TemplateStorePublished = {
-  categories: TemplateStoreCategoryRef[]
-  templates: TemplateStorePublishedTemplate[]
-}
-
 /**
  * Why an approved template is (not) shown, by the same ordered checks as the
  * SQL status predicates in the repository. `now` is injectable for tests.
@@ -123,10 +121,6 @@ export const resolveTemplateStoreListingStatus = (
   }
   return isShareLive(row, now) ? "published" : "shareDisabled"
 }
-
-/** A stored code the UI no longer lists (a removed locale) is dropped on read, so every consumer sees valid codes only. */
-const knownLanguages = (languages: readonly string[]): Locale[] =>
-  languages.filter(isLocale)
 
 /** Turns the case-insensitive unique-name violation into the typed exception; rethrows anything else. */
 const rethrowCategoryNameTaken = (error: unknown): never => {
@@ -148,14 +142,20 @@ const requireTenantId = async (
   return tenantId
 }
 
-/** Runs `work` in a transaction holding the tenant's store lock, which serialises every store write. */
+/**
+ * Runs `work` in a transaction holding the tenant's store lock, which
+ * serialises every store write, then bumps the tenant's store version once,
+ * after all of `work`'s writes, in the same transaction.
+ */
 const withStoreLock = async <T>(
   tenantId: string,
   work: (tx: Transaction) => Promise<T>,
 ): Promise<T> =>
   await db.transaction(async (tx) => {
     await templateStoreRepository.lockTenantStore(tenantId, tx)
-    return await work(tx)
+    const result = await work(tx)
+    await bumpTemplateStoreVersion(tenantId, tx)
+    return result
   })
 
 /** Ids come from clients; a non-numeric one must read as "not found", never reach a bigint compare. */
@@ -208,6 +208,44 @@ const normalizeCategoryName = (name: string): string => {
     )
   }
   return trimmed
+}
+
+type ListPublishedInput = {
+  tenantId: string
+  categoryId?: string
+  keyword?: string
+  /** Keeps templates tagged with this language and the untagged ones. */
+  language?: Locale
+  /** Keeps listings tagged with this channel and the untagged ones (every channel). */
+  channel?: TemplateChannel
+  /** The visitor's UI language: each template gets its zone for that language. Nothing is left out, since the visitor may view every language. */
+  viewerLocale?: Locale
+}
+
+/** The live store queries: the fallback for a snapshot that cannot answer exactly, and the reference the cache must match. */
+const listPublishedFromSql = async (
+  input: ListPublishedInput,
+  hostLookup: Promise<{ appUrl: string }>,
+): Promise<TemplateStorePublished> => {
+  const [host, categories, rows] = await Promise.all([
+    hostLookup,
+    templateStoreRepository.listPublishedCategories(input.tenantId),
+    matchesNoCategory(input.categoryId)
+      ? []
+      : templateStoreRepository.listPublishedTemplates({
+          tenantId: input.tenantId,
+          categoryId: input.categoryId,
+          keyword: input.keyword,
+          language: input.language,
+          channel: input.channel,
+        }),
+  ])
+  return {
+    categories,
+    templates: rows.map((row) =>
+      toPublishedTemplate(row, input.viewerLocale, host.appUrl),
+    ),
+  }
 }
 
 /**
@@ -606,66 +644,66 @@ export const templateStoreService = {
 
   /**
    * Whether the tenant's store has anything a visitor can open. The tenant
-   * comes from a trusted caller (the host). One bounded probe, no cache:
-   * visibility is time-based (share expiry), so a cached answer could go stale.
+   * comes from a trusted caller (the host). Read from the cached snapshot,
+   * with share expiry applied at the database clock of this request; a tenant
+   * over the listing cap runs one bounded probe instead. The host is never
+   * resolved here.
    */
   async hasPublished(input: { tenantId: string }): Promise<boolean> {
-    return await templateStoreRepository.hasPublishedTemplates(input.tenantId)
+    const { snapshot, requestNowMicros } = await readTemplateStoreSnapshot(
+      input.tenantId,
+    )
+    if (isSnapshotOverCap(snapshot)) {
+      log.warn(
+        { tenantId: input.tenantId },
+        "Template store snapshot is over the listing cap; probing the database",
+      )
+      return await templateStoreRepository.hasPublishedTemplates(input.tenantId)
+    }
+    return hasVisible(snapshot, requestNowMicros)
   },
 
   /**
    * What a visitor of a tenant's store can open: the categories that have a
    * published template, and the templates with the links to open them. The
    * tenant always comes from a trusted caller (the host or the API token).
-   * Two bounded queries; the host is resolved once for every link.
+   * Filters run on the tenant's cached snapshot; the host is resolved on every
+   * request for the links, never cached. A tenant over the listing cap, or a
+   * keyword the database cannot search outside SQL, runs the two bounded
+   * queries instead.
    */
-  async listPublished(input: {
-    tenantId: string
-    categoryId?: string
-    keyword?: string
-    /** Keeps templates tagged with this language and the untagged ones. */
-    language?: Locale
-    /** Keeps listings tagged with this channel and the untagged ones (every channel). */
-    channel?: TemplateChannel
-    /** The visitor's UI language: each template gets its zone for that language. Nothing is left out, since the visitor may view every language. */
-    viewerLocale?: Locale
-  }): Promise<TemplateStorePublished> {
-    const matchesNothing =
-      input.categoryId !== undefined && !isBigintId(input.categoryId)
-    const [categories, rows, host] = await Promise.all([
-      templateStoreRepository.listPublishedCategories(input.tenantId),
-      matchesNothing
-        ? []
-        : templateStoreRepository.listPublishedTemplates({
-            tenantId: input.tenantId,
-            categoryId: input.categoryId,
-            keyword: input.keyword,
-            language: input.language,
-            channel: input.channel,
-          }),
+  async listPublished(
+    input: ListPublishedInput,
+  ): Promise<TemplateStorePublished> {
+    // A keyword the database cannot search outside SQL never touches the snapshot.
+    if (!(await canSearchKeywordOnSnapshot(input.keyword))) {
+      return await listPublishedFromSql(
+        input,
+        resolveServingHost(input.tenantId),
+      )
+    }
+    const [read, host] = await Promise.all([
+      readTemplateStoreSnapshot(input.tenantId, input.keyword),
       resolveServingHost(input.tenantId),
     ])
-    const { viewerLocale } = input
-    return {
-      categories,
-      templates: rows.map((row) => {
-        const languages = knownLanguages(row.languages)
-        return {
-          templateId: row.templateId,
-          name: row.name,
-          description: row.description,
-          imageUrl: row.imageUrl,
-          publisherName: row.publisherName,
-          categoryIds: row.categoryIds,
-          languages,
-          channels: knownTemplateChannels(row.channels),
-          section: viewerLocale
-            ? classifyStoreListingForLocale(languages, viewerLocale)
-            : "primary",
-          shareToken: row.shareToken,
-          shareUrl: buildTemplateShareUrl(host.appUrl, row),
-        }
-      }),
+    if (isSnapshotOverCap(read.snapshot)) {
+      log.warn(
+        { tenantId: input.tenantId },
+        "Template store snapshot is over the listing cap; querying the database",
+      )
+      return await listPublishedFromSql(input, Promise.resolve(host))
     }
+    return projectPublished(
+      read.snapshot,
+      {
+        categoryId: input.categoryId,
+        keywordLiteral: read.keywordLiteral,
+        language: input.language,
+        channel: input.channel,
+        viewerLocale: input.viewerLocale,
+      },
+      read.requestNowMicros,
+      host.appUrl,
+    )
   },
 }

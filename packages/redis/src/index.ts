@@ -54,4 +54,11 @@ export const distributedStore = distributedStoreFactory(
 export * from "./cache-utils"
 export { sequenceConnections } from "./connections/sequence-connection"
 export * from "./queue-utils"
+export type {
+  DeepReadonly,
+  ReadCache,
+  ReadCacheOptions,
+  VersionedValue,
+} from "./read-cache"
+export { createReadCache } from "./read-cache"
 export { createRedisConnection } from "./redis-client"
