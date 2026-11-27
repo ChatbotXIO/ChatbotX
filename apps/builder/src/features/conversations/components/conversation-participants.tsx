@@ -26,6 +26,15 @@ const REPLY_TIME_FORMAT = {
   minute: "2-digit",
 } as const
 
+const WHITESPACE = /\s+/
+
+/** The given name of a full name: its first word; a single word stays as is. */
+function givenNameOf(fullName: string): string {
+  return fullName.split(WHITESPACE).find(Boolean) ?? fullName
+}
+
+const LIST_FORMAT = { type: "unit", style: "long" } as const
+
 /** Avatars shown before the names; the dialog lists everyone. */
 const MAX_INLINE_AVATARS = 3
 
@@ -56,6 +65,8 @@ export function ConversationParticipants({
 
   const nameOf = (participant: ConversationParticipantResource) =>
     participant.name ?? t("unnamedMember")
+  const givenNameLabelOf = (participant: ConversationParticipantResource) =>
+    participant.name ? givenNameOf(participant.name) : nameOf(participant)
   const timeOf = (participant: ConversationParticipantResource) =>
     format.dateTime(participant.lastRepliedAt, REPLY_TIME_FORMAT)
 
@@ -76,12 +87,16 @@ export function ConversationParticipants({
                 />
               ))}
             </span>
-            <span className="truncate">
-              {t("joined", {
-                names: format.list(participants.map(nameOf), {
-                  type: "unit",
-                  style: "long",
-                }),
+            <span
+              className="truncate"
+              title={format.list(participants.map(nameOf), LIST_FORMAT)}
+            >
+              {t("joinedShort", {
+                count: participants.length,
+                names: format.list(
+                  participants.map(givenNameLabelOf),
+                  LIST_FORMAT,
+                ),
               })}
             </span>
             <span aria-hidden>•</span>

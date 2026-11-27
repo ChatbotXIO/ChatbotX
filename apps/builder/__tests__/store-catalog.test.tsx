@@ -142,6 +142,19 @@ afterEach(() => {
   root = null
 })
 
+describe("StoreCatalog cards", () => {
+  test.each([
+    "page",
+    "embedded",
+  ] as const)("a %s card shows the cover image only, never a video player", (layout) => {
+    const el = render(layout)
+
+    expect(el.querySelector("img")?.getAttribute("src")).toBe("/cover.png")
+    expect(el.querySelector("iframe")).toBeNull()
+    expect(el.querySelector("video")).toBeNull()
+  })
+})
+
 describe("StoreCatalog layouts", () => {
   test("the page layout keeps the public /store wrapper and its h1", () => {
     const el = render("page")

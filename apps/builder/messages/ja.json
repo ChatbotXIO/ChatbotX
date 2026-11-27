@@ -7534,8 +7534,17 @@
       "allowEdit": "インストール後の編集を許可",
       "allowDelete": "インストール後の削除を許可",
       "publisherName": "公開者名",
-      "youtubeVideoId": "YouTube動画ID",
-      "youtubeVideoIdDescription": "動画URLに含まれる11文字のID（例: youtube.com/watch?v=xxxxxxxxxxx の \"xxxxxxxxxxx\"）",
+      "video": "カバー動画",
+      "videoDescription": "YouTube、Vimeo、Streamable、Cloudinary の動画リンク、またはそのプラットフォームの埋め込みコードを貼り付けてください。動画がない場合は空欄のままにします。",
+      "videoEmpty": "下に動画のリンクを貼り付けると、ここにプレビューが表示されます。",
+      "videoOrientationNote": "動画の向き（横長か縦長）は保存時に判定されます。",
+      "videoPreviewTitle": "動画のプレビュー",
+      "videoErrors": {
+        "tooLong": "動画のリンクまたは埋め込みコードが長すぎます",
+        "invalidUrl": "有効な https の動画リンクまたは埋め込みコードを入力してください",
+        "unsupportedProvider": "対応しているのは YouTube、Vimeo、Streamable、Cloudinary の動画のみです",
+        "invalidVideoId": "このリンクには有効な動画が含まれていません"
+      },
       "testLink": "テストリンク",
       "imageUrl": "カバー画像",
       "installBehavior": "インストール時の動作",
@@ -12598,6 +12607,7 @@
   },
   "conversationParticipants": {
     "joined": "{names} が会話に参加しました",
+    "joinedShort": "{count, plural, one {{names} が参加} other {{names} が参加}}",
     "replied": "{name} が返信しました {time}",
     "showMore": "さらに表示",
     "label": "この会話で返信した人",

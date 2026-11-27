@@ -1,4 +1,5 @@
 import { listInboxesRequest } from "@chatbotx.io/business/inbox/schema"
+import { socialProviders } from "@chatbotx.io/database/partials"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { createSearchParamsCache, parseAsInteger } from "nuqs/server"
 import { z } from "zod"
@@ -61,6 +62,15 @@ export const inboxAvatarResource = z.object({
     .describe(
       "URL of the page's profile picture, the same one the Posts pickers show. Null when the page has no picture or it cannot be read now (for example a disconnected inbox).",
     ),
+  profileUrl: z
+    .string()
+    .nullable()
+    .describe(
+      "The page's public URL on its network (https), the one the Posts pickers link to. Null when it cannot be built.",
+    ),
+  provider: socialProviders.describe(
+    "The network the page is on: `facebook` (Messenger inboxes), `instagram` or `threads`.",
+  ),
 })
 export type InboxAvatarResource = z.infer<typeof inboxAvatarResource>
 

@@ -100,8 +100,55 @@ describe("ConversationParticipants", () => {
       conversation([member("1", "Hoàng", 20), member("2", "Hùng", 19)]),
     )
 
-    expect(container.textContent).toContain("joined:Hoàng, Hùng")
+    expect(container.textContent).toContain("joinedShort:2|Hoàng, Hùng")
     expect(container.textContent).toContain("2026-11-20T17:00")
+  })
+
+  const inlineSpan = () => container.querySelector("button span.truncate")
+
+  test("shows the first word of each name, with full names in the title", async () => {
+    await render(
+      conversation([
+        member("1", "Phong Tran", 20),
+        member("2", "Hung Phan Viet", 19),
+      ]),
+    )
+
+    expect(inlineSpan()?.textContent).toBe("joinedShort:2|Phong, Hung")
+    expect(inlineSpan()?.getAttribute("title")).toBe(
+      "Phong Tran, Hung Phan Viet",
+    )
+  })
+
+  test("a single-word name stays as is and extra spaces are collapsed", async () => {
+    await render(
+      conversation([
+        member("1", "Hoang", 20),
+        member("2", "  Hung   Phan ", 19),
+      ]),
+    )
+
+    expect(inlineSpan()?.textContent).toBe("joinedShort:2|Hoang, Hung")
+  })
+
+  test("the dialog keeps full names", async () => {
+    queryState.data = { pages: [{ data: [member("1", "Phong Tran", 20)] }] }
+    await render(conversation([]))
+    await openDialog()
+
+    expect(
+      document.body.querySelector("li > span:last-child")?.textContent,
+    ).toBe("replied:Phong Tran|2026-11-20T17:00")
+  })
+
+  test("passes the member count so the translation can agree in number", async () => {
+    await render(conversation([member("1", "Hoàng", 20)]))
+    expect(inlineSpan()?.textContent).toBe("joinedShort:1|Hoàng")
+
+    await render(
+      conversation([member("1", "Hoàng", 20), member("2", "Hùng", 19)]),
+    )
+    expect(inlineSpan()?.textContent).toBe("joinedShort:2|Hoàng, Hùng")
   })
 
   test("the loaded list wins over the preview, newest reply first", async () => {
@@ -118,7 +165,7 @@ describe("ConversationParticipants", () => {
     }
     await render(conversation([member("1", "Hoàng", 20)]))
 
-    expect(container.textContent).toContain("joined:Hoàng, Hùng, Tàu")
+    expect(container.textContent).toContain("joinedShort:3|Hoàng, Hùng, Tàu")
   })
 
   test("the dialog lists each member with their own reply time", async () => {
@@ -180,7 +227,7 @@ describe("ConversationParticipants", () => {
     queryState.data = { pages: [{ data: [member("1", null, 20)] }] }
     await render(conversation([]))
 
-    expect(container.textContent).toContain("joined:unnamedMember")
+    expect(container.textContent).toContain("joinedShort:1|unnamedMember")
   })
 
   test("offers Show more only when another page exists, and loads it", async () => {
@@ -214,6 +261,6 @@ describe("ConversationParticipants", () => {
   test("keeps the preview when the full list failed to load", async () => {
     await render(conversation([member("1", "Hoàng", 20)]))
 
-    expect(container.textContent).toContain("joined:Hoàng")
+    expect(container.textContent).toContain("joinedShort:1|Hoàng")
   })
 })

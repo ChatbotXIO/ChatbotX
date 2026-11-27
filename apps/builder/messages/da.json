@@ -7534,8 +7534,17 @@
       "allowEdit": "Tillad redigering efter installation",
       "allowDelete": "Tillad sletning efter installation",
       "publisherName": "Udgivernavn",
-      "youtubeVideoId": "YouTube-video-id",
-      "youtubeVideoIdDescription": "Det 11-tegns id fra videoens URL, f.eks. \"xxxxxxxxxxx\" i youtube.com/watch?v=xxxxxxxxxxx",
+      "video": "Covervideo",
+      "videoDescription": "Indsæt et link til en YouTube-, Vimeo-, Streamable- eller Cloudinary-video, eller indlejringskoden fra den platform. Lad feltet være tomt, hvis der ikke er nogen video.",
+      "videoEmpty": "Indsæt et videolink nedenfor for at se en forhåndsvisning her.",
+      "videoOrientationNote": "Videoens retning (liggende eller stående) registreres, når du gemmer.",
+      "videoPreviewTitle": "Forhåndsvisning af video",
+      "videoErrors": {
+        "tooLong": "Videolinket eller indlejringskoden er for langt",
+        "invalidUrl": "Angiv et gyldigt https-videolink eller en gyldig indlejringskode",
+        "unsupportedProvider": "Kun videoer fra YouTube, Vimeo, Streamable og Cloudinary understøttes",
+        "invalidVideoId": "Videolinket indeholder ikke en gyldig video"
+      },
       "testLink": "Testlink",
       "imageUrl": "Forsidebillede",
       "installBehavior": "Installationsadfærd",
@@ -12598,6 +12607,7 @@
   },
   "conversationParticipants": {
     "joined": "{names} har deltaget i samtalen",
+    "joinedShort": "{count, plural, one {{names} deltog} other {{names} deltog}}",
     "replied": "{name} svarede {time}",
     "showMore": "Vis mere",
     "label": "Hvem har svaret i denne samtale",

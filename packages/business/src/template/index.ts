@@ -89,6 +89,13 @@ export {
   type TemplateSyncHistoryItem,
   templateSyncRequestService,
 } from "./sync-request.service"
+export type { TemplateVideoInput } from "./template-save"
+export {
+  resolveTemplateEmbeddedVideo,
+  type TemplateVideoProjection,
+  type TemplateVideoRow,
+  toTemplateVideoProjection,
+} from "./template-video"
 export { templateUninstallNoticeService } from "./uninstall-notice.service"
 export { templateUninstallSweepService } from "./uninstall-sweep.service"
 export type { TemplateInstallationWarningGroup } from "./warning-groups"

@@ -7534,8 +7534,17 @@
       "allowEdit": "Salli muokkaus asennuksen jälkeen",
       "allowDelete": "Salli poistaminen asennuksen jälkeen",
       "publisherName": "Julkaisijan nimi",
-      "youtubeVideoId": "YouTube-videon tunnus",
-      "youtubeVideoIdDescription": "11-merkkinen tunnus videon URL-osoitteesta, esim. \"xxxxxxxxxxx\" osoitteessa youtube.com/watch?v=xxxxxxxxxxx",
+      "video": "Kansivideo",
+      "videoDescription": "Liitä YouTube-, Vimeo-, Streamable- tai Cloudinary-videon linkki tai kyseisen palvelun upotuskoodi. Jätä tyhjäksi, jos videota ei ole.",
+      "videoEmpty": "Liitä videolinkki alle nähdäksesi esikatselun tässä.",
+      "videoOrientationNote": "Videon suunta (vaaka tai pysty) tunnistetaan tallennettaessa.",
+      "videoPreviewTitle": "Videon esikatselu",
+      "videoErrors": {
+        "tooLong": "Videolinkki tai upotuskoodi on liian pitkä",
+        "invalidUrl": "Anna kelvollinen https-videolinkki tai upotuskoodi",
+        "unsupportedProvider": "Vain YouTube-, Vimeo-, Streamable- ja Cloudinary-videot ovat tuettuja",
+        "invalidVideoId": "Videolinkki ei sisällä kelvollista videota"
+      },
       "testLink": "Testilinkki",
       "imageUrl": "Kansikuva",
       "installBehavior": "Asennuksen toiminta",
@@ -12598,6 +12607,7 @@
   },
   "conversationParticipants": {
     "joined": "{names} osallistui keskusteluun",
+    "joinedShort": "{count, plural, one {{names} liittyi} other {{names} liittyivät}}",
     "replied": "{name} vastasi {time}",
     "showMore": "Näytä lisää",
     "label": "Kuka vastasi tässä keskustelussa",

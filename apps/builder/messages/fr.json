@@ -7534,8 +7534,17 @@
       "allowEdit": "Autoriser la modification après installation",
       "allowDelete": "Autoriser la suppression après installation",
       "publisherName": "Nom de l'éditeur",
-      "youtubeVideoId": "ID de la vidéo YouTube",
-      "youtubeVideoIdDescription": "L'identifiant de 11 caractères présent dans l'URL de la vidéo, par ex. \"xxxxxxxxxxx\" dans youtube.com/watch?v=xxxxxxxxxxx",
+      "video": "Vidéo de couverture",
+      "videoDescription": "Collez le lien d'une vidéo YouTube, Vimeo, Streamable ou Cloudinary, ou le code d'intégration de cette plateforme. Laissez vide s'il n'y a pas de vidéo.",
+      "videoEmpty": "Collez un lien vidéo ci-dessous pour l'aperçu ici.",
+      "videoOrientationNote": "L'orientation de la vidéo (paysage ou portrait) est détectée à l'enregistrement.",
+      "videoPreviewTitle": "Aperçu de la vidéo",
+      "videoErrors": {
+        "tooLong": "Le lien ou le code d'intégration de la vidéo est trop long",
+        "invalidUrl": "Saisissez un lien vidéo https ou un code d'intégration valide",
+        "unsupportedProvider": "Seules les vidéos YouTube, Vimeo, Streamable et Cloudinary sont prises en charge",
+        "invalidVideoId": "Le lien ne contient pas de vidéo valide"
+      },
       "testLink": "Lien de test",
       "imageUrl": "Image de couverture",
       "installBehavior": "Comportement d'installation",
@@ -12598,6 +12607,7 @@
   },
   "conversationParticipants": {
     "joined": "{names} ont participé à la conversation",
+    "joinedShort": "{count, plural, one {{names} a rejoint} other {{names} ont rejoint}}",
     "replied": "{name} a répondu {time}",
     "showMore": "Voir plus",
     "label": "Qui a répondu dans cette conversation",

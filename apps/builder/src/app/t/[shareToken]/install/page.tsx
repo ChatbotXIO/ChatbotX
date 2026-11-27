@@ -57,6 +57,8 @@ export default async function PublicTemplateInstallPage(
           <PublicTemplateHeading
             imageUrl={await resolveTemplateImageUrl(template.imageUrl)}
             template={template}
+            video={template.video}
+            videoTitle={t("videoTitle")}
           />
         </CardContent>
       </Card>

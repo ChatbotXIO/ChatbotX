@@ -34,7 +34,11 @@ vi.mock("@chatbotx.io/business", async () => {
   const permissions = await import(
     "../../../packages/business/src/template/permissions"
   )
+  const video = await import(
+    "../../../packages/business/src/template/template-video"
+  )
   return {
+    toTemplateVideoProjection: video.toTemplateVideoProjection,
     workspaceApiTokenService: { findWorkspaceByTokenHash },
     isWorkspaceScheduledForDeletion,
     userQuotaService: { getAccessState },
@@ -98,6 +102,7 @@ const installablePreview = {
     description: null,
     imageUrl: null,
     publisherName: null,
+    video: null,
     youtubeVideoId: null,
     testLink: null,
     categoryCounts: {},
@@ -129,6 +134,7 @@ describe("templates.list paging", () => {
     imageUrl: null,
     publisherName: null,
     youtubeVideoId: null,
+    embeddedVideo: null,
     testLink: null,
     defaultPermissions: {},
     createInstallFolder: false,

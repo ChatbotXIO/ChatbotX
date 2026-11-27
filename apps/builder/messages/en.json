@@ -8412,8 +8412,17 @@
       "allowEdit": "Allow editing after install",
       "allowDelete": "Allow deleting after install",
       "publisherName": "Publisher name",
-      "youtubeVideoId": "YouTube video ID",
-      "youtubeVideoIdDescription": "The 11-character ID from the video's URL, e.g. the \"xxxxxxxxxxx\" in youtube.com/watch?v=xxxxxxxxxxx",
+      "video": "Cover video",
+      "videoDescription": "Paste a link to a YouTube, Vimeo, Streamable or Cloudinary video, or the embed code from that platform. Leave empty for no video.",
+      "videoEmpty": "Paste a video link below to preview it here.",
+      "videoOrientationNote": "The video's orientation (landscape or portrait) is detected when you save.",
+      "videoPreviewTitle": "Video preview",
+      "videoErrors": {
+        "tooLong": "The video link or embed code is too long",
+        "invalidUrl": "Enter a valid https video link or embed code",
+        "unsupportedProvider": "Only YouTube, Vimeo, Streamable and Cloudinary videos are supported",
+        "invalidVideoId": "The video link does not contain a valid video"
+      },
       "testLink": "Test link",
       "imageUrl": "Cover image",
       "installBehavior": "Install behavior",
@@ -12598,6 +12607,7 @@
   },
   "conversationParticipants": {
     "joined": "{names} joined the conversation",
+    "joinedShort": "{count, plural, one {{names} joined} other {{names} joined}}",
     "replied": "{name} replied {time}",
     "showMore": "Show more",
     "label": "Who replied in this conversation",

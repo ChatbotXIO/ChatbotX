@@ -7580,8 +7580,17 @@
       "allowEdit": "允許安裝後編輯",
       "allowDelete": "允許安裝後刪除",
       "publisherName": "發布者名稱",
-      "youtubeVideoId": "YouTube 影片 ID",
-      "youtubeVideoIdDescription": "影片網址中的 11 位字元 ID，例如 youtube.com/watch?v=xxxxxxxxxxx 中的 \"xxxxxxxxxxx\"",
+      "video": "封面影片",
+      "videoDescription": "貼上 YouTube、Vimeo、Streamable 或 Cloudinary 的影片連結，或該平台的嵌入程式碼。沒有影片請留空。",
+      "videoEmpty": "在下方貼上影片連結，即可在此預覽。",
+      "videoOrientationNote": "影片方向（橫向或直向）將在儲存時偵測。",
+      "videoPreviewTitle": "影片預覽",
+      "videoErrors": {
+        "tooLong": "影片連結或嵌入程式碼過長",
+        "invalidUrl": "請輸入有效的 https 影片連結或嵌入程式碼",
+        "unsupportedProvider": "僅支援 YouTube、Vimeo、Streamable 和 Cloudinary 影片",
+        "invalidVideoId": "此連結不包含有效的影片"
+      },
       "testLink": "測試連結",
       "imageUrl": "封面圖片",
       "installBehavior": "安裝行為",
@@ -12598,6 +12607,7 @@
   },
   "conversationParticipants": {
     "joined": "{names} 已參與對話",
+    "joinedShort": "{count, plural, one {{names} 已加入} other {{names} 已加入}}",
     "replied": "{name} 回覆於 {time}",
     "showMore": "顯示更多",
     "label": "誰在此對話中回覆過",

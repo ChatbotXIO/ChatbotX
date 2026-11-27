@@ -15,12 +15,14 @@ import { cn } from "@chatbotx.io/ui/lib/utils"
 import { useQuery } from "@tanstack/react-query"
 import { useFormatter, useTranslations } from "next-intl"
 import { useMemo } from "react"
+import { PROVIDER_LABELS } from "@/features/social-accounts/lib/connections"
 import { useWorkspaceId } from "@/hooks/routing"
 import { orpc } from "@/lib/orpc/query"
 import {
   INBOX_ICON_CONFIG,
   InboxIcon,
 } from "../../inboxes/components/inbox-icon"
+import type { InboxAvatarResource } from "../../inboxes/schema/action"
 import type { ListConversationItemResource } from "../schema/resource"
 
 type ContactInbox = ListConversationItemResource["contactInboxes"][number]
@@ -109,37 +111,66 @@ function PageAvatar({
   )
 }
 
+const WEB_URL = /^https?:\/\//i
+
+/** The page link is built by the server; still, only a web address opens. */
+const isWebUrl = (url: string): boolean => WEB_URL.test(url)
+
+const CHIP_CLASS =
+  "flex min-w-0 max-w-52 shrink-0 items-center gap-1.5 rounded-full border border-transparent py-0.5 ps-0.5 pe-2.5"
+
 function PageChip({
-  avatar,
   contactInbox,
   isCurrent,
+  page,
 }: {
-  avatar: string | null
   contactInbox: ContactInbox
   isCurrent: boolean
+  page: InboxAvatarResource | undefined
 }) {
   const t = useTranslations()
   const channel = contactInbox.channel as ChannelType
   const { defaultLabelKey } =
     INBOX_ICON_CONFIG[channel] ?? INBOX_ICON_CONFIG.omnichannel
-  return (
-    <span
-      className={cn(
-        "flex min-w-0 max-w-52 shrink-0 items-center gap-1.5 rounded-full border border-transparent py-0.5 ps-0.5 pe-2.5",
-        isCurrent && "border-border bg-background shadow-xs",
-      )}
-    >
-      <PageAvatar avatar={avatar} channel={channel} />
+  const channelLabel = t(defaultLabelKey)
+  const className = cn(
+    CHIP_CLASS,
+    isCurrent && "border-border bg-background shadow-xs",
+  )
+  const content = (
+    <>
+      <PageAvatar avatar={page?.avatar ?? null} channel={channel} />
       <span className="flex min-w-0 flex-col leading-tight">
         <span className="truncate text-[0.6875rem] text-muted-foreground">
-          {t(defaultLabelKey)}
+          {channelLabel}
         </span>
-        <span className="truncate font-medium text-xs">
+        <span className="truncate font-medium text-xs group-hover/page-link:underline">
           {contactInbox.inbox.name}
         </span>
       </span>
-    </span>
+    </>
   )
+  // The page opens on its network; a channel without a page URL stays plain.
+  if (page?.profileUrl && isWebUrl(page.profileUrl)) {
+    return (
+      <a
+        aria-label={t("composer.openProfile", {
+          name: contactInbox.inbox.name,
+          network: PROVIDER_LABELS[page.provider],
+        })}
+        className={cn(
+          className,
+          "group/page-link outline-none transition-colors hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring",
+        )}
+        href={page.profileUrl}
+        rel="noopener noreferrer"
+        target="_blank"
+      >
+        {content}
+      </a>
+    )
+  }
+  return <span className={className}>{content}</span>
 }
 
 function MorePages({
@@ -213,10 +244,7 @@ export function ConversationPageStrip({
   const avatarByInbox = useMemo(
     () =>
       new Map(
-        (avatars.data?.data ?? []).map((entry) => [
-          entry.inboxId,
-          entry.avatar,
-        ]),
+        (avatars.data?.data ?? []).map((entry) => [entry.inboxId, entry]),
       ),
     [avatars.data],
   )
@@ -251,9 +279,9 @@ export function ConversationPageStrip({
             key={page.id}
           >
             <PageChip
-              avatar={avatarByInbox.get(page.inboxId) ?? null}
               contactInbox={page}
               isCurrent={pages.length > 1 && index === 0}
+              page={avatarByInbox.get(page.inboxId)}
             />
           </span>
         ))}

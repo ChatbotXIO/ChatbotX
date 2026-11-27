@@ -5115,8 +5115,17 @@
       "allowEdit": "אפשר עריכה לאחר ההתקנה",
       "allowDelete": "אפשר מחיקה לאחר ההתקנה",
       "publisherName": "שם המפרסם",
-      "youtubeVideoId": "מזהה סרטון YouTube",
-      "youtubeVideoIdDescription": "המזהה בן 11 התווים מכתובת ה-URL של הסרטון, למשל \"xxxxxxxxxxx\" בכתובת youtube.com/watch?v=xxxxxxxxxxx",
+      "video": "סרטון שער",
+      "videoDescription": "הדביקו קישור לסרטון YouTube, Vimeo, Streamable או Cloudinary, או את קוד ההטמעה מאותה פלטפורמה. השאירו ריק אם אין סרטון.",
+      "videoEmpty": "הדביקו למטה קישור לסרטון כדי לצפות בתצוגה מקדימה כאן.",
+      "videoOrientationNote": "כיוון הסרטון (לרוחב או לאורך) מזוהה בעת השמירה.",
+      "videoPreviewTitle": "תצוגה מקדימה של הסרטון",
+      "videoErrors": {
+        "tooLong": "קישור הסרטון או קוד ההטמעה ארוך מדי",
+        "invalidUrl": "הזינו קישור https לסרטון או קוד הטמעה תקין",
+        "unsupportedProvider": "נתמכים רק סרטונים מ-YouTube, Vimeo, Streamable ו-Cloudinary",
+        "invalidVideoId": "הקישור אינו מכיל סרטון תקין"
+      },
       "testLink": "קישור בדיקה",
       "imageUrl": "תמונת שער",
       "installBehavior": "התנהגות ההתקנה",
@@ -12598,6 +12607,7 @@
   },
   "conversationParticipants": {
     "joined": "{names} השתתפו בשיחה",
+    "joinedShort": "{count, plural, one {{names} הצטרף} other {{names} הצטרפו}}",
     "replied": "{name} השיב {time}",
     "showMore": "הצג עוד",
     "label": "מי השיב בשיחה זו",

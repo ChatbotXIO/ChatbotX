@@ -61,6 +61,7 @@ export const templatePreviewsPublicRouter = {
           description: preview.template.description,
           imageUrl: preview.template.imageUrl,
           publisherName: preview.template.publisherName,
+          video: preview.template.video,
           youtubeVideoId: preview.template.youtubeVideoId,
           testLink: preview.template.testLink,
           categoryCounts: preview.template.categoryCounts,

@@ -14,12 +14,16 @@ import {
 } from "@chatbotx.io/ui/components/ui/card"
 import { Form } from "@chatbotx.io/ui/components/ui/form"
 import { getPublicFileUrl } from "@chatbotx.io/utils"
+import {
+  type EmbeddedVideo,
+  toEmbeddedVideoView,
+} from "@chatbotx.io/utils/embedded-video"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
 import { Loader2Icon } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
-import { useTransition } from "react"
+import { useMemo, useTransition } from "react"
 import { useWatch } from "react-hook-form"
 import { toast } from "sonner"
 import { useTenantSettings } from "@/features/tenant"
@@ -29,13 +33,16 @@ import type {
   CategorySelectionState,
   TemplateSelectionFormState,
 } from "../lib/selection"
-import { saveTemplateRequest } from "../schema/mutation"
+import { createTemplateFormSchema } from "../schema/form"
 import { TemplateContentsCard } from "./template-contents-card"
 import { TemplateCoverImageField } from "./template-cover-image-field"
+import { TemplateVideoField } from "./template-video-field"
 
 type TemplateFormProps = {
   workspaceId: string
   template?: TemplateDetail
+  /** The stored video (`resolveTemplateEmbeddedVideo(template)`), read on the server. */
+  savedVideo?: EmbeddedVideo | null
   selectableCategories: readonly TemplateCategory[]
   initialName?: string
 }
@@ -43,6 +50,7 @@ type TemplateFormProps = {
 export function TemplateForm({
   workspaceId,
   template,
+  savedVideo,
   selectableCategories,
   initialName,
 }: TemplateFormProps) {
@@ -50,13 +58,14 @@ export function TemplateForm({
   const router = useRouter()
   const isEdit = Boolean(template)
   const { storageUrl } = useTenantSettings()
+  const formSchema = useMemo(() => createTemplateFormSchema(t), [t])
   // A save ends before the page has moved on, and a second click in between
   // would create the template twice.
   const [isNavigating, startNavigation] = useTransition()
 
   const { form, handleSubmitWithAction } = useHookFormAction(
     saveTemplateAction.bind(null, workspaceId),
-    zodResolver(saveTemplateRequest),
+    zodResolver(formSchema),
     {
       actionProps: {
         onSuccess: ({ data }) => {
@@ -92,7 +101,9 @@ export function TemplateForm({
           description: template?.description ?? "",
           imageUrl: template?.imageUrl ?? "",
           publisherName: template?.publisherName ?? "",
-          youtubeVideoId: template?.youtubeVideoId ?? "",
+          video: {
+            source: savedVideo ? toEmbeddedVideoView(savedVideo).source : "",
+          },
           testLink: template?.testLink ?? "",
           selection: template?.selection ?? {},
           defaultPermissions: template?.defaultPermissions ?? {
@@ -136,31 +147,31 @@ export function TemplateForm({
               label={t("fields.description.label")}
               name="description"
             />
-            <div className="space-y-2">
-              <p className="font-medium text-sm">
-                {t("templates.form.imageUrl")}
-              </p>
-              <TemplateCoverImageField
-                onClear={() =>
-                  form.setValue("imageUrl", "", { shouldDirty: true })
-                }
-                onSelect={(path) =>
-                  form.setValue("imageUrl", path, { shouldDirty: true })
-                }
-                previewUrl={
-                  imageUrl ? getPublicFileUrl(imageUrl, storageUrl) : undefined
-                }
-                workspaceId={workspaceId}
-              />
+            <div className="grid gap-6 md:grid-cols-2">
+              <div className="space-y-2">
+                <p className="font-medium text-sm">
+                  {t("templates.form.imageUrl")}
+                </p>
+                <TemplateCoverImageField
+                  onClear={() =>
+                    form.setValue("imageUrl", "", { shouldDirty: true })
+                  }
+                  onSelect={(path) =>
+                    form.setValue("imageUrl", path, { shouldDirty: true })
+                  }
+                  previewUrl={
+                    imageUrl
+                      ? getPublicFileUrl(imageUrl, storageUrl)
+                      : undefined
+                  }
+                  workspaceId={workspaceId}
+                />
+              </div>
+              <TemplateVideoField savedVideo={savedVideo} />
             </div>
             <InputField
               label={t("templates.form.publisherName")}
               name="publisherName"
-            />
-            <InputField
-              description={t("templates.form.youtubeVideoIdDescription")}
-              label={t("templates.form.youtubeVideoId")}
-              name="youtubeVideoId"
             />
             <InputField label={t("templates.form.testLink")} name="testLink" />
           </CardContent>
