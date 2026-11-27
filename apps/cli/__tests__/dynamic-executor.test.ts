@@ -133,6 +133,16 @@ describe("executeDynamicCommand", () => {
       )
     })
 
+    test("an object-or-null property parses JSON and still takes null", async () => {
+      const property = { anyOf: [{ type: "object" }, { type: "null" }] }
+      expect(await sentBody(property, '{"source":"x"}')).toBe(
+        JSON.stringify({ currency: { source: "x" } }),
+      )
+      expect(await sentBody(property, "null")).toBe(
+        JSON.stringify({ currency: null }),
+      )
+    })
+
     test("any other value is still sent as text", async () => {
       expect(
         await sentBody(

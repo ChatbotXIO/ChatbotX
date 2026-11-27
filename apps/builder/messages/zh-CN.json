@@ -7541,8 +7541,15 @@
       "allowEdit": "允许安装后编辑",
       "allowDelete": "允许安装后删除",
       "publisherName": "发布者名称",
-      "youtubeVideoId": "YouTube 视频 ID",
-      "youtubeVideoIdDescription": "视频 URL 中的 11 位字符 ID，例如 youtube.com/watch?v=xxxxxxxxxxx 中的 \"xxxxxxxxxxx\"",
+      "video": "视频",
+      "videoDescription": "粘贴 YouTube、Vimeo、Streamable 或 Cloudinary 的视频链接，或该平台的嵌入代码。没有视频请留空。",
+      "videoPreviewTitle": "视频预览",
+      "videoErrors": {
+        "tooLong": "视频链接或嵌入代码过长",
+        "invalidUrl": "请输入有效的 https 视频链接或嵌入代码",
+        "unsupportedProvider": "仅支持 YouTube、Vimeo、Streamable 和 Cloudinary 视频",
+        "invalidVideoId": "该链接不包含有效的视频"
+      },
       "testLink": "测试链接",
       "imageUrl": "封面图片",
       "installBehavior": "安装行为",

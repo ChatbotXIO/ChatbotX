@@ -11,6 +11,7 @@ import {
   templateUninstallStates,
 } from "@chatbotx.io/database/partials"
 import { zodBigintAsString } from "@chatbotx.io/utils"
+import { embeddedVideoViewSchema } from "@chatbotx.io/utils/embedded-video"
 import { z } from "zod"
 import { saveTemplateRequest } from "./mutation"
 import {
@@ -39,7 +40,15 @@ export const publicTemplateResource = z.object({
   description: z.string().nullable(),
   imageUrl: z.string().nullable(),
   publisherName: z.string().nullable(),
-  youtubeVideoId: z.string().nullable(),
+  video: embeddedVideoViewSchema
+    .nullable()
+    .describe(
+      "The share page video, ready to play: `playback` is the exact iframe (or file) to embed. Echoing this object back as `video` on update keeps it.",
+    ),
+  youtubeVideoId: z
+    .string()
+    .nullable()
+    .describe("Deprecated: use `video`. Set only for a YouTube video."),
   testLink: z.string().nullable(),
   selection: templateSelectionSchema,
   defaultPermissions: templatePermissionsSchema,
@@ -99,8 +108,11 @@ export const createTemplatePublicRequest = z.object({
   publisherName: saved.publisherName.describe(
     "Publisher name shown on the share page.",
   ),
+  video: saved.video.describe(
+    'Video for the share page: `{ source }` where `source` is a link or embed code. YouTube: watch, youtu.be, shorts, live or embed link, or its <iframe> embed code. Vimeo: vimeo.com/{id}, vimeo.com/{id}/{hash} (unlisted), player.vimeo.com/video/{id}?h={hash}, or its <iframe>. Streamable: streamable.com/{id}, /e/{id} or /o/{id}, or its <iframe>. Cloudinary: a player.cloudinary.com/embed link (cloud_name and public_id) or its <iframe>, or a res.cloudinary.com/{cloud_name}/video/upload/[v{version}/]{public_id}.mp4 or .webm file URL (no transformations); a Cloudinary public_id is letters, digits, `_`, `.` and `-` in each `/`-separated segment (no empty, `.` or `..` segment; up to 255 characters, ASCII only). Omit to keep the current video; `null` or `{ "source": "" }` removes it. Takes precedence over the deprecated `youtubeVideoId`. An unsupported or unparsable source is refused with 422 `validation` (the message says why).',
+  ),
   youtubeVideoId: saved.youtubeVideoId.describe(
-    "11-character YouTube video id for the share page preview.",
+    "Deprecated, use `video`. 11-character YouTube video id; its value is not used when `video` is present (even `null`), but must still be a valid id or blank.",
   ),
   testLink: saved.testLink.describe(
     "URL where people can try the bot before installing.",
@@ -341,7 +353,13 @@ export const publicTemplatePreviewResponse = z.discriminatedUnion(
         description: z.string().nullable(),
         imageUrl: z.string().nullable(),
         publisherName: z.string().nullable(),
-        youtubeVideoId: z.string().nullable(),
+        video: embeddedVideoViewSchema
+          .nullable()
+          .describe("The share page video, ready to play."),
+        youtubeVideoId: z
+          .string()
+          .nullable()
+          .describe("Deprecated: use `video`. Set only for a YouTube video."),
         testLink: z.string().nullable(),
         categoryCounts,
       }),

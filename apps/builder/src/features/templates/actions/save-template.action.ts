@@ -22,6 +22,7 @@ export const saveTemplateAction = templateActionClient
         description: parsedInput.description,
         imageUrl: parsedInput.imageUrl,
         publisherName: parsedInput.publisherName,
+        video: parsedInput.video,
         youtubeVideoId: parsedInput.youtubeVideoId,
         testLink: parsedInput.testLink,
         selection: parsedInput.selection,

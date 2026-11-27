@@ -4,6 +4,7 @@ import {
   resolveTemplateShareUrl,
   type TemplateDetail,
   templateService,
+  toTemplateVideoProjection,
 } from "@chatbotx.io/business"
 import { templateUninstallService } from "@chatbotx.io/business/template-uninstall"
 import { z } from "zod"
@@ -55,10 +56,15 @@ type TemplateRow = Omit<
 /**
  * The public fields come from the schema itself, so a new template column is
  * added in the service type and the schema only; extra row fields (share
- * token, payload hash) are dropped by the parse.
+ * token, payload hash) are dropped by the parse. The video is the exception:
+ * it is projected from the row (reconciled `embeddedVideo` + legacy id, no
+ * network) the same way the share page and previews do.
  */
 const toPublicTemplateBase = (row: TemplateRow) =>
-  publicTemplateBaseResource.parse(row)
+  publicTemplateBaseResource.parse({
+    ...row,
+    ...toTemplateVideoProjection(row),
+  })
 
 const toPublicTemplate = (row: TemplateDetail) => ({
   ...toPublicTemplateBase(row),

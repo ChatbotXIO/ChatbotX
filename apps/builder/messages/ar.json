@@ -7138,8 +7138,15 @@
       "allowEdit": "السماح بالتعديل بعد التثبيت",
       "allowDelete": "السماح بالحذف بعد التثبيت",
       "publisherName": "اسم الناشر",
-      "youtubeVideoId": "معرّف فيديو يوتيوب",
-      "youtubeVideoIdDescription": "المعرّف المكوَّن من 11 حرفًا من رابط الفيديو، مثل \"xxxxxxxxxxx\" في youtube.com/watch?v=xxxxxxxxxxx",
+      "video": "الفيديو",
+      "videoDescription": "الصق رابط فيديو من YouTube أو Vimeo أو Streamable أو Cloudinary، أو رمز التضمين من تلك المنصة. اتركه فارغًا إن لم يكن هناك فيديو.",
+      "videoPreviewTitle": "معاينة الفيديو",
+      "videoErrors": {
+        "tooLong": "رابط الفيديو أو رمز التضمين طويل جدًا",
+        "invalidUrl": "أدخل رابط فيديو https صالحًا أو رمز تضمين صالحًا",
+        "unsupportedProvider": "يُدعم فقط فيديو YouTube وVimeo وStreamable وCloudinary",
+        "invalidVideoId": "لا يحتوي رابط الفيديو على فيديو صالح"
+      },
       "testLink": "رابط الاختبار",
       "imageUrl": "صورة الغلاف",
       "installBehavior": "سلوك التثبيت",

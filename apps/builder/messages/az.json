@@ -8412,8 +8412,15 @@
       "allowEdit": "Quraşdırıldıqdan sonra redaktəyə icazə ver",
       "allowDelete": "Quraşdırıldıqdan sonra silməyə icazə ver",
       "publisherName": "Dərc edənin adı",
-      "youtubeVideoId": "YouTube video ID-si",
-      "youtubeVideoIdDescription": "Videonun URL-indəki 11 simvolluq ID, məsələn, youtube.com/watch?v=xxxxxxxxxxx ünvanındakı \"xxxxxxxxxxx\"",
+      "video": "Video",
+      "videoDescription": "YouTube, Vimeo, Streamable və ya Cloudinary video linkini və ya həmin platformanın yerləşdirmə kodunu yapışdırın. Video yoxdursa, boş buraxın.",
+      "videoPreviewTitle": "Videoya önbaxış",
+      "videoErrors": {
+        "tooLong": "Video linki və ya yerləşdirmə kodu çox uzundur",
+        "invalidUrl": "Etibarlı https video linki və ya yerləşdirmə kodu daxil edin",
+        "unsupportedProvider": "Yalnız YouTube, Vimeo, Streamable və Cloudinary videoları dəstəklənir",
+        "invalidVideoId": "Video linkində etibarlı video yoxdur"
+      },
       "testLink": "Sınaq keçidi",
       "imageUrl": "Üz qabığı şəkli",
       "installBehavior": "Quraşdırma qaydası",

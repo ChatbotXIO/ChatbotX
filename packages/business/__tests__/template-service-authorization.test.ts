@@ -771,4 +771,39 @@ describe("templateService.markInstallationFailed", () => {
       errorCode: "workspaceOwnerBlocked",
     })
   })
+
+  test("the public projection carries the reconciled video and a derived youtubeVideoId", async () => {
+    const row = {
+      shareEnabled: true,
+      shareExpiresAt: null,
+      name: "Shop",
+      categoryCounts: {},
+      youtubeVideoId: null,
+    }
+    mocks.templateFindFirst.mockResolvedValue({
+      ...row,
+      embeddedVideo: {
+        provider: "vimeo",
+        videoId: "76979871",
+        aspectRatio: 1.5,
+      },
+    })
+    const vimeo = await templateService.findPublicByShareToken("tok")
+    expect(vimeo?.video).toMatchObject({ provider: "vimeo", aspectRatio: 1.5 })
+    expect(vimeo?.youtubeVideoId).toBeNull()
+
+    mocks.templateFindFirst.mockResolvedValue({
+      ...row,
+      embeddedVideo: null,
+      youtubeVideoId: "dQw4w9WgXcQ",
+    })
+    const legacy = await templateService.findPublicByShareToken("tok")
+    expect(legacy?.video).toMatchObject({ provider: "youtube" })
+    expect(legacy?.youtubeVideoId).toBe("dQw4w9WgXcQ")
+
+    mocks.templateFindFirst.mockResolvedValue({ ...row, embeddedVideo: null })
+    expect(
+      (await templateService.findPublicByShareToken("tok"))?.video,
+    ).toBeNull()
+  })
 })

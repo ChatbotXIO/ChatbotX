@@ -8412,8 +8412,15 @@
       "allowEdit": "Allow editing after install",
       "allowDelete": "Allow deleting after install",
       "publisherName": "Publisher name",
-      "youtubeVideoId": "YouTube video ID",
-      "youtubeVideoIdDescription": "The 11-character ID from the video's URL, e.g. the \"xxxxxxxxxxx\" in youtube.com/watch?v=xxxxxxxxxxx",
+      "video": "Video",
+      "videoDescription": "Paste a link to a YouTube, Vimeo, Streamable or Cloudinary video, or the embed code from that platform. Leave empty for no video.",
+      "videoPreviewTitle": "Video preview",
+      "videoErrors": {
+        "tooLong": "The video link or embed code is too long",
+        "invalidUrl": "Enter a valid https video link or embed code",
+        "unsupportedProvider": "Only YouTube, Vimeo, Streamable and Cloudinary videos are supported",
+        "invalidVideoId": "The video link does not contain a valid video"
+      },
       "testLink": "Test link",
       "imageUrl": "Cover image",
       "installBehavior": "Install behavior",

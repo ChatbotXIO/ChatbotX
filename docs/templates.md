@@ -26,6 +26,39 @@ resource, see `.agents/skills/template-integration/SKILL.md`.
 - A save that changes the content creates a new version. Comparison ignores JSON key order.
 - The Versions tab of the edit page lists each version's changes per category.
 
+### Video
+
+A template can carry one video, shown on the share page (`/t/template`), the install page and the home
+Templates tab in place of the cover image. Store cards stay image-only. Paste a link or the platform's
+embed code (the first `<iframe>`'s `src`, `width` and `height` are used; at most 4000 characters).
+
+| Provider | Accepted forms |
+|---|---|
+| YouTube | `watch?v=`, `youtu.be/`, `/shorts/`, `/embed/`, `/live/` (id of 11 characters). Playlists (`list=` only, `videoseries`) are rejected. Played from `youtube-nocookie.com` |
+| Vimeo | `vimeo.com/{id}`, `player.vimeo.com/video/{id}`. Unlisted videos need the hash: `vimeo.com/{id}/{hash}` or `?h={hash}` (lowercase hex). Only `h=` is kept from the link |
+| Streamable | `streamable.com/{id}` (also `/e/{id}`, `/o/{id}`); the `www.` host is not accepted. Played from `streamable.com/o/{id}` |
+| Cloudinary | The player embed code (`player.cloudinary.com/embed/?cloud_name=…&public_id=…`), or a plain file URL `res.cloudinary.com/{cloud}/video/upload/…/{public_id}.mp4` or `.webm`. No transformations in a file URL. The `public_id` is letters, digits, `_`, `.` and `-` in each `/`-separated segment (no empty, `.` or `..` segment; up to 255 characters, ASCII only); an optional `v{version}/` segment is allowed. Files play in a `<video>` |
+
+Anything else answers 422: code `validation` (the message says why), or `invalidRequestData` for a source over 4000 characters or a malformed `youtubeVideoId`; the form shows a translated message.
+
+- **Keep or clear:** on update, an omitted `video` keeps the stored one; `video: null` or
+  `video: { "source": "" }` (blank counts) clears it. Creating without a video never errors.
+- **Deprecated alias:** `youtubeVideoId` still works. `video` takes precedence whenever it is present (even
+  `null`); `youtubeVideoId` alone is converted to a YouTube video (still validated); neither present leaves
+  the video unchanged. The output keeps `youtubeVideoId` (the id for a YouTube video, otherwise `null`), so
+  an old client keeps working.
+- **Orientation** (`aspectRatio`) is detected at save time, in this order: the embed code's `width`/`height`;
+  a `/shorts/` link (9:16); the ratio already stored for the same video; one oEmbed call for Vimeo and
+  Streamable. Nothing found means 16:9. The oEmbed call happens only at save time, only when needed, with a
+  3 s timeout, and a failure never fails the save (it is retried on the next save that sends the video, e.g. a GET → PUT echo). YouTube is never sent to
+  oEmbed. A Cloudinary file is measured in the browser once its metadata loads.
+- **The video is metadata**, like the cover image: it is not part of the payload or hash, so changing it
+  creates no new version and queues no sync.
+- **Output:** `video: { source, provider, aspectRatio, playback }` where `playback` is
+  `{ kind: "iframe", src, allow }` or `{ kind: "file", src }`. Echoing a `GET` body back as a `PUT` is safe.
+- **Fallbacks:** a file that fails to load shows the cover image; an iframe whose video is unavailable shows
+  the provider's own message.
+
 ## Sharing
 
 - The share link is `/t/template?id=<templateId>&key=<shareToken>`, and the install page is
@@ -339,3 +372,10 @@ Each tenant (the platform's root, or one white-label) curates its own public sto
   interactive lane, which raises the queued job.
 - Same-tenant copies from before the publisher access default need their
   `publisherUninstallGrant` updated by hand; there is no migration for it.
+- The template video adds one nullable column (`Template.embeddedVideo`, migration
+  `20261127043058_template_embedded_video`: `ADD COLUMN` only, no backfill). Reads reconcile it with the
+  legacy `youtubeVideoId` column (the legacy column wins when an old pod changed it; an old row with only
+  `youtubeVideoId` reads as a YouTube video), and new code writes both. Apply the migration before the new
+  code. Accepted limitation during a rolling deploy: the same last-writer-wins as every template metadata field
+  (an old form opened earlier that saves after the video was changed can restore the old one), and a public
+  API client sending `video` to an old pod has it stripped.

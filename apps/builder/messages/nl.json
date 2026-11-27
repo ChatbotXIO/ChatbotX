@@ -7534,8 +7534,15 @@
       "allowEdit": "Bewerken na installatie toestaan",
       "allowDelete": "Verwijderen na installatie toestaan",
       "publisherName": "Naam uitgever",
-      "youtubeVideoId": "YouTube-video-ID",
-      "youtubeVideoIdDescription": "De 11-tekens-ID uit de video-URL, bijv. \"xxxxxxxxxxx\" in youtube.com/watch?v=xxxxxxxxxxx",
+      "video": "Video",
+      "videoDescription": "Plak een link naar een YouTube-, Vimeo-, Streamable- of Cloudinary-video, of de insluitcode van dat platform. Laat leeg als er geen video is.",
+      "videoPreviewTitle": "Videovoorbeeld",
+      "videoErrors": {
+        "tooLong": "De videolink of insluitcode is te lang",
+        "invalidUrl": "Voer een geldige https-videolink of insluitcode in",
+        "unsupportedProvider": "Alleen video's van YouTube, Vimeo, Streamable en Cloudinary worden ondersteund",
+        "invalidVideoId": "De videolink bevat geen geldige video"
+      },
       "testLink": "Testlink",
       "imageUrl": "Omslagafbeelding",
       "installBehavior": "Installatiegedrag",

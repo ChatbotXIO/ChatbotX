@@ -7534,8 +7534,15 @@
       "allowEdit": "Permitir edição após a instalação",
       "allowDelete": "Permitir exclusão após a instalação",
       "publisherName": "Nome do publicador",
-      "youtubeVideoId": "ID do vídeo do YouTube",
-      "youtubeVideoIdDescription": "O ID de 11 caracteres da URL do vídeo, ex.: \"xxxxxxxxxxx\" em youtube.com/watch?v=xxxxxxxxxxx",
+      "video": "Vídeo",
+      "videoDescription": "Cole o link de um vídeo do YouTube, Vimeo, Streamable ou Cloudinary, ou o código de incorporação dessa plataforma. Deixe vazio se não houver vídeo.",
+      "videoPreviewTitle": "Pré-visualização do vídeo",
+      "videoErrors": {
+        "tooLong": "O link ou o código de incorporação do vídeo é longo demais",
+        "invalidUrl": "Informe um link de vídeo https ou um código de incorporação válido",
+        "unsupportedProvider": "Somente vídeos do YouTube, Vimeo, Streamable e Cloudinary são aceitos",
+        "invalidVideoId": "O link não contém um vídeo válido"
+      },
       "testLink": "Link de teste",
       "imageUrl": "Imagem de capa",
       "installBehavior": "Comportamento de instalação",

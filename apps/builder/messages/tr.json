@@ -7534,8 +7534,15 @@
       "allowEdit": "Yüklemeden sonra düzenlemeye izin ver",
       "allowDelete": "Yüklemeden sonra silmeye izin ver",
       "publisherName": "Yayıncı adı",
-      "youtubeVideoId": "YouTube video kimliği",
-      "youtubeVideoIdDescription": "Video URL'sindeki 11 karakterli kimlik, ör. youtube.com/watch?v=xxxxxxxxxxx içindeki \"xxxxxxxxxxx\"",
+      "video": "Video",
+      "videoDescription": "Bir YouTube, Vimeo, Streamable veya Cloudinary video bağlantısını ya da o platformun gömme kodunu yapıştırın. Video yoksa boş bırakın.",
+      "videoPreviewTitle": "Video önizlemesi",
+      "videoErrors": {
+        "tooLong": "Video bağlantısı veya gömme kodu çok uzun",
+        "invalidUrl": "Geçerli bir https video bağlantısı veya gömme kodu girin",
+        "unsupportedProvider": "Yalnızca YouTube, Vimeo, Streamable ve Cloudinary videoları desteklenir",
+        "invalidVideoId": "Bağlantı geçerli bir video içermiyor"
+      },
       "testLink": "Test bağlantısı",
       "imageUrl": "Kapak görseli",
       "installBehavior": "Yükleme davranışı",

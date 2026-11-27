@@ -7541,8 +7541,15 @@
       "allowEdit": "Tillåt redigering efter installation",
       "allowDelete": "Tillåt borttagning efter installation",
       "publisherName": "Utgivarens namn",
-      "youtubeVideoId": "YouTube-video-id",
-      "youtubeVideoIdDescription": "Det 11-teckens id från videons URL, t.ex. \"xxxxxxxxxxx\" i youtube.com/watch?v=xxxxxxxxxxx",
+      "video": "Video",
+      "videoDescription": "Klistra in en länk till en YouTube-, Vimeo-, Streamable- eller Cloudinary-video, eller inbäddningskoden från den plattformen. Lämna tomt om det inte finns någon video.",
+      "videoPreviewTitle": "Förhandsgranskning av video",
+      "videoErrors": {
+        "tooLong": "Videolänken eller inbäddningskoden är för lång",
+        "invalidUrl": "Ange en giltig https-videolänk eller inbäddningskod",
+        "unsupportedProvider": "Endast videor från YouTube, Vimeo, Streamable och Cloudinary stöds",
+        "invalidVideoId": "Videolänken innehåller ingen giltig video"
+      },
       "testLink": "Testlänk",
       "imageUrl": "Omslagsbild",
       "installBehavior": "Installationsbeteende",

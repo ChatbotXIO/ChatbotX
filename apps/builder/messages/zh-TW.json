@@ -7580,8 +7580,15 @@
       "allowEdit": "允許安裝後編輯",
       "allowDelete": "允許安裝後刪除",
       "publisherName": "發布者名稱",
-      "youtubeVideoId": "YouTube 影片 ID",
-      "youtubeVideoIdDescription": "影片網址中的 11 位字元 ID，例如 youtube.com/watch?v=xxxxxxxxxxx 中的 \"xxxxxxxxxxx\"",
+      "video": "影片",
+      "videoDescription": "貼上 YouTube、Vimeo、Streamable 或 Cloudinary 的影片連結，或該平台的嵌入程式碼。沒有影片請留空。",
+      "videoPreviewTitle": "影片預覽",
+      "videoErrors": {
+        "tooLong": "影片連結或嵌入程式碼過長",
+        "invalidUrl": "請輸入有效的 https 影片連結或嵌入程式碼",
+        "unsupportedProvider": "僅支援 YouTube、Vimeo、Streamable 和 Cloudinary 影片",
+        "invalidVideoId": "此連結不包含有效的影片"
+      },
       "testLink": "測試連結",
       "imageUrl": "封面圖片",
       "installBehavior": "安裝行為",

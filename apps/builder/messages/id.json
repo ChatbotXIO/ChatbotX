@@ -7534,8 +7534,15 @@
       "allowEdit": "Izinkan pengeditan setelah instalasi",
       "allowDelete": "Izinkan penghapusan setelah instalasi",
       "publisherName": "Nama penerbit",
-      "youtubeVideoId": "ID video YouTube",
-      "youtubeVideoIdDescription": "ID 11 karakter dari URL video, misalnya \"xxxxxxxxxxx\" pada youtube.com/watch?v=xxxxxxxxxxx",
+      "video": "Video",
+      "videoDescription": "Tempel tautan video YouTube, Vimeo, Streamable, atau Cloudinary, atau kode sematan dari platform tersebut. Kosongkan jika tidak ada video.",
+      "videoPreviewTitle": "Pratinjau video",
+      "videoErrors": {
+        "tooLong": "Tautan atau kode sematan video terlalu panjang",
+        "invalidUrl": "Masukkan tautan video https atau kode sematan yang valid",
+        "unsupportedProvider": "Hanya video YouTube, Vimeo, Streamable, dan Cloudinary yang didukung",
+        "invalidVideoId": "Tautan tidak berisi video yang valid"
+      },
       "testLink": "Tautan uji",
       "imageUrl": "Gambar sampul",
       "installBehavior": "Perilaku instalasi",

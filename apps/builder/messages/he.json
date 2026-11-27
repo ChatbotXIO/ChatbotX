@@ -5115,8 +5115,15 @@
       "allowEdit": "אפשר עריכה לאחר ההתקנה",
       "allowDelete": "אפשר מחיקה לאחר ההתקנה",
       "publisherName": "שם המפרסם",
-      "youtubeVideoId": "מזהה סרטון YouTube",
-      "youtubeVideoIdDescription": "המזהה בן 11 התווים מכתובת ה-URL של הסרטון, למשל \"xxxxxxxxxxx\" בכתובת youtube.com/watch?v=xxxxxxxxxxx",
+      "video": "סרטון",
+      "videoDescription": "הדביקו קישור לסרטון YouTube, Vimeo, Streamable או Cloudinary, או את קוד ההטמעה מאותה פלטפורמה. השאירו ריק אם אין סרטון.",
+      "videoPreviewTitle": "תצוגה מקדימה של הסרטון",
+      "videoErrors": {
+        "tooLong": "קישור הסרטון או קוד ההטמעה ארוך מדי",
+        "invalidUrl": "הזינו קישור https לסרטון או קוד הטמעה תקין",
+        "unsupportedProvider": "נתמכים רק סרטונים מ-YouTube, Vimeo, Streamable ו-Cloudinary",
+        "invalidVideoId": "הקישור אינו מכיל סרטון תקין"
+      },
       "testLink": "קישור בדיקה",
       "imageUrl": "תמונת שער",
       "installBehavior": "התנהגות ההתקנה",

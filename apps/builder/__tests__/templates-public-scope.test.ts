@@ -26,15 +26,21 @@ const templateService = {
   softDelete: vi.fn(),
 }
 
-vi.mock("@chatbotx.io/business", () => ({
-  workspaceApiTokenService: { findWorkspaceByTokenHash },
-  isWorkspaceScheduledForDeletion,
-  userQuotaService: { getAccessState },
-  quotaEnforcementService: { isAtLimit },
-  templateService,
-  templateInstallationRequestService: {},
-  resolveTemplateShareUrl: vi.fn(),
-}))
+vi.mock("@chatbotx.io/business", async () => {
+  const video = await import(
+    "../../../packages/business/src/template/template-video"
+  )
+  return {
+    toTemplateVideoProjection: video.toTemplateVideoProjection,
+    workspaceApiTokenService: { findWorkspaceByTokenHash },
+    isWorkspaceScheduledForDeletion,
+    userQuotaService: { getAccessState },
+    quotaEnforcementService: { isAtLimit },
+    templateService,
+    templateInstallationRequestService: {},
+    resolveTemplateShareUrl: vi.fn(),
+  }
+})
 
 vi.mock("../src/features/templates/lib/request-install", () => ({
   requestTemplateInstall,
@@ -86,6 +92,7 @@ const savedTemplate = {
   imageUrl: null,
   publisherName: null,
   youtubeVideoId: null,
+  embeddedVideo: null,
   testLink: null,
   selection: {},
   defaultPermissions: { allowEdit: true, allowDelete: true },

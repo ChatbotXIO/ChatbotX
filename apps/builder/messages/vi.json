@@ -7768,8 +7768,15 @@
       "allowEdit": "Cho phép chỉnh sửa sau khi cài đặt",
       "allowDelete": "Cho phép xóa sau khi cài đặt",
       "publisherName": "Tên nhà xuất bản",
-      "youtubeVideoId": "ID video YouTube",
-      "youtubeVideoIdDescription": "ID gồm 11 ký tự lấy từ URL video, ví dụ \"xxxxxxxxxxx\" trong youtube.com/watch?v=xxxxxxxxxxx",
+      "video": "Video",
+      "videoDescription": "Dán liên kết video YouTube, Vimeo, Streamable hoặc Cloudinary, hoặc mã nhúng của nền tảng đó. Để trống nếu không có video.",
+      "videoPreviewTitle": "Xem trước video",
+      "videoErrors": {
+        "tooLong": "Liên kết hoặc mã nhúng video quá dài",
+        "invalidUrl": "Nhập liên kết video https hoặc mã nhúng hợp lệ",
+        "unsupportedProvider": "Chỉ hỗ trợ video YouTube, Vimeo, Streamable và Cloudinary",
+        "invalidVideoId": "Liên kết không chứa video hợp lệ"
+      },
       "testLink": "Liên kết thử nghiệm",
       "imageUrl": "Ảnh bìa",
       "installBehavior": "Hành vi khi cài đặt",

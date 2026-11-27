@@ -19,7 +19,7 @@ import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hoo
 import { Loader2Icon } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
-import { useTransition } from "react"
+import { useMemo, useTransition } from "react"
 import { useWatch } from "react-hook-form"
 import { toast } from "sonner"
 import { useTenantSettings } from "@/features/tenant"
@@ -29,13 +29,16 @@ import type {
   CategorySelectionState,
   TemplateSelectionFormState,
 } from "../lib/selection"
-import { saveTemplateRequest } from "../schema/mutation"
+import { createTemplateFormSchema } from "../schema/form"
 import { TemplateContentsCard } from "./template-contents-card"
 import { TemplateCoverImageField } from "./template-cover-image-field"
+import { TemplateVideoField } from "./template-video-field"
 
 type TemplateFormProps = {
   workspaceId: string
   template?: TemplateDetail
+  /** The saved video's link (`toTemplateVideoProjection(...).video?.source`), read on the server. */
+  initialVideoSource?: string
   selectableCategories: readonly TemplateCategory[]
   initialName?: string
 }
@@ -43,6 +46,7 @@ type TemplateFormProps = {
 export function TemplateForm({
   workspaceId,
   template,
+  initialVideoSource,
   selectableCategories,
   initialName,
 }: TemplateFormProps) {
@@ -50,13 +54,14 @@ export function TemplateForm({
   const router = useRouter()
   const isEdit = Boolean(template)
   const { storageUrl } = useTenantSettings()
+  const formSchema = useMemo(() => createTemplateFormSchema(t), [t])
   // A save ends before the page has moved on, and a second click in between
   // would create the template twice.
   const [isNavigating, startNavigation] = useTransition()
 
   const { form, handleSubmitWithAction } = useHookFormAction(
     saveTemplateAction.bind(null, workspaceId),
-    zodResolver(saveTemplateRequest),
+    zodResolver(formSchema),
     {
       actionProps: {
         onSuccess: ({ data }) => {
@@ -92,7 +97,7 @@ export function TemplateForm({
           description: template?.description ?? "",
           imageUrl: template?.imageUrl ?? "",
           publisherName: template?.publisherName ?? "",
-          youtubeVideoId: template?.youtubeVideoId ?? "",
+          video: { source: initialVideoSource ?? "" },
           testLink: template?.testLink ?? "",
           selection: template?.selection ?? {},
           defaultPermissions: template?.defaultPermissions ?? {
@@ -157,11 +162,7 @@ export function TemplateForm({
               label={t("templates.form.publisherName")}
               name="publisherName"
             />
-            <InputField
-              description={t("templates.form.youtubeVideoIdDescription")}
-              label={t("templates.form.youtubeVideoId")}
-              name="youtubeVideoId"
-            />
+            <TemplateVideoField />
             <InputField label={t("templates.form.testLink")} name="testLink" />
           </CardContent>
         </Card>
