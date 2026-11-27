@@ -55,6 +55,10 @@ export const resolveStoredStepContent = (
         text: step.text,
         contentAttributes: { viewCatalog: { footer: step.footer } },
       }
+    // The caption is stored as the message text, next to the media attachment.
+    case stepTypes.enum.sendImage:
+    case stepTypes.enum.sendVideo:
+      return { contentType: contentTypes.enum.text, text: step.caption || null }
     default:
       return { contentType: contentTypes.enum.text, text: null }
   }

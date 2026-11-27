@@ -3285,7 +3285,13 @@
     "dataWasSaved": "Dados guardados",
     "media": {
       "stepUnsupportedOnChannel": "Este canal não consegue enviar este tipo de multimédia — o passo é ignorado aí. Remova-o ou mude o nó para um canal compatível.",
-      "buttonsSkippedOnChannel": "Este canal não consegue enviar botões juntamente com uma mensagem multimédia — são ignorados aí. Coloque-os num passo de texto seguinte."
+      "buttonsSkippedOnChannel": "Este canal não consegue enviar botões juntamente com uma mensagem multimédia — são ignorados aí. Coloque-os num passo de texto seguinte.",
+      "captionLabel": "Legenda",
+      "captionPlaceholder": "Texto enviado com o multimédia (opcional)",
+      "sendAsVoiceNote": "Enviar como mensagem de voz",
+      "voiceNoteHint": "Reproduzida como mensagem de voz. OGG (Opus), MP3 ou M4A.",
+      "sendAsVideoNote": "Enviar como vídeo redondo",
+      "videoNoteHint": "Um vídeo quadrado de até 1 minuto. Não tem legenda."
     },
     "whatsappCallButton": {
       "editButtonTitle": "Editar botão",
@@ -4689,6 +4695,10 @@
     "unsupportedBlock": "Este canal não suporta este bloco.",
     "constraintExceeded": "O limite deste canal foi excedido.",
     "mediaButtonsUnsupported": "Este canal não consegue enviar botões juntamente com uma mensagem multimédia. Remova os botões ou mova-os para um passo de texto depois deste.",
+    "mediaCaptionUnsupported": "Este canal não consegue enviar legenda com multimédia. Remova a legenda ou coloque o texto num passo de texto separado.",
+    "mediaCaptionTooLong": "A legenda é demasiado longa para este canal. Encurte-a ou mova parte do texto para um passo de texto separado.",
+    "mediaNoteUnsupported": "Este canal não consegue enviar isto como mensagem de voz ou vídeo redondo. Desative o interruptor para enviar um ficheiro normal.",
+    "mediaNoteCaptionUnsupported": "Um vídeo redondo não pode ter legenda. Remova a legenda ou coloque o texto num passo de texto separado.",
     "voiceCall": "Chamada de voz",
     "voiceCallDuration": "Chamada de voz · {duration}",
     "missedVoiceCall": "Chamada de voz perdida",

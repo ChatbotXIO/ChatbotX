@@ -3,6 +3,7 @@ import { useParams } from "next/navigation"
 import { useFormContext } from "react-hook-form"
 import { MediaLibraryOrInsertLink } from "@/components/media-library-or-insert-link"
 import { ButtonGroupEditor } from "../button/editor"
+import { MediaNoteSwitch } from "../button/media-note-switch"
 import { MediaStepNotice } from "../button/media-step-notice"
 
 type SendAudioStepEditorProps = {
@@ -25,6 +26,7 @@ const SendAudioStepEditor = (props: SendAudioStepEditorProps) => {
           showVariablePicker
           uploadPath={`public/space/${params.workspaceId}/flows/${params.id}/steps/${stepId}`}
         />
+        <MediaNoteSwitch parentName={parentName} />
       </div>
       <div className="bg-slate-200 px-3 py-2">
         <ButtonGroupEditor

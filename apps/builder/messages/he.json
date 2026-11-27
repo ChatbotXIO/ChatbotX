@@ -866,7 +866,13 @@
     "dataWasSaved": "הנתונים נשמרו",
     "media": {
       "stepUnsupportedOnChannel": "ערוץ זה לא יכול לשלוח סוג מדיה זה — השלב ידולג שם. הסר אותו או העבר את הצומת לערוץ שתומך בכך.",
-      "buttonsSkippedOnChannel": "ערוץ זה לא יכול לשלוח כפתורים עם הודעת מדיה — הם ידולגו שם. הוסף אותם לשלב טקסט שלאחר מכן."
+      "buttonsSkippedOnChannel": "ערוץ זה לא יכול לשלוח כפתורים עם הודעת מדיה — הם ידולגו שם. הוסף אותם לשלב טקסט שלאחר מכן.",
+      "captionLabel": "כיתוב",
+      "captionPlaceholder": "טקסט שנשלח עם המדיה (אופציונלי)",
+      "sendAsVoiceNote": "שלח כהודעה קולית",
+      "voiceNoteHint": "מושמע כהודעה קולית. OGG (Opus), MP3 או M4A.",
+      "sendAsVideoNote": "שלח כסרטון עגול",
+      "videoNoteHint": "סרטון ריבועי של עד דקה אחת. אין לו כיתוב."
     },
     "whatsappCallButton": {
       "editButtonTitle": "עריכת כפתור",
@@ -2270,6 +2276,10 @@
     "unsupportedBlock": "הערוץ הזה אינו תומך בבלוק הזה.",
     "constraintExceeded": "חרגת ממגבלת הערוץ.",
     "mediaButtonsUnsupported": "ערוץ זה לא יכול לשלוח כפתורים עם הודעת מדיה. הסר את הכפתורים או העבר אותם לשלב טקסט שלאחר שלב זה.",
+    "mediaCaptionUnsupported": "ערוץ זה לא יכול לשלוח כיתוב עם מדיה. הסר את הכיתוב או העבר את הטקסט לשלב טקסט נפרד.",
+    "mediaCaptionTooLong": "הכיתוב ארוך מדי עבור ערוץ זה. קצר אותו או העבר חלק מהטקסט לשלב טקסט נפרד.",
+    "mediaNoteUnsupported": "ערוץ זה לא יכול לשלוח זאת כהודעה קולית או כסרטון עגול. כבה את המתג כדי לשלוח קובץ רגיל.",
+    "mediaNoteCaptionUnsupported": "לסרטון עגול לא יכול להיות כיתוב. הסר את הכיתוב או העבר את הטקסט לשלב טקסט נפרד.",
     "voiceCall": "שיחה קולית",
     "voiceCallDuration": "שיחה קולית · {duration}",
     "missedVoiceCall": "שיחה קולית שלא נענתה",

@@ -1938,6 +1938,10 @@
     "unsupportedBlock": "此管道不支援此區塊。",
     "constraintExceeded": "已超出此管道的限制。",
     "mediaButtonsUnsupported": "此管道無法隨媒體訊息傳送按鈕。請刪除按鈕，或移到此步驟之後的文字步驟中。",
+    "mediaCaptionUnsupported": "此頻道無法隨媒體傳送說明文字。請刪除說明文字，或將文字放到單獨的文字步驟中。",
+    "mediaCaptionTooLong": "說明文字對此頻道而言過長。請縮短，或將部分文字移到單獨的文字步驟中。",
+    "mediaNoteUnsupported": "此頻道無法將其作為語音訊息或圓形影片傳送。關閉開關即可作為一般檔案傳送。",
+    "mediaNoteCaptionUnsupported": "圓形影片不能含有說明文字。請刪除說明文字，或將文字放到單獨的文字步驟中。",
     "voiceCall": "語音通話",
     "voiceCallDuration": "語音通話 · {duration}",
     "missedVoiceCall": "未接語音通話",
@@ -3725,7 +3729,13 @@
     "dataWasSaved": "資料已儲存",
     "media": {
       "stepUnsupportedOnChannel": "此管道無法傳送該類型的媒體，此步驟會被略過。請刪除該步驟，或將節點切換到支援的管道。",
-      "buttonsSkippedOnChannel": "此管道無法隨媒體訊息傳送按鈕，按鈕會被略過。請改放在後面的文字步驟中。"
+      "buttonsSkippedOnChannel": "此管道無法隨媒體訊息傳送按鈕，按鈕會被略過。請改放在後面的文字步驟中。",
+      "captionLabel": "說明文字",
+      "captionPlaceholder": "隨媒體一起傳送的文字（選填）",
+      "sendAsVoiceNote": "以語音訊息傳送",
+      "voiceNoteHint": "以語音訊息播放。支援 OGG (Opus)、MP3 或 M4A。",
+      "sendAsVideoNote": "以圓形影片傳送",
+      "videoNoteHint": "最長 1 分鐘的方形影片，不含說明文字。"
     },
     "whatsappCallButton": {
       "editButtonTitle": "編輯按鈕",

@@ -263,6 +263,7 @@ const getFlowSpecCapabilities = (
       policyVersion: CHANNEL_POLICY_VERSION,
       unsupportedSteps,
       noButtonSteps,
+      mediaNotes: [...policy.mediaNotes],
       nativeButtonTypes: [...policy.nativeButtonTypes],
       buttonStyles: policy.buttonStyles
         ? {

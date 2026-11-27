@@ -63,7 +63,7 @@ only place button limits live. `limits.buttonCount` caps a text or media step,
 `limits.cardButtonCount` caps a `sendCard` step and each card of a `sendCarousel`;
 `getButtonCountLimit(policy, "step" | "card")` is the one reader (publish, builder
 editors, the worker). Agents read both in `capabilities.get` →
-`selectedChannelPolicy.limits` (policy version 4).
+`selectedChannelPolicy.limits` (policy version 6).
 
 | Channel | Step buttons | Card buttons |
 |---|---|---|
@@ -93,6 +93,20 @@ default for an unset style is `link`. The builder shows the style picker in the
 button dialog only on such a channel (never on quick replies). Everywhere else a
 stored style is ignored and never blocks publish. In a flow spec, set `style` on a
 `send` button.
+
+## Media captions
+
+`sendImage` and `sendVideo` take an optional `caption`, sent with the media as one
+message. Only channels declaring `limits.mediaCaption` send it (today Telegram,
+1,024 characters); elsewhere publish fails with `mediaCaptionUnsupported`. The
+worker stores the caption as the outgoing message's text.
+
+## Media notes
+
+`sendAudio` and `sendVideo` take an optional `asNote`: a voice message or a round
+video (no caption). Only channels listing the step in their policy's `mediaNotes`
+send it (today Telegram); elsewhere publish fails with `mediaNoteUnsupported`.
+Telegram takes a round video only as an upload, so the sender fetches the file first.
 
 ## Call Phone Number buttons
 

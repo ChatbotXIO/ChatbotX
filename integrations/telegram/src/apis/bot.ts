@@ -12,7 +12,9 @@ import type {
   TelegramSendMediaGroupRequest,
   TelegramSendMessageRequest,
   TelegramSendPhotoRequest,
+  TelegramSendVideoNoteRequest,
   TelegramSendVideoRequest,
+  TelegramSendVoiceRequest,
 } from "../schema"
 
 export const sendTelegramMessage = (
@@ -84,6 +86,58 @@ export const sendTelegramVideo = (
     const response = await client.post<
       TelegramApiResponse<{ message_id: number }>
     >("sendVideo", { json: payload })
+    return response.result.message_id
+  })
+
+export const sendTelegramVoice = (
+  auth: TelegramAuthValue,
+  payload: TelegramSendVoiceRequest,
+): Promise<number> =>
+  rescue("sendVoice", async () => {
+    const client = createTelegramClient(auth.secretText)
+    const response = await client.post<
+      TelegramApiResponse<{ message_id: number }>
+    >("sendVoice", { json: payload })
+    return response.result.message_id
+  })
+
+/** Telegram's cap on a file a bot uploads. */
+const MAX_UPLOAD_BYTES = 50 * 1024 * 1024
+
+/**
+ * A round video cannot be sent by URL, so the file is fetched and uploaded
+ * (as TikTok and Zalo do for their media uploads).
+ */
+export const sendTelegramVideoNote = (
+  auth: TelegramAuthValue,
+  payload: TelegramSendVideoNoteRequest,
+): Promise<number> =>
+  rescue("sendVideoNote", async () => {
+    const fileResponse = await fetch(payload.video_note)
+    if (!fileResponse.ok) {
+      throw new Error(`Failed to fetch video note: ${payload.video_note}`)
+    }
+    const tooLarge = () =>
+      new Error("Video note is larger than Telegram's 50 MB upload cap")
+    if (Number(fileResponse.headers.get("content-length")) > MAX_UPLOAD_BYTES) {
+      throw tooLarge()
+    }
+    const file = await fileResponse.blob()
+    if (file.size > MAX_UPLOAD_BYTES) {
+      throw tooLarge()
+    }
+
+    const form = new FormData()
+    form.append("chat_id", String(payload.chat_id))
+    form.append("video_note", file, "video-note.mp4")
+    if (payload.reply_markup) {
+      form.append("reply_markup", JSON.stringify(payload.reply_markup))
+    }
+
+    const client = createTelegramClient(auth.secretText)
+    const response = await client.postFormData<
+      TelegramApiResponse<{ message_id: number }>
+    >("sendVideoNote", form)
     return response.result.message_id
   })
 

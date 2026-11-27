@@ -1,4 +1,5 @@
 import {
+  resolveMediaCaptionLimit,
   type SendAudioStepSchema,
   type SendCarouselStepSchema,
   type SendFileStepSchema,
@@ -15,6 +16,7 @@ import {
   type MessageHandlers,
   type SendFlowStepProps,
 } from "@chatbotx.io/sdk"
+import { channelTypes } from "@chatbotx.io/utils/channel"
 import {
   sendTelegramAudio,
   sendTelegramDocument,
@@ -22,6 +24,8 @@ import {
   sendTelegramMessage,
   sendTelegramPhoto,
   sendTelegramVideo,
+  sendTelegramVideoNote,
+  sendTelegramVoice,
 } from "../../../apis/bot"
 import { MAX_INLINE_BUTTONS_PER_ROW } from "../../../constants"
 import { mapToChannelError } from "../../../lib/error-mapper"
@@ -41,6 +45,9 @@ import {
 import { convertFlowStepCarousel } from "./send-carousel"
 import { convertFlowStepQuickReply } from "./send-quick-reply"
 import { convertFlowStepText } from "./send-text"
+
+const TELEGRAM_CAPTION_MAX =
+  resolveMediaCaptionLimit(channelTypes.enum.telegram) ?? 0
 
 export const handledFlowStepTypes = [
   stepTypes.enum.sendText,
@@ -65,20 +72,13 @@ export const sendMessage: MessageHandlers<TelegramAuthValue>["sendMessage"] =
 
     try {
       if (message.contentType === contentTypes.enum.text) {
-        if (message.text) {
-          const messageId = await sendTelegramMessage(ctx.auth, {
-            chat_id: contact.sourceId,
-            text: message.text,
-            reply_markup:
-              quickReplies && quickReplies.length > 0
-                ? buildInlineKeyboardFromButtons(
-                    quickReplies.map(buildCanonicalInlineButton),
-                    MAX_INLINE_BUTTONS_PER_ROW,
-                  )
-                : undefined,
-          })
-          messageIds.push(String(messageId))
-        }
+        const keyboard =
+          quickReplies && quickReplies.length > 0
+            ? buildInlineKeyboardFromButtons(
+                quickReplies.map(buildCanonicalInlineButton),
+                MAX_INLINE_BUTTONS_PER_ROW,
+              )
+            : undefined
 
         // Multiple images in one outgoing message batch into a single
         // sendMediaGroup call (same mechanism the sendMultipleImages flow
@@ -91,6 +91,24 @@ export const sendMessage: MessageHandlers<TelegramAuthValue>["sendMessage"] =
         const otherAttachments = attachments.filter(
           (attachment) => attachment.fileType !== "image",
         )
+
+        // One image with text that fits a caption goes out as one captioned
+        // photo. UTF-16 length, as Telegram counts it.
+        const caption =
+          imageAttachments.length === 1 &&
+          message.text &&
+          message.text.length <= TELEGRAM_CAPTION_MAX
+            ? message.text
+            : undefined
+
+        if (message.text && !caption) {
+          const messageId = await sendTelegramMessage(ctx.auth, {
+            chat_id: contact.sourceId,
+            text: message.text,
+            reply_markup: keyboard,
+          })
+          messageIds.push(String(messageId))
+        }
 
         if (imageAttachments.length > 1) {
           const ids = await sendTelegramMediaGroup(ctx.auth, {
@@ -105,6 +123,8 @@ export const sendMessage: MessageHandlers<TelegramAuthValue>["sendMessage"] =
           const messageId = await sendTelegramPhoto(ctx.auth, {
             chat_id: contact.sourceId,
             photo: imageAttachments[0].url as string,
+            caption,
+            reply_markup: caption ? keyboard : undefined,
           })
           messageIds.push(String(messageId))
         }
@@ -217,7 +237,10 @@ export const sendFlowStep: MessageHandlers<TelegramAuthValue>["sendFlowStep"] =
               >["sendFlowStep"]
             >[0],
           )) {
-            const messageId = await sendTelegramVideo(ctx.auth, payload)
+            const messageId =
+              "video_note" in payload
+                ? await sendTelegramVideoNote(ctx.auth, payload)
+                : await sendTelegramVideo(ctx.auth, payload)
             messageIds.push(String(messageId))
           }
           break
@@ -231,7 +254,10 @@ export const sendFlowStep: MessageHandlers<TelegramAuthValue>["sendFlowStep"] =
               >["sendFlowStep"]
             >[0],
           )) {
-            const messageId = await sendTelegramAudio(ctx.auth, payload)
+            const messageId =
+              "voice" in payload
+                ? await sendTelegramVoice(ctx.auth, payload)
+                : await sendTelegramAudio(ctx.auth, payload)
             messageIds.push(String(messageId))
           }
           break

@@ -2,7 +2,7 @@
 
 import type { SendAudioStepSchema } from "@chatbotx.io/flow-config"
 import { Card, CardContent } from "@chatbotx.io/ui/components/ui/card"
-import { Volume2Icon } from "lucide-react"
+import { MicIcon, Volume2Icon } from "lucide-react"
 import { ButtonGroupViewer } from "../button/viewer"
 
 type SendAudioStepViewerProps = {
@@ -17,7 +17,7 @@ const SendAudioStepViewer = (props: SendAudioStepViewerProps) => {
       <CardContent className="p-0">
         {data.url && (
           <div className="flex items-center justify-start gap-2 px-4 py-2">
-            <Volume2Icon size={24} />
+            {data.asNote ? <MicIcon size={24} /> : <Volume2Icon size={24} />}
             <span className="flex-1 truncate">{data.url}</span>
           </div>
         )}

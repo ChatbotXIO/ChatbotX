@@ -184,8 +184,8 @@ describe("LINE flow policy", () => {
     })
   })
 
-  test("pins the policy version clients cache (bumped for card limits and styles)", () => {
-    expect(CHANNEL_POLICY_VERSION).toBe(4)
+  test("pins the policy version clients cache (bumped for card limits and styles, media captions, media notes)", () => {
+    expect(CHANNEL_POLICY_VERSION).toBe(6)
   })
 
   test("rejects sendText over 5000 characters", () => {

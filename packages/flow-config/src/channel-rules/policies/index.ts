@@ -55,6 +55,8 @@ export {
   type ChannelFlowPolicy,
   channelDeliverableStepTypes,
   getButtonCountLimit,
+  type MediaNoteStepType,
+  mediaNoteStepTypes,
   type StepSupport,
   stepSupport,
 } from "./define"

@@ -149,15 +149,17 @@ describe("media step validators block publish per channel", () => {
   })
 
   test("a channel with nothing to say gets no override at all", () => {
-    // Telegram sends every media step in full, buttons included.
-    for (const validator of [
-      sendImageValidator,
-      sendVideoValidator,
-      sendAudioValidator,
-      sendFileValidator,
-      sendGifValidator,
-    ]) {
+    // Telegram sends every media step in full, buttons included. Image, video
+    // and audio are refined on every channel for their caption or note.
+    for (const validator of [sendFileValidator, sendGifValidator]) {
       expect(validator.telegram).toBeUndefined()
+    }
+    for (const [validator, stepType] of [
+      [sendImageValidator, "sendImage"],
+      [sendVideoValidator, "sendVideo"],
+      [sendAudioValidator, "sendAudio"],
+    ] as const) {
+      expect(validator.telegram?.safeParse(step(stepType)).success).toBe(true)
     }
   })
 

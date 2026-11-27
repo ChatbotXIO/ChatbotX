@@ -1,6 +1,7 @@
 import {
   buttonStyles,
   buttonTypes,
+  mediaNoteStepTypes,
   productMessageConditions,
   sendProductsDisplays,
   waTemplateParamsSchema,
@@ -35,6 +36,11 @@ const capabilitiesChannelPolicySchema = z.object({
   policyVersion: z.number(),
   unsupportedSteps: z.array(z.string()),
   noButtonSteps: z.array(z.string()),
+  mediaNotes: z
+    .array(z.enum(mediaNoteStepTypes))
+    .describe(
+      "Media steps this channel can send as a note with `asNote: true`: `sendAudio` as a voice message, `sendVideo` as a round video. Leave `asNote` unset on any other step.",
+    ),
   nativeButtonTypes: z
     .array(buttonTypes)
     .describe(
@@ -67,6 +73,12 @@ const capabilitiesChannelPolicySchema = z.object({
     buttonLabel: z.number(),
     cardTitle: z.number().optional(),
     text: z.number(),
+    mediaCaption: z
+      .number()
+      .optional()
+      .describe(
+        "Longest `caption` on a `sendImage` or `sendVideo` step. Absent when the channel sends no caption: leave `caption` unset there.",
+      ),
     viewCatalog: z.object({ footer: z.number(), text: z.number() }).optional(),
   }),
   productMessages: z

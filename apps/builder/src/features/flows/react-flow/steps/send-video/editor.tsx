@@ -3,6 +3,8 @@ import { useParams } from "next/navigation"
 import { useFormContext } from "react-hook-form"
 import { MediaLibraryOrInsertLink } from "@/components/media-library-or-insert-link"
 import { ButtonGroupEditor } from "../button/editor"
+import { MediaCaptionField } from "../button/media-caption-field"
+import { MediaNoteSwitch } from "../button/media-note-switch"
 import { MediaStepNotice } from "../button/media-step-notice"
 
 type SendVideoStepEditorProps = {
@@ -25,6 +27,8 @@ const SendVideoStepEditor = (props: SendVideoStepEditorProps) => {
           showVariablePicker
           uploadPath={`public/space/${params.workspaceId}/flows/${params.id}/steps/${stepId}`}
         />
+        <MediaNoteSwitch parentName={parentName} />
+        <MediaCaptionField parentName={parentName} />
       </div>
       <div className="bg-slate-200 px-3 py-2">
         <ButtonGroupEditor

@@ -72,7 +72,7 @@ describe("getCapabilities", () => {
     })
 
     expect(result.flowSpec?.selectedChannelPolicy).toMatchObject({
-      policyVersion: 4,
+      policyVersion: 6,
       nativeButtonTypes,
       limits: { buttonCount },
     })
@@ -82,6 +82,18 @@ describe("getCapabilities", () => {
     expect(result.flowSpec?.selectedChannelPolicy?.noButtonSteps).toEqual(
       expect.arrayContaining(noButtonSteps),
     )
+  })
+
+  test("exposes Telegram's media notes and caption limit", async () => {
+    const telegram = await getCapabilities({
+      channel: "telegram",
+      include: ["flowSpec"],
+      workspaceId: "ws-1",
+    })
+    const policy =
+      capabilitiesResponseSchema.parse(telegram).flowSpec?.selectedChannelPolicy
+    expect(policy?.mediaNotes).toEqual(["sendAudio", "sendVideo"])
+    expect(policy?.limits.mediaCaption).toBe(1024)
   })
 
   test("exposes LINE's button styles and 5-button step and card limits", async () => {
