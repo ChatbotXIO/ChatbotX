@@ -39,6 +39,15 @@ describe("resolveStoredStepContent", () => {
     ).toEqual({ contentType: "text", text: null })
   })
 
+  test.each([
+    "sendImage",
+    "sendVideo",
+  ])("stores a %s step's caption as its text", (stepType) => {
+    expect(
+      resolveStoredStepContent(step({ stepType, url: "x", caption: "Hi" })),
+    ).toEqual({ contentType: "text", text: "Hi" })
+  })
+
   test("stores a location with a name: address label and string coordinates", () => {
     expect(
       resolveStoredStepContent(

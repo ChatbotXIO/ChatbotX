@@ -67,6 +67,12 @@ const capabilitiesChannelPolicySchema = z.object({
     buttonLabel: z.number(),
     cardTitle: z.number().optional(),
     text: z.number(),
+    mediaCaption: z
+      .number()
+      .optional()
+      .describe(
+        "Longest `caption` on a `sendImage` or `sendVideo` step. Absent when the channel sends no caption: leave `caption` unset there.",
+      ),
     viewCatalog: z.object({ footer: z.number(), text: z.number() }).optional(),
   }),
   productMessages: z

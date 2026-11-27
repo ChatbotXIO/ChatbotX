@@ -4472,7 +4472,9 @@
     "dataWasSaved": "数据已保存",
     "media": {
       "stepUnsupportedOnChannel": "此渠道无法发送该类型的媒体，此步骤会被跳过。请删除该步骤，或将节点切换到支持的渠道。",
-      "buttonsSkippedOnChannel": "此渠道无法随媒体消息发送按钮，按钮会被跳过。请改为放在后面的文本步骤中。"
+      "buttonsSkippedOnChannel": "此渠道无法随媒体消息发送按钮，按钮会被跳过。请改为放在后面的文本步骤中。",
+      "captionLabel": "说明文字",
+      "captionPlaceholder": "随媒体一起发送的文字（可选）"
     },
     "whatsappCallButton": {
       "editButtonTitle": "编辑按钮",
@@ -5857,6 +5859,8 @@
     "unsupportedBlock": "此渠道不支持此模块。",
     "constraintExceeded": "已超出此渠道的限制。",
     "mediaButtonsUnsupported": "此渠道无法随媒体消息发送按钮。请删除按钮，或将其移到此步骤之后的文本步骤中。",
+    "mediaCaptionUnsupported": "此渠道无法随媒体发送说明文字。请删除说明文字，或将文字放到单独的文本步骤中。",
+    "mediaCaptionTooLong": "说明文字对此渠道来说过长。请缩短，或将部分文字移到单独的文本步骤中。",
     "voiceCall": "语音通话",
     "voiceCallDuration": "语音通话 · {duration}",
     "missedVoiceCall": "未接语音通话",

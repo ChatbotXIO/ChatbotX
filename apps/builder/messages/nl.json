@@ -3285,7 +3285,9 @@
     "dataWasSaved": "Gegevens zijn opgeslagen",
     "media": {
       "stepUnsupportedOnChannel": "Dit kanaal kan dit mediatype niet verzenden — de stap wordt daar overgeslagen. Verwijder de stap of zet de node op een kanaal dat het ondersteunt.",
-      "buttonsSkippedOnChannel": "Dit kanaal kan geen knoppen bij een mediabericht verzenden — daar worden ze overgeslagen. Zet ze in plaats daarvan in een volgende tekststap."
+      "buttonsSkippedOnChannel": "Dit kanaal kan geen knoppen bij een mediabericht verzenden — daar worden ze overgeslagen. Zet ze in plaats daarvan in een volgende tekststap.",
+      "captionLabel": "Bijschrift",
+      "captionPlaceholder": "Tekst die met de media wordt verzonden (optioneel)"
     },
     "whatsappCallButton": {
       "editButtonTitle": "Knop bewerken",
@@ -4689,6 +4691,8 @@
     "unsupportedBlock": "Dit kanaal ondersteunt dit blok niet.",
     "constraintExceeded": "De limiet van dit kanaal is overschreden.",
     "mediaButtonsUnsupported": "Dit kanaal kan geen knoppen bij een mediabericht verzenden. Verwijder de knoppen of verplaats ze naar een tekststap hierna.",
+    "mediaCaptionUnsupported": "Dit kanaal kan geen bijschrift bij media verzenden. Verwijder het bijschrift of zet de tekst in een aparte tekststap.",
+    "mediaCaptionTooLong": "Het bijschrift is te lang voor dit kanaal. Maak het korter of verplaats een deel van de tekst naar een aparte tekststap.",
     "voiceCall": "Spraakoproep",
     "voiceCallDuration": "Spraakoproep · {duration}",
     "missedVoiceCall": "Gemiste spraakoproep",

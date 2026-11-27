@@ -3,7 +3,7 @@ import type { ButtonStyle, ButtonType } from "../../steps/button"
 import { type StepType, stepTypes } from "../../steps/step-action"
 import type { ProductMessageCapability } from "../product-message-rules"
 
-export const CHANNEL_POLICY_VERSION = 4
+export const CHANNEL_POLICY_VERSION = 5
 
 export const stepSupport = {
   full: "full",
@@ -199,6 +199,12 @@ export type ChannelFlowPolicy = {
     buttonLabel: number
     cardTitle?: number
     text: number
+    /**
+     * Declared only by channels that send a caption with an image or video
+     * (`caption` on `sendImage` / `sendVideo`); a channel without it rejects a
+     * caption at publish and the builder hides the field.
+     */
+    mediaCaption?: number
     /** Declared only by channels that can deliver `sendViewCatalog`. */
     viewCatalog?: { footer: number; text: number }
   }

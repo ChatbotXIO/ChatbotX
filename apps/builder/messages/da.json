@@ -3285,7 +3285,9 @@
     "dataWasSaved": "Data blev gemt",
     "media": {
       "stepUnsupportedOnChannel": "Denne kanal kan ikke sende denne medietype – trinnet springes over der. Fjern det, eller skift noden til en kanal der understøtter det.",
-      "buttonsSkippedOnChannel": "Denne kanal kan ikke sende knapper sammen med en mediebesked – de springes over der. Læg dem i stedet på et efterfølgende teksttrin."
+      "buttonsSkippedOnChannel": "Denne kanal kan ikke sende knapper sammen med en mediebesked – de springes over der. Læg dem i stedet på et efterfølgende teksttrin.",
+      "captionLabel": "Billedtekst",
+      "captionPlaceholder": "Tekst, der sendes med mediet (valgfrit)"
     },
     "whatsappCallButton": {
       "editButtonTitle": "Rediger Knap",
@@ -4689,6 +4691,8 @@
     "unsupportedBlock": "Denne kanal understøtter ikke denne blok.",
     "constraintExceeded": "Denne kanals grænse er overskredet.",
     "mediaButtonsUnsupported": "Denne kanal kan ikke sende knapper sammen med en mediebesked. Fjern knapperne, eller flyt dem til et teksttrin efter dette.",
+    "mediaCaptionUnsupported": "Denne kanal kan ikke sende en billedtekst med medier. Fjern billedteksten, eller læg teksten i et separat teksttrin.",
+    "mediaCaptionTooLong": "Billedteksten er for lang til denne kanal. Forkort den, eller flyt en del af teksten til et separat teksttrin.",
     "voiceCall": "Taleopkald",
     "voiceCallDuration": "Taleopkald · {duration}",
     "missedVoiceCall": "Ubesvaret taleopkald",

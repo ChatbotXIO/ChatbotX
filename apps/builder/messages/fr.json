@@ -3285,7 +3285,9 @@
     "dataWasSaved": "Les données ont été enregistrées",
     "media": {
       "stepUnsupportedOnChannel": "Ce canal ne peut pas envoyer ce type de média : l'étape y est ignorée. Supprimez-la ou basculez le nœud vers un canal qui le prend en charge.",
-      "buttonsSkippedOnChannel": "Ce canal ne peut pas envoyer de boutons avec un message média : ils y sont ignorés. Placez-les plutôt dans une étape de texte suivante."
+      "buttonsSkippedOnChannel": "Ce canal ne peut pas envoyer de boutons avec un message média : ils y sont ignorés. Placez-les plutôt dans une étape de texte suivante.",
+      "captionLabel": "Légende",
+      "captionPlaceholder": "Texte envoyé avec le média (facultatif)"
     },
     "whatsappCallButton": {
       "editButtonTitle": "Modifier le bouton",
@@ -4689,6 +4691,8 @@
     "unsupportedBlock": "Ce canal ne prend pas en charge ce bloc.",
     "constraintExceeded": "La limite de ce canal a été dépassée.",
     "mediaButtonsUnsupported": "Ce canal ne peut pas envoyer de boutons avec un message média. Supprimez les boutons ou déplacez-les vers une étape de texte suivante.",
+    "mediaCaptionUnsupported": "Ce canal ne peut pas envoyer de légende avec un média. Supprimez la légende ou placez le texte dans une étape de texte séparée.",
+    "mediaCaptionTooLong": "La légende est trop longue pour ce canal. Raccourcissez-la ou déplacez une partie du texte dans une étape de texte séparée.",
     "voiceCall": "Appel vocal",
     "voiceCallDuration": "Appel vocal · {duration}",
     "missedVoiceCall": "Appel vocal manqué",

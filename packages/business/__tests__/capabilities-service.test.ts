@@ -72,7 +72,7 @@ describe("getCapabilities", () => {
     })
 
     expect(result.flowSpec?.selectedChannelPolicy).toMatchObject({
-      policyVersion: 4,
+      policyVersion: 5,
       nativeButtonTypes,
       limits: { buttonCount },
     })

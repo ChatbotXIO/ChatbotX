@@ -29,33 +29,10 @@ import {
 } from "react-hook-form"
 import { TiptapEditorField } from "@/components/tiptap/tiptap-editor-field"
 import { MetaCatalogProductSelect } from "@/features/integration-whatsapp/message-templates/components/meta-catalog-product-select"
-import { resolveFlowValidationCodeKey } from "../../flow-validation-message"
+import { FlowValidationFieldError } from "../../flow-validation-field-error"
 
 type SendViewCatalogStepEditorProps = {
   parentName: string
-}
-
-/**
- * The rich-text field would print a validation code raw, since it is the rule's
- * own message; a code is shown as its translated text and a plain schema
- * message as it is.
- */
-const FieldErrorMessage = ({ name }: { name: string }) => {
-  const t = useTranslations()
-  const { formState, getFieldState } = useFormContext()
-  const message = getFieldState(name, formState).error?.message
-
-  if (!message) {
-    return null
-  }
-
-  const key = resolveFlowValidationCodeKey(message)
-
-  return (
-    <p className="text-destructive text-sm" role="alert">
-      {key ? t(key) : message}
-    </p>
-  )
 }
 
 type CatalogDetailsFormProps = {
@@ -114,7 +91,7 @@ function CatalogDetailsForm({
             name="footer"
             required={false}
           />
-          <FieldErrorMessage name="footer" />
+          <FlowValidationFieldError name="footer" />
         </div>
         <div className="flex flex-col gap-1.5">
           <span className="font-semibold text-sm">
@@ -238,7 +215,7 @@ const SendViewCatalogStepEditor = (props: SendViewCatalogStepEditorProps) => {
             error and the footer step aside by the toolbar's height only then,
             instead of leaving a permanent gap. Nothing to show, nothing here. */}
         <div className="flex flex-col gap-1 pt-2.5 empty:hidden group-focus-within/body:pt-8">
-          <FieldErrorMessage name={`${parentName}.text`} />
+          <FlowValidationFieldError name={`${parentName}.text`} />
           {footer ? (
             <p className="line-clamp-2 whitespace-pre-line break-words text-muted-foreground text-xs">
               {footer}
