@@ -9595,7 +9595,8 @@
   },
   "helpMenu": {
     "title": "Help",
-    "ariaLabel": "Open help menu"
+    "ariaLabel": "Open help menu",
+    "status": "System status"
   },
   "helpItems": {
     "title": "Help Links",

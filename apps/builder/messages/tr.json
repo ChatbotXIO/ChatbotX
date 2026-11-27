@@ -8600,7 +8600,8 @@
   },
   "helpMenu": {
     "title": "Yardım",
-    "ariaLabel": "Yardım menüsünü aç"
+    "ariaLabel": "Yardım menüsünü aç",
+    "status": "Sistem durumu"
   },
   "helpItems": {
     "title": "Yardım Bağlantıları",

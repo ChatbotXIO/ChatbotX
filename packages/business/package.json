@@ -38,6 +38,7 @@
     "./coupon": "./src/coupon/index.ts",
     "./dynamic-image": "./src/dynamic-image/index.ts",
     "./error-log": "./src/error-log/index.ts",
+    "./health": "./src/health/health.service.ts",
     "./error-log-columns": "./src/error-log/columns.ts",
     "./facebook-marketing-message-audience": "./src/facebook-marketing-message-audience/index.ts",
     "./template-errors": "./src/template/template-errors.ts",

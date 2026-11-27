@@ -53,6 +53,13 @@ export const env = createEnv({
     // Optional upper bound for draining every worker in the process on SIGTERM
     // (lib/shutdown). Consolidated Docker modes default below the 10s stop
     // timeout; for other modes, set this with the orchestrator grace period.
+    // External status-page heartbeat monitor (docs/status-page.md). The
+    // schedule queue pings it once a minute; unset removes the scheduler.
+    // Empty counts as unset. Holds a secret token: never log it.
+    STATUS_HEARTBEAT_WORKER_URL: z.preprocess(
+      (value) => (value === "" ? undefined : value),
+      z.url({ protocol: /^https?$/ }).optional(),
+    ),
     WORKER_SHUTDOWN_TIMEOUT_MS: z.coerce
       .number()
       .int()

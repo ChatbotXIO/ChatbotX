@@ -8600,7 +8600,8 @@
   },
   "helpMenu": {
     "title": "Hjælp",
-    "ariaLabel": "Open hjælp menu"
+    "ariaLabel": "Open hjælp menu",
+    "status": "Systemstatus"
   },
   "helpItems": {
     "title": "Hjælp Links",

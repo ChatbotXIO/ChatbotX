@@ -8600,7 +8600,8 @@
   },
   "helpMenu": {
     "title": "Help",
-    "ariaLabel": "Helpmenu openen"
+    "ariaLabel": "Helpmenu openen",
+    "status": "Systeemstatus"
   },
   "helpItems": {
     "title": "Helplinks",

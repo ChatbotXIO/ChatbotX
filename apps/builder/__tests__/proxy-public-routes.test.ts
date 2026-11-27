@@ -16,6 +16,11 @@ describe("isPublicRoute", () => {
     expect(isPublicRoute("/api/contacts")).toBe(true)
   })
 
+  test("/api/health/ready is reachable by the unauthenticated status monitor", () => {
+    expect(isPublicRoute("/api/health")).toBe(true)
+    expect(isPublicRoute("/api/health/ready")).toBe(true)
+  })
+
   test("inbound webhook deliveries (/api/hooks/<token>) need no session", () => {
     // The sender is an external system; the token in the path is the credential.
     expect(isPublicRoute("/api/hooks/iwh_abc")).toBe(true)

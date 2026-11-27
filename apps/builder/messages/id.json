@@ -8600,7 +8600,8 @@
   },
   "helpMenu": {
     "title": "Bantuan",
-    "ariaLabel": "Buka menu bantuan"
+    "ariaLabel": "Buka menu bantuan",
+    "status": "Status sistem"
   },
   "helpItems": {
     "title": "Tautan Bantuan",

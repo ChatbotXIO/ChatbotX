@@ -195,6 +195,7 @@ See **`.agents/rules/git.md`** for the full canonical rules (commit format, bran
 - Architecture decisions: `docs/adr/`
 - Broadcast audience (direct-chat-only default, reaching contacts without one by chat history with **Last interaction**, moving back to draft, the broadcasts a contact was sent: `contacts.listBroadcasts` with search and keyset paging): `docs/broadcasts.md`
 - Messaging scaling runbook: `docs/scaling-messaging.md`
+- Public status page (Better Stack components and signals, `/api/health/ready` readiness probe, `statusHeartbeat` worker heartbeat, coverage table, incident and maintenance procedure, `NEXT_PUBLIC_STATUS_PAGE_URL` help link): `docs/status-page.md`
 - Request flow diagrams: `docs/request-workflow.md`
 - White-label tenancy model: `docs/tenancy.md`
 - Workspace API tokens (hashing, scopes, `{{api_key}}` default token): `docs/developer/workspace-api-tokens.md`

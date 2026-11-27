@@ -4774,7 +4774,8 @@
   },
   "helpMenu": {
     "ariaLabel": "打开帮助菜单",
-    "title": "帮助"
+    "title": "帮助",
+    "status": "系统状态"
   },
   "home": {
     "noWorkspaces": "您还没有任何工作区。",

@@ -8600,7 +8600,8 @@
   },
   "helpMenu": {
     "title": "幫助",
-    "ariaLabel": "開啟幫助選單"
+    "ariaLabel": "開啟幫助選單",
+    "status": "系統狀態"
   },
   "helpItems": {
     "title": "幫助連結",

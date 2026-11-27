@@ -6181,7 +6181,8 @@
   },
   "helpMenu": {
     "title": "עזרה",
-    "ariaLabel": "פתיחת תפריט עזרה"
+    "ariaLabel": "פתיחת תפריט עזרה",
+    "status": "מצב המערכת"
   },
   "helpItems": {
     "title": "קישורי עזרה",

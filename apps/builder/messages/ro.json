@@ -7112,7 +7112,8 @@
   },
   "helpMenu": {
     "ariaLabel": "Deschide meniul de ajutor",
-    "title": "Ajutor"
+    "title": "Ajutor",
+    "status": "Starea sistemului"
   },
   "instagramCommentAutomation": {
     "activated": "Automatizare activată",

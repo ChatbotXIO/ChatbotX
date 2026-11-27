@@ -10,7 +10,6 @@ import { logger } from "../lib/logger"
 import { registerWorkerQueueMetrics } from "../lib/queue-metrics"
 import { runJobWithAuditContext } from "../lib/run-job-with-audit-context"
 import { runWorker } from "../lib/shutdown"
-import { startUptimeHeartbeat } from "../lib/uptime-heartbeat"
 import {
   cleanupTriggerExecutions,
   scanDateTimeTriggers,
@@ -78,6 +77,7 @@ import { scanContactScans } from "./handlers/scan-contact-scans"
 import { scanContactSyncRuns } from "./handlers/scan-contact-sync-runs"
 import { scanSmartDelay } from "./handlers/scan-smart-delay"
 import { scanSocialPostFeeds } from "./handlers/scan-social-post-feeds"
+import { sendStatusHeartbeat } from "./handlers/status-heartbeat"
 import { sweepStaleWhatsappCalls } from "./handlers/sweep-stale-whatsapp-calls"
 import { syncUserQuota } from "./handlers/sync-user-quota"
 import { teardownExpiredTrial } from "./handlers/teardown-expired-trial"
@@ -91,7 +91,6 @@ async function startQueueObservability(): Promise<void> {
   } catch (err) {
     logger.error({ err }, "Schedule worker metrics server failed to start")
   }
-  startUptimeHeartbeat()
 }
 
 async function startScheduleWorker() {
@@ -363,6 +362,11 @@ async function startScheduleWorker() {
 
             case ScheduleJobData.refreshLicense:
               await refreshLicense()
+              return
+
+            // Platform-scoped: no workspace, so no blocked-owner guard.
+            case ScheduleJobData.statusHeartbeat:
+              await sendStatusHeartbeat()
               return
 
             case ScheduleJobData.unsubscribeExpiredTrials:

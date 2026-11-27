@@ -12,9 +12,10 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@chatbotx.io/ui/components/ui/sidebar"
-import { CircleHelpIcon } from "lucide-react"
+import { ActivityIcon, CircleHelpIcon } from "lucide-react"
 import { DynamicIcon, type IconName } from "lucide-react/dynamic"
 import { useTranslations } from "next-intl"
+import { env } from "@/env"
 import { useTenantSettings } from "@/features/tenant/tenant-settings-provider"
 
 const ALLOWED_URL_RE = /^(https?:\/\/|mailto:)/i
@@ -23,8 +24,9 @@ export const NavHelp = () => {
   const { isMobile } = useSidebar()
   const t = useTranslations()
   const { helpItems } = useTenantSettings()
+  const statusPageUrl = env.NEXT_PUBLIC_STATUS_PAGE_URL
 
-  if (helpItems.length === 0) {
+  if (helpItems.length === 0 && !statusPageUrl) {
     return null
   }
 
@@ -74,6 +76,20 @@ export const NavHelp = () => {
                   />
                 )
               })}
+            {statusPageUrl ? (
+              <DropdownMenuItem
+                render={
+                  <a
+                    href={statusPageUrl}
+                    rel="noopener noreferrer"
+                    target="_blank"
+                  >
+                    <ActivityIcon className="me-2 size-4" />
+                    {t("helpMenu.status")}
+                  </a>
+                }
+              />
+            ) : null}
           </DropdownMenuContent>
         </DropdownMenu>
       </SidebarMenuItem>

@@ -11,7 +11,7 @@ ChatbotX exposes Prometheus metrics, reports exceptions to any Sentry-compatible
 | `SENTRY_DSN` | builder/worker/realtime | Enables Sentry SDK reporting. A GlitchTip project DSN is compatible. |
 | `RELEASE_SHA` | builder/worker/realtime | Release identifier attached to Sentry events. |
 | `APP_ENV` | builder/worker/realtime | Environment attached to Sentry events. |
-| `UPTIME_KUMA_PUSH_URL` | schedule worker | Optional Uptime Kuma push-monitor URL pinged every minute. |
+| `STATUS_HEARTBEAT_WORKER_URL` | schedule worker | Optional heartbeat-monitor URL. The `statusHeartbeat` schedule job sends one `GET` each minute, so the heartbeat stops when Redis or the schedule queue stops — not only when the process exits. Unset removes the job scheduler. See [status-page.md](status-page.md). |
 | `ALERT_TELEGRAM_BOT_TOKEN`, `ALERT_TELEGRAM_CHAT_ID` | Grafana | Provisioned Telegram contact point. |
 | `ALERT_DISCORD_WEBHOOK_URL` | Grafana | Provisioned Discord contact point. |
 | `BULL_BOARD_URL` | worker/Prometheus/Grafana | Base URL of the super-admin Bull Board, used for failed-queue alert links and worker-error event links. Example: `https://app.example.com/developer/queues`. |
@@ -45,6 +45,16 @@ Grafana provisions the Prometheus data source, dashboard, alert rules, Telegram 
 
 Sentry events redact secret-named fields and request bodies before send. Worker failure events include queue, job, job ID, error classification, retry-attempt tags, and a Bull Board job link when `BULL_BOARD_URL` is configured. Identical queue/job/class/message events are deduplicated for one minute in-process.
 
+## Worker heartbeat rollout
+
+The worker heartbeat moved from a process timer (`UPTIME_KUMA_PUSH_URL`) to the `statusHeartbeat` schedule job (`STATUS_HEARTBEAT_WORKER_URL`). The job is platform-scoped, so the workspace blocked-owner guard does not apply. To roll it out in production:
+
+1. Create the heartbeat monitor and set `STATUS_HEARTBEAT_WORKER_URL` before the new worker starts. Every schedule worker replica in one deployment must use the same value; production and test use different URLs.
+2. Deploy and confirm the monitor receives one heartbeat per minute.
+3. Retire the old Uptime Kuma push monitor and remove `UPTIME_KUMA_PUSH_URL`; the worker no longer reads it.
+
+The handler aborts a request after 5 seconds, logs non-2xx and network failures without the URL, and never throws: the next run is one minute later.
+
 ## Alert runbook
 
 ### `MessagingCodeBug`
@@ -65,7 +75,7 @@ Check Redis, worker process health, and the job class at the head of the affecte
 
 ### `WorkerDown`
 
-A worker metrics process cannot be scraped. Check the container supervisor and all consecutive `METRICS_PORT` bindings. Uptime Kuma should independently page if the worker heartbeat stops.
+A worker metrics process cannot be scraped. Check the container supervisor and all consecutive `METRICS_PORT` bindings. The external heartbeat monitor (`STATUS_HEARTBEAT_WORKER_URL`) independently pages if the schedule queue stops running jobs.
 
 ### `MacClaimSideEffectFailed`
 
