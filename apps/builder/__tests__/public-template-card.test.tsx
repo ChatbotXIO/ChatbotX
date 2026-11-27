@@ -1,5 +1,10 @@
 // @vitest-environment node
 
+import {
+  fromYoutubeVideoId,
+  parseEmbeddedVideoSource,
+  toEmbeddedVideoView,
+} from "@chatbotx.io/utils/embedded-video"
 import { renderToStaticMarkup } from "react-dom/server"
 import { describe, expect, test, vi } from "vitest"
 import { PublicTemplateCard } from "@/features/templates/components/public-template-card"
@@ -18,6 +23,7 @@ const render = async (overrides: Record<string, unknown> = {}) =>
         name: "Starter",
         publisherName: "Acme",
         description: "Line one",
+        video: null,
         youtubeVideoId: null,
         testLink: "https://bot.test/try",
         categoryCounts: { flows: 2 },
@@ -25,6 +31,14 @@ const render = async (overrides: Record<string, unknown> = {}) =>
       } as never,
     }),
   )
+
+const viewOf = (source: string) => {
+  const parsed = parseEmbeddedVideoSource(source)
+  if (!parsed.ok) {
+    throw new Error(`fixture does not parse: ${parsed.reason}`)
+  }
+  return toEmbeddedVideoView(parsed.video)
+}
 
 describe("public template card", () => {
   test("shows the cover, a Preview link in a new tab, Install and the About section", async () => {
@@ -61,5 +75,53 @@ describe("public template card", () => {
 
     expect(html).not.toContain("preview")
     expect(html).not.toContain("aboutTemplate")
+  })
+
+  test("shows the video in the cover's place when the template has one", async () => {
+    const html = await render({
+      video: viewOf("https://vimeo.com/76979871"),
+    })
+
+    expect(html).toContain('src="https://player.vimeo.com/video/76979871')
+    expect(html).toContain('title="videoTitle"')
+    expect(html).not.toContain("<img")
+    expect(html.indexOf("<iframe")).toBeLessThan(html.indexOf("<h1"))
+  })
+
+  test("falls back to the cover image when the template has no video", async () => {
+    const html = await render({ video: null })
+
+    expect(html).toContain('src="https://cdn.test/cover.png"')
+    expect(html).not.toContain("<iframe")
+  })
+
+  test("plays a template that only has the legacy YouTube id like a new one", async () => {
+    const legacy = fromYoutubeVideoId("dQw4w9WgXcQ")
+    if (!legacy) {
+      throw new Error("fixture id is valid")
+    }
+    const html = await render({ video: toEmbeddedVideoView(legacy) })
+
+    expect(html).toContain(
+      'src="https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ"',
+    )
+  })
+
+  test("renders the video once, not again under the buttons", async () => {
+    const html = await render({
+      video: viewOf("https://www.youtube.com/watch?v=dQw4w9WgXcQ"),
+    })
+
+    expect(html.match(/<iframe/g)).toHaveLength(1)
+    expect(html.indexOf("<iframe")).toBeLessThan(html.indexOf("install"))
+  })
+
+  test("a file video gets the template cover as its poster", async () => {
+    const html = await render({
+      video: viewOf("https://res.cloudinary.com/demo/video/upload/dog.mp4"),
+    })
+
+    expect(html).toContain("<video")
+    expect(html).toContain('poster="https://cdn.test/cover.png"')
   })
 })

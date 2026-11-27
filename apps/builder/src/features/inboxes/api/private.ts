@@ -3,12 +3,27 @@ import {
   listAllConnectedInboxesResponse,
   listInboxesRequest,
   listInboxesResponse,
+  publishDestinationService,
 } from "@chatbotx.io/business"
 import { workspaceAuthorizedMidddleware } from "@/middlewares/auth"
 import { authorizedAPI } from "@/orpc"
 import { listAllConnectedInboxes, listInboxes } from "../queries"
+import {
+  listInboxAvatarsRequest,
+  listInboxAvatarsResponse,
+} from "../schema/action"
 
 export const inboxesAuthenticatedAPI = {
+  // RPC-only: the inbox conversation header's page pictures. Agents use the
+  // public `inboxes.listAvatars`; both call the same service method.
+  listInboxAvatarsAuthenticatedAPI: authorizedAPI
+    .input(listInboxAvatarsRequest)
+    .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
+    .output(listInboxAvatarsResponse)
+    .handler(async ({ input }) => ({
+      data: await publishDestinationService.listInboxAvatars(input),
+    })),
+
   listInboxesAuthenticatedAPI: authorizedAPI
     .route({
       method: "GET",

@@ -1,0 +1,47 @@
+{
+  "type": "diff",
+  "version": "10",
+  "dialect": "postgres",
+  "id": "695d2731-542e-4aeb-bf38-b5bb7d5339ee",
+  "prevIds": [
+    "3b81ad60-c8ad-4bd5-94dc-e03441d8e338"
+  ],
+  "footprints": [
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "Template",
+        "embeddedVideo"
+      ],
+      "writes": [
+        "s|col|public.Template.embeddedVideo",
+        "n|col|public.Template.embeddedVideo",
+        "e|col|public.Template.embeddedVideo"
+      ],
+      "reads": [
+        "n|tbl|public.Template",
+        "n|sch|public"
+      ]
+    }
+  ],
+  "deltas": [
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "Template",
+        "name": "embeddedVideo",
+        "type": "jsonb",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    }
+  ]
+}

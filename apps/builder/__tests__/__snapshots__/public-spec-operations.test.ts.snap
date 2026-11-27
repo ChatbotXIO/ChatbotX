@@ -2089,6 +2089,11 @@ exports[`public API spec — operation naming guard > operation list (operationI
   },
   {
     "method": "GET",
+    "operationId": "inboxes.listAvatars",
+    "path": "/v1/inboxes/avatars",
+  },
+  {
+    "method": "GET",
     "operationId": "inboxes.listChannels",
     "path": "/v1/channels",
   },

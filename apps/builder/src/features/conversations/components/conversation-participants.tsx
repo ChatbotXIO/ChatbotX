@@ -26,6 +26,18 @@ const REPLY_TIME_FORMAT = {
   minute: "2-digit",
 } as const
 
+const WHITESPACE = /\s+/
+
+/** The given name of a full name: its first word; a single word stays as is. */
+function givenNameOf(fullName: string): string {
+  return fullName.split(WHITESPACE).find(Boolean) ?? fullName
+}
+
+const LIST_FORMAT = { type: "unit", style: "long" } as const
+
+/** Avatars shown before the names; the dialog lists everyone. */
+const MAX_INLINE_AVATARS = 3
+
 /**
  * Under the contact name: who replied in this conversation and when the last
  * reply was. Click opens a dialog with the full list, newest first. The row's
@@ -53,6 +65,8 @@ export function ConversationParticipants({
 
   const nameOf = (participant: ConversationParticipantResource) =>
     participant.name ?? t("unnamedMember")
+  const givenNameLabelOf = (participant: ConversationParticipantResource) =>
+    participant.name ? givenNameOf(participant.name) : nameOf(participant)
   const timeOf = (participant: ConversationParticipantResource) =>
     format.dateTime(participant.lastRepliedAt, REPLY_TIME_FORMAT)
 
@@ -64,12 +78,25 @@ export function ConversationParticipants({
             className="flex min-w-0 max-w-full items-center gap-1 text-start text-muted-foreground text-xs hover:text-foreground"
             type="button"
           >
-            <span className="truncate">
-              {t("joined", {
-                names: format.list(participants.map(nameOf), {
-                  type: "unit",
-                  style: "long",
-                }),
+            <span aria-hidden className="flex shrink-0 items-center -space-x-1">
+              {participants.slice(0, MAX_INLINE_AVATARS).map((participant) => (
+                <ParticipantAvatar
+                  className="ring-1 ring-background"
+                  key={participant.userId}
+                  participant={participant}
+                />
+              ))}
+            </span>
+            <span
+              className="truncate"
+              title={format.list(participants.map(nameOf), LIST_FORMAT)}
+            >
+              {t("joinedShort", {
+                count: participants.length,
+                names: format.list(
+                  participants.map(givenNameLabelOf),
+                  LIST_FORMAT,
+                ),
               })}
             </span>
             <span aria-hidden>•</span>

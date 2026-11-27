@@ -15,6 +15,7 @@ import type {
   TemplateModel,
 } from "@chatbotx.io/database/types"
 import { parseTemplateExport } from "@chatbotx.io/flow-config"
+import type { EmbeddedVideoView } from "@chatbotx.io/utils/embedded-video"
 import { enqueueFanOutTemplateUpdate } from "@chatbotx.io/worker-config"
 import { ChatbotXException, notFoundException } from "../errors"
 import { logger } from "../logger"
@@ -52,6 +53,7 @@ import { withTemplateStoreBump } from "./store-cache"
 import { templateSourceMissingException } from "./template-errors"
 import { INSTALL_LEASE_MS } from "./template-leases"
 import { type SaveTemplateInput, saveTemplate } from "./template-save"
+import { toTemplateVideoProjection } from "./template-video"
 import {
   loadInstallationWarningGroups,
   type TemplateInstallationWarningGroup,
@@ -95,6 +97,9 @@ export type PublicTemplateProjection = {
   description: string | null
   imageUrl: string | null
   publisherName: string | null
+  /** The reconciled video (see `resolveTemplateEmbeddedVideo`), ready to render. */
+  video: EmbeddedVideoView | null
+  /** @deprecated Derived from `video`: the id for YouTube, else null. */
   youtubeVideoId: string | null
   testLink: string | null
   categoryCounts: TemplateModel["categoryCounts"]
@@ -107,7 +112,7 @@ export const toPublicProjection = (
   description: row.description,
   imageUrl: row.imageUrl,
   publisherName: row.publisherName,
-  youtubeVideoId: row.youtubeVideoId,
+  ...toTemplateVideoProjection(row),
   testLink: row.testLink,
   categoryCounts: row.categoryCounts,
 })

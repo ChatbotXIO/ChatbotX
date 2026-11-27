@@ -500,9 +500,9 @@ Publish a snapshot of resources as a share link, and install templates shared by
 ```bash
 chatbotx templates list                              # [--cursor --limit]  templates this workspace published, with active install count; pass `nextCursor` back for the next page (max 100)
 chatbotx templates get <id>                          # Template with its selection (never the snapshot)
-chatbotx templates create --name <name> --selection <json> --defaultPermissions <json> --createInstallFolder <bool> --defaultAutoUpdate <bool>
+chatbotx templates create --name <name> --selection <json> --defaultPermissions <json> --createInstallFolder <bool> --defaultAutoUpdate <bool>   # [--video <json>]  share-page video, e.g. --video '{"source":"<link or embed code>"}' (YouTube, Vimeo, Streamable, Cloudinary); omit keeps, --video null or an empty source clears; replaces the deprecated --youtubeVideoId
                                                      # selection: {"flows":{"mode":"ids","ids":["…"],"lockedIds":["…"]}} — list ids with `templates selectable-resources`
-chatbotx templates update <id> ...                   # Same body as create; takes a new snapshot
+chatbotx templates update <id> ...                   # Same body as create (incl. --video); takes a new snapshot
 chatbotx templates delete <id>                       # Copies already installed stay (their view-only locks are released)
 chatbotx templates selectable-resources --category <category>  # [--keyword --cursor --limit]  ids for `selection`
 chatbotx templates dependencies-preview --selection <json>  # Read only: what saving that selection takes along (includedDependencies, manifests of tags/custom fields/folders/...)
@@ -1120,6 +1120,7 @@ chatbotx ig-stories instagram-stories --variant <instagram|facebook>  # List eli
 ```bash
 chatbotx inboxes list                                 # Connected inboxes; use `id` as `inboxId` elsewhere
 chatbotx inboxes update <id> --markReadOnOutbound <true|false>
+chatbotx inboxes avatars --inboxIds <id> [--inboxIds <id> ...]  # Page picture URL and page link (`profileUrl`) and network (`provider`) of each Facebook/Instagram/Threads inbox (max 50); other channels are left out
 ```
 
 ---

@@ -48,6 +48,7 @@
     "./datetime": "./src/datetime.ts",
     "./find-email": "./src/find-email.ts",
     "./form-answer-format": "./src/form-answer-format.ts",
+    "./embedded-video": "./src/embedded-video.ts",
     "./error-log": "./src/error-log.ts",
     "./google-click": "./src/google-click.ts",
     "./graph-error": "./src/graph-error.ts",

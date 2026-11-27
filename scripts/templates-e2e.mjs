@@ -563,6 +563,96 @@ const checkAutoUpdate = async (template, selection, shareToken, manualId) => {
   return followed.installationId
 }
 
+/**
+ * The template video is metadata: create with a link, echo GET -> PUT, omit
+ * keeps, null / "" clears, the deprecated `youtubeVideoId` alias still works.
+ * Uses YouTube forms only, which need no outbound oEmbed call.
+ */
+const checkVideo = async (selection) => {
+  const body = {
+    name: `${RUN} video`,
+    selection,
+    defaultPermissions: { allowEdit: true, allowDelete: false },
+    createInstallFolder: false,
+    defaultAutoUpdate: false,
+  }
+  const createdResponse = await call("src", "POST", "/v1/templates", {
+    ...body,
+    video: { source: "https://youtu.be/dQw4w9WgXcQ" },
+  })
+  if (createdResponse.status >= 300) {
+    check(
+      "VIDEO",
+      false,
+      `create ${createdResponse.status} ${JSON.stringify(createdResponse.json).slice(0, 200)}`,
+    )
+    return
+  }
+  const created = createdResponse.json
+  const id = created.id
+  const put = (extra) =>
+    call("src", "PUT", `/v1/templates/${id}`, { ...body, ...extra })
+  const read = async () =>
+    (await call("src", "GET", `/v1/templates/${id}`)).json
+
+  const first = created.video
+  const createdOk =
+    first?.provider === "youtube" &&
+    first.playback?.kind === "iframe" &&
+    typeof first.playback.allow === "string" &&
+    first.aspectRatio > 0 &&
+    created.youtubeVideoId === "dQw4w9WgXcQ"
+
+  // GET body echoed back as the PUT video keeps the same video.
+  const fetched = await read()
+  const echoed = await put({ video: fetched.video })
+  const echoOk =
+    echoed.status < 300 &&
+    echoed.json?.video?.source === fetched.video?.source &&
+    echoed.json?.video?.provider === "youtube"
+
+  // Omitted keeps.
+  const kept = await put({})
+  const keepOk = kept.json?.video?.provider === "youtube"
+
+  // null clears, and so does an empty source.
+  const cleared = await put({ video: null })
+  const clearOk = cleared.status < 300 && cleared.json?.video === null
+  await put({ video: { source: "https://www.youtube.com/shorts/dQw4w9WgXcQ" } })
+  const blank = await put({ video: { source: "  " } })
+  const blankOk = blank.status < 300 && blank.json?.video === null
+
+  // Deprecated alias; `video` wins when both are sent.
+  const alias = await put({ youtubeVideoId: "dQw4w9WgXcQ" })
+  const aliasOk =
+    alias.json?.video?.provider === "youtube" &&
+    alias.json?.youtubeVideoId === "dQw4w9WgXcQ"
+  const precedence = await put({
+    video: null,
+    youtubeVideoId: "dQw4w9WgXcQ",
+  })
+  const precedenceOk = precedence.json?.video === null
+
+  const bad = await put({ video: { source: "https://example.com/watch?v=x" } })
+  const badOk = bad.status === 422 && bad.json?.code === "validation"
+
+  check(
+    "VIDEO",
+    createdOk &&
+      echoOk &&
+      keepOk &&
+      clearOk &&
+      blankOk &&
+      aliasOk &&
+      precedenceOk &&
+      badOk,
+    `create ${createdOk} echo ${echoOk} keep ${keepOk} clear ${clearOk} blank ${blankOk} alias ${aliasOk} precedence ${precedenceOk} bad ${bad.status} ${bad.json?.code}`,
+  )
+  if (process.env.TPL_KEEP !== "1") {
+    await call("src", "DELETE", `/v1/templates/${id}`)
+  }
+}
+
 const main = async () => {
   console.log(`Run ${RUN} against ${API}`)
   const selection = await buildSelection()
@@ -649,6 +739,8 @@ const main = async () => {
     shareToken,
     installed.installationId,
   )
+
+  await checkVideo(selection)
 
   if (process.env.TPL_KEEP !== "1") {
     await checkUninstall(installed.installationId)

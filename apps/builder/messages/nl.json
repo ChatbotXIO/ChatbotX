@@ -7534,8 +7534,17 @@
       "allowEdit": "Bewerken na installatie toestaan",
       "allowDelete": "Verwijderen na installatie toestaan",
       "publisherName": "Naam uitgever",
-      "youtubeVideoId": "YouTube-video-ID",
-      "youtubeVideoIdDescription": "De 11-tekens-ID uit de video-URL, bijv. \"xxxxxxxxxxx\" in youtube.com/watch?v=xxxxxxxxxxx",
+      "video": "Omslagvideo",
+      "videoDescription": "Plak een link naar een YouTube-, Vimeo-, Streamable- of Cloudinary-video, of de insluitcode van dat platform. Laat leeg als er geen video is.",
+      "videoEmpty": "Plak hieronder een videolink om hier een voorbeeld te zien.",
+      "videoOrientationNote": "De oriëntatie van de video (liggend of staand) wordt bij het opslaan bepaald.",
+      "videoPreviewTitle": "Videovoorbeeld",
+      "videoErrors": {
+        "tooLong": "De videolink of insluitcode is te lang",
+        "invalidUrl": "Voer een geldige https-videolink of insluitcode in",
+        "unsupportedProvider": "Alleen video's van YouTube, Vimeo, Streamable en Cloudinary worden ondersteund",
+        "invalidVideoId": "De videolink bevat geen geldige video"
+      },
       "testLink": "Testlink",
       "imageUrl": "Omslagafbeelding",
       "installBehavior": "Installatiegedrag",
@@ -12591,8 +12600,14 @@
       "selected": "Uses AhaChat data"
     }
   },
+  "conversationPages": {
+    "label": "Pagina's waarmee dit contact chat",
+    "lastMessage": "Laatste bericht",
+    "morePages": "+{count} meer"
+  },
   "conversationParticipants": {
     "joined": "{names} hebben deelgenomen aan het gesprek",
+    "joinedShort": "{count, plural, one {{names} doet mee} other {{names} doen mee}}",
     "replied": "{name} heeft geantwoord {time}",
     "showMore": "Meer weergeven",
     "label": "Wie heeft geantwoord in dit gesprek",

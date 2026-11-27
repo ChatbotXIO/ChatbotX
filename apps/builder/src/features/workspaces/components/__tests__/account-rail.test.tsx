@@ -14,6 +14,8 @@ import {
 } from "vitest"
 
 const translations: Record<string, string> = {
+  "fields.language.label": "Language",
+  "fields.theme.label": "Theme",
   "actions.admin": "Admin",
   "actions.manage": "Manage",
   "actions.billing": "Billing",
@@ -53,6 +55,14 @@ vi.mock("@/features/auth/sign-out", () => ({
 // test body runs.
 vi.mock("../refresh-all-channel-tokens-button", () => ({
   RefreshAllChannelTokensButton: () => null,
+}))
+
+vi.mock("@/components/lang-selector", () => ({
+  LangSelector: () => <div data-testid="lang-selector" />,
+}))
+
+vi.mock("@/components/theme-switcher", () => ({
+  ThemeSwitcher: () => <div data-testid="theme-switcher" />,
 }))
 
 vi.mock("@/enterprise/features/billing/upgrade-plan-dialog", () => ({
@@ -175,19 +185,51 @@ describe("account rail", () => {
     expect(findLink("/portal/billing")).toBeUndefined()
   })
 
-  it("omits the menu divider when no menu items render on community edition", async () => {
+  it("omits the menu block on community edition without admin", async () => {
     await render({ cloud: false })
-
-    const menu = container.querySelector("#account-rail-menu")
-    expect(menu?.classList.contains("border-t")).toBe(false)
-    expect(menu?.classList.contains("pt-4")).toBe(false)
+    expect(container.querySelector("#account-rail-menu")).toBeNull()
   })
 
-  it("keeps the menu divider when the admin link renders on community edition", async () => {
+  it("renders the admin/manage block with a divider when admin renders", async () => {
     await render({ isSuperAdmin: true, cloud: false })
 
     const menu = container.querySelector("#account-rail-menu")
     expect(menu?.classList.contains("border-t")).toBe(true)
+  })
+
+  it.each([
+    false,
+    true,
+  ])("renders language and theme controls (cloud=%s)", async (cloud) => {
+    await render({ cloud })
+
+    expect(container.textContent).toContain("Language")
+    expect(container.textContent).toContain("Theme")
+    expect(
+      container.querySelector('[data-testid="lang-selector"]'),
+    ).not.toBeNull()
+    expect(
+      container.querySelector('[data-testid="theme-switcher"]'),
+    ).not.toBeNull()
+  })
+
+  it("groups admin, manage, billing and redeem in one menu block on cloud", async () => {
+    await render({
+      canAccessManage: true,
+      cloud: true,
+      isPlatformContext: true,
+      isSuperAdmin: true,
+    })
+
+    const menu = container.querySelector("#account-rail-menu")
+    for (const href of [
+      "/admin",
+      "/manage",
+      "/portal/billing",
+      "/portal/redeem",
+    ]) {
+      expect(menu?.querySelector(`a[href="${href}"]`)).not.toBeNull()
+    }
   })
 
   it("renders exactly one mt-auto element", async () => {

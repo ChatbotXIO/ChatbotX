@@ -1,3 +1,4 @@
+import type { EmbeddedVideo } from "@chatbotx.io/utils/embedded-video"
 import {
   boolean,
   index,
@@ -55,6 +56,7 @@ export const templateModel = pgTable(
     imageUrl: text(),
     publisherName: text(),
     youtubeVideoId: text(),
+    embeddedVideo: jsonb().$type<EmbeddedVideo>(),
     testLink: text(),
     selection: jsonb().$type<TemplateSelection>().notNull(),
     payload: jsonb().$type<TemplatePayload>().notNull(),

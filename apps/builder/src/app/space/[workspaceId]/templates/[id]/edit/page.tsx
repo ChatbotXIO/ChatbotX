@@ -1,6 +1,7 @@
 import {
   getEditableTemplateOrFail,
   listSelectableTemplateCategories,
+  resolveTemplateEmbeddedVideo,
   TEMPLATE_MANAGE_PERMISSION,
   templateService,
 } from "@chatbotx.io/business"
@@ -86,6 +87,7 @@ export default async function EditTemplatePage({
         />
       ) : (
         <TemplateForm
+          savedVideo={resolveTemplateEmbeddedVideo(template)}
           selectableCategories={listSelectableTemplateCategories(
             member.targetWorkspaceMember.permissions,
           )}

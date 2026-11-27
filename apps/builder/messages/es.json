@@ -7534,8 +7534,17 @@
       "allowEdit": "Permitir edición después de instalar",
       "allowDelete": "Permitir eliminación después de instalar",
       "publisherName": "Nombre del publicador",
-      "youtubeVideoId": "ID del vídeo de YouTube",
-      "youtubeVideoIdDescription": "El ID de 11 caracteres de la URL del vídeo, por ejemplo \"xxxxxxxxxxx\" en youtube.com/watch?v=xxxxxxxxxxx",
+      "video": "Vídeo de portada",
+      "videoDescription": "Pega el enlace de un vídeo de YouTube, Vimeo, Streamable o Cloudinary, o el código de inserción de esa plataforma. Déjalo vacío si no hay vídeo.",
+      "videoEmpty": "Pega un enlace de vídeo abajo para previsualizarlo aquí.",
+      "videoOrientationNote": "La orientación del vídeo (horizontal o vertical) se detecta al guardar.",
+      "videoPreviewTitle": "Vista previa del vídeo",
+      "videoErrors": {
+        "tooLong": "El enlace o el código de inserción del vídeo es demasiado largo",
+        "invalidUrl": "Introduce un enlace https de vídeo o un código de inserción válido",
+        "unsupportedProvider": "Solo se admiten vídeos de YouTube, Vimeo, Streamable y Cloudinary",
+        "invalidVideoId": "El enlace no contiene un vídeo válido"
+      },
       "testLink": "Enlace de prueba",
       "imageUrl": "Imagen de portada",
       "installBehavior": "Comportamiento de instalación",
@@ -12591,8 +12600,14 @@
       "selected": "Uses AhaChat data"
     }
   },
+  "conversationPages": {
+    "label": "Páginas con las que habla este contacto",
+    "lastMessage": "Último mensaje",
+    "morePages": "+{count} más"
+  },
   "conversationParticipants": {
     "joined": "{names} han participado en la conversación",
+    "joinedShort": "{count, plural, one {{names} se unió} other {{names} se unieron}}",
     "replied": "{name} respondió {time}",
     "showMore": "Ver más",
     "label": "Quién respondió en esta conversación",

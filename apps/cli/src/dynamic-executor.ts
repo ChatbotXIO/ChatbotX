@@ -58,6 +58,12 @@ const acceptsNull = (schema: BodyPropertySchema | undefined): boolean =>
   (Array.isArray(schema?.type) && schema.type.includes("null")) ||
   [...(schema?.anyOf ?? []), ...(schema?.oneOf ?? [])].some(acceptsNull)
 
+/** Whether the flag is JSON text: an object/array property, or a union with one (e.g. `object | null`). */
+const takesJson = (schema: BodyPropertySchema | undefined): boolean =>
+  schema?.type === "array" ||
+  schema?.type === "object" ||
+  [...(schema?.anyOf ?? []), ...(schema?.oneOf ?? [])].some(takesJson)
+
 export async function executeDynamicCommand(
   tool: DynamicTool,
   params: Record<string, CliParamValue>,
@@ -92,10 +98,7 @@ export async function executeDynamicCommand(
       // JSON null (e.g. "clear it") to a property that accepts one.
       if (value === "null" && acceptsNull(propSchema)) {
         body[key] = null
-      } else if (
-        propSchema?.type === "array" ||
-        propSchema?.type === "object"
-      ) {
+      } else if (takesJson(propSchema)) {
         try {
           body[key] = JSON.parse(value)
         } catch {

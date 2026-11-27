@@ -7138,8 +7138,17 @@
       "allowEdit": "السماح بالتعديل بعد التثبيت",
       "allowDelete": "السماح بالحذف بعد التثبيت",
       "publisherName": "اسم الناشر",
-      "youtubeVideoId": "معرّف فيديو يوتيوب",
-      "youtubeVideoIdDescription": "المعرّف المكوَّن من 11 حرفًا من رابط الفيديو، مثل \"xxxxxxxxxxx\" في youtube.com/watch?v=xxxxxxxxxxx",
+      "video": "فيديو الغلاف",
+      "videoDescription": "الصق رابط فيديو من YouTube أو Vimeo أو Streamable أو Cloudinary، أو رمز التضمين من تلك المنصة. اتركه فارغًا إن لم يكن هناك فيديو.",
+      "videoEmpty": "الصق رابط فيديو أدناه لمعاينته هنا.",
+      "videoOrientationNote": "يتم اكتشاف اتجاه الفيديو (أفقي أو عمودي) عند الحفظ.",
+      "videoPreviewTitle": "معاينة الفيديو",
+      "videoErrors": {
+        "tooLong": "رابط الفيديو أو رمز التضمين طويل جدًا",
+        "invalidUrl": "أدخل رابط فيديو https صالحًا أو رمز تضمين صالحًا",
+        "unsupportedProvider": "يُدعم فقط فيديو YouTube وVimeo وStreamable وCloudinary",
+        "invalidVideoId": "لا يحتوي رابط الفيديو على فيديو صالح"
+      },
       "testLink": "رابط الاختبار",
       "imageUrl": "صورة الغلاف",
       "installBehavior": "سلوك التثبيت",
@@ -12591,8 +12600,14 @@
       "selected": "Uses AhaChat data"
     }
   },
+  "conversationPages": {
+    "label": "الصفحات التي يراسلها جهة الاتصال هذه",
+    "lastMessage": "آخر رسالة",
+    "morePages": "+{count} أخرى"
+  },
   "conversationParticipants": {
     "joined": "{names} شاركوا في المحادثة",
+    "joinedShort": "{count, plural, one {{names} انضم} other {{names} انضموا}}",
     "replied": "{name} ردّ {time}",
     "showMore": "عرض المزيد",
     "label": "من رد في هذه المحادثة",

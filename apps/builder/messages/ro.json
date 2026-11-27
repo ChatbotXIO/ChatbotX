@@ -8361,8 +8361,17 @@
       "allowEdit": "Permite editarea după instalare",
       "allowDelete": "Permite ștergerea după instalare",
       "publisherName": "Numele editorului",
-      "youtubeVideoId": "ID-ul videoclipului YouTube",
-      "youtubeVideoIdDescription": "ID-ul de 11 caractere din URL-ul videoclipului, de ex. \"xxxxxxxxxxx\" în youtube.com/watch?v=xxxxxxxxxxx",
+      "video": "Video de copertă",
+      "videoDescription": "Lipește linkul unui videoclip YouTube, Vimeo, Streamable sau Cloudinary ori codul de încorporare de pe acea platformă. Lasă gol dacă nu există videoclip.",
+      "videoEmpty": "Lipiți mai jos un link video pentru a-l previzualiza aici.",
+      "videoOrientationNote": "Orientarea videoclipului (peisaj sau portret) este detectată la salvare.",
+      "videoPreviewTitle": "Previzualizare video",
+      "videoErrors": {
+        "tooLong": "Linkul sau codul de încorporare al videoclipului este prea lung",
+        "invalidUrl": "Introdu un link https de videoclip sau un cod de încorporare valid",
+        "unsupportedProvider": "Sunt acceptate doar videoclipurile YouTube, Vimeo, Streamable și Cloudinary",
+        "invalidVideoId": "Linkul nu conține un videoclip valid"
+      },
       "testLink": "Link de test",
       "imageUrl": "Imagine de copertă",
       "installBehavior": "Comportament la instalare",
@@ -12591,8 +12600,14 @@
       "selected": "Uses AhaChat data"
     }
   },
+  "conversationPages": {
+    "label": "Paginile cu care vorbește acest contact",
+    "lastMessage": "Ultimul mesaj",
+    "morePages": "încă {count}"
+  },
   "conversationParticipants": {
     "joined": "{names} au participat la conversație",
+    "joinedShort": "{count, plural, one {{names} s-a alăturat} other {{names} s-au alăturat}}",
     "replied": "{name} a răspuns {time}",
     "showMore": "Arată mai mult",
     "label": "Cine a răspuns în această conversație",
