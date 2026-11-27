@@ -10,7 +10,6 @@ import {
   Settings2Icon,
   ShieldCheckIcon,
   TicketIcon,
-  UserCogIcon,
 } from "lucide-react"
 import Link from "next/link"
 import { getTranslations } from "next-intl/server"
@@ -108,13 +107,6 @@ export const AccountRail = async ({
           </div>
         </Link>
 
-        <div className="flex flex-col gap-1 border-t pt-4">
-          <Link className={railMenuItemClassName} href="/account">
-            <UserCogIcon aria-hidden className="size-4" />
-            {t("account.title")}
-          </Link>
-        </div>
-
         {cloud && (
           <div className="flex flex-col gap-4 border-t pt-5">
             <div className="flex flex-col gap-3">
@@ -160,10 +152,10 @@ export const AccountRail = async ({
 
         {/*
           `mt-auto` is the layout's single flexible spacer — it pushes the
-          Admin/Manage group to the bottom of the scrollable body
-          instead of sitting right under plan/usage. Exactly one `mt-auto` must
-          exist in this component; a second one would split the free space and
-          reopen the dead-gap bug this replaces.
+          preferences + Admin/Manage block to the bottom of the scrollable
+          body instead of sitting right under plan/usage. Exactly one
+          `mt-auto` must exist in this component; a second one would split the
+          free space and reopen the dead-gap bug this replaces.
         */}
         <div className="mt-auto flex flex-col gap-4">
           <div

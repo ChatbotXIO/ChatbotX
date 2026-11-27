@@ -29,7 +29,7 @@ const items = locales.map((value) => ({
 
 export const LangSelector: React.FC<{
   className?: string
-  /** Compact globe + label trigger, for page corners instead of form rows. */
+  /** Compact trigger: globe + label, no chevron, centered popover. */
   compact?: boolean
 }> = ({ className, compact = false }) => {
   const locale = resolveLocale(useLocale())

@@ -14,7 +14,6 @@ import {
 } from "vitest"
 
 const translations: Record<string, string> = {
-  "account.title": "Account settings",
   "fields.language.label": "Language",
   "fields.theme.label": "Theme",
   "actions.admin": "Admin",
@@ -196,15 +195,6 @@ describe("account rail", () => {
 
     const menu = container.querySelector("#account-rail-menu")
     expect(menu?.classList.contains("border-t")).toBe(true)
-  })
-
-  it("links account settings to /account", async () => {
-    await render()
-
-    const link = Array.from(container.querySelectorAll("a")).find((a) =>
-      a.textContent?.includes("Account settings"),
-    )
-    expect(link?.getAttribute("href")).toBe("/account")
   })
 
   it.each([
