@@ -28,12 +28,11 @@ import { z } from "zod"
 import { createDecisionConnectionAction } from "@/features/decision-connections/actions/create-decision-connection.action"
 import { updateDecisionConnectionAction } from "@/features/decision-connections/actions/update-decision-connection.action"
 import { useWorkspaceId } from "@/hooks/routing"
+import {
+  decisionProviderKinds,
+  decisionProviderLabelKeyByKind,
+} from "./provider-labels"
 
-const providerKinds = [
-  "typesafe",
-  "openrouterDecision",
-  "systemOneCompatible",
-] as const
 const modelCatalogDelimiter = /[\n,]/
 
 const connectionFormSchema = z.object({
@@ -42,7 +41,7 @@ const connectionFormSchema = z.object({
   endpoint: z.string().trim().max(2048),
   modelCatalogText: z.string().trim().min(1).max(26_000),
   name: z.string().trim().min(1).max(160),
-  providerKind: z.enum(providerKinds),
+  providerKind: z.enum(decisionProviderKinds),
 })
 
 type ConnectionFormValues = z.infer<typeof connectionFormSchema>
@@ -135,8 +134,8 @@ export function DecisionConnectionDialog({
     create(payload)
   }
 
-  const providerOptions = providerKinds.map((value) => ({
-    label: t(`decision.providers.${value}`),
+  const providerOptions = decisionProviderKinds.map((value) => ({
+    label: t(decisionProviderLabelKeyByKind[value]),
     value,
   }))
 

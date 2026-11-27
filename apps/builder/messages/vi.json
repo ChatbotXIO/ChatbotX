@@ -5060,6 +5060,11 @@
     "modelCatalog": "Các model khả dụng",
     "modelCatalogDescription": "Nhập một model ID mỗi dòng hoặc ngăn cách các model ID bằng dấu phẩy.",
     "provider": "Provider",
+    "providers": {
+      "openrouterDecision": "OpenRouter Decision",
+      "systemOneCompatible": "System One-compatible",
+      "typesafe": "TypeSafe"
+    },
     "testFailed": "Kiểm tra kết nối AI Router thất bại.",
     "testPassed": "Kiểm tra kết nối AI Router thành công.",
     "toolDescription": "Tạo profile dùng lại cho flow step AI Router.",

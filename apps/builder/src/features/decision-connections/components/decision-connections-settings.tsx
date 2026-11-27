@@ -13,6 +13,7 @@ import { testDecisionConnectionAction } from "@/features/decision-connections/ac
 import { toggleDecisionConnectionAction } from "@/features/decision-connections/actions/toggle-decision-connection.action"
 import { useWorkspaceId } from "@/hooks/routing"
 import { DecisionConnectionDialog } from "./connection-dialog"
+import { decisionProviderLabelKeyByKind } from "./provider-labels"
 
 type DecisionConnectionsSettingsProps = {
   connections: DecisionConnectionSafe[]
@@ -87,7 +88,9 @@ function DecisionConnectionRow({
       },
     },
   )
-  const providerLabel = t(`decision.providers.${connection.providerKind}`)
+  const providerLabel = t(
+    decisionProviderLabelKeyByKind[connection.providerKind],
+  )
   const model = connection.defaultModel ?? connection.modelCatalog[0]
   const testStatus = connection.lastTest.status
 

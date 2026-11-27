@@ -6274,6 +6274,11 @@
     "modelCatalog": "Available models",
     "modelCatalogDescription": "Enter one model ID per line, or separate model IDs with commas.",
     "provider": "Provider",
+    "providers": {
+      "openrouterDecision": "OpenRouter Decision",
+      "systemOneCompatible": "System One-compatible",
+      "typesafe": "TypeSafe"
+    },
     "testFailed": "AI Router connection test failed.",
     "testPassed": "AI Router connection test passed.",
     "toolDescription": "Create reusable profiles for the AI Router flow step.",
