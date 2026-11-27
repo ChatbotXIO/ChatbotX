@@ -619,13 +619,12 @@ export const templateStoreRepository = {
   },
 
   /**
-   * Whether a visitor of this tenant's store can open anything at all. Same
-   * eligibility rule as the catalog, but it stops at the first match: at worst
-   * (nothing visible) a scan of the tenant's listings, bounded by the
-   * per-tenant listing cap.
+   * Whether any store listing belongs to a template of this workspace (any
+   * status). Indexed: `Template_workspaceId_idx` finds the workspace's
+   * templates and `TemplateStoreListing_templateId_idx` their listings.
    */
-  async hasPublishedTemplates(
-    tenantId: string,
+  async hasListingsForWorkspace(
+    workspaceId: string,
     tx: DatabaseClient = db,
   ): Promise<boolean> {
     const [first] = await tx
@@ -635,7 +634,7 @@ export const templateStoreRepository = {
         templateModel,
         eq(templateModel.id, templateStoreListingModel.templateId),
       )
-      .where(publishedTemplateWhere(tenantId))
+      .where(eq(templateModel.workspaceId, workspaceId))
       .limit(1)
     return first !== undefined
   },

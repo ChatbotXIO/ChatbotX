@@ -21,7 +21,6 @@ import {
   templateStoreRepository,
 } from "@chatbotx.io/database/repositories"
 import { isBigintId } from "@chatbotx.io/database/utils"
-import { getChildLogger } from "@chatbotx.io/logger"
 import type { Locale } from "@chatbotx.io/utils/ui-locale"
 import {
   resolveTenantAdminScope,
@@ -41,7 +40,7 @@ import {
   readTemplateStoreSnapshot,
 } from "./store-cache"
 import {
-  hasVisible,
+  countVisible,
   isSnapshotOverCap,
   knownLanguages,
   matchesNoCategory,
@@ -63,8 +62,6 @@ export type {
   TemplateStorePublished,
   TemplateStorePublishedTemplate,
 } from "./store-snapshot"
-
-const log = getChildLogger("template-store")
 
 export type TemplateStoreMoveDirection = "up" | "down"
 
@@ -643,24 +640,24 @@ export const templateStoreService = {
   },
 
   /**
-   * Whether the tenant's store has anything a visitor can open. The tenant
-   * comes from a trusted caller (the host). Read from the cached snapshot,
-   * with share expiry applied at the database clock of this request; a tenant
-   * over the listing cap runs one bounded probe instead. The host is never
-   * resolved here.
+   * How many templates the tenant's store holds, for visitors of every
+   * language: what an unfiltered `listPublished` returns (cap included). The
+   * tenant comes from a trusted caller (the host). Read from the cached
+   * snapshot, with share expiry applied at the database clock of this request;
+   * a tenant over the listing cap reads its bounded live rows instead. The host
+   * is never resolved here.
    */
-  async hasPublished(input: { tenantId: string }): Promise<boolean> {
+  async countPublished(input: { tenantId: string }): Promise<number> {
     const { snapshot, requestNowMicros } = await readTemplateStoreSnapshot(
       input.tenantId,
     )
     if (isSnapshotOverCap(snapshot)) {
-      log.warn(
-        { tenantId: input.tenantId },
-        "Template store snapshot is over the listing cap; probing the database",
-      )
-      return await templateStoreRepository.hasPublishedTemplates(input.tenantId)
+      const rows = await templateStoreRepository.listPublishedTemplates({
+        tenantId: input.tenantId,
+      })
+      return rows.length
     }
-    return hasVisible(snapshot, requestNowMicros)
+    return countVisible(snapshot, requestNowMicros)
   },
 
   /**
@@ -687,10 +684,6 @@ export const templateStoreService = {
       resolveServingHost(input.tenantId),
     ])
     if (isSnapshotOverCap(read.snapshot)) {
-      log.warn(
-        { tenantId: input.tenantId },
-        "Template store snapshot is over the listing cap; querying the database",
-      )
       return await listPublishedFromSql(input, Promise.resolve(host))
     }
     return projectPublished(

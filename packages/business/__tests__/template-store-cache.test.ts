@@ -9,7 +9,6 @@ const mocks = vi.hoisted(() => ({
   readKeywordCollationSupport: vi.fn(),
   listPublishedCategories: vi.fn(),
   listPublishedTemplates: vi.fn(),
-  hasPublishedTemplates: vi.fn(),
   resolveServingHost: vi.fn(),
   getOrLoad: vi.fn(),
   logError: vi.fn(),
@@ -30,7 +29,6 @@ vi.mock("@chatbotx.io/database/repositories", () => ({
     readKeywordCollationSupport: mocks.readKeywordCollationSupport,
     listPublishedCategories: mocks.listPublishedCategories,
     listPublishedTemplates: mocks.listPublishedTemplates,
-    hasPublishedTemplates: mocks.hasPublishedTemplates,
   },
 }))
 vi.mock("@chatbotx.io/logger", () => ({
@@ -125,7 +123,6 @@ beforeEach(() => {
   })
   mocks.listPublishedCategories.mockResolvedValue([])
   mocks.listPublishedTemplates.mockResolvedValue([])
-  mocks.hasPublishedTemplates.mockResolvedValue(false)
 })
 
 describe("readTemplateStoreSnapshot", () => {
@@ -191,11 +188,33 @@ describe("readTemplateStoreSnapshot", () => {
     hit(snapshotOf([]))
     mocks.readKeywordCollationSupport.mockRejectedValueOnce(new Error("down"))
 
-    await expect(canSearchKeywordOnSnapshot("a")).rejects.toThrow("down")
+    await expect(canSearchKeywordOnSnapshot("a")).resolves.toBe(false)
     await canSearchKeywordOnSnapshot("a")
     await canSearchKeywordOnSnapshot("b")
 
     expect(mocks.readKeywordCollationSupport).toHaveBeenCalledTimes(2)
+  })
+
+  test("a failed collation read falls back to SQL for that call, logs the error and is not memoized", async () => {
+    const failure = new Error("down")
+    mocks.readKeywordCollationSupport.mockRejectedValueOnce(failure)
+
+    expect(await canSearchKeywordOnSnapshot("a")).toBe(false)
+    expect(mocks.logError).toHaveBeenCalledWith(
+      { err: failure },
+      expect.any(String),
+    )
+    expect(await canSearchKeywordOnSnapshot("a")).toBe(true)
+    expect(mocks.readKeywordCollationSupport).toHaveBeenCalledTimes(2)
+  })
+
+  test("listPublished falls back to the SQL queries when the collation read fails", async () => {
+    mocks.readKeywordCollationSupport.mockRejectedValueOnce(new Error("down"))
+
+    await service.listPublished({ tenantId: "1", keyword: "shop" })
+
+    expect(mocks.listPublishedTemplates).toHaveBeenCalled()
+    expect(mocks.versionRead).not.toHaveBeenCalled()
   })
 
   test("an unsupported database reports it for a keyword and logs once", async () => {
@@ -343,19 +362,74 @@ describe("templateStoreService on the cache", () => {
     expect(templates[0].shareUrl).toContain("https://other.example.test/")
   })
 
-  test("hasPublished never resolves the host, and a failure there cannot affect it", async () => {
-    hit(snapshotOf([snapshotRow("1")]))
+  test("countPublished never resolves the host, and a failure there cannot affect it", async () => {
+    hit(snapshotOf([snapshotRow("1"), snapshotRow("2")]))
     mocks.resolveServingHost.mockRejectedValue(new Error("host down"))
 
-    await expect(service.hasPublished({ tenantId: "1" })).resolves.toBe(true)
+    await expect(service.countPublished({ tenantId: "1" })).resolves.toBe(2)
     expect(mocks.resolveServingHost).not.toHaveBeenCalled()
-    expect(mocks.hasPublishedTemplates).not.toHaveBeenCalled()
+    expect(mocks.listPublishedTemplates).not.toHaveBeenCalled()
   })
 
-  test("hasPublished is false when every share has expired at the database clock", async () => {
+  test("countPublished leaves out shares expired at the database clock", async () => {
+    hit(
+      snapshotOf([
+        snapshotRow("1"),
+        { ...snapshotRow("2"), shareExpiresAtMicros: "1500" },
+        { ...snapshotRow("3"), shareExpiresAtMicros: "2000" },
+      ]),
+    )
+
+    await expect(service.countPublished({ tenantId: "1" })).resolves.toBe(2)
+  })
+
+  test("countPublished is 0 when every share has expired", async () => {
     hit(snapshotOf([{ ...snapshotRow("1"), shareExpiresAtMicros: "1500" }]))
 
-    await expect(service.hasPublished({ tenantId: "1" })).resolves.toBe(false)
+    await expect(service.countPublished({ tenantId: "1" })).resolves.toBe(0)
+  })
+
+  test("countPublished equals the templates listPublished returns", async () => {
+    hit(
+      snapshotOf([
+        snapshotRow("1"),
+        { ...snapshotRow("2"), shareExpiresAtMicros: "1500" },
+        snapshotRow("3"),
+      ]),
+    )
+
+    const count = await service.countPublished({ tenantId: "1" })
+    const { templates } = await service.listPublished({ tenantId: "1" })
+
+    expect(count).toBe(templates.length)
+  })
+
+  test("countPublished counts every language, so every viewer sees the same total", async () => {
+    hit(
+      snapshotOf([
+        snapshotRow("1"),
+        { ...snapshotRow("2"), languages: ["vi"] },
+        { ...snapshotRow("3"), languages: ["en"] },
+      ]),
+    )
+
+    await expect(service.countPublished({ tenantId: "1" })).resolves.toBe(3)
+  })
+
+  test("countPublished is capped at the listing cap like the catalog", async () => {
+    // Exactly the cap is complete, so the snapshot answers; the cap is the ceiling.
+    hit(
+      snapshotOf(
+        Array.from({ length: TEMPLATE_STORE_MAX_LISTINGS }, (_, i) =>
+          snapshotRow(String(i + 1)),
+        ),
+      ),
+    )
+
+    await expect(service.countPublished({ tenantId: "1" })).resolves.toBe(
+      TEMPLATE_STORE_MAX_LISTINGS,
+    )
+    expect(mocks.listPublishedTemplates).not.toHaveBeenCalled()
   })
 
   test("a failing host fails listPublished as it does today", async () => {
@@ -402,9 +476,18 @@ describe("templateStoreService on the cache", () => {
       expect(result.templates.map((template) => template.section)).toEqual([
         "hidden",
       ])
-      expect(mocks.hasPublishedTemplates).not.toHaveBeenCalled()
+      expect(mocks.logWarn).not.toHaveBeenCalled()
+    })
+
+    test("the over-cap warning is logged once per snapshot load, with the tenant", async () => {
+      miss()
+      mocks.readSnapshot.mockResolvedValue(overCap())
+
+      await readTemplateStoreSnapshot("1")
+
+      expect(mocks.logWarn).toHaveBeenCalledTimes(1)
       expect(mocks.logWarn).toHaveBeenCalledWith(
-        expect.objectContaining({ tenantId: "1" }),
+        { tenantId: "1" },
         expect.any(String),
       )
     })
@@ -418,15 +501,21 @@ describe("templateStoreService on the cache", () => {
       expect(mocks.listPublishedTemplates).not.toHaveBeenCalled()
     })
 
-    test("hasPublished runs only the probe", async () => {
+    test("countPublished reads the bounded live rows once, without the host", async () => {
       hit(overCap())
-      mocks.hasPublishedTemplates.mockResolvedValue(true)
+      mocks.listPublishedTemplates.mockResolvedValue([
+        { ...snapshotRow("1"), languages: ["en"] },
+        { ...snapshotRow("2"), languages: ["vi"] },
+        { ...snapshotRow("3"), languages: [] },
+      ])
 
-      await expect(service.hasPublished({ tenantId: "1" })).resolves.toBe(true)
+      await expect(service.countPublished({ tenantId: "1" })).resolves.toBe(3)
 
-      expect(mocks.hasPublishedTemplates).toHaveBeenCalledWith("1")
+      expect(mocks.listPublishedTemplates).toHaveBeenCalledWith({
+        tenantId: "1",
+      })
+      expect(mocks.resolveServingHost).not.toHaveBeenCalled()
       expect(mocks.listPublishedCategories).not.toHaveBeenCalled()
-      expect(mocks.listPublishedTemplates).not.toHaveBeenCalled()
     })
   })
 

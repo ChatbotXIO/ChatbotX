@@ -40,6 +40,8 @@ type WorkspacesListProps = {
   activeTab?: HomeTab
   /** Whether the Templates tab is offered (the tenant's store has something to show). */
   showTemplatesTab?: boolean
+  /** The number shown next to the Templates tab: the catalog's card count. */
+  templateCount?: number
   /** The content of the Templates tab; the page fills it only while that tab is open. */
   templatesPanel?: ReactNode
 }
@@ -205,6 +207,7 @@ const WorkspacesList = async ({
   superAdminWorkspaceIds = [],
   activeTab = "workspaces",
   showTemplatesTab = false,
+  templateCount = 0,
   templatesPanel,
 }: WorkspacesListProps) => {
   const t = await getTranslations()
@@ -293,9 +296,9 @@ const WorkspacesList = async ({
         {showTemplatesTab ? (
           <HomeTabs
             activeTab={openTab}
+            counts={{ workspaces: usedCount, templates: templateCount }}
             labels={homeTabLabels}
             navLabel={t("home.tabs.label")}
-            workspaceCount={usedCount}
           />
         ) : (
           <>

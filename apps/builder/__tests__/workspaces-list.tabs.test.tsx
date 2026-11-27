@@ -46,6 +46,7 @@ let root: Root | null = null
 type RenderOptions = {
   activeTab?: HomeTab
   showTemplatesTab?: boolean
+  templateCount?: number
   isAtLimit?: boolean
 }
 
@@ -55,6 +56,7 @@ async function renderList(options: RenderOptions = {}): Promise<HTMLElement> {
     workspaces: [workspace],
     activeTab: options.activeTab,
     showTemplatesTab: options.showTemplatesTab,
+    templateCount: options.templateCount,
     isAtLimit: options.isAtLimit,
     templatesPanel: <div data-testid="templates-panel">catalog</div>,
   })
@@ -115,7 +117,7 @@ describe("WorkspacesList — Templates tab hidden", () => {
 
 describe("WorkspacesList — Templates tab offered", () => {
   test("on the workspaces tab: two text links, the workspaces one current, the grid shown", async () => {
-    const el = await renderList({ showTemplatesTab: true })
+    const el = await renderList({ showTemplatesTab: true, templateCount: 12 })
 
     const nav = el.querySelector("nav")
     expect(nav?.getAttribute("aria-label")).toBe("home.tabs.label")
@@ -126,7 +128,7 @@ describe("WorkspacesList — Templates tab offered", () => {
     expect(workspaces?.getAttribute("href")).toBe("/")
     expect(templates?.getAttribute("href")).toBe("/?tab=templates")
     expect(workspaces?.textContent).toBe("billing.usage.workspaces1")
-    expect(templates?.textContent).toBe("home.tabs.templates")
+    expect(templates?.textContent).toBe("home.tabs.templates12")
     expect(workspaces?.getAttribute("aria-current")).toBe("page")
     expect(templates?.hasAttribute("aria-current")).toBe(false)
 

@@ -155,6 +155,7 @@ export default async function MainPage({
             reason={blockReason}
             showTemplatesTab={templatesView.showTemplatesTab}
             superAdminWorkspaceIds={superAdminWorkspaceIds}
+            templateCount={templateStore.templateCount}
             templatesPanel={
               <HomeTemplatesPanel
                 catalog={templateStore.catalog}

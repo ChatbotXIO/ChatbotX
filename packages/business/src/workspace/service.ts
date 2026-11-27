@@ -13,7 +13,10 @@ import {
   type WorkspaceMemberPermissions,
   workspaceMemberRoles,
 } from "@chatbotx.io/database/partials"
-import { templateUninstallStateRepository } from "@chatbotx.io/database/repositories"
+import {
+  templateStoreRepository,
+  templateUninstallStateRepository,
+} from "@chatbotx.io/database/repositories"
 import {
   type WorkspaceDeletionRequestState,
   workspaceRepository,
@@ -902,6 +905,19 @@ class WorkspaceService extends BaseService {
               "TemplateUninstall",
             )
           }
+          // Every store write runs under this lock, so a listing cannot be
+          // added between the check and the delete: it would otherwise be
+          // cascaded away without a version bump. The wait is bounded by the
+          // purge's lock_timeout.
+          await templateStoreRepository.lockTenantStore(
+            fencedWorkspace.tenantId,
+            tx,
+          )
+          const hadStoreListings =
+            await templateStoreRepository.hasListingsForWorkspace(
+              fencedWorkspace.id,
+              tx,
+            )
           const deleted = await tx
             .delete(workspaceModel)
             .where(eq(workspaceModel.id, fencedWorkspace.id))
@@ -922,8 +938,11 @@ class WorkspaceService extends BaseService {
               tx,
             })
             // The cascade hard-deleted this workspace's Templates and, with
-            // them, their store listings: announce it (the last write) to the cached store.
-            await bumpTemplateStoreVersion(fencedWorkspace.tenantId, tx)
+            // them, their store listings: announce it (the last write) to the
+            // cached store, only when there were listings.
+            if (hadStoreListings) {
+              await bumpTemplateStoreVersion(fencedWorkspace.tenantId, tx)
+            }
           }
           return deleted
         },

@@ -6,7 +6,7 @@ import {
 } from "@/features/workspaces/lib/home-templates-view"
 
 const mocks = vi.hoisted(() => ({
-  hasPublished: vi.fn(),
+  countPublished: vi.fn(),
   findPublicByShareToken: vi.fn(),
   loadStoreCatalog: vi.fn(),
   getTenantSettings: vi.fn(),
@@ -15,7 +15,7 @@ const mocks = vi.hoisted(() => ({
 
 vi.mock("server-only", () => ({}))
 vi.mock("@chatbotx.io/business", () => ({
-  templateStoreService: { hasPublished: mocks.hasPublished },
+  templateStoreService: { countPublished: mocks.countPublished },
   templateService: { findPublicByShareToken: mocks.findPublicByShareToken },
 }))
 vi.mock("@/features/template-store/queries/load-store-catalog", () => ({
@@ -50,7 +50,7 @@ const openedTemplate = {
 
 const store = (overrides: Partial<HomeTemplateStore>): HomeTemplateStore => ({
   status: "ready",
-  hasTemplates: false,
+  templateCount: 0,
   catalog: null,
   openedTemplate: null,
   ...overrides,
@@ -66,7 +66,7 @@ describe("resolveHomeTemplatesView", () => {
     {
       name: "workspaces tab, store has templates: offer the tab",
       request: request("workspaces"),
-      store: store({ hasTemplates: true }),
+      store: store({ templateCount: 3 }),
       expected: {
         activeTab: "workspaces",
         showTemplatesTab: true,
@@ -77,7 +77,7 @@ describe("resolveHomeTemplatesView", () => {
     {
       name: "workspaces tab, empty store: hide the tab",
       request: request("workspaces"),
-      store: store({ hasTemplates: false }),
+      store: store({ templateCount: 0 }),
       expected: {
         activeTab: "workspaces",
         showTemplatesTab: false,
@@ -88,7 +88,7 @@ describe("resolveHomeTemplatesView", () => {
     {
       name: "workspaces tab, store not readable: hide the tab",
       request: request("workspaces"),
-      store: store({ status: "failed", hasTemplates: true }),
+      store: store({ status: "failed", templateCount: 3 }),
       expected: {
         activeTab: "workspaces",
         showTemplatesTab: false,
@@ -99,7 +99,7 @@ describe("resolveHomeTemplatesView", () => {
     {
       name: "templates tab with templates: show the catalog",
       request: request("templates"),
-      store: store({ hasTemplates: true, catalog }),
+      store: store({ templateCount: 3, catalog }),
       expected: {
         activeTab: "templates",
         showTemplatesTab: true,
@@ -110,7 +110,7 @@ describe("resolveHomeTemplatesView", () => {
     {
       name: "templates tab, nothing published (stale link): back to the plain URL",
       request: request("templates"),
-      store: store({ hasTemplates: false, catalog }),
+      store: store({ templateCount: 0, catalog }),
       expected: {
         activeTab: "workspaces",
         showTemplatesTab: false,
@@ -132,7 +132,7 @@ describe("resolveHomeTemplatesView", () => {
     {
       name: "a template opened in the tab: show it to install, inside the tab",
       request: request("templates", "tok-11"),
-      store: store({ hasTemplates: true, openedTemplate }),
+      store: store({ templateCount: 3, openedTemplate }),
       expected: {
         activeTab: "templates",
         showTemplatesTab: true,
@@ -143,7 +143,7 @@ describe("resolveHomeTemplatesView", () => {
     {
       name: "an unknown or disabled key: say so inside the tab, no redirect",
       request: request("templates", "gone"),
-      store: store({ hasTemplates: true, openedTemplate: null }),
+      store: store({ templateCount: 3, openedTemplate: null }),
       expected: {
         activeTab: "templates",
         showTemplatesTab: true,
@@ -165,7 +165,7 @@ describe("resolveHomeTemplatesView", () => {
     {
       name: "a key on the workspaces tab is ignored",
       request: request("workspaces", "tok-11"),
-      store: store({ hasTemplates: true }),
+      store: store({ templateCount: 3 }),
       expected: {
         activeTab: "workspaces",
         showTemplatesTab: true,
@@ -187,8 +187,8 @@ describe("loadHomeTemplateStore", () => {
     })
   })
 
-  test("the workspaces tab asks the store one cheap question and loads nothing else", async () => {
-    mocks.hasPublished.mockResolvedValue(true)
+  test("the workspaces tab asks the store one cheap question (the count) and loads nothing else", async () => {
+    mocks.countPublished.mockResolvedValue(7)
 
     const result = await loadHomeTemplateStore({
       tab: "workspaces",
@@ -196,13 +196,13 @@ describe("loadHomeTemplateStore", () => {
       tenantId: Promise.resolve("tenant-7"),
     })
 
-    expect(mocks.hasPublished).toHaveBeenCalledTimes(1)
-    expect(mocks.hasPublished).toHaveBeenCalledWith({ tenantId: "tenant-7" })
+    expect(mocks.countPublished).toHaveBeenCalledTimes(1)
+    expect(mocks.countPublished).toHaveBeenCalledWith({ tenantId: "tenant-7" })
     expect(mocks.loadStoreCatalog).not.toHaveBeenCalled()
     expect(mocks.findPublicByShareToken).not.toHaveBeenCalled()
     expect(result).toEqual({
       status: "ready",
-      hasTemplates: true,
+      templateCount: 7,
       catalog: null,
       openedTemplate: null,
     })
@@ -211,7 +211,10 @@ describe("loadHomeTemplateStore", () => {
   test("the templates tab loads the catalog with cards that open inside the tab", async () => {
     mocks.loadStoreCatalog.mockResolvedValue({
       ...catalog,
-      templates: [{ templateId: "1" }],
+      templates: [
+        { templateId: "1", section: "primary" },
+        { templateId: "2", section: "hidden" },
+      ],
     })
 
     const result = await loadHomeTemplateStore({
@@ -226,11 +229,12 @@ describe("loadHomeTemplateStore", () => {
     expect(buildHref({ templateId: "1", shareToken: "tok 1" })).toBe(
       "/?tab=templates&key=tok+1",
     )
-    expect(mocks.hasPublished).not.toHaveBeenCalled()
+    expect(mocks.countPublished).not.toHaveBeenCalled()
     expect(mocks.findPublicByShareToken).not.toHaveBeenCalled()
+    // The count is the number of cards the tab shows (every language), not a second query.
     expect(result).toMatchObject({
       status: "ready",
-      hasTemplates: true,
+      templateCount: 2,
       openedTemplate: null,
     })
   })
@@ -246,14 +250,15 @@ describe("loadHomeTemplateStore", () => {
 
     expect(result).toEqual({
       status: "ready",
-      hasTemplates: false,
+      templateCount: 0,
       catalog,
       openedTemplate: null,
     })
   })
 
-  test("a template opened in the tab is read by its share key, with its cover", async () => {
+  test("a template opened in the tab is read by its share key, with its cover and the store's count", async () => {
     mocks.findPublicByShareToken.mockResolvedValue(publicTemplate)
+    mocks.countPublished.mockResolvedValue(5)
 
     const result = await loadHomeTemplateStore({
       tab: "templates",
@@ -262,7 +267,9 @@ describe("loadHomeTemplateStore", () => {
     })
 
     expect(mocks.findPublicByShareToken).toHaveBeenCalledWith("tok-11")
+    expect(mocks.countPublished).toHaveBeenCalledWith({ tenantId: "tenant-7" })
     expect(mocks.loadStoreCatalog).not.toHaveBeenCalled()
+    expect(result.templateCount).toBe(5)
     expect(result.openedTemplate).toEqual({
       template: publicTemplate,
       shareToken: "tok-11",
@@ -270,8 +277,31 @@ describe("loadHomeTemplateStore", () => {
     })
   })
 
+  test("a failed count still opens the template: the tab reads 0 and the error is logged", async () => {
+    mocks.findPublicByShareToken.mockResolvedValue(publicTemplate)
+    mocks.countPublished.mockRejectedValueOnce(new Error("db down"))
+
+    const result = await loadHomeTemplateStore({
+      tab: "templates",
+      templateKey: "tok-11",
+      tenantId: Promise.resolve("tenant-7"),
+    })
+
+    expect(result).toMatchObject({
+      status: "ready",
+      templateCount: 0,
+      openedTemplate: { shareToken: "tok-11" },
+    })
+    expect(mocks.loggerError).toHaveBeenCalledTimes(1)
+    expect(mocks.loggerError.mock.calls[0][0]).toMatchObject({
+      err: expect.any(Error),
+      tenantId: "tenant-7",
+    })
+  })
+
   test("an unknown or disabled share key opens nothing", async () => {
     mocks.findPublicByShareToken.mockResolvedValue(undefined)
+    mocks.countPublished.mockResolvedValue(0)
 
     const result = await loadHomeTemplateStore({
       tab: "templates",
@@ -287,7 +317,8 @@ describe("loadHomeTemplateStore", () => {
       name: "the probe fails",
       tab: "workspaces" as const,
       templateKey: null,
-      arrange: () => mocks.hasPublished.mockRejectedValue(new Error("db down")),
+      arrange: () =>
+        mocks.countPublished.mockRejectedValue(new Error("db down")),
     },
     {
       name: "the catalog load fails",
@@ -300,8 +331,10 @@ describe("loadHomeTemplateStore", () => {
       name: "the opened template read fails",
       tab: "templates" as const,
       templateKey: "tok-11",
-      arrange: () =>
-        mocks.findPublicByShareToken.mockRejectedValue(new Error("db down")),
+      arrange: () => {
+        mocks.countPublished.mockResolvedValue(3)
+        mocks.findPublicByShareToken.mockRejectedValue(new Error("db down"))
+      },
     },
   ])("never rejects when $name: logs it and reports a failed store", async ({
     tab,
@@ -318,7 +351,7 @@ describe("loadHomeTemplateStore", () => {
 
     expect(result).toEqual({
       status: "failed",
-      hasTemplates: false,
+      templateCount: 0,
       catalog: null,
       openedTemplate: null,
     })
@@ -337,7 +370,7 @@ describe("loadHomeTemplateStore", () => {
     await expect(
       loadHomeTemplateStore({ tab: "workspaces", templateKey: null, tenantId }),
     ).rejects.toThrow("no tenant")
-    expect(mocks.hasPublished).not.toHaveBeenCalled()
+    expect(mocks.countPublished).not.toHaveBeenCalled()
     expect(mocks.loggerError).not.toHaveBeenCalled()
   })
 })
