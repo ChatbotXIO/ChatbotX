@@ -14,7 +14,7 @@ import {
   PopoverTrigger,
 } from "@chatbotx.io/ui/components/ui/popover"
 import { cn } from "@chatbotx.io/ui/lib/utils"
-import { Check, ChevronsUpDown } from "lucide-react"
+import { Check, ChevronsUpDown, GlobeIcon } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useLocale, useTranslations } from "next-intl"
 import type React from "react"
@@ -27,7 +27,11 @@ const items = locales.map((value) => ({
   label: localeMeta[value].nativeLabel,
 }))
 
-export const LangSelector: React.FC = () => {
+export const LangSelector: React.FC<{
+  className?: string
+  /** Compact globe + label trigger, for page corners instead of form rows. */
+  compact?: boolean
+}> = ({ className, compact = false }) => {
   const locale = resolveLocale(useLocale())
   const [open, setOpen] = useState(false)
   const [isPending, startTransition] = useTransition()
@@ -52,17 +56,20 @@ export const LangSelector: React.FC = () => {
           <Button
             aria-expanded={open}
             aria-label={t("fields.language.label")}
-            className="w-45 justify-between"
+            className={cn(!compact && "w-45 justify-between", className)}
             disabled={isPending}
             role="combobox"
             variant="outline"
           >
+            {compact && <GlobeIcon aria-hidden className="size-4" />}
             <span className="truncate">{localeMeta[locale].nativeLabel}</span>
-            <ChevronsUpDown className="size-4 shrink-0 opacity-50" />
+            {!compact && (
+              <ChevronsUpDown className="size-4 shrink-0 opacity-50" />
+            )}
           </Button>
         }
       />
-      <PopoverContent align="start" className="w-45 p-0">
+      <PopoverContent align={compact ? "center" : "start"} className="w-45 p-0">
         <Command>
           <CommandInput className="h-9" placeholder={t("actions.search")} />
           <CommandList>

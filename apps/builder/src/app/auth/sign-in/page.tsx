@@ -1,3 +1,4 @@
+import { AuthLanguageSelector } from "@/features/auth/auth-language-selector"
 import { SignInForm } from "@/features/auth/sign-in"
 import { resolveAuthPageOptions } from "@/lib/auth/auth-page-options"
 
@@ -6,5 +7,10 @@ export const dynamic = "force-dynamic"
 export default async function SignInPage() {
   const options = await resolveAuthPageOptions()
 
-  return <SignInForm {...options} />
+  return (
+    <>
+      <SignInForm {...options} />
+      <AuthLanguageSelector />
+    </>
+  )
 }
