@@ -137,6 +137,7 @@ export const TELEGRAM_ALLOWED_UPDATES = [
   "callback_query",
   "my_chat_member",
   "chat_member",
+  "business_message",
 ] as const
 
 export const setWebhook = (

@@ -7,6 +7,7 @@ import type {
 } from "@chatbotx.io/flow-config"
 import type { MessageHandlers } from "@chatbotx.io/sdk"
 import { MAX_INLINE_BUTTONS_PER_ROW } from "../../../constants"
+import { chatTarget } from "../../../lib/chat-target"
 import type {
   TelegramAuthValue,
   TelegramSendAudioRequest,
@@ -40,7 +41,7 @@ export function* convertFlowStepImage(
   ]
 
   if (buttons.length === 0) {
-    yield { chat_id: chatId, photo: step.url }
+    yield { ...chatTarget(contact), photo: step.url }
     return
   }
 
@@ -50,7 +51,7 @@ export function* convertFlowStepImage(
   )
 
   yield {
-    chat_id: chatId,
+    ...chatTarget(contact),
     photo: step.url,
     reply_markup: keyboard,
   }
@@ -80,7 +81,7 @@ export function* convertFlowStepVideo(
       : undefined
 
   yield {
-    chat_id: chatId,
+    ...chatTarget(contact),
     video: step.url,
     reply_markup: keyboard,
   }
@@ -105,7 +106,7 @@ export function* convertFlowStepAudio(
   ]
 
   if (buttons.length === 0) {
-    yield { chat_id: chatId, audio: step.url }
+    yield { ...chatTarget(contact), audio: step.url }
     return
   }
 
@@ -115,7 +116,7 @@ export function* convertFlowStepAudio(
   )
 
   yield {
-    chat_id: chatId,
+    ...chatTarget(contact),
     audio: step.url,
     reply_markup: keyboard,
   }
@@ -140,7 +141,7 @@ export function* convertFlowStepMultipleImages(
 
   // Telegram's sendMediaGroup does not support reply_markup/buttons.
   yield {
-    chat_id: chatId,
+    ...chatTarget(contact),
     media: step.images.map((image) => ({
       type: "photo" as const,
       media: image.url,
@@ -167,7 +168,7 @@ export function* convertFlowStepFile(
   ]
 
   if (buttons.length === 0) {
-    yield { chat_id: chatId, document: step.url }
+    yield { ...chatTarget(contact), document: step.url }
     return
   }
 
@@ -177,7 +178,7 @@ export function* convertFlowStepFile(
   )
 
   yield {
-    chat_id: chatId,
+    ...chatTarget(contact),
     document: step.url,
     reply_markup: keyboard,
   }

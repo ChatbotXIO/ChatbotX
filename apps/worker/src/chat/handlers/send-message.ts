@@ -1018,7 +1018,18 @@ export async function sendTypingToChannel(data: ChatJobSendTyping["data"]) {
 
   await integration.runChannelHandler("conversation", "sendTyping", {
     ctx,
-    data: { contact: contactInbox, typing, seconds, messageSourceId },
+    data: {
+      contact: {
+        ...contactInbox,
+        sourceConversationId: resolveSourceConversationId(
+          conversation,
+          contactInbox.channel,
+        ),
+      },
+      typing,
+      seconds,
+      messageSourceId,
+    },
   })
 }
 

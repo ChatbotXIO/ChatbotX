@@ -1,6 +1,7 @@
 import type { SendQuickReplyStepSchema } from "@chatbotx.io/flow-config"
 import type { MessageHandlers } from "@chatbotx.io/sdk"
 import { MAX_INLINE_BUTTONS_PER_ROW } from "../../../constants"
+import { chatTarget } from "../../../lib/chat-target"
 import type {
   TelegramAuthValue,
   TelegramSendMessageRequest,
@@ -28,7 +29,7 @@ export function* convertFlowStepQuickReply(
   })
 
   yield {
-    chat_id: chatId,
+    ...chatTarget(contact),
     text: step.message,
     reply_markup: keyboard,
   }

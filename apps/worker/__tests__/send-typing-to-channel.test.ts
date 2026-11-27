@@ -15,7 +15,7 @@ vi.mock("@chatbotx.io/business", () => ({
 }))
 vi.mock("@chatbotx.io/database/client", () => ({ db: {}, eq: vi.fn() }))
 vi.mock("../src/services/integrations", () => ({
-  allIntegrations: { messenger: {}, whatsapp: {} },
+  allIntegrations: { messenger: {}, telegram: {}, whatsapp: {} },
   resolveIntegrationContextFromContactInbox:
     mocks.resolveIntegrationContextFromContactInbox,
 }))
@@ -60,6 +60,34 @@ describe("sendTypingToChannel", () => {
           messageSourceId: "wamid.abc",
         },
       },
+    )
+  })
+
+  test("typing carries the channel conversation id, like a send", async () => {
+    const contactInbox = { id: "ci-1", channel: "telegram" } as never
+
+    await sendTypingToChannel({
+      conversation: {
+        id: "conv-1",
+        workspaceId: "ws-1",
+        sourceId: null,
+        additionalAttributes: { channelConversationId: "bc-1" },
+      } as never,
+      contactInbox,
+      typing: true,
+    })
+
+    expect(mocks.runChannelHandler).toHaveBeenCalledWith(
+      "conversation",
+      "sendTyping",
+      expect.objectContaining({
+        data: expect.objectContaining({
+          contact: {
+            ...(contactInbox as object),
+            sourceConversationId: "bc-1",
+          },
+        }),
+      }),
     )
   })
 

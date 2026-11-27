@@ -1,5 +1,6 @@
 import { type ConversationHandlers, SdkException } from "@chatbotx.io/sdk"
 import { sendChatAction } from "../apis/bot"
+import { chatTarget } from "../lib/chat-target"
 import type { TelegramAuthValue } from "../schema"
 
 const sendTyping: ConversationHandlers<TelegramAuthValue>["sendTyping"] =
@@ -16,7 +17,7 @@ const sendTyping: ConversationHandlers<TelegramAuthValue>["sendTyping"] =
 
     if (typing) {
       await sendChatAction(ctx.auth, {
-        chat_id: chatId,
+        ...chatTarget(contact),
         action: "typing",
       })
     }

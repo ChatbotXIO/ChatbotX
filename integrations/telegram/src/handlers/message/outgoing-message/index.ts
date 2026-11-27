@@ -24,6 +24,7 @@ import {
   sendTelegramVideo,
 } from "../../../apis/bot"
 import { MAX_INLINE_BUTTONS_PER_ROW } from "../../../constants"
+import { chatTarget } from "../../../lib/chat-target"
 import { mapToChannelError } from "../../../lib/error-mapper"
 import { logger } from "../../../lib/logger"
 import type { TelegramAuthValue } from "../../../schema"
@@ -67,7 +68,7 @@ export const sendMessage: MessageHandlers<TelegramAuthValue>["sendMessage"] =
       if (message.contentType === contentTypes.enum.text) {
         if (message.text) {
           const messageId = await sendTelegramMessage(ctx.auth, {
-            chat_id: contact.sourceId,
+            ...chatTarget(contact),
             text: message.text,
             reply_markup:
               quickReplies && quickReplies.length > 0
@@ -94,7 +95,7 @@ export const sendMessage: MessageHandlers<TelegramAuthValue>["sendMessage"] =
 
         if (imageAttachments.length > 1) {
           const ids = await sendTelegramMediaGroup(ctx.auth, {
-            chat_id: contact.sourceId,
+            ...chatTarget(contact),
             media: imageAttachments.map((attachment) => ({
               type: "photo" as const,
               media: attachment.url as string,
@@ -103,7 +104,7 @@ export const sendMessage: MessageHandlers<TelegramAuthValue>["sendMessage"] =
           messageIds.push(...ids.map(String))
         } else if (imageAttachments.length === 1) {
           const messageId = await sendTelegramPhoto(ctx.auth, {
-            chat_id: contact.sourceId,
+            ...chatTarget(contact),
             photo: imageAttachments[0].url as string,
           })
           messageIds.push(String(messageId))
@@ -113,7 +114,7 @@ export const sendMessage: MessageHandlers<TelegramAuthValue>["sendMessage"] =
           switch (attachment.fileType) {
             case "video": {
               const messageId = await sendTelegramVideo(ctx.auth, {
-                chat_id: contact.sourceId,
+                ...chatTarget(contact),
                 video: attachment.url as string,
               })
               messageIds.push(String(messageId))
@@ -121,7 +122,7 @@ export const sendMessage: MessageHandlers<TelegramAuthValue>["sendMessage"] =
             }
             case "audio": {
               const messageId = await sendTelegramAudio(ctx.auth, {
-                chat_id: contact.sourceId,
+                ...chatTarget(contact),
                 audio: attachment.url as string,
               })
               messageIds.push(String(messageId))
@@ -129,7 +130,7 @@ export const sendMessage: MessageHandlers<TelegramAuthValue>["sendMessage"] =
             }
             default: {
               const messageId = await sendTelegramDocument(ctx.auth, {
-                chat_id: contact.sourceId,
+                ...chatTarget(contact),
                 document: attachment.url as string,
               })
               messageIds.push(String(messageId))
@@ -139,7 +140,7 @@ export const sendMessage: MessageHandlers<TelegramAuthValue>["sendMessage"] =
         }
       } else {
         const messageId = await sendTelegramMessage(ctx.auth, {
-          chat_id: contact.sourceId,
+          ...chatTarget(contact),
           text: message.text ?? "not handled yet",
         })
         messageIds.push(String(messageId))
@@ -253,7 +254,7 @@ export const sendFlowStep: MessageHandlers<TelegramAuthValue>["sendFlowStep"] =
         case stepTypes.enum.sendGif: {
           if ("url" in step) {
             const messageId = await sendTelegramDocument(ctx.auth, {
-              chat_id: props.data.contact.sourceId,
+              ...chatTarget(props.data.contact),
               document: step.url as string,
               reply_markup:
                 props.data.quickReplies && props.data.quickReplies.length > 0
