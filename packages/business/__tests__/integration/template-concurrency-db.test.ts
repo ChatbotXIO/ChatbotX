@@ -397,19 +397,24 @@ describe.skipIf(!databaseUrl)("template lock protocols, concurrently", () => {
     }
 
     const save = async (seed: Seed) =>
-      await templateRepository.saveWithVersion({
-        id: seed.templateId,
-        workspaceId: seed.workspaceId,
-        versionId: createId(),
-        set: { name: "Saved" },
-        snapshot: {
-          payload: {} as never,
-          payloadHash: "hash-new",
-          formatVersion: 1,
-        },
-        legacyPayloadHash: null,
-        basedOnVersion: VERSIONS,
-      })
+      await db.transaction((tx) =>
+        templateRepository.saveWithVersion(
+          {
+            id: seed.templateId,
+            workspaceId: seed.workspaceId,
+            versionId: createId(),
+            set: { name: "Saved" },
+            snapshot: {
+              payload: {} as never,
+              payloadHash: "hash-new",
+              formatVersion: 1,
+            },
+            legacyPayloadHash: null,
+            basedOnVersion: VERSIONS,
+          },
+          tx,
+        ),
+      )
 
     const remainingVersions = async (seed: Seed) =>
       (
@@ -424,19 +429,24 @@ describe.skipIf(!databaseUrl)("template lock protocols, concurrently", () => {
     test("a save that read an older version advances, even with a stale hash equal to its own", async () => {
       const seed = await seedVersions()
 
-      const saved = await templateRepository.saveWithVersion({
-        id: seed.templateId,
-        workspaceId: seed.workspaceId,
-        versionId: createId(),
-        set: { name: "Stale" },
-        snapshot: {
-          payload: {} as never,
-          payloadHash: "hash-a",
-          formatVersion: 1,
-        },
-        legacyPayloadHash: "hash-a",
-        basedOnVersion: VERSIONS - 1,
-      })
+      const saved = await db.transaction((tx) =>
+        templateRepository.saveWithVersion(
+          {
+            id: seed.templateId,
+            workspaceId: seed.workspaceId,
+            versionId: createId(),
+            set: { name: "Stale" },
+            snapshot: {
+              payload: {} as never,
+              payloadHash: "hash-a",
+              formatVersion: 1,
+            },
+            legacyPayloadHash: "hash-a",
+            basedOnVersion: VERSIONS - 1,
+          },
+          tx,
+        ),
+      )
 
       expect(saved?.version).toBe(VERSIONS + 1)
     })

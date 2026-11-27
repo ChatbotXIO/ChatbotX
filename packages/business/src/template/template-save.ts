@@ -24,6 +24,7 @@ import {
 } from "./permissions"
 import { generateShareToken } from "./share-token"
 import { buildTemplateSnapshot } from "./snapshot.service"
+import { withTemplateStoreBump } from "./store-cache"
 import { resolveTemplateEmbeddedVideo } from "./template-video"
 import { describeVersionChanges } from "./version-changes"
 
@@ -242,20 +243,26 @@ export const saveTemplate = async (
   const legacyPayloadHash = await hashTemplateContent(existing.payload)
   // A template saved under an older format can not be compared: no detail then.
   const previous = parseTemplateExport(existing.payload)
-  const saved = await templateRepository.saveWithVersion({
-    id: existing.id,
-    workspaceId: input.workspaceId,
-    versionId: createId(),
-    set: { ...contents, ...videoColumns },
-    snapshot: {
-      ...snapshot,
-      changes: previous.ok
-        ? describeVersionChanges(previous.data, payload)
-        : null,
-    },
-    legacyPayloadHash,
-    basedOnVersion: existing.version,
-  })
+  // Always bumps the template's own tenant: a listing may be attached right now.
+  const saved = await withTemplateStoreBump((tx) =>
+    templateRepository.saveWithVersion(
+      {
+        id: existing.id,
+        workspaceId: input.workspaceId,
+        versionId: createId(),
+        set: { ...contents, ...videoColumns },
+        snapshot: {
+          ...snapshot,
+          changes: previous.ok
+            ? describeVersionChanges(previous.data, payload)
+            : null,
+        },
+        legacyPayloadHash,
+        basedOnVersion: existing.version,
+      },
+      tx,
+    ),
+  )
   if (!saved) {
     throw notFoundException("Template not found")
   }

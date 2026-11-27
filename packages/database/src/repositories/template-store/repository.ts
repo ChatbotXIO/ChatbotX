@@ -39,6 +39,7 @@ import {
   workspaceModel,
 } from "../../schema"
 import { isBigintId, likeContains } from "../../utils"
+import { cacheVersionRepository } from "../cache-version"
 
 export type TemplateStoreCategoryRef = { id: string; name: string }
 
@@ -85,6 +86,37 @@ export type TemplateStorePublishedRow = {
   languages: Locale[]
   /** Channels the template supports, in display order; empty = every channel. */
   channels: TemplateChannel[]
+}
+
+/** A visible-or-expired-but-shared row of the cached snapshot (expiry is applied on read). */
+export type TemplateStoreSnapshotRow = TemplateStorePublishedRow & {
+  /** Epoch microseconds of `shareExpiresAt` as a decimal string, or null when it never expires. */
+  shareExpiresAtMicros: string | null
+  /** `lower(name)` under the column's collation, exactly what `ILIKE` compares. */
+  searchName: string
+  /** `lower(publisherName)`, or null when there is no publisher. */
+  searchPublisherName: string | null
+}
+
+export type TemplateStoreSnapshotData = {
+  tenantId: string
+  /** The tenant's CacheVersion at the snapshot's read (decimal bigint string). */
+  version: string
+  /** Database `statement_timestamp()` of the snapshot's first statement (the instant its snapshot was taken), epoch microseconds. */
+  loadedAtMicros: string
+  /** At most `TEMPLATE_STORE_MAX_LISTINGS + 1` rows; one row more than the cap means the snapshot is incomplete. */
+  rows: TemplateStoreSnapshotRow[]
+  /** Every category of the tenant, in tab order. */
+  categories: TemplateStoreCategoryRef[]
+}
+
+/** Whether the database lets keyword search be reproduced outside SQL. */
+export type TemplateStoreKeywordCollationSupport = {
+  isUtf8: boolean
+  /** `Template.name` uses the database `default` collation, and it is deterministic. */
+  nameUsesDefaultDeterministicCollation: boolean
+  /** `Template.publisherName` uses the database `default` collation, and it is deterministic. */
+  publisherNameUsesDefaultDeterministicCollation: boolean
 }
 
 export type TemplateStoreCandidateRow = {
@@ -166,6 +198,29 @@ const publishedTemplateWhere = (tenantId: string) =>
     eq(templateStoreListingModel.tenantId, tenantId),
     STATUS_PREDICATES.published(),
   ) as SQL
+
+/** The columns of a published listing, shared by the live query and the snapshot. A function so no `sql` template is built at import time. */
+const publishedRowColumns = () => ({
+  listingId: templateStoreListingModel.id,
+  templateId: templateModel.id,
+  name: templateModel.name,
+  description: templateModel.description,
+  imageUrl: templateModel.imageUrl,
+  publisherName: templateModel.publisherName,
+  shareToken: templateModel.shareToken,
+  languages: templateStoreListingModel.languages,
+  channels: templateStoreListingModel.channels,
+  // The left join gives one NULL row to a listing with no category; it must read as [].
+  categoryIds: sql<
+    string[]
+  >`coalesce(array_agg(${templateStoreListingCategoryModel.categoryId}::text order by ${templateStoreListingCategoryModel.categoryId}) filter (where ${templateStoreListingCategoryModel.categoryId} is not null), '{}')`,
+})
+
+/** Newest first, ties by id. */
+const publishedRowsOrder = () => [
+  desc(templateStoreListingModel.createdAt),
+  asc(templateStoreListingModel.id),
+]
 
 export const templateStoreRepository = {
   /**
@@ -649,21 +704,7 @@ export const templateStoreRepository = {
     const filterLink = alias(templateStoreListingCategoryModel, "filter_link")
     const keyword = input.keyword?.trim()
     return await tx
-      .select({
-        listingId: templateStoreListingModel.id,
-        templateId: templateModel.id,
-        name: templateModel.name,
-        description: templateModel.description,
-        imageUrl: templateModel.imageUrl,
-        publisherName: templateModel.publisherName,
-        shareToken: templateModel.shareToken,
-        languages: templateStoreListingModel.languages,
-        channels: templateStoreListingModel.channels,
-        // The left join gives one NULL row to a listing with no category; it must read as [].
-        categoryIds: sql<
-          string[]
-        >`coalesce(array_agg(${templateStoreListingCategoryModel.categoryId}::text order by ${templateStoreListingCategoryModel.categoryId}) filter (where ${templateStoreListingCategoryModel.categoryId} is not null), '{}')`,
-      })
+      .select(publishedRowColumns())
       .from(templateStoreListingModel)
       .innerJoin(
         templateModel,
@@ -719,10 +760,121 @@ export const templateStoreRepository = {
         ),
       )
       .groupBy(templateStoreListingModel.id, templateModel.id)
-      .orderBy(
-        desc(templateStoreListingModel.createdAt),
-        asc(templateStoreListingModel.id),
-      )
+      .orderBy(...publishedRowsOrder())
       .limit(TEMPLATE_STORE_MAX_LISTINGS)
+  },
+
+  /**
+   * Everything the cached store needs for one tenant, read in one
+   * repeatable-read, read-only transaction so the version, the clock, the rows
+   * and the categories describe the same instant. Rows are the tenant's
+   * non-gone, share-enabled listings WITHOUT the expiry predicate (expiry is
+   * applied on read), newest first, capped at one row over the listing cap.
+   */
+  async readSnapshot(tenantId: string): Promise<TemplateStoreSnapshotData> {
+    return await db.transaction(
+      async (tx) => {
+        const { version, databaseNowMicros } =
+          await cacheVersionRepository.read(
+            { namespace: "template-store", scopeId: tenantId },
+            tx,
+          )
+        const rows = await tx
+          .select({
+            ...publishedRowColumns(),
+            shareExpiresAtMicros: sql<
+              string | null
+            >`case when ${templateModel.shareExpiresAt} = 'infinity' then null else floor(extract(epoch from ${templateModel.shareExpiresAt}) * 1000000)::bigint::text end`,
+            searchName: sql<string>`lower(${templateModel.name})`,
+            searchPublisherName: sql<
+              string | null
+            >`lower(${templateModel.publisherName})`,
+          })
+          .from(templateStoreListingModel)
+          .innerJoin(
+            templateModel,
+            eq(templateModel.id, templateStoreListingModel.templateId),
+          )
+          .leftJoin(
+            templateStoreListingCategoryModel,
+            eq(
+              templateStoreListingCategoryModel.listingId,
+              templateStoreListingModel.id,
+            ),
+          )
+          .where(
+            and(
+              eq(templateStoreListingModel.tenantId, tenantId),
+              not(templateGone()),
+              eq(templateModel.shareEnabled, true),
+              // The live predicate `shareExpiresAt < now()` is always true for
+              // '-infinity', so such a row is never visible; leaving it out is
+              // exactly equivalent (and its epoch is not a bigint).
+              or(
+                isNull(templateModel.shareExpiresAt),
+                sql`${templateModel.shareExpiresAt} > '-infinity'`,
+              ),
+            ),
+          )
+          .groupBy(templateStoreListingModel.id, templateModel.id)
+          .orderBy(...publishedRowsOrder())
+          .limit(TEMPLATE_STORE_MAX_LISTINGS + 1)
+        const categories = await tx
+          .select({
+            id: templateStoreCategoryModel.id,
+            name: templateStoreCategoryModel.name,
+          })
+          .from(templateStoreCategoryModel)
+          .where(eq(templateStoreCategoryModel.tenantId, tenantId))
+          .orderBy(
+            asc(templateStoreCategoryModel.rank),
+            asc(templateStoreCategoryModel.id),
+          )
+        return {
+          tenantId,
+          version,
+          loadedAtMicros: databaseNowMicros,
+          rows,
+          categories,
+        }
+      },
+      { isolationLevel: "repeatable read", accessMode: "read only" },
+    )
+  },
+
+  /**
+   * Whether keyword search over `lower(name)` / `lower(publisherName)` can
+   * reproduce `ILIKE` outside SQL: the database must be UTF-8 (otherwise ILIKE
+   * lowers byte-wise) and both columns must use the database `default`
+   * collation (the one `cacheVersionRepository.read` lowers the pattern with)
+   * and it must be deterministic (otherwise ILIKE raises). Constant for a
+   * database; callers memoise it.
+   */
+  async readKeywordCollationSupport(
+    tx: DatabaseClient = db,
+  ): Promise<TemplateStoreKeywordCollationSupport> {
+    const result = await tx.execute<TemplateStoreKeywordCollationSupport>(sql`
+      SELECT
+        pg_encoding_to_char(d."encoding") = 'UTF8' AS "isUtf8",
+        coalesce(nc."collname" = 'default' AND nc."collisdeterministic", false) AS "nameUsesDefaultDeterministicCollation",
+        coalesce(pc."collname" = 'default' AND pc."collisdeterministic", false) AS "publisherNameUsesDefaultDeterministicCollation"
+      FROM pg_database d
+      LEFT JOIN pg_attribute na
+        ON na."attrelid" = to_regclass('"Template"') AND na."attname" = 'name'
+      LEFT JOIN pg_collation nc ON nc."oid" = na."attcollation"
+      LEFT JOIN pg_attribute pa
+        ON pa."attrelid" = to_regclass('"Template"') AND pa."attname" = 'publisherName'
+      LEFT JOIN pg_collation pc ON pc."oid" = pa."attcollation"
+      WHERE d."datname" = current_database()
+    `)
+    const [row] = result.rows
+    if (!row) {
+      return {
+        isUtf8: false,
+        nameUsesDefaultDeterministicCollation: false,
+        publisherNameUsesDefaultDeterministicCollation: false,
+      }
+    }
+    return row
   },
 }

@@ -53,6 +53,7 @@ import {
   stageSharedTemplateInstall,
   stageTenantDefaultInstall,
 } from "../template/installation-stage"
+import { bumpTemplateStoreVersion } from "../template/store-cache"
 import { userQuotaService } from "../user-quota/service"
 import { workspaceDeletionRecordService } from "../workspace-deletion-record/service"
 import { withPurgeTimeouts } from "../workspace-lifecycle/purge-batch"
@@ -920,6 +921,9 @@ class WorkspaceService extends BaseService {
               workspace: deleted[0],
               tx,
             })
+            // The cascade hard-deleted this workspace's Templates and, with
+            // them, their store listings: announce it (the last write) to the cached store.
+            await bumpTemplateStoreVersion(fencedWorkspace.tenantId, tx)
           }
           return deleted
         },

@@ -8,9 +8,19 @@ const mocks = vi.hoisted(() => ({
   buildTemplateSnapshot: vi.fn(),
   enqueueFanOut: vi.fn(),
   findMediaFileByPath: vi.fn(),
+  bumpCacheVersion: vi.fn(),
+}))
+
+// The existing-template save runs inside withTemplateStoreBump, which opens a
+// transaction and bumps the tenant's CacheVersion: stand both in.
+vi.mock("@chatbotx.io/database/client", () => ({
+  db: {
+    transaction: (callback: (tx: unknown) => unknown) => callback({}),
+  },
 }))
 
 vi.mock("@chatbotx.io/database/repositories", () => ({
+  cacheVersionRepository: { bump: mocks.bumpCacheVersion },
   templateRepository: {
     findLive: mocks.findLive,
     saveWithVersion: mocks.saveWithVersion,
@@ -77,6 +87,7 @@ describe("saveTemplate video", () => {
     mocks.createWithFirstVersion.mockResolvedValue({ id: "tpl-1", version: 1 })
     mocks.saveWithVersion.mockImplementation(({ set }) => ({
       id: "tpl-1",
+      tenantId: "1",
       version: 1,
       ...set,
     }))
