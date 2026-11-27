@@ -3287,7 +3287,11 @@
       "stepUnsupportedOnChannel": "Dit kanaal kan dit mediatype niet verzenden — de stap wordt daar overgeslagen. Verwijder de stap of zet de node op een kanaal dat het ondersteunt.",
       "buttonsSkippedOnChannel": "Dit kanaal kan geen knoppen bij een mediabericht verzenden — daar worden ze overgeslagen. Zet ze in plaats daarvan in een volgende tekststap.",
       "captionLabel": "Bijschrift",
-      "captionPlaceholder": "Tekst die met de media wordt verzonden (optioneel)"
+      "captionPlaceholder": "Tekst die met de media wordt verzonden (optioneel)",
+      "sendAsVoiceNote": "Verzenden als spraakbericht",
+      "voiceNoteHint": "Wordt afgespeeld als spraakbericht. OGG (Opus), MP3 of M4A.",
+      "sendAsVideoNote": "Verzenden als ronde video",
+      "videoNoteHint": "Een vierkante video van maximaal 1 minuut. Zonder bijschrift."
     },
     "whatsappCallButton": {
       "editButtonTitle": "Knop bewerken",
@@ -4693,6 +4697,8 @@
     "mediaButtonsUnsupported": "Dit kanaal kan geen knoppen bij een mediabericht verzenden. Verwijder de knoppen of verplaats ze naar een tekststap hierna.",
     "mediaCaptionUnsupported": "Dit kanaal kan geen bijschrift bij media verzenden. Verwijder het bijschrift of zet de tekst in een aparte tekststap.",
     "mediaCaptionTooLong": "Het bijschrift is te lang voor dit kanaal. Maak het korter of verplaats een deel van de tekst naar een aparte tekststap.",
+    "mediaNoteUnsupported": "Dit kanaal kan dit niet als spraakbericht of ronde video verzenden. Zet de schakelaar uit om een gewoon bestand te verzenden.",
+    "mediaNoteCaptionUnsupported": "Een ronde video kan geen bijschrift hebben. Verwijder het bijschrift of zet de tekst in een aparte tekststap.",
     "voiceCall": "Spraakoproep",
     "voiceCallDuration": "Spraakoproep · {duration}",
     "missedVoiceCall": "Gemiste spraakoproep",

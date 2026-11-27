@@ -27,6 +27,12 @@ export const sendVideoStepSchema = baseStepSchema.extend({
     .describe(
       "Text sent with the video as its caption. May include `{{variable}}` placeholders. Only on channels whose policy declares `limits.mediaCaption`.",
     ),
+  asNote: z
+    .boolean()
+    .optional()
+    .describe(
+      "Send the video as a round video note (square, up to 1 minute; no caption). Only on channels whose policy lists `sendVideo` in `mediaNotes`.",
+    ),
   buttons: z.array(buttonStepSchema),
 })
 

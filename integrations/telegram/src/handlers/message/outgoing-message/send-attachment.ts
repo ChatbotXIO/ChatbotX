@@ -13,7 +13,9 @@ import type {
   TelegramSendDocumentRequest,
   TelegramSendMediaGroupRequest,
   TelegramSendPhotoRequest,
+  TelegramSendVideoNoteRequest,
   TelegramSendVideoRequest,
+  TelegramSendVoiceRequest,
 } from "../../../schema"
 import {
   buildCanonicalInlineButton,
@@ -56,7 +58,7 @@ export function* convertFlowStepVideo(
   props: Parameters<
     MessageHandlers<TelegramAuthValue, SendVideoStepSchema>["sendFlowStep"]
   >[0],
-): Generator<TelegramSendVideoRequest> {
+): Generator<TelegramSendVideoRequest | TelegramSendVideoNoteRequest> {
   const {
     data: { step, contact, flowId },
   } = props
@@ -75,6 +77,11 @@ export function* convertFlowStepVideo(
       ? buildInlineKeyboardFromButtons(buttons, MAX_INLINE_BUTTONS_PER_ROW)
       : undefined
 
+  if (step.asNote) {
+    yield { chat_id: chatId, video_note: step.url, reply_markup: keyboard }
+    return
+  }
+
   yield {
     chat_id: chatId,
     video: step.url,
@@ -87,7 +94,7 @@ export function* convertFlowStepAudio(
   props: Parameters<
     MessageHandlers<TelegramAuthValue, SendAudioStepSchema>["sendFlowStep"]
   >[0],
-): Generator<TelegramSendAudioRequest> {
+): Generator<TelegramSendAudioRequest | TelegramSendVoiceRequest> {
   const {
     data: { step, contact, flowId },
   } = props
@@ -101,21 +108,17 @@ export function* convertFlowStepAudio(
     ...(props.data.quickReplies ?? []).map(buildCanonicalInlineButton),
   ]
 
-  if (buttons.length === 0) {
-    yield { chat_id: chatId, audio: step.url }
+  const keyboard =
+    buttons.length > 0
+      ? buildInlineKeyboardFromButtons(buttons, MAX_INLINE_BUTTONS_PER_ROW)
+      : undefined
+
+  if (step.asNote) {
+    yield { chat_id: chatId, voice: step.url, reply_markup: keyboard }
     return
   }
 
-  const keyboard = buildInlineKeyboardFromButtons(
-    buttons,
-    MAX_INLINE_BUTTONS_PER_ROW,
-  )
-
-  yield {
-    chat_id: chatId,
-    audio: step.url,
-    reply_markup: keyboard,
-  }
+  yield { chat_id: chatId, audio: step.url, reply_markup: keyboard }
 }
 
 export function* convertFlowStepMultipleImages(

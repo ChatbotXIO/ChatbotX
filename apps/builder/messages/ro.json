@@ -305,7 +305,11 @@
       "stepUnsupportedOnChannel": "Acest canal nu poate trimite acest tip de conținut media — pasul este ignorat acolo. Elimină-l sau schimbă nodul pe un canal compatibil.",
       "buttonsSkippedOnChannel": "Acest canal nu poate trimite butoane împreună cu un mesaj media — acolo sunt ignorate. Adaugă-le într-un pas text ulterior.",
       "captionLabel": "Descriere",
-      "captionPlaceholder": "Text trimis împreună cu fișierul media (opțional)"
+      "captionPlaceholder": "Text trimis împreună cu fișierul media (opțional)",
+      "sendAsVoiceNote": "Trimite ca mesaj vocal",
+      "voiceNoteHint": "Se redă ca mesaj vocal. OGG (Opus), MP3 sau M4A.",
+      "sendAsVideoNote": "Trimite ca video rotund",
+      "videoNoteHint": "Un video pătrat de până la 1 minut. Nu are descriere."
     },
     "whatsappCallButton": {
       "editButtonTitle": "Editează butonul",
@@ -4693,6 +4697,8 @@
     "mediaButtonsUnsupported": "Acest canal nu poate trimite butoane împreună cu un mesaj media. Elimină butoanele sau mută-le într-un pas text de după acesta.",
     "mediaCaptionUnsupported": "Acest canal nu poate trimite o descriere cu fișiere media. Elimină descrierea sau mută textul într-un pas de text separat.",
     "mediaCaptionTooLong": "Descrierea este prea lungă pentru acest canal. Scurteaz-o sau mută o parte din text într-un pas de text separat.",
+    "mediaNoteUnsupported": "Acest canal nu poate trimite acest lucru ca mesaj vocal sau video rotund. Dezactivează comutatorul pentru a trimite un fișier obișnuit.",
+    "mediaNoteCaptionUnsupported": "Un video rotund nu poate avea descriere. Elimină descrierea sau mută textul într-un pas de text separat.",
     "voiceCall": "Apel vocal",
     "voiceCallDuration": "Apel vocal · {duration}",
     "missedVoiceCall": "Apel vocal pierdut",

@@ -21,6 +21,8 @@ export const flowValidationCodes = {
   mediaButtonsUnsupported: "mediaButtonsUnsupported",
   mediaCaptionUnsupported: "mediaCaptionUnsupported",
   mediaCaptionTooLong: "mediaCaptionTooLong",
+  mediaNoteUnsupported: "mediaNoteUnsupported",
+  mediaNoteCaptionUnsupported: "mediaNoteCaptionUnsupported",
   unsupportedBlock: "unsupportedBlock",
   constraintExceeded: "constraintExceeded",
   waTemplateMpmNoProducts: "waTemplateMpmNoProducts",

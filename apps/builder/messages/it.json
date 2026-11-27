@@ -3287,7 +3287,11 @@
       "stepUnsupportedOnChannel": "Questo canale non può inviare questo tipo di contenuto: il passaggio viene ignorato. Rimuovilo o imposta il nodo su un canale che lo supporta.",
       "buttonsSkippedOnChannel": "Questo canale non può inviare pulsanti con un messaggio multimediale: lì vengono ignorati. Inseriscili invece in un passaggio di testo successivo.",
       "captionLabel": "Didascalia",
-      "captionPlaceholder": "Testo inviato con il contenuto multimediale (facoltativo)"
+      "captionPlaceholder": "Testo inviato con il contenuto multimediale (facoltativo)",
+      "sendAsVoiceNote": "Invia come messaggio vocale",
+      "voiceNoteHint": "Viene riprodotto come messaggio vocale. OGG (Opus), MP3 o M4A.",
+      "sendAsVideoNote": "Invia come video circolare",
+      "videoNoteHint": "Un video quadrato di massimo 1 minuto. Non ha didascalia."
     },
     "whatsappCallButton": {
       "editButtonTitle": "Modifica pulsante",
@@ -4693,6 +4697,8 @@
     "mediaButtonsUnsupported": "Questo canale non può inviare pulsanti con un messaggio multimediale. Rimuovi i pulsanti o spostali in un passaggio di testo successivo.",
     "mediaCaptionUnsupported": "Questo canale non può inviare una didascalia con i contenuti multimediali. Rimuovi la didascalia o sposta il testo in un passaggio di testo separato.",
     "mediaCaptionTooLong": "La didascalia è troppo lunga per questo canale. Accorciala o sposta parte del testo in un passaggio di testo separato.",
+    "mediaNoteUnsupported": "Questo canale non può inviarlo come messaggio vocale o video circolare. Disattiva l'interruttore per inviare un file normale.",
+    "mediaNoteCaptionUnsupported": "Un video circolare non può avere una didascalia. Rimuovi la didascalia o sposta il testo in un passaggio di testo separato.",
     "voiceCall": "Chiamata vocale",
     "voiceCallDuration": "Chiamata vocale · {duration}",
     "missedVoiceCall": "Chiamata vocale persa",

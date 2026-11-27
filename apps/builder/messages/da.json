@@ -3287,7 +3287,11 @@
       "stepUnsupportedOnChannel": "Denne kanal kan ikke sende denne medietype – trinnet springes over der. Fjern det, eller skift noden til en kanal der understøtter det.",
       "buttonsSkippedOnChannel": "Denne kanal kan ikke sende knapper sammen med en mediebesked – de springes over der. Læg dem i stedet på et efterfølgende teksttrin.",
       "captionLabel": "Billedtekst",
-      "captionPlaceholder": "Tekst, der sendes med mediet (valgfrit)"
+      "captionPlaceholder": "Tekst, der sendes med mediet (valgfrit)",
+      "sendAsVoiceNote": "Send som talebesked",
+      "voiceNoteHint": "Afspilles som en talebesked. OGG (Opus), MP3 eller M4A.",
+      "sendAsVideoNote": "Send som rund video",
+      "videoNoteHint": "En kvadratisk video på op til 1 minut. Den har ingen billedtekst."
     },
     "whatsappCallButton": {
       "editButtonTitle": "Rediger Knap",
@@ -4693,6 +4697,8 @@
     "mediaButtonsUnsupported": "Denne kanal kan ikke sende knapper sammen med en mediebesked. Fjern knapperne, eller flyt dem til et teksttrin efter dette.",
     "mediaCaptionUnsupported": "Denne kanal kan ikke sende en billedtekst med medier. Fjern billedteksten, eller læg teksten i et separat teksttrin.",
     "mediaCaptionTooLong": "Billedteksten er for lang til denne kanal. Forkort den, eller flyt en del af teksten til et separat teksttrin.",
+    "mediaNoteUnsupported": "Denne kanal kan ikke sende dette som talebesked eller rund video. Slå kontakten fra for at sende en almindelig fil.",
+    "mediaNoteCaptionUnsupported": "En rund video kan ikke have en billedtekst. Fjern billedteksten, eller læg teksten i et separat teksttrin.",
     "voiceCall": "Taleopkald",
     "voiceCallDuration": "Taleopkald · {duration}",
     "missedVoiceCall": "Ubesvaret taleopkald",

@@ -3287,7 +3287,11 @@
       "stepUnsupportedOnChannel": "Ce canal ne peut pas envoyer ce type de média : l'étape y est ignorée. Supprimez-la ou basculez le nœud vers un canal qui le prend en charge.",
       "buttonsSkippedOnChannel": "Ce canal ne peut pas envoyer de boutons avec un message média : ils y sont ignorés. Placez-les plutôt dans une étape de texte suivante.",
       "captionLabel": "Légende",
-      "captionPlaceholder": "Texte envoyé avec le média (facultatif)"
+      "captionPlaceholder": "Texte envoyé avec le média (facultatif)",
+      "sendAsVoiceNote": "Envoyer comme message vocal",
+      "voiceNoteHint": "Lu comme un message vocal. OGG (Opus), MP3 ou M4A.",
+      "sendAsVideoNote": "Envoyer comme vidéo ronde",
+      "videoNoteHint": "Une vidéo carrée d'une minute maximum. Elle n'a pas de légende."
     },
     "whatsappCallButton": {
       "editButtonTitle": "Modifier le bouton",
@@ -4693,6 +4697,8 @@
     "mediaButtonsUnsupported": "Ce canal ne peut pas envoyer de boutons avec un message média. Supprimez les boutons ou déplacez-les vers une étape de texte suivante.",
     "mediaCaptionUnsupported": "Ce canal ne peut pas envoyer de légende avec un média. Supprimez la légende ou placez le texte dans une étape de texte séparée.",
     "mediaCaptionTooLong": "La légende est trop longue pour ce canal. Raccourcissez-la ou déplacez une partie du texte dans une étape de texte séparée.",
+    "mediaNoteUnsupported": "Ce canal ne peut pas envoyer ceci comme message vocal ou vidéo ronde. Désactivez l'interrupteur pour envoyer un fichier normal.",
+    "mediaNoteCaptionUnsupported": "Une vidéo ronde ne peut pas avoir de légende. Supprimez la légende ou placez le texte dans une étape de texte séparée.",
     "voiceCall": "Appel vocal",
     "voiceCallDuration": "Appel vocal · {duration}",
     "missedVoiceCall": "Appel vocal manqué",

@@ -11,6 +11,12 @@ export const sendAudioStepSchema = baseStepSchema.extend({
     .describe('Step type discriminator: "sendAudio".'),
   mode: uploadModes,
   url: zodUrlWithVariables(),
+  asNote: z
+    .boolean()
+    .optional()
+    .describe(
+      "Send the audio as a voice message instead of a file. Only on channels whose policy lists `sendAudio` in `mediaNotes`.",
+    ),
   buttons: z.array(buttonStepSchema),
 })
 

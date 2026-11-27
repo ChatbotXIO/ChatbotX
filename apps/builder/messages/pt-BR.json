@@ -3287,7 +3287,11 @@
       "stepUnsupportedOnChannel": "Este canal não consegue enviar esse tipo de mídia — a etapa é ignorada lá. Remova-a ou mude o nó para um canal compatível.",
       "buttonsSkippedOnChannel": "Este canal não consegue enviar botões junto com uma mensagem de mídia — eles são ignorados lá. Coloque-os em uma etapa de texto seguinte.",
       "captionLabel": "Legenda",
-      "captionPlaceholder": "Texto enviado com a mídia (opcional)"
+      "captionPlaceholder": "Texto enviado com a mídia (opcional)",
+      "sendAsVoiceNote": "Enviar como mensagem de voz",
+      "voiceNoteHint": "Reproduzida como mensagem de voz. OGG (Opus), MP3 ou M4A.",
+      "sendAsVideoNote": "Enviar como vídeo redondo",
+      "videoNoteHint": "Um vídeo quadrado de até 1 minuto. Não tem legenda."
     },
     "whatsappCallButton": {
       "editButtonTitle": "Editar botão",
@@ -4670,6 +4674,8 @@
     "mediaButtonsUnsupported": "Este canal não consegue enviar botões junto com uma mensagem de mídia. Remova os botões ou mova-os para uma etapa de texto depois desta.",
     "mediaCaptionUnsupported": "Este canal não pode enviar legenda com mídia. Remova a legenda ou coloque o texto em uma etapa de texto separada.",
     "mediaCaptionTooLong": "A legenda é longa demais para este canal. Encurte-a ou mova parte do texto para uma etapa de texto separada.",
+    "mediaNoteUnsupported": "Este canal não pode enviar isto como mensagem de voz ou vídeo redondo. Desative a chave para enviar um arquivo comum.",
+    "mediaNoteCaptionUnsupported": "Um vídeo redondo não pode ter legenda. Remova a legenda ou coloque o texto em uma etapa de texto separada.",
     "voiceCall": "Chamada de voz",
     "voiceCallDuration": "Chamada de voz · {duration}",
     "missedVoiceCall": "Chamada de voz perdida",

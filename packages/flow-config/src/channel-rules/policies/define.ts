@@ -3,7 +3,7 @@ import type { ButtonStyle, ButtonType } from "../../steps/button"
 import { type StepType, stepTypes } from "../../steps/step-action"
 import type { ProductMessageCapability } from "../product-message-rules"
 
-export const CHANNEL_POLICY_VERSION = 5
+export const CHANNEL_POLICY_VERSION = 6
 
 export const stepSupport = {
   full: "full",
@@ -173,6 +173,14 @@ export const omnichannelDeliverableStepTypes: readonly ChannelDeliverableStepTyp
     (stepType) => !channelOptInStepTypes.includes(stepType),
   )
 
+/** The media steps that may be sent as a note (`asNote`). */
+export const mediaNoteStepTypes = [
+  stepTypes.enum.sendAudio,
+  stepTypes.enum.sendVideo,
+] as const satisfies readonly ChannelDeliverableStepType[]
+
+export type MediaNoteStepType = (typeof mediaNoteStepTypes)[number]
+
 /**
  * The button styles a channel renders (see `buttonStyles` in
  * `steps/button.ts`) and the one it uses for a button whose author chose none.
@@ -224,6 +232,12 @@ export type ChannelFlowPolicy = {
    */
   buttonStyles: ButtonStyleSupport | null
   steps: Record<StepType, StepSupport>
+  /**
+   * The media steps the channel can send as a note (`asNote`): `sendAudio` as
+   * a voice message, `sendVideo` as a round video. A channel without a step
+   * here rejects `asNote` on it at publish and the builder hides the switch.
+   */
+  mediaNotes: readonly MediaNoteStepType[]
   /** Present only on channels that can render `sendProducts`. */
   productMessages?: ProductMessageCapability
 }
@@ -234,6 +248,7 @@ type ChannelFlowPolicyDefinition = {
   nativeButtonTypes?: readonly ButtonType[]
   buttonStyles?: ButtonStyleSupport
   productMessages?: ProductMessageCapability
+  mediaNotes?: readonly MediaNoteStepType[]
   supported?: readonly ChannelDeliverableStepType[]
   noButtons?: readonly ChannelDeliverableStepType[]
 }
@@ -268,6 +283,7 @@ export const defineChannelFlowPolicy = (
     nativeButtonTypes: definition.nativeButtonTypes ?? [],
     buttonStyles: definition.buttonStyles ?? null,
     steps,
+    mediaNotes: definition.mediaNotes ?? [],
     ...(definition.productMessages
       ? { productMessages: definition.productMessages }
       : {}),

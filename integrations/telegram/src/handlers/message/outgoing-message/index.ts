@@ -24,6 +24,8 @@ import {
   sendTelegramMessage,
   sendTelegramPhoto,
   sendTelegramVideo,
+  sendTelegramVideoNote,
+  sendTelegramVoice,
 } from "../../../apis/bot"
 import { MAX_INLINE_BUTTONS_PER_ROW } from "../../../constants"
 import { mapToChannelError } from "../../../lib/error-mapper"
@@ -235,7 +237,10 @@ export const sendFlowStep: MessageHandlers<TelegramAuthValue>["sendFlowStep"] =
               >["sendFlowStep"]
             >[0],
           )) {
-            const messageId = await sendTelegramVideo(ctx.auth, payload)
+            const messageId =
+              "video_note" in payload
+                ? await sendTelegramVideoNote(ctx.auth, payload)
+                : await sendTelegramVideo(ctx.auth, payload)
             messageIds.push(String(messageId))
           }
           break
@@ -249,7 +254,10 @@ export const sendFlowStep: MessageHandlers<TelegramAuthValue>["sendFlowStep"] =
               >["sendFlowStep"]
             >[0],
           )) {
-            const messageId = await sendTelegramAudio(ctx.auth, payload)
+            const messageId =
+              "voice" in payload
+                ? await sendTelegramVoice(ctx.auth, payload)
+                : await sendTelegramAudio(ctx.auth, payload)
             messageIds.push(String(messageId))
           }
           break

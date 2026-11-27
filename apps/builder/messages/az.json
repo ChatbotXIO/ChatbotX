@@ -4126,7 +4126,11 @@
       "stepUnsupportedOnChannel": "Bu kanal bu media növünü göndərə bilmir, buna görə addım həmin kanalda icra edilmir. Addımı çıxarın və ya düyünü bu növü dəstəkləyən kanala keçirin.",
       "buttonsSkippedOnChannel": "Bu kanal media mesajı ilə düymə göndərə bilmir, buna görə düymələr həmin kanalda göndərilmir. Onları sonrakı mətn addımına yerləşdirin.",
       "captionLabel": "Başlıq",
-      "captionPlaceholder": "Media ilə göndərilən mətn (istəyə bağlı)"
+      "captionPlaceholder": "Media ilə göndərilən mətn (istəyə bağlı)",
+      "sendAsVoiceNote": "Səsli mesaj kimi göndər",
+      "voiceNoteHint": "Səsli mesaj kimi oxunur. OGG (Opus), MP3 və ya M4A.",
+      "sendAsVideoNote": "Dairəvi video kimi göndər",
+      "videoNoteHint": "1 dəqiqəyədək kvadrat video. Başlığı olmur."
     },
     "whatsappCallButton": {
       "editButtonTitle": "Düyməni redaktə et",
@@ -5375,6 +5379,8 @@
     "mediaButtonsUnsupported": "Bu kanal media mesajı ilə düymə göndərə bilmir. Düymələri çıxarın və ya onları bundan sonrakı mətn addımına köçürün.",
     "mediaCaptionUnsupported": "Bu kanal media ilə başlıq göndərə bilmir. Başlığı silin və ya mətni ayrıca mətn addımına köçürün.",
     "mediaCaptionTooLong": "Başlıq bu kanal üçün çox uzundur. Onu qısaldın və ya mətnin bir hissəsini ayrıca mətn addımına köçürün.",
+    "mediaNoteUnsupported": "Bu kanal bunu səsli mesaj və ya dairəvi video kimi göndərə bilmir. Adi fayl kimi göndərmək üçün açarı söndürün.",
+    "mediaNoteCaptionUnsupported": "Dairəvi videoda başlıq ola bilməz. Başlığı silin və ya mətni ayrıca mətn addımına köçürün.",
     "voiceCall": "Səsli zəng",
     "voiceCallDuration": "Səsli zəng · {duration}",
     "missedVoiceCall": "Buraxılmış səsli zəng",

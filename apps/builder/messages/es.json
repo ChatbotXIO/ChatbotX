@@ -3444,7 +3444,11 @@
       "stepUnsupportedOnChannel": "Este canal no puede enviar este tipo de contenido: el paso se omite allí. Quítalo o cambia el nodo a un canal que lo admita.",
       "buttonsSkippedOnChannel": "Este canal no puede enviar botones junto con un mensaje multimedia: allí se omiten. Colócalos en un paso de texto posterior.",
       "captionLabel": "Pie de foto",
-      "captionPlaceholder": "Texto que se envía con el archivo multimedia (opcional)"
+      "captionPlaceholder": "Texto que se envía con el archivo multimedia (opcional)",
+      "sendAsVoiceNote": "Enviar como mensaje de voz",
+      "voiceNoteHint": "Se reproduce como mensaje de voz. OGG (Opus), MP3 o M4A.",
+      "sendAsVideoNote": "Enviar como videomensaje redondo",
+      "videoNoteHint": "Un video cuadrado de hasta 1 minuto. No lleva pie de foto."
     },
     "whatsappCallButton": {
       "editButtonTitle": "Editar botón",
@@ -4693,6 +4697,8 @@
     "mediaButtonsUnsupported": "Este canal no puede enviar botones junto con un mensaje multimedia. Quita los botones o muévelos a un paso de texto posterior.",
     "mediaCaptionUnsupported": "Este canal no puede enviar un pie de foto con contenido multimedia. Quita el pie de foto o pon el texto en un paso de texto aparte.",
     "mediaCaptionTooLong": "El pie de foto es demasiado largo para este canal. Acórtalo o mueve parte del texto a un paso de texto aparte.",
+    "mediaNoteUnsupported": "Este canal no puede enviar esto como mensaje de voz ni como videomensaje redondo. Desactiva el interruptor para enviar un archivo normal.",
+    "mediaNoteCaptionUnsupported": "Un videomensaje redondo no puede tener pie de foto. Quita el pie de foto o pon el texto en un paso de texto aparte.",
     "voiceCall": "Llamada de voz",
     "voiceCallDuration": "Llamada de voz · {duration}",
     "missedVoiceCall": "Llamada de voz perdida",

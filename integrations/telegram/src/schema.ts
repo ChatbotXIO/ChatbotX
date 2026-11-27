@@ -189,6 +189,22 @@ export type TelegramSendVideoRequest = {
   reply_markup?: TelegramInlineKeyboardMarkup
 }
 
+export type TelegramSendVoiceRequest = {
+  chat_id: number | string
+  voice: string
+  reply_markup?: TelegramInlineKeyboardMarkup
+}
+
+/**
+ * `video_note` is the URL of the file to upload: the Bot API takes a round
+ * video only as an upload or a `file_id`, never by URL.
+ */
+export type TelegramSendVideoNoteRequest = {
+  chat_id: number | string
+  video_note: string
+  reply_markup?: TelegramInlineKeyboardMarkup
+}
+
 export type TelegramSendChatActionRequest = {
   chat_id: number | string
   action:

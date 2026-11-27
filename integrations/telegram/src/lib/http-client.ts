@@ -70,6 +70,14 @@ class TelegramHttpClient {
   post<T>(endpoint: string, options?: PostOptions): Promise<T> {
     return this.request(() => this.client.post(endpoint, options).json<T>())
   }
+
+  postFormData<T>(endpoint: string, body: FormData): Promise<T> {
+    return this.request(() =>
+      this.client
+        .post(endpoint, { body, headers: { "Content-Type": undefined } })
+        .json<T>(),
+    )
+  }
 }
 
 export const createTelegramClient = (botToken: string): TelegramHttpClient =>

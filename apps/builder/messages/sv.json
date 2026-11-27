@@ -4474,7 +4474,11 @@
       "stepUnsupportedOnChannel": "Den här kanalen kan inte skicka den här medietypen – steget hoppas över där. Ta bort det eller byt nodens kanal till en som stöder det.",
       "buttonsSkippedOnChannel": "Den här kanalen kan inte skicka knappar tillsammans med ett mediemeddelande – där hoppas de över. Lägg dem i ett efterföljande textsteg i stället.",
       "captionLabel": "Bildtext",
-      "captionPlaceholder": "Text som skickas med mediet (valfritt)"
+      "captionPlaceholder": "Text som skickas med mediet (valfritt)",
+      "sendAsVoiceNote": "Skicka som röstmeddelande",
+      "voiceNoteHint": "Spelas upp som ett röstmeddelande. OGG (Opus), MP3 eller M4A.",
+      "sendAsVideoNote": "Skicka som rund video",
+      "videoNoteHint": "En kvadratisk video på upp till 1 minut. Den har ingen bildtext."
     },
     "whatsappCallButton": {
       "editButtonTitle": "Redigera knapp",
@@ -5861,6 +5865,8 @@
     "mediaButtonsUnsupported": "Den här kanalen kan inte skicka knappar tillsammans med ett mediemeddelande. Ta bort knapparna eller flytta dem till ett textsteg efter det här.",
     "mediaCaptionUnsupported": "Den här kanalen kan inte skicka en bildtext med media. Ta bort bildtexten eller lägg texten i ett separat textsteg.",
     "mediaCaptionTooLong": "Bildtexten är för lång för den här kanalen. Korta ner den eller flytta en del av texten till ett separat textsteg.",
+    "mediaNoteUnsupported": "Den här kanalen kan inte skicka detta som röstmeddelande eller rund video. Stäng av reglaget för att skicka en vanlig fil.",
+    "mediaNoteCaptionUnsupported": "En rund video kan inte ha en bildtext. Ta bort bildtexten eller lägg texten i ett separat textsteg.",
     "voiceCall": "Röstsamtal",
     "voiceCallDuration": "Röstsamtal · {duration}",
     "missedVoiceCall": "Missat röstsamtal",

@@ -3287,7 +3287,11 @@
       "stepUnsupportedOnChannel": "このチャネルではこの種類のメディアを送信できず、ステップはスキップされます。ステップを削除するか、対応しているチャネルにノードを切り替えてください。",
       "buttonsSkippedOnChannel": "このチャネルではメディアメッセージと一緒にボタンを送信できず、ボタンはスキップされます。代わりに次のテキストステップに配置してください。",
       "captionLabel": "キャプション",
-      "captionPlaceholder": "メディアと一緒に送信するテキスト（任意）"
+      "captionPlaceholder": "メディアと一緒に送信するテキスト（任意）",
+      "sendAsVoiceNote": "ボイスメッセージとして送信",
+      "voiceNoteHint": "ボイスメッセージとして再生されます。OGG (Opus)、MP3、M4A。",
+      "sendAsVideoNote": "丸いビデオとして送信",
+      "videoNoteHint": "最大1分の正方形の動画です。キャプションは付きません。"
     },
     "whatsappCallButton": {
       "editButtonTitle": "ボタンを編集",
@@ -4670,6 +4674,8 @@
     "mediaButtonsUnsupported": "このチャネルではメディアメッセージと一緒にボタンを送信できません。ボタンを削除するか、この後のテキストステップに移動してください。",
     "mediaCaptionUnsupported": "このチャネルではメディアと一緒にキャプションを送信できません。キャプションを削除するか、テキストを別のテキストステップに移動してください。",
     "mediaCaptionTooLong": "キャプションがこのチャネルには長すぎます。短くするか、テキストの一部を別のテキストステップに移動してください。",
+    "mediaNoteUnsupported": "このチャネルではボイスメッセージや丸いビデオとして送信できません。通常のファイルとして送信するにはスイッチをオフにしてください。",
+    "mediaNoteCaptionUnsupported": "丸いビデオにはキャプションを付けられません。キャプションを削除するか、テキストを別のテキストステップに移動してください。",
     "voiceCall": "音声通話",
     "voiceCallDuration": "音声通話 · {duration}",
     "missedVoiceCall": "不在着信",

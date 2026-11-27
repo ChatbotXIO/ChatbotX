@@ -13,17 +13,20 @@ type MediaCaptionFieldProps = {
 
 /**
  * The caption of an image or video step, shown only on a channel whose policy
- * declares `limits.mediaCaption` (the same rule publish applies). A caption
- * left over from another channel stays visible so the author can remove it
- * instead of meeting a publish error on a field they cannot see.
+ * declares `limits.mediaCaption` and not on a round video (the same rules
+ * publish applies). A caption left over from another channel stays visible so
+ * the author can remove it instead of meeting a publish error on a field they
+ * cannot see.
  */
 export const MediaCaptionField = ({ parentName }: MediaCaptionFieldProps) => {
   const t = useTranslations()
   const channel = useWatch({ name: "beforeStep.channel" })
   const caption = useWatch({ name: `${parentName}.caption` })
+  const asNote = useWatch({ name: `${parentName}.asNote` })
   const limit = resolveMediaCaptionLimit(channel)
 
-  if (limit === undefined && !caption) {
+  // A round video carries no caption.
+  if ((limit === undefined || asNote) && !caption) {
     return null
   }
 
