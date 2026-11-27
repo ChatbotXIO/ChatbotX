@@ -1,0 +1,217 @@
+apiVersion: 1
+
+groups:
+  - orgId: 1
+    name: ChatbotX messaging
+    folder: ChatbotX
+    interval: 1m
+    rules:
+      - uid: chatbotx-messaging-code-bug
+        title: MessagingCodeBug
+        condition: B
+        for: 0s
+        noDataState: OK
+        execErrState: Error
+        annotations:
+          summary: Deterministic code failure in a messaging queue
+          runbook: docs/observability.md#messagingcodebug
+          bullboard: '{{ if ne "${BULL_BOARD_URL}" "" }}${BULL_BOARD_URL}/queue/{{ $$values.A.Labels.queue }}?status=failed{{ end }}'
+
+        labels:
+          severity: critical
+        data:
+          - refId: A
+            datasourceUid: prometheus
+            relativeTimeRange: { from: 60, to: 0 }
+            model:
+              expr: increase(chatbotx_jobs_failed_total{error_class="code_bug",queue=~"integration|chat|webhook"}[1m])
+              format: time_series
+              refId: A
+          - refId: B
+            datasourceUid: __expr__
+            relativeTimeRange: { from: 0, to: 0 }
+            model:
+              datasource: { type: __expr__, uid: __expr__ }
+              expression: A
+              conditions:
+                - evaluator: { type: gt, params: [0] }
+                  operator: { type: and }
+                  query: { params: [A] }
+                  reducer: { type: last, params: [] }
+                  type: query
+              refId: B
+              type: classic_conditions
+
+      - uid: chatbotx-worker-failure-rate
+        title: WorkerJobFailureRate
+        condition: B
+        for: 5m
+        noDataState: OK
+        execErrState: Error
+        annotations:
+          summary: Worker job failure rate exceeds 10%
+          runbook: docs/observability.md#workerjobfailurerate
+          bullboard: '{{ if ne "${BULL_BOARD_URL}" "" }}${BULL_BOARD_URL}/queue/{{ $$values.A.Labels.queue }}?status=failed{{ end }}'
+
+        labels:
+          severity: warning
+        data:
+          - refId: A
+            datasourceUid: prometheus
+            relativeTimeRange: { from: 300, to: 0 }
+            model:
+              expr: sum by (queue) (rate(chatbotx_jobs_failed_total[5m])) / (sum by (queue) (rate(chatbotx_jobs_completed_total[5m])) + sum by (queue) (rate(chatbotx_jobs_failed_total[5m])))
+              format: time_series
+              refId: A
+          - refId: B
+            datasourceUid: __expr__
+            relativeTimeRange: { from: 0, to: 0 }
+            model:
+              datasource: { type: __expr__, uid: __expr__ }
+              expression: A
+              conditions:
+                - evaluator: { type: gt, params: [0.1] }
+                  operator: { type: and }
+                  query: { params: [A] }
+                  reducer: { type: last, params: [] }
+                  type: query
+              refId: B
+              type: classic_conditions
+
+      - uid: chatbotx-inbound-volume-drop
+        title: InboundMessageVolumeDrop
+        condition: B
+        for: 10m
+        noDataState: OK
+        execErrState: Error
+        annotations:
+          summary: Inbound message volume is below 30% of last week
+          runbook: docs/observability.md#inboundmessagevolumedrop
+        labels:
+          severity: warning
+        data:
+          - refId: A
+            datasourceUid: prometheus
+            relativeTimeRange: { from: 600, to: 0 }
+            model:
+              expr: (sum(rate(chatbotx_messages_total{direction="in"}[10m])) or vector(0)) < bool 0.3 * (sum(rate(chatbotx_messages_total{direction="in"}[10m] offset 1w)) or vector(0))
+              format: time_series
+              refId: A
+          - refId: B
+            datasourceUid: __expr__
+            relativeTimeRange: { from: 0, to: 0 }
+            model:
+              datasource: { type: __expr__, uid: __expr__ }
+              expression: A
+              conditions:
+                - evaluator: { type: gt, params: [0] }
+                  operator: { type: and }
+                  query: { params: [A] }
+                  reducer: { type: last, params: [] }
+                  type: query
+              refId: B
+              type: classic_conditions
+
+      - uid: chatbotx-messaging-backlog
+        title: MessagingQueueBacklog
+        condition: B
+        for: 2m
+        noDataState: OK
+        execErrState: Error
+        annotations:
+          summary: A messaging queue has waited longer than two minutes
+          runbook: docs/observability.md#messagingqueuebacklog
+          bullboard: '{{ if ne "${BULL_BOARD_URL}" "" }}${BULL_BOARD_URL}/queue/{{ $$values.A.Labels.queue }}?status=failed{{ end }}'
+
+        labels:
+          severity: critical
+        data:
+          - refId: A
+            datasourceUid: prometheus
+            relativeTimeRange: { from: 120, to: 0 }
+            model:
+              expr: max by (queue) (chatbotx_queue_oldest_waiting_seconds{queue=~"integration|chat"})
+              format: time_series
+              refId: A
+          - refId: B
+            datasourceUid: __expr__
+            relativeTimeRange: { from: 0, to: 0 }
+            model:
+              datasource: { type: __expr__, uid: __expr__ }
+              expression: A
+              conditions:
+                - evaluator: { type: gt, params: [120] }
+                  operator: { type: and }
+                  query: { params: [A] }
+                  reducer: { type: last, params: [] }
+                  type: query
+              refId: B
+              type: classic_conditions
+
+      - uid: chatbotx-worker-down
+        title: WorkerDown
+        condition: B
+        for: 1m
+        noDataState: Alerting
+        execErrState: Error
+        annotations:
+          summary: A worker metrics endpoint cannot be scraped
+          runbook: docs/observability.md#workerdown
+        labels:
+          severity: critical
+        data:
+          - refId: A
+            datasourceUid: prometheus
+            relativeTimeRange: { from: 60, to: 0 }
+            model:
+              expr: min(up{job="chatbotx-worker"})
+              format: time_series
+              refId: A
+          - refId: B
+            datasourceUid: __expr__
+            relativeTimeRange: { from: 0, to: 0 }
+            model:
+              datasource: { type: __expr__, uid: __expr__ }
+              expression: A
+              conditions:
+                - evaluator: { type: lt, params: [1] }
+                  operator: { type: and }
+                  query: { params: [A] }
+                  reducer: { type: last, params: [] }
+                  type: query
+              refId: B
+              type: classic_conditions
+
+      - uid: chatbotx-mac-claim-failed
+        title: MacClaimSideEffectFailed
+        condition: B
+        for: 0s
+        noDataState: OK
+        execErrState: Error
+        annotations:
+          summary: MAC tracking failed after a contact was created
+          runbook: docs/observability.md#macclaimsideeffectfailed
+        labels:
+          severity: warning
+        data:
+          - refId: A
+            datasourceUid: prometheus
+            relativeTimeRange: { from: 300, to: 0 }
+            model:
+              expr: increase(chatbotx_side_effect_failed_total{name="mac_claim"}[5m])
+              format: time_series
+              refId: A
+          - refId: B
+            datasourceUid: __expr__
+            relativeTimeRange: { from: 0, to: 0 }
+            model:
+              datasource: { type: __expr__, uid: __expr__ }
+              expression: A
+              conditions:
+                - evaluator: { type: gt, params: [0] }
+                  operator: { type: and }
+                  query: { params: [A] }
+                  reducer: { type: last, params: [] }
+                  type: query
+              refId: B
+              type: classic_conditions

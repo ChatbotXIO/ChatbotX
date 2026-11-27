@@ -1,7 +1,16 @@
 import { assertLicenseAtStartup } from "@chatbotx.io/business/license-startup"
+import { initErrorTracking } from "@chatbotx.io/observability"
+import { startMetricsServer } from "@chatbotx.io/observability/metrics-server"
+import { logger } from "./logger"
 
 async function bootstrapApp(): Promise<void> {
+  initErrorTracking({ service: "worker" })
   await assertLicenseAtStartup()
+  try {
+    await startMetricsServer()
+  } catch (error) {
+    logger.error({ err: error }, "Worker metrics server failed to start")
+  }
 }
 
 let bootstrapPromise: Promise<void> | null = null

@@ -122,6 +122,11 @@ vi.mock("../src/lib/db", () => ({
 vi.mock("../src/lib/is-blocked-workspace", () => ({
   isBlockedWorkspace: mocks.isBlockedWorkspace,
 }))
+// Metrics/error-tracking listeners are covered by job-observability.test.ts;
+// this Worker mock keeps one listener per event.
+vi.mock("../src/lib/job-observability", () => ({
+  instrumentWorker: vi.fn(),
+}))
 vi.mock("../src/lib/logger", () => ({
   logger: {
     debug: vi.fn(),

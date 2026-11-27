@@ -348,6 +348,7 @@ export async function processWhatsappTemplate(
       text: `Template: ${template.name}`,
       contentAttributes,
       createdAt: new Date(),
+      metricsChannel: contactInbox.channel,
     })
 
     if (!newMessage) {
@@ -601,7 +602,7 @@ export async function sendWhatsappTemplateMessage(
       templateData ??
       extractTemplateParams((template.components as TemplateComponent[]) || [])
 
-    const result = await processWhatsappTemplate({
+    return await processWhatsappTemplate({
       conversation,
       contactInbox,
       willRetryOnThrow,
@@ -615,8 +616,6 @@ export async function sendWhatsappTemplateMessage(
       isBulkBroadcast: broadcastId !== undefined,
       metadata,
     })
-
-    return result
   } catch (error) {
     logger.error(
       {

@@ -1,3 +1,4 @@
+import { startMetricsServer } from "@chatbotx.io/observability/metrics-server"
 import {
   queueNames,
   ScheduleJobData,
@@ -6,8 +7,10 @@ import {
 import { type Job, Queue } from "bullmq"
 import { createQueueWorker } from "../lib/create-queue-worker"
 import { logger } from "../lib/logger"
+import { registerWorkerQueueMetrics } from "../lib/queue-metrics"
 import { runJobWithAuditContext } from "../lib/run-job-with-audit-context"
 import { runWorker } from "../lib/shutdown"
+import { startUptimeHeartbeat } from "../lib/uptime-heartbeat"
 import {
   cleanupTriggerExecutions,
   scanDateTimeTriggers,
@@ -80,7 +83,20 @@ import { syncUserQuota } from "./handlers/sync-user-quota"
 import { teardownExpiredTrial } from "./handlers/teardown-expired-trial"
 import { unsubscribeExpiredTrials } from "./handlers/unsubscribe-expired-trials"
 
+async function startQueueObservability(): Promise<void> {
+  try {
+    if (await startMetricsServer()) {
+      registerWorkerQueueMetrics()
+    }
+  } catch (err) {
+    logger.error({ err }, "Schedule worker metrics server failed to start")
+  }
+  startUptimeHeartbeat()
+}
+
 async function startScheduleWorker() {
+  await startQueueObservability()
+
   if (scheduleQueue instanceof Queue) {
     // A registration failure must not take the shared process down: the
     // consumers below still serve already-registered schedules.

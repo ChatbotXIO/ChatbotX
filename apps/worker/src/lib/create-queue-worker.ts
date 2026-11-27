@@ -5,6 +5,7 @@ import {
 } from "@chatbotx.io/worker-config"
 import { type Job, type Processor, Worker, type WorkerOptions } from "bullmq"
 import { normalizeError } from "universal-error-normalizer"
+import { instrumentWorker } from "./job-observability"
 import { logger } from "./logger"
 import { isShutdownRequested, onShutdown } from "./shutdown"
 
@@ -21,6 +22,7 @@ type QueueWorkerOptions<TData> = Omit<WorkerOptions, "connection"> & {
  * - `failed` is logged unless the caller supplies `onFailed`. BullMQ never
  *   awaits listeners, so a rejecting `onFailed` is caught and logged here;
  *   left alone it becomes `unhandledRejection` and drains every queue.
+ * - Completed/failed jobs feed the job metrics and error tracking.
  * - The worker is drained on shutdown under the queue's own name.
  * Caller options win over `defaultWorkerOptions`. Throws once shutdown has
  * begun: a worker constructed then would consume jobs nothing ever closes.
@@ -62,6 +64,8 @@ export function createQueueWorker<TData>(
         )
       })
   })
+
+  instrumentWorker(worker, { queue })
 
   onShutdown(queue, () => worker.close())
   return worker

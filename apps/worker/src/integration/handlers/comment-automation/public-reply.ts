@@ -101,6 +101,7 @@ export async function postPublicCommentReply(props: {
     },
     parentId: props.parentMessageId ?? null,
     createdAt: new Date(),
+    metricsChannel: props.contactInbox.channel,
   })
   const conversation = await conversationService.findBy({
     where: { id: props.conversationId, workspaceId: props.workspaceId },

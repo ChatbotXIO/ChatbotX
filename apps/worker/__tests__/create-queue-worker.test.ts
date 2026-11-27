@@ -12,6 +12,7 @@ const state = vi.hoisted(() => ({
   requestShutdown: vi.fn(),
   loggerError: vi.fn(),
   isShutdownRequested: vi.fn(() => false),
+  instrumentWorker: vi.fn(),
 }))
 
 vi.mock("bullmq", () => ({
@@ -37,6 +38,10 @@ vi.mock("@chatbotx.io/worker-config", () => ({
     removeOnFail: { count: 5000 },
   },
   getQueueConnection: vi.fn((queue: string) => ({ conn: queue })),
+}))
+
+vi.mock("../src/lib/job-observability", () => ({
+  instrumentWorker: state.instrumentWorker,
 }))
 
 vi.mock("../src/lib/logger", () => ({
@@ -75,6 +80,14 @@ describe("createQueueWorker", () => {
     createQueueWorker("chat" as never, vi.fn())
 
     expect([...state.listeners.keys()].sort()).toEqual(["error", "failed"])
+  })
+
+  test("instruments the worker under its queue name", () => {
+    const worker = createQueueWorker("chat" as never, vi.fn())
+
+    expect(state.instrumentWorker).toHaveBeenCalledWith(worker, {
+      queue: "chat",
+    })
   })
 
   test("logs a failed job with its queue and id", () => {
