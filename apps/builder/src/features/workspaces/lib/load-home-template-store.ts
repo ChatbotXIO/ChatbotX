@@ -19,19 +19,39 @@ type HomeTemplateStoreRequest = {
   templateKey: string | null
 }
 
+/**
+ * The tab label's count while a template is open. It only labels the tab, so a
+ * failed count reads 0 instead of hiding a template its share key opens fine.
+ */
+const countForOpenedTemplate = async (tenantId: string): Promise<number> => {
+  try {
+    return await templateStoreService.countPublished({ tenantId })
+  } catch (error) {
+    logger.error(
+      { err: error, tenantId },
+      "Counting the template store for the home tab failed",
+    )
+    return 0
+  }
+}
+
 const readOpenedTemplate = async (
+  tenantId: string,
   templateKey: string,
 ): Promise<HomeTemplateStore> => {
   // The share key is the template's own access check, as on its share page:
   // a disabled, expired or unknown key finds nothing.
-  const [template, branding] = await Promise.all([
+  const [template, branding, templateCount] = await Promise.all([
     templateService.findPublicByShareToken(templateKey),
     getTenantSettings(),
+    // The tab keeps its count while a template is open in it, so it reads the
+    // same number as everywhere else. The tab itself stays offered even when
+    // that number is 0 (a share key can open a template the store does not list).
+    countForOpenedTemplate(tenantId),
   ])
   return {
     status: "ready",
-    // The tab stays offered while a template is open in it.
-    hasTemplates: true,
+    templateCount,
     catalog: null,
     openedTemplate: template
       ? {
@@ -48,16 +68,18 @@ const readCatalog = async (tenantId: string): Promise<HomeTemplateStore> => {
   const catalog = await loadStoreCatalog(tenantId, buildHomeTemplateHref)
   return {
     status: "ready",
-    hasTemplates: catalog.templates.length > 0,
+    // One entry per template (a template in several categories is still one),
+    // so this is the same total `countPublished` reports.
+    templateCount: catalog.templates.length,
     catalog,
     openedTemplate: null,
   }
 }
 
 /**
- * What each tab needs from the store. The default tab only asks whether
- * anything is published (a one-row probe, to decide if the Templates tab is
- * offered); the Templates tab loads either the catalog or the one template the
+ * What each tab needs from the store. The default tab only asks how many
+ * templates are published (a count from the cached snapshot, to decide if the
+ * Templates tab is offered and to label it); the Templates tab loads either the catalog or the one template the
  * user opened.
  */
 const STORE_READERS: Record<
@@ -66,12 +88,14 @@ const STORE_READERS: Record<
 > = {
   workspaces: async ({ tenantId }) => ({
     status: "ready",
-    hasTemplates: await templateStoreService.hasPublished({ tenantId }),
+    templateCount: await templateStoreService.countPublished({ tenantId }),
     catalog: null,
     openedTemplate: null,
   }),
   templates: ({ tenantId, templateKey }) =>
-    templateKey ? readOpenedTemplate(templateKey) : readCatalog(tenantId),
+    templateKey
+      ? readOpenedTemplate(tenantId, templateKey)
+      : readCatalog(tenantId),
 }
 
 type LoadHomeTemplateStoreInput = {
@@ -106,7 +130,7 @@ export async function loadHomeTemplateStore({
     )
     return {
       status: "failed",
-      hasTemplates: false,
+      templateCount: 0,
       catalog: null,
       openedTemplate: null,
     }

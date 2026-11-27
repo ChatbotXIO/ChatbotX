@@ -5,7 +5,7 @@
  * real Postgres (and Redis), the cached path must deep-equal the repository's
  * own queries plus the old service mapping, in the same order, for every filter
  * combination. The oracle below is the pre-cache `listPublished` /
- * `hasPublished`, kept here verbatim so it never drifts with the code under test.
+ * `countPublished`, kept here verbatim so it never drifts with the code under test.
  * Commits for real; each run deletes its tenants, workspace, templates and users.
  */
 
@@ -67,7 +67,7 @@ const { templateStoreService } = await import(
 const { bumpTemplateStoreVersion, readTemplateStoreSnapshot } = await import(
   "../../src/template/store-cache"
 )
-const { projectPublished, hasVisible } = await import(
+const { projectPublished, countVisible } = await import(
   "../../src/template/store-snapshot"
 )
 const { classifyStoreListingForLocale } = await import(
@@ -132,7 +132,6 @@ describe.skipIf(!databaseUrl)("template store cache parity", () => {
   const categoryIdsByName = new Map<string, string>()
   let listSpy: MockInstance
   let snapshotSpy: MockInstance
-  let hasSpy: MockInstance
 
   const seedTenant = async (label: string): Promise<string> => {
     const [owner] = await db
@@ -369,7 +368,6 @@ describe.skipIf(!databaseUrl)("template store cache parity", () => {
   beforeEach(() => {
     listSpy = vi.spyOn(templateStoreRepository, "listPublishedTemplates")
     snapshotSpy = vi.spyOn(templateStoreRepository, "readSnapshot")
-    hasSpy = vi.spyOn(templateStoreRepository, "hasPublishedTemplates")
   })
 
   afterAll(async () => {
@@ -491,26 +489,25 @@ describe.skipIf(!databaseUrl)("template store cache parity", () => {
       ])
     })
 
-    test("hasPublished matches the live SQL for tenants with and without a visible listing", async () => {
+    test("countPublished matches the templates the live catalog lists", async () => {
       const onlyExpired = await seedTenant("only-expired")
       await insertListing("Only expired listing", onlyExpired, {
         shareExpiresAt: new Date(Date.now() - 1000),
       })
       const empty = await seedTenant("empty")
       for (const tenantId of [tenantA, tenantB, onlyExpired, empty]) {
-        const before = hasSpy.mock.calls.length
-        const actual = await templateStoreService.hasPublished({ tenantId })
-        expect(hasSpy.mock.calls.length).toBe(before)
-        expect(actual).toBe(
-          await templateStoreRepository.hasPublishedTemplates(tenantId),
-        )
+        const before = listSpy.mock.calls.length
+        const actual = await templateStoreService.countPublished({ tenantId })
+        expect(listSpy.mock.calls.length).toBe(before)
+        const live = await templateStoreService.listPublished({ tenantId })
+        expect(actual).toBe(live.templates.length)
       }
       expect(
-        await templateStoreService.hasPublished({ tenantId: tenantA }),
-      ).toBe(true)
+        await templateStoreService.countPublished({ tenantId: tenantA }),
+      ).toBeGreaterThan(0)
       expect(
-        await templateStoreService.hasPublished({ tenantId: onlyExpired }),
-      ).toBe(false)
+        await templateStoreService.countPublished({ tenantId: onlyExpired }),
+      ).toBe(0)
     })
   })
 
@@ -555,7 +552,7 @@ describe.skipIf(!databaseUrl)("template store cache parity", () => {
           "plus-one",
         ])
         expect([...projected].sort()).toEqual(["at-now", "plus-one"])
-        expect(hasVisible(pinned, nowMicros)).toBe(true)
+        expect(countVisible(pinned, nowMicros)).toBe(2)
         // One microsecond later the exact-now share is gone, like SQL at now()+1us.
         const next = (BigInt(nowMicros) + 1n).toString()
         expect(
@@ -593,7 +590,7 @@ describe.skipIf(!databaseUrl)("template store cache parity", () => {
         projectPublished(snapshot, {}, request.databaseNowMicros, APP_URL)
           .templates,
       ).toHaveLength(0)
-      expect(hasVisible(snapshot, request.databaseNowMicros)).toBe(false)
+      expect(countVisible(snapshot, request.databaseNowMicros)).toBe(0)
     })
   })
 
@@ -633,11 +630,12 @@ describe.skipIf(!databaseUrl)("template store cache parity", () => {
       expect(actual).toEqual(expected)
       expect(actual.templates).toHaveLength(TEMPLATE_STORE_MAX_LISTINGS)
 
-      const hasBefore = hasSpy.mock.calls.length
+      // Over the cap the count falls back to one bounded live read.
+      const countListBefore = listSpy.mock.calls.length
       expect(
-        await templateStoreService.hasPublished({ tenantId: tenant }),
-      ).toBe(true)
-      expect(hasSpy.mock.calls.length).toBe(hasBefore + 1)
+        await templateStoreService.countPublished({ tenantId: tenant }),
+      ).toBe(expected.templates.length)
+      expect(listSpy.mock.calls.length).toBe(countListBefore + 1)
     }, 120_000)
   })
 

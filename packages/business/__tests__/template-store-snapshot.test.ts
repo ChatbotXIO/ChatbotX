@@ -7,7 +7,7 @@ vi.mock("../src/platform/settings", () => ({ resolveWorkspaceAppUrl: vi.fn() }))
 
 const {
   effectiveNowMicros,
-  hasVisible,
+  countVisible,
   isSnapshotOverCap,
   projectPublished,
   toPublishedTemplate,
@@ -97,7 +97,7 @@ describe("share expiry", () => {
       row("earlier", { shareExpiresAtMicros: "999999" }),
     ])
     expect(ids(snapshot)).toEqual(["never", "exact", "later"])
-    expect(hasVisible(snapshot, NOW)).toBe(true)
+    expect(countVisible(snapshot, NOW)).toBe(3)
   })
 
   test("a snapshot loaded after the request's clock is evaluated at its own load time", () => {
@@ -107,14 +107,34 @@ describe("share expiry", () => {
       "1001000",
     )
     expect(ids(snapshot)).toEqual([])
-    expect(hasVisible(snapshot, NOW)).toBe(false)
+    expect(countVisible(snapshot, NOW)).toBe(0)
   })
 
-  test("hasVisible is false with no rows or only expired rows", () => {
-    expect(hasVisible(snapshotOf([]), NOW)).toBe(false)
+  test("countVisible is 0 with no rows or only expired rows", () => {
+    expect(countVisible(snapshotOf([]), NOW)).toBe(0)
     expect(
-      hasVisible(snapshotOf([row("a", { shareExpiresAtMicros: "1" })]), NOW),
-    ).toBe(false)
+      countVisible(snapshotOf([row("a", { shareExpiresAtMicros: "1" })]), NOW),
+    ).toBe(0)
+  })
+
+  test("countVisible counts templates of every language, once each", () => {
+    const snapshot = snapshotOf([
+      row("any"),
+      row("vi", { languages: ["vi"] }),
+      row("two-categories", { categoryIds: ["1", "2"] }),
+    ])
+    expect(countVisible(snapshot, NOW)).toBe(3)
+  })
+
+  test("countVisible equals what an unfiltered projectPublished lists", () => {
+    const snapshot = snapshotOf([
+      row("a"),
+      row("b", { shareExpiresAtMicros: "1" }),
+      row("c"),
+    ])
+    expect(countVisible(snapshot, NOW)).toBe(
+      projectPublished(snapshot, {}, NOW, APP_URL).templates.length,
+    )
   })
 
   test("handles expiries beyond 2^53 exactly", () => {

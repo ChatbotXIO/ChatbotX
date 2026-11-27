@@ -189,11 +189,16 @@ export const projectPublished = (
   }
 }
 
-/** Whether at least one listing is visible right now. */
-export const hasVisible = (
+/**
+ * How many templates the store holds for visitors of every language: the
+ * visible rows cut to the per-tenant cap exactly like `projectPublished`.
+ * Each row is one template, however many categories it is in.
+ */
+export const countVisible = (
   snapshot: ReadonlyTemplateStoreSnapshot,
   requestNowMicros: string,
-): boolean => {
+): number => {
   const nowMicros = effectiveNowMicros(snapshot, requestNowMicros)
-  return snapshot.rows.some((row) => isShareLiveAt(row, nowMicros))
+  const visible = snapshot.rows.filter((row) => isShareLiveAt(row, nowMicros))
+  return Math.min(visible.length, TEMPLATE_STORE_MAX_LISTINGS)
 }

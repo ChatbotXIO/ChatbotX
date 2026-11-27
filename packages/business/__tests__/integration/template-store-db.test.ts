@@ -565,10 +565,10 @@ describe.skipIf(!databaseUrl)("template store service", () => {
       (await templateStoreService.listPublished({ tenantId })).templates,
     ).toHaveLength(1)
     // The home page's tab probe agrees with the catalog, and is scoped to the tenant.
-    expect(await templateStoreService.hasPublished({ tenantId })).toBe(true)
+    expect(await templateStoreService.countPublished({ tenantId })).toBe(1)
     expect(
-      await templateStoreService.hasPublished({ tenantId: createId() }),
-    ).toBe(false)
+      await templateStoreService.countPublished({ tenantId: createId() }),
+    ).toBe(0)
   })
 
   test("concurrent category replacement, remove and category delete leave a consistent store", async () => {
@@ -823,8 +823,8 @@ describe.skipIf(!databaseUrl)("template store service", () => {
       actorUserId: ownerId,
     })
 
-    // A visitor in any language can switch to "All languages".
-    expect(await templateStoreService.hasPublished({ tenantId })).toBe(true)
+    // The count covers every language, so a visitor in any locale sees it.
+    expect(await templateStoreService.countPublished({ tenantId })).toBe(1)
     expect(
       (
         await templateStoreService.listPublished({

@@ -22,7 +22,11 @@ export type HomeOpenedTemplate = {
  */
 export type HomeTemplateStore = {
   status: HomeTemplateStoreStatus
-  hasTemplates: boolean
+  /**
+   * How many templates the store offers: the number of cards its catalog
+   * shows. 0 when nothing is published or the store could not be read.
+   */
+  templateCount: number
   catalog: StoreCatalogData | null
   openedTemplate: HomeOpenedTemplate | null
 }
@@ -66,7 +70,7 @@ const resolveWorkspacesTabView = (
 ): HomeTemplatesView => ({
   activeTab: "workspaces",
   // A store that cannot be read hides the tab rather than breaking the page.
-  showTemplatesTab: store.status === "ready" && store.hasTemplates,
+  showTemplatesTab: store.status === "ready" && store.templateCount > 0,
   panel: "none",
   redirectToHome: false,
 })
@@ -85,7 +89,7 @@ const resolveTemplatesTabView = (
       store.openedTemplate ? "template" : "templateUnavailable",
     )
   }
-  if (!store.hasTemplates) {
+  if (store.templateCount === 0) {
     // A stale link: the last template was unshared or removed.
     return {
       activeTab: "workspaces",

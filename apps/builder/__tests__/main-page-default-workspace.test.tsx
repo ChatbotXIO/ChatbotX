@@ -116,7 +116,7 @@ describe("MainPage default workspace", () => {
     mocks.resolveTenantByDomain.mockResolvedValue("1")
     mocks.loadHomeTemplateStore.mockResolvedValue({
       status: "ready",
-      hasTemplates: false,
+      templateCount: 0,
       catalog: null,
     })
   })
@@ -198,7 +198,7 @@ describe("MainPage templates tab", () => {
   test("the default tab only probes the store, with the tenant resolved once", async () => {
     mocks.loadHomeTemplateStore.mockResolvedValue({
       status: "ready",
-      hasTemplates: true,
+      templateCount: 3,
       catalog: null,
     })
 
@@ -224,7 +224,7 @@ describe("MainPage templates tab", () => {
   test("an empty store hides the Templates tab", async () => {
     mocks.loadHomeTemplateStore.mockResolvedValue({
       status: "ready",
-      hasTemplates: false,
+      templateCount: 0,
       catalog: null,
     })
 
@@ -239,7 +239,7 @@ describe("MainPage templates tab", () => {
   test("a store that could not be read hides the tab and the page still renders", async () => {
     mocks.loadHomeTemplateStore.mockResolvedValue({
       status: "failed",
-      hasTemplates: false,
+      templateCount: 0,
       catalog: null,
     })
 
@@ -255,7 +255,7 @@ describe("MainPage templates tab", () => {
   test("?tab=templates loads the catalog and shows it instead of the deleted workspaces", async () => {
     mocks.loadHomeTemplateStore.mockResolvedValue({
       status: "ready",
-      hasTemplates: true,
+      templateCount: 3,
       catalog,
     })
 
@@ -278,7 +278,7 @@ describe("MainPage templates tab", () => {
   test("?tab=templates on an empty store goes back to the plain home URL", async () => {
     mocks.loadHomeTemplateStore.mockResolvedValue({
       status: "ready",
-      hasTemplates: false,
+      templateCount: 0,
       catalog,
     })
 
@@ -288,7 +288,7 @@ describe("MainPage templates tab", () => {
   test("?tab=templates keeps the tab open when the store cannot be read", async () => {
     mocks.loadHomeTemplateStore.mockResolvedValue({
       status: "failed",
-      hasTemplates: false,
+      templateCount: 0,
       catalog: null,
     })
 
@@ -314,7 +314,7 @@ describe("MainPage templates tab", () => {
     }
     mocks.loadHomeTemplateStore.mockResolvedValue({
       status: "ready",
-      hasTemplates: true,
+      templateCount: 3,
       catalog: null,
       openedTemplate,
     })
@@ -340,7 +340,7 @@ describe("MainPage templates tab", () => {
   test("an unknown template key stays in the tab and says so, without a redirect", async () => {
     mocks.loadHomeTemplateStore.mockResolvedValue({
       status: "ready",
-      hasTemplates: true,
+      templateCount: 3,
       catalog: null,
       openedTemplate: null,
     })
@@ -359,7 +359,7 @@ describe("MainPage templates tab", () => {
   ])("$name the tab asks for the catalog and shows it", async ({ query }) => {
     mocks.loadHomeTemplateStore.mockResolvedValue({
       status: "ready",
-      hasTemplates: true,
+      templateCount: 3,
       catalog: { categories: [], templates: [] },
       openedTemplate: null,
     })
