@@ -12607,6 +12607,7 @@
   },
   "conversationParticipants": {
     "joined": "{names} hebben deelgenomen aan het gesprek",
+    "joinedShort": "{count, plural, one {{names} doet mee} other {{names} doen mee}}",
     "replied": "{name} heeft geantwoord {time}",
     "showMore": "Meer weergeven",
     "label": "Wie heeft geantwoord in dit gesprek",

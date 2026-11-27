@@ -12607,6 +12607,7 @@
   },
   "conversationParticipants": {
     "joined": "{names} har deltagit i konversationen",
+    "joinedShort": "{names} gick med",
     "replied": "{name} svarade {time}",
     "showMore": "Visa mer",
     "label": "Vem som har svarat i den här konversationen",

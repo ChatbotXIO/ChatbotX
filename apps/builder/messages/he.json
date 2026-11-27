@@ -12607,6 +12607,7 @@
   },
   "conversationParticipants": {
     "joined": "{names} השתתפו בשיחה",
+    "joinedShort": "{count, plural, one {{names} הצטרף} other {{names} הצטרפו}}",
     "replied": "{name} השיב {time}",
     "showMore": "הצג עוד",
     "label": "מי השיב בשיחה זו",

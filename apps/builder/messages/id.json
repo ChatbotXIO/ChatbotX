@@ -12607,6 +12607,7 @@
   },
   "conversationParticipants": {
     "joined": "{names} telah bergabung dalam percakapan",
+    "joinedShort": "{names} bergabung",
     "replied": "{name} membalas {time}",
     "showMore": "Tampilkan lebih banyak",
     "label": "Siapa yang membalas di percakapan ini",

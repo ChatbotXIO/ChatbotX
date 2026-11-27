@@ -12607,6 +12607,7 @@
   },
   "conversationParticipants": {
     "joined": "{names} 已参与会话",
+    "joinedShort": "{names} 已加入",
     "replied": "{name} 回复于 {time}",
     "showMore": "显示更多",
     "label": "谁在此会话中回复过",

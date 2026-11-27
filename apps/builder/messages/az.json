@@ -12607,6 +12607,7 @@
   },
   "conversationParticipants": {
     "joined": "{names} söhbətdə iştirak etdi",
+    "joinedShort": "{names} qoşuldu",
     "replied": "{name} cavab verdi {time}",
     "showMore": "Daha çox göstər",
     "label": "Bu söhbətdə kim cavab verdi",

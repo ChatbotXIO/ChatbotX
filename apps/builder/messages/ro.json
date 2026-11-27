@@ -12607,6 +12607,7 @@
   },
   "conversationParticipants": {
     "joined": "{names} au participat la conversație",
+    "joinedShort": "{count, plural, one {{names} s-a alăturat} other {{names} s-au alăturat}}",
     "replied": "{name} a răspuns {time}",
     "showMore": "Arată mai mult",
     "label": "Cine a răspuns în această conversație",

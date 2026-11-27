@@ -12607,6 +12607,7 @@
   },
   "conversationParticipants": {
     "joined": "{names} شاركوا في المحادثة",
+    "joinedShort": "{count, plural, one {{names} انضم} two {{names} انضما} other {{names} انضموا}}",
     "replied": "{name} ردّ {time}",
     "showMore": "عرض المزيد",
     "label": "من رد في هذه المحادثة",

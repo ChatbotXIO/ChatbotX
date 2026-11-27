@@ -12607,6 +12607,7 @@
   },
   "conversationParticipants": {
     "joined": "{names} han participado en la conversación",
+    "joinedShort": "{count, plural, one {{names} se unió} other {{names} se unieron}}",
     "replied": "{name} respondió {time}",
     "showMore": "Ver más",
     "label": "Quién respondió en esta conversación",

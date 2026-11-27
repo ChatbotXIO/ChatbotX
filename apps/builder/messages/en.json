@@ -12607,6 +12607,7 @@
   },
   "conversationParticipants": {
     "joined": "{names} joined the conversation",
+    "joinedShort": "{names} joined",
     "replied": "{name} replied {time}",
     "showMore": "Show more",
     "label": "Who replied in this conversation",

@@ -12607,6 +12607,7 @@
   },
   "conversationParticipants": {
     "joined": "{names} osallistui keskusteluun",
+    "joinedShort": "{count, plural, one {{names} liittyi} other {{names} liittyivät}}",
     "replied": "{name} vastasi {time}",
     "showMore": "Näytä lisää",
     "label": "Kuka vastasi tässä keskustelussa",
