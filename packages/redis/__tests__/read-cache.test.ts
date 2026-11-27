@@ -19,10 +19,35 @@ class FakeRedis {
     const hash = this.hashes.get(key)
     return Promise.resolve(fields.map((field) => hash?.get(field) ?? null))
   })
+  expiresAt = new Map<string, number>()
+  // MULTI twin: HMGET (through the `hmget` mock) + PTTL in one exec.
+  multi = () => {
+    const steps: (() => Promise<unknown>)[] = []
+    const chain = {
+      hmget: (key: string, ...fields: string[]) => {
+        steps.push(() => this.hmget(key, ...fields))
+        return chain
+      },
+      pttl: (key: string) => {
+        steps.push(() => Promise.resolve(this.pttl(key)))
+        return chain
+      },
+      exec: async () =>
+        await Promise.all(
+          steps.map(async (step) => [null, await step()] as [null, unknown]),
+        ),
+    }
+    return chain
+  }
+  // Seeded hashes without a recorded expiry read as 60 s left.
+  pttl = (key: string) =>
+    this.hashes.has(key)
+      ? (this.expiresAt.get(key) ?? Date.now() + 60_000) - Date.now()
+      : -2
   defineCommand = vi.fn()
   // JS twin of the Lua compare-and-set; the real script is covered by the integration test.
   readCacheSetIfNewer = vi.fn(
-    (key: string, version: string, payload: string) => {
+    (key: string, version: string, payload: string, ttlMs?: string) => {
       const hash = this.hashes.get(key) ?? new Map<string, string>()
       const current = hash.get("v")
       if (
@@ -35,6 +60,7 @@ class FakeRedis {
       hash.set("v", version)
       hash.set("d", payload)
       this.hashes.set(key, hash)
+      this.expiresAt.set(key, Date.now() + Number(ttlMs ?? 60_000))
       return Promise.resolve(1)
     },
   )
@@ -253,6 +279,54 @@ describe("read cache", () => {
     vi.advanceTimersByTime(1001)
     await other.getOrLoad(input)
     expect(load).toHaveBeenCalledTimes(3)
+  })
+
+  test("a Redis hit promoted to memory expires when its Redis TTL would", async () => {
+    vi.useFakeTimers()
+    const { redis, cache } = setup({ ttlMs: 60_000 })
+    const key = "test:v1:s:e"
+    redis.hashes.set(
+      key,
+      new Map([
+        ["v", "1"],
+        ["d", superjson.stringify({ name: "stale" })],
+      ]),
+    )
+    redis.expiresAt.set(key, Date.now() + 1000)
+    const load = vi.fn(async () => loaded("1", "fresh"))
+    const input = { scope: "s", entry: "e", version: "1", load }
+
+    expect((await cache.getOrLoad(input)).value.name).toBe("stale")
+    vi.advanceTimersByTime(999)
+    expect((await cache.getOrLoad(input)).value.name).toBe("stale")
+    expect(load).not.toHaveBeenCalled()
+
+    // Redis would have dropped the key by now, so memory must too.
+    redis.hashes.delete(key)
+    vi.advanceTimersByTime(2)
+    expect((await cache.getOrLoad(input)).value.name).toBe("fresh")
+    expect(load).toHaveBeenCalledTimes(1)
+  })
+
+  test("a Redis entry without a TTL is treated as a miss", async () => {
+    const { redis, cache } = setup()
+    redis.hashes.set(
+      "test:v1:s:e",
+      new Map([
+        ["v", "1"],
+        ["d", superjson.stringify({ name: "forever" })],
+      ]),
+    )
+    redis.expiresAt.set("test:v1:s:e", Number.NEGATIVE_INFINITY)
+    redis.pttl = () => -1
+    const load = vi.fn(async () => loaded("1", "fresh"))
+    const result = await cache.getOrLoad({
+      scope: "s",
+      entry: "e",
+      version: "1",
+      load,
+    })
+    expect(result.value.name).toBe("fresh")
   })
 
   test("an oversized entry is returned but not stored anywhere, with a warning", async () => {

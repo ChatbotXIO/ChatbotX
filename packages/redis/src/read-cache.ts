@@ -228,6 +228,7 @@ export const createReadCacheWith = <T>(
     key: string,
     entry: VersionedValue<T>,
     bytes: number,
+    lifetimeMs: number = ttlMs,
   ) => {
     if (!memory || bytes > memory.maxBytes) {
       return
@@ -248,7 +249,7 @@ export const createReadCacheWith = <T>(
       version: entry.version,
       value: entry.value,
       bytes,
-      expiresAt: Date.now() + ttlMs,
+      expiresAt: Date.now() + lifetimeMs,
     })
     memoryBytes += bytes
     for (const [oldest] of memoryEntries) {
@@ -263,13 +264,21 @@ export const createReadCacheWith = <T>(
     ids: CacheIds,
     version: string,
     accept: Accept<T> | undefined,
-  ): Promise<{ value: T; bytes: number } | undefined> => {
+  ): Promise<{ value: T; bytes: number; remainingMs: number } | undefined> => {
     try {
-      const [storedVersion, payload] = await withTimeout(
+      // One round trip: the entry and how long Redis will still keep it.
+      const [storedVersion, payload, remainingMs] = await withTimeout(
         redisTimeoutMs,
-        async () => (await getRedisClient()).hmget(ids.redisKey, "v", "d"),
+        async () =>
+          await readEntryWithTtl(await getRedisClient(), ids.redisKey),
       )
       if (storedVersion !== version || typeof payload !== "string") {
+        return
+      }
+      // PTTL -2 = no key, -1 = no expiry (never written by us, which always
+      // sets one): both are a miss, so a reload rewrites the entry with a TTL
+      // and a promoted copy can never outlive the documented TTL.
+      if (remainingMs <= 0) {
         return
       }
       // Size gate before parsing: an oversized payload (written by an older
@@ -298,7 +307,7 @@ export const createReadCacheWith = <T>(
         )
         return
       }
-      return { value, bytes }
+      return { value, bytes, remainingMs }
     } catch (err) {
       logger.debug(
         { err, redisKey: ids.redisKey },
@@ -357,7 +366,12 @@ export const createReadCacheWith = <T>(
     const { key } = ids
     const fromRedis = await readRedis(ids, version, accept)
     if (fromRedis) {
-      writeMemory(key, { version, value: fromRedis.value }, fromRedis.bytes)
+      writeMemory(
+        key,
+        { version, value: fromRedis.value },
+        fromRedis.bytes,
+        Math.min(ttlMs, fromRedis.remainingMs),
+      )
       return { version, value: fromRedis.value }
     }
     const loaded = await load()
@@ -392,6 +406,23 @@ export const createReadCacheWith = <T>(
       return asReadonly(await flight)
     },
   }
+}
+
+const readEntryWithTtl = async (
+  client: Redis,
+  redisKey: string,
+): Promise<[string | null, string | null, number]> => {
+  const results = await client
+    .multi()
+    .hmget(redisKey, "v", "d")
+    .pttl(redisKey)
+    .exec()
+  const [hashReply, ttlReply] = results ?? []
+  if (!(hashReply && ttlReply) || hashReply[0] || ttlReply[0]) {
+    throw hashReply?.[0] ?? ttlReply?.[0] ?? new Error("read-cache: empty EXEC")
+  }
+  const [storedVersion, payload] = hashReply[1] as (string | null)[]
+  return [storedVersion ?? null, payload ?? null, Number(ttlReply[1])]
 }
 
 export const createReadCache = <T>(options: ReadCacheOptions): ReadCache<T> =>

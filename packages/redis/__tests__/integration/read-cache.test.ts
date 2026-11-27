@@ -2,6 +2,7 @@
 
 import { randomUUID as createId } from "node:crypto"
 import Redis from "ioredis"
+import superjson from "superjson"
 import { afterAll, beforeAll, describe, expect, test } from "vitest"
 import { createReadCacheWith } from "../../src/read-cache"
 import { realRedisUrl } from "./redis-url"
@@ -100,6 +101,22 @@ describe.skipIf(!redisUrl)("read cache against Redis", () => {
     await client.pexpire(`${prefix}:ttl:s:e`, 1000)
     await write(cache, "e", "2")
     expect(await client.pttl(`${prefix}:ttl:s:e`)).toBeGreaterThan(1000)
+  })
+
+  test("reloads an entry that has no TTL and rewrites it with one", async () => {
+    const cache = makeCache("nottl")
+    const key = `${prefix}:nottl:s:e`
+    await client.hset(key, { v: "1", d: superjson.stringify({ n: "old" }) })
+    expect(await client.pttl(key)).toBe(-1)
+
+    const result = await cache.getOrLoad({
+      scope: "s",
+      entry: "e",
+      version: "1",
+      load: async () => ({ version: "1", value: { n: "fresh" } }),
+    })
+    expect(result.value.n).toBe("fresh")
+    expect(await client.pttl(key)).toBeGreaterThan(0)
   })
 
   test("overwrites a corrupt stored version", async () => {
