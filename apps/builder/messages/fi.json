@@ -8600,7 +8600,8 @@
   },
   "helpMenu": {
     "title": "Ohje",
-    "ariaLabel": "Avaa ohjevalikko"
+    "ariaLabel": "Avaa ohjevalikko",
+    "status": "Järjestelmän tila"
   },
   "helpItems": {
     "title": "Ohjelinkit",

@@ -8600,7 +8600,8 @@
   },
   "helpMenu": {
     "title": "ヘルプ",
-    "ariaLabel": "ヘルプメニューを開く"
+    "ariaLabel": "ヘルプメニューを開く",
+    "status": "システムステータス"
   },
   "helpItems": {
     "title": "ヘルプリンク",

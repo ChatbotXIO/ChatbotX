@@ -1,0 +1,53 @@
+{
+  "annotations": { "list": [] },
+  "editable": true,
+  "panels": [
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": { "defaults": {}, "overrides": [] },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+      "targets": [
+        {
+          "expr": "sum by (direction, channel) (rate(chatbotx_messages_total[5m]))",
+          "legendFormat": "{{direction}} {{channel}}"
+        }
+      ],
+      "title": "Message rate by direction and channel",
+      "type": "timeseries"
+    },
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": { "defaults": {}, "overrides": [] },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
+      "targets": [
+        {
+          "expr": "sum by (queue, error_class) (rate(chatbotx_jobs_failed_total[5m]))",
+          "legendFormat": "{{queue}} {{error_class}}"
+        }
+      ],
+      "title": "Failed jobs by queue and class",
+      "type": "timeseries"
+    },
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": { "defaults": {}, "overrides": [] },
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 8 },
+      "targets": [
+        {
+          "expr": "max by (queue) (chatbotx_queue_waiting)",
+          "legendFormat": "{{queue}} waiting"
+        },
+        {
+          "expr": "max by (queue) (chatbotx_queue_oldest_waiting_seconds)",
+          "legendFormat": "{{queue}} oldest seconds"
+        }
+      ],
+      "title": "Queue depth and oldest waiting job",
+      "type": "timeseries"
+    }
+  ],
+  "schemaVersion": 41,
+  "tags": ["chatbotx", "messaging"],
+  "title": "ChatbotX Messaging",
+  "uid": "chatbotx-messaging"
+}

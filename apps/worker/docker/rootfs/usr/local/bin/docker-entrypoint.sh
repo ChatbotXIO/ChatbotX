@@ -97,15 +97,23 @@ run_all_workers() {
     require_script "$script"
   done
 
+  metrics_worker_index=0
   for worker in $(all_worker_names); do
     script="$(resolve_worker_script "$worker")"
-    echo "Starting worker: $worker ($script)"
+    worker_node_options="$NODE_OPTIONS"
     # Bound each legacy all-mode process independently only when an operator
     # explicitly configures a heap cap. Consolidated commands retain V8's default.
     if [ -n "${WORKER_MAX_OLD_SPACE_MB:-}" ]; then
-      NODE_OPTIONS="$NODE_OPTIONS --max-old-space-size=$WORKER_MAX_OLD_SPACE_MB" "$NODE_BIN" "$script" &
+      worker_node_options="$NODE_OPTIONS --max-old-space-size=$WORKER_MAX_OLD_SPACE_MB"
+    fi
+    if [ -n "${METRICS_PORT:-}" ]; then
+      worker_metrics_port=$((METRICS_PORT + metrics_worker_index))
+      echo "Starting worker: $worker ($script, metrics :$worker_metrics_port)"
+      NODE_OPTIONS="$worker_node_options" METRICS_PORT="$worker_metrics_port" "$NODE_BIN" "$script" &
+      metrics_worker_index=$((metrics_worker_index + 1))
     else
-      "$NODE_BIN" "$script" &
+      echo "Starting worker: $worker ($script)"
+      NODE_OPTIONS="$worker_node_options" "$NODE_BIN" "$script" &
     fi
     pids="$pids $!"
   done

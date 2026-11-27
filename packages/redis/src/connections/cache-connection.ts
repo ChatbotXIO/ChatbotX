@@ -1,15 +1,14 @@
 import { Mutex } from "async-mutex"
 import type Redis from "ioredis"
-import { keys } from "../keys"
+import { resolveCacheRedisUrl } from "../probe"
 import { createRedisConnection } from "../redis-client"
 
 let cacheInstance: Redis | null = null
 const mutexLock = new Mutex()
-const env = keys()
 
 export const cacheConnections = {
   async create(): Promise<Redis> {
-    return await createRedisConnection(env.REDIS_CACHE_URL ?? env.REDIS_URL, {
+    return await createRedisConnection(resolveCacheRedisUrl(), {
       // Fail commands immediately if Redis is down so callers can fall back fast.
       // BullMQ queue connections need null (retry forever); cache reads do not.
       maxRetriesPerRequest: 0,

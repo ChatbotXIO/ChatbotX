@@ -53,6 +53,9 @@ export const env = createEnv({
       .default("http://localhost:9000/chatbotx/"),
     NEXT_PUBLIC_STORAGE_URL: z.url().optional(),
     NEXT_PUBLIC_PANCAKE_CHAT_PAGE_ID: z.string().optional(),
+    // Public status page (docs/status-page.md), shown as "Status" in the help
+    // menu. Unset hides the link; self-hosted operators can set their own.
+    NEXT_PUBLIC_STATUS_PAGE_URL: z.url({ protocol: /^https?$/ }).optional(),
     NEXT_PUBLIC_AUTH_OAUTH_DISPLAY_NAME: z.string().optional(),
     NEXT_PUBLIC_AUTH_OAUTH_LOGO_URL: z.url().optional(),
     NEXT_PUBLIC_ALLOWED_DEV_ORIGINS: z
@@ -77,6 +80,7 @@ export const env = createEnv({
     NEXT_PUBLIC_PANCAKE_CHAT_PAGE_ID: clientEnv(
       "NEXT_PUBLIC_PANCAKE_CHAT_PAGE_ID",
     ),
+    NEXT_PUBLIC_STATUS_PAGE_URL: clientEnv("NEXT_PUBLIC_STATUS_PAGE_URL"),
     NEXT_PUBLIC_AUTH_OAUTH_DISPLAY_NAME: clientEnv(
       "NEXT_PUBLIC_AUTH_OAUTH_DISPLAY_NAME",
     ),

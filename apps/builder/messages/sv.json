@@ -4774,7 +4774,8 @@
   },
   "helpMenu": {
     "ariaLabel": "Öppna hjälpmenyn",
-    "title": "Hjälp"
+    "title": "Hjälp",
+    "status": "Systemstatus"
   },
   "home": {
     "noWorkspaces": "Du har inga arbetsytor ännu.",

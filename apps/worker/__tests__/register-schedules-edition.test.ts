@@ -7,6 +7,11 @@ const { mockUpsertJobScheduler, mockRemoveJobScheduler, envState } = vi.hoisted(
     envState: {
       NEXT_PUBLIC_EDITION: "community",
       QUOTA_SYNC_INTERVAL_SECONDS: 60,
+      // Set so the edition removal counts below stay heartbeat-free; the
+      // heartbeat lifecycle has its own describe block.
+      STATUS_HEARTBEAT_WORKER_URL: "https://uptime.example/heartbeat/token" as
+        | string
+        | undefined,
     },
   }),
 )
@@ -67,6 +72,7 @@ vi.mock("@chatbotx.io/worker-config", () => ({
     purgeAutomationThrottle: "purgeAutomationThrottle",
     refreshChannelTokens: "refreshChannelTokens",
     refreshLicense: "refreshLicense",
+    statusHeartbeat: "statusHeartbeat",
     unsubscribeExpiredTrials: "unsubscribeExpiredTrials",
     googleAdsHousekeeping: "googleAdsHousekeeping",
     googleAdsSyncSetups: "googleAdsSyncSetups",
@@ -101,8 +107,48 @@ const upsertedRepeatOptionsFor = (name: string) =>
     | { pattern?: string; every?: number }
     | undefined
 
+const HEARTBEAT_URL = "https://uptime.example/heartbeat/token"
+
 beforeEach(() => {
   vi.clearAllMocks()
+  envState.STATUS_HEARTBEAT_WORKER_URL = HEARTBEAT_URL
+})
+
+describe("registerSchedules — status heartbeat", () => {
+  test("registers one heartbeat a minute at second 54 when the URL is set", async () => {
+    await registerSchedules()
+
+    expect(upsertedRepeatOptionsFor("statusHeartbeat")?.pattern).toBe(
+      "54 * * * * *",
+    )
+    const call = mockUpsertJobScheduler.mock.calls.find(
+      (c) => c[0] === "statusHeartbeat",
+    )
+    expect(call?.[2]).toEqual({
+      name: "statusHeartbeat",
+      data: { type: "statusHeartbeat", data: {} },
+    })
+    expect(mockRemoveJobScheduler).not.toHaveBeenCalledWith("statusHeartbeat")
+  })
+
+  test("repeated registration upserts the same scheduler id", async () => {
+    await registerSchedules()
+    await registerSchedules()
+
+    const ids = upsertedNames().filter((name) => name === "statusHeartbeat")
+    expect(ids).toEqual(["statusHeartbeat", "statusHeartbeat"])
+  })
+
+  test("removes the persisted scheduler once the URL is unset", async () => {
+    await registerSchedules()
+    vi.clearAllMocks()
+    envState.STATUS_HEARTBEAT_WORKER_URL = undefined
+
+    await registerSchedules()
+
+    expect(upsertedNames()).not.toContain("statusHeartbeat")
+    expect(mockRemoveJobScheduler).toHaveBeenCalledWith("statusHeartbeat")
+  })
 })
 
 describe("registerSchedules — edition gating", () => {
@@ -241,6 +287,7 @@ describe("registerSchedules — every-minute cadence", () => {
     "finalizeBroadcasts",
     "finalizeMarketingMessages",
     "reconcileMetaCatalogSyncs",
+    "statusHeartbeat",
   ]
 
   const everyMinuteJobNames = () =>

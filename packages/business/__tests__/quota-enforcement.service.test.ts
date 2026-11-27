@@ -1,7 +1,12 @@
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
 const findFirstUser = vi.fn(async () => ({ tenantId: "1" }) as unknown)
-const fakeTx = { __tx: true }
+const fakeTx = {
+  __tx: true,
+  transaction: vi.fn(
+    async (fn: (tx: unknown) => Promise<unknown>) => await fn(fakeTx),
+  ),
+}
 const dbTransaction = vi.fn(
   async (fn: (tx: unknown) => Promise<unknown>) => await fn(fakeTx),
 )

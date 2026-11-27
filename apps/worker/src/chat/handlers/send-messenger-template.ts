@@ -333,6 +333,7 @@ export async function processMessengerTemplate(
       sourceId: null,
       text: `Template: ${template.name}`,
       contentAttributes,
+      metricsChannel: contactInbox.channel,
     })
     const createdMessage = newMessage
 
@@ -593,7 +594,7 @@ export async function sendMessengerTemplateMessage(
           : buttonStepDefaultFn({ label: b.label }),
     )
 
-    const result = await processMessengerTemplate({
+    return await processMessengerTemplate({
       conversation,
       contactInbox,
       willRetryOnThrow,
@@ -625,8 +626,6 @@ export async function sendMessengerTemplateMessage(
         },
       }),
     })
-
-    return result
   } catch (error) {
     logger.error(
       {

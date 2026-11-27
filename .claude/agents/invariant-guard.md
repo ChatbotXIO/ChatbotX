@@ -34,6 +34,7 @@ You are a focused reviewer with ONE job: catch violations of the ChatbotX invari
 14. **Workspace purge safety.** If the diff adds or changes a schema FK, a workspace-scoped table, `workspace-lifecycle`, workspace purge code, campaign cleanup, or dispatch cancellation, require the `workspace-purge` rules: leading FK indexes; child-before-parent bounded drains; PK-tuple deletes for partitioned data; chunk drains for hypertables; short timeout-guarded transactions. Require `packages/database/__tests__/workspace-purge-coverage.test.ts` for a new workspace-scoped table or FK.
 15. **`User` secret column** (AGENTS.md invariant 26). Flag a new `User` read (`userModel` select/`db.query.userModel`/`findFirst`) that returns the whole row to a client, cache, log or `ctx` instead of using `userColumnsWithoutSecrets`; any `connectionAuthorizations` in better-auth `additionalFields`, an API/mobile/session resource, a cache payload or a log; any write to the column outside `userService.recordConnectionAuthorization`; a new channel connect path that obtains an `AuthValue` without calling it; a new account-deletion/anonymisation path that does not clear the column. Severity: HIGH (credential leak).
 16. **Template decision** (AGENTS.md invariant 27). If the diff adds a Tools card (`tools-list.tsx`/`TOOLS_CONFIG`), a table users build content in, or a column on a template-copied table, check `TOOL_TEMPLATE_COVERAGE` and the adapter column map are updated; that an install adapter writes through the service's `insertInTx` core (not straight to a repository that skips the service's caps/validation); that anything that sends messages or accepts public data installs switched off; and that no token/secret/source-workspace id is collected. Severity: HIGH.
+17. **Messaging hot paths.** If a changed file is under `packages/analytics/src/repositories/**`, `packages/business/src/quota-enforcement/**`, `apps/worker/src/integration/handlers/received-message.ts`, or `apps/worker/src/chat/**`, flag an `INSERT … SELECT` that does not explicitly supply every required target column (with casts where the source type differs). Also flag a non-critical analytics, billing, advertising, or activity side effect inside the transaction that creates a contact or message unless it is isolated in a savepoint or runs after commit/event delivery.
 
 ## Output
 
@@ -42,5 +43,5 @@ A single findings table, severity-tagged (HIGH = silent runtime/clone breakage; 
 ## Boundaries
 
 - Read-only. Never edit files. Report only.
-- Do not review general code quality, style, or logic — that is other reviewers' job. Stay on these 15 invariants.
+- Do not review general code quality, style, or logic — except the messaging hot-path transaction and `INSERT … SELECT` checks above. Stay on these 17 invariants.
 - If a diff touches none of the invariant surfaces, return `INVARIANTS: PASS (no invariant-relevant changes)` and stop.

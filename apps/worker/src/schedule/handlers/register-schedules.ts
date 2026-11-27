@@ -61,6 +61,9 @@ const EVERY_MINUTE_SECOND_OFFSETS = {
   reconcileMetaCatalogSyncs: 48,
   recoverSocialPostTargets: 50,
   pollSmtpInboxes: 52,
+  // Status-page heartbeat (docs/status-page.md): any second works; kept off
+  // the busier offsets so it measures the queue, not a contended tick.
+  statusHeartbeat: 54,
 } as const satisfies Partial<Record<keyof typeof ScheduleJobData, number>>
 
 // Job names (the values call sites pass) that have an offset. Intersecting with
@@ -71,6 +74,28 @@ type SpreadEveryMinuteJob = keyof typeof EVERY_MINUTE_SECOND_OFFSETS &
 /** BullMQ cron (cron-parser) reads a 6-field pattern as seconds-first. */
 const everyMinuteAtOffset = (job: SpreadEveryMinuteJob): string =>
   `${EVERY_MINUTE_SECOND_OFFSETS[job]} * * * * *`
+
+/**
+ * One heartbeat a minute to the status-page monitor while
+ * STATUS_HEARTBEAT_WORKER_URL is set. Skipping registration would leave a
+ * scheduler stored in Redis firing, so an unset URL removes it instead.
+ */
+async function registerStatusHeartbeat(
+  queue: Queue<ScheduleJobData>,
+): Promise<void> {
+  if (!env.STATUS_HEARTBEAT_WORKER_URL) {
+    await queue.removeJobScheduler(ScheduleJobData.statusHeartbeat)
+    return
+  }
+  await queue.upsertJobScheduler(
+    ScheduleJobData.statusHeartbeat,
+    { pattern: everyMinuteAtOffset(ScheduleJobData.statusHeartbeat) },
+    {
+      name: ScheduleJobData.statusHeartbeat,
+      data: { type: ScheduleJobData.statusHeartbeat, data: {} },
+    },
+  )
+}
 
 export const registerSchedules = async () => {
   if (!(scheduleQueue instanceof Queue)) {
@@ -848,6 +873,8 @@ export const registerSchedules = async () => {
       },
     },
   )
+
+  await registerStatusHeartbeat(scheduleQueue)
 
   if (env.NEXT_PUBLIC_EDITION === "community") {
     // upsertJobScheduler persists in Redis: a scheduler left by an earlier

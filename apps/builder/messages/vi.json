@@ -8955,7 +8955,8 @@
   },
   "helpMenu": {
     "title": "Trợ giúp",
-    "ariaLabel": "Mở menu trợ giúp"
+    "ariaLabel": "Mở menu trợ giúp",
+    "status": "Trạng thái hệ thống"
   },
   "helpItems": {
     "title": "Liên kết trợ giúp",

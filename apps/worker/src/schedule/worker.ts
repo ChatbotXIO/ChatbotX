@@ -1,3 +1,4 @@
+import { startMetricsServer } from "@chatbotx.io/observability/metrics-server"
 import {
   queueNames,
   ScheduleJobData,
@@ -6,6 +7,7 @@ import {
 import { type Job, Queue } from "bullmq"
 import { createQueueWorker } from "../lib/create-queue-worker"
 import { logger } from "../lib/logger"
+import { registerWorkerQueueMetrics } from "../lib/queue-metrics"
 import { runJobWithAuditContext } from "../lib/run-job-with-audit-context"
 import { runWorker } from "../lib/shutdown"
 import {
@@ -75,12 +77,25 @@ import { scanContactScans } from "./handlers/scan-contact-scans"
 import { scanContactSyncRuns } from "./handlers/scan-contact-sync-runs"
 import { scanSmartDelay } from "./handlers/scan-smart-delay"
 import { scanSocialPostFeeds } from "./handlers/scan-social-post-feeds"
+import { sendStatusHeartbeat } from "./handlers/status-heartbeat"
 import { sweepStaleWhatsappCalls } from "./handlers/sweep-stale-whatsapp-calls"
 import { syncUserQuota } from "./handlers/sync-user-quota"
 import { teardownExpiredTrial } from "./handlers/teardown-expired-trial"
 import { unsubscribeExpiredTrials } from "./handlers/unsubscribe-expired-trials"
 
+async function startQueueObservability(): Promise<void> {
+  try {
+    if (await startMetricsServer()) {
+      registerWorkerQueueMetrics()
+    }
+  } catch (err) {
+    logger.error({ err }, "Schedule worker metrics server failed to start")
+  }
+}
+
 async function startScheduleWorker() {
+  await startQueueObservability()
+
   if (scheduleQueue instanceof Queue) {
     // A registration failure must not take the shared process down: the
     // consumers below still serve already-registered schedules.
@@ -347,6 +362,11 @@ async function startScheduleWorker() {
 
             case ScheduleJobData.refreshLicense:
               await refreshLicense()
+              return
+
+            // Platform-scoped: no workspace, so no blocked-owner guard.
+            case ScheduleJobData.statusHeartbeat:
+              await sendStatusHeartbeat()
               return
 
             case ScheduleJobData.unsubscribeExpiredTrials:

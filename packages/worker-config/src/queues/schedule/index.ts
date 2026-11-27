@@ -67,6 +67,8 @@ export const ScheduleJobData = {
   purgeCommentAutomationEvents: "purgeCommentAutomationEvents",
   refreshChannelTokens: "refreshChannelTokens",
   refreshLicense: "refreshLicense",
+  // Platform-scoped: pings the external status-page heartbeat monitor.
+  statusHeartbeat: "statusHeartbeat",
   unsubscribeExpiredTrials: "unsubscribeExpiredTrials",
   teardownExpiredTrial: "teardownExpiredTrial",
   purgeExpiredContactExports: "purgeExpiredContactExports",
@@ -452,6 +454,12 @@ export type ScheduleJobRefreshLicense = {
   data: Record<string, never>
 }
 
+/** Proves the schedule queue runs jobs; see docs/status-page.md. */
+export type ScheduleJobStatusHeartbeat = {
+  type: typeof ScheduleJobData.statusHeartbeat
+  data: Record<string, never>
+}
+
 export type ScheduleJobUnsubscribeExpiredTrials = {
   type: typeof ScheduleJobData.unsubscribeExpiredTrials
   data: { cursor?: string }
@@ -559,6 +567,7 @@ export type ScheduleJobData =
   | ScheduleJobPurgeCommentAutomationEvents
   | ScheduleJobRefreshChannelTokens
   | ScheduleJobRefreshLicense
+  | ScheduleJobStatusHeartbeat
   | ScheduleJobUnsubscribeExpiredTrials
   | ScheduleJobTeardownExpiredTrial
   | ScheduleJobPurgeExpiredContactExports

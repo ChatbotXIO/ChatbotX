@@ -4,7 +4,8 @@
   "private": true,
   "type": "module",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./probe": "./src/probe.ts"
   },
   "dependencies": {
     "@chatbotx.io/logger": "workspace:*",

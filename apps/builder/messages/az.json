@@ -9595,7 +9595,8 @@
   },
   "helpMenu": {
     "title": "Yardım",
-    "ariaLabel": "Yardım menyusunu aç"
+    "ariaLabel": "Yardım menyusunu aç",
+    "status": "Sistem statusu"
   },
   "helpItems": {
     "title": "Yardım keçidləri",
