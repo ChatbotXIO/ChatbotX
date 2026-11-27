@@ -695,7 +695,14 @@ describe.skipIf(!databaseUrl)("template store cache parity", () => {
         v: version,
         d: JSON.stringify({ json: { ...foreign, version } }),
       })
+      // A live entry (positive TTL): without one the read rejects it on PTTL
+      // before reaching the tenant check, and this test proves nothing.
+      await redis.pexpire(`template-store:v1:${victim}:snapshot`, 60_000)
+      const loadsBefore = snapshotSpy.mock.calls.length
       const result = await readTemplateStoreSnapshot(victim)
+      // The foreign entry was refused by the tenant check and the victim's
+      // own snapshot was reloaded from the database.
+      expect(snapshotSpy.mock.calls.length).toBe(loadsBefore + 1)
       expect(result.snapshot.tenantId).toBe(victim)
       expect(result.snapshot.rows.map((row) => row.name)).toEqual([
         "victim listing",
