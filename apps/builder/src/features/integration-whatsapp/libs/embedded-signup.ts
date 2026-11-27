@@ -122,12 +122,15 @@ export type EmbeddedSignupIntent = {
 }
 
 /**
- * Derive Meta's embedded-signup `featureType` from the user's intent.
+ * Derive the server's coexist intent from the form.
  *
  * Connecting an existing account means the number is live on the WhatsApp
  * Business App, which is Meta's coexistence onboarding screen. (Transferring a
  * number from another provider, `only_waba_sharing`, is no longer offered:
- * Meta removes it after 2026-11-16.)
+ * Meta removes it after 2026-11-16.) A fresh signup returns nothing here so
+ * the server keeps the Cloud API number resolver. The dialog still sends
+ * `whatsapp_business_app_onboarding` (see `dialogFeatureType`): without that
+ * feature type Meta never shows the existing-number screen.
  */
 export function resolveEmbeddedSignupFeatureType(
   params: EmbeddedSignupIntent,
@@ -136,6 +139,23 @@ export function resolveEmbeddedSignupFeatureType(
     return EMBEDDED_SIGNUP_FEATURE_TYPES.WHATSAPP_BUSINESS_APP_ONBOARDING
   }
   return
+}
+
+/**
+ * Feature type on the Facebook dialog.
+ *
+ * Meta shows an existing WhatsApp Business app number only when `featureType`
+ * is `whatsapp_business_app_onboarding`. That type goes on every connect,
+ * including a fresh signup whose form switch is off. Coexist eligibility
+ * stays on `resolveEmbeddedSignupFeatureType`, which still follows the switch.
+ */
+export function dialogFeatureType(
+  params: EmbeddedSignupIntent & { showExistingNumbers?: boolean },
+): string | undefined {
+  if (params.showExistingNumbers) {
+    return EMBEDDED_SIGNUP_FEATURE_TYPES.WHATSAPP_BUSINESS_APP_ONBOARDING
+  }
+  return resolveEmbeddedSignupFeatureType(params)
 }
 
 /**
@@ -211,10 +231,16 @@ export type FacebookOAuthDialogParams = {
   configId: string
   version: string
   connectExisting: boolean
+  /**
+   * Number connect and reconnect always ask Meta for the existing-number
+   * screen. CAPI leaves this off and follows `connectExisting` alone.
+   */
+  showExistingNumbers?: boolean
   locale?: string
   /**
-   * Set on a reconnect, left off on a first connect: the first connect has
-   * nothing to re-ask for, and the dialog already shows every permission.
+   * Defaults to `rerequest`. A first connect on an app that already granted
+   * Page permissions still has to re-ask, or Meta returns that Page token and
+   * the WhatsApp screen never runs.
    */
   authType?: FacebookAuthType
 }
@@ -233,9 +259,14 @@ export function buildFacebookOAuthDialogUrl(
   url.searchParams.set("config_id", params.configId)
   url.searchParams.set("redirect_uri", params.redirectUri)
   url.searchParams.set("response_type", "code")
-  if (params.authType) {
-    url.searchParams.set("auth_type", params.authType)
-  }
+  // Login for Business reads permissions from config_id. override_default_response_type
+  // keeps the dialog on the embedded-signup response. rerequest stops Meta from
+  // reusing a previous Page-only grant on the same app.
+  url.searchParams.set("override_default_response_type", "true")
+  url.searchParams.set(
+    "auth_type",
+    params.authType ?? FACEBOOK_AUTH_TYPES.REREQUEST,
+  )
   url.searchParams.set(
     "state",
     encodeOAuthState({
@@ -244,8 +275,9 @@ export function buildFacebookOAuthDialogUrl(
     }),
   )
 
-  const featureType = resolveEmbeddedSignupFeatureType({
+  const featureType = dialogFeatureType({
     connectExisting: params.connectExisting,
+    showExistingNumbers: params.showExistingNumbers,
   })
   const buildExtras =
     EMBEDDED_SIGNUP_EXTRAS_BUILDERS[DEFAULT_EMBEDDED_SIGNUP_VERSION]
