@@ -31,6 +31,10 @@ import {
 // share fixtures/mocks from `whatsapp-connect-action.mocks.ts`.
 // ---------------------------------------------------------------------------
 
+vi.mock("@/lib/tenant/request-tenant", () => ({
+  resolveRequestTenantId: vi.fn(async () => "1"),
+}))
+
 vi.mock("@/lib/safe-action", () => {
   const chain: Record<string, unknown> = {}
   chain.inputSchema = () => chain
@@ -82,6 +86,9 @@ vi.mock("@chatbotx.io/business", () => ({
     findByWaba: mocks.findWabaRecordMock,
     markProvisioned: mocks.markWabaProvisionedMock,
     upsertCurrentCredential: mocks.upsertWabaCredentialMock,
+  },
+  userService: {
+    recordConnectionAuthorization: mocks.recordAuthorizationMock,
   },
   workspaceMemberService: {
     isMember: mocks.isMemberMock,
@@ -188,6 +195,33 @@ describe("connectWhatsappAction — session path", () => {
         businessId: "session-business",
       }),
     )
+  })
+
+  test("records the signup session's auth once for the connected number", async () => {
+    mocks.findActiveSignupSessionForUserMock.mockResolvedValue({
+      ...defaultSession,
+      accessToken: "session-token",
+    })
+
+    await callConnectWhatsappAction({
+      ctx: { user: { id: "user-1" } },
+      parsedInput: {
+        ...BASE_INPUT,
+        phoneNumberId: selectedPhoneNumber.id,
+        signupSessionId: "signup-session-1",
+      },
+    })
+
+    expect(mocks.recordAuthorizationMock).toHaveBeenCalledTimes(1)
+    expect(mocks.recordAuthorizationMock).toHaveBeenCalledWith({
+      userId: "user-1",
+      provider: "whatsapp",
+      auth: expect.objectContaining({
+        tokens: { accessToken: "session-token" },
+      }),
+      phase: "authorizationObtained",
+      workspaceId: null,
+    })
   })
 
   test("session expired/foreign id returns typed sessionExpired, never thrown", async () => {

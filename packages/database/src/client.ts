@@ -1,8 +1,8 @@
 import { parseEnvBool } from "@chatbotx.io/utils"
 import {
   DrizzleQueryError,
+  getTableColumns,
   type InferSelectModel,
-  relationsFilterToSQL,
   type SQLWrapper,
   sql,
 } from "drizzle-orm"
@@ -13,15 +13,13 @@ import { ModelNotfoundException } from "./errors"
 import { keys } from "./keys"
 import { logger } from "./logger"
 import { relations } from "./relations"
-
-// biome-ignore lint/performance/noNamespaceImport: drizzle schema
-import * as schema from "./schema"
+import { relationsFilterToSQL, stripUndefined } from "./relations-filter"
 
 const env = keys()
 
 const pool = new Pool({
   connectionString: env.DATABASE_URL,
-  max: 10,
+  max: env.DATABASE_POOL_MAX,
   idleTimeoutMillis: 30_000,
   connectionTimeoutMillis: 10_000,
 })
@@ -32,21 +30,44 @@ pool.on("error", (error) => {
 
 export const db = drizzle({
   client: pool,
-  schema,
   relations,
   // parseEnvBool: with SKIP_ENV_CHECK=true (build scripts) this is the raw
   // string "true", which drizzle would treat as a Logger object and crash on.
   logger: parseEnvBool(env.DATABASE_DEBUG),
 })
 
+// drizzle-orm 1.0.0-rc throws "Unexpected 'undefined' in filter value" for
+// any `undefined` inside a relational `where` (top level or in `with`); beta
+// skipped those keys and many repositories build `where` objects with
+// optional filters (`name: input.name ? … : undefined`). Strip them once on
+// the shared builder prototype so every `db.query.*` and `tx.query.*`
+// find keeps beta semantics. Guarded by __tests__/relational-query-undefined.test.ts.
+type RelationalFind = (config?: unknown) => unknown
+const relationalQueryBuilderPrototype = Object.getPrototypeOf(
+  Object.values(db.query)[0],
+) as { findMany: RelationalFind; findFirst: RelationalFind }
+for (const method of ["findMany", "findFirst"] as const) {
+  const original = relationalQueryBuilderPrototype[method]
+  relationalQueryBuilderPrototype[method] = function (
+    this: unknown,
+    config?: unknown,
+  ) {
+    return original.call(
+      this,
+      config === undefined ? undefined : stripUndefined(config),
+    )
+  }
+}
+
 export * from "drizzle-orm"
+export { relationsFilterToSQL } from "./relations-filter"
 
 type RelationsFilterArg = Parameters<typeof relationsFilterToSQL>[1]
-type RelationsFilterInternals = Parameters<typeof relationsFilterToSQL>[3]
-type RelationsFilterCasing = Parameters<typeof relationsFilterToSQL>[4]
+type RelationsFilterInternals = NonNullable<
+  Parameters<typeof relationsFilterToSQL>[3]
+>
 type DrizzleRelationInternalsClient = {
   _?: { relations: RelationsFilterInternals }
-  dialect?: { casing: RelationsFilterCasing }
 }
 export type Transaction = Parameters<
   Parameters<(typeof db)["transaction"]>[0]
@@ -159,23 +180,50 @@ const resolveRelationsFilter = <TTable extends PgTable>(props: {
     where as RelationsFilterArg,
     tableRelations,
     relationInternals,
-    internalClient.dialect?.casing ?? rootClient.dialect.casing,
   )
 }
 
-export const findOrFail = async <TTable extends PgTable>(props: {
+/** Columns left out of a `findOrFail` read, in drizzle's `columns` exclusion form. */
+type ExcludedColumns<TTable extends PgTable> = Partial<
+  Record<keyof InferSelectModel<TTable>, false>
+>
+
+export const findOrFail = async <
+  TTable extends PgTable,
+  TExcluded extends ExcludedColumns<TTable> = Record<never, false>,
+>(props: {
   client?: DatabaseClient
   table: TTable
   where: Record<string, unknown> | undefined
   message?: string
-}): Promise<InferSelectModel<TTable>> => {
+  /**
+   * Columns to leave out, as `{ column: false }` (e.g.
+   * `userColumnsWithoutSecrets`); every other column is read.
+   */
+  columns?: TExcluded
+}): Promise<Omit<InferSelectModel<TTable>, keyof TExcluded>> => {
   const { client = db, table, where, message = "Record not found" } = props
-  const result = await client
-    .select()
+  const { columns: excluded } = props
+  // Without exclusions keep the plain `select()` every other caller relies on.
+  const query = excluded
+    ? client.select(
+        Object.fromEntries(
+          Object.entries(getTableColumns(table)).filter(
+            ([key]) => !(key in excluded),
+          ),
+        ),
+      )
+    : client.select()
+  const result = await query
     .from(table as PgTable)
     .where(relationsFilterToSQL(table, where as RelationsFilterArg))
     .limit(1)
-    .then((result) => result[0] as InferSelectModel<TTable> | undefined)
+    .then(
+      (result) =>
+        result[0] as
+          | Omit<InferSelectModel<TTable>, keyof TExcluded>
+          | undefined,
+    )
 
   if (!result) {
     throw new ModelNotfoundException(message)
@@ -211,15 +259,16 @@ export const throwIfExists = async <TTable extends PgTable>(props: {
 
 /**
  * A database error safe to log or record: its message and parameters carry the
- * bound values (tokens, payload data), so only the driver-level code is kept.
- * Any other error is returned unchanged.
+ * bound values (tokens, payload data), so only the driver-level code and the
+ * violated constraint's name are kept. Any other error is returned unchanged.
  */
 export const toLoggableDatabaseError = (error: unknown): unknown => {
   if (!(error instanceof DrizzleQueryError)) {
     return error
   }
-  const code = (error.cause as { code?: unknown } | undefined)?.code
-  return new Error(`Database error${code ? ` (${String(code)})` : ""}`)
+  const { code, constraint } = describeDatabaseError(error)
+  const details = [code, constraint].filter(Boolean).join(" ")
+  return new Error(`Database error${details ? ` (${details})` : ""}`)
 }
 
 export const isDatabaseError = (
@@ -263,6 +312,14 @@ export const isUniqueViolationError = (
 /** Detects a statement cancelled by `statement_timeout` (SQLSTATE 57014). */
 export const isStatementTimeoutError = (error: unknown): boolean =>
   isConstraintViolationError(error, "57014")
+
+/** Detects a transaction aborted as a deadlock victim (SQLSTATE 40P01). */
+export const isDeadlockError = (error: unknown): boolean =>
+  isConstraintViolationError(error, "40P01")
+
+/** Detects a lock wait that exceeded `lock_timeout` (SQLSTATE 55P03). */
+export const isLockTimeoutError = (error: unknown): boolean =>
+  isConstraintViolationError(error, "55P03")
 
 /**
  * Detects a foreign-key violation (SQLSTATE 23503).

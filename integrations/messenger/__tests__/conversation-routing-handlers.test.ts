@@ -30,10 +30,13 @@ const ctx = {
   },
 } as never
 
-const updateThreadControl = (action: "take" | "pass" | "release") =>
+const updateThreadControl = (
+  action: "take" | "pass" | "release",
+  targetRole?: "ai_agent" | "marketing",
+) =>
   conversationHandlers.updateThreadControl({
     ctx,
-    data: { contact: { id: "ci-1", sourceId: PSID }, action },
+    data: { contact: { id: "ci-1", sourceId: PSID }, action, targetRole },
   } as never)
 
 /** Records the body of the next request to `url` and answers `response`. */
@@ -114,6 +117,30 @@ describe("updateThreadControl", () => {
     expect((error as ChannelError).isRetryable).toBe(false)
     expect(takeSeen).toHaveLength(0)
     expect(passSeen).toHaveLength(0)
+  })
+
+  it("pass to a partner role is refused up front instead of being silently dropped", async () => {
+    const passSeen = captureBody(PASS_URL, HttpResponse.json({ success: true }))
+
+    const error = await updateThreadControl("pass", "marketing").catch(
+      (e: unknown) => e,
+    )
+
+    expect(error).toBeInstanceOf(ChannelError)
+    expect((error as ChannelError).code).toBe(
+      THREAD_CONTROL_ACTION_UNSUPPORTED_CODE,
+    )
+    expect((error as ChannelError).isRetryable).toBe(false)
+    expect(passSeen).toHaveLength(0)
+  })
+
+  it("pass naming the AI agent as target is the normal return to the bot", async () => {
+    const passSeen = captureBody(PASS_URL, HttpResponse.json({ success: true }))
+
+    await expect(
+      updateThreadControl("pass", "ai_agent"),
+    ).resolves.toMatchObject({ ownerRole: "ai_agent" })
+    expect(passSeen).toHaveLength(1)
   })
 
   it("a permission refusal on take becomes ThreadControlTakeRefusedError with Messenger wording", async () => {

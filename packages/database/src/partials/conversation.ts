@@ -52,6 +52,13 @@ export type ConversationStepChallenge = {
     stepId: string
     attempts: number
     lastAttemptAt: Date
+    /**
+     * When this challenge cycle first asked its question. Unlike
+     * `lastAttemptAt` it is never moved by a retry, so a step deadline counts
+     * from the first prompt. Absent on challenges written before it existed.
+     * Stored as JSON, so it reads back as an ISO string.
+     */
+    startedAt?: Date
     appointmentId?: string
     challengeId?: string
   }
@@ -75,3 +82,10 @@ export type ConversationAttributes = {
   phoneNumber?: string
   challenge?: ConversationStepChallenge | ConversationQuickReplyChallenge
 }
+
+/**
+ * Members shown as avatars on a conversation row (`recentParticipants`). The
+ * server loads this many and the client keeps its live preview at the same
+ * size; the full list is paged.
+ */
+export const RECENT_PARTICIPANT_LIMIT = 3

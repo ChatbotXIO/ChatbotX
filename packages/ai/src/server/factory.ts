@@ -3,6 +3,7 @@ import type {
   IntegrationClaudeModel,
   IntegrationDeepseekModel,
   IntegrationGeminiModel,
+  IntegrationMuseModel,
   IntegrationOpenAIModel,
   IntegrationOpenaiCompatibleModel,
   IntegrationOpenrouterModel,
@@ -22,6 +23,7 @@ export type AIIntegrationModel =
   | IntegrationClaudeModel
   | IntegrationDeepseekModel
   | IntegrationOpenrouterModel
+  | IntegrationMuseModel
 
 export type OpenaiCompatibleAIIntegrationModel =
   IntegrationOpenaiCompatibleModel
@@ -61,6 +63,10 @@ export async function getAIIntegrationInDB(props: {
       })
     case aiProviders.enum.openrouter:
       return await db.query.integrationOpenrouterModel.findFirst({
+        where,
+      })
+    case aiProviders.enum.muse:
+      return await db.query.integrationMuseModel.findFirst({
         where,
       })
     default:
@@ -212,6 +218,11 @@ export function createAIImageModelInstance(props: {
 
   if ("image" in providerInstance) {
     return providerInstance.image(normalizedModelId) as ImageModel
+  }
+
+  // `@ai-sdk/openai-compatible` exposes only `imageModel()`.
+  if (provider === aiProviders.enum.muse && "imageModel" in providerInstance) {
+    return providerInstance.imageModel(normalizedModelId) as ImageModel
   }
 
   throw new Error(`Provider ${provider} does not support image generation`)

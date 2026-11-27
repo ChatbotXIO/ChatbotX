@@ -1,0 +1,107 @@
+{
+  "type": "diff",
+  "version": "10",
+  "dialect": "postgres",
+  "id": "3405d3ac-0034-4dc3-b17c-b8318a3899d2",
+  "prevIds": [
+    "ead1b09e-f458-4998-930c-abadd817574f"
+  ],
+  "footprints": [
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "PlatformCredential",
+        "PlatformCredential_user_type_key"
+      ],
+      "writes": [
+        "s|idx|public.PlatformCredential_user_type_key",
+        "n|idx|public.PlatformCredential_user_type_key",
+        "e|idx|public.PlatformCredential_user_type_key",
+        "n|rel|public.PlatformCredential_user_type_key"
+      ],
+      "reads": [
+        "n|tbl|public.PlatformCredential",
+        "n|sch|public",
+        "n|col|public.PlatformCredential.userId",
+        "n|col|public.PlatformCredential.type"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "PlatformCredential",
+        "PlatformCredential_platform_type_key"
+      ],
+      "writes": [
+        "s|idx|public.PlatformCredential_platform_type_key",
+        "n|idx|public.PlatformCredential_platform_type_key",
+        "e|idx|public.PlatformCredential_platform_type_key",
+        "n|rel|public.PlatformCredential_platform_type_key"
+      ],
+      "reads": [
+        "n|tbl|public.PlatformCredential",
+        "n|sch|public",
+        "n|col|public.PlatformCredential.type"
+      ]
+    }
+  ],
+  "deltas": [
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PlatformCredential",
+        "name": "PlatformCredential_user_type_key",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "userId",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          },
+          {
+            "value": "type",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": true,
+        "where": "\"userId\" IS NOT NULL",
+        "with": "",
+        "method": "btree",
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PlatformCredential",
+        "name": "PlatformCredential_platform_type_key",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "type",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": true,
+        "where": "\"userId\" IS NULL",
+        "with": "",
+        "method": "btree",
+        "entityType": "indexes"
+      }
+    }
+  ]
+}

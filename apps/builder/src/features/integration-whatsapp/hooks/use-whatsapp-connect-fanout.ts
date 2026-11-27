@@ -52,10 +52,7 @@ type WhatsappLastConnectedInfo = Pick<
 /** The form fields the session connect route accepts — the rest stay server-side. */
 type SessionConnectFields = Pick<
   ConnectWhatsappSchema,
-  | "signupSessionId"
-  | "connectExisting"
-  | "transferPhoneNumber"
-  | "marketingMessageLite"
+  "signupSessionId" | "connectExisting"
 >
 
 /**
@@ -81,8 +78,6 @@ async function connectPhoneNumberViaSession(
       signupSessionId: fields.signupSessionId ?? "",
       phoneNumberId: item.id,
       connectExisting: fields.connectExisting,
-      transferPhoneNumber: fields.transferPhoneNumber,
-      marketingMessageLite: fields.marketingMessageLite,
     },
     parse: (data) => connectWhatsappViaSessionResponse.parse(data),
     item,

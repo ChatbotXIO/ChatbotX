@@ -2,7 +2,7 @@ import type { KeyboardEvent } from "react"
 import type { FieldValues, Path, UseFormReturn } from "react-hook-form"
 
 type KeywordFieldValues = FieldValues & {
-  keywords: { value: string }[]
+  keywords?: { value: string }[]
 }
 
 export function useKeywordFieldNavigation<T extends KeywordFieldValues>(

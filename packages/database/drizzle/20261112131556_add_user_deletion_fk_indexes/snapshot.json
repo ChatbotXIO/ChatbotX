@@ -1,0 +1,314 @@
+{
+  "type": "diff",
+  "version": "10",
+  "dialect": "postgres",
+  "id": "b73177b2-2f4d-40ef-b2ab-184d0bf661bc",
+  "prevIds": [
+    "313aa547-442a-4177-9cfc-0049b576f604"
+  ],
+  "footprints": [
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "Account",
+        "Account_userId_idx"
+      ],
+      "writes": [
+        "s|idx|public.Account_userId_idx",
+        "n|idx|public.Account_userId_idx",
+        "e|idx|public.Account_userId_idx",
+        "n|rel|public.Account_userId_idx"
+      ],
+      "reads": [
+        "n|tbl|public.Account",
+        "n|sch|public",
+        "n|col|public.Account.userId"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "Session",
+        "Session_userId_idx"
+      ],
+      "writes": [
+        "s|idx|public.Session_userId_idx",
+        "n|idx|public.Session_userId_idx",
+        "e|idx|public.Session_userId_idx",
+        "n|rel|public.Session_userId_idx"
+      ],
+      "reads": [
+        "n|tbl|public.Session",
+        "n|sch|public",
+        "n|col|public.Session.userId"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "File",
+        "File_userId_idx"
+      ],
+      "writes": [
+        "s|idx|public.File_userId_idx",
+        "n|idx|public.File_userId_idx",
+        "e|idx|public.File_userId_idx",
+        "n|rel|public.File_userId_idx"
+      ],
+      "reads": [
+        "n|tbl|public.File",
+        "n|sch|public",
+        "n|col|public.File.userId"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "Import",
+        "Import_userId_idx"
+      ],
+      "writes": [
+        "s|idx|public.Import_userId_idx",
+        "n|idx|public.Import_userId_idx",
+        "e|idx|public.Import_userId_idx",
+        "n|rel|public.Import_userId_idx"
+      ],
+      "reads": [
+        "n|tbl|public.Import",
+        "n|sch|public",
+        "n|col|public.Import.userId"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "WhatsappCall",
+        "WhatsappCall_answeredByUserId_idx"
+      ],
+      "writes": [
+        "s|idx|public.WhatsappCall_answeredByUserId_idx",
+        "n|idx|public.WhatsappCall_answeredByUserId_idx",
+        "e|idx|public.WhatsappCall_answeredByUserId_idx",
+        "n|rel|public.WhatsappCall_answeredByUserId_idx"
+      ],
+      "reads": [
+        "n|tbl|public.WhatsappCall",
+        "n|sch|public",
+        "n|col|public.WhatsappCall.answeredByUserId"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "WhatsappCall",
+        "WhatsappCall_initiatedByUserId_idx"
+      ],
+      "writes": [
+        "s|idx|public.WhatsappCall_initiatedByUserId_idx",
+        "n|idx|public.WhatsappCall_initiatedByUserId_idx",
+        "e|idx|public.WhatsappCall_initiatedByUserId_idx",
+        "n|rel|public.WhatsappCall_initiatedByUserId_idx"
+      ],
+      "reads": [
+        "n|tbl|public.WhatsappCall",
+        "n|sch|public",
+        "n|col|public.WhatsappCall.initiatedByUserId"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "WorkspaceMember",
+        "WorkspaceMember_userId_idx"
+      ],
+      "writes": [
+        "s|idx|public.WorkspaceMember_userId_idx",
+        "n|idx|public.WorkspaceMember_userId_idx",
+        "e|idx|public.WorkspaceMember_userId_idx",
+        "n|rel|public.WorkspaceMember_userId_idx"
+      ],
+      "reads": [
+        "n|tbl|public.WorkspaceMember",
+        "n|sch|public",
+        "n|col|public.WorkspaceMember.userId"
+      ]
+    }
+  ],
+  "deltas": [
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "Account",
+        "name": "Account_userId_idx",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "userId",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": false,
+        "where": null,
+        "with": "",
+        "method": "btree",
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "Session",
+        "name": "Session_userId_idx",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "userId",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": false,
+        "where": null,
+        "with": "",
+        "method": "btree",
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "File",
+        "name": "File_userId_idx",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "userId",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": false,
+        "where": "\"userId\" IS NOT NULL",
+        "with": "",
+        "method": "btree",
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "Import",
+        "name": "Import_userId_idx",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "userId",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": false,
+        "where": "\"userId\" IS NOT NULL",
+        "with": "",
+        "method": "btree",
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "WhatsappCall",
+        "name": "WhatsappCall_answeredByUserId_idx",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "answeredByUserId",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": false,
+        "where": "\"answeredByUserId\" IS NOT NULL",
+        "with": "",
+        "method": "btree",
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "WhatsappCall",
+        "name": "WhatsappCall_initiatedByUserId_idx",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "initiatedByUserId",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": false,
+        "where": "\"initiatedByUserId\" IS NOT NULL",
+        "with": "",
+        "method": "btree",
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "WorkspaceMember",
+        "name": "WorkspaceMember_userId_idx",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "userId",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": false,
+        "where": null,
+        "with": "",
+        "method": "btree",
+        "entityType": "indexes"
+      }
+    }
+  ]
+}

@@ -20,7 +20,12 @@ spec:
 
 ```bash
 pnpm --filter builder test -- public-spec-operations.test.ts public-spec-mcp.test.ts
+
 ```
+
+For MCP safety changes, remember that gated tools expose a `_confirm` input,
+`get_guide` is the third meta tool, and `apps/mcp-server/src/guides/*.md` is a
+public documentation surface.
 
 Check:
 - `operationId` is what you expect — it becomes the MCP tool name
@@ -36,7 +41,7 @@ Check:
   operation returns the link/preview/stats itself — see `orpc-api`,
   "Result-returning operations").
 - Nothing in the feature's UI is left without a matching operation, unless it is
-  on the invariant 23 exempt list.
+  on the invariant 23 exempt list (`docs/agents/invariants.md`).
 
 ## 2. Check for a silent CLI command-name collision
 

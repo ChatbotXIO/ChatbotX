@@ -50,6 +50,11 @@ const conversationService = {
 
 vi.mock("@chatbotx.io/business", () => ({
   AVATAR_HYDRATION_CHANNELS: new Set(["messenger", "instagram"]),
+  conversationMemberScope: {
+    resolve: vi.fn(),
+    allows: () => true,
+    where: () => undefined,
+  },
   workspaceApiTokenService: { findWorkspaceByTokenHash },
   isWorkspaceScheduledForDeletion,
   userQuotaService: { getAccessState },
@@ -150,6 +155,7 @@ const buildConversationFixture = () => ({
   contact: null,
   assignedUser: null,
   assignedInboxTeam: null,
+  conversationParticipants: [],
 })
 
 const invoke = (procedure: typeof conversationsPublicRouter.get) =>

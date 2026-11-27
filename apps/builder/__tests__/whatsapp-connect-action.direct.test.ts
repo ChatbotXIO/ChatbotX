@@ -28,6 +28,10 @@ import {
 // fixtures/mocks from `whatsapp-connect-action.mocks.ts`.
 // ---------------------------------------------------------------------------
 
+vi.mock("@/lib/tenant/request-tenant", () => ({
+  resolveRequestTenantId: vi.fn(async () => "1"),
+}))
+
 vi.mock("@/lib/safe-action", () => {
   const chain: Record<string, unknown> = {}
   chain.inputSchema = () => chain
@@ -79,6 +83,9 @@ vi.mock("@chatbotx.io/business", () => ({
     findByWaba: mocks.findWabaRecordMock,
     markProvisioned: mocks.markWabaProvisionedMock,
     upsertCurrentCredential: mocks.upsertWabaCredentialMock,
+  },
+  userService: {
+    recordConnectionAuthorization: mocks.recordAuthorizationMock,
   },
   workspaceMemberService: {
     isMember: mocks.isMemberMock,
@@ -549,19 +556,83 @@ describe("connectWhatsappAction — direct paths and selection request", () => {
       expect(mocks.resolveOwningWabaIdMock).toHaveBeenCalled()
       expect(mocks.resolveBusinessAppCandidatesMock).not.toHaveBeenCalled()
     })
+  })
 
-    test("a transfer (only_waba_sharing) is not a coexistence signup either", async () => {
+  describe("connection authorization capture", () => {
+    const manualInput = {
+      ...BASE_INPUT,
+      manualConnect: true,
+      wabaId: "waba-1",
+      accessToken: "manual-token",
+      manualPhoneNumberId: selectedPhoneNumber.id,
+    }
+
+    test("records the number's auth once, before it is stored", async () => {
       await callConnectWhatsappAction({
         ctx: { user: { id: "user-1" } },
-        parsedInput: {
-          ...BASE_INPUT,
-          transferPhoneNumber: true,
-          code: "oauth-code-1",
-        },
+        parsedInput: { ...manualInput, workspaceId: "ws-1" },
       })
 
-      expect(mocks.resolveOwningWabaIdMock).toHaveBeenCalled()
-      expect(mocks.resolveBusinessAppCandidatesMock).not.toHaveBeenCalled()
+      expect(mocks.recordAuthorizationMock).toHaveBeenCalledTimes(1)
+      expect(mocks.recordAuthorizationMock).toHaveBeenCalledWith({
+        userId: "user-1",
+        provider: "whatsapp",
+        auth: expect.objectContaining({
+          tokens: { accessToken: "manual-token" },
+        }),
+        phase: "authorizationObtained",
+        workspaceId: "ws-1",
+      })
+      expect(
+        mocks.recordAuthorizationMock.mock.invocationCallOrder[0],
+      ).toBeLessThan(
+        mocks.connectPhoneNumberMock.mock.invocationCallOrder[0] as number,
+      )
+    })
+
+    test("a known workspace is recorded even when storing the number fails", async () => {
+      mocks.connectPhoneNumberMock.mockRejectedValue(new Error("db down"))
+
+      await callConnectWhatsappAction({
+        ctx: { user: { id: "user-1" } },
+        parsedInput: { ...manualInput, workspaceId: "ws-1" },
+      })
+
+      expect(mocks.recordAuthorizationMock).toHaveBeenCalledTimes(1)
+      expect(mocks.recordAuthorizationMock).toHaveBeenCalledWith(
+        expect.objectContaining({ workspaceId: "ws-1" }),
+      )
+    })
+
+    test("a first-ever connect (no workspace) records once, with a null workspace, before it is stored", async () => {
+      await callConnectWhatsappAction({
+        ctx: { user: { id: "user-1" } },
+        parsedInput: { ...manualInput, workspaceId: null },
+      })
+
+      expect(mocks.recordAuthorizationMock).toHaveBeenCalledTimes(1)
+      expect(mocks.recordAuthorizationMock).toHaveBeenCalledWith(
+        expect.objectContaining({ workspaceId: null }),
+      )
+      expect(
+        mocks.recordAuthorizationMock.mock.invocationCallOrder[0],
+      ).toBeLessThan(
+        mocks.connectPhoneNumberMock.mock.invocationCallOrder[0] as number,
+      )
+    })
+
+    test("a first-ever connect whose storing fails still records once, with a null workspace", async () => {
+      mocks.connectPhoneNumberMock.mockRejectedValue(new Error("db down"))
+
+      await callConnectWhatsappAction({
+        ctx: { user: { id: "user-1" } },
+        parsedInput: { ...manualInput, workspaceId: null },
+      })
+
+      expect(mocks.recordAuthorizationMock).toHaveBeenCalledTimes(1)
+      expect(mocks.recordAuthorizationMock).toHaveBeenCalledWith(
+        expect.objectContaining({ workspaceId: null }),
+      )
     })
   })
 

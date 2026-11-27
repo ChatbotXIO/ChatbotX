@@ -110,7 +110,13 @@ export function ProductDetail({
   const price = variant?.price ?? product.price
   const needsVariant = product.hasVariants && !variant
 
-  const canAdd = product.inStock && !needsVariant && !isPending
+  const variantSoldOut =
+    variant?.inventoryQuantity != null &&
+    variant.inventoryQuantity <= 0 &&
+    !product.allowOutOfStockPurchase
+  const inStock = product.inStock && !variantSoldOut
+  const sku = variant?.sku ?? product.sku
+  const canAdd = inStock && !needsVariant && !isPending
 
   const addToCart = () =>
     change({
@@ -181,9 +187,10 @@ export function ProductDetail({
             <h1 className="font-bold text-2xl leading-tight tracking-tight">
               {product.name}
             </h1>
-            {product.vendorName ? (
-              <p className="text-muted-foreground text-sm">
-                {product.vendorName}
+            {product.vendorName || sku ? (
+              <p className="flex flex-wrap gap-x-3 text-muted-foreground text-sm">
+                {product.vendorName ? <span>{product.vendorName}</span> : null}
+                {sku ? <span>{t("sku", { sku })}</span> : null}
               </p>
             ) : null}
             <ProductPrice
@@ -216,7 +223,7 @@ export function ProductDetail({
 
             <BuyControls
               canAdd={canAdd}
-              inStock={product.inStock}
+              inStock={inStock}
               isPending={isPending}
               onAdd={addToCart}
               onQuantityChange={setQuantity}
@@ -396,7 +403,7 @@ function BuyControls({
         ) : (
           <ShoppingCartIcon />
         )}
-        {inStock ? t("addToCart") : t("outOfStock")}
+        {inStock ? t("addToCart") : t("soldOut")}
       </Button>
     </ShopBottomBar>
   )

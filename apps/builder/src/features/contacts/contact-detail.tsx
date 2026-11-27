@@ -49,6 +49,7 @@ import {
 import { useTranslations } from "next-intl"
 import { useEffect, useMemo, useRef, useState } from "react"
 import { toast } from "sonner"
+import { contactDisplayName } from "@/features/contacts/lib/contact-display-name"
 import { RequestCallPermissionDialog } from "@/features/integration-whatsapp/calling/request-call-permission-dialog"
 import { useOutboundCallMode } from "@/features/integration-whatsapp/calling/voip/use-outbound-call-mode"
 import { useWhatsappCallStarter } from "@/features/integration-whatsapp/calling/voip/use-whatsapp-call-starter"
@@ -62,14 +63,11 @@ import { formatCustomFieldDisplayValue } from "../custom-fields/lib/format-custo
 import { customFieldIconsMap } from "../custom-fields/provider/custom-field-hook"
 import { EditContactField } from "./edit-contact-field"
 import { resolveSourceIdentity } from "./lib/channel-identity"
+import { toHttpUrl } from "./lib/http-url"
 import { ResetContactCustomFieldsDialog } from "./reset-contact-custom-fields-dialog"
 import type { GetContactResponse } from "./schema/query"
 import type { ContactEditableField } from "./schema/resource"
 import { useAvatarUrl } from "./utils"
-
-// Guards the ad source URL to navigable http(s) so a non-URL / `javascript:`
-// referral value never becomes an anchor href.
-const HTTP_URL_RE = /^https?:\/\//
 
 const READ_ONLY_VALUE_CLASS =
   "inline-flex h-8 flex-1 items-center justify-start truncate rounded-md px-3 text-[12px]"
@@ -451,6 +449,21 @@ export const ContactDetail = ({
 
   const [selectedField, setSelectedField] =
     useState<ContactEditableField | null>(null)
+  const [selectedFieldAnchor, setSelectedFieldAnchor] =
+    useState<HTMLElement | null>(null)
+
+  const openFieldEditor = (
+    field: ContactEditableField,
+    anchorElement: HTMLElement,
+  ) => {
+    setSelectedFieldAnchor(anchorElement)
+    setSelectedField(field)
+  }
+
+  const closeFieldEditor = () => {
+    setSelectedField(null)
+    setSelectedFieldAnchor(null)
+  }
 
   const [contactFields, setContactFields] = useState<ContactEditableField[]>([])
 
@@ -572,10 +585,7 @@ export const ContactDetail = ({
         const rawAdSourceUrl = conversation.contactInboxes.find(
           (contactInbox) => contactInbox.adReferral?.sourceUrl,
         )?.adReferral?.sourceUrl
-        const adSourceUrl =
-          rawAdSourceUrl && HTTP_URL_RE.test(rawAdSourceUrl)
-            ? rawAdSourceUrl
-            : null
+        const adSourceUrl = toHttpUrl(rawAdSourceUrl)
         const tmpContactFields: ContactEditableField[] = [
           {
             key: "contactId",
@@ -733,7 +743,7 @@ export const ContactDetail = ({
         <div className="mb-3 flex justify-center">
           <ContactPanelCallEntry
             contactInboxId={soleCallableContactInbox.id}
-            contactName={contact.fullName}
+            contactName={contactDisplayName(contact)}
             conversationId={activeConversationForCall.id}
             inboxId={soleCallableContactInbox.inboxId}
           />
@@ -781,7 +791,7 @@ export const ContactDetail = ({
             <ContactPanelCallEntry
               autoTrigger
               contactInboxId={callSelection.contactInboxId}
-              contactName={contact.fullName}
+              contactName={contactDisplayName(contact)}
               conversationId={activeConversationForCall.id}
               inboxId={callSelection.inboxId}
               key={`${callSelection.contactInboxId}-${callSelection.token}`}
@@ -816,7 +826,9 @@ export const ContactDetail = ({
               ) : (
                 <Button
                   className="flex-1 justify-start truncate text-[12px]"
-                  onClick={() => setSelectedField(editable)}
+                  onClick={(event) =>
+                    openFieldEditor(editable, event.currentTarget)
+                  }
                   size="sm"
                   variant="ghost"
                 >
@@ -842,9 +854,14 @@ export const ContactDetail = ({
       </div>
 
       <EditContactField
+        anchor={selectedFieldAnchor}
         contactId={contact.id}
         onDeleted={handleCustomFieldDeleted}
-        onOpenChange={() => setSelectedField(null)}
+        onOpenChange={(open) => {
+          if (!open) {
+            closeFieldEditor()
+          }
+        }}
         onUpdated={handleCustomFieldUpdated}
         open={Boolean(selectedField)}
         targetField={selectedField}

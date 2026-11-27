@@ -3,6 +3,7 @@ import {
   db,
   isUniqueViolationError,
 } from "@chatbotx.io/database/client"
+import { isExternalStoreSource } from "@chatbotx.io/database/partials"
 import {
   productCategoryRepository,
   type VendorListInput,
@@ -10,7 +11,15 @@ import {
 } from "@chatbotx.io/database/repositories"
 import { BaseService } from "../base.service"
 import { ecommerceOpenHoursService } from "../ecommerce-open-hours/service"
+import { resolveStoreSource } from "../ecommerce-settings/store-source"
 import { ChatbotXException, notFoundException } from "../errors"
+import { externalStoreManagedException } from "../external-store/errors"
+import {
+  assertResourceEditable,
+  changedKeysOf,
+  withDeleteGuard,
+} from "../template/installed-resource.service"
+import { withTemplateLockedTransaction } from "../template/template-resource-locks"
 
 const normalizeVendorName = (name: string): string => name.trim()
 
@@ -39,14 +48,43 @@ export type VendorWriteData = {
 class VendorService extends BaseService {
   /** All vendors, or one page filtered by name. */
   async list(input: VendorListInput) {
-    return await vendorRepository.listWithProductCount(input)
+    return await vendorRepository.listWithProductCount({
+      ...input,
+      source: input.source ?? (await resolveStoreSource(input.workspaceId)),
+    })
   }
 
   async listOptions(workspaceId: string) {
-    return await vendorRepository.listOptions(workspaceId)
+    return await vendorRepository.listOptions(
+      workspaceId,
+      undefined,
+      await resolveStoreSource(workspaceId),
+    )
+  }
+
+  /**
+   * A vendor mirrored from Shopify changes in Shopify. Checked while the
+   * store mirrors Shopify; otherwise its vendors are not listed at all.
+   */
+  private async assertManagedHere(input: {
+    workspaceId: string
+    vendorId: string
+  }) {
+    const storeSource = await resolveStoreSource(input.workspaceId)
+    if (!isExternalStoreSource(storeSource)) {
+      return
+    }
+    const row = await vendorRepository.find(input)
+    if (row?.source === storeSource) {
+      throw externalStoreManagedException(storeSource)
+    }
   }
 
   async create(input: VendorWriteData & { workspaceId: string }) {
+    const storeSource = await resolveStoreSource(input.workspaceId)
+    if (isExternalStoreSource(storeSource)) {
+      throw externalStoreManagedException(storeSource)
+    }
     const name = normalizeVendorName(input.name)
     if (!name) {
       throw vendorNameRequired()
@@ -72,6 +110,10 @@ class VendorService extends BaseService {
     vendorId: string
     data: Partial<VendorWriteData>
   }) {
+    // A Shopify vendor may only be switched on or off here.
+    if (!Object.keys(input.data).every((key) => key === "isActive")) {
+      await this.assertManagedHere(input)
+    }
     const name =
       input.data.name === undefined
         ? undefined
@@ -95,11 +137,43 @@ class VendorService extends BaseService {
     })
     await this.assertReferences(input.workspaceId, data, stored?.categoryId)
     try {
-      const row = await vendorRepository.update({
-        workspaceId: input.workspaceId,
-        vendorId: input.vendorId,
-        values: { ...data, ...(name === undefined ? {} : { name }) },
-      })
+      const values = { ...data, ...(name === undefined ? {} : { name }) }
+      const row = await withTemplateLockedTransaction(
+        async (tx) => {
+          const current = await vendorRepository.find(input, tx)
+          if (!current) {
+            return
+          }
+          await assertResourceEditable({
+            workspaceId: input.workspaceId,
+            resourceKind: "vendor",
+            resourceIds: [current.id],
+            changedKeys: changedKeysOf(current, values),
+            // A re-pointed open-hours schedule is a parent the write references.
+            referencedParents: data.openHoursId
+              ? [{ kind: "openHours", resourceId: data.openHoursId }]
+              : [],
+            tx,
+          })
+          return await vendorRepository.update(
+            {
+              workspaceId: input.workspaceId,
+              vendorId: input.vendorId,
+              values,
+            },
+            tx,
+          )
+        },
+        {
+          workspaceId: input.workspaceId,
+          initialKeys: [
+            { kind: "vendor", resourceId: input.vendorId },
+            ...(data.openHoursId
+              ? [{ kind: "openHours" as const, resourceId: data.openHoursId }]
+              : []),
+          ],
+        },
+      )
       if (!row) {
         throw notFoundException("Vendor not found")
       }
@@ -115,11 +189,51 @@ class VendorService extends BaseService {
 
   /** Products of the vendor stay; they just lose their vendor. */
   async delete(input: { workspaceId: string; vendorId: string }) {
-    const row = await vendorRepository.delete(input)
-    if (!row) {
+    await this.assertManagedHere(input)
+    const deleted = await withDeleteGuard(
+      {
+        workspaceId: input.workspaceId,
+        targets: [{ resourceKind: "vendor", resourceIds: [input.vendorId] }],
+      },
+      (tx) =>
+        this.deleteInTx(tx, {
+          workspaceId: input.workspaceId,
+          ids: [input.vendorId],
+        }),
+    )
+    if (deleted.length === 0) {
       throw notFoundException("Vendor not found")
     }
     await this.invalidateCacheTags(this.cacheTag(input.workspaceId))
+  }
+
+  /**
+   * The delete core (row write only), shared with the template uninstall: the
+   * products of the vendor stay and lose their vendor. The caller drops the
+   * cache after the commit.
+   */
+  async deleteInTx(
+    tx: DatabaseClient,
+    input: { workspaceId: string; ids: string[] },
+  ): Promise<string[]> {
+    return await vendorRepository.deleteManyReturningIds(input, tx)
+  }
+
+  /**
+   * The insert core for the template install: inserts the vendor, or finds the
+   * one that already carries the name (`created` says which). No cache drop:
+   * the install runs it after the commit.
+   */
+  insertOrFindInTx(
+    tx: DatabaseClient,
+    input: Parameters<typeof vendorRepository.insertOrFindByName>[0],
+  ) {
+    return vendorRepository.insertOrFindByName(input, tx)
+  }
+
+  /** The cache drop a delete leaves for after its commit. */
+  async invalidateWorkspaceCache(workspaceId: string): Promise<void> {
+    await this.invalidateCacheTags(this.cacheTag(workspaceId))
   }
 
   /** Throws unless the vendor exists in this workspace. */

@@ -1,5 +1,6 @@
 export * from "./constants"
 export * from "./core/factory"
+export * from "./core/provider-errors"
 export * from "./core/stream"
 export * from "./core/timeout"
 export * from "./models"

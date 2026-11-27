@@ -74,6 +74,20 @@ describe("resolveLastUserInputTracking", () => {
     })
   })
 
+  test("marks a shared Instagram reel as a reel", () => {
+    expect(
+      resolveLastUserInputTracking({
+        contentType: "text",
+        attachments: [{ fileType: "video", originPath: "uploads/reel.mp4" }],
+        contentAttributes: { type: "reel_share" },
+        storageUrl: "https://files.example.com",
+      }),
+    ).toEqual({
+      lastUserInput: "https://files.example.com/uploads/reel.mp4",
+      lastUserInputType: "reel",
+    })
+  })
+
   test("keeps the media type for other content attributes", () => {
     expect(
       resolveLastUserInputTracking({
@@ -83,5 +97,23 @@ describe("resolveLastUserInputTracking", () => {
         storageUrl: "https://files.example.com",
       }).lastUserInputType,
     ).toBe("image")
+  })
+
+  test("a Flow response keeps its reply text, not the files it carries", () => {
+    expect(
+      resolveLastUserInputTracking({
+        contentType: "text",
+        text: "Sent",
+        attachments: [{ fileType: "image", originPath: "uploads/receipt.png" }],
+        contentAttributes: {
+          type: "whatsapp_flow_response",
+          name: "flow",
+          flowResponse: { photo: [{ id: "1" }] },
+          flowToken: null,
+          decoded: null,
+        },
+        storageUrl: "https://files.example.com",
+      }),
+    ).toEqual({ lastUserInput: "Sent", lastUserInputType: "text" })
   })
 })

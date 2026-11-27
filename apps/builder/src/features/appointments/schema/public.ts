@@ -84,20 +84,78 @@ export const appointmentIdPublicRequest = z.object({
   ),
 })
 
-export const bookAppointmentPublicRequest = z.object({
+export const bookAppointmentPublicRequest = z
+  .object({
+    calendarId: zodBigintAsString().describe(
+      "Calendar to book on. Get it from `appointmentCalendars.list`.",
+    ),
+    contactId: zodBigintAsString().describe(
+      "Contact id. Get it from `contacts.list`.",
+    ),
+    conversationId: zodBigintAsString()
+      .optional()
+      .nullable()
+      .describe(
+        "Conversation of this contact to associate the booking with, if any.",
+      ),
+    inboxId: zodBigintAsString()
+      .optional()
+      .describe(
+        "Channel inbox of the conversation. When set together with conversationId, the calendar's confirmation flow is sent to the contact on this inbox and reminders use it. Omit to book silently (previous behaviour).",
+      ),
+    startAt: z.coerce.date().describe("Slot start time."),
+    // Kept as a plain string: this route is released, and clients may already
+    // send non-IANA values (`GMT+7`). `bookAppointment` falls back to the
+    // calendar timezone for a value it cannot format with.
+    inviteeTimezone: z
+      .string()
+      .optional()
+      .describe(
+        "IANA timezone of the invitee (e.g. `Asia/Ho_Chi_Minh`), for display purposes. An unrecognised value falls back to the calendar's timezone.",
+      ),
+  })
+  .superRefine((value, ctx) => {
+    if (value.inboxId && !value.conversationId) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["inboxId"],
+        message: "inboxId requires conversationId",
+      })
+    }
+  })
+
+export const createBookingLinkPublicRequest = z.object({
+  conversationId: zodBigintAsString().describe(
+    "Conversation whose contact the link books for. Get it from `conversations.list`.",
+  ),
   calendarId: zodBigintAsString().describe(
-    "Calendar to book on. Get it from `appointmentCalendars.list`.",
+    "Calendar to book on. Get it from `appointmentCalendars.list`; it must be active.",
   ),
-  contactId: zodBigintAsString().describe(
-    "Contact id. Get it from `contacts.list`.",
-  ),
-  conversationId: zodBigintAsString()
+  inboxId: zodBigintAsString()
     .optional()
-    .nullable()
-    .describe("Conversation to associate the booking with, if any."),
-  startAt: z.coerce.date().describe("Slot start time."),
-  inviteeTimezone: z
+    .describe(
+      "Channel inbox of the conversation to book and send on. Defaults to the contact's most recent inbox.",
+    ),
+  send: z
+    .boolean()
+    .default(false)
+    .describe(
+      "When true, also sends the link on the conversation as a message with a booking button (requires the `inbox` token scope).",
+    ),
+  bypassThreadControlLock: z
+    .boolean()
+    .optional()
+    .describe(
+      "With send=true: skip the WhatsApp thread-control standby lock for this message.",
+    ),
+})
+
+export const createBookingLinkPublicResponse = z.object({
+  url: z.url().describe("Booking picker URL for the contact."),
+  expiresAt: z.date().describe("When the link stops working (24 hours)."),
+  calendar: z.object({ id: z.string(), name: z.string() }),
+  messageId: z
     .string()
-    .optional()
-    .describe("IANA timezone of the invitee, for display purposes."),
+    .nullable()
+    .describe("Id of the sent message when send=true, otherwise null."),
 })

@@ -1,8 +1,8 @@
 import { connectSessionService } from "@chatbotx.io/business/connect-session"
 import { connectionService, failSession } from "@chatbotx.io/connections"
 import type { MessengerCredential } from "@chatbotx.io/database/partials"
-import type { AuthValue } from "@chatbotx.io/sdk"
 import type { NextRequest } from "next/server"
+import { buildFacebookUserAuth } from "@/features/channel-connect/lib/facebook-user-auth"
 import type {
   BeforeStartContext,
   BeforeStartResult,
@@ -27,6 +27,7 @@ async function tryMessengerSsoReuse({
   userId,
   platformOwnerId,
   targetWorkspacePromise,
+  callbackUrl,
   credential,
 }: BeforeStartContext): Promise<BeforeStartResult> {
   const messengerCredential = credential as MessengerCredential
@@ -51,15 +52,36 @@ async function tryMessengerSsoReuse({
       platformOwnerId,
     })
     createdSessionId = session.id
-    const auth: AuthValue = {
-      authType: "oauth2",
-      clientId: messengerCredential.clientId,
-      clientSecret: messengerCredential.clientSecret,
-      redirectUrl: "",
-      version: messengerCredential.version,
-      tokens: { accessToken: reuse.userToken },
+    const auth = buildFacebookUserAuth(
+      messengerCredential,
+      reuse.userToken,
+      callbackUrl,
+    )
+    const attached = await connectionService.listAndAttachCandidates(
+      session,
+      auth,
+    )
+    // No listed page is selectable: either the token lacks access to the
+    // pages (unavailable) or every page is already connected. A picker with
+    // nothing to pick would loop back here through the same token, so go to
+    // the OAuth dialog instead, where the user can grant access to more pages.
+    // Pages were listed, so this is not a `no_candidates` failure: the
+    // superseded session is cancelled (which also clears its stored auth).
+    if (!attached.targets.some((target) => target.selectable)) {
+      logger.info(
+        { workspaceId: targetWorkspace.id, sessionId: session.id },
+        "Facebook SSO reuse listed no selectable page; falling back to OAuth",
+      )
+      await connectSessionService
+        .cancel({ id: session.id, workspaceId: targetWorkspace.id })
+        .catch((err: unknown) =>
+          logger.warn(
+            { err, workspaceId: targetWorkspace.id, sessionId: session.id },
+            "Failed to cancel the superseded Facebook SSO reuse session",
+          ),
+        )
+      return { type: "continue" }
     }
-    await connectionService.listAndAttachCandidates(session, auth)
     return { type: "redirect", url: MESSENGER_SELECT_PATH(session.id) }
   } catch (err) {
     logger.error(

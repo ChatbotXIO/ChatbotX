@@ -11,6 +11,13 @@ export const richButtonPayloadSchema = z.union([
     actions: z.array(richActionSchema).min(1),
   }),
   z.object({ type: z.literal("text"), text: z.string().min(1).max(1000) }),
+  z.object({ type: z.literal("poll_open"), pollId: z.string().min(1) }),
+  z.object({
+    type: z.literal("poll_vote"),
+    pollId: z.string().min(1),
+    candidateId: z.string().min(1),
+  }),
+  z.object({ type: z.literal("poll_list") }),
   z.object({ type: z.literal("unsupported"), reason: z.string() }),
 ])
 

@@ -1,0 +1,246 @@
+{
+  "type": "diff",
+  "version": "10",
+  "dialect": "postgres",
+  "id": "b20381cb-457c-4c18-a8ba-01e8f5ae77e0",
+  "prevIds": [
+    "f292c323-e19d-491a-86dd-d6c2f7e8b704"
+  ],
+  "footprints": [
+    {
+      "statementType": "drop_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "Cart",
+        "Cart_abandoned_scan_idx"
+      ],
+      "writes": [
+        "s|idx|public.Cart_abandoned_scan_idx",
+        "n|idx|public.Cart_abandoned_scan_idx",
+        "e|idx|public.Cart_abandoned_scan_idx",
+        "n|rel|public.Cart_abandoned_scan_idx"
+      ],
+      "reads": [
+        "e|tbl|public.Cart",
+        "n|sch|public",
+        "e|col|public.Cart.lastActivityAt"
+      ],
+      "sharedWrites": []
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "Connection",
+        "providerEventAt"
+      ],
+      "writes": [
+        "s|col|public.Connection.providerEventAt",
+        "n|col|public.Connection.providerEventAt",
+        "e|col|public.Connection.providerEventAt"
+      ],
+      "reads": [
+        "n|tbl|public.Connection",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "Connection",
+        "providerEventKind"
+      ],
+      "writes": [
+        "s|col|public.Connection.providerEventKind",
+        "n|col|public.Connection.providerEventKind",
+        "e|col|public.Connection.providerEventKind"
+      ],
+      "reads": [
+        "n|tbl|public.Connection",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "Cart",
+        "Cart_abandoned_due_idx"
+      ],
+      "writes": [
+        "s|idx|public.Cart_abandoned_due_idx",
+        "n|idx|public.Cart_abandoned_due_idx",
+        "e|idx|public.Cart_abandoned_due_idx",
+        "n|rel|public.Cart_abandoned_due_idx"
+      ],
+      "reads": [
+        "n|tbl|public.Cart",
+        "n|sch|public",
+        "n|col|public.Cart.lastActivityAt"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "IntegrationWhatsapp",
+        "IntegrationWhatsapp_wabaId_idx"
+      ],
+      "writes": [
+        "s|idx|public.IntegrationWhatsapp_wabaId_idx",
+        "n|idx|public.IntegrationWhatsapp_wabaId_idx",
+        "e|idx|public.IntegrationWhatsapp_wabaId_idx",
+        "n|rel|public.IntegrationWhatsapp_wabaId_idx"
+      ],
+      "reads": [
+        "n|tbl|public.IntegrationWhatsapp",
+        "n|sch|public",
+        "n|col|public.IntegrationWhatsapp.wabaId"
+      ]
+    },
+    {
+      "statementType": "add_check",
+      "statementTarget": [
+        "table",
+        "public",
+        "Connection"
+      ],
+      "writes": [
+        "s|ck|public.Connection.Connection_providerEventKind_check",
+        "n|ck|public.Connection.Connection_providerEventKind_check",
+        "e|ck|public.Connection.Connection_providerEventKind_check",
+        "n|con|public.Connection.Connection_providerEventKind_check"
+      ],
+      "reads": [
+        "n|tbl|public.Connection",
+        "n|sch|public",
+        "n|col|public.Connection.providerEventKind"
+      ]
+    },
+    {
+      "statementType": "alter_check",
+      "statementTarget": [
+        "table",
+        "public",
+        "Connection"
+      ],
+      "writes": [
+        "s|ck|public.Connection.Connection_statusReason_check"
+      ],
+      "reads": [
+        "n|tbl|public.Connection",
+        "n|sch|public",
+        "n|col|public.Connection.statusReason",
+        "e|col|public.Connection.statusReason"
+      ],
+      "sqlHash": "b56b87b55aca5b69"
+    }
+  ],
+  "deltas": [
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "Connection",
+        "name": "providerEventAt",
+        "type": "timestamp(6) with time zone",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "Connection",
+        "name": "providerEventKind",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "Cart",
+        "name": "Cart_abandoned_due_idx",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "lastActivityAt",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": false,
+        "where": "\"abandonedNotifiedAt\" IS NULL AND jsonb_array_length(\"items\") > 0",
+        "with": "",
+        "method": "btree",
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "IntegrationWhatsapp",
+        "name": "IntegrationWhatsapp_wabaId_idx",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "wabaId",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": false,
+        "where": null,
+        "with": "",
+        "method": "btree",
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "Connection",
+        "name": "Connection_providerEventKind_check",
+        "value": "\"providerEventKind\" IS NULL OR \"providerEventKind\" IN ('revoked', 'offboarded', 'reconnected')",
+        "entityType": "checks"
+      }
+    },
+    {
+      "op": "drop",
+      "key": "indexes\u0000[\"public\",\"Cart_abandoned_scan_idx\"]"
+    },
+    {
+      "op": "alter",
+      "key": "checks\u0000[\"public\",\"Connection\",\"Connection_statusReason_check\"]",
+      "set": {
+        "value": "\"statusReason\" IN ('manual', 'workspace_purge', 'trial_expired', 'tenant_suspended', 'token_revoked', 'provider_revoked', 'provider_offboarded', 'refresh_failed', 'verify_failed', 'quota_exceeded', 'orphaned_webhook')"
+      }
+    }
+  ]
+}

@@ -1,99 +1,185 @@
+import { getChildLogger } from "@chatbotx.io/logger"
 import { z } from "zod"
 import { env } from "./env"
 import { fetchWithTimeout } from "./http"
+import { isExpiredJwt, unverifiedJwtExpiryMs } from "./jwt-claims"
 
+const logger = getChildLogger("mcp-server")
 const tokenIntrospectionSchema = z.object({
   workspaceId: z.string(),
   permission: z.enum(["read_only", "full"]),
   scopes: z.array(z.string()).nullable(),
+  // Trusted identity from the builder. Optional so older builders still work
+  // for the default profile; the OpenAI profile requires it.
+  principal: z
+    .discriminatedUnion("credentialType", [
+      z.object({
+        credentialType: z.literal("oauth"),
+        audience: z.string(),
+        clientId: z.string(),
+        issuer: z.string(),
+        subject: z.string(),
+      }),
+      z.object({ credentialType: z.literal("workspace_token") }),
+      z.object({ credentialType: z.literal("mobile") }),
+    ])
+    .optional(),
 })
 
 export type TokenIntrospection = z.infer<typeof tokenIntrospectionSchema>
+export type IntrospectionResult =
+  | { status: "ok"; data: TokenIntrospection }
+  | { status: "unauthorized" }
+  | { status: "configError"; message: string }
+  /**
+   * Fails open for tools/list filtering and the listener gate; real API calls
+   * still authorize the credential before accessing workspace data.
+   */
+  | { status: "unavailable" }
 
-/**
- * Cached by the raw token *value*, never by session — a session's token can
- * change mid-connection (see `sse-server.ts`'s per-request resolver), so
- * caching by session id would serve a stale/wrong scope set after a token
- * swap. Module-level, same pattern as `openapi-loader.ts`'s tool cache.
- */
+// A rejected token stays rejected; cache it long enough to absorb retries.
 const NEGATIVE_CACHE_TTL_MS = 30_000
+// Callers fail closed on `unavailable`, so it is cached only long enough to
+// spare the API a burst of identical calls, not to outlive a short outage.
+const UNAVAILABLE_CACHE_TTL_MS = 2000
+// The expiry sweep scans the whole cache, so it runs at most this often.
+const EVICTION_INTERVAL_MS = 1000
 
 type IntrospectionCacheEntry = {
-  data: TokenIntrospection | null
+  result: IntrospectionResult
   fetchedAtMs: number
   ttlMs: number
 }
 
 const introspectionCache = new Map<string, IntrospectionCacheEntry>()
 
-/** Sweeps entries whose TTL has already elapsed so the cache can't grow unbounded across distinct tokens. */
-function evictExpiredEntries(): void {
+let nextEvictionAtMs = 0
+
+/**
+ * Sweeps entries whose TTL has already elapsed so the cache can't grow
+ * unbounded across distinct token/workspace pairs. Throttled, so a flood of
+ * one-off tokens does not make every insert a full scan.
+ */
+const evictExpiredEntries = (): void => {
   const nowMs = Date.now()
-  for (const [apiKey, entry] of introspectionCache) {
+  if (nowMs < nextEvictionAtMs) {
+    return
+  }
+  nextEvictionAtMs = nowMs + EVICTION_INTERVAL_MS
+  for (const [key, entry] of introspectionCache) {
     if (nowMs - entry.fetchedAtMs >= entry.ttlMs) {
-      introspectionCache.delete(apiKey)
+      introspectionCache.delete(key)
     }
   }
 }
 
-const cacheIntrospectionResult = (
-  apiKey: string,
-  data: TokenIntrospection | null,
+const cacheResult = (
+  key: string,
+  result: IntrospectionResult,
   ttlMs: number,
-): TokenIntrospection | null => {
+): IntrospectionResult => {
   evictExpiredEntries()
-  introspectionCache.set(apiKey, { data, fetchedAtMs: Date.now(), ttlMs })
-  return data
+  introspectionCache.set(key, { result, fetchedAtMs: Date.now(), ttlMs })
+  return result
 }
 
 /**
- * Resolves a workspace token's scopes/permission via `GET /v1/token`, for
- * scope-based `tools/list` filtering. Returns `null` on any failure
- * (network error, non-2xx, malformed body) — callers must fail OPEN (skip
- * scope filtering, not hide every tool) on `null`: enforcement of scope
- * still happens server-side on the actual call; this is a `tools/list`
- * display concern only.
+ * OAuth access tokens are JWTs. The builder verifies their signatures before
+ * returning success; decoding here only bounds this cache entry so it cannot
+ * outlive the already-verified `exp`. Opaque workspace API tokens retain the
+ * configured cache TTL.
  */
-export async function introspectToken(
-  apiKey: string,
-): Promise<TokenIntrospection | null> {
-  const cached = introspectionCache.get(apiKey)
+const getPositiveCacheTtl = (token: string): number => {
+  const expiryMs = unverifiedJwtExpiryMs(token)
+  return expiryMs === undefined
+    ? env.CHATBOTX_SPEC_TTL_MS
+    : Math.max(0, Math.min(env.CHATBOTX_SPEC_TTL_MS, expiryMs - Date.now()))
+}
+
+export const introspectToken = async (
+  token: string,
+  workspaceId?: string,
+): Promise<IntrospectionResult> => {
+  const cacheKey = `${token}\u0000${workspaceId ?? ""}`
+  const cached = introspectionCache.get(cacheKey)
   if (cached && Date.now() - cached.fetchedAtMs < cached.ttlMs) {
-    return cached.data
+    return cached.result
+  }
+  // Expired whether or not its signature is valid; the client refreshes it.
+  if (isExpiredJwt(token)) {
+    return { status: "unauthorized" }
   }
 
   try {
+    const headers = new Headers({
+      Accept: "application/json",
+      Authorization: `Bearer ${token}`,
+    })
+    if (workspaceId) {
+      headers.set("x-workspace-id", workspaceId)
+    }
     const response = await fetchWithTimeout(
       `${env.CHATBOTX_API_URL}/v1/token`,
-      {
-        headers: {
-          Accept: "application/json",
-          Authorization: `Bearer ${apiKey}`,
-        },
-      },
+      { headers },
       env.CHATBOTX_HTTP_TIMEOUT_MS,
     )
+    if (response.status === 401) {
+      return cacheResult(
+        cacheKey,
+        { status: "unauthorized" },
+        NEGATIVE_CACHE_TTL_MS,
+      )
+    }
+    if (response.status === 400) {
+      const body = await response.text()
+      let message = body || "Workspace selection is required"
+      try {
+        const parsed = JSON.parse(body) as {
+          json?: { message?: unknown }
+          message?: unknown
+        }
+        const envelopeMessage = parsed.json?.message ?? parsed.message
+        if (typeof envelopeMessage === "string") {
+          message = envelopeMessage
+        }
+      } catch {
+        // Preserve a non-JSON error body verbatim for the MCP client.
+      }
+      return cacheResult(
+        cacheKey,
+        { status: "configError", message },
+        NEGATIVE_CACHE_TTL_MS,
+      )
+    }
     if (!response.ok) {
-      return cacheIntrospectionResult(apiKey, null, NEGATIVE_CACHE_TTL_MS)
+      return cacheResult(
+        cacheKey,
+        { status: "unavailable" },
+        UNAVAILABLE_CACHE_TTL_MS,
+      )
     }
     const parsed = tokenIntrospectionSchema.safeParse(await response.json())
     if (!parsed.success) {
-      console.error(
-        `Token introspection returned a malformed body, tools/list will not be scope-filtered: ${parsed.error.message}`,
+      logger.error(
+        { err: parsed.error },
+        "MCP token introspection returned a malformed response",
       )
-      return cacheIntrospectionResult(apiKey, null, NEGATIVE_CACHE_TTL_MS)
+      return cacheResult(
+        cacheKey,
+        { status: "unavailable" },
+        UNAVAILABLE_CACHE_TTL_MS,
+      )
     }
-    return cacheIntrospectionResult(
-      apiKey,
-      parsed.data,
-      env.CHATBOTX_SPEC_TTL_MS,
-    )
+    const ttlMs = getPositiveCacheTtl(token)
+    const result: IntrospectionResult = { status: "ok", data: parsed.data }
+    // A token about to expire is not worth caching; the next call re-verifies.
+    return ttlMs > 0 ? cacheResult(cacheKey, result, ttlMs) : result
   } catch (error) {
-    console.error(
-      `Token introspection failed, tools/list will not be scope-filtered: ${
-        error instanceof Error ? error.message : String(error)
-      }`,
+    logger.error({ err: error }, "MCP token introspection failed")
+    return cacheResult(
+      cacheKey,
+      { status: "unavailable" },
+      UNAVAILABLE_CACHE_TTL_MS,
     )
-    return cacheIntrospectionResult(apiKey, null, NEGATIVE_CACHE_TTL_MS)
   }
 }

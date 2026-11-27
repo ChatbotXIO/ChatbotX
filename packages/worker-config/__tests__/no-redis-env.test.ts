@@ -18,6 +18,7 @@ vi.mock("@chatbotx.io/flow-config", async () => {
   return {
     aiEditImageSchema: stepSchema,
     aiGenerateImageSchema: stepSchema,
+    aiSegmentImageSchema: stepSchema,
     aiSpeechToTextSchema: stepSchema,
     aiTextToSpeechSchema: stepSchema,
     metadataSchema: z.record(z.string(), z.unknown()),

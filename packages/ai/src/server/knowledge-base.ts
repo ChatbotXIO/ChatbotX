@@ -1,5 +1,4 @@
-import { db, sql } from "@chatbotx.io/database/client"
-import { aiEmbeddingStatuses } from "@chatbotx.io/database/partials"
+import { createAiFileEmbeddingRepository } from "@chatbotx.io/database/repositories"
 import { embed } from "ai"
 import { z } from "zod"
 import { logger } from "../logger"
@@ -10,15 +9,12 @@ import {
 
 const REGEX_NUMERIC_ID = /^\d+$/
 
-const distanceSchema = z
+const similaritySchema = z
   .union([z.number(), z.string()])
   .transform((value, ctx) => {
     const parsed = typeof value === "string" ? Number(value) : value
     if (!Number.isFinite(parsed)) {
-      ctx.addIssue({
-        code: "custom",
-        message: "Invalid distance",
-      })
+      ctx.addIssue({ code: "custom", message: "Invalid similarity" })
       return z.NEVER
     }
     return parsed
@@ -28,10 +24,10 @@ const similaritySearchResultSchema = z.object({
   id: z.string(),
   content: z.string(),
   aiFileId: z.string(),
-  distance: distanceSchema,
+  similarity: similaritySchema,
+  // NULL for rows older than the position column.
+  chunkIndex: z.number().int().nullable().default(null),
 })
-
-const similaritySearchResultsSchema = z.array(similaritySearchResultSchema)
 
 export type SimilaritySearchResult = z.infer<
   typeof similaritySearchResultSchema
@@ -49,80 +45,98 @@ export const embeddingSimilarityThresholds = {
   gemini: 0.55,
 } as const satisfies Record<EmbeddingProvider, number>
 
-async function createQueryEmbedding(
-  query: string,
-  workspaceId: string,
-): Promise<{ embedding: number[]; provider: EmbeddingProvider }> {
+async function createQueryEmbedding(query: string, workspaceId: string) {
   const resolvedEmbeddingModel = await resolveEmbeddingModel(workspaceId)
   const { embedding } = await embed({
     model: resolvedEmbeddingModel.model,
     value: query,
-    providerOptions: {
-      google: { outputDimensionality: 1536 },
-    },
+    providerOptions: { google: { outputDimensionality: 1536 } },
   })
-
-  return { embedding, provider: resolvedEmbeddingModel.provider }
+  return {
+    embedding,
+    provider: resolvedEmbeddingModel.provider,
+    modelId: resolvedEmbeddingModel.modelId,
+  }
 }
 
-async function searchSimilarEmbeddings(
-  queryEmbedding: number[],
+export async function searchKnowledgeChunks(
+  args: { query: string },
   config: FileSearchConfig,
-): Promise<SimilaritySearchResult[]> {
-  const embeddingLiteral = sql.raw(`'[${queryEmbedding.join(",")}]'::vector`)
+): Promise<{
+  matches: Array<
+    SimilaritySearchResult & { rank: number; passedThreshold: boolean }
+  >
+  appliedConfig: {
+    provider: EmbeddingProvider
+    modelId: string
+    similarityThreshold: number
+    limit: number
+  }
+  timingsMs: { embed: number; search: number }
+}> {
+  const embedStartedAt = performance.now()
+  const queryEmbedding = await createQueryEmbedding(
+    args.query,
+    config.workspaceId,
+  )
+  const embedMs = Math.round(performance.now() - embedStartedAt)
   const numericIds = config.selectedFileIds.filter((id) =>
     REGEX_NUMERIC_ID.test(id),
   )
-  if (numericIds.length === 0) {
-    return []
+  const similarityThreshold =
+    config.similarityThreshold ??
+    embeddingSimilarityThresholds[queryEmbedding.provider]
+  const appliedConfig = {
+    provider: queryEmbedding.provider,
+    modelId: queryEmbedding.modelId,
+    similarityThreshold,
+    limit: config.maxResults,
   }
-  const fileIdList = sql.raw(numericIds.join(","))
+  if (numericIds.length === 0) {
+    return {
+      matches: [],
+      appliedConfig,
+      timingsMs: { embed: embedMs, search: 0 },
+    }
+  }
 
-  const results = await db.execute(sql`
-    SELECT
-      "id",
-      "content",
-      "aiFileId",
-      1 - ("embedding" <=> ${embeddingLiteral}) as distance
-    FROM "AIEmbedding"
-    WHERE "workspaceId" = ${config.workspaceId}
-      AND "aiFileId" = ANY(ARRAY[${fileIdList}]::bigint[])
-      AND "status" = ${aiEmbeddingStatuses.enum.success}::"aiEmbeddingStatus"
-      AND "embedding" IS NOT NULL
-    ORDER BY "embedding" <=> ${embeddingLiteral}
-    LIMIT ${config.maxResults}
-  `)
-
-  const parsed = similaritySearchResultsSchema.safeParse(results.rows)
+  const searchStartedAt = performance.now()
+  const rows = await createAiFileEmbeddingRepository().vectorSearch({
+    workspaceId: config.workspaceId,
+    fileIds: numericIds,
+    queryVector: queryEmbedding.embedding,
+    limit: config.maxResults,
+  })
+  const parsed = z.array(similaritySearchResultSchema).safeParse(rows)
   if (!parsed.success) {
     logger.warn(
-      {
-        workspaceId: config.workspaceId,
-        issues: parsed.error.issues,
-      },
+      { workspaceId: config.workspaceId, issues: parsed.error.issues },
       "[ai-package] Invalid similarity search results",
     )
-    return []
   }
-
-  return parsed.data
+  const results = parsed.success ? parsed.data : []
+  return {
+    matches: results.map((result, index) => ({
+      ...result,
+      rank: index + 1,
+      passedThreshold: result.similarity > similarityThreshold,
+    })),
+    appliedConfig,
+    timingsMs: {
+      embed: embedMs,
+      search: Math.round(performance.now() - searchStartedAt),
+    },
+  }
 }
 
 export async function performFileSearch(
   args: { query: string },
   config: FileSearchConfig,
 ): Promise<SimilaritySearchResult[]> {
-  const queryEmbedding = await createQueryEmbedding(
-    args.query,
-    config.workspaceId,
-  )
-  const searchResults = await searchSimilarEmbeddings(
-    queryEmbedding.embedding,
-    config,
-  )
-  const similarityThreshold =
-    config.similarityThreshold ??
-    embeddingSimilarityThresholds[queryEmbedding.provider]
-
-  return searchResults.filter((result) => result.distance > similarityThreshold)
+  const search = await searchKnowledgeChunks(args, config)
+  return search.matches
+    .filter((result) => result.passedThreshold)
+    .map(
+      ({ rank: _rank, passedThreshold: _passedThreshold, ...result }) => result,
+    )
 }

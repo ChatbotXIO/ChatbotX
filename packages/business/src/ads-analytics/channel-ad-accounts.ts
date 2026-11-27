@@ -124,10 +124,22 @@ function dedupeById(entries: AccountEntry[]): ChannelAdAccount[] {
   return [...byId.values()]
 }
 
+/** The integration ids a call narrows to: the list, else the single id; `undefined` = no narrowing. */
+function requestedIntegrationIds(
+  input: ResolveChannelAdAccountSourcesInput,
+): string[] | undefined {
+  if (input.integrationIds?.length) {
+    return input.integrationIds
+  }
+  return input.integrationId ? [input.integrationId] : undefined
+}
+
 export type ResolveChannelAdAccountSourcesInput = {
   workspaceId: string
   channel: AdsEligibleChannelType
   integrationId?: string
+  /** Several integrations; wins over `integrationId`. See below. */
+  integrationIds?: string[]
 }
 
 /**
@@ -135,9 +147,11 @@ export type ResolveChannelAdAccountSourcesInput = {
  * 1) — the shared union used by the dashboard, the private `adsAPI`, and the
  * public `/v1/ads/{channel}/ad-accounts` endpoint.
  *
- * - `integrationId` given -> narrows to ONE channel integration's own
- *   messaging-ads connection (its `channel:integrationId` cache is reused,
- *   no extra Graph traffic on a re-render).
+ * - `integrationIds` (several) or `integrationId` (one) given -> narrows to
+ *   those channel integrations' own messaging-ads connections (no
+ *   workspace-wide fallback), deduped by ad-account id (each one's
+ *   `channel:integrationId` cache is reused, no extra Graph traffic on a
+ *   re-render). Integrations this workspace does not own are skipped.
  * - Otherwise -> unions every connected integration's messaging-ads
  *   connection for the channel PLUS the workspace-wide `IntegrationFacebookAds`
  *   fallback (legacy compat — Decision #1 in the plan), deduped by
@@ -158,20 +172,29 @@ export async function resolveChannelAdAccountSources(
     channel: input.channel,
   })
 
-  if (input.integrationId) {
-    const ownsRequestedIntegration = connections.some(
-      (connection) =>
-        connectionIntegrationId(connection) === input.integrationId,
+  const requestedIds = requestedIntegrationIds(input)
+  if (requestedIds) {
+    const ownedIds = new Set(
+      connections.flatMap((connection) => {
+        const id = connectionIntegrationId(connection)
+        return id ? [id] : []
+      }),
     )
-    if (!ownsRequestedIntegration) {
-      return []
-    }
-    const entries = await listMessagingAccountsForIntegration({
-      workspaceId: input.workspaceId,
-      channel: input.channel,
-      integrationId: input.integrationId,
-    })
-    return dedupeById(entries)
+    const results = await mapWithConcurrency(
+      requestedIds.filter((id) => ownedIds.has(id)),
+      CHANNEL_AD_ACCOUNTS_FETCH_CONCURRENCY,
+      (integrationId) =>
+        listMessagingAccountsForIntegration({
+          workspaceId: input.workspaceId,
+          channel: input.channel,
+          integrationId,
+        }),
+    )
+    return dedupeById(
+      results.flatMap((result) =>
+        result.status === "fulfilled" ? result.value : [],
+      ),
+    )
   }
 
   const [connectionResults, workspaceEntries] = await Promise.all([

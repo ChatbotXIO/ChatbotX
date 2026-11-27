@@ -406,6 +406,7 @@ const getMessageEntity = async (
     ref,
     referralSource,
     referral,
+    occurredAt: messengerTimestampToOccurredAt(messaging.timestamp),
     buttonTitle,
     contact,
     echoOrigin:

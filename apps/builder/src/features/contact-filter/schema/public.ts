@@ -75,11 +75,48 @@ const contactFilterTagPublicResource = z.object({
   name: z.string(),
 })
 
+const contactFilterPipelineItemsPublicResource = z.object({
+  pipelines: z
+    .array(
+      z.object({
+        id: z.string().describe("Value for a condition's `pipelineId`."),
+        name: z.string(),
+        stages: z.array(
+          z.object({
+            id: z.string().describe("Value for a `stage` condition."),
+            name: z.string(),
+          }),
+        ),
+      }),
+    )
+    .describe("Pipelines a `pipelineItem` condition can target, with stages."),
+  attributes: z
+    .array(
+      z.object({
+        attribute: z.enum(["exists", "status", "stage", "priority"]),
+        operators: z.array(z.string()),
+        pipelineIdRequired: z
+          .boolean()
+          .describe("`stage` needs a `pipelineId`; the others accept `null`."),
+        valueShape: z
+          .enum(["single", "list"])
+          .describe("`value` is one string or a non-empty array of strings."),
+        values: z
+          .array(z.string())
+          .describe("Accepted values; empty for `stage` (use the stage ids)."),
+      }),
+    )
+    .describe(
+      "Shapes of `field: pipelineItem` conditions, `{ field, attribute, pipelineId, operator, value }`. Negative operators (`isEmpty`, `notIn`) also match contacts without any item.",
+    ),
+})
+
 export const listContactFilterFieldsPublicResponse = z.object({
   staticFields: z.array(contactFilterFieldPublicResource),
   customFields: z.array(contactFilterCustomFieldPublicResource),
   botFields: z.array(contactFilterCustomFieldPublicResource),
   tags: z.array(contactFilterTagPublicResource),
+  pipelineItems: contactFilterPipelineItemsPublicResource,
 })
 export type ListContactFilterFieldsPublicResponse = z.infer<
   typeof listContactFilterFieldsPublicResponse

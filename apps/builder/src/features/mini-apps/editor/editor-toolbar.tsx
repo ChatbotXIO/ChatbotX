@@ -15,6 +15,7 @@ import {
   Undo2Icon,
 } from "lucide-react"
 import { useTranslations } from "next-intl"
+import { useIsEditorLocked } from "@/features/templates/components/locked-editor"
 import { useMiniAppEditor } from "./editor-context"
 import { IssuesButton } from "./issues-button"
 
@@ -35,6 +36,7 @@ export function EditorToolbar({
   onViewJson: () => void
 }) {
   const t = useTranslations()
+  const isLocked = useIsEditorLocked()
   const name = useMiniAppEditor((state) => state.name)
   const setName = useMiniAppEditor((state) => state.setName)
   const canUndo = useMiniAppEditor((state) => state.past.length > 0)
@@ -48,6 +50,7 @@ export function EditorToolbar({
           aria-invalid={nameError ? true : undefined}
           aria-label={t("fields.name.label")}
           className="h-8 font-semibold"
+          disabled={isLocked}
           maxLength={MINI_APP_NAME_MAX_LENGTH}
           onChange={(event) => setName(event.target.value)}
           placeholder={t("miniApps.editor.namePlaceholder")}
@@ -60,7 +63,7 @@ export function EditorToolbar({
       <div className="flex items-center">
         <Button
           aria-label={t("miniApps.editor.undo")}
-          disabled={!canUndo}
+          disabled={isLocked || !canUndo}
           onClick={undo}
           size="icon"
           variant="ghost"
@@ -69,7 +72,7 @@ export function EditorToolbar({
         </Button>
         <Button
           aria-label={t("miniApps.editor.redo")}
-          disabled={!canRedo}
+          disabled={isLocked || !canRedo}
           onClick={redo}
           size="icon"
           variant="ghost"
@@ -87,7 +90,11 @@ export function EditorToolbar({
           <BracesIcon className="size-4" />
           {t("miniApps.editor.viewJson")}
         </Button>
-        <Button disabled={isSaving || !name.trim()} onClick={onSave} size="sm">
+        <Button
+          disabled={isLocked || isSaving || !name.trim()}
+          onClick={onSave}
+          size="sm"
+        >
           {isSaving ? (
             <Loader2Icon className="size-4 animate-spin" />
           ) : (

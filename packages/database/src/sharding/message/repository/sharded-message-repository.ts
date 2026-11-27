@@ -4,9 +4,14 @@ import {
   withCache,
 } from "@chatbotx.io/redis"
 import {
+  PHONE_NUMBER_REDACTION_SQL_PATTERN,
+  PHONE_NUMBER_SQL_PATTERN,
+} from "@chatbotx.io/utils/has-phone-number"
+import {
   and,
   desc,
   eq,
+  getTableColumns,
   gt,
   gte,
   inArray,
@@ -28,31 +33,46 @@ import type {
   AttachmentLookupRow,
   BulkCreateAttachmentInput,
   BulkPatchContentAttributesParams,
+  CommentListFilter,
   CreateAttachmentInput,
   CreateMessageInput,
   CreateMessageResult,
   DistributedLock,
+  EmailParentRow,
   FindAIContextMessagesOptions,
   FindAttachmentByIdParams,
+  FindEmailParentParams,
   FindLastByConversationOptions,
   FindManyByConversationOptions,
   FindManyBySourceIdsParams,
   FindMessageByIdParams,
+  FindOutgoingBeforeParams,
   FindRichResponseByButtonParams,
+  FindThreadAnchorsBySourceIdsParams,
   FindTriggerMessageOptions,
   HardDeleteAllByContactInboxParams,
   HardDeleteAllByContactInboxResult,
   IMessageRepository,
+  ListCommentsQuery,
+  ListedComment,
   ListIncomingTextsByContactInboxParams,
   ListMessagesQuery,
+  MessageForTranslation,
+  MessageQuotaMarkerKey,
+  MessageRef,
   MessageSourceRow,
+  MessageTextWithFileTypes,
   MessageWithAttachments,
+  OutgoingBotMessage,
+  PaginatedComments,
   PaginatedMessages,
   PaginationCursor,
+  TranslationContextMessage,
   UpdateAttachmentParams,
 } from "../../../repositories/message/message-repository"
 import type { RichResponseContentAttributes } from "../../../schema"
 import type { AttachmentModel, MessageModel } from "../../../types"
+import { likeContains } from "../../../utils"
 import {
   endOfHour,
   rehydrateTimeRangeDates,
@@ -100,16 +120,23 @@ function dedupeShardsByPhysicalId<T extends { shard: { id: string } }>(
   })
 }
 
-function compareMessageDesc(
-  a: { id: string; createdAt: Date },
-  b: { id: string; createdAt: Date },
+// Fixed-width UTC text of the full microsecond timestamp. It sorts as text and
+// round-trips through `::timestamptz`, which a JS Date (milliseconds) cannot.
+const createdAtExactSql = sql<string>`to_char(${messageModel.createdAt} AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"')`
+
+function compareOutgoingDesc(
+  a: OutgoingBotMessage,
+  b: OutgoingBotMessage,
 ): number {
-  const timeDiff = b.createdAt.getTime() - a.createdAt.getTime()
-  if (timeDiff !== 0) {
-    return timeDiff
+  if (a.createdAtExact !== b.createdAtExact) {
+    return a.createdAtExact < b.createdAtExact ? 1 : -1
   }
+  return compareIdDesc(a.id, b.id)
+}
+
+function compareIdDesc(a: string, b: string): number {
   try {
-    const diff = BigInt(b.id) - BigInt(a.id)
+    const diff = BigInt(b) - BigInt(a)
     if (diff > 0n) {
       return 1
     }
@@ -118,8 +145,19 @@ function compareMessageDesc(
     }
     return 0
   } catch {
-    return b.id.localeCompare(a.id)
+    return b.localeCompare(a)
   }
+}
+
+function compareMessageDesc(
+  a: { id: string; createdAt: Date },
+  b: { id: string; createdAt: Date },
+): number {
+  const timeDiff = b.createdAt.getTime() - a.createdAt.getTime()
+  if (timeDiff !== 0) {
+    return timeDiff
+  }
+  return compareIdDesc(a.id, b.id)
 }
 
 // A row stamped by Postgres carries microseconds a JS Date cannot hold, so a
@@ -128,6 +166,38 @@ function compareMessageDesc(
 // the id next to it keeps the match unique.
 const matchesCreatedAt = (column: PgColumn, at: Date): SQL | undefined =>
   and(gte(column, at), lt(column, new Date(at.getTime() + 1)))
+
+/**
+ * The conditions that select the listed comments, shared by the page query and
+ * the count. Id lists are bound as ONE array parameter each, so a read over
+ * thousands of threads stays far under the protocol's 65,535-bind limit.
+ * `redactPhones` searches the text with phone numbers masked, as such a viewer
+ * sees it, so no search can probe a number.
+ */
+const commentFilterConditions = (
+  filter: CommentListFilter,
+  workspaceId: string,
+): SQL[] => {
+  const conditions: SQL[] = [
+    sql`${messageModel.workspaceId} = ${workspaceId}`,
+    sql`${messageModel.conversationId} = ANY(${sql.param(filter.conversationIds)}::bigint[])`,
+    sql`${messageModel.contactInboxId} = ANY(${sql.param(filter.contactInboxIds)}::bigint[])`,
+    sql`${messageModel.type} = 'comment'`,
+    sql`${messageModel.deletedAt} IS NULL`,
+  ]
+  if (filter.hasPhone) {
+    conditions.push(sql`${messageModel.text} ~ ${PHONE_NUMBER_SQL_PATTERN}`)
+  }
+  if (filter.search) {
+    const searched = filter.redactPhones
+      ? sql`regexp_replace(${messageModel.text}, ${PHONE_NUMBER_REDACTION_SQL_PATTERN}, '•••', 'g')`
+      : sql`${messageModel.text}`
+    conditions.push(
+      sql`${searched} ILIKE ${likeContains(filter.search)} ESCAPE '\\'`,
+    )
+  }
+  return conditions
+}
 
 export class ShardedMessageRepository implements IMessageRepository {
   private readonly shardManager: MessageShardConnectionManager
@@ -545,10 +615,177 @@ export class ShardedMessageRepository implements IMessageRepository {
     )
   }
 
+  markPhoneCounted(
+    messageId: string,
+    workspaceId: string,
+    createdAt: Date,
+  ): Promise<boolean> {
+    return this.setCountedMark({
+      createdAt,
+      key: "phoneCounted",
+      messageId,
+      workspaceId,
+    })
+  }
+
+  markCommentCounted(
+    messageId: string,
+    workspaceId: string,
+    createdAt: Date,
+  ): Promise<boolean> {
+    return this.setCountedMark({
+      createdAt,
+      key: "commentCounted",
+      messageId,
+      workspaceId,
+    })
+  }
+
+  /**
+   * Sets a "counted" mark (`phoneCounted`, `commentCounted`) where it is not
+   * set yet, on every shard that may hold the message. Unlike
+   * `updateAcrossShards` it lets a shard failure propagate, so the caller can
+   * tell "already counted" from "could not write".
+   */
+  private async setCountedMark(input: {
+    createdAt: Date
+    key: "commentCounted" | "phoneCounted"
+    messageId: string
+    workspaceId: string
+  }): Promise<boolean> {
+    const { createdAt, key, messageId, workspaceId } = input
+    const patch = sql`COALESCE(${messageModel.attributes}, '{}'::jsonb) || ${JSON.stringify({ [key]: true })}::jsonb`
+    let shards: MessageShardTimeRangeInfo[]
+    try {
+      const timeRangeShards = await this.getShardsForRange(createdAt, createdAt)
+      const writeShard = await this.shardManager.getWriteShardInfo(workspaceId)
+      shards = this.mergeWriteShard(timeRangeShards, writeShard)
+    } catch (error) {
+      throw this.toStorageError(`select shards for the ${key} mark`, error)
+    }
+    if (shards.length === 0) {
+      throw new MessageShardUnavailableError(
+        `No message shards are available for the ${key} mark`,
+      )
+    }
+
+    const markIsSet = sql`COALESCE(${messageModel.attributes}->>${key}, 'false') = 'true'`
+    const perShard = await Promise.all(
+      shards.map(async (shardInfo) => {
+        try {
+          const client = await this.shardManager.getShardClient(shardInfo.shard)
+          return await client
+            .update(messageModel)
+            .set({ attributes: patch })
+            .where(
+              and(
+                eq(messageModel.id, messageId),
+                eq(messageModel.workspaceId, workspaceId),
+                matchesCreatedAt(messageModel.createdAt, createdAt),
+                sql`NOT (${markIsSet})`,
+              ),
+            )
+            .returning({ id: messageModel.id })
+        } catch (error) {
+          throw this.toStorageError(`write the ${key} mark`, error)
+        }
+      }),
+    )
+    return perShard.flat().length > 0
+  }
+
+  claimQuotaMarker(
+    messageId: string,
+    workspaceId: string,
+    createdAt: Date,
+    key: MessageQuotaMarkerKey,
+  ): Promise<boolean> {
+    return this.writeQuotaMarker({
+      createdAt,
+      key,
+      messageId,
+      mode: "claim",
+      workspaceId,
+    })
+  }
+
+  async releaseQuotaMarker(
+    messageId: string,
+    workspaceId: string,
+    createdAt: Date,
+    key: MessageQuotaMarkerKey,
+  ): Promise<void> {
+    await this.writeQuotaMarker({
+      createdAt,
+      key,
+      messageId,
+      mode: "release",
+      workspaceId,
+    })
+  }
+
+  /**
+   * Sets (`claim`, only where the key is not set) or removes (`release`, only
+   * where it is set) a message-quota marker on every shard that may hold the
+   * message. Like the phone-count mark it lets a shard failure propagate, so a
+   * caller never takes "could not write" for "already charged".
+   */
+  private async writeQuotaMarker(input: {
+    createdAt: Date
+    key: MessageQuotaMarkerKey
+    messageId: string
+    mode: "claim" | "release"
+    workspaceId: string
+  }): Promise<boolean> {
+    const { createdAt, key, messageId, mode, workspaceId } = input
+    const isClaim = mode === "claim"
+    const patch = isClaim
+      ? sql`COALESCE(${messageModel.attributes}, '{}'::jsonb) || jsonb_build_object(${key}::text, true)`
+      : sql`COALESCE(${messageModel.attributes}, '{}'::jsonb) - ${key}::text`
+    let shards: MessageShardTimeRangeInfo[]
+    try {
+      const timeRangeShards = await this.getShardsForRange(createdAt, createdAt)
+      const writeShard = await this.shardManager.getWriteShardInfo(workspaceId)
+      shards = this.mergeWriteShard(timeRangeShards, writeShard)
+    } catch (error) {
+      throw this.toStorageError("select shards for the quota marker", error)
+    }
+    if (shards.length === 0) {
+      throw new MessageShardUnavailableError(
+        "No message shards are available for the quota marker",
+      )
+    }
+
+    const markIsSet = sql`COALESCE(${messageModel.attributes}->>${key}::text, 'false') = 'true'`
+    const stateGuard = isClaim ? sql`NOT (${markIsSet})` : markIsSet
+    const perShard = await Promise.all(
+      shards.map(async (shardInfo) => {
+        try {
+          const client = await this.shardManager.getShardClient(shardInfo.shard)
+          return await client
+            .update(messageModel)
+            .set({ attributes: patch })
+            .where(
+              and(
+                eq(messageModel.id, messageId),
+                eq(messageModel.workspaceId, workspaceId),
+                matchesCreatedAt(messageModel.createdAt, createdAt),
+                stateGuard,
+              ),
+            )
+            .returning({ id: messageModel.id })
+        } catch (error) {
+          throw this.toStorageError("write the quota marker", error)
+        }
+      }),
+    )
+    return perShard.flat().length > 0
+  }
+
   updateMessageAttributes(
     messageId: string,
     workspaceId: string,
-    attributes: { liked: boolean; hidden: boolean },
+    attributes: { liked: boolean; hidden: boolean; phoneCounted?: boolean },
     createdAt: Date,
   ): Promise<{ id: string } | null> {
     return this.updateAcrossShards(
@@ -808,6 +1045,21 @@ export class ShardedMessageRepository implements IMessageRepository {
     )
   }
 
+  claimForResend(params: {
+    id: string
+    workspaceId: string
+    createdAt: Date
+  }): Promise<{ id: string } | null> {
+    return this.updateAcrossShards(
+      params.id,
+      params.workspaceId,
+      { sendError: null },
+      "claimForResend",
+      params.createdAt,
+      sql`${messageModel.sendError} IS NOT NULL AND ${messageModel.sourceId} IS NULL AND ${messageModel.deletedAt} IS NULL`,
+    )
+  }
+
   updateSendError(
     id: string,
     sendError: string | null,
@@ -834,6 +1086,25 @@ export class ShardedMessageRepository implements IMessageRepository {
       workspaceId,
       { sourceId },
       "updateSourceId",
+      createdAt,
+    )
+  }
+
+  updateSourceIdAndEmail(
+    id: string,
+    sourceId: string,
+    email: Record<string, unknown>,
+    workspaceId: string,
+    createdAt: Date,
+  ): Promise<{ id: string } | null> {
+    return this.updateAcrossShards(
+      id,
+      workspaceId,
+      {
+        sourceId,
+        contentAttributes: sql`COALESCE(${messageModel.contentAttributes}, '{}'::jsonb) || ${JSON.stringify({ email })}::jsonb`,
+      },
+      "updateSourceIdAndEmail",
       createdAt,
     )
   }
@@ -1021,6 +1292,76 @@ export class ShardedMessageRepository implements IMessageRepository {
       }
     }
     return []
+  }
+
+  async hardDeleteById(
+    id: string,
+    workspaceId: string,
+    createdAt: Date,
+  ): Promise<{ id: string }[]> {
+    // The write shard joins the time-range shards for the same reason as in
+    // `deleteAttachmentsByMessageId`: an attachment row can land beside its
+    // message in an adjacent shard.
+    const timeRangeShards = await this.getShardsForRange(createdAt, createdAt)
+    const writeShard = await this.shardManager.getWriteShardInfo(workspaceId)
+    const shards = this.mergeWriteShard(timeRangeShards, writeShard)
+    if (shards.length === 0) {
+      return []
+    }
+
+    // Every shard is attempted, but a shard that fails must fail the call: the
+    // caller tells the open tabs the message is gone, which is only true when
+    // the delete really happened. An empty result alone cannot say so, because a
+    // shard that never held the message returns no rows too. Each shard removes
+    // the attachments and the message in one transaction, so a failure leaves
+    // the message with its files instead of the files alone.
+    const perShard = await Promise.allSettled(
+      shards.map(async (shardInfo) => {
+        const client = await this.shardManager.getShardClient(shardInfo.shard)
+        return await client.transaction(async (tx) => {
+          await tx
+            .delete(attachmentModel)
+            .where(
+              and(
+                eq(attachmentModel.messageId, id),
+                eq(attachmentModel.workspaceId, workspaceId),
+              ),
+            )
+          return await tx
+            .delete(messageModel)
+            .where(
+              and(
+                eq(messageModel.workspaceId, workspaceId),
+                eq(messageModel.id, id),
+                matchesCreatedAt(messageModel.createdAt, createdAt),
+              ),
+            )
+            .returning({ id: messageModel.id })
+        })
+      }),
+    )
+
+    const deleted: { id: string }[] = []
+    let firstFailure: unknown
+    let hasFailure = false
+    perShard.forEach((outcome, index) => {
+      if (outcome.status === "fulfilled") {
+        deleted.push(...(outcome.value as { id: string }[]))
+        return
+      }
+      logger.warn(
+        { err: outcome.reason, shardId: shards[index]?.shard.id },
+        "Shard delete failed in hardDeleteById",
+      )
+      if (!hasFailure) {
+        hasFailure = true
+        firstFailure = outcome.reason
+      }
+    })
+    if (hasFailure) {
+      throw firstFailure
+    }
+    return deleted
   }
 
   async listIncomingTextsByContactInbox({
@@ -1964,6 +2305,21 @@ export class ShardedMessageRepository implements IMessageRepository {
     return null
   }
 
+  async findByIdForConversation(
+    id: string,
+    conversationId: string,
+    workspaceId: string,
+    sinceTime: Date,
+  ): Promise<MessageWithAttachments | null> {
+    return await this.findByIdInConversation(
+      id,
+      conversationId,
+      sinceTime,
+      true,
+      workspaceId,
+    )
+  }
+
   async findBySourceId(
     sourceId: string,
     conversationId: string,
@@ -2076,6 +2432,96 @@ export class ShardedMessageRepository implements IMessageRepository {
     )
 
     return shardResults.flat()
+  }
+
+  async findThreadAnchorsBySourceIds({
+    contactInboxId,
+    sourceIds,
+    workspaceId,
+    sinceTime,
+  }: FindThreadAnchorsBySourceIdsParams): Promise<MessageSourceRow[]> {
+    if (sourceIds.length === 0) {
+      return []
+    }
+
+    const shards = await this.getConversationReadShards(sinceTime, workspaceId)
+    const shardResults = await Promise.all(
+      shards.map(
+        async (shardInfo): Promise<MessageSourceRow[]> =>
+          await this.shardManager.withShardClientForPrimary(
+            shardInfo.shard,
+            async (shardClient) =>
+              (await shardClient
+                .select({
+                  id: messageModel.id,
+                  conversationId: messageModel.conversationId,
+                  contactInboxId: messageModel.contactInboxId,
+                  sourceId: messageModel.sourceId,
+                  createdAt: messageModel.createdAt,
+                })
+                .from(messageModel)
+                .where(
+                  and(
+                    eq(messageModel.workspaceId, workspaceId),
+                    eq(messageModel.contactInboxId, contactInboxId),
+                    inArray(messageModel.sourceId, sourceIds),
+                    gte(messageModel.createdAt, sinceTime),
+                  ),
+                )) as MessageSourceRow[],
+          ),
+      ),
+    )
+    return shardResults.flat()
+  }
+
+  async findEmailParent({
+    contactInboxId,
+    conversationId,
+    messageId,
+    sinceTime,
+    workspaceId,
+  }: FindEmailParentParams): Promise<EmailParentRow | null> {
+    const shards = await this.getConversationReadShards(sinceTime, workspaceId)
+    const shardResults = await Promise.all(
+      shards.map(
+        async (shardInfo): Promise<EmailParentRow | null> =>
+          await this.shardManager.withShardClientForPrimary(
+            shardInfo.shard,
+            async (shardClient) => {
+              const [row] = await shardClient
+                .select({
+                  id: messageModel.id,
+                  contactInboxId: messageModel.contactInboxId,
+                  sourceId: messageModel.sourceId,
+                  contentAttributes: messageModel.contentAttributes,
+                  createdAt: messageModel.createdAt,
+                })
+                .from(messageModel)
+                .where(
+                  and(
+                    eq(messageModel.workspaceId, workspaceId),
+                    eq(messageModel.conversationId, conversationId),
+                    eq(messageModel.contactInboxId, contactInboxId),
+                    isNotNull(messageModel.sourceId),
+                    inArray(messageModel.messageType, ["incoming", "outgoing"]),
+                    sql`${messageModel.contentAttributes} ? 'email'`,
+                    gte(messageModel.createdAt, sinceTime),
+                    messageId ? eq(messageModel.id, messageId) : undefined,
+                  ),
+                )
+                .orderBy(desc(messageModel.createdAt))
+                .limit(1)
+              return (row as EmailParentRow | undefined) ?? null
+            },
+          ),
+      ),
+    )
+    return (
+      shardResults
+        .flatMap((row) => (row ? [row] : []))
+        .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())[0] ??
+      null
+    )
   }
 
   async bulkPatchContentAttributes({
@@ -2504,12 +2950,83 @@ export class ShardedMessageRepository implements IMessageRepository {
     return shardResults.flat().sort(compareMessageDesc).slice(0, options.limit)
   }
 
+  async findOutgoingBefore(
+    params: FindOutgoingBeforeParams,
+  ): Promise<OutgoingBotMessage[]> {
+    const { before, conversationId, limit, since, workspaceId } = params
+
+    let shards: MessageShardTimeRangeInfo[]
+    try {
+      const timeRangeShards = await this.getShardsForRange(
+        since,
+        new Date(before.createdAt),
+      )
+      const writeShard = await this.shardManager.getWriteShardInfo(workspaceId)
+      shards = this.mergeWriteShard(timeRangeShards, writeShard)
+    } catch (error) {
+      throw this.toStorageError("select shards for outgoing history", error)
+    }
+    if (shards.length === 0) {
+      throw new MessageShardUnavailableError(
+        "No message shards are available for outgoing history read",
+      )
+    }
+
+    const beforeAt = sql`${before.createdAt}::timestamptz`
+    const olderThanBefore = or(
+      sql`${messageModel.createdAt} < ${beforeAt}`,
+      and(
+        sql`${messageModel.createdAt} = ${beforeAt}`,
+        lt(messageModel.id, before.id),
+      ),
+    )
+
+    const shardResults = await Promise.all(
+      shards.map(async (shardInfo): Promise<OutgoingBotMessage[]> => {
+        try {
+          // Always the primary: a lagging replica could miss a newer bot
+          // message and make an older broadcast message look like the latest
+          // bot content, a permanent false attribution. One bounded page per
+          // job run, so the extra primary load is small.
+          const shardClient = await this.shardManager.getShardClient(
+            shardInfo.shard,
+          )
+          return await shardClient
+            .select({
+              contentAttributes: messageModel.contentAttributes,
+              createdAtExact: createdAtExactSql,
+              id: messageModel.id,
+            })
+            .from(messageModel)
+            .where(
+              and(
+                eq(messageModel.conversationId, conversationId),
+                eq(messageModel.workspaceId, workspaceId),
+                gte(messageModel.createdAt, since),
+                olderThanBefore,
+                eq(messageModel.messageType, "outgoing"),
+                inArray(messageModel.senderType, ["bot", "system"]),
+                eq(messageModel.type, "message"),
+                isNull(messageModel.sendError),
+              ),
+            )
+            .orderBy(desc(messageModel.createdAt), desc(messageModel.id))
+            .limit(limit)
+        } catch (error) {
+          throw this.toStorageError("find outgoing messages before", error)
+        }
+      }),
+    )
+
+    return shardResults.flat().sort(compareOutgoingDesc).slice(0, limit)
+  }
+
   async findManyByIds(
     ids: string[],
     contactInboxId: string,
     sinceTime?: Date,
     workspaceId?: string,
-  ): Promise<Pick<MessageModel, "id" | "text">[]> {
+  ): Promise<MessageTextWithFileTypes[]> {
     if (ids.length === 0) {
       return []
     }
@@ -2531,34 +3048,44 @@ export class ShardedMessageRepository implements IMessageRepository {
 
     // Query all shards in parallel and deduplicate
     const shardResults = await Promise.all(
-      shards.map(
-        async (shardInfo): Promise<Pick<MessageModel, "id" | "text">[]> => {
-          try {
-            return await this.shardManager.withShardClientForRead(
-              shardInfo.shard,
-              async (shardClient) => {
-                const messages = await shardClient
-                  .select({ id: messageModel.id, text: messageModel.text })
-                  .from(messageModel)
-                  .where(
-                    and(
-                      eq(messageModel.contactInboxId, contactInboxId),
-                      inArray(messageModel.id, ids),
-                      gte(messageModel.createdAt, sinceTime),
-                    ),
-                  )
-                return messages as Pick<MessageModel, "id" | "text">[]
-              },
-            )
-          } catch (error) {
-            logger.warn(
-              { err: error, shardId: shardInfo.shard.id },
-              "Shard query failed in findManyByIds",
-            )
-            return []
-          }
-        },
-      ),
+      shards.map(async (shardInfo): Promise<MessageTextWithFileTypes[]> => {
+        try {
+          return await this.shardManager.withShardClientForRead(
+            shardInfo.shard,
+            async (shardClient) => {
+              const messages = await shardClient
+                .select({
+                  id: messageModel.id,
+                  text: messageModel.text,
+                  createdAt: messageModel.createdAt,
+                })
+                .from(messageModel)
+                .where(
+                  and(
+                    eq(messageModel.contactInboxId, contactInboxId),
+                    inArray(messageModel.id, ids),
+                    gte(messageModel.createdAt, sinceTime),
+                  ),
+                )
+              const attachmentsByMessageId =
+                await this.fetchAndGroupAttachments(shardClient, messages)
+              return messages.map((message) => ({
+                id: message.id,
+                text: message.text,
+                attachmentFileTypes: (
+                  attachmentsByMessageId[message.id] ?? []
+                ).map((attachment) => attachment.fileType),
+              }))
+            },
+          )
+        } catch (error) {
+          logger.warn(
+            { err: error, shardId: shardInfo.shard.id },
+            "Shard query failed in findManyByIds",
+          )
+          return []
+        }
+      }),
     )
 
     const seen = new Set<string>()
@@ -2571,9 +3098,173 @@ export class ShardedMessageRepository implements IMessageRepository {
     })
   }
 
-  async listByConversation(
-    query: ListMessagesQuery,
-  ): Promise<PaginatedMessages> {
+  async findManyForTranslation(
+    workspaceId: string,
+    refs: MessageRef[],
+  ): Promise<MessageForTranslation[]> {
+    if (refs.length === 0) {
+      return []
+    }
+
+    const oldest = new Date(
+      Math.min(...refs.map((ref) => ref.createdAt.getTime())),
+    )
+    const shards = await this.getConversationReadShards(oldest, workspaceId)
+    if (shards.length === 0) {
+      return []
+    }
+
+    const refMatch = or(
+      ...refs.map((ref) =>
+        and(
+          eq(messageModel.id, ref.id),
+          matchesCreatedAt(messageModel.createdAt, ref.createdAt),
+        ),
+      ),
+    )
+
+    // A failing shard throws instead of being skipped: a missing message reads
+    // as edited or deleted to the caller, which would drop a finished
+    // translation or skip the message for good. Throwing lets the job retry.
+    const shardResults = await Promise.all(
+      shards.map(
+        (shardInfo): Promise<MessageForTranslation[]> =>
+          this.shardManager.withShardClientForRead(
+            shardInfo.shard,
+            async (shardClient) =>
+              await shardClient
+                .select({
+                  id: messageModel.id,
+                  createdAt: messageModel.createdAt,
+                  conversationId: messageModel.conversationId,
+                  contactInboxId: messageModel.contactInboxId,
+                  direction: messageModel.messageType,
+                  type: messageModel.type,
+                  contentType: messageModel.contentType,
+                  text: messageModel.text,
+                  deletedAt: messageModel.deletedAt,
+                })
+                .from(messageModel)
+                .where(
+                  and(eq(messageModel.workspaceId, workspaceId), refMatch),
+                ),
+          ),
+      ),
+    )
+
+    const seen = new Set<string>()
+    return shardResults.flat().filter((message) => {
+      if (seen.has(message.id)) {
+        return false
+      }
+      seen.add(message.id)
+      return true
+    })
+  }
+
+  async findInboundTextBefore(params: {
+    workspaceId: string
+    conversationId: string
+    before: Date
+    sinceTime: Date
+    limit: number
+  }): Promise<TranslationContextMessage[]> {
+    const { workspaceId, conversationId, before, sinceTime, limit } = params
+    if (limit <= 0) {
+      return []
+    }
+    const shards = await this.getConversationReadShards(sinceTime, workspaceId)
+    if (shards.length === 0) {
+      return []
+    }
+
+    const shardResults = await Promise.all(
+      shards.map(async (shardInfo): Promise<TranslationContextMessage[]> => {
+        try {
+          return await this.shardManager.withShardClientForRead(
+            shardInfo.shard,
+            async (shardClient) => {
+              const rows = await shardClient
+                .select({
+                  id: messageModel.id,
+                  createdAt: messageModel.createdAt,
+                  text: messageModel.text,
+                })
+                .from(messageModel)
+                .where(
+                  and(
+                    eq(messageModel.conversationId, conversationId),
+                    eq(messageModel.workspaceId, workspaceId),
+                    eq(messageModel.messageType, "incoming"),
+                    eq(messageModel.type, "message"),
+                    eq(messageModel.contentType, "text"),
+                    isNotNull(messageModel.text),
+                    isNull(messageModel.deletedAt),
+                    gte(messageModel.createdAt, sinceTime),
+                    lt(messageModel.createdAt, before),
+                  ),
+                )
+                .orderBy(desc(messageModel.createdAt), desc(messageModel.id))
+                .limit(limit)
+              return rows.flatMap((row) =>
+                row.text === null
+                  ? []
+                  : [{ id: row.id, createdAt: row.createdAt, text: row.text }],
+              )
+            },
+          )
+        } catch (error) {
+          logger.warn(
+            { err: error, shardId: shardInfo.shard.id },
+            "Shard query failed in findInboundTextBefore",
+          )
+          return []
+        }
+      }),
+    )
+
+    return shardResults.flat().sort(compareMessageDesc).slice(0, limit)
+  }
+
+  listByConversation(query: ListMessagesQuery): Promise<PaginatedMessages> {
+    return this.walkShardsNewestFirst<MessageWithAttachments>(
+      query,
+      (shard, remaining, cursor) =>
+        this.queryShardForMessages(shard, query, remaining, cursor),
+      "listByConversation",
+    )
+  }
+
+  listComments(query: ListCommentsQuery): Promise<PaginatedComments> {
+    return this.walkShardsNewestFirst<ListedComment>(
+      query,
+      (shard, remaining, cursor) =>
+        this.queryShardForComments(shard, query, remaining, cursor),
+      "listComments",
+    )
+  }
+
+  /**
+   * One newest-first keyset page across the time shards: shards are walked from
+   * the latest to the oldest, each asked for what is still missing, and the next
+   * cursor names the shard it stopped in. A shard that fails is skipped and the
+   * page is flagged partial.
+   */
+  private async walkShardsNewestFirst<
+    Row extends { createdAt: Date; createdAtText?: string; id: string },
+  >(
+    query: Pick<ListMessagesQuery, "pagination" | "sinceTime" | "workspaceId">,
+    queryShard: (
+      shard: MessageShardTimeRangeInfo,
+      remaining: number,
+      cursor: PaginationCursor | undefined,
+    ) => Promise<{ data: Row[]; nextCursor: PaginationCursor | null }>,
+    operation: string,
+  ): Promise<{
+    data: Row[]
+    hasPartialResults?: boolean
+    nextCursor: PaginationCursor | null
+  }> {
     const { pagination, sinceTime } = query
     const { limit, cursor } = pagination
 
@@ -2602,7 +3293,7 @@ export class ShardedMessageRepository implements IMessageRepository {
       }
     }
 
-    const data: MessageWithAttachments[] = []
+    const data: Row[] = []
     let nextCursor: PaginationCursor | null = null
     let cursorForQuery = cursor
     let hasPartialResults = false
@@ -2615,6 +3306,7 @@ export class ShardedMessageRepository implements IMessageRepository {
         if (last) {
           nextCursor = {
             createdAt: last.createdAt,
+            createdAtText: last.createdAtText,
             id: last.id,
             shardId: lastProductiveShardId,
           }
@@ -2623,12 +3315,7 @@ export class ShardedMessageRepository implements IMessageRepository {
       }
 
       try {
-        const result = await this.queryShardForMessages(
-          shard,
-          query,
-          remaining,
-          cursorForQuery,
-        )
+        const result = await queryShard(shard, remaining, cursorForQuery)
 
         if (result.data.length > 0) {
           lastProductiveShardId = shard.shard.id
@@ -2636,6 +3323,7 @@ export class ShardedMessageRepository implements IMessageRepository {
           if (lastMsg) {
             cursorForQuery = {
               createdAt: lastMsg.createdAt,
+              createdAtText: lastMsg.createdAtText,
               id: lastMsg.id,
             }
           }
@@ -2654,7 +3342,7 @@ export class ShardedMessageRepository implements IMessageRepository {
         cursorForQuery = undefined
         logger.warn(
           { err: error, shardId: shard.shard.id },
-          "Shard query failed in listByConversation",
+          `Shard query failed in ${operation}`,
         )
       }
     }
@@ -2675,6 +3363,143 @@ export class ShardedMessageRepository implements IMessageRepository {
       id: lastMessage.id,
       shardId,
     }
+  }
+
+  async countComments(query: {
+    filter: CommentListFilter
+    limit: number
+    workspaceId: string
+  }): Promise<{ capped: boolean; count: number }> {
+    if (
+      query.filter.conversationIds.length === 0 ||
+      query.filter.contactInboxIds.length === 0
+    ) {
+      return { capped: false, count: 0 }
+    }
+    const timeRangeShards = await this.getShardsForRange(
+      new Date(0),
+      new Date(),
+    )
+    const writeShard = await this.shardManager.getWriteShardInfo(
+      query.workspaceId,
+    )
+    const shards = this.mergeWriteShard(timeRangeShards, writeShard)
+
+    let count = 0
+    for (const shardInfo of shards) {
+      const remaining = query.limit + 1 - count
+      if (remaining <= 0) {
+        break
+      }
+      const rows = await this.shardManager.withShardClientForRead(
+        shardInfo.shard,
+        async (shardClient) =>
+          await shardClient
+            .select({ id: messageModel.id })
+            .from(messageModel)
+            .where(
+              and(...commentFilterConditions(query.filter, query.workspaceId)),
+            )
+            .limit(remaining),
+      )
+      count += rows.length
+    }
+    return count > query.limit
+      ? { capped: true, count: query.limit }
+      : { capped: false, count }
+  }
+
+  patchMessageAttributes(
+    messageId: string,
+    workspaceId: string,
+    patch: { hidden?: boolean; liked?: boolean },
+    createdAt: Date,
+  ): Promise<{ id: string } | null> {
+    const keys = Object.entries(patch).flatMap(([key, value]) =>
+      value === undefined ? [] : [sql`${key}::text, ${value}::boolean`],
+    )
+    if (keys.length === 0) {
+      return Promise.resolve(null)
+    }
+    return this.updateAcrossShards(
+      messageId,
+      workspaceId,
+      {
+        attributes: sql`COALESCE(${messageModel.attributes}, '{}'::jsonb) || jsonb_build_object(${sql.join(keys, sql`, `)})`,
+      },
+      "patchMessageAttributes",
+      createdAt,
+    )
+  }
+
+  /**
+   * One shard's page of the comments of a set of conversations, newest first.
+   * `conversationId = ANY(…)` + `type = 'comment'` follow the
+   * `(workspaceId, conversationId, type, createdAt)` index; a removed comment
+   * (`deletedAt`) never lists. `search` is a case-insensitive substring match
+   * with its wildcards escaped; `hasPhone` is the shared phone rule as a POSIX
+   * pattern.
+   */
+  private queryShardForComments(
+    shardInfo: MessageShardTimeRangeInfo,
+    query: ListCommentsQuery,
+    limit: number,
+    cursor?: PaginationCursor,
+  ): Promise<{ data: ListedComment[]; nextCursor: PaginationCursor | null }> {
+    const { conversationIds, contactInboxIds } = query.filter
+    return this.shardManager.withShardClientForRead(
+      shardInfo.shard,
+      async (shardClient) => {
+        if (conversationIds.length === 0 || contactInboxIds.length === 0) {
+          return { data: [], nextCursor: null }
+        }
+        const whereConditions = commentFilterConditions(
+          query.filter,
+          query.workspaceId,
+        )
+        if (cursor) {
+          // Compared as the exact microsecond text the previous page ended on: a
+          // JavaScript Date keeps milliseconds only and would skip or repeat rows.
+          const cursorAt = cursor.createdAtText
+            ? sql`${cursor.createdAtText}::timestamptz`
+            : sql`${cursor.createdAt.toISOString()}::timestamptz`
+          const cursorCondition = or(
+            sql`${messageModel.createdAt} < ${cursorAt}`,
+            and(
+              sql`${messageModel.createdAt} = ${cursorAt}`,
+              lt(messageModel.id, cursor.id),
+            ),
+          )
+          if (cursorCondition) {
+            whereConditions.push(cursorCondition)
+          }
+        }
+
+        const rows = (await shardClient
+          .select({
+            ...getTableColumns(messageModel),
+            createdAtText: sql<string>`${messageModel.createdAt}::text`,
+          })
+          .from(messageModel)
+          .where(and(...whereConditions))
+          .orderBy(desc(messageModel.createdAt), desc(messageModel.id))
+          .limit(limit + 1)) as ListedComment[]
+
+        const hasMore = rows.length > limit
+        const data = hasMore ? rows.slice(0, limit) : rows
+        const last = data.at(-1)
+        return {
+          data,
+          nextCursor:
+            hasMore && last
+              ? {
+                  ...this.buildNextCursor(last, shardInfo.shard.id),
+                  createdAtText: last.createdAtText,
+                }
+              : null,
+        }
+      },
+    )
   }
 
   private queryShardForMessages(

@@ -2,7 +2,11 @@ import { createHmac } from "node:crypto"
 import { sha256Hex } from "@chatbotx.io/utils/crypto"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import type { OnMessageArgs } from "whatsapp-api-js/emitters"
-import { extractCoexistPayloads, webhookHandler } from "../src/handlers/webhook"
+import {
+  extractCoexistPayloads,
+  extractSmbMessageEchoPayloads,
+  webhookHandler,
+} from "../src/handlers/webhook"
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -70,18 +74,21 @@ describe("extractCoexistPayloads", () => {
       expect(result[0]).toMatchObject({ phoneNumberId: "phone-789" })
     })
 
-    it("returns entry for field='smb_message_echoes' with value.message_echoes[]", () => {
+    it("never buffers field='smb_message_echoes': every echo type is delivered live", () => {
       const body = makeBody(
         {
           metadata: { phone_number_id: "phone-echo" },
-          message_echoes: [{ id: "wamid.echo" }],
+          message_echoes: [
+            { id: "wamid.text", type: "text" },
+            { id: "wamid.edit", type: "edit" },
+            { id: "wamid.revoke", type: "revoke" },
+            { id: "wamid.untyped" },
+          ],
         },
         "smb_message_echoes",
       )
-      const result = extractCoexistPayloads(body)
 
-      expect(result).toHaveLength(1)
-      expect(result[0]).toMatchObject({ phoneNumberId: "phone-echo" })
+      expect(extractCoexistPayloads(body)).toEqual([])
     })
 
     it("preserves history[].metadata (phase/chunk_order/progress) on the buffered value", () => {
@@ -587,5 +594,430 @@ describe("webhookHandler — coexist job dedup", () => {
       expect.anything(),
       expect.objectContaining({ removeOnFail: true }),
     )
+  })
+})
+
+// ---------------------------------------------------------------------------
+// What the business did in the WhatsApp Business app (smb_message_echoes) is
+// live: one job per echo, never the Coexistence history buffer.
+// ---------------------------------------------------------------------------
+
+const ECHO_PHONE_NUMBER_ID = "106540352242922"
+
+const buildEcho = (fields: Record<string, unknown> = {}) => ({
+  from: "15550783881",
+  to: "16505551234",
+  to_user_id: "US.13491208655302741918",
+  id: "wamid.echo-1",
+  timestamp: "1739321024",
+  type: "text",
+  text: { body: "Here is the info" },
+  ...fields,
+})
+
+const buildEditEcho = (fields: Record<string, unknown> = {}) =>
+  buildEcho({
+    id: "wamid.edit-1",
+    type: "edit",
+    text: undefined,
+    edit: {
+      original_message_id: "wamid.original",
+      message: { type: "text", text: { body: "Corrected text" } },
+    },
+    ...fields,
+  })
+
+const buildRevokeEcho = (fields: Record<string, unknown> = {}) =>
+  buildEcho({
+    id: "wamid.revoke-1",
+    type: "revoke",
+    text: undefined,
+    revoke: { original_message_id: "wamid.original" },
+    ...fields,
+  })
+
+const buildEchoBody = (
+  echoes: unknown[],
+  contacts: unknown[] = [
+    { wa_id: "16505551234", user_id: "US.13491208655302741918" },
+  ],
+  phoneNumberId = ECHO_PHONE_NUMBER_ID,
+) => ({
+  entry: [
+    {
+      id: "waba-1",
+      changes: [
+        {
+          field: "smb_message_echoes",
+          value: {
+            messaging_product: "whatsapp",
+            metadata: { phone_number_id: phoneNumberId },
+            contacts,
+            message_echoes: echoes,
+          },
+        },
+      ],
+    },
+  ],
+})
+
+describe("extractSmbMessageEchoPayloads", () => {
+  it("builds one incomingMessageEcho job per sent message with its recipient's contact", () => {
+    const jobs = extractSmbMessageEchoPayloads(
+      buildEchoBody([
+        buildEcho(),
+        buildEcho({ id: "wamid.echo-2", type: "image", text: undefined }),
+      ]),
+    )
+
+    expect(jobs.map((job) => job.jobId)).toEqual([
+      `wa-smb-message-${ECHO_PHONE_NUMBER_ID}-wamid.echo-1`,
+      `wa-smb-message-${ECHO_PHONE_NUMBER_ID}-wamid.echo-2`,
+    ])
+    expect(jobs[0]).toMatchObject({
+      phoneNumberId: ECHO_PHONE_NUMBER_ID,
+      queueJob: {
+        type: "incomingMessageEcho",
+        data: {
+          integrationType: "whatsapp",
+          integrationIdentifier: ECHO_PHONE_NUMBER_ID,
+          payload: {
+            kind: "smbMessageEcho",
+            phoneID: ECHO_PHONE_NUMBER_ID,
+            echo: { id: "wamid.echo-1", type: "text" },
+            contact: { wa_id: "16505551234" },
+          },
+        },
+      },
+    })
+  })
+
+  it("turns an edit into an updateIncomingMessage job that waits for the original message", () => {
+    const [job] = extractSmbMessageEchoPayloads(
+      buildEchoBody([buildEditEcho()]),
+    )
+
+    expect(job).toMatchObject({
+      jobId: `wa-smb-edit-${ECHO_PHONE_NUMBER_ID}-wamid.edit-1`,
+      queueJob: {
+        type: "updateIncomingMessage",
+        data: {
+          integrationType: "whatsapp",
+          integrationIdentifier: ECHO_PHONE_NUMBER_ID,
+          messageId: "wamid.original",
+          newText: "Corrected text",
+          retryIfMissing: true,
+        },
+      },
+    })
+  })
+
+  it("reads the new text of a media edit from its caption", () => {
+    const [job] = extractSmbMessageEchoPayloads(
+      buildEchoBody([
+        buildEditEcho({
+          edit: {
+            original_message_id: "wamid.original",
+            message: {
+              type: "image",
+              image: { caption: "Updated image caption" },
+            },
+          },
+        }),
+      ]),
+    )
+
+    expect(job?.queueJob).toMatchObject({
+      data: { newText: "Updated image caption" },
+    })
+  })
+
+  it("turns a revoke into a deleteIncomingMessage job that waits for the original message", () => {
+    const [job] = extractSmbMessageEchoPayloads(
+      buildEchoBody([buildRevokeEcho()]),
+    )
+
+    expect(job).toMatchObject({
+      jobId: `wa-smb-revoke-${ECHO_PHONE_NUMBER_ID}-wamid.revoke-1`,
+      queueJob: {
+        type: "deleteIncomingMessage",
+        data: {
+          integrationType: "whatsapp",
+          integrationIdentifier: ECHO_PHONE_NUMBER_ID,
+          messageId: "wamid.original",
+          retryIfMissing: true,
+        },
+      },
+    })
+  })
+
+  it("gives a change a longer retry horizon than a sent message", () => {
+    const jobs = extractSmbMessageEchoPayloads(
+      buildEchoBody([buildEcho(), buildEditEcho(), buildRevokeEcho()]),
+    )
+
+    expect(jobs.map((job) => job.options.attempts)).toEqual([5, 6, 6])
+  })
+
+  it("keeps two edits of one message as two jobs", () => {
+    const jobs = extractSmbMessageEchoPayloads(
+      buildEchoBody([
+        buildEditEcho({ id: "wamid.edit-1" }),
+        buildEditEcho({ id: "wamid.edit-2" }),
+      ]),
+    )
+
+    expect(new Set(jobs.map((job) => job.jobId)).size).toBe(2)
+  })
+
+  it.each([
+    ["an edit with no text", { edit: { original_message_id: "wamid.o" } }],
+    [
+      "an edit naming no message",
+      { edit: { message: { text: { body: "x" } } } },
+    ],
+  ])("skips %s", (_label, fields) => {
+    expect(
+      extractSmbMessageEchoPayloads(buildEchoBody([buildEditEcho(fields)])),
+    ).toEqual([])
+  })
+
+  it("skips a revoke that names no message", () => {
+    expect(
+      extractSmbMessageEchoPayloads(
+        buildEchoBody([buildRevokeEcho({ revoke: {} })]),
+      ),
+    ).toEqual([])
+  })
+
+  it("matches each echo to its own contact by the recipient, not by position", () => {
+    const jobs = extractSmbMessageEchoPayloads(
+      buildEchoBody(
+        [
+          buildEcho({ id: "wamid.a", to: "111", to_user_id: "US.A" }),
+          buildEcho({ id: "wamid.b", to: "222", to_user_id: "US.B" }),
+        ],
+        [
+          { wa_id: "222", user_id: "US.B", profile: { name: "Bea" } },
+          { wa_id: "111", user_id: "US.A", profile: { name: "Ann" } },
+        ],
+      ),
+    )
+
+    expect(
+      jobs.map(
+        (job) =>
+          (job.queueJob.data as { payload: { contact?: unknown } }).payload
+            .contact,
+      ),
+    ).toEqual([
+      expect.objectContaining({ profile: { name: "Ann" } }),
+      expect.objectContaining({ profile: { name: "Bea" } }),
+    ])
+  })
+
+  it("matches the contact by the business-scoped user id when the phone number is omitted", () => {
+    const [job] = extractSmbMessageEchoPayloads(
+      buildEchoBody(
+        [buildEcho({ to: undefined, to_user_id: "US.B" })],
+        [
+          { user_id: "US.A", profile: { username: "ann" } },
+          { user_id: "US.B", profile: { username: "bea" } },
+        ],
+      ),
+    )
+
+    expect(job?.queueJob.data).toMatchObject({
+      payload: { contact: { profile: { username: "bea" } } },
+    })
+  })
+
+  it("keeps an echo whose recipient has no contact entry", () => {
+    const [job] = extractSmbMessageEchoPayloads(
+      buildEchoBody([buildEcho({ to_user_id: "US.unlisted", to: "999" })]),
+    )
+
+    expect(job?.queueJob.data).not.toHaveProperty("payload.contact")
+  })
+
+  it("collects echoes across several entries and changes", () => {
+    const body = {
+      entry: [
+        ...buildEchoBody([buildEcho({ id: "wamid.one" })]).entry,
+        ...buildEchoBody(
+          [buildEcho({ id: "wamid.two" })],
+          undefined,
+          "other-phone",
+        ).entry,
+      ],
+    }
+
+    expect(extractSmbMessageEchoPayloads(body).map((job) => job.jobId)).toEqual(
+      [
+        `wa-smb-message-${ECHO_PHONE_NUMBER_ID}-wamid.one`,
+        "wa-smb-message-other-phone-wamid.two",
+      ],
+    )
+  })
+
+  it("skips an echo without an id and keeps the rest", () => {
+    const jobs = extractSmbMessageEchoPayloads(
+      buildEchoBody([buildEcho({ id: undefined }), buildEcho()]),
+    )
+
+    expect(jobs).toHaveLength(1)
+  })
+
+  it.each([
+    ["null", null],
+    ["a string", "text"],
+    ["no entry", {}],
+    ["a customer message", messageBody],
+    [
+      "a change without a phone number id",
+      makeBody({ message_echoes: [buildEcho()] }, "smb_message_echoes"),
+    ],
+  ])("returns [] for %s", (_label, body) => {
+    expect(extractSmbMessageEchoPayloads(body)).toEqual([])
+  })
+})
+
+describe("webhookHandler — live Business-app echoes", () => {
+  beforeEach(() => {
+    handlePostMock.mockReset()
+    handlePostMock.mockResolvedValue(200)
+  })
+
+  const handle = (
+    body: unknown,
+    queue: unknown,
+    config: unknown = baseConfig,
+  ) =>
+    webhookHandler({
+      config: config as never,
+      req: makePostRequest(body),
+      queue: queue as never,
+    })
+
+  it("enqueues a sent message as an incomingMessageEcho job that retries and dedupes", async () => {
+    const queueAdd = vi.fn().mockResolvedValue(undefined)
+
+    await handle(buildEchoBody([buildEcho()]), { add: queueAdd })
+
+    expect(queueAdd).toHaveBeenCalledTimes(1)
+    expect(queueAdd).toHaveBeenCalledWith(
+      "incomingMessageEcho",
+      expect.objectContaining({
+        type: "incomingMessageEcho",
+        data: expect.objectContaining({
+          integrationType: "whatsapp",
+          integrationIdentifier: ECHO_PHONE_NUMBER_ID,
+          payload: expect.objectContaining({ kind: "smbMessageEcho" }),
+        }),
+      }),
+      {
+        jobId: `wa-smb-message-${ECHO_PHONE_NUMBER_ID}-wamid.echo-1`,
+        removeOnFail: true,
+        attempts: 5,
+        backoff: { type: "exponential", delay: 5000 },
+      },
+    )
+  })
+
+  it("enqueues an edit and a revoke with their own retry options", async () => {
+    const queueAdd = vi.fn().mockResolvedValue(undefined)
+
+    await handle(buildEchoBody([buildEditEcho(), buildRevokeEcho()]), {
+      add: queueAdd,
+    })
+
+    expect(queueAdd).toHaveBeenCalledWith(
+      "updateIncomingMessage",
+      expect.objectContaining({ type: "updateIncomingMessage" }),
+      expect.objectContaining({
+        jobId: `wa-smb-edit-${ECHO_PHONE_NUMBER_ID}-wamid.edit-1`,
+        attempts: 6,
+        removeOnFail: true,
+      }),
+    )
+    expect(queueAdd).toHaveBeenCalledWith(
+      "deleteIncomingMessage",
+      expect.objectContaining({ type: "deleteIncomingMessage" }),
+      expect.objectContaining({
+        jobId: `wa-smb-revoke-${ECHO_PHONE_NUMBER_ID}-wamid.revoke-1`,
+        attempts: 6,
+      }),
+    )
+  })
+
+  it("does not buffer anything of the field for the history import", async () => {
+    const queueAdd = vi.fn().mockResolvedValue(undefined)
+
+    await handle(
+      buildEchoBody([buildEcho(), buildEditEcho(), buildRevokeEcho()]),
+      { add: queueAdd },
+    )
+
+    expect(queueAdd).toHaveBeenCalledTimes(3)
+    expect(queueAdd).not.toHaveBeenCalledWith(
+      "coexistWhatsappBuffer",
+      expect.anything(),
+      expect.anything(),
+    )
+  })
+
+  it("still buffers the history of the same delivery", async () => {
+    const queueAdd = vi.fn().mockResolvedValue(undefined)
+    const body = {
+      entry: [...buildEchoBody([buildEcho()]).entry, ...coexistBody.entry],
+    }
+
+    await handle(body, { add: queueAdd })
+
+    const names = queueAdd.mock.calls.map(([name]) => name)
+    expect(names).toContain("incomingMessageEcho")
+    expect(names).toContain("coexistWhatsappBuffer")
+  })
+
+  it("gives a redelivered echo the same jobId", async () => {
+    const first = vi.fn().mockResolvedValue(undefined)
+    const second = vi.fn().mockResolvedValue(undefined)
+
+    await handle(buildEchoBody([buildEcho()]), { add: first })
+    await handle(buildEchoBody([buildEcho()]), { add: second })
+
+    expect(second.mock.calls[0]?.[2]?.jobId).toBe(
+      first.mock.calls[0]?.[2]?.jobId,
+    )
+  })
+
+  it("drops an echo for another number than the one the route is pinned to", async () => {
+    const queueAdd = vi.fn().mockResolvedValue(undefined)
+
+    await handle(
+      buildEchoBody([buildEcho()], undefined, "someone-elses-number"),
+      { add: queueAdd },
+      { ...(baseConfig as object), phoneNumberId: ECHO_PHONE_NUMBER_ID },
+    )
+
+    expect(queueAdd).not.toHaveBeenCalled()
+  })
+
+  it("fails the webhook when the echo cannot be enqueued so Meta redelivers it", async () => {
+    const queueAdd = vi.fn().mockRejectedValue(new Error("redis down"))
+
+    await expect(
+      handle(buildEchoBody([buildEcho()]), { add: queueAdd }),
+    ).rejects.toThrow()
+  })
+
+  it("fails the webhook instead of acknowledging an echo it has no queue for", async () => {
+    await expect(
+      handle(buildEchoBody([buildEcho()]), undefined),
+    ).rejects.toThrow()
+  })
+
+  it("acknowledges a webhook without echoes when there is no queue", async () => {
+    await expect(handle(messageBody, undefined)).resolves.toBeDefined()
   })
 })

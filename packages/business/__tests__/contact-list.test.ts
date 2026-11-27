@@ -138,11 +138,13 @@ describe("contactService.list", () => {
     expect(relationsSpy).not.toHaveBeenCalled()
   })
 
-  test("projection:'table' for a restricted member passes includeEmailAndPhone:false + restrictToAssignedUserId to buildListWhere and returns rows as-is", async () => {
+  test("projection:'table' for a restricted member masks email/phone and passes includeEmailAndPhone:false + restrictToAssignedUserId", async () => {
     const rows = [
       {
         id: "contact-1",
-        fullName: "Ada Lovelace",
+        fullName: null,
+        email: "ada@example.com",
+        phoneNumber: "84349566550",
         avatar: null,
         createdAt: new Date("2024-01-01"),
         contactInboxes: [],
@@ -162,13 +164,42 @@ describe("contactService.list", () => {
       projection: "table",
     })
 
-    expect(result.data).toEqual(rows)
+    // The name fallback must never reveal what the member may not see.
+    expect(result.data).toEqual([
+      { ...rows[0], email: null, phoneNumber: null },
+    ])
     expect(contactRepository.buildListWhere).toHaveBeenCalledWith(
       expect.objectContaining({
         includeEmailAndPhone: false,
         restrictToAssignedUserId: "user-1",
       }),
     )
+  })
+
+  test("projection:'table' keeps email/phone for a caller allowed to see them", async () => {
+    const rows = [
+      {
+        id: "contact-1",
+        fullName: null,
+        email: null,
+        phoneNumber: "84349566550",
+        avatar: null,
+        createdAt: new Date("2024-01-01"),
+        contactInboxes: [],
+        conversation: null,
+      },
+    ]
+    vi.spyOn(contactRepository, "listTableRows").mockResolvedValue(
+      rows as never,
+    )
+
+    const result = await list({
+      workspaceId: "ws-1",
+      scope: UNSCOPED,
+      projection: "table",
+    })
+
+    expect(result.data).toEqual(rows)
   })
 
   test("include omitting both 'tags' and 'customFields' uses listWithInboxesAndConversation", async () => {

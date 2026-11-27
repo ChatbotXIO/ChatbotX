@@ -1,6 +1,7 @@
 export * from "./lib/bounded-fetch"
 export * from "./lib/browser"
 export * from "./lib/helper"
+export * from "./lib/mime-type"
 export * from "./lib/schema"
 export * from "./lib/upload"
 export * from "./lib/uploader"

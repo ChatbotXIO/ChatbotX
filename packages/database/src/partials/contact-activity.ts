@@ -13,6 +13,7 @@ export const contactActivityTypes = z.enum([
   "messageDelivered",
   "messageOpened",
   "messageClicked",
+  "adClicked",
 ])
 export type ContactActivityType = z.infer<typeof contactActivityTypes>
 
@@ -23,6 +24,7 @@ export const contactActivityReferenceTypes = z.enum([
   "automatedResponse",
   "whatsappFlow",
   "emailTopic",
+  "ad",
 ])
 export type ContactActivityReferenceType = z.infer<
   typeof contactActivityReferenceTypes
@@ -44,6 +46,22 @@ export type ContactActivityValueFormat = z.infer<
  * this to callers. Set to the release date of the activity store.
  */
 export const CONTACT_ACTIVITY_TRACKING_STARTED_AT = "2026-10-23T00:00:00.000Z"
+
+/**
+ * Fields whose recording went live after the activity store did. Set each to
+ * the moment its writer ships; a field not listed starts at
+ * {@link CONTACT_ACTIVITY_TRACKING_STARTED_AT}.
+ */
+const FIELD_TRACKING_STARTED_AT: Partial<
+  Record<ContactActivityTrackedField, string>
+> = {
+  clickedAd: "2026-10-26T00:00:00.000Z",
+}
+
+export const getContactActivityTrackingStartedAt = (field: string): string =>
+  (Object.hasOwn(FIELD_TRACKING_STARTED_AT, field)
+    ? FIELD_TRACKING_STARTED_AT[field as ContactActivityTrackedField]
+    : undefined) ?? CONTACT_ACTIVITY_TRACKING_STARTED_AT
 
 export type ContactActivityFilterConfig = {
   activityType: ContactActivityType
@@ -147,6 +165,15 @@ export const CONTACT_ACTIVITY_FILTERS = {
     valueSourceOperation: "emailTopics.list",
     valueSourceScope: "broadcasts",
   },
+  clickedAd: {
+    activityType: "adClicked",
+    referenceType: "ad",
+    parentScoped: false,
+    fixedValues: [],
+    valueFormat: "id",
+    valueSourceOperation: "ads.listReferralAds",
+    valueSourceScope: "ads",
+  },
 } as const satisfies Record<string, ContactActivityFilterConfig>
 
 export type ContactActivityFilterField = keyof typeof CONTACT_ACTIVITY_FILTERS
@@ -154,12 +181,13 @@ export type ContactActivityFilterField = keyof typeof CONTACT_ACTIVITY_FILTERS
 /**
  * Activity filter value sources whose entity has no cheap full list, so the
  * picker searches them on the server (keyword rules, WhatsApp Flows, email
- * topics).
+ * topics, ads).
  */
 export const contactActivityValueSources = [
   "keywords",
   "whatsappFlows",
   "emailTopics",
+  "ads",
 ] as const
 export type ContactActivityValueSource =
   (typeof contactActivityValueSources)[number]
@@ -172,10 +200,11 @@ export const isContactActivityValueSource = (
 /** Max values one activity condition may carry (bounds the generated SQL). */
 export const CONTACT_ACTIVITY_MAX_FILTER_VALUES = 500
 
-const POSITIVE_BIGINT_PATTERN = /^[1-9]\d*$/
-const MAX_SIGNED_BIGINT = 9_223_372_036_854_775_807n
+export const POSITIVE_BIGINT_PATTERN = /^[1-9]\d*$/
+export const MAX_SIGNED_BIGINT = 9_223_372_036_854_775_807n
 
-const isPositiveBigint = (raw: string): boolean =>
+/** Whether `raw` is a positive id that fits a signed bigint. */
+export const isPositiveBigint = (raw: string): boolean =>
   POSITIVE_BIGINT_PATTERN.test(raw) && BigInt(raw) <= MAX_SIGNED_BIGINT
 
 export type ContactActivityReference = {
@@ -253,6 +282,9 @@ export const CONTACT_ACTIVITY_TRACKED_FIELDS = [
   "sentMessage",
   "lastDelivered",
 ] as const
+
+export type ContactActivityTrackedField =
+  (typeof CONTACT_ACTIVITY_TRACKED_FIELDS)[number]
 
 export const isContactActivityFilterField = (
   field: string,

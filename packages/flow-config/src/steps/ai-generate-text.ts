@@ -15,7 +15,25 @@ export const defaultAIModels = {
   claude: "claude-sonnet-4-6",
   deepseek: "deepseek-flash",
   openrouter: "openai/gpt-5.4-mini",
+  muse: "muse-spark-1.3",
 } as const
+
+/**
+ * Highest temperature Muse answers reliably: at 2 every Muse model either
+ * reasons until the budget is gone (empty reply) or returns a 500.
+ */
+export const MUSE_MAX_TEMPERATURE = 1
+
+/**
+ * Extra `max_tokens` the Muse provider adds for reasoning, which Muse counts
+ * against `max_tokens`. Without it Spark returns empty replies at small
+ * budgets even at `minimal` effort (agent at 100 tokens, the 128-token handoff
+ * classifier). `maxOutputTokens` is therefore the visible-text budget for
+ * Muse; the reasoning tokens are billed as output.
+ */
+export const MUSE_REASONING_HEADROOM_TOKENS = 1024
+
+export const MUSE_MAX_OUTPUT_TOKENS_DESCRIPTION = `Maximum tokens of reply text. Muse models may use up to ${MUSE_REASONING_HEADROOM_TOKENS} extra reasoning tokens on top, billed as output.`
 
 export const aiGenerateTextNativeProviderSchema = z.enum([
   "openai",
@@ -23,6 +41,7 @@ export const aiGenerateTextNativeProviderSchema = z.enum([
   "claude",
   "deepseek",
   "openrouter",
+  "muse",
 ])
 export type AIGenerateTextNativeProvider = z.infer<
   typeof aiGenerateTextNativeProviderSchema
@@ -49,8 +68,17 @@ export const aiGenerateTextSchema = z
     outputFieldId: zodFieldReference(),
     tools: z.array(z.string()).optional(),
     remember: z.boolean(),
-    temperature: z.number().min(0).max(2),
-    maxOutputTokens: z.number().int().min(250).max(4096),
+    temperature: z
+      .number()
+      .min(0)
+      .max(2)
+      .describe(`Sampling temperature, 0-2 (Muse: 0-${MUSE_MAX_TEMPERATURE}).`),
+    maxOutputTokens: z
+      .number()
+      .int()
+      .min(250)
+      .max(4096)
+      .describe(MUSE_MAX_OUTPUT_TOKENS_DESCRIPTION),
     states: z.tuple([successStateSchema, errorStateSchema]),
   })
   .superRefine((value, ctx) => {
@@ -66,6 +94,13 @@ export const aiGenerateTextSchema = z
         code: "custom",
         path: ["integrationId"],
         message: "Integration is required",
+      })
+    }
+    if (value.provider === "muse" && value.temperature > MUSE_MAX_TEMPERATURE) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["temperature"],
+        message: `Muse supports temperature up to ${MUSE_MAX_TEMPERATURE}`,
       })
     }
   })

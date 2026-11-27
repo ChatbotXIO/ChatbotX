@@ -1,9 +1,11 @@
-import {
-  workspaceDeletionRecordService,
-  workspaceMemberService,
-} from "@chatbotx.io/business"
+import { workspaceDeletionRecordService } from "@chatbotx.io/business"
 import z from "zod"
+import {
+  filterWorkspacesForHost,
+  resolveRequestTenantId,
+} from "@/lib/tenant/request-tenant"
 import { authorizedAPI } from "@/orpc"
+import { listMyWorkspaces } from "../lib/list-my-workspaces"
 import { workspaceDeletionRecordResource } from "../schema/deletion-record"
 import { workspaceResource } from "../schema/resource"
 
@@ -18,10 +20,16 @@ export const workspacesAuthenticatedAPI = {
     .input(z.object({}))
     .output(z.object({ workspaces: z.array(workspaceResource) }))
     .handler(async ({ context }) => {
-      const members = await workspaceMemberService.listByUserId({
-        userId: context.user.id,
-      })
-      return { workspaces: members.map((member) => member.workspace) }
+      // Session RPC runs on a browser host, so it lists only that host's
+      // tenant. The workspace-token public API / mobile `GET /v1/me/workspaces`
+      // share `listMyWorkspaces` but have no host and stay unscoped.
+      const { workspaces } = await listMyWorkspaces(context.user.id)
+      return {
+        workspaces: filterWorkspacesForHost(
+          workspaces,
+          await resolveRequestTenantId(),
+        ),
+      }
     }),
 
   listDeletedWorkspacesAPI: authorizedAPI

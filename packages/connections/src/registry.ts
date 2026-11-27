@@ -11,6 +11,7 @@ import {
   claudeConnectionProvider,
   deepseekConnectionProvider,
   geminiConnectionProvider,
+  museConnectionProvider,
   openaiCompatibleConnectionProvider,
   openaiConnectionProvider,
   openrouterConnectionProvider,
@@ -27,6 +28,7 @@ import { integration as integrationGoogleSheets } from "@chatbotx.io/integration
 import { integration as integrationInstagram } from "@chatbotx.io/integration-instagram"
 import { integration as integrationInstagramFacebook } from "@chatbotx.io/integration-instagram-facebook"
 import { integration as integrationKlaviyo } from "@chatbotx.io/integration-klaviyo"
+import { integration as integrationLine } from "@chatbotx.io/integration-line"
 import { integration as integrationMailchimp } from "@chatbotx.io/integration-mailchimp"
 import { integration as integrationMailerLite } from "@chatbotx.io/integration-mailer-lite"
 import { integration as integrationMessenger } from "@chatbotx.io/integration-messenger"
@@ -187,6 +189,7 @@ export const CONNECTION_REGISTRY: StoreBoundConnectionRegistry = {
   },
   metaCatalog: null,
   moosend: fromIntegration(integrationMoosend, "moosend"),
+  muse: fromCredentialProvider(museConnectionProvider, "muse"),
   openai: fromCredentialProvider(openaiConnectionProvider, "openai"),
   openaiCompatible: fromCredentialProvider(
     openaiCompatibleConnectionProvider,
@@ -199,6 +202,7 @@ export const CONNECTION_REGISTRY: StoreBoundConnectionRegistry = {
   outlookCalendar: null,
   sendGrid: fromIntegration(integrationSendGrid, "sendGrid"),
   smtp: fromIntegration(integrationSmtp, "smtp"),
+  line: fromIntegration(integrationLine, "line"),
   telegram: fromIntegration(integrationTelegram, "telegram"),
   threads: fromIntegration(integrationThreads, "threads", "threads"),
   tiktok: fromIntegration(integrationTiktok, "tiktok", "tiktok"),

@@ -8,6 +8,7 @@ import { aiExtractDataSchema } from "./steps/ai-extract-data"
 import { aiGenerateImageSchema } from "./steps/ai-generate-image"
 import { aiGenerateTextSchema } from "./steps/ai-generate-text"
 import { aiGenerateTextAgentSchema } from "./steps/ai-generate-text-agent"
+import { aiSegmentImageSchema } from "./steps/ai-segment-image"
 import { aiSpeechToTextSchema } from "./steps/ai-speech-to-text"
 import { aiTextToSpeechSchema } from "./steps/ai-text-to-speech"
 import { appointmentSchedulingStepSchema } from "./steps/appointment-scheduling"
@@ -29,6 +30,7 @@ import { evaluateDecisionStepSchema } from "./steps/evaluate-decision"
 import { executeJavascriptStepSchema } from "./steps/execute-javascript"
 import { externalRequestStepSchema } from "./steps/external-request"
 import { facebookCustomAudienceSchema } from "./steps/facebook-custom-audience"
+import { findPlacesNearMeStepSchema } from "./steps/find-places-near-me"
 import { followConversationStepSchema } from "./steps/follow-conversation"
 import { formatDateStepSchema } from "./steps/format-date"
 import { generateCodeStepSchema } from "./steps/generate-code"
@@ -44,6 +46,7 @@ import { markEmailVerifiedStepSchema } from "./steps/mark-email-verified"
 import { moosendCreateContactSchema } from "./steps/moosend-create-contact"
 import { optInEmailStepSchema } from "./steps/opt-in-email"
 import { optOutEmailStepSchema } from "./steps/opt-out-email"
+import { pipelineStepSchema } from "./steps/pipeline"
 import { questionnairesStepSchema } from "./steps/questionnaires"
 import { removeContactTagStepSchema } from "./steps/remove-contact-tag"
 import { sendGoogleAdsConversionSchema } from "./steps/send-google-ads-conversion"
@@ -99,6 +102,7 @@ const contactSteps = [
   setUpCouponStepSchema,
   markCouponUsedStepSchema,
   changeGamificationScoreStepSchema,
+  pipelineStepSchema,
 ]
 
 const broadcastSteps = [
@@ -148,6 +152,7 @@ const aiSteps = [
   aiGenerateImageSchema,
   aiDeleteMessageHistorySchema,
   aiEditImageSchema,
+  aiSegmentImageSchema,
   aiAnalyzeImageSchema,
   aiGenerateTextAgentSchema,
   aiExtractDataSchema,
@@ -166,6 +171,8 @@ const messengerSteps = [
 ]
 
 const googleAdsSteps = [sendGoogleAdsConversionSchema]
+
+const moreOptionsSteps = [findPlacesNearMeStepSchema]
 
 const googleSheetStep = [
   spreadsheetGetRowSchema,
@@ -188,4 +195,5 @@ export const actionSteps = [
   ...messengerSteps,
   ...googleAdsSteps,
   ...triggerSteps,
+  ...moreOptionsSteps,
 ]

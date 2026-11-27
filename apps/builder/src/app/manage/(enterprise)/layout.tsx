@@ -1,7 +1,8 @@
 import { notFound } from "next/navigation"
 import { isCloud } from "@/env"
+import { requireActiveReseller } from "../reseller-guard"
 
-export default function ManageEnterpriseLayout({
+export default async function ManageEnterpriseLayout({
   children,
 }: {
   children: React.ReactNode
@@ -9,5 +10,6 @@ export default function ManageEnterpriseLayout({
   if (!isCloud()) {
     notFound()
   }
+  await requireActiveReseller()
   return <div>{children}</div>
 }

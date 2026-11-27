@@ -8,8 +8,8 @@ import { useWorkspaceId } from "@/hooks/routing"
 
 /**
  * Next already logs the server-render failure (with its digest); this view only
- * recovers. `retry()` re-fetches and re-renders the segment. `AnalyticsNav`
- * lives in the page, which no longer renders, so the way back is its own link.
+ * recovers. `retry()` re-fetches and re-renders the segment. The failed page no
+ * longer renders, so the way back is its own link.
  */
 export default function GoogleAdsStatsError({ retry }: { retry: () => void }) {
   const t = useTranslations()

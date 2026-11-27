@@ -17,7 +17,21 @@ import {
 import { loadBotFields } from "./bot-field-variable-resolver"
 import { isCouponVariable, resolveCouponVariable } from "./coupon-variable"
 import { logger } from "./logger"
-import type { ContactCustomFieldValue, ReplaceVariableProps } from "./schema"
+import {
+  createContactPipelineItemsLoader,
+  isPipelineVariable,
+  resolvePipelineVariable,
+} from "./pipeline-variable"
+import {
+  createPostCommentLoader,
+  isPostCommentVariable,
+  resolvePostCommentVariable,
+} from "./post-comment-variable"
+import type {
+  ContactCustomFieldValue,
+  PostCommentVariableRef,
+  ReplaceVariableProps,
+} from "./schema"
 import {
   extractVariables,
   getContactTimezone,
@@ -100,11 +114,27 @@ const couponResolver: VariableResolver = {
     await resolveCouponVariable(context, variable),
 }
 
+const pipelineResolver: VariableResolver = {
+  matches: (variable) => isPipelineVariable(variable),
+  resolve: async (variable, context, timezone) =>
+    await resolvePipelineVariable(context, variable, timezone),
+}
+
+// Run-scoped: a post-comment trigger run (or a flow it started) carries the
+// comment; everywhere else these render empty, never a "latest post".
+const postCommentResolver: VariableResolver = {
+  matches: (variable) => isPostCommentVariable(variable),
+  resolve: async (variable, context, timezone) =>
+    await resolvePostCommentVariable(context, variable, timezone),
+}
+
 const variableResolvers = [
   systemFieldResolver,
   rawCustomFieldResolver,
   botFieldResolver,
   customFieldResolver,
+  pipelineResolver,
+  postCommentResolver,
   couponResolver,
 ] as const satisfies readonly VariableResolver[]
 
@@ -115,6 +145,8 @@ type GetAllProps = {
   conversation?: ConversationModel | null
   appointmentId?: string
   sentByUserId?: string
+  /** The comment a post-comment trigger run is about, for `{{post.*}}` / `{{comment.*}}`. */
+  postComment?: PostCommentVariableRef
   workspace?: WorkspaceModel
 }
 
@@ -205,6 +237,15 @@ export const contactVariableService = {
       customFieldsMap,
       botFieldsMap,
       workspace,
+      pipelineItems: createContactPipelineItemsLoader(contact),
+      ...(input.postComment
+        ? {
+            postComment: createPostCommentLoader(
+              contact.workspaceId,
+              input.postComment,
+            ),
+          }
+        : {}),
     }
   },
 
@@ -214,16 +255,17 @@ export const contactVariableService = {
     /** Escapes each resolved value before it is put into `text`. */
     escapeValue?: (value: string) => string
   }): Promise<string> => {
-    const { variables: context, text, escapeValue } = props
+    const { variables, text, escapeValue } = props
     // Temporal custom fields render in the contact's timezone, falling back to
     // the workspace timezone (then UTC) — an outgoing message should read in the
     // recipient's local time when we know it. See getContactTimezone.
-    const renderTimezone = getContactTimezone(context)
+    const renderTimezone = getContactTimezone(variables)
 
     try {
       const mapping: Record<string, string> = {}
-      const variables = extractVariables(text)
-      for (const variable of variables) {
+      const names = extractVariables(text)
+      const context = variables
+      for (const variable of names) {
         const resolver = variableResolvers.find((candidate) =>
           candidate.matches(variable, context),
         )

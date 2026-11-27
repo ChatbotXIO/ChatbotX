@@ -3,6 +3,7 @@ import { getChildLogger } from "@chatbotx.io/logger"
 import { createId } from "@chatbotx.io/utils"
 import { fetchFollowingSafeRedirects, readBodyWithLimit } from "./bounded-fetch"
 import { getImageDimensions, pathJoin } from "./helper"
+import { normalizeMimeType } from "./mime-type"
 import { DEFAULT_MIME_TYPE, type UploadedFile } from "./schema"
 import { uploader } from "./uploader"
 
@@ -17,11 +18,33 @@ const logger = getChildLogger("filesystem:upload")
  * request's caller.
  */
 export class UploadValidationError extends Error {
-  constructor(message: string) {
+  /**
+   * Stable machine-readable cause (e.g. `"fileTooLarge"`), so a caller can
+   * localize the failure without parsing `message`. Optional: callers that
+   * never set it keep working unchanged.
+   */
+  readonly reason?: string
+
+  constructor(message: string, reason?: string) {
     super(message)
     this.name = "UploadValidationError"
+    this.reason = reason
   }
 }
+
+/**
+ * Inspects the final response (after every redirect) before its body is read
+ * or stored. Throw to reject; return `mimeType`/`name` to override what is
+ * stored and returned.
+ */
+export type UploadResponseValidator = (input: {
+  finalUrl: string
+  mimeType: string
+  contentDisposition: string | null
+  contentLength: number | null
+}) =>
+  | Promise<{ mimeType?: string; name?: string }>
+  | { mimeType?: string; name?: string }
 
 export async function uploadFile(
   file: File,
@@ -29,13 +52,14 @@ export async function uploadFile(
   acl = "public-read",
 ): Promise<UploadedFile> {
   const buffer = (await file.arrayBuffer()) as unknown as Buffer
+  const mimeType = normalizeMimeType(file.type)
   await uploader.putObject(path, buffer, {
     ACL: acl as ObjectCannedACL,
     ContentLength: file.size,
-    ContentType: file.type,
+    ContentType: mimeType,
   })
 
-  const imageDimensions = await getImageDimensions(file.type, buffer)
+  const imageDimensions = await getImageDimensions(mimeType, buffer)
 
   return {
     name: file.name,
@@ -62,6 +86,7 @@ export async function uploadFileFromUrl(
   maxBytes?: number,
   validateUrl?: (url: string) => Promise<void>,
   signal?: AbortSignal,
+  validateResponse?: UploadResponseValidator,
 ): Promise<UploadedFile> {
   const { response, finalUrl } = validateUrl
     ? await fetchFollowingSafeRedirects({
@@ -69,14 +94,19 @@ export async function uploadFileFromUrl(
           tooManyRedirects: () =>
             new UploadValidationError(
               "Too many redirects while downloading file",
+              "tooManyRedirects",
             ),
           noLocationHeader: () =>
             new UploadValidationError(
               "Redirect response has no Location header",
+              "invalidRedirect",
             ),
-          invalidRedirectLocation: (location) =>
+          // The Location value is attacker-controlled and may carry tokens:
+          // never echo it into a message that can reach an API response.
+          invalidRedirectLocation: () =>
             new UploadValidationError(
-              `Redirect response has an invalid Location header: ${location}`,
+              "Redirect response has an invalid Location header",
+              "invalidRedirect",
             ),
         },
         fetchImpl: (candidateUrl) =>
@@ -91,12 +121,13 @@ export async function uploadFileFromUrl(
   if (!response.ok) {
     throw new UploadValidationError(
       `Failed to download file: ${response.status}`,
+      "downloadFailed",
     )
   }
 
-  const mimeType = (response.headers.get("content-type") || DEFAULT_MIME_TYPE)
-    .split(";")[0]
-    .trim()
+  const headerMimeType = normalizeMimeType(
+    (response.headers.get("content-type") || DEFAULT_MIME_TYPE).split(";")[0],
+  )
   const headerLength = Number.parseInt(
     response.headers.get("content-length") ?? "0",
     10,
@@ -104,8 +135,22 @@ export async function uploadFileFromUrl(
   if (maxBytes !== undefined && headerLength > maxBytes) {
     throw new UploadValidationError(
       `File exceeds the maximum allowed size of ${maxBytes} bytes`,
+      "fileTooLarge",
     )
   }
+
+  const overrides = validateResponse
+    ? await validateResponse({
+        finalUrl,
+        mimeType: headerMimeType,
+        contentDisposition: response.headers.get("content-disposition"),
+        contentLength:
+          Number.isFinite(headerLength) && headerLength > 0
+            ? headerLength
+            : null,
+      })
+    : {}
+  const mimeType = overrides.mimeType ?? headerMimeType
 
   let name = createId()
   try {
@@ -127,6 +172,7 @@ export async function uploadFileFromUrl(
           (limit) =>
             new UploadValidationError(
               `File exceeds the maximum allowed size of ${limit} bytes`,
+              "fileTooLarge",
             ),
         )
   // headerLength is the origin's self-reported content-length, used only as
@@ -150,7 +196,7 @@ export async function uploadFileFromUrl(
   const imageDimensions = await getImageDimensions(mimeType, buffer)
 
   return {
-    name,
+    name: overrides.name ?? name,
     originPath: path,
     size,
     ...imageDimensions,

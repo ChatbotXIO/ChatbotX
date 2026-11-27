@@ -1,21 +1,27 @@
 import { runWithWebhookExecutionContext } from "@chatbotx.io/events/context"
 import type { IntegrationJobData } from "@chatbotx.io/worker-config"
-import { UnrecoverableError } from "bullmq"
 import { logger } from "../lib/logger"
 import {
-  handleOrphanedIntegration,
+  cleanupOrphanedIntegrationOnce,
   IntegrationNotFoundError,
-  isExpectedOrphan,
 } from "../services/orphaned-integration-cleanup"
-import { isChannelOriginatedJob } from "./channel-origin"
+import { isChannelOriginatedJob, isInboundWebhookJob } from "./channel-origin"
 
-function stringifyError(error: unknown): string {
-  return error instanceof Error ? error.message : String(error)
-}
+type OrphanedJobContext = Readonly<{
+  jobType: string
+  isInbound: boolean
+}>
 
+/**
+ * A job whose integration row is gone completes after throttled
+ * orphaned-integration cleanup instead of retrying or filling the failed set.
+ * Inbound events log at `warn`; internal jobs log at `error` because losing
+ * one is unexpected.
+ */
 export async function runWithOrphanedIntegrationCleanup<T>(
+  context: OrphanedJobContext,
   callback: () => Promise<T>,
-): Promise<T> {
+): Promise<T | undefined> {
   try {
     return await callback()
   } catch (error) {
@@ -23,43 +29,24 @@ export async function runWithOrphanedIntegrationCleanup<T>(
       throw error
     }
 
-    try {
-      await handleOrphanedIntegration(error)
-    } catch (cleanupError) {
+    await cleanupOrphanedIntegrationOnce(error)
+
+    const logContext = {
+      channel: error.channel,
+      identifier: error.identifier,
+      jobType: context.jobType,
+    }
+    if (context.isInbound) {
       logger.warn(
-        {
-          channel: error.channel,
-          identifier: error.identifier,
-          err: stringifyError(cleanupError),
-        },
-        "Orphaned integration cleanup threw before marking job unrecoverable",
+        logContext,
+        "Integration not found for inbound event; skipping job",
+      )
+    } else {
+      logger.error(
+        { ...logContext, err: error },
+        "Integration not found; completing job without retry",
       )
     }
-    throw new UnrecoverableError(error.message)
-  }
-}
-
-/**
- * An inbound event for a channel that keeps delivering after disconnect (see
- * `isExpectedOrphan`) completes the job instead of filling the failed set.
- * Only for channel-originated jobs: internal jobs that lose their integration
- * still fail loudly through `runWithOrphanedIntegrationCleanup`.
- */
-async function skipExpectedOrphans<T>(
-  callback: () => Promise<T>,
-): Promise<T | undefined> {
-  try {
-    return await callback()
-  } catch (error) {
-    if (
-      !(error instanceof IntegrationNotFoundError && isExpectedOrphan(error))
-    ) {
-      throw error
-    }
-    logger.info(
-      { channel: error.channel, identifier: error.identifier },
-      "Integration not found for inbound event; skipping job",
-    )
     return
   }
 }
@@ -68,14 +55,17 @@ export async function runIntegrationJobWithWebhookContext<T>(
   jobData: IntegrationJobData,
   callback: () => Promise<T>,
 ): Promise<T | undefined> {
-  const isChannelOriginated = isChannelOriginatedJob(jobData)
-  const webhookExecutionContext = isChannelOriginated
+  const webhookExecutionContext = isChannelOriginatedJob(jobData)
     ? { source: "webhook" as const }
     : {}
 
   return await runWithWebhookExecutionContext(webhookExecutionContext, () =>
-    runWithOrphanedIntegrationCleanup(() =>
-      isChannelOriginated ? skipExpectedOrphans(callback) : callback(),
+    runWithOrphanedIntegrationCleanup(
+      {
+        isInbound: isInboundWebhookJob(jobData),
+        jobType: jobData.type,
+      },
+      callback,
     ),
   )
 }

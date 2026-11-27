@@ -6,6 +6,7 @@ import {
 import { sendPrivateReplyMessage } from "../../apis/message"
 import { mapToChannelError } from "../../lib/error-mapper"
 import { logger } from "../../lib/logger"
+import { tiktokCanMessage } from "../../lib/scopes"
 import type { TiktokAuthValue } from "../../schema"
 
 /**
@@ -27,6 +28,15 @@ export const sendPrivateReply: CommentHandlers<TiktokAuthValue>["sendPrivateRepl
       ctx,
       data: { message },
     } = props
+
+    // A comments-only connection (EEA, Swiss or UK account) holds no messaging
+    // scope, and TikTok's own rejection of the send names none of that.
+    if (!tiktokCanMessage(ctx.auth)) {
+      throw new ChannelError(
+        "Cannot send TikTok private reply: this connection has no messaging permission. TikTok Business Messaging is not available to accounts registered in the EEA, Switzerland or the UK.",
+        ChannelErrorCategory.PERMISSION_DENIED,
+      )
+    }
 
     const replyToCommentId = message.contentAttributes?.replyToCommentId
     if (typeof replyToCommentId !== "string" || !replyToCommentId.trim()) {

@@ -155,6 +155,34 @@ export const minigamesPublicRouter = {
       )
     }),
 
+  duplicate: workspaceTokenAuthAPI
+    .route({
+      method: "POST",
+      path: "/v1/minigames/{id}/duplicate",
+      summary: "Duplicate minigame",
+      description:
+        "Copies a minigame's settings into a new minigame named `<name> - Copy` (`- Copy 2`, … when taken). Prizes are not copied: the copy starts with no prizes and `nonWinning.loseRate` 100, so add prizes with `minigames.updatePartial`. The prize description image is not copied either. The copy starts disabled (its play link is not live): enable it with `minigames.setEnabled` once it has prizes. Plays, players and counters start from zero. Find the id with `minigames.list`.",
+      successStatus: 201,
+      tags,
+    })
+    .input(
+      z.object({
+        id: zodBigintAsString().describe(
+          "Minigame id to copy. Get it from `minigames.list`.",
+        ),
+      }),
+    )
+    .output(minigamePublicResource)
+    .errors(possibleErrorsOnMutatingMinigame)
+    .handler(async ({ context, input }) =>
+      withPlayUrl(
+        await minigameService.duplicate({
+          workspaceId: context.workspace.id,
+          id: input.id,
+        }),
+      ),
+    ),
+
   delete: workspaceTokenAuthAPI
     .route({
       method: "DELETE",

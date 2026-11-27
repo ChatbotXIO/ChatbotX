@@ -15,9 +15,11 @@ import {
   LightbulbIcon,
   type LucideIcon,
   MessageCircleMoreIcon,
+  NewspaperIcon,
   PhoneCallIcon,
   RadioIcon,
   SlidersHorizontalIcon,
+  SquareKanbanIcon,
   UsersIcon,
   WebhookIcon,
   WorkflowIcon,
@@ -59,8 +61,8 @@ export function AppSidebar({
   workspaceId,
   allWorkspaces,
   callHistoryNavVisible,
+  canAccessManage,
   isSuperAdmin,
-  isPlatformAdmin,
   permissions,
   quota,
   scheduledForDeletion = false,
@@ -71,8 +73,8 @@ export function AppSidebar({
   /** Gates the Calls nav item: call-history permission AND a connected
    * call-capable channel. */
   callHistoryNavVisible: boolean
+  canAccessManage?: boolean
   isSuperAdmin?: boolean
-  isPlatformAdmin?: boolean
   // Runtime may be a partial object (the jsonb column defaults to `{}`);
   // `hasWorkspacePermission` fails closed on any missing flag.
   permissions: WorkspaceMemberPermissions
@@ -100,6 +102,12 @@ export function AppSidebar({
         url: `/space/${workspaceId}/inbox`,
         icon: MessageCircleMoreIcon,
         permission: PERMISSION_NAV.contacts,
+      },
+      {
+        title: t("fields.pipelines.label"),
+        url: `/space/${workspaceId}/pipelines`,
+        icon: SquareKanbanIcon,
+        permission: PERMISSION_NAV.pipelines,
       },
       {
         title: t("fields.flows.label"),
@@ -155,6 +163,12 @@ export function AppSidebar({
         url: `/space/${workspaceId}/webhooks`,
         icon: WebhookIcon,
         permission: "superAdmin",
+      },
+      {
+        title: t("posts.title"),
+        url: `/space/${workspaceId}/posts`,
+        icon: NewspaperIcon,
+        permission: PERMISSION_NAV.posts,
       },
       {
         title: t("tools.title"),
@@ -218,7 +232,7 @@ export function AppSidebar({
           trialEndsAt={quota.trialEndsAt}
         />
         <NavUser
-          isPlatformAdmin={isPlatformAdmin}
+          canAccessManage={canAccessManage}
           isSuperAdmin={isSuperAdmin}
           planName={quota.planName}
           user={data.user}

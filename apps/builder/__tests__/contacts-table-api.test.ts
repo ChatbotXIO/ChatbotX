@@ -41,9 +41,6 @@ vi.mock("@/features/contacts/permissions", () => ({
 vi.mock("@/features/contacts/queries/get-contact.query", () => ({
   getContact: vi.fn(),
 }))
-vi.mock("@/features/contacts/queries/get-export-file.query", () => ({
-  getExportFile: vi.fn(),
-}))
 vi.mock("@/features/contacts/queries/list-contact-inboxes.queries", () => ({
   countContactInboxes: vi.fn(),
   listAudienceInboxesPreview: vi.fn(),

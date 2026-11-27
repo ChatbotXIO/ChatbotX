@@ -61,6 +61,7 @@ export async function scanContactScans(): Promise<void> {
                 jobId: buildContactScanJobId({
                   runId: run.id,
                   attempts: run.attempts,
+                  generation: Date.now(),
                 }),
                 attempts: 1,
                 removeOnComplete: true,

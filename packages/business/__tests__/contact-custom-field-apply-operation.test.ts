@@ -1,18 +1,20 @@
 // @vitest-environment node
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
-// applyOperationToContacts locks each contact row FOR UPDATE, computes the
-// new value, and writes it inside one transaction. The customFieldChanged
-// events MUST fire only after the transaction commits — the trigger worker
-// re-reads the value, so a mid-transaction emit can read uncommitted or
-// rolled-back data.
+// applyFieldOperations locks every (contact, field) pair, reads the current
+// values in one query, calculates each result and writes it inside one
+// transaction. The customFieldChanged events MUST fire only after the
+// transaction commits — the trigger worker re-reads the value, so a
+// mid-transaction emit can read uncommitted or rolled-back data.
 
 const callLog: string[] = []
 
 const mocks = vi.hoisted(() => ({
   findManyByIds: vi.fn(),
   customFieldFindManyByIds: vi.fn(),
-  selectLimit: vi.fn(),
+  lockPairs: vi.fn(),
+  listValuesForPairs: vi.fn(),
+  deleteValue: vi.fn(),
   insertValues: vi.fn(),
   insertOnConflictDoUpdate: vi.fn(),
   updateSet: vi.fn(),
@@ -23,13 +25,6 @@ const mocks = vi.hoisted(() => ({
 
 const txHandle = {
   __tx: true,
-  select: () => ({
-    from: () => ({
-      where: () => ({
-        for: () => ({ limit: mocks.selectLimit }),
-      }),
-    }),
-  }),
   query: {
     customFieldModel: {
       findMany: vi.fn(async () => [{ id: "cf-1", name: "plan", type: "text" }]),
@@ -57,10 +52,6 @@ const txHandle = {
   }),
 }
 
-vi.mock("@chatbotx.io/business/errors", () => ({
-  notFoundException: (message: string) => new Error(message),
-}))
-
 vi.mock("../src/contact/service", () => ({
   contactService: { findManyByIds: mocks.findManyByIds },
 }))
@@ -77,11 +68,23 @@ vi.mock("../src/contact-custom-field/value-service", () => ({
   contactCustomFieldValueService: {},
 }))
 
-vi.mock("../src/contact-custom-field/normalize.ts", () => ({
-  normalizeCustomFieldValueForStorage: async ({ value }: { value: unknown }) =>
-    value,
-  createSourceTimezoneResolver: () => vi.fn(),
-}))
+vi.mock("../src/contact-custom-field/normalize.ts", async () => {
+  const { canonicalNumberLiteral } = await import(
+    "@chatbotx.io/utils/custom-field"
+  )
+  return {
+    normalizeCustomFieldValueForStorage: async ({
+      type,
+      value,
+    }: {
+      type: string
+      value: string
+    }) =>
+      // Mirrors the real number coercion so a normalized value feeds the next op.
+      type === "number" ? (canonicalNumberLiteral(value) ?? value) : value,
+    createSourceTimezoneResolver: () => vi.fn(),
+  }
+})
 
 vi.mock("@chatbotx.io/database/client", () => ({
   and: (...args: unknown[]) => args,
@@ -100,7 +103,20 @@ vi.mock("@chatbotx.io/database/client", () => ({
 // package graph together once any subpath is imported, which otherwise pulls
 // in `contactCustomFieldRepository`'s real contact-filter query graph (needs
 // the real schema, conflicting with the narrow mock below).
-vi.mock("@chatbotx.io/database/repositories", () => ({}))
+vi.mock("@chatbotx.io/database/repositories", () => ({
+  contactCustomFieldRepository: {
+    lockPairs: (...args: unknown[]) => {
+      callLog.push("lock")
+      return mocks.lockPairs(...args)
+    },
+    listValuesForPairs: (...args: unknown[]) =>
+      mocks.listValuesForPairs(...args),
+    deleteValue: (...args: unknown[]) => {
+      callLog.push("write")
+      return mocks.deleteValue(...args)
+    },
+  },
+}))
 
 vi.mock("@chatbotx.io/database/schema", () => ({
   contactCustomFieldModel: {
@@ -124,14 +140,10 @@ vi.mock("@chatbotx.io/redis", () => ({
     mocks.invalidateCacheByTags(...args),
 }))
 
-vi.mock("@chatbotx.io/flow-config", () => ({
-  FieldOperationType: {
-    append: "append",
-    prepend: "prepend",
-    increase: "increase",
-    decrease: "decrease",
-    set: "set",
-  },
+vi.mock("@chatbotx.io/flow-config", async () => ({
+  FieldOperationType: (
+    await import("@chatbotx.io/utils/custom-field-operation")
+  ).FieldOperationType,
 }))
 
 vi.mock("@chatbotx.io/utils", async (importOriginal) => {
@@ -139,8 +151,20 @@ vi.mock("@chatbotx.io/utils", async (importOriginal) => {
   return { ...actual, createId: () => "generated-id" }
 })
 
+vi.mock("../src/errors", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../src/errors")>()),
+  notFoundException: (message: string) => new Error(message),
+}))
+
+const mockLoggerWarn = vi.hoisted(() => vi.fn())
+
 vi.mock("../src/logger", () => ({
-  logger: { warn: vi.fn(), error: vi.fn(), debug: vi.fn(), info: vi.fn() },
+  logger: {
+    warn: mockLoggerWarn,
+    error: vi.fn(),
+    debug: vi.fn(),
+    info: vi.fn(),
+  },
 }))
 
 const { contactCustomFieldService } = await import(
@@ -156,42 +180,62 @@ mocks.updateSet.mockImplementation(() => {
   callLog.push("write")
 })
 
-describe("contactCustomFieldService.applyOperationToContacts — event ordering", () => {
+const { FieldOperationType } = await import(
+  "@chatbotx.io/utils/custom-field-operation"
+)
+
+const field = (type: string) => ({ id: "cf-1", name: "plan", type })
+
+const writtenValues = () =>
+  mocks.insertValues.mock.calls.map(([values]) => values.value)
+
+const arrange = (input: {
+  type?: string
+  stored?: Array<{ contactId: string; customFieldId: string; value: string }>
+  contactIds?: string[]
+}) => {
+  mocks.findManyByIds.mockResolvedValue(
+    (input.contactIds ?? ["contact-1"]).map((id) => ({ id })),
+  )
+  mocks.customFieldFindManyByIds.mockResolvedValue([
+    field(input.type ?? "shortText"),
+  ])
+  mocks.listValuesForPairs.mockResolvedValue(input.stored ?? [])
+}
+
+describe("contactCustomFieldService.applyFieldOperations", () => {
   beforeEach(() => {
     vi.clearAllMocks()
     callLog.length = 0
-    mocks.findManyByIds.mockResolvedValue([{ id: "contact-1" }])
-    mocks.customFieldFindManyByIds.mockResolvedValue([
-      { id: "cf-1", name: "plan" },
-    ])
     mocks.emitCustomFieldChanged.mockResolvedValue(undefined)
-    mocks.insertValues.mockClear()
     mocks.insertValues.mockImplementation(() => {
       callLog.push("write")
     })
-    mocks.updateSet.mockClear()
     mocks.updateSet.mockImplementation(() => {
       callLog.push("write")
     })
     mocks.insertOnConflictDoUpdate.mockResolvedValue(undefined)
-    // No existing value for the field on this contact -> insert path.
-    mocks.selectLimit.mockResolvedValue([])
+    mocks.lockPairs.mockResolvedValue(undefined)
+    mocks.deleteValue.mockResolvedValue(null)
+    txHandle.query.customFieldModel.findMany = vi.fn(async () => [
+      field("shortText"),
+    ])
     txHandle.query.contactCustomFieldModel.findMany = vi.fn(async () => [])
+    arrange({})
   })
 
-  test("writes inside the transaction and emits per contact only after commit", async () => {
+  test("locks the pairs, writes inside the transaction and emits only after commit", async () => {
     await contactCustomFieldService.applyOperationToContacts({
       workspaceId: "ws-1",
       contactIds: ["contact-1"],
       customFieldId: "cf-1",
-      operation: "set" as never,
+      operation: FieldOperationType.set,
       value: "pro",
-      sourceTimezone: "Asia/Ho_Chi_Minh",
     })
 
+    expect(callLog.indexOf("lock")).toBeLessThan(callLog.indexOf("write"))
     expect(callLog.indexOf("write")).toBeLessThan(callLog.indexOf("commit"))
     expect(callLog.indexOf("emit")).toBeGreaterThan(callLog.indexOf("commit"))
-
     expect(mocks.emitCustomFieldChanged).toHaveBeenCalledWith(
       "ws-1",
       "contact-1",
@@ -204,8 +248,29 @@ describe("contactCustomFieldService.applyOperationToContacts — event ordering"
     )
   })
 
-  test("emits nothing when no contact value actually changes", async () => {
-    // Existing value equals the incoming value -> diff guard skips the write.
+  test("reads every current value in one query and takes one lock set", async () => {
+    arrange({ contactIds: ["contact-1", "contact-2"] })
+
+    await contactCustomFieldService.applyOperationToContacts({
+      workspaceId: "ws-1",
+      contactIds: ["contact-1", "contact-2"],
+      customFieldId: "cf-1",
+      operation: FieldOperationType.append,
+      value: "x",
+    })
+
+    expect(mocks.lockPairs).toHaveBeenCalledTimes(1)
+    expect(mocks.listValuesForPairs).toHaveBeenCalledTimes(1)
+    expect(mocks.listValuesForPairs).toHaveBeenCalledWith(
+      {
+        contactIds: ["contact-1", "contact-2"],
+        customFieldIds: ["cf-1"],
+      },
+      txHandle,
+    )
+  })
+
+  test("emits nothing when the value does not change", async () => {
     txHandle.query.contactCustomFieldModel.findMany = vi.fn(async () => [
       { customFieldId: "cf-1", value: "pro" },
     ])
@@ -214,9 +279,8 @@ describe("contactCustomFieldService.applyOperationToContacts — event ordering"
       workspaceId: "ws-1",
       contactIds: ["contact-1"],
       customFieldId: "cf-1",
-      operation: "set" as never,
+      operation: FieldOperationType.set,
       value: "pro",
-      sourceTimezone: "Asia/Ho_Chi_Minh",
     })
 
     expect(mocks.insertValues).not.toHaveBeenCalled()
@@ -224,109 +288,496 @@ describe("contactCustomFieldService.applyOperationToContacts — event ordering"
     expect(mocks.emitCustomFieldChanged).not.toHaveBeenCalled()
   })
 
-  // `contacts.setCustomFields` (deleted by the public-API consolidation;
-  // `contacts.applyCustomFieldOperations` is the surviving batch route)
-  // called `setValues`, whose `writeValues` step runs every value through
-  // `normalizeCustomFieldValueForStorage` (type coercion, temporal
-  // parsing/timezone resolution) before persisting.
-  // `applyOperationToContacts`/`applyOperations` predate this PR and never
-  // called that normalizer — they persist `computeUpdatedFieldValue`'s raw
-  // string as-is. This is not a regression introduced by the consolidation
-  // (the gap pre-existed on `main`), but it is a real behavioral difference
-  // between the two batch-write paths worth pinning: a caller migrating
-  // from `setCustomFields` to `applyCustomFieldOperations` for a
-  // date/datetime-typed field loses `setValues`'s temporal normalization.
-  test("persists the raw computed value without type/temporal normalization", async () => {
-    txHandle.query.contactCustomFieldModel.findMany = vi.fn(async () => [])
+  test("append, increase and decrease are computed from the stored value", async () => {
+    arrange({
+      type: "number",
+      stored: [{ contactId: "contact-1", customFieldId: "cf-1", value: "10" }],
+    })
+    txHandle.query.customFieldModel.findMany = vi.fn(async () => [
+      field("number"),
+    ])
+
+    await contactCustomFieldService.applyOperations({
+      workspaceId: "ws-1",
+      contactId: "contact-1",
+      operations: [
+        {
+          customFieldId: "cf-1",
+          operation: FieldOperationType.increase,
+          value: "5",
+        },
+        {
+          customFieldId: "cf-1",
+          operation: FieldOperationType.decrease,
+          value: "3",
+        },
+      ],
+    })
+
+    // The second operation sees the first one's result.
+    expect(writtenValues()).toEqual(["15", "12"])
+  })
+
+  test("decrease on a missing value yields the negative operand", async () => {
+    arrange({ type: "number" })
+    txHandle.query.customFieldModel.findMany = vi.fn(async () => [
+      field("number"),
+    ])
 
     await contactCustomFieldService.applyOperationToContacts({
       workspaceId: "ws-1",
       contactIds: ["contact-1"],
       customFieldId: "cf-1",
-      operation: "set" as never,
-      value: "not-a-normalized-date",
-      sourceTimezone: "Asia/Ho_Chi_Minh",
+      operation: FieldOperationType.decrease,
+      value: "5",
     })
 
-    expect(mocks.insertValues).toHaveBeenCalledWith(
-      expect.objectContaining({ value: "not-a-normalized-date" }),
+    expect(writtenValues()).toEqual(["-5"])
+  })
+
+  test("clear deletes the value and emits one post-commit event", async () => {
+    mocks.deleteValue.mockResolvedValue("old")
+
+    await contactCustomFieldService.applyOperationToContacts({
+      workspaceId: "ws-1",
+      contactIds: ["contact-1"],
+      customFieldId: "cf-1",
+      operation: FieldOperationType.clear,
+      value: "",
+    })
+
+    expect(mocks.deleteValue).toHaveBeenCalledWith(
+      { contactId: "contact-1", customFieldId: "cf-1" },
+      txHandle,
+    )
+    expect(callLog.indexOf("emit")).toBeGreaterThan(callLog.indexOf("commit"))
+    expect(mocks.emitCustomFieldChanged).toHaveBeenCalledTimes(1)
+    expect(mocks.emitCustomFieldChanged).toHaveBeenCalledWith(
+      "ws-1",
+      "contact-1",
+      "cf-1",
+      "plan",
+      "old",
+      null,
+      undefined,
+      undefined,
     )
   })
-})
 
-describe("contactCustomFieldService.applyOperations — batch atomicity", () => {
-  beforeEach(() => {
-    vi.clearAllMocks()
-    callLog.length = 0
-    mocks.findManyByIds.mockResolvedValue([{ id: "contact-1" }])
-    mocks.customFieldFindManyByIds.mockResolvedValue([
-      { id: "cf-1", name: "plan" },
-    ])
-    mocks.emitCustomFieldChanged.mockResolvedValue(undefined)
-    mocks.insertValues.mockClear()
-    mocks.insertValues.mockImplementation(() => {
-      callLog.push("write")
+  test("clearing a value that does not exist emits nothing", async () => {
+    await contactCustomFieldService.applyOperationToContacts({
+      workspaceId: "ws-1",
+      contactIds: ["contact-1"],
+      customFieldId: "cf-1",
+      operation: FieldOperationType.clear,
+      value: "",
     })
-    mocks.updateSet.mockClear()
-    mocks.updateSet.mockImplementation(() => {
-      callLog.push("write")
-    })
-    mocks.insertOnConflictDoUpdate.mockResolvedValue(undefined)
-    mocks.selectLimit.mockResolvedValue([])
-    txHandle.query.contactCustomFieldModel.findMany = vi.fn(async () => [])
+
+    expect(mocks.emitCustomFieldChanged).not.toHaveBeenCalled()
   })
 
-  test("runs every operation inside one outer transaction, all writes before commit", async () => {
+  test("a rejected operation on one contact throws a structured error and emits nothing", async () => {
+    arrange({ type: "number" })
+
+    await expect(
+      contactCustomFieldService.applyOperationToContacts({
+        workspaceId: "ws-1",
+        contactIds: ["contact-1"],
+        customFieldId: "cf-1",
+        operation: FieldOperationType.increase,
+        value: "abc",
+      }),
+    ).rejects.toMatchObject({
+      code: "invalidFieldOperation",
+      data: { reason: "operandNotNumber" },
+    })
+    expect(callLog).not.toContain("commit")
+    expect(mocks.emitCustomFieldChanged).not.toHaveBeenCalled()
+  })
+
+  test("an operation the field type does not allow is rejected", async () => {
+    await expect(
+      contactCustomFieldService.applyOperationToContacts({
+        workspaceId: "ws-1",
+        contactIds: ["contact-1"],
+        customFieldId: "cf-1",
+        operation: FieldOperationType.formula,
+        value: "value + 1",
+      }),
+    ).rejects.toMatchObject({ data: { reason: "operationNotAllowed" } })
+  })
+
+  test("a bulk edit skips the contacts a rejection hits and applies the rest", async () => {
+    arrange({
+      type: "number",
+      contactIds: ["contact-1", "contact-2"],
+      stored: [
+        { contactId: "contact-1", customFieldId: "cf-1", value: "1" },
+        {
+          contactId: "contact-2",
+          customFieldId: "cf-1",
+          value: "not a number",
+        },
+      ],
+    })
+    txHandle.query.customFieldModel.findMany = vi.fn(async () => [
+      field("number"),
+    ])
+
+    await contactCustomFieldService.applyOperationToContacts({
+      workspaceId: "ws-1",
+      contactIds: ["contact-1", "contact-2"],
+      customFieldId: "cf-1",
+      operation: FieldOperationType.increase,
+      value: "2",
+    })
+
+    expect(writtenValues()).toEqual(["3"])
+    expect(mocks.emitCustomFieldChanged).toHaveBeenCalledTimes(1)
+  })
+
+  test("contacts outside the caller's access scope are dropped", async () => {
+    arrange({ contactIds: ["contact-1"] })
+
+    await contactCustomFieldService.applyOperationToContacts({
+      workspaceId: "ws-1",
+      contactIds: ["contact-1", "contact-2"],
+      customFieldId: "cf-1",
+      operation: FieldOperationType.set,
+      value: "pro",
+    })
+
+    expect(mocks.emitCustomFieldChanged).toHaveBeenCalledTimes(1)
+    expect(mocks.emitCustomFieldChanged.mock.calls[0]?.[1]).toBe("contact-1")
+  })
+
+  test("runs a whole batch in one transaction, all writes before the single commit", async () => {
     await contactCustomFieldService.applyOperations({
       workspaceId: "ws-1",
       contactId: "contact-1",
       operations: [
-        { customFieldId: "cf-1", operation: "set" as never, value: "a" },
-        { customFieldId: "cf-1", operation: "append" as never, value: "b" },
-        { customFieldId: "cf-1", operation: "prepend" as never, value: "c" },
+        {
+          customFieldId: "cf-1",
+          operation: FieldOperationType.set,
+          value: "a",
+        },
+        {
+          customFieldId: "cf-1",
+          operation: FieldOperationType.append,
+          value: "b",
+        },
+        {
+          customFieldId: "cf-1",
+          operation: FieldOperationType.prepend,
+          value: "c",
+        },
       ],
     })
 
-    // Exactly one commit for the whole batch (not one per operation), and
-    // every write happens before that single commit.
     expect(callLog.filter((entry) => entry === "commit")).toHaveLength(1)
     const commitIndex = callLog.indexOf("commit")
-    const writeIndices = callLog.reduce<number[]>((acc, entry, index) => {
-      if (entry === "write") {
-        acc.push(index)
-      }
-      return acc
-    }, [])
+    const writeIndices = callLog.flatMap((entry, index) =>
+      entry === "write" ? [index] : [],
+    )
     expect(writeIndices).toHaveLength(3)
     for (const writeIndex of writeIndices) {
       expect(writeIndex).toBeLessThan(commitIndex)
     }
+    expect(writtenValues()).toEqual(["a", "ab", "cab"])
     expect(mocks.emitCustomFieldChanged).toHaveBeenCalledTimes(3)
   })
 
-  test("rolls back every earlier operation when a later one fails", async () => {
-    // First call (operation 1) resolves the field; second call (operation 2)
-    // simulates an unknown custom field, the same way the real repository
-    // returns no rows for a nonexistent id.
-    mocks.customFieldFindManyByIds
-      .mockResolvedValueOnce([{ id: "cf-1", name: "plan" }])
-      .mockResolvedValueOnce([])
+  test("an unknown custom field fails before anything is locked, written or emitted", async () => {
+    await expect(
+      contactCustomFieldService.applyOperations({
+        workspaceId: "ws-1",
+        contactId: "contact-1",
+        operations: [
+          {
+            customFieldId: "cf-1",
+            operation: FieldOperationType.set,
+            value: "a",
+          },
+          {
+            customFieldId: "cf-bad",
+            operation: FieldOperationType.set,
+            value: "b",
+          },
+        ],
+      }),
+    ).rejects.toThrow("Custom field not found")
+
+    expect(mocks.lockPairs).not.toHaveBeenCalled()
+    expect(callLog).not.toContain("commit")
+    expect(mocks.emitCustomFieldChanged).not.toHaveBeenCalled()
+  })
+
+  test("a failure after an earlier write rolls everything back without events", async () => {
+    mocks.deleteValue.mockRejectedValue(new Error("db down"))
 
     await expect(
       contactCustomFieldService.applyOperations({
         workspaceId: "ws-1",
         contactId: "contact-1",
         operations: [
-          { customFieldId: "cf-1", operation: "set" as never, value: "a" },
-          { customFieldId: "cf-bad", operation: "set" as never, value: "b" },
+          {
+            customFieldId: "cf-1",
+            operation: FieldOperationType.set,
+            value: "a",
+          },
+          {
+            customFieldId: "cf-1",
+            operation: FieldOperationType.clear,
+            value: "",
+          },
         ],
       }),
-    ).rejects.toThrow("Custom field not found")
+    ).rejects.toThrow("db down")
 
-    // The whole batch is one transaction: a failure on the second operation
-    // must mean nothing committed and nothing was emitted, even though the
-    // first operation's write already ran against the (rolled-back) tx.
     expect(callLog).not.toContain("commit")
+    expect(mocks.emitCustomFieldChanged).not.toHaveBeenCalled()
+  })
+
+  test("with one of two requested contacts out of scope the call is strict and rejects", async () => {
+    arrange({
+      type: "number",
+      contactIds: ["contact-1"],
+      stored: [{ contactId: "contact-1", customFieldId: "cf-1", value: "abc" }],
+    })
+    txHandle.query.customFieldModel.findMany = vi.fn(async () => [
+      field("number"),
+    ])
+
+    await expect(
+      contactCustomFieldService.applyOperationToContacts({
+        workspaceId: "ws-1",
+        contactIds: ["contact-1", "contact-2"],
+        customFieldId: "cf-1",
+        operation: FieldOperationType.increase,
+        value: "2",
+      }),
+    ).rejects.toMatchObject({ code: "invalidFieldOperation" })
+
+    expect(callLog).not.toContain("commit")
+    expect(mocks.insertValues).not.toHaveBeenCalled()
+    expect(mocks.updateSet).not.toHaveBeenCalled()
+    expect(mocks.emitCustomFieldChanged).not.toHaveBeenCalled()
+  })
+
+  test("with both contacts accessible the invalid one is skipped and logged", async () => {
+    arrange({
+      type: "number",
+      contactIds: ["contact-1", "contact-2"],
+      stored: [
+        { contactId: "contact-1", customFieldId: "cf-1", value: "abc" },
+        { contactId: "contact-2", customFieldId: "cf-1", value: "1" },
+      ],
+    })
+    txHandle.query.customFieldModel.findMany = vi.fn(async () => [
+      field("number"),
+    ])
+
+    await contactCustomFieldService.applyOperationToContacts({
+      workspaceId: "ws-1",
+      contactIds: ["contact-1", "contact-2"],
+      customFieldId: "cf-1",
+      operation: FieldOperationType.increase,
+      value: "2",
+    })
+
+    expect(writtenValues()).toEqual(["3"])
+    expect(mocks.emitCustomFieldChanged).toHaveBeenCalledTimes(1)
+    expect(mocks.emitCustomFieldChanged.mock.calls[0]?.[1]).toBe("contact-2")
+    expect(mockLoggerWarn).toHaveBeenCalledTimes(1)
+  })
+
+  describe("sequential normalization in one batch", () => {
+    const store = new Map<string, string>()
+    const numberField = (id: string) => ({ id, name: id, type: "number" })
+
+    const arrangeStore = (fieldIds: string[]) => {
+      store.clear()
+      mocks.findManyByIds.mockResolvedValue([{ id: "contact-1" }])
+      mocks.customFieldFindManyByIds.mockResolvedValue(
+        fieldIds.map(numberField),
+      )
+      mocks.listValuesForPairs.mockImplementation(async () =>
+        [...store].map(([customFieldId, value]) => ({
+          contactId: "contact-1",
+          customFieldId,
+          value,
+        })),
+      )
+      txHandle.query.customFieldModel.findMany = vi.fn(async () =>
+        fieldIds.map(numberField),
+      )
+      txHandle.query.contactCustomFieldModel.findMany = vi.fn(async () =>
+        [...store].map(([customFieldId, value]) => ({
+          id: `row-${customFieldId}`,
+          customFieldId,
+          value,
+        })),
+      )
+      mocks.insertValues.mockImplementation((values) => {
+        store.set(values.customFieldId, values.value)
+      })
+      let pendingValue = ""
+      mocks.updateSet.mockImplementation((values) => {
+        pendingValue = values.value
+      })
+      mocks.updateWhere.mockImplementation((cond: string[]) => {
+        store.set(String(cond[1]).replace("row-", ""), pendingValue)
+      })
+      mocks.deleteValue.mockImplementation(({ customFieldId }) => {
+        const old = store.get(customFieldId) ?? null
+        store.delete(customFieldId)
+        return Promise.resolve(old)
+      })
+    }
+
+    const emittedChanges = () =>
+      mocks.emitCustomFieldChanged.mock.calls.map(
+        ([, , customFieldId, , oldValue, newValue]) => [
+          customFieldId,
+          oldValue,
+          newValue,
+        ],
+      )
+
+    test("set, increase and formula feed each normalized value into the next", async () => {
+      arrangeStore(["cf-1"])
+
+      await contactCustomFieldService.applyOperations({
+        workspaceId: "ws-1",
+        contactId: "contact-1",
+        operations: [
+          {
+            customFieldId: "cf-1",
+            operation: FieldOperationType.set,
+            value: "007",
+          },
+          {
+            customFieldId: "cf-1",
+            operation: FieldOperationType.increase,
+            value: "2",
+          },
+          {
+            customFieldId: "cf-1",
+            operation: FieldOperationType.formula,
+            value: "value*2",
+          },
+        ],
+      })
+
+      expect(store.get("cf-1")).toBe("18")
+      expect(emittedChanges()).toEqual([
+        ["cf-1", null, "7"],
+        ["cf-1", "7", "9"],
+        ["cf-1", "9", "18"],
+      ])
+    })
+
+    test("an increase after a clear starts from zero", async () => {
+      arrangeStore(["cf-1"])
+      store.set("cf-1", "50")
+
+      await contactCustomFieldService.applyOperations({
+        workspaceId: "ws-1",
+        contactId: "contact-1",
+        operations: [
+          {
+            customFieldId: "cf-1",
+            operation: FieldOperationType.clear,
+            value: "",
+          },
+          {
+            customFieldId: "cf-1",
+            operation: FieldOperationType.increase,
+            value: "4",
+          },
+        ],
+      })
+
+      expect(store.get("cf-1")).toBe("4")
+      expect(emittedChanges()).toEqual([
+        ["cf-1", "50", null],
+        ["cf-1", null, "4"],
+      ])
+    })
+
+    test("operations on two fields keep independent values", async () => {
+      arrangeStore(["cf-1", "cf-2"])
+      store.set("cf-1", "10")
+      store.set("cf-2", "100")
+
+      await contactCustomFieldService.applyOperations({
+        workspaceId: "ws-1",
+        contactId: "contact-1",
+        operations: [
+          {
+            customFieldId: "cf-1",
+            operation: FieldOperationType.increase,
+            value: "1",
+          },
+          {
+            customFieldId: "cf-2",
+            operation: FieldOperationType.decrease,
+            value: "1",
+          },
+          {
+            customFieldId: "cf-1",
+            operation: FieldOperationType.increase,
+            value: "1",
+          },
+        ],
+      })
+
+      expect(store.get("cf-1")).toBe("12")
+      expect(store.get("cf-2")).toBe("99")
+    })
+  })
+
+  test("appending a padded operand stores it verbatim, without trimming", async () => {
+    arrange({
+      stored: [{ contactId: "contact-1", customFieldId: "cf-1", value: "a" }],
+    })
+
+    await contactCustomFieldService.applyOperationToContacts({
+      workspaceId: "ws-1",
+      contactIds: ["contact-1"],
+      customFieldId: "cf-1",
+      operation: FieldOperationType.append,
+      value: " x ",
+    })
+
+    expect(writtenValues()).toEqual(["a x "])
+  })
+
+  test("appending a whitespace-only operand writes it; only an empty operand is unchanged", async () => {
+    const stored = [
+      { contactId: "contact-1", customFieldId: "cf-1", value: "a" },
+    ]
+    arrange({ stored })
+
+    await contactCustomFieldService.applyOperationToContacts({
+      workspaceId: "ws-1",
+      contactIds: ["contact-1"],
+      customFieldId: "cf-1",
+      operation: FieldOperationType.append,
+      value: "   ",
+    })
+    expect(writtenValues()).toEqual(["a   "])
+
+    vi.clearAllMocks()
+    arrange({ stored })
+    await contactCustomFieldService.applyOperationToContacts({
+      workspaceId: "ws-1",
+      contactIds: ["contact-1"],
+      customFieldId: "cf-1",
+      operation: FieldOperationType.append,
+      value: "",
+    })
+    expect(mocks.insertValues).not.toHaveBeenCalled()
     expect(mocks.emitCustomFieldChanged).not.toHaveBeenCalled()
   })
 })

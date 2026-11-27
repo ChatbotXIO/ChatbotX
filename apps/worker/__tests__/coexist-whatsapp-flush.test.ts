@@ -192,6 +192,7 @@ vi.mock("@chatbotx.io/worker-config", () => ({
     coexistMessengerSync: "coexistMessengerSync",
   },
   integrationQueue: { add: mockQueueAdd },
+  LOW_BULK_PRIORITY: 10,
   LowJobAction: {
     coexistAttachmentDownload: "coexistAttachmentDownload",
     updateContactAvatar: "updateContactAvatar",

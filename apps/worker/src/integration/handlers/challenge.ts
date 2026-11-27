@@ -1,72 +1,91 @@
+import type { ConversationStepChallenge } from "@chatbotx.io/database/partials"
+import type {
+  ContactInboxModel,
+  ConversationModel,
+} from "@chatbotx.io/database/types"
 import { emit } from "@chatbotx.io/event-bus"
-import type { FlowNode } from "@chatbotx.io/flow-config"
-import { initVariables, SdkException } from "@chatbotx.io/sdk"
+import type { StepInputResolutionReason } from "@chatbotx.io/flow-config"
+import { SdkException } from "@chatbotx.io/sdk"
 import type { IntegrationJobRunChallenge } from "@chatbotx.io/worker-config"
-import {
-  detectConversationAndContactInbox,
-  detectFlowVersion,
-} from "../../lib/db"
+import { detectConversationAndContactInbox } from "../../lib/db"
 import { runStepsAndQuickReplies } from "./flow"
 import { runQuickReplyChallenge } from "./quick-reply-resume"
+import {
+  buildStepChallengeVariables,
+  resolveStepChallengeTarget,
+  type StepChallengeTarget,
+} from "./step-challenge-target"
 
-export async function runChallenge(data: IntegrationJobRunChallenge["data"]) {
+type RunStepChallengeProps = {
+  conversation: ConversationModel
+  contactInbox: ContactInboxModel
+  challenge: ConversationStepChallenge
+  /** Contact message that triggered the run; absent for a timer. */
+  messageId?: string
+  messageCreatedAt?: Date
+  startedByContactMessage: boolean
+  /** Set when the run ends the input without a typed answer. */
+  resolutionReason?: StepInputResolutionReason
+  triggerHandler: string
+  /**
+   * Called instead of failing when the flow, node or step is gone. Without it
+   * the error propagates so the job retries.
+   */
+  onTargetUnavailable?: (error: SdkException) => Promise<void>
+}
+
+async function tryResolveStepChallengeTarget(
+  props: Parameters<typeof resolveStepChallengeTarget>[0],
+  onTargetUnavailable: RunStepChallengeProps["onTargetUnavailable"],
+): Promise<StepChallengeTarget | undefined> {
+  try {
+    return await resolveStepChallengeTarget(props)
+  } catch (error) {
+    if (onTargetUnavailable && error instanceof SdkException) {
+      await onTargetUnavailable(error)
+      return
+    }
+    throw error
+  }
+}
+
+/**
+ * Re-enters a step from its pending challenge: a typed reply (`runChallenge`)
+ * or a resolution without one (`runStepInputResolution`).
+ */
+export async function runStepChallenge(
+  props: RunStepChallengeProps,
+): Promise<void> {
   const {
-    conversationId,
-    contactInboxId,
+    conversation,
+    contactInbox,
     challenge,
     messageId,
     messageCreatedAt,
-  } = data
-
-  const { conversation, contactInbox } =
-    await detectConversationAndContactInbox({
-      conversationId,
-      contactInboxId,
-    })
-
-  if (challenge.type === "quickReply") {
-    await runQuickReplyChallenge({ conversation, contactInbox, challenge })
-    return
-  }
-  if (challenge.type !== "step") {
-    return
-  }
+    startedByContactMessage,
+    resolutionReason,
+    triggerHandler,
+    onTargetUnavailable,
+  } = props
 
   const startTime = Date.now()
   try {
-    const { flowVersion, useLatestFlowVersion } = await detectFlowVersion({
-      flowId: challenge.data.flowId,
-      flowVersionId: challenge.data.flowVersionId,
-      workspaceId: conversation.workspaceId,
-    })
-
-    const targetNode = (flowVersion.nodes as unknown as FlowNode[]).find(
-      (node) => node.id === challenge.data.nodeId,
+    const target = await tryResolveStepChallengeTarget(
+      { challenge, workspaceId: conversation.workspaceId },
+      onTargetUnavailable,
     )
-    if (!targetNode) {
-      throw new SdkException("Target node not found")
+    if (!target) {
+      return
     }
+    const { flowVersion, useLatestFlowVersion, nodeId, details } = target
 
-    if (!("steps" in targetNode.data.details)) {
-      throw new SdkException("Target node does not have steps")
-    }
-    const targetStepIdx = targetNode.data.details.steps.findIndex(
-      (step) => step.id === challenge.data.stepId,
-    )
-    if (targetStepIdx === -1) {
-      throw new SdkException("Target step not found")
-    }
-
-    const variables = initVariables()
-    variables.conversation.challengeAttempts = {
-      name: "challengeAttempts",
-      type: "number",
-      value: challenge.data.attempts,
-    }
-    variables.conversation.challengeLastAttemptAt = {
-      name: "challengeLastAttemptAt",
-      type: "date",
-      value: challenge.data.lastAttemptAt,
+    const variables = buildStepChallengeVariables(challenge)
+    if (resolutionReason) {
+      variables.conversation.challengeResolution = {
+        name: "challengeResolution",
+        type: "string",
+        value: resolutionReason,
+      }
     }
 
     await runStepsAndQuickReplies({
@@ -74,17 +93,15 @@ export async function runChallenge(data: IntegrationJobRunChallenge["data"]) {
       contactInbox,
       flowVersion,
       useLatestFlowVersion,
-      details: targetNode.data.details,
+      details,
       targetType: "node",
-      targetId: targetNode.id,
-      targetNodeId: targetNode.id,
+      targetId: nodeId,
+      targetNodeId: nodeId,
       startFromStepId: challenge.data.stepId,
-      ctx: {
-        variables,
-      },
+      ctx: { variables },
       triggerMessageId: messageId,
       triggerMessageCreatedAt: messageCreatedAt,
-      startedByContactMessage: true,
+      startedByContactMessage,
       appointmentId: challenge.data.appointmentId,
     })
 
@@ -107,7 +124,7 @@ export async function runChallenge(data: IntegrationJobRunChallenge["data"]) {
           flowId: challenge.data.flowId,
           triggerContext: {
             triggerSource: "worker",
-            triggerHandler: "runChallenge",
+            triggerHandler,
             triggerType: "challenge_step",
           },
         },
@@ -134,7 +151,7 @@ export async function runChallenge(data: IntegrationJobRunChallenge["data"]) {
           fallbackReason: "handler_error_to_fallback",
           triggerContext: {
             triggerSource: "worker",
-            triggerHandler: "runChallenge",
+            triggerHandler,
             triggerType: "challenge_step_failed",
           },
         },
@@ -142,4 +159,38 @@ export async function runChallenge(data: IntegrationJobRunChallenge["data"]) {
     }
     throw error
   }
+}
+
+export async function runChallenge(data: IntegrationJobRunChallenge["data"]) {
+  const {
+    conversationId,
+    contactInboxId,
+    challenge,
+    messageId,
+    messageCreatedAt,
+  } = data
+
+  const { conversation, contactInbox } =
+    await detectConversationAndContactInbox({
+      conversationId,
+      contactInboxId,
+    })
+
+  if (challenge.type === "quickReply") {
+    await runQuickReplyChallenge({ conversation, contactInbox, challenge })
+    return
+  }
+  if (challenge.type !== "step") {
+    return
+  }
+
+  await runStepChallenge({
+    conversation,
+    contactInbox,
+    challenge,
+    messageId,
+    messageCreatedAt,
+    startedByContactMessage: true,
+    triggerHandler: "runChallenge",
+  })
 }

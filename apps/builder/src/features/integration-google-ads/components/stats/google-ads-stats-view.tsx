@@ -32,7 +32,6 @@ type GoogleAdsStatsViewProps = {
   workspaceCreatedAt: Date
   /** One instant captured by the server for this request (ISO). */
   referenceNow: string
-  channel: string | null
   action: string | null
   /** Synced conversion actions, so the select can switch away from a filtered action. */
   syncedActions: readonly StatsActionOption[]
@@ -120,7 +119,6 @@ export function GoogleAdsStatsView({
   connected,
   workspaceCreatedAt,
   referenceNow,
-  channel,
   action,
   syncedActions,
   googleReport,
@@ -142,7 +140,6 @@ export function GoogleAdsStatsView({
         <StatsFilters
           action={action}
           actions={mergeActions(syncedActions, stats.byAction)}
-          channel={channel}
           onParamChange={setParam}
           onRangeChange={pushRange}
           range={stats.range}

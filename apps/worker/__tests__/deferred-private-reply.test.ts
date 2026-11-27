@@ -12,6 +12,7 @@ const {
   mockContactVariableGetAll,
   mockContactVariableReplaceAll,
   mockLoggerInfo,
+  mockIsBotMessageQuotaReached,
 } = vi.hoisted(() => ({
   mockFindContactInboxBy: vi.fn(),
   mockIncrementRepliesCount: vi.fn(),
@@ -24,6 +25,7 @@ const {
   mockContactVariableGetAll: vi.fn(),
   mockContactVariableReplaceAll: vi.fn(),
   mockLoggerInfo: vi.fn(),
+  mockIsBotMessageQuotaReached: vi.fn(),
 }))
 
 vi.mock("@chatbotx.io/business", () => ({
@@ -88,6 +90,10 @@ vi.mock("../src/services/integrations", () => ({
 
 vi.mock("../src/chat/handlers/send-message", () => ({
   emitBotMessageSentEvents: vi.fn(),
+}))
+
+vi.mock("../src/lib/is-bot-message-quota-reached", () => ({
+  isBotMessageQuotaReached: mockIsBotMessageQuotaReached,
 }))
 
 vi.mock("../src/lib/logger", () => ({
@@ -172,6 +178,7 @@ describe("runDeferredCommentPrivateReply", () => {
       ({ text }: { text: string }) => Promise.resolve(text),
     )
     mockIntegrationQueueAdd.mockResolvedValue(undefined)
+    mockIsBotMessageQuotaReached.mockResolvedValue(false)
   })
 
   test("re-enqueues itself while the comment is still unflagged", async () => {
@@ -243,6 +250,26 @@ describe("runDeferredCommentPrivateReply", () => {
       expect.objectContaining({
         status: "failed",
         errorDetail: expect.stringContaining("48-hour"),
+      }),
+    )
+  })
+
+  // The DM goes straight to TikTok's Send API, past the chat worker's quota
+  // gate, and the quota can run out during the deferral wait.
+  test("records a blocked event when the bot message quota is reached", async () => {
+    mockFindBySourceId.mockResolvedValue(flaggedComment)
+    mockIsBotMessageQuotaReached.mockResolvedValue(true)
+
+    await runDeferredCommentPrivateReply(buildData())
+
+    expect(mockIsBotMessageQuotaReached).toHaveBeenCalledWith("workspace-1")
+    expect(mockSendTiktokPrivateReply).not.toHaveBeenCalled()
+    expect(mockIncrementRepliesCount).not.toHaveBeenCalled()
+    expect(mockRecordEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        replyChannel: "private",
+        status: "failed",
+        errorDetail: "Private reply not sent: Bot message limit reached",
       }),
     )
   })

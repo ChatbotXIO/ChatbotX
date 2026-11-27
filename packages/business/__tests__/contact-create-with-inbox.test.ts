@@ -10,6 +10,7 @@ const mockEmit = vi.fn()
 const mockEmitContactCreated = vi.fn()
 const mockRecordAuditLog = vi.fn()
 const mockCancelByInboxSource = vi.fn()
+const mockFindExistingSourceIdentities = vi.fn()
 
 vi.mock("../src/audit/dispatcher", () => ({
   dispatchAuditRecord: (...args: unknown[]) => mockRecordAuditLog(...args),
@@ -19,6 +20,8 @@ vi.mock("../src/contact-inbox/service", () => ({
   contactInboxService: {
     findLatestBySource: (...args: unknown[]) =>
       mockContactInboxFindLatestBySource(...args),
+    findExistingSourceIdentities: (...args: unknown[]) =>
+      mockFindExistingSourceIdentities(...args),
   },
 }))
 
@@ -154,6 +157,10 @@ beforeEach(() => {
   mockContactInsert.mockResolvedValue(contact)
   mockEmitContactCreated.mockResolvedValue(undefined)
   mockCancelByInboxSource.mockResolvedValue(undefined)
+  mockFindExistingSourceIdentities.mockResolvedValue({
+    sourceIds: new Set(),
+    sourceUserIds: new Set(),
+  })
   mockCreateContactWithoutMac.mockImplementation(
     (args: CreateContactQuotaArgs) => {
       const tx: CreateContactTestTx = {
@@ -844,6 +851,114 @@ describe("contactService.createWithInbox", () => {
         channel: "webchat",
         inboxId: "webchat-inbox-1",
       }),
+    )
+  })
+})
+
+describe("contactService.createWithInbox — WhatsApp BSUID", () => {
+  const whatsappInbox = { id: "whatsapp-inbox-1", channel: "whatsapp" }
+  const bsuid = "US.13491208655302741918"
+  const whatsappInput = {
+    ...baseInput,
+    email: "",
+    inboxId: whatsappInbox.id,
+    channel: "whatsapp" as const,
+    contactId: "",
+  }
+
+  beforeEach(() => {
+    mockFindOrFail.mockResolvedValue(whatsappInbox)
+  })
+
+  test("keys a BSUID-only contact by the BSUID so sends route via `recipient`", async () => {
+    const insertedRows = mockCreateWithInsertedRows()
+
+    await createContactWithInbox({
+      workspaceId: "ws-1",
+      input: { ...whatsappInput, phoneNumber: "", sourceUserId: bsuid },
+    })
+
+    expect(mockFindByPhone).not.toHaveBeenCalled()
+    expect(mockContactInsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.not.objectContaining({ sourceUserId: expect.anything() }),
+      }),
+    )
+    expect(insertedRows).toContainEqual(
+      expect.objectContaining({ sourceId: bsuid, sourceUserId: bsuid }),
+    )
+  })
+
+  test("keys by phone digits and stores the BSUID alongside when both are given", async () => {
+    const insertedRows = mockCreateWithInsertedRows()
+
+    await createContactWithInbox({
+      workspaceId: "ws-1",
+      input: { ...whatsappInput, sourceUserId: bsuid },
+    })
+
+    expect(insertedRows).toContainEqual(
+      expect.objectContaining({ sourceId: "15551234567", sourceUserId: bsuid }),
+    )
+    expect(mockFindExistingSourceIdentities).toHaveBeenCalledWith({
+      inboxId: whatsappInbox.id,
+      sourceIds: [],
+      sourceUserIds: [bsuid],
+    })
+  })
+
+  test("rejects a BSUID already on the inbox on the sourceUserId field", async () => {
+    mockFindExistingSourceIdentities.mockResolvedValue({
+      sourceIds: new Set(),
+      sourceUserIds: new Set([bsuid]),
+    })
+
+    await expect(
+      createContactWithInbox({
+        workspaceId: "ws-1",
+        input: { ...whatsappInput, sourceUserId: bsuid },
+      }),
+    ).rejects.toMatchObject({ field: "sourceUserId" })
+    expect(mockCreateContactWithoutMac).not.toHaveBeenCalled()
+  })
+
+  test("reports a BSUID-keyed duplicate source id on the sourceUserId field", async () => {
+    mockContactInboxFindLatestBySource.mockResolvedValue({ id: "existing" })
+
+    await expect(
+      createContactWithInbox({
+        workspaceId: "ws-1",
+        input: { ...whatsappInput, phoneNumber: "", sourceUserId: bsuid },
+      }),
+    ).rejects.toMatchObject({ field: "sourceUserId" })
+  })
+
+  test("still requires a phone when no BSUID is given", async () => {
+    await expect(
+      createContactWithInbox({
+        workspaceId: "ws-1",
+        input: { ...whatsappInput, phoneNumber: "" },
+      }),
+    ).rejects.toMatchObject({ field: "phoneNumber" })
+  })
+
+  test("ignores a BSUID on a non-WhatsApp channel", async () => {
+    mockFindOrFail.mockResolvedValue({ id: "inbox-1", channel: "messenger" })
+    const insertedRows = mockCreateWithInsertedRows()
+
+    await createContactWithInbox({
+      workspaceId: "ws-1",
+      input: {
+        ...baseInput,
+        channel: "messenger",
+        contactId: "psid-1",
+        sourceUserId: bsuid,
+      },
+    })
+
+    expect(mockFindExistingSourceIdentities).not.toHaveBeenCalled()
+    expect(insertedRows).toContainEqual(
+      expect.objectContaining({ sourceId: "psid-1", sourceUserId: null }),
     )
   })
 })

@@ -23,6 +23,7 @@ import {
   runConnectTransaction,
 } from "../inbox/connect-channel"
 import { inboxService } from "../inbox/service"
+import { dispatchStagedInstalls } from "../template/installation-dispatch"
 import type { WorkspaceQuotaConsumption } from "../workspace/quota-consumption"
 import { workspaceService } from "../workspace/service"
 
@@ -52,6 +53,8 @@ export type ConnectPhoneNumberInput = {
   platformType: string
   /** Present on the session (embedded-signup picker) path: claim + bind inside the tx. */
   signupSession?: ConnectPhoneNumberSignupSession
+  /** Server-resolved tenant of the request host; see `workspaceService.resolveWorkspaceTenant`. */
+  hostTenantId?: string
 }
 
 export type ConnectPhoneNumberResult = {
@@ -90,6 +93,7 @@ export async function connectPhoneNumber(
   const result = await insertPhoneNumber(input)
 
   if (result.createdWorkspace) {
+    await dispatchStagedInstalls(result.workspaceId)
     await dispatchAuditRecordSafely(
       {
         userId: input.actorUserId,
@@ -309,6 +313,7 @@ async function resolveConnectWorkspace(
       ownerId: input.actorUserId,
     },
     quotaConsumption,
+    hostTenantId: input.hostTenantId,
   })
 
   if (input.signupSession) {

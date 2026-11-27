@@ -12,16 +12,26 @@ import {
   sum,
 } from "../../client"
 import { workspaceMacModel, workspaceModel } from "../../schema"
+import { poolWorkspaceScope } from "../workspace/pool-scope"
 
 class WorkspaceMacRepository {
+  /**
+   * `poolOwnerId`: also include the root-tenant workspaces this owner holds
+   * (a reseller owner's platform-host workspaces share their tenant's pool).
+   */
   async sumForTenant(
     tenantId: string,
+    poolOwnerId?: string,
     client: DatabaseClient = db,
   ): Promise<number> {
     const tenantWorkspaces = client
       .select({ id: workspaceModel.id })
       .from(workspaceModel)
-      .where(eq(workspaceModel.tenantId, tenantId))
+      .where(
+        poolOwnerId
+          ? poolWorkspaceScope(poolOwnerId, tenantId)
+          : eq(workspaceModel.tenantId, tenantId),
+      )
     const [row] = await client
       .select({ total: sum(workspaceMacModel.macCount) })
       .from(workspaceMacModel)
@@ -29,10 +39,15 @@ class WorkspaceMacRepository {
         and(
           or(
             eq(workspaceMacModel.tenantId, tenantId),
-            and(
-              isNull(workspaceMacModel.tenantId),
-              inArray(workspaceMacModel.workspaceId, tenantWorkspaces),
-            ),
+            poolOwnerId
+              ? inArray(workspaceMacModel.workspaceId, tenantWorkspaces)
+              : undefined,
+            poolOwnerId
+              ? undefined
+              : and(
+                  isNull(workspaceMacModel.tenantId),
+                  inArray(workspaceMacModel.workspaceId, tenantWorkspaces),
+                ),
           ),
           lte(workspaceMacModel.periodStart, sql`now()`),
           gt(workspaceMacModel.periodEnd, sql`now()`),

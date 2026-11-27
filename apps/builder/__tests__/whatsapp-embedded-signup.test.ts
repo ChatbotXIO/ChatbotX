@@ -38,7 +38,6 @@ describe("buildFacebookOAuthDialogUrl", () => {
             configId: "config-1",
             version: "v21.0",
             connectExisting,
-            transferPhoneNumber: false,
           }),
         ).searchParams.get("extras") ?? "{}",
       )
@@ -50,8 +49,8 @@ describe("buildFacebookOAuthDialogUrl", () => {
     expect(extrasFor(false).featureType).toBeUndefined()
   })
 
-  test("pins the reconnect flow to Embedded Signup v4", async () => {
-    const { buildFacebookOAuthDialogUrl, EMBEDDED_SIGNUP_VERSIONS } =
+  test("pins every flow to Embedded Signup v4 by default", async () => {
+    const { buildFacebookOAuthDialogUrl, DEFAULT_EMBEDDED_SIGNUP_VERSION } =
       await loadWith({ NEXT_PUBLIC_BROKER_URL: BROKER_URL })
 
     const result = new URL(
@@ -62,40 +61,16 @@ describe("buildFacebookOAuthDialogUrl", () => {
         configId: "config-1",
         version: "v21.0",
         connectExisting: false,
-        transferPhoneNumber: false,
-        embeddedSignupVersion: EMBEDDED_SIGNUP_VERSIONS.V4,
       }),
     )
     const extras = JSON.parse(result.searchParams.get("extras") ?? "{}")
 
+    expect(DEFAULT_EMBEDDED_SIGNUP_VERSION).toBe("v4")
     expect(extras.version).toBe("v4")
     // v4 dropped `marketing_messages_lite` as a feature — it is a Login
     // Configuration product there — and only v2 needs `sessionInfoVersion`.
     expect(extras.features).toBeUndefined()
     expect(extras.sessionInfoVersion).toBeUndefined()
-  })
-
-  test("leaves an unpinned flow on the shape Meta accepted before v4", async () => {
-    const { buildFacebookOAuthDialogUrl } = await loadWith({
-      NEXT_PUBLIC_BROKER_URL: BROKER_URL,
-    })
-
-    const result = new URL(
-      buildFacebookOAuthDialogUrl({
-        resellerOrigin: RESELLER_ORIGIN,
-        redirectUri: `${BROKER_URL}/integrations/whatsapp/callback`,
-        clientId: "client-1",
-        configId: "config-1",
-        version: "v21.0",
-        connectExisting: false,
-        transferPhoneNumber: false,
-      }),
-    )
-    const extras = JSON.parse(result.searchParams.get("extras") ?? "{}")
-
-    expect(extras.version).toBeUndefined()
-    expect(extras.sessionInfoVersion).toBe(3)
-    expect(extras.features).toEqual(["marketing_messages_lite"])
   })
 
   test("omits auth_type on a first connect", async () => {
@@ -111,7 +86,6 @@ describe("buildFacebookOAuthDialogUrl", () => {
         configId: "config-1",
         version: "v21.0",
         connectExisting: false,
-        transferPhoneNumber: false,
       }),
     )
 
@@ -133,7 +107,6 @@ describe("buildFacebookOAuthDialogUrl", () => {
         configId: "config-1",
         version: "v21.0",
         connectExisting: false,
-        transferPhoneNumber: false,
         authType: FACEBOOK_AUTH_TYPES.REREQUEST,
       }),
     )
@@ -157,8 +130,7 @@ describe("buildFacebookOAuthDialogUrl", () => {
         clientId: "client-1",
         configId: "config-1",
         version: "v21.0",
-        connectExisting: false,
-        transferPhoneNumber: true,
+        connectExisting: true,
         locale: "vi",
       }),
     )
@@ -175,10 +147,8 @@ describe("buildFacebookOAuthDialogUrl", () => {
     const state = decodeOAuthState(result.searchParams.get("state") ?? "")
     expect(state).toEqual({ referer: RESELLER_ORIGIN, locale: "vi" })
 
-    // transferPhoneNumber sends the user to Meta's existing-WABA sharing screen,
-    // which is where a number hosted by another provider is migrated from.
     const extras = JSON.parse(result.searchParams.get("extras") ?? "{}")
-    expect(extras.featureType).toBe("only_waba_sharing")
+    expect(extras.featureType).toBe("whatsapp_business_app_onboarding")
   })
 
   test("passes through a tenant-owned credential's own custom-domain redirect_uri unchanged", async () => {
@@ -195,7 +165,6 @@ describe("buildFacebookOAuthDialogUrl", () => {
         configId: "config-1",
         version: "v21.0",
         connectExisting: true,
-        transferPhoneNumber: false,
       }),
     )
 
@@ -216,7 +185,6 @@ describe("buildFacebookOAuthDialogUrl", () => {
         configId: "config-1",
         version: "v21.0",
         connectExisting: true,
-        transferPhoneNumber: false,
       }),
     )
 
@@ -256,18 +224,6 @@ describe("encodeOAuthState / decodeOAuthState", () => {
 })
 
 describe("resolveEmbeddedSignupFeatureType", () => {
-  test("returns WABA sharing when transferring a phone from another provider", async () => {
-    const { resolveEmbeddedSignupFeatureType, EMBEDDED_SIGNUP_FEATURE_TYPES } =
-      await loadWith({ NEXT_PUBLIC_BROKER_URL: BROKER_URL })
-
-    expect(
-      resolveEmbeddedSignupFeatureType({
-        connectExisting: false,
-        transferPhoneNumber: true,
-      }),
-    ).toBe(EMBEDDED_SIGNUP_FEATURE_TYPES.ONLY_WABA_SHARING)
-  })
-
   test("returns the coexist onboarding type when connecting an existing account", async () => {
     const { resolveEmbeddedSignupFeatureType, EMBEDDED_SIGNUP_FEATURE_TYPES } =
       await loadWith({ NEXT_PUBLIC_BROKER_URL: BROKER_URL })
@@ -275,7 +231,6 @@ describe("resolveEmbeddedSignupFeatureType", () => {
     expect(
       resolveEmbeddedSignupFeatureType({
         connectExisting: true,
-        transferPhoneNumber: false,
       }),
     ).toBe(EMBEDDED_SIGNUP_FEATURE_TYPES.WHATSAPP_BUSINESS_APP_ONBOARDING)
   })
@@ -288,21 +243,8 @@ describe("resolveEmbeddedSignupFeatureType", () => {
     expect(
       resolveEmbeddedSignupFeatureType({
         connectExisting: false,
-        transferPhoneNumber: false,
       }),
     ).toBeUndefined()
-  })
-
-  test("lets the transfer intent win when both toggles are set", async () => {
-    const { resolveEmbeddedSignupFeatureType, EMBEDDED_SIGNUP_FEATURE_TYPES } =
-      await loadWith({ NEXT_PUBLIC_BROKER_URL: BROKER_URL })
-
-    expect(
-      resolveEmbeddedSignupFeatureType({
-        connectExisting: true,
-        transferPhoneNumber: true,
-      }),
-    ).toBe(EMBEDDED_SIGNUP_FEATURE_TYPES.ONLY_WABA_SHARING)
   })
 })
 
@@ -315,7 +257,6 @@ describe("isCoexistOnboardingIntent", () => {
     expect(
       isCoexistOnboardingIntent({
         connectExisting: true,
-        transferPhoneNumber: false,
       }),
     ).toBe(true)
   })
@@ -330,36 +271,16 @@ describe("isCoexistOnboardingIntent", () => {
     expect(
       isCoexistOnboardingIntent({
         connectExisting: true,
-        transferPhoneNumber: false,
         manualConnect: true,
       }),
     ).toBe(false)
   })
 
-  test("is false for a transfer, a fresh signup, and an ambiguous both-on form", async () => {
+  test("is false for a fresh signup", async () => {
     const { isCoexistOnboardingIntent } = await loadWith({
       NEXT_PUBLIC_BROKER_URL: BROKER_URL,
     })
 
-    expect(
-      isCoexistOnboardingIntent({
-        connectExisting: false,
-        transferPhoneNumber: true,
-      }),
-    ).toBe(false)
-    expect(
-      isCoexistOnboardingIntent({
-        connectExisting: false,
-        transferPhoneNumber: false,
-      }),
-    ).toBe(false)
-    // Both on resolves to only_waba_sharing, so the server must not run the
-    // coexist eligibility check for it.
-    expect(
-      isCoexistOnboardingIntent({
-        connectExisting: true,
-        transferPhoneNumber: true,
-      }),
-    ).toBe(false)
+    expect(isCoexistOnboardingIntent({ connectExisting: false })).toBe(false)
   })
 })

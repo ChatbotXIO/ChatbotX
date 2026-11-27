@@ -3,8 +3,11 @@ import { beforeEach, describe, expect, test, vi } from "vitest"
 
 const mocks = vi.hoisted(() => ({
   isImageUrl: vi.fn(),
+  logStepProviderError: vi.fn(),
+  probeImageMimeType: vi.fn(),
   processStreamingText: vi.fn(),
   readCustomFieldValue: vi.fn(),
+  resolveContactVariablesDeep: vi.fn(),
   resolveFlowAIModel: vi.fn(),
   saveResultToCustomField: vi.fn(),
   streamText: vi.fn(),
@@ -15,16 +18,22 @@ vi.mock("@chatbotx.io/ai", () => ({
   isImageUrl: mocks.isImageUrl,
   processStreamingText: mocks.processStreamingText,
 }))
+vi.mock("@chatbotx.io/business/media/probe-image-url", () => ({
+  probeImageMimeType: mocks.probeImageMimeType,
+}))
+vi.mock("@chatbotx.io/variables", () => ({
+  resolveContactVariablesDeep: mocks.resolveContactVariablesDeep,
+}))
 vi.mock("ai", () => ({ streamText: mocks.streamText }))
 vi.mock("../src/integration/utils/contact", () => ({
   readCustomFieldValue: mocks.readCustomFieldValue,
   saveResultToCustomField: mocks.saveResultToCustomField,
 }))
 vi.mock("../src/integration/handlers/flow-utils", () => ({
-  logStepProviderError: vi.fn(),
+  logStepProviderError: mocks.logStepProviderError,
 }))
 vi.mock("../src/integration/handlers/shared/ai-error-log-provider", () => ({
-  aiErrorLogProvider: vi.fn(),
+  aiErrorLogProvider: vi.fn((provider: string) => provider),
 }))
 vi.mock("../src/integration/handlers/shared/flow-ai-model-resolver", () => ({
   resolveFlowAIModel: mocks.resolveFlowAIModel,
@@ -63,6 +72,9 @@ const props: Parameters<typeof handleAIAnalyzeImage>[0] = {
 describe("handleAIAnalyzeImage", () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    mocks.resolveContactVariablesDeep.mockImplementation(
+      async (_contactId: string, value: unknown) => value,
+    )
     mocks.isImageUrl.mockReturnValue(true)
     mocks.processStreamingText.mockResolvedValue({ fullText: "description" })
     mocks.readCustomFieldValue.mockResolvedValue(
@@ -96,6 +108,138 @@ describe("handleAIAnalyzeImage", () => {
           },
         ],
       }),
+    )
+  })
+
+  test("does not probe a link that already ends in an image extension", async () => {
+    await handleAIAnalyzeImage(props)
+
+    expect(mocks.probeImageMimeType).not.toHaveBeenCalled()
+  })
+
+  test("accepts an extensionless link served as an image (WhatsApp media)", async () => {
+    const url =
+      "https://cdn.example/public/whatsapp/1/2/2026/11/17/11785793378962970"
+    mocks.isImageUrl.mockReturnValue(false)
+    mocks.readCustomFieldValue.mockResolvedValue(url)
+    mocks.probeImageMimeType.mockResolvedValue("image/jpeg")
+
+    await expect(handleAIAnalyzeImage(props)).resolves.toMatchObject({
+      status: "success",
+    })
+
+    expect(mocks.probeImageMimeType).toHaveBeenCalledWith(url)
+    expect(mocks.streamText).toHaveBeenCalledWith(
+      expect.objectContaining({
+        messages: [
+          expect.objectContaining({
+            content: expect.arrayContaining([
+              { data: url, mediaType: "image/jpeg", type: "file" },
+            ]),
+          }),
+        ],
+      }),
+    )
+  })
+
+  test("rejects an extensionless link that is not served as an image", async () => {
+    mocks.isImageUrl.mockReturnValue(false)
+    mocks.readCustomFieldValue.mockResolvedValue("https://cdn.example/page")
+    mocks.probeImageMimeType.mockResolvedValue(null)
+
+    await expect(handleAIAnalyzeImage(props)).resolves.toEqual({
+      status: "error",
+      errorMessage: "Invalid image URL provided",
+      result: null,
+    })
+    expect(mocks.streamText).not.toHaveBeenCalled()
+  })
+
+  test("rejects a value that is not an http(s) link without probing", async () => {
+    mocks.isImageUrl.mockReturnValue(false)
+    mocks.readCustomFieldValue.mockResolvedValue("not a url")
+
+    await expect(handleAIAnalyzeImage(props)).resolves.toMatchObject({
+      status: "error",
+    })
+    expect(mocks.probeImageMimeType).not.toHaveBeenCalled()
+    expect(mocks.streamText).not.toHaveBeenCalled()
+  })
+
+  test("resolves contact variables in the prompt", async () => {
+    mocks.resolveContactVariablesDeep.mockResolvedValueOnce(
+      "Describe the image for Lan",
+    )
+
+    await handleAIAnalyzeImage({
+      ...props,
+      step: { ...props.step, prompt: "Describe the image for {{first_name}}" },
+    })
+
+    expect(mocks.resolveContactVariablesDeep).toHaveBeenCalledWith(
+      "contact-1",
+      "Describe the image for {{first_name}}",
+      expect.anything(),
+    )
+    expect(mocks.streamText).toHaveBeenCalledWith(
+      expect.objectContaining({
+        messages: [
+          expect.objectContaining({
+            content: expect.arrayContaining([
+              { type: "text", text: "Describe the image for Lan" },
+            ]),
+          }),
+        ],
+      }),
+    )
+  })
+
+  test("asks the model to fit the answer in one message on the contact's channel", async () => {
+    await handleAIAnalyzeImage({
+      ...props,
+      contactInbox: { ...props.contactInbox, channel: "messenger" },
+    })
+
+    expect(mocks.streamText).toHaveBeenCalledWith(
+      expect.objectContaining({
+        instructions:
+          "Your answer will be sent as one messenger chat message. Keep it under 1600 characters including spaces. Use plain text, no markdown headings.",
+      }),
+    )
+  })
+
+  test("reports a provider error from the stream as a step error", async () => {
+    const providerError = new Error("The requested model was not found.")
+    // The SDK reports stream errors through onError and drops them from
+    // textStream, which then ends empty.
+    mocks.streamText.mockImplementation(
+      (options: { onError: (event: { error: unknown }) => void }) => {
+        // Like the SDK, swallow a throw from onError.
+        try {
+          options.onError({ error: providerError })
+        } catch {
+          // ignored
+        }
+        return { textStream: [] }
+      },
+    )
+    mocks.processStreamingText.mockResolvedValue({ fullText: "" })
+
+    await expect(
+      handleAIAnalyzeImage({
+        ...props,
+        step: { ...props.step, outputFieldId: "field-2" },
+      }),
+    ).resolves.toEqual({
+      status: "error",
+      errorMessage: "The requested model was not found.",
+      result: null,
+    })
+    expect(mocks.saveResultToCustomField).not.toHaveBeenCalled()
+    expect(mocks.logStepProviderError).toHaveBeenCalledWith(
+      "openai",
+      expect.anything(),
+      providerError,
     )
   })
 })

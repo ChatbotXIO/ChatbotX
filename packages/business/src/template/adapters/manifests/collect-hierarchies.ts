@@ -4,6 +4,7 @@ import type {
   TemplateFolderManifestEntry,
   TemplateProductCategoryManifestEntry,
 } from "@chatbotx.io/flow-config"
+import { workspaceUsesExternalStore } from "../../external-store"
 
 /**
  * Walks each given folder id up to its root and returns manifest entries
@@ -56,6 +57,8 @@ const toManifestEntry = (
   parentSourceId: folder.parentId,
 })
 
+const DEFAULT_CATEGORY_RANK = 10
+
 /**
  * Same walk-to-root shape as `collectFolderAncestry`, for the
  * `ProductCategory` self-reference — capped at two levels
@@ -67,6 +70,13 @@ export const collectProductCategoryAncestry = async (
   categoryIds: readonly string[],
 ): Promise<Record<string, TemplateProductCategoryManifestEntry>> => {
   const manifest: Record<string, TemplateProductCategoryManifestEntry> = {}
+  // A workspace that sells from a connected store mirrors its categories: none ships.
+  if (
+    categoryIds.length === 0 ||
+    (await workspaceUsesExternalStore(workspaceId))
+  ) {
+    return manifest
+  }
   const pending = new Set(categoryIds)
 
   while (pending.size > 0) {
@@ -84,6 +94,8 @@ export const collectProductCategoryAncestry = async (
       manifest[row.id] = {
         name: row.name,
         parentSourceId: row.parentId,
+        // Left out at the default, so an unranked category keeps its fingerprint.
+        ...(row.rank === DEFAULT_CATEGORY_RANK ? {} : { rank: row.rank }),
       }
       if (row.parentId && !(row.parentId in manifest)) {
         pending.add(row.parentId)

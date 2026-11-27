@@ -148,7 +148,7 @@ describe("armQuickReplySettings", () => {
     expect(mocks.scheduleSmartDelayResume).toHaveBeenCalledWith(
       expect.objectContaining({
         type: "quickReplyFollowUp",
-        connectedNodeId: "node-1",
+        nodeId: "node-1",
         stepId: details.quickReplySettings.followUp.id,
         flowVersionId: null,
       }),

@@ -1,6 +1,8 @@
 import { describe, expect, test } from "vitest"
 import {
   EVENT_DELIVERY,
+  messageTranslationUpdatedSchema,
+  pipelineItemChangedSchema,
   RealtimeEventType,
   realtimeBatchEnvelopeSchema,
   realtimeCallTransportEndedSchema,
@@ -10,8 +12,10 @@ import {
   realtimeEventEnvelopeSchema,
   realtimeGuestBatchEnvelopeSchema,
   realtimeMemberBatchEnvelopeSchema,
+  realtimeWorkspaceEventEnvelopeSchema,
   routeForAssignment,
   routeForConversation,
+  socialPostChangedSchema,
   whatsappCallClaimedElsewhereSchema,
 } from "../src/schemas"
 
@@ -276,5 +280,108 @@ describe("call payload schemas", () => {
         whatsappCallId: "whatsapp-call-1",
       }),
     ).toMatchObject({ status: "ringing" })
+  })
+})
+
+describe("pipelineItemChanged event", () => {
+  test("is a workspace-broadcast event that needs no route", () => {
+    const parsed = realtimeWorkspaceEventEnvelopeSchema.safeParse({
+      eventType: RealtimeEventType.pipelineItemChanged,
+      data: { pipelineId: "1", change: "bulk" },
+    })
+
+    expect(parsed.success).toBe(true)
+    expect(EVENT_DELIVERY[RealtimeEventType.pipelineItemChanged]).toBe(
+      "workspace",
+    )
+  })
+
+  test("accepts only the documented change kinds and ids", () => {
+    expect(
+      pipelineItemChangedSchema.safeParse({ pipelineId: "1", change: "moved" })
+        .success,
+    ).toBe(true)
+    expect(
+      pipelineItemChangedSchema.safeParse({ pipelineId: "1", change: "x" })
+        .success,
+    ).toBe(false)
+    expect(
+      pipelineItemChangedSchema.safeParse({ change: "moved" }).success,
+    ).toBe(false)
+  })
+})
+
+describe("messageTranslationUpdated", () => {
+  const payload = {
+    conversationId: "c1",
+    conversationLanguage: "es",
+    items: [
+      { messageId: "m1", status: "translated", displayText: "Xin chào" },
+      { messageId: "m2", status: "translated", removed: true },
+    ],
+  }
+  const frame = {
+    batch: [
+      {
+        data: payload,
+        eventType: RealtimeEventType.messageTranslationUpdated,
+        route: { assignedTeamIds: [], assignedUserIds: [] },
+      },
+    ],
+    seq: "123-0",
+  }
+
+  test("is a conversation-scoped event", () => {
+    expect(EVENT_DELIVERY[RealtimeEventType.messageTranslationUpdated]).toBe(
+      "conversation",
+    )
+  })
+
+  test("members receive it", () => {
+    expect(realtimeMemberBatchEnvelopeSchema.safeParse(frame).success).toBe(
+      true,
+    )
+  })
+
+  test("guests never receive it: an outgoing displayText is the agent's own sentence", () => {
+    expect(realtimeGuestBatchEnvelopeSchema.safeParse(frame).success).toBe(
+      false,
+    )
+  })
+
+  test("its payload schema accepts the documented shape and rejects a bad status", () => {
+    expect(messageTranslationUpdatedSchema.safeParse(payload).success).toBe(
+      true,
+    )
+    expect(
+      messageTranslationUpdatedSchema.safeParse({
+        conversationId: "c1",
+        items: [{ messageId: "m1", status: "pending" }],
+      }).success,
+    ).toBe(false)
+  })
+})
+
+describe("socialPostChanged event", () => {
+  test("is a workspace-broadcast event that needs no route", () => {
+    const parsed = realtimeWorkspaceEventEnvelopeSchema.safeParse({
+      eventType: RealtimeEventType.socialPostChanged,
+      data: { socialPostId: "p1", targetId: "t1", status: "failed" },
+    })
+
+    expect(parsed.success).toBe(true)
+    expect(EVENT_DELIVERY[RealtimeEventType.socialPostChanged]).toBe(
+      "workspace",
+    )
+  })
+
+  test("needs a post id and a status; the target is optional", () => {
+    expect(
+      socialPostChangedSchema.safeParse({ socialPostId: "p1", status: "draft" })
+        .success,
+    ).toBe(true)
+    expect(
+      socialPostChangedSchema.safeParse({ socialPostId: "p1" }).success,
+    ).toBe(false)
   })
 })

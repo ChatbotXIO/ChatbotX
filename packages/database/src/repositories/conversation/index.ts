@@ -3,4 +3,6 @@ export {
   assignUserIfUnassigned,
   type CloseHumanReplyWindowResult,
   closeHumanReplyWindow,
+  insertDmConversationsIfAbsent,
+  unassignUserBatch,
 } from "./repository"

@@ -49,7 +49,7 @@ export async function markWebhookExecuted(params: {
 export async function cleanupOldWebhookExecutions(
   olderThan: Date,
 ): Promise<number> {
-  const result = await db.execute(
+  const result = await db.execute<Record<string, unknown>>(
     sql`DELETE FROM "WebhookExecution" WHERE "executedAt" < ${olderThan}`,
   )
 

@@ -22,6 +22,7 @@ const {
 vi.mock("@chatbotx.io/business/smart-delay", () => ({ smartDelayService }))
 
 vi.mock("@chatbotx.io/worker-config", () => ({
+  flowContinuationJobOptions: () => ({}),
   IntegrationJobAction: {
     resumeFollowUp: "resumeFollowUp",
     resumeWait: "resumeWait",
@@ -295,7 +296,10 @@ describe("scanSmartDelay", () => {
           type: "resumeWait",
           data: { smartDelayId: "wait-row" },
         },
-        opts: { jobId: "smart-delay-wait-row-1784160060000", delay: 60_000 },
+        opts: {
+          jobId: "smart-delay-wait-row-1784160060000",
+          delay: 60_000,
+        },
       },
       {
         name: "resumeFollowUp",

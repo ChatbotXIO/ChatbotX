@@ -17,6 +17,7 @@ import { useIsMobileState } from "@chatbotx.io/ui/hooks/use-mobile"
 import { Loader2Icon } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { useEffect, useState } from "react"
+import { SendQueueRunner } from "@/features/messages/components/send-queue-runner"
 import { useConversationIdParam } from "../conversations/hooks/use-conversation-id-param"
 import type { ConversationResource } from "../conversations/schema/resource"
 import { useCallPlaybackStore } from "../messages/store/call-playback-store"
@@ -31,6 +32,8 @@ import { useChatStore } from "./store/chat-store-provider"
 
 type ChatLayoutProps = {
   canViewEmailAndPhone?: boolean
+  /** Whether the member may open the Broadcasts section, so a contact's broadcast names can link there. */
+  canOpenBroadcasts?: boolean
   workspaceId: string
   layout?: [number, number, number]
 }
@@ -39,6 +42,7 @@ export const ChatLayout = (props: ChatLayoutProps) => {
   const t = useTranslations()
   const {
     canViewEmailAndPhone = true,
+    canOpenBroadcasts = false,
     workspaceId,
     layout = [25, 50, 25],
   } = props
@@ -127,6 +131,7 @@ export const ChatLayout = (props: ChatLayoutProps) => {
         user goes back to the list, and the realtime socket must not go with it.
       */}
       <ChatRealtime />
+      <SendQueueRunner />
       {/*
         The VoIP provider (single `useWhatsappVoipCall` peer/hook instance),
         the call panel and `WhatsappCallInfoSheet` now
@@ -185,7 +190,11 @@ export const ChatLayout = (props: ChatLayoutProps) => {
                   {t("messages.selectConversationContactDescription")}
                 </SheetDescription>
               </SheetHeader>
-              <ContactDetailPane {...paneState} workspaceId={workspaceId} />
+              <ContactDetailPane
+                {...paneState}
+                canOpenBroadcasts={canOpenBroadcasts}
+                workspaceId={workspaceId}
+              />
             </SheetContent>
           </Sheet>
         </div>
@@ -226,7 +235,11 @@ export const ChatLayout = (props: ChatLayoutProps) => {
             maxSize={"30%"}
             minSize={"20%"}
           >
-            <ContactDetailPane {...paneState} workspaceId={workspaceId} />
+            <ContactDetailPane
+              {...paneState}
+              canOpenBroadcasts={canOpenBroadcasts}
+              workspaceId={workspaceId}
+            />
           </ResizablePanel>
         </ResizablePanelGroup>
       )}

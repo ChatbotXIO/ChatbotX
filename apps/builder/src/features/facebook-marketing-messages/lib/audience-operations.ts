@@ -6,6 +6,7 @@ import {
   type AudienceUploadSource,
   facebookMarketingMessageAudienceService,
 } from "@chatbotx.io/business/facebook-marketing-message-audience"
+import { facebookMarketingMessageAudienceUploadService } from "@chatbotx.io/business/facebook-marketing-message-audience/upload"
 import type { WorkspaceModel } from "@chatbotx.io/database/types"
 import { getTranslations } from "next-intl/server"
 import { toUploadOutcome, withAudienceErrors } from "./audience-errors"
@@ -103,7 +104,7 @@ export async function createAudience({
 
   const file = await toSource(input)
   return await toUploadOutcome(() =>
-    facebookMarketingMessageAudienceService.create({
+    facebookMarketingMessageAudienceUploadService.create({
       workspaceId: workspace.id,
       grant,
       adAccountId: input.adAccountId,
@@ -125,7 +126,7 @@ export async function uploadMoreAudience({
   const grant = await requireValidGrant(workspace)
   const file = await toSource(input)
   return await toUploadOutcome(() =>
-    facebookMarketingMessageAudienceService.uploadMore({
+    facebookMarketingMessageAudienceUploadService.uploadMore({
       workspaceId: workspace.id,
       grant,
       id: input.id,

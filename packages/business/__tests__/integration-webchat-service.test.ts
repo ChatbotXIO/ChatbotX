@@ -187,12 +187,38 @@ vi.mock("../src/audit/dispatcher", () => ({
   dispatchAuditRecord: mockDispatchAuditRecord,
 }))
 
+const { mockDispatchStagedInstalls } = vi.hoisted(() => ({
+  mockDispatchStagedInstalls: vi.fn(async (_workspaceId: string) => undefined),
+}))
+vi.mock("../src/template/installation-dispatch", () => ({
+  dispatchStagedInstalls: mockDispatchStagedInstalls,
+}))
+
 vi.mock("../src/flow/service", () => ({
   flowService: { findActiveById: mockFindActiveFlowById },
 }))
 
-vi.mock("../src/template/installed-resource.service", () => ({
-  assertDeletable: vi.fn(async () => undefined),
+// Runs through the mocked `db.transaction` and records the initial lock keys.
+const { lockOptionsSpy } = vi.hoisted(() => ({ lockOptionsSpy: vi.fn() }))
+vi.mock("../src/template/template-resource-locks", async () => {
+  const { db } = await import("@chatbotx.io/database/client")
+  return {
+    withTemplateLockedTransaction: (
+      run: (tx: unknown) => unknown,
+      options?: unknown,
+    ) => {
+      lockOptionsSpy(options)
+      return db.transaction(run as never)
+    },
+  }
+})
+
+vi.mock("../src/template/installed-resource.service", async () => ({
+  ...(await import("./helpers/template-guard-mocks")).templateGuardMocks({
+    useTransaction: true,
+    assertDeletable: vi.fn(async () => undefined),
+    assertResourceEditable: vi.fn(),
+  }),
 }))
 
 vi.mock("../src/workspace", () => ({
@@ -325,6 +351,56 @@ describe("integrationWebchatService.createWithWorkspace", () => {
       },
       workspaceQuotaConsumption: { consumed: false },
     })
+  })
+
+  test("dispatches the staged installs once, after the transaction, only for a workspace it created", async () => {
+    const order: string[] = []
+    mockTransaction.mockImplementation(
+      async (callback: (tx: unknown) => Promise<unknown>) => {
+        const result = await callback({
+          update: mockUpdate,
+          query: { integrationWebchatModel: { findFirst: mockFindFirst } },
+        })
+        order.push("commit")
+        return result
+      },
+    )
+    mockDispatchStagedInstalls.mockImplementation(() => {
+      order.push("dispatch")
+      return Promise.resolve(undefined)
+    })
+
+    await integrationWebchatService.createWithWorkspace({
+      createdBy: "user-1",
+      workspaceName: "My Chatbot",
+      data: baseData,
+    })
+    expect(order).toEqual(["commit", "dispatch"])
+    expect(mockDispatchStagedInstalls).toHaveBeenCalledTimes(1)
+    expect(mockDispatchStagedInstalls).toHaveBeenCalledWith("ws-new")
+
+    mockDispatchStagedInstalls.mockClear()
+    await integrationWebchatService.createWithWorkspace({
+      workspaceId: "ws-1",
+      createdBy: "user-1",
+      workspaceName: "My Chatbot",
+      data: baseData,
+    })
+    expect(mockDispatchStagedInstalls).not.toHaveBeenCalled()
+  })
+
+  test("does not dispatch when the transaction fails", async () => {
+    mockUpsertConnectionRow.mockRejectedValueOnce(new Error("insert failed"))
+
+    await expect(
+      integrationWebchatService.createWithWorkspace({
+        createdBy: "user-1",
+        workspaceName: "My Chatbot",
+        data: baseData,
+      }),
+    ).rejects.toThrow("insert failed")
+
+    expect(mockDispatchStagedInstalls).not.toHaveBeenCalled()
   })
 
   test("creates a workspace only when workspaceId is absent and reports createdWorkspace correctly", async () => {
@@ -662,6 +738,37 @@ describe("integrationWebchatService.update", () => {
     expect(mockUpdateSet).toHaveBeenCalledWith(
       expect.objectContaining({ welcomeFlowId: "flow-1" }),
     )
+  })
+
+  test("locks the webchat and its welcome flow before the stored row is read", async () => {
+    mockFindActiveFlowById.mockResolvedValueOnce({ id: "flow-1" })
+
+    await integrationWebchatService.update({
+      workspaceId: "ws-1",
+      id: "webchat-1",
+      data: { welcomeFlowId: "flow-1" },
+    })
+
+    expect(lockOptionsSpy).toHaveBeenCalledWith({
+      workspaceId: expect.any(String),
+      initialKeys: [
+        { kind: "integrationWebchat", resourceId: "webchat-1" },
+        { kind: "flow", resourceId: "flow-1" },
+      ],
+    })
+  })
+
+  test("locks only the webchat when no welcome flow is written", async () => {
+    await integrationWebchatService.update({
+      workspaceId: "ws-1",
+      id: "webchat-1",
+      data: {},
+    })
+
+    expect(lockOptionsSpy).toHaveBeenCalledWith({
+      workspaceId: expect.any(String),
+      initialKeys: [{ kind: "integrationWebchat", resourceId: "webchat-1" }],
+    })
   })
 
   // Prevents a caller from pointing welcomeFlowId at another workspace's

@@ -12,7 +12,14 @@ import {
 import { Switch } from "@chatbotx.io/ui/components/ui/switch"
 import type { DataTableRowAction } from "@chatbotx.io/ui/types/data-table"
 import type { ColumnDef } from "@tanstack/react-table"
-import { EllipsisVerticalIcon, PencilIcon, Trash } from "lucide-react"
+import {
+  CopyIcon,
+  EllipsisVerticalIcon,
+  ExternalLinkIcon,
+  EyeIcon,
+  PencilIcon,
+  Trash,
+} from "lucide-react"
 import Link from "next/link"
 import type { useTranslations } from "next-intl"
 import {
@@ -21,13 +28,21 @@ import {
   useState,
   useTransition,
 } from "react"
+import { toast } from "sonner"
+import {
+  type ExternalStoreLinks,
+  externalProductAdminUrl,
+} from "@/features/external-store/lib/store-links"
+import { LockBadge } from "@/features/templates/components/lock-badge"
+import { UndeletableGuard } from "@/features/templates/components/lock-context"
 import { WebshopLinkMenuItems } from "@/features/webshop/components/webshop-link-menu-items"
 import { toggleProductActiveAction } from "./actions/toggle-product-active-action"
+import { ProductStatusBadge } from "./components/product-status-badge"
 import type { ProductResource } from "./schema/resource"
 
 function ActiveToggleCell({ product }: { product: ProductResource }) {
   const [isPending, startTransition] = useTransition()
-  const [isActive, setIsActive] = useState(product.isActive)
+  const [isActive, setIsActive] = useState(product.status === "active")
 
   function handleToggle(checked: boolean) {
     setIsActive(checked)
@@ -54,38 +69,146 @@ type GetColumnsProps = {
   setRowAction: Dispatch<
     SetStateAction<DataTableRowAction<ProductResource> | null>
   >
+  /** Set while the store source is an external store: the table is read-only. */
+  externalStore?: {
+    store: ExternalStoreLinks
+  }
 }
 
 export function getProductColumns({
   t,
   setRowAction,
+  externalStore,
 }: GetColumnsProps): ColumnDef<ProductResource>[] {
-  return [
-    {
-      id: "select",
-      header: ({ table }) => (
-        <Checkbox
-          aria-label={t("actions.selectAll")}
-          checked={table.getIsAllPageRowsSelected()}
-          className="translate-y-0.5"
-          indeterminate={table.getIsSomePageRowsSelected()}
-          onCheckedChange={(value) =>
-            table.toggleAllPageRowsSelected(Boolean(value))
+  const selectColumn: ColumnDef<ProductResource> = {
+    id: "select",
+    header: ({ table }) => (
+      <Checkbox
+        aria-label={t("actions.selectAll")}
+        checked={table.getIsAllPageRowsSelected()}
+        className="translate-y-0.5"
+        indeterminate={table.getIsSomePageRowsSelected()}
+        onCheckedChange={(value) =>
+          table.toggleAllPageRowsSelected(Boolean(value))
+        }
+      />
+    ),
+    cell: ({ row }) => (
+      <Checkbox
+        aria-label={t("actions.selectRow")}
+        checked={row.getIsSelected()}
+        className="translate-y-0.5"
+        onCheckedChange={(value) => row.toggleSelected(Boolean(value))}
+      />
+    ),
+    size: 50,
+    enableSorting: false,
+    enableHiding: false,
+  }
+
+  const quantityColumn: ColumnDef<ProductResource> = {
+    accessorKey: "inventoryQuantity",
+    header: ({ column }) => (
+      <DataTableColumnHeader
+        column={column}
+        title={t("products.fields.inventoryQuantity.label")}
+      />
+    ),
+    cell: ({ row }) => {
+      if (!externalStore) {
+        return (
+          <span className="text-muted-foreground">
+            {row.original.inventoryQuantity}
+          </span>
+        )
+      }
+      const units =
+        row.original.variantInventoryTotal ?? row.original.inventoryQuantity
+      const variantCount = row.original.variantCount ?? 0
+      return (
+        <span className="text-muted-foreground">
+          {variantCount > 1
+            ? t("products.shopify.inStockWithVariants", {
+                count: units,
+                variants: variantCount,
+              })
+            : t("products.shopify.inStock", { count: units })}
+        </span>
+      )
+    },
+    size: 180,
+    enableSorting: true,
+    enableHiding: false,
+  }
+
+  const externalStoreActionsColumn: ColumnDef<ProductResource> = {
+    id: "actions",
+    header: t("actions.actions"),
+    cell: ({ row }) => (
+      <DropdownMenu>
+        <DropdownMenuTrigger
+          render={
+            <Button
+              aria-label={t("actions.openMenu")}
+              className="flex size-8 p-0 data-[state=open]:bg-muted"
+              variant="ghost"
+            >
+              <EllipsisVerticalIcon aria-hidden="true" className="size-4" />
+            </Button>
           }
         />
-      ),
-      cell: ({ row }) => (
-        <Checkbox
-          aria-label={t("actions.selectRow")}
-          checked={row.getIsSelected()}
-          className="translate-y-0.5"
-          onCheckedChange={(value) => row.toggleSelected(Boolean(value))}
-        />
-      ),
-      size: 50,
-      enableSorting: false,
-      enableHiding: false,
-    },
+        <DropdownMenuContent align="end" className="w-52">
+          <DropdownMenuItem
+            onClick={() => setRowAction({ row, variant: "view" })}
+          >
+            <EyeIcon />
+            {t("products.shopify.viewDetails")}
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            render={
+              <a
+                href={
+                  externalStore
+                    ? externalProductAdminUrl({
+                        store: externalStore.store,
+                        externalId: row.original.externalId,
+                      })
+                    : undefined
+                }
+                rel="noopener noreferrer"
+                target="_blank"
+              >
+                <ExternalLinkIcon />
+                {t("products.shopify.editOnStore", {
+                  store: externalStore?.store.storeName ?? "",
+                })}
+              </a>
+            }
+          />
+          <DropdownMenuItem
+            onClick={async () => {
+              const productUrl = row.original.productUrl
+              if (!productUrl) {
+                toast.error(t("products.shopify.noProductLink"))
+                return
+              }
+              await navigator.clipboard.writeText(productUrl)
+              toast.success(t("products.shopify.linkCopied"))
+            }}
+          >
+            <CopyIcon />
+            {t("products.shopify.copyProductLink")}
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    ),
+    size: 50,
+    enableSorting: false,
+    enableHiding: false,
+  }
+
+  const columns: ColumnDef<ProductResource>[] = [
+    selectColumn,
     {
       id: "name",
       accessorKey: "name",
@@ -93,8 +216,9 @@ export function getProductColumns({
         <DataTableColumnHeader column={column} title={t("fields.name.label")} />
       ),
       cell: ({ row }) => (
-        <span className="max-w-75 truncate font-medium">
-          {row.original.name}
+        <span className="flex max-w-75 items-center font-medium">
+          <span className="truncate">{row.original.name}</span>
+          <LockBadge resourceId={row.original.id} />
         </span>
       ),
       meta: {
@@ -120,23 +244,7 @@ export function getProductColumns({
       enableSorting: true,
       enableHiding: false,
     },
-    {
-      accessorKey: "inventoryQuantity",
-      header: ({ column }) => (
-        <DataTableColumnHeader
-          column={column}
-          title={t("products.fields.inventoryQuantity.label")}
-        />
-      ),
-      cell: ({ row }) => (
-        <span className="text-muted-foreground">
-          {row.original.inventoryQuantity}
-        </span>
-      ),
-      size: 120,
-      enableSorting: true,
-      enableHiding: false,
-    },
+    quantityColumn,
     {
       accessorKey: "sku",
       header: ({ column }) => (
@@ -170,14 +278,24 @@ export function getProductColumns({
       enableHiding: false,
     },
     {
-      accessorKey: "isActive",
+      accessorKey: "status",
       header: ({ column }) => (
         <DataTableColumnHeader
           column={column}
-          title={t("products.fields.isActive.label")}
+          title={t(
+            externalStore
+              ? "products.fields.status.label"
+              : "products.fields.isActive.label",
+          )}
         />
       ),
-      cell: ({ row }) => <ActiveToggleCell product={row.original} />,
+      // A mirrored product's status follows its store, so it is shown, not set.
+      cell: ({ row }) =>
+        externalStore ? (
+          <ProductStatusBadge status={row.original.status} />
+        ) : (
+          <ActiveToggleCell product={row.original} />
+        ),
       size: 100,
       enableSorting: false,
       enableHiding: false,
@@ -213,13 +331,18 @@ export function getProductColumns({
               target={{ productId: row.original.id }}
               workspaceId={row.original.workspaceId}
             />
-            <DropdownMenuItem
-              onClick={() => setRowAction({ row, variant: "delete" })}
-              variant="destructive"
-            >
-              <Trash />
-              {t("actions.delete")}
-            </DropdownMenuItem>
+            <UndeletableGuard resourceId={row.original.id}>
+              {(disabled) => (
+                <DropdownMenuItem
+                  disabled={disabled}
+                  onClick={() => setRowAction({ row, variant: "delete" })}
+                  variant="destructive"
+                >
+                  <Trash />
+                  {t("actions.delete")}
+                </DropdownMenuItem>
+              )}
+            </UndeletableGuard>
           </DropdownMenuContent>
         </DropdownMenu>
       ),
@@ -228,4 +351,11 @@ export function getProductColumns({
       enableHiding: false,
     },
   ]
+
+  if (!externalStore) {
+    return columns
+  }
+  return columns
+    .filter((column) => column.id !== "select" && column.id !== "actions")
+    .concat(externalStoreActionsColumn)
 }

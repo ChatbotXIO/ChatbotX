@@ -1,0 +1,45 @@
+{
+  "type": "diff",
+  "version": "10",
+  "dialect": "postgres",
+  "id": "92eba09c-e001-4035-99bf-7445ad765ab8",
+  "prevIds": [
+    "56712d7e-dbf1-4815-a5b2-7f8289e13d82"
+  ],
+  "footprints": [
+    {
+      "statementType": "alter_enum",
+      "statementTarget": [
+        "enum",
+        "public",
+        "lastUserInputType"
+      ],
+      "writes": [
+        "s|enum|public.lastUserInputType"
+      ],
+      "reads": [
+        "n|sch|public"
+      ]
+    }
+  ],
+  "deltas": [
+    {
+      "op": "alter",
+      "key": "enums\u0000[\"public\",\"lastUserInputType\"]",
+      "set": {
+        "values": [
+          "text",
+          "location",
+          "refLink",
+          "image",
+          "video",
+          "audio",
+          "gif",
+          "file",
+          "storyMention",
+          "reel"
+        ]
+      }
+    }
+  ]
+}

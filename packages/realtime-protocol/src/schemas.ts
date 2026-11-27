@@ -3,10 +3,12 @@ import { z } from "zod"
 export const RealtimeEventType = {
   messageCreated: "messageCreated",
   messageDeleted: "messageDeleted",
+  messageRemoved: "messageRemoved",
   messageUpdated: "messageUpdated",
   messageContentUpdated: "messageContentUpdated",
   messageIdAssigned: "messageIdAssigned",
   messageFailed: "messageFailed",
+  messageTranslationUpdated: "messageTranslationUpdated",
   typing: "typing",
   contactBlocked: "contactBlocked",
   contactUnblocked: "contactUnblocked",
@@ -19,6 +21,8 @@ export const RealtimeEventType = {
   whatsappCallOutboundStatus: "whatsappCallOutboundStatus",
   whatsappCallPermissionUpdated: "whatsappCallPermissionUpdated",
   contactInboxThreadControlUpdated: "contactInboxThreadControlUpdated",
+  pipelineItemChanged: "pipelineItemChanged",
+  socialPostChanged: "socialPostChanged",
 } as const
 
 type RealtimeEventTypeValue =
@@ -29,10 +33,12 @@ type RealtimeEventDelivery = "conversation" | "workspace" | "targeted"
 export const EVENT_DELIVERY = {
   [RealtimeEventType.messageCreated]: "conversation",
   [RealtimeEventType.messageDeleted]: "conversation",
+  [RealtimeEventType.messageRemoved]: "conversation",
   [RealtimeEventType.messageUpdated]: "conversation",
   [RealtimeEventType.messageContentUpdated]: "conversation",
   [RealtimeEventType.messageIdAssigned]: "conversation",
   [RealtimeEventType.messageFailed]: "conversation",
+  [RealtimeEventType.messageTranslationUpdated]: "conversation",
   [RealtimeEventType.typing]: "workspace",
   [RealtimeEventType.contactBlocked]: "workspace",
   [RealtimeEventType.contactUnblocked]: "workspace",
@@ -45,6 +51,8 @@ export const EVENT_DELIVERY = {
   [RealtimeEventType.whatsappCallOutboundStatus]: "targeted",
   [RealtimeEventType.whatsappCallPermissionUpdated]: "conversation",
   [RealtimeEventType.contactInboxThreadControlUpdated]: "workspace",
+  [RealtimeEventType.pipelineItemChanged]: "workspace",
+  [RealtimeEventType.socialPostChanged]: "workspace",
 } as const satisfies Record<RealtimeEventTypeValue, RealtimeEventDelivery>
 
 const guestRealtimeEventTypes = new Set<RealtimeEventTypeValue>([
@@ -222,6 +230,19 @@ export type RealtimeEventCreateMessage = {
 
 export type RealtimeEventMessageDeleted = {
   eventType: typeof RealtimeEventType.messageDeleted
+  data: {
+    messageIds: string[]
+  }
+}
+
+/**
+ * Messages permanently removed from the conversation — an outgoing message
+ * whose send failed for good and that a member did not send from the Inbox.
+ * Unlike {@link RealtimeEventMessageDeleted} (a tombstone rendered as "The
+ * message has been deleted."), the client drops the rows from the timeline.
+ */
+export type RealtimeEventMessageRemoved = {
+  eventType: typeof RealtimeEventType.messageRemoved
   data: {
     messageIds: string[]
   }
@@ -500,13 +521,87 @@ export type RealtimeEventContactInboxThreadControlUpdated = {
   data: ContactInboxThreadControlUpdatedData
 }
 
+/**
+ * A pipeline board changed. Carries ids only (never item content), so the
+ * client refetches through its authorised read instead of trusting the event.
+ * `itemId` is omitted for a bulk change that touched many items.
+ */
+export const pipelineItemChangedSchema = z.object({
+  pipelineId: z.string(),
+  itemId: z.string().optional(),
+  /** The item's contact, so per-contact views (inbox panel) refetch only for it. */
+  contactId: z.string().optional(),
+  change: z.enum(["created", "updated", "moved", "deleted", "bulk"]),
+})
+export type PipelineItemChangedData = z.infer<typeof pipelineItemChangedSchema>
+
+export type RealtimeEventPipelineItemChanged = {
+  eventType: typeof RealtimeEventType.pipelineItemChanged
+  data: PipelineItemChangedData
+}
+
+/**
+ * A composed post (or one of its targets) changed: created, edited, scheduled,
+ * cancelled, deleted, retried, resolved or settled by the publisher. Carries ids
+ * and a status only (never content), so the client refetches through its
+ * authorised read. `targetId` is omitted when the change is to the whole post;
+ * `status` is then the post's status, else the target's.
+ */
+export const socialPostChangedSchema = z.object({
+  socialPostId: z.string(),
+  targetId: z.string().optional(),
+  status: z.string(),
+})
+export type SocialPostChangedData = z.infer<typeof socialPostChangedSchema>
+
+export type RealtimeEventSocialPostChanged = {
+  eventType: typeof RealtimeEventType.socialPostChanged
+  data: SocialPostChangedData
+}
+
+/**
+ * Inbox translation results for a conversation. Member-only: it is NOT in
+ * `guestRealtimeEventTypes`, because an outgoing message's `displayText` is the
+ * agent's original sentence and must never reach the customer.
+ *
+ * `removed` drops the translation of a message the customer edited or unsent.
+ * `conversationLanguage` is present only when this change set or upgraded the
+ * conversation's customer language.
+ */
+export const messageTranslationUpdatedSchema = z.object({
+  conversationId: z.string(),
+  conversationLanguage: z.string().optional(),
+  /** Set when the conversation's switch changed: `false` off, `true` on, `null` cleared. */
+  conversationEnabledOverride: z.boolean().nullable().optional(),
+  items: z.array(
+    z.object({
+      messageId: z.string(),
+      status: z.enum(["translated", "failed", "skipped"]),
+      displayText: z.string().nullable().optional(),
+      sourceLanguage: z.string().nullable().optional(),
+      targetLanguage: z.string().optional(),
+      removed: z.boolean().optional(),
+    }),
+  ),
+})
+export type MessageTranslationUpdatedData = z.infer<
+  typeof messageTranslationUpdatedSchema
+>
+
+export type RealtimeEventMessageTranslationUpdated = {
+  eventType: typeof RealtimeEventType.messageTranslationUpdated
+  data: MessageTranslationUpdatedData
+}
+
 type AllRealtimeEventData =
   | RealtimeEventCreateMessage
   | RealtimeEventMessageDeleted
+  | RealtimeEventMessageRemoved
   | RealtimeEventMessageIdAssigned
   | RealtimeEventMessageUpdated
   | RealtimeEventMessageContentUpdated
   | RealtimeEventMessageFailed
+  | RealtimeEventMessageTranslationUpdated
   | RealtimeEventTyping
   | RealtimeEventContactCommon
   | RealtimeEventConversationAssigned
@@ -518,6 +613,8 @@ type AllRealtimeEventData =
   | RealtimeEventWhatsappCallOutboundStatus
   | RealtimeEventWhatsappCallPermissionUpdated
   | RealtimeEventContactInboxThreadControlUpdated
+  | RealtimeEventPipelineItemChanged
+  | RealtimeEventSocialPostChanged
 
 type RealtimeConversationScopedEventData = Extract<
   AllRealtimeEventData,

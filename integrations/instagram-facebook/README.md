@@ -11,7 +11,7 @@ Integration name in code: **`instagramFacebook`**
 This integration connects Instagram Business or Creator accounts to ChatbotX through the Facebook Graph API (Meta). It supports two channels:
 
 - **DMs** — real-time private messaging with Instagram users
-- **Post comments** — receive new comments on Instagram posts, and reply/hide/like/delete them
+- **Post comments** — receive new comments on Instagram posts, and reply/hide/delete them
 
 Personal Instagram accounts are not supported (filtered during the OAuth account-selection step).
 
@@ -117,12 +117,12 @@ Each message is stamped with `metadata: "SENT_FROM_CHATBOTX"` so echo events can
 | `sendComment` | `POST /<version>/<commentId>/replies` | Requires `contentAttributes.replyToCommentId` |
 | `deleteComment` | `DELETE /<version>/<commentId>` | |
 | `hideComment` | `POST /<version>/<commentId>?hide=true\|false` | |
-| `likeComment` | `POST /<version>/<igId>/likes` | Toggle via POST/DELETE |
+| `likeComment` | — | No-op; the like endpoint is not in Instagram's official reference |
 | `editComment` | — | No-op; Facebook API does not support editing comments |
 | `sendPrivateReply(Message)` | `POST /<version>/<pageId>/messages` | `recipient: { comment_id }`. **Page** node — see below |
 
 Messaging edges use the **Page** node (`<pageId>/messages`, `<pageId>/message_attachments`, `me/messages`);
-Instagram content edges use the **IG** node (`<igId>/media`, `<igId>/stories`, `<igId>/likes`). Posting a
+Instagram content edges use the **IG** node (`<igId>/media`, `<igId>/stories`). Posting a
 private reply to `<igId>/messages` fails with `(#3) Application does not have the capability to make this
 API call.` regardless of granted permissions, because Meta does not expose that edge on the IG node for
 Facebook-Login connections. The Instagram Login package (`integrations/instagram`) uses `me/messages` on
@@ -168,7 +168,7 @@ src/
     auth.ts                          ← generateAuthUrl, exchangeCodeForToken, getUserInstagramAccounts
     page.ts                          ← subscribe/unsubscribe, profile management
     message.ts                       ← sendMessage
-    comment.ts                       ← replyToComment, deleteComment, hideComment, likeComment
+    comment.ts                       ← replyToComment, deleteComment, hideComment
     post.ts                          ← getPostDetails (action exposed to the platform)
     contact-profile.ts               ← fetch contact name/avatar
     attachment.ts                    ← upload attachment by URL, download incoming attachments
@@ -179,7 +179,7 @@ src/
       incoming-message.ts            ← receiveMessage
       outgoing-message/              ← sendMessage, sendFlowStep, per-type converters
     comment/
-      comment.ts                     ← deleteComment, hideComment, likeComment, editComment (no-op)
+      comment.ts                     ← deleteComment, hideComment, likeComment (no-op), editComment (no-op)
       outgoing-comment.ts            ← sendComment
       outgoing-private-reply.ts      ← sendPrivateReply
     contact.ts                       ← resolveContact

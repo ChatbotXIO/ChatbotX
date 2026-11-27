@@ -1,11 +1,16 @@
 import {
+  templateInstallIntentService,
   type WorkspaceQuotaConsumption,
   workspaceService,
 } from "@chatbotx.io/business"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
 import type { DatabaseClient } from "@chatbotx.io/database/client"
+import type { WorkspaceModel } from "@chatbotx.io/database/types"
 import { redirect } from "next/navigation"
 import type { MessageKey } from "@/features/channel-connect/lib/message-key"
+import { resolveRequestTenantId } from "@/lib/tenant/request-tenant"
+
+const DEFAULT_WORKSPACE_NAME = "New Workspace"
 
 /** Query param `/channels/create` reads to explain why a channel connect could not start. */
 const CREATE_CHANNEL_ERROR_PARAM = "error"
@@ -78,27 +83,64 @@ function createChannelErrorPathFor(error: unknown): string | null {
   return null
 }
 
+interface FirstWorkspaceOptions {
+  name?: string
+  quotaConsumption?: WorkspaceQuotaConsumption
+  tx?: DatabaseClient
+}
+
+async function callEnsureWorkspace(
+  userId: string,
+  method: "ensureFirstForOwner" | "ensureConnectTargetForOwner",
+  {
+    tx,
+    quotaConsumption,
+    name = DEFAULT_WORKSPACE_NAME,
+  }: FirstWorkspaceOptions,
+): Promise<WorkspaceModel> {
+  return await workspaceService[method]({
+    ownerId: userId,
+    name,
+    tx,
+    quotaConsumption,
+    // Server-resolved from the request host: decides tenant vs root for a reseller owner.
+    hostTenantId: await resolveRequestTenantId(),
+  })
+}
+
 /**
- * First-channel path: the user has no workspace yet, so one is created before
- * the channel connects. Shared by the legacy JSON-state OAuth callback
+ * Same as `createFirstWorkspace` but for callers that cannot redirect (the
+ * `/` page): any known create failure (workspace limit, trial expired, MAC
+ * limit) yields `null` instead. Unknown errors keep propagating.
+ */
+export async function ensureFirstWorkspace(
+  userId: string,
+  options: Pick<FirstWorkspaceOptions, "name"> = {},
+): Promise<WorkspaceModel | null> {
+  // The home page is no share-page flow: its default workspace gets no template choice.
+  await templateInstallIntentService.clear(userId)
+  try {
+    return await callEnsureWorkspace(userId, "ensureFirstForOwner", options)
+  } catch (error) {
+    if (createChannelErrorPathFor(error)) {
+      return null
+    }
+    throw error
+  }
+}
+
+/**
+ * Channel-connect path: an empty workspace is reused before a new one is
+ * created. This keeps replayed GET requests idempotent without redirecting a
+ * new channel into an existing workspace that already has an Inbox.
+ *
+ * Shared by the legacy JSON-state OAuth callback
  * (`app/integrations/[...integration]/callback.ts`) and
  * `startChannelConnect` (`features/channel-connect/lib/start-channel-
  * connect.ts`, itself shared by the Instagram, Instagram-via-Facebook, and
  * Messenger connect-start routes) so every caller turns a plan-limit
  * failure into a redirect back to `/channels/create` with a translated
  * message, never a bare 500.
- *
- * Idempotent on `ownerId` (regression I7): this runs from a plain GET route
- * reached by a redirect, not a POST — a browser back-button retry, a
- * double-navigation, or a replayed request must reuse the user's existing
- * workspace instead of minting a second "New Workspace" every time. Without
- * this check, `workspaceService.create` has no such guard (it isn't meant
- * to — callers that deliberately want an ADDITIONAL workspace, e.g.
- * Settings → "New workspace", must still be able to create one), so the
- * idempotency has to live here, at the "this is the user's FIRST workspace"
- * call site specifically. `findActiveByOwner` excludes a workspace mid
- * soft-delete, so a user who deleted their only workspace gets a fresh one
- * instead of being handed back the one that's about to be purged.
  *
  * Accepts an optional `tx`: `startChannelConnect`'s plain OAuth-start
  * path (no `beforeStart` hook) passes `connectionService.startSession`'s
@@ -112,17 +154,8 @@ export async function createFirstWorkspace(
   tx?: DatabaseClient,
   quotaConsumption?: WorkspaceQuotaConsumption,
 ) {
-  const existing = await workspaceService.findActiveByOwner({
-    ownerId: userId,
-    tx,
-  })
-  if (existing) {
-    return existing
-  }
   try {
-    return await workspaceService.create({
-      data: { name: "New Workspace", ownerId: userId },
-      createdBy: userId,
+    return await callEnsureWorkspace(userId, "ensureConnectTargetForOwner", {
       tx,
       quotaConsumption,
     })

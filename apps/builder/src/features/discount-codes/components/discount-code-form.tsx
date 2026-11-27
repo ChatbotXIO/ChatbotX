@@ -36,6 +36,11 @@ import {
   PERCENT_INPUT_PROPS,
   PRICE_INPUT_PROPS,
 } from "@/features/products/constants"
+import {
+  TemplateLockedList,
+  UndeletableGuard,
+} from "@/features/templates/components/lock-context"
+import { LockedContent } from "@/features/templates/components/locked-editor"
 import { toastActionError } from "@/lib/errors/safe-action-error-handler"
 import {
   type FieldRule,
@@ -353,206 +358,223 @@ export function DiscountCodeForm({
           {discountCode ? t("edit") : t("add")}
         </h1>
 
-        <Section title={t("form.discountCode")}>
-          <div className="space-y-2">
-            <div className="flex items-center justify-between gap-2">
-              <Label htmlFor="discount-code">{t("form.code")}</Label>
-              <Button
-                disabled={generate.isPending}
-                onClick={() => generate.execute()}
-                size="sm"
-                type="button"
-                variant="link"
-              >
-                {t("form.generate")}
-              </Button>
+        <LockedContent className="flex flex-col gap-4">
+          <Section title={t("form.discountCode")}>
+            <div className="space-y-2">
+              <div className="flex items-center justify-between gap-2">
+                <Label htmlFor="discount-code">{t("form.code")}</Label>
+                <Button
+                  disabled={generate.isPending}
+                  onClick={() => generate.execute()}
+                  size="sm"
+                  type="button"
+                  variant="link"
+                >
+                  {t("form.generate")}
+                </Button>
+              </div>
+              <InputField
+                autoComplete="off"
+                id="discount-code"
+                maxLength={64}
+                name="code"
+                required
+              />
             </div>
-            <InputField
-              autoComplete="off"
-              id="discount-code"
-              maxLength={64}
-              name="code"
-              required
-            />
-          </div>
-          <CheckboxRow label={t("form.autoApply")} name="autoApply" />
-          <p className="text-muted-foreground text-sm">
-            {form.watch("autoApply")
-              ? t("form.autoApplyHint")
-              : t("form.typedHint")}
-          </p>
-        </Section>
-
-        <Section title={t("form.options")}>
-          <div className="grid gap-4 sm:grid-cols-2">
-            <SelectField
-              label={t("form.discountType")}
-              name="discountType"
-              options={(
-                ["percentage", "fixedAmount", "freeShipping"] as const
-              ).map((type) => ({
-                value: type,
-                label: t(`discountTypes.${type}`),
-              }))}
-            />
-            {discountType === "freeShipping" ? null : (
-              <InputNumberField
-                label={
-                  discountType === "percentage"
-                    ? t("form.discountValuePercent")
-                    : t("form.discountValueAmount", { currency })
-                }
-                min={0}
-                name="discountValue"
-                required
-                {...(discountType === "percentage"
-                  ? PERCENT_INPUT_PROPS
-                  : PRICE_INPUT_PROPS)}
-              />
-            )}
-          </div>
-          {discountType === "freeShipping" ? (
+            <CheckboxRow label={t("form.autoApply")} name="autoApply" />
             <p className="text-muted-foreground text-sm">
-              {t("form.freeShippingHint")}
+              {form.watch("autoApply")
+                ? t("form.autoApplyHint")
+                : t("form.typedHint")}
             </p>
-          ) : null}
-        </Section>
+          </Section>
 
-        {discountType === "freeShipping" ? null : (
-          <Section title={t("form.appliesTo")}>
-            <RadioGroupField
-              name="appliesTo"
-              options={(["entireOrder", "category", "products"] as const).map(
-                (value) => ({ value, label: t(`appliesTo.${value}`) }),
-              )}
-            />
-            {appliesTo === "category" ? (
+          <Section title={t("form.options")}>
+            <div className="grid gap-4 sm:grid-cols-2">
               <SelectField
-                label={t("form.category")}
-                name="categoryId"
-                options={categoryOptions}
-                required
+                label={t("form.discountType")}
+                name="discountType"
+                options={(
+                  ["percentage", "fixedAmount", "freeShipping"] as const
+                ).map((type) => ({
+                  value: type,
+                  label: t(`discountTypes.${type}`),
+                }))}
               />
-            ) : null}
-            {appliesTo === "products" ? (
-              <MultiSelectField
-                label={t("form.products")}
-                name="productIds"
-                options={productOptions}
-                placeholder={t("form.productsPlaceholder")}
-                required
-              />
+              {discountType === "freeShipping" ? null : (
+                <InputNumberField
+                  label={
+                    discountType === "percentage"
+                      ? t("form.discountValuePercent")
+                      : t("form.discountValueAmount", { currency })
+                  }
+                  min={0}
+                  name="discountValue"
+                  required
+                  {...(discountType === "percentage"
+                    ? PERCENT_INPUT_PROPS
+                    : PRICE_INPUT_PROPS)}
+                />
+              )}
+            </div>
+            {discountType === "freeShipping" ? (
+              <p className="text-muted-foreground text-sm">
+                {t("form.freeShippingHint")}
+              </p>
             ) : null}
           </Section>
-        )}
 
-        <Section title={t("form.minimumRequirement")}>
-          <RadioGroupField
-            name="minimumType"
-            options={(["none", "amount", "quantity"] as const).map((value) => ({
-              value,
-              label: t(`minimumTypes.${value}`),
-            }))}
-          />
-          {minimumType === "amount" ? (
-            <div className="max-w-xs">
-              <InputNumberField
-                label={t("form.minimumAmount", { currency })}
-                min={0}
-                name="minimumAmount"
-                required
-                {...PRICE_INPUT_PROPS}
+          {discountType === "freeShipping" ? null : (
+            <Section title={t("form.appliesTo")}>
+              <RadioGroupField
+                name="appliesTo"
+                options={(["entireOrder", "category", "products"] as const).map(
+                  (value) => ({ value, label: t(`appliesTo.${value}`) }),
+                )}
               />
-            </div>
-          ) : null}
-          {minimumType === "quantity" ? (
-            <div className="max-w-xs">
-              <InputNumberField
-                label={t("form.minimumQuantity")}
-                min={1}
-                name="minimumQuantity"
-                required
-                step={1}
-              />
-            </div>
-          ) : null}
-        </Section>
-
-        <Section title={t("form.usageLimits")}>
-          <CheckboxRow label={t("form.limitTotal")} name="limitTotal" />
-          {limitTotal ? (
-            <div className="max-w-xs ps-6">
-              <InputNumberField
-                aria-label={t("form.limitTotal")}
-                min={1}
-                name="usageLimit"
-                required
-                step={1}
-              />
-              {discountCode ? (
-                <p className="pt-1 text-muted-foreground text-xs">
-                  {t("form.usedSoFar", { count: discountCode.usedCount })}
-                </p>
+              {appliesTo === "category" ? (
+                <SelectField
+                  label={t("form.category")}
+                  name="categoryId"
+                  options={categoryOptions}
+                  required
+                />
               ) : null}
-            </div>
-          ) : null}
-          <CheckboxRow
-            label={t("form.oncePerCustomer")}
-            name="oncePerCustomer"
-          />
-        </Section>
+              {appliesTo === "products" ? (
+                <MultiSelectField
+                  label={t("form.products")}
+                  name="productIds"
+                  options={productOptions}
+                  placeholder={t("form.productsPlaceholder")}
+                  required
+                />
+              ) : null}
+            </Section>
+          )}
 
-        <Section title={t("form.customerEligibility")}>
-          <RadioGroupField
-            name="eligibility"
-            options={(["everyone", "specificCustomers"] as const).map(
-              (value) => ({
-                value,
-                label: t(`eligibilities.${value}`),
-                description:
-                  value === "specificCustomers"
-                    ? t("form.specificCustomersHint")
-                    : undefined,
-              }),
-            )}
-          />
-          {eligibility === "specificCustomers" ? (
-            <ContactFilter parentName="customerFilter" />
-          ) : null}
-        </Section>
+          <Section title={t("form.minimumRequirement")}>
+            <RadioGroupField
+              name="minimumType"
+              options={(["none", "amount", "quantity"] as const).map(
+                (value) => ({
+                  value,
+                  label: t(`minimumTypes.${value}`),
+                }),
+              )}
+            />
+            {minimumType === "amount" ? (
+              <div className="max-w-xs">
+                <InputNumberField
+                  label={t("form.minimumAmount", { currency })}
+                  min={0}
+                  name="minimumAmount"
+                  required
+                  {...PRICE_INPUT_PROPS}
+                />
+              </div>
+            ) : null}
+            {minimumType === "quantity" ? (
+              <div className="max-w-xs">
+                <InputNumberField
+                  label={t("form.minimumQuantity")}
+                  min={1}
+                  name="minimumQuantity"
+                  required
+                  step={1}
+                />
+              </div>
+            ) : null}
+          </Section>
+
+          <Section title={t("form.usageLimits")}>
+            <CheckboxRow label={t("form.limitTotal")} name="limitTotal" />
+            {limitTotal ? (
+              <div className="max-w-xs ps-6">
+                <InputNumberField
+                  aria-label={t("form.limitTotal")}
+                  min={1}
+                  name="usageLimit"
+                  required
+                  step={1}
+                />
+                {discountCode ? (
+                  <p className="pt-1 text-muted-foreground text-xs">
+                    {t("form.usedSoFar", { count: discountCode.usedCount })}
+                  </p>
+                ) : null}
+              </div>
+            ) : null}
+            <CheckboxRow
+              label={t("form.oncePerCustomer")}
+              name="oncePerCustomer"
+            />
+          </Section>
+
+          <Section title={t("form.customerEligibility")}>
+            <RadioGroupField
+              name="eligibility"
+              options={(["everyone", "specificCustomers"] as const).map(
+                (value) => ({
+                  value,
+                  label: t(`eligibilities.${value}`),
+                  description:
+                    value === "specificCustomers"
+                      ? t("form.specificCustomersHint")
+                      : undefined,
+                }),
+              )}
+            />
+            {eligibility === "specificCustomers" ? (
+              <ContactFilter parentName="customerFilter" />
+            ) : null}
+          </Section>
+        </LockedContent>
 
         <Section title={t("form.activeDates")}>
-          <div className="grid gap-4 sm:grid-cols-2">
-            <DateTimePickerField
-              displayFormat={{ hour24: "yyyy-MM-dd HH:mm" }}
-              granularity="minute"
-              label={t("form.startDate")}
-              name="startsAt"
-              required
-              saveFormat="iso"
-            />
-            <DateTimePickerField
-              displayFormat={{ hour24: "yyyy-MM-dd HH:mm" }}
-              granularity="minute"
-              label={t("form.endDate")}
-              name="endsAt"
-              placeholder={t("never")}
-              saveFormat="iso"
-            />
-          </div>
+          <LockedContent>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <DateTimePickerField
+                displayFormat={{ hour24: "yyyy-MM-dd HH:mm" }}
+                granularity="minute"
+                label={t("form.startDate")}
+                name="startsAt"
+                required
+                saveFormat="iso"
+              />
+              <DateTimePickerField
+                displayFormat={{ hour24: "yyyy-MM-dd HH:mm" }}
+                granularity="minute"
+                label={t("form.endDate")}
+                name="endsAt"
+                placeholder={t("never")}
+                saveFormat="iso"
+              />
+            </div>
+          </LockedContent>
           <CheckboxRow label={t("form.isActive")} name="isActive" />
         </Section>
 
         <EcommerceFooterActions>
           <div className="mx-auto flex max-w-3xl items-center justify-between gap-2">
             {discountCode ? (
-              <Button
-                onClick={() => setDeleting(true)}
-                type="button"
-                variant="ghost"
+              <TemplateLockedList
+                resourceKind="discountCode"
+                rows={[discountCode]}
+                workspaceId={workspaceId}
               >
-                {t("delete")}
-              </Button>
+                <UndeletableGuard resourceId={discountCode.id}>
+                  {(undeletable) => (
+                    <Button
+                      disabled={undeletable}
+                      onClick={() => setDeleting(true)}
+                      type="button"
+                      variant="ghost"
+                    >
+                      {t("delete")}
+                    </Button>
+                  )}
+                </UndeletableGuard>
+              </TemplateLockedList>
             ) : (
               <span />
             )}

@@ -12,6 +12,7 @@ import { Loader2Icon, SearchIcon } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { type FormEvent, useState, useTransition } from "react"
+import { groupCategoriesByParent } from "../lib/category-tree"
 import { useShop } from "./shop-provider"
 
 const ALL = "all"
@@ -60,13 +61,12 @@ export function ProductFilters({
   }
 
   // Sub-categories sit under their parent, indented.
-  const topLevel = categories.filter((category) => !category.parentId)
-  const orderedCategories = topLevel.flatMap((parent) => [
-    { ...parent, depth: 0 },
-    ...categories
-      .filter((child) => child.parentId === parent.id)
-      .map((child) => ({ ...child, depth: 1 })),
-  ])
+  const orderedCategories = groupCategoriesByParent(categories).flatMap(
+    ({ category, subcategories }) => [
+      { ...category, depth: 0 },
+      ...subcategories.map((child) => ({ ...child, depth: 1 })),
+    ],
+  )
 
   return (
     <div className="flex flex-col gap-2 sm:flex-row">

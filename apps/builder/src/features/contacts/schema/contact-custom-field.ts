@@ -2,7 +2,10 @@ import {
   contactCustomFieldModel,
   createSelectSchema,
 } from "@chatbotx.io/database/schema"
-import { FieldOperationType } from "@chatbotx.io/flow-config"
+import {
+  FieldOperationType,
+  withFieldOperationOperandRule,
+} from "@chatbotx.io/flow-config"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
 import { publicCustomFieldResource } from "@/features/custom-fields/schema/resource"
@@ -16,15 +19,17 @@ export const contactCustomFieldResource = createSelectSchema(
   },
 )
 
-export const addContactCustomFieldRequest = z.object({
-  ids: z.array(zodBigintAsString()).max(200),
-  customFieldId: zodBigintAsString(),
-  operation: z.enum(FieldOperationType),
-  value: z.string().trim(),
-  // Browser zone captured at submit — anchors a naive `date` to the user's
-  // local calendar day (same field shape the import flow uses for `timezone`).
-  clientTimezone: z.string().trim().min(1).max(255).optional(),
-})
+export const addContactCustomFieldRequest = withFieldOperationOperandRule(
+  z.object({
+    ids: z.array(zodBigintAsString()).max(200),
+    customFieldId: zodBigintAsString(),
+    operation: z.enum(FieldOperationType),
+    value: z.string().trim(),
+    // Browser zone captured at submit — anchors a naive `date` to the user's
+    // local calendar day (same field shape the import flow uses for `timezone`).
+    clientTimezone: z.string().trim().min(1).max(255).optional(),
+  }),
+)
 export type AddContactCustomFieldRequest = z.infer<
   typeof addContactCustomFieldRequest
 >

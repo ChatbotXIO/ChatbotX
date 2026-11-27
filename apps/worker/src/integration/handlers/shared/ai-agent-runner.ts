@@ -3,10 +3,12 @@ import {
   helpTexts,
   processStreamingText,
   toolPrefixes,
+  toStepSeparatedTextStream,
 } from "@chatbotx.io/ai"
 import {
   aiContextService,
   aiIntegrationService,
+  appendCustomerInputGuard,
   appendFabricationGuard,
   appendKnowledgeBaseGuard,
   appendToolOutputGuard,
@@ -176,9 +178,11 @@ async function runAIReplyInternal(
       ? `Conversation Context: ${props.summary}\n\n${promptBase}`
       : promptBase
 
-    const systemPrompt = appendKnowledgeBaseGuard(
-      appendFabricationGuard(appendToolOutputGuard(completePrompt), tools),
-      tools,
+    const systemPrompt = appendCustomerInputGuard(
+      appendKnowledgeBaseGuard(
+        appendFabricationGuard(appendToolOutputGuard(completePrompt), tools),
+        tools,
+      ),
     )
 
     const toolStats = createAgentToolStatsCollector({
@@ -211,7 +215,7 @@ async function runAIReplyInternal(
     })
 
     const { fullText } = await processStreamingText(
-      result.textStream,
+      toStepSeparatedTextStream(result.stream),
       async () => {
         // noop: fullText is accumulated internally, no message to send
       },

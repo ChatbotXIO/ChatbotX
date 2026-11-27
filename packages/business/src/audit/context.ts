@@ -1,14 +1,7 @@
 import { AsyncLocalStorage } from "node:async_hooks"
+import type { AuditActor } from "./actor"
 
-export const SYSTEM_ACTOR = "system"
-
-export type AuditActor = {
-  userId?: string | typeof SYSTEM_ACTOR
-  workspaceId?: string
-  ipAddress?: string
-  userAgent?: string
-  source?: string
-}
+export { type AuditActor, SYSTEM_ACTOR } from "./actor"
 
 const globalForAudit = globalThis as typeof globalThis & {
   __chatbotxAuditStorage?: AsyncLocalStorage<AuditActor>

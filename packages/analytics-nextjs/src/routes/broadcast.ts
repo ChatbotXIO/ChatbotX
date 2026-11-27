@@ -19,7 +19,7 @@ export const analyticsBroadcastRoutes = os.router({
     .output(getBroadcastStatsResponse)
     .handler(async ({ input }) =>
       withCache(
-        `analytics:broadcast-stats:${input.workspaceId}:${input.broadcastId}`,
+        `analytics:broadcast-stats:v2:${input.workspaceId}:${input.broadcastId}`,
         async () => {
           try {
             return await broadcastAnalyticsService.getStats({

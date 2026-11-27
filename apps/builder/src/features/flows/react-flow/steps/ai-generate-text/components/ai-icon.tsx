@@ -5,6 +5,8 @@ import {
   SiClaudeHex,
   SiGooglegemini,
   SiGooglegeminiHex,
+  SiMeta,
+  SiMetaHex,
 } from "@icons-pack/react-simple-icons"
 import { BotIcon } from "lucide-react"
 import { OpenAIIcon, OpenAIIconHex } from "@/icons/openai"
@@ -29,6 +31,8 @@ const AIIconInner = (props: AIIconProps) => {
       return (
         <SiGooglegemini className={fullClassName} fill={SiGooglegeminiHex} />
       )
+    case "muse":
+      return <SiMeta className={fullClassName} fill={SiMetaHex} />
     default:
       return <BotIcon className={fullClassName} />
   }

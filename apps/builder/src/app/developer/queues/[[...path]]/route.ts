@@ -4,6 +4,7 @@ import { HonoAdapter } from "@bull-board/hono"
 import { isSuperAdmin } from "@chatbotx.io/business"
 import {
   aiAgentQueue,
+  channelPostExportQueue,
   chatQueue,
   defaultQueue,
   getSequenceSchedulerQueue,
@@ -12,6 +13,7 @@ import {
   lowQueue,
   quotaQueue,
   scheduleQueue,
+  templateQueue,
   triggerQueue,
   webhookQueue,
 } from "@chatbotx.io/worker-config"
@@ -58,6 +60,8 @@ async function buildApp() {
     lowQueue,
     quotaQueue,
     scheduleQueue,
+    templateQueue,
+    channelPostExportQueue,
     ...(sequenceSchedulerQueue ? [sequenceSchedulerQueue] : []),
   ].filter(isBullBoardQueue)
 

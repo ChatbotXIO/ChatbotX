@@ -1,8 +1,11 @@
 import type { DatabaseClient } from "@chatbotx.io/database/client"
-import { and, db, eq, findOrFail } from "@chatbotx.io/database/client"
-import { integrationTypes } from "@chatbotx.io/database/partials"
+import { and, db, eq, findOrFail, gt, sql } from "@chatbotx.io/database/client"
+import { inboxStatuses, integrationTypes } from "@chatbotx.io/database/partials"
 import { connectionRepository } from "@chatbotx.io/database/repositories"
-import { integrationTelegramModel } from "@chatbotx.io/database/schema"
+import {
+  inboxModel,
+  integrationTelegramModel,
+} from "@chatbotx.io/database/schema"
 import type { IntegrationTelegramModel } from "@chatbotx.io/database/types"
 import { BaseService } from "../base.service"
 import {
@@ -13,6 +16,7 @@ import {
 } from "../connection"
 import { connectionStateService } from "../connection/state-service"
 import { inboxService } from "../inbox/service"
+import { dispatchStagedInstalls } from "../template/installation-dispatch"
 import { type WorkspaceQuotaConsumption, workspaceService } from "../workspace"
 
 /** 64 hex chars from Web Crypto (no `node:crypto`: this module is in the Edge-safe barrel). */
@@ -63,6 +67,8 @@ class TelegramIntegrationService extends BaseService {
     botId: string
     botUsername: string
     botToken: string
+    /** Server-resolved tenant of the request host; see `workspaceService.resolveWorkspaceTenant`. */
+    hostTenantId?: string
     onConnected: (ctx: {
       integrationId: string
       /** Pass as `secret_token` to setWebhook; the webhook checks it. */
@@ -122,6 +128,7 @@ class TelegramIntegrationService extends BaseService {
                 ownerId: createdBy,
               },
               quotaConsumption: workspaceQuotaConsumption,
+              hostTenantId: input.hostTenantId,
             })
             workspaceId = workspace.id
           }
@@ -186,7 +193,76 @@ class TelegramIntegrationService extends BaseService {
         }),
     )
 
+    if (createdWorkspace) {
+      await dispatchStagedInstalls(result.workspaceId)
+    }
+
     return { ...result, createdWorkspace }
+  }
+
+  /** A fresh secret for `setWebhook`'s `secret_token`. */
+  createWebhookSecretToken(): string {
+    return generateWebhookSecretToken()
+  }
+
+  /**
+   * Connected bots in bounded keyset pages (ascending id, strictly after
+   * `afterId`), for re-registering their webhooks.
+   *
+   * Ops-only and cross-tenant (every workspace, bot tokens included): called
+   * by `apps/worker/scripts/reregister-telegram-webhooks.ts`. Never call it
+   * from a request path.
+   */
+  listConnectedForWebhookRefresh(input: { afterId?: string; limit: number }) {
+    return db
+      .select({
+        id: integrationTelegramModel.id,
+        workspaceId: integrationTelegramModel.workspaceId,
+        botId: integrationTelegramModel.botId,
+        auth: integrationTelegramModel.auth,
+      })
+      .from(integrationTelegramModel)
+      .innerJoin(
+        inboxModel,
+        eq(inboxModel.id, integrationTelegramModel.inboxId),
+      )
+      .where(
+        and(
+          eq(inboxModel.status, inboxStatuses.enum.connected),
+          input.afterId
+            ? gt(integrationTelegramModel.id, input.afterId)
+            : undefined,
+        ),
+      )
+      .orderBy(integrationTelegramModel.id)
+      .limit(input.limit)
+  }
+
+  /**
+   * Stores a webhook secret on a bot that has none, leaving the bot token and
+   * the rest of `auth` untouched. Returns false when the bot already has a
+   * secret by now (e.g. it was reconnected meanwhile) — the stored one wins.
+   *
+   * Ops-only: updates by primary key with no workspace scope, for the same
+   * re-register script. Never call it from a request path.
+   */
+  async saveMissingWebhookSecretToken(input: {
+    id: string
+    webhookSecretToken: string
+  }): Promise<boolean> {
+    const rows = await db
+      .update(integrationTelegramModel)
+      .set({
+        auth: sql`jsonb_set(${integrationTelegramModel.auth}, '{metadata}', coalesce(${integrationTelegramModel.auth}->'metadata', '{}'::jsonb) || jsonb_build_object('webhookSecretToken', ${input.webhookSecretToken}::text))`,
+      })
+      .where(
+        and(
+          eq(integrationTelegramModel.id, input.id),
+          sql`${integrationTelegramModel.auth}->'metadata'->>'webhookSecretToken' is null`,
+        ),
+      )
+      .returning({ id: integrationTelegramModel.id })
+    return rows.length > 0
   }
 
   async disconnect(input: {

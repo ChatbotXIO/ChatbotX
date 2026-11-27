@@ -1,8 +1,9 @@
 import type { ChannelType } from "@chatbotx.io/utils/channel"
+import type { ButtonStyle, ButtonType } from "../../steps/button"
 import { type StepType, stepTypes } from "../../steps/step-action"
 import type { ProductMessageCapability } from "../product-message-rules"
 
-export const CHANNEL_POLICY_VERSION = 2
+export const CHANNEL_POLICY_VERSION = 4
 
 export const stepSupport = {
   full: "full",
@@ -66,6 +67,7 @@ const stepExecutionKinds = {
   aiAnalyzeImage: "worker",
   aiGenerateImage: "worker",
   aiEditImage: "worker",
+  aiSegmentImage: "worker",
   aiSpeechToText: "worker",
   aiTextToSpeech: "worker",
   aiExtractData: "worker",
@@ -76,6 +78,7 @@ const stepExecutionKinds = {
   getDataFromJson: "worker",
   formatDate: "worker",
   generateCode: "worker",
+  findPlacesNearMe: "worker",
   countCharacters: "worker",
   performAction: "worker",
   callApi: "worker",
@@ -88,6 +91,8 @@ const stepExecutionKinds = {
   startExternalNode: "worker",
   openWebsite: "worker",
   openMiniApp: "worker",
+  callPhoneNumber: "worker",
+  copyText: "worker",
   addNotes: "worker",
   subscribeBroadcast: "worker",
   unsubscribeBroadcast: "worker",
@@ -106,6 +111,7 @@ const stepExecutionKinds = {
   klaviyoSyncProfile: "worker",
   subscribeSequence: "worker",
   changeGamificationScore: "worker",
+  pipeline: "worker",
   unsubscribeSequence: "worker",
   email: "worker",
   sendViewCatalog: "channel",
@@ -167,9 +173,29 @@ export const omnichannelDeliverableStepTypes: readonly ChannelDeliverableStepTyp
     (stepType) => !channelOptInStepTypes.includes(stepType),
   )
 
+/**
+ * The button styles a channel renders (see `buttonStyles` in
+ * `steps/button.ts`) and the one it uses for a button whose author chose none.
+ */
+export type ButtonStyleSupport = {
+  options: readonly ButtonStyle[]
+  default: ButtonStyle
+}
+
 export type ChannelFlowPolicy = {
   limits: {
+    /**
+     * Buttons on one step that is not a card: `sendText` (counting quick
+     * replies when `quickRepliesShareButtonSlots`) and media steps.
+     */
     buttonCount: number
+    /**
+     * Buttons on one card: a `sendCard` step and each card of a
+     * `sendCarousel`. Required on every channel (even one without cards) so a
+     * new channel cannot inherit another's number; it may not exceed
+     * `CARD_BUTTON_MAX` (`steps/button-limits.ts`), the card schema's ceiling.
+     */
+    cardButtonCount: number
     buttonLabel: number
     cardTitle?: number
     text: number
@@ -177,6 +203,20 @@ export type ChannelFlowPolicy = {
     viewCatalog?: { footer: number; text: number }
   }
   quickRepliesShareButtonSlots: boolean
+  /**
+   * Button types the channel renders as a native control on step and card
+   * buttons: `callPhoneNumber` (dials on tap) and `copyText` (copies on tap). A
+   * channel that does not list one sends that button as a reply, and a tap
+   * answers with the number or text. Informational: it never gates publish.
+   */
+  nativeButtonTypes: readonly ButtonType[]
+  /**
+   * The button styles the channel renders on step and card buttons, or `null`
+   * when it has none (a button's `style` is then ignored). The builder shows
+   * its style picker only when this is set. Informational: a stored style
+   * never gates publish on any channel.
+   */
+  buttonStyles: ButtonStyleSupport | null
   steps: Record<StepType, StepSupport>
   /** Present only on channels that can render `sendProducts`. */
   productMessages?: ProductMessageCapability
@@ -185,6 +225,8 @@ export type ChannelFlowPolicy = {
 type ChannelFlowPolicyDefinition = {
   limits: ChannelFlowPolicy["limits"]
   quickRepliesShareButtonSlots?: boolean
+  nativeButtonTypes?: readonly ButtonType[]
+  buttonStyles?: ButtonStyleSupport
   productMessages?: ProductMessageCapability
   supported?: readonly ChannelDeliverableStepType[]
   noButtons?: readonly ChannelDeliverableStepType[]
@@ -217,6 +259,8 @@ export const defineChannelFlowPolicy = (
     limits: definition.limits,
     quickRepliesShareButtonSlots:
       definition.quickRepliesShareButtonSlots ?? false,
+    nativeButtonTypes: definition.nativeButtonTypes ?? [],
+    buttonStyles: definition.buttonStyles ?? null,
     steps,
     ...(definition.productMessages
       ? { productMessages: definition.productMessages }
@@ -225,3 +269,26 @@ export const defineChannelFlowPolicy = (
 }
 
 export type ChannelFlowPolicyMap = Record<ChannelType, ChannelFlowPolicy>
+
+/** Where a group of buttons sits, which decides the policy limit it has. */
+export const buttonContainers = {
+  step: "step",
+  card: "card",
+} as const
+
+export type ButtonContainer =
+  (typeof buttonContainers)[keyof typeof buttonContainers]
+
+/**
+ * The one reading of a policy's button limit: `cardButtonCount` for the
+ * buttons of a card (a `sendCard` step, a `sendCarousel` card),
+ * `buttonCount` for every other step. Publish, the builder editors and the
+ * worker's send-time clamp all go through it.
+ */
+export const getButtonCountLimit = (
+  policy: Pick<ChannelFlowPolicy, "limits">,
+  container: ButtonContainer,
+): number =>
+  container === buttonContainers.card
+    ? policy.limits.cardButtonCount
+    : policy.limits.buttonCount

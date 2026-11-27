@@ -11,6 +11,7 @@ import { Form } from "@chatbotx.io/ui/components/ui/form"
 import { useTranslations } from "next-intl"
 import { useForm } from "react-hook-form"
 import { CustomFieldSelect } from "@/features/custom-fields/custom-field-select"
+import { useIsEditorLocked } from "@/features/templates/components/locked-editor"
 import { useMiniAppEditor } from "../editor-context"
 import { InspectorHint } from "./field-row"
 
@@ -46,6 +47,7 @@ export function CustomFieldMapping({ node }: { node: MiniAppNode }) {
   const setNodeCustomField = useMiniAppEditor(
     (state) => state.setNodeCustomField,
   )
+  const isLocked = useIsEditorLocked()
   const form = useForm<{ customFieldId: string }>({
     defaultValues: { customFieldId: node.customFieldId ?? "" },
   })
@@ -63,6 +65,7 @@ export function CustomFieldMapping({ node }: { node: MiniAppNode }) {
           // Uploaded files are stored as their public URLs, so only text fields fit.
           createDefaultType={isFileInput ? "longText" : undefined}
           customFieldTypes={allowedFieldTypes(node)}
+          disabled={isLocked}
           label={t("saveToCustomField")}
           name="customFieldId"
           onValueChange={(value) => setNodeCustomField(node.id, value || null)}

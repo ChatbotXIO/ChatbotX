@@ -20,6 +20,8 @@ import { format } from "date-fns"
 import { CodeIcon, ExternalLinkIcon, MoreHorizontalIcon } from "lucide-react"
 import Link from "next/link"
 import type { useTranslations } from "next-intl"
+import { LockBadge } from "@/features/templates/components/lock-badge"
+import { UndeletableGuard } from "@/features/templates/components/lock-context"
 import { EmbedCodeDialog } from "../dialogs/embed-code-dialog"
 
 type WebchatColumnsProps = {
@@ -45,8 +47,9 @@ export function getWebchatColumns({
           <Tooltip>
             <TooltipTrigger
               render={
-                <div className="inline-block max-w-75 truncate">
-                  {webchat.name}
+                <div className="flex max-w-75 items-center">
+                  <span className="truncate">{webchat.name}</span>
+                  <LockBadge resourceId={webchat.id} />
                 </div>
               }
             />
@@ -148,17 +151,22 @@ export function getWebchatColumns({
                     </Link>
                   }
                 />
-                <DropdownMenuItem
-                  className="text-destructive"
-                  onClick={() =>
-                    setRowAction({
-                      row,
-                      variant: "delete",
-                    })
-                  }
-                >
-                  {t("actions.delete")}
-                </DropdownMenuItem>
+                <UndeletableGuard resourceId={row.original.id}>
+                  {(disabled) => (
+                    <DropdownMenuItem
+                      className="text-destructive"
+                      disabled={disabled}
+                      onClick={() =>
+                        setRowAction({
+                          row,
+                          variant: "delete",
+                        })
+                      }
+                    >
+                      {t("actions.delete")}
+                    </DropdownMenuItem>
+                  )}
+                </UndeletableGuard>
               </DropdownMenuContent>
             </DropdownMenu>
           </div>

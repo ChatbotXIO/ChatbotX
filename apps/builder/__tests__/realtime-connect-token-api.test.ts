@@ -40,8 +40,6 @@ const { authorizedAPI, mocks, workspaceAuthorizedMidddleware } = vi.hoisted(
     return {
       authorizedAPI: procedure,
       mocks: {
-        hasContactsAccess: vi.fn(),
-        inboxTeamService: { listTeamIdsByUserId: vi.fn() },
         resolveBroadcastSecret: vi.fn(),
         signMemberConnectToken: vi.fn(),
         state,
@@ -54,15 +52,17 @@ const { authorizedAPI, mocks, workspaceAuthorizedMidddleware } = vi.hoisted(
 vi.mock("@/orpc", () => ({ authorizedAPI }))
 vi.mock("@/middlewares/auth", () => ({ workspaceAuthorizedMidddleware }))
 vi.mock("@chatbotx.io/business", () => ({
-  hasContactsAccess: mocks.hasContactsAccess,
-  inboxTeamService: mocks.inboxTeamService,
+  conversationMemberScope: {
+    resolve: vi.fn(({ userId }: { userId: string }) => ({
+      chatScope: "all",
+      teamIds: [],
+      userId,
+    })),
+  },
   resolveBroadcastSecret: mocks.resolveBroadcastSecret,
 }))
 vi.mock("@chatbotx.io/realtime-protocol/auth", () => ({
   signMemberConnectToken: mocks.signMemberConnectToken,
-}))
-vi.mock("@/features/contacts/permissions", () => ({
-  getAssignedContactsUserId: () => true,
 }))
 
 await import("@/features/realtime/api/private")
@@ -73,8 +73,6 @@ const mintHandler =
 describe("mintWorkspaceConnectTokenAuthenticatedAPI", () => {
   test("signs a token bound to the workspace-authorized context's user and workspace, not the raw input", async () => {
     mocks.resolveBroadcastSecret.mockReturnValue("the-secret")
-    mocks.hasContactsAccess.mockReturnValue(true)
-    mocks.inboxTeamService.listTeamIdsByUserId.mockResolvedValue(["team_1"])
     mocks.signMemberConnectToken.mockResolvedValue("signed-token")
 
     const result = await mintHandler?.({
@@ -87,6 +85,7 @@ describe("mintWorkspaceConnectTokenAuthenticatedAPI", () => {
         user: { id: "u_1" },
         workspace: { id: "ws_1" },
         workspaceMember: { permissions: {} },
+        requestIssuedAtMs: 1_700_000_000_000,
       },
     })
 
@@ -98,8 +97,9 @@ describe("mintWorkspaceConnectTokenAuthenticatedAPI", () => {
       {
         workspaceId: "ws_1",
         userId: "u_1",
-        chatScope: "assigned",
-        teamIds: ["team_1"],
+        chatScope: "all",
+        teamIds: [],
+        issuedAtMs: 1_700_000_000_000,
       },
       "the-secret",
     )

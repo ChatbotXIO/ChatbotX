@@ -11,6 +11,7 @@ import {
 import { bigintAsString, money, sharedColumns } from "../partials/shared"
 import { ecommerceOpenHoursModel } from "./ecommerce-open-hours"
 import { productCategoryModel } from "./product-category"
+import { storeSource } from "./store-source"
 import { workspaceModel } from "./workspace"
 
 /** The seller or brand behind a product. */
@@ -49,6 +50,8 @@ export const vendorModel = pgTable(
       onUpdate: "cascade",
     }),
     rank: integer().default(10).notNull(),
+    /** `shopify` vendors are a connected store's product vendors. */
+    source: storeSource().default("chatbotx").notNull(),
   },
   (table) => [
     index("Vendor_workspaceId_idx").on(table.workspaceId),
@@ -63,6 +66,7 @@ export const vendorModel = pgTable(
     // instead of creating a second vendor.
     uniqueIndex("Vendor_workspaceId_name_key").on(
       table.workspaceId,
+      table.source,
       sql`lower(${table.name})`,
     ),
   ],

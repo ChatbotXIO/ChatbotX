@@ -124,6 +124,11 @@ exports[`public API spec — operation naming guard > operation list (operationI
   },
   {
     "method": "GET",
+    "operationId": "ads.listReferralAds",
+    "path": "/v1/ads/referral-ads",
+  },
+  {
+    "method": "GET",
     "operationId": "ads.listRules",
     "path": "/v1/ads/conversion-rules",
   },
@@ -136,6 +141,11 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "method": "POST",
     "operationId": "ads.publishCampaign",
     "path": "/v1/ads/campaigns/{id}/publish",
+  },
+  {
+    "method": "GET",
+    "operationId": "ads.referralStats",
+    "path": "/v1/ads/referral-stats",
   },
   {
     "method": "POST",
@@ -211,6 +221,21 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "method": "GET",
     "operationId": "aiFiles.list",
     "path": "/v1/ai-files",
+  },
+  {
+    "method": "GET",
+    "operationId": "aiFiles.listChunks",
+    "path": "/v1/ai-files/{id}/chunks",
+  },
+  {
+    "method": "POST",
+    "operationId": "aiFiles.reindex",
+    "path": "/v1/ai-files/{id}/reindex",
+  },
+  {
+    "method": "POST",
+    "operationId": "aiFiles.search",
+    "path": "/v1/ai-files/search",
   },
   {
     "method": "POST",
@@ -548,6 +573,11 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "path": "/v1/appointments/{id}/cancel",
   },
   {
+    "method": "POST",
+    "operationId": "appointments.createBookingLink",
+    "path": "/v1/conversations/{conversationId}/appointment-booking-link",
+  },
+  {
     "method": "DELETE",
     "operationId": "appointments.delete",
     "path": "/v1/appointments/{id}",
@@ -561,6 +591,11 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "method": "GET",
     "operationId": "appointments.list",
     "path": "/v1/appointments",
+  },
+  {
+    "method": "POST",
+    "operationId": "botFields.applyOperation",
+    "path": "/v1/bot-fields/{idOrName}/operations",
   },
   {
     "method": "PUT",
@@ -738,6 +773,91 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "path": "/v1/channel-integrations",
   },
   {
+    "method": "POST",
+    "operationId": "channelPostManagement.bulkUpdate",
+    "path": "/v1/channel-posts/management/bulk-update",
+  },
+  {
+    "method": "DELETE",
+    "operationId": "channelPostManagement.deleteComment",
+    "path": "/v1/channel-posts/management/{id}/comments/{commentId}",
+  },
+  {
+    "method": "POST",
+    "operationId": "channelPostManagement.exportComments",
+    "path": "/v1/channel-posts/management/export",
+  },
+  {
+    "method": "GET",
+    "operationId": "channelPostManagement.get",
+    "path": "/v1/channel-posts/management/{id}",
+  },
+  {
+    "method": "GET",
+    "operationId": "channelPostManagement.getCommentExport",
+    "path": "/v1/channel-posts/management/exports/{fileId}",
+  },
+  {
+    "method": "GET",
+    "operationId": "channelPostManagement.getMetrics",
+    "path": "/v1/channel-posts/management/{id}/metrics",
+  },
+  {
+    "method": "POST",
+    "operationId": "channelPostManagement.likeComment",
+    "path": "/v1/channel-posts/management/{id}/comments/{commentId}/like",
+  },
+  {
+    "method": "GET",
+    "operationId": "channelPostManagement.list",
+    "path": "/v1/channel-posts/management",
+  },
+  {
+    "method": "GET",
+    "operationId": "channelPostManagement.listAuthors",
+    "path": "/v1/channel-posts/management/authors",
+  },
+  {
+    "method": "GET",
+    "operationId": "channelPostManagement.listComments",
+    "path": "/v1/channel-posts/management/{id}/comments",
+  },
+  {
+    "method": "POST",
+    "operationId": "channelPostManagement.mergeComments",
+    "path": "/v1/channel-posts/management/merge-view",
+  },
+  {
+    "method": "POST",
+    "operationId": "channelPostManagement.refresh",
+    "path": "/v1/channel-posts/management/{id}/refresh",
+  },
+  {
+    "method": "POST",
+    "operationId": "channelPostManagement.refreshMetrics",
+    "path": "/v1/channel-posts/management/refresh-metrics",
+  },
+  {
+    "method": "POST",
+    "operationId": "channelPostManagement.startCommentExport",
+    "path": "/v1/channel-posts/management/exports",
+  },
+  {
+    "method": "POST",
+    "operationId": "channelPostManagement.startSync",
+    "path": "/v1/channel-posts/sync",
+  },
+  {
+    "method": "GET",
+    "operationId": "channelPostManagement.syncStatus",
+    "path": "/v1/channel-posts/sync/status",
+  },
+  {
+    "method": "PATCH",
+    "operationId": "channelPostManagement.update",
+    "path": "/v1/channel-posts/management/{id}",
+  },
+  {
     "method": "GET",
     "operationId": "channelPosts.list",
     "path": "/v1/channel-posts",
@@ -779,8 +899,18 @@ exports[`public API spec — operation naming guard > operation list (operationI
   },
   {
     "method": "GET",
+    "operationId": "commentAutomations.getModerationSummary",
+    "path": "/v1/comment-automations/{id}/moderation-summary",
+  },
+  {
+    "method": "GET",
     "operationId": "commentAutomations.listAccounts",
     "path": "/v1/comment-automations/accounts",
+  },
+  {
+    "method": "GET",
+    "operationId": "commentAutomations.listModerationLogs",
+    "path": "/v1/comment-automations/{id}/moderation-logs",
   },
   {
     "method": "POST",
@@ -989,8 +1119,23 @@ exports[`public API spec — operation naming guard > operation list (operationI
   },
   {
     "method": "GET",
+    "operationId": "contacts.listAdReferrals",
+    "path": "/v1/contacts/{identifier}/ad-referrals",
+  },
+  {
+    "method": "GET",
+    "operationId": "contacts.listBroadcasts",
+    "path": "/v1/contacts/{identifier}/broadcasts",
+  },
+  {
+    "method": "GET",
     "operationId": "contacts.listCustomFields",
     "path": "/v1/contacts/{identifier}/custom-fields",
+  },
+  {
+    "method": "GET",
+    "operationId": "contacts.listExportFiles",
+    "path": "/v1/contacts/export-files",
   },
   {
     "method": "GET",
@@ -1041,6 +1186,11 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "method": "DELETE",
     "operationId": "contacts.removeTags",
     "path": "/v1/contacts/{identifier}/tags",
+  },
+  {
+    "method": "DELETE",
+    "operationId": "contacts.removeTagsByName",
+    "path": "/v1/contacts/{identifier}/tags/by-name",
   },
   {
     "method": "POST",
@@ -1124,6 +1274,11 @@ exports[`public API spec — operation naming guard > operation list (operationI
   },
   {
     "method": "POST",
+    "operationId": "contactScans.cancel",
+    "path": "/v1/contact-scans/cancel",
+  },
+  {
+    "method": "POST",
     "operationId": "contactScans.create",
     "path": "/v1/contact-scans",
   },
@@ -1136,6 +1291,56 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "method": "GET",
     "operationId": "contactScans.list",
     "path": "/v1/contact-scans",
+  },
+  {
+    "method": "POST",
+    "operationId": "contactSyncs.cancel",
+    "path": "/v1/contact-syncs/{runId}/cancel",
+  },
+  {
+    "method": "POST",
+    "operationId": "contactSyncs.create",
+    "path": "/v1/contact-syncs",
+  },
+  {
+    "method": "GET",
+    "operationId": "contactSyncs.get",
+    "path": "/v1/contact-syncs/{runId}",
+  },
+  {
+    "method": "GET",
+    "operationId": "contactSyncs.getAvailability",
+    "path": "/v1/contact-syncs/availability",
+  },
+  {
+    "method": "GET",
+    "operationId": "contactSyncs.getSchema",
+    "path": "/v1/contact-syncs/sources/{inboxId}/schema",
+  },
+  {
+    "method": "GET",
+    "operationId": "contactSyncs.list",
+    "path": "/v1/contact-syncs",
+  },
+  {
+    "method": "GET",
+    "operationId": "contactSyncs.listSources",
+    "path": "/v1/contact-syncs/sources",
+  },
+  {
+    "method": "POST",
+    "operationId": "contactSyncs.retryHistory",
+    "path": "/v1/contact-syncs/sources/{inboxId}/retry-history",
+  },
+  {
+    "method": "PUT",
+    "operationId": "contactSyncs.saveMappings",
+    "path": "/v1/contact-syncs/sources/{inboxId}/mappings",
+  },
+  {
+    "method": "POST",
+    "operationId": "contactSyncs.startConnectImport",
+    "path": "/v1/contact-syncs/connect-import",
   },
   {
     "method": "POST",
@@ -1171,6 +1376,11 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "method": "GET",
     "operationId": "conversations.list",
     "path": "/v1/conversations",
+  },
+  {
+    "method": "GET",
+    "operationId": "conversations.listParticipants",
+    "path": "/v1/conversations/{id}/participants",
   },
   {
     "method": "POST",
@@ -1659,6 +1869,11 @@ exports[`public API spec — operation naming guard > operation list (operationI
   },
   {
     "method": "GET",
+    "operationId": "flows.export",
+    "path": "/v1/flows/{id}/export",
+  },
+  {
+    "method": "GET",
     "operationId": "flows.get",
     "path": "/v1/flows/{id}",
   },
@@ -1874,6 +2089,11 @@ exports[`public API spec — operation naming guard > operation list (operationI
   },
   {
     "method": "GET",
+    "operationId": "inboxes.listAvatars",
+    "path": "/v1/inboxes/avatars",
+  },
+  {
+    "method": "GET",
     "operationId": "inboxes.listChannels",
     "path": "/v1/channels",
   },
@@ -2006,6 +2226,11 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "method": "GET",
     "operationId": "integrations.tokenErrors",
     "path": "/v1/integrations/status/token-errors",
+  },
+  {
+    "method": "PATCH",
+    "operationId": "integrations.updateAiProvider",
+    "path": "/v1/integrations/ai/{provider}",
   },
   {
     "method": "POST",
@@ -2159,6 +2384,31 @@ exports[`public API spec — operation naming guard > operation list (operationI
   },
   {
     "method": "POST",
+    "operationId": "lineChannels.connect",
+    "path": "/v1/line-channels",
+  },
+  {
+    "method": "DELETE",
+    "operationId": "lineChannels.delete",
+    "path": "/v1/line-channels/{id}",
+  },
+  {
+    "method": "GET",
+    "operationId": "lineChannels.get",
+    "path": "/v1/line-channels/{id}",
+  },
+  {
+    "method": "GET",
+    "operationId": "lineChannels.list",
+    "path": "/v1/line-channels",
+  },
+  {
+    "method": "POST",
+    "operationId": "lineChannels.testWebhook",
+    "path": "/v1/line-channels/{id}/test-webhook",
+  },
+  {
+    "method": "POST",
     "operationId": "magicLinks.create",
     "path": "/v1/magic-links",
   },
@@ -2181,6 +2431,46 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "method": "PATCH",
     "operationId": "magicLinks.update",
     "path": "/v1/magic-links/{id}",
+  },
+  {
+    "method": "POST",
+    "operationId": "me.changePassword",
+    "path": "/v1/me/password",
+  },
+  {
+    "method": "DELETE",
+    "operationId": "me.delete",
+    "path": "/v1/me",
+  },
+  {
+    "method": "POST",
+    "operationId": "me.ensureDefaultWorkspace",
+    "path": "/v1/me/workspaces/default",
+  },
+  {
+    "method": "GET",
+    "operationId": "me.get",
+    "path": "/v1/me",
+  },
+  {
+    "method": "GET",
+    "operationId": "me.listWorkspaces",
+    "path": "/v1/me/workspaces",
+  },
+  {
+    "method": "PUT",
+    "operationId": "me.registerDeviceToken",
+    "path": "/v1/me/device-tokens",
+  },
+  {
+    "method": "DELETE",
+    "operationId": "me.unregisterDeviceToken",
+    "path": "/v1/me/device-tokens",
+  },
+  {
+    "method": "POST",
+    "operationId": "me.webHandoff",
+    "path": "/v1/me/web-handoff",
   },
   {
     "method": "POST",
@@ -2276,6 +2566,11 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "method": "POST",
     "operationId": "messages.requestWhatsappCallPermission",
     "path": "/v1/conversations/{conversationId}/whatsapp-call-permission",
+  },
+  {
+    "method": "POST",
+    "operationId": "messages.resend",
+    "path": "/v1/conversations/{conversationId}/messages/{messageId}/resend",
   },
   {
     "method": "POST",
@@ -2483,6 +2778,11 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "path": "/v1/minigames/bulk-delete",
   },
   {
+    "method": "POST",
+    "operationId": "minigames.duplicate",
+    "path": "/v1/minigames/{id}/duplicate",
+  },
+  {
     "method": "GET",
     "operationId": "minigames.get",
     "path": "/v1/minigames/{id}",
@@ -2564,8 +2864,18 @@ exports[`public API spec — operation naming guard > operation list (operationI
   },
   {
     "method": "GET",
+    "operationId": "orders.export",
+    "path": "/v1/orders/export",
+  },
+  {
+    "method": "GET",
     "operationId": "orders.get",
     "path": "/v1/orders/{id}",
+  },
+  {
+    "method": "POST",
+    "operationId": "orders.getPaymentLink",
+    "path": "/v1/orders/{id}/payment-link",
   },
   {
     "method": "GET",
@@ -2576,6 +2886,436 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "method": "POST",
     "operationId": "orders.ship",
     "path": "/v1/orders/{id}/ship",
+  },
+  {
+    "method": "POST",
+    "operationId": "paymentProviders.connectStripeKey",
+    "path": "/v1/payment-providers/stripe/api-key",
+  },
+  {
+    "method": "DELETE",
+    "operationId": "paymentProviders.disconnect",
+    "path": "/v1/payment-providers/{provider}",
+  },
+  {
+    "method": "GET",
+    "operationId": "paymentProviders.getConnectLink",
+    "path": "/v1/payment-providers/{provider}/connect-link",
+  },
+  {
+    "method": "GET",
+    "operationId": "paymentProviders.list",
+    "path": "/v1/payment-providers",
+  },
+  {
+    "method": "POST",
+    "operationId": "pipelines.addAttachment",
+    "path": "/v1/pipelines/{id}/items/{itemId}/attachments",
+  },
+  {
+    "method": "POST",
+    "operationId": "pipelines.addComment",
+    "path": "/v1/pipelines/{id}/items/{itemId}/comments",
+  },
+  {
+    "method": "POST",
+    "operationId": "pipelines.create",
+    "path": "/v1/pipelines",
+  },
+  {
+    "method": "POST",
+    "operationId": "pipelines.createField",
+    "path": "/v1/pipelines/{id}/fields",
+  },
+  {
+    "method": "POST",
+    "operationId": "pipelines.createItem",
+    "path": "/v1/pipelines/{id}/items",
+  },
+  {
+    "method": "POST",
+    "operationId": "pipelines.createStage",
+    "path": "/v1/pipelines/{id}/stages",
+  },
+  {
+    "method": "DELETE",
+    "operationId": "pipelines.delete",
+    "path": "/v1/pipelines/{id}",
+  },
+  {
+    "method": "DELETE",
+    "operationId": "pipelines.deleteComment",
+    "path": "/v1/pipelines/{id}/items/{itemId}/comments/{commentId}",
+  },
+  {
+    "method": "DELETE",
+    "operationId": "pipelines.deleteField",
+    "path": "/v1/pipelines/{id}/fields/{fieldId}",
+  },
+  {
+    "method": "DELETE",
+    "operationId": "pipelines.deleteItem",
+    "path": "/v1/pipelines/{id}/items/{itemId}",
+  },
+  {
+    "method": "DELETE",
+    "operationId": "pipelines.deleteStage",
+    "path": "/v1/pipelines/{id}/stages/{stageId}",
+  },
+  {
+    "method": "POST",
+    "operationId": "pipelines.duplicate",
+    "path": "/v1/pipelines/{id}/duplicate",
+  },
+  {
+    "method": "GET",
+    "operationId": "pipelines.get",
+    "path": "/v1/pipelines/{id}",
+  },
+  {
+    "method": "GET",
+    "operationId": "pipelines.getItem",
+    "path": "/v1/pipelines/{id}/items/{itemId}",
+  },
+  {
+    "method": "GET",
+    "operationId": "pipelines.getStats",
+    "path": "/v1/pipelines/{id}/stats",
+  },
+  {
+    "method": "GET",
+    "operationId": "pipelines.list",
+    "path": "/v1/pipelines",
+  },
+  {
+    "method": "GET",
+    "operationId": "pipelines.listActivity",
+    "path": "/v1/pipelines/{id}/items/{itemId}/activity",
+  },
+  {
+    "method": "GET",
+    "operationId": "pipelines.listComments",
+    "path": "/v1/pipelines/{id}/items/{itemId}/comments",
+  },
+  {
+    "method": "GET",
+    "operationId": "pipelines.listContactItems",
+    "path": "/v1/contacts/{identifier}/pipeline-items",
+  },
+  {
+    "method": "GET",
+    "operationId": "pipelines.listFields",
+    "path": "/v1/pipelines/{id}/fields",
+  },
+  {
+    "method": "GET",
+    "operationId": "pipelines.listItems",
+    "path": "/v1/pipelines/{id}/items",
+  },
+  {
+    "method": "GET",
+    "operationId": "pipelines.listMembers",
+    "path": "/v1/pipelines/{id}/members",
+  },
+  {
+    "method": "POST",
+    "operationId": "pipelines.moveItem",
+    "path": "/v1/pipelines/{id}/items/{itemId}/move",
+  },
+  {
+    "method": "DELETE",
+    "operationId": "pipelines.removeAttachment",
+    "path": "/v1/pipelines/{id}/items/{itemId}/attachments/{mediaLibraryFileId}",
+  },
+  {
+    "method": "DELETE",
+    "operationId": "pipelines.removeMember",
+    "path": "/v1/pipelines/{id}/members/{workspaceMemberId}",
+  },
+  {
+    "method": "POST",
+    "operationId": "pipelines.reorderStages",
+    "path": "/v1/pipelines/{id}/stages/reorder",
+  },
+  {
+    "method": "PUT",
+    "operationId": "pipelines.setMember",
+    "path": "/v1/pipelines/{id}/members/{workspaceMemberId}",
+  },
+  {
+    "method": "GET",
+    "operationId": "pipelines.stageTotals",
+    "path": "/v1/pipelines/{id}/stage-totals",
+  },
+  {
+    "method": "POST",
+    "operationId": "pipelines.transferItem",
+    "path": "/v1/pipelines/{id}/items/{itemId}/transfer",
+  },
+  {
+    "method": "PATCH",
+    "operationId": "pipelines.update",
+    "path": "/v1/pipelines/{id}",
+  },
+  {
+    "method": "PATCH",
+    "operationId": "pipelines.updateField",
+    "path": "/v1/pipelines/{id}/fields/{fieldId}",
+  },
+  {
+    "method": "PATCH",
+    "operationId": "pipelines.updateItem",
+    "path": "/v1/pipelines/{id}/items/{itemId}",
+  },
+  {
+    "method": "PATCH",
+    "operationId": "pipelines.updateStage",
+    "path": "/v1/pipelines/{id}/stages/{stageId}",
+  },
+  {
+    "method": "POST",
+    "operationId": "placeCategories.create",
+    "path": "/v1/place-categories",
+  },
+  {
+    "method": "DELETE",
+    "operationId": "placeCategories.delete",
+    "path": "/v1/place-categories/{id}",
+  },
+  {
+    "method": "GET",
+    "operationId": "placeCategories.get",
+    "path": "/v1/place-categories/{id}",
+  },
+  {
+    "method": "GET",
+    "operationId": "placeCategories.list",
+    "path": "/v1/place-categories",
+  },
+  {
+    "method": "PATCH",
+    "operationId": "placeCategories.update",
+    "path": "/v1/place-categories/{id}",
+  },
+  {
+    "method": "POST",
+    "operationId": "placeLocations.create",
+    "path": "/v1/place-locations",
+  },
+  {
+    "method": "DELETE",
+    "operationId": "placeLocations.delete",
+    "path": "/v1/place-locations/{id}",
+  },
+  {
+    "method": "GET",
+    "operationId": "placeLocations.get",
+    "path": "/v1/place-locations/{id}",
+  },
+  {
+    "method": "GET",
+    "operationId": "placeLocations.list",
+    "path": "/v1/place-locations",
+  },
+  {
+    "method": "PATCH",
+    "operationId": "placeLocations.update",
+    "path": "/v1/place-locations/{id}",
+  },
+  {
+    "method": "POST",
+    "operationId": "polls.bulkDelete",
+    "path": "/v1/polls/bulk-delete",
+  },
+  {
+    "method": "POST",
+    "operationId": "polls.create",
+    "path": "/v1/polls",
+  },
+  {
+    "method": "DELETE",
+    "operationId": "polls.delete",
+    "path": "/v1/polls/{id}",
+  },
+  {
+    "method": "GET",
+    "operationId": "polls.get",
+    "path": "/v1/polls/{id}",
+  },
+  {
+    "method": "GET",
+    "operationId": "polls.getAnalytics",
+    "path": "/v1/polls/{id}/analytics",
+  },
+  {
+    "method": "GET",
+    "operationId": "polls.getLinks",
+    "path": "/v1/polls/{id}/links",
+  },
+  {
+    "method": "GET",
+    "operationId": "polls.list",
+    "path": "/v1/polls",
+  },
+  {
+    "method": "PATCH",
+    "operationId": "polls.update",
+    "path": "/v1/polls/{id}",
+  },
+  {
+    "method": "GET",
+    "operationId": "postAnalytics.bestTimes",
+    "path": "/v1/post-analytics/best-times",
+  },
+  {
+    "method": "GET",
+    "operationId": "postAnalytics.summary",
+    "path": "/v1/post-analytics/summary",
+  },
+  {
+    "method": "GET",
+    "operationId": "postAnalytics.timeseries",
+    "path": "/v1/post-analytics/timeseries",
+  },
+  {
+    "method": "GET",
+    "operationId": "postAnalytics.topPosts",
+    "path": "/v1/post-analytics/top-posts",
+  },
+  {
+    "method": "POST",
+    "operationId": "postFeeds.bulkDelete",
+    "path": "/v1/post-feeds/bulk-delete",
+  },
+  {
+    "method": "POST",
+    "operationId": "postFeeds.check",
+    "path": "/v1/post-feeds/{id}/check",
+  },
+  {
+    "method": "POST",
+    "operationId": "postFeeds.create",
+    "path": "/v1/post-feeds",
+  },
+  {
+    "method": "DELETE",
+    "operationId": "postFeeds.delete",
+    "path": "/v1/post-feeds/{id}",
+  },
+  {
+    "method": "GET",
+    "operationId": "postFeeds.get",
+    "path": "/v1/post-feeds/{id}",
+  },
+  {
+    "method": "GET",
+    "operationId": "postFeeds.itemDraftContent",
+    "path": "/v1/post-feeds/{id}/items/{itemId}/draft-content",
+  },
+  {
+    "method": "GET",
+    "operationId": "postFeeds.list",
+    "path": "/v1/post-feeds",
+  },
+  {
+    "method": "GET",
+    "operationId": "postFeeds.listItems",
+    "path": "/v1/post-feeds/{id}/items",
+  },
+  {
+    "method": "POST",
+    "operationId": "postFeeds.pause",
+    "path": "/v1/post-feeds/{id}/pause",
+  },
+  {
+    "method": "POST",
+    "operationId": "postFeeds.preview",
+    "path": "/v1/post-feeds/preview",
+  },
+  {
+    "method": "POST",
+    "operationId": "postFeeds.resume",
+    "path": "/v1/post-feeds/{id}/resume",
+  },
+  {
+    "method": "POST",
+    "operationId": "postFeeds.test",
+    "path": "/v1/post-feeds/{id}/test",
+  },
+  {
+    "method": "PATCH",
+    "operationId": "postFeeds.update",
+    "path": "/v1/post-feeds/{id}",
+  },
+  {
+    "method": "POST",
+    "operationId": "postSnippets.create",
+    "path": "/v1/post-snippets",
+  },
+  {
+    "method": "DELETE",
+    "operationId": "postSnippets.delete",
+    "path": "/v1/post-snippets/{id}",
+  },
+  {
+    "method": "GET",
+    "operationId": "postSnippets.get",
+    "path": "/v1/post-snippets/{id}",
+  },
+  {
+    "method": "GET",
+    "operationId": "postSnippets.list",
+    "path": "/v1/post-snippets",
+  },
+  {
+    "method": "PATCH",
+    "operationId": "postSnippets.update",
+    "path": "/v1/post-snippets/{id}",
+  },
+  {
+    "method": "POST",
+    "operationId": "postTargetSets.create",
+    "path": "/v1/post-target-sets",
+  },
+  {
+    "method": "DELETE",
+    "operationId": "postTargetSets.delete",
+    "path": "/v1/post-target-sets/{id}",
+  },
+  {
+    "method": "GET",
+    "operationId": "postTargetSets.get",
+    "path": "/v1/post-target-sets/{id}",
+  },
+  {
+    "method": "GET",
+    "operationId": "postTargetSets.list",
+    "path": "/v1/post-target-sets",
+  },
+  {
+    "method": "PATCH",
+    "operationId": "postTargetSets.update",
+    "path": "/v1/post-target-sets/{id}",
+  },
+  {
+    "method": "POST",
+    "operationId": "postTopics.create",
+    "path": "/v1/post-topics",
+  },
+  {
+    "method": "DELETE",
+    "operationId": "postTopics.delete",
+    "path": "/v1/post-topics/{id}",
+  },
+  {
+    "method": "GET",
+    "operationId": "postTopics.list",
+    "path": "/v1/post-topics",
+  },
+  {
+    "method": "PATCH",
+    "operationId": "postTopics.update",
+    "path": "/v1/post-topics/{id}",
   },
   {
     "method": "POST",
@@ -2728,6 +3468,41 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "path": "/v1/product-vendors/{id}",
   },
   {
+    "method": "GET",
+    "operationId": "publishDestinations.get",
+    "path": "/v1/posts/destinations/{id}",
+  },
+  {
+    "method": "GET",
+    "operationId": "publishDestinations.getPostingSlots",
+    "path": "/v1/posts/destinations/{id}/posting-schedule",
+  },
+  {
+    "method": "GET",
+    "operationId": "publishDestinations.getPublishingSettings",
+    "path": "/v1/posts/destinations/{id}/publishing-settings",
+  },
+  {
+    "method": "GET",
+    "operationId": "publishDestinations.list",
+    "path": "/v1/posts/destinations",
+  },
+  {
+    "method": "GET",
+    "operationId": "publishDestinations.listFreeSlots",
+    "path": "/v1/posts/destinations/{id}/free-slots",
+  },
+  {
+    "method": "POST",
+    "operationId": "publishDestinations.recheckPermissions",
+    "path": "/v1/posts/destinations/recheck-permissions",
+  },
+  {
+    "method": "PUT",
+    "operationId": "publishDestinations.updatePostingSlots",
+    "path": "/v1/posts/destinations/{id}/posting-schedule",
+  },
+  {
     "method": "POST",
     "operationId": "qrCodes.create",
     "path": "/v1/qr-codes",
@@ -2806,6 +3581,11 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "method": "PUT",
     "operationId": "questionnaires.update",
     "path": "/v1/questionnaires/{id}",
+  },
+  {
+    "method": "GET",
+    "operationId": "realtime.getConnectToken",
+    "path": "/v1/realtime/connect-token",
   },
   {
     "method": "POST",
@@ -2949,6 +3729,26 @@ exports[`public API spec — operation naming guard > operation list (operationI
   },
   {
     "method": "POST",
+    "operationId": "shopify.connect",
+    "path": "/v1/shopify",
+  },
+  {
+    "method": "DELETE",
+    "operationId": "shopify.disconnect",
+    "path": "/v1/shopify",
+  },
+  {
+    "method": "GET",
+    "operationId": "shopify.getStatus",
+    "path": "/v1/shopify",
+  },
+  {
+    "method": "POST",
+    "operationId": "shopify.sync",
+    "path": "/v1/shopify/sync",
+  },
+  {
+    "method": "POST",
     "operationId": "smtpIntegrations.create",
     "path": "/v1/smtp-integrations",
   },
@@ -2964,13 +3764,173 @@ exports[`public API spec — operation naming guard > operation list (operationI
   },
   {
     "method": "GET",
+    "operationId": "smtpIntegrations.getInboundWebhook",
+    "path": "/v1/smtp-integrations/{id}/inbound-webhook",
+  },
+  {
+    "method": "GET",
     "operationId": "smtpIntegrations.list",
     "path": "/v1/smtp-integrations",
+  },
+  {
+    "method": "POST",
+    "operationId": "smtpIntegrations.rotateInboundWebhook",
+    "path": "/v1/smtp-integrations/{id}/inbound-webhook/rotate",
   },
   {
     "method": "PUT",
     "operationId": "smtpIntegrations.update",
     "path": "/v1/smtp-integrations/{id}",
+  },
+  {
+    "method": "DELETE",
+    "operationId": "socialAccounts.disconnect",
+    "path": "/v1/social-accounts/{id}",
+  },
+  {
+    "method": "GET",
+    "operationId": "socialAccounts.get",
+    "path": "/v1/social-accounts/{id}",
+  },
+  {
+    "method": "GET",
+    "operationId": "socialAccounts.list",
+    "path": "/v1/social-accounts",
+  },
+  {
+    "method": "POST",
+    "operationId": "socialAccounts.syncDestinations",
+    "path": "/v1/social-accounts/{id}/sync-destinations",
+  },
+  {
+    "method": "POST",
+    "operationId": "socialAccounts.verify",
+    "path": "/v1/social-accounts/{id}/verify",
+  },
+  {
+    "method": "GET",
+    "operationId": "socialPosts.contentTypes",
+    "path": "/v1/posts/content-types",
+  },
+  {
+    "method": "GET",
+    "operationId": "socialPosts.counts",
+    "path": "/v1/posts/counts",
+  },
+  {
+    "method": "POST",
+    "operationId": "socialPosts.create",
+    "path": "/v1/posts",
+  },
+  {
+    "method": "DELETE",
+    "operationId": "socialPosts.delete",
+    "path": "/v1/posts/{id}",
+  },
+  {
+    "method": "POST",
+    "operationId": "socialPosts.duplicate",
+    "path": "/v1/posts/{id}/duplicate",
+  },
+  {
+    "method": "DELETE",
+    "operationId": "socialPosts.endRecurrence",
+    "path": "/v1/posts/{id}/recurrence",
+  },
+  {
+    "method": "GET",
+    "operationId": "socialPosts.get",
+    "path": "/v1/posts/{id}",
+  },
+  {
+    "method": "GET",
+    "operationId": "socialPosts.getMetrics",
+    "path": "/v1/posts/{id}/metrics",
+  },
+  {
+    "method": "GET",
+    "operationId": "socialPosts.list",
+    "path": "/v1/posts",
+  },
+  {
+    "method": "GET",
+    "operationId": "socialPosts.listOccurrences",
+    "path": "/v1/posts/{id}/recurrence/occurrences",
+  },
+  {
+    "method": "POST",
+    "operationId": "socialPosts.pauseRecurrence",
+    "path": "/v1/posts/{id}/recurrence/pause",
+  },
+  {
+    "method": "POST",
+    "operationId": "socialPosts.preview",
+    "path": "/v1/posts/preview",
+  },
+  {
+    "method": "POST",
+    "operationId": "socialPosts.publish",
+    "path": "/v1/posts/{id}/publish",
+  },
+  {
+    "method": "POST",
+    "operationId": "socialPosts.removeTarget",
+    "path": "/v1/posts/{id}/targets/{targetId}/remove",
+  },
+  {
+    "method": "POST",
+    "operationId": "socialPosts.reschedule",
+    "path": "/v1/posts/{id}/reschedule",
+  },
+  {
+    "method": "POST",
+    "operationId": "socialPosts.resolveTarget",
+    "path": "/v1/posts/{id}/targets/{targetId}/resolve",
+  },
+  {
+    "method": "POST",
+    "operationId": "socialPosts.restoreOccurrences",
+    "path": "/v1/posts/{id}/recurrence/occurrences/restore",
+  },
+  {
+    "method": "POST",
+    "operationId": "socialPosts.resumeRecurrence",
+    "path": "/v1/posts/{id}/recurrence/resume",
+  },
+  {
+    "method": "POST",
+    "operationId": "socialPosts.retryTarget",
+    "path": "/v1/posts/{id}/targets/{targetId}/retry",
+  },
+  {
+    "method": "PUT",
+    "operationId": "socialPosts.setRecurrence",
+    "path": "/v1/posts/{id}/recurrence",
+  },
+  {
+    "method": "POST",
+    "operationId": "socialPosts.skipOccurrences",
+    "path": "/v1/posts/{id}/recurrence/occurrences/skip",
+  },
+  {
+    "method": "POST",
+    "operationId": "socialPosts.unschedule",
+    "path": "/v1/posts/{id}/unschedule",
+  },
+  {
+    "method": "PATCH",
+    "operationId": "socialPosts.update",
+    "path": "/v1/posts/{id}",
+  },
+  {
+    "method": "POST",
+    "operationId": "socialPosts.validate",
+    "path": "/v1/posts/validate",
+  },
+  {
+    "method": "POST",
+    "operationId": "socialPostsAi.generate",
+    "path": "/v1/posts/ai/generate",
   },
   {
     "method": "POST",
@@ -3033,9 +3993,169 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "path": "/v1/tags/{id}",
   },
   {
+    "method": "POST",
+    "operationId": "templateInstallations.cancelUninstall",
+    "path": "/v1/template-installations/{id}/uninstall/cancel",
+  },
+  {
+    "method": "GET",
+    "operationId": "templateInstallations.get",
+    "path": "/v1/template-installations/{id}",
+  },
+  {
+    "method": "GET",
+    "operationId": "templateInstallations.getSync",
+    "path": "/v1/template-installations/{id}/syncs/{syncId}",
+  },
+  {
+    "method": "POST",
+    "operationId": "templateInstallations.install",
+    "path": "/v1/template-installations",
+  },
+  {
+    "method": "GET",
+    "operationId": "templateInstallations.list",
+    "path": "/v1/template-installations",
+  },
+  {
+    "method": "GET",
+    "operationId": "templateInstallations.listResources",
+    "path": "/v1/template-installations/{id}/resources",
+  },
+  {
+    "method": "GET",
+    "operationId": "templateInstallations.listSyncs",
+    "path": "/v1/template-installations/{id}/syncs",
+  },
+  {
+    "method": "GET",
+    "operationId": "templateInstallations.previewUninstall",
+    "path": "/v1/template-installations/{id}/uninstall-preview",
+  },
+  {
+    "method": "POST",
+    "operationId": "templateInstallations.restoreBackup",
+    "path": "/v1/template-installations/{id}/backups/{backupId}/restore",
+  },
+  {
+    "method": "POST",
+    "operationId": "templateInstallations.retry",
+    "path": "/v1/template-installations/{id}/retry",
+  },
+  {
+    "method": "POST",
+    "operationId": "templateInstallations.sync",
+    "path": "/v1/template-installations/{id}/sync",
+  },
+  {
+    "method": "POST",
+    "operationId": "templateInstallations.uninstall",
+    "path": "/v1/template-installations/{id}/uninstall",
+  },
+  {
+    "method": "PATCH",
+    "operationId": "templateInstallations.update",
+    "path": "/v1/template-installations/{id}",
+  },
+  {
     "method": "GET",
     "operationId": "templateMessages.list",
     "path": "/v1/template-messages",
+  },
+  {
+    "method": "GET",
+    "operationId": "templatePreviews.get",
+    "path": "/v1/template-previews/{id}",
+  },
+  {
+    "method": "POST",
+    "operationId": "templates.create",
+    "path": "/v1/templates",
+  },
+  {
+    "method": "DELETE",
+    "operationId": "templates.delete",
+    "path": "/v1/templates/{id}",
+  },
+  {
+    "method": "GET",
+    "operationId": "templates.get",
+    "path": "/v1/templates/{id}",
+  },
+  {
+    "method": "GET",
+    "operationId": "templates.getAnalytics",
+    "path": "/v1/templates/{id}/analytics",
+  },
+  {
+    "method": "GET",
+    "operationId": "templates.getInstallerIssues",
+    "path": "/v1/templates/{id}/installers/{installerId}/issues",
+  },
+  {
+    "method": "GET",
+    "operationId": "templates.getLink",
+    "path": "/v1/templates/{id}/link",
+  },
+  {
+    "method": "GET",
+    "operationId": "templates.list",
+    "path": "/v1/templates",
+  },
+  {
+    "method": "GET",
+    "operationId": "templates.listInstallers",
+    "path": "/v1/templates/{id}/installers",
+  },
+  {
+    "method": "POST",
+    "operationId": "templates.listLockedResources",
+    "path": "/v1/templates/locked-resources",
+  },
+  {
+    "method": "GET",
+    "operationId": "templates.listSelectableResources",
+    "path": "/v1/templates/selectable-resources",
+  },
+  {
+    "method": "GET",
+    "operationId": "templates.listVersions",
+    "path": "/v1/templates/{id}/versions",
+  },
+  {
+    "method": "POST",
+    "operationId": "templates.previewDependencies",
+    "path": "/v1/templates/dependencies-preview",
+  },
+  {
+    "method": "GET",
+    "operationId": "templates.previewUninstallInstaller",
+    "path": "/v1/templates/{id}/installers/{installerId}/uninstall-preview",
+  },
+  {
+    "method": "POST",
+    "operationId": "templates.rotateShare",
+    "path": "/v1/templates/{id}/share/rotate",
+  },
+  {
+    "method": "POST",
+    "operationId": "templates.uninstallInstaller",
+    "path": "/v1/templates/{id}/installers/{installerId}/uninstall",
+  },
+  {
+    "method": "PUT",
+    "operationId": "templates.update",
+    "path": "/v1/templates/{id}",
+  },
+  {
+    "method": "PUT",
+    "operationId": "templates.updateShare",
+    "path": "/v1/templates/{id}/share",
+  },
+  {
+    "method": "GET",
+    "operationId": "templateStore.list",
+    "path": "/v1/template-store",
   },
   {
     "method": "POST",
@@ -3126,6 +4246,41 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "method": "GET",
     "operationId": "token.get",
     "path": "/v1/token",
+  },
+  {
+    "method": "GET",
+    "operationId": "translation.getConversationState",
+    "path": "/v1/conversations/{conversationId}/translation",
+  },
+  {
+    "method": "GET",
+    "operationId": "translation.getSettings",
+    "path": "/v1/translation/settings",
+  },
+  {
+    "method": "POST",
+    "operationId": "translation.previewText",
+    "path": "/v1/conversations/{conversationId}/translation/preview",
+  },
+  {
+    "method": "POST",
+    "operationId": "translation.requestMessages",
+    "path": "/v1/conversations/{conversationId}/translation/requests",
+  },
+  {
+    "method": "POST",
+    "operationId": "translation.testSettings",
+    "path": "/v1/translation/settings/test",
+  },
+  {
+    "method": "PUT",
+    "operationId": "translation.updateConversationState",
+    "path": "/v1/conversations/{conversationId}/translation",
+  },
+  {
+    "method": "PUT",
+    "operationId": "translation.updateSettings",
+    "path": "/v1/translation/settings",
   },
   {
     "method": "POST",
@@ -3299,6 +4454,16 @@ exports[`public API spec — operation naming guard > operation list (operationI
   },
   {
     "method": "GET",
+    "operationId": "whatsappChannels.getPaymentSettings",
+    "path": "/v1/whatsapp-channels/{id}/payment-settings",
+  },
+  {
+    "method": "GET",
+    "operationId": "whatsappChannels.getRoutingRoles",
+    "path": "/v1/whatsapp-channels/{id}/routing-roles",
+  },
+  {
+    "method": "GET",
     "operationId": "whatsappChannels.list",
     "path": "/v1/whatsapp-channels",
   },
@@ -3323,6 +4488,11 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "path": "/v1/whatsapp-channels/{id}/coexist",
   },
   {
+    "method": "POST",
+    "operationId": "whatsappChannels.syncRoutingRoles",
+    "path": "/v1/whatsapp-channels/{id}/routing-roles/sync",
+  },
+  {
     "method": "PUT",
     "operationId": "whatsappChannels.updateCallHours",
     "path": "/v1/whatsapp-channels/{id}/calling/hours",
@@ -3336,6 +4506,11 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "method": "PATCH",
     "operationId": "whatsappChannels.updateHandoverResumeFlow",
     "path": "/v1/whatsapp-channels/{id}/handover-resume-flow",
+  },
+  {
+    "method": "PUT",
+    "operationId": "whatsappChannels.updatePaymentSettings",
+    "path": "/v1/whatsapp-channels/{id}/payment-settings",
   },
   {
     "method": "GET",
@@ -3371,6 +4546,26 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "method": "POST",
     "operationId": "whatsappTemplates.sync",
     "path": "/v1/whatsapp-channels/{id}/templates/sync",
+  },
+  {
+    "method": "POST",
+    "operationId": "woocommerce.connect",
+    "path": "/v1/woocommerce",
+  },
+  {
+    "method": "DELETE",
+    "operationId": "woocommerce.disconnect",
+    "path": "/v1/woocommerce",
+  },
+  {
+    "method": "GET",
+    "operationId": "woocommerce.getStatus",
+    "path": "/v1/woocommerce",
+  },
+  {
+    "method": "POST",
+    "operationId": "woocommerce.sync",
+    "path": "/v1/woocommerce/sync",
   },
   {
     "method": "POST",

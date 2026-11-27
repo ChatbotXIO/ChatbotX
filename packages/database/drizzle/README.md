@@ -21,3 +21,32 @@ a `drizzle-kit generate` run at their point in history):
 Verified at synthesis time: `drizzle-kit generate` → "No schema changes" and
 `drizzle-kit check` → clean. Branches that do not carry these two files will
 still hit the three-head error until they rebase/merge onto them.
+
+## Template enum migrations are forward-only
+
+The `templateResourceCategory` / `templateInstallationStatus` `ADD VALUE`
+statements in `20261103090000_template_enums` cannot be
+reversed: PostgreSQL has no `DROP VALUE` for enums. A rolled-back app version
+simply ignores the extra values. Deploy readers and workers before writers.
+
+## Template migrations
+
+The Templates feature ships as four migrations, squashed before it was merged, so no
+deployed database has the earlier names:
+
+- `20261103090000_template_enums`: enum values must commit before they are used.
+- `20261103090100_template_install_core`: every table and column of the feature.
+- `20261103090500_template_installed_resource_active_unique` and
+  `20261109000000_ai_file_queued_run_index`: `CONCURRENTLY` index builds, which run
+  outside a transaction.
+
+Their snapshots are SYNTHESIZED: each carries the full `ddl` (only the last one is read
+by `drizzle-kit generate`). `20261109000000` is the merge node over the template chain
+and the head of `main` (`20261108054403_whatsapp_routing_roles`), and has to stay the newest folder:
+`drizzle-kit` takes the newest folder as the head, so rename it past any later migration of
+`main` when rebasing. Its statements are idempotent.
+`db:check-drift` is clean.
+
+## Template tool categories
+
+`20261119123604_template_tools_enums` adds the 13 tool `templateResourceCategory` values. It was squashed from five unshipped enum migrations (`…_g1_enums` to `…_g4b_enums`), so no deployed database has the earlier names; it uses `IF NOT EXISTS`, so it is a no-op on a database that already applied them.

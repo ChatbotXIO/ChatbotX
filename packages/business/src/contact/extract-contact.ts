@@ -1,3 +1,4 @@
+import { EMAIL_REGEX } from "@chatbotx.io/utils/find-email"
 import {
   type CountryCode,
   type NumberFormat,
@@ -5,14 +6,15 @@ import {
   parsePhoneNumberFromString,
 } from "libphonenumber-js"
 
-const EMAIL_REGEX = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/
-
 /**
  * Region fallback list when no `defaultCountry` is supplied. Narrower than the
  * PHP `hasPhoneNumber` original (`['VN','PH','KH','ID','US','TH']`) to avoid
  * false positives from overlapping numbering plans.
  */
 const FALLBACK_REGIONS: CountryCode[] = ["VN", "US"]
+
+/** Minimum text length worth running through the extractor; shorter text (an "ok", an emoji) is skipped before any scan. */
+export const MIN_EXTRACT_LENGTH = 5
 
 /** Minimum digit count for `parsePhoneNumber` to even attempt. Matches PHP. */
 const MIN_DIGITS = 8
@@ -191,7 +193,7 @@ export const extractContactInfo = (
   defaultCountry?: string | null,
   options?: ExtractContactOptions,
 ): ExtractedContactInfo => {
-  if (!text || text.length < 5) {
+  if (!text || text.length < MIN_EXTRACT_LENGTH) {
     return {}
   }
 

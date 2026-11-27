@@ -82,7 +82,7 @@ export function IssuesButton({ issues }: { issues: MiniAppValidationIssue[] }) {
                       "break-words text-sm",
                       issue.severity === "error"
                         ? "text-destructive"
-                        : "text-amber-600",
+                        : "text-amber-700 dark:text-amber-400",
                     )}
                   >
                     {message(issue)}

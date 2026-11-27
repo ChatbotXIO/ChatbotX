@@ -1,0 +1,38 @@
+{
+  "type": "diff",
+  "version": "10",
+  "dialect": "postgres",
+  "id": "b77408ea-4d67-485d-b6df-b2d74d9a4df9",
+  "prevIds": [
+    "8952801b-1628-4f35-a127-550d73d1778f"
+  ],
+  "footprints": [
+    {
+      "statementType": "drop_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "Cart",
+        "Cart_abandoned_scan_idx"
+      ],
+      "writes": [
+        "s|idx|public.Cart_abandoned_scan_idx",
+        "n|idx|public.Cart_abandoned_scan_idx",
+        "e|idx|public.Cart_abandoned_scan_idx",
+        "n|rel|public.Cart_abandoned_scan_idx"
+      ],
+      "reads": [
+        "e|tbl|public.Cart",
+        "n|sch|public",
+        "e|col|public.Cart.lastActivityAt"
+      ],
+      "sharedWrites": []
+    }
+  ],
+  "deltas": [
+    {
+      "op": "drop",
+      "key": "indexes\u0000[\"public\",\"Cart_abandoned_scan_idx\"]"
+    }
+  ]
+}

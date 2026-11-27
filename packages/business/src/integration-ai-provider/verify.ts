@@ -16,6 +16,7 @@ export type AiKeyProvider =
   | "claude"
   | "deepseek"
   | "gemini"
+  | "muse"
   | "openai"
   | "openrouter"
 
@@ -48,6 +49,13 @@ const verifyConfigByProvider: Record<AiKeyProvider, VerifyConfig> = {
       "x-goog-api-key": apiKey,
     }),
     invalidStatuses: [400, 401, 403],
+  },
+  muse: {
+    url: "https://api.meta.ai/v1/models",
+    headers: (apiKey) => ({
+      Authorization: `Bearer ${apiKey}`,
+    }),
+    invalidStatuses: UNAUTHORIZED_STATUSES,
   },
   openai: {
     url: "https://api.openai.com/v1/models",

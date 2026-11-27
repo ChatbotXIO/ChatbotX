@@ -1,3 +1,4 @@
+import { customFieldService } from "@chatbotx.io/business"
 import type { AIAgentActionRule } from "@chatbotx.io/database/partials"
 import { type Tool, tool } from "ai"
 import { z } from "zod"
@@ -17,11 +18,40 @@ type ToolOutput = {
   skipped: Array<{ actionId?: string; reason: string; ruleId?: string }>
 }
 
-function buildActionToolDescription(rules: AIAgentActionRule[]): string {
+/**
+ * Action ids are opaque (`createId()` in the builder), so a set_custom_field
+ * action must be named by its field — otherwise the model cannot tell what to
+ * put in `values` and leaves it empty unless the When text spells it out.
+ */
+function describeRuleValues(
+  rule: AIAgentActionRule,
+  fieldNames?: ReadonlyMap<string, string>,
+): string {
+  const lines = rule.actions.flatMap((action) =>
+    action.type === "set_custom_field"
+      ? [
+          `   - actionId ${action.id}: custom field "${fieldNames?.get(action.customFieldId) ?? "unnamed"}"`,
+        ]
+      : [],
+  )
+  if (lines.length === 0) {
+    return ""
+  }
+  return [
+    "",
+    "   Values to save when this rule matches (put each one the customer gave in values; omit any they did not give):",
+    ...lines,
+  ].join("\n")
+}
+
+function buildActionToolDescription(
+  rules: AIAgentActionRule[],
+  fieldNames?: ReadonlyMap<string, string>,
+): string {
   const configuredRules = rules
     .map(
       (rule, index) =>
-        `${index + 1}. ruleId: ${rule.id}\n   When: ${rule.when}`,
+        `${index + 1}. ruleId: ${rule.id}\n   When: ${rule.when}${describeRuleValues(rule, fieldNames)}`,
     )
     .join("\n")
 
@@ -87,6 +117,27 @@ const rejected = (reason: string): ToolOutput => ({
   failed: [],
 })
 
+/** Field names for the tool description, keyed by custom field id. */
+export async function resolveActionValueFieldNames(input: {
+  rules: AIAgentActionRule[]
+  workspaceId: string
+}): Promise<Map<string, string>> {
+  const ids = [
+    ...new Set(
+      input.rules.flatMap((rule) =>
+        rule.actions.flatMap((action) =>
+          action.type === "set_custom_field" ? [action.customFieldId] : [],
+        ),
+      ),
+    ),
+  ]
+  const fields = await customFieldService.findManyByIds({
+    workspaceId: input.workspaceId,
+    ids,
+  })
+  return new Map(fields.map((field) => [field.id, field.name]))
+}
+
 /**
  * Builds the one native tool used by AI actions. The schema controls shape;
  * this executor additionally binds every value to a configured action/rule.
@@ -94,10 +145,11 @@ const rejected = (reason: string): ToolOutput => ({
 export function createAIAgentActionsTool(input: {
   context: AIAgentActionExecutionContext
   executedRuleIds: Set<string>
+  fieldNames?: ReadonlyMap<string, string>
   rules: AIAgentActionRule[]
 }): Tool<ToolInput, ToolOutput> {
   return tool({
-    description: buildActionToolDescription(input.rules),
+    description: buildActionToolDescription(input.rules, input.fieldNames),
     inputSchema: buildToolInputSchema(input.rules),
     execute: async (call: ToolInput) => {
       const configuredRuleById = new Map(

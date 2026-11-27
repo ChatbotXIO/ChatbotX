@@ -120,5 +120,12 @@ export async function getWhatsappFlowResponseView(props: {
     contactInboxId: message.contactInboxId,
     flowToken: readFlowToken(entity.flowToken, entity.flowResponse),
   })
-  return buildWhatsappFlowResponseFields(entity.flowResponse, labels)
+  return buildWhatsappFlowResponseFields(entity.flowResponse, labels, {
+    files: entity.files,
+    urlByMediaId: new Map(
+      message.attachments.flatMap(({ sourceId, url }) =>
+        sourceId && url ? [[sourceId, url] as const] : [],
+      ),
+    ),
+  })
 }

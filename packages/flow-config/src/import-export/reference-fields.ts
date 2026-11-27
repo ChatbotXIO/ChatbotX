@@ -2,6 +2,8 @@ import {
   BOT_FIELD_REFERENCE_PREFIX,
   FieldReferenceKind,
 } from "../field-reference"
+import { CONTACT_FILTER_FIELD_REFERENCE } from "./contact-filter-references"
+import { EXTERNAL_REFERENCE_KIND } from "./external-reference-kind"
 
 /**
  * Single source of truth for every workspace-scoped entity reference the
@@ -23,6 +25,8 @@ import {
 export const REFERENCE_FIELD_ENTITY_KIND: Record<string, string> = {
   inputFieldId: "customField",
   outputFieldId: "customField",
+  // AI Segment Image's optional detection-details field (steps/ai-segment-image.ts).
+  detailsOutputFieldId: "customField",
   outputCustomFieldId: "customField",
   customFieldId: "customField",
   dateTimeFieldId: "customField",
@@ -52,6 +56,26 @@ export const REFERENCE_FIELD_ENTITY_KIND: Record<string, string> = {
   // install has no Mini App adapter, and the worker drops a button whose Mini
   // App is not in the sending workspace.
   miniAppId: "miniApp",
+  // A flow link or a leaderboard names a minigame; its settings name the rest.
+  minigameId: "minigame",
+  sharingFlowId: "flow",
+  referralWelcomeFlowId: "flow",
+  prizeNameCustomFieldId: "customField",
+  // The store settings and a vendor name a schedule; the settings name three flows.
+  openHoursId: "openHours",
+  abandonedCartFlowId: "flow",
+  checkoutFlowId: "flow",
+  orderConfirmationFlowId: "flow",
+  // Pipeline flow step (steps/pipeline.ts). The template pipelines manifest
+  // fills all three maps; unresolved ids only warn.
+  pipelineId: "pipeline",
+  destinationPipelineId: "pipeline",
+  stageId: "pipelineStage",
+  destinationStageId: "pipelineStage",
+  pipelineFieldId: "pipelineField",
+  // Find places near me step (steps/find-places-near-me.ts). The template's
+  // `placeCategories` manifest finds or creates the category by name.
+  placeCategoryId: "placeCategory",
 }
 
 // `flowId` shows up both as a cross-flow jump target (steps/start-external-flow.ts,
@@ -72,9 +96,52 @@ export const CROSS_FLOW_NODE_FIELD = "nodeId"
  */
 export const REFERENCE_ARRAY_FIELD_ENTITY_KIND: Record<string, string> = {
   tagIds: "tag",
+  // Trigger addSequence / removeSequence actions.
+  sequenceIds: "sequence",
   addonProductIds: "product",
+  // A minigame's tag groups.
+  openerTagIds: "tag",
+  playerTagIds: "tag",
+  newFriendTagIds: "tag",
   productIds: "product",
+  pipelineFieldIds: "pipelineField",
+  // Pipelines step assignees. Members and teams never travel between
+  // workspaces, so these kinds have no id map: they are reported and stripped.
+  assigneeMemberIds: "workspaceMember",
+  assigneeInboxTeamIds: "inboxTeam",
 }
+
+/**
+ * Array reference kinds whose unresolved elements are removed (and reported)
+ * instead of left in place: a foreign id there is not a stale picker but a
+ * value that makes the owning step fail on every run.
+ */
+export const STRIP_UNRESOLVED_ARRAY_REFERENCE_KINDS: ReadonlySet<string> =
+  new Set(["workspaceMember", "inboxTeam"])
+
+// Values a member / team slot can hold that name nobody: sentinels, not ids.
+const ASSIGNEE_SENTINELS: ReadonlySet<string> = new Set(["unassigned"])
+const NUMERIC_ID_PATTERN = /^\d+$/
+
+/**
+ * True when `value` is a workspace-bound id of `kind` that can not be kept in
+ * another workspace. A member or team slot holds a bare id, `u_<id>` /
+ * `t_<id>`, or a sentinel such as `unassigned` that names nobody and is never
+ * a reference; every other kind holds a bare numeric id.
+ */
+export const isWorkspaceBoundReferenceValue = (
+  kind: string,
+  value: string,
+): boolean =>
+  STRIP_UNRESOLVED_ARRAY_REFERENCE_KINDS.has(kind)
+    ? value.length > 0 && !ASSIGNEE_SENTINELS.has(value)
+    : NUMERIC_ID_PATTERN.test(value)
+
+/** The reference kinds whose policy is `policy`. */
+export const referenceKindsWithPolicy = (policy: ReferencePolicy): string[] =>
+  Object.entries(REFERENCE_KIND_POLICY)
+    .filter(([, kindPolicy]) => kindPolicy === policy)
+    .map(([kind]) => kind)
 
 /**
  * Discriminated-union reference fields: the key itself carries no kind
@@ -89,6 +156,11 @@ export type DiscriminatedReferenceField = {
   readonly discriminatorKey: string
   /** Discriminator value -> entity kind. */
   readonly kindByDiscriminator: Readonly<Record<string, string>>
+  /**
+   * Sibling keys that must all be present (as strings) on the object for the
+   * rule to apply, so a same-named key on an unrelated step is never touched.
+   */
+  readonly requireSiblings?: readonly string[]
 }
 
 export const DISCRIMINATED_REFERENCE_FIELDS: Readonly<
@@ -100,6 +172,18 @@ export const DISCRIMINATED_REFERENCE_FIELDS: Readonly<
       trigger: "trigger",
       webhook: "webhook",
     },
+  },
+  // A Condition row (`steps/condition.ts`): `value` holds an id for the
+  // contact-filter fields listed in `CONTACT_FILTER_FIELD_REFERENCE`.
+  value: {
+    discriminatorKey: "field",
+    kindByDiscriminator: Object.fromEntries(
+      Object.entries(CONTACT_FILTER_FIELD_REFERENCE).map(([field, ref]) => [
+        field,
+        ref.kind,
+      ]),
+    ),
+    requireSiblings: ["field", "operator"],
   },
 }
 
@@ -131,6 +215,117 @@ export const PREFIXED_REFERENCE_ENTITY_KIND: Readonly<Record<string, string>> =
 export const PREFIXED_REFERENCE_FIELDS: ReadonlySet<string> = new Set(["tools"])
 
 /**
+ * What happens to a reference of a given kind when a template is installed
+ * into another workspace (or a flow is imported):
+ *
+ * - `copy`: shipped inside the template and re-created, so it is remapped to
+ *   the new copy's id.
+ * - `naturalKey`: found or created by name in the target (tags, fields,
+ *   folders...), so it is remapped to that row's id.
+ * - `verifyInTarget`: kept only when the id exists in the target workspace.
+ * - `strip`: removed, since it can never mean the same thing elsewhere
+ *   (members and teams do not travel between workspaces).
+ * - `external`: a third-party id this product never owns; never touched.
+ */
+export type ReferencePolicy =
+  | "copy"
+  | "naturalKey"
+  | "verifyInTarget"
+  | "strip"
+  | "external"
+
+export const REFERENCE_KIND_POLICY: Readonly<Record<string, ReferencePolicy>> =
+  {
+    flow: "copy",
+    flowNode: "copy",
+    aiAgent: "copy",
+    aiFunction: "copy",
+    aiFile: "copy",
+    aiMcpServer: "copy",
+    trigger: "copy",
+    calendar: "copy",
+    questionnaire: "copy",
+    couponTopic: "copy",
+    reflink: "copy",
+    minigame: "copy",
+    openHours: "copy",
+    automatedResponse: "copy",
+    customField: "naturalKey",
+    [FieldReferenceKind.botField]: "naturalKey",
+    tag: "naturalKey",
+    folder: "naturalKey",
+    pipeline: "naturalKey",
+    pipelineStage: "naturalKey",
+    pipelineField: "naturalKey",
+    productCategory: "naturalKey",
+    // Found or created by name (empty: locations are never copied). Unresolved
+    // (a payload without the manifest), the id becomes `null` = "all locations"
+    // with a `referenceRemoved` warning, never another workspace's id.
+    placeCategory: "naturalKey",
+    // Sequences are shipped when the template includes them (a flow's or
+    // trigger's sequence is a hard dependency, so `idMaps.sequence` resolves
+    // the id). `verifyInTarget` stays the fallback for a payload that does not
+    // carry it: the id is kept only when it exists in the target workspace and
+    // is removed otherwise, never left pointing at another workspace.
+    sequence: "verifyInTarget",
+    inbox: "verifyInTarget",
+    product: "verifyInTarget",
+    vendor: "verifyInTarget",
+    integration: "verifyInTarget",
+    messengerPersona: "verifyInTarget",
+    spreadsheet: "verifyInTarget",
+    miniApp: "verifyInTarget",
+    leaderboard: "verifyInTarget",
+    // Polls ship with a template (remapped by `idMaps.poll`); otherwise an id
+    // is kept only when it is the target workspace's own.
+    poll: "verifyInTarget",
+    webhook: "verifyInTarget",
+    decisionProfile: "verifyInTarget",
+    userPersistentMenu: "verifyInTarget",
+    whatsappFlow: "verifyInTarget",
+    messengerTemplate: "verifyInTarget",
+    whatsappTemplate: "verifyInTarget",
+    broadcast: "strip",
+    workspaceMember: "strip",
+    inboxTeam: "strip",
+    [EXTERNAL_REFERENCE_KIND]: "external",
+  }
+
+/**
+ * Slots whose meaning depends on the step that owns them, keyed by `stepType`
+ * then by the slot's path relative to the step. A value is an entity kind, or
+ * `EXTERNAL_REFERENCE_KIND` for a third-party id the generic key tables would
+ * otherwise mistake for one of ours (ActiveCampaign `tagIds`).
+ */
+export const STEP_REFERENCE_OVERRIDES: Readonly<
+  Record<string, Readonly<Record<string, string>>>
+> = {
+  activeCampaignSyncContact: { tagIds: EXTERNAL_REFERENCE_KIND },
+  assignConversation: { assignedId: "workspaceMember" },
+  autoAssignConversation: { assignedIds: "workspaceMember" },
+  evaluateDecision: {
+    contextCustomFieldIds: "customField",
+    profileId: "decisionProfile",
+  },
+  setMessengerUserPersistentMenu: {
+    userPersistentMenuId: "userPersistentMenu",
+  },
+  whatsappFlow: { "flow.id": "whatsappFlow" },
+  // The picked template row of a Messenger / WhatsApp channel. Each belongs to
+  // an integration of one workspace, so a foreign id is removed on install.
+  sendMessengerTemplateMessage: { "template.id": "messengerTemplate" },
+  sendWaTemplateMessage: { "template.id": "whatsappTemplate" },
+  sendCollection: {
+    "conditions.categoryId": "productCategory",
+    "conditions.subcategoryId": "productCategory",
+    "conditions.vendorId": "vendor",
+  },
+  // `thumbnailProductId` is the Meta catalog `retailerId` (Content ID), not a
+  // `Product` id, so it must never be looked up as one.
+  sendViewCatalog: { thumbnailProductId: EXTERNAL_REFERENCE_KIND },
+}
+
+/**
  * Depth ceiling for every walker in this module and in `remap.ts`.
  *
  * These recurse over attacker-supplied JSON. A few step schemas keep an
@@ -152,3 +347,75 @@ export const isPlainObject = (
   value: unknown,
 ): value is Record<string, unknown> =>
   typeof value === "object" && value !== null && !Array.isArray(value)
+
+/**
+ * What a reference slot looks like in its step's zod schema, which decides how
+ * a reference that cannot be kept is removed without leaving a graph the
+ * editor can not open:
+ *
+ * - `optional`: the key is deleted.
+ * - `nullable`: the value becomes `null`.
+ * - `required`: the value becomes `""`, the editor's own "nothing picked yet"
+ *   state (every step's default props use `""` for an unset id).
+ * - an array element is dropped from its array.
+ */
+/** `emptiable`: required to run, but a step may be saved with it empty and filled in later. */
+export type ReferenceSlotShape =
+  | "optional"
+  | "nullable"
+  | "required"
+  | "emptiable"
+
+/** Slots that are not plain required strings, by key. Any key absent here is `required`. */
+export const REFERENCE_SLOT_SHAPE_BY_KEY: Readonly<
+  Record<string, ReferenceSlotShape>
+> = {
+  botFieldId: "optional",
+  detailsOutputFieldId: "optional",
+  integrationId: "optional",
+  integrationMessengerId: "optional",
+  leaderboardId: "optional",
+  personaId: "optional",
+  sequenceId: "optional",
+  destinationStageId: "optional",
+  topicId: "optional",
+  inboxId: "optional",
+  userPersistentMenuId: "optional",
+  minigameId: "nullable",
+  sharingFlowId: "nullable",
+  referralWelcomeFlowId: "nullable",
+  prizeNameCustomFieldId: "nullable",
+  openHoursId: "nullable",
+  abandonedCartFlowId: "nullable",
+  checkoutFlowId: "nullable",
+  orderConfirmationFlowId: "nullable",
+}
+
+/**
+ * Per-step exceptions to `REFERENCE_SLOT_SHAPE_BY_KEY`, keyed by `stepType`
+ * then by the slot's path relative to the step.
+ */
+export const STEP_REFERENCE_SLOT_SHAPE: Readonly<
+  Record<string, Readonly<Record<string, ReferenceSlotShape>>>
+> = {
+  // Members never travel: the step stays, for the installer to pick someone.
+  assignConversation: { assignedId: "emptiable" },
+  // `inboxId` is nullable, not optional, on these two steps.
+  sendWaTemplateMessage: {
+    inboxId: "nullable",
+    "template.inboxId": "nullable",
+  },
+  // A map row's custom field is optional on the spreadsheet steps.
+  spreadsheetSendData: { "map.customFieldId": "optional" },
+  spreadsheetUpdateRow: { "map.customFieldId": "optional" },
+  whatsappFlow: {
+    inboxId: "nullable",
+    "flow.fieldMappings.customFieldId": "nullable",
+  },
+  // A required id on the other steps that use `sequenceId` / `topicId`.
+  sendMessage: { sequenceId: "required" },
+  coupon: { topicId: "required" },
+  findPlacesNearMe: { placeCategoryId: "nullable" },
+  markCouponUsed: { topicId: "required" },
+  setUpCoupon: { topicId: "required" },
+}

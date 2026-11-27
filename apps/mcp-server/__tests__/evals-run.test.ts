@@ -1,10 +1,12 @@
 import { describe, expect, test } from "vitest"
 import { type EvalCase, materializeCases } from "../evals/cases"
-import { getAggregateUsage, getFinalStepUsage } from "../evals/run"
 import {
   assertComparableManifests,
   type EvalManifest,
+  getAggregateUsage,
+  getFinalStepUsage,
   validateCaseCoverage,
+  withConfirmationArgument,
 } from "../evals/run-contract"
 import { fixtureOperationIds } from "../evals/sandbox"
 
@@ -87,6 +89,21 @@ describe("evaluation runner contracts", () => {
         usage: aggregateUsage,
       }),
     ).toEqual(aggregateUsage)
+  })
+
+  test("retries confirmation in direct and meta-tool argument shapes", () => {
+    expect(
+      withConfirmationArgument("contacts_send_message", { id: "1" }),
+    ).toEqual({ _confirm: true, id: "1" })
+    expect(
+      withConfirmationArgument("call_tool", {
+        arguments: { id: "1" },
+        name: "contacts_send_message",
+      }),
+    ).toEqual({
+      arguments: { _confirm: true, id: "1" },
+      name: "contacts_send_message",
+    })
   })
 
   test("permits source and instructions snapshots to differ", () => {

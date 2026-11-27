@@ -1,0 +1,8 @@
+{
+  "extends": "@chatbotx.io/typescript-config/base.json",
+  "compilerOptions": {
+    "outDir": "dist"
+  },
+  "include": ["src", "__tests__"],
+  "exclude": ["node_modules", "dist"]
+}

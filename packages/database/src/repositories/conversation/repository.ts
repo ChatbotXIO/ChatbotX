@@ -1,6 +1,31 @@
+import { createId } from "@chatbotx.io/utils"
 import { and, type DatabaseClient, db, eq, isNull, sql } from "../../client"
 import { conversationModel } from "../../schema"
 import type { ConversationModel } from "../../types"
+
+/**
+ * Opens the DM (`sourceId IS NULL`) of each contact that has none. A contact
+ * whose DM already exists — or is opened concurrently, e.g. by the message
+ * echo webhook — is skipped by `ON CONFLICT DO NOTHING`, so callers re-read
+ * the DMs afterwards instead of trusting what this inserted.
+ */
+export async function insertDmConversationsIfAbsent(
+  params: { workspaceId: string; contactIds: string[] },
+  tx: DatabaseClient = db,
+): Promise<void> {
+  const { workspaceId, contactIds } = params
+  await tx
+    .insert(conversationModel)
+    .values(
+      contactIds.map((contactId) => ({
+        id: createId(),
+        workspaceId,
+        contactId,
+        sourceId: null,
+      })),
+    )
+    .onConflictDoNothing()
+}
 
 /**
  * Claims an unassigned conversation for a user — used by the call-answer and
@@ -164,4 +189,28 @@ export async function closeHumanReplyWindow(
     closedResponseDueAt: toDateOrNull(row.closedResponseDueAt),
     closedResponseSlaTargetSeconds: row.closedResponseSlaTargetSeconds,
   }
+}
+
+export async function unassignUserBatch(
+  userId: string,
+  limit: number,
+  tx: DatabaseClient = db,
+): Promise<number> {
+  const result = await tx.execute<{ id: string }>(sql`
+    WITH batch AS (
+      SELECT "id"
+      FROM "Conversation"
+      WHERE "assignedUserId" = ${userId}
+      ORDER BY "id"
+      LIMIT ${limit}
+      FOR UPDATE SKIP LOCKED
+    )
+    UPDATE "Conversation"
+    SET "assignedUserId" = NULL
+    FROM batch
+    WHERE "Conversation"."id" = batch."id"
+    RETURNING "Conversation"."id"
+  `)
+
+  return result.rows.length
 }

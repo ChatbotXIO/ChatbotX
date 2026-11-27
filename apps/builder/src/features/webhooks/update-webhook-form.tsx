@@ -1,5 +1,6 @@
 "use client"
 
+import type { StoreSource } from "@chatbotx.io/database/partials"
 import type { WebhookModel } from "@chatbotx.io/database/types"
 import { TextareaField } from "@chatbotx.io/ui/components/form/textarea-field"
 import { Button } from "@chatbotx.io/ui/components/ui/button"
@@ -34,10 +35,11 @@ type WebhookWithConditions = WebhookModel & {
 type UpdateWebhookFormProps = {
   workspaceId: string
   webhook: WebhookWithConditions
+  storeSource?: StoreSource
 }
 
 export default function UpdateWebhookForm(props: UpdateWebhookFormProps) {
-  const { workspaceId, webhook } = props
+  const { workspaceId, webhook, storeSource } = props
   const t = useTranslations()
   const router = useRouter()
 
@@ -117,6 +119,7 @@ export default function UpdateWebhookForm(props: UpdateWebhookFormProps) {
                   option.defaultFn() as UpdateWebhookSchema["conditions"][number]
                 appendConditions(condition)
               }}
+              storeSource={storeSource}
             />
           </div>
 

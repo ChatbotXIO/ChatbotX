@@ -1,8 +1,11 @@
-import { db } from "@chatbotx.io/database/client"
+import { aiFileService } from "@chatbotx.io/business"
+import { capText, logDiagnostic } from "@chatbotx.io/logger"
 import { type ToolSet, tool } from "ai"
+import { normalizeError } from "universal-error-normalizer"
 import { z } from "zod"
 import { logger } from "../../logger"
 import { type FileSearchConfig, performFileSearch } from "../knowledge-base"
+import { DEFAULT_FILE_SEARCH_MAX_RESULTS } from "../retrieval/constants"
 
 export async function getAIFileTools(
   workspaceId: string,
@@ -23,7 +26,7 @@ export async function getAIFileTools(
     fileSearchFoundPrefix = (count: number) =>
       `Found ${count} matching results:`,
     similarityThreshold,
-    maxResults = 5,
+    maxResults = DEFAULT_FILE_SEARCH_MAX_RESULTS,
   } = options
   try {
     const tools: ToolSet = {}
@@ -32,11 +35,9 @@ export async function getAIFileTools(
       return tools
     }
 
-    const allFiles = await db.query.aiFileModel.findMany({
-      where: {
-        workspaceId,
-        id: { in: selectedFileIds },
-      },
+    const allFiles = await aiFileService.findManyByIds({
+      workspaceId,
+      ids: selectedFileIds,
     })
 
     if (allFiles.length > 0) {
@@ -56,7 +57,7 @@ export async function getAIFileTools(
 
           if (results.length === 0) {
             logger.info(
-              { workspaceId, query },
+              { workspaceId, queryLength: query.length },
               "[knowledge-base] tool: no results found",
             )
             return fileSearchNoResult
@@ -71,12 +72,22 @@ export async function getAIFileTools(
           logger.info(
             {
               workspaceId,
-              query,
               resultCount: results.length,
               outputLength: toolOutput.length,
-              output: toolOutput,
+              queryLength: query.length,
+              chunkIds: results.map((result) => result.id),
+              topSimilarity: results[0]?.similarity,
             },
             "[knowledge-base] tool: formatted output sent to AI",
+          )
+          logDiagnostic(
+            logger,
+            () => ({
+              workspaceId,
+              query: capText(query, 500),
+              chunkIds: results.map((result) => result.id),
+            }),
+            "[knowledge-base] tool: query diagnostic",
           )
 
           return toolOutput
@@ -88,7 +99,7 @@ export async function getAIFileTools(
   } catch (error) {
     logger.error(
       {
-        error,
+        err: normalizeError(error),
         workspaceId,
       },
       "[ai-package] getAIFileTools failed",

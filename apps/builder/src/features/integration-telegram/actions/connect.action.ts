@@ -1,20 +1,16 @@
 "use server"
 
-import {
-  hasWorkspaceAccess,
-  telegramIntegrationService,
-  userQuotaService,
-  workspaceService,
-} from "@chatbotx.io/business"
+import { telegramIntegrationService, userService } from "@chatbotx.io/business"
 import { auditService } from "@chatbotx.io/business/audit"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
 import type { UserModel } from "@chatbotx.io/database/types"
 import { redirect } from "next/navigation"
-import { isCloud } from "@/env"
+import { resolveConnectOwnerId } from "@/features/channel-connect/lib/resolve-connect-owner"
 import { integrations } from "@/integration"
 import { logger } from "@/lib/log"
 import { buildBrokerCallbackUrl } from "@/lib/oauth-broker"
 import { authActionClient } from "@/lib/safe-action"
+import { resolveRequestTenantId } from "@/lib/tenant/request-tenant"
 import {
   type ConnectTelegramRequest,
   connectTelegramRequest,
@@ -32,6 +28,7 @@ export const connectTelegramAction = authActionClient
     }) => {
       try {
         const workspaceId = parsedInput.workspaceId ?? undefined
+        const hostTenantId = await resolveRequestTenantId()
 
         // Validate bot token and fetch bot info from Telegram
         const botData = await integrations.telegram.runAction("connect", {
@@ -39,31 +36,24 @@ export const connectTelegramAction = authActionClient
         })
 
         // Resolve ownerId before the transaction to avoid an extra read inside it
-        let ownerId = ctx.user.id
-        if (workspaceId) {
-          if (!(await hasWorkspaceAccess({ workspaceId, user: ctx.user }))) {
-            throw new ChatbotXException("Workspace not found", "notFound", 404)
-          }
-          const workspace = await workspaceService.findOrFail({
-            where: { id: workspaceId },
-          })
-          ownerId = workspace.ownerId
-        }
+        const ownerId = await resolveConnectOwnerId({
+          workspaceId,
+          user: ctx.user,
+        })
 
-        if (!workspaceId && isCloud()) {
-          const { blocked, reason } = await userQuotaService.getAccessState(
-            ctx.user.id,
-          )
-          if (blocked) {
-            throw reason === "mac"
-              ? new ChatbotXException(
-                  "Monthly active contact limit reached",
-                  "macLimitReached",
-                  403,
-                )
-              : new ChatbotXException("Trial expired", "trialExpired", 403)
-          }
-        }
+        // The bot token is the authorization. Recorded before
+        // `telegramIntegrationService.connect` so a failed connect keeps the
+        // backup; a new workspace has no id yet.
+        await userService.recordConnectionAuthorization({
+          userId: ctx.user.id,
+          provider: "telegram",
+          auth: {
+            authType: "secretText",
+            secretText: parsedInput.botToken,
+          },
+          phase: "credentialsValidated",
+          workspaceId: workspaceId ?? null,
+        })
 
         const result = await telegramIntegrationService.connect({
           workspaceId,
@@ -72,6 +62,7 @@ export const connectTelegramAction = authActionClient
           botId: botData.id,
           botUsername: botData.username,
           botToken: parsedInput.botToken,
+          hostTenantId,
           onConnected: async ({ webhookSecretToken }) => {
             // Register webhook URL with Telegram
             const webhookUrl = buildBrokerCallbackUrl(

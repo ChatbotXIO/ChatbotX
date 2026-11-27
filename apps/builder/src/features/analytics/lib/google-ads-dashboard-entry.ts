@@ -4,7 +4,7 @@ import {
 } from "@chatbotx.io/business"
 
 /**
- * Whether the Analytics nav shows the Google Ads entry: super admins only, and
+ * Whether the Analytics section select lists the Google Ads entry: super admins only, and
  * only once the workspace has a connection or any conversion history (events
  * outlive a disconnect, and the check ignores the selected date range).
  */

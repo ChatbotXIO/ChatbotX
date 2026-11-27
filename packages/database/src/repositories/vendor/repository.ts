@@ -10,8 +10,13 @@ import {
   inArray,
   sql,
 } from "@chatbotx.io/database/client"
+import type { StoreSource } from "@chatbotx.io/database/partials"
 import { productModel, vendorModel } from "@chatbotx.io/database/schema"
-import { likeContains, parsePagination } from "@chatbotx.io/database/utils"
+import {
+  deleteByIdsInWorkspace,
+  likeContains,
+  parsePagination,
+} from "@chatbotx.io/database/utils"
 import { createId } from "@chatbotx.io/utils"
 
 /** Every column a vendor form or API writes. */
@@ -26,6 +31,8 @@ const lowerName = () => sql<string>`lower(${vendorModel.name})`
 
 export type VendorListInput = {
   workspaceId: string
+  /** Our own vendors or the connected Shopify store's; ours when left out. */
+  source?: StoreSource
   /** Case-insensitive part of the name. */
   name?: string | null
   page?: number
@@ -34,10 +41,12 @@ export type VendorListInput = {
 
 const vendorListWhere = (input: {
   workspaceId: string
+  source?: StoreSource
   name?: string | null
 }) =>
   and(
     eq(vendorModel.workspaceId, input.workspaceId),
+    eq(vendorModel.source, input.source ?? "chatbotx"),
     input.name ? ilike(vendorModel.name, likeContains(input.name)) : undefined,
   )
 
@@ -78,11 +87,20 @@ export const vendorRepository = {
     }
   },
 
-  async listOptions(workspaceId: string, tx: DatabaseClient = db) {
+  async listOptions(
+    workspaceId: string,
+    tx: DatabaseClient = db,
+    source: StoreSource = "chatbotx",
+  ) {
     return await tx
       .select({ id: vendorModel.id, name: vendorModel.name })
       .from(vendorModel)
-      .where(eq(vendorModel.workspaceId, workspaceId))
+      .where(
+        and(
+          eq(vendorModel.workspaceId, workspaceId),
+          eq(vendorModel.source, source),
+        ),
+      )
       .orderBy(asc(vendorModel.rank), asc(vendorModel.name))
   },
 
@@ -97,7 +115,7 @@ export const vendorRepository = {
 
   /** Case-insensitive, matching `Vendor_workspaceId_name_key`. */
   async findByNames(
-    input: { workspaceId: string; names: string[] },
+    input: { workspaceId: string; names: string[]; source?: StoreSource },
     tx: DatabaseClient = db,
   ) {
     const lowered = Array.from(
@@ -112,6 +130,7 @@ export const vendorRepository = {
       .where(
         and(
           eq(vendorModel.workspaceId, input.workspaceId),
+          eq(vendorModel.source, input.source ?? "chatbotx"),
           inArray(lowerName(), lowered),
         ),
       )
@@ -123,7 +142,7 @@ export const vendorRepository = {
    * the caller reads the row back.
    */
   async createMissing(
-    input: { workspaceId: string; names: string[] },
+    input: { workspaceId: string; names: string[]; source?: StoreSource },
     tx: DatabaseClient = db,
   ) {
     const byLowerName = new Map<string, string>()
@@ -143,9 +162,41 @@ export const vendorRepository = {
           id: createId(),
           workspaceId: input.workspaceId,
           name,
+          source: input.source ?? "chatbotx",
         })),
       )
       .onConflictDoNothing()
+  },
+
+  /**
+   * Inserts the vendor, or finds the one that already carries the name (names
+   * are unique per workspace and source, case-insensitively). `created` says
+   * which, so a caller writes its copied fields only into a new row.
+   */
+  async insertOrFindByName(
+    input: VendorWriteValues & { workspaceId: string },
+    tx: DatabaseClient = db,
+  ): Promise<{ row: typeof vendorModel.$inferSelect; created: boolean }> {
+    const [inserted] = await tx
+      .insert(vendorModel)
+      .values({ ...input, id: createId() })
+      .onConflictDoNothing()
+      .returning()
+    if (inserted) {
+      return { row: inserted, created: true }
+    }
+    const [existing] = await tx
+      .select()
+      .from(vendorModel)
+      .where(
+        and(
+          eq(vendorModel.workspaceId, input.workspaceId),
+          eq(vendorModel.source, input.source ?? "chatbotx"),
+          eq(lowerName(), input.name.toLowerCase()),
+        ),
+      )
+      .limit(1)
+    return { row: existing, created: false }
   },
 
   async create(
@@ -180,19 +231,11 @@ export const vendorRepository = {
     return row
   },
 
-  async delete(
-    input: { workspaceId: string; vendorId: string },
+  /** Deletes the vendors in one statement and returns the ids that went. */
+  async deleteManyReturningIds(
+    input: { workspaceId: string; ids: string[] },
     tx: DatabaseClient = db,
-  ) {
-    const [row] = await tx
-      .delete(vendorModel)
-      .where(
-        and(
-          eq(vendorModel.id, input.vendorId),
-          eq(vendorModel.workspaceId, input.workspaceId),
-        ),
-      )
-      .returning()
-    return row
+  ): Promise<string[]> {
+    return await deleteByIdsInWorkspace(tx, vendorModel, input)
   },
 }

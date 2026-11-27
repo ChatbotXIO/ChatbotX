@@ -13,6 +13,23 @@ const mocks = vi.hoisted(() => ({
   count: vi.fn(),
 }))
 
+// The template lock guard has its own suite; these tests cover the service.
+// Run the locked transaction against the same mocked client the test asserts on.
+vi.mock("../src/template/template-resource-locks", async () => {
+  const { db } = await import("@chatbotx.io/database/client")
+  return {
+    withTemplateLockedTransaction: (run: (tx: unknown) => unknown) => run(db),
+  }
+})
+
+vi.mock("../src/template/installed-resource.service", async () => ({
+  ...(await import("./helpers/template-guard-mocks")).templateGuardMocks({
+    assertDeletable: vi.fn(),
+    assertResourceEditable: vi.fn(),
+  }),
+  changedKeysOf: vi.fn(() => []),
+}))
+
 vi.mock("@chatbotx.io/database/client", () => ({
   db: {
     query: {
@@ -43,28 +60,47 @@ vi.mock("@chatbotx.io/database/client", () => ({
   }),
 }))
 
-vi.mock("@chatbotx.io/database/partials", () => ({
-  commentAutomationTypes: {
-    enum: {
-      threads: "threads",
+vi.mock("@chatbotx.io/database/partials", async () => {
+  const actual = await vi.importActual<
+    typeof import("../../database/src/partials/comment-automation")
+  >("../../database/src/partials/comment-automation")
+  return {
+    // The real post-target helpers, so hashtag normalization is what ships.
+    COMMENT_POST_HASHTAGS_MAX: actual.COMMENT_POST_HASHTAGS_MAX,
+    COMMENT_POST_HASHTAG_MAX_LENGTH: actual.COMMENT_POST_HASHTAG_MAX_LENGTH,
+    isHashtagCommentAutomation: actual.isHashtagCommentAutomation,
+    isValidCommentPostHashtag: actual.isValidCommentPostHashtag,
+    normalizeCommentPostHashtags: actual.normalizeCommentPostHashtags,
+    commentAutomationTypes: {
+      enum: {
+        threads: "threads",
+      },
     },
-  },
-  // Same contract as the real one: a `text` reply gains a `values` list
-  // mirroring `value`; every other type passes through untouched.
-  normalizeReplyTexts: (reply: {
-    type: string
-    value: string | null
-    values?: { value: string }[]
-  }) =>
-    reply.type === "text" && !reply.values
-      ? { ...reply, values: [{ value: reply.value ?? "" }] }
-      : reply,
-}))
+    // Same contract as the real one: a `text` reply gains a `values` list
+    // mirroring `value`; every other type passes through untouched.
+    normalizeReplyTexts: (reply: {
+      type: string
+      value: string | null
+      values?: { value: string }[]
+    }) =>
+      reply.type === "text" && !reply.values
+        ? { ...reply, values: [{ value: reply.value ?? "" }] }
+        : reply,
+  }
+})
 
 // Stub flowService so its transitive deps aren't loaded; flow validation is
 // covered in comment-automation-write-methods.test.ts.
 vi.mock("../src/flow/service", () => ({
   flowService: { exists: vi.fn().mockResolvedValue(true) },
+}))
+
+vi.mock("../src/ai-agent/service", () => ({
+  aiAgentService: { findByIdForWorkspace: vi.fn() },
+}))
+
+vi.mock("../src/decision/comment-moderation-service", () => ({
+  decisionCommentModerationService: { isConnectionUsable: vi.fn() },
 }))
 
 vi.mock("@chatbotx.io/database/schema", () => ({
@@ -151,12 +187,14 @@ describe("commentAutomationService threads CRUD", () => {
           replyToUsersWhoCommentedOnOtherPosts: false,
           ignoreCommentReplies: false,
           trackUserTags: false,
+          onlyCommentsWithImage: false,
         },
       }),
     )
   })
 
   test("update only allows supported mutable fields", async () => {
+    mocks.findFirst.mockResolvedValue({ id: "thread-1", name: "Before" })
     await commentAutomationService.updateThreadsAutomation({
       workspaceId: "workspace-1",
       id: "thread-1",
@@ -184,6 +222,7 @@ describe("commentAutomationService threads CRUD", () => {
         replyToUsersWhoCommentedOnOtherPosts: true,
         ignoreCommentReplies: true,
         trackUserTags: false,
+        onlyCommentsWithImage: false,
       },
     })
     expect(JSON.stringify(mocks.updateWhere.mock.calls[0]?.[0])).toContain(

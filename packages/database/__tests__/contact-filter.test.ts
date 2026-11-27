@@ -4,7 +4,7 @@ import {
   BOOLEAN_TRUTHY_LITERALS,
   canonicalBooleanLiteral,
 } from "@chatbotx.io/utils/custom-field"
-import { relationsFilterToSQL, type SQL } from "drizzle-orm"
+import type { SQL } from "drizzle-orm"
 import { alias, PgDialect } from "drizzle-orm/pg-core"
 import { describe, expect, test } from "vitest"
 import { operatorTypes } from "../src/partials"
@@ -14,10 +14,13 @@ import {
   buildContactWhere,
   buildSmartKeywordWhere,
   contactFilterHasPredicate,
+  contactFilterUsesField,
+  contactInboxHasDmSQL,
   parseConversationAssigneeValues,
   pruneEmailPhoneFilterConditions,
 } from "../src/queries/contact-filter"
 import { isValidDateTimeFilterValue } from "../src/queries/contact-filter/value-format"
+import { relationsFilterToSQL } from "../src/relations-filter"
 import { contactInboxModel, contactModel } from "../src/schema"
 import { escapeLikePattern, likeContains } from "../src/utils"
 
@@ -2212,6 +2215,27 @@ describe("applyContactFilter — contactInbox relation fields", () => {
     )
   })
 
+  // "Never messaged the page": a comment or an imported contact has no inbound
+  // message, and opening a DM for it (a broadcast does) must not change that.
+  test("lastInteraction isEmpty / isNotEmpty test the latest inbound message for NULL", () => {
+    const render = (operator: string) =>
+      renderContactWhere(
+        applyContactFilter({
+          operator: "and",
+          conditions: [{ field: "lastInteraction", operator }],
+        }),
+      )
+
+    const never = render(operatorTypes.enum.isEmpty)
+    expect(never.sql).toContain(
+      'SELECT MAX("ContactInbox"."lastIncomingMessageAt")',
+    )
+    expect(never.sql).toContain('"latestInteraction"."latest" IS NULL')
+
+    const ever = render(operatorTypes.enum.isNotEmpty)
+    expect(ever.sql).toContain('"latestInteraction"."latest" IS NOT NULL')
+  })
+
   test("renders lastInteraction date filters against latest ContactInbox.lastIncomingMessageAt", () => {
     const eq = renderContactWhere(
       applyContactFilter({
@@ -3045,6 +3069,44 @@ describe("applyContactFilter — tags relation", () => {
   })
 })
 
+describe("applyContactFilter — votedOnPoll relation", () => {
+  test.each([
+    operatorTypes.enum.eq,
+    operatorTypes.enum.ne,
+  ])("renders votedOnPoll %s as a PollVote.pollId EXISTS over the selected polls", (operator) => {
+    const query = renderContactWhere(
+      applyContactFilter({
+        operator: "and",
+        conditions: [
+          { field: "votedOnPoll", operator, value: ["poll-1", "poll-2"] },
+        ],
+      }),
+    )
+    if (operator === operatorTypes.enum.eq) {
+      expect(query.sql).toContain('EXISTS (SELECT 1 FROM "PollVote"')
+      expect(query.sql).not.toContain("NOT EXISTS")
+    } else {
+      expect(query.sql).toContain('NOT EXISTS (SELECT 1 FROM "PollVote"')
+    }
+    expect(query.sql).toContain('"PollVote"."contactId"')
+    expect(query.sql).toContain('"PollVote"."pollId" in')
+    expect(query.params).toEqual(expect.arrayContaining(["poll-1", "poll-2"]))
+  })
+
+  test("renders votedOnPoll isEmpty as NOT EXISTS any PollVote", () => {
+    const query = renderContactWhere(
+      applyContactFilter({
+        operator: "and",
+        conditions: [
+          { field: "votedOnPoll", operator: operatorTypes.enum.isEmpty },
+        ],
+      }),
+    )
+    expect(query.sql).toContain('NOT EXISTS (SELECT 1 FROM "PollVote"')
+    expect(query.sql).not.toContain('"PollVote"."pollId" in')
+  })
+})
+
 describe("applyContactFilter — conversation relation fields", () => {
   test("archived isEmpty/isNotEmpty/eq map to archivedAt null-checks", () => {
     const empty = renderContactWhere(
@@ -3173,6 +3235,41 @@ describe("applyContactFilter — conversation relation fields", () => {
     )
     expect(notTransferred.sql).toContain('"Conversation"."botEnabled" = false')
     expect(notTransferred.sql).toContain('"Conversation"."botResumeAt" > NOW()')
+  })
+})
+
+describe("contactInboxHasDmSQL", () => {
+  test("is an EXISTS over the contact's DM, never a comment thread", () => {
+    const rendered = new PgDialect().sqlToQuery(contactInboxHasDmSQL())
+    expect(rendered.sql).toBe(
+      'EXISTS (SELECT 1 FROM "Conversation" WHERE "Conversation"."contactId" = "ContactInbox"."contactId" AND "Conversation"."sourceId" IS NULL)',
+    )
+  })
+})
+
+describe("contactFilterUsesField", () => {
+  test("is true only when a condition is on the field", () => {
+    const filter = {
+      operator: "or" as const,
+      conditions: [
+        { field: "tag", operator: "in", value: ["vip"] },
+        { field: "lastInteraction", operator: "isEmpty" },
+      ],
+    }
+
+    expect(contactFilterUsesField(filter, "lastInteraction")).toBe(true)
+    expect(contactFilterUsesField(filter, "lastSeen")).toBe(false)
+  })
+
+  test("is false for a missing filter or malformed conditions", () => {
+    expect(contactFilterUsesField(null, "lastInteraction")).toBe(false)
+    expect(contactFilterUsesField(undefined, "lastInteraction")).toBe(false)
+    expect(
+      contactFilterUsesField(
+        { operator: "and", conditions: [null, "lastInteraction", 1] },
+        "lastInteraction",
+      ),
+    ).toBe(false)
   })
 })
 
@@ -4136,14 +4233,36 @@ describe("buildSmartKeywordWhere", () => {
     expect(query.sql.toLowerCase()).toContain('"contact"."email" ilike')
     expect(query.sql.toLowerCase()).toContain('"contact"."phonenumber" ilike')
     expect(query.sql).toContain('"ContactInbox"."sourceId" =')
+    expect(query.sql).toContain('"Contact"."id" =')
     expect(query.params).toEqual([
       "ws-1",
+      "12345",
       "%12345%",
       "%12345%",
       "%12345%",
       "%12345%",
       "12345",
     ])
+  })
+
+  test("a pasted contact id matches that contact exactly", () => {
+    const query = renderContactWhere({
+      workspaceId: "ws-1",
+      ...buildSmartKeywordWhere(" 11753941635047880 "),
+    })
+
+    expect(query.sql).toContain('"Contact"."id" =')
+    expect(query.params[1]).toBe("11753941635047880")
+  })
+
+  test("digit runs too long for a bigint never compare against the id", () => {
+    const query = renderContactWhere({
+      workspaceId: "ws-1",
+      ...buildSmartKeywordWhere("99999999999999999999"),
+    })
+
+    expect(query.sql).not.toContain('"Contact"."id" =')
+    expect(query.sql.toLowerCase()).toContain('"contact"."firstname" ilike')
   })
 
   test("searches plain text by names and exact sourceId only", () => {

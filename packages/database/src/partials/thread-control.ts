@@ -22,6 +22,9 @@ export type ThreadControlRole = z.infer<typeof threadControlRoles>
 export const threadControlActions = z.enum(["take", "release", "pass"])
 export type ThreadControlAction = z.infer<typeof threadControlActions>
 
+/** Meta caps the free-form handover `metadata` note at 2000 characters. */
+export const THREAD_CONTROL_METADATA_MAX_LENGTH = 2000
+
 export const threadControlEvents = z.enum([
   // We got the user's message as owner (Meta: the receiver becomes owner).
   "inboundReceived",
@@ -204,6 +207,42 @@ export function readThreadControlColumns(row: {
     threadControlUpdatedAt: toDateOrNull(row.threadControlUpdatedAt),
     threadOwnerExpiresAt: toDateOrNull(row.threadOwnerExpiresAt),
   }
+}
+
+/**
+ * The roles a channel says THIS app holds on a routed number (WhatsApp
+ * `GET /{phone_number_id}/routing_roles`). Meta's values: `calls`, `ctwa`,
+ * `customer_service`, `escalation`, `marketing`, `utility` (`ai_agent` is never
+ * returned). Kept as strings: a role Meta adds later is stored, not dropped.
+ */
+export const routingRolesSnapshotSchema = z.object({
+  /** `false` when the channel says conversation routing is off for the number. */
+  enabled: z.boolean(),
+  roles: z.array(z.string()),
+  /** Whether the business granted this app standby (listen-only) access. */
+  isStandby: z.boolean(),
+  /** ISO time of the last successful check. */
+  checkedAt: z.string(),
+})
+export type RoutingRolesSnapshot = z.infer<typeof routingRolesSnapshotSchema>
+
+/**
+ * Whether this app may `take` a thread, read from its stored roles. Only the
+ * escalation partner can take (Meta error 2494191 otherwise). `unknown` =
+ * never checked, or routing off: the caller lets the channel decide.
+ */
+export const threadTakePermissions = z.enum(["allowed", "forbidden", "unknown"])
+export type ThreadTakePermission = z.infer<typeof threadTakePermissions>
+
+export function resolveThreadTakePermission(
+  snapshot: RoutingRolesSnapshot | null,
+): ThreadTakePermission {
+  if (!snapshot?.enabled) {
+    return threadTakePermissions.enum.unknown
+  }
+  return snapshot.roles.includes(threadControlRoles.enum.escalation)
+    ? threadTakePermissions.enum.allowed
+    : threadTakePermissions.enum.forbidden
 }
 
 /** An unknown (future) Meta role is stored as null, never rejected. */

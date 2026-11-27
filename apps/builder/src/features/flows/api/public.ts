@@ -3,13 +3,18 @@ import {
   flowVersionService,
   messengerWelcomeMessageFlowService,
 } from "@chatbotx.io/business"
-import { validationException } from "@chatbotx.io/business/errors"
+import {
+  ChatbotXException,
+  notFoundException,
+  validationException,
+} from "@chatbotx.io/business/errors"
 import { importService } from "@chatbotx.io/business/import"
 import { stepTypes } from "@chatbotx.io/flow-config"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { DefaultJobAction, defaultQueue } from "@chatbotx.io/worker-config"
 import { z } from "zod"
 import { flowVersionResource } from "@/features/flow-versions/schema/resource"
+import { hasWorkspacePermission } from "@/lib/auth/permission-routes"
 import { mcpSpec } from "@/lib/orpc/mcp-annotations"
 import {
   possibleErrorsOnCreatingResource,
@@ -45,6 +50,32 @@ import {
 
 const workspaceTokenAuthAPI = workspaceTokenAuthAPIForScope("automation")
 
+const exportFailure = (
+  reason: "notFound" | "notPublished" | "noDraft" | "viewOnly",
+) => {
+  if (reason === "notFound") {
+    return notFoundException("Flow not found")
+  }
+  if (reason === "viewOnly") {
+    return new ChatbotXException(
+      "This flow was installed from a view-only template and can not be exported",
+      "templateAllowEditViolation",
+      403,
+    )
+  }
+  return reason === "noDraft"
+    ? new ChatbotXException(
+        "The flow has no draft to export",
+        "flowNoDraft",
+        409,
+      )
+    : new ChatbotXException(
+        "The flow has no published version to export",
+        "flowNotPublished",
+        409,
+      )
+}
+
 export const flowsPublicRouter = {
   list: workspaceTokenAuthAPI
     .route({
@@ -54,7 +85,13 @@ export const flowsPublicRouter = {
       description:
         "Use this to find flow ids and names before fetching one with `flows.get` or publishing a draft with `flows.publish`. Returns active flows in the workspace, newest first unless `sort` is given. Filter by `name` (substring), `folderId`, or `startType` to pick a flow for a template broadcast.",
       tags: ["Flows"],
-      spec: mcpSpec({ visibility: "default" }),
+      spec: mcpSpec({
+        destructiveHint: false,
+        idempotentHint: true,
+        openWorldHint: false,
+        readOnlyHint: true,
+        visibility: "default",
+      }),
     })
     .input(
       publicListRequest.extend({
@@ -64,6 +101,12 @@ export const flowsPublicRouter = {
           .default(true)
           .describe(
             "Restrict to active flows. Set to false to include inactive ones too.",
+          ),
+        enableInInbox: z
+          .boolean()
+          .optional()
+          .describe(
+            "Restrict to flows that can be started from the inbox (`enableInInbox` true). Omit for all flows.",
           ),
         name: z
           .string()
@@ -98,6 +141,7 @@ export const flowsPublicRouter = {
           name: true,
           folderId: true,
           active: true,
+          enableInInbox: true,
         }),
       ),
     )
@@ -105,6 +149,13 @@ export const flowsPublicRouter = {
     .handler(async ({ context, input }) => {
       const { data, pageCount } = await flowService.list({
         ...input,
+        // A mobile member without the `flows` permission may only see the
+        // flows meant to be started from the inbox, whatever they ask for.
+        enableInInbox:
+          context.member &&
+          !hasWorkspacePermission(context.member.permissions, "flows")
+            ? true
+            : input.enableInInbox,
         workspaceId: context.workspace.id,
         sort: input.sort ?? [{ id: "createdAt", desc: true }],
       })
@@ -119,7 +170,13 @@ export const flowsPublicRouter = {
       description:
         "Use this to inspect one flow and its versions after finding its id with `flows.list`. Call `flows.updateDraft` to change the draft or `flows.publish` to create a version. `welcomeMessageFlows` lists the Meta welcome message flow created on each Messenger page from the published starting step (refreshed a few seconds after `flows.publish`); use its id in Click-to-Messenger ads.",
       tags: ["Flows"],
-      spec: mcpSpec({ visibility: "default" }),
+      spec: mcpSpec({
+        destructiveHint: false,
+        idempotentHint: true,
+        openWorldHint: false,
+        readOnlyHint: true,
+        visibility: "default",
+      }),
     })
     .input(publicIdParam("flow", "flows.list"))
     .output(
@@ -146,7 +203,7 @@ export const flowsPublicRouter = {
       path: "/v1/flows/{id}/nodes",
       summary: "List flow nodes",
       description:
-        "Lists the nodes (canvas blocks) of a flow's published version: `nodeId`, the node's display `label` and `nodeType`. Get the flow id from `flows.list`. A node is identified by its flow and node id together, so the `Executed Step` contact filter takes it as `{flowId}:{nodeId}`. Returns an empty list for a flow that was never published.",
+        "Lists the nodes (canvas blocks) of a flow's published version: `nodeId`, the node's display `label` and `nodeType`. Get the flow id from `flows.list`. A node is identified by its flow and node id together, so the `Executed Step` contact filter takes it as `{flowId}:{nodeId}`. Returns an empty list for a flow that was never published. The same `flowId` and `nodeId` start a flow at that node from a trigger's `startExternalStep` action.",
       tags: ["Flows"],
     })
     .input(publicIdParam("flow", "flows.list"))
@@ -182,7 +239,13 @@ export const flowsPublicRouter = {
         "Creates a flow. With no `spec`/`nodes` it starts a draft with one default start node. Supply `spec` (flow-spec DSL, see `GET /v1/schemas/flow-spec`) or a raw `nodes`/`edges` graph to seed the draft in the same call — node `position`/`measured`, node ids, and edge ids/handles are all generated server-side (a raw node's `id` is only a request-scoped token for wiring `edges`; the response's `nodeIds` maps each authored id to its persisted id). Add `publish: true` to validate the graph exactly like `flows.publish` and create the flow's first version immediately. Use `flows.list` to inspect existing flows first.",
       successStatus: 201,
       tags: ["Flows"],
-      spec: mcpSpec({ visibility: "default" }),
+      spec: mcpSpec({
+        destructiveHint: false,
+        idempotentHint: false,
+        openWorldHint: false,
+        readOnlyHint: false,
+        visibility: "default",
+      }),
     })
     .input(createFlowRequest)
     .output(
@@ -262,7 +325,7 @@ export const flowsPublicRouter = {
       path: "/v1/flows/{id}/duplicate",
       summary: "Duplicate flow",
       description:
-        "Copies a flow's draft into a new flow. Use `flows.get` to inspect the source first, then call `flows.updateDraft` or `flows.publish` on the returned flow.",
+        "Copies a flow within the workspace. The copy gets the source's draft; if the source is published the copy is published too with the same graph and `active` kept, otherwise it is a draft-only flow that starts inactive. References the flow makes to itself point at the copy. Named `<name> _copy`, then `_copy 2`, … . Inspect the source with `flows.get`; edit the copy with `flows.updateDraft` and publish a draft-only copy with `flows.publish`.",
       successStatus: 201,
       tags: ["Flows"],
     })
@@ -286,7 +349,13 @@ export const flowsPublicRouter = {
         "Creates an immutable version from a draft and synchronizes the draft to match. Call `flows.validate` before this when supplying a spec, or use `flows.updateDraft` to save changes without publishing. Also syncs the Meta welcome message flow on every Messenger page (best-effort, asynchronous); read the ids from `flows.get`.",
       successStatus: 204,
       tags: ["Flows"],
-      spec: mcpSpec({ visibility: "default" }),
+      spec: mcpSpec({
+        destructiveHint: true,
+        idempotentHint: true,
+        openWorldHint: true,
+        readOnlyHint: false,
+        visibility: "default",
+      }),
     })
     .input(publishFlowRequest.and(publicIdParam("flow", "flows.list")))
     .errors(possibleErrorsOnMutatingResource)
@@ -313,7 +382,14 @@ export const flowsPublicRouter = {
       description:
         "Compiles a flow-spec DSL object (see `GET /v1/schemas/flow-spec`) and validates the result exactly like `flows.publish` would, without persisting anything. On success, returns the compiled node/edge graph. On failure, returns a 422 with structured errors (`path`/`code`/`message`/`hint`/`candidates`) — fix and retry before calling `flows.publish`.",
       tags: ["Flows"],
-      spec: mcpSpec({ visibility: "default" }),
+      spec: mcpSpec({
+        destructiveHint: false,
+        hitlPolicy: "none",
+        idempotentHint: true,
+        openWorldHint: false,
+        readOnlyHint: true,
+        visibility: "default",
+      }),
     })
     .input(flowSpecRequest)
     .output(publishFlowSchema)
@@ -335,7 +411,13 @@ export const flowsPublicRouter = {
         "Overwrites the draft version's nodes/edges in place, without publishing. Accepts either the raw `{ nodes, edges }` graph the builder UI sends, or `{ spec }` compiled server-side into that same graph — draft nodes are not otherwise validated (see `flows.validate` to check a spec before writing it). Unlike `flows.create`, a raw node's `id` is persisted verbatim, not remapped, so it must already be a numeric string (the same format `flows.create`'s `nodeIds` response and `flows.get` return).",
       successStatus: 204,
       tags: ["Flows"],
-      spec: mcpSpec({ visibility: "default" }),
+      spec: mcpSpec({
+        destructiveHint: true,
+        idempotentHint: true,
+        openWorldHint: false,
+        readOnlyHint: false,
+        visibility: "default",
+      }),
     })
     .input(updateDraftFlowRequest.and(publicIdParam("flow", "flows.list")))
     .errors(possibleErrorsOnMutatingResource)
@@ -372,6 +454,44 @@ export const flowsPublicRouter = {
         workspaceId: context.workspace.id,
       })
       return { data }
+    }),
+
+  export: workspaceTokenAuthAPI
+    .route({
+      method: "GET",
+      path: "/v1/flows/{id}/export",
+      summary: "Export flow",
+      description:
+        "The flow's published graph (or its draft with `version: draft`) as a portable export, with the custom and bot fields it uses listed by name. Save the `export` object as a file and upload it with the Files API to import it into another workspace with `flows.import`.",
+      tags: ["Flows"],
+    })
+    .input(
+      publicIdParam("Flow", "flows.list").extend({
+        version: z
+          .enum(["published", "draft"])
+          .optional()
+          .describe("Which graph to export; defaults to `published`."),
+      }),
+    )
+    .output(
+      z.object({
+        fileName: z.string().describe("Suggested file name."),
+        export: z
+          .record(z.string(), z.unknown())
+          .describe("The flow export document."),
+      }),
+    )
+    .errors(possibleErrorsOnFindingResource)
+    .handler(async ({ context, input }) => {
+      const result = await flowService.buildExport({
+        workspaceId: context.workspace.id,
+        id: input.id,
+        version: input.version,
+      })
+      if (!result.ok) {
+        throw exportFailure(result.reason)
+      }
+      return { fileName: result.fileName, export: result.envelope }
     }),
 
   import: workspaceTokenAuthAPI
@@ -428,9 +548,11 @@ const toPublicFlowListItem = (flow: {
   name: string
   folderId: string | null
   active: boolean
+  enableInInbox: boolean
 }) => ({
   id: flow.id,
   name: flow.name,
   folderId: flow.folderId,
   active: flow.active,
+  enableInInbox: flow.enableInInbox,
 })

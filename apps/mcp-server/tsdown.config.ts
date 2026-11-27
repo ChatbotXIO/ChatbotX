@@ -11,6 +11,7 @@ export default defineConfig({
     alwaysBundle: [/(.*)/],
   },
   clean: true,
+  copy: [{ from: "src/guides/*.md", to: "dist/guides" }],
   target: "node24",
   platform: "node",
   minify: true,

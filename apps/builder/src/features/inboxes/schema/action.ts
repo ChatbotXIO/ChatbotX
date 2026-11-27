@@ -1,4 +1,5 @@
 import { listInboxesRequest } from "@chatbotx.io/business/inbox/schema"
+import { socialProviders } from "@chatbotx.io/database/partials"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { createSearchParamsCache, parseAsInteger } from "nuqs/server"
 import { z } from "zod"
@@ -30,6 +31,54 @@ export const updateInboxPublicRequest = z.object({
     .optional()
     .describe(
       "Whether the contact's unread conversation is marked read when an agent or flow sends a message to it.",
+    ),
+})
+
+// Same cap as the service's `MAX_INBOX_AVATARS` (kept local: this schema is
+// also read by client code, which must not import the business root).
+const MAX_INBOX_AVATAR_IDS = 50
+
+export const listInboxAvatarsPublicRequest = z.object({
+  inboxIds: z
+    // One `?inboxIds=` value arrives as a string; repeated values as an array.
+    .preprocess(
+      (value) => (typeof value === "string" ? [value] : value),
+      z.array(zodBigintAsString()).min(1).max(MAX_INBOX_AVATAR_IDS),
+    )
+    .describe(
+      "Inboxes to read, at most 50. Get ids from `inboxes.list` or from a conversation's `contactInboxes[].inboxId`.",
+    ),
+})
+
+export const listInboxAvatarsRequest = listInboxAvatarsPublicRequest.extend({
+  workspaceId: zodBigintAsString(),
+})
+
+export const inboxAvatarResource = z.object({
+  inboxId: z.string().describe("The inbox the picture belongs to."),
+  avatar: z
+    .string()
+    .nullable()
+    .describe(
+      "URL of the page's profile picture, the same one the Posts pickers show. Null when the page has no picture or it cannot be read now (for example a disconnected inbox).",
+    ),
+  profileUrl: z
+    .string()
+    .nullable()
+    .describe(
+      "The page's public URL on its network (https), the one the Posts pickers link to. Null when it cannot be built.",
+    ),
+  provider: socialProviders.describe(
+    "The network the page is on: `facebook` (Messenger inboxes), `instagram` or `threads`.",
+  ),
+})
+export type InboxAvatarResource = z.infer<typeof inboxAvatarResource>
+
+export const listInboxAvatarsResponse = z.object({
+  data: z
+    .array(inboxAvatarResource)
+    .describe(
+      "One entry per requested inbox whose channel has a page picture (Facebook, Instagram, Threads). Inboxes of other channels or of another workspace are left out.",
     ),
 })
 

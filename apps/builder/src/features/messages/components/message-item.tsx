@@ -1,5 +1,6 @@
 "use client"
 
+import { isResendableMessage } from "@chatbotx.io/database/partials"
 import type {
   MessageButtonTemplate,
   MessageStoryReplyEntity,
@@ -12,6 +13,7 @@ import {
   getWhatsappCallEntity,
   getWhatsappCallPermissionReply,
   getWhatsappFlowResponse,
+  getWhatsappPaymentMethod,
   isMessageProductEntity,
 } from "@chatbotx.io/sdk"
 import {
@@ -37,6 +39,7 @@ import { cn } from "@chatbotx.io/ui/lib/utils"
 import { format } from "date-fns"
 import {
   BotIcon,
+  CopyIcon,
   ExternalLinkIcon,
   ImageIcon,
   LockIcon,
@@ -51,9 +54,22 @@ import {
 import Image from "next/image"
 import Link from "next/link"
 import { useTranslations } from "next-intl"
-import { useState } from "react"
+import { type ReactNode, useState } from "react"
+import { useCopyToClipboard } from "usehooks-ts"
 import type { AttachmentResource } from "@/features/attachments/schema/resource"
 import { useAttachmentSource } from "@/features/attachments/utils"
+import { contactDisplayName } from "@/features/contacts/lib/contact-display-name"
+import { ParticipantAvatar } from "@/features/conversations/components/participant-avatar"
+import type { ConversationParticipantResource } from "@/features/conversations/schema/resource"
+import {
+  OutgoingTranslationStatus,
+  useOutgoingTranslationStatus,
+} from "@/features/translation/components/outgoing-translation-status"
+import { getEmailSubject } from "../lib/get-email-subject"
+import {
+  getSentPaymentRequests,
+  getSentTemplateName,
+} from "../lib/payment-request-content"
 import {
   getThreadControlActivity,
   getThreadControlContextCard,
@@ -69,7 +85,9 @@ import { ReferredProductContext } from "./referred-product-context"
 import { ThreadControlContextCard } from "./thread-control-context-card"
 import { ThreadControlDivider } from "./thread-control-divider"
 import { WhatsappCallCard } from "./whatsapp-call-card"
-import { WhatsappFlowResponseButton } from "./whatsapp-flow-response-dialog"
+import { WhatsappFlowResponseCard } from "./whatsapp-flow-response-card"
+import { WhatsappPaymentConfirmation } from "./whatsapp-payment-confirmation"
+import { WhatsappPaymentRequestCard } from "./whatsapp-payment-request-card"
 
 type MessageItemProps = {
   message: MessageResourceWithRelations
@@ -105,6 +123,29 @@ type MessageItemProps = {
    * and the guest view keep their existing behaviour.
    */
   canPrivateReply?: (message: MessageItemProps["message"]) => boolean
+  /**
+   * The inbox's Resend control, offered next to the error badge of a message
+   * that can be sent again. Passed in (not rendered here) because it needs the
+   * chat store, which the guest webchat view does not have.
+   */
+  renderResend?: (message: MessageItemProps["message"]) => ReactNode
+  /** Inbox only: omitted means the bubble renders exactly as before. */
+  translation?: MessageItemTranslation
+  /**
+   * Inbox only: set on a member's latest message so their small avatar sits
+   * under the bubble's end edge (see `findLatestMessageIdByAuthor`).
+   */
+  authorMarker?: ConversationParticipantResource
+}
+
+/**
+ * Inbox translation for one bubble, computed by the inbox (never by the guest
+ * view). `mainText` replaces the text shown first (the translation of a
+ * customer message, or what the agent typed); `footer` is rendered under it.
+ */
+export type MessageItemTranslation = {
+  mainText?: string
+  footer: ReactNode
 }
 
 export const MessageItem = (props: MessageItemProps) => {
@@ -117,12 +158,21 @@ export const MessageItem = (props: MessageItemProps) => {
     onReply,
     onPrivateReply,
     canPrivateReply,
+    renderResend,
     onDelete,
     onEdit,
+    translation,
+    authorMarker,
   } = props
   const t = useTranslations("messages")
   const tRouting = useTranslations("conversationRouting")
   const [isEditing, setIsEditing] = useState(false)
+  // Only an agent's own message in this tab has one; the guest widget never.
+  const outgoingTranslationStatus = useOutgoingTranslationStatus(
+    !guestDisplay && message.messageType === "outgoing"
+      ? message.clientId
+      : null,
+  )
 
   const variants: Record<"left" | "right" | "full", string> = {
     left: "px-4 py-3 rounded-xl bg-secondary",
@@ -152,6 +202,7 @@ export const MessageItem = (props: MessageItemProps) => {
   const isLiked = attributes?.liked === true
   const isHidden = attributes?.hidden === true
   const hasAttachments = !!message.attachments?.length
+  const emailSubject = getEmailSubject(message.contentAttributes)
   const storyReply = getStoryReplyEntity(message.contentAttributes)
   // Call rows render localized labels from contentAttributes; the stored
   // text is only an English fallback for previews and must not double-render.
@@ -159,6 +210,11 @@ export const MessageItem = (props: MessageItemProps) => {
   const callPermissionReply = getWhatsappCallPermissionReply(
     message.contentAttributes,
   )
+  const paymentMethod = getWhatsappPaymentMethod(message.contentAttributes)
+  // A payment request template renders as its own card (method, amount,
+  // value); the stored "Template: <name>" text would only repeat its name.
+  const paymentRequests = getSentPaymentRequests(message.contentAttributes)
+  const hasPaymentRequests = paymentRequests.length > 0
   const threadControlActivity = getThreadControlActivity(
     message.contentAttributes,
   )
@@ -171,10 +227,19 @@ export const MessageItem = (props: MessageItemProps) => {
   // An inbound cart renders as its own bubble; the stored text is only its
   // plain-text summary for keywords and previews.
   const inboundOrder = getInboundOrder(message.contentAttributes)
+  // A Flow response renders as one card (text, files, answers). The guest
+  // widget is the customer's own view, and the answers are agent-only.
+  const flowResponse =
+    isComment || isDeleted || guestDisplay
+      ? undefined
+      : getWhatsappFlowResponse(message.contentAttributes)
   const suppressRawText = Boolean(
-    inboundOrder ||
+    flowResponse ||
+      inboundOrder ||
       whatsappCall ||
       callPermissionReply ||
+      paymentMethod ||
+      hasPaymentRequests ||
       threadControlActivity ||
       threadControlContext,
   )
@@ -189,6 +254,12 @@ export const MessageItem = (props: MessageItemProps) => {
     } else {
       variant = guestDisplay ? "right" : "left"
     }
+  }
+
+  // The buyer's payment confirmation is a conversation event, centered like
+  // routing activity, not a chat bubble.
+  if (paymentMethod) {
+    variant = "full"
   }
 
   const createdAt = new Date(message.createdAt)
@@ -264,27 +335,47 @@ export const MessageItem = (props: MessageItemProps) => {
                     isDeleted && "opacity-50",
                   )}
                 >
-                  <pre className="wrap-break-word whitespace-pre-line font-sans">
+                  {emailSubject && !isDeleted && (
+                    <p className="mb-1 font-semibold text-xs">{emailSubject}</p>
+                  )}
+                  <pre
+                    className="wrap-break-word whitespace-pre-line font-sans"
+                    dir={translation ? "auto" : undefined}
+                  >
                     {isDeleted ? (
                       <span className="text-xs italic">
                         {t("messageDeleted")}
                       </span>
                     ) : (
-                      message.text
+                      (translation?.mainText ?? message.text)
                     )}
                   </pre>
+                  {!isDeleted && translation?.footer}
                 </div>
               )}
-            {!isDeleted && hasAttachments && !whatsappCall && (
+            {!isDeleted && hasAttachments && !whatsappCall && !flowResponse && (
               <RenderAttachments message={message} />
+            )}
+            {flowResponse && (
+              <WhatsappFlowResponseCard
+                entity={flowResponse}
+                message={message}
+              />
             )}
           </>
         )}
-        {RenderContentAttributes(props)}
+        {RenderContentAttributes(props, paymentRequests)}
+        {outgoingTranslationStatus && (
+          <OutgoingTranslationStatus status={outgoingTranslationStatus} />
+        )}
+        {authorMarker && !isDeleted && (
+          <AuthorMarker participant={authorMarker} />
+        )}
       </div>
 
       <div className="flex">
-        {message.sendError &&
+        {!outgoingTranslationStatus &&
+          message.sendError &&
           (message.messageType === "outgoing" ||
             (guestDisplay && message.messageType === "incoming")) && (
             <MessageErrorBadge
@@ -292,6 +383,10 @@ export const MessageItem = (props: MessageItemProps) => {
               label={t("sendFailed")}
             />
           )}
+        {!guestDisplay &&
+          renderResend &&
+          isResendableMessage(message) &&
+          renderResend(message)}
         {/* Meta can terminate an ANSWERED call with no audio (e.g. error
             138021), so this badge isn't gated on the call having been missed. */}
         {whatsappCall?.failureReason && (
@@ -397,6 +492,29 @@ export const MessageItem = (props: MessageItemProps) => {
         </Tooltip>
       )}
     </MessageBubble>
+  )
+}
+
+/** The member's avatar under their latest message, named on hover. */
+const AuthorMarker = ({
+  participant,
+}: {
+  participant: ConversationParticipantResource
+}) => {
+  const t = useTranslations("conversationParticipants")
+  return (
+    <Tooltip>
+      <TooltipTrigger
+        render={
+          <span className="self-end">
+            <ParticipantAvatar participant={participant} />
+          </span>
+        }
+      />
+      <TooltipContent side="bottom">
+        {t("lastMessageBy", { name: participant.name ?? t("unnamedMember") })}
+      </TooltipContent>
+    </Tooltip>
   )
 }
 
@@ -791,7 +909,123 @@ const ViewCatalogCard = ({ footer }: { footer?: string }) => {
   )
 }
 
-const RenderContentAttributes = (props: MessageItemProps) => {
+/** A plain international number: what may follow `tel:`. */
+const TEL_NUMBER = /^\+\d+$/
+
+type TemplateButtonProps = {
+  button: MessageButtonTemplate
+  onPostback?: (button: MessageButtonTemplate) => void
+  className?: string
+}
+
+/**
+ * One button of a template message, shared by the button list and carousel
+ * cards: a link opens its URL, a call button dials its number (`tel:`), and
+ * everything else replies with its postback. The number was validated when
+ * the message was sent; it is checked again here only so nothing but a plain
+ * `+digits` number ever reaches the `tel:` link.
+ */
+/** A Copy Text button copies its text here too, as it did for the contact. */
+const CopyTextTemplateButton = ({
+  label,
+  text,
+  className,
+}: {
+  label: string
+  text: string
+  className?: string
+}) => {
+  const [, copy] = useCopyToClipboard()
+  return (
+    <Button
+      className={cn(
+        buttonVariants({ size: "sm", variant: "secondary" }),
+        className,
+      )}
+      onClick={() => {
+        copy(text).catch(() => undefined)
+      }}
+      size="sm"
+      type="button"
+      variant="secondary"
+    >
+      <CopyIcon />
+      {label}
+    </Button>
+  )
+}
+
+const TemplateButton = ({
+  button,
+  onPostback,
+  className,
+}: TemplateButtonProps) => {
+  if (button.buttonType === "copyText") {
+    return (
+      <CopyTextTemplateButton
+        className={className}
+        label={button.label}
+        text={button.copyText}
+      />
+    )
+  }
+
+  if (button.buttonType === "url") {
+    return (
+      <Link
+        className={cn(
+          buttonVariants({ size: "sm", variant: "secondary" }),
+          className,
+        )}
+        href={button.url}
+        target="_blank"
+      >
+        <ExternalLinkIcon />
+        {button.label}
+      </Link>
+    )
+  }
+
+  if (
+    button.buttonType === "phoneNumber" &&
+    TEL_NUMBER.test(button.phoneNumber)
+  ) {
+    return (
+      <a
+        className={cn(
+          buttonVariants({ size: "sm", variant: "secondary" }),
+          className,
+        )}
+        href={`tel:${button.phoneNumber}`}
+      >
+        <PhoneIcon />
+        {button.label}
+      </a>
+    )
+  }
+
+  return (
+    <Button
+      className={cn(
+        "w-full bg-secondary text-secondary-foreground disabled:bg-muted disabled:text-muted-foreground sm:w-auto sm:min-w-60 dark:bg-secondary dark:text-secondary-foreground dark:disabled:bg-muted dark:disabled:text-muted-foreground",
+        className,
+      )}
+      disabled={!onPostback}
+      onClick={() => {
+        onPostback?.(button)
+      }}
+      size="sm"
+      variant="outline"
+    >
+      {button.label}
+    </Button>
+  )
+}
+
+const RenderContentAttributes = (
+  props: MessageItemProps,
+  paymentRequests: ReturnType<typeof getSentPaymentRequests>,
+) => {
   const { message, onPostback } = props
   const viewCatalog = getViewCatalogEntity(message.contentAttributes)
   if (viewCatalog) {
@@ -804,7 +1038,7 @@ const RenderContentAttributes = (props: MessageItemProps) => {
       <WhatsappCallCard
         call={whatsappCall}
         callEndedAt={message.createdAt}
-        contactName={message.contact?.fullName}
+        contactName={contactDisplayName(message.contact)}
         conversationId={message.conversationId}
         hasRecordingAttachment={Boolean(message.attachments?.length)}
       />
@@ -820,18 +1054,16 @@ const RenderContentAttributes = (props: MessageItemProps) => {
     )
   }
 
-  // The guest widget is the customer's own view: the answers are agent-only.
-  // A deleted message shows only its "deleted" note, so no answers either.
-  if (
-    !(props.guestDisplay || message.deletedAt) &&
-    getWhatsappFlowResponse(message.contentAttributes)
-  ) {
+  const paymentMethod = getWhatsappPaymentMethod(message.contentAttributes)
+  if (paymentMethod) {
+    return <WhatsappPaymentConfirmation entity={paymentMethod} />
+  }
+
+  if (paymentRequests.length > 0) {
     return (
-      <WhatsappFlowResponseButton
-        conversationId={message.conversationId}
-        createdAt={message.createdAt}
-        messageId={message.id}
-        workspaceId={message.workspaceId}
+      <WhatsappPaymentRequestCard
+        requests={paymentRequests}
+        templateName={getSentTemplateName(message.contentAttributes)}
       />
     )
   }
@@ -877,38 +1109,13 @@ const RenderContentAttributes = (props: MessageItemProps) => {
       return (
         <div className="mt-1 flex flex-col gap-1">
           {contentAttributes.payload.templateType === "button" &&
-            contentAttributes.payload.buttons.map((button) => {
-              if (button.buttonType === "url") {
-                return (
-                  <Link
-                    className={buttonVariants({
-                      size: "sm",
-                      variant: "secondary",
-                    })}
-                    href={button.url}
-                    key={button.id}
-                    target="_blank"
-                  >
-                    <ExternalLinkIcon />
-                    {button.label}
-                  </Link>
-                )
-              }
-              return (
-                <Button
-                  className="w-full bg-secondary text-secondary-foreground disabled:bg-muted disabled:text-muted-foreground sm:w-auto sm:min-w-60 dark:bg-secondary dark:text-secondary-foreground dark:disabled:bg-muted dark:disabled:text-muted-foreground"
-                  disabled={!onPostback}
-                  key={button.id}
-                  onClick={() => {
-                    onPostback?.(button)
-                  }}
-                  size="sm"
-                  variant="outline"
-                >
-                  {button.label}
-                </Button>
-              )
-            })}
+            contentAttributes.payload.buttons.map((button) => (
+              <TemplateButton
+                button={button}
+                key={button.id}
+                onPostback={onPostback}
+              />
+            ))}
           {contentAttributes.payload.templateType === "carousel" && (
             <Carousel
               opts={{
@@ -943,14 +1150,12 @@ const RenderContentAttributes = (props: MessageItemProps) => {
                           {"buttons" in card &&
                             card.buttons &&
                             card.buttons.map((button) => (
-                              <Button
-                                className="w-full"
+                              <TemplateButton
+                                button={button}
+                                className="w-full sm:w-full sm:min-w-0"
                                 key={button.id}
-                                size="sm"
-                                variant="secondary"
-                              >
-                                {button.label}
-                              </Button>
+                                onPostback={onPostback}
+                              />
                             ))}
                         </CardContent>
                       </Card>

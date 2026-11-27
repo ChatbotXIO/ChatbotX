@@ -2,6 +2,7 @@ import { type DatabaseClient, db, relationsFilterToSQL } from "../../client"
 import { rootFolderId } from "../../partials"
 import { flowModel } from "../../schema"
 import {
+  escapeLikePattern,
   likeContains,
   parseOrderByAsObject,
   parsePagination,
@@ -12,6 +13,8 @@ export type FlowListInput = {
   name?: string | null
   folderId?: string | null
   active?: boolean | null
+  /** Restrict to flows an agent may start from the inbox (`enableInInbox`). */
+  enableInInbox?: boolean | null
   page?: number | null
   perPage?: number | null
   sort?: { id: string; desc: boolean }[] | null
@@ -27,9 +30,28 @@ const buildWhere = (input: FlowListInput) => ({
     : undefined,
   name: input.name ? { ilike: likeContains(input.name) } : undefined,
   active: input.active === null ? undefined : (input.active ?? undefined),
+  enableInInbox:
+    input.enableInInbox === null
+      ? undefined
+      : (input.enableInInbox ?? undefined),
 })
 
 export const flowRepository = {
+  /** Names of the workspace's flows starting with `prefix` (taken as plain text). */
+  async listNamesWithPrefix(
+    input: { workspaceId: string; prefix: string },
+    tx: DatabaseClient = db,
+  ): Promise<string[]> {
+    const rows = await tx.query.flowModel.findMany({
+      where: {
+        workspaceId: input.workspaceId,
+        name: { like: `${escapeLikePattern(input.prefix)}%` },
+      },
+      columns: { name: true },
+    })
+    return rows.map((row) => row.name)
+  },
+
   /** Whether a flow with this id exists in the workspace (id-only read). */
   async existsInWorkspace(
     input: { workspaceId: string; id: string },

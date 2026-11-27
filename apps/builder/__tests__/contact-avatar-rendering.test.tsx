@@ -107,3 +107,63 @@ describe("ContactNameCell avatar rendering", () => {
     )
   })
 })
+
+function renderNameCell(
+  contact: {
+    fullName?: string | null
+    email?: string | null
+    phoneNumber?: string | null
+  },
+  unknownContactLabel = "Unknown contact",
+) {
+  container = document.createElement("div")
+  document.body.appendChild(container)
+  root = createRoot(container)
+  act(() => {
+    root?.render(
+      <TenantProvider settings={tenantSettings}>
+        <ContactNameCell
+          contact={{ avatar: null, ...contact }}
+          unknownContactLabel={unknownContactLabel}
+          workspaceId="workspace-1"
+        />
+      </TenantProvider>,
+    )
+  })
+  return container
+}
+
+describe("ContactNameCell name fallback", () => {
+  test("shows the phone number when a channel never sent a name", () => {
+    const el = renderNameCell({ fullName: null, phoneNumber: "84349566550" })
+
+    expect(el.textContent).toContain("84349566550")
+  })
+
+  test("shows the email when there is no name, ahead of the phone", () => {
+    const el = renderNameCell({
+      fullName: "  ",
+      email: "ada@example.com",
+      phoneNumber: "84349566550",
+    })
+
+    expect(el.textContent).toContain("ada@example.com")
+    expect(el.textContent).not.toContain("84349566550")
+  })
+
+  test("keeps the real name first", () => {
+    const el = renderNameCell({
+      fullName: "Ada Lovelace",
+      email: "ada@example.com",
+    })
+
+    expect(el.textContent).toContain("Ada Lovelace")
+    expect(el.textContent).not.toContain("ada@example.com")
+  })
+
+  test("falls back to the unknown label when nothing identifies the contact", () => {
+    const el = renderNameCell({})
+
+    expect(el.textContent).toContain("Unknown contact")
+  })
+})

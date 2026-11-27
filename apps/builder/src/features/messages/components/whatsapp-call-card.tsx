@@ -32,6 +32,7 @@ import {
 import { useLocale, useTranslations } from "next-intl"
 import type { ReactNode } from "react"
 import { useChatStore } from "@/features/chat/store/chat-store-provider"
+import { contactDisplayName } from "@/features/contacts/lib/contact-display-name"
 import { findContactInboxByChannel } from "@/features/conversations/utils/contact-inbox"
 import { useOutboundCallMode } from "@/features/integration-whatsapp/calling/voip/use-outbound-call-mode"
 import { useWhatsappCallStarter } from "@/features/integration-whatsapp/calling/voip/use-whatsapp-call-starter"
@@ -280,7 +281,7 @@ export const WhatsappCallCard = ({
     (conversation) =>
       conversation.id === (conversationId ?? activeConversationId),
   )
-  const activeConversationContactName = active?.contact?.fullName ?? null
+  const activeConversationContactName = contactDisplayName(active?.contact)
   const whatsappContactInboxId = findContactInboxByChannel(
     active,
     channelTypes.enum.whatsapp,

@@ -6,14 +6,17 @@ vi.mock("server-only", () => ({}))
 
 const findRecentByContactId = vi.fn()
 const integrationWhatsappFind = vi.fn()
+vi.mock("@/lib/log", () => ({ logger: { warn: vi.fn() } }))
 vi.mock("@chatbotx.io/business", () => ({
   contactInboxService: { findRecentByContactId },
   integrationWhatsappService: { findByIdForWorkspace: integrationWhatsappFind },
-  whatsappFlowService: { upsertFromMeta },
+  whatsappFlowService: { upsertFromMeta, markRemovedOnMeta },
 }))
 
 const upsertFromMeta = vi.fn()
+const markRemovedOnMeta = vi.fn()
 const recordPublication = vi.fn()
+const assertAcceptsPublication = vi.fn()
 const runWhatsappAction = vi.fn()
 
 const getAll = vi.fn()
@@ -31,10 +34,11 @@ vi.mock("@chatbotx.io/business/mini-app", () => ({
   miniAppService: {
     findOrFail,
     validate: () => ({ valid: true, issues: [] }),
+    assertAcceptsPublication,
+    recordPublication,
   },
   miniAppPublicationService: {
     findForIntegration: vi.fn(),
-    record: recordPublication,
   },
 }))
 
@@ -294,7 +298,9 @@ describe("publishMiniAppToWhatsapp", () => {
       publishError: "Verify your business before publishing.",
     })
     upsertFromMeta.mockResolvedValue({ id: "flow-row-1" })
-    recordPublication.mockImplementation(async (input: object) => input)
+    recordPublication.mockImplementation(
+      async (_scope: object, input: object) => input,
+    )
 
     const result = await publishMiniAppToWhatsapp({
       workspaceId: "ws-1",
@@ -303,6 +309,7 @@ describe("publishMiniAppToWhatsapp", () => {
     })
 
     expect(recordPublication).toHaveBeenCalledWith(
+      { workspaceId: "ws-1", id: "10" },
       expect.objectContaining({
         sourceId: "meta-1",
         status: "DRAFT",
@@ -313,5 +320,62 @@ describe("publishMiniAppToWhatsapp", () => {
       }),
     )
     expect(result.published).toBe(false)
+  })
+
+  describe("uninstall race", () => {
+    const publishable = () => {
+      findOrFail.mockResolvedValue({
+        id: "10",
+        name: "Signup",
+        definition: { screens: [] },
+        flowJson: {},
+      })
+      integrationWhatsappFind.mockResolvedValue({ id: "wa-1" })
+    }
+    const metaCreatesFlow = () =>
+      runWhatsappAction.mockResolvedValueOnce({
+        flow: { id: "meta-1", name: "Signup", status: "PUBLISHED" },
+        published: true,
+      })
+    const target = {
+      workspaceId: "ws-1",
+      miniAppId: "10",
+      integrationWhatsappId: "wa-1",
+    }
+
+    test("refuses before any Meta call while an uninstall runs", async () => {
+      publishable()
+      assertAcceptsPublication.mockRejectedValueOnce(new Error("uninstalling"))
+
+      await expect(publishMiniAppToWhatsapp(target)).rejects.toThrow(
+        "uninstalling",
+      )
+      expect(runWhatsappAction).not.toHaveBeenCalled()
+    })
+
+    test("deletes the new Meta Flow when the Mini App went away meanwhile", async () => {
+      publishable()
+      metaCreatesFlow()
+      runWhatsappAction.mockResolvedValueOnce({
+        outcome: "deprecated",
+        status: "DEPRECATED",
+      })
+      upsertFromMeta.mockResolvedValue({ id: "flow-row-1" })
+      recordPublication.mockRejectedValueOnce(new Error("Mini App not found"))
+
+      await expect(publishMiniAppToWhatsapp(target)).rejects.toThrow(
+        "Mini App not found",
+      )
+
+      expect(runWhatsappAction).toHaveBeenLastCalledWith("deleteFlow", {
+        ctx: undefined,
+        params: { flowSourceId: "meta-1" },
+      })
+      expect(markRemovedOnMeta).toHaveBeenCalledWith({
+        workspaceId: "ws-1",
+        sourceId: "meta-1",
+        status: "DEPRECATED",
+      })
+    })
   })
 })

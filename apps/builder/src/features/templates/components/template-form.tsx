@@ -1,7 +1,7 @@
 "use client"
 
+import type { TemplateDetail } from "@chatbotx.io/business"
 import type { TemplateCategory } from "@chatbotx.io/database/partials"
-import type { TemplateModel } from "@chatbotx.io/database/types"
 import { InputField } from "@chatbotx.io/ui/components/form/input-field"
 import { SwitchField } from "@chatbotx.io/ui/components/form/switch-field"
 import { TextareaField } from "@chatbotx.io/ui/components/form/textarea-field"
@@ -14,38 +14,58 @@ import {
 } from "@chatbotx.io/ui/components/ui/card"
 import { Form } from "@chatbotx.io/ui/components/ui/form"
 import { getPublicFileUrl } from "@chatbotx.io/utils"
+import {
+  type EmbeddedVideo,
+  toEmbeddedVideoView,
+} from "@chatbotx.io/utils/embedded-video"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
 import { Loader2Icon } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
+import { useMemo, useTransition } from "react"
 import { useWatch } from "react-hook-form"
 import { toast } from "sonner"
 import { useTenantSettings } from "@/features/tenant"
 import { saveTemplateAction } from "../actions/save-template.action"
+import { toastActionError } from "../lib/action-error-toast"
 import type {
   CategorySelectionState,
   TemplateSelectionFormState,
 } from "../lib/selection"
-import { saveTemplateRequest } from "../schema/mutation"
+import { createTemplateFormSchema } from "../schema/form"
 import { TemplateContentsCard } from "./template-contents-card"
-import { TemplateImageUploadField } from "./template-image-upload-field"
-import { TemplateShareCard } from "./template-share-card"
+import { TemplateCoverImageField } from "./template-cover-image-field"
+import { TemplateVideoField } from "./template-video-field"
 
 type TemplateFormProps = {
   workspaceId: string
-  template?: TemplateModel
+  template?: TemplateDetail
+  /** The stored video (`resolveTemplateEmbeddedVideo(template)`), read on the server. */
+  savedVideo?: EmbeddedVideo | null
+  selectableCategories: readonly TemplateCategory[]
+  initialName?: string
 }
 
-export function TemplateForm({ workspaceId, template }: TemplateFormProps) {
+export function TemplateForm({
+  workspaceId,
+  template,
+  savedVideo,
+  selectableCategories,
+  initialName,
+}: TemplateFormProps) {
   const t = useTranslations()
   const router = useRouter()
   const isEdit = Boolean(template)
   const { storageUrl } = useTenantSettings()
+  const formSchema = useMemo(() => createTemplateFormSchema(t), [t])
+  // A save ends before the page has moved on, and a second click in between
+  // would create the template twice.
+  const [isNavigating, startNavigation] = useTransition()
 
   const { form, handleSubmitWithAction } = useHookFormAction(
     saveTemplateAction.bind(null, workspaceId),
-    zodResolver(saveTemplateRequest),
+    zodResolver(formSchema),
     {
       actionProps: {
         onSuccess: ({ data }) => {
@@ -54,38 +74,43 @@ export function TemplateForm({ workspaceId, template }: TemplateFormProps) {
               feature: t("fields.template.label"),
             }),
           )
-          if (isEdit) {
-            router.refresh()
-          } else if (data?.templateId) {
-            router.push(
-              `/space/${workspaceId}/templates/${data.templateId}/edit`,
-            )
-          } else {
-            router.push(`/space/${workspaceId}/templates`)
-          }
+          startNavigation(() => {
+            if (isEdit) {
+              router.refresh()
+            } else if (data?.templateId) {
+              router.push(
+                `/space/${workspaceId}/templates/${data.templateId}/edit`,
+              )
+            } else {
+              router.push(`/space/${workspaceId}/templates`)
+            }
+          })
         },
-        onError: ({ error }) => {
-          if (error.serverError) {
-            toast.error(error.serverError)
-          }
-        },
+        onError: ({ error }) =>
+          toastActionError(error, t("messages.unknownError")),
       },
       formProps: {
-        mode: "onChange",
+        // Validate on submit (then on every change): a button disabled until the
+        // form is valid gives no reason, and RHF focuses the first invalid field.
+        mode: "onSubmit",
+        reValidateMode: "onChange",
+        shouldFocusError: true,
         defaultValues: {
           templateId: template?.id,
-          name: template?.name ?? "",
+          name: template?.name ?? initialName ?? "",
           description: template?.description ?? "",
           imageUrl: template?.imageUrl ?? "",
           publisherName: template?.publisherName ?? "",
-          youtubeVideoId: template?.youtubeVideoId ?? "",
+          video: {
+            source: savedVideo ? toEmbeddedVideoView(savedVideo).source : "",
+          },
           testLink: template?.testLink ?? "",
           selection: template?.selection ?? {},
           defaultPermissions: template?.defaultPermissions ?? {
             allowEdit: true,
-            allowDelete: true,
+            allowDelete: false,
           },
-          createInstallFolder: template?.createInstallFolder ?? false,
+          createInstallFolder: template?.createInstallFolder ?? true,
           defaultAutoUpdate: template?.defaultAutoUpdate ?? false,
         },
       },
@@ -107,6 +132,8 @@ export function TemplateForm({ workspaceId, template }: TemplateFormProps) {
     )
   }
 
+  const isBusy = form.formState.isSubmitting || isNavigating
+
   return (
     <Form {...form}>
       <form className="flex-1 space-y-6" onSubmit={handleSubmitWithAction}>
@@ -120,44 +147,42 @@ export function TemplateForm({ workspaceId, template }: TemplateFormProps) {
               label={t("fields.description.label")}
               name="description"
             />
-            <div className="space-y-2">
-              <p className="font-medium text-sm">
-                {t("templates.form.imageUrl")}
-              </p>
-              <TemplateImageUploadField
-                onUploaded={(path) =>
-                  form.setValue("imageUrl", path, { shouldDirty: true })
-                }
-                previewUrl={
-                  imageUrl ? getPublicFileUrl(imageUrl, storageUrl) : undefined
-                }
-                uploadLabel={t("actions.uploadFile")}
-                uploadPath={`public/space/${workspaceId}/templates`}
-                workspaceId={workspaceId}
-              />
+            <div className="grid gap-6 md:grid-cols-2">
+              <div className="space-y-2">
+                <p className="font-medium text-sm">
+                  {t("templates.form.imageUrl")}
+                </p>
+                <TemplateCoverImageField
+                  onClear={() =>
+                    form.setValue("imageUrl", "", { shouldDirty: true })
+                  }
+                  onSelect={(path) =>
+                    form.setValue("imageUrl", path, { shouldDirty: true })
+                  }
+                  previewUrl={
+                    imageUrl
+                      ? getPublicFileUrl(imageUrl, storageUrl)
+                      : undefined
+                  }
+                  workspaceId={workspaceId}
+                />
+              </div>
+              <TemplateVideoField savedVideo={savedVideo} />
             </div>
             <InputField
               label={t("templates.form.publisherName")}
               name="publisherName"
-            />
-            <InputField
-              description={t("templates.form.youtubeVideoIdDescription")}
-              label={t("templates.form.youtubeVideoId")}
-              name="youtubeVideoId"
             />
             <InputField label={t("templates.form.testLink")} name="testLink" />
           </CardContent>
         </Card>
 
         <TemplateContentsCard
+          categories={selectableCategories}
           onChange={handleSelectionChange}
           selection={selection}
           workspaceId={workspaceId}
         />
-
-        {template && (
-          <TemplateShareCard template={template} workspaceId={workspaceId} />
-        )}
 
         <Card>
           <CardHeader>
@@ -205,13 +230,8 @@ export function TemplateForm({ workspaceId, template }: TemplateFormProps) {
           >
             {t("actions.cancel")}
           </Button>
-          <Button
-            disabled={!form.formState.isValid || form.formState.isSubmitting}
-            type="submit"
-          >
-            {form.formState.isSubmitting && (
-              <Loader2Icon className="animate-spin" />
-            )}
+          <Button disabled={isBusy} type="submit">
+            {isBusy && <Loader2Icon className="animate-spin" />}
             {t(isEdit ? "actions.save" : "actions.create")}
           </Button>
         </div>

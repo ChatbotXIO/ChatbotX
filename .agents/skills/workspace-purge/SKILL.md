@@ -1,6 +1,10 @@
 ---
 name: workspace-purge
-description: Keep workspace deletion bounded, indexed, resumable, and safe under lock contention.
+description: >-
+  Use when adding a table, foreign key, hypertable, or any workspace-scoped data,
+  or when changing workspace deletion, `scheduleDeletion`, the `purgeWorkspaces`
+  worker, or runtime freeze. Keeps purge bounded, indexed, resumable, and safe
+  under lock contention.
 ---
 
 # Workspace Purge Safety

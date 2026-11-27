@@ -7,6 +7,7 @@ import {
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import z from "zod"
 import { resolveContactAvatars } from "@/features/contacts/queries/resolve-contact-avatars"
+import { TOKEN_CALLER_CAN_VIEW_EMAIL_AND_PHONE } from "@/features/contacts/token-caller-permissions"
 import { mcpSpec } from "@/lib/orpc/mcp-annotations"
 import {
   possibleErrorsOnActivatingBroadcast,
@@ -47,10 +48,11 @@ const workspaceTokenAuthAPI = workspaceTokenAuthAPIForScope("broadcasts")
 // A workspace-token caller is a workspace-level credential mintable only by
 // a superAdmin, so it is not subject to the member-level email/phone field
 // permission the builder UI derives per-session — every public create/edit
-// route treats the caller as fully privileged rather than silently pruning
-// the audience filter it was given.
+// route treats the caller as fully privileged (`TOKEN_CALLER_CAN_VIEW_EMAIL_AND_PHONE`,
+// shared with the Posts API) rather than silently pruning the audience filter
+// it was given.
 //
-// This flag governs *write-side filter-condition pruning only*
+// That flag governs *write-side filter-condition pruning only*
 // (`pruneEmailPhoneFilterConditions`, applied in `create`/`updateDraft`/
 // `resendWithPruning`/`cloneBroadcast`). Reads are unaffected by it: `get`/
 // `list`, and in particular `getAudience` below, already return full
@@ -61,7 +63,6 @@ const workspaceTokenAuthAPI = workspaceTokenAuthAPIForScope("broadcasts")
 // here without diverging from the private route this public route mirrors
 // (invariant #9); see the "Broadcasts scope" table in
 // `docs/developer/workspace-api-tokens.md` for the caller-facing writeup.
-const TOKEN_CALLER_CAN_VIEW_EMAIL_AND_PHONE = true
 
 export const broadcastsPublicRouter = {
   ...broadcastsRecurrencePublicRouter,
@@ -74,7 +75,13 @@ export const broadcastsPublicRouter = {
       description:
         "Use this to find broadcasts before inspecting one with `broadcasts.get` or stopping one with `broadcasts.stop`. Filter by `status`, `name`, `channel` or a `scheduledFrom`/`scheduledTo` window; newest first unless `sort` is given. Each broadcast includes its channel, subaction, template, audience filter and per-page targets.",
       tags: ["Broadcasts"],
-      spec: mcpSpec({ visibility: "default" }),
+      spec: mcpSpec({
+        destructiveHint: false,
+        idempotentHint: true,
+        openWorldHint: false,
+        readOnlyHint: true,
+        visibility: "default",
+      }),
     })
     .input(listBroadcastsPublicRequest)
     .output(publicListBroadcastsResponse)
@@ -97,7 +104,13 @@ export const broadcastsPublicRouter = {
       description:
         "Use this to inspect a broadcast by id or name after finding it with `broadcasts.list`. Call `broadcasts.schedule` for a draft or `broadcasts.stop` for a sending broadcast.",
       tags: ["Broadcasts"],
-      spec: mcpSpec({ visibility: "default" }),
+      spec: mcpSpec({
+        destructiveHint: false,
+        idempotentHint: true,
+        openWorldHint: false,
+        readOnlyHint: true,
+        visibility: "default",
+      }),
     })
     .input(
       z.object({
@@ -166,7 +179,7 @@ export const broadcastsPublicRouter = {
       path: BROADCAST_AUDIENCE_PREVIEW_TOKEN_PATH,
       summary: "Preview broadcast audience before send",
       description:
-        'Counts and lists the contact inboxes a broadcast would be sent to, without creating anything. `total` is the size of the whole audience (the `audienceRangeStart`/`audienceRangeEnd` window already applied, one contact on several channels counts once per channel); `data` is one page of it in send order (ascending contact inbox id), `page` from 1 and `perPage` up to 50. Select the audience like `broadcasts.create`: `subaction`, `contactFilter`, the window, and the inboxes with `inboxIds`, or `channels` (`omnichannel` = every channel), or an integration id; none given means an empty audience (`total` 0). `fullName`, `avatar` and `occurredAt` come from the contact. Use `perPage: 1` when you only need `total`. On very large audiences pass `countMode: "bounded"`: the count then stops at `countCap` and `totalCountCapped: true` means `total` is a lower bound (it can even be 0 when the window starts past `countCap`, which is not an empty audience); an exact count that takes too long fails with 503 `countTimeout`. A page past the window is empty. Use `broadcasts.getAudience` for a broadcast that already exists.',
+        'Counts and lists the contact inboxes a broadcast would be sent to, without creating anything. `total` is the size of the whole audience (the `audienceRangeStart`/`audienceRangeEnd` window already applied, one contact on several channels counts once per channel); `data` is one page of it in send order (ascending contact inbox id), `page` from 1 and `perPage` up to 50. Select the audience like `broadcasts.create`: `subaction`, `contactFilter` (only contacts with a DM are counted unless it has a `lastInteraction` condition), the window, and the inboxes with `inboxIds`, or `channels` (`omnichannel` = every channel), or an integration id; none given means an empty audience (`total` 0). `fullName`, `avatar` and `occurredAt` come from the contact. Use `perPage: 1` when you only need `total`. On very large audiences pass `countMode: "bounded"`: the count then stops at `countCap` and `totalCountCapped: true` means `total` is a lower bound (it can even be 0 when the window starts past `countCap`, which is not an empty audience); an exact count that takes too long fails with 503 `countTimeout`. A page past the window is empty. Use `broadcasts.getAudience` for a broadcast that already exists.',
       tags: ["Broadcasts"],
     })
     .input(previewBroadcastAudiencePublicRequest)
@@ -218,7 +231,7 @@ export const broadcastsPublicRouter = {
       path: "/v1/broadcasts/{id}/contacts",
       summary: "List broadcast recipients by event type",
       description:
-        "Returns contacts that reached one event for a broadcast (`message:sent`, `message:delivered`, `message:seen`, `message:failed` or `flow:clicked`; `message:received` and `flow:ref` behave like `message:delivered`).",
+        "Returns contacts that reached one event for a broadcast (`message:sent`, `message:delivered`, `message:seen`, `message:failed`, `flow:clicked`, `contactInfo:phoneCaptured` or `contactInfo:emailCaptured`; `message:received` and `flow:ref` behave like `message:delivered`).",
       tags: ["Broadcasts"],
     })
     .input(publicListBroadcastContactsRequest)
@@ -297,7 +310,7 @@ export const broadcastsPublicRouter = {
       path: "/v1/broadcasts/{id}/draft",
       summary: "Replace draft broadcast payload",
       description:
-        "Replaces a draft's complete payload and can schedule it when `saveAsDraft` is false. Call `broadcasts.get` to inspect the draft first, or use `broadcasts.schedule` to keep its payload.",
+        "Replaces a draft's complete payload and can schedule it when `saveAsDraft` is false. Call `broadcasts.get` to inspect the draft first, or use `broadcasts.schedule` to keep its payload. Scheduling it is refused like `broadcasts.schedule` (400, retry shortly) while a draft moved back mid-preparation is still clearing its previous recipients.",
       tags: ["Broadcasts"],
     })
     .input(
@@ -334,7 +347,7 @@ export const broadcastsPublicRouter = {
       path: "/v1/broadcasts/{id}/schedule",
       summary: "Schedule draft broadcast",
       description:
-        "Moves a draft broadcast to its scheduled state using the provided schedule; for `schedulesType: recurring` it starts the repeating schedule (send `recurrence` to replace the saved rule, or omit it to keep it). Call `broadcasts.get` to inspect it first, or use `broadcasts.updateDraft` to change its payload.",
+        "Moves a draft broadcast to its scheduled state using the provided schedule; for `schedulesType: recurring` it starts the repeating schedule (send `recurrence` to replace the saved rule, or omit it to keep it). Call `broadcasts.get` to inspect it first, or use `broadcasts.updateDraft` to change its payload. A draft moved back from `scheduled` mid-preparation may still be clearing its previous recipients; it then fails with 400 and a message to retry shortly, and succeeds once the cleanup finishes.",
       tags: ["Broadcasts"],
     })
     .input(
@@ -366,7 +379,7 @@ export const broadcastsPublicRouter = {
       path: "/v1/broadcasts/{id}/move-to-draft",
       summary: "Move scheduled broadcast back to draft",
       description:
-        "Reverses a broadcast's `scheduled` state so its payload can be edited again. For a repeating broadcast it stops the schedule, running or paused, so the rule can be edited; slots that pass while it is a draft are skipped. Only matches a broadcast whose status is `scheduled`, or a repeating one that is `recurring` or paused (`cancelled`); 404 otherwise. Use `broadcasts.updateDraft` afterward, or `broadcasts.schedule` to re-schedule.",
+        "Reverses a broadcast's `scheduled` state so its payload can be edited again. For a repeating broadcast it stops the schedule, running or paused, so the rule can be edited; slots that pass while it is a draft are skipped. Only matches a broadcast whose status is `scheduled`, or a repeating one that is `recurring` or paused (`cancelled`); 404 otherwise. Use `broadcasts.updateDraft` afterward, or `broadcasts.schedule` to re-schedule (recipients a half-done preparation left behind are cleared in the background first).",
       tags: ["Broadcasts"],
     })
     .input(
@@ -392,9 +405,15 @@ export const broadcastsPublicRouter = {
       path: BROADCAST_STOP_TOKEN_PATH,
       summary: "Stop broadcast",
       description:
-        "Stops a broadcast while it is sending and returns its id. On a repeating broadcast (status `recurring`) it pauses the schedule: no new runs start, a run already sending carries on. Allowed even when the workspace trial has expired, like the builder. Call `broadcasts.get` to confirm its state first, or use `broadcasts.moveToDraft` for scheduled broadcasts.",
+        "Stops a broadcast while it is sending and returns its id. On a repeating broadcast (status `recurring`) it pauses the schedule: no new runs start, a run already sending carries on. Allowed even when the workspace trial has expired, like the builder. Call `broadcasts.get` to confirm its state first, or use `broadcasts.moveToDraft` for scheduled broadcasts. The system also stops a broadcast on its own when the channel page is blocked from sending: the broadcast then has a `statusReason` (and `statusErrorMessage`, `statusInboxId`) in `broadcasts.get`.",
       tags: ["Broadcasts"],
-      spec: mcpSpec({ visibility: "default" }),
+      spec: mcpSpec({
+        destructiveHint: true,
+        idempotentHint: true,
+        openWorldHint: false,
+        readOnlyHint: false,
+        visibility: "default",
+      }),
     })
     .input(
       z.object({
@@ -419,7 +438,7 @@ export const broadcastsPublicRouter = {
       path: "/v1/broadcasts/{id}/resume",
       summary: "Resume stopped broadcast",
       description:
-        "Resumes sending a stopped broadcast where it left off. On a paused repeating broadcast it restarts the schedule and returns `nextRunAt`; slots that passed while it was paused are not sent. Only matches a broadcast whose status is `cancelled`; 404 otherwise. Use `broadcasts.stop` to pause a sending broadcast.",
+        "Resumes sending a stopped broadcast where it left off. On a paused repeating broadcast it restarts the schedule and returns `nextRunAt`; slots that passed while it was paused are not sent. Only matches a broadcast whose status is `cancelled`; 404 otherwise. Use `broadcasts.stop` to pause a sending broadcast. A broadcast the system stopped (it has a `statusReason`) is resumed the same way and is not blocked, but if the channel page is still blocked from sending the first message fails and it stops again, and sending while blocked can lead to a heavier restriction: check the page is unblocked first. Resuming clears `statusReason`.",
       tags: ["Broadcasts"],
     })
     .input(

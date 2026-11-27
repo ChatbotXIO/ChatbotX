@@ -1,4 +1,6 @@
 import { botFieldService } from "@chatbotx.io/business"
+import { ChatbotXException } from "@chatbotx.io/business/errors"
+import { fieldOperationByApiName } from "@chatbotx.io/utils/custom-field-operation"
 import z from "zod"
 import {
   possibleErrorsOnCreatingBotField,
@@ -7,6 +9,11 @@ import {
   possibleErrorsOnMutatingResource,
   possibleErrorsOnSettingBotField,
 } from "@/lib/orpc/orpc-error-helper"
+import {
+  publicFieldOperationFields,
+  requireOperandForOperation,
+} from "@/lib/public-api/field-operation"
+import { ianaTimezoneSchema } from "@/lib/public-api/iana-timezone"
 import { workspaceTokenAuthAPIForScope } from "@/orpc"
 
 import {
@@ -284,6 +291,50 @@ export const botFieldsPublicRouter = {
           key: resolveKey(field),
           value: field.value,
         })),
+      })
+    }),
+
+  applyOperation: workspaceTokenAuthAPI
+    .route({
+      method: "POST",
+      path: "/v1/bot-fields/{idOrName}/operations",
+      summary: "Apply bot field operation",
+      description:
+        "Applies one operation to a bot field's value: text fields support `set`/`append`/`prepend`/`clear`; number fields `set`/`increase`/`decrease`/`formula`/`clear`; date and datetime fields `set`/`setNow`/`dateExpression`/`addMinutes`/`addHours`/`addDays`/`clear`; every other type `set`/`clear`. Increase, decrease, append and prepend are atomic, so concurrent calls never lose an update. An unsupported operation or invalid operand fails with `invalidFieldOperation` and the reason. Get the id or name from `botFields.list`.",
+      tags: ["Bot Fields"],
+    })
+    .input(
+      z
+        .object({
+          idOrName: z
+            .string()
+            .max(255)
+            .describe("Bot field id or name. Get it from `botFields.list`."),
+          ...publicFieldOperationFields,
+          clientTimezone: ianaTimezoneSchema
+            .optional()
+            .describe(
+              "IANA timezone anchoring date values, e.g. `Asia/Ho_Chi_Minh`; defaults to the workspace zone.",
+            ),
+        })
+        .superRefine(requireOperandForOperation),
+    )
+    .output(publicBotFieldResource)
+    .errors(possibleErrorsOnSettingBotField)
+    .handler(async ({ context, input }) => {
+      const operation = fieldOperationByApiName(input.operation)
+      if (!operation) {
+        throw new ChatbotXException(
+          "Unknown operation",
+          "invalidFieldOperation",
+        )
+      }
+      return await botFieldService.applyValueOperation({
+        workspaceId: context.workspace.id,
+        key: input.idOrName,
+        operation,
+        value: input.value,
+        sourceTimezoneOverride: input.clientTimezone,
       })
     }),
 

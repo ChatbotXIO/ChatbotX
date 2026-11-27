@@ -1,0 +1,146 @@
+{
+  "type": "diff",
+  "version": "10",
+  "dialect": "postgres",
+  "id": "81823a40-52ac-4c4f-a12d-516c5582a1cb",
+  "prevIds": [
+    "b73177b2-2f4d-40ef-b2ab-184d0bf661bc",
+    "92eba09c-e001-4035-99bf-7445ad765ab8"
+  ],
+  "footprints": [
+    {
+      "statementType": "create_enum",
+      "statementTarget": [
+        "enum",
+        "public",
+        "broadcastStatusReason"
+      ],
+      "writes": [
+        "s|enum|public.broadcastStatusReason",
+        "n|enum|public.broadcastStatusReason",
+        "e|enum|public.broadcastStatusReason",
+        "n|type|public.broadcastStatusReason"
+      ],
+      "reads": [
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "Broadcast",
+        "statusReason"
+      ],
+      "writes": [
+        "s|col|public.Broadcast.statusReason",
+        "n|col|public.Broadcast.statusReason",
+        "e|col|public.Broadcast.statusReason"
+      ],
+      "reads": [
+        "n|tbl|public.Broadcast",
+        "n|sch|public",
+        "n|enum|public.broadcastStatusReason"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "Broadcast",
+        "statusErrorMessage"
+      ],
+      "writes": [
+        "s|col|public.Broadcast.statusErrorMessage",
+        "n|col|public.Broadcast.statusErrorMessage",
+        "e|col|public.Broadcast.statusErrorMessage"
+      ],
+      "reads": [
+        "n|tbl|public.Broadcast",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "Broadcast",
+        "statusInboxId"
+      ],
+      "writes": [
+        "s|col|public.Broadcast.statusInboxId",
+        "n|col|public.Broadcast.statusInboxId",
+        "e|col|public.Broadcast.statusInboxId"
+      ],
+      "reads": [
+        "n|tbl|public.Broadcast",
+        "n|sch|public"
+      ]
+    }
+  ],
+  "deltas": [
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "name": "broadcastStatusReason",
+        "values": [
+          "accountPolicyBlocked",
+          "accountSendRestricted"
+        ],
+        "entityType": "enums"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "Broadcast",
+        "name": "statusReason",
+        "type": "broadcastStatusReason",
+        "typeSchema": "public",
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "Broadcast",
+        "name": "statusErrorMessage",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "Broadcast",
+        "name": "statusInboxId",
+        "type": "bigint",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    }
+  ]
+}

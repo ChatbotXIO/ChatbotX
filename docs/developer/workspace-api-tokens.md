@@ -4,6 +4,9 @@ This document is for developers adding or changing workspace-token (public
 API) surfaces. Workspace API tokens are bearer credentials, so their storage,
 lookup, and scoping rules are security boundaries.
 
+
+For MCP OAuth 2.1 access-token behavior and workspace selection, see
+[MCP OAuth 2.1](../mcp-oauth.md).
 ## Token model
 
 Tokens live in the `WorkspaceApiToken` table
@@ -54,9 +57,81 @@ The `inbox` scope also covers the Working Hours routes
 Inbox Teams. A token without `inbox` gets 403; a `read_only` token is blocked
 on the mutations. See `docs/working-hours.md`.
 
+The Inbox translation routes
+(`apps/builder/src/features/translation/api/public.ts`, router key
+`translation`) split across two scopes: `GET /v1/translation/settings` takes
+`settings` or `inbox` (agents read whether translation is on), while
+`PUT /v1/translation/settings` and `POST /v1/translation/settings/test` need
+`settings`, because they choose which AI provider receives customer chat text.
+The conversation routes (`GET/PUT /v1/conversations/{conversationId}/translation`,
+`POST .../translation/requests`, `POST .../translation/preview`) need `inbox`;
+they run the same membership scope check as the other conversation routes. A
+`read_only` token is limited to GET, so it is blocked on every other
+translation route, including the POST `test`, `requests` and `preview` calls
+that run the paid provider. See
+`docs/inbox-translation.md`.
+
 The `appointments` scope existed in the enum and UI registry for some time
 before any endpoint used it — see "Appointments scope — endpoint-to-scope
 table" below for the full surface now behind it.
+
+## AI files search and reindex
+
+AI file procedures use the `automation` scope. `GET aiFiles.listChunks` is
+available to both `full` and `read_only` tokens; it is the safe way to inspect
+stored chunks. `POST aiFiles.search` and `POST aiFiles.reindex` require a
+`full` token: search creates an embedding using the workspace provider and
+reindex queues extraction, chunking, and embedding work. Each is limited to
+approximately 30 requests per minute per workspace (five per ten seconds).
+
+Uploads (`aiFiles.create`) are tracked the same way: a `processingRun` with
+`status = error` and `error = enqueueFailed` in a `201` response means the file
+was stored but its processing job could not be queued — call
+`aiFiles.reindex` with that `id`. A run with `stale = true` has had no worker
+heartbeat for an hour and can be replaced by a new `aiFiles.reindex`.
+
+`aiFiles.create` accepts files up to 25 MB (multipart uploads are capped at
+about 20 MB by the request body limit, so use `url` for larger files). A `url`
+is downloaded once into a private snapshot — reindex never re-fetches it — and
+creating from a `url` shares the same ~30 requests per minute limit with the
+builder UI. Public Google Docs, Sheets and Slides links are exported
+automatically (text, XLSX with every tab, PPTX); a Google file that is not
+shared publicly, a "Publish to the web" link, an unsupported file type, an
+oversized file or a download over 60 seconds is refused with `400
+businessError`.
+
+After `aiFiles.reindex`, poll `aiFiles.get`. `processingRun.status` reports
+the extract/chunk/enqueue run (`success` does not mean all embeddings have
+finished); wait for both `processingRun.status = success` and
+`processingStatus = success` before relying on search results. A coalesced
+reindex response means an active run already exists and no second job was
+queued.
+
+### Testing a question and tuning chunking
+
+`POST aiFiles.search` with `fileIds` (or `agentId`) returns, per result, the
+chunk position (`chunkIndex`), the score, whether it passed the threshold
+(`passedThreshold`, which follows the optional trial `similarityThreshold`) and
+`agentVisible` — whether the agent's own tool would return it using only the
+searched files (provider default threshold, top five; never affected by the
+trial threshold). Send `expectedText` (up to 200 characters, case-insensitive,
+accents matter) to get `expected.verdict` in the same call without an extra
+embedding: `inTopResults`, `foundButLowRank` or `notInAnyChunk`. An answer split
+across two chunks reports `notInAnyChunk`.
+
+`aiFiles.listChunks` pages follow document order; pass `fromChunkIndex` to open
+the first page at a position. `cursor` is opaque — copy `nextCursor`, never
+build one.
+
+`aiFiles.reindex` accepts `chunkingConfig` (`strategy` `auto|prose`, `chunkSize`
+200–2000, `overlapSize` up to half of `chunkSize`, `tabularHeaderRow` 1–20).
+Omit it to keep the stored parameters, send `null` to reset to the defaults.
+The effective values are `chunkingConfig` on `aiFiles.get`. Changing them
+re-embeds the whole file on the workspace's embedding key and the file is not
+searchable until it finishes. Sending parameters while a run is active returns
+`409 conflict` and applies nothing; without parameters the call coalesces.
+Chunks stored before positions existed have `chunkIndex = null` and
+`indexOutdated = true`; reindex numbers them.
 
 ## The default token and `{{api_key}}`
 
@@ -213,27 +288,126 @@ The full endpoint-to-scope mapping is generated, not hand-maintained here —
 see `/api/spec.json` (built from `apps/builder/src/routers/public.ts`) for
 the authoritative, current list, and
 `apps/builder/__tests__/*-public-scope.test.ts` for the tests that enforce
-each feature's scope assignment at compile/test time. The 19
+each feature's scope assignment at compile/test time. The 20
 `*-public-scope.test.ts` files are: `ads`, `analytics`, `appointments`,
 `automation`, `broadcasts`, `channels-and-integrations`, `channels`,
 `contacts`, `conversations`, `coupons`, `ecommerce` (orders, product vendors,
 store settings), `email-topics`, `error-logs`, `integrations`, `media`,
-`minigames`, `product-categories`, `products` and `sequences`.
+`minigames`, `pipelines`, `product-categories`, `products` and `sequences`.
+
+The `polls` scope covers the Poll Manager routes
+(`apps/builder/src/features/polls/api/public.ts`, router key `polls`:
+`GET/POST /v1/polls`, `GET/PATCH/DELETE /v1/polls/{id}`,
+`POST /v1/polls/bulk-delete`, `GET /v1/polls/{id}/links`,
+`GET /v1/polls/{id}/analytics`). A `read_only` token can list, get, fetch
+links and analytics but is blocked on create, update and delete.
+
+The `posts` scope covers post management: the managed channel posts
+(`apps/builder/src/features/channel-posts/api/management-public.ts`, router
+key `channelPostManagement`: `GET /v1/channel-posts/management`,
+`GET/PATCH /v1/channel-posts/management/{id}`,
+`POST /v1/channel-posts/management/bulk-update`, `POST /v1/channel-posts/management/{id}/refresh`, `POST /v1/channel-posts/management/refresh-metrics`, `GET /v1/channel-posts/management/authors`, `GET /v1/channel-posts/management/{id}/comments`, `POST /v1/channel-posts/management/merge-view`, `POST /v1/channel-posts/management/{id}/comments/{commentId}/like`, `DELETE /v1/channel-posts/management/{id}/comments/{commentId}`, `POST /v1/channel-posts/management/export`, `GET /v1/channel-posts/management/{id}/metrics`, `POST /v1/channel-posts/sync`, `GET /v1/channel-posts/sync/status`) and post topics
+(`apps/builder/src/features/post-topics/api/public.ts`, router key
+`postTopics`: `GET/POST /v1/post-topics`,
+`PATCH/DELETE /v1/post-topics/{id}`), post analytics (`apps/builder/src/features/post-analytics/api/public.ts`, router key `postAnalytics`: `GET /v1/post-analytics/summary`, `/timeseries`, `/top-posts`, `/best-times`) and `GET /v1/posts/{id}/metrics` (`socialPosts.getMetrics`); all read-only, so a `read_only` token can call them. `sync` and `refresh-metrics` only queue background work, and `{id}/refresh` reads one post from its channel now; a `read_only` token can read the status but not start them. The comment reads (`comments`, `merge-view`, `authors`) and `export` read only: `export` builds a CSV of up to 20,000 comments or phone numbers and consumes 1 message of the quota, so it is blocked for a `read_only` token (like the audience preview) and refused on an expired plan; `like` and `delete` act on the channel and are blocked for it. A token sees phone numbers (the same policy as the broadcast API). The older `channelPosts.list` and
+`channelPosts.listSelected` stay under `contacts`. A `read_only` token can
+list and get but is blocked on update, bulk update and topic writes.
+
+The `posts` scope also covers post snippets and saved destination sets
+(`apps/builder/src/features/social-post-snippets/api/public.ts`, router keys
+`postSnippets` and `postTargetSets`: `GET/POST /v1/post-snippets`,
+`GET/PATCH/DELETE /v1/post-snippets/{id}`, `GET/POST /v1/post-target-sets`,
+`GET/PATCH/DELETE /v1/post-target-sets/{id}`) and AI writing
+(`apps/builder/src/features/social-posts-ai/api/public.ts`, router key
+`socialPostsAi`: `POST /v1/posts/ai/generate`). A `read_only` token can list
+and get snippets and sets but is blocked on writes, and on `ai/generate`: it is a
+POST that makes a paid model call with the workspace's own AI key (the integration comes from the body's `integrationId` + `model`, else the translation setting) (it is not on
+the dry-run allow-list that `validate` and `preview` use).
+
+The same `posts` scope covers the composed posts
+(`apps/builder/src/features/social-posts/api/public.ts`, router key `socialPosts`:
+`POST /v1/posts`, `GET /v1/posts` (filter `bucket`), `GET /v1/posts/counts`, `GET|PATCH|DELETE /v1/posts/{id}`,
+`POST /v1/posts/{id}/duplicate`, `POST /v1/posts/{id}/publish`,
+`POST /v1/posts/{id}/reschedule`,
+`POST /v1/posts/{id}/targets/{targetId}/retry`, `POST /v1/posts/{id}/targets/{targetId}/resolve`,
+`POST /v1/posts/{id}/targets/{targetId}/remove`,
+`PUT|DELETE /v1/posts/{id}/recurrence`, `POST /v1/posts/{id}/recurrence/pause|resume`,
+`GET /v1/posts/{id}/recurrence/occurrences`, `POST /v1/posts/{id}/recurrence/occurrences/skip|restore`, `POST /v1/posts/validate`,
+`POST /v1/posts/preview`, `GET /v1/posts/content-types`). `DELETE /v1/posts/{id}`
+answers 200 `{deleted, removal}`; with the query `removeFromChannels=true` it asks every
+published destination to be taken down from its network instead (a worker does it;
+Instagram Login and TikTok offer no delete and answer `unsupported`), which is an outward action:
+refused with 402 in a workspace whose plan has expired, and blocked for a `read_only`
+token like every `DELETE`. Creating, updating,
+duplicating, publishing, scheduling, rescheduling (to a time, a queue slot or a new zone), retrying and resolving are refused in a workspace whose plan has expired; reads, deleting a draft, cancelling a scheduled post (`DELETE`) and unscheduling (`POST /v1/posts/{id}/unschedule`; `reschedule` is refused, `unschedule: true` included), pausing a repeating post (`POST …/recurrence/pause`) and ending its series (`DELETE …/recurrence`) stay open; setting a repeat rule, resuming, skipping and restoring runs are refused. A token creates posts with `createdVia: "api"` and
+no author. `validate` and `preview` are read-only POSTs (the only row they may write is an inbox's missing publishing binding, an idempotent row derived from the inbox that `GET /v1/posts/destinations` also creates) and are exempt from the
+`Idempotency-Key` header replay; `POST /v1/posts` takes its own body field
+`idempotencyKey`.
+Parts and first comment need no new route: `parts` and `firstComment` are fields of the `create` and `update` targets, `targets[].parts[]` is part of every read, and `retry` / `resolve` take an optional `partId`. They follow the existing rules of the `posts` scope: a `read_only` token can read them, create, update and retry are refused with 403 `trialExpired` (or `macLimitReached`) on an expired plan.
+
+The publishing destinations are under the same scope
+(`apps/builder/src/features/publish-destinations/api/public.ts`, router key
+`publishDestinations`: `GET /v1/posts/destinations` (filters `providers[]`, `states[]`),
+`GET /v1/posts/destinations/{id}`,
+`GET|PUT /v1/posts/destinations/{id}/posting-schedule` (procedures `getPostingSlots` /
+`updatePostingSlots`), `GET /v1/posts/destinations/{id}/free-slots` and
+`GET /v1/posts/destinations/{id}/publishing-settings`, which reads a TikTok creator's
+allowed privacy levels live and so works with a `read_only` token). A destination is a
+connected Facebook Page, Instagram or Threads inbox (published with the inbox's own
+token) or a TikTok login; a post target names one by `destinationId` or `inboxId`. A
+`read_only` token can read the destinations, the schedule and the free times but not
+set the schedule; setting it is refused in a workspace whose plan has expired. Reading
+the list creates the bindings of inboxes that have none yet (idempotent).
+
+The same `posts` scope covers the connected TikTok publishing accounts, the only
+separately connected social accounts left
+(`apps/builder/src/features/social-accounts/api/public.ts`, router key
+`socialAccounts`: `GET /v1/social-accounts`, `GET /v1/social-accounts/{id}`,
+`POST /v1/social-accounts/{id}/verify`,
+`POST /v1/social-accounts/{id}/sync-destinations`, `DELETE /v1/social-accounts/{id}`). No response carries a
+token. `verify` and `sync-destinations` call the platform and can move an
+account to `needsReauth`, so a `read_only` token cannot call them. `DELETE` removes the
+stored tokens of a TikTok login; the web page limits it to a workspace super admin, a
+token has no role, so the `posts` scope (and not `read_only`, like every `DELETE`) is what allows it.
+Connecting a TikTok account, and reconnecting an inbox so it can publish, are
+session-only on purpose: each is a browser redirect through the network's login
+dialog (the OAuth step is on invariant 23's exempt list). Tokens
+with an explicit scope list must be edited to add it; tokens with
+`scopes: null` get it automatically. The scope assignment is pinned in
+`apps/builder/__tests__/channel-post-management-api.test.ts`.
 
 What follows are the scope-assignment decisions and gotchas that aren't
 derivable from the code or those tests — read before adding or reassigning
 an endpoint's scope.
 
+- **Pipelines** — scope `pipelines`. A workspace token is governed by its
+  scope, not by per-pipeline member grants (those only limit signed-in
+  members), so a `pipelines` token can read and manage every pipeline,
+  including `setMember`. Attachments reference media-library files:
+  uploading one (`mediaLibrary.createUploadUrl` → `mediaLibrary.createFile`)
+  needs the `media` scope as well. `GET /v1/contacts/{identifier}/pipeline-items`
+  lives under the contacts path but is a `pipelines` operation. Changes made
+  through a token are attributed to the token (`actorKind: workspaceToken`).
+- **Templates** — scope `templates`. Covers `/v1/templates*` (create, update, delete, share link, rotate, analytics, `installers` — who installed it, by opaque reference, with the workspace name shown only when the installer allowed it — and publisher-side uninstall), `/v1/template-previews/{id}` (the path id is a share token) and `/v1/template-installations*` (install — an already installed template is updated in place unless `allowDuplicate` —, retry, status, resources, `update` for auto-update and the publisher-uninstall consent, `sync` and its history, `restoreBackup`, and `uninstall` with its preview). A token acts with its own power: a `full` token may use every template category, a `read_only` token only reads (including the uninstall previews). An install made through a token has no installing user (`installedBy` is null); the worker therefore skips the per-user permission re-check that member installs get. Installs reach only workspaces of the template's tenant. `flows.export` stays under `automation`.
 - **Contacts** — Contacts' public surface is split by concern across
   submodules — some in `features/contacts/api/public/` (`crud.ts`,
   `tags.ts`, `custom-fields.ts`, `bulk.ts`, `export.ts`,
   `refresh-profile.ts`, `messages.ts`), some in their own owning feature's
   `api/public.ts` (`contact-notes`, `contact-sequences`, `contact-inboxes`,
   `contact-filter`, `import`) that `features/contacts/api/public.ts`
-  composes in alongside its own submodules, and `contact-scan` — the one
-  submodule composed directly into `apps/builder/src/routers/public.ts`
-  under its own `contactScans` top-level key instead of through
-  `features/contacts/api/public.ts`. Every one of them other than
+  composes in alongside its own submodules, and `contact-scan` and
+  `contact-sync` — the two submodules composed directly into
+  `apps/builder/src/routers/public.ts` under their own `contactScans` and
+  `contactSyncs` top-level keys instead of through
+  `features/contacts/api/public.ts`. `contactSyncs.*`
+  (`/v1/contact-syncs*`: sources, schema, mappings, create, get, list,
+  availability, cancel, retry-history) imports contacts from AhaChat into the
+  workspace's connected pages; AhaChat is asked about each page by itself, no
+  token or connection is needed. `contactSyncs.startConnectImport`
+  (`POST /v1/contact-syncs/connect-import`) also turns on a channel's history
+  sync, so it additionally needs the `channels` scope (checked in its
+  handler). Every
+  one of them other than
   `messages.ts` calls `workspaceTokenAuthAPIForScope("contacts")` exactly
   once at import. `messages.ts` is the one exception: sending/reading
   messages, auto-replies, and flows for a contact are conversation/automation
@@ -717,6 +891,10 @@ Two invariants specific to this scope:
 Existing scoped tokens do not gain the new scope; only `null`-scoped tokens
 can reach it.
 
+The `places` scope covers the Places Near Me endpoints (place categories and
+locations). Tokens with an explicit scope list must be edited to add it;
+tokens with `scopes: null` get it automatically.
+
 ## Token management
 
 - Creating and revoking tokens requires the caller to be a workspace
@@ -754,7 +932,8 @@ approved as UI-only.
   builder), never the stored key.
 - `contacts.export` `fields` need a kind prefix: `sys:<column>` (firstName,
   lastName, fullName, email, phoneNumber, gender, source, lastReadAt,
-  blockedAt, contactId, sourceUserId = WhatsApp BSUID), `cus:<customFieldId>`,
+  blockedAt, contactId, sourceUserId = WhatsApp BSUID, adIds = every ad id the
+  contact came from, oldest first, at most `CONTACT_AD_IDS_LIMIT` = 50), `cus:<customFieldId>`,
   `tag:<tagId>`. A key without a prefix is rejected (422).
 - `POST /v1/contacts/filter-value-labels` is a pure read (id lists too large
   for a query string) that names the tag ids a `contactFilter` references; it is

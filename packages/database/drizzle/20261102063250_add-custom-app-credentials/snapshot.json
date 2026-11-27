@@ -1,0 +1,47 @@
+{
+  "type": "diff",
+  "version": "10",
+  "dialect": "postgres",
+  "id": "2b888b2e-3ff4-450b-b98f-31b685088e44",
+  "prevIds": [
+    "14b31a82-653a-4bbf-9259-ccae3ddc4cd9"
+  ],
+  "footprints": [
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "UserQuota",
+        "customAppCredentials"
+      ],
+      "writes": [
+        "s|col|public.UserQuota.customAppCredentials",
+        "n|col|public.UserQuota.customAppCredentials",
+        "e|col|public.UserQuota.customAppCredentials"
+      ],
+      "reads": [
+        "n|tbl|public.UserQuota",
+        "n|sch|public"
+      ]
+    }
+  ],
+  "deltas": [
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "UserQuota",
+        "name": "customAppCredentials",
+        "type": "boolean",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "false",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    }
+  ]
+}

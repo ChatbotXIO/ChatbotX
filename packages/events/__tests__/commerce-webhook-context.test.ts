@@ -40,6 +40,15 @@ describe("webhooks for store events", () => {
     expect(mocks.queueAdd).toHaveBeenCalledTimes(1)
   })
 
+  test.each([
+    "orderPaid",
+    "orderRefunded",
+  ] as const)("the %s payment event reaches webhooks outside a channel context", async (eventType) => {
+    // A payment provider's webhook confirming the payment: no channel context.
+    await WebhookEventEmitter.orderStatus(eventType, "ws-1", "c-1", order)
+    expect(mocks.queueAdd).toHaveBeenCalledTimes(1)
+  })
+
   test("other events still need the channel context", async () => {
     await WebhookEventEmitter.tagApplied("ws-1", "c-1", "tag-1")
     expect(mocks.queueAdd).not.toHaveBeenCalled()

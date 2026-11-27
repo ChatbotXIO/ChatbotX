@@ -1,5 +1,6 @@
 // @vitest-environment node
 
+import { ChatbotXException } from "@chatbotx.io/business/errors"
 import { beforeEach, describe, expect, test, vi } from "vitest"
 import { GET, POST } from "@/app/api/auth/[...all]/route"
 
@@ -16,6 +17,8 @@ const {
   mockResolveTenantFromOAuthState,
   socialHandler,
   warnIfGenericOAuthUnlicensed,
+  assertApiNotRateLimited,
+  getGuestClientIp,
 } = vi.hoisted(() => ({
   defaultHandler: vi.fn(() => new Response("default")),
   hasEnterpriseFeatures: vi.fn(),
@@ -26,19 +29,29 @@ const {
   mockResolveTenantFromOAuthState: vi.fn(),
   socialHandler: vi.fn(() => new Response("social")),
   warnIfGenericOAuthUnlicensed: vi.fn(),
+  assertApiNotRateLimited: vi.fn(),
+  getGuestClientIp: vi.fn(() => "203.0.113.9"),
 }))
 
 // `isGenericOAuthPath`'s real logic is covered directly in
 // `packages/auth/__tests__/generic-oauth-path.test.ts` (importing from the
 // package avoids pulling the heavy `@chatbotx.io/auth/server` module graph —
 // better-auth, drizzle, business — into this route test). This mock mirrors
-// that real implementation's three suffix/substring checks; a drift between
-// the two is caught by that dedicated test.
+// that real implementation's two branches (the `/callback/oidc` suffix, or a
+// shared social path selecting the `oidc` provider); a drift between the two
+// is caught by that dedicated test.
+const { isSharedSocialPath } = vi.hoisted(() => ({
+  isSharedSocialPath: (pathname: string) =>
+    ["/sign-in/social", "/sign-up/social", "/link-social"].some((suffix) =>
+      pathname.endsWith(suffix),
+    ),
+}))
+
 vi.mock("@chatbotx.io/auth/server", () => ({
-  isGenericOAuthPath: (pathname: string) =>
-    pathname.endsWith("/sign-in/oauth2") ||
-    pathname.endsWith("/oauth2/link") ||
-    pathname.includes("/oauth2/callback/"),
+  isGenericOAuthPath: (pathname: string, provider?: string) =>
+    pathname.endsWith("/callback/oidc") ||
+    (isSharedSocialPath(pathname) && provider === "oidc"),
+  isSharedSocialPath,
   SOCIAL_PROVIDERS: ["google", "facebook"] as const,
   warnIfGenericOAuthUnlicensed,
 }))
@@ -78,9 +91,21 @@ vi.mock("@/lib/auth-redirect", () => ({
     response,
 }))
 
+vi.mock("@/lib/rate-limit/api-rate-limit", () => ({
+  assertApiNotRateLimited,
+}))
+vi.mock("@/lib/rate-limit/guest-rate-limit", () => ({
+  getGuestClientIp,
+}))
+
+async function loadRoute() {
+  return await import("@/app/api/auth/[...all]/route")
+}
+
 beforeEach(() => {
   vi.clearAllMocks()
   hasEnterpriseFeatures.mockResolvedValue(true)
+  assertApiNotRateLimited.mockResolvedValue(undefined)
   mockGetSocialAuthForTenant.mockResolvedValue({ handler: socialHandler })
   mockResolveTenantByDomain.mockResolvedValue("1")
 })
@@ -144,16 +169,29 @@ describe("auth route — white-label relay", () => {
 
 describe("auth route — generic OAuth enterprise gate (real isGenericOAuthPath matcher)", () => {
   const genericOAuthPaths = [
-    "/api/auth/sign-in/oauth2",
-    "/api/auth/oauth2/link",
-    "/api/auth/oauth2/callback/oidc",
+    "/api/auth/sign-in/social?provider=oidc",
+    "/api/auth/sign-up/social?provider=oidc",
+    "/api/auth/link-social?provider=oidc",
+    "/api/auth/callback/oidc",
   ]
+
+  const callGenericOAuthPath = async (path: string) => {
+    const isSocialPath = path.includes("social")
+    const request = new Request(`https://${PLATFORM_HOST}${path}`, {
+      ...(isSocialPath && {
+        body: JSON.stringify({ provider: "oidc" }),
+        headers: { "Content-Type": "application/json" },
+        method: "POST",
+      }),
+    })
+    return await (isSocialPath ? POST(request) : GET(request))
+  }
 
   for (const path of genericOAuthPaths) {
     test(`returns 404 for ${path} when enterprise features are unavailable`, async () => {
       hasEnterpriseFeatures.mockResolvedValue(false)
 
-      const response = await GET(new Request(`https://${PLATFORM_HOST}${path}`))
+      const response = await callGenericOAuthPath(path)
 
       expect(response.status).toBe(404)
       expect(defaultHandler).not.toHaveBeenCalled()
@@ -163,7 +201,7 @@ describe("auth route — generic OAuth enterprise gate (real isGenericOAuthPath 
     test(`reaches the default handler for ${path} when enterprise features are available`, async () => {
       hasEnterpriseFeatures.mockResolvedValue(true)
 
-      const response = await GET(new Request(`https://${PLATFORM_HOST}${path}`))
+      const response = await callGenericOAuthPath(path)
 
       expect(response.status).not.toBe(404)
       expect(defaultHandler).toHaveBeenCalledTimes(1)
@@ -181,5 +219,67 @@ describe("auth route — generic OAuth enterprise gate (real isGenericOAuthPath 
 
     expect(response.status).not.toBe(404)
     expect(defaultHandler).toHaveBeenCalledTimes(1)
+  })
+})
+
+describe("auth route — MCP consent", () => {
+  test("rejects direct HTTP consent requests", async () => {
+    const { POST } = await loadRoute()
+
+    expect(
+      (
+        await POST(
+          new Request(`https://${PLATFORM_HOST}/api/auth/oauth2/consent`, {
+            method: "POST",
+          }),
+        )
+      ).status,
+    ).toBe(404)
+    expect(defaultHandler).not.toHaveBeenCalled()
+  })
+})
+describe("auth route — MCP browser responses", () => {
+  test("adds CORS headers to the MCP token response", async () => {
+    mockResolveTenantByDomain.mockResolvedValue("1")
+    const { POST } = await loadRoute()
+
+    const response = await POST(
+      new Request(`https://${PLATFORM_HOST}/api/auth/oauth2/token`, {
+        method: "POST",
+      }),
+    )
+
+    expect(response.headers.get("access-control-allow-origin")).toBe("*")
+    expect(response.headers.get("access-control-allow-methods")).toBe(
+      "GET,POST,OPTIONS",
+    )
+    expect(response.headers.get("access-control-allow-headers")).toBe(
+      "Content-Type, Authorization, mcp-protocol-version",
+    )
+  })
+
+  test("adds CORS and Retry-After to a rate-limited client registration", async () => {
+    mockResolveTenantByDomain.mockResolvedValue("1")
+    assertApiNotRateLimited.mockRejectedValue(
+      new ChatbotXException(
+        "Too many requests. Retry after 7s.",
+        "tooManyRequests",
+        429,
+      ),
+    )
+    const { POST } = await loadRoute()
+
+    const response = await POST(
+      new Request(`https://${PLATFORM_HOST}/api/auth/oauth2/register`, {
+        method: "POST",
+      }),
+    )
+
+    expect(response.status).toBe(429)
+    expect(response.headers.get("access-control-allow-origin")).toBe("*")
+    expect(response.headers.get("retry-after")).toBe("7")
+    await expect(response.json()).resolves.toEqual({
+      error: "Too many requests. Retry after 7s.",
+    })
   })
 })

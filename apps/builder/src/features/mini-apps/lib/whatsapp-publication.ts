@@ -18,6 +18,7 @@ import {
 import { getTranslations } from "next-intl/server"
 import { buildWhatsappContext } from "@/features/integration-whatsapp/flows/lib/whatsapp-flow-operations"
 import { integrations } from "@/integration"
+import { logger } from "@/lib/log"
 
 type MiniAppWhatsappTarget = {
   workspaceId: string
@@ -66,6 +67,7 @@ async function loadPublication(target: MiniAppWhatsappTarget) {
  * Flow" step can pick it right away) and into the Mini App's publication.
  */
 async function recordFlowResult(props: {
+  workspaceId: string
   miniAppId: string
   integrationWhatsappId: string
   result: PublishFlowJsonResult
@@ -75,20 +77,24 @@ async function recordFlowResult(props: {
     integrationWhatsappId: props.integrationWhatsappId,
     flow: result.flow,
   })
-  const publication = await miniAppPublicationService.record({
-    miniAppId: props.miniAppId,
-    integrationWhatsappId: props.integrationWhatsappId,
-    whatsappFlowId: whatsappFlow.id,
-    sourceId: result.flow.id,
-    status: result.flow.status,
-    // A refused publish has no validation error; surface Meta's reason the
-    // same way so the dialog and API callers see why it stayed a draft.
-    validationErrors: [
-      ...(result.flow.validation_errors ?? []),
-      ...(result.publishError ? [{ message: result.publishError }] : []),
-    ],
-    published: result.published,
-  })
+  // Under the Mini App's template lock: refuses (and the caller compensates)
+  // when it was deleted or is being uninstalled while Meta was answering.
+  const publication = await miniAppService.recordPublication(
+    { workspaceId: props.workspaceId, id: props.miniAppId },
+    {
+      integrationWhatsappId: props.integrationWhatsappId,
+      whatsappFlowId: whatsappFlow.id,
+      sourceId: result.flow.id,
+      status: result.flow.status,
+      // A refused publish has no validation error; surface Meta's reason the
+      // same way so the dialog and API callers see why it stayed a draft.
+      validationErrors: [
+        ...(result.flow.validation_errors ?? []),
+        ...(result.publishError ? [{ message: result.publishError }] : []),
+      ],
+      published: result.published,
+    },
+  )
   // `published` comes from the publish call itself; the status Meta reports
   // right after it can lag behind.
   return { ...publication, published: result.published }
@@ -129,6 +135,11 @@ export async function publishMiniAppToWhatsapp(
     id: props.miniAppId,
   })
   await assertPublishable(miniApp.definition)
+  // Refuse before any Meta call when an uninstall is already in progress.
+  await miniAppService.assertAcceptsPublication({
+    workspaceId: props.workspaceId,
+    id: miniApp.id,
+  })
 
   const { integrationWhatsapp, whatsappContext } =
     await loadWhatsappContext(props)
@@ -149,6 +160,7 @@ export async function publishMiniAppToWhatsapp(
     // Nothing changed on Meta; only bring the stored status in line with it
     // (without moving `publishedAt`) before refusing the draft save.
     await recordFlowResult({
+      workspaceId: props.workspaceId,
       miniAppId: miniApp.id,
       integrationWhatsappId: integrationWhatsapp.id,
       result: { ...result, published: false },
@@ -156,11 +168,51 @@ export async function publishMiniAppToWhatsapp(
     const t = await getTranslations("miniApps.publish")
     throw validationException("publish", t("flowIsLive"))
   }
-  return await recordFlowResult({
-    miniAppId: miniApp.id,
-    integrationWhatsappId: integrationWhatsapp.id,
-    result,
-  })
+  try {
+    return await recordFlowResult({
+      workspaceId: props.workspaceId,
+      miniAppId: miniApp.id,
+      integrationWhatsappId: integrationWhatsapp.id,
+      result,
+    })
+  } catch (error) {
+    if (!existing) {
+      // The Flow was created by this call and no publication points at it:
+      // remove it so it never outlives its Mini App.
+      await removeOrphanFlow({
+        workspaceId: props.workspaceId,
+        flowSourceId: result.flow.id,
+        whatsappContext,
+      })
+    }
+    throw error
+  }
+}
+
+type WhatsappContext = Awaited<ReturnType<typeof buildWhatsappContext>>
+
+/** Best-effort undo of a Flow created on Meta whose publication could not be recorded. */
+async function removeOrphanFlow(props: {
+  workspaceId: string
+  flowSourceId: string
+  whatsappContext: WhatsappContext
+}) {
+  try {
+    const removed = await integrations.whatsapp.runAction("deleteFlow", {
+      ctx: props.whatsappContext,
+      params: { flowSourceId: props.flowSourceId },
+    })
+    await whatsappFlowService.markRemovedOnMeta({
+      workspaceId: props.workspaceId,
+      sourceId: props.flowSourceId,
+      status: removed.status,
+    })
+  } catch (err) {
+    logger.warn(
+      { err, flowSourceId: props.flowSourceId },
+      "Orphan WhatsApp Flow not removed after its Mini App went away",
+    )
+  }
 }
 
 /** Publishes the draft already on Meta, exactly as it was previewed. */
@@ -174,6 +226,7 @@ export async function publishMiniAppWhatsappDraft(
     params: { flowSourceId: publication.sourceId },
   })
   return await recordFlowResult({
+    workspaceId: props.workspaceId,
     miniAppId: publication.miniAppId,
     integrationWhatsappId: publication.integrationWhatsappId,
     result,

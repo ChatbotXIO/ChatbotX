@@ -1,4 +1,11 @@
-import { type DatabaseClient, db, relationsFilterToSQL } from "../../client"
+import {
+  type DatabaseClient,
+  db,
+  relationsFilterToSQL,
+  type SQL,
+  type SQLWrapper,
+  sql,
+} from "../../client"
 import { miniAppModel, miniAppSubmissionModel } from "../../schema"
 import {
   escapeLikePattern,
@@ -23,7 +30,37 @@ const buildWhere = (input: {
   ...(input.keyword ? { name: { ilike: likeContains(input.keyword) } } : {}),
 })
 
+/**
+ * A Mini App never published to WhatsApp (no publication with `publishedAt`).
+ * A raw predicate, so it works in `findMany` and in `$count` alike; a published
+ * one has a Flow on the creator's number and is not copyable into a template.
+ */
+export const miniAppNotPublishedRaw = (columns: { id: SQLWrapper }): SQL =>
+  sql`NOT EXISTS (
+    SELECT 1 FROM "MiniAppPublication"
+    WHERE "MiniAppPublication"."miniAppId" = ${columns.id}
+      AND "MiniAppPublication"."publishedAt" IS NOT NULL
+  )`
+
 export const miniAppRepository = {
+  /** The Mini Apps among `ids` that exist in the workspace and are published to WhatsApp (the complement of `miniAppNotPublishedRaw`). One query. */
+  async listPublishedNamesByIds(
+    input: { workspaceId: string; ids: readonly string[] },
+    tx: DatabaseClient = db,
+  ): Promise<{ id: string; name: string }[]> {
+    if (input.ids.length === 0) {
+      return []
+    }
+    return await tx.query.miniAppModel.findMany({
+      where: {
+        workspaceId: input.workspaceId,
+        id: { in: [...input.ids] },
+        RAW: (columns) => sql`NOT (${miniAppNotPublishedRaw(columns)})`,
+      },
+      columns: { id: true, name: true },
+    })
+  },
+
   async listPaginated(input: MiniAppListInput, tx: DatabaseClient = db) {
     return await tx.query.miniAppModel.findMany({
       where: buildWhere(input),

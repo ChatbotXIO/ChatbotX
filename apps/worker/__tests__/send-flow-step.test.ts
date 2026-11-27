@@ -346,6 +346,10 @@ vi.mock("../src/services/integrations", () => ({
   resolveIntegrationContextFromContactInbox: vi.fn(),
 }))
 
+const mockSettleFailedOutgoingMessage = vi.hoisted(() =>
+  vi.fn().mockResolvedValue("removed"),
+)
+
 vi.mock("../src/chat/handlers/send-message", async (importOriginal) => {
   const actual =
     await importOriginal<typeof import("../src/chat/handlers/send-message")>()
@@ -353,7 +357,7 @@ vi.mock("../src/chat/handlers/send-message", async (importOriginal) => {
     ...actual,
     sendFlowStepToChannel: mockSendFlowStepToChannel,
     sendMessageToChannel: mockSendMessageToChannel,
-    recordMessageSendError: vi.fn().mockResolvedValue(undefined),
+    settleFailedOutgoingMessage: mockSettleFailedOutgoingMessage,
     markConversationReadAfterDelivery: mockMarkReadByOutbound,
   }
 })
@@ -375,6 +379,7 @@ import {
   SEQUENCE_SCHEDULE_PAYLOAD_TYPE,
 } from "@chatbotx.io/flow-config"
 import type { ChatJobSendFlowStep } from "@chatbotx.io/worker-config"
+import { logger } from "../src/lib/logger"
 
 const { sendChatMessage, sendFlowStep } = await import(
   "../src/chat/handlers/send-flow-step"
@@ -720,6 +725,85 @@ describe("sendFlowStep", () => {
     expect(mockSendFlowStepToChannel).not.toHaveBeenCalled()
   })
 
+  describe("card button limit of the resolved channel", () => {
+    const fiveButtons = Array.from({ length: 5 }, (_, index) => ({
+      id: `b${index + 1}`,
+      label: `Option ${index + 1}`,
+      buttonType: null,
+      beforeStep: null,
+      steps: [],
+    }))
+    const lineTextStep = {
+      id: "step-line",
+      nodeId: "node-line",
+      stepType: "sendText",
+      text: "Pick one",
+      buttons: fiveButtons,
+    } as unknown as SendFlowStepData["step"]
+    const lineCarouselStep = {
+      id: "step-line-carousel",
+      nodeId: "node-line",
+      stepType: "sendCarousel",
+      layout: "horizontal",
+      cards: [
+        { id: "c1", stepType: "sendCard", title: "A", buttons: fiveButtons },
+      ],
+    } as unknown as SendFlowStepData["step"]
+    const DROPPED =
+      "Dropping card buttons over the resolved channel's card button limit"
+    const sentStep = () =>
+      mockSendFlowStepToChannel.mock.calls.at(-1)?.[0]?.step as {
+        buttons?: { id: string }[]
+        cards?: { buttons: { id: string }[] }[]
+      }
+
+    test("a 5-button text step is passed to a 3-button channel unchanged", async () => {
+      await sendFlowStep({
+        ...baseParams,
+        contactInboxId: "ci-1",
+        step: lineTextStep,
+      })
+
+      expect(sentStep().buttons).toHaveLength(5)
+      expect(logger.warn).not.toHaveBeenCalledWith(expect.anything(), DROPPED)
+    })
+
+    test("each carousel card is cut to the channel's card limit and logged", async () => {
+      await sendFlowStep({
+        ...baseParams,
+        contactInboxId: "ci-1",
+        step: lineCarouselStep,
+      })
+
+      expect(sentStep().cards?.[0]?.buttons.map((button) => button.id)).toEqual(
+        ["b1", "b2", "b3"],
+      )
+      expect(logger.warn).toHaveBeenCalledWith(
+        expect.objectContaining({
+          channel: "messenger",
+          dropped: [{ group: "cards.0", kept: 3, dropped: 2 }],
+        }),
+        DROPPED,
+      )
+    })
+
+    test("LINE keeps all 5 card buttons and logs nothing", async () => {
+      mockFindContactInbox.mockResolvedValue({
+        ...fakeContactInbox,
+        channel: "line",
+      })
+
+      await sendFlowStep({
+        ...baseParams,
+        contactInboxId: "ci-1",
+        step: lineCarouselStep,
+      })
+
+      expect(sentStep().cards?.[0]?.buttons).toHaveLength(5)
+      expect(logger.warn).not.toHaveBeenCalledWith(expect.anything(), DROPPED)
+    })
+  })
+
   describe("whatsappLocation step", () => {
     const locationStep = {
       id: "step-location",
@@ -884,6 +968,104 @@ describe("sendFlowStep", () => {
     )
   })
 
+  describe("a failed send", () => {
+    beforeEach(() => {
+      mockSendFlowStepToChannel.mockRejectedValueOnce(new Error("rejected"))
+    })
+
+    test("of an automated flow step settles its message without the inbox rule", async () => {
+      await sendFlowStep(baseParams)
+
+      expect(mockEmit).toHaveBeenCalledWith(
+        "message:failed",
+        expect.objectContaining({ willRetry: false }),
+      )
+      expect(mockSettleFailedOutgoingMessage).toHaveBeenCalledWith({
+        message: expect.objectContaining({ id: "msg-created" }),
+        conversationId: "conv-1",
+        workspaceId: "ws-1",
+        errorMessage: expect.any(String),
+        sendFrom: undefined,
+        silent: false,
+      })
+    })
+
+    test("of a flow sent from the inbox passes sendFrom so the message is kept", async () => {
+      await sendFlowStep({ ...baseParams, sendFrom: "inbox" })
+
+      expect(mockSettleFailedOutgoingMessage).toHaveBeenCalledWith(
+        expect.objectContaining({ sendFrom: "inbox" }),
+      )
+    })
+
+    test("of a bulk broadcast step settles silently", async () => {
+      await sendFlowStep({
+        ...baseParams,
+        isBulkBroadcast: true,
+        metadata: { type: BROADCAST_PAYLOAD_TYPE } as never,
+      })
+
+      expect(mockSettleFailedOutgoingMessage).toHaveBeenCalledWith(
+        expect.objectContaining({ silent: true }),
+      )
+    })
+  })
+
+  test("stamps a flow step sent from the inbox as sentFromInbox", async () => {
+    await sendFlowStep({ ...baseParams, sendFrom: "inbox" })
+
+    expect(mockRepositoryCreate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        contentAttributes: expect.objectContaining({ sentFromInbox: true }),
+      }),
+    )
+  })
+
+  test("stamps the member behind a manual flow step", async () => {
+    await sendFlowStep({
+      ...baseParams,
+      sendFrom: "inbox",
+      sentByUserId: "user-7",
+    })
+
+    expect(mockRepositoryCreate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        contentAttributes: expect.objectContaining({ sentByUserId: "user-7" }),
+      }),
+    )
+  })
+
+  test("stamps the member behind an API flow step sent with a member token", async () => {
+    await sendFlowStep({
+      ...baseParams,
+      sendFrom: "api",
+      sentByUserId: "user-7",
+    })
+
+    const [created] = mockRepositoryCreate.mock.calls[0] as [
+      { contentAttributes: Record<string, unknown> },
+    ]
+    expect(created.contentAttributes).toHaveProperty("sentByUserId", "user-7")
+  })
+
+  test("never stamps an automated flow step, even when a sender id is present", async () => {
+    await sendFlowStep({ ...baseParams, sentByUserId: "user-7" })
+
+    const [created] = mockRepositoryCreate.mock.calls[0] as [
+      { contentAttributes: Record<string, unknown> },
+    ]
+    expect(created.contentAttributes).not.toHaveProperty("sentByUserId")
+  })
+
+  test("does not mark an API flow step sentFromInbox", async () => {
+    await sendFlowStep({ ...baseParams, sendFrom: "api" })
+
+    const [created] = mockRepositoryCreate.mock.calls[0] as [
+      { contentAttributes: Record<string, unknown> },
+    ]
+    expect(created.contentAttributes).not.toHaveProperty("sentFromInbox")
+  })
+
   test("an inbox-originated flow step leaves the window to the producer claim", async () => {
     await sendFlowStep({ ...baseParams, sendFrom: "inbox" })
 
@@ -967,6 +1149,7 @@ describe("sendFlowStep", () => {
       publicLinkSlug: "public-slug",
     })
     expect(mockSignAppointmentWebviewToken).toHaveBeenCalledWith({
+      source: "flow",
       mode: "book",
       workspaceId: "ws-1",
       calendarId: "calendar-1",
@@ -1104,6 +1287,105 @@ describe("sendFlowStep", () => {
     // both.
     expect(sentButtonUrl()).toContain(GO_PREFIX)
     expect(persistedButtonUrl()).toBe(sentButtonUrl())
+  })
+
+  // -------------------------------------------------------------------------
+  // Call Phone Number buttons
+  // -------------------------------------------------------------------------
+
+  const callPhoneStep = (phoneNumber: string, label = "Call") =>
+    ({
+      ...sendTextStep,
+      buttons: [
+        {
+          id: "button-1",
+          label,
+          buttonType: "callPhoneNumber",
+          beforeStep: {
+            id: "before-1",
+            stepType: "callPhoneNumber",
+            phoneNumber,
+          },
+          steps: [],
+        },
+      ],
+    }) as unknown as SendFlowStepData["step"]
+
+  const sentCallButton = () =>
+    mockSendFlowStepToChannel.mock.calls.at(-1)?.[0]?.step?.buttons?.[0]
+
+  const persistedCallButton = () =>
+    mockRepositoryCreate.mock.calls.at(-1)?.[0]?.contentAttributes?.payload
+      ?.buttons?.[0]
+
+  test("normalises a resolved call number and keeps the label on a native channel", async () => {
+    mockResolveContactVariables.mockImplementation(
+      (_contactId: string, step: unknown) =>
+        Promise.resolve(
+          JSON.parse(
+            JSON.stringify(step).replace(
+              "{{contact.phone}}",
+              "+1 415 555 2671",
+            ),
+          ),
+        ),
+    )
+
+    await sendFlowStep({
+      ...baseParams,
+      contactInboxId: "ci-1",
+      step: callPhoneStep("{{contact.phone}}"),
+    })
+
+    expect(sentCallButton()).toMatchObject({
+      label: "Call",
+      buttonType: "callPhoneNumber",
+      beforeStep: { phoneNumber: "+14155552671" },
+    })
+    expect(persistedCallButton()).toMatchObject({
+      buttonType: "phoneNumber",
+      label: "Call",
+      phoneNumber: "+14155552671",
+    })
+  })
+
+  test("shows the number in the title on a channel that cannot dial", async () => {
+    mockFindContactInbox.mockResolvedValue({
+      ...fakeContactInbox,
+      channel: "telegram",
+    })
+
+    await sendFlowStep({
+      ...baseParams,
+      contactInboxId: "ci-1",
+      step: callPhoneStep("+14155552671"),
+    })
+
+    expect(sentCallButton()?.label).toBe("Call +14155552671")
+    // Stored as the reply button the contact actually got, not a dial link.
+    expect(persistedCallButton()).toMatchObject({
+      buttonType: "postback",
+      label: "Call +14155552671",
+    })
+    expect(persistedCallButton()).not.toHaveProperty("phoneNumber")
+  })
+
+  test("degrades an unresolved number to an inert reply button", async () => {
+    await sendFlowStep({
+      ...baseParams,
+      contactInboxId: "ci-1",
+      step: callPhoneStep("{{contact.phone}}"),
+    })
+
+    expect(sentCallButton()).toMatchObject({
+      buttonType: null,
+      beforeStep: null,
+      label: "Call",
+    })
+    expect(persistedCallButton()).toMatchObject({
+      buttonType: "postback",
+      label: "Call",
+    })
   })
 
   test("leaves every link outside the deep-link table untouched", async () => {
@@ -1271,6 +1553,7 @@ describe("sendFlowStep", () => {
     })
 
     expect(mockSignAppointmentWebviewToken).toHaveBeenCalledWith({
+      source: "flow",
       mode: "book",
       workspaceId: "ws-1",
       calendarId: "calendar-1",
@@ -1575,6 +1858,79 @@ describe("sendFlowStep", () => {
         }),
       }),
     )
+  })
+
+  describe("presetQuickReplies (caller-encoded quick replies, e.g. Get User Data's Skip)", () => {
+    const skip = {
+      id: "skip-1",
+      label: "Skip",
+      buttonType: "postback" as const,
+      postback: "STEP_INPUT_SKIP|11612473309626368",
+    }
+
+    test("reaches the channel untouched and is stored as a button of the message", async () => {
+      await sendFlowStep({
+        ...baseParams,
+        step: sendTextStep,
+        presetQuickReplies: [skip],
+      })
+
+      expect(mockSendFlowStepToChannel).toHaveBeenCalledWith(
+        expect.objectContaining({ quickReplies: [skip] }),
+      )
+      expect(mockRepositoryCreate).toHaveBeenCalledWith(
+        expect.objectContaining({
+          contentAttributes: expect.objectContaining({
+            payload: expect.objectContaining({
+              buttons: expect.arrayContaining([skip]),
+            }),
+          }),
+        }),
+      )
+    })
+
+    test("goes after the step's own quick replies", async () => {
+      const quickReplies = [
+        {
+          id: "qr-1",
+          label: "Yes",
+          buttonType: null,
+          beforeStep: null,
+          steps: [],
+        },
+      ]
+
+      await sendFlowStep({
+        ...baseParams,
+        step: sendTextStep,
+        quickReplies,
+        presetQuickReplies: [skip],
+      } as SendFlowStepData & { quickReplies: typeof quickReplies })
+
+      const call = mockSendFlowStepToChannel.mock.calls[0]?.[0] as {
+        quickReplies: { id: string }[]
+      }
+      expect(call.quickReplies.map((reply) => reply.id)).toEqual([
+        "qr-1",
+        "skip-1",
+      ])
+    })
+
+    test.each([
+      ["omitted", undefined],
+      ["empty", []],
+    ])("adds nothing when %s", async (_label, presetQuickReplies) => {
+      await sendFlowStep({
+        ...baseParams,
+        step: sendTextStep,
+        presetQuickReplies,
+      })
+
+      const call = mockSendFlowStepToChannel.mock.calls[0]?.[0] as {
+        quickReplies?: unknown
+      }
+      expect(call.quickReplies).toBeUndefined()
+    })
   })
 
   test("calls repository.createWithAttachments() for step with url (sendImage)", async () => {
@@ -2034,6 +2390,19 @@ describe("sendChatMessage", () => {
     })
   })
 
+  test("never stamps a member on a chat message row", async () => {
+    await sendChatMessage({
+      conversation: fakeConversation as never,
+      contactInbox: fakeContactInbox as never,
+      text: "hello from chat",
+    })
+
+    const [created] = mockRepositoryCreate.mock.calls[0] as [
+      { contentAttributes: Record<string, unknown> },
+    ]
+    expect(created.contentAttributes).not.toHaveProperty("sentByUserId")
+  })
+
   test("updates contact inbox lastMessageAt and conversation lastActivityAt after creating a chat message", async () => {
     await sendChatMessage({
       conversation: fakeConversation as never,
@@ -2054,6 +2423,46 @@ describe("sendChatMessage", () => {
     expect(mockInvalidateTracking).toHaveBeenCalledWith({
       cacheTags: ["contacts:contact-1:contact-inboxes"],
     })
+  })
+
+  test("stores flowId and stepId on the message when the caller names its flow step", async () => {
+    await sendChatMessage({
+      conversation: fakeConversation as never,
+      contactInbox: fakeContactInbox as never,
+      text: "what is your phone number?",
+      flowOrigin: { flowId: "flow-1", stepId: "step-1" },
+    })
+
+    expect(mockRepositoryCreate).toHaveBeenCalledTimes(1)
+    expect(mockRepositoryCreate.mock.calls[0]?.[0].contentAttributes).toEqual(
+      expect.objectContaining({ flowId: "flow-1", stepId: "step-1" }),
+    )
+  })
+
+  test("leaves contentAttributes without flow keys when the caller passes no flowOrigin", async () => {
+    await sendChatMessage({
+      conversation: fakeConversation as never,
+      contactInbox: fakeContactInbox as never,
+      text: "plain",
+    })
+
+    const attributes = mockRepositoryCreate.mock.calls[0]?.[0].contentAttributes
+    expect(attributes).not.toHaveProperty("flowId")
+    expect(attributes).not.toHaveProperty("stepId")
+  })
+
+  test("never tells the send it will be retried: sendChatMessage swallows failures, so the send error must be recorded at once", async () => {
+    await sendChatMessage({
+      conversation: fakeConversation as never,
+      contactInbox: fakeContactInbox as never,
+      text: "hello from chat",
+    })
+
+    expect(mockSendMessageToChannel).toHaveBeenCalledWith(
+      expect.anything(),
+      0,
+      false,
+    )
   })
 
   test("uses the resolved fallback inbox when routing the realtime message", async () => {

@@ -2,58 +2,70 @@ import { createId, zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
 import { stepTypes } from "./step-action"
 
-export const conditionFilterConditionSchema = z.object({
-  field: z
-    .string()
-    .min(1)
-    .describe(
-      "Contact field to test: a static field name from `GET /v1/contacts/filter-fields`, or `customField` together with `customFieldId` (the custom field id) to test a workspace custom field.",
-    ),
-  operator: z
-    .string()
-    .min(1)
-    .describe(
-      "Operator valid for this field, as listed by `GET /v1/contacts/filter-fields`.",
-    ),
-  value: z
-    .union([z.string(), z.array(z.string()), z.tuple([z.string(), z.string()])])
-    .optional()
-    .describe(
-      "Comparison value. Omit for valueless operators (e.g. isEmpty). A two-element tuple is a between-range; an array is a multi-value match.",
-    ),
-  customFieldId: zodBigintAsString().optional(),
-  /**
-   * Runtime coupon topic id for dynamic coupon-topic filter rows. Kept so
-   * publish validation does not strip the selected topic before worker match.
-   */
-  topicId: zodBigintAsString().optional(),
-  /**
-   * Leaderboard id for dynamic "Gamification scores" filter rows. Same
-   * reason as `topicId`: without it zod strips the key on save and the
-   * condition compares against no leaderboard.
-   */
-  leaderboardId: zodBigintAsString().optional(),
-  /**
-   * Precise custom-field type (`date` | `datetime`). Kept alongside `valueType`
-   * so the runtime filter compares a date field by wall clock rather than the
-   * zone-aware datetime path. Without it here, zod strips the key on save and
-   * date conditions are silently mis-evaluated.
-   */
-  customFieldType: z.string().optional(),
-  /**
-   * Runtime bot field (account field) id for dynamic bot-field filter rows —
-   * workspace-scoped, mirrors `customFieldId` for the `customField` branch.
-   */
-  botFieldId: zodBigintAsString().optional(),
-  /**
-   * Precise bot-field type (`date` | `datetime` | ...), mirroring
-   * `customFieldType`. Kept alongside `valueType` so the runtime filter
-   * compares a date field by wall clock rather than the zone-aware datetime
-   * path.
-   */
-  botFieldType: z.string().optional(),
-  valueType: z.string().optional(),
-})
+export const conditionFilterConditionSchema = z
+  .object({
+    field: z
+      .string()
+      .min(1)
+      .describe(
+        "Contact field to test: a static field name from `GET /v1/contacts/filter-fields`, or `customField` together with `customFieldId` (the custom field id) to test a workspace custom field.",
+      ),
+    operator: z
+      .string()
+      .min(1)
+      .describe(
+        "Operator valid for this field, as listed by `GET /v1/contacts/filter-fields`.",
+      ),
+    value: z
+      .union([
+        z.string(),
+        z.array(z.string()),
+        z.tuple([z.string(), z.string()]),
+      ])
+      .optional()
+      .describe(
+        "Comparison value. Omit for valueless operators (e.g. isEmpty). A two-element tuple is a between-range; an array is a multi-value match.",
+      ),
+    customFieldId: zodBigintAsString().optional(),
+    /**
+     * Runtime coupon topic id for dynamic coupon-topic filter rows. Kept so
+     * publish validation does not strip the selected topic before worker match.
+     */
+    topicId: zodBigintAsString().optional(),
+    /**
+     * Leaderboard id for dynamic "Gamification scores" filter rows. Same
+     * reason as `topicId`: without it zod strips the key on save and the
+     * condition compares against no leaderboard.
+     */
+    leaderboardId: zodBigintAsString().optional(),
+    /**
+     * Precise custom-field type (`date` | `datetime`). Kept alongside `valueType`
+     * so the runtime filter compares a date field by wall clock rather than the
+     * zone-aware datetime path. Without it here, zod strips the key on save and
+     * date conditions are silently mis-evaluated.
+     */
+    customFieldType: z.string().optional(),
+    /**
+     * Runtime bot field (account field) id for dynamic bot-field filter rows —
+     * workspace-scoped, mirrors `customFieldId` for the `customField` branch.
+     */
+    botFieldId: zodBigintAsString().optional(),
+    /**
+     * Precise bot-field type (`date` | `datetime` | ...), mirroring
+     * `customFieldType`. Kept alongside `valueType` so the runtime filter
+     * compares a date field by wall clock rather than the zone-aware datetime
+     * path.
+     */
+    botFieldType: z.string().optional(),
+    valueType: z.string().optional(),
+  })
+  // Stored conditions keep only the keys above, so a pipeline condition would
+  // lose its attribute and pipeline and never match. Fail loudly instead.
+  .refine((condition) => condition.field !== "pipelineItem", {
+    path: ["field"],
+    message:
+      "Pipeline item conditions are not supported in the Condition step, which would never match them.",
+  })
 
 export const conditionCaseSchema = z.object({
   id: zodBigintAsString().describe(

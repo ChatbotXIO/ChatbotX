@@ -1,14 +1,11 @@
 import {
-  defaultWorkerOptions,
-  getQueueConnection,
   MarketingMessageJobAction,
   type MarketingMessageJobData,
   queueNames,
 } from "@chatbotx.io/worker-config"
-import { type Job, Worker } from "bullmq"
+import type { Job, Worker } from "bullmq"
 import { env } from "../env"
-import { instrumentWorker } from "../lib/job-observability"
-import { logger } from "../lib/logger"
+import { createQueueWorker } from "../lib/create-queue-worker"
 import { processMarketingMessageCampaign } from "../schedule/handlers/process-marketing-message-campaign"
 
 /**
@@ -16,7 +13,7 @@ import { processMarketingMessageCampaign } from "../schedule/handlers/process-ma
  * campaign step; the blocked-owner guard runs inside the step handler.
  */
 export function startMarketingMessageWorker(): Worker<MarketingMessageJobData> {
-  const worker = new Worker<MarketingMessageJobData>(
+  return createQueueWorker<MarketingMessageJobData>(
     queueNames.enum.marketingMessage,
     async (job: Job<MarketingMessageJobData>) => {
       switch (job.data.type) {
@@ -27,19 +24,6 @@ export function startMarketingMessageWorker(): Worker<MarketingMessageJobData> {
           return
       }
     },
-    {
-      connection: getQueueConnection(queueNames.enum.marketingMessage),
-      ...defaultWorkerOptions,
-      concurrency: env.MARKETING_MESSAGE_WORKER_CONCURRENCY,
-    },
+    { concurrency: env.MARKETING_MESSAGE_WORKER_CONCURRENCY },
   )
-
-  worker.on("failed", (job, err) => {
-    if (job) {
-      logger.error({ err, jobId: job.id }, "Marketing message job failed")
-    }
-  })
-  instrumentWorker(worker, { queue: queueNames.enum.marketingMessage })
-
-  return worker
 }

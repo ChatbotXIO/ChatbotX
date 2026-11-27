@@ -90,6 +90,9 @@ export async function fetchFollowingSafeRedirects(input: {
   if (response.status < 300 || response.status >= 400) {
     return { finalUrl: url, response }
   }
+  // A redirect's body is never read; release it so its connection can be
+  // reclaimed on every path below (follow or reject).
+  await response.body?.cancel().catch(() => undefined)
   if (redirectsLeft <= 0) {
     throw errors.tooManyRedirects()
   }

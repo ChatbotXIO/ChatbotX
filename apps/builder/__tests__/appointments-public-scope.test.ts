@@ -19,6 +19,12 @@ const {
 }))
 
 const appointmentCalendarService = { list: vi.fn() }
+const conversationService = {
+  findByOrFail: vi.fn(),
+  resolveContactInboxForConversation: vi.fn(),
+}
+const createInboxBookingLink = vi.fn()
+const sendInboxBookingLink = vi.fn()
 
 vi.mock("@chatbotx.io/business", () => ({
   workspaceApiTokenService: { findWorkspaceByTokenHash },
@@ -26,6 +32,15 @@ vi.mock("@chatbotx.io/business", () => ({
   userQuotaService: { getAccessState },
   quotaEnforcementService: { isAtLimit },
   appointmentCalendarService,
+  appointmentService: {},
+  conversationService,
+  conversationMemberScope: { allows: () => true, resolve: vi.fn() },
+  contactService: {},
+  flowService: {},
+  buildContactPermissionScope: vi.fn(),
+  UNSCOPED: Symbol("unscoped"),
+  createInboxBookingLink,
+  sendInboxBookingLink,
   resolveTenantSettings,
 }))
 
@@ -53,6 +68,9 @@ vi.mock("@/middlewares/auth", () => ({
 const { call } = await import("@orpc/server")
 const { appointmentCalendarsPublicRouter } = await import(
   "../src/features/appointment-calendars/api/public"
+)
+const { appointmentsPublicRouter } = await import(
+  "../src/features/appointments/api/public"
 )
 
 const TOKEN = "cbx_ws_fixture"
@@ -116,5 +134,77 @@ describe("real router: appointment calendars public API scope wiring", () => {
     await expect(
       invoke(appointmentCalendarsPublicRouter.list),
     ).resolves.toMatchObject({ data: [] })
+  })
+})
+
+describe("real router: appointments.createBookingLink scope wiring", () => {
+  const link = {
+    url: "https://tenant.example/booking/picker?token=abc",
+    expiresAt: new Date("2026-11-15T00:00:00Z"),
+    calendar: { id: "11", name: "Consultation" },
+    messageText: "Choose an appointment time",
+  }
+  const invokeLink = (send: boolean) =>
+    call(
+      appointmentsPublicRouter.createBookingLink,
+      { conversationId: "21", calendarId: "11", send },
+      {
+        context: {
+          headers: new Headers({ Authorization: `Bearer ${TOKEN}` }),
+        },
+      },
+    )
+
+  beforeEach(() => {
+    conversationService.findByOrFail.mockResolvedValue({
+      id: "21",
+      contactId: "31",
+      workspaceId: "ws-1",
+    })
+    conversationService.resolveContactInboxForConversation.mockResolvedValue({
+      id: "41",
+      inboxId: "51",
+    })
+    createInboxBookingLink.mockResolvedValue(link)
+    sendInboxBookingLink.mockResolvedValue({
+      ...link,
+      message: { id: "61" },
+    })
+  })
+
+  test("an appointments-only token creates a link without sending", async () => {
+    findWorkspaceByTokenHash.mockResolvedValue(authResult(["appointments"]))
+
+    await expect(invokeLink(false)).resolves.toMatchObject({
+      url: link.url,
+      messageId: null,
+    })
+  })
+
+  test("an appointments-only token cannot send the link", async () => {
+    findWorkspaceByTokenHash.mockResolvedValue(authResult(["appointments"]))
+
+    await expect(invokeLink(true)).rejects.toMatchObject({
+      code: "FORBIDDEN",
+      message: "Token is not authorized for the 'inbox' scope",
+    })
+    expect(conversationService.findByOrFail).not.toHaveBeenCalled()
+    expect(sendInboxBookingLink).not.toHaveBeenCalled()
+  })
+
+  test("an inbox-only token is denied the appointments route", async () => {
+    findWorkspaceByTokenHash.mockResolvedValue(authResult(["inbox"]))
+
+    await expect(invokeLink(false)).rejects.toMatchObject({
+      code: "FORBIDDEN",
+      message: "Token is not authorized for the 'appointments' scope",
+    })
+  })
+
+  test("an all-scopes token sends the link", async () => {
+    findWorkspaceByTokenHash.mockResolvedValue(authResult(null))
+
+    await expect(invokeLink(true)).resolves.toMatchObject({ messageId: "61" })
+    expect(sendInboxBookingLink).toHaveBeenCalled()
   })
 })

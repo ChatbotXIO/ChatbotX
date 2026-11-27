@@ -1,6 +1,7 @@
 "use client"
 
 import { CommentAutomationAnalytics } from "@chatbotx.io/analytics-nextjs/components/comment-automation-analytics"
+import { ModerationLogCard } from "./moderation-log-card"
 
 /**
  * Client shell for the per-automation analytics dashboard, shared by the
@@ -24,13 +25,19 @@ export function CommentAutomationAnalyticsClient({
 }) {
   const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone
   return (
-    <CommentAutomationAnalytics
-      defaultSearchParams={{
-        workspaceId,
-        automationId,
-        automationName,
-        timezone,
-      }}
-    />
+    <div className="space-y-6">
+      <CommentAutomationAnalytics
+        defaultSearchParams={{
+          workspaceId,
+          automationId,
+          automationName,
+          timezone,
+        }}
+      />
+      <ModerationLogCard
+        automationId={automationId}
+        workspaceId={workspaceId}
+      />
+    </div>
   )
 }

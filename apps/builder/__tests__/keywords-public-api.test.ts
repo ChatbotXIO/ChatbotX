@@ -10,6 +10,7 @@ type RouteConfig = {
 
 type CapturedProcedure = {
   route: RouteConfig
+  input?: { safeParse: (value: unknown) => { success: boolean } }
   handler?: (...args: any[]) => any
 }
 
@@ -21,7 +22,10 @@ const { workspaceTokenAuthAPIForScope, capturedProcedures } = vi.hoisted(() => {
     capturedProcedures.push(record)
 
     const chain = {
-      input: vi.fn(() => chain),
+      input: vi.fn((schema: CapturedProcedure["input"]) => {
+        record.input = schema
+        return chain
+      }),
       output: vi.fn(() => chain),
       errors: vi.fn(() => chain),
       handler: vi.fn((fn: (...args: any[]) => any) => {
@@ -305,6 +309,125 @@ describe("DELETE /v1/keywords/{id}", () => {
       "workspace-1",
       ["keyword-2"],
       "outbound",
+    )
+  })
+})
+
+describe("keyword conditions on create/update", () => {
+  const create = findProcedure("POST", "/v1/keywords")
+  const update = findProcedure("PATCH", "/v1/keywords/{id}")
+  const conditions = [
+    { operator: "contains", values: ["muốn", "quan tâm"] },
+    { operator: "containsImage", values: [] },
+  ]
+
+  test("create accepts conditions instead of keywords", () => {
+    expect(
+      create.input?.safeParse({ type: "inbound", conditions, text: "Hi" })
+        .success,
+    ).toBe(true)
+  })
+
+  test("create and update accept a containsAudio condition with no values", () => {
+    const audio = [{ operator: "containsAudio", values: [] }]
+    expect(
+      create.input?.safeParse({
+        type: "inbound",
+        conditions: audio,
+        text: "Hi",
+      }).success,
+    ).toBe(true)
+    expect(
+      update.input?.safeParse({ id: "1", type: "inbound", conditions: audio })
+        .success,
+    ).toBe(true)
+  })
+
+  test("create rejects values on a containsAudio condition", () => {
+    expect(
+      create.input?.safeParse({
+        type: "inbound",
+        conditions: [{ operator: "containsAudio", values: ["voice"] }],
+        text: "Hi",
+      }).success,
+    ).toBe(false)
+  })
+
+  test("create rejects keywords and conditions together, or neither", () => {
+    expect(
+      create.input?.safeParse({
+        type: "inbound",
+        keywords: ["hi"],
+        conditions,
+        text: "Hi",
+      }).success,
+    ).toBe(false)
+    expect(
+      create.input?.safeParse({ type: "inbound", text: "Hi" }).success,
+    ).toBe(false)
+  })
+
+  test("create rejects an invalid regex condition", () => {
+    expect(
+      create.input?.safeParse({
+        type: "inbound",
+        conditions: [{ operator: "matchesRegex", values: ["(unclosed"] }],
+        text: "Hi",
+      }).success,
+    ).toBe(false)
+  })
+
+  // A body with no field to change (e.g. only `status` or `name`, which this
+  // procedure does not take) used to reach the database with an empty update
+  // and fail as a 500.
+  test("update rejects a body with nothing to change", () => {
+    for (const body of [
+      { id: "1", type: "inbound" },
+      { id: "1", type: "inbound", status: false },
+      { id: "1", type: "inbound", name: "x" },
+    ]) {
+      const parsed = update.input?.safeParse(body) as
+        | { success: boolean; error?: { issues: unknown[] } }
+        | undefined
+      expect(parsed?.success).toBe(false)
+      expect(JSON.stringify(parsed?.error?.issues)).toContain(
+        "keywords.updateStatus",
+      )
+    }
+    expect(
+      update.input?.safeParse({ id: "1", type: "inbound", text: "hi" }).success,
+    ).toBe(true)
+    expect(
+      update.input?.safeParse({ id: "1", type: "inbound", folderId: null })
+        .success,
+    ).toBe(true)
+  })
+
+  test("update rejects keywords and conditions together", () => {
+    expect(
+      update.input?.safeParse({
+        id: "1",
+        type: "inbound",
+        keywords: ["hi"],
+        conditions,
+      }).success,
+    ).toBe(false)
+    expect(
+      update.input?.safeParse({ id: "1", type: "inbound", conditions }).success,
+    ).toBe(true)
+  })
+
+  test("update forwards conditions to the service untouched", async () => {
+    automatedResponseService.update.mockResolvedValueOnce({ id: "1" })
+
+    await update.handler?.({
+      context: { workspace: { id: "workspace-1" } },
+      input: { id: "1", type: "inbound", conditions },
+    })
+
+    expect(automatedResponseService.update).toHaveBeenCalledWith(
+      { workspaceId: "workspace-1", id: "1", type: "inbound" },
+      expect.objectContaining({ conditions, keywords: undefined }),
     )
   })
 })

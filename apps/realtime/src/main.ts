@@ -1,7 +1,5 @@
-import {
-  initErrorTracking,
-  startMetricsServer,
-} from "@chatbotx.io/observability"
+import { initErrorTracking } from "@chatbotx.io/observability"
+import { startMetricsServer } from "@chatbotx.io/observability/metrics-server"
 import { createRedisConnection } from "@chatbotx.io/redis"
 import { createRealtimeGateway } from "./gateway"
 import { resolveRealtimeGatewayConfig } from "./gateway-config"

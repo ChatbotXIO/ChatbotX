@@ -21,6 +21,7 @@ const listPausedByOwnerMock = vi.fn(async () => state.pausedConnections)
 const listTenantSuspendedWithoutConnectionByOwnerMock = vi.fn(
   async () => [] as { id: string; workspaceId: string }[],
 )
+const invalidateCacheByTagsMock = vi.fn(async () => undefined)
 
 vi.mock("@chatbotx.io/database/client", () => ({
   db: {
@@ -59,7 +60,7 @@ vi.mock("@chatbotx.io/database/repositories", () => ({
 vi.mock("@chatbotx.io/redis", async (importOriginal) => ({
   ...(await importOriginal<Record<string, unknown>>()),
   withCache: (_key: string, fn: () => unknown) => fn(),
-  invalidateCacheByTags: vi.fn(async () => undefined),
+  invalidateCacheByTags: invalidateCacheByTagsMock,
 }))
 
 vi.mock("../src/connection/state-service", () => ({
@@ -84,12 +85,16 @@ const { tenantService } = await import("../src/enterprise/tenant/service")
 
 beforeEach(() => {
   vi.clearAllMocks()
+  vi.spyOn(tenantService, "findByOwner").mockResolvedValue({
+    id: "tenant-1",
+  } as never)
   state.updatedTenantRow = { id: "tenant-1" }
   state.pausedConnections = []
   deactivateOwnerWorkspacesMock.mockResolvedValue([])
   connectionTransitionMock.mockResolvedValue(undefined)
   listPausedByOwnerMock.mockImplementation(async () => state.pausedConnections)
   listTenantSuspendedWithoutConnectionByOwnerMock.mockResolvedValue([])
+  invalidateCacheByTagsMock.mockClear()
 })
 
 test("suspend pauses the owner's workspaces with teardownLevel pause and reason tenant_suspended", async () => {
@@ -99,7 +104,22 @@ test("suspend pauses the owner's workspaces with teardownLevel pause and reason 
     ownerId: "owner-1",
     reason: "tenant_suspended",
     teardownLevel: "pause",
+    tenantId: "tenant-1",
   })
+})
+
+test("suspend and reactivate invalidate the tenant cache used by invitation serving-host resolution", async () => {
+  await tenantService.suspend("owner-1")
+  await tenantService.reactivate("owner-1")
+
+  expect(invalidateCacheByTagsMock).toHaveBeenNthCalledWith(1, [
+    "tenant:tenant-1",
+    "tenant:owner:owner-1",
+  ])
+  expect(invalidateCacheByTagsMock).toHaveBeenNthCalledWith(2, [
+    "tenant:tenant-1",
+    "tenant:owner:owner-1",
+  ])
 })
 
 test("reactivate resumes every paused connection for the owner via teardown.resume", async () => {
@@ -107,7 +127,10 @@ test("reactivate resumes every paused connection for the owner via teardown.resu
 
   await tenantService.reactivate("owner-1")
 
-  expect(listPausedByOwnerMock).toHaveBeenCalledWith({ ownerId: "owner-1" })
+  expect(listPausedByOwnerMock).toHaveBeenCalledWith({
+    ownerId: "owner-1",
+    tenantId: "tenant-1",
+  })
   expect(connectionTransitionMock).toHaveBeenNthCalledWith(1, {
     connectionId: "connection-1",
     event: "teardown.resume",
@@ -125,5 +148,24 @@ test("reactivate is a no-op resume sweep when the owner has no paused connection
 
   await tenantService.reactivate("owner-1")
 
+  expect(connectionTransitionMock).not.toHaveBeenCalled()
+})
+
+test("suspend scopes the teardown to the tenant so the owner's platform workspaces keep running", async () => {
+  await tenantService.suspend("owner-1")
+
+  expect(deactivateOwnerWorkspacesMock).toHaveBeenCalledWith(
+    expect.objectContaining({ tenantId: "tenant-1" }),
+  )
+})
+
+test("suspend and reactivate do nothing when the owner has no tenant row (root workspaces untouched)", async () => {
+  vi.spyOn(tenantService, "findByOwner").mockResolvedValue(undefined as never)
+
+  await tenantService.suspend("owner-1")
+  await tenantService.reactivate("owner-1")
+
+  expect(deactivateOwnerWorkspacesMock).not.toHaveBeenCalled()
+  expect(listPausedByOwnerMock).not.toHaveBeenCalled()
   expect(connectionTransitionMock).not.toHaveBeenCalled()
 })

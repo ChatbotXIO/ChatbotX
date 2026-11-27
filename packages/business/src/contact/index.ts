@@ -4,6 +4,7 @@ export type {
   InsertImportedContactBatchInput,
   InsertImportedContactBatchResult,
 } from "./insert-imported-batch"
+export * from "./permission-scope"
 export * from "./profile-refresh"
 export * from "./service"
 export * from "./update-from-message"

@@ -6,14 +6,42 @@ import {
   type SequenceSchedulerJobData,
   type SequenceSchedulerQueue,
 } from "@chatbotx.io/worker-config"
-import { ensureBootstrapped } from "../lib/bootstrap"
+import {
+  DEFAULT_SCHEDULER_TICK_INTERVAL_MS,
+  env,
+  MAX_SCHEDULER_TICK_INTERVAL_MS,
+  MIN_SCHEDULER_TICK_INTERVAL_MS,
+} from "../env"
 import { logger } from "../lib/logger"
+import { isShutdownRequested, onShutdown, runWorker } from "../lib/shutdown"
 
 import { getAssignedBuckets } from "./buckets"
 
 const CLAIM_LIMIT = 100
 const LOCK_TTL_MS = 30_000
-const TICK_INTERVAL_MS = 500
+
+/**
+ * The only place that decides the poll interval. An explicit `configValue`
+ * (constructor option, used by tests) wins as-is. The env value is clamped
+ * here as well as in the env schema because `SKIP_ENV_CHECK=true` makes
+ * `createEnv` return raw strings with no default or bounds: "0", "abc" or
+ * undefined would reach `setTimeout` and turn every bucket loop into a 1 ms
+ * busy-poll, and so would anything above 2^31-1 ms.
+ */
+export function resolveTickIntervalMs(
+  configValue: number | undefined,
+  envValue: number | string | undefined,
+): number {
+  if (configValue) {
+    return configValue
+  }
+  const candidate = Number(envValue)
+  const isInRange =
+    Number.isInteger(candidate) &&
+    candidate >= MIN_SCHEDULER_TICK_INTERVAL_MS &&
+    candidate <= MAX_SCHEDULER_TICK_INTERVAL_MS
+  return isInRange ? candidate : DEFAULT_SCHEDULER_TICK_INTERVAL_MS
+}
 
 interface SchedulerConfig {
   buckets: number[]
@@ -35,6 +63,10 @@ export class SchedulerWorker {
   private _queue: SequenceSchedulerQueue | null = null
   private running = false
   private readonly timers = new Map<number, NodeJS.Timeout>()
+  // Ticks still running. stop() waits for them: a tick removes dispatches from
+  // the ZSET before publishing them, so exiting mid-tick loses them until the
+  // hourly reconcile.
+  private readonly runningTicks = new Set<Promise<void>>()
 
   private get scheduler(): SchedulerClient {
     if (!this._scheduler) {
@@ -55,7 +87,10 @@ export class SchedulerWorker {
   constructor(config: Partial<SchedulerConfig> = {}) {
     this.config = {
       buckets: config.buckets || getAssignedBuckets(),
-      tickIntervalMs: config.tickIntervalMs || TICK_INTERVAL_MS,
+      tickIntervalMs: resolveTickIntervalMs(
+        config.tickIntervalMs,
+        env.SCHEDULER_TICK_INTERVAL_MS,
+      ),
       claimLimit: config.claimLimit || CLAIM_LIMIT,
       lockTtlMs: config.lockTtlMs || LOCK_TTL_MS,
     }
@@ -92,9 +127,24 @@ export class SchedulerWorker {
     if (!queue) {
       throw new Error("Sequence scheduler queue is unavailable")
     }
+    // Shutdown may have run stop() while Redis was connecting; it returned
+    // early (not running yet), so ticks started now would never be awaited.
+    if (isShutdownRequested()) {
+      logger.warn(
+        "Shutdown requested during startup; not starting scheduler worker",
+      )
+      return
+    }
     this._queue = queue
 
     this.running = true
+    logger.info(
+      {
+        tickIntervalMs: this.config.tickIntervalMs,
+        bucketCount: this.config.buckets.length,
+      },
+      "Starting sequence producer bucket polling",
+    )
 
     for (const bucket of this.config.buckets) {
       this.startBucketScheduler(bucket)
@@ -114,12 +164,17 @@ export class SchedulerWorker {
       }
 
       if (this.running) {
-        const timer = setTimeout(tick, this.config.tickIntervalMs)
+        const timer = setTimeout(run, this.config.tickIntervalMs)
         this.timers.set(bucket, timer)
       }
     }
 
-    tick()
+    const run = () => {
+      const running = tick().finally(() => this.runningTicks.delete(running))
+      this.runningTicks.add(running)
+    }
+
+    run()
   }
 
   async processBucket(bucket: number) {
@@ -296,7 +351,7 @@ export class SchedulerWorker {
     await this.queue.addBulk(jobs)
   }
 
-  stop() {
+  async stop() {
     if (!this.running) {
       return
     }
@@ -308,6 +363,8 @@ export class SchedulerWorker {
     }
     this.timers.clear()
 
+    await Promise.allSettled([...this.runningTicks])
+
     this._queue = null
   }
 }
@@ -315,69 +372,14 @@ export class SchedulerWorker {
 const scheduler = new SchedulerWorker()
 const shouldAutoStart = process.env.NODE_ENV !== "test" && !process.env.VITEST
 
-let isShuttingDown = false
-
 async function startSchedulerWorker() {
   logger.info("Starting scheduler worker")
 
-  try {
-    await ensureBootstrapped()
-    await scheduler.start()
-    logger.info("Scheduler worker fully operational")
-  } catch (error) {
-    logger.error(error, "Error starting scheduler worker")
-    throw error
-  }
-}
-
-async function stopSchedulerWorker() {
-  logger.info("Stopping scheduler worker")
-
-  try {
-    await scheduler.stop()
-    logger.info("Scheduler worker stopped")
-  } catch (error) {
-    logger.error(error, "Error stopping scheduler worker")
-    throw error
-  }
+  await scheduler.start()
+  logger.info("Scheduler worker fully operational")
 }
 
 if (shouldAutoStart) {
-  startSchedulerWorker().catch((error) => {
-    logger.error(error, "Error starting scheduler worker")
-    process.exitCode = 1
-  })
-}
-
-const handleShutdownSignal = async (signal: "SIGINT" | "SIGTERM") => {
-  if (isShuttingDown) {
-    return
-  }
-  isShuttingDown = true
-
-  logger.info({ signal }, "Shutdown signal received")
-
-  try {
-    await stopSchedulerWorker()
-    process.exit(0)
-  } catch (error) {
-    logger.error(error, "Error during scheduler worker shutdown")
-    process.exit(1)
-  }
-}
-
-if (shouldAutoStart) {
-  process.on("SIGINT", () => {
-    handleShutdownSignal("SIGINT").catch((error) => {
-      logger.error(error, "Unhandled SIGINT shutdown error")
-      process.exit(1)
-    })
-  })
-
-  process.on("SIGTERM", () => {
-    handleShutdownSignal("SIGTERM").catch((error) => {
-      logger.error(error, "Unhandled SIGTERM shutdown error")
-      process.exit(1)
-    })
-  })
+  runWorker("sequence-producer", startSchedulerWorker)
+  onShutdown("sequence-producer", () => scheduler.stop())
 }

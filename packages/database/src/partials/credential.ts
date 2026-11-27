@@ -15,6 +15,7 @@ export const credentialTypes = z.enum([
   "smtp",
   "paddle",
   "tiktok",
+  "tiktokPublishing",
   "make",
 ])
 export type CredentialType = z.infer<typeof credentialTypes>
@@ -186,7 +187,16 @@ export const stripeCredentialSchema = z.object({
   publishableKey: z.string(),
   verifyToken: z.string(),
   secretKey: z.string(),
+  /** The Connect OAuth app (`ca_…`) stores connect their own account with. */
   connectClientId: z.string().optional(),
+  /**
+   * The Connect webhook created on save (`connect: true`), which receives the
+   * events of every connected store. Secret: never in the public config.
+   */
+  connectWebhookEndpointId: z.string().optional(),
+  connectWebhookSecret: z.string().optional(),
+  /** The Stripe account the key belongs to, so a key of another is caught. */
+  platformAccountId: z.string().optional(),
 })
 export type StripeCredential = z.infer<typeof stripeCredentialSchema>
 
@@ -229,17 +239,56 @@ export type PaddleCredentialPublic = z.infer<
   typeof paddleCredentialPublicSchema
 >
 
+/**
+ * Which halves of the TikTok channel a credential serves. Absent on credentials
+ * saved before the switches existed — read as both on. Messaging off is what
+ * an app for EEA, Swiss or UK accounts needs: TikTok never grants those
+ * accounts `message.list.*`, so asking for them blocks the connect outright.
+ */
+export const tiktokChannelFeaturesSchema = z.object({
+  messaging: z.boolean(),
+  comments: z.boolean(),
+})
+export type TiktokChannelFeaturesValue = z.infer<
+  typeof tiktokChannelFeaturesSchema
+>
+
+/** What a credential without stored features behaves as. */
+export const TIKTOK_DEFAULT_CHANNEL_FEATURES: TiktokChannelFeaturesValue = {
+  messaging: true,
+  comments: true,
+}
+
 export const tiktokCredentialSchema = z.object({
   clientId: z.string(),
   clientSecret: z.string(),
+  features: tiktokChannelFeaturesSchema.optional(),
 })
 export type TiktokCredential = z.infer<typeof tiktokCredentialSchema>
 
 export const tiktokCredentialPublicSchema = tiktokCredentialSchema.pick({
   clientId: true,
+  features: true,
 })
 export type TiktokCredentialPublic = z.infer<
   typeof tiktokCredentialPublicSchema
+>
+
+// TikTok publishing is its OWN app (Login Kit + Content Posting API at
+// open.tiktokapis.com), separate from `tiktok` (the Business Messaging inbox
+// app). Different client key, different tokens, never shared.
+export const tiktokPublishingCredentialSchema = z.object({
+  clientId: z.string(),
+  clientSecret: z.string(),
+})
+export type TiktokPublishingCredential = z.infer<
+  typeof tiktokPublishingCredentialSchema
+>
+
+export const tiktokPublishingCredentialPublicSchema =
+  tiktokPublishingCredentialSchema.pick({ clientId: true })
+export type TiktokPublishingCredentialPublic = z.infer<
+  typeof tiktokPublishingCredentialPublicSchema
 >
 
 export const makeCredentialSchema = z.object({
@@ -266,6 +315,7 @@ export const credentialSchemas = {
   smtp: smtpCredentialSchema,
   paddle: paddleCredentialSchema,
   tiktok: tiktokCredentialSchema,
+  tiktokPublishing: tiktokPublishingCredentialSchema,
   make: makeCredentialSchema,
 } as const
 
@@ -283,6 +333,7 @@ export const credentialPublicSchemas = {
   smtp: smtpCredentialPublicSchema,
   paddle: paddleCredentialPublicSchema,
   tiktok: tiktokCredentialPublicSchema,
+  tiktokPublishing: tiktokPublishingCredentialPublicSchema,
   make: makeCredentialPublicSchema,
 } as const
 
@@ -300,6 +351,7 @@ export type CredentialByType = {
   smtp: SmtpCredential
   paddle: PaddleCredential
   tiktok: TiktokCredential
+  tiktokPublishing: TiktokPublishingCredential
   make: MakeCredential
 }
 
@@ -317,6 +369,7 @@ export type CredentialPublicByType = {
   smtp: SmtpCredentialPublic
   paddle: PaddleCredentialPublic
   tiktok: TiktokCredentialPublic
+  tiktokPublishing: TiktokPublishingCredentialPublic
   make: MakeCredentialPublic
 }
 
@@ -419,6 +472,14 @@ export const stripeCredentialUpdateSchema = z.object({
   publishableKey: z.string().trim().min(1),
   verifyToken: z.string().trim().min(1),
   secretKey: z.string().trim().min(1),
+  /**
+   * Stripe Connect's OAuth client id; stores connect their account with it.
+   * Required: web shop payments are all this credential is for.
+   */
+  connectClientId: z
+    .string()
+    .trim()
+    .regex(/^ca_[A-Za-z0-9]+$/),
 })
 export type StripeCredentialUpdate = z.infer<
   typeof stripeCredentialUpdateSchema
@@ -437,9 +498,25 @@ export type SmtpCredentialUpdate = z.infer<typeof smtpCredentialUpdateSchema>
 export const tiktokCredentialUpdateSchema = z.object({
   clientId: z.string().trim().min(1),
   clientSecret: z.string().trim().min(1),
+  // A credential serving neither half would connect accounts that receive
+  // nothing at all. Omitted means both on, the same as a stored credential
+  // without features.
+  features: tiktokChannelFeaturesSchema
+    .refine((features) => features.messaging || features.comments, {
+      path: ["messaging"],
+    })
+    .default(TIKTOK_DEFAULT_CHANNEL_FEATURES),
 })
 export type TiktokCredentialUpdate = z.infer<
   typeof tiktokCredentialUpdateSchema
+>
+
+export const tiktokPublishingCredentialUpdateSchema = z.object({
+  clientId: z.string().trim().min(1),
+  clientSecret: z.string().trim().min(1),
+})
+export type TiktokPublishingCredentialUpdate = z.infer<
+  typeof tiktokPublishingCredentialUpdateSchema
 >
 
 export const makeCredentialUpdateSchema = z.object({
@@ -458,3 +535,28 @@ export const credentialEncryptedSchema = z.object({
   aad: z.string().optional(),
 })
 export type CredentialEncrypted = z.infer<typeof credentialEncryptedSchema>
+
+/**
+ * AAD strings are part of the stored ciphertext binding to the credential
+ * owner. They historically ended in the `PlatformCredential.livemode` flag,
+ * which was always `false`. The legacy suffix MUST stay so existing
+ * credentials continue to decrypt.
+ */
+const LEGACY_AAD_SUFFIX = "false"
+
+export const userCredentialAad = (userId: string, type: CredentialType) =>
+  `user:${userId}:${type}:${LEGACY_AAD_SUFFIX}`
+
+export const platformCredentialAad = (type: CredentialType) =>
+  `platform:${type}:${LEGACY_AAD_SUFFIX}`
+
+export const credentialAadFor = ({
+  userId,
+  type,
+}: {
+  userId: string | null
+  type: CredentialType
+}): string =>
+  userId === null
+    ? platformCredentialAad(type)
+    : userCredentialAad(userId, type)

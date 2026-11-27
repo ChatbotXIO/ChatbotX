@@ -4,7 +4,11 @@ import { ROOT_TENANT_ID } from "@chatbotx.io/database/schema"
 import { distributedLock, withCache } from "@chatbotx.io/redis"
 import { tenantService } from "../enterprise/tenant/service"
 import { logger } from "../logger"
-import { type QuotaMetric, userQuotaService } from "../user-quota/service"
+import {
+  type QuotaMetric,
+  type TeamMemberScope,
+  userQuotaService,
+} from "../user-quota/service"
 import { workspaceUsageService } from "../workspace-usage/service"
 import { quotaEnforcementEnv } from "./keys"
 import {
@@ -664,15 +668,14 @@ class QuotaEnforcementService {
   private async anyLevelAtLimit(
     ctx: QuotaContext,
     userId: string,
-    atLimit: (
-      limitUserId: string,
-      scope: { ownerId: string } | { tenantId: string },
-    ) => Promise<boolean>,
+    atLimit: (limitUserId: string, scope: TeamMemberScope) => Promise<boolean>,
   ): Promise<boolean> {
     const pooled = this.isPooled(ctx)
     if (pooled && userId === ctx.ownerId) {
       // Reseller acting directly: only the pool (owner row) governs.
-      return atLimit(ctx.ownerId, { tenantId: ctx.tenantId })
+      return atLimit(ctx.ownerId, {
+        pool: { ownerId: ctx.ownerId, tenantId: ctx.tenantId },
+      })
     }
 
     const userFull = await atLimit(userId, { ownerId: userId })
@@ -682,7 +685,9 @@ class QuotaEnforcementService {
     if (userFull) {
       return true
     }
-    return atLimit(ctx.ownerId as string, { tenantId: ctx.tenantId })
+    return atLimit(ctx.ownerId as string, {
+      pool: { ownerId: ctx.ownerId as string, tenantId: ctx.tenantId },
+    })
   }
 
   /** Tighter of the user and pool remaining slots (`null` = unlimited). */
@@ -733,7 +738,10 @@ class QuotaEnforcementService {
       const [liveUsed, ownerQuota, teamMembersUsed] = await Promise.all([
         userQuotaService.getLiveUsage(ctx.ownerId),
         userQuotaService.getForUser(ctx.ownerId),
-        userQuotaService.countDistinctTeamMembersForTenant(ctx.tenantId),
+        userQuotaService.countDistinctTeamMembersForPool(
+          ctx.ownerId,
+          ctx.tenantId,
+        ),
       ])
       return Object.fromEntries(
         ALL_METRICS.map((metric) => [

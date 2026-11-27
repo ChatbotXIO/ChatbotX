@@ -1,0 +1,770 @@
+{
+  "type": "diff",
+  "version": "10",
+  "dialect": "postgres",
+  "id": "ead1b09e-f458-4998-930c-abadd817574f",
+  "prevIds": [
+    "108bbbdb-c92a-4211-8769-e2e7dfdf82d2"
+  ],
+  "footprints": [
+    {
+      "statementType": "create_enum",
+      "statementTarget": [
+        "enum",
+        "public",
+        "externalCheckoutMethod"
+      ],
+      "writes": [
+        "s|enum|public.externalCheckoutMethod",
+        "n|enum|public.externalCheckoutMethod",
+        "e|enum|public.externalCheckoutMethod",
+        "n|type|public.externalCheckoutMethod"
+      ],
+      "reads": [
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "create_enum",
+      "statementTarget": [
+        "enum",
+        "public",
+        "externalStoreConnectionStatus"
+      ],
+      "writes": [
+        "s|enum|public.externalStoreConnectionStatus",
+        "n|enum|public.externalStoreConnectionStatus",
+        "e|enum|public.externalStoreConnectionStatus",
+        "n|type|public.externalStoreConnectionStatus"
+      ],
+      "reads": [
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "create_enum",
+      "statementTarget": [
+        "enum",
+        "public",
+        "externalStoreSyncStatus"
+      ],
+      "writes": [
+        "s|enum|public.externalStoreSyncStatus",
+        "n|enum|public.externalStoreSyncStatus",
+        "e|enum|public.externalStoreSyncStatus",
+        "n|type|public.externalStoreSyncStatus"
+      ],
+      "reads": [
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "alter_enum",
+      "statementTarget": [
+        "enum",
+        "public",
+        "orderSource"
+      ],
+      "writes": [
+        "s|enum|public.orderSource"
+      ],
+      "reads": [
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "alter_enum",
+      "statementTarget": [
+        "enum",
+        "public",
+        "storeSource"
+      ],
+      "writes": [
+        "s|enum|public.storeSource"
+      ],
+      "reads": [
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "create_table",
+      "statementTarget": [
+        "table",
+        "public",
+        "IntegrationWoocommerce"
+      ],
+      "writes": [
+        "s|tbl|public.IntegrationWoocommerce",
+        "n|tbl|public.IntegrationWoocommerce",
+        "e|tbl|public.IntegrationWoocommerce",
+        "n|rel|public.IntegrationWoocommerce",
+        "n|type|public.IntegrationWoocommerce",
+        "n|rel|public.IntegrationWoocommerce_pkey"
+      ],
+      "reads": [
+        "n|sch|public",
+        "n|enum|public.externalStoreConnectionStatus",
+        "n|enum|public.externalStoreSyncStatus"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "EcommerceSettings",
+        "externalCheckoutMethod"
+      ],
+      "writes": [
+        "s|col|public.EcommerceSettings.externalCheckoutMethod",
+        "n|col|public.EcommerceSettings.externalCheckoutMethod",
+        "e|col|public.EcommerceSettings.externalCheckoutMethod"
+      ],
+      "reads": [
+        "n|tbl|public.EcommerceSettings",
+        "n|sch|public",
+        "n|enum|public.externalCheckoutMethod"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "EcommerceSettings",
+        "externalAutoApplyDiscounts"
+      ],
+      "writes": [
+        "s|col|public.EcommerceSettings.externalAutoApplyDiscounts",
+        "n|col|public.EcommerceSettings.externalAutoApplyDiscounts",
+        "e|col|public.EcommerceSettings.externalAutoApplyDiscounts"
+      ],
+      "reads": [
+        "n|tbl|public.EcommerceSettings",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "drop_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "EcommerceSettings",
+        "shopifyCheckoutMethod"
+      ],
+      "writes": [
+        "s|col|public.EcommerceSettings.shopifyCheckoutMethod",
+        "n|col|public.EcommerceSettings.shopifyCheckoutMethod",
+        "e|col|public.EcommerceSettings.shopifyCheckoutMethod"
+      ],
+      "reads": [
+        "n|tbl|public.EcommerceSettings",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "drop_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "EcommerceSettings",
+        "shopifyAutoApplyDiscounts"
+      ],
+      "writes": [
+        "s|col|public.EcommerceSettings.shopifyAutoApplyDiscounts",
+        "n|col|public.EcommerceSettings.shopifyAutoApplyDiscounts",
+        "e|col|public.EcommerceSettings.shopifyAutoApplyDiscounts"
+      ],
+      "reads": [
+        "n|tbl|public.EcommerceSettings",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "alter_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "IntegrationShopify",
+        "status"
+      ],
+      "writes": [
+        "s|colprop|public.IntegrationShopify.status.type",
+        "s|colprop|public.IntegrationShopify.status.default"
+      ],
+      "reads": [
+        "n|tbl|public.IntegrationShopify",
+        "n|sch|public",
+        "n|col|public.IntegrationShopify.status",
+        "n|enum|public.externalStoreConnectionStatus"
+      ],
+      "sqlHash": "d3f0608a0be41604"
+    },
+    {
+      "statementType": "alter_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "IntegrationShopify",
+        "syncStatus"
+      ],
+      "writes": [
+        "s|colprop|public.IntegrationShopify.syncStatus.type",
+        "s|colprop|public.IntegrationShopify.syncStatus.default"
+      ],
+      "reads": [
+        "n|tbl|public.IntegrationShopify",
+        "n|sch|public",
+        "n|col|public.IntegrationShopify.syncStatus",
+        "n|enum|public.externalStoreSyncStatus"
+      ],
+      "sqlHash": "0d83c0fe2e9b3b03"
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "IntegrationWoocommerce",
+        "IntegrationWoocommerce_workspaceId_key"
+      ],
+      "writes": [
+        "s|idx|public.IntegrationWoocommerce_workspaceId_key",
+        "n|idx|public.IntegrationWoocommerce_workspaceId_key",
+        "e|idx|public.IntegrationWoocommerce_workspaceId_key",
+        "n|rel|public.IntegrationWoocommerce_workspaceId_key"
+      ],
+      "reads": [
+        "n|tbl|public.IntegrationWoocommerce",
+        "n|sch|public",
+        "n|col|public.IntegrationWoocommerce.workspaceId"
+      ]
+    },
+    {
+      "statementType": "create_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "IntegrationWoocommerce"
+      ],
+      "writes": [
+        "s|fk|public.IntegrationWoocommerce.IntegrationWoocommerce_workspaceId_Workspace_id_fkey",
+        "n|fk|public.IntegrationWoocommerce.IntegrationWoocommerce_workspaceId_Workspace_id_fkey",
+        "e|fk|public.IntegrationWoocommerce.IntegrationWoocommerce_workspaceId_Workspace_id_fkey",
+        "n|con|public.IntegrationWoocommerce.IntegrationWoocommerce_workspaceId_Workspace_id_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.IntegrationWoocommerce",
+        "n|sch|public",
+        "n|tbl|public.Workspace",
+        "n|sch|public",
+        "n|col|public.IntegrationWoocommerce.workspaceId",
+        "n|col|public.Workspace.id",
+        "e|uniqueness|public.Workspace.id"
+      ]
+    },
+    {
+      "statementType": "drop_enum",
+      "statementTarget": [
+        "enum",
+        "public",
+        "shopifyCheckoutMethod"
+      ],
+      "writes": [
+        "s|enum|public.shopifyCheckoutMethod",
+        "n|enum|public.shopifyCheckoutMethod",
+        "e|enum|public.shopifyCheckoutMethod",
+        "n|type|public.shopifyCheckoutMethod"
+      ],
+      "reads": [
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "drop_enum",
+      "statementTarget": [
+        "enum",
+        "public",
+        "shopifyConnectionStatus"
+      ],
+      "writes": [
+        "s|enum|public.shopifyConnectionStatus",
+        "n|enum|public.shopifyConnectionStatus",
+        "e|enum|public.shopifyConnectionStatus",
+        "n|type|public.shopifyConnectionStatus"
+      ],
+      "reads": [
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "drop_enum",
+      "statementTarget": [
+        "enum",
+        "public",
+        "shopifySyncStatus"
+      ],
+      "writes": [
+        "s|enum|public.shopifySyncStatus",
+        "n|enum|public.shopifySyncStatus",
+        "e|enum|public.shopifySyncStatus",
+        "n|type|public.shopifySyncStatus"
+      ],
+      "reads": [
+        "n|sch|public"
+      ]
+    }
+  ],
+  "deltas": [
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "name": "IntegrationWoocommerce",
+        "isRlsEnabled": false,
+        "entityType": "tables"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "name": "externalCheckoutMethod",
+        "values": [
+          "webCheckout",
+          "inApp"
+        ],
+        "entityType": "enums"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "name": "externalStoreConnectionStatus",
+        "values": [
+          "active",
+          "invalid"
+        ],
+        "entityType": "enums"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "name": "externalStoreSyncStatus",
+        "values": [
+          "idle",
+          "queued",
+          "running",
+          "succeeded",
+          "failed"
+        ],
+        "entityType": "enums"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "EcommerceSettings",
+        "name": "externalCheckoutMethod",
+        "type": "externalCheckoutMethod",
+        "typeSchema": "public",
+        "notNull": true,
+        "dimensions": 0,
+        "default": "'webCheckout'",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "EcommerceSettings",
+        "name": "externalAutoApplyDiscounts",
+        "type": "boolean",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "true",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "IntegrationWoocommerce",
+        "name": "id",
+        "type": "bigint",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "IntegrationWoocommerce",
+        "name": "createdAt",
+        "type": "timestamp(6) with time zone",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "now()",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "IntegrationWoocommerce",
+        "name": "updatedAt",
+        "type": "timestamp(6) with time zone",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "now()",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "IntegrationWoocommerce",
+        "name": "workspaceId",
+        "type": "bigint",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "IntegrationWoocommerce",
+        "name": "siteUrl",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "IntegrationWoocommerce",
+        "name": "storeName",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "IntegrationWoocommerce",
+        "name": "currency",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "IntegrationWoocommerce",
+        "name": "encryptedAuth",
+        "type": "jsonb",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "IntegrationWoocommerce",
+        "name": "webhookIds",
+        "type": "jsonb",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "IntegrationWoocommerce",
+        "name": "status",
+        "type": "externalStoreConnectionStatus",
+        "typeSchema": "public",
+        "notNull": true,
+        "dimensions": 0,
+        "default": "'active'",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "IntegrationWoocommerce",
+        "name": "statusReason",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "IntegrationWoocommerce",
+        "name": "syncStatus",
+        "type": "externalStoreSyncStatus",
+        "typeSchema": "public",
+        "notNull": true,
+        "dimensions": 0,
+        "default": "'idle'",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "IntegrationWoocommerce",
+        "name": "syncError",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "IntegrationWoocommerce",
+        "name": "lastSyncedAt",
+        "type": "timestamp(6) with time zone",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "IntegrationWoocommerce",
+        "name": "productCount",
+        "type": "integer",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "0",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "IntegrationWoocommerce",
+        "name": "orderCount",
+        "type": "integer",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "0",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "IntegrationWoocommerce",
+        "name": "IntegrationWoocommerce_workspaceId_key",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "workspaceId",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": true,
+        "where": null,
+        "with": "",
+        "method": "btree",
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "IntegrationWoocommerce",
+        "name": "IntegrationWoocommerce_workspaceId_Workspace_id_fkey",
+        "nameExplicit": false,
+        "columns": [
+          "workspaceId"
+        ],
+        "schemaTo": "public",
+        "tableTo": "Workspace",
+        "columnsTo": [
+          "id"
+        ],
+        "onUpdate": "CASCADE",
+        "onDelete": "CASCADE",
+        "entityType": "fks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "IntegrationWoocommerce",
+        "name": "IntegrationWoocommerce_pkey",
+        "columns": [
+          "id"
+        ],
+        "nameExplicit": false,
+        "entityType": "pks"
+      }
+    },
+    {
+      "op": "drop",
+      "key": "enums\u0000[\"public\",\"shopifyCheckoutMethod\"]"
+    },
+    {
+      "op": "drop",
+      "key": "enums\u0000[\"public\",\"shopifyConnectionStatus\"]"
+    },
+    {
+      "op": "drop",
+      "key": "enums\u0000[\"public\",\"shopifySyncStatus\"]"
+    },
+    {
+      "op": "drop",
+      "key": "columns\u0000[\"public\",\"EcommerceSettings\",\"shopifyCheckoutMethod\"]"
+    },
+    {
+      "op": "drop",
+      "key": "columns\u0000[\"public\",\"EcommerceSettings\",\"shopifyAutoApplyDiscounts\"]"
+    },
+    {
+      "op": "alter",
+      "key": "enums\u0000[\"public\",\"orderSource\"]",
+      "set": {
+        "values": [
+          "webshop",
+          "api",
+          "manual",
+          "shopify",
+          "woocommerce"
+        ]
+      }
+    },
+    {
+      "op": "alter",
+      "key": "enums\u0000[\"public\",\"storeSource\"]",
+      "set": {
+        "values": [
+          "chatbotx",
+          "shopify",
+          "woocommerce"
+        ]
+      }
+    },
+    {
+      "op": "alter",
+      "key": "columns\u0000[\"public\",\"IntegrationShopify\",\"status\"]",
+      "set": {
+        "type": "externalStoreConnectionStatus"
+      }
+    },
+    {
+      "op": "alter",
+      "key": "columns\u0000[\"public\",\"IntegrationShopify\",\"syncStatus\"]",
+      "set": {
+        "type": "externalStoreSyncStatus"
+      }
+    }
+  ]
+}

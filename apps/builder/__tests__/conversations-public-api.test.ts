@@ -57,6 +57,11 @@ const conversationService = {
   setBotEnabledByIds: vi.fn(),
 }
 vi.mock("@chatbotx.io/business", () => ({
+  conversationMemberScope: {
+    resolve: vi.fn(),
+    allows: () => true,
+    where: () => undefined,
+  },
   conversationService,
   ThreadControlUnsupportedError: class extends Error {},
 }))
@@ -117,10 +122,10 @@ describe("GET /v1/conversations/{id}", () => {
       input: { id: "1" },
     })
 
-    expect(findConversation).toHaveBeenCalledWith({
-      id: "1",
-      workspaceId: "ws-1",
-    })
+    expect(findConversation).toHaveBeenCalledWith(
+      { id: "1", workspaceId: "ws-1" },
+      { publicUrls: true },
+    )
     expect(result).toEqual({ data: { id: "1" } })
   })
 })

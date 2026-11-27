@@ -33,6 +33,20 @@ export const broadcastStatuses = z.enum([
 export type BroadcastStatus = z.infer<typeof broadcastStatuses>
 
 /**
+ * Why the system (not the customer) changed a broadcast's status. Set together
+ * with `statusErrorMessage` and `statusInboxId`; cleared when the customer
+ * resumes or moves the broadcast back to draft.
+ */
+export const broadcastStatusReasons = z.enum([
+  "accountPolicyBlocked",
+  "accountSendRestricted",
+])
+export type BroadcastStatusReason = z.infer<typeof broadcastStatusReasons>
+
+/** Longest provider error text kept in `Broadcast.statusErrorMessage`. */
+export const BROADCAST_STATUS_ERROR_MESSAGE_MAX_LENGTH = 500
+
+/**
  * What happened to one slot of a repeating broadcast. `created` means a run
  * (child broadcast) exists — not that it was delivered; `skipped` is an
  * intentional non-send; `missed` is a slot an outage swallowed.
@@ -118,6 +132,7 @@ export const broadcastSubactionAudienceRules: Record<
   whatsappWithin24Hours: { requiresRecentInteractionWindow: true },
   instagramActiveContacts: { requiresRecentInteractionWindow: true },
   telegramAllContacts: { requiresRecentInteractionWindow: false },
+  lineAllContacts: { requiresRecentInteractionWindow: false },
   tiktokActiveContacts: { requiresRecentInteractionWindow: true },
 }
 
@@ -173,6 +188,12 @@ export const broadcastChannelCapabilities: readonly BroadcastChannelCapability[]
       channel: "telegram",
       subactions: ["telegramAllContacts"],
       defaultSubaction: "telegramAllContacts",
+      supportsTemplateBroadcast: false,
+    },
+    {
+      channel: "line",
+      subactions: ["lineAllContacts"],
+      defaultSubaction: "lineAllContacts",
       supportsTemplateBroadcast: false,
     },
     {

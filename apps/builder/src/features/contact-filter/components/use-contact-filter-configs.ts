@@ -14,6 +14,8 @@ import {
 } from "@/features/flows/provider/flow-hook"
 import { useInboxOptionsByChannel } from "@/features/inboxes/provider/inbox-hook"
 import { useLeaderboardOptions } from "@/features/leaderboards/lib/use-leaderboard-options"
+import { usePipelineOptions } from "@/features/pipelines/lib/use-pipeline-options"
+import { usePollOptions } from "@/features/polls/lib/use-poll-options"
 import { useSequenceOptions } from "@/features/sequences/provider/sequence-hook"
 import { useTagSelectOptions } from "@/features/tags/provider/tag-hook"
 import { useContactAssigneeOptions } from "@/features/users/provider/user-hook"
@@ -120,6 +122,8 @@ export const useContactFilterConfigs = (
   })
   const { options: couponTopicOptions } = useCouponTopicOptions()
   const { options: leaderboardOptions } = useLeaderboardOptions()
+  const { options: pollOptions } = usePollOptions()
+  const { pipelines: pipelineOptions } = usePipelineOptions()
   const filterValueLabels = useFilterValueLabels(conditions)
   const productOptions = useProductFilterOptions(workspaceId)
 
@@ -140,6 +144,8 @@ export const useContactFilterConfigs = (
         assigneeOptions,
         couponTopicOptions,
         leaderboardOptions,
+        pollOptions,
+        pipelineOptions,
         productOptions,
         botFields,
         includeBotFields,
@@ -162,6 +168,8 @@ export const useContactFilterConfigs = (
       assigneeOptions,
       couponTopicOptions,
       leaderboardOptions,
+      pollOptions,
+      pipelineOptions,
       productOptions,
       botFields,
       includeBotFields,

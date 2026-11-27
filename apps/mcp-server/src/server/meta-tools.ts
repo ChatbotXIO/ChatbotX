@@ -1,3 +1,4 @@
+import { getGuide, guideNames, isGuideName } from "../guides"
 import {
   type DynamicTool,
   getCachedTools,
@@ -8,6 +9,7 @@ import {
   errorResult,
   executeTool,
   jsonResult,
+  type RequestCredentials,
   type ToolCallResult,
 } from "./execute-tool"
 import { expandSearchQuery, looksNonEnglish } from "./search/normalize"
@@ -22,8 +24,15 @@ import { distinctResourceGroups, rankTools } from "./search/rank"
 export const META_TOOLS = [
   {
     name: "search_tools",
+    annotations: {
+      title: "Search tools",
+      readOnlyHint: true,
+      destructiveHint: false,
+      idempotentHint: true,
+      openWorldHint: false,
+    },
     description:
-      "Search the full ChatbotX catalog for hidden or unlisted tool definitions; this never executes a tool. Direct listed tools may be called directly. Search with one action plus one resource, inspect each returned inputSchema, then call call_tool with the exact returned name.",
+      "Search the full catalog for hidden or unlisted tool definitions; this never executes a tool. Direct listed tools may be called directly. Search with one action plus one resource, inspect each returned inputSchema, then call call_tool with the exact returned name.",
     inputSchema: {
       type: "object",
       properties: {
@@ -42,6 +51,14 @@ export const META_TOOLS = [
   },
   {
     name: "call_tool",
+    annotations: {
+      title: "Call tool",
+      readOnlyHint: false,
+      destructiveHint: true,
+      idempotentHint: false,
+      // Worst-case: this can execute any tool.
+      openWorldHint: true,
+    },
     description:
       'Execute a hidden tool by the exact name returned by search_tools (dotted names like "contacts.get" are also accepted). Pass a flat arguments object matching inputSchema; resolve named entities first unless the user supplied a stable ID, email, or phone.',
     inputSchema: {
@@ -55,6 +72,28 @@ export const META_TOOLS = [
           type: "object",
           description:
             "JSON object containing every field declared by the selected inputSchema. Read its schema and lookup requirements first; use {} only for a no-input tool. Do not wrap fields in body, params, or workspaceId unless the selected schema declares them.",
+        },
+      },
+      required: ["name"],
+    },
+  },
+  {
+    name: "get_guide",
+    annotations: {
+      title: "Get guide",
+      readOnlyHint: true,
+      destructiveHint: false,
+      idempotentHint: true,
+      openWorldHint: false,
+    },
+    description:
+      "Read an operational safety guide. Use it for workflows that need the documented approval, OAuth, flow, inbox, contact, or pipeline procedure.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        name: {
+          enum: guideNames,
+          type: "string",
         },
       },
       required: ["name"],
@@ -144,6 +183,16 @@ export function handleSearchTools(
   return jsonResult({ matches } satisfies SearchToolsResult)
 }
 
+export const handleGetGuide = (
+  args: Record<string, unknown>,
+): ToolCallResult => {
+  const name = args.name
+  if (typeof name !== "string" || !isGuideName(name)) {
+    return errorResult(`get_guide requires one of: ${guideNames.join(", ")}.`)
+  }
+  return { content: [{ text: getGuide(name).content, type: "text" }] }
+}
+
 /**
  * Resolves a tool name for `call_tool`, accepting the exact executable
  * name `search_tools` returns as well as a raw dotted/camelCase
@@ -173,7 +222,7 @@ function unknownToolMessage(name: string): string {
  */
 export async function handleCallTool(
   args: Record<string, unknown>,
-  apiKey: string,
+  credentials: RequestCredentials,
 ): Promise<ToolCallResult> {
   const name = args.name
   if (typeof name !== "string" || name.trim().length === 0) {
@@ -196,9 +245,7 @@ export async function handleCallTool(
     return errorResult("call_tool 'arguments' must be a JSON object.")
   }
 
-  return await executeTool(
-    tool,
-    (suppliedArguments ?? {}) as Record<string, unknown>,
-    apiKey,
-  )
+  const toolArguments = (suppliedArguments ?? {}) as Record<string, unknown>
+
+  return await executeTool(tool, toolArguments, credentials)
 }

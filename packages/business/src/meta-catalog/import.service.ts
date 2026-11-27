@@ -3,10 +3,12 @@ import {
   metaCatalogItemRepository,
   productRepository,
 } from "@chatbotx.io/database/repositories"
+import { logger } from "../logger"
 import {
   getProductCategoryPathKey,
   productCategoryService,
 } from "../product-category"
+import { listLockedIds } from "../template/installed-resource.service"
 import { vendorService } from "../vendor/service"
 
 export type MetaCatalogImportProduct = {
@@ -27,7 +29,7 @@ export type MetaCatalogImportProduct = {
   inventoryPolicy?: "dont_track" | "track"
   allowOutOfStockPurchase?: boolean
   images?: Array<{ url: string; type: "link" }>
-  isActive?: boolean
+  status?: "active" | "draft"
 }
 
 /** Lower-cased vendor name → vendor id, as `vendorService.resolveByNames` returns. */
@@ -94,7 +96,7 @@ const toProductValues = (
       ? {}
       : { allowOutOfStockPurchase: product.allowOutOfStockPurchase }),
     ...(product.images === undefined ? {} : { images: product.images }),
-    ...(product.isActive === undefined ? {} : { isActive: product.isActive }),
+    ...(product.status === undefined ? {} : { status: product.status }),
   }
 }
 
@@ -219,7 +221,24 @@ class MetaCatalogImportService {
         createMissing: true,
         tx,
       })
+      // Template-locked products keep their content: skip them rather than
+      // fail the whole catalog import.
+      const lockedProductIds = new Set(
+        await listLockedIds({
+          workspaceId: input.workspaceId,
+          resourceKind: "product",
+          resourceIds: existingProducts.map(({ productId }) => productId),
+          tx,
+        }),
+      )
       for (const { product, productId } of existingProducts) {
+        if (lockedProductIds.has(productId)) {
+          logger.info(
+            { workspaceId: input.workspaceId, productId },
+            "Meta Catalog import skipped a template-locked product",
+          )
+          continue
+        }
         const updated = await productRepository.update(
           {
             workspaceId: input.workspaceId,

@@ -1,7 +1,7 @@
 // @vitest-environment node
 
 import { ChatbotXException } from "@chatbotx.io/business/errors"
-import { isValidElement } from "react"
+import { isValidElement, type ReactNode } from "react"
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
 const {
@@ -21,6 +21,14 @@ const {
   mockSanitizeReferer: vi.fn(async (referer: string) => referer),
   mockSelectPage: vi.fn(() => null),
 }))
+
+vi.mock("@chatbotx.io/integration-ahachat", () => ({
+  isAhachatConfigured: () => true,
+}))
+
+/** The page wraps the picker in the AhaChat availability provider: tests look at the picker inside. */
+const unwrapAvailability = (node: ReactNode): ReactNode =>
+  isValidElement<{ children: ReactNode }>(node) ? node.props.children : node
 
 vi.mock("next/navigation", () => ({
   redirect: mockRedirect,
@@ -91,6 +99,35 @@ const alreadyConnectedTarget = {
   alreadyConnected: "other_workspace" as const,
 }
 
+const insufficientPermissionsTarget = {
+  id: "page-no-admin",
+  name: "No Admin Page",
+  selectable: false,
+  disabledReason: "insufficientPermissions",
+}
+
+const missingAccessTokenTarget = {
+  id: "page-no-token",
+  name: "No Token Page",
+  selectable: false,
+  disabledReason: "missingAccessToken",
+}
+
+const unknownReasonTarget = {
+  id: "page-unknown",
+  name: "Unknown Reason Page",
+  selectable: false,
+  disabledReason: "somethingNewFromAnotherBuild",
+}
+
+const renderItems = async () => {
+  const element = unwrapAvailability(await MessengerSelectPage(pageArgs))
+  if (!isValidElement<SelectPageElementProps>(element)) {
+    throw new Error("MessengerSelectPage did not return a valid element")
+  }
+  return element.props.items
+}
+
 describe("MessengerSelectPage", () => {
   beforeEach(() => {
     vi.clearAllMocks()
@@ -104,7 +141,7 @@ describe("MessengerSelectPage", () => {
   })
 
   test("passes session targets through as picker items, ranked selectable first then already-connected", async () => {
-    const element = await MessengerSelectPage(pageArgs)
+    const element = unwrapAvailability(await MessengerSelectPage(pageArgs))
 
     expect(isValidElement<SelectPageElementProps>(element)).toBe(true)
     if (!isValidElement<SelectPageElementProps>(element)) {
@@ -131,13 +168,98 @@ describe("MessengerSelectPage", () => {
     ])
   })
 
+  test("ranks selectable first, unavailable second and already connected last, keeping order within a rank", async () => {
+    mockResolveConnectSessionForSelect.mockResolvedValue({
+      session: {
+        targets: [
+          alreadyConnectedTarget,
+          insufficientPermissionsTarget,
+          connectableTarget,
+          missingAccessTokenTarget,
+        ],
+      },
+      workspace: { id: "ws-1" },
+    })
+
+    const items = await renderItems()
+
+    expect(items.map((item) => item.id)).toEqual([
+      "page-connectable",
+      "page-no-admin",
+      "page-no-token",
+      "page-connected",
+    ])
+  })
+
+  test("translates each machine disabledReason into its own label", async () => {
+    mockResolveConnectSessionForSelect.mockResolvedValue({
+      session: {
+        targets: [insufficientPermissionsTarget, missingAccessTokenTarget],
+      },
+      workspace: { id: "ws-1" },
+    })
+
+    const items = await renderItems()
+
+    expect(items).toEqual([
+      expect.objectContaining({
+        id: "page-no-admin",
+        disabled: true,
+        disabledReason:
+          "messenger.selectPage.unavailableInsufficientPermissions",
+      }),
+      expect.objectContaining({
+        id: "page-no-token",
+        disabled: true,
+        disabledReason: "messenger.selectPage.unavailableMissingAccessToken",
+      }),
+    ])
+  })
+
+  test("falls back to the generic unavailable label for an unknown disabledReason", async () => {
+    mockResolveConnectSessionForSelect.mockResolvedValue({
+      session: { targets: [unknownReasonTarget] },
+      workspace: { id: "ws-1" },
+    })
+
+    const items = await renderItems()
+
+    expect(items).toEqual([
+      expect.objectContaining({
+        id: "page-unknown",
+        disabled: true,
+        disabledReason: "messenger.selectPage.unavailableGeneric",
+      }),
+    ])
+  })
+
+  test("lets already connected win over an unavailable reason", async () => {
+    mockResolveConnectSessionForSelect.mockResolvedValue({
+      session: {
+        targets: [
+          {
+            ...alreadyConnectedTarget,
+            disabledReason: "insufficientPermissions",
+          },
+        ],
+      },
+      workspace: { id: "ws-1" },
+    })
+
+    const items = await renderItems()
+
+    expect(items[0]?.disabledReason).toBe(
+      "messenger.selectPage.alreadyConnectedNote",
+    )
+  })
+
   test("renders an empty picker when the session has no targets", async () => {
     mockResolveConnectSessionForSelect.mockResolvedValue({
       session: { targets: [] },
       workspace: { id: "ws-1" },
     })
 
-    const element = await MessengerSelectPage(pageArgs)
+    const element = unwrapAvailability(await MessengerSelectPage(pageArgs))
 
     if (!isValidElement<SelectPageElementProps>(element)) {
       throw new Error("MessengerSelectPage did not return a valid element")
@@ -148,7 +270,7 @@ describe("MessengerSelectPage", () => {
   })
 
   test("uses the page id as the secondary line", async () => {
-    const element = await MessengerSelectPage(pageArgs)
+    const element = unwrapAvailability(await MessengerSelectPage(pageArgs))
 
     if (!isValidElement<SelectPageElementProps>(element)) {
       throw new Error("MessengerSelectPage did not return a valid element")

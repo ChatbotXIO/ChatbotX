@@ -10,7 +10,9 @@ import {
   type InboxDisconnectReason,
 } from "@chatbotx.io/database/partials"
 import {
+  coexistSyncRunRepository,
   connectionRepository,
+  contactSyncRunRepository,
   HEAVY_WORKSPACE_TABLES,
   LIVE_RUN_STATUSES,
   NO_FK_WORKSPACE_TABLES,
@@ -22,6 +24,7 @@ import {
 import {
   coexistSyncRunModel,
   integrationInstagramModel,
+  integrationLineModel,
   integrationMessengerModel,
   integrationSmtpModel,
   integrationTelegramModel,
@@ -50,6 +53,8 @@ import {
   connectionStateService,
   type PendingQuotaRelease,
 } from "../connection/state-service"
+import { CONTACT_SCAN_ERRORS } from "../contact-scan/constants"
+import { isContactSyncFollowUpChannel } from "../contact-sync/constants"
 import { WorkspacePurgeIncompleteError } from "../errors"
 import { inboxService } from "../inbox/service"
 import { integrationActiveCampaignService } from "../integration-active-campaign/service"
@@ -62,12 +67,15 @@ import { integrationKlaviyoService } from "../integration-klaviyo/service"
 import { integrationMailchimpService } from "../integration-mailchimp/service"
 import { integrationMailerLiteService } from "../integration-mailer-lite/service"
 import { integrationMoosendService } from "../integration-moosend/service"
+import { integrationMuseService } from "../integration-muse/service"
 import { integrationOpenAIService } from "../integration-openai/service"
 import { integrationOpenRouterService } from "../integration-openrouter/service"
 import { integrationSendGridService } from "../integration-sendgrid/service"
 import { purgeLeaderboardDataForWorkspace } from "../leaderboard/purge"
 import { logger } from "../logger"
+import { shopifyIntegrationService } from "../shopify/integration.service"
 import { userQuotaService } from "../user-quota/service"
+import { wooCommerceIntegrationService } from "../woocommerce/integration.service"
 import {
   cancelInFlightBroadcastsForWorkspace,
   completeActiveSequenceEnrollmentBatch,
@@ -178,9 +186,13 @@ class WorkspaceLifecycleService extends BaseService {
       ["mailchimp", integrationMailchimpService],
       ["mailer-lite", integrationMailerLiteService],
       ["moosend", integrationMoosendService],
+      ["muse", integrationMuseService],
       ["openai", integrationOpenAIService],
       ["openrouter", integrationOpenRouterService],
       ["sendgrid", integrationSendGridService],
+      // Store sources: the stores stop calling the workspace's webhook URLs.
+      ["shopify", shopifyIntegrationService],
+      ["woocommerce", wooCommerceIntegrationService],
     ]
 
     const results = await Promise.allSettled(
@@ -521,9 +533,13 @@ class WorkspaceLifecycleService extends BaseService {
     reason: InboxDisconnectReason
     integrations?: WorkspaceTeardownIntegrations
     teardownLevel?: WorkspaceTeardownLevel
+    /** Limit teardown to this tenant's workspaces (tenant suspend must not touch the owner's platform workspaces). Omit for every workspace the owner has. */
+    tenantId?: string
   }): Promise<string[]> {
     const workspaces = await db.query.workspaceModel.findMany({
-      where: { ownerId: props.ownerId },
+      where: props.tenantId
+        ? { ownerId: props.ownerId, tenantId: props.tenantId }
+        : { ownerId: props.ownerId },
       columns: { id: true, tenantId: true },
     })
 
@@ -665,6 +681,30 @@ class WorkspaceLifecycleService extends BaseService {
       })
     }
 
+    // A page going away ends its open contact-import items and cancels any
+    // history sync they still owe, so a reconnect never starts one unasked.
+    // Messenger and Instagram lock their integration row first (the order a
+    // handoff takes it in), so the two cannot deadlock.
+    const historyIntegrations = {
+      [channelTypes.enum.messenger]: inbox.integrationMessenger,
+      [channelTypes.enum.instagram]: inbox.integrationInstagram,
+    } as Partial<Record<string, { id: string } | null | undefined>>
+    const historyIntegration = historyIntegrations[inbox.channel]
+    // Through the repositories, not `contactSyncService`: importing the
+    // service here closes an import cycle (see the contact scan note below).
+    if (historyIntegration && isContactSyncFollowUpChannel(inbox.channel)) {
+      await coexistSyncRunRepository.lockIntegration({
+        channel: inbox.channel,
+        workspaceId: inbox.workspaceId,
+        integrationId: historyIntegration.id,
+        tx,
+      })
+    }
+    await contactSyncRunRepository.cancelForInbox(
+      { workspaceId: inbox.workspaceId, inboxId: inbox.id },
+      tx,
+    )
+
     switch (inbox.channel) {
       case channelTypes.enum.messenger: {
         if (removeIntegrationRow && inbox.integrationMessenger) {
@@ -760,6 +800,15 @@ class WorkspaceLifecycleService extends BaseService {
         await finish(integrations?.zalo)
         return
       }
+      case channelTypes.enum.line: {
+        if (removeIntegrationRow && inbox.integrationLine) {
+          await tx
+            .delete(integrationLineModel)
+            .where(eq(integrationLineModel.id, inbox.integrationLine.id))
+        }
+        await finish(integrations?.line)
+        return
+      }
       case channelTypes.enum.telegram: {
         if (removeIntegrationRow && inbox.integrationTelegram) {
           await tx
@@ -773,15 +822,26 @@ class WorkspaceLifecycleService extends BaseService {
       }
       case channelTypes.enum.instagram: {
         if (removeIntegrationRow && inbox.integrationInstagram) {
-          if (inbox.integrationInstagram.type === "instagram") {
-            await coexistService.tearDownForIntegration({
-              workspaceId: inbox.workspaceId,
-              integrationId: inbox.integrationInstagram.id,
-              channel: "instagram",
-              currentError: "Integration disconnected",
-              tx,
-            })
-          }
+          // Both Instagram variants run coexist history, including the
+          // Facebook-linked one that a contact import hands off to.
+          await coexistService.tearDownForIntegration({
+            workspaceId: inbox.workspaceId,
+            integrationId: inbox.integrationInstagram.id,
+            channel: "instagram",
+            currentError: "Integration disconnected",
+            tx,
+          })
+          // Both Instagram variants support the contact scan, so this is not
+          // gated on the integration type.
+          // Through the repository, not `contactScanService`: importing the
+          // service here closes an import cycle (contact-scan → inbox →
+          // quota → tenant → workspace-lifecycle).
+          await coexistSyncRunRepository.cancelActiveContactScanRuns({
+            channel: "instagram",
+            integrationId: inbox.integrationInstagram.id,
+            currentError: CONTACT_SCAN_ERRORS.cancelled,
+            tx,
+          })
           await tx
             .delete(integrationInstagramModel)
             .where(
@@ -847,6 +907,8 @@ const inboxToAuth = (inbox: InboxWithIntegrations): unknown => {
       return inbox.integrationWhatsapp?.auth
     case channelTypes.enum.zalo:
       return inbox.integrationZalo?.auth
+    case channelTypes.enum.line:
+      return inbox.integrationLine?.auth
     case channelTypes.enum.telegram:
       return inbox.integrationTelegram?.auth
     case channelTypes.enum.tiktok:

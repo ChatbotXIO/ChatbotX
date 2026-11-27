@@ -1,9 +1,11 @@
 import {
+  ecommerceSettingsService,
   integrationMetaCatalogService,
   metaCatalogSyncRunService,
   productCategoryService,
   productService,
 } from "@chatbotx.io/business"
+import { resolveExternalStoreLinks } from "@/features/external-store/lib/resolve-store-links"
 import { listImports } from "@/features/import/queries/list-imports.queries"
 import { CategorySidebar } from "@/features/product-categories/components/category-sidebar"
 import { toSafeMetaCatalogConnection } from "@/features/products/lib/meta-catalog-connection"
@@ -42,11 +44,19 @@ export default async function ProductsPage({
       integrationMetaCatalogService.findByWorkspaceId(workspaceId),
       metaCatalogSyncRunService.list(workspaceId),
     ])
+  const externalStoreLinks = await resolveExternalStoreLinks(
+    workspaceId,
+    await ecommerceSettingsService.storeSource(workspaceId),
+  )
+
   return (
     <div className="flex min-h-0 flex-1">
       <CategorySidebar categories={categories} workspaceId={workspaceId} />
       <div className="min-w-0 flex-1 p-4">
         <ProductsTable
+          externalStore={
+            externalStoreLinks ? { store: externalStoreLinks } : undefined
+          }
           importHistoryPromise={Promise.resolve([importHistory])}
           initialMetaCatalogState={{
             connection: toSafeMetaCatalogConnection(metaConnection),

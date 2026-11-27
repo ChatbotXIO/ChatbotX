@@ -1,5 +1,6 @@
-import { readdirSync, readFileSync } from "node:fs"
+import { existsSync, readdirSync, readFileSync } from "node:fs"
 import { join } from "node:path"
+import { reconstruct } from "drizzle-kit/api-postgres"
 import { describe, expect, test } from "vitest"
 import {
   HEAVY_WORKSPACE_TABLES,
@@ -22,15 +23,28 @@ type Snapshot = { ddl: SnapshotEntry[] }
 const MIGRATION_DIRECTORY = /^\d+_/
 
 const drizzleDirectory = join(import.meta.dirname, "../drizzle")
-const snapshotPath = join(
-  drizzleDirectory,
+// drizzle-kit 1.0 snapshots store diffs against their predecessors (only the
+// oldest one holds a full `ddl`), so replay the chain to get the current DDL.
+const snapshotFiles = Object.fromEntries(
   readdirSync(drizzleDirectory)
-    .filter((entry) => MIGRATION_DIRECTORY.test(entry))
+    .filter(
+      (entry) =>
+        MIGRATION_DIRECTORY.test(entry) &&
+        existsSync(join(drizzleDirectory, entry, "snapshot.json")),
+    )
     .sort()
-    .at(-1) ?? "",
-  "snapshot.json",
+    .map((entry) => [
+      entry,
+      JSON.parse(
+        readFileSync(join(drizzleDirectory, entry, "snapshot.json"), "utf8"),
+      ) as { id: string },
+    ]),
 )
-const snapshot = JSON.parse(readFileSync(snapshotPath, "utf8")) as Snapshot
+const latestSnapshot = Object.values(snapshotFiles).at(-1)
+const snapshot = (await reconstruct(
+  snapshotFiles,
+  latestSnapshot?.id,
+)) as Snapshot
 const entriesByType = (entityType: string) =>
   snapshot.ddl.filter((entry) => entry.entityType === entityType)
 const key = (table: string, columns: readonly string[]) =>
@@ -62,11 +76,9 @@ const LEGACY_UNINDEXED_FKS = [
   "AppointmentCalendarReminder:flowId",
   "AppointmentReminderDispatch:workspaceId",
   "AppointmentReminderDispatch:reminderConfigId",
-  "Account:userId",
   "Account:tenantId",
   "Invitation:workspaceId",
   "Invitation:invitedBy",
-  "Session:userId",
   "AutomatedResponse:folderId",
   "AutomatedResponse:flowId",
   "BotField:folderId",
@@ -77,20 +89,14 @@ const LEGACY_UNINDEXED_FKS = [
   "ConnectSession:actorUserId",
   "ConnectSession:actorTokenId",
   "Connection:createdBy",
-  "ContactNote:createdById",
-  "Conversation:assignedUserId",
   "Conversation:assignedInboxTeamId",
-  "ConversationParticipant:userId",
   "Coupon:topicId",
   "CouponTopic:createdById",
   "CustomField:folderId",
   "DynamicImage:customFieldId",
-  "AuditLog:userId",
-  "File:userId",
   "FacebookMarketingMessageRecipient:workspaceId",
   "Flow:folderId",
   "GoogleAdsConversionEvent:integrationGoogleAdsId",
-  "Import:userId",
   "InboxTeamMember:inboxTeamId",
   "IntegrationGoogleCalendar:workspaceId",
   "IntegrationGoogleSheet:workspaceId",
@@ -119,15 +125,11 @@ const LEGACY_UNINDEXED_FKS = [
   "TemplateInstallation:installFolderId",
   "TemplateInstallation:installedBy",
   "UserDeviceToken:workspaceId",
-  "WhatsappCall:answeredByUserId",
-  "WhatsappCall:initiatedByUserId",
   "WhatsappSignupSession:ownerId",
   "WhatsappSignupSession:workspaceId",
   "WorkingHoursDateOverride:workingHoursId,workspaceId",
   "WorkingHoursMember:userId",
   "WorkingHoursMember:workingHoursId,workspaceId",
-  "Workspace:ownerId",
-  "WorkspaceMember:userId",
 ]
 
 describe("workspace purge coverage", () => {
@@ -182,6 +184,7 @@ describe("workspace purge coverage", () => {
       "WorkspaceMac",
       "WorkspaceBotMessageUsage",
       "WorkspaceDeletionRecord",
+      "ResourceDeletionLog",
     ])
   })
 
@@ -219,5 +222,25 @@ describe("workspace purge coverage", () => {
       fixedBaseline,
       "Remove fixed FKs from LEGACY_UNINDEXED_FKS.",
     ).toEqual([])
+  })
+
+  test("keeps ResourceDeletionLog primary-key only so it outlives its workspace", () => {
+    const ofTable = (entityType: string) =>
+      entriesByType(entityType).filter(
+        (entry) => entry.table === "ResourceDeletionLog",
+      )
+
+    expect(ofTable("fks")).toEqual([])
+    expect(ofTable("indexes")).toEqual([])
+    expect(ofTable("uniques")).toEqual([])
+    expect(ofTable("pks").map(indexColumns)).toEqual([["id"]])
+  })
+
+  test("drains Conversation children before Conversation", () => {
+    const order: readonly string[] = HEAVY_WORKSPACE_TABLES
+    for (const child of ["MessageTranslation", "ConversationParticipant"]) {
+      expect(order).toContain(child)
+      expect(order.indexOf(child)).toBeLessThan(order.indexOf("Conversation"))
+    }
   })
 })

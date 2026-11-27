@@ -1,4 +1,4 @@
-export { getTelegramChatMemberStatus } from "./apis/bot"
+export { getTelegramChatMemberStatus, registerWebhook } from "./apis/bot"
 export { isTelegramMemberStatus } from "./handlers/webhook"
 export * from "./integration"
 export { isRevokedTokenError, mapToChannelError } from "./lib/error-mapper"

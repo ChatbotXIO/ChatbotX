@@ -56,5 +56,6 @@ export const accountModel = pgTable(
       table.accountId,
       table.tenantId,
     ),
+    index("Account_userId_idx").on(table.userId),
   ],
 )

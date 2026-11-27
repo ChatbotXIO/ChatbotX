@@ -9,6 +9,7 @@ import {
   ConnectingStepBody,
   ConnectingStepFooter,
 } from "../components/connecting-step"
+import { startAhachatImportCall } from "../lib/ahachat-import-client"
 import { coexistUnavailable, setCoexist } from "../lib/coexist-client"
 import type { MessageKey } from "../lib/message-key"
 import type { ConnectPickerItem } from "../lib/picker-items"
@@ -143,6 +144,17 @@ function useCoexistAfterConnect<TItem extends ConnectPickerItem>({
       // as an opaque failure instead of the explicit "sync did not start".
       if (!workspaceId) {
         return Promise.resolve(coexistUnavailable(translate))
+      }
+
+      // "Import from AhaChat first" asked for this row: its contacts import, and
+      // the history sync follows by itself (or starts at once if AhaChat lacks it).
+      if (item.ahachat && outcome.inboxId) {
+        return startAhachatImportCall({
+          workspaceId,
+          inboxId: outcome.inboxId,
+          aiReadsSyncedHistory: item.aiReadsSyncedHistory ?? false,
+          t: translate,
+        })
       }
 
       return setCoexist({

@@ -8,6 +8,7 @@ import {
   unique,
 } from "drizzle-orm/pg-core"
 import { bigintAsString, sharedColumns } from "../partials/shared"
+import { storeSource } from "./store-source"
 import { workspaceModel } from "./workspace"
 
 export const productCategoryModel = pgTable(
@@ -35,6 +36,8 @@ export const productCategoryModel = pgTable(
     /** Off hides the category (and what is filed under it) from customers. */
     isVisible: boolean().default(true).notNull(),
     rank: integer().default(10).notNull(),
+    /** `shopify` categories are a connected store's product types. */
+    source: storeSource().default("chatbotx").notNull(),
   },
   (table) => [
     index("ProductCategory_workspaceId_idx").on(table.workspaceId),
@@ -44,8 +47,10 @@ export const productCategoryModel = pgTable(
     // expressible here, and it is what keeps the old guarantee for top-level
     // rows — Postgres would otherwise treat them as always-unique, their parent
     // being null.
+    // A store switched to Shopify keeps its own categories, so the same name
+    // may exist once per source.
     unique("ProductCategory_workspaceId_parent_name_key")
-      .on(table.workspaceId, table.parentId, table.name)
+      .on(table.workspaceId, table.source, table.parentId, table.name)
       .nullsNotDistinct(),
   ],
 )

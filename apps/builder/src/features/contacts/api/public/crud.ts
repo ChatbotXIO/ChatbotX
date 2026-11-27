@@ -1,4 +1,4 @@
-import { contactService, UNSCOPED } from "@chatbotx.io/business"
+import { contactService } from "@chatbotx.io/business"
 import { getAuditActor } from "@chatbotx.io/business/audit"
 import { importService } from "@chatbotx.io/business/import"
 import { contactSources, genderTypes } from "@chatbotx.io/database/partials"
@@ -16,6 +16,11 @@ import {
   possibleErrorsOnWritingContactFields,
 } from "@/lib/orpc/orpc-error-helper"
 import { publicContactIdentifier } from "@/lib/public-api/contact-identifier"
+import {
+  contactIdFor,
+  contactScopeForCaller,
+  maskContactForCaller,
+} from "@/lib/public-api/member-scope"
 import { workspaceTokenAuthAPIForScope } from "@/orpc"
 import { resolveContactAvatars } from "../../queries/resolve-contact-avatars"
 import {
@@ -57,7 +62,13 @@ export const contactsCrudPublicRouter = {
       description:
         "Use this to find contacts by name, keyword, or filter before inspecting one with `contacts.get` or sending a message with `contacts.sendMessage`. Supports `include` and `withCount` to shape the response. Call `contacts.listFilterFields` first to discover `contactFilter` fields, including custom fields.",
       tags: ["Contacts"],
-      spec: mcpSpec({ visibility: "default" }),
+      spec: mcpSpec({
+        destructiveHint: false,
+        idempotentHint: true,
+        openWorldHint: false,
+        readOnlyHint: true,
+        visibility: "default",
+      }),
     })
     .input(listContactsPublicRequest)
     .output(listContactsResponse)
@@ -67,7 +78,7 @@ export const contactsCrudPublicRouter = {
       const result = await contactService.list({
         ...rest,
         workspaceId: context.workspace.id,
-        scope: UNSCOPED,
+        scope: await contactScopeForCaller(context),
         include,
         withCount,
       })
@@ -91,6 +102,7 @@ export const contactsCrudPublicRouter = {
       summary: "Search contacts with filter body",
       description:
         "Deprecated — `contacts.list` accepts the identical `contactFilter` shape as a query-string request; this POST-with-body variant is kept only for callers that have not migrated.",
+      spec: mcpSpec({ hitlPolicy: "none", readOnlyHint: true }),
       tags: ["Contacts"],
       deprecated: true,
     })
@@ -102,7 +114,7 @@ export const contactsCrudPublicRouter = {
       const result = await contactService.list({
         ...rest,
         workspaceId: context.workspace.id,
-        scope: UNSCOPED,
+        scope: await contactScopeForCaller(context),
         include,
         withCount,
       })
@@ -133,7 +145,7 @@ export const contactsCrudPublicRouter = {
         await contactService.count({
           ...input,
           workspaceId: context.workspace.id,
-          scope: UNSCOPED,
+          scope: await contactScopeForCaller(context),
         }),
     ),
 
@@ -145,7 +157,13 @@ export const contactsCrudPublicRouter = {
       description:
         "Use this to look up a contact by email, phone, or id after locating a prefixed identifier. Call `contacts.list` to search first, or use `contacts.sendMessage` to contact the result.",
       tags: ["Contacts"],
-      spec: mcpSpec({ visibility: "default" }),
+      spec: mcpSpec({
+        destructiveHint: false,
+        idempotentHint: true,
+        openWorldHint: false,
+        readOnlyHint: true,
+        visibility: "default",
+      }),
     })
     .input(
       z.object({
@@ -155,10 +173,7 @@ export const contactsCrudPublicRouter = {
     .output(contactResponse)
     .errors(possibleErrorsOnFindingResource)
     .handler(async ({ context, input }) => {
-      const contactId = await contactService.resolveIdByIdentifier({
-        identifier: input.identifier,
-        workspaceId: context.workspace.id,
-      })
+      const contactId = await contactIdFor(context, input.identifier)
       const contact = await contactService.findPublicContactOrFail({
         id: contactId,
         workspaceId: context.workspace.id,
@@ -168,7 +183,7 @@ export const contactsCrudPublicRouter = {
         context.workspace.id,
         { publicUrls: true },
       )
-      return resolved
+      return maskContactForCaller(context, resolved)
     }),
 
   create: workspaceTokenAuthAPI
@@ -179,7 +194,13 @@ export const contactsCrudPublicRouter = {
       description:
         "Adds a contact to the inbox given by `inboxId` and opens its conversation, so `contacts.sendMessage` works right after. Use `contacts.list` to check for an existing contact first.",
       tags: ["Contacts"],
-      spec: mcpSpec({ visibility: "default" }),
+      spec: mcpSpec({
+        destructiveHint: false,
+        idempotentHint: false,
+        openWorldHint: false,
+        readOnlyHint: false,
+        visibility: "default",
+      }),
     })
     .input(createContactRequest)
     .output(contactResponse)
@@ -266,10 +287,7 @@ export const contactsCrudPublicRouter = {
     .errors(possibleErrorsOnWritingContactFields)
     .handler(async ({ context, input }) => {
       const { identifier, ...fields } = input
-      const contactId = await contactService.resolveIdByIdentifier({
-        identifier,
-        workspaceId: context.workspace.id,
-      })
+      const contactId = await contactIdFor(context, identifier)
       await contactService.updateFieldsAndCustomFields(
         { workspaceId: context.workspace.id, id: contactId },
         fields,
@@ -300,10 +318,7 @@ export const contactsCrudPublicRouter = {
     .errors(possibleErrorsOnMutatingResource)
     .handler(async ({ context, input }) => {
       const { identifier, ...fields } = input
-      const contactId = await contactService.resolveIdByIdentifier({
-        identifier,
-        workspaceId: context.workspace.id,
-      })
+      const contactId = await contactIdFor(context, identifier)
       await contactService.updateFieldsAndCustomFields(
         { workspaceId: context.workspace.id, id: contactId },
         fields,
@@ -327,10 +342,7 @@ export const contactsCrudPublicRouter = {
     )
     .errors(possibleErrorsOnMutatingResource)
     .handler(async ({ context, input }) => {
-      const contactId = await contactService.resolveIdByIdentifier({
-        identifier: input.identifier,
-        workspaceId: context.workspace.id,
-      })
+      const contactId = await contactIdFor(context, input.identifier)
       await contactService.deleteAndRecord({
         triggerSource: "api",
         workspaceId: context.workspace.id,
@@ -355,10 +367,7 @@ export const contactsCrudPublicRouter = {
     )
     .errors(possibleErrorsOnMutatingResource)
     .handler(async ({ context, input }) => {
-      const contactId = await contactService.resolveIdByIdentifier({
-        identifier: input.identifier,
-        workspaceId: context.workspace.id,
-      })
+      const contactId = await contactIdFor(context, input.identifier)
       await contactService.blockAndRecord({
         workspaceId: context.workspace.id,
         id: contactId,
@@ -382,10 +391,7 @@ export const contactsCrudPublicRouter = {
     )
     .errors(possibleErrorsOnMutatingResource)
     .handler(async ({ context, input }) => {
-      const contactId = await contactService.resolveIdByIdentifier({
-        identifier: input.identifier,
-        workspaceId: context.workspace.id,
-      })
+      const contactId = await contactIdFor(context, input.identifier)
       await contactService.unblockAndRecord({
         workspaceId: context.workspace.id,
         id: contactId,

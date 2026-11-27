@@ -9,6 +9,7 @@ export const WHATSAPP_BASE_SUBSCRIBED_FIELDS = [
   "history",
   "smb_app_state_sync",
   "smb_message_echoes",
+  "account_update",
 ] as const
 
 export const WHATSAPP_SUBSCRIBED_FIELDS = [

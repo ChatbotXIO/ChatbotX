@@ -85,6 +85,14 @@ vi.mock("@chatbotx.io/business", () => ({
   connectionStateService: {
     commitReconnect: mockCommitReconnect,
   },
+  publishDestinationService: {
+    captureInboxScopes: vi.fn(async () => undefined),
+  },
+  userService: { recordConnectionAuthorization: vi.fn(async () => undefined) },
+}))
+
+vi.mock("@/features/channel-connect/lib/reconnect-fan-out", () => ({
+  runReconnectFanOut: vi.fn(async () => null),
 }))
 
 vi.mock("@/features/channel-connect/lib/branding-follow-ups", () => ({
@@ -119,6 +127,7 @@ vi.mock("@chatbotx.io/integration-instagram", () => ({
 
 vi.mock("@chatbotx.io/integration-instagram-facebook", () => ({
   getFacebookUser: mockGetInstagramFacebookUser,
+  getGrantedPermissions: vi.fn(async () => ["instagram_content_publish"]),
   getUserInstagramAccounts: mockGetUserInstagramAccounts,
   subscribePageToInstagramWebhook: mockSubscribeInstagramFacebookWebhook,
   integration: {},
@@ -264,6 +273,7 @@ describe("reconnectMessengerHandler", () => {
       credentialConfig,
       workspaceId: "ws-1",
       integrationId: "im-1",
+      userId: "user-1",
       code: "code-1",
       callbackUrl: "https://broker.example.com/integrations/messenger/callback",
     })
@@ -445,7 +455,9 @@ describe("reconnectInstagramHandler", () => {
       credentialConfig,
       workspaceId: "ws-1",
       integrationId: "ig-1",
+      userId: "user-1",
       userToken: "ig-user-token",
+      grantedScopes: null,
     })
 
   test("stores the user token when the authorized account matches", async () => {
@@ -588,6 +600,7 @@ describe("reconnectInstagramFacebookHandler", () => {
       credentialConfig,
       workspaceId: "ws-1",
       integrationId: "ig-1",
+      userId: "user-1",
       userToken: "fb-user-token",
     })
 
@@ -733,6 +746,7 @@ describe("reconnectZaloHandler", () => {
       zaloSettings,
       workspaceId: "ws-1",
       integrationId: "iz-1",
+      userId: "user-1",
       req: new Request(
         "https://broker.example.com/integrations/zalo/callback?code=code-1",
       ),

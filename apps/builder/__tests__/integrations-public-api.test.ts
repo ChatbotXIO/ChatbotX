@@ -77,6 +77,7 @@ vi.mock("@chatbotx.io/ai", () => ({
       claude: "claude",
       deepseek: "deepseek",
       gemini: "gemini",
+      muse: "muse",
       openai: "openai",
     },
   },
@@ -91,21 +92,31 @@ const integrationService = {
 const integrationClaudeService = {
   findByWorkspaceId: vi.fn(),
   connect: vi.fn(),
+  update: vi.fn(),
   disconnect: vi.fn(),
 }
 const integrationDeepSeekService = {
   findByWorkspaceId: vi.fn(),
   connect: vi.fn(),
+  update: vi.fn(),
   disconnect: vi.fn(),
 }
 const integrationGeminiService = {
   findByWorkspaceId: vi.fn(),
   connect: vi.fn(),
+  update: vi.fn(),
+  disconnect: vi.fn(),
+}
+const integrationMuseService = {
+  findByWorkspaceId: vi.fn(),
+  connect: vi.fn(),
+  update: vi.fn(),
   disconnect: vi.fn(),
 }
 const integrationOpenAIService = {
   findByWorkspaceId: vi.fn(),
   connect: vi.fn(),
+  update: vi.fn(),
   disconnect: vi.fn(),
 }
 
@@ -116,6 +127,7 @@ vi.mock("@chatbotx.io/business", () => ({
   integrationClaudeService,
   integrationDeepSeekService,
   integrationGeminiService,
+  integrationMuseService,
   integrationOpenAIService,
   connectionStateService,
 }))
@@ -291,6 +303,34 @@ describe("GET /v1/integrations/ai/{provider}", () => {
       "workspace-1",
     )
     expect(integrationClaudeService.findByWorkspaceId).not.toHaveBeenCalled()
+  })
+
+  test("dispatches the muse provider to the Muse service", async () => {
+    integrationMuseService.findByWorkspaceId.mockResolvedValueOnce({
+      id: "muse-1",
+      model: "muse-spark-1.3",
+      temperature: 0.4,
+      maxOutputTokens: 4096,
+      autoReply: false,
+      auth: { authType: "secretText", secretText: "muse-key" },
+    })
+
+    const result = await procedure.handler?.({
+      context: { workspace: { id: "workspace-1" } },
+      input: { provider: "muse" },
+    })
+
+    expect(integrationMuseService.findByWorkspaceId).toHaveBeenCalledWith(
+      "workspace-1",
+    )
+    expect(result).toEqual({
+      id: "muse-1",
+      model: "muse-spark-1.3",
+      temperature: 0.4,
+      maxOutputTokens: 4096,
+      autoReply: false,
+      hasApiKey: true,
+    })
   })
 })
 
@@ -472,5 +512,113 @@ describe("DELETE /v1/integrations/ai/{provider}", () => {
 
   test("is marked deprecated", () => {
     expect(procedure.route.deprecated).toBe(true)
+  })
+})
+
+describe("PATCH /v1/integrations/ai/{provider}", () => {
+  const procedure = findProcedure("PATCH", "/v1/integrations/ai/{provider}")
+
+  const row = (autoReply: boolean) => ({
+    id: "row-1",
+    model: "m",
+    temperature: 0.5,
+    maxOutputTokens: 1024,
+    autoReply,
+    auth: { authType: "secretText", secretText: "sk-secret" },
+  })
+
+  const services = {
+    claude: integrationClaudeService,
+    deepseek: integrationDeepSeekService,
+    gemini: integrationGeminiService,
+    muse: integrationMuseService,
+    openai: integrationOpenAIService,
+  } as const
+
+  test("is registered under the Integrations tag", () => {
+    expect(procedure.route.tags).toEqual(["Integrations"])
+    expect(procedure.route.summary).toBe("Update AI provider settings")
+  })
+
+  test.each(
+    Object.keys(services) as (keyof typeof services)[],
+  )("%s: updates autoReply, invalidates the cache, returns the fresh resource without the secret", async (provider) => {
+    const service = services[provider]
+    service.findByWorkspaceId
+      .mockResolvedValueOnce(row(false))
+      .mockResolvedValueOnce(row(true))
+
+    const result = await procedure.handler?.({
+      context: { workspace: { id: "workspace-1" } },
+      input: { provider, autoReply: true },
+    })
+
+    expect(service.update).toHaveBeenCalledWith(
+      provider === "openai"
+        ? { workspaceId: "workspace-1", id: "row-1" }
+        : { workspaceId: "workspace-1" },
+      { autoReply: true },
+    )
+    expect(aiIntegrationService.invalidateCache).toHaveBeenCalledWith(
+      "workspace-1",
+      provider,
+    )
+    expect(result).toEqual({
+      id: "row-1",
+      model: "m",
+      temperature: 0.5,
+      maxOutputTokens: 1024,
+      autoReply: true,
+      hasApiKey: true,
+    })
+    expect(JSON.stringify(result)).not.toContain("sk-secret")
+  })
+
+  test("throws notFound without writing or invalidating when the provider is not connected", async () => {
+    integrationMuseService.findByWorkspaceId.mockResolvedValueOnce(undefined)
+
+    await expect(
+      procedure.handler?.({
+        context: { workspace: { id: "workspace-1" } },
+        input: { provider: "muse", autoReply: true },
+      }),
+    ).rejects.toThrow("muse integration not found")
+
+    expect(integrationMuseService.update).not.toHaveBeenCalled()
+    expect(aiIntegrationService.invalidateCache).not.toHaveBeenCalled()
+  })
+
+  test("leaves the integration untouched when autoReply is omitted", async () => {
+    integrationClaudeService.findByWorkspaceId
+      .mockResolvedValueOnce(row(true))
+      .mockResolvedValueOnce(row(true))
+
+    const result = await procedure.handler?.({
+      context: { workspace: { id: "workspace-1" } },
+      input: { provider: "claude" },
+    })
+
+    expect(integrationClaudeService.update).not.toHaveBeenCalled()
+    expect(aiIntegrationService.invalidateCache).not.toHaveBeenCalled()
+    expect(result).toMatchObject({ id: "row-1", autoReply: true })
+  })
+
+  test("scopes the write to the token's workspace", async () => {
+    integrationGeminiService.findByWorkspaceId
+      .mockResolvedValueOnce(row(true))
+      .mockResolvedValueOnce(row(false))
+
+    await procedure.handler?.({
+      context: { workspace: { id: "workspace-9" } },
+      input: { provider: "gemini", autoReply: false },
+    })
+
+    expect(integrationGeminiService.findByWorkspaceId).toHaveBeenCalledWith(
+      "workspace-9",
+    )
+    expect(integrationGeminiService.update).toHaveBeenCalledWith(
+      { workspaceId: "workspace-9" },
+      { autoReply: false },
+    )
   })
 })

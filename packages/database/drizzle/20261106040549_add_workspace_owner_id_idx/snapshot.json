@@ -1,0 +1,56 @@
+{
+  "type": "diff",
+  "version": "10",
+  "dialect": "postgres",
+  "id": "28123e97-6285-4033-954a-88136a68c0d0",
+  "prevIds": [
+    "b20381cb-457c-4c18-a8ba-01e8f5ae77e0"
+  ],
+  "footprints": [
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "Workspace",
+        "Workspace_ownerId_idx"
+      ],
+      "writes": [
+        "s|idx|public.Workspace_ownerId_idx",
+        "n|idx|public.Workspace_ownerId_idx",
+        "e|idx|public.Workspace_ownerId_idx",
+        "n|rel|public.Workspace_ownerId_idx"
+      ],
+      "reads": [
+        "n|tbl|public.Workspace",
+        "n|sch|public",
+        "n|col|public.Workspace.ownerId"
+      ]
+    }
+  ],
+  "deltas": [
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "Workspace",
+        "name": "Workspace_ownerId_idx",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "ownerId",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": false,
+        "where": null,
+        "with": "",
+        "method": "btree",
+        "entityType": "indexes"
+      }
+    }
+  ]
+}

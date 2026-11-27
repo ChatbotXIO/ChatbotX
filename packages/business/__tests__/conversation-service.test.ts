@@ -167,7 +167,9 @@ vi.mock("@chatbotx.io/analytics", () => ({
   macAnalyticsService: {},
 }))
 
-const { conversationService } = await import("../src/conversation/service")
+const { conversationAssigneeId, conversationService } = await import(
+  "../src/conversation/service"
+)
 const { humanReplyWindowSet, reopenIfUnansweredSince } = await import(
   "../src/conversation/human-reply-window"
 )
@@ -253,10 +255,10 @@ function collectSqlText(
       }
       const obj = n as Record<string, unknown>
       if (
-        Array.isArray(obj.value) &&
-        obj.value.every((v) => typeof v === "string")
+        n.constructor?.name === "StringChunk" &&
+        typeof obj.value === "string"
       ) {
-        out.push(...(obj.value as string[]))
+        out.push(obj.value)
       }
     },
     seen,
@@ -432,7 +434,10 @@ describe("conversationService.markReadByContact", () => {
     })
 
     expect(transaction).toHaveBeenCalledTimes(1)
-    expect(set).toHaveBeenCalledWith({ contactLastReadAt: seenAt })
+    // Advance-only: an older receipt finishing last must not move the mark back.
+    const readMark = set.mock.calls[0][0].contactLastReadAt
+    expect(collectSqlText(readMark)).toContain("GREATEST(")
+    expect(collectSqlParams(readMark)).toContain(seenAt)
 
     const whereValues = collectSqlValues(where.mock.calls[0][0])
     expect(whereValues).toContain("conv-1")
@@ -524,6 +529,55 @@ describe("conversationService.updateReadStatus", () => {
     expect(queueWorkspaceRealtimeEvent).not.toHaveBeenCalled()
     await afterCommit?.()
     expect(queueWorkspaceRealtimeEvent).toHaveBeenCalledTimes(1)
+  })
+})
+
+describe("conversationService.markReadBySkippedPost", () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    returning.mockResolvedValue([])
+    createMessageRepository.mockResolvedValue({ findLastByConversation })
+  })
+
+  test("advances the read time to the comment's own time with no inbox-preference condition", async () => {
+    const readAt = new Date("2026-11-22T10:00:00.000Z")
+    returning.mockResolvedValueOnce([
+      { assignedInboxTeamId: null, assignedUserId: null, id: "conv-1" },
+    ])
+
+    await expect(
+      conversationService.markReadBySkippedPost({
+        workspaceId: "ws-1",
+        conversationId: "conv-1",
+        readAt,
+      }),
+    ).resolves.toBe(true)
+
+    expect(set).toHaveBeenCalledWith({ agentLastReadAt: readAt })
+    const whereExpression = where.mock.calls[0][0]
+    const whereValues = collectSqlValues(whereExpression)
+    const whereSqlText = collectSqlText(whereExpression).toLowerCase()
+    expect(whereValues).toContain("conv-1")
+    expect(whereValues).toContain("ws-1")
+    expect(whereValues).toContain(readAt)
+    expect(whereSqlText).toContain(" < ")
+    expect(whereSqlText).toContain("is null")
+    expect(whereSqlText).not.toContain("exists")
+    expect(invalidateCacheByTags).toHaveBeenCalled()
+    expect(queueWorkspaceRealtimeEvent).toHaveBeenCalledTimes(1)
+  })
+
+  test("a comment older than the current read changes nothing", async () => {
+    await expect(
+      conversationService.markReadBySkippedPost({
+        workspaceId: "ws-1",
+        conversationId: "conv-1",
+        readAt: new Date("2026-11-22T10:00:00.000Z"),
+      }),
+    ).resolves.toBe(false)
+
+    expect(invalidateCacheByTags).not.toHaveBeenCalled()
+    expect(queueWorkspaceRealtimeEvent).not.toHaveBeenCalled()
   })
 })
 
@@ -759,6 +813,33 @@ describe("conversationService.recordInboundActivity contactRepliedAt", () => {
     expect(collectSqlParams(setArg.contactRepliedAt)).toContainEqual(at)
   })
 
+  test("keys the referral's ad touch by the carrying message and its time", async () => {
+    const at = new Date("2026-09-24T10:00:00.000Z")
+
+    await conversationService.recordInboundActivity({
+      ...baseProps,
+      at,
+      referralEventKey: "mid-1",
+    })
+
+    expect(updateTracking).toHaveBeenCalledWith(
+      expect.objectContaining({
+        referralOccurrence: { occurredAt: at, eventKey: "mid-1" },
+      }),
+    )
+  })
+
+  test("sends no ad touch occurrence without a message key", async () => {
+    await conversationService.recordInboundActivity({
+      ...baseProps,
+      at: new Date("2026-09-24T10:00:00.000Z"),
+    })
+
+    expect(updateTracking).toHaveBeenCalledWith(
+      expect.objectContaining({ referralOccurrence: undefined }),
+    )
+  })
+
   test("advances lastActivityAt without touching contactRepliedAt when omitted", async () => {
     const at = new Date("2026-09-24T10:00:00.000Z")
 
@@ -824,12 +905,12 @@ describe("conversationService outbound activity bump", () => {
 describe("human-reply-window SQL fragments", () => {
   const at = new Date("2026-10-18T09:00:00.000Z")
 
-  test("open is DM-only, stale-event guarded and keeps the earliest start", () => {
+  test("open is direct-conversation-only, stale-event guarded and keeps the earliest start", () => {
     const set = humanReplyWindowSet({ open: at })
 
     const text = collectSqlText(set.awaitingHumanReplySince)
-    expect(text).toContain(`"sourceId" IS NOT NULL`)
-    expect(text).toContain(`"awaitingHumanReplyClosedAt"`)
+    expect(text).toContain(`"sourceId" IS NULL`)
+    expect(text).toContain(`"sourceId" LIKE 'email:%'`)
     expect(text).toContain("LEAST(COALESCE")
     expect(text).not.toContain("botEnabled")
     expect(collectSqlParams(set.awaitingHumanReplySince)).toContain(
@@ -841,7 +922,7 @@ describe("human-reply-window SQL fragments", () => {
   test.each([
     "externalHuman",
     "archive",
-  ] as const)("close by %s is DM-only and ignores botEnabled", (actor) => {
+  ] as const)("close by %s is direct-conversation-only and ignores botEnabled", (actor) => {
     const set = humanReplyWindowSet({ close: at, actor })
 
     for (const fragment of [
@@ -850,7 +931,7 @@ describe("human-reply-window SQL fragments", () => {
     ]) {
       const text = collectSqlText(fragment)
       expect(text).toContain(`"sourceId" IS NULL`)
-      expect(text).not.toContain("botEnabled")
+      expect(text).toContain(`"sourceId" LIKE 'email:%'`)
     }
     expect(collectSqlText(set.awaitingHumanReplyClosedAt)).toContain("GREATEST")
   })
@@ -875,11 +956,12 @@ describe("human-reply-window SQL fragments", () => {
     )
   })
 
-  test("reopen only fires for an unanswered, unclosed DM message", () => {
+  test("reopen only fires for an unanswered, unclosed direct-conversation message", () => {
     const text = collectSqlText(reopenIfUnansweredSince())
 
     expect(text).toContain(`"awaitingHumanReplySince" IS NULL`)
     expect(text).toContain(`"sourceId" IS NULL`)
+    expect(text).toContain(`"sourceId" LIKE 'email:%'`)
     expect(text).toContain(`"contactRepliedAt" > COALESCE("adminRepliedAt"`)
     expect(text).toContain(
       `"contactRepliedAt" > COALESCE("awaitingHumanReplyClosedAt"`,
@@ -990,7 +1072,9 @@ describe("conversationService window transitions on existing UPDATEs", () => {
       humanReplyWindow: { open: at },
     })
 
-    expect(lastSet().contactLastReadAt).toBe(at)
+    // Advance-only: a late inbound must not move the read mark backwards.
+    expect(collectSqlText(lastSet().contactLastReadAt)).toContain("GREATEST(")
+    expect(collectSqlParams(lastSet().contactLastReadAt)).toContain(at)
     expect(lastSet()).toHaveProperty("awaitingHumanReplySince")
   })
 })
@@ -1092,6 +1176,109 @@ describe("conversationService.updateAssignment", () => {
         assignedTeamIds: ["team-before"],
         assignedUserIds: ["user-before"],
       },
+    })
+  })
+})
+
+describe("conversationService.assignByContactIds onlyFromAssignees", () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  test("passes the allowed assignees to the locked update", async () => {
+    findByWorkspaceIdAndUserId.mockResolvedValue({ id: "user-new" })
+    vi.spyOn(conversationService, "findManyByContactIds").mockResolvedValue([
+      { id: "conv-1", contactId: "c-1" },
+    ] as never)
+    const updateAssignment = vi
+      .spyOn(conversationService, "updateAssignment")
+      .mockResolvedValue([])
+
+    await conversationService.assignByContactIds({
+      workspaceId: "ws-1",
+      contactIds: ["c-1"],
+      assignedId: "u_user-new",
+      triggerContext: { triggerSource: "pipeline" },
+      onlyFromAssignees: [null, "u_user-old"],
+    })
+
+    expect(updateAssignment).toHaveBeenCalledWith(
+      expect.objectContaining({
+        conversations: [{ id: "conv-1", contactId: "c-1" }],
+        onlyFromAssignees: [null, "u_user-old"],
+      }),
+    )
+    updateAssignment.mockRestore()
+  })
+
+  test("the locked update skips rows someone else took meanwhile", async () => {
+    // Under the row lock the conversation turns out to be with another agent.
+    selectForUpdate.mockResolvedValue([
+      { id: "conv-1", assignedUserId: "user-other", assignedInboxTeamId: null },
+    ])
+
+    const updated = await conversationService.updateAssignment({
+      workspaceId: "ws-1",
+      conversations: [{ id: "conv-1", contactId: "c-1" }],
+      assignedUserId: "user-new",
+      assignedInboxTeamId: null,
+      onlyFromAssignees: [null, "u_user-old"],
+      triggerContext: { triggerType: "conversation_assigned" },
+    })
+
+    expect(update).not.toHaveBeenCalled()
+    expect(updated).toEqual([])
+    expect(queueWorkspaceRealtimeEvent).not.toHaveBeenCalled()
+  })
+
+  test("the locked update changes a row still with an allowed assignee", async () => {
+    selectForUpdate.mockResolvedValue([
+      { id: "conv-1", assignedUserId: "user-old", assignedInboxTeamId: null },
+    ])
+    returning.mockResolvedValue([{ id: "conv-1", contactId: "c-1" }])
+
+    await conversationService.updateAssignment({
+      workspaceId: "ws-1",
+      conversations: [{ id: "conv-1", contactId: "c-1" }],
+      assignedUserId: "user-new",
+      assignedInboxTeamId: null,
+      onlyFromAssignees: [null, "u_user-old"],
+      triggerContext: { triggerType: "conversation_assigned" },
+    })
+
+    expect(update).toHaveBeenCalledTimes(1)
+  })
+
+  test("conversationAssigneeId prefers the user, then the team, else null", () => {
+    expect(
+      conversationAssigneeId({ assignedUserId: "u", assignedInboxTeamId: "t" }),
+    ).toBe("u_u")
+    expect(
+      conversationAssigneeId({
+        assignedUserId: null,
+        assignedInboxTeamId: "t",
+      }),
+    ).toBe("t_t")
+    expect(
+      conversationAssigneeId({
+        assignedUserId: null,
+        assignedInboxTeamId: null,
+      }),
+    ).toBeNull()
+  })
+})
+
+describe("conversationService.findWithFullRelations", () => {
+  test("loads the assigned user without the secret column", async () => {
+    const findFirst = vi.fn().mockResolvedValue(undefined)
+
+    await conversationService.findWithFullRelations({
+      where: { id: "conversation-1" },
+      tx: { query: { conversationModel: { findFirst } } } as never,
+    })
+
+    expect(findFirst.mock.calls[0]?.[0]?.with.assignedUser).toEqual({
+      columns: { connectionAuthorizations: false },
     })
   })
 })

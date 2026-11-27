@@ -1,21 +1,7 @@
 {
-  "$schema": "https://json.schemastore.org/tsconfig",
+  "extends": "../../tsconfig.base.json",
   "include": ["src/**/*.ts"],
   "compilerOptions": {
-    "target": "ES2022",
-    "lib": ["ESNext"],
-    "module": "Preserve",
-    "moduleResolution": "Bundler",
-    "moduleDetection": "force",
-    "allowJs": false,
-    "noEmit": true,
-    "strict": true,
-    "strictNullChecks": true,
-    "esModuleInterop": true,
-    "skipLibCheck": true,
-    "resolveJsonModule": true,
-    "isolatedModules": true,
-    "verbatimModuleSyntax": true,
     "types": ["node"]
   }
 }

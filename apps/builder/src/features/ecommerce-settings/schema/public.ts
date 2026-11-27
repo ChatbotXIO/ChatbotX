@@ -37,9 +37,44 @@ export const updateEcommerceSettingsPublicRequest = z.object({
     .describe("Delivery or pickup, countries and delivery cost."),
   checkout: ecommerceCheckoutSettingsSchema
     .partial()
+    .extend({
+      shopifyCheckoutMethod:
+        ecommerceCheckoutSettingsSchema.shape.externalCheckoutMethod
+          .optional()
+          .describe("Deprecated: use `externalCheckoutMethod`."),
+      shopifyAutoApplyDiscounts: z
+        .boolean()
+        .optional()
+        .describe("Deprecated: use `externalAutoApplyDiscounts`."),
+    })
     .optional()
     .describe("Checkout mode, minimum order and required buyer fields."),
 })
+
+/**
+ * The patch the service takes: the deprecated Shopify-only checkout keys
+ * (renamed when WooCommerce joined) still work, the new name winning when
+ * both are sent.
+ */
+export const toEcommerceSettingsPatch = (
+  input: UpdateEcommerceSettingsRequest,
+) => {
+  if (!input.checkout) {
+    return { ...input, checkout: undefined }
+  }
+  const { shopifyCheckoutMethod, shopifyAutoApplyDiscounts, ...checkout } =
+    input.checkout
+  return {
+    ...input,
+    checkout: {
+      ...checkout,
+      externalCheckoutMethod:
+        checkout.externalCheckoutMethod ?? shopifyCheckoutMethod,
+      externalAutoApplyDiscounts:
+        checkout.externalAutoApplyDiscounts ?? shopifyAutoApplyDiscounts,
+    },
+  }
+}
 export type UpdateEcommerceSettingsRequest = z.infer<
   typeof updateEcommerceSettingsPublicRequest
 >

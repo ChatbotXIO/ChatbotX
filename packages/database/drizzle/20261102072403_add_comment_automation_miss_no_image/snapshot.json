@@ -1,0 +1,44 @@
+{
+  "type": "diff",
+  "version": "10",
+  "dialect": "postgres",
+  "id": "1fef8404-ac87-4055-9045-c04437da4e7d",
+  "prevIds": [
+    "2b888b2e-3ff4-450b-b98f-31b685088e44"
+  ],
+  "footprints": [
+    {
+      "statementType": "alter_enum",
+      "statementTarget": [
+        "enum",
+        "public",
+        "commentAutomationMissReason"
+      ],
+      "writes": [
+        "s|enum|public.commentAutomationMissReason"
+      ],
+      "reads": [
+        "n|sch|public"
+      ]
+    }
+  ],
+  "deltas": [
+    {
+      "op": "alter",
+      "key": "enums\u0000[\"public\",\"commentAutomationMissReason\"]",
+      "set": {
+        "values": [
+          "outsideSchedule",
+          "postNotMatched",
+          "commentIsReply",
+          "keywordsNotMatched",
+          "mentionCountNotMatched",
+          "noImageAttachment",
+          "contactNotNew",
+          "alreadyRepliedOnPost",
+          "engagedOnOtherPost"
+        ]
+      }
+    }
+  ]
+}

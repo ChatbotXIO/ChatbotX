@@ -21,6 +21,15 @@ export const facebookLeadAdsLeadModel = pgTable(
     formId: text(),
     formName: text(),
     adgroupId: text(),
+    // Ad/ad set/campaign of the lead, read from the Graph Lead object after
+    // the claim. Best-effort: Meta omits names the page token cannot read, and
+    // leads that predate these columns have none.
+    adId: text(),
+    adName: text(),
+    adsetId: text(),
+    adsetName: text(),
+    campaignId: text(),
+    campaignName: text(),
     contactId: bigintAsString().references(() => contactModel.id, {
       onDelete: "set null",
       onUpdate: "cascade",

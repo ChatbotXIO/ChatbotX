@@ -53,15 +53,27 @@ const aiFileService = {
   findWithProcessing: vi.fn(),
   create: vi.fn(),
   delete: vi.fn(),
+  listChunks: vi.fn(),
+  reindex: vi.fn(),
 }
 vi.mock("@chatbotx.io/business", () => ({
   aiFileService,
-  AI_FILE_MAX_UPLOAD_BYTES: 100 * 1000 * 1000,
+  AI_FILE_MAX_UPLOAD_BYTES: 25 * 1024 * 1024,
 }))
 
 vi.mock("@chatbotx.io/business/errors", () => ({
   BROADCAST_PLAN_LIMIT_CODE: "broadcastPlanLimit",
+  ChatbotXException: class extends Error {},
   notFoundException: (message: string) => new Error(message),
+}))
+
+const searchAIFiles = vi.fn()
+vi.mock("@chatbotx.io/ai/server", () => ({ searchAIFiles }))
+const assertAIFileCreateFromUrlNotRateLimited = vi.fn()
+vi.mock("@/features/ai-files/lib/rate-limit", () => ({
+  assertAIFileCreateFromUrlNotRateLimited,
+  assertAIFileReindexNotRateLimited: vi.fn(),
+  assertAIFileSearchNotRateLimited: vi.fn(),
 }))
 
 vi.mock("@chatbotx.io/database/schema", () => {
@@ -166,19 +178,47 @@ describe("POST /v1/ai-files", () => {
     expect(aiFileService.create).toHaveBeenCalledWith("workspace-1", {
       file,
     })
+    expect(assertAIFileCreateFromUrlNotRateLimited).not.toHaveBeenCalled()
   })
 
   test("delegates to aiFileService.create with a source url", async () => {
     aiFileService.create.mockResolvedValueOnce({ id: "file-2" })
 
+    const resHeaders = new Headers()
+
     await procedure.handler?.({
-      context: { workspace: { id: "workspace-1" } },
+      context: { workspace: { id: "workspace-1" }, resHeaders },
       input: { url: "https://example.com/manual.pdf" },
     })
 
+    expect(assertAIFileCreateFromUrlNotRateLimited).toHaveBeenCalledWith(
+      "workspace-1",
+      resHeaders,
+    )
     expect(aiFileService.create).toHaveBeenCalledWith("workspace-1", {
       url: "https://example.com/manual.pdf",
     })
+  })
+
+  test("a rate-limited url never reaches the service", async () => {
+    const limited = Object.assign(new Error("Too many requests"), {
+      code: "tooManyRequests",
+    })
+    assertAIFileCreateFromUrlNotRateLimited.mockRejectedValueOnce(limited)
+
+    await expect(
+      procedure.handler?.({
+        context: { workspace: { id: "workspace-1" } },
+        input: { url: "https://example.com/manual.pdf" },
+      }),
+    ).rejects.toBe(limited)
+    expect(aiFileService.create).not.toHaveBeenCalled()
+  })
+
+  test("documents the 25 MB limit instead of 100MB", () => {
+    const route = procedure.route as RouteConfig & { description?: string }
+    expect(route.description).toContain("25 MB")
+    expect(route.description).not.toContain("100MB")
   })
 })
 
@@ -211,6 +251,16 @@ describe("createAIFilePublicRequest", () => {
     }
   })
 
+  test("rejects a file over 25 MB", () => {
+    const big = new File([new Uint8Array(25 * 1024 * 1024 + 1)], "big.pdf")
+    const result = createAIFilePublicRequest.safeParse({ file: big })
+
+    expect(result.success).toBe(false)
+    if (!result.success) {
+      expect(result.error.issues[0]?.message).toBe("Max file size is 25 MB.")
+    }
+  })
+
   test("rejects a payload with neither file nor url", () => {
     const result = createAIFilePublicRequest.safeParse({
       name: "manual.pdf",
@@ -239,6 +289,67 @@ describe("DELETE /v1/ai-files/{id}", () => {
     expect(aiFileService.delete).toHaveBeenCalledWith({
       workspaceId: "workspace-1",
       id: "file-1",
+    })
+  })
+})
+
+describe("phase-two AI file procedures", () => {
+  test("registers search, chunks, and reindex procedures", () => {
+    expect(findProcedure("POST", "/v1/ai-files/search").route.summary).toBe(
+      "Search AI file chunks",
+    )
+    expect(findProcedure("GET", "/v1/ai-files/{id}/chunks").route.summary).toBe(
+      "List AI file chunks",
+    )
+    expect(
+      findProcedure("POST", "/v1/ai-files/{id}/reindex").route.successStatus,
+    ).toBe(202)
+  })
+
+  test("search delegates to the shared retrieval implementation", async () => {
+    searchAIFiles.mockResolvedValueOnce({ results: [] })
+    const procedure = findProcedure("POST", "/v1/ai-files/search")
+
+    await procedure.handler?.({
+      context: { workspace: { id: "workspace-1" }, resHeaders: new Headers() },
+      input: { query: "hello", fileIds: ["1"] },
+    })
+
+    expect(searchAIFiles).toHaveBeenCalledWith({
+      workspaceId: "workspace-1",
+      query: "hello",
+      fileIds: ["1"],
+    })
+  })
+
+  test("list chunks and reindex use workspace-scoped service methods", async () => {
+    aiFileService.listChunks.mockResolvedValueOnce({
+      data: [],
+      nextCursor: null,
+    })
+    aiFileService.reindex.mockResolvedValueOnce({
+      file: { id: "1" },
+      coalesced: true,
+    })
+
+    await findProcedure("GET", "/v1/ai-files/{id}/chunks").handler?.({
+      context: { workspace: { id: "workspace-1" } },
+      input: { id: "1", limit: 50 },
+    })
+    await findProcedure("POST", "/v1/ai-files/{id}/reindex").handler?.({
+      context: { workspace: { id: "workspace-1" }, resHeaders: new Headers() },
+      input: { id: "1" },
+    })
+
+    expect(aiFileService.listChunks).toHaveBeenCalledWith({
+      workspaceId: "workspace-1",
+      aiFileId: "1",
+      id: "1",
+      limit: 50,
+    })
+    expect(aiFileService.reindex).toHaveBeenCalledWith({
+      workspaceId: "workspace-1",
+      id: "1",
     })
   })
 })

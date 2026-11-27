@@ -174,3 +174,55 @@ describe("flowService.listLabelsByIds", () => {
     )
   })
 })
+
+describe("flowService.resolveStartTarget", () => {
+  const flow = (overrides: Record<string, unknown> = {}) => ({
+    id: "7",
+    active: true,
+    currentVersionId: "v1",
+    ...overrides,
+  })
+  const resolve = (nodeId?: string) =>
+    flowService.resolveStartTarget({ workspaceId: "ws-1", flowId: "7", nodeId })
+
+  beforeEach(() => vi.clearAllMocks())
+
+  test.each([
+    ["flowNotFound", undefined],
+    ["flowInactive", flow({ active: false })],
+    ["flowNotPublished", flow({ currentVersionId: null })],
+  ])("a missing, inactive or unpublished flow reports %s without reading nodes", async (expected, row) => {
+    vi.spyOn(flowService, "findBy").mockResolvedValue(row as never)
+
+    expect(await resolve("9")).toBe(expected)
+    expect(mocks.findCurrentVersionNodes).not.toHaveBeenCalled()
+  })
+
+  test("a flow without a node check is ready after one query", async () => {
+    vi.spyOn(flowService, "findBy").mockResolvedValue(flow() as never)
+
+    expect(await resolve()).toBe("ready")
+    expect(mocks.findCurrentVersionNodes).not.toHaveBeenCalled()
+  })
+
+  test("a node in the published version is ready", async () => {
+    vi.spyOn(flowService, "findBy").mockResolvedValue(flow() as never)
+    mocks.findCurrentVersionNodes.mockResolvedValue([node("9"), node("10")])
+
+    expect(await resolve("10")).toBe("ready")
+  })
+
+  test("a node missing from the published version reports nodeNotFound", async () => {
+    vi.spyOn(flowService, "findBy").mockResolvedValue(flow() as never)
+    mocks.findCurrentVersionNodes.mockResolvedValue([node("9")])
+
+    expect(await resolve("404")).toBe("nodeNotFound")
+  })
+
+  test("a flow whose version cannot be read reports nodeNotFound", async () => {
+    vi.spyOn(flowService, "findBy").mockResolvedValue(flow() as never)
+    mocks.findCurrentVersionNodes.mockResolvedValue(undefined)
+
+    expect(await resolve("9")).toBe("nodeNotFound")
+  })
+})

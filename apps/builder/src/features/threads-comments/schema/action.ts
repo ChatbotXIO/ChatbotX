@@ -1,5 +1,6 @@
 import {
   COMMENT_REPLY_MAX_TEXTS,
+  commentAIModerationSchema,
   commentExcludeKeywordsTypes,
   commentIncludeKeywordsSchema,
   resolveReplyTexts,
@@ -28,6 +29,7 @@ const MAX_POST_ID_LENGTH = 120
 const threadsCommentValidationKeyNames = [
   "postIdsMustBeEmptyForAll",
   "postIdsRequired",
+  "hashtagsRequired",
   "keywordsMustBeEmptyForAll",
   "keywordsRequired",
   "delayMustBePositive",
@@ -109,7 +111,7 @@ export function createThreadsCommentRequestSchema(
 
   const threadsPostSchema = z
     .object({
-      type: z.enum(["all", "postIds"]),
+      type: z.enum(["all", "postIds", "hashtags"]),
       value: trimmedArray(MAX_POST_IDS, MAX_POST_ID_LENGTH),
     })
     .superRefine((value, ctx) => {
@@ -125,6 +127,13 @@ export function createThreadsCommentRequestSchema(
           code: "custom",
           path: ["value"],
           message: validationMessages.postIdsRequired,
+        })
+      }
+      if (value.type === "hashtags" && value.value.length === 0) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["value"],
+          message: validationMessages.hashtagsRequired,
         })
       }
     })
@@ -161,10 +170,17 @@ export function createThreadsCommentRequestSchema(
     replyToUsersWhoCommentedOnOtherPosts: z.boolean(),
     ignoreCommentReplies: z.boolean(),
     trackUserTags: z.boolean().optional(),
+    onlyCommentsWithImage: z
+      .boolean()
+      .optional()
+      .describe(
+        "Only reply when the reply carries a photo (`media_type` IMAGE or CAROUSEL_ALBUM); otherwise this automation skips it and the next automation is tried. GIFs do not count. Omitted means off.",
+      ),
   })
 
   // Threads hides a top-level reply via `manage_reply` and exposes its
-  // `gif_url`. `hasImage`/`hasVideo` are absent: no attachment lookup exists.
+  // `gif_url`. `hasImage`/`hasVideo` are absent: hiding by them is
+  // Facebook-only.
   const threadsHideCommentsSchema = z
     .object({
       all: z.boolean(),
@@ -173,6 +189,7 @@ export function createThreadsCommentRequestSchema(
       hasKeywords: z.boolean(),
       hasGif: z.boolean().optional(),
       hasEmoji: z.boolean().optional(),
+      aiModeration: commentAIModerationSchema.optional(),
       keywords: trimmedArray(MAX_KEYWORDS, MAX_KEYWORD_LENGTH),
       showCommentsAfter: z.enum([
         "none",
@@ -247,7 +264,7 @@ export function createThreadsCommentRequestSchema(
       .describe("Automation name."),
     inboxId: automationInboxIdSchema,
     post: threadsPostSchema.describe(
-      "Which comments to answer: `all` posts or specific `postIds` (get them from `threadsComments.listPosts`).",
+      "Which comments to answer: `all` posts, specific `postIds` (get them from `threadsComments.listPosts`), or `hashtags` — any post whose text carries one of the hashtags in `value` (without `#`).",
     ),
     publicReply: threadsReplySchema.describe(
       "Public reply posted under the comment: `text`, a `flow`, an `AIAgent`, or `none`.",

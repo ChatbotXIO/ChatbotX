@@ -1,7 +1,10 @@
 import { triggerService, workspaceService } from "@chatbotx.io/business"
 import type { TriggerEventType } from "@chatbotx.io/database/partials"
 import type { WorkspaceModel } from "@chatbotx.io/database/types"
-import { matchableConditionTypesFor } from "@chatbotx.io/events"
+import {
+  conditionListensToSource,
+  matchableConditionTypesFor,
+} from "@chatbotx.io/events"
 import type { TriggerEventData, TriggerWithConditions } from "../types"
 import { ConditionEvaluator } from "./condition-evaluator"
 
@@ -40,7 +43,11 @@ export class TriggerMatcherService {
       trigger.conditions.some(
         (c) =>
           hasConditionType(conditionTypes, c.type) &&
-          (sourceId ? c.sourceId === sourceId : true),
+          conditionListensToSource({
+            eventType,
+            conditionSourceId: c.sourceId,
+            eventSourceId: sourceId,
+          }),
       ),
     )
 

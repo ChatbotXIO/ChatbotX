@@ -47,6 +47,7 @@ describe("errorLogProviders", () => {
       "claude",
       "deepseek",
       "openrouter",
+      "muse",
       "openai-compatible",
     ]) {
       expect(errorLogProviders.safeParse(provider).success).toBe(true)

@@ -21,7 +21,8 @@ vi.mock("@chatbotx.io/worker-config", () => ({
   HeavyJobAction: { analyzeImage: "analyzeImage" },
   getHeavyJobOptions: () => ({}),
   getHeavyJobCompletionWaitTimeoutMs: () => 1000,
-  getHeavyQueueEvents: () => ({}),
+  getQueueEvents: () => ({}),
+  queueNames: { enum: { heavy: "heavy" } },
   heavyAnalyzeImageResultSchema: { parse: (value: unknown) => value },
   heavyQueue: { add: mocks.heavyAdd },
   waitForJobCompletionWithRetries: vi.fn(async () => ({

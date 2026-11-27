@@ -26,6 +26,12 @@ export const broadcastRelations = defineRelationsPart(schema, (r) => ({
       from: r.broadcastModel.integrationMessengerId,
       to: r.integrationMessengerModel.id,
     }),
+    // The inbox behind `statusReason`; ORM-level only (no FK), null once deleted.
+    statusInbox: r.one.inboxModel({
+      from: r.broadcastModel.statusInboxId,
+      to: r.inboxModel.id,
+      alias: "broadcastStatusInbox",
+    }),
     targets: r.many.broadcastTargetModel({
       from: r.broadcastModel.id,
       to: r.broadcastTargetModel.broadcastId,

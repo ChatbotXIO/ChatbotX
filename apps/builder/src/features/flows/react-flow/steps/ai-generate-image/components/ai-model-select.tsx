@@ -2,6 +2,7 @@
 
 import {
   geminiImageModelOptions,
+  museImageModelOptions,
   openaiImageModelOptions,
 } from "@chatbotx.io/ai"
 import type { AIGenerateImageProvider } from "@chatbotx.io/flow-config"
@@ -17,6 +18,7 @@ import type { FieldValues } from "react-hook-form"
 const imageModelOptions: Record<AIGenerateImageProvider, SelectOption[]> = {
   openai: openaiImageModelOptions,
   gemini: geminiImageModelOptions,
+  muse: museImageModelOptions,
 }
 
 type AIModelSelectProps = SelectFieldProps<FieldValues> & {

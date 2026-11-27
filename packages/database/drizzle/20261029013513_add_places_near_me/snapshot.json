@@ -1,0 +1,655 @@
+{
+  "type": "diff",
+  "version": "10",
+  "dialect": "postgres",
+  "id": "d889de6b-91ea-4c69-ba84-1e4670ee22ea",
+  "prevIds": [
+    "652d6462-9614-466e-b432-970a0566b157"
+  ],
+  "footprints": [
+    {
+      "statementType": "create_table",
+      "statementTarget": [
+        "table",
+        "public",
+        "PlaceCategory"
+      ],
+      "writes": [
+        "s|tbl|public.PlaceCategory",
+        "n|tbl|public.PlaceCategory",
+        "e|tbl|public.PlaceCategory",
+        "n|rel|public.PlaceCategory",
+        "n|type|public.PlaceCategory",
+        "n|rel|public.PlaceCategory_pkey"
+      ],
+      "reads": [
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "create_table",
+      "statementTarget": [
+        "table",
+        "public",
+        "PlaceLocation"
+      ],
+      "writes": [
+        "s|tbl|public.PlaceLocation",
+        "n|tbl|public.PlaceLocation",
+        "e|tbl|public.PlaceLocation",
+        "n|rel|public.PlaceLocation",
+        "n|type|public.PlaceLocation",
+        "n|rel|public.PlaceLocation_pkey"
+      ],
+      "reads": [
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "PlaceCategory",
+        "PlaceCategory_workspaceId_idx"
+      ],
+      "writes": [
+        "s|idx|public.PlaceCategory_workspaceId_idx",
+        "n|idx|public.PlaceCategory_workspaceId_idx",
+        "e|idx|public.PlaceCategory_workspaceId_idx",
+        "n|rel|public.PlaceCategory_workspaceId_idx"
+      ],
+      "reads": [
+        "n|tbl|public.PlaceCategory",
+        "n|sch|public",
+        "n|col|public.PlaceCategory.workspaceId"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "PlaceCategory",
+        "PlaceCategory_workspaceId_name_key"
+      ],
+      "writes": [
+        "s|idx|public.PlaceCategory_workspaceId_name_key",
+        "n|idx|public.PlaceCategory_workspaceId_name_key",
+        "e|idx|public.PlaceCategory_workspaceId_name_key",
+        "n|rel|public.PlaceCategory_workspaceId_name_key"
+      ],
+      "reads": [
+        "n|tbl|public.PlaceCategory",
+        "n|sch|public",
+        "n|col|public.PlaceCategory.workspaceId"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "PlaceLocation",
+        "PlaceLocation_workspaceId_createdAt_idx"
+      ],
+      "writes": [
+        "s|idx|public.PlaceLocation_workspaceId_createdAt_idx",
+        "n|idx|public.PlaceLocation_workspaceId_createdAt_idx",
+        "e|idx|public.PlaceLocation_workspaceId_createdAt_idx",
+        "n|rel|public.PlaceLocation_workspaceId_createdAt_idx"
+      ],
+      "reads": [
+        "n|tbl|public.PlaceLocation",
+        "n|sch|public",
+        "n|col|public.PlaceLocation.workspaceId",
+        "n|col|public.PlaceLocation.createdAt"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "PlaceLocation",
+        "PlaceLocation_categoryId_idx"
+      ],
+      "writes": [
+        "s|idx|public.PlaceLocation_categoryId_idx",
+        "n|idx|public.PlaceLocation_categoryId_idx",
+        "e|idx|public.PlaceLocation_categoryId_idx",
+        "n|rel|public.PlaceLocation_categoryId_idx"
+      ],
+      "reads": [
+        "n|tbl|public.PlaceLocation",
+        "n|sch|public",
+        "n|col|public.PlaceLocation.categoryId"
+      ]
+    },
+    {
+      "statementType": "create_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "PlaceCategory"
+      ],
+      "writes": [
+        "s|fk|public.PlaceCategory.PlaceCategory_workspaceId_Workspace_id_fkey",
+        "n|fk|public.PlaceCategory.PlaceCategory_workspaceId_Workspace_id_fkey",
+        "e|fk|public.PlaceCategory.PlaceCategory_workspaceId_Workspace_id_fkey",
+        "n|con|public.PlaceCategory.PlaceCategory_workspaceId_Workspace_id_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.PlaceCategory",
+        "n|sch|public",
+        "n|tbl|public.Workspace",
+        "n|sch|public",
+        "n|col|public.PlaceCategory.workspaceId",
+        "n|col|public.Workspace.id",
+        "e|uniqueness|public.Workspace.id"
+      ]
+    },
+    {
+      "statementType": "create_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "PlaceLocation"
+      ],
+      "writes": [
+        "s|fk|public.PlaceLocation.PlaceLocation_workspaceId_Workspace_id_fkey",
+        "n|fk|public.PlaceLocation.PlaceLocation_workspaceId_Workspace_id_fkey",
+        "e|fk|public.PlaceLocation.PlaceLocation_workspaceId_Workspace_id_fkey",
+        "n|con|public.PlaceLocation.PlaceLocation_workspaceId_Workspace_id_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.PlaceLocation",
+        "n|sch|public",
+        "n|tbl|public.Workspace",
+        "n|sch|public",
+        "n|col|public.PlaceLocation.workspaceId",
+        "n|col|public.Workspace.id",
+        "e|uniqueness|public.Workspace.id"
+      ]
+    },
+    {
+      "statementType": "create_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "PlaceLocation"
+      ],
+      "writes": [
+        "s|fk|public.PlaceLocation.PlaceLocation_categoryId_PlaceCategory_id_fkey",
+        "n|fk|public.PlaceLocation.PlaceLocation_categoryId_PlaceCategory_id_fkey",
+        "e|fk|public.PlaceLocation.PlaceLocation_categoryId_PlaceCategory_id_fkey",
+        "n|con|public.PlaceLocation.PlaceLocation_categoryId_PlaceCategory_id_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.PlaceLocation",
+        "n|sch|public",
+        "n|tbl|public.PlaceCategory",
+        "n|sch|public",
+        "n|col|public.PlaceLocation.categoryId",
+        "n|col|public.PlaceCategory.id",
+        "e|uniqueness|public.PlaceCategory.id"
+      ]
+    }
+  ],
+  "deltas": [
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "name": "PlaceCategory",
+        "isRlsEnabled": false,
+        "entityType": "tables"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "name": "PlaceLocation",
+        "isRlsEnabled": false,
+        "entityType": "tables"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PlaceCategory",
+        "name": "id",
+        "type": "bigint",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PlaceCategory",
+        "name": "createdAt",
+        "type": "timestamp(6) with time zone",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "now()",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PlaceCategory",
+        "name": "updatedAt",
+        "type": "timestamp(6) with time zone",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "now()",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PlaceCategory",
+        "name": "workspaceId",
+        "type": "bigint",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PlaceCategory",
+        "name": "name",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PlaceCategory",
+        "name": "rank",
+        "type": "integer",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "10",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PlaceLocation",
+        "name": "id",
+        "type": "bigint",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PlaceLocation",
+        "name": "createdAt",
+        "type": "timestamp(6) with time zone",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "now()",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PlaceLocation",
+        "name": "updatedAt",
+        "type": "timestamp(6) with time zone",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "now()",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PlaceLocation",
+        "name": "workspaceId",
+        "type": "bigint",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PlaceLocation",
+        "name": "name",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PlaceLocation",
+        "name": "latitude",
+        "type": "double precision",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PlaceLocation",
+        "name": "longitude",
+        "type": "double precision",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PlaceLocation",
+        "name": "categoryId",
+        "type": "bigint",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PlaceCategory",
+        "name": "PlaceCategory_workspaceId_idx",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "workspaceId",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": false,
+        "where": null,
+        "with": "",
+        "method": "btree",
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PlaceCategory",
+        "name": "PlaceCategory_workspaceId_name_key",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "workspaceId",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          },
+          {
+            "value": "lower(\"name\")",
+            "isExpression": true,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": true,
+        "where": null,
+        "with": "",
+        "method": "btree",
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PlaceLocation",
+        "name": "PlaceLocation_workspaceId_createdAt_idx",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "workspaceId",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          },
+          {
+            "value": "createdAt",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": false,
+        "where": null,
+        "with": "",
+        "method": "btree",
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PlaceLocation",
+        "name": "PlaceLocation_categoryId_idx",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "categoryId",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": false,
+        "where": null,
+        "with": "",
+        "method": "btree",
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PlaceCategory",
+        "name": "PlaceCategory_workspaceId_Workspace_id_fkey",
+        "nameExplicit": false,
+        "columns": [
+          "workspaceId"
+        ],
+        "schemaTo": "public",
+        "tableTo": "Workspace",
+        "columnsTo": [
+          "id"
+        ],
+        "onUpdate": "CASCADE",
+        "onDelete": "CASCADE",
+        "entityType": "fks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PlaceLocation",
+        "name": "PlaceLocation_workspaceId_Workspace_id_fkey",
+        "nameExplicit": false,
+        "columns": [
+          "workspaceId"
+        ],
+        "schemaTo": "public",
+        "tableTo": "Workspace",
+        "columnsTo": [
+          "id"
+        ],
+        "onUpdate": "CASCADE",
+        "onDelete": "CASCADE",
+        "entityType": "fks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PlaceLocation",
+        "name": "PlaceLocation_categoryId_PlaceCategory_id_fkey",
+        "nameExplicit": false,
+        "columns": [
+          "categoryId"
+        ],
+        "schemaTo": "public",
+        "tableTo": "PlaceCategory",
+        "columnsTo": [
+          "id"
+        ],
+        "onUpdate": "CASCADE",
+        "onDelete": "SET NULL",
+        "entityType": "fks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PlaceCategory",
+        "name": "PlaceCategory_pkey",
+        "columns": [
+          "id"
+        ],
+        "nameExplicit": false,
+        "entityType": "pks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PlaceLocation",
+        "name": "PlaceLocation_pkey",
+        "columns": [
+          "id"
+        ],
+        "nameExplicit": false,
+        "entityType": "pks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PlaceLocation",
+        "name": "PlaceLocation_latitude_check",
+        "value": "\"latitude\" BETWEEN -90 AND 90",
+        "entityType": "checks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PlaceLocation",
+        "name": "PlaceLocation_longitude_check",
+        "value": "\"longitude\" BETWEEN -180 AND 180",
+        "entityType": "checks"
+      }
+    }
+  ]
+}

@@ -1,7 +1,12 @@
 import type { ButtonPayload } from "@chatbotx.io/flow-config"
+import type {
+  ChannelPostContentType,
+  ChannelPostLiveStatus,
+} from "@chatbotx.io/utils/channel-post"
 import { z } from "zod"
 import type { ChannelError } from "../channel-error"
 import { guessFileTypeFromMimeType } from "../util"
+import type { FlowResponseFile } from "./flow-response-file"
 import { EXTENSION_MIME_TYPES } from "./mime-types"
 
 export type MessageReferral = {
@@ -30,6 +35,10 @@ export type MessageReferral = {
 
 export type IncomingContact = {
   sourceId: string
+  /**
+   * Channel-defined key that selects the conversation for an incoming message:
+   * a comment post id or an SMTP email thread (`email:<Message-ID>`).
+   */
   sourceConversationId?: string
   phoneNumber?: string
   phoneNumberId?: string
@@ -91,6 +100,107 @@ export type ChannelPostDetails = {
   permalink?: string | null
   publishedAt?: Date | null
   thumbnailUrl?: string | null
+}
+
+export type {
+  ChannelPostContentType,
+  ChannelPostLiveState,
+  ChannelPostLiveStatus,
+} from "@chatbotx.io/utils/channel-post"
+
+/**
+ * One post in a channel's own listing, in channel-neutral terms. A count is
+ * `null` when the platform does not report it in the listing: "unknown",
+ * never zero, so a sync never overwrites a known count with a guess.
+ */
+export type ChannelPostListItem = {
+  authorExternalId: string | null
+  authorName: string | null
+  caption: string | null
+  commentsCount: number | null
+  contentType: ChannelPostContentType | null
+  /** The id the channel's comment events report for this post. */
+  externalPostId: string
+  liveStatus: ChannelPostLiveStatus | null
+  /** The raw provider media kind, kept next to the neutral `contentType`. */
+  mediaType: string | null
+  permalink: string | null
+  publishedAt: Date | null
+  reactionsCount: number | null
+  sharesCount: number | null
+  thumbnailUrl: string | null
+  viewsCount: number | null
+}
+
+/**
+ * The counts a batch metrics read reports for one post: the same neutral count
+ * fields as {@link ChannelPostListItem}, with the same meaning of `null`
+ * (not reported: unknown, never zero).
+ */
+export type ChannelPostMetricsItem = Pick<
+  ChannelPostListItem,
+  | "commentsCount"
+  | "externalPostId"
+  | "reactionsCount"
+  | "sharesCount"
+  | "viewsCount"
+>
+
+/**
+ * A broadcast read by its own id (a live-state webhook names only that id): the
+ * post it lives in and whether it is on. Never carries a scheduled or
+ * unpublished broadcast, which has no post yet.
+ */
+export type ChannelLiveBroadcast = {
+  caption: string | null
+  /** The id the channel's comment events report for the post. */
+  externalPostId: string
+  liveStatus: Extract<ChannelPostLiveStatus, "live" | "ended">
+  permalink: string | null
+  publishedAt: Date | null
+}
+
+/**
+ * One page of a channel's post listing, newest first. `nextCursor` is opaque
+ * to the caller: it is handed back unchanged to fetch the following page, and
+ * is `null` after the last page.
+ */
+export type ChannelPostListPage = {
+  items: ChannelPostListItem[]
+  nextCursor: string | null
+}
+
+/**
+ * One comment (or reply) read from a channel's own comment edge, in
+ * channel-neutral terms. A flag is `null` when the platform does not report it:
+ * "unknown", never `false`.
+ */
+export type ChannelPostComment = {
+  author: { id: string | null; name: string | null }
+  /** `null` when the platform reports no creation time. */
+  createdAt: Date | null
+  /** Whether the account that owns the post wrote it. */
+  fromOwner: boolean | null
+  hidden: boolean | null
+  id: string
+  /** The comment this one answers; `null` for a top-level comment. */
+  parentId: string | null
+  text: string
+}
+
+/**
+ * One page of a post's comments. Replies are part of the same traversal. The
+ * cursor is opaque to the caller: handed back unchanged to fetch the next page,
+ * `null` after the last one.
+ */
+export type ChannelPostCommentPage = {
+  items: ChannelPostComment[]
+  nextCursor: string | null
+  /**
+   * The channel's own hint that the next read should wait this many ms (its
+   * usage budget is nearly spent); `null` or absent when it sent none.
+   */
+  pauseMs?: number | null
 }
 
 /**
@@ -312,6 +422,14 @@ export type ThreadControlReceiveInfo = {
    * delivery.
    */
   ownerRole?: ThreadControlRole | null
+  /**
+   * `false` when the delivery says nothing about who owns the thread, so it is
+   * stored but never recorded as a routing transition. WhatsApp: a partner's
+   * template echo — marketing, utility and authentication templates can be
+   * sent by any partner and "never change ownership" (Meta thread lifecycle).
+   * Absent = the delivery signals ownership as usual.
+   */
+  signalsOwnership?: boolean
 }
 
 export type ThreadControlWebhookEvent = {
@@ -490,6 +608,11 @@ export type MessageType = z.infer<typeof messageTypes>
 
 export type IncomingMessage = {
   sourceId: string
+  /**
+   * Source IDs of messages in the provider's ancestry, ordered closest parent
+   * first. SMTP uses these to resolve a thread before its root arrives.
+   */
+  threadSourceIds?: string[]
   messageType: MessageType
   contentType: ContentType
   text?: string
@@ -503,6 +626,7 @@ export type IncomingMessage = {
     | MessageSharedPostEntity
     | MessageWhatsappCallEntity
     | MessageWhatsappCallPermissionReplyEntity
+    | MessageWhatsappPaymentMethodEntity
     | { [x: string]: unknown }
   attachments?: IncomingAttachment[]
   clientId?: string | null
@@ -514,6 +638,17 @@ export type MessageWhatsappFlowResponseEntity = {
   flowResponse: Record<string, unknown>
   flowToken: string | null
   decoded: ButtonPayload | null
+  /**
+   * The provider's id of the message that sent the Flow (WhatsApp: the
+   * reply's `context.id`), the `sourceId` of that outgoing message. Kept as
+   * received; absent when the provider gave none and on older messages.
+   */
+  contextMessageId?: string
+  /**
+   * Files attached to answers, by response key. Absent on messages stored
+   * before file ingestion existed and on responses without file answers.
+   */
+  files?: Record<string, FlowResponseFile[]>
 }
 
 /**
@@ -634,6 +769,24 @@ export type MessageWhatsappCallPermissionReplyEntity = {
 }
 
 /**
+ * Carried on the message written when a contact confirms a one-click payment
+ * (`interactive.type: "payment_method"`). It only records the buyer's intent
+ * and the credential to charge: nothing here charges or settles the payment.
+ * The raw webhook object is kept verbatim for fields not modeled here.
+ */
+export type MessageWhatsappPaymentMethodEntity = {
+  type: "whatsapp_payment_method"
+  /** Meta's value, e.g. `offsite_card_pay`; `unknown` when it was missing. */
+  paymentMethod: string
+  lastFourDigits?: string
+  credentialId?: string
+  referenceId?: string
+  /** Unix seconds. */
+  paymentTimestamp?: number
+  raw: Record<string, unknown>
+}
+
+/**
  * Marks an outgoing message as a business-calling permission request; the
  * WhatsApp send handler renders it as the call_permission_request interactive
  * instead of plain text.
@@ -689,6 +842,22 @@ export const isStoryMention = (contentAttributes: unknown): boolean =>
     contentAttributes &&
       typeof contentAttributes === "object" &&
       (contentAttributes as { type?: unknown }).type === "story_mention",
+  )
+
+/**
+ * Carried on an inbound Instagram message whose attachment is a shared reel
+ * (`ig_reel` / `reel`), so `{{last_user_input_type}}` can say `reel` instead of
+ * the video/file the reel's media is stored as.
+ */
+export type MessageReelShareEntity = {
+  type: "reel_share"
+}
+
+export const isReelShare = (contentAttributes: unknown): boolean =>
+  Boolean(
+    contentAttributes &&
+      typeof contentAttributes === "object" &&
+      (contentAttributes as { type?: unknown }).type === "reel_share",
   )
 
 /**
@@ -814,6 +983,15 @@ export const getWhatsappFlowResponse = (
     : undefined
 }
 
+/** The ingested files of one response key; empty when the key has none. */
+export const getFlowResponseFiles = (
+  entity: Pick<MessageWhatsappFlowResponseEntity, "files">,
+  key: string,
+): FlowResponseFile[] =>
+  entity.files && Object.hasOwn(entity.files, key)
+    ? (entity.files[key] ?? [])
+    : []
+
 export const getWhatsappCallPermissionReply = (
   contentAttributes: unknown,
 ): MessageWhatsappCallPermissionReplyEntity | undefined => {
@@ -824,6 +1002,18 @@ export const getWhatsappCallPermissionReply = (
   return attrs.type === "whatsapp_call_permission_reply" &&
     (attrs.response === "accept" || attrs.response === "reject")
     ? (contentAttributes as MessageWhatsappCallPermissionReplyEntity)
+    : undefined
+}
+
+export const getWhatsappPaymentMethod = (
+  contentAttributes: unknown,
+): MessageWhatsappPaymentMethodEntity | undefined => {
+  if (!contentAttributes || typeof contentAttributes !== "object") {
+    return
+  }
+  const attrs = contentAttributes as { type?: string }
+  return attrs.type === "whatsapp_payment_method"
+    ? (contentAttributes as MessageWhatsappPaymentMethodEntity)
     : undefined
 }
 
@@ -993,6 +1183,20 @@ export type MessageButtonTemplate = {
       buttonType: "postback"
       postback: string
     }
+  | {
+      buttonType: "phoneNumber"
+      /** Dialable number in E.164 form. */
+      phoneNumber: string
+      /** Replayed on channels that cannot dial: the tap replies with the number. */
+      postback: string
+    }
+  | {
+      buttonType: "copyText"
+      /** Text a tap copies to the contact's clipboard (1–256 characters). */
+      copyText: string
+      /** Replayed on channels that cannot copy: the tap replies with the text. */
+      postback: string
+    }
 )
 
 /**
@@ -1067,7 +1271,7 @@ export const URL_QUICK_REPLY_CAPABLE_CHANNELS: ReadonlySet<string> = new Set([
 export function getCanonicalReplyPayload(
   button: MessageButtonTemplate,
 ): string {
-  if (button.buttonType === "postback") {
+  if (button.buttonType !== "url") {
     return button.postback
   }
 

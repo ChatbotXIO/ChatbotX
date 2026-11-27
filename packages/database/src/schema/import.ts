@@ -120,5 +120,8 @@ export const importModel = pgTable(
       .where(
         sql`${table.type} = 'products' AND ${table.status} IN ('pending', 'processing')`,
       ),
+    index("Import_userId_idx")
+      .on(table.userId)
+      .where(sql`${table.userId} IS NOT NULL`),
   ],
 )

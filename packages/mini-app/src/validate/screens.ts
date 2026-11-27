@@ -7,6 +7,10 @@ import {
   type MiniAppNode,
   type MiniAppScreen,
 } from "../types"
+import {
+  MINI_APP_MAX_UPLOADS_PER_INPUT,
+  MINI_APP_WHATSAPP_MAX_FILES_PER_RESPONSE,
+} from "../uploads"
 import type { IssueCollector } from "./issues"
 
 const SCREEN_ID_PATTERN = /^[A-Za-z][A-Za-z_]*$/
@@ -78,32 +82,55 @@ const collectReachableScreens = (
   return reachable
 }
 
-/** A flow that completes on `screen` accepts one file per picker on the way there. */
+/**
+ * What a screen's pickers can add to a response. Meta states no maximum for a
+ * picker in a Flow without an endpoint, so an unset one counts as the web
+ * limit (this app's policy): the author must set it to publish.
+ */
+const screenPickerFiles = (screen: MiniAppScreen): number => {
+  let total = 0
+  walkNodes(screen.children, ({ node }) => {
+    const maxProp = PICKER_MAX_FILES_PROP[node.type]
+    if (maxProp) {
+      const max = node.props[maxProp]
+      total += typeof max === "number" ? max : MINI_APP_MAX_UPLOADS_PER_INPUT
+    }
+  })
+  return total
+}
+
+const sumPickerFiles = (
+  definition: MiniAppDefinition,
+  screenKeys: ReadonlySet<string>,
+): number =>
+  definition.screens.reduce(
+    (sum, screen) =>
+      screenKeys.has(screen.key) ? sum + screenPickerFiles(screen) : sum,
+    0,
+  )
+
+/**
+ * Meta: "no more than 10 files can be attached" to a response message. A
+ * completing screen's payload references the pickers of every screen that can
+ * lead to it (`buildCompletePayload`), so all of them are counted: Meta does
+ * not say what an unvisited screen's reference holds, so none is assumed empty.
+ */
 const checkPickersInComplete = (
   definition: MiniAppDefinition,
-  screen: MiniAppScreen,
   collector: IssueCollector,
 ) => {
-  const onPath = collectPathScreens(definition, screen.key)
-  for (const candidate of definition.screens) {
-    if (!onPath.has(candidate.key)) {
-      continue
+  for (const screen of definition.screens) {
+    if (
+      isTerminalScreen(screen) &&
+      sumPickerFiles(definition, collectPathScreens(definition, screen.key)) >
+        MINI_APP_WHATSAPP_MAX_FILES_PER_RESPONSE
+    ) {
+      collector.add({
+        screenKey: screen.key,
+        code: "picker_multiple_in_complete",
+        params: { max: MINI_APP_WHATSAPP_MAX_FILES_PER_RESPONSE },
+      })
     }
-    walkNodes(candidate.children, ({ node }) => {
-      const maxProp = PICKER_MAX_FILES_PROP[node.type]
-      if (!maxProp) {
-        return
-      }
-      const max = node.props[maxProp]
-      if (typeof max !== "number" || max > 1) {
-        collector.add({
-          screenKey: candidate.key,
-          nodeId: node.id,
-          property: maxProp,
-          code: "picker_multiple_in_complete",
-        })
-      }
-    })
   }
 }
 
@@ -115,12 +142,16 @@ const checkNavigation = (
   if (!definition.screens.some(isTerminalScreen)) {
     collector.add({ code: "no_terminal_screen" })
   }
+  checkPickersInComplete(definition, collector)
   const reachable = collectReachableScreens(definition)
   for (const screen of definition.screens) {
     const actions = screenActions(screen)
-    if (actions.some((action) => action.name === "complete")) {
-      checkPickersInComplete(definition, screen, collector)
-    } else if (!actions.some((action) => action.name === "navigate")) {
+    if (
+      !(
+        actions.some((action) => action.name === "complete") ||
+        actions.some((action) => action.name === "navigate")
+      )
+    ) {
       collector.add({ screenKey: screen.key, code: "screen_without_exit" })
     }
     if (!reachable.has(screen.key)) {

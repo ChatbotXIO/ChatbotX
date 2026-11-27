@@ -42,6 +42,29 @@ describe("zalo webhookHandler event routing", () => {
     expect(queueAdd).not.toHaveBeenCalled()
   })
 
+  test.each([
+    "user_submit_info",
+    "some_future_event",
+  ])("acks %s without a message and does not enqueue it", async (eventName) => {
+    const queueAdd = vi.fn()
+
+    const result = await webhookHandler(
+      buildProps(
+        {
+          app_id: APP_ID,
+          event_name: eventName,
+          sender: { id: "user-1" },
+          recipient: { id: "oa-1" },
+          info: { name: "Jane", phone: "0900000000" },
+        },
+        queueAdd,
+      ),
+    )
+
+    expect(result).toBe("ok")
+    expect(queueAdd).not.toHaveBeenCalled()
+  })
+
   test("routes user_send_text to the incomingMessage queue", async () => {
     const queueAdd = vi.fn()
 
@@ -70,7 +93,7 @@ describe("zalo webhookHandler event routing", () => {
     )
   })
 
-  test("routes oa_send_text echoes to the incomingMessage queue", async () => {
+  test("routes oa_send_text echoes to the incomingMessageEcho queue", async () => {
     const queueAdd = vi.fn()
 
     await webhookHandler(
@@ -87,9 +110,9 @@ describe("zalo webhookHandler event routing", () => {
     )
 
     expect(queueAdd).toHaveBeenCalledWith(
-      "incomingMessage",
+      "incomingMessageEcho",
       expect.objectContaining({
-        type: "incomingMessage",
+        type: "incomingMessageEcho",
         data: expect.objectContaining({
           integrationIdentifier: "oa-1",
         }),

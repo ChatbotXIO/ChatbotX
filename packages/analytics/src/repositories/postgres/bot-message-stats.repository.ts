@@ -125,7 +125,7 @@ export class BotMessageStatsRepository extends BaseRepository {
     const eventFilter = buildEventFilter(props)
 
     if (granularity === "day" && shouldUseMonthlyGranularity(props)) {
-      const result = await db.execute(sql`
+      const result = await db.execute<Record<string, unknown>>(sql`
         SELECT
           time_bucket('1 month', "occurredAt" AT TIME ZONE ${resolvedTimezone(timezone)} AT TIME ZONE 'UTC') AS bucket,
           "result",
@@ -182,7 +182,7 @@ export class BotMessageStatsRepository extends BaseRepository {
             ORDER BY 1 ASC
           `
 
-      const result = await db.execute(query)
+      const result = await db.execute<Record<string, unknown>>(query)
       const rows = mapBotMessageRows(
         workspaceId,
         result.rows as RawBotMessageRow[],
@@ -192,7 +192,7 @@ export class BotMessageStatsRepository extends BaseRepository {
     }
 
     if (readsHourlyCagg(props)) {
-      const result = await db.execute(sql`
+      const result = await db.execute<Record<string, unknown>>(sql`
         SELECT
           time_bucket('1 hour', bucket) AS bucket,
           "result",
@@ -211,7 +211,7 @@ export class BotMessageStatsRepository extends BaseRepository {
       return mapBotMessageRows(workspaceId, result.rows as RawBotMessageRow[])
     }
 
-    const result = await db.execute(sql`
+    const result = await db.execute<Record<string, unknown>>(sql`
       SELECT
         time_bucket(${rawBucket(granularity)}, "occurredAt") AS bucket,
         "result",
@@ -269,7 +269,7 @@ export class BotMessageStatsRepository extends BaseRepository {
             ORDER BY 1 ASC
           `
 
-      const result = await db.execute(query)
+      const result = await db.execute<Record<string, unknown>>(query)
 
       return (
         result.rows as {
@@ -289,7 +289,7 @@ export class BotMessageStatsRepository extends BaseRepository {
     }
 
     if (readsHourlyCagg(props)) {
-      const result = await db.execute(sql`
+      const result = await db.execute<Record<string, unknown>>(sql`
         SELECT
           time_bucket('1 hour', bucket) AS bucket,
           "hasResponse",
@@ -321,7 +321,7 @@ export class BotMessageStatsRepository extends BaseRepository {
       }))
     }
 
-    const result = await db.execute(sql`
+    const result = await db.execute<Record<string, unknown>>(sql`
       SELECT
         time_bucket(${rawBucket(granularity)}, "occurredAt") AS bucket,
         "hasResponse",
@@ -394,7 +394,7 @@ export class BotMessageStatsRepository extends BaseRepository {
             ORDER BY 1 ASC
           `
 
-      const result = await db.execute(query)
+      const result = await db.execute<Record<string, unknown>>(query)
       const rows = mapBotMessageRows(
         workspaceId,
         result.rows as RawBotMessageRow[],
@@ -423,7 +423,7 @@ export class BotMessageStatsRepository extends BaseRepository {
     }
 
     if (readsHourlyCagg(props)) {
-      const result = await db.execute(sql`
+      const result = await db.execute<Record<string, unknown>>(sql`
         SELECT
           time_bucket('1 hour', bucket) AS bucket,
           "responseType",
@@ -446,7 +446,7 @@ export class BotMessageStatsRepository extends BaseRepository {
       )
     }
 
-    const result = await db.execute(sql`
+    const result = await db.execute<Record<string, unknown>>(sql`
       SELECT
         time_bucket(${rawBucket(granularity)}, "occurredAt") AS bucket,
         "responseType",
@@ -507,7 +507,7 @@ export class BotMessageStatsRepository extends BaseRepository {
           ORDER BY count DESC
         `
 
-    const result = await db.execute(query)
+    const result = await db.execute<Record<string, unknown>>(query)
     const rows = result.rows as { aiProvider: string; count: number }[]
     const total = rows.reduce((sum, row) => sum + Number(row.count), 0)
 

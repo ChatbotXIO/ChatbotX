@@ -1,6 +1,7 @@
 import type { Oauth2AuthValue } from "@chatbotx.io/sdk"
+import { sheets } from "@googleapis/sheets"
 import { OAuth2Client } from "google-auth-library"
-import { google } from "googleapis"
+
 import { GOOGLE_SHEETS_SCOPES } from "./constants"
 import type { GoogleSheetsConfig } from "./schemas"
 
@@ -37,7 +38,7 @@ export function generateAuthUrl(props: GoogleSheetsConfig): string {
 export function getSheetsClient(props: Oauth2AuthValue) {
   const client = getClient(props)
 
-  return google.sheets({ version: "v4", auth: client })
+  return sheets({ version: "v4", auth: client })
 }
 
 export async function revokeToken(auth: Oauth2AuthValue): Promise<void> {

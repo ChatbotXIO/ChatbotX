@@ -387,6 +387,6 @@ describe("handleWhatsappCallRecordingReady", () => {
 
       expect(mocks.bulkCreateAttachments).not.toHaveBeenCalled()
       expect(mocks.emitCallRecorded).not.toHaveBeenCalled()
-    }, 10_000)
+    })
   })
 })

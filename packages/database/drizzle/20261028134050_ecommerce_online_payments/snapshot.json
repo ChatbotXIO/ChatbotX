@@ -1,0 +1,2274 @@
+{
+  "type": "diff",
+  "version": "10",
+  "dialect": "postgres",
+  "id": "652d6462-9614-466e-b432-970a0566b157",
+  "prevIds": [
+    "ae680038-e4d2-41d5-b70c-8d196e054d80"
+  ],
+  "footprints": [
+    {
+      "statementType": "create_enum",
+      "statementTarget": [
+        "enum",
+        "public",
+        "onlinePaymentProvider"
+      ],
+      "writes": [
+        "s|enum|public.onlinePaymentProvider",
+        "n|enum|public.onlinePaymentProvider",
+        "e|enum|public.onlinePaymentProvider",
+        "n|type|public.onlinePaymentProvider"
+      ],
+      "reads": [
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "create_enum",
+      "statementTarget": [
+        "enum",
+        "public",
+        "orderPaymentStatus"
+      ],
+      "writes": [
+        "s|enum|public.orderPaymentStatus",
+        "n|enum|public.orderPaymentStatus",
+        "e|enum|public.orderPaymentStatus",
+        "n|type|public.orderPaymentStatus"
+      ],
+      "reads": [
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "alter_enum",
+      "statementTarget": [
+        "enum",
+        "public",
+        "paymentMethod"
+      ],
+      "writes": [
+        "s|enum|public.paymentMethod"
+      ],
+      "reads": [
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "alter_enum",
+      "statementTarget": [
+        "enum",
+        "public",
+        "contactActivityReferenceType"
+      ],
+      "writes": [
+        "s|enum|public.contactActivityReferenceType"
+      ],
+      "reads": [
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "alter_enum",
+      "statementTarget": [
+        "enum",
+        "public",
+        "contactActivityType"
+      ],
+      "writes": [
+        "s|enum|public.contactActivityType"
+      ],
+      "reads": [
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "create_table",
+      "statementTarget": [
+        "table",
+        "public",
+        "ContactReferralEvent"
+      ],
+      "writes": [
+        "s|tbl|public.ContactReferralEvent",
+        "n|tbl|public.ContactReferralEvent",
+        "e|tbl|public.ContactReferralEvent",
+        "n|rel|public.ContactReferralEvent",
+        "n|type|public.ContactReferralEvent",
+        "n|rel|public.ContactReferralEvent_pkey"
+      ],
+      "reads": [
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "create_table",
+      "statementTarget": [
+        "table",
+        "public",
+        "EcommercePaymentProvider"
+      ],
+      "writes": [
+        "s|tbl|public.EcommercePaymentProvider",
+        "n|tbl|public.EcommercePaymentProvider",
+        "e|tbl|public.EcommercePaymentProvider",
+        "n|rel|public.EcommercePaymentProvider",
+        "n|type|public.EcommercePaymentProvider",
+        "n|rel|public.EcommercePaymentProvider_pkey"
+      ],
+      "reads": [
+        "n|sch|public",
+        "n|enum|public.onlinePaymentProvider"
+      ]
+    },
+    {
+      "statementType": "create_table",
+      "statementTarget": [
+        "table",
+        "public",
+        "OrderPayment"
+      ],
+      "writes": [
+        "s|tbl|public.OrderPayment",
+        "n|tbl|public.OrderPayment",
+        "e|tbl|public.OrderPayment",
+        "n|rel|public.OrderPayment",
+        "n|type|public.OrderPayment",
+        "n|rel|public.OrderPayment_pkey"
+      ],
+      "reads": [
+        "n|sch|public",
+        "n|enum|public.onlinePaymentProvider",
+        "n|enum|public.orderPaymentStatus"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "AdsConversionEvent",
+        "referralEventId"
+      ],
+      "writes": [
+        "s|col|public.AdsConversionEvent.referralEventId",
+        "n|col|public.AdsConversionEvent.referralEventId",
+        "e|col|public.AdsConversionEvent.referralEventId"
+      ],
+      "reads": [
+        "n|tbl|public.AdsConversionEvent",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "GoogleAdsConversionEvent",
+        "referralEventId"
+      ],
+      "writes": [
+        "s|col|public.GoogleAdsConversionEvent.referralEventId",
+        "n|col|public.GoogleAdsConversionEvent.referralEventId",
+        "e|col|public.GoogleAdsConversionEvent.referralEventId"
+      ],
+      "reads": [
+        "n|tbl|public.GoogleAdsConversionEvent",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "Order",
+        "paymentExpiresAt"
+      ],
+      "writes": [
+        "s|col|public.Order.paymentExpiresAt",
+        "n|col|public.Order.paymentExpiresAt",
+        "e|col|public.Order.paymentExpiresAt"
+      ],
+      "reads": [
+        "n|tbl|public.Order",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "Order",
+        "paidAt"
+      ],
+      "writes": [
+        "s|col|public.Order.paidAt",
+        "n|col|public.Order.paidAt",
+        "e|col|public.Order.paidAt"
+      ],
+      "reads": [
+        "n|tbl|public.Order",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "AdsConversionEvent",
+        "AdsConversionEvent_referralEventId_idx"
+      ],
+      "writes": [
+        "s|idx|public.AdsConversionEvent_referralEventId_idx",
+        "n|idx|public.AdsConversionEvent_referralEventId_idx",
+        "e|idx|public.AdsConversionEvent_referralEventId_idx",
+        "n|rel|public.AdsConversionEvent_referralEventId_idx"
+      ],
+      "reads": [
+        "n|tbl|public.AdsConversionEvent",
+        "n|sch|public",
+        "n|col|public.AdsConversionEvent.referralEventId"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "ContactReferralEvent",
+        "ContactReferralEvent_workspaceId_contactInboxId_dedupKey_key"
+      ],
+      "writes": [
+        "s|idx|public.ContactReferralEvent_workspaceId_contactInboxId_dedupKey_key",
+        "n|idx|public.ContactReferralEvent_workspaceId_contactInboxId_dedupKey_key",
+        "e|idx|public.ContactReferralEvent_workspaceId_contactInboxId_dedupKey_key",
+        "n|rel|public.ContactReferralEvent_workspaceId_contactInboxId_dedupKey_key"
+      ],
+      "reads": [
+        "n|tbl|public.ContactReferralEvent",
+        "n|sch|public",
+        "n|col|public.ContactReferralEvent.workspaceId",
+        "n|col|public.ContactReferralEvent.contactInboxId",
+        "n|col|public.ContactReferralEvent.dedupKey"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "ContactReferralEvent",
+        "ContactReferralEvent_contactInboxId_idx"
+      ],
+      "writes": [
+        "s|idx|public.ContactReferralEvent_contactInboxId_idx",
+        "n|idx|public.ContactReferralEvent_contactInboxId_idx",
+        "e|idx|public.ContactReferralEvent_contactInboxId_idx",
+        "n|rel|public.ContactReferralEvent_contactInboxId_idx"
+      ],
+      "reads": [
+        "n|tbl|public.ContactReferralEvent",
+        "n|sch|public",
+        "n|col|public.ContactReferralEvent.contactInboxId"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "ContactReferralEvent",
+        "ContactReferralEvent_workspaceId_contactId_occurredAt_idx"
+      ],
+      "writes": [
+        "s|idx|public.ContactReferralEvent_workspaceId_contactId_occurredAt_idx",
+        "n|idx|public.ContactReferralEvent_workspaceId_contactId_occurredAt_idx",
+        "e|idx|public.ContactReferralEvent_workspaceId_contactId_occurredAt_idx",
+        "n|rel|public.ContactReferralEvent_workspaceId_contactId_occurredAt_idx"
+      ],
+      "reads": [
+        "n|tbl|public.ContactReferralEvent",
+        "n|sch|public",
+        "n|col|public.ContactReferralEvent.workspaceId",
+        "n|col|public.ContactReferralEvent.contactId",
+        "n|col|public.ContactReferralEvent.occurredAt"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "ContactReferralEvent",
+        "ContactReferralEvent_workspaceId_type_occurredAt_idx"
+      ],
+      "writes": [
+        "s|idx|public.ContactReferralEvent_workspaceId_type_occurredAt_idx",
+        "n|idx|public.ContactReferralEvent_workspaceId_type_occurredAt_idx",
+        "e|idx|public.ContactReferralEvent_workspaceId_type_occurredAt_idx",
+        "n|rel|public.ContactReferralEvent_workspaceId_type_occurredAt_idx"
+      ],
+      "reads": [
+        "n|tbl|public.ContactReferralEvent",
+        "n|sch|public",
+        "n|col|public.ContactReferralEvent.workspaceId",
+        "n|col|public.ContactReferralEvent.type",
+        "n|col|public.ContactReferralEvent.occurredAt"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "EcommercePaymentProvider",
+        "EcommercePaymentProvider_workspaceId_provider_key"
+      ],
+      "writes": [
+        "s|idx|public.EcommercePaymentProvider_workspaceId_provider_key",
+        "n|idx|public.EcommercePaymentProvider_workspaceId_provider_key",
+        "e|idx|public.EcommercePaymentProvider_workspaceId_provider_key",
+        "n|rel|public.EcommercePaymentProvider_workspaceId_provider_key"
+      ],
+      "reads": [
+        "n|tbl|public.EcommercePaymentProvider",
+        "n|sch|public",
+        "n|col|public.EcommercePaymentProvider.workspaceId",
+        "n|col|public.EcommercePaymentProvider.provider"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "EcommercePaymentProvider",
+        "EcommercePaymentProvider_platformCredentialId_account_key"
+      ],
+      "writes": [
+        "s|idx|public.EcommercePaymentProvider_platformCredentialId_account_key",
+        "n|idx|public.EcommercePaymentProvider_platformCredentialId_account_key",
+        "e|idx|public.EcommercePaymentProvider_platformCredentialId_account_key",
+        "n|rel|public.EcommercePaymentProvider_platformCredentialId_account_key"
+      ],
+      "reads": [
+        "n|tbl|public.EcommercePaymentProvider",
+        "n|sch|public",
+        "n|col|public.EcommercePaymentProvider.platformCredentialId",
+        "n|col|public.EcommercePaymentProvider.externalAccountId"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "EcommercePaymentProvider",
+        "EcommercePaymentProvider_externalAccountId_idx"
+      ],
+      "writes": [
+        "s|idx|public.EcommercePaymentProvider_externalAccountId_idx",
+        "n|idx|public.EcommercePaymentProvider_externalAccountId_idx",
+        "e|idx|public.EcommercePaymentProvider_externalAccountId_idx",
+        "n|rel|public.EcommercePaymentProvider_externalAccountId_idx"
+      ],
+      "reads": [
+        "n|tbl|public.EcommercePaymentProvider",
+        "n|sch|public",
+        "n|col|public.EcommercePaymentProvider.externalAccountId"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "OrderPayment",
+        "OrderPayment_provider_providerReference_key"
+      ],
+      "writes": [
+        "s|idx|public.OrderPayment_provider_providerReference_key",
+        "n|idx|public.OrderPayment_provider_providerReference_key",
+        "e|idx|public.OrderPayment_provider_providerReference_key",
+        "n|rel|public.OrderPayment_provider_providerReference_key"
+      ],
+      "reads": [
+        "n|tbl|public.OrderPayment",
+        "n|sch|public",
+        "n|col|public.OrderPayment.provider",
+        "n|col|public.OrderPayment.providerReference"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "OrderPayment",
+        "OrderPayment_orderId_idx"
+      ],
+      "writes": [
+        "s|idx|public.OrderPayment_orderId_idx",
+        "n|idx|public.OrderPayment_orderId_idx",
+        "e|idx|public.OrderPayment_orderId_idx",
+        "n|rel|public.OrderPayment_orderId_idx"
+      ],
+      "reads": [
+        "n|tbl|public.OrderPayment",
+        "n|sch|public",
+        "n|col|public.OrderPayment.orderId"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "OrderPayment",
+        "OrderPayment_workspaceId_idx"
+      ],
+      "writes": [
+        "s|idx|public.OrderPayment_workspaceId_idx",
+        "n|idx|public.OrderPayment_workspaceId_idx",
+        "e|idx|public.OrderPayment_workspaceId_idx",
+        "n|rel|public.OrderPayment_workspaceId_idx"
+      ],
+      "reads": [
+        "n|tbl|public.OrderPayment",
+        "n|sch|public",
+        "n|col|public.OrderPayment.workspaceId"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "OrderPayment",
+        "OrderPayment_open_expiresAt_idx"
+      ],
+      "writes": [
+        "s|idx|public.OrderPayment_open_expiresAt_idx",
+        "n|idx|public.OrderPayment_open_expiresAt_idx",
+        "e|idx|public.OrderPayment_open_expiresAt_idx",
+        "n|rel|public.OrderPayment_open_expiresAt_idx"
+      ],
+      "reads": [
+        "n|tbl|public.OrderPayment",
+        "n|sch|public",
+        "n|col|public.OrderPayment.expiresAt"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "GoogleAdsConversionEvent",
+        "GoogleAdsConversionEvent_referralEventId_idx"
+      ],
+      "writes": [
+        "s|idx|public.GoogleAdsConversionEvent_referralEventId_idx",
+        "n|idx|public.GoogleAdsConversionEvent_referralEventId_idx",
+        "e|idx|public.GoogleAdsConversionEvent_referralEventId_idx",
+        "n|rel|public.GoogleAdsConversionEvent_referralEventId_idx"
+      ],
+      "reads": [
+        "n|tbl|public.GoogleAdsConversionEvent",
+        "n|sch|public",
+        "n|col|public.GoogleAdsConversionEvent.referralEventId"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "Order",
+        "Order_paymentExpiresAt_idx"
+      ],
+      "writes": [
+        "s|idx|public.Order_paymentExpiresAt_idx",
+        "n|idx|public.Order_paymentExpiresAt_idx",
+        "e|idx|public.Order_paymentExpiresAt_idx",
+        "n|rel|public.Order_paymentExpiresAt_idx"
+      ],
+      "reads": [
+        "n|tbl|public.Order",
+        "n|sch|public",
+        "n|col|public.Order.paymentExpiresAt"
+      ]
+    },
+    {
+      "statementType": "create_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "AdsConversionEvent"
+      ],
+      "writes": [
+        "s|fk|public.AdsConversionEvent.AdsConversionEvent_referralEventId_ContactReferralEvent_id_fkey",
+        "n|fk|public.AdsConversionEvent.AdsConversionEvent_referralEventId_ContactReferralEvent_id_fkey",
+        "e|fk|public.AdsConversionEvent.AdsConversionEvent_referralEventId_ContactReferralEvent_id_fkey",
+        "n|con|public.AdsConversionEvent.AdsConversionEvent_referralEventId_ContactReferralEvent_id_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.AdsConversionEvent",
+        "n|sch|public",
+        "n|tbl|public.ContactReferralEvent",
+        "n|sch|public",
+        "n|col|public.AdsConversionEvent.referralEventId",
+        "n|col|public.ContactReferralEvent.id",
+        "e|uniqueness|public.ContactReferralEvent.id"
+      ]
+    },
+    {
+      "statementType": "create_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "ContactReferralEvent"
+      ],
+      "writes": [
+        "s|fk|public.ContactReferralEvent.ContactReferralEvent_workspaceId_Workspace_id_fkey",
+        "n|fk|public.ContactReferralEvent.ContactReferralEvent_workspaceId_Workspace_id_fkey",
+        "e|fk|public.ContactReferralEvent.ContactReferralEvent_workspaceId_Workspace_id_fkey",
+        "n|con|public.ContactReferralEvent.ContactReferralEvent_workspaceId_Workspace_id_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.ContactReferralEvent",
+        "n|sch|public",
+        "n|tbl|public.Workspace",
+        "n|sch|public",
+        "n|col|public.ContactReferralEvent.workspaceId",
+        "n|col|public.Workspace.id",
+        "e|uniqueness|public.Workspace.id"
+      ]
+    },
+    {
+      "statementType": "create_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "ContactReferralEvent"
+      ],
+      "writes": [
+        "s|fk|public.ContactReferralEvent.ContactReferralEvent_contactInboxId_ContactInbox_id_fkey",
+        "n|fk|public.ContactReferralEvent.ContactReferralEvent_contactInboxId_ContactInbox_id_fkey",
+        "e|fk|public.ContactReferralEvent.ContactReferralEvent_contactInboxId_ContactInbox_id_fkey",
+        "n|con|public.ContactReferralEvent.ContactReferralEvent_contactInboxId_ContactInbox_id_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.ContactReferralEvent",
+        "n|sch|public",
+        "n|tbl|public.ContactInbox",
+        "n|sch|public",
+        "n|col|public.ContactReferralEvent.contactInboxId",
+        "n|col|public.ContactInbox.id",
+        "e|uniqueness|public.ContactInbox.id"
+      ]
+    },
+    {
+      "statementType": "create_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "EcommercePaymentProvider"
+      ],
+      "writes": [
+        "s|fk|public.EcommercePaymentProvider.EcommercePaymentProvider_workspaceId_Workspace_id_fkey",
+        "n|fk|public.EcommercePaymentProvider.EcommercePaymentProvider_workspaceId_Workspace_id_fkey",
+        "e|fk|public.EcommercePaymentProvider.EcommercePaymentProvider_workspaceId_Workspace_id_fkey",
+        "n|con|public.EcommercePaymentProvider.EcommercePaymentProvider_workspaceId_Workspace_id_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.EcommercePaymentProvider",
+        "n|sch|public",
+        "n|tbl|public.Workspace",
+        "n|sch|public",
+        "n|col|public.EcommercePaymentProvider.workspaceId",
+        "n|col|public.Workspace.id",
+        "e|uniqueness|public.Workspace.id"
+      ]
+    },
+    {
+      "statementType": "create_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "EcommercePaymentProvider"
+      ],
+      "writes": [
+        "s|fk|public.EcommercePaymentProvider.EcommercePaymentProvider_eOJU9fhqr8NU_fkey",
+        "n|fk|public.EcommercePaymentProvider.EcommercePaymentProvider_eOJU9fhqr8NU_fkey",
+        "e|fk|public.EcommercePaymentProvider.EcommercePaymentProvider_eOJU9fhqr8NU_fkey",
+        "n|con|public.EcommercePaymentProvider.EcommercePaymentProvider_eOJU9fhqr8NU_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.EcommercePaymentProvider",
+        "n|sch|public",
+        "n|tbl|public.PlatformCredential",
+        "n|sch|public",
+        "n|col|public.EcommercePaymentProvider.platformCredentialId",
+        "n|col|public.PlatformCredential.id",
+        "e|uniqueness|public.PlatformCredential.id"
+      ]
+    },
+    {
+      "statementType": "create_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "OrderPayment"
+      ],
+      "writes": [
+        "s|fk|public.OrderPayment.OrderPayment_orderId_Order_id_fkey",
+        "n|fk|public.OrderPayment.OrderPayment_orderId_Order_id_fkey",
+        "e|fk|public.OrderPayment.OrderPayment_orderId_Order_id_fkey",
+        "n|con|public.OrderPayment.OrderPayment_orderId_Order_id_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.OrderPayment",
+        "n|sch|public",
+        "n|tbl|public.Order",
+        "n|sch|public",
+        "n|col|public.OrderPayment.orderId",
+        "n|col|public.Order.id",
+        "e|uniqueness|public.Order.id"
+      ]
+    },
+    {
+      "statementType": "create_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "OrderPayment"
+      ],
+      "writes": [
+        "s|fk|public.OrderPayment.OrderPayment_workspaceId_Workspace_id_fkey",
+        "n|fk|public.OrderPayment.OrderPayment_workspaceId_Workspace_id_fkey",
+        "e|fk|public.OrderPayment.OrderPayment_workspaceId_Workspace_id_fkey",
+        "n|con|public.OrderPayment.OrderPayment_workspaceId_Workspace_id_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.OrderPayment",
+        "n|sch|public",
+        "n|tbl|public.Workspace",
+        "n|sch|public",
+        "n|col|public.OrderPayment.workspaceId",
+        "n|col|public.Workspace.id",
+        "e|uniqueness|public.Workspace.id"
+      ]
+    },
+    {
+      "statementType": "create_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "GoogleAdsConversionEvent"
+      ],
+      "writes": [
+        "s|fk|public.GoogleAdsConversionEvent.GoogleAdsConversionEvent_0EWR38dBZsuA_fkey",
+        "n|fk|public.GoogleAdsConversionEvent.GoogleAdsConversionEvent_0EWR38dBZsuA_fkey",
+        "e|fk|public.GoogleAdsConversionEvent.GoogleAdsConversionEvent_0EWR38dBZsuA_fkey",
+        "n|con|public.GoogleAdsConversionEvent.GoogleAdsConversionEvent_0EWR38dBZsuA_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.GoogleAdsConversionEvent",
+        "n|sch|public",
+        "n|tbl|public.ContactReferralEvent",
+        "n|sch|public",
+        "n|col|public.GoogleAdsConversionEvent.referralEventId",
+        "n|col|public.ContactReferralEvent.id",
+        "e|uniqueness|public.ContactReferralEvent.id"
+      ]
+    },
+    {
+      "statementType": "alter_check",
+      "statementTarget": [
+        "table",
+        "public",
+        "ContactActivity"
+      ],
+      "writes": [
+        "s|ck|public.ContactActivity.ContactActivity_allowed_pair_check"
+      ],
+      "reads": [
+        "n|tbl|public.ContactActivity",
+        "n|sch|public",
+        "n|col|public.ContactActivity.activityType",
+        "n|col|public.ContactActivity.referenceType",
+        "n|col|public.ContactActivity.parentReferenceId",
+        "e|col|public.ContactActivity.activityType",
+        "e|col|public.ContactActivity.referenceType",
+        "e|col|public.ContactActivity.parentReferenceId"
+      ],
+      "sqlHash": "b147b09c1dd00247"
+    }
+  ],
+  "deltas": [
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "name": "ContactReferralEvent",
+        "isRlsEnabled": false,
+        "entityType": "tables"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "name": "EcommercePaymentProvider",
+        "isRlsEnabled": false,
+        "entityType": "tables"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "name": "OrderPayment",
+        "isRlsEnabled": false,
+        "entityType": "tables"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "name": "onlinePaymentProvider",
+        "values": [
+          "stripe",
+          "paypal"
+        ],
+        "entityType": "enums"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "name": "orderPaymentStatus",
+        "values": [
+          "open",
+          "paid",
+          "expired",
+          "refunded"
+        ],
+        "entityType": "enums"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "AdsConversionEvent",
+        "name": "referralEventId",
+        "type": "bigint",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "ContactReferralEvent",
+        "name": "id",
+        "type": "bigint",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "ContactReferralEvent",
+        "name": "createdAt",
+        "type": "timestamp(6) with time zone",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "now()",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "ContactReferralEvent",
+        "name": "updatedAt",
+        "type": "timestamp(6) with time zone",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "now()",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "ContactReferralEvent",
+        "name": "workspaceId",
+        "type": "bigint",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "ContactReferralEvent",
+        "name": "contactId",
+        "type": "bigint",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "ContactReferralEvent",
+        "name": "contactInboxId",
+        "type": "bigint",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "ContactReferralEvent",
+        "name": "channel",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "ContactReferralEvent",
+        "name": "type",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "ContactReferralEvent",
+        "name": "provider",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "ContactReferralEvent",
+        "name": "occurredAt",
+        "type": "timestamp(6) with time zone",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "ContactReferralEvent",
+        "name": "adId",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "ContactReferralEvent",
+        "name": "campaignId",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "ContactReferralEvent",
+        "name": "adGroupId",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "ContactReferralEvent",
+        "name": "clickIdType",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "ContactReferralEvent",
+        "name": "clickId",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "ContactReferralEvent",
+        "name": "ref",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "ContactReferralEvent",
+        "name": "source",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "ContactReferralEvent",
+        "name": "sourceUrl",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "ContactReferralEvent",
+        "name": "metadata",
+        "type": "jsonb",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "ContactReferralEvent",
+        "name": "dedupKey",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "EcommercePaymentProvider",
+        "name": "id",
+        "type": "bigint",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "EcommercePaymentProvider",
+        "name": "createdAt",
+        "type": "timestamp(6) with time zone",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "now()",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "EcommercePaymentProvider",
+        "name": "updatedAt",
+        "type": "timestamp(6) with time zone",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "now()",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "EcommercePaymentProvider",
+        "name": "workspaceId",
+        "type": "bigint",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "EcommercePaymentProvider",
+        "name": "provider",
+        "type": "onlinePaymentProvider",
+        "typeSchema": "public",
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "EcommercePaymentProvider",
+        "name": "livemode",
+        "type": "boolean",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "EcommercePaymentProvider",
+        "name": "accountLabel",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "EcommercePaymentProvider",
+        "name": "externalAccountId",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "EcommercePaymentProvider",
+        "name": "platformCredentialId",
+        "type": "bigint",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "EcommercePaymentProvider",
+        "name": "secret",
+        "type": "jsonb",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "EcommercePaymentProvider",
+        "name": "webhookEndpointId",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "OrderPayment",
+        "name": "id",
+        "type": "bigint",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "OrderPayment",
+        "name": "createdAt",
+        "type": "timestamp(6) with time zone",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "now()",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "OrderPayment",
+        "name": "updatedAt",
+        "type": "timestamp(6) with time zone",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "now()",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "OrderPayment",
+        "name": "orderId",
+        "type": "bigint",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "OrderPayment",
+        "name": "workspaceId",
+        "type": "bigint",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "OrderPayment",
+        "name": "provider",
+        "type": "onlinePaymentProvider",
+        "typeSchema": "public",
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "OrderPayment",
+        "name": "providerReference",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "OrderPayment",
+        "name": "transactionId",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "OrderPayment",
+        "name": "refundId",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "OrderPayment",
+        "name": "amount",
+        "type": "numeric(19,4)",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "OrderPayment",
+        "name": "currency",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "OrderPayment",
+        "name": "status",
+        "type": "orderPaymentStatus",
+        "typeSchema": "public",
+        "notNull": true,
+        "dimensions": 0,
+        "default": "'open'",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "OrderPayment",
+        "name": "livemode",
+        "type": "boolean",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "OrderPayment",
+        "name": "checkoutUrl",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "OrderPayment",
+        "name": "expiresAt",
+        "type": "timestamp(6) with time zone",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "OrderPayment",
+        "name": "paidAt",
+        "type": "timestamp(6) with time zone",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "OrderPayment",
+        "name": "refundedAt",
+        "type": "timestamp(6) with time zone",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "GoogleAdsConversionEvent",
+        "name": "referralEventId",
+        "type": "bigint",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "Order",
+        "name": "paymentExpiresAt",
+        "type": "timestamp(6) with time zone",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "Order",
+        "name": "paidAt",
+        "type": "timestamp(6) with time zone",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "AdsConversionEvent",
+        "name": "AdsConversionEvent_referralEventId_idx",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "referralEventId",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": false,
+        "where": "\"referralEventId\" IS NOT NULL",
+        "with": "",
+        "method": "btree",
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "ContactReferralEvent",
+        "name": "ContactReferralEvent_workspaceId_contactInboxId_dedupKey_key",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "workspaceId",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          },
+          {
+            "value": "contactInboxId",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          },
+          {
+            "value": "dedupKey",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": true,
+        "where": null,
+        "with": "",
+        "method": "btree",
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "ContactReferralEvent",
+        "name": "ContactReferralEvent_contactInboxId_idx",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "contactInboxId",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": false,
+        "where": null,
+        "with": "",
+        "method": "btree",
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "ContactReferralEvent",
+        "name": "ContactReferralEvent_workspaceId_contactId_occurredAt_idx",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "workspaceId",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          },
+          {
+            "value": "contactId",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          },
+          {
+            "value": "occurredAt",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": false,
+        "where": null,
+        "with": "",
+        "method": "btree",
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "ContactReferralEvent",
+        "name": "ContactReferralEvent_workspaceId_type_occurredAt_idx",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "workspaceId",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          },
+          {
+            "value": "type",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          },
+          {
+            "value": "occurredAt",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": false,
+        "where": "\"adId\" IS NOT NULL",
+        "with": "",
+        "method": "btree",
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "EcommercePaymentProvider",
+        "name": "EcommercePaymentProvider_workspaceId_provider_key",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "workspaceId",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          },
+          {
+            "value": "provider",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": true,
+        "where": null,
+        "with": "",
+        "method": "btree",
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "EcommercePaymentProvider",
+        "name": "EcommercePaymentProvider_platformCredentialId_account_key",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "platformCredentialId",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          },
+          {
+            "value": "externalAccountId",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": true,
+        "where": "\"externalAccountId\" IS NOT NULL",
+        "with": "",
+        "method": "btree",
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "EcommercePaymentProvider",
+        "name": "EcommercePaymentProvider_externalAccountId_idx",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "externalAccountId",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": false,
+        "where": null,
+        "with": "",
+        "method": "btree",
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "OrderPayment",
+        "name": "OrderPayment_provider_providerReference_key",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "provider",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          },
+          {
+            "value": "providerReference",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": true,
+        "where": null,
+        "with": "",
+        "method": "btree",
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "OrderPayment",
+        "name": "OrderPayment_orderId_idx",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "orderId",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": false,
+        "where": null,
+        "with": "",
+        "method": "btree",
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "OrderPayment",
+        "name": "OrderPayment_workspaceId_idx",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "workspaceId",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": false,
+        "where": null,
+        "with": "",
+        "method": "btree",
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "OrderPayment",
+        "name": "OrderPayment_open_expiresAt_idx",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "expiresAt",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": false,
+        "where": "\"status\" = 'open'",
+        "with": "",
+        "method": "btree",
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "GoogleAdsConversionEvent",
+        "name": "GoogleAdsConversionEvent_referralEventId_idx",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "referralEventId",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": false,
+        "where": "\"referralEventId\" IS NOT NULL",
+        "with": "",
+        "method": "btree",
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "Order",
+        "name": "Order_paymentExpiresAt_idx",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "paymentExpiresAt",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": false,
+        "where": "\"status\" = 'pending' AND \"paymentStatus\" = 'unpaid' AND \"paymentExpiresAt\" IS NOT NULL",
+        "with": "",
+        "method": "btree",
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "AdsConversionEvent",
+        "name": "AdsConversionEvent_referralEventId_ContactReferralEvent_id_fkey",
+        "nameExplicit": false,
+        "columns": [
+          "referralEventId"
+        ],
+        "schemaTo": "public",
+        "tableTo": "ContactReferralEvent",
+        "columnsTo": [
+          "id"
+        ],
+        "onUpdate": "CASCADE",
+        "onDelete": "SET NULL",
+        "entityType": "fks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "ContactReferralEvent",
+        "name": "ContactReferralEvent_workspaceId_Workspace_id_fkey",
+        "nameExplicit": false,
+        "columns": [
+          "workspaceId"
+        ],
+        "schemaTo": "public",
+        "tableTo": "Workspace",
+        "columnsTo": [
+          "id"
+        ],
+        "onUpdate": "CASCADE",
+        "onDelete": "CASCADE",
+        "entityType": "fks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "ContactReferralEvent",
+        "name": "ContactReferralEvent_contactInboxId_ContactInbox_id_fkey",
+        "nameExplicit": false,
+        "columns": [
+          "contactInboxId"
+        ],
+        "schemaTo": "public",
+        "tableTo": "ContactInbox",
+        "columnsTo": [
+          "id"
+        ],
+        "onUpdate": "CASCADE",
+        "onDelete": "CASCADE",
+        "entityType": "fks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "EcommercePaymentProvider",
+        "name": "EcommercePaymentProvider_workspaceId_Workspace_id_fkey",
+        "nameExplicit": false,
+        "columns": [
+          "workspaceId"
+        ],
+        "schemaTo": "public",
+        "tableTo": "Workspace",
+        "columnsTo": [
+          "id"
+        ],
+        "onUpdate": "CASCADE",
+        "onDelete": "CASCADE",
+        "entityType": "fks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "EcommercePaymentProvider",
+        "name": "EcommercePaymentProvider_eOJU9fhqr8NU_fkey",
+        "nameExplicit": false,
+        "columns": [
+          "platformCredentialId"
+        ],
+        "schemaTo": "public",
+        "tableTo": "PlatformCredential",
+        "columnsTo": [
+          "id"
+        ],
+        "onUpdate": "CASCADE",
+        "onDelete": "SET NULL",
+        "entityType": "fks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "OrderPayment",
+        "name": "OrderPayment_orderId_Order_id_fkey",
+        "nameExplicit": false,
+        "columns": [
+          "orderId"
+        ],
+        "schemaTo": "public",
+        "tableTo": "Order",
+        "columnsTo": [
+          "id"
+        ],
+        "onUpdate": "CASCADE",
+        "onDelete": "CASCADE",
+        "entityType": "fks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "OrderPayment",
+        "name": "OrderPayment_workspaceId_Workspace_id_fkey",
+        "nameExplicit": false,
+        "columns": [
+          "workspaceId"
+        ],
+        "schemaTo": "public",
+        "tableTo": "Workspace",
+        "columnsTo": [
+          "id"
+        ],
+        "onUpdate": "CASCADE",
+        "onDelete": "CASCADE",
+        "entityType": "fks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "GoogleAdsConversionEvent",
+        "name": "GoogleAdsConversionEvent_0EWR38dBZsuA_fkey",
+        "nameExplicit": false,
+        "columns": [
+          "referralEventId"
+        ],
+        "schemaTo": "public",
+        "tableTo": "ContactReferralEvent",
+        "columnsTo": [
+          "id"
+        ],
+        "onUpdate": "CASCADE",
+        "onDelete": "SET NULL",
+        "entityType": "fks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "ContactReferralEvent",
+        "name": "ContactReferralEvent_pkey",
+        "columns": [
+          "id"
+        ],
+        "nameExplicit": false,
+        "entityType": "pks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "EcommercePaymentProvider",
+        "name": "EcommercePaymentProvider_pkey",
+        "columns": [
+          "id"
+        ],
+        "nameExplicit": false,
+        "entityType": "pks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "OrderPayment",
+        "name": "OrderPayment_pkey",
+        "columns": [
+          "id"
+        ],
+        "nameExplicit": false,
+        "entityType": "pks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "ContactReferralEvent",
+        "name": "ContactReferralEvent_type_check",
+        "value": "\"type\" IN ('ad', 'refLink', 'shortLink', 'qr')",
+        "entityType": "checks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "ContactReferralEvent",
+        "name": "ContactReferralEvent_provider_check",
+        "value": "\"provider\" IS NULL OR \"provider\" IN ('meta', 'google')",
+        "entityType": "checks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "ContactReferralEvent",
+        "name": "ContactReferralEvent_clickIdType_check",
+        "value": "\"clickIdType\" IS NULL OR \"clickIdType\" IN ('ctwa', 'gclid', 'gbraid')",
+        "entityType": "checks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "ContactReferralEvent",
+        "name": "ContactReferralEvent_clickId_check",
+        "value": "(\"clickId\" IS NULL) = (\"clickIdType\" IS NULL)",
+        "entityType": "checks"
+      }
+    },
+    {
+      "op": "alter",
+      "key": "enums\u0000[\"public\",\"paymentMethod\"]",
+      "set": {
+        "values": [
+          "cod",
+          "stripe",
+          "paypal"
+        ]
+      }
+    },
+    {
+      "op": "alter",
+      "key": "enums\u0000[\"public\",\"contactActivityReferenceType\"]",
+      "set": {
+        "values": [
+          "flow",
+          "flowNode",
+          "automatedResponse",
+          "whatsappFlow",
+          "emailTopic",
+          "ad"
+        ]
+      }
+    },
+    {
+      "op": "alter",
+      "key": "enums\u0000[\"public\",\"contactActivityType\"]",
+      "set": {
+        "values": [
+          "flowExecuted",
+          "flowNodeExecuted",
+          "automatedResponseMatched",
+          "formCompleted",
+          "messageSent",
+          "messageDelivered",
+          "messageOpened",
+          "messageClicked",
+          "adClicked"
+        ]
+      }
+    },
+    {
+      "op": "alter",
+      "key": "checks\u0000[\"public\",\"ContactActivity\",\"ContactActivity_allowed_pair_check\"]",
+      "set": {
+        "value": "(\"activityType\" = 'flowExecuted' AND \"referenceType\" = 'flow' AND \"parentReferenceId\" = 0) OR (\"activityType\" = 'flowNodeExecuted' AND \"referenceType\" = 'flowNode' AND \"parentReferenceId\" <> 0) OR (\"activityType\" = 'automatedResponseMatched' AND \"referenceType\" = 'automatedResponse' AND \"parentReferenceId\" = 0) OR (\"activityType\" = 'formCompleted' AND \"referenceType\" = 'whatsappFlow' AND \"parentReferenceId\" = 0) OR (\"activityType\" = 'messageSent' AND \"referenceType\" = 'emailTopic' AND \"parentReferenceId\" = 0) OR (\"activityType\" = 'messageDelivered' AND \"referenceType\" = 'emailTopic' AND \"parentReferenceId\" = 0) OR (\"activityType\" = 'messageOpened' AND \"referenceType\" = 'emailTopic' AND \"parentReferenceId\" = 0) OR (\"activityType\" = 'messageClicked' AND \"referenceType\" = 'emailTopic' AND \"parentReferenceId\" = 0) OR (\"activityType\" = 'adClicked' AND \"referenceType\" = 'ad' AND \"parentReferenceId\" = 0)"
+      }
+    }
+  ]
+}

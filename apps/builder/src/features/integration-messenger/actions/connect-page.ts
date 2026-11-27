@@ -7,11 +7,20 @@ import {
 import { channelTypes } from "@chatbotx.io/database/partials"
 import type { IntegrationMessengerModel } from "@chatbotx.io/database/types"
 import type { MessengerAuthValue } from "@chatbotx.io/integration-messenger"
-import { integration as integrationMessenger } from "@chatbotx.io/integration-messenger"
+import {
+  integration as integrationMessenger,
+  toAppAccessToken,
+} from "@chatbotx.io/integration-messenger"
+import { readTokenScopes } from "@chatbotx.io/integration-messenger/apis/token-scopes"
 import { runBrandingFollowUps } from "@/features/channel-connect/lib/branding-follow-ups"
+import {
+  captureConnectScopes,
+  grantedScopesOfAuth,
+} from "@/features/channel-connect/lib/capture-connect-scopes"
 import { connectSessionCandidate } from "@/features/channel-connect/lib/connect-session-candidate"
 import type { ResolvedConnectSession } from "@/features/channel-connect/lib/resolve-connect-session"
 import type { ConnectActionResultWire } from "@/features/channel-connect/schema"
+import { logger } from "@/lib/log"
 
 /**
  * Connects one Facebook page from a `ConnectSession` in `awaiting_selection`,
@@ -79,6 +88,13 @@ async function runMessengerFollowUps({
   const auth = messengerRow.auth as MessengerAuthValue
   const integrationRow = { ...messengerRow, auth }
 
+  await captureConnectScopes({
+    grantedScopes: await readPageScopes(auth),
+    inboxId: messengerRow.inboxId,
+    publisherKey: "facebook",
+    workspaceId: session.workspace.id,
+  })
+
   const results = await Promise.allSettled([
     runBrandingFollowUps({
       session,
@@ -105,4 +121,37 @@ async function runMessengerFollowUps({
   if (failed) {
     throw failed.reason
   }
+}
+
+/**
+ * The page token's granted scopes from `/debug_token` (needs the app token, so
+ * it reads the app credentials stored on the row's auth); `null` on any failure.
+ * The same reader the Posts Connect tab's permission re-check uses.
+ */
+async function readPageScopes(
+  auth: MessengerAuthValue,
+): Promise<string[] | null> {
+  const fromMetadata = grantedScopesOfAuth(auth)
+  if (fromMetadata) {
+    return fromMetadata
+  }
+  try {
+    const result = await readTokenScopes({
+      appAccessToken: toAppAccessToken(auth),
+      inputToken: auth.tokens.accessToken,
+      version: auth.version,
+    })
+    if (result.kind === "scopes") {
+      return result.scopes
+    }
+    logger.warn(
+      { reason: result.kind },
+      "Messenger debug_token gave no scopes after connect",
+    )
+  } catch (err) {
+    // Building the app token can fail on a row without app credentials: the
+    // connect already succeeded, so the scopes just stay unknown.
+    logger.warn({ err }, "Messenger debug_token failed after connect")
+  }
+  return null
 }

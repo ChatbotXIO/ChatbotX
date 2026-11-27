@@ -118,6 +118,11 @@ export const reservedCustomFieldIds: {
     labelKey: "fields.lastInput.label",
   },
   {
+    id: systemFieldTypes.enum.last_opportunity_id,
+    type: "shortText",
+    labelKey: "fields.lastOpportunityId.label",
+  },
+  {
     // Latest incoming plain text; unlike `last_input` it never yields a media URL.
     id: systemFieldTypes.enum.last_text_input,
     type: "shortText",
@@ -191,6 +196,13 @@ export const reservedCustomFieldIds: {
     channels: ["messenger", "instagram"],
   },
   {
+    // Facebook comments only: people mentioned in the contact's comment.
+    id: systemFieldTypes.enum.total_tagged,
+    type: "number",
+    labelKey: "fields.totalTagged.label",
+    channels: ["messenger"],
+  },
+  {
     // The inbox user who sent the running flow — not the conversation assignee.
     // Only set on a flow an inbox user started.
     id: systemFieldTypes.enum.admin_name,
@@ -217,6 +229,19 @@ export const reservedCustomFieldIds: {
     type: "shortText",
     labelKey: "fields.lastAdHeadline.label",
     channels: ["messenger", "instagram", "whatsapp"],
+  },
+  {
+    // Read from the contact's ad touch log (all inboxes), not the last referral.
+    id: systemFieldTypes.enum.ad_ids,
+    type: "shortText",
+    labelKey: "fields.adIds.label",
+    channels: ["messenger", "instagram", "whatsapp", "zalo"],
+  },
+  {
+    id: systemFieldTypes.enum.ad_id,
+    type: "shortText",
+    labelKey: "fields.adId.label",
+    channels: ["messenger", "instagram", "whatsapp", "zalo"],
   },
   {
     // Only WhatsApp Click-to-WhatsApp referrals carry an ad body.

@@ -16,21 +16,26 @@ export {
 } from "./apis/webhook"
 export {
   TIKTOK_MISSING_SCOPES_CODE,
+  TiktokAuthException,
   TiktokMissingScopesError,
 } from "./exception"
 export * from "./integration"
 export { isRevokedTokenError, mapToChannelError } from "./lib/error-mapper"
 export { buildTiktokVideoUrl } from "./lib/post-link"
+export { refreshTiktokAuth } from "./lib/refresh-auth"
 export {
   findMissingTiktokScopes,
   parseTiktokScopes,
   TIKTOK_COMMENT_AUTOMATION_SCOPES,
   TIKTOK_CORE_SCOPES,
+  TIKTOK_MESSAGING_SCOPES,
   tiktokCanListVideos,
+  tiktokCanMessage,
   tiktokNeedsReauthorization,
 } from "./lib/scopes"
 export type {
   TiktokAuthValue,
+  TiktokChannelFeatures,
   TiktokComment,
   TiktokCommentHideAction,
   TiktokCommentLikeAction,
@@ -39,6 +44,7 @@ export type {
   TiktokConfig,
   TiktokDirectReplyStatus,
   TiktokHighIntentCommentContent,
+  TiktokListCommentsInput,
   TiktokVideo,
   TiktokVideoListResult,
   TiktokWebhookEvent,

@@ -1,0 +1,1 @@
+ALTER TABLE "Pipeline" ALTER COLUMN "currency" DROP NOT NULL;

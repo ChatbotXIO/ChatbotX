@@ -14,6 +14,8 @@ import {
 } from "vitest"
 
 const translations: Record<string, string> = {
+  "fields.language.label": "Language",
+  "fields.theme.label": "Theme",
   "actions.admin": "Admin",
   "actions.manage": "Manage",
   "actions.billing": "Billing",
@@ -47,16 +49,20 @@ vi.mock("@/features/auth/sign-out", () => ({
   SignOut: () => <button type="button">Sign out</button>,
 }))
 
-vi.mock("../edit-profile-dialog", () => ({
-  EditProfileDialog: () => null,
-}))
-
 // Severs the server-action import chain (refresh action → @/lib/safe-action →
 // @chatbotx.io/business → database/client), which otherwise touches a
 // server-only env var at import time and crashes the whole file before any
 // test body runs.
 vi.mock("../refresh-all-channel-tokens-button", () => ({
   RefreshAllChannelTokensButton: () => null,
+}))
+
+vi.mock("@/components/lang-selector", () => ({
+  LangSelector: () => <div data-testid="lang-selector" />,
+}))
+
+vi.mock("@/components/theme-switcher", () => ({
+  ThemeSwitcher: () => <div data-testid="theme-switcher" />,
 }))
 
 vi.mock("@/enterprise/features/billing/upgrade-plan-dialog", () => ({
@@ -92,7 +98,7 @@ describe("account rail", () => {
   async function render(
     props: Partial<{
       isSuperAdmin: boolean
-      isPlatformAdmin: boolean
+      canAccessManage: boolean
       isPlatformContext: boolean
       cloud: boolean
       planName: string | null
@@ -102,7 +108,7 @@ describe("account rail", () => {
     const element = await AccountRail({
       user: BASE_USER,
       isSuperAdmin: props.isSuperAdmin,
-      isPlatformAdmin: props.isPlatformAdmin,
+      canAccessManage: props.canAccessManage,
       isPlatformContext: props.isPlatformContext,
       planName: props.planName,
     })
@@ -147,15 +153,29 @@ describe("account rail", () => {
   })
 
   it("renders admin but hides manage on community edition", async () => {
-    await render({ isSuperAdmin: true, isPlatformAdmin: true, cloud: false })
+    await render({ canAccessManage: true, cloud: false, isSuperAdmin: true })
     expect(findLink("/admin")?.textContent).toContain("Admin")
     expect(findLink("/manage")).toBeUndefined()
   })
 
-  it("renders admin and manage on cloud edition", async () => {
-    await render({ isSuperAdmin: true, isPlatformAdmin: true, cloud: true })
-    expect(findLink("/admin")?.textContent).toContain("Admin")
+  it("renders manage for a credentials-only user on cloud edition", async () => {
+    await render({ canAccessManage: true, cloud: true })
     expect(findLink("/manage")?.textContent).toContain("Manage")
+  })
+
+  it("renders admin for a credentials-only super admin on cloud edition", async () => {
+    await render({
+      canAccessManage: true,
+      cloud: true,
+      isSuperAdmin: true,
+    })
+
+    expect(findLink("/admin")?.textContent).toContain("Admin")
+  })
+
+  it("hides manage on cloud edition without credential access", async () => {
+    await render({ cloud: true })
+    expect(findLink("/manage")).toBeUndefined()
   })
 
   it("still renders the menu block on community edition", async () => {
@@ -165,19 +185,51 @@ describe("account rail", () => {
     expect(findLink("/portal/billing")).toBeUndefined()
   })
 
-  it("omits the menu divider when no menu items render on community edition", async () => {
+  it("omits the menu block on community edition without admin", async () => {
     await render({ cloud: false })
-
-    const menu = container.querySelector("#account-rail-menu")
-    expect(menu?.classList.contains("border-t")).toBe(false)
-    expect(menu?.classList.contains("pt-4")).toBe(false)
+    expect(container.querySelector("#account-rail-menu")).toBeNull()
   })
 
-  it("keeps the menu divider when the admin link renders on community edition", async () => {
+  it("renders the admin/manage block with a divider when admin renders", async () => {
     await render({ isSuperAdmin: true, cloud: false })
 
     const menu = container.querySelector("#account-rail-menu")
     expect(menu?.classList.contains("border-t")).toBe(true)
+  })
+
+  it.each([
+    false,
+    true,
+  ])("renders language and theme controls (cloud=%s)", async (cloud) => {
+    await render({ cloud })
+
+    expect(container.textContent).toContain("Language")
+    expect(container.textContent).toContain("Theme")
+    expect(
+      container.querySelector('[data-testid="lang-selector"]'),
+    ).not.toBeNull()
+    expect(
+      container.querySelector('[data-testid="theme-switcher"]'),
+    ).not.toBeNull()
+  })
+
+  it("groups admin, manage, billing and redeem in one menu block on cloud", async () => {
+    await render({
+      canAccessManage: true,
+      cloud: true,
+      isPlatformContext: true,
+      isSuperAdmin: true,
+    })
+
+    const menu = container.querySelector("#account-rail-menu")
+    for (const href of [
+      "/admin",
+      "/manage",
+      "/portal/billing",
+      "/portal/redeem",
+    ]) {
+      expect(menu?.querySelector(`a[href="${href}"]`)).not.toBeNull()
+    }
   })
 
   it("renders exactly one mt-auto element", async () => {
@@ -203,5 +255,14 @@ describe("account rail", () => {
     const text = planNameText()
     expect(text).toContain("Current plan")
     expect(text).toContain("Free")
+  })
+
+  it("links the profile summary to account settings without an edit button", async () => {
+    await render()
+
+    expect(findLink("/account")?.textContent).toContain("Jane Doe")
+    expect(
+      container.querySelector('button[aria-label="actions.edit"]'),
+    ).toBeNull()
   })
 })

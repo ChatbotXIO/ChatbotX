@@ -13,6 +13,7 @@ import {
   or,
   sql,
 } from "@chatbotx.io/database/client"
+import type { StoreSource } from "@chatbotx.io/database/partials"
 import {
   discountCodeModel,
   discountCodeRedemptionModel,
@@ -28,6 +29,8 @@ export type DiscountCodeWriteValues = Omit<
 
 export type DiscountCodeListInput = {
   workspaceId: string
+  /** The store's codes or the connected Shopify store's; ours when left out. */
+  source?: StoreSource
   /** Case-insensitive part of the code. */
   code?: string | null
   page?: number
@@ -100,6 +103,7 @@ export const discountCodeRepository = {
     const pagination = parsePagination(input)
     const where = and(
       eq(discountCodeModel.workspaceId, input.workspaceId),
+      eq(discountCodeModel.source, input.source ?? "chatbotx"),
       input.code
         ? ilike(discountCodeModel.code, likeContains(input.code))
         : undefined,
@@ -131,7 +135,7 @@ export const discountCodeRepository = {
   },
 
   async findByCode(
-    input: { workspaceId: string; code: string },
+    input: { workspaceId: string; code: string; source?: StoreSource },
     tx: DatabaseClient = db,
   ) {
     const [row] = await tx
@@ -140,6 +144,7 @@ export const discountCodeRepository = {
       .where(
         and(
           eq(discountCodeModel.workspaceId, input.workspaceId),
+          eq(discountCodeModel.source, input.source ?? "chatbotx"),
           sameCode(input.code),
         ),
       )
@@ -170,7 +175,7 @@ export const discountCodeRepository = {
 
   /** Codes that apply themselves, on and within their dates at `now`. */
   async listAutoApply(
-    input: { workspaceId: string; now: Date },
+    input: { workspaceId: string; now: Date; source?: StoreSource },
     tx: DatabaseClient = db,
   ) {
     return await tx
@@ -179,6 +184,7 @@ export const discountCodeRepository = {
       .where(
         and(
           eq(discountCodeModel.workspaceId, input.workspaceId),
+          eq(discountCodeModel.source, input.source ?? "chatbotx"),
           eq(discountCodeModel.autoApply, true),
           eq(discountCodeModel.isActive, true),
           lte(discountCodeModel.startsAt, input.now),
@@ -204,7 +210,12 @@ export const discountCodeRepository = {
    * each.
    */
   async listOffered(
-    input: { workspaceId: string; now: Date; limit: number },
+    input: {
+      workspaceId: string
+      now: Date
+      limit: number
+      source?: StoreSource
+    },
     tx: DatabaseClient = db,
   ) {
     const usable = and(
@@ -223,6 +234,7 @@ export const discountCodeRepository = {
       .where(
         and(
           eq(discountCodeModel.workspaceId, input.workspaceId),
+          eq(discountCodeModel.source, input.source ?? "chatbotx"),
           eq(discountCodeModel.autoApply, false),
           eq(discountCodeModel.isActive, true),
           lte(discountCodeModel.startsAt, input.now),
@@ -247,6 +259,37 @@ export const discountCodeRepository = {
     return row
   },
 
+  /**
+   * Inserts the code, or finds the one that already carries it (codes are
+   * unique per workspace and source, case-insensitively). `created` says which,
+   * so a caller writes its copied fields only into a new row.
+   */
+  async insertOrFindByCode(
+    input: DiscountCodeWriteValues & { workspaceId: string },
+    tx: DatabaseClient = db,
+  ): Promise<{ row: typeof discountCodeModel.$inferSelect; created: boolean }> {
+    const [inserted] = await tx
+      .insert(discountCodeModel)
+      .values({ id: createId(), ...input })
+      .onConflictDoNothing()
+      .returning()
+    if (inserted) {
+      return { row: inserted, created: true }
+    }
+    const [existing] = await tx
+      .select()
+      .from(discountCodeModel)
+      .where(
+        and(
+          eq(discountCodeModel.workspaceId, input.workspaceId),
+          eq(discountCodeModel.source, input.source ?? "chatbotx"),
+          sql`lower(${discountCodeModel.code}) = ${input.code.toLowerCase()}`,
+        ),
+      )
+      .limit(1)
+    return { row: existing, created: false }
+  },
+
   async update(
     input: {
       workspaceId: string
@@ -268,20 +311,23 @@ export const discountCodeRepository = {
     return row
   },
 
-  async delete(
-    input: { workspaceId: string; discountCodeId: string },
+  /** Deletes the codes in one statement and returns the rows that went. */
+  async deleteMany(
+    input: { workspaceId: string; ids: string[] },
     tx: DatabaseClient = db,
   ) {
-    const [row] = await tx
+    if (input.ids.length === 0) {
+      return []
+    }
+    return await tx
       .delete(discountCodeModel)
       .where(
         and(
-          eq(discountCodeModel.id, input.discountCodeId),
           eq(discountCodeModel.workspaceId, input.workspaceId),
+          inArray(discountCodeModel.id, input.ids),
         ),
       )
       .returning()
-    return row
   },
 
   /** One more use; `undefined` when the limit is already reached. */

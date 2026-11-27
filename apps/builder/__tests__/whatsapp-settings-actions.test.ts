@@ -38,6 +38,7 @@ vi.mock("@chatbotx.io/integration-whatsapp/api/app-subscriptions", () => ({
   },
   WHATSAPP_APP_WEBHOOK_FIELDS: {
     CALLS: "calls",
+    ACCOUNT_UPDATE: "account_update",
     ACCOUNT_SETTINGS_UPDATE: "account_settings_update",
   },
 }))
@@ -177,7 +178,7 @@ describe("WhatsApp credential actions", () => {
     })
   })
 
-  test("subscribes the app-level 'calls' webhook field after saving", async () => {
+  test("subscribes the app-level 'calls' and 'account_update' webhook fields after saving", async () => {
     const result = (await call(updateWhatsappSettingsAction)({
       ctx: { user: { id: "user-1" } },
       bindArgsParsedInputs: ["user"],
@@ -189,7 +190,7 @@ describe("WhatsApp credential actions", () => {
         appId: valid.clientId,
         appSecret: valid.clientSecret,
         verifyToken: valid.verifyToken,
-        requiredFields: ["calls"],
+        requiredFields: ["calls", "account_update"],
       }),
     )
     expect(result.callsSubscriptionWarning).toBeUndefined()

@@ -1,0 +1,119 @@
+{
+  "type": "diff",
+  "version": "10",
+  "dialect": "postgres",
+  "id": "fd4e3999-5212-4c59-9d92-919626799f69",
+  "prevIds": [
+    "695d2731-542e-4aeb-bf38-b5bb7d5339ee"
+  ],
+  "footprints": [
+    {
+      "statementType": "create_table",
+      "statementTarget": [
+        "table",
+        "public",
+        "CacheVersion"
+      ],
+      "writes": [
+        "s|tbl|public.CacheVersion",
+        "n|tbl|public.CacheVersion",
+        "e|tbl|public.CacheVersion",
+        "n|rel|public.CacheVersion",
+        "n|type|public.CacheVersion",
+        "n|rel|public.CacheVersion_pkey"
+      ],
+      "reads": [
+        "n|sch|public"
+      ]
+    }
+  ],
+  "deltas": [
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "name": "CacheVersion",
+        "isRlsEnabled": false,
+        "entityType": "tables"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "CacheVersion",
+        "name": "namespace",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "CacheVersion",
+        "name": "scopeId",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "CacheVersion",
+        "name": "version",
+        "type": "bigint",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "CacheVersion",
+        "name": "updatedAt",
+        "type": "timestamp(6) with time zone",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "now()",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "CacheVersion",
+        "name": "CacheVersion_pkey",
+        "columns": [
+          "namespace",
+          "scopeId"
+        ],
+        "nameExplicit": true,
+        "entityType": "pks"
+      }
+    }
+  ]
+}

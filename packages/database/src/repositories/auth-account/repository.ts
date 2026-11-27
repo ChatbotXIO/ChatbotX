@@ -35,6 +35,16 @@ class AuthAccountRepository {
 
     return row ?? null
   }
+
+  async clearTokensByUserId(
+    userId: string,
+    tx: DatabaseClient = db,
+  ): Promise<void> {
+    await tx
+      .update(accountModel)
+      .set({ accessToken: null, idToken: null, refreshToken: null })
+      .where(eq(accountModel.userId, userId))
+  }
 }
 
 export const authAccountRepository = new AuthAccountRepository()

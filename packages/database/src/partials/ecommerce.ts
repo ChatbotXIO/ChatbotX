@@ -14,18 +14,105 @@ export type OrderStatus = z.infer<typeof orderStatuses>
  * WhatsApp cart is checked out); `api` is a public API or MCP caller;
  * `manual` is a member typing one in.
  */
-export const orderSources = z.enum(["webshop", "api", "manual"])
+export const orderSources = z.enum([
+  "webshop",
+  "api",
+  "manual",
+  "shopify",
+  "woocommerce",
+])
 export type OrderSource = z.infer<typeof orderSources>
 
 /**
- * Cash on delivery only for now. A new method is a value here plus whatever
- * provider handles it; nothing else keys on the list.
+ * Where the store's catalog and orders live. `chatbotx` is our own tables;
+ * `shopify` and `woocommerce` mirror a connected external store, read-only
+ * here. Each product, category, vendor and discount code carries the source
+ * it came from, and every list shows only the rows of the store's current
+ * source.
  */
-export const paymentMethods = z.enum(["cod"])
+export const storeSources = z.enum(["chatbotx", "shopify", "woocommerce"])
+export type StoreSource = z.infer<typeof storeSources>
+
+/** The store sources mirrored from a connected external store. */
+export type ExternalStoreSource = Exclude<StoreSource, "chatbotx">
+
+export const externalStoreSources = storeSources.exclude(["chatbotx"])
+
+/** True for a store (or a row) mirrored from an external store. */
+export const isExternalStoreSource = (
+  source: StoreSource | OrderSource | null | undefined,
+): source is ExternalStoreSource =>
+  (externalStoreSources.options as readonly string[]).includes(source ?? "")
+
+/** The external store's name as merchants know it, for messages. */
+export const EXTERNAL_STORE_NAMES: Record<ExternalStoreSource, string> = {
+  shopify: "Shopify",
+  woocommerce: "WooCommerce",
+}
+
+/**
+ * How an external store's web shop checks out: `webCheckout` sends the
+ * customer to the store's own checkout (or payment) page, `inApp` places the
+ * order from our page.
+ */
+export const externalCheckoutMethods = z.enum(["webCheckout", "inApp"])
+export type ExternalCheckoutMethod = z.infer<typeof externalCheckoutMethods>
+
+/** How much of an order was handed to the carrier; mirrored from the store. */
+export const fulfillmentStatuses = z.enum([
+  "unfulfilled",
+  "partial",
+  "fulfilled",
+])
+export type FulfillmentStatus = z.infer<typeof fulfillmentStatuses>
+
+/**
+ * `cod` is cash on delivery; `stripe` and `paypal` are paid online on the
+ * provider's own page, with the store's own connected account.
+ */
+export const paymentMethods = z.enum(["cod", "stripe", "paypal"])
 export type PaymentMethod = z.infer<typeof paymentMethods>
+
+/** The payment methods paid online, each through its own provider. */
+export const onlinePaymentProviders = z.enum(["stripe", "paypal"])
+export type OnlinePaymentProvider = z.infer<typeof onlinePaymentProviders>
+
+export const isOnlinePaymentMethod = (
+  method: PaymentMethod,
+): method is OnlinePaymentProvider =>
+  (onlinePaymentProviders.options as readonly string[]).includes(method)
+
+/** An online order whose money has not come in yet. */
+export const isAwaitingOnlinePayment = (order: {
+  paymentMethod: PaymentMethod
+  paymentStatus: string
+}) =>
+  isOnlinePaymentMethod(order.paymentMethod) && order.paymentStatus === "unpaid"
+
+/** How long an online order waits for its payment before it is cancelled. */
+export const PAYMENT_EXPIRY_MINUTES = 30
+
+/**
+ * The cancel reason the expiry scan stores. Kept in English for the public
+ * API; the builder shows it translated (`orders.paymentExpiredCancelReason`).
+ */
+export const PAYMENT_EXPIRED_CANCEL_REASON = "Payment not received in time."
 
 export const paymentStatuses = z.enum(["unpaid", "paid", "refunded"])
 export type PaymentStatus = z.infer<typeof paymentStatuses>
+
+/**
+ * One attempt to pay an order online: `open` while the provider's page can
+ * still take the money, `paid` once it did, `expired` when it can no longer,
+ * `refunded` once the money went back.
+ */
+export const orderPaymentStatuses = z.enum([
+  "open",
+  "paid",
+  "expired",
+  "refunded",
+])
+export type OrderPaymentStatus = z.infer<typeof orderPaymentStatuses>
 
 /** How one order reaches the customer. */
 export const shippingTypes = z.enum(["delivery", "pickup"])
@@ -231,6 +318,9 @@ export type OrderShippingAddress = z.infer<typeof orderShippingAddressSchema>
  * stores them flat; `ecommerceSettingsService` converts between the two.
  */
 export const ecommerceGeneralSettingsSchema = z.object({
+  storeSource: storeSources.describe(
+    "Where products and orders come from: the platform's own catalog, managed here (the default), `shopify`, mirrored read-only from the store connected with `shopify.connect`, or `woocommerce`, mirrored read-only from the store connected with `woocommerce.connect`. Switching to `shopify` or `woocommerce` needs that store connected, takes its currency and queues a full sync of it (poll `shopify.getStatus` / `woocommerce.getStatus`).",
+  ),
   orderingAvailable: z
     .boolean()
     .describe("Whether customers can place orders at all."),
@@ -294,7 +384,9 @@ export const ecommercePaymentSettingsSchema = z.object({
   paymentMethods: z
     .array(paymentMethods)
     .min(1)
-    .describe("Payment methods offered at checkout."),
+    .describe(
+      "Payment methods offered at checkout: `cod` (cash on delivery), `stripe` (card) and `paypal`. Stripe and PayPal must be connected first (`paymentProviders.list`); PayPal only takes some currencies (not VND).",
+    ),
   currency: storeCurrencyCodeSchema.describe(
     "ISO 4217 code every order is charged in, e.g. `VND`.",
   ),
@@ -380,6 +472,14 @@ export const ecommerceCheckoutSettingsSchema = z.object({
   requirePhone: z.boolean().describe("Phone number is required."),
   requireState: z.boolean().describe("State / province is required."),
   requireZip: z.boolean().describe("ZIP code is required."),
+  externalCheckoutMethod: externalCheckoutMethods.describe(
+    "With `storeSource: shopify` or `woocommerce`: `webCheckout` sends the customer to the store's own checkout page (Shopify) or the order's payment page (WooCommerce), `inApp` places the order on the store from our checkout page (cash on delivery).",
+  ),
+  externalAutoApplyDiscounts: z
+    .boolean()
+    .describe(
+      "With `storeSource: shopify` or `woocommerce`: offer the store's synced discount codes in the cart and pass the chosen one to checkout.",
+    ),
 })
 export type EcommerceCheckoutSettings = z.infer<
   typeof ecommerceCheckoutSettingsSchema
@@ -396,6 +496,7 @@ export type EcommerceSettings = z.infer<typeof ecommerceSettingsSchema>
 /** What a workspace that never opened its settings gets. */
 export const ECOMMERCE_SETTINGS_DEFAULTS: EcommerceSettings = {
   general: {
+    storeSource: "chatbotx",
     orderingAvailable: true,
     webshopProductView: "list",
     openHoursId: null,
@@ -434,6 +535,8 @@ export const ECOMMERCE_SETTINGS_DEFAULTS: EcommerceSettings = {
     requirePhone: true,
     requireState: false,
     requireZip: false,
+    externalCheckoutMethod: "webCheckout",
+    externalAutoApplyDiscounts: true,
   },
 }
 

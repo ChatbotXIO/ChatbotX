@@ -1,4 +1,6 @@
+import type { PaymentRequestMethod } from "./steps/payment-request"
 import { toOptionalString } from "./steps/send-wa-message-template"
+import { resolveWaPaymentRequestMethod } from "./steps/wa-template-payment-request-rules"
 
 /**
  * The send-relevant structure of a Meta message template (WhatsApp or
@@ -30,6 +32,8 @@ type StructureButton = {
   hasDynamicPayload: boolean
   flowSourceId?: string
   navigateScreenId?: string
+  /** Payment method of a `PAYMENT_REQUEST` button; `null` when unresolvable. */
+  paymentMethod?: PaymentRequestMethod | null
 }
 
 type StructureComponent = {
@@ -67,12 +71,25 @@ const asUpperString = (value: unknown): string | undefined =>
 const asRecordArray = (value: unknown): UnknownRecord[] =>
   Array.isArray(value) ? value.filter(isRecord) : []
 
+const normalizePaymentMethod = (
+  button: UnknownRecord,
+): PaymentRequestMethod | null =>
+  resolveWaPaymentRequestMethod({
+    text: asString(button.text) ?? "",
+    payment_setting: isRecord(button.payment_setting)
+      ? { type: asString(button.payment_setting.type) }
+      : undefined,
+  })
+
 const normalizeButton = (button: UnknownRecord): StructureButton => {
   const url = asString(button.url)
   const payload = asString(button.payload)
+  const type = asUpperString(button.type) ?? ""
   return {
-    type: asUpperString(button.type) ?? "",
+    type,
     text: asString(button.text) ?? "",
+    paymentMethod:
+      type === "PAYMENT_REQUEST" ? normalizePaymentMethod(button) : undefined,
     url,
     isDynamicUrl: url?.includes(DYNAMIC_URL_TOKEN) ?? false,
     phoneNumber: asString(button.phone_number),

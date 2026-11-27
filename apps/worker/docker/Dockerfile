@@ -1,4 +1,4 @@
-FROM node:24.22.1-trixie-slim AS base
+FROM node:24.22.3-trixie-slim AS base
 
 ENV PNPM_HOME="/pnpm"
 ENV PATH="$PNPM_HOME:$PATH"
@@ -25,6 +25,10 @@ RUN pnpm install --frozen-lockfile
 
 COPY --from=pre /app/out/full/ .
 RUN SKIP_ENV_CHECK=true pnpm turbo run build --filter=worker
+# The entrypoint runs with `--enable-source-maps`; full maps cost +511MB heap,
+# first-party-only maps +114MB. `turbo prune` omits root scripts; copy it back.
+COPY scripts/prune-sourcemaps.mjs scripts/prune-sourcemaps.mjs
+RUN node scripts/prune-sourcemaps.mjs apps/worker/dist
 
 FROM base AS release
 RUN apt update && \
@@ -38,11 +42,18 @@ COPY --from=deps /app/apps/worker/dist /app/apps/worker/dist
 # The bundle leaves the native `sharp` addon external (tsdown `neverBundle`);
 # install it where `dist/*.mjs` resolves it. Keep the version in step with
 # `@chatbotx.io/utils`.
+# `@ai-sdk/provider-utils` (AI SDK v7) loads `undici` for URL downloads through
+# `createRequire(<bundle path>)("undici")`, which the bundler cannot inline, so
+# it must sit next to `dist` too. Keep the version equal to the one
+# `@ai-sdk/provider-utils` resolves in `pnpm-lock.yaml`
+# (`__tests__/docker-runtime-deps.test.ts` fails on drift).
 RUN npm install --prefix /app/apps/worker --omit=dev --no-audit --no-fund \
-  sharp@0.35.5 && \
+  sharp@0.35.5 undici@7.30.1 && \
   npm cache clean --force
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
 ENTRYPOINT ["tini", "--", "/usr/local/bin/docker-entrypoint.sh"]
 STOPSIGNAL SIGTERM
-CMD ["worker", "all"]
+# Core queues, schedule, and sequence workers in one process (~500MB). Use
+# `worker all` for one process per worker, or `worker <name>` to isolate a queue.
+CMD ["worker", "standalone"]

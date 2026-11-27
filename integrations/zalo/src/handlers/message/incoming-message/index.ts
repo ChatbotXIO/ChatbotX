@@ -60,7 +60,11 @@ export const receiveMessage: MessageHandlers<ZaloAuthValue>["receiveMessage"] =
       return null
     }
 
-    const { message, postbackAction } = await getMessageEntity(ctx, data)
+    const entity = await getMessageEntity(ctx, data)
+    if (!entity) {
+      return null
+    }
+    const { message, postbackAction } = entity
 
     // Calculate conversation
     const sourceId = data.event_name.includes("user_send")
@@ -83,7 +87,10 @@ export const receiveMessage: MessageHandlers<ZaloAuthValue>["receiveMessage"] =
 const getMessageEntity = async (
   ctx: Context<ZaloAuthValue>,
   event: ZaloWebhookEvent,
-): Promise<{ message: IncomingMessage; postbackAction: string | null }> => {
+): Promise<{
+  message: IncomingMessage
+  postbackAction: string | null
+} | null> => {
   if (!event.message?.msg_id) {
     throw new ZaloException("Missing msg_id in message event")
   }
@@ -145,7 +152,10 @@ const getMessageEntity = async (
   }
 
   if (!message.text && (message.attachments?.length ?? 0) === 0) {
-    throw new ZaloException(`No content found in message ${event.event_name}`)
+    // Zalo sends some events (e.g. oa_send_template) with no text or
+    // attachment — nothing to store, so drop it instead of failing the job.
+    logger.warn(`Zalo message has no content: ${event.event_name}`)
+    return null
   }
 
   // Detect postback action

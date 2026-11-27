@@ -1,4 +1,9 @@
+import { DrizzleQueryError } from "drizzle-orm"
 import { beforeEach, describe, expect, test, vi } from "vitest"
+import {
+  assertDeletable,
+  assertResourceEditable,
+} from "../src/template/installed-resource.service"
 
 const mocks = vi.hoisted(() => {
   const updateBuilder = {
@@ -25,6 +30,7 @@ const mocks = vi.hoisted(() => {
           id: "questionnaire-1",
           workspaceId: "workspace-1",
         })),
+        findMany: vi.fn(async () => [] as { name: string }[]),
       },
       questionnaireSubmissionModel: {
         findFirst: vi.fn(async () => null),
@@ -41,6 +47,10 @@ const mocks = vi.hoisted(() => {
     insert: vi.fn(() => insertBuilder),
     delete: vi.fn(() => deleteBuilder),
     execute: vi.fn(async () => undefined),
+    // A savepoint runs on the same client in these tests.
+    transaction: vi.fn(async (callback: (client: unknown) => unknown) =>
+      callback(tx),
+    ),
   }
 
   return {
@@ -58,6 +68,15 @@ const mocks = vi.hoisted(() => {
   }
 })
 
+vi.mock("../src/template/installed-resource.service", async () => ({
+  ...(await import("./helpers/template-guard-mocks")).templateGuardMocks({
+    useTransaction: true,
+    assertDeletable: vi.fn(),
+    assertResourceEditable: vi.fn(),
+  }),
+
+  changedKeysOf: () => [],
+}))
 vi.mock("@chatbotx.io/database/client", async (importOriginal) => {
   const actual =
     await importOriginal<typeof import("@chatbotx.io/database/client")>()
@@ -180,6 +199,69 @@ function expectOrderSql(
     expect(sqlText.toLowerCase()).not.toContain("nulls last")
   }
 }
+
+describe("questionnaireService.duplicate", () => {
+  const source = {
+    id: "questionnaire-1",
+    workspaceId: "workspace-1",
+    name: "Survey",
+    triggerFlowId: null,
+    enableScore: false,
+    enableRetryMessages: false,
+    enableCustomFieldMapping: false,
+  }
+
+  beforeEach(() => {
+    vi.clearAllMocks()
+    mocks.tx.query.questionnaireModel.findFirst.mockResolvedValue(source)
+    mocks.tx.query.questionnaireModel.findMany.mockResolvedValue([])
+    mocks.tx.query.questionnaireQuestionModel.findMany.mockResolvedValue([])
+  })
+
+  const insertedNames = () =>
+    mocks.insertBuilder.values.mock.calls.map(
+      ([values]) => (values as { name?: string }).name,
+    )
+
+  test("names the first copy `<name> - Copy`", async () => {
+    await questionnaireService.duplicate({
+      workspaceId: "workspace-1",
+      id: "questionnaire-1",
+    })
+
+    expect(insertedNames()).toEqual(["Survey - Copy"])
+  })
+
+  test("a second copy takes the next free name instead of failing on the unique index", async () => {
+    mocks.tx.query.questionnaireModel.findMany.mockResolvedValue([
+      { name: "Survey - Copy" },
+    ])
+
+    await questionnaireService.duplicate({
+      workspaceId: "workspace-1",
+      id: "questionnaire-1",
+    })
+
+    expect(insertedNames()).toEqual(["Survey - Copy 2"])
+  })
+
+  test("tries the next name when a concurrent copy took the free one", async () => {
+    const conflict = new DrizzleQueryError("insert", [], {
+      code: "23505",
+      constraint: "Questionnaire_workspaceId_name_key",
+    } as Error)
+    mocks.insertBuilder.values.mockImplementationOnce(() => {
+      throw conflict
+    })
+
+    await questionnaireService.duplicate({
+      workspaceId: "workspace-1",
+      id: "questionnaire-1",
+    })
+
+    expect(insertedNames()).toEqual(["Survey - Copy", "Survey - Copy 2"])
+  })
+})
 
 describe("questionnaireService", () => {
   beforeEach(() => {
@@ -363,6 +445,101 @@ describe("questionnaireService", () => {
       deletedAt: expect.any(Date),
     })
     expect(mocks.tx.delete).not.toHaveBeenCalled()
+  })
+
+  test("deleteMany and rename ask the template lock guard first", async () => {
+    await questionnaireService.deleteMany({
+      workspaceId: "workspace-1",
+      ids: ["questionnaire-1", "questionnaire-2"],
+    })
+    expect(assertDeletable).toHaveBeenCalledWith({
+      workspaceId: "workspace-1",
+      resourceKind: "questionnaire",
+      resourceIds: ["questionnaire-1", "questionnaire-2"],
+    })
+
+    await questionnaireService.rename({
+      workspaceId: "workspace-1",
+      id: "questionnaire-1",
+      name: "New",
+    })
+    expect(assertResourceEditable).toHaveBeenCalledWith(
+      expect.objectContaining({
+        resourceKind: "questionnaire",
+        changedKeys: ["name"],
+      }),
+    )
+  })
+
+  test("update takes the guard first inside the transaction and locks its flow and custom fields", async () => {
+    await questionnaireService.update({
+      workspaceId: "workspace-1",
+      id: "questionnaire-1",
+      triggerFlowId: "flow-1",
+      enableScore: false,
+      enableRetryMessages: false,
+      enableCustomFieldMapping: true,
+      questions: [
+        {
+          title: "Email",
+          type: "email",
+          active: true,
+          image: null,
+          customFieldId: "cf-1",
+        },
+      ],
+    })
+
+    expect(assertResourceEditable).toHaveBeenCalledWith(
+      expect.objectContaining({
+        resourceKind: "questionnaire",
+        resourceIds: ["questionnaire-1"],
+        changedKeys: ["questions"],
+        referencedParents: [
+          { kind: "flow", resourceId: "flow-1" },
+          { kind: "customField", resourceId: "cf-1" },
+        ],
+        tx: mocks.tx,
+      }),
+    )
+    expect(
+      vi.mocked(assertResourceEditable).mock.invocationCallOrder[0],
+    ).toBeLessThan(mocks.tx.update.mock.invocationCallOrder[0] as number)
+  })
+
+  test("update blocked by the guard writes nothing", async () => {
+    vi.mocked(assertResourceEditable).mockRejectedValueOnce(new Error("locked"))
+
+    await expect(
+      questionnaireService.update({
+        workspaceId: "workspace-1",
+        id: "questionnaire-1",
+        triggerFlowId: null,
+        enableScore: false,
+        enableRetryMessages: false,
+        enableCustomFieldMapping: false,
+        questions: [
+          { title: "Email", type: "email", active: true, image: null },
+        ],
+      }),
+    ).rejects.toThrow("locked")
+    expect(mocks.tx.update).not.toHaveBeenCalled()
+    expect(mocks.tx.insert).not.toHaveBeenCalled()
+  })
+
+  test("rename runs the guard on the transaction before the write", async () => {
+    await questionnaireService.rename({
+      workspaceId: "workspace-1",
+      id: "questionnaire-1",
+      name: "New",
+    })
+
+    expect(assertResourceEditable).toHaveBeenCalledWith(
+      expect.objectContaining({ tx: mocks.tx }),
+    )
+    expect(
+      vi.mocked(assertResourceEditable).mock.invocationCallOrder[0],
+    ).toBeLessThan(mocks.tx.update.mock.invocationCallOrder[0] as number)
   })
 
   test("update rejects system fields that do not match the question type", async () => {

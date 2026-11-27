@@ -15,6 +15,7 @@ import { customFieldService } from "../custom-field/service"
 import { flowService } from "../flow/service"
 import { inboxService } from "../inbox/service"
 import { logger } from "../logger"
+import { pipelineService } from "../pipeline/service"
 import { sequenceService } from "../sequence/service"
 import { tagService } from "../tag/service"
 import { whatsappMessageTemplateService } from "../whatsapp-message-template/service"
@@ -262,6 +263,13 @@ const getFlowSpecCapabilities = (
       policyVersion: CHANNEL_POLICY_VERSION,
       unsupportedSteps,
       noButtonSteps,
+      nativeButtonTypes: [...policy.nativeButtonTypes],
+      buttonStyles: policy.buttonStyles
+        ? {
+            options: [...policy.buttonStyles.options],
+            default: policy.buttonStyles.default,
+          }
+        : null,
       limits: policy.limits,
       ...(policy.productMessages
         ? { productMessages: policy.productMessages }
@@ -347,10 +355,12 @@ export async function getFlowAuthoringContext(
   // `listCustomFields` / `listFlows`, which cap at `CAPABILITIES_LIST_LIMIT`
   // for the public response) — the compiler must resolve DSL names against
   // the entire workspace, not a truncated page.
-  const [templates, customFields, flows] = await Promise.all([
+  const [templates, customFields, flows, pipelines] = await Promise.all([
     listAllTemplates(workspaceId),
     listAllCustomFields(workspaceId),
     listAllFlows(workspaceId),
+    // Three batched queries for every pipeline with its stages and fields.
+    pipelineService.listAuthoringCatalog({ workspaceId }),
   ])
 
   return {
@@ -377,5 +387,21 @@ export async function getFlowAuthoringContext(
       ]),
     ),
     flowsByName: new Map(flows.map((flow) => [flow.name, { id: flow.id }])),
+    pipelinesByReferenceName: new Map(
+      pipelines.map(({ pipeline, stages, fields }) => [
+        pipeline.referenceName,
+        {
+          id: pipeline.id,
+          name: pipeline.name,
+          referenceName: pipeline.referenceName,
+          stages: stages.map((stage) => ({ id: stage.id, name: stage.name })),
+          fields: fields.map((field) => ({
+            id: field.id,
+            name: field.name,
+            referenceName: field.referenceName,
+          })),
+        },
+      ]),
+    ),
   }
 }

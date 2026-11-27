@@ -107,6 +107,31 @@ describe("captureTemplateFlowResponse", () => {
     })
   })
 
+  test("hands the stored files of the response to the service", async () => {
+    resolveTemplateFlowButton.mockResolvedValue({
+      integrationWhatsappId: "wa-integration-1",
+      flowSourceId: "wa-flow-1",
+      param,
+    })
+    const flowFiles = {
+      docs: [
+        {
+          mediaId: "1",
+          fileName: "a.pdf",
+          mimeType: "application/pdf",
+          size: 10,
+          url: "https://storage.example.com/a.pdf",
+        },
+      ],
+    }
+
+    await captureTemplateFlowResponse({ ...makeJobData(token), flowFiles })
+
+    expect(applyWhatsappFlowResponse).toHaveBeenCalledWith(
+      expect.objectContaining({ flowFiles }),
+    )
+  })
+
   test("applies with no field mappings when the button has none", async () => {
     resolveTemplateFlowButton.mockResolvedValue({
       flowSourceId: "wa-flow-step",

@@ -1,5 +1,7 @@
+import type { ConversationMemberScope } from "@chatbotx.io/business"
 import type {
   WorkspaceApiTokenModel,
+  WorkspaceMemberModel,
   WorkspaceModel,
 } from "@chatbotx.io/database/types"
 import { os } from "@orpc/server"
@@ -17,6 +19,14 @@ export type RequestApiToken = Pick<
   "id" | "workspaceId" | "permission" | "scopes" | "isDefault"
 >
 
+/** Verified MCP OAuth identity; set only for an OAuth access token. */
+export type RequestOAuthPrincipal = {
+  audience: string
+  clientId: string
+  issuer: string
+  subject: string
+}
+
 export type BaseContext = ResponseHeadersPluginContext & {
   headers: Headers
   url?: string
@@ -29,11 +39,25 @@ export type BaseContext = ResponseHeadersPluginContext & {
   workspace?: WorkspaceModel
   apiToken?: RequestApiToken
   /**
+   * Set only for a mobile JWT principal: the caller's real membership of
+   * `workspace`. Its presence is what switches the `/v1` handlers from
+   * workspace-level (API token / MCP) behavior to member-scoped behavior —
+   * contact/conversation scope, per-user attribution. Never set for workspace
+   * API tokens or MCP OAuth, which stay workspace-level and unscoped.
+   */
+  member?: WorkspaceMemberModel
+  /** Mobile member scope resolved once per request, including inbox-team ids. */
+  memberConversationScope?: Promise<ConversationMemberScope>
+  /** Mobile JWT principal only: the installation the access token was issued to. */
+  mobileDeviceId?: string
+  /**
    * Stable identity of the workspace or channel API credential that
    * authenticated this request. The public API idempotency middleware scopes
    * keys to it.
    */
   apiCredentialId?: string
+  /** Set only when an MCP OAuth access token authenticated the request. */
+  oauthPrincipal?: RequestOAuthPrincipal
 }
 
 export const base = os.$context<BaseContext>()

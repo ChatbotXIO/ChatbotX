@@ -1,6 +1,8 @@
 "use client"
 
 import {
+  isExternalStoreSource,
+  type StoreSource,
   type TriggerEventType,
   triggerEventTypes,
 } from "@chatbotx.io/database/partials"
@@ -17,6 +19,7 @@ import {
 import { PlusIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { useMemo } from "react"
+import { pipelineItemEventTypes } from "@/features/conditions/schema/pipeline-item"
 import { defaultFn as addContactInfoUpdatedCondition } from "../conditions/schema/contact-info-updated"
 import { defaultFn as addCustomFieldValueChangedCondition } from "../conditions/schema/custom-field-value-changed"
 import { defaultFn as addDateTimeBaseTriggerCondition } from "../conditions/schema/date-time-based-trigger"
@@ -34,10 +37,21 @@ type ConditionOption = {
   defaultFn: () => unknown
 }
 
+/**
+ * WhatsApp catalog events; an external store (Shopify, WooCommerce) has no WhatsApp catalog, so they
+ * can never fire there.
+ */
+const WHATSAPP_CATALOG_EVENTS: ReadonlySet<TriggerEventType> = new Set([
+  triggerEventTypes.enum.shoppingCartSent,
+  triggerEventTypes.enum.userAskedAboutProduct,
+])
+
 export function AddCondition({
   onAdd,
+  storeSource = "chatbotx",
 }: {
   onAdd: (option: ConditionOption) => void
+  storeSource?: StoreSource
 }) {
   const t = useTranslations()
   const options = useMemo(
@@ -159,46 +173,34 @@ export function AddCondition({
         ],
       },
 
-      // {
-      //   label: t("fields.pipelines.label"),
-      //   children: [
-      //     {
-      //       label: t("trigger.conditions.ticketCreated"),
-      //       value: triggerEventTypes.enum.ticketCreated,
-      //       defaultFn: () => ({
-      //         type: triggerEventTypes.enum.ticketCreated,
-      //       }),
-      //     },
-      //     {
-      //       label: t("trigger.conditions.ticketMovedToStage"),
-      //       value: triggerEventTypes.enum.ticketMovedToStage,
-      //       defaultFn: () => ({
-      //         type: triggerEventTypes.enum.ticketMovedToStage,
-      //       }),
-      //     },
-      //     {
-      //       label: t("trigger.conditions.ticketValueChanged"),
-      //       value: triggerEventTypes.enum.ticketValueChanged,
-      //       defaultFn: () => ({
-      //         type: triggerEventTypes.enum.ticketValueChanged,
-      //       }),
-      //     },
-      //     {
-      //       label: t("trigger.conditions.ticketStatusChanged"),
-      //       value: triggerEventTypes.enum.ticketStatusChanged,
-      //       defaultFn: () => ({
-      //         type: triggerEventTypes.enum.ticketStatusChanged,
-      //       }),
-      //     },
-      //     {
-      //       label: t("trigger.conditions.ticketPriorityChanged"),
-      //       value: triggerEventTypes.enum.ticketPriorityChanged,
-      //       defaultFn: () => ({
-      //         type: triggerEventTypes.enum.ticketPriorityChanged,
-      //       }),
-      //     },
-      //   ],
-      // },
+      {
+        label: t("fields.telegram.label"),
+        children: [
+          {
+            label: t("trigger.conditions.contactBlockedBot"),
+            value: triggerEventTypes.enum.contactBlockedBot,
+            defaultFn: createDefaultFn(
+              triggerEventTypes.enum.contactBlockedBot,
+            ),
+          },
+          {
+            label: t("trigger.conditions.contactUnblockedBot"),
+            value: triggerEventTypes.enum.contactUnblockedBot,
+            defaultFn: createDefaultFn(
+              triggerEventTypes.enum.contactUnblockedBot,
+            ),
+          },
+        ],
+      },
+
+      {
+        label: t("fields.pipelines.label"),
+        children: pipelineItemEventTypes.map((type) => ({
+          label: t(`trigger.conditions.${type}`),
+          value: type,
+          defaultFn: createDefaultFnWithOptionalSourceId(type),
+        })),
+      },
 
       {
         label: t("fields.sequences.label"),
@@ -233,11 +235,19 @@ export function AddCondition({
               triggerEventTypes.enum.categoryAddedToCart,
               triggerEventTypes.enum.productOrdered,
             ] as const
-          ).map((type) => ({
-            label: t(`trigger.conditions.${type}`),
-            value: type,
-            defaultFn: createDefaultFnWithOptionalSourceId(type),
-          })),
+          )
+            .filter(
+              (type) =>
+                !(
+                  isExternalStoreSource(storeSource) &&
+                  WHATSAPP_CATALOG_EVENTS.has(type)
+                ),
+            )
+            .map((type) => ({
+              label: t(`trigger.conditions.${type}`),
+              value: type,
+              defaultFn: createDefaultFnWithOptionalSourceId(type),
+            })),
           ...(
             [
               triggerEventTypes.enum.cartAbandoned,
@@ -246,6 +256,8 @@ export function AddCondition({
               triggerEventTypes.enum.orderShipped,
               triggerEventTypes.enum.orderConcluded,
               triggerEventTypes.enum.orderCancelled,
+              triggerEventTypes.enum.orderPaid,
+              triggerEventTypes.enum.orderRefunded,
             ] as const
           ).map((type) => ({
             label: t(`trigger.conditions.${type}`),
@@ -275,7 +287,7 @@ export function AddCondition({
         ],
       },
     ],
-    [t],
+    [t, storeSource],
   )
 
   return (

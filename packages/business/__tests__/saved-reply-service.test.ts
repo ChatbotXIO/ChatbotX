@@ -1,7 +1,9 @@
 import { beforeEach, describe, expect, test, vi } from "vitest"
+import { installedResourceModelStub } from "./helpers/template-guard-mocks"
 
 const mocks = vi.hoisted(() => ({
   transaction: vi.fn(),
+  execute: vi.fn(),
   insertReturning: vi.fn(),
   updateReturning: vi.fn(),
   findMany: vi.fn(),
@@ -15,7 +17,11 @@ const mocks = vi.hoisted(() => ({
 
 const updateSet = vi.fn()
 
-const tx = {
+// Fresh per test, like a real driver: the template lock registry is keyed by the client.
+const newTx = () => ({
+  execute: mocks.execute,
+  // The reply counts as installed, so the lock path runs.
+  query: { templateInstalledResourceModel: installedResourceModelStub() },
   insert: () => ({
     values: () => ({ returning: mocks.insertReturning }),
   }),
@@ -25,7 +31,8 @@ const tx = {
       return { where: () => ({ returning: mocks.updateReturning }) }
     },
   }),
-}
+})
+let tx = newTx()
 
 vi.mock("@chatbotx.io/database/client", () => ({
   db: {
@@ -49,11 +56,21 @@ vi.mock("../src/platform/settings", () => ({
   resolveTenantSettings: mocks.resolveTenantSettings,
 }))
 
-vi.mock("../src/template/installed-resource.service", () => ({
-  assertDeletable: vi.fn(),
+vi.mock("../src/template/installed-resource.service", async () => ({
+  ...(await import("./helpers/template-guard-mocks")).templateGuardMocks({
+    assertDeletable: vi.fn(),
+    assertResourceEditable: vi.fn(),
+  }),
+
+  changedKeysOf: vi.fn((_existing: unknown, patch: Record<string, unknown>) =>
+    Object.keys(patch),
+  ),
 }))
 
 const { savedReplyService } = await import("../src/saved-reply/service")
+const { assertResourceEditable } = await import(
+  "../src/template/installed-resource.service"
+)
 
 const savedReply = {
   id: "reply-1",
@@ -75,6 +92,7 @@ const imageFile = (id: string, mimeType = "image/png") => ({
 
 beforeEach(() => {
   vi.clearAllMocks()
+  tx = newTx()
   mocks.transaction.mockImplementation((callback) => callback(tx))
   mocks.insertReturning.mockResolvedValue([savedReply])
   mocks.updateReturning.mockResolvedValue([savedReply])
@@ -221,6 +239,64 @@ describe("savedReplyService.update", () => {
     )
 
     expect(mocks.listBySavedReplyIds).toHaveBeenCalledTimes(1)
+  })
+
+  test("takes the guard first inside the transaction, with the image change as a content key", async () => {
+    mocks.findByIds.mockResolvedValue([imageFile("f1")])
+    mocks.listBySavedReplyIds.mockResolvedValue([])
+
+    await savedReplyService.update(
+      { workspaceId: "ws-1", id: "reply-1" },
+      { shortcut: "hello", imageFileIds: ["f1"] },
+    )
+
+    expect(assertResourceEditable).toHaveBeenCalledWith(
+      expect.objectContaining({
+        resourceKind: "savedReply",
+        resourceIds: ["reply-1"],
+        changedKeys: ["shortcut", "images"],
+        tx,
+      }),
+    )
+    expect(
+      vi.mocked(assertResourceEditable).mock.invocationCallOrder[0],
+    ).toBeLessThan(updateSet.mock.invocationCallOrder[0] as number)
+    expect(
+      vi.mocked(assertResourceEditable).mock.invocationCallOrder[0],
+    ).toBeLessThan(
+      mocks.replaceForSavedReply.mock.invocationCallOrder[0] as number,
+    )
+  })
+
+  test("holds the reply's lock before the stored row is read inside the transaction", async () => {
+    await savedReplyService.update(
+      { workspaceId: "ws-1", id: "reply-1" },
+      { shortcut: "hello", text: "Hi again" },
+    )
+
+    expect(mocks.execute).toHaveBeenCalledTimes(1)
+    expect(mocks.execute.mock.invocationCallOrder[0]).toBeLessThan(
+      mocks.findOrFail.mock.invocationCallOrder[0] as number,
+    )
+    expect(mocks.findOrFail).toHaveBeenCalledWith(
+      expect.objectContaining({
+        client: expect.objectContaining({ execute: mocks.execute }),
+      }),
+    )
+  })
+
+  test("a blocked edit never writes the reply or its images", async () => {
+    vi.mocked(assertResourceEditable).mockRejectedValueOnce(new Error("locked"))
+    mocks.findByIds.mockResolvedValue([imageFile("f1")])
+
+    await expect(
+      savedReplyService.update(
+        { workspaceId: "ws-1", id: "reply-1" },
+        { shortcut: "hello", text: "Changed", imageFileIds: ["f1"] },
+      ),
+    ).rejects.toThrow("locked")
+    expect(updateSet).not.toHaveBeenCalled()
+    expect(mocks.replaceForSavedReply).not.toHaveBeenCalled()
   })
 
   test("clears the images with an empty list when text remains", async () => {

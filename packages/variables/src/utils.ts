@@ -1,6 +1,7 @@
 import {
   appointmentService,
   buildAppointmentUrl,
+  contactReferralEventService,
   conversationService,
   facebookLeadAdsLeadService,
   messageService,
@@ -14,6 +15,7 @@ import {
   normalizeStoredTimezone,
   offsetFromStoredTimezone,
 } from "@chatbotx.io/business/contact-locale"
+import { loadLastPipelineItemId } from "@chatbotx.io/business/pipeline/variable-targets"
 import { resolveGenderLabel } from "@chatbotx.io/business/system-field"
 import { isWorkspaceScheduledForDeletion } from "@chatbotx.io/business/workspace-lifecycle/predicates"
 import { ensureContactAvatarMirrored } from "@chatbotx.io/channel-registry/media-hydration"
@@ -30,6 +32,7 @@ import { signMiniAppToken } from "@chatbotx.io/encryption/mini-app-token"
 import { signMinigamePlayToken } from "@chatbotx.io/encryption/minigame-play-token"
 import { signShopToken } from "@chatbotx.io/encryption/shop-token"
 import { signUserHash } from "@chatbotx.io/encryption/user-hash"
+import { isEmailThreadSourceId } from "@chatbotx.io/utils"
 import {
   DATE_FORMAT,
   DATE_TIME_FORMAT,
@@ -48,7 +51,9 @@ import {
 } from "./helpers/assigned"
 import {
   findPrimaryContactChannel,
+  getFirstContactAdId,
   getLatestContactNoteString,
+  listContactAdIdsString,
   listContactNotesString,
   listContactTagsString,
 } from "./helpers/contact"
@@ -70,7 +75,7 @@ import { getChatHistory } from "./helpers/message"
 import { getQueuedMessages } from "./helpers/queued-messages"
 import { toPublicStorageUrl } from "./helpers/storage-url"
 import { logger } from "./logger"
-import type { ContactVariableContext } from "./schema"
+import type { ContactVariableContext, ReplaceVariableProps } from "./schema"
 
 const LOCALE_SEPARATOR_RE = /[-_]/
 // Exported so javascript-interpolation.ts scans the same placeholder syntax as
@@ -97,19 +102,39 @@ const contactSourceLabels: Record<ContactSource, string> = {
   [contactSources.enum.botLink]: "Bot Link",
   [contactSources.enum.chatPlugin]: "Chat Plugin",
   [contactSources.enum.comments]: "Facebook/IG Comment",
+  [contactSources.enum.liveComments]: "Facebook/IG Livestream",
   [contactSources.enum.imported]: "Imported",
   [contactSources.enum.api]: "API",
   [contactSources.enum.direct]: "Direct",
   [contactSources.enum.inboundWebhook]: "Inbound Webhook",
 }
 
-const formatContactSource = (source: string | null | undefined): string => {
+// Comments also arrive from channels outside Meta; those get their own name
+// instead of the "Facebook/IG" label. Only Facebook and Instagram have lives.
+const commentSourceLabelsByChannel: Partial<Record<string, string>> = {
+  tiktok: "TikTok Comment",
+  threads: "Threads Comment",
+}
+
+const formatContactSource = (
+  source: string | null | undefined,
+  channel: string | null | undefined,
+): string => {
   if (!source) {
     return "Unknown"
   }
   const parsedSource = contactSources.safeParse(source)
   if (!parsedSource.success) {
     return source
+  }
+  const channelCommentLabel = channel
+    ? commentSourceLabelsByChannel[channel]
+    : undefined
+  if (
+    parsedSource.data === contactSources.enum.comments &&
+    channelCommentLabel
+  ) {
+    return channelCommentLabel
   }
   return contactSourceLabels[parsedSource.data]
 }
@@ -185,7 +210,7 @@ export const getContactTimezone = ({
   workspace?.timezone ??
   DEFAULT_FILTER_TIMEZONE
 
-const formatDate = (
+export const formatDate = (
   date: Date | string | null | undefined,
   timezone: string | null,
 ): string | null => {
@@ -196,7 +221,7 @@ const formatDate = (
   return formatWithFallback(date, timezone, DATE_FORMAT)
 }
 
-const formatDateTime = (
+export const formatDateTime = (
   date: Date | string | null | undefined,
   timezone: string | null,
 ): string | null => {
@@ -269,10 +294,12 @@ const getFlowStepValue = async (
   context: ContactVariableContext,
   key: "lastStep" | "currentStep",
 ): Promise<string | null> => {
-  const conversation = await conversationService.findDMByContact({
-    workspaceId: context.contact.workspaceId,
-    contactId: context.contact.id,
-  })
+  const conversation = isEmailThreadSourceId(context.conversation?.sourceId)
+    ? context.conversation
+    : await conversationService.findDMByContact({
+        workspaceId: context.contact.workspaceId,
+        contactId: context.contact.id,
+      })
   return conversation?.[key] ?? null
 }
 
@@ -353,7 +380,7 @@ const getLastQuestionnairePoints = async (
     })
 
   // A contact who never completed a scored questionnaire has 0 points (the
-  // value Chatrace renders), not an empty substitution.
+  // value imported flows expect), not an empty substitution.
   return String(submission?.totalPoints ?? 0)
 }
 
@@ -373,7 +400,17 @@ const getFlowSenderValue = async (
 
 const getLatestLeadValue = async (
   context: ContactVariableContext,
-  key: "leadgenId" | "formId" | "formName" | "adgroupId",
+  key:
+    | "leadgenId"
+    | "formId"
+    | "formName"
+    | "adgroupId"
+    | "adId"
+    | "adName"
+    | "adsetId"
+    | "adsetName"
+    | "campaignId"
+    | "campaignName",
 ): Promise<string | null> => {
   const lead = await facebookLeadAdsLeadService.findLatestByContact({
     workspaceId: context.contact.workspaceId,
@@ -383,8 +420,40 @@ const getLatestLeadValue = async (
   return lead?.[key] ?? null
 }
 
-export const getSystemFieldValue = async (
+/**
+ * The ad the contact came from most recently: the click-to-message referral
+ * of this inbox or the ad of the latest Lead Ads lead, whichever is newer, so
+ * `{{last_ad}}` names the same ad as `{{last_ad_name}}` when the lead is the
+ * latest. A referral with no logged touch predates the touch log, which is
+ * older than any lead carrying an ad id, so the lead wins then.
+ */
+const getLastAdId = async (
   context: ContactVariableContext,
+): Promise<string | null> => {
+  const { contact, contactInbox } = context
+  const referralAdId = getReferralValue(contactInbox, "adId")
+  const lead = await facebookLeadAdsLeadService.findLatestByContact({
+    workspaceId: contact.workspaceId,
+    contactId: contact.id,
+  })
+  const leadAdId = lead?.adId || null
+  if (!(referralAdId && contactInbox && lead && leadAdId)) {
+    return referralAdId ?? leadAdId
+  }
+
+  const referralAt = await contactReferralEventService.findLatestAdTouchAt({
+    workspaceId: contact.workspaceId,
+    contactId: contact.id,
+    contactInboxId: contactInbox.id,
+  })
+  if (referralAt && referralAt > lead.createdAt) {
+    return referralAdId
+  }
+  return leadAdId
+}
+
+export const getSystemFieldValue = async (
+  context: ContactVariableContext & Pick<ReplaceVariableProps, "pipelineItems">,
   key: SystemFieldType,
 ): Promise<string | null> => {
   const { contact, contactInbox, workspace } = context
@@ -435,10 +504,21 @@ export const getSystemFieldValue = async (
       return formatDate(contactInbox?.createdAt, contactTimezone)
     case systemFieldTypes.enum.last_seen:
       return formatDateTime(contactInbox?.contactLastReadAt, contactTimezone)
+    case systemFieldTypes.enum.last_opportunity_id:
+      // The context's loader shares one query per render; without one, read it.
+      return await (context.pipelineItems?.lastItemId() ??
+        loadLastPipelineItemId({
+          workspaceId: contact.workspaceId,
+          contactId: contact.id,
+        }))
     case systemFieldTypes.enum.last_input:
       return await getContactLastInput(contact.id)
     case systemFieldTypes.enum.last_input_type:
       return await getContactLastInputType(contact.id)
+    // The stored column the "Last user input type" contact filter reads, so
+    // the variable and the filter agree (`storyMention`, `reel`).
+    case systemFieldTypes.enum.last_user_input_type:
+      return contactInbox?.lastUserInputType ?? null
     case systemFieldTypes.enum.last_text_input:
       return await getContactLastTextInput(contact.id)
     case systemFieldTypes.enum.last_call_recorded:
@@ -500,7 +580,7 @@ export const getSystemFieldValue = async (
     case systemFieldTypes.enum.workspace_id:
       return contact.workspaceId
     case systemFieldTypes.enum.user_source:
-      return formatContactSource(contactInbox?.source)
+      return formatContactSource(contactInbox?.source, contactInbox?.channel)
     case systemFieldTypes.enum.assigned_admin_name:
       return await resolveAssigneeName(contact.id, contact.workspaceId)
     case systemFieldTypes.enum.assigned_admin_email:
@@ -588,8 +668,8 @@ export const getSystemFieldValue = async (
     // Always an empty string, for a template slot that must stay blank.
     case systemFieldTypes.enum.empty:
       return ""
-    // `last_btt_title` is Chatrace's spelling of `last_btn_title`; the alias
-    // lets flows imported from Chatrace resolve it.
+    // `last_btt_title` is a legacy spelling of `last_btn_title`; the alias
+    // lets imported flows resolve it.
     case systemFieldTypes.enum.last_btn_title:
     case systemFieldTypes.enum.last_btt_title:
       return contactInbox?.lastBtnTitle ?? null
@@ -610,7 +690,7 @@ export const getSystemFieldValue = async (
     // that predates this model gets its default token lazily minted (or its
     // legacy plaintext migrated forward from the deprecated
     // Workspace.token) on first resolve.
-    // `page_api_key` is Chatrace's spelling of `api_key`.
+    // `page_api_key` is a legacy spelling of `api_key`.
     case systemFieldTypes.enum.api_key:
     case systemFieldTypes.enum.page_api_key:
       if (workspace && isWorkspaceScheduledForDeletion(workspace)) {
@@ -631,9 +711,15 @@ export const getSystemFieldValue = async (
         return null
       }
     case systemFieldTypes.enum.last_ad:
-      return getReferralValue(contactInbox, "adId")
+      return await getLastAdId(context)
     case systemFieldTypes.enum.last_ctwa:
       return getReferralValue(contactInbox, "ctwaClid")
+    // Unlike `last_ad`, these read the contact's ad touch log, so they span
+    // every inbox and every ad the contact came from, not just the latest.
+    case systemFieldTypes.enum.ad_ids:
+      return await listContactAdIdsString(contact.id, contact.workspaceId)
+    case systemFieldTypes.enum.ad_id:
+      return await getFirstContactAdId(contact.id, contact.workspaceId)
     case systemFieldTypes.enum.last_ad_source_url:
       return getReferralValue(contactInbox, "sourceUrl")
     case systemFieldTypes.enum.last_ad_source_platform:
@@ -698,6 +784,16 @@ export const getSystemFieldValue = async (
       return await getLatestLeadValue(context, "formName")
     case systemFieldTypes.enum.last_adgroup_id:
       return await getLatestLeadValue(context, "adgroupId")
+    case systemFieldTypes.enum.last_ad_name:
+      return await getLatestLeadValue(context, "adName")
+    case systemFieldTypes.enum.last_adset_id:
+      return await getLatestLeadValue(context, "adsetId")
+    case systemFieldTypes.enum.last_adset_name:
+      return await getLatestLeadValue(context, "adsetName")
+    case systemFieldTypes.enum.last_campaign_id:
+      return await getLatestLeadValue(context, "campaignId")
+    case systemFieldTypes.enum.last_campaign_name:
+      return await getLatestLeadValue(context, "campaignName")
     case systemFieldTypes.enum.booking_link: {
       const appointment = await getAppointment(context)
       if (!appointment) {

@@ -1,6 +1,9 @@
 "use server"
 
-import { automatedResponseService } from "@chatbotx.io/automated-response"
+import {
+  automatedResponseService,
+  isKeywordMediaFileType,
+} from "@chatbotx.io/automated-response"
 import {
   contactInboxService,
   contactService,
@@ -14,6 +17,7 @@ import {
 } from "@chatbotx.io/business"
 import { resolveLastUserInputTracking } from "@chatbotx.io/business/contact-inbox"
 import { normalizeLanguage } from "@chatbotx.io/business/contact-locale"
+import { detectContactInfoTypes } from "@chatbotx.io/business/detect-contact-info"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
 import { getPublicFileUrl } from "@chatbotx.io/business/utils"
 
@@ -25,8 +29,13 @@ import type { IntegrationWebchatModel } from "@chatbotx.io/database/types"
 import { emit } from "@chatbotx.io/event-bus"
 import { setWebhookExecutionContext } from "@chatbotx.io/events/context"
 import { type UploadedFile, uploadMultipleFiles } from "@chatbotx.io/filesystem"
-import { messageEventTypeSchema } from "@chatbotx.io/flow-config"
 import {
+  decodeStepInputSkipPostback,
+  messageEventTypeSchema,
+  stepInputResolutionReasons,
+} from "@chatbotx.io/flow-config"
+import {
+  buildResolveStepInputJob,
   IntegrationJobAction,
   integrationQueue,
 } from "@chatbotx.io/worker-config"
@@ -197,7 +206,18 @@ export async function handleCreateWebchatMessage({
     return null
   }
 
-  if ("postback" in parsedInput && parsedInput.postback) {
+  // A Skip tap is resolved by its own job (after the tap's message is saved),
+  // never as a flow action.
+  const stepInputSkipChallengeId =
+    "postback" in parsedInput
+      ? decodeStepInputSkipPostback(parsedInput.postback)
+      : null
+
+  if (
+    "postback" in parsedInput &&
+    parsedInput.postback &&
+    !stepInputSkipChallengeId
+  ) {
     await automatedResponseService.enqueueFlowAction({
       kind: "postback",
       data: {
@@ -301,6 +321,15 @@ export async function handleCreateWebchatMessage({
       )
     }
 
+    // Webchat does not write phone/email into the Contact from messages (other
+    // channels do); it only reports which kinds the message holds, for the
+    // "left a phone / email" statistic. Pure text scan with the workspace
+    // already in hand: no query, and no value on the event.
+    const contactInfoTypes = detectContactInfoTypes(
+      newMessage.text,
+      workspace.targetCountry,
+    )
+
     emit(messageEventTypeSchema.enum["message:received"], {
       workspaceId: conversation.workspaceId,
       contactId: contactInbox.contactId,
@@ -309,6 +338,16 @@ export async function handleCreateWebchatMessage({
       inboxId: contactInbox.inboxId,
       occurredAt: newMessage.createdAt ?? new Date(),
       sourceId: newMessage.sourceId ?? undefined,
+      origin: "inbound",
+      messageId: newMessage.id,
+      contactInfoCapture:
+        contactInfoTypes.length > 0
+          ? {
+              infoTypes: contactInfoTypes,
+              conversationId: conversation.id,
+              conversationCreatedAt: conversation.createdAt.toISOString(),
+            }
+          : undefined,
     })
 
     await queueMessageCreatedEvent(
@@ -321,6 +360,12 @@ export async function handleCreateWebchatMessage({
     )
 
     const promises: Promise<unknown>[] = []
+    // An image/video/audio without text still reaches Keywords (image/video/
+    // audio conditions); the enqueue only queues it when a keyword rule matches.
+    const attachmentFileTypes = newMessage.attachments.map(
+      (attachment) => attachment.fileType,
+    )
+    const hasKeywordMedia = attachmentFileTypes.some(isKeywordMediaFileType)
 
     const additionalAttributes =
       conversation.additionalAttributes as unknown as ConversationAttributes
@@ -329,7 +374,11 @@ export async function handleCreateWebchatMessage({
       "postback" in parsedInput && parsedInput.postback,
     )
     if (
-      shouldRunWebchatChallenge(additionalAttributes?.challenge, hasPostback)
+      shouldRunWebchatChallenge(
+        additionalAttributes?.challenge,
+        hasPostback,
+        stepInputSkipChallengeId !== null,
+      )
     ) {
       promises.push(
         integrationQueue.add(
@@ -339,38 +388,47 @@ export async function handleCreateWebchatMessage({
             data: {
               conversationId: conversation,
               contactInboxId: contactInbox,
+              // Names the message this run answers, so a reply queued before a
+              // later message (a Skip tap) is judged on its own text.
+              messageId: newMessage.id,
+              messageCreatedAt: newMessage.createdAt,
               challenge: additionalAttributes?.challenge,
             },
           },
-          {
-            deduplication: {
-              id: `conversation-${conversation.id}-challenge`,
-            },
-          },
+          // One run per message, like the webhook channels: each job judges the
+          // message it names, so a deduplicated (dropped) reply would never be
+          // processed. Duplicate or racing runs are settled by the attempt
+          // compare-and-set and the challenge claim.
+          { jobId: `webchat-challenge-${conversation.id}-${newMessage.id}` },
         ),
       )
     } else if (
-      newMessage.text &&
+      (newMessage.text || hasKeywordMedia) &&
       !("postback" in parsedInput && parsedInput.postback)
     ) {
       const isConversationActive =
         await conversationService.ensureActive(conversation)
-      promises.push(
-        isConversationActive
-          ? automatedResponseService.enqueue({
-              conversationId: conversation.id,
-              contactInboxId: contactInbox.id,
-              messageId: newMessage.id,
-              messageText: newMessage.text,
-              workspaceId: conversation.workspaceId,
-            })
-          : automatedResponseService.enqueueHandoffReentry({
-              conversationId: conversation.id,
-              contactInboxId: contactInbox.id,
-              messageId: newMessage.id,
-              workspaceId: conversation.workspaceId,
-            }),
-      )
+      if (isConversationActive) {
+        promises.push(
+          automatedResponseService.enqueue({
+            conversationId: conversation.id,
+            contactInboxId: contactInbox.id,
+            messageId: newMessage.id,
+            messageText: newMessage.text ?? undefined,
+            attachmentFileTypes,
+            workspaceId: conversation.workspaceId,
+          }),
+        )
+      } else if (newMessage.text) {
+        promises.push(
+          automatedResponseService.enqueueHandoffReentry({
+            conversationId: conversation.id,
+            contactInboxId: contactInbox.id,
+            messageId: newMessage.id,
+            workspaceId: conversation.workspaceId,
+          }),
+        )
+      }
     }
 
     if (isNewContact && contactInbox.sourceId) {
@@ -398,10 +456,42 @@ export async function handleCreateWebchatMessage({
       await Promise.allSettled(promises)
     }
 
+    // Not part of the best-effort list above: if this enqueue fails the
+    // contact is waiting on the Skip, so the failure must surface (the widget
+    // can resend, and the resolution is idempotent).
+    if (stepInputSkipChallengeId) {
+      await enqueueStepInputSkip({
+        conversationId: conversation.id,
+        contactInboxId: contactInbox.id,
+        challengeId: stepInputSkipChallengeId,
+        message: newMessage,
+      })
+    }
+
     return newMessage
   }
 
   return null
+}
+
+function enqueueStepInputSkip(props: {
+  conversationId: string
+  contactInboxId: string
+  challengeId: string
+  message: { id: string; createdAt: Date }
+}) {
+  const { conversationId, contactInboxId, challengeId, message } = props
+
+  const job = buildResolveStepInputJob({
+    conversationId,
+    contactInboxId,
+    challengeId,
+    reason: stepInputResolutionReasons.enum.user_skipped,
+    messageId: message.id,
+    messageCreatedAt: message.createdAt,
+  })
+
+  return integrationQueue.add(job.name, job.data, job.opts)
 }
 
 async function getConversationFromInput(

@@ -1,5 +1,6 @@
 // @vitest-environment jsdom
 
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { act } from "react"
 import { createRoot, type Root } from "react-dom/client"
 import { afterEach, describe, expect, test, vi } from "vitest"
@@ -26,12 +27,29 @@ class PointerEventPolyfill extends MouseEvent {
 
 const listSelectableResourcesAPI = vi.fn()
 
-vi.mock("@/lib/orpc/orpc", () => ({
-  client: {
+type PagedInput = (cursor: string | undefined) => unknown
+
+vi.mock("@/lib/orpc/query", () => ({
+  orpc: {
     templatesAPI: {
-      listSelectableResourcesAPI: (
-        ...args: Parameters<typeof listSelectableResourcesAPI>
-      ) => listSelectableResourcesAPI(...args),
+      listSelectableResourcesAPI: {
+        infiniteOptions: (options: {
+          input: PagedInput
+          initialPageParam: undefined
+          getNextPageParam: (page: unknown) => unknown
+        }) => ({
+          ...options,
+          queryKey: ["selectable", options.input(undefined)],
+          queryFn: ({ pageParam }: { pageParam: string | undefined }) =>
+            Promise.resolve(
+              listSelectableResourcesAPI(options.input(pageParam)),
+            ),
+        }),
+        queryOptions: ({ input }: { input: unknown }) => ({
+          queryKey: ["selectable-all", input],
+          queryFn: () => Promise.resolve(listSelectableResourcesAPI(input)),
+        }),
+      },
     },
   },
 }))
@@ -44,8 +62,16 @@ async function renderComponent(ui: React.ReactElement) {
   container = document.createElement("div")
   document.body.appendChild(container)
   root = createRoot(container)
+  const client = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  })
   await act(() => {
-    root?.render(ui)
+    root?.render(
+      <QueryClientProvider client={client}>{ui}</QueryClientProvider>,
+    )
+  })
+  await act(async () => {
+    await new Promise((resolve) => setTimeout(resolve, 0))
   })
   return container
 }
@@ -60,7 +86,6 @@ afterEach(() => {
   container = null
   root = null
   vi.clearAllMocks()
-  vi.useRealTimers()
 })
 
 const FULL_SET = ["id-1", "id-2", "id-3"]
@@ -73,7 +98,6 @@ const clickCheckbox = async (node: Element) => {
 
 describe("CategoryResourceList selection", () => {
   test("select-all after a search still selects the full unfiltered set, not just the matches", async () => {
-    vi.useFakeTimers()
     listSelectableResourcesAPI.mockImplementation(
       (input: { keyword?: string }) => {
         if (input.keyword) {
@@ -123,13 +147,15 @@ describe("CategoryResourceList selection", () => {
       searchInput.dispatchEvent(new Event("input", { bubbles: true }))
     })
 
-    // Drive the real debounce timer so `fetchPage(null, "Matching")` runs
-    // through the component's own effect, not a re-invoked mock.
-    await act(() => {
-      vi.advanceTimersByTime(500)
-    })
-    await act(async () => {
-      await Promise.resolve()
+    // Let the real debounce settle and the search query answer, so the
+    // search ran through the component's own hook, not a re-invoked mock.
+    await vi.waitFor(async () => {
+      await act(async () => {
+        await new Promise((resolve) => setTimeout(resolve, 50))
+      })
+      expect(listSelectableResourcesAPI).toHaveBeenCalledWith(
+        expect.objectContaining({ keyword: "Matching" }),
+      )
     })
 
     const selectAllCheckbox = el.querySelector(
@@ -162,9 +188,16 @@ describe("CategoryResourceList selection", () => {
     )
 
     const allCheckboxes = Array.from(el.querySelectorAll('[role="checkbox"]'))
+    // Selection checkboxes only: the select-all box and every View only (lock)
+    // box are separate controls with their own labels.
     const rowCheckboxes = allCheckboxes.filter(
       (node) =>
-        node.getAttribute("aria-labelledby") !== "flows-select-all-label",
+        !(
+          ["flows-select-all-label", "flows-lock-all-label"].includes(
+            node.getAttribute("aria-labelledby") ?? "",
+          ) ||
+          (node.getAttribute("aria-labelledby") ?? "").endsWith("-lock-label")
+        ),
     )
     expect(rowCheckboxes.length).toBe(FULL_SET.length)
 
@@ -173,6 +206,54 @@ describe("CategoryResourceList selection", () => {
     expect(onChange).toHaveBeenCalledWith({
       mode: "ids",
       ids: FULL_SET.filter((id) => id !== "id-2"),
+    })
+  })
+  // Above the allIds cap the hook pages through every id itself: the API
+  // serves at most 200 rows a call, so one "limit: total" request was refused.
+  test("unchecking a row in a category too big for allIds fetches every page of ids", async () => {
+    const BIG = Array.from({ length: 450 }, (_, index) => `big-${index}`)
+    listSelectableResourcesAPI.mockImplementation(
+      (input: { cursor?: string; limit: number }) => {
+        const start = input.cursor ? Number(input.cursor) : 0
+        const end = Math.min(start + input.limit, BIG.length)
+        return {
+          items: BIG.slice(start, end).map((id) => ({ id, name: id })),
+          nextCursor: end < BIG.length ? String(end) : null,
+          total: BIG.length,
+        }
+      },
+    )
+
+    const onChange = vi.fn()
+    const el = await renderComponent(
+      <CategoryResourceList
+        category="flows"
+        onChange={onChange}
+        selection={{ mode: "all" }}
+        workspaceId="ws-1"
+      />,
+    )
+    const firstRow = Array.from(el.querySelectorAll('[role="checkbox"]')).find(
+      (node) =>
+        !(
+          ["flows-select-all-label", "flows-lock-all-label"].includes(
+            node.getAttribute("aria-labelledby") ?? "",
+          ) ||
+          (node.getAttribute("aria-labelledby") ?? "").endsWith("-lock-label")
+        ),
+    )
+    await clickCheckbox(firstRow as Element)
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 0))
+    })
+
+    const pageCalls = listSelectableResourcesAPI.mock.calls
+      .map(([input]) => input as { limit: number })
+      .filter((input) => input.limit === 200)
+    expect(pageCalls).toHaveLength(3)
+    expect(onChange).toHaveBeenCalledWith({
+      mode: "ids",
+      ids: BIG.filter((id) => id !== "big-0"),
     })
   })
 })

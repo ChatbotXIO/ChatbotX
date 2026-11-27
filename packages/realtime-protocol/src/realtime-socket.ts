@@ -122,8 +122,10 @@ export class RealtimeSocket {
           this.#armHeartbeat(socket)
           this.options.onOpen?.()
         }
+        // A message is not proof of a healthy connection: the gateway can send
+        // a replay frame and close with a resync from the same `open`. Only the
+        // uptime timer (armed in `onopen`) resets the backoff.
         socket.onmessage = (event) => {
-          this.#resetAttempt()
           this.#armHeartbeat(socket)
           this.options.onMessage(event.data)
         }

@@ -6,6 +6,7 @@ import {
   claudeConnectionProvider,
   deepseekConnectionProvider,
   geminiConnectionProvider,
+  museConnectionProvider,
   openaiCompatibleConnectionProvider,
   openaiConnectionProvider,
   openrouterConnectionProvider,
@@ -154,6 +155,7 @@ describe.each([
   ["claude", claudeConnectionProvider],
   ["deepseek", deepseekConnectionProvider],
   ["gemini", geminiConnectionProvider],
+  ["muse", museConnectionProvider],
   ["openai", openaiConnectionProvider],
   ["openrouter", openrouterConnectionProvider],
 ] as const)("AI API-key provider: %s", (providerName, provider) => {

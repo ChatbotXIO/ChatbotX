@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import type { UseFormReturn } from "react-hook-form"
 import { toast } from "sonner"
+import { AI_MODERATION_DEFAULTS } from "@/features/shared/comment-automation/lib/ai-moderation-defaults"
 import { createTiktokCommentAction } from "../actions/create-tiktok-comment.action"
 import {
   type CreateTiktokCommentRequest,
@@ -39,14 +40,18 @@ const defaultValues = {
     hasEmoji: false,
     keywords: [],
     showCommentsAfter: "none" as const,
+    aiModeration: AI_MODERATION_DEFAULTS,
   },
   replyAfter: { type: "immediately" as const, value: 0 },
 }
 
 export function CreateTiktokCommentForm({
   workspaceId,
+  captionUnavailableInboxIds,
 }: {
   workspaceId: string
+  /** TikTok accounts that cannot read captions (see the hashtags target). */
+  captionUnavailableInboxIds: string[]
 }) {
   const t = useTranslations()
   const validationMessages = resolveTiktokCommentValidationMessages(t)
@@ -78,6 +83,7 @@ export function CreateTiktokCommentForm({
   return (
     <Form {...form}>
       <TiktokCommentForm
+        captionUnavailableInboxIds={captionUnavailableInboxIds}
         form={typedForm}
         isSubmitting={form.formState.isSubmitting}
         onCancel={() => router.push(`/space/${workspaceId}/tiktok-comments`)}

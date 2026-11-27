@@ -1,0 +1,76 @@
+{
+  "type": "diff",
+  "version": "10",
+  "dialect": "postgres",
+  "id": "e209ed10-730b-40dd-86eb-9d5feea66b7b",
+  "prevIds": [
+    "25451959-a916-406e-9bca-bb67da1b502d"
+  ],
+  "footprints": [
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "PipelineItem",
+        "position"
+      ],
+      "writes": [
+        "s|col|public.PipelineItem.position",
+        "n|col|public.PipelineItem.position",
+        "e|col|public.PipelineItem.position"
+      ],
+      "reads": [
+        "n|tbl|public.PipelineItem",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "add_check",
+      "statementTarget": [
+        "table",
+        "public",
+        "PipelineItem"
+      ],
+      "writes": [
+        "s|ck|public.PipelineItem.PipelineItem_position_finite_check",
+        "n|ck|public.PipelineItem.PipelineItem_position_finite_check",
+        "e|ck|public.PipelineItem.PipelineItem_position_finite_check",
+        "n|con|public.PipelineItem.PipelineItem_position_finite_check"
+      ],
+      "reads": [
+        "n|tbl|public.PipelineItem",
+        "n|sch|public",
+        "n|col|public.PipelineItem.position"
+      ]
+    }
+  ],
+  "deltas": [
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PipelineItem",
+        "name": "position",
+        "type": "double precision",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "(-(extract(epoch from now()) * 1000))",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PipelineItem",
+        "name": "PipelineItem_position_finite_check",
+        "value": "\"position\" > '-Infinity'::float8 AND \"position\" < 'Infinity'::float8",
+        "entityType": "checks"
+      }
+    }
+  ]
+}

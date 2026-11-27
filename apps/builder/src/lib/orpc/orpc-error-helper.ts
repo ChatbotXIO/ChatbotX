@@ -1,6 +1,10 @@
 import { BROADCAST_PLAN_LIMIT_CODE } from "@chatbotx.io/business/errors"
+import type { CONTACT_SYNC_ERROR_CODES } from "@chatbotx.io/database/partials"
 import {
   broadcastPlanLimitDataSchema,
+  contactSyncAlreadyRunningDataSchema,
+  contactSyncCooldownDataSchema,
+  contactSyncMappingInvalidDataSchema,
   IMAGES_NOT_SUPPORTED_ON_CHANNEL_CODE,
   imagesNotSupportedOnChannelDataSchema,
   PRODUCT_MESSAGE_UNRESOLVABLE_CODE,
@@ -8,7 +12,14 @@ import {
 } from "@chatbotx.io/database/partials"
 import type { ErrorMap } from "@orpc/server"
 import { z } from "zod"
+import {
+  TRANSLATION_API_ERRORS,
+  type TRANSLATION_NOT_SENT_CODE,
+  TRANSLATION_NOT_SENT_ERROR,
+} from "@/features/translation/schema/errors"
 import { DENIAL_MESSAGES } from "@/lib/workspace/authorize-workspace-access"
+
+type ContactSyncErrorCodes = typeof CONTACT_SYNC_ERROR_CODES
 
 const notFound = {
   message: "Resource not found",
@@ -51,6 +62,14 @@ export const STRUCTURED_ERROR_CODES: ReadonlySet<string> = new Set([
   BROADCAST_PLAN_LIMIT_CODE,
   PRODUCT_MESSAGE_UNRESOLVABLE_CODE,
   IMAGES_NOT_SUPPORTED_ON_CHANNEL_CODE,
+  // Literals checked against the code table at compile time only: no
+  // module-scope read of a value a narrow test mock may leave out.
+  "contactSyncMappingInvalid" satisfies ContactSyncErrorCodes["mappingInvalid"],
+  "contactSyncAlreadyRunning" satisfies ContactSyncErrorCodes["alreadyRunning"],
+  "contactSyncCooldown" satisfies ContactSyncErrorCodes["cooldown"],
+  "translationNotSent" satisfies typeof TRANSLATION_NOT_SENT_CODE,
+  "feedNotParseable",
+  "templateInvalid",
 ])
 
 /**
@@ -93,6 +112,10 @@ export const commonApiErrors = {
   FORBIDDEN: {
     message: "You do not have permission to perform this action",
     status: 403,
+  },
+  WORKSPACE_SELECTION_REQUIRED: {
+    message: "Workspace selection is required",
+    status: 400,
   },
   trialExpired: {
     message: DENIAL_MESSAGES.trialExpired,
@@ -166,6 +189,19 @@ export const possibleErrorsOnFindingResource = {
   businessError,
 } satisfies ErrorMap
 
+/** Refused when the owner has no message left (a download or a publish consumes one). */
+const postMessageQuotaExceeded = {
+  message:
+    "The message quota of this account is used up. Upgrade the plan or wait for the next billing period.",
+  status: 429,
+}
+
+/** A download that consumes a message is refused when the owner has none left. */
+export const possibleErrorsOnExportingResource = {
+  ...possibleErrorsOnFindingResource,
+  postMessageQuotaExceeded,
+} satisfies ErrorMap
+
 export const possibleErrorsOnListingResource = {
   businessError,
 } satisfies ErrorMap
@@ -186,6 +222,21 @@ export const possibleErrorsOnCounting = {
 } satisfies ErrorMap
 
 /**
+ * A report that outruns its statement timeout answers 503 `reportTimeout`
+ * (`reportTimeoutException` in `@chatbotx.io/business`); the caller retries
+ * with a shorter date range or a narrower channel.
+ */
+const reportTimeout = {
+  message: "The report took too long",
+  status: 503,
+} as const
+
+export const possibleErrorsOnReporting = {
+  businessError,
+  reportTimeout,
+} satisfies ErrorMap
+
+/**
  * Per-router sets carry only what varies by operation shape. The auth,
  * rate-limit, and both validation codes come from `commonApiErrors`, attached
  * once to the public stacks in `@/orpc` — never re-declare them here.
@@ -203,10 +254,389 @@ export const possibleErrorsOnCreatingBroadcast = {
   ...possibleIdempotencyErrors,
 } satisfies ErrorMap
 
+/**
+ * A product, category, vendor, discount code or order mirrored from a
+ * connected external store — Shopify or WooCommerce, named in `data.store` —
+ * (or any create while the store source is one): it is changed on that
+ * store. `externalStoreManagedException` in
+ * `packages/business/src/external-store/errors.ts`.
+ */
+export const externalStoreManagedErrors = {
+  externalStoreManaged: {
+    message:
+      "Managed in the connected Shopify or WooCommerce store; change it there and it syncs here",
+    status: 409,
+  },
+} satisfies ErrorMap
+
 export const possibleErrorsOnMutatingResource = {
   notFound,
   businessError,
   ...possibleIdempotencyErrors,
+} satisfies ErrorMap
+
+/** A post topic name is unique per workspace: `postTopicService` answers `topicNameTaken`. */
+const topicNameTaken = {
+  topicNameTaken: {
+    message: "A topic with this name already exists",
+    status: 409,
+  },
+} satisfies ErrorMap
+
+export const possibleErrorsOnCreatingPostTopic = {
+  ...possibleErrorsOnCreatingResource,
+  ...topicNameTaken,
+} satisfies ErrorMap
+
+export const possibleErrorsOnMutatingPostTopic = {
+  ...possibleErrorsOnMutatingResource,
+  ...topicNameTaken,
+} satisfies ErrorMap
+
+/** An expired plan or trial refuses what spends money or creates posts (invariant 14). */
+const workspaceBlockedError = {
+  workspaceBlocked: {
+    message: "This workspace's plan or trial has expired",
+    status: 402,
+  },
+} satisfies ErrorMap
+
+/** Writing post text with AI: `generatePostText` answers these codes. */
+export const possibleErrorsOnGeneratingPostText = {
+  businessError,
+  ...workspaceBlockedError,
+  ...possibleIdempotencyErrors,
+  aiModelNotChosen: {
+    message: "Choose an AI integration and model to write with AI",
+    status: 409,
+  },
+  aiNeedsReconfiguration: {
+    message: "The chosen AI integration is missing, disabled or invalid",
+    status: 409,
+  },
+  aiRequestInProgress: {
+    message: "An AI writing request is already running",
+    status: 409,
+  },
+  aiKeyReused: {
+    message: "This idempotency key was already used with a different request",
+    status: 422,
+  },
+  aiRateLimited: { message: "Too many AI writing requests", status: 429 },
+  aiTimeout: { message: "The AI model did not answer in time", status: 504 },
+  aiProviderError: { message: "The AI provider failed", status: 502 },
+  aiEmptyOutput: { message: "The AI model returned no text", status: 502 },
+} satisfies ErrorMap
+
+/** A snippet or set name is unique per workspace: the services answer `snippetNameTaken` / `targetSetNameTaken`. */
+export const possibleErrorsOnCreatingPostSnippet = {
+  ...possibleErrorsOnCreatingResource,
+  ...workspaceBlockedError,
+  snippetNameTaken: {
+    message: "A snippet with this name already exists",
+    status: 409,
+  },
+} satisfies ErrorMap
+
+export const possibleErrorsOnMutatingPostSnippet = {
+  ...possibleErrorsOnMutatingResource,
+  ...workspaceBlockedError,
+  snippetNameTaken: {
+    message: "A snippet with this name already exists",
+    status: 409,
+  },
+} satisfies ErrorMap
+
+export const possibleErrorsOnCreatingPostTargetSet = {
+  ...possibleErrorsOnCreatingResource,
+  ...workspaceBlockedError,
+  targetSetNameTaken: {
+    message: "A set with this name already exists",
+    status: 409,
+  },
+} satisfies ErrorMap
+
+export const possibleErrorsOnMutatingPostTargetSet = {
+  ...possibleErrorsOnMutatingResource,
+  ...workspaceBlockedError,
+  targetSetNameTaken: {
+    message: "A set with this name already exists",
+    status: 409,
+  },
+} satisfies ErrorMap
+
+/**
+ * RSS/Atom feed auto-posting: `socialPostFeedService` answers these codes. A
+ * feed's address is unique per workspace, "run now" has a 5-minute cool-down
+ * and a preview is limited to 10 per hour.
+ */
+const postFeedConflicts = {
+  feedUrlTaken: {
+    message: "This feed is already registered in the workspace",
+    status: 409,
+  },
+  feedNotActive: {
+    message: "The feed is not active",
+    status: 409,
+  },
+  feedCheckCooldown: {
+    message: "A feed can be checked by hand once every 5 minutes",
+    status: 409,
+  },
+  feedCheckInProgress: {
+    message: "A check of this feed is already waiting or running",
+    status: 409,
+  },
+} satisfies ErrorMap
+
+/**
+ * An address is fetched and parsed before a feed is saved or previewed:
+ * `feedNotParseable` (not an RSS/Atom feed; `data.suggestedUrl` names the feed
+ * an HTML page advertises, when it does) and `feedUnreachable` (could not be
+ * fetched). Nothing is stored in either case.
+ */
+const postFeedAddressErrors = {
+  feedNotParseable: {
+    message: "The address is not an RSS or Atom feed",
+    status: 422,
+    data: z.object({ suggestedUrl: z.string().optional() }).optional(),
+  },
+  feedUnreachable: {
+    message: "The feed address could not be fetched",
+    status: 422,
+  },
+  feedFetchUnavailable: {
+    message: "Feed fetching is not available",
+    status: 503,
+  },
+} satisfies ErrorMap
+
+/** Saving an address fetches it; the workspace's hourly budget for outside fetches (`POST_FEED_FETCH_PER_HOUR`) can be spent. */
+const postFeedFetchRateError = {
+  feedFetchRateLimited: {
+    message: "Too many feed address checks. Try again later",
+    status: 429,
+  },
+} satisfies ErrorMap
+
+/** A feed template that does not parse: `data` says where (`line`, `column`) and in which field. */
+const postFeedTemplateErrors = {
+  templateInvalid: {
+    message: "The template is not valid",
+    status: 422,
+    data: z
+      .object({
+        code: z.string(),
+        column: z.number(),
+        field: z.string(),
+        line: z.number(),
+      })
+      .optional(),
+  },
+} satisfies ErrorMap
+
+export const possibleErrorsOnCreatingPostFeed = {
+  ...possibleErrorsOnCreatingResource,
+  ...workspaceBlockedError,
+  ...postFeedAddressErrors,
+  ...postFeedFetchRateError,
+  ...postFeedTemplateErrors,
+  feedUrlTaken: postFeedConflicts.feedUrlTaken,
+} satisfies ErrorMap
+
+export const possibleErrorsOnMutatingPostFeed = {
+  ...possibleErrorsOnMutatingResource,
+  ...workspaceBlockedError,
+  ...postFeedAddressErrors,
+  ...postFeedFetchRateError,
+  ...postFeedTemplateErrors,
+  feedUrlTaken: postFeedConflicts.feedUrlTaken,
+} satisfies ErrorMap
+
+export const possibleErrorsOnChangingPostFeed = {
+  ...possibleErrorsOnMutatingResource,
+  ...workspaceBlockedError,
+  ...postFeedConflicts,
+} satisfies ErrorMap
+
+export const possibleErrorsOnReadingPostFeedItem = {
+  ...possibleErrorsOnFindingResource,
+  ...workspaceBlockedError,
+  ...postFeedAddressErrors,
+} satisfies ErrorMap
+
+export const possibleErrorsOnTestingPostFeed = {
+  ...possibleErrorsOnMutatingResource,
+  ...workspaceBlockedError,
+  ...postFeedAddressErrors,
+  feedHasNoItems: {
+    message: "The feed has no items yet",
+    status: 422,
+  },
+  feedTestRateLimited: {
+    message: "Too many test posts. Try again later",
+    status: 429,
+  },
+} satisfies ErrorMap
+
+export const possibleErrorsOnPreviewingPostFeed = {
+  businessError,
+  ...possibleIdempotencyErrors,
+  ...workspaceBlockedError,
+  ...postFeedAddressErrors,
+  feedPreviewRateLimited: {
+    message: "Too many feed previews. Try again later",
+    status: 429,
+  },
+} satisfies ErrorMap
+
+/** Liking or deleting a comment the post's channel cannot do: `channelPostCommentsService` answers `commentActionUnsupported`. */
+export const possibleErrorsOnChangingPostComment = {
+  ...possibleErrorsOnMutatingResource,
+  commentActionUnsupported: {
+    message: "This channel does not support that action on comments",
+    status: 409,
+  },
+} satisfies ErrorMap
+
+/**
+ * Starting a read-from-channel comment export: `channelPostCommentExportService`
+ * answers `commentExportUnsupported` (a post's channel cannot be read) and
+ * `exportInProgress` (the start lock is being taken); an owner without a message
+ * left answers 429; an expired plan is refused first by the token gate (403
+ * `trialExpired` / `macLimitReached`), then by the handler's own check (402).
+ */
+export const possibleErrorsOnStartingChannelPostCommentExport = {
+  ...possibleErrorsOnMutatingResource,
+  ...workspaceBlockedError,
+  commentExportUnsupported: {
+    message: "The comments of this channel cannot be read from the channel",
+    status: 409,
+  },
+  exportInProgress: {
+    message: "An export of these posts is starting. Try again in a moment",
+    status: 409,
+  },
+  postMessageQuotaExceeded,
+} satisfies ErrorMap
+
+/** Calling the platform for a social account: `socialAccountOperations` answers these codes. */
+export const possibleErrorsOnUsingSocialAccount = {
+  ...possibleErrorsOnMutatingResource,
+  providerNotSupported: {
+    message: "This network cannot be used yet",
+    status: 422,
+  },
+  providerUnavailable: {
+    message: "The platform could not be reached",
+    status: 502,
+  },
+  socialAccountDisconnected: {
+    message: "The account is disconnected",
+    status: 409,
+  },
+  socialAccountNeedsReauth: {
+    message: "The platform rejected the account's token",
+    status: 409,
+  },
+} satisfies ErrorMap
+
+/** Composing a post: `socialPostService` and `assertWorkspaceNotBlocked` raise these. */
+export const possibleErrorsOnChangingSocialPost = {
+  ...possibleErrorsOnMutatingResource,
+  // Publishing now (and retrying) refuses when the owner has no message left.
+  postMessageQuotaExceeded,
+  socialPostKeyConflict: {
+    message: "This idempotency key was already used with a different post",
+    status: 409,
+  },
+  socialPostNotRemovable: {
+    message: "The post has no published destination to remove",
+    status: 409,
+  },
+  socialPostNotDeletable: {
+    message: "Only a draft can be deleted",
+    status: 409,
+  },
+  socialPostNotPublishable: {
+    message: "Only a draft or scheduled post can be published",
+    status: 409,
+  },
+  socialPostContentInvalid: {
+    message: "A destination cannot publish the post as composed",
+    status: 422,
+  },
+  socialPostTargetNotRetryable: {
+    message: "Only a failed target, or one waiting for review, can be retried",
+    status: 409,
+  },
+  socialPostTargetNotReviewable: {
+    message: "Only a target waiting for review can be resolved",
+    status: 409,
+  },
+  socialPostNotEditable: {
+    message: "Only a draft or scheduled post can be edited",
+    status: 409,
+  },
+  socialPostNotSchedulable: {
+    message: "Only a draft or scheduled post can be scheduled",
+    status: 409,
+  },
+  socialPostTargetNotReschedulable: {
+    message:
+      "A destination is publishing, was already tried, or is due within a minute, so the post cannot be moved",
+    status: 409,
+  },
+  socialPostPartNotResumable: {
+    message:
+      "Only the first part that is not published can be retried or resolved",
+    status: 409,
+  },
+  socialPostHeadUnconfirmed: {
+    message:
+      "The first post is not confirmed, so its follow-up parts cannot be published after it",
+    status: 409,
+  },
+  duplicateFailed: {
+    message: "The post could not be duplicated",
+    status: 409,
+  },
+  socialPostNotRecurrable: {
+    message: "Only a draft that is not itself a repeated copy can repeat",
+    status: 409,
+  },
+  socialPostRecurrenceEnded: {
+    message: "The series has ended; set a rule again to start a new one",
+    status: 409,
+  },
+  socialPostOccurrenceSettled: {
+    message: "A run that already happened cannot be skipped or restored",
+    status: 409,
+  },
+  socialPostIsRecurringTemplate: {
+    message:
+      "A repeating post is a template: end its series before publishing or scheduling it",
+    status: 409,
+  },
+  ...workspaceBlockedError,
+} satisfies ErrorMap
+
+export const possibleErrorsOnSchedulingAccountDeletion = {
+  ...possibleErrorsOnMutatingResource,
+  accountDeletionSupportRequired: {
+    message: "Reseller accounts must contact support to delete their account",
+    status: 403,
+  },
+} satisfies ErrorMap
+
+/** Reindex with parameters while a processing run is already active. */
+export const possibleErrorsOnReindexingResource = {
+  ...possibleErrorsOnMutatingResource,
+  conflict: {
+    message:
+      "File is being processed; parameters were not applied. Retry when processingRun finishes.",
+    status: 409,
+  },
 } satisfies ErrorMap
 
 const decisionValidationErrors = {
@@ -311,6 +741,18 @@ export const possibleErrorsOnPeekingImportHeaders = {
   },
 } satisfies ErrorMap
 
+/** Resending a failed message: only a failed, undelivered DM can be resent (409). */
+export const possibleErrorsOnResendingMessage = {
+  notFound,
+  businessError,
+  messageNotResendable: {
+    message:
+      "The message cannot be resent: it did not fail, was already delivered, was not sent by a person or the API, is a public comment reply, or is already being resent.",
+    status: 409,
+  },
+  ...possibleIdempotencyErrors,
+} satisfies ErrorMap
+
 /** Starting a contact import: only one import may run per workspace (409). */
 export const possibleErrorsOnStartingContactImport = {
   notFound,
@@ -340,6 +782,7 @@ export const possibleErrorsOnCountingWithBody = {
 
 /** Starting a product import: one import per workspace (409), file checks (404/422). */
 export const possibleErrorsOnStartingProductImport = {
+  ...externalStoreManagedErrors,
   notFound,
   businessError,
   // Reading the file's headers when `columnMap` is omitted.
@@ -390,6 +833,31 @@ export const possibleErrorsOnGeneratingCallSummary = {
   ...possibleIdempotencyErrors,
 } satisfies ErrorMap
 
+/**
+ * Inbox translation: every way a translation can be refused or fail, each with
+ * its own code so an agent can branch on it (`translation<Name>`). Declared on
+ * the operations that surface them (settings, test, preview). A send with
+ * `translate: true` throws {@link possibleErrorsOnTranslatedSend} instead.
+ */
+export const possibleErrorsOnTranslating = {
+  notFound,
+  businessError,
+  ...Object.fromEntries(
+    Object.values(TRANSLATION_API_ERRORS).map(
+      ({ code, status, message }) => [code, { message, status }] as const,
+    ),
+  ),
+  ...possibleIdempotencyErrors,
+} satisfies ErrorMap
+
+/**
+ * A send with `translate: true` whose text could not be translated: nothing was
+ * sent, and `data` says why and whether translation was turned off.
+ */
+export const possibleErrorsOnTranslatedSend = {
+  translationNotSent: TRANSLATION_NOT_SENT_ERROR,
+} satisfies ErrorMap
+
 /** AI hand-over apply-to-all: every refusal is a 422 with its own code. */
 const aiHandoverRefusal = (message: string) => ({ message, status: 422 })
 
@@ -438,6 +906,11 @@ export const possibleErrorsOnSettingCoexist = {
     message: "The channel's credentials are invalid: reconnect the channel.",
     status: 409,
   },
+  coexistContactImportRunning: {
+    message:
+      "This page's contacts are still importing and its history sync follows by itself: wait for it.",
+    status: 409,
+  },
   coexistSyncNotStarted: {
     message: "Coexist is on, but Meta did not start the sync. Try again.",
     status: 502,
@@ -461,9 +934,27 @@ export const possibleErrorsOnSendingCapiTestEvent = {
   },
 } satisfies ErrorMap
 
+/** Syncing WhatsApp routing roles: Meta's lookup can fail (502). */
+export const possibleErrorsOnSyncingRoutingRoles = {
+  ...possibleErrorsOnMutatingResource,
+  routingRolesUnavailable: {
+    message: "Meta did not return the routing roles. Try again.",
+    status: 502,
+  },
+} satisfies ErrorMap
+
 /** Cursor-paged list: a cursor that does not decode is a 400. */
 export const possibleErrorsOnListingWithCursor = {
   ...possibleErrorsOnListingResource,
+  invalidCursor: {
+    message: "The cursor is invalid. Start again without a cursor.",
+    status: 400,
+  },
+} satisfies ErrorMap
+
+/** Cursor-paged children of one resource: the parent can also be absent. */
+export const possibleErrorsOnFindingWithCursor = {
+  ...possibleErrorsOnFindingResource,
   invalidCursor: {
     message: "The cursor is invalid. Start again without a cursor.",
     status: 400,
@@ -573,15 +1064,37 @@ const appointmentDeleteBlocked = {
   status: 409,
 }
 
+const invalidAppointmentConversation = {
+  message: "Appointment conversation does not belong to the contact",
+  status: 400,
+}
+
+const appointmentCalendarInactive = {
+  message: "Appointment calendar is inactive",
+  status: 409,
+}
+
 export const possibleErrorsOnBookingAppointment = {
   notFound,
   businessError,
+  invalidAppointmentConversation,
   slotUnavailable,
   appointmentAvailabilityChanged,
   appointmentAlreadyScheduled,
   appointmentNotCancellable,
   appointmentDeleteBlocked,
   ...possibleIdempotencyErrors,
+} satisfies ErrorMap
+
+/**
+ * `appointments.createBookingLink`: an inactive calendar is a 409
+ * `appointmentCalendarInactive`; with `send=true` the message send can also
+ * fail like `messages.create` (`validation` 422 is in `commonApiErrors`).
+ */
+export const possibleErrorsOnCreatingBookingLink = {
+  notFound,
+  appointmentCalendarInactive,
+  ...possibleErrorsOnCreatingResource,
 } satisfies ErrorMap
 
 /**
@@ -664,6 +1177,112 @@ export const possibleErrorsOnSchedulingContactScan = {
     message: "A scan is already running for this inbox.",
     status: 409,
   },
+  ...possibleIdempotencyErrors,
+} satisfies ErrorMap
+
+/** Contact sync (`contactSyncs.*`): codes from `CONTACT_SYNC_ERROR_CODES`. */
+const contactSyncSourceErrors = {
+  contactSyncNotConfigured: {
+    message: "The AhaChat sync is not configured on this server",
+    status: 503,
+  },
+  contactSyncSourceUnavailable: {
+    message: "AhaChat could not be reached: retry shortly",
+    status: 503,
+  },
+  contactSyncSourceNotFound: { message: "Source not found", status: 404 },
+  contactSyncSourceNotEligible: {
+    message: "This source cannot be synced",
+    status: 422,
+  },
+} as const
+
+export const possibleErrorsOnReadingContactSyncSource = {
+  businessError,
+  ...contactSyncSourceErrors,
+} satisfies ErrorMap
+
+export const possibleErrorsOnContactSyncSource = {
+  businessError,
+  ...contactSyncSourceErrors,
+  contactSyncMappingInvalid: {
+    message: "Some mappings are invalid",
+    status: 422,
+    data: contactSyncMappingInvalidDataSchema,
+  },
+  ...possibleIdempotencyErrors,
+} satisfies ErrorMap
+
+export const possibleErrorsOnSchedulingContactSync = {
+  businessError,
+  ...contactSyncSourceErrors,
+  contactSyncAlreadyRunning: {
+    message: "A contact sync is already running in this workspace",
+    status: 409,
+    data: contactSyncAlreadyRunningDataSchema,
+  },
+  contactSyncCooldown: {
+    message: "Contacts can be synced once every 4 hours",
+    status: 409,
+    data: contactSyncCooldownDataSchema,
+  },
+  contactSyncNoSources: { message: "Choose at least one source", status: 422 },
+  contactSyncTooManySources: {
+    message: "Too many sources in one sync",
+    status: 422,
+  },
+  contactSyncDuplicateSource: {
+    message: "A source is listed twice",
+    status: 422,
+  },
+  ...possibleIdempotencyErrors,
+} satisfies ErrorMap
+
+/** Retrying an import's history sync: a write, so it takes an idempotency key. */
+export const possibleErrorsOnRetryingContactSyncHistory = {
+  businessError,
+  contactSyncSourceNotFound: { message: "Source not found", status: 404 },
+  ...possibleIdempotencyErrors,
+} satisfies ErrorMap
+
+/**
+ * Starting the contacts-first import at page connect: every page the service
+ * cannot import falls back with a reason instead of an error, so only a
+ * missing configuration refuses the call.
+ */
+export const possibleErrorsOnConnectingContactSyncImport = {
+  businessError,
+  contactSyncNotConfigured: {
+    message: "The AhaChat sync is not configured on this server",
+    status: 503,
+  },
+  ...possibleIdempotencyErrors,
+} satisfies ErrorMap
+
+/** The session procedures' refusal of a member who is not a workspace admin. */
+export const contactSyncNotAdminError = {
+  contactSyncNotAdmin: {
+    message: "Only a workspace admin can sync contacts from AhaChat",
+    status: 403,
+  },
+} as const
+
+/** Session procedures of the sync dialog: a workspace admin only. */
+export const possibleErrorsOnContactSyncAdmin = {
+  businessError,
+  ...contactSyncSourceErrors,
+  ...contactSyncNotAdminError,
+  contactSyncRunNotFound: { message: "Contact sync not found", status: 404 },
+} satisfies ErrorMap
+
+export const possibleErrorsOnReadingContactSyncRun = {
+  businessError,
+  contactSyncRunNotFound: { message: "Contact sync not found", status: 404 },
+} satisfies ErrorMap
+
+export const possibleErrorsOnContactSyncRun = {
+  businessError,
+  contactSyncRunNotFound: { message: "Contact sync not found", status: 404 },
   ...possibleIdempotencyErrors,
 } satisfies ErrorMap
 
@@ -864,6 +1483,24 @@ export const possibleErrorsOnCreatingConnection = {
   ...possibleIdempotencyErrors,
 } satisfies ErrorMap
 
+/** `POST /v1/line-channels`: credentials rejected by LINE, channel already connected elsewhere, LINE unavailable. */
+export const possibleErrorsOnConnectingLine = {
+  notFound,
+  businessError,
+  channelDuplicated: {
+    message: "This account is already connected to another workspace.",
+    status: 400,
+  },
+  connectionCredentialsRejected,
+  connectionProviderUnavailable,
+  channelHidden,
+  lineWebhookRejected: {
+    message: "LINE rejected the webhook URL",
+    status: 400,
+  },
+  ...possibleIdempotencyErrors,
+} satisfies ErrorMap
+
 export const possibleErrorsOnReconnectingConnection = {
   connectionProviderDedicatedOnly,
   notFound,
@@ -992,9 +1629,16 @@ const invalidCustomFieldValue = {
   status: 400,
 }
 
+const invalidFieldOperation = {
+  message:
+    "The operation or its value does not fit this field's type; the message names the reason.",
+  status: 400,
+}
+
 export const possibleErrorsOnWritingContactFields = {
   ...possibleErrorsOnMutatingResource,
   invalidCustomFieldValue,
+  invalidFieldOperation,
 } satisfies ErrorMap
 
 /** Create-or-update by identifier: unknown `id:` contact (404), phone taken (422). */
@@ -1013,12 +1657,6 @@ export const possibleErrorsOnCreatingContact = {
   notFound,
   invalidCustomFieldValue,
 } satisfies ErrorMap
-
-/** A bot-field value that does not fit the field's type. */
-const invalidFieldOperation = {
-  message: "The value does not fit this bot field's type.",
-  status: 400,
-}
 
 export const possibleErrorsOnCreatingBotField = {
   ...possibleErrorsOnCreatingResource,
@@ -1065,13 +1703,40 @@ const productVendorErrors = {
 } satisfies ErrorMap
 
 export const possibleErrorsOnCreatingProductVendor = {
+  ...externalStoreManagedErrors,
   ...possibleErrorsOnCreatingResource,
   ...productVendorErrors,
 } satisfies ErrorMap
 
 export const possibleErrorsOnMutatingProductVendor = {
+  ...externalStoreManagedErrors,
   ...possibleErrorsOnMutatingResource,
   ...productVendorErrors,
+} satisfies ErrorMap
+
+/**
+ * Place category create/update enforce unique names per workspace
+ * (`placeCategoryService` in packages/business/src/place-near-me).
+ */
+const placeCategoryErrors = {
+  placeCategoryDuplicated: {
+    message: "A place category with this name already exists",
+    status: 409,
+  },
+  placeCategoryNameRequired: {
+    message: "Place category name is required",
+    status: 400,
+  },
+} satisfies ErrorMap
+
+export const possibleErrorsOnCreatingPlaceCategory = {
+  ...possibleErrorsOnCreatingResource,
+  ...placeCategoryErrors,
+} satisfies ErrorMap
+
+export const possibleErrorsOnMutatingPlaceCategory = {
+  ...possibleErrorsOnMutatingResource,
+  ...placeCategoryErrors,
 } satisfies ErrorMap
 
 /** `ecommerceSettingsService.update` refuses a Pro setting the plan lacks. */
@@ -1080,6 +1745,19 @@ export const possibleErrorsOnUpdatingEcommerceSettings = {
   ecommerceProFeatureRequired: {
     message: "This setting needs a Pro plan",
     status: 403,
+  },
+  paymentProviderNotConnected: {
+    message: "Connect this payment provider in Settings → Integrations first",
+    status: 400,
+  },
+  paymentCurrencyUnsupported: {
+    message: "The payment provider does not take payments in this currency",
+    status: 400,
+  },
+  externalStoreNotConnected: {
+    message:
+      "Connect the Shopify or WooCommerce store before switching the store source to it",
+    status: 400,
   },
 } satisfies ErrorMap
 
@@ -1128,6 +1806,7 @@ const discountCodeUseErrors = {
 } satisfies ErrorMap
 
 export const possibleErrorsOnCreatingDiscountCode = {
+  ...externalStoreManagedErrors,
   ...possibleErrorsOnCreatingResource,
   discountCodeDuplicated: {
     message: "A discount code with this name already exists",
@@ -1136,6 +1815,7 @@ export const possibleErrorsOnCreatingDiscountCode = {
 } satisfies ErrorMap
 
 export const possibleErrorsOnMutatingDiscountCode = {
+  ...externalStoreManagedErrors,
   ...possibleErrorsOnMutatingResource,
   discountCodeDuplicated: {
     message: "A discount code with this name already exists",
@@ -1171,13 +1851,186 @@ export const possibleErrorsOnPlacingOrder = {
     message: "The store does not offer this shipping type",
     status: 400,
   },
+  paymentMethodUnavailable: {
+    message: "The store does not take this payment method",
+    status: 400,
+  },
+  orderPaymentContactRequired: {
+    message: "An order paid online needs a contact",
+    status: 400,
+  },
+} satisfies ErrorMap
+
+/**
+ * A store's Stripe or PayPal refusing or not answering — see
+ * `packages/business/src/payment-provider/errors.ts`. `data.provider` says
+ * which, `data.providerCode` the provider's own code.
+ */
+const paymentProviderErrors = {
+  paymentProviderNotConnected: {
+    message: "Connect this payment provider in Settings → Integrations first",
+    status: 400,
+  },
+  paymentProviderCredentialsRejected: {
+    message: "The payment provider refused the credentials",
+    status: 400,
+  },
+  paymentProviderRejected: {
+    message: "The payment provider refused the request",
+    status: 400,
+  },
+  paymentProviderUnavailable: {
+    message: "The payment provider is not answering; try again shortly",
+    status: 503,
+  },
+  paymentAmountUnsupported: {
+    message: "The payment provider cannot charge this amount exactly",
+    status: 400,
+  },
+} satisfies ErrorMap
+
+/** Connecting or disconnecting a store's Stripe or PayPal. */
+export const possibleErrorsOnConnectingPaymentProvider = {
+  ...possibleErrorsOnMutatingResource,
+  ...paymentProviderErrors,
+  stripePlatformNotConfigured: {
+    message: "Stripe Connect is not set up on this platform",
+    status: 400,
+  },
+  stripeAccountAlreadyConnected: {
+    message: "This Stripe account is connected to another workspace",
+    status: 409,
+  },
+  stripeSecretKeyInvalid: {
+    message:
+      "Not a Stripe secret key: paste sk_live_…, sk_test_… or a restricted rk_… key",
+    status: 400,
+  },
+  paymentProviderInUse: {
+    message:
+      "Open orders still need this payment account; complete or cancel them first",
+    status: 409,
+  },
 } satisfies ErrorMap
 
 /** Accept/ship/conclude/cancel: a move the order's status does not allow. */
 export const possibleErrorsOnTransitioningOrder = {
+  ...externalStoreManagedErrors,
   ...possibleErrorsOnMutatingResource,
+  ...paymentProviderErrors,
   orderInvalidStatusTransition: {
     message: "The order's current status does not allow this change",
     status: 409,
   },
+  orderAwaitingPayment: {
+    message: "The order is waiting for its online payment",
+    status: 409,
+  },
+  orderRefundFailed: {
+    message:
+      "The payment could not be refunded, so the order was not cancelled",
+    status: 502,
+  },
+  orderPaymentProcessing: {
+    message: "A payment for this order is still being processed",
+    status: 409,
+  },
+} satisfies ErrorMap
+
+/** Deleting an order: a paid online order is cancelled (refunded) instead. */
+export const possibleErrorsOnDeletingOrder = {
+  ...externalStoreManagedErrors,
+  ...possibleErrorsOnDeletingResource,
+  ...paymentProviderErrors,
+  orderPaidOnline: {
+    message: "The order was paid online; cancel it to refund the payment",
+    status: 409,
+  },
+} satisfies ErrorMap
+
+/** Opening the provider's page for an order still waiting for its payment. */
+export const possibleErrorsOnStartingOrderPayment = {
+  ...possibleErrorsOnMutatingResource,
+  ...paymentProviderErrors,
+  orderPaymentNotOpen: {
+    message: "This order cannot be paid online now",
+    status: 409,
+  },
+  orderPaymentContactRequired: {
+    message: "An order paid online needs a contact",
+    status: 400,
+  },
+} satisfies ErrorMap
+
+/**
+ * Pipeline writes can fail with three 409s of their own. oRPC matches a thrown
+ * error to its declaration by code and exact status, so they are declared here
+ * rather than folded into `businessError`. The body-level idempotency conflict
+ * has its own code: `idempotencyKeyReused` already means a reused
+ * `Idempotency-Key` header (422).
+ */
+export const possibleErrorsOnMutatingPipeline = {
+  notFound,
+  businessError,
+  stageBusy: {
+    message: "The stage is being processed in the background",
+    status: 409,
+  },
+  pipelineItemLimitReached: {
+    message: "The contact already has the maximum number of open items",
+    status: 409,
+  },
+  pipelineItemIdempotencyKeyConflict: {
+    message: "This idempotency key was already used for another contact",
+    status: 409,
+  },
+  ...possibleIdempotencyErrors,
+} satisfies ErrorMap
+
+/** Connect, sync and disconnect of the Shopify store source. */
+export const possibleErrorsOnShopify = {
+  ...possibleErrorsOnMutatingResource,
+  shopifyNotConnected: {
+    message: "Connect a Shopify store first",
+    status: 400,
+  },
+  shopifyCredentialsInvalid: {
+    message: "Shopify did not accept these credentials",
+    status: 400,
+  },
+  shopifySyncInProgress: {
+    message: "A Shopify sync is already running",
+    status: 409,
+  },
+} satisfies ErrorMap
+
+/** Connect, sync and disconnect of the WooCommerce store source. */
+export const possibleErrorsOnWooCommerce = {
+  ...possibleErrorsOnMutatingResource,
+  woocommerceNotConnected: {
+    message: "Connect a WooCommerce store first",
+    status: 400,
+  },
+  woocommerceCredentialsInvalid: {
+    message: "WooCommerce did not accept this connection",
+    status: 400,
+  },
+  woocommerceSyncInProgress: {
+    message: "A WooCommerce sync is already running",
+    status: 409,
+  },
+} satisfies ErrorMap
+
+/** Reading from the platform for a social account (a GET): the same codes as `possibleErrorsOnUsingSocialAccount`, with no write or idempotency codes. */
+export const possibleErrorsOnReadingSocialAccount = {
+  ...possibleErrorsOnFindingResource,
+  providerUnavailable: possibleErrorsOnUsingSocialAccount.providerUnavailable,
+  publishingSettingsNotSupported: {
+    message: "This network has no publishing settings to read",
+    status: 422,
+  },
+  socialAccountDisconnected:
+    possibleErrorsOnUsingSocialAccount.socialAccountDisconnected,
+  socialAccountNeedsReauth:
+    possibleErrorsOnUsingSocialAccount.socialAccountNeedsReauth,
 } satisfies ErrorMap

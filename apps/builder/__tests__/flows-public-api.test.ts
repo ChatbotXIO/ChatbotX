@@ -1,5 +1,8 @@
 import {
+  AISpeechToTextDefaultFn,
+  aiSegmentImageDefaultFn,
   FlowAuthoringException,
+  performActionNodeDefaultFn,
   sendMessageNodeDefaultFn,
 } from "@chatbotx.io/flow-config"
 import { beforeEach, describe, expect, test, vi } from "vitest"
@@ -275,6 +278,101 @@ describe("GET /v1/flows", () => {
   })
 })
 
+describe("GET /v1/flows — enableInInbox", () => {
+  const procedure = findProcedure("GET", "/v1/flows")
+  const input = { page: 1, perPage: 50, active: true }
+  const member = (permissions: Record<string, boolean>) => ({
+    userId: "user-7",
+    workspaceId: "workspace-1",
+    permissions,
+  })
+
+  test("forwards the enableInInbox filter", async () => {
+    flowService.list.mockResolvedValueOnce({ data: [], pageCount: 1 })
+
+    await procedure.handler?.({
+      context: { workspace: { id: "workspace-1" } },
+      input: { ...input, enableInInbox: true },
+    })
+
+    expect(flowService.list).toHaveBeenCalledWith(
+      expect.objectContaining({ enableInInbox: true }),
+    )
+  })
+
+  test("omitting the filter lists every flow, as before", async () => {
+    flowService.list.mockResolvedValueOnce({ data: [], pageCount: 1 })
+
+    await procedure.handler?.({
+      context: { workspace: { id: "workspace-1" } },
+      input,
+    })
+
+    expect(flowService.list.mock.calls[0][0].enableInInbox).toBeUndefined()
+  })
+
+  test("returns enableInInbox on every listed flow", async () => {
+    flowService.list.mockResolvedValueOnce({
+      data: [
+        {
+          id: "flow-1",
+          name: "Flow 1",
+          folderId: null,
+          active: true,
+          enableInInbox: false,
+          flowVersions: [],
+        },
+      ],
+      pageCount: 1,
+    })
+
+    const result = await procedure.handler?.({
+      context: { workspace: { id: "workspace-1" } },
+      input,
+    })
+
+    expect(result.data[0]).toEqual({
+      id: "flow-1",
+      name: "Flow 1",
+      folderId: null,
+      active: true,
+      enableInInbox: false,
+    })
+  })
+
+  test("a mobile member without the flows permission only ever sees inbox flows, whatever they ask for", async () => {
+    flowService.list.mockResolvedValue({ data: [], pageCount: 1 })
+
+    for (const asked of [undefined, false, true]) {
+      await procedure.handler?.({
+        context: {
+          workspace: { id: "workspace-1" },
+          member: member({ contacts: true }),
+        },
+        input: { ...input, enableInInbox: asked },
+      })
+    }
+
+    expect(
+      flowService.list.mock.calls.map(([call]) => call.enableInInbox),
+    ).toEqual([true, true, true])
+  })
+
+  test("a mobile member with the flows permission may list every flow", async () => {
+    flowService.list.mockResolvedValue({ data: [], pageCount: 1 })
+
+    await procedure.handler?.({
+      context: {
+        workspace: { id: "workspace-1" },
+        member: member({ flows: true }),
+      },
+      input,
+    })
+
+    expect(flowService.list.mock.calls[0][0].enableInInbox).toBeUndefined()
+  })
+})
+
 describe("GET /v1/flows/{id}", () => {
   const procedure = findProcedure("GET", "/v1/flows/{id}")
 
@@ -463,6 +561,133 @@ describe("POST /v1/flows", () => {
 
     expect(flowService.createDraft).not.toHaveBeenCalled()
   })
+
+  const segmentNode = (
+    overrides: Parameters<typeof aiSegmentImageDefaultFn>[0] = {},
+  ) => {
+    const node = performActionNodeDefaultFn({
+      nodeProps: { id: "n1" },
+      dataProps: {},
+      detailProps: {},
+    })
+    node.data.details.steps = [
+      aiSegmentImageDefaultFn({
+        inputFieldId: "1",
+        target: "product box",
+        outputFieldId: "2",
+        ...overrides,
+      }),
+    ]
+    return node
+  }
+
+  test("publish: true accepts an aiSegmentImage step through the shared flow schema", async () => {
+    flowService.createPublished.mockResolvedValueOnce({ id: "flow-10" })
+
+    await procedure.handler?.({
+      context: { workspace: { id: "workspace-1" } },
+      input: {
+        name: "Segment flow",
+        folderId: null,
+        nodes: [segmentNode({ detailsOutputFieldId: "3" })],
+        edges: [],
+        publish: true,
+      },
+    })
+
+    const graph = flowService.createPublished.mock.calls[0][0].graph
+    expect(graph.nodes[0].data.details.steps[0]).toMatchObject({
+      stepType: "aiSegmentImage",
+      target: "product box",
+      detailsOutputFieldId: "3",
+    })
+  })
+
+  test("publish: true rejects an aiSegmentImage step whose details share the output field", async () => {
+    await expect(
+      procedure.handler?.({
+        context: { workspace: { id: "workspace-1" } },
+        input: {
+          name: "Segment flow",
+          folderId: null,
+          nodes: [segmentNode({ detailsOutputFieldId: "2" })],
+          edges: [],
+          publish: true,
+        },
+      }),
+    ).rejects.toBeInstanceOf(FlowAuthoringException)
+
+    expect(flowService.createPublished).not.toHaveBeenCalled()
+  })
+
+  const speechNode = (step: Record<string, unknown>) => {
+    const node = performActionNodeDefaultFn({
+      nodeProps: { id: "n1" },
+      dataProps: {},
+      detailProps: {},
+    })
+    node.data.details.steps = [
+      {
+        ...AISpeechToTextDefaultFn({ inputFieldId: "1", outputFieldId: "2" }),
+        ...step,
+      } as never,
+    ]
+    return node
+  }
+
+  const createSpeechFlow = (step: Record<string, unknown>) =>
+    procedure.handler?.({
+      context: { workspace: { id: "workspace-1" } },
+      input: {
+        name: "Speech flow",
+        folderId: null,
+        nodes: [speechNode(step)],
+        edges: [],
+        publish: true,
+      },
+    })
+
+  test("publish: true accepts a Muse aiSpeechToText step through the shared flow schema", async () => {
+    flowService.createPublished.mockResolvedValueOnce({ id: "flow-11" })
+
+    await createSpeechFlow({
+      provider: "muse",
+      model: "muse-voice-transcribe-1.0",
+      languageBias: ["Vietnamese"],
+    })
+
+    const graph = flowService.createPublished.mock.calls[0][0].graph
+    expect(graph.nodes[0].data.details.steps[0]).toMatchObject({
+      stepType: "aiSpeechToText",
+      provider: "muse",
+      model: "muse-voice-transcribe-1.0",
+      languageBias: ["Vietnamese"],
+    })
+  })
+
+  test.each([
+    [
+      "a Muse step with another model",
+      { provider: "muse", model: "whisper-1" },
+    ],
+    [
+      "a Muse step with an unknown language",
+      {
+        provider: "muse",
+        model: "muse-voice-transcribe-1.0",
+        languageBias: ["Klingon"],
+      },
+    ],
+    [
+      "an OpenAI step with Muse-only fields",
+      { provider: "openai", model: "whisper-1", keywords: ["ChatbotX"] },
+    ],
+  ])("publish: true rejects %s", async (_name, step) => {
+    await expect(createSpeechFlow(step)).rejects.toBeInstanceOf(
+      FlowAuthoringException,
+    )
+    expect(flowService.createPublished).not.toHaveBeenCalled()
+  })
 })
 
 describe("PATCH /v1/flows/{id}", () => {
@@ -621,6 +846,158 @@ describe("POST /v1/flows/validate", () => {
     expect(result.edges).toEqual([])
     expect(flowVersionService.publish).not.toHaveBeenCalled()
     expect(flowVersionService.updateDraftByFlowId).not.toHaveBeenCalled()
+  })
+
+  test("compiles a Call Phone Number button from `call`", async () => {
+    const result = await procedure.handler?.({
+      context: { workspace: { id: "workspace-1" } },
+      input: {
+        spec: {
+          formatVersion: 1,
+          name: "Call flow",
+          channel: "messenger",
+          steps: [
+            {
+              type: "send",
+              text: "Need help?",
+              buttons: [{ text: "Call us", call: "+14155552671" }],
+            },
+          ],
+        },
+      },
+    })
+
+    expect(result.nodes[0].data.details.steps[0].buttons[0]).toMatchObject({
+      buttonType: "callPhoneNumber",
+      beforeStep: { phoneNumber: "+14155552671" },
+      steps: [],
+    })
+    expect(result.edges).toEqual([])
+  })
+
+  test("compiles a Copy Text button from `copy` on Telegram", async () => {
+    const result = await procedure.handler?.({
+      context: { workspace: { id: "workspace-1" } },
+      input: {
+        spec: {
+          formatVersion: 1,
+          name: "PIX flow",
+          channel: "telegram",
+          steps: [
+            {
+              type: "send",
+              text: "Pague com PIX",
+              buttons: [{ text: "Copiar PIX", copy: "{{pix_code}}" }],
+            },
+          ],
+        },
+      },
+    })
+
+    expect(result.nodes[0].data.details.steps[0].buttons[0]).toMatchObject({
+      buttonType: "copyText",
+      beforeStep: { stepType: "copyText", text: "{{pix_code}}" },
+      steps: [],
+    })
+    expect(result.edges).toEqual([])
+  })
+
+  test("rejects a `call` number that is not a real international number", async () => {
+    await expect(
+      procedure.handler?.({
+        context: { workspace: { id: "workspace-1" } },
+        input: {
+          spec: {
+            formatVersion: 1,
+            name: "Call flow",
+            steps: [
+              {
+                type: "send",
+                text: "Need help?",
+                buttons: [{ text: "Call us", call: "+9991234567" }],
+              },
+            ],
+          },
+        },
+      }),
+    ).rejects.toThrow()
+  })
+
+  test("compiles a pipeline step through publishFlowSchema using the authoring context", async () => {
+    getFlowAuthoringContext.mockResolvedValueOnce({
+      templatesByName: new Map(),
+      customFieldsByName: new Map(),
+      flowsByName: new Map(),
+      pipelinesByReferenceName: new Map([
+        [
+          "sales",
+          {
+            id: "5001",
+            name: "Sales",
+            referenceName: "sales",
+            stages: [{ id: "5101", name: "Won" }],
+            fields: [],
+          },
+        ],
+      ]),
+    } as never)
+
+    const result = await procedure.handler?.({
+      context: { workspace: { id: "workspace-1" } },
+      input: {
+        spec: {
+          formatVersion: 1,
+          name: "Pipeline flow",
+          steps: [
+            {
+              type: "pipeline",
+              action: "moveToStage",
+              pipeline: "sales",
+              stage: "Won",
+              onSkip: [{ type: "send", text: "No deal yet" }],
+            },
+          ],
+        },
+      },
+    })
+
+    expect(result.nodes[0].type).toBe("performAction")
+    expect(result.nodes[0].data.details.steps[0]).toMatchObject({
+      stepType: "pipeline",
+      pipelineId: "5001",
+      stageId: "5101",
+    })
+    expect(result.edges).toHaveLength(1)
+  })
+
+  test("reports an unknown pipeline with its spec path", async () => {
+    let caught: unknown
+    try {
+      await procedure.handler?.({
+        context: { workspace: { id: "workspace-1" } },
+        input: {
+          spec: {
+            formatVersion: 1,
+            name: "Pipeline flow",
+            steps: [
+              {
+                type: "pipeline",
+                action: "removeFromPipeline",
+                pipeline: "missing",
+              },
+            ],
+          },
+        },
+      })
+    } catch (error) {
+      caught = error
+    }
+
+    expect(caught).toBeInstanceOf(FlowAuthoringException)
+    expect((caught as FlowAuthoringException).errors[0]).toMatchObject({
+      path: "steps[0].pipeline",
+      code: "unknownPipeline",
+    })
   })
 
   test("throws FlowAuthoringException for an unknown template name", async () => {

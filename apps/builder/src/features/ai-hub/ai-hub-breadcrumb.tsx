@@ -10,7 +10,10 @@ export function AITab() {
   const t = useTranslations()
 
   const pathname = usePathname()
-  const activeTab = pathname.split("/").pop()
+  // The section is the segment after /space/{workspaceId}, so nested pages
+  // such as /ai-files/{id} keep their tab lit.
+  const segments = pathname.split("/")
+  const activeTab = segments[segments.indexOf("space") + 2]
 
   return (
     <AppTab

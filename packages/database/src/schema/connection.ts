@@ -15,6 +15,8 @@ import {
   connectionKinds,
   connectionStatuses,
   connectionStatusReasons,
+  type ProviderAccountEventKind,
+  providerAccountEventKinds,
 } from "../partials/connection"
 import type { IntegrationType } from "../partials/integration"
 import {
@@ -67,6 +69,10 @@ export const connectionModel = pgTable(
     }),
     connectedAt: timestamp(timestampConfig),
     disconnectedAt: timestamp(timestampConfig),
+    // Newest provider-reported lifecycle event applied to this row; compared
+    // under the row lock so a late or duplicate webhook is a no-op.
+    providerEventAt: timestamp(timestampConfig),
+    providerEventKind: text().$type<ProviderAccountEventKind>(),
   },
   (table) => [
     uniqueIndex("Connection_workspaceId_provider_sourceId_key").using(
@@ -118,6 +124,13 @@ export const connectionModel = pgTable(
       "Connection_statusReason_check",
       sql`${table.statusReason} IN (${sql.join(
         connectionStatusReasons.options.map((reason) => sql`${reason}`),
+        sql`, `,
+      )})`,
+    ),
+    check(
+      "Connection_providerEventKind_check",
+      sql`${table.providerEventKind} IS NULL OR ${table.providerEventKind} IN (${sql.join(
+        providerAccountEventKinds.options.map((kind) => sql`${kind}`),
         sql`, `,
       )})`,
     ),

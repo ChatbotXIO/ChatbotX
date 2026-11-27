@@ -1,4 +1,11 @@
-import { and, db, eq, inArray, sql } from "@chatbotx.io/database/client"
+import {
+  and,
+  type DatabaseClient,
+  db,
+  eq,
+  inArray,
+  sql,
+} from "@chatbotx.io/database/client"
 import type { FolderType } from "@chatbotx.io/database/partials"
 import { triggerRepository } from "@chatbotx.io/database/repositories"
 import {
@@ -10,17 +17,36 @@ import {
 } from "@chatbotx.io/database/schema"
 import type { ConditionModel, TriggerModel } from "@chatbotx.io/database/types"
 import { removeTriggerCache, updateTriggerCache } from "@chatbotx.io/events"
-import { createId } from "@chatbotx.io/utils"
+import { distributedStore } from "@chatbotx.io/redis"
+import { createId, withTimeout } from "@chatbotx.io/utils"
 import { isSameJsonValue } from "../audit/diff"
+import {
+  findInvalidActionReferences,
+  indexesOfNewActions,
+} from "../automation-action/references"
 import { BaseService } from "../base.service"
 import { notFoundException, validationException } from "../errors"
 import { folderService } from "../folder/service"
-import { assertDeletable } from "../template/installed-resource.service"
+import { logger } from "../logger"
+import {
+  assertResourceEditable,
+  withDeleteGuard,
+} from "../template/installed-resource.service"
+import { withTemplateLockedTransaction } from "../template/template-resource-locks"
+import { referencedParentsOf } from "../template/uninstall-references"
 import {
   type ConditionInput,
   toConditionColumnsShared as toConditionColumns,
 } from "./condition-columns"
-import { MAX_TRIGGERS_PER_WORKSPACE } from "./constants"
+import {
+  MAX_TRIGGERS_PER_WORKSPACE,
+  TRIGGER_CONTACT_RUN_LIMIT,
+  TRIGGER_CONTACT_RUN_LIMITER_BACKOFF_MS,
+  TRIGGER_CONTACT_RUN_LIMITER_TIMEOUT_MS,
+  TRIGGER_CONTACT_RUN_WINDOW_SECONDS,
+} from "./constants"
+import { FailOpenCircuit } from "./fail-open-circuit"
+import { assertPostCommentPostsValid } from "./post-comment-posts"
 
 export type { ConditionInput } from "./condition-columns"
 
@@ -34,6 +60,51 @@ export type ActiveTriggerWithConditionsPageRow = TriggerModel & {
   conditions: ConditionModel[]
   workspace: { timezone: string | null } | null
 }
+
+/**
+ * Rejects an update that points a NEW action at something that does not exist
+ * in the workspace, at `actions.<index>.<field>`. Only actions not already
+ * stored are checked, so a trigger that still holds a reference to a deleted
+ * record can be saved without touching it.
+ */
+const assertNewActionReferencesExist = async (input: {
+  workspaceId: string
+  next: TriggerModel["actions"]
+  stored: TriggerModel["actions"]
+  tx: DatabaseClient
+}): Promise<void> => {
+  const indexes = indexesOfNewActions(input.next, input.stored)
+  if (indexes.size === 0) {
+    return
+  }
+  const [problem] = await findInvalidActionReferences({
+    workspaceId: input.workspaceId,
+    actions: input.next.map((action) =>
+      action && typeof action === "object"
+        ? (action as Record<string, unknown>)
+        : {},
+    ),
+    indexes,
+    // The trigger runtime resolves a custom field named by `setCustomField`.
+    fieldNames: true,
+    tx: input.tx,
+  })
+  if (problem) {
+    const field = `actions.${problem.index}.${problem.field}`
+    // A message key (localised by the builder) with the path as a param, which
+    // the public API appends to the key so an agent still sees where.
+    throw validationException(
+      field,
+      "validation.trigger.actionReferenceNotFound",
+      { field },
+    )
+  }
+}
+
+/** Per worker process: switches the run limiter off while its Redis is failing. */
+const runLimiterCircuit = new FailOpenCircuit(
+  TRIGGER_CONTACT_RUN_LIMITER_BACKOFF_MS,
+)
 
 class TriggerService extends BaseService {
   async create(input: {
@@ -131,18 +202,33 @@ class TriggerService extends BaseService {
     workspaceId: string
     ids: string[]
   }): Promise<void> {
-    await assertDeletable({
-      workspaceId: input.workspaceId,
-      resourceKind: "trigger",
-      resourceIds: input.ids,
-    })
+    const deleted = await withDeleteGuard(
+      {
+        workspaceId: input.workspaceId,
+        targets: [{ resourceKind: "trigger", resourceIds: input.ids }],
+      },
+      (tx) => this.deleteInTx(tx, input),
+    )
 
-    const deletedTriggers = await db.query.triggerModel.findMany({
-      where: { workspaceId: input.workspaceId, id: { in: input.ids } },
-      columns: { id: true },
-    })
+    await removeTriggerCache(input.workspaceId)
 
-    await db
+    if (deleted.length > 0) {
+      await this.audit(
+        "delete",
+        `deleted trigger${deleted.length > 1 ? "s" : ""} (${deleted.map((id) => `#${id}`).join(", ")})`,
+      )
+    }
+  }
+
+  /**
+   * The delete core (row write only), shared with the template uninstall so
+   * there is one implementation. Returns the ids actually deleted.
+   */
+  async deleteInTx(
+    tx: DatabaseClient,
+    input: { workspaceId: string; ids: string[] },
+  ): Promise<string[]> {
+    const rows = await tx
       .delete(triggerModel)
       .where(
         and(
@@ -150,15 +236,8 @@ class TriggerService extends BaseService {
           inArray(triggerModel.id, input.ids),
         ),
       )
-
-    await removeTriggerCache(input.workspaceId)
-
-    if (deletedTriggers.length > 0) {
-      await this.audit(
-        "delete",
-        `deleted trigger${deletedTriggers.length > 1 ? "s" : ""} (${deletedTriggers.map((trigger) => `#${trigger.id}`).join(", ")})`,
-      )
-    }
+      .returning({ id: triggerModel.id })
+    return rows.map((row) => String(row.id))
   }
 
   /**
@@ -181,128 +260,175 @@ class TriggerService extends BaseService {
   > {
     const { workspaceId, id, actions, conditions } = input
 
-    const result = await db.transaction(async (tx) => {
-      const [existingTrigger, existingConditions] = await Promise.all([
-        tx.query.triggerModel.findFirst({
-          where: {
-            id,
-            workspaceId,
-          },
-        }),
-        tx.query.conditionModel.findMany({
-          where: {
-            triggerId: id,
-          },
-        }),
-      ])
-
-      if (!existingTrigger) {
-        return {
-          trigger: undefined,
-          conditions: undefined,
-          hasRealChange: false,
-        }
-      }
-
-      const existingIds = new Set(existingConditions.map((c) => c.id))
-      const existingById = new Map(existingConditions.map((c) => [c.id, c]))
-      const submittedIds = new Set(
-        conditions.filter((c) => c.id).map((c) => c.id),
-      )
-
-      const conditionsToDelete = existingConditions.filter(
-        (existing) => !submittedIds.has(existing.id.toString()),
-      )
-
-      const conditionsToUpdate = conditions.filter(
-        (c) => c.id && existingIds.has(c.id),
-      )
-
-      const changedConditionsToUpdate = conditionsToUpdate.filter(
-        (condition) => {
-          const existing = condition.id
-            ? existingById.get(condition.id)
-            : undefined
-          if (!existing) {
-            return false
-          }
-          const next = toConditionColumns(condition)
-          return !isSameJsonValue(next, {
-            type: existing.type,
-            sourceId: existing.sourceId,
-            operator: existing.operator,
-            value: existing.value,
-          })
-        },
-      )
-
-      const conditionsToCreate = conditions.filter((c) => !c.id)
-
-      let actionsChanged = false
-      if (!isSameJsonValue(actions, existingTrigger.actions)) {
-        const updated = await tx
-          .update(triggerModel)
-          .set({ actions })
+    const referencedParents = referencedParentsOf(actions)
+    const result = await withTemplateLockedTransaction(
+      async (tx) => {
+        await assertResourceEditable({
+          workspaceId,
+          resourceKind: "trigger",
+          resourceIds: [id],
+          changedKeys: ["actions", "conditions"],
+          // The flows, sequences... the new actions point at are locked with the trigger.
+          referencedParents,
+          tx,
+        })
+        // Serializes concurrent saves of one trigger, so "what is already
+        // stored" below cannot change between the read and the write. Taken
+        // after the template locks, like every other row lock.
+        await tx
+          .select({ id: triggerModel.id })
+          .from(triggerModel)
           .where(
             and(
               eq(triggerModel.workspaceId, workspaceId),
               eq(triggerModel.id, id),
             ),
           )
-          .returning({ id: triggerModel.id })
+          .for("update")
 
-        actionsChanged = updated.length > 0
-      }
+        const [existingTrigger, existingConditions] = await Promise.all([
+          tx.query.triggerModel.findFirst({
+            where: {
+              id,
+              workspaceId,
+            },
+          }),
+          tx.query.conditionModel.findMany({
+            where: {
+              triggerId: id,
+            },
+          }),
+        ])
 
-      if (conditionsToDelete.length > 0) {
-        await tx.delete(conditionModel).where(
-          inArray(
-            conditionModel.id,
-            conditionsToDelete.map((c) => c.id),
-          ),
+        if (!existingTrigger) {
+          return {
+            trigger: undefined,
+            conditions: undefined,
+            hasRealChange: false,
+          }
+        }
+
+        await assertNewActionReferencesExist({
+          workspaceId,
+          next: actions,
+          stored: existingTrigger.actions,
+          tx,
+        })
+
+        await assertPostCommentPostsValid({
+          conditions,
+          stored: existingConditions,
+          tx,
+          workspaceId,
+        })
+
+        const existingIds = new Set(existingConditions.map((c) => c.id))
+        const existingById = new Map(existingConditions.map((c) => [c.id, c]))
+        const submittedIds = new Set(
+          conditions.filter((c) => c.id).map((c) => c.id),
         )
-      }
 
-      for (const condition of changedConditionsToUpdate) {
-        await tx
-          .update(conditionModel)
-          .set(toConditionColumns(condition))
-          .where(eq(conditionModel.id, condition.id ?? ""))
-      }
-
-      if (conditionsToCreate.length > 0) {
-        await tx.insert(conditionModel).values(
-          conditionsToCreate.map((c) => ({
-            id: createId(),
-            triggerId: id,
-            ...toConditionColumns(c),
-          })),
+        const conditionsToDelete = existingConditions.filter(
+          (existing) => !submittedIds.has(existing.id.toString()),
         )
-      }
 
-      const [trigger, updatedConditions] = await Promise.all([
-        tx.query.triggerModel.findFirst({
-          where: {
-            id,
-          },
-        }),
-        tx.query.conditionModel.findMany({
-          where: {
-            triggerId: id,
-          },
-        }),
-      ])
+        const conditionsToUpdate = conditions.filter(
+          (c) => c.id && existingIds.has(c.id),
+        )
 
-      return {
-        trigger,
-        conditions: updatedConditions,
-        hasRealChange:
-          actionsChanged ||
-          conditionsToDelete.length > 0 ||
-          changedConditionsToUpdate.length > 0 ||
-          conditionsToCreate.length > 0,
-      }
-    })
+        const changedConditionsToUpdate = conditionsToUpdate.filter(
+          (condition) => {
+            const existing = condition.id
+              ? existingById.get(condition.id)
+              : undefined
+            if (!existing) {
+              return false
+            }
+            const next = toConditionColumns(condition)
+            return !isSameJsonValue(next, {
+              type: existing.type,
+              sourceId: existing.sourceId,
+              operator: existing.operator,
+              value: existing.value,
+            })
+          },
+        )
+
+        const conditionsToCreate = conditions.filter((c) => !c.id)
+
+        let actionsChanged = false
+        if (!isSameJsonValue(actions, existingTrigger.actions)) {
+          const updated = await tx
+            .update(triggerModel)
+            .set({ actions })
+            .where(
+              and(
+                eq(triggerModel.workspaceId, workspaceId),
+                eq(triggerModel.id, id),
+              ),
+            )
+            .returning({ id: triggerModel.id })
+
+          actionsChanged = updated.length > 0
+        }
+
+        if (conditionsToDelete.length > 0) {
+          await tx.delete(conditionModel).where(
+            inArray(
+              conditionModel.id,
+              conditionsToDelete.map((c) => c.id),
+            ),
+          )
+        }
+
+        for (const condition of changedConditionsToUpdate) {
+          await tx
+            .update(conditionModel)
+            .set(toConditionColumns(condition))
+            .where(eq(conditionModel.id, condition.id ?? ""))
+        }
+
+        if (conditionsToCreate.length > 0) {
+          await tx.insert(conditionModel).values(
+            conditionsToCreate.map((c) => ({
+              id: createId(),
+              triggerId: id,
+              ...toConditionColumns(c),
+            })),
+          )
+        }
+
+        const [trigger, updatedConditions] = await Promise.all([
+          tx.query.triggerModel.findFirst({
+            where: {
+              id,
+            },
+          }),
+          tx.query.conditionModel.findMany({
+            where: {
+              triggerId: id,
+            },
+          }),
+        ])
+
+        return {
+          trigger,
+          conditions: updatedConditions,
+          hasRealChange:
+            actionsChanged ||
+            conditionsToDelete.length > 0 ||
+            changedConditionsToUpdate.length > 0 ||
+            conditionsToCreate.length > 0,
+        }
+      },
+      {
+        workspaceId,
+        initialKeys: [
+          { kind: "trigger", resourceId: id },
+          ...referencedParents,
+        ],
+      },
+    )
 
     if (result.trigger) {
       await updateTriggerCache(workspaceId)
@@ -333,39 +459,57 @@ class TriggerService extends BaseService {
   > {
     const { workspaceId, id, ...patch } = input
 
-    const trigger = await db.query.triggerModel.findFirst({
-      where: {
-        id,
-        workspaceId,
-      },
-    })
+    // The trigger is locked before the stored row is read, so the diff that
+    // decides the guard is computed under the lock; the audit follows commit.
+    const { trigger, changedEntries, updated } =
+      await withTemplateLockedTransaction(
+        async (tx) => {
+          const current = await tx.query.triggerModel.findFirst({
+            where: { id, workspaceId },
+          })
 
-    if (!trigger) {
-      throw notFoundException("Trigger not found")
-    }
+          if (!current) {
+            throw notFoundException("Trigger not found")
+          }
 
-    const changedEntries = Object.entries(patch).filter(
-      ([key, value]) => trigger[key as keyof typeof patch] !== value,
-    )
+          const entries = Object.entries(patch).filter(
+            ([key, value]) => current[key as keyof typeof patch] !== value,
+          )
+          if (entries.length === 0) {
+            return {
+              trigger: current,
+              changedEntries: entries,
+              updated: [] as { id: string }[],
+            }
+          }
 
-    if (changedEntries.length > 0) {
-      const updated = await db
-        .update(triggerModel)
-        .set(patch)
-        .where(eq(triggerModel.id, trigger.id))
-        .returning({ id: triggerModel.id })
+          await assertResourceEditable({
+            workspaceId,
+            resourceKind: "trigger",
+            resourceIds: [current.id],
+            changedKeys: entries.map(([key]) => key),
+            tx,
+          })
+          const rows = await tx
+            .update(triggerModel)
+            .set(patch)
+            .where(eq(triggerModel.id, current.id))
+            .returning({ id: triggerModel.id })
+          return { trigger: current, changedEntries: entries, updated: rows }
+        },
+        { workspaceId, initialKeys: [{ kind: "trigger", resourceId: id }] },
+      )
 
-      if (updated.length > 0) {
-        const changedKeys = changedEntries.map(([key]) => key)
-        let detail = `updated a trigger (#${trigger.id})`
-        if (changedKeys.length === 1 && changedKeys[0] === "active") {
-          detail = patch.active
-            ? `enabled a trigger (#${trigger.id})`
-            : `disabled a trigger (#${trigger.id})`
-        }
-
-        await this.audit("update", detail)
+    if (changedEntries.length > 0 && updated.length > 0) {
+      const changedKeys = changedEntries.map(([key]) => key)
+      let detail = `updated a trigger (#${trigger.id})`
+      if (changedKeys.length === 1 && changedKeys[0] === "active") {
+        detail = patch.active
+          ? `enabled a trigger (#${trigger.id})`
+          : `disabled a trigger (#${trigger.id})`
       }
+
+      await this.audit("update", detail)
     }
 
     const withConditions = await triggerRepository.findWithConditions({
@@ -465,10 +609,64 @@ class TriggerService extends BaseService {
 
   /** `datetime-trigger-evaluator.ts` cleanupOldExecutions: purge executions older than the cutoff. */
   async purgeExecutionsOlderThan(cutoff: Date): Promise<number> {
-    const result = await db.execute(
+    const result = await db.execute<Record<string, unknown>>(
       sql`DELETE FROM "TriggerExecution" WHERE "executedAt" < ${cutoff}`,
     )
     return Number(result.rowCount ?? 0)
+  }
+
+  /**
+   * Loop circuit breaker: counts one run of `triggerId` for `contactId` in a
+   * fixed window and returns `false` once the run exceeds
+   * `TRIGGER_CONTACT_RUN_LIMIT`; the first denial of a window is logged at
+   * `warn`.
+   *
+   * Fails open (returns `true`) so a Redis problem never stops trigger runs. The
+   * Redis call is bounded by `TRIGGER_CONTACT_RUN_LIMITER_TIMEOUT_MS`, and a
+   * failure opens `runLimiterCircuit`: runs then skip the limiter until one
+   * probe call succeeds. A hung cache Redis therefore neither stalls every run
+   * nor floods the log (one error line when the outage starts, one info line on
+   * recovery, per worker process).
+   */
+  async tryAcquireContactRun(input: {
+    workspaceId: string
+    triggerId: string
+    contactId: string
+  }): Promise<boolean> {
+    const { workspaceId, triggerId, contactId } = input
+    const token = runLimiterCircuit.tryEnter()
+    if (token === null) {
+      return true
+    }
+    try {
+      const count = await withTimeout(
+        distributedStore.incrWithWindow(
+          `trigger:contact-run:${triggerId}:${contactId}`,
+          TRIGGER_CONTACT_RUN_WINDOW_SECONDS,
+        ),
+        TRIGGER_CONTACT_RUN_LIMITER_TIMEOUT_MS,
+      )
+      if (runLimiterCircuit.recordSuccess(token)) {
+        logger.info("Trigger run limiter recovered; counting runs again")
+      }
+      // Once per window, not per skipped run: a busy contact on a legitimate
+      // trigger keeps being denied until the window ends.
+      if (count === TRIGGER_CONTACT_RUN_LIMIT + 1) {
+        logger.warn(
+          { workspaceId, triggerId, contactId },
+          "Trigger run skipped: per-contact run limit exceeded (possible automation loop)",
+        )
+      }
+      return count <= TRIGGER_CONTACT_RUN_LIMIT
+    } catch (err) {
+      if (runLimiterCircuit.recordFailure(token)) {
+        logger.error(
+          { err, workspaceId, triggerId, contactId },
+          "Trigger run limiter unavailable; allowing runs uncounted",
+        )
+      }
+      return true
+    }
   }
 
   /** `trigger-executor.service.ts` execute: records first-entered contact history. */

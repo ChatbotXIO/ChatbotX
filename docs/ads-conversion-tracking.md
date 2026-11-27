@@ -14,6 +14,81 @@ against real chatbot outcomes.
 | Rule | `AdsConversionRule` (`packages/database/src/schema/ads-conversion-rule.ts`) | Workspace-configured "when X happens on this integration, record a lead/purchase" — trigger kinds `templateSent`/`tagApplied`/`keywordMatched`/`contactReplied`. Configured on a deliberately hidden page (`/dashboard/ads/conversion-events`, not linked from navigation). |
 | Event | `AdsConversionEvent` (`packages/database/src/schema/ads-conversion-event.ts`) | One row per recorded conversion. `source` is `automatic` (Meta's own webhook-reported event, WhatsApp only), `rule` (an `AdsConversionRule` fired), or `trigger` (a Trigger automation action fired — see below). `eventType` is `lead` or `purchase`; `capiStatus` tracks CAPI delivery (`pending`/`sent`/`failed`/`skipped_no_scope`/`skipped_region`). |
 
+## Ad touch history
+
+`ContactInbox.referral` is a mutable snapshot of the **last** ad a contact came from;
+a newer ad replaces it. Every ad click is also appended to `ContactReferralEvent`
+(`packages/database/src/schema/contact-referral-event.ts`), one immutable row per
+touch, so a contact who clicked ad 1 and, days later, ad 2 keeps both.
+
+| Concept | Where | Notes |
+|---------|-------|-------|
+| Writer | `contactReferralEventService.recordAdTouches` (`packages/business/src/contact-referral-event/`) | Called from `contactInboxService.updateTracking` whenever a referral is persisted. Every channel that persists a referral (WhatsApp, Messenger, Instagram, Zalo's Google click) is covered by that one hook. The log is secondary: inside a caller's transaction (the inbound message path) the write runs in a savepoint and a failure is logged without failing the message, because a retry would find the message stored and skip its automation. The Zalo profile lookup uses `contactInboxService.updateTrackingAtomic`: its snapshot and the touch commit together, so a failed touch leaves the snapshot unchanged and a later lookup retries (a click already in the snapshot is not offered again). |
+| Dedup | `dedupKey`, unique per `(workspaceId, contactInboxId, dedupKey)` | A click id when the touch has one (`ctwa:`, `gclid:`, `gbraid:`), otherwise `ad:<adId>:<message id or provider timestamp>`, so a webhook retry is a no-op but a second click of the same ad is a new touch. A Zalo profile lookup returns the same gclid on every read, so its click id alone is the key. |
+| What counts | `toAdTouches` (`ad-touch.ts`) | The same paid-ad test as attribution (`resolveAdReferral`: `ctwaClid`, or `adId` with `source: "ADS"`) plus a Google click. An organic referral (ig.me shortlink, ref link) is skipped. A touch can have no `adId` (a Zalo Google click); it is kept, never given an invented id. |
+| Time | `occurredAt` | The carrying message's time (or the webhook's own timestamp for a referral-only delivery). For a Google click that is when the message arrived, not when the user clicked. |
+| Conversion link | `AdsConversionEvent.referralEventId`, `GoogleAdsConversionEvent.referralEventId` | Names the touch a conversion is credited to: the touch of the click it carries, or, for a Messenger/Instagram ad with no click id, the latest touch of that same ad. Attribution itself is unchanged; the `adId`/`ctwaClid`/click-id snapshots stay authoritative, and a contact whose ad predates the log has a null link. |
+| Reads | `contacts.listAdReferrals`, `ads.referralStats`, `ads.listReferralAds`, the `{{ad_ids}}` / `{{ad_id}}` system fields, the "Clicked ad" filter | See below. |
+
+There is no backfill: history starts when the writer ships.
+
+- **Contact profile**: `contacts.listAdReferrals` (`GET /v1/contacts/{identifier}/ad-referrals`,
+  scope `contacts`) lists a contact's touches newest first, cursor-paginated, and never
+  returns click ids. The inbox contact panel shows it as the "Ads history" section.
+- **Per-ad report**: `ads.referralStats` (`GET /v1/ads/referral-stats`, scope `ads`),
+  also shown under the Ads dashboard. Per ad over a date range: contacts reached
+  (`anyTouchContacts`), contacts whose first ad **in the range** it was
+  (`firstTouchContacts`), and the lead/purchase conversions credited to its clicks
+  (Meta conversions linked to a touch; Google conversions are not counted, though they are linked too). It scans
+  every touch in the range, so the range is capped like every Ads report (366 days)
+  and the query runs under a 15 s statement timeout, answering 503 `reportTimeout`.
+- **System fields**: `{{ad_ids}}` is the contact's distinct ad ids, oldest first (at most
+  50), across all its inboxes; `{{ad_id}}` is the first one. Both are null for a contact
+  that never came from an ad, and unlike `{{last_ad}}` they do not read the current inbox's
+  referral. A workspace custom field with the same name is shadowed by the system field; it stays reachable as `{{raw:ad_id}}` / `{{raw:ad_ids}}`.
+- **Contact export**: the optional `sys:adIds` column (header "Ad IDs", off by default
+  in the dialog) writes the same list as `{{ad_ids}}`, joined with `, `. The worker
+  loads it only when the column is selected, with one query per export page
+  (`loopableItemsCount` contacts), not one per contact.
+- **Filter**: "Clicked ad" (`clickedAd`) reuses the contact activity store; see
+  `docs/contact-activity.md#clicked-ad`. Ad ids to pick come from `ads.listReferralAds`, which
+  looks only at the workspace's newest 2000 touches.
+- **Purge**: `ContactReferralEvent` cascades from `ContactInbox` and `Workspace` and is
+  drained in bounded batches before the final cascade (it sits after the conversion
+  tables it is the parent of).
+
+## AI Agent ad context
+
+A customer who just clicked a paid ad often opens with a vague message ("tell me
+more", "how much?"). The AI Agent chat reply therefore receives the ad as extra
+system-prompt context and **prioritises it** for vague messages. Always on, no
+setting.
+
+| Concept | Where | Notes |
+|---------|-------|-------|
+| Block | `buildAdContextPrompt` (`packages/business/src/ads-conversion/ad-context-prompt.ts`) | Pure. Renders one ad's headline (`adTitle`), text (`adBody`), platform and link (`sourceUrl`) as JSON-quoted values, plus a short rule: treat the ad as the customer's current interest, answer about it when the message is vague even if earlier messages discussed another product, but follow the customer if they clearly name a different product. Never contains `adId` or `ctwaClid`. |
+| Gate | `resolveAdContextPrompt` (`apps/worker/src/integration/handlers/automated-response/ad-context.ts`) | Cheapest check first: (1) `isAdContextCandidate` on the `ContactInbox.referral` snapshot, in memory: `resolveAdReferral` is non-null (the same paid-ad test as attribution; an ig.me `SHORTLINK`, a ref link or a Google click is not an ad) and the snapshot carries a headline, text or link (an ad id alone is useless to a model, so a Messenger/Instagram referral with only an `adId` costs no query), (2) the latest Meta ad touch (`contactReferralEventService.findLatestMetaAdTouch`, which, unlike `findLatestAdTouchAt`, does not require an `adId`, so a Click-to-WhatsApp click with a click id but no `source_id` still counts) is fresh: at most `AD_CONTEXT_WINDOW_MS` = 72 hours old and at most `AD_CONTEXT_CLOCK_SKEW_MS` = 5 minutes in the future (the time is Meta's timestamp, not our clock); a never-logged touch counts as stale, (3) that touch carries a headline, text or link. An organic customer costs no query. |
+| Copy source | `adCreativeFromTouch` | The block is rendered from the **newest logged touch** (`ContactReferralEvent.sourceUrl` + `metadata`), never from the snapshot. The snapshot is a jsonb merge that can keep an older ad's copy (a CTWA click without `source_id` does not clear `adTitle`/`adBody`; `sourceUrl`/`sourcePlatform` are never cleared) and is last-processed-wins, so out-of-order webhooks can leave it behind or ahead of the log. Only the touch row pairs the copy with its own time. |
+| Placement | `runAIReply` (`apps/worker/src/integration/handlers/automated-response/replies.ts`) | After the workspace prompt (and the `Conversation Context` summary), before every guard, so the guards keep the last word. Rebuilt on every reply; never written to the AI history. |
+| Failure | `resolveAdContextPrompt` | Any error returns no block and logs a `warn` with `reason: "ad_context_unavailable"`; the reply is never blocked. |
+
+- **Scope**: only the AI Agent chat reply (`replyByAI`, reached by the Default Agent
+  and the Global Router through `runAgentReply`). The AI Generate Text flow step,
+  comment automation and story reply do not get it.
+- **Sanitising**: ad copy comes from the advertiser and Meta, but is still outside
+  input headed for a prompt. Each field is flattened to one line, stripped of control
+  characters and capped (headline 200, text 600, link 300 characters).
+- **Known limits**: Messenger and Instagram referrals often carry only an `adId`
+  (the title is optional), so they get no block until an ad name is available. The
+  priority is not tied to the message order: within the 72 hours a vague message is
+  answered about the ad even if the conversation has since moved to another product.
+  The Messenger/Instagram `messaging_referrals` event can arrive separately from the
+  message, so the first reply may miss the block if the job runs first.
+  The in-memory gate reads the snapshot, so in the rare out-of-order case where
+  the snapshot holds a copy-less ad (only an `adId`) while the log's newest touch
+  has copy, no block is shown; this keeps adId-only referrals free of a query on
+  every reply.
+
 ## How conversions get produced
 
 Two independent producers write the same `AdsConversionEvent` table:
@@ -190,6 +265,19 @@ can supply.
   parameters show up under *Sampled activities*.
 
 ## Where Ads dashboard metrics come from
+
+**Scope of a per-channel Ads section.** The section's channel is fixed by its route; the
+Analytics dashboard's shared Inbox filter (`inboxIds` URL param) narrows it: each selected
+inbox is mapped to this channel's integration bound to it
+(`resolveSelectedIntegrationIds`), inboxes of other channels are ignored, and none
+selected means every connected integration ("All accounts"). Totals, the daily series and
+the ad-account list aggregate exactly the selected integrations (`integrationIds` on the
+ads analytics scope; the single `integration*Id` inputs still work for the public API and
+CLI). The "All ad accounts" filter has no shared equivalent and stays in the section. The
+older `channelAccount` / `account` link params apply only while no inbox is selected and are
+dropped when the shared selection changes. The CSV export and retarget follow the
+integration only when exactly one is selected; with several they cover the whole channel.
+Changing the shared selection re-renders the server page (`shallow: false`).
 
 The Ads dashboard (`apps/builder/src/features/ads/components/ads-analytics-view.tsx`)
 merges two sources per request, not one:

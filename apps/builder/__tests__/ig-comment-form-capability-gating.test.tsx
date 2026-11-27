@@ -36,6 +36,10 @@ vi.mock(
   }),
 )
 
+vi.mock("@/features/shared/comment-automation/ai-moderation-field", () => ({
+  AIModerationField: () => <div data-testid="ai-moderation-field" />,
+}))
+
 vi.mock(
   "@/features/ig-comments/provider/ig-comment-posts-store-context",
   () => ({
@@ -60,6 +64,9 @@ vi.mock("@chatbotx.io/ui/components/ui/form", async () => {
     }: {
       render: (props: { field: Record<string, unknown> }) => React.ReactNode
     }) => render({ field: {} }),
+    FormDescription: ({ children }: { children: React.ReactNode }) => (
+      <p>{children}</p>
+    ),
     FormItem: ({ children }: { children: React.ReactNode }) => (
       <div>{children}</div>
     ),
@@ -113,13 +120,16 @@ const BASE_VALUES: CreateIgCommentRequest = {
 function Harness({
   variant,
   isLive = false,
+  likeStored = false,
 }: {
   variant: IgCommentVariant
   isLive?: boolean
+  likeStored?: boolean
 }) {
   const form = useForm<CreateIgCommentRequest>({
     defaultValues: {
       ...BASE_VALUES,
+      options: { ...BASE_VALUES.options, likeUserComment: likeStored },
       type: variant,
       post: isLive ? { type: "live", value: [] } : BASE_VALUES.post,
     },
@@ -143,12 +153,18 @@ describe("IgCommentForm capability gating", () => {
   let container: HTMLDivElement
   let root: Root
 
-  const renderVariant = (variant: IgCommentVariant, isLive = false) => {
+  const renderVariant = (
+    variant: IgCommentVariant,
+    isLive = false,
+    likeStored = false,
+  ) => {
     container = document.createElement("div")
     document.body.append(container)
     root = createRoot(container)
     act(() => {
-      root.render(<Harness isLive={isLive} variant={variant} />)
+      root.render(
+        <Harness isLive={isLive} likeStored={likeStored} variant={variant} />,
+      )
     })
   }
 
@@ -167,11 +183,22 @@ describe("IgCommentForm capability gating", () => {
     )
   })
 
-  test("instagramFacebook: shows the like-comment option", () => {
+  test("instagramFacebook: never offers the like-comment option either", () => {
     renderVariant("instagramFacebook")
 
-    expect(container.textContent).toContain(
+    expect(container.textContent).not.toContain(
       "instagramCommentAutomation.options.likeUserComment",
+    )
+  })
+
+  test.each([
+    "instagram",
+    "instagramFacebook",
+  ] as const)("%s: a rule saved with like on shows it as unavailable", (variant) => {
+    renderVariant(variant, false, true)
+
+    expect(container.textContent).toContain(
+      "instagramCommentAutomation.options.likeUserCommentUnavailable",
     )
   })
 

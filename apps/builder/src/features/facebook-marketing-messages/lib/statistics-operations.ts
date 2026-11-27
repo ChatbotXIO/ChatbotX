@@ -1,6 +1,5 @@
 import "server-only"
 
-import { createHash } from "node:crypto"
 import { facebookMarketingMessagesService } from "@chatbotx.io/business"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
 import type { WorkspaceModel } from "@chatbotx.io/database/types"
@@ -12,6 +11,7 @@ import {
 } from "@chatbotx.io/integration-facebook-ads"
 import { getChildLogger } from "@chatbotx.io/logger"
 import { withCache } from "@chatbotx.io/redis"
+import { sha256Hex } from "@chatbotx.io/utils/crypto"
 import { getTranslations } from "next-intl/server"
 import type { StatisticsInput, StatisticsOutput } from "../schema/statistics"
 import { requireValidGrant } from "./grant"
@@ -46,10 +46,9 @@ function pickMetrics(
   }
 }
 
-function hashIds(ids: string[]): string {
-  return createHash("sha1")
-    .update([...ids].sort().join(","))
-    .digest("hex")
+/** Order-insensitive cache-key fragment for an ad id set (Web Crypto: Edge-safe). */
+function hashIds(ids: string[]): Promise<string> {
+  return sha256Hex([...ids].sort().join(","))
 }
 
 /**
@@ -176,7 +175,7 @@ export async function getMarketingMessagesStatistics(
       until,
     }
     const keyBase = `mm-stats:${workspace.id}:${selected.adAccountId}:${since}:${until}`
-    const idsHash = hashIds(adIds)
+    const idsHash = await hashIds(adIds)
     const [rowsResult, aggregateResult] = await Promise.allSettled([
       withCache(
         `${keyBase}:ad:${idsHash}`,

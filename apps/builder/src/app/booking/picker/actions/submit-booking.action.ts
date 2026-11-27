@@ -82,20 +82,22 @@ export async function submitBooking(parsedInput: SubmitBookingInput) {
     }
 
     try {
-      if (tokenPayload.nodeId) {
+      const { nodeId, flowId, flowVersionId, stepId } = tokenPayload
+      // Inbox booking links carry no flow context, so there is nothing to resume.
+      if (nodeId && flowId && flowVersionId && stepId) {
         await integrationQueue.add(IntegrationJobAction.sendFlow, {
           type: IntegrationJobAction.sendFlow,
           data: {
             conversationId: tokenPayload.conversationId,
             contactInboxId: tokenPayload.contactInboxId,
-            flowId: tokenPayload.flowId,
-            flowVersionId: tokenPayload.flowVersionId,
-            nodeId: tokenPayload.nodeId,
-            startFromStepId: tokenPayload.stepId,
+            flowId,
+            flowVersionId,
+            nodeId,
+            startFromStepId: stepId,
             appointmentId: result.appointment?.id,
             metadata: {
               type: APPOINTMENT_WEBVIEW_SELECTION_PAYLOAD_TYPE,
-              stepId: tokenPayload.stepId,
+              stepId,
               contactInboxId: tokenPayload.contactInboxId,
               selectedStartAt: parsedInput.selectedStartAt,
               appointmentId: result.appointment?.id,

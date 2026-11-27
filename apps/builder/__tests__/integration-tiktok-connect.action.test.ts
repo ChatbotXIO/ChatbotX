@@ -8,11 +8,13 @@ const mocks = vi.hoisted(() => ({
   auditRecord: vi.fn(),
   handleRequest: vi.fn(),
   redirect: vi.fn(),
+  recordAuthorization: vi.fn(async () => undefined),
 }))
 
 vi.mock("@chatbotx.io/business", () => ({
   tiktokIntegrationService: { connect: mocks.connect },
   workspaceService: { findById: mocks.findWorkspaceById },
+  userService: { recordConnectionAuthorization: mocks.recordAuthorization },
 }))
 
 vi.mock("@chatbotx.io/business/audit", () => ({
@@ -90,5 +92,52 @@ describe("connectTiktokHandler", () => {
       ipAddress: "unknown",
       userAgent: undefined,
     })
+  })
+
+  test("records the obtained auth once, before the integration is stored", async () => {
+    mocks.connect.mockResolvedValue({
+      wasCreated: true,
+      integration: { id: "integration-1" },
+    })
+
+    await connectTiktokHandler({
+      tiktokSettings: { clientId: "client", clientSecret: "secret" },
+      workspaceId: "workspace-1",
+      userId: "admin-1",
+      req: new Request("https://app.example.com/integrations/tiktok/callback"),
+      redirectUrl: "https://app.example.com/integrations/tiktok/callback",
+    })
+
+    expect(mocks.recordAuthorization).toHaveBeenCalledTimes(1)
+    expect(mocks.recordAuthorization).toHaveBeenCalledWith({
+      userId: "admin-1",
+      provider: "tiktok",
+      auth: expect.objectContaining({
+        metadata: expect.objectContaining({ openId: "open-id-1" }),
+      }),
+      phase: "authorizationObtained",
+      workspaceId: "workspace-1",
+    })
+    expect(mocks.recordAuthorization.mock.invocationCallOrder[0]).toBeLessThan(
+      mocks.connect.mock.invocationCallOrder[0] as number,
+    )
+  })
+
+  test("records nothing when the authorization itself fails", async () => {
+    mocks.handleRequest.mockRejectedValue(new Error("missing scopes"))
+
+    await expect(
+      connectTiktokHandler({
+        tiktokSettings: { clientId: "client", clientSecret: "secret" },
+        workspaceId: "workspace-1",
+        userId: "admin-1",
+        req: new Request(
+          "https://app.example.com/integrations/tiktok/callback",
+        ),
+        redirectUrl: "https://app.example.com/integrations/tiktok/callback",
+      }),
+    ).rejects.toThrow("missing scopes")
+
+    expect(mocks.recordAuthorization).not.toHaveBeenCalled()
   })
 })

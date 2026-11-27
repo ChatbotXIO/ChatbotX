@@ -9,6 +9,8 @@ const mocks = vi.hoisted(() => ({
   delete: vi.fn(),
   assertDeletable: vi.fn(),
   flowExists: vi.fn(),
+  findAIAgent: vi.fn(),
+  isConnectionUsable: vi.fn(),
 }))
 
 vi.mock("@chatbotx.io/database/client", () => ({
@@ -40,8 +42,18 @@ vi.mock("@chatbotx.io/database/partials", async () => {
     typeof import("../../database/src/partials/comment-automation")
   >("../../database/src/partials/comment-automation")
   return {
+    // The real post-target helpers, so hashtag normalization is what ships.
+    COMMENT_POST_HASHTAGS_MAX: actual.COMMENT_POST_HASHTAGS_MAX,
+    COMMENT_POST_HASHTAG_MAX_LENGTH: actual.COMMENT_POST_HASHTAG_MAX_LENGTH,
+    isHashtagCommentAutomation: actual.isHashtagCommentAutomation,
+    isValidCommentPostHashtag: actual.isValidCommentPostHashtag,
+    normalizeCommentPostHashtags: actual.normalizeCommentPostHashtags,
+    commentAutomationChannelSupportsDelete:
+      actual.commentAutomationChannelSupportsDelete,
     commentAutomationChannelSupportsHideGif:
       actual.commentAutomationChannelSupportsHideGif,
+    commentAutomationChannelSupportsImageFilter:
+      actual.commentAutomationChannelSupportsImageFilter,
     isLiveCommentAutomation: actual.isLiveCommentAutomation,
     liveCommentCapabilities: actual.liveCommentCapabilities,
     commentAutomationTypes: { enum: { messenger: "messenger" } },
@@ -49,6 +61,7 @@ vi.mock("@chatbotx.io/database/partials", async () => {
       options: ["instagram", "instagramFacebook"],
     },
     normalizeReplyTexts: (reply: unknown) => reply,
+    resolveModerationEngine: actual.resolveModerationEngine,
     rootFolderId: "0",
   }
 })
@@ -76,12 +89,43 @@ vi.mock("date-fns-tz", () => ({
   formatInTimeZone: () => "00:00",
 }))
 
-vi.mock("../src/template/installed-resource.service", () => ({
-  assertDeletable: mocks.assertDeletable,
+const mockLockOptions = vi.hoisted(() => vi.fn())
+
+// Run the locked transaction against the same mocked client the test asserts on.
+vi.mock("../src/template/template-resource-locks", async () => {
+  const { db } = await import("@chatbotx.io/database/client")
+  return {
+    withTemplateLockedTransaction: (
+      run: (tx: unknown) => unknown,
+      options?: unknown,
+    ) => {
+      mockLockOptions(options)
+      return run(db)
+    },
+  }
+})
+
+vi.mock("../src/template/installed-resource.service", async () => ({
+  ...(await import("./helpers/template-guard-mocks")).templateGuardMocks({
+    assertDeletable: mocks.assertDeletable,
+    assertResourceEditable: vi.fn(),
+  }),
+  assertReferencable: vi.fn(),
+  changedKeysOf: vi.fn(() => []),
 }))
 
 vi.mock("../src/flow/service", () => ({
   flowService: { exists: mocks.flowExists },
+}))
+
+vi.mock("../src/ai-agent/service", () => ({
+  aiAgentService: { findByIdForWorkspace: mocks.findAIAgent },
+}))
+
+vi.mock("../src/decision/comment-moderation-service", () => ({
+  decisionCommentModerationService: {
+    isConnectionUsable: mocks.isConnectionUsable,
+  },
 }))
 
 const { commentAutomationService } = await import(
@@ -93,6 +137,8 @@ beforeEach(() => {
   mocks.findFirst.mockResolvedValue(undefined)
   mocks.assertDeletable.mockResolvedValue(undefined)
   mocks.flowExists.mockResolvedValue(true)
+  mocks.findAIAgent.mockResolvedValue({ id: "agent-1" })
+  mocks.isConnectionUsable.mockResolvedValue("ok")
 })
 
 describe("commentAutomationService — type-scoped writes", () => {
@@ -169,9 +215,84 @@ describe("commentAutomationService — type-scoped writes", () => {
     expect(set).toHaveBeenCalledWith({ name: "x" })
   })
 
+  test("updateMessenger guards first on the locked transaction and locks the reply flows", async () => {
+    const { assertResourceEditable } = await import(
+      "../src/template/installed-resource.service"
+    )
+    const { db } = await import("@chatbotx.io/database/client")
+    vi.mocked(assertResourceEditable).mockClear()
+    mocks.findFirst.mockResolvedValue({ id: "9", type: "messenger" })
+    mocks.flowExists.mockResolvedValue(true)
+    const returning = vi.fn().mockResolvedValue([{ id: "9" }])
+    const where = vi.fn(() => ({ returning }))
+    const set = vi.fn(() => ({ where }))
+    mocks.update.mockReturnValue({ set })
+
+    await commentAutomationService.updateMessenger(
+      { workspaceId: "1", id: "9" },
+      { privateReply: { type: "flow", value: "flow-1" } } as never,
+    )
+
+    expect(assertResourceEditable).toHaveBeenCalledWith(
+      expect.objectContaining({
+        resourceKind: "fbCommentAutomation",
+        resourceIds: ["9"],
+        referencedParents: [{ kind: "flow", resourceId: "flow-1" }],
+        tx: db,
+      }),
+    )
+    expect(
+      vi.mocked(assertResourceEditable).mock.invocationCallOrder[0],
+    ).toBeLessThan(mocks.update.mock.invocationCallOrder[0] as number)
+  })
+
+  test("updateMessenger locks the automation and reply flows before the stored row is read", async () => {
+    mocks.findFirst.mockResolvedValue({ id: "9", type: "messenger" })
+    mocks.flowExists.mockResolvedValue(true)
+    const returning = vi.fn().mockResolvedValue([{ id: "9" }])
+    mocks.update.mockReturnValue({
+      set: () => ({ where: () => ({ returning }) }),
+    })
+    mocks.findFirst.mockClear()
+    mockLockOptions.mockClear()
+
+    await commentAutomationService.updateMessenger(
+      { workspaceId: "1", id: "9" },
+      { privateReply: { type: "flow", value: "flow-1" } } as never,
+    )
+
+    expect(mockLockOptions).toHaveBeenCalledWith({
+      workspaceId: expect.any(String),
+      initialKeys: [
+        { kind: "fbCommentAutomation", resourceId: "9" },
+        { kind: "flow", resourceId: "flow-1" },
+      ],
+    })
+    expect(mockLockOptions.mock.invocationCallOrder[0]).toBeLessThan(
+      mocks.findFirst.mock.invocationCallOrder[0] as number,
+    )
+  })
+
+  test("updateInstagram blocked by the guard writes nothing", async () => {
+    const { assertResourceEditable } = await import(
+      "../src/template/installed-resource.service"
+    )
+    mocks.findFirst.mockResolvedValue({ id: "9", type: "instagram" })
+    mocks.update.mockClear()
+    vi.mocked(assertResourceEditable).mockRejectedValueOnce(new Error("locked"))
+
+    await expect(
+      commentAutomationService.updateInstagram(
+        { workspaceId: "1", id: "9" },
+        { name: "x" },
+      ),
+    ).rejects.toThrow("locked")
+    expect(mocks.update).not.toHaveBeenCalled()
+  })
+
   test("deleteMessenger deletes through deleteMany scoped to the messenger type only", async () => {
     mocks.findFirst.mockResolvedValue({ id: "9", type: "messenger" })
-    const where = vi.fn().mockResolvedValue(undefined)
+    const where = vi.fn(() => ({ returning: vi.fn().mockResolvedValue([]) }))
     mocks.delete.mockReturnValue({ where })
 
     await commentAutomationService.deleteMessenger({
@@ -188,7 +309,7 @@ describe("commentAutomationService — type-scoped writes", () => {
   })
 
   test("deleteMany filters by the caller-supplied types array", async () => {
-    const where = vi.fn().mockResolvedValue(undefined)
+    const where = vi.fn(() => ({ returning: vi.fn().mockResolvedValue([]) }))
     mocks.delete.mockReturnValue({ where })
 
     await commentAutomationService.deleteMany({
@@ -197,7 +318,9 @@ describe("commentAutomationService — type-scoped writes", () => {
       types: ["instagram", "instagramFacebook"],
     })
 
-    const whereArg = where.mock.calls[0]?.[0] as { and: unknown[] }
+    const whereArg = (where.mock.calls[0] as unknown[])[0] as {
+      and: unknown[]
+    }
     // The types filter is threaded into the compound where-clause as one of
     // the `inArray` conditions built by the mocked `and`/`inArray` helpers.
     expect(
@@ -418,6 +541,7 @@ describe("commentAutomationService — type-scoped writes", () => {
   })
 
   test("updateThreadsAutomation rejects a publicReply flow from another workspace", async () => {
+    mocks.findFirst.mockResolvedValue({ id: "9", name: "Before" })
     mocks.flowExists.mockResolvedValue(false)
 
     await expect(
@@ -461,6 +585,7 @@ describe("commentAutomationService — type-scoped writes", () => {
   })
 
   test("updateTiktokAutomation rejects a publicReply flow from another workspace", async () => {
+    mocks.findFirst.mockResolvedValue({ id: "9", name: "Before" })
     mocks.flowExists.mockResolvedValue(false)
 
     await expect(
@@ -556,6 +681,103 @@ describe("commentAutomationService — hasGif capability pin", () => {
     expect(values).toHaveBeenCalledWith(
       expect.objectContaining({
         hideComments: expect.objectContaining({ hasGif: true }),
+      }),
+    )
+  })
+})
+
+// Instagram delivers comment text only, so a stored `onlyCommentsWithImage`
+// would make the automation skip every comment.
+describe("commentAutomationService — onlyCommentsWithImage capability pin", () => {
+  const options = {
+    replyToNewContactsOnly: false,
+    replyOncePerUserPerPost: false,
+    likeUserComment: false,
+    replyToUsersWhoCommentedOnOtherPosts: true,
+    ignoreCommentReplies: true,
+    trackUserTags: false,
+    onlyCommentsWithImage: true,
+  }
+
+  test("createInstagram stores onlyCommentsWithImage as false", async () => {
+    const returning = vi.fn().mockResolvedValue([{ id: "id-1" }])
+    const values = vi.fn(() => ({ returning }))
+    mocks.insert.mockReturnValue({ values })
+
+    await commentAutomationService.createInstagram({
+      workspaceId: "1",
+      type: "instagram",
+      data: { name: "hello", options },
+    })
+
+    expect(values).toHaveBeenCalledWith(
+      expect.objectContaining({
+        options: { ...options, onlyCommentsWithImage: false },
+      }),
+    )
+  })
+
+  test("updateInstagram stores onlyCommentsWithImage as false", async () => {
+    mocks.findFirst.mockResolvedValue({ id: "9", type: "instagramFacebook" })
+    const returning = vi.fn().mockResolvedValue([{ id: "9" }])
+    const where = vi.fn(() => ({ returning }))
+    const set = vi.fn(() => ({ where }))
+    mocks.update.mockReturnValue({ set })
+
+    await commentAutomationService.updateInstagram(
+      { workspaceId: "1", id: "9" },
+      { options },
+    )
+
+    expect(set).toHaveBeenCalledWith({
+      options: { ...options, onlyCommentsWithImage: false },
+    })
+  })
+
+  test("createMessenger keeps onlyCommentsWithImage, which Facebook can detect", async () => {
+    const returning = vi.fn().mockResolvedValue([{ id: "id-1" }])
+    const values = vi.fn(() => ({ returning }))
+    mocks.insert.mockReturnValue({ values })
+
+    await commentAutomationService.createMessenger({
+      workspaceId: "1",
+      data: { name: "hello", options },
+    })
+
+    expect(values).toHaveBeenCalledWith(
+      expect.objectContaining({
+        options: expect.objectContaining({ onlyCommentsWithImage: true }),
+      }),
+    )
+  })
+
+  test("createThreadsAutomation keeps onlyCommentsWithImage", async () => {
+    const returning = vi.fn().mockResolvedValue([{ id: "id-1" }])
+    const values = vi.fn(() => ({ returning }))
+    mocks.insert.mockReturnValue({ values })
+
+    await commentAutomationService.createThreadsAutomation({
+      workspaceId: "1",
+      data: {
+        name: "hello",
+        post: { type: "all", value: [] },
+        publicReply: { type: "text", value: "hi" },
+        includeKeywords: { type: "all", value: [] },
+        excludeKeywords: [],
+        options: {
+          replyToNewContactsOnly: false,
+          replyOncePerUserPerPost: false,
+          replyToUsersWhoCommentedOnOtherPosts: true,
+          ignoreCommentReplies: true,
+          onlyCommentsWithImage: true,
+        },
+        replyAfter: { type: "immediately", value: 0 },
+      },
+    })
+
+    expect(values).toHaveBeenCalledWith(
+      expect.objectContaining({
+        options: expect.objectContaining({ onlyCommentsWithImage: true }),
       }),
     )
   })
@@ -696,6 +918,210 @@ describe("commentAutomationService — Instagram Live capability pin", () => {
         options: expect.objectContaining({ likeUserComment: true }),
         hideComments: expect.objectContaining({ all: true }),
         replyAfter: { type: "minutes", value: 5 },
+      }),
+    )
+  })
+})
+
+describe("commentAutomationService — AI moderation", () => {
+  const aiModeration = {
+    enabled: true,
+    aiAgentId: "agent-1",
+    categories: ["hate" as const, "offensive" as const],
+    action: "delete" as const,
+  }
+  const hideComments = {
+    all: false,
+    hasPhoneNumber: false,
+    hasImage: false,
+    hasVideo: false,
+    hasLink: false,
+    hasKeywords: false,
+    keywords: [],
+    showCommentsAfter: "none" as const,
+    aiModeration,
+  }
+
+  function mockInsert() {
+    const returning = vi.fn().mockResolvedValue([{ id: "id-1" }])
+    const values = vi.fn(() => ({ returning }))
+    mocks.insert.mockReturnValue({ values })
+    return values
+  }
+
+  test("createInstagram keeps delete, which Instagram supports", async () => {
+    const values = mockInsert()
+
+    await commentAutomationService.createInstagram({
+      workspaceId: "1",
+      type: "instagram",
+      data: { name: "hello", hideComments },
+    })
+
+    expect(mocks.findAIAgent).toHaveBeenCalledWith({
+      id: "agent-1",
+      workspaceId: "1",
+    })
+    expect(values).toHaveBeenCalledWith(
+      expect.objectContaining({
+        hideComments: expect.objectContaining({ aiModeration }),
+      }),
+    )
+  })
+
+  test("rejects an AI agent from another workspace", async () => {
+    mocks.findAIAgent.mockResolvedValue(undefined)
+    mockInsert()
+
+    await expect(
+      commentAutomationService.createInstagram({
+        workspaceId: "1",
+        type: "instagram",
+        data: { name: "hello", hideComments },
+      }),
+    ).rejects.toMatchObject({ code: "validation" })
+    expect(mocks.insert).not.toHaveBeenCalled()
+  })
+
+  test("rejects enabled moderation without an agent or categories", async () => {
+    await expect(
+      commentAutomationService.createMessenger({
+        workspaceId: "1",
+        data: {
+          name: "hello",
+          hideComments: {
+            ...hideComments,
+            aiModeration: { ...aiModeration, aiAgentId: null },
+          },
+        },
+      }),
+    ).rejects.toMatchObject({ code: "validation" })
+
+    await expect(
+      commentAutomationService.createMessenger({
+        workspaceId: "1",
+        data: {
+          name: "hello",
+          hideComments: {
+            ...hideComments,
+            aiModeration: { ...aiModeration, categories: [] },
+          },
+        },
+      }),
+    ).rejects.toMatchObject({ code: "validation" })
+    expect(mocks.insert).not.toHaveBeenCalled()
+  })
+
+  describe("with the AI Router (decision) engine", () => {
+    const decisionModeration = {
+      ...aiModeration,
+      engine: "decision" as const,
+      aiAgentId: null,
+      decisionConnectionId: "connection-1",
+      decisionModel: "jev-1.13.0",
+    }
+    const decisionHideComments = {
+      ...hideComments,
+      aiModeration: decisionModeration,
+    }
+
+    test("checks the connection in this workspace and stores it without an agent", async () => {
+      const values = mockInsert()
+
+      await commentAutomationService.createMessenger({
+        workspaceId: "1",
+        data: { name: "hello", hideComments: decisionHideComments },
+      })
+
+      expect(mocks.isConnectionUsable).toHaveBeenCalledWith({
+        workspaceId: "1",
+        connectionId: "connection-1",
+        model: "jev-1.13.0",
+      })
+      expect(mocks.findAIAgent).not.toHaveBeenCalled()
+      expect(values).toHaveBeenCalledWith(
+        expect.objectContaining({
+          hideComments: expect.objectContaining({
+            aiModeration: decisionModeration,
+          }),
+        }),
+      )
+    })
+
+    test.each([
+      "connectionNotFound",
+      "modelNotFound",
+    ] as const)("rejects a connection that is %s", async (status) => {
+      mocks.isConnectionUsable.mockResolvedValue(status)
+      mockInsert()
+
+      await expect(
+        commentAutomationService.createMessenger({
+          workspaceId: "1",
+          data: { name: "hello", hideComments: decisionHideComments },
+        }),
+      ).rejects.toMatchObject({ code: "validation" })
+      expect(mocks.insert).not.toHaveBeenCalled()
+    })
+
+    test("rejects a missing connection or model", async () => {
+      for (const missing of [
+        { decisionConnectionId: null },
+        { decisionModel: null },
+      ]) {
+        await expect(
+          commentAutomationService.createMessenger({
+            workspaceId: "1",
+            data: {
+              name: "hello",
+              hideComments: {
+                ...hideComments,
+                aiModeration: { ...decisionModeration, ...missing },
+              },
+            },
+          }),
+        ).rejects.toMatchObject({ code: "validation" })
+      }
+      expect(mocks.isConnectionUsable).not.toHaveBeenCalled()
+      expect(mocks.insert).not.toHaveBeenCalled()
+    })
+  })
+
+  test("skips the agent check when moderation is off", async () => {
+    mockInsert()
+
+    await commentAutomationService.createMessenger({
+      workspaceId: "1",
+      data: {
+        name: "hello",
+        hideComments: {
+          ...hideComments,
+          aiModeration: { ...aiModeration, enabled: false, aiAgentId: null },
+        },
+      },
+    })
+
+    expect(mocks.findAIAgent).not.toHaveBeenCalled()
+  })
+
+  test("an Instagram Live automation stores moderation as disabled", async () => {
+    const values = mockInsert()
+
+    await commentAutomationService.createInstagram({
+      workspaceId: "1",
+      type: "instagram",
+      data: {
+        name: "hello",
+        post: { type: "live", value: [] },
+        hideComments,
+      },
+    })
+
+    expect(values).toHaveBeenCalledWith(
+      expect.objectContaining({
+        hideComments: expect.objectContaining({
+          aiModeration: { ...aiModeration, enabled: false },
+        }),
       }),
     )
   })

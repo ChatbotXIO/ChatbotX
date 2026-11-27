@@ -265,6 +265,27 @@ class MediaLibraryService extends BaseService {
     return { mimeType: file.mimeType, base64: bytes.toString("base64") }
   }
 
+  /**
+   * Removes a stored object nothing in the workspace refers to (a raw upload
+   * whose Media Library row could not be written). Never throws.
+   */
+  async deleteObjectIfUnreferenced(input: {
+    path: string
+    workspaceId: string
+  }): Promise<void> {
+    try {
+      const referenced = await mediaLibraryFileRepository.findByPath(input)
+      if (!referenced) {
+        await uploader.deleteObject(input.path)
+      }
+    } catch (error) {
+      logger.warn(
+        { err: error },
+        `deleteObjectIfUnreferenced: failed for ${input.path}`,
+      )
+    }
+  }
+
   async deleteFile(input: {
     workspaceId: string
     fileId: string
@@ -290,6 +311,38 @@ class MediaLibraryService extends BaseService {
       id: input.fileId,
       workspaceId: input.workspaceId,
     })
+  }
+
+  /**
+   * Removes the ROW of a file no social post uses; the row lock and the
+   * reference check run in one transaction (see the repository method). The
+   * storage object is NOT touched unless `shouldDeleteObject(path)` says so
+   * (only for a path that is never shared); it is then deleted after the
+   * commit. Returns whether the row was deleted.
+   */
+  async deleteFileUnlessUsedByPosts(input: {
+    fileId: string
+    shouldDeleteObject?: (path: string) => boolean
+    workspaceId: string
+  }): Promise<boolean> {
+    const result = await mediaLibraryFileRepository.deleteIfUnusedByPosts({
+      id: input.fileId,
+      workspaceId: input.workspaceId,
+    })
+    if (!result.deleted) {
+      return false
+    }
+    if (input.shouldDeleteObject?.(result.path)) {
+      try {
+        await uploader.deleteObject(result.path)
+      } catch (error) {
+        logger.warn(
+          { err: error },
+          `deleteFileUnlessUsedByPosts: S3 delete failed for ${result.path}`,
+        )
+      }
+    }
+    return true
   }
 
   /**

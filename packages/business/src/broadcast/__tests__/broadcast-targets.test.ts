@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
 const mocks = vi.hoisted(() => ({
+  assertReferencable: vi.fn(async () => undefined),
   resolveBroadcastInboxIds: vi.fn(),
   inboxFindMany: vi.fn(),
   integrationWhatsappFindFirst: vi.fn(),
@@ -18,6 +19,18 @@ const mocks = vi.hoisted(() => ({
   transaction: vi.fn(),
   dispatchAuditRecord: vi.fn().mockResolvedValue(undefined),
 }))
+
+// The template guards are covered by their own suites; here they only must not
+// block the write, and run it on this file's mocked client.
+vi.mock(
+  "../../template/installed-resource.service",
+  async (importOriginal) => ({
+    ...(await importOriginal<
+      typeof import("../../template/installed-resource.service")
+    >()),
+    assertReferencable: mocks.assertReferencable,
+  }),
+)
 
 vi.mock("@chatbotx.io/analytics", () => ({
   broadcastAnalyticsService: { getContacts: vi.fn() },
@@ -45,7 +58,10 @@ vi.mock("../plan-policy.service", () => ({
   },
 }))
 
-vi.mock("@chatbotx.io/database/schema", () => ({
+// The repositories index builds query fragments from the real tables when it loads, so
+// keep them and override only the models this test controls.
+vi.mock("@chatbotx.io/database/schema", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@chatbotx.io/database/schema")>()),
   broadcastModel: {
     id: "Broadcast.id",
     workspaceId: "Broadcast.workspaceId",
@@ -129,6 +145,9 @@ vi.mock("@chatbotx.io/database/client", () => {
       },
       select: () => selectBuilder,
       query: {
+        // `updateDraft`'s leftover gate reads the draft's epoch first; none
+        // found leaves the write's own scope (covered in the drafts tests).
+        broadcastModel: { findFirst: async () => undefined },
         inboxModel: { findMany: mocks.inboxFindMany },
         integrationWhatsappModel: {
           findFirst: mocks.integrationWhatsappFindFirst,

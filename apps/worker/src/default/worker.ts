@@ -1,25 +1,40 @@
-import { flushAllPendingWorkspaceRealtimeEvents } from "@chatbotx.io/business"
 import {
+  ChannelPostExportJobAction,
+  type ChannelPostExportJobData,
   DefaultJobAction,
   type DefaultJobData,
-  defaultWorkerOptions,
-  getQueueConnection,
   queueNames,
+  TemplateJobAction,
+  type TemplateJobData,
 } from "@chatbotx.io/worker-config"
-import { type Job, Worker } from "bullmq"
-import { ensureBootstrapped } from "../lib/bootstrap"
+import type { Job } from "bullmq"
+import { env } from "../env"
+import { createQueueWorker } from "../lib/create-queue-worker"
 import { isBlockedWorkspace } from "../lib/is-blocked-workspace"
 import { logger } from "../lib/logger"
 import { resolveWorkspaceId } from "../lib/resolve-workspace-id"
 import { runJobWithAuditContext } from "../lib/run-job-with-audit-context"
+import { runWorker } from "../lib/shutdown"
 import { handleBulkTagContacts } from "./handlers/bulk-tag-contacts"
+import {
+  exportChannelPostComments,
+  failBlockedChannelPostExport,
+} from "./handlers/export-channel-post-comments"
 import { loopableExportContacts } from "./handlers/export-contacts"
 import { exportCoupons } from "./handlers/export-coupons"
 import { exportLeaderboardParticipants } from "./handlers/export-leaderboard-participants"
-import { installTemplate } from "./handlers/install-template"
+import { fanOutTemplateUpdate } from "./handlers/fan-out-template-update"
+import {
+  failBlockedTemplateInstall,
+  installTemplate,
+} from "./handlers/install-template"
 import { checkMetaCatalogSync } from "./handlers/meta-catalog/check"
 import { importMetaCatalogProducts } from "./handlers/meta-catalog/import-products"
 import { submitMetaCatalogSync } from "./handlers/meta-catalog/submit"
+import {
+  processPipelineStageBulk,
+  releasePipelineStageBulkClaim,
+} from "./handlers/pipeline-stage-bulk"
 import {
   processInboundWebhookRequest,
   skipBlockedInboundWebhookRequest,
@@ -32,11 +47,19 @@ import { handleSyncChannelLabels } from "./handlers/sync-channel-labels"
 import { syncExternalCalendarEvent } from "./handlers/sync-external-calendar-event"
 import { handleSyncTag } from "./handlers/sync-tag"
 import {
+  skipBlockedTemplateSync,
+  syncTemplateInstallation,
+} from "./handlers/sync-template-installation"
+import {
+  skipBlockedTemplateUninstall,
+  uninstallTemplate,
+} from "./handlers/uninstall-template"
+import {
   deleteWelcomeMessageFlows,
   syncWelcomeMessageFlows,
 } from "./handlers/welcome-message-flows"
 
-async function runGuardedDefaultJob<T>(
+async function runGuardedJob<T>(
   data: unknown,
   auditParams: {
     source: string
@@ -57,19 +80,14 @@ async function runGuardedDefaultJob<T>(
   return runJobWithAuditContext({ workspaceId, ...auditParams }, handler)
 }
 
-async function startDefaultWorker() {
-  try {
-    await ensureBootstrapped()
-    logger.info("Default worker bootstrapped successfully")
-  } catch (err) {
-    logger.error(err, "Failed to bootstrap default worker")
-    process.exit(1)
-  }
-
-  const worker = new Worker(
+function startDefaultWorker() {
+  createQueueWorker(
     queueNames.enum.default,
     async (job: Job<DefaultJobData>) => {
-      logger.info(job.data, `Worker received job: ${job.id}`)
+      logger.debug(
+        { jobId: job.id, type: job.data.type },
+        "Worker received job",
+      )
 
       switch (job.data.type) {
         case DefaultJobAction.sendAuditLog:
@@ -77,28 +95,28 @@ async function startDefaultWorker() {
           return
         case DefaultJobAction.exportContacts: {
           const { type, data } = job.data
-          await runGuardedDefaultJob(data, { source: `default:${type}` }, () =>
+          await runGuardedJob(data, { source: `default:${type}` }, () =>
             loopableExportContacts(data),
           )
           return
         }
         case DefaultJobAction.exportCoupons: {
           const { type, data } = job.data
-          await runGuardedDefaultJob(data, { source: `default:${type}` }, () =>
+          await runGuardedJob(data, { source: `default:${type}` }, () =>
             exportCoupons(data),
           )
           return
         }
         case DefaultJobAction.exportLeaderboardParticipants: {
           const { type, data } = job.data
-          await runGuardedDefaultJob(data, { source: `default:${type}` }, () =>
+          await runGuardedJob(data, { source: `default:${type}` }, () =>
             exportLeaderboardParticipants(data),
           )
           return
         }
         case DefaultJobAction.bulkTagContacts: {
           const { type, data } = job.data
-          await runGuardedDefaultJob(
+          await runGuardedJob(
             data,
             {
               source: `default:${type}`,
@@ -111,7 +129,7 @@ async function startDefaultWorker() {
         }
         case DefaultJobAction.runImport: {
           const { type, data } = job.data
-          await runGuardedDefaultJob(
+          await runGuardedJob(
             data,
             {
               source: `default:${type}`,
@@ -124,63 +142,56 @@ async function startDefaultWorker() {
         }
         case DefaultJobAction.syncTag: {
           const { type, data } = job.data
-          await runGuardedDefaultJob(data, { source: `default:${type}` }, () =>
+          await runGuardedJob(data, { source: `default:${type}` }, () =>
             handleSyncTag(data),
           )
           return
         }
         case DefaultJobAction.syncChannelLabels: {
           const { type, data } = job.data
-          await runGuardedDefaultJob(data, { source: `default:${type}` }, () =>
+          await runGuardedJob(data, { source: `default:${type}` }, () =>
             handleSyncChannelLabels(data),
           )
           return
         }
         case DefaultJobAction.submitMetaCatalogSync: {
           const { type, data } = job.data
-          await runGuardedDefaultJob(data, { source: `default:${type}` }, () =>
+          await runGuardedJob(data, { source: `default:${type}` }, () =>
             submitMetaCatalogSync(data),
           )
           return
         }
         case DefaultJobAction.importMetaCatalogProducts: {
           const { type, data } = job.data
-          await runGuardedDefaultJob(data, { source: `default:${type}` }, () =>
+          await runGuardedJob(data, { source: `default:${type}` }, () =>
             importMetaCatalogProducts(data),
           )
           return
         }
         case DefaultJobAction.checkMetaCatalogSync: {
           const { type, data } = job.data
-          await runGuardedDefaultJob(data, { source: `default:${type}` }, () =>
+          await runGuardedJob(data, { source: `default:${type}` }, () =>
             checkMetaCatalogSync(data),
           )
           return
         }
         case DefaultJobAction.syncExternalCalendarEvent: {
           const { type, data } = job.data
-          await runGuardedDefaultJob(data, { source: `default:${type}` }, () =>
+          await runGuardedJob(data, { source: `default:${type}` }, () =>
             syncExternalCalendarEvent(data, job),
           )
           return
         }
         case DefaultJobAction.sendAppointmentReminder: {
           const { type, data } = job.data
-          await runGuardedDefaultJob(data, { source: `default:${type}` }, () =>
+          await runGuardedJob(data, { source: `default:${type}` }, () =>
             sendAppointmentReminder(data),
-          )
-          return
-        }
-        case DefaultJobAction.installTemplate: {
-          const { type, data } = job.data
-          await runGuardedDefaultJob(data, { source: `default:${type}` }, () =>
-            installTemplate(data),
           )
           return
         }
         case DefaultJobAction.processInboundWebhookRequest: {
           const { type, data } = job.data
-          await runGuardedDefaultJob(
+          await runGuardedJob(
             data,
             { source: `default:${type}` },
             () => processInboundWebhookRequest(data, job),
@@ -190,37 +201,48 @@ async function startDefaultWorker() {
         }
         case DefaultJobAction.syncWelcomeMessageFlows: {
           const { type, data } = job.data
-          await runGuardedDefaultJob(data, { source: `default:${type}` }, () =>
+          await runGuardedJob(data, { source: `default:${type}` }, () =>
             syncWelcomeMessageFlows(data),
           )
           return
         }
         case DefaultJobAction.deleteWelcomeMessageFlows: {
           const { type, data } = job.data
-          await runGuardedDefaultJob(data, { source: `default:${type}` }, () =>
+          await runGuardedJob(data, { source: `default:${type}` }, () =>
             deleteWelcomeMessageFlows(data),
+          )
+          return
+        }
+        case DefaultJobAction.processPipelineStageBulk: {
+          const { type, data } = job.data
+          await runGuardedJob(
+            data,
+            {
+              source: `default:${type}`,
+              requestedUserId: data.actorUserId ?? undefined,
+            },
+            () => processPipelineStageBulk(data),
+            // A blocked owner skips the job; the stage must not stay claimed
+            // (hidden from writers) forever.
+            () => releasePipelineStageBulkClaim(data),
           )
           return
         }
         case DefaultJobAction.retryRealtimeMemberRevoke: {
           const { type, data } = job.data
-          await runGuardedDefaultJob(
-            data,
-            { source: `default:${type}` },
-            async () => {
-              try {
-                await retryRealtimeMemberRevoke(data)
-              } catch (err) {
-                if (job.attemptsMade + 1 >= (job.opts.attempts ?? 1)) {
-                  logger.error(
-                    { err, userId: data.userId, workspaceId: data.workspaceId },
-                    "Realtime member connection revoke retry exhausted",
-                  )
-                }
-                throw err
+          await runGuardedJob(data, { source: `default:${type}` }, async () => {
+            try {
+              await retryRealtimeMemberRevoke(data)
+            } catch (err) {
+              if (job.attemptsMade + 1 >= (job.opts.attempts ?? 1)) {
+                logger.error(
+                  { err, userId: data.userId, workspaceId: data.workspaceId },
+                  "Realtime member connection revoke retry exhausted",
+                )
               }
-            },
-          )
+              throw err
+            }
+          })
           return
         }
         default:
@@ -229,48 +251,116 @@ async function startDefaultWorker() {
       }
     },
     {
-      connection: getQueueConnection(queueNames.enum.default),
-      ...defaultWorkerOptions,
+      onFailed: (job, err) => {
+        if (!job) {
+          return
+        }
+        // Logged only. This used to write an `ErrorLog` row for every failed job,
+        // but `ErrorLog` records third-party API failures and most default-queue
+        // jobs (exportContacts, runImport, installTemplate, …) never call one. The
+        // six jobs that do call a third party log explicitly in their own handlers,
+        // where the provider is actually knowable — `syncTag` alone hits both
+        // Messenger and Zalo, which no single catch-all label could attribute.
+        logger.error({ err, jobId: job.id }, "Job has failed")
+      },
     },
   )
-
-  worker.on("failed", (job, err) => {
-    if (!job) {
-      return
-    }
-    // Logged only. This used to write an `ErrorLog` row for every failed job,
-    // but `ErrorLog` records third-party API failures and most default-queue
-    // jobs (exportContacts, runImport, installTemplate, …) never call one. The
-    // six jobs that do call a third party log explicitly in their own handlers,
-    // where the provider is actually knowable — `syncTag` alone hits both
-    // Messenger and Zalo, which no single catch-all label could attribute.
-    logger.error(err, `Job ${job.id} has failed`)
-  })
-
-  let isShuttingDown = false
-  async function shutdown() {
-    if (isShuttingDown) {
-      return
-    }
-    isShuttingDown = true
-    let shutdownFailed = false
-    try {
-      await worker.close()
-    } catch (err) {
-      shutdownFailed = true
-      logger.error(err, "[DefaultWorker] Error closing worker during shutdown")
-    } finally {
-      try {
-        await flushAllPendingWorkspaceRealtimeEvents()
-      } catch (err) {
-        shutdownFailed = true
-        logger.error(err, "[DefaultWorker] Error flushing realtime events")
-      }
-    }
-    process.exit(shutdownFailed ? 1 : 0)
-  }
-  process.once("SIGINT", shutdown)
-  process.once("SIGTERM", shutdown)
 }
 
-startDefaultWorker()
+/**
+ * Template jobs run off their own queue with a small concurrency, hosted in
+ * this process: a burst of syncs after a widely installed template is saved
+ * queues up there instead of holding the `default` queue's slots.
+ */
+function startTemplateWorker() {
+  createQueueWorker(
+    queueNames.enum.template,
+    async (job: Job<TemplateJobData>) => {
+      switch (job.data.type) {
+        case TemplateJobAction.installTemplate: {
+          const { type, data } = job.data
+          await runGuardedJob(
+            data,
+            { source: `template:${type}` },
+            () => installTemplate(data, job),
+            () => failBlockedTemplateInstall(data),
+          )
+          return
+        }
+        case TemplateJobAction.uninstallTemplate: {
+          const { type, data } = job.data
+          await runGuardedJob(
+            data,
+            { source: `template:${type}` },
+            () => uninstallTemplate(data, job),
+            () => skipBlockedTemplateUninstall(data),
+          )
+          return
+        }
+        case TemplateJobAction.syncTemplateInstallation: {
+          const { type, data } = job.data
+          await runGuardedJob(
+            data,
+            { source: `template:${type}` },
+            () => syncTemplateInstallation(data, job),
+            () => skipBlockedTemplateSync(data),
+          )
+          return
+        }
+        case TemplateJobAction.fanOutTemplateUpdate: {
+          const { type, data } = job.data
+          await runGuardedJob(data, { source: `template:${type}` }, () =>
+            fanOutTemplateUpdate(data),
+          )
+          return
+        }
+        default:
+          logger.warn({ jobId: job.id }, "Unknown template job")
+          return
+      }
+    },
+    { concurrency: env.TEMPLATE_WORKER_CONCURRENCY },
+  )
+}
+
+/**
+ * Channel comment exports run off their own queue with a small concurrency,
+ * hosted in this process: each can wait minutes on a channel's usage hints, and
+ * on the `default` queue a few of them would hold every slot. A worker that
+ * predates this queue never consumes it, so during a rolling deploy a new job
+ * waits for a new worker instead of being completed as a no-op by an old one.
+ */
+function startChannelPostExportWorker() {
+  createQueueWorker(
+    queueNames.enum.channelPostExport,
+    async (job: Job<ChannelPostExportJobData>) => {
+      switch (job.data.type) {
+        case ChannelPostExportJobAction.exportChannelPostComments: {
+          const { type, data } = job.data
+          await runGuardedJob(
+            data,
+            {
+              source: `channelPostExport:${type}`,
+              requestedUserId: data.requestedUserId,
+            },
+            () => exportChannelPostComments(data),
+            () => failBlockedChannelPostExport(data),
+          )
+          return
+        }
+        default:
+          logger.warn({ jobId: job.id }, "Unknown channel post export job")
+          return
+      }
+    },
+    { concurrency: env.CHANNEL_POST_EXPORT_WORKER_CONCURRENCY },
+  )
+}
+
+const startDefaultAndHostedWorkers = () => {
+  startDefaultWorker()
+  startTemplateWorker()
+  startChannelPostExportWorker()
+}
+
+runWorker("default", startDefaultAndHostedWorkers)

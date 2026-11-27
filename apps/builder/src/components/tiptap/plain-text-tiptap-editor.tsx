@@ -1,9 +1,6 @@
 "use client"
 
-import Emoji, {
-  EmojiSuggestionPluginKey,
-  gitHubEmojis,
-} from "@tiptap/extension-emoji"
+import { EmojiSuggestionPluginKey } from "@tiptap/extension-emoji"
 import Mention from "@tiptap/extension-mention"
 import Placeholder from "@tiptap/extension-placeholder"
 import { DOMParser as ProseMirrorDOMParser } from "@tiptap/pm/model"
@@ -29,8 +26,10 @@ import { cn } from "@chatbotx.io/ui/lib/utils"
 import EmojiPicker, { type EmojiClickData } from "emoji-picker-react"
 import { CodeXml, Smile } from "lucide-react"
 import { useCallback, useEffect, useRef, useState } from "react"
+import { configureFlowEditorEmoji } from "./fully-qualified-github-emojis"
 import { htmlToPlainTextWithBlocks } from "./html-to-plain-text"
 import { usePromptVariableOptions } from "./use-prompt-variable-options"
+import { useReadOnlyWhenLocked } from "./use-read-only-when-locked"
 
 // Swallows Enter / Shift+Enter so a single-line value never gets a line
 // break. Priority sits below Mention (101) so Enter still picks a variable
@@ -82,6 +81,9 @@ type PlainTextTiptapEditorProps = {
   showEmojiPicker?: boolean
   channels?: ChannelType[]
   includeCouponVariables?: boolean
+  includePipelineVariables?: boolean
+  /** Adds the `{{post.*}}` / `{{comment.*}}` group of a post-comment trigger run. */
+  includePostCommentVariables?: boolean
   includeRawCustomFieldVariables?: boolean
   includeBotFieldVariables?: boolean
   onChange?: (content: string) => void
@@ -96,6 +98,8 @@ type PlainTextTiptapEditorProps = {
   editorAttributes?: Record<string, string>
   /** Render the variable picker next to the editor instead of portaling it to `<body>`. */
   inlineVariablePicker?: boolean
+  /** Focus the editor, caret at the end, as soon as it mounts. */
+  autoFocus?: boolean
 }
 
 export const PlainTextTiptapEditor = ({
@@ -105,6 +109,8 @@ export const PlainTextTiptapEditor = ({
   className,
   channels,
   includeCouponVariables = false,
+  includePipelineVariables = false,
+  includePostCommentVariables = false,
   includeRawCustomFieldVariables = false,
   includeBotFieldVariables = false,
   placeholder = "Type a message...",
@@ -114,6 +120,7 @@ export const PlainTextTiptapEditor = ({
   plainText = false,
   editorAttributes,
   inlineVariablePicker = false,
+  autoFocus = false,
 }: PlainTextTiptapEditorProps) => {
   const [isOpenEmoji, setIsOpenEmoji] = useState(false)
   const [isEditorFocused, setIsEditorFocused] = useState(false)
@@ -122,6 +129,8 @@ export const PlainTextTiptapEditor = ({
     botFieldsOnly,
     channels,
     includeCouponVariables,
+    includePipelineVariables,
+    includePostCommentVariables,
     includeRawCustomFieldVariables,
     includeBotFieldVariables,
   })
@@ -141,6 +150,7 @@ export const PlainTextTiptapEditor = ({
   )
 
   const tiptapEditor = useEditor({
+    autofocus: autoFocus ? "end" : false,
     extensions: [
       plainText ? plainTextStarterKit : StarterKit,
       Mention.configure({
@@ -151,11 +161,7 @@ export const PlainTextTiptapEditor = ({
         }),
       }),
       ...(disableLineBreaks ? [NoLineBreaks] : []),
-      Emoji.configure({
-        emojis: gitHubEmojis,
-        enableEmoticons: true,
-        suggestion: emojiSuggestion,
-      }),
+      configureFlowEditorEmoji(emojiSuggestion),
       Placeholder.configure({
         placeholder,
       }),
@@ -229,6 +235,8 @@ export const PlainTextTiptapEditor = ({
       tiptapEditor.commands.focus()
     }
   }
+
+  useReadOnlyWhenLocked(tiptapEditor)
 
   useEffect(() => {
     if (tiptapEditor && initValue !== undefined) {

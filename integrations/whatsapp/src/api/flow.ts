@@ -7,6 +7,7 @@ import type {
   ListFlowsResponse,
   WhatsappAuthValue,
   WhatsappFlow,
+  WhatsappFlowResponseKind,
   WhatsappFlowScreen,
 } from "../schema"
 
@@ -50,20 +51,6 @@ const forEachJsonNode = (
 
 const readOnClickAction = (obj: JsonObject): JsonObject | undefined =>
   obj["on-click-action"] as JsonObject | undefined
-
-const extractScreenOutputKeys = (layout: unknown): Set<string> => {
-  const keys = new Set<string>()
-  forEachJsonNode(layout, (obj) => {
-    const action = readOnClickAction(obj)
-    if (action?.name !== "complete" || !action.payload) {
-      return
-    }
-    for (const key of Object.keys(action.payload as JsonObject)) {
-      keys.add(key)
-    }
-  })
-  return keys
-}
 
 const collectFieldLabels = (
   layout: unknown,
@@ -131,18 +118,35 @@ const getScreenRoutes = (
 }
 
 type ScreenIndex = {
-  outputs: Map<string, Set<string>>
+  /** Screen id → the response keys its complete payloads name, with their kind. */
+  outputs: Map<string, Map<string, WhatsappFlowResponseKind>>
   routes: Map<string, string[]>
   labels: Map<string, string>
+}
+
+/**
+ * Records `key`'s kind, keeping the first one seen unless a later one is a
+ * file: a key that any branch or screen fills with files is a file answer, so
+ * text returned under the same key elsewhere never hides those files.
+ */
+const addAnswerKind = (
+  kinds: Map<string, WhatsappFlowResponseKind>,
+  key: string,
+  kind: WhatsappFlowResponseKind,
+): void => {
+  if (!kinds.has(key) || kind === "file") {
+    kinds.set(key, kind)
+  }
 }
 
 const buildScreenIndex = (
   screens: unknown[],
   routingModel: JsonObject | undefined,
 ): ScreenIndex => {
-  const outputs = new Map<string, Set<string>>()
+  const outputs = new Map<string, Map<string, WhatsappFlowResponseKind>>()
   const routes = new Map<string, string[]>()
   const labels = new Map<string, string>()
+  const components = indexFlowComponents(screens)
 
   for (const screen of screens) {
     const s = screen as { id?: string; layout?: unknown }
@@ -150,7 +154,11 @@ const buildScreenIndex = (
       continue
     }
 
-    outputs.set(s.id, extractScreenOutputKeys(s.layout))
+    const kinds = new Map<string, WhatsappFlowResponseKind>()
+    for (const [key, entry] of collectScreenPayloadEntries(screen)) {
+      addAnswerKind(kinds, key, readAnswerKind(entry, components))
+    }
+    outputs.set(s.id, kinds)
     collectFieldLabels(s.layout, labels)
     routes.set(s.id, getScreenRoutes(s.id, s.layout, routingModel))
   }
@@ -162,16 +170,17 @@ const getScreenOutputs = (
   screenId: string,
   index: ScreenIndex,
 ): WhatsappFlowScreen["output"] => {
-  const outputKeys = new Set<string>()
+  const kinds = new Map<string, WhatsappFlowResponseKind>()
   for (const reachableId of getReachableScreenIds(screenId, index.routes)) {
-    for (const key of index.outputs.get(reachableId) ?? []) {
-      outputKeys.add(key)
+    for (const [key, kind] of index.outputs.get(reachableId) ?? []) {
+      addAnswerKind(kinds, key, kind)
     }
   }
 
-  return Array.from(outputKeys).map((key) => ({
+  return Array.from(kinds, ([key, kind]) => ({
     value: key,
     label: index.labels.get(key) ?? humanizeKey(key),
+    kind,
   }))
 }
 
@@ -210,7 +219,14 @@ export type WhatsappFlowResponseField = {
   labelled: boolean
 }
 
+/** Components whose answer is a list of uploaded files (Meta's media upload). */
+const FILE_INPUT_COMPONENT_TYPES: ReadonlySet<string> = new Set([
+  "PhotoPicker",
+  "DocumentPicker",
+])
+
 type FlowComponentInfo = {
+  type: string
   label: string | null
   options: Record<string, string>
 }
@@ -267,6 +283,7 @@ const indexFlowComponents = (screens: unknown[]): FlowComponentIndex => {
         return
       }
       const info: FlowComponentInfo = {
+        type: obj.type,
         label: readStaticLabel(obj.label),
         options: readStaticOptions(obj["data-source"]),
       }
@@ -284,30 +301,41 @@ const indexFlowComponents = (screens: unknown[]): FlowComponentIndex => {
 
 type CompletePayloadEntry = { screenId: string; value: unknown }
 
+/** Every key one screen's `complete` actions return, each occurrence kept. */
+const collectScreenPayloadEntries = (
+  screen: unknown,
+): Array<readonly [string, CompletePayloadEntry]> => {
+  const screenId = readScreenId(screen)
+  const entries: Array<readonly [string, CompletePayloadEntry]> = []
+  forEachJsonNode((screen as { layout?: unknown }).layout, (obj) => {
+    const action = readOnClickAction(obj)
+    if (action?.name !== "complete" || !action.payload) {
+      return
+    }
+    for (const [key, value] of Object.entries(action.payload as JsonObject)) {
+      entries.push([key, { screenId, value }])
+    }
+  })
+  return entries
+}
+
+/** Every key the Flow returns; the first screen that names a key decides it. */
 const collectCompletePayloads = (
   screens: unknown[],
 ): Map<string, CompletePayloadEntry> => {
   const payload = new Map<string, CompletePayloadEntry>()
   for (const screen of screens) {
-    const screenId = readScreenId(screen)
-    forEachJsonNode((screen as { layout?: unknown }).layout, (obj) => {
-      const action = readOnClickAction(obj)
-      if (action?.name !== "complete" || !action.payload) {
-        return
+    for (const [key, entry] of collectScreenPayloadEntries(screen)) {
+      if (!payload.has(key)) {
+        payload.set(key, entry)
       }
-      for (const [key, value] of Object.entries(action.payload as JsonObject)) {
-        if (!payload.has(key)) {
-          payload.set(key, { screenId, value })
-        }
-      }
-    })
+    }
   }
   return payload
 }
 
-/** The component a payload value reads, on the screen it names (or its own). */
-const findReferencedComponent = (
-  key: string,
+/** The input a payload value reads (`${form.X}` / `${screen.S.form.X}`), if it reads one. */
+const findFormReferencedComponent = (
   entry: CompletePayloadEntry,
   index: FlowComponentIndex,
 ): FlowComponentInfo | undefined => {
@@ -316,7 +344,7 @@ const findReferencedComponent = (
       ? FORM_REFERENCE_REGEX.exec(entry.value)
       : null
   if (!match) {
-    return index.byName.get(key)
+    return
   }
   const [, referencedScreenId, name] = match
   const onScreen = index.byScreen
@@ -325,6 +353,33 @@ const findReferencedComponent = (
   // Another screen's same-named input is a guess, used only when the named
   // screen has no such input (e.g. a hand-written Flow with a stale screen id).
   return onScreen ?? index.byName.get(name ?? "")
+}
+
+/**
+ * The component whose label and options describe a response key: the one the
+ * payload reads, or — for a literal or data value — the input of the same name.
+ */
+const findReferencedComponent = (
+  key: string,
+  entry: CompletePayloadEntry,
+  index: FlowComponentIndex,
+): FlowComponentInfo | undefined =>
+  typeof entry.value === "string" && FORM_REFERENCE_REGEX.test(entry.value)
+    ? findFormReferencedComponent(entry, index)
+    : index.byName.get(key)
+
+/**
+ * A file answer is one that reads a picker. A literal or data value never is,
+ * even when an input of the same name is a picker.
+ */
+const readAnswerKind = (
+  entry: CompletePayloadEntry,
+  index: FlowComponentIndex,
+): WhatsappFlowResponseKind => {
+  const component = findFormReferencedComponent(entry, index)
+  return component && FILE_INPUT_COMPONENT_TYPES.has(component.type)
+    ? "file"
+    : "value"
 }
 
 /**

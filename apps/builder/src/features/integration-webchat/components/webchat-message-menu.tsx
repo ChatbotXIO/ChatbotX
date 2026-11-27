@@ -19,19 +19,18 @@ import { useAction } from "next-safe-action/hooks"
 import { Fragment, useEffect, useState } from "react"
 import { createWebchatMessageAction } from "@/features/messages/actions/create-webchat-message.action"
 import { getWebchatProfileFields } from "../browser-profile-fields"
+import { getClientEmbeddingOrigin } from "../lib/authorized-domain"
 import { useGuestSessionStore } from "../providers/store/guest-session-provider"
 
 type WebchatMessageMenuProps = {
   workspaceId: string
   webchatId: string
-  parentOrigin?: string | null
   accessToken?: string | null
 }
 
 export default function WebchatMessageMenu({
   workspaceId,
   webchatId,
-  parentOrigin,
   accessToken,
 }: WebchatMessageMenuProps) {
   const { getMenus } = useGuestSessionStore((state) => state)
@@ -93,7 +92,7 @@ export default function WebchatMessageMenu({
                     guestConversationId: guestConversationId ?? "",
                     ...getWebchatProfileFields(),
                     accessToken: accessToken ?? undefined,
-                    parentOrigin: parentOrigin ?? undefined,
+                    parentOrigin: getClientEmbeddingOrigin() ?? undefined,
                   })
                 }
               >

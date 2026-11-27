@@ -103,6 +103,10 @@ export async function resolveTenantOwnerId(
   return tenant?.ownerId ?? null
 }
 
+/** Mirrors better-auth's internal `getAuthStateVerificationIdentifier` (state.mjs). */
+export const getAuthStateVerificationIdentifier = (state: string): string =>
+  `auth-state:${state}`
+
 /**
  * Recover the originating `callbackURL` carried in an OAuth `state`.
  *
@@ -110,8 +114,9 @@ export async function resolveTenantOwnerId(
  * platform host), so on `/api/auth/callback/*` the request itself no longer
  * carries the reseller's branded origin. better-auth persists the originating
  * origin for us: at sign-in time it writes the `state` to the `Verification`
- * table (`identifier = state`) with a JSON value whose `callbackURL` is the
- * origin the client passed (the reseller's domain — see `sso-sign-in.tsx`).
+ * table (`identifier = auth-state:<state>` since 1.7) with a JSON value whose
+ * `callbackURL` is the origin the client passed (the reseller's domain — see
+ * `sso-sign-in.tsx`).
  *
  * Read-only: the verification row is consumed later by better-auth's own
  * `parseGenericState` in the same request, so we must not delete it here.
@@ -127,7 +132,12 @@ export async function resolveOAuthStateCallbackURL(
   const [record] = await db
     .select({ value: verificationModel.value })
     .from(verificationModel)
-    .where(eq(verificationModel.identifier, state))
+    .where(
+      eq(
+        verificationModel.identifier,
+        getAuthStateVerificationIdentifier(state),
+      ),
+    )
     .limit(1)
 
   if (!record?.value) {

@@ -13,6 +13,10 @@ import { SendIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { useMemo, useState } from "react"
 import { PublicUrlSection } from "@/components/public-url-section"
+import {
+  LockedContent,
+  useIsEditorLocked,
+} from "@/features/templates/components/locked-editor"
 import { FlowJsonDialog } from "../components/flow-json-dialog"
 import { PublishWhatsappDialog } from "../components/publish-whatsapp-dialog"
 import { componentIcon } from "../lib/component-icons"
@@ -76,7 +80,17 @@ function EditorBody({
   const [previewOpen, setPreviewOpen] = useState(false)
   const [publishOpen, setPublishOpen] = useState(false)
 
-  const { save, isSaving, nameError } = useSaveMiniApp(workspaceId, miniAppId)
+  const isLocked = useIsEditorLocked()
+  const {
+    save: saveMiniApp,
+    isSaving,
+    nameError,
+  } = useSaveMiniApp(workspaceId, miniAppId)
+  const save = () => {
+    if (!isLocked) {
+      saveMiniApp()
+    }
+  }
   const { dragSource, dropTarget, dndContextProps } = useCanvasDnd()
   useEditorShortcuts(save)
   useUnsavedGuard(dirty)
@@ -118,17 +132,21 @@ function EditorBody({
         >
           <div className="grid min-h-0 flex-1 grid-cols-[240px_1fr_340px]">
             <div className="min-h-0 border-e">
-              <Palette
-                onAdd={(type: MiniAppComponentType) =>
-                  addNode(type, defaultText)
-                }
-              />
+              <LockedContent className="h-full">
+                <Palette
+                  onAdd={(type: MiniAppComponentType) =>
+                    addNode(type, defaultText)
+                  }
+                />
+              </LockedContent>
             </div>
             <div className="min-h-0">
-              <ScreenCanvas />
+              <LockedContent className="h-full">
+                <ScreenCanvas />
+              </LockedContent>
             </div>
             <ScrollArea className="min-h-0 border-s">
-              <div className="p-4">
+              <LockedContent className="p-4">
                 {selectedNodeId ? (
                   <NodeInspector
                     issues={validation.issues}
@@ -137,7 +155,7 @@ function EditorBody({
                 ) : (
                   <ScreenInspector issues={validation.issues} />
                 )}
-              </div>
+              </LockedContent>
             </ScrollArea>
           </div>
         </CanvasContext.Provider>

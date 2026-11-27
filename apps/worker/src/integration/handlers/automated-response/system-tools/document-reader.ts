@@ -11,10 +11,11 @@ import {
 import {
   getHeavyJobCompletionWaitTimeoutMs,
   getHeavyJobOptions,
-  getHeavyQueueEvents,
+  getQueueEvents,
   HeavyJobAction,
   heavyExtractTextFromFileResultSchema,
   heavyQueue,
+  queueNames,
   waitForJobCompletionWithRetries,
 } from "@chatbotx.io/worker-config"
 import { normalizeError } from "universal-error-normalizer"
@@ -85,7 +86,7 @@ async function parseFallbackSnippets(input: {
   const rawResult = await waitForJobCompletionWithRetries(
     job,
     heavyQueue,
-    getHeavyQueueEvents(),
+    getQueueEvents(queueNames.enum.heavy),
     getHeavyJobCompletionWaitTimeoutMs(
       HeavyJobAction.extractTextFromFile,
       env.HEAVY_JOB_WAIT_TIMEOUT_MS,

@@ -10,7 +10,7 @@ import { type SQL, sql } from "@chatbotx.io/database/client"
  * expression is the target row) and every value is a bound parameter.
  *
  * Invariants shared by all transitions:
- * - DM only: a comment thread (`"sourceId" IS NOT NULL`) never opens/closes.
+ * - Direct only: DMs and SMTP email threads; comment threads never open/close.
  * - Stale-event guard: `awaitingHumanReplyClosedAt` is the last HUMAN close;
  *   an open at or before it is ignored (delayed/retried inbound webhooks).
  * - Only the `bot` actor is guarded by `"botEnabled"`: a paused conversation
@@ -32,9 +32,11 @@ type HumanReplyWindowSet = {
 }
 
 const ts = (at: Date): SQL => sql`${at.toISOString()}::timestamptz`
+const directConversation = (): SQL =>
+  sql`("sourceId" IS NULL OR "sourceId" LIKE 'email:%')`
 
 const buildOpen = (at: Date): HumanReplyWindowSet => ({
-  awaitingHumanReplySince: sql`CASE WHEN "sourceId" IS NOT NULL OR ${ts(at)} <= COALESCE("awaitingHumanReplyClosedAt", '-infinity'::timestamptz) THEN "awaitingHumanReplySince" ELSE LEAST(COALESCE("awaitingHumanReplySince", ${ts(at)}), ${ts(at)}) END`,
+  awaitingHumanReplySince: sql`CASE WHEN NOT ${directConversation()} OR ${ts(at)} <= COALESCE("awaitingHumanReplyClosedAt", '-infinity'::timestamptz) THEN "awaitingHumanReplySince" ELSE LEAST(COALESCE("awaitingHumanReplySince", ${ts(at)}), ${ts(at)}) END`,
 })
 
 // Close applies only to a DM; for the bot actor also only while the bot is
@@ -42,8 +44,8 @@ const buildOpen = (at: Date): HumanReplyWindowSet => ({
 // apply, neither column moves.
 const closeGuard = (actor: HumanReplyWindowCloseActor): SQL =>
   actor === "bot"
-    ? sql`"sourceId" IS NULL AND "botEnabled"`
-    : sql`"sourceId" IS NULL`
+    ? sql`${directConversation()} AND "botEnabled"`
+    : directConversation()
 
 // Only a HUMAN close (external echo, archive; the reply claim does the same in
 // the repository) advances the stale-event marker. A bot close clears the
@@ -88,4 +90,4 @@ export const humanReplyWindowSet = (
  * close; a bot close does not count).
  */
 export const reopenIfUnansweredSince = (): SQL =>
-  sql`CASE WHEN "awaitingHumanReplySince" IS NULL AND "sourceId" IS NULL AND "contactRepliedAt" > COALESCE("adminRepliedAt", '-infinity'::timestamptz) AND "contactRepliedAt" > COALESCE("awaitingHumanReplyClosedAt", '-infinity'::timestamptz) THEN "contactRepliedAt" ELSE "awaitingHumanReplySince" END`
+  sql`CASE WHEN "awaitingHumanReplySince" IS NULL AND ${directConversation()} AND "contactRepliedAt" > COALESCE("adminRepliedAt", '-infinity'::timestamptz) AND "contactRepliedAt" > COALESCE("awaitingHumanReplyClosedAt", '-infinity'::timestamptz) THEN "contactRepliedAt" ELSE "awaitingHumanReplySince" END`

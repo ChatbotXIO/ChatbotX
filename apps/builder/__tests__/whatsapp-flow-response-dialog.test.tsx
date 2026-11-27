@@ -8,6 +8,7 @@ import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
 const fetchFlowResponse = vi.hoisted(() => vi.fn())
 
 vi.mock("next-intl", () => ({
+  useLocale: () => "en",
   useTranslations: (namespace: string) => (key: string) =>
     `${namespace}.${key}`,
 }))
@@ -126,7 +127,14 @@ describe("WhatsappFlowResponseButton", () => {
           key: "photos",
           label: "Photos",
           kind: "files",
-          value: [{ fileName: "IMG_1.jpg", mimeType: null, mediaId: null }],
+          value: [
+            {
+              status: "unprocessed",
+              fileName: "IMG_1.jpg",
+              mimeType: null,
+              mediaId: null,
+            },
+          ],
         },
         { key: "note", label: "Note", kind: "text", value: "" },
       ],
@@ -153,12 +161,129 @@ describe("WhatsappFlowResponseButton", () => {
       "An",
       "messages.flowResponse.yes",
       "BasicPro",
-      "IMG_1.jpg",
+      "IMG_1.jpgmessages.flowResponse.fileNotSaved",
       "messages.flowResponse.noAnswer",
     ])
     expect(container.textContent).not.toContain(
       "messages.flowResponse.labelsUnavailable",
     )
+  })
+
+  describe("uploaded files", () => {
+    const showFiles = async (value: unknown[]): Promise<Element | null> => {
+      fetchFlowResponse.mockResolvedValue({
+        labelSource: "whatsappFlow",
+        fields: [{ key: "docs", label: "Documents", kind: "files", value }],
+      })
+      render()
+      clickButton("messages.flowResponse.viewResponse")
+      await waitForText("Documents")
+      return container.querySelector("dd ul")
+    }
+
+    test("a stored file is a link that opens in a new tab, with its size", async () => {
+      const list = await showFiles([
+        {
+          status: "stored",
+          fileName: "Boarding Pass.pdf",
+          mimeType: "application/pdf",
+          mediaId: "1",
+          size: 2_621_440,
+          url: "https://files.example/1-pass.pdf",
+        },
+      ])
+
+      const link = list?.querySelector("a")
+      expect(link?.getAttribute("href")).toBe(
+        "https://files.example/1-pass.pdf",
+      )
+      expect(link?.getAttribute("target")).toBe("_blank")
+      expect(link?.getAttribute("rel")).toBe("noopener noreferrer")
+      expect(link?.textContent).toContain("Boarding Pass.pdf")
+      expect(link?.textContent).toContain("2.5")
+      expect(link?.querySelector("img")).toBeNull()
+    })
+
+    test("a stored image shows a thumbnail", async () => {
+      const list = await showFiles([
+        {
+          status: "stored",
+          fileName: "receipt.png",
+          mimeType: "image/png",
+          mediaId: "2",
+          size: 900,
+          url: "https://files.example/2-receipt.png",
+        },
+      ])
+
+      expect(list?.querySelector("a img")?.getAttribute("alt")).toBe("")
+      expect(list?.textContent).toContain("900")
+    })
+
+    test.each([
+      ["a type browsers cannot draw", "image/heic", 900],
+      ["a large photo", "image/jpeg", 5 * 1024 * 1024],
+    ])("%s gets an icon, not a thumbnail", async (_label, mimeType, size) => {
+      const list = await showFiles([
+        {
+          status: "stored",
+          fileName: "photo",
+          mimeType,
+          mediaId: "4",
+          size,
+          url: "https://files.example/photo",
+        },
+      ])
+
+      expect(list?.querySelector("a")?.getAttribute("href")).toBe(
+        "https://files.example/photo",
+      )
+      expect(list?.querySelector("img")).toBeNull()
+    })
+
+    test("a file that could not be kept says why, without a link", async () => {
+      const list = await showFiles([
+        {
+          status: "failed",
+          fileName: "scan.pdf",
+          mimeType: null,
+          mediaId: "3",
+          failureReason: "download_failed",
+        },
+      ])
+
+      expect(list?.querySelector("a")).toBeNull()
+      expect(list?.textContent).toContain("scan.pdf")
+      expect(list?.textContent).toContain(
+        "messages.flowResponse.fileFailure.download_failed",
+      )
+    })
+
+    test("lists every file of an answer in order", async () => {
+      const list = await showFiles([
+        {
+          status: "stored",
+          fileName: "a.pdf",
+          mimeType: "application/pdf",
+          mediaId: "1",
+          size: 10,
+          url: "https://files.example/a.pdf",
+        },
+        {
+          status: "failed",
+          fileName: "b.pdf",
+          mimeType: null,
+          mediaId: "2",
+          failureReason: "too_large",
+        },
+      ])
+
+      expect(
+        Array.from(list?.querySelectorAll("li") ?? []).map((item) =>
+          item.textContent?.includes("a.pdf") ? "a" : "b",
+        ),
+      ).toEqual(["a", "b"])
+    })
   })
 
   test("notes when labels are humanized keys", async () => {

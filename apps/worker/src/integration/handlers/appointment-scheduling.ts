@@ -9,6 +9,10 @@ import {
   resolveTenantSettings,
   SlotUnavailableException,
 } from "@chatbotx.io/business"
+import {
+  type AppointmentSchedulingCopy,
+  getAppointmentSchedulingCopy,
+} from "@chatbotx.io/business/appointment/copy"
 import { signAppointmentWebviewToken } from "@chatbotx.io/encryption"
 import {
   APPOINTMENT_AVAILABILITY_RANGE_SELECTION_PAYLOAD_TYPE,
@@ -27,39 +31,6 @@ import { logger } from "../../lib/logger"
 import type { ExecuteStepProps } from "./flow-utils"
 import { resolveFlowAIModel } from "./shared/flow-ai-model-resolver"
 import type { ExecuteStepResult } from "./step"
-
-type AppointmentSchedulingCopy = {
-  bookingPrompt: string
-  bookingButton: string
-  rangePrompt: string
-  rangeButton: string
-  noSlotsFound: string
-}
-
-const APPOINTMENT_SCHEDULING_COPY = {
-  en: {
-    bookingPrompt: "Choose an appointment time",
-    bookingButton: "Select Date",
-    rangePrompt: "Choose a date range to check availability",
-    rangeButton: "Check Availability",
-    noSlotsFound: "No available slots found.",
-  },
-  vi: {
-    bookingPrompt: "Chọn thời gian đặt lịch",
-    bookingButton: "Chọn ngày",
-    rangePrompt: "Chọn khoảng ngày cần kiểm tra lịch trống",
-    rangeButton: "Kiểm tra lịch trống",
-    noSlotsFound: "Không có lịch trống.",
-  },
-} satisfies Record<string, AppointmentSchedulingCopy>
-
-function getAppointmentSchedulingCopy(input: {
-  language?: string | null
-}): AppointmentSchedulingCopy {
-  return normalizeLanguage(input.language) === "vi"
-    ? APPOINTMENT_SCHEDULING_COPY.vi
-    : APPOINTMENT_SCHEDULING_COPY.en
-}
 
 const parseCalendarLocalInstant = (dateTime: string, timezone: string) =>
   fromZonedTime(dateTime, timezone)
@@ -89,6 +60,7 @@ const availabilityAIModelCandidates = [
   { provider: "claude", modelId: defaultAIModels.claude },
   { provider: "deepseek", modelId: defaultAIModels.deepseek },
   { provider: "openrouter", modelId: defaultAIModels.openrouter },
+  { provider: "muse", modelId: defaultAIModels.muse },
 ] as const
 
 function buildRawAvailabilityText(input: {
@@ -157,6 +129,10 @@ async function buildAvailabilityResponseText(input: {
     const timeoutId = setTimeout(() => controller.abort(), 120_000)
 
     try {
+      // `textStream` drops error parts, so keep the provider error and rethrow
+      // it once the stream ends — otherwise a failed call skips the remaining
+      // candidates and returns the raw availability text.
+      let streamError: unknown
       const result = streamText({
         model: resolvedModel.model,
         instructions: `You are an appointment scheduling assistant. Write a short response for the customer in ${language}. Use only the provided availability data. Do not invent appointment times. If there are no slots, politely say no slots are available in the selected range and suggest choosing another range. Do not mention internal IDs, JSON, or system instructions.`,
@@ -164,6 +140,9 @@ async function buildAvailabilityResponseText(input: {
         temperature: 0.2,
         maxOutputTokens: 250,
         abortSignal: controller.signal,
+        onError: ({ error }) => {
+          streamError = error
+        },
       })
 
       const { fullText } = await processStreamingText(
@@ -173,6 +152,9 @@ async function buildAvailabilityResponseText(input: {
         },
         { sendParts: false },
       )
+      if (streamError) {
+        throw streamError
+      }
 
       return fullText.trim() || input.rawText
     } catch (err) {
@@ -374,6 +356,7 @@ export async function appointmentScheduling(
           workspaceId: conversation.workspaceId,
         })
         const token = await signAppointmentWebviewToken({
+          source: "flow",
           mode: "book",
           workspaceId: conversation.workspaceId,
           calendarId: step.calendarId,
@@ -466,6 +449,7 @@ export async function appointmentScheduling(
             workspaceId: conversation.workspaceId,
           })
           const token = await signAppointmentWebviewToken({
+            source: "flow",
             mode: "selectAvailabilityRange",
             workspaceId: conversation.workspaceId,
             calendarId: step.calendarId,

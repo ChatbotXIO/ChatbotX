@@ -1,8 +1,8 @@
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
 // ---------------------------------------------------------------------------
-// connect/update/disconnect on the four LLM provider services (Claude,
-// DeepSeek, Gemini, OpenAI). `connect` delegates the upsert to the shared
+// connect/update/disconnect on the LLM provider services (Claude,
+// DeepSeek, Gemini, Muse, OpenAI). `connect` delegates the upsert to the shared
 // connectAiProviderIntegration helper and audits connect/update based on
 // whether a row already existed; `update` patches provider-specific fields
 // (e.g. autoReply) directly; `disconnect` removes the parent integration row.
@@ -14,6 +14,7 @@ const mocks = vi.hoisted(() => ({
   findFirstClaude: vi.fn(),
   findFirstDeepseek: vi.fn(),
   findFirstGemini: vi.fn(),
+  findFirstMuse: vi.fn(),
   findFirstOpenai: vi.fn(),
   deleteWhere: vi.fn(),
   updateSet: vi.fn(),
@@ -35,6 +36,7 @@ vi.mock("@chatbotx.io/database/client", () => ({
       integrationClaudeModel: { findFirst: mocks.findFirstClaude },
       integrationDeepseekModel: { findFirst: mocks.findFirstDeepseek },
       integrationGeminiModel: { findFirst: mocks.findFirstGemini },
+      integrationMuseModel: { findFirst: mocks.findFirstMuse },
       integrationOpenaiModel: { findFirst: mocks.findFirstOpenai },
     },
     delete: vi.fn(() => ({ where: mocks.deleteWhere })),
@@ -48,6 +50,7 @@ vi.mock("@chatbotx.io/database/schema", () => ({
   integrationDeepseekModel: { id: "id", workspaceId: "workspaceId" },
   integrationGeminiModel: { id: "id", workspaceId: "workspaceId" },
   integrationModel: { id: "id" },
+  integrationMuseModel: { id: "id", workspaceId: "workspaceId" },
   integrationOpenaiModel: { id: "id", workspaceId: "workspaceId" },
 }))
 
@@ -59,6 +62,9 @@ const { integrationDeepSeekService } = await import(
 )
 const { integrationGeminiService } = await import(
   "../src/integration-gemini/service"
+)
+const { integrationMuseService } = await import(
+  "../src/integration-muse/service"
 )
 const { integrationOpenAIService } = await import(
   "../src/integration-openai/service"
@@ -97,6 +103,12 @@ describe.each([
     label: "Gemini",
     provider: "gemini",
     service: integrationGeminiService,
+  },
+  {
+    findFirst: mocks.findFirstMuse,
+    label: "Muse",
+    provider: "muse",
+    service: integrationMuseService,
   },
   {
     findFirst: mocks.findFirstOpenai,

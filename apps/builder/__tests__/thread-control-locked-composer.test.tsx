@@ -66,6 +66,25 @@ vi.mock("@/features/messages/components/input-menu", () => ({
   },
 }))
 
+// This app's permission to take the thread, from `useThreadTakePermission`.
+const takePermission = vi.hoisted(() => ({
+  value: "unknown" as "allowed" | "forbidden" | "unknown",
+  lastInput: undefined as
+    | undefined
+    | {
+        channel: string
+        workspaceId: string
+        inboxId: string
+        enabled: boolean
+      },
+}))
+vi.mock("@/features/conversations/hooks/use-thread-take-permission", () => ({
+  useThreadTakePermission: (input: typeof takePermission.lastInput) => {
+    takePermission.lastInput = input
+    return takePermission.value
+  },
+}))
+
 const onDismiss = vi.fn()
 const refuse = () =>
   act(() =>
@@ -93,6 +112,7 @@ describe("ThreadControlLockedComposer", () => {
           channel={channel}
           contactInboxId="ci-1"
           conversationId="conv-1"
+          inboxId="inbox-1"
           onDismiss={onDismiss}
           revealOnTakeOver={revealOnTakeOver}
           workspaceId="ws-1"
@@ -103,6 +123,7 @@ describe("ThreadControlLockedComposer", () => {
   beforeEach(() => {
     vi.clearAllMocks()
     hookState.isExecuting = false
+    takePermission.value = "unknown"
     container = document.createElement("div")
     document.body.appendChild(container)
     root = createRoot(container)
@@ -138,12 +159,88 @@ describe("ThreadControlLockedComposer", () => {
     expect(onDismiss).toHaveBeenCalledTimes(1)
   })
 
-  test("Take over requests a take on the WhatsApp contact inbox", () => {
+  const dialogForm = () => document.body.querySelector("form")
+  const typeNote = (value: string) => {
+    const textarea = document.body.querySelector("textarea")
+    const setValue = Object.getOwnPropertyDescriptor(
+      HTMLTextAreaElement.prototype,
+      "value",
+    )?.set
+    setValue?.call(textarea, value)
+    act(() => {
+      textarea?.dispatchEvent(new Event("input", { bubbles: true }))
+    })
+  }
+  const confirmTake = async () => {
+    await act(async () => {
+      dialogForm()
+        ?.querySelector<HTMLButtonElement>('button[type="submit"]')
+        ?.click()
+      // Let react-hook-form's async validation settle inside act.
+      await Promise.resolve()
+    })
+  }
+
+  test("Take over opens a confirmation instead of taking straight away", () => {
     act(() => buttonByText("conversationRouting.composer.takeOver")?.click())
-    expect(hookState.execute).toHaveBeenCalledWith({
+
+    expect(document.body.textContent).toContain(
+      "conversationRouting.composer.takeOverTitle",
+    )
+    expect(hookState.execute).not.toHaveBeenCalled()
+  })
+
+  test("confirming requests a take on the WhatsApp contact inbox, without a note", async () => {
+    act(() => buttonByText("conversationRouting.composer.takeOver")?.click())
+    await confirmTake()
+
+    expect(hookState.execute).toHaveBeenCalledExactlyOnceWith({
       contactInboxId: "ci-1",
       action: "take",
+      metadata: undefined,
     })
+  })
+
+  test("the note is trimmed and handed to the partner losing the thread", async () => {
+    act(() => buttonByText("conversationRouting.composer.takeOver")?.click())
+    typeNote("  Agent taking over billing dispute  ")
+    await confirmTake()
+
+    expect(hookState.execute).toHaveBeenCalledExactlyOnceWith({
+      contactInboxId: "ci-1",
+      action: "take",
+      metadata: "Agent taking over billing dispute",
+    })
+  })
+
+  test("a whitespace-only note is dropped", async () => {
+    act(() => buttonByText("conversationRouting.composer.takeOver")?.click())
+    typeNote("     ")
+    await confirmTake()
+
+    expect(hookState.execute).toHaveBeenCalledExactlyOnceWith({
+      contactInboxId: "ci-1",
+      action: "take",
+      metadata: undefined,
+    })
+  })
+
+  test("a note over Meta's 2000-character limit is refused before any call", async () => {
+    act(() => buttonByText("conversationRouting.composer.takeOver")?.click())
+    typeNote("x".repeat(2001))
+    await confirmTake()
+
+    expect(hookState.execute).not.toHaveBeenCalled()
+  })
+
+  test("cancelling the confirmation takes nothing", () => {
+    act(() => buttonByText("conversationRouting.composer.takeOver")?.click())
+    const cancel = Array.from(
+      document.body.querySelectorAll<HTMLButtonElement>("form button"),
+    ).find((button) => button.textContent === "actions.cancel")
+    act(() => cancel?.click())
+
+    expect(hookState.execute).not.toHaveBeenCalled()
   })
 
   test("Take over only reveals the composer (no Meta take) when revealOnTakeOver", () => {
@@ -246,5 +343,54 @@ describe("ThreadControlLockedComposer", () => {
       buttonByText("conversationRouting.composer.takeOver")?.disabled,
     ).toBe(true)
     expect(buttonByText("actions.sendFlow")?.disabled).toBe(true)
+  })
+
+  describe("take permission from the channel's routing roles", () => {
+    const takeButton = () =>
+      buttonByText("conversationRouting.composer.takeOver") as
+        | HTMLButtonElement
+        | undefined
+
+    test("asks for the permission of the thread's inbox, unless the take is inline", () => {
+      expect(takePermission.lastInput).toEqual({
+        channel: "whatsapp",
+        workspaceId: "ws-1",
+        inboxId: "inbox-1",
+        enabled: true,
+      })
+      render("messenger", true)
+      expect(takePermission.lastInput?.enabled).toBe(false)
+    })
+
+    test("forbidden: Take over is disabled and explained up front", () => {
+      takePermission.value = "forbidden"
+      render()
+      expect(takeButton()?.disabled).toBe(true)
+      expect(container.textContent).toContain(
+        "conversationRouting.composer.notEscalation",
+      )
+      act(() => takeButton()?.click())
+      expect(hookState.execute).not.toHaveBeenCalled()
+    })
+
+    test.each([
+      ["allowed"],
+      ["unknown"],
+    ] as const)("%s: Take over is offered and the channel decides", (value) => {
+      takePermission.value = value
+      render()
+      expect(takeButton()?.disabled).toBe(false)
+      expect(container.textContent).not.toContain(
+        "conversationRouting.composer.notEscalation",
+      )
+    })
+
+    test("an inline-reply take-over ignores a forbidden permission", () => {
+      takePermission.value = "forbidden"
+      render("messenger", true)
+      expect(takeButton()?.disabled).toBe(false)
+      act(() => takeButton()?.click())
+      expect(onDismiss).toHaveBeenCalledTimes(1)
+    })
   })
 })

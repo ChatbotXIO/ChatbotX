@@ -164,3 +164,19 @@ describe("receiveMessage — contact identity", () => {
     expect(result.message.messageType).toBe("outgoing")
   })
 })
+
+describe("receiveMessage — step input skip payload", () => {
+  test("hands the tapped reply_source_unique_id to the worker unchanged as postbackAction", async () => {
+    const result = await run(
+      "im_receive_msg",
+      inboundContent({
+        reply_source_payload: {
+          reply_source_msg_id: "u5Buqc6lAghuOelnHUZV88DK2A==",
+          reply_source_unique_id: "STEP_INPUT_SKIP|11612473309626368",
+        },
+      }),
+    )
+
+    expect(result.postbackAction).toBe("STEP_INPUT_SKIP|11612473309626368")
+  })
+})

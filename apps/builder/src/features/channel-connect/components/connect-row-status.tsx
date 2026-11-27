@@ -23,7 +23,7 @@ export type ConnectRowStatusProps = {
 }
 
 const NOTE_TONE_CLASS = {
-  warning: "text-amber-600 text-xs",
+  warning: "text-amber-700 text-xs dark:text-amber-400",
   muted: "text-muted-foreground text-xs",
 } as const satisfies Record<RowNote["tone"], string>
 

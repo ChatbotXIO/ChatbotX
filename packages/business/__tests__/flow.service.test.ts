@@ -23,6 +23,7 @@ const {
   mockEnqueueDelete,
   mockFlowFindMany,
   mockAssertDeletable,
+  mockAssertEditable,
 } = vi.hoisted(() => {
   const mockInsertReturning = vi.fn().mockResolvedValue([{ id: "flow-1" }])
   const mockInsertValues = vi.fn(() =>
@@ -58,6 +59,7 @@ const {
     mockEnqueueDelete: vi.fn(),
     mockFlowFindMany: vi.fn(),
     mockAssertDeletable: vi.fn(),
+    mockAssertEditable: vi.fn(),
   }
 })
 
@@ -98,6 +100,7 @@ vi.mock("@chatbotx.io/database/repositories", () => ({
     listIdsByIds: vi.fn(async () => []),
     listPublishedOptions: mockListPublishedOptions,
   },
+  reflinkRepository: { listIdsByFlowIds: vi.fn(async () => []) },
   whatsappMessageTemplateRepository: { listIdsByIntegration: vi.fn() },
 }))
 
@@ -163,9 +166,30 @@ vi.mock("../src/folder/service", () => ({
   folderService: { find: vi.fn(), ensureExists: mockEnsureExists },
 }))
 
-vi.mock("../src/template/installed-resource.service", () => ({
-  assertDeletable: mockAssertDeletable,
+vi.mock("../src/template/installed-resource.service", async () => ({
+  ...(await import("./helpers/template-guard-mocks")).templateGuardMocks({
+    useTransaction: true,
+    assertDeletable: mockAssertDeletable,
+    assertResourceEditable: mockAssertEditable,
+  }),
+  changedKeysOf: vi.fn(() => []),
 }))
+
+const mockLockOptions = vi.hoisted(() => vi.fn())
+
+// Run the locked transaction against the same mocked client the test asserts on.
+vi.mock("../src/template/template-resource-locks", async () => {
+  const { db } = await import("@chatbotx.io/database/client")
+  return {
+    withTemplateLockedTransaction: (
+      run: (tx: unknown) => unknown,
+      options?: unknown,
+    ) => {
+      mockLockOptions(options)
+      return run(db)
+    },
+  }
+})
 
 vi.mock("../src/messenger-welcome-message-flow/service", () => ({
   messengerWelcomeMessageFlowService: {
@@ -195,152 +219,6 @@ describe("flowService.listPublishedOptions", () => {
   })
 })
 
-describe("flowService.duplicate", () => {
-  afterEach(() => {
-    vi.clearAllMocks()
-  })
-
-  test("throws when the source flow does not exist in the workspace", async () => {
-    mockDbTransaction.mockImplementation(async (callback) =>
-      callback(transaction),
-    )
-    mockFlowFindFirst.mockResolvedValue(undefined)
-
-    await expect(
-      flowService.duplicate({ workspaceId: "ws-1", id: "flow-1" }),
-    ).rejects.toThrow("Flow not found")
-
-    expect(mockFlowFindFirst).toHaveBeenCalledWith({
-      where: { id: "flow-1", workspaceId: "ws-1" },
-    })
-    expect(mockFindDraft).not.toHaveBeenCalled()
-    expect(mockInsert).not.toHaveBeenCalled()
-  })
-
-  test("throws when the source flow has no draft version", async () => {
-    mockDbTransaction.mockImplementation(async (callback) =>
-      callback(transaction),
-    )
-    mockFlowFindFirst.mockResolvedValue({
-      id: "flow-1",
-      workspaceId: "ws-1",
-      name: "Original flow",
-    })
-    mockFindDraft.mockResolvedValue(undefined)
-
-    await expect(
-      flowService.duplicate({ workspaceId: "ws-1", id: "flow-1" }),
-    ).rejects.toThrow("Draft version not found")
-
-    expect(mockFindDraft).toHaveBeenCalledWith(
-      { flowId: "flow-1", workspaceId: "ws-1" },
-      transaction,
-    )
-    expect(mockInsert).not.toHaveBeenCalled()
-  })
-
-  test("creates an unpublished copy from the draft and returns its id", async () => {
-    mockDbTransaction.mockImplementation(async (callback) =>
-      callback(transaction),
-    )
-    mockInsertValues.mockResolvedValue(undefined)
-    mockFlowFindFirst.mockResolvedValue({
-      id: "flow-1",
-      workspaceId: "ws-1",
-      name: "Original flow",
-      active: true,
-      enableInInbox: false,
-      folderId: "folder-1",
-      currentVersionId: "published-1",
-      draftVersionId: null,
-      createdAt: new Date("2024-01-01"),
-      updatedAt: new Date("2024-01-02"),
-    })
-    mockFindDraft.mockResolvedValue({
-      id: "draft-1",
-      workspaceId: "ws-1",
-      flowId: "flow-1",
-      nodes: [{ id: "node-1" }],
-      edges: [{ id: "edge-1" }],
-      isDraft: true,
-      isLatest: false,
-      startNodeId: "node-1",
-      createdAt: new Date("2024-01-01"),
-      updatedAt: new Date("2024-01-02"),
-    })
-    // Source id order: new flow id → draft version id → analytics session id.
-    mockCreateId
-      .mockReturnValueOnce("flow-copy-1")
-      .mockReturnValueOnce("draft-copy-1")
-      .mockReturnValueOnce("analytics-1")
-
-    await expect(
-      flowService.duplicate({ workspaceId: "ws-1", id: "flow-1" }),
-    ).resolves.toBe("flow-copy-1")
-
-    expect(mockInsert).toHaveBeenNthCalledWith(1, flowModel)
-    expect(mockInsertValues).toHaveBeenNthCalledWith(1, {
-      id: "flow-copy-1",
-      name: "Original flow _copy",
-      active: true,
-      enableInInbox: false,
-      workspaceId: "ws-1",
-      folderId: "folder-1",
-      currentVersionId: null,
-      draftVersionId: "draft-copy-1",
-    })
-    expect(mockInsert).toHaveBeenNthCalledWith(2, flowAnalyticsSessionModel)
-    expect(mockInsertValues).toHaveBeenNthCalledWith(2, {
-      id: "analytics-1",
-      flowId: "flow-copy-1",
-      workspaceId: "ws-1",
-    })
-    expect(mockInsert).toHaveBeenNthCalledWith(3, flowVersionModel)
-    expect(mockInsertValues).toHaveBeenNthCalledWith(3, {
-      id: "draft-copy-1",
-      workspaceId: "ws-1",
-      flowId: "flow-copy-1",
-      nodes: [{ id: "node-1" }],
-      edges: [{ id: "edge-1" }],
-      isDraft: true,
-      isLatest: false,
-      startNodeId: "node-1",
-    })
-  })
-
-  test("propagates insert failures so the transaction can roll back", async () => {
-    mockDbTransaction.mockImplementation(async (callback) =>
-      callback(transaction),
-    )
-    mockFlowFindFirst.mockResolvedValue({
-      id: "flow-1",
-      workspaceId: "ws-1",
-      name: "Original flow",
-      active: true,
-      enableInInbox: true,
-      folderId: null,
-    })
-    mockFindDraft.mockResolvedValue({
-      id: "draft-1",
-      workspaceId: "ws-1",
-      flowId: "flow-1",
-      nodes: [{ id: "node-1" }],
-      edges: [],
-      isDraft: true,
-      isLatest: false,
-      startNodeId: "node-1",
-    })
-    mockCreateId.mockReturnValue("flow-copy-1")
-    mockInsertValues.mockRejectedValueOnce(new Error("insert failed"))
-
-    await expect(
-      flowService.duplicate({ workspaceId: "ws-1", id: "flow-1" }),
-    ).rejects.toThrow("insert failed")
-
-    expect(mockInsert).toHaveBeenCalledTimes(1)
-  })
-})
-
 describe("flowService.update", () => {
   afterEach(() => {
     vi.clearAllMocks()
@@ -359,6 +237,35 @@ describe("flowService.update", () => {
     expect(mockUpdate).not.toHaveBeenCalled()
   })
 
+  test("locks the flow before the stored row is read, then diffs the fresh row", async () => {
+    mockTopLevelFlowFindFirst.mockResolvedValue({
+      id: "flow-1",
+      workspaceId: "ws-1",
+      name: "Welcome",
+      active: true,
+      enableInInbox: true,
+    })
+    mockUpdateReturning.mockResolvedValue([{ id: "flow-1" }])
+    mockTopLevelFlowFindFirst.mockClear()
+    mockLockOptions.mockClear()
+
+    await flowService.update(
+      { workspaceId: "ws-1", id: "flow-1" },
+      { name: "Renamed" },
+    )
+
+    expect(mockLockOptions).toHaveBeenCalledWith({
+      workspaceId: expect.any(String),
+      initialKeys: [{ kind: "flow", resourceId: "flow-1" }],
+    })
+    expect(mockLockOptions.mock.invocationCallOrder[0]).toBeLessThan(
+      mockTopLevelFlowFindFirst.mock.invocationCallOrder[0] as number,
+    )
+    expect(mockAssertEditable).toHaveBeenCalledWith(
+      expect.objectContaining({ changedKeys: ["name"] }),
+    )
+  })
+
   test("no-ops when nothing changed", async () => {
     mockTopLevelFlowFindFirst.mockResolvedValue({
       id: "flow-1",
@@ -375,6 +282,65 @@ describe("flowService.update", () => {
 
     expect(mockUpdate).not.toHaveBeenCalled()
     expect(mockAudit).not.toHaveBeenCalled()
+  })
+
+  test("a rename of a locked template copy is refused before any write", async () => {
+    mockTopLevelFlowFindFirst.mockResolvedValue({
+      id: "flow-1",
+      workspaceId: "ws-1",
+      name: "Welcome",
+      active: true,
+      enableInInbox: true,
+    })
+    mockAssertEditable.mockRejectedValueOnce(
+      Object.assign(new Error("locked"), {
+        code: "templateAllowEditViolation",
+      }),
+    )
+
+    await expect(
+      flowService.update(
+        { workspaceId: "ws-1", id: "flow-1" },
+        { name: "Renamed" },
+      ),
+    ).rejects.toMatchObject({ code: "templateAllowEditViolation" })
+
+    expect(mockAssertEditable).toHaveBeenCalledWith(
+      expect.objectContaining({
+        resourceKind: "flow",
+        resourceIds: ["flow-1"],
+        changedKeys: ["name"],
+      }),
+    )
+    expect(mockUpdate).not.toHaveBeenCalled()
+  })
+
+  test("takes the guard first, inside the locked transaction, before the write", async () => {
+    mockTopLevelFlowFindFirst.mockResolvedValue({
+      id: "flow-1",
+      workspaceId: "ws-1",
+      name: "Welcome",
+      active: true,
+      enableInInbox: true,
+    })
+    mockUpdateReturning.mockResolvedValue([{ id: "flow-1" }])
+
+    await flowService.update(
+      { workspaceId: "ws-1", id: "flow-1" },
+      { name: "Onboarding" },
+    )
+
+    const guardArgs = mockAssertEditable.mock.calls[0]?.[0] as {
+      tx?: unknown
+    }
+    expect(guardArgs.tx).toBeDefined()
+    expect(mockAssertEditable.mock.invocationCallOrder[0]).toBeLessThan(
+      mockUpdate.mock.invocationCallOrder[0] as number,
+    )
+    // The rename sync is queued after the transaction, not inside it.
+    expect(mockEnqueueSync.mock.invocationCallOrder[0]).toBeGreaterThan(
+      mockUpdateReturning.mock.invocationCallOrder[0] as number,
+    )
   })
 
   test("updates and audits when a field changed", async () => {

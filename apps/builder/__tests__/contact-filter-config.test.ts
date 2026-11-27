@@ -112,6 +112,31 @@ describe("contact filter operator config", () => {
     })
   })
 
+  test("offers votedOnPoll as an Analytics multi-select of workspace polls with Is / Is not / Has no value", () => {
+    expect(staticFieldRules.votedOnPoll?.enabledOperators).toEqual([
+      operatorTypes.enum.eq,
+      operatorTypes.enum.ne,
+      operatorTypes.enum.isEmpty,
+    ])
+
+    const configs = getFieldConfigs({
+      t,
+      tagOptions: [],
+      inboxOptions: [],
+      flowVersionOptions: [],
+      customFields: [],
+      pollOptions: [{ label: "Best dish", value: "11" }],
+    })
+    expect(
+      configs.find((config) => config.name === "votedOnPoll"),
+    ).toMatchObject({
+      group: "analytics",
+      formField: formFieldTypes.enum.multiSelect,
+      optionSource: "polls",
+      options: [{ label: "Best dish", value: "11" }],
+    })
+  })
+
   test("rejects malformed commented-post values before they can widen an audience", () => {
     for (const value of [
       "1",
@@ -585,6 +610,7 @@ describe("contact filter field config helpers", () => {
             label: "condition.fields.fromGoogleAd",
             value: "fromGoogleAd",
           },
+          { label: "condition.fields.clickedAd", value: "clickedAd" },
           {
             label: "condition.fields.ctwaConversion",
             value: "ctwaConversion",
@@ -883,6 +909,10 @@ describe("contact filter field config helpers", () => {
           keywords: [],
           whatsappFlows: [],
           emailTopics: [],
+          pipelines: [],
+          pipelineStages: [],
+          ads: [],
+          polls: [],
         },
       })
       const byName = (name: string) =>

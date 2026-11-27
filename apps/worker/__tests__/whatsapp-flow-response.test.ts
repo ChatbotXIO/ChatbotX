@@ -424,3 +424,37 @@ describe("applyWhatsappFlowResponseSideEffects", () => {
     expect(applyWhatsappFlowResponse).toHaveBeenCalledOnce()
   })
 })
+
+describe("flow files reaching the response", () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    applyWhatsappFlowResponse.mockResolvedValue(undefined)
+  })
+
+  test("applyWhatsappFlowResponseSideEffects hands them to the service", async () => {
+    const flowFiles = {
+      docs: [
+        {
+          mediaId: "1",
+          fileName: "a.pdf",
+          mimeType: "application/pdf",
+          size: 10,
+          url: "https://storage.example.com/a.pdf",
+        },
+      ],
+    }
+
+    await applyWhatsappFlowResponseSideEffects({
+      workspaceId: "ws-1",
+      contactId: "contact-1",
+      contactInbox: makeContactInbox(),
+      step: makeWhatsappFlowStep("btn-1") as never,
+      flowResponse: { docs: [{ id: "1" }] },
+      flowFiles,
+    })
+
+    expect(applyWhatsappFlowResponse).toHaveBeenCalledWith(
+      expect.objectContaining({ flowFiles }),
+    )
+  })
+})

@@ -30,6 +30,12 @@ export type ConnectPickerItem = {
    * account's own history.
    */
   aiReadsSyncedHistory?: boolean
+  /**
+   * The row also imports its contacts from AhaChat first (the answer to the
+   * dialog asked when its history sync was turned on); only meaningful with
+   * `coexist`. The history sync then follows the import by itself.
+   */
+  ahachat?: boolean
 }
 
 /**
@@ -40,5 +46,5 @@ export type ConnectPickerItem = {
  */
 export type ConnectTarget = Pick<
   ConnectPickerItem,
-  "id" | "name" | "coexist" | "aiReadsSyncedHistory"
+  "id" | "name" | "coexist" | "aiReadsSyncedHistory" | "ahachat"
 >

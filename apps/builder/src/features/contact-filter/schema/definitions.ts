@@ -36,8 +36,10 @@ export type ContactFilterOptionSource =
   | "keywords"
   | "whatsappFlows"
   | "emailTopics"
+  | "ads"
   | "broadcasts"
   | "sequences"
+  | "polls"
   | "reflinks"
   | "assignees"
   | "ctwaConversionTypes"
@@ -318,6 +320,11 @@ export const CONTACT_FILTER_FIELD_DEFINITIONS = [
     schemaKind: "boolean",
     optionSource: "none",
   },
+  {
+    field: contactFilterFields.enum.votedOnPoll,
+    schemaKind: "multiSelect",
+    optionSource: "polls",
+  },
   // --- Facebook/Instagram comment ---
   {
     field: contactFilterFields.enum.lastComment,
@@ -407,6 +414,11 @@ export const CONTACT_FILTER_FIELD_DEFINITIONS = [
     field: contactFilterFields.enum.fromGoogleAd,
     schemaKind: "boolean",
     optionSource: "none",
+  },
+  {
+    field: contactFilterFields.enum.clickedAd,
+    schemaKind: "multiSelect",
+    optionSource: "ads",
   },
   {
     field: contactFilterFields.enum.ctwaConversion,

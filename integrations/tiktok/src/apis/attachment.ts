@@ -1,4 +1,4 @@
-import { rescue, TiktokAPIException } from "../exception"
+import { rescue, throwBusinessApiError } from "../exception"
 import { createTiktokBusinessClient } from "../lib/http-client"
 import type { BusinessApiResponse } from "../schema"
 
@@ -29,9 +29,7 @@ export const uploadAttachment = (
     >("business/message/media/upload/", form)
 
     if (response.code !== 0) {
-      throw new TiktokAPIException(
-        response.message ?? "TikTok media upload failed",
-      )
+      throwBusinessApiError(response, "TikTok media upload failed")
     }
 
     const mediaId = response.data?.media_id

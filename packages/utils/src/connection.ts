@@ -40,12 +40,73 @@ export const connectionStatusReasons = z.enum([
   "tenant_suspended",
   "token_revoked",
   "provider_revoked",
+  // The provider is re-onboarding the account (e.g. WhatsApp Business app
+  // moved to another device). Active: quota is held and sends are deferred.
+  "provider_offboarded",
   "refresh_failed",
   "verify_failed",
   "quota_exceeded",
   "orphaned_webhook",
 ])
 export type ConnectionStatusReason = z.infer<typeof connectionStatusReasons>
+
+/**
+ * Channel-agnostic lifecycle events a provider reports about the account
+ * behind a connection. Stored on `Connection.providerEventKind` so an
+ * out-of-order or duplicate delivery can be recognised.
+ */
+export const providerAccountEventKinds = z.enum([
+  "revoked",
+  "offboarded",
+  "reconnected",
+])
+export type ProviderAccountEventKind = z.infer<typeof providerAccountEventKinds>
+
+/** What a provider reported about why an account event happened; bounded by the channel adapter. */
+export type ProviderAccountEventDetail = { reason: string; initiatedBy: string }
+
+/** The part of a `Connection` that says whether, and why, it is not simply connected. */
+export type ConnectionStatusState = {
+  status: ConnectionStatus
+  statusReason: ConnectionStatusReason | null
+}
+
+/**
+ * Held by the provider while it re-onboards the account: still active (quota
+ * held), but sends wait and health checks cannot override the state.
+ */
+export const isProviderOffboardedConnection = (
+  state: ConnectionStatusState | null | undefined,
+): boolean =>
+  state?.status === "degraded" && state.statusReason === "provider_offboarded"
+
+/**
+ * Which connections a provider account event may touch, by the route that
+ * delivered it. An account id is not a tenant boundary and a provider sends one
+ * event to every app subscribed to the account, so each route only speaks for
+ * the rows that connected through ITS app (`appId`).
+ */
+export type ProviderAccountRouteScope =
+  /** The platform app. */
+  | { kind: "platform"; appId: string }
+  /** A user- or reseller-owned app whose tenant-aware credential owner is `ownerId`. */
+  | { kind: "credentialOwner"; ownerId: string; appId: string }
+  /** One manually connected integration, which brings its own app. */
+  | { kind: "manualIntegration"; integrationId: string; workspaceId: string }
+
+/** One channel number a provider account event may act on. */
+export type ProviderAccountTarget = {
+  integrationId: string
+  workspaceId: string
+  /** The workspace owner: the quota owner released on a revoke. */
+  workspaceOwnerId: string
+  inboxId: string
+  /** `null` for a row predating the Connection backfill. */
+  connectionId: string | null
+}
+
+/** How many targets one batch of a provider account event handles. */
+export const PROVIDER_ACCOUNT_TARGET_BATCH_SIZE = 200
 
 /**
  * `Inbox.disconnectReason` predates this `Connection` domain and is narrower
@@ -81,6 +142,7 @@ export const CONNECTION_TO_INBOX_DISCONNECT_REASON: Record<
   tenant_suspended: "tenant_suspended",
   token_revoked: "token_revoked",
   provider_revoked: "token_revoked",
+  provider_offboarded: "manual",
   refresh_failed: "token_revoked",
   verify_failed: "manual",
   quota_exceeded: "manual",

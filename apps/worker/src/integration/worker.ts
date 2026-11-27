@@ -1,39 +1,32 @@
 import { createHash } from "node:crypto"
-import { automatedResponseService } from "@chatbotx.io/automated-response"
-import {
-  conversationService,
-  flushAllPendingWorkspaceRealtimeEvents,
-  withBlockedOwnerGuard,
-} from "@chatbotx.io/business"
+import { withBlockedOwnerGuard } from "@chatbotx.io/business"
 import { channelTypes } from "@chatbotx.io/database/partials"
-import { emit } from "@chatbotx.io/event-bus"
 import {
   AIJobAction,
   aiAgentQueue,
   type CallTranscriptionJobData,
-  closeHeavyQueueEvents,
-  closeIntegrationQueueEvents,
-  defaultWorkerOptions,
+  chatQueue,
   getHeavyJobCompletionWaitTimeoutMs,
-  getQueueConnection,
   HeavyJobAction,
   IntegrationJobAction,
   type IntegrationJobData,
   integrationQueue,
+  lowQueue,
   queueNames,
   WhatsappVoipSignalingJobAction,
   type WhatsappVoipSignalingJobData,
 } from "@chatbotx.io/worker-config"
-import { type Job, Worker } from "bullmq"
+import type { Job } from "bullmq"
+import { recordLiveVideoStatusChange } from "../channel-post-sync/record-live-video"
 import { env } from "../env"
-import { ensureBootstrapped } from "../lib/bootstrap"
+import { createQueueWorker } from "../lib/create-queue-worker"
 import { isBlockedWorkspace } from "../lib/is-blocked-workspace"
 import { hasExhaustedAttempts } from "../lib/job-attempts"
-import { instrumentWorker } from "../lib/job-observability"
 import { deferOnLockContention } from "../lib/lock-contention-deferral"
 import { logger } from "../lib/logger"
 import { resolveWorkspaceId } from "../lib/resolve-workspace-id"
 import { runJobWithAuditContext } from "../lib/run-job-with-audit-context"
+import { onShutdown, runWorker } from "../lib/shutdown"
 import { integrationService } from "../services/integrations"
 import { mintRandomFlowExecutionKey } from "./flow-execution-key"
 import { handleAdsAutomaticEvent } from "./handlers/ads-automatic-event"
@@ -49,8 +42,11 @@ import { coexistWhatsappBuffer } from "./handlers/coexist/whatsapp-buffer"
 import { coexistWhatsappFlush } from "./handlers/coexist/whatsapp-flush"
 import { processCommentAutomation } from "./handlers/comment-automation"
 import { runDeferredCommentPrivateReply } from "./handlers/comment-automation/deferred-private-reply"
+import { runAsMissedCommentReplay } from "./handlers/comment-automation/replay-priority"
+import { confirmOrderPayment } from "./handlers/confirm-order-payment"
 import { updateContactAvatar } from "./handlers/contact/update-avatar"
 import { runContactScan } from "./handlers/contact-scan/engine"
+import { runContactSync } from "./handlers/contact-sync/engine"
 import { agentMarkAsRead, contactMarkAsRead } from "./handlers/conversation"
 import {
   runFlowNode,
@@ -61,23 +57,33 @@ import { runFollowUpResume } from "./handlers/follow-up"
 import { handleSendGoogleAdsConversion } from "./handlers/google-ads/send-conversion"
 import { resumeHeavyStep } from "./handlers/heavy-step-resume"
 import { handleChannelLabelWebhook } from "./handlers/inbox_labels"
+import { processIncomingMessage } from "./handlers/incoming-message"
+import {
+  deleteIncomingMessage,
+  updateIncomingMessage,
+} from "./handlers/incoming-message-change"
 import { processLeadgen } from "./handlers/lead-ads"
 import { processMarketingMessageWebhook } from "./handlers/marketing-message-webhook"
 import { handleMessageStatus } from "./handlers/message-status"
 import { handleSendMetaCapiEvent } from "./handlers/meta-conversions/send-meta-capi-event"
+import { handleProviderAccountEvent } from "./handlers/provider-account-event"
 import { runQuickReplyFollowUpResume } from "./handlers/quick-reply-resume"
 import {
   deleteIncomingComment,
-  deleteIncomingMessage,
   processMessageReaction,
   receiveComment,
-  receiveMessage,
   updateIncomingComment,
 } from "./handlers/received-message"
 import { runRef } from "./handlers/ref"
 import { replyToInboundCart } from "./handlers/reply-to-inbound-cart"
 import { recordEmailTrackingTransition } from "./handlers/send-email"
 import { handleSendSequenceFlow } from "./handlers/sequence-flow"
+import { runShopifySync, runShopifyWebhook } from "./handlers/shopify"
+import { pollSmtpInbox } from "./handlers/smtp/poll-inbox"
+import {
+  runStepInputResolution,
+  runStepInputTimeoutResume,
+} from "./handlers/step-input-resolution"
 import { captureTemplateFlowResponse } from "./handlers/template-flow-response"
 import {
   isThreadControlJobReprocess,
@@ -89,7 +95,6 @@ import { runWaitResume } from "./handlers/wait-resume"
 import { handleWhatsappCallEvent } from "./handlers/whatsapp-call"
 import { handleWhatsappCallNativeRecordingFetch } from "./handlers/whatsapp-call-native-recording"
 import { handleWhatsappCallNativeTranscriptFetch } from "./handlers/whatsapp-call-native-transcript"
-import { recordWhatsappCallPermissionReply } from "./handlers/whatsapp-call-permission-reply"
 import { handleWhatsappCallRecordingReady } from "./handlers/whatsapp-call-recording"
 import { handleWhatsappCallTranscribe } from "./handlers/whatsapp-call-transcribe"
 import { handleWhatsappIdentityChange } from "./handlers/whatsapp-identity-change"
@@ -97,11 +102,19 @@ import {
   finalizeExhaustedHandleConnect,
   handleWhatsappVoipSignalingJob,
 } from "./handlers/whatsapp-voip-signaling"
+import {
+  runWooCommerceSync,
+  runWooCommerceWebhook,
+} from "./handlers/woocommerce"
 import { runIntegrationJobWithWebhookContext } from "./job-context"
-import { resolveIncomingTextRouting } from "./routing"
-import { dispatchStoryAutomation } from "./story-automation-dispatch"
-import { closeChatQueueEvents } from "./utils/message"
 
+// Coexist historical sync chunks are bounded to ~4 min via self-continuation
+// (see coexist-messenger-sync / coexist-whatsapp-flush). Lock sized as:
+// 4 min active + 4 min Graph 5xx retry tail + 2 min bulk INSERT tail.
+// Heavy flow steps also wait for every configured provider retry and
+// backoff; their full budget must fit within the parent job lock. The event
+// loop is shared in `standalone`, so the lock must not be shortened to rely on
+// timely renewal.
 const integrationWorkerLockDuration = Math.max(
   10 * 60 * 1000,
   getHeavyJobCompletionWaitTimeoutMs(
@@ -165,153 +178,107 @@ async function resolveVoipSignalingWorkspaceId(
   }
 }
 
-async function startIntegrationWorker() {
-  try {
-    await ensureBootstrapped()
-  } catch (err) {
-    logger.error({ err }, "Failed to bootstrap integration worker")
-    process.exit(1)
+function handleVoipSignalingFailed(
+  job: Job<WhatsappVoipSignalingJobData> | undefined,
+  err: Error,
+): void {
+  if (!job) {
+    return
+  }
+  // Retries here are routine, not incidents: handleConnect throws
+  // VoipCallRowNotReadyError until the separate whatsappCallEvent job creates
+  // the call row, and this queue's retry window exists precisely to outlast
+  // that lag. Logging every attempt at ERROR made a healthy race read as a
+  // dropped call. Only an exhausted job actually lost the offer.
+  const attempts = job.opts.attempts ?? 1
+  if (!hasExhaustedAttempts(job)) {
+    logger.warn(
+      { err, attempt: job.attemptsMade, attempts },
+      `Whatsapp VoIP signaling job ${job.id} attempt failed; retrying`,
+    )
+    return
+  }
+  logger.error(
+    { err, attempts },
+    `Whatsapp VoIP signaling job ${job.id} has failed`,
+  )
+  // Safety net: a handleConnect job that exhausted every attempt
+  // (removeOnFail deletes it from Redis right after this) must not silently
+  // strand the call at ringing — finalize it here instead of leaving it
+  // entirely to the 5-minute stale-call sweep. This listener isn't awaited by
+  // BullMQ, so the call is fire-and-forget; .catch is belt-and-suspenders
+  // since finalizeExhaustedHandleConnect already logs its own failures and
+  // never rejects.
+  if (job.data.type === WhatsappVoipSignalingJobAction.handleConnect) {
+    finalizeExhaustedHandleConnect(job.data.data).catch((finalizeErr) => {
+      logger.error(
+        { err: finalizeErr, wacid: job.data.data.wacid },
+        "Whatsapp VoIP signaling: finalizeExhaustedHandleConnect rejected unexpectedly",
+      )
+    })
+  }
+}
+
+const QUEUE_DEPTH_LOG_INTERVAL_MS = 60_000
+
+const depthLoggedQueues = [
+  { name: queueNames.enum.integration, queue: integrationQueue },
+  { name: queueNames.enum.chat, queue: chatQueue },
+  { name: queueNames.enum.low, queue: lowQueue },
+] as const
+
+/**
+ * Logs how deep the queues behind customer replies are, once a minute. The
+ * numbers tell an operator whether `integration` is backed up (raise its
+ * concurrency), `chat` is (raise `CHAT_WORKER_CONCURRENCY`), or `low` is (the
+ * bookkeeping ingress is behind). `prioritized` holds broadcast, sequence and
+ * replay sends, which wait behind live traffic by design.
+ */
+function startQueueDepthLogging(): void {
+  const logDepths = async () => {
+    for (const { name, queue } of depthLoggedQueues) {
+      try {
+        const counts = await queue.getJobCounts(
+          "waiting",
+          "prioritized",
+          "delayed",
+          "active",
+        )
+        logger.info({ queue: name, ...counts }, "Queue depth")
+      } catch (err) {
+        logger.warn({ err, queue: name }, "Failed to read queue depth")
+      }
+    }
   }
 
+  const timer = setInterval(() => {
+    logDepths().catch((err: unknown) => {
+      logger.warn({ err }, "Failed to log queue depth")
+    })
+  }, QUEUE_DEPTH_LOG_INTERVAL_MS)
+  timer.unref()
+  onShutdown("queue-depth-logging", () => clearInterval(timer))
+}
+
+function startIntegrationWorker() {
   const processIntegrationJob = async (job: Job<IntegrationJobData>) => {
     const workspaceId = await resolveWorkspaceId(job.data.data)
     if (await isBlockedWorkspace(workspaceId)) {
       return
     }
 
-    await runIntegrationJobWithWebhookContext(job.data, () =>
+    return await runIntegrationJobWithWebhookContext(job.data, () =>
       runJobWithAuditContext(
         { workspaceId, source: `integration:${job.data.type}` },
         async () => {
           switch (job.data.type) {
-            case IntegrationJobAction.incomingMessage: {
-              const received = await receiveMessage(job.data.data)
-              if (!received) {
-                return
-              }
-              const {
-                message,
-                postbackAction,
-                quickReplyAction,
-                conversation,
-                channelType,
-                inboxId,
-                inboxChannel,
-                suppressAutomation,
-              } = received
-
-              if (!message) {
-                return
-              }
-
-              const isNotPostbackOrQuickReply = !(
-                postbackAction || quickReplyAction
-              )
-
-              // A call-permission answer is account state, recorded for
-              // standby deliveries too; it never reaches automation.
-              if (
-                isNotPostbackOrQuickReply &&
-                (await recordWhatsappCallPermissionReply({
-                  workspaceId: conversation.workspaceId,
-                  message,
-                }))
-              ) {
-                return
-              }
-
-              // Standby deliveries (another responder owns the thread) are
-              // stored only: no story-reply, routing or fallback analytics.
-              if (suppressAutomation) {
-                return
-              }
-
-              // An image/file message has contentType "text" — only its
-              // `attachments` array distinguishes it; a shared location has
-              // contentType "location".
-              const isFromContact =
-                isNotPostbackOrQuickReply && message.senderType === "contact"
-              const hasAttachment = message.attachments.length > 0
-              const isLocation = message.contentType === "location"
-
-              if (
-                isFromContact &&
-                (await dispatchStoryAutomation({
-                  message,
-                  conversation,
-                  channelType,
-                }))
-              ) {
-                return
-              }
-
-              const routing = await resolveIncomingTextRouting({
-                conversation,
-                hasActionableInput: Boolean(
-                  isFromContact &&
-                    (message.text || hasAttachment || isLocation),
-                ),
-                hasText: Boolean(isFromContact && message.text),
-                isConversationActive: (conversation) =>
-                  conversationService.ensureActive(conversation),
-              })
-
-              if (routing.type === "challenge") {
-                await integrationQueue.add(
-                  IntegrationJobAction.runChallenge,
-                  {
-                    type: IntegrationJobAction.runChallenge,
-                    data: {
-                      conversationId: routing.conversation.id,
-                      contactInboxId: message.contactInboxId,
-                      messageId: message.id,
-                      messageCreatedAt: message.createdAt,
-                      challenge: routing.challenge,
-                    },
-                  },
-                  {
-                    jobId: `questionnaire-challenge-${routing.conversation.id}-${message.id}`,
-                  },
-                )
-              } else if (routing.type === "automatedResponse") {
-                await automatedResponseService.enqueue({
-                  conversationId: routing.conversation.id,
-                  contactInboxId: message.contactInboxId,
-                  messageId: message.id,
-                  messageText: message.text ?? "",
-                  workspaceId: routing.conversation.workspaceId,
-                })
-              } else if (routing.type === "handoffReentry") {
-                await automatedResponseService.enqueueHandoffReentry({
-                  conversationId: routing.conversation.id,
-                  contactInboxId: message.contactInboxId,
-                  messageId: message.id,
-                  workspaceId: routing.conversation.workspaceId,
-                })
-              } else if (isNotPostbackOrQuickReply) {
-                // Track no response for messages without content or not from contact
-                // (postback/quickReply are tracked in their own handlers)
-                await emit("analytics:dashboard", {
-                  eventType: "message:bot_received",
-                  workspaceId: message.workspaceId,
-                  conversationId: message.conversationId,
-                  channel: inboxChannel,
-                  inboxId,
-                  messageId: message.id,
-                  occurredAt: new Date(),
-                  hasResponse: false,
-                  responseType: "none",
-                  routeType: "fallback",
-                  result: "fallback",
-                  aiProvider: "none",
-                  metadata: {
-                    latency: 0,
-                    fallbackReason: message.text
-                      ? "not_from_contact"
-                      : "no_content",
-                  },
-                })
-              }
+            case IntegrationJobAction.incomingMessage:
+            case IntegrationJobAction.incomingMessageEcho: {
+              await processIncomingMessage(job.data.data)
+              return
+            }
+            case IntegrationJobAction.liveVideoStatusChange: {
+              await recordLiveVideoStatusChange(job.data.data)
               return
             }
             case IntegrationJobAction.incomingComment: {
@@ -327,7 +294,11 @@ async function startIntegrationWorker() {
               return
             }
             case IntegrationJobAction.deleteIncomingMessage: {
-              await deleteIncomingMessage(job.data.data)
+              await deleteIncomingMessage(job.data.data, job)
+              return
+            }
+            case IntegrationJobAction.updateIncomingMessage: {
+              await updateIncomingMessage(job.data.data, job)
               return
             }
             case IntegrationJobAction.messageReaction: {
@@ -410,6 +381,14 @@ async function startIntegrationWorker() {
               await runQuickReplyFollowUpResume(job.data.data)
               return
             }
+            case IntegrationJobAction.resumeStepInputTimeout: {
+              await runStepInputTimeoutResume(job.data.data)
+              return
+            }
+            case IntegrationJobAction.resolveStepInput: {
+              await runStepInputResolution(job.data.data)
+              return
+            }
             case IntegrationJobAction.messageStatus: {
               await handleMessageStatus(job.data.data, job)
               return
@@ -430,6 +409,10 @@ async function startIntegrationWorker() {
               await coexistWhatsappFlush(job.data.data)
               return
             }
+            case IntegrationJobAction.pollSmtpInbox: {
+              await pollSmtpInbox(job.data.data)
+              return
+            }
             case IntegrationJobAction.coexistMessengerSync: {
               await coexistMessengerSync(job.data.data)
               return
@@ -444,6 +427,10 @@ async function startIntegrationWorker() {
             }
             case IntegrationJobAction.adsAutomaticEvent: {
               await handleAdsAutomaticEvent(job.data.data)
+              return
+            }
+            case IntegrationJobAction.providerAccountEvent: {
+              await handleProviderAccountEvent(job.data.data)
               return
             }
             case IntegrationJobAction.whatsappCallEvent: {
@@ -490,7 +477,12 @@ async function startIntegrationWorker() {
               return
             }
             case IntegrationJobAction.processCommentAutomation: {
-              await processCommentAutomation(job.data.data)
+              const commentAutomationData = job.data.data
+              await (commentAutomationData.replay
+                ? runAsMissedCommentReplay(() =>
+                    processCommentAutomation(commentAutomationData),
+                  )
+                : processCommentAutomation(commentAutomationData))
               return
             }
             case IntegrationJobAction.tiktokHighIntentComment: {
@@ -548,6 +540,26 @@ async function startIntegrationWorker() {
               await replyToInboundCart(job.data.data)
               return
             }
+            case IntegrationJobAction.confirmOrderPayment: {
+              await confirmOrderPayment(job.data.data)
+              return
+            }
+            case IntegrationJobAction.shopifySync: {
+              await runShopifySync(job.data.data)
+              return
+            }
+            case IntegrationJobAction.shopifyWebhook: {
+              await runShopifyWebhook(job.data.data)
+              return
+            }
+            case IntegrationJobAction.woocommerceSync: {
+              await runWooCommerceSync(job.data.data)
+              return
+            }
+            case IntegrationJobAction.woocommerceWebhook: {
+              await runWooCommerceWebhook(job.data.data)
+              return
+            }
             case IntegrationJobAction.processLeadgen: {
               await processLeadgen(job.data.data, job)
               return
@@ -569,6 +581,10 @@ async function startIntegrationWorker() {
             }
             case IntegrationJobAction.aiHandoverBulkToggle: {
               await runAiHandoverBulkToggle(job.data.data)
+              return
+            }
+            case IntegrationJobAction.contactSync: {
+              await runContactSync(job.data.data)
               return
             }
             case IntegrationJobAction.aiHandoverTakeBack: {
@@ -595,41 +611,29 @@ async function startIntegrationWorker() {
     )
   }
 
+  startQueueDepthLogging()
+
   // A job that lost a distributed-lock race (e.g. the per-owner MAC lock when
   // many new contacts arrive at once) is deferred, not failed: failing it
   // burns one of only two attempts and drops the inbound message.
-  const worker = new Worker(
+  createQueueWorker(
     queueNames.enum.integration,
     (job: Job<IntegrationJobData>, token) =>
       deferOnLockContention(job, token, () => processIntegrationJob(job)),
     {
-      connection: getQueueConnection(queueNames.enum.integration),
-      ...defaultWorkerOptions,
       // Override the shared default (5). I/O-bound webhook handling tolerates
       // more parallelism; env-tunable via INTEGRATION_WORKER_CONCURRENCY.
       concurrency: env.INTEGRATION_WORKER_CONCURRENCY,
-      // Coexist historical sync chunks are bounded to ~4 min via self-continuation
-      // (see coexist-messenger-sync / coexist-whatsapp-flush). Lock sized as:
-      // 4 min active + 4 min Graph 5xx retry tail + 2 min bulk INSERT tail.
-      // Heavy flow steps also wait for every configured provider retry and
-      // backoff; their full budget must fit within the parent job lock.
       lockDuration: integrationWorkerLockDuration,
       stalledInterval: integrationWorkerLockDuration,
       maxStalledCount: 1,
     },
   )
 
-  worker.on("failed", (job, err) => {
-    if (job) {
-      logger.error({ err }, `Job ${job.id} has failed`)
-    }
-  })
-  instrumentWorker(worker, { queue: queueNames.enum.integration })
-
   // Dedicated, rate-limited consumer for call transcription: a second Worker
   // instance in this process, on its own queue, so its limiter bounds
   // transcription throughput independent of the shared integration queue.
-  const callTranscriptionWorker = new Worker(
+  createQueueWorker(
     queueNames.enum.callTranscription,
     async (job: Job<CallTranscriptionJobData>) => {
       const workspaceId = job.data.data.workspaceId
@@ -643,20 +647,10 @@ async function startIntegrationWorker() {
       })
     },
     {
-      connection: getQueueConnection(queueNames.enum.callTranscription),
       concurrency: 1,
       limiter: { max: env.CALL_TRANSCRIBE_PER_MIN, duration: 60_000 },
     },
   )
-
-  callTranscriptionWorker.on("failed", (job, err) => {
-    if (job) {
-      logger.error({ err }, `Call transcription job ${job.id} has failed`)
-    }
-  })
-  instrumentWorker(callTranscriptionWorker, {
-    queue: queueNames.enum.callTranscription,
-  })
 
   // Dedicated consumer for WhatsApp Business Calling VoIP-mode signaling: a
   // third Worker instance on its own queue, since the shared integration
@@ -664,7 +658,7 @@ async function startIntegrationWorker() {
   // resolveWorkspaceId's generic resolvers don't know about phoneNumberId, so
   // the workspace is resolved directly here for the frozen-workspace guard; the
   // handler resolves the integration again for its own purposes.
-  const whatsappVoipSignalingWorker = new Worker<WhatsappVoipSignalingJobData>(
+  createQueueWorker<WhatsappVoipSignalingJobData>(
     queueNames.enum.whatsappVoipSignaling,
     async (job: Job<WhatsappVoipSignalingJobData>) => {
       const workspaceId = await resolveVoipSignalingWorkspaceId(job.data)
@@ -679,81 +673,10 @@ async function startIntegrationWorker() {
       })
     },
     {
-      connection: getQueueConnection(queueNames.enum.whatsappVoipSignaling),
       concurrency: 10,
+      onFailed: handleVoipSignalingFailed,
     },
   )
-
-  whatsappVoipSignalingWorker.on("failed", (job, err) => {
-    if (!job) {
-      return
-    }
-    // Retries here are routine, not incidents: handleConnect throws
-    // VoipCallRowNotReadyError until the separate whatsappCallEvent job creates
-    // the call row, and this queue's retry window exists precisely to outlast
-    // that lag. Logging every attempt at ERROR made a healthy race read as a
-    // dropped call. Only an exhausted job actually lost the offer.
-    const attempts = job.opts.attempts ?? 1
-    if (!hasExhaustedAttempts(job)) {
-      logger.warn(
-        { err, attempt: job.attemptsMade, attempts },
-        `Whatsapp VoIP signaling job ${job.id} attempt failed; retrying`,
-      )
-      return
-    }
-    logger.error(
-      { err, attempts },
-      `Whatsapp VoIP signaling job ${job.id} has failed`,
-    )
-    // Safety net: a handleConnect job that exhausted every attempt
-    // (removeOnFail deletes it from Redis right after this) must not silently
-    // strand the call at ringing — finalize it here instead of leaving it
-    // entirely to the 5-minute stale-call sweep. This listener isn't awaited by
-    // BullMQ, so the call is fire-and-forget; .catch is belt-and-suspenders
-    // since finalizeExhaustedHandleConnect already logs its own failures and
-    // never rejects.
-    if (job.data.type === WhatsappVoipSignalingJobAction.handleConnect) {
-      finalizeExhaustedHandleConnect(job.data.data).catch((finalizeErr) => {
-        logger.error(
-          { err: finalizeErr, wacid: job.data.data.wacid },
-          "Whatsapp VoIP signaling: finalizeExhaustedHandleConnect rejected unexpectedly",
-        )
-      })
-    }
-  })
-  instrumentWorker(whatsappVoipSignalingWorker, {
-    queue: queueNames.enum.whatsappVoipSignaling,
-  })
-
-  let isShuttingDown = false
-  async function shutdown() {
-    if (isShuttingDown) {
-      return
-    }
-    isShuttingDown = true
-    try {
-      await worker.close()
-      await Promise.all([
-        callTranscriptionWorker.close(),
-        whatsappVoipSignalingWorker.close(),
-        closeChatQueueEvents(),
-        closeIntegrationQueueEvents(),
-        closeHeavyQueueEvents(),
-      ])
-      // After every close(): drains events published by jobs that finished
-      // during the drain, whose coalesce timers would never fire past exit.
-      await flushAllPendingWorkspaceRealtimeEvents()
-      process.exit(0)
-    } catch (err) {
-      logger.error(err, "[IntegrationWorker] Error during shutdown")
-      process.exit(1)
-    }
-  }
-  process.once("SIGINT", shutdown)
-  process.once("SIGTERM", shutdown)
 }
 
-startIntegrationWorker().catch((err) => {
-  logger.error({ err }, "Failed to start integration worker")
-  process.exit(1)
-})
+runWorker("integration", startIntegrationWorker)

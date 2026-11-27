@@ -1,0 +1,176 @@
+{
+  "type": "diff",
+  "version": "10",
+  "dialect": "postgres",
+  "id": "00a8debc-ff36-468b-84b4-271242df83b0",
+  "prevIds": [
+    "f1205fae-cdf8-44f2-805f-3eaf47919630"
+  ],
+  "footprints": [
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "OAuthConsent",
+        "workspaceId"
+      ],
+      "writes": [
+        "s|col|public.OAuthConsent.workspaceId",
+        "n|col|public.OAuthConsent.workspaceId",
+        "e|col|public.OAuthConsent.workspaceId"
+      ],
+      "reads": [
+        "n|tbl|public.OAuthConsent",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "File",
+        "File_export_createdAt_idx"
+      ],
+      "writes": [
+        "s|idx|public.File_export_createdAt_idx",
+        "n|idx|public.File_export_createdAt_idx",
+        "e|idx|public.File_export_createdAt_idx",
+        "n|rel|public.File_export_createdAt_idx"
+      ],
+      "reads": [
+        "n|tbl|public.File",
+        "n|sch|public",
+        "n|col|public.File.createdAt"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "OAuthConsent",
+        "OAuthConsent_workspaceId_idx"
+      ],
+      "writes": [
+        "s|idx|public.OAuthConsent_workspaceId_idx",
+        "n|idx|public.OAuthConsent_workspaceId_idx",
+        "e|idx|public.OAuthConsent_workspaceId_idx",
+        "n|rel|public.OAuthConsent_workspaceId_idx"
+      ],
+      "reads": [
+        "n|tbl|public.OAuthConsent",
+        "n|sch|public",
+        "n|col|public.OAuthConsent.workspaceId"
+      ]
+    },
+    {
+      "statementType": "create_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "OAuthConsent"
+      ],
+      "writes": [
+        "s|fk|public.OAuthConsent.OAuthConsent_workspaceId_Workspace_id_fkey",
+        "n|fk|public.OAuthConsent.OAuthConsent_workspaceId_Workspace_id_fkey",
+        "e|fk|public.OAuthConsent.OAuthConsent_workspaceId_Workspace_id_fkey",
+        "n|con|public.OAuthConsent.OAuthConsent_workspaceId_Workspace_id_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.OAuthConsent",
+        "n|sch|public",
+        "n|tbl|public.Workspace",
+        "n|sch|public",
+        "n|col|public.OAuthConsent.workspaceId",
+        "n|col|public.Workspace.id",
+        "e|uniqueness|public.Workspace.id"
+      ]
+    }
+  ],
+  "deltas": [
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "OAuthConsent",
+        "name": "workspaceId",
+        "type": "bigint",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "File",
+        "name": "File_export_createdAt_idx",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "createdAt",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": false,
+        "where": "\"contextType\" = 'export'",
+        "with": "",
+        "method": "btree",
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "OAuthConsent",
+        "name": "OAuthConsent_workspaceId_idx",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "workspaceId",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": false,
+        "where": "\"workspaceId\" IS NOT NULL",
+        "with": "",
+        "method": "btree",
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "OAuthConsent",
+        "name": "OAuthConsent_workspaceId_Workspace_id_fkey",
+        "nameExplicit": false,
+        "columns": [
+          "workspaceId"
+        ],
+        "schemaTo": "public",
+        "tableTo": "Workspace",
+        "columnsTo": [
+          "id"
+        ],
+        "onUpdate": "CASCADE",
+        "onDelete": "CASCADE",
+        "entityType": "fks"
+      }
+    }
+  ]
+}

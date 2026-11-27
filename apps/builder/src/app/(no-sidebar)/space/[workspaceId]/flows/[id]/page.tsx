@@ -1,10 +1,11 @@
-import { flowService } from "@chatbotx.io/business"
+import { flowService, listLockedIds } from "@chatbotx.io/business"
 import { notFound } from "next/navigation"
 import { FlowDetail } from "@/features/flows/flow-detail"
 import { isSameContent } from "@/features/flows/flow-version-content"
 import { listIntegrationOpenaiCompatible } from "@/features/integration-openai-compatible/queries"
 import { withWorkspaceIdAndIdSchema } from "@/features/workspaces/schema/resource"
 import { requireWorkspacePermission } from "@/lib/auth/require-workspace-permission"
+import { getCurrentUserAndTargetWorkspace } from "@/lib/auth/utils"
 import { isNotFoundException } from "@/lib/errors/validation-exception"
 
 type FlowPageProps = {
@@ -37,9 +38,19 @@ export default async function FlowPage({ params }: FlowPageProps) {
     return notFound()
   }
 
-  const openaiCompatibleIntegrations = await listIntegrationOpenaiCompatible({
-    workspaceId: data.workspaceId,
-  })
+  // A copy installed from a View-only template opens read-only. The write
+  // paths refuse independently, so this only spares the editor a failed save.
+  const [openaiCompatibleIntegrations, access, lockedFlowIds] =
+    await Promise.all([
+      listIntegrationOpenaiCompatible({ workspaceId: data.workspaceId }),
+      // Already loaded for this request by the permission check above.
+      getCurrentUserAndTargetWorkspace(data.workspaceId),
+      listLockedIds({
+        workspaceId: data.workspaceId,
+        resourceKind: "flow",
+        resourceIds: [flow.id],
+      }),
+    ])
   const publishedVersion = flow.flowVersions?.find(
     (v) => v.isLatest && !v.isDraft,
   )
@@ -60,7 +71,9 @@ export default async function FlowPage({ params }: FlowPageProps) {
         flow={flow}
         flowVersion={draftFlowVersion}
         hasPublishedVersion={hasPublishedVersion}
+        isTemplateLocked={lockedFlowIds.length > 0}
         openaiCompatibleIntegrations={openaiCompatibleIntegrations}
+        workspaceTargetCountry={access?.targetWorkspace.targetCountry ?? null}
       />
     </div>
   )

@@ -304,7 +304,12 @@ function SendMessengerTemplateMessageStepEditor(
                 <ButtonStepEditor
                   editorConfig={{
                     lockLabel: true,
-                    hiddenButtonTypes: ["openWebsite", "openMiniApp"],
+                    hiddenButtonTypes: [
+                      "openWebsite",
+                      "openMiniApp",
+                      "callPhoneNumber",
+                      "copyText",
+                    ],
                     hideDelete: true,
                   }}
                   // biome-ignore lint/suspicious/noArrayIndexKey: stable seeded list

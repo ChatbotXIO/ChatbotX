@@ -3,8 +3,9 @@ import {
   contentTypes,
   lastUserInputTypes,
 } from "@chatbotx.io/database/partials"
-import { isStoryMention } from "@chatbotx.io/sdk"
+import { isReelShare, isStoryMention } from "@chatbotx.io/sdk"
 import { getPublicFileUrl } from "../utils"
+import { getContactInputAttachments } from "./input-attachments"
 
 type LastUserInputAttachment = {
   fileType: string
@@ -27,7 +28,7 @@ export type LastUserInputTracking = {
 export function resolveLastUserInputTracking(
   source: LastUserInputSource,
 ): LastUserInputTracking {
-  const attachment = source.attachments?.[0]
+  const attachment = getContactInputAttachments(source)[0]
 
   return {
     lastUserInput: resolveLastUserInput(source, attachment),
@@ -44,6 +45,10 @@ function resolveLastUserInputType(
   // in the chat.
   if (isStoryMention(source.contentAttributes)) {
     return lastUserInputTypes.enum.storyMention
+  }
+  // A shared reel is stored as its video; only its attributes mark it a reel.
+  if (isReelShare(source.contentAttributes)) {
+    return lastUserInputTypes.enum.reel
   }
   const parsedType = lastUserInputTypes.safeParse(
     attachment?.fileType ?? source.contentType,

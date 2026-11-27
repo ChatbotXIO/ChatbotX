@@ -1,5 +1,7 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
 
+const MARKDOWN_HEADING_PATTERN = /^# /u
+
 // Same convention as openapi-loader.test.ts / meta-tools.test.ts:
 // `getCachedTools()`/`introspectToken()`'s caches are module-level state, so
 // each test needs a fresh module instance (`vi.resetModules()`) and its own
@@ -35,7 +37,17 @@ const jsonExecuteResponse = (body: unknown): FetchResponse => ({
 })
 
 type RequestHandler = (request: unknown, extra: unknown) => Promise<unknown>
-type ListToolsResult = { tools: Array<{ name: string }> }
+type ToolAnnotations = {
+  destructiveHint: boolean
+  idempotentHint: boolean
+  openWorldHint: boolean
+  readOnlyHint: boolean
+  title: string
+}
+
+type ListToolsResult = {
+  tools: Array<{ annotations: ToolAnnotations; name: string }>
+}
 type CallToolResult = {
   isError?: boolean
   content: Array<{ type: string; text: string }>
@@ -109,7 +121,9 @@ describe("createMcpServer", () => {
     globalThis.fetch = fetchMock as unknown as typeof fetch
 
     const { createMcpServer } = await import("../src/server/create-mcp-server")
-    const server = createMcpServer({ getApiKey: () => "api-key" })
+    const server = createMcpServer({
+      getCredentials: () => ({ token: "api-key" }),
+    })
 
     const listHandler = getRequestHandler(server, "tools/list")
     const result = (await listHandler(
@@ -123,8 +137,27 @@ describe("createMcpServer", () => {
     expect(result.tools.map((tool: { name: string }) => tool.name)).toEqual([
       "search_tools",
       "call_tool",
+      "get_guide",
       "tags_list",
     ])
+
+    for (const tool of result.tools) {
+      expect(typeof tool.annotations.title).toBe("string")
+      expect(typeof tool.annotations.readOnlyHint).toBe("boolean")
+      expect(typeof tool.annotations.destructiveHint).toBe("boolean")
+      expect(typeof tool.annotations.idempotentHint).toBe("boolean")
+      expect(typeof tool.annotations.openWorldHint).toBe("boolean")
+    }
+
+    expect(
+      result.tools.find((tool) => tool.name === "tags_list")?.annotations,
+    ).toEqual({
+      title: "List tags",
+      readOnlyHint: true,
+      destructiveHint: false,
+      idempotentHint: true,
+      openWorldHint: false,
+    })
   })
 
   test("a hidden tool (excluded from tools/list) is reachable via call_tool", async () => {
@@ -148,7 +181,9 @@ describe("createMcpServer", () => {
     globalThis.fetch = fetchMock as unknown as typeof fetch
 
     const { createMcpServer } = await import("../src/server/create-mcp-server")
-    const server = createMcpServer({ getApiKey: () => "api-key" })
+    const server = createMcpServer({
+      getCredentials: () => ({ token: "api-key" }),
+    })
 
     // Warm the spec cache and confirm the tool is genuinely absent from
     // tools/list before reaching it through call_tool.
@@ -173,7 +208,7 @@ describe("createMcpServer", () => {
     expect(result.isError).toBeUndefined()
   })
 
-  test("missing API key blocks a regular tool and call_tool, but not search_tools", async () => {
+  test("missing API key blocks regular tools but leaves search and guides available", async () => {
     const fetchMock = vi.fn().mockResolvedValueOnce(
       specResponse({
         "/v1/tags": {
@@ -191,7 +226,7 @@ describe("createMcpServer", () => {
     await loadOpenApiSpec()
 
     const { createMcpServer } = await import("../src/server/create-mcp-server")
-    const server = createMcpServer({ getApiKey: () => "" })
+    const server = createMcpServer({ getCredentials: () => undefined })
     const callHandler = getRequestHandler(server, "tools/call")
 
     const regularToolResult = (await callHandler(
@@ -200,7 +235,7 @@ describe("createMcpServer", () => {
     )) as CallToolResult
     expect(regularToolResult.isError).toBe(true)
     expect(regularToolResult.content[0]?.text).toContain(
-      "No workspace token configured",
+      "No credential. Authorize this MCP server with OAuth",
     )
 
     const callToolResult = (await callHandler(
@@ -210,9 +245,8 @@ describe("createMcpServer", () => {
       },
       {},
     )) as CallToolResult
-    expect(callToolResult.isError).toBe(true)
     expect(callToolResult.content[0]?.text).toContain(
-      "No workspace token configured",
+      "No credential. Authorize this MCP server with OAuth",
     )
 
     const searchToolsResult = (await callHandler(
@@ -223,6 +257,16 @@ describe("createMcpServer", () => {
       {},
     )) as CallToolResult
     expect(searchToolsResult.isError).toBeUndefined()
+
+    const guideResult = (await callHandler(
+      {
+        method: "tools/call",
+        params: { name: "get_guide", arguments: { name: "overview" } },
+      },
+      {},
+    )) as CallToolResult
+    expect(guideResult.isError).toBeUndefined()
+    expect(guideResult.content[0]?.text).toContain("# MCP overview")
   })
 
   test("'toString' is not treated as a meta-tool name", async () => {
@@ -233,7 +277,9 @@ describe("createMcpServer", () => {
     await loadOpenApiSpec()
 
     const { createMcpServer } = await import("../src/server/create-mcp-server")
-    const server = createMcpServer({ getApiKey: () => "api-key" })
+    const server = createMcpServer({
+      getCredentials: () => ({ token: "api-key" }),
+    })
     const callHandler = getRequestHandler(server, "tools/call")
 
     const result = (await callHandler(
@@ -243,5 +289,94 @@ describe("createMcpServer", () => {
 
     expect(result.isError).toBe(true)
     expect(result.content[0]?.text).toBe("Unknown tool: toString")
+  })
+
+  test("registers four markdown guide resources", async () => {
+    const { createMcpServer } = await import("../src/server/create-mcp-server")
+    const server = createMcpServer()
+    const listHandler = getRequestHandler(server, "resources/list")
+    const listResult = (await listHandler(
+      { method: "resources/list" },
+      {},
+    )) as {
+      resources: Array<{ mimeType: string; uri: string }>
+    }
+
+    expect(listResult.resources).toHaveLength(4)
+    expect(listResult.resources).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          mimeType: "text/markdown",
+          uri: "guides://overview",
+        }),
+      ]),
+    )
+
+    const readHandler = getRequestHandler(server, "resources/read")
+    const readResult = (await readHandler(
+      {
+        method: "resources/read",
+        params: { uri: "guides://overview" },
+      },
+      {},
+    )) as {
+      contents: Array<{ mimeType: string; text: string }>
+    }
+    expect(readResult.contents[0]).toEqual(
+      expect.objectContaining({
+        mimeType: "text/markdown",
+        text: expect.stringMatching(MARKDOWN_HEADING_PATTERN),
+      }),
+    )
+  })
+
+  test("returns confirmation fallback without eliciting from a form-capable client", async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(
+        specResponse({
+          "/v1/tags": {
+            post: { operationId: "tags.create", summary: "Create tag" },
+          },
+        }),
+      )
+      .mockResolvedValueOnce(jsonExecuteResponse({ id: "tag-1" }))
+    globalThis.fetch = fetchMock as unknown as typeof fetch
+
+    const { loadOpenApiSpec } = await import("../src/openapi-loader")
+    await loadOpenApiSpec()
+
+    const { createMcpServer } = await import("../src/server/create-mcp-server")
+    const server = createMcpServer({
+      getCredentials: () => ({ token: "api-key" }),
+    })
+    vi.spyOn(server.server, "getClientCapabilities").mockReturnValue({
+      elicitation: { form: {} },
+    } as never)
+    const elicitInput = vi.spyOn(server.server, "elicitInput")
+    const callHandler = getRequestHandler(server, "tools/call")
+
+    const confirmation = (await callHandler(
+      {
+        method: "tools/call",
+        params: { arguments: {}, name: "tags_create" },
+      },
+      {},
+    )) as CallToolResult
+    const created = (await callHandler(
+      {
+        method: "tools/call",
+        params: { arguments: { _confirm: true }, name: "tags_create" },
+      },
+      {},
+    )) as CallToolResult
+
+    expect(JSON.parse(confirmation.content[0]?.text ?? "{}")).toMatchObject({
+      code: "CONFIRMATION_REQUIRED",
+      policy: "confirm_diff",
+      tool: "tags_create",
+    })
+    expect(created.isError).toBeUndefined()
+    expect(elicitInput).not.toHaveBeenCalled()
   })
 })

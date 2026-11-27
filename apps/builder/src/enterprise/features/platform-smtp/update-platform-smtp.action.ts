@@ -19,8 +19,10 @@ export const updatePlatformSmtpAction = superAdminActionClient
     await assertEnterpriseFeatures()
     const t = await getTranslations()
 
+    // `strict`: an unreadable stored password must stop the save, not read as none.
     const existing = await platformCredentialService.findDecryptedPlatform({
       type: "smtp",
+      strict: true,
     })
 
     const password = parsedInput.password || existing?.config.password

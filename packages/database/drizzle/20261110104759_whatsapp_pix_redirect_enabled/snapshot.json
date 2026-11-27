@@ -1,0 +1,48 @@
+{
+  "type": "diff",
+  "version": "10",
+  "dialect": "postgres",
+  "id": "2b1adc9f-f27a-4a84-a475-5daad557a9c8",
+  "prevIds": [
+    "3405d3ac-0034-4dc3-b17c-b8318a3899d2",
+    "8a58d11f-ab83-4dc7-9495-5bdb15e41e28"
+  ],
+  "footprints": [
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "IntegrationWhatsapp",
+        "pixRedirectEnabled"
+      ],
+      "writes": [
+        "s|col|public.IntegrationWhatsapp.pixRedirectEnabled",
+        "n|col|public.IntegrationWhatsapp.pixRedirectEnabled",
+        "e|col|public.IntegrationWhatsapp.pixRedirectEnabled"
+      ],
+      "reads": [
+        "n|tbl|public.IntegrationWhatsapp",
+        "n|sch|public"
+      ]
+    }
+  ],
+  "deltas": [
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "IntegrationWhatsapp",
+        "name": "pixRedirectEnabled",
+        "type": "boolean",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "false",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    }
+  ]
+}

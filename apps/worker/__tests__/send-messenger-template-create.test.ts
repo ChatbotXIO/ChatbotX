@@ -194,6 +194,7 @@ vi.mock("../src/chat/handlers/send-message", () => ({
     result.sentCount > 0,
   markConversationReadAfterDelivery: vi.fn().mockResolvedValue(undefined),
   sendFlowStepToChannel: mockSendFlowStep,
+  settleFailedTemplateMessage: vi.fn().mockResolvedValue("removed"),
 }))
 
 vi.mock("@chatbotx.io/worker-config", () => ({

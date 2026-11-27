@@ -13,6 +13,7 @@ import {
 import { AwsClient } from "aws4fetch"
 import { keys } from "../keys"
 import { buildCopySource } from "./copy-source"
+import { normalizeMimeType } from "./mime-type"
 
 const env = keys()
 
@@ -79,6 +80,11 @@ export class Uploader {
       Key: path,
       Body: body,
       ...options,
+      // Every server-side write funnels through here, so a caller passing a
+      // non-standard type (`image/jpg`) cannot store an object Meta rejects.
+      ...(options?.ContentType !== undefined && {
+        ContentType: normalizeMimeType(options.ContentType),
+      }),
     })
 
     return await this.#client.send(

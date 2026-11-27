@@ -1,13 +1,20 @@
 import { contactExportService } from "@chatbotx.io/business"
+import { CONTACT_EXPORT_RETENTION_DAYS } from "@chatbotx.io/database/partials"
 import {
   possibleErrorsOnCreatingResource,
   possibleErrorsOnFindingResource,
+  possibleErrorsOnListingWithCursor,
 } from "@/lib/orpc/orpc-error-helper"
 import { workspaceTokenAuthAPIForScope } from "@/orpc"
+import { listContactExportFiles } from "../../lib/list-contact-export-files"
 import {
   exportContactsRequest,
   exportContactsResponse,
 } from "../../schema/action"
+import {
+  listContactExportFilesRequest,
+  listContactExportFilesResponse,
+} from "../../schema/export-file"
 import {
   getExportFilePublicRequest,
   getExportFilePublicResponse,
@@ -59,6 +66,26 @@ export const contactsExportPublicRouter = {
         await contactExportService.getFile({
           workspaceId: context.workspace.id,
           fileId: input.fileId,
+        }),
+    ),
+  listExportFiles: workspaceTokenAuthAPI
+    .route({
+      method: "GET",
+      path: "/v1/contacts/export-files",
+      summary: "List contact exports",
+      description: `Lists the workspace's contact exports, newest first, with status, row count, who started each one and when its file is deleted (exports are kept for ${CONTACT_EXPORT_RETENTION_DAYS} days). Start one with \`contacts.export\`; get a download link for an entry with \`contacts.getExportFile\`.`,
+      tags: ["Contacts"],
+    })
+    .input(listContactExportFilesRequest)
+    .output(listContactExportFilesResponse)
+    .errors(possibleErrorsOnListingWithCursor)
+    .handler(
+      async ({ context, input }) =>
+        // A workspace token is never member-scoped (same as `getExportFile`).
+        await listContactExportFiles({
+          workspaceId: context.workspace.id,
+          perPage: input.perPage,
+          cursor: input.cursor,
         }),
     ),
 }

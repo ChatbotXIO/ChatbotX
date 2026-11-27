@@ -23,6 +23,21 @@ const tokenPublicResponse = z.object({
     .array(workspaceApiTokenScopes)
     .nullable()
     .describe("null means unrestricted — every scope."),
+  principal: z
+    .discriminatedUnion("credentialType", [
+      z.object({
+        credentialType: z.literal("oauth"),
+        audience: z.string(),
+        clientId: z.string(),
+        issuer: z.string(),
+        subject: z.string(),
+      }),
+      z.object({ credentialType: z.literal("workspace_token") }),
+      z.object({ credentialType: z.literal("mobile") }),
+    ])
+    .describe(
+      "Verified identity of the caller. MCP connector transports use it to bind a session to one identity.",
+    ),
 })
 
 export const tokenPublicRouter = {
@@ -34,7 +49,14 @@ export const tokenPublicRouter = {
       description:
         "Reports the calling token's workspace id, permission, and scopes, including whether `scopes: null` grants unrestricted access. Call `capabilities.get` to discover useful resources before using the token with another operation.",
       tags: ["Capabilities"],
-      spec: mcpSpec({ visibility: "default", alwaysVisible: true }),
+      spec: mcpSpec({
+        alwaysVisible: true,
+        destructiveHint: false,
+        idempotentHint: true,
+        openWorldHint: false,
+        readOnlyHint: true,
+        visibility: "default",
+      }),
     })
     .input(z.object({}))
     .output(tokenPublicResponse)
@@ -45,10 +67,18 @@ export const tokenPublicRouter = {
       // `workspaceTokenAuthMidddleware` first (see the identical note on
       // `requireTokenScope` in `@/orpc`).
       const apiToken = context.apiToken as RequestApiToken
+      const oauth = context.oauthPrincipal
       return {
         workspaceId: context.workspace.id,
         permission: apiToken.permission as WorkspaceApiTokenPermission,
         scopes: apiToken.scopes,
+        principal: oauth
+          ? { credentialType: "oauth" as const, ...oauth }
+          : {
+              credentialType: context.mobileDeviceId
+                ? ("mobile" as const)
+                : ("workspace_token" as const),
+            },
       }
     }),
 }

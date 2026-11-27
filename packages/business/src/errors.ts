@@ -183,6 +183,19 @@ export class ChatbotXException extends Error {
   }
 }
 
+/** A field operation the calculator rejected; `reason` is machine-readable. */
+export const invalidFieldOperationException = (
+  reason: string,
+): ChatbotXException => {
+  const exception = new ChatbotXException(
+    `This operation cannot be applied to the field (${reason}).`,
+    "invalidFieldOperation",
+    400,
+  )
+  exception.data = { reason }
+  return exception
+}
+
 /**
  * A bounded workspace purge reached its per-run limit while rows still
  * remain. The scheduled worker treats this as an expected, resumable state:
@@ -221,6 +234,17 @@ export const countTimeoutException = () =>
     503,
   )
 
+/**
+ * A report ran past its statement timeout. The caller can narrow the date
+ * range or the channel and try again.
+ */
+export const reportTimeoutException = () =>
+  new ChatbotXException(
+    "The report took too long. Narrow the date range or the channel.",
+    "reportTimeout",
+    503,
+  )
+
 /** The request field a broadcast validation failure points at. */
 export type BroadcastValidationField =
   | "channel"
@@ -251,6 +275,16 @@ export class BroadcastValidationException extends ChatbotXException {
 
 export const notFoundException = (message: string) =>
   new ChatbotXException(message, "notFound", 404)
+
+export const conflictException = (message: string, code: string) =>
+  new ChatbotXException(message, code, 409)
+
+/** A tenant's sub-account may not reuse the email of that tenant's own owner (the owner already signs in on the platform with it). */
+export const tenantOwnerEmailReservedException = () =>
+  conflictException(
+    "This email belongs to the tenant owner and cannot be used for a sub-account",
+    "tenantOwnerEmailReserved",
+  )
 
 /**
  * A field-scoped validation failure raised from inside a service. The

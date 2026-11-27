@@ -19,6 +19,7 @@ import { connectionStateService } from "../connection/state-service"
 import { ChatbotXException } from "../errors"
 import { inboxService } from "../inbox/service"
 import { assertPublicUrl } from "../net/ssrf-guard"
+import { dispatchStagedInstalls } from "../template/installation-dispatch"
 import type { WorkspaceQuotaConsumption } from "../workspace/quota-consumption"
 import {
   generateApiChannelToken,
@@ -147,6 +148,10 @@ class IntegrationApiService extends BaseService {
           }
         }),
     )
+
+    if (result.workspaceCreated) {
+      await dispatchStagedInstalls(result.workspaceId)
+    }
 
     // Sanctioned exception: `connect()` is reachable from `authActionClient`
     // (create-api.action.ts), which never puts `workspaceId` into the ALS

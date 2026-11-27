@@ -1,3 +1,4 @@
+import { sql } from "drizzle-orm"
 import { index, pgTable, text } from "drizzle-orm/pg-core"
 import { bigintAsString, sharedColumns } from "../partials/shared"
 import { userModel } from "./auth-user"
@@ -15,7 +16,7 @@ export const contactNoteModel = pgTable(
         onUpdate: "cascade",
       }),
     createdById: bigintAsString().references(() => userModel.id, {
-      onDelete: "cascade",
+      onDelete: "set null",
       onUpdate: "cascade",
     }),
   },
@@ -24,5 +25,8 @@ export const contactNoteModel = pgTable(
       "btree",
       table.contactId.asc().nullsLast(),
     ),
+    index("ContactNote_createdById_idx")
+      .on(table.createdById)
+      .where(sql`${table.createdById} IS NOT NULL`),
   ],
 )

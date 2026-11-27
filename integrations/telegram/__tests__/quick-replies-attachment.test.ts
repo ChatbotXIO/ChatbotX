@@ -137,3 +137,37 @@ describe("telegram quick replies attachment", () => {
     )
   })
 })
+
+describe("telegram step input skip quick reply", () => {
+  test("encodes the skip postback unchanged as the inline keyboard callback_data", () => {
+    const [payload] = Array.from(
+      convertFlowStepText({
+        data: {
+          contact: { sourceId: "chat-1" },
+          flowId: "flow-1",
+          step: {
+            id: "step-1",
+            stepType: "sendText",
+            text: "Choose",
+            buttons: [],
+          },
+          quickReplies: [
+            {
+              id: "skip-1",
+              label: "Skip",
+              buttonType: "postback",
+              postback: "STEP_INPUT_SKIP|11612473309626368",
+            },
+          ],
+        },
+      } as never),
+    )
+
+    expect(payload.reply_markup?.inline_keyboard.flat()).toEqual([
+      expect.objectContaining({
+        text: "Skip",
+        callback_data: "STEP_INPUT_SKIP|11612473309626368",
+      }),
+    ])
+  })
+})

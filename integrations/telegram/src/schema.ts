@@ -140,6 +140,8 @@ export type TelegramInlineKeyboardButton = {
   text: string
   callback_data?: string
   url?: string
+  /** Bot API 7.11 `CopyTextButton`: a tap copies `text` (1–256 characters). */
+  copy_text?: { text: string }
 }
 
 export type TelegramInlineKeyboardMarkup = {

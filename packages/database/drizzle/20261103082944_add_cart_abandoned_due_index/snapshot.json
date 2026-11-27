@@ -1,0 +1,142 @@
+{
+  "type": "diff",
+  "version": "10",
+  "dialect": "postgres",
+  "id": "8952801b-1628-4f35-a127-550d73d1778f",
+  "prevIds": [
+    "ae38f4ea-28c2-4b22-ada8-f008fa3a6c03"
+  ],
+  "footprints": [
+    {
+      "statementType": "drop_table",
+      "statementTarget": [
+        "table",
+        "public",
+        "MobileRefreshToken"
+      ],
+      "writes": [
+        "s|tbl|public.MobileRefreshToken",
+        "n|tbl|public.MobileRefreshToken",
+        "e|tbl|public.MobileRefreshToken",
+        "n|rel|public.MobileRefreshToken",
+        "n|type|public.MobileRefreshToken"
+      ],
+      "reads": [
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "Cart",
+        "Cart_abandoned_due_idx"
+      ],
+      "writes": [
+        "s|idx|public.Cart_abandoned_due_idx",
+        "n|idx|public.Cart_abandoned_due_idx",
+        "e|idx|public.Cart_abandoned_due_idx",
+        "n|rel|public.Cart_abandoned_due_idx"
+      ],
+      "reads": [
+        "n|tbl|public.Cart",
+        "n|sch|public",
+        "n|col|public.Cart.lastActivityAt"
+      ]
+    }
+  ],
+  "deltas": [
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "Cart",
+        "name": "Cart_abandoned_due_idx",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "lastActivityAt",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": false,
+        "where": "\"abandonedNotifiedAt\" IS NULL AND jsonb_array_length(\"items\") > 0",
+        "with": "",
+        "method": "btree",
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "drop",
+      "key": "tables\u0000[\"public\",\"MobileRefreshToken\"]"
+    },
+    {
+      "op": "drop",
+      "key": "columns\u0000[\"public\",\"MobileRefreshToken\",\"id\"]"
+    },
+    {
+      "op": "drop",
+      "key": "columns\u0000[\"public\",\"MobileRefreshToken\",\"createdAt\"]"
+    },
+    {
+      "op": "drop",
+      "key": "columns\u0000[\"public\",\"MobileRefreshToken\",\"updatedAt\"]"
+    },
+    {
+      "op": "drop",
+      "key": "columns\u0000[\"public\",\"MobileRefreshToken\",\"userId\"]"
+    },
+    {
+      "op": "drop",
+      "key": "columns\u0000[\"public\",\"MobileRefreshToken\",\"deviceId\"]"
+    },
+    {
+      "op": "drop",
+      "key": "columns\u0000[\"public\",\"MobileRefreshToken\",\"familyId\"]"
+    },
+    {
+      "op": "drop",
+      "key": "columns\u0000[\"public\",\"MobileRefreshToken\",\"tokenHash\"]"
+    },
+    {
+      "op": "drop",
+      "key": "columns\u0000[\"public\",\"MobileRefreshToken\",\"expiresAt\"]"
+    },
+    {
+      "op": "drop",
+      "key": "columns\u0000[\"public\",\"MobileRefreshToken\",\"rotatedAt\"]"
+    },
+    {
+      "op": "drop",
+      "key": "columns\u0000[\"public\",\"MobileRefreshToken\",\"revoked\"]"
+    },
+    {
+      "op": "drop",
+      "key": "indexes\u0000[\"public\",\"MobileRefreshToken_tokenHash_key\"]"
+    },
+    {
+      "op": "drop",
+      "key": "indexes\u0000[\"public\",\"MobileRefreshToken_userId_idx\"]"
+    },
+    {
+      "op": "drop",
+      "key": "indexes\u0000[\"public\",\"MobileRefreshToken_familyId_rotatedAt_idx\"]"
+    },
+    {
+      "op": "drop",
+      "key": "indexes\u0000[\"public\",\"MobileRefreshToken_expiresAt_idx\"]"
+    },
+    {
+      "op": "drop",
+      "key": "fks\u0000[\"public\",\"MobileRefreshToken\",\"MobileRefreshToken_userId_User_id_fkey\"]"
+    },
+    {
+      "op": "drop",
+      "key": "pks\u0000[\"public\",\"MobileRefreshToken\",\"MobileRefreshToken_pkey\"]"
+    }
+  ]
+}

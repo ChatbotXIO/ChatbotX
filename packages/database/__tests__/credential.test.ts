@@ -80,6 +80,7 @@ describe("credential update schemas", () => {
         publishableKey: " publishable-key ",
         verifyToken: " verify-token ",
         secretKey: " secret-key ",
+        connectClientId: " ca_client123 ",
       },
     ],
     [

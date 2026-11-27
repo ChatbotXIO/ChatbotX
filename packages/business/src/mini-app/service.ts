@@ -1,16 +1,11 @@
-import {
-  and,
-  db,
-  eq,
-  inArray,
-  isUniqueViolationError,
-} from "@chatbotx.io/database/client"
+import { and, type DatabaseClient, db, eq } from "@chatbotx.io/database/client"
 import {
   type MiniAppListInput,
   miniAppRepository,
 } from "@chatbotx.io/database/repositories"
 import { miniAppModel } from "@chatbotx.io/database/schema"
 import type { MiniAppModel } from "@chatbotx.io/database/types"
+import { deleteByIdsInWorkspace } from "@chatbotx.io/database/utils"
 import {
   type MiniAppDefinition,
   type MiniAppValidationResult,
@@ -20,23 +15,22 @@ import {
 import { createId } from "@chatbotx.io/utils"
 import { BaseService } from "../base.service"
 import { notFoundException, validationException } from "../errors"
+import { copyNamePrefix, insertWithFreeCopyName } from "../lib/copy-name"
+import {
+  assertResourceEditable,
+  changedKeysOf,
+  withDeleteGuard,
+} from "../template/installed-resource.service"
+import { withTemplateLockedTransaction } from "../template/template-resource-locks"
 import {
   buildNewDefinition,
   buildUpdatedDefinition,
   type MiniAppDefinitionInput,
 } from "./definition"
-import {
-  copyName,
-  copyNamePrefix,
-  MAX_COPY_NAME_ATTEMPTS,
-  NAME_TAKEN,
-  rethrowNameTaken,
-} from "./names"
+import { MINI_APP_COPY_NAME, NAME_TAKEN, rethrowNameTaken } from "./names"
+import { miniAppPublicationService } from "./publication-service"
 
 export { importMiniAppFlowJson } from "./definition"
-
-/** Free names tried in turn when another copy takes one at the same time. */
-const COPY_NAME_INSERT_ATTEMPTS = 2
 
 type MiniAppScope = { workspaceId: string; id: string }
 
@@ -57,6 +51,63 @@ class MiniAppService extends BaseService {
     return miniApp
   }
 
+  /**
+   * Refuses to start a Meta publish for a Mini App that is gone or being
+   * uninstalled. Best effort (the lock is released on return): the
+   * authoritative check is `recordPublication`, after Meta answered.
+   */
+  async assertAcceptsPublication(scope: MiniAppScope): Promise<void> {
+    await this.lockedPublicationCheck(scope, async () => undefined)
+  }
+
+  /**
+   * Records a publication under the Mini App's template lock, re-checking that
+   * it still exists and is not being uninstalled (the uninstall keeps only a
+   * Mini App that already has a publication). Throws otherwise, so the caller
+   * can undo what it created on Meta.
+   */
+  async recordPublication(
+    scope: MiniAppScope,
+    input: Omit<
+      Parameters<typeof miniAppPublicationService.record>[0],
+      "miniAppId"
+    >,
+  ) {
+    return await this.lockedPublicationCheck(scope, (tx) =>
+      miniAppPublicationService.record({ ...input, miniAppId: scope.id }, tx),
+    )
+  }
+
+  private async lockedPublicationCheck<T>(
+    scope: MiniAppScope,
+    run: (tx: DatabaseClient) => Promise<T>,
+  ): Promise<T> {
+    return await withTemplateLockedTransaction(
+      async (tx) => {
+        const miniApp = await tx.query.miniAppModel.findFirst({
+          where: { id: scope.id, workspaceId: scope.workspaceId },
+        })
+        if (!miniApp) {
+          throw notFoundException("Mini App not found")
+        }
+        // No content key changes: this only takes the lock and refuses a
+        // tombstoned (being uninstalled) copy.
+        await assertResourceEditable({
+          workspaceId: scope.workspaceId,
+          resourceKind: "miniApp",
+          resourceIds: [miniApp.id],
+          changedKeys: [],
+          tx,
+        })
+        return await run(tx)
+      },
+      {
+        workspaceId: scope.workspaceId,
+        initialKeys: [{ kind: "miniApp", resourceId: scope.id }],
+      },
+    )
+  }
+
   async findUnscoped(id: string): Promise<MiniAppModel | null> {
     return (await miniAppRepository.findById(id)) ?? null
   }
@@ -65,14 +116,20 @@ class MiniAppService extends BaseService {
     return validateMiniApp(definition)
   }
 
-  /** Inserts a Mini App with its Flow JSON generated from the definition. */
-  private async insert(values: {
-    workspaceId: string
-    name: string
-    enabled: boolean
-    definition: MiniAppDefinition
-  }): Promise<MiniAppModel> {
-    const [created] = await db
+  /**
+   * Inserts a Mini App with its Flow JSON generated from the definition. The
+   * row write shared by `create`, `duplicate` and the template install.
+   */
+  async insertInTx(
+    tx: DatabaseClient,
+    values: {
+      workspaceId: string
+      name: string
+      enabled: boolean
+      definition: MiniAppDefinition
+    },
+  ): Promise<MiniAppModel> {
+    const [created] = await tx
       .insert(miniAppModel)
       .values({
         id: createId(),
@@ -90,7 +147,7 @@ class MiniAppService extends BaseService {
   ): Promise<MiniAppModel> {
     const definition = buildNewDefinition(input)
     try {
-      return await this.insert({
+      return await this.insertInTx(db, {
         workspaceId: input.workspaceId,
         name: input.name,
         enabled: true,
@@ -107,32 +164,57 @@ class MiniAppService extends BaseService {
    * Submissions and WhatsApp publications stay with the original.
    */
   async duplicate(scope: MiniAppScope): Promise<MiniAppModel> {
-    const source = await this.findOrFail(scope)
-    const taken = new Set(
-      await miniAppRepository.listNamesWithPrefix({
-        workspaceId: scope.workspaceId,
-        prefix: copyNamePrefix(source.name),
-      }),
-    )
-    const freeNames = Array.from(
-      { length: MAX_COPY_NAME_ATTEMPTS },
-      (_, index) => copyName(source.name, index + 1),
-    )
-      .filter((name) => !taken.has(name))
-      .slice(0, COPY_NAME_INSERT_ATTEMPTS)
-    for (const name of freeNames) {
-      try {
-        return await this.insert({
-          workspaceId: scope.workspaceId,
-          name,
-          enabled: source.enabled,
-          definition: source.definition,
+    const copy = await withTemplateLockedTransaction(
+      async (tx) => {
+        const source = await tx.query.miniAppModel.findFirst({
+          where: { id: scope.id, workspaceId: scope.workspaceId },
         })
-      } catch (error) {
-        if (!isUniqueViolationError(error)) {
-          throw error
+        if (!source) {
+          throw notFoundException("Mini App not found")
         }
-      }
+        // Takes the source's lock and refuses one that is being uninstalled,
+        // so the copy cannot land after the uninstall decided what to keep.
+        await assertResourceEditable({
+          workspaceId: scope.workspaceId,
+          resourceKind: "miniApp",
+          resourceIds: [source.id],
+          changedKeys: [],
+          tx,
+        })
+        const taken = new Set(
+          await miniAppRepository.listNamesWithPrefix(
+            {
+              workspaceId: scope.workspaceId,
+              prefix: copyNamePrefix(source.name, MINI_APP_COPY_NAME),
+            },
+            tx,
+          ),
+        )
+        // A savepoint per candidate: a name taken by a concurrent copy must
+        // not abort the transaction.
+        return await insertWithFreeCopyName({
+          constraint: "MiniApp_workspaceId_name_key",
+          base: source.name,
+          taken,
+          options: MINI_APP_COPY_NAME,
+          insert: (name) =>
+            tx.transaction((savepoint) =>
+              this.insertInTx(savepoint, {
+                workspaceId: scope.workspaceId,
+                name,
+                enabled: source.enabled,
+                definition: source.definition,
+              }),
+            ),
+        })
+      },
+      {
+        workspaceId: scope.workspaceId,
+        initialKeys: [{ kind: "miniApp", resourceId: scope.id }],
+      },
+    )
+    if (copy) {
+      return copy
     }
     throw validationException("name", NAME_TAKEN)
   }
@@ -146,28 +228,55 @@ class MiniAppService extends BaseService {
     scope: MiniAppScope,
     data: { name?: string; enabled?: boolean } & MiniAppDefinitionInput,
   ): Promise<MiniAppModel> {
-    const miniApp = await this.findOrFail(scope)
-    const definition = buildUpdatedDefinition(miniApp.definition, data)
-    const changes = {
-      ...(data.name === undefined ? {} : { name: data.name }),
-      ...(data.enabled === undefined ? {} : { enabled: data.enabled }),
-      ...(definition ? { definition, flowJson: toFlowJson(definition) } : {}),
-    }
-    if (Object.keys(changes).length === 0) {
-      return miniApp
-    }
     try {
-      const [updated] = await db
-        .update(miniAppModel)
-        .set(changes)
-        .where(
-          and(
-            eq(miniAppModel.id, miniApp.id),
-            eq(miniAppModel.workspaceId, scope.workspaceId),
-          ),
-        )
-        .returning()
-      return updated as MiniAppModel
+      // The row is locked before it is read, so the diff that decides the
+      // View-only guard is computed under the lock.
+      return await withTemplateLockedTransaction(
+        async (tx) => {
+          const miniApp = await tx.query.miniAppModel.findFirst({
+            where: { id: scope.id, workspaceId: scope.workspaceId },
+          })
+          if (!miniApp) {
+            throw notFoundException("Mini App not found")
+          }
+          const definition = buildUpdatedDefinition(miniApp.definition, data)
+          const changes = {
+            ...(data.name === undefined ? {} : { name: data.name }),
+            ...(data.enabled === undefined ? {} : { enabled: data.enabled }),
+            ...(definition
+              ? { definition, flowJson: toFlowJson(definition) }
+              : {}),
+          }
+          if (Object.keys(changes).length === 0) {
+            return miniApp
+          }
+          await assertResourceEditable({
+            workspaceId: scope.workspaceId,
+            resourceKind: "miniApp",
+            resourceIds: [miniApp.id],
+            changedKeys: changedKeysOf(miniApp, {
+              name: changes.name,
+              definition: changes.definition,
+            }),
+            tx,
+          })
+          const [updated] = await tx
+            .update(miniAppModel)
+            .set(changes)
+            .where(
+              and(
+                eq(miniAppModel.id, miniApp.id),
+                eq(miniAppModel.workspaceId, scope.workspaceId),
+              ),
+            )
+            .returning()
+          return updated as MiniAppModel
+        },
+        {
+          workspaceId: scope.workspaceId,
+          initialKeys: [{ kind: "miniApp", resourceId: scope.id }],
+        },
+      )
     } catch (error) {
       return rethrowNameTaken(error)
     }
@@ -180,16 +289,26 @@ class MiniAppService extends BaseService {
     if (input.ids.length === 0) {
       return 0
     }
-    const deleted = await db
-      .delete(miniAppModel)
-      .where(
-        and(
-          eq(miniAppModel.workspaceId, input.workspaceId),
-          inArray(miniAppModel.id, input.ids),
-        ),
-      )
-      .returning({ id: miniAppModel.id })
+    const deleted = await withDeleteGuard(
+      {
+        workspaceId: input.workspaceId,
+        targets: [{ resourceKind: "miniApp", resourceIds: input.ids }],
+      },
+      (tx) => this.deleteInTx(tx, input),
+    )
     return deleted.length
+  }
+
+  /**
+   * The delete core (row write only; submissions, uploads and publications
+   * cascade), shared with the template uninstall so there is one
+   * implementation. Returns the ids deleted.
+   */
+  async deleteInTx(
+    tx: DatabaseClient,
+    input: { workspaceId: string; ids: string[] },
+  ): Promise<string[]> {
+    return await deleteByIdsInWorkspace(tx, miniAppModel, input)
   }
 }
 

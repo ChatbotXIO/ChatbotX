@@ -9,6 +9,8 @@ import { useTranslations } from "next-intl"
 import { useAction } from "next-safe-action/hooks"
 import { type Resolver, type UseFormReturn, useForm } from "react-hook-form"
 import { toast } from "sonner"
+import { withAIModerationDefaults } from "@/features/shared/comment-automation/lib/ai-moderation-defaults"
+import { refinePostHashtags } from "@/features/shared/comment-automation/lib/post-hashtags-validation"
 import { updateFbCommentAction } from "../actions/update-fb-comment.action"
 import {
   type CreateFbCommentRequest,
@@ -29,7 +31,9 @@ export function EditFbCommentForm({
 
   const form = useForm<CreateFbCommentRequest>({
     resolver: zodResolver(
-      createFbCommentRequest,
+      createFbCommentRequest.superRefine(
+        refinePostHashtags(t("commentAutomation.postHashtags.required")),
+      ),
     ) as Resolver<CreateFbCommentRequest>,
     mode: "onChange",
     defaultValues: {
@@ -48,7 +52,12 @@ export function EditFbCommentForm({
       excludeKeywords: initialData.excludeKeywords,
       excludeKeywordsType: initialData.excludeKeywordsType,
       options: initialData.options,
-      hideComments: initialData.hideComments,
+      hideComments: {
+        ...initialData.hideComments,
+        aiModeration: withAIModerationDefaults(
+          initialData.hideComments.aiModeration,
+        ),
+      },
       replyAfter: initialData.replyAfter,
     },
   })

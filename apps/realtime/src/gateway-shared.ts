@@ -10,6 +10,7 @@ import {
   REALTIME_CLOSE_CODE,
 } from "@chatbotx.io/realtime-protocol"
 import { decrementKeyedCount, incrementKeyedCount } from "./lib/keyed-count"
+import { endSocket, runThenFlushEnds } from "./lib/socket-end"
 import type { StreamReader } from "./stream-reader"
 
 const OVERLOAD_RETRY_AFTER_MIN_MS = 1000
@@ -155,14 +156,18 @@ export const upgradeSocket = <SocketData extends object>({
   res: HttpResponse
   socketData: SocketData
 }): void => {
-  res.cork(() => {
-    res.upgrade(
-      socketData,
-      headers.websocketKey,
-      headers.websocketProtocol,
-      headers.websocketExtensions,
-      context,
-    )
+  // `open` runs inside this cork; ends it requests wait for the uncork (see
+  // `endSocket`).
+  runThenFlushEnds(() => {
+    res.cork(() => {
+      res.upgrade(
+        socketData,
+        headers.websocketKey,
+        headers.websocketProtocol,
+        headers.websocketExtensions,
+        context,
+      )
+    })
   })
 }
 
@@ -267,7 +272,8 @@ export const closeIfOverloadedOnOpen = <
   if (socketData.overloadRetryAfterMs !== undefined) {
     counters.overloadCloses += 1
     socketData.closed = true
-    socket.end(
+    endSocket(
+      socket,
       REALTIME_CLOSE_CODE.overloaded,
       JSON.stringify({ retryAfter: socketData.overloadRetryAfterMs }),
     )
@@ -300,7 +306,7 @@ export const closeIfTainted = ({
     return false
   }
   socketData.closed = true
-  socket.end(REALTIME_CLOSE_CODE.resync, "malformed-stream-record")
+  endSocket(socket, REALTIME_CLOSE_CODE.resync, "malformed-stream-record")
   return true
 }
 
@@ -329,7 +335,11 @@ export const armLifetimeTimer = <
         return
       }
       socketData.closed = true
-      socket.end(REALTIME_CLOSE_CODE.reauth, "connection-lifetime-exceeded")
+      endSocket(
+        socket,
+        REALTIME_CLOSE_CODE.reauth,
+        "connection-lifetime-exceeded",
+      )
     }, lifetimeMs),
   )
 }

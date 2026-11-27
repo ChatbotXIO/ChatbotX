@@ -10,19 +10,12 @@ import { isCoexistOnboardingIntent } from "@/features/integration-whatsapp/libs/
  */
 describe("which WhatsApp onboarding modes can coexist", () => {
   test.each([
-    ["connect existing, no transfer", true, false, false, true],
-    ["transfer wins over connect existing", true, true, false, false],
-    ["transfer only", false, true, false, false],
-    ["neither (plain new-number signup)", false, false, false, false],
-    ["manual connect, whatever the switches say", true, false, true, false],
-    ["manual connect with transfer", false, true, true, false],
-  ])("%s", (_name, connectExisting: boolean, transferPhoneNumber: boolean, manualConnect: boolean, expected: boolean) => {
-    expect(
-      isCoexistOnboardingIntent({
-        connectExisting,
-        transferPhoneNumber,
-        manualConnect,
-      }),
-    ).toBe(expected)
+    ["connect existing", true, false, true],
+    ["neither (plain new-number signup)", false, false, false],
+    ["manual connect, whatever the switch says", true, true, false],
+  ])("%s", (_name, connectExisting: boolean, manualConnect: boolean, expected: boolean) => {
+    expect(isCoexistOnboardingIntent({ connectExisting, manualConnect })).toBe(
+      expected,
+    )
   })
 })

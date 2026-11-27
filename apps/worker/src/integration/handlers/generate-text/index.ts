@@ -6,12 +6,14 @@ import {
 } from "@chatbotx.io/ai/server"
 import { isMessageStorageError } from "@chatbotx.io/database/errors"
 import type { AIGenerateTextSchema } from "@chatbotx.io/flow-config"
+import { resolveContactVariablesDeep } from "@chatbotx.io/variables"
 import { APICallError, streamText } from "ai"
 import { normalizeError } from "universal-error-normalizer"
 import { logger } from "../../../lib/logger"
 import { saveResultToCustomField } from "../../utils/contact"
 import { type ExecuteStepProps, logStepProviderError } from "../flow-utils"
 import { aiErrorLogProvider } from "../shared/ai-error-log-provider"
+import { withChannelLengthInstruction } from "../shared/ai-output-length"
 import { resolveFlowAIModel } from "../shared/flow-ai-model-resolver"
 import { createMcpTokenResolver } from "../shared/resolve-mcp-token"
 import type { ExecuteStepResult } from "../step"
@@ -23,7 +25,8 @@ const ERROR_INSUFFICIENT_CREDITS =
 export async function handleAIGenerateText({
   conversation,
   contactInbox,
-  step,
+  step: rawStep,
+  sentByUserId,
 }: ExecuteStepProps<AIGenerateTextSchema>): Promise<ExecuteStepResult> {
   const controller = new AbortController()
   const timeoutId = setTimeout(() => controller.abort(), 120_000)
@@ -31,6 +34,16 @@ export async function handleAIGenerateText({
   let cleanupToolset: (() => Promise<void>) | undefined
 
   try {
+    // The prompt fields are authored with the variable picker; resolve
+    // `{{var}}` before they reach the model (a no-op without placeholders).
+    const step: AIGenerateTextSchema = {
+      ...rawStep,
+      ...(await resolveContactVariablesDeep(
+        conversation.contactId,
+        { system: rawStep.system, text: rawStep.text },
+        { contactInbox, conversation, sentByUserId },
+      )),
+    }
     const messages = await buildAIMessages(conversation, contactInbox, step)
 
     const resolvedModel = await resolveFlowAIModel({
@@ -89,17 +102,24 @@ export async function handleAIGenerateText({
     })
     cleanupToolset = cleanup
 
+    // The SDK swallows a throw from `onError` and drops error parts from
+    // `textStream`, so keep the provider error and rethrow it once the stream
+    // ends — otherwise a failed call saves "" and reports success.
+    let streamError: unknown
     const result = streamText({
       model: resolvedModel.model,
-      instructions: step.system,
+      instructions: withChannelLengthInstruction(
+        step.system,
+        contactInbox.channel,
+      ),
       messages,
       tools,
       toolChoice: Object.keys(tools).length > 0 ? "auto" : undefined,
       maxOutputTokens: step.maxOutputTokens,
       temperature: step.temperature,
       abortSignal: controller.signal,
-      onError: (error) => {
-        throw error.error
+      onError: ({ error }) => {
+        streamError = error
       },
     })
 
@@ -110,6 +130,9 @@ export async function handleAIGenerateText({
       },
       { sendParts: false },
     )
+    if (streamError) {
+      throw streamError
+    }
 
     await saveResultToCustomField({
       contactId: conversation.contactId,
@@ -126,7 +149,7 @@ export async function handleAIGenerateText({
     }
     const error = normalizeError(err)
     await logStepProviderError(
-      aiErrorLogProvider(step.provider),
+      aiErrorLogProvider(rawStep.provider),
       { conversation, contactInbox },
       err,
     )

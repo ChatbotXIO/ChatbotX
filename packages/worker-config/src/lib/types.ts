@@ -19,6 +19,10 @@ export const queueNames = z.enum([
   "low",
   "leaderboard",
   "marketingMessage",
+  "template",
+  "contactInfoCapture",
+  "postPublish",
+  "channelPostExport",
 ])
 
 export type QueueName = z.infer<typeof queueNames>

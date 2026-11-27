@@ -12,9 +12,7 @@ export const FORM_FIELDS = {
   WABA_ID: "wabaId",
   ACCESS_TOKEN: "accessToken",
   CONNECT_EXISTING: "connectExisting",
-  TRANSFER_PHONE_NUMBER: "transferPhoneNumber",
   MANUAL_CONNECT: "manualConnect",
-  MARKETING_MESSAGE_LITE: "marketingMessageLite",
   // Multi-select picker field (`CheckboxGroupField`) — the client fans out
   // one action call per id (`phoneNumberId`) rather than sending this array.
   PHONE_NUMBER_IDS: "phoneNumberIds",

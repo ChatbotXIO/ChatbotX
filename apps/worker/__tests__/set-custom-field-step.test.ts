@@ -71,9 +71,10 @@ vi.mock("@chatbotx.io/utils", async (importOriginal) => {
 })
 
 const loggerError = vi.fn()
+const loggerWarn = vi.fn()
 
 vi.mock("../src/lib/logger", () => ({
-  logger: { error: loggerError },
+  logger: { error: loggerError, warn: loggerWarn },
 }))
 
 // ---------------------------------------------------------------------------
@@ -209,5 +210,35 @@ describe("setContactCustomField", () => {
     expect(setValueByKey).toHaveBeenCalledWith(
       expect.objectContaining({ sourceTimezoneOverride: undefined }),
     )
+  })
+
+  test("a plain value skips the variable lookup entirely", async () => {
+    await setContactCustomField(props({ inputFieldId: "42", value: "hello" }))
+
+    expect(getAllVariables).not.toHaveBeenCalled()
+    expect(replaceAll).not.toHaveBeenCalled()
+  })
+
+  test("a calculator rejection is logged as a warning and the flow keeps going", async () => {
+    const { ChatbotXException } = await import("@chatbotx.io/business/errors")
+    const rejection = new ChatbotXException(
+      "rejected",
+      "invalidFieldOperation",
+      400,
+    )
+    rejection.data = { reason: "operandNotNumber" }
+    setValueByKey.mockRejectedValueOnce(rejection)
+
+    await expect(
+      setContactCustomField(
+        props({ inputFieldId: "42", value: "abc", operation: "O04" }),
+      ),
+    ).resolves.toBeUndefined()
+
+    expect(loggerWarn).toHaveBeenCalledWith(
+      expect.objectContaining({ reason: "operandNotNumber" }),
+      expect.any(String),
+    )
+    expect(loggerError).not.toHaveBeenCalled()
   })
 })

@@ -103,6 +103,69 @@ describe("resolveTemplateParams", () => {
     })
   })
 
+  describe("payment request buttons", () => {
+    const pixComponents = [
+      {
+        type: "BUTTONS",
+        buttons: [
+          {
+            type: "PAYMENT_REQUEST",
+            text: "Copy Pix code",
+            payment_setting: { type: "pix_dynamic_code" },
+          },
+        ],
+      },
+    ]
+    const resolve = (values: Record<string, string>) =>
+      resolveTemplateParams({
+        workspaceId: "ws-1",
+        channel: "whatsapp",
+        templateId: "t-1",
+        values,
+        field: "templateParams",
+      })
+
+    test("builds the payment request from flat keys", async () => {
+      mocks.findWa.mockResolvedValue({ components: pixComponents })
+
+      await expect(
+        resolve({ "button.0": "000201", "button.0.amount": "12.34" }),
+      ).resolves.toEqual({
+        button: [
+          {
+            sub_type: "payment_request",
+            index: 0,
+            payment_request: {
+              method: "pix",
+              code: "000201",
+              amount: "12.34",
+            },
+          },
+        ],
+      })
+    })
+
+    test("a missing Pix code is a 422 that names the key", async () => {
+      mocks.findWa.mockResolvedValue({ components: pixComponents })
+
+      await expect(resolve({})).rejects.toMatchObject({
+        code: "validation",
+        message: expect.stringContaining("missing: button.0"),
+      })
+    })
+
+    test("a malformed amount is a 422 that names the key", async () => {
+      mocks.findWa.mockResolvedValue({ components: pixComponents })
+
+      await expect(
+        resolve({ "button.0": "000201", "button.0.amount": "1.234" }),
+      ).rejects.toMatchObject({
+        code: "validation",
+        message: expect.stringContaining("invalid: button.0.amount"),
+      })
+    })
+  })
+
   test("builds Messenger params with the template's parameter format", async () => {
     mocks.findMessenger.mockResolvedValue({
       components: [{ type: "BODY", text: "Code {{code}}" }],

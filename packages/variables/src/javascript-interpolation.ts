@@ -8,9 +8,18 @@ import {
   parseFieldReference,
 } from "@chatbotx.io/flow-config"
 import { isCouponVariable, resolveCouponVariable } from "./coupon-variable"
+import {
+  isPipelineVariable,
+  resolvePipelineVariable,
+} from "./pipeline-variable"
+import {
+  isPostCommentVariable,
+  resolvePostCommentVariable,
+} from "./post-comment-variable"
 import type { ReplaceVariableProps } from "./schema"
 import {
   extractVariables,
+  getContactTimezone,
   getSystemFieldValue,
   RAW_CUSTOM_FIELD_VARIABLE_PREFIX,
   toRawCustomFieldName,
@@ -447,6 +456,21 @@ const resolveJavascriptInputValue = async (
       return null
     }
     return coerceCustomFieldValueForJavascript(field.value, field.type)
+  }
+  if (isPipelineVariable(name)) {
+    return await resolvePipelineVariable(
+      context,
+      name,
+      getContactTimezone(context),
+    )
+  }
+  // Run-scoped: empty outside a post-comment run, like in a message.
+  if (isPostCommentVariable(name)) {
+    return await resolvePostCommentVariable(
+      context,
+      name,
+      getContactTimezone(context),
+    )
   }
   if (isCouponVariable(name)) {
     return await resolveCouponVariable(context, name)

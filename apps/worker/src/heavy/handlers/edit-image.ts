@@ -14,6 +14,7 @@ import {
   IMAGE_DEFAULT_MIME_TYPE,
 } from "@chatbotx.io/flow-config"
 import { generateImage, type ImageModel } from "ai"
+import sharp from "sharp"
 import { normalizeError } from "universal-error-normalizer"
 import { env } from "../../env"
 import { editImageInputSchema } from "../../integration/handlers/edit-image/schema"
@@ -24,11 +25,14 @@ import {
 } from "../../integration/utils/contact"
 import { logger } from "../../lib/logger"
 import { downloadWithByteLimit } from "./bounded-download"
+import { toChannelSafeImage } from "./channel-safe-image"
 import { ExpectedHeavyStepError } from "./errors"
 import { getOpenAIEditImageQuality } from "./image-options"
 
 const FETCH_IMAGE_TIMEOUT_MS = 30_000
 const ALLOWED_IMAGE_EXTENSIONS = new Set(["png", "jpg", "jpeg", "webp", "gif"])
+// `sharp` format names of the inputs the image edit APIs accept.
+const EDITABLE_IMAGE_FORMATS = new Set(["png", "jpeg", "webp", "gif"])
 
 async function fetchImageAsBuffer(
   url: string,
@@ -41,6 +45,16 @@ async function fetchImageAsBuffer(
     timeout: FETCH_IMAGE_TIMEOUT_MS,
     url,
   })
+  // Check the bytes, not `content-type`: CDNs often serve images as
+  // `application/octet-stream`, and a non-image otherwise fails inside the
+  // AI SDK as a retryable error.
+  const format = await sharp(buffer)
+    .metadata()
+    .then((metadata) => metadata.format)
+    .catch(() => undefined)
+  if (!(format && EDITABLE_IMAGE_FORMATS.has(format))) {
+    throw new ExpectedHeavyStepError("Input is not a supported image")
+  }
   return buffer
 }
 
@@ -140,8 +154,12 @@ export async function editImageOutput({
       )
     }
 
+    // Muse keeps the input aspect ratio when no size is sent and rejects
+    // `quality`/`aspect_ratio`, so it shares the OpenAI size path only.
     const size =
-      step.provider === aiProviders.enum.openai && step.size !== "auto"
+      (step.provider === aiProviders.enum.openai ||
+        step.provider === aiProviders.enum.muse) &&
+      step.size !== "auto"
         ? (step.size as `${number}x${number}`)
         : undefined
 
@@ -176,17 +194,22 @@ export async function editImageOutput({
       throw new Error("[ai-edit-image] No image returned from provider")
     }
 
-    let buffer: Buffer | null = null
+    let rawBuffer: Buffer | null = null
 
     if (image.uint8Array && image.uint8Array.byteLength > 0) {
-      buffer = Buffer.from(image.uint8Array)
+      rawBuffer = Buffer.from(image.uint8Array)
     } else if (image.base64) {
-      buffer = Buffer.from(image.base64, IMAGE_BASE64_ENCODING)
+      rawBuffer = Buffer.from(image.base64, IMAGE_BASE64_ENCODING)
     }
 
-    if (!buffer || buffer.length === 0) {
+    if (!rawBuffer || rawBuffer.length === 0) {
       throw new Error("[ai-edit-image] Empty image payload from provider")
     }
+
+    const { buffer, contentType } = await toChannelSafeImage({
+      buffer: rawBuffer,
+      contentType: image.mediaType || IMAGE_DEFAULT_MIME_TYPE,
+    })
 
     if (buffer.length > env.HEAVY_MAX_IMAGE_BYTES) {
       throw new ExpectedHeavyStepError(
@@ -194,7 +217,6 @@ export async function editImageOutput({
       )
     }
 
-    const contentType = image.mediaType || IMAGE_DEFAULT_MIME_TYPE
     const rawExt = contentType.split("/")[1]?.split(";")[0]?.trim() ?? ""
     const extension = ALLOWED_IMAGE_EXTENSIONS.has(rawExt)
       ? rawExt

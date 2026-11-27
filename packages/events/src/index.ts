@@ -5,6 +5,8 @@ export type {
   CartItemEventMetadata,
   CommerceEventProduct,
   OrderEventMetadata,
+  PipelineItemEventMetadata,
+  PostCommentEventMetadata,
   ShoppingCartSentMetadata,
   UserAskedAboutProductMetadata,
 } from "./base-emitter"
@@ -13,6 +15,7 @@ export * from "./context"
 export * from "./decision-flow-lineage"
 export * from "./event-dispatcher"
 export * from "./event-type-registry"
+export * from "./post-comment-context"
 // Trigger events
 export * from "./trigger/cache"
 export * as TriggerEventEmitter from "./trigger/emitter"

@@ -1,0 +1,377 @@
+{
+  "type": "diff",
+  "version": "10",
+  "dialect": "postgres",
+  "id": "313aa547-442a-4177-9cfc-0049b576f604",
+  "prevIds": [
+    "a065c6e2-2b8e-4a56-bdf2-e13a8c8fb700"
+  ],
+  "footprints": [
+    {
+      "statementType": "alter_enum",
+      "statementTarget": [
+        "enum",
+        "public",
+        "resourceDeletionResourceType"
+      ],
+      "writes": [
+        "s|enum|public.resourceDeletionResourceType"
+      ],
+      "reads": [
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "User",
+        "deletionRequestedAt"
+      ],
+      "writes": [
+        "s|col|public.User.deletionRequestedAt",
+        "n|col|public.User.deletionRequestedAt",
+        "e|col|public.User.deletionRequestedAt"
+      ],
+      "reads": [
+        "n|tbl|public.User",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "User",
+        "scheduledDeletionAt"
+      ],
+      "writes": [
+        "s|col|public.User.scheduledDeletionAt",
+        "n|col|public.User.scheduledDeletionAt",
+        "e|col|public.User.scheduledDeletionAt"
+      ],
+      "reads": [
+        "n|tbl|public.User",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "alter_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "ResourceDeletionLog",
+        "workspaceId"
+      ],
+      "writes": [
+        "s|colprop|public.ResourceDeletionLog.workspaceId.notNull"
+      ],
+      "reads": [
+        "n|tbl|public.ResourceDeletionLog",
+        "n|sch|public",
+        "n|col|public.ResourceDeletionLog.workspaceId"
+      ],
+      "sqlHash": "63067058579ac29f"
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "User",
+        "User_scheduledDeletionAt_idx"
+      ],
+      "writes": [
+        "s|idx|public.User_scheduledDeletionAt_idx",
+        "n|idx|public.User_scheduledDeletionAt_idx",
+        "e|idx|public.User_scheduledDeletionAt_idx",
+        "n|rel|public.User_scheduledDeletionAt_idx"
+      ],
+      "reads": [
+        "n|tbl|public.User",
+        "n|sch|public",
+        "n|col|public.User.scheduledDeletionAt"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "ContactNote",
+        "ContactNote_createdById_idx"
+      ],
+      "writes": [
+        "s|idx|public.ContactNote_createdById_idx",
+        "n|idx|public.ContactNote_createdById_idx",
+        "e|idx|public.ContactNote_createdById_idx",
+        "n|rel|public.ContactNote_createdById_idx"
+      ],
+      "reads": [
+        "n|tbl|public.ContactNote",
+        "n|sch|public",
+        "n|col|public.ContactNote.createdById"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "Conversation",
+        "Conversation_assignedUserId_idx"
+      ],
+      "writes": [
+        "s|idx|public.Conversation_assignedUserId_idx",
+        "n|idx|public.Conversation_assignedUserId_idx",
+        "e|idx|public.Conversation_assignedUserId_idx",
+        "n|rel|public.Conversation_assignedUserId_idx"
+      ],
+      "reads": [
+        "n|tbl|public.Conversation",
+        "n|sch|public",
+        "n|col|public.Conversation.assignedUserId"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "ConversationParticipant",
+        "ConversationParticipant_userId_idx"
+      ],
+      "writes": [
+        "s|idx|public.ConversationParticipant_userId_idx",
+        "n|idx|public.ConversationParticipant_userId_idx",
+        "e|idx|public.ConversationParticipant_userId_idx",
+        "n|rel|public.ConversationParticipant_userId_idx"
+      ],
+      "reads": [
+        "n|tbl|public.ConversationParticipant",
+        "n|sch|public",
+        "n|col|public.ConversationParticipant.userId"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "AuditLog",
+        "AuditLog_userId_idx"
+      ],
+      "writes": [
+        "s|idx|public.AuditLog_userId_idx",
+        "n|idx|public.AuditLog_userId_idx",
+        "e|idx|public.AuditLog_userId_idx",
+        "n|rel|public.AuditLog_userId_idx"
+      ],
+      "reads": [
+        "n|tbl|public.AuditLog",
+        "n|sch|public",
+        "n|col|public.AuditLog.userId"
+      ]
+    },
+    {
+      "statementType": "recreate_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "ContactNote"
+      ],
+      "writes": [
+        "s|fk|public.ContactNote.ContactNote_createdById_User_id_fkey",
+        "n|fk|public.ContactNote.ContactNote_createdById_User_id_fkey",
+        "e|fk|public.ContactNote.ContactNote_createdById_User_id_fkey",
+        "n|con|public.ContactNote.ContactNote_createdById_User_id_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.ContactNote",
+        "n|sch|public",
+        "n|tbl|public.User",
+        "n|sch|public",
+        "n|col|public.ContactNote.createdById",
+        "n|col|public.User.id",
+        "e|uniqueness|public.User.id"
+      ],
+      "sqlHash": "9a7fb504e5e0e999"
+    }
+  ],
+  "deltas": [
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "User",
+        "name": "deletionRequestedAt",
+        "type": "timestamp(6) with time zone",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "User",
+        "name": "scheduledDeletionAt",
+        "type": "timestamp(6) with time zone",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "User",
+        "name": "User_scheduledDeletionAt_idx",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "scheduledDeletionAt",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": false,
+        "where": "\"scheduledDeletionAt\" IS NOT NULL",
+        "with": "",
+        "method": "btree",
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "ContactNote",
+        "name": "ContactNote_createdById_idx",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "createdById",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": false,
+        "where": "\"createdById\" IS NOT NULL",
+        "with": "",
+        "method": "btree",
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "Conversation",
+        "name": "Conversation_assignedUserId_idx",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "assignedUserId",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": false,
+        "where": "\"assignedUserId\" IS NOT NULL",
+        "with": "",
+        "method": "btree",
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "ConversationParticipant",
+        "name": "ConversationParticipant_userId_idx",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "userId",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": false,
+        "where": null,
+        "with": "",
+        "method": "btree",
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "AuditLog",
+        "name": "AuditLog_userId_idx",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "userId",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": false,
+        "where": "\"userId\" IS NOT NULL",
+        "with": "",
+        "method": "btree",
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "alter",
+      "key": "enums\u0000[\"public\",\"resourceDeletionResourceType\"]",
+      "set": {
+        "values": [
+          "workspace",
+          "channel",
+          "user"
+        ]
+      }
+    },
+    {
+      "op": "alter",
+      "key": "columns\u0000[\"public\",\"ResourceDeletionLog\",\"workspaceId\"]",
+      "set": {
+        "notNull": false
+      }
+    },
+    {
+      "op": "alter",
+      "key": "fks\u0000[\"public\",\"ContactNote\",\"ContactNote_createdById_User_id_fkey\"]",
+      "set": {
+        "onDelete": "SET NULL"
+      }
+    }
+  ]
+}

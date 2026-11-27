@@ -2,6 +2,9 @@ import { ECOMMERCE_SETTINGS_DEFAULTS } from "@chatbotx.io/database/partials"
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
 const mocks = vi.hoisted(() => ({
+  cancelOrder: vi.fn(),
+  startCheckout: vi.fn(),
+  syncOrder: vi.fn(),
   findCart: vi.fn(),
   findCartForUpdate: vi.fn(),
   freezeReason: vi.fn(),
@@ -23,6 +26,7 @@ const mocks = vi.hoisted(() => ({
   emitCartItemChanged: vi.fn(),
   emitCartAbandoned: vi.fn(),
   resolveContactInboxForSend: vi.fn(),
+  buildShopifyWebCheckoutUrl: vi.fn(),
 }))
 
 vi.mock("../../conversation/service", () => ({
@@ -41,6 +45,23 @@ vi.mock("@chatbotx.io/database/client", () => ({
 vi.mock("../../workspace-lifecycle/with-blocked-owner-guard", () => ({
   resolveWorkspaceFreezeReasonById: (...args: unknown[]) =>
     mocks.freezeReason(...args),
+}))
+
+vi.mock("../../woocommerce/checkout", () => ({
+  buildWooCommerceWebCheckoutUrl: vi.fn(),
+  placeWooCommerceInAppOrder: vi.fn(),
+}))
+
+vi.mock("../../shopify/checkout", () => ({
+  buildShopifyWebCheckoutUrl: (...args: unknown[]) =>
+    mocks.buildShopifyWebCheckoutUrl(...args),
+  placeShopifyInAppOrder: vi.fn(),
+}))
+vi.mock("../../order-payment/service", () => ({
+  orderPaymentService: {
+    startCheckout: (...args: unknown[]) => mocks.startCheckout(...args),
+    syncOrder: (...args: unknown[]) => mocks.syncOrder(...args),
+  },
 }))
 
 vi.mock("@chatbotx.io/events", () => ({
@@ -84,12 +105,13 @@ vi.mock("../../ecommerce-settings/service", () => ({
   ecommerceSettingsService: {
     get: (...args: unknown[]) => mocks.getSettings(...args),
     getFresh: (...args: unknown[]) => mocks.getFreshSettings(...args),
+    storeSource: async () => "chatbotx",
   },
 }))
 
 type MockProduct = {
   id: string
-  isActive?: boolean
+  status?: "active" | "draft" | "unlisted"
   name?: string
   categoryId?: string | null
   subcategoryId?: string | null
@@ -99,6 +121,7 @@ vi.mock("../../order/service", () => ({
     quote: (...args: unknown[]) => mocks.quote(...args),
     place: (...args: unknown[]) => mocks.place(...args),
     getDetail: (...args: unknown[]) => mocks.getDetail(...args),
+    cancel: (...args: unknown[]) => mocks.cancelOrder(...args),
   },
   findProductsForOrder: async (...args: unknown[]) =>
     new Map(
@@ -113,10 +136,10 @@ vi.mock("../../order/service", () => ({
     items: Array<{ productId: string }>,
   ) => ({
     orderable: items.filter(
-      (item) => products.get(item.productId)?.isActive !== false,
+      (item) => (products.get(item.productId)?.status ?? "active") === "active",
     ),
     unavailable: items.filter(
-      (item) => products.get(item.productId)?.isActive === false,
+      (item) => (products.get(item.productId)?.status ?? "active") !== "active",
     ),
   }),
   productCategoryIds: (product?: MockProduct) =>
@@ -139,7 +162,7 @@ vi.mock("../../product-category/service", () => ({
 }))
 vi.mock("../../vendor/service", () => ({ vendorService: {} }))
 vi.mock("../../platform/settings", () => ({
-  resolveTenantSettings: async () => ({ appUrl: "https://app.example" }),
+  resolveWorkspaceAppUrl: async () => "https://app.example",
 }))
 vi.mock("../../order/message-language", () => ({
   resolveCustomerMessageLanguage: async () => "en",
@@ -249,7 +272,7 @@ describe("webshopService.checkout", () => {
     })
     mocks.findForOrder.mockResolvedValue([
       { id: "p1", vendor: null },
-      { id: "p2", vendor: null, isActive: false },
+      { id: "p2", vendor: null, status: "draft" },
     ])
     await webshopService.checkout({ shopper, form: {} })
     const [input] = mocks.place.mock.calls[0] as [
@@ -271,7 +294,7 @@ describe("webshopService.checkout", () => {
 
   test("refuses a cart whose items are all no longer sold", async () => {
     mocks.findForOrder.mockResolvedValue([
-      { id: "p1", vendor: null, isActive: false },
+      { id: "p1", vendor: null, status: "draft" },
     ])
     await expect(
       webshopService.checkout({ shopper, form: {} }),
@@ -319,6 +342,17 @@ describe("webshopService.checkout", () => {
     expect(mocks.place).not.toHaveBeenCalled()
   })
 
+  test("a store that checks out with a flow still places the order (the flow runs once it is placed)", async () => {
+    mocks.getFreshSettings.mockResolvedValue(
+      settings({
+        shipping: { shippingType: "none" },
+        checkout: { checkoutMode: "flow", checkoutFlowId: "f1" },
+      }),
+    )
+    await webshopService.checkout({ shopper, form: {} })
+    expect(mocks.place).toHaveBeenCalledTimes(1)
+  })
+
   test("refuses when the store checks out on its own external page", async () => {
     mocks.getFreshSettings.mockResolvedValue(
       settings({
@@ -334,27 +368,96 @@ describe("webshopService.checkout", () => {
     expect(mocks.place).not.toHaveBeenCalled()
   })
 
-  test("runs the checkout flow in the customer's conversation", async () => {
+  test("a Shopify store checks out on Shopify despite an old external-page mode", async () => {
     mocks.getFreshSettings.mockResolvedValue(
       settings({
+        general: { storeSource: "shopify" },
         shipping: { shippingType: "none" },
-        checkout: { checkoutMode: "flow", checkoutFlowId: "f1" },
+        checkout: {
+          checkoutMode: "externalLink",
+          checkoutLink: "https://pay.example",
+          externalCheckoutMethod: "webCheckout",
+        },
       }),
     )
-    await webshopService.checkout({ shopper, form: {} })
-    expect(mocks.queueAdd).toHaveBeenCalledWith(
-      "sendFlow",
-      {
-        type: "sendFlow",
-        data: { conversationId: "conv1", contactInboxId: "ci1", flowId: "f1" },
-      },
-      { jobId: "webshop-checkout-flow-o1" },
+    mocks.buildShopifyWebCheckoutUrl.mockResolvedValue(
+      "https://shop.example/cart/1:1",
     )
+    const result = await webshopService.checkout({ shopper, form: {} })
+    expect(result.paymentUrl).toBe("https://shop.example/cart/1:1")
+    expect(mocks.place).not.toHaveBeenCalled()
   })
 
-  test("starts no flow on the default checkout", async () => {
-    await webshopService.checkout({ shopper, form: {} })
+  test("places a cash order as cash on delivery, with nothing to pay online", async () => {
+    const result = await webshopService.checkout({ shopper, form: {} })
+    expect(mocks.place).toHaveBeenCalledWith(
+      expect.objectContaining({ paymentMethod: "cod" }),
+    )
+    expect(result.paymentUrl).toBeNull()
+    expect(mocks.startCheckout).not.toHaveBeenCalled()
+    // The checkout flow is the order's to start, once it is announced.
     expect(mocks.queueAdd).not.toHaveBeenCalled()
+  })
+
+  test("paid online, opens the provider's page for the order", async () => {
+    mocks.place.mockResolvedValue({
+      id: "o1",
+      paymentMethod: "stripe",
+      paymentStatus: "unpaid",
+    })
+    mocks.startCheckout.mockResolvedValue({
+      url: "https://checkout.stripe.com/c/pay/cs_1",
+      expiresAt: new Date(),
+    })
+    const result = await webshopService.checkout({
+      shopper,
+      form: { paymentMethod: "stripe" },
+    })
+    expect(mocks.place).toHaveBeenCalledWith(
+      expect.objectContaining({ paymentMethod: "stripe" }),
+    )
+    expect(mocks.startCheckout).toHaveBeenCalledWith({
+      workspaceId: shopper.workspaceId,
+      orderId: "o1",
+    })
+    expect(result.paymentUrl).toBe("https://checkout.stripe.com/c/pay/cs_1")
+  })
+
+  test("a provider page that cannot open cancels the order and puts its items back", async () => {
+    mocks.place.mockResolvedValue({
+      id: "o1",
+      paymentMethod: "stripe",
+      paymentStatus: "unpaid",
+    })
+    const refused = Object.assign(new Error("amount too small"), {
+      code: "paymentAmountUnsupported",
+    })
+    mocks.startCheckout.mockRejectedValue(refused)
+    // Checkout reads the cart; once the order took its items, the cart the
+    // undo locks is empty.
+    mocks.findCart
+      .mockResolvedValueOnce({
+        items: [{ productId: "p1", variantId: null, quantity: 2 }],
+        discountCode: null,
+      })
+      .mockResolvedValueOnce({ items: [], discountCode: null })
+
+    await expect(
+      webshopService.checkout({ shopper, form: { paymentMethod: "stripe" } }),
+    ).rejects.toBe(refused)
+    expect(mocks.cancelOrder).toHaveBeenCalledWith(
+      expect.objectContaining({
+        orderId: "o1",
+        actor: { type: "system" },
+      }),
+    )
+    expect(mocks.upsertCart).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        contactId: "c1",
+        items: [{ productId: "p1", variantId: null, quantity: 2 }],
+      }),
+      expect.anything(),
+    )
   })
 
   test("refuses while ordering is turned off", async () => {

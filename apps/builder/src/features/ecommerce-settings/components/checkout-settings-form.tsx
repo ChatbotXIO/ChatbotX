@@ -3,6 +3,8 @@
 import {
   checkoutModes,
   type EcommerceCheckoutSettings,
+  externalCheckoutMethods,
+  isExternalStoreSource,
   orderConfirmationModes,
 } from "@chatbotx.io/database/partials"
 import { ComboboxField } from "@chatbotx.io/ui/components/form/combobox-field"
@@ -38,7 +40,19 @@ const REQUIRED_FIELDS = [
   "requireZip",
 ] as const
 
-const toRequest = (values: CheckoutFormValues) => ({
+type CheckoutFormFields = CheckoutFormValues & {
+  /** An external store's delivery fee, saved with the shipping group. */
+  deliveryCost: number
+}
+
+const toRequest = (
+  { deliveryCost, ...values }: CheckoutFormFields,
+  isExternalStore: boolean,
+) => ({
+  // An external store has no Shipping tab, so its delivery fee is saved here.
+  ...(isExternalStore && {
+    shipping: { deliveryCost: Number(deliveryCost) || 0 },
+  }),
   checkout: {
     ...values,
     // An emptied number field means no minimum.
@@ -66,7 +80,7 @@ export function CheckoutSettingsForm({
   /** The service's checks: each checkout mode needs its own target. */
   const rules = (
     values: CheckoutFormValues,
-  ): Array<FieldRule<CheckoutFormValues> | false> => [
+  ): Array<FieldRule<CheckoutFormFields> | false> => [
     values.checkoutMode === "externalLink" &&
       !values.checkoutLink.trim() && {
         field: "checkoutLink",
@@ -83,9 +97,15 @@ export function CheckoutSettingsForm({
         message: tValidation("required"),
       },
   ]
-  const resolver = useSettingsResolver(toRequest, rules)
+  const storeSource = settings.general.storeSource
+  const isExternalStore = isExternalStoreSource(storeSource)
+  const isWooCommerce = storeSource === "woocommerce"
+  const resolver = useSettingsResolver(
+    (values: CheckoutFormFields) => toRequest(values, isExternalStore),
+    rules,
+  )
 
-  const form = useForm<CheckoutFormValues>({
+  const form = useForm<CheckoutFormFields>({
     resolver,
     defaultValues: {
       ...settings.checkout,
@@ -93,19 +113,78 @@ export function CheckoutSettingsForm({
       checkoutFlowId: settings.checkout.checkoutFlowId ?? undefined,
       orderConfirmationFlowId:
         settings.checkout.orderConfirmationFlowId ?? undefined,
+      deliveryCost: settings.shipping.deliveryCost,
     },
   })
   const checkoutMode = form.watch("checkoutMode")
   const orderConfirmationMode = form.watch("orderConfirmationMode")
+  const externalCheckoutMethod = form.watch("externalCheckoutMethod")
   const flowSelectOptions = flowOptions.map((flow) => ({
     value: flow.id,
     label: flow.name,
   }))
 
   const onSubmit = form.handleSubmit(
-    (values) => execute(toRequest(values)),
+    (values) => execute(toRequest(values, isExternalStore)),
     showInvalidToast,
   )
+
+  if (isExternalStore) {
+    return (
+      <Form {...form}>
+        <form className="space-y-4" onSubmit={onSubmit}>
+          <SettingRow
+            description={t(
+              isWooCommerce
+                ? "wooCommerceCheckoutMethod.description"
+                : "shopifyCheckoutMethod.description",
+            )}
+            label={t("shopifyCheckoutMethod.label")}
+          >
+            <SelectField
+              name="externalCheckoutMethod"
+              options={externalCheckoutMethods.options.map((method) => ({
+                value: method,
+                label: t(
+                  isWooCommerce
+                    ? `wooCommerceCheckoutMethod.options.${method}`
+                    : `shopifyCheckoutMethod.options.${method}`,
+                ),
+              }))}
+            />
+          </SettingRow>
+          <SettingRow
+            description={t(
+              isWooCommerce
+                ? "wooCommerceAutoApplyDiscounts.description"
+                : "shopifyAutoApplyDiscounts.description",
+            )}
+            label={t("shopifyAutoApplyDiscounts.label")}
+          >
+            <SwitchField name="externalAutoApplyDiscounts" />
+          </SettingRow>
+          {/* WooCommerce's payment page takes the delivery fee set here too. */}
+          {externalCheckoutMethod === "inApp" || isWooCommerce ? (
+            <SettingRow
+              description={t(
+                isWooCommerce
+                  ? "wooCommerceDeliveryCost.description"
+                  : "inAppDeliveryCost.description",
+              )}
+              label={t("inAppDeliveryCost.label")}
+            >
+              <InputNumberField
+                min={0}
+                name="deliveryCost"
+                {...PRICE_INPUT_PROPS}
+              />
+            </SettingRow>
+          ) : null}
+          <SettingsSaveBar isSaving={isPending} />
+        </form>
+      </Form>
+    )
+  }
 
   return (
     <Form {...form}>

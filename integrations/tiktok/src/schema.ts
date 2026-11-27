@@ -1,8 +1,30 @@
-import type { Oauth2AuthValue, Oauth2Config } from "@chatbotx.io/sdk"
+import type {
+  Context,
+  Handler,
+  Oauth2AuthValue,
+  Oauth2Config,
+} from "@chatbotx.io/sdk"
 import { z } from "zod"
+
+/**
+ * Which halves of the channel a TikTok app credential serves, chosen by the
+ * admin who saved it. Both default to on; at least one must be.
+ *
+ * Exists because TikTok's Business Messaging API is not available to accounts
+ * registered in the EEA, Switzerland or the UK — those accounts can never be
+ * granted `message.list.*`, so a credential that insisted on them would leave
+ * comment automation, which needs only the comment scopes, unreachable too.
+ * Stored per credential, not per deployment, because credentials are per
+ * platform and per reseller tenant and one server serves both regions.
+ */
+export type TiktokChannelFeatures = {
+  messaging: boolean
+  comments: boolean
+}
 
 export type TiktokConfig = Oauth2Config & {
   openId?: string
+  features?: Partial<TiktokChannelFeatures>
 }
 
 /** `operation_status` on `business/message/direct_reply/{get,update}/`. */
@@ -23,6 +45,12 @@ export type TiktokAuthValue = Oauth2AuthValue & {
      */
     scopes?: string[]
     /**
+     * The credential's features at the time this account authorized, so the
+     * settings list can judge the grant against what was actually asked for.
+     * Absent on connections made before features existed — read as both on.
+     */
+    features?: TiktokChannelFeatures
+    /**
      * Cached Comment-to-Message setting, the switch that decides whether TikTok
      * delivers `im_receive_high_intent_comment` for this account at all.
      *
@@ -38,10 +66,38 @@ export type TiktokAuthValue = Oauth2AuthValue & {
       /** ISO-8601; when the status above was last read back from TikTok. */
       checkedAt: string
     }
+    /**
+     * The `unique_identifier` TikTok's comment webhook reports when this
+     * account comments itself, learned from a comment lookup that answered
+     * `owner: true`. Lets the worker tell the account's own comments apart
+     * when a lookup returns nothing (seen on photo posts, #1715). Absent until
+     * the account's first own comment has been looked up.
+     *
+     * Must be preserved across token refresh, which re-stamps `metadata`.
+     */
+    ownerUniqueIdentifier?: string
   }
 }
 
-export type TiktokActions = Record<string, never>
+export type TiktokListCommentsInput = {
+  videoId: string
+  commentIds?: string[]
+  includeReplies?: boolean
+} & TiktokCommentListOptions
+
+/**
+ * Called through `integration.runAction`, never as bare API functions, so the
+ * SDK refreshes an expiring token first and retries once on a
+ * `TiktokAuthException`. Code that called the API directly with the stored
+ * token kept failing after the token expired (#1754).
+ */
+export type TiktokActions = {
+  /** `business/comment/list/` for the connected account (`business_id` from auth). */
+  listComments: Handler<
+    { ctx: Context<TiktokAuthValue>; input: TiktokListCommentsInput },
+    TiktokCommentListResult
+  >
+}
 
 // ─── Webhook event schemas ────────────────────────────────────────────────────
 

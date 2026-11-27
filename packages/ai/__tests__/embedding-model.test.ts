@@ -39,6 +39,7 @@ describe("resolveEmbeddingModel", () => {
   test("resolves Gemini when it is the only configured provider", async () => {
     await expect(resolveEmbeddingModel("workspace-1")).resolves.toEqual({
       model: "gemini-embedding-model",
+      modelId: "gemini-embedding-001",
       provider: "gemini",
     })
 

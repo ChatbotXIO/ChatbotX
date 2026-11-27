@@ -26,6 +26,9 @@ export type PlainTextEditorFieldProps = {
   showEmojiPicker?: boolean
   channels?: ChannelType[]
   includeCouponVariables?: boolean
+  includePipelineVariables?: boolean
+  /** Adds the `{{post.*}}` / `{{comment.*}}` group of a post-comment trigger run. */
+  includePostCommentVariables?: boolean
   includeRawCustomFieldVariables?: boolean
   includeBotFieldVariables?: boolean
   description?: string
@@ -44,6 +47,8 @@ export const PlainTextEditorField = ({
   placeholder,
   channels,
   includeCouponVariables = false,
+  includePipelineVariables = false,
+  includePostCommentVariables = false,
   includeRawCustomFieldVariables = false,
   includeBotFieldVariables = false,
   showEmojiPicker = true,
@@ -82,6 +87,8 @@ export const PlainTextEditorField = ({
               className={editorClassName}
               includeBotFieldVariables={includeBotFieldVariables}
               includeCouponVariables={includeCouponVariables}
+              includePipelineVariables={includePipelineVariables}
+              includePostCommentVariables={includePostCommentVariables}
               includeRawCustomFieldVariables={includeRawCustomFieldVariables}
               initValue={initValue}
               inline={inline}

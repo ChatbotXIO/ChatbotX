@@ -14,14 +14,19 @@ export const AI_EDIT_IMAGE_DEFAULT_OPENAI_MODEL = "gpt-image-2" as const
 export const AI_EDIT_IMAGE_FALLBACK_OPENAI_MODEL = "gpt-image-1" as const
 export const AI_EDIT_IMAGE_DEFAULT_GEMINI_MODEL =
   "gemini-3.1-flash-image" as const
+export const AI_EDIT_IMAGE_DEFAULT_MUSE_MODEL = "muse-image-1.0" as const
 
 export const AI_EDIT_IMAGE_DEFAULT_OPENAI_SIZE = "1024x1024" as const
 export const AI_EDIT_IMAGE_DEFAULT_GEMINI_SIZE = "1:1" as const
+// Muse keeps the input image's aspect ratio when no size is sent.
+export const AI_EDIT_IMAGE_DEFAULT_MUSE_SIZE = "auto" as const
 
 export const AI_EDIT_IMAGE_DEFAULT_OPENAI_QUALITY = "low" as const
 export const AI_EDIT_IMAGE_DEFAULT_GEMINI_QUALITY = "auto" as const
+// Muse rejects a `quality` parameter; the worker never sends it.
+export const AI_EDIT_IMAGE_DEFAULT_MUSE_QUALITY = "auto" as const
 
-export const aiEditImageProvider = z.enum(["openai", "gemini"])
+export const aiEditImageProvider = z.enum(["openai", "gemini", "muse"])
 export type AIEditImageProvider = z.infer<typeof aiEditImageProvider>
 
 // Keep legacy UI values for existing flows, but normalize them to the
@@ -40,11 +45,13 @@ export type AIEditImageQuality = z.infer<typeof aiEditImageQuality>
 export const aiEditImageDefaultModels: Record<AIEditImageProvider, string> = {
   openai: AI_EDIT_IMAGE_DEFAULT_OPENAI_MODEL,
   gemini: AI_EDIT_IMAGE_DEFAULT_GEMINI_MODEL,
+  muse: AI_EDIT_IMAGE_DEFAULT_MUSE_MODEL,
 }
 
 export const aiEditImageDefaultSizes: Record<AIEditImageProvider, string> = {
   openai: AI_EDIT_IMAGE_DEFAULT_OPENAI_SIZE,
   gemini: AI_EDIT_IMAGE_DEFAULT_GEMINI_SIZE,
+  muse: AI_EDIT_IMAGE_DEFAULT_MUSE_SIZE,
 }
 
 export const aiEditImageDefaultQualities: Record<
@@ -53,6 +60,7 @@ export const aiEditImageDefaultQualities: Record<
 > = {
   openai: AI_EDIT_IMAGE_DEFAULT_OPENAI_QUALITY,
   gemini: AI_EDIT_IMAGE_DEFAULT_GEMINI_QUALITY,
+  muse: AI_EDIT_IMAGE_DEFAULT_MUSE_QUALITY,
 }
 
 export const aiEditImageSchema = z.object({

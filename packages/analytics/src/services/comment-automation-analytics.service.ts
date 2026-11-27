@@ -11,6 +11,8 @@ import {
 import type {
   CommentAutomationEventInsert,
   CommentAutomationMissInsert,
+  CommentModerationLogInsert,
+  CommentModerationLogModel,
 } from "@chatbotx.io/database/types"
 import type {
   FlowClickedPayload,
@@ -27,6 +29,11 @@ import {
 } from "../lib/time-series"
 import { commentAutomationMissRepository } from "../repositories/postgres/comment-automation-miss.repository"
 import { commentAutomationStatsRepository } from "../repositories/postgres/comment-automation-stats.repository"
+import {
+  type CommentModerationLogFilter,
+  type CommentModerationLogSummaryRow,
+  commentModerationLogRepository,
+} from "../repositories/postgres/comment-moderation-log.repository"
 import {
   COMMENT_AUTOMATION_MISSED_EVENT,
   type CommentAutomationCounterDeltas,
@@ -695,6 +702,98 @@ export class CommentAutomationAnalyticsService {
         "[analytics:commentAutomation] failed to record misses",
       )
     }
+  }
+
+  /**
+   * Records a hidden or deleted comment — one row per `(automationId,
+   * commentId)`. Returns whether the row was new, so the caller enqueues the
+   * hide/delete job only once even when a webhook is redelivered.
+   *
+   * Never throws, same contract as `recordMisses`: on a failed write the
+   * comment is still moderated (returns `true`), it just goes unlogged —
+   * hiding an abusive comment matters more than the log line about it.
+   */
+  async recordModeration(row: CommentModerationLogInsert): Promise<boolean> {
+    try {
+      const inserted = await commentModerationLogRepository.insertLogs([row])
+      await commentAutomationStatsRepository.incrementCounters(
+        tallyCounters(inserted, "moderatedCount"),
+      )
+      return inserted.length > 0
+    } catch (err) {
+      logger.warn(
+        { err, automationId: row.automationId, commentId: row.commentId },
+        "[analytics:commentAutomation] failed to record moderation",
+      )
+      return true
+    }
+  }
+
+  /**
+   * Whether an existing log row is still waiting on its hide/delete job — a
+   * redelivered comment whose first run logged it but failed to enqueue the
+   * job must enqueue it again. Never throws: on a failed read it answers
+   * `true`, since the action job is deduplicated by id.
+   */
+  async isModerationPending(input: {
+    workspaceId: string
+    automationId: string
+    commentId: string
+  }): Promise<boolean> {
+    try {
+      const status = await commentModerationLogRepository.findStatus(input)
+      return status === "pending"
+    } catch (err) {
+      logger.warn(
+        { err, automationId: input.automationId, commentId: input.commentId },
+        "[analytics:commentAutomation] failed to read moderation status",
+      )
+      return true
+    }
+  }
+
+  /** Settles a log row once the channel's hide/delete job ran. Never throws. */
+  async settleModeration(input: {
+    workspaceId: string
+    automationId: string
+    commentId: string
+    status: "done" | "failed"
+    errorDetail?: string | null
+  }): Promise<void> {
+    try {
+      await commentModerationLogRepository.settleStatus({
+        ...input,
+        errorDetail: input.errorDetail?.slice(0, MAX_ERROR_DETAIL_LENGTH),
+      })
+    } catch (err) {
+      logger.warn(
+        { err, automationId: input.automationId, commentId: input.commentId },
+        "[analytics:commentAutomation] failed to settle moderation",
+      )
+    }
+  }
+
+  /**
+   * One page of an automation's moderation log, newest first. Workspace-scoped
+   * through `automationExists`, so a foreign id returns an empty page.
+   */
+  async listModerationLogs(
+    input: CommentModerationLogFilter & { page: number; perPage: number },
+  ): Promise<{ rows: CommentModerationLogModel[]; total: number }> {
+    if (!(await this.automationExists(input))) {
+      return { rows: [], total: 0 }
+    }
+    return await commentModerationLogRepository.listLogs(input)
+  }
+
+  /** Counts per source × action × status for the same filter as the list. */
+  async getModerationSummary(
+    input: CommentModerationLogFilter,
+  ): Promise<CommentModerationLogSummaryRow[]> {
+    if (!(await this.automationExists(input))) {
+      return []
+    }
+    return await commentModerationLogRepository.summarize(input)
   }
 
   /**

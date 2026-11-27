@@ -1,55 +1,142 @@
 import {
   commentAutomationService,
-  flushAllPendingWorkspaceRealtimeEvents,
   withBlockedOwnerGuard,
 } from "@chatbotx.io/business"
 import {
-  defaultWorkerOptions,
-  getQueueConnection,
+  type ContactInfoCaptureJobData,
   type LeaderboardJobData,
   LowJobAction,
   type LowJobData,
+  type PostPublishJobData,
   type ProfileSnapshotJobData,
   queueNames,
 } from "@chatbotx.io/worker-config"
-import { type Job, Worker } from "bullmq"
+import type { Job } from "bullmq"
+import { recordLiveVideoStatusChange } from "../channel-post-sync/record-live-video"
+import { refreshChannelPost } from "../channel-post-sync/refresh-channel-post"
+import { refreshChannelPostMetrics } from "../channel-post-sync/refresh-channel-post-metrics"
+import { syncChannelPosts } from "../channel-post-sync/sync-channel-posts"
 import { env } from "../env"
 import { captureContactProfileSnapshot } from "../integration/handlers/capture-contact-profile-snapshot"
 import { coexistAttachmentDownload } from "../integration/handlers/coexist/attachment-download"
 import { updateContactAvatar } from "../integration/handlers/contact/update-avatar"
+import { processContactInfoCapture } from "../integration/handlers/contact-info-capture"
+import { contactMarkAsRead } from "../integration/handlers/conversation"
+import { processIncomingMessage } from "../integration/handlers/incoming-message"
+import { handleMessageStatus } from "../integration/handlers/message-status"
 import { receiveComment } from "../integration/handlers/received-message"
+import { runIntegrationJobWithWebhookContext } from "../integration/job-context"
 import { processLeaderboardJob } from "../leaderboard/process-job"
-import { ensureBootstrapped } from "../lib/bootstrap"
-import { instrumentWorker } from "../lib/job-observability"
+import { createQueueWorker } from "../lib/create-queue-worker"
+import { deferOnLockContention } from "../lib/lock-contention-deferral"
 import { logger } from "../lib/logger"
+import { resolveWorkspaceId } from "../lib/resolve-workspace-id"
 import { runJobWithAuditContext } from "../lib/run-job-with-audit-context"
+import { runWorker } from "../lib/shutdown"
+import { processPostPublishJob } from "../post-publish/process-job"
+import { recheckPublishDestinationScopes } from "../publish-destination/recheck-scopes"
+import { processReconnectPublishFanOut } from "../publish-destination/reconnect-fan-out"
+import { refreshPublishDestinationAvatar } from "../publish-destination/refresh-avatar"
+import "../post-publish/register-feed-fetcher"
+
+/**
+ * The workspace a `low` job belongs to. Jobs routed here from the integration
+ * ingress carry only the integration identifiers, so they resolve through the
+ * integration, as the integration worker does; `undefined` (unresolvable) makes
+ * the guard fail open, like every other job that cannot be attributed.
+ */
+async function resolveLowJobWorkspaceId(
+  data: LowJobData["data"],
+): Promise<string | undefined> {
+  return "workspaceId" in data
+    ? data.workspaceId
+    : await resolveWorkspaceId(data)
+}
 
 /**
  * Runs one `low` job behind the blocked-owner guard, dispatching on its type.
+ * `token` is the worker lock token an echo needs to be parked in the delayed
+ * set when it loses a distributed-lock race.
  */
-async function processLowJob(job: Job<LowJobData>) {
-  const workspaceId = job.data.data.workspaceId
+async function processLowJob(
+  job: Job<LowJobData>,
+  token: string | undefined,
+): Promise<void> {
+  const workspaceId = await resolveLowJobWorkspaceId(job.data.data)
   await withBlockedOwnerGuard(workspaceId, async () => {
     await runJobWithAuditContext(
       { workspaceId, source: `low:${job.data.type}` },
       async () => {
-        switch (job.data.type) {
+        const jobData = job.data
+        switch (jobData.type) {
           case LowJobAction.coexistAttachmentDownload: {
-            await coexistAttachmentDownload(job, job.data.data)
+            await coexistAttachmentDownload(job, jobData.data)
             return
           }
           case LowJobAction.updateContactAvatar: {
-            await updateContactAvatar(job.data.data)
+            await updateContactAvatar(jobData.data)
+            return
+          }
+          case LowJobAction.reconnectPublishFanOut: {
+            await processReconnectPublishFanOut(jobData.data)
+            return
+          }
+          case LowJobAction.recheckPublishDestinationScopes: {
+            await recheckPublishDestinationScopes(jobData.data)
+            return
+          }
+          case LowJobAction.refreshPublishDestinationAvatar: {
+            await refreshPublishDestinationAvatar(jobData.data)
+            return
+          }
+          case LowJobAction.refreshChannelPost: {
+            await refreshChannelPost(jobData.data)
+            return
+          }
+          case LowJobAction.refreshChannelPostMetrics: {
+            await refreshChannelPostMetrics(jobData.data)
+            return
+          }
+          case LowJobAction.syncChannelPosts: {
+            await syncChannelPosts(jobData.data)
             return
           }
           case LowJobAction.replayMissedComment: {
-            await receiveComment(job.data.data)
+            await receiveComment(jobData.data)
+            return
+          }
+          case LowJobAction.messageStatus: {
+            await runIntegrationJobWithWebhookContext(jobData, () =>
+              handleMessageStatus(jobData.data, job),
+            )
+            return
+          }
+          case LowJobAction.contactMarkAsRead: {
+            await runIntegrationJobWithWebhookContext(jobData, () =>
+              contactMarkAsRead(jobData.data),
+            )
+            return
+          }
+          case LowJobAction.incomingMessageEcho: {
+            // Same lock-race policy as the integration queue: a lost race
+            // defers the echo instead of burning one of its two attempts.
+            await deferOnLockContention(job, token, () =>
+              runIntegrationJobWithWebhookContext(jobData, () =>
+                processIncomingMessage(jobData.data),
+              ),
+            )
+            return
+          }
+          case LowJobAction.liveVideoStatusChange: {
+            await runIntegrationJobWithWebhookContext(jobData, () =>
+              recordLiveVideoStatusChange(jobData.data),
+            )
             return
           }
           default: {
             // Exhaustiveness guard — a new LowJobData variant without a
             // case here becomes a compile error.
-            const _exhaustive: never = job.data
+            const _exhaustive: never = jobData
             logger.warn({ data: _exhaustive }, "Unhandled low job type")
             return
           }
@@ -98,44 +185,30 @@ async function settleMissedCommentReplay(job: Job<LowJobData>): Promise<void> {
  *
  * This process also hosts the dedicated, rate-limited `profileSnapshot` consumer
  * (contact relationship snapshots) — non-urgent provider enrichment that must
- * not occupy the integration process.
+ * not occupy the integration process — and the small, rate-limited
+ * `contactInfoCapture` consumer.
  */
-async function startLowWorker() {
-  try {
-    await ensureBootstrapped()
-  } catch (err) {
-    logger.error({ err }, "Failed to bootstrap low worker")
-    process.exit(1)
-  }
+/** Concurrent publish attempts of one worker process. */
+const POST_PUBLISH_WORKER_CONCURRENCY = 3
 
-  const worker = new Worker(
+function startLowWorker() {
+  createQueueWorker(
     queueNames.enum.low,
-    async (job: Job<LowJobData>) => {
+    async (job: Job<LowJobData>, token) => {
       try {
-        await processLowJob(job)
+        await processLowJob(job, token)
       } finally {
         await settleMissedCommentReplay(job)
       }
     },
-    {
-      connection: getQueueConnection(queueNames.enum.low),
-      ...defaultWorkerOptions,
-      concurrency: env.LOW_WORKER_CONCURRENCY,
-    },
+    { concurrency: env.LOW_WORKER_CONCURRENCY },
   )
-
-  worker.on("failed", (job, err) => {
-    if (job) {
-      logger.error({ err }, `Low job ${job.id} has failed`)
-    }
-  })
-  instrumentWorker(worker, { queue: queueNames.enum.low })
 
   // Rate-limited provider enrichment (contact relationship snapshots). Its own
   // queue + limiter so the provider rate limit never throttles the shared
   // `low` jobs above; it runs here, off the latency-sensitive integration
   // process.
-  const profileSnapshotWorker = new Worker(
+  createQueueWorker(
     queueNames.enum.profileSnapshot,
     async (job: Job<ProfileSnapshotJobData>) => {
       const workspaceId = job.data.data.workspaceId
@@ -149,24 +222,14 @@ async function startLowWorker() {
       })
     },
     {
-      connection: getQueueConnection(queueNames.enum.profileSnapshot),
       concurrency: 1,
       limiter: { max: env.PROFILE_SNAPSHOT_JOBS_PER_SECOND, duration: 1000 },
     },
   )
 
-  profileSnapshotWorker.on("failed", (job, err) => {
-    if (job) {
-      logger.error({ err }, `Profile snapshot job ${job.id} has failed`)
-    }
-  })
-  instrumentWorker(profileSnapshotWorker, {
-    queue: queueNames.enum.profileSnapshot,
-  })
-
   // Leaderboard scoring: its own queue so a livestream burst never delays the
   // shared `low` jobs, with bounded concurrency so it cannot flood Postgres.
-  const leaderboardWorker = new Worker(
+  createQueueWorker(
     queueNames.enum.leaderboard,
     async (job: Job<LeaderboardJobData>) => {
       const workspaceId = job.data.data.workspaceId
@@ -179,44 +242,43 @@ async function startLowWorker() {
         )
       })
     },
+    { concurrency: env.LEADERBOARD_WORKER_CONCURRENCY },
+  )
+
+  // Broadcast "left a phone/email" attribution: its own queue so a burst of
+  // replies carrying a phone number never takes `low` slots, with small
+  // concurrency and a rate limit because every run reads message history.
+  createQueueWorker(
+    queueNames.enum.contactInfoCapture,
+    async (job: Job<ContactInfoCaptureJobData>) => {
+      const workspaceId = job.data.data.workspaceId
+      await withBlockedOwnerGuard(workspaceId, async () => {
+        await runJobWithAuditContext(
+          { workspaceId, source: `contact-info-capture:${job.data.type}` },
+          async () => {
+            await processContactInfoCapture(job.data.data)
+          },
+        )
+      })
+    },
     {
-      connection: getQueueConnection(queueNames.enum.leaderboard),
-      ...defaultWorkerOptions,
-      concurrency: env.LEADERBOARD_WORKER_CONCURRENCY,
+      concurrency: env.CONTACT_INFO_CAPTURE_CONCURRENCY,
+      limiter: {
+        max: env.CONTACT_INFO_CAPTURE_JOBS_PER_SECOND,
+        duration: 1000,
+      },
     },
   )
 
-  leaderboardWorker.on("failed", (job, err) => {
-    if (job) {
-      logger.error({ err }, `Leaderboard job ${job.id} has failed`)
-    }
-  })
-  instrumentWorker(leaderboardWorker, { queue: queueNames.enum.leaderboard })
-
-  let isShuttingDown = false
-  async function shutdown() {
-    if (isShuttingDown) {
-      return
-    }
-    isShuttingDown = true
-    try {
-      await Promise.all([
-        worker.close(),
-        profileSnapshotWorker.close(),
-        leaderboardWorker.close(),
-      ])
-      await flushAllPendingWorkspaceRealtimeEvents()
-      process.exit(0)
-    } catch (err) {
-      logger.error(err, "[LowWorker] Error during shutdown")
-      process.exit(1)
-    }
-  }
-  process.once("SIGINT", shutdown)
-  process.once("SIGTERM", shutdown)
+  // Composed posts: one job per destination. The attempt, its claim and its
+  // retries live in the database, so BullMQ never retries a job.
+  createQueueWorker(
+    queueNames.enum.postPublish,
+    async (job: Job<PostPublishJobData>) => {
+      await processPostPublishJob(job.data)
+    },
+    { concurrency: POST_PUBLISH_WORKER_CONCURRENCY },
+  )
 }
 
-startLowWorker().catch((err) => {
-  logger.error({ err }, "Failed to start low worker")
-  process.exit(1)
-})
+runWorker("low", startLowWorker)

@@ -56,6 +56,93 @@ again equals the published content.
 - The revert action is destructive from the user's perspective because it discards
   local draft work, so the builder shows a confirmation dialog before executing it.
 
+## Button limits and button styles
+
+Each channel's flow policy (`packages/flow-config/src/channel-rules/policies/`) is the
+only place button limits live. `limits.buttonCount` caps a text or media step,
+`limits.cardButtonCount` caps a `sendCard` step and each card of a `sendCarousel`;
+`getButtonCountLimit(policy, "step" | "card")` is the one reader (publish, builder
+editors, the worker). Agents read both in `capabilities.get` →
+`selectedChannelPolicy.limits` (policy version 4).
+
+| Channel | Step buttons | Card buttons |
+|---|---|---|
+| LINE | 5 | 5 |
+| Telegram | 10 | 3 |
+| Every other channel (and omnichannel) | 3 | 3 |
+
+The card schema's own ceiling, `CARD_BUTTON_MAX` (`steps/button-limits.ts`), must
+equal the largest `cardButtonCount`; a test pins it. Publish rejects more buttons
+than the node's channel allows with the `constraintExceeded` / `maxButtonCount`
+capability error (path `…buttons`, or `…cards.<i>.buttons` for a carousel card).
+
+The node's channel is not enforced at send time, so a step can reach a contact on a
+channel that takes fewer buttons (a 5-button LINE node reached through a jump from
+another node). For **cards**, where the extra buttons make the channel's API reject
+the whole card, the worker (`clampCardButtonsToChannel`, called from `sendFlowStep`)
+keeps the leading buttons up to the **resolved** channel's `cardButtonCount` and logs
+a warning naming what it dropped. Text and media step buttons are not cut by the
+worker: each integration already handles that overflow itself (Messenger and
+Instagram send the first 3, TikTok and WhatsApp split into further messages, Zalo
+sends 5).
+
+A button may carry `style`: `primary`, `secondary` or `link`. A channel renders it
+only when its policy declares `buttonStyles` (`capabilities.get` →
+`selectedChannelPolicy.buttonStyles`, `null` elsewhere); today that is LINE, whose
+default for an unset style is `link`. The builder shows the style picker in the
+button dialog only on such a channel (never on quick replies). Everywhere else a
+stored style is ignored and never blocks publish. In a flow spec, set `style` on a
+`send` button.
+
+## Call Phone Number buttons
+
+A step button (`buttonType: "callPhoneNumber"`, or `call` in a flow spec) that dials
+a number when tapped. The number is either a real number in E.164 form
+(`+14155552671`, at most 16 characters; checked with libphonenumber when the flow is
+saved or published) or an expression embedding `{{variables}}` (at most 100
+characters) that is resolved, and validated the same way, when the message is sent.
+
+- **Native channels** (`capabilities.get` → `selectedChannelPolicy.nativeButtonTypes`
+  contains `callPhoneNumber`): Messenger (`phone_number`), Zalo (`oa.open.phone`,
+  digits without `+`) and webchat/inbox (`tel:` link). The device places the call;
+  the bot is not told about the tap. Native vs. reply is decided per delivery
+  channel, so an omnichannel node sent to one of these channels dials too.
+- **Every other channel** (Instagram, Telegram, TikTok, WhatsApp, API) sends an ordinary reply button whose title is `"{label} {number}"` when
+  that fits the channel's button-label limit, otherwise just the number. Tapping it
+  replies with the number as text, and the inbox stores it as that reply button,
+  not a dial link. The reply resolves `{{variables}}` again at tap
+  time, so if the value changed after the message was sent, the reply shows the
+  new number while the button title still shows the old one.
+- A number that does not resolve to a valid international number degrades to an
+  inert button (logged) rather than being dropped, so card button counts stay equal.
+- The button can neither continue the flow nor run additional steps, and it is
+  rejected on quick replies (node quick replies and `sendQuickReply` steps), on
+  WhatsApp / Messenger message-template steps and as the WhatsApp Flow button.
+
+## Copy Text buttons
+
+A step button (`buttonType: "copyText"`, or `copy` in a flow spec) that copies a
+text to the contact's clipboard when tapped — for example a PIX "copia e cola"
+payment code returned by a Call API step. The text is a literal of at most 256
+characters or an expression embedding `{{variables}}` (at most 1,000 characters
+authored) that is resolved when the message is sent.
+
+- **Native channels** (`selectedChannelPolicy.nativeButtonTypes` contains
+  `copyText`): Telegram, as an inline `copy_text` button (Bot API 7.11). The
+  device copies the text; the bot is not told about the tap. Telegram copies at
+  most 256 characters, so a resolved text that is empty or longer is sent as a
+  reply button instead (logged), and the inbox stores it as that reply button.
+- **Every other channel** sends an ordinary reply button. Tapping it replies with
+  the text as a message the contact can long-press to copy; the reply resolves
+  `{{variables}}` again at tap time. The inbox shows a stored native copy button
+  as a button that copies the text.
+- The builder offers the Copy Text action only on Telegram nodes. The schema
+  still accepts it on every channel (the reply fallback above), so a flow built
+  through the API or switched to another channel keeps working.
+- The button can neither continue the flow nor run additional steps, and it is
+  rejected in the same places as a Call Phone Number button (quick replies,
+  WhatsApp / Messenger message-template steps, the WhatsApp Flow button).
+
 ## Channel capability validation
 
 Publishing, importing, and restoring a flow validate every message step against its
@@ -104,14 +191,15 @@ here, so it cannot drift from the schema.
 
 | Type | Terminal? | Notes |
 |---|---|---|
-| `send` | No | Text, image, or file, with optional quick-reply `buttons`. Each button's `then` is a nested step list. |
+| `send` | No | Text, image, or file, with optional `buttons`. Each button's `then` is a nested step list. A button may instead set `call` (an international number such as `+14155552671`, optionally with `{{variables}}`) to become a Call Phone Number button; `call` cannot be combined with `then`. See "Call Phone Number buttons". A button may also set `copy` (the text to copy, at most 256 characters once `{{variables}}` are resolved) to become a Copy Text button; `copy` cannot be combined with `then` or `call`. See "Copy Text buttons". A button may set `style` (see "Button limits and button styles"). How many buttons the flow's channel allows is its `limits.buttonCount` (3 when `channel` is omitted); a spec with more is rejected, drafts included. |
 | `sendTemplate` | No | Sends an existing WhatsApp template by `templateName`. The template must resolve (by name) to a workspace template with status `APPROVED`. |
 | `sendCollection` | No | A product carousel (Messenger): `collectionType` `automated` picks the products matching `conditions` (`name`, `categoryId`, `subcategoryId`, `vendorId`) when sent, `manual` the chosen `productIds`; at most 10, only what the web shop shows. Each card opens the product in the web shop signed for the contact (`{{shop_token}}`). A collection matching nothing is skipped. See `docs/ecommerce.md`. |
 | `sendProducts` | No | Sends catalog products (`display`: `products` or `carousel`) by ChatbotX product id; get ids from `products.listSendable`. Needs a `channel` that supports product messages (WhatsApp); omnichannel flows reject it. Limits per channel come from `capabilities.get`. See `docs/product-messages.md`. |
 | `sendViewCatalog` | No | Shares the product catalog: a message (`text`, optional `footer`) with a button that opens it. Optional `thumbnailProductId` is a catalog item's `retailerId` from `products.searchMetaCatalogItems`. Publish rejects it on channels that cannot deliver it (WhatsApp is the only one today; see `capabilities.get`'s `unsupportedSteps`). In an omnichannel flow (`channel` omitted) it is accepted but only sent to WhatsApp contacts; other contacts skip it. Set `channel: "whatsapp"` to get the publish-time check. |
 | `wait` | No | Pauses for a duration before continuing. |
 | `branch` | **Yes** | Contact-filter-style `cases` (`when`/`match`/`then`) plus an `otherwise`. Terminal within its own step list — nothing may follow a `branch` at the same level; continue inside `cases[].then` / `otherwise` instead. |
-| `action` | No | A workspace side-effect: `addTags`, `removeTags`, `setCustomField`, `assignConversation`, `archiveConversation`. |
+| `action` | No | A workspace side-effect: `addTags`, `removeTags`, `setCustomField`, `assignConversation`, `archiveConversation`. `setCustomField` takes an optional `operation` (default `set`): `set`, `append`/`prepend` (text), `increase`/`decrease`/`formula` (number), `setNow`/`dateExpression`/`addMinutes`/`addHours`/`addDays` (date, datetime) or `clear`; the field's type must support it (`invalidFieldOperation` otherwise) and `value` is optional only for `clear` and `setNow`. `formula` evaluates math with `value` as the current number (e.g. `round(value * 1.1)`); `dateExpression` evaluates e.g. `now + 2 days - 3 hours`. |
+| `pipeline` | No | A Pipelines (CRM kanban) action for the contact, one of the 14 `action`s of the Pipelines flow step (`addToPipeline`, `moveToStage`, `changeValue`, `assign`, `changeStatus`, `changePriority`, `changeDueDate`, `changeTitle`, `setCustomField`, `clearCustomField`, `changeDescription`, `removeFromPipeline`, `addComment`, `transfer`). References are by name, never id: `pipeline` is a pipeline `referenceName` (an id also works), `stage`/`destinationStage` a stage name in that pipeline, `field`/`fields`/`fieldValues[].field` pipeline custom field `referenceName`s (all from `pipelines.get`), `dueDate` is `{ mode: "none" }`, `{ mode: "fixed", at }` or `{ mode: "customField", customFieldName }` (a contact date/datetime custom field). Assignees are workspace member ids (`workspaceMembers.list`) and inbox team ids (`inboxTeams.list`). Each action's required fields are validated with spec paths (e.g. `steps[1].stage`), and fields an action does not use are rejected. Success continues to the next step; optional `onError` / `onSkip` step lists run when the action fails or the contact has no open item (skip). `onSkip` is rejected for `addToPipeline`, which never skips. Unknown pipeline/stage/field names fail with `unknownPipeline` / `unknownPipelineStage` / `unknownPipelineField` (or `ambiguousPipelineStage` when two stages share a name) and candidate names. See `docs/pipelines.md`. |
 | `startFlow` | No | Starts another flow (by `flowName`); this flow keeps running afterward. |
 | `addNote` | No | Adds an internal note to the conversation. |
 | `goto` | **Yes** | Routes to an already-defined step's `id` instead of continuing linearly. See constraints below. |
@@ -238,9 +326,9 @@ list endpoint instead (`tags.list`, `customFields.list`, `flows.list`, ...) —
 
 **This cap does not apply to what the flow-spec compiler itself sees.** The DSL
 compiler's `FlowAuthoringContext` (`templatesByName`/`customFieldsByName`/
-`flowsByName`, built by
+`flowsByName`/`pipelinesByReferenceName`, built by
 [`getFlowAuthoringContext`](../packages/business/src/capabilities/service.ts))
-fetches templates, custom fields, and flows **unbounded** — independent of, and via
+fetches templates, custom fields, and flows **unbounded** (and every pipeline with its stages and fields in three batched queries, uncached) — independent of, and via
 different loaders than, the public `capabilities.get` response. This means: a
 `flows.publish`/`flows.updateDraft`/`flows.validate` call with a spec that
 references (by name) the 250th flow, template, or custom field in a workspace with

@@ -7,12 +7,15 @@ import {
   type CommentAutomationStatField,
   commentAutomationStatCounters,
 } from "./lib/stat-counters"
+import { ModeratedStatsCell } from "./moderated-stats-cell"
 
 /** The counter columns every comment automation row carries. */
 export type CommentAutomationStatRow = {
   id: string
   /** Half of the Misses denominator; see `resolveDenominator`. */
   repliesCount: number
+  /** Comments hidden or deleted by a hide rule or AI moderation. */
+  moderatedCount: number
 } & Record<
   (typeof commentAutomationStatCounters)[CommentAutomationStatField],
   number
@@ -86,7 +89,7 @@ export function buildCommentAutomationStatColumns<
     ? STAT_COLUMNS
     : STAT_COLUMNS.filter(({ field }) => !DM_ONLY_STAT_FIELDS.has(field))
 
-  return columns.map(({ id, field }) => ({
+  const statColumns: ColumnDef<TRow>[] = columns.map(({ id, field }) => ({
     id,
     header: ({ column }) => (
       <DataTableColumnHeader
@@ -112,4 +115,30 @@ export function buildCommentAutomationStatColumns<
     enableSorting: false,
     size: 110,
   }))
+
+  // Not a delivery counter, so it has no rate and opens the moderation log
+  // rather than the contacts dialog.
+  statColumns.push({
+    id: "moderated",
+    header: ({ column }) => (
+      <DataTableColumnHeader
+        className="w-full justify-center"
+        column={column}
+        title={t("commentAutomation.stats.moderated")}
+      />
+    ),
+    cell: ({ row }) => (
+      <div className="text-center">
+        <ModeratedStatsCell
+          automationId={row.original.id}
+          value={row.original.moderatedCount}
+          workspaceId={workspaceId}
+        />
+      </div>
+    ),
+    meta: { label: t("commentAutomation.stats.moderated") },
+    enableSorting: false,
+    size: 110,
+  })
+  return statColumns
 }

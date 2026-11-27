@@ -1,14 +1,15 @@
-import { templateService } from "@chatbotx.io/business"
-import { buttonVariants } from "@chatbotx.io/ui/components/ui/button"
+import {
+  TEMPLATE_MANAGE_PERMISSION,
+  templateService,
+} from "@chatbotx.io/business"
 import { getIdFromParams } from "@chatbotx.io/utils"
-import { PlusIcon } from "lucide-react"
-import Link from "next/link"
 import { notFound } from "next/navigation"
 import { getTranslations } from "next-intl/server"
 import { AppBreadcrumb } from "@/components/app-breadcrumb"
+import { CreateTemplateDialog } from "@/features/templates/components/create-template-dialog"
 import { TemplatesTable } from "@/features/templates/components/templates-table"
-import { hasWorkspacePermission } from "@/lib/auth/permission-routes"
-import { getCurrentUserAndTargetWorkspace } from "@/lib/auth/utils"
+import { TemplatesTabs } from "@/features/templates/components/templates-tabs"
+import { requireWorkspacePermission } from "@/lib/auth/require-workspace-permission"
 
 export default async function TemplatesPage({
   params,
@@ -20,13 +21,9 @@ export default async function TemplatesPage({
     return notFound()
   }
 
-  const userAndWorkspace = await getCurrentUserAndTargetWorkspace(workspaceId)
-  const isSuperAdmin = Boolean(
-    userAndWorkspace &&
-      hasWorkspacePermission(
-        userAndWorkspace.targetWorkspaceMember.permissions,
-        "superAdmin",
-      ),
+  const member = await requireWorkspacePermission(
+    workspaceId,
+    TEMPLATE_MANAGE_PERMISSION,
   )
 
   const t = await getTranslations()
@@ -40,33 +37,15 @@ export default async function TemplatesPage({
           { label: t("templates.title"), href: "" },
         ]}
       />
-      <div className="flex items-center justify-between">
-        <p className="text-muted-foreground text-sm">
-          {t("templates.description")}
-        </p>
-        <div className="flex gap-2">
-          <Link
-            className={buttonVariants({ variant: "outline" })}
-            href={`/space/${workspaceId}/templates/installs`}
-          >
-            {t("templates.installs.title")}
-          </Link>
-          {isSuperAdmin && (
-            <Link
-              className={buttonVariants({ variant: "default" })}
-              href={`/space/${workspaceId}/templates/create`}
-            >
-              <PlusIcon />
-              {t("actions.create")}
-            </Link>
-          )}
-        </div>
-      </div>
-      <TemplatesTable
-        isSuperAdmin={isSuperAdmin}
-        templates={templates}
+      <TemplatesTabs
+        active="mine"
+        permissions={member.targetWorkspaceMember.permissions}
         workspaceId={workspaceId}
       />
+      <div className="flex justify-end">
+        <CreateTemplateDialog workspaceId={workspaceId} />
+      </div>
+      <TemplatesTable templates={templates} workspaceId={workspaceId} />
     </div>
   )
 }

@@ -12,7 +12,7 @@ import { createId } from "@chatbotx.io/utils"
 import { ecommerceSettingsService } from "../ecommerce-settings/service"
 import { customerMessageStrings } from "../order/customer-messages"
 import { resolveCustomerMessageLanguage } from "../order/message-language"
-import { resolveTenantSettings } from "../platform/settings"
+import { resolveWorkspaceAppUrl } from "../platform/settings"
 import { buildWebshopButtonUrl } from "./link"
 
 /** Product names read for matching; a bigger catalog matches its first ones. */
@@ -145,10 +145,11 @@ export async function searchProductsByMessage(input: {
     return []
   }
   const names = await withCache(
-    `webshop:searchable-names:${input.workspaceId}`,
+    `webshop:searchable-names:${input.workspaceId}:${settings.general.storeSource}`,
     () =>
       productRepository.listSearchableNames({
         workspaceId: input.workspaceId,
+        source: settings.general.storeSource,
         limit: SEARCHABLE_NAMES_LIMIT,
       }),
     { ttl: NAMES_CACHE_SECONDS },
@@ -194,9 +195,9 @@ export async function buildProductSearchReply(input: {
       productIds: products.map((product) => product.id),
     }
   }
-  const [language, { appUrl }] = await Promise.all([
+  const [language, appUrl] = await Promise.all([
     resolveCustomerMessageLanguage(input),
-    resolveTenantSettings({ workspaceId: input.workspaceId }),
+    resolveWorkspaceAppUrl({ workspaceId: input.workspaceId }),
   ])
   const strings = customerMessageStrings(language).productSearch
   return {

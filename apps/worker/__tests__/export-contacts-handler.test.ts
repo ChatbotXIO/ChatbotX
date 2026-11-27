@@ -1,9 +1,11 @@
-import { PassThrough } from "node:stream"
+import { PassThrough, Readable } from "node:stream"
+import { createImportCsvParser } from "@chatbotx.io/imports/parsers"
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
 // ── Mocks ─────────────────────────────────────────────────────────────────────
 
 const findManyContacts = vi.fn()
+const listAdIdsByContacts = vi.fn()
 const findManyTags = vi.fn()
 const findManyCustomFields = vi.fn()
 const findFirstWorkspace = vi.fn()
@@ -36,6 +38,9 @@ vi.mock("@chatbotx.io/business", () => ({
   // fields for CSV export.
   workspaceService: {
     find: (...args: unknown[]) => findFirstWorkspace(...args),
+  },
+  contactReferralEventService: {
+    listAdIdsByContacts: (...args: unknown[]) => listAdIdsByContacts(...args),
   },
   tagService: {
     findManyByIds: (...args: unknown[]) => findManyTags(...args),
@@ -83,7 +88,7 @@ vi.mock("@chatbotx.io/filesystem/node-upload", () => ({
     createUpload(path, options),
 }))
 
-const { loopableExportContacts } = await import(
+const { loopableExportContacts, resolveExportRelations } = await import(
   "../src/default/handlers/export-contacts"
 )
 
@@ -105,14 +110,19 @@ const buildData = (overrides: Partial<ExportData> = {}): ExportData =>
   }) as ExportData
 
 // Captures everything the handler streams to the uploader.
-const captureCsv = (): { text: () => string } => {
+const LEADING_BOM_RE = /^\uFEFF/
+
+// `text()` drops the leading UTF-8 BOM so row assertions stay readable;
+// `raw()` keeps it for the BOM test.
+const captureCsv = (): { text: () => string; raw: () => Buffer } => {
   const chunks: Buffer[] = []
   createUpload.mockImplementationOnce(() => {
     uploadStream = new PassThrough()
     uploadStream.on("data", (c: Buffer) => chunks.push(Buffer.from(c)))
     return { stream: uploadStream, done: Promise.resolve() }
   })
-  return { text: () => Buffer.concat(chunks).toString("utf8") }
+  const raw = () => Buffer.concat(chunks)
+  return { text: () => raw().toString("utf8").replace(LEADING_BOM_RE, ""), raw }
 }
 
 const lastUpdate = () =>
@@ -129,6 +139,7 @@ const contact = (overrides: Record<string, unknown> = {}) => ({
 
 beforeEach(() => {
   findManyContacts.mockReset()
+  listAdIdsByContacts.mockReset()
   findManyTags.mockReset()
   findManyTags.mockResolvedValue([])
   findManyCustomFields.mockReset()
@@ -151,6 +162,38 @@ describe("loopableExportContacts", () => {
 
     expect(createUpload).not.toHaveBeenCalled()
     expect(findManyContacts).not.toHaveBeenCalled()
+  })
+
+  test("starts the file with a UTF-8 BOM so Excel on Windows reads Vietnamese correctly", async () => {
+    const csv = captureCsv()
+    findManyContacts.mockResolvedValueOnce([
+      contact({ fullName: "Nguyễn Văn Bình" }),
+    ])
+
+    await loopableExportContacts(buildData())
+
+    const bytes = csv.raw()
+    expect([...bytes.subarray(0, 3)]).toEqual([0xef, 0xbb, 0xbf])
+    expect(csv.text()).toContain('"Nguyễn Văn Bình"')
+    // The reported file size includes the BOM bytes.
+    expect(lastUpdate().fileSize).toBe(String(bytes.length))
+  })
+
+  test("round-trips through the production import parser without a BOM-polluted header", async () => {
+    const csv = captureCsv()
+    findManyContacts.mockResolvedValueOnce([
+      contact({ fullName: "Nguyễn Văn Bình", email: "binh@example.com" }),
+    ])
+
+    await loopableExportContacts(buildData())
+
+    const rows: Record<string, string>[] = []
+    for await (const row of createImportCsvParser(Readable.from([csv.raw()]))) {
+      rows.push(row as Record<string, string>)
+    }
+    expect(rows).toEqual([
+      { "Full Name": "Nguyễn Văn Bình", Email: "binh@example.com" },
+    ])
   })
 
   test("writes an escaped header row", async () => {
@@ -185,22 +228,34 @@ describe("loopableExportContacts", () => {
     })
   })
 
-  test("paginates with keyset and persists progress per chunk", async () => {
+  test("paginates with keyset and persists progress at most every 5 seconds", async () => {
     const csv = captureCsv()
     findManyContacts
       .mockResolvedValueOnce([contact({ id: "1" }), contact({ id: "2" })])
-      .mockResolvedValueOnce([contact({ id: "3" })])
+      .mockResolvedValueOnce([contact({ id: "3" }), contact({ id: "4" })])
+      .mockResolvedValueOnce([contact({ id: "5" })])
+    // Start, then page 1 within the interval, page 2 past it, page 3 within.
+    const now = vi
+      .spyOn(Date, "now")
+      .mockReturnValueOnce(0)
+      .mockReturnValueOnce(4999)
+      .mockReturnValueOnce(5000)
+      .mockReturnValue(5000)
 
     await loopableExportContacts(buildData())
+    now.mockRestore()
 
-    expect(findManyContacts).toHaveBeenCalledTimes(2)
-    expect(csv.text().trim().split("\n")).toHaveLength(4) // header + 3 rows
+    expect(findManyContacts).toHaveBeenCalledTimes(3)
+    expect(csv.text().trim().split("\n")).toHaveLength(6) // header + 5 rows
+    // The BOM leads the file once and is never repeated before a later page.
+    expect(csv.raw().indexOf(Buffer.from([0xef, 0xbb, 0xbf]))).toBe(0)
+    expect(csv.raw().indexOf(Buffer.from([0xef, 0xbb, 0xbf]), 3)).toBe(-1)
 
-    // First chunk persists 2, second persists 3, final update persists 3.
+    // Only page 2 saved progress mid-export; the final update has the total.
     const totals = updateSet.mock.calls.map(
       (c) => (c[0] as { meta?: { totalRecords?: number } }).meta?.totalRecords,
     )
-    expect(totals).toEqual([2, 3, 3])
+    expect(totals).toEqual([4, 5])
     expect(lastUpdate()).toMatchObject({ status: "uploaded" })
   })
 
@@ -305,35 +360,96 @@ describe("loopableExportContacts", () => {
     )
   })
 
-  test("loads every contactInboxes row (no limit) ONLY when the WhatsApp User ID column is selected", async () => {
+  test("asks each page only for the relations the selected columns render", async () => {
     captureCsv()
     findManyContacts.mockResolvedValueOnce([])
 
-    await loopableExportContacts(buildData({ fields: ["sys:sourceUserId"] }))
+    await loopableExportContacts(
+      buildData({ fields: ["sys:contactId", "cus:cf-1", "tag:t-1"] }),
+    )
 
-    // The `with.contactInboxes` shape now lives inside
-    // contactRepository.listForExportPage (pinned in
-    // packages/database/__tests__/contact-export-page-repository.test.ts); the
-    // handler's job is to signal that the WhatsApp User ID column is selected,
-    // which is what lifts the earliest-row limit.
-    const query = findManyContacts.mock.calls[0][0] as {
-      includeSourceUserId: boolean
-    }
-    expect(query.includeSourceUserId).toBe(true)
+    expect(findManyContacts.mock.calls[0][0]).toMatchObject({
+      relations: {
+        customFieldIds: ["cf-1"],
+        tagIds: ["t-1"],
+        contactInboxes: "earliest",
+      },
+    })
   })
 
-  test("keeps the single-row contactInboxes load when the WhatsApp User ID column is NOT selected (regression)", async () => {
+  test("does not stall on a write once the upload has failed", async () => {
+    findManyContacts.mockResolvedValue([contact()])
+    let failUpload: (error: Error) => void = () => undefined
+    createUpload.mockImplementationOnce(() => {
+      // Nothing reads the stream, as when every lib-storage part upload has
+      // failed: a write would wait on backpressure forever.
+      uploadStream = new PassThrough({ highWaterMark: 1 })
+      const done = new Promise<void>((_, reject) => {
+        failUpload = reject
+      })
+      return { stream: uploadStream, done }
+    })
+
+    const exported = loopableExportContacts(buildData())
+    // The header write is now stuck on backpressure.
+    await vi.waitFor(() => expect(uploadStream.writableNeedDrain).toBe(true))
+    failUpload(new Error("s3 part upload failed"))
+
+    await expect(exported).rejects.toThrow("s3 part upload failed")
+    expect(lastUpdate()).toMatchObject({ status: "failed" })
+  })
+
+  test("loads the ad ids of a whole page in ONE query, only when the Ad IDs column is selected", async () => {
+    const csv = captureCsv()
+    findManyContacts
+      .mockResolvedValueOnce([
+        contact({ id: "1", firstName: "A" }),
+        contact({ id: "2", firstName: "B" }),
+      ])
+      .mockResolvedValueOnce([contact({ id: "3", firstName: "C" })])
+      .mockResolvedValueOnce([])
+    listAdIdsByContacts
+      .mockResolvedValueOnce(new Map([["1", ["1001", "1002"]]]))
+      .mockResolvedValueOnce(new Map())
+
+    await loopableExportContacts(
+      buildData({ fields: ["sys:firstName", "sys:adIds"] }),
+    )
+
+    // Two pages with contacts => two batched lookups, never one per contact.
+    expect(listAdIdsByContacts).toHaveBeenCalledTimes(2)
+    expect(listAdIdsByContacts).toHaveBeenNthCalledWith(1, {
+      workspaceId: "ws-1",
+      contactIds: ["1", "2"],
+    })
+    expect(csv.text().trim().split("\n").slice(1)).toEqual([
+      '"A","1001, 1002"',
+      '"B",""',
+      '"C",""',
+    ])
+  })
+
+  test("marks the file failed and rethrows when the ad id lookup fails, instead of writing a partial column", async () => {
+    const csv = captureCsv()
+    findManyContacts.mockResolvedValueOnce([contact({ id: "1" })])
+    listAdIdsByContacts.mockRejectedValueOnce(new Error("statement timeout"))
+
+    await expect(
+      loopableExportContacts(buildData({ fields: ["sys:adIds"] })),
+    ).rejects.toThrow("statement timeout")
+
+    expect(lastUpdate()).toMatchObject({ status: "failed" })
+    // Only the header was written; no row was emitted without its ad ids.
+    expect(csv.text().trim().split("\n")).toEqual(['"Ad IDs"'])
+  })
+
+  test("does not touch the ad log when the Ad IDs column is NOT selected (regression)", async () => {
     captureCsv()
-    findManyContacts.mockResolvedValueOnce([])
+    findManyContacts.mockResolvedValueOnce([contact({ id: "1" })])
 
     await loopableExportContacts(buildData())
 
-    // Regression: an ordinary export must NOT ask for the multi-inbox scan,
-    // so the repository keeps its single-row contactInboxes load.
-    const query = findManyContacts.mock.calls[0][0] as {
-      includeSourceUserId: boolean
-    }
-    expect(query.includeSourceUserId).toBe(false)
+    expect(listAdIdsByContacts).not.toHaveBeenCalled()
   })
 
   test("filters by contactIds when no filter is supplied", async () => {
@@ -405,5 +521,46 @@ describe("loopableExportContacts", () => {
     expect(csv.text().trim().split("\n")[1]).toBe(
       `"'=cmd|' /C calc'!A1","jane@example.com"`,
     )
+  })
+})
+
+describe("resolveExportRelations", () => {
+  const field = (type: "contact" | "custom" | "tag", value: string) => ({
+    type,
+    value,
+    header: value,
+  })
+
+  test("needs no relation for plain contact columns", () => {
+    expect(resolveExportRelations([field("contact", "fullName")])).toEqual({
+      customFieldIds: [],
+      tagIds: [],
+      contactInboxes: "none",
+    })
+  })
+
+  test("the Contact Id column needs only the earliest inbox row", () => {
+    expect(
+      resolveExportRelations([field("contact", "contactId")]).contactInboxes,
+    ).toBe("earliest")
+  })
+
+  test("the WhatsApp User ID column needs every inbox row, even with Contact Id", () => {
+    expect(
+      resolveExportRelations([
+        field("contact", "contactId"),
+        field("contact", "sourceUserId"),
+      ]).contactInboxes,
+    ).toBe("all")
+  })
+
+  test("narrows custom fields and tags to the selected ones", () => {
+    expect(
+      resolveExportRelations([
+        field("custom", "cf-1"),
+        field("tag", "t-1"),
+        field("tag", "t-2"),
+      ]),
+    ).toMatchObject({ customFieldIds: ["cf-1"], tagIds: ["t-1", "t-2"] })
   })
 })

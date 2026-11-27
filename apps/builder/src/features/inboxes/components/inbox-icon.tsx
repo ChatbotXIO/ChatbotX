@@ -1,8 +1,11 @@
 import type { ChannelType } from "@chatbotx.io/database/partials"
+import type { MultiSelectOption } from "@chatbotx.io/ui/components/ui/sersavan/multi-select"
 import { cn } from "@chatbotx.io/ui/lib/utils"
 import {
   SiInstagram,
   SiInstagramHex,
+  SiLine,
+  SiLineHex,
   SiMessenger,
   SiMessengerHex,
   SiTelegram,
@@ -84,6 +87,11 @@ export const INBOX_ICON_CONFIG: Record<ChannelType, InboxIconConfig> = {
     fill: SiZaloHex,
     defaultLabelKey: "fields.zalo.label",
   },
+  line: {
+    Icon: SiLine,
+    fill: SiLineHex,
+    defaultLabelKey: "fields.line.label",
+  },
   telegram: {
     Icon: SiTelegram,
     fill: SiTelegramHex,
@@ -119,6 +127,27 @@ type InboxIconProps = {
   labelClassName?: string
   showLabel?: boolean
   size?: IconSize
+}
+
+type ChannelIcon = NonNullable<MultiSelectOption["icon"]>
+
+const channelIcons = new Map<ChannelType, ChannelIcon>()
+
+/** Brand icon of a channel as a MultiSelect option icon, built once per channel. */
+export function getChannelIcon(channel: ChannelType): ChannelIcon {
+  const cached = channelIcons.get(channel)
+  if (cached) {
+    return cached
+  }
+  const { Icon, fill, iconClassName } = INBOX_ICON_CONFIG[channel]
+  const ChannelIcon: ChannelIcon = ({ className }) => (
+    <Icon
+      className={cn(className, iconClassName)}
+      {...(fill !== undefined && { fill })}
+    />
+  )
+  channelIcons.set(channel, ChannelIcon)
+  return ChannelIcon
 }
 
 const isChannelType = (channel: string): channel is ChannelType =>

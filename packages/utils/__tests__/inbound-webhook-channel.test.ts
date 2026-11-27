@@ -84,6 +84,7 @@ describe("PAYLOAD_RESOLVABLE_CHANNELS", () => {
       "instagram",
       "threads",
       "tiktok",
+      "line",
     ])
   })
 })

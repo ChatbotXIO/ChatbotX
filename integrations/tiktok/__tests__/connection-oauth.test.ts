@@ -6,7 +6,10 @@ import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
 import { TiktokAPIException, TiktokMissingScopesError } from "../src/exception"
 import {
   TIKTOK_COMMENT_AUTOMATION_SCOPES,
+  TIKTOK_COMMENT_CORE_SCOPES,
   TIKTOK_CORE_SCOPES,
+  TIKTOK_IDENTITY_SCOPES,
+  TIKTOK_MESSAGING_SCOPES,
   TIKTOK_OPTIONAL_PROFILE_SCOPES,
 } from "../src/lib/scopes"
 
@@ -36,6 +39,10 @@ vi.mock("../src/apis/user", async (importOriginal) => {
 const { integration } = await import("../src/integration")
 
 const credential = oauthCredential
+const commentsOnlyCredential = {
+  ...oauthCredential,
+  features: { messaging: false, comments: true },
+}
 
 describe("TikTok connection.authorizeUrl", () => {
   test("passes state through verbatim, not JSON/base64-wrapped", () => {
@@ -57,6 +64,20 @@ describe("TikTok connection.authorizeUrl", () => {
       ...TIKTOK_OPTIONAL_PROFILE_SCOPES,
       ...TIKTOK_COMMENT_AUTOMATION_SCOPES,
     ])
+  })
+
+  test("never asks for messaging scopes when messaging is off", () => {
+    const url = integration.connection.authorizeUrl?.({
+      credential: commentsOnlyCredential,
+      callbackUrl: "https://app.example.test/integrations/tiktok/callback",
+      state: "session-1.abc123",
+    })
+    const scopes = new URL(url as string).searchParams.get("scope")?.split(",")
+
+    for (const scope of TIKTOK_MESSAGING_SCOPES) {
+      expect(scopes).not.toContain(scope)
+    }
+    expect(scopes).toEqual(expect.arrayContaining(TIKTOK_COMMENT_CORE_SCOPES))
   })
 })
 
@@ -127,6 +148,7 @@ describe("TikTok connection.exchangeCode", () => {
           ...TIKTOK_OPTIONAL_PROFILE_SCOPES,
           ...TIKTOK_COMMENT_AUTOMATION_SCOPES,
         ],
+        features: { messaging: true, comments: true },
       },
     })
   })
@@ -151,6 +173,51 @@ describe("TikTok connection.exchangeCode", () => {
       }),
     ).rejects.toBeInstanceOf(TiktokMissingScopesError)
     expect(mocks.getUserInfo).not.toHaveBeenCalled()
+  })
+
+  // What an EEA, Swiss or UK account grants: identity and comments, never
+  // `message.list.*`.
+  test("accepts a grant without messaging scopes when messaging is off", async () => {
+    mocks.exchangeCodeForToken.mockResolvedValueOnce({
+      access_token: "access-token",
+      refresh_token: "refresh-token",
+      expires_in: 3600,
+      refresh_expires_in: 7200,
+      open_id: "open-id-1",
+      scope: [...TIKTOK_IDENTITY_SCOPES, ...TIKTOK_COMMENT_CORE_SCOPES].join(
+        ",",
+      ),
+    })
+
+    const auth = await integration.connection.exchangeCode?.({
+      code: "auth-code",
+      callbackUrl: "https://app.example.test/callback",
+      credential: commentsOnlyCredential,
+    })
+
+    expect(auth?.metadata.features).toEqual({
+      messaging: false,
+      comments: true,
+    })
+  })
+
+  test("refuses a comments-only grant missing comment.list", async () => {
+    mocks.exchangeCodeForToken.mockResolvedValueOnce({
+      access_token: "access-token",
+      refresh_token: "refresh-token",
+      expires_in: 3600,
+      refresh_expires_in: 7200,
+      open_id: "open-id-1",
+      scope: [...TIKTOK_IDENTITY_SCOPES, "comment.list.manage"].join(","),
+    })
+
+    await expect(
+      integration.connection.exchangeCode?.({
+        code: "auth-code",
+        callbackUrl: "https://app.example.test/callback",
+        credential: commentsOnlyCredential,
+      }),
+    ).rejects.toMatchObject({ missingScopes: ["comment.list"] })
   })
 })
 

@@ -1,0 +1,951 @@
+{
+  "type": "diff",
+  "version": "10",
+  "dialect": "postgres",
+  "id": "6c05ca87-35cd-4e76-90c4-69c76a28b3ed",
+  "prevIds": [
+    "1fef8404-ac87-4055-9045-c04437da4e7d"
+  ],
+  "footprints": [
+    {
+      "statementType": "create_enum",
+      "statementTarget": [
+        "enum",
+        "public",
+        "commentModerationAction"
+      ],
+      "writes": [
+        "s|enum|public.commentModerationAction",
+        "n|enum|public.commentModerationAction",
+        "e|enum|public.commentModerationAction",
+        "n|type|public.commentModerationAction"
+      ],
+      "reads": [
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "create_enum",
+      "statementTarget": [
+        "enum",
+        "public",
+        "commentModerationRule"
+      ],
+      "writes": [
+        "s|enum|public.commentModerationRule",
+        "n|enum|public.commentModerationRule",
+        "e|enum|public.commentModerationRule",
+        "n|type|public.commentModerationRule"
+      ],
+      "reads": [
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "create_enum",
+      "statementTarget": [
+        "enum",
+        "public",
+        "commentModerationSource"
+      ],
+      "writes": [
+        "s|enum|public.commentModerationSource",
+        "n|enum|public.commentModerationSource",
+        "e|enum|public.commentModerationSource",
+        "n|type|public.commentModerationSource"
+      ],
+      "reads": [
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "create_enum",
+      "statementTarget": [
+        "enum",
+        "public",
+        "commentModerationStatus"
+      ],
+      "writes": [
+        "s|enum|public.commentModerationStatus",
+        "n|enum|public.commentModerationStatus",
+        "e|enum|public.commentModerationStatus",
+        "n|type|public.commentModerationStatus"
+      ],
+      "reads": [
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "alter_enum",
+      "statementTarget": [
+        "enum",
+        "public",
+        "commentAutomationMissReason"
+      ],
+      "writes": [
+        "s|enum|public.commentAutomationMissReason"
+      ],
+      "reads": [
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "create_table",
+      "statementTarget": [
+        "table",
+        "public",
+        "CommentModerationLog"
+      ],
+      "writes": [
+        "s|tbl|public.CommentModerationLog",
+        "n|tbl|public.CommentModerationLog",
+        "e|tbl|public.CommentModerationLog",
+        "n|rel|public.CommentModerationLog",
+        "n|type|public.CommentModerationLog",
+        "n|rel|public.CommentModerationLog_pkey"
+      ],
+      "reads": [
+        "n|sch|public",
+        "n|enum|public.commentModerationSource",
+        "n|enum|public.commentModerationRule",
+        "n|enum|public.commentModerationAction",
+        "n|enum|public.commentModerationStatus"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "CommentAutomation",
+        "moderatedCount"
+      ],
+      "writes": [
+        "s|col|public.CommentAutomation.moderatedCount",
+        "n|col|public.CommentAutomation.moderatedCount",
+        "e|col|public.CommentAutomation.moderatedCount"
+      ],
+      "reads": [
+        "n|tbl|public.CommentAutomation",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "CommentModerationLog",
+        "CommentModerationLog_dedup_idx"
+      ],
+      "writes": [
+        "s|idx|public.CommentModerationLog_dedup_idx",
+        "n|idx|public.CommentModerationLog_dedup_idx",
+        "e|idx|public.CommentModerationLog_dedup_idx",
+        "n|rel|public.CommentModerationLog_dedup_idx"
+      ],
+      "reads": [
+        "n|tbl|public.CommentModerationLog",
+        "n|sch|public",
+        "n|col|public.CommentModerationLog.automationId",
+        "n|col|public.CommentModerationLog.commentId"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "CommentModerationLog",
+        "CommentModerationLog_workspace_automation_occurredAt_idx"
+      ],
+      "writes": [
+        "s|idx|public.CommentModerationLog_workspace_automation_occurredAt_idx",
+        "n|idx|public.CommentModerationLog_workspace_automation_occurredAt_idx",
+        "e|idx|public.CommentModerationLog_workspace_automation_occurredAt_idx",
+        "n|rel|public.CommentModerationLog_workspace_automation_occurredAt_idx"
+      ],
+      "reads": [
+        "n|tbl|public.CommentModerationLog",
+        "n|sch|public",
+        "n|col|public.CommentModerationLog.workspaceId",
+        "n|col|public.CommentModerationLog.automationId",
+        "n|col|public.CommentModerationLog.occurredAt"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "CommentModerationLog",
+        "CommentModerationLog_contactId_idx"
+      ],
+      "writes": [
+        "s|idx|public.CommentModerationLog_contactId_idx",
+        "n|idx|public.CommentModerationLog_contactId_idx",
+        "e|idx|public.CommentModerationLog_contactId_idx",
+        "n|rel|public.CommentModerationLog_contactId_idx"
+      ],
+      "reads": [
+        "n|tbl|public.CommentModerationLog",
+        "n|sch|public",
+        "n|col|public.CommentModerationLog.contactId"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "CommentModerationLog",
+        "CommentModerationLog_contactInboxId_idx"
+      ],
+      "writes": [
+        "s|idx|public.CommentModerationLog_contactInboxId_idx",
+        "n|idx|public.CommentModerationLog_contactInboxId_idx",
+        "e|idx|public.CommentModerationLog_contactInboxId_idx",
+        "n|rel|public.CommentModerationLog_contactInboxId_idx"
+      ],
+      "reads": [
+        "n|tbl|public.CommentModerationLog",
+        "n|sch|public",
+        "n|col|public.CommentModerationLog.contactInboxId"
+      ]
+    },
+    {
+      "statementType": "create_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "CommentModerationLog"
+      ],
+      "writes": [
+        "s|fk|public.CommentModerationLog.CommentModerationLog_workspaceId_Workspace_id_fkey",
+        "n|fk|public.CommentModerationLog.CommentModerationLog_workspaceId_Workspace_id_fkey",
+        "e|fk|public.CommentModerationLog.CommentModerationLog_workspaceId_Workspace_id_fkey",
+        "n|con|public.CommentModerationLog.CommentModerationLog_workspaceId_Workspace_id_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.CommentModerationLog",
+        "n|sch|public",
+        "n|tbl|public.Workspace",
+        "n|sch|public",
+        "n|col|public.CommentModerationLog.workspaceId",
+        "n|col|public.Workspace.id",
+        "e|uniqueness|public.Workspace.id"
+      ]
+    },
+    {
+      "statementType": "create_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "CommentModerationLog"
+      ],
+      "writes": [
+        "s|fk|public.CommentModerationLog.CommentModerationLog_automationId_CommentAutomation_id_fkey",
+        "n|fk|public.CommentModerationLog.CommentModerationLog_automationId_CommentAutomation_id_fkey",
+        "e|fk|public.CommentModerationLog.CommentModerationLog_automationId_CommentAutomation_id_fkey",
+        "n|con|public.CommentModerationLog.CommentModerationLog_automationId_CommentAutomation_id_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.CommentModerationLog",
+        "n|sch|public",
+        "n|tbl|public.CommentAutomation",
+        "n|sch|public",
+        "n|col|public.CommentModerationLog.automationId",
+        "n|col|public.CommentAutomation.id",
+        "e|uniqueness|public.CommentAutomation.id"
+      ]
+    },
+    {
+      "statementType": "create_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "CommentModerationLog"
+      ],
+      "writes": [
+        "s|fk|public.CommentModerationLog.CommentModerationLog_contactId_Contact_id_fkey",
+        "n|fk|public.CommentModerationLog.CommentModerationLog_contactId_Contact_id_fkey",
+        "e|fk|public.CommentModerationLog.CommentModerationLog_contactId_Contact_id_fkey",
+        "n|con|public.CommentModerationLog.CommentModerationLog_contactId_Contact_id_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.CommentModerationLog",
+        "n|sch|public",
+        "n|tbl|public.Contact",
+        "n|sch|public",
+        "n|col|public.CommentModerationLog.contactId",
+        "n|col|public.Contact.id",
+        "e|uniqueness|public.Contact.id"
+      ]
+    },
+    {
+      "statementType": "create_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "CommentModerationLog"
+      ],
+      "writes": [
+        "s|fk|public.CommentModerationLog.CommentModerationLog_contactInboxId_ContactInbox_id_fkey",
+        "n|fk|public.CommentModerationLog.CommentModerationLog_contactInboxId_ContactInbox_id_fkey",
+        "e|fk|public.CommentModerationLog.CommentModerationLog_contactInboxId_ContactInbox_id_fkey",
+        "n|con|public.CommentModerationLog.CommentModerationLog_contactInboxId_ContactInbox_id_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.CommentModerationLog",
+        "n|sch|public",
+        "n|tbl|public.ContactInbox",
+        "n|sch|public",
+        "n|col|public.CommentModerationLog.contactInboxId",
+        "n|col|public.ContactInbox.id",
+        "e|uniqueness|public.ContactInbox.id"
+      ]
+    }
+  ],
+  "deltas": [
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "name": "CommentModerationLog",
+        "isRlsEnabled": false,
+        "entityType": "tables"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "name": "commentModerationAction",
+        "values": [
+          "hide",
+          "delete"
+        ],
+        "entityType": "enums"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "name": "commentModerationRule",
+        "values": [
+          "all",
+          "phoneNumber",
+          "link",
+          "keyword",
+          "image",
+          "video",
+          "gif",
+          "emoji"
+        ],
+        "entityType": "enums"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "name": "commentModerationSource",
+        "values": [
+          "rule",
+          "ai"
+        ],
+        "entityType": "enums"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "name": "commentModerationStatus",
+        "values": [
+          "pending",
+          "done",
+          "failed"
+        ],
+        "entityType": "enums"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "CommentAutomation",
+        "name": "moderatedCount",
+        "type": "integer",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "0",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "CommentModerationLog",
+        "name": "id",
+        "type": "bigint",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "CommentModerationLog",
+        "name": "createdAt",
+        "type": "timestamp(6) with time zone",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "now()",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "CommentModerationLog",
+        "name": "updatedAt",
+        "type": "timestamp(6) with time zone",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "now()",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "CommentModerationLog",
+        "name": "workspaceId",
+        "type": "bigint",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "CommentModerationLog",
+        "name": "automationId",
+        "type": "bigint",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "CommentModerationLog",
+        "name": "contactId",
+        "type": "bigint",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "CommentModerationLog",
+        "name": "contactInboxId",
+        "type": "bigint",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "CommentModerationLog",
+        "name": "postId",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "CommentModerationLog",
+        "name": "commentId",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "CommentModerationLog",
+        "name": "commentText",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "CommentModerationLog",
+        "name": "source",
+        "type": "commentModerationSource",
+        "typeSchema": "public",
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "CommentModerationLog",
+        "name": "rule",
+        "type": "commentModerationRule",
+        "typeSchema": "public",
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "CommentModerationLog",
+        "name": "matchedKeyword",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "CommentModerationLog",
+        "name": "categories",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 1,
+        "default": "'{}'",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "CommentModerationLog",
+        "name": "reason",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "CommentModerationLog",
+        "name": "action",
+        "type": "commentModerationAction",
+        "typeSchema": "public",
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "CommentModerationLog",
+        "name": "status",
+        "type": "commentModerationStatus",
+        "typeSchema": "public",
+        "notNull": true,
+        "dimensions": 0,
+        "default": "'pending'",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "CommentModerationLog",
+        "name": "errorDetail",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "CommentModerationLog",
+        "name": "provider",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "CommentModerationLog",
+        "name": "modelId",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "CommentModerationLog",
+        "name": "occurredAt",
+        "type": "timestamp(6) with time zone",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "CommentModerationLog",
+        "name": "CommentModerationLog_dedup_idx",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "automationId",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          },
+          {
+            "value": "commentId",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": true,
+        "where": null,
+        "with": "",
+        "method": "btree",
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "CommentModerationLog",
+        "name": "CommentModerationLog_workspace_automation_occurredAt_idx",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "workspaceId",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          },
+          {
+            "value": "automationId",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          },
+          {
+            "value": "occurredAt",
+            "isExpression": false,
+            "asc": false,
+            "nullsFirst": true,
+            "opclass": null
+          }
+        ],
+        "isUnique": false,
+        "where": null,
+        "with": "",
+        "method": "btree",
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "CommentModerationLog",
+        "name": "CommentModerationLog_contactId_idx",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "contactId",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": false,
+        "where": "\"contactId\" IS NOT NULL",
+        "with": "",
+        "method": "btree",
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "CommentModerationLog",
+        "name": "CommentModerationLog_contactInboxId_idx",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "contactInboxId",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": false,
+        "where": "\"contactInboxId\" IS NOT NULL",
+        "with": "",
+        "method": "btree",
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "CommentModerationLog",
+        "name": "CommentModerationLog_workspaceId_Workspace_id_fkey",
+        "nameExplicit": false,
+        "columns": [
+          "workspaceId"
+        ],
+        "schemaTo": "public",
+        "tableTo": "Workspace",
+        "columnsTo": [
+          "id"
+        ],
+        "onUpdate": "CASCADE",
+        "onDelete": "CASCADE",
+        "entityType": "fks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "CommentModerationLog",
+        "name": "CommentModerationLog_automationId_CommentAutomation_id_fkey",
+        "nameExplicit": false,
+        "columns": [
+          "automationId"
+        ],
+        "schemaTo": "public",
+        "tableTo": "CommentAutomation",
+        "columnsTo": [
+          "id"
+        ],
+        "onUpdate": "CASCADE",
+        "onDelete": "CASCADE",
+        "entityType": "fks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "CommentModerationLog",
+        "name": "CommentModerationLog_contactId_Contact_id_fkey",
+        "nameExplicit": false,
+        "columns": [
+          "contactId"
+        ],
+        "schemaTo": "public",
+        "tableTo": "Contact",
+        "columnsTo": [
+          "id"
+        ],
+        "onUpdate": "CASCADE",
+        "onDelete": "SET NULL",
+        "entityType": "fks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "CommentModerationLog",
+        "name": "CommentModerationLog_contactInboxId_ContactInbox_id_fkey",
+        "nameExplicit": false,
+        "columns": [
+          "contactInboxId"
+        ],
+        "schemaTo": "public",
+        "tableTo": "ContactInbox",
+        "columnsTo": [
+          "id"
+        ],
+        "onUpdate": "CASCADE",
+        "onDelete": "SET NULL",
+        "entityType": "fks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "CommentModerationLog",
+        "name": "CommentModerationLog_pkey",
+        "columns": [
+          "id"
+        ],
+        "nameExplicit": false,
+        "entityType": "pks"
+      }
+    },
+    {
+      "op": "alter",
+      "key": "enums\u0000[\"public\",\"commentAutomationMissReason\"]",
+      "set": {
+        "values": [
+          "outsideSchedule",
+          "postNotMatched",
+          "commentIsReply",
+          "keywordsNotMatched",
+          "mentionCountNotMatched",
+          "noImageAttachment",
+          "contactNotNew",
+          "alreadyRepliedOnPost",
+          "engagedOnOtherPost",
+          "moderated"
+        ]
+      }
+    }
+  ]
+}

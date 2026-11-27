@@ -1,0 +1,181 @@
+import { flowService } from "@chatbotx.io/business"
+import type { ContactInboxWorkspaceRow } from "@chatbotx.io/database/repositories"
+import type { ConversationModel } from "@chatbotx.io/database/types"
+import {
+  POST_COMMENT_PAYLOAD_TYPE,
+  type PostCommentMetadataPayload,
+  startExternalStepActionSchema,
+} from "@chatbotx.io/flow-config"
+import baseLogger from "@chatbotx.io/logger"
+import {
+  IntegrationJobAction,
+  type IntegrationJobRunFlowNode,
+  integrationQueue,
+} from "@chatbotx.io/worker-config"
+import { buildSendFlowJob } from "../../../integration/handlers/send-flow-job"
+import type { ActionExecutionContext } from "../../types"
+import {
+  skipped,
+  succeeded,
+  type TriggerActionHandler,
+  type TriggerActionScope,
+} from "./types"
+
+/**
+ * An inbound-webhook action may run again after a retry that lost its
+ * checkpoint; a deterministic job id keeps the flow from being sent twice.
+ * Trigger runs keep their existing, unkeyed behaviour.
+ */
+const enqueueSendFlow = async (
+  sendFlowJob: IntegrationJobRunFlowNode,
+  context: ActionExecutionContext,
+): Promise<void> => {
+  if (context.source.kind === "inboundWebhook" && context.occurrenceKey) {
+    await integrationQueue.add(IntegrationJobAction.sendFlow, sendFlowJob, {
+      jobId: `send-flow-${context.occurrenceKey.replaceAll(":", "-")}`,
+    })
+    return
+  }
+  await integrationQueue.add(IntegrationJobAction.sendFlow, sendFlowJob)
+}
+
+/**
+ * What a flow started by a post-comment trigger carries so its messages can
+ * render `{{post.*}}` / `{{comment.*}}` for that one comment. Any other trigger
+ * starts its flow with no metadata, as before.
+ */
+const postCommentFlowExtras = (
+  context: ActionExecutionContext,
+): { metadata?: PostCommentMetadataPayload } =>
+  context.postComment
+    ? {
+        metadata: {
+          type: POST_COMMENT_PAYLOAD_TYPE,
+          ...context.postComment,
+        },
+      }
+    : {}
+
+/**
+ * A flow started without an event conversation (tag added, webhook, pipeline…)
+ * must not reply into whichever thread was last active: for email that is an
+ * arbitrary old thread. SMTP uses the run's single outreach thread.
+ */
+const resolveFlowConversationId = async (props: {
+  context: ActionExecutionContext
+  conversation: ConversationModel
+  contactInbox: ContactInboxWorkspaceRow
+  scope: TriggerActionScope
+}): Promise<string | ConversationModel> => {
+  const { context, conversation, contactInbox, scope } = props
+  if (context.conversationId || contactInbox.channel !== "smtp") {
+    return conversation
+  }
+  return (await scope.getOutreachConversation()) ?? conversation
+}
+
+export const startAnotherFlow: TriggerActionHandler = async ({
+  context,
+  conversation,
+  scope,
+}) => {
+  const { action, contactId, source, workspaceId } = context
+  const contactInbox = await scope.getContactInbox()
+  if (!contactInbox) {
+    baseLogger.warn(
+      `No contact inbox found for contact ${contactId}, skipping startAnotherFlow action`,
+    )
+    return skipped("noContactInbox")
+  }
+
+  const flowId = action.flowId as string
+  if (context.decisionFlowOrigin?.flowId === flowId) {
+    baseLogger.info(
+      { flowId, source },
+      "Skipping Decision-origin Flow self-loop",
+    )
+    return succeeded
+  }
+  const flow = await flowService.findActiveById({
+    workspaceId,
+    id: flowId,
+  })
+
+  if (!flow?.currentVersionId) {
+    baseLogger.warn(
+      `Flow ${flowId} not found or not active, skipping startAnotherFlow action`,
+    )
+    return skipped("flowInactive")
+  }
+
+  const sendFlowJob = buildSendFlowJob(
+    {
+      conversationId: await resolveFlowConversationId({
+        context,
+        conversation,
+        contactInbox,
+        scope,
+      }),
+      contactInboxId: contactInbox.id,
+      flowId,
+    },
+    postCommentFlowExtras(context),
+  )
+  await enqueueSendFlow(sendFlowJob, context)
+  return succeeded
+}
+
+/** Starts a flow at one of its nodes, reusing the flow step's node entry. */
+export const startExternalStep: TriggerActionHandler = async ({
+  context,
+  conversation,
+  scope,
+}) => {
+  const parsed = startExternalStepActionSchema.safeParse(context.action)
+  if (!parsed.success) {
+    return skipped("invalidAction")
+  }
+  const { flowId, nodeId } = parsed.data
+  const { workspaceId, source } = context
+
+  const contactInbox = await scope.getContactInbox()
+  if (!contactInbox) {
+    return skipped("noContactInbox")
+  }
+  if (context.decisionFlowOrigin?.flowId === flowId) {
+    baseLogger.info(
+      { flowId, source },
+      "Skipping Decision-origin Flow self-loop",
+    )
+    return succeeded
+  }
+
+  const status = await flowService.resolveStartTarget({
+    workspaceId,
+    flowId,
+    nodeId,
+  })
+  if (status !== "ready") {
+    // The status names the reason: flowNotFound, flowInactive, flowNotPublished, nodeNotFound.
+    return skipped(status)
+  }
+
+  await enqueueSendFlow(
+    buildSendFlowJob(
+      {
+        conversationId: await resolveFlowConversationId({
+          context,
+          conversation,
+          contactInbox,
+          scope,
+        }),
+        contactInboxId: contactInbox.id,
+        flowId,
+        nodeId,
+      },
+      postCommentFlowExtras(context),
+    ),
+    context,
+  )
+  return succeeded
+}

@@ -1,3 +1,5 @@
+import { AI_FILES_SEARCH_TOKEN_PATH } from "@/features/ai-files/lib/api-paths"
+
 export const IDEMPOTENCY_KEY_HEADER = "Idempotency-Key"
 export const IDEMPOTENT_REPLAYED_HEADER = "Idempotent-Replayed"
 export const MAX_IDEMPOTENCY_KEY_LENGTH = 255
@@ -9,10 +11,27 @@ export const IDEMPOTENCY_RETENTION_HOURS = 24
  * hand back stale rows after the data changed.
  */
 export const IDEMPOTENCY_EXEMPT_READ_PATHS: ReadonlySet<string> = new Set([
+  // Search reflects the current index; replaying a cached result would be stale.
+  AI_FILES_SEARCH_TOKEN_PATH,
   "/v1/broadcasts/audience/preview",
   // Next run times depend on the current time, so a replayed response would go stale.
   "/v1/broadcasts/preview-recurrence",
   // A dry run of a mapping: nothing is written, and the verdict depends on
   // the workspace's current custom fields.
   "/v1/inbound-webhooks/preview-mapping",
+  // Read-only lookups that take their ids in the body: the answer follows the
+  // workspace's current resources and installs, so a replay would go stale.
+  "/v1/templates/dependencies-preview",
+  // A one-time handoff code must not replay a prior browser sign-in URL.
+  "/v1/me/web-handoff",
+  "/v1/templates/locked-resources",
+  // Read-only: the comments of several posts take their ids in the body, and
+  // the export builds a file from the comments as they are now; a replay would
+  // hand back comments that were since added, hidden or deleted.
+  "/v1/channel-posts/management/merge-view",
+  "/v1/channel-posts/management/export",
+  // Dry runs of a post: nothing is written, and the verdict follows the
+  // account's current status and the workspace's files, so a replay would go stale.
+  "/v1/posts/validate",
+  "/v1/posts/preview",
 ])

@@ -9,6 +9,7 @@ import {
   vi,
 } from "vitest"
 import { webhookHandler } from "../src/handlers/webhook"
+import { logger } from "../src/lib/logger"
 import type { TiktokConfig } from "../src/schema"
 
 type MockQueue = { add: MockInstance }
@@ -82,18 +83,18 @@ describe("webhookHandler", () => {
   })
 
   test.each([
-    "im_receive_msg",
-    "im_send_msg",
-  ])("enqueues %s as an incoming TikTok message", async (event) => {
+    ["im_receive_msg", "incomingMessage"],
+    ["im_send_msg", "incomingMessageEcho"],
+  ])("enqueues %s as an incoming TikTok message", async (event, expectedJob) => {
     const payload = buildPayload(event)
 
     await expect(webhookHandler(makeProps(payload, queue))).resolves.toBe("ok")
 
     expect(queue.add).toHaveBeenCalledTimes(1)
     const [jobName, job, options] = queue.add.mock.calls[0] ?? []
-    expect(jobName).toBe("incomingMessage")
+    expect(jobName).toBe(expectedJob)
     expect(job).toEqual({
-      type: "incomingMessage",
+      type: expectedJob,
       data: {
         integrationType: "tiktok",
         integrationIdentifier: "account-open-id",
@@ -177,6 +178,51 @@ describe("webhookHandler", () => {
     )
 
     expect(queue.add).not.toHaveBeenCalled()
+  })
+
+  // A server clock a few seconds behind rejects every webhook exactly like a
+  // bad secret does; logging how far off the timestamp was makes it a
+  // one-line diagnosis (reported alongside #1715).
+  test("logs how far ahead the timestamp was when it is rejected for clock skew", async () => {
+    const warn = vi.spyOn(logger, "warn").mockImplementation(() => undefined)
+
+    await expect(
+      webhookHandler(
+        makeProps(buildPayload("im_receive_msg"), queue, {
+          timestamp: Math.floor(Date.now() / 1000) + 3,
+        }),
+      ),
+    ).rejects.toThrow("Invalid or missing webhook signature")
+
+    expect(warn).toHaveBeenCalledWith(
+      expect.objectContaining({
+        reason: "timestamp",
+        ageSeconds: expect.any(Number),
+        allowedFutureSeconds: 2,
+      }),
+      "TikTok webhook signature rejected",
+    )
+    const [details] = warn.mock.calls[0] as unknown as [{ ageSeconds: number }]
+    expect(details.ageSeconds).toBeLessThanOrEqual(-3)
+    warn.mockRestore()
+  })
+
+  test("logs a signature mismatch without a clock reading", async () => {
+    const warn = vi.spyOn(logger, "warn").mockImplementation(() => undefined)
+
+    await expect(
+      webhookHandler(
+        makeProps(buildPayload("im_receive_msg"), queue, {
+          signSecret: "wrong-secret",
+        }),
+      ),
+    ).rejects.toThrow("Invalid or missing webhook signature")
+
+    expect(warn).toHaveBeenCalledWith(
+      expect.objectContaining({ reason: "mismatch" }),
+      "TikTok webhook signature rejected",
+    )
+    warn.mockRestore()
   })
 
   test("rejects an empty webhook payload before verifying the signature", async () => {

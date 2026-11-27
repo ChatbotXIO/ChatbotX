@@ -12,4 +12,5 @@ export const automatedResponseService = {
   process: processPendingMessages,
 }
 
+export { isKeywordMediaFileType } from "./keyword-match"
 export { replyByOutboundAutomatedResponse } from "./process-outbound-message"

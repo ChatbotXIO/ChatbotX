@@ -1,10 +1,9 @@
 "use server"
 
 import { aiFileService } from "@chatbotx.io/business"
-import { ChatbotXException } from "@chatbotx.io/business/errors"
-import { getTranslations } from "next-intl/server"
 import { workspaceIdrequestParams } from "@/features/common/schema"
 import { workspaceActionClient } from "@/lib/safe-action"
+import { toAIFileCreateActionError } from "../lib/create-error-message"
 import { createAIFileRequest } from "../schema"
 
 export const createAIFileAction = workspaceActionClient
@@ -14,15 +13,14 @@ export const createAIFileAction = workspaceActionClient
     const [workspaceId] = bindArgsParsedInputs
 
     try {
-      await aiFileService.create(workspaceId, parsedInput)
-    } catch (error) {
-      if (
-        error instanceof ChatbotXException &&
-        error.code === "noEmbeddingProvider"
-      ) {
-        const t = await getTranslations("aiFiles")
-        throw new ChatbotXException(t("noEmbeddingProvider"))
+      const file = await aiFileService.create(workspaceId, parsedInput)
+      return {
+        id: file.id,
+        processingRunError: file.processingRun?.error ?? null,
       }
-      throw error
+    } catch (error) {
+      // fileTooLarge / unsupportedFileType / uploadPathNotAllowed come from
+      // the server-side check of the uploaded object.
+      throw await toAIFileCreateActionError(error)
     }
   })

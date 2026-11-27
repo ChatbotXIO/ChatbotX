@@ -53,9 +53,21 @@ const conversationService = {
 const messageService = {
   findByIdWithUrls: vi.fn(),
   createOutgoing: vi.fn(),
+  resendOutgoing: vi.fn(),
 }
 const resolveTemplateParams = vi.fn()
+// The translation field is covered in `translation/`; here it is a pass-through.
+vi.mock("@/features/translation/lib/message-translations", () => ({
+  withMessageTranslations: (_workspaceId: string, messages: { id: string }[]) =>
+    Promise.resolve(messages.map((m) => ({ ...m, translation: null }))),
+}))
+
 vi.mock("@chatbotx.io/business", () => ({
+  conversationMemberScope: {
+    resolve: vi.fn(),
+    allows: () => true,
+    where: () => undefined,
+  },
   conversationService,
   messageService,
   resolveTemplateParams,
@@ -152,12 +164,15 @@ describe("GET /v1/conversations/{conversationId}/messages", () => {
     expect(conversationService.findByOrFail).toHaveBeenCalledWith({
       where: { id: "conv-1", workspaceId: "ws-1" },
     })
-    expect(listMessages).toHaveBeenCalledWith({
-      workspaceId: "ws-1",
-      conversationId: "conv-1",
-      perPage: 20,
-      cursor: undefined,
-    })
+    expect(listMessages).toHaveBeenCalledWith(
+      {
+        workspaceId: "ws-1",
+        conversationId: "conv-1",
+        perPage: 20,
+        cursor: undefined,
+      },
+      { includeTranslation: true },
+    )
     expect(result).toEqual({ data: [], nextCursor: null, prevCursor: null })
   })
 
@@ -199,7 +214,11 @@ describe("GET /v1/conversations/{conversationId}/messages/{messageId}", () => {
       id: "msg-1",
       createdAt,
     })
-    expect(result).toEqual({ id: "msg-1", conversationId: "conv-1" })
+    expect(result).toEqual({
+      id: "msg-1",
+      conversationId: "conv-1",
+      translation: null,
+    })
   })
 
   test("404s when the message belongs to a different conversation", async () => {
@@ -277,6 +296,7 @@ describe("POST /v1/conversations/{conversationId}/messages", () => {
       conversation: { id: "conv-1", contactId: "contact-1" },
       contactInbox: { id: "contact-inbox-1" },
       input,
+      sendFrom: "api",
     })
     expect(messageService.createOutgoing.mock.calls[0][0]).not.toHaveProperty(
       "user",
@@ -398,6 +418,59 @@ describe("DELETE /v1/conversations/{conversationId}/messages/{messageId}", () =>
   })
 })
 
+describe("POST /v1/conversations/{conversationId}/messages/{messageId}/resend", () => {
+  const procedure = findProcedure(
+    "POST",
+    "/v1/conversations/{conversationId}/messages/{messageId}/resend",
+  )
+
+  test("is a 202 under the Messages tag", () => {
+    expect(procedure.route.successStatus).toBe(202)
+    expect(procedure.route.tags).toContain("Messages")
+  })
+
+  test("delegates to messageService.resendOutgoing with the id field it expects and returns its result", async () => {
+    const createdAt = new Date("2026-01-01T00:00:00Z")
+    messageService.resendOutgoing.mockResolvedValueOnce({
+      id: "msg-1",
+      queued: true,
+    })
+
+    const result = await procedure.handler?.({
+      context,
+      input: { conversationId: "conv-1", messageId: "msg-1", createdAt },
+    })
+
+    expect(messageService.resendOutgoing).toHaveBeenCalledWith({
+      workspaceId: "ws-1",
+      conversationId: "conv-1",
+      messageId: "msg-1",
+      createdAt,
+      sendFrom: "api",
+    })
+    expect(result).toEqual({ id: "msg-1", queued: true })
+  })
+
+  test("checks the caller may see the conversation first, and resends nothing when it may not", async () => {
+    conversationService.findByOrFail.mockRejectedValueOnce(
+      new Error("Conversation not found"),
+    )
+
+    await expect(
+      procedure.handler?.({
+        context,
+        input: {
+          conversationId: "conv-1",
+          messageId: "msg-1",
+          createdAt: new Date("2026-01-01T00:00:00Z"),
+        },
+      }),
+    ).rejects.toThrow("Conversation not found")
+
+    expect(messageService.resendOutgoing).not.toHaveBeenCalled()
+  })
+})
+
 describe("POST /v1/conversations/{conversationId}/messages/{messageId}/attributes", () => {
   const procedure = findProcedure(
     "POST",
@@ -455,7 +528,32 @@ describe("POST /v1/conversations/{conversationId}/whatsapp-template", () => {
       request: { templateId: "5", templateData: { params: [] }, inboxId: "3" },
       // An API send is not an agent reply: no human-sent analytics event.
       sender: { initiatedBy: "api" },
+      sendFrom: "api",
     })
+  })
+
+  test("attributes the template to the mobile member who sent it", async () => {
+    sendTemplate.mockResolvedValue(undefined)
+
+    await procedure.handler?.({
+      context: {
+        workspace: { id: "workspace-1" },
+        member: { permissions: {} },
+        user: { id: "user-1" },
+      },
+      input: {
+        conversationId: "9",
+        templateId: "5",
+        templateData: { params: [] },
+      },
+    })
+
+    expect(sendTemplate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        sender: { initiatedBy: "user", adminId: "user-1" },
+        sendFrom: "api",
+      }),
+    )
   })
 
   test("answers 202 because delivery is asynchronous", () => {
@@ -488,6 +586,7 @@ describe("POST /v1/conversations/{conversationId}/whatsapp-template", () => {
       conversationId: "9",
       request: { templateId: "5", templateData: nested },
       sender: { initiatedBy: "api" },
+      sendFrom: "api",
     })
   })
 
@@ -535,7 +634,25 @@ describe("POST /v1/conversations/{conversationId}/whatsapp-call-permission", () 
         inboxId: "3",
       }),
     )
-    expect(requestCallPermission.mock.calls[0]?.[0]).not.toHaveProperty("user")
+    expect(requestCallPermission.mock.calls[0]?.[0].user).toBeUndefined()
     expect(result).toEqual({ queued: true })
+  })
+
+  test("attributes the request to the mobile member who sent it", async () => {
+    conversationService.findByOrFail.mockResolvedValue({ id: "9" })
+    requestCallPermission.mockResolvedValue(undefined)
+
+    await procedure.handler?.({
+      context: {
+        workspace: { id: "workspace-1" },
+        member: { permissions: {} },
+        user: { id: "user-1" },
+      },
+      input: { conversationId: "9", text: "May we call you?" },
+    })
+
+    expect(requestCallPermission).toHaveBeenCalledWith(
+      expect.objectContaining({ user: { id: "user-1" }, sendFrom: "api" }),
+    )
   })
 })

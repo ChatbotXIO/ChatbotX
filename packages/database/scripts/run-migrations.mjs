@@ -12,7 +12,9 @@ import { readMigrationFiles } from "drizzle-orm/migrator"
 import { getMigrationsToRun } from "drizzle-orm/migrator.utils"
 import { drizzle } from "drizzle-orm/node-postgres"
 import { migrate } from "drizzle-orm/node-postgres/migrator"
-import { upgradeIfNeeded } from "drizzle-orm/up-migrations/pg"
+import { runAsyncProgram } from "drizzle-orm/runtime/async"
+import { pgMigrationRunner } from "drizzle-orm/up-migrations/pg"
+import { upgradeIfNeeded } from "drizzle-orm/up-migrations/pg-program"
 import { Pool } from "pg"
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
@@ -79,11 +81,12 @@ const runMigrationsSequentially = async (db) => {
   )
 
   const localMigrations = readMigrationFiles({ migrationsFolder })
-  const { newDb } = await upgradeIfNeeded(
-    migrationsSchema,
-    migrationsTable,
-    db,
-    localMigrations,
+  // Since drizzle-orm 1.0.0-rc, `upgradeIfNeeded` is a query program (a
+  // generator) driven by a migration runner, not an async function taking the
+  // database. This mirrors what drizzle's own `migrate` does internally.
+  const runner = pgMigrationRunner(db)
+  const { newDb } = await runAsyncProgram(() =>
+    upgradeIfNeeded(migrationsSchema, migrationsTable, runner, localMigrations),
   )
 
   if (newDb) {
@@ -98,8 +101,9 @@ const runMigrationsSequentially = async (db) => {
     `)
   }
 
-  const dbMigrations = await db.session.all(
+  const dbMigrations = await runner.objects(
     sql`select id, hash, created_at, name from ${sql.identifier(migrationsSchema)}.${sql.identifier(migrationsTable)}`,
+    ["id", "hash", "created_at", "name"],
   )
   const migrationsToRun = getMigrationsToRun({
     localMigrations,
@@ -194,88 +198,6 @@ const reconcileRenamedMigrations = async (client) => {
   }
 }
 
-const reconcileSquashedQuestionnaireMigration = async (client) => {
-  const legacyQuestionnaireMigrationNames = [
-    "20260714152243_create_questionnaires",
-    "20260716132848_update_questionnaires_status_image_retry_timeout",
-    "20260716140752_add_questionnaire_question_system_field_key",
-  ]
-  const squashedQuestionnaireMigrationName =
-    "20260719020251_create_questionnaires"
-
-  const migrationTableResult = await client.query(
-    "SELECT to_regclass('drizzle.__drizzle_migrations') IS NOT NULL AS exists",
-  )
-  if (!migrationTableResult.rows[0]?.exists) {
-    return
-  }
-
-  const localMigrations = readMigrationFiles({ migrationsFolder })
-  const squashedMigration = localMigrations.find(
-    ({ name }) => name === squashedQuestionnaireMigrationName,
-  )
-  if (!squashedMigration) {
-    return
-  }
-
-  const dbMigrationsResult = await client.query(
-    "SELECT name FROM drizzle.__drizzle_migrations",
-  )
-  const dbNames = new Set(dbMigrationsResult.rows.map(({ name }) => name))
-  if (dbNames.has(squashedQuestionnaireMigrationName)) {
-    return
-  }
-
-  const hasLegacyQuestionnaireMigrations =
-    legacyQuestionnaireMigrationNames.every((name) => dbNames.has(name))
-  if (!hasLegacyQuestionnaireMigrations) {
-    return
-  }
-
-  await client.query(`
-    ALTER TABLE "Questionnaire"
-      ADD COLUMN IF NOT EXISTS "deletedAt" timestamp(6) with time zone
-  `)
-  await client.query(
-    'DROP INDEX IF EXISTS "Questionnaire_workspaceId_name_key"',
-  )
-  await client.query(`
-    CREATE UNIQUE INDEX IF NOT EXISTS "Questionnaire_workspaceId_name_key"
-      ON "Questionnaire" ("workspaceId","name")
-      WHERE ("deletedAt" is null)
-  `)
-  await client.query(`
-    DO $$
-    BEGIN
-      IF NOT EXISTS (
-        SELECT 1
-        FROM pg_constraint
-        WHERE conname = 'QuestionnaireQuestion_customFieldId_systemFieldKey_exclusive'
-          AND conrelid = '"QuestionnaireQuestion"'::regclass
-      ) THEN
-        ALTER TABLE "QuestionnaireQuestion"
-          ADD CONSTRAINT "QuestionnaireQuestion_customFieldId_systemFieldKey_exclusive"
-          CHECK (("customFieldId" IS NULL) OR ("systemFieldKey" IS NULL));
-      END IF;
-    END $$;
-  `)
-  await client.query(
-    `INSERT INTO drizzle.__drizzle_migrations ("hash", "created_at", "name")
-     VALUES ($1, $2, $3)`,
-    [
-      squashedMigration.hash,
-      squashedMigration.folderMillis,
-      squashedMigration.name,
-    ],
-  )
-
-  console.log(
-    `Reconciled squashed migration: ${legacyQuestionnaireMigrationNames.join(
-      ", ",
-    )} -> ${squashedQuestionnaireMigrationName}`,
-  )
-}
-
 /**
  * Whether a **pending** migration contains a statement that cannot run inside a
  * transaction.
@@ -332,7 +254,6 @@ try {
   migrationLockAcquired = true
 
   await reconcileRenamedMigrations(client)
-  await reconcileSquashedQuestionnaireMigration(client)
   const db = drizzle({ client })
   // Drizzle's batch migrator wraps everything in one transaction, which a
   // `CONCURRENTLY` statement cannot survive. The sequential runner is the only

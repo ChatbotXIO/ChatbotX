@@ -8,7 +8,10 @@ import type {
   CouponIssueStatus,
   CouponUsageStatus,
 } from "@chatbotx.io/database/partials"
-import { appointmentExternalSyncOperations } from "@chatbotx.io/database/partials"
+import {
+  appointmentExternalSyncOperations,
+  type PipelineActorKind,
+} from "@chatbotx.io/database/partials"
 import type { ContactFilterCriteriaInput } from "@chatbotx.io/database/queries"
 import { Queue } from "bullmq"
 import { z } from "zod"
@@ -41,11 +44,11 @@ export const DefaultJobAction = {
   checkMetaCatalogSync: "checkMetaCatalogSync",
   syncExternalCalendarEvent: "syncExternalCalendarEvent",
   sendAppointmentReminder: "sendAppointmentReminder",
-  installTemplate: "installTemplate",
   syncWelcomeMessageFlows: "syncWelcomeMessageFlows",
   deleteWelcomeMessageFlows: "deleteWelcomeMessageFlows",
   processInboundWebhookRequest: "processInboundWebhookRequest",
   retryRealtimeMemberRevoke: "retryRealtimeMemberRevoke",
+  processPipelineStageBulk: "processPipelineStageBulk",
 } as const
 
 export const syncExternalCalendarEventJobId = (
@@ -274,14 +277,6 @@ export type JobSendAppointmentReminder = {
   data: JobSendAppointmentReminderData
 }
 
-export type JobInstallTemplate = {
-  type: typeof DefaultJobAction.installTemplate
-  data: {
-    installationId: string
-    workspaceId: string
-  }
-}
-
 /**
  * Mirror a flow's published start node (or just its name, for `rename`) to a
  * Meta welcome message flow on every Messenger page of the workspace.
@@ -365,7 +360,30 @@ export type JobRetryRealtimeMemberRevoke = {
   }
 }
 
+/**
+ * Deletes a pipeline stage whose items are too many to settle inside one
+ * request: moves or deletes them in bounded batches, then drops the stage.
+ * Idempotent — a retry only sees the items still in the stage.
+ */
+export type JobProcessPipelineStageBulk = {
+  type: typeof DefaultJobAction.processPipelineStageBulk
+  data: {
+    workspaceId: string
+    pipelineId: string
+    stageId: string
+    /** The claim written to `PipelineStage.bulkJobId`; the job acts only while it still owns the stage. */
+    bulkJobId: string
+    moveItemsToStageId: string | null
+    actorUserId: string | null
+    /** Who started the removal. */
+    actorKind: PipelineActorKind
+    /** Workspace token, flow or trigger id for non-user actors. */
+    actorSourceId: string | null
+  }
+}
+
 export type DefaultJobData =
+  | JobProcessPipelineStageBulk
   | JobRetryRealtimeMemberRevoke
   | JobProcessInboundWebhookRequest
   | JobSyncWelcomeMessageFlows
@@ -383,4 +401,3 @@ export type DefaultJobData =
   | JobCheckMetaCatalogSync
   | JobSyncExternalCalendarEvent
   | JobSendAppointmentReminder
-  | JobInstallTemplate

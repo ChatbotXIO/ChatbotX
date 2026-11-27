@@ -56,6 +56,59 @@ export const orderBelowVendorMinimumException = (
   return error
 }
 
+/** An online order is accepted only once its payment came in. */
+export const orderAwaitingPaymentException = () =>
+  new ChatbotXException(
+    "The order is waiting for its online payment.",
+    "orderAwaitingPayment",
+    409,
+  )
+
+/** The payment could not be sent back, so the order stays as it was. */
+export const orderRefundFailedException = (provider: string) => {
+  const error = new ChatbotXException(
+    `${provider} could not refund the payment, so the order was not cancelled. Try again in a moment.`,
+    "orderRefundFailed",
+    502,
+  )
+  error.data = { provider }
+  return error
+}
+
+/** Paid, but the provider has not settled it yet: nothing to refund yet. */
+export const orderPaymentProcessingException = () =>
+  new ChatbotXException(
+    "A payment for this order is still being processed. Try again later.",
+    "orderPaymentProcessing",
+    409,
+  )
+
+/** The provider's page sends the customer back to their own order. */
+export const orderPaymentContactRequiredException = () =>
+  new ChatbotXException(
+    "An order paid online needs a contact (the customer).",
+    "orderPaymentContactRequired",
+  )
+
+/** Only a pending online order still waiting for its money can be paid. */
+export const orderPaymentNotOpenException = (reason: string) => {
+  const error = new ChatbotXException(
+    "This order cannot be paid online now.",
+    "orderPaymentNotOpen",
+    409,
+  )
+  error.data = { reason }
+  return error
+}
+
+/** Deleting a paid online order would keep the money without an order. */
+export const orderPaidOnlineException = () =>
+  new ChatbotXException(
+    "This order was paid online. Cancel it first: cancelling refunds the payment.",
+    "orderPaidOnline",
+    409,
+  )
+
 export const orderShippingTypeUnavailableException = (shippingType: string) => {
   const error = new ChatbotXException(
     `The store does not offer ${shippingType}.`,

@@ -256,13 +256,54 @@ describe("webhookHandler comment routing", () => {
   test.each([
     "set_to_hidden",
     "set_to_friends_only",
-    "set_to_public",
   ])("enqueues nothing for %s", async (action) => {
     await expect(run(buildContent({ comment_action: action }))).resolves.toBe(
       "ok",
     )
 
     expect(queueAdd).not.toHaveBeenCalled()
+  })
+
+  // #1715: on a photo post TikTok reports `set_to_public` about a second after
+  // the comment, which the commenter lookup had just missed. It is sent on as
+  // a re-check; the worker acts on it only for a comment it withheld.
+  test("enqueues a visibility re-check for set_to_public", async () => {
+    await expect(
+      run(buildContent({ comment_action: "set_to_public" })),
+    ).resolves.toBe("ok")
+
+    expect(queueAdd).toHaveBeenCalledWith("incomingComment", {
+      type: "incomingComment",
+      data: expect.objectContaining({
+        integrationIdentifier: "open-1",
+        commentData: expect.objectContaining({ commentId: COMMENT_ID }),
+        tiktokIdentityRecheck: { source: "visibility" },
+      }),
+    })
+  })
+
+  // The worker re-checks the comment stored at first delivery, so a
+  // visibility payload without the commenter id is still worth sending on.
+  test("enqueues the set_to_public re-check without a unique_identifier", async () => {
+    await run(
+      buildContent({
+        comment_action: "set_to_public",
+        unique_identifier: undefined,
+        text: undefined,
+      }),
+    )
+
+    expect(queueAdd.mock.calls[0][1].data.tiktokIdentityRecheck).toEqual({
+      source: "visibility",
+    })
+  })
+
+  test("a new comment carries no re-check marker", async () => {
+    await run(buildContent())
+
+    expect(queueAdd.mock.calls[0][1].data).not.toHaveProperty(
+      "tiktokIdentityRecheck",
+    )
   })
 
   test("answers ok without enqueuing when the content cannot be parsed", async () => {

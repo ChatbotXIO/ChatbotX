@@ -17,9 +17,10 @@ import { Form } from "@chatbotx.io/ui/components/ui/form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useTranslations } from "next-intl"
 import { useState } from "react"
-import { useForm, useFormContext } from "react-hook-form"
+import { type UseFormReturn, useForm, useFormContext } from "react-hook-form"
 import { PlainTextEditorField } from "@/components/tiptap/plain-text-editor-field"
 import { getBrowserTimezone } from "@/features/contact-filter/lib/timezone"
+import { FieldOperationOperand } from "@/features/custom-fields/components/field-operation-operand"
 import {
   type FieldValuePickerKind,
   FieldValuePickerPopover,
@@ -29,6 +30,7 @@ import {
   CustomFieldSelect,
 } from "@/features/custom-fields/custom-field-select"
 import { findFieldByReference } from "@/features/custom-fields/lib/find-field-by-reference"
+import { useFieldOperationReset } from "@/features/custom-fields/lib/use-field-operation-reset"
 import {
   useBotFields,
   useCustomFields,
@@ -59,6 +61,13 @@ const SetCustomFieldStepEditor = ({ parentName }: { parentName: string }) => {
     customFields,
     botFields,
   })?.type
+  const operation = customFieldForm.watch("operation")
+  const { onOperationChange } = useFieldOperationReset({
+    operationName: "operation",
+    valueName: "value",
+    fieldType: selectedFieldType ?? null,
+    form: customFieldForm as unknown as UseFormReturn,
+  })
   const isTemporalField =
     selectedFieldType === "date" || selectedFieldType === "datetime"
   const isPickableField = isTemporalField || selectedFieldType === "boolean"
@@ -105,43 +114,51 @@ const SetCustomFieldStepEditor = ({ parentName }: { parentName: string }) => {
             />
             <CustomFieldOperationSelect
               name="operation"
+              onValueChange={onOperationChange}
               required
               type={selectedFieldType ?? null}
             />
-            <div className="flex flex-col gap-1.5">
-              {isPickableField ? (
-                <FieldValuePickerPopover
-                  kind={selectedFieldType as FieldValuePickerKind}
-                  name="value"
-                >
-                  {(inputKey) => (
+            <FieldOperationOperand
+              name="value"
+              operation={operation}
+              renderTyped={() => (
+                <div className="flex flex-col gap-1.5">
+                  {isPickableField ? (
+                    <FieldValuePickerPopover
+                      kind={selectedFieldType as FieldValuePickerKind}
+                      name="value"
+                    >
+                      {(inputKey) => (
+                        <PlainTextEditorField
+                          includeBotFieldVariables
+                          includeRawCustomFieldVariables
+                          inline
+                          key={inputKey}
+                          label={t("fields.value.label")}
+                          name="value"
+                          showEmojiPicker={false}
+                        />
+                      )}
+                    </FieldValuePickerPopover>
+                  ) : (
                     <PlainTextEditorField
                       includeBotFieldVariables
                       includeRawCustomFieldVariables
                       inline
-                      key={inputKey}
                       label={t("fields.value.label")}
                       name="value"
                       showEmojiPicker={false}
                     />
                   )}
-                </FieldValuePickerPopover>
-              ) : (
-                <PlainTextEditorField
-                  includeBotFieldVariables
-                  includeRawCustomFieldVariables
-                  inline
-                  label={t("fields.value.label")}
-                  name="value"
-                  showEmojiPicker={false}
-                />
+                  {isTemporalField ? (
+                    <p className="text-muted-foreground text-xs">
+                      {t("flows.setCustomField.temporalHint")}
+                    </p>
+                  ) : null}
+                </div>
               )}
-              {isTemporalField ? (
-                <p className="text-muted-foreground text-xs">
-                  {t("flows.setCustomField.temporalHint")}
-                </p>
-              ) : null}
-            </div>
+              variables
+            />
 
             <div className="flex w-full items-center justify-end gap-2">
               <Button

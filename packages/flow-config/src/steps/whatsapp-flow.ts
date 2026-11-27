@@ -1,18 +1,37 @@
 import { createId, zodBigintAsString } from "@chatbotx.io/utils"
+import type { CustomFieldType } from "@chatbotx.io/utils/custom-field"
 import { z } from "zod"
 import { flowValidationCodes } from "../validation-codes"
 import { baseStepSchema } from "./base"
-import { type ButtonStepProps, buttonStepSchema } from "./button"
+import {
+  type ButtonStepProps,
+  buttonStepSchema,
+  refineReplyOnlyButtons,
+} from "./button"
 import { stepTypes } from "./step-action"
 
 export const WHATSAPP_FLOW_BODY_MAX = 1024
 export const WHATSAPP_FLOW_BUTTON_MAX = 20
 export const WHATSAPP_FLOW_PARAM_KEY_MAX = 64
 
+/** How a file answer (PhotoPicker / DocumentPicker) is written to its custom field. */
+export const whatsappFlowFileFormats = z.enum(["allUrls", "firstUrl"])
+export type WhatsappFlowFileFormat = z.infer<typeof whatsappFlowFileFormats>
+export const DEFAULT_WHATSAPP_FLOW_FILE_FORMAT: WhatsappFlowFileFormat =
+  "allUrls"
+/** File answers are links, so only text custom fields can hold them. */
+export const WHATSAPP_FLOW_FILE_ANSWER_FIELD_TYPES: readonly CustomFieldType[] =
+  ["shortText", "longText"]
+
 export const whatsappFlowFieldMappingSchema = z.object({
   paramKey: z.string().trim().min(1).max(WHATSAPP_FLOW_PARAM_KEY_MAX),
   paramLabel: z.string().optional(),
   customFieldId: zodBigintAsString().nullable(),
+  fileFormat: whatsappFlowFileFormats
+    .optional()
+    .describe(
+      'Only for file answers: "allUrls" stores every file URL, comma-separated (default); "firstUrl" stores the first one.',
+    ),
 })
 export type WhatsappFlowFieldMapping = z.infer<
   typeof whatsappFlowFieldMappingSchema
@@ -49,7 +68,12 @@ export const whatsappFlowStepSchema = baseStepSchema.extend({
     .literal(stepTypes.enum.whatsappFlow)
     .describe('Step type discriminator: "whatsappFlow".'),
   text: z.string().trim().min(1).max(WHATSAPP_FLOW_BODY_MAX),
-  buttons: z.array(buttonStepSchema).min(1).max(1),
+  // The button is the CTA that opens the WhatsApp Flow, so it cannot dial.
+  buttons: z
+    .array(buttonStepSchema)
+    .min(1)
+    .max(1)
+    .superRefine(refineReplyOnlyButtons),
   inboxId: zodBigintAsString().nullable(),
   flow: whatsappFlowStepFlowSchema,
 })

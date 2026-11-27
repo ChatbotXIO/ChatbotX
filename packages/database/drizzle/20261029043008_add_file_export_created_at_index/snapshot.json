@@ -1,0 +1,219 @@
+{
+  "type": "diff",
+  "version": "10",
+  "dialect": "postgres",
+  "id": "da79a4d8-8f03-43cc-8dea-8ac55f7e6831",
+  "prevIds": [
+    "d889de6b-91ea-4c69-ba84-1e4670ee22ea"
+  ],
+  "footprints": [
+    {
+      "statementType": "drop_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "PlaceLocation"
+      ],
+      "writes": [
+        "s|fk|public.PlaceLocation.PlaceLocation_categoryId_PlaceCategory_id_fkey",
+        "n|fk|public.PlaceLocation.PlaceLocation_categoryId_PlaceCategory_id_fkey",
+        "e|fk|public.PlaceLocation.PlaceLocation_categoryId_PlaceCategory_id_fkey",
+        "n|con|public.PlaceLocation.PlaceLocation_categoryId_PlaceCategory_id_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.PlaceLocation",
+        "n|sch|public",
+        "e|col|public.PlaceLocation.categoryId"
+      ]
+    },
+    {
+      "statementType": "drop_table",
+      "statementTarget": [
+        "table",
+        "public",
+        "PlaceCategory"
+      ],
+      "writes": [
+        "s|tbl|public.PlaceCategory",
+        "n|tbl|public.PlaceCategory",
+        "e|tbl|public.PlaceCategory",
+        "n|rel|public.PlaceCategory",
+        "n|type|public.PlaceCategory"
+      ],
+      "reads": [
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "drop_table",
+      "statementTarget": [
+        "table",
+        "public",
+        "PlaceLocation"
+      ],
+      "writes": [
+        "s|tbl|public.PlaceLocation",
+        "n|tbl|public.PlaceLocation",
+        "e|tbl|public.PlaceLocation",
+        "n|rel|public.PlaceLocation",
+        "n|type|public.PlaceLocation"
+      ],
+      "reads": [
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "File",
+        "File_export_createdAt_idx"
+      ],
+      "writes": [
+        "s|idx|public.File_export_createdAt_idx",
+        "n|idx|public.File_export_createdAt_idx",
+        "e|idx|public.File_export_createdAt_idx",
+        "n|rel|public.File_export_createdAt_idx"
+      ],
+      "reads": [
+        "n|tbl|public.File",
+        "n|sch|public",
+        "n|col|public.File.createdAt"
+      ]
+    }
+  ],
+  "deltas": [
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "File",
+        "name": "File_export_createdAt_idx",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "createdAt",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": false,
+        "where": "\"contextType\" = 'export'",
+        "with": "",
+        "method": "btree",
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "drop",
+      "key": "tables\u0000[\"public\",\"PlaceCategory\"]"
+    },
+    {
+      "op": "drop",
+      "key": "tables\u0000[\"public\",\"PlaceLocation\"]"
+    },
+    {
+      "op": "drop",
+      "key": "columns\u0000[\"public\",\"PlaceCategory\",\"id\"]"
+    },
+    {
+      "op": "drop",
+      "key": "columns\u0000[\"public\",\"PlaceCategory\",\"createdAt\"]"
+    },
+    {
+      "op": "drop",
+      "key": "columns\u0000[\"public\",\"PlaceCategory\",\"updatedAt\"]"
+    },
+    {
+      "op": "drop",
+      "key": "columns\u0000[\"public\",\"PlaceCategory\",\"workspaceId\"]"
+    },
+    {
+      "op": "drop",
+      "key": "columns\u0000[\"public\",\"PlaceCategory\",\"name\"]"
+    },
+    {
+      "op": "drop",
+      "key": "columns\u0000[\"public\",\"PlaceCategory\",\"rank\"]"
+    },
+    {
+      "op": "drop",
+      "key": "columns\u0000[\"public\",\"PlaceLocation\",\"id\"]"
+    },
+    {
+      "op": "drop",
+      "key": "columns\u0000[\"public\",\"PlaceLocation\",\"createdAt\"]"
+    },
+    {
+      "op": "drop",
+      "key": "columns\u0000[\"public\",\"PlaceLocation\",\"updatedAt\"]"
+    },
+    {
+      "op": "drop",
+      "key": "columns\u0000[\"public\",\"PlaceLocation\",\"workspaceId\"]"
+    },
+    {
+      "op": "drop",
+      "key": "columns\u0000[\"public\",\"PlaceLocation\",\"name\"]"
+    },
+    {
+      "op": "drop",
+      "key": "columns\u0000[\"public\",\"PlaceLocation\",\"latitude\"]"
+    },
+    {
+      "op": "drop",
+      "key": "columns\u0000[\"public\",\"PlaceLocation\",\"longitude\"]"
+    },
+    {
+      "op": "drop",
+      "key": "columns\u0000[\"public\",\"PlaceLocation\",\"categoryId\"]"
+    },
+    {
+      "op": "drop",
+      "key": "indexes\u0000[\"public\",\"PlaceCategory_workspaceId_idx\"]"
+    },
+    {
+      "op": "drop",
+      "key": "indexes\u0000[\"public\",\"PlaceCategory_workspaceId_name_key\"]"
+    },
+    {
+      "op": "drop",
+      "key": "indexes\u0000[\"public\",\"PlaceLocation_workspaceId_createdAt_idx\"]"
+    },
+    {
+      "op": "drop",
+      "key": "indexes\u0000[\"public\",\"PlaceLocation_categoryId_idx\"]"
+    },
+    {
+      "op": "drop",
+      "key": "fks\u0000[\"public\",\"PlaceCategory\",\"PlaceCategory_workspaceId_Workspace_id_fkey\"]"
+    },
+    {
+      "op": "drop",
+      "key": "fks\u0000[\"public\",\"PlaceLocation\",\"PlaceLocation_workspaceId_Workspace_id_fkey\"]"
+    },
+    {
+      "op": "drop",
+      "key": "fks\u0000[\"public\",\"PlaceLocation\",\"PlaceLocation_categoryId_PlaceCategory_id_fkey\"]"
+    },
+    {
+      "op": "drop",
+      "key": "pks\u0000[\"public\",\"PlaceCategory\",\"PlaceCategory_pkey\"]"
+    },
+    {
+      "op": "drop",
+      "key": "pks\u0000[\"public\",\"PlaceLocation\",\"PlaceLocation_pkey\"]"
+    },
+    {
+      "op": "drop",
+      "key": "checks\u0000[\"public\",\"PlaceLocation\",\"PlaceLocation_latitude_check\"]"
+    },
+    {
+      "op": "drop",
+      "key": "checks\u0000[\"public\",\"PlaceLocation\",\"PlaceLocation_longitude_check\"]"
+    }
+  ]
+}

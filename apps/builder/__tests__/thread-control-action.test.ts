@@ -54,16 +54,28 @@ const { threadControlAction: untypedAction } = await import(
 const { ThreadControlUnsupportedError } = await import("@chatbotx.io/business")
 const threadControlAction = untypedAction as unknown as (props: {
   bindArgsParsedInputs: [string, string]
-  parsedInput: { contactInboxId: string; action: "take" | "release" | "pass" }
+  parsedInput: {
+    contactInboxId: string
+    action: "take" | "release" | "pass"
+    targetRole?: "customer_service" | "marketing"
+    metadata?: string
+  }
   ctx: { user: { id: string }; workspaceMemberPermissions: unknown }
 }) => Promise<unknown>
 
 const NOT_THE_OWNER_PATTERN = /Not the owner/
 const permissions = { onlyAssignedContacts: true }
-const run = (action: "take" | "release" | "pass", contactInboxId = "ci-1") =>
+const run = (
+  action: "take" | "release" | "pass",
+  contactInboxId = "ci-1",
+  handover: {
+    targetRole?: "customer_service" | "marketing"
+    metadata?: string
+  } = {},
+) =>
   threadControlAction({
     bindArgsParsedInputs: ["ws-1", "conv-1"],
-    parsedInput: { contactInboxId, action },
+    parsedInput: { contactInboxId, action, ...handover },
     ctx: { user: { id: "user-1" }, workspaceMemberPermissions: permissions },
   })
 
@@ -99,6 +111,22 @@ describe("threadControlAction", () => {
       conversation: { id: "conv-1", contactId: "contact-1" },
       contactInboxId: "ci-1",
       action: "take",
+    })
+  })
+
+  test("forwards the target role and the handover note to the channel registry", async () => {
+    await run("pass", "ci-1", {
+      targetRole: "customer_service",
+      metadata: "Refund approved",
+    })
+
+    expect(mocks.requestConversationThreadControl).toHaveBeenCalledWith({
+      workspaceId: "ws-1",
+      conversation: { id: "conv-1", contactId: "contact-1" },
+      contactInboxId: "ci-1",
+      action: "pass",
+      targetRole: "customer_service",
+      metadata: "Refund approved",
     })
   })
 

@@ -5,6 +5,7 @@ import {
 } from "@chatbotx.io/business"
 import type { CommentAutomationType } from "@chatbotx.io/database/partials"
 import {
+  LOW_BULK_PRIORITY,
   LowJobAction,
   type LowJobReplayMissedComment,
   lowQueue,
@@ -34,7 +35,7 @@ const MISSED_COMMENTS_ENQUEUE_CHUNK_SIZE = 500
 type ReplayJob = {
   name: typeof LowJobAction.replayMissedComment
   data: LowJobReplayMissedComment
-  opts: { jobId: string; delay: number; attempts: number }
+  opts: { jobId: string; delay: number; priority: number; attempts: number }
 }
 
 export type ProcessMissedCommentsFailureReason =
@@ -201,6 +202,7 @@ async function enqueueReplays(props: {
         opts: {
           jobId: `missed-comment-${automationId}-${comment.commentData.commentId}`,
           delay: firstDelay + index * MISSED_COMMENTS_REPLAY_SPACING_MS,
+          priority: LOW_BULK_PRIORITY,
           attempts: 1,
         },
       }),

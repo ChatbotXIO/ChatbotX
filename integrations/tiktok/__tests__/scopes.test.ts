@@ -4,10 +4,16 @@ import {
   findMissingTiktokScopes,
   parseTiktokScopes,
   TIKTOK_COMMENT_AUTOMATION_SCOPES,
+  TIKTOK_COMMENT_CORE_SCOPES,
   TIKTOK_COMMENT_SCOPES_PENDING_APPROVAL,
   TIKTOK_CORE_SCOPES,
+  TIKTOK_IDENTITY_SCOPES,
+  TIKTOK_MESSAGING_SCOPES,
   TIKTOK_OPTIONAL_PROFILE_SCOPES,
+  tiktokCanMessage,
   tiktokNeedsReauthorization,
+  tiktokRequestedScopes,
+  tiktokRequiredScopes,
 } from "../src/lib/scopes"
 
 const buildAuth = (scopes?: string[]) => ({
@@ -191,5 +197,105 @@ describe("tiktokNeedsReauthorization", () => {
 
   test("an empty recorded scope list is flagged", () => {
     expect(tiktokNeedsReauthorization(buildAuth([]))).toBe(true)
+  })
+
+  // The credential never asked for comment scopes, so lacking them is the
+  // grant working as configured.
+  test("a connection whose credential had comments off is not flagged", () => {
+    const auth = buildAuth([...TIKTOK_CORE_SCOPES])
+    expect(
+      tiktokNeedsReauthorization({
+        metadata: {
+          ...auth.metadata,
+          features: { messaging: true, comments: false },
+        },
+      }),
+    ).toBe(false)
+  })
+})
+
+describe("channel features", () => {
+  const commentsOnly = { messaging: false, comments: true }
+  const messagingOnly = { messaging: true, comments: false }
+
+  // Credentials saved before the switches existed carry no features and must
+  // behave exactly as before.
+  test("no features means both on, unchanged from before", () => {
+    expect(tiktokRequiredScopes(undefined)).toEqual(TIKTOK_CORE_SCOPES)
+    expect(tiktokRequestedScopes(undefined).split(",")).toEqual([
+      ...TIKTOK_CORE_SCOPES,
+      ...TIKTOK_OPTIONAL_PROFILE_SCOPES,
+      ...TIKTOK_COMMENT_AUTOMATION_SCOPES,
+    ])
+  })
+
+  test("messaging off requires the comment scopes instead", () => {
+    expect(tiktokRequiredScopes(commentsOnly)).toEqual([
+      ...TIKTOK_IDENTITY_SCOPES,
+      ...TIKTOK_COMMENT_CORE_SCOPES,
+    ])
+  })
+
+  // An EEA, Swiss or UK account can never grant these; asking for them on the
+  // consent screen is what blocks the connect.
+  test("messaging off never requests a messaging scope", () => {
+    const requested = tiktokRequestedScopes(commentsOnly).split(",")
+    for (const scope of TIKTOK_MESSAGING_SCOPES) {
+      expect(requested).not.toContain(scope)
+    }
+    expect(requested).toEqual(
+      expect.arrayContaining([...TIKTOK_COMMENT_AUTOMATION_SCOPES]),
+    )
+  })
+
+  test("comments off never requests a comment scope", () => {
+    const requested = tiktokRequestedScopes(messagingOnly).split(",")
+    for (const scope of TIKTOK_COMMENT_AUTOMATION_SCOPES) {
+      expect(requested).not.toContain(scope)
+    }
+    expect(tiktokRequiredScopes(messagingOnly)).toEqual(TIKTOK_CORE_SCOPES)
+  })
+})
+
+describe("tiktokCanMessage", () => {
+  const withFeatures = (
+    scopes: string[] | undefined,
+    features?: { messaging: boolean; comments: boolean },
+  ) => {
+    const auth = buildAuth(scopes)
+    return { metadata: { ...auth.metadata, features } }
+  }
+
+  test("a connection made with messaging on can message", () => {
+    expect(
+      tiktokCanMessage(
+        withFeatures([...TIKTOK_CORE_SCOPES], {
+          messaging: true,
+          comments: true,
+        }),
+      ),
+    ).toBe(true)
+  })
+
+  test("a connection made with messaging off cannot", () => {
+    expect(
+      tiktokCanMessage(
+        withFeatures(
+          [...TIKTOK_IDENTITY_SCOPES, ...TIKTOK_COMMENT_CORE_SCOPES],
+          { messaging: false, comments: true },
+        ),
+      ),
+    ).toBe(false)
+  })
+
+  // Messaging was required to connect at all before features existed.
+  test("a connection made before features existed counts as able", () => {
+    expect(tiktokCanMessage(buildAuth())).toBe(true)
+  })
+
+  // Both refresh paths re-stamp `scopes` from TikTok's refresh response; an
+  // empty answer there must not cut off a working DM connection.
+  test("an empty re-stamped scope list does not revoke messaging", () => {
+    expect(tiktokCanMessage(buildAuth([]))).toBe(true)
   })
 })

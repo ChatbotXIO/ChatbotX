@@ -1,3 +1,4 @@
+import type { EmbeddedVideo } from "@chatbotx.io/utils/embedded-video"
 import {
   boolean,
   index,
@@ -55,6 +56,7 @@ export const templateModel = pgTable(
     imageUrl: text(),
     publisherName: text(),
     youtubeVideoId: text(),
+    embeddedVideo: jsonb().$type<EmbeddedVideo>(),
     testLink: text(),
     selection: jsonb().$type<TemplateSelection>().notNull(),
     payload: jsonb().$type<TemplatePayload>().notNull(),
@@ -69,6 +71,10 @@ export const templateModel = pgTable(
     createInstallFolder: boolean().default(false).notNull(),
     defaultAutoUpdate: boolean().default(false).notNull(),
     installCount: integer().default(0).notNull(),
+    // Bumped in the transaction that saves a payload whose semantic hash
+    // changed; installs follow it. `payloadHash` is that hash.
+    version: integer().default(1).notNull(),
+    payloadHash: text(),
     createdBy: bigintAsString().references(() => userModel.id, {
       onDelete: "set null",
       onUpdate: "cascade",

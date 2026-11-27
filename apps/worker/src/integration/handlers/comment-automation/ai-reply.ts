@@ -3,6 +3,7 @@ import {
   aiAgentService,
   contactInboxService,
   conversationService,
+  logProviderError,
   workspaceService,
 } from "@chatbotx.io/business"
 import type { IntegrationType } from "@chatbotx.io/database/partials"
@@ -23,6 +24,7 @@ import {
   recordInlinePrivateReply,
 } from "./private-reply"
 import { postPublicCommentReply } from "./public-reply"
+import { ERROR_LOG_PROVIDER_BY_CHANNEL } from "./record"
 
 /**
  * Channels whose comments reach the agent inside an explicit untrusted-data
@@ -128,11 +130,10 @@ export async function processCommentAIReply(
 /**
  * BullMQ will not run this job again after the current attempt.
  *
- * `willRetryOnThrow` alone is not enough. `runWithOrphanedIntegrationCleanup`
- * turns an `IntegrationNotFoundError` into a BullMQ `UnrecoverableError`, but it
- * wraps this handler from the *outside* (`ai-agent/worker.ts`), so the catch
- * here only ever sees the original error — and an attempt that is nominally
- * "1 of 2" is in fact the last one.
+ * `willRetryOnThrow` alone is not enough. The outer
+ * `runWithOrphanedIntegrationCleanup` completes an
+ * `IntegrationNotFoundError` after this handler rethrows it, so this catch must
+ * settle the terminal failure even when BullMQ has attempts remaining.
  */
 function isTerminalAIReplyFailure(
   error: unknown,
@@ -397,12 +398,12 @@ function settleAIReplySent(props: {
  * received beats one with an empty reply, which reads as "the agent produced
  * nothing" and hides that generation actually succeeded.
  */
-function settleAIReplyFailed(props: {
+async function settleAIReplyFailed(props: {
   data: AIJobCommentAIReply["data"]
   text?: string
   error: unknown
 }): Promise<void> {
-  return commentAutomationAnalyticsService.settleEvent({
+  await commentAutomationAnalyticsService.settleEvent({
     automationId: props.data.automationId,
     commentId: props.data.commentId,
     replyChannel: props.data.replyChannel,
@@ -411,4 +412,16 @@ function settleAIReplyFailed(props: {
     errorDetail:
       props.error instanceof Error ? props.error.message : String(props.error),
   })
+  // A private reply is sent inline here, so this is its only failure record
+  // outside the automation's own analytics — the same pairing a `text` private
+  // reply gets (`recordReplyFailure`). A public reply's channel send fails in
+  // the chat worker, whose `message:failed` already writes the Error Log row.
+  if (props.data.replyChannel === "private") {
+    await logProviderError({
+      provider: ERROR_LOG_PROVIDER_BY_CHANNEL[props.data.channelType],
+      workspaceId: props.data.workspaceId,
+      contactId: props.data.commentDedup?.contactId,
+      error: props.error,
+    })
+  }
 }

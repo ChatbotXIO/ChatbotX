@@ -43,11 +43,13 @@ vi.mock("@chatbotx.io/ai", () => ({
   },
   processStreamingText: vi.fn(async () => ({ fullText: state.aiResponseText })),
   toolPrefixes: { enum: { file: "file", fn: "fn", mcp: "mcp", sys: "sys" } },
+  toStepSeparatedTextStream: vi.fn((stream: unknown) => stream),
 }))
 
 vi.mock("@chatbotx.io/ai/server", () => ({
   aiContextService: { appendHistory: appendHistoryMock },
   aiIntegrationService: { findBy: findAIIntegrationMock },
+  appendCustomerInputGuard: (prompt: string) => prompt,
   appendFabricationGuard: (prompt: string) => prompt,
   appendKnowledgeBaseGuard: (prompt: string) => prompt,
   appendToolOutputGuard: (prompt: string) => prompt,

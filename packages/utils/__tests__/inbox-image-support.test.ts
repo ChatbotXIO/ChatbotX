@@ -56,6 +56,26 @@ describe("resolveInboxReplyKind", () => {
     ).toBe("comment")
   })
 
+  test("an SMTP reply stays a message: it is an email in the thread, not a comment", () => {
+    expect(
+      resolveInboxReplyKind({
+        channel: "smtp",
+        hasReplyTarget: true,
+        isPrivateReply: false,
+      }),
+    ).toBe("message")
+  })
+
+  test("a Messenger reply target is still a comment reply", () => {
+    expect(
+      resolveInboxReplyKind({
+        channel: "messenger",
+        hasReplyTarget: true,
+        isPrivateReply: false,
+      }),
+    ).toBe("comment")
+  })
+
   test("no reply target is a direct message", () => {
     expect(
       resolveInboxReplyKind({ hasReplyTarget: false, isPrivateReply: false }),

@@ -1,0 +1,1350 @@
+{
+  "type": "diff",
+  "version": "10",
+  "dialect": "postgres",
+  "id": "cce19a98-af13-47c9-9045-e27e6b1c5a56",
+  "prevIds": [
+    "28123e97-6285-4033-954a-88136a68c0d0"
+  ],
+  "footprints": [
+    {
+      "statementType": "create_table",
+      "statementTarget": [
+        "table",
+        "public",
+        "PollCandidate"
+      ],
+      "writes": [
+        "s|tbl|public.PollCandidate",
+        "n|tbl|public.PollCandidate",
+        "e|tbl|public.PollCandidate",
+        "n|rel|public.PollCandidate",
+        "n|type|public.PollCandidate",
+        "n|rel|public.PollCandidate_pkey"
+      ],
+      "reads": [
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "create_table",
+      "statementTarget": [
+        "table",
+        "public",
+        "Poll"
+      ],
+      "writes": [
+        "s|tbl|public.Poll",
+        "n|tbl|public.Poll",
+        "e|tbl|public.Poll",
+        "n|rel|public.Poll",
+        "n|type|public.Poll",
+        "n|rel|public.Poll_pkey"
+      ],
+      "reads": [
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "create_table",
+      "statementTarget": [
+        "table",
+        "public",
+        "PollVote"
+      ],
+      "writes": [
+        "s|tbl|public.PollVote",
+        "n|tbl|public.PollVote",
+        "e|tbl|public.PollVote",
+        "n|rel|public.PollVote",
+        "n|type|public.PollVote",
+        "n|rel|public.PollVote_pkey"
+      ],
+      "reads": [
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "PollCandidate",
+        "PollCandidate_pollId_position_idx"
+      ],
+      "writes": [
+        "s|idx|public.PollCandidate_pollId_position_idx",
+        "n|idx|public.PollCandidate_pollId_position_idx",
+        "e|idx|public.PollCandidate_pollId_position_idx",
+        "n|rel|public.PollCandidate_pollId_position_idx"
+      ],
+      "reads": [
+        "n|tbl|public.PollCandidate",
+        "n|sch|public",
+        "n|col|public.PollCandidate.pollId",
+        "n|col|public.PollCandidate.position"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "PollCandidate",
+        "PollCandidate_workspaceId_idx"
+      ],
+      "writes": [
+        "s|idx|public.PollCandidate_workspaceId_idx",
+        "n|idx|public.PollCandidate_workspaceId_idx",
+        "e|idx|public.PollCandidate_workspaceId_idx",
+        "n|rel|public.PollCandidate_workspaceId_idx"
+      ],
+      "reads": [
+        "n|tbl|public.PollCandidate",
+        "n|sch|public",
+        "n|col|public.PollCandidate.workspaceId"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "Poll",
+        "Poll_workspaceId_createdAt_idx"
+      ],
+      "writes": [
+        "s|idx|public.Poll_workspaceId_createdAt_idx",
+        "n|idx|public.Poll_workspaceId_createdAt_idx",
+        "e|idx|public.Poll_workspaceId_createdAt_idx",
+        "n|rel|public.Poll_workspaceId_createdAt_idx"
+      ],
+      "reads": [
+        "n|tbl|public.Poll",
+        "n|sch|public",
+        "n|col|public.Poll.workspaceId",
+        "n|col|public.Poll.createdAt"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "Poll",
+        "Poll_afterVoteFlowId_idx"
+      ],
+      "writes": [
+        "s|idx|public.Poll_afterVoteFlowId_idx",
+        "n|idx|public.Poll_afterVoteFlowId_idx",
+        "e|idx|public.Poll_afterVoteFlowId_idx",
+        "n|rel|public.Poll_afterVoteFlowId_idx"
+      ],
+      "reads": [
+        "n|tbl|public.Poll",
+        "n|sch|public",
+        "n|col|public.Poll.afterVoteFlowId"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "PollVote",
+        "PollVote_pollId_contactId_key"
+      ],
+      "writes": [
+        "s|idx|public.PollVote_pollId_contactId_key",
+        "n|idx|public.PollVote_pollId_contactId_key",
+        "e|idx|public.PollVote_pollId_contactId_key",
+        "n|rel|public.PollVote_pollId_contactId_key"
+      ],
+      "reads": [
+        "n|tbl|public.PollVote",
+        "n|sch|public",
+        "n|col|public.PollVote.pollId",
+        "n|col|public.PollVote.contactId"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "PollVote",
+        "PollVote_workspaceId_idx"
+      ],
+      "writes": [
+        "s|idx|public.PollVote_workspaceId_idx",
+        "n|idx|public.PollVote_workspaceId_idx",
+        "e|idx|public.PollVote_workspaceId_idx",
+        "n|rel|public.PollVote_workspaceId_idx"
+      ],
+      "reads": [
+        "n|tbl|public.PollVote",
+        "n|sch|public",
+        "n|col|public.PollVote.workspaceId"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "PollVote",
+        "PollVote_candidateId_idx"
+      ],
+      "writes": [
+        "s|idx|public.PollVote_candidateId_idx",
+        "n|idx|public.PollVote_candidateId_idx",
+        "e|idx|public.PollVote_candidateId_idx",
+        "n|rel|public.PollVote_candidateId_idx"
+      ],
+      "reads": [
+        "n|tbl|public.PollVote",
+        "n|sch|public",
+        "n|col|public.PollVote.candidateId"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "PollVote",
+        "PollVote_contactId_idx"
+      ],
+      "writes": [
+        "s|idx|public.PollVote_contactId_idx",
+        "n|idx|public.PollVote_contactId_idx",
+        "e|idx|public.PollVote_contactId_idx",
+        "n|rel|public.PollVote_contactId_idx"
+      ],
+      "reads": [
+        "n|tbl|public.PollVote",
+        "n|sch|public",
+        "n|col|public.PollVote.contactId"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "PollVote",
+        "PollVote_contactInboxId_idx"
+      ],
+      "writes": [
+        "s|idx|public.PollVote_contactInboxId_idx",
+        "n|idx|public.PollVote_contactInboxId_idx",
+        "e|idx|public.PollVote_contactInboxId_idx",
+        "n|rel|public.PollVote_contactInboxId_idx"
+      ],
+      "reads": [
+        "n|tbl|public.PollVote",
+        "n|sch|public",
+        "n|col|public.PollVote.contactInboxId"
+      ]
+    },
+    {
+      "statementType": "create_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "PollCandidate"
+      ],
+      "writes": [
+        "s|fk|public.PollCandidate.PollCandidate_workspaceId_Workspace_id_fkey",
+        "n|fk|public.PollCandidate.PollCandidate_workspaceId_Workspace_id_fkey",
+        "e|fk|public.PollCandidate.PollCandidate_workspaceId_Workspace_id_fkey",
+        "n|con|public.PollCandidate.PollCandidate_workspaceId_Workspace_id_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.PollCandidate",
+        "n|sch|public",
+        "n|tbl|public.Workspace",
+        "n|sch|public",
+        "n|col|public.PollCandidate.workspaceId",
+        "n|col|public.Workspace.id",
+        "e|uniqueness|public.Workspace.id"
+      ]
+    },
+    {
+      "statementType": "create_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "PollCandidate"
+      ],
+      "writes": [
+        "s|fk|public.PollCandidate.PollCandidate_pollId_Poll_id_fkey",
+        "n|fk|public.PollCandidate.PollCandidate_pollId_Poll_id_fkey",
+        "e|fk|public.PollCandidate.PollCandidate_pollId_Poll_id_fkey",
+        "n|con|public.PollCandidate.PollCandidate_pollId_Poll_id_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.PollCandidate",
+        "n|sch|public",
+        "n|tbl|public.Poll",
+        "n|sch|public",
+        "n|col|public.PollCandidate.pollId",
+        "n|col|public.Poll.id",
+        "e|uniqueness|public.Poll.id"
+      ]
+    },
+    {
+      "statementType": "create_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "Poll"
+      ],
+      "writes": [
+        "s|fk|public.Poll.Poll_workspaceId_Workspace_id_fkey",
+        "n|fk|public.Poll.Poll_workspaceId_Workspace_id_fkey",
+        "e|fk|public.Poll.Poll_workspaceId_Workspace_id_fkey",
+        "n|con|public.Poll.Poll_workspaceId_Workspace_id_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.Poll",
+        "n|sch|public",
+        "n|tbl|public.Workspace",
+        "n|sch|public",
+        "n|col|public.Poll.workspaceId",
+        "n|col|public.Workspace.id",
+        "e|uniqueness|public.Workspace.id"
+      ]
+    },
+    {
+      "statementType": "create_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "Poll"
+      ],
+      "writes": [
+        "s|fk|public.Poll.Poll_afterVoteFlowId_Flow_id_fkey",
+        "n|fk|public.Poll.Poll_afterVoteFlowId_Flow_id_fkey",
+        "e|fk|public.Poll.Poll_afterVoteFlowId_Flow_id_fkey",
+        "n|con|public.Poll.Poll_afterVoteFlowId_Flow_id_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.Poll",
+        "n|sch|public",
+        "n|tbl|public.Flow",
+        "n|sch|public",
+        "n|col|public.Poll.afterVoteFlowId",
+        "n|col|public.Flow.id",
+        "e|uniqueness|public.Flow.id"
+      ]
+    },
+    {
+      "statementType": "create_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "PollVote"
+      ],
+      "writes": [
+        "s|fk|public.PollVote.PollVote_workspaceId_Workspace_id_fkey",
+        "n|fk|public.PollVote.PollVote_workspaceId_Workspace_id_fkey",
+        "e|fk|public.PollVote.PollVote_workspaceId_Workspace_id_fkey",
+        "n|con|public.PollVote.PollVote_workspaceId_Workspace_id_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.PollVote",
+        "n|sch|public",
+        "n|tbl|public.Workspace",
+        "n|sch|public",
+        "n|col|public.PollVote.workspaceId",
+        "n|col|public.Workspace.id",
+        "e|uniqueness|public.Workspace.id"
+      ]
+    },
+    {
+      "statementType": "create_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "PollVote"
+      ],
+      "writes": [
+        "s|fk|public.PollVote.PollVote_pollId_Poll_id_fkey",
+        "n|fk|public.PollVote.PollVote_pollId_Poll_id_fkey",
+        "e|fk|public.PollVote.PollVote_pollId_Poll_id_fkey",
+        "n|con|public.PollVote.PollVote_pollId_Poll_id_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.PollVote",
+        "n|sch|public",
+        "n|tbl|public.Poll",
+        "n|sch|public",
+        "n|col|public.PollVote.pollId",
+        "n|col|public.Poll.id",
+        "e|uniqueness|public.Poll.id"
+      ]
+    },
+    {
+      "statementType": "create_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "PollVote"
+      ],
+      "writes": [
+        "s|fk|public.PollVote.PollVote_candidateId_PollCandidate_id_fkey",
+        "n|fk|public.PollVote.PollVote_candidateId_PollCandidate_id_fkey",
+        "e|fk|public.PollVote.PollVote_candidateId_PollCandidate_id_fkey",
+        "n|con|public.PollVote.PollVote_candidateId_PollCandidate_id_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.PollVote",
+        "n|sch|public",
+        "n|tbl|public.PollCandidate",
+        "n|sch|public",
+        "n|col|public.PollVote.candidateId",
+        "n|col|public.PollCandidate.id",
+        "e|uniqueness|public.PollCandidate.id"
+      ]
+    },
+    {
+      "statementType": "create_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "PollVote"
+      ],
+      "writes": [
+        "s|fk|public.PollVote.PollVote_contactId_Contact_id_fkey",
+        "n|fk|public.PollVote.PollVote_contactId_Contact_id_fkey",
+        "e|fk|public.PollVote.PollVote_contactId_Contact_id_fkey",
+        "n|con|public.PollVote.PollVote_contactId_Contact_id_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.PollVote",
+        "n|sch|public",
+        "n|tbl|public.Contact",
+        "n|sch|public",
+        "n|col|public.PollVote.contactId",
+        "n|col|public.Contact.id",
+        "e|uniqueness|public.Contact.id"
+      ]
+    },
+    {
+      "statementType": "create_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "PollVote"
+      ],
+      "writes": [
+        "s|fk|public.PollVote.PollVote_contactInboxId_ContactInbox_id_fkey",
+        "n|fk|public.PollVote.PollVote_contactInboxId_ContactInbox_id_fkey",
+        "e|fk|public.PollVote.PollVote_contactInboxId_ContactInbox_id_fkey",
+        "n|con|public.PollVote.PollVote_contactInboxId_ContactInbox_id_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.PollVote",
+        "n|sch|public",
+        "n|tbl|public.ContactInbox",
+        "n|sch|public",
+        "n|col|public.PollVote.contactInboxId",
+        "n|col|public.ContactInbox.id",
+        "e|uniqueness|public.ContactInbox.id"
+      ]
+    }
+  ],
+  "deltas": [
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "name": "PollCandidate",
+        "isRlsEnabled": false,
+        "entityType": "tables"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "name": "Poll",
+        "isRlsEnabled": false,
+        "entityType": "tables"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "name": "PollVote",
+        "isRlsEnabled": false,
+        "entityType": "tables"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PollCandidate",
+        "name": "id",
+        "type": "bigint",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PollCandidate",
+        "name": "createdAt",
+        "type": "timestamp(6) with time zone",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "now()",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PollCandidate",
+        "name": "updatedAt",
+        "type": "timestamp(6) with time zone",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "now()",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PollCandidate",
+        "name": "workspaceId",
+        "type": "bigint",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PollCandidate",
+        "name": "pollId",
+        "type": "bigint",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PollCandidate",
+        "name": "position",
+        "type": "integer",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PollCandidate",
+        "name": "name",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PollCandidate",
+        "name": "description",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PollCandidate",
+        "name": "imageUrl",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "Poll",
+        "name": "id",
+        "type": "bigint",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "Poll",
+        "name": "createdAt",
+        "type": "timestamp(6) with time zone",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "now()",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "Poll",
+        "name": "updatedAt",
+        "type": "timestamp(6) with time zone",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "now()",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "Poll",
+        "name": "workspaceId",
+        "type": "bigint",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "Poll",
+        "name": "name",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "Poll",
+        "name": "imageUrl",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "Poll",
+        "name": "startsAt",
+        "type": "timestamp(6) with time zone",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "Poll",
+        "name": "endsAt",
+        "type": "timestamp(6) with time zone",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "Poll",
+        "name": "afterVoteFlowId",
+        "type": "bigint",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PollVote",
+        "name": "id",
+        "type": "bigint",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PollVote",
+        "name": "createdAt",
+        "type": "timestamp(6) with time zone",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "now()",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PollVote",
+        "name": "updatedAt",
+        "type": "timestamp(6) with time zone",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "now()",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PollVote",
+        "name": "workspaceId",
+        "type": "bigint",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PollVote",
+        "name": "pollId",
+        "type": "bigint",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PollVote",
+        "name": "candidateId",
+        "type": "bigint",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PollVote",
+        "name": "contactId",
+        "type": "bigint",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PollVote",
+        "name": "contactInboxId",
+        "type": "bigint",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PollCandidate",
+        "name": "PollCandidate_pollId_position_idx",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "pollId",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          },
+          {
+            "value": "position",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": false,
+        "where": null,
+        "with": "",
+        "method": "btree",
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PollCandidate",
+        "name": "PollCandidate_workspaceId_idx",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "workspaceId",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": false,
+        "where": null,
+        "with": "",
+        "method": "btree",
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "Poll",
+        "name": "Poll_workspaceId_createdAt_idx",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "workspaceId",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          },
+          {
+            "value": "createdAt",
+            "isExpression": false,
+            "asc": false,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": false,
+        "where": null,
+        "with": "",
+        "method": "btree",
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "Poll",
+        "name": "Poll_afterVoteFlowId_idx",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "afterVoteFlowId",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": false,
+        "where": null,
+        "with": "",
+        "method": "btree",
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PollVote",
+        "name": "PollVote_pollId_contactId_key",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "pollId",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          },
+          {
+            "value": "contactId",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": true,
+        "where": null,
+        "with": "",
+        "method": "btree",
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PollVote",
+        "name": "PollVote_workspaceId_idx",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "workspaceId",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": false,
+        "where": null,
+        "with": "",
+        "method": "btree",
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PollVote",
+        "name": "PollVote_candidateId_idx",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "candidateId",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": false,
+        "where": null,
+        "with": "",
+        "method": "btree",
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PollVote",
+        "name": "PollVote_contactId_idx",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "contactId",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": false,
+        "where": null,
+        "with": "",
+        "method": "btree",
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PollVote",
+        "name": "PollVote_contactInboxId_idx",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "contactInboxId",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": false,
+        "where": null,
+        "with": "",
+        "method": "btree",
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PollCandidate",
+        "name": "PollCandidate_workspaceId_Workspace_id_fkey",
+        "nameExplicit": false,
+        "columns": [
+          "workspaceId"
+        ],
+        "schemaTo": "public",
+        "tableTo": "Workspace",
+        "columnsTo": [
+          "id"
+        ],
+        "onUpdate": "CASCADE",
+        "onDelete": "CASCADE",
+        "entityType": "fks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PollCandidate",
+        "name": "PollCandidate_pollId_Poll_id_fkey",
+        "nameExplicit": false,
+        "columns": [
+          "pollId"
+        ],
+        "schemaTo": "public",
+        "tableTo": "Poll",
+        "columnsTo": [
+          "id"
+        ],
+        "onUpdate": "CASCADE",
+        "onDelete": "CASCADE",
+        "entityType": "fks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "Poll",
+        "name": "Poll_workspaceId_Workspace_id_fkey",
+        "nameExplicit": false,
+        "columns": [
+          "workspaceId"
+        ],
+        "schemaTo": "public",
+        "tableTo": "Workspace",
+        "columnsTo": [
+          "id"
+        ],
+        "onUpdate": "CASCADE",
+        "onDelete": "CASCADE",
+        "entityType": "fks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "Poll",
+        "name": "Poll_afterVoteFlowId_Flow_id_fkey",
+        "nameExplicit": false,
+        "columns": [
+          "afterVoteFlowId"
+        ],
+        "schemaTo": "public",
+        "tableTo": "Flow",
+        "columnsTo": [
+          "id"
+        ],
+        "onUpdate": "CASCADE",
+        "onDelete": "SET NULL",
+        "entityType": "fks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PollVote",
+        "name": "PollVote_workspaceId_Workspace_id_fkey",
+        "nameExplicit": false,
+        "columns": [
+          "workspaceId"
+        ],
+        "schemaTo": "public",
+        "tableTo": "Workspace",
+        "columnsTo": [
+          "id"
+        ],
+        "onUpdate": "CASCADE",
+        "onDelete": "CASCADE",
+        "entityType": "fks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PollVote",
+        "name": "PollVote_pollId_Poll_id_fkey",
+        "nameExplicit": false,
+        "columns": [
+          "pollId"
+        ],
+        "schemaTo": "public",
+        "tableTo": "Poll",
+        "columnsTo": [
+          "id"
+        ],
+        "onUpdate": "CASCADE",
+        "onDelete": "CASCADE",
+        "entityType": "fks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PollVote",
+        "name": "PollVote_candidateId_PollCandidate_id_fkey",
+        "nameExplicit": false,
+        "columns": [
+          "candidateId"
+        ],
+        "schemaTo": "public",
+        "tableTo": "PollCandidate",
+        "columnsTo": [
+          "id"
+        ],
+        "onUpdate": "CASCADE",
+        "onDelete": "CASCADE",
+        "entityType": "fks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PollVote",
+        "name": "PollVote_contactId_Contact_id_fkey",
+        "nameExplicit": false,
+        "columns": [
+          "contactId"
+        ],
+        "schemaTo": "public",
+        "tableTo": "Contact",
+        "columnsTo": [
+          "id"
+        ],
+        "onUpdate": "CASCADE",
+        "onDelete": "CASCADE",
+        "entityType": "fks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PollVote",
+        "name": "PollVote_contactInboxId_ContactInbox_id_fkey",
+        "nameExplicit": false,
+        "columns": [
+          "contactInboxId"
+        ],
+        "schemaTo": "public",
+        "tableTo": "ContactInbox",
+        "columnsTo": [
+          "id"
+        ],
+        "onUpdate": "CASCADE",
+        "onDelete": "SET NULL",
+        "entityType": "fks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PollCandidate",
+        "name": "PollCandidate_pkey",
+        "columns": [
+          "id"
+        ],
+        "nameExplicit": false,
+        "entityType": "pks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "Poll",
+        "name": "Poll_pkey",
+        "columns": [
+          "id"
+        ],
+        "nameExplicit": false,
+        "entityType": "pks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PollVote",
+        "name": "PollVote_pkey",
+        "columns": [
+          "id"
+        ],
+        "nameExplicit": false,
+        "entityType": "pks"
+      }
+    }
+  ]
+}

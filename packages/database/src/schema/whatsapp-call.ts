@@ -220,5 +220,11 @@ export const whatsappCallModel = pgTable(
       .where(
         sql`"direction" = 'businessInitiated' AND "status" IN ('ringing', 'accepted')`,
       ),
+    index("WhatsappCall_answeredByUserId_idx")
+      .on(table.answeredByUserId)
+      .where(sql`${table.answeredByUserId} IS NOT NULL`),
+    index("WhatsappCall_initiatedByUserId_idx")
+      .on(table.initiatedByUserId)
+      .where(sql`${table.initiatedByUserId} IS NOT NULL`),
   ],
 )

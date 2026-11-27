@@ -16,6 +16,7 @@ const mocks = vi.hoisted(() => ({
   moveToFolder: vi.fn(),
   touchLastAccessedAt: vi.fn(),
   deleteObject: vi.fn(),
+  deleteIfUnused: vi.fn(),
   getPresignedUpload: vi.fn(),
   resolveTenantSettings: vi.fn(),
   createPending: vi.fn(),
@@ -35,6 +36,7 @@ vi.mock("@chatbotx.io/database/repositories", () => ({
     create: mocks.createFile,
     findById: mocks.findById,
     deleteById: mocks.deleteFileById,
+    deleteIfUnusedByPosts: mocks.deleteIfUnused,
     setFavourite: mocks.setFavourite,
     countByFolder: mocks.countByFolder,
     moveToFolder: mocks.moveToFolder,
@@ -232,6 +234,62 @@ describe("mediaLibraryService.deleteFile", () => {
       id: "file-1",
       workspaceId: "ws-1",
     })
+  })
+})
+
+describe("mediaLibraryService.deleteFileUnlessUsedByPosts", () => {
+  const path = "public/space/ws-1/media-library/feed-1-abc"
+
+  test("a stable path: the row goes, no object delete is requested", async () => {
+    mocks.deleteIfUnused.mockResolvedValue({ deleted: true, path })
+    mocks.deleteObject.mockReset()
+
+    const deleted = await mediaLibraryService.deleteFileUnlessUsedByPosts({
+      fileId: "file-1",
+      shouldDeleteObject: () => false,
+      workspaceId: "ws-1",
+    })
+
+    expect(deleted).toBe(true)
+    expect(mocks.deleteObject).not.toHaveBeenCalled()
+  })
+
+  test("no predicate: never deletes the object", async () => {
+    mocks.deleteIfUnused.mockResolvedValue({ deleted: true, path })
+    mocks.deleteObject.mockReset()
+    await mediaLibraryService.deleteFileUnlessUsedByPosts({
+      fileId: "file-1",
+      workspaceId: "ws-1",
+    })
+    expect(mocks.deleteObject).not.toHaveBeenCalled()
+  })
+
+  test("a test path: the object is deleted after the row", async () => {
+    mocks.deleteIfUnused.mockResolvedValue({ deleted: true, path })
+    mocks.deleteObject.mockReset()
+    mocks.deleteObject.mockResolvedValue(undefined)
+
+    await mediaLibraryService.deleteFileUnlessUsedByPosts({
+      fileId: "file-1",
+      shouldDeleteObject: () => true,
+      workspaceId: "ws-1",
+    })
+
+    expect(mocks.deleteObject).toHaveBeenCalledWith(path)
+  })
+
+  test("a referenced file: nothing is deleted", async () => {
+    mocks.deleteIfUnused.mockResolvedValue({ deleted: false })
+    mocks.deleteObject.mockReset()
+
+    const deleted = await mediaLibraryService.deleteFileUnlessUsedByPosts({
+      fileId: "file-1",
+      shouldDeleteObject: () => true,
+      workspaceId: "ws-1",
+    })
+
+    expect(deleted).toBe(false)
+    expect(mocks.deleteObject).not.toHaveBeenCalled()
   })
 })
 

@@ -17,6 +17,102 @@ const DOCS_AUTHENTICATION = {
 
 const SERVER_ERROR_STATUS_THRESHOLD = 500
 
+const V1_ETAG_PATHS = [
+  /^\/api\/v1\/conversations$/,
+  /^\/api\/v1\/conversations\/[^/]+\/messages$/,
+  /^\/api\/v1\/me\/workspaces$/,
+]
+
+type StandardHeaders = Record<string, string | string[] | undefined>
+
+const isEtaggedV1List = (pathname: string) =>
+  V1_ETAG_PATHS.some((path) => path.test(pathname))
+
+const getHeader = (
+  headers: StandardHeaders,
+  name: string,
+): string | undefined => {
+  const entry = Object.entries(headers).find(
+    ([key]) => key.toLowerCase() === name.toLowerCase(),
+  )?.[1]
+  return Array.isArray(entry) ? entry.join(",") : entry
+}
+
+const withoutEntityHeaders = (headers: StandardHeaders): StandardHeaders =>
+  Object.fromEntries(
+    Object.entries(headers).filter(([key]) => {
+      const normalizedKey = key.toLowerCase()
+      return (
+        normalizedKey !== "content-length" && normalizedKey !== "content-type"
+      )
+    }),
+  )
+
+const sha256 = async (value: string): Promise<string> => {
+  const bytes = new TextEncoder().encode(value)
+  const digest = await globalThis.crypto.subtle.digest("SHA-256", bytes)
+  return Array.from(new Uint8Array(digest))
+    .map((byte) => byte.toString(16).padStart(2, "0"))
+    .join("")
+}
+
+export function createV1EtagInterceptor() {
+  return async (options: {
+    request: {
+      headers: StandardHeaders
+      method: string
+      url: URL
+    }
+    next(): Promise<StandardHandleResult>
+  }): Promise<StandardHandleResult> => {
+    const result = await options.next()
+    if (
+      !(
+        result.matched &&
+        options.request.method === "GET" &&
+        isEtaggedV1List(options.request.url.pathname) &&
+        result.response.status === 200
+      )
+    ) {
+      return result
+    }
+
+    const body = JSON.stringify(result.response.body)
+    if (!body) {
+      return result
+    }
+
+    const etag = `W/"${await sha256(body)}"`
+    const headers = {
+      ...result.response.headers,
+      "Cache-Control": "private, no-cache",
+      ETag: etag,
+    }
+    const ifNoneMatch = getHeader(options.request.headers, "If-None-Match")
+    if (
+      ifNoneMatch
+        ?.split(",")
+        .some(
+          (candidate) => candidate.trim() === "*" || candidate.trim() === etag,
+        )
+    ) {
+      return {
+        ...result,
+        response: {
+          body: undefined,
+          headers: withoutEntityHeaders(headers),
+          status: 304,
+        },
+      }
+    }
+
+    return {
+      ...result,
+      response: { ...result.response, headers },
+    }
+  }
+}
+
 /**
  * Single place unknown/server errors get logged at error level for a route
  * handler. Known 4xx `ORPCError`s are already warn-logged by
@@ -92,6 +188,7 @@ export function createOpenAPIHandler<T extends AnyRouter>(
   return new OpenAPIHandler(router, {
     interceptors: [
       createTimingInterceptor(options.logLabel),
+      createV1EtagInterceptor(),
       onError(logUnexpectedOrpcErrorCallback(options.logLabel)),
     ],
     plugins: [

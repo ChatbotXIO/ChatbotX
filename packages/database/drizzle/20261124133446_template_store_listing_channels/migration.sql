@@ -1,0 +1,1 @@
+ALTER TABLE "TemplateStoreListing" ADD COLUMN "channels" text[] DEFAULT '{}'::text[] NOT NULL;

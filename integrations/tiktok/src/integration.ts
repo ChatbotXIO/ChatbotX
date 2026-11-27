@@ -1,36 +1,26 @@
 import {
-  AuthException,
   HandleRequestType,
   Integration,
   type IntegrationDefinition,
   oauth2Auth,
   probeVerify,
 } from "@chatbotx.io/sdk"
-import { exchangeCodeForToken, refreshAccessToken } from "./apis/auth"
+import { exchangeCodeForToken } from "./apis/auth"
+import { listTiktokComments } from "./apis/comment"
 import { getUserInfo } from "./apis/user"
-import { TiktokAPIException, TiktokMissingScopesError } from "./exception"
+import { TiktokAPIException } from "./exception"
 import { callbackHandler } from "./handlers/callback"
 import { commentHandlers } from "./handlers/comment"
 import { contactHandlers } from "./handlers/contact"
 import { conversationHandlers } from "./handlers/conversation"
 import { messageHandlers } from "./handlers/message"
+import { postHandlers } from "./handlers/post"
 import { webhookHandler } from "./handlers/webhook"
 import { isRevokedTokenError } from "./lib/error-mapper"
-import {
-  findMissingTiktokScopes,
-  parseTiktokScopes,
-  TIKTOK_COMMENT_AUTOMATION_SCOPES,
-  TIKTOK_CORE_SCOPES,
-  TIKTOK_OPTIONAL_PROFILE_SCOPES,
-} from "./lib/scopes"
+import { refreshTiktokAuth } from "./lib/refresh-auth"
+import { assertTiktokGrant, tiktokRequestedScopes } from "./lib/scopes"
 import { buildTokenTimestamps } from "./lib/token-utils"
 import type { TiktokActions, TiktokAuthValue, TiktokConfig } from "./schema"
-
-const TIKTOK_SCOPES = [
-  ...TIKTOK_CORE_SCOPES,
-  ...TIKTOK_OPTIONAL_PROFILE_SCOPES,
-  ...TIKTOK_COMMENT_AUTOMATION_SCOPES,
-].join(",")
 
 const config: IntegrationDefinition<
   TiktokConfig,
@@ -44,9 +34,16 @@ const config: IntegrationDefinition<
       conversation: conversationHandlers,
       contact: contactHandlers,
       comment: commentHandlers,
+      post: postHandlers,
     },
   },
-  actions: {},
+  actions: {
+    listComments: async ({ ctx, input }) =>
+      await listTiktokComments(ctx.auth.tokens.accessToken, {
+        ...input,
+        businessId: ctx.auth.metadata.openId,
+      }),
+  },
   connection: {
     kind: "channel",
     strategy: "oauth_redirect",
@@ -57,7 +54,7 @@ const config: IntegrationDefinition<
       const params = new URLSearchParams({
         client_key: config.clientId,
         response_type: "code",
-        scope: TIKTOK_SCOPES,
+        scope: tiktokRequestedScopes(config.features),
         redirect_uri: callbackUrl,
         disable_auto_auth: "1",
         state,
@@ -74,14 +71,7 @@ const config: IntegrationDefinition<
         },
         code,
       )
-      const grantedScopes = parseTiktokScopes(tokenResponse.scope)
-      const missingCoreScopes = findMissingTiktokScopes(
-        grantedScopes,
-        TIKTOK_CORE_SCOPES,
-      )
-      if (missingCoreScopes.length > 0) {
-        throw new TiktokMissingScopesError(missingCoreScopes)
-      }
+      const grant = assertTiktokGrant(tokenResponse.scope, config.features)
 
       const userInfo = await getUserInfo({
         accessToken: tokenResponse.access_token,
@@ -102,7 +92,8 @@ const config: IntegrationDefinition<
           openId: tokenResponse.open_id,
           username: userInfo.username,
           displayName: userInfo.display_name,
-          scopes: grantedScopes,
+          scopes: grant.scopes,
+          features: grant.features,
         },
       ) satisfies TiktokAuthValue
     },
@@ -122,34 +113,7 @@ const config: IntegrationDefinition<
       ),
     isRevokedTokenError,
   },
-  refreshAuth: async ({ auth }) => {
-    if (!auth.tokens.refreshToken) {
-      throw new AuthException("TikTok refresh token not available")
-    }
-    const newTokens = await refreshAccessToken(
-      { clientId: auth.clientId, clientSecret: auth.clientSecret },
-      auth.tokens.refreshToken,
-    )
-    return {
-      ...auth,
-      tokens: {
-        ...auth.tokens,
-        accessToken: newTokens.access_token,
-        refreshToken: newTokens.refresh_token,
-        ...buildTokenTimestamps(
-          newTokens.expires_in,
-          newTokens.refresh_expires_in,
-        ),
-      },
-      // A refresh never grants a new scope, but it does report the current set
-      // — which is how a connection made before scopes were recorded stops
-      // being reported as "unknown" without the owner doing anything.
-      metadata: {
-        ...auth.metadata,
-        scopes: parseTiktokScopes(newTokens.scope),
-      },
-    }
-  },
+  refreshAuth: async ({ auth }) => await refreshTiktokAuth(auth),
   handleRequest: async (props) => {
     const segments = new URL(props.req.url).pathname.split("/")
     const action = segments.pop()

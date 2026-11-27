@@ -52,7 +52,7 @@ const endpointUrlFor = async (workspaceId: string, token: string) => {
   return buildInboundWebhookUrl({ origin: appUrl, token })
 }
 
-const readOnly = mcpSpec({ readOnlyHint: true })
+const readOnly = mcpSpec({ hitlPolicy: "none", readOnlyHint: true })
 
 const flowIdsNote =
   "Get flow ids from `flows.list`, inbox ids and their `sourceId` (page id, phone number id, …) from `inboxes.list`, and custom field ids from `customFields.list`."

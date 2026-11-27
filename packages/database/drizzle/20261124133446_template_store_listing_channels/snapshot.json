@@ -1,0 +1,47 @@
+{
+  "type": "diff",
+  "version": "10",
+  "dialect": "postgres",
+  "id": "8519fd19-aa7a-42ba-ba64-57430c094f89",
+  "prevIds": [
+    "9974b6fa-495c-4941-a798-1782117264a3"
+  ],
+  "footprints": [
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "TemplateStoreListing",
+        "channels"
+      ],
+      "writes": [
+        "s|col|public.TemplateStoreListing.channels",
+        "n|col|public.TemplateStoreListing.channels",
+        "e|col|public.TemplateStoreListing.channels"
+      ],
+      "reads": [
+        "n|tbl|public.TemplateStoreListing",
+        "n|sch|public"
+      ]
+    }
+  ],
+  "deltas": [
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "TemplateStoreListing",
+        "name": "channels",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 1,
+        "default": "'{}'",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    }
+  ]
+}

@@ -1,20 +1,16 @@
-import { flushAllPendingWorkspaceRealtimeEvents } from "@chatbotx.io/business"
-import { startMetricsServer } from "@chatbotx.io/observability"
+import { startMetricsServer } from "@chatbotx.io/observability/metrics-server"
 import {
-  defaultWorkerOptions,
-  getQueueConnection,
   queueNames,
   ScheduleJobData,
   scheduleQueue,
 } from "@chatbotx.io/worker-config"
-import { type Job, Queue, Worker } from "bullmq"
-import { ensureBootstrapped } from "../lib/bootstrap"
-import { instrumentWorker } from "../lib/job-observability"
+import { type Job, Queue } from "bullmq"
+import { createQueueWorker } from "../lib/create-queue-worker"
 import { logger } from "../lib/logger"
 import { registerWorkerQueueMetrics } from "../lib/queue-metrics"
 import { runJobWithAuditContext } from "../lib/run-job-with-audit-context"
+import { runWorker } from "../lib/shutdown"
 import { startUptimeHeartbeat } from "../lib/uptime-heartbeat"
-import { startMarketingMessageWorker } from "../marketing-message/consumer"
 import {
   cleanupTriggerExecutions,
   scanDateTimeTriggers,
@@ -29,6 +25,8 @@ import { dispatchProfileSnapshots } from "./handlers/dispatch-profile-snapshots"
 import { enqueueBroadcast } from "./handlers/enqueue-broadcast"
 import { enqueueMarketingMessages } from "./handlers/enqueue-marketing-messages"
 import { enqueueRecurringBroadcasts } from "./handlers/enqueue-recurring-broadcasts"
+import { enqueueSocialPostTargets } from "./handlers/enqueue-social-post-targets"
+import { expireUnpaidOrders } from "./handlers/expire-unpaid-orders"
 import { finalizeBroadcasts } from "./handlers/finalize-broadcasts"
 import { finalizeMarketingMessages } from "./handlers/finalize-marketing-messages"
 import {
@@ -39,47 +37,53 @@ import {
   finishOverdueLeaderboards,
   maintainLeaderboardRankings,
 } from "./handlers/leaderboard-schedules"
+import { maintainChannelPostMetricPartitions } from "./handlers/maintain-channel-post-metric-partitions"
 import { maintainLeaderboardPartitions } from "./handlers/maintain-leaderboard-partitions"
 import { maintainMacPartitions } from "./handlers/maintain-mac-partitions"
 import { materializeRecurringBroadcasts } from "./handlers/materialize-recurring-broadcasts"
+import { materializeSocialPostRecurrences } from "./handlers/materialize-social-post-recurrences"
+import { pollSmtpInboxes } from "./handlers/poll-smtp-inboxes"
 import { prepareBroadcast } from "./handlers/prepare-broadcast"
 import { processBroadcastContacts } from "./handlers/process-broadcast-contacts"
 import { purgeAutomationThrottle } from "./handlers/purge-automation-throttle"
 import { purgeBroadcasts } from "./handlers/purge-broadcasts"
 import { purgeCoexistStaging } from "./handlers/purge-coexist-staging"
 import { purgeCommentAutomationEvents } from "./handlers/purge-comment-automation-events"
+import { purgeDeletedUsers } from "./handlers/purge-deleted-users"
+import { purgeDraftBroadcastRecipients } from "./handlers/purge-draft-broadcast-recipients"
 import { purgeErrorLogs } from "./handlers/purge-error-logs"
 import { purgeExpiredCallRecordings } from "./handlers/purge-expired-call-recordings"
 import { purgeExpiredConnectSessions } from "./handlers/purge-expired-connect-sessions"
+import { purgeExpiredContactExports } from "./handlers/purge-expired-contact-exports"
+import { purgeExpiredOAuthTokens } from "./handlers/purge-expired-oauth-tokens"
 import { purgeInboundWebhookRequests } from "./handlers/purge-inbound-webhook-requests"
 import { purgeWhatsappSignupSessions } from "./handlers/purge-whatsapp-signup-sessions"
 import { purgeWorkspaces } from "./handlers/purge-workspaces"
 import { reconcileBroadcasts } from "./handlers/reconcile-broadcasts"
 import { reconcileMetaCatalogSyncs } from "./handlers/reconcile-meta-catalog-syncs"
 import { reconcileTenants } from "./handlers/reconcile-tenants"
+import { recoverSocialPostTargets } from "./handlers/recover-social-post-targets"
 import { redispatchInboundWebhookRequests } from "./handlers/redispatch-inbound-webhook-requests"
+import { redispatchTemplateJobs } from "./handlers/redispatch-template-jobs"
 import { refreshChannelTokens } from "./handlers/refresh-channel-tokens"
 import { refreshLicense } from "./handlers/refresh-license"
+import { refreshSocialAccountTokens } from "./handlers/refresh-social-account-tokens"
 import { registerSchedules } from "./handlers/register-schedules"
 import { scanAbandonedCarts } from "./handlers/scan-abandoned-carts"
 import { scanAiHandoverBulkRuns } from "./handlers/scan-ai-handover-bulk-runs"
 import { scanAppointmentReminders } from "./handlers/scan-appointment-reminders"
+import { scanChannelPostSyncs } from "./handlers/scan-channel-post-syncs"
 import { scanCoexistRuns } from "./handlers/scan-coexist-runs"
 import { scanContactScans } from "./handlers/scan-contact-scans"
+import { scanContactSyncRuns } from "./handlers/scan-contact-sync-runs"
 import { scanSmartDelay } from "./handlers/scan-smart-delay"
+import { scanSocialPostFeeds } from "./handlers/scan-social-post-feeds"
 import { sweepStaleWhatsappCalls } from "./handlers/sweep-stale-whatsapp-calls"
 import { syncUserQuota } from "./handlers/sync-user-quota"
 import { teardownExpiredTrial } from "./handlers/teardown-expired-trial"
 import { unsubscribeExpiredTrials } from "./handlers/unsubscribe-expired-trials"
 
-async function startScheduleWorker() {
-  try {
-    await ensureBootstrapped()
-    logger.info("Analytics bootstrapped successfully")
-  } catch (err) {
-    logger.error(err, "Failed to bootstrap analytics")
-    process.exit(1)
-  }
+async function startQueueObservability(): Promise<void> {
   try {
     if (await startMetricsServer()) {
       registerWorkerQueueMetrics()
@@ -88,24 +92,25 @@ async function startScheduleWorker() {
     logger.error({ err }, "Schedule worker metrics server failed to start")
   }
   startUptimeHeartbeat()
+}
+
+async function startScheduleWorker() {
+  await startQueueObservability()
 
   if (scheduleQueue instanceof Queue) {
-    registerSchedules()
-      .then(() => {
-        logger.info("Schedules registered")
-      })
-      .catch((err) => {
-        logger.error(err, "Error registering schedules")
-      })
+    // A registration failure must not take the shared process down: the
+    // consumers below still serve already-registered schedules.
+    try {
+      await registerSchedules()
+      logger.info("Schedules registered")
+    } catch (err) {
+      logger.error({ err }, "Error registering schedules")
+    }
   }
 
-  // Hosted in the schedule process (its crons are the only producers) but on
-  // its own queue and concurrency, so Meta sends never starve schedule jobs.
-  const marketingMessageWorker = startMarketingMessageWorker()
-
-  const worker = new Worker(
+  createQueueWorker(
     queueNames.enum.schedule,
-    async (job: Job<ScheduleJobData>) =>
+    async (job: Job<ScheduleJobData>, token?: string) =>
       runJobWithAuditContext(
         { source: `schedule:${job.data.type}` },
         async () => {
@@ -124,6 +129,15 @@ async function startScheduleWorker() {
 
             case ScheduleJobData.prepareBroadcast:
               await prepareBroadcast(job.data.data.broadcastId)
+              return
+
+            case ScheduleJobData.purgeDraftBroadcastRecipients:
+              await purgeDraftBroadcastRecipients({
+                job,
+                token,
+                workspaceId: job.data.data.workspaceId,
+                broadcastId: job.data.data.broadcastId,
+              })
               return
 
             case ScheduleJobData.sendBroadcast:
@@ -178,6 +192,10 @@ async function startScheduleWorker() {
               await scanAbandonedCarts()
               return
 
+            case ScheduleJobData.expireUnpaidOrders:
+              await expireUnpaidOrders()
+              return
+
             case ScheduleJobData.syncUserQuota:
               await syncUserQuota()
               return
@@ -188,6 +206,10 @@ async function startScheduleWorker() {
 
             case ScheduleJobData.maintainMacPartitions:
               await maintainMacPartitions()
+              return
+
+            case ScheduleJobData.maintainChannelPostMetricPartitions:
+              await maintainChannelPostMetricPartitions()
               return
 
             case ScheduleJobData.maintainLeaderboardPartitions:
@@ -210,8 +232,40 @@ async function startScheduleWorker() {
               await scanContactScans()
               return
 
+            case ScheduleJobData.scanChannelPostSyncs:
+              await scanChannelPostSyncs()
+              return
+
+            case ScheduleJobData.enqueueSocialPostTargets:
+              await enqueueSocialPostTargets()
+              return
+
+            case ScheduleJobData.materializeSocialPostRecurrences:
+              await materializeSocialPostRecurrences()
+              return
+
+            case ScheduleJobData.scanSocialPostFeeds:
+              await scanSocialPostFeeds()
+              return
+
+            case ScheduleJobData.recoverSocialPostTargets:
+              await recoverSocialPostTargets()
+              return
+
+            case ScheduleJobData.refreshSocialAccountTokens:
+              await refreshSocialAccountTokens()
+              return
+
+            case ScheduleJobData.pollSmtpInboxes:
+              await pollSmtpInboxes()
+              return
+
             case ScheduleJobData.scanAiHandoverBulkRuns:
               await scanAiHandoverBulkRuns()
+              return
+
+            case ScheduleJobData.scanContactSyncRuns:
+              await scanContactSyncRuns()
               return
 
             case ScheduleJobData.reconcileMetaCatalogSyncs:
@@ -234,6 +288,10 @@ async function startScheduleWorker() {
               await purgeWorkspaces()
               return
 
+            case ScheduleJobData.purgeDeletedUsers:
+              await purgeDeletedUsers()
+              return
+
             case ScheduleJobData.clearExpiredSupportAccess:
               await clearExpiredSupportAccess()
               return
@@ -248,6 +306,10 @@ async function startScheduleWorker() {
 
             case ScheduleJobData.dispatchProfileSnapshots:
               await dispatchProfileSnapshots()
+              return
+
+            case ScheduleJobData.purgeExpiredOAuthTokens:
+              await purgeExpiredOAuthTokens()
               return
 
             case ScheduleJobData.purgeBroadcasts:
@@ -270,6 +332,10 @@ async function startScheduleWorker() {
               await redispatchInboundWebhookRequests()
               return
 
+            case ScheduleJobData.redispatchTemplateJobs:
+              await redispatchTemplateJobs()
+              return
+
             case ScheduleJobData.purgeInboundWebhookRequests:
               await purgeInboundWebhookRequests()
               return
@@ -280,6 +346,11 @@ async function startScheduleWorker() {
 
             case ScheduleJobData.purgeExpiredCallRecordings:
               await purgeExpiredCallRecordings()
+              return
+
+            // Not workspace-scoped: one sweep over every workspace's exports.
+            case ScheduleJobData.purgeExpiredContactExports:
+              await purgeExpiredContactExports()
               return
 
             case ScheduleJobData.sweepStaleWhatsappCalls:
@@ -307,39 +378,7 @@ async function startScheduleWorker() {
           }
         },
       ),
-    {
-      connection: getQueueConnection(queueNames.enum.schedule),
-      ...defaultWorkerOptions,
-    },
   )
-
-  worker.on("failed", (job, err) => {
-    if (job) {
-      logger.error(err, `Job ${job.id} has failed`)
-    }
-  })
-  instrumentWorker(worker, { queue: queueNames.enum.schedule })
-
-  let isShuttingDown = false
-  async function shutdown() {
-    if (isShuttingDown) {
-      return
-    }
-    isShuttingDown = true
-    try {
-      await Promise.all([worker.close(), marketingMessageWorker.close()])
-      await flushAllPendingWorkspaceRealtimeEvents()
-      process.exit(0)
-    } catch (err) {
-      logger.error(err, "[ScheduleWorker] Error during shutdown")
-      process.exit(1)
-    }
-  }
-  process.once("SIGINT", shutdown)
-  process.once("SIGTERM", shutdown)
 }
 
-startScheduleWorker().catch((err) => {
-  logger.error("Failed to start schedule worker", err)
-  process.exit(1)
-})
+runWorker("schedule", startScheduleWorker)

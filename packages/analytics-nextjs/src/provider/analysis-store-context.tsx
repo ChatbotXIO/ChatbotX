@@ -25,6 +25,8 @@ export const AnalysisStoreContext = createContext<AnalysisStoreApi | undefined>(
 export type AnalysisStoreProviderProps = {
   type: AnalysisDashboardType
   defaultSearchParams: AnalysisState["defaultSearchParams"]
+  /** Channel / inbox filter the first load starts with (empty = All). */
+  initialFilters?: Pick<AnalysisState, "channels" | "inboxIds">
   children: ReactNode
   autoInitialize?: boolean
 }
@@ -34,11 +36,17 @@ export const AnalysisStoreProvider = ({
   autoInitialize = true,
   type,
   defaultSearchParams,
+  initialFilters,
 }: AnalysisStoreProviderProps) => {
   const api = useAnalyticsApi()
   const storeRef = useRef<AnalysisStoreApi>(null)
   if (!storeRef.current) {
-    storeRef.current = createAnalysisStore({ type, defaultSearchParams, api })
+    storeRef.current = createAnalysisStore({
+      type,
+      defaultSearchParams,
+      api,
+      ...initialFilters,
+    })
   }
 
   useEffect(() => {

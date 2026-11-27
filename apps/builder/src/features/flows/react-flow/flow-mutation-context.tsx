@@ -3,6 +3,7 @@ import { createContext, useContext } from "react"
 
 export type FlowMutationContextValue = {
   isFlowMutating: boolean
+  isReadOnly: boolean
   duplicateNode: (sourceNode: FlowNode) => Promise<void>
   deleteNode: (nodeId: string) => Promise<void>
 }
@@ -10,6 +11,14 @@ export type FlowMutationContextValue = {
 const FlowMutationContext = createContext<FlowMutationContextValue | null>(null)
 
 export const FlowMutationProvider = FlowMutationContext.Provider
+
+/**
+ * Whether the canvas around the caller must not edit the flow. Outside a
+ * provider (the analytics viewer) nothing is editable, so it reads as true.
+ */
+export function useIsFlowReadOnly(): boolean {
+  return useContext(FlowMutationContext)?.isReadOnly ?? true
+}
 
 export function useFlowMutation(): FlowMutationContextValue {
   const ctx = useContext(FlowMutationContext)

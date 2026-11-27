@@ -1,13 +1,19 @@
 // @vitest-environment node
 import { afterEach, describe, expect, test, vi } from "vitest"
 
-const { customFieldList, botFieldList, tagListActive, activityFilters } =
-  vi.hoisted(() => ({
-    customFieldList: vi.fn(),
-    botFieldList: vi.fn(),
-    tagListActive: vi.fn(),
-    activityFilters: { enabled: true },
-  }))
+const {
+  customFieldList,
+  botFieldList,
+  tagListActive,
+  pipelineListWithStages,
+  activityFilters,
+} = vi.hoisted(() => ({
+  customFieldList: vi.fn(),
+  botFieldList: vi.fn(),
+  tagListActive: vi.fn(),
+  pipelineListWithStages: vi.fn(async (): Promise<unknown[]> => []),
+  activityFilters: { enabled: true },
+}))
 
 vi.mock("@chatbotx.io/database/queries/contact-filter", () => ({
   isContactActivityFiltersEnabled: () => activityFilters.enabled,
@@ -17,6 +23,10 @@ vi.mock("@chatbotx.io/business", () => ({
   customFieldService: { list: customFieldList },
   botFieldService: { list: botFieldList },
   tagService: { listActive: tagListActive },
+}))
+
+vi.mock("@chatbotx.io/business/pipeline", () => ({
+  pipelineService: { listWithStages: pipelineListWithStages },
 }))
 
 // Dynamic import (not a runtime-selected specifier): `vi.mock` above must
@@ -156,6 +166,24 @@ describe("listContactFilterFieldsForAPI", () => {
       })
     })
 
+    test("clicked ad points an agent at the ads it can pick, and starts later than the store", async () => {
+      const result = await list()
+      const valueSource = find(result, "clickedAd")?.valueSource
+
+      expect(valueSource).toMatchObject({
+        operation: "ads.listReferralAds",
+        scope: "ads",
+        fixedValues: [],
+        valueFormat: "id",
+      })
+      // Ad clicks were not recorded from the day the activity store was.
+      expect(Date.parse(valueSource?.trackingStartedAt ?? "")).toBeGreaterThan(
+        Date.parse(
+          find(result, "executedFlow")?.valueSource?.trackingStartedAt ?? "",
+        ),
+      )
+    })
+
     test("free-form tracked fields carry only their format and baseline", async () => {
       const result = await list()
 
@@ -179,6 +207,7 @@ describe("listContactFilterFieldsForAPI", () => {
         "executedStep",
         "keywordsReceived",
         "completedWhatsAppFlows",
+        "clickedAd",
         "emailSent",
         "emailDelivered",
         "emailOpened",
@@ -232,5 +261,91 @@ describe("listContactFilterFieldsForAPI", () => {
       }
       expect(names).toContain("tags")
     })
+  })
+})
+
+describe("listContactFilterFieldsForAPI pipelineItems", () => {
+  test("lists the token-visible pipelines with stages and the four attribute shapes", async () => {
+    customFieldList.mockResolvedValue({ data: [] })
+    botFieldList.mockResolvedValue({ data: [] })
+    tagListActive.mockResolvedValue([])
+    pipelineListWithStages.mockResolvedValue([
+      {
+        pipeline: { id: "p1", name: "Sales" },
+        stages: [
+          { id: "s1", name: "Lead" },
+          { id: "s2", name: "Won" },
+        ],
+      },
+    ])
+
+    const result = await listContactFilterFieldsForAPI({ workspaceId: "ws-1" })
+
+    expect(pipelineListWithStages).toHaveBeenCalledWith({
+      workspaceId: "ws-1",
+      scope: { kind: "workspaceToken" },
+    })
+    expect(result.pipelineItems.pipelines).toEqual([
+      {
+        id: "p1",
+        name: "Sales",
+        stages: [
+          { id: "s1", name: "Lead" },
+          { id: "s2", name: "Won" },
+        ],
+      },
+    ])
+    expect(result.pipelineItems.attributes).toEqual([
+      {
+        attribute: "exists",
+        operators: ["isNotEmpty", "isEmpty"],
+        pipelineIdRequired: false,
+        valueShape: "single",
+        values: ["any", "open", "won", "lost"],
+      },
+      {
+        attribute: "status",
+        operators: ["in", "notIn"],
+        pipelineIdRequired: false,
+        valueShape: "list",
+        values: ["open", "won", "lost"],
+      },
+      {
+        attribute: "stage",
+        operators: ["in", "notIn"],
+        pipelineIdRequired: true,
+        valueShape: "list",
+        values: [],
+      },
+      {
+        attribute: "priority",
+        operators: ["in", "notIn"],
+        pipelineIdRequired: false,
+        valueShape: "list",
+        values: ["low", "medium", "high"],
+      },
+    ])
+  })
+
+  test("omits the pipelineItems block on the flowCondition surface", async () => {
+    customFieldList.mockResolvedValue({ data: [] })
+    botFieldList.mockResolvedValue({ data: [] })
+    tagListActive.mockResolvedValue([])
+    pipelineListWithStages.mockResolvedValue([
+      { pipeline: { id: "p1", name: "Sales" }, stages: [] },
+    ])
+
+    const flow = await listContactFilterFieldsForAPI({
+      workspaceId: "ws-1",
+      surface: "flowCondition",
+    })
+    const contacts = await listContactFilterFieldsForAPI({
+      workspaceId: "ws-1",
+      surface: "contacts",
+    })
+
+    expect(flow.pipelineItems).toEqual({ pipelines: [], attributes: [] })
+    expect(contacts.pipelineItems.pipelines).toHaveLength(1)
+    expect(contacts.pipelineItems.attributes).toHaveLength(4)
   })
 })

@@ -1,10 +1,14 @@
 // @vitest-environment node
 
 import { and, asc, db, eq, inArray } from "@chatbotx.io/database/client"
-import { buildContactInboxContactFilterSQL } from "@chatbotx.io/database/queries"
+import {
+  buildContactInboxContactFilterSQL,
+  contactInboxHasDmSQL,
+} from "@chatbotx.io/database/queries"
 import {
   contactInboxModel,
   contactModel,
+  conversationModel,
   inboxModel,
   userModel,
   workspaceModel,
@@ -44,7 +48,10 @@ const contactFilter = {
   ],
 }
 
-/** The pre-§7.2 query: the whole filter as a subquery, windowed by SQL OFFSET/LIMIT. */
+/**
+ * The pre-§7.2 query: the whole filter as a subquery, windowed by SQL
+ * OFFSET/LIMIT, plus the default direct-chat requirement of a broadcast.
+ */
 const legacyAudienceIds = async (
   offset: number,
   size: number | null,
@@ -55,6 +62,7 @@ const legacyAudienceIds = async (
     .where(
       and(
         inArray(contactInboxModel.inboxId, [inboxId]),
+        contactInboxHasDmSQL(),
         buildContactInboxContactFilterSQL({
           contactIdColumn: contactInboxModel.contactId,
           workspaceId,
@@ -125,6 +133,13 @@ describe.skipIf(!databaseUrl)("filtered broadcast audience scan", () => {
         source: "telegram",
         sourceId: `scan-${contactId}`,
       })
+      // Every fourth contact has no direct chat yet, so a broadcast leaves
+      // it out by default.
+      if (index % 4 !== 0) {
+        await db
+          .insert(conversationModel)
+          .values({ workspaceId, contactId, sourceId: null })
+      }
     }
   })
 
@@ -154,7 +169,8 @@ describe.skipIf(!databaseUrl)("filtered broadcast audience scan", () => {
   test("walks the whole filtered audience in ContactInbox.id order", async () => {
     const all = await legacyAudienceIds(0, null)
 
-    expect(all).toHaveLength(16)
+    // 16 contacts match the filter; 4 of them have no direct chat.
+    expect(all).toHaveLength(12)
     expect(await scannedAudienceIds(0, null, 7)).toEqual(all)
   })
 })

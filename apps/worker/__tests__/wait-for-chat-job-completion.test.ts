@@ -5,9 +5,7 @@ import { beforeEach, describe, expect, test, vi } from "vitest"
 const mocks = vi.hoisted(() => ({
   loggerError: vi.fn(),
   loggerWarn: vi.fn(),
-  queueEvents: vi.fn(function QueueEvents() {
-    return { close: vi.fn() }
-  }),
+  getQueueEvents: vi.fn(() => ({ close: vi.fn() })),
 }))
 
 vi.mock("@chatbotx.io/ai", () => ({
@@ -22,11 +20,8 @@ vi.mock("@chatbotx.io/database/schema", () => ({
 vi.mock("@chatbotx.io/worker-config", () => ({
   ChatJobAction: { sendChatMessage: "sendChatMessage" },
   chatQueue: { add: vi.fn() },
-  getQueueConnection: () => ({ duplicate: () => ({}) }),
+  getQueueEvents: mocks.getQueueEvents,
   queueNames: { enum: { chat: "chat" } },
-}))
-vi.mock("bullmq", () => ({
-  QueueEvents: mocks.queueEvents,
 }))
 vi.mock("../src/lib/logger", () => ({
   logger: { error: mocks.loggerError, warn: mocks.loggerWarn },
@@ -51,7 +46,7 @@ describe("waitForChatJobCompletion", () => {
     // chat worker from leaking a QueueEvents listener + closures until OOM.
     const [, ttl] = job.waitUntilFinished.mock.calls[0]
     expect(ttl).toBeGreaterThan(0)
-    expect(mocks.queueEvents).toHaveBeenCalledOnce()
+    expect(mocks.getQueueEvents).toHaveBeenCalledWith("chat")
   })
 
   test("is a no-op for a non-job value", async () => {
@@ -59,7 +54,7 @@ describe("waitForChatJobCompletion", () => {
       undefined,
     )
 
-    expect(mocks.queueEvents).not.toHaveBeenCalled()
+    expect(mocks.getQueueEvents).not.toHaveBeenCalled()
   })
 
   test("swallows and logs a failed or timed-out wait", async () => {

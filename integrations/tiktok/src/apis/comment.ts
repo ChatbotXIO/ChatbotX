@@ -1,4 +1,4 @@
-import { rescue, TiktokAPIException } from "../exception"
+import { rescue, throwBusinessApiError } from "../exception"
 import { createTiktokBusinessClient } from "../lib/http-client"
 import type {
   BusinessApiResponse,
@@ -17,7 +17,7 @@ import type {
  */
 const unwrap = <T>(response: BusinessApiResponse<T>, endpoint: string): T => {
   if (response.code !== 0) {
-    throw new TiktokAPIException(response.message ?? `${endpoint} failed`)
+    throwBusinessApiError(response, `${endpoint} failed`)
   }
   return response.data
 }

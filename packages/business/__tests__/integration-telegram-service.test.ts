@@ -83,6 +83,12 @@ vi.mock("../src/inbox/service", () => ({
   inboxService: { create: mockCreateInbox },
 }))
 
+const mockDispatchStagedInstalls = vi.hoisted(() =>
+  vi.fn(async (_workspaceId: string) => undefined),
+)
+vi.mock("../src/template/installation-dispatch", () => ({
+  dispatchStagedInstalls: mockDispatchStagedInstalls,
+}))
 vi.mock("../src/workspace", () => ({
   workspaceService: { create: mockWorkspaceCreate },
 }))
@@ -154,6 +160,64 @@ describe("telegramIntegrationService.connect", () => {
       "transaction-end",
     ])
     expect(onConnected).toHaveBeenCalledTimes(1)
+  })
+
+  describe("staged template installs", () => {
+    const connectInput = {
+      ownerId: "owner-1",
+      createdBy: "user-1",
+      botId: "bot-1",
+      botUsername: "mybot",
+      botToken: "token-1",
+      onConnected: vi.fn(async () => undefined),
+    }
+
+    test("dispatches once, after the transaction, for a workspace the connect created", async () => {
+      const order: string[] = []
+      mockWorkspaceCreate.mockResolvedValue({ id: "ws-new" })
+      mockTransaction.mockImplementation(
+        async (callback: (tx: unknown) => Promise<unknown>) => {
+          const result = await callback({
+            delete: mockDelete,
+            query: {
+              integrationTelegramModel: { findFirst: mockQueryFindFirst },
+            },
+          })
+          order.push("commit")
+          return result
+        },
+      )
+      mockDispatchStagedInstalls.mockImplementation(() => {
+        order.push("dispatch")
+        return Promise.resolve(undefined)
+      })
+
+      await telegramIntegrationService.connect(connectInput)
+
+      expect(order).toEqual(["commit", "dispatch"])
+      expect(mockDispatchStagedInstalls).toHaveBeenCalledTimes(1)
+      expect(mockDispatchStagedInstalls).toHaveBeenCalledWith("ws-new")
+    })
+
+    test("does not dispatch for an existing workspace", async () => {
+      await telegramIntegrationService.connect({
+        ...connectInput,
+        workspaceId: "ws-1",
+      })
+
+      expect(mockDispatchStagedInstalls).not.toHaveBeenCalled()
+    })
+
+    test("does not dispatch when the transaction fails", async () => {
+      mockWorkspaceCreate.mockResolvedValue({ id: "ws-new" })
+      mockUpsertConnectionRow.mockRejectedValueOnce(new Error("insert failed"))
+
+      await expect(
+        telegramIntegrationService.connect(connectInput),
+      ).rejects.toThrow("insert failed")
+
+      expect(mockDispatchStagedInstalls).not.toHaveBeenCalled()
+    })
   })
 
   test("creates a workspace only when workspaceId is absent", async () => {

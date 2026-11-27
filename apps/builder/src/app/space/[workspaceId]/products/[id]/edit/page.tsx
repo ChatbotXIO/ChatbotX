@@ -4,6 +4,7 @@ import {
   productService,
 } from "@chatbotx.io/business"
 import { EditProduct } from "@/features/products/components/edit-product"
+import { LockedEditorGuard } from "@/features/templates/components/locked-editor-guard"
 
 export default async function EditProductPage({
   params,
@@ -22,11 +23,17 @@ export default async function EditProductPage({
   ])
 
   return (
-    <EditProduct
-      metaCatalogId={metaCatalogLink?.catalogId ?? null}
-      product={product}
-      publicUrl={shopLink.buttonUrl}
+    <LockedEditorGuard
+      resourceId={product.id}
+      resourceKind="product"
       workspaceId={workspaceId}
-    />
+    >
+      <EditProduct
+        metaCatalogId={metaCatalogLink?.catalogId ?? null}
+        product={product}
+        publicUrl={shopLink.buttonUrl}
+        workspaceId={workspaceId}
+      />
+    </LockedEditorGuard>
   )
 }

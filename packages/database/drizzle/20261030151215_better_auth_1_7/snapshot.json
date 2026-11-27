@@ -1,0 +1,3964 @@
+{
+  "type": "diff",
+  "version": "10",
+  "dialect": "postgres",
+  "id": "54201d6c-8d54-405d-842a-ea9b38de2b04",
+  "prevIds": [
+    "00a8debc-ff36-468b-84b4-271242df83b0"
+  ],
+  "footprints": [
+    {
+      "statementType": "create_table",
+      "statementTarget": [
+        "table",
+        "public",
+        "OAuthClientAssertion"
+      ],
+      "writes": [
+        "s|tbl|public.OAuthClientAssertion",
+        "n|tbl|public.OAuthClientAssertion",
+        "e|tbl|public.OAuthClientAssertion",
+        "n|rel|public.OAuthClientAssertion",
+        "n|type|public.OAuthClientAssertion",
+        "n|rel|public.OAuthClientAssertion_pkey"
+      ],
+      "reads": [
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "create_table",
+      "statementTarget": [
+        "table",
+        "public",
+        "OAuthClientResource"
+      ],
+      "writes": [
+        "s|tbl|public.OAuthClientResource",
+        "n|tbl|public.OAuthClientResource",
+        "e|tbl|public.OAuthClientResource",
+        "n|rel|public.OAuthClientResource",
+        "n|type|public.OAuthClientResource",
+        "n|rel|public.OAuthClientResource_pkey"
+      ],
+      "reads": [
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "create_table",
+      "statementTarget": [
+        "table",
+        "public",
+        "OAuthRefreshToken"
+      ],
+      "writes": [
+        "s|tbl|public.OAuthRefreshToken",
+        "n|tbl|public.OAuthRefreshToken",
+        "e|tbl|public.OAuthRefreshToken",
+        "n|rel|public.OAuthRefreshToken",
+        "n|type|public.OAuthRefreshToken",
+        "n|rel|public.OAuthRefreshToken_pkey"
+      ],
+      "reads": [
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "create_table",
+      "statementTarget": [
+        "table",
+        "public",
+        "OAuthResource"
+      ],
+      "writes": [
+        "s|tbl|public.OAuthResource",
+        "n|tbl|public.OAuthResource",
+        "e|tbl|public.OAuthResource",
+        "n|rel|public.OAuthResource",
+        "n|type|public.OAuthResource",
+        "n|rel|public.OAuthResource_pkey"
+      ],
+      "reads": [
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "rename_table",
+      "statementTarget": [
+        "table",
+        "public",
+        "OAuthApplication"
+      ],
+      "writes": [
+        "s|tbl|public.OAuthApplication",
+        "n|tbl|public.OAuthApplication",
+        "n|rel|public.OAuthApplication",
+        "n|type|public.OAuthApplication",
+        "s|tbl|public.OAuthClient",
+        "n|tbl|public.OAuthClient",
+        "n|rel|public.OAuthClient",
+        "n|type|public.OAuthClient"
+      ],
+      "reads": [
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "drop_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "OAuthAccessToken"
+      ],
+      "writes": [
+        "s|fk|public.OAuthAccessToken.OAuthAccessToken_clientId_OAuthApplication_clientId_fkey",
+        "n|fk|public.OAuthAccessToken.OAuthAccessToken_clientId_OAuthApplication_clientId_fkey",
+        "e|fk|public.OAuthAccessToken.OAuthAccessToken_clientId_OAuthApplication_clientId_fkey",
+        "n|con|public.OAuthAccessToken.OAuthAccessToken_clientId_OAuthApplication_clientId_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.OAuthAccessToken",
+        "n|sch|public",
+        "e|col|public.OAuthAccessToken.clientId"
+      ]
+    },
+    {
+      "statementType": "drop_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "OAuthClient"
+      ],
+      "writes": [
+        "s|fk|public.OAuthClient.OAuthApplication_userId_User_id_fkey",
+        "n|fk|public.OAuthClient.OAuthApplication_userId_User_id_fkey",
+        "e|fk|public.OAuthClient.OAuthApplication_userId_User_id_fkey",
+        "n|con|public.OAuthClient.OAuthApplication_userId_User_id_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.OAuthClient",
+        "n|sch|public",
+        "e|col|public.OAuthClient.userId"
+      ]
+    },
+    {
+      "statementType": "drop_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "OAuthConsent"
+      ],
+      "writes": [
+        "s|fk|public.OAuthConsent.OAuthConsent_clientId_OAuthApplication_clientId_fkey",
+        "n|fk|public.OAuthConsent.OAuthConsent_clientId_OAuthApplication_clientId_fkey",
+        "e|fk|public.OAuthConsent.OAuthConsent_clientId_OAuthApplication_clientId_fkey",
+        "n|con|public.OAuthConsent.OAuthConsent_clientId_OAuthApplication_clientId_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.OAuthConsent",
+        "n|sch|public",
+        "e|col|public.OAuthConsent.clientId"
+      ]
+    },
+    {
+      "statementType": "drop_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "OAuthAccessToken",
+        "OAuthAccessToken_accessToken_key"
+      ],
+      "writes": [
+        "s|idx|public.OAuthAccessToken_accessToken_key",
+        "n|idx|public.OAuthAccessToken_accessToken_key",
+        "e|idx|public.OAuthAccessToken_accessToken_key",
+        "n|rel|public.OAuthAccessToken_accessToken_key"
+      ],
+      "reads": [
+        "n|tbl|public.OAuthAccessToken",
+        "n|sch|public",
+        "e|col|public.OAuthAccessToken.accessToken"
+      ],
+      "sharedWrites": [
+        "e|uniqueness|public.OAuthAccessToken.accessToken"
+      ]
+    },
+    {
+      "statementType": "drop_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "OAuthAccessToken",
+        "OAuthAccessToken_refreshToken_key"
+      ],
+      "writes": [
+        "s|idx|public.OAuthAccessToken_refreshToken_key",
+        "n|idx|public.OAuthAccessToken_refreshToken_key",
+        "e|idx|public.OAuthAccessToken_refreshToken_key",
+        "n|rel|public.OAuthAccessToken_refreshToken_key"
+      ],
+      "reads": [
+        "n|tbl|public.OAuthAccessToken",
+        "n|sch|public",
+        "e|col|public.OAuthAccessToken.refreshToken"
+      ],
+      "sharedWrites": [
+        "e|uniqueness|public.OAuthAccessToken.refreshToken"
+      ]
+    },
+    {
+      "statementType": "drop_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "OAuthClient",
+        "OAuthApplication_clientId_key"
+      ],
+      "writes": [
+        "s|idx|public.OAuthApplication_clientId_key",
+        "n|idx|public.OAuthApplication_clientId_key",
+        "e|idx|public.OAuthApplication_clientId_key",
+        "n|rel|public.OAuthApplication_clientId_key"
+      ],
+      "reads": [
+        "n|tbl|public.OAuthClient",
+        "n|sch|public",
+        "e|col|public.OAuthClient.clientId"
+      ],
+      "sharedWrites": [
+        "e|uniqueness|public.OAuthClient.clientId"
+      ]
+    },
+    {
+      "statementType": "drop_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "OAuthClient",
+        "OAuthApplication_userId_idx"
+      ],
+      "writes": [
+        "s|idx|public.OAuthApplication_userId_idx",
+        "n|idx|public.OAuthApplication_userId_idx",
+        "e|idx|public.OAuthApplication_userId_idx",
+        "n|rel|public.OAuthApplication_userId_idx"
+      ],
+      "reads": [
+        "e|tbl|public.OAuthClient",
+        "n|sch|public",
+        "e|col|public.OAuthClient.userId"
+      ],
+      "sharedWrites": []
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "Jwk",
+        "alg"
+      ],
+      "writes": [
+        "s|col|public.Jwk.alg",
+        "n|col|public.Jwk.alg",
+        "e|col|public.Jwk.alg"
+      ],
+      "reads": [
+        "n|tbl|public.Jwk",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "Jwk",
+        "crv"
+      ],
+      "writes": [
+        "s|col|public.Jwk.crv",
+        "n|col|public.Jwk.crv",
+        "e|col|public.Jwk.crv"
+      ],
+      "reads": [
+        "n|tbl|public.Jwk",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "OAuthAccessToken",
+        "token"
+      ],
+      "writes": [
+        "s|col|public.OAuthAccessToken.token",
+        "n|col|public.OAuthAccessToken.token",
+        "e|col|public.OAuthAccessToken.token"
+      ],
+      "reads": [
+        "n|tbl|public.OAuthAccessToken",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "OAuthAccessToken",
+        "sessionId"
+      ],
+      "writes": [
+        "s|col|public.OAuthAccessToken.sessionId",
+        "n|col|public.OAuthAccessToken.sessionId",
+        "e|col|public.OAuthAccessToken.sessionId"
+      ],
+      "reads": [
+        "n|tbl|public.OAuthAccessToken",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "OAuthAccessToken",
+        "referenceId"
+      ],
+      "writes": [
+        "s|col|public.OAuthAccessToken.referenceId",
+        "n|col|public.OAuthAccessToken.referenceId",
+        "e|col|public.OAuthAccessToken.referenceId"
+      ],
+      "reads": [
+        "n|tbl|public.OAuthAccessToken",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "OAuthAccessToken",
+        "authorizationCodeId"
+      ],
+      "writes": [
+        "s|col|public.OAuthAccessToken.authorizationCodeId",
+        "n|col|public.OAuthAccessToken.authorizationCodeId",
+        "e|col|public.OAuthAccessToken.authorizationCodeId"
+      ],
+      "reads": [
+        "n|tbl|public.OAuthAccessToken",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "OAuthAccessToken",
+        "resources"
+      ],
+      "writes": [
+        "s|col|public.OAuthAccessToken.resources",
+        "n|col|public.OAuthAccessToken.resources",
+        "e|col|public.OAuthAccessToken.resources"
+      ],
+      "reads": [
+        "n|tbl|public.OAuthAccessToken",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "OAuthAccessToken",
+        "requestedUserInfoClaims"
+      ],
+      "writes": [
+        "s|col|public.OAuthAccessToken.requestedUserInfoClaims",
+        "n|col|public.OAuthAccessToken.requestedUserInfoClaims",
+        "e|col|public.OAuthAccessToken.requestedUserInfoClaims"
+      ],
+      "reads": [
+        "n|tbl|public.OAuthAccessToken",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "OAuthAccessToken",
+        "refreshId"
+      ],
+      "writes": [
+        "s|col|public.OAuthAccessToken.refreshId",
+        "n|col|public.OAuthAccessToken.refreshId",
+        "e|col|public.OAuthAccessToken.refreshId"
+      ],
+      "reads": [
+        "n|tbl|public.OAuthAccessToken",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "OAuthAccessToken",
+        "expiresAt"
+      ],
+      "writes": [
+        "s|col|public.OAuthAccessToken.expiresAt",
+        "n|col|public.OAuthAccessToken.expiresAt",
+        "e|col|public.OAuthAccessToken.expiresAt"
+      ],
+      "reads": [
+        "n|tbl|public.OAuthAccessToken",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "OAuthAccessToken",
+        "revoked"
+      ],
+      "writes": [
+        "s|col|public.OAuthAccessToken.revoked",
+        "n|col|public.OAuthAccessToken.revoked",
+        "e|col|public.OAuthAccessToken.revoked"
+      ],
+      "reads": [
+        "n|tbl|public.OAuthAccessToken",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "OAuthAccessToken",
+        "confirmation"
+      ],
+      "writes": [
+        "s|col|public.OAuthAccessToken.confirmation",
+        "n|col|public.OAuthAccessToken.confirmation",
+        "e|col|public.OAuthAccessToken.confirmation"
+      ],
+      "reads": [
+        "n|tbl|public.OAuthAccessToken",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "OAuthClient",
+        "clientDiscoveryId"
+      ],
+      "writes": [
+        "s|col|public.OAuthClient.clientDiscoveryId",
+        "n|col|public.OAuthClient.clientDiscoveryId",
+        "e|col|public.OAuthClient.clientDiscoveryId"
+      ],
+      "reads": [
+        "n|tbl|public.OAuthClient",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "OAuthClient",
+        "skipConsent"
+      ],
+      "writes": [
+        "s|col|public.OAuthClient.skipConsent",
+        "n|col|public.OAuthClient.skipConsent",
+        "e|col|public.OAuthClient.skipConsent"
+      ],
+      "reads": [
+        "n|tbl|public.OAuthClient",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "OAuthClient",
+        "enableEndSession"
+      ],
+      "writes": [
+        "s|col|public.OAuthClient.enableEndSession",
+        "n|col|public.OAuthClient.enableEndSession",
+        "e|col|public.OAuthClient.enableEndSession"
+      ],
+      "reads": [
+        "n|tbl|public.OAuthClient",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "OAuthClient",
+        "subjectType"
+      ],
+      "writes": [
+        "s|col|public.OAuthClient.subjectType",
+        "n|col|public.OAuthClient.subjectType",
+        "e|col|public.OAuthClient.subjectType"
+      ],
+      "reads": [
+        "n|tbl|public.OAuthClient",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "OAuthClient",
+        "scopes"
+      ],
+      "writes": [
+        "s|col|public.OAuthClient.scopes",
+        "n|col|public.OAuthClient.scopes",
+        "e|col|public.OAuthClient.scopes"
+      ],
+      "reads": [
+        "n|tbl|public.OAuthClient",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "OAuthClient",
+        "clientCredentialsScopes"
+      ],
+      "writes": [
+        "s|col|public.OAuthClient.clientCredentialsScopes",
+        "n|col|public.OAuthClient.clientCredentialsScopes",
+        "e|col|public.OAuthClient.clientCredentialsScopes"
+      ],
+      "reads": [
+        "n|tbl|public.OAuthClient",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "OAuthClient",
+        "uri"
+      ],
+      "writes": [
+        "s|col|public.OAuthClient.uri",
+        "n|col|public.OAuthClient.uri",
+        "e|col|public.OAuthClient.uri"
+      ],
+      "reads": [
+        "n|tbl|public.OAuthClient",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "OAuthClient",
+        "contacts"
+      ],
+      "writes": [
+        "s|col|public.OAuthClient.contacts",
+        "n|col|public.OAuthClient.contacts",
+        "e|col|public.OAuthClient.contacts"
+      ],
+      "reads": [
+        "n|tbl|public.OAuthClient",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "OAuthClient",
+        "tos"
+      ],
+      "writes": [
+        "s|col|public.OAuthClient.tos",
+        "n|col|public.OAuthClient.tos",
+        "e|col|public.OAuthClient.tos"
+      ],
+      "reads": [
+        "n|tbl|public.OAuthClient",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "OAuthClient",
+        "policy"
+      ],
+      "writes": [
+        "s|col|public.OAuthClient.policy",
+        "n|col|public.OAuthClient.policy",
+        "e|col|public.OAuthClient.policy"
+      ],
+      "reads": [
+        "n|tbl|public.OAuthClient",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "OAuthClient",
+        "softwareId"
+      ],
+      "writes": [
+        "s|col|public.OAuthClient.softwareId",
+        "n|col|public.OAuthClient.softwareId",
+        "e|col|public.OAuthClient.softwareId"
+      ],
+      "reads": [
+        "n|tbl|public.OAuthClient",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "OAuthClient",
+        "softwareVersion"
+      ],
+      "writes": [
+        "s|col|public.OAuthClient.softwareVersion",
+        "n|col|public.OAuthClient.softwareVersion",
+        "e|col|public.OAuthClient.softwareVersion"
+      ],
+      "reads": [
+        "n|tbl|public.OAuthClient",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "OAuthClient",
+        "softwareStatement"
+      ],
+      "writes": [
+        "s|col|public.OAuthClient.softwareStatement",
+        "n|col|public.OAuthClient.softwareStatement",
+        "e|col|public.OAuthClient.softwareStatement"
+      ],
+      "reads": [
+        "n|tbl|public.OAuthClient",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "OAuthClient",
+        "redirectUris"
+      ],
+      "writes": [
+        "s|col|public.OAuthClient.redirectUris",
+        "n|col|public.OAuthClient.redirectUris",
+        "e|col|public.OAuthClient.redirectUris"
+      ],
+      "reads": [
+        "n|tbl|public.OAuthClient",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "OAuthClient",
+        "postLogoutRedirectUris"
+      ],
+      "writes": [
+        "s|col|public.OAuthClient.postLogoutRedirectUris",
+        "n|col|public.OAuthClient.postLogoutRedirectUris",
+        "e|col|public.OAuthClient.postLogoutRedirectUris"
+      ],
+      "reads": [
+        "n|tbl|public.OAuthClient",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "OAuthClient",
+        "backchannelLogoutUri"
+      ],
+      "writes": [
+        "s|col|public.OAuthClient.backchannelLogoutUri",
+        "n|col|public.OAuthClient.backchannelLogoutUri",
+        "e|col|public.OAuthClient.backchannelLogoutUri"
+      ],
+      "reads": [
+        "n|tbl|public.OAuthClient",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "OAuthClient",
+        "backchannelLogoutSessionRequired"
+      ],
+      "writes": [
+        "s|col|public.OAuthClient.backchannelLogoutSessionRequired",
+        "n|col|public.OAuthClient.backchannelLogoutSessionRequired",
+        "e|col|public.OAuthClient.backchannelLogoutSessionRequired"
+      ],
+      "reads": [
+        "n|tbl|public.OAuthClient",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "OAuthClient",
+        "tokenEndpointAuthMethod"
+      ],
+      "writes": [
+        "s|col|public.OAuthClient.tokenEndpointAuthMethod",
+        "n|col|public.OAuthClient.tokenEndpointAuthMethod",
+        "e|col|public.OAuthClient.tokenEndpointAuthMethod"
+      ],
+      "reads": [
+        "n|tbl|public.OAuthClient",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "OAuthClient",
+        "applicationType"
+      ],
+      "writes": [
+        "s|col|public.OAuthClient.applicationType",
+        "n|col|public.OAuthClient.applicationType",
+        "e|col|public.OAuthClient.applicationType"
+      ],
+      "reads": [
+        "n|tbl|public.OAuthClient",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "OAuthClient",
+        "jwks"
+      ],
+      "writes": [
+        "s|col|public.OAuthClient.jwks",
+        "n|col|public.OAuthClient.jwks",
+        "e|col|public.OAuthClient.jwks"
+      ],
+      "reads": [
+        "n|tbl|public.OAuthClient",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "OAuthClient",
+        "jwksUri"
+      ],
+      "writes": [
+        "s|col|public.OAuthClient.jwksUri",
+        "n|col|public.OAuthClient.jwksUri",
+        "e|col|public.OAuthClient.jwksUri"
+      ],
+      "reads": [
+        "n|tbl|public.OAuthClient",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "OAuthClient",
+        "grantTypes"
+      ],
+      "writes": [
+        "s|col|public.OAuthClient.grantTypes",
+        "n|col|public.OAuthClient.grantTypes",
+        "e|col|public.OAuthClient.grantTypes"
+      ],
+      "reads": [
+        "n|tbl|public.OAuthClient",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "OAuthClient",
+        "responseTypes"
+      ],
+      "writes": [
+        "s|col|public.OAuthClient.responseTypes",
+        "n|col|public.OAuthClient.responseTypes",
+        "e|col|public.OAuthClient.responseTypes"
+      ],
+      "reads": [
+        "n|tbl|public.OAuthClient",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "OAuthClient",
+        "requirePKCE"
+      ],
+      "writes": [
+        "s|col|public.OAuthClient.requirePKCE",
+        "n|col|public.OAuthClient.requirePKCE",
+        "e|col|public.OAuthClient.requirePKCE"
+      ],
+      "reads": [
+        "n|tbl|public.OAuthClient",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "OAuthClient",
+        "dpopBoundAccessTokens"
+      ],
+      "writes": [
+        "s|col|public.OAuthClient.dpopBoundAccessTokens",
+        "n|col|public.OAuthClient.dpopBoundAccessTokens",
+        "e|col|public.OAuthClient.dpopBoundAccessTokens"
+      ],
+      "reads": [
+        "n|tbl|public.OAuthClient",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "OAuthClient",
+        "referenceId"
+      ],
+      "writes": [
+        "s|col|public.OAuthClient.referenceId",
+        "n|col|public.OAuthClient.referenceId",
+        "e|col|public.OAuthClient.referenceId"
+      ],
+      "reads": [
+        "n|tbl|public.OAuthClient",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "OAuthConsent",
+        "referenceId"
+      ],
+      "writes": [
+        "s|col|public.OAuthConsent.referenceId",
+        "n|col|public.OAuthConsent.referenceId",
+        "e|col|public.OAuthConsent.referenceId"
+      ],
+      "reads": [
+        "n|tbl|public.OAuthConsent",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "OAuthConsent",
+        "resources"
+      ],
+      "writes": [
+        "s|col|public.OAuthConsent.resources",
+        "n|col|public.OAuthConsent.resources",
+        "e|col|public.OAuthConsent.resources"
+      ],
+      "reads": [
+        "n|tbl|public.OAuthConsent",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "OAuthConsent",
+        "requestedUserInfoClaims"
+      ],
+      "writes": [
+        "s|col|public.OAuthConsent.requestedUserInfoClaims",
+        "n|col|public.OAuthConsent.requestedUserInfoClaims",
+        "e|col|public.OAuthConsent.requestedUserInfoClaims"
+      ],
+      "reads": [
+        "n|tbl|public.OAuthConsent",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "drop_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "OAuthAccessToken",
+        "accessToken"
+      ],
+      "writes": [
+        "s|col|public.OAuthAccessToken.accessToken",
+        "n|col|public.OAuthAccessToken.accessToken",
+        "e|col|public.OAuthAccessToken.accessToken"
+      ],
+      "reads": [
+        "n|tbl|public.OAuthAccessToken",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "drop_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "OAuthAccessToken",
+        "refreshToken"
+      ],
+      "writes": [
+        "s|col|public.OAuthAccessToken.refreshToken",
+        "n|col|public.OAuthAccessToken.refreshToken",
+        "e|col|public.OAuthAccessToken.refreshToken"
+      ],
+      "reads": [
+        "n|tbl|public.OAuthAccessToken",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "drop_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "OAuthAccessToken",
+        "accessTokenExpiresAt"
+      ],
+      "writes": [
+        "s|col|public.OAuthAccessToken.accessTokenExpiresAt",
+        "n|col|public.OAuthAccessToken.accessTokenExpiresAt",
+        "e|col|public.OAuthAccessToken.accessTokenExpiresAt"
+      ],
+      "reads": [
+        "n|tbl|public.OAuthAccessToken",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "drop_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "OAuthAccessToken",
+        "refreshTokenExpiresAt"
+      ],
+      "writes": [
+        "s|col|public.OAuthAccessToken.refreshTokenExpiresAt",
+        "n|col|public.OAuthAccessToken.refreshTokenExpiresAt",
+        "e|col|public.OAuthAccessToken.refreshTokenExpiresAt"
+      ],
+      "reads": [
+        "n|tbl|public.OAuthAccessToken",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "drop_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "OAuthClient",
+        "redirectUrls"
+      ],
+      "writes": [
+        "s|col|public.OAuthClient.redirectUrls",
+        "n|col|public.OAuthClient.redirectUrls",
+        "e|col|public.OAuthClient.redirectUrls"
+      ],
+      "reads": [
+        "n|tbl|public.OAuthClient",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "drop_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "OAuthClient",
+        "type"
+      ],
+      "writes": [
+        "s|col|public.OAuthClient.type",
+        "n|col|public.OAuthClient.type",
+        "e|col|public.OAuthClient.type"
+      ],
+      "reads": [
+        "n|tbl|public.OAuthClient",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "drop_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "OAuthConsent",
+        "consentGiven"
+      ],
+      "writes": [
+        "s|col|public.OAuthConsent.consentGiven",
+        "n|col|public.OAuthConsent.consentGiven",
+        "e|col|public.OAuthConsent.consentGiven"
+      ],
+      "reads": [
+        "n|tbl|public.OAuthConsent",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "alter_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "Verification",
+        "id"
+      ],
+      "writes": [
+        "s|colprop|public.Verification.id.type",
+        "s|colprop|public.Verification.id.default"
+      ],
+      "reads": [
+        "n|tbl|public.Verification",
+        "n|sch|public",
+        "n|col|public.Verification.id"
+      ],
+      "sqlHash": "018e7ff24e33e678"
+    },
+    {
+      "statementType": "alter_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "OAuthAccessToken",
+        "scopes"
+      ],
+      "writes": [
+        "s|colprop|public.OAuthAccessToken.scopes.type",
+        "s|colprop|public.OAuthAccessToken.scopes.default"
+      ],
+      "reads": [
+        "n|tbl|public.OAuthAccessToken",
+        "n|sch|public",
+        "n|col|public.OAuthAccessToken.scopes"
+      ]
+    },
+    {
+      "statementType": "alter_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "OAuthClient",
+        "name"
+      ],
+      "writes": [
+        "s|colprop|public.OAuthClient.name.notNull"
+      ],
+      "reads": [
+        "n|tbl|public.OAuthClient",
+        "n|sch|public",
+        "n|col|public.OAuthClient.name"
+      ],
+      "sqlHash": "3d3516997ff93f26"
+    },
+    {
+      "statementType": "alter_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "OAuthClient",
+        "metadata"
+      ],
+      "writes": [
+        "s|colprop|public.OAuthClient.metadata.type",
+        "s|colprop|public.OAuthClient.metadata.default"
+      ],
+      "reads": [
+        "n|tbl|public.OAuthClient",
+        "n|sch|public",
+        "n|col|public.OAuthClient.metadata"
+      ],
+      "sqlHash": "b6dff81635a6a134"
+    },
+    {
+      "statementType": "alter_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "OAuthConsent",
+        "userId"
+      ],
+      "writes": [
+        "s|colprop|public.OAuthConsent.userId.notNull"
+      ],
+      "reads": [
+        "n|tbl|public.OAuthConsent",
+        "n|sch|public",
+        "n|col|public.OAuthConsent.userId"
+      ],
+      "sqlHash": "435dcb718052e5f5"
+    },
+    {
+      "statementType": "alter_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "OAuthConsent",
+        "scopes"
+      ],
+      "writes": [
+        "s|colprop|public.OAuthConsent.scopes.type",
+        "s|colprop|public.OAuthConsent.scopes.default"
+      ],
+      "reads": [
+        "n|tbl|public.OAuthConsent",
+        "n|sch|public",
+        "n|col|public.OAuthConsent.scopes"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "Verification",
+        "Verification_identifier_idx"
+      ],
+      "writes": [
+        "s|idx|public.Verification_identifier_idx",
+        "n|idx|public.Verification_identifier_idx",
+        "e|idx|public.Verification_identifier_idx",
+        "n|rel|public.Verification_identifier_idx"
+      ],
+      "reads": [
+        "n|tbl|public.Verification",
+        "n|sch|public",
+        "n|col|public.Verification.identifier"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "OAuthAccessToken",
+        "OAuthAccessToken_token_key"
+      ],
+      "writes": [
+        "s|idx|public.OAuthAccessToken_token_key",
+        "n|idx|public.OAuthAccessToken_token_key",
+        "e|idx|public.OAuthAccessToken_token_key",
+        "n|rel|public.OAuthAccessToken_token_key"
+      ],
+      "reads": [
+        "n|tbl|public.OAuthAccessToken",
+        "n|sch|public",
+        "n|col|public.OAuthAccessToken.token"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "OAuthAccessToken",
+        "OAuthAccessToken_sessionId_idx"
+      ],
+      "writes": [
+        "s|idx|public.OAuthAccessToken_sessionId_idx",
+        "n|idx|public.OAuthAccessToken_sessionId_idx",
+        "e|idx|public.OAuthAccessToken_sessionId_idx",
+        "n|rel|public.OAuthAccessToken_sessionId_idx"
+      ],
+      "reads": [
+        "n|tbl|public.OAuthAccessToken",
+        "n|sch|public",
+        "n|col|public.OAuthAccessToken.sessionId"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "OAuthAccessToken",
+        "OAuthAccessToken_authorizationCodeId_idx"
+      ],
+      "writes": [
+        "s|idx|public.OAuthAccessToken_authorizationCodeId_idx",
+        "n|idx|public.OAuthAccessToken_authorizationCodeId_idx",
+        "e|idx|public.OAuthAccessToken_authorizationCodeId_idx",
+        "n|rel|public.OAuthAccessToken_authorizationCodeId_idx"
+      ],
+      "reads": [
+        "n|tbl|public.OAuthAccessToken",
+        "n|sch|public",
+        "n|col|public.OAuthAccessToken.authorizationCodeId"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "OAuthAccessToken",
+        "OAuthAccessToken_refreshId_idx"
+      ],
+      "writes": [
+        "s|idx|public.OAuthAccessToken_refreshId_idx",
+        "n|idx|public.OAuthAccessToken_refreshId_idx",
+        "e|idx|public.OAuthAccessToken_refreshId_idx",
+        "n|rel|public.OAuthAccessToken_refreshId_idx"
+      ],
+      "reads": [
+        "n|tbl|public.OAuthAccessToken",
+        "n|sch|public",
+        "n|col|public.OAuthAccessToken.refreshId"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "OAuthClient",
+        "OAuthClient_clientId_key"
+      ],
+      "writes": [
+        "s|idx|public.OAuthClient_clientId_key",
+        "n|idx|public.OAuthClient_clientId_key",
+        "e|idx|public.OAuthClient_clientId_key",
+        "n|rel|public.OAuthClient_clientId_key"
+      ],
+      "reads": [
+        "n|tbl|public.OAuthClient",
+        "n|sch|public",
+        "n|col|public.OAuthClient.clientId"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "OAuthClient",
+        "OAuthClient_userId_idx"
+      ],
+      "writes": [
+        "s|idx|public.OAuthClient_userId_idx",
+        "n|idx|public.OAuthClient_userId_idx",
+        "e|idx|public.OAuthClient_userId_idx",
+        "n|rel|public.OAuthClient_userId_idx"
+      ],
+      "reads": [
+        "n|tbl|public.OAuthClient",
+        "n|sch|public",
+        "n|col|public.OAuthClient.userId"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "OAuthClientAssertion",
+        "OAuthClientAssertion_expiresAt_idx"
+      ],
+      "writes": [
+        "s|idx|public.OAuthClientAssertion_expiresAt_idx",
+        "n|idx|public.OAuthClientAssertion_expiresAt_idx",
+        "e|idx|public.OAuthClientAssertion_expiresAt_idx",
+        "n|rel|public.OAuthClientAssertion_expiresAt_idx"
+      ],
+      "reads": [
+        "n|tbl|public.OAuthClientAssertion",
+        "n|sch|public",
+        "n|col|public.OAuthClientAssertion.expiresAt"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "OAuthClientResource",
+        "OAuthClientResource_clientId_idx"
+      ],
+      "writes": [
+        "s|idx|public.OAuthClientResource_clientId_idx",
+        "n|idx|public.OAuthClientResource_clientId_idx",
+        "e|idx|public.OAuthClientResource_clientId_idx",
+        "n|rel|public.OAuthClientResource_clientId_idx"
+      ],
+      "reads": [
+        "n|tbl|public.OAuthClientResource",
+        "n|sch|public",
+        "n|col|public.OAuthClientResource.clientId"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "OAuthClientResource",
+        "OAuthClientResource_resourceId_idx"
+      ],
+      "writes": [
+        "s|idx|public.OAuthClientResource_resourceId_idx",
+        "n|idx|public.OAuthClientResource_resourceId_idx",
+        "e|idx|public.OAuthClientResource_resourceId_idx",
+        "n|rel|public.OAuthClientResource_resourceId_idx"
+      ],
+      "reads": [
+        "n|tbl|public.OAuthClientResource",
+        "n|sch|public",
+        "n|col|public.OAuthClientResource.resourceId"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "OAuthClientResource",
+        "OAuthClientResource_clientId_resourceId_key"
+      ],
+      "writes": [
+        "s|idx|public.OAuthClientResource_clientId_resourceId_key",
+        "n|idx|public.OAuthClientResource_clientId_resourceId_key",
+        "e|idx|public.OAuthClientResource_clientId_resourceId_key",
+        "n|rel|public.OAuthClientResource_clientId_resourceId_key"
+      ],
+      "reads": [
+        "n|tbl|public.OAuthClientResource",
+        "n|sch|public",
+        "n|col|public.OAuthClientResource.clientId",
+        "n|col|public.OAuthClientResource.resourceId"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "OAuthRefreshToken",
+        "OAuthRefreshToken_token_key"
+      ],
+      "writes": [
+        "s|idx|public.OAuthRefreshToken_token_key",
+        "n|idx|public.OAuthRefreshToken_token_key",
+        "e|idx|public.OAuthRefreshToken_token_key",
+        "n|rel|public.OAuthRefreshToken_token_key"
+      ],
+      "reads": [
+        "n|tbl|public.OAuthRefreshToken",
+        "n|sch|public",
+        "n|col|public.OAuthRefreshToken.token"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "OAuthRefreshToken",
+        "OAuthRefreshToken_clientId_idx"
+      ],
+      "writes": [
+        "s|idx|public.OAuthRefreshToken_clientId_idx",
+        "n|idx|public.OAuthRefreshToken_clientId_idx",
+        "e|idx|public.OAuthRefreshToken_clientId_idx",
+        "n|rel|public.OAuthRefreshToken_clientId_idx"
+      ],
+      "reads": [
+        "n|tbl|public.OAuthRefreshToken",
+        "n|sch|public",
+        "n|col|public.OAuthRefreshToken.clientId"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "OAuthRefreshToken",
+        "OAuthRefreshToken_sessionId_idx"
+      ],
+      "writes": [
+        "s|idx|public.OAuthRefreshToken_sessionId_idx",
+        "n|idx|public.OAuthRefreshToken_sessionId_idx",
+        "e|idx|public.OAuthRefreshToken_sessionId_idx",
+        "n|rel|public.OAuthRefreshToken_sessionId_idx"
+      ],
+      "reads": [
+        "n|tbl|public.OAuthRefreshToken",
+        "n|sch|public",
+        "n|col|public.OAuthRefreshToken.sessionId"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "OAuthRefreshToken",
+        "OAuthRefreshToken_userId_idx"
+      ],
+      "writes": [
+        "s|idx|public.OAuthRefreshToken_userId_idx",
+        "n|idx|public.OAuthRefreshToken_userId_idx",
+        "e|idx|public.OAuthRefreshToken_userId_idx",
+        "n|rel|public.OAuthRefreshToken_userId_idx"
+      ],
+      "reads": [
+        "n|tbl|public.OAuthRefreshToken",
+        "n|sch|public",
+        "n|col|public.OAuthRefreshToken.userId"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "OAuthRefreshToken",
+        "OAuthRefreshToken_authorizationCodeId_idx"
+      ],
+      "writes": [
+        "s|idx|public.OAuthRefreshToken_authorizationCodeId_idx",
+        "n|idx|public.OAuthRefreshToken_authorizationCodeId_idx",
+        "e|idx|public.OAuthRefreshToken_authorizationCodeId_idx",
+        "n|rel|public.OAuthRefreshToken_authorizationCodeId_idx"
+      ],
+      "reads": [
+        "n|tbl|public.OAuthRefreshToken",
+        "n|sch|public",
+        "n|col|public.OAuthRefreshToken.authorizationCodeId"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "OAuthResource",
+        "OAuthResource_identifier_key"
+      ],
+      "writes": [
+        "s|idx|public.OAuthResource_identifier_key",
+        "n|idx|public.OAuthResource_identifier_key",
+        "e|idx|public.OAuthResource_identifier_key",
+        "n|rel|public.OAuthResource_identifier_key"
+      ],
+      "reads": [
+        "n|tbl|public.OAuthResource",
+        "n|sch|public",
+        "n|col|public.OAuthResource.identifier"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "OAuthResource",
+        "OAuthResource_disabled_idx"
+      ],
+      "writes": [
+        "s|idx|public.OAuthResource_disabled_idx",
+        "n|idx|public.OAuthResource_disabled_idx",
+        "e|idx|public.OAuthResource_disabled_idx",
+        "n|rel|public.OAuthResource_disabled_idx"
+      ],
+      "reads": [
+        "n|tbl|public.OAuthResource",
+        "n|sch|public",
+        "n|col|public.OAuthResource.disabled"
+      ]
+    },
+    {
+      "statementType": "create_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "OAuthAccessToken"
+      ],
+      "writes": [
+        "s|fk|public.OAuthAccessToken.OAuthAccessToken_sessionId_Session_id_fkey",
+        "n|fk|public.OAuthAccessToken.OAuthAccessToken_sessionId_Session_id_fkey",
+        "e|fk|public.OAuthAccessToken.OAuthAccessToken_sessionId_Session_id_fkey",
+        "n|con|public.OAuthAccessToken.OAuthAccessToken_sessionId_Session_id_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.OAuthAccessToken",
+        "n|sch|public",
+        "n|tbl|public.Session",
+        "n|sch|public",
+        "n|col|public.OAuthAccessToken.sessionId",
+        "n|col|public.Session.id",
+        "e|uniqueness|public.Session.id"
+      ]
+    },
+    {
+      "statementType": "create_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "OAuthAccessToken"
+      ],
+      "writes": [
+        "s|fk|public.OAuthAccessToken.OAuthAccessToken_refreshId_OAuthRefreshToken_id_fkey",
+        "n|fk|public.OAuthAccessToken.OAuthAccessToken_refreshId_OAuthRefreshToken_id_fkey",
+        "e|fk|public.OAuthAccessToken.OAuthAccessToken_refreshId_OAuthRefreshToken_id_fkey",
+        "n|con|public.OAuthAccessToken.OAuthAccessToken_refreshId_OAuthRefreshToken_id_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.OAuthAccessToken",
+        "n|sch|public",
+        "n|tbl|public.OAuthRefreshToken",
+        "n|sch|public",
+        "n|col|public.OAuthAccessToken.refreshId",
+        "n|col|public.OAuthRefreshToken.id",
+        "e|uniqueness|public.OAuthRefreshToken.id"
+      ]
+    },
+    {
+      "statementType": "create_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "OAuthAccessToken"
+      ],
+      "writes": [
+        "s|fk|public.OAuthAccessToken.OAuthAccessToken_clientId_OAuthClient_clientId_fkey",
+        "n|fk|public.OAuthAccessToken.OAuthAccessToken_clientId_OAuthClient_clientId_fkey",
+        "e|fk|public.OAuthAccessToken.OAuthAccessToken_clientId_OAuthClient_clientId_fkey",
+        "n|con|public.OAuthAccessToken.OAuthAccessToken_clientId_OAuthClient_clientId_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.OAuthAccessToken",
+        "n|sch|public",
+        "n|tbl|public.OAuthClient",
+        "n|sch|public",
+        "n|col|public.OAuthAccessToken.clientId",
+        "n|col|public.OAuthClient.clientId",
+        "e|uniqueness|public.OAuthClient.clientId"
+      ]
+    },
+    {
+      "statementType": "create_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "OAuthClientResource"
+      ],
+      "writes": [
+        "s|fk|public.OAuthClientResource.OAuthClientResource_clientId_OAuthClient_clientId_fkey",
+        "n|fk|public.OAuthClientResource.OAuthClientResource_clientId_OAuthClient_clientId_fkey",
+        "e|fk|public.OAuthClientResource.OAuthClientResource_clientId_OAuthClient_clientId_fkey",
+        "n|con|public.OAuthClientResource.OAuthClientResource_clientId_OAuthClient_clientId_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.OAuthClientResource",
+        "n|sch|public",
+        "n|tbl|public.OAuthClient",
+        "n|sch|public",
+        "n|col|public.OAuthClientResource.clientId",
+        "n|col|public.OAuthClient.clientId",
+        "e|uniqueness|public.OAuthClient.clientId"
+      ]
+    },
+    {
+      "statementType": "create_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "OAuthClientResource"
+      ],
+      "writes": [
+        "s|fk|public.OAuthClientResource.OAuthClientResource_resourceId_OAuthResource_identifier_fkey",
+        "n|fk|public.OAuthClientResource.OAuthClientResource_resourceId_OAuthResource_identifier_fkey",
+        "e|fk|public.OAuthClientResource.OAuthClientResource_resourceId_OAuthResource_identifier_fkey",
+        "n|con|public.OAuthClientResource.OAuthClientResource_resourceId_OAuthResource_identifier_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.OAuthClientResource",
+        "n|sch|public",
+        "n|tbl|public.OAuthResource",
+        "n|sch|public",
+        "n|col|public.OAuthClientResource.resourceId",
+        "n|col|public.OAuthResource.identifier",
+        "e|uniqueness|public.OAuthResource.identifier"
+      ]
+    },
+    {
+      "statementType": "create_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "OAuthRefreshToken"
+      ],
+      "writes": [
+        "s|fk|public.OAuthRefreshToken.OAuthRefreshToken_clientId_OAuthClient_clientId_fkey",
+        "n|fk|public.OAuthRefreshToken.OAuthRefreshToken_clientId_OAuthClient_clientId_fkey",
+        "e|fk|public.OAuthRefreshToken.OAuthRefreshToken_clientId_OAuthClient_clientId_fkey",
+        "n|con|public.OAuthRefreshToken.OAuthRefreshToken_clientId_OAuthClient_clientId_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.OAuthRefreshToken",
+        "n|sch|public",
+        "n|tbl|public.OAuthClient",
+        "n|sch|public",
+        "n|col|public.OAuthRefreshToken.clientId",
+        "n|col|public.OAuthClient.clientId",
+        "e|uniqueness|public.OAuthClient.clientId"
+      ]
+    },
+    {
+      "statementType": "create_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "OAuthRefreshToken"
+      ],
+      "writes": [
+        "s|fk|public.OAuthRefreshToken.OAuthRefreshToken_sessionId_Session_id_fkey",
+        "n|fk|public.OAuthRefreshToken.OAuthRefreshToken_sessionId_Session_id_fkey",
+        "e|fk|public.OAuthRefreshToken.OAuthRefreshToken_sessionId_Session_id_fkey",
+        "n|con|public.OAuthRefreshToken.OAuthRefreshToken_sessionId_Session_id_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.OAuthRefreshToken",
+        "n|sch|public",
+        "n|tbl|public.Session",
+        "n|sch|public",
+        "n|col|public.OAuthRefreshToken.sessionId",
+        "n|col|public.Session.id",
+        "e|uniqueness|public.Session.id"
+      ]
+    },
+    {
+      "statementType": "create_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "OAuthRefreshToken"
+      ],
+      "writes": [
+        "s|fk|public.OAuthRefreshToken.OAuthRefreshToken_userId_User_id_fkey",
+        "n|fk|public.OAuthRefreshToken.OAuthRefreshToken_userId_User_id_fkey",
+        "e|fk|public.OAuthRefreshToken.OAuthRefreshToken_userId_User_id_fkey",
+        "n|con|public.OAuthRefreshToken.OAuthRefreshToken_userId_User_id_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.OAuthRefreshToken",
+        "n|sch|public",
+        "n|tbl|public.User",
+        "n|sch|public",
+        "n|col|public.OAuthRefreshToken.userId",
+        "n|col|public.User.id",
+        "e|uniqueness|public.User.id"
+      ]
+    },
+    {
+      "statementType": "create_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "OAuthClient"
+      ],
+      "writes": [
+        "s|fk|public.OAuthClient.OAuthClient_userId_User_id_fkey",
+        "n|fk|public.OAuthClient.OAuthClient_userId_User_id_fkey",
+        "e|fk|public.OAuthClient.OAuthClient_userId_User_id_fkey",
+        "n|con|public.OAuthClient.OAuthClient_userId_User_id_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.OAuthClient",
+        "n|sch|public",
+        "n|tbl|public.User",
+        "n|sch|public",
+        "n|col|public.OAuthClient.userId",
+        "n|col|public.User.id",
+        "e|uniqueness|public.User.id"
+      ]
+    },
+    {
+      "statementType": "create_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "OAuthConsent"
+      ],
+      "writes": [
+        "s|fk|public.OAuthConsent.OAuthConsent_clientId_OAuthClient_clientId_fkey",
+        "n|fk|public.OAuthConsent.OAuthConsent_clientId_OAuthClient_clientId_fkey",
+        "e|fk|public.OAuthConsent.OAuthConsent_clientId_OAuthClient_clientId_fkey",
+        "n|con|public.OAuthConsent.OAuthConsent_clientId_OAuthClient_clientId_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.OAuthConsent",
+        "n|sch|public",
+        "n|tbl|public.OAuthClient",
+        "n|sch|public",
+        "n|col|public.OAuthConsent.clientId",
+        "n|col|public.OAuthClient.clientId",
+        "e|uniqueness|public.OAuthClient.clientId"
+      ]
+    }
+  ],
+  "deltas": [
+    {
+      "op": "rename",
+      "key": "tables\u0000[\"public\",\"OAuthApplication\"]",
+      "set": {
+        "name": "OAuthClient"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "name": "OAuthClientAssertion",
+        "isRlsEnabled": false,
+        "entityType": "tables"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "name": "OAuthClientResource",
+        "isRlsEnabled": false,
+        "entityType": "tables"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "name": "OAuthRefreshToken",
+        "isRlsEnabled": false,
+        "entityType": "tables"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "name": "OAuthResource",
+        "isRlsEnabled": false,
+        "entityType": "tables"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "Jwk",
+        "name": "alg",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "Jwk",
+        "name": "crv",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "OAuthAccessToken",
+        "name": "token",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "OAuthAccessToken",
+        "name": "sessionId",
+        "type": "bigint",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "OAuthAccessToken",
+        "name": "referenceId",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "OAuthAccessToken",
+        "name": "authorizationCodeId",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "OAuthAccessToken",
+        "name": "resources",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 1,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "OAuthAccessToken",
+        "name": "requestedUserInfoClaims",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 1,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "OAuthAccessToken",
+        "name": "refreshId",
+        "type": "bigint",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "OAuthAccessToken",
+        "name": "expiresAt",
+        "type": "timestamp(6) with time zone",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "OAuthAccessToken",
+        "name": "revoked",
+        "type": "timestamp(6) with time zone",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "OAuthAccessToken",
+        "name": "confirmation",
+        "type": "jsonb",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "OAuthClient",
+        "name": "clientDiscoveryId",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "OAuthClient",
+        "name": "skipConsent",
+        "type": "boolean",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "OAuthClient",
+        "name": "enableEndSession",
+        "type": "boolean",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "OAuthClient",
+        "name": "subjectType",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "OAuthClient",
+        "name": "scopes",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 1,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "OAuthClient",
+        "name": "clientCredentialsScopes",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 1,
+        "default": "'{}'",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "OAuthClient",
+        "name": "uri",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "OAuthClient",
+        "name": "contacts",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 1,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "OAuthClient",
+        "name": "tos",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "OAuthClient",
+        "name": "policy",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "OAuthClient",
+        "name": "softwareId",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "OAuthClient",
+        "name": "softwareVersion",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "OAuthClient",
+        "name": "softwareStatement",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "OAuthClient",
+        "name": "redirectUris",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 1,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "OAuthClient",
+        "name": "postLogoutRedirectUris",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 1,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "OAuthClient",
+        "name": "backchannelLogoutUri",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "OAuthClient",
+        "name": "backchannelLogoutSessionRequired",
+        "type": "boolean",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "OAuthClient",
+        "name": "tokenEndpointAuthMethod",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "OAuthClient",
+        "name": "applicationType",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "OAuthClient",
+        "name": "jwks",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "OAuthClient",
+        "name": "jwksUri",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "OAuthClient",
+        "name": "grantTypes",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 1,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "OAuthClient",
+        "name": "responseTypes",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 1,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "OAuthClient",
+        "name": "requirePKCE",
+        "type": "boolean",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "OAuthClient",
+        "name": "dpopBoundAccessTokens",
+        "type": "boolean",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "false",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "OAuthClient",
+        "name": "referenceId",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "OAuthClientAssertion",
+        "name": "id",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "OAuthClientAssertion",
+        "name": "expiresAt",
+        "type": "timestamp(6) with time zone",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "OAuthClientResource",
+        "name": "id",
+        "type": "bigint",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "OAuthClientResource",
+        "name": "createdAt",
+        "type": "timestamp(6) with time zone",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "now()",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "OAuthClientResource",
+        "name": "updatedAt",
+        "type": "timestamp(6) with time zone",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "now()",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "OAuthClientResource",
+        "name": "clientId",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "OAuthClientResource",
+        "name": "resourceId",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "OAuthClientResource",
+        "name": "metadata",
+        "type": "jsonb",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "OAuthConsent",
+        "name": "referenceId",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "OAuthConsent",
+        "name": "resources",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 1,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "OAuthConsent",
+        "name": "requestedUserInfoClaims",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 1,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "OAuthRefreshToken",
+        "name": "id",
+        "type": "bigint",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "OAuthRefreshToken",
+        "name": "createdAt",
+        "type": "timestamp(6) with time zone",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "now()",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "OAuthRefreshToken",
+        "name": "updatedAt",
+        "type": "timestamp(6) with time zone",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "now()",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "OAuthRefreshToken",
+        "name": "token",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "OAuthRefreshToken",
+        "name": "clientId",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "OAuthRefreshToken",
+        "name": "sessionId",
+        "type": "bigint",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "OAuthRefreshToken",
+        "name": "userId",
+        "type": "bigint",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "OAuthRefreshToken",
+        "name": "referenceId",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "OAuthRefreshToken",
+        "name": "authorizationCodeId",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "OAuthRefreshToken",
+        "name": "resources",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 1,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "OAuthRefreshToken",
+        "name": "requestedUserInfoClaims",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 1,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "OAuthRefreshToken",
+        "name": "expiresAt",
+        "type": "timestamp(6) with time zone",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "OAuthRefreshToken",
+        "name": "revoked",
+        "type": "timestamp(6) with time zone",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "OAuthRefreshToken",
+        "name": "rotatedAt",
+        "type": "timestamp(6) with time zone",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "OAuthRefreshToken",
+        "name": "rotationReplayResponse",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "OAuthRefreshToken",
+        "name": "rotationReplayExpiresAt",
+        "type": "timestamp(6) with time zone",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "OAuthRefreshToken",
+        "name": "authTime",
+        "type": "timestamp(6) with time zone",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "OAuthRefreshToken",
+        "name": "confirmation",
+        "type": "jsonb",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "OAuthRefreshToken",
+        "name": "scopes",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 1,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "OAuthResource",
+        "name": "id",
+        "type": "bigint",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "OAuthResource",
+        "name": "createdAt",
+        "type": "timestamp(6) with time zone",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "now()",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "OAuthResource",
+        "name": "updatedAt",
+        "type": "timestamp(6) with time zone",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "now()",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "OAuthResource",
+        "name": "identifier",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "OAuthResource",
+        "name": "name",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "OAuthResource",
+        "name": "accessTokenTtl",
+        "type": "integer",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "OAuthResource",
+        "name": "refreshTokenTtl",
+        "type": "integer",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "OAuthResource",
+        "name": "signingAlgorithm",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "OAuthResource",
+        "name": "signingKeyId",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "OAuthResource",
+        "name": "allowedScopes",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 1,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "OAuthResource",
+        "name": "customClaims",
+        "type": "jsonb",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "OAuthResource",
+        "name": "dpopBoundAccessTokensRequired",
+        "type": "boolean",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "false",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "OAuthResource",
+        "name": "disabled",
+        "type": "boolean",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "false",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "OAuthResource",
+        "name": "policyVersion",
+        "type": "integer",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "1",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "OAuthResource",
+        "name": "metadata",
+        "type": "jsonb",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "Verification",
+        "name": "Verification_identifier_idx",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "identifier",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": false,
+        "where": null,
+        "with": "",
+        "method": "btree",
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "OAuthAccessToken",
+        "name": "OAuthAccessToken_token_key",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "token",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": true,
+        "where": null,
+        "with": "",
+        "method": "btree",
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "OAuthAccessToken",
+        "name": "OAuthAccessToken_sessionId_idx",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "sessionId",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": false,
+        "where": null,
+        "with": "",
+        "method": "btree",
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "OAuthAccessToken",
+        "name": "OAuthAccessToken_authorizationCodeId_idx",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "authorizationCodeId",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": false,
+        "where": null,
+        "with": "",
+        "method": "btree",
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "OAuthAccessToken",
+        "name": "OAuthAccessToken_refreshId_idx",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "refreshId",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": false,
+        "where": null,
+        "with": "",
+        "method": "btree",
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "OAuthClient",
+        "name": "OAuthClient_clientId_key",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "clientId",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": true,
+        "where": null,
+        "with": "",
+        "method": "btree",
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "OAuthClient",
+        "name": "OAuthClient_userId_idx",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "userId",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": false,
+        "where": null,
+        "with": "",
+        "method": "btree",
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "OAuthClientAssertion",
+        "name": "OAuthClientAssertion_expiresAt_idx",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "expiresAt",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": false,
+        "where": null,
+        "with": "",
+        "method": "btree",
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "OAuthClientResource",
+        "name": "OAuthClientResource_clientId_idx",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "clientId",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": false,
+        "where": null,
+        "with": "",
+        "method": "btree",
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "OAuthClientResource",
+        "name": "OAuthClientResource_resourceId_idx",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "resourceId",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": false,
+        "where": null,
+        "with": "",
+        "method": "btree",
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "OAuthClientResource",
+        "name": "OAuthClientResource_clientId_resourceId_key",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "clientId",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          },
+          {
+            "value": "resourceId",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": true,
+        "where": null,
+        "with": "",
+        "method": "btree",
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "OAuthRefreshToken",
+        "name": "OAuthRefreshToken_token_key",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "token",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": true,
+        "where": null,
+        "with": "",
+        "method": "btree",
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "OAuthRefreshToken",
+        "name": "OAuthRefreshToken_clientId_idx",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "clientId",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": false,
+        "where": null,
+        "with": "",
+        "method": "btree",
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "OAuthRefreshToken",
+        "name": "OAuthRefreshToken_sessionId_idx",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "sessionId",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": false,
+        "where": null,
+        "with": "",
+        "method": "btree",
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "OAuthRefreshToken",
+        "name": "OAuthRefreshToken_userId_idx",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "userId",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": false,
+        "where": null,
+        "with": "",
+        "method": "btree",
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "OAuthRefreshToken",
+        "name": "OAuthRefreshToken_authorizationCodeId_idx",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "authorizationCodeId",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": false,
+        "where": null,
+        "with": "",
+        "method": "btree",
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "OAuthResource",
+        "name": "OAuthResource_identifier_key",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "identifier",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": true,
+        "where": null,
+        "with": "",
+        "method": "btree",
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "OAuthResource",
+        "name": "OAuthResource_disabled_idx",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "disabled",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": false,
+        "where": null,
+        "with": "",
+        "method": "btree",
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "OAuthAccessToken",
+        "name": "OAuthAccessToken_sessionId_Session_id_fkey",
+        "nameExplicit": false,
+        "columns": [
+          "sessionId"
+        ],
+        "schemaTo": "public",
+        "tableTo": "Session",
+        "columnsTo": [
+          "id"
+        ],
+        "onUpdate": "CASCADE",
+        "onDelete": "SET NULL",
+        "entityType": "fks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "OAuthAccessToken",
+        "name": "OAuthAccessToken_refreshId_OAuthRefreshToken_id_fkey",
+        "nameExplicit": false,
+        "columns": [
+          "refreshId"
+        ],
+        "schemaTo": "public",
+        "tableTo": "OAuthRefreshToken",
+        "columnsTo": [
+          "id"
+        ],
+        "onUpdate": "CASCADE",
+        "onDelete": "SET NULL",
+        "entityType": "fks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "OAuthClientResource",
+        "name": "OAuthClientResource_clientId_OAuthClient_clientId_fkey",
+        "nameExplicit": false,
+        "columns": [
+          "clientId"
+        ],
+        "schemaTo": "public",
+        "tableTo": "OAuthClient",
+        "columnsTo": [
+          "clientId"
+        ],
+        "onUpdate": "CASCADE",
+        "onDelete": "CASCADE",
+        "entityType": "fks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "OAuthClientResource",
+        "name": "OAuthClientResource_resourceId_OAuthResource_identifier_fkey",
+        "nameExplicit": false,
+        "columns": [
+          "resourceId"
+        ],
+        "schemaTo": "public",
+        "tableTo": "OAuthResource",
+        "columnsTo": [
+          "identifier"
+        ],
+        "onUpdate": "CASCADE",
+        "onDelete": "CASCADE",
+        "entityType": "fks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "OAuthRefreshToken",
+        "name": "OAuthRefreshToken_clientId_OAuthClient_clientId_fkey",
+        "nameExplicit": false,
+        "columns": [
+          "clientId"
+        ],
+        "schemaTo": "public",
+        "tableTo": "OAuthClient",
+        "columnsTo": [
+          "clientId"
+        ],
+        "onUpdate": "CASCADE",
+        "onDelete": "CASCADE",
+        "entityType": "fks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "OAuthRefreshToken",
+        "name": "OAuthRefreshToken_sessionId_Session_id_fkey",
+        "nameExplicit": false,
+        "columns": [
+          "sessionId"
+        ],
+        "schemaTo": "public",
+        "tableTo": "Session",
+        "columnsTo": [
+          "id"
+        ],
+        "onUpdate": "CASCADE",
+        "onDelete": "SET NULL",
+        "entityType": "fks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "OAuthRefreshToken",
+        "name": "OAuthRefreshToken_userId_User_id_fkey",
+        "nameExplicit": false,
+        "columns": [
+          "userId"
+        ],
+        "schemaTo": "public",
+        "tableTo": "User",
+        "columnsTo": [
+          "id"
+        ],
+        "onUpdate": "CASCADE",
+        "onDelete": "CASCADE",
+        "entityType": "fks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "OAuthClientAssertion",
+        "name": "OAuthClientAssertion_pkey",
+        "columns": [
+          "id"
+        ],
+        "nameExplicit": false,
+        "entityType": "pks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "OAuthClientResource",
+        "name": "OAuthClientResource_pkey",
+        "columns": [
+          "id"
+        ],
+        "nameExplicit": false,
+        "entityType": "pks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "OAuthRefreshToken",
+        "name": "OAuthRefreshToken_pkey",
+        "columns": [
+          "id"
+        ],
+        "nameExplicit": false,
+        "entityType": "pks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "OAuthResource",
+        "name": "OAuthResource_pkey",
+        "columns": [
+          "id"
+        ],
+        "nameExplicit": false,
+        "entityType": "pks"
+      }
+    },
+    {
+      "op": "drop",
+      "key": "columns\u0000[\"public\",\"OAuthAccessToken\",\"accessToken\"]"
+    },
+    {
+      "op": "drop",
+      "key": "columns\u0000[\"public\",\"OAuthAccessToken\",\"refreshToken\"]"
+    },
+    {
+      "op": "drop",
+      "key": "columns\u0000[\"public\",\"OAuthAccessToken\",\"accessTokenExpiresAt\"]"
+    },
+    {
+      "op": "drop",
+      "key": "columns\u0000[\"public\",\"OAuthAccessToken\",\"refreshTokenExpiresAt\"]"
+    },
+    {
+      "op": "drop",
+      "key": "columns\u0000[\"public\",\"OAuthClient\",\"redirectUrls\"]"
+    },
+    {
+      "op": "drop",
+      "key": "columns\u0000[\"public\",\"OAuthClient\",\"type\"]"
+    },
+    {
+      "op": "drop",
+      "key": "columns\u0000[\"public\",\"OAuthConsent\",\"consentGiven\"]"
+    },
+    {
+      "op": "drop",
+      "key": "indexes\u0000[\"public\",\"OAuthAccessToken_accessToken_key\"]"
+    },
+    {
+      "op": "drop",
+      "key": "indexes\u0000[\"public\",\"OAuthAccessToken_refreshToken_key\"]"
+    },
+    {
+      "op": "drop",
+      "key": "indexes\u0000[\"public\",\"OAuthApplication_clientId_key\"]"
+    },
+    {
+      "op": "drop",
+      "key": "indexes\u0000[\"public\",\"OAuthApplication_userId_idx\"]"
+    },
+    {
+      "op": "alter",
+      "key": "columns\u0000[\"public\",\"Verification\",\"id\"]",
+      "set": {
+        "type": "text"
+      }
+    },
+    {
+      "op": "alter",
+      "key": "columns\u0000[\"public\",\"OAuthAccessToken\",\"scopes\"]",
+      "set": {
+        "dimensions": 1
+      }
+    },
+    {
+      "op": "alter",
+      "key": "columns\u0000[\"public\",\"OAuthClient\",\"name\"]",
+      "set": {
+        "notNull": false
+      }
+    },
+    {
+      "op": "alter",
+      "key": "columns\u0000[\"public\",\"OAuthClient\",\"metadata\"]",
+      "set": {
+        "type": "jsonb"
+      }
+    },
+    {
+      "op": "alter",
+      "key": "columns\u0000[\"public\",\"OAuthConsent\",\"userId\"]",
+      "set": {
+        "notNull": false
+      }
+    },
+    {
+      "op": "alter",
+      "key": "columns\u0000[\"public\",\"OAuthConsent\",\"scopes\"]",
+      "set": {
+        "dimensions": 1
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "OAuthAccessToken",
+        "name": "OAuthAccessToken_clientId_OAuthClient_clientId_fkey",
+        "nameExplicit": false,
+        "columns": [
+          "clientId"
+        ],
+        "schemaTo": "public",
+        "tableTo": "OAuthClient",
+        "columnsTo": [
+          "clientId"
+        ],
+        "onUpdate": "CASCADE",
+        "onDelete": "CASCADE",
+        "entityType": "fks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "OAuthClient",
+        "name": "OAuthClient_userId_User_id_fkey",
+        "nameExplicit": false,
+        "columns": [
+          "userId"
+        ],
+        "schemaTo": "public",
+        "tableTo": "User",
+        "columnsTo": [
+          "id"
+        ],
+        "onUpdate": "CASCADE",
+        "onDelete": "CASCADE",
+        "entityType": "fks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "OAuthConsent",
+        "name": "OAuthConsent_clientId_OAuthClient_clientId_fkey",
+        "nameExplicit": false,
+        "columns": [
+          "clientId"
+        ],
+        "schemaTo": "public",
+        "tableTo": "OAuthClient",
+        "columnsTo": [
+          "clientId"
+        ],
+        "onUpdate": "CASCADE",
+        "onDelete": "CASCADE",
+        "entityType": "fks"
+      }
+    },
+    {
+      "op": "drop",
+      "key": "fks\u0000[\"public\",\"OAuthAccessToken\",\"OAuthAccessToken_clientId_OAuthApplication_clientId_fkey\"]"
+    },
+    {
+      "op": "drop",
+      "key": "fks\u0000[\"public\",\"OAuthClient\",\"OAuthApplication_userId_User_id_fkey\"]"
+    },
+    {
+      "op": "drop",
+      "key": "fks\u0000[\"public\",\"OAuthConsent\",\"OAuthConsent_clientId_OAuthApplication_clientId_fkey\"]"
+    }
+  ]
+}

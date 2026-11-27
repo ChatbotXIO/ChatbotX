@@ -1,6 +1,7 @@
 import { getIdFromParams } from "@chatbotx.io/utils"
 import { notFound } from "next/navigation"
 import { getTranslations } from "next-intl/server"
+import { canUseContactSync } from "@/features/contact-sync/lib/access"
 import { ContactsTable } from "@/features/contacts/contacts-table"
 import { CreateContactDialog } from "@/features/contacts/create-contact-dialog"
 import { requireContactsAccess } from "@/lib/auth/require-workspace-permission"
@@ -25,6 +26,7 @@ export default async function ContactsPage(props: {
       <ContactsTable
         canViewEmailAndPhone={contactPermissionScope.canViewEmailAndPhone}
         key={workspaceId}
+        showContactSync={await canUseContactSync(workspaceId)}
         workspaceId={workspaceId}
       />
     </div>

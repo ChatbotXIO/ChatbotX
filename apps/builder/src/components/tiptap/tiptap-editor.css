@@ -63,6 +63,13 @@
   white-space: pre-wrap;
 }
 
+/* A variable chip wraps at its own spaces ("Pipeline · Status"), never mid-word;
+   only a single token longer than the line is broken. */
+.tiptap [data-type="mention"] {
+  word-break: normal;
+  overflow-wrap: anywhere;
+}
+
 /* Single-line variant for compact inputs (e.g. filter value fields). */
 /* Vertical centering via line-height (not flex) keeps the ProseMirror caret stable. */
 .tiptap.tiptap-plain-text-inline {

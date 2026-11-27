@@ -13,12 +13,20 @@ import type {
 import { headers } from "next/headers"
 import { cache } from "react"
 import { getTenantSettings } from "@/features/tenant/utils"
+import {
+  canOpenWorkspaceOnHost,
+  filterWorkspacesForHost,
+  resolveRequestTenantId,
+} from "@/lib/tenant/request-tenant"
 import { auth } from "./auth"
 
 // `tenantId` is the white-label tenant key. It is deliberately never returned by
 // the auth session (see `additionalFields.tenantId.returned = false` in
 // `@chatbotx.io/auth/server`), so the session-derived user never carries it.
-export type SessionUser = Omit<UserModel, "tenantId">
+export type SessionUser = Omit<
+  UserModel,
+  "tenantId" | "deletionRequestedAt" | "scheduledDeletionAt"
+>
 
 export const getCurrentUserId = async (): Promise<string | null> => {
   const session = await auth.api.getSession({
@@ -92,8 +100,34 @@ const getCachedCurrentUserAndAllLinkedWorkspaces = cache(
   },
 )
 
+/**
+ * Every workspace the user belongs to, across all hosts. Only for surfaces
+ * that must see them all (account deletion, account page); everything else
+ * uses the host-scoped variant below.
+ */
 export const getCurrentUserAndAllLinkedWorkspaces = async () =>
   getCachedCurrentUserAndAllLinkedWorkspaces()
+
+const getCachedHostScopedWorkspaces = cache(async () => {
+  const all = await getCachedCurrentUserAndAllLinkedWorkspaces()
+  if (!all) {
+    return null
+  }
+  const hostTenantId = await resolveRequestTenantId()
+  const allWorkspaceMembers = all.allWorkspaceMembers.filter(
+    (member) =>
+      filterWorkspacesForHost([member.workspace], hostTenantId).length,
+  )
+  return {
+    ...all,
+    allWorkspaces: allWorkspaceMembers.map((member) => member.workspace),
+    allWorkspaceMembers,
+  }
+})
+
+/** The user's workspaces that belong to the tenant of the request host. */
+export const getCurrentUserAndHostScopedWorkspaces = async () =>
+  getCachedHostScopedWorkspaces()
 
 type CurrentUserAndTargetWorkspace = {
   user: SessionUser
@@ -126,8 +160,19 @@ const getCachedCurrentUserAndTargetWorkspace = cache(
       return null
     }
 
+    if (
+      !canOpenWorkspaceOnHost({
+        workspaceTenantId: access.workspace.tenantId,
+        hostTenantId: await resolveRequestTenantId(),
+        isSupportSession: access.isSupportSession,
+      })
+    ) {
+      return null
+    }
+
     return {
       ...userAndWorkspaces,
+      ...(await getCachedHostScopedWorkspaces()),
       targetWorkspace: access.workspace,
       targetWorkspaceMember: access.member,
       isSupportSession: access.isSupportSession,

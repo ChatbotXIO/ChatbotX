@@ -1,5 +1,12 @@
 import type { DatabaseClient } from "@chatbotx.io/database/client"
-import { and, db, eq, findOrFail, inArray } from "@chatbotx.io/database/client"
+import {
+  and,
+  db,
+  eq,
+  findOrFail,
+  inArray,
+  sql,
+} from "@chatbotx.io/database/client"
 import { connectionRepository } from "@chatbotx.io/database/repositories"
 import { integrationTiktokModel } from "@chatbotx.io/database/schema"
 import type { IntegrationTiktokModel } from "@chatbotx.io/database/types"
@@ -10,8 +17,10 @@ import {
   type TiktokAuthValue,
   type TiktokDirectReplyStatus,
   tiktokCanListVideos,
+  tiktokCanMessage,
   updateTiktokDirectReplyStatus,
 } from "@chatbotx.io/integration-tiktok"
+import { distributedStore } from "@chatbotx.io/redis"
 import type { AuthValue } from "@chatbotx.io/sdk"
 import { BaseService } from "../base.service"
 import {
@@ -28,7 +37,20 @@ import {
   notFoundException,
 } from "../errors"
 import { inboxService } from "../inbox/service"
+import { makeAuthStore } from "../integration-context/auth-store"
 import { logger } from "../logger"
+
+/**
+ * How long a withheld comment stays eligible for a re-check. Covers the
+ * scheduled re-checks (a few minutes) with room for a late `set_to_public`.
+ */
+const COMMENT_IDENTITY_WITHHELD_TTL_SECONDS = 60 * 60
+
+const commentIdentityWithheldKey = (props: {
+  integrationIdentifier: string
+  commentId: string
+}) =>
+  `tiktok:comment-identity-withheld:${props.integrationIdentifier}:${props.commentId}`
 
 /** The post a TikTok comment conversation sits on, as far as it can be resolved. */
 export type TiktokPostDetails = {
@@ -76,9 +98,28 @@ class TiktokIntegrationService extends BaseService {
       .select({
         id: integrationTiktokModel.id,
         workspaceId: integrationTiktokModel.workspaceId,
+        inboxId: integrationTiktokModel.inboxId,
         auth: integrationTiktokModel.auth,
       })
       .from(integrationTiktokModel)
+  }
+
+  /**
+   * Runs `fn` holding the lock every TikTok token refresh takes.
+   *
+   * It is the SDK auth store's own lock (keyed by the mirrored `Connection`,
+   * or by the row before one exists), so the scheduled job, the builder's
+   * refresh buttons and the SDK's on-demand refresh can never run at once.
+   * That matters because TikTok rotates refresh tokens from 2026-12-01: two
+   * refreshes racing on one refresh token leave the loser holding a revoked
+   * one. Read the auth inside `fn`, never before it.
+   */
+  async withTokenRefreshLock<T>(
+    integration: { id: string; inboxId?: string | null },
+    fn: () => Promise<T>,
+  ): Promise<T> {
+    const authStore = makeAuthStore<TiktokAuthValue>("tiktok", integration)
+    return authStore.withLock ? await authStore.withLock(fn) : await fn()
   }
 
   findAllByWorkspaceIds(workspaceIds: string[]) {
@@ -89,6 +130,7 @@ class TiktokIntegrationService extends BaseService {
       .select({
         id: integrationTiktokModel.id,
         workspaceId: integrationTiktokModel.workspaceId,
+        inboxId: integrationTiktokModel.inboxId,
         auth: integrationTiktokModel.auth,
       })
       .from(integrationTiktokModel)
@@ -131,6 +173,9 @@ class TiktokIntegrationService extends BaseService {
    * owner over 18; a Registered Business Account or one that has run Messaging
    * Ads; messaging permissions set to "Requests". So it is surfaced verbatim
    * rather than replaced with a generic failure.
+   *
+   * A comments-only connection holds no messaging scope, so it is refused
+   * before the call, with a reason TikTok's own answer would not give.
    */
   async setCommentToMessage(props: {
     workspaceId: string
@@ -141,6 +186,12 @@ class TiktokIntegrationService extends BaseService {
     const integration = await this.findById({ id, workspaceId })
     const auth = integration.auth as TiktokAuthValue
     const status: TiktokDirectReplyStatus = enabled ? "ENABLE" : "DISABLE"
+
+    if (!tiktokCanMessage(auth)) {
+      throw new ChatbotXException(
+        "This TikTok connection has no messaging permission, so Comment-to-Message cannot be used. TikTok Business Messaging is not available to accounts registered in the EEA, Switzerland or the UK.",
+      )
+    }
 
     try {
       await updateTiktokDirectReplyStatus(
@@ -160,7 +211,7 @@ class TiktokIntegrationService extends BaseService {
       )
     }
 
-    await this.cacheCommentToMessageStatus({ id, workspaceId, auth, status })
+    await this.cacheCommentToMessageStatus({ id, workspaceId, status })
 
     await this.audit(
       "update",
@@ -209,7 +260,7 @@ class TiktokIntegrationService extends BaseService {
       return null
     }
 
-    await this.cacheCommentToMessageStatus({ id, workspaceId, auth, status })
+    await this.cacheCommentToMessageStatus({ id, workspaceId, status })
     return status
   }
 
@@ -217,31 +268,113 @@ class TiktokIntegrationService extends BaseService {
    * Caches the status on the integration's auth metadata.
    *
    * A cache, never the authority — the owner can flip Comment-to-Message inside
-   * the TikTok app and nothing notifies us, which is why a re-check exists. The
-   * spread keeps `scopes` and the profile fields, which token refresh re-stamps
-   * onto this same object.
+   * the TikTok app and nothing notifies us, which is why a re-check exists.
+   *
+   * Writes ONLY `auth.metadata.commentToMessage`, in the database, never the
+   * whole `auth` read before the TikTok call: a token refresh landing during
+   * that call would otherwise be overwritten with the old tokens — and from
+   * 2026-12-01 TikTok revokes a refresh token once it has been used, so the
+   * restored one would leave the connection unable to refresh at all.
    */
   private async cacheCommentToMessageStatus(props: {
     id: string
     workspaceId: string
-    auth: TiktokAuthValue
     status: TiktokDirectReplyStatus
   }): Promise<void> {
-    const updatedAuth: TiktokAuthValue = {
-      ...props.auth,
-      metadata: {
-        ...props.auth.metadata,
-        commentToMessage: {
-          status: props.status,
-          checkedAt: new Date().toISOString(),
-        },
-      },
+    const commentToMessage = {
+      status: props.status,
+      checkedAt: new Date().toISOString(),
     }
-    await this.updateAuth({
-      id: props.id,
-      workspaceId: props.workspaceId,
-      auth: updatedAuth,
-    })
+    const [row] = await db
+      .update(integrationTiktokModel)
+      .set({
+        auth: sql`jsonb_set(
+          ${integrationTiktokModel.auth},
+          '{metadata}',
+          coalesce(${integrationTiktokModel.auth} -> 'metadata', '{}'::jsonb)
+            || jsonb_build_object('commentToMessage', ${JSON.stringify(commentToMessage)}::jsonb)
+        )`,
+      })
+      .where(
+        and(
+          eq(integrationTiktokModel.id, props.id),
+          eq(integrationTiktokModel.workspaceId, props.workspaceId),
+        ),
+      )
+      .returning({ id: integrationTiktokModel.id })
+
+    if (!row) {
+      throw notFoundException("TikTok integration not found")
+    }
+  }
+
+  /**
+   * Remembers the `unique_identifier` this account comments under, so a comment
+   * whose lookup comes back empty can still be told apart from the account's
+   * own (see `TiktokAuthValue.metadata.ownerUniqueIdentifier`).
+   *
+   * Writes ONLY that one metadata field, in the database, for the same reason
+   * `cacheCommentToMessageStatus` does: writing back a whole `auth` read
+   * earlier could restore tokens a refresh has just replaced. A refresh racing
+   * this write may drop the field; the next own comment records it again.
+   */
+  async rememberOwnerUniqueIdentifier(props: {
+    id: string
+    workspaceId: string
+    uniqueIdentifier: string
+  }): Promise<void> {
+    await db
+      .update(integrationTiktokModel)
+      .set({
+        auth: sql`jsonb_set(
+          ${integrationTiktokModel.auth},
+          '{metadata}',
+          coalesce(${integrationTiktokModel.auth} -> 'metadata', '{}'::jsonb)
+            || jsonb_build_object('ownerUniqueIdentifier', ${props.uniqueIdentifier}::text)
+        )`,
+      })
+      .where(
+        and(
+          eq(integrationTiktokModel.id, props.id),
+          eq(integrationTiktokModel.workspaceId, props.workspaceId),
+        ),
+      )
+  }
+
+  /**
+   * Marks a comment whose commenter lookup came back empty, so its automation
+   * was withheld. Only a marked comment is looked at again — by the scheduled
+   * re-checks, or when TikTok reports it `set_to_public` — which keeps a shop
+   * un-hiding an old comment from triggering a reply to it.
+   *
+   * Holds the comment as first delivered: a later `set_to_public` event is
+   * not documented to carry the text, and the automation matches on it.
+   */
+  markCommentIdentityWithheld<T>(props: {
+    integrationIdentifier: string
+    commentId: string
+    comment: T
+  }): Promise<void> {
+    return distributedStore.put(
+      commentIdentityWithheldKey(props),
+      props.comment,
+      COMMENT_IDENTITY_WITHHELD_TTL_SECONDS,
+    )
+  }
+
+  /** The comment `markCommentIdentityWithheld` stored, or `null` once settled or expired. */
+  findCommentIdentityWithheld<T>(props: {
+    integrationIdentifier: string
+    commentId: string
+  }): Promise<T | null> {
+    return distributedStore.get<T>(commentIdentityWithheldKey(props))
+  }
+
+  clearCommentIdentityWithheld(props: {
+    integrationIdentifier: string
+    commentId: string
+  }): Promise<void> {
+    return distributedStore.delete(commentIdentityWithheldKey(props))
   }
 
   async markTokenRefreshError(props: {
@@ -387,6 +520,27 @@ class TiktokIntegrationService extends BaseService {
       )
       return { ...fallback, degraded: true }
     }
+  }
+
+  /**
+   * Inboxes of the workspace's TikTok connections that cannot read a video's
+   * caption (no `video.list` grant — connected before the scope was approved,
+   * or the owner unticked it). A `hashtags` comment automation skips every
+   * comment on these until the owner reconnects, so the form warns about them.
+   * Returns ids only: the rows carry tokens that must never reach a client.
+   */
+  async listInboxIdsWithoutCaptionAccess(props: {
+    workspaceId: string
+  }): Promise<string[]> {
+    const integrations = await this.listByWorkspace({
+      workspaceId: props.workspaceId,
+    })
+    return integrations
+      .filter(
+        (integration) =>
+          !tiktokCanListVideos(integration.auth as TiktokAuthValue),
+      )
+      .map((integration) => integration.inboxId)
   }
 
   async findByOpenId(openId: string): Promise<IntegrationTiktokModel | null> {

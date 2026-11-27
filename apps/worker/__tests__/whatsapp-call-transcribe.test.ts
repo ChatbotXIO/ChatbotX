@@ -282,7 +282,7 @@ describe("handleWhatsappCallTranscribe", () => {
 
       expect(mocks.mergeContentAttributesBySourceId).not.toHaveBeenCalled()
       expect(mocks.emitCallTranscribed).not.toHaveBeenCalled()
-    }, 10_000)
+    })
 
     test("a broadcast failure is swallowed and does not fail the job or block callTranscribed", async () => {
       mocks.publishWorkspaceRealtimeEvent.mockRejectedValueOnce(

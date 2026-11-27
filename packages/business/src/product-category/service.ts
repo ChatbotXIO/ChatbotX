@@ -3,12 +3,21 @@ import {
   db,
   isUniqueViolationError,
 } from "@chatbotx.io/database/client"
+import { isExternalStoreSource } from "@chatbotx.io/database/partials"
 import {
   discountCodeRepository,
   productCategoryRepository,
 } from "@chatbotx.io/database/repositories"
 import { BaseService } from "../base.service"
+import { resolveStoreSource } from "../ecommerce-settings/store-source"
 import { ChatbotXException, notFoundException } from "../errors"
+import { externalStoreManagedException } from "../external-store/errors"
+import {
+  assertResourceEditable,
+  changedKeysOf,
+  withDeleteGuard,
+} from "../template/installed-resource.service"
+import { withTemplateLockedTransaction } from "../template/template-resource-locks"
 
 const normalizeCategoryName = (name: string): string => name.trim()
 
@@ -33,8 +42,11 @@ class ProductCategoryService extends BaseService {
     workspaceId: string,
     filter: { parentId?: string | null; name?: string | null } = {},
   ) {
-    const all =
-      await productCategoryRepository.listWithProductCount(workspaceId)
+    const all = await productCategoryRepository.listWithProductCount(
+      workspaceId,
+      undefined,
+      await resolveStoreSource(workspaceId),
+    )
     const keyword = filter.name?.trim().toLowerCase()
     return all.filter(
       (category) =>
@@ -58,6 +70,8 @@ class ProductCategoryService extends BaseService {
   }) {
     const all = await productCategoryRepository.listWithProductCount(
       input.workspaceId,
+      undefined,
+      await resolveStoreSource(input.workspaceId),
     )
     const keyword = input.name?.trim().toLowerCase()
     const level = all.filter(
@@ -93,7 +107,29 @@ class ProductCategoryService extends BaseService {
   }
 
   async listOptions(workspaceId: string) {
-    return await productCategoryRepository.list(workspaceId)
+    return await productCategoryRepository.list(
+      workspaceId,
+      undefined,
+      await resolveStoreSource(workspaceId),
+    )
+  }
+
+  /**
+   * A category mirrored from Shopify changes in Shopify. Checked while the
+   * store mirrors Shopify; otherwise its categories are not listed at all.
+   */
+  private async assertManagedHere(input: {
+    workspaceId: string
+    categoryId: string
+  }) {
+    const storeSource = await resolveStoreSource(input.workspaceId)
+    if (!isExternalStoreSource(storeSource)) {
+      return
+    }
+    const row = await productCategoryRepository.find(input)
+    if (row?.source === storeSource) {
+      throw externalStoreManagedException(storeSource)
+    }
   }
 
   async create(input: {
@@ -104,6 +140,10 @@ class ProductCategoryService extends BaseService {
     imageUrl?: string | null
     isVisible?: boolean
   }) {
+    const storeSource = await resolveStoreSource(input.workspaceId)
+    if (isExternalStoreSource(storeSource)) {
+      throw externalStoreManagedException(storeSource)
+    }
     const name = normalizeCategoryName(input.name)
     if (!name) {
       throw new ChatbotXException(
@@ -137,6 +177,15 @@ class ProductCategoryService extends BaseService {
     isVisible?: boolean
     rank?: number
   }) {
+    // A Shopify product type may only be shown or hidden here.
+    const {
+      workspaceId: _workspaceId,
+      categoryId: _categoryId,
+      ...changes
+    } = input
+    if (!Object.keys(changes).every((key) => key === "isVisible")) {
+      await this.assertManagedHere(input)
+    }
     const name =
       input.name === undefined ? undefined : normalizeCategoryName(input.name)
     if (name === "") {
@@ -150,26 +199,66 @@ class ProductCategoryService extends BaseService {
       await this.assertHasNoChildren(input)
     }
     try {
-      const row = await db.transaction(async (tx) => {
-        const before =
-          input.parentId === undefined
-            ? undefined
-            : await productCategoryRepository.find(input, tx)
-        const updated = await productCategoryRepository.update(
-          { ...input, name },
-          tx,
-        )
-        if (updated && before && input.parentId !== undefined) {
-          await this.refileReferences({
-            workspaceId: input.workspaceId,
-            categoryId: input.categoryId,
-            previousParentId: before.parentId ?? null,
+      // The category and a new parent are locked before the stored row is read,
+      // so the diff that decides the guard is computed under the lock.
+      const row = await withTemplateLockedTransaction(
+        async (tx) => {
+          // Visibility and rank are the installer's; name, parent and image are
+          // content, and only an actual change to them is guarded (a full form
+          // always submits the name).
+          const stored = await productCategoryRepository.find(input, tx)
+          const submitted = {
+            name,
             parentId: input.parentId,
+            imageUrl: input.imageUrl,
+          }
+          const changedKeys = stored
+            ? changedKeysOf(stored, submitted)
+            : Object.keys(submitted).filter(
+                (key) => submitted[key as keyof typeof submitted] !== undefined,
+              )
+          // A re-parent also locks the new parent category.
+          await assertResourceEditable({
+            workspaceId: input.workspaceId,
+            resourceKind: "productCategory",
+            resourceIds: [input.categoryId],
+            changedKeys,
+            referencedParents: input.parentId
+              ? [{ kind: "productCategory", resourceId: input.parentId }]
+              : [],
             tx,
           })
-        }
-        return updated
-      })
+          const before = input.parentId === undefined ? undefined : stored
+          const updated = await productCategoryRepository.update(
+            { ...input, name },
+            tx,
+          )
+          if (updated && before && input.parentId !== undefined) {
+            await this.refileReferences({
+              workspaceId: input.workspaceId,
+              categoryId: input.categoryId,
+              previousParentId: before.parentId ?? null,
+              parentId: input.parentId,
+              tx,
+            })
+          }
+          return updated
+        },
+        {
+          workspaceId: input.workspaceId,
+          initialKeys: [
+            { kind: "productCategory", resourceId: input.categoryId },
+            ...(input.parentId
+              ? [
+                  {
+                    kind: "productCategory" as const,
+                    resourceId: input.parentId,
+                  },
+                ]
+              : []),
+          ],
+        },
+      )
       if (!row) {
         throw notFoundException("Product category not found")
       }
@@ -187,21 +276,32 @@ class ProductCategoryService extends BaseService {
   }
 
   async delete(input: { workspaceId: string; categoryId: string }) {
+    await this.assertManagedHere(input)
     const row = await db.transaction(async (tx) => {
       const children = await productCategoryRepository.listChildren(
         { workspaceId: input.workspaceId, parentId: input.categoryId },
         tx,
       )
-      // Deactivate first: deleting clears each code's category, after which
-      // they could no longer be told apart from codes that never had one.
-      await discountCodeRepository.deactivateByCategoryIds(
+      // The children cascade with the root, so every one of them must be
+      // deletable too: a locked subcategory blocks deleting its parent.
+      const guarded = [input.categoryId, ...children.map(({ id }) => id)]
+      return await withDeleteGuard(
         {
           workspaceId: input.workspaceId,
-          categoryIds: [input.categoryId, ...children.map(({ id }) => id)],
+          targets: [{ resourceKind: "productCategory", resourceIds: guarded }],
+          tx,
         },
-        tx,
+        async () => {
+          // Deactivate first: deleting clears each code's category, after
+          // which they could no longer be told apart from codes that never
+          // had one.
+          await discountCodeRepository.deactivateByCategoryIds(
+            { workspaceId: input.workspaceId, categoryIds: guarded },
+            tx,
+          )
+          return await productCategoryRepository.delete(input, tx)
+        },
       )
-      return await productCategoryRepository.delete(input, tx)
     })
     if (!row) {
       throw notFoundException("Product category not found")

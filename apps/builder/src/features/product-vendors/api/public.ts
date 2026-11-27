@@ -2,6 +2,7 @@ import { vendorService } from "@chatbotx.io/business"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
 import {
+  externalStoreManagedErrors,
   possibleErrorsOnCreatingProductVendor,
   possibleErrorsOnDeletingResource,
   possibleErrorsOnListingResource,
@@ -97,7 +98,10 @@ export const productVendorsPublicRouter = {
         ),
       }),
     )
-    .errors(possibleErrorsOnDeletingResource)
+    .errors({
+      ...possibleErrorsOnDeletingResource,
+      ...externalStoreManagedErrors,
+    })
     .handler(async ({ context, input }) => {
       await vendorService.delete({
         workspaceId: context.workspace.id,

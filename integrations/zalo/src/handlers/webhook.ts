@@ -5,6 +5,7 @@ import {
   type HandleRequestProps,
   SdkException,
 } from "@chatbotx.io/sdk"
+import { logger } from "../lib/logger"
 import { sha256Hex, timingSafeStringEqual } from "../lib/webhook"
 import type { ZaloConfig } from "../schema/definition"
 import {
@@ -14,6 +15,7 @@ import {
 } from "../schema/webhook"
 
 const TAG_EVENT_NAME_SET = new Set<string>(TAG_EVENT_NAMES)
+const ZALO_OA_SEND_EVENT_PREFIX = "oa_send"
 
 /** Zalo sends `timestamp` as epoch milliseconds in a string. */
 const zaloTimestampToIso = (timestamp: string | undefined): string => {
@@ -198,20 +200,38 @@ const handleWebhookEvent = async (
           payload: webhookData,
         },
       })
-    } else {
-      const integrationIdentifier = webhookData.event_name.includes("user_send")
-        ? webhookData.recipient.id
-        : webhookData.sender.id
-
-      await queue.add("incomingMessage", {
-        type: "incomingMessage",
-        data: {
-          integrationType: "zalo",
-          integrationIdentifier,
-          payload: webhookData,
-        },
-      })
+      return
     }
+
+    // Some events carry sender/recipient but no `message` (e.g.
+    // `user_submit_info`, or an event name Zalo adds later). The channel
+    // parser returns null for them and the worker throws "Unable to parse
+    // received message" on every retry, so ack and drop them here instead.
+    if (!webhookData.message) {
+      logger.info(
+        { eventName: webhookData.event_name },
+        "Dropping Zalo webhook event without a message",
+      )
+      return
+    }
+
+    const integrationIdentifier = webhookData.event_name.includes("user_send")
+      ? webhookData.recipient.id
+      : webhookData.sender.id
+
+    // `oa_send_*` is the OA's own send echoed back (also sends made through the
+    // API); nobody waits on a reply to it, so it takes the low-priority path.
+    const jobType = webhookData.event_name.startsWith(ZALO_OA_SEND_EVENT_PREFIX)
+      ? "incomingMessageEcho"
+      : "incomingMessage"
+    await queue.add(jobType, {
+      type: jobType,
+      data: {
+        integrationType: "zalo",
+        integrationIdentifier,
+        payload: webhookData,
+      },
+    })
   } catch (error) {
     const errorMessage =
       error instanceof Error

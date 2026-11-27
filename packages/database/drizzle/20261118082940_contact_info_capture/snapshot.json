@@ -1,0 +1,395 @@
+{
+  "type": "diff",
+  "version": "10",
+  "dialect": "postgres",
+  "id": "22f8668e-26c7-464d-affb-0dea2aa11174",
+  "prevIds": [
+    "81823a40-52ac-4c4f-a12d-516c5582a1cb"
+  ],
+  "footprints": [
+    {
+      "statementType": "create_enum",
+      "statementTarget": [
+        "enum",
+        "public",
+        "contactInfoSourceType"
+      ],
+      "writes": [
+        "s|enum|public.contactInfoSourceType",
+        "n|enum|public.contactInfoSourceType",
+        "e|enum|public.contactInfoSourceType",
+        "n|type|public.contactInfoSourceType"
+      ],
+      "reads": [
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "create_enum",
+      "statementTarget": [
+        "enum",
+        "public",
+        "contactInfoType"
+      ],
+      "writes": [
+        "s|enum|public.contactInfoType",
+        "n|enum|public.contactInfoType",
+        "e|enum|public.contactInfoType",
+        "n|type|public.contactInfoType"
+      ],
+      "reads": [
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "create_table",
+      "statementTarget": [
+        "table",
+        "public",
+        "ContactInfoCapture"
+      ],
+      "writes": [
+        "s|tbl|public.ContactInfoCapture",
+        "n|tbl|public.ContactInfoCapture",
+        "e|tbl|public.ContactInfoCapture",
+        "n|rel|public.ContactInfoCapture",
+        "n|type|public.ContactInfoCapture",
+        "n|rel|public.ContactInfoCapture_pkey"
+      ],
+      "reads": [
+        "n|sch|public",
+        "n|enum|public.contactInfoSourceType",
+        "n|enum|public.contactInfoType"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "ContactInfoCapture",
+        "ContactInfoCapture_source_idx"
+      ],
+      "writes": [
+        "s|idx|public.ContactInfoCapture_source_idx",
+        "n|idx|public.ContactInfoCapture_source_idx",
+        "e|idx|public.ContactInfoCapture_source_idx",
+        "n|rel|public.ContactInfoCapture_source_idx"
+      ],
+      "reads": [
+        "n|tbl|public.ContactInfoCapture",
+        "n|sch|public",
+        "n|col|public.ContactInfoCapture.workspaceId",
+        "n|col|public.ContactInfoCapture.sourceType",
+        "n|col|public.ContactInfoCapture.sourceId",
+        "n|col|public.ContactInfoCapture.infoType",
+        "n|col|public.ContactInfoCapture.createdAt",
+        "n|col|public.ContactInfoCapture.contactId"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "ContactInfoCapture",
+        "ContactInfoCapture_contact_idx"
+      ],
+      "writes": [
+        "s|idx|public.ContactInfoCapture_contact_idx",
+        "n|idx|public.ContactInfoCapture_contact_idx",
+        "e|idx|public.ContactInfoCapture_contact_idx",
+        "n|rel|public.ContactInfoCapture_contact_idx"
+      ],
+      "reads": [
+        "n|tbl|public.ContactInfoCapture",
+        "n|sch|public",
+        "n|col|public.ContactInfoCapture.workspaceId",
+        "n|col|public.ContactInfoCapture.contactId"
+      ]
+    }
+  ],
+  "deltas": [
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "name": "ContactInfoCapture",
+        "isRlsEnabled": false,
+        "entityType": "tables"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "name": "contactInfoSourceType",
+        "values": [
+          "broadcast"
+        ],
+        "entityType": "enums"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "name": "contactInfoType",
+        "values": [
+          "phone",
+          "email"
+        ],
+        "entityType": "enums"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "ContactInfoCapture",
+        "name": "workspaceId",
+        "type": "bigint",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "ContactInfoCapture",
+        "name": "sourceType",
+        "type": "contactInfoSourceType",
+        "typeSchema": "public",
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "ContactInfoCapture",
+        "name": "sourceId",
+        "type": "bigint",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "ContactInfoCapture",
+        "name": "infoType",
+        "type": "contactInfoType",
+        "typeSchema": "public",
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "ContactInfoCapture",
+        "name": "contactId",
+        "type": "bigint",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "ContactInfoCapture",
+        "name": "contactInboxId",
+        "type": "bigint",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "ContactInfoCapture",
+        "name": "inboxId",
+        "type": "bigint",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "ContactInfoCapture",
+        "name": "conversationId",
+        "type": "bigint",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "ContactInfoCapture",
+        "name": "createdAt",
+        "type": "timestamp(6) with time zone",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "ContactInfoCapture",
+        "name": "ContactInfoCapture_source_idx",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "workspaceId",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          },
+          {
+            "value": "sourceType",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          },
+          {
+            "value": "sourceId",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          },
+          {
+            "value": "infoType",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          },
+          {
+            "value": "createdAt",
+            "isExpression": false,
+            "asc": false,
+            "nullsFirst": false,
+            "opclass": null
+          },
+          {
+            "value": "contactId",
+            "isExpression": false,
+            "asc": false,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": false,
+        "where": null,
+        "with": "",
+        "method": "btree",
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "ContactInfoCapture",
+        "name": "ContactInfoCapture_contact_idx",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "workspaceId",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          },
+          {
+            "value": "contactId",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": false,
+        "where": null,
+        "with": "",
+        "method": "btree",
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "ContactInfoCapture",
+        "name": "ContactInfoCapture_pkey",
+        "columns": [
+          "workspaceId",
+          "sourceType",
+          "sourceId",
+          "infoType",
+          "contactId"
+        ],
+        "nameExplicit": true,
+        "entityType": "pks"
+      }
+    }
+  ]
+}

@@ -16,7 +16,7 @@ export const toggleProductActiveAction = workspaceActionClient
       await productService.update({
         productId,
         workspaceId,
-        data: { isActive },
+        data: { status: isActive ? "active" : "draft" },
       })
     },
   )

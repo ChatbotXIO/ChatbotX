@@ -1,0 +1,80 @@
+{
+  "type": "diff",
+  "version": "10",
+  "dialect": "postgres",
+  "id": "3b81ad60-c8ad-4bd5-94dc-e03441d8e338",
+  "prevIds": [
+    "e209ed10-730b-40dd-86eb-9d5feea66b7b"
+  ],
+  "footprints": [
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "PipelineItem",
+        "PipelineItem_stage_position_idx"
+      ],
+      "writes": [
+        "s|idx|public.PipelineItem_stage_position_idx",
+        "n|idx|public.PipelineItem_stage_position_idx",
+        "e|idx|public.PipelineItem_stage_position_idx",
+        "n|rel|public.PipelineItem_stage_position_idx"
+      ],
+      "reads": [
+        "n|tbl|public.PipelineItem",
+        "n|sch|public",
+        "n|col|public.PipelineItem.pipelineId",
+        "n|col|public.PipelineItem.stageId",
+        "n|col|public.PipelineItem.position",
+        "n|col|public.PipelineItem.id"
+      ]
+    }
+  ],
+  "deltas": [
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PipelineItem",
+        "name": "PipelineItem_stage_position_idx",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "pipelineId",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          },
+          {
+            "value": "stageId",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          },
+          {
+            "value": "position",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          },
+          {
+            "value": "id",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": false,
+        "where": null,
+        "with": "",
+        "method": "btree",
+        "entityType": "indexes"
+      }
+    }
+  ]
+}

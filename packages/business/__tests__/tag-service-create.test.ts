@@ -16,6 +16,35 @@ const insertBuilder = {
   },
 }
 
+// The template lock guard has its own suite; these tests cover the service.
+vi.mock("../src/template/installed-resource.service", async () => ({
+  ...(await import("./helpers/template-guard-mocks")).templateGuardMocks({
+    assertDeletable: vi.fn(),
+    assertResourceEditable: vi.fn(),
+  }),
+  // The real diff is covered by the guard suite: a key is changed when its value differs.
+  changedKeysOf: (
+    stored: Record<string, unknown>,
+    patch: Record<string, unknown>,
+  ) => Object.keys(patch).filter((key) => stored[key] !== patch[key]),
+}))
+
+const lockOptions = vi.hoisted(() => vi.fn())
+
+// Run the locked transaction against the same mocked client the test asserts on.
+vi.mock("../src/template/template-resource-locks", async () => {
+  const { db } = await import("@chatbotx.io/database/client")
+  return {
+    withTemplateLockedTransaction: (
+      run: (tx: unknown) => unknown,
+      options?: unknown,
+    ) => {
+      lockOptions(options)
+      return run(db)
+    },
+  }
+})
+
 vi.mock("@chatbotx.io/database/client", () => ({
   db: {
     query: {
@@ -242,5 +271,81 @@ describe("tagService.update", () => {
     expect(ensureExists).not.toHaveBeenCalled()
     expect(updateSet).toHaveBeenNthCalledWith(1, { name: "A", folderId: null })
     expect(updateSet).toHaveBeenNthCalledWith(2, { name: "A", folderId: null })
+  })
+
+  test("guards a rename inside the locked transaction, before the write", async () => {
+    const { assertResourceEditable } = await import(
+      "../src/template/installed-resource.service"
+    )
+    const { db } = await import("@chatbotx.io/database/client")
+    vi.mocked(assertResourceEditable).mockClear()
+    updateSet.mockClear()
+    findOrFail.mockResolvedValue({ id: "tag-1", name: "Old" })
+
+    await tagService.update({ workspaceId: WS, id: "tag-1" }, { name: "New" })
+
+    expect(assertResourceEditable).toHaveBeenCalledWith(
+      expect.objectContaining({
+        resourceKind: "tag",
+        resourceIds: ["tag-1"],
+        changedKeys: ["name"],
+        tx: db,
+      }),
+    )
+    expect(
+      vi.mocked(assertResourceEditable).mock.invocationCallOrder[0],
+    ).toBeLessThan(updateSet.mock.invocationCallOrder[0] as number)
+  })
+
+  test("locks the tag before its stored row is read on the locked client", async () => {
+    findOrFail.mockClear()
+    lockOptions.mockClear()
+    findOrFail.mockResolvedValue({ id: "tag-1", name: "Old" })
+
+    await tagService.update({ workspaceId: WS, id: "tag-1" }, { name: "New" })
+
+    expect(lockOptions).toHaveBeenCalledWith({
+      workspaceId: WS,
+      initialKeys: [{ kind: "tag", resourceId: "tag-1" }],
+    })
+    expect(lockOptions.mock.invocationCallOrder[0]).toBeLessThan(
+      findOrFail.mock.invocationCallOrder[0] as number,
+    )
+    expect(findOrFail).toHaveBeenCalledWith(
+      expect.objectContaining({ client: expect.anything() }),
+    )
+  })
+
+  test("a folder-only move still runs the guard, with no changed content key, so a tombstoned copy rejects it", async () => {
+    const { assertResourceEditable } = await import(
+      "../src/template/installed-resource.service"
+    )
+    vi.mocked(assertResourceEditable).mockClear()
+    findOrFail.mockResolvedValue({ id: "tag-1", name: "A" })
+
+    await tagService.update(
+      { workspaceId: WS, id: "tag-1" },
+      { name: "A", folderId: "0" },
+    )
+
+    expect(assertResourceEditable).toHaveBeenCalledTimes(1)
+    expect(assertResourceEditable).toHaveBeenCalledWith(
+      expect.objectContaining({ resourceKind: "tag", changedKeys: [] }),
+    )
+  })
+
+  test("a blocked rename never reaches the write", async () => {
+    const { assertResourceEditable } = await import(
+      "../src/template/installed-resource.service"
+    )
+    updateSet.mockClear()
+    findOrFail.mockResolvedValue({ id: "tag-1", name: "Old" })
+    vi.mocked(assertResourceEditable).mockRejectedValueOnce(new Error("locked"))
+
+    await expect(
+      tagService.update({ workspaceId: WS, id: "tag-1" }, { name: "New" }),
+    ).rejects.toThrow("locked")
+    expect(updateSet).not.toHaveBeenCalled()
+    expect(invalidateCacheByTags).not.toHaveBeenCalled()
   })
 })

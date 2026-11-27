@@ -2,7 +2,8 @@ import { encryptedDataSchema, encryptUtils } from "@chatbotx.io/encryption"
 import { z } from "zod"
 import { notFoundException } from "../errors"
 
-const NUMERIC_IDENTIFIER = /^\d+$/
+/** Digits only, and no longer than a bigint id can be: a longer number would overflow the column and fail in SQL as a 500. */
+const NUMERIC_IDENTIFIER = /^\d{1,18}$/
 
 export function parseContactIdentifier(identifier: string) {
   const colonIndex = identifier.indexOf(":")

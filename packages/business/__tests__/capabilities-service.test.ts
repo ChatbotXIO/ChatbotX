@@ -6,6 +6,7 @@ const { botFieldService } = await import("../src/bot-field/service")
 const { customFieldService } = await import("../src/custom-field/service")
 const { flowService } = await import("../src/flow/service")
 const { inboxService } = await import("../src/inbox/service")
+const { pipelineService } = await import("../src/pipeline/service")
 const { sequenceService } = await import("../src/sequence/service")
 const { tagService } = await import("../src/tag/service")
 const { whatsappMessageTemplateService } = await import(
@@ -40,6 +41,7 @@ beforeEach(() => {
   )
   vi.spyOn(sequenceService, "list").mockResolvedValue(emptyListResult as never)
   vi.spyOn(flowService, "list").mockResolvedValue(emptyListResult as never)
+  vi.spyOn(pipelineService, "listAuthoringCatalog").mockResolvedValue([])
 })
 
 describe("getCapabilities", () => {
@@ -59,10 +61,10 @@ describe("getCapabilities", () => {
   })
 
   test.each([
-    ["tiktok", ["sendCard"], ["sendImage"], 3],
-    ["messenger", [], ["sendAudio", "sendFile"], 3],
-    ["omnichannel", [], [], 3],
-  ])("projects the %s channel policy", async (channel, unsupportedSteps, noButtonSteps, buttonCount) => {
+    ["tiktok", ["sendCard"], ["sendImage"], 3, []],
+    ["messenger", [], ["sendAudio", "sendFile"], 3, ["callPhoneNumber"]],
+    ["omnichannel", [], [], 3, []],
+  ])("projects the %s channel policy", async (channel, unsupportedSteps, noButtonSteps, buttonCount, nativeButtonTypes) => {
     const result = await getCapabilities({
       channel,
       include: ["flowSpec"],
@@ -70,7 +72,8 @@ describe("getCapabilities", () => {
     })
 
     expect(result.flowSpec?.selectedChannelPolicy).toMatchObject({
-      policyVersion: 2,
+      policyVersion: 4,
+      nativeButtonTypes,
       limits: { buttonCount },
     })
     expect(result.flowSpec?.selectedChannelPolicy?.unsupportedSteps).toEqual(
@@ -79,6 +82,40 @@ describe("getCapabilities", () => {
     expect(result.flowSpec?.selectedChannelPolicy?.noButtonSteps).toEqual(
       expect.arrayContaining(noButtonSteps),
     )
+  })
+
+  test("exposes LINE's button styles and 5-button step and card limits", async () => {
+    const line = await getCapabilities({
+      channel: "line",
+      include: ["flowSpec"],
+      workspaceId: "ws-1",
+    })
+    const policy =
+      capabilitiesResponseSchema.parse(line).flowSpec?.selectedChannelPolicy
+    expect(policy?.buttonStyles).toEqual({
+      options: ["primary", "secondary", "link"],
+      default: "link",
+    })
+    expect(policy?.limits).toMatchObject({
+      buttonCount: 5,
+      cardButtonCount: 5,
+    })
+  })
+
+  test.each([
+    ["messenger", 3, 3],
+    ["telegram", 10, 3],
+    ["omnichannel", 3, 3],
+  ])("projects no button styles and the %s step/card limits", async (channel, buttonCount, cardButtonCount) => {
+    const result = await getCapabilities({
+      channel,
+      include: ["flowSpec"],
+      workspaceId: "ws-1",
+    })
+    const policy =
+      capabilitiesResponseSchema.parse(result).flowSpec?.selectedChannelPolicy
+    expect(policy?.buttonStyles).toBeNull()
+    expect(policy?.limits).toMatchObject({ buttonCount, cardButtonCount })
   })
 
   test("exposes the product-message rules only for a channel that declares them", async () => {
@@ -309,7 +346,7 @@ describe("getCapabilities", () => {
 })
 
 describe("getFlowAuthoringContext", () => {
-  test("returns only templatesByName/customFieldsByName/flowsByName, each keyed by name", async () => {
+  test("returns only the by-name reference maps (templates, custom fields, flows, pipelines)", async () => {
     vi.spyOn(whatsappMessageTemplateService, "list").mockResolvedValue([
       {
         id: "1001",
@@ -331,7 +368,12 @@ describe("getFlowAuthoringContext", () => {
     const ctx = await getFlowAuthoringContext("ws-1")
 
     expect(Object.keys(ctx).sort()).toEqual(
-      ["customFieldsByName", "flowsByName", "templatesByName"].sort(),
+      [
+        "customFieldsByName",
+        "flowsByName",
+        "pipelinesByReferenceName",
+        "templatesByName",
+      ].sort(),
     )
     expect(ctx.templatesByName.get("welcome_promo")).toEqual({
       id: "1001",
@@ -361,6 +403,27 @@ describe("getFlowAuthoringContext", () => {
       workspaceId: "ws-1",
     })
     expect(flowService.list).toHaveBeenCalledWith({ workspaceId: "ws-1" })
+  })
+
+  test("maps pipelines by referenceName with stages and fields from one catalog call", async () => {
+    vi.spyOn(pipelineService, "listAuthoringCatalog").mockResolvedValue([
+      {
+        pipeline: { id: "5001", name: "Sales", referenceName: "sales" },
+        stages: [{ id: "5101", name: "New", pipelineId: "5001" }],
+        fields: [{ id: "5201", name: "Budget", referenceName: "budget" }],
+      },
+    ] as never)
+
+    const ctx = await getFlowAuthoringContext("ws-1")
+
+    expect(pipelineService.listAuthoringCatalog).toHaveBeenCalledTimes(1)
+    expect(ctx.pipelinesByReferenceName?.get("sales")).toEqual({
+      id: "5001",
+      name: "Sales",
+      referenceName: "sales",
+      stages: [{ id: "5101", name: "New" }],
+      fields: [{ id: "5201", name: "Budget", referenceName: "budget" }],
+    })
   })
 
   test("on a template name collision across languages, prefers the APPROVED variant over last-wins array order", async () => {

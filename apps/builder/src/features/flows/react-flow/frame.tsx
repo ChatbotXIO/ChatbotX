@@ -2,6 +2,7 @@
 
 import "@xyflow/react/dist/style.css"
 import type { Edge, Node } from "@xyflow/react"
+import { useTranslations } from "next-intl"
 import { useCallback, useState } from "react"
 import type { FlowVersionResource } from "@/features/flow-versions/schema/resource"
 import type { FlowResource } from "../schema/resource"
@@ -17,6 +18,7 @@ type ReactFlowFrameProps = {
   flowVersion: FlowVersionResource
   canRevertToPublished: boolean
   hasPublishedVersion: boolean
+  isTemplateLocked: boolean
 }
 
 export function ReactFlowFrame({
@@ -24,7 +26,9 @@ export function ReactFlowFrame({
   flowVersion,
   canRevertToPublished,
   hasPublishedVersion,
+  isTemplateLocked,
 }: ReactFlowFrameProps) {
+  const t = useTranslations()
   const openNodeDetailSheet = useStepStore((state) => state.openNodeDetailSheet)
   const setOpenNodeDetailSheet = useStepStore(
     (state) => state.setOpenNodeDetailSheet,
@@ -83,11 +87,23 @@ export function ReactFlowFrame({
         }
         flow={flow}
         hasPublishedVersion={hasPublishedVersion}
+        isTemplateLocked={isTemplateLocked}
         markSaved={markSaved}
       />
 
+      {isTemplateLocked ? (
+        <div
+          className="shrink-0 border-b bg-muted px-4 py-2 text-muted-foreground text-sm"
+          data-testid="template-locked-banner"
+          role="status"
+        >
+          {t("templates.locked.flowBanner")}
+        </div>
+      ) : null}
+
       <ReactFlowWrapper
         flowVersion={flowVersion}
+        isReadOnly={isTemplateLocked}
         onAutosaveCancelChange={handleAutosaveCancelChange}
         onAutosaveFlushChange={handleAutosaveFlushChange}
         onDraftDirtiedChange={handleDraftDirtiedChange}

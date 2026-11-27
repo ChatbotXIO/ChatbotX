@@ -14,6 +14,15 @@ const setUpdate = vi.fn(() => ({ where: whereUpdate }))
 const update = vi.fn(() => ({ set: setUpdate }))
 
 const findFirstUser = vi.fn(async () => ({ tenantId: "1" }))
+const findActiveByOwnerRepo = vi.fn()
+const findByIdForUpdate = vi.fn()
+const resourceDeletionLogService = {
+  recordRequest: vi.fn(async () => undefined),
+  recordHistoricalRequest: vi.fn(async () => undefined),
+  cancelPending: vi.fn(async () => 0),
+  findPendingId: vi.fn(async () => undefined),
+  completePending: vi.fn(async () => 1),
+}
 const findFirstWorkspace = vi.fn(async () => ({ name: "Old Name" }))
 const findFirstFlow = vi.fn(async () => ({ id: "11" }))
 const countWorkspaces = vi.fn(async () => 0)
@@ -48,6 +57,15 @@ vi.mock("@chatbotx.io/database/schema", () => ({
 // in `contactRepository`'s real contact-filter query graph (needs the real
 // schema, conflicting with the narrow mock above).
 vi.mock("@chatbotx.io/database/repositories", () => ({}))
+vi.mock("@chatbotx.io/database/repositories/workspace", () => ({
+  workspaceRepository: {
+    findActiveByOwner: findActiveByOwnerRepo,
+    findByIdForUpdate,
+  },
+}))
+vi.mock("../src/resource-deletion-log/service", () => ({
+  resourceDeletionLogService,
+}))
 
 const tenantService = { findByOwner: vi.fn(async () => undefined as unknown) }
 vi.mock("../src/enterprise/tenant/service", () => ({ tenantService }))
@@ -120,7 +138,36 @@ const logger = { info: vi.fn(), warn: vi.fn(), error: vi.fn() }
 vi.mock("../src/logger", () => ({ logger }))
 
 const dispatchAuditRecord = vi.fn()
-vi.mock("../src/audit/dispatcher", () => ({ dispatchAuditRecord }))
+const dispatchAuditRecordSafely = vi.fn(async () => undefined)
+vi.mock("../src/audit/dispatcher", () => ({
+  dispatchAuditRecord,
+  dispatchAuditRecordSafely,
+}))
+
+const notifyWorkspaceCurrencyChange = vi.fn(async () => undefined)
+vi.mock("../src/pipeline/currency-refresh", () => ({
+  notifyWorkspaceCurrencyChange,
+}))
+
+const stageTenantDefaultInstall = vi.fn(async () => null as string | null)
+const stageSharedTemplateInstall = vi.fn(async () => null as string | null)
+vi.mock("../src/template/installation-stage", () => ({
+  stageSharedTemplateInstall,
+  stageTenantDefaultInstall,
+}))
+
+const installIntent = {
+  take: vi.fn(async () => null as string | null),
+  clear: vi.fn(async () => undefined),
+}
+vi.mock("../src/template/install-intent", () => ({
+  templateInstallIntentService: installIntent,
+}))
+
+const dispatchStagedInstalls = vi.fn(async () => undefined)
+vi.mock("../src/template/installation-dispatch", () => ({
+  dispatchStagedInstalls,
+}))
 
 const { workspaceService } = await import("../src/workspace/service")
 const { compensateWorkspaceQuotaConsumption } = await import(
@@ -154,8 +201,12 @@ beforeEach(() => {
     .mockReset()
     .mockResolvedValue(new Map<string, string>())
   anchoredPeriod.mockClear()
+  stageTenantDefaultInstall.mockReset().mockResolvedValue(null)
+  dispatchStagedInstalls.mockReset().mockResolvedValue(undefined)
   logger.error.mockClear()
   dispatchAuditRecord.mockClear()
+  dispatchAuditRecordSafely.mockClear()
+  notifyWorkspaceCurrencyChange.mockClear()
   transaction.mockClear()
   workspaceUsageService.rollbackLiveIncrement.mockClear()
   returningUpdatedWorkspace
@@ -164,6 +215,10 @@ beforeEach(() => {
   setUpdate.mockClear()
   update.mockClear()
   invalidateCacheByTags.mockClear()
+  findByIdForUpdate.mockReset().mockResolvedValue(undefined)
+  resourceDeletionLogService.recordRequest.mockReset()
+  resourceDeletionLogService.recordHistoricalRequest.mockReset()
+  resourceDeletionLogService.cancelPending.mockReset().mockResolvedValue(0)
   isCommunity.mockReset().mockReturnValue(false)
   countWorkspaces.mockReset().mockResolvedValue(0)
   runExclusive
@@ -635,26 +690,20 @@ describe("WorkspaceService.create — community workspace limit", () => {
 })
 
 describe("WorkspaceService.findActiveByOwner", () => {
-  test("excludes a workspace mid soft-delete and orders deterministically by id", async () => {
-    findFirstWorkspace.mockResolvedValueOnce({ id: "ws-1" })
+  test("delegates to the repository with the caller's transaction", async () => {
+    const tx = {} as never
+    findActiveByOwnerRepo.mockResolvedValueOnce({ id: "ws-1" })
 
     const result = await workspaceService.findActiveByOwner({
       ownerId: "owner-1",
+      tx,
     })
 
     expect(result).toEqual({ id: "ws-1" })
-    expect(findFirstWorkspace).toHaveBeenCalledWith({
-      where: { ownerId: "owner-1", scheduledDeletionAt: { isNull: true } },
-      orderBy: { id: "asc" },
-    })
-  })
-
-  test("returns undefined when the owner's only workspace is scheduled for deletion", async () => {
-    findFirstWorkspace.mockResolvedValueOnce(undefined)
-
-    await expect(
-      workspaceService.findActiveByOwner({ ownerId: "owner-1" }),
-    ).resolves.toBeUndefined()
+    expect(findActiveByOwnerRepo).toHaveBeenCalledWith(
+      { ownerId: "owner-1" },
+      tx,
+    )
   })
 })
 
@@ -697,6 +746,238 @@ describe("WorkspaceService.update — member cache invalidation", () => {
     ).rejects.toMatchObject({
       code: "workspaceDeletionStarted",
     })
+    expect(resourceDeletionLogService.cancelPending).not.toHaveBeenCalled()
+  })
+})
+
+const REQUESTED_AT = new Date("2026-11-01T00:00:00.000Z")
+
+const lockedWorkspace = (
+  overrides: Partial<{
+    scheduledDeletionAt: Date | null
+    deletionRequestedAt: Date | null
+    deletionRequestedById: string | null
+  }> = {},
+) => ({
+  id: "ws-1",
+  name: "Old Name",
+  purgeStartedAt: null,
+  scheduledDeletionAt: null,
+  deletionRequestedAt: null,
+  deletionRequestedById: null,
+  ...overrides,
+})
+
+const callOrder = (mock: { mock: { invocationCallOrder: number[] } }) =>
+  mock.mock.invocationCallOrder[0]
+
+describe("WorkspaceService.scheduleDeletion — deletion log", () => {
+  test("records a pending request for the submitting actor in the same transaction as the update", async () => {
+    findByIdForUpdate.mockResolvedValue(lockedWorkspace())
+
+    await workspaceService.scheduleDeletion({ actorId: "user-9", id: "ws-1" })
+
+    expect(transaction).toHaveBeenCalledTimes(1)
+    expect(findByIdForUpdate).toHaveBeenCalledWith({ id: "ws-1" }, db)
+    expect(resourceDeletionLogService.cancelPending).not.toHaveBeenCalled()
+    expect(resourceDeletionLogService.recordRequest).toHaveBeenCalledWith({
+      resource: {
+        type: "workspace",
+        id: "ws-1",
+        workspaceId: "ws-1",
+        name: "New Name",
+      },
+      status: "pending",
+      requestedByUserId: "user-9",
+      tx: db,
+    })
+    expect(dispatchAuditRecordSafely).toHaveBeenCalledWith(
+      {
+        action: "schedule_deletion",
+        detail: "scheduled the workspace for deletion",
+        userId: "user-9",
+        workspaceId: "ws-1",
+      },
+      "workspace-deletion: failed to dispatch schedule audit record",
+    )
+  })
+
+  test("invalidates the workspace caches again after the transaction it opened commits", async () => {
+    findByIdForUpdate.mockResolvedValue(lockedWorkspace())
+
+    await workspaceService.scheduleDeletion({ actorId: "user-9", id: "ws-1" })
+
+    // Once from `update` (before the commit), once after it.
+    expect(invalidateCacheByTags).toHaveBeenCalledTimes(2)
+    expect(invalidateCacheByTags).toHaveBeenLastCalledWith(["workspaces:ws-1"])
+  })
+
+  test("closes the previous request before recording a resubmission", async () => {
+    findByIdForUpdate.mockResolvedValue(
+      lockedWorkspace({
+        scheduledDeletionAt: new Date("2026-11-20T00:00:00.000Z"),
+        deletionRequestedAt: REQUESTED_AT,
+        deletionRequestedById: "user-1",
+      }),
+    )
+    resourceDeletionLogService.cancelPending.mockResolvedValue(1)
+
+    await workspaceService.scheduleDeletion({ actorId: "user-2", id: "ws-1" })
+
+    expect(callOrder(resourceDeletionLogService.cancelPending)).toBeLessThan(
+      callOrder(resourceDeletionLogService.recordRequest),
+    )
+    expect(
+      resourceDeletionLogService.recordHistoricalRequest,
+    ).not.toHaveBeenCalled()
+    expect(resourceDeletionLogService.recordRequest).toHaveBeenCalledWith(
+      expect.objectContaining({ requestedByUserId: "user-2" }),
+    )
+  })
+
+  test("recovers the earlier request of a workspace scheduled before the log existed", async () => {
+    findByIdForUpdate.mockResolvedValue(
+      lockedWorkspace({
+        scheduledDeletionAt: new Date("2026-11-20T00:00:00.000Z"),
+        deletionRequestedAt: REQUESTED_AT,
+        deletionRequestedById: "user-1",
+      }),
+    )
+    resourceDeletionLogService.cancelPending.mockResolvedValue(0)
+
+    await workspaceService.scheduleDeletion({ actorId: "user-2", id: "ws-1" })
+
+    expect(
+      resourceDeletionLogService.recordHistoricalRequest,
+    ).toHaveBeenCalledWith({
+      resource: {
+        type: "workspace",
+        id: "ws-1",
+        workspaceId: "ws-1",
+        name: "Old Name",
+      },
+      status: "canceled",
+      requestedByUserId: "user-1",
+      requestedAt: REQUESTED_AT,
+      tx: db,
+    })
+    expect(resourceDeletionLogService.recordRequest).toHaveBeenCalledWith(
+      expect.objectContaining({
+        status: "pending",
+        requestedByUserId: "user-2",
+      }),
+    )
+  })
+
+  test("uses a caller-owned transaction without opening, auditing or re-invalidating", async () => {
+    const callerTx = { update, query: db.query }
+    findByIdForUpdate.mockResolvedValue(lockedWorkspace())
+
+    await workspaceService.scheduleDeletion({
+      actorId: "user-9",
+      id: "ws-1",
+      tx: callerTx as never,
+    })
+
+    expect(transaction).not.toHaveBeenCalled()
+    expect(findByIdForUpdate).toHaveBeenCalledWith({ id: "ws-1" }, callerTx)
+    expect(resourceDeletionLogService.recordRequest).toHaveBeenCalledWith(
+      expect.objectContaining({ tx: callerTx }),
+    )
+    expect(dispatchAuditRecord).not.toHaveBeenCalled()
+    expect(invalidateCacheByTags).toHaveBeenCalledTimes(1)
+  })
+
+  test("writes nothing when the purge has already started", async () => {
+    findByIdForUpdate.mockResolvedValue(lockedWorkspace())
+    returningUpdatedWorkspace.mockResolvedValueOnce([])
+
+    await expect(
+      workspaceService.scheduleDeletion({ actorId: "user-9", id: "ws-1" }),
+    ).rejects.toMatchObject({ code: "workspaceDeletionStarted" })
+
+    expect(resourceDeletionLogService.recordRequest).not.toHaveBeenCalled()
+    expect(resourceDeletionLogService.cancelPending).not.toHaveBeenCalled()
+    expect(dispatchAuditRecord).not.toHaveBeenCalled()
+  })
+
+  test("does not report success when the log write fails", async () => {
+    findByIdForUpdate.mockResolvedValue(lockedWorkspace())
+    resourceDeletionLogService.recordRequest.mockRejectedValueOnce(
+      new Error("log insert failed"),
+    )
+
+    await expect(
+      workspaceService.scheduleDeletion({ actorId: "user-9", id: "ws-1" }),
+    ).rejects.toThrow("log insert failed")
+
+    expect(dispatchAuditRecord).not.toHaveBeenCalled()
+  })
+})
+
+describe("WorkspaceService.cancelDeletion — deletion log", () => {
+  test("closes the pending request as canceled in the same transaction", async () => {
+    findByIdForUpdate.mockResolvedValue(
+      lockedWorkspace({
+        scheduledDeletionAt: new Date("2026-11-20T00:00:00.000Z"),
+        deletionRequestedAt: REQUESTED_AT,
+        deletionRequestedById: "user-1",
+      }),
+    )
+    resourceDeletionLogService.cancelPending.mockResolvedValue(1)
+
+    await workspaceService.cancelDeletion({ id: "ws-1" })
+
+    expect(resourceDeletionLogService.cancelPending).toHaveBeenCalledWith({
+      resource: {
+        type: "workspace",
+        id: "ws-1",
+        workspaceId: "ws-1",
+        name: "Old Name",
+      },
+      tx: db,
+    })
+    expect(
+      resourceDeletionLogService.recordHistoricalRequest,
+    ).not.toHaveBeenCalled()
+    expect(dispatchAuditRecord).toHaveBeenCalledWith({
+      action: "cancel_deletion",
+      detail: "canceled the workspace deletion",
+    })
+  })
+
+  test("recovers a request made before the log existed instead of losing it", async () => {
+    findByIdForUpdate.mockResolvedValue(
+      lockedWorkspace({
+        scheduledDeletionAt: new Date("2026-11-20T00:00:00.000Z"),
+        deletionRequestedAt: REQUESTED_AT,
+        deletionRequestedById: "user-1",
+      }),
+    )
+    resourceDeletionLogService.cancelPending.mockResolvedValue(0)
+
+    await workspaceService.cancelDeletion({ id: "ws-1" })
+
+    expect(
+      resourceDeletionLogService.recordHistoricalRequest,
+    ).toHaveBeenCalledWith(
+      expect.objectContaining({
+        status: "canceled",
+        requestedByUserId: "user-1",
+        requestedAt: REQUESTED_AT,
+      }),
+    )
+  })
+
+  test("records nothing and scans nothing when no deletion was ever requested", async () => {
+    findByIdForUpdate.mockResolvedValue(lockedWorkspace())
+
+    await workspaceService.cancelDeletion({ id: "ws-1" })
+
+    expect(resourceDeletionLogService.cancelPending).not.toHaveBeenCalled()
+    expect(
+      resourceDeletionLogService.recordHistoricalRequest,
+    ).not.toHaveBeenCalled()
   })
 })
 
@@ -773,6 +1054,53 @@ describe("workspaceService.updateSettings", () => {
     expect(result).toMatchObject({ id: "ws-1" })
   })
 
+  test("writing the target country tells every pipeline to refresh", async () => {
+    await workspaceService.updateSettings({
+      id: "ws-1",
+      data: { targetCountry: "VN" },
+    })
+
+    expect(notifyWorkspaceCurrencyChange).toHaveBeenCalledTimes(1)
+    expect(notifyWorkspaceCurrencyChange).toHaveBeenCalledWith("ws-1")
+  })
+
+  test("every write of the country notifies, so a concurrent save cannot skip it", async () => {
+    // Two saves back to back (VN -> JP, then JP -> VN) each notify: a change
+    // check against a stale read would have skipped the second one.
+    await workspaceService.updateSettings({
+      id: "ws-1",
+      data: { targetCountry: "JP" },
+    })
+    await workspaceService.updateSettings({
+      id: "ws-1",
+      data: { targetCountry: "VN" },
+    })
+
+    expect(notifyWorkspaceCurrencyChange).toHaveBeenCalledTimes(2)
+  })
+
+  test("a save that leaves the country out notifies nobody", async () => {
+    await workspaceService.updateSettings({
+      id: "ws-1",
+      data: { capiLimitedDataUse: true },
+    })
+
+    expect(notifyWorkspaceCurrencyChange).not.toHaveBeenCalled()
+  })
+
+  test("a failed write notifies nobody", async () => {
+    returningUpdatedWorkspace.mockResolvedValueOnce([])
+
+    await expect(
+      workspaceService.updateSettings({
+        id: "ws-1",
+        data: { targetCountry: "VN" },
+      }),
+    ).rejects.toThrow()
+
+    expect(notifyWorkspaceCurrencyChange).not.toHaveBeenCalled()
+  })
+
   test("a field left out is not written (undefined is skipped)", async () => {
     setUpdate.mockClear()
 
@@ -836,5 +1164,246 @@ describe("WorkspaceService.setLogoIfEmpty", () => {
 
     expect(invalidateCacheByTags).toHaveBeenCalled()
     expect(dispatchAuditRecord).not.toHaveBeenCalled()
+  })
+})
+
+describe("WorkspaceService.create — a share page's template", () => {
+  beforeEach(() => {
+    installIntent.take.mockReset().mockResolvedValue(null)
+    stageSharedTemplateInstall.mockReset().mockResolvedValue(null)
+    stageTenantDefaultInstall.mockReset().mockResolvedValue(null)
+  })
+
+  test("installs it in place of the tenant's default", async () => {
+    installIntent.take.mockResolvedValue("tok")
+    stageSharedTemplateInstall.mockResolvedValue("inst-1")
+
+    await workspaceService.create(createInput())
+
+    expect(installIntent.take).toHaveBeenCalledWith("user-1")
+    expect(stageSharedTemplateInstall).toHaveBeenCalledWith(db, {
+      workspaceId: "ws-1",
+      tenantId: "1",
+      createdBy: "user-1",
+      shareToken: "tok",
+    })
+    expect(stageTenantDefaultInstall).not.toHaveBeenCalled()
+    expect(dispatchStagedInstalls).toHaveBeenCalledWith("ws-1")
+  })
+
+  test("falls back to the default when the link no longer works", async () => {
+    installIntent.take.mockResolvedValue("tok")
+
+    await workspaceService.create(createInput())
+
+    expect(stageTenantDefaultInstall).toHaveBeenCalledTimes(1)
+  })
+
+  test("a creation refused by the workspace limit still ends the choice", async () => {
+    isCommunity.mockReturnValue(true)
+    countWorkspaces.mockResolvedValue(1000)
+    installIntent.take.mockResolvedValue("tok")
+
+    await expect(workspaceService.create(createInput())).rejects.toMatchObject({
+      code: "workspaceLimitReached",
+    })
+
+    expect(installIntent.take).toHaveBeenCalledTimes(1)
+    isCommunity.mockReturnValue(false)
+  })
+
+  test("the admin console's creation leaves the owner's choice alone", async () => {
+    await workspaceService.create({
+      ...createInput(),
+      consumeInstallIntent: false,
+    })
+
+    expect(installIntent.take).not.toHaveBeenCalled()
+    expect(stageSharedTemplateInstall).not.toHaveBeenCalled()
+  })
+})
+
+describe("WorkspaceService.create — tenant default template", () => {
+  test("stages the default install in the creation transaction, for the workspace's tenant", async () => {
+    await workspaceService.create(createInput())
+
+    expect(stageTenantDefaultInstall).toHaveBeenCalledWith(db, {
+      workspaceId: "ws-1",
+      tenantId: "1",
+    })
+  })
+
+  test("stages after the owner member and the MAC rollup", async () => {
+    const order: string[] = []
+    userQuotaService.getForUser.mockResolvedValue({
+      id: "q-1",
+      userId: "user-1",
+      periodStart: new Date("2026-05-01T00:00:00.000Z"),
+    })
+    workspaceMemberService.create.mockImplementationOnce(() => {
+      order.push("member")
+      return Promise.resolve(undefined)
+    })
+    macRepository.ensureWorkspaceMac.mockImplementationOnce(() => {
+      order.push("mac")
+      return Promise.resolve(new Map<string, string>())
+    })
+    stageTenantDefaultInstall.mockImplementationOnce(() => {
+      order.push("stage")
+      return Promise.resolve(null)
+    })
+
+    await workspaceService.create(createInput())
+
+    expect(order).toEqual(["member", "mac", "stage"])
+  })
+
+  test("dispatches right after an owned transaction commits, before the cache bust", async () => {
+    const events: string[] = []
+    stageTenantDefaultInstall.mockResolvedValue("inst-1")
+    transaction.mockImplementationOnce(async (fn) => {
+      const result = await fn(db)
+      events.push("commit")
+      return result
+    })
+    dispatchStagedInstalls.mockImplementationOnce(() => {
+      events.push("dispatch")
+      return Promise.resolve(undefined)
+    })
+    invalidateCacheByTags.mockImplementationOnce(() => {
+      events.push("invalidate")
+      return Promise.resolve()
+    })
+
+    await workspaceService.create(createInput())
+
+    expect(events).toEqual(["commit", "dispatch", "invalidate"])
+    expect(dispatchStagedInstalls).toHaveBeenCalledWith("ws-1")
+  })
+
+  test("does not dispatch when nothing was staged", async () => {
+    await workspaceService.create(createInput())
+
+    expect(dispatchStagedInstalls).not.toHaveBeenCalled()
+  })
+
+  test("leaves dispatch to the caller when it owns the transaction", async () => {
+    stageTenantDefaultInstall.mockResolvedValue("inst-1")
+
+    await workspaceService.create({ ...createInput(), tx: db as never })
+
+    expect(stageTenantDefaultInstall).toHaveBeenCalledOnce()
+    expect(dispatchStagedInstalls).not.toHaveBeenCalled()
+  })
+
+  test("a staging failure aborts the creation and releases the seat and member count once", async () => {
+    workspaceMemberService.create.mockImplementationOnce((props: unknown) => {
+      const { teamMemberUsage } = props as {
+        teamMemberUsage?: { liveIncrementedCount: number }
+      }
+      if (teamMemberUsage) {
+        teamMemberUsage.liveIncrementedCount += 1
+      }
+      return Promise.resolve(undefined)
+    })
+    stageTenantDefaultInstall.mockRejectedValueOnce(new Error("deadlock"))
+
+    await expect(workspaceService.create(createInput())).rejects.toThrow(
+      "deadlock",
+    )
+
+    expect(quotaEnforcementService.release).toHaveBeenCalledTimes(1)
+    expect(workspaceUsageService.rollbackLiveIncrement).toHaveBeenCalledTimes(1)
+    expect(workspaceUsageService.rollbackLiveIncrement).toHaveBeenCalledWith(
+      "ws-1",
+      "teamMembers",
+      1,
+    )
+    expect(dispatchStagedInstalls).not.toHaveBeenCalled()
+    expect(dispatchAuditRecord).not.toHaveBeenCalled()
+  })
+
+  test("with a caller tx, a staging failure leaves the tracker unmarked so the caller compensates once", async () => {
+    stageTenantDefaultInstall.mockRejectedValueOnce(new Error("deadlock"))
+    const quotaConsumption = { consumed: false as const }
+
+    await expect(
+      workspaceService.create({
+        ...createInput(),
+        tx: db as never,
+        quotaConsumption,
+      }),
+    ).rejects.toThrow("deadlock")
+
+    expect(quotaConsumption).toEqual({ consumed: false })
+  })
+})
+
+describe("WorkspaceService.resolveWorkspaceTenant", () => {
+  const RESELLER_TENANT = "42"
+  const asResellerOwner = () => {
+    findFirstUser.mockResolvedValue({ tenantId: "1" })
+    tenantService.findByOwner.mockResolvedValue({ id: RESELLER_TENANT })
+  }
+
+  test("a sub-account keeps its own tenant on any host", async () => {
+    findFirstUser.mockResolvedValue({ tenantId: "77" })
+
+    await expect(
+      workspaceService.resolveWorkspaceTenant({
+        ownerId: "sub",
+        hostTenantId: "1",
+      }),
+    ).resolves.toBe("77")
+  })
+
+  test("a reseller owner on their tenant's host gets their tenant", async () => {
+    asResellerOwner()
+
+    await expect(
+      workspaceService.resolveWorkspaceTenant({
+        ownerId: "owner",
+        hostTenantId: RESELLER_TENANT,
+      }),
+    ).resolves.toBe(RESELLER_TENANT)
+  })
+
+  test("a reseller owner on the platform host gets the root tenant", async () => {
+    asResellerOwner()
+
+    await expect(
+      workspaceService.resolveWorkspaceTenant({
+        ownerId: "owner",
+        hostTenantId: "1",
+      }),
+    ).resolves.toBe("1")
+  })
+
+  test("a reseller owner on another tenant's host gets the root tenant", async () => {
+    asResellerOwner()
+
+    await expect(
+      workspaceService.resolveWorkspaceTenant({
+        ownerId: "owner",
+        hostTenantId: "99",
+      }),
+    ).resolves.toBe("1")
+  })
+
+  test("without request context the owner-derived tenant is kept", async () => {
+    asResellerOwner()
+
+    await expect(
+      workspaceService.resolveWorkspaceTenant({ ownerId: "owner" }),
+    ).resolves.toBe(RESELLER_TENANT)
+  })
+
+  test("a plain platform user gets the root tenant", async () => {
+    await expect(
+      workspaceService.resolveWorkspaceTenant({
+        ownerId: "user",
+        hostTenantId: "1",
+      }),
+    ).resolves.toBe("1")
   })
 })

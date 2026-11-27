@@ -10,6 +10,7 @@ import type {
 
 export * from "./audience-event"
 export * from "./context"
+export * from "./flow-response-file"
 export * from "./message"
 export * from "./meta-messaging"
 export * from "./mime-types"
@@ -47,6 +48,12 @@ export type ReceivedMessageResult = {
   ref: string | null
   referralSource?: string | null
   referral?: MessageReferral | null
+  /**
+   * The provider's own time for this delivery. Set by channels that can deliver
+   * a referral on its own (no message); it makes that referral idempotent when
+   * the webhook is retried.
+   */
+  occurredAt?: Date | null
   buttonTitle?: string | null
   /**
    * Origin of an outgoing echo, when the channel can tell. Unset or null

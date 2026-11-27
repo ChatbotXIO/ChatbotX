@@ -17,7 +17,11 @@ import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { use, useMemo, useState } from "react"
+import { ProductExternalDetailsDialog } from "@/features/external-store/components/product-external-details-dialog"
+import { ProductExternalHeaderActions } from "@/features/external-store/components/product-external-header-actions"
+import type { ExternalStoreLinks } from "@/features/external-store/lib/store-links"
 import type { listImports } from "@/features/import/queries/list-imports.queries"
+import { TemplateLockedList } from "@/features/templates/components/lock-context"
 import { ImportProductDialog } from "./components/import-product-dialog"
 import { MetaCatalogDialog } from "./components/meta-catalog-dialog"
 import { DeleteProductsDialog } from "./delete-product-dialog"
@@ -33,6 +37,10 @@ type ProductsTableProps = {
   initialMetaCatalogState: Parameters<
     typeof MetaCatalogDialog
   >[0]["initialState"]
+  /** Set while the store source is an external store: the table is read-only. */
+  externalStore?: {
+    store: ExternalStoreLinks
+  }
 }
 
 export function ProductsTable({
@@ -40,6 +48,7 @@ export function ProductsTable({
   workspaceId,
   importHistoryPromise,
   initialMetaCatalogState,
+  externalStore,
 }: ProductsTableProps) {
   const t = useTranslations()
   const router = useRouter()
@@ -49,7 +58,10 @@ export function ProductsTable({
   const [rowAction, setRowAction] =
     useState<DataTableRowAction<ProductResource> | null>(null)
 
-  const columns = useMemo(() => getProductColumns({ t, setRowAction }), [t])
+  const columns = useMemo(
+    () => getProductColumns({ t, setRowAction, externalStore }),
+    [t, externalStore],
+  )
 
   const { table } = useDataTable({
     data,
@@ -74,36 +86,58 @@ export function ProductsTable({
           {t("products.title")}
         </CardTitle>
         <CardAction>
-          <div className="flex items-center gap-2">
-            <Link
-              className={buttonVariants({ size: "sm" })}
-              href={`/space/${workspaceId}/products/create`}
-            >
-              <PlusIcon />
-              {t("actions.create")}
-            </Link>
-            <ImportProductDialog
-              historyPromise={importHistoryPromise}
+          {externalStore ? (
+            <ProductExternalHeaderActions
+              store={externalStore.store}
               workspaceId={workspaceId}
             />
-            <MetaCatalogDialog
-              initialState={initialMetaCatalogState}
-              selectedProductIds={selectedProductIds}
-              workspaceId={workspaceId}
-            />
-          </div>
+          ) : (
+            <div className="flex items-center gap-2">
+              <Link
+                className={buttonVariants({ size: "sm" })}
+                href={`/space/${workspaceId}/products/create`}
+              >
+                <PlusIcon />
+                {t("actions.create")}
+              </Link>
+              <ImportProductDialog
+                historyPromise={importHistoryPromise}
+                workspaceId={workspaceId}
+              />
+              <MetaCatalogDialog
+                initialState={initialMetaCatalogState}
+                selectedProductIds={selectedProductIds}
+                workspaceId={workspaceId}
+              />
+            </div>
+          )}
         </CardAction>
       </CardHeader>
       <CardContent>
-        <DataTable table={table}>
-          <DataTableToolbar table={table}>
-            <ProductsTableToolbarActions
-              setRowAction={setRowAction}
-              table={table}
-              workspaceId={workspaceId}
-            />
-          </DataTableToolbar>
-        </DataTable>
+        <TemplateLockedList
+          resourceKind="product"
+          rows={data}
+          workspaceId={workspaceId}
+        >
+          <DataTable table={table}>
+            <DataTableToolbar table={table}>
+              <ProductsTableToolbarActions
+                setRowAction={setRowAction}
+                table={table}
+                workspaceId={workspaceId}
+              />
+            </DataTableToolbar>
+          </DataTable>
+        </TemplateLockedList>
+
+        {externalStore && rowAction?.variant === "view" ? (
+          <ProductExternalDetailsDialog
+            onOpenChange={() => setRowAction(null)}
+            product={rowAction.row.original}
+            store={externalStore.store}
+            workspaceId={workspaceId}
+          />
+        ) : null}
 
         <DeleteProductsDialog
           onOpenChange={() => setRowAction(null)}

@@ -1,6 +1,7 @@
 import type { Oauth2AuthValue } from "@chatbotx.io/sdk"
+import { calendar } from "@googleapis/calendar"
 import { OAuth2Client } from "google-auth-library"
-import { google } from "googleapis"
+
 import type { GoogleCalendarConfig } from "./schemas"
 
 export const GOOGLE_CALENDAR_SCOPES = [
@@ -40,7 +41,7 @@ export function generateAuthUrl(props: GoogleCalendarConfig): string {
 export function getCalendarClient(props: Oauth2AuthValue) {
   const client = getClient(props)
 
-  return google.calendar({ version: "v3", auth: client })
+  return calendar({ version: "v3", auth: client })
 }
 
 export async function revokeToken(auth: Oauth2AuthValue): Promise<void> {

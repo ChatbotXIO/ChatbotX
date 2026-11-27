@@ -20,6 +20,7 @@ const expectedReservedSystemFieldIds = [
   systemFieldTypes.enum.workspace_id,
   systemFieldTypes.enum.page_user_name,
   systemFieldTypes.enum.last_input,
+  systemFieldTypes.enum.last_opportunity_id,
   systemFieldTypes.enum.last_text_input,
   systemFieldTypes.enum.last_call_recorded,
   systemFieldTypes.enum.last_call_transcript,
@@ -34,11 +35,14 @@ const expectedReservedSystemFieldIds = [
   systemFieldTypes.enum.last_btn_title,
   systemFieldTypes.enum.fb_chat_link,
   systemFieldTypes.enum.last_fb_comment,
+  systemFieldTypes.enum.total_tagged,
   systemFieldTypes.enum.admin_name,
   systemFieldTypes.enum.admin_team_name,
   systemFieldTypes.enum.booking_id,
   systemFieldTypes.enum.last_points,
   systemFieldTypes.enum.last_ad_headline,
+  systemFieldTypes.enum.ad_ids,
+  systemFieldTypes.enum.ad_id,
   systemFieldTypes.enum.last_ad_body,
   systemFieldTypes.enum.last_story_id,
   systemFieldTypes.enum.last_lead_id,
@@ -64,7 +68,7 @@ const getMessageValue = (
 }
 
 describe("reservedCustomFieldIds", () => {
-  test("matches the ChatRace-compatible system field picker set", () => {
+  test("matches the import-compatible system field picker set", () => {
     expect(reservedCustomFieldIds.map((field) => field.id)).toEqual(
       expectedReservedSystemFieldIds,
     )
@@ -89,8 +93,22 @@ describe("reservedCustomFieldIds", () => {
     expect(channelsOf(systemFieldTypes.enum.last_adgroup_id)).toEqual([
       "messenger",
     ])
+    // Mentions are counted on Facebook comments only.
+    expect(channelsOf(systemFieldTypes.enum.total_tagged)).toEqual([
+      "messenger",
+    ])
     // Only WhatsApp Click-to-WhatsApp referrals carry an ad body.
     expect(channelsOf(systemFieldTypes.enum.last_ad_body)).toEqual(["whatsapp"])
+    // Every channel that records an ad touch (Zalo through a Google click).
+    expect(channelsOf(systemFieldTypes.enum.ad_ids)).toEqual([
+      "messenger",
+      "instagram",
+      "whatsapp",
+      "zalo",
+    ])
+    expect(channelsOf(systemFieldTypes.enum.ad_id)).toEqual(
+      channelsOf(systemFieldTypes.enum.ad_ids),
+    )
     expect(channelsOf(systemFieldTypes.enum.last_ad_headline)).toEqual([
       "messenger",
       "instagram",
@@ -98,7 +116,7 @@ describe("reservedCustomFieldIds", () => {
     ])
   })
 
-  test("does not offer the Chatrace spelling alias beside the canonical field", () => {
+  test("does not offer the legacy spelling alias beside the canonical field", () => {
     expect(reservedCustomFieldIds.map((field) => field.id)).not.toContain(
       systemFieldTypes.enum.last_btt_title,
     )

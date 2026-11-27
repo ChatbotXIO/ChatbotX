@@ -6,6 +6,11 @@ import {
   ne,
   sql,
 } from "@chatbotx.io/database/client"
+import type {
+  CurrencyPosition,
+  ExternalStoreSource,
+  StoreSource,
+} from "@chatbotx.io/database/partials"
 import {
   ecommerceOrderCounterModel,
   ecommerceSettingsModel,
@@ -26,12 +31,19 @@ export const ecommerceSettingsRepository = {
     })
   },
 
-  /** Creates the row from the given values when the workspace has none. */
-  async insertIfMissing(
+  /**
+   * Creates the row from the given values when the workspace has none, else
+   * returns the one that is there. `created` says which, so a caller that
+   * copies into a new row never claims one another writer created first.
+   */
+  async insertOrFind(
     input: { workspaceId: string; values: EcommerceSettingsValues },
     tx: DatabaseClient = db,
-  ) {
-    await tx
+  ): Promise<{
+    row: typeof ecommerceSettingsModel.$inferSelect | undefined
+    created: boolean
+  }> {
+    const [inserted] = await tx
       .insert(ecommerceSettingsModel)
       .values({
         id: createId(),
@@ -39,6 +51,63 @@ export const ecommerceSettingsRepository = {
         ...input.values,
       })
       .onConflictDoNothing({ target: ecommerceSettingsModel.workspaceId })
+      .returning()
+    if (inserted) {
+      return { row: inserted, created: true }
+    }
+    return {
+      row: await tx.query.ecommerceSettingsModel.findFirst({
+        where: { workspaceId: input.workspaceId },
+      }),
+      created: false,
+    }
+  },
+
+  /** Only the store source; a workspace with no settings row has nothing to switch. */
+  async setStoreSource(
+    input: { workspaceId: string; storeSource: StoreSource },
+    tx: DatabaseClient = db,
+  ) {
+    await tx
+      .update(ecommerceSettingsModel)
+      .set({ storeSource: input.storeSource, updatedAt: new Date() })
+      .where(eq(ecommerceSettingsModel.workspaceId, input.workspaceId))
+  },
+
+  /**
+   * The currency prices are shown and orders charged in, taken from the
+   * external store the workspace sells from — only while it still does
+   * (`storeSource` is that store), so a switch made meanwhile is kept.
+   * Returns whether a row changed.
+   */
+  async setCurrencyFromStore(
+    input: {
+      workspaceId: string
+      storeSource: ExternalStoreSource
+      currency: string
+      currencySymbol: string | null
+      currencyPosition?: CurrencyPosition
+    },
+    tx: DatabaseClient = db,
+  ): Promise<boolean> {
+    const rows = await tx
+      .update(ecommerceSettingsModel)
+      .set({
+        currency: input.currency,
+        currencySymbol: input.currencySymbol,
+        ...(input.currencyPosition
+          ? { currencyPosition: input.currencyPosition }
+          : {}),
+        updatedAt: new Date(),
+      })
+      .where(
+        and(
+          eq(ecommerceSettingsModel.workspaceId, input.workspaceId),
+          eq(ecommerceSettingsModel.storeSource, input.storeSource),
+        ),
+      )
+      .returning({ id: ecommerceSettingsModel.id })
+    return rows.length > 0
   },
 
   /** Reads the row and holds its lock until the transaction ends. */

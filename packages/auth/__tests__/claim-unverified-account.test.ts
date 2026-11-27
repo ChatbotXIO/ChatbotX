@@ -17,6 +17,7 @@ const internalAdapter = {
   findUserById: vi.fn(),
   findAccounts: vi.fn(),
   deleteAccount: vi.fn(async () => undefined),
+  updateUser: vi.fn(async () => ({ id: USER_ID, emailVerified: true })),
 }
 const deleteMany = vi.fn(async () => 2)
 const context = {
@@ -45,6 +46,7 @@ beforeEach(() => {
   vi.clearAllMocks()
   internalAdapter.findUserById.mockResolvedValue({
     id: USER_ID,
+    email: "owner@example.com",
     emailVerified: false,
     createdAt: oldDate(),
   })
@@ -66,6 +68,9 @@ describe("claimUnverifiedAccountBeforeLink", () => {
     expect(internalAdapter.deleteAccount).toHaveBeenCalledWith("acc-pwd")
     expect(internalAdapter.deleteAccount).toHaveBeenCalledWith("acc-fb")
     expect(deleteMany).toHaveBeenCalledWith(SESSION_DELETE)
+    expect(internalAdapter.updateUser).toHaveBeenCalledWith(USER_ID, {
+      emailVerified: true,
+    })
   })
 
   test.each([
@@ -77,6 +82,42 @@ describe("claimUnverifiedAccountBeforeLink", () => {
       claimUnverifiedAccountBeforeLink(account("google", token), context),
     ).rejects.toThrow(DID_NOT_ATTEST_ERROR)
     expect(internalAdapter.deleteAccount).not.toHaveBeenCalled()
+    expect(deleteMany).not.toHaveBeenCalled()
+  })
+
+  test.each([
+    ["true", idTokenWith({ email_verified: true })],
+    ['"true" (string)', idTokenWith({ email_verified: "true" })],
+  ])("Apple with email_verified %s claims the placeholder and promotes it", async (_label, token) => {
+    await expect(
+      claimUnverifiedAccountBeforeLink(account("apple", token), context),
+    ).resolves.toBeUndefined()
+    expect(internalAdapter.deleteAccount).toHaveBeenCalledTimes(2)
+    expect(deleteMany).toHaveBeenCalledWith(SESSION_DELETE)
+    expect(internalAdapter.updateUser).toHaveBeenCalledWith(USER_ID, {
+      emailVerified: true,
+    })
+  })
+
+  test.each([
+    ["email_verified is false", idTokenWith({ email_verified: false })],
+    ['email_verified is "false"', idTokenWith({ email_verified: "false" })],
+    ["there is no id token", undefined],
+  ])("Apple is refused when %s", async (_label, token) => {
+    await expect(
+      claimUnverifiedAccountBeforeLink(account("apple", token), context),
+    ).rejects.toThrow(DID_NOT_ATTEST_ERROR)
+    expect(internalAdapter.deleteAccount).not.toHaveBeenCalled()
+    expect(deleteMany).not.toHaveBeenCalled()
+  })
+
+  test('Google still refuses the string "true"', async () => {
+    await expect(
+      claimUnverifiedAccountBeforeLink(
+        account("google", idTokenWith({ email_verified: "true" })),
+        context,
+      ),
+    ).rejects.toThrow(DID_NOT_ATTEST_ERROR)
     expect(deleteMany).not.toHaveBeenCalled()
   })
 

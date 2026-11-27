@@ -87,11 +87,14 @@ function ContactCard({
 
 type ContactsTableProps = {
   canViewEmailAndPhone?: boolean
+  /** Whether "Sync with AhaChat" is offered (the operator configured it). */
+  showContactSync?: boolean
   workspaceId: string
 }
 
 export function ContactsTable({
   canViewEmailAndPhone = true,
+  showContactSync = false,
   workspaceId,
 }: ContactsTableProps) {
   const t = useTranslations()
@@ -406,6 +409,7 @@ export function ContactsTable({
         <ContactListAction
           disabled={contactsQuery.isPlaceholderData}
           filter={exportFilter}
+          showContactSync={showContactSync}
           table={table}
           workspaceId={workspaceId}
         />

@@ -7,13 +7,17 @@ import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { useState } from "react"
+import { AhachatImportDialog } from "@/features/channel-connect/components/ahachat-import-dialog"
+import { AhachatPageBadge } from "@/features/channel-connect/components/ahachat-page-badge"
 import {
+  AhachatImportNote,
   CoexistOptionsPanel,
   coexistRowTrailing,
 } from "@/features/channel-connect/components/coexist-controls"
 import { renderConnectFlowOverlay } from "@/features/channel-connect/components/connect-picker-screen"
 import { ConnectSessionErrorAlert } from "@/features/channel-connect/components/connect-session-error-alert"
 import { useConnectFlow } from "@/features/channel-connect/hooks/use-connect-flow"
+import { useAhachatPageIds } from "@/features/channel-connect/lib/ahachat-import-availability"
 import { connectViaApi } from "@/features/channel-connect/lib/connect-client"
 import type { ConnectTarget } from "@/features/channel-connect/lib/picker-items"
 import {
@@ -57,6 +61,11 @@ export function InstagramAccounts({
   // account this screen ever shows.
   const [syncHistory, setSyncHistory] = useState(false)
   const [aiReadsSyncedHistory, setAiReadsSyncedHistory] = useState(false)
+  // "Use data from AhaChat?", asked when the history sync is turned on for an
+  // account AhaChat has.
+  const ahachatAvailable = useAhachatPageIds().has(account.id)
+  const [importFirst, setImportFirst] = useState(false)
+  const [askImportFirst, setAskImportFirst] = useState(false)
 
   const settingsHref = `/space/${workspaceId}/settings/channels/instagram`
 
@@ -112,7 +121,12 @@ export function InstagramAccounts({
           />
         )}
         <div className="min-w-0 flex-1">
-          <p className="font-medium">{account.name}</p>
+          <p className="flex items-center gap-1.5 font-medium">
+            <span className="truncate">{account.name}</span>
+            {ahachatAvailable && (
+              <AhachatPageBadge selected={syncHistory && importFirst} />
+            )}
+          </p>
         </div>
         {/* The same trailing column (and the same reveal rule) the
             multi-select pickers render, for the one account this screen
@@ -120,11 +134,28 @@ export function InstagramAccounts({
         {coexistRowTrailing({
           aiReadsSyncedHistory,
           onAiReadsSyncedHistoryChange: setAiReadsSyncedHistory,
-          onSyncChange: setSyncHistory,
+          onSyncChange: (checked) => {
+            setSyncHistory(checked)
+            // A fresh question every time the sync is turned on.
+            setImportFirst(false)
+            setAskImportFirst(checked && ahachatAvailable)
+          },
           row: { name: account.name },
           syncing: syncHistory,
         })}
       </div>
+
+      {syncHistory && importFirst && <AhachatImportNote />}
+      {askImportFirst && (
+        <AhachatImportDialog
+          onHistoryOnly={() => setAskImportFirst(false)}
+          onImportFirst={() => {
+            setImportFirst(true)
+            setAskImportFirst(false)
+          }}
+          rowName={account.name}
+        />
+      )}
 
       {syncHistory && (
         <CoexistOptionsPanel
@@ -150,6 +181,7 @@ export function InstagramAccounts({
                 name: account.name,
                 aiReadsSyncedHistory,
                 coexist: syncHistory,
+                ahachat: syncHistory && importFirst,
               },
             ])
           }

@@ -24,5 +24,6 @@ export const sendWhatsappTemplateAction = workspaceActionClient
       conversationId,
       request: parsedInput,
       sender: { initiatedBy: "user", adminId: ctx.user.id },
+      sendFrom: "inbox",
     })
   })

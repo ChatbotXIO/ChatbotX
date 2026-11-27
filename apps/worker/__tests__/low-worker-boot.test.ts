@@ -23,7 +23,21 @@ const workerState = vi.hoisted(() => ({
   coexistAttachmentDownload: vi.fn(async () => undefined),
   updateContactAvatar: vi.fn(async () => undefined),
   captureContactProfileSnapshot: vi.fn(async () => undefined),
+  processContactInfoCapture: vi.fn(async () => undefined),
   receiveComment: vi.fn(async () => undefined),
+  handleMessageStatus: vi.fn(async () => undefined),
+  contactMarkAsRead: vi.fn(async () => undefined),
+  processIncomingMessage: vi.fn(async () => undefined),
+  resolveWorkspaceId: vi.fn(
+    async (): Promise<string | undefined> => "ws-resolved",
+  ),
+  deferOnLockContention: vi.fn(
+    async (_job: unknown, _token: unknown, fn: () => Promise<unknown>) =>
+      await fn(),
+  ),
+  runIntegrationJobWithWebhookContext: vi.fn(
+    async (_jobData: unknown, fn: () => Promise<unknown>) => await fn(),
+  ),
   finishMissedCommentReplay: vi.fn(async () => undefined),
   withBlockedOwnerGuard: vi.fn(
     async (_workspaceId: unknown, fn: () => Promise<unknown>) => await fn(),
@@ -55,19 +69,28 @@ vi.mock("@chatbotx.io/worker-config", () => ({
     coexistAttachmentDownload: "coexistAttachmentDownload",
     updateContactAvatar: "updateContactAvatar",
     replayMissedComment: "replayMissedComment",
+    messageStatus: "messageStatus",
+    contactMarkAsRead: "contactMarkAsRead",
+    incomingMessageEcho: "incomingMessageEcho",
   },
   queueNames: {
     enum: {
       low: "low",
       profileSnapshot: "profileSnapshot",
       leaderboard: "leaderboard",
+      contactInfoCapture: "contactInfoCapture",
+      postPublish: "postPublish",
     },
   },
+  closeAllQueueEvents: vi.fn(async () => undefined),
   defaultWorkerOptions: { concurrency: 5, removeOnComplete: { count: 1000 } },
   getRedisConnection: vi.fn(() => ({})),
   getQueueConnection: vi.fn(() => ({})),
 }))
 
+vi.mock("../src/post-publish/process-job", () => ({
+  processPostPublishJob: vi.fn(async () => undefined),
+}))
 vi.mock("../src/leaderboard/process-job", () => ({
   processLeaderboardJob: vi.fn(),
 }))
@@ -78,7 +101,17 @@ vi.mock("@chatbotx.io/business", () => ({
   },
   flushAllPendingWorkspaceRealtimeEvents:
     workerState.flushAllPendingWorkspaceRealtimeEvents,
+  registerFeedAiModelChecker: vi.fn(),
+  registerFeedArticleImageFinder: vi.fn(),
+  registerFeedFetcher: vi.fn(),
+  registerFeedImageImporter: vi.fn(),
+  registerFeedPostWriter: vi.fn(),
   withBlockedOwnerGuard: workerState.withBlockedOwnerGuard,
+}))
+
+vi.mock("@chatbotx.io/ai/feed-post-writer", () => ({
+  isFeedAiModelUsable: vi.fn(),
+  writeFeedPost: vi.fn(),
 }))
 
 vi.mock("../src/env", () => ({
@@ -86,6 +119,8 @@ vi.mock("../src/env", () => ({
     LOW_WORKER_CONCURRENCY: 30,
     PROFILE_SNAPSHOT_JOBS_PER_SECOND: 5,
     LEADERBOARD_WORKER_CONCURRENCY: 10,
+    CONTACT_INFO_CAPTURE_CONCURRENCY: 2,
+    CONTACT_INFO_CAPTURE_JOBS_PER_SECOND: 20,
   },
 }))
 
@@ -119,6 +154,35 @@ vi.mock("../src/integration/handlers/capture-contact-profile-snapshot", () => ({
   captureContactProfileSnapshot: workerState.captureContactProfileSnapshot,
 }))
 
+vi.mock("../src/integration/handlers/contact-info-capture", () => ({
+  processContactInfoCapture: workerState.processContactInfoCapture,
+}))
+
+vi.mock("../src/integration/handlers/message-status", () => ({
+  handleMessageStatus: workerState.handleMessageStatus,
+}))
+
+vi.mock("../src/integration/handlers/conversation", () => ({
+  contactMarkAsRead: workerState.contactMarkAsRead,
+}))
+
+vi.mock("../src/integration/handlers/incoming-message", () => ({
+  processIncomingMessage: workerState.processIncomingMessage,
+}))
+
+vi.mock("../src/integration/job-context", () => ({
+  runIntegrationJobWithWebhookContext:
+    workerState.runIntegrationJobWithWebhookContext,
+}))
+
+vi.mock("../src/lib/resolve-workspace-id", () => ({
+  resolveWorkspaceId: workerState.resolveWorkspaceId,
+}))
+
+vi.mock("../src/lib/lock-contention-deferral", () => ({
+  deferOnLockContention: workerState.deferOnLockContention,
+}))
+
 vi.mock("../src/integration/handlers/received-message", () => ({
   receiveComment: workerState.receiveComment,
 }))
@@ -126,7 +190,7 @@ vi.mock("../src/integration/handlers/received-message", () => ({
 // Importing the worker module boots it exactly once (ESM module cache).
 await import("../src/low/worker")
 await vi.waitFor(() => {
-  expect(workerState.capturedWorkers).toHaveLength(3)
+  expect(workerState.capturedWorkers).toHaveLength(5)
 })
 
 describe("low worker process boot", () => {
@@ -134,7 +198,15 @@ describe("low worker process boot", () => {
     workerState.coexistAttachmentDownload.mockClear()
     workerState.updateContactAvatar.mockClear()
     workerState.captureContactProfileSnapshot.mockClear()
+    workerState.processContactInfoCapture.mockClear()
     workerState.receiveComment.mockClear()
+    workerState.handleMessageStatus.mockClear()
+    workerState.contactMarkAsRead.mockClear()
+    workerState.processIncomingMessage.mockClear()
+    workerState.resolveWorkspaceId.mockClear()
+    workerState.resolveWorkspaceId.mockResolvedValue("ws-resolved")
+    workerState.deferOnLockContention.mockClear()
+    workerState.runIntegrationJobWithWebhookContext.mockClear()
     workerState.finishMissedCommentReplay.mockClear()
     workerState.withBlockedOwnerGuard.mockClear()
     workerState.withBlockedOwnerGuard.mockImplementation(
@@ -143,12 +215,48 @@ describe("low worker process boot", () => {
   })
 
   test("boots the low Worker at the env-tunable concurrency plus the dedicated profileSnapshot and leaderboard Workers", () => {
-    expect(workerState.capturedWorkers).toHaveLength(3)
+    expect(workerState.capturedWorkers).toHaveLength(5)
     expect(workerState.capturedWorkers[0]?.queueName).toBe("low")
     expect(workerState.capturedWorkers[0]?.options.concurrency).toBe(30)
     expect(workerState.capturedWorkers[1]?.queueName).toBe("profileSnapshot")
     expect(workerState.capturedWorkers[2]?.queueName).toBe("leaderboard")
     expect(workerState.capturedWorkers[2]?.options.concurrency).toBe(10)
+    expect(workerState.capturedWorkers[3]?.queueName).toBe("contactInfoCapture")
+    expect(workerState.capturedWorkers[4]?.queueName).toBe("postPublish")
+  })
+
+  test("the contactInfoCapture Worker is small and rate limited", () => {
+    const worker = workerState.capturedWorkers[3]
+
+    expect(worker?.options.concurrency).toBe(2)
+    expect(worker?.options.limiter).toEqual({ max: 20, duration: 1000 })
+  })
+
+  test("routes a contactInfoCapture job to its handler behind the owner guard", async () => {
+    const data = { workspaceId: "ws-9", messageId: "m-9" }
+
+    await workerState.capturedWorkers[3]?.processor({
+      data: { type: "capture", data },
+    })
+
+    expect(workerState.processContactInfoCapture).toHaveBeenCalledWith(data)
+    expect(workerState.withBlockedOwnerGuard).toHaveBeenCalledWith(
+      "ws-9",
+      expect.any(Function),
+    )
+  })
+
+  test("a blocked owner skips the contactInfoCapture job without throwing", async () => {
+    workerState.withBlockedOwnerGuard.mockImplementationOnce(
+      async () => undefined,
+    )
+
+    await expect(
+      workerState.capturedWorkers[3]?.processor({
+        data: { type: "capture", data: { workspaceId: "ws-9" } },
+      }),
+    ).resolves.toBeUndefined()
+    expect(workerState.processContactInfoCapture).not.toHaveBeenCalled()
   })
 
   test("the profileSnapshot Worker is serial and carries the PROFILE_SNAPSHOT_JOBS_PER_SECOND limiter", () => {
@@ -205,7 +313,7 @@ describe("low worker process boot", () => {
     await vi.waitFor(() => {
       expect(exit).toHaveBeenCalledWith(0)
     })
-    expect(workerState.workerClose).toHaveBeenCalledTimes(3)
+    expect(workerState.workerClose).toHaveBeenCalledTimes(5)
     exit.mockRestore()
   })
 
@@ -278,6 +386,113 @@ describe("low worker process boot", () => {
       "ws-5",
       expect.any(Function),
     )
+  })
+
+  describe("bookkeeping ingress routed from the integration queue", () => {
+    const statusData = {
+      integrationType: "whatsapp",
+      integrationIdentifier: "phone-1",
+      payload: { messageId: "wamid.1", status: "read", timestamp: "1" },
+    }
+    const readData = {
+      integrationType: "messenger",
+      integrationIdentifier: "page-1",
+      sourceConversationId: "psid-1",
+      payload: {},
+    }
+    const echoData = {
+      integrationType: "zalo",
+      integrationIdentifier: "oa-1",
+      payload: {},
+    }
+
+    test("routes messageStatus to handleMessageStatus, resolving the workspace through its integration", async () => {
+      const [worker] = workerState.capturedWorkers
+      const job = {
+        id: "wa-status-1",
+        data: { type: "messageStatus", data: statusData },
+      }
+
+      await worker?.processor(job)
+
+      expect(workerState.resolveWorkspaceId).toHaveBeenCalledWith(statusData)
+      expect(workerState.withBlockedOwnerGuard).toHaveBeenCalledWith(
+        "ws-resolved",
+        expect.any(Function),
+      )
+      expect(workerState.handleMessageStatus).toHaveBeenCalledWith(
+        statusData,
+        job,
+      )
+    })
+
+    test("routes contactMarkAsRead to contactMarkAsRead", async () => {
+      const [worker] = workerState.capturedWorkers
+
+      await worker?.processor({
+        data: { type: "contactMarkAsRead", data: readData },
+      })
+
+      expect(workerState.contactMarkAsRead).toHaveBeenCalledWith(readData)
+      expect(workerState.handleMessageStatus).not.toHaveBeenCalled()
+    })
+
+    test("routes incomingMessageEcho to processIncomingMessage under the lock-contention deferral", async () => {
+      const [worker] = workerState.capturedWorkers
+      const job = {
+        id: "echo-1",
+        data: { type: "incomingMessageEcho", data: echoData },
+      }
+
+      await (worker?.processor as (j: unknown, t?: string) => Promise<unknown>)(
+        job,
+        "lock-token",
+      )
+
+      expect(workerState.deferOnLockContention).toHaveBeenCalledWith(
+        job,
+        "lock-token",
+        expect.any(Function),
+      )
+      expect(workerState.processIncomingMessage).toHaveBeenCalledWith(echoData)
+    })
+
+    test("a blocked owner skips the job with a bare return", async () => {
+      workerState.withBlockedOwnerGuard.mockImplementationOnce(
+        async () => undefined,
+      )
+      const [worker] = workerState.capturedWorkers
+
+      await worker?.processor({
+        data: { type: "messageStatus", data: statusData },
+      })
+
+      expect(workerState.handleMessageStatus).not.toHaveBeenCalled()
+    })
+
+    test("an unresolvable workspace fails open: the job still runs", async () => {
+      workerState.resolveWorkspaceId.mockResolvedValueOnce(undefined)
+      const [worker] = workerState.capturedWorkers
+
+      await worker?.processor({
+        data: { type: "messageStatus", data: statusData },
+      })
+
+      expect(workerState.withBlockedOwnerGuard).toHaveBeenCalledWith(
+        undefined,
+        expect.any(Function),
+      )
+      expect(workerState.handleMessageStatus).toHaveBeenCalled()
+    })
+
+    test("a lost lock race is not retried by the status handler itself", async () => {
+      const [worker] = workerState.capturedWorkers
+      await worker?.processor({
+        data: { type: "contactMarkAsRead", data: readData },
+      })
+
+      expect(workerState.deferOnLockContention).not.toHaveBeenCalled()
+    })
   })
 
   describe("missed-comment replay count-down", () => {

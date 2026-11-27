@@ -8,6 +8,7 @@ vi.mock("../src/broadcast/plan-policy.service", () => ({
 
 const {
   mockDelete,
+  mockDeleteReturning,
   mockFindActiveFlow,
   mockFindCustomFields,
   mockFindFirst,
@@ -28,7 +29,8 @@ const {
   const mockInsertReturning = vi.fn(async () => [{ id: "agent-1" }])
   const mockInsertValues = vi.fn(() => ({ returning: mockInsertReturning }))
   const mockInsert = vi.fn(() => ({ values: mockInsertValues }))
-  const mockDeleteWhere = vi.fn()
+  const mockDeleteReturning = vi.fn(async () => [] as { id: string }[])
+  const mockDeleteWhere = vi.fn(() => ({ returning: mockDeleteReturning }))
   const mockDelete = vi.fn(() => ({ where: mockDeleteWhere }))
   const mockTemplateInstalledResourceFindMany = vi.fn(async () => [])
 
@@ -44,14 +46,17 @@ const {
         findMany: mockTemplateInstalledResourceFindMany,
       },
     },
+    // A fresh client per transaction, like a real driver: the template lock
+    // registry is keyed by it.
     transaction: vi.fn(async (callback: (tx: unknown) => unknown) =>
-      callback(dbClient),
+      callback({ ...dbClient, execute: vi.fn() }),
     ),
     update: mockUpdate,
   }
 
   return {
     mockDelete,
+    mockDeleteReturning,
     mockFindActiveFlow: vi.fn(),
     mockFindCustomFields: vi.fn(async () => []),
     mockFindFirst: dbClient.query.aiAgentModel.findFirst,
@@ -114,6 +119,20 @@ vi.mock("@chatbotx.io/utils", async (importOriginal) => ({
 }))
 
 const dispatchAuditRecord = vi.fn()
+// The real guard runs; only observed.
+vi.mock(
+  "../src/template/installed-resource.service",
+  async (importOriginal) => {
+    const original =
+      await importOriginal<
+        typeof import("../src/template/installed-resource.service")
+      >()
+    return {
+      ...original,
+      assertReferencable: vi.fn(original.assertReferencable),
+    }
+  },
+)
 vi.mock("../src/audit/dispatcher", () => ({ dispatchAuditRecord }))
 
 vi.mock("../src/custom-field/service", () => ({
@@ -232,6 +251,28 @@ describe("aiAgentService cache invalidation", () => {
   })
 })
 
+describe("aiAgentService create guards its references", () => {
+  test("takes the guard for the tool tokens' files, functions and MCP servers", async () => {
+    const { assertReferencable } = await import(
+      "../src/template/installed-resource.service"
+    )
+    vi.mocked(assertReferencable).mockClear()
+
+    await aiAgentService.create(workspaceId, {
+      ...createRequest,
+      tools: ["file:11", "fn:22", "mcp:33"],
+    })
+
+    const call = vi.mocked(assertReferencable).mock.calls[0]?.[0]
+    expect(call?.workspaceId).toBe(workspaceId)
+    expect(call?.parents).toEqual([
+      { kind: "aiFile", resourceId: "11" },
+      { kind: "aiFunction", resourceId: "22" },
+      { kind: "aiMcpServer", resourceId: "33" },
+    ])
+  })
+})
+
 describe("aiAgentService AI action validation", () => {
   test("rejects an inactive or unpublished flow action", async () => {
     await expect(
@@ -262,7 +303,10 @@ describe("aiAgentService audit messages", () => {
   })
 
   test("delete logs one entry per agent by id", async () => {
-    mockFindMany.mockResolvedValue([{ id: "agent-1" }, { id: "agent-2" }])
+    mockDeleteReturning.mockResolvedValueOnce([
+      { id: "agent-1" },
+      { id: "agent-2" },
+    ])
 
     await aiAgentService.delete({ ids: ["agent-1", "agent-2"], workspaceId })
 

@@ -3,6 +3,8 @@ import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
 
 const AVATAR_STORAGE_PATH_PATTERN = /^public\/space\/ws-1\/avatars\//
 
+const mockContactInfoCaptureAdd = vi.hoisted(() => vi.fn())
+
 const mockLockContentionPolicy = vi.hoisted(() => ({
   lockWaitSeconds: 10,
   maxDeferrals: 8,
@@ -58,6 +60,10 @@ const {
   mockDistributedLockRunExclusive,
   mockResolveChannelPostForComment,
   mockRecordContactInboxPostComment,
+  mockEmitPostCommentTriggers,
+  mockRecordPhoneComment,
+  mockRecordWebhookComment,
+  mockMarkReadBySkippedPost,
 } = vi.hoisted(() => {
   const mockFindContactInbox = vi.fn()
 
@@ -125,7 +131,7 @@ const {
     mockresolveTenantSettings: vi
       .fn()
       .mockResolvedValue({ storageUrl: "https://files.example.test" }),
-    mockUpdateContactFromMessage: vi.fn().mockResolvedValue(undefined),
+    mockUpdateContactFromMessage: vi.fn().mockResolvedValue({}),
     mockContactUnblockIfBlocked: vi.fn().mockResolvedValue(null),
     mockContactUpdate: vi.fn().mockResolvedValue({}),
     mockAdoptPhoneNumberIfSafe,
@@ -188,8 +194,21 @@ const {
     mockDistributedLockRunExclusive: vi.fn(
       async ({ fn }: { fn: () => Promise<unknown> }) => await fn(),
     ),
-    mockResolveChannelPostForComment: vi.fn().mockResolvedValue("post-row-1"),
-    mockRecordContactInboxPostComment: vi.fn().mockResolvedValue(true),
+    mockRecordPhoneComment: vi.fn().mockResolvedValue(undefined),
+    mockRecordWebhookComment: vi.fn().mockResolvedValue(undefined),
+    mockMarkReadBySkippedPost: vi.fn().mockResolvedValue(true),
+    mockResolveChannelPostForComment: vi.fn().mockResolvedValue({
+      id: "post-row-1",
+      settings: {
+        hideComments: false,
+        hidePhoneComments: false,
+        skipComments: false,
+      },
+    }),
+    mockRecordContactInboxPostComment: vi
+      .fn()
+      .mockResolvedValue({ status: "inserted" }),
+    mockEmitPostCommentTriggers: vi.fn().mockResolvedValue(undefined),
   }
 })
 
@@ -291,13 +310,19 @@ const mockEnqueueStoredImageOptimizations = vi.hoisted(() =>
 const mockWithResolvedAttachmentUrls = vi.hoisted(() =>
   vi.fn(async (message: unknown) => message),
 )
+const mockFindMessageWithAttachments = vi.hoisted(() =>
+  vi.fn(async (_params: unknown): Promise<unknown> => null),
+)
 
 vi.mock("@chatbotx.io/business", () => ({
+  chargeCommentActionOnce: vi.fn().mockResolvedValue(true),
+  messageUsageService: { hasRoom: vi.fn().mockResolvedValue(true) },
   productMessageService: {
     resolveInboundProducts: mockResolveInboundProducts,
   },
   messageService: {
     withResolvedAttachmentUrls: mockWithResolvedAttachmentUrls,
+    findWithAttachments: mockFindMessageWithAttachments,
   },
   commentAutomationService: {
     reserveLiveCommentWindow: mockReserveLiveCommentWindow,
@@ -351,10 +376,12 @@ vi.mock("@chatbotx.io/business", () => ({
     syncScopedIdentity: mockSyncScopedIdentity,
   },
   channelPostService: {
-    resolveForComment: mockResolveChannelPostForComment,
+    resolveForCommentWithSettings: mockResolveChannelPostForComment,
+    recordPhoneComment: mockRecordPhoneComment,
+    recordWebhookComment: mockRecordWebhookComment,
   },
   contactInboxPostService: {
-    recordComment: mockRecordContactInboxPostComment,
+    recordCommentOutcome: mockRecordContactInboxPostComment,
   },
   getContactInboxIdentityConflictConstraint: (error: unknown) => {
     const constraints = [
@@ -375,6 +402,7 @@ vi.mock("@chatbotx.io/business", () => ({
   conversationService: {
     findOrCreate: mockConversationFindOrCreate,
     markReadByOutbound: mockMarkReadByOutbound,
+    markReadBySkippedPost: mockMarkReadBySkippedPost,
     recordInboundActivity: mockRecordInboundActivity,
   },
   workspaceService: {
@@ -444,11 +472,19 @@ vi.mock("@chatbotx.io/sdk", () => ({
   // Mirror of the real pure helper — `resolveLastUserInputTracking` calls it.
   isStoryMention: (contentAttributes: unknown) =>
     (contentAttributes as { type?: unknown } | null)?.type === "story_mention",
+  isReelShare: (contentAttributes: unknown) =>
+    (contentAttributes as { type?: unknown } | null)?.type === "reel_share",
   // Mirror of the real pure helper — the module is fully mocked here.
   toKeepOriginal: (attachment: {
     fileType: string
     isPhotoMessage?: boolean
   }) => (attachment.fileType === "image" ? !attachment.isPhotoMessage : null),
+  // Mirror of the real pure helper — `resolveFlowFiles` reads a response through it.
+  getWhatsappFlowResponse: (contentAttributes: unknown) =>
+    (contentAttributes as { type?: unknown } | null)?.type ===
+    "whatsapp_flow_response"
+      ? contentAttributes
+      : undefined,
   // Mirror of the real pure helper — the module is fully mocked here.
   resolveSourceScopedIdentityMatch: async <T>(
     identity: {
@@ -544,23 +580,33 @@ vi.mock("@chatbotx.io/encryption", () => ({
   verifyAppointmentCancelPostback: mockVerifyAppointmentCancelPostback,
 }))
 
-vi.mock("@chatbotx.io/worker-config", () => ({
+vi.mock("@chatbotx.io/worker-config", async (importOriginal) => ({
+  // The real job builder: the tests assert what producers actually enqueue.
+  buildResolveStepInputJob: (
+    await importOriginal<typeof import("@chatbotx.io/worker-config")>()
+  ).buildResolveStepInputJob,
   // `logProviderError` short-circuits on this, as `defaultQueue` does.
   isNoRedisEnv: () => true,
   enqueueStoredImageOptimizations: mockEnqueueStoredImageOptimizations,
   ChatJobAction: {
     sendChatMessage: "sendChatMessage",
     checkOutboundAutomatedResponse: "checkOutboundAutomatedResponse",
+    changeChannelMessageState: "changeChannelMessageState",
   },
   chatQueue: {
     add: mockChatQueueAdd,
   },
+  // Must never be touched by receiveMessage: the capture is handed over by the
+  // event listener, not by this path.
+  contactInfoCaptureQueue: { add: mockContactInfoCaptureAdd },
   IntegrationJobAction: {
     runFlowPostback: "runFlowPostback",
     runFlowQuickReply: "runFlowQuickReply",
     runRef: "runRef",
     processCommentAutomation: "processCommentAutomation",
     replyToInboundCart: "replyToInboundCart",
+    captureTemplateFlowResponse: "captureTemplateFlowResponse",
+    resolveStepInput: "resolveStepInput",
   },
   getInboundCartReplyJobId: (messageId: string) =>
     `inbound-cart-reply-${messageId}`,
@@ -632,8 +678,17 @@ vi.mock("../src/services/integrations", () => ({
 }))
 
 const mockResolveTiktokCommenterIdentity = vi.fn()
+const mockWithholdTiktokComment = vi.fn()
+const mockFindTiktokCommentToRecheck = vi.fn()
+const mockSettleTiktokRecheck = vi.fn()
+const mockRememberTiktokOwnerIdentifier = vi.fn()
+// `resolveTiktokAuthorship` lives in its own module and stays real.
 vi.mock("../src/integration/handlers/tiktok-comment-identity", () => ({
   resolveTiktokCommenterIdentity: mockResolveTiktokCommenterIdentity,
+  withholdTiktokComment: mockWithholdTiktokComment,
+  findTiktokCommentToRecheck: mockFindTiktokCommentToRecheck,
+  settleTiktokRecheck: mockSettleTiktokRecheck,
+  rememberTiktokOwnerIdentifier: mockRememberTiktokOwnerIdentifier,
 }))
 
 const mockFetchThreadsCommentAttachments = vi.fn().mockResolvedValue([])
@@ -663,6 +718,11 @@ vi.mock("../src/integration/handlers/comment-automation", async () => {
   }
 })
 
+vi.mock("../src/integration/handlers/post-comment-trigger", () => ({
+  claimFirstCommentWinnerBestEffort: vi.fn().mockResolvedValue(undefined),
+  emitPostCommentTriggersBestEffort: mockEmitPostCommentTriggers,
+}))
+
 const mockAwardCommentLeaderboard = vi.fn().mockResolvedValue(undefined)
 const mockAwardInboundMessageLeaderboard = vi.fn().mockResolvedValue(undefined)
 const mockAwardReactionLeaderboard = vi.fn().mockResolvedValue(undefined)
@@ -679,6 +739,8 @@ vi.mock(
   "../src/integration/handlers/comment-automation/replay-priority",
   () => ({
     runAsMissedCommentReplay: mockRunAsMissedCommentReplay,
+    // Outside a replay the options pass through untouched.
+    withReplayPriority: <Options>(options?: Options) => options,
   }),
 )
 
@@ -729,6 +791,7 @@ const fakeConversation = {
   id: "conv-1",
   workspaceId: "ws-1",
   contactId: "contact-1",
+  createdAt: new Date("2026-11-18T08:00:00.000Z"),
 } as unknown as import("@chatbotx.io/database/types").ConversationModel
 
 const baseIncomingMessage = {
@@ -865,6 +928,17 @@ describe("receiveMessage — message repository branch", () => {
     mockMarkReadByOutbound.mockResolvedValue(true)
   })
 
+  test("skips without failing the job when the channel parser returns nothing to store", async () => {
+    mockRunChannelHandler.mockResolvedValue(null)
+
+    await expect(receiveMessage(baseProps)).resolves.toBeNull()
+
+    expect(mockFindContactInbox).not.toHaveBeenCalled()
+    expect(mockCreateOrUpdate).not.toHaveBeenCalled()
+    expect(mockCreateOrUpdateWithAttachments).not.toHaveBeenCalled()
+    expect(mockEmit).not.toHaveBeenCalled()
+  })
+
   test("calls repository.createOrUpdate() when message has no attachments", async () => {
     mockRunChannelHandler.mockResolvedValue({
       message: { ...baseIncomingMessage, attachments: [] },
@@ -922,6 +996,63 @@ describe("receiveMessage — message repository branch", () => {
     expect(mockAwardInboundMessageLeaderboard).not.toHaveBeenCalled()
   })
 
+  describe("one-click payment confirmation redelivery", () => {
+    const paymentEntity = {
+      type: "whatsapp_payment_method",
+      paymentMethod: "offsite_card_pay",
+      lastFourDigits: "5235",
+      credentialId: "cred-1",
+      raw: { payment_method: "offsite_card_pay" },
+    }
+
+    const deliverPayment = (isNew: boolean) => {
+      mockCreateOrUpdate.mockResolvedValue({
+        message: { ...fakeCreatedMessage, contentAttributes: paymentEntity },
+        isNew,
+      })
+      mockRunChannelHandler.mockResolvedValue({
+        message: {
+          ...baseIncomingMessage,
+          text: "Customer confirmed card payment ending 5235 (not charged yet)",
+          contentAttributes: paymentEntity,
+          attachments: [],
+        },
+        contact: { sourceId: "psid-123", firstName: "Test" },
+        postbackAction: null,
+        quickReplyAction: null,
+        ref: null,
+      })
+    }
+
+    test("is stored once, keyed by the Meta message id, with its structured entity", async () => {
+      deliverPayment(true)
+
+      await receiveMessage(baseProps)
+
+      expect(mockCreateOrUpdate).toHaveBeenCalledTimes(1)
+      expect(mockCreateOrUpdate).toHaveBeenCalledWith(
+        expect.objectContaining({
+          sourceId: "msg-src-1",
+          contentAttributes: paymentEntity,
+        }),
+      )
+    })
+
+    test("a Meta retry of the same webhook is not treated as a new message", async () => {
+      deliverPayment(true)
+      await receiveMessage(baseProps)
+      mockAwardInboundMessageLeaderboard.mockClear()
+
+      deliverPayment(false)
+      await receiveMessage(baseProps)
+
+      expect(mockCreateOrUpdate).toHaveBeenLastCalledWith(
+        expect.objectContaining({ sourceId: "msg-src-1" }),
+      )
+      expect(mockAwardInboundMessageLeaderboard).not.toHaveBeenCalled()
+    })
+  })
+
   describe("Google click referral persistence", () => {
     const googleReferral = {
       gclid: "ABCDEFGHIJ1234567890",
@@ -969,6 +1100,47 @@ describe("receiveMessage — message repository branch", () => {
         expect.objectContaining({
           data: { referral: expect.objectContaining(googleReferral) },
         }),
+      )
+    })
+
+    test("keys a referral-only ad touch by the provider's own delivery time", async () => {
+      const occurredAt = new Date("2026-10-20T08:00:00.000Z")
+      mockRunChannelHandler.mockResolvedValue({
+        message: null,
+        contact: { sourceId: "psid-123" },
+        postbackAction: null,
+        quickReplyAction: null,
+        ref: null,
+        referral: googleReferral,
+        occurredAt,
+      })
+
+      await receiveMessage(baseProps)
+
+      expect(mockUpdateTracking).toHaveBeenCalledWith(
+        expect.objectContaining({
+          referralOccurrence: {
+            occurredAt,
+            eventKey: String(occurredAt.getTime()),
+          },
+        }),
+      )
+    })
+
+    test("logs no ad touch for a referral-only delivery without a provider time", async () => {
+      mockRunChannelHandler.mockResolvedValue({
+        message: null,
+        contact: { sourceId: "psid-123" },
+        postbackAction: null,
+        quickReplyAction: null,
+        ref: null,
+        referral: googleReferral,
+      })
+
+      await receiveMessage(baseProps)
+
+      expect(mockUpdateTracking).toHaveBeenCalledWith(
+        expect.objectContaining({ referralOccurrence: undefined }),
       )
     })
 
@@ -1274,6 +1446,7 @@ describe("receiveMessage — message repository branch", () => {
         lastUserInputType: "text",
       },
       contactLocation: null,
+      referralEventKey: fakeCreatedMessage.sourceId,
       at: fakeCreatedMessage.createdAt,
       contactRepliedAt: fakeCreatedMessage.createdAt,
     })
@@ -1336,6 +1509,163 @@ describe("receiveMessage — message repository branch", () => {
     )
   })
 
+  describe("contactInfoCapture on message:received", () => {
+    const receiveWithText = async (text: string) => {
+      mockFindContactInbox.mockResolvedValue({
+        ...fakeContactInbox,
+        lastIncomingMessageAt: null,
+        contact: fakeContact,
+      })
+      mockRunChannelHandler.mockResolvedValue({
+        message: { ...baseIncomingMessage, text, attachments: [] },
+        contact: { sourceId: "psid-123", firstName: "Test" },
+        postbackAction: null,
+        quickReplyAction: null,
+        ref: null,
+      })
+      await receiveMessage(baseProps)
+    }
+
+    const receivedEvents = () =>
+      mockEmit.mock.calls.filter(([type]) => type === "message:received")
+
+    test("carries the info kinds and conversation, never the value", async () => {
+      mockUpdateContactFromMessage.mockResolvedValueOnce({
+        phoneNumber: "+84901234567",
+        email: "a@example.com",
+      })
+
+      await receiveWithText("0901234567 a@example.com")
+
+      expect(mockUpdateContactFromMessage).toHaveBeenCalledTimes(1)
+      expect(receivedEvents()).toHaveLength(1)
+      const payload = receivedEvents()[0]?.[1]
+      expect(payload.contactInfoCapture).toEqual({
+        infoTypes: ["phone", "email"],
+        conversationId: fakeCreatedMessage.conversationId,
+        conversationCreatedAt: fakeConversation.createdAt.toISOString(),
+      })
+      const serialized = JSON.stringify(payload)
+      expect(serialized).not.toContain("84901234567")
+      expect(serialized).not.toContain("a@example.com")
+    })
+
+    test("carries a single kind when only one was extracted", async () => {
+      mockUpdateContactFromMessage.mockResolvedValueOnce({
+        email: "a@example.com",
+      })
+
+      await receiveWithText("a@example.com")
+
+      expect(receivedEvents()[0]?.[1].contactInfoCapture?.infoTypes).toEqual([
+        "email",
+      ])
+    })
+
+    test("costs the same DB, service and queue calls with or without a phone/email; only the event payload differs", async () => {
+      const mocks: Record<string, ReturnType<typeof vi.fn>> = {
+        mockCreateOrUpdate,
+        mockCreateOrUpdateWithAttachments,
+        mockFindLastByConversation,
+        mockCreateMessageRepository,
+        mockFindContactInbox,
+        mockRunChannelHandler,
+        mockBroadcast,
+        mockEmit,
+        mockBuildContext,
+        mockresolveTenantSettings,
+        mockUpdateContactFromMessage,
+        mockContactUnblockIfBlocked,
+        mockConversationFindOrCreate,
+        mockAutomatedResponseEnqueueFlowAction,
+        mockIntegrationQueueAdd,
+        mockCreateNewContactWithMac,
+        mockWorkspaceFind,
+        mockQuotaIncrement,
+        mockContactUpdate,
+        mockAdoptPhoneNumberIfSafe,
+        mockSetAvatarIfEmptyOrSentinel,
+        mockUpdateTracking,
+        mockInvalidateTracking,
+        mockRecordInboundActivity,
+        mockWorkspaceIsActiveNow,
+        mockAppointmentCancelByToken,
+        mockParseAppointmentCancelPostback,
+        mockVerifyAppointmentCancelPostback,
+        mockChatQueueAdd,
+        mockSyncScopedIdentity,
+        mockSyncExistingContactIdentity,
+        mockIsUniqueViolationError,
+        mockDetectFlowVersion,
+        mockContactProfileRefresh,
+        mockRecordProfileRefreshFailure,
+        mockResolveIntegrationContextFromContactInbox,
+        mockUploaderPutObject,
+        mockMarkReadByOutbound,
+        mockRecordInboundDelivery,
+        mockPromoteStandbyDelivery,
+        mockDistributedLockRunExclusive,
+        mockResolveChannelPostForComment,
+        mockRecordContactInboxPostComment,
+      }
+      const counts = () =>
+        Object.fromEntries(
+          Object.entries(mocks).map(([name, mock]) => [
+            name,
+            mock.mock.calls.length,
+          ]),
+        )
+
+      mockUpdateContactFromMessage.mockResolvedValueOnce({})
+      await receiveWithText("just chatting here")
+      const withoutInfo = counts()
+      const eventWithoutInfo = receivedEvents()[0]?.[1]
+
+      vi.clearAllMocks()
+      mockFindContactInbox.mockResolvedValue({
+        ...fakeContactInbox,
+        lastIncomingMessageAt: null,
+        contact: fakeContact,
+      })
+      mockUpdateContactFromMessage.mockResolvedValueOnce({
+        phoneNumber: "+84901234567",
+        email: "a@example.com",
+      })
+      await receiveWithText("0901234567 a@example.com")
+      const withInfo = counts()
+      const eventWithInfo = receivedEvents()[0]?.[1]
+
+      expect(withInfo).toEqual(withoutInfo)
+      expect(mockContactInfoCaptureAdd).not.toHaveBeenCalled()
+      expect(eventWithoutInfo.contactInfoCapture).toBeUndefined()
+      expect(eventWithInfo.contactInfoCapture).toBeDefined()
+      expect({ ...eventWithInfo, contactInfoCapture: undefined }).toEqual({
+        ...eventWithoutInfo,
+        contactInfoCapture: undefined,
+      })
+    })
+
+    test("omits the field when nothing was extracted, with the same single extractor call", async () => {
+      mockUpdateContactFromMessage.mockResolvedValueOnce({})
+
+      await receiveWithText("just chatting here")
+
+      expect(mockUpdateContactFromMessage).toHaveBeenCalledTimes(1)
+      expect(receivedEvents()).toHaveLength(1)
+      expect(receivedEvents()[0]?.[1].contactInfoCapture).toBeUndefined()
+    })
+
+    test("an extraction failure still saves the message and emits it without the field", async () => {
+      mockUpdateContactFromMessage.mockRejectedValueOnce(new Error("db down"))
+
+      await receiveWithText("0901234567")
+
+      expect(receivedEvents()).toHaveLength(1)
+      expect(receivedEvents()[0]?.[1].contactInfoCapture).toBeUndefined()
+      expect(receivedEvents()[0]?.[1].origin).toBe("inbound")
+    })
+  })
+
   test("marks a new outgoing echo read when no recent outgoing row matches", async () => {
     mockFindLastByConversation.mockResolvedValueOnce([])
     mockRunChannelHandler.mockResolvedValue({
@@ -1367,6 +1697,7 @@ describe("receiveMessage — message repository branch", () => {
         lastMessageAt: fakeCreatedMessage.createdAt,
       },
       contactLocation: null,
+      referralEventKey: fakeCreatedMessage.sourceId,
       at: fakeCreatedMessage.createdAt,
       // Native-app echo closes the waiting window as an external human reply.
       isExternalHumanEcho: true,
@@ -2119,6 +2450,455 @@ describe("receiveMessage — message repository branch", () => {
     expect(mockAutomatedResponseEnqueueFlowAction).toHaveBeenCalledWith({
       kind: "postback",
       data: expect.objectContaining({ action: postbackAction }),
+    })
+  })
+
+  describe("a step's Skip button tap", () => {
+    const CHALLENGE_ID = "11612473309626368"
+    const SKIP_PAYLOAD = `STEP_INPUT_SKIP|${CHALLENGE_ID}`
+    const stepChallenge = {
+      type: "step",
+      data: {
+        flowId: "flow-1",
+        flowVersionId: "fv-1",
+        nodeId: "node-1",
+        stepId: "step-1",
+        attempts: 1,
+        lastAttemptAt: new Date(),
+        challengeId: CHALLENGE_ID,
+      },
+    }
+
+    function skipJob() {
+      return mockIntegrationQueueAdd.mock.calls.find(
+        ([action]) => action === "resolveStepInput",
+      )
+    }
+
+    function mockSkipTap(overrides: Record<string, unknown> = {}) {
+      mockRunChannelHandler.mockResolvedValue({
+        message: { ...baseIncomingMessage, text: "Skip", attachments: [] },
+        contact: { sourceId: "psid-123", firstName: "Test" },
+        postbackAction: null,
+        quickReplyAction: null,
+        ref: null,
+        ...overrides,
+      })
+    }
+
+    function pendingStepChallengeOnConversation() {
+      mockConversationFindOrCreate.mockResolvedValue({
+        ...fakeConversation,
+        additionalAttributes: { challenge: stepChallenge },
+      })
+      mockDetectFlowVersion.mockResolvedValue({
+        flowVersion: {
+          id: "fv-1",
+          nodes: [
+            {
+              id: "node-1",
+              data: {
+                details: {
+                  steps: [
+                    {
+                      id: "step-1",
+                      stepType: "getUserData",
+                      skipButtonLabel: "Bỏ qua",
+                    },
+                  ],
+                },
+              },
+            },
+          ],
+        },
+        useLatestFlowVersion: false,
+      })
+    }
+
+    test.each([
+      [
+        "a quick reply (Messenger, Instagram)",
+        { quickReplyAction: SKIP_PAYLOAD },
+      ],
+      [
+        "a postback (WhatsApp, Telegram, Zalo, TikTok)",
+        { postbackAction: SKIP_PAYLOAD },
+      ],
+    ])("%s is resolved by its own job, not as a flow action", async (_label, tap) => {
+      mockSkipTap(tap)
+
+      const result = await receiveMessage(baseProps)
+
+      expect(result.stepInputSkipHandled).toBe(true)
+      expect(result.postbackAction).toBeNull()
+      expect(result.quickReplyAction).toBeNull()
+      expect(mockAutomatedResponseEnqueueFlowAction).not.toHaveBeenCalled()
+      expect(logger.warn).not.toHaveBeenCalledWith(
+        expect.anything(),
+        "Dropping undecodable flow action from channel webhook",
+      )
+      expect(skipJob()).toEqual([
+        "resolveStepInput",
+        {
+          type: "resolveStepInput",
+          data: {
+            conversationId: "conv-1",
+            contactInboxId: expect.any(String),
+            challengeId: CHALLENGE_ID,
+            reason: "user_skipped",
+            messageId: fakeCreatedMessage.id,
+            messageCreatedAt: fakeCreatedMessage.createdAt,
+          },
+        },
+        // Active-only dedup, never a fixed jobId.
+        { deduplication: { id: `step-input-conv-1-${CHALLENGE_ID}` } },
+      ])
+    })
+
+    test("a workspace that is no longer active resolves nothing, but the text is still not routed as a reply", async () => {
+      mockWorkspaceIsActiveNow.mockReturnValue(false)
+      mockSkipTap({ postbackAction: SKIP_PAYLOAD })
+
+      const result = await receiveMessage(baseProps)
+
+      expect(skipJob()).toBeUndefined()
+      expect(result.stepInputSkipHandled).toBe(true)
+    })
+
+    test("a standby (listen-only) delivery resolves nothing", async () => {
+      mockSkipTap({
+        postbackAction: SKIP_PAYLOAD,
+        threadControl: { delivery: "standby", ownerRole: "ai_agent" },
+      })
+
+      const result = await receiveMessage(baseProps)
+
+      expect(skipJob()).toBeUndefined()
+      expect(result.suppressAutomation).toBe(true)
+    })
+
+    test("a redelivered tap (message already stored) still enqueues the idempotent resolution, so a first failed enqueue is recoverable", async () => {
+      mockCreateOrUpdate.mockResolvedValue({
+        message: fakeCreatedMessage,
+        isNew: false,
+      })
+      mockSkipTap({ postbackAction: SKIP_PAYLOAD })
+
+      await receiveMessage(baseProps)
+
+      // Safe to repeat: the dedup id collapses it while a job is active and
+      // the challenge claim settles it once. No flow action is re-run.
+      expect(skipJob()).toBeDefined()
+      expect(mockAutomatedResponseEnqueueFlowAction).not.toHaveBeenCalled()
+    })
+
+    test("a failed enqueue fails the job so the webhook is retried, and the retry then enqueues it", async () => {
+      mockSkipTap({ postbackAction: SKIP_PAYLOAD })
+      mockIntegrationQueueAdd.mockRejectedValueOnce(new Error("redis down"))
+
+      await expect(receiveMessage(baseProps)).rejects.toThrow("redis down")
+
+      mockCreateOrUpdate.mockResolvedValue({
+        message: fakeCreatedMessage,
+        isNew: false,
+      })
+      mockIntegrationQueueAdd.mockClear()
+      await receiveMessage(baseProps)
+
+      expect(skipJob()).toBeDefined()
+    })
+
+    test.each([
+      ["a non-numeric id", "STEP_INPUT_SKIP|abc"],
+      ["an oversized id", "STEP_INPUT_SKIP|99999999999999999999"],
+    ])("%s is dropped like any undecodable payload", async (_label, payload) => {
+      mockSkipTap({ postbackAction: payload })
+
+      const result = await receiveMessage(baseProps)
+
+      expect(result.stepInputSkipHandled).toBe(false)
+      expect(result.postbackAction).toBeNull()
+      expect(skipJob()).toBeUndefined()
+    })
+
+    test("a channel that sends the button title keeps it and reads no flow", async () => {
+      pendingStepChallengeOnConversation()
+      mockDetectFlowVersion.mockClear()
+      mockSkipTap({ postbackAction: SKIP_PAYLOAD, buttonTitle: "Skip" })
+
+      await receiveMessage(baseProps)
+
+      expect(mockDetectFlowVersion).not.toHaveBeenCalled()
+      expect(mockCreateOrUpdate).toHaveBeenCalledWith(
+        expect.objectContaining({ text: "Skip" }),
+      )
+    })
+
+    test.each([
+      ["Telegram (bare payload as text)", "telegram", SKIP_PAYLOAD],
+      ["Zalo (prefixed payload as text)", "zalo", `postback_${SKIP_PAYLOAD}`],
+    ])("%s is stored with the label the contact pressed", async (_label, integrationType, text) => {
+      pendingStepChallengeOnConversation()
+      mockSkipTap({
+        postbackAction: SKIP_PAYLOAD,
+        message: { ...baseIncomingMessage, text, attachments: [] },
+      })
+
+      await receiveMessage({ ...baseProps, integrationType })
+
+      expect(mockCreateOrUpdate).toHaveBeenCalledWith(
+        expect.objectContaining({ text: "Bỏ qua" }),
+      )
+      expect(skipJob()).toBeDefined()
+    })
+
+    test("keeps the raw text, without failing the save, when the challenge or flow is gone", async () => {
+      mockDetectFlowVersion.mockRejectedValue(
+        new Error("FlowVersion not found"),
+      )
+      mockConversationFindOrCreate.mockResolvedValue({
+        ...fakeConversation,
+        additionalAttributes: { challenge: stepChallenge },
+      })
+      mockSkipTap({
+        postbackAction: SKIP_PAYLOAD,
+        message: {
+          ...baseIncomingMessage,
+          text: SKIP_PAYLOAD,
+          attachments: [],
+        },
+      })
+
+      await receiveMessage({ ...baseProps, integrationType: "telegram" })
+
+      expect(mockCreateOrUpdate).toHaveBeenCalledWith(
+        expect.objectContaining({ text: SKIP_PAYLOAD }),
+      )
+      expect(skipJob()).toBeDefined()
+    })
+  })
+
+  describe("a form response carrying uploaded files", () => {
+    const FILE_PATH = "public/whatsapp/ws-1/int-1/2026/10/06/111-pass.pdf"
+    const flowResponse = {
+      flow_token: "token",
+      docs: [{ id: "111", file_name: "Pass.pdf" }],
+    }
+    const storedFile = {
+      status: "stored",
+      mediaId: "111",
+      fileName: "Pass.pdf",
+      mimeType: "application/pdf",
+      size: 10,
+    }
+    const failedFile = {
+      status: "failed",
+      mediaId: "111",
+      fileName: "Pass.pdf",
+      mimeType: "application/pdf",
+      reason: "download_failed",
+    }
+    const flowResponseAttributes = (files?: Record<string, unknown>) => ({
+      type: "whatsapp_flow_response",
+      name: "flow",
+      flowResponse,
+      flowToken: "token",
+      decoded: null,
+      ...(files ? { files } : {}),
+    })
+    const storedAttachment = {
+      id: "att-1",
+      sourceId: "111",
+      originPath: FILE_PATH,
+      createdAt: new Date(),
+      messageCreatedAt: new Date(),
+    }
+    const expectedFlowFiles = {
+      docs: [
+        {
+          mediaId: "111",
+          fileName: "Pass.pdf",
+          mimeType: "application/pdf",
+          size: 10,
+          url: `https://files.example.test/${FILE_PATH}`,
+        },
+      ],
+    }
+    const postbackAction = encodeButtonPayload({ flowId: "42", buttonId: "7" })
+
+    const incomingAttachment = {
+      sourceId: "111",
+      fileType: "file",
+      mimeType: "application/pdf",
+      originPath: FILE_PATH,
+      size: 10,
+      name: "Pass.pdf",
+    }
+
+    /** The delivery the channel parsed, with the attachments it stored. */
+    const deliver = (
+      files: Record<string, unknown> | undefined,
+      options: {
+        attachments?: unknown[]
+        action?: Record<string, unknown>
+      } = {},
+    ) =>
+      mockRunChannelHandler.mockResolvedValue({
+        message: {
+          ...baseIncomingMessage,
+          text: "Sent",
+          contentAttributes: flowResponseAttributes(files),
+          attachments: options.attachments ?? [],
+        },
+        contact: { sourceId: "psid-123", firstName: "Test" },
+        postbackAction: null,
+        quickReplyAction: null,
+        ref: null,
+        ...(options.action ?? { postbackAction }),
+      })
+
+    /**
+     * The saved copy the repository returns. A delivery with attachments is
+     * saved with them (rows included); one without goes through the plain
+     * upsert, which returns the row without its attachments.
+     */
+    const saved = (
+      files: Record<string, unknown> | undefined,
+      attachments: unknown[],
+    ) => {
+      const message = {
+        ...fakeCreatedMessage,
+        contentAttributes: flowResponseAttributes(files),
+      }
+      mockCreateOrUpdateWithAttachments.mockResolvedValue({
+        result: { ...message, attachments },
+        isNew: true,
+      })
+      mockCreateOrUpdate.mockResolvedValue({ message, isNew: true })
+    }
+
+    const postbackPayload = () =>
+      (
+        mockAutomatedResponseEnqueueFlowAction.mock.calls.at(-1)?.[0] as {
+          data: { payload: unknown }
+        }
+      ).data.payload
+
+    test("the postback job carries the saved files with their public URLs", async () => {
+      deliver({ docs: [storedFile] }, { attachments: [incomingAttachment] })
+      saved({ docs: [storedFile] }, [storedAttachment])
+
+      await receiveMessage(baseProps)
+
+      expect(postbackPayload()).toEqual({
+        waFlowResponse: flowResponse,
+        flowFiles: expectedFlowFiles,
+      })
+      expect(mockFindMessageWithAttachments).not.toHaveBeenCalled()
+    })
+
+    test("the template-button job carries them too", async () => {
+      deliver(
+        { docs: [storedFile] },
+        {
+          attachments: [incomingAttachment],
+          action: { templateFlowToken: "template-token" },
+        },
+      )
+      saved({ docs: [storedFile] }, [storedAttachment])
+
+      await receiveMessage(baseProps)
+
+      expect(mockIntegrationQueueAdd).toHaveBeenCalledWith(
+        "captureTemplateFlowResponse",
+        expect.objectContaining({
+          data: expect.objectContaining({
+            templateFlowToken: "template-token",
+            flowResponse,
+            flowFiles: expectedFlowFiles,
+          }),
+        }),
+        { jobId: "template-flow-response-msg-created" },
+      )
+    })
+
+    /** A copy stored by an earlier delivery: the upsert finds it, `isNew` false. */
+    const savedEarlier = (
+      files: Record<string, unknown>,
+      extraAttributes: Record<string, unknown> = {},
+    ) => {
+      const message = {
+        ...fakeCreatedMessage,
+        contentAttributes: {
+          ...flowResponseAttributes(files),
+          ...extraAttributes,
+        },
+      }
+      mockCreateOrUpdateWithAttachments.mockResolvedValue({
+        result: { ...message, attachments: [] },
+        isNew: false,
+      })
+      mockCreateOrUpdate.mockResolvedValue({ message, isNew: false })
+    }
+
+    test("a plain redelivery of a stored response enqueues nothing again", async () => {
+      deliver({ docs: [storedFile] })
+      savedEarlier({ docs: [storedFile] })
+
+      await receiveMessage(baseProps)
+
+      expect(mockAutomatedResponseEnqueueFlowAction).not.toHaveBeenCalled()
+    })
+
+    test("the saved copy decides: the owner delivery of a standby copy keeps its stored files", async () => {
+      // The standby copy saved earlier has the file; this owner delivery could
+      // not download it again. The saved row comes back without attachments.
+      deliver(
+        { docs: [failedFile] },
+        { action: { postbackAction, threadControl: { delivery: "owner" } } },
+      )
+      savedEarlier({ docs: [storedFile] }, { threadControlDelivery: "standby" })
+      mockPromoteStandbyDelivery.mockResolvedValueOnce(true)
+      mockFindMessageWithAttachments.mockResolvedValueOnce({
+        ...fakeCreatedMessage,
+        attachments: [storedAttachment],
+      })
+
+      await receiveMessage(baseProps)
+
+      expect(mockFindMessageWithAttachments).toHaveBeenCalledWith({
+        id: fakeCreatedMessage.id,
+        createdAt: fakeCreatedMessage.createdAt,
+        conversationId: "conv-1",
+        workspaceId: "ws-1",
+      })
+      expect(postbackPayload()).toEqual({
+        waFlowResponse: flowResponse,
+        flowFiles: expectedFlowFiles,
+      })
+    })
+
+    test("a file that could not be kept leaves its answer empty, not raw, without a lookup", async () => {
+      deliver({ docs: [failedFile] })
+      saved({ docs: [failedFile] }, [])
+
+      await receiveMessage(baseProps)
+
+      expect(postbackPayload()).toEqual({
+        waFlowResponse: flowResponse,
+        flowFiles: { docs: [] },
+      })
+      expect(mockFindMessageWithAttachments).not.toHaveBeenCalled()
+    })
+
+    test("a response without files adds no file field to the job", async () => {
+      deliver(undefined)
+      saved(undefined, [])
+
+      await receiveMessage(baseProps)
+
+      expect(postbackPayload()).toEqual({ waFlowResponse: flowResponse })
+      expect(mockFindMessageWithAttachments).not.toHaveBeenCalled()
     })
   })
 
@@ -3247,6 +4027,7 @@ describe("receiveMessage — new contact MAC gate", () => {
         lastBtnTitle: "Choose plan",
       },
       contactLocation: { latitude: 10.75, longitude: 106.66 },
+      referralEventKey: fakeCreatedMessage.sourceId,
       at: fakeCreatedMessage.createdAt,
       contactRepliedAt: fakeCreatedMessage.createdAt,
     })
@@ -4858,8 +5639,15 @@ describe("contact source taxonomy", () => {
             : undefined,
         ),
     )
-    mockResolveChannelPostForComment.mockResolvedValue("post-row-1")
-    mockRecordContactInboxPostComment.mockResolvedValue(true)
+    mockResolveChannelPostForComment.mockResolvedValue({
+      id: "post-row-1",
+      settings: {
+        hideComments: false,
+        hidePhoneComments: false,
+        skipComments: false,
+      },
+    })
+    mockRecordContactInboxPostComment.mockResolvedValue({ status: "inserted" })
   })
 
   afterEach(() => {
@@ -4904,6 +5692,7 @@ describe("contact source taxonomy", () => {
         lastCommentMessageAt: fakeCreatedMessage.createdAt,
       },
       contactLocation: undefined,
+      referralEventKey: fakeCreatedMessage.sourceId,
       at: fakeCreatedMessage.createdAt,
       contactRepliedAt: fakeCreatedMessage.createdAt,
     })
@@ -4920,6 +5709,269 @@ describe("contact source taxonomy", () => {
         postId: "post-row-1",
         workspaceId: "ws-1",
       }),
+    )
+  })
+
+  describe("per-post comment settings", () => {
+    const settings = (
+      overrides: Partial<{
+        hideComments: boolean
+        hidePhoneComments: boolean
+        skipComments: boolean
+      }>,
+    ) => ({
+      id: "post-row-1",
+      settings: {
+        hideComments: false,
+        hidePhoneComments: false,
+        skipComments: false,
+        ...overrides,
+      },
+    })
+    const comment = (message: string) => ({
+      integrationType: "messenger",
+      integrationIdentifier: "inbox-1",
+      commentData: {
+        commentId: "comment-1",
+        fromId: "commenter-1",
+        fromName: "Commenter",
+        message,
+        postId: "post-1",
+        createdTime: 0,
+      },
+    })
+    const hideCalls = () =>
+      mockChatQueueAdd.mock.calls.filter(
+        ([action]) => action === "changeChannelMessageState",
+      )
+    const automationData = () =>
+      mockIntegrationQueueAdd.mock.calls.find(
+        ([action]) => action === "processCommentAutomation",
+      )?.[1]?.data
+
+    test("a post that hides all comments queues one hide and tells the automation", async () => {
+      mockResolveChannelPostForComment.mockResolvedValue(
+        settings({ hideComments: true }),
+      )
+
+      await receiveComment(comment("hello"))
+
+      expect(hideCalls()).toHaveLength(1)
+      expect(hideCalls()[0]?.[2]).toMatchObject({
+        jobId: "post-hide-comment-comment-1",
+      })
+      expect(hideCalls()[0]?.[1].data).toMatchObject({
+        hidden: true,
+        message: { id: fakeCreatedMessage.id },
+      })
+      expect(automationData()).toMatchObject({ postHidesComment: true })
+    })
+
+    test("a comment with a phone number is hidden by the phone switch only when it has one", async () => {
+      mockResolveChannelPostForComment.mockResolvedValue(
+        settings({ hidePhoneComments: true }),
+      )
+
+      await receiveComment(comment("call me 0912 345 678"))
+      expect(hideCalls()).toHaveLength(1)
+
+      mockChatQueueAdd.mockClear()
+      mockIntegrationQueueAdd.mockClear()
+      await receiveComment(comment("hello there"))
+      expect(hideCalls()).toHaveLength(0)
+      expect(automationData()).not.toHaveProperty("postHidesComment", true)
+    })
+
+    test("counts a new comment with a phone number even with every switch off", async () => {
+      await receiveComment(comment("my number is 0912 345 678"))
+
+      expect(mockRecordPhoneComment).toHaveBeenCalledWith({
+        comment: {
+          createdAt: fakeCreatedMessage.createdAt,
+          id: fakeCreatedMessage.id,
+        },
+        id: "post-row-1",
+        workspaceId: "ws-1",
+      })
+      expect(hideCalls()).toHaveLength(0)
+    })
+
+    test("a phone comment is still counted when the workspace is inactive, with no hide and no read marker", async () => {
+      mockResolveChannelPostForComment.mockResolvedValue(
+        settings({ hideComments: true, skipComments: true }),
+      )
+      mockWorkspaceIsActiveNow.mockReturnValueOnce(false)
+
+      await receiveComment(comment("my number is 0912 345 678"))
+
+      expect(mockRecordPhoneComment).toHaveBeenCalledWith({
+        comment: {
+          createdAt: fakeCreatedMessage.createdAt,
+          id: fakeCreatedMessage.id,
+        },
+        id: "post-row-1",
+        workspaceId: "ws-1",
+      })
+      expect(hideCalls()).toHaveLength(0)
+      expect(mockMarkReadBySkippedPost).not.toHaveBeenCalled()
+      expect(automationData()).toBeUndefined()
+    })
+
+    test("an ordinary comment on a post with no switches costs no extra work", async () => {
+      await receiveComment(comment("hello"))
+
+      expect(mockRecordPhoneComment).not.toHaveBeenCalled()
+      expect(mockMarkReadBySkippedPost).not.toHaveBeenCalled()
+      expect(hideCalls()).toHaveLength(0)
+      expect(automationData()).not.toHaveProperty("postHidesComment", true)
+    })
+
+    test("skipping comments marks the new comment as read at its own time", async () => {
+      mockResolveChannelPostForComment.mockResolvedValue(
+        settings({ skipComments: true }),
+      )
+
+      await receiveComment(comment("hello"))
+
+      expect(mockMarkReadBySkippedPost).toHaveBeenCalledWith({
+        conversationId: "conv-1",
+        readAt: fakeCreatedMessage.createdAt,
+        workspaceId: "ws-1",
+      })
+      expect(automationData()).toBeDefined()
+    })
+
+    test("a failing read marker never fails the comment", async () => {
+      mockResolveChannelPostForComment.mockResolvedValue(
+        settings({ skipComments: true }),
+      )
+      mockMarkReadBySkippedPost.mockRejectedValueOnce(new Error("db down"))
+
+      await expect(receiveComment(comment("hello"))).resolves.toBeUndefined()
+      expect(automationData()).toBeDefined()
+    })
+
+    test("every stored comment is offered to the webhook counter, with the post's root id and the stored comment", async () => {
+      await receiveComment(comment("hello"))
+
+      expect(mockRecordWebhookComment).toHaveBeenCalledExactlyOnceWith(
+        expect.objectContaining({
+          channelPostId: "post-row-1",
+          comment: {
+            createdAt: fakeCreatedMessage.createdAt,
+            id: fakeCreatedMessage.id,
+          },
+          externalPostId: "post-1",
+          workspaceId: "ws-1",
+        }),
+      )
+    })
+
+    test("a redelivered comment asks the webhook counter again; its mark keeps the count to one", async () => {
+      mockCreateOrUpdate.mockResolvedValue({
+        isNew: false,
+        message: fakeCreatedMessage,
+      })
+      mockCreateOrUpdateWithAttachments.mockResolvedValue({
+        isNew: false,
+        result: { ...fakeCreatedMessage, attachments: [] },
+      })
+
+      await receiveComment(comment("hello"))
+
+      expect(mockRecordWebhookComment).toHaveBeenCalledTimes(1)
+    })
+
+    test("a failing webhook count never fails the job, so the steps that run once per new comment still run", async () => {
+      mockRecordWebhookComment.mockRejectedValueOnce(new Error("db down"))
+
+      await expect(receiveComment(comment("hello"))).resolves.toBeUndefined()
+      expect(automationData()).toBeDefined()
+    })
+
+    test("a failing phone count never fails the job, so the steps that run once per new comment still run", async () => {
+      mockRecordPhoneComment.mockRejectedValueOnce(new Error("db down"))
+
+      await expect(
+        receiveComment(comment("0912 345 678")),
+      ).resolves.not.toThrow()
+      expect(mockRecordPhoneComment).toHaveBeenCalledTimes(1)
+    })
+
+    test("a redelivered comment asks the counter again; its mark keeps the count to one", async () => {
+      mockCreateOrUpdate.mockResolvedValue({
+        isNew: false,
+        message: fakeCreatedMessage,
+      })
+      mockCreateOrUpdateWithAttachments.mockResolvedValue({
+        isNew: false,
+        result: { ...fakeCreatedMessage, attachments: [] },
+      })
+
+      await receiveComment(comment("my number is 0912 345 678"))
+
+      expect(mockRecordPhoneComment).toHaveBeenCalledTimes(1)
+    })
+
+    test("a failed hide enqueue propagates so the job retries", async () => {
+      mockResolveChannelPostForComment.mockResolvedValue(
+        settings({ hideComments: true }),
+      )
+      mockChatQueueAdd.mockRejectedValueOnce(new Error("redis down"))
+
+      await expect(receiveComment(comment("hello"))).rejects.toThrow(
+        "redis down",
+      )
+    })
+  })
+
+  test("writes liveComments as the source for a Facebook live comment contact", async () => {
+    vi.mocked(allIntegrations.messenger?.runAction)?.mockImplementation(
+      (action: string) =>
+        Promise.resolve(
+          action === "getCommentAttachment"
+            ? { isLive: true }
+            : { created_time: "2026-01-01T00:00:00.000Z" },
+        ),
+    )
+
+    await receiveComment({
+      integrationType: "messenger",
+      integrationIdentifier: "inbox-1",
+      commentData: {
+        commentId: "comment-live-1",
+        fromId: "commenter-1",
+        fromName: "Commenter",
+        message: "hello live",
+        postId: "post-1",
+        createdTime: 0,
+      },
+    })
+
+    const rows = await runCapturedNewContactCreate()
+    expect(rows).toContainEqual(
+      expect.objectContaining({ source: "liveComments" }),
+    )
+  })
+
+  test("writes liveComments as the source for an Instagram live comment contact", async () => {
+    await receiveComment({
+      integrationType: "instagram",
+      integrationIdentifier: "inbox-1",
+      commentData: {
+        commentId: "ig-live-comment-1",
+        fromId: "commenter-1",
+        fromName: "Commenter",
+        message: "hello live",
+        postId: "live-media-1",
+        createdTime: 0,
+        isLive: true,
+      },
+    })
+
+    const rows = await runCapturedNewContactCreate()
+    expect(rows).toContainEqual(
+      expect.objectContaining({ source: "liveComments" }),
     )
   })
 
@@ -5077,7 +6129,14 @@ describe("contact source taxonomy", () => {
         // The worker holds no vendor field mapping: whatever the channel
         // handler returns is passed through unchanged.
         await expect(fetchDetails()).resolves.toBe(details)
-        return "post-row-1"
+        return {
+          id: "post-row-1",
+          settings: {
+            hideComments: false,
+            hidePhoneComments: false,
+            skipComments: false,
+          },
+        }
       },
     )
 
@@ -5126,6 +6185,96 @@ describe("contact source taxonomy", () => {
 
     expect(mockResolveChannelPostForComment).not.toHaveBeenCalled()
     expect(mockRecordContactInboxPostComment).not.toHaveBeenCalled()
+  })
+
+  describe("post comment triggers", () => {
+    const comment = {
+      integrationType: "messenger",
+      integrationIdentifier: "inbox-1",
+      commentData: {
+        commentId: "comment-trig-1",
+        fromId: "commenter-1",
+        fromName: "Commenter",
+        message: "I want one",
+        postId: "post-1",
+        createdTime: 0,
+      },
+    }
+
+    test("a comment on a tracked post is handed to the trigger emitter with the recorded outcome", async () => {
+      await receiveComment(comment)
+
+      expect(mockEmitPostCommentTriggers).toHaveBeenCalledTimes(1)
+      expect(mockEmitPostCommentTriggers).toHaveBeenCalledWith(
+        expect.objectContaining({
+          channelPostId: "post-row-1",
+          commentId: "comment-trig-1",
+          commentText: "I want one",
+          conversationId: "conv-1",
+          externalPostId: "post-1",
+          outcome: { status: "inserted" },
+          savedComment: expect.objectContaining({ conversationId: "conv-1" }),
+        }),
+      )
+    })
+
+    test("a repeat comment hands over the existing outcome", async () => {
+      const firstAt = new Date(0)
+      mockRecordContactInboxPostComment.mockResolvedValue({
+        status: "existing",
+        commentedAt: firstAt,
+      })
+
+      await receiveComment(comment)
+
+      expect(mockEmitPostCommentTriggers).toHaveBeenCalledWith(
+        expect.objectContaining({
+          outcome: { status: "existing", commentedAt: firstAt },
+        }),
+      )
+    })
+
+    test("a channel that does not track posts fires nothing", async () => {
+      vi.mocked(
+        integrationService.identifyInboxAndIntegrationAuthFromIdentifier,
+      ).mockResolvedValue({
+        inbox: { ...fakeInbox, channel: "threads" },
+        integrationRow: fakeIntegrationRow,
+      } as never)
+
+      await receiveComment(comment)
+
+      expect(mockEmitPostCommentTriggers).not.toHaveBeenCalled()
+    })
+
+    test("a replayed missed comment fires nothing", async () => {
+      await receiveComment({
+        ...comment,
+        replay: { automationId: "automation-9" },
+      })
+
+      expect(mockEmitPostCommentTriggers).not.toHaveBeenCalled()
+    })
+
+    test("a workspace that is no longer active fires nothing", async () => {
+      mockWorkspaceIsActiveNow.mockReturnValue(false)
+      try {
+        await receiveComment(comment)
+      } finally {
+        mockWorkspaceIsActiveNow.mockReturnValue(true)
+      }
+
+      expect(mockEmitPostCommentTriggers).not.toHaveBeenCalled()
+    })
+
+    test("the page's own comment fires nothing", async () => {
+      await receiveComment({
+        ...comment,
+        commentData: { ...comment.commentData, fromId: "inbox-1" },
+      })
+
+      expect(mockEmitPostCommentTriggers).not.toHaveBeenCalled()
+    })
   })
 
   test("saves a Facebook video comment with the webhook's video attached", async () => {
@@ -5609,6 +6758,178 @@ describe("contact source taxonomy", () => {
     // The comment itself still reaches the inbox — a missing display name must
     // not cost the workspace a comment.
     expect(mockCreateMessageRepository).toHaveBeenCalled()
+    // …and it is looked at again later (#1715).
+    expect(mockWithholdTiktokComment).toHaveBeenCalledWith(
+      expect.objectContaining({
+        integrationIdentifier: "inbox-1",
+        commentData: expect.objectContaining({ commentId: "comment-tiktok-2" }),
+      }),
+    )
+  })
+
+  // #1715: once the account's own unique_identifier is known, a lookup that
+  // misses (photo posts) no longer withholds the reply.
+  test("answers a TikTok comment whose lookup missed when the commenter is not the remembered account", async () => {
+    vi.mocked(
+      integrationService.identifyInboxAndIntegrationAuthFromIdentifier,
+    ).mockResolvedValue({
+      inbox: { ...fakeInbox, channel: "tiktok" },
+      integrationRow: {
+        ...fakeIntegrationRow,
+        auth: { metadata: { ownerUniqueIdentifier: "+Owner/Unique1" } },
+      },
+    } as never)
+    mockResolveTiktokCommenterIdentity.mockResolvedValue(undefined)
+
+    await receiveComment({
+      integrationType: "tiktok",
+      integrationIdentifier: "inbox-1",
+      commentData: {
+        commentId: "comment-tiktok-photo-1",
+        fromId: "+ABc1D2/E0fGhijkl",
+        message: "bac",
+        postId: "photo-post-1",
+        createdTime: 1_783_674_105,
+      },
+    })
+
+    expect(mockWithholdTiktokComment).not.toHaveBeenCalled()
+    expect(mockIntegrationQueueAdd).toHaveBeenCalledWith(
+      "processCommentAutomation",
+      expect.anything(),
+      expect.objectContaining({ jobId: "comment-auto-comment-tiktok-photo-1" }),
+    )
+  })
+
+  test("skips a TikTok comment whose lookup missed when it is the remembered account's own", async () => {
+    vi.mocked(
+      integrationService.identifyInboxAndIntegrationAuthFromIdentifier,
+    ).mockResolvedValue({
+      inbox: { ...fakeInbox, channel: "tiktok" },
+      integrationRow: {
+        ...fakeIntegrationRow,
+        auth: { metadata: { ownerUniqueIdentifier: "+Owner/Unique1" } },
+      },
+    } as never)
+    mockResolveTiktokCommenterIdentity.mockResolvedValue(undefined)
+
+    await receiveComment({
+      integrationType: "tiktok",
+      integrationIdentifier: "inbox-1",
+      commentData: {
+        commentId: "comment-tiktok-own-1",
+        fromId: "+Owner/Unique1",
+        message: "thanks!",
+        postId: "photo-post-1",
+        createdTime: 1_783_674_105,
+      },
+    })
+
+    expect(mockCreateMessageRepository).not.toHaveBeenCalled()
+    expect(mockIntegrationQueueAdd).not.toHaveBeenCalledWith(
+      "processCommentAutomation",
+      expect.anything(),
+      expect.anything(),
+    )
+  })
+
+  test("remembers the account's unique_identifier when the lookup says the comment is its own", async () => {
+    vi.mocked(
+      integrationService.identifyInboxAndIntegrationAuthFromIdentifier,
+    ).mockResolvedValue({
+      inbox: { ...fakeInbox, channel: "tiktok" },
+      integrationRow: fakeIntegrationRow,
+    } as never)
+    mockResolveTiktokCommenterIdentity.mockResolvedValue({ isOwner: true })
+
+    await receiveComment({
+      integrationType: "tiktok",
+      integrationIdentifier: "inbox-1",
+      commentData: {
+        commentId: "comment-tiktok-own-2",
+        fromId: "+Owner/Unique1",
+        message: "thanks!",
+        postId: "video-1",
+        createdTime: 1_783_674_105,
+      },
+    })
+
+    expect(mockRememberTiktokOwnerIdentifier).toHaveBeenCalledWith({
+      integrationRow: { id: "integration-1", auth: {} },
+      workspaceId: "ws-1",
+      uniqueIdentifier: "+Owner/Unique1",
+    })
+    expect(mockCreateMessageRepository).not.toHaveBeenCalled()
+  })
+
+  test("a TikTok re-check stops when the comment is no longer withheld", async () => {
+    mockFindTiktokCommentToRecheck.mockResolvedValue(undefined)
+
+    await receiveComment({
+      integrationType: "tiktok",
+      integrationIdentifier: "inbox-1",
+      commentData: {
+        commentId: "comment-tiktok-3",
+        fromId: "+ABc1D2/E0fGhijkl",
+        postId: "video-1",
+        createdTime: 1_783_674_105,
+      },
+      tiktokIdentityRecheck: { source: "visibility" },
+    })
+
+    expect(
+      integrationService.identifyInboxAndIntegrationAuthFromIdentifier,
+    ).not.toHaveBeenCalled()
+    expect(mockResolveTiktokCommenterIdentity).not.toHaveBeenCalled()
+  })
+
+  // `set_to_public` may arrive without the text; the automation matches on the
+  // text stored when the comment was first withheld.
+  test("a TikTok re-check runs on the stored comment and settles it once the commenter is known", async () => {
+    vi.mocked(
+      integrationService.identifyInboxAndIntegrationAuthFromIdentifier,
+    ).mockResolvedValue({
+      inbox: { ...fakeInbox, channel: "tiktok" },
+      integrationRow: fakeIntegrationRow,
+    } as never)
+    mockFindTiktokCommentToRecheck.mockResolvedValue({
+      commentId: "comment-tiktok-4",
+      fromId: "+ABc1D2/E0fGhijkl",
+      message: "bac",
+      postId: "photo-post-1",
+      createdTime: 1_783_674_105,
+    })
+    mockResolveTiktokCommenterIdentity.mockResolvedValue({
+      displayName: "Commenter",
+      isOwner: false,
+    })
+
+    await receiveComment({
+      integrationType: "tiktok",
+      integrationIdentifier: "inbox-1",
+      commentData: {
+        commentId: "comment-tiktok-4",
+        fromId: "",
+        postId: "photo-post-1",
+        createdTime: 1_783_674_106,
+      },
+      tiktokIdentityRecheck: { source: "visibility" },
+    })
+
+    expect(mockSettleTiktokRecheck).toHaveBeenCalledWith({
+      integrationIdentifier: "inbox-1",
+      commentId: "comment-tiktok-4",
+    })
+    expect(mockIntegrationQueueAdd).toHaveBeenCalledWith(
+      "processCommentAutomation",
+      expect.objectContaining({
+        data: expect.objectContaining({
+          message: "bac",
+          fromId: "+ABc1D2/E0fGhijkl",
+        }),
+      }),
+      expect.anything(),
+    )
   })
 
   test("downloads and re-hosts a Threads commenter's avatar from the webhook payload", async () => {
@@ -5653,6 +6974,8 @@ describe("contact source taxonomy", () => {
       expect.stringMatching(AVATAR_STORAGE_PATH_PATTERN),
       expect.anything(),
       { ACL: "public-read", ContentLength: 3, ContentType: "image/jpeg" },
+      // No cancellation signal: an avatar upload has no deadline.
+      undefined,
     )
     expect(mockSetAvatarIfEmptyOrSentinel).toHaveBeenCalledWith(
       expect.objectContaining({

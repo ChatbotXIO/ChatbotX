@@ -3,11 +3,13 @@ import type { Metadata, Viewport } from "next"
 import { NextIntlClientProvider } from "next-intl"
 import { getLocale } from "next-intl/server"
 import type { ReactNode } from "react"
+import { DataTableLabelsBridge } from "@/components/data-table-labels-bridge"
 import { FormOptionalLabelBridge } from "@/components/form-optional-label-bridge"
 import { PublicEnvScript } from "@/components/public-env-script"
 import { SupportChatScript } from "@/components/support-chat-script"
 import { TimezoneSync } from "@/components/timezone-sync"
 import { env } from "@/env"
+import { TemplateInstallIntentGuard } from "@/features/templates/components/template-install-intent-guard"
 import { TenantProvider } from "@/features/tenant"
 import { getTenantSettings } from "@/features/tenant/utils"
 import { getDirection } from "@/i18n/direction"
@@ -84,10 +86,13 @@ export default async function RootLayout({ children }: Props) {
             <UiProvider>
               <NextIntlClientProvider>
                 <FormOptionalLabelBridge>
-                  <QueryProvider>
-                    <TimezoneSync timezone={timezone} />
-                    {children}
-                  </QueryProvider>
+                  <DataTableLabelsBridge>
+                    <QueryProvider>
+                      <TimezoneSync timezone={timezone} />
+                      <TemplateInstallIntentGuard />
+                      {children}
+                    </QueryProvider>
+                  </DataTableLabelsBridge>
                 </FormOptionalLabelBridge>
               </NextIntlClientProvider>
             </UiProvider>

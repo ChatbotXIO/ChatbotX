@@ -14,13 +14,17 @@ import {
 import { PlusIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { useMemo } from "react"
+import { defaultFn as addSequencesAction } from "./components/actions/schema/add-sequences"
 import { defaultFn as addTagsAction } from "./components/actions/schema/add-tags"
 import { defaultFn as clearCustomFieldAction } from "./components/actions/schema/clear-custom-field"
+import { defaultFn as pipelineAction } from "./components/actions/schema/pipeline"
+import { defaultFn as removeSequencesAction } from "./components/actions/schema/remove-sequences"
 import { defaultFn as removeTagsAction } from "./components/actions/schema/remove-tags"
 import { defaultFn as runGoogleSheetAction } from "./components/actions/schema/run-google-sheet"
 import { defaultFn as sendGoogleAdsConversionAction } from "./components/actions/schema/send-google-ads-conversion"
 import { defaultFn as sendMetaCapiEventAction } from "./components/actions/schema/send-meta-capi-event"
 import { defaultFn as setCustomFieldAction } from "./components/actions/schema/set-custom-field"
+import { defaultFn as startExternalStepAction } from "./components/actions/schema/start-external-step"
 import { defaultFn as startFlowAction } from "./components/actions/schema/start-flow"
 import { defaultFn as transferConversationToHumanAction } from "./components/actions/schema/transfer-conversation-to-human"
 
@@ -30,13 +34,17 @@ type ActionOption = {
   defaultFn:
     | typeof addTagsAction
     | typeof removeTagsAction
+    | typeof addSequencesAction
+    | typeof removeSequencesAction
     | typeof setCustomFieldAction
     | typeof clearCustomFieldAction
     | typeof startFlowAction
+    | typeof startExternalStepAction
     | typeof transferConversationToHumanAction
     | typeof sendMetaCapiEventAction
     | typeof sendGoogleAdsConversionAction
     | typeof runGoogleSheetAction
+    | typeof pipelineAction
 }
 
 export function AddAction({
@@ -48,8 +56,19 @@ export function AddAction({
   allowedTypes?: readonly TriggerAction[]
 }) {
   const t = useTranslations()
+  // Reference action-picker order; the actions only ChatbotX has come last.
   const options = useMemo(
     () => [
+      {
+        label: t("trigger.actions.startAnotherFlow"),
+        value: triggerActions.enum.startAnotherFlow,
+        defaultFn: startFlowAction,
+      },
+      {
+        label: t("trigger.actions.startExternalStep"),
+        value: triggerActions.enum.startExternalStep,
+        defaultFn: startExternalStepAction,
+      },
       {
         label: t("trigger.actions.addTag"),
         value: triggerActions.enum.addTag,
@@ -59,6 +78,16 @@ export function AddAction({
         label: t("trigger.actions.removeTag"),
         value: triggerActions.enum.removeTag,
         defaultFn: removeTagsAction,
+      },
+      {
+        label: t("flows.actions.subscribeSequence"),
+        value: triggerActions.enum.addSequence,
+        defaultFn: addSequencesAction,
+      },
+      {
+        label: t("flows.actions.unsubscribeSequence"),
+        value: triggerActions.enum.removeSequence,
+        defaultFn: removeSequencesAction,
       },
       {
         label: t("trigger.actions.setCustomField"),
@@ -71,14 +100,19 @@ export function AddAction({
         defaultFn: clearCustomFieldAction,
       },
       {
-        label: t("trigger.actions.startAnotherFlow"),
-        value: triggerActions.enum.startAnotherFlow,
-        defaultFn: startFlowAction,
-      },
-      {
         label: t("trigger.actions.transferConversationToHuman"),
         value: triggerActions.enum.transferConversationToHuman,
         defaultFn: transferConversationToHumanAction,
+      },
+      {
+        label: t("flows.actions.pipeline"),
+        value: triggerActions.enum.pipeline,
+        defaultFn: pipelineAction,
+      },
+      {
+        label: "Google Sheets",
+        value: triggerActions.enum.runGoogleSheet,
+        defaultFn: runGoogleSheetAction,
       },
       {
         label: t("trigger.actions.sendMetaCapiEvent"),
@@ -89,11 +123,6 @@ export function AddAction({
         label: t("trigger.actions.sendGoogleAdsConversion"),
         value: triggerActions.enum.sendGoogleAdsConversion,
         defaultFn: sendGoogleAdsConversionAction,
-      },
-      {
-        label: "Google Sheets",
-        value: triggerActions.enum.runGoogleSheet,
-        defaultFn: runGoogleSheetAction,
       },
     ],
     [t],

@@ -29,6 +29,7 @@ import { format } from "date-fns"
 import {
   DownloadIcon,
   EyeIcon,
+  InfoIcon,
   MoreHorizontalIcon,
   Trash2Icon,
 } from "lucide-react"
@@ -37,6 +38,12 @@ import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import prettyBytes from "pretty-bytes"
 import { use, useMemo, useState } from "react"
+import { LockBadge } from "@/features/templates/components/lock-badge"
+import {
+  TemplateLockedList,
+  useIsUndeletable,
+} from "@/features/templates/components/lock-context"
+import { useWorkspaceId } from "@/hooks/routing"
 import { AIFileProcessingStatus } from "./ai-file-processing-status"
 import { AIFilesCreate } from "./ai-files-create"
 import { DeleteAIFileDialog } from "./delete-ai-file-dialog"
@@ -47,10 +54,17 @@ type AIFilesTableProps = {
   promises: Promise<[Awaited<ReturnType<typeof listAIFiles>>]>
 }
 
-function RowActionCell({ aiFile }: { aiFile: AIFileWithProcessing }) {
+function RowActionCell({
+  aiFile,
+  workspaceId,
+}: {
+  aiFile: AIFileWithProcessing
+  workspaceId: string
+}) {
   const t = useTranslations()
   const [open, setOpen] = useState(false)
   const router = useRouter()
+  const undeletable = useIsUndeletable(aiFile.id)
 
   return (
     <>
@@ -64,6 +78,14 @@ function RowActionCell({ aiFile }: { aiFile: AIFileWithProcessing }) {
           }
         />
         <DropdownMenuContent align="end">
+          <DropdownMenuItem
+            render={
+              <Link href={`/space/${workspaceId}/ai-files/${aiFile.id}`}>
+                <InfoIcon className="me-2 h-4 w-4" />
+                {t("aiFiles.detail.details")}
+              </Link>
+            }
+          />
           <DropdownMenuItem
             render={
               <Link href={aiFile.url} rel="noopener" target="_blank">
@@ -82,6 +104,7 @@ function RowActionCell({ aiFile }: { aiFile: AIFileWithProcessing }) {
           />
           <DropdownMenuItem
             className="text-destructive"
+            disabled={undeletable}
             onClick={() => setOpen(true)}
           >
             <Trash2Icon className="me-2 h-4 w-4" />
@@ -108,6 +131,7 @@ export default function AIFilesTable({ promises }: AIFilesTableProps) {
 
   const router = useRouter()
   const t = useTranslations()
+  const workspaceId = useWorkspaceId()
 
   const columns = useMemo<ColumnDef<AIFileWithProcessing>[]>(
     () => [
@@ -124,8 +148,14 @@ export default function AIFilesTable({ promises }: AIFilesTableProps) {
           <Tooltip>
             <TooltipTrigger
               render={
-                <div className="inline-block max-w-[300px] truncate">
-                  {row.original.name}
+                <div className="flex max-w-[300px] items-center">
+                  <Link
+                    className="truncate"
+                    href={`/space/${workspaceId}/ai-files/${row.original.id}`}
+                  >
+                    {row.original.name}
+                  </Link>
+                  <LockBadge resourceId={row.original.id} />
                 </div>
               }
             />
@@ -193,11 +223,18 @@ export default function AIFilesTable({ promises }: AIFilesTableProps) {
           />
         ),
         cell: ({ row }) => (
-          <AIFileProcessingStatus
-            aiFileId={row.original.id}
-            chunksCount={row.original.chunksCount}
-            processingStatus={row.original.processingStatus}
-          />
+          <div className="flex flex-wrap items-center gap-1">
+            <AIFileProcessingStatus
+              aiFileId={row.original.id}
+              chunksCount={row.original.chunksCount}
+              processingStatus={row.original.processingStatus}
+            />
+            {row.original.processingRun?.status === "error" ? (
+              <Badge variant="destructive">
+                {t("aiFiles.processingRun.failedBadge")}
+              </Badge>
+            ) : null}
+          </div>
         ),
         enableSorting: false,
         enableHiding: true,
@@ -222,13 +259,15 @@ export default function AIFilesTable({ promises }: AIFilesTableProps) {
       {
         id: "actions",
         header: t("actions.actions"),
-        cell: ({ row }) => <RowActionCell aiFile={row.original} />,
+        cell: ({ row }) => (
+          <RowActionCell aiFile={row.original} workspaceId={workspaceId} />
+        ),
         size: 50,
         enableSorting: false,
         enableHiding: false,
       },
     ],
-    [t],
+    [t, workspaceId],
   )
 
   const { table } = useDataTable({
@@ -253,15 +292,31 @@ export default function AIFilesTable({ promises }: AIFilesTableProps) {
         <CardDescription>{t("aiFiles.description")}</CardDescription>
       </CardHeader>
       <CardContent>
-        <DataTable table={table}>
-          <DataTableToolbar table={table}>
-            <AIFilesCreate
-              onSuccess={() => {
-                router.refresh()
-              }}
-            />
-          </DataTableToolbar>
-        </DataTable>
+        <TemplateLockedList
+          resourceKind="aiFile"
+          rows={data}
+          workspaceId={workspaceId}
+        >
+          <DataTable table={table}>
+            <DataTableToolbar table={table}>
+              <AIFilesCreate
+                onSuccess={() => {
+                  router.refresh()
+                }}
+              />
+              <Button
+                nativeButton={false}
+                render={
+                  <Link href={`/space/${workspaceId}/ai-files/test-query`} />
+                }
+                size="sm"
+                variant="outline"
+              >
+                {t("aiFiles.testQuery.open")}
+              </Button>
+            </DataTableToolbar>
+          </DataTable>
+        </TemplateLockedList>
       </CardContent>
     </Card>
   )

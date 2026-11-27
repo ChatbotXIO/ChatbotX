@@ -13,7 +13,7 @@ const mocks = vi.hoisted(() => ({
     REALTIME_BROADCAST_SECRET: "secret",
   },
   findActiveByDomain: vi.fn(),
-  findByTenantId: vi.fn(),
+  findActiveByTenantId: vi.fn(),
   findTenantById: vi.fn(),
   findWorkspaceById: vi.fn(),
   hasEnterpriseFeatures: vi.fn(),
@@ -27,7 +27,7 @@ vi.mock("../src/integration-context/keys", () => ({
 vi.mock("../src/enterprise/custom-domain/service", () => ({
   customDomainService: {
     findActiveByDomain: mocks.findActiveByDomain,
-    findByTenantId: mocks.findByTenantId,
+    findActiveByTenantId: mocks.findActiveByTenantId,
   },
 }))
 
@@ -47,9 +47,11 @@ vi.mock("../src/workspace/service", () => ({
   workspaceService: { findById: mocks.findWorkspaceById },
 }))
 
-const { resolveTenantSettingsByDomain, resolveWorkspaceAppUrl } = await import(
-  "../src/platform/settings"
-)
+const {
+  resolveServingHost,
+  resolveTenantSettingsByDomain,
+  resolveWorkspaceAppUrl,
+} = await import("../src/platform/settings")
 
 beforeEach(() => {
   vi.clearAllMocks()
@@ -183,6 +185,55 @@ describe("resolveTenantSettingsByDomain", () => {
   })
 })
 
+describe("resolveServingHost", () => {
+  test("uses the platform host for the root tenant", async () => {
+    await expect(resolveServingHost("1")).resolves.toEqual({
+      tenantId: "1",
+      appUrl: BUILDER_URL,
+    })
+    expect(mocks.findTenantById).not.toHaveBeenCalled()
+  })
+
+  test("uses the platform host for a suspended tenant", async () => {
+    mocks.findTenantById.mockResolvedValue({
+      id: "tenant-1",
+      status: "suspended",
+    })
+
+    await expect(resolveServingHost("tenant-1")).resolves.toEqual({
+      tenantId: "1",
+      appUrl: BUILDER_URL,
+    })
+    expect(mocks.findActiveByTenantId).not.toHaveBeenCalled()
+  })
+
+  test("uses the platform host when an active tenant has no active domain", async () => {
+    mocks.findTenantById.mockResolvedValue({
+      id: "tenant-1",
+      status: "active",
+    })
+    mocks.findActiveByTenantId.mockResolvedValue(null)
+
+    await expect(resolveServingHost("tenant-1")).resolves.toEqual({
+      tenantId: "1",
+      appUrl: BUILDER_URL,
+    })
+  })
+
+  test("uses the active custom domain for an active tenant", async () => {
+    mocks.findTenantById.mockResolvedValue({
+      id: "tenant-1",
+      status: "active",
+    })
+    mocks.findActiveByTenantId.mockResolvedValue({ domain: CUSTOM_DOMAIN })
+
+    await expect(resolveServingHost("tenant-1")).resolves.toEqual({
+      tenantId: "tenant-1",
+      appUrl: `https://${CUSTOM_DOMAIN}`,
+    })
+  })
+})
+
 describe("resolveWorkspaceAppUrl", () => {
   test("uses the builder URL for root-tenant workspaces", async () => {
     mocks.findWorkspaceById.mockResolvedValue({
@@ -193,7 +244,7 @@ describe("resolveWorkspaceAppUrl", () => {
     await expect(
       resolveWorkspaceAppUrl({ workspaceId: "workspace-1" }),
     ).resolves.toBe(BUILDER_URL)
-    expect(mocks.findByTenantId).not.toHaveBeenCalled()
+    expect(mocks.findActiveByTenantId).not.toHaveBeenCalled()
   })
 
   test("uses the active custom domain for non-root tenant workspaces", async () => {
@@ -201,10 +252,9 @@ describe("resolveWorkspaceAppUrl", () => {
       id: "workspace-1",
       tenantId: "tenant-1",
     })
-    mocks.findByTenantId.mockResolvedValue([
-      { domain: "pending.customer.com", status: "pending" },
-      { domain: CUSTOM_DOMAIN, status: "active" },
-    ])
+    mocks.findActiveByTenantId.mockResolvedValue({
+      domain: CUSTOM_DOMAIN,
+    })
 
     await expect(
       resolveWorkspaceAppUrl({ workspaceId: "workspace-1" }),
@@ -216,10 +266,7 @@ describe("resolveWorkspaceAppUrl", () => {
       id: "workspace-1",
       tenantId: "tenant-1",
     })
-    mocks.findByTenantId.mockResolvedValue([
-      { domain: "pending.customer.com", status: "pending" },
-      { domain: "failed.customer.com", status: "failed" },
-    ])
+    mocks.findActiveByTenantId.mockResolvedValue(null)
 
     await expect(
       resolveWorkspaceAppUrl({ workspaceId: "workspace-1" }),

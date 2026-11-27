@@ -1,5 +1,8 @@
 import {
+  fulfillmentStatuses,
+  onlinePaymentProviders,
   orderActorTypes,
+  orderPaymentStatuses,
   orderShippingAddressSchema,
   orderSources,
   orderStatuses,
@@ -16,8 +19,19 @@ export const publicOrderResource = z.object({
   number: z.number().describe("Order number, counted per workspace."),
   status: orderStatuses,
   source: orderSources,
-  paymentMethod: paymentMethods,
-  paymentStatus: paymentStatuses,
+  paymentMethod: paymentMethods.describe(
+    "`cod` cash on delivery, `stripe` card or `paypal`, paid online.",
+  ),
+  paymentStatus: paymentStatuses.describe(
+    "`unpaid`, `paid`, or `refunded` once an online payment went back.",
+  ),
+  paymentExpiresAt: z
+    .date()
+    .nullable()
+    .describe(
+      "An online order still unpaid is cancelled at this time. Null for cash on delivery and once paid.",
+    ),
+  paidAt: z.date().nullable(),
   currency: z.string().describe("ISO 4217 code all amounts are in."),
   subtotal: z.number().describe("Sum of the lines before discounts and tax."),
   discountTotal: z.number(),
@@ -52,6 +66,24 @@ export const publicOrderResource = z.object({
   shippedAt: z.date().nullable(),
   concludedAt: z.date().nullable(),
   cancelledAt: z.date().nullable(),
+  externalId: z
+    .string()
+    .nullable()
+    .describe(
+      "The store's order id, for an order mirrored from a connected store: Shopify's order GID (`source: shopify`) or the WooCommerce site and order id such as `example.com#1234` (`source: woocommerce`).",
+    ),
+  externalName: z
+    .string()
+    .nullable()
+    .describe("The store's order name or number, e.g. `#1004`."),
+  fulfillmentStatus: fulfillmentStatuses
+    .nullable()
+    .describe(
+      "The mirrored store's fulfillment state; null for our own orders.",
+    ),
+  trackingCompany: z.string().nullable(),
+  trackingNumber: z.string().nullable(),
+  trackingUrl: z.string().nullable(),
   createdAt: z.date(),
   updatedAt: z.date(),
 })
@@ -95,9 +127,35 @@ export const publicOrderHistoryResource = z.object({
   createdAt: z.date(),
 })
 
+export const publicOrderPaymentResource = z.object({
+  id: z.string(),
+  provider: onlinePaymentProviders,
+  status: orderPaymentStatuses.describe(
+    "`open` the page can still be paid, `paid`, `expired`, or `refunded`.",
+  ),
+  amount: z.number(),
+  currency: z.string(),
+  livemode: z.boolean().describe("False for a test or sandbox payment."),
+  providerReference: z
+    .string()
+    .describe("The Stripe Checkout Session or PayPal order id."),
+  transactionId: z
+    .string()
+    .nullable()
+    .describe("The Stripe payment intent or PayPal capture id, once paid."),
+  refundId: z.string().nullable(),
+  expiresAt: z.date(),
+  paidAt: z.date().nullable(),
+  refundedAt: z.date().nullable(),
+  createdAt: z.date(),
+})
+
 export const publicOrderDetailResource = publicOrderResource.extend({
   items: z.array(publicOrderItemResource),
   history: z.array(publicOrderHistoryResource),
+  payments: z
+    .array(publicOrderPaymentResource)
+    .describe("Each attempt to pay the order online, newest first."),
 })
 export type OrderDetailResource = z.infer<typeof publicOrderDetailResource>
 
@@ -109,7 +167,19 @@ export const listOrdersPublicRequest = z.object({
   source: z
     .array(orderSources)
     .optional()
-    .describe("Only orders from these sources."),
+    .describe(
+      "Only orders from these sources. Left out, the store's current source decides: `shopify` orders while `general.storeSource` is `shopify`, all others otherwise.",
+    ),
+  paymentStatus: z
+    .array(paymentStatuses)
+    .optional()
+    .describe("Only orders in these payment states."),
+  fulfillmentStatus: z
+    .array(fulfillmentStatuses)
+    .optional()
+    .describe(
+      "Only mirrored (Shopify, WooCommerce) orders in these fulfillment states.",
+    ),
   contactId: zodBigintAsString()
     .optional()
     .describe("Only this contact's orders. Get it from `contacts.list`."),
@@ -127,7 +197,7 @@ export const listOrdersPublicRequest = z.object({
     .max(255)
     .optional()
     .describe(
-      "An order number, or part of the customer's name, phone or email.",
+      "An order number (ours, or the store's such as `#1004`), or part of the customer's name, phone or email.",
     ),
   page: z.coerce
     .number()
@@ -145,12 +215,34 @@ export const listOrdersPublicRequest = z.object({
     .describe("Orders per page, up to 100; defaults to 20."),
 })
 
+export const exportOrdersPublicRequest = listOrdersPublicRequest.omit({
+  page: true,
+  perPage: true,
+})
+
+export const exportOrdersPublicResponse = z.object({
+  csv: z
+    .string()
+    .describe(
+      "The orders as CSV (header row first): order, created at, status, payment, fulfillment, customer, email, phone, items, currency, total.",
+    ),
+  rowCount: z.number().int(),
+  truncated: z
+    .boolean()
+    .describe("True when more orders matched than one export returns (5000)."),
+})
+
 export const listOrdersPublicResponse = z.object({
   data: z.array(publicOrderListItemResource),
   pageCount: z.number(),
 })
 
 export const createOrderPublicRequest = z.object({
+  paymentMethod: paymentMethods
+    .optional()
+    .describe(
+      "How the customer pays; `cod` (cash on delivery) by default. `stripe` and `paypal` must be enabled in `ecommerceSettings` (`payments.paymentMethods`) and need a `contact`: the order then waits for its payment — get the page to pay on with `orders.getPaymentLink` and send it to the customer.",
+    ),
   contact: publicContactIdentifier
     .optional()
     .describe(
@@ -212,6 +304,15 @@ export const createOrderPublicRequest = z.object({
     .describe(
       "A discount code to apply (`discountCodes.list`); one that cannot be used refuses the order. Check it first with `discountCodes.validate`.",
     ),
+})
+
+export const orderPaymentLinkResponse = z.object({
+  url: z
+    .string()
+    .describe("The Stripe or PayPal page the customer pays the order on."),
+  expiresAt: z
+    .date()
+    .describe("The order is cancelled if it is not paid by then."),
 })
 
 export const orderIdRequest = z.object({

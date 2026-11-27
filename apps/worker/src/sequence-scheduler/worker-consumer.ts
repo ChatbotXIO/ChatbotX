@@ -4,17 +4,18 @@ import { isLockAcquisitionError, sequenceConnections } from "@chatbotx.io/redis"
 import { SchedulerClient } from "@chatbotx.io/scheduler"
 import { advanceEnrollment } from "@chatbotx.io/sequence-scheduler"
 import {
+  flowContinuationJobOptions,
   IntegrationJobAction,
   integrationQueue,
   queueNames,
   type SequenceSchedulerJobData,
 } from "@chatbotx.io/worker-config"
 import { Worker } from "bullmq"
-import { ensureBootstrapped } from "../lib/bootstrap"
 import { isBlockedWorkspace } from "../lib/is-blocked-workspace"
 import { instrumentWorker } from "../lib/job-observability"
 import { logger } from "../lib/logger"
 import { runJobWithAuditContext } from "../lib/run-job-with-audit-context"
+import { isShutdownRequested, onShutdown, runWorker } from "../lib/shutdown"
 import { revertDispatchToPending } from "./revert-dispatch"
 import { MAX_PROCESS } from "./services/constants"
 import { DispatchProcessorService } from "./services/dispatch-processor.service"
@@ -69,6 +70,14 @@ class DispatchConsumer {
     }
 
     const redisClient = await sequenceConnections.useExisting()
+    // Shutdown may have drained the registered closers while Redis was
+    // connecting; a Worker created now would never be closed.
+    if (isShutdownRequested()) {
+      logger.warn(
+        "Shutdown requested during startup; not starting dispatch consumer",
+      )
+      return
+    }
     this._scheduler = new SchedulerClient(redisClient)
 
     this.running = true
@@ -108,6 +117,11 @@ class DispatchConsumer {
         removeOnFail: { count: 0 },
       },
     )
+    // Unhandled, a Redis error would crash the process and every co-located
+    // queue with it.
+    this.consumer.on("error", (err) => {
+      logger.error({ err }, "Sequence scheduler worker error")
+    })
     this.consumer.on("failed", (job, error) => {
       logger.error(
         { err: error, jobId: job?.id },
@@ -229,6 +243,14 @@ class DispatchConsumer {
         return
       }
 
+      const sequenceMetadata = {
+        type: SEQUENCE_SCHEDULE_PAYLOAD_TYPE,
+        sequenceStepId: step?.id ?? "",
+        sequenceId: step?.sequenceId ?? "",
+        dispatchId: dispatch.id,
+        contactInboxId: dispatch.contactInboxId,
+      } as const
+
       await integrationQueue.add(
         IntegrationJobAction.sendSequenceFlow,
         {
@@ -242,16 +264,11 @@ class DispatchConsumer {
             enrollmentId: dispatch.enrollmentId,
             sequenceId: dispatch.sequenceId,
             bucket: dispatch.bucket,
-            metadata: {
-              type: SEQUENCE_SCHEDULE_PAYLOAD_TYPE,
-              sequenceStepId: step?.id ?? "",
-              sequenceId: step?.sequenceId ?? "",
-              dispatchId: dispatch.id,
-              contactInboxId: dispatch.contactInboxId,
-            },
+            metadata: sequenceMetadata,
           },
         },
         {
+          ...flowContinuationJobOptions(sequenceMetadata),
           jobId: `seq-${dispatch.id}-${dispatch.attempt}`,
           attempts: 3,
           backoff: { type: "exponential", delay: 5000 },
@@ -291,64 +308,11 @@ class DispatchConsumer {
 
 const consumer = new DispatchConsumer()
 
-let isShuttingDown = false
-
 async function startDispatchConsumer() {
   logger.info("Starting dispatch consumer")
 
-  try {
-    await ensureBootstrapped()
-    await consumer.start()
-  } catch (error) {
-    logger.error(error, "Error starting dispatch consumer")
-    throw error
-  }
+  await consumer.start()
 }
 
-async function stopDispatchConsumer() {
-  logger.info("Stopping dispatch consumer")
-
-  try {
-    await consumer.stop()
-    logger.info("Dispatch consumer stopped")
-  } catch (error) {
-    logger.error(error, "Error stopping dispatch consumer")
-    throw error
-  }
-}
-
-startDispatchConsumer().catch((error) => {
-  logger.error(error, "Error starting dispatch consumer")
-  process.exitCode = 1
-})
-
-const handleShutdownSignal = async (signal: "SIGINT" | "SIGTERM") => {
-  if (isShuttingDown) {
-    return
-  }
-  isShuttingDown = true
-
-  logger.info({ signal }, "Shutdown signal received")
-
-  try {
-    await stopDispatchConsumer()
-    process.exit(0)
-  } catch (error) {
-    logger.error(error, "Error during dispatch consumer shutdown")
-    process.exit(1)
-  }
-}
-
-process.on("SIGINT", () => {
-  handleShutdownSignal("SIGINT").catch((error) => {
-    logger.error(error, "Unhandled SIGINT shutdown error")
-    process.exit(1)
-  })
-})
-
-process.on("SIGTERM", () => {
-  handleShutdownSignal("SIGTERM").catch((error) => {
-    logger.error(error, "Unhandled SIGTERM shutdown error")
-    process.exit(1)
-  })
-})
+runWorker("sequence-consumer", startDispatchConsumer)
+onShutdown("sequence-consumer", () => consumer.stop())

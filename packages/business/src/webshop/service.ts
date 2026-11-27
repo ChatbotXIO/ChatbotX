@@ -1,9 +1,13 @@
 import { type DatabaseClient, db } from "@chatbotx.io/database/client"
-import type {
-  CartLine,
-  EcommerceSettings,
-  OrderShippingAddress,
-  ShippingType,
+import {
+  type CartLine,
+  type EcommerceSettings,
+  type ExternalStoreSource,
+  isAwaitingOnlinePayment,
+  isExternalStoreSource,
+  type OrderShippingAddress,
+  type PaymentMethod,
+  type ShippingType,
 } from "@chatbotx.io/database/partials"
 import {
   cartRepository,
@@ -43,10 +47,19 @@ import {
   productCategoryIds,
   splitOrderableItems,
 } from "../order/service"
-import { resolveTenantSettings } from "../platform/settings"
+import { orderPaymentService } from "../order-payment/service"
+import { resolveWorkspaceAppUrl } from "../platform/settings"
 import { productService } from "../product/service"
 import { productCategoryService } from "../product-category/service"
+import {
+  buildShopifyWebCheckoutUrl,
+  placeShopifyInAppOrder,
+} from "../shopify/checkout"
 import { vendorService } from "../vendor/service"
+import {
+  buildWooCommerceWebCheckoutUrl,
+  placeWooCommerceInAppOrder,
+} from "../woocommerce/checkout"
 import { workspaceService } from "../workspace/service"
 import { resolveWorkspaceFreezeReasonById } from "../workspace-lifecycle/with-blocked-owner-guard"
 import {
@@ -66,6 +79,8 @@ export type WebshopShopper = {
 }
 
 export type WebshopCheckoutForm = {
+  /** Cash on delivery when left out. */
+  paymentMethod?: PaymentMethod | null
   customerName?: string | null
   customerEmail?: string | null
   customerPhone?: string | null
@@ -123,8 +138,11 @@ const lineQuantity = (
       (candidate.variantId ?? null) === (line.variantId ?? null),
   )?.quantity ?? 0
 
-/** Adds `quantity` to a line, or a new line; 0 or less removes it. */
-const changeLine = (
+/**
+ * Adds `quantity` to a line, or appends a new line; 0 or less removes it. An
+ * existing line keeps its place so the cart does not reshuffle on +/-.
+ */
+export const changeLine = (
   lines: CartLine[],
   change: { productId: string; variantId: string | null; quantity: number },
   mode: "add" | "set",
@@ -137,17 +155,23 @@ const changeLine = (
     mode === "add"
       ? (current?.quantity ?? 0) + change.quantity
       : change.quantity
-  const others = lines.filter((line) => !sameLine(line))
-  return quantity > 0
-    ? [
-        ...others,
-        {
-          productId: change.productId,
-          variantId: change.variantId ?? null,
-          quantity: Math.min(quantity, 10_000),
-        },
-      ]
-    : others
+  if (quantity <= 0) {
+    return lines.filter((line) => !sameLine(line))
+  }
+  const cappedQuantity = Math.min(quantity, 10_000)
+  if (!current) {
+    return [
+      ...lines,
+      {
+        productId: change.productId,
+        variantId: change.variantId ?? null,
+        quantity: cappedQuantity,
+      },
+    ]
+  }
+  return lines.map((line) =>
+    sameLine(line) ? { ...line, quantity: cappedQuantity } : line,
+  )
 }
 
 /**
@@ -188,6 +212,29 @@ export const subtractOrderedLines = (
  * shows, keep a cart, check out, follow and rate their own orders. Prices
  * and stock always come from `orderService`, never from the cart.
  */
+/**
+ * The categories the shop shows: visible ones, and a sub-category only while
+ * its parent is shown too. A product keeps its top-level category, so under
+ * a hidden parent it is hidden as well: the sub-category would open on
+ * nothing.
+ */
+export const visibleShopCategories = <
+  TCategory extends { id: string; parentId: string | null; isVisible: boolean },
+>(
+  categories: TCategory[],
+): TCategory[] => {
+  const visibleIds = new Set(
+    categories
+      .filter((category) => category.isVisible)
+      .map((category) => category.id),
+  )
+  return categories.filter(
+    (category) =>
+      category.isVisible &&
+      (!category.parentId || visibleIds.has(category.parentId)),
+  )
+}
+
 /** A row of "You may also like": enough to browse, not a second catalog. */
 const RELATED_PRODUCTS_LIMIT = 10
 
@@ -207,7 +254,7 @@ class WebshopService extends BaseService {
       language: workspace.language,
       settings,
       ordering,
-      categories: categories.filter((category) => category.isVisible),
+      categories: visibleShopCategories(categories),
       vendors: vendors.data.filter((vendor) => vendor.isActive),
     }
   }
@@ -221,7 +268,10 @@ class WebshopService extends BaseService {
     page?: number
     perPage?: number
   }) {
-    return await productRepository.listForShop(input)
+    return await productRepository.listForShop({
+      ...input,
+      source: await ecommerceSettingsService.storeSource(input.workspaceId),
+    })
   }
 
   /**
@@ -240,6 +290,7 @@ class WebshopService extends BaseService {
   }) {
     return await productRepository.listRelatedForShop({
       workspaceId: input.workspaceId,
+      source: await ecommerceSettingsService.storeSource(input.workspaceId),
       product: input.product,
       limit: input.limit ?? RELATED_PRODUCTS_LIMIT,
     })
@@ -249,6 +300,7 @@ class WebshopService extends BaseService {
   async getProduct(input: { workspaceId: string; productId: string }) {
     const { data } = await productRepository.listForShop({
       workspaceId: input.workspaceId,
+      source: await ecommerceSettingsService.storeSource(input.workspaceId),
       productIds: [input.productId],
     })
     if (data.length === 0) {
@@ -592,9 +644,9 @@ class WebshopService extends BaseService {
     if (cart.lines.length === 0) {
       return null
     }
-    const [language, { appUrl }] = await Promise.all([
+    const [language, appUrl] = await Promise.all([
       resolveCustomerMessageLanguage(input),
-      resolveTenantSettings({ workspaceId: input.workspaceId }),
+      resolveWorkspaceAppUrl({ workspaceId: input.workspaceId }),
     ])
     const externalCheckout =
       settings.checkout.checkoutMode === "externalLink"
@@ -674,10 +726,15 @@ class WebshopService extends BaseService {
   }
 
   /**
-   * Places the cart as a cash-on-delivery order for the shopper. The store's
-   * rules are checked first (open, required fields, country); prices, stock
-   * and minimums are `orderService.place`'s. The cart is emptied in the same
-   * transaction, so a refused order keeps it.
+   * Places the cart as an order for the shopper, paid the way they chose.
+   * The store's rules are checked first (open, required fields, country);
+   * prices, stock and minimums are `orderService.place`'s. The cart is
+   * emptied in the same transaction, so a refused order keeps it.
+   *
+   * Paid online, the order is placed first (holding its stock) and the
+   * provider's page opened for it: `paymentUrl` is where the customer goes
+   * next. A page that cannot be opened cancels the order and puts its items
+   * back in the cart, so the customer can pick another way to pay.
    */
   async checkout(input: {
     shopper: WebshopShopper
@@ -690,8 +747,13 @@ class WebshopService extends BaseService {
     // A store that checks out on its own external page (to take payment
     // there) takes no order through the built-in checkout. `productPage`
     // only changes the product's Buy button, so a cart filled another way
-    // (a WhatsApp cart) still checks out here.
-    if (settings.checkout.checkoutMode === "externalLink") {
+    // (a WhatsApp cart) still checks out here. An external store has no
+    // checkout mode (its settings hide it): a value left from before the
+    // switch must not block it.
+    if (
+      !isExternalStoreSource(settings.general.storeSource) &&
+      settings.checkout.checkoutMode === "externalLink"
+    ) {
       throw webshopClosedException("orderingUnavailable")
     }
     const cart = await cartRepository.find(shopper)
@@ -734,6 +796,17 @@ class WebshopService extends BaseService {
 
     this.assertCheckoutForm(settings, form)
 
+    if (isExternalStoreSource(settings.general.storeSource)) {
+      return await this.checkoutOnExternalStore({
+        source: settings.general.storeSource,
+        shopper,
+        form,
+        settings,
+        lines,
+        discountCode: cart?.discountCode ?? null,
+      })
+    }
+
     const order = await orderService.place({
       workspaceId: shopper.workspaceId,
       source: "webshop",
@@ -752,6 +825,7 @@ class WebshopService extends BaseService {
       note: form.note?.trim() || null,
       discountCode: cart?.discountCode,
       autoApplyDiscount: true,
+      paymentMethod: form.paymentMethod ?? "cod",
       onPlaced: async (_order, tx) => {
         // Only what was ordered leaves the cart: an item added in another
         // tab while this order was placed stays. A double-submitted checkout
@@ -765,51 +839,190 @@ class WebshopService extends BaseService {
         await this.keepCartLines(shopper, left, tx)
       },
     })
-    await this.startCheckoutFlow(settings, order)
-    return order
+    if (!isAwaitingOnlinePayment(order)) {
+      return { order, paymentUrl: null }
+    }
+    try {
+      const { url } = await orderPaymentService.startCheckout({
+        workspaceId: shopper.workspaceId,
+        orderId: order.id,
+      })
+      return { order, paymentUrl: url }
+    } catch (error) {
+      await this.undoUnpayableOrder({
+        shopper,
+        orderId: order.id,
+        lines,
+        discountCode: cart?.discountCode ?? null,
+      })
+      throw error
+    }
   }
 
   /**
-   * "Start a flow" checkout: once the order is placed, the chosen flow runs
-   * in the customer's conversation. A customer without one (the link was
-   * opened outside a chat) just gets the order.
+   * A store mirroring an external store checks out on that store:
+   * - `webCheckout` answers with a link (`paymentUrl`) to the store's own
+   *   page — Shopify's checkout with the cart, or the payment page of a
+   *   pending WooCommerce order; the cart stays until the store reports the
+   *   order paid or placed;
+   * - `inApp` places the order on the store now (cash on delivery) and
+   *   empties what was ordered from the cart.
    */
-  private async startCheckoutFlow(
-    settings: EcommerceSettings,
-    order: {
-      id: string
-      conversationId: string | null
-      contactInboxId: string | null
-    },
-  ) {
-    const flowId = settings.checkout.checkoutFlowId
-    if (
-      settings.checkout.checkoutMode !== "flow" ||
-      !flowId ||
-      !order.conversationId ||
-      !order.contactInboxId
-    ) {
-      return
+  private async checkoutOnExternalStore(input: {
+    source: ExternalStoreSource
+    shopper: WebshopShopper
+    form: WebshopCheckoutForm
+    settings: EcommerceSettings
+    lines: Array<{
+      productId: string
+      variantId?: string | null
+      quantity: number
+    }>
+    discountCode: string | null
+  }) {
+    const { shopper, form, settings, lines } = input
+    const offersCodes = settings.checkout.externalAutoApplyDiscounts
+    const quote = await orderService.quote({
+      workspaceId: shopper.workspaceId,
+      items: lines,
+      shippingType: form.shippingType,
+      contactId: shopper.contactId,
+      discountCode: offersCodes ? input.discountCode : null,
+      autoApplyDiscount: offersCodes,
+    })
+    const discount =
+      offersCodes && quote.discount
+        ? {
+            code: quote.discount.code,
+            discountType: quote.discount.discountType,
+            amount: quote.discount.amount,
+            percent:
+              quote.discount.discountType === "percentage"
+                ? quote.discount.discountValue
+                : null,
+          }
+        : null
+    const customer = {
+      customerName: form.customerName?.trim() || null,
+      customerEmail: form.customerEmail?.trim() || null,
+      customerPhone: form.customerPhone?.trim() || null,
+      shippingAddress: form.shippingAddress ?? null,
+      note: form.note?.trim() || null,
     }
-    await integrationQueue
-      .add(
-        IntegrationJobAction.sendFlow,
-        {
-          type: IntegrationJobAction.sendFlow,
-          data: {
-            conversationId: order.conversationId,
-            contactInboxId: order.contactInboxId,
-            flowId,
+
+    const adapter =
+      input.source === "shopify"
+        ? {
+            buildWebCheckoutUrl: buildShopifyWebCheckoutUrl,
+            placeInAppOrder: placeShopifyInAppOrder,
+          }
+        : {
+            buildWebCheckoutUrl: buildWooCommerceWebCheckoutUrl,
+            placeInAppOrder: placeWooCommerceInAppOrder,
+          }
+
+    if (settings.checkout.externalCheckoutMethod === "webCheckout") {
+      const url = await adapter.buildWebCheckoutUrl({
+        shopper,
+        lines,
+        customer,
+        discount,
+        settings,
+        delivery: quote.shippingType === "delivery",
+      })
+      return { order: null, paymentUrl: url }
+    }
+
+    const order = await adapter.placeInAppOrder({
+      shopper,
+      lines,
+      customer,
+      discount,
+      settings,
+      delivery: quote.shippingType === "delivery",
+    })
+    await db.transaction(async (tx) => {
+      const locked = await cartRepository.findForUpdate(shopper, tx)
+      const left = subtractOrderedLines(locked?.items ?? [], lines)
+      if (left) {
+        await this.keepCartLines(shopper, left, tx)
+      }
+    })
+    return { order, paymentUrl: null }
+  }
+
+  /**
+   * The provider's page could not be opened for an order just placed: the
+   * order is cancelled (its stock and code given back) and its items return
+   * to the cart, so nothing was lost and the customer can try again.
+   */
+  private async undoUnpayableOrder(input: {
+    shopper: WebshopShopper
+    orderId: string
+    lines: Array<{
+      productId: string
+      variantId?: string | null
+      quantity: number
+    }>
+    discountCode: string | null
+  }) {
+    const { shopper } = input
+    try {
+      await orderService.cancel({
+        workspaceId: shopper.workspaceId,
+        orderId: input.orderId,
+        actor: { type: "system" },
+        message: null,
+      })
+      await db.transaction(async (tx) => {
+        const locked = await cartRepository.lockOrCreate(
+          {
+            workspaceId: shopper.workspaceId,
+            contactId: shopper.contactId,
+            contactInboxId: shopper.contactInboxId,
           },
-        },
-        { jobId: `webshop-checkout-flow-${order.id}` },
+          tx,
+        )
+        const restored = input.lines.reduce(
+          (current, line) =>
+            changeLine(
+              current,
+              {
+                productId: line.productId,
+                variantId: line.variantId ?? null,
+                quantity: line.quantity,
+              },
+              "add",
+            ),
+          locked?.items ?? [],
+        )
+        await cartRepository.upsert(
+          {
+            workspaceId: shopper.workspaceId,
+            contactId: shopper.contactId,
+            contactInboxId: shopper.contactInboxId,
+            items: restored,
+          },
+          tx,
+        )
+        if (input.discountCode) {
+          await cartRepository.setDiscountCode(
+            {
+              workspaceId: shopper.workspaceId,
+              contactId: shopper.contactId,
+              contactInboxId: shopper.contactInboxId,
+              discountCode: input.discountCode,
+            },
+            tx,
+          )
+        }
+      })
+    } catch (err) {
+      logger.error(
+        { err, orderId: input.orderId, workspaceId: shopper.workspaceId },
+        "[webshop] could not undo an order whose payment could not start",
       )
-      .catch((err: unknown) =>
-        logger.warn(
-          { err, orderId: order.id },
-          "[webshop] could not start the checkout flow",
-        ),
-      )
+    }
   }
 
   /** One of the shopper's own orders — another customer's is a 404. */
@@ -823,6 +1036,36 @@ class WebshopService extends BaseService {
       throw notFoundException("Order does not exist.")
     }
     return order
+  }
+
+  /**
+   * The provider's page for one of the shopper's own orders still waiting for
+   * its online payment (the order page's Pay button).
+   */
+  async payCustomerOrder(input: {
+    workspaceId: string
+    contactId: string
+    orderId: string
+  }) {
+    await this.getCustomerOrder(input)
+    return await orderPaymentService.startCheckout(input)
+  }
+
+  /**
+   * The shopper came back from the provider's page: the payment is read back
+   * so the order shows paid at once, then the order as it stands now.
+   */
+  async refreshCustomerOrderPayment(input: {
+    workspaceId: string
+    contactId: string
+    orderId: string
+  }) {
+    const order = await this.getCustomerOrder(input)
+    if (!isAwaitingOnlinePayment(order)) {
+      return order
+    }
+    await orderPaymentService.syncOrder(input)
+    return await this.getCustomerOrder(input)
   }
 
   /** A customer rates their completed order, when the store allows it. */

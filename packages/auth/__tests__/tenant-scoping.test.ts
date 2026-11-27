@@ -4,13 +4,31 @@ import { describe, expect, test, vi } from "vitest"
  * Hoisted mock handles. `vi.mock` factories run before module top-level, so any
  * value a factory references must be created with `vi.hoisted`.
  */
-const { findActiveByDomain, listActiveDomains, dbLimit, tenantFindById } =
-  vi.hoisted(() => ({
-    findActiveByDomain: vi.fn(),
-    listActiveDomains: vi.fn(),
-    dbLimit: vi.fn(),
-    tenantFindById: vi.fn(),
-  }))
+const {
+  checksSchema,
+  findActiveByDomain,
+  listActiveDomains,
+  dbLimit,
+  dbWhere,
+  registerSchemaCheck,
+  schemaCheckFor,
+  tenantFindById,
+} = vi.hoisted(() => ({
+  checksSchema: vi.fn(() => true),
+  findActiveByDomain: vi.fn(),
+  listActiveDomains: vi.fn(),
+  dbLimit: vi.fn(),
+  dbWhere: vi.fn(),
+  registerSchemaCheck: vi.fn(),
+  schemaCheckFor: vi.fn(),
+  tenantFindById: vi.fn(),
+}))
+
+vi.mock("@better-auth/core/db/internal", () => ({
+  checksSchema,
+  registerSchemaCheck,
+  schemaCheckFor,
+}))
 
 // Replace the DB client with a tiny stub: a select-chain whose terminal
 // `.limit()` resolves to whatever a test queues (used by
@@ -20,14 +38,17 @@ const { findActiveByDomain, listActiveDomains, dbLimit, tenantFindById } =
 vi.mock("@chatbotx.io/database/client", () => {
   const chain = {
     from: () => chain,
-    where: () => chain,
+    where: (clause: unknown) => {
+      dbWhere(clause)
+      return chain
+    },
     limit: dbLimit,
   }
   return {
     db: {
       select: () => chain,
     },
-    eq: () => ({}),
+    eq: (column: unknown, value: unknown) => ({ column, value }),
   }
 })
 
@@ -118,6 +139,14 @@ describe("resolveOAuthStateCallbackURL", () => {
     ])
     expect(await resolveOAuthStateCallbackURL("state-token")).toBe(
       "https://reseller.com/welcome",
+    )
+  })
+
+  test("looks the row up by better-auth 1.7's prefixed state identifier", async () => {
+    dbLimit.mockResolvedValue([])
+    await resolveOAuthStateCallbackURL("state-token")
+    expect(dbWhere).toHaveBeenCalledWith(
+      expect.objectContaining({ value: "auth-state:state-token" }),
     )
   })
 
@@ -238,8 +267,21 @@ describe("tenant-scoped adapter", () => {
       ) => Promise<unknown>
     }
 
-    return { scoped, create, findOne, findMany, count }
+    return { baseAdapter, scoped, create, findOne, findMany, count }
   }
+
+  test("preserves Better Auth schema validation after wrapping the adapter", () => {
+    const check = vi.fn()
+    schemaCheckFor.mockReturnValueOnce(check)
+
+    const { baseAdapter, scoped } = buildScoped()
+
+    expect(registerSchemaCheck).toHaveBeenCalledWith(scoped, check, {
+      runtimeEnabled: true,
+    })
+    expect(schemaCheckFor).toHaveBeenCalledWith(baseAdapter)
+    expect(checksSchema).toHaveBeenCalled()
+  })
 
   test("stamps tenantId from the bound tenant on user inserts", async () => {
     const { scoped, create } = buildScoped()
@@ -390,6 +432,25 @@ describe("tenant-scoped adapter", () => {
 
     const passed = findOne.mock.calls[0]?.[0] as AdapterCall
     expect(passed.where).toContainEqual({ field: "tenantId", value: "42" })
+  })
+
+  test("leaves credential lookups by userId tenant-neutral", async () => {
+    const { scoped, findOne } = buildScoped()
+    findOne.mockResolvedValue(null)
+
+    await withTenant("42", () =>
+      scoped.findOne({
+        model: "account",
+        where: [
+          { field: "userId", value: "7" },
+          { field: "providerId", value: "credential" },
+          { field: "accountId", value: "7" },
+        ],
+      }),
+    )
+
+    const passed = findOne.mock.calls[0]?.[0] as AdapterCall
+    expect(passed.where).not.toContainEqual({ field: "tenantId", value: "42" })
   })
 
   test("leaves account lookups by userId tenant-neutral", async () => {

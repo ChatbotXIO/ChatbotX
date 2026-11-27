@@ -23,6 +23,7 @@ describe("threads auth", () => {
     expect(url.pathname).toBe("/oauth/authorize")
     expect(url.searchParams.get("scope")).toContain("threads_basic")
     expect(url.searchParams.get("scope")).toContain("threads_manage_replies")
+    expect(url.searchParams.get("scope")).toContain("threads_delete")
   })
 
   test("exchangeCodeForToken exchanges short-lived token for long-lived token", async () => {

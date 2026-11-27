@@ -8,6 +8,7 @@ import {
   type ThreadControlRole,
   type ThreadControlState,
   threadControlEvents,
+  threadControlRoles,
 } from "@chatbotx.io/database/partials"
 import {
   isThreadControlChannel,
@@ -26,7 +27,8 @@ import { findContactInboxByChannel } from "./contact-inbox"
 
 type Translate = ReturnType<typeof useTranslations>
 
-const ROLE_LABEL_KEYS = {
+/** Translation key per routing role, shared by the inbox and the flow step. */
+export const THREAD_CONTROL_ROLE_LABEL_KEYS = {
   ai_agent: "conversationRouting.roles.ai_agent",
   ctwa: "conversationRouting.roles.ctwa",
   customer_service: "conversationRouting.roles.customer_service",
@@ -55,7 +57,7 @@ export function resolveThreadOwnerLabel(
   }
   if (role) {
     return t("conversationRouting.owner.partnerWithRole", {
-      role: t(ROLE_LABEL_KEYS[role]),
+      role: t(THREAD_CONTROL_ROLE_LABEL_KEYS[role]),
     })
   }
   return t("conversationRouting.owner.partner")
@@ -64,7 +66,7 @@ export function resolveThreadOwnerLabel(
 /** The routing fields of a contact inbox; timestamps may be strings after realtime/JSON. */
 export type ThreadControlContactInbox = Pick<
   ConversationContactInboxResource,
-  "id" | "channel" | "lastIncomingMessageAt"
+  "id" | "inboxId" | "channel" | "lastIncomingMessageAt"
 > & {
   threadControlState?: ThreadControlState | null
   threadOwnerRole?: string | null
@@ -76,6 +78,8 @@ export type ThreadControlContactInbox = Pick<
 
 export type ThreadControlView = {
   contactInboxId: string
+  /** The inbox (number/page) the resolved thread belongs to. */
+  inboxId: string
   /** The routing-capable channel of the resolved thread. */
   channel: ThreadControlChannel
   /** Resolved (24h idle applied); never null — a null thread yields no view. */
@@ -93,8 +97,9 @@ export type ThreadControlView = {
   canRelease: boolean
   /**
    * Pass is offered while this app owns the thread (or holds it idle on a
-   * channel that can pass from idle). Hidden when this app is itself the
-   * escalation partner (Meta forbids it) or the channel cannot pass.
+   * channel that can pass from idle). Hidden when the channel cannot pass, or
+   * when this app already holds the escalation role on a channel whose pass
+   * only goes to that role (`passWhileEscalationOwner: false`, e.g. Messenger).
    */
   canPass: boolean
   /** The composer is locked while another responder owns the thread on its channel. */
@@ -234,6 +239,7 @@ export function resolveThreadControlView(
 
   return {
     contactInboxId: contactInbox.id,
+    inboxId: contactInbox.inboxId,
     channel: contactInbox.channel,
     state,
     ownerRole,
@@ -243,7 +249,7 @@ export function resolveThreadControlView(
     canPass:
       capabilities.supportsPass &&
       (state === "owned" || (state === "idle" && capabilities.passFromIdle)) &&
-      ownerRole !== "escalation",
+      (capabilities.passWhileEscalationOwner || ownerRole !== "escalation"),
     isLocked: state === "standby" && composerOwnsThread,
     inlineReplyTakesOver,
     idleAt,
@@ -363,5 +369,48 @@ export function isStaleThreadControlSnapshot(
   return !winsSameSecondTie(
     parseThreadControlEvent(stored.threadControlLastEvent),
     parseThreadControlEvent(snapshot.threadControlLastEvent),
+  )
+}
+
+export type ThreadPassChoices = {
+  /** The roles the pass dialog offers as a target. */
+  roles: readonly ThreadControlRole[]
+  /** The role preselected in the dialog. */
+  defaultRole: ThreadControlRole
+}
+
+const ALL_PASS_TARGET_ROLES = threadControlRoles.options
+
+/**
+ * Who a pass may target. The escalation partner cannot pass to itself (Meta
+ * refuses an untargeted pass from it), so it is offered every other role and
+ * defaults to the Service partner; any other owner defaults to the escalation
+ * partner, which is what Meta does when no target is named.
+ */
+export function resolveThreadPassChoices(
+  holdsEscalationRole: boolean,
+): ThreadPassChoices {
+  if (holdsEscalationRole) {
+    return {
+      roles: ALL_PASS_TARGET_ROLES.filter(
+        (role) => role !== threadControlRoles.enum.escalation,
+      ),
+      defaultRole: threadControlRoles.enum.customer_service,
+    }
+  }
+  return {
+    roles: ALL_PASS_TARGET_ROLES,
+    defaultRole: threadControlRoles.enum.escalation,
+  }
+}
+
+/**
+ * Whether the thread can be passed to a partner role the agent picks (WhatsApp),
+ * as opposed to a pass that only hands it back to the AI agent (Messenger).
+ */
+export function offersPartnerPass(view: ThreadControlView): boolean {
+  return (
+    view.canPass &&
+    THREAD_CONTROL_CHANNEL_UI[view.channel].passTarget === "escalation"
   )
 }

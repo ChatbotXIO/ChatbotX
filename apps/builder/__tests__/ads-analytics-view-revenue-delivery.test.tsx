@@ -209,7 +209,7 @@ describe("AdsAnalyticsView revenue and delivery", () => {
         <QueryClientProvider client={queryClient}>
           <AdsAnalyticsView
             channel="whatsapp"
-            channelIntegrations={[]}
+            matchesNoIntegration={false}
             promises={Promise.resolve([
               analyticsData,
               deliverySummary,
@@ -217,6 +217,7 @@ describe("AdsAnalyticsView revenue and delivery", () => {
             ])}
             range={range}
             selectedChannelIntegrationId="iw-1"
+            selectedChannelIntegrationIds={["iw-1"]}
             workspaceCreatedAt={new Date("2024-01-01T00:00:00.000Z")}
             workspaceId="ws-1"
           />
@@ -247,7 +248,7 @@ describe("AdsAnalyticsView revenue and delivery", () => {
         <QueryClientProvider client={queryClient}>
           <AdsAnalyticsView
             channel="whatsapp"
-            channelIntegrations={[]}
+            matchesNoIntegration={false}
             promises={Promise.resolve([
               analyticsData,
               deliverySummary,
@@ -255,6 +256,7 @@ describe("AdsAnalyticsView revenue and delivery", () => {
             ])}
             range={range}
             selectedChannelIntegrationId={null}
+            selectedChannelIntegrationIds={[]}
             workspaceCreatedAt={new Date("2024-01-01T00:00:00.000Z")}
             workspaceId="ws-1"
           />
@@ -279,7 +281,7 @@ describe("AdsAnalyticsView revenue and delivery", () => {
         <QueryClientProvider client={queryClient}>
           <AdsAnalyticsView
             channel="messenger"
-            channelIntegrations={[{ id: "msg-1", name: "My Page" }]}
+            matchesNoIntegration={false}
             promises={Promise.resolve([
               analyticsData,
               deliverySummary,
@@ -287,6 +289,7 @@ describe("AdsAnalyticsView revenue and delivery", () => {
             ])}
             range={{ ...range, channelAccount: "msg-1" }}
             selectedChannelIntegrationId="msg-1"
+            selectedChannelIntegrationIds={["msg-1"]}
             workspaceCreatedAt={new Date("2024-01-01T00:00:00.000Z")}
             workspaceId="ws-1"
           />

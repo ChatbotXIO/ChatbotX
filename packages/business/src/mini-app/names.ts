@@ -12,20 +12,8 @@ export const rethrowNameTaken = (error: unknown): never => {
   throw error
 }
 
-export const MAX_COPY_NAME_ATTEMPTS = 50
-
-const copyNameSuffix = (attempt: number) =>
-  attempt === 1 ? " - Copy" : ` - Copy ${attempt}`
-
-/** `<name> - Copy`, then `<name> - Copy 2`, … cut to fit the name limit. */
-export const copyName = (name: string, attempt: number): string => {
-  const suffix = copyNameSuffix(attempt)
-  return `${name.slice(0, MINI_APP_NAME_MAX_LENGTH - suffix.length)}${suffix}`
-}
-
-/** The start every copy name of `name` shares, however much it was cut. */
-export const copyNamePrefix = (name: string): string =>
-  name.slice(
-    0,
-    MINI_APP_NAME_MAX_LENGTH - copyNameSuffix(MAX_COPY_NAME_ATTEMPTS).length,
-  )
+/** How mini app copies are named: `<name> - Copy`, `<name> - Copy 2`, … */
+export const MINI_APP_COPY_NAME = {
+  style: "dash",
+  maxLength: MINI_APP_NAME_MAX_LENGTH,
+} as const

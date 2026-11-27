@@ -88,7 +88,7 @@ const sendableProductWhere = (
 ) =>
   and(
     linkedProductWhere(input),
-    eq(productModel.isActive, true),
+    eq(productModel.status, "active"),
     input.keyword
       ? ilike(productModel.name, likeContains(input.keyword))
       : undefined,

@@ -15,8 +15,10 @@ import {
 } from "@chatbotx.io/ui/components/ui/tooltip"
 import { cn } from "@chatbotx.io/ui/lib/utils"
 import {
+  type LucideIcon,
   MailIcon,
-  MessageCircleMoreIcon,
+  MessageCircleIcon,
+  MessageSquareTextIcon,
   PhoneIcon,
   PhoneIncomingIcon,
   PhoneMissedIcon,
@@ -25,9 +27,10 @@ import {
   StarIcon,
   UsersRoundIcon,
 } from "lucide-react"
-import { useFormatter, useTranslations } from "next-intl"
+import { useTranslations } from "next-intl"
 import { useMemo } from "react"
-import { useNow } from "@/hooks/use-now"
+import { contactDisplayName } from "@/features/contacts/lib/contact-display-name"
+import { hasRealContactEmail } from "@/features/contacts/lib/has-real-contact-email"
 import { useUserAvatarUrl } from "@/lib/auth/avatar"
 import { useChatStore } from "../chat/store/chat-store-provider"
 import { useAvatarUrl } from "../contacts/utils"
@@ -35,11 +38,13 @@ import { InboxIcon } from "../inboxes/components/inbox-icon"
 import { useWhatsappVoipCallStore } from "../integration-whatsapp/calling/voip/voip-call-store"
 import { useOptionalWhatsappVoipCallContext } from "../integration-whatsapp/calling/voip/whatsapp-voip-call-context"
 import { useTenantSettings } from "../tenant/tenant-settings-provider"
+import { ConversationLanguageBadge } from "../translation/components/conversation-language-badge"
+import { ConversationParticipantStack } from "./components/conversation-participant-stack"
+import { LastActivityAgo } from "./components/last-activity-ago"
 import { SlaPill } from "./components/sla-pill"
 import { ThreadControlPill } from "./components/thread-control-pill"
 import { useMarkConversationRead } from "./hooks/use-mark-conversation-read"
 import { isConversationUnread } from "./lib/is-conversation-unread"
-import { type ShortTimeUnit, shortTimeAgo } from "./lib/short-time-ago"
 import {
   type CallPreviewKind,
   resolveCallPreviewKind,
@@ -67,8 +72,37 @@ const CALL_PREVIEW_ICON_BY_KIND: Record<CallPreviewKind, typeof PhoneIcon> = {
 type ConversationItemProps = {
   assigneeOptionNameByValue: ReadonlyMap<string, string>
   conversation: ListConversationItemResource
+  /** Whether the member may see contacts' email and phone: without it the row shows no such icons. */
+  canViewEmailAndPhone: boolean
   onSelect: () => void
 }
+
+/** A small icon that says the contact left this detail; the value shows on hover. */
+const ContactInfoIcon = ({
+  icon: Icon,
+  label,
+  value,
+  className,
+}: {
+  icon: LucideIcon
+  label: string
+  value: string
+  className?: string
+}) => (
+  <Tooltip>
+    <TooltipTrigger
+      render={
+        // The trigger wraps the icon in a <span> (see the comment on the type icon below).
+        <span aria-label={label} role="img">
+          <Icon className={cn("size-3.5 shrink-0", className)} />
+        </span>
+      }
+    />
+    <TooltipContent align="center" side="top">
+      {value}
+    </TooltipContent>
+  </Tooltip>
+)
 
 const assignedIcon = (
   conversation: ListConversationItemResource,
@@ -137,41 +171,6 @@ const AD_BADGE_STYLE = {
   color: "#6d28d9",
 } as const
 
-const AGE_LABEL_KEY: Record<Exclude<ShortTimeUnit, "now">, string> = {
-  minute: "messages.timeAgo.minutes",
-  hour: "messages.timeAgo.hours",
-  day: "messages.timeAgo.days",
-  month: "messages.timeAgo.months",
-  year: "messages.timeAgo.years",
-}
-
-const EXACT_TIME_FORMAT = { dateStyle: "medium", timeStyle: "short" } as const
-
-/**
- * "5m" / "3h" / "8d" for the row's last activity (never seconds — see
- * `shortTimeAgo`), with the exact time as the tooltip, re-rendered on the
- * shared minute tick so the list keeps up with the clock without anyone
- * touching it. Isolated in its own component so the tick re-renders only
- * this text, not the whole row.
- */
-function LastActivityAgo({ at }: { at: Date | string }) {
-  const t = useTranslations()
-  const format = useFormatter()
-  const now = useNow()
-  const date = new Date(at)
-  const age = shortTimeAgo(date, now)
-  return (
-    <time
-      dateTime={date.toISOString()}
-      title={format.dateTime(date, EXACT_TIME_FORMAT)}
-    >
-      {age.unit === "now"
-        ? t("messages.timeAgo.now")
-        : t(AGE_LABEL_KEY[age.unit], { count: age.count })}
-    </time>
-  )
-}
-
 // Compact violet "Ads" pill shown on the conversation row's bottom line when
 // the contact arrived from a Meta ad. The ad title (when present) is surfaced
 // in a tooltip. Channel-specific label (CTWA/CTM/CTID) is resolved by the caller.
@@ -208,6 +207,7 @@ function AdBadgePill({
 
 export default function ConversationItem({
   assigneeOptionNameByValue,
+  canViewEmailAndPhone,
   conversation,
   onSelect,
 }: ConversationItemProps) {
@@ -232,6 +232,9 @@ export default function ConversationItem({
   // ringingCallId would never be set either.
   const voipCallContext = useOptionalWhatsappVoipCallContext()
   const isComment = conversation.messages?.[0]?.type === "comment"
+  const contactPhone = conversation.contact?.phoneNumber || null
+  const storedEmail = conversation.contact?.email
+  const contactEmail = hasRealContactEmail(storedEmail) ? storedEmail : null
   const avatarUrl = useAvatarUrl(conversation.contact)
   const assignedAvatarUrl = useUserAvatarUrl(conversation.assignedUser?.image)
   const assignedUserOptionName =
@@ -265,22 +268,25 @@ export default function ConversationItem({
     })),
   )
 
+  // Name, else email, else phone: a contact a channel never named still reads as someone.
+  const contactName = contactDisplayName(conversation.contact)
+
   const contactAvatar = useMemo(
     () => (
       <Avatar
         className={cn("h-12 w-12", isUnread && "border-2 border-primary")}
       >
         <AvatarImage
-          alt={conversation.contact?.fullName ?? ""}
+          alt={contactName ?? ""}
           className="object-cover"
           src={avatarUrl}
         />
         <AvatarFallback className="bg-gray-300 dark:bg-zinc-100 dark:text-zinc-800">
-          {conversation.contact?.fullName?.slice(0, 2)}
+          {contactName?.slice(0, 2)}
         </AvatarFallback>
       </Avatar>
     ),
-    [conversation.contact, avatarUrl, isUnread],
+    [contactName, avatarUrl, isUnread],
   )
 
   // Opening a conversation is read by the thread pane (`useThreadReadTracking`),
@@ -355,16 +361,16 @@ export default function ConversationItem({
                   : "font-medium text-muted-foreground",
               )}
             >
-              {conversation.contact?.fullName}
+              {contactName}
             </span>
             <Tooltip>
               <TooltipTrigger
                 render={
                   <span>
                     {isComment ? (
-                      <MessageCircleMoreIcon className="size-3.5 shrink-0 text-muted-foreground" />
+                      <MessageSquareTextIcon className="size-3.5 shrink-0 text-muted-foreground" />
                     ) : (
-                      <MailIcon className="size-3.5 shrink-0 text-muted-foreground" />
+                      <MessageCircleIcon className="size-3.5 shrink-0 text-muted-foreground" />
                     )}
                   </span>
                 }
@@ -401,19 +407,41 @@ export default function ConversationItem({
                   label={t(googleAdsBadgeLabelKey(googleAdsBadge.channel))}
                 />
               )}
+              <ConversationLanguageBadge conversation={conversation} />
               <ThreadControlPill conversation={conversation} />
               <SlaPill
                 responseDueAt={conversation.responseDueAt}
                 responseSlaBreachingAt={conversation.responseSlaBreachingAt}
               />
             </div>
-            <span className="text-neutral-400" suppressHydrationWarning>
-              {conversation.lastActivityAt ? (
-                <LastActivityAgo at={conversation.lastActivityAt} />
-              ) : (
-                " "
-              )}
-            </span>
+            <div className="flex shrink-0 items-center gap-1.5">
+              {canViewEmailAndPhone && contactPhone ? (
+                <ContactInfoIcon
+                  className="text-green-600"
+                  icon={PhoneIcon}
+                  label={t("fields.phoneNumber.label")}
+                  value={contactPhone}
+                />
+              ) : null}
+              {canViewEmailAndPhone && contactEmail ? (
+                <ContactInfoIcon
+                  className="text-muted-foreground"
+                  icon={MailIcon}
+                  label={t("fields.email.label")}
+                  value={contactEmail}
+                />
+              ) : null}
+              <ConversationParticipantStack
+                participants={conversation.recentParticipants}
+              />
+              <span className="text-neutral-400" suppressHydrationWarning>
+                {conversation.lastActivityAt ? (
+                  <LastActivityAgo at={conversation.lastActivityAt} />
+                ) : (
+                  " "
+                )}
+              </span>
+            </div>
           </div>
         </div>
       </Button>

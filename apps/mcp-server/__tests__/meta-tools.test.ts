@@ -1,13 +1,61 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
-import { META_TOOLS } from "../src/server/meta-tools"
+import { handleGetGuide, META_TOOLS } from "../src/server/meta-tools"
 import { specWithTools } from "./helpers/spec-fixture"
 
 describe("META_TOOLS", () => {
-  test("are exactly search_tools and call_tool", () => {
+  test("are exactly the discovery, execution, and guide tools", () => {
     expect(META_TOOLS.map((tool) => tool.name)).toEqual([
       "search_tools",
       "call_tool",
+      "get_guide",
     ])
+  })
+
+  test("declares complete annotations for every meta-tool", () => {
+    expect(
+      META_TOOLS.map(({ annotations, name }) => ({ annotations, name })),
+    ).toEqual([
+      {
+        name: "search_tools",
+        annotations: {
+          title: "Search tools",
+          readOnlyHint: true,
+          destructiveHint: false,
+          idempotentHint: true,
+          openWorldHint: false,
+        },
+      },
+      {
+        name: "call_tool",
+        annotations: {
+          title: "Call tool",
+          readOnlyHint: false,
+          destructiveHint: true,
+          idempotentHint: false,
+          openWorldHint: true,
+        },
+      },
+      {
+        name: "get_guide",
+        annotations: {
+          title: "Get guide",
+          readOnlyHint: true,
+          destructiveHint: false,
+          idempotentHint: true,
+          openWorldHint: false,
+        },
+      },
+    ])
+  })
+
+  test("returns raw markdown from the shared guide source", () => {
+    const result = handleGetGuide({ name: "overview" })
+    expect(result.content[0]?.text).toContain("# MCP overview")
+  })
+
+  test("rejects invalid and prototype guide names", () => {
+    expect(handleGetGuide({ name: "missing" }).isError).toBe(true)
+    expect(handleGetGuide({ name: "toString" }).isError).toBe(true)
   })
 })
 
@@ -312,7 +360,7 @@ describe("handleCallTool", () => {
 
   test("rejects a missing name", async () => {
     const { handleCallTool } = await import("../src/server/meta-tools")
-    const result = await handleCallTool({}, "api-key")
+    const result = await handleCallTool({}, { token: "api-key" }, {})
     expect(result.isError).toBe(true)
   })
 
@@ -324,7 +372,11 @@ describe("handleCallTool", () => {
     await loadOpenApiSpec()
     const { handleCallTool } = await import("../src/server/meta-tools")
 
-    const result = await handleCallTool({ name: "does_not_exist" }, "api-key")
+    const result = await handleCallTool(
+      { name: "does_not_exist" },
+      { token: "api-key" },
+      {},
+    )
     expect(result.isError).toBe(true)
     expect(result.content[0]?.text).toContain("Unknown tool")
   })
@@ -354,7 +406,8 @@ describe("handleCallTool", () => {
 
     const result = await handleCallTool(
       { name: "minigames_list", arguments: {} },
-      "api-key",
+      { token: "api-key" },
+      {},
     )
     expect(result.isError).toBeUndefined()
   })
@@ -373,7 +426,8 @@ describe("handleCallTool", () => {
     const { handleCallTool } = await import("../src/server/meta-tools")
     const result = await handleCallTool(
       { arguments: [], name: "tags_list" },
-      "api-key",
+      { token: "api-key" },
+      {},
     )
 
     expect(result).toEqual({
@@ -389,7 +443,8 @@ describe("handleCallTool", () => {
 
     const nullPrototypeResult = await handleCallTool(
       { arguments: Object.create(null), name: "tags_list" },
-      "api-key",
+      { token: "api-key" },
+      {},
     )
     expect(nullPrototypeResult.isError).toBe(true)
     expect(nullPrototypeResult.content[0]?.text).toBe(
@@ -423,7 +478,8 @@ describe("handleCallTool", () => {
 
     const result = await handleCallTool(
       { name: "contacts.get", arguments: { identifier: "id:1" } },
-      "api-key",
+      { token: "api-key" },
+      {},
     )
     expect(result.isError).toBeUndefined()
   })
@@ -438,7 +494,11 @@ describe("handleCallTool", () => {
     await loadOpenApiSpec()
     const { handleCallTool } = await import("../src/server/meta-tools")
 
-    const result = await handleCallTool({ name: "contact_get" }, "api-key")
+    const result = await handleCallTool(
+      { name: "contact_get" },
+      { token: "api-key" },
+      {},
+    )
     expect(result.isError).toBe(true)
     expect(result.content[0]?.text).toContain("Closest matches")
     expect(result.content[0]?.text).toContain("contacts_get")
@@ -489,14 +549,16 @@ describe("handleCallTool", () => {
         name: "contacts_add_tags_by_name",
         arguments: { identifier: "id:1" },
       },
-      "api-key",
+      { token: "api-key" },
+      {},
     )
     const nullResult = await handleCallTool(
       {
         name: "contacts_add_tags_by_name",
         arguments: { identifier: "id:1", tags: null },
       },
-      "api-key",
+      { token: "api-key" },
+      {},
     )
 
     expect(missingResult.isError).toBe(true)
@@ -556,8 +618,12 @@ describe("handleCallTool", () => {
     const { handleCallTool } = await import("../src/server/meta-tools")
 
     const result = await handleCallTool(
-      { arguments: { name: "Welcome" }, name: "flows_create" },
-      "api-key",
+      {
+        arguments: { _confirm: true, name: "Welcome" },
+        name: "flows_create",
+      },
+      { token: "api-key" },
+      {},
     )
 
     expect(result.isError).toBeUndefined()
@@ -606,11 +672,57 @@ describe("handleCallTool", () => {
 
     const result = await handleCallTool(
       { name: "tags_create", arguments: { body: { name: "VIP" } } },
-      "api-key",
+      { token: "api-key" },
+      {},
     )
 
     expect(result.isError).toBe(true)
     expect(result.content[0]?.text).toContain("wrapper")
+  })
+
+  test("gates writes invoked through call_tool before dispatching", async () => {
+    const fetchMock = vi.fn().mockResolvedValueOnce({
+      ok: true,
+      headers: { get: () => null },
+      json: async () => ({
+        servers: [{ url: "https://api.example.com" }],
+        paths: {
+          "/v1/tags": {
+            post: {
+              operationId: "tags.create",
+              requestBody: {
+                content: {
+                  "application/json": {
+                    schema: {
+                      properties: { name: { type: "string" } },
+                      required: ["name"],
+                      type: "object",
+                    },
+                  },
+                },
+              },
+              summary: "Create tag",
+            },
+          },
+        },
+      }),
+    })
+    globalThis.fetch = fetchMock as unknown as typeof fetch
+
+    const { loadOpenApiSpec } = await import("../src/openapi-loader")
+    await loadOpenApiSpec()
+    const { handleCallTool } = await import("../src/server/meta-tools")
+    const result = await handleCallTool(
+      { arguments: { name: "VIP" }, name: "tags_create" },
+      { token: "api-key" },
+      {},
+    )
+
+    expect(fetchMock).toHaveBeenCalledOnce()
+    expect(JSON.parse(result.content[0]?.text ?? "{}")).toMatchObject({
+      code: "CONFIRMATION_REQUIRED",
+      policy: "confirm_diff",
+    })
   })
 })
 

@@ -22,7 +22,9 @@ import {
 import {
   contactInboxRepository,
   contactRepository,
+  pipelineActivityRepository,
 } from "@chatbotx.io/database/repositories"
+import { contactInfoCaptureRepository } from "@chatbotx.io/database/repositories/contact-info-capture"
 import {
   contactInboxModel,
   contactModel,
@@ -32,6 +34,7 @@ import {
 import type {
   ContactInboxModel,
   ContactModel,
+  ConversationModel,
 } from "@chatbotx.io/database/types"
 import { emit } from "@chatbotx.io/event-bus"
 import { emitContactCreated } from "@chatbotx.io/events"
@@ -130,6 +133,7 @@ type ContactWithInboxes = ContactModel & { contactInboxes: ContactInboxModel[] }
 
 export type ContactAccessScope = {
   restrictToAssignedUserId?: string
+  restrictToTeamIds?: string[]
 }
 
 export type ContactListScope = ContactListScopeType
@@ -354,11 +358,7 @@ class ContactService extends BaseService {
       throw notFoundException("Contact not found")
     }
 
-    if (
-      accessScope?.restrictToAssignedUserId &&
-      contact.conversation?.assignedUserId !==
-        accessScope.restrictToAssignedUserId
-    ) {
+    if (!isContactWithinAccessScope(accessScope, contact.conversation)) {
       throw notFoundException("Contact not found")
     }
 
@@ -817,22 +817,34 @@ class ContactService extends BaseService {
       )
 
       await db.transaction(async (tx) => {
+        const contactIds = chunk.map((contact) => contact.id)
         await contactInboxPostService.deleteForContacts({
-          contactIds: chunk.map((contact) => contact.id),
+          contactIds,
           tx,
           workspaceId,
         })
         await contactActivityService.deleteForContacts({
-          contactIds: chunk.map((contact) => contact.id),
+          contactIds,
           tx,
           workspaceId,
         })
+        // The contacts are already locked FOR UPDATE and the workspace fence is
+        // held (taken by the activity delete above), so no lock is re-taken.
+        await contactInfoCaptureRepository.deleteByContactIds(
+          { contactIds, workspaceId },
+          tx,
+        )
         await messageCleanupService.record({ workspaceId, entries, tx })
-        await tx.delete(contactModel).where(
-          inArray(
-            contactModel.id,
-            chunk.map((c) => c.id),
-          ),
+        await tx
+          .delete(contactModel)
+          .where(inArray(contactModel.id, contactIds))
+        // Pipeline history outlives the contact (it has no FK) for analytics;
+        // only the item titles that may name the contact are cleared. After
+        // the delete: its item cascade waited for any writer holding an item
+        // lock, so history that writer added is cleared too.
+        await pipelineActivityRepository.scrubContactTitles(
+          { workspaceId, contactIds: chunk.map((contact) => contact.id) },
+          tx,
         )
       })
     }
@@ -1336,11 +1348,39 @@ export function mergeRichSystemFields(
   )
 }
 
+function isContactWithinAccessScope(
+  accessScope: ContactAccessScope | undefined,
+  conversation:
+    | Pick<ConversationModel, "assignedUserId" | "assignedInboxTeamId">
+    | null
+    | undefined,
+): boolean {
+  if (
+    accessScope?.restrictToAssignedUserId === undefined &&
+    accessScope?.restrictToTeamIds === undefined
+  ) {
+    return true
+  }
+  if (
+    accessScope.restrictToAssignedUserId !== undefined &&
+    conversation?.assignedUserId === accessScope.restrictToAssignedUserId
+  ) {
+    return true
+  }
+  return Boolean(
+    conversation?.assignedInboxTeamId &&
+      accessScope.restrictToTeamIds?.includes(conversation.assignedInboxTeamId),
+  )
+}
+
 function withContactAccessScope<TWhere extends Record<string, unknown>>(
   where: TWhere,
   accessScope?: ContactAccessScope,
 ) {
-  if (!accessScope?.restrictToAssignedUserId) {
+  if (
+    accessScope?.restrictToAssignedUserId === undefined &&
+    accessScope?.restrictToTeamIds === undefined
+  ) {
     return where
   }
 
@@ -1350,12 +1390,20 @@ function withContactAccessScope<TWhere extends Record<string, unknown>>(
     !Array.isArray(where.conversation)
       ? where.conversation
       : {}
+  const assignmentScopes = [
+    ...(accessScope.restrictToAssignedUserId === undefined
+      ? []
+      : [{ assignedUserId: accessScope.restrictToAssignedUserId }]),
+    ...(accessScope.restrictToTeamIds === undefined
+      ? []
+      : [{ assignedInboxTeamId: { in: accessScope.restrictToTeamIds } }]),
+  ]
 
   return {
     ...where,
     conversation: {
       ...conversation,
-      assignedUserId: accessScope.restrictToAssignedUserId,
+      OR: assignmentScopes,
     },
   }
 }

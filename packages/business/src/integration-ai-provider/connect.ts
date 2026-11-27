@@ -19,7 +19,7 @@ export type ConnectAiProviderInput = {
 }
 
 /**
- * Shared connect logic for the claude/deepseek/gemini/openai tables — they are
+ * Shared connect logic for the claude/deepseek/gemini/muse/openai tables — they are
  * structurally identical (auth/model/temperature/maxOutputTokens/workspaceId/
  * integrationId), so a single upsert-by-workspace routine avoids four
  * copy-paste clones. Callers pass their own table + integrationType; extra

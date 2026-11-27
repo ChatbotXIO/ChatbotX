@@ -42,6 +42,11 @@ export const router = {
       default: m.aiAgentsAPI,
     })),
   ),
+  decisionConnectionsAPI: lazy(() =>
+    import("@/features/decision-connections/api").then((m) => ({
+      default: m.decisionConnectionsAPI,
+    })),
+  ),
   decisionProfilesAPI: lazy(() =>
     import("@/features/decision-profiles/api").then((m) => ({
       default: m.decisionProfilesAPI,
@@ -64,6 +69,19 @@ export const router = {
   ),
   couponsAPI: lazy(() =>
     import("@/features/coupons/api").then((m) => ({ default: m.couponsAPI })),
+  ),
+  pipelinesAPI: lazy(() =>
+    import("@/features/pipelines/api").then((m) => ({
+      default: m.pipelinesAPI,
+    })),
+  ),
+  pollsAPI: lazy(() =>
+    import("@/features/polls/api").then((m) => ({ default: m.pollsAPI })),
+  ),
+  placesNearMeAPI: lazy(() =>
+    import("@/features/places-near-me/api").then((m) => ({
+      default: m.placesNearMeAPI,
+    })),
   ),
   leaderboardsAPI: lazy(() =>
     import("@/features/leaderboards/api").then((m) => ({
@@ -131,6 +149,16 @@ export const router = {
       default: m.contactScanAPIs,
     })),
   ),
+  translationAPI: lazy(() =>
+    import("@/features/translation/api").then((m) => ({
+      default: m.translationAPI,
+    })),
+  ),
+  contactSyncAPIs: lazy(() =>
+    import("@/features/contact-sync/api").then((m) => ({
+      default: m.contactSyncAPIs,
+    })),
+  ),
   aiHandoverAPIs: lazy(() =>
     import("@/features/integration-ai-handover/api").then((m) => ({
       default: m.aiHandoverAPIs,
@@ -139,6 +167,46 @@ export const router = {
   channelPostAPIs: lazy(() =>
     import("@/features/channel-posts/api").then((m) => ({
       default: m.channelPostAPIs,
+    })),
+  ),
+  socialPostsAPIs: lazy(() =>
+    import("@/features/social-posts/api/private").then((m) => ({
+      default: m.socialPostsAPIs,
+    })),
+  ),
+  socialPostsAiAPIs: lazy(() =>
+    import("@/features/social-posts-ai/api/private").then((m) => ({
+      default: m.socialPostsAiAPIs,
+    })),
+  ),
+  postSnippetsAPIs: lazy(() =>
+    import("@/features/social-post-snippets/api/private").then((m) => ({
+      default: m.postSnippetsAPIs,
+    })),
+  ),
+  postFeedsAPIs: lazy(() =>
+    import("@/features/social-post-feeds/api/private").then((m) => ({
+      default: m.postFeedsAPIs,
+    })),
+  ),
+  publishDestinationsAPIs: lazy(() =>
+    import("@/features/publish-destinations/api/private").then((m) => ({
+      default: m.publishDestinationsAPIs,
+    })),
+  ),
+  socialAccountsAPIs: lazy(() =>
+    import("@/features/social-accounts/api/private").then((m) => ({
+      default: m.socialAccountsAPIs,
+    })),
+  ),
+  channelPostManagementAPIs: lazy(() =>
+    import("@/features/channel-posts/api/management-private").then((m) => ({
+      default: m.channelPostManagementAPIs,
+    })),
+  ),
+  postAnalyticsAPIs: lazy(() =>
+    import("@/features/post-analytics/api/private").then((m) => ({
+      default: m.postAnalyticsAPIs,
     })),
   ),
   botFieldAPIs: lazy(() =>

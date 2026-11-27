@@ -116,8 +116,51 @@ describe("adsAnalyticsService.getOverview ad account filtering", () => {
     expect(mocks.resolveChannelAdAccountSources).toHaveBeenCalledWith({
       workspaceId: "ws-1",
       channel: "messenger",
-      integrationId: "im-1",
+      integrationIds: ["im-1"],
     })
+  })
+
+  test("several selected integrations are threaded as one list, and win over the single id", async () => {
+    mocks.resolveChannelAdAccountSources.mockResolvedValue([])
+
+    await adsAnalyticsService.getOverview({
+      workspaceId: "ws-1",
+      from: "2026-08-01",
+      to: "2026-08-11",
+      channel: "messenger",
+      integrationMessengerId: "im-9",
+      integrationIds: ["im-1", "im-2"],
+    })
+
+    expect(mocks.resolveChannelAdAccountSources).toHaveBeenCalledWith({
+      workspaceId: "ws-1",
+      channel: "messenger",
+      integrationIds: ["im-1", "im-2"],
+    })
+    expect(mocks.getCtwaFunnel).toHaveBeenCalledWith(
+      expect.objectContaining({
+        channel: "messenger",
+        integrationIds: ["im-1", "im-2"],
+      }),
+    )
+  })
+
+  test("an explicit selection that matches no integration is empty: no funnel, no spend, no ad-account lookup", async () => {
+    const scope = {
+      workspaceId: "ws-1",
+      from: "2026-08-01",
+      to: "2026-08-03",
+      channel: "messenger" as const,
+      matchesNoIntegration: true,
+    }
+
+    const overview = await adsAnalyticsService.getOverview(scope)
+
+    expect(mocks.getCtwaFunnel).not.toHaveBeenCalled()
+    expect(mocks.resolveChannelAdAccountSources).not.toHaveBeenCalled()
+    expect(overview.totals.conversations).toBe(0)
+    expect(overview.totals.spend).toBe(0)
+    expect(overview.perAd).toEqual([])
   })
 
   test("workspace-source accounts fetch insights through buildFacebookAdsContext (backward compat)", async () => {

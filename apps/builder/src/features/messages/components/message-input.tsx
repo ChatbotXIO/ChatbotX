@@ -4,6 +4,7 @@ import type { ChannelType } from "@chatbotx.io/database/partials"
 import { Button } from "@chatbotx.io/ui/components/ui/button"
 import { Form } from "@chatbotx.io/ui/components/ui/form"
 import { Textarea } from "@chatbotx.io/ui/components/ui/textarea"
+import { useIsTouchDevice } from "@chatbotx.io/ui/hooks/use-touch-device"
 import { createId } from "@chatbotx.io/utils"
 import { channelTypes } from "@chatbotx.io/utils/channel"
 import {
@@ -18,6 +19,8 @@ import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hoo
 import {
   HandIcon,
   ImageIcon,
+  LanguagesIcon,
+  Loader2Icon,
   LockIcon,
   PaperclipIcon,
   ReplyIcon,
@@ -25,7 +28,6 @@ import {
   XIcon,
 } from "lucide-react"
 import { useTranslations } from "next-intl"
-import { useAction } from "next-safe-action/hooks"
 import {
   type KeyboardEvent,
   useCallback,
@@ -36,26 +38,39 @@ import {
 } from "react"
 import { Controller, useWatch } from "react-hook-form"
 import { toast } from "sonner"
-import { disableBotAction } from "@/features/conversations/actions/disable-bot.action"
 import { useThreadControl } from "@/features/conversations/hooks/use-thread-control"
-import {
-  BOT_DISABLE_DURATION_MS,
-  isConversationActive,
-} from "@/features/conversations/utils/bot-state"
 import { InboxIcon } from "@/features/inboxes/components/inbox-icon"
 import { MediaLibraryTrigger } from "@/features/media-library/components/media-library-trigger"
 import type { ListFilesResponse } from "@/features/media-library/schema"
 import { QuickRepliesPopover } from "@/features/saved-replies/quick-replies-popover"
 import type { SavedReplyResource } from "@/features/saved-replies/schema/resource"
+import { ComposerTargetLanguage } from "@/features/translation/components/composer-target-language"
+import { ComposerTranslationPreview } from "@/features/translation/components/composer-translation-preview"
+import { useConversationTranslation } from "@/features/translation/hooks/use-conversation-translation"
+import { useTranslationPreview } from "@/features/translation/hooks/use-translation-preview"
+import { useTranslationPreviewPreference } from "@/features/translation/hooks/use-translation-preview-preference"
+import {
+  resolveComposerTranslation,
+  willTranslateSend,
+} from "@/features/translation/lib/composer-translation"
+import { decidePreviewSend } from "@/features/translation/lib/preview-send"
+import { useTranslationUiStore } from "@/features/translation/store/translation-ui-store"
 import { authClient } from "@/lib/auth/auth-client"
+import { shouldSendOnEnter } from "@/lib/keyboard/should-send-on-enter"
 import { useChatStore } from "../../chat/store/chat-store-provider"
 import { createMessageAction } from "../actions/create-message.action"
-import { flattenValidationErrors } from "../lib/validation-errors"
+import {
+  discardHeldSends,
+  enqueueSend,
+  isSendQueueLocked,
+  resumeSendQueue,
+} from "../lib/send-queue"
 import { createMessageWithRoutingBypassRequest } from "../schema/mutation"
 import type { MessageResource } from "../schema/resource"
 import { FileUploadPreview } from "./file-upload"
 import { InputMenu } from "./input-menu"
 import { MediaFilePreview } from "./media-file-preview"
+import { SendQueueNotice } from "./send-queue-notice"
 import { ThreadControlLockedComposer } from "./thread-control-locked-composer"
 
 const CHANNEL_WINDOW_SECONDS: Record<ChannelType, number> = {
@@ -67,6 +82,7 @@ const CHANNEL_WINDOW_SECONDS: Record<ChannelType, number> = {
   zalo: 0,
   smtp: 0,
   telegram: 0,
+  line: 0,
   instagram: 24 * 60 * 60,
   threads: 0,
   tiktok: 24 * 60 * 60,
@@ -87,6 +103,7 @@ export const MessageInput = () => {
   const t = useTranslations()
   const session = authClient.useSession()
 
+  const isTouchDevice = useIsTouchDevice()
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const fileUploadRef = useRef<HTMLInputElement>(null)
   const [selectedMediaFiles, setSelectedMediaFiles] = useState<
@@ -95,27 +112,17 @@ export const MessageInput = () => {
 
   const {
     appendMessage,
+    markMessagesDeleted,
     updateConversationViaMessage,
     activeConversationId,
     conversations,
-    updateConversation,
     replyToMessage,
     setReplyToMessage,
     isPrivateReply,
-    markMessageFailed,
     messages,
+    sendQueues,
+    updateSendQueue,
   } = useChatStore((state) => state)
-
-  const replyToMessageRef = useRef(replyToMessage)
-  const selectedMediaFilesRef = useRef(selectedMediaFiles)
-
-  useEffect(() => {
-    replyToMessageRef.current = replyToMessage
-  }, [replyToMessage])
-
-  useEffect(() => {
-    selectedMediaFilesRef.current = selectedMediaFiles
-  }, [selectedMediaFiles])
 
   const lastContactComment = useMemo(() => {
     for (let i = messages.length - 1; i >= 0; i--) {
@@ -146,6 +153,7 @@ export const MessageInput = () => {
   // fewer images than a message thread on most channels. A private reply is
   // a DM to the commenter instead, so it gets the DM-like limit.
   const replyKind = resolveInboxReplyKind({
+    channel: channelTypes.safeParse(channel).data,
     hasReplyTarget: Boolean(replyToMessage ?? lastContactComment),
     isPrivateReply: Boolean(replyToMessage && isPrivateReply),
   })
@@ -186,25 +194,6 @@ export const MessageInput = () => {
   // handover take). Drives the highlighted notice + the send-gate bypass.
   const takeOverOnSend = Boolean(threadControl?.inlineReplyTakesOver)
 
-  const { execute: disableBot } = useAction(
-    disableBotAction.bind(null, conversation?.workspaceId ?? ""),
-    {
-      onSuccess: () => {
-        if (conversation) {
-          updateConversation(conversation.id, {
-            botEnabled: false,
-            botResumeAt: new Date(Date.now() + BOT_DISABLE_DURATION_MS),
-          })
-        }
-      },
-      onError: ({ error }) => {
-        if (error.serverError) {
-          toast.error(error.serverError)
-        }
-      },
-    },
-  )
-
   const defaultValues = useMemo(
     () => ({
       text: "",
@@ -217,7 +206,7 @@ export const MessageInput = () => {
     [],
   )
 
-  const { form, action } = useHookFormAction(
+  const { form } = useHookFormAction(
     createMessageAction.bind(
       null,
       conversation?.workspaceId ?? "",
@@ -244,6 +233,42 @@ export const MessageInput = () => {
       textareaRef.current?.focus()
     }
   }, [form, replyToMessage, isPrivateReply])
+
+  // Inbox translation. All of it is inert while the workspace has translation
+  // off: the chip is hidden, no preview runs, and `translate` is never added to
+  // the message, so the composer sends exactly what it did before.
+  const conversationTranslation = useConversationTranslation()
+  const draftText = useWatch({ control: form.control, name: "text" })
+  const draftFiles = useWatch({ control: form.control, name: "files" })
+  const composerTranslation = resolveComposerTranslation({
+    workspaceEnabled: conversationTranslation.workspaceEnabled,
+    conversationEnabled: conversationTranslation.conversationEnabled,
+    language: conversationTranslation.language,
+    workspaceLanguage: conversationTranslation.workspaceLanguage,
+    hasFiles:
+      selectedMediaFiles.length > 0 ||
+      (Array.isArray(draftFiles) && draftFiles.length > 0),
+    isCommentOrPrivateReply: Boolean(replyToMessage ?? lastContactComment),
+  })
+  const translatesSend = willTranslateSend(composerTranslation)
+  const [previewEnabled, setPreviewEnabled] = useTranslationPreviewPreference()
+  const {
+    preview: translationPreview,
+    translate: translatePreview,
+    edit: editPreview,
+    reset: resetPreview,
+  } = useTranslationPreview({
+    conversationId: activeConversationId,
+    text: draftText ?? "",
+    language:
+      composerTranslation.kind === "active"
+        ? composerTranslation.language
+        : null,
+    enabled: previewEnabled && composerTranslation.kind === "active",
+  })
+  const isDetectingLanguage = useTranslationUiStore((state) =>
+    Object.values(state.entries).some((entry) => entry.state === "pending"),
+  )
 
   // Memoize emoji selection handler
   const setContent = useCallback(
@@ -387,7 +412,37 @@ export const MessageInput = () => {
     ],
   )
 
+  const sendQueue = activeConversationId
+    ? sendQueues[activeConversationId]
+    : undefined
+  // Messages are held behind a failed (or unconfirmed) one: sending more would
+  // only pile on, so the composer waits for the person's decision.
+  const isSendLocked = sendQueue ? isSendQueueLocked(sendQueue) : false
+
   const sendMessage = useCallback(async () => {
+    if (isSendLocked) {
+      return
+    }
+    // With the translation preview on, Enter first translates and shows it; the
+    // next Enter sends what was shown. Off (or nothing to translate), this is a
+    // plain send.
+    const previewStep = decidePreviewSend({
+      previewEnabled,
+      translationActive: composerTranslation.kind === "active",
+      text: form.getValues("text") ?? "",
+      language:
+        composerTranslation.kind === "active"
+          ? composerTranslation.language
+          : null,
+      preview: translationPreview,
+    })
+    if (previewStep === "wait") {
+      return
+    }
+    if (previewStep === "translate") {
+      await translatePreview()
+      return
+    }
     // Same check as the server, done here so the agent sees which channel
     // refuses the images before anything is sent.
     if (channelType) {
@@ -409,8 +464,22 @@ export const MessageInput = () => {
       }
     }
 
-    const submittedFiles = form.getValues("files")
     const replyTarget = replyToMessage ?? lastContactComment
+    // Captured now, with the rest of the message: the box is cleared at once
+    // and the queue sends later, so a preview or setting changed after Enter
+    // must not change a message that is already queued. A translation the
+    // agent reviewed is sent as is, but only when it still matches the sentence
+    // and the language; otherwise the server translates again.
+    const reviewedTranslation =
+      translationPreview.status === "ready" &&
+      composerTranslation.kind === "active" &&
+      translationPreview.language === composerTranslation.language &&
+      translationPreview.translated.trim() !== ""
+        ? {
+            text: translationPreview.translated.trim(),
+            targetLanguage: composerTranslation.language,
+          }
+        : undefined
     const values = {
       ...form.getValues(),
       clientId: createId(),
@@ -418,6 +487,9 @@ export const MessageInput = () => {
       replyToMessageId: replyTarget?.id,
       replyToMessageCreatedAt: replyTarget?.createdAt ?? undefined,
       isPrivateReply: replyToMessage ? isPrivateReply : undefined,
+      ...(translatesSend
+        ? { translate: true, editedTranslation: reviewedTranslation }
+        : {}),
     }
     const parsed = createMessageWithRoutingBypassRequest.safeParse(values)
     if (!parsed.success) {
@@ -425,96 +497,62 @@ export const MessageInput = () => {
       return
     }
 
-    const optimisticMessageId = appendOptimistic(parsed.data)
-    form.setValue("text", "")
-    textareaRef.current?.focus()
-
-    try {
-      const result = await action.executeAsync(parsed.data)
-      if (result?.serverError) {
-        markMessageFailed(
-          optimisticMessageId ?? "",
-          parsed.data.clientId,
-          result.serverError,
-        )
-        toast.error(result.serverError)
-        return
-      }
-
-      if (result?.validationErrors) {
-        const validationErrors = flattenValidationErrors(
-          result.validationErrors,
-        )
-        for (const validationError of validationErrors) {
-          form.setError(validationError.path as never, {
-            message: validationError.message,
-          })
-        }
-        const errorMessage =
-          validationErrors[0]?.message ?? t("messages.unknownError")
-        markMessageFailed(
-          optimisticMessageId ?? "",
-          parsed.data.clientId,
-          errorMessage,
-        )
-        toast.error(errorMessage)
-        return
-      }
-
-      if (form.getValues("files") === submittedFiles) {
-        form.setValue("files", [])
-      }
-      if (selectedMediaFilesRef.current === selectedMediaFiles) {
-        form.setValue("mediaFileIds", [])
-        setSelectedMediaFiles([])
-      }
-      if (replyToMessageRef.current === replyToMessage) {
-        setReplyToMessage(null)
-      }
-      if (result?.data && conversation && isConversationActive(conversation)) {
-        disableBot({ ids: [conversation.id] })
-      }
-    } catch (error) {
-      const errorMessage =
-        error instanceof Error ? error.message : t("messages.unknownError")
-      markMessageFailed(
-        optimisticMessageId ?? "",
-        parsed.data.clientId,
-        errorMessage,
-      )
-      toast.error(errorMessage)
+    if (!conversation) {
+      return
     }
+
+    // Everything the message needs is in `parsed.data` (files, media, reply
+    // target, routing bypass), so the composer can be cleared at once: the
+    // queue sends it, in order, when its turn comes.
+    const optimisticMessageId = appendOptimistic(parsed.data)
+    updateSendQueue(conversation.id, (queue) =>
+      enqueueSend(queue, {
+        clientId: values.clientId,
+        input: parsed.data,
+        optimisticMessageId,
+      }),
+    )
+    form.setValue("text", "")
+    form.setValue("files", [])
+    form.setValue("mediaFileIds", [])
+    setSelectedMediaFiles([])
+    setReplyToMessage(null)
+    resetPreview()
+    textareaRef.current?.focus()
   }, [
-    action,
     appendOptimistic,
+    composerTranslation,
+    previewEnabled,
+    resetPreview,
+    translatePreview,
+    translatesSend,
+    translationPreview,
     bypassThreadControlLock,
     channelType,
     conversation,
-    disableBot,
     form,
     imageLimitMessage,
     isPrivateReply,
+    isSendLocked,
     lastContactComment,
-    markMessageFailed,
     replyToMessage,
     replyKind,
     selectedMediaFiles,
     setReplyToMessage,
-    t,
+    updateSendQueue,
   ])
 
   // Memoize keyboard handler
   const onKeyDown = useCallback(
     async (e: KeyboardEvent) => {
-      if (e.nativeEvent.isComposing || e.key === "Process") {
+      if (!shouldSendOnEnter(e, isTouchDevice)) {
         return
       }
-      if (e.key === "Enter" && e.shiftKey === false) {
-        e.preventDefault()
-        await sendMessage()
-      }
+
+      e.preventDefault()
+      await sendMessage()
     },
-    [sendMessage],
+    [isTouchDevice, sendMessage],
   )
 
   const isInstagramPostComment =
@@ -624,6 +662,7 @@ export const MessageInput = () => {
         channel={threadControl.channel}
         contactInboxId={threadControl.contactInboxId}
         conversationId={conversation.id}
+        inboxId={threadControl.inboxId}
         // Keyed per conversation so a take-over spinner or inline refusal
         // never carries over when the agent switches conversations.
         key={conversation.id}
@@ -635,6 +674,22 @@ export const MessageInput = () => {
     )
   }
 
+  // Without a composer there is no chip: keep the translation settings reachable
+  // under the notice (turn translation on or off, show originals). Nothing is
+  // sent from here, so the preview option is left out.
+  const translationSettingsEntry =
+    conversation && composerTranslation.kind !== "hidden" ? (
+      <div className="flex justify-end px-2 pb-2">
+        <ComposerTargetLanguage
+          conversation={conversation}
+          onPreviewEnabledChange={setPreviewEnabled}
+          previewEnabled={previewEnabled}
+          showPreviewOption={false}
+          state={composerTranslation}
+        />
+      </div>
+    ) : null
+
   if (isMessengerHumanAgentWindowExpired) {
     return (
       <div className="m-3 shrink-0 rounded-xl border pt-2">
@@ -643,6 +698,7 @@ export const MessageInput = () => {
             {t("messages.humanAgentWindowExpired")}
           </p>
         </div>
+        {translationSettingsEntry}
       </div>
     )
   }
@@ -655,6 +711,7 @@ export const MessageInput = () => {
             {t("messages.messagingWindowClosed")}
           </p>
         </div>
+        {translationSettingsEntry}
       </div>
     )
   }
@@ -674,6 +731,39 @@ export const MessageInput = () => {
             <p className="mx-2.5 mb-1 flex items-center gap-2 rounded-md border border-primary/40 bg-primary/10 px-3 py-1.5 font-semibold text-primary text-sm">
               <HandIcon aria-hidden className="size-4 shrink-0" />
               {t("conversationRouting.composer.aiStandbyHint")}
+            </p>
+          )}
+          {sendQueue && isSendLocked && activeConversationId && (
+            <SendQueueNotice
+              heldCount={sendQueue.waiting.length}
+              onContinue={() =>
+                updateSendQueue(activeConversationId, (queue) =>
+                  resumeSendQueue(queue, Date.now()),
+                )
+              }
+              onDiscard={() => {
+                // The rows shown for the dropped messages must go too, or they
+                // would sit in the thread looking sent.
+                markMessagesDeleted(
+                  sendQueue.waiting.flatMap((item) =>
+                    item.optimisticMessageId ? [item.optimisticMessageId] : [],
+                  ),
+                )
+                updateSendQueue(activeConversationId, discardHeldSends)
+              }}
+              reason={sendQueue.holdReason}
+            />
+          )}
+          {composerTranslation.kind === "unknownLanguage" && (
+            <p className="mx-2.5 mb-1 flex items-center gap-1.5 text-muted-foreground text-xs">
+              {isDetectingLanguage ? (
+                <Loader2Icon aria-hidden className="size-3.5 animate-spin" />
+              ) : (
+                <LanguagesIcon aria-hidden className="size-3.5" />
+              )}
+              {isDetectingLanguage
+                ? t("inboxTranslation.composer.hintDetecting")
+                : t("inboxTranslation.composer.hintUnknown")}
             </p>
           )}
           {replyToMessage && (
@@ -717,6 +807,7 @@ export const MessageInput = () => {
                     aria-label={t("actions.typeMessage")}
                     autoComplete="off"
                     className="h-16 resize-none border-0 px-1.5 py-1 shadow-none focus:ring-0 focus-visible:ring-0 dark:bg-neutral-900"
+                    enterKeyHint={isTouchDevice ? "enter" : "send"}
                     placeholder={t("actions.messagePlaceholder")}
                     {...field}
                     onKeyDown={onKeyDown}
@@ -726,6 +817,14 @@ export const MessageInput = () => {
               )}
             />
           </div>
+          {composerTranslation.kind === "active" && (
+            <ComposerTranslationPreview
+              language={composerTranslation.language}
+              onEdit={editPreview}
+              onTranslate={translatePreview}
+              preview={translationPreview}
+            />
+          )}
           {!isInstagramPostComment && (
             <div className="px-2">
               <FileUploadPreview ref={fileUploadRef} />
@@ -759,13 +858,21 @@ export const MessageInput = () => {
             </div>
           )}
           <div className="scrollbar-hide flex w-full items-center gap-2 overflow-x-auto ps-2.5">
-            <div className="min-w-0 flex-1">
+            <div className="flex min-w-0 flex-1 items-center gap-1">
               <InboxIcon
                 channel={
                   (conversation?.contactInboxes[0]?.channel ??
                     "webchat") as ChannelType
                 }
               />
+              {conversation && (
+                <ComposerTargetLanguage
+                  conversation={conversation}
+                  onPreviewEnabledChange={setPreviewEnabled}
+                  previewEnabled={previewEnabled}
+                  state={composerTranslation}
+                />
+              )}
             </div>
 
             <div className="message-toolbar flex shrink-0 items-center gap-2">
@@ -823,7 +930,9 @@ export const MessageInput = () => {
                 aria-label="Send message"
                 className="px-2 py-1.5 [&_svg]:size-5"
                 disabled={
-                  !form.formState.isValid || form.formState.isSubmitting
+                  !form.formState.isValid ||
+                  form.formState.isSubmitting ||
+                  isSendLocked
                 }
                 type="submit"
                 variant="ghost"

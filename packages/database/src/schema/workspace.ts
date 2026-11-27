@@ -95,6 +95,7 @@ export const workspaceModel = pgTable(
       }),
   },
   (table) => [
+    index("Workspace_ownerId_idx").on(table.ownerId),
     index("Workspace_tenantId_idx").on(table.tenantId),
     index("Workspace_scheduledDeletionAt_idx").on(table.scheduledDeletionAt),
     index("Workspace_supportAccessUntil_idx").on(table.supportAccessUntil),

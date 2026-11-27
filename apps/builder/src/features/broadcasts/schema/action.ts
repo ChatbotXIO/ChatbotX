@@ -149,7 +149,7 @@ export const createBroadcastFields = z.object({
       "ISO 8601 send time, required when schedulesType is `future` and not a draft.",
     ),
   contactFilter: contactFilterRequest.shape.contactFilter.describe(
-    "Structured filter selecting the recipient audience. See `contacts.listFilterFields`.",
+    "Structured filter selecting the recipient audience. See `contacts.listFilterFields`. By default only contacts that already have a direct chat (DM) are included. A `lastInteraction` condition chooses by chat history instead and also covers contacts with no DM yet (`isEmpty` = never messaged, `isNotEmpty` = messaged; both with operator `or` = everyone); a DM is opened for them when the broadcast is sent.",
   ),
   audienceRangeStart:
     broadcastSendLimitSchema.shape.audienceRangeStart.describe(

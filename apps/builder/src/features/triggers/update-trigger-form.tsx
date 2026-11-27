@@ -1,5 +1,6 @@
 "use client"
 
+import type { StoreSource } from "@chatbotx.io/database/partials"
 import type { TriggerModel } from "@chatbotx.io/database/types"
 import { Button } from "@chatbotx.io/ui/components/ui/button"
 import { Form, FormMessage } from "@chatbotx.io/ui/components/ui/form"
@@ -11,6 +12,10 @@ import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { useFieldArray } from "react-hook-form"
 import { toast } from "sonner"
+import {
+  LockedContent,
+  useIsEditorLocked,
+} from "@/features/templates/components/locked-editor"
 import { ConditionEditor } from "../conditions/editor"
 import { updateTriggerAction } from "./actions/update-trigger-action"
 import { AddAction } from "./add-action"
@@ -35,11 +40,13 @@ type TriggerWithConditions = TriggerModel & {
 type UpdateTriggerFormProps = {
   workspaceId: string
   trigger: TriggerWithConditions
+  storeSource?: StoreSource
 }
 
 export default function UpdateTriggerForm(props: UpdateTriggerFormProps) {
-  const { workspaceId, trigger } = props
+  const { workspaceId, trigger, storeSource } = props
   const t = useTranslations()
+  const isLocked = useIsEditorLocked()
   const router = useRouter()
 
   const {
@@ -61,7 +68,13 @@ export default function UpdateTriggerForm(props: UpdateTriggerFormProps) {
         },
         onError: ({ error }) => {
           if (error.serverError) {
-            toast.error(error.serverError)
+            // Services raise validation failures as message keys.
+            toast.error(
+              error.serverError.startsWith("validation.") &&
+                t.has(error.serverError as never)
+                ? t(error.serverError as never)
+                : error.serverError,
+            )
           }
         },
       },
@@ -103,67 +116,70 @@ export default function UpdateTriggerForm(props: UpdateTriggerFormProps) {
   return (
     <Form {...form}>
       <form className="flex-1 space-y-4" onSubmit={handleSubmitWithAction}>
-        <div className="flex gap-10">
-          {/* condition block */}
-          <div className="flex flex-1 flex-col gap-4">
-            <Label htmlFor="conditions">{t("trigger.when")}</Label>
-            {conditions.map((condition, index) => (
-              <BaseEditor
-                conditionType={condition.type}
-                // biome-ignore lint/suspicious/noArrayIndexKey: wip
-                key={index}
-                onRemove={() => removeConditions(index)}
-              >
-                <ConditionEditor
-                  parentName={`conditions.${index}`}
-                  type={condition.type}
-                />
-              </BaseEditor>
-            ))}
-            <FormMessage />
-            <AddCondition
-              onAdd={(option) => {
-                const condition =
-                  option.defaultFn() as UpdateTriggerSchema["conditions"][number]
-                appendConditions(condition)
-              }}
-            />
-          </div>
+        <LockedContent className="">
+          <div className="flex gap-10">
+            <div className="flex flex-1 flex-col gap-4">
+              <Label htmlFor="conditions">{t("trigger.when")}</Label>
+              {conditions.map((condition, index) => (
+                <BaseEditor
+                  conditionType={condition.type}
+                  // biome-ignore lint/suspicious/noArrayIndexKey: wip
+                  key={index}
+                  onRemove={() => removeConditions(index)}
+                >
+                  <ConditionEditor
+                    parentName={`conditions.${index}`}
+                    type={condition.type}
+                  />
+                </BaseEditor>
+              ))}
+              <FormMessage />
+              <AddCondition
+                onAdd={(option) => {
+                  const condition =
+                    option.defaultFn() as UpdateTriggerSchema["conditions"][number]
+                  appendConditions(condition)
+                }}
+                storeSource={storeSource}
+              />
+            </div>
 
-          {/* actions block */}
-          <div className="flex flex-1 flex-col gap-4">
-            <Label htmlFor="actions">{t("fields.actions.label")}</Label>
-            {actions.map((action, index) => (
-              <BaseEditor
-                actionType={action.type}
-                // biome-ignore lint/suspicious/noArrayIndexKey: wip
-                key={index}
-                onRemove={() => removeActions(index)}
-              >
-                <ActionEditor
-                  parentName={`actions.${index}`}
-                  type={action.type}
-                />
-              </BaseEditor>
-            ))}
-            <FormMessage />
-            <AddAction
-              onAdd={(option) => {
-                const action =
-                  option.defaultFn() as UpdateTriggerSchema["actions"][number]
-                appendActions(action)
-              }}
-            />
+            <div className="flex flex-1 flex-col gap-4">
+              <Label htmlFor="actions">{t("fields.actions.label")}</Label>
+              {actions.map((action, index) => (
+                <BaseEditor
+                  actionType={action.type}
+                  // The array's stable id, so removing an earlier action does not
+                  // hand its mounted editor (and reset state) to the next one.
+                  key={action.id}
+                  onRemove={() => removeActions(index)}
+                >
+                  <ActionEditor
+                    parentName={`actions.${index}`}
+                    type={action.type}
+                  />
+                </BaseEditor>
+              ))}
+              <FormMessage />
+              <AddAction
+                onAdd={(option) => {
+                  const action =
+                    option.defaultFn() as UpdateTriggerSchema["actions"][number]
+                  appendActions(action)
+                }}
+              />
+            </div>
           </div>
-        </div>
-
+        </LockedContent>
         {/* footer */}
         <div className="flex justify-end gap-4">
           <Button onClick={() => router.back()} type="button" variant="ghost">
             {t("actions.cancel")}
           </Button>
           <Button
-            disabled={!form.formState.isValid || form.formState.isSubmitting}
+            disabled={
+              isLocked || !form.formState.isValid || form.formState.isSubmitting
+            }
             type="submit"
           >
             {form.formState.isSubmitting && (

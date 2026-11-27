@@ -11,6 +11,8 @@ export const RUN_STAT_EVENTS = [
   ["message:seen", "seen"],
   ["flow:clicked", "clicked"],
   ["message:failed", "failed"],
+  ["contactInfo:phoneCaptured", "leftPhone"],
+  ["contactInfo:emailCaptured", "leftEmail"],
 ] as const satisfies readonly (readonly [BroadcastEventType, string])[]
 
 type RunStatsGridProps = {
@@ -19,13 +21,13 @@ type RunStatsGridProps = {
   onSelect?: (eventType: BroadcastEventType, total: number) => void
 }
 
-/** The five delivery numbers of a run, or the totals of several. */
+/** The delivery and contact-info numbers of a run, or the totals of several. */
 export function RunStatsGrid({ stats, onSelect }: RunStatsGridProps) {
   const t = useTranslations("broadcasts.stats")
   const format = useFormatter()
 
   return (
-    <dl className="grid grid-cols-2 gap-3 text-sm sm:grid-cols-5">
+    <dl className="grid grid-cols-2 gap-3 text-sm sm:grid-cols-4 lg:grid-cols-7">
       {RUN_STAT_EVENTS.map(([eventType, labelKey]) => {
         const total = stats?.[eventType] ?? 0
         return (

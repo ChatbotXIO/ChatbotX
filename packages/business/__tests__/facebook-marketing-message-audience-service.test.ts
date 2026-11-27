@@ -45,6 +45,8 @@ vi.mock("@chatbotx.io/integration-facebook-ads", () => graph)
 const { facebookMarketingMessageAudienceService: service } = await import(
   "../src/facebook-marketing-message-audience/service"
 )
+const { facebookMarketingMessageAudienceUploadService: uploadService } =
+  await import("../src/facebook-marketing-message-audience/upload.service")
 
 const grant = { accessToken: "T", version: "v25.0", facebookUserId: "asuid" }
 const csv = (text: string) => ({
@@ -80,7 +82,7 @@ describe("create", () => {
       new FacebookAdsException("(#100) Invalid parameter", 100),
     )
     await expect(
-      service.create(createInput("email\na@b.co\n")),
+      uploadService.create(createInput("email\na@b.co\n")),
     ).rejects.toMatchObject({
       code: "audienceCreateRejected",
       data: { reason: "(#100) Invalid parameter" },
@@ -92,13 +94,13 @@ describe("create", () => {
   test("a timeout / network error (no Graph code) stays a thrown error", async () => {
     const timeout = new FacebookAdsException("timed out")
     graph.createMarketingMessagesAudience.mockRejectedValue(timeout)
-    await expect(service.create(createInput("email\na@b.co\n"))).rejects.toBe(
-      timeout,
-    )
+    await expect(
+      uploadService.create(createInput("email\na@b.co\n")),
+    ).rejects.toBe(timeout)
   })
 
   test("validates, creates on Meta, inserts, uploads, and counts", async () => {
-    const result = await service.create(
+    const result = await uploadService.create(
       createInput("email,phone\na@b.co,\n,\nc@d.co,+44 303 123 7300\n"),
     )
     expect(result).toEqual({
@@ -134,7 +136,9 @@ describe("create", () => {
   })
 
   test("reports skipped rows", async () => {
-    const result = await service.create(createInput("email\na@b.co\nnope\n"))
+    const result = await uploadService.create(
+      createInput("email\na@b.co\nnope\n"),
+    )
     expect(result.skipped).toBe(1)
   })
 
@@ -143,16 +147,18 @@ describe("create", () => {
     ["no valid rows", "email\nnope\n", "audienceNoValidRows"],
     ["empty file", "", "audienceInvalidFile"],
   ])("%s → %s, nothing created on Meta", async (_label, text, code) => {
-    await expect(service.create(createInput(text))).rejects.toMatchObject({
-      code,
-    })
+    await expect(uploadService.create(createInput(text))).rejects.toMatchObject(
+      {
+        code,
+      },
+    )
     expect(graph.createMarketingMessagesAudience).not.toHaveBeenCalled()
     expect(repository.create).not.toHaveBeenCalled()
   })
 
   test("unsupported extension → audienceInvalidFile", async () => {
     await expect(
-      service.create({
+      uploadService.create({
         ...createInput("email\na@b.co\n"),
         file: { fileName: "list.xls", buffer: Buffer.from("x") },
       }),
@@ -164,7 +170,7 @@ describe("create", () => {
       new AudienceUploadError(10_000, 3),
     )
     await expect(
-      service.create(createInput("email\na@b.co\n")),
+      uploadService.create(createInput("email\na@b.co\n")),
     ).rejects.toMatchObject({
       code: "audiencePartialUpload",
       data: { received: 10_000 },
@@ -181,7 +187,7 @@ describe("create", () => {
   test("a non-upload error after the Meta create is reported as partial", async () => {
     graph.uploadAudienceUsersSession.mockRejectedValue(new Error("boom"))
     await expect(
-      service.create(createInput("email\na@b.co\n")),
+      uploadService.create(createInput("email\na@b.co\n")),
     ).rejects.toMatchObject({
       code: "audiencePartialUpload",
       data: { received: 0 },
@@ -191,7 +197,7 @@ describe("create", () => {
   test("a failed row insert after the Meta create is reported as partial", async () => {
     repository.create.mockRejectedValueOnce(new Error("db down"))
     await expect(
-      service.create(createInput("email\na@b.co\n")),
+      uploadService.create(createInput("email\na@b.co\n")),
     ).rejects.toMatchObject({ code: "audiencePartialUpload" })
     expect(graph.uploadAudienceUsersSession).not.toHaveBeenCalled()
   })
@@ -202,7 +208,7 @@ describe("create", () => {
     )
     repository.incrementRowsUploaded.mockRejectedValueOnce(new Error("db down"))
     await expect(
-      service.create(createInput("email\na@b.co\n")),
+      uploadService.create(createInput("email\na@b.co\n")),
     ).rejects.toMatchObject({
       code: "audiencePartialUpload",
       data: { received: 10_000 },
@@ -212,7 +218,7 @@ describe("create", () => {
   test("errors before the Meta create stay unmapped to partial", async () => {
     graph.createMarketingMessagesAudience.mockRejectedValue(new Error("graph"))
     await expect(
-      service.create(createInput("email\na@b.co\n")),
+      uploadService.create(createInput("email\na@b.co\n")),
     ).rejects.not.toMatchObject({ code: "audiencePartialUpload" })
   })
 })
@@ -223,7 +229,7 @@ describe("uploadMore", () => {
       id: "row_1",
       customAudienceId: "aud_1",
     })
-    const result = await service.uploadMore({
+    const result = await uploadService.uploadMore({
       workspaceId: "w1",
       grant,
       id: "row_1",
@@ -244,7 +250,7 @@ describe("uploadMore", () => {
   test("unknown row → audienceNotFound", async () => {
     repository.findForWorkspace.mockResolvedValue(null)
     await expect(
-      service.uploadMore({
+      uploadService.uploadMore({
         workspaceId: "w1",
         grant,
         id: "x",

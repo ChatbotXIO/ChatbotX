@@ -88,27 +88,36 @@ const {
   }
 })
 
-vi.mock("@chatbotx.io/database/client", () => ({
-  and: vi.fn((...conditions: unknown[]) => ({ conditions })),
-  count: mockCount,
-  db: {
+vi.mock("@chatbotx.io/database/client", () => {
+  const db = {
     insert: mockDbInsert,
     select: mockDbSelect,
     update: mockDbUpdate,
+    transaction: vi.fn(
+      async (run: (tx: unknown) => Promise<unknown>) => await run(db),
+    ),
     query: {
       contactOnSmartDelayModel: {
         findFirst: mockDbFindFirst,
       },
     },
-  },
-  eq: mockEq,
-  inArray: mockInArray,
-  isNotNull: mockIsNotNull,
-  lt: mockLt,
-  lte: mockLte,
-  sql: mockSql,
-}))
+  }
+  return {
+    and: vi.fn((...conditions: unknown[]) => ({ conditions })),
+    count: mockCount,
+    db,
+    eq: mockEq,
+    inArray: mockInArray,
+    isNotNull: mockIsNotNull,
+    lt: mockLt,
+    lte: mockLte,
+    sql: mockSql,
+  }
+})
 
+const { contactOnSmartDelayModel } = await import(
+  "@chatbotx.io/database/schema"
+)
 const { smartDelayService } = await import("../src/smart-delay/service")
 
 const smartDelayRow = {
@@ -172,6 +181,91 @@ describe("smartDelayService", () => {
       }),
     )
     expect(mockDbReturning).toHaveBeenCalledOnce()
+  })
+
+  describe("upsertStepInputTimeout", () => {
+    const timeoutRow = {
+      ...smartDelayRow,
+      id: "timeout-row",
+      type: "stepInputTimeout",
+      metadata: {
+        type: "stepInputResolution",
+        stepId: "step-1",
+        challengeId: "challenge-1",
+        reason: "timeout",
+      },
+    }
+
+    test("keys the conflict on one active timer per conversation and restarts it", async () => {
+      mockDbFor.mockResolvedValueOnce([{ challengeId: "challenge-1" }])
+      mockDbReturning.mockResolvedValueOnce([timeoutRow])
+
+      await expect(
+        smartDelayService.upsertStepInputTimeout({ data: timeoutRow as never }),
+      ).resolves.toEqual(timeoutRow)
+
+      const [conflict] = mockDbOnConflictDoUpdate.mock.calls[0] as [
+        { target: unknown[]; targetWhere: { values: unknown[] }; set: object },
+      ]
+      expect(conflict.target).toEqual([
+        contactOnSmartDelayModel.workspaceId,
+        contactOnSmartDelayModel.conversationId,
+      ])
+      expect(conflict.set).toMatchObject({
+        flowId: "flow-1",
+        nodeId: "next-node",
+        stepId: "step-1",
+        metadata: timeoutRow.metadata,
+        status: "pending",
+        triggerAt: timeoutRow.triggerAt,
+      })
+      expect(conflict.set).toHaveProperty("createdAt", expect.any(Date))
+    })
+
+    test("only treats non-terminal stepInputTimeout rows as the active key", async () => {
+      mockDbFor.mockResolvedValueOnce([{ challengeId: "challenge-1" }])
+      mockDbReturning.mockResolvedValueOnce([timeoutRow])
+
+      await smartDelayService.upsertStepInputTimeout({
+        data: timeoutRow as never,
+      })
+
+      const [conflict] = mockDbOnConflictDoUpdate.mock.calls[0] as [
+        { targetWhere: { strings: string[] } },
+      ]
+      const predicate = conflict.targetWhere.strings.join("?")
+      expect(predicate).toContain("NOT IN ('completed', 'failed', 'canceled')")
+      expect(predicate).toContain("'stepInputTimeout'")
+    })
+
+    test("locks the conversation and arms nothing when its pending challenge was replaced", async () => {
+      mockDbFor.mockResolvedValueOnce([{ challengeId: "newer-challenge" }])
+
+      await expect(
+        smartDelayService.upsertStepInputTimeout({ data: timeoutRow as never }),
+      ).resolves.toBeNull()
+
+      expect(mockDbFor).toHaveBeenCalledWith("update")
+      expect(mockDbInsert).not.toHaveBeenCalled()
+    })
+
+    test("arms nothing when the conversation is gone", async () => {
+      mockDbFor.mockResolvedValueOnce([])
+
+      await expect(
+        smartDelayService.upsertStepInputTimeout({ data: timeoutRow as never }),
+      ).resolves.toBeNull()
+      expect(mockDbInsert).not.toHaveBeenCalled()
+    })
+
+    test("fails loudly when the upsert returns no row", async () => {
+      mockDbFor.mockResolvedValueOnce([{ challengeId: "challenge-1" }])
+      mockDbReturning.mockResolvedValueOnce([])
+
+      await expect(
+        smartDelayService.upsertStepInputTimeout({ data: timeoutRow as never }),
+      ).rejects.toThrow("Failed to upsert step input timeout smart delay")
+    })
   })
 
   test("findById returns the matching row or null", async () => {
@@ -266,6 +360,33 @@ describe("smartDelayService", () => {
     await expect(
       smartDelayService.claimForRun({ id: "row-1", to: "canceled" }),
     ).resolves.toBe(false)
+  })
+
+  test("claimForRun ties the claim to the deadline the caller observed, so a re-armed timer is not consumed", async () => {
+    const observedTriggerAt = new Date("2026-11-09T11:00:00.000Z")
+    mockDbReturning.mockResolvedValueOnce([{ id: "row-1" }])
+
+    await smartDelayService.claimForRun({
+      id: "row-1",
+      to: "completed",
+      observedTriggerAt,
+    })
+
+    expect(mockEq).toHaveBeenCalledWith(
+      contactOnSmartDelayModel.triggerAt,
+      observedTriggerAt,
+    )
+  })
+
+  test("claimForRun without an observed deadline does not filter on it (other smart-delay types)", async () => {
+    mockDbReturning.mockResolvedValueOnce([{ id: "row-1" }])
+
+    await smartDelayService.claimForRun({ id: "row-1", to: "completed" })
+
+    expect(mockEq).not.toHaveBeenCalledWith(
+      contactOnSmartDelayModel.triggerAt,
+      expect.anything(),
+    )
   })
 
   test("requeueClaimedRun only restores rows claimed as completed", async () => {

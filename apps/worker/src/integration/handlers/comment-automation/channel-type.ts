@@ -17,11 +17,12 @@ export type CommentAutomationChannelType =
 /**
  * Whether the channel can like an incoming comment on the author's behalf.
  *
- * Meta's Graph API exposes `POST /{comment-id}/likes` for Facebook and
- * Instagram comments, and TikTok has `business/comment/like/`; the Threads API
- * has no equivalent, so a Threads automation with `likeUserComment` enabled
- * logs an unsupported-capability line instead of enqueuing a job that could
- * only fail.
+ * Facebook comments (`POST /{comment-id}/likes`) and TikTok
+ * (`business/comment/like/`) can be liked. Neither Instagram connection can:
+ * the like endpoint is not in Meta's official reference, and Threads has no
+ * equivalent. An automation saved with `likeUserComment` on for one of those
+ * logs an unsupported-capability line instead of enqueuing a job, so the rule
+ * keeps working and the like is skipped.
  *
  * An allowlist rather than a chain of `!==`: a channel added without a decision
  * here should default to "cannot", not inherit a capability by omission.
@@ -33,8 +34,6 @@ export type CommentAutomationChannelType =
  */
 const CHANNELS_WITH_COMMENT_LIKE = new Set<CommentAutomationChannelType>([
   "messenger",
-  "instagram",
-  "instagramFacebook",
   "tiktok",
 ])
 

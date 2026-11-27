@@ -62,7 +62,14 @@ export const capabilitiesPublicRouter = {
       description:
         "Returns compact workspace reference data and FlowSpec authoring capabilities. Before writing a channel-bound FlowSpec, pass `channel` to receive the selected channel policy, supported block IDs, limits, and Builder/FlowSpec surface flags. Use `include` (comma-separated) to narrow the response; omit it for the default flow-authoring capabilities. Call this before `flows.create`, `flows.publish`, `flows.updateDraft`, or `flows.validate` so referenced names resolve to real workspace entities.",
       tags: ["Capabilities"],
-      spec: mcpSpec({ visibility: "default", alwaysVisible: true }),
+      spec: mcpSpec({
+        alwaysVisible: true,
+        destructiveHint: false,
+        idempotentHint: true,
+        openWorldHint: false,
+        readOnlyHint: true,
+        visibility: "default",
+      }),
     })
     .input(z.object({ channel: channelQueryParam, include: includeQueryParam }))
     .output(capabilitiesResponseSchema)
@@ -86,7 +93,13 @@ export const schemasPublicRouter = {
       description:
         "Returns the JSON Schema for the `spec` object accepted by `flows.create`'s, `flows.publish`'s, `flows.updateDraft`'s, and `flows.validate`'s `{ spec }` input — the authoritative reference for every step type's fields. Use `capabilities.get` first to resolve the names (templates, flows, tags, custom fields) a spec references into real ids.",
       tags: ["Capabilities"],
-      spec: mcpSpec({ visibility: "default" }),
+      spec: mcpSpec({
+        destructiveHint: false,
+        idempotentHint: true,
+        openWorldHint: false,
+        readOnlyHint: true,
+        visibility: "default",
+      }),
     })
     .input(z.object({}))
     .output(z.record(z.string(), z.unknown()))

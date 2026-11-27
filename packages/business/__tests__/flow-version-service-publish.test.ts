@@ -44,6 +44,14 @@ const {
   }
 })
 
+// The template lock guard has its own suite; these tests cover the service.
+vi.mock("../src/template/installed-resource.service", async () => ({
+  ...(await import("./helpers/template-guard-mocks")).templateGuardMocks({
+    assertDeletable: vi.fn(),
+    assertResourceEditable: vi.fn(),
+  }),
+}))
+
 vi.mock("@chatbotx.io/database/client", () => ({
   db: {
     query: { flowModel: { findFirst: mockFlowFindFirst } },

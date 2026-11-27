@@ -26,6 +26,7 @@ import {
   writeUnauthorized,
 } from "./gateway-shared"
 import type { RealtimeServerCounters } from "./lib/realtime-metrics"
+import { endSocket } from "./lib/socket-end"
 import { logger } from "./logger"
 import { loadReplay } from "./replay"
 import type { StreamReader } from "./stream-reader"
@@ -269,7 +270,7 @@ export const createWorkspaceSocketBehavior = <GuestSocketData extends object>({
     delivery.subscribeWorkspaceSocket(socket)
     if (socketData.closeReason) {
       socketData.closed = true
-      socket.end(REALTIME_CLOSE_CODE.resync, socketData.closeReason)
+      endSocket(socket, REALTIME_CLOSE_CODE.resync, socketData.closeReason)
       return
     }
     if (!delivery.replayWorkspaceSocket(socket)) {
@@ -282,7 +283,7 @@ export const createWorkspaceSocketBehavior = <GuestSocketData extends object>({
       )
     ) {
       socketData.closed = true
-      socket.end(REALTIME_CLOSE_CODE.resync, "recent-entries-expired")
+      endSocket(socket, REALTIME_CLOSE_CODE.resync, "recent-entries-expired")
       return
     }
     const gapEntries = streamReader.getRecentEntries(

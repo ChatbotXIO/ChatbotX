@@ -48,6 +48,16 @@ export const queueGroupByName: Record<QueueName, QueueGroup> = {
   // FB Marketing Messages campaign steps: long-running Meta sends, isolated
   // from the shared schedule queue so they never hold its slots.
   marketingMessage: "bulk",
+  // Template install / sync / uninstall: long transactions, bursty on a
+  // widely installed template's save, never latency-critical.
+  template: "bulk",
+  // Broadcast "left a phone/email" attribution: bounded, rate-limited, and the
+  // statistic may be late, so it must never compete with chat/integration.
+  contactInfoCapture: "bulk",
+  // Composed posts published to social networks: one job per destination.
+  postPublish: "bulk",
+  // Channel comment exports: long reads that wait on the channel, never latency-critical.
+  channelPostExport: "bulk",
 }
 
 function resolveGroupUrl(group: QueueGroup): string {
@@ -117,4 +127,6 @@ export const fakeQueue = {
   getWaitingCount: () => Promise.resolve(0),
   getPrioritizedCount: () => Promise.resolve(0),
   getDelayedCount: () => Promise.resolve(0),
+  getJobCounts: (..._types: string[]) =>
+    Promise.resolve<Record<string, number>>({}),
 }

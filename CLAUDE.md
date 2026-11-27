@@ -21,7 +21,7 @@
 | Result-returning operation (link, preview, test run/test send, stats, export, AI generation) — see "Result-returning operations" | `orpc-api` |
 | After any public API change (every one surfaces in the CLI/MCP), or CLI/MCP docs/skill drift | `cli-mcp-docs` |
 | Business logic, new service method, any DB read/write from app code | `business-data-access` |
-| New DB table or migration | `drizzle-database` |
+| New DB table or migration, Drizzle relational query, or `drizzle-orm`/`drizzle-kit` upgrade | `drizzle-database` |
 | New table / FK / workspace-scoped data, or any change to workspace deletion/purge/freeze | `workspace-purge` |
 | New background job or queue | `worker-development` |
 | New channel integration | `integration-channel` |
@@ -29,10 +29,12 @@
 | Comment automation (auto-reply/like/hide on post comments — Messenger, Instagram, Threads, TikTok) | `comment-automation` |
 | Minigame tool (Jackpot CRUD, prize draw, public play link/token, extending to a new minigame type) | `minigame` |
 | New flow step with states (success/error/skip routing) | `flow-step-development` |
+| New resource users build (shareable via Templates), new field/id reference on one (flow step, trigger action, contact filter, JSON column), or a write/delete path / list / editor of a template-copied kind, adding a Tools card, or adding a column to a template-copied table | `template-integration` |
 | Dev/build/lint commands | `turborepo-workflow` |
 | Approved implementation plan | `implement-plan` |
 | Security-sensitive change (auth, scoping, webhooks, AI tools, permissions) | `security-review` |
 | Writing tests / verifying a change is done | `testing-workflow` |
+| Fixing a bug, flaky test, or performance regression | `diagnosing-bugs` |
 | Concurrent code (worker jobs, migrations, replace-writes) | `reliability-concurrency` |
 
 ### Specialist agents (`.claude/agents/`)
@@ -43,7 +45,7 @@ Dispatch these project subagents by name when relevant:
 |-------|------|
 | `invariant-guard` | after editing `apps/`/`packages/`/`integrations/` — checks the ChatbotX invariants no linter enforces |
 | `rag-eval` | changes under `packages/ai` or the embedding repositories/handlers |
-| `incident-responder` | triaging a production error or failed job |
+| `incident-responder` | triaging a production error or failed job (then `diagnosing-bugs` to reproduce and fix it locally) |
 
 Reviewers, planners, build-fixers, etc. come from the `~/.claude/` global set — don't recreate them here.
 
@@ -59,10 +61,11 @@ Default to the cheapest tier that fits the task; reserve the top tier for judgme
 
 ### Never do without checking
 
-- Do not use `git add -A` or `git add .` — stage specific files only.
+- Stage specific files only. A `PreToolUse` hook (`.claude/hooks/block-dangerous-git.mjs`) blocks `git add -A`/`.`, force push, `reset --hard`, `clean -f`, `branch -D`, and `checkout .`/`restore .`; if one is truly needed, ask the user to run it.
 - Do not commit `.env` files or secrets.
 - Do not skip `pnpm lint` — the CI will fail.
 - Do not hardcode user-facing strings — use `useTranslations()`.
-- Do not ship a UI-only feature or UI-only button — every operation, including result-returning ones like the bot simulator link, needs a public API procedure unless it is on the exempt list in AGENTS.md invariant 23.
+- Do not ship a UI-only feature or UI-only button — every operation, including result-returning ones like the bot simulator link, needs a public API procedure unless it is on the exempt list of invariant 23 in `docs/agents/invariants.md`.
 - Do not import `db` directly in `apps/` or `integrations/` — the chain is `action | API handler → service (@chatbotx.io/business) → repository (@chatbotx.io/database/repositories) → DB`; app code calls a service, never a repository directly (the one exception is a pure read with zero business logic). See `.agents/rules/data-access.md`.
+- Do not put Node-only code (`node:crypto`, `node:stream`, `fs`, any `process.*` but `env`) in a module the builder's oRPC router reaches — it lands in the Edge instrumentation bundle. Split it into its own file + package subpath (outside `index.ts`) imported only by actions/public API/workers; never gate `instrumentation.ts` instead. Guarded by `apps/builder/__tests__/edge-instrumentation-graph.test.ts`; see AGENTS.md invariant 25.
 - Do not use dynamic `import()` in tsdown-built code (`packages/*`, `integrations/*`, `apps/worker`, `apps/cli`, `apps/mcp-server`, `apps/javascript-executor`) — it breaks the tsdown build. In `apps/builder/src` dynamic imports and `next/dynamic` are allowed (and preferred for heavy client islands). See `.agents/rules/no-dynamic-import.md`.

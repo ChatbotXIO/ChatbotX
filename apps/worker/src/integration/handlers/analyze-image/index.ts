@@ -1,5 +1,8 @@
 import { aiTimeouts, isImageUrl, processStreamingText } from "@chatbotx.io/ai"
+import { probeImageMimeType } from "@chatbotx.io/business/media/probe-image-url"
+import { HTTP_URL_RE } from "@chatbotx.io/business/utils"
 import type { AIAnalyzeImageSchema } from "@chatbotx.io/flow-config"
+import { resolveContactVariablesDeep } from "@chatbotx.io/variables"
 import { streamText } from "ai"
 import { normalizeError } from "universal-error-normalizer"
 import { logger } from "../../../lib/logger"
@@ -10,13 +13,34 @@ import {
 import type { ExecuteStepProps } from "../flow"
 import { logStepProviderError } from "../flow-utils"
 import { aiErrorLogProvider } from "../shared/ai-error-log-provider"
+import { buildChannelLengthInstruction } from "../shared/ai-output-length"
 import { resolveFlowAIModel } from "../shared/flow-ai-model-resolver"
 import type { ExecuteStepResult } from "../step"
+
+/**
+ * The media type to hand the model for `rawUrl`, or `null` when it is not an
+ * image link. A path ending in an image extension is trusted as before; any
+ * other link (WhatsApp media is stored under a bare id, no extension) is
+ * accepted only when its host serves an `image/*` Content-Type.
+ */
+async function resolveImageMediaType(
+  rawUrl: string | null,
+): Promise<string | null> {
+  const url = rawUrl?.trim()
+  if (!(url && HTTP_URL_RE.test(url))) {
+    return null
+  }
+  if (isImageUrl(url)) {
+    return "image/*"
+  }
+  return await probeImageMimeType(url)
+}
 
 export async function handleAIAnalyzeImage({
   conversation,
   contactInbox,
   step,
+  sentByUserId,
 }: ExecuteStepProps<AIAnalyzeImageSchema>): Promise<ExecuteStepResult> {
   const controller = new AbortController()
   const timeoutId = setTimeout(() => controller.abort(), aiTimeouts.aiTotal)
@@ -60,7 +84,8 @@ export async function handleAIAnalyzeImage({
       contactId: conversation.contactId,
       customFieldId: step.inputFieldId,
     })
-    if (!(imageUrl && isImageUrl(imageUrl))) {
+    const mediaType = await resolveImageMediaType(imageUrl)
+    if (!(imageUrl && mediaType)) {
       return {
         status: "error",
         errorMessage: "Invalid image URL provided",
@@ -68,20 +93,35 @@ export async function handleAIAnalyzeImage({
       }
     }
 
+    // The prompt is authored with the variable picker; resolve `{{var}}`
+    // before it reaches the model (a no-op without placeholders).
+    const prompt = await resolveContactVariablesDeep(
+      conversation.contactId,
+      step.prompt,
+      { contactInbox, conversation, sentByUserId },
+    )
+
+    // `textStream` drops error parts, so keep the provider error and rethrow
+    // it once the stream ends — otherwise a failed call reports success.
+    let streamError: unknown
     const result = streamText({
       model: resolvedModel.model,
+      instructions: buildChannelLengthInstruction(contactInbox.channel),
       messages: [
         {
           role: "user",
           content: [
-            { type: "text", text: step.prompt },
-            { type: "file", data: imageUrl, mediaType: "image/*" },
+            { type: "text", text: prompt },
+            { type: "file", data: imageUrl.trim(), mediaType },
           ],
         },
       ],
       maxOutputTokens: step.maxOutputTokens,
       temperature: step.temperature,
       abortSignal: controller.signal,
+      onError: ({ error }) => {
+        streamError = error
+      },
     })
 
     const { fullText } = await processStreamingText(
@@ -91,6 +131,9 @@ export async function handleAIAnalyzeImage({
       },
       { sendParts: false },
     )
+    if (streamError) {
+      throw streamError
+    }
 
     if (step.outputFieldId) {
       await saveResultToCustomField({

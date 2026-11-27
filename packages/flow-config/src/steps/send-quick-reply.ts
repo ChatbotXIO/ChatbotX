@@ -1,7 +1,7 @@
 import { createId } from "@chatbotx.io/utils"
 import { z } from "zod"
 import { baseStepSchema } from "./base"
-import { buttonStepSchema } from "./button"
+import { buttonStepSchema, refineReplyOnlyButtons } from "./button"
 import { stepTypes } from "./step-action"
 
 export const MAX_QUICK_REPLIES = 10
@@ -11,7 +11,7 @@ export const sendQuickReplyStepSchema = baseStepSchema.extend({
     .literal(stepTypes.enum.sendQuickReply)
     .describe('Step type discriminator: "sendQuickReply".'),
   message: z.string().trim().min(1).max(1000),
-  buttons: z.array(buttonStepSchema),
+  buttons: z.array(buttonStepSchema).superRefine(refineReplyOnlyButtons),
 })
 
 export type SendQuickReplyStepSchema = z.infer<typeof sendQuickReplyStepSchema>

@@ -152,3 +152,108 @@ export const integrationUpdates = {
   CoexistChannel,
   (input: IntegrationUpdateInput) => Promise<CoexistIntegrationRow | null>
 >
+
+type IntegrationInboxInput = {
+  tx: DatabaseClient
+  workspaceId: string
+  inboxId: string
+}
+
+/**
+ * Locks the channel integration row (`SELECT … FOR UPDATE`) without changing
+ * it: the one lock a history start, a connect-import start and a follow-up
+ * handoff serialize on.
+ */
+export const integrationLocks = {
+  messenger: async ({
+    tx,
+    workspaceId,
+    integrationId,
+  }: IntegrationAccessInput): Promise<void> => {
+    await tx
+      .select({ id: integrationMessengerModel.id })
+      .from(integrationMessengerModel)
+      .where(
+        and(
+          eq(integrationMessengerModel.id, integrationId),
+          eq(integrationMessengerModel.workspaceId, workspaceId),
+        ),
+      )
+      .for("update")
+  },
+  instagram: async ({
+    tx,
+    workspaceId,
+    integrationId,
+  }: IntegrationAccessInput): Promise<void> => {
+    await tx
+      .select({ id: integrationInstagramModel.id })
+      .from(integrationInstagramModel)
+      .where(
+        and(
+          eq(integrationInstagramModel.id, integrationId),
+          eq(integrationInstagramModel.workspaceId, workspaceId),
+        ),
+      )
+      .for("update")
+  },
+  whatsapp: async ({
+    tx,
+    workspaceId,
+    integrationId,
+  }: IntegrationAccessInput): Promise<void> => {
+    await tx
+      .select({ id: integrationWhatsappModel.id })
+      .from(integrationWhatsappModel)
+      .where(
+        and(
+          eq(integrationWhatsappModel.id, integrationId),
+          eq(integrationWhatsappModel.workspaceId, workspaceId),
+        ),
+      )
+      .for("update")
+  },
+} satisfies Record<
+  CoexistChannel,
+  (input: IntegrationAccessInput) => Promise<void>
+>
+
+/** The id of the integration an inbox belongs to, per channel; `null` when it has none. */
+export const integrationIdsByInbox = {
+  messenger: async ({
+    tx,
+    workspaceId,
+    inboxId,
+  }: IntegrationInboxInput): Promise<string | null> => {
+    const row = await tx.query.integrationMessengerModel.findFirst({
+      columns: { id: true },
+      where: { inboxId, workspaceId },
+    })
+    return row?.id ?? null
+  },
+  instagram: async ({
+    tx,
+    workspaceId,
+    inboxId,
+  }: IntegrationInboxInput): Promise<string | null> => {
+    const row = await tx.query.integrationInstagramModel.findFirst({
+      columns: { id: true },
+      where: { inboxId, workspaceId },
+    })
+    return row?.id ?? null
+  },
+  whatsapp: async ({
+    tx,
+    workspaceId,
+    inboxId,
+  }: IntegrationInboxInput): Promise<string | null> => {
+    const row = await tx.query.integrationWhatsappModel.findFirst({
+      columns: { id: true },
+      where: { inboxId, workspaceId },
+    })
+    return row?.id ?? null
+  },
+} satisfies Record<
+  CoexistChannel,
+  (input: IntegrationInboxInput) => Promise<string | null>
+>

@@ -5,9 +5,14 @@
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
+    "./channel-post-refresh": "./src/channel-post-refresh.ts",
     "./errors": "./src/errors.ts",
     "./media-hydration": "./src/media-hydration.ts",
+    "./publish-avatar-ops": "./src/publish-avatar-ops.ts",
+    "./publish-fan-out-ops": "./src/publish-fan-out-ops.ts",
+    "./publish-scope-ops": "./src/publish-scope-ops.ts",
     "./registry": "./src/registry.ts",
+    "./social-account": "./src/social-account.ts",
     "./thread-control": "./src/thread-control.ts"
   },
   "scripts": {
@@ -32,6 +37,7 @@
     "@chatbotx.io/integration-instagram": "workspace:*",
     "@chatbotx.io/integration-instagram-facebook": "workspace:*",
     "@chatbotx.io/integration-klaviyo": "workspace:*",
+    "@chatbotx.io/integration-line": "workspace:*",
     "@chatbotx.io/integration-mailchimp": "workspace:*",
     "@chatbotx.io/integration-mailer-lite": "workspace:*",
     "@chatbotx.io/integration-messenger": "workspace:*",
@@ -53,9 +59,9 @@
   "devDependencies": {
     "@chatbotx.io/typescript-config": "workspace:*",
     "@chatbotx.io/vitest-config": "workspace:*",
-    "@types/node": "24.x",
-    "tsdown": "0.22.3",
-    "typescript": "^5",
-    "vitest": "^4.1.0"
+    "@types/node": "catalog:",
+    "tsdown": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
   }
 }

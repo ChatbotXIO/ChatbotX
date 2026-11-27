@@ -45,5 +45,5 @@ describe("editComment (idempotent, unaffected by the fix)", () => {
 
     await expect(editComment(auth, COMMENT_ID, "hello")).rejects.toThrow()
     expect(requestCount).toBeGreaterThan(1)
-  }, 10_000)
+  })
 })

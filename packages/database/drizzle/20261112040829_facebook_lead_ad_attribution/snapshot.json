@@ -1,0 +1,217 @@
+{
+  "type": "diff",
+  "version": "10",
+  "dialect": "postgres",
+  "id": "56712d7e-dbf1-4815-a5b2-7f8289e13d82",
+  "prevIds": [
+    "a065c6e2-2b8e-4a56-bdf2-e13a8c8fb700"
+  ],
+  "footprints": [
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "FacebookLeadAdsLead",
+        "adId"
+      ],
+      "writes": [
+        "s|col|public.FacebookLeadAdsLead.adId",
+        "n|col|public.FacebookLeadAdsLead.adId",
+        "e|col|public.FacebookLeadAdsLead.adId"
+      ],
+      "reads": [
+        "n|tbl|public.FacebookLeadAdsLead",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "FacebookLeadAdsLead",
+        "adName"
+      ],
+      "writes": [
+        "s|col|public.FacebookLeadAdsLead.adName",
+        "n|col|public.FacebookLeadAdsLead.adName",
+        "e|col|public.FacebookLeadAdsLead.adName"
+      ],
+      "reads": [
+        "n|tbl|public.FacebookLeadAdsLead",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "FacebookLeadAdsLead",
+        "adsetId"
+      ],
+      "writes": [
+        "s|col|public.FacebookLeadAdsLead.adsetId",
+        "n|col|public.FacebookLeadAdsLead.adsetId",
+        "e|col|public.FacebookLeadAdsLead.adsetId"
+      ],
+      "reads": [
+        "n|tbl|public.FacebookLeadAdsLead",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "FacebookLeadAdsLead",
+        "adsetName"
+      ],
+      "writes": [
+        "s|col|public.FacebookLeadAdsLead.adsetName",
+        "n|col|public.FacebookLeadAdsLead.adsetName",
+        "e|col|public.FacebookLeadAdsLead.adsetName"
+      ],
+      "reads": [
+        "n|tbl|public.FacebookLeadAdsLead",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "FacebookLeadAdsLead",
+        "campaignId"
+      ],
+      "writes": [
+        "s|col|public.FacebookLeadAdsLead.campaignId",
+        "n|col|public.FacebookLeadAdsLead.campaignId",
+        "e|col|public.FacebookLeadAdsLead.campaignId"
+      ],
+      "reads": [
+        "n|tbl|public.FacebookLeadAdsLead",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "FacebookLeadAdsLead",
+        "campaignName"
+      ],
+      "writes": [
+        "s|col|public.FacebookLeadAdsLead.campaignName",
+        "n|col|public.FacebookLeadAdsLead.campaignName",
+        "e|col|public.FacebookLeadAdsLead.campaignName"
+      ],
+      "reads": [
+        "n|tbl|public.FacebookLeadAdsLead",
+        "n|sch|public"
+      ]
+    }
+  ],
+  "deltas": [
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "FacebookLeadAdsLead",
+        "name": "adId",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "FacebookLeadAdsLead",
+        "name": "adName",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "FacebookLeadAdsLead",
+        "name": "adsetId",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "FacebookLeadAdsLead",
+        "name": "adsetName",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "FacebookLeadAdsLead",
+        "name": "campaignId",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "FacebookLeadAdsLead",
+        "name": "campaignName",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    }
+  ]
+}

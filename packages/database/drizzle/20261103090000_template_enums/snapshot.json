@@ -1,0 +1,4665 @@
+{
+  "type": "diff",
+  "version": "10",
+  "dialect": "postgres",
+  "id": "e4feba67-251b-4730-95b4-510e0ed02985",
+  "prevIds": [
+    "b77408ea-4d67-485d-b6df-b2d74d9a4df9"
+  ],
+  "footprints": [
+    {
+      "statementType": "create_enum",
+      "statementTarget": [
+        "enum",
+        "public",
+        "templateUninstallState"
+      ],
+      "writes": [
+        "s|enum|public.templateUninstallState",
+        "n|enum|public.templateUninstallState",
+        "e|enum|public.templateUninstallState",
+        "n|type|public.templateUninstallState"
+      ],
+      "reads": [
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "create_enum",
+      "statementTarget": [
+        "enum",
+        "public",
+        "templateSyncStatus"
+      ],
+      "writes": [
+        "s|enum|public.templateSyncStatus",
+        "n|enum|public.templateSyncStatus",
+        "e|enum|public.templateSyncStatus",
+        "n|type|public.templateSyncStatus"
+      ],
+      "reads": [
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "create_enum",
+      "statementTarget": [
+        "enum",
+        "public",
+        "templateSyncTrigger"
+      ],
+      "writes": [
+        "s|enum|public.templateSyncTrigger",
+        "n|enum|public.templateSyncTrigger",
+        "e|enum|public.templateSyncTrigger",
+        "n|type|public.templateSyncTrigger"
+      ],
+      "reads": [
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "create_enum",
+      "statementTarget": [
+        "enum",
+        "public",
+        "templateUninstallOperationState"
+      ],
+      "writes": [
+        "s|enum|public.templateUninstallOperationState",
+        "n|enum|public.templateUninstallOperationState",
+        "e|enum|public.templateUninstallOperationState",
+        "n|type|public.templateUninstallOperationState"
+      ],
+      "reads": [
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "alter_enum",
+      "statementTarget": [
+        "enum",
+        "public",
+        "templateInstallationStatus"
+      ],
+      "writes": [
+        "s|enum|public.templateInstallationStatus"
+      ],
+      "reads": [
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "alter_enum",
+      "statementTarget": [
+        "enum",
+        "public",
+        "templateResourceCategory"
+      ],
+      "writes": [
+        "s|enum|public.templateResourceCategory"
+      ],
+      "reads": [
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "create_table",
+      "statementTarget": [
+        "table",
+        "public",
+        "TemplateInstallationSync"
+      ],
+      "writes": [
+        "s|tbl|public.TemplateInstallationSync",
+        "n|tbl|public.TemplateInstallationSync",
+        "e|tbl|public.TemplateInstallationSync",
+        "n|rel|public.TemplateInstallationSync",
+        "n|type|public.TemplateInstallationSync",
+        "n|rel|public.TemplateInstallationSync_pkey"
+      ],
+      "reads": [
+        "n|sch|public",
+        "n|enum|public.templateSyncStatus",
+        "n|enum|public.templateSyncTrigger"
+      ]
+    },
+    {
+      "statementType": "create_table",
+      "statementTarget": [
+        "table",
+        "public",
+        "TemplateResourceBackup"
+      ],
+      "writes": [
+        "s|tbl|public.TemplateResourceBackup",
+        "n|tbl|public.TemplateResourceBackup",
+        "e|tbl|public.TemplateResourceBackup",
+        "n|rel|public.TemplateResourceBackup",
+        "n|type|public.TemplateResourceBackup",
+        "n|rel|public.TemplateResourceBackup_pkey"
+      ],
+      "reads": [
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "create_table",
+      "statementTarget": [
+        "table",
+        "public",
+        "TemplateUninstallOperation"
+      ],
+      "writes": [
+        "s|tbl|public.TemplateUninstallOperation",
+        "n|tbl|public.TemplateUninstallOperation",
+        "e|tbl|public.TemplateUninstallOperation",
+        "n|rel|public.TemplateUninstallOperation",
+        "n|type|public.TemplateUninstallOperation",
+        "n|rel|public.TemplateUninstallOperation_pkey"
+      ],
+      "reads": [
+        "n|sch|public",
+        "n|enum|public.templateUninstallOperationState"
+      ]
+    },
+    {
+      "statementType": "create_table",
+      "statementTarget": [
+        "table",
+        "public",
+        "TemplateVersion"
+      ],
+      "writes": [
+        "s|tbl|public.TemplateVersion",
+        "n|tbl|public.TemplateVersion",
+        "e|tbl|public.TemplateVersion",
+        "n|rel|public.TemplateVersion",
+        "n|type|public.TemplateVersion",
+        "n|rel|public.TemplateVersion_pkey"
+      ],
+      "reads": [
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "Template",
+        "version"
+      ],
+      "writes": [
+        "s|col|public.Template.version",
+        "n|col|public.Template.version",
+        "e|col|public.Template.version"
+      ],
+      "reads": [
+        "n|tbl|public.Template",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "Template",
+        "payloadHash"
+      ],
+      "writes": [
+        "s|col|public.Template.payloadHash",
+        "n|col|public.Template.payloadHash",
+        "e|col|public.Template.payloadHash"
+      ],
+      "reads": [
+        "n|tbl|public.Template",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "TemplateInstallation",
+        "installedByKind"
+      ],
+      "writes": [
+        "s|col|public.TemplateInstallation.installedByKind",
+        "n|col|public.TemplateInstallation.installedByKind",
+        "e|col|public.TemplateInstallation.installedByKind"
+      ],
+      "reads": [
+        "n|tbl|public.TemplateInstallation",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "TemplateInstallation",
+        "stagingGeneration"
+      ],
+      "writes": [
+        "s|col|public.TemplateInstallation.stagingGeneration",
+        "n|col|public.TemplateInstallation.stagingGeneration",
+        "e|col|public.TemplateInstallation.stagingGeneration"
+      ],
+      "reads": [
+        "n|tbl|public.TemplateInstallation",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "TemplateInstallation",
+        "stagedCleanedGeneration"
+      ],
+      "writes": [
+        "s|col|public.TemplateInstallation.stagedCleanedGeneration",
+        "n|col|public.TemplateInstallation.stagedCleanedGeneration",
+        "e|col|public.TemplateInstallation.stagedCleanedGeneration"
+      ],
+      "reads": [
+        "n|tbl|public.TemplateInstallation",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "TemplateInstallation",
+        "stagedCleanupClaimedAt"
+      ],
+      "writes": [
+        "s|col|public.TemplateInstallation.stagedCleanupClaimedAt",
+        "n|col|public.TemplateInstallation.stagedCleanupClaimedAt",
+        "e|col|public.TemplateInstallation.stagedCleanupClaimedAt"
+      ],
+      "reads": [
+        "n|tbl|public.TemplateInstallation",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "TemplateInstallation",
+        "pendingPublishEffects"
+      ],
+      "writes": [
+        "s|col|public.TemplateInstallation.pendingPublishEffects",
+        "n|col|public.TemplateInstallation.pendingPublishEffects",
+        "e|col|public.TemplateInstallation.pendingPublishEffects"
+      ],
+      "reads": [
+        "n|tbl|public.TemplateInstallation",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "TemplateInstallation",
+        "claimToken"
+      ],
+      "writes": [
+        "s|col|public.TemplateInstallation.claimToken",
+        "n|col|public.TemplateInstallation.claimToken",
+        "e|col|public.TemplateInstallation.claimToken"
+      ],
+      "reads": [
+        "n|tbl|public.TemplateInstallation",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "TemplateInstallation",
+        "claimedAt"
+      ],
+      "writes": [
+        "s|col|public.TemplateInstallation.claimedAt",
+        "n|col|public.TemplateInstallation.claimedAt",
+        "e|col|public.TemplateInstallation.claimedAt"
+      ],
+      "reads": [
+        "n|tbl|public.TemplateInstallation",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "TemplateInstallation",
+        "attempts"
+      ],
+      "writes": [
+        "s|col|public.TemplateInstallation.attempts",
+        "n|col|public.TemplateInstallation.attempts",
+        "e|col|public.TemplateInstallation.attempts"
+      ],
+      "reads": [
+        "n|tbl|public.TemplateInstallation",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "TemplateInstallation",
+        "errorCode"
+      ],
+      "writes": [
+        "s|col|public.TemplateInstallation.errorCode",
+        "n|col|public.TemplateInstallation.errorCode",
+        "e|col|public.TemplateInstallation.errorCode"
+      ],
+      "reads": [
+        "n|tbl|public.TemplateInstallation",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "TemplateInstallation",
+        "sourceTemplateId"
+      ],
+      "writes": [
+        "s|col|public.TemplateInstallation.sourceTemplateId",
+        "n|col|public.TemplateInstallation.sourceTemplateId",
+        "e|col|public.TemplateInstallation.sourceTemplateId"
+      ],
+      "reads": [
+        "n|tbl|public.TemplateInstallation",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "TemplateInstallation",
+        "successfulInstallEvents"
+      ],
+      "writes": [
+        "s|col|public.TemplateInstallation.successfulInstallEvents",
+        "n|col|public.TemplateInstallation.successfulInstallEvents",
+        "e|col|public.TemplateInstallation.successfulInstallEvents"
+      ],
+      "reads": [
+        "n|tbl|public.TemplateInstallation",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "TemplateInstallation",
+        "sourceDeletedAt"
+      ],
+      "writes": [
+        "s|col|public.TemplateInstallation.sourceDeletedAt",
+        "n|col|public.TemplateInstallation.sourceDeletedAt",
+        "e|col|public.TemplateInstallation.sourceDeletedAt"
+      ],
+      "reads": [
+        "n|tbl|public.TemplateInstallation",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "TemplateInstallation",
+        "inboxBindings"
+      ],
+      "writes": [
+        "s|col|public.TemplateInstallation.inboxBindings",
+        "n|col|public.TemplateInstallation.inboxBindings",
+        "e|col|public.TemplateInstallation.inboxBindings"
+      ],
+      "reads": [
+        "n|tbl|public.TemplateInstallation",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "TemplateInstallation",
+        "publisherRef"
+      ],
+      "writes": [
+        "s|col|public.TemplateInstallation.publisherRef",
+        "n|col|public.TemplateInstallation.publisherRef",
+        "e|col|public.TemplateInstallation.publisherRef"
+      ],
+      "reads": [
+        "n|tbl|public.TemplateInstallation",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "TemplateInstallation",
+        "publisherUninstallGrant"
+      ],
+      "writes": [
+        "s|col|public.TemplateInstallation.publisherUninstallGrant",
+        "n|col|public.TemplateInstallation.publisherUninstallGrant",
+        "e|col|public.TemplateInstallation.publisherUninstallGrant"
+      ],
+      "reads": [
+        "n|tbl|public.TemplateInstallation",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "TemplateInstallation",
+        "uninstalledAt"
+      ],
+      "writes": [
+        "s|col|public.TemplateInstallation.uninstalledAt",
+        "n|col|public.TemplateInstallation.uninstalledAt",
+        "e|col|public.TemplateInstallation.uninstalledAt"
+      ],
+      "reads": [
+        "n|tbl|public.TemplateInstallation",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "TemplateInstallation",
+        "uninstalledByKind"
+      ],
+      "writes": [
+        "s|col|public.TemplateInstallation.uninstalledByKind",
+        "n|col|public.TemplateInstallation.uninstalledByKind",
+        "e|col|public.TemplateInstallation.uninstalledByKind"
+      ],
+      "reads": [
+        "n|tbl|public.TemplateInstallation",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "TemplateInstallation",
+        "uninstallCounts"
+      ],
+      "writes": [
+        "s|col|public.TemplateInstallation.uninstallCounts",
+        "n|col|public.TemplateInstallation.uninstallCounts",
+        "e|col|public.TemplateInstallation.uninstallCounts"
+      ],
+      "reads": [
+        "n|tbl|public.TemplateInstallation",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "TemplateInstallation",
+        "uninstallState"
+      ],
+      "writes": [
+        "s|col|public.TemplateInstallation.uninstallState",
+        "n|col|public.TemplateInstallation.uninstallState",
+        "e|col|public.TemplateInstallation.uninstallState"
+      ],
+      "reads": [
+        "n|tbl|public.TemplateInstallation",
+        "n|sch|public",
+        "n|enum|public.templateUninstallState"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "TemplateInstallation",
+        "uninstallRequestedByKind"
+      ],
+      "writes": [
+        "s|col|public.TemplateInstallation.uninstallRequestedByKind",
+        "n|col|public.TemplateInstallation.uninstallRequestedByKind",
+        "e|col|public.TemplateInstallation.uninstallRequestedByKind"
+      ],
+      "reads": [
+        "n|tbl|public.TemplateInstallation",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "TemplateInstallation",
+        "uninstallRequestedBy"
+      ],
+      "writes": [
+        "s|col|public.TemplateInstallation.uninstallRequestedBy",
+        "n|col|public.TemplateInstallation.uninstallRequestedBy",
+        "e|col|public.TemplateInstallation.uninstallRequestedBy"
+      ],
+      "reads": [
+        "n|tbl|public.TemplateInstallation",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "TemplateInstallation",
+        "uninstallRequestedAt"
+      ],
+      "writes": [
+        "s|col|public.TemplateInstallation.uninstallRequestedAt",
+        "n|col|public.TemplateInstallation.uninstallRequestedAt",
+        "e|col|public.TemplateInstallation.uninstallRequestedAt"
+      ],
+      "reads": [
+        "n|tbl|public.TemplateInstallation",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "TemplateInstallation",
+        "uninstallAttempt"
+      ],
+      "writes": [
+        "s|col|public.TemplateInstallation.uninstallAttempt",
+        "n|col|public.TemplateInstallation.uninstallAttempt",
+        "e|col|public.TemplateInstallation.uninstallAttempt"
+      ],
+      "reads": [
+        "n|tbl|public.TemplateInstallation",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "TemplateInstallation",
+        "uninstallClaimToken"
+      ],
+      "writes": [
+        "s|col|public.TemplateInstallation.uninstallClaimToken",
+        "n|col|public.TemplateInstallation.uninstallClaimToken",
+        "e|col|public.TemplateInstallation.uninstallClaimToken"
+      ],
+      "reads": [
+        "n|tbl|public.TemplateInstallation",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "TemplateInstallation",
+        "uninstallClaimedAt"
+      ],
+      "writes": [
+        "s|col|public.TemplateInstallation.uninstallClaimedAt",
+        "n|col|public.TemplateInstallation.uninstallClaimedAt",
+        "e|col|public.TemplateInstallation.uninstallClaimedAt"
+      ],
+      "reads": [
+        "n|tbl|public.TemplateInstallation",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "TemplateInstallation",
+        "uninstallErrorCode"
+      ],
+      "writes": [
+        "s|col|public.TemplateInstallation.uninstallErrorCode",
+        "n|col|public.TemplateInstallation.uninstallErrorCode",
+        "e|col|public.TemplateInstallation.uninstallErrorCode"
+      ],
+      "reads": [
+        "n|tbl|public.TemplateInstallation",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "TemplateInstallation",
+        "uninstallOperationId"
+      ],
+      "writes": [
+        "s|col|public.TemplateInstallation.uninstallOperationId",
+        "n|col|public.TemplateInstallation.uninstallOperationId",
+        "e|col|public.TemplateInstallation.uninstallOperationId"
+      ],
+      "reads": [
+        "n|tbl|public.TemplateInstallation",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "TemplateInstallation",
+        "sourceVersion"
+      ],
+      "writes": [
+        "s|col|public.TemplateInstallation.sourceVersion",
+        "n|col|public.TemplateInstallation.sourceVersion",
+        "e|col|public.TemplateInstallation.sourceVersion"
+      ],
+      "reads": [
+        "n|tbl|public.TemplateInstallation",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "TemplateInstallation",
+        "lastSyncedAt"
+      ],
+      "writes": [
+        "s|col|public.TemplateInstallation.lastSyncedAt",
+        "n|col|public.TemplateInstallation.lastSyncedAt",
+        "e|col|public.TemplateInstallation.lastSyncedAt"
+      ],
+      "reads": [
+        "n|tbl|public.TemplateInstallation",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "TemplateInstalledResource",
+        "allowEdit"
+      ],
+      "writes": [
+        "s|col|public.TemplateInstalledResource.allowEdit",
+        "n|col|public.TemplateInstalledResource.allowEdit",
+        "e|col|public.TemplateInstalledResource.allowEdit"
+      ],
+      "reads": [
+        "n|tbl|public.TemplateInstalledResource",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "TemplateInstalledResource",
+        "allowDelete"
+      ],
+      "writes": [
+        "s|col|public.TemplateInstalledResource.allowDelete",
+        "n|col|public.TemplateInstalledResource.allowDelete",
+        "e|col|public.TemplateInstalledResource.allowDelete"
+      ],
+      "reads": [
+        "n|tbl|public.TemplateInstalledResource",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "TemplateInstalledResource",
+        "detachedAt"
+      ],
+      "writes": [
+        "s|col|public.TemplateInstalledResource.detachedAt",
+        "n|col|public.TemplateInstalledResource.detachedAt",
+        "e|col|public.TemplateInstalledResource.detachedAt"
+      ],
+      "reads": [
+        "n|tbl|public.TemplateInstalledResource",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "TemplateInstalledResource",
+        "syncedHash"
+      ],
+      "writes": [
+        "s|col|public.TemplateInstalledResource.syncedHash",
+        "n|col|public.TemplateInstalledResource.syncedHash",
+        "e|col|public.TemplateInstalledResource.syncedHash"
+      ],
+      "reads": [
+        "n|tbl|public.TemplateInstalledResource",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "TemplateInstalledResource",
+        "syncedVersion"
+      ],
+      "writes": [
+        "s|col|public.TemplateInstalledResource.syncedVersion",
+        "n|col|public.TemplateInstalledResource.syncedVersion",
+        "e|col|public.TemplateInstalledResource.syncedVersion"
+      ],
+      "reads": [
+        "n|tbl|public.TemplateInstalledResource",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "TemplateInstalledResource",
+        "uninstallOutcome"
+      ],
+      "writes": [
+        "s|col|public.TemplateInstalledResource.uninstallOutcome",
+        "n|col|public.TemplateInstalledResource.uninstallOutcome",
+        "e|col|public.TemplateInstalledResource.uninstallOutcome"
+      ],
+      "reads": [
+        "n|tbl|public.TemplateInstalledResource",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "TemplateInstalledResource",
+        "uninstallEffects"
+      ],
+      "writes": [
+        "s|col|public.TemplateInstalledResource.uninstallEffects",
+        "n|col|public.TemplateInstalledResource.uninstallEffects",
+        "e|col|public.TemplateInstalledResource.uninstallEffects"
+      ],
+      "reads": [
+        "n|tbl|public.TemplateInstalledResource",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "TemplateInstalledResource",
+        "uninstallEffectsAttempts"
+      ],
+      "writes": [
+        "s|col|public.TemplateInstalledResource.uninstallEffectsAttempts",
+        "n|col|public.TemplateInstalledResource.uninstallEffectsAttempts",
+        "e|col|public.TemplateInstalledResource.uninstallEffectsAttempts"
+      ],
+      "reads": [
+        "n|tbl|public.TemplateInstalledResource",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "TemplateInstalledResource",
+        "uninstallFrozenFrom"
+      ],
+      "writes": [
+        "s|col|public.TemplateInstalledResource.uninstallFrozenFrom",
+        "n|col|public.TemplateInstalledResource.uninstallFrozenFrom",
+        "e|col|public.TemplateInstalledResource.uninstallFrozenFrom"
+      ],
+      "reads": [
+        "n|tbl|public.TemplateInstalledResource",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "TemplateInstalledResource",
+        "uninstallDrainStartedAt"
+      ],
+      "writes": [
+        "s|col|public.TemplateInstalledResource.uninstallDrainStartedAt",
+        "n|col|public.TemplateInstalledResource.uninstallDrainStartedAt",
+        "e|col|public.TemplateInstalledResource.uninstallDrainStartedAt"
+      ],
+      "reads": [
+        "n|tbl|public.TemplateInstalledResource",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "AIFile",
+        "AIFile_queuedAt_queued_idx"
+      ],
+      "writes": [
+        "s|idx|public.AIFile_queuedAt_queued_idx",
+        "n|idx|public.AIFile_queuedAt_queued_idx",
+        "e|idx|public.AIFile_queuedAt_queued_idx",
+        "n|rel|public.AIFile_queuedAt_queued_idx"
+      ],
+      "reads": [
+        "n|tbl|public.AIFile",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "TemplateInstallation",
+        "TemplateInstallation_workspaceId_sourceTemplateId_active_key"
+      ],
+      "writes": [
+        "s|idx|public.TemplateInstallation_workspaceId_sourceTemplateId_active_key",
+        "n|idx|public.TemplateInstallation_workspaceId_sourceTemplateId_active_key",
+        "e|idx|public.TemplateInstallation_workspaceId_sourceTemplateId_active_key",
+        "n|rel|public.TemplateInstallation_workspaceId_sourceTemplateId_active_key"
+      ],
+      "reads": [
+        "n|tbl|public.TemplateInstallation",
+        "n|sch|public",
+        "n|col|public.TemplateInstallation.workspaceId",
+        "n|col|public.TemplateInstallation.sourceTemplateId"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "TemplateInstallation",
+        "TemplateInstallation_sourceTemplateId_idx"
+      ],
+      "writes": [
+        "s|idx|public.TemplateInstallation_sourceTemplateId_idx",
+        "n|idx|public.TemplateInstallation_sourceTemplateId_idx",
+        "e|idx|public.TemplateInstallation_sourceTemplateId_idx",
+        "n|rel|public.TemplateInstallation_sourceTemplateId_idx"
+      ],
+      "reads": [
+        "n|tbl|public.TemplateInstallation",
+        "n|sch|public",
+        "n|col|public.TemplateInstallation.sourceTemplateId"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "TemplateInstallation",
+        "TemplateInstallation_templateId_publisherRef_idx"
+      ],
+      "writes": [
+        "s|idx|public.TemplateInstallation_templateId_publisherRef_idx",
+        "n|idx|public.TemplateInstallation_templateId_publisherRef_idx",
+        "e|idx|public.TemplateInstallation_templateId_publisherRef_idx",
+        "n|rel|public.TemplateInstallation_templateId_publisherRef_idx"
+      ],
+      "reads": [
+        "n|tbl|public.TemplateInstallation",
+        "n|sch|public",
+        "n|col|public.TemplateInstallation.templateId",
+        "n|col|public.TemplateInstallation.publisherRef"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "TemplateInstallation",
+        "TemplateInstallation_uninstallRequestedBy_idx"
+      ],
+      "writes": [
+        "s|idx|public.TemplateInstallation_uninstallRequestedBy_idx",
+        "n|idx|public.TemplateInstallation_uninstallRequestedBy_idx",
+        "e|idx|public.TemplateInstallation_uninstallRequestedBy_idx",
+        "n|rel|public.TemplateInstallation_uninstallRequestedBy_idx"
+      ],
+      "reads": [
+        "n|tbl|public.TemplateInstallation",
+        "n|sch|public",
+        "n|col|public.TemplateInstallation.uninstallRequestedBy"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "TemplateInstallation",
+        "TemplateInstallation_uninstallOperationId_idx"
+      ],
+      "writes": [
+        "s|idx|public.TemplateInstallation_uninstallOperationId_idx",
+        "n|idx|public.TemplateInstallation_uninstallOperationId_idx",
+        "e|idx|public.TemplateInstallation_uninstallOperationId_idx",
+        "n|rel|public.TemplateInstallation_uninstallOperationId_idx"
+      ],
+      "reads": [
+        "n|tbl|public.TemplateInstallation",
+        "n|sch|public",
+        "n|col|public.TemplateInstallation.uninstallOperationId"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "TemplateInstallation",
+        "TemplateInstallation_uninstallState_claimedAt_idx"
+      ],
+      "writes": [
+        "s|idx|public.TemplateInstallation_uninstallState_claimedAt_idx",
+        "n|idx|public.TemplateInstallation_uninstallState_claimedAt_idx",
+        "e|idx|public.TemplateInstallation_uninstallState_claimedAt_idx",
+        "n|rel|public.TemplateInstallation_uninstallState_claimedAt_idx"
+      ],
+      "reads": [
+        "n|tbl|public.TemplateInstallation",
+        "n|sch|public",
+        "n|col|public.TemplateInstallation.uninstallState",
+        "n|col|public.TemplateInstallation.uninstallClaimedAt"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "TemplateInstallation",
+        "TemplateInstallation_pendingPublishEffects_updatedAt_idx"
+      ],
+      "writes": [
+        "s|idx|public.TemplateInstallation_pendingPublishEffects_updatedAt_idx",
+        "n|idx|public.TemplateInstallation_pendingPublishEffects_updatedAt_idx",
+        "e|idx|public.TemplateInstallation_pendingPublishEffects_updatedAt_idx",
+        "n|rel|public.TemplateInstallation_pendingPublishEffects_updatedAt_idx"
+      ],
+      "reads": [
+        "n|tbl|public.TemplateInstallation",
+        "n|sch|public",
+        "n|col|public.TemplateInstallation.updatedAt"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "TemplateInstallation",
+        "TemplateInstallation_stagedCleanupOwed_updatedAt_idx"
+      ],
+      "writes": [
+        "s|idx|public.TemplateInstallation_stagedCleanupOwed_updatedAt_idx",
+        "n|idx|public.TemplateInstallation_stagedCleanupOwed_updatedAt_idx",
+        "e|idx|public.TemplateInstallation_stagedCleanupOwed_updatedAt_idx",
+        "n|rel|public.TemplateInstallation_stagedCleanupOwed_updatedAt_idx"
+      ],
+      "reads": [
+        "n|tbl|public.TemplateInstallation",
+        "n|sch|public",
+        "n|col|public.TemplateInstallation.updatedAt"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "TemplateInstallation",
+        "TemplateInstallation_status_claimedAt_idx"
+      ],
+      "writes": [
+        "s|idx|public.TemplateInstallation_status_claimedAt_idx",
+        "n|idx|public.TemplateInstallation_status_claimedAt_idx",
+        "e|idx|public.TemplateInstallation_status_claimedAt_idx",
+        "n|rel|public.TemplateInstallation_status_claimedAt_idx"
+      ],
+      "reads": [
+        "n|tbl|public.TemplateInstallation",
+        "n|sch|public",
+        "n|col|public.TemplateInstallation.status",
+        "n|col|public.TemplateInstallation.claimedAt"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "TemplateInstallationSync",
+        "TemplateInstallationSync_workspaceId_idx"
+      ],
+      "writes": [
+        "s|idx|public.TemplateInstallationSync_workspaceId_idx",
+        "n|idx|public.TemplateInstallationSync_workspaceId_idx",
+        "e|idx|public.TemplateInstallationSync_workspaceId_idx",
+        "n|rel|public.TemplateInstallationSync_workspaceId_idx"
+      ],
+      "reads": [
+        "n|tbl|public.TemplateInstallationSync",
+        "n|sch|public",
+        "n|col|public.TemplateInstallationSync.workspaceId"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "TemplateInstallationSync",
+        "TemplateInstallationSync_requestedBy_idx"
+      ],
+      "writes": [
+        "s|idx|public.TemplateInstallationSync_requestedBy_idx",
+        "n|idx|public.TemplateInstallationSync_requestedBy_idx",
+        "e|idx|public.TemplateInstallationSync_requestedBy_idx",
+        "n|rel|public.TemplateInstallationSync_requestedBy_idx"
+      ],
+      "reads": [
+        "n|tbl|public.TemplateInstallationSync",
+        "n|sch|public",
+        "n|col|public.TemplateInstallationSync.requestedBy"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "TemplateInstallationSync",
+        "TemplateInstallationSync_installationId_idx"
+      ],
+      "writes": [
+        "s|idx|public.TemplateInstallationSync_installationId_idx",
+        "n|idx|public.TemplateInstallationSync_installationId_idx",
+        "e|idx|public.TemplateInstallationSync_installationId_idx",
+        "n|rel|public.TemplateInstallationSync_installationId_idx"
+      ],
+      "reads": [
+        "n|tbl|public.TemplateInstallationSync",
+        "n|sch|public",
+        "n|col|public.TemplateInstallationSync.installationId"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "TemplateInstallationSync",
+        "TemplateInstallationSync_auto_active_key"
+      ],
+      "writes": [
+        "s|idx|public.TemplateInstallationSync_auto_active_key",
+        "n|idx|public.TemplateInstallationSync_auto_active_key",
+        "e|idx|public.TemplateInstallationSync_auto_active_key",
+        "n|rel|public.TemplateInstallationSync_auto_active_key"
+      ],
+      "reads": [
+        "n|tbl|public.TemplateInstallationSync",
+        "n|sch|public",
+        "n|col|public.TemplateInstallationSync.installationId",
+        "n|col|public.TemplateInstallationSync.requestedVersion"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "TemplateInstallationSync",
+        "TemplateInstallationSync_idempotency_key"
+      ],
+      "writes": [
+        "s|idx|public.TemplateInstallationSync_idempotency_key",
+        "n|idx|public.TemplateInstallationSync_idempotency_key",
+        "e|idx|public.TemplateInstallationSync_idempotency_key",
+        "n|rel|public.TemplateInstallationSync_idempotency_key"
+      ],
+      "reads": [
+        "n|tbl|public.TemplateInstallationSync",
+        "n|sch|public",
+        "n|col|public.TemplateInstallationSync.installationId",
+        "n|col|public.TemplateInstallationSync.idempotencyKey"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "TemplateInstallationSync",
+        "TemplateInstallationSync_status_claimedAt_idx"
+      ],
+      "writes": [
+        "s|idx|public.TemplateInstallationSync_status_claimedAt_idx",
+        "n|idx|public.TemplateInstallationSync_status_claimedAt_idx",
+        "e|idx|public.TemplateInstallationSync_status_claimedAt_idx",
+        "n|rel|public.TemplateInstallationSync_status_claimedAt_idx"
+      ],
+      "reads": [
+        "n|tbl|public.TemplateInstallationSync",
+        "n|sch|public",
+        "n|col|public.TemplateInstallationSync.status",
+        "n|col|public.TemplateInstallationSync.claimedAt"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "TemplateInstalledResource",
+        "TemplateInstalledResource_active_lookup_idx"
+      ],
+      "writes": [
+        "s|idx|public.TemplateInstalledResource_active_lookup_idx",
+        "n|idx|public.TemplateInstalledResource_active_lookup_idx",
+        "e|idx|public.TemplateInstalledResource_active_lookup_idx",
+        "n|rel|public.TemplateInstalledResource_active_lookup_idx"
+      ],
+      "reads": [
+        "n|tbl|public.TemplateInstalledResource",
+        "n|sch|public",
+        "n|col|public.TemplateInstalledResource.workspaceId",
+        "n|col|public.TemplateInstalledResource.resourceKind",
+        "n|col|public.TemplateInstalledResource.resourceId"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "TemplateInstalledResource",
+        "TemplateInstalledResource_active_source_key"
+      ],
+      "writes": [
+        "s|idx|public.TemplateInstalledResource_active_source_key",
+        "n|idx|public.TemplateInstalledResource_active_source_key",
+        "e|idx|public.TemplateInstalledResource_active_source_key",
+        "n|rel|public.TemplateInstalledResource_active_source_key"
+      ],
+      "reads": [
+        "n|tbl|public.TemplateInstalledResource",
+        "n|sch|public",
+        "n|col|public.TemplateInstalledResource.installationId",
+        "n|col|public.TemplateInstalledResource.resourceKind",
+        "n|col|public.TemplateInstalledResource.sourceResourceId"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "TemplateInstalledResource",
+        "TemplateInstalledResource_pending_effects_idx"
+      ],
+      "writes": [
+        "s|idx|public.TemplateInstalledResource_pending_effects_idx",
+        "n|idx|public.TemplateInstalledResource_pending_effects_idx",
+        "e|idx|public.TemplateInstalledResource_pending_effects_idx",
+        "n|rel|public.TemplateInstalledResource_pending_effects_idx"
+      ],
+      "reads": [
+        "n|tbl|public.TemplateInstalledResource",
+        "n|sch|public",
+        "n|col|public.TemplateInstalledResource.uninstallEffectsAttempts",
+        "n|col|public.TemplateInstalledResource.id"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "TemplateResourceBackup",
+        "TemplateResourceBackup_workspaceId_idx"
+      ],
+      "writes": [
+        "s|idx|public.TemplateResourceBackup_workspaceId_idx",
+        "n|idx|public.TemplateResourceBackup_workspaceId_idx",
+        "e|idx|public.TemplateResourceBackup_workspaceId_idx",
+        "n|rel|public.TemplateResourceBackup_workspaceId_idx"
+      ],
+      "reads": [
+        "n|tbl|public.TemplateResourceBackup",
+        "n|sch|public",
+        "n|col|public.TemplateResourceBackup.workspaceId"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "TemplateResourceBackup",
+        "TemplateResourceBackup_installationId_idx"
+      ],
+      "writes": [
+        "s|idx|public.TemplateResourceBackup_installationId_idx",
+        "n|idx|public.TemplateResourceBackup_installationId_idx",
+        "e|idx|public.TemplateResourceBackup_installationId_idx",
+        "n|rel|public.TemplateResourceBackup_installationId_idx"
+      ],
+      "reads": [
+        "n|tbl|public.TemplateResourceBackup",
+        "n|sch|public",
+        "n|col|public.TemplateResourceBackup.installationId"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "TemplateResourceBackup",
+        "TemplateResourceBackup_syncId_idx"
+      ],
+      "writes": [
+        "s|idx|public.TemplateResourceBackup_syncId_idx",
+        "n|idx|public.TemplateResourceBackup_syncId_idx",
+        "e|idx|public.TemplateResourceBackup_syncId_idx",
+        "n|rel|public.TemplateResourceBackup_syncId_idx"
+      ],
+      "reads": [
+        "n|tbl|public.TemplateResourceBackup",
+        "n|sch|public",
+        "n|col|public.TemplateResourceBackup.syncId"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "TemplateResourceBackup",
+        "TemplateResourceBackup_installedResourceId_idx"
+      ],
+      "writes": [
+        "s|idx|public.TemplateResourceBackup_installedResourceId_idx",
+        "n|idx|public.TemplateResourceBackup_installedResourceId_idx",
+        "e|idx|public.TemplateResourceBackup_installedResourceId_idx",
+        "n|rel|public.TemplateResourceBackup_installedResourceId_idx"
+      ],
+      "reads": [
+        "n|tbl|public.TemplateResourceBackup",
+        "n|sch|public",
+        "n|col|public.TemplateResourceBackup.installedResourceId"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "TemplateUninstallOperation",
+        "TemplateUninstallOperation_workspaceId_idx"
+      ],
+      "writes": [
+        "s|idx|public.TemplateUninstallOperation_workspaceId_idx",
+        "n|idx|public.TemplateUninstallOperation_workspaceId_idx",
+        "e|idx|public.TemplateUninstallOperation_workspaceId_idx",
+        "n|rel|public.TemplateUninstallOperation_workspaceId_idx"
+      ],
+      "reads": [
+        "n|tbl|public.TemplateUninstallOperation",
+        "n|sch|public",
+        "n|col|public.TemplateUninstallOperation.workspaceId"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "TemplateUninstallOperation",
+        "TemplateUninstallOperation_templateId_idx"
+      ],
+      "writes": [
+        "s|idx|public.TemplateUninstallOperation_templateId_idx",
+        "n|idx|public.TemplateUninstallOperation_templateId_idx",
+        "e|idx|public.TemplateUninstallOperation_templateId_idx",
+        "n|rel|public.TemplateUninstallOperation_templateId_idx"
+      ],
+      "reads": [
+        "n|tbl|public.TemplateUninstallOperation",
+        "n|sch|public",
+        "n|col|public.TemplateUninstallOperation.templateId"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "TemplateUninstallOperation",
+        "TemplateUninstallOperation_requestedBy_idx"
+      ],
+      "writes": [
+        "s|idx|public.TemplateUninstallOperation_requestedBy_idx",
+        "n|idx|public.TemplateUninstallOperation_requestedBy_idx",
+        "e|idx|public.TemplateUninstallOperation_requestedBy_idx",
+        "n|rel|public.TemplateUninstallOperation_requestedBy_idx"
+      ],
+      "reads": [
+        "n|tbl|public.TemplateUninstallOperation",
+        "n|sch|public",
+        "n|col|public.TemplateUninstallOperation.requestedBy"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "TemplateUninstallOperation",
+        "TemplateUninstallOperation_notice_idx"
+      ],
+      "writes": [
+        "s|idx|public.TemplateUninstallOperation_notice_idx",
+        "n|idx|public.TemplateUninstallOperation_notice_idx",
+        "e|idx|public.TemplateUninstallOperation_notice_idx",
+        "n|rel|public.TemplateUninstallOperation_notice_idx"
+      ],
+      "reads": [
+        "n|tbl|public.TemplateUninstallOperation",
+        "n|sch|public",
+        "n|col|public.TemplateUninstallOperation.state",
+        "n|col|public.TemplateUninstallOperation.noticeDeliveredAt"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "TemplateVersion",
+        "TemplateVersion_templateId_version_key"
+      ],
+      "writes": [
+        "s|idx|public.TemplateVersion_templateId_version_key",
+        "n|idx|public.TemplateVersion_templateId_version_key",
+        "e|idx|public.TemplateVersion_templateId_version_key",
+        "n|rel|public.TemplateVersion_templateId_version_key"
+      ],
+      "reads": [
+        "n|tbl|public.TemplateVersion",
+        "n|sch|public",
+        "n|col|public.TemplateVersion.templateId",
+        "n|col|public.TemplateVersion.version"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "TemplateVersion",
+        "TemplateVersion_workspaceId_idx"
+      ],
+      "writes": [
+        "s|idx|public.TemplateVersion_workspaceId_idx",
+        "n|idx|public.TemplateVersion_workspaceId_idx",
+        "e|idx|public.TemplateVersion_workspaceId_idx",
+        "n|rel|public.TemplateVersion_workspaceId_idx"
+      ],
+      "reads": [
+        "n|tbl|public.TemplateVersion",
+        "n|sch|public",
+        "n|col|public.TemplateVersion.workspaceId"
+      ]
+    },
+    {
+      "statementType": "create_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "TemplateInstallation"
+      ],
+      "writes": [
+        "s|fk|public.TemplateInstallation.TemplateInstallation_uninstallRequestedBy_User_id_fkey",
+        "n|fk|public.TemplateInstallation.TemplateInstallation_uninstallRequestedBy_User_id_fkey",
+        "e|fk|public.TemplateInstallation.TemplateInstallation_uninstallRequestedBy_User_id_fkey",
+        "n|con|public.TemplateInstallation.TemplateInstallation_uninstallRequestedBy_User_id_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.TemplateInstallation",
+        "n|sch|public",
+        "n|tbl|public.User",
+        "n|sch|public",
+        "n|col|public.TemplateInstallation.uninstallRequestedBy",
+        "n|col|public.User.id",
+        "e|uniqueness|public.User.id"
+      ]
+    },
+    {
+      "statementType": "create_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "TemplateInstallation"
+      ],
+      "writes": [
+        "s|fk|public.TemplateInstallation.TemplateInstallation_jgQpmfUEHTMJ_fkey",
+        "n|fk|public.TemplateInstallation.TemplateInstallation_jgQpmfUEHTMJ_fkey",
+        "e|fk|public.TemplateInstallation.TemplateInstallation_jgQpmfUEHTMJ_fkey",
+        "n|con|public.TemplateInstallation.TemplateInstallation_jgQpmfUEHTMJ_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.TemplateInstallation",
+        "n|sch|public",
+        "n|tbl|public.TemplateUninstallOperation",
+        "n|sch|public",
+        "n|col|public.TemplateInstallation.uninstallOperationId",
+        "n|col|public.TemplateUninstallOperation.id",
+        "e|uniqueness|public.TemplateUninstallOperation.id"
+      ]
+    },
+    {
+      "statementType": "create_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "TemplateInstallationSync"
+      ],
+      "writes": [
+        "s|fk|public.TemplateInstallationSync.TemplateInstallationSync_workspaceId_Workspace_id_fkey",
+        "n|fk|public.TemplateInstallationSync.TemplateInstallationSync_workspaceId_Workspace_id_fkey",
+        "e|fk|public.TemplateInstallationSync.TemplateInstallationSync_workspaceId_Workspace_id_fkey",
+        "n|con|public.TemplateInstallationSync.TemplateInstallationSync_workspaceId_Workspace_id_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.TemplateInstallationSync",
+        "n|sch|public",
+        "n|tbl|public.Workspace",
+        "n|sch|public",
+        "n|col|public.TemplateInstallationSync.workspaceId",
+        "n|col|public.Workspace.id",
+        "e|uniqueness|public.Workspace.id"
+      ]
+    },
+    {
+      "statementType": "create_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "TemplateInstallationSync"
+      ],
+      "writes": [
+        "s|fk|public.TemplateInstallationSync.TemplateInstallationSync_FDCAZLsj6sha_fkey",
+        "n|fk|public.TemplateInstallationSync.TemplateInstallationSync_FDCAZLsj6sha_fkey",
+        "e|fk|public.TemplateInstallationSync.TemplateInstallationSync_FDCAZLsj6sha_fkey",
+        "n|con|public.TemplateInstallationSync.TemplateInstallationSync_FDCAZLsj6sha_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.TemplateInstallationSync",
+        "n|sch|public",
+        "n|tbl|public.TemplateInstallation",
+        "n|sch|public",
+        "n|col|public.TemplateInstallationSync.installationId",
+        "n|col|public.TemplateInstallation.id",
+        "e|uniqueness|public.TemplateInstallation.id"
+      ]
+    },
+    {
+      "statementType": "create_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "TemplateInstallationSync"
+      ],
+      "writes": [
+        "s|fk|public.TemplateInstallationSync.TemplateInstallationSync_requestedBy_User_id_fkey",
+        "n|fk|public.TemplateInstallationSync.TemplateInstallationSync_requestedBy_User_id_fkey",
+        "e|fk|public.TemplateInstallationSync.TemplateInstallationSync_requestedBy_User_id_fkey",
+        "n|con|public.TemplateInstallationSync.TemplateInstallationSync_requestedBy_User_id_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.TemplateInstallationSync",
+        "n|sch|public",
+        "n|tbl|public.User",
+        "n|sch|public",
+        "n|col|public.TemplateInstallationSync.requestedBy",
+        "n|col|public.User.id",
+        "e|uniqueness|public.User.id"
+      ]
+    },
+    {
+      "statementType": "create_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "TemplateResourceBackup"
+      ],
+      "writes": [
+        "s|fk|public.TemplateResourceBackup.TemplateResourceBackup_workspaceId_Workspace_id_fkey",
+        "n|fk|public.TemplateResourceBackup.TemplateResourceBackup_workspaceId_Workspace_id_fkey",
+        "e|fk|public.TemplateResourceBackup.TemplateResourceBackup_workspaceId_Workspace_id_fkey",
+        "n|con|public.TemplateResourceBackup.TemplateResourceBackup_workspaceId_Workspace_id_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.TemplateResourceBackup",
+        "n|sch|public",
+        "n|tbl|public.Workspace",
+        "n|sch|public",
+        "n|col|public.TemplateResourceBackup.workspaceId",
+        "n|col|public.Workspace.id",
+        "e|uniqueness|public.Workspace.id"
+      ]
+    },
+    {
+      "statementType": "create_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "TemplateResourceBackup"
+      ],
+      "writes": [
+        "s|fk|public.TemplateResourceBackup.TemplateResourceBackup_mhH3iOmsXeXF_fkey",
+        "n|fk|public.TemplateResourceBackup.TemplateResourceBackup_mhH3iOmsXeXF_fkey",
+        "e|fk|public.TemplateResourceBackup.TemplateResourceBackup_mhH3iOmsXeXF_fkey",
+        "n|con|public.TemplateResourceBackup.TemplateResourceBackup_mhH3iOmsXeXF_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.TemplateResourceBackup",
+        "n|sch|public",
+        "n|tbl|public.TemplateInstallation",
+        "n|sch|public",
+        "n|col|public.TemplateResourceBackup.installationId",
+        "n|col|public.TemplateInstallation.id",
+        "e|uniqueness|public.TemplateInstallation.id"
+      ]
+    },
+    {
+      "statementType": "create_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "TemplateResourceBackup"
+      ],
+      "writes": [
+        "s|fk|public.TemplateResourceBackup.TemplateResourceBackup_syncId_TemplateInstallationSync_id_fkey",
+        "n|fk|public.TemplateResourceBackup.TemplateResourceBackup_syncId_TemplateInstallationSync_id_fkey",
+        "e|fk|public.TemplateResourceBackup.TemplateResourceBackup_syncId_TemplateInstallationSync_id_fkey",
+        "n|con|public.TemplateResourceBackup.TemplateResourceBackup_syncId_TemplateInstallationSync_id_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.TemplateResourceBackup",
+        "n|sch|public",
+        "n|tbl|public.TemplateInstallationSync",
+        "n|sch|public",
+        "n|col|public.TemplateResourceBackup.syncId",
+        "n|col|public.TemplateInstallationSync.id",
+        "e|uniqueness|public.TemplateInstallationSync.id"
+      ]
+    },
+    {
+      "statementType": "create_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "TemplateResourceBackup"
+      ],
+      "writes": [
+        "s|fk|public.TemplateResourceBackup.TemplateResourceBackup_6ze53IE5Y2X5_fkey",
+        "n|fk|public.TemplateResourceBackup.TemplateResourceBackup_6ze53IE5Y2X5_fkey",
+        "e|fk|public.TemplateResourceBackup.TemplateResourceBackup_6ze53IE5Y2X5_fkey",
+        "n|con|public.TemplateResourceBackup.TemplateResourceBackup_6ze53IE5Y2X5_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.TemplateResourceBackup",
+        "n|sch|public",
+        "n|tbl|public.TemplateInstalledResource",
+        "n|sch|public",
+        "n|col|public.TemplateResourceBackup.installedResourceId",
+        "n|col|public.TemplateInstalledResource.id",
+        "e|uniqueness|public.TemplateInstalledResource.id"
+      ]
+    },
+    {
+      "statementType": "create_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "TemplateUninstallOperation"
+      ],
+      "writes": [
+        "s|fk|public.TemplateUninstallOperation.TemplateUninstallOperation_workspaceId_Workspace_id_fkey",
+        "n|fk|public.TemplateUninstallOperation.TemplateUninstallOperation_workspaceId_Workspace_id_fkey",
+        "e|fk|public.TemplateUninstallOperation.TemplateUninstallOperation_workspaceId_Workspace_id_fkey",
+        "n|con|public.TemplateUninstallOperation.TemplateUninstallOperation_workspaceId_Workspace_id_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.TemplateUninstallOperation",
+        "n|sch|public",
+        "n|tbl|public.Workspace",
+        "n|sch|public",
+        "n|col|public.TemplateUninstallOperation.workspaceId",
+        "n|col|public.Workspace.id",
+        "e|uniqueness|public.Workspace.id"
+      ]
+    },
+    {
+      "statementType": "create_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "TemplateUninstallOperation"
+      ],
+      "writes": [
+        "s|fk|public.TemplateUninstallOperation.TemplateUninstallOperation_templateId_Template_id_fkey",
+        "n|fk|public.TemplateUninstallOperation.TemplateUninstallOperation_templateId_Template_id_fkey",
+        "e|fk|public.TemplateUninstallOperation.TemplateUninstallOperation_templateId_Template_id_fkey",
+        "n|con|public.TemplateUninstallOperation.TemplateUninstallOperation_templateId_Template_id_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.TemplateUninstallOperation",
+        "n|sch|public",
+        "n|tbl|public.Template",
+        "n|sch|public",
+        "n|col|public.TemplateUninstallOperation.templateId",
+        "n|col|public.Template.id",
+        "e|uniqueness|public.Template.id"
+      ]
+    },
+    {
+      "statementType": "create_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "TemplateUninstallOperation"
+      ],
+      "writes": [
+        "s|fk|public.TemplateUninstallOperation.TemplateUninstallOperation_requestedBy_User_id_fkey",
+        "n|fk|public.TemplateUninstallOperation.TemplateUninstallOperation_requestedBy_User_id_fkey",
+        "e|fk|public.TemplateUninstallOperation.TemplateUninstallOperation_requestedBy_User_id_fkey",
+        "n|con|public.TemplateUninstallOperation.TemplateUninstallOperation_requestedBy_User_id_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.TemplateUninstallOperation",
+        "n|sch|public",
+        "n|tbl|public.User",
+        "n|sch|public",
+        "n|col|public.TemplateUninstallOperation.requestedBy",
+        "n|col|public.User.id",
+        "e|uniqueness|public.User.id"
+      ]
+    },
+    {
+      "statementType": "create_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "TemplateVersion"
+      ],
+      "writes": [
+        "s|fk|public.TemplateVersion.TemplateVersion_templateId_Template_id_fkey",
+        "n|fk|public.TemplateVersion.TemplateVersion_templateId_Template_id_fkey",
+        "e|fk|public.TemplateVersion.TemplateVersion_templateId_Template_id_fkey",
+        "n|con|public.TemplateVersion.TemplateVersion_templateId_Template_id_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.TemplateVersion",
+        "n|sch|public",
+        "n|tbl|public.Template",
+        "n|sch|public",
+        "n|col|public.TemplateVersion.templateId",
+        "n|col|public.Template.id",
+        "e|uniqueness|public.Template.id"
+      ]
+    },
+    {
+      "statementType": "create_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "TemplateVersion"
+      ],
+      "writes": [
+        "s|fk|public.TemplateVersion.TemplateVersion_workspaceId_Workspace_id_fkey",
+        "n|fk|public.TemplateVersion.TemplateVersion_workspaceId_Workspace_id_fkey",
+        "e|fk|public.TemplateVersion.TemplateVersion_workspaceId_Workspace_id_fkey",
+        "n|con|public.TemplateVersion.TemplateVersion_workspaceId_Workspace_id_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.TemplateVersion",
+        "n|sch|public",
+        "n|tbl|public.Workspace",
+        "n|sch|public",
+        "n|col|public.TemplateVersion.workspaceId",
+        "n|col|public.Workspace.id",
+        "e|uniqueness|public.Workspace.id"
+      ]
+    }
+  ],
+  "deltas": [
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "name": "TemplateInstallationSync",
+        "isRlsEnabled": false,
+        "entityType": "tables"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "name": "TemplateResourceBackup",
+        "isRlsEnabled": false,
+        "entityType": "tables"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "name": "TemplateUninstallOperation",
+        "isRlsEnabled": false,
+        "entityType": "tables"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "name": "TemplateVersion",
+        "isRlsEnabled": false,
+        "entityType": "tables"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "name": "templateUninstallState",
+        "values": [
+          "none",
+          "pending",
+          "running",
+          "done",
+          "partial",
+          "failed",
+          "skipped"
+        ],
+        "entityType": "enums"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "name": "templateSyncStatus",
+        "values": [
+          "pending",
+          "running",
+          "completed",
+          "partial",
+          "failed",
+          "skipped",
+          "cancelled"
+        ],
+        "entityType": "enums"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "name": "templateSyncTrigger",
+        "values": [
+          "autoUpdate",
+          "manual",
+          "reinstall"
+        ],
+        "entityType": "enums"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "name": "templateUninstallOperationState",
+        "values": [
+          "none",
+          "pending",
+          "running",
+          "done",
+          "partial",
+          "failed",
+          "skipped"
+        ],
+        "entityType": "enums"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "Template",
+        "name": "version",
+        "type": "integer",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "1",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "Template",
+        "name": "payloadHash",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "TemplateInstallation",
+        "name": "installedByKind",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "'apiToken'",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "TemplateInstallation",
+        "name": "stagingGeneration",
+        "type": "integer",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "0",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "TemplateInstallation",
+        "name": "stagedCleanedGeneration",
+        "type": "integer",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "-1",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "TemplateInstallation",
+        "name": "stagedCleanupClaimedAt",
+        "type": "timestamp(6) with time zone",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "TemplateInstallation",
+        "name": "pendingPublishEffects",
+        "type": "jsonb",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "TemplateInstallation",
+        "name": "claimToken",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "TemplateInstallation",
+        "name": "claimedAt",
+        "type": "timestamp(6) with time zone",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "TemplateInstallation",
+        "name": "attempts",
+        "type": "integer",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "0",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "TemplateInstallation",
+        "name": "errorCode",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "TemplateInstallation",
+        "name": "sourceTemplateId",
+        "type": "bigint",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "TemplateInstallation",
+        "name": "successfulInstallEvents",
+        "type": "integer",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "0",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "TemplateInstallation",
+        "name": "sourceDeletedAt",
+        "type": "timestamp(6) with time zone",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "TemplateInstallation",
+        "name": "inboxBindings",
+        "type": "jsonb",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "TemplateInstallation",
+        "name": "publisherRef",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "''",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "TemplateInstallation",
+        "name": "publisherUninstallGrant",
+        "type": "smallint",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "0",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "TemplateInstallation",
+        "name": "uninstalledAt",
+        "type": "timestamp(6) with time zone",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "TemplateInstallation",
+        "name": "uninstalledByKind",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "TemplateInstallation",
+        "name": "uninstallCounts",
+        "type": "jsonb",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "TemplateInstallation",
+        "name": "uninstallState",
+        "type": "templateUninstallState",
+        "typeSchema": "public",
+        "notNull": true,
+        "dimensions": 0,
+        "default": "'none'",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "TemplateInstallation",
+        "name": "uninstallRequestedByKind",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "TemplateInstallation",
+        "name": "uninstallRequestedBy",
+        "type": "bigint",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "TemplateInstallation",
+        "name": "uninstallRequestedAt",
+        "type": "timestamp(6) with time zone",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "TemplateInstallation",
+        "name": "uninstallAttempt",
+        "type": "integer",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "0",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "TemplateInstallation",
+        "name": "uninstallClaimToken",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "TemplateInstallation",
+        "name": "uninstallClaimedAt",
+        "type": "timestamp(6) with time zone",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "TemplateInstallation",
+        "name": "uninstallErrorCode",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "TemplateInstallation",
+        "name": "uninstallOperationId",
+        "type": "bigint",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "TemplateInstallation",
+        "name": "sourceVersion",
+        "type": "integer",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "1",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "TemplateInstallation",
+        "name": "lastSyncedAt",
+        "type": "timestamp(6) with time zone",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "TemplateInstallationSync",
+        "name": "id",
+        "type": "bigint",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "TemplateInstallationSync",
+        "name": "createdAt",
+        "type": "timestamp(6) with time zone",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "now()",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "TemplateInstallationSync",
+        "name": "updatedAt",
+        "type": "timestamp(6) with time zone",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "now()",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "TemplateInstallationSync",
+        "name": "workspaceId",
+        "type": "bigint",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "TemplateInstallationSync",
+        "name": "installationId",
+        "type": "bigint",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "TemplateInstallationSync",
+        "name": "status",
+        "type": "templateSyncStatus",
+        "typeSchema": "public",
+        "notNull": true,
+        "dimensions": 0,
+        "default": "'pending'",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "TemplateInstallationSync",
+        "name": "trigger",
+        "type": "templateSyncTrigger",
+        "typeSchema": "public",
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "TemplateInstallationSync",
+        "name": "requestedVersion",
+        "type": "integer",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "TemplateInstallationSync",
+        "name": "idempotencyKey",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "TemplateInstallationSync",
+        "name": "requestFingerprint",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "TemplateInstallationSync",
+        "name": "requestedBy",
+        "type": "bigint",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "TemplateInstallationSync",
+        "name": "requestedByKind",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "'apiToken'",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "TemplateInstallationSync",
+        "name": "claimToken",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "TemplateInstallationSync",
+        "name": "claimedAt",
+        "type": "timestamp(6) with time zone",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "TemplateInstallationSync",
+        "name": "attempts",
+        "type": "integer",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "0",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "TemplateInstallationSync",
+        "name": "errorCode",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "TemplateInstallationSync",
+        "name": "fromVersion",
+        "type": "integer",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "TemplateInstallationSync",
+        "name": "appliedVersion",
+        "type": "integer",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "TemplateInstallationSync",
+        "name": "appliedHash",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "TemplateInstallationSync",
+        "name": "counts",
+        "type": "jsonb",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "TemplateInstallationSync",
+        "name": "warnings",
+        "type": "jsonb",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "'[]'",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "TemplateInstallationSync",
+        "name": "warningSummary",
+        "type": "jsonb",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "TemplateInstallationSync",
+        "name": "startedAt",
+        "type": "timestamp(6) with time zone",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "TemplateInstallationSync",
+        "name": "finishedAt",
+        "type": "timestamp(6) with time zone",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "TemplateInstalledResource",
+        "name": "allowEdit",
+        "type": "boolean",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "true",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "TemplateInstalledResource",
+        "name": "allowDelete",
+        "type": "boolean",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "true",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "TemplateInstalledResource",
+        "name": "detachedAt",
+        "type": "timestamp(6) with time zone",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "TemplateInstalledResource",
+        "name": "syncedHash",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "TemplateInstalledResource",
+        "name": "syncedVersion",
+        "type": "integer",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "TemplateInstalledResource",
+        "name": "uninstallOutcome",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "TemplateInstalledResource",
+        "name": "uninstallEffects",
+        "type": "jsonb",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "TemplateInstalledResource",
+        "name": "uninstallEffectsAttempts",
+        "type": "integer",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "0",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "TemplateInstalledResource",
+        "name": "uninstallFrozenFrom",
+        "type": "jsonb",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "TemplateInstalledResource",
+        "name": "uninstallDrainStartedAt",
+        "type": "timestamp(6) with time zone",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "TemplateResourceBackup",
+        "name": "id",
+        "type": "bigint",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "TemplateResourceBackup",
+        "name": "createdAt",
+        "type": "timestamp(6) with time zone",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "now()",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "TemplateResourceBackup",
+        "name": "updatedAt",
+        "type": "timestamp(6) with time zone",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "now()",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "TemplateResourceBackup",
+        "name": "workspaceId",
+        "type": "bigint",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "TemplateResourceBackup",
+        "name": "installationId",
+        "type": "bigint",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "TemplateResourceBackup",
+        "name": "syncId",
+        "type": "bigint",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "TemplateResourceBackup",
+        "name": "installedResourceId",
+        "type": "bigint",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "TemplateResourceBackup",
+        "name": "resourceKind",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "TemplateResourceBackup",
+        "name": "resourceId",
+        "type": "bigint",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "TemplateResourceBackup",
+        "name": "formatVersion",
+        "type": "integer",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "TemplateResourceBackup",
+        "name": "content",
+        "type": "jsonb",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "TemplateResourceBackup",
+        "name": "byteSize",
+        "type": "integer",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "TemplateUninstallOperation",
+        "name": "id",
+        "type": "bigint",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "TemplateUninstallOperation",
+        "name": "createdAt",
+        "type": "timestamp(6) with time zone",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "now()",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "TemplateUninstallOperation",
+        "name": "updatedAt",
+        "type": "timestamp(6) with time zone",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "now()",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "TemplateUninstallOperation",
+        "name": "workspaceId",
+        "type": "bigint",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "TemplateUninstallOperation",
+        "name": "templateId",
+        "type": "bigint",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "TemplateUninstallOperation",
+        "name": "publisherRef",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "TemplateUninstallOperation",
+        "name": "requestedByKind",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "TemplateUninstallOperation",
+        "name": "requestedBy",
+        "type": "bigint",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "TemplateUninstallOperation",
+        "name": "state",
+        "type": "templateUninstallOperationState",
+        "typeSchema": "public",
+        "notNull": true,
+        "dimensions": 0,
+        "default": "'pending'",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "TemplateUninstallOperation",
+        "name": "counts",
+        "type": "jsonb",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "TemplateUninstallOperation",
+        "name": "auditLogId",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "TemplateUninstallOperation",
+        "name": "noticeDeliveredAt",
+        "type": "timestamp(6) with time zone",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "TemplateUninstallOperation",
+        "name": "finishedAt",
+        "type": "timestamp(6) with time zone",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "TemplateVersion",
+        "name": "id",
+        "type": "bigint",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "TemplateVersion",
+        "name": "createdAt",
+        "type": "timestamp(6) with time zone",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "now()",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "TemplateVersion",
+        "name": "updatedAt",
+        "type": "timestamp(6) with time zone",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "now()",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "TemplateVersion",
+        "name": "templateId",
+        "type": "bigint",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "TemplateVersion",
+        "name": "workspaceId",
+        "type": "bigint",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "TemplateVersion",
+        "name": "version",
+        "type": "integer",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "TemplateVersion",
+        "name": "payload",
+        "type": "jsonb",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "TemplateVersion",
+        "name": "payloadHash",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "TemplateVersion",
+        "name": "formatVersion",
+        "type": "integer",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "AIFile",
+        "name": "AIFile_queuedAt_queued_idx",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "(\"processingRun\"->>'queuedAt')",
+            "isExpression": true,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": false,
+        "where": "\"processingRun\"->>'status' = 'queued'",
+        "with": "",
+        "method": "btree",
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "TemplateInstallation",
+        "name": "TemplateInstallation_workspaceId_sourceTemplateId_active_key",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "workspaceId",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          },
+          {
+            "value": "sourceTemplateId",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": true,
+        "where": "\"status\" IN ('pending', 'installing')",
+        "with": "",
+        "method": "btree",
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "TemplateInstallation",
+        "name": "TemplateInstallation_sourceTemplateId_idx",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "sourceTemplateId",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": false,
+        "where": null,
+        "with": "",
+        "method": "btree",
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "TemplateInstallation",
+        "name": "TemplateInstallation_templateId_publisherRef_idx",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "templateId",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          },
+          {
+            "value": "publisherRef",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": false,
+        "where": null,
+        "with": "",
+        "method": "btree",
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "TemplateInstallation",
+        "name": "TemplateInstallation_uninstallRequestedBy_idx",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "uninstallRequestedBy",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": false,
+        "where": null,
+        "with": "",
+        "method": "btree",
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "TemplateInstallation",
+        "name": "TemplateInstallation_uninstallOperationId_idx",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "uninstallOperationId",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": false,
+        "where": null,
+        "with": "",
+        "method": "btree",
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "TemplateInstallation",
+        "name": "TemplateInstallation_uninstallState_claimedAt_idx",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "uninstallState",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          },
+          {
+            "value": "uninstallClaimedAt",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": false,
+        "where": "\"uninstallState\" IN ('pending', 'running')",
+        "with": "",
+        "method": "btree",
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "TemplateInstallation",
+        "name": "TemplateInstallation_pendingPublishEffects_updatedAt_idx",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "updatedAt",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": false,
+        "where": "\"pendingPublishEffects\" IS NOT NULL",
+        "with": "",
+        "method": "btree",
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "TemplateInstallation",
+        "name": "TemplateInstallation_stagedCleanupOwed_updatedAt_idx",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "updatedAt",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": false,
+        "where": "((\"status\" = 'failed' AND \"stagedCleanedGeneration\" < \"stagingGeneration\") OR (\"status\" <> 'failed' AND \"stagedCleanedGeneration\" < \"stagingGeneration\" - 1))",
+        "with": "",
+        "method": "btree",
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "TemplateInstallation",
+        "name": "TemplateInstallation_status_claimedAt_idx",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "status",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          },
+          {
+            "value": "claimedAt",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": false,
+        "where": null,
+        "with": "",
+        "method": "btree",
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "TemplateInstallationSync",
+        "name": "TemplateInstallationSync_workspaceId_idx",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "workspaceId",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": false,
+        "where": null,
+        "with": "",
+        "method": "btree",
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "TemplateInstallationSync",
+        "name": "TemplateInstallationSync_requestedBy_idx",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "requestedBy",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": false,
+        "where": null,
+        "with": "",
+        "method": "btree",
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "TemplateInstallationSync",
+        "name": "TemplateInstallationSync_installationId_idx",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "installationId",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": false,
+        "where": null,
+        "with": "",
+        "method": "btree",
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "TemplateInstallationSync",
+        "name": "TemplateInstallationSync_auto_active_key",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "installationId",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          },
+          {
+            "value": "requestedVersion",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": true,
+        "where": "\"trigger\" = 'autoUpdate' AND \"status\" IN ('pending', 'running')",
+        "with": "",
+        "method": "btree",
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "TemplateInstallationSync",
+        "name": "TemplateInstallationSync_idempotency_key",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "installationId",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          },
+          {
+            "value": "idempotencyKey",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": true,
+        "where": "\"idempotencyKey\" IS NOT NULL",
+        "with": "",
+        "method": "btree",
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "TemplateInstallationSync",
+        "name": "TemplateInstallationSync_status_claimedAt_idx",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "status",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          },
+          {
+            "value": "claimedAt",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": false,
+        "where": null,
+        "with": "",
+        "method": "btree",
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "TemplateInstalledResource",
+        "name": "TemplateInstalledResource_active_lookup_idx",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "workspaceId",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          },
+          {
+            "value": "resourceKind",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          },
+          {
+            "value": "resourceId",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": false,
+        "where": "\"wasExisting\" = false AND \"detachedAt\" IS NULL",
+        "with": "",
+        "method": "btree",
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "TemplateInstalledResource",
+        "name": "TemplateInstalledResource_active_source_key",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "installationId",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          },
+          {
+            "value": "resourceKind",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          },
+          {
+            "value": "sourceResourceId",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": true,
+        "where": "\"detachedAt\" IS NULL",
+        "with": "",
+        "method": "btree",
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "TemplateInstalledResource",
+        "name": "TemplateInstalledResource_pending_effects_idx",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "uninstallEffectsAttempts",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          },
+          {
+            "value": "id",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": false,
+        "where": "\"uninstallEffects\" IS NOT NULL",
+        "with": "",
+        "method": "btree",
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "TemplateResourceBackup",
+        "name": "TemplateResourceBackup_workspaceId_idx",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "workspaceId",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": false,
+        "where": null,
+        "with": "",
+        "method": "btree",
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "TemplateResourceBackup",
+        "name": "TemplateResourceBackup_installationId_idx",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "installationId",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": false,
+        "where": null,
+        "with": "",
+        "method": "btree",
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "TemplateResourceBackup",
+        "name": "TemplateResourceBackup_syncId_idx",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "syncId",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": false,
+        "where": null,
+        "with": "",
+        "method": "btree",
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "TemplateResourceBackup",
+        "name": "TemplateResourceBackup_installedResourceId_idx",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "installedResourceId",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": false,
+        "where": null,
+        "with": "",
+        "method": "btree",
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "TemplateUninstallOperation",
+        "name": "TemplateUninstallOperation_workspaceId_idx",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "workspaceId",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": false,
+        "where": null,
+        "with": "",
+        "method": "btree",
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "TemplateUninstallOperation",
+        "name": "TemplateUninstallOperation_templateId_idx",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "templateId",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": false,
+        "where": null,
+        "with": "",
+        "method": "btree",
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "TemplateUninstallOperation",
+        "name": "TemplateUninstallOperation_requestedBy_idx",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "requestedBy",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": false,
+        "where": null,
+        "with": "",
+        "method": "btree",
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "TemplateUninstallOperation",
+        "name": "TemplateUninstallOperation_notice_idx",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "state",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          },
+          {
+            "value": "noticeDeliveredAt",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": false,
+        "where": null,
+        "with": "",
+        "method": "btree",
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "TemplateVersion",
+        "name": "TemplateVersion_templateId_version_key",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "templateId",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          },
+          {
+            "value": "version",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": true,
+        "where": null,
+        "with": "",
+        "method": "btree",
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "TemplateVersion",
+        "name": "TemplateVersion_workspaceId_idx",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "workspaceId",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": false,
+        "where": null,
+        "with": "",
+        "method": "btree",
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "TemplateInstallation",
+        "name": "TemplateInstallation_uninstallRequestedBy_User_id_fkey",
+        "nameExplicit": false,
+        "columns": [
+          "uninstallRequestedBy"
+        ],
+        "schemaTo": "public",
+        "tableTo": "User",
+        "columnsTo": [
+          "id"
+        ],
+        "onUpdate": "CASCADE",
+        "onDelete": "SET NULL",
+        "entityType": "fks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "TemplateInstallation",
+        "name": "TemplateInstallation_jgQpmfUEHTMJ_fkey",
+        "nameExplicit": false,
+        "columns": [
+          "uninstallOperationId"
+        ],
+        "schemaTo": "public",
+        "tableTo": "TemplateUninstallOperation",
+        "columnsTo": [
+          "id"
+        ],
+        "onUpdate": "CASCADE",
+        "onDelete": "SET NULL",
+        "entityType": "fks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "TemplateInstallationSync",
+        "name": "TemplateInstallationSync_workspaceId_Workspace_id_fkey",
+        "nameExplicit": false,
+        "columns": [
+          "workspaceId"
+        ],
+        "schemaTo": "public",
+        "tableTo": "Workspace",
+        "columnsTo": [
+          "id"
+        ],
+        "onUpdate": "CASCADE",
+        "onDelete": "CASCADE",
+        "entityType": "fks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "TemplateInstallationSync",
+        "name": "TemplateInstallationSync_FDCAZLsj6sha_fkey",
+        "nameExplicit": false,
+        "columns": [
+          "installationId"
+        ],
+        "schemaTo": "public",
+        "tableTo": "TemplateInstallation",
+        "columnsTo": [
+          "id"
+        ],
+        "onUpdate": "CASCADE",
+        "onDelete": "CASCADE",
+        "entityType": "fks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "TemplateInstallationSync",
+        "name": "TemplateInstallationSync_requestedBy_User_id_fkey",
+        "nameExplicit": false,
+        "columns": [
+          "requestedBy"
+        ],
+        "schemaTo": "public",
+        "tableTo": "User",
+        "columnsTo": [
+          "id"
+        ],
+        "onUpdate": "CASCADE",
+        "onDelete": "SET NULL",
+        "entityType": "fks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "TemplateResourceBackup",
+        "name": "TemplateResourceBackup_workspaceId_Workspace_id_fkey",
+        "nameExplicit": false,
+        "columns": [
+          "workspaceId"
+        ],
+        "schemaTo": "public",
+        "tableTo": "Workspace",
+        "columnsTo": [
+          "id"
+        ],
+        "onUpdate": "CASCADE",
+        "onDelete": "CASCADE",
+        "entityType": "fks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "TemplateResourceBackup",
+        "name": "TemplateResourceBackup_mhH3iOmsXeXF_fkey",
+        "nameExplicit": false,
+        "columns": [
+          "installationId"
+        ],
+        "schemaTo": "public",
+        "tableTo": "TemplateInstallation",
+        "columnsTo": [
+          "id"
+        ],
+        "onUpdate": "CASCADE",
+        "onDelete": "CASCADE",
+        "entityType": "fks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "TemplateResourceBackup",
+        "name": "TemplateResourceBackup_syncId_TemplateInstallationSync_id_fkey",
+        "nameExplicit": false,
+        "columns": [
+          "syncId"
+        ],
+        "schemaTo": "public",
+        "tableTo": "TemplateInstallationSync",
+        "columnsTo": [
+          "id"
+        ],
+        "onUpdate": "CASCADE",
+        "onDelete": "CASCADE",
+        "entityType": "fks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "TemplateResourceBackup",
+        "name": "TemplateResourceBackup_6ze53IE5Y2X5_fkey",
+        "nameExplicit": false,
+        "columns": [
+          "installedResourceId"
+        ],
+        "schemaTo": "public",
+        "tableTo": "TemplateInstalledResource",
+        "columnsTo": [
+          "id"
+        ],
+        "onUpdate": "CASCADE",
+        "onDelete": "CASCADE",
+        "entityType": "fks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "TemplateUninstallOperation",
+        "name": "TemplateUninstallOperation_workspaceId_Workspace_id_fkey",
+        "nameExplicit": false,
+        "columns": [
+          "workspaceId"
+        ],
+        "schemaTo": "public",
+        "tableTo": "Workspace",
+        "columnsTo": [
+          "id"
+        ],
+        "onUpdate": "CASCADE",
+        "onDelete": "CASCADE",
+        "entityType": "fks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "TemplateUninstallOperation",
+        "name": "TemplateUninstallOperation_templateId_Template_id_fkey",
+        "nameExplicit": false,
+        "columns": [
+          "templateId"
+        ],
+        "schemaTo": "public",
+        "tableTo": "Template",
+        "columnsTo": [
+          "id"
+        ],
+        "onUpdate": "CASCADE",
+        "onDelete": "SET NULL",
+        "entityType": "fks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "TemplateUninstallOperation",
+        "name": "TemplateUninstallOperation_requestedBy_User_id_fkey",
+        "nameExplicit": false,
+        "columns": [
+          "requestedBy"
+        ],
+        "schemaTo": "public",
+        "tableTo": "User",
+        "columnsTo": [
+          "id"
+        ],
+        "onUpdate": "CASCADE",
+        "onDelete": "SET NULL",
+        "entityType": "fks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "TemplateVersion",
+        "name": "TemplateVersion_templateId_Template_id_fkey",
+        "nameExplicit": false,
+        "columns": [
+          "templateId"
+        ],
+        "schemaTo": "public",
+        "tableTo": "Template",
+        "columnsTo": [
+          "id"
+        ],
+        "onUpdate": "CASCADE",
+        "onDelete": "CASCADE",
+        "entityType": "fks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "TemplateVersion",
+        "name": "TemplateVersion_workspaceId_Workspace_id_fkey",
+        "nameExplicit": false,
+        "columns": [
+          "workspaceId"
+        ],
+        "schemaTo": "public",
+        "tableTo": "Workspace",
+        "columnsTo": [
+          "id"
+        ],
+        "onUpdate": "CASCADE",
+        "onDelete": "CASCADE",
+        "entityType": "fks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "TemplateInstallationSync",
+        "name": "TemplateInstallationSync_pkey",
+        "columns": [
+          "id"
+        ],
+        "nameExplicit": false,
+        "entityType": "pks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "TemplateResourceBackup",
+        "name": "TemplateResourceBackup_pkey",
+        "columns": [
+          "id"
+        ],
+        "nameExplicit": false,
+        "entityType": "pks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "TemplateUninstallOperation",
+        "name": "TemplateUninstallOperation_pkey",
+        "columns": [
+          "id"
+        ],
+        "nameExplicit": false,
+        "entityType": "pks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "TemplateVersion",
+        "name": "TemplateVersion_pkey",
+        "columns": [
+          "id"
+        ],
+        "nameExplicit": false,
+        "entityType": "pks"
+      }
+    },
+    {
+      "op": "alter",
+      "key": "enums\u0000[\"public\",\"templateInstallationStatus\"]",
+      "set": {
+        "values": [
+          "pending",
+          "installing",
+          "completed",
+          "partial",
+          "failed",
+          "uninstalled"
+        ]
+      }
+    },
+    {
+      "op": "alter",
+      "key": "enums\u0000[\"public\",\"templateResourceCategory\"]",
+      "set": {
+        "values": [
+          "flows",
+          "products",
+          "aiFunctions",
+          "aiAgents",
+          "calendars",
+          "webchats",
+          "keywords",
+          "entryPointLinks",
+          "triggers",
+          "fbCommentAutomations",
+          "settings",
+          "sequences",
+          "aiMcpServers",
+          "aiFiles",
+          "questionnaires",
+          "couponTopics",
+          "pipelines",
+          "customFields",
+          "tags",
+          "productCategories"
+        ]
+      }
+    }
+  ]
+}

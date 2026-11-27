@@ -23,7 +23,7 @@ function resolveRedirectChannel(channel: string | string[] | undefined) {
 
 // The single "Ads" menu item was split into one entry per ads-eligible
 // channel (`/dashboard/ads/whatsapp` | `/messenger` | `/instagram`) — see
-// `AnalyticsNav`. This channel-less route only exists for old bookmarks and
+// `AnalyticsSectionSelect`. This channel-less route only exists for old bookmarks and
 // the CAPI-connect redirect (`?account=<id>`), which predate the split;
 // forward the query string and land on the requested (or default) channel so
 // a stale selection is preserved and a future default change never silently

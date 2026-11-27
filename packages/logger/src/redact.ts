@@ -14,6 +14,8 @@ const MAX_REDACT_DEPTH = 64
 // Redact by sensitive KEY NAME (exact, case-insensitive).
 const SENSITIVE_KEYS: ReadonlySet<string> = new Set([
   "access_token",
+  "input_token",
+  "appsecret_proof",
   "refresh_token",
   "auth_token",
   "id_token",
@@ -38,6 +40,8 @@ const SENSITIVE_KEYS: ReadonlySet<string> = new Set([
 // up to the next delimiter, case-insensitively.
 const SENSITIVE_QUERY_PARAMS = [
   "access_token",
+  "input_token",
+  "appsecret_proof",
   "refresh_token",
   "fb_exchange_token",
   "auth_token",

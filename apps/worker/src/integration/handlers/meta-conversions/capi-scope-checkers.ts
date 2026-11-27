@@ -7,8 +7,8 @@ import {
   messengerIntegrationService,
   metaConversionsService,
   platformCredentialService,
+  resolveCredentialOwnerIdForWorkspace,
   WHATSAPP_CAPI_SCOPE,
-  workspaceService,
 } from "@chatbotx.io/business"
 import {
   debugToken as debugInstagramFacebookToken,
@@ -106,9 +106,8 @@ async function checkMetaCapiScope(
   workspaceId: string,
   config: MetaCapiScopeCheckerConfig,
 ): Promise<boolean> {
-  const workspace = await workspaceService.findById({ id: workspaceId })
   const credential = await platformCredentialService.resolveForOwner({
-    ownerId: workspace.ownerId,
+    ownerId: await resolveCredentialOwnerIdForWorkspace(workspaceId),
     type: config.credentialType,
   })
   if (!credential) {
@@ -160,9 +159,8 @@ async function checkWhatsappCapiScope(
   storedHasCapiScope: boolean,
   workspaceId: string,
 ): Promise<boolean> {
-  const workspace = await workspaceService.findById({ id: workspaceId })
   const credential = await platformCredentialService.resolveForOwner({
-    ownerId: workspace.ownerId,
+    ownerId: await resolveCredentialOwnerIdForWorkspace(workspaceId),
     type: "whatsapp",
   })
   if (!credential) {

@@ -15,10 +15,10 @@ export async function sha256Hex(payload: string): Promise<string> {
     .join("")
 }
 
-export async function hmacSha256Hex(
+async function hmacSha256Bytes(
   secret: string,
   payload: string,
-): Promise<string> {
+): Promise<Uint8Array> {
   const enc = new TextEncoder()
   const key = await crypto.subtle.importKey(
     "raw",
@@ -27,10 +27,26 @@ export async function hmacSha256Hex(
     false,
     ["sign"],
   )
-  const sig = await crypto.subtle.sign("HMAC", key, enc.encode(payload))
-  return Array.from(new Uint8Array(sig))
+  return new Uint8Array(
+    await crypto.subtle.sign("HMAC", key, enc.encode(payload)),
+  )
+}
+
+export async function hmacSha256Hex(
+  secret: string,
+  payload: string,
+): Promise<string> {
+  return Array.from(await hmacSha256Bytes(secret, payload))
     .map((b) => b.toString(16).padStart(2, "0"))
     .join("")
+}
+
+/** HMAC-SHA256 as standard base64 (e.g. LINE's `X-Line-Signature`). */
+export async function hmacSha256Base64(
+  secret: string,
+  payload: string,
+): Promise<string> {
+  return btoa(String.fromCharCode(...(await hmacSha256Bytes(secret, payload))))
 }
 
 export function timingSafeStringEqual(a: string, b: string): boolean {

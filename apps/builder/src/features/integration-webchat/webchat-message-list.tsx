@@ -7,12 +7,14 @@ import {
 } from "@chatbotx.io/ui/components/ui/avatar"
 import { Skeleton } from "@chatbotx.io/ui/components/ui/skeleton"
 import { BotIcon } from "lucide-react"
+import { useTranslations } from "next-intl"
 import { useEffect, useRef, useState } from "react"
 import {
   type GridComponents,
   Virtuoso,
   type VirtuosoHandle,
 } from "react-virtuoso"
+import { toast } from "sonner"
 import { MessageBubble } from "../messages/components/message-bubble"
 import { MessageItem } from "../messages/components/message-item"
 import type { MessageResourceWithRelations } from "../messages/schema/resource"
@@ -33,6 +35,7 @@ export function WebchatMessageList() {
     isTyping,
     workspaceLogoUrl,
   } = useGuestSessionStore((state) => state)
+  const t = useTranslations("webchat")
 
   const virtuosoRef = useRef<VirtuosoHandle>(null)
 
@@ -47,10 +50,18 @@ export function WebchatMessageList() {
   useEffect(() => {
     setPage(1)
 
-    if (guestConversationId) {
-      loadMoreMessages(guestConversationId, MESSAGE_LIST_PER_PAGE)
+    if (!guestConversationId) {
+      return
     }
-  }, [loadMoreMessages, guestConversationId])
+
+    // loadMoreMessages only console.errors + rethrows on failure (network,
+    // rate limit, a still-invalid guest id, …) — without this catch that
+    // rejection is silently swallowed and the visitor sees an empty chat
+    // with no indication anything went wrong.
+    loadMoreMessages(guestConversationId, MESSAGE_LIST_PER_PAGE).catch(() => {
+      toast.error(t("loadMessagesError"))
+    })
+  }, [loadMoreMessages, guestConversationId, t])
 
   // Load more items when reaching the end of the list
   const loadMoreItems = () => {
@@ -70,19 +81,21 @@ export function WebchatMessageList() {
         data={data}
         followOutput
         initialTopMostItemIndex={{ index: "LAST" }}
-        itemContent={(_, item) =>
-          item.id === TYPING_INDICATOR_ID ? (
-            <TypingIndicator avatarUrl={workspaceLogoUrl} />
-          ) : (
-            <MessageItem
-              avatarUrl={workspaceLogoUrl}
-              guestDisplay={true}
-              key={item.id}
-              message={item as MessageResourceWithRelations}
-              onPostback={sendPostback}
-            />
-          )
-        }
+        itemContent={(_, item) => (
+          <div className="pb-1.5">
+            {item.id === TYPING_INDICATOR_ID ? (
+              <TypingIndicator avatarUrl={workspaceLogoUrl} />
+            ) : (
+              <MessageItem
+                avatarUrl={workspaceLogoUrl}
+                guestDisplay={true}
+                key={item.id}
+                message={item as MessageResourceWithRelations}
+                onPostback={sendPostback}
+              />
+            )}
+          </div>
+        )}
         rangeChanged={({ startIndex }) => {
           if (startIndex <= 5 && page !== 1) {
             loadMoreItems()
@@ -135,7 +148,7 @@ const MessageComponentList: GridComponents["List"] = ({
   children,
   ...props
 }) => (
-  <div {...props} className="virtuoso-item-list flex flex-col gap-1.5">
+  <div {...props} className="virtuoso-item-list flex flex-col">
     {children}
   </div>
 )

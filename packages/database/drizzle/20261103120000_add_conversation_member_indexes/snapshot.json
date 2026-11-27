@@ -1,0 +1,639 @@
+{
+  "type": "diff",
+  "version": "10",
+  "dialect": "postgres",
+  "id": "f292c323-e19d-491a-86dd-d6c2f7e8b704",
+  "prevIds": [
+    "b77408ea-4d67-485d-b6df-b2d74d9a4df9"
+  ],
+  "footprints": [
+    {
+      "statementType": "create_table",
+      "statementTarget": [
+        "table",
+        "public",
+        "MobileRefreshToken"
+      ],
+      "writes": [
+        "s|tbl|public.MobileRefreshToken",
+        "n|tbl|public.MobileRefreshToken",
+        "e|tbl|public.MobileRefreshToken",
+        "n|rel|public.MobileRefreshToken",
+        "n|type|public.MobileRefreshToken",
+        "n|rel|public.MobileRefreshToken_pkey"
+      ],
+      "reads": [
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "drop_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "Cart",
+        "Cart_abandoned_due_idx"
+      ],
+      "writes": [
+        "s|idx|public.Cart_abandoned_due_idx",
+        "n|idx|public.Cart_abandoned_due_idx",
+        "e|idx|public.Cart_abandoned_due_idx",
+        "n|rel|public.Cart_abandoned_due_idx"
+      ],
+      "reads": [
+        "e|tbl|public.Cart",
+        "n|sch|public",
+        "e|col|public.Cart.lastActivityAt"
+      ],
+      "sharedWrites": []
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "Cart",
+        "Cart_abandoned_scan_idx"
+      ],
+      "writes": [
+        "s|idx|public.Cart_abandoned_scan_idx",
+        "n|idx|public.Cart_abandoned_scan_idx",
+        "e|idx|public.Cart_abandoned_scan_idx",
+        "n|rel|public.Cart_abandoned_scan_idx"
+      ],
+      "reads": [
+        "n|tbl|public.Cart",
+        "n|sch|public",
+        "n|col|public.Cart.lastActivityAt"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "MobileRefreshToken",
+        "MobileRefreshToken_tokenHash_key"
+      ],
+      "writes": [
+        "s|idx|public.MobileRefreshToken_tokenHash_key",
+        "n|idx|public.MobileRefreshToken_tokenHash_key",
+        "e|idx|public.MobileRefreshToken_tokenHash_key",
+        "n|rel|public.MobileRefreshToken_tokenHash_key"
+      ],
+      "reads": [
+        "n|tbl|public.MobileRefreshToken",
+        "n|sch|public",
+        "n|col|public.MobileRefreshToken.tokenHash"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "MobileRefreshToken",
+        "MobileRefreshToken_userId_idx"
+      ],
+      "writes": [
+        "s|idx|public.MobileRefreshToken_userId_idx",
+        "n|idx|public.MobileRefreshToken_userId_idx",
+        "e|idx|public.MobileRefreshToken_userId_idx",
+        "n|rel|public.MobileRefreshToken_userId_idx"
+      ],
+      "reads": [
+        "n|tbl|public.MobileRefreshToken",
+        "n|sch|public",
+        "n|col|public.MobileRefreshToken.userId"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "MobileRefreshToken",
+        "MobileRefreshToken_familyId_rotatedAt_idx"
+      ],
+      "writes": [
+        "s|idx|public.MobileRefreshToken_familyId_rotatedAt_idx",
+        "n|idx|public.MobileRefreshToken_familyId_rotatedAt_idx",
+        "e|idx|public.MobileRefreshToken_familyId_rotatedAt_idx",
+        "n|rel|public.MobileRefreshToken_familyId_rotatedAt_idx"
+      ],
+      "reads": [
+        "n|tbl|public.MobileRefreshToken",
+        "n|sch|public",
+        "n|col|public.MobileRefreshToken.familyId",
+        "n|col|public.MobileRefreshToken.rotatedAt"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "MobileRefreshToken",
+        "MobileRefreshToken_expiresAt_idx"
+      ],
+      "writes": [
+        "s|idx|public.MobileRefreshToken_expiresAt_idx",
+        "n|idx|public.MobileRefreshToken_expiresAt_idx",
+        "e|idx|public.MobileRefreshToken_expiresAt_idx",
+        "n|rel|public.MobileRefreshToken_expiresAt_idx"
+      ],
+      "reads": [
+        "n|tbl|public.MobileRefreshToken",
+        "n|sch|public",
+        "n|col|public.MobileRefreshToken.expiresAt"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "Conversation",
+        "Conversation_workspaceId_assignedUserId_lastActivityAt_id_idx"
+      ],
+      "writes": [
+        "s|idx|public.Conversation_workspaceId_assignedUserId_lastActivityAt_id_idx",
+        "n|idx|public.Conversation_workspaceId_assignedUserId_lastActivityAt_id_idx",
+        "e|idx|public.Conversation_workspaceId_assignedUserId_lastActivityAt_id_idx",
+        "n|rel|public.Conversation_workspaceId_assignedUserId_lastActivityAt_id_idx"
+      ],
+      "reads": [
+        "n|tbl|public.Conversation",
+        "n|sch|public",
+        "n|col|public.Conversation.workspaceId",
+        "n|col|public.Conversation.assignedUserId",
+        "n|col|public.Conversation.lastActivityAt",
+        "n|col|public.Conversation.id"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "Conversation",
+        "Conversation_ws_team_lastActivity_id_idx"
+      ],
+      "writes": [
+        "s|idx|public.Conversation_ws_team_lastActivity_id_idx",
+        "n|idx|public.Conversation_ws_team_lastActivity_id_idx",
+        "e|idx|public.Conversation_ws_team_lastActivity_id_idx",
+        "n|rel|public.Conversation_ws_team_lastActivity_id_idx"
+      ],
+      "reads": [
+        "n|tbl|public.Conversation",
+        "n|sch|public",
+        "n|col|public.Conversation.workspaceId",
+        "n|col|public.Conversation.assignedInboxTeamId",
+        "n|col|public.Conversation.lastActivityAt",
+        "n|col|public.Conversation.id"
+      ]
+    },
+    {
+      "statementType": "create_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "MobileRefreshToken"
+      ],
+      "writes": [
+        "s|fk|public.MobileRefreshToken.MobileRefreshToken_userId_User_id_fkey",
+        "n|fk|public.MobileRefreshToken.MobileRefreshToken_userId_User_id_fkey",
+        "e|fk|public.MobileRefreshToken.MobileRefreshToken_userId_User_id_fkey",
+        "n|con|public.MobileRefreshToken.MobileRefreshToken_userId_User_id_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.MobileRefreshToken",
+        "n|sch|public",
+        "n|tbl|public.User",
+        "n|sch|public",
+        "n|col|public.MobileRefreshToken.userId",
+        "n|col|public.User.id",
+        "e|uniqueness|public.User.id"
+      ]
+    }
+  ],
+  "deltas": [
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "name": "MobileRefreshToken",
+        "isRlsEnabled": false,
+        "entityType": "tables"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "MobileRefreshToken",
+        "name": "id",
+        "type": "bigint",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "MobileRefreshToken",
+        "name": "createdAt",
+        "type": "timestamp(6) with time zone",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "now()",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "MobileRefreshToken",
+        "name": "updatedAt",
+        "type": "timestamp(6) with time zone",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "now()",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "MobileRefreshToken",
+        "name": "userId",
+        "type": "bigint",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "MobileRefreshToken",
+        "name": "deviceId",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "MobileRefreshToken",
+        "name": "familyId",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "MobileRefreshToken",
+        "name": "tokenHash",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "MobileRefreshToken",
+        "name": "expiresAt",
+        "type": "timestamp(6) with time zone",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "MobileRefreshToken",
+        "name": "rotatedAt",
+        "type": "timestamp(6) with time zone",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "MobileRefreshToken",
+        "name": "revoked",
+        "type": "timestamp(6) with time zone",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "Cart",
+        "name": "Cart_abandoned_scan_idx",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "lastActivityAt",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": false,
+        "where": "\"abandonedNotifiedAt\" IS NULL",
+        "with": "",
+        "method": "btree",
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "MobileRefreshToken",
+        "name": "MobileRefreshToken_tokenHash_key",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "tokenHash",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": true,
+        "where": null,
+        "with": "",
+        "method": "btree",
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "MobileRefreshToken",
+        "name": "MobileRefreshToken_userId_idx",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "userId",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": false,
+        "where": null,
+        "with": "",
+        "method": "btree",
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "MobileRefreshToken",
+        "name": "MobileRefreshToken_familyId_rotatedAt_idx",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "familyId",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          },
+          {
+            "value": "rotatedAt",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": false,
+        "where": null,
+        "with": "",
+        "method": "btree",
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "MobileRefreshToken",
+        "name": "MobileRefreshToken_expiresAt_idx",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "expiresAt",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": false,
+        "where": null,
+        "with": "",
+        "method": "btree",
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "Conversation",
+        "name": "Conversation_workspaceId_assignedUserId_lastActivityAt_id_idx",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "workspaceId",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          },
+          {
+            "value": "assignedUserId",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          },
+          {
+            "value": "lastActivityAt",
+            "isExpression": false,
+            "asc": false,
+            "nullsFirst": false,
+            "opclass": null
+          },
+          {
+            "value": "id",
+            "isExpression": false,
+            "asc": false,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": false,
+        "where": "\"assignedUserId\" IS NOT NULL",
+        "with": "",
+        "method": "btree",
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "Conversation",
+        "name": "Conversation_ws_team_lastActivity_id_idx",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "workspaceId",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          },
+          {
+            "value": "assignedInboxTeamId",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          },
+          {
+            "value": "lastActivityAt",
+            "isExpression": false,
+            "asc": false,
+            "nullsFirst": false,
+            "opclass": null
+          },
+          {
+            "value": "id",
+            "isExpression": false,
+            "asc": false,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": false,
+        "where": "\"assignedInboxTeamId\" IS NOT NULL",
+        "with": "",
+        "method": "btree",
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "MobileRefreshToken",
+        "name": "MobileRefreshToken_userId_User_id_fkey",
+        "nameExplicit": false,
+        "columns": [
+          "userId"
+        ],
+        "schemaTo": "public",
+        "tableTo": "User",
+        "columnsTo": [
+          "id"
+        ],
+        "onUpdate": "CASCADE",
+        "onDelete": "CASCADE",
+        "entityType": "fks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "MobileRefreshToken",
+        "name": "MobileRefreshToken_pkey",
+        "columns": [
+          "id"
+        ],
+        "nameExplicit": false,
+        "entityType": "pks"
+      }
+    },
+    {
+      "op": "drop",
+      "key": "indexes\u0000[\"public\",\"Cart_abandoned_due_idx\"]"
+    }
+  ]
+}

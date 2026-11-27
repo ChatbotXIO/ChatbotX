@@ -10,17 +10,27 @@ import {
   messageTypes,
 } from "@chatbotx.io/sdk"
 import { extractInvisibleGoogleClick } from "@chatbotx.io/utils/google-click"
-import type { ServerMessageTypes } from "whatsapp-api-js/types"
+import type { ServerMessage, ServerMessageTypes } from "whatsapp-api-js/types"
 import { z } from "zod"
 import { getWhatsappClient } from "../../client"
 import {
   isStandbyEchoItem,
+  isTemplateEcho,
   parseStandbyEcho,
   readThreadControlReceiveInfo,
 } from "../../lib/conversation-routing"
 import { extractWhatsappUserIdentity } from "../../lib/raw-identity"
+import {
+  buildSmbEchoContact,
+  readSmbEchoMedia,
+  readSmbEchoText,
+  readSmbMessageEchoPayload,
+  type SmbMessageEchoEnvelope,
+  type SmbMessageEchoPayload,
+} from "../../lib/smb-message-echo"
 import { asString } from "../../lib/value"
 import type { WhatsappAuthValue, WhatsappWebhookEvent } from "../../schema"
+import { readFlowResponseMedia } from "./incoming-flow-media"
 import {
   parseAudioMessage,
   parseDocumentMessage,
@@ -235,16 +245,34 @@ const readReferredProductCommerce = (
     : undefined
 }
 
-const parseInteractiveMessage: WhatsappMessageParser<"interactive"> = (
+/**
+ * The id of the message a reply answers (`context.id`). Parsers are typed with
+ * their message type's own fields, but they get the whole webhook message, so
+ * `context` is read through `ServerMessage`.
+ */
+const readContextMessageId = (message: object): string | null =>
+  asString((message as Pick<ServerMessage, "context">).context?.id)
+
+const parseInteractiveMessage: WhatsappMessageParser<"interactive"> = async (
   message,
+  deps,
 ) => {
-  const reply = readInteractiveReply(message.interactive)
+  const reply = readInteractiveReply(
+    message.interactive,
+    readContextMessageId(message),
+  )
+  // A Flow answer can carry uploaded files (PhotoPicker / DocumentPicker).
+  const flowMedia = await readFlowResponseMedia(
+    deps.ctx,
+    reply.contentAttributes,
+  )
   return {
     text: reply.text,
     postbackAction: reply.postbackAction,
     templateFlowToken: reply.templateFlowToken,
     buttonTitle: reply.buttonTitle,
     contentAttributes: reply.contentAttributes,
+    ...flowMedia,
   }
 }
 
@@ -285,6 +313,73 @@ const messageParsers: {
   video: parseVideoMessage,
 }
 
+type WhatsappReceiveMessageHandler =
+  MessageHandlers<WhatsappAuthValue>["receiveMessage"]
+type WhatsappReceiveMessageResult = Awaited<
+  ReturnType<WhatsappReceiveMessageHandler>
+>
+
+/**
+ * What an echo contributes to the stored message: its text, or the media the
+ * live media parser downloaded for it.
+ */
+const readSmbEchoFragment = async (props: {
+  ctx: Parameters<WhatsappReceiveMessageHandler>[0]["ctx"]
+  echo: SmbMessageEchoEnvelope
+}): Promise<IncomingMessageFragment> => {
+  const { ctx, echo } = props
+  const content = readSmbEchoMedia(echo)
+  const parse = content ? messageParsers[content.mediaType] : undefined
+  if (!(content && parse)) {
+    return { text: readSmbEchoText(echo) }
+  }
+  // Same documented assertion as the customer path: the registry key is the
+  // media type just read, which TypeScript cannot prove through the lookup.
+  return await parse({ [content.mediaType]: content.media } as never, {
+    ctx,
+    whatsappClient: getWhatsappClient(ctx.auth),
+    receivedAt: new Date(),
+  })
+}
+
+/**
+ * A message the business sent from the WhatsApp Business app or a linked
+ * device, as an outgoing first-party message on the customer it went to.
+ *
+ * Media goes through the same live parsers as a customer's media (download and
+ * storage included), but only what is storable is kept: the parsers also read
+ * customer-only data (a referral, a Google click, a postback, a flow token)
+ * that an echo must never carry into the conversation.
+ */
+const parseSmbMessageEcho = async (props: {
+  ctx: Parameters<WhatsappReceiveMessageHandler>[0]["ctx"]
+  payload: SmbMessageEchoPayload
+}): Promise<WhatsappReceiveMessageResult> => {
+  const { ctx, payload } = props
+  const { echo } = payload
+  const fragment = await readSmbEchoFragment({ ctx, echo })
+
+  // Only what is storable is kept: a parser's referral, Google click, postback
+  // or flow token belongs to a customer's message, never to an echo.
+  const message: IncomingMessage = {
+    sourceId: echo.id,
+    messageType: messageTypes.enum.outgoing,
+    contentType: fragment.contentType ?? contentTypes.enum.text,
+    text: fragment.text,
+    attachments: fragment.attachments,
+    contentAttributes: fragment.contentAttributes,
+  }
+
+  return {
+    message,
+    contact: buildSmbEchoContact(echo, payload.contact),
+    postbackAction: null,
+    quickReplyAction: null,
+    ref: null,
+    echoOrigin: echoOrigins.enum.firstParty,
+  }
+}
+
 export const receiveMessage: MessageHandlers<WhatsappAuthValue>["receiveMessage"] =
   async (props) => {
     const {
@@ -292,11 +387,21 @@ export const receiveMessage: MessageHandlers<WhatsappAuthValue>["receiveMessage"
       data: { payload },
     } = props
 
+    const smbMessageEcho = readSmbMessageEchoPayload(payload)
+    if (smbMessageEcho) {
+      return await parseSmbMessageEcho({ ctx, payload: smbMessageEcho })
+    }
+
     const data = payload as WhatsappWebhookEvent
     const threadControl = readThreadControlReceiveInfo(data.raw)
 
     // A standby echo is a partner's outgoing message, not a customer message:
     // its "message" is the Send API body, so it never reaches the type parsers.
+    // Only the owner (or the escalation partner, whose send takes the thread)
+    // can send a Service message, so a Service echo means another app owns the
+    // thread. A template echo means nothing: any partner may send templates and
+    // they never change ownership (Meta thread lifecycle; Testing Guide SC-1
+    // step 3 "It is still the owner", SC-4 step 1 "The thread stays Idle").
     if (
       threadControl?.delivery === "standby" &&
       isStandbyEchoItem(data.message)
@@ -309,7 +414,9 @@ export const receiveMessage: MessageHandlers<WhatsappAuthValue>["receiveMessage"
         quickReplyAction: null,
         ref: null,
         echoOrigin: echoOrigins.enum.thirdParty,
-        threadControl,
+        threadControl: isTemplateEcho(data.message)
+          ? { ...threadControl, signalsOwnership: false }
+          : threadControl,
       }
     }
 

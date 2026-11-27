@@ -7,6 +7,7 @@ import {
   type UniqueIdsMessages,
   uniqueIds,
 } from "@/features/channel-connect/schema"
+import { transferPhoneNumberField } from "./connect-via-session"
 
 export const manualOnboardingResultSchema = z.object({
   integrationId: z.string(),
@@ -145,9 +146,11 @@ export const buildConnectWhatsappSchema = (messages?: UniqueIdsMessages) =>
       // connect supplies wabaId directly (enforced below).
       wabaId: z.string().nullish(),
       connectExisting: z.boolean(),
-      transferPhoneNumber: z.boolean(),
+      transferPhoneNumber: transferPhoneNumberField,
       manualConnect: z.boolean(),
-      marketingMessageLite: z.boolean(),
+      // No longer read: Marketing Messages is a Login Configuration product on
+      // Embedded Signup v4. Still accepted so an older client keeps working.
+      marketingMessageLite: z.boolean().optional(),
       // Session / OAuth-with-id path: exactly one id per action request — the
       // client fans out one call per id when the operator picks several.
       phoneNumberId: z.string().nullish(),

@@ -110,7 +110,107 @@ describe("ads analytics export route", () => {
     expect(mockListExportRows).not.toHaveBeenCalled()
   })
 
-  test("legacy no-channel export stays byte-identical: 4 columns, ctwa-* filename", async () => {
+  test("prefixes the CSV with a UTF-8 BOM so Excel on Windows decodes it as UTF-8", async () => {
+    mockListExportRows.mockResolvedValueOnce({
+      rows: [
+        {
+          id: "row-1",
+          contactId: "contact-1",
+          contactName: "Nguyễn Văn Bình",
+          phoneNumber: null,
+          email: null,
+          adId: "ad-1",
+          occurredAt: new Date("2026-08-05T09:30:00.000Z"),
+        },
+      ],
+      hasMore: false,
+    })
+
+    const response = await callRoute(
+      "segment=leads&channel=whatsapp&from=2026-08-01&to=2026-08-10",
+    )
+
+    // `response.text()` strips a leading BOM while decoding, so read bytes.
+    const bytes = Buffer.from(await response.arrayBuffer())
+    expect([...bytes.subarray(0, 3)]).toEqual([0xef, 0xbb, 0xbf])
+    expect(bytes.indexOf(Buffer.from([0xef, 0xbb, 0xbf]), 3)).toBe(-1)
+    expect(bytes.subarray(3).toString("utf8")).toContain(
+      "Nguyễn Văn Bình,,ad-1,",
+    )
+  })
+
+  test("keeps LF and CRLF inside quoted fields, as before the shared serializer", async () => {
+    mockListExportRows.mockResolvedValueOnce({
+      rows: [
+        {
+          id: "row-1",
+          contactId: "contact-1",
+          contactName: "Ada\nLovelace",
+          phoneNumber: null,
+          email: null,
+          adId: "ad\r\n1",
+          occurredAt: new Date("2026-08-05T09:30:00.000Z"),
+        },
+      ],
+      hasMore: false,
+    })
+
+    const response = await callRoute(
+      "segment=leads&channel=whatsapp&from=2026-08-01&to=2026-08-10",
+    )
+
+    await expect(response.text()).resolves.toBe(
+      [
+        "ads.analytics.csv.contactName,ads.analytics.csv.phone,ads.analytics.csv.adId,ads.analytics.csv.occurredAt,ads.analytics.csv.channel",
+        '"Ada\nLovelace",,"ad\r\n1",2026-08-05T09:30:00.000Z,ads.conversionEvents.tabs.whatsapp',
+        "",
+      ].join("\n"),
+    )
+  })
+
+  test("fetches the next page only when the client reads, and stops once it cancels", async () => {
+    const page = (id: string) => ({
+      rows: [
+        {
+          id,
+          contactId: `contact-${id}`,
+          contactName: `Name ${id}`,
+          phoneNumber: null,
+          email: null,
+          adId: null,
+          occurredAt: new Date("2026-08-05T09:30:00.000Z"),
+        },
+      ],
+      // 50 pages: plenty to expose an eager producer without exhausting memory.
+      hasMore: mockListExportRows.mock.calls.length < 50,
+    })
+    mockListExportRows.mockImplementation(async ({ afterId }) =>
+      page(`after-${afterId ?? "start"}`),
+    )
+
+    const response = await callRoute(
+      "segment=leads&channel=whatsapp&from=2026-08-01&to=2026-08-10",
+    )
+    const reader = response.body?.getReader()
+    if (!reader) {
+      throw new Error("response has no body")
+    }
+    await reader.read() // header
+    await reader.read() // first page
+    // Let any eager producer run ahead before counting.
+    await new Promise((resolve) => setTimeout(resolve, 20))
+
+    // A slow download must not make the server query ahead of it: at most the
+    // page just read plus one buffered page (the stream's high-water mark).
+    expect(mockListExportRows.mock.calls.length).toBeLessThanOrEqual(2)
+
+    await reader.cancel()
+    const callsAtCancel = mockListExportRows.mock.calls.length
+    await new Promise((resolve) => setTimeout(resolve, 20))
+    expect(mockListExportRows).toHaveBeenCalledTimes(callsAtCancel)
+  })
+
+  test("legacy no-channel export keeps its shape: 4 columns, ctwa-* filename", async () => {
     const row: ExportRow = {
       id: "row-1",
       contactId: "contact-1",
@@ -220,9 +320,12 @@ describe("ads analytics export route", () => {
   test("threads `tz` into the resolved [since, until] window so CSV rows match the on-screen viewer-local window", async () => {
     mockListExportRows.mockResolvedValueOnce({ rows: [], hasMore: false })
 
-    await callRoute(
-      "segment=leads&from=2026-08-27&to=2026-08-27&tz=Asia%2FSaigon",
-    )
+    // The export queries lazily as the body is read, like a real download.
+    await (
+      await callRoute(
+        "segment=leads&from=2026-08-27&to=2026-08-27&tz=Asia%2FSaigon",
+      )
+    ).text()
 
     expect(mockListExportRows).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -235,7 +338,10 @@ describe("ads analytics export route", () => {
   test("falls back to UTC anchoring for an omitted `tz` (old export links keep working unchanged)", async () => {
     mockListExportRows.mockResolvedValueOnce({ rows: [], hasMore: false })
 
-    await callRoute("segment=leads&from=2026-08-01&to=2026-08-10")
+    // The export queries lazily as the body is read, like a real download.
+    await (
+      await callRoute("segment=leads&from=2026-08-01&to=2026-08-10")
+    ).text()
 
     expect(mockListExportRows).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -397,6 +503,8 @@ describe("ads analytics export route", () => {
       // is silently ignored rather than rejected; the important guarantee is
       // that it never reaches `listAllChannelExportRows`.
       expect(response.status).toBe(200)
+      // The export queries lazily as the body is read, like a real download.
+      await response.text()
       expect(mockListAllChannelExportRows).toHaveBeenCalledWith(
         expect.not.objectContaining({
           integrationWhatsappId: expect.anything(),

@@ -26,6 +26,7 @@ import { integration as integrationGoogleSheets } from "@chatbotx.io/integration
 import { integration as integrationInstagram } from "@chatbotx.io/integration-instagram"
 import { integration as integrationInstagramFacebook } from "@chatbotx.io/integration-instagram-facebook"
 import { integration as integrationKlaviyo } from "@chatbotx.io/integration-klaviyo"
+import { integration as integrationLine } from "@chatbotx.io/integration-line"
 import { integration as integrationMailchimp } from "@chatbotx.io/integration-mailchimp"
 import { integration as integrationMailerLite } from "@chatbotx.io/integration-mailer-lite"
 import { integration as integrationMessenger } from "@chatbotx.io/integration-messenger"
@@ -47,7 +48,10 @@ import {
   type IntegrationDefinition,
   SdkException,
 } from "@chatbotx.io/sdk"
-import { IntegrationNotFoundError } from "./errors"
+import {
+  INTEGRATION_AUTH_MISSING_CODE,
+  IntegrationNotFoundError,
+} from "./errors"
 
 export { IntegrationNotFoundError } from "./errors"
 
@@ -64,6 +68,7 @@ export const integrations = {
   instagram: integrationInstagram,
   instagramFacebook: integrationInstagramFacebook,
   klaviyo: integrationKlaviyo,
+  line: integrationLine,
   mailchimp: integrationMailchimp,
   mailerLite: integrationMailerLite,
   messenger: integrationMessenger,
@@ -170,6 +175,11 @@ export const integrationService = {
         columnName = "botId"
         break
       }
+      case "line": {
+        modelName = "IntegrationLine"
+        columnName = "channelId"
+        break
+      }
       case "messenger": {
         modelName = "IntegrationMessenger"
         columnName = "pageId"
@@ -189,6 +199,11 @@ export const integrationService = {
       case "tiktok": {
         modelName = "IntegrationTiktok"
         columnName = "openId"
+        break
+      }
+      case "smtp": {
+        modelName = "IntegrationSmtp"
+        columnName = "inboxId"
         break
       }
       case "webchat": {
@@ -240,7 +255,7 @@ export const integrationService = {
         throw new ChannelError(
           `Unable to find integration auth for channel: ${contactInbox.channel}`,
           ChannelErrorCategory.AUTH_FAILED,
-          { code: "integration_auth_missing" },
+          { code: INTEGRATION_AUTH_MISSING_CODE },
         )
       }
 
@@ -253,6 +268,7 @@ export const integrationService = {
     const integrationTableByChannel: Partial<Record<string, string>> = {
       api: "IntegrationApi",
       instagram: "IntegrationInstagram",
+      line: "IntegrationLine",
       messenger: "IntegrationMessenger",
       smtp: "IntegrationSmtp",
       telegram: "IntegrationTelegram",
@@ -279,7 +295,7 @@ export const integrationService = {
       throw new ChannelError(
         `Unable to find integration auth for channel: ${contactInbox.channel}`,
         ChannelErrorCategory.AUTH_FAILED,
-        { code: "integration_auth_missing" },
+        { code: INTEGRATION_AUTH_MISSING_CODE },
       )
     }
 

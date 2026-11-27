@@ -7,6 +7,7 @@ export const contactSources = z.enum([
   "botLink",
   "chatPlugin",
   "comments",
+  "liveComments",
   "imported",
   "api",
   "direct",
@@ -53,6 +54,12 @@ export const supportsPostTracking = (
 export const genderTypes = z.enum(["male", "female", "unknown"])
 export type GenderType = z.infer<typeof genderTypes>
 
+/**
+ * Bounds the ad ids listed per contact (`{{ad_ids}}`, the contact export): a
+ * contact can click far more ads than a message or a CSV cell needs.
+ */
+export const CONTACT_AD_IDS_LIMIT = 50
+
 export const systemFieldTypes = z.enum([
   "first_name",
   "last_name",
@@ -85,9 +92,11 @@ export const systemFieldTypes = z.enum([
   "empty",
   "last_interaction",
   "last_order",
+  "last_opportunity_id",
   "last_seen",
   "last_input",
   "last_input_type",
+  "last_user_input_type",
   "last_text_input",
   "consecutive_failed_reply",
   "last_ref",
@@ -124,6 +133,8 @@ export const systemFieldTypes = z.enum([
 
   "last_ad",
   "last_ctwa",
+  "ad_ids",
+  "ad_id",
   "last_ad_source_url",
   "last_ad_source_platform",
   "last_ad_headline",
@@ -158,6 +169,11 @@ export const systemFieldTypes = z.enum([
   "last_form_id",
   "last_form_name",
   "last_adgroup_id",
+  "last_ad_name",
+  "last_adset_id",
+  "last_adset_name",
+  "last_campaign_id",
+  "last_campaign_name",
 
   "workspace_id",
   "workspace_name",
@@ -181,6 +197,13 @@ export const onDemandSystemFieldTypes: readonly SystemFieldType[] = [
   systemFieldTypes.enum.last_form_id,
   systemFieldTypes.enum.last_form_name,
   systemFieldTypes.enum.last_adgroup_id,
+  systemFieldTypes.enum.last_ad_name,
+  systemFieldTypes.enum.last_adset_id,
+  systemFieldTypes.enum.last_adset_name,
+  systemFieldTypes.enum.last_campaign_id,
+  systemFieldTypes.enum.last_campaign_name,
+  systemFieldTypes.enum.ad_ids,
+  systemFieldTypes.enum.ad_id,
   systemFieldTypes.enum.admin_name,
   systemFieldTypes.enum.admin_team_name,
   systemFieldTypes.enum.last_text_input,
@@ -280,6 +303,7 @@ export const contactFilterFields = z.enum([
   "questionnaireFinished",
   "couponTopic",
   "leaderboardScore",
+  "pipelineItem",
   "votedOnPoll",
   "lastComment",
   "commentedOnPost",
@@ -320,6 +344,7 @@ export const contactFilterFields = z.enum([
   "language",
   "fromCtwaAd",
   "fromGoogleAd",
+  "clickedAd",
   "ctwaConversion",
   "ctwaRetarget",
 ])

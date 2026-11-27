@@ -14,7 +14,9 @@ describe("workspace permission routes", () => {
       dashboard: "analytics",
       flows: "flows",
       contacts: "contacts",
+      pipelines: "contacts",
       broadcasts: "broadcast",
+      posts: "broadcast",
       sequences: "broadcast",
       products: "ecommerce",
     })
@@ -58,6 +60,10 @@ describe("hasContactsAccess", () => {
 })
 
 describe("resolveWorkspaceLandingSegment", () => {
+  test("pipelines shares the contacts-access rule with contacts and inbox", () => {
+    expect(PERMISSION_NAV.pipelines).toBe(PERMISSION_NAV.contacts)
+  })
+
   test("lands super admins on the dashboard", () => {
     expect(resolveWorkspaceLandingSegment({ superAdmin: true })).toBe(
       "dashboard",

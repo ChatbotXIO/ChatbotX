@@ -6,10 +6,18 @@ import type {
 } from "@chatbotx.io/database/partials"
 import { appointmentCalendarRepository } from "@chatbotx.io/database/repositories"
 import { createId } from "@chatbotx.io/utils"
+import { insertCopyNamed } from "./naming"
+import {
+  createFlowRefPatcher,
+  dependenciesOn,
+  makeCollector,
+  recordCopy,
+  scopedWhere,
+  updateNotSupported,
+} from "./shared"
 import type {
   PatchTask,
   ResourceAdapter,
-  ResourceCollector,
   TemplateInstallContext,
 } from "./types"
 
@@ -66,29 +74,23 @@ type TemplateCalendarEntry = {
  * `confirmationFlowId`/`cancellationFlowId`/reminders all point at flows,
  * which insert later in Phase 1 — deferred to the returned `PatchTask`.
  */
-export const calendarsAdapter: ResourceAdapter = {
+export const calendarsAdapter: ResourceAdapter<TemplateCalendarEntry> = {
   category: "calendars",
   providesKinds: ["calendar"],
   consumesKinds: ["flow"],
   deferredKinds: ["flow"],
+  trackedKind: "calendar",
+  folderTypes: [],
+  minFormatVersion: 1,
+  sync: updateNotSupported("calendars"),
 
   async insert(
     ctx: TemplateInstallContext,
-    entries: readonly (Record<string, unknown> & { sourceId: string })[],
+    entries: readonly TemplateCalendarEntry[],
   ): Promise<PatchTask[]> {
-    if (!ctx.idMaps.calendar) {
-      ctx.idMaps.calendar = new Map()
-    }
-    const idMap = ctx.idMaps.calendar
-    const pendingFlowRefs: Array<{
-      calendarId: string
-      confirmationFlowSourceId: string | null
-      cancellationFlowSourceId: string | null
-      reminders: TemplateCalendarReminder[]
-    }> = []
+    const flowRefs = createFlowRefPatcher("calendars")
 
-    for (const rawEntry of entries) {
-      const entry = rawEntry as unknown as TemplateCalendarEntry
+    for (const entry of entries) {
       if (entry.externalConnectionId) {
         ctx.warn({
           category: "calendars",
@@ -98,16 +100,36 @@ export const calendarsAdapter: ResourceAdapter = {
         })
       }
 
-      const created = await appointmentCalendarRepository.create(
-        {
-          workspaceId: ctx.workspaceId,
-          name: entry.name,
-          timezone: entry.timezone,
-          locationType: entry.locationType,
-          publicLinkSlug: createId().toString(),
-        },
-        ctx.tx,
-      )
+      // A calendar is copied, never reused: a name the target already uses
+      // gets the shared copy name instead of failing the whole install.
+      const created = await insertCopyNamed(ctx, {
+        category: "calendars",
+        constraint: "AppointmentCalendar_workspaceId_name_key",
+        entry,
+        findTaken: (tx, name) =>
+          tx.query.appointmentCalendarModel.findMany({
+            where: {
+              workspaceId: ctx.workspaceId,
+              name,
+              deletedAt: { isNull: true },
+            },
+            columns: { name: true },
+          }),
+        insert: (tx, name) =>
+          appointmentCalendarRepository.create(
+            {
+              workspaceId: ctx.workspaceId,
+              name,
+              timezone: entry.timezone,
+              locationType: entry.locationType,
+              publicLinkSlug: createId().toString(),
+            },
+            tx,
+          ),
+      })
+      if (!created) {
+        continue
+      }
       await appointmentCalendarRepository.update(
         {
           workspaceId: ctx.workspaceId,
@@ -136,68 +158,28 @@ export const calendarsAdapter: ResourceAdapter = {
         ctx.tx,
       )
 
-      idMap.set(entry.sourceId, created.id)
-      pendingFlowRefs.push({
-        calendarId: created.id,
-        confirmationFlowSourceId: entry.confirmationFlowId,
-        cancellationFlowSourceId: entry.cancellationFlowId,
-        reminders: entry.reminders,
-      })
-      ctx.track({
+      recordCopy(ctx, {
         category: "calendars",
         resourceKind: "calendar",
+        idMapKind: "calendar",
+        sourceId: entry.sourceId,
         resourceId: created.id,
-        sourceResourceId: entry.sourceId,
-        wasExisting: false,
       })
+      deferFlowRefs(flowRefs, entry, created.id)
     }
 
-    return [
-      {
-        category: "calendars",
-        apply: async (patchCtx) => {
-          for (const pending of pendingFlowRefs) {
-            await patchCalendarFlowRefs(patchCtx, pending)
-          }
-        },
-      },
-    ]
+    return flowRefs.tasks()
   },
 
-  collector: {
-    async resolveIds(workspaceId) {
-      const rows = await db.query.appointmentCalendarModel.findMany({
-        where: { workspaceId, deletedAt: { isNull: true as const } },
+  collector: makeCollector({
+    findIds: (query) =>
+      db.query.appointmentCalendarModel.findMany({
+        where: scopedWhere(query, { deletedAt: { isNull: true } }),
         columns: { id: true },
-      })
-      return rows.map((row) => row.id)
-    },
+        limit: query.limit,
+      }),
 
-    async verifyOwnership(workspaceId, ids) {
-      const uniqueIds = [...new Set(ids)]
-      if (uniqueIds.length === 0) {
-        return []
-      }
-      const rows = await db.query.appointmentCalendarModel.findMany({
-        where: {
-          workspaceId,
-          id: { in: uniqueIds },
-          deletedAt: { isNull: true as const },
-        },
-        columns: { id: true },
-      })
-      return rows.map((row) => row.id)
-    },
-
-    async collect(workspaceId, ids) {
-      if (ids.length === 0) {
-        return {
-          entries: [],
-          folderIds: [],
-          productCategoryIds: [],
-          hardDependencies: [],
-        }
-      }
+    async collectRows(workspaceId, ids) {
       const rows = await db.query.appointmentCalendarModel.findMany({
         where: { workspaceId, id: { in: [...ids] } },
         with: {
@@ -240,105 +222,76 @@ export const calendarsAdapter: ResourceAdapter = {
         })),
       }))
 
-      // `reminders[].flowId` is NOT NULL on the row — per the same save-time
-      // rule `entryPointLinks` depends on (G9), every reminder's flow must be
-      // auto-included even if not explicitly selected. `confirmationFlowId`/
-      // `cancellationFlowId` are nullable and simply degrade to a warn+skip
-      // at install time if left unselected, so they are not hard
-      // dependencies.
-      const hardDependencies = rows.flatMap((row) =>
-        row.reminders.map((reminder) => ({
-          category: "flows" as const,
-          sourceId: reminder.flowId,
-        })),
-      )
-
+      // Every flow a calendar runs travels with it (reminders, booking
+      // confirmation, cancellation), like a keyword's flow: a calendar copied
+      // without them would silently stop confirming bookings.
       return {
         entries,
-        folderIds: [],
-        productCategoryIds: [],
-        hardDependencies,
+        hardDependencies: dependenciesOn(
+          "flows",
+          rows.flatMap((row) => [
+            ...row.reminders.map((reminder) => reminder.flowId),
+            row.confirmationFlowId,
+            row.cancellationFlowId,
+          ]),
+        ),
       }
     },
-  } satisfies ResourceCollector,
+  }),
 }
 
-const resolveFlowRef = (
-  ctx: TemplateInstallContext,
+/**
+ * The calendar's confirmation and cancellation flows and its reminders point
+ * at flows, which insert later: they are written once the flows exist.
+ * Reminders that resolve are replaced as one set (none resolved leaves them).
+ */
+const deferFlowRefs = (
+  flowRefs: ReturnType<typeof createFlowRefPatcher>,
+  entry: TemplateCalendarEntry,
   calendarId: string,
-  field: string,
-  flowSourceId: string | null,
-): string | null => {
-  if (!flowSourceId) {
-    return null
-  }
-  const targetId = ctx.idMaps.flow?.get(flowSourceId)
-  if (!targetId) {
-    ctx.warn({
-      category: "calendars",
-      entityKind: "flow",
-      path: `calendars.${calendarId}.${field}`,
-      value: flowSourceId,
-    })
-    return null
-  }
-  return targetId
-}
-
-const patchCalendarFlowRefs = async (
-  ctx: TemplateInstallContext,
-  pending: {
-    calendarId: string
-    confirmationFlowSourceId: string | null
-    cancellationFlowSourceId: string | null
-    reminders: TemplateCalendarReminder[]
-  },
-): Promise<void> => {
-  const confirmationFlowId = resolveFlowRef(
-    ctx,
-    pending.calendarId,
-    "confirmationFlowId",
-    pending.confirmationFlowSourceId,
-  )
-  const cancellationFlowId = resolveFlowRef(
-    ctx,
-    pending.calendarId,
-    "cancellationFlowId",
-    pending.cancellationFlowSourceId,
-  )
-  await appointmentCalendarRepository.update(
-    {
-      workspaceId: ctx.workspaceId,
-      id: pending.calendarId,
-      confirmationFlowId,
-      cancellationFlowId,
+): void => {
+  flowRefs.defer({
+    sourceEntryId: entry.sourceId,
+    field: "confirmationFlowId",
+    sourceFlowId: entry.confirmationFlowId,
+    write: async (tx, confirmationFlowId, ctx) => {
+      await appointmentCalendarRepository.update(
+        { workspaceId: ctx.workspaceId, id: calendarId, confirmationFlowId },
+        tx,
+      )
     },
-    ctx.tx,
-  )
-
-  const resolvedReminders = pending.reminders.flatMap((reminder) => {
-    const targetFlowId = ctx.idMaps.flow?.get(reminder.flowId)
-    if (!targetFlowId) {
-      ctx.warn({
-        category: "calendars",
-        entityKind: "flow",
-        path: `calendars.${pending.calendarId}.reminders.flowId`,
-        value: reminder.flowId,
-      })
-      return []
-    }
-    return [
-      {
-        flowId: targetFlowId,
-        timingValue: reminder.timingValue,
-        timingUnit: reminder.timingUnit,
-      },
-    ]
   })
-  if (resolvedReminders.length > 0) {
-    await appointmentCalendarRepository.replaceReminders(
-      { calendarId: pending.calendarId, reminders: resolvedReminders },
-      ctx.tx,
-    )
+  flowRefs.defer({
+    sourceEntryId: entry.sourceId,
+    field: "cancellationFlowId",
+    sourceFlowId: entry.cancellationFlowId,
+    write: async (tx, cancellationFlowId, ctx) => {
+      await appointmentCalendarRepository.update(
+        { workspaceId: ctx.workspaceId, id: calendarId, cancellationFlowId },
+        tx,
+      )
+    },
+  })
+  const reminders: TemplateCalendarReminder[] = []
+  for (const [index, reminder] of entry.reminders.entries()) {
+    flowRefs.defer({
+      sourceEntryId: entry.sourceId,
+      field: `reminders.${index}.flowId`,
+      sourceFlowId: reminder.flowId,
+      write: (_tx, flowId) => {
+        reminders.push({ ...reminder, flowId })
+      },
+    })
   }
+  if (entry.reminders.length === 0) {
+    return
+  }
+  flowRefs.afterWrites(async (ctx) => {
+    if (reminders.length > 0) {
+      await appointmentCalendarRepository.replaceReminders(
+        { calendarId, reminders },
+        ctx.tx,
+      )
+    }
+  })
 }

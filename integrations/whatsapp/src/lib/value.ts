@@ -8,6 +8,10 @@
 export const asString = (value: unknown): string | null =>
   typeof value === "string" && value.length > 0 ? value : null
 
+/** Narrows an untrusted value to a plain object (not null, not an array). */
+export const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === "object" && value !== null && !Array.isArray(value)
+
 /** Reads the top-level entries from an untrusted Meta webhook body. */
 export const readWebhookEntries = (rawBody: unknown): unknown[] => {
   if (typeof rawBody !== "object" || rawBody === null) {

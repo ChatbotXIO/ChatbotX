@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { act } from "react"
+import { act, type ReactNode } from "react"
 import { createRoot, type Root } from "react-dom/client"
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
 import { MessageList } from "@/features/messages/message-list"
@@ -43,8 +43,40 @@ const chatStoreState = {
   updateMessageText: vi.fn(),
 }
 
+type VirtuosoMockProps = {
+  components: {
+    Footer: () => ReactNode
+    Header: () => ReactNode
+    List: ({ children }: { children: ReactNode }) => ReactNode
+  }
+  data: { id: string; messageType: string }[]
+  firstItemIndex: number
+  itemContent: (
+    index: number,
+    message: { id: string; messageType: string },
+  ) => ReactNode
+  startReached: () => void
+}
+
 vi.mock("next-intl", () => ({
   useTranslations: () => (key: string) => key,
+  useLocale: () => "en",
+}))
+vi.mock("@/features/translation/hooks/use-translation-settings", () => ({
+  useTranslationSettings: () => ({ data: undefined }),
+  useInvalidateTranslation: () => vi.fn(),
+}))
+vi.mock("@/features/translation/actions/preview-text.action", () => ({
+  previewTranslationAction: vi.fn(),
+}))
+vi.mock(
+  "@/features/translation/actions/update-conversation-state.action",
+  () => ({
+    updateConversationTranslationStateAction: vi.fn(),
+  }),
+)
+vi.mock("@/features/translation/actions/request-messages.action", () => ({
+  requestTranslationsAction: vi.fn(),
 }))
 
 vi.mock("next-safe-action/hooks", () => ({
@@ -53,6 +85,15 @@ vi.mock("next-safe-action/hooks", () => ({
 
 vi.mock("@/hooks/routing", () => ({
   useWorkspaceId: () => "workspace-1",
+}))
+
+// The participants query and the session only feed the avatar marker; the
+// marker itself is covered by `find-latest-message-id-by-author.test.ts`.
+vi.mock("@/features/conversations/hooks/use-conversation-participants", () => ({
+  useConversationParticipants: () => ({ data: undefined }),
+}))
+vi.mock("@/lib/auth/auth-client", () => ({
+  authClient: { useSession: () => ({ data: null }) },
 }))
 
 vi.mock("@/features/chat/store/chat-store-provider", () => ({
@@ -76,6 +117,9 @@ vi.mock("@/features/conversations/components/conversation-info", () => ({
   ConversationInfo: () => null,
 }))
 
+vi.mock("@/features/messages/components/resend-message-button", () => ({
+  ResendMessageButton: () => null,
+}))
 vi.mock("@/features/messages/components/message-item", () => ({
   MessageItem: () => null,
 }))
@@ -86,15 +130,23 @@ vi.mock("@/features/messages/lib/private-reply", () => ({
 
 vi.mock("react-virtuoso", () => ({
   Virtuoso: ({
+    components: { Footer, Header, List },
+    data,
     firstItemIndex,
+    itemContent,
     startReached,
-  }: {
-    firstItemIndex: number
-    startReached: () => void
-  }) => {
+  }: VirtuosoMockProps) => {
     virtuosoPropsRef.current = { firstItemIndex, startReached }
     return (
-      <div data-first-item-index={firstItemIndex} data-testid="message-list" />
+      <div data-first-item-index={firstItemIndex} data-testid="message-list">
+        <Header />
+        <List>
+          {data.map((message, index) => (
+            <div key={message.id}>{itemContent(index, message)}</div>
+          ))}
+        </List>
+        <Footer />
+      </div>
     )
   },
 }))
@@ -193,5 +245,18 @@ describe("MessageList", () => {
         .querySelector("[data-testid='message-list']")
         ?.getAttribute("data-first-item-index"),
     ).toBe("99999")
+  })
+
+  test("measures message spacing inside virtuoso items", () => {
+    chatStoreState.messages = [{ id: "message-1", messageType: "incoming" }]
+
+    render()
+
+    const list = container.querySelector(".virtuoso-item-list")
+    expect(list?.className).toBe("virtuoso-item-list flex flex-col")
+    expect(
+      list?.firstElementChild?.firstElementChild?.classList.contains("pb-1.5"),
+    ).toBe(true)
+    expect(container.querySelector(".h-3")).not.toBeNull()
   })
 })

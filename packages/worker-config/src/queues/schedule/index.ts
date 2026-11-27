@@ -14,6 +14,7 @@ export const ScheduleJobData = {
   enqueueRecurringBroadcasts: "enqueueRecurringBroadcasts",
   materializeRecurringBroadcasts: "materializeRecurringBroadcasts",
   prepareBroadcast: "prepareBroadcast",
+  purgeDraftBroadcastRecipients: "purgeDraftBroadcastRecipients",
   sendBroadcast: "sendBroadcast",
   reconcileBroadcasts: "reconcileBroadcasts",
   enqueueMarketingMessages: "enqueueMarketingMessages",
@@ -27,34 +28,48 @@ export const ScheduleJobData = {
   scanSmartDelay: "scanSmartDelay",
   scanAppointmentReminders: "scanAppointmentReminders",
   scanAbandonedCarts: "scanAbandonedCarts",
+  expireUnpaidOrders: "expireUnpaidOrders",
   syncUserQuota: "syncUserQuota",
   reconcileTenants: "reconcileTenants",
   reconcileMac: "reconcileMac",
   maintainMacPartitions: "maintainMacPartitions",
   maintainLeaderboardPartitions: "maintainLeaderboardPartitions",
+  maintainChannelPostMetricPartitions: "maintainChannelPostMetricPartitions",
   finishOverdueLeaderboards: "finishOverdueLeaderboards",
   maintainLeaderboardRankings: "maintainLeaderboardRankings",
   scanCoexistRuns: "scanCoexistRuns",
   scanContactScans: "scanContactScans",
+  scanChannelPostSyncs: "scanChannelPostSyncs",
+  refreshSocialAccountTokens: "refreshSocialAccountTokens",
+  enqueueSocialPostTargets: "enqueueSocialPostTargets",
+  recoverSocialPostTargets: "recoverSocialPostTargets",
+  materializeSocialPostRecurrences: "materializeSocialPostRecurrences",
+  scanSocialPostFeeds: "scanSocialPostFeeds",
+  pollSmtpInboxes: "pollSmtpInboxes",
   scanAiHandoverBulkRuns: "scanAiHandoverBulkRuns",
+  scanContactSyncRuns: "scanContactSyncRuns",
   reconcileMetaCatalogSyncs: "reconcileMetaCatalogSyncs",
   purgeCoexistStaging: "purgeCoexistStaging",
   purgeWhatsappSignupSessions: "purgeWhatsappSignupSessions",
   purgeExpiredConnectSessions: "purgeExpiredConnectSessions",
   purgeWorkspaces: "purgeWorkspaces",
+  purgeDeletedUsers: "purgeDeletedUsers",
   clearExpiredSupportAccess: "clearExpiredSupportAccess",
   googleAdsHousekeeping: "googleAdsHousekeeping",
   googleAdsSyncSetups: "googleAdsSyncSetups",
+  purgeExpiredOAuthTokens: "purgeExpiredOAuthTokens",
   purgeBroadcasts: "purgeBroadcasts",
   purgeAutomationThrottle: "purgeAutomationThrottle",
   purgeErrorLogs: "purgeErrorLogs",
   redispatchInboundWebhookRequests: "redispatchInboundWebhookRequests",
+  redispatchTemplateJobs: "redispatchTemplateJobs",
   purgeInboundWebhookRequests: "purgeInboundWebhookRequests",
   purgeCommentAutomationEvents: "purgeCommentAutomationEvents",
   refreshChannelTokens: "refreshChannelTokens",
   refreshLicense: "refreshLicense",
   unsubscribeExpiredTrials: "unsubscribeExpiredTrials",
   teardownExpiredTrial: "teardownExpiredTrial",
+  purgeExpiredContactExports: "purgeExpiredContactExports",
   // WhatsApp calling.
   purgeExpiredCallRecordings: "purgeExpiredCallRecordings",
   sweepStaleWhatsappCalls: "sweepStaleWhatsappCalls",
@@ -96,6 +111,24 @@ export const broadcastSendJobId = (broadcastId: string) =>
 /** Shared by every producer of a `prepareBroadcast` job, so the same broadcast is never prepared twice. */
 export const broadcastPrepareJobId = (broadcastId: string) =>
   `schedule-prepare-broadcast-${broadcastId}`
+
+/**
+ * Who asks for a draft's leftover-recipient cleanup: the draft transitions
+ * (`moveToDraft`, a refused `scheduleDraft`) or a stale prepare run that wrote
+ * a chunk after `moveToDraft`.
+ */
+export type BroadcastDraftPurgeRequester = "draft" | "stalePrepare"
+
+/**
+ * One cleanup per draft and requester: re-asking while one is queued or
+ * running is a no-op. A stale prepare gets its own id so its request never
+ * folds into a cleanup that is just finishing — that one may have checked
+ * before the prepare's last chunk landed.
+ */
+export const broadcastDraftPurgeJobId = (
+  broadcastId: string,
+  requester: BroadcastDraftPurgeRequester,
+) => `schedule-purge-draft-broadcast-${broadcastId}-${requester}`
 
 /** Series handled by one `materializeRecurringBroadcasts` job. */
 export const MATERIALIZE_BATCH_SIZE = 100
@@ -159,6 +192,14 @@ export type ScheduleJobPrepareBroadcast = {
   }
 }
 
+export type ScheduleJobPurgeDraftBroadcastRecipients = {
+  type: typeof ScheduleJobData.purgeDraftBroadcastRecipients
+  data: {
+    workspaceId: string
+    broadcastId: string
+  }
+}
+
 export type ScheduleJobFinalizeBroadcasts = {
   type: typeof ScheduleJobData.finalizeBroadcasts
   data: Record<string, never>
@@ -207,6 +248,12 @@ export type ScheduleJobScanAbandonedCarts = {
   data: Record<string, never>
 }
 
+/** Every minute: cancels online orders whose payment never came in time. */
+export type ScheduleJobExpireUnpaidOrders = {
+  type: typeof ScheduleJobData.expireUnpaidOrders
+  data: Record<string, never>
+}
+
 export type ScheduleJobSyncUserQuota = {
   type: typeof ScheduleJobData.syncUserQuota
   data: Record<string, never>
@@ -227,8 +274,55 @@ export type ScheduleJobScanContactScans = {
   data: Record<string, never>
 }
 
+/** Queues the channel post syncs that are due, and takes over stalled ones. */
+export type ScheduleJobScanChannelPostSyncs = {
+  type: typeof ScheduleJobData.scanChannelPostSyncs
+  data: Record<string, never>
+}
+
+/** Refreshes the tokens of connected social accounts that expire soon. */
+export type ScheduleJobRefreshSocialAccountTokens = {
+  type: typeof ScheduleJobData.refreshSocialAccountTokens
+  data: Record<string, never>
+}
+
+/** Hands the composed-post targets that are due to the `postPublish` queue. */
+export type ScheduleJobEnqueueSocialPostTargets = {
+  type: typeof ScheduleJobData.enqueueSocialPostTargets
+  data: Record<string, never>
+}
+
+/** Takes over composed-post targets whose lease ran out (crashed worker, container to read again). */
+export type ScheduleJobRecoverSocialPostTargets = {
+  type: typeof ScheduleJobData.recoverSocialPostTargets
+  data: Record<string, never>
+}
+
+/** Turns each due slot of a repeating post into a scheduled post. */
+export type ScheduleJobMaterializeSocialPostRecurrences = {
+  type: typeof ScheduleJobData.materializeSocialPostRecurrences
+  data: Record<string, never>
+}
+
+/** Hands the RSS/Atom feeds that are due to the `postPublish` queue, one job per feed. */
+export type ScheduleJobScanSocialPostFeeds = {
+  type: typeof ScheduleJobData.scanSocialPostFeeds
+  data: Record<string, never>
+}
+
+/** Enqueues one IMAP poll per due SMTP inbox. */
+export type ScheduleJobPollSmtpInboxes = {
+  type: typeof ScheduleJobData.pollSmtpInboxes
+  data: Record<string, never>
+}
+
 export type ScheduleJobScanAiHandoverBulkRuns = {
   type: typeof ScheduleJobData.scanAiHandoverBulkRuns
+  data: Record<string, never>
+}
+
+export type ScheduleJobScanContactSyncRuns = {
+  type: typeof ScheduleJobData.scanContactSyncRuns
   data: Record<string, never>
 }
 
@@ -249,6 +343,11 @@ export type ScheduleJobMaintainMacPartitions = {
 
 export type ScheduleJobMaintainLeaderboardPartitions = {
   type: typeof ScheduleJobData.maintainLeaderboardPartitions
+  data: Record<string, never>
+}
+
+export type ScheduleJobMaintainChannelPostMetricPartitions = {
+  type: typeof ScheduleJobData.maintainChannelPostMetricPartitions
   data: Record<string, never>
 }
 
@@ -301,6 +400,11 @@ export type ScheduleJobDispatchProfileSnapshots = {
   data: Record<string, never>
 }
 
+export type ScheduleJobPurgeExpiredOAuthTokens = {
+  type: typeof ScheduleJobData.purgeExpiredOAuthTokens
+  data: Record<string, never>
+}
+
 export type ScheduleJobPurgeBroadcasts = {
   type: typeof ScheduleJobData.purgeBroadcasts
   data: Record<string, never>
@@ -318,6 +422,11 @@ export type ScheduleJobPurgeErrorLogs = {
 
 export type ScheduleJobRedispatchInboundWebhookRequests = {
   type: typeof ScheduleJobData.redispatchInboundWebhookRequests
+  data: Record<string, never>
+}
+
+export type ScheduleJobRedispatchTemplateJobs = {
+  type: typeof ScheduleJobData.redispatchTemplateJobs
   data: Record<string, never>
 }
 
@@ -348,9 +457,20 @@ export type ScheduleJobUnsubscribeExpiredTrials = {
   data: { cursor?: string }
 }
 
+export type ScheduleJobPurgeDeletedUsers = {
+  type: typeof ScheduleJobData.purgeDeletedUsers
+  data: Record<string, never>
+}
+
 export type ScheduleJobTeardownExpiredTrial = {
   type: typeof ScheduleJobData.teardownExpiredTrial
   data: { userId: string }
+}
+
+/** Daily retention sweep: deletes contact exports past their retention (file, then row). */
+export type ScheduleJobPurgeExpiredContactExports = {
+  type: typeof ScheduleJobData.purgeExpiredContactExports
+  data: Record<string, never>
 }
 
 /** Daily retention sweep: deletes expired call recordings' S3 objects and clears the columns. */
@@ -389,6 +509,7 @@ export type ScheduleJobData =
   | ScheduleJobEnqueueRecurringBroadcasts
   | ScheduleJobMaterializeRecurringBroadcasts
   | ScheduleJobPrepareBroadcast
+  | ScheduleJobPurgeDraftBroadcastRecipients
   | ScheduleJobFinalizeBroadcasts
   | ScheduleJobReconcileBroadcasts
   | ScheduleJobEvaluateTriggers
@@ -398,35 +519,49 @@ export type ScheduleJobData =
   | ScheduleJobScanSmartDelay
   | ScheduleJobScanAppointmentReminders
   | ScheduleJobScanAbandonedCarts
+  | ScheduleJobExpireUnpaidOrders
   | ScheduleJobSyncUserQuota
   | ScheduleJobReconcileTenants
   | ScheduleJobReconcileMac
   | ScheduleJobMaintainMacPartitions
   | ScheduleJobMaintainLeaderboardPartitions
+  | ScheduleJobMaintainChannelPostMetricPartitions
   | ScheduleJobFinishOverdueLeaderboards
   | ScheduleJobMaintainLeaderboardRankings
   | ScheduleJobScanCoexistRuns
   | ScheduleJobScanContactScans
+  | ScheduleJobScanChannelPostSyncs
+  | ScheduleJobRefreshSocialAccountTokens
+  | ScheduleJobEnqueueSocialPostTargets
+  | ScheduleJobRecoverSocialPostTargets
+  | ScheduleJobMaterializeSocialPostRecurrences
+  | ScheduleJobScanSocialPostFeeds
+  | ScheduleJobPollSmtpInboxes
   | ScheduleJobScanAiHandoverBulkRuns
+  | ScheduleJobScanContactSyncRuns
   | ScheduleJobReconcileMetaCatalogSyncs
   | ScheduleJobPurgeCoexistStaging
   | ScheduleJobPurgeWhatsappSignupSessions
   | ScheduleJobPurgeExpiredConnectSessions
   | ScheduleJobPurgeWorkspaces
+  | ScheduleJobPurgeDeletedUsers
   | ScheduleJobClearExpiredSupportAccess
   | ScheduleJobGoogleAdsHousekeeping
   | ScheduleJobGoogleAdsSyncSetups
   | ScheduleJobDispatchProfileSnapshots
+  | ScheduleJobPurgeExpiredOAuthTokens
   | ScheduleJobPurgeBroadcasts
   | ScheduleJobPurgeAutomationThrottle
   | ScheduleJobPurgeErrorLogs
   | ScheduleJobRedispatchInboundWebhookRequests
+  | ScheduleJobRedispatchTemplateJobs
   | ScheduleJobPurgeInboundWebhookRequests
   | ScheduleJobPurgeCommentAutomationEvents
   | ScheduleJobRefreshChannelTokens
   | ScheduleJobRefreshLicense
   | ScheduleJobUnsubscribeExpiredTrials
   | ScheduleJobTeardownExpiredTrial
+  | ScheduleJobPurgeExpiredContactExports
   | ScheduleJobPurgeExpiredCallRecordings
   | ScheduleJobSweepStaleWhatsappCalls
 

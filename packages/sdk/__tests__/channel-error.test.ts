@@ -1,5 +1,8 @@
 import { describe, expect, test } from "vitest"
-import { ChannelError } from "../src/lib/channel-error"
+import {
+  ChannelError,
+  ThreadControlTakeRefusedError,
+} from "../src/lib/channel-error"
 import { ChannelErrorCategory } from "../src/lib/channel-error-codes"
 
 describe("ChannelError.getErrorData", () => {
@@ -77,5 +80,21 @@ describe("ChannelError.getErrorData", () => {
     const data = await err.getErrorData()
     expect(data.subcode).toBe(1_545_041)
     expect(data.category).toBe("user_blocked")
+  })
+})
+
+describe("ThreadControlTakeRefusedError.fromChannelError", () => {
+  test("keeps the origin error so the Meta fbtrace_id survives the wrapper", () => {
+    const origin = { fbtraceId: "trace-1" }
+    const refused = new ChannelError(
+      "not escalation",
+      ChannelErrorCategory.PERMISSION_DENIED,
+      { code: 2_494_191, httpStatusCode: 400 },
+    ).setOriginError(origin)
+
+    const wrapped = ThreadControlTakeRefusedError.fromChannelError(refused)
+
+    expect(wrapped.getOriginError()).toBe(origin)
+    expect(wrapped.code).toBe(2_494_191)
   })
 })

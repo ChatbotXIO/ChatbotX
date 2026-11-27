@@ -128,9 +128,18 @@ export default function ConversationList({
           <SelectField
             name="botCategory"
             options={[
-              { label: "All", value: conversationBotCategories.enum.all },
-              { label: "Human", value: conversationBotCategories.enum.human },
-              { label: "Bot", value: conversationBotCategories.enum.bot },
+              {
+                label: t("fields.botCategory.options.all"),
+                value: conversationBotCategories.enum.all,
+              },
+              {
+                label: t("fields.botCategory.options.human"),
+                value: conversationBotCategories.enum.human,
+              },
+              {
+                label: t("fields.botCategory.options.bot"),
+                value: conversationBotCategories.enum.bot,
+              },
             ]}
           />
 
@@ -190,6 +199,7 @@ export default function ConversationList({
             itemContent={(_, item) => (
               <ConversationItem
                 assigneeOptionNameByValue={assigneeOptionNameByValue}
+                canViewEmailAndPhone={canViewEmailAndPhone}
                 conversation={item}
                 onSelect={() => {
                   conversationIdParam.set(item.id.toString())

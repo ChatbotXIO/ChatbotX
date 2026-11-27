@@ -4,6 +4,7 @@ import { createGoogle } from "@ai-sdk/google"
 import { createOpenAI } from "@ai-sdk/openai"
 import { createOpenRouter } from "@openrouter/ai-sdk-provider"
 import { type AIProvider, aiProviders } from "../schemas"
+import { createMuse } from "./muse"
 
 /**
  * SDK provider-factory per AI provider. Shared with the server factory so that
@@ -15,6 +16,7 @@ export const providerSdkFactories = {
   [aiProviders.enum.claude]: createAnthropic,
   [aiProviders.enum.deepseek]: createDeepSeek,
   [aiProviders.enum.openrouter]: createOpenRouter,
+  [aiProviders.enum.muse]: createMuse,
 } as const satisfies Record<AIProvider, unknown>
 
 const providerApiKeyEnvVar: Partial<Record<AIProvider, string>> = {
@@ -23,6 +25,7 @@ const providerApiKeyEnvVar: Partial<Record<AIProvider, string>> = {
   [aiProviders.enum.claude]: "ANTHROPIC_API_KEY",
   [aiProviders.enum.deepseek]: "DEEPSEEK_API_KEY",
   [aiProviders.enum.openrouter]: "OPENROUTER_API_KEY",
+  [aiProviders.enum.muse]: "MODEL_API_KEY",
 }
 
 export const getAIProviderInstance = (provider: AIProvider) => {

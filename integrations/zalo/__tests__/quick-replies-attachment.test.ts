@@ -184,3 +184,38 @@ describe("zalo quick replies attachment", () => {
     )
   })
 })
+
+describe("zalo step input skip quick reply", () => {
+  test("encodes the skip postback with the postback_ prefix as the oa.query.hide payload", () => {
+    const [payload] = Array.from(
+      convertFlowStepText({
+        data: {
+          contact: { id: "ci-1" },
+          flowId: "flow-1",
+          step: {
+            id: "step-1",
+            stepType: "sendText",
+            text: "Choose",
+            buttons: [],
+          },
+          quickReplies: [
+            {
+              id: "skip-1",
+              label: "Skip",
+              buttonType: "postback",
+              postback: "STEP_INPUT_SKIP|11612473309626368",
+            },
+          ],
+        },
+      } as never),
+    )
+
+    expect(payload.attachment?.payload.buttons).toEqual([
+      {
+        type: "oa.query.hide",
+        title: "Skip",
+        payload: "postback_STEP_INPUT_SKIP|11612473309626368",
+      },
+    ])
+  })
+})

@@ -4,6 +4,7 @@ import {
   orderService,
 } from "@chatbotx.io/business"
 import {
+  externalStoreManagedErrors,
   possibleErrorsOnCreatingDiscountCode,
   possibleErrorsOnDeletingResource,
   possibleErrorsOnFindingResource,
@@ -157,7 +158,10 @@ export const discountCodesPublicRouter = {
     })
     .input(discountCodeIdRequest)
     .output(publicDiscountCodeResource)
-    .errors(possibleErrorsOnDeletingResource)
+    .errors({
+      ...possibleErrorsOnDeletingResource,
+      ...externalStoreManagedErrors,
+    })
     .handler(
       async ({ context, input }) =>
         await discountCodeService.delete({

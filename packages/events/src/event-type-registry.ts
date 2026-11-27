@@ -20,6 +20,10 @@ export const EMITTED_EVENT_TYPES = [
   triggerEventTypes.enum.unsubscribedFromSequence,
   triggerEventTypes.enum.contactReferredANewContact,
   triggerEventTypes.enum.contactReferredExistingContact,
+  triggerEventTypes.enum.contactBlockedBot,
+  triggerEventTypes.enum.contactUnblockedBot,
+  triggerEventTypes.enum.contactCommentedOnPost,
+  triggerEventTypes.enum.contactFirstCommentedOnPost,
   triggerEventTypes.enum.incomingCall,
   triggerEventTypes.enum.missedAudioCall,
   triggerEventTypes.enum.callEnded,
@@ -32,11 +36,18 @@ export const EMITTED_EVENT_TYPES = [
   triggerEventTypes.enum.orderShipped,
   triggerEventTypes.enum.orderConcluded,
   triggerEventTypes.enum.orderCancelled,
+  triggerEventTypes.enum.orderPaid,
+  triggerEventTypes.enum.orderRefunded,
   triggerEventTypes.enum.productOrdered,
   triggerEventTypes.enum.productAddedToCart,
   triggerEventTypes.enum.productRemovedFromCart,
   triggerEventTypes.enum.categoryAddedToCart,
   triggerEventTypes.enum.cartAbandoned,
+  triggerEventTypes.enum.pipelineItemCreated,
+  triggerEventTypes.enum.pipelineItemMovedToStage,
+  triggerEventTypes.enum.pipelineItemValueChanged,
+  triggerEventTypes.enum.pipelineItemStatusChanged,
+  triggerEventTypes.enum.pipelineItemPriorityChanged,
 ] as const
 
 /** An order's status events, one per status it reaches. */
@@ -46,6 +57,8 @@ export const ORDER_STATUS_EVENT_TYPES = [
   triggerEventTypes.enum.orderShipped,
   triggerEventTypes.enum.orderConcluded,
   triggerEventTypes.enum.orderCancelled,
+  triggerEventTypes.enum.orderPaid,
+  triggerEventTypes.enum.orderRefunded,
 ] as const
 export type OrderStatusEventType = (typeof ORDER_STATUS_EVENT_TYPES)[number]
 
@@ -69,6 +82,52 @@ export const COMMERCE_EVENT_TYPE_SET: ReadonlySet<TriggerEventType> = new Set(
 )
 
 /**
+ * Pipeline item events. A member moving a card in the app or an agent calling
+ * the public API changes the item without any channel message, so they reach
+ * outbound webhooks without the channel-originated context other events need.
+ * `sourceId` is the pipeline id; a stage filter is applied by the evaluator.
+ */
+export const PIPELINE_EVENT_TYPES = [
+  triggerEventTypes.enum.pipelineItemCreated,
+  triggerEventTypes.enum.pipelineItemMovedToStage,
+  triggerEventTypes.enum.pipelineItemValueChanged,
+  triggerEventTypes.enum.pipelineItemStatusChanged,
+  triggerEventTypes.enum.pipelineItemPriorityChanged,
+] as const
+export type PipelineEventType = (typeof PIPELINE_EVENT_TYPES)[number]
+
+const PIPELINE_EVENT_TYPE_SET: ReadonlySet<TriggerEventType> = new Set(
+  PIPELINE_EVENT_TYPES,
+)
+
+/**
+ * Whether a condition pinned to `conditionSourceId` listens to an event
+ * carrying `eventSourceId`. An event without a source reaches every
+ * condition. A pipeline condition left unpinned means "any pipeline", so it
+ * also matches; for every other event type an unpinned condition is still
+ * left to the evaluator, exactly as before.
+ */
+export function conditionListensToSource(input: {
+  eventType: TriggerEventType
+  conditionSourceId: string | null
+  eventSourceId?: string
+}): boolean {
+  if (!input.eventSourceId) {
+    return true
+  }
+  if (input.conditionSourceId === input.eventSourceId) {
+    return true
+  }
+  return (
+    !input.conditionSourceId && PIPELINE_EVENT_TYPE_SET.has(input.eventType)
+  )
+}
+
+/** Events delivered to outbound webhooks regardless of channel context. */
+export const CONTEXT_FREE_EVENT_TYPE_SET: ReadonlySet<TriggerEventType> =
+  new Set([...COMMERCE_EVENT_TYPES, ...PIPELINE_EVENT_TYPES])
+
+/**
  * Events whose conditions are narrowed by the evaluator, not by the event's
  * `sourceId`. They carry no `sourceId` (a cart names many products, and a
  * condition without a product must match all of them), so the "is anyone
@@ -82,7 +141,25 @@ export const EVALUATOR_FILTERED_EVENT_TYPES = [
   triggerEventTypes.enum.productAddedToCart,
   triggerEventTypes.enum.productRemovedFromCart,
   triggerEventTypes.enum.categoryAddedToCart,
+  // A post-comment condition is narrowed by the evaluator (posts, inbox), and
+  // the event carries no `sourceId`.
+  triggerEventTypes.enum.contactCommentedOnPost,
+  triggerEventTypes.enum.contactFirstCommentedOnPost,
 ] as const
+
+/**
+ * Events only a contact's own action on a channel can produce, so no trigger
+ * action (which runs in worker context) can emit them and they are let through
+ * the worker-context loop guard. A trigger's own reply under a post comes back
+ * as a comment of the page itself, which ingestion drops before any event.
+ */
+export const INGRESS_ORIGINATED_EVENT_TYPES = [
+  triggerEventTypes.enum.contactCommentedOnPost,
+  triggerEventTypes.enum.contactFirstCommentedOnPost,
+] as const
+
+export const INGRESS_ORIGINATED_EVENT_TYPE_SET: ReadonlySet<TriggerEventType> =
+  new Set(INGRESS_ORIGINATED_EVENT_TYPES)
 
 export const SCANNER_VERIFIED_EVENT_TYPES = [
   triggerEventTypes.enum.dateTimeBasedTrigger,

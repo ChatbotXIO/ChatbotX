@@ -6,6 +6,7 @@ import {
   PRODUCT_BUTTON_SETS,
   type ProductButtonType,
   productImageSizes,
+  storeSources,
   webshopProductViews,
 } from "@chatbotx.io/database/partials"
 import { InputField } from "@chatbotx.io/ui/components/form/input-field"
@@ -112,6 +113,18 @@ export function GeneralSettingsForm({
   return (
     <Form {...form}>
       <form className="space-y-4" onSubmit={onSubmit}>
+        <SettingRow
+          description={t("storeSource.description")}
+          label={t("storeSource.label")}
+        >
+          <SelectField
+            name="storeSource"
+            options={storeSources.options.map((source) => ({
+              value: source,
+              label: t(`storeSource.options.${source}`),
+            }))}
+          />
+        </SettingRow>
         <SettingRow
           description={t("orderingAvailable.description")}
           label={t("orderingAvailable.label")}

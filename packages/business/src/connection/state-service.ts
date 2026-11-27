@@ -4,6 +4,9 @@ import {
   type ConnectionStatus,
   type ConnectionStatusReason,
   type IntegrationType,
+  inboxStatuses,
+  isProviderOffboardedConnection,
+  type ProviderAccountEventKind,
 } from "@chatbotx.io/database/partials"
 import {
   aiHandoverBulkRunRepository,
@@ -16,18 +19,37 @@ import type { connectionModel } from "@chatbotx.io/database/schema"
 import type { ConnectionModel } from "@chatbotx.io/database/types"
 import type { AuthValue } from "@chatbotx.io/sdk"
 import { BaseService } from "../base.service"
+import {
+  releaseParkedChannelPostSync,
+  resetChannelPostSyncAfterAuthChange,
+} from "../channel-post/sync-reset"
 import { ChatbotXException, channelLimitReachedException } from "../errors"
 import { inboxService } from "../inbox/service"
 import { logger } from "../logger"
 import { quotaEnforcementService } from "../quota-enforcement/service"
+import { resourceDeletionLogService } from "../resource-deletion-log/service"
 import { workspaceMemberService } from "../workspace-member/service"
 import { workspaceUsageService } from "../workspace-usage/service"
 import { authExpiresAtOf } from "./auth-expiry"
+import {
+  type ConnectionSendDecision,
+  decideProviderEventOrder,
+  PROVIDER_ACCOUNT_EVENT_STRATEGY,
+  type ProviderEventOrder,
+  resolveConnectionSendDecision,
+} from "./provider-account-events"
 import {
   type ConnectionEvent,
   isActiveConnectionStatus,
   transitionConnection,
 } from "./state"
+
+/**
+ * Provider event times have one-second resolution, so a stamp finer than that
+ * would make a provider event from the same second look older than it.
+ */
+const floorToSecond = (date: Date): Date =>
+  new Date(Math.floor(date.getTime() / 1000) * 1000)
 
 class ConnectionNotFoundException extends ChatbotXException {
   constructor(id: string) {
@@ -49,6 +71,47 @@ export type ConnectionQuotaConsumption =
 
 /** A `channels` quota release a `transition` call decided on but has not yet executed — see `transition`'s `pendingRelease` handshake and `releasePendingQuota`. */
 export type PendingQuotaRelease = { ownerId: string; workspaceId: string }
+
+type DisconnectInboxInput = {
+  inboxId: string
+  workspaceId: string
+  ownerId: string
+  tx?: DatabaseClient
+}
+
+/** What the deletion log snapshots about a channel at the moment a user removes it. */
+type ChannelDeletionSnapshot = {
+  inboxId: string
+  workspaceId: string
+  channelType?: string
+  name: string
+}
+
+const legacyChannelSnapshot = (
+  inbox: { id: string; name: string; channel: string },
+  workspaceId: string,
+): ChannelDeletionSnapshot => ({
+  inboxId: inbox.id,
+  workspaceId,
+  channelType: inbox.channel,
+  name: inbox.name,
+})
+
+const writeChannelDeletionLog = (
+  channel: ChannelDeletionSnapshot,
+  tx: DatabaseClient,
+): Promise<void> =>
+  resourceDeletionLogService.recordRequest({
+    resource: {
+      type: "channel",
+      id: channel.inboxId,
+      workspaceId: channel.workspaceId,
+      subtype: channel.channelType,
+      name: channel.name,
+    },
+    status: "completed",
+    tx,
+  })
 
 /**
  * How `releaseQuotaEdge` treats the display-only `WorkspaceUsage` counter:
@@ -120,12 +183,7 @@ class ConnectionStateService extends BaseService {
    * Disconnects the connection mirroring an inbox, or preserves the legacy
    * inbox-only path for rows not yet backfilled into `Connection`.
    */
-  async disconnectInbox(input: {
-    inboxId: string
-    workspaceId: string
-    ownerId: string
-    tx?: DatabaseClient
-  }): Promise<void> {
+  async disconnectInbox(input: DisconnectInboxInput): Promise<void> {
     const connection = await connectionRepository.findByInboxId(
       { inboxId: input.inboxId },
       input.tx,
@@ -142,10 +200,103 @@ class ConnectionStateService extends BaseService {
       })
       return
     }
-    await inboxService.disconnect({
-      ...input,
-      reason: "manual",
+    await this.disconnectLegacyInbox(input)
+  }
+
+  /**
+   * A user removing a channel is logged; the system acting on it
+   * (`teardown.*`: trial expiry, suspension, workspace purge) is not. Runs only
+   * for a real transition, so repeating a disconnect writes nothing.
+   */
+  private async logUserChannelDisconnect(
+    connection: ConnectionModel,
+    tx: DatabaseClient,
+  ): Promise<void> {
+    if (connection.kind !== "channel" || !connection.inboxId) {
+      return
+    }
+    await writeChannelDeletionLog(
+      {
+        inboxId: connection.inboxId,
+        workspaceId: connection.workspaceId,
+        channelType: connection.channel ?? undefined,
+        name: connection.displayName,
+      },
+      tx,
+    )
+  }
+
+  /**
+   * The inbox-only path for rows not yet backfilled into `Connection`. It keeps
+   * `inboxService.disconnect` exactly as it was — that method releases quota
+   * before any surrounding transaction commits, so no new transaction is opened
+   * around it — and only adds the log.
+   */
+  private async disconnectLegacyInbox(
+    input: DisconnectInboxInput,
+  ): Promise<void> {
+    if (input.tx) {
+      await this.disconnectLegacyInboxInTransaction(input, input.tx)
+      return
+    }
+    await this.disconnectLegacyInboxWithoutTransaction(input)
+  }
+
+  /**
+   * The inbox row is locked, so a repeat or concurrent disconnect of an already
+   * disconnected inbox logs nothing, and the log commits (or rolls back) with
+   * the caller's transaction.
+   */
+  private async disconnectLegacyInboxInTransaction(
+    input: DisconnectInboxInput,
+    tx: DatabaseClient,
+  ): Promise<void> {
+    const { inboxId, workspaceId } = input
+    const inbox = await inboxRepository.findByIdForUpdate(
+      { id: inboxId, workspaceId },
+      tx,
+    )
+
+    await inboxService.disconnect({ ...input, reason: "manual" })
+
+    if (inbox && inbox.status !== inboxStatuses.enum.disconnected) {
+      await writeChannelDeletionLog(
+        legacyChannelSnapshot(inbox, workspaceId),
+        tx,
+      )
+    }
+  }
+
+  /**
+   * Nothing to lock the inbox with, so its status is read first and the log is
+   * written after the disconnect, best effort: a failed write is logged and
+   * never fails a disconnect that already took effect.
+   */
+  private async disconnectLegacyInboxWithoutTransaction(
+    input: DisconnectInboxInput,
+  ): Promise<void> {
+    const { inboxId, workspaceId } = input
+    const [inbox] = await inboxRepository.listIdentitiesByIds({
+      workspaceId,
+      ids: [inboxId],
     })
+
+    await inboxService.disconnect({ ...input, reason: "manual" })
+
+    if (!inbox || inbox.status === inboxStatuses.enum.disconnected) {
+      return
+    }
+    try {
+      await writeChannelDeletionLog(
+        legacyChannelSnapshot(inbox, workspaceId),
+        db,
+      )
+    } catch (err) {
+      logger.error(
+        { err, inboxId, workspaceId },
+        "resource-deletion-log: failed to record a channel deletion",
+      )
+    }
   }
 
   /**
@@ -282,6 +433,12 @@ class ConnectionStateService extends BaseService {
     try {
       await db.transaction(async (tx) => {
         await input.writeAuth(tx)
+        // A post sync that failed on the old authorisation (or was parked as
+        // not connected) is due again; same tx as the auth write.
+        await resetChannelPostSyncAfterAuthChange(
+          { inboxId: input.inboxId, workspaceId: input.workspaceId },
+          tx,
+        )
         await this.reconnectInbox({
           inboxId: input.inboxId,
           workspaceId: input.workspaceId,
@@ -318,7 +475,7 @@ class ConnectionStateService extends BaseService {
     ownerId?: string
     values?: Pick<
       typeof connectionModel.$inferInsert,
-      "authExpiresAt" | "lastError"
+      "authExpiresAt" | "lastError" | "providerEventAt" | "providerEventKind"
     >
     tx?: DatabaseClient
     /** Required for a quota-consuming transition inside a caller-owned transaction. */
@@ -340,6 +497,26 @@ class ConnectionStateService extends BaseService {
         consumed: false,
         workspaceUsageIncremented: false,
       }
+    // A completed (re)connect is the newest thing that happened to the
+    // account: record it so a provider event delivered late, from before the
+    // reconnect, resolves as stale instead of undoing it — also when the row
+    // was already connected and the status does not change. Evaluated after the
+    // row lock is held and always strictly after any event already recorded, so
+    // it can never move an earlier event's time ahead of the reconnect.
+    const connectEventValues = (existing: ConnectionModel) => {
+      if (input.event !== "connect.completed") {
+        return {}
+      }
+      const now = floorToSecond(new Date())
+      const recordedAt = existing.providerEventAt
+      return {
+        providerEventAt:
+          recordedAt && recordedAt >= now
+            ? new Date(recordedAt.getTime() + 1000)
+            : now,
+        providerEventKind: "reconnected" as const,
+      }
+    }
     type RunResult = {
       updated: ConnectionModel
       /** A release this transition decided on but has not yet executed — see below. */
@@ -362,13 +539,21 @@ class ConnectionStateService extends BaseService {
 
       const result = transitionConnection({
         from: existing.status,
+        fromReason: existing.statusReason,
         event: input.event,
         reason: input.reason,
       })
 
       if (result.noop) {
+        // A held event (see `EVENTS_HELD_BY_PROVIDER_OFFBOARD`) must not clear
+        // the error that explains why the connection is held.
+        const { lastError: _heldLastError, ...valuesWithoutLastError } =
+          input.values ?? {}
         const values = {
-          ...input.values,
+          ...connectEventValues(existing),
+          ...(result.heldByProviderOffboard
+            ? valuesWithoutLastError
+            : input.values),
           ...(result.reason ? { statusReason: result.reason } : {}),
         }
         const updated =
@@ -436,6 +621,7 @@ class ConnectionStateService extends BaseService {
           id: existing.id,
           workspaceId: existing.workspaceId,
           values: {
+            ...connectEventValues(existing),
             ...input.values,
             status: result.to,
             statusReason: result.reason,
@@ -463,6 +649,30 @@ class ConnectionStateService extends BaseService {
           reason: result.reason,
           tx: client,
         })
+        // An inactive to active edge (a disconnected or
+        // needs-reauth page connected again; connected and degraded flaps are
+        // both active and never reset): its post sync, parked as not
+        // connected or failed, is due again. Same tx as the status write.
+        // Not on the no-op branch above, so a mere re-assertion never
+        // retries a permanently failed sync.
+        if (
+          isActiveConnectionStatus(result.to) &&
+          !isActiveConnectionStatus(existing.status)
+        ) {
+          // New credentials (a connect) fully reset; a resume brings none, so
+          // only a row parked as not connected is released.
+          const reactivate =
+            input.event === "connect.completed"
+              ? resetChannelPostSyncAfterAuthChange
+              : releaseParkedChannelPostSync
+          await reactivate(
+            { inboxId: existing.inboxId, workspaceId: existing.workspaceId },
+            client,
+          )
+        }
+      }
+      if (input.event === "user.disconnect") {
+        await this.logUserChannelDisconnect(existing, client)
       }
 
       let pendingRelease: RunResult["pendingRelease"] = null
@@ -542,6 +752,92 @@ class ConnectionStateService extends BaseService {
       }
       throw err
     }
+  }
+
+  /**
+   * Whether a send for this inbox should go out now. One indexed read; an
+   * unknown inbox or a row with no `Connection` sends as before.
+   */
+  async resolveSendDecision(input: {
+    inboxId: string
+  }): Promise<ConnectionSendDecision> {
+    const connection = await connectionRepository.findByInboxId(input)
+    return resolveConnectionSendDecision(connection ?? null)
+  }
+
+  /**
+   * Applies a provider-reported account lifecycle event (revoked / offboarded /
+   * reconnected) to one connection. The ordering check and the transition share
+   * one transaction and one row lock, so concurrent or redelivered webhooks
+   * resolve to a single winner. A revoke's quota release fires after the commit.
+   * `callerTransaction` joins a transaction the caller owns (to make the change
+   * atomic with its own writes): the caller then releases the pending quota
+   * once its transaction has committed.
+   */
+  async applyProviderAccountEvent(input: {
+    connectionId: string
+    event: ProviderAccountEventKind
+    occurredAt: Date
+    /** The quota owner released on a revoke. */
+    ownerId: string
+    lastError?: string
+    callerTransaction?: {
+      tx: DatabaseClient
+      pendingRelease: { current: PendingQuotaRelease | null }
+    }
+  }): Promise<{ outcome: ProviderEventOrder; connection: ConnectionModel }> {
+    const strategy = PROVIDER_ACCOUNT_EVENT_STRATEGY[input.event]
+    const pendingRelease = input.callerTransaction?.pendingRelease ?? {
+      current: null,
+    }
+
+    const run = async (tx: DatabaseClient) => {
+      const existing = await connectionRepository.findByIdForUpdateById(
+        { id: input.connectionId },
+        tx,
+      )
+      if (!existing) {
+        throw new ConnectionNotFoundException(input.connectionId)
+      }
+
+      const outcome = decideProviderEventOrder(
+        { at: existing.providerEventAt, kind: existing.providerEventKind },
+        { at: input.occurredAt, kind: input.event },
+      )
+      if (outcome !== "apply") {
+        return { outcome, connection: existing }
+      }
+
+      // A reconnect resolves the error an offboard left behind, but a late one
+      // must not erase an unrelated error (e.g. a failing token refresh).
+      const lastError =
+        input.lastError ??
+        (strategy.clearsLastError && isProviderOffboardedConnection(existing)
+          ? null
+          : undefined)
+
+      const connection = await this.transition({
+        connectionId: input.connectionId,
+        event: strategy.connectionEvent,
+        reason: strategy.reason,
+        ownerId: input.ownerId,
+        tx,
+        pendingRelease,
+        values: {
+          providerEventAt: input.occurredAt,
+          providerEventKind: input.event,
+          ...(lastError === undefined ? {} : { lastError }),
+        },
+      })
+      return { outcome, connection }
+    }
+
+    if (input.callerTransaction) {
+      return await run(input.callerTransaction.tx)
+    }
+    const result = await db.transaction(run)
+    await this.releasePendingQuota(pendingRelease.current)
+    return result
   }
 
   /**
@@ -722,16 +1018,22 @@ class ConnectionStateService extends BaseService {
     inboxId: string
     workspaceId: string
     reason?: ConnectionStatusReason
+    /** Joins a caller-owned transaction (e.g. to stop a coexist run atomically). */
+    tx?: DatabaseClient
   }): Promise<void> {
-    await db.transaction(async (tx) => {
-      await this.mirrorInboxStatus({
+    const mirror = (tx: DatabaseClient) =>
+      this.mirrorInboxStatus({
         inboxId: input.inboxId,
         workspaceId: input.workspaceId,
         to: "needs_reauth",
         reason: input.reason ?? "token_revoked",
         tx,
       })
-    })
+    if (input.tx) {
+      await mirror(input.tx)
+      return
+    }
+    await db.transaction(mirror)
   }
 
   /** Thin pass-through for a workspace-scoped `(provider, sourceId)` lookup — the unique-key read a caller needs before a write it drives (e.g. the legacy AI-provider disconnect alias), so app-layer code never imports `connectionRepository` directly. */

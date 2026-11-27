@@ -1,5 +1,12 @@
-import { SiFacebook, SiGoogleads, SiMake } from "@icons-pack/react-simple-icons"
-import { BotIcon, CodeIcon, MailIcon, TableIcon } from "lucide-react"
+import {
+  SiFacebook,
+  SiGoogleads,
+  SiMake,
+  SiMeta,
+  SiPaypal,
+  SiStripe,
+} from "@icons-pack/react-simple-icons"
+import { BotIcon, CodeIcon, MailIcon, PlugIcon, TableIcon } from "lucide-react"
 import type { ComponentType } from "react"
 
 /**
@@ -31,7 +38,9 @@ export const INTEGRATION_SETTINGS_REGISTRY: readonly IntegrationSettingsEntry[] 
       titleKey: "workspaceToken.title",
       icon: CodeIcon,
     },
+    { slug: "mcp", titleKey: "chatbotxMcp.title", icon: PlugIcon },
     { slug: "openai", titleKey: "openai.title", icon: BotIcon },
+    { slug: "muse", titleKey: "muse.title", icon: SiMeta },
     { slug: "gemini", titleKey: "gemini.title", icon: BotIcon },
     { slug: "claude", titleKey: "claude.title", icon: BotIcon },
     { slug: "deepseek", titleKey: "deepseek.title", icon: BotIcon },
@@ -50,6 +59,8 @@ export const INTEGRATION_SETTINGS_REGISTRY: readonly IntegrationSettingsEntry[] 
     { slug: "facebook-ads", titleKey: "facebookAds.title", icon: SiFacebook },
     { slug: "google-ads", titleKey: "googleAds.title", icon: SiGoogleads },
     { slug: "make", titleKey: "make.title", icon: SiMake },
+    { slug: "stripe", titleKey: "stripe.title", icon: SiStripe },
+    { slug: "paypal", titleKey: "paypal.title", icon: SiPaypal },
     {
       slug: "active-campaign",
       titleKey: "activeCampaign.title",

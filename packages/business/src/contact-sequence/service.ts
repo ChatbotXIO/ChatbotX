@@ -10,6 +10,7 @@ import {
   contactsOnSequenceModel,
   sequenceModel,
 } from "@chatbotx.io/database/schema"
+import { isBigintId } from "@chatbotx.io/database/utils"
 import {
   emitSequenceSubscribed,
   emitSequenceUnsubscribed,
@@ -19,6 +20,7 @@ import {
   cancelPendingDispatches,
   enrollContactInSequence,
   enrollContactsInSequenceBulk,
+  getContactInboxes,
   removeDispatchesFromSchedule,
   sequenceDispatchUtils,
 } from "@chatbotx.io/sequence-scheduler"
@@ -56,6 +58,12 @@ type RemoveContactSequencesForContactsParams = {
    * bulk removal (builder bulk unsubscribe, membership-diff) to one inbox.
    */
   contactInboxId?: string
+  /**
+   * Whether to emit `unsubscribedFromSequence` after the commit. Defaults to
+   * `true`; trigger actions pass `false` so they cannot re-fire sequence
+   * triggers/webhooks (the same rule as the tag `...ForTrigger` methods).
+   */
+  emitUnsubscribedEvents?: boolean
 }
 
 type RemoveContactSequencesForContactParams = {
@@ -139,20 +147,30 @@ class ContactSequenceService extends BaseService {
     sequenceIds: string[]
     tx?: DrizzleClient
   }): Promise<void> {
-    const { workspaceId, sequenceIds, tx = db } = props
+    const { sequenceIds } = props
     if (sequenceIds.length === 0) {
       return
     }
 
-    const owned = await tx.query.sequenceModel.findMany({
-      where: { workspaceId, id: { in: sequenceIds } },
-      columns: { id: true },
-    })
-    const ownedIds = new Set(owned.map((sequence) => sequence.id))
+    const ownedIds = await this.findOwnedSequenceIds(props)
     const missing = sequenceIds.filter((id) => !ownedIds.has(id))
     if (missing.length > 0) {
       throw notFoundException("Sequence not found")
     }
+  }
+
+  /** The subset of `sequenceIds` that exists in the workspace, in one query. */
+  private async findOwnedSequenceIds(props: {
+    workspaceId: string
+    sequenceIds: string[]
+    tx?: DrizzleClient
+  }): Promise<Set<string>> {
+    const { workspaceId, sequenceIds, tx = db } = props
+    const owned = await tx.query.sequenceModel.findMany({
+      where: { workspaceId, id: { in: sequenceIds } },
+      columns: { id: true },
+    })
+    return new Set(owned.map((sequence) => sequence.id))
   }
 
   async subscribeContacts(props: {
@@ -308,7 +326,7 @@ class ContactSequenceService extends BaseService {
         )
       : now
 
-    await enrollContactInSequence({
+    const { enrolled } = await enrollContactInSequence({
       workspaceId,
       contactId,
       sequenceId,
@@ -316,6 +334,10 @@ class ContactSequenceService extends BaseService {
       nextStepId: firstStep?.id ?? null,
       enrolledAt: now,
     })
+    // A concurrent run that won the unique index already emitted the event.
+    if (!enrolled) {
+      return
+    }
 
     const sequence = await db.query.sequenceModel.findFirst({
       where: { id: sequenceId },
@@ -329,6 +351,103 @@ class ContactSequenceService extends BaseService {
       sequence?.name ?? "",
       contactInboxId,
     )
+  }
+
+  /**
+   * Trigger-action sequence subscribe. Deliberately does **not** emit
+   * `subscribedToSequence` (unlike `subscribeFromFlow`): a trigger action that
+   * re-fired sequence triggers could loop (A adds B, B adds A), exactly as the
+   * tag `...ForTrigger` methods avoid. Ids that are malformed or no longer
+   * exist in the workspace are skipped, not thrown, so one deleted sequence
+   * cannot fail every run of the trigger; the owned ids are returned so the
+   * caller can tell. Enrollment is idempotent and race-safe
+   * (`enrollContactInSequence`). One sequence failing does not stop the others:
+   * every enrollment is tried, then the failures are thrown together.
+   */
+  async subscribeContactForTrigger(props: {
+    workspaceId: string
+    contactId: string
+    sequenceIds: string[]
+  }): Promise<{ ownedSequenceIds: string[] }> {
+    const { workspaceId, contactId } = props
+    const candidateIds = [...new Set(props.sequenceIds)].filter(isBigintId)
+    if (candidateIds.length === 0) {
+      return { ownedSequenceIds: [] }
+    }
+
+    const ownedIds = await this.findOwnedSequenceIds({
+      workspaceId,
+      sequenceIds: candidateIds,
+    })
+    const ownedSequenceIds = candidateIds.filter((id) => ownedIds.has(id))
+    if (ownedSequenceIds.length === 0) {
+      return { ownedSequenceIds }
+    }
+
+    const now = new Date()
+    const nextRunAtBySequenceId = await this.calculateNextRunAtBulk(
+      workspaceId,
+      ownedSequenceIds,
+      now,
+      db,
+    )
+    const enrollments = ownedSequenceIds.map((sequenceId) => ({
+      sequenceId,
+      ...(nextRunAtBySequenceId.get(sequenceId) ?? {
+        nextRunAt: now,
+        nextStepId: null,
+      }),
+    }))
+    // Only a sequence with a first step creates dispatches, so the contact's
+    // inboxes are looked up once, and only when one of them needs them.
+    const contactInboxes = enrollments.some(({ nextStepId }) => nextStepId)
+      ? await getContactInboxes(workspaceId, contactId)
+      : undefined
+
+    const failures: unknown[] = []
+    for (const { sequenceId, nextRunAt, nextStepId } of enrollments) {
+      try {
+        await enrollContactInSequence({
+          workspaceId,
+          contactId,
+          sequenceId,
+          nextRunAt,
+          nextStepId,
+          enrolledAt: now,
+          contactInboxes,
+        })
+      } catch (err) {
+        failures.push(err)
+      }
+    }
+    if (failures.length > 0) {
+      throw new AggregateError(
+        failures,
+        `Could not subscribe the contact to ${failures.length} of ${enrollments.length} sequences`,
+      )
+    }
+    return { ownedSequenceIds }
+  }
+
+  /**
+   * Trigger-action sequence unsubscribe: removes the enrollments and cancels
+   * pending dispatches like any unsubscribe, but never emits
+   * `unsubscribedFromSequence` (see `subscribeContactForTrigger`). Malformed
+   * ids are ignored; ids the contact is not enrolled in are a no-op.
+   */
+  async unsubscribeContactForTrigger(props: {
+    workspaceId: string
+    contactId: string
+    sequenceIds: string[]
+  }): Promise<void> {
+    const sequenceIds = props.sequenceIds.filter(isBigintId)
+    await this.removeContactSequencesForContacts({
+      workspaceId: props.workspaceId,
+      contactIds: [props.contactId],
+      sequenceIds,
+      reason: "subscription_removed",
+      emitUnsubscribedEvents: false,
+    })
   }
 
   async listByContactId(props: {
@@ -432,7 +551,8 @@ class ContactSequenceService extends BaseService {
 
     // A supplied client may be an outer transaction; emit only when this service
     // owns the commit boundary so downstream workers never observe rolled-back removals.
-    if (!params.client) {
+    const emitUnsubscribedEvents = params.emitUnsubscribedEvents ?? true
+    if (!params.client && emitUnsubscribedEvents) {
       this.emitSequenceUnsubscribedEvents(removedEnrollments).catch((err) => {
         logger.warn(
           { err, removedCount: removedEnrollments.length },

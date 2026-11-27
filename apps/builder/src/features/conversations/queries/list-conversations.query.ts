@@ -1,4 +1,5 @@
 import {
+  type ConversationParticipantPreview,
   conversationService,
   resolveContactAvatarUrl,
 } from "@chatbotx.io/business"
@@ -8,7 +9,9 @@ import { resolveGoogleAdsClick } from "@chatbotx.io/business/google-ads/click-fi
 import {
   contactInboxOperationalColumns,
   createMessageRepository,
+  recentParticipantsRelation,
 } from "@chatbotx.io/database/repositories"
+import { userColumnsWithoutSecrets } from "@chatbotx.io/database/repositories/user-columns"
 import type {
   ContactInboxOperationalModel,
   InboxModel,
@@ -16,12 +19,19 @@ import type {
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { endOfHour } from "date-fns"
 import z from "zod"
+import {
+  type AvatarFinalizer,
+  createAvatarFinalizer,
+} from "@/features/contacts/queries/avatar-finalizer"
 import type { ListConversationsRequest } from "@/features/conversations/schema/query"
 import { decodeCursor, encodeCursor } from "@/lib/pagination"
+import { mapConversationParticipants } from "../lib/map-participants"
 import type {
+  ConversationCompactContactInboxResource,
   ConversationContactInboxResource,
   FindConversationRequest,
   FindConversationResponse,
+  ListConversationsCompactResponse,
   ListConversationsResponse,
 } from "../schema/resource"
 import { buildConversationWhere } from "./build-conversation-where"
@@ -35,24 +45,30 @@ const DEFAULT_PER_PAGE = 20
 // same `conversationContactInboxResource` shape (output validation requires
 // this). The explicit projection keeps internal jsonb columns out of the
 // response object entirely rather than relying on output validation to strip them.
+const mapConversationContactInbox = (
+  contactInbox: ContactInboxOperationalModel & { inbox: InboxModel },
+) => ({
+  id: contactInbox.id,
+  contactId: contactInbox.contactId,
+  inboxId: contactInbox.inboxId,
+  channel: contactInbox.channel,
+  source: contactInbox.source,
+  sourceId: contactInbox.sourceId,
+  sourceUserId: contactInbox.sourceUserId,
+  sourceUsername: contactInbox.sourceUsername,
+  language: contactInbox.language,
+  lastMessageAt: contactInbox.lastMessageAt,
+  lastIncomingMessageAt: contactInbox.lastIncomingMessageAt,
+  contactLastReadAt: contactInbox.contactLastReadAt,
+})
+
 const mapConversationContactInboxes = (
   contactInboxes: readonly (ContactInboxOperationalModel & {
     inbox: InboxModel
   })[],
 ): ConversationContactInboxResource[] =>
   contactInboxes.map((contactInbox) => ({
-    id: contactInbox.id,
-    contactId: contactInbox.contactId,
-    inboxId: contactInbox.inboxId,
-    channel: contactInbox.channel,
-    source: contactInbox.source,
-    sourceId: contactInbox.sourceId,
-    sourceUserId: contactInbox.sourceUserId,
-    sourceUsername: contactInbox.sourceUsername,
-    language: contactInbox.language,
-    lastMessageAt: contactInbox.lastMessageAt,
-    lastIncomingMessageAt: contactInbox.lastIncomingMessageAt,
-    contactLastReadAt: contactInbox.contactLastReadAt,
+    ...mapConversationContactInbox(contactInbox),
     inbox: contactInbox.inbox,
     adReferral: resolveAdReferral(contactInbox.referral),
     googleAdsClick: resolveGoogleAdsClick(contactInbox.referral),
@@ -67,26 +83,63 @@ const mapConversationContactInboxes = (
     threadControlLastEvent: contactInbox.threadControlLastEvent,
   }))
 
-const resolveConversationContact = async <T extends { avatar: string | null }>(
-  contact: T | null,
+const mapCompactConversationContactInboxes = (
   contactInboxes: readonly (ContactInboxOperationalModel & {
     inbox: InboxModel
   })[],
+): ConversationCompactContactInboxResource[] =>
+  contactInboxes.map((contactInbox) => ({
+    ...mapConversationContactInbox(contactInbox),
+    inbox: {
+      id: contactInbox.inbox.id,
+      name: contactInbox.inbox.name,
+      channel: contactInbox.inbox.channel,
+    },
+  }))
+
+/** Replaces the raw relation with the public `recentParticipants` shape. */
+const withRecentParticipants = <
+  T extends { conversationParticipants: ConversationParticipantPreview[] },
+>({
+  conversationParticipants,
+  ...rest
+}: T) => ({
+  ...rest,
+  recentParticipants: mapConversationParticipants(conversationParticipants),
+})
+
+type ConversationContactInbox = ContactInboxOperationalModel & {
+  inbox: InboxModel
+}
+
+/**
+ * Resolves a conversation's contact avatar. One contact often shows up in
+ * several conversations of a page (a DM plus its comment threads); the avatar
+ * for the same contact and contact inboxes is resolved once and shared, not
+ * once per conversation.
+ */
+const createConversationContactResolver = (
   workspaceId: string,
-): Promise<T | null> => {
-  if (!contact) {
-    return null
-  }
-  return {
-    ...contact,
-    avatar: await resolveContactAvatarUrl(
-      {
-        workspaceId,
-        contact,
-        contactInboxes,
-      },
-      (key) => key,
-    ),
+  finalize: AvatarFinalizer,
+) => {
+  const avatars = new Map<string, Promise<string | null>>()
+  return async <T extends { id: string; avatar: string | null }>(
+    contact: T | null,
+    contactInboxes: readonly ConversationContactInbox[],
+  ): Promise<T | null> => {
+    if (!contact) {
+      return null
+    }
+    const key = [contact.id, ...contactInboxes.map((ci) => ci.id)].join(":")
+    let avatar = avatars.get(key)
+    if (!avatar) {
+      avatar = resolveContactAvatarUrl(
+        { workspaceId, contact, contactInboxes },
+        finalize,
+      )
+      avatars.set(key, avatar)
+    }
+    return { ...contact, avatar: await avatar }
   }
 }
 
@@ -96,10 +149,28 @@ const conversationCursorSchema = z.object({
 })
 type ConversationCursor = z.infer<typeof conversationCursorSchema>
 
-export const listConversations = async (
+type ListConversationsAccess = {
+  includeEmailAndPhone: boolean
+  /** Restricts the list to a member's chat scope (mobile API only). */
+  scopeWhere?: Record<string, unknown>
+  view?: "compact" | "full"
+  /** Return contact avatars as absolute URLs (public API) instead of storage
+   * keys (builder UI); see `createAvatarFinalizer`. */
+  publicUrls?: boolean
+}
+
+export function listConversations(
   data: ListConversationsRequest,
-  access: { includeEmailAndPhone: boolean },
-): Promise<ListConversationsResponse> => {
+  access: ListConversationsAccess & { view: "compact" },
+): Promise<ListConversationsCompactResponse>
+export function listConversations(
+  data: ListConversationsRequest,
+  access: ListConversationsAccess & { view?: "full" },
+): Promise<ListConversationsResponse>
+export async function listConversations(
+  data: ListConversationsRequest,
+  access: ListConversationsAccess,
+): Promise<ListConversationsResponse | ListConversationsCompactResponse> {
   const { workspaceId, ...input } = data
 
   const limit = input.perPage ?? DEFAULT_PER_PAGE
@@ -113,6 +184,7 @@ export const listConversations = async (
   // tokens, which are workspace-level not member-scoped) and threads it through.
   const where = buildConversationWhere(workspaceId, input, cursor, {
     includeEmailAndPhone: access.includeEmailAndPhone,
+    scopeWhere: access.scopeWhere,
   })
 
   const conversations = await conversationService.findManyQuery({
@@ -129,8 +201,9 @@ export const listConversations = async (
         columns: contactInboxOperationalColumns,
         with: { inbox: true },
       },
-      assignedUser: true,
+      assignedUser: { columns: userColumnsWithoutSecrets },
       assignedInboxTeam: true,
+      conversationParticipants: recentParticipantsRelation,
     },
   })
 
@@ -158,6 +231,10 @@ export const listConversations = async (
       })
     }),
   )
+  const resolveContact = createConversationContactResolver(
+    workspaceId,
+    createAvatarFinalizer(workspaceId, { publicUrls: access.publicUrls }),
+  )
 
   const lastMessagesByConversationId = new Map(
     page.map((c, index) => [c.id, lastMessagesResults[index]?.[0] ?? null]),
@@ -180,17 +257,38 @@ export const listConversations = async (
       } satisfies ConversationCursor)
     : null
 
+  const pagination = {
+    nextCursor,
+    prevCursor,
+  }
+  if (access.view === "compact") {
+    return {
+      data: await Promise.all(
+        page.map(async (c) => {
+          const lastMessage = lastMessagesByConversationId.get(c.id)
+          return {
+            ...withRecentParticipants(c),
+            contact: await resolveContact(c.contact ?? null, c.contactInboxes),
+            contactInboxes: mapCompactConversationContactInboxes(
+              c.contactInboxes,
+            ),
+            assignedUser: c.assignedUser ?? null,
+            assignedInboxTeam: c.assignedInboxTeam ?? null,
+            messages: lastMessage ? [lastMessage] : [],
+          }
+        }),
+      ),
+      ...pagination,
+    }
+  }
+
   return {
     data: await Promise.all(
       page.map(async (c) => {
         const lastMessage = lastMessagesByConversationId.get(c.id)
         return {
-          ...c,
-          contact: await resolveConversationContact(
-            c.contact ?? null,
-            c.contactInboxes,
-            workspaceId,
-          ),
+          ...withRecentParticipants(c),
+          contact: await resolveContact(c.contact ?? null, c.contactInboxes),
           contactInboxes: mapConversationContactInboxes(c.contactInboxes),
           assignedUser: c.assignedUser ?? null,
           assignedInboxTeam: c.assignedInboxTeam ?? null,
@@ -198,8 +296,7 @@ export const listConversations = async (
         }
       }),
     ),
-    nextCursor,
-    prevCursor,
+    ...pagination,
   }
 }
 
@@ -207,6 +304,7 @@ export const listConversations = async (
 
 export const findConversation = async (
   input: FindConversationRequest,
+  options: { publicUrls?: boolean } = {},
 ): Promise<FindConversationResponse> => {
   const conversation = await conversationService.findWithFullRelations({
     where: input,
@@ -237,12 +335,11 @@ export const findConversation = async (
 
   return {
     data: {
-      ...conversation,
-      contact: await resolveConversationContact(
-        conversation.contact,
-        conversation.contactInboxes,
+      ...withRecentParticipants(conversation),
+      contact: await createConversationContactResolver(
         input.workspaceId,
-      ),
+        createAvatarFinalizer(input.workspaceId, options),
+      )(conversation.contact, conversation.contactInboxes),
       contactInboxes: mapConversationContactInboxes(
         conversation.contactInboxes,
       ),

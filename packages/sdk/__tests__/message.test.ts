@@ -1,6 +1,8 @@
 import { describe, expect, test, vi } from "vitest"
 import {
+  type FlowResponseFile,
   getCanonicalReplyPayload,
+  getFlowResponseFiles,
   getInboundOrder,
   getReferredProduct,
   getViewCatalogEntity,
@@ -477,5 +479,35 @@ describe("getReferredProduct", () => {
     },
   ])("returns undefined for %j", (contentAttributes) => {
     expect(getReferredProduct(contentAttributes)).toBeUndefined()
+  })
+})
+
+describe("getFlowResponseFiles", () => {
+  const file: FlowResponseFile = {
+    status: "stored",
+    mediaId: "1",
+    fileName: "a.pdf",
+    mimeType: "application/pdf",
+    size: 10,
+  }
+
+  test("returns the files of one response key", () => {
+    expect(getFlowResponseFiles({ files: { docs: [file] } }, "docs")).toEqual([
+      file,
+    ])
+  })
+
+  test.each([
+    ["a key with no files", { files: { docs: [file] } }, "other"],
+    ["a response without files", {}, "docs"],
+    ["an inherited member name", { files: { docs: [file] } }, "constructor"],
+    ["another inherited member", { files: { docs: [file] } }, "toString"],
+  ])("returns none for %s", (_label, entity, key) => {
+    expect(getFlowResponseFiles(entity, key)).toEqual([])
+  })
+
+  test("reads a key named __proto__ when the response has it", () => {
+    const files = JSON.parse(`{"__proto__":[${JSON.stringify(file)}]}`)
+    expect(getFlowResponseFiles({ files }, "__proto__")).toEqual([file])
   })
 })

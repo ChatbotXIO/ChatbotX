@@ -12,6 +12,7 @@ import type { MessageResource } from "../messages/schema/resource"
 import { logRealtimeWarning } from "../realtime/realtime-warn-limiter"
 import { useRealtimeSocket } from "../realtime/use-realtime-socket"
 import { useTenantSettings } from "../tenant"
+import { getClientEmbeddingOrigin } from "./lib/authorized-domain"
 import { useGuestSessionStore } from "./providers/store/guest-session-provider"
 
 type GuestRealtimeEnvelope = {
@@ -22,7 +23,6 @@ type GuestRealtimeEnvelope = {
 type WebchatRealtimeProps = {
   accessToken: string
   guestConversationId: string
-  parentOrigin?: string | null
   webchatId: string
   workspaceId: string
 }
@@ -47,7 +47,6 @@ export const reloadGuestSessionAfterFatalRealtimeError = ({
 export function WebchatRealtime({
   accessToken,
   guestConversationId,
-  parentOrigin,
   webchatId,
   workspaceId,
 }: WebchatRealtimeProps) {
@@ -109,7 +108,7 @@ export function WebchatRealtime({
     const response = await fetch("/api/guest/realtime-token", {
       body: JSON.stringify({
         guestConversationId,
-        ...(parentOrigin ? { parentOrigin } : {}),
+        parentOrigin: getClientEmbeddingOrigin() ?? undefined,
         webchatId,
         workspaceId,
       }),
@@ -149,7 +148,6 @@ export function WebchatRealtime({
   }, [
     accessToken,
     guestConversationId,
-    parentOrigin,
     publicRealtimeUrl,
     webchatId,
     workspaceId,

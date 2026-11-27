@@ -126,7 +126,7 @@ export function DiscountCodeBox({ cart }: { cart: CartData }) {
                 : t("discount.applied")}
             </p>
           </div>
-          <span className="shrink-0 font-semibold text-emerald-600 tabular-nums dark:text-emerald-400">
+          <span className="shrink-0 font-semibold text-emerald-700 tabular-nums dark:text-emerald-400">
             -{formatShopMoney(applied.amount, shop.money)}
           </span>
           {typedApplied ? (

@@ -205,19 +205,20 @@ describe("WhatsappCreate connect card — phone number picker", () => {
       expect(pushMock).toHaveBeenCalledWith("/space/ws-1")
     })
 
-    test("every candidate row carries a coexist switch, disabled until that number is selected", () => {
+    test("every candidate row carries a coexist switch, and turning one on selects that number", () => {
       // Two candidates, no coexist panel yet (nothing opted in).
       expect(switches()).toHaveLength(2)
       for (const rowSwitch of switches()) {
-        expect(rowSwitch.getAttribute("aria-disabled")).toBe("true")
+        // Base UI drops `aria-disabled` entirely while the switch is enabled.
+        expect(rowSwitch.getAttribute("aria-disabled")).toBeNull()
         expect(rowSwitch.getAttribute("aria-checked")).toBe("false")
       }
 
-      const [, first] = checkboxes()
-      click(first)
+      click(switches()[0])
 
-      expect(switches()[0]?.getAttribute("aria-disabled")).toBeNull()
-      expect(switches()[1]?.getAttribute("aria-disabled")).toBe("true")
+      const [, first, second] = checkboxes()
+      expect(first?.getAttribute("aria-checked")).toBe("true")
+      expect(second?.getAttribute("aria-checked")).toBe("false")
     })
 
     test("a single number whose sync-history switch is on posts the coexist route for the workspace the connect created", async () => {
@@ -484,18 +485,6 @@ describe("WhatsappCreate connect card — phone number picker", () => {
       relayCode()
       await flush()
     }
-
-    test("a transfer signup offers no sync-history switch at all", async () => {
-      // switches()[0] is connectExisting, [1] is transferPhoneNumber.
-      click(switches()[1])
-      await openPicker()
-
-      expect(checkboxes()).toHaveLength(3)
-      expect(switches()).toHaveLength(0)
-      expect(container().textContent).not.toContain(
-        "channels.connectMany.stepCoexist",
-      )
-    })
 
     test("a plain new-number signup offers none either", async () => {
       await openPicker()

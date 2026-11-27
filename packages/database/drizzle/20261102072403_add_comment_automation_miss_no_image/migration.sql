@@ -1,0 +1,1 @@
+ALTER TYPE "commentAutomationMissReason" ADD VALUE 'noImageAttachment' BEFORE 'contactNotNew';

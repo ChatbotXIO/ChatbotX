@@ -10,6 +10,7 @@ import {
   Building2Icon,
   CircleHelpIcon,
   Grid2x2PlusIcon,
+  LayoutTemplateIcon,
   ListTodoIcon,
   MailIcon,
   PaletteIcon,
@@ -17,6 +18,7 @@ import {
   ScrollTextIcon,
   SendIcon,
   ShieldCheckIcon,
+  StoreIcon,
 } from "lucide-react"
 import Link from "next/link"
 import { useTranslations } from "next-intl"
@@ -45,7 +47,7 @@ export function AdminSidebar({
     avatar: session?.user.image ?? "",
   }
 
-  const communityItems = [
+  const platformItems = [
     {
       title: t("platformAdmin.platformCredentials.title"),
       url: "/admin/platform-credentials",
@@ -66,9 +68,19 @@ export function AdminSidebar({
       url: "/admin/platform-channels",
       icon: RadioTowerIcon,
     },
+    {
+      title: t("platformDefaultTemplate.title"),
+      url: "/admin/default-template",
+      icon: LayoutTemplateIcon,
+    },
+    {
+      title: t("templateStore.title"),
+      url: "/admin/template-store",
+      icon: StoreIcon,
+    },
   ]
 
-  const enterpriseItems = [
+  const administrationItems = [
     {
       title: t("platformAdmin.admins.title"),
       url: "/admin/admins",
@@ -125,9 +137,12 @@ export function AdminSidebar({
         </Link>
       </SidebarHeader>
       <SidebarContent>
-        <NavMain items={communityItems} label={tManage("communityGroup")} />
+        <NavMain items={platformItems} label={tManage("platformGroup")} />
         {showEnterpriseItems && (
-          <NavMain items={enterpriseItems} label={tManage("enterpriseGroup")} />
+          <NavMain
+            items={administrationItems}
+            label={tManage("administrationGroup")}
+          />
         )}
         <NavMain items={toolsItems} label={tManage("toolsGroup")} />
       </SidebarContent>

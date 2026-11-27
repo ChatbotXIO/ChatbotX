@@ -102,7 +102,7 @@ export class ConversationStatsRepository extends BaseRepository {
           ORDER BY 1 ASC, 2 ASC
         `
 
-    const result = await db.execute(query)
+    const result = await db.execute<Record<string, unknown>>(query)
 
     return (
       result.rows as {
@@ -150,7 +150,7 @@ export class ConversationStatsRepository extends BaseRepository {
           ORDER BY 1 ASC
         `
 
-    const result = await db.execute(query)
+    const result = await db.execute<Record<string, unknown>>(query)
 
     return (
       result.rows as {
@@ -196,7 +196,7 @@ export class ConversationStatsRepository extends BaseRepository {
           ORDER BY 1 ASC
         `
 
-    const result = await db.execute(query)
+    const result = await db.execute<Record<string, unknown>>(query)
 
     return (
       result.rows as {
@@ -242,7 +242,7 @@ export class ConversationStatsRepository extends BaseRepository {
           ORDER BY 1 ASC
         `
 
-    const result = await db.execute(query)
+    const result = await db.execute<Record<string, unknown>>(query)
 
     return (
       result.rows as {
@@ -291,7 +291,7 @@ export class ConversationStatsRepository extends BaseRepository {
         `
 
     const [statsResult, members] = await Promise.all([
-      db.execute(statsQuery),
+      db.execute<Record<string, unknown>>(statsQuery),
       db.query.workspaceMemberModel.findMany({
         where: { workspaceId },
         with: {
@@ -324,7 +324,7 @@ export class ConversationStatsRepository extends BaseRepository {
     const eventFilter = buildEventFilter(props)
 
     const [statsResult, members] = await Promise.all([
-      db.execute(sql`
+      db.execute<Record<string, unknown>>(sql`
         SELECT
           "toAssignee",
           COUNT(DISTINCT "conversationId")::int AS count

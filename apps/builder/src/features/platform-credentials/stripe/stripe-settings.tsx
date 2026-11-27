@@ -22,6 +22,7 @@ import {
 } from "@chatbotx.io/ui/components/ui/dialog"
 import { Form } from "@chatbotx.io/ui/components/ui/form"
 import { zodResolver } from "@hookform/resolvers/zod"
+import { SiStripe, SiStripeHex } from "@icons-pack/react-simple-icons"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
 import { CopyIcon, Loader2Icon } from "lucide-react"
 import { useRouter } from "next/navigation"
@@ -30,92 +31,110 @@ import { useAction } from "next-safe-action/hooks"
 import { useState } from "react"
 import { toast } from "sonner"
 import { useClipboard } from "@/hooks/use-clipboard"
-import { buildBrokerCallbackUrl } from "@/lib/oauth-broker"
+import { CredentialFallbackNote } from "../credential-fallback-note"
 import { DeleteCredentialDialog } from "../delete-credential-dialog"
+import { useCredentialScope } from "../provider/credential-scope-context"
 import { deleteStripeSettingsAction } from "./delete-stripe-settings.action"
 import { updateStripeSettingsAction } from "./update-stripe-settings.action"
 
+/** Where Stripe Connect sends store owners back; must be added in Stripe. */
+const STRIPE_CONNECT_CALLBACK_PATH = "/integrations/stripe/callback"
+
+/** Whether stores can connect yet, and whether their payments are confirmed. */
+const connectStatusKey = (hasClientId: boolean, hasWebhook: boolean) => {
+  if (!hasClientId) {
+    return "stripe.platform.connectMissing"
+  }
+  return hasWebhook
+    ? "stripe.platform.webhookReady"
+    : "stripe.platform.webhookMissing"
+}
+
+function CopyRow({ label, value }: { label: string; value: string }) {
+  const { handleCopy } = useClipboard()
+  return (
+    <div className="flex flex-col gap-1">
+      <div className="font-bold">{label}:</div>
+      <div className="flex items-center gap-2">
+        <span className="truncate">{value}</span>
+        <Button
+          className="flex-none"
+          onClick={() => handleCopy(value)}
+          size="icon"
+          type="button"
+          variant="outline"
+        >
+          <CopyIcon className="size-4" />
+        </Button>
+      </div>
+    </div>
+  )
+}
+
+/**
+ * The Stripe settings stores connect their own account through (Stripe
+ * Connect OAuth). The Redirect URI is what Stripe must list under Connect →
+ * Onboarding options → OAuth; the Connect webhook is created on save.
+ */
 export function StripeSettings({
   publicConfig,
+  isInherited = false,
+  callbackOrigin,
+  hasConnectWebhook,
 }: {
   publicConfig: StripeCredentialPublic | null
+  isInherited?: boolean
+  callbackOrigin: string
+  hasConnectWebhook: boolean
 }) {
   const t = useTranslations()
-  const { handleCopy } = useClipboard()
-
-  // Webhook URL must live on the fixed, canonical broker host — never the
-  // reseller's white-label custom domain. Stripe signature verification is
-  // host-independent, so the broker host receives and validates events.
-  const webhookUrl = buildBrokerCallbackUrl("/integrations/stripe/webhook")
+  const redirectUri = new URL(
+    STRIPE_CONNECT_CALLBACK_PATH,
+    callbackOrigin,
+  ).toString()
 
   return (
     <Card>
       <CardHeader className="items-center justify-center">
         <CardTitle className="flex items-center gap-2">
-          <span className="font-semibold text-lg">Stripe</span>
+          <SiStripe className="size-6" fill={SiStripeHex} />
+          <span>Stripe</span>
         </CardTitle>
         <CardAction>
           <EditStripeSettingsDialog publicConfig={publicConfig} />
         </CardAction>
       </CardHeader>
       <CardContent>
-        {publicConfig?.publishableKey ? (
-          <div className="flex flex-col gap-4">
-            <div className="flex flex-col">
-              <div className="font-bold">
-                {t("fields.publishableKey.label")}:
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="truncate">{publicConfig.publishableKey}</span>
-                <Button
-                  className="flex-none"
-                  onClick={() => handleCopy(publicConfig.publishableKey)}
-                  size="icon"
-                  type="button"
-                  variant="outline"
-                >
-                  <CopyIcon className="size-4" />
-                </Button>
-              </div>
-            </div>
-
-            <div className="flex flex-col gap-2">
-              <div className="font-bold">{t("fields.verifyToken.label")}:</div>
-              <div className="flex items-center gap-2">
-                <span className="truncate">{publicConfig.verifyToken}</span>
-                <Button
-                  className="flex-none"
-                  onClick={() => handleCopy(publicConfig.verifyToken)}
-                  size="icon"
-                  type="button"
-                  variant="outline"
-                >
-                  <CopyIcon className="size-4" />
-                </Button>
-              </div>
-            </div>
-
-            <div className="flex flex-col gap-2">
-              <div className="font-bold">Webhook URL:</div>
-              <div className="flex items-center gap-2">
-                <span className="truncate">{webhookUrl}</span>
-                <Button
-                  className="flex-none"
-                  onClick={() => handleCopy(webhookUrl)}
-                  size="icon"
-                  type="button"
-                  variant="outline"
-                >
-                  <CopyIcon className="size-4" />
-                </Button>
-              </div>
-            </div>
-          </div>
-        ) : (
-          <p className="text-muted-foreground text-sm">
-            {t("messages.needToAddSettings")}
-          </p>
-        )}
+        <div className="flex flex-col gap-4">
+          {publicConfig?.publishableKey ? (
+            <>
+              <CopyRow
+                label={t("fields.publishableKey.label")}
+                value={publicConfig.publishableKey}
+              />
+              {publicConfig.connectClientId ? (
+                <CopyRow
+                  label={t("stripe.platform.connectClientId")}
+                  value={publicConfig.connectClientId}
+                />
+              ) : null}
+              <p className="text-muted-foreground text-sm">
+                {t(
+                  connectStatusKey(
+                    Boolean(publicConfig.connectClientId),
+                    hasConnectWebhook,
+                  ),
+                )}
+              </p>
+            </>
+          ) : (
+            <CredentialFallbackNote isInherited={isInherited} />
+          )}
+          <CopyRow
+            label={t("stripe.platform.redirectUri")}
+            value={redirectUri}
+          />
+        </div>
       </CardContent>
     </Card>
   )
@@ -164,10 +183,11 @@ export function EditStripeSettingsForm({
   onClose?: () => void
 }) {
   const t = useTranslations()
+  const scope = useCredentialScope()
 
   const { form, handleSubmitWithAction, resetFormAndAction } =
     useHookFormAction(
-      updateStripeSettingsAction,
+      updateStripeSettingsAction.bind(null, scope),
       zodResolver(stripeCredentialUpdateSchema),
       {
         actionProps: {
@@ -186,13 +206,14 @@ export function EditStripeSettingsForm({
             publishableKey: publicConfig?.publishableKey ?? "",
             verifyToken: publicConfig?.verifyToken ?? "",
             secretKey: "",
+            connectClientId: publicConfig?.connectClientId ?? "",
           } satisfies StripeCredentialUpdate,
         },
       },
     )
 
   const { execute: executeDelete, isPending: isDeleting } = useAction(
-    deleteStripeSettingsAction,
+    deleteStripeSettingsAction.bind(null, scope),
     {
       onSuccess: () => {
         toast.success(t("messages.deletedSuccess", { feature: "Stripe" }))
@@ -222,6 +243,14 @@ export function EditStripeSettingsForm({
         <InputField
           label={t("fields.verifyToken.label")}
           name="verifyToken"
+          required
+        />
+
+        <InputField
+          description={t("stripe.platform.connectClientIdHint")}
+          label={t("stripe.platform.connectClientId")}
+          name="connectClientId"
+          placeholder="ca_…"
           required
         />
 

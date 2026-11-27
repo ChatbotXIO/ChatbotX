@@ -323,3 +323,35 @@ describe("connectWhatsappSchema", () => {
     })
   })
 })
+
+describe("transferPhoneNumber (removed — Meta ends Transfer phone 2026-11-16)", () => {
+  const sessionInput = {
+    connectExisting: false,
+    manualConnect: false,
+    marketingMessageLite: true,
+    signupSessionId: "sess-1",
+    phoneNumberId: "phone-1",
+  }
+
+  test.each([
+    ["absent", {}],
+    ["false", { transferPhoneNumber: false }],
+  ])("an older client sending it %s still validates", (_name, extra) => {
+    expect(
+      connectWhatsappSchema.safeParse({ ...sessionInput, ...extra }).success,
+    ).toBe(true)
+  })
+
+  test("true is rejected instead of silently ignored", () => {
+    const result = connectWhatsappSchema.safeParse({
+      ...sessionInput,
+      transferPhoneNumber: true,
+    })
+    expect(result.success).toBe(false)
+    expect(
+      result.error?.issues.some((issue) =>
+        issue.path.includes("transferPhoneNumber"),
+      ),
+    ).toBe(true)
+  })
+})

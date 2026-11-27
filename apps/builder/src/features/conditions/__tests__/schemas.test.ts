@@ -147,13 +147,15 @@ describe("catalog and call conditions", () => {
     triggerEventTypes.enum.orderShipped,
     triggerEventTypes.enum.orderConcluded,
     triggerEventTypes.enum.orderCancelled,
+    triggerEventTypes.enum.orderPaid,
+    triggerEventTypes.enum.orderRefunded,
     triggerEventTypes.enum.cartAbandoned,
   ])("accepts the %s store event, which takes no other field", (type) => {
     expect(conditionSchema.parse({ type })).toEqual({ type })
   })
 
   test("still rejects a condition type nothing emits", () => {
-    expect(conditionSchema.safeParse({ type: "ticketCreated" }).success).toBe(
+    expect(conditionSchema.safeParse({ type: "bogusEvent" }).success).toBe(
       false,
     )
   })
@@ -179,5 +181,130 @@ describe("catalog and call conditions", () => {
       { type: "userAskedAboutProduct", sourceId: null },
       { type: "incomingCall" },
     ])
+  })
+})
+
+describe("conditionSchema pipeline item conditions", () => {
+  test.each([
+    triggerEventTypes.enum.pipelineItemCreated,
+    triggerEventTypes.enum.pipelineItemValueChanged,
+    triggerEventTypes.enum.pipelineItemStatusChanged,
+    triggerEventTypes.enum.pipelineItemPriorityChanged,
+  ])("%s accepts no pipeline (any) or a pinned pipeline id", (type) => {
+    expect(conditionSchema.parse({ type })).toEqual({
+      type,
+      sourceId: null,
+    })
+    expect(conditionSchema.parse({ type, sourceId: "42" })).toEqual({
+      type,
+      sourceId: "42",
+    })
+  })
+
+  test("moved-to-stage accepts an optional destination stage", () => {
+    const parsed = conditionSchema.parse({
+      type: triggerEventTypes.enum.pipelineItemMovedToStage,
+      sourceId: "42",
+      value: { stageId: "7" },
+    })
+
+    expect(parsed).toMatchObject({ sourceId: "42", value: { stageId: "7" } })
+  })
+
+  test("rejects a non numeric pipeline id", () => {
+    expect(
+      conditionSchema.safeParse({
+        type: triggerEventTypes.enum.pipelineItemCreated,
+        sourceId: "abc",
+      }).success,
+    ).toBe(false)
+  })
+})
+
+describe("post-comment conditions", () => {
+  const TYPES = [
+    triggerEventTypes.enum.contactCommentedOnPost,
+    triggerEventTypes.enum.contactFirstCommentedOnPost,
+  ] as const
+  const ANY = { scope: "any", channelPostIds: [] }
+
+  test.each(
+    TYPES,
+  )("%s: nothing pinned means any inbox and any post", (type) => {
+    expect(conditionSchema.parse({ type })).toEqual({
+      type,
+      sourceId: null,
+      value: ANY,
+    })
+    expect(conditionSchema.parse({ type, sourceId: "", value: null })).toEqual({
+      type,
+      sourceId: null,
+      value: ANY,
+    })
+  })
+
+  test.each(TYPES)("%s: keeps a pinned inbox and selected posts", (type) => {
+    expect(
+      conditionSchema.parse({
+        type,
+        sourceId: "123456789012345678",
+        value: { scope: "selected", channelPostIds: ["11", "12"] },
+      }),
+    ).toEqual({
+      type,
+      sourceId: "123456789012345678",
+      value: { scope: "selected", channelPostIds: ["11", "12"] },
+    })
+  })
+
+  test.each(TYPES)("%s: selected posts need at least one post", (type) => {
+    expect(
+      conditionSchema.safeParse({
+        type,
+        value: { scope: "selected", channelPostIds: [] },
+      }).success,
+    ).toBe(false)
+  })
+
+  test.each(
+    TYPES,
+  )("%s: posts are dropped for the scopes that do not use them", (type) => {
+    expect(
+      conditionSchema.parse({
+        type,
+        value: { scope: "publishedFromPosts", channelPostIds: ["11"] },
+      }),
+    ).toEqual({
+      type,
+      sourceId: null,
+      value: { scope: "publishedFromPosts", channelPostIds: [] },
+    })
+  })
+
+  test.each(
+    TYPES,
+  )("%s: rejects an unknown scope, a bad inbox id and bad post ids", (type) => {
+    expect(
+      conditionSchema.safeParse({ type, value: { scope: "everything" } })
+        .success,
+    ).toBe(false)
+    expect(conditionSchema.safeParse({ type, sourceId: "page" }).success).toBe(
+      false,
+    )
+    expect(
+      conditionSchema.safeParse({
+        type,
+        value: { scope: "selected", channelPostIds: ["x"] },
+      }).success,
+    ).toBe(false)
+  })
+
+  test("a trigger accepts the condition next to its actions", () => {
+    expect(
+      updateTriggerSchema.safeParse({
+        conditions: [{ type: TYPES[0] }],
+        actions: [],
+      }).success,
+    ).toBe(true)
   })
 })

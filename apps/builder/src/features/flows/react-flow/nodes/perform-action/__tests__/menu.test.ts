@@ -91,3 +91,19 @@ describe("perform action email integrations", () => {
     )
   })
 })
+
+describe("perform action More options menu", () => {
+  test("exposes Find places near me under More options", () => {
+    const moreOptions = performActionMenus(t).find(
+      (item) => item.label === "flows.actions.moreOptions",
+    )
+
+    expect(moreOptions?.stepType).toBeNull()
+    expect(moreOptions?.children).toContainEqual(
+      expect.objectContaining({
+        label: "flows.actions.findPlacesNearMe",
+        stepType: stepTypes.enum.findPlacesNearMe,
+      }),
+    )
+  })
+})

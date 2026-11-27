@@ -8,6 +8,10 @@ import type {
 } from "@chatbotx.io/database/types"
 import {
   extractTemplateParams,
+  type PaymentRequest,
+  paymentRequestFieldNames,
+  paymentRequestSchema,
+  readPaymentRequestField,
   type SendWaTemplateMessageStepSchema,
   type TemplateComponent,
 } from "@chatbotx.io/flow-config"
@@ -15,6 +19,31 @@ import {
   contactVariableService,
   type ReplaceVariableProps,
 } from "@chatbotx.io/variables"
+
+/** Resolves `{{variables}}` in every value of a payment request. */
+async function replacePaymentRequestVariables(
+  request: PaymentRequest,
+  variables: ReplaceVariableProps,
+): Promise<PaymentRequest> {
+  const replaced = await Promise.all(
+    paymentRequestFieldNames(request.method).flatMap((field) => {
+      const text = readPaymentRequestField(request, field)
+      return text
+        ? [
+            contactVariableService
+              .replaceAll({ text, variables })
+              // Trimmed once here, so the value that is validated is exactly
+              // the value that is sent.
+              .then((resolved) => [field, resolved.trim()] as const),
+          ]
+        : []
+    }),
+  )
+  return paymentRequestSchema.parse({
+    ...request,
+    ...Object.fromEntries(replaced),
+  })
+}
 
 export async function replaceWhatsappTemplateVariables(props: {
   templateParams: SendWaTemplateMessageStepSchema["template"]["params"]
@@ -71,6 +100,12 @@ export async function replaceWhatsappTemplateVariables(props: {
         text: await contactVariableService.replaceAll({
           text: param.text || "",
           variables,
+        }),
+        ...(param.payment_request && {
+          payment_request: await replacePaymentRequestVariables(
+            param.payment_request,
+            variables,
+          ),
         }),
       })),
     )

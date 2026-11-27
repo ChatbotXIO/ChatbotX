@@ -155,3 +155,100 @@ describe("replaceWhatsappTemplateVariables — named parameters", () => {
     ])
   })
 })
+
+describe("replaceWhatsappTemplateVariables — payment requests", () => {
+  test("resolves the variables in every value of a payment request", async () => {
+    const result = await replaceWhatsappTemplateVariables({
+      templateParams: {
+        button: [
+          {
+            sub_type: "payment_request",
+            index: 0,
+            payment_request: {
+              method: "pix",
+              code: "{{pix_code}}",
+              amount: "{{total}}",
+            },
+          },
+        ],
+      },
+      variables: {} as never,
+    })
+
+    expect(result.button?.[0]?.payment_request).toEqual({
+      method: "pix",
+      code: "John",
+      amount: "John",
+    })
+  })
+
+  test("trims what a variable resolved to, so the validated value is the sent value", async () => {
+    const { contactVariableService } = await import("@chatbotx.io/variables")
+    const replaceAll = vi.mocked(contactVariableService.replaceAll)
+    replaceAll.mockImplementation(({ text }) =>
+      Promise.resolve(text === "{{last4}}" ? " 4242\n" : "John"),
+    )
+
+    try {
+      const result = await replaceWhatsappTemplateVariables({
+        templateParams: {
+          button: [
+            {
+              sub_type: "payment_request",
+              index: 0,
+              payment_request: {
+                method: "card_on_file",
+                lastFourDigits: "{{last4}}",
+                amount: "",
+              },
+            },
+          ],
+        },
+        variables: {} as never,
+      })
+
+      expect(result.button?.[0]?.payment_request).toEqual({
+        method: "card_on_file",
+        lastFourDigits: "4242",
+        amount: "",
+      })
+    } finally {
+      replaceAll.mockImplementation(() => Promise.resolve("John"))
+    }
+  })
+
+  test("leaves absent optional values absent", async () => {
+    const result = await replaceWhatsappTemplateVariables({
+      templateParams: {
+        button: [
+          {
+            sub_type: "payment_request",
+            index: 0,
+            payment_request: { method: "pix", code: "{{pix_code}}" },
+          },
+        ],
+      },
+      variables: {} as never,
+    })
+
+    expect(result.button?.[0]?.payment_request).toEqual({
+      method: "pix",
+      code: "John",
+    })
+  })
+
+  test("buttons without a payment request gain none", async () => {
+    const result = await replaceWhatsappTemplateVariables({
+      templateParams: {
+        button: [{ sub_type: "url", index: 0, text: "{{v}}" }],
+      },
+      variables: {} as never,
+    })
+
+    expect(result.button?.[0]).toEqual({
+      sub_type: "url",
+      index: 0,
+      text: "John",
+    })
+  })
+})

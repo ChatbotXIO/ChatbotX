@@ -2,6 +2,7 @@ import { aiAgentModelConfig } from "@chatbotx.io/database/partials"
 import {
   aiEditImageSchema,
   aiGenerateImageSchema,
+  aiSegmentImageSchema,
   aiSpeechToTextSchema,
   aiTextToSpeechSchema,
   type FlowActionTargetType,
@@ -10,6 +11,7 @@ import {
 import { getChildLogger } from "@chatbotx.io/logger"
 import type { CommentAnchor } from "@chatbotx.io/sdk"
 import { isStoredImageOptimizationEnabled } from "@chatbotx.io/utils/image-optimize-settings"
+import { type SendFrom, sendFromSchema } from "@chatbotx.io/utils/send-from"
 import { type JobsOptions, Queue } from "bullmq"
 import { z } from "zod"
 import {
@@ -30,7 +32,7 @@ export type HeavyFlowContinuation = {
   metadata?: z.infer<typeof metadataSchema>
   nodeId?: string
   nodeVisits?: Record<string, number>
-  sendFrom?: "inbox"
+  sendFrom?: SendFrom
   sentByUserId?: string
   targetId?: string
   targetType?: FlowActionTargetType
@@ -40,6 +42,7 @@ export type HeavyFlowContinuation = {
 export const HeavyJobAction = {
   processAIFile: "processAIFile",
   aiEditImage: "aiEditImage",
+  aiSegmentImage: "aiSegmentImage",
   aiGenerateImage: "aiGenerateImage",
   aiSpeechToText: "aiSpeechToText",
   aiTextToSpeech: "aiTextToSpeech",
@@ -59,6 +62,12 @@ const heavyJobOptionsByAction: Record<HeavyJobAction, JobsOptions> = {
     removeOnFail: { count: 1000 },
   },
   [HeavyJobAction.aiEditImage]: {
+    attempts: 2,
+    backoff: { type: "exponential", delay: 30_000 },
+    removeOnComplete: { count: 200 },
+    removeOnFail: { count: 500 },
+  },
+  [HeavyJobAction.aiSegmentImage]: {
     attempts: 2,
     backoff: { type: "exponential", delay: 30_000 },
     removeOnComplete: { count: 200 },
@@ -161,8 +170,47 @@ export function getHeavyJobCompletionWaitTimeoutMs(
 
 const heavyJobProcessAIFileSchema = z.object({
   type: z.literal(HeavyJobAction.processAIFile),
-  data: z.object({ aiFileId: z.string().min(1) }),
+  data: z.object({
+    aiFileId: z.string().min(1),
+    runId: z.string().min(1).optional(),
+  }),
 })
+
+/**
+ * Queues the first embedding run of an AI file. The id is the one a plain
+ * upload uses, so a file whose job was already queued is not queued twice.
+ */
+export const enqueueProcessAIFile = async (data: {
+  aiFileId: string
+  runId: string
+}): Promise<void> => {
+  await heavyQueue.add(
+    HeavyJobAction.processAIFile,
+    { type: HeavyJobAction.processAIFile, data },
+    {
+      ...getHeavyJobOptions(HeavyJobAction.processAIFile),
+      jobId: `heavy-ai-file-${data.aiFileId}`,
+    },
+  )
+}
+
+/** Job ids are retained by BullMQ, so a reindex run must never reuse one. */
+export function buildAIFileReindexJobId(
+  aiFileId: string,
+  runId: string,
+): string {
+  return `heavy-ai-file-${aiFileId}-reindex-${runId}`
+}
+
+/** Keep old ids stable; a reindex adds its run to avoid retained-job dedupe. */
+export function buildAIFileEmbeddingJobId(input: {
+  aiFileId: string
+  embeddingId: string
+  runId?: string
+}): string {
+  const base = `ai-file-embedding-${input.aiFileId}-${input.embeddingId}`
+  return input.runId ? `${base}-r${input.runId}` : base
+}
 
 const heavyFlowContinuationSchema = z
   .object({
@@ -174,7 +222,7 @@ const heavyFlowContinuationSchema = z
     targetType: z.enum(["button", "quickReply"]).optional(),
     metadata: metadataSchema.optional(),
     appointmentId: z.string().min(1).optional(),
-    sendFrom: z.literal("inbox").optional(),
+    sendFrom: sendFromSchema.optional(),
     sentByUserId: z.string().min(1).optional(),
     nodeVisits: z.record(z.string(), z.number().int().nonnegative()).optional(),
     // Must mirror every field of `CommentAnchor`. Zod strips unknown keys, so
@@ -218,6 +266,13 @@ const heavyJobAiEditImageSchema = z.object({
   type: z.literal(HeavyJobAction.aiEditImage),
   data: heavyStepBaseDataSchema.extend({
     step: aiEditImageSchema,
+  }),
+})
+
+const heavyJobAiSegmentImageSchema = z.object({
+  type: z.literal(HeavyJobAction.aiSegmentImage),
+  data: heavyStepBaseDataSchema.extend({
+    step: aiSegmentImageSchema,
   }),
 })
 
@@ -289,6 +344,7 @@ const heavyJobOptimizeStoredImageSchema = z.object({
 export const heavyJobDataSchema = z.discriminatedUnion("type", [
   heavyJobProcessAIFileSchema,
   heavyJobAiEditImageSchema,
+  heavyJobAiSegmentImageSchema,
   heavyJobAiGenerateImageSchema,
   heavyJobAiSpeechToTextSchema,
   heavyJobAiTextToSpeechSchema,
@@ -297,10 +353,20 @@ export const heavyJobDataSchema = z.discriminatedUnion("type", [
   heavyJobOptimizeStoredImageSchema,
 ])
 
+export const heavyStepOutputValueSchema = z.object({
+  customFieldId: z.string().min(1),
+  value: z.string().min(1),
+})
+
 export const heavyStepResultSchema = z.discriminatedUnion("status", [
   z.object({
     status: z.literal("success"),
-    outputValue: z.string().min(1),
+    outputValues: z.array(heavyStepOutputValueSchema).min(1),
+  }),
+  // A completed run that found nothing to write; the flow routes to its skip
+  // state and no custom field is touched.
+  z.object({
+    status: z.literal("skip"),
   }),
   z.object({
     status: z.literal("error"),
@@ -320,6 +386,9 @@ export const heavyAnalyzeImageResultSchema = z.object({
 export type HeavyJobData = z.infer<typeof heavyJobDataSchema>
 export type HeavyJobProcessAIFile = z.infer<typeof heavyJobProcessAIFileSchema>
 export type HeavyJobAiEditImage = z.infer<typeof heavyJobAiEditImageSchema>
+export type HeavyJobAiSegmentImage = z.infer<
+  typeof heavyJobAiSegmentImageSchema
+>
 export type HeavyJobAiGenerateImage = z.infer<
   typeof heavyJobAiGenerateImageSchema
 >
@@ -337,6 +406,7 @@ export type HeavyJobOptimizeStoredImage = z.infer<
   typeof heavyJobOptimizeStoredImageSchema
 >
 export type StoredImageOptimization = HeavyJobOptimizeStoredImage["data"]
+export type HeavyStepOutputValue = z.infer<typeof heavyStepOutputValueSchema>
 export type HeavyStepResultData = z.infer<typeof heavyStepResultSchema>
 export type HeavyExtractTextFromFileResultData = z.infer<
   typeof heavyExtractTextFromFileResultSchema

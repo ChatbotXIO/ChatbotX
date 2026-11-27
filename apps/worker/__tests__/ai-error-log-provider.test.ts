@@ -8,6 +8,7 @@ describe("aiErrorLogProvider", () => {
     expect(aiErrorLogProvider("claude")).toBe("claude")
     expect(aiErrorLogProvider("deepseek")).toBe("deepseek")
     expect(aiErrorLogProvider("openrouter")).toBe("openrouter")
+    expect(aiErrorLogProvider("muse")).toBe("muse")
   })
 
   // A self-hosted or third-party OpenAI-shaped endpoint is not OpenAI, and its

@@ -20,6 +20,16 @@ describe("isPublicRoute", () => {
     // The sender is an external system; the token in the path is the credential.
     expect(isPublicRoute("/api/hooks/iwh_abc")).toBe(true)
   })
+  test("/.well-known exposes OAuth discovery without opening /well-known", () => {
+    expect(isPublicRoute("/.well-known/oauth-authorization-server")).toBe(true)
+    expect(isPublicRoute("/well-known")).toBe(false)
+  })
+
+  test("/mcp is public so the MCP server can run its OAuth challenge", () => {
+    expect(isPublicRoute("/mcp")).toBe(true)
+    expect(isPublicRoute("/mcp/messages")).toBe(true)
+    expect(isPublicRoute("/mcp-client")).toBe(false)
+  })
 
   test("/go is public so a contact can tap a flow button without a session", () => {
     expect(isPublicRoute("/go/ws-1")).toBe(true)
@@ -29,6 +39,7 @@ describe("isPublicRoute", () => {
   test("signed media proxy route families are public", () => {
     expect(isPublicRoute("/media/attachment/signed-token")).toBe(true)
     expect(isPublicRoute("/media/avatar/signed-token")).toBe(true)
+    expect(isPublicRoute("/media/destination-avatar/signed-token")).toBe(true)
     expect(isPublicRoute("/mediator")).toBe(false)
   })
 
@@ -55,6 +66,14 @@ describe("isPublicRoute", () => {
     expect(isPublicRoute("/shopping")).toBe(false)
   })
 
+  test("/store is public so visitors can browse the template store", () => {
+    expect(isPublicRoute("/store")).toBe(true)
+    expect(isPublicRoute("/store/")).toBe(true)
+    // "/storage" is public on its own entry; "/stores" and "/storefront" are not.
+    expect(isPublicRoute("/stores")).toBe(false)
+    expect(isPublicRoute("/storefront")).toBe(false)
+  })
+
   test("an authenticated app path is not public", () => {
     expect(isPublicRoute("/space/1/inbox")).toBe(false)
     expect(isPublicRoute("/channels/create")).toBe(false)
@@ -74,5 +93,17 @@ describe("isPublicRoute", () => {
   test("/connect is public so an unauthenticated ConnectSession completion works (T8)", () => {
     expect(isPublicRoute("/connect")).toBe(true)
     expect(isPublicRoute("/connect/sess-abc123")).toBe(true)
+  })
+
+  test("only the account deletion page is public", () => {
+    expect(isPublicRoute("/account/delete")).toBe(true)
+    expect(isPublicRoute("/account")).toBe(false)
+    expect(isPublicRoute("/account/settings")).toBe(false)
+    expect(isPublicRoute("/account/deletex")).toBe(false)
+  })
+
+  test("/delete-account info page is public, siblings are not", () => {
+    expect(isPublicRoute("/delete-account")).toBe(true)
+    expect(isPublicRoute("/delete-accounts")).toBe(false)
   })
 })

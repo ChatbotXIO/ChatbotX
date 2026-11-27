@@ -1,0 +1,47 @@
+{
+  "type": "diff",
+  "version": "10",
+  "dialect": "postgres",
+  "id": "46cea7a6-cab9-42c7-8788-c65e7ac40c0c",
+  "prevIds": [
+    "f0a30ea8-86b3-4c6f-9b21-20760fe2dd7c"
+  ],
+  "footprints": [
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "User",
+        "connectionAuthorizations"
+      ],
+      "writes": [
+        "s|col|public.User.connectionAuthorizations",
+        "n|col|public.User.connectionAuthorizations",
+        "e|col|public.User.connectionAuthorizations"
+      ],
+      "reads": [
+        "n|tbl|public.User",
+        "n|sch|public"
+      ]
+    }
+  ],
+  "deltas": [
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "User",
+        "name": "connectionAuthorizations",
+        "type": "jsonb",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    }
+  ]
+}

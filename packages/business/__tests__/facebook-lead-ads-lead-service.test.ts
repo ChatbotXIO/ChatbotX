@@ -142,6 +142,13 @@ describe("facebookLeadAdsLeadService.findLatestByContact", () => {
         formId: true,
         formName: true,
         adgroupId: true,
+        adId: true,
+        adName: true,
+        adsetId: true,
+        adsetName: true,
+        campaignId: true,
+        campaignName: true,
+        createdAt: true,
       },
     })
   })

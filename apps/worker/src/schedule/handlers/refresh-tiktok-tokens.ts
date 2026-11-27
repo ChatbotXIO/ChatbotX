@@ -1,11 +1,9 @@
 import { tiktokIntegrationService } from "@chatbotx.io/business"
 import {
   isRevokedTokenError,
+  refreshTiktokAuth,
   type TiktokAuthValue,
 } from "@chatbotx.io/integration-tiktok"
-import { refreshAccessToken } from "@chatbotx.io/integration-tiktok/apis/auth"
-import { parseTiktokScopes } from "@chatbotx.io/integration-tiktok/lib/scopes"
-import { buildTokenTimestamps } from "@chatbotx.io/integration-tiktok/lib/token-utils"
 import { logger } from "../../lib/logger"
 import { refreshWithErrorHandling, runRefreshBatch } from "./refresh-runner"
 
@@ -15,6 +13,7 @@ const REFRESH_LOCK_TIMEOUT_SECONDS = 10
 async function refreshOne(integration: {
   id: string
   workspaceId: string
+  inboxId: string
 }): Promise<void> {
   await refreshWithErrorHandling<TiktokAuthValue>({
     id: integration.id,
@@ -23,7 +22,13 @@ async function refreshOne(integration: {
     label: "refreshTiktokTokens",
     lockKey: `auth:refresh:tiktok:${integration.id}`,
     lockTimeout: REFRESH_LOCK_TIMEOUT_SECONDS,
+    // The SDK's on-demand refresh takes this same lock. TikTok rotates refresh
+    // tokens, so two refreshes racing on one would leave a revoked one behind.
+    withLock: (fn) =>
+      tiktokIntegrationService.withTokenRefreshLock(integration, fn),
     refresh: async () => {
+      // Read inside the lock: the refresh token may have rotated since the
+      // batch listing was taken.
       const current = await tiktokIntegrationService.findById({
         id: integration.id,
         workspaceId: integration.workspaceId,
@@ -35,31 +40,7 @@ async function refreshOne(integration: {
         )
         return
       }
-
-      const newTokens = await refreshAccessToken(
-        { clientId: auth.clientId, clientSecret: auth.clientSecret },
-        auth.tokens.refreshToken,
-      )
-
-      return {
-        ...auth,
-        tokens: {
-          ...auth.tokens,
-          accessToken: newTokens.access_token,
-          refreshToken: newTokens.refresh_token,
-          ...buildTokenTimestamps(
-            newTokens.expires_in,
-            newTokens.refresh_expires_in,
-          ),
-        },
-        // A refresh never grants a new scope, but it does report the
-        // current set — which is how a connection made before scopes
-        // were recorded stops being reported as "unknown" on its own.
-        metadata: {
-          ...auth.metadata,
-          scopes: parseTiktokScopes(newTokens.scope),
-        },
-      }
+      return await refreshTiktokAuth(auth)
     },
     apply: (newAuth) =>
       tiktokIntegrationService.updateAuth({

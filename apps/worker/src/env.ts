@@ -5,16 +5,69 @@ const editionRule = z
   .enum(["community", "enterprise", "cloud"])
   .default("community")
 
+export const DEFAULT_SCHEDULER_TICK_INTERVAL_MS = 5000
+export const MIN_SCHEDULER_TICK_INTERVAL_MS = 100
+export const MAX_SCHEDULER_TICK_INTERVAL_MS = 10_000
+
 export const env = createEnv({
   server: {
     NEXT_PUBLIC_EDITION: editionRule,
     QUOTA_SYNC_INTERVAL_SECONDS: z.coerce.number().int().min(10).default(60),
+    // Contact sync from AhaChat (docs/contact-sync.md): optional https base URL,
+    // path included. Empty counts as unset: the integration is then off.
+    AHACHAT_API_BASE_URL: z.preprocess(
+      (value) => (value === "" ? undefined : value),
+      z.url({ protocol: /^https$/ }).optional(),
+    ),
+    // The two AhaChat secrets (docs/contact-sync.md):
+    // the API key sent and the hash key it signs with (never sent), each base64
+    // of >= 32 random bytes. Validated where they are used: a bad value (a typo in the key id too) leaves
+    // the sync off instead of stopping the process. The key id names the pair for rotation (default k1).
+    AHACHAT_API_KEY: z.preprocess(
+      (value) => (value === "" ? undefined : value),
+      z.string().optional(),
+    ),
+    AHACHAT_HASH_KEY: z.preprocess(
+      (value) => (value === "" ? undefined : value),
+      z.string().optional(),
+    ),
+    AHACHAT_KEY_ID: z.preprocess(
+      (value) => (value === "" ? undefined : value),
+      z.string().optional(),
+    ),
+    // How often the sequence producer polls each of its buckets. Idle Redis
+    // cost is `buckets x 2 x 1000 / interval` ZRANGEBYSCORE per second (256
+    // buckets: ~102/s at 5000ms). Without backlog a due dispatch waits up to
+    // one interval plus the tick time, once per step: every step goes back
+    // through the bucket, so consecutive zero-delay steps each add one wait.
+    // Backlog, lock contention or event-loop delay add more. Each tick claims
+    // at most `claimLimit` (100) dispatches per bucket from each of the
+    // schedule and retry sets, so a bucket sustains at most
+    // `claimLimit x 1000 / interval` per set.
+    SCHEDULER_TICK_INTERVAL_MS: z.coerce
+      .number()
+      .int()
+      .min(MIN_SCHEDULER_TICK_INTERVAL_MS)
+      .max(MAX_SCHEDULER_TICK_INTERVAL_MS)
+      .default(DEFAULT_SCHEDULER_TICK_INTERVAL_MS),
+    // Optional upper bound for draining every worker in the process on SIGTERM
+    // (lib/shutdown). Consolidated Docker modes default below the 10s stop
+    // timeout; for other modes, set this with the orchestrator grace period.
+    WORKER_SHUTDOWN_TIMEOUT_MS: z.coerce
+      .number()
+      .int()
+      .min(1000)
+      .max(600_000)
+      .optional(),
     WEBHOOK_WORKER_CONCURRENCY: z.coerce
       .number()
       .int()
       .min(1)
       .max(200)
       .default(50),
+    // A slot is mostly idle I/O: a message step holds it while the `chat` queue
+    // sends. Raise together with CHAT_WORKER_CONCURRENCY (keep chat at least half
+    // of this) and DATABASE_POOL_MAX; see docs/scaling-messaging.md.
     INTEGRATION_WORKER_CONCURRENCY: z.coerce
       .number()
       .int()
@@ -30,6 +83,25 @@ export const env = createEnv({
     // starves the latency-sensitive integration queue. I/O-bound → higher
     // default than integration; tune per node bandwidth / Graph rate limits.
     LOW_WORKER_CONCURRENCY: z.coerce.number().int().min(1).max(200).default(30),
+    // Template install / sync / uninstall jobs: each is one long transaction,
+    // and saving a widely installed template fans out a sync per installation.
+    // Kept small so that burst queues up instead of flooding Postgres.
+    TEMPLATE_WORKER_CONCURRENCY: z.coerce
+      .number()
+      .int()
+      .min(1)
+      .max(20)
+      .default(2),
+    // Channel comment exports: each reads a channel page by page and may wait
+    // minutes on its usage hints, so it mostly sleeps: I/O-bound, hence a higher
+    // default. One workspace runs at most one (a cap in the start), which bounds
+    // the load any single workspace puts on the channels.
+    CHANNEL_POST_EXPORT_WORKER_CONCURRENCY: z.coerce
+      .number()
+      .int()
+      .min(1)
+      .max(50)
+      .default(10),
     // Leaderboard scoring jobs; bounded so a livestream comment burst queues
     // up instead of flooding Postgres.
     LEADERBOARD_WORKER_CONCURRENCY: z.coerce
@@ -77,6 +149,24 @@ export const env = createEnv({
       .min(1)
       .max(100 * 1024 * 1024)
       .default(25 * 1024 * 1024),
+    // Muse needs its own cap: a 10-minute 24 kHz mono WAV (~28.8 MB) is over
+    // HEAVY_MAX_AUDIO_BYTES. Bounded by the client's 32 MiB request limit
+    // minus multipart overhead (`MUSE_TRANSCRIBE_MAX_REQUEST_BYTES` and
+    // `MUSE_TRANSCRIBE_MULTIPART_OVERHEAD_BYTES` in @chatbotx.io/ai/server).
+    MUSE_TRANSCRIBE_MAX_AUDIO_BYTES: z.coerce
+      .number()
+      .int()
+      .min(1)
+      .max(32 * 1024 * 1024 - 64 * 1024)
+      .default(32 * 1024 * 1024 - 64 * 1024),
+    // One Muse Speech to Text attempt (download + upload + transcription).
+    // Also sizes the step's completion deadline and the worker locks.
+    MUSE_TRANSCRIBE_TIMEOUT_MS: z.coerce
+      .number()
+      .int()
+      .min(5000)
+      .max(9 * 60 * 1000)
+      .default(9 * 60 * 1000),
     HEAVY_MAX_IMAGE_BYTES: z.coerce
       .number()
       .int()
@@ -126,6 +216,20 @@ export const env = createEnv({
       .min(1)
       .max(1000)
       .default(10),
+    // Broadcast contact-info attribution: small and rate-limited, each run is
+    // at most one bounded `Message` read.
+    CONTACT_INFO_CAPTURE_CONCURRENCY: z.coerce
+      .number()
+      .int()
+      .min(1)
+      .max(20)
+      .default(2),
+    CONTACT_INFO_CAPTURE_JOBS_PER_SECOND: z.coerce
+      .number()
+      .int()
+      .min(1)
+      .max(1000)
+      .default(20),
     PROFILE_SNAPSHOT_JOBS_PER_SECOND: z.coerce
       .number()
       .int()

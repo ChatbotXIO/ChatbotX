@@ -5,7 +5,7 @@ import {
 } from "@chatbotx.io/utils/channel"
 
 /**
- * Which Ads Analytics nav entries (`AnalyticsNav`) a workspace should see.
+ * Which Ads Analytics entries of the section select (`AnalyticsSectionSelect`) a workspace should see.
  *
  * Only superAdmins ever see the Ads section, and within it only the
  * ads-eligible channels the workspace has actually connected (an inbox row

@@ -9,7 +9,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
 import { Loader2Icon } from "lucide-react"
 import { useTranslations } from "next-intl"
-import { useMemo, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { toast } from "sonner"
 import {
   allInboxConfigs,
@@ -32,6 +32,8 @@ const userIdPlaceholderKey = (channel: ChannelType) => {
   switch (channel) {
     case channelTypes.enum.instagram:
       return "fields.userId.placeholders.instagram"
+    case channelTypes.enum.line:
+      return "fields.userId.placeholders.line"
     case channelTypes.enum.messenger:
       return "fields.userId.placeholders.messenger"
     case channelTypes.enum.telegram:
@@ -45,13 +47,20 @@ const userIdPlaceholderKey = (channel: ChannelType) => {
   }
 }
 
+/** The contact a successful create hands back to its caller. */
+export type CreatedContact = {
+  id: string
+  fullName?: string | null
+  avatar?: string | null
+}
+
 export function CreateContactForm({
   workspaceId,
   onSubmmited,
   onCancelled,
 }: {
   workspaceId: string
-  onSubmmited?: () => void
+  onSubmmited?: (contact: CreatedContact) => void
   onCancelled?: () => void
 }) {
   const t = useTranslations()
@@ -89,14 +98,14 @@ export function CreateContactForm({
       zodResolver(createContactRequest),
       {
         actionProps: {
-          onSuccess: () => {
+          onSuccess: ({ data }) => {
             resetFormAndAction()
             toast.success(
               t("messages.createdSuccess", {
                 feature: t("fields.contact.label"),
               }),
             )
-            onSubmmited?.()
+            onSubmmited?.(data)
           },
           onError: ({ error }) => {
             if (error.serverError) {
@@ -108,6 +117,7 @@ export function CreateContactForm({
           mode: "onChange",
           defaultValues: {
             phoneNumber: "",
+            sourceUserId: "",
             email: "",
             firstName: "",
             lastName: "",
@@ -119,6 +129,17 @@ export function CreateContactForm({
         errorMapProps: {},
       },
     )
+
+  // WhatsApp needs a phone OR a BSUID; the "need one" error sits on the phone
+  // field, so typing a BSUID must re-validate it or the stale error lingers.
+  useEffect(() => {
+    const subscription = form.watch((_values, { name }) => {
+      if (name === "sourceUserId" && form.getFieldState("phoneNumber").error) {
+        form.trigger("phoneNumber")
+      }
+    })
+    return () => subscription.unsubscribe()
+  }, [form])
 
   const genderLabels = [
     {
@@ -147,6 +168,8 @@ export function CreateContactForm({
           triggerValueChange={(value) => {
             setChannel(value && isChannelType(value) ? value : undefined)
             form.setValue("inboxId", "")
+            // A BSUID is WhatsApp-only; a hidden leftover would fail validation.
+            form.setValue("sourceUserId", "")
           }}
         />
 
@@ -168,11 +191,22 @@ export function CreateContactForm({
         )}
 
         <InputField
-          label={t("fields.phoneNumber.label")}
+          label={
+            isWhatsapp
+              ? `${t("fields.phoneNumber.label")} / ${t("fields.channelIdentity.whatsappId")}`
+              : t("fields.phoneNumber.label")
+          }
           name="phoneNumber"
           placeholder="090xxxxxxx"
-          required={isWhatsapp}
         />
+
+        {isWhatsapp && (
+          <InputField
+            label={t("fields.channelIdentity.bsuid")}
+            name="sourceUserId"
+            placeholder="US.13491208655302741918"
+          />
+        )}
 
         <InputField
           label={t("fields.email.label")}

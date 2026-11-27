@@ -100,5 +100,13 @@ export const contactOnSmartDelayModel = pgTable(
         // restarts it through upsertQuickReplyFollowUp.
         sql`${table.status} NOT IN ('completed', 'failed', 'canceled') AND ${table.type} = 'quickReplyFollowUp'`,
       ),
+    uniqueIndex("ContactOnSmartDelay_stepInputTimeout_active_key")
+      .on(table.workspaceId, table.conversationId)
+      .where(
+        // One pending step input per conversation (a conversation holds a
+        // single challenge); re-asking restarts it through
+        // upsertStepInputTimeout.
+        sql`${table.status} NOT IN ('completed', 'failed', 'canceled') AND ${table.type} = 'stepInputTimeout'`,
+      ),
   ],
 )

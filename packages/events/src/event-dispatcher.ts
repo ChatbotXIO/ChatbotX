@@ -9,11 +9,16 @@ import type {
   CartItemEventMetadata,
   IncomingCallMetadata,
   OrderEventMetadata,
+  PipelineItemEventMetadata,
+  PostCommentEventMetadata,
   ShoppingCartSentMetadata,
   UserAskedAboutProductMetadata,
 } from "./base-emitter"
 import type { DecisionFlowOrigin } from "./decision-flow-lineage"
-import type { OrderStatusEventType } from "./event-type-registry"
+import type {
+  OrderStatusEventType,
+  PipelineEventType,
+} from "./event-type-registry"
 import { logger } from "./logger"
 import { TriggerEventEmitter } from "./trigger/emitter"
 import { WebhookEventEmitter } from "./webhook/emitter"
@@ -50,6 +55,37 @@ async function emitToAllEmitters<M extends EmitterEventMethod>(
     if (result.status === "rejected") {
       logger.error({ err: result.reason }, `Failed to emit event: ${eventName}`)
     }
+  }
+}
+
+/** Which emitter a post-comment event is queued to (each has its own dedupe claim). */
+export type PostCommentEmitterKind = "trigger" | "webhook"
+
+const EMITTERS_BY_KIND = {
+  trigger: TriggerEventEmitter,
+  webhook: WebhookEventEmitter,
+} as const satisfies Record<PostCommentEmitterKind, BaseEventEmitter>
+
+/**
+ * Emits to one emitter and throws when it fails, for a caller that holds a
+ * per-emitter dedupe claim it must release when the enqueue failed.
+ */
+async function emitToOneEmitterStrict<M extends EmitterEventMethod>(
+  kind: PostCommentEmitterKind,
+  eventName: M,
+  ...args: EmitterEventArgs<M>
+): Promise<void> {
+  const emitter = EMITTERS_BY_KIND[kind]
+  const method = emitter[eventName] as unknown as (
+    ...methodArgs: EmitterEventArgs<M>
+  ) => Promise<void>
+  try {
+    await method.call(emitter, ...args)
+  } catch (err) {
+    logger.error({ err }, `Failed to emit event: ${eventName} (${kind})`)
+    throw err instanceof Error
+      ? err
+      : new Error(`Failed to emit event: ${eventName}`)
   }
 }
 
@@ -214,6 +250,68 @@ export const emitContactUnsubscribed = async (
     contactInboxId,
   )
 
+export const emitContactBlockedBot = async (
+  workspaceId: string,
+  contactId: string,
+  channel: string,
+  contactInboxId?: string,
+) =>
+  await emitToAllEmitters(
+    "contactBlockedBot",
+    workspaceId,
+    contactId,
+    channel,
+    contactInboxId,
+  )
+
+export const emitContactUnblockedBot = async (
+  workspaceId: string,
+  contactId: string,
+  channel: string,
+  contactInboxId?: string,
+) =>
+  await emitToAllEmitters(
+    "contactUnblockedBot",
+    workspaceId,
+    contactId,
+    channel,
+    contactInboxId,
+  )
+
+export const emitContactCommentedOnPost = async (
+  workspaceId: string,
+  contactId: string,
+  metadata: PostCommentEventMetadata,
+  contactInboxId: string | undefined,
+  emitter: PostCommentEmitterKind,
+) =>
+  await emitToOneEmitterStrict(
+    emitter,
+    "postComment",
+    triggerEventTypes.enum.contactCommentedOnPost,
+    workspaceId,
+    contactId,
+    metadata,
+    contactInboxId,
+  )
+
+export const emitContactFirstCommentedOnPost = async (
+  workspaceId: string,
+  contactId: string,
+  metadata: PostCommentEventMetadata,
+  contactInboxId: string | undefined,
+  emitter: PostCommentEmitterKind,
+) =>
+  await emitToOneEmitterStrict(
+    emitter,
+    "postComment",
+    triggerEventTypes.enum.contactFirstCommentedOnPost,
+    workspaceId,
+    contactId,
+    metadata,
+    contactInboxId,
+  )
+
 export const emitConversationArchived = async (
   workspaceId: string,
   contactId: string,
@@ -345,6 +443,23 @@ export const emitOrderStatus = async (
 ) =>
   await emitToAllEmitters(
     "orderStatus",
+    eventType,
+    workspaceId,
+    contactId,
+    metadata,
+    contactInboxId,
+  )
+
+/** One of a pipeline item's events (created, moved, value/status/priority changed). */
+export const emitPipelineItemEvent = async (
+  eventType: PipelineEventType,
+  workspaceId: string,
+  contactId: string,
+  metadata: PipelineItemEventMetadata,
+  contactInboxId?: string,
+) =>
+  await emitToAllEmitters(
+    "pipelineItem",
     eventType,
     workspaceId,
     contactId,

@@ -2,11 +2,29 @@
 
 import { readFileSync } from "node:fs"
 import { join } from "node:path"
-
+import { MCP_CONNECTOR_PROFILES } from "@chatbotx.io/auth/mcp-config"
 import { OpenAPIGenerator } from "@orpc/openapi"
 import { ZodToJsonSchemaConverter } from "@orpc/zod/zod4"
 import { beforeAll, describe, expect, test, vi } from "vitest"
-import { WORKSPACE_TOKEN_SECURITY_SCHEMES } from "@/lib/orpc/public-spec"
+import {
+  inferHitlPolicy,
+  WORKSPACE_TOKEN_SECURITY_SCHEMES,
+  withIdempotencyKeyHeader,
+  withMcpHitlPolicy,
+} from "@/lib/orpc/public-spec"
+import { CONNECTOR_PROFILES } from "../../mcp-server/src/oauth"
+import {
+  CLAUDE_API_TOOLS,
+  CLAUDE_EXCLUDED_TOOLS,
+} from "../../mcp-server/src/profiles/claude-contract"
+import {
+  OPENAI_API_TOOLS,
+  OPENAI_CONFIRMED_POLICIES,
+  OPENAI_DEFERRED_TOOLS,
+  OPENAI_EXCLUDED_TOOLS,
+  OPENAI_TOOL_OVERRIDES,
+} from "../../mcp-server/src/profiles/openai-contract"
+import { buildOpenAiManifest } from "../../mcp-server/src/profiles/openai-manifest-builder"
 
 // Same side-effect-free import stubs as public-spec-operations.test.ts —
 // `@/routers/public` transitively boots the real db client and better-auth
@@ -26,7 +44,13 @@ type McpOperationMeta = {
   alwaysVisible?: boolean
   readOnlyHint?: boolean
   destructiveHint?: boolean
+  openWorldHint?: boolean
   idempotentHint?: boolean
+  hitlPolicy?:
+    | "none"
+    | "confirm_diff"
+    | "confirm_destructive"
+    | "confirm_outbound"
   scope?: string
 }
 
@@ -38,7 +62,37 @@ type McpSpecOperation = {
   description?: string
   security?: Record<string, string[]>[]
   "x-mcp"?: McpOperationMeta
+  parameters?: { in: string; name: string }[]
+  requestBody?: {
+    content?: { "application/json"?: { schema?: BodySchema } }
+  }
 }
+
+type BodySchema = {
+  properties?: Record<string, unknown>
+  allOf?: BodySchema[]
+  anyOf?: BodySchema[]
+  oneOf?: BodySchema[]
+}
+
+// Mirrors `resolveBodySchema` in `apps/mcp-server/src/openapi-loader.ts`:
+// top-level properties, merged across allOf / anyOf / oneOf branches.
+function bodyPropertyNames(schema: BodySchema | undefined): string[] {
+  if (!schema) {
+    return []
+  }
+  if (schema.properties) {
+    return Object.keys(schema.properties)
+  }
+  const branches = [
+    ...(schema.allOf ?? []),
+    ...(schema.anyOf ?? []),
+    ...(schema.oneOf ?? []),
+  ]
+  return [...new Set(branches.flatMap((b) => Object.keys(b.properties ?? {})))]
+}
+
+const sorted = (names: string[]): string[] => [...names].sort()
 
 // Every operation whose security includes a workspace-token scheme (i.e.
 // `isWorkspaceTokenOperation` in `apps/mcp-server/src/openapi-loader.ts`
@@ -61,6 +115,22 @@ function isWorkspaceTokenOperation(operation: McpSpecOperation): boolean {
   )
 }
 
+// POST-only computations explicitly documented as side-effect free. Each must
+// remain an intentional exception rather than becoming an accidental policy
+// hole when metadata changes.
+const HITL_NONE_WRITE_ALLOWLIST: Record<string, true> = {
+  "aiFiles.search": true,
+  "broadcasts.previewRecurrence": true,
+  "channelPostManagement.exportComments": true,
+  "channelPostManagement.mergeComments": true,
+  "contacts.search": true,
+  "flows.validate": true,
+  "inboundWebhooks.previewMapping": true,
+  "miniApps.validate": true,
+  "templates.listLockedResources": true,
+  "templates.previewDependencies": true,
+}
+
 // Guard against the default set silently growing back toward 346 — a
 // deliberate cap, not a tuned performance number. Bump only alongside an
 // explicit decision to add a tool to the default set (see the plan's P0.2
@@ -68,9 +138,17 @@ function isWorkspaceTokenOperation(operation: McpSpecOperation): boolean {
 // `connections.list`/`connections.create`/`connectionProviders.list`/
 // `connectSessions.get`/`connectSessions.connectTargets` joined the default
 // set so an agent can guide a user through connecting a new channel or
-// integration without a `search_tools` round trip.
-const MAX_DEFAULT_VISIBLE_OPERATIONS = 48
+// integration without a `search_tools` round trip. Bumped 48 -> 52 when
+// `pipelines.list`/`pipelines.listItems`/`pipelines.createItem`/
+// `pipelines.moveItem` joined the default set so an agent can drive a CRM
+// board without a `search_tools` round trip. Bumped 52 -> 53 when
+// `postAnalytics.summary` joined it (the one post-analytics read an agent
+// reaches for first; the rest stay behind `search_tools`).
+const MAX_DEFAULT_VISIBLE_OPERATIONS = 53
 
+const DOTTED_OPERATION = /`([a-zA-Z]+\.[a-zA-Z]+)`/g
+const DYNAMIC_TOOL_NAMES = /search_tools|call_tool/
+const BRAND = /chatbotx/i
 const MCP_SERVER_ROOT = join(import.meta.dirname, "..", "..", "mcp-server")
 const MCP_README_PATH = join(MCP_SERVER_ROOT, "README.md")
 const MCP_README_TOOLS_HEADING = "## Available tools"
@@ -108,23 +186,30 @@ function mcpToolNamesFromMarkdownTable(
 }
 
 let operations: McpSpecOperation[]
+let publicSpec: unknown
 
 beforeAll(async () => {
   const { publicRouter } = await import("@/routers/public")
-  const { publicSpecGenerateOptions, withChannelApiTokenSecurity } =
-    await import("@/lib/orpc/public-spec")
+  const {
+    publicSpecGenerateOptions,
+    withChannelApiTokenSecurity,
+    withMcpHitlPolicy,
+  } = await import("@/lib/orpc/public-spec")
 
   const generator = new OpenAPIGenerator({
     schemaConverters: [new ZodToJsonSchemaConverter()],
   })
 
-  const spec = withChannelApiTokenSecurity(
-    await generator.generate(
-      publicRouter,
-      publicSpecGenerateOptions("public-spec-mcp.test"),
+  const spec = withMcpHitlPolicy(
+    withChannelApiTokenSecurity(
+      await generator.generate(
+        publicRouter,
+        publicSpecGenerateOptions("public-spec-mcp.test"),
+      ),
     ),
   )
 
+  publicSpec = spec
   operations = []
   for (const [path, methods] of Object.entries(spec.paths ?? {})) {
     for (const [method, operation] of Object.entries(
@@ -141,6 +226,31 @@ beforeAll(async () => {
   operations.sort((a, b) => a.operationId.localeCompare(b.operationId))
 }, 120_000)
 
+describe("inferHitlPolicy", () => {
+  test.each([
+    ["post", "contacts.unblock", "confirm_diff"],
+    ["post", "broadcasts.unschedule", "confirm_diff"],
+    ["post", "flows.publish", "confirm_outbound"],
+    ["post", "contacts.bulkDelete", "confirm_destructive"],
+    ["post", "contacts.bulkAddTags", "confirm_diff"],
+    ["post", "contacts.import", "confirm_diff"],
+    ["post", "messengerChannels.updateHandoverResumeFlow", "confirm_diff"],
+    ["post", "broadcasts.resume", "confirm_outbound"],
+    ["post", "connections.disconnect", "confirm_destructive"],
+    ["post", "contacts.clearCustomFields", "confirm_destructive"],
+    ["post", "conversations.archive", "confirm_destructive"],
+    ["post", "conversations.unarchive", "confirm_diff"],
+    ["post", "contacts.bulkSubscribeSequences", "confirm_outbound"],
+  ] as const)("%s %s -> %s", (method, operationId, expected) => {
+    expect(inferHitlPolicy(method, operationId, undefined)).toBe(expected)
+  })
+
+  test("keeps reads and read-only writes unguarded", () => {
+    expect(inferHitlPolicy("get", "contacts.delete", undefined)).toBe("none")
+    expect(inferHitlPolicy("post", "files.search", true)).toBe("none")
+  })
+})
+
 describe("x-mcp.scope coverage", () => {
   test("every workspace-token operation carries x-mcp.scope", () => {
     const missingScope = operations
@@ -149,6 +259,417 @@ describe("x-mcp.scope coverage", () => {
       .map((op) => op.operationId)
 
     expect(missingScope).toEqual([])
+  })
+})
+
+describe("x-mcp HITL policy coverage", () => {
+  test("guards every workspace-token write and marks destructive writes", () => {
+    const unguardedWrites = operations
+      .filter(isWorkspaceTokenOperation)
+      .filter((operation) => !["GET", "HEAD"].includes(operation.method))
+      .filter(
+        (operation) =>
+          !operation["x-mcp"]?.hitlPolicy ||
+          operation["x-mcp"]?.hitlPolicy === "none",
+      )
+      .filter(
+        (operation) =>
+          operation["x-mcp"]?.hitlPolicy !== "none" ||
+          !HITL_NONE_WRITE_ALLOWLIST[operation.operationId],
+      )
+      .map((operation) => operation.operationId)
+
+    const explicitNoneWrites = operations
+      .filter(isWorkspaceTokenOperation)
+      .filter((operation) => !["GET", "HEAD"].includes(operation.method))
+      .filter((operation) => operation["x-mcp"]?.hitlPolicy === "none")
+      .map((operation) => operation.operationId)
+      .sort()
+
+    const unmarkedDestructiveWrites = operations
+      .filter(
+        (operation) =>
+          operation["x-mcp"]?.hitlPolicy === "confirm_destructive" &&
+          operation["x-mcp"]?.destructiveHint !== true,
+      )
+      .map((operation) => operation.operationId)
+
+    expect({
+      explicitNoneWrites,
+      unguardedWrites,
+      unmarkedDestructiveWrites,
+    }).toEqual({
+      explicitNoneWrites: Object.keys(HITL_NONE_WRITE_ALLOWLIST).sort(),
+      unguardedWrites: [],
+      unmarkedDestructiveWrites: [],
+    })
+  })
+})
+
+describe("x-mcp outbound policy", () => {
+  test("classifies a contact send as outbound", () => {
+    const operation = operations.find(
+      (candidate) => candidate.operationId === "contacts.sendMessage",
+    )
+
+    expect(operation?.["x-mcp"]?.hitlPolicy).toBe("confirm_outbound")
+  })
+
+  test("pins the complete outbound operation set", () => {
+    const outboundOperationIds = operations
+      .filter(
+        (operation) => operation["x-mcp"]?.hitlPolicy === "confirm_outbound",
+      )
+      .map((operation) => operation.operationId)
+      .sort()
+
+    expect(outboundOperationIds).toEqual([
+      "ads.publishCampaign",
+      "appointments.book",
+      "broadcasts.resend",
+      "broadcasts.resume",
+      "broadcasts.schedule",
+      "channels.sendMessage",
+      "contacts.bulkSubscribeSequences",
+      "contacts.sendFlow",
+      "contacts.sendMessage",
+      "contacts.subscribeSequences",
+      "contacts.triggerAutoReply",
+      "conversations.enableBot",
+      "conversations.threadControl",
+      "coupons.issueCoupon",
+      "facebookMarketingMessages.campaigns.resume",
+      "facebookMarketingMessages.campaigns.send",
+      "flows.publish",
+      "instagramChannels.sendCapiTestEvent",
+      "leaderboards.publish",
+      "leaderboards.triggerRewards",
+      "messages.create",
+      "messages.resend",
+      "messages.sendWhatsappTemplate",
+      "messengerChannels.sendCapiTestEvent",
+      "miniApps.publishWhatsapp",
+      "miniApps.publishWhatsappDraft",
+      "miniApps.pushWhatsappDraft",
+      "postFeeds.resume",
+      "socialPosts.publish",
+      "whatsappChannels.sendCapiTestEvent",
+    ])
+  })
+})
+
+describe("OpenAI MCP profile tools (built from the live spec)", () => {
+  // Built at runtime by the MCP server from the same spec; nothing committed.
+  const manifest = () => buildOpenAiManifest(publicSpec)
+  const toToolName = (operationId: string) =>
+    operationId
+      .replace(/([a-z\d])([A-Z])/g, "$1_$2")
+      .replace(/\./g, "_")
+      .toLowerCase()
+
+  test("every contract operation exists in the live spec", () => {
+    expect(manifest().missing).toEqual([])
+    expect(manifest().tools.map((tool) => tool.name)).toEqual([
+      ...OPENAI_API_TOOLS,
+    ])
+  })
+
+  test("never serves deferred or excluded operations", () => {
+    const names = new Set<string>(manifest().tools.map((tool) => tool.name))
+    for (const name of [...OPENAI_DEFERRED_TOOLS, ...OPENAI_EXCLUDED_TOOLS]) {
+      expect(names.has(name), name).toBe(false)
+    }
+  })
+
+  test("descriptions only reference tools in the profile, and never the brand", () => {
+    const names = new Set<string>(manifest().tools.map((tool) => tool.name))
+    for (const tool of manifest().tools) {
+      const text = JSON.stringify({
+        description: tool.description,
+        inputSchema: tool.inputSchema,
+      })
+      for (const match of text.matchAll(DOTTED_OPERATION)) {
+        expect(
+          names.has(toToolName(match[1] as string)),
+          `${tool.name}: ${match[1]}`,
+        ).toBe(true)
+      }
+      expect(text, tool.name).not.toMatch(DYNAMIC_TOOL_NAMES)
+      expect(text, tool.name).not.toMatch(BRAND)
+    }
+  })
+
+  test("contacts_create never accepts gender", () => {
+    const tool = manifest().tools.find(
+      (item) => item.name === "contacts_create",
+    )
+    expect(tool?.inputSchema.properties).not.toHaveProperty("gender")
+    expect(tool?.inputSchema.required ?? []).not.toContain("gender")
+    expect(tool?.adapterBody).toEqual({ gender: "unknown" })
+  })
+
+  test("input schemas contain no free-form objects", () => {
+    const walk = (node: unknown, where: string): void => {
+      if (Array.isArray(node)) {
+        for (const item of node) {
+          walk(item, where)
+        }
+        return
+      }
+      if (node && typeof node === "object") {
+        const schema = node as Record<string, unknown>
+        if (schema.type === "object" && !schema.properties) {
+          expect(schema.additionalProperties, where).toBe(false)
+        }
+        for (const value of Object.values(schema)) {
+          walk(value, where)
+        }
+      }
+    }
+    for (const tool of manifest().tools) {
+      walk(tool.inputSchema, tool.name)
+    }
+  })
+
+  test("only outbound and destructive tools keep the _confirm round trip", () => {
+    for (const tool of manifest().tools) {
+      const confirmed = (
+        OPENAI_CONFIRMED_POLICIES as readonly string[]
+      ).includes(tool.hitlPolicy)
+      expect(tool.hitlPolicy === "none" || confirmed, tool.name).toBe(true)
+      expect("_confirm" in tool.inputSchema.properties, tool.name).toBe(
+        confirmed,
+      )
+    }
+    const policyOf = (name: string) =>
+      manifest().tools.find((tool) => tool.name === name)?.hitlPolicy
+    expect(policyOf("contacts_send_message")).toBe("confirm_outbound")
+    expect(policyOf("broadcasts_stop")).toBe("confirm_destructive")
+  })
+
+  test("every tool matches a live default operation and its hints", () => {
+    const byName = new Map(
+      operations.map((operation) => [
+        toToolName(operation.operationId),
+        operation,
+      ]),
+    )
+    for (const tool of manifest().tools) {
+      const operation = byName.get(tool.name)
+      expect(operation, tool.name).toBeDefined()
+      expect(operation?.method, tool.name).toBe(tool.method)
+      expect(operation?.path, tool.name).toBe(tool.pathTemplate)
+      const meta = operation?.["x-mcp"] as Record<string, unknown>
+      expect(meta.visibility, tool.name).toBe("default")
+      for (const hint of [
+        "readOnlyHint",
+        "destructiveHint",
+        "idempotentHint",
+        "openWorldHint",
+      ] as const) {
+        expect(tool.annotations[hint], `${tool.name}.${hint}`).toBe(meta[hint])
+      }
+    }
+  })
+
+  test("mcp-server and auth agree on the connector profiles", () => {
+    expect([...CONNECTOR_PROFILES]).toEqual([...MCP_CONNECTOR_PROFILES])
+  })
+
+  test("every tool's path, query and body params match the live spec", () => {
+    const byName = new Map(
+      operations.map((operation) => [
+        toToolName(operation.operationId),
+        operation,
+      ]),
+    )
+    const namesIn = (operation: McpSpecOperation, where: string) =>
+      (operation.parameters ?? [])
+        .filter((parameter) => parameter.in === where)
+        .map((parameter) => parameter.name)
+    for (const tool of manifest().tools) {
+      const operation = byName.get(tool.name) as McpSpecOperation
+      const removed = OPENAI_TOOL_OVERRIDES[tool.name]?.removeProperties ?? []
+      const liveBody = bodyPropertyNames(
+        operation.requestBody?.content?.["application/json"]?.schema,
+      ).filter((name) => !removed.includes(name))
+      expect(sorted(tool.pathParamNames), `${tool.name} path`).toEqual(
+        sorted(namesIn(operation, "path")),
+      )
+      expect(sorted(tool.queryParamNames), `${tool.name} query`).toEqual(
+        sorted(namesIn(operation, "query")),
+      )
+      expect(sorted(tool.bodyParamNames), `${tool.name} body`).toEqual(
+        sorted(liveBody),
+      )
+    }
+  })
+})
+
+describe("Claude MCP profile contract", () => {
+  const toToolName = (operationId: string) =>
+    operationId
+      .replace(/([a-z\d])([A-Z])/g, "$1_$2")
+      .replace(/\./g, "_")
+      .toLowerCase()
+  const defaultVisible = () =>
+    operations.filter(
+      (operation) =>
+        (operation["x-mcp"] as Record<string, unknown> | undefined)
+          ?.visibility === "default",
+    )
+
+  test("every Claude profile tool is a live default-visible operation", () => {
+    const visible = new Set(
+      defaultVisible().map((operation) => toToolName(operation.operationId)),
+    )
+    for (const name of CLAUDE_API_TOOLS) {
+      expect(visible.has(name), name).toBe(true)
+    }
+  })
+
+  test("every default-visible operation is in the Claude profile or explicitly excluded", () => {
+    // A new default tool must be a deliberate decision for the directory
+    // listing: add it to CLAUDE_READ_TOOLS / CLAUDE_WRITE_TOOLS or to
+    // CLAUDE_EXCLUDED_TOOLS in apps/mcp-server/src/profiles/claude-contract.ts.
+    const decided = new Set<string>([
+      ...CLAUDE_API_TOOLS,
+      ...CLAUDE_EXCLUDED_TOOLS,
+    ])
+    const undecided = defaultVisible()
+      .map((operation) => toToolName(operation.operationId))
+      .filter((name) => !decided.has(name))
+    expect(undecided).toEqual([])
+  })
+})
+
+describe("x-mcp policy classifications", () => {
+  test("every default-visible operation declares all four hints as booleans", () => {
+    const hintNames = [
+      "readOnlyHint",
+      "destructiveHint",
+      "idempotentHint",
+      "openWorldHint",
+    ] as const
+    const missing = operations
+      .filter(
+        (operation) =>
+          isWorkspaceTokenOperation(operation) &&
+          operation["x-mcp"]?.visibility === "default",
+      )
+      .flatMap((operation) =>
+        hintNames
+          .filter(
+            (hint) =>
+              typeof (operation["x-mcp"] as Record<string, unknown>)?.[hint] !==
+              "boolean",
+          )
+          .map((hint) => `${operation.operationId}.${hint}`),
+      )
+    expect(missing).toEqual([])
+  })
+
+  test("declares complete annotations for validation and broadcast cancellation", () => {
+    const annotationByOperation = (operationId: string) =>
+      operations.find((operation) => operation.operationId === operationId)?.[
+        "x-mcp"
+      ]
+
+    expect(annotationByOperation("flows.validate")).toMatchObject({
+      readOnlyHint: true,
+      destructiveHint: false,
+      idempotentHint: true,
+      openWorldHint: false,
+    })
+    expect(annotationByOperation("broadcasts.stop")).toMatchObject({
+      readOnlyHint: false,
+      destructiveHint: true,
+      idempotentHint: true,
+      openWorldHint: false,
+    })
+  })
+
+  // OpenAI review: destructiveHint is true for anything that overwrites or
+  // clears existing data, even when it can be undone. These replace the
+  // current assignee, stage or field value; the approval step is unchanged.
+  test.each([
+    "conversations.assign",
+    "pipelines.moveItem",
+    "contacts.setCustomField",
+  ])("marks %s, which overwrites current state, as destructive", (operationId) => {
+    const operation = operations.find(
+      (candidate) => candidate.operationId === operationId,
+    )
+    expect(operation?.["x-mcp"]).toMatchObject({
+      readOnlyHint: false,
+      destructiveHint: true,
+    })
+    expect(operation?.["x-mcp"]?.hitlPolicy).toBe("confirm_diff")
+  })
+
+  test("marks every DELETE operation as destructive", () => {
+    const nonDestructiveDeletes = operations
+      .filter(isWorkspaceTokenOperation)
+      .filter((operation) => operation.method === "DELETE")
+      .filter(
+        (operation) => operation["x-mcp"]?.hitlPolicy !== "confirm_destructive",
+      )
+      .map((operation) => operation.operationId)
+
+    expect(nonDestructiveDeletes).toEqual([])
+  })
+
+  test.each([
+    ["flows.publish", "confirm_outbound"],
+    ["contacts.bulkDelete", "confirm_destructive"],
+    ["contacts.bulkAddTags", "confirm_diff"],
+    ["contacts.import", "confirm_diff"],
+    ["connections.disconnect", "confirm_destructive"],
+    ["contacts.clearCustomFields", "confirm_destructive"],
+    ["conversations.archive", "confirm_destructive"],
+    ["contacts.bulkSubscribeSequences", "confirm_outbound"],
+  ] as const)("classifies %s as %s in the generated spec", (operationId, policy) => {
+    expect(
+      operations.find((operation) => operation.operationId === operationId)?.[
+        "x-mcp"
+      ]?.hitlPolicy,
+    ).toBe(policy)
+  })
+
+  test("preserves explicit hints and idempotency parameters across reruns", () => {
+    const spec = {
+      paths: {
+        "/v1/example": {
+          post: {
+            operationId: "example.remove",
+            responses: {},
+            "x-mcp": { destructiveHint: false, hitlPolicy: "confirm_diff" },
+          },
+        },
+      },
+    }
+
+    withMcpHitlPolicy(spec as never)
+    withIdempotencyKeyHeader(spec as never)
+    withIdempotencyKeyHeader(spec as never)
+
+    const operation = spec.paths["/v1/example"]
+      .post as (typeof spec.paths)["/v1/example"]["post"] & {
+      parameters?: unknown[]
+    }
+    expect(operation["x-mcp"]).toMatchObject({
+      destructiveHint: false,
+      hitlPolicy: "confirm_diff",
+    })
+    expect(operation.parameters).toHaveLength(1)
+  })
+
+  test("does not advertise aiFiles.search to read-only tokens", () => {
+    expect(
+      operations.find(
+        (operation) => operation.operationId === "aiFiles.search",
+      )?.["x-mcp"]?.readOnlyHint,
+    ).toBeUndefined()
   })
 })
 

@@ -13,10 +13,12 @@ import {
   integrationGoogleSheetsModel,
   integrationInstagramModel,
   integrationKlaviyoModel,
+  integrationLineModel,
   integrationMailchimpModel,
   integrationMailerLiteModel,
   integrationMessengerModel,
   integrationMoosendModel,
+  integrationMuseModel,
   integrationOpenaiCompatibleModel,
   integrationOpenaiModel,
   integrationOpenrouterModel,
@@ -57,16 +59,18 @@ type MakeWorkspaceIntegrationBinding = typeof makeWorkspaceIntegrationBinding
  * legacy claude/deepseek/gemini/openrouter connect schemas
  * (`apps/builder/src/features/integration-{claude,deepseek,gemini,
  * openrouter}/schema/request.ts`); openai's legacy schema has no default,
- * so 1024 is reused here for consistency across all five providers.
+ * so 1024 is reused here for consistency across all five providers. Muse
+ * uses 4096 to match `apps/builder/src/features/integration-muse/schema/request.ts`.
  */
 const AI_KEY_PROVIDER_DEFAULTS = {
   claude: { model: "claude-sonnet-4-6", maxOutputTokens: 1024 },
   deepseek: { model: "deepseek-flash", maxOutputTokens: 1024 },
   gemini: { model: "gemini-3.5-flash", maxOutputTokens: 1024 },
+  muse: { model: "muse-spark-1.3", maxOutputTokens: 4096 },
   openai: { model: "gpt-5.4-mini", maxOutputTokens: 1024 },
   openrouter: { model: "openai/gpt-5.4-mini", maxOutputTokens: 1024 },
 } as const satisfies Record<
-  "claude" | "deepseek" | "gemini" | "openai" | "openrouter",
+  "claude" | "deepseek" | "gemini" | "muse" | "openai" | "openrouter",
   { model: string; maxOutputTokens: number }
 >
 
@@ -249,6 +253,14 @@ export const buildConnectionStoreBindings = (
     integrationType: "moosend",
     duplicateConstraint: "IntegrationMoosend_workspaceId_key",
   }),
+  muse: makeWorkspaceIntegrationBinding({
+    table: integrationMuseModel,
+    tableName: "IntegrationMuse",
+    integrationType: "muse",
+    duplicateConstraint: "IntegrationMuse_workspaceId_key",
+    configColumns: AI_KEY_PROVIDER_CONFIG_COLUMNS,
+    defaultConfigValues: () => AI_KEY_PROVIDER_DEFAULTS.muse,
+  }),
   openai: makeWorkspaceIntegrationBinding({
     table: integrationOpenaiModel,
     tableName: "IntegrationOpenai",
@@ -309,7 +321,29 @@ export const buildConnectionStoreBindings = (
     tableName: "IntegrationSmtp",
     identityColumn: "id",
     onDisconnect: "keep_row",
-    configColumns: ["fromAddress"],
+    configColumns: [
+      "fromAddress",
+      "imapEnabled",
+      "imapHost",
+      "imapPort",
+      "imapMailbox",
+    ],
+  }),
+  line: makeChannelBinding({
+    table: integrationLineModel,
+    tableName: "IntegrationLine",
+    identityColumn: "channelId",
+    onDisconnect: "keep_row",
+    duplicateConstraint: "IntegrationLine_channelId_key",
+    // NOT NULL bot identity columns come from the validated auth, never from
+    // a client `config` (see `makeChannelBinding.valuesFromAuth`).
+    valuesFromAuth: (auth) => {
+      const metadata = (auth as { metadata?: Record<string, unknown> }).metadata
+      return {
+        botUserId: metadata?.botUserId,
+        basicId: metadata?.basicId,
+      }
+    },
   }),
   telegram: makeChannelBinding({
     table: integrationTelegramModel,

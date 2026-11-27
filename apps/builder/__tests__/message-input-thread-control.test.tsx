@@ -5,6 +5,23 @@ import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
 
 vi.mock("next-intl", () => ({
   useTranslations: () => (key: string) => key,
+  useLocale: () => "en",
+}))
+vi.mock("@/features/translation/hooks/use-translation-settings", () => ({
+  useTranslationSettings: () => ({ data: undefined }),
+  useInvalidateTranslation: () => vi.fn(),
+}))
+vi.mock("@/features/translation/actions/preview-text.action", () => ({
+  previewTranslationAction: vi.fn(),
+}))
+vi.mock(
+  "@/features/translation/actions/update-conversation-state.action",
+  () => ({
+    updateConversationTranslationStateAction: vi.fn(),
+  }),
+)
+vi.mock("@/features/translation/actions/request-messages.action", () => ({
+  requestTranslationsAction: vi.fn(),
 }))
 
 vi.mock("@/lib/auth/auth-client", () => ({
@@ -95,6 +112,9 @@ const storeState = {
   replyToMessage: null,
   isPrivateReply: false,
   messages: [],
+  markMessageFailed: vi.fn(),
+  sendQueues: {},
+  updateSendQueue: vi.fn(),
   activeConversationId: "conv-1",
   conversations: [
     {
@@ -111,6 +131,7 @@ const storeState = {
     },
   ],
 }
+vi.mock("@/hooks/routing", () => ({ useWorkspaceId: () => "ws-1" }))
 vi.mock("@/features/chat/store/chat-store-provider", () => ({
   useChatStore: (selector: (state: typeof storeState) => unknown) =>
     selector(storeState),

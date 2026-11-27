@@ -1,11 +1,10 @@
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
 // --- top-level spies (captured by vi.mock factory closures) ---
-const findFirstMock = vi.fn()
 const insertMock = vi.fn()
 const valuesMock = vi.fn()
 const returningMock = vi.fn()
-const bulkReturningMock = vi.fn()
+const onConflictDoNothingMock = vi.fn()
 const addToScheduleMock = vi.fn()
 const transactionMock = vi.fn()
 const order: string[] = []
@@ -21,21 +20,19 @@ vi.mock("../src/dispatch-manager", () => ({
 
 vi.mock("@chatbotx.io/database/client", () => ({
   db: {
-    query: {
-      contactsOnSequenceModel: {
-        findFirst: (...args: unknown[]) => findFirstMock(...args),
-      },
-    },
+    query: {},
     insert: (table: unknown) => {
       insertMock(table)
       return {
         values: (vals: unknown) => {
           valuesMock(vals)
           return {
-            returning: (...args: unknown[]) => returningMock(...args),
-            onConflictDoNothing: () => ({
-              returning: (...args: unknown[]) => bulkReturningMock(...args),
-            }),
+            onConflictDoNothing: () => {
+              onConflictDoNothingMock()
+              return {
+                returning: (...args: unknown[]) => returningMock(...args),
+              }
+            },
           }
         },
       }
@@ -43,21 +40,19 @@ vi.mock("@chatbotx.io/database/client", () => ({
     transaction: async (cb: (tx: unknown) => unknown) => {
       transactionMock()
       const result = await cb({
-        query: {
-          contactsOnSequenceModel: {
-            findFirst: (...args: unknown[]) => findFirstMock(...args),
-          },
-        },
+        query: {},
         insert: (table: unknown) => {
           insertMock(table)
           return {
             values: (vals: unknown) => {
               valuesMock(vals)
               return {
-                returning: (...args: unknown[]) => returningMock(...args),
-                onConflictDoNothing: () => ({
-                  returning: (...args: unknown[]) => bulkReturningMock(...args),
-                }),
+                onConflictDoNothing: () => {
+                  onConflictDoNothingMock()
+                  return {
+                    returning: (...args: unknown[]) => returningMock(...args),
+                  }
+                },
               }
             },
           }
@@ -143,7 +138,6 @@ beforeEach(() => {
   valuesMock.mockReset()
   order.length = 0
   // default: no existing enrollment
-  findFirstMock.mockResolvedValue(undefined)
   // default: successful insert returns one row
   returningMock.mockResolvedValue([{ id: "enrollment-1" }])
   // default: one contact inbox
@@ -160,26 +154,52 @@ beforeEach(() => {
 
 // ---------------------------------------------------------------------------
 describe("enrollContactInSequence", () => {
-  describe("when enrollment already exists", () => {
-    test("returns early without inserting", async () => {
-      findFirstMock.mockResolvedValue({ id: "existing-enrollment" })
+  describe("when the contact is already enrolled (the insert conflicts and returns no row)", () => {
+    test("inserts with onConflictDoNothing, reports it did not enroll, and creates no dispatch or schedule", async () => {
+      returningMock.mockResolvedValue([])
 
-      await enrollContactInSequence(makeEnrollParams())
+      await expect(
+        enrollContactInSequence(makeEnrollParams()),
+      ).resolves.toEqual({ enrolled: false })
 
-      expect(insertMock).not.toHaveBeenCalled()
-    })
-
-    test("does not create a dispatch or schedule when returning early", async () => {
-      findFirstMock.mockResolvedValue({ id: "existing-enrollment" })
-
-      await enrollContactInSequence(makeEnrollParams())
-
+      expect(onConflictDoNothingMock).toHaveBeenCalledTimes(1)
+      expect(vi.mocked(getContactInboxes)).not.toHaveBeenCalled()
       expect(vi.mocked(createDispatch)).not.toHaveBeenCalled()
       expect(addToScheduleMock).not.toHaveBeenCalled()
     })
   })
 
+  describe("contact inboxes", () => {
+    test("looks them up when the caller did not pass them", async () => {
+      await enrollContactInSequence(makeEnrollParams())
+
+      expect(vi.mocked(getContactInboxes)).toHaveBeenCalledTimes(1)
+      expect(vi.mocked(getContactInboxes)).toHaveBeenCalledWith(
+        "ws-1",
+        "contact-1",
+      )
+    })
+
+    test("uses the ones the caller passed and does not look them up again", async () => {
+      await enrollContactInSequence(
+        makeEnrollParams({ contactInboxes: [{ id: "ci-9" }] }),
+      )
+
+      expect(vi.mocked(getContactInboxes)).not.toHaveBeenCalled()
+      expect(vi.mocked(createDispatch)).toHaveBeenCalledTimes(1)
+      expect(vi.mocked(createDispatch)).toHaveBeenCalledWith(
+        expect.objectContaining({ contactInboxId: "ci-9" }),
+      )
+    })
+  })
+
   describe("when enrollment does not exist and nextStepId is provided", () => {
+    test("reports the contact as enrolled once dispatches are scheduled", async () => {
+      await expect(
+        enrollContactInSequence(makeEnrollParams()),
+      ).resolves.toEqual({ enrolled: true })
+    })
+
     test("uses a transaction when no client is provided", async () => {
       await enrollContactInSequence(makeEnrollParams())
 
@@ -280,6 +300,12 @@ describe("enrollContactInSequence", () => {
   })
 
   describe("when nextStepId is null", () => {
+    test("reports the contact as enrolled even though no dispatch is created", async () => {
+      await expect(
+        enrollContactInSequence(makeEnrollParams({ nextStepId: null })),
+      ).resolves.toEqual({ enrolled: true })
+    })
+
     test("inserts the enrollment row", async () => {
       await enrollContactInSequence(makeEnrollParams({ nextStepId: null }))
 
@@ -288,17 +314,6 @@ describe("enrollContactInSequence", () => {
 
     test("does not create a dispatch or schedule", async () => {
       await enrollContactInSequence(makeEnrollParams({ nextStepId: null }))
-
-      expect(vi.mocked(createDispatch)).not.toHaveBeenCalled()
-      expect(addToScheduleMock).not.toHaveBeenCalled()
-    })
-  })
-
-  describe("when insert returns empty array (unexpected db failure)", () => {
-    test("does not create a dispatch or schedule", async () => {
-      returningMock.mockResolvedValue([])
-
-      await enrollContactInSequence(makeEnrollParams())
 
       expect(vi.mocked(createDispatch)).not.toHaveBeenCalled()
       expect(addToScheduleMock).not.toHaveBeenCalled()
@@ -317,7 +332,7 @@ describe("enrollContactsInSequenceBulk", () => {
       nextStepId: string | null
     }>,
   ) {
-    bulkReturningMock.mockResolvedValue(insertedRows)
+    returningMock.mockResolvedValue(insertedRows)
   }
 
   test("calls addToSchedule for each inbox per enrollment", async () => {

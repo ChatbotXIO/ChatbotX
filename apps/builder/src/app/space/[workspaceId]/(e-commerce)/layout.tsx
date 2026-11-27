@@ -1,4 +1,4 @@
-import { createWebshopLink } from "@chatbotx.io/business"
+import { createWebshopShareLinks } from "@chatbotx.io/business"
 import { notFound } from "next/navigation"
 import { type ReactNode, Suspense } from "react"
 import { EcommerceFooterLayout } from "@/features/products/components/ecommerce-footer"
@@ -21,8 +21,10 @@ export default async function ProductsPage({
   // Every Ecommerce page asks for this permission too; checked here so the
   // shop link bar below is never shown to a member who cannot open them.
   await requireWorkspacePermission(data.workspaceId, "ecommerce")
-  // The same link `webshop.getLink` returns without a contact.
-  const shopLink = await createWebshopLink({ workspaceId: data.workspaceId })
+  // The same links `webshop.getLink` returns without a contact.
+  const shareLinks = await createWebshopShareLinks({
+    workspaceId: data.workspaceId,
+  })
 
   // The shop link is pinned at the bottom of every Ecommerce page, unless the
   // page puts its own actions there (a form's Cancel / Save).
@@ -30,8 +32,8 @@ export default async function ProductsPage({
     <EcommerceFooterLayout
       shopLink={
         <ShopLinkSection
-          buttonUrl={shopLink.buttonUrl}
-          previewUrl={shopLink.url}
+          buttonUrls={shareLinks.buttonUrls}
+          previewUrl={shareLinks.previewUrl}
         />
       }
     >

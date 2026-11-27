@@ -17,6 +17,18 @@ const toConditionWithField = (
     ? (condition as { field?: unknown })
     : undefined
 
+/** Whether any condition of the filter is on `field`. */
+export function contactFilterUsesField(
+  contactFilter: ContactFilterCriteriaInput | null | undefined,
+  field: ContactFilterField,
+): boolean {
+  return (
+    contactFilter?.conditions.some(
+      (condition) => toConditionWithField(condition)?.field === field,
+    ) ?? false
+  )
+}
+
 export function pruneContactFilterFields(
   contactFilter: ContactFilterCriteriaInput | null | undefined,
   excludedFields: readonly ContactFilterField[],

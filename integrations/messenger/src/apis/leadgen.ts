@@ -115,3 +115,44 @@ export function getLead(
     }),
   )
 }
+
+export type LeadAdAttribution = {
+  id: string
+  ad_id?: string
+  ad_name?: string
+  adset_id?: string
+  adset_name?: string
+  campaign_id?: string
+  campaign_name?: string
+}
+
+const LEAD_AD_ID_FIELDS = "id,ad_id,adset_id,campaign_id"
+const LEAD_AD_NAME_FIELDS = "ad_name,adset_name,campaign_name"
+
+/**
+ * Ad, ad set and campaign a lead came from. Kept apart from `getLead` because
+ * the names need ad-account access the page token may lack — a failure here
+ * must not cost the lead's answers. Organic leads carry none of these fields.
+ * Graph fails the whole read when one field is denied, so pass
+ * `withNames: false` to read only the ids, which the page token can see.
+ */
+export function getLeadAdAttribution(
+  leadgenId: string,
+  accessToken: string,
+  version: string = DEFAULT_API_VERSION,
+  options: { withNames: boolean } = { withNames: true },
+): Promise<LeadAdAttribution> {
+  const endpoint = `${version}/${leadgenId}`
+  const fields = options.withNames
+    ? `${LEAD_AD_ID_FIELDS},${LEAD_AD_NAME_FIELDS}`
+    : LEAD_AD_ID_FIELDS
+
+  return rescue(endpoint, () =>
+    facebookGraphClient.get<LeadAdAttribution>(endpoint, {
+      searchParams: {
+        fields,
+        access_token: accessToken,
+      },
+    }),
+  )
+}

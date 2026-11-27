@@ -12,7 +12,7 @@ name: Publish CLI to npm
 # Quality gate: ci.yml (PR/push-to-main) and release.yml's `check` job already
 # run the repo-wide lint/types/test. This workflow cannot `needs:` a job in
 # another workflow file, so it re-runs only the two CLI-scoped tasks, which
-# cost seconds.
+# cost seconds. The build runs first because the smoke test inspects dist/.
 #
 # Auth: OIDC trusted publishing (id-token: write), not an NPM_TOKEN secret.
 # Two things had to be true for this to work, in order:
@@ -66,7 +66,7 @@ jobs:
         uses: actions/checkout@v7
 
       - name: Set up pnpm
-        uses: pnpm/action-setup@v6.1.0
+        uses: pnpm/action-setup@v6.1.1
 
       # No `registry-url:` here on purpose — that makes setup-node write its
       # own npmrc via NPM_CONFIG_USERCONFIG, which is unnecessary noise: the
@@ -149,6 +149,15 @@ jobs:
           mv package.json.tmp apps/cli/package.json
           node -e "console.log('stamped version:', require('./apps/cli/package.json').version)"
 
+      # Direct `tsdown` rather than `turbo run build`: the stamped package.json
+      # must be inside the bundle, and this sidesteps any turbo cache question
+      # entirely. Built BEFORE the tests: __tests__/smoke.test.ts asserts on
+      # dist/index.cjs, which does not exist on a clean runner until now.
+      - name: Build CLI
+        if: steps.guard.outputs.should_publish != 'false'
+        working-directory: apps/cli
+        run: pnpm build
+
       - name: Type-check and test CLI
         if: steps.guard.outputs.should_publish != 'false'
         working-directory: apps/cli
@@ -156,27 +165,58 @@ jobs:
           pnpm check-types
           pnpm test
 
-      # Direct `tsdown` rather than `turbo run build`: the stamped package.json
-      # must be inside the bundle, and this sidesteps any turbo cache question
-      # entirely.
-      - name: Build CLI
+      # `pnpm pack`, then `npm publish <tarball>`: package.json uses pnpm-only
+      # specs (`catalog:`, `workspace:`) that `npm publish` would ship verbatim,
+      # leaving the package uninstallable. `pnpm pack` rewrites them to concrete
+      # versions; publishing stays on npm for the OIDC exchange (see header).
+      # A tarball publish runs no lifecycle scripts, so the version check that
+      # `prepublishOnly` does is repeated against the tarball here.
+      - name: Pack tarball
+        id: pack
         if: steps.guard.outputs.should_publish != 'false'
         working-directory: apps/cli
-        run: pnpm build
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          PACK_DIR="${RUNNER_TEMP}/npm-pack"
+          rm -rf "${PACK_DIR}"
+          mkdir -p "${PACK_DIR}"
+          pnpm pack --pack-destination "${PACK_DIR}"
+          TARBALL="$(find "${PACK_DIR}" -maxdepth 1 -name '*.tgz' -print -quit)"
+          if [[ -z "${TARBALL}" ]]; then
+            echo "::error::pnpm pack produced no tarball in ${PACK_DIR}"
+            exit 1
+          fi
+          MANIFEST="$(tar -xOf "${TARBALL}" package/package.json)"
+          PACKED_VERSION="$(jq -r '.version' <<<"${MANIFEST}")"
+          if [[ "${PACKED_VERSION}" != "${VERSION}" ]]; then
+            echo "::error::Tarball version '${PACKED_VERSION}' does not match '${VERSION}'"
+            exit 1
+          fi
+          LEAKED="$(jq -r '
+            [.dependencies, .devDependencies, .peerDependencies, .optionalDependencies]
+            | map(select(. != null) | to_entries[]) | .[]
+            | select(.value | test("^(catalog|workspace):"))
+            | "\(.key)@\(.value)"' <<<"${MANIFEST}")"
+          if [[ -n "${LEAKED}" ]]; then
+            echo "::error::Tarball package.json still has pnpm-only specs: ${LEAKED//$'\n'/, }"
+            exit 1
+          fi
+          echo "tarball=${TARBALL}" >> "$GITHUB_OUTPUT"
 
       - name: Publish to npm
         id: publish
         if: steps.guard.outputs.should_publish != 'false'
-        working-directory: apps/cli
         env:
           DIST_TAG: ${{ steps.version.outputs.dist_tag }}
           DRY_RUN: ${{ inputs.dry_run }}
+          TARBALL: ${{ steps.pack.outputs.tarball }}
         run: |
           ARGS=(--access public --tag "${DIST_TAG}")
           if [[ "${DRY_RUN}" == "true" ]]; then
             ARGS+=(--dry-run)
           fi
-          npm publish "${ARGS[@]}"
+          npm publish "${TARBALL}" "${ARGS[@]}"
 
       # Lets ChatbotXIO/chatbotx-agent's upstream-drift-check workflow run
       # immediately instead of waiting for its next scheduled run. Optional:

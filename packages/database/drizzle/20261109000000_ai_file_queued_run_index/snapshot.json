@@ -1,0 +1,792 @@
+{
+  "type": "diff",
+  "version": "10",
+  "dialect": "postgres",
+  "id": "108bbbdb-c92a-4211-8769-e2e7dfdf82d2",
+  "prevIds": [
+    "51e8a458-8593-47ef-8492-2d1f3dc72bd6",
+    "919746cc-88d6-4f55-a0ac-48bf452698f4"
+  ],
+  "footprints": [
+    {
+      "statementType": "create_enum",
+      "statementTarget": [
+        "enum",
+        "public",
+        "tenantDefaultTemplateAction"
+      ],
+      "writes": [
+        "s|enum|public.tenantDefaultTemplateAction",
+        "n|enum|public.tenantDefaultTemplateAction",
+        "e|enum|public.tenantDefaultTemplateAction",
+        "n|type|public.tenantDefaultTemplateAction"
+      ],
+      "reads": [
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "create_enum",
+      "statementTarget": [
+        "enum",
+        "public",
+        "templateInstallSource"
+      ],
+      "writes": [
+        "s|enum|public.templateInstallSource",
+        "n|enum|public.templateInstallSource",
+        "e|enum|public.templateInstallSource",
+        "n|type|public.templateInstallSource"
+      ],
+      "reads": [
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "create_table",
+      "statementTarget": [
+        "table",
+        "public",
+        "TenantDefaultTemplate"
+      ],
+      "writes": [
+        "s|tbl|public.TenantDefaultTemplate",
+        "n|tbl|public.TenantDefaultTemplate",
+        "e|tbl|public.TenantDefaultTemplate",
+        "n|rel|public.TenantDefaultTemplate",
+        "n|type|public.TenantDefaultTemplate",
+        "n|rel|public.TenantDefaultTemplate_pkey"
+      ],
+      "reads": [
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "create_table",
+      "statementTarget": [
+        "table",
+        "public",
+        "TenantDefaultTemplateEvent"
+      ],
+      "writes": [
+        "s|tbl|public.TenantDefaultTemplateEvent",
+        "n|tbl|public.TenantDefaultTemplateEvent",
+        "e|tbl|public.TenantDefaultTemplateEvent",
+        "n|rel|public.TenantDefaultTemplateEvent",
+        "n|type|public.TenantDefaultTemplateEvent",
+        "n|rel|public.TenantDefaultTemplateEvent_pkey"
+      ],
+      "reads": [
+        "n|sch|public",
+        "n|enum|public.tenantDefaultTemplateAction"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "TemplateInstallation",
+        "installSource"
+      ],
+      "writes": [
+        "s|col|public.TemplateInstallation.installSource",
+        "n|col|public.TemplateInstallation.installSource",
+        "e|col|public.TemplateInstallation.installSource"
+      ],
+      "reads": [
+        "n|tbl|public.TemplateInstallation",
+        "n|sch|public",
+        "n|enum|public.templateInstallSource"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "TemplateVersion",
+        "changes"
+      ],
+      "writes": [
+        "s|col|public.TemplateVersion.changes",
+        "n|col|public.TemplateVersion.changes",
+        "e|col|public.TemplateVersion.changes"
+      ],
+      "reads": [
+        "n|tbl|public.TemplateVersion",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "TenantDefaultTemplate",
+        "TenantDefaultTemplate_templateId_idx"
+      ],
+      "writes": [
+        "s|idx|public.TenantDefaultTemplate_templateId_idx",
+        "n|idx|public.TenantDefaultTemplate_templateId_idx",
+        "e|idx|public.TenantDefaultTemplate_templateId_idx",
+        "n|rel|public.TenantDefaultTemplate_templateId_idx"
+      ],
+      "reads": [
+        "n|tbl|public.TenantDefaultTemplate",
+        "n|sch|public",
+        "n|col|public.TenantDefaultTemplate.templateId"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "TenantDefaultTemplateEvent",
+        "TenantDefaultTemplateEvent_tenantId_createdAt_idx"
+      ],
+      "writes": [
+        "s|idx|public.TenantDefaultTemplateEvent_tenantId_createdAt_idx",
+        "n|idx|public.TenantDefaultTemplateEvent_tenantId_createdAt_idx",
+        "e|idx|public.TenantDefaultTemplateEvent_tenantId_createdAt_idx",
+        "n|rel|public.TenantDefaultTemplateEvent_tenantId_createdAt_idx"
+      ],
+      "reads": [
+        "n|tbl|public.TenantDefaultTemplateEvent",
+        "n|sch|public",
+        "n|col|public.TenantDefaultTemplateEvent.tenantId",
+        "n|col|public.TenantDefaultTemplateEvent.createdAt"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "TenantDefaultTemplateEvent",
+        "TenantDefaultTemplateEvent_actorUserId_idx"
+      ],
+      "writes": [
+        "s|idx|public.TenantDefaultTemplateEvent_actorUserId_idx",
+        "n|idx|public.TenantDefaultTemplateEvent_actorUserId_idx",
+        "e|idx|public.TenantDefaultTemplateEvent_actorUserId_idx",
+        "n|rel|public.TenantDefaultTemplateEvent_actorUserId_idx"
+      ],
+      "reads": [
+        "n|tbl|public.TenantDefaultTemplateEvent",
+        "n|sch|public",
+        "n|col|public.TenantDefaultTemplateEvent.actorUserId"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "TemplateInstallation",
+        "TemplateInstallation_autoUpdate_sourceTemplateId_sourceVersion_idx"
+      ],
+      "writes": [
+        "s|idx|public.TemplateInstallation_autoUpdate_sourceTemplateId_sourceVersion_idx",
+        "n|idx|public.TemplateInstallation_autoUpdate_sourceTemplateId_sourceVersion_idx",
+        "e|idx|public.TemplateInstallation_autoUpdate_sourceTemplateId_sourceVersion_idx",
+        "n|rel|public.TemplateInstallation_autoUpdate_sourceTemplateId_sourceVersion_idx"
+      ],
+      "reads": [
+        "n|tbl|public.TemplateInstallation",
+        "n|sch|public",
+        "n|col|public.TemplateInstallation.sourceTemplateId",
+        "n|col|public.TemplateInstallation.sourceVersion"
+      ]
+    },
+    {
+      "statementType": "create_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "TenantDefaultTemplate"
+      ],
+      "writes": [
+        "s|fk|public.TenantDefaultTemplate.TenantDefaultTemplate_tenantId_Tenant_id_fkey",
+        "n|fk|public.TenantDefaultTemplate.TenantDefaultTemplate_tenantId_Tenant_id_fkey",
+        "e|fk|public.TenantDefaultTemplate.TenantDefaultTemplate_tenantId_Tenant_id_fkey",
+        "n|con|public.TenantDefaultTemplate.TenantDefaultTemplate_tenantId_Tenant_id_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.TenantDefaultTemplate",
+        "n|sch|public",
+        "n|tbl|public.Tenant",
+        "n|sch|public",
+        "n|col|public.TenantDefaultTemplate.tenantId",
+        "n|col|public.Tenant.id",
+        "e|uniqueness|public.Tenant.id"
+      ]
+    },
+    {
+      "statementType": "create_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "TenantDefaultTemplate"
+      ],
+      "writes": [
+        "s|fk|public.TenantDefaultTemplate.TenantDefaultTemplate_templateId_Template_id_fkey",
+        "n|fk|public.TenantDefaultTemplate.TenantDefaultTemplate_templateId_Template_id_fkey",
+        "e|fk|public.TenantDefaultTemplate.TenantDefaultTemplate_templateId_Template_id_fkey",
+        "n|con|public.TenantDefaultTemplate.TenantDefaultTemplate_templateId_Template_id_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.TenantDefaultTemplate",
+        "n|sch|public",
+        "n|tbl|public.Template",
+        "n|sch|public",
+        "n|col|public.TenantDefaultTemplate.templateId",
+        "n|col|public.Template.id",
+        "e|uniqueness|public.Template.id"
+      ]
+    },
+    {
+      "statementType": "create_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "TenantDefaultTemplateEvent"
+      ],
+      "writes": [
+        "s|fk|public.TenantDefaultTemplateEvent.TenantDefaultTemplateEvent_tenantId_Tenant_id_fkey",
+        "n|fk|public.TenantDefaultTemplateEvent.TenantDefaultTemplateEvent_tenantId_Tenant_id_fkey",
+        "e|fk|public.TenantDefaultTemplateEvent.TenantDefaultTemplateEvent_tenantId_Tenant_id_fkey",
+        "n|con|public.TenantDefaultTemplateEvent.TenantDefaultTemplateEvent_tenantId_Tenant_id_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.TenantDefaultTemplateEvent",
+        "n|sch|public",
+        "n|tbl|public.Tenant",
+        "n|sch|public",
+        "n|col|public.TenantDefaultTemplateEvent.tenantId",
+        "n|col|public.Tenant.id",
+        "e|uniqueness|public.Tenant.id"
+      ]
+    },
+    {
+      "statementType": "create_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "TenantDefaultTemplateEvent"
+      ],
+      "writes": [
+        "s|fk|public.TenantDefaultTemplateEvent.TenantDefaultTemplateEvent_actorUserId_User_id_fkey",
+        "n|fk|public.TenantDefaultTemplateEvent.TenantDefaultTemplateEvent_actorUserId_User_id_fkey",
+        "e|fk|public.TenantDefaultTemplateEvent.TenantDefaultTemplateEvent_actorUserId_User_id_fkey",
+        "n|con|public.TenantDefaultTemplateEvent.TenantDefaultTemplateEvent_actorUserId_User_id_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.TenantDefaultTemplateEvent",
+        "n|sch|public",
+        "n|tbl|public.User",
+        "n|sch|public",
+        "n|col|public.TenantDefaultTemplateEvent.actorUserId",
+        "n|col|public.User.id",
+        "e|uniqueness|public.User.id"
+      ]
+    }
+  ],
+  "deltas": [
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "name": "TenantDefaultTemplate",
+        "isRlsEnabled": false,
+        "entityType": "tables"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "name": "TenantDefaultTemplateEvent",
+        "isRlsEnabled": false,
+        "entityType": "tables"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "name": "tenantDefaultTemplateAction",
+        "values": [
+          "set",
+          "cleared"
+        ],
+        "entityType": "enums"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "name": "templateInstallSource",
+        "values": [
+          "manual",
+          "tenantDefault"
+        ],
+        "entityType": "enums"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "TenantDefaultTemplate",
+        "name": "tenantId",
+        "type": "bigint",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "TenantDefaultTemplate",
+        "name": "templateId",
+        "type": "bigint",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "TenantDefaultTemplate",
+        "name": "keyHash",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "TenantDefaultTemplate",
+        "name": "encryptedKey",
+        "type": "jsonb",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "TenantDefaultTemplate",
+        "name": "createdAt",
+        "type": "timestamp(6) with time zone",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "now()",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "TenantDefaultTemplate",
+        "name": "updatedAt",
+        "type": "timestamp(6) with time zone",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "now()",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "TenantDefaultTemplateEvent",
+        "name": "id",
+        "type": "bigint",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "TenantDefaultTemplateEvent",
+        "name": "createdAt",
+        "type": "timestamp(6) with time zone",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "now()",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "TenantDefaultTemplateEvent",
+        "name": "updatedAt",
+        "type": "timestamp(6) with time zone",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "now()",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "TenantDefaultTemplateEvent",
+        "name": "tenantId",
+        "type": "bigint",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "TenantDefaultTemplateEvent",
+        "name": "action",
+        "type": "tenantDefaultTemplateAction",
+        "typeSchema": "public",
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "TenantDefaultTemplateEvent",
+        "name": "templateId",
+        "type": "bigint",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "TenantDefaultTemplateEvent",
+        "name": "actorUserId",
+        "type": "bigint",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "TemplateInstallation",
+        "name": "installSource",
+        "type": "templateInstallSource",
+        "typeSchema": "public",
+        "notNull": true,
+        "dimensions": 0,
+        "default": "'manual'",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "TemplateVersion",
+        "name": "changes",
+        "type": "jsonb",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "TenantDefaultTemplate",
+        "name": "TenantDefaultTemplate_templateId_idx",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "templateId",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": false,
+        "where": null,
+        "with": "",
+        "method": "btree",
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "TenantDefaultTemplateEvent",
+        "name": "TenantDefaultTemplateEvent_tenantId_createdAt_idx",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "tenantId",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          },
+          {
+            "value": "createdAt",
+            "isExpression": false,
+            "asc": false,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": false,
+        "where": null,
+        "with": "",
+        "method": "btree",
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "TenantDefaultTemplateEvent",
+        "name": "TenantDefaultTemplateEvent_actorUserId_idx",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "actorUserId",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": false,
+        "where": null,
+        "with": "",
+        "method": "btree",
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "TemplateInstallation",
+        "name": "TemplateInstallation_autoUpdate_sourceTemplateId_sourceVersion_idx",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "sourceTemplateId",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          },
+          {
+            "value": "sourceVersion",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": false,
+        "where": "\"autoUpdate\" = true AND \"status\" IN ('completed', 'partial') AND \"sourceDeletedAt\" IS NULL",
+        "with": "",
+        "method": "btree",
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "TenantDefaultTemplate",
+        "name": "TenantDefaultTemplate_tenantId_Tenant_id_fkey",
+        "nameExplicit": false,
+        "columns": [
+          "tenantId"
+        ],
+        "schemaTo": "public",
+        "tableTo": "Tenant",
+        "columnsTo": [
+          "id"
+        ],
+        "onUpdate": "CASCADE",
+        "onDelete": "CASCADE",
+        "entityType": "fks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "TenantDefaultTemplate",
+        "name": "TenantDefaultTemplate_templateId_Template_id_fkey",
+        "nameExplicit": false,
+        "columns": [
+          "templateId"
+        ],
+        "schemaTo": "public",
+        "tableTo": "Template",
+        "columnsTo": [
+          "id"
+        ],
+        "onUpdate": "CASCADE",
+        "onDelete": "CASCADE",
+        "entityType": "fks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "TenantDefaultTemplateEvent",
+        "name": "TenantDefaultTemplateEvent_tenantId_Tenant_id_fkey",
+        "nameExplicit": false,
+        "columns": [
+          "tenantId"
+        ],
+        "schemaTo": "public",
+        "tableTo": "Tenant",
+        "columnsTo": [
+          "id"
+        ],
+        "onUpdate": "CASCADE",
+        "onDelete": "CASCADE",
+        "entityType": "fks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "TenantDefaultTemplateEvent",
+        "name": "TenantDefaultTemplateEvent_actorUserId_User_id_fkey",
+        "nameExplicit": false,
+        "columns": [
+          "actorUserId"
+        ],
+        "schemaTo": "public",
+        "tableTo": "User",
+        "columnsTo": [
+          "id"
+        ],
+        "onUpdate": "CASCADE",
+        "onDelete": "SET NULL",
+        "entityType": "fks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "TenantDefaultTemplate",
+        "name": "TenantDefaultTemplate_pkey",
+        "columns": [
+          "tenantId"
+        ],
+        "nameExplicit": false,
+        "entityType": "pks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "TenantDefaultTemplateEvent",
+        "name": "TenantDefaultTemplateEvent_pkey",
+        "columns": [
+          "id"
+        ],
+        "nameExplicit": false,
+        "entityType": "pks"
+      }
+    }
+  ]
+}

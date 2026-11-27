@@ -1,4 +1,5 @@
 import { channelPostService } from "@chatbotx.io/business"
+import { zodBigintIdAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
 import { possibleErrorsOnListingResource } from "@/lib/orpc/orpc-error-helper"
 import { workspaceTokenAuthAPIForScope } from "@/orpc"
@@ -24,6 +25,11 @@ const listChannelPostsRequest = z.object({
     .max(200)
     .optional()
     .describe("Case-insensitive substring match against the post caption."),
+  inboxId: zodBigintIdAsString()
+    .optional()
+    .describe(
+      "Only posts of this inbox (channel). Get the id from `inboxes.list`.",
+    ),
 })
 
 const listChannelPostsResponse = z.object({

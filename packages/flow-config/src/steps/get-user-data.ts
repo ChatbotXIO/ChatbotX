@@ -42,19 +42,55 @@ export const getUserDataStepSchema = z.object({
   message: z.string().trim().min(1).max(255),
   replyFormat: z.string().pipe(z.enum(ReplyFormat)),
   outputFieldId: z.string().trim().min(1),
-  retryMessage: z.string().trim().max(255),
-  // Reserved for a future runtime skip-button event; currently schema-only.
-  skipButtonLabel: z.string().trim().max(255),
+  retryMessage: z
+    .string()
+    .trim()
+    .max(255)
+    .default("")
+    .describe(
+      "Sent when the reply is invalid, before the question is asked again. Empty sends only the question.",
+    ),
+  skipButtonLabel: z
+    .string()
+    .trim()
+    .max(255)
+    .default("Skip")
+    .describe(
+      "Label of the Skip button sent with the question. Tapping it takes the Skip branch. Empty hides the button. Channels cap the shown label at 20 characters.",
+    ),
   showHint: z
     .boolean()
     .optional()
     .describe(
       "Phone/email reply formats only: offer the contact's stored phone/email as a quick reply on Messenger and Instagram. With no stored value, Messenger falls back to its native phone/email quick reply. Other channels send the plain prompt.",
     ),
-  autoSkip: z.boolean(),
-  autoSkipTimeUnit: z.string().pipe(waitStepDelayUnits),
-  autoSkipTimeValue: z.coerce.number().int().min(1).max(100),
-  autoSkipFailAttempts: z.coerce.number().int().min(1).max(100),
+  autoSkip: z
+    .boolean()
+    .default(false)
+    .describe(
+      "Take the Skip branch on its own when the contact has not answered within autoSkipTimeValue autoSkipTimeUnit of the first question (retries do not restart the clock), or after autoSkipFailAttempts invalid replies.",
+    ),
+  autoSkipTimeUnit: z
+    .string()
+    .pipe(waitStepDelayUnits)
+    .default("minutes")
+    .describe(
+      'Unit of autoSkipTimeValue: "seconds", "minutes", "hours" or "days".',
+    ),
+  autoSkipTimeValue: z.coerce
+    .number()
+    .int()
+    .min(1)
+    .max(100)
+    .default(3)
+    .describe("Time to wait for an answer before auto skipping (1-100)."),
+  autoSkipFailAttempts: z.coerce
+    .number()
+    .int()
+    .min(1)
+    .max(100)
+    .default(3)
+    .describe("Invalid replies allowed before auto skipping (1-100)."),
   states: z.tuple([successStateSchema, skipStateSchema]),
 })
 export type GetUserDataStepSchema = z.infer<typeof getUserDataStepSchema>
@@ -82,18 +118,23 @@ export function decodeContactHintQuickReplyPayload(
   return payload.slice(CONTACT_HINT_QUICK_REPLY_PREFIX.length) || null
 }
 
-export const getUserDataStepDefaultFn = (): GetUserDataStepSchema => ({
-  id: createId(),
-  stepType: stepTypes.enum.getUserData,
+// `skipButtonLabel` is author copy: the builder passes the label in the UI
+// language, and this fallback only serves callers without one (public API).
+export const getUserDataStepDefaultFn = (
+  props: Partial<GetUserDataStepSchema> = {},
+): GetUserDataStepSchema => ({
   message: "",
   replyFormat: ReplyFormat.text,
   outputFieldId: "",
   retryMessage: "",
-  skipButtonLabel: "",
+  skipButtonLabel: "Skip",
   showHint: false,
   autoSkip: false,
   autoSkipTimeUnit: waitStepDelayUnits.enum.minutes,
   autoSkipTimeValue: 3,
   autoSkipFailAttempts: 3,
   states: [successStateDefaultFn(), skipStateDefaultFn()],
+  ...props,
+  id: createId(),
+  stepType: stepTypes.enum.getUserData,
 })

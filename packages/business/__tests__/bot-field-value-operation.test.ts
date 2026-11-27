@@ -17,8 +17,10 @@ const mocks = vi.hoisted(() => {
   const updateReturning = vi.fn()
   const insertValues = vi.fn()
   const insertReturning = vi.fn()
+  const selectForUpdate = vi.fn()
   const workspaceFindFirst = vi.fn()
   const invalidateCacheTags = vi.fn()
+  const lockOptions = vi.fn()
   const sqlMock = vi.fn(
     (strings: TemplateStringsArray, ...values: unknown[]) => ({
       text: strings.join("?"),
@@ -38,8 +40,10 @@ const mocks = vi.hoisted(() => {
     updateReturning,
     insertValues,
     insertReturning,
+    selectForUpdate,
     workspaceFindFirst,
     invalidateCacheTags,
+    lockOptions,
     sqlMock,
     parseOrderByAsObject,
     parsePagination,
@@ -59,6 +63,10 @@ const botFieldModel = {
 
 vi.mock("@chatbotx.io/database/client", () => ({
   db: {
+    execute: vi.fn(),
+    // Runs the callback against the same mocked client the test asserts on.
+    transaction: async (run: (tx: unknown) => unknown) =>
+      run((await import("@chatbotx.io/database/client")).db),
     query: {
       botFieldModel: {
         findFirst: mocks.findFirst,
@@ -89,10 +97,17 @@ vi.mock("@chatbotx.io/database/client", () => ({
       },
     })),
     $count: mocks.countMock,
+    // The calculated operations lock the row first (`select ... for update`).
+    select: () => ({
+      from: () => ({
+        where: () => ({ for: () => mocks.selectForUpdate() }),
+      }),
+    }),
   },
   and: vi.fn((...conditions: unknown[]) => ({ and: conditions })),
   eq: vi.fn((column: unknown, value: unknown) => ({ eq: [column, value] })),
   inArray: vi.fn(),
+  isUniqueViolationError: () => false,
   relationsFilterToSQL: mocks.relationsFilterToSQL,
   sql: mocks.sqlMock,
 }))
@@ -125,6 +140,11 @@ vi.mock("../src/base.service", () => ({
 
 vi.mock("../src/errors", () => ({
   notFoundException: (message: string) => new Error(message),
+  invalidFieldOperationException: (reason: string) =>
+    Object.assign(new Error(reason), {
+      code: "invalidFieldOperation",
+      data: { reason },
+    }),
   ChatbotXException: class ChatbotXException extends Error {
     code: string
     constructor(message: string, code?: string) {
@@ -139,8 +159,26 @@ vi.mock("../src/folder/service", () => ({
   folderService: { ensureExists: vi.fn() },
 }))
 
-vi.mock("../src/template/installed-resource.service", () => ({
-  assertDeletable: vi.fn(),
+// Run the locked transaction against the same mocked client the test asserts on.
+vi.mock("../src/template/template-resource-locks", async () => {
+  const { db } = await import("@chatbotx.io/database/client")
+  return {
+    withTemplateLockedTransaction: (
+      run: (tx: unknown) => unknown,
+      options?: unknown,
+    ) => {
+      mocks.lockOptions(options)
+      return run(db)
+    },
+  }
+})
+
+vi.mock("../src/template/installed-resource.service", async () => ({
+  ...(await import("./helpers/template-guard-mocks")).templateGuardMocks({
+    assertDeletable: vi.fn(),
+    assertResourceEditable: vi.fn(),
+  }),
+  changedKeysOf: vi.fn(() => []),
 }))
 
 const { botFieldService } = await import("../src/bot-field/service")
@@ -212,6 +250,60 @@ describe("botFieldService.applyValueOperation — set", () => {
     expect(mocks.updateSet).toHaveBeenCalledWith(
       expect.objectContaining({ value: expected }),
     )
+  })
+
+  test("a name patch locks the field before the stored row is re-read, then diffs the fresh row", async () => {
+    const { changedKeysOf } = await import(
+      "../src/template/installed-resource.service"
+    )
+    mocks.findFirst.mockResolvedValue(existingRow({ name: "stale" }))
+    mocks.updateReturning.mockResolvedValue([existingRow({ name: "next" })])
+    mocks.findFirst.mockClear()
+    vi.mocked(changedKeysOf).mockClear()
+    mocks.lockOptions.mockClear()
+
+    await botFieldService.updateByKey({
+      workspaceId: "ws-1",
+      key: "field",
+      data: { name: "next" },
+    })
+
+    expect(mocks.lockOptions).toHaveBeenCalledWith({
+      workspaceId: expect.any(String),
+      initialKeys: [{ kind: "botField", resourceId: "1" }],
+    })
+    // First read resolves the key; the second is the re-read under the lock.
+    expect(mocks.findFirst).toHaveBeenCalledTimes(2)
+    expect(mocks.lockOptions.mock.invocationCallOrder[0]).toBeLessThan(
+      mocks.findFirst.mock.invocationCallOrder[1] as number,
+    )
+    expect(changedKeysOf).toHaveBeenCalledTimes(1)
+  })
+
+  test("set without a caller transaction guards first on the locked transaction, before the write", async () => {
+    const { assertResourceEditable } = await import(
+      "../src/template/installed-resource.service"
+    )
+    const { db } = await import("@chatbotx.io/database/client")
+    vi.mocked(assertResourceEditable).mockClear()
+    mocks.findFirst.mockResolvedValue(existingRow({ type: "shortText" }))
+    mocks.updateReturning.mockResolvedValue([
+      existingRow({ type: "shortText", value: "after" }),
+    ])
+
+    await botFieldService.applyValueOperation({
+      workspaceId: "ws-1",
+      key: "field",
+      operation: FieldOperationType.set,
+      value: "after",
+    })
+
+    expect(assertResourceEditable).toHaveBeenCalledWith(
+      expect.objectContaining({ resourceKind: "botField", tx: db }),
+    )
+    expect(
+      vi.mocked(assertResourceEditable).mock.invocationCallOrder[0],
+    ).toBeLessThan(mocks.updateSet.mock.invocationCallOrder[0] as number)
   })
 
   // Runtime coercion for `boolean`/`number` set values (unified normalizer,
@@ -461,6 +553,10 @@ describe("botFieldService.applyValueOperation — append/prepend/increase/decrea
     // literal, proving the concatenation happens inside Postgres.
     const [[setArg]] = mocks.updateSet.mock.calls
     expect(setArg.value.text).toContain("concat")
+    // Postgres cannot infer the type of an untyped parameter inside concat()
+    // ("could not determine data type of parameter $1"), so the bound operand
+    // must be cast.
+    expect(setArg.value.text).toContain("::text")
     expect(setArg.value.values).toContain("bar")
   })
 
@@ -482,6 +578,7 @@ describe("botFieldService.applyValueOperation — append/prepend/increase/decrea
     expect(result.value).toBe("foobar")
     const [[setArg]] = mocks.updateSet.mock.calls
     expect(setArg.value.text).toContain("concat")
+    expect(setArg.value.text).toContain("::text")
   })
 
   test("increase runs a single atomic numeric UPDATE for type number", async () => {
@@ -709,6 +806,195 @@ describe("botFieldService.applyValueOperation — operation x type policy", () =
         value: "1",
       }),
     ).rejects.toBeInstanceOf(ChatbotXException)
+  })
+})
+
+describe("botFieldService.applyValueOperation — error contract", () => {
+  afterEach(() => {
+    vi.clearAllMocks()
+  })
+
+  const run = (operation: FieldOperationType, value: string) =>
+    botFieldService.applyValueOperation({
+      workspaceId: "ws-1",
+      key: "field",
+      operation,
+      value,
+    })
+
+  test("an unsupported operation for the type throws invalidFieldOperation with its message and no reason", async () => {
+    mocks.findFirst.mockResolvedValue(existingRow({ type: "boolean" }))
+
+    const error = await run(FieldOperationType.increase, "1").catch(
+      (caught: unknown) => caught,
+    )
+
+    expect(error).toBeInstanceOf(ChatbotXException)
+    expect(error).toMatchObject({
+      code: "invalidFieldOperation",
+      message: 'Operation "O04" is not supported for field type "boolean"',
+    })
+    expect((error as ChatbotXException).data).toBeUndefined()
+  })
+
+  test("a calculator rejection carries the machine-readable reason", async () => {
+    mocks.findFirst.mockResolvedValue(existingRow({ type: "number" }))
+    mocks.selectForUpdate.mockResolvedValue([
+      existingRow({ type: "number", value: "4" }),
+    ])
+
+    const error = await run(FieldOperationType.formula, "1 +").catch(
+      (caught: unknown) => caught,
+    )
+
+    expect(error).toMatchObject({
+      code: "invalidFieldOperation",
+      data: { reason: "invalidExpression" },
+    })
+  })
+
+  test.each([
+    FieldOperationType.increase,
+    FieldOperationType.decrease,
+  ])("%s on a number field rejects a non-numeric operand with the documented message and no reason", async (operation) => {
+    mocks.findFirst.mockResolvedValue(
+      existingRow({ type: "number", value: "10" }),
+    )
+
+    const error = await run(operation, "abc").catch((caught: unknown) => caught)
+
+    expect(error).toMatchObject({
+      code: "invalidFieldOperation",
+      message: '"abc" is not a valid number value for this field.',
+    })
+    expect((error as ChatbotXException).data).toBeUndefined()
+    expect(mocks.updateSet).not.toHaveBeenCalled()
+  })
+})
+
+describe("botFieldService.applyValueOperation — calculated operations", () => {
+  afterEach(() => {
+    vi.clearAllMocks()
+  })
+
+  const arrangeRow = (type: string, value: string | null) => {
+    mocks.findFirst.mockResolvedValue(existingRow({ type }))
+    mocks.selectForUpdate.mockResolvedValue([existingRow({ type, value })])
+    mocks.updateReturning.mockImplementation(async () => [
+      existingRow({ type, value: "persisted" }),
+    ])
+  }
+  const apply = (operation: FieldOperationType, value: string) =>
+    botFieldService.applyValueOperation({
+      workspaceId: "ws-1",
+      key: "field",
+      operation,
+      value,
+    })
+
+  test("clear nulls the value under the row lock", async () => {
+    arrangeRow("shortText", "old")
+
+    await apply(FieldOperationType.clear, "")
+
+    expect(mocks.updateSet).toHaveBeenCalledWith(
+      expect.objectContaining({ value: null }),
+    )
+  })
+
+  test("takes the field's template lock before the row lock", async () => {
+    arrangeRow("shortText", "old")
+
+    await apply(FieldOperationType.clear, "")
+
+    expect(mocks.lockOptions).toHaveBeenCalledWith({
+      workspaceId: "ws-1",
+      initialKeys: [{ kind: "botField", resourceId: existingRow({}).id }],
+    })
+    // The transaction opened with the lock is the one the row lock runs in.
+    expect(mocks.lockOptions.mock.invocationCallOrder[0]).toBeLessThan(
+      mocks.selectForUpdate.mock.invocationCallOrder[0],
+    )
+  })
+
+  test("formula is computed from the locked value", async () => {
+    arrangeRow("number", "4")
+
+    await apply(FieldOperationType.formula, "value * 2 + 1")
+
+    expect(mocks.updateSet).toHaveBeenCalledWith(
+      expect.objectContaining({ value: "9" }),
+    )
+  })
+
+  test("set now stamps the current instant on a datetime field", async () => {
+    arrangeRow("datetime", null)
+
+    await apply(FieldOperationType.setNow, "")
+
+    const [setValue] = mocks.updateSet.mock.calls[0] ?? []
+    expect(Number.isNaN(Date.parse(setValue.value))).toBe(false)
+  })
+
+  test("add days moves a stored datetime by calendar days", async () => {
+    arrangeRow("datetime", "2026-03-10T00:00:00.000Z")
+
+    await apply(FieldOperationType.addDays, "3")
+
+    expect(mocks.updateSet).toHaveBeenCalledWith(
+      expect.objectContaining({ value: "2026-03-13T00:00:00.000Z" }),
+    )
+  })
+
+  test("invalidates the cache once, after the transaction has committed", async () => {
+    arrangeRow("number", "4")
+
+    await apply(FieldOperationType.formula, "value + 1")
+
+    expect(mocks.invalidateCacheTags).toHaveBeenCalledTimes(1)
+    expect(
+      mocks.invalidateCacheTags.mock.invocationCallOrder[0],
+    ).toBeGreaterThan(mocks.updateReturning.mock.invocationCallOrder[0] ?? 0)
+  })
+
+  test("a rolled-back calculation never invalidates", async () => {
+    arrangeRow("number", "4")
+    mocks.updateReturning.mockRejectedValueOnce(new Error("db down"))
+
+    await expect(
+      apply(FieldOperationType.formula, "value + 1"),
+    ).rejects.toThrow("db down")
+    expect(mocks.invalidateCacheTags).not.toHaveBeenCalled()
+  })
+
+  test("a rejected calculation throws a typed error with the reason and writes nothing", async () => {
+    arrangeRow("number", "4")
+
+    await expect(
+      apply(FieldOperationType.formula, "1 +"),
+    ).rejects.toMatchObject({
+      code: "invalidFieldOperation",
+      data: { reason: "invalidExpression" },
+    })
+    expect(mocks.updateSet).not.toHaveBeenCalled()
+  })
+
+  test("an operation the type does not allow never reaches the calculator", async () => {
+    arrangeRow("shortText", "x")
+
+    await expect(
+      apply(FieldOperationType.formula, "value + 1"),
+    ).rejects.toMatchObject({ code: "invalidFieldOperation" })
+    expect(mocks.selectForUpdate).not.toHaveBeenCalled()
+  })
+
+  test("throws notFound when the row vanishes before the lock", async () => {
+    mocks.findFirst.mockResolvedValue(existingRow({ type: "number" }))
+    mocks.selectForUpdate.mockResolvedValue([])
+
+    await expect(apply(FieldOperationType.formula, "1")).rejects.toThrow(
+      "Bot field not found",
+    )
   })
 })
 

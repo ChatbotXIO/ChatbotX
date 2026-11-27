@@ -14,6 +14,7 @@ import {
   resolveFilterValueLabelsRequest,
   resolveFilterValueLabelsResponse,
 } from "@/features/contact-filter/schema/value-labels"
+import { pipelineScopeFromMember } from "@/features/pipelines/lib/access"
 import { workspaceAuthorizedMidddleware } from "@/middlewares/auth"
 import { authorizedAPI } from "@/orpc"
 
@@ -69,7 +70,11 @@ export const privateContactFilterAPI = {
     .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
     .output(resolveFilterValueLabelsResponse)
     .handler(
-      async ({ input: { workspaceId, ...ids } }) =>
-        await resolveContactFilterValueLabels({ workspaceId, ids }),
+      async ({ input: { workspaceId, ...ids }, context }) =>
+        await resolveContactFilterValueLabels({
+          workspaceId,
+          ids,
+          pipelineScope: pipelineScopeFromMember(context),
+        }),
     ),
 }

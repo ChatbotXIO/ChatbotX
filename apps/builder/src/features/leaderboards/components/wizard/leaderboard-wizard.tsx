@@ -16,6 +16,7 @@ import { useAction } from "next-safe-action/hooks"
 import { useMemo, useState } from "react"
 import { type FieldPath, useForm, useWatch } from "react-hook-form"
 import { toast } from "sonner"
+import { LockedContent } from "@/features/templates/components/locked-editor"
 import { createLeaderboardAction } from "../../actions/create-leaderboard.action"
 import { updateLeaderboardAction } from "../../actions/update-leaderboard.action"
 import { supportsFollowersOnly } from "../../lib/platforms"
@@ -289,7 +290,9 @@ export function LeaderboardWizard({
         </div>
 
         {step === 1 ? (
-          <StepInfo startLocked={hostLocked} workspaceId={workspaceId} />
+          <LockedContent>
+            <StepInfo startLocked={hostLocked} workspaceId={workspaceId} />
+          </LockedContent>
         ) : null}
         {step === 2 ? (
           <StepConfig

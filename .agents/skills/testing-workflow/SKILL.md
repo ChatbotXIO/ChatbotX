@@ -14,6 +14,20 @@ The verification gate every change passes before it is "done". CI runs Types, Li
 3. **Test** — run the affected package's Vitest suite.
 4. **Coverage** — keep the 80% threshold (`packages/vitest-config/src/node.ts`). Do **not** set `VITEST_SKIP_COVERAGE_THRESHOLDS` to dodge it — that silently nulls all thresholds and hides under-coverage.
 
+### Focused Vitest runs
+
+For a single test file, invoke Vitest directly and cap its local worker pool:
+
+```bash
+VITEST_MAX_WORKERS=1 pnpm --filter <workspace> exec vitest run <relative-test-path>
+```
+
+`packages/vitest-config/src/node.ts` honors `VITEST_MAX_WORKERS`; it bounds memory even if the selected scope grows. NEVER use `pnpm --filter <workspace> test -- <relative-test-path>` for a focused run: the forwarded `--` can make Vitest ignore the path and run the entire workspace suite. To confirm the selected scope without executing tests, run:
+
+```bash
+pnpm --filter <workspace> exec vitest list <relative-test-path>
+```
+
 ## Where tests live
 
 - App/package/integration-level tests (actions, routes, API behavior, cache, worker behavior, cross-boundary): `<workspace>/__tests__/` — e.g. `apps/builder/__tests__`, `apps/worker/__tests__`, `packages/sdk/__tests__`, `integrations/messenger/__tests__`.
@@ -58,3 +72,7 @@ For changes under `packages/analytics/src/repositories/**`, `packages/business/s
 ## Stop condition
 
 A change is verified only when lint + the touched packages' `check-types` + the affected tests all pass, with coverage at/above threshold (not skipped). If you cannot run a gate, say which and why — do not report "verified" on an unrun gate.
+
+## Templates tests
+
+Touching a template-copied kind requires: an adapter unit test (collect drops history/secrets; insert remaps, skips-with-warning, never widens), a service guard test, the hard-coded-list tests (`template-sync-handler-coverage`, `template-category-counts-share`, `template-service-authorization`, `template-install-order`), and a DB test (`packages/business/__tests__/integration/template-tools-*-db.test.ts` pattern: install → View-only refusal → normal `update` round trip → uninstall). Run DB tests one file at a time. See `template-integration` section 7 and `docs/templates-testing.md`.

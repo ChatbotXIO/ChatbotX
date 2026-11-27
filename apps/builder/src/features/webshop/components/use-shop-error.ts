@@ -28,6 +28,13 @@ const KNOWN_CODES = new Set([
   "discountCodeAlreadyUsed",
   "discountCodeNotEligible",
   "discountCodeNotApplicable",
+  "paymentMethodUnavailable",
+  "paymentProviderNotConnected",
+  "paymentProviderUnavailable",
+  "paymentProviderRejected",
+  "paymentProviderCredentialsRejected",
+  "paymentAmountUnsupported",
+  "orderPaymentNotOpen",
 ])
 
 const FIELD_LABEL_KEYS: Record<string, string> = {

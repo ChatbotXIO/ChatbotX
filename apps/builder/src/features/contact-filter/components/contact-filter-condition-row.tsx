@@ -9,6 +9,7 @@ import {
   formatCtwaRetargetChipLabel,
   formatFilterConditionValue,
 } from "./contact-filter-config"
+import { pipelineItemConfigName } from "./pipeline-item-filter-config"
 
 type ContactFilterConditionRowProps = {
   row: ContactFilterCondition
@@ -59,6 +60,7 @@ export const ContactFilterConditionRow = ({
   const isBotField = row.field === "botField"
   const isCouponTopic = row.field === "couponTopic"
   const isLeaderboardScore = row.field === "leaderboardScore"
+  const isPipelineItem = row.field === "pipelineItem"
   const fieldConfig = configs.find((c) => {
     if (isCustomField && "customFieldId" in row) {
       return String(c.customFieldId) === String(row.customFieldId)
@@ -71,6 +73,9 @@ export const ContactFilterConditionRow = ({
     }
     if (isLeaderboardScore && "leaderboardId" in row) {
       return String(c.leaderboardId) === String(row.leaderboardId)
+    }
+    if (isPipelineItem && "attribute" in row) {
+      return c.name === pipelineItemConfigName(row)
     }
     return c.name === row.field
   })
@@ -89,6 +94,9 @@ export const ContactFilterConditionRow = ({
       if (isLeaderboardScore) {
         return t("condition.fields.leaderboardScore")
       }
+      if (isPipelineItem) {
+        return t("condition.fields.pipelineItem")
+      }
       return t(`condition.fields.${row.field}`)
     })()
   const valueDisplay = formatFilterConditionValue(
@@ -96,7 +104,10 @@ export const ContactFilterConditionRow = ({
     fieldConfig,
     t,
   )
-  const operatorLabel = operatorLabelByValue.get(row.operator) ?? row.operator
+  const operatorLabel =
+    fieldConfig?.operatorLabels?.[row.operator] ??
+    operatorLabelByValue.get(row.operator) ??
+    row.operator
   const editLabel = [fieldLabel, operatorLabel, valueDisplay]
     .filter(Boolean)
     .join(" ")

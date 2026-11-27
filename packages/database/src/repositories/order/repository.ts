@@ -4,9 +4,15 @@ import {
   db,
   eq,
   inArray,
+  ne,
   relationsFilterToSQL,
 } from "@chatbotx.io/database/client"
-import type { OrderSource, OrderStatus } from "@chatbotx.io/database/partials"
+import type {
+  FulfillmentStatus,
+  OrderSource,
+  OrderStatus,
+  PaymentStatus,
+} from "@chatbotx.io/database/partials"
 import {
   orderItemModel,
   orderModel,
@@ -23,12 +29,17 @@ export type OrderListInput = {
   workspaceId: string
   status?: OrderStatus[] | null
   source?: OrderSource[] | null
+  paymentStatus?: PaymentStatus[] | null
+  fulfillmentStatus?: FulfillmentStatus[] | null
   contactId?: string | null
   /** Inclusive lower bound on `createdAt`. */
   from?: Date | null
   /** Exclusive upper bound on `createdAt`. */
   to?: Date | null
-  /** An order number, or part of the customer's name, phone or email. */
+  /**
+   * An order number (ours, or Shopify's name such as `#1004`), or part of the
+   * customer's name, phone or email.
+   */
   keyword?: string | null
   page?: number
   perPage?: number
@@ -67,12 +78,19 @@ const buildListWhere = (input: OrderListInput) => {
     workspaceId: input.workspaceId,
     status: input.status?.length ? { in: input.status } : undefined,
     source: input.source?.length ? { in: input.source } : undefined,
+    paymentStatus: input.paymentStatus?.length
+      ? { in: input.paymentStatus }
+      : undefined,
+    fulfillmentStatus: input.fulfillmentStatus?.length
+      ? { in: input.fulfillmentStatus }
+      : undefined,
     contactId: input.contactId ?? undefined,
     createdAt,
     ...(keyword
       ? {
           OR: [
             ...(numberMatch ? [{ number: Number(numberMatch[1]) }] : []),
+            { externalName: keyword },
             { customerName: { ilike: likeContains(keyword) } },
             { customerPhone: { ilike: likeContains(keyword) } },
             { customerEmail: { ilike: likeContains(keyword) } },
@@ -119,8 +137,37 @@ export const orderRepository = {
           orderBy: { createdAt: "asc", id: "asc" },
           with: { actorUser: { columns: { id: true, name: true } } },
         },
+        payments: { orderBy: { createdAt: "desc", id: "desc" } },
       },
     })
+  },
+
+  /**
+   * Marks an online order paid, only while it is still unpaid and not
+   * cancelled: of two payments landing at once only one wins, and a payment
+   * for a cancelled order changes nothing (it is refunded instead).
+   */
+  async markPaid(
+    input: { workspaceId: string; orderId: string; paidAt: Date },
+    tx: DatabaseClient = db,
+  ) {
+    const [row] = await tx
+      .update(orderModel)
+      .set({
+        paymentStatus: "paid",
+        paidAt: input.paidAt,
+        paymentExpiresAt: null,
+      })
+      .where(
+        and(
+          eq(orderModel.id, input.orderId),
+          eq(orderModel.workspaceId, input.workspaceId),
+          eq(orderModel.paymentStatus, "unpaid"),
+          ne(orderModel.status, "cancelled"),
+        ),
+      )
+      .returning()
+    return row
   },
 
   async find(
@@ -152,6 +199,74 @@ export const orderRepository = {
       )
       .for("update")
     return row
+  },
+
+  /** A mirrored Shopify order, locked until the transaction ends. */
+  /** A mirrored order by the external store's id; no lock. */
+  async findByExternalId(
+    input: { workspaceId: string; externalId: string },
+    tx: DatabaseClient = db,
+  ) {
+    const [row] = await tx
+      .select({ id: orderModel.id, status: orderModel.status })
+      .from(orderModel)
+      .where(
+        and(
+          eq(orderModel.workspaceId, input.workspaceId),
+          eq(orderModel.externalId, input.externalId),
+        ),
+      )
+      .limit(1)
+    return row
+  },
+
+  async findByExternalIdForUpdate(
+    input: { workspaceId: string; externalId: string },
+    tx: DatabaseClient,
+  ) {
+    const [row] = await tx
+      .select()
+      .from(orderModel)
+      .where(
+        and(
+          eq(orderModel.workspaceId, input.workspaceId),
+          eq(orderModel.externalId, input.externalId),
+        ),
+      )
+      .for("update")
+    return row
+  },
+
+  async update(
+    input: { workspaceId: string; orderId: string; values: OrderUpdateValues },
+    tx: DatabaseClient = db,
+  ) {
+    const [row] = await tx
+      .update(orderModel)
+      .set({ ...input.values, updatedAt: new Date() })
+      .where(
+        and(
+          eq(orderModel.id, input.orderId),
+          eq(orderModel.workspaceId, input.workspaceId),
+        ),
+      )
+      .returning()
+    return row
+  },
+
+  /** Drops an order's lines, so a mirrored order can write them again. */
+  async deleteItems(
+    input: { workspaceId: string; orderId: string },
+    tx: DatabaseClient = db,
+  ) {
+    await tx
+      .delete(orderItemModel)
+      .where(
+        and(
+          eq(orderItemModel.orderId, input.orderId),
+          eq(orderItemModel.workspaceId, input.workspaceId),
+        ),
+      )
   },
 
   async insert(values: OrderInsertValues, tx: DatabaseClient = db) {

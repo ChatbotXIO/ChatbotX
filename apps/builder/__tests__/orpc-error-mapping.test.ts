@@ -22,6 +22,10 @@ vi.mock("@/middlewares/channel-api-token-auth", () => ({
 vi.mock("@/middlewares/workspace-token-auth", () => ({
   workspaceTokenAuthMidddleware: {},
 }))
+vi.mock("@/middlewares/mobile-user-auth", () => ({
+  mobileUserAuthMiddleware: {},
+  mobileUserPasswordChangeAuthMiddleware: {},
+}))
 
 vi.mock("@chatbotx.io/database/errors", () => ({
   ModelNotfoundException: class ModelNotfoundException extends Error {},
@@ -174,6 +178,18 @@ describe("mapKnownOrpcErrors", () => {
       expect.objectContaining({ code: "tooManyRequests", status: 429 }),
     )
     expect(mockLoggerWarn).toHaveBeenCalledTimes(1)
+  })
+
+  test("maps a duplicate place category to a 409 placeCategoryDuplicated error", () => {
+    const error = new ChatbotXException(
+      "Place category already exists",
+      "placeCategoryDuplicated",
+      409,
+    )
+
+    expect(() => mapKnownOrpcErrors(error)).toThrow(
+      expect.objectContaining({ code: "placeCategoryDuplicated", status: 409 }),
+    )
   })
 
   test("maps a 5xx ChatbotXException without warn-logging — the route callback logs it once", () => {

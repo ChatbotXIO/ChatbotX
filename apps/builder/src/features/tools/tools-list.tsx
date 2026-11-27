@@ -217,12 +217,14 @@ export const TOOLS_CONFIG = [
     labelKey: "placesNearMe.title",
     descriptionKey: "placesNearMe.description",
     icon: MapIcon,
+    getLink: (id: string) => `/space/${id}/places-near-me`,
   },
   {
     id: "poll-manager",
     labelKey: "pollManager.title",
     descriptionKey: "pollManager.description",
     icon: UserCheck2Icon,
+    getLink: (id: string) => `/space/${id}/polls`,
   },
 ] as const
 

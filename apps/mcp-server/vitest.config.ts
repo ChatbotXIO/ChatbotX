@@ -1,11 +1,5 @@
-import { defineConfig } from "vitest/config"
-
-export default defineConfig({
-  test: {
-    environment: "node",
-    include: ["**/*.{test,spec}.ts"],
-    exclude: ["**/node_modules/**", "**/dist/**"],
-    clearMocks: true,
-    restoreMocks: true,
-  },
-})
+// The shared preset, not a bespoke config: it carries the 30s test/hook
+// timeouts, the CI worker budget and the env defaults every other suite
+// runs under. A standalone `defineConfig` here silently fell back to vitest's
+// 5s/10s defaults, the lowest in the repo.
+export { default } from "@chatbotx.io/vitest-config/node"

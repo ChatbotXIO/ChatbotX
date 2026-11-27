@@ -1,40 +1,52 @@
-import type { PassThrough } from "node:stream"
 import { leaderboardService } from "@chatbotx.io/business/leaderboard"
 import { fileStatuses } from "@chatbotx.io/database/partials"
 import { createUpload } from "@chatbotx.io/filesystem/node-upload"
+import { toUploadWriter } from "@chatbotx.io/filesystem/upload-writer"
+import { type CsvCell, toCsvRow, UTF8_BOM } from "@chatbotx.io/utils/csv"
 import type { JobExportLeaderboardParticipants } from "@chatbotx.io/worker-config"
 
 type ExportData = JobExportLeaderboardParticipants["data"]
+type ParticipantRow = Awaited<
+  ReturnType<typeof leaderboardService.exportPage>
+>[number]
 
-const FORMULA_PREFIX_RE = /^[=+\-@\t\r]/
-const NEWLINE_RE = /\r?\n/g
-const QUOTE_RE = /"/g
 const PAGE_SIZE = 1000
 const MAX_EXPORT_ROWS = 500_000
-
-/** CSV-escapes a cell and neutralizes spreadsheet formulas (same rules as the coupon export). */
-const escapeCsvValue = (value: string | number | null | undefined): string => {
-  const text = value === null || value === undefined ? "" : String(value)
-  if (!text) {
-    return '""'
-  }
-  const normalized = text.replace(NEWLINE_RE, " ")
-  const guarded = FORMULA_PREFIX_RE.test(normalized)
-    ? `'${normalized}`
-    : normalized
-  return `"${guarded.replace(QUOTE_RE, '""')}"`
-}
-
-const writeToStream = (stream: PassThrough, chunk: string): Promise<void> =>
-  new Promise((resolve, reject) => {
-    stream.write(chunk, (error) => (error ? reject(error) : resolve()))
-  })
 
 const formatBreakdown = (breakdown: Record<string, number>): string =>
   Object.entries(breakdown)
     .filter(([, count]) => count > 0)
     .map(([rule, count]) => `${rule}: ${count}`)
     .join("; ")
+
+const buildHeader = (withContactInfo: boolean): string[] => [
+  "Rank",
+  "Contact ID",
+  "Name",
+  ...(withContactInfo ? ["Phone", "Email"] : []),
+  "Score",
+  "Banned",
+  "Breakdown",
+  "Joined at",
+  "Last activity",
+]
+
+/** Banned participants have no rank (`null` → empty cell). */
+const buildCells = (
+  row: ParticipantRow,
+  rank: number | null,
+  withContactInfo: boolean,
+): CsvCell[] => [
+  rank,
+  row.contactId,
+  row.fullName,
+  ...(withContactInfo ? [row.phoneNumber, row.email] : []),
+  row.score,
+  row.isBanned ? "yes" : "no",
+  formatBreakdown(row.breakdown ?? {}),
+  new Date(row.createdAt).toISOString(),
+  new Date(row.lastActivityAt).toISOString(),
+]
 
 /**
  * Streams every participant of a leaderboard to CSV in ranking order (banned
@@ -43,38 +55,15 @@ const formatBreakdown = (breakdown: Record<string, number>): string =>
 export const exportLeaderboardParticipants = async (
   data: ExportData,
 ): Promise<void> => {
-  const { stream, done } = createUpload(data.outputPath, {
-    contentType: "text/csv; charset=utf-8",
-  })
-  let totalBytes = 0
+  const { workspaceId, fileId } = data
+  const withContactInfo = data.includeContactInfo === true
+  const upload = toUploadWriter(
+    createUpload(data.outputPath, { contentType: "text/csv; charset=utf-8" }),
+  )
   let totalRecords = 0
 
-  const fail = async () => {
-    await leaderboardService.updateExportFile({
-      workspaceId: data.workspaceId,
-      fileId: data.fileId,
-      values: { status: fileStatuses.enum.failed, meta: { totalRecords } },
-    })
-  }
-
   try {
-    const withContactInfo = data.includeContactInfo === true
-    const header = [
-      "Rank",
-      "Contact ID",
-      "Name",
-      ...(withContactInfo ? ["Phone", "Email"] : []),
-      "Score",
-      "Banned",
-      "Breakdown",
-      "Joined at",
-      "Last activity",
-    ]
-      .map(escapeCsvValue)
-      .join(",")
-      .concat("\n")
-    await writeToStream(stream, header)
-    totalBytes += Buffer.byteLength(header)
+    await upload.write(`${UTF8_BOM}${toCsvRow(buildHeader(withContactInfo))}`)
 
     let rank = 0
     for (let offset = 0; offset < MAX_EXPORT_ROWS; offset += PAGE_SIZE) {
@@ -83,49 +72,40 @@ export const exportLeaderboardParticipants = async (
         limit: PAGE_SIZE,
         offset,
       })
+      let chunk = ""
       for (const row of rows) {
         if (!row.isBanned) {
           rank += 1
         }
-        const line = [
-          row.isBanned ? "" : rank,
-          row.contactId,
-          row.fullName,
-          ...(withContactInfo ? [row.phoneNumber, row.email] : []),
-          row.score,
-          row.isBanned ? "yes" : "no",
-          formatBreakdown(row.breakdown ?? {}),
-          new Date(row.createdAt).toISOString(),
-          new Date(row.lastActivityAt).toISOString(),
-        ]
-          .map(escapeCsvValue)
-          .join(",")
-          .concat("\n")
-        await writeToStream(stream, line)
-        totalBytes += Buffer.byteLength(line)
-        totalRecords += 1
+        chunk += toCsvRow(
+          buildCells(row, row.isBanned ? null : rank, withContactInfo),
+        )
       }
+      await upload.write(chunk)
+      totalRecords += rows.length
       if (rows.length < PAGE_SIZE) {
         break
       }
     }
 
-    stream.end()
-    await done
+    await upload.finish()
     await leaderboardService.updateExportFile({
-      workspaceId: data.workspaceId,
-      fileId: data.fileId,
+      workspaceId,
+      fileId,
       values: {
         status: fileStatuses.enum.uploaded,
-        fileSize: String(totalBytes),
+        fileSize: String(upload.bytesWritten()),
         meta: { totalRecords },
         uploadedAt: new Date(),
       },
     })
   } catch (error) {
-    stream.destroy()
-    await done.catch(() => undefined)
-    await fail()
+    await upload.abort()
+    await leaderboardService.updateExportFile({
+      workspaceId,
+      fileId,
+      values: { status: fileStatuses.enum.failed, meta: { totalRecords } },
+    })
     throw error
   }
 }

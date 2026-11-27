@@ -1,3 +1,4 @@
+import { sql } from "drizzle-orm"
 import {
   index,
   jsonb,
@@ -7,7 +8,12 @@ import {
   timestamp,
   uniqueIndex,
 } from "drizzle-orm/pg-core"
-import { fileContextTypes, fileStatuses } from "../partials"
+import {
+  type ExportFailureReason,
+  type FileStatus,
+  fileContextTypes,
+  fileStatuses,
+} from "../partials"
 import {
   bigintAsString,
   sharedColumns,
@@ -18,6 +24,30 @@ import { workspaceModel } from "./workspace"
 
 export type FileMeta = {
   totalRecords?: number
+  /** Export-generic: what the export holds (e.g. `comments`, `phones`, `emails`). */
+  kind?: string
+  /** Export-generic: the ids of the records the export was started from. */
+  sourceIds?: string[]
+  /** Export-generic: an estimate of the rows the export will hold; never exact. */
+  expectedRecords?: number
+  /** Export-generic: the export stopped at a safety ceiling and is incomplete. */
+  truncated?: boolean
+  /**
+   * Export-generic: the file holds contact data the requester was allowed to
+   * see (a snapshot taken at the start); its link is only issued to a caller
+   * who may still see it.
+   */
+  containsContactData?: boolean
+  /**
+   * Export-generic: ISO time of the last sign of life of the running job (its
+   * pickup, then each progress save). A pending file that started reads as dead
+   * once its heartbeat is older than the start lock's TTL; one that never
+   * started, once it is older than the export's maximum queue wait, counted from
+   * its creation.
+   */
+  heartbeatAt?: string
+  /** Export-generic: why the export failed. */
+  failureReason?: ExportFailureReason
 }
 
 export const fileContextType = pgEnum(
@@ -27,7 +57,7 @@ export const fileContextType = pgEnum(
 
 export const fileStatus = pgEnum(
   "fileStatus",
-  fileStatuses.options as [string, ...string[]],
+  fileStatuses.options as [FileStatus, ...FileStatus[]],
 )
 
 export const fileModel = pgTable(
@@ -64,5 +94,13 @@ export const fileModel = pgTable(
       table.workspaceId.asc().nullsLast(),
       table.subType.asc().nullsLast(),
     ),
+    // The daily export retention sweep reads only export rows by age; the
+    // table also holds every generic upload, so it is never scanned whole.
+    index("File_export_createdAt_idx")
+      .on(table.createdAt)
+      .where(sql`${table.contextType} = 'export'`),
+    index("File_userId_idx")
+      .on(table.userId)
+      .where(sql`${table.userId} IS NOT NULL`),
   ],
 )

@@ -10,6 +10,8 @@ import type {
   CommerceEventProduct,
   MatchableEventType,
   OrderEventMetadata,
+  PipelineItemEventMetadata,
+  PostCommentEventMetadata,
   ShoppingCartSentMetadata,
   UserAskedAboutProductMetadata,
 } from "@chatbotx.io/events"
@@ -51,6 +53,11 @@ const EVENT_NAMES = {
     "contact_referred_a_new_contact",
   [triggerEventTypes.enum.contactReferredExistingContact]:
     "contact_referred_existing_contact",
+  [triggerEventTypes.enum.contactBlockedBot]: "contact_blocked_bot",
+  [triggerEventTypes.enum.contactUnblockedBot]: "contact_unblocked_bot",
+  [triggerEventTypes.enum.contactCommentedOnPost]: "contact_commented_on_post",
+  [triggerEventTypes.enum.contactFirstCommentedOnPost]:
+    "contact_first_commented_on_post",
   [triggerEventTypes.enum.dateTimeBasedTrigger]: "datetime_based_trigger",
   [triggerEventTypes.enum.incomingCall]: "incoming_call",
   [triggerEventTypes.enum.missedAudioCall]: "missed_audio_call",
@@ -64,11 +71,22 @@ const EVENT_NAMES = {
   [triggerEventTypes.enum.orderShipped]: "order_shipped",
   [triggerEventTypes.enum.orderConcluded]: "order_concluded",
   [triggerEventTypes.enum.orderCancelled]: "order_cancelled",
+  [triggerEventTypes.enum.orderPaid]: "order_paid",
+  [triggerEventTypes.enum.orderRefunded]: "order_refunded",
   [triggerEventTypes.enum.productOrdered]: "product_ordered",
   [triggerEventTypes.enum.productAddedToCart]: "product_added_to_cart",
   [triggerEventTypes.enum.productRemovedFromCart]: "product_removed_from_cart",
   [triggerEventTypes.enum.categoryAddedToCart]: "category_added_to_cart",
   [triggerEventTypes.enum.cartAbandoned]: "cart_abandoned",
+  [triggerEventTypes.enum.pipelineItemCreated]: "pipeline_item_created",
+  [triggerEventTypes.enum.pipelineItemMovedToStage]:
+    "pipeline_item_moved_to_stage",
+  [triggerEventTypes.enum.pipelineItemValueChanged]:
+    "pipeline_item_value_changed",
+  [triggerEventTypes.enum.pipelineItemStatusChanged]:
+    "pipeline_item_status_changed",
+  [triggerEventTypes.enum.pipelineItemPriorityChanged]:
+    "pipeline_item_priority_changed",
 } satisfies Record<MatchableEventType, string>
 
 async function buildTagPayload(
@@ -112,6 +130,35 @@ function buildSequencePayload(
     ...basePayload,
     sequence_id: data.sequenceId as string,
     sequence_name: data.sequenceName as string,
+  }
+}
+
+/** `contact_blocked_bot` / `contact_unblocked_bot`: which channel's bot it was. */
+function buildBotBlockPayload(
+  basePayload: WebhookPayloadBase,
+  data: Record<string, unknown>,
+): WebhookPayload {
+  return {
+    ...basePayload,
+    channel: typeof data.channel === "string" ? data.channel : null,
+  }
+}
+
+/** `contact_commented_on_post` / `contact_first_commented_on_post`: the post and the comment. */
+function buildPostCommentPayload(
+  basePayload: WebhookPayloadBase,
+  data: Record<string, unknown>,
+): WebhookPayload {
+  const comment = data as Partial<PostCommentEventMetadata>
+  return {
+    ...basePayload,
+    channel: comment.channel ?? null,
+    inbox_id: comment.inboxId ?? null,
+    post_id: comment.externalPostId ?? null,
+    channel_post_id: comment.channelPostId ?? null,
+    comment_id: comment.commentId ?? null,
+    comment_text: comment.commentText ?? null,
+    conversation_id: comment.conversationId ?? null,
   }
 }
 
@@ -240,6 +287,52 @@ function buildOrderPayload(
   }
 }
 
+const omitUndefined = (
+  record: Record<string, unknown>,
+): Record<string, unknown> =>
+  Object.fromEntries(
+    Object.entries(record).filter(([, value]) => value !== undefined),
+  )
+
+// Explicit fields, like the order events: never `contactInboxId`, and the
+// previous* keys appear only on the event that changed that attribute.
+function buildPipelineItemPayload(
+  basePayload: WebhookPayloadBase,
+  data: Record<string, unknown>,
+): WebhookPayload {
+  const item = data as PipelineItemEventMetadata
+  return {
+    ...basePayload,
+    pipeline_id: item.pipelineId,
+    pipeline_name: item.pipelineName,
+    pipeline_reference_name: item.pipelineReferenceName,
+    item_id: item.itemId,
+    item_number: item.itemNumber,
+    title: item.title,
+    stage_id: item.stageId,
+    stage_name: item.stageName,
+    status: item.status,
+    status_label: item.statusLabel,
+    priority: item.priority,
+    value: item.value,
+    currency: item.currency,
+    due_date: item.dueDate,
+    actor_kind: item.actorKind,
+    actor_user_id: item.actorUserId,
+    ...omitUndefined({
+      from_stage_id: item.fromStageId,
+      from_stage_name:
+        item.fromStageId === undefined
+          ? undefined
+          : (item.fromStageName ?? null),
+      from_pipeline_id: item.fromPipelineId,
+      previous_status: item.previousStatus,
+      previous_value: item.previousValue,
+      previous_priority: item.previousPriority,
+    }),
+  }
+}
+
 function buildCartItemPayload(
   basePayload: WebhookPayloadBase,
   data: Record<string, unknown>,
@@ -327,6 +420,10 @@ const PAYLOAD_BUILDERS = {
   [triggerEventTypes.enum.unsubscribedFromSequence]: buildSequencePayload,
   [triggerEventTypes.enum.contactReferredANewContact]: buildReferralPayload,
   [triggerEventTypes.enum.contactReferredExistingContact]: buildReferralPayload,
+  [triggerEventTypes.enum.contactBlockedBot]: buildBotBlockPayload,
+  [triggerEventTypes.enum.contactUnblockedBot]: buildBotBlockPayload,
+  [triggerEventTypes.enum.contactCommentedOnPost]: buildPostCommentPayload,
+  [triggerEventTypes.enum.contactFirstCommentedOnPost]: buildPostCommentPayload,
   [triggerEventTypes.enum.dateTimeBasedTrigger]: (basePayload, data) => ({
     ...basePayload,
     ...data,
@@ -360,11 +457,19 @@ const PAYLOAD_BUILDERS = {
   [triggerEventTypes.enum.orderShipped]: buildOrderPayload,
   [triggerEventTypes.enum.orderConcluded]: buildOrderPayload,
   [triggerEventTypes.enum.orderCancelled]: buildOrderPayload,
+  [triggerEventTypes.enum.orderPaid]: buildOrderPayload,
+  [triggerEventTypes.enum.orderRefunded]: buildOrderPayload,
   [triggerEventTypes.enum.productOrdered]: buildOrderPayload,
   [triggerEventTypes.enum.productAddedToCart]: buildCartItemPayload,
   [triggerEventTypes.enum.productRemovedFromCart]: buildCartItemPayload,
   [triggerEventTypes.enum.categoryAddedToCart]: buildCartItemPayload,
   [triggerEventTypes.enum.cartAbandoned]: buildCartAbandonedPayload,
+  [triggerEventTypes.enum.pipelineItemCreated]: buildPipelineItemPayload,
+  [triggerEventTypes.enum.pipelineItemMovedToStage]: buildPipelineItemPayload,
+  [triggerEventTypes.enum.pipelineItemValueChanged]: buildPipelineItemPayload,
+  [triggerEventTypes.enum.pipelineItemStatusChanged]: buildPipelineItemPayload,
+  [triggerEventTypes.enum.pipelineItemPriorityChanged]:
+    buildPipelineItemPayload,
 } satisfies Record<MatchableEventType, PayloadBuilder>
 
 /**

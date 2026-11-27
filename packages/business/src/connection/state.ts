@@ -18,6 +18,7 @@ import {
   type ActiveConnectionStatus,
   type ConnectionStatus,
   type ConnectionStatusReason,
+  isProviderOffboardedConnection,
 } from "@chatbotx.io/database/partials"
 import { ChatbotXException } from "../errors"
 
@@ -32,10 +33,14 @@ export type ConnectionEvent =
   | "teardown.pause"
   | "teardown.resume"
   | "teardown.disconnect"
+  | "provider.offboarded"
+  | "provider.reconnected"
 
 type ConnectionTransitionInput = {
   /** `undefined` when no `Connection` row exists yet (first `connect.completed`). */
   from: ConnectionStatus | undefined
+  /** The stored reason of `from`; needed to recognise the sticky `provider_offboarded` state. */
+  fromReason?: ConnectionStatusReason | null
   event: ConnectionEvent
   reason?: ConnectionStatusReason
 }
@@ -47,6 +52,11 @@ type ConnectionTransitionResult = {
   quotaEdge: "consume" | "release" | null
   /** Idempotent no-op: `to === from`, event carried no real state change. */
   noop: boolean
+  /**
+   * The event was swallowed because the connection is held in the sticky
+   * `provider_offboarded` state: callers must not clear its `lastError`.
+   */
+  heldByProviderOffboard: boolean
 }
 export const isActiveConnectionStatus = (
   status: ConnectionStatus,
@@ -87,7 +97,31 @@ const result = (
   reason,
   quotaEdge: quotaEdgeFor(from, to),
   noop: from === to,
+  heldByProviderOffboard: false,
 })
+
+/**
+ * While the provider is re-onboarding the account, a token refresh or health
+ * check succeeding (or failing without proof of revocation) says nothing about
+ * the re-onboarding. Only the provider's own `reconnected` event, a completed
+ * reconnect, or a revoke leaves the state, so these events are held.
+ */
+const EVENTS_HELD_BY_PROVIDER_OFFBOARD: ReadonlySet<ConnectionEvent> = new Set([
+  "auth.saved",
+  "refresh.transient_failure",
+  "verify.failed_non_auth",
+  "verify.ok",
+])
+
+const isProviderOffboarded = (
+  from: ConnectionStatus | undefined,
+  fromReason: ConnectionStatusReason | null | undefined,
+): boolean =>
+  from !== undefined &&
+  isProviderOffboardedConnection({
+    status: from,
+    statusReason: fromReason ?? null,
+  })
 
 /**
  * Resolve one event against the current status. Throws
@@ -99,7 +133,17 @@ const result = (
 export const transitionConnection = (
   input: ConnectionTransitionInput,
 ): ConnectionTransitionResult => {
-  const { from, event, reason } = input
+  const { from, fromReason, event, reason } = input
+
+  if (
+    EVENTS_HELD_BY_PROVIDER_OFFBOARD.has(event) &&
+    isProviderOffboarded(from, fromReason)
+  ) {
+    return {
+      ...result(from, "degraded", "provider_offboarded"),
+      heldByProviderOffboard: true,
+    }
+  }
 
   switch (event) {
     case "connect.completed": {
@@ -164,6 +208,22 @@ export const transitionConnection = (
         return result(from, from, null)
       }
       return result(from, "disconnected", reason ?? "workspace_purge")
+    }
+    case "provider.offboarded": {
+      // An inactive connection has nothing left to hold open; an already
+      // offboarded one keeps its state.
+      if (from === undefined || !isActiveConnectionStatus(from)) {
+        return result(from, from ?? "needs_reauth", null)
+      }
+      return result(from, "degraded", "provider_offboarded")
+    }
+    case "provider.reconnected": {
+      // Only the offboarded hold is released: a late `reconnected` must never
+      // resume a paused/disconnected row or clear an unrelated degradation.
+      if (!isProviderOffboarded(from, fromReason)) {
+        return result(from, from ?? "needs_reauth", null)
+      }
+      return result(from, "connected", null)
     }
     default: {
       const _exhaustive: never = event

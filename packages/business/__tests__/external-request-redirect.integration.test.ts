@@ -1,6 +1,5 @@
 import { createServer, type Server } from "node:http"
 import type { AddressInfo } from "node:net"
-import { server as mswServer } from "@chatbotx.io/vitest-config/msw"
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
 import { externalRequestService } from "../src/external-request/service"
 
@@ -35,14 +34,14 @@ const listenOnLoopback = (server: Server) => {
 
 describe("externalRequestService redirect integration", () => {
   let server: Server
+  // Real loopback HTTP: this workspace does not boot MSW globally, so the
+  // request reaches the local server without any interceptor in the way.
   beforeEach(() => {
     vi.clearAllMocks()
-    mswServer.close()
   })
 
   afterEach(async () => {
     await closeServer(server)
-    mswServer.listen({ onUnhandledRequest: "error" })
   })
 
   test("follows an Apps Script-style POST redirect with a GET", async () => {

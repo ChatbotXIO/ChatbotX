@@ -1,0 +1,504 @@
+{
+  "type": "diff",
+  "version": "10",
+  "dialect": "postgres",
+  "id": "891b72f0-8911-4348-babd-57569e48891e",
+  "prevIds": [
+    "51e8a458-8593-47ef-8492-2d1f3dc72bd6"
+  ],
+  "footprints": [
+    {
+      "statementType": "create_table",
+      "statementTarget": [
+        "table",
+        "public",
+        "IntegrationLine"
+      ],
+      "writes": [
+        "s|tbl|public.IntegrationLine",
+        "n|tbl|public.IntegrationLine",
+        "e|tbl|public.IntegrationLine",
+        "n|rel|public.IntegrationLine",
+        "n|type|public.IntegrationLine",
+        "n|rel|public.IntegrationLine_pkey"
+      ],
+      "reads": [
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "IntegrationLine",
+        "IntegrationLine_workspaceId_idx"
+      ],
+      "writes": [
+        "s|idx|public.IntegrationLine_workspaceId_idx",
+        "n|idx|public.IntegrationLine_workspaceId_idx",
+        "e|idx|public.IntegrationLine_workspaceId_idx",
+        "n|rel|public.IntegrationLine_workspaceId_idx"
+      ],
+      "reads": [
+        "n|tbl|public.IntegrationLine",
+        "n|sch|public",
+        "n|col|public.IntegrationLine.workspaceId"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "IntegrationLine",
+        "IntegrationLine_inboxId_key"
+      ],
+      "writes": [
+        "s|idx|public.IntegrationLine_inboxId_key",
+        "n|idx|public.IntegrationLine_inboxId_key",
+        "e|idx|public.IntegrationLine_inboxId_key",
+        "n|rel|public.IntegrationLine_inboxId_key"
+      ],
+      "reads": [
+        "n|tbl|public.IntegrationLine",
+        "n|sch|public",
+        "n|col|public.IntegrationLine.inboxId"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "IntegrationLine",
+        "IntegrationLine_channelId_key"
+      ],
+      "writes": [
+        "s|idx|public.IntegrationLine_channelId_key",
+        "n|idx|public.IntegrationLine_channelId_key",
+        "e|idx|public.IntegrationLine_channelId_key",
+        "n|rel|public.IntegrationLine_channelId_key"
+      ],
+      "reads": [
+        "n|tbl|public.IntegrationLine",
+        "n|sch|public",
+        "n|col|public.IntegrationLine.channelId"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "IntegrationLine",
+        "IntegrationLine_botUserId_key"
+      ],
+      "writes": [
+        "s|idx|public.IntegrationLine_botUserId_key",
+        "n|idx|public.IntegrationLine_botUserId_key",
+        "e|idx|public.IntegrationLine_botUserId_key",
+        "n|rel|public.IntegrationLine_botUserId_key"
+      ],
+      "reads": [
+        "n|tbl|public.IntegrationLine",
+        "n|sch|public",
+        "n|col|public.IntegrationLine.botUserId"
+      ]
+    },
+    {
+      "statementType": "create_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "IntegrationLine"
+      ],
+      "writes": [
+        "s|fk|public.IntegrationLine.IntegrationLine_workspaceId_Workspace_id_fkey",
+        "n|fk|public.IntegrationLine.IntegrationLine_workspaceId_Workspace_id_fkey",
+        "e|fk|public.IntegrationLine.IntegrationLine_workspaceId_Workspace_id_fkey",
+        "n|con|public.IntegrationLine.IntegrationLine_workspaceId_Workspace_id_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.IntegrationLine",
+        "n|sch|public",
+        "n|tbl|public.Workspace",
+        "n|sch|public",
+        "n|col|public.IntegrationLine.workspaceId",
+        "n|col|public.Workspace.id",
+        "e|uniqueness|public.Workspace.id"
+      ]
+    },
+    {
+      "statementType": "create_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "IntegrationLine"
+      ],
+      "writes": [
+        "s|fk|public.IntegrationLine.IntegrationLine_inboxId_Inbox_id_fkey",
+        "n|fk|public.IntegrationLine.IntegrationLine_inboxId_Inbox_id_fkey",
+        "e|fk|public.IntegrationLine.IntegrationLine_inboxId_Inbox_id_fkey",
+        "n|con|public.IntegrationLine.IntegrationLine_inboxId_Inbox_id_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.IntegrationLine",
+        "n|sch|public",
+        "n|tbl|public.Inbox",
+        "n|sch|public",
+        "n|col|public.IntegrationLine.inboxId",
+        "n|col|public.Inbox.id",
+        "e|uniqueness|public.Inbox.id"
+      ]
+    }
+  ],
+  "deltas": [
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "name": "IntegrationLine",
+        "isRlsEnabled": false,
+        "entityType": "tables"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "IntegrationLine",
+        "name": "id",
+        "type": "bigint",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "IntegrationLine",
+        "name": "createdAt",
+        "type": "timestamp(6) with time zone",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "now()",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "IntegrationLine",
+        "name": "updatedAt",
+        "type": "timestamp(6) with time zone",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "now()",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "IntegrationLine",
+        "name": "auth",
+        "type": "jsonb",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "IntegrationLine",
+        "name": "channelId",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "IntegrationLine",
+        "name": "botUserId",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "IntegrationLine",
+        "name": "basicId",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "IntegrationLine",
+        "name": "name",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "IntegrationLine",
+        "name": "pictureUrl",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "IntegrationLine",
+        "name": "tokenRefreshError",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "IntegrationLine",
+        "name": "workspaceId",
+        "type": "bigint",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "IntegrationLine",
+        "name": "inboxId",
+        "type": "bigint",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "IntegrationLine",
+        "name": "IntegrationLine_workspaceId_idx",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "workspaceId",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": false,
+        "where": null,
+        "with": "",
+        "method": "btree",
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "IntegrationLine",
+        "name": "IntegrationLine_inboxId_key",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "inboxId",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": true,
+        "where": null,
+        "with": "",
+        "method": "btree",
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "IntegrationLine",
+        "name": "IntegrationLine_channelId_key",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "channelId",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": true,
+        "where": null,
+        "with": "",
+        "method": "btree",
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "IntegrationLine",
+        "name": "IntegrationLine_botUserId_key",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "botUserId",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": true,
+        "where": null,
+        "with": "",
+        "method": "btree",
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "IntegrationLine",
+        "name": "IntegrationLine_workspaceId_Workspace_id_fkey",
+        "nameExplicit": false,
+        "columns": [
+          "workspaceId"
+        ],
+        "schemaTo": "public",
+        "tableTo": "Workspace",
+        "columnsTo": [
+          "id"
+        ],
+        "onUpdate": "CASCADE",
+        "onDelete": "CASCADE",
+        "entityType": "fks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "IntegrationLine",
+        "name": "IntegrationLine_inboxId_Inbox_id_fkey",
+        "nameExplicit": false,
+        "columns": [
+          "inboxId"
+        ],
+        "schemaTo": "public",
+        "tableTo": "Inbox",
+        "columnsTo": [
+          "id"
+        ],
+        "onUpdate": "CASCADE",
+        "onDelete": "CASCADE",
+        "entityType": "fks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "IntegrationLine",
+        "name": "IntegrationLine_pkey",
+        "columns": [
+          "id"
+        ],
+        "nameExplicit": false,
+        "entityType": "pks"
+      }
+    }
+  ]
+}

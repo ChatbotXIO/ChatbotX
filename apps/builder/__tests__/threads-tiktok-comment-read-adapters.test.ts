@@ -45,6 +45,7 @@ function buildRow() {
     clickedCount: 0,
     failedCount: 0,
     missedCount: 0,
+    moderatedCount: 0,
     post: { type: "all", value: [] },
     privateReply: { type: "none", value: null },
     publicReply: { type: "text", value: "first", values: TEXTS },

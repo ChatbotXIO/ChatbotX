@@ -86,7 +86,7 @@ describe("inboxRepository.listAnalyticsOptionsByWorkspace", () => {
     mocks.findMany.mockResolvedValue([])
   })
 
-  test("offers only connected, non-smtp inboxes of the workspace, as a lean projection", async () => {
+  test("offers only connected inboxes of the workspace, as a lean projection", async () => {
     await inboxRepository.listAnalyticsOptionsByWorkspace({
       workspaceId: "ws-1",
     })
@@ -96,7 +96,6 @@ describe("inboxRepository.listAnalyticsOptionsByWorkspace", () => {
       where: {
         workspaceId: "ws-1",
         status: "connected",
-        channel: { ne: "smtp" },
       },
       orderBy: { name: "asc" },
     })

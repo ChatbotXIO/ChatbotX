@@ -232,6 +232,28 @@ describe("webhookHandler conversation routing", () => {
     )
     expect(calls().map((call) => call[0])).toEqual(["incomingMessage"])
   })
+  it("routes an echo of a message the Page sent as an incomingMessageEcho", async () => {
+    await post(
+      entryBody({
+        messaging: [
+          {
+            sender: { id: "page-1" },
+            recipient: { id: "psid-1" },
+            timestamp: 1,
+            message: { mid: "m.echo", text: "agent reply", is_echo: true },
+          },
+        ],
+      }),
+      queue,
+    )
+
+    expect(calls().map((call) => call[0])).toEqual(["incomingMessageEcho"])
+    expect(calls()[0]?.[1]).toMatchObject({
+      type: "incomingMessageEcho",
+      data: { integrationType: "messenger", integrationIdentifier: "page-1" },
+    })
+  })
+
   describe("hop_context through the standby rewrap", () => {
     const standbyItem = {
       sender: { id: "psid-1" },

@@ -1,0 +1,539 @@
+{
+  "type": "diff",
+  "version": "10",
+  "dialect": "postgres",
+  "id": "57363325-97c4-4af1-83b6-e2179d41fc4d",
+  "prevIds": [
+    "81a96690-fe08-4ff2-ac92-c4d2f0e48367"
+  ],
+  "footprints": [
+    {
+      "statementType": "drop_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "AdsConversionEvent"
+      ],
+      "writes": [
+        "s|fk|public.AdsConversionEvent.AdsConversionEvent_referralEventId_ContactReferralEvent_id_fkey",
+        "n|fk|public.AdsConversionEvent.AdsConversionEvent_referralEventId_ContactReferralEvent_id_fkey",
+        "e|fk|public.AdsConversionEvent.AdsConversionEvent_referralEventId_ContactReferralEvent_id_fkey",
+        "n|con|public.AdsConversionEvent.AdsConversionEvent_referralEventId_ContactReferralEvent_id_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.AdsConversionEvent",
+        "n|sch|public",
+        "e|col|public.AdsConversionEvent.referralEventId"
+      ]
+    },
+    {
+      "statementType": "drop_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "GoogleAdsConversionEvent"
+      ],
+      "writes": [
+        "s|fk|public.GoogleAdsConversionEvent.GoogleAdsConversionEvent_0EWR38dBZsuA_fkey",
+        "n|fk|public.GoogleAdsConversionEvent.GoogleAdsConversionEvent_0EWR38dBZsuA_fkey",
+        "e|fk|public.GoogleAdsConversionEvent.GoogleAdsConversionEvent_0EWR38dBZsuA_fkey",
+        "n|con|public.GoogleAdsConversionEvent.GoogleAdsConversionEvent_0EWR38dBZsuA_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.GoogleAdsConversionEvent",
+        "n|sch|public",
+        "e|col|public.GoogleAdsConversionEvent.referralEventId"
+      ]
+    },
+    {
+      "statementType": "drop_table",
+      "statementTarget": [
+        "table",
+        "public",
+        "ContactReferralEvent"
+      ],
+      "writes": [
+        "s|tbl|public.ContactReferralEvent",
+        "n|tbl|public.ContactReferralEvent",
+        "e|tbl|public.ContactReferralEvent",
+        "n|rel|public.ContactReferralEvent",
+        "n|type|public.ContactReferralEvent"
+      ],
+      "reads": [
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "drop_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "AdsConversionEvent",
+        "AdsConversionEvent_referralEventId_idx"
+      ],
+      "writes": [
+        "s|idx|public.AdsConversionEvent_referralEventId_idx",
+        "n|idx|public.AdsConversionEvent_referralEventId_idx",
+        "e|idx|public.AdsConversionEvent_referralEventId_idx",
+        "n|rel|public.AdsConversionEvent_referralEventId_idx"
+      ],
+      "reads": [
+        "e|tbl|public.AdsConversionEvent",
+        "n|sch|public",
+        "e|col|public.AdsConversionEvent.referralEventId"
+      ],
+      "sharedWrites": []
+    },
+    {
+      "statementType": "drop_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "GoogleAdsConversionEvent",
+        "GoogleAdsConversionEvent_referralEventId_idx"
+      ],
+      "writes": [
+        "s|idx|public.GoogleAdsConversionEvent_referralEventId_idx",
+        "n|idx|public.GoogleAdsConversionEvent_referralEventId_idx",
+        "e|idx|public.GoogleAdsConversionEvent_referralEventId_idx",
+        "n|rel|public.GoogleAdsConversionEvent_referralEventId_idx"
+      ],
+      "reads": [
+        "e|tbl|public.GoogleAdsConversionEvent",
+        "n|sch|public",
+        "e|col|public.GoogleAdsConversionEvent.referralEventId"
+      ],
+      "sharedWrites": []
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "AIEmbedding",
+        "chunkIndex"
+      ],
+      "writes": [
+        "s|col|public.AIEmbedding.chunkIndex",
+        "n|col|public.AIEmbedding.chunkIndex",
+        "e|col|public.AIEmbedding.chunkIndex"
+      ],
+      "reads": [
+        "n|tbl|public.AIEmbedding",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "AIFile",
+        "chunking"
+      ],
+      "writes": [
+        "s|col|public.AIFile.chunking",
+        "n|col|public.AIFile.chunking",
+        "e|col|public.AIFile.chunking"
+      ],
+      "reads": [
+        "n|tbl|public.AIFile",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "AIFile",
+        "chunkingConfig"
+      ],
+      "writes": [
+        "s|col|public.AIFile.chunkingConfig",
+        "n|col|public.AIFile.chunkingConfig",
+        "e|col|public.AIFile.chunkingConfig"
+      ],
+      "reads": [
+        "n|tbl|public.AIFile",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "AIFile",
+        "processingRun"
+      ],
+      "writes": [
+        "s|col|public.AIFile.processingRun",
+        "n|col|public.AIFile.processingRun",
+        "e|col|public.AIFile.processingRun"
+      ],
+      "reads": [
+        "n|tbl|public.AIFile",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "recreate_enum",
+      "statementTarget": [
+        "enum",
+        "public",
+        "contactActivityReferenceType"
+      ],
+      "writes": [
+        "s|enum|public.contactActivityReferenceType",
+        "n|enum|public.contactActivityReferenceType",
+        "e|enum|public.contactActivityReferenceType",
+        "n|type|public.contactActivityReferenceType",
+        "s|colprop|public.ContactActivity.referenceType.type",
+        "s|colprop|public.ContactActivity.referenceType.default"
+      ],
+      "reads": [
+        "n|sch|public",
+        "n|tbl|public.ContactActivity",
+        "n|sch|public",
+        "n|col|public.ContactActivity.referenceType"
+      ],
+      "sqlHash": "8cfa225b978d6b4c"
+    },
+    {
+      "statementType": "recreate_enum",
+      "statementTarget": [
+        "enum",
+        "public",
+        "contactActivityType"
+      ],
+      "writes": [
+        "s|enum|public.contactActivityType",
+        "n|enum|public.contactActivityType",
+        "e|enum|public.contactActivityType",
+        "n|type|public.contactActivityType",
+        "s|colprop|public.ContactActivity.activityType.type",
+        "s|colprop|public.ContactActivity.activityType.default"
+      ],
+      "reads": [
+        "n|sch|public",
+        "n|tbl|public.ContactActivity",
+        "n|sch|public",
+        "n|col|public.ContactActivity.activityType"
+      ],
+      "sqlHash": "3717898e4c3e5908"
+    },
+    {
+      "statementType": "drop_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "AdsConversionEvent",
+        "referralEventId"
+      ],
+      "writes": [
+        "s|col|public.AdsConversionEvent.referralEventId",
+        "n|col|public.AdsConversionEvent.referralEventId",
+        "e|col|public.AdsConversionEvent.referralEventId"
+      ],
+      "reads": [
+        "n|tbl|public.AdsConversionEvent",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "drop_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "GoogleAdsConversionEvent",
+        "referralEventId"
+      ],
+      "writes": [
+        "s|col|public.GoogleAdsConversionEvent.referralEventId",
+        "n|col|public.GoogleAdsConversionEvent.referralEventId",
+        "e|col|public.GoogleAdsConversionEvent.referralEventId"
+      ],
+      "reads": [
+        "n|tbl|public.GoogleAdsConversionEvent",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "alter_check",
+      "statementTarget": [
+        "table",
+        "public",
+        "ContactActivity"
+      ],
+      "writes": [
+        "s|ck|public.ContactActivity.ContactActivity_allowed_pair_check"
+      ],
+      "reads": [
+        "n|tbl|public.ContactActivity",
+        "n|sch|public",
+        "n|col|public.ContactActivity.activityType",
+        "n|col|public.ContactActivity.referenceType",
+        "n|col|public.ContactActivity.parentReferenceId",
+        "e|col|public.ContactActivity.activityType",
+        "e|col|public.ContactActivity.referenceType",
+        "e|col|public.ContactActivity.parentReferenceId"
+      ],
+      "sqlHash": "65de775584074743"
+    }
+  ],
+  "deltas": [
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "AIEmbedding",
+        "name": "chunkIndex",
+        "type": "integer",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "AIFile",
+        "name": "chunking",
+        "type": "jsonb",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "AIFile",
+        "name": "chunkingConfig",
+        "type": "jsonb",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "AIFile",
+        "name": "processingRun",
+        "type": "jsonb",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "drop",
+      "key": "tables\u0000[\"public\",\"ContactReferralEvent\"]"
+    },
+    {
+      "op": "drop",
+      "key": "columns\u0000[\"public\",\"AdsConversionEvent\",\"referralEventId\"]"
+    },
+    {
+      "op": "drop",
+      "key": "columns\u0000[\"public\",\"ContactReferralEvent\",\"id\"]"
+    },
+    {
+      "op": "drop",
+      "key": "columns\u0000[\"public\",\"ContactReferralEvent\",\"createdAt\"]"
+    },
+    {
+      "op": "drop",
+      "key": "columns\u0000[\"public\",\"ContactReferralEvent\",\"updatedAt\"]"
+    },
+    {
+      "op": "drop",
+      "key": "columns\u0000[\"public\",\"ContactReferralEvent\",\"workspaceId\"]"
+    },
+    {
+      "op": "drop",
+      "key": "columns\u0000[\"public\",\"ContactReferralEvent\",\"contactId\"]"
+    },
+    {
+      "op": "drop",
+      "key": "columns\u0000[\"public\",\"ContactReferralEvent\",\"contactInboxId\"]"
+    },
+    {
+      "op": "drop",
+      "key": "columns\u0000[\"public\",\"ContactReferralEvent\",\"channel\"]"
+    },
+    {
+      "op": "drop",
+      "key": "columns\u0000[\"public\",\"ContactReferralEvent\",\"type\"]"
+    },
+    {
+      "op": "drop",
+      "key": "columns\u0000[\"public\",\"ContactReferralEvent\",\"provider\"]"
+    },
+    {
+      "op": "drop",
+      "key": "columns\u0000[\"public\",\"ContactReferralEvent\",\"occurredAt\"]"
+    },
+    {
+      "op": "drop",
+      "key": "columns\u0000[\"public\",\"ContactReferralEvent\",\"adId\"]"
+    },
+    {
+      "op": "drop",
+      "key": "columns\u0000[\"public\",\"ContactReferralEvent\",\"campaignId\"]"
+    },
+    {
+      "op": "drop",
+      "key": "columns\u0000[\"public\",\"ContactReferralEvent\",\"adGroupId\"]"
+    },
+    {
+      "op": "drop",
+      "key": "columns\u0000[\"public\",\"ContactReferralEvent\",\"clickIdType\"]"
+    },
+    {
+      "op": "drop",
+      "key": "columns\u0000[\"public\",\"ContactReferralEvent\",\"clickId\"]"
+    },
+    {
+      "op": "drop",
+      "key": "columns\u0000[\"public\",\"ContactReferralEvent\",\"ref\"]"
+    },
+    {
+      "op": "drop",
+      "key": "columns\u0000[\"public\",\"ContactReferralEvent\",\"source\"]"
+    },
+    {
+      "op": "drop",
+      "key": "columns\u0000[\"public\",\"ContactReferralEvent\",\"sourceUrl\"]"
+    },
+    {
+      "op": "drop",
+      "key": "columns\u0000[\"public\",\"ContactReferralEvent\",\"metadata\"]"
+    },
+    {
+      "op": "drop",
+      "key": "columns\u0000[\"public\",\"ContactReferralEvent\",\"dedupKey\"]"
+    },
+    {
+      "op": "drop",
+      "key": "columns\u0000[\"public\",\"GoogleAdsConversionEvent\",\"referralEventId\"]"
+    },
+    {
+      "op": "drop",
+      "key": "indexes\u0000[\"public\",\"AdsConversionEvent_referralEventId_idx\"]"
+    },
+    {
+      "op": "drop",
+      "key": "indexes\u0000[\"public\",\"ContactReferralEvent_workspaceId_contactInboxId_dedupKey_key\"]"
+    },
+    {
+      "op": "drop",
+      "key": "indexes\u0000[\"public\",\"ContactReferralEvent_contactInboxId_idx\"]"
+    },
+    {
+      "op": "drop",
+      "key": "indexes\u0000[\"public\",\"ContactReferralEvent_workspaceId_contactId_occurredAt_idx\"]"
+    },
+    {
+      "op": "drop",
+      "key": "indexes\u0000[\"public\",\"ContactReferralEvent_workspaceId_type_occurredAt_idx\"]"
+    },
+    {
+      "op": "drop",
+      "key": "indexes\u0000[\"public\",\"GoogleAdsConversionEvent_referralEventId_idx\"]"
+    },
+    {
+      "op": "drop",
+      "key": "fks\u0000[\"public\",\"AdsConversionEvent\",\"AdsConversionEvent_referralEventId_ContactReferralEvent_id_fkey\"]"
+    },
+    {
+      "op": "drop",
+      "key": "fks\u0000[\"public\",\"ContactReferralEvent\",\"ContactReferralEvent_workspaceId_Workspace_id_fkey\"]"
+    },
+    {
+      "op": "drop",
+      "key": "fks\u0000[\"public\",\"ContactReferralEvent\",\"ContactReferralEvent_contactInboxId_ContactInbox_id_fkey\"]"
+    },
+    {
+      "op": "drop",
+      "key": "fks\u0000[\"public\",\"GoogleAdsConversionEvent\",\"GoogleAdsConversionEvent_0EWR38dBZsuA_fkey\"]"
+    },
+    {
+      "op": "drop",
+      "key": "pks\u0000[\"public\",\"ContactReferralEvent\",\"ContactReferralEvent_pkey\"]"
+    },
+    {
+      "op": "drop",
+      "key": "checks\u0000[\"public\",\"ContactReferralEvent\",\"ContactReferralEvent_type_check\"]"
+    },
+    {
+      "op": "drop",
+      "key": "checks\u0000[\"public\",\"ContactReferralEvent\",\"ContactReferralEvent_provider_check\"]"
+    },
+    {
+      "op": "drop",
+      "key": "checks\u0000[\"public\",\"ContactReferralEvent\",\"ContactReferralEvent_clickIdType_check\"]"
+    },
+    {
+      "op": "drop",
+      "key": "checks\u0000[\"public\",\"ContactReferralEvent\",\"ContactReferralEvent_clickId_check\"]"
+    },
+    {
+      "op": "alter",
+      "key": "enums\u0000[\"public\",\"contactActivityReferenceType\"]",
+      "set": {
+        "values": [
+          "flow",
+          "flowNode",
+          "automatedResponse",
+          "whatsappFlow",
+          "emailTopic"
+        ]
+      }
+    },
+    {
+      "op": "alter",
+      "key": "enums\u0000[\"public\",\"contactActivityType\"]",
+      "set": {
+        "values": [
+          "flowExecuted",
+          "flowNodeExecuted",
+          "automatedResponseMatched",
+          "formCompleted",
+          "messageSent",
+          "messageDelivered",
+          "messageOpened",
+          "messageClicked"
+        ]
+      }
+    },
+    {
+      "op": "alter",
+      "key": "checks\u0000[\"public\",\"ContactActivity\",\"ContactActivity_allowed_pair_check\"]",
+      "set": {
+        "value": "(\"activityType\" = 'flowExecuted' AND \"referenceType\" = 'flow' AND \"parentReferenceId\" = 0) OR (\"activityType\" = 'flowNodeExecuted' AND \"referenceType\" = 'flowNode' AND \"parentReferenceId\" <> 0) OR (\"activityType\" = 'automatedResponseMatched' AND \"referenceType\" = 'automatedResponse' AND \"parentReferenceId\" = 0) OR (\"activityType\" = 'formCompleted' AND \"referenceType\" = 'whatsappFlow' AND \"parentReferenceId\" = 0) OR (\"activityType\" = 'messageSent' AND \"referenceType\" = 'emailTopic' AND \"parentReferenceId\" = 0) OR (\"activityType\" = 'messageDelivered' AND \"referenceType\" = 'emailTopic' AND \"parentReferenceId\" = 0) OR (\"activityType\" = 'messageOpened' AND \"referenceType\" = 'emailTopic' AND \"parentReferenceId\" = 0) OR (\"activityType\" = 'messageClicked' AND \"referenceType\" = 'emailTopic' AND \"parentReferenceId\" = 0)"
+      }
+    }
+  ]
+}

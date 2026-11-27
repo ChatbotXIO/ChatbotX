@@ -2,7 +2,7 @@
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
 const mocks = vi.hoisted(() => {
-  const updateReturning = vi.fn(async () => [{ openId: "open-1" }])
+  const updateReturning = vi.fn(async () => [{ id: "tt-1" }])
   const updateWhere = vi.fn(() => ({ returning: updateReturning }))
   const updateSet = vi.fn(() => ({ where: updateWhere }))
   return {
@@ -14,8 +14,19 @@ const mocks = vi.hoisted(() => {
     updateTiktokDirectReplyStatus: vi.fn(),
     getTiktokDirectReplyStatus: vi.fn(),
     auditRecord: vi.fn(),
+    storePut: vi.fn(),
+    storeGet: vi.fn(),
+    storeDelete: vi.fn(),
   }
 })
+
+vi.mock("@chatbotx.io/redis", () => ({
+  distributedStore: {
+    put: mocks.storePut,
+    get: mocks.storeGet,
+    delete: mocks.storeDelete,
+  },
+}))
 
 vi.mock("@chatbotx.io/database/client", () => ({
   db: { update: mocks.update },
@@ -23,6 +34,14 @@ vi.mock("@chatbotx.io/database/client", () => ({
   eq: vi.fn(),
   findOrFail: mocks.findOrFail,
   inArray: vi.fn(),
+  sql: (strings: TemplateStringsArray, ...values: unknown[]) => ({
+    sql: strings.join("?"),
+    values,
+  }),
+}))
+
+vi.mock("../src/integration-context/auth-store", () => ({
+  makeAuthStore: vi.fn(),
 }))
 
 vi.mock("@chatbotx.io/database/repositories", () => ({
@@ -70,9 +89,18 @@ const { tiktokIntegrationService } = await import(
   "../src/integration-tiktok/service"
 )
 
+const NO_MESSAGING_PERMISSION_MESSAGE = /no messaging permission/
+
+const SCOPES = [
+  "message.list.read",
+  "message.list.send",
+  "message.list.manage",
+  "video.list",
+]
+
 const auth = {
   tokens: { accessToken: "token-1" },
-  metadata: { openId: "open-1", scopes: ["video.list"] },
+  metadata: { openId: "open-1", scopes: SCOPES },
 }
 
 beforeEach(() => {
@@ -98,16 +126,20 @@ describe("tiktokIntegrationService.setCommentToMessage", () => {
       "open-1",
       "ENABLE",
     )
-    expect(mocks.updateSet).toHaveBeenCalledWith(
-      expect.objectContaining({
-        auth: expect.objectContaining({
-          metadata: expect.objectContaining({
-            scopes: ["video.list"],
-            commentToMessage: expect.objectContaining({ status: "ENABLE" }),
-          }),
-        }),
-      }),
+    // Only `metadata.commentToMessage` is written, in the database: writing
+    // back the `auth` read before the TikTok call would undo a token refresh
+    // that landed meanwhile (and TikTok revokes a used refresh token).
+    const [setArg] = mocks.updateSet.mock.calls[0] as unknown as [
+      { auth: { sql: string; values: unknown[] } },
+    ]
+    expect(setArg.auth.sql).toContain("jsonb_set")
+    const written = setArg.auth.values.find(
+      (value): value is string => typeof value === "string",
     )
+    expect(JSON.parse(written ?? "{}")).toEqual(
+      expect.objectContaining({ status: "ENABLE" }),
+    )
+    expect(JSON.stringify(setArg)).not.toContain("token-1")
     expect(mocks.auditRecord).toHaveBeenCalledWith({
       action: "update",
       detail: "enabled TikTok Comment-to-Message",
@@ -129,6 +161,31 @@ describe("tiktokIntegrationService.setCommentToMessage", () => {
     expect(mocks.update).not.toHaveBeenCalled()
     expect(mocks.auditRecord).not.toHaveBeenCalled()
   })
+
+  // A comments-only connection (EEA, Swiss or UK account) holds no messaging
+  // scope; Comment-to-Message is a DM feature, so the refusal must name that.
+  test("refuses a connection without messaging scopes before calling TikTok", async () => {
+    mocks.findOrFail.mockResolvedValueOnce({
+      id: "tt-1",
+      auth: {
+        ...auth,
+        metadata: {
+          openId: "open-1",
+          scopes: ["comment.list"],
+          features: { messaging: false, comments: true },
+        },
+      },
+    })
+
+    await expect(
+      tiktokIntegrationService.setCommentToMessage({
+        workspaceId: "ws-1",
+        id: "tt-1",
+        enabled: true,
+      }),
+    ).rejects.toThrow(NO_MESSAGING_PERMISSION_MESSAGE)
+    expect(mocks.updateTiktokDirectReplyStatus).not.toHaveBeenCalled()
+  })
 })
 
 describe("tiktokIntegrationService.refreshCommentToMessage", () => {
@@ -142,5 +199,49 @@ describe("tiktokIntegrationService.refreshCommentToMessage", () => {
       }),
     ).resolves.toBeNull()
     expect(mocks.update).not.toHaveBeenCalled()
+  })
+})
+
+// #1715: lets the worker tell the account's own comments apart when TikTok's
+// comment lookup returns nothing.
+describe("tiktokIntegrationService.rememberOwnerUniqueIdentifier", () => {
+  test("writes only metadata.ownerUniqueIdentifier, never the tokens", async () => {
+    await tiktokIntegrationService.rememberOwnerUniqueIdentifier({
+      id: "tt-1",
+      workspaceId: "ws-1",
+      uniqueIdentifier: "+Owner/Unique1",
+    })
+
+    const [setArg] = mocks.updateSet.mock.calls[0] as unknown as [
+      { auth: { sql: string; values: unknown[] } },
+    ]
+    expect(setArg.auth.sql).toContain("jsonb_set")
+    expect(setArg.auth.sql).toContain("ownerUniqueIdentifier")
+    expect(setArg.auth.values).toContain("+Owner/Unique1")
+    expect(JSON.stringify(setArg)).not.toContain("token-1")
+  })
+})
+
+describe("tiktokIntegrationService withheld comment marks", () => {
+  const props = { integrationIdentifier: "open-1", commentId: "c-1" }
+  const KEY = "tiktok:comment-identity-withheld:open-1:c-1"
+
+  test("stores the comment for an hour, reads it back and clears it", async () => {
+    const comment = { commentId: "c-1", message: "bac" }
+
+    await tiktokIntegrationService.markCommentIdentityWithheld({
+      ...props,
+      comment,
+    })
+    expect(mocks.storePut).toHaveBeenCalledWith(KEY, comment, 3600)
+
+    mocks.storeGet.mockResolvedValueOnce(comment)
+    await expect(
+      tiktokIntegrationService.findCommentIdentityWithheld(props),
+    ).resolves.toEqual(comment)
+    expect(mocks.storeGet).toHaveBeenCalledWith(KEY)
+
+    await tiktokIntegrationService.clearCommentIdentityWithheld(props)
+    expect(mocks.storeDelete).toHaveBeenCalledWith(KEY)
   })
 })

@@ -30,7 +30,7 @@ const SELECT_CLASSES =
   "h-8 rounded-[3px] border border-input bg-background px-1.5 text-sm focus-visible:outline-2 focus-visible:outline-primary"
 
 /**
- * Full-viewport inline month calendar (Sunday-first, Chatrace-style): nav
+ * Full-viewport inline month calendar (Sunday-first): nav
  * arrows pinned near the screen edges, native month/year selects centered,
  * hairline dividers between sections, a fixed 6x7 grid of flat full-width
  * day cells (the selection is a thin rectangular outline), and — in

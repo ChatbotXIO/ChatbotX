@@ -8,6 +8,7 @@ import {
   publicSpecGenerateOptions,
   withChannelApiTokenSecurity,
   withIdempotencyKeyHeader,
+  withMcpHitlPolicy,
 } from "@/lib/orpc/public-spec"
 import { publicRouter } from "@/routers/public"
 
@@ -53,7 +54,9 @@ async function buildSpecDocument(props: {
   })
 
   const document = spec
-    ? withIdempotencyKeyHeader(withChannelApiTokenSecurity(spec))
+    ? withMcpHitlPolicy(
+        withIdempotencyKeyHeader(withChannelApiTokenSecurity(spec)),
+      )
     : spec
   return document ? JSON.stringify(document) : null
 }

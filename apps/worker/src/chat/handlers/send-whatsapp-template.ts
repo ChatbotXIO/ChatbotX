@@ -2,8 +2,13 @@ import {
   contactInboxService,
   conversationService,
   messageService,
+  messageStatusBranchService,
   queueMessageCreatedEvent,
 } from "@chatbotx.io/business"
+import {
+  SENT_FROM_INBOX_KEY,
+  sentByUserAttributes,
+} from "@chatbotx.io/database/partials"
 import type { messageModel } from "@chatbotx.io/database/schema"
 import type {
   ContactInboxModel,
@@ -19,6 +24,7 @@ import {
   type SendWaTemplateMessageStepSchema,
   stepTypes,
   type TemplateComponent,
+  type WaTemplateStatusBranch,
 } from "@chatbotx.io/flow-config"
 import {
   ChannelError,
@@ -29,12 +35,14 @@ import {
 } from "@chatbotx.io/sdk"
 import { createId } from "@chatbotx.io/utils"
 import { resolveStackFrames } from "@chatbotx.io/utils/error-log"
+import { isManualSend, type SendFrom } from "@chatbotx.io/utils/send-from"
 import { contactVariableService } from "@chatbotx.io/variables"
 import type {
   BotResponseTrackingContext,
   ChatJobSendWhatsappTemplateMessage,
   ChatJobSendWhatsappTemplateToConversation,
 } from "@chatbotx.io/worker-config"
+import { assertPaymentRequestsSendable } from "../../integration/handlers/wa-payment-request-guard"
 import {
   replaceWhatsappTemplateVariables,
   validateWhatsappTemplate,
@@ -52,6 +60,7 @@ import {
   isDeliveredDirectMessage,
   markConversationReadAfterDelivery,
   sendFlowStepToChannel,
+  settleFailedTemplateMessage,
 } from "./send-message"
 
 // Meta rejects (error 131062) an authentication-category template sent to a
@@ -101,8 +110,18 @@ export interface ProcessWhatsappTemplateParams {
   humanSender?: { adminId: string }
   isBulkBroadcast?: boolean
   metadata?: MetadataPayload
+  /**
+   * Where the send was started (see `SendFrom`). `inbox` stamps the row so a
+   * failed send keeps it with its error; anything else removes it.
+   */
+  sendFrom?: SendFrom
   /** The inbox user who sent the running flow, for `{{admin_name}}` in the params. */
   sentByUserId?: string
+  /**
+   * Statuses whose step button leads somewhere; they are recorded against the
+   * provider message id so ingress keeps those statuses on the integration queue.
+   */
+  statusBranches?: readonly WaTemplateStatusBranch[]
   step?: SendWaTemplateMessageStepSchema
   template: SendWaTemplateMessageStepSchema["template"]
   trackingContext?: BotResponseTrackingContext
@@ -197,6 +216,8 @@ export async function processWhatsappTemplate(
     willRetryOnThrow = false,
     humanSender,
     sentByUserId,
+    statusBranches,
+    sendFrom,
   } = params
   const isBulkOutbound = isBulkOutboundMetadata(
     metadata,
@@ -223,6 +244,9 @@ export async function processWhatsappTemplate(
   }
 
   let newMessage: typeof messageModel.$inferSelect | null = null
+  // Set once the provider accepted the template: a failure after that point is
+  // bookkeeping, and the delivered message must not be removed or marked.
+  let isDispatched = false
 
   try {
     const validated = await validateWhatsappTemplate(
@@ -248,18 +272,26 @@ export async function processWhatsappTemplate(
       conversation,
       sentByUserId,
     })
+    const templateComponents =
+      (validated.template.components as TemplateComponent[]) || []
     const replacedParams = await replaceWhatsappTemplateVariables({
       templateParams: template.params,
       variables,
       // Authoritative source for NAMED vs POSITIONAL placeholders, so the send
       // works even for broadcasts/flows saved before named-parameter support.
-      components: (validated.template.components as TemplateComponent[]) || [],
+      components: templateComponents,
+    })
+
+    assertPaymentRequestsSendable({
+      params: replacedParams,
+      components: templateComponents,
     })
 
     const flowButtons = flow?.buttons ?? []
     const flowButtonTemplates =
       flow && flowButtons.length > 0
         ? convertButtonsToTemplate({
+            channel: contactInbox.channel,
             flowId: flow.id,
             flowVersionId: flow.versionId,
             buttons: flowButtons,
@@ -270,7 +302,7 @@ export async function processWhatsappTemplate(
 
     const resolvedParams = withQuickReplyButtonParams({
       params: replacedParams,
-      components: (validated.template.components as TemplateComponent[]) || [],
+      components: templateComponents,
       stepButtons: flowButtons,
       flowButtonTemplates,
     })
@@ -291,6 +323,11 @@ export async function processWhatsappTemplate(
       ...(trackingContext && { trackingContext }),
       payload: {} as MessageTemplateEntity["payload"],
       metadata,
+      ...(sendFrom && { [SENT_FROM_INBOX_KEY]: sendFrom === "inbox" }),
+      ...sentByUserAttributes(
+        humanSender?.adminId ??
+          (isManualSend(sendFrom) ? sentByUserId : undefined),
+      ),
     }
 
     if (flowButtonTemplates.length > 0) {
@@ -375,6 +412,7 @@ export async function processWhatsappTemplate(
         occurredAt: createdMessage.createdAt,
       },
     })
+    isDispatched = true
 
     // Same rule as a flow reply: a delivered bot DM honours the inbox's
     // markReadOnOutbound option. Templates get no channel echo on WhatsApp, so
@@ -411,20 +449,34 @@ export async function processWhatsappTemplate(
 
     const providerMessageId = result?.messageIds?.[0]
 
+    let isSourceIdSaved = false
     if (providerMessageId) {
       try {
-        await messageService.updateSourceId({
+        const updated = await messageService.updateSourceId({
           id: newMessage.id,
           sourceId: providerMessageId,
           workspaceId: conversation.workspaceId,
           createdAt: newMessage.createdAt,
         })
+        isSourceIdSaved = updated !== null
       } catch (err) {
         logger.error(
           err,
           "Failed to persist WhatsApp template sourceId after a successful send",
         )
       }
+    }
+
+    if (providerMessageId && isSourceIdSaved && statusBranches?.length) {
+      // Ingress reads this marker to keep those statuses on `integration`.
+      // Written only once the sourceId is saved: a status handled with the
+      // marker must find its message, while one arriving before it goes to
+      // `low` and runs later.
+      await messageStatusBranchService.mark({
+        channel: contactInbox.channel,
+        providerMessageId,
+        statuses: statusBranches,
+      })
     }
 
     return {
@@ -444,6 +496,11 @@ export async function processWhatsappTemplate(
       },
       "Failed to send WhatsApp template to provider",
     )
+    const willRetry = willSendRetry({
+      error,
+      channel: contactInbox.channel,
+      willRetryOnThrow,
+    })
     await emit(messageEventTypeSchema.enum["message:failed"], {
       ...eventLogData,
       action: {
@@ -455,12 +512,20 @@ export async function processWhatsappTemplate(
       // stackless `ParsedError`, so `ErrorLog.stackTrace` has no other source.
       errorStack: resolveStackFrames(error),
       occurredAt: new Date(),
-      willRetry: willSendRetry({
-        error,
-        channel: contactInbox.channel,
-        willRetryOnThrow,
-      }),
+      willRetry,
     })
+
+    if (newMessage && !isDispatched) {
+      await settleFailedTemplateMessage({
+        message: newMessage,
+        conversationId: conversation.id,
+        workspaceId: conversation.workspaceId,
+        errorMessage: errorData.message,
+        sendFrom,
+        silent: isBulkOutbound,
+        willRetry,
+      })
+    }
 
     throw error
   }
@@ -587,6 +652,7 @@ export async function sendWhatsappTemplateToConversation(
     metadata,
     initiatedBy,
     adminId,
+    sendFrom,
   } = data
 
   try {
@@ -617,6 +683,7 @@ export async function sendWhatsappTemplateToConversation(
       },
       metadata,
       humanSender: initiatedBy === "user" && adminId ? { adminId } : undefined,
+      sendFrom,
     })
   } catch (error) {
     logger.error(

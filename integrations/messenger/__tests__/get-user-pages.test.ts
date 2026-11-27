@@ -102,7 +102,7 @@ describe("getUserPages", () => {
     })
   })
 
-  test("classifies pages and sorts connectable pages first", async () => {
+  test("classifies pages, reports why each is unavailable and sorts connectable pages first", async () => {
     const missingTaskPage = {
       id: "page-missing-task",
       name: "Missing Task",
@@ -115,24 +115,58 @@ describe("getUserPages", () => {
       access_token: "empty-tasks-token",
       tasks: [],
     }
+    const noTasksPage = {
+      id: "page-no-tasks",
+      name: "No Tasks",
+      access_token: "no-tasks-token",
+    }
     const missingTokenPage = {
       id: "page-missing-token",
       name: "Missing Token",
       tasks: adminTasks,
     }
+    const missingTokenAndTaskPage = {
+      id: "page-missing-both",
+      name: "Missing Both",
+      tasks: adminTasks.filter((task) => task !== "MODERATE"),
+    }
 
     mockGet.mockResolvedValueOnce({
-      data: [missingTaskPage, directPage, emptyTasksPage, missingTokenPage],
+      data: [
+        missingTaskPage,
+        directPage,
+        emptyTasksPage,
+        noTasksPage,
+        missingTokenPage,
+        missingTokenAndTaskPage,
+      ],
     })
 
     const result = await getUserPages("user-token")
 
     expect(result.pages).toEqual([
       { ...directPage, isConnectable: true },
-      { ...missingTaskPage, isConnectable: false },
-      { ...emptyTasksPage, isConnectable: false },
-      { ...missingTokenPage, isConnectable: false },
+      { ...emptyTasksPage, isConnectable: true },
+      { ...noTasksPage, isConnectable: true },
+      {
+        ...missingTaskPage,
+        isConnectable: false,
+        unavailableReason: "insufficientPermissions",
+      },
+      {
+        ...missingTokenPage,
+        isConnectable: false,
+        unavailableReason: "missingAccessToken",
+      },
+      {
+        ...missingTokenAndTaskPage,
+        isConnectable: false,
+        unavailableReason: "missingAccessToken",
+      },
     ])
+    for (const page of result.pages.filter((entry) => entry.isConnectable)) {
+      expect(page).not.toHaveProperty("unavailableReason")
+    }
   })
 
   test("requests page fields with limit=50 and the user token", async () => {

@@ -23,6 +23,8 @@ vi.mock("../src/lib/presence-report", () => ({
 const HTTP_STATUS_LINE_PATTERN = /^HTTP\/1\.1 (\d{3})/
 
 const SECRET = "gateway-test-secret"
+/** Far above a prompt close, far below the ~16s uWS timeout it guards against. */
+const CLOSE_ON_OPEN_MAX_MS = 5000
 
 const signMemberToken = async (
   member: Omit<Parameters<typeof signMemberConnectToken>[0], "issuedAtMs">,
@@ -206,6 +208,17 @@ const startUpgrade = (port: number, path: string): Promise<net.Socket> => {
   return promise
 }
 
+/**
+ * `vi.waitFor` defaults to 1000ms, sized for in-memory state. These tests poll
+ * a live uWS server over real HTTP and sockets, and on a loaded CI runner a
+ * round trip plus the gateway's own scheduling can exceed that. Still far
+ * below the 30s test timeout, so a real hang fails promptly.
+ */
+const IO_WAIT = { timeout: 15_000 } as const
+
+const waitForIo = <T>(callback: () => T | Promise<T>): Promise<T> =>
+  vi.waitFor(callback, IO_WAIT)
+
 const waitForOpen = (socket: WebSocket): Promise<void> => {
   const { promise, resolve, reject } = Promise.withResolvers<void>()
   socket.onopen = () => resolve()
@@ -382,18 +395,18 @@ describe("createRealtimeGateway (live)", () => {
       statusCode: 503,
     })
     resolveInitialProbe("PONG")
-    await vi.waitFor(async () => {
+    await waitForIo(async () => {
       await expect(requestHttp(port, "/ready")).resolves.toEqual({
         statusCode: 200,
       })
     })
-    await vi.waitFor(() => expect(reconnect).toBeDefined())
+    await waitForIo(() => expect(reconnect).toBeDefined())
     reconnect?.()
 
     await expect(requestHttp(port, "/ready")).resolves.toEqual({
       statusCode: 503,
     })
-    await vi.waitFor(async () => {
+    await waitForIo(async () => {
       await expect(requestHttp(port, "/ready")).resolves.toEqual({
         statusCode: 200,
       })
@@ -426,17 +439,16 @@ describe("createRealtimeGateway (live)", () => {
     )
     const port = await gateway.listen("127.0.0.1", 0)
 
-    await vi.waitFor(async () => {
+    await waitForIo(async () => {
       await expect(requestHttp(port, "/ready")).resolves.toEqual({
         statusCode: 503,
       })
     })
-    await vi.waitFor(
-      () => expect(replacementReader.call).toHaveBeenCalledWith("PING"),
-      { timeout: 2000 },
+    await waitForIo(() =>
+      expect(replacementReader.call).toHaveBeenCalledWith("PING"),
     )
     resolveIdleProbe("PONG")
-    await vi.waitFor(async () => {
+    await waitForIo(async () => {
       await expect(requestHttp(port, "/ready")).resolves.toEqual({
         statusCode: 200,
       })
@@ -965,11 +977,16 @@ describe("createRealtimeGateway (live)", () => {
         const closePromise = waitForClose(socket)
 
         await waitForOpen(socket)
+        const openedAt = performance.now()
 
         expect(await closePromise).toEqual({
           code: REALTIME_CLOSE_CODE.resync,
           reason,
         })
+        // An end issued inside the corked upgrade used to leave the TCP
+        // connection open until uWS timed it out (~16s), delaying the
+        // client's reconnect by that much.
+        expect(performance.now() - openedAt).toBeLessThan(CLOSE_ON_OPEN_MAX_MS)
       },
     )
   })
@@ -1387,19 +1404,27 @@ describe("createRealtimeGateway (live)", () => {
 
   // These cover a criticality-9 test gap (PR #1349 round-4 review): nothing
   // previously exercised the gateway's local presence orchestration
-  // (dedupe, last-close, coalescing, periodic re-report) end-to-end. Each
-  // opens a real uWS server + real sockets and waits out the (fixed, not
-  // configurable per-test) 1s coalesce window — like this file's other
-  // live-integration tests, that's a genuine real-clock wait.
+  // (dedupe, last-close, coalescing, periodic re-report) end-to-end. The
+  // coalescing case controls its debounce callback; the expiry case uses a
+  // short real-clock delay against a real uWS server and real sockets.
   const PRESENCE_TEST_TIMEOUT_MS = 45_000
 
   test(
     "presence: dedupes two tabs of the same user and coalesces a second user's connect into one report",
     async () => {
-      // A short, test-only `presenceReportCoalesceMs` (instead of the real
-      // 1000ms default) keeps this real-socket test fast and avoids the
-      // resource-exhaustion flakiness a 1100ms real-clock wait hit when run
-      // after many other real-socket "live" tests earlier in this file.
+      const pendingPresenceReports = new Map<symbol, () => void>()
+      const presenceTimerScheduler = {
+        clear: (timer: NodeJS.Timeout | undefined) => {
+          if (timer !== undefined) {
+            pendingPresenceReports.delete(timer as unknown as symbol)
+          }
+        },
+        schedule: (callback: () => void): NodeJS.Timeout => {
+          const timer = Symbol("presence-report")
+          pendingPresenceReports.set(timer, callback)
+          return timer as never
+        },
+      }
       gateway = createRealtimeGateway(
         testGatewayOptions({
           maxConnections: 10,
@@ -1407,6 +1432,7 @@ describe("createRealtimeGateway (live)", () => {
           redis: createFakeRedis() as never,
           secret: SECRET,
         }),
+        { presenceTimerScheduler },
       )
       const port = await gateway.listen("127.0.0.1", 0)
       const tokenA = await signMemberToken(
@@ -1419,16 +1445,25 @@ describe("createRealtimeGateway (live)", () => {
       )
       const url = `ws://127.0.0.1:${port}/rt/workspaces/ws-presence-1?token=${tokenA}`
 
-      const firstTab = new WebSocket(url)
-      await waitForOpen(firstTab)
-      const secondTab = new WebSocket(url)
-      await waitForOpen(secondTab)
-      const otherUser = new WebSocket(
-        `ws://127.0.0.1:${port}/rt/workspaces/ws-presence-1?token=${tokenB}`,
-      )
-      await waitForOpen(otherUser)
+      // Start every connection in the same event-loop turn. Awaiting each open
+      // serially can let the first 30ms coalesce timer fire before user-b is
+      // even connected, which tests two batches rather than one.
+      const [firstTab, secondTab, otherUser] = [
+        new WebSocket(url),
+        new WebSocket(url),
+        new WebSocket(
+          `ws://127.0.0.1:${port}/rt/workspaces/ws-presence-1?token=${tokenB}`,
+        ),
+      ]
+      await Promise.all([
+        waitForOpen(firstTab),
+        waitForOpen(secondTab),
+        waitForOpen(otherUser),
+      ])
 
-      await delay(150) // past the 30ms presence-report coalesce window
+      expect(pendingPresenceReports).toHaveLength(1)
+      const [reportPresence] = pendingPresenceReports.values()
+      reportPresence?.()
 
       const callsForWorkspace = reportWorkspacePresenceMock.mock.calls.filter(
         ([workspaceId]) => workspaceId === "ws-presence-1",
@@ -1474,7 +1509,7 @@ describe("createRealtimeGateway (live)", () => {
       await waitForOpen(socket)
       const previousPresenceReportCount =
         reportWorkspacePresenceMock.mock.calls.length
-      await vi.waitFor(() =>
+      await waitForIo(() =>
         expect(reportWorkspacePresenceMock.mock.calls.length).toBeGreaterThan(
           previousPresenceReportCount,
         ),

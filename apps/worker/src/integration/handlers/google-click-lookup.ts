@@ -108,11 +108,15 @@ const persistLookedUpReferral = async (
   referral: MessageReferral,
 ): Promise<boolean> => {
   try {
-    await contactInboxService.updateTracking({
+    // Atomic: once the click is in the snapshot a later lookup no longer offers
+    // it, so it must reach the log in the same commit.
+    await contactInboxService.updateTrackingAtomic({
       contactInboxId: contactInbox.id,
       contactId: contactInbox.contactId,
       workspaceId: inbox.workspaceId,
       data: { referral },
+      // The click id keys the touch; a profile lookup has no carrying event.
+      referralOccurrence: { occurredAt: new Date() },
     })
     return true
   } catch (error) {

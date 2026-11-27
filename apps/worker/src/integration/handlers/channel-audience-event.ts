@@ -22,6 +22,7 @@ import {
   detectContactAndConversation,
   resolveExistingContactInbox,
 } from "./received-message"
+import { handleTelegramPrivateBotStatus } from "./telegram-bot-block"
 
 type PersonEvent = Exclude<ChannelAudienceEvent, { kind: "botChatStatus" }>
 type IntegrationRow = Parameters<
@@ -165,6 +166,12 @@ export const processChannelAudienceEvent = async (
   const event = data.event
 
   if (event.kind === "botChatStatus") {
+    // A private chat is one user (un)blocking the bot, not a group the
+    // leaderboard could pick: it fires the contact's trigger instead.
+    if (event.chat.type === "private") {
+      await handleTelegramPrivateBotStatus({ inbox, event })
+      return
+    }
     await recordTelegramBotChatStatus({
       workspaceId: inbox.workspaceId,
       inboxId: inbox.id,

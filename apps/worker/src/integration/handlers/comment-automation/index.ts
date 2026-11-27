@@ -1,14 +1,16 @@
 import { commentAutomationAnalyticsService } from "@chatbotx.io/analytics"
 import {
   commentAutomationService,
+  commentLikeFence,
   contactInboxService,
   contactService,
   workspaceService,
 } from "@chatbotx.io/business"
-import type {
-  CommentAutomationMissReason,
-  CommentReply,
-  IntegrationType,
+import {
+  type CommentAutomationMissReason,
+  type CommentReply,
+  commentAutomationChannelSupportsImageFilter,
+  type IntegrationType,
 } from "@chatbotx.io/database/partials"
 import { createMessageRepository } from "@chatbotx.io/database/repositories"
 import type {
@@ -32,6 +34,7 @@ import {
   matchKeywords,
   matchMentionCount,
   matchPost,
+  matchPostHashtags,
   needsMentionCount,
   willSendReply,
   withLiveCapabilityLimits,
@@ -40,22 +43,15 @@ import {
   type CommentAutomationChannelType,
   supportsCommentLike,
 } from "./channel-type"
-import {
-  createAttachmentInfoResolver,
-  needsAttachmentInfo,
-} from "./comment-attachment"
+import { createAttachmentInfoResolver } from "./comment-attachment"
 import {
   type CommentTagInfo,
   countMentions,
   createCommentTagResolvers,
 } from "./comment-tags"
 import { enqueueDeferredPrivateReply } from "./deferred-private-reply"
-import {
-  applyHideComments,
-  hasHideCommentAction,
-  supportsHideComments,
-  supportsHideForComment,
-} from "./hide-comments"
+import { applyHideRules, moderateCommentWithAI } from "./moderation"
+import { createPostCaptionResolver, type PostCaption } from "./post-caption"
 import {
   executePrivateReply,
   isCommentFlaggedHighIntent,
@@ -64,6 +60,10 @@ import {
   privateReplyWindowLabel,
   supportsPrivateReply,
 } from "./private-reply"
+import {
+  isPrivateReplyQuotaReached,
+  PRIVATE_REPLY_QUOTA_REACHED_ERROR,
+} from "./private-reply-quota"
 import { executePublicReply } from "./public-reply"
 import {
   logAutomationSkipped,
@@ -154,10 +154,9 @@ export async function processCommentAutomation(
   // not enough to tell which Page, post or workspace lost a reply.
   //
   // An `IntegrationNotFoundError` from the lookup below needs nothing extra
-  // here: `runWithOrphanedIntegrationCleanup` (see `integration/job-context.ts`)
-  // already disconnects the orphaned integration and marks the job
-  // unrecoverable, which is a better answer than an error-log row. (Channels in
-  // `isExpectedOrphan` complete the job instead; none has comment automation.)
+  // here: this channel-originated job passes through
+  // `runIntegrationJobWithWebhookContext` in `integration/job-context.ts`,
+  // which completes the job after throttled orphaned-integration cleanup.
   let context: Awaited<ReturnType<typeof loadCommentAutomationContext>>
   try {
     context = await loadCommentAutomationContext({
@@ -230,6 +229,15 @@ export async function processCommentAutomation(
     auth,
   })
 
+  // The post's caption, read at most once per comment and only when an
+  // automation targets hashtags.
+  const loadPostCaption = createPostCaptionResolver({
+    channelType,
+    workspaceId,
+    postId,
+    integrationRow,
+  })
+
   // The incoming comment's own message row, looked up at most once per run —
   // tag tracking reads it before the loop, and every automation hangs its
   // like/hide/parent threading off it inside.
@@ -256,15 +264,14 @@ export async function processCommentAutomation(
   // purpose. Awaited before any reply dispatches so `{{total_tagged}}` renders
   // the total that includes this comment.
   if (
-    automations.some((automation) =>
-      tracksTagsForComment(automation, workspace.timezone, {
-        postId,
-        commentId,
-        parentId,
-        message,
-        isLive,
-      }),
-    )
+    await anyAutomationTracksTags(automations, workspace.timezone, {
+      postId,
+      commentId,
+      parentId,
+      message,
+      isLive,
+      loadPostCaption,
+    })
   ) {
     await trackCommentTags({
       workspaceId,
@@ -288,6 +295,14 @@ export async function processCommentAutomation(
         commentId,
       })
     : false
+
+  // Read at most once per comment, and only once an automation actually has a
+  // private reply to send — see `isPrivateReplyQuotaReached`.
+  let privateReplyQuotaReached: boolean | undefined
+  const resolvePrivateReplyQuotaReached = async (): Promise<boolean> => {
+    privateReplyQuotaReached ??= await isPrivateReplyQuotaReached(workspaceId)
+    return privateReplyQuotaReached
+  }
 
   // Every automation that declines this comment, flushed in ONE insert after
   // the loop. `findActiveAutomations` scopes by workspace + channel + account,
@@ -347,6 +362,53 @@ export async function processCommentAutomation(
         collectMiss(automation.id, "postNotMatched")
         continue
       }
+      const hashtagMatch = await matchPostHashtags(
+        automation.post,
+        loadPostCaption,
+      )
+      if (hashtagMatch !== "matched") {
+        const captionUnavailable = hashtagMatch === "captionUnavailable"
+        logAutomationSkipped({
+          automationId: automation.id,
+          commentId,
+          postId,
+          workspaceId,
+          reason: captionUnavailable
+            ? "post caption unavailable for the hashtag filter"
+            : "post has none of the target hashtags",
+        })
+        collectMiss(
+          automation.id,
+          captionUnavailable
+            ? "postCaptionUnavailable"
+            : "postHashtagNotMatched",
+        )
+        continue
+      }
+
+      // Before the reply filters on purpose: an abusive comment must be
+      // checked whether or not this automation would have answered it, and a
+      // comment the AI moderates is never answered. The hide rules keep their
+      // old place below — after the filters, hiding AND answering.
+      const moderation = await moderateCommentWithAI({
+        automation,
+        channelType,
+        data,
+        contactInbox,
+        loadCommentMessage,
+      })
+      if (moderation === "pendingAI") {
+        // Not a miss yet: the AI job records one if it moderates the comment,
+        // or re-runs this automation past moderation if it does not.
+        logAutomationSkipped({
+          automationId: automation.id,
+          commentId,
+          postId,
+          workspaceId,
+          reason: "waiting for AI moderation",
+        })
+        continue
+      }
       if (
         automation.options.ignoreCommentReplies &&
         isCommentReply(parentId, postId, commentId)
@@ -395,6 +457,31 @@ export async function processCommentAutomation(
             reason: `comment tagged ${mentionCount} accounts, expected at least ${automation.includeKeywords.mentionCount ?? 1}`,
           })
           collectMiss(automation.id, "mentionCountNotMatched")
+          continue
+        }
+      }
+
+      // After the text gates on purpose: this one may cost a Graph call, which
+      // `resolveAttachmentInfo` makes at most once per comment and shares with
+      // the hide rules below.
+      if (automation.options.onlyCommentsWithImage) {
+        if (!commentAutomationChannelSupportsImageFilter(channelType)) {
+          // Skipping here would make the automation answer no one, so the
+          // switch is ignored rather than enforced.
+          logUnsupportedCapability({
+            automationId: automation.id,
+            commentId,
+            capability: "image filter unsupported",
+          })
+        } else if (!(await resolveAttachmentInfo()).hasImage) {
+          logAutomationSkipped({
+            automationId: automation.id,
+            commentId,
+            postId,
+            workspaceId,
+            reason: "comment has no image attachment",
+          })
+          collectMiss(automation.id, "noImageAttachment")
           continue
         }
       }
@@ -500,6 +587,10 @@ export async function processCommentAutomation(
         if (automation.options.likeUserComment) {
           if (supportsCommentLike(channelType)) {
             const likeOptions = withReplayPriority()
+            const likeSeq = await commentLikeFence.next({
+              commentId: dbMessage.id,
+              workspaceId,
+            })
             chatQueue
               .add(
                 ChatJobAction.changeChannelMessageState,
@@ -510,6 +601,7 @@ export async function processCommentAutomation(
                     contactInbox,
                     message: messageRef,
                     liked: true,
+                    likeSeq,
                   },
                 },
                 ...(likeOptions ? [likeOptions] : []),
@@ -529,55 +621,15 @@ export async function processCommentAutomation(
           }
         }
 
-        if (hasHideCommentAction(automation.hideComments)) {
-          if (
-            supportsHideComments(channelType) &&
-            !supportsHideForComment(
-              channelType,
-              isCommentReply(parentId, postId, commentId),
-            )
-          ) {
-            logUnsupportedCapability({
-              automationId: automation.id,
-              commentId,
-              capability: "hide nested reply unsupported",
-            })
-          } else if (supportsHideComments(channelType)) {
-            const { hasImage, hasVideo, hasGif } = needsAttachmentInfo(
-              automation.hideComments,
-            )
-              ? await resolveAttachmentInfo()
-              : { hasImage: false, hasVideo: false, hasGif: false }
-
-            applyHideComments(automation.hideComments, commentId, message, {
-              conversation: conversationRef,
-              contactInbox,
-              messageId: dbMessage.id,
-              messageCreatedAt: dbMessage.createdAt,
-              hasImage,
-              hasVideo,
-              hasGif,
-            }).catch((err: unknown) =>
-              logger.error(
-                { err, automationId: automation.id, commentId },
-                "Failed to apply hide comments",
-              ),
-            )
-          } else {
-            if (needsAttachmentInfo(automation.hideComments)) {
-              logUnsupportedCapability({
-                automationId: automation.id,
-                commentId,
-                capability: "attachment lookup unsupported",
-              })
-            }
-            logUnsupportedCapability({
-              automationId: automation.id,
-              commentId,
-              capability: "hide or unhide comment unsupported",
-            })
-          }
-        }
+        await applyHideRules({
+          automation,
+          channelType,
+          data,
+          contactInbox,
+          occurredAt,
+          loadCommentMessage,
+          resolveAttachmentInfo,
+        })
       } else {
         // Liking, hiding and parent threading all hang off the incoming
         // comment's message row. Losing it degrades all three without touching
@@ -701,6 +753,9 @@ export async function processCommentAutomation(
         const privateReplyBlockedReason = resolvePrivateReplyBlockedReason({
           privateReply: automation.privateReply,
           privateReplyClaimed,
+          botMessageQuotaReached:
+            willSendReply(automation.privateReply) &&
+            (await resolvePrivateReplyQuotaReached()),
           channelType,
           createdTime,
           delay,
@@ -943,6 +998,8 @@ export async function processCommentAutomation(
 export function resolvePrivateReplyBlockedReason(props: {
   privateReply: CommentReply
   privateReplyClaimed: boolean
+  /** See `isPrivateReplyQuotaReached`: an inline DM bypasses the chat gate. */
+  botMessageQuotaReached: boolean
   channelType: CommentAutomationChannelType
   createdTime: number
   delay: number
@@ -975,7 +1032,23 @@ export function resolvePrivateReplyBlockedReason(props: {
     }
   }
 
+  if (props.botMessageQuotaReached) {
+    return {
+      logReason: "bot message quota reached",
+      errorDetail: PRIVATE_REPLY_QUOTA_REACHED_ERROR,
+    }
+  }
+
   return null
+}
+
+type TagTrackingComment = {
+  postId: string
+  commentId: string
+  parentId: string | undefined
+  message: string | undefined
+  isLive: boolean
+  loadPostCaption: () => Promise<PostCaption>
 }
 
 /**
@@ -986,20 +1059,17 @@ export function resolvePrivateReplyBlockedReason(props: {
  * checks) is left out on purpose — it is about replying, and must not stop a
  * user's later comments from being counted. So is the mention-count filter,
  * which needs the very lookup this gate exists to spare.
+ *
+ * The post-hashtag gate is checked last: it may cost a caption fetch, which
+ * the cheap synchronous gates spare whenever they already say no.
  */
-function tracksTagsForComment(
+async function tracksTagsForComment(
   automation: CommentAutomationModel,
   timezone: string,
-  comment: {
-    postId: string
-    commentId: string
-    parentId: string | undefined
-    message: string | undefined
-    isLive: boolean
-  },
-): boolean {
+  comment: TagTrackingComment,
+): Promise<boolean> {
   const { postId, commentId, parentId, message, isLive } = comment
-  return (
+  const passesSyncGates =
     automation.options.trackUserTags &&
     commentAutomationService.isWithinSchedule(automation, timezone) &&
     matchPost(automation.post, postId, isLive) &&
@@ -1013,7 +1083,26 @@ function tracksTagsForComment(
       message,
       automation.excludeKeywordsType,
     )
+  if (!passesSyncGates) {
+    return false
+  }
+  return (
+    (await matchPostHashtags(automation.post, comment.loadPostCaption)) ===
+    "matched"
   )
+}
+
+async function anyAutomationTracksTags(
+  automations: CommentAutomationModel[],
+  timezone: string,
+  comment: TagTrackingComment,
+): Promise<boolean> {
+  for (const automation of automations) {
+    if (await tracksTagsForComment(automation, timezone, comment)) {
+      return true
+    }
+  }
+  return false
 }
 
 /**

@@ -25,7 +25,6 @@ export type ActionHandler = (args: {
     businessId?: string | null
     wabaId?: string | null
     connectExisting: boolean
-    transferPhoneNumber: boolean
     manualConnect: boolean
     marketingMessageLite: boolean
     phoneNumberId?: string | null
@@ -60,6 +59,7 @@ export const mocks = {
   loggerWarnMock: vi.fn(),
   platformCredentialResolveMock: vi.fn(),
   recordRegistrationOutcomeMock: vi.fn(),
+  recordAuthorizationMock: vi.fn(),
   refreshCapiScopeCacheMock: vi.fn(),
   registerPhoneNumberMock: vi.fn(),
   resolvePlatformOwnerIdMock: vi.fn(),
@@ -110,7 +110,6 @@ export const BASE_INPUT = {
   businessId: null,
   wabaId: null,
   connectExisting: true,
-  transferPhoneNumber: false,
   manualConnect: false,
   marketingMessageLite: true,
   phoneNumberId: null,
@@ -146,6 +145,7 @@ export const EXISTING_WABA_INPUT = {
 /** Mirrors the original suite's shared `beforeEach` — call after `vi.clearAllMocks()`. */
 export function resetWhatsappConnectActionMocks() {
   mocks.createIdMock.mockReturnValue("integration-1")
+  mocks.recordAuthorizationMock.mockResolvedValue(undefined)
 
   mocks.resolvePlatformOwnerIdMock.mockResolvedValue("owner-1")
   mocks.resolveProviderOriginMock.mockResolvedValue(

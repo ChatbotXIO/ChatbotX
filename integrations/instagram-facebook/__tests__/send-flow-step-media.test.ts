@@ -250,3 +250,39 @@ describe("instagram-facebook sendFlowStep — image/video steps", () => {
     expect(mockSendInstagramMessage).not.toHaveBeenCalled()
   })
 })
+
+describe("instagram-facebook step input skip quick reply", () => {
+  test("encodes the skip postback unchanged as the quick reply payload", async () => {
+    await sendFlowStep({
+      ctx,
+      data: buildData(
+        {
+          id: "step-1",
+          nodeId: "node-1",
+          stepType: "sendImage",
+          mode: "file",
+          url: IMAGE_URL,
+          buttons: [],
+        },
+        {
+          quickReplies: [
+            {
+              id: "skip-1",
+              label: "Skip",
+              buttonType: "postback",
+              postback: "STEP_INPUT_SKIP|11612473309626368",
+            },
+          ],
+        },
+      ),
+    } as never)
+
+    const [, payload] = mockSendInstagramMessage.mock.calls[0]
+    expect(payload.message.quick_replies).toEqual([
+      expect.objectContaining({
+        title: "Skip",
+        payload: "STEP_INPUT_SKIP|11612473309626368",
+      }),
+    ])
+  })
+})

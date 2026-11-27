@@ -14,6 +14,9 @@ import { env } from "../../env"
  * teardown is the dangerous one: it disconnects every channel of an expired
  * trial owner, and off-cloud there is no billing path to recover from that.
  */
+/** Scheduler names of jobs that no longer exist (the AhaChat import sweeper). */
+const RETIRED_SCHEDULERS = ["scanAhachatImportRuns"] as const
+
 const CLOUD_ONLY_SCHEDULERS = [
   ScheduleJobData.syncUserQuota,
   ScheduleJobData.reconcileTenants,
@@ -21,6 +24,53 @@ const CLOUD_ONLY_SCHEDULERS = [
 ] as const
 
 const LICENSE_REFRESH_MINUTE = randomInt(60)
+
+/**
+ * Second of the minute each every-minute scanner fires at, so they do not all
+ * start at :00 (a CPU/DB spike on an idle worker). Jobs that read the minute
+ * boundary (`startOfMinute`) or start user-scheduled sends stay on
+ * "* * * * *" and are deliberately NOT listed here: enqueueBroadcast,
+ * enqueueRecurringBroadcasts, enqueueMarketingMessages, evaluateTriggers,
+ * evaluateDateTimeWebhooks.
+ */
+const EVERY_MINUTE_SECOND_OFFSETS = {
+  // Smallest offsets for the two deadline-driven jobs. Both already act up to
+  // a minute after the deadline (it falls on an arbitrary second), so this
+  // adds at most 2 s / 4 s to how late an overdue order expires or an overdue
+  // leaderboard finishes.
+  expireUnpaidOrders: 2,
+  finishOverdueLeaderboards: 4,
+  // Reads campaigns in status "sending", which the steps queued by
+  // enqueueMarketingMessages (kept at :00) set. Running a few seconds later
+  // lets a fast step land first; no ordering is required or guaranteed.
+  dispatchMarketingMessages: 8,
+  materializeSocialPostRecurrences: 12,
+  scanSocialPostFeeds: 14,
+  scanAbandonedCarts: 16,
+  reconcileBroadcasts: 20,
+  dispatchProfileSnapshots: 24,
+  scanCoexistRuns: 28,
+  scanContactScans: 32,
+  scanChannelPostSyncs: 34,
+  scanAiHandoverBulkRuns: 36,
+  scanContactSyncRuns: 38,
+  finalizeBroadcasts: 40,
+  refreshSocialAccountTokens: 42,
+  finalizeMarketingMessages: 44,
+  enqueueSocialPostTargets: 46,
+  reconcileMetaCatalogSyncs: 48,
+  recoverSocialPostTargets: 50,
+  pollSmtpInboxes: 52,
+} as const satisfies Partial<Record<keyof typeof ScheduleJobData, number>>
+
+// Job names (the values call sites pass) that have an offset. Intersecting with
+// the table keys makes a name/key mismatch a compile error, not a lookup miss.
+type SpreadEveryMinuteJob = keyof typeof EVERY_MINUTE_SECOND_OFFSETS &
+  (typeof ScheduleJobData)[keyof typeof ScheduleJobData]
+
+/** BullMQ cron (cron-parser) reads a 6-field pattern as seconds-first. */
+const everyMinuteAtOffset = (job: SpreadEveryMinuteJob): string =>
+  `${EVERY_MINUTE_SECOND_OFFSETS[job]} * * * * *`
 
 export const registerSchedules = async () => {
   if (!(scheduleQueue instanceof Queue)) {
@@ -36,10 +86,16 @@ export const registerSchedules = async () => {
     }
   }
 
+  // Schedulers of removed jobs persist in Redis and would keep firing into an
+  // unknown job type.
+  for (const name of RETIRED_SCHEDULERS) {
+    await scheduleQueue.removeJobScheduler(name)
+  }
+
   await scheduleQueue.upsertJobScheduler(
     ScheduleJobData.scanAbandonedCarts,
     {
-      pattern: "* * * * *",
+      pattern: everyMinuteAtOffset(ScheduleJobData.scanAbandonedCarts),
     },
     {
       name: ScheduleJobData.scanAbandonedCarts,
@@ -51,9 +107,23 @@ export const registerSchedules = async () => {
   )
 
   await scheduleQueue.upsertJobScheduler(
+    ScheduleJobData.expireUnpaidOrders,
+    {
+      pattern: everyMinuteAtOffset(ScheduleJobData.expireUnpaidOrders),
+    },
+    {
+      name: ScheduleJobData.expireUnpaidOrders,
+      data: {
+        type: ScheduleJobData.expireUnpaidOrders,
+        data: {},
+      },
+    },
+  )
+
+  await scheduleQueue.upsertJobScheduler(
     ScheduleJobData.dispatchProfileSnapshots,
     {
-      pattern: "* * * * *",
+      pattern: everyMinuteAtOffset(ScheduleJobData.dispatchProfileSnapshots),
     },
     {
       name: ScheduleJobData.dispatchProfileSnapshots,
@@ -97,7 +167,7 @@ export const registerSchedules = async () => {
   await scheduleQueue.upsertJobScheduler(
     ScheduleJobData.finalizeBroadcasts,
     {
-      pattern: "* * * * *",
+      pattern: everyMinuteAtOffset(ScheduleJobData.finalizeBroadcasts),
     },
     {
       name: ScheduleJobData.finalizeBroadcasts,
@@ -111,7 +181,7 @@ export const registerSchedules = async () => {
   await scheduleQueue.upsertJobScheduler(
     ScheduleJobData.reconcileBroadcasts,
     {
-      pattern: "* * * * *",
+      pattern: everyMinuteAtOffset(ScheduleJobData.reconcileBroadcasts),
     },
     {
       name: ScheduleJobData.reconcileBroadcasts,
@@ -139,7 +209,7 @@ export const registerSchedules = async () => {
   await scheduleQueue.upsertJobScheduler(
     ScheduleJobData.dispatchMarketingMessages,
     {
-      pattern: "* * * * *",
+      pattern: everyMinuteAtOffset(ScheduleJobData.dispatchMarketingMessages),
     },
     {
       name: ScheduleJobData.dispatchMarketingMessages,
@@ -153,7 +223,7 @@ export const registerSchedules = async () => {
   await scheduleQueue.upsertJobScheduler(
     ScheduleJobData.finalizeMarketingMessages,
     {
-      pattern: "* * * * *",
+      pattern: everyMinuteAtOffset(ScheduleJobData.finalizeMarketingMessages),
     },
     {
       name: ScheduleJobData.finalizeMarketingMessages,
@@ -286,6 +356,20 @@ export const registerSchedules = async () => {
   )
 
   await scheduleQueue.upsertJobScheduler(
+    ScheduleJobData.maintainChannelPostMetricPartitions,
+    {
+      pattern: "40 1 * * *",
+    },
+    {
+      name: ScheduleJobData.maintainChannelPostMetricPartitions,
+      data: {
+        type: ScheduleJobData.maintainChannelPostMetricPartitions,
+        data: {},
+      },
+    },
+  )
+
+  await scheduleQueue.upsertJobScheduler(
     ScheduleJobData.maintainLeaderboardPartitions,
     {
       pattern: "20 1 * * *",
@@ -302,7 +386,7 @@ export const registerSchedules = async () => {
   await scheduleQueue.upsertJobScheduler(
     ScheduleJobData.finishOverdueLeaderboards,
     {
-      pattern: "* * * * *",
+      pattern: everyMinuteAtOffset(ScheduleJobData.finishOverdueLeaderboards),
     },
     {
       name: ScheduleJobData.finishOverdueLeaderboards,
@@ -331,7 +415,7 @@ export const registerSchedules = async () => {
   await scheduleQueue.upsertJobScheduler(
     ScheduleJobData.scanCoexistRuns,
     {
-      pattern: "* * * * *",
+      pattern: everyMinuteAtOffset(ScheduleJobData.scanCoexistRuns),
     },
     {
       name: ScheduleJobData.scanCoexistRuns,
@@ -345,7 +429,7 @@ export const registerSchedules = async () => {
   await scheduleQueue.upsertJobScheduler(
     ScheduleJobData.scanContactScans,
     {
-      pattern: "* * * * *",
+      pattern: everyMinuteAtOffset(ScheduleJobData.scanContactScans),
     },
     {
       name: ScheduleJobData.scanContactScans,
@@ -357,9 +441,123 @@ export const registerSchedules = async () => {
   )
 
   await scheduleQueue.upsertJobScheduler(
+    ScheduleJobData.scanChannelPostSyncs,
+    {
+      pattern: everyMinuteAtOffset(ScheduleJobData.scanChannelPostSyncs),
+    },
+    {
+      name: ScheduleJobData.scanChannelPostSyncs,
+      data: {
+        type: ScheduleJobData.scanChannelPostSyncs,
+        data: {},
+      },
+    },
+  )
+
+  await scheduleQueue.upsertJobScheduler(
+    ScheduleJobData.enqueueSocialPostTargets,
+    {
+      pattern: everyMinuteAtOffset(ScheduleJobData.enqueueSocialPostTargets),
+    },
+    {
+      name: ScheduleJobData.enqueueSocialPostTargets,
+      data: {
+        type: ScheduleJobData.enqueueSocialPostTargets,
+        data: {},
+      },
+    },
+  )
+
+  await scheduleQueue.upsertJobScheduler(
+    ScheduleJobData.recoverSocialPostTargets,
+    {
+      pattern: everyMinuteAtOffset(ScheduleJobData.recoverSocialPostTargets),
+    },
+    {
+      name: ScheduleJobData.recoverSocialPostTargets,
+      data: {
+        type: ScheduleJobData.recoverSocialPostTargets,
+        data: {},
+      },
+    },
+  )
+
+  await scheduleQueue.upsertJobScheduler(
+    ScheduleJobData.materializeSocialPostRecurrences,
+    {
+      pattern: everyMinuteAtOffset(
+        ScheduleJobData.materializeSocialPostRecurrences,
+      ),
+    },
+    {
+      name: ScheduleJobData.materializeSocialPostRecurrences,
+      data: {
+        type: ScheduleJobData.materializeSocialPostRecurrences,
+        data: {},
+      },
+    },
+  )
+
+  await scheduleQueue.upsertJobScheduler(
+    ScheduleJobData.scanSocialPostFeeds,
+    {
+      pattern: everyMinuteAtOffset(ScheduleJobData.scanSocialPostFeeds),
+    },
+    {
+      name: ScheduleJobData.scanSocialPostFeeds,
+      data: {
+        type: ScheduleJobData.scanSocialPostFeeds,
+        data: {},
+      },
+    },
+  )
+
+  await scheduleQueue.upsertJobScheduler(
+    ScheduleJobData.refreshSocialAccountTokens,
+    {
+      pattern: everyMinuteAtOffset(ScheduleJobData.refreshSocialAccountTokens),
+    },
+    {
+      name: ScheduleJobData.refreshSocialAccountTokens,
+      data: {
+        type: ScheduleJobData.refreshSocialAccountTokens,
+        data: {},
+      },
+    },
+  )
+
+  await scheduleQueue.upsertJobScheduler(
+    ScheduleJobData.pollSmtpInboxes,
+    {
+      pattern: everyMinuteAtOffset(ScheduleJobData.pollSmtpInboxes),
+    },
+    {
+      name: ScheduleJobData.pollSmtpInboxes,
+      data: {
+        type: ScheduleJobData.pollSmtpInboxes,
+        data: {},
+      },
+    },
+  )
+
+  await scheduleQueue.upsertJobScheduler(
+    ScheduleJobData.scanContactSyncRuns,
+    {
+      pattern: everyMinuteAtOffset(ScheduleJobData.scanContactSyncRuns),
+    },
+    {
+      name: ScheduleJobData.scanContactSyncRuns,
+      data: {
+        type: ScheduleJobData.scanContactSyncRuns,
+        data: {},
+      },
+    },
+  )
+
+  await scheduleQueue.upsertJobScheduler(
     ScheduleJobData.scanAiHandoverBulkRuns,
     {
-      pattern: "* * * * *",
+      pattern: everyMinuteAtOffset(ScheduleJobData.scanAiHandoverBulkRuns),
     },
     {
       name: ScheduleJobData.scanAiHandoverBulkRuns,
@@ -373,7 +571,7 @@ export const registerSchedules = async () => {
   await scheduleQueue.upsertJobScheduler(
     ScheduleJobData.reconcileMetaCatalogSyncs,
     {
-      pattern: "* * * * *",
+      pattern: everyMinuteAtOffset(ScheduleJobData.reconcileMetaCatalogSyncs),
     },
     {
       name: ScheduleJobData.reconcileMetaCatalogSyncs,
@@ -424,6 +622,22 @@ export const registerSchedules = async () => {
       name: ScheduleJobData.redispatchInboundWebhookRequests,
       data: {
         type: ScheduleJobData.redispatchInboundWebhookRequests,
+        data: {},
+      },
+    },
+  )
+
+  // The template-install outbox sweep (the row is the outbox) applies to
+  // every edition.
+  await scheduleQueue.upsertJobScheduler(
+    ScheduleJobData.redispatchTemplateJobs,
+    {
+      pattern: "*/5 * * * *",
+    },
+    {
+      name: ScheduleJobData.redispatchTemplateJobs,
+      data: {
+        type: ScheduleJobData.redispatchTemplateJobs,
         data: {},
       },
     },
@@ -500,6 +714,20 @@ export const registerSchedules = async () => {
     },
   )
 
+  await scheduleQueue.upsertJobScheduler(
+    ScheduleJobData.purgeDeletedUsers,
+    {
+      pattern: `*/${PURGE_WORKSPACES_INTERVAL_MINUTES} * * * *`,
+    },
+    {
+      name: ScheduleJobData.purgeDeletedUsers,
+      data: {
+        type: ScheduleJobData.purgeDeletedUsers,
+        data: {},
+      },
+    },
+  )
+
   // Access is already gated by comparing `supportAccessUntil > now()` on
   // every read, so this cron only tidies the stale timestamp for
   // display/reporting hygiene — daily is plenty.
@@ -536,6 +764,22 @@ export const registerSchedules = async () => {
       name: ScheduleJobData.googleAdsSyncSetups,
       data: {
         type: ScheduleJobData.googleAdsSyncSetups,
+        data: {},
+      },
+    },
+  )
+
+  // Better Auth retains every refreshed OAuth token row, so daily retention
+  // prevents active MCP connections from growing the table unboundedly.
+  await scheduleQueue.upsertJobScheduler(
+    ScheduleJobData.purgeExpiredOAuthTokens,
+    {
+      pattern: "0 4 * * *",
+    },
+    {
+      name: ScheduleJobData.purgeExpiredOAuthTokens,
+      data: {
+        type: ScheduleJobData.purgeExpiredOAuthTokens,
         data: {},
       },
     },
@@ -640,6 +884,21 @@ export const registerSchedules = async () => {
       },
     )
   }
+
+  // Contact exports hold email and phone numbers, so they are not kept forever.
+  await scheduleQueue.upsertJobScheduler(
+    ScheduleJobData.purgeExpiredContactExports,
+    {
+      pattern: "30 4 * * *",
+    },
+    {
+      name: ScheduleJobData.purgeExpiredContactExports,
+      data: {
+        type: ScheduleJobData.purgeExpiredContactExports,
+        data: {},
+      },
+    },
+  )
 
   // WhatsApp calling.
   await scheduleQueue.upsertJobScheduler(

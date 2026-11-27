@@ -162,6 +162,7 @@ vi.mock("@chatbotx.io/database/schema", () => ({
     profileSnapshotState: "profileSnapshotState",
     accountVerified: "accountVerified",
     lastIncomingMessageAt: "lastIncomingMessageAt",
+    contactLastReadAt: "contactLastReadAt",
     lastMessageAt: "lastMessageAt",
     lastUserInput: "lastUserInput",
     lastUserInputType: "lastUserInputType",
@@ -184,9 +185,19 @@ vi.mock("@chatbotx.io/redis", () => ({
   withCache: vi.fn((_key: string, fn: () => unknown) => fn()),
 }))
 
+const { mockRecordAdTouches, mockLoggerError } = vi.hoisted(() => ({
+  mockRecordAdTouches: vi.fn(),
+  mockLoggerError: vi.fn(),
+}))
+
+vi.mock("../src/contact-referral-event/service", () => ({
+  contactReferralEventService: { recordAdTouches: mockRecordAdTouches },
+}))
+
 vi.mock("../src/logger", () => ({
   logger: {
     warn: mockLoggerWarn,
+    error: mockLoggerError,
   },
 }))
 
@@ -414,6 +425,24 @@ describe("contactInboxService timestamp helpers", () => {
     })
   })
 
+  test("updateTracking advances contactLastReadAt with GREATEST so a stale receipt cannot move it back", async () => {
+    const contactLastReadAt = new Date("2026-07-09T07:43:30.676Z")
+
+    await contactInboxService.updateTracking({
+      contactInboxId: "contact-inbox-1",
+      contactId: "contact-1",
+      workspaceId: "workspace-1",
+      data: { contactLastReadAt },
+    })
+
+    expect(mockDbSet).toHaveBeenCalledWith({
+      contactLastReadAt: {
+        strings: ["GREATEST(", ", ", ")"],
+        values: ["contactLastReadAt", contactLastReadAt],
+      },
+    })
+  })
+
   test("updateTracking merges only populated referral keys", async () => {
     await contactInboxService.updateTracking({
       contactInboxId: "contact-inbox-1",
@@ -440,6 +469,165 @@ describe("contactInboxService timestamp helpers", () => {
           }),
         ],
       },
+    })
+  })
+
+  describe("updateTracking ad touch log", () => {
+    const referral = { adId: "ad-1", source: "ADS" }
+    const referralOccurrence = {
+      occurredAt: new Date("2026-10-20T08:00:00Z"),
+      eventKey: "mid-1",
+    }
+    const baseInput = {
+      contactInboxId: "contact-inbox-1",
+      contactId: "contact-1",
+      workspaceId: "workspace-1",
+    }
+    const touchInput = {
+      workspaceId: "workspace-1",
+      contactId: "contact-1",
+      contactInboxId: "contact-inbox-1",
+      channel: "messenger",
+      referral,
+      occurrence: referralOccurrence,
+    }
+
+    /** A transaction whose nested transaction (a savepoint) runs on itself. */
+    const createTx = () => {
+      const tx = { update: mockDbUpdate, transaction: vi.fn() }
+      tx.transaction.mockImplementation(
+        async (run: (client: unknown) => unknown) => await run(tx),
+      )
+      return tx
+    }
+
+    beforeEach(() => {
+      mockDbReturning.mockResolvedValue([
+        { id: "contact-inbox-1", channel: "messenger" },
+      ])
+      mockRecordAdTouches.mockReset()
+    })
+
+    test("logs the referral as an ad touch in a savepoint of the caller's transaction", async () => {
+      const tx = createTx()
+
+      await contactInboxService.updateTracking({
+        ...baseInput,
+        tx: tx as never,
+        data: { referral },
+        referralOccurrence,
+      })
+
+      expect(tx.transaction).toHaveBeenCalledTimes(1)
+      expect(mockRecordAdTouches).toHaveBeenCalledWith(touchInput, tx)
+    })
+
+    test("only moves the snapshot when the caller gives no occurrence", async () => {
+      await contactInboxService.updateTracking({
+        ...baseInput,
+        data: { referral },
+      })
+
+      expect(mockRecordAdTouches).not.toHaveBeenCalled()
+    })
+
+    test("logs nothing when the contact inbox was not updated", async () => {
+      mockDbReturning.mockResolvedValue([])
+
+      await contactInboxService.updateTracking({
+        ...baseInput,
+        tx: createTx() as never,
+        data: { referral },
+        referralOccurrence,
+      })
+
+      expect(mockRecordAdTouches).not.toHaveBeenCalled()
+    })
+
+    test("a failed touch write does not fail the update of the message that carries it", async () => {
+      mockRecordAdTouches.mockRejectedValueOnce(
+        new Error("insert failed for gclid-SECRET-0001234567"),
+      )
+
+      await expect(
+        contactInboxService.updateTracking({
+          ...baseInput,
+          tx: createTx() as never,
+          data: { referral },
+          referralOccurrence,
+        }),
+      ).resolves.not.toBeNull()
+
+      expect(mockLoggerError).toHaveBeenCalledWith(
+        {
+          errName: "Error",
+          workspaceId: "workspace-1",
+          contactInboxId: "contact-inbox-1",
+        },
+        "updateTracking: could not record the ad touch",
+      )
+      // The error text embeds the query parameters, which include the click id.
+      expect(JSON.stringify(mockLoggerError.mock.calls)).not.toContain(
+        "gclid-SECRET",
+      )
+    })
+
+    test("without a caller transaction a failed touch is contained too, so the update still lands", async () => {
+      mockRecordAdTouches.mockRejectedValueOnce(new Error("db down"))
+      mockDbTransaction.mockImplementationOnce(
+        async (run: (client: unknown) => unknown) => await run(createTx()),
+      )
+
+      await expect(
+        contactInboxService.updateTracking({
+          ...baseInput,
+          data: { referral },
+          referralOccurrence,
+        }),
+      ).resolves.not.toBeNull()
+    })
+
+    describe("updateTrackingAtomic", () => {
+      beforeEach(() => {
+        mockInvalidateCacheByTags.mockClear()
+        mockLoggerError.mockClear()
+      })
+
+      test("commits the snapshot and the touch together, then invalidates", async () => {
+        const tx = createTx()
+        mockDbTransaction.mockImplementationOnce(
+          async (run: (client: unknown) => unknown) => await run(tx),
+        )
+
+        await contactInboxService.updateTrackingAtomic({
+          ...baseInput,
+          data: { referral },
+          referralOccurrence,
+        })
+
+        expect(mockDbTransaction).toHaveBeenCalledTimes(1)
+        expect(mockRecordAdTouches).toHaveBeenCalledWith(touchInput, tx)
+        expect(mockInvalidateCacheByTags).toHaveBeenCalledTimes(1)
+      })
+
+      test("a failed touch rolls the snapshot back so a later attempt can record it", async () => {
+        const tx = createTx()
+        mockDbTransaction.mockImplementationOnce(
+          async (run: (client: unknown) => unknown) => await run(tx),
+        )
+        mockRecordAdTouches.mockRejectedValueOnce(new Error("db down"))
+
+        await expect(
+          contactInboxService.updateTrackingAtomic({
+            ...baseInput,
+            data: { referral },
+            referralOccurrence,
+          }),
+        ).rejects.toThrow("db down")
+
+        expect(mockInvalidateCacheByTags).not.toHaveBeenCalled()
+        expect(mockLoggerError).not.toHaveBeenCalled()
+      })
     })
   })
 
@@ -997,6 +1185,70 @@ describe("contactInboxService Instagram snapshot recovery queries", () => {
     for (const [, channels] of inArrayCalls) {
       expect(channels).toEqual(["instagram"])
     }
+  })
+
+  type SqlFragment = { strings: string[]; values: unknown[] }
+
+  const isSqlFragment = (condition: unknown): condition is SqlFragment =>
+    typeof condition === "object" &&
+    condition !== null &&
+    "strings" in condition &&
+    "values" in condition
+
+  /** The `sql` fragments the query passed to `and(...)`, in order. */
+  const whereFragments = (where: ReturnType<typeof vi.fn>): SqlFragment[] => {
+    const [conditions] = where.mock.calls[0] as [{ conditions: unknown[] }]
+    return conditions.conditions.filter(isSqlFragment)
+  }
+
+  const CURSOR_AT = new Date("2026-11-03T06:00:00.000Z")
+  const CURSOR = `${CURSOR_AT.toISOString()}|42`
+  const ROW_COMPARISON = "(, ) > (, )"
+
+  // `a > x OR (a = x AND id > y)` cannot be used as an index bound, so a cursor
+  // that has drifted deep into a pending backlog rescanned it from its start
+  // on every page. The row comparison is the same predicate as one index range.
+  test.each([
+    [
+      "due",
+      (cursor: string) =>
+        contactInboxService.listDueProfileSnapshots({ cursor, limit: 100 }),
+    ],
+    [
+      "exhausted",
+      (cursor: string) =>
+        contactInboxService.listExhaustedProfileSnapshots({
+          cursor,
+          limit: 100,
+        }),
+    ],
+  ])("pages the %s scan with a row comparison", async (_name, list) => {
+    const { where } = mockRecoveryQuery([])
+
+    await list(CURSOR)
+
+    const rowComparison = whereFragments(where).find(
+      (fragment) => fragment.strings.join("") === ROW_COMPARISON,
+    )
+    expect(rowComparison?.values).toEqual([
+      "profileSnapshotNextAttemptAt",
+      "id",
+      CURSOR_AT,
+      "42",
+    ])
+    expect(mockOr).not.toHaveBeenCalled()
+  })
+
+  test("adds no cursor predicate for the first page", async () => {
+    const { where } = mockRecoveryQuery([])
+
+    await contactInboxService.listDueProfileSnapshots({ limit: 100 })
+
+    expect(
+      whereFragments(where).some(
+        (fragment) => fragment.strings.join("") === ROW_COMPARISON,
+      ),
+    ).toBe(false)
   })
 
   test("selects exhausted work only after its lease deadline", async () => {

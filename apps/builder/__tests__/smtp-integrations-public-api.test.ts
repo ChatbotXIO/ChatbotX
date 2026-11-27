@@ -57,7 +57,23 @@ const integrationSmtpService = {
   update: vi.fn(),
   disconnect: vi.fn(),
 }
-vi.mock("@chatbotx.io/business", () => ({ integrationSmtpService }))
+// Mirrors the real `toResource` (unit-tested in packages/business): a hand-
+// picked projection that never spreads the row, so `auth` cannot leak.
+const toResource = (row: Record<string, unknown>) => ({
+  id: row.id,
+  name: row.name,
+  fromAddress: row.fromAddress,
+  imapEnabled: row.imapEnabled ?? false,
+  imapHost: row.imapHost ?? null,
+  imapPort: row.imapPort ?? null,
+  imapMailbox: row.imapMailbox ?? null,
+  lastPolledAt: row.lastPolledAt ?? null,
+  lastPollError: row.lastPollError ?? null,
+  provider:
+    (row.auth as { provider?: string } | undefined)?.provider ?? "other",
+  inboundWebhookIssued: Boolean(row.inboundToken),
+})
+vi.mock("@chatbotx.io/business", () => ({ integrationSmtpService, toResource }))
 
 const callOrder: string[] = []
 const verifySmtpConnection = vi.fn()
@@ -70,6 +86,19 @@ vi.mock("../src/features/integration-smtp/lib/verify-connection", () => ({
     callOrder.push("verify")
     return Promise.resolve(verifySmtpConnection(...args))
   },
+}))
+
+const verifyImapLogin = vi.fn()
+vi.mock("../src/features/integration-smtp/lib/verify-imap", () => ({
+  verifyImapLogin: (...args: unknown[]) => {
+    callOrder.push("verify-imap")
+    return Promise.resolve(verifyImapLogin(...args))
+  },
+}))
+
+const resolveInboundWebhook = vi.fn()
+vi.mock("../src/features/integration-smtp/lib/inbound-webhook", () => ({
+  resolveInboundWebhook: (...args: unknown[]) => resolveInboundWebhook(...args),
 }))
 
 await import("@/features/integration-smtp/api/public")
@@ -148,7 +177,7 @@ describe("POST /v1/smtp-integrations", () => {
     )
   })
 
-  test("returns only { id, name, fromAddress } even though the row carries the password", async () => {
+  test("returns the public fields and IMAP status, never the stored auth", async () => {
     integrationSmtpService.connect.mockResolvedValueOnce({ smtpId: "smtp-1" })
     integrationSmtpService.findByIdForWorkspace.mockResolvedValueOnce({
       id: "smtp-1",
@@ -156,14 +185,105 @@ describe("POST /v1/smtp-integrations", () => {
       fromAddress: "from@example.com",
       inboxId: "inbox-1",
       workspaceId: "workspace-1",
-      auth: { authType: "custom", password: "super-secret" },
+      auth: {
+        authType: "custom",
+        provider: "google",
+        password: "super-secret",
+      },
     })
 
     await expect(procedure.handler?.({ context, input })).resolves.toEqual({
       id: "smtp-1",
       name: "user1",
       fromAddress: "from@example.com",
+      imapEnabled: false,
+      imapHost: null,
+      imapPort: null,
+      imapMailbox: null,
+      lastPolledAt: null,
+      lastPollError: null,
+      provider: "google",
+      inboundWebhookIssued: false,
     })
+  })
+
+  test("verifies SMTP then IMAP, pins the provider's IMAP host, and connects with IMAP enabled", async () => {
+    integrationSmtpService.connect.mockImplementationOnce(() => {
+      callOrder.push("connect")
+      return Promise.resolve({ smtpId: "smtp-1" })
+    })
+    integrationSmtpService.findByIdForWorkspace.mockResolvedValueOnce({
+      id: "smtp-1",
+      name: "user1",
+      fromAddress: "from@example.com",
+    })
+
+    await procedure.handler?.({
+      context,
+      input: {
+        ...input,
+        imap: { enabled: true, host: "ignored", port: 1, username: "box" },
+      },
+    })
+
+    expect(callOrder).toEqual(["verify", "verify-imap", "connect"])
+    expect(verifyImapLogin).toHaveBeenCalledWith(
+      expect.objectContaining({
+        host: "imap.gmail.com",
+        port: 993,
+        mailbox: "INBOX",
+        username: "box",
+        password: "super-secret",
+      }),
+    )
+    expect(integrationSmtpService.connect).toHaveBeenCalledWith(
+      expect.objectContaining({
+        imap: {
+          enabled: true,
+          host: "imap.gmail.com",
+          port: 993,
+          mailbox: "INBOX",
+        },
+        auth: expect.objectContaining({ imapUsername: "box" }),
+      }),
+    )
+  })
+
+  test("skips the IMAP login check when receiving is off", async () => {
+    integrationSmtpService.connect.mockResolvedValueOnce({ smtpId: "smtp-1" })
+    integrationSmtpService.findByIdForWorkspace.mockResolvedValueOnce({
+      id: "smtp-1",
+      name: "user1",
+      fromAddress: "from@example.com",
+    })
+
+    await procedure.handler?.({
+      context,
+      input: { ...input, imap: { enabled: false } },
+    })
+
+    expect(verifyImapLogin).not.toHaveBeenCalled()
+    expect(integrationSmtpService.connect).toHaveBeenCalledWith(
+      expect.objectContaining({
+        imap: { enabled: false, host: null, port: null, mailbox: null },
+      }),
+    )
+  })
+
+  test("does not touch IMAP when the request has no imap block", async () => {
+    integrationSmtpService.connect.mockResolvedValueOnce({ smtpId: "smtp-1" })
+    integrationSmtpService.findByIdForWorkspace.mockResolvedValueOnce({
+      id: "smtp-1",
+      name: "user1",
+      fromAddress: "from@example.com",
+    })
+
+    await procedure.handler?.({ context, input })
+
+    expect(verifyImapLogin).not.toHaveBeenCalled()
+    expect(integrationSmtpService.connect).toHaveBeenCalledWith(
+      expect.objectContaining({ imap: undefined }),
+    )
   })
 })
 
@@ -214,6 +334,36 @@ describe("DELETE /v1/smtp-integrations/{id}", () => {
       id: "smtp-1",
       inboxId: "inbox-1",
       ownerId: "owner-1",
+    })
+  })
+})
+
+describe("inbound webhook procedures", () => {
+  test("GET reuses the existing URL; POST rotate replaces it", async () => {
+    resolveInboundWebhook.mockResolvedValue({ url: "https://app/x" })
+    const get = findProcedure(
+      "GET",
+      "/v1/smtp-integrations/{id}/inbound-webhook",
+    )
+    const rotate = findProcedure(
+      "POST",
+      "/v1/smtp-integrations/{id}/inbound-webhook/rotate",
+    )
+
+    await get.handler?.({ context, input: { id: "smtp-1" } })
+    await rotate.handler?.({ context, input: { id: "smtp-1" } })
+
+    expect(resolveInboundWebhook).toHaveBeenNthCalledWith(1, {
+      workspaceId: "workspace-1",
+      ownerId: "owner-1",
+      id: "smtp-1",
+      rotate: false,
+    })
+    expect(resolveInboundWebhook).toHaveBeenNthCalledWith(2, {
+      workspaceId: "workspace-1",
+      ownerId: "owner-1",
+      id: "smtp-1",
+      rotate: true,
     })
   })
 })

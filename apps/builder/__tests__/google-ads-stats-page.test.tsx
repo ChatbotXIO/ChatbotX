@@ -15,13 +15,17 @@ const mocks = vi.hoisted(() => ({
   findWorkspace: vi.fn(),
   distinctConnectedChannels: vi.fn(async () => ["whatsapp"]),
   view: vi.fn(() => null),
-  nav: vi.fn(() => null),
 }))
 
 vi.mock("@/lib/auth/require-workspace-permission", () => ({
   resolveGuardedWorkspaceId: mocks.resolveGuardedWorkspaceId,
 }))
-vi.mock("next/navigation", () => ({ notFound: mocks.notFound }))
+vi.mock("next/navigation", () => ({
+  notFound: mocks.notFound,
+  redirect: (url: string) => {
+    throw new Error(`redirect:${url}`)
+  },
+}))
 vi.mock("@chatbotx.io/business", () => ({
   googleAdsConversionService: {
     getStats: mocks.getStats,
@@ -33,9 +37,6 @@ vi.mock("@chatbotx.io/business", () => ({
   },
   workspaceService: { findById: mocks.findWorkspace },
   inboxService: { distinctConnectedChannels: mocks.distinctConnectedChannels },
-}))
-vi.mock("@/features/analytics/components/analytics-nav", () => ({
-  AnalyticsNav: mocks.nav,
 }))
 vi.mock(
   "@/features/integration-google-ads/components/stats/google-ads-stats-view",
@@ -150,7 +151,7 @@ describe("Google Ads statistics page", () => {
       from: "2026-09-01",
       to: "2026-09-07",
       tz: "Asia/Ho_Chi_Minh",
-      channel: "whatsapp",
+      channels: "whatsapp",
       action: "111",
     })
 
@@ -174,9 +175,46 @@ describe("Google Ads statistics page", () => {
       }),
     )
     expect(mocks.view).toHaveBeenCalledWith(
-      expect.objectContaining({ stats, channel: null, action: null }),
+      expect.objectContaining({ stats, action: null }),
       undefined,
     )
+  })
+
+  test("a single Google channel in the shared Channel filter narrows the statistics to it", async () => {
+    await render({ channels: "messenger" })
+
+    expect(mocks.getStats).toHaveBeenCalledWith(
+      expect.objectContaining({ channel: "messenger" }),
+    )
+  })
+
+  test.each([
+    ["several shared channels", { channels: "whatsapp,messenger" }],
+    [
+      "a shared channel Google has no conversions for",
+      { channels: "telegram" },
+    ],
+  ])("%s show every channel", async (_label, params) => {
+    await render(params)
+
+    expect(mocks.getStats).toHaveBeenCalledWith(
+      expect.objectContaining({ channel: undefined }),
+    )
+  })
+
+  test("the shared selection wins over the legacy channel param (no redirect)", async () => {
+    await render({ channels: "messenger", channel: "whatsapp" })
+
+    expect(mocks.getStats).toHaveBeenCalledWith(
+      expect.objectContaining({ channel: "messenger" }),
+    )
+  })
+
+  test("a legacy channel link becomes the shared channel selection and leaves the URL", async () => {
+    await expect(render({ channel: "zalo", action: "111" })).rejects.toThrow(
+      "redirect:/space/ws-1/dashboard/ads/google?action=111&channels=zalo",
+    )
+    expect(mocks.getStats).not.toHaveBeenCalled()
   })
 
   test("renders the view with the connection, the workspace birth and the synced actions", async () => {
@@ -214,38 +252,6 @@ describe("Google Ads statistics page", () => {
 
     expect(mocks.view).toHaveBeenCalledWith(
       expect.objectContaining({ connected: false, syncedActions: [] }),
-      undefined,
-    )
-  })
-
-  test("lists itself in the nav with the connected Meta channels once connected", async () => {
-    await render()
-
-    expect(mocks.nav).toHaveBeenCalledWith(
-      { adsChannels: ["whatsapp"], showGoogleAds: true },
-      undefined,
-    )
-  })
-
-  test("does not list itself without a connection and without any conversion", async () => {
-    mocks.getSetup.mockResolvedValue(null)
-
-    await render()
-
-    expect(mocks.nav).toHaveBeenCalledWith(
-      { adsChannels: ["whatsapp"], showGoogleAds: false },
-      undefined,
-    )
-  })
-
-  test("still lists itself without a connection while conversion history exists", async () => {
-    mocks.getSetup.mockResolvedValue(null)
-    mocks.hasAnyEvent.mockResolvedValue(true)
-
-    await render()
-
-    expect(mocks.nav).toHaveBeenCalledWith(
-      { adsChannels: ["whatsapp"], showGoogleAds: true },
       undefined,
     )
   })

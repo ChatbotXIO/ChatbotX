@@ -1,7 +1,10 @@
 import { buildContext } from "@chatbotx.io/business"
 import type { CommentHideComments } from "@chatbotx.io/database/partials"
 import type { MessengerAuthValue } from "@chatbotx.io/integration-messenger"
-import type { ThreadsAuthValue } from "@chatbotx.io/integration-threads"
+import type {
+  ThreadsAuthValue,
+  ThreadsReplyAttachment,
+} from "@chatbotx.io/integration-threads"
 import type { AuthValue } from "@chatbotx.io/sdk"
 import { allIntegrations } from "../../../services/integrations"
 import type { CommentAutomationChannelType } from "./channel-type"
@@ -38,12 +41,29 @@ function isGifAttachmentType(type: string | null | undefined): boolean {
   return typeof type === "string" && type.startsWith("animated_image")
 }
 
+const THREADS_IMAGE_MEDIA_TYPES = new Set(["IMAGE", "CAROUSEL_ALBUM"])
+
+function threadsAttachmentInfo(
+  attachment: ThreadsReplyAttachment | null | undefined,
+): CommentAttachmentInfo {
+  if (!attachment) {
+    return NO_ATTACHMENT
+  }
+  return {
+    hasImage: THREADS_IMAGE_MEDIA_TYPES.has(attachment.mediaType ?? ""),
+    hasVideo: attachment.mediaType === "VIDEO",
+    hasGif: Boolean(attachment.gifUrl),
+  }
+}
+
 /**
  * Returns a memoized resolver that fetches a comment's attachment type at
  * most once per incoming comment, regardless of how many active automations
  * need it. Facebook answers all three flags from the comment's
- * `attachment.type`; Threads can only answer `hasGif` (from the reply's
- * `gif_url`); Instagram and TikTok have no attachment data at all and
+ * `attachment.type`; Threads answers them from the reply's `gif_url` and
+ * `media_type` (a GIF reply is still `TEXT_POST`, a photo reply is `IMAGE`,
+ * or `CAROUSEL_ALBUM` for several); Instagram and TikTok have no attachment
+ * data at all and
  * short-circuit to "no attachment" — unrelated to which channels support
  * private replies.
  */
@@ -67,8 +87,8 @@ export function createAttachmentInfoResolver(params: {
       return cached
     }
     if (channelType === "threads") {
-      const gifUrl = await allIntegrations.threads
-        ?.runAction("getReplyGifUrl", {
+      const attachment = await allIntegrations.threads
+        ?.runAction("getReplyAttachment", {
           ctx: await buildContext({
             workspaceId,
             integrationType: "threads",
@@ -80,7 +100,7 @@ export function createAttachmentInfoResolver(params: {
           input: { replyId: commentId },
         })
         .catch(() => null)
-      cached = { ...NO_ATTACHMENT, hasGif: Boolean(gifUrl) }
+      cached = threadsAttachmentInfo(attachment)
       return cached
     }
     if (channelType !== "messenger") {

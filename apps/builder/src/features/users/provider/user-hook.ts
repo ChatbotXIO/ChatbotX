@@ -6,17 +6,21 @@ import { useWorkspaceId } from "@/hooks/routing"
 import { orpc } from "@/lib/orpc/query"
 import { maxPerPage } from "@/lib/shared-request"
 
+/** Shared by the hook and by code that needs a fresh list (realtime). */
+export const workspaceMembersQueryOptions = (workspaceId: string) =>
+  orpc.workspaceMembersAPI.listWorkspaceMembersAuthenticatedAPI.queryOptions({
+    input: { workspaceId, perPage: maxPerPage },
+  })
+
 export const useWorkspaceMembers = (
   workspaceId: string | undefined,
   options?: { enabled?: boolean },
 ) =>
-  useQuery(
-    orpc.workspaceMembersAPI.listWorkspaceMembersAuthenticatedAPI.queryOptions({
-      input: { workspaceId: workspaceId ?? "", perPage: maxPerPage },
-      enabled: Boolean(workspaceId) && (options?.enabled ?? true),
-      select: (res) => res.data,
-    }),
-  )
+  useQuery({
+    ...workspaceMembersQueryOptions(workspaceId ?? ""),
+    enabled: Boolean(workspaceId) && (options?.enabled ?? true),
+    select: (res) => res.data,
+  })
 
 export const useInboxTeams = (
   workspaceId: string | undefined,
@@ -29,6 +33,11 @@ export const useInboxTeams = (
       select: (res) => res.data,
     }),
   )
+
+/** The one label rule for a workspace member shown as an assignee. */
+export const workspaceMemberLabel = (member: {
+  user?: { name?: string | null } | null
+}) => member.user?.name ?? "--"
 
 export const useInvalidateUsers = () => {
   const queryClient = useQueryClient()
@@ -79,7 +88,7 @@ const useContactAssigneeOptionsState = (
         label: "Agents",
         value: "agents",
         children: workspaceMembers.map((v) => ({
-          label: v.user?.name ?? "--",
+          label: workspaceMemberLabel(v),
           value: `u_${v.user?.id}`,
         })),
       },
@@ -129,27 +138,43 @@ export const useContactAssigneeOptions = (
   props?: ContactAssigneeOptionsProps,
 ) => useContactAssigneeOptionsState(props).options
 
-export const useContactAssigneeMultiSelectOptions = (): MultiSelectGroup[] => {
+export type ContactAssigneeMultiSelectConfig = {
+  /** Translated group headings; defaults to the English "Agents" / "Inbox Teams". */
+  groupLabels?: { agents: string; teams: string }
+  /**
+   * What an agent option's value carries after `u_`: the `User` id (default,
+   * what contact assignment uses) or the `WorkspaceMember` id (what pipelines
+   * store as assignees).
+   */
+  agentValue?: "userId" | "memberId"
+}
+
+export const useContactAssigneeMultiSelectOptions = ({
+  groupLabels,
+  agentValue = "userId",
+}: ContactAssigneeMultiSelectConfig = {}): MultiSelectGroup[] => {
   const workspaceId = useWorkspaceId()
   const { data: workspaceMembers = [] } = useWorkspaceMembers(workspaceId)
   const { data: inboxTeams = [] } = useInboxTeams(workspaceId)
+  const agentsHeading = groupLabels?.agents ?? "Agents"
+  const teamsHeading = groupLabels?.teams ?? "Inbox Teams"
   return useMemo(
     () => [
       {
-        heading: "Agents",
+        heading: agentsHeading,
         options: workspaceMembers.map((v) => ({
-          label: v.user?.name ?? "--",
-          value: `u_${v.user?.id}`,
+          label: workspaceMemberLabel(v),
+          value: `u_${agentValue === "memberId" ? v.id : v.user?.id}`,
         })),
       },
       {
-        heading: "Inbox Teams",
+        heading: teamsHeading,
         options: inboxTeams.map((v) => ({
           label: v.name,
           value: `t_${v.id}`,
         })),
       },
     ],
-    [workspaceMembers, inboxTeams],
+    [workspaceMembers, inboxTeams, agentsHeading, teamsHeading, agentValue],
   )
 }

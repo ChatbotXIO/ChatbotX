@@ -3,15 +3,22 @@ import type {
   ConversationQuickReplyChallenge,
   ConversationStepChallenge,
   EmailTrackingPhase,
+  IntegrationType,
+  ProviderAccountEventDetail,
+  ProviderAccountEventKind,
+  ProviderAccountRouteScope,
 } from "@chatbotx.io/database/partials"
 import type { AdsConversionChannel } from "@chatbotx.io/database/schema"
 import type {
   ContactInboxModel,
   ConversationModel,
 } from "@chatbotx.io/database/types"
-import type {
-  FlowActionTargetType,
-  MetadataPayload,
+import {
+  BROADCAST_PAYLOAD_TYPE,
+  type FlowActionTargetType,
+  type MetadataPayload,
+  SEQUENCE_SCHEDULE_PAYLOAD_TYPE,
+  type StepInputResolutionReason,
 } from "@chatbotx.io/flow-config"
 import type {
   ChannelAudienceEventJobData,
@@ -19,6 +26,7 @@ import type {
   MessageInboundOrderEntity,
   OutgoingMessage,
 } from "@chatbotx.io/sdk"
+import type { SendFrom } from "@chatbotx.io/utils/send-from"
 import { type JobsOptions, Queue } from "bullmq"
 import {
   defaultJobOptions,
@@ -27,11 +35,16 @@ import {
   isNoRedisEnv,
 } from "../../lib/connection"
 import { queueNames } from "../../lib/types"
+import { lowQueue } from "../low"
 import type { BotResponseTrackingContext } from "../types"
+import type { ResolvedFlowFile } from "./flow-response-files"
 
 export * from "./ai-handover-bulk-job-ids"
 export * from "./coexist-job-ids"
 export * from "./contact-scan-job-ids"
+export * from "./contact-sync-job-ids"
+export * from "./flow-response-files"
+export * from "./smtp-job-ids"
 
 export const IntegrationJobAction = {
   sendFlow: "sendFlow",
@@ -39,12 +52,15 @@ export const IntegrationJobAction = {
   sendSequenceFlow: "sendSequenceFlow",
   runRef: "runRef",
   incomingMessage: "incomingMessage",
+  incomingMessageEcho: "incomingMessageEcho",
+  liveVideoStatusChange: "liveVideoStatusChange",
   incomingComment: "incomingComment",
   tiktokHighIntentComment: "tiktokHighIntentComment",
   deferredCommentPrivateReply: "deferredCommentPrivateReply",
   updateIncomingComment: "updateIncomingComment",
   deleteIncomingComment: "deleteIncomingComment",
   deleteIncomingMessage: "deleteIncomingMessage",
+  updateIncomingMessage: "updateIncomingMessage",
   messageReaction: "messageReaction",
   messageStatus: "messageStatus",
   runFlowPostback: "runFlowPostback",
@@ -56,6 +72,8 @@ export const IntegrationJobAction = {
   resumeWait: "resumeWait",
   resumeFollowUp: "resumeFollowUp",
   resumeQuickReplyFollowUp: "resumeQuickReplyFollowUp",
+  resumeStepInputTimeout: "resumeStepInputTimeout",
+  resolveStepInput: "resolveStepInput",
   blockContact: "blockContact",
   unblockContact: "unblockContact",
   assignConversation: "assignConversation",
@@ -65,9 +83,11 @@ export const IntegrationJobAction = {
   coexistWhatsappBuffer: "coexistWhatsappBuffer",
   coexistWhatsappFlush: "coexistWhatsappFlush",
   coexistMessengerSync: "coexistMessengerSync",
+  pollSmtpInbox: "pollSmtpInbox",
   coexistInstagramSync: "coexistInstagramSync",
   coexistAttachmentDownload: "coexistAttachmentDownload",
   adsAutomaticEvent: "adsAutomaticEvent",
+  providerAccountEvent: "providerAccountEvent",
   whatsappIdentityChange: "whatsappIdentityChange",
   whatsappCallEvent: "whatsappCallEvent",
   whatsappCallRecordingReady: "whatsappCallRecordingReady",
@@ -82,6 +102,11 @@ export const IntegrationJobAction = {
   processStoryReplyAutomation: "processStoryReplyAutomation",
   captureTemplateFlowResponse: "captureTemplateFlowResponse",
   replyToInboundCart: "replyToInboundCart",
+  confirmOrderPayment: "confirmOrderPayment",
+  shopifySync: "shopifySync",
+  shopifyWebhook: "shopifyWebhook",
+  woocommerceSync: "woocommerceSync",
+  woocommerceWebhook: "woocommerceWebhook",
   // Ads-conversion actions (merged from the retired `adsConversion` queue).
   evaluateTemplateSent: "evaluateTemplateSent",
   evaluateConversionTrigger: "evaluateConversionTrigger",
@@ -95,6 +120,8 @@ export const IntegrationJobAction = {
   threadControlAction: "threadControlAction",
   aiHandoverTakeBack: "aiHandoverTakeBack",
   aiHandoverBulkToggle: "aiHandoverBulkToggle",
+  // One budgeted chunk of a contact sync from an external system.
+  contactSync: "contactSync",
   // Follow/unfollow, group join/leave, group messages and the bot's own group
   // membership — audience events that are not 1:1 messages (leaderboard scoring).
   channelAudienceEvent: "channelAudienceEvent",
@@ -109,6 +136,35 @@ export type IntegrationJobReceiveMessage = {
     integrationType: string
     integrationIdentifier: string
     payload: unknown
+  }
+}
+
+/**
+ * A message the channel echoes back for something the account itself sent (a
+ * Page-inbox reply, a third-party app, an OA send). Same payload as
+ * `incomingMessage`, but nobody waits on a reply to it, so it is routed to the
+ * `low` queue and never queues ahead of a customer's message.
+ */
+export type IntegrationJobReceiveMessageEcho = {
+  type: typeof IntegrationJobAction.incomingMessageEcho
+  data: IntegrationJobReceiveMessage["data"]
+}
+
+/**
+ * A page's `live_videos` webhook: a broadcast changed state. Carries only the
+ * live video id and the status the webhook named; the worker re-reads the
+ * broadcast with the page token and records what that read says. Routed to the
+ * `low` queue (nobody waits on it); the job id names the video and status, so a
+ * redelivery adds nothing.
+ */
+export type IntegrationJobLiveVideoStatusChange = {
+  type: typeof IntegrationJobAction.liveVideoStatusChange
+  data: {
+    integrationType: string
+    integrationIdentifier: string
+    liveVideoId: string
+    /** The status the webhook reported; the read decides, this only keys the job. */
+    status: string
   }
 }
 
@@ -140,6 +196,39 @@ export const MISSED_COMMENT_REPLAY_PRIORITY = 10
  * scheduled send, a replay is catch-up work.
  */
 export const BROADCAST_SEND_PRIORITY = 5
+
+/**
+ * BullMQ priority for every send a scheduled sequence makes (its first job per
+ * dispatch and each flow step after it). Same tier as a broadcast: a scheduled
+ * mass send, yielding to live traffic and to flow continuations.
+ */
+export const SEQUENCE_SEND_PRIORITY = 5
+
+const flowJobPriorityByMetadataType: Partial<
+  Record<MetadataPayload["type"], number>
+> = {
+  [BROADCAST_PAYLOAD_TYPE]: BROADCAST_SEND_PRIORITY,
+  [SEQUENCE_SCHEDULE_PAYLOAD_TYPE]: SEQUENCE_SEND_PRIORITY,
+}
+
+/** The BullMQ options a flow job's tier sets. */
+export type FlowJobPriorityOptions = Pick<JobsOptions, "priority">
+
+/**
+ * Job options for a job that continues or schedules a flow run. A mass
+ * scheduled send (`metadata.type` broadcast / sequenceSchedule) keeps its tier
+ * on every step, so it always yields to live traffic. Any other run gets no
+ * priority: its next step stays in FIFO order with customer messages. BullMQ
+ * only takes a prioritized job when no unprioritized one is waiting, so a
+ * lower tier for continuations would let new conversations stall a running
+ * flow indefinitely under sustained load.
+ */
+export const flowContinuationJobOptions = (
+  metadata?: MetadataPayload,
+): FlowJobPriorityOptions => {
+  const priority = metadata && flowJobPriorityByMetadataType[metadata.type]
+  return priority ? { priority } : {}
+}
 
 export type IntegrationJobReceiveComment = {
   type: typeof IntegrationJobAction.incomingComment
@@ -186,6 +275,16 @@ export type IntegrationJobReceiveComment = {
      * runs on it. Absent on every webhook-driven comment.
      */
     replay?: { automationId: string }
+    /**
+     * TikTok only: this run looks again at a comment whose commenter lookup
+     * came back empty, so its automation was withheld. `retry` is one of the
+     * scheduled follow-ups (`attempt` counts from 1); `visibility` is TikTok's
+     * `set_to_public` for that comment. Either one stops early unless the
+     * comment is still marked as withheld. Absent on a first delivery.
+     */
+    tiktokIdentityRecheck?:
+      | { source: "retry"; attempt: number }
+      | { source: "visibility" }
   }
 }
 
@@ -208,13 +307,39 @@ export type IntegrationJobDeleteIncomingComment = {
   }
 }
 
+/**
+ * Optional for the producers that change a stored message by its provider id.
+ * Absent (a Messenger unsend, a job queued before it existed) keeps the original
+ * behavior: a missing row only warns.
+ */
+export type IncomingMessageChangeOptions = {
+  /**
+   * The message may still be on its way (its own job has not stored it yet):
+   * throw on a missing row so the job retries, warn once on the last attempt,
+   * and wait for the conversation's message ingress before publishing the
+   * change (best effort: it is published anyway when the wait times out).
+   */
+  retryIfMissing?: boolean
+}
+
 export type IntegrationJobDeleteIncomingMessage = {
   type: typeof IntegrationJobAction.deleteIncomingMessage
   data: {
     integrationType: string
     integrationIdentifier: string
     messageId: string
-  }
+  } & IncomingMessageChangeOptions
+}
+
+/** The provider edited a message already stored: replace its text. */
+export type IntegrationJobUpdateIncomingMessage = {
+  type: typeof IntegrationJobAction.updateIncomingMessage
+  data: {
+    integrationType: string
+    integrationIdentifier: string
+    messageId: string
+    newText: string
+  } & IncomingMessageChangeOptions
 }
 
 export type IntegrationJobMessageReaction = {
@@ -265,6 +390,13 @@ export type IntegrationJobMessageStatus = {
       timestamp: string
       error?: unknown
     }
+    /**
+     * Set at ingress when the message this status belongs to can continue a
+     * flow (a template whose Delivered/Failed button is wired to another
+     * node). Such a status stays on the `integration` queue; every other one
+     * is pure bookkeeping and goes to `low`.
+     */
+    continuesFlow?: boolean
   }
 }
 
@@ -321,7 +453,7 @@ export type IntegrationJobRunFlowNode = {
      */
     isBulkBroadcast?: boolean
     appointmentId?: string
-    sendFrom?: "inbox"
+    sendFrom?: SendFrom
     /**
      * The inbox user who sent the flow (`sendFrom: "inbox"`), for the
      * `{{admin_name}}` / `{{admin_team_name}}` variables. Like `sendFrom` it is
@@ -341,6 +473,25 @@ export type IntegrationJobRunFlowNode = {
     origin?: "channel"
     /** See {@link CommentAnchor}. */
     commentAnchor?: CommentAnchor
+    /**
+     * A continuation that waits for this run's chain to finish. Get User Data
+     * hands its Continue here when it branches, so the branch's messages go
+     * out first: the chain forwards it to its next step or next node, and the
+     * job where the chain stops (waits for the contact, or has nothing after
+     * it) enqueues it, exactly once.
+     *
+     * Known limit: a step that jumps by enqueuing its own run (Condition,
+     * Start Another Node, Split Traffic, Start External Flow/Node) does not
+     * carry it, so when such a step ends the chain the continuation runs
+     * alongside the jumped-to node, as before this field existed.
+     */
+    thenSendFlow?: IntegrationJobRunFlowNode["data"]
+    /**
+     * A node an earlier step of this node's run already branched to. Carried
+     * to the node's next step jobs, so its Continue edge does not send that
+     * node a second time.
+     */
+    branchedNodeId?: string
   }
 }
 
@@ -367,6 +518,8 @@ export type IntegrationJobSendFlowPostback = {
     messageId?: string
     payload?: {
       waFlowResponse?: Record<string, unknown> | string
+      /** Stored files of the response's file answers, by response key. */
+      flowFiles?: Record<string, ResolvedFlowFile[]>
     }
   }
 }
@@ -442,6 +595,52 @@ export type IntegrationJobResumeQuickReplyFollowUp = {
   data: { smartDelayId: string }
 }
 
+export type IntegrationJobResumeStepInputTimeout = {
+  type: typeof IntegrationJobAction.resumeStepInputTimeout
+  data: { smartDelayId: string }
+}
+
+/**
+ * Ends a pending step input (a `type: "step"` challenge) without a typed
+ * answer: the contact tapped Skip, or the step's timer ran out.
+ * `messageId` is set only when the contact's own tap triggered it.
+ */
+export type IntegrationJobResolveStepInput = {
+  type: typeof IntegrationJobAction.resolveStepInput
+  data: {
+    conversationId: string
+    contactInboxId: string
+    challengeId: string
+    reason: StepInputResolutionReason
+    messageId?: string
+    messageCreatedAt?: Date
+  }
+}
+
+/**
+ * The job (and its dedup id) that ends a pending step input. Every producer
+ * (webhook channels, webchat) builds it here so they cannot drift apart. The
+ * dedup id only holds while a job is waiting or active: a double tap collapses,
+ * while a tap after a finished or no-op resolution is still processed (a fixed
+ * `jobId` would be dropped by the retained completed job). The challenge claim
+ * is the real guard.
+ */
+export const buildResolveStepInputJob = (
+  data: IntegrationJobResolveStepInput["data"],
+): {
+  name: typeof IntegrationJobAction.resolveStepInput
+  data: IntegrationJobResolveStepInput
+  opts: JobsOptions
+} => ({
+  name: IntegrationJobAction.resolveStepInput,
+  data: { type: IntegrationJobAction.resolveStepInput, data },
+  opts: {
+    deduplication: {
+      id: `step-input-${data.conversationId}-${data.challengeId}`,
+    },
+  },
+})
+
 export type IntegrationJobResumeWait = {
   type: typeof IntegrationJobAction.resumeWait
   data: { smartDelayId: string }
@@ -504,6 +703,15 @@ export type IntegrationJobCoexistWhatsappFlush = {
   data: {
     runId?: string
     phoneNumberId: string
+  }
+}
+
+/** Reads new mail for one IMAP-enabled SMTP inbox and enqueues it as incoming messages. */
+export type IntegrationJobPollSmtpInbox = {
+  type: typeof IntegrationJobAction.pollSmtpInbox
+  data: {
+    integrationId: string
+    workspaceId: string
   }
 }
 
@@ -769,6 +977,22 @@ export const whatsappCallNativeTranscriptFetchJobId = (wacid: string): string =>
 // callTranscription queue so it can carry its own BullMQ limiter independent of
 // this shared queue's traffic.
 
+/** A lifecycle event about the provider-side account behind one or more connections. */
+export type IntegrationJobProviderAccountEvent = {
+  type: typeof IntegrationJobAction.providerAccountEvent
+  data: {
+    integrationType: IntegrationType
+    account: { kind: "businessAccount"; id: string }
+    event: ProviderAccountEventKind
+    /** Provider-reported facts, bounded by the adapter (never raw payload). */
+    detail: ProviderAccountEventDetail
+    /** Event time in epoch milliseconds, as reported by the provider. */
+    occurredAt: number
+    /** Absent until a route stamps it; the worker treats absent as "drop". */
+    routeScope?: ProviderAccountRouteScope
+  }
+}
+
 export type IntegrationJobAdsAutomaticEvent = {
   type: typeof IntegrationJobAction.adsAutomaticEvent
   data: {
@@ -931,6 +1155,25 @@ export type IntegrationJobProcessCommentAutomation = {
      * every other active automation on the channel. Absent on webhook comments.
      */
     onlyAutomationId?: string
+    /**
+     * Set when AI moderation already cleared this comment for
+     * `onlyAutomationId`, so the resumed run goes straight to the reply
+     * filters instead of asking the AI again.
+     */
+    moderationChecked?: boolean
+    /**
+     * The post's own settings already hide this comment, so the automation's
+     * hide rules must not run: they would hide it a second time and, with
+     * `showCommentsAfter`, later unhide a comment the post wants hidden. The
+     * automation still replies.
+     */
+    postHidesComment?: boolean
+    /**
+     * The run belongs to a missed-comment replay. Set on the payload the AI
+     * moderation job carries, so it and the resumed run keep the replay's low
+     * priority after leaving the replay's async context.
+     */
+    replay?: boolean
   }
 }
 
@@ -1056,6 +1299,8 @@ export type IntegrationJobCaptureTemplateFlowResponse = {
     messageId: string
     templateFlowToken: string
     flowResponse: Record<string, unknown>
+    /** Stored files of the response's file answers, by response key. */
+    flowFiles?: Record<string, ResolvedFlowFile[]>
   }
 }
 
@@ -1078,6 +1323,112 @@ export type IntegrationJobReplyToInboundCart = {
 
 export const getInboundCartReplyJobId = (messageId: string): string =>
   `inbound-cart-reply-${messageId}`
+
+/**
+ * A signed Stripe or PayPal webhook about one web shop payment attempt. The
+ * job asks the provider again and settles the order; one job per provider
+ * event (`getOrderPaymentEventJobId`), so a redelivered webhook runs once.
+ */
+export type IntegrationJobConfirmOrderPayment = {
+  type: typeof IntegrationJobAction.confirmOrderPayment
+  data: {
+    provider: "stripe" | "paypal"
+    workspaceId: string
+    /** The Checkout Session (Stripe) or order (PayPal) id. */
+    reference: string
+    /** What ChatbotX put on the attempt; null for one it did not create. */
+    metadata: {
+      workspaceId: string
+      orderId: string
+      orderPaymentId: string
+    } | null
+  }
+}
+
+export const getOrderPaymentEventJobId = (
+  provider: string,
+  eventId: string,
+): string => `order-payment-event-${provider}-${eventId}`
+
+/**
+ * Pulls the connected Shopify store's catalog and recent orders again. Only
+ * one runs per workspace: `IntegrationShopify.syncStatus` is claimed before
+ * the job is queued.
+ */
+export type IntegrationJobShopifySync = {
+  type: typeof IntegrationJobAction.shopifySync
+  data: {
+    workspaceId: string
+    scope: "all" | "products" | "orders"
+  }
+}
+
+/** Completed jobs are kept, so each requested sync carries its own key. */
+export const getShopifySyncJobId = (
+  workspaceId: string,
+  scope: string,
+  requestedAt: Date,
+) => `shopify-sync-${workspaceId}-${scope}-${requestedAt.getTime()}`
+
+/**
+ * A signed Shopify webhook. Only the topic and the object's id travel: the
+ * handler reads the object back from Shopify, so a late or reordered
+ * delivery still writes the store's current state.
+ */
+export type IntegrationJobShopifyWebhook = {
+  type: typeof IntegrationJobAction.shopifyWebhook
+  data: {
+    workspaceId: string
+    /** Shopify's REST spelling, e.g. `orders/create`. */
+    topic: string
+    /** The object's GID; null for `app/uninstalled`. */
+    objectId: string | null
+  }
+}
+
+/** One job per delivery, so a redelivered webhook runs once. */
+export const getShopifyWebhookJobId = (webhookId: string) =>
+  `shopify-webhook-${webhookId}`
+
+/**
+ * Pulls the connected WooCommerce store's catalog and recent orders again.
+ * Only one runs per workspace: `IntegrationWoocommerce.syncStatus` is claimed
+ * before the job is queued.
+ */
+export type IntegrationJobWoocommerceSync = {
+  type: typeof IntegrationJobAction.woocommerceSync
+  data: {
+    workspaceId: string
+    scope: "all" | "products" | "orders"
+  }
+}
+
+/** Completed jobs are kept, so each requested sync carries its own key. */
+export const getWoocommerceSyncJobId = (
+  workspaceId: string,
+  scope: string,
+  requestedAt: Date,
+) => `woocommerce-sync-${workspaceId}-${scope}-${requestedAt.getTime()}`
+
+/**
+ * A signed WooCommerce webhook. Only the topic and the object's id travel:
+ * the handler reads the object back from the store, so a late or reordered
+ * delivery still writes the store's current state.
+ */
+export type IntegrationJobWoocommerceWebhook = {
+  type: typeof IntegrationJobAction.woocommerceWebhook
+  data: {
+    workspaceId: string
+    /** WooCommerce's spelling, e.g. `order.updated`. */
+    topic: string
+    /** The product, order or coupon id the delivery is about. */
+    resourceId: string
+  }
+}
+
+/** One job per delivery, so a redelivered webhook runs once. */
+export const getWoocommerceWebhookJobId = (deliveryId: string) =>
+  `woocommerce-webhook-${deliveryId}`
 
 /**
  * Facebook Lead Ads: a page leadgen webhook. Carries only ids — the handler
@@ -1125,6 +1476,19 @@ export type IntegrationJobContactScan = {
  */
 export type IntegrationJobAiHandoverBulkToggle = {
   type: typeof IntegrationJobAction.aiHandoverBulkToggle
+  data: {
+    runId: string
+    workspaceId: string
+  }
+}
+
+/**
+ * Runs one budgeted chunk of a contact sync run. Only `runId`/`workspaceId`
+ * travel: sources, options and cursors are read off the claimed run row, so a
+ * stale or forged job cannot steer the engine.
+ */
+export type IntegrationJobContactSync = {
+  type: typeof IntegrationJobAction.contactSync
   data: {
     runId: string
     workspaceId: string
@@ -1196,10 +1560,13 @@ export type IntegrationJobAiHandoverTakeBack = {
 
 export type IntegrationJobData =
   | IntegrationJobReceiveMessage
+  | IntegrationJobReceiveMessageEcho
+  | IntegrationJobLiveVideoStatusChange
   | IntegrationJobReceiveComment
   | IntegrationJobUpdateIncomingComment
   | IntegrationJobDeleteIncomingComment
   | IntegrationJobDeleteIncomingMessage
+  | IntegrationJobUpdateIncomingMessage
   | IntegrationJobMessageReaction
   | IntegrationJobMessageStatus
   | IntegrationJobRecordEmailTrackingTransition
@@ -1214,15 +1581,19 @@ export type IntegrationJobData =
   | IntegrationJobResumeWait
   | IntegrationJobResumeFollowUp
   | IntegrationJobResumeQuickReplyFollowUp
+  | IntegrationJobResumeStepInputTimeout
+  | IntegrationJobResolveStepInput
   | IntegrationJobCreateMessage
   | IntegrationJobProcessAutomatedResponse
   | IntegrationJobSendSequenceFlow
   | IntegrationJobCoexistWhatsappBuffer
   | IntegrationJobCoexistWhatsappFlush
   | IntegrationJobCoexistMessengerSync
+  | IntegrationJobPollSmtpInbox
   | IntegrationJobCoexistInstagramSync
   | IntegrationJobCoexistAttachmentDownload
   | IntegrationJobAdsAutomaticEvent
+  | IntegrationJobProviderAccountEvent
   | IntegrationJobWhatsappIdentityChange
   | IntegrationJobWhatsappCallEvent
   | IntegrationJobWhatsappCallRecordingReady
@@ -1239,6 +1610,11 @@ export type IntegrationJobData =
   | IntegrationJobProcessStoryReplyAutomation
   | IntegrationJobCaptureTemplateFlowResponse
   | IntegrationJobReplyToInboundCart
+  | IntegrationJobConfirmOrderPayment
+  | IntegrationJobShopifySync
+  | IntegrationJobShopifyWebhook
+  | IntegrationJobWoocommerceSync
+  | IntegrationJobWoocommerceWebhook
   | AdsConversionJobSendConversionEvent
   | IntegrationJobSendMetaCapiEvent
   | IntegrationJobSendGoogleAdsConversion
@@ -1250,6 +1626,7 @@ export type IntegrationJobData =
   | IntegrationJobThreadControlAction
   | IntegrationJobAiHandoverTakeBack
   | IntegrationJobAiHandoverBulkToggle
+  | IntegrationJobContactSync
   | IntegrationJobChannelAudienceEvent
 
 export const integrationQueue = isNoRedisEnv()
@@ -1305,6 +1682,14 @@ const jobOptionsByAction: Partial<
   // failed, typically because the database was briefly unavailable.
   [IntegrationJobAction.recordEmailTrackingTransition]:
     adsConversionRetryOptions,
+  // One read of the broadcast; a few spaced retries, then the periodic sync and
+  // the stale-live re-read settle the post.
+  [IntegrationJobAction.liveVideoStatusChange]: {
+    attempts: 3,
+    backoff: { type: "exponential", delay: 30_000 },
+    removeOnComplete: { age: 60 * 60 },
+    removeOnFail: { age: 24 * 60 * 60 },
+  },
   [IntegrationJobAction.whatsappCallNativeRecordingFetch]:
     NATIVE_CALL_CAPTURE_RETRY_OPTIONS,
   [IntegrationJobAction.whatsappCallNativeTranscriptFetch]:
@@ -1312,17 +1697,49 @@ const jobOptionsByAction: Partial<
 }
 
 /**
+ * Bookkeeping ingress that is consumed by the `low` worker so it never queues
+ * ahead of a customer reply.
+ */
+export type LowRoutedIntegrationJob =
+  | IntegrationJobMessageStatus
+  | IntegrationJobContactMarkAsRead
+  | IntegrationJobReceiveMessageEcho
+  | IntegrationJobLiveVideoStatusChange
+
+/**
+ * Whether a job goes to the `low` queue. A new bookkeeping action joins with a
+ * case here and a variant in `LowRoutedIntegrationJob`.
+ */
+const isLowRoutedIntegrationJob = (
+  job: IntegrationJobData,
+): job is LowRoutedIntegrationJob => {
+  switch (job.type) {
+    case IntegrationJobAction.messageStatus:
+      // A status that may continue a flow stays with live traffic.
+      return job.data.continuesFlow !== true
+    case IntegrationJobAction.contactMarkAsRead:
+    case IntegrationJobAction.incomingMessageEcho:
+    case IntegrationJobAction.liveVideoStatusChange:
+      return true
+    default:
+      return false
+  }
+}
+
+/**
  * Enqueue helper that layers per-action retry/priority defaults
- * (`jobOptionsByAction`) under the caller's own opts. Producer opts — most
- * importantly a deterministic `jobId` — MUST win, so they're merged last;
- * BullMQ itself also treats `jobId` as authoritative regardless of merge
- * order, but keeping the spread order explicit avoids relying on that.
+ * (`jobOptionsByAction`) under the caller's own opts, and routes the
+ * bookkeeping actions of `isLowRoutedIntegrationJob` to the `low` queue. Producer
+ * opts — most importantly a deterministic `jobId` — MUST win, so they're
+ * merged last; BullMQ itself also treats `jobId` as authoritative regardless
+ * of merge order, but keeping the spread order explicit avoids relying on that.
  */
 export const enqueueIntegrationJob = (
   job: IntegrationJobData,
   opts?: JobsOptions,
-) =>
-  integrationQueue.add(job.type, job, {
-    ...jobOptionsByAction[job.type],
-    ...opts,
-  })
+) => {
+  const options: JobsOptions = { ...jobOptionsByAction[job.type], ...opts }
+  return isLowRoutedIntegrationJob(job)
+    ? lowQueue.add(job.type, job, options)
+    : integrationQueue.add(job.type, job, options)
+}

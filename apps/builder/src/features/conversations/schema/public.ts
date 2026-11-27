@@ -3,9 +3,16 @@ import {
   threadControlEvents,
   threadControlStates,
 } from "@chatbotx.io/database/partials"
-import { zodBigintAsString } from "@chatbotx.io/utils"
+import { zodBigintAsString, zodBigintIdAsString } from "@chatbotx.io/utils"
 import z from "zod"
 import { findConversationResponse } from "./resource"
+import {
+  refineThreadControlHandover,
+  threadControlHandoverFields,
+} from "./thread-control"
+
+export const CONVERSATION_PARTICIPANTS_DEFAULT_LIMIT = 50
+export const CONVERSATION_PARTICIPANTS_MAX_LIMIT = 100
 
 // Reuses the same shared `findConversationResponse`/`listConversationsItemResource`
 // as the already-public `conversations.list` and the private `findConversation`
@@ -23,6 +30,35 @@ export const conversationIdPathParam = z.object({
     "Conversation id. Get it from `conversations.list`.",
   ),
 })
+
+export const listConversationParticipantsRequest =
+  conversationIdPathParam.extend({
+    // Bounded: a longer number would overflow the bigint column and fail in SQL as a 500.
+    id: zodBigintIdAsString().describe(
+      "Conversation id. Get it from `conversations.list`.",
+    ),
+    cursor: z
+      .string()
+      .optional()
+      .describe(
+        "Opaque cursor from a previous response's `nextCursor`. Omit for the first page.",
+      ),
+    perPage: z.coerce
+      .number()
+      .int()
+      .min(1)
+      .max(CONVERSATION_PARTICIPANTS_MAX_LIMIT)
+      .nullish()
+      .describe(
+        `Members per page (default ${CONVERSATION_PARTICIPANTS_DEFAULT_LIMIT}, max ${CONVERSATION_PARTICIPANTS_MAX_LIMIT}).`,
+      ),
+  })
+
+/** The builder's twin of the public request: the workspace is part of the input instead of the token. */
+export const listConversationParticipantsPrivateRequest =
+  listConversationParticipantsRequest.extend({
+    workspaceId: zodBigintIdAsString(),
+  })
 
 export const assignConversationPublicRequest = z.object({
   // Must be `u_<userId>` or `t_<inboxTeamId>` — anything else falls through
@@ -56,9 +92,11 @@ export const threadControlPublicRequest = z
     action: z
       .enum([...threadControlActions.options, "sync"])
       .describe(
-        "`take` the thread from the partner, `release` it back, `pass` it to the channel's escalation role, or `sync` to only refresh the stored owner from the channel (changes nothing at the channel).",
+        "`take` the thread from the partner, `release` it back, `pass` it to another partner (the escalation partner unless `targetRole` names one), or `sync` to only refresh the stored owner from the channel (changes nothing at the channel).",
       ),
+    ...threadControlHandoverFields,
   })
+  .superRefine(refineThreadControlHandover)
   .and(conversationIdPathParam)
 
 export const threadControlPublicResponse = z.object({

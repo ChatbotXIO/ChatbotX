@@ -129,7 +129,7 @@ export function CapiTestEventCard({
       </div>
 
       {testEventCode ? (
-        <p className="text-amber-600 text-xs dark:text-amber-400">
+        <p className="text-amber-700 text-xs dark:text-amber-400">
           {t("testEvents.activeNotice")}
         </p>
       ) : null}

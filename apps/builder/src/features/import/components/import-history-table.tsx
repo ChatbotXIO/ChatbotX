@@ -56,7 +56,7 @@ function ImportErrorSampleButton({ item }: { item: ListImportsItem }) {
           <Button
             className={
               isWarningOnly
-                ? "h-auto p-0 text-amber-600"
+                ? "h-auto p-0 text-amber-700 dark:text-amber-400"
                 : "h-auto p-0 text-red-600"
             }
             variant="link"
@@ -163,7 +163,7 @@ export function ImportHistoryTable({ promises }: ImportHistoryTableProps) {
         size: 100,
         header: t("fields.import.histories.success"),
         cell: ({ row }) => (
-          <span className="text-emerald-600 tabular-nums">
+          <span className="text-emerald-700 tabular-nums dark:text-emerald-400">
             {row.original.successCount}
           </span>
         ),

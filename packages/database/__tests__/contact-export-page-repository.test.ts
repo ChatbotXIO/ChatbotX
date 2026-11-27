@@ -1,11 +1,8 @@
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
 // ---------------------------------------------------------------------------
-// contactRepository.listForExportPage — the relational `with` literal moved
-// here from apps/worker/src/default/handlers/export-contacts.ts so Drizzle
-// keeps type inference. These assertions were relocated from
-// apps/worker/__tests__/export-contacts-handler.test.ts, which can no longer
-// see the query shape now that the handler only passes a boolean flag.
+// contactRepository.listForExportPage: the relational `with` it builds from
+// the relations the export handler resolves from its selected columns.
 // ---------------------------------------------------------------------------
 
 const findManyContacts = vi.fn()
@@ -29,6 +26,25 @@ beforeEach(() => {
   findManyContacts.mockResolvedValue([])
 })
 
+const noRelations = {
+  customFieldIds: [],
+  tagIds: [],
+  contactInboxes: "none",
+} as const
+
+const withOf = async (relations: Record<string, unknown>) => {
+  await contactRepository.listForExportPage({
+    where: {},
+    limit: 2,
+    relations: { ...noRelations, ...relations },
+  })
+  return (
+    findManyContacts.mock.calls[0][0] as {
+      with: Record<string, Record<string, unknown>>
+    }
+  ).with
+}
+
 describe("contactRepository.listForExportPage", () => {
   test("passes the caller's where and limit through and keys the page on id asc", async () => {
     const where = { workspaceId: "ws-1", id: { gt: "10" } }
@@ -36,7 +52,7 @@ describe("contactRepository.listForExportPage", () => {
     await contactRepository.listForExportPage({
       where,
       limit: 2,
-      includeSourceUserId: false,
+      relations: noRelations,
     })
 
     expect(findManyContacts).toHaveBeenCalledWith(
@@ -48,57 +64,42 @@ describe("contactRepository.listForExportPage", () => {
     )
   })
 
-  test("always loads contactCustomFields and tags relations", async () => {
-    await contactRepository.listForExportPage({
-      where: {},
-      limit: 2,
-      includeSourceUserId: false,
-    })
-
-    const query = findManyContacts.mock.calls[0][0] as {
-      with: Record<string, unknown>
-    }
-    expect(query.with.contactCustomFields).toBe(true)
-    expect(query.with.tags).toBe(true)
+  test("loads no relation when no column needs one", async () => {
+    expect(await withOf({})).toEqual({})
   })
 
-  test("keeps the single-row contactInboxes load when sourceUserId is not selected", async () => {
-    await contactRepository.listForExportPage({
-      where: {},
-      limit: 2,
-      includeSourceUserId: false,
-    })
+  test("loads only the selected custom fields, with just the columns a cell renders", async () => {
+    const relations = await withOf({ customFieldIds: ["cf-1", "cf-2"] })
 
-    const query = findManyContacts.mock.calls[0][0] as {
-      with: {
-        contactInboxes: {
-          columns: Record<string, boolean>
-          orderBy: unknown
-          limit?: number
-        }
-      }
-    }
-    expect(query.with.contactInboxes.columns).toMatchObject({
-      sourceId: true,
-      sourceUserId: true,
+    expect(relations).toEqual({
+      contactCustomFields: {
+        columns: { customFieldId: true, value: true },
+        where: { customFieldId: { in: ["cf-1", "cf-2"] } },
+      },
     })
-    expect(query.with.contactInboxes.orderBy).toEqual({ id: "asc" })
-    // The Contact Id column only needs the earliest inbox row.
-    expect(query.with.contactInboxes.limit).toBe(1)
   })
 
-  test("lifts the contactInboxes limit ONLY when sourceUserId is selected", async () => {
-    await contactRepository.listForExportPage({
-      where: {},
-      limit: 2,
-      includeSourceUserId: true,
-    })
+  test("loads only the selected tags", async () => {
+    const relations = await withOf({ tagIds: ["t-1"] })
 
-    const query = findManyContacts.mock.calls[0][0] as {
-      with: { contactInboxes: { limit?: number } }
-    }
-    // The WhatsApp User ID column must scan every inbox connection, so the
-    // multi-inbox scan is only paid for when that column is actually selected.
-    expect(query.with.contactInboxes.limit).toBeUndefined()
+    expect(relations).toEqual({
+      tags: { columns: { id: true }, where: { id: { in: ["t-1"] } } },
+    })
+  })
+
+  test("loads the earliest inbox row for the Contact Id column", async () => {
+    const relations = await withOf({ contactInboxes: "earliest" })
+
+    expect(relations.contactInboxes).toEqual({
+      columns: { sourceId: true, sourceUserId: true },
+      orderBy: { id: "asc" },
+      limit: 1,
+    })
+  })
+
+  test("loads every inbox row for the WhatsApp User ID column", async () => {
+    const relations = await withOf({ contactInboxes: "all" })
+
+    expect(relations.contactInboxes).not.toHaveProperty("limit")
   })
 })

@@ -11,6 +11,9 @@ const mocks = vi.hoisted(() => ({
   refreshAccessToken: vi.fn(),
   runExclusive: vi.fn(async ({ fn }: { fn: () => Promise<unknown> }) => fn()),
   updateAuth: vi.fn(),
+  withTokenRefreshLock: vi.fn(
+    async (_integration: unknown, fn: () => Promise<unknown>) => await fn(),
+  ),
 }))
 
 vi.mock("@chatbotx.io/business", () => ({
@@ -19,6 +22,7 @@ vi.mock("@chatbotx.io/business", () => ({
     findById: mocks.findById,
     updateAuth: mocks.updateAuth,
     markTokenRefreshError: mocks.markTokenRefreshError,
+    withTokenRefreshLock: mocks.withTokenRefreshLock,
   },
 }))
 vi.mock("@chatbotx.io/business/audit", () => ({
@@ -27,8 +31,12 @@ vi.mock("@chatbotx.io/business/audit", () => ({
 vi.mock("@chatbotx.io/business/error-log", () => ({
   logProviderError: mocks.logProviderError,
 }))
-vi.mock("@chatbotx.io/integration-tiktok", () => ({
+vi.mock("@chatbotx.io/integration-tiktok", async () => ({
   isRevokedTokenError: mocks.isRevokedTokenError,
+  // The real shared refresh, so the job is tested with what it persists.
+  refreshTiktokAuth: (
+    await import("@chatbotx.io/integration-tiktok/lib/refresh-auth")
+  ).refreshTiktokAuth,
 }))
 vi.mock("@chatbotx.io/integration-tiktok/apis/auth", () => ({
   refreshAccessToken: mocks.refreshAccessToken,
@@ -89,16 +97,28 @@ beforeEach(() => {
 
 describe("refreshTiktokTokens", () => {
   test("refreshes and writes an updateAuth payload carrying workspaceId and the parsed scopes", async () => {
-    mocks.findAll.mockResolvedValue([{ id: "tiktok-1", workspaceId: "ws-1" }])
+    mocks.findAll.mockResolvedValue([
+      { id: "tiktok-1", workspaceId: "ws-1", inboxId: "inbox-1" },
+    ])
     mocks.findById.mockResolvedValue({ auth: makeAuth("old-token") })
 
     await refreshTiktokTokens()
 
+    // The SDK auth store's lock, shared with on-demand refreshes.
+    expect(mocks.withTokenRefreshLock).toHaveBeenCalledWith(
+      { id: "tiktok-1", workspaceId: "ws-1", inboxId: "inbox-1" },
+      expect.any(Function),
+    )
+    expect(mocks.runExclusive).not.toHaveBeenCalled()
     expect(mocks.updateAuth).toHaveBeenCalledWith({
       id: "tiktok-1",
       workspaceId: "ws-1",
       auth: expect.objectContaining({
-        tokens: expect.objectContaining({ accessToken: "new-token" }),
+        // TikTok rotates refresh tokens: the returned one must be stored.
+        tokens: expect.objectContaining({
+          accessToken: "new-token",
+          refreshToken: "new-refresh",
+        }),
         metadata: expect.objectContaining({ scopes: ["user.info.basic"] }),
       }),
     })

@@ -30,6 +30,7 @@ import {
 import { bigintAsString, money, sharedColumns } from "../partials/shared"
 import { ecommerceOpenHoursModel } from "./ecommerce-open-hours"
 import { flowModel } from "./flow"
+import { externalCheckoutMethod, storeSource } from "./store-source"
 import { workspaceModel } from "./workspace"
 
 export const webshopProductView = pgEnum(
@@ -78,6 +79,8 @@ export const ecommerceSettingsModel = pgTable(
       }),
 
     // General
+    /** Existing stores keep managing their catalog here. */
+    storeSource: storeSource().notNull().default("chatbotx"),
     orderingAvailable: boolean().notNull(),
     webshopProductView: webshopProductView().notNull(),
     /** Null is always open. */
@@ -135,6 +138,11 @@ export const ecommerceSettingsModel = pgTable(
     requirePhone: boolean().notNull(),
     requireState: boolean().notNull(),
     requireZip: boolean().notNull(),
+    /** For a Shopify or WooCommerce store; see `externalCheckoutMethods`. */
+    externalCheckoutMethod: externalCheckoutMethod()
+      .notNull()
+      .default("webCheckout"),
+    externalAutoApplyDiscounts: boolean().notNull().default(true),
   },
   (table) => [
     uniqueIndex("EcommerceSettings_workspaceId_key").on(table.workspaceId),

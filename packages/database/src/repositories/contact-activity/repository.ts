@@ -87,7 +87,7 @@ export const contactActivityRepository = {
     const column = <Key extends keyof ContactActivityRecord>(key: Key) =>
       input.records.map((record) => record[key])
 
-    const result = await tx.execute(sql`
+    const result = await tx.execute<Record<string, unknown>>(sql`
       INSERT INTO "ContactActivity"
         ("workspaceId", "contactId", "activityType", "referenceType",
          "parentReferenceId", "referenceId", "firstOccurredAt")
@@ -120,7 +120,7 @@ export const contactActivityRepository = {
     tx: DatabaseClient,
   ): Promise<boolean> {
     const { record } = input
-    const result = await tx.execute(sql`
+    const result = await tx.execute<Record<string, unknown>>(sql`
       INSERT INTO "ContactKeywordMessage"
         ("workspaceId", "contactId", "messageId", "automatedResponseId",
          "text", "normalizedText", "occurredAt")
@@ -146,7 +146,7 @@ export const contactActivityRepository = {
       return 0
     }
 
-    const result = await tx.execute(sql`
+    const result = await tx.execute<Record<string, unknown>>(sql`
       INSERT INTO "ContactState" ("workspaceId", "contactId", "lastDeliveredAt")
       SELECT c."workspaceId", c."id", v."deliveredAt"
       FROM unnest(
@@ -181,7 +181,7 @@ export const contactActivityRepository = {
 
     let deleted = 0
     for (const table of CONTACT_ACTIVITY_TABLES) {
-      const result = await tx.execute(sql`
+      const result = await tx.execute<Record<string, unknown>>(sql`
         DELETE FROM ${sql.identifier(table)}
         WHERE "workspaceId" = ${input.workspaceId}::bigint
           AND "contactId" = ANY(${asBigintArray(contactIds)})
@@ -199,7 +199,7 @@ export const contactActivityRepository = {
   }): Promise<number> {
     const table = sql.identifier(input.table)
     const columns = keyColumns(input.table)
-    const result = await db.execute(sql`
+    const result = await db.execute<Record<string, unknown>>(sql`
       DELETE FROM ${table}
       WHERE "workspaceId" = ${input.workspaceId}::bigint
         AND (${columns}) IN (
@@ -218,7 +218,7 @@ export const contactActivityRepository = {
     table: ContactActivityTable
     workspaceId: string
   }): Promise<boolean> {
-    const result = await db.execute(sql`
+    const result = await db.execute<Record<string, unknown>>(sql`
       SELECT 1
       FROM ${sql.identifier(input.table)}
       WHERE "workspaceId" = ${input.workspaceId}::bigint

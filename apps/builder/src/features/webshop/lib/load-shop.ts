@@ -1,6 +1,10 @@
 import "server-only"
 
 import { webshopService } from "@chatbotx.io/business"
+import {
+  isExternalStoreSource,
+  type PaymentMethod,
+} from "@chatbotx.io/database/partials"
 import { cache } from "react"
 import { resolveLocale } from "@/i18n/config"
 import { toSafeWebUrl } from "./safe-url"
@@ -12,8 +16,19 @@ type Storefront = Awaited<ReturnType<typeof webshopService.getStorefront>>
 /** What every shop page needs from the store, safe to hand to the browser. */
 export type ShopView = ReturnType<typeof toShopView>
 
+/**
+ * An external store (Shopify, WooCommerce) takes cash on delivery here and
+ * nothing else online.
+ */
+const EXTERNAL_STORE_PAYMENT_METHODS: PaymentMethod[] = ["cod"]
+
 const toShopView = (storefront: Storefront) => {
   const { settings } = storefront
+  const storeSource = settings.general.storeSource
+  const isExternalStore = isExternalStoreSource(storeSource)
+  const externalWebCheckout =
+    isExternalStore &&
+    settings.checkout.externalCheckoutMethod === "webCheckout"
   const money: ShopMoneyFormat = {
     currency: settings.payments.currency,
     currencySymbol: settings.payments.currencySymbol,
@@ -30,6 +45,10 @@ const toShopView = (storefront: Storefront) => {
     productImageSize: settings.general.productImageSize,
     productButtons: settings.general.productButtons,
     allowRateOrders: settings.general.allowRateOrders,
+    // Only connected providers are ever offered (disconnecting drops them).
+    paymentMethods: isExternalStore
+      ? EXTERNAL_STORE_PAYMENT_METHODS
+      : settings.payments.paymentMethods,
     facebookPixelId: settings.general.facebookPixelId,
     checkout: {
       mode: settings.checkout.checkoutMode,
@@ -40,6 +59,15 @@ const toShopView = (storefront: Storefront) => {
       requirePhone: settings.checkout.requirePhone,
       requireState: settings.checkout.requireState,
       requireZip: settings.checkout.requireZip,
+      // Web Checkout sends the customer to the store's own page to pay: no
+      // payment choice here.
+      externalWebCheckout,
+      // Shopify's checkout also prices delivery; WooCommerce's payment page
+      // takes the delivery fee set here.
+      shopifyWebCheckout: externalWebCheckout && storeSource === "shopify",
+      // The store's codes are only offered when they apply automatically.
+      showDiscountCodes:
+        !isExternalStore || settings.checkout.externalAutoApplyDiscounts,
     },
     shipping: {
       mode: settings.shipping.shippingType,

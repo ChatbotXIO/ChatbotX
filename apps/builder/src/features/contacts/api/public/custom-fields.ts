@@ -1,9 +1,10 @@
 import {
   contactCustomFieldService,
-  contactService,
   customFieldService,
 } from "@chatbotx.io/business"
+import { notFoundException } from "@chatbotx.io/business/errors"
 import { zodBigintAsString } from "@chatbotx.io/utils"
+import { fieldOperationByApiName } from "@chatbotx.io/utils/custom-field-operation"
 import { z } from "zod"
 import { mcpSpec } from "@/lib/orpc/mcp-annotations"
 import {
@@ -14,6 +15,7 @@ import {
 } from "@/lib/orpc/orpc-error-helper"
 import { publicContactIdentifier } from "@/lib/public-api/contact-identifier"
 import { ianaTimezoneSchema } from "@/lib/public-api/iana-timezone"
+import { contactIdFor } from "@/lib/public-api/member-scope"
 import { workspaceTokenAuthAPIForScope } from "@/orpc"
 import {
   findContactCustomField,
@@ -23,10 +25,7 @@ import {
   listPublicContactCustomFieldsResponse,
   publicContactCustomFieldResource,
 } from "../../schema/contact-custom-field"
-import {
-  addContactCustomFieldOperationsPublicRequest,
-  publicFieldOperationNameToCode,
-} from "../../schema/public/custom-fields"
+import { addContactCustomFieldOperationsPublicRequest } from "../../schema/public/custom-fields"
 
 const workspaceTokenAuthAPI = workspaceTokenAuthAPIForScope("contacts")
 
@@ -39,7 +38,13 @@ export const contactsCustomFieldsPublicRouter = {
       description:
         "Use this to inspect every custom-field value for a contact after resolving its identifier with `contacts.get`. Call `contacts.setCustomField` to change one value or `contacts.applyCustomFieldOperations` to change several in one call.",
       tags: ["Contacts"],
-      spec: mcpSpec({ visibility: "default" }),
+      spec: mcpSpec({
+        destructiveHint: false,
+        idempotentHint: true,
+        openWorldHint: false,
+        readOnlyHint: true,
+        visibility: "default",
+      }),
     })
     .input(
       z.object({
@@ -49,10 +54,7 @@ export const contactsCustomFieldsPublicRouter = {
     .output(listPublicContactCustomFieldsResponse)
     .errors(possibleErrorsOnFindingResource)
     .handler(async ({ context, input }) => {
-      const contactId = await contactService.resolveIdByIdentifier({
-        identifier: input.identifier,
-        workspaceId: context.workspace.id,
-      })
+      const contactId = await contactIdFor(context, input.identifier)
       return await listContactCustomFields({
         workspaceId: context.workspace.id,
         contactId,
@@ -83,10 +85,7 @@ export const contactsCustomFieldsPublicRouter = {
     .errors(possibleErrorsOnFindingResource)
     .handler(async ({ context, input }) => {
       const workspaceId = context.workspace.id
-      const contactId = await contactService.resolveIdByIdentifier({
-        identifier: input.identifier,
-        workspaceId,
-      })
+      const contactId = await contactIdFor(context, input.identifier)
       const field = await customFieldService.findByKeyOrFail({
         workspaceId,
         key: input.idOrName,
@@ -107,7 +106,13 @@ export const contactsCustomFieldsPublicRouter = {
         "Changes one custom-field value on a resolved contact without altering its other fields. Use `contacts.listCustomFields` to inspect current values, or `contacts.applyCustomFieldOperations` for several changes.",
       successStatus: 204,
       tags: ["Contacts"],
-      spec: mcpSpec({ visibility: "default" }),
+      spec: mcpSpec({
+        destructiveHint: true,
+        idempotentHint: true,
+        openWorldHint: false,
+        readOnlyHint: false,
+        visibility: "default",
+      }),
     })
     .input(
       z.object({
@@ -129,10 +134,7 @@ export const contactsCustomFieldsPublicRouter = {
     .errors(possibleErrorsOnWritingContactFields)
     .handler(async ({ context, input }) => {
       const workspaceId = context.workspace.id
-      const contactId = await contactService.resolveIdByIdentifier({
-        identifier: input.identifier,
-        workspaceId,
-      })
+      const contactId = await contactIdFor(context, input.identifier)
       const field = await customFieldService.findByKeyOrFail({
         workspaceId,
         key: input.idOrName,
@@ -171,10 +173,7 @@ export const contactsCustomFieldsPublicRouter = {
     )
     .errors(possibleErrorsOnMutatingResource)
     .handler(async ({ context, input }) => {
-      const contactId = await contactService.resolveIdByIdentifier({
-        identifier: input.identifier,
-        workspaceId: context.workspace.id,
-      })
+      const contactId = await contactIdFor(context, input.identifier)
       await contactCustomFieldService.setValueForContact({
         workspaceId: context.workspace.id,
         contactId,
@@ -187,9 +186,9 @@ export const contactsCustomFieldsPublicRouter = {
     .route({
       method: "PATCH",
       path: "/v1/contacts/{identifier}/custom-fields",
-      summary: "Apply arithmetic/append operations to custom field",
+      summary: "Apply operations to contact custom fields",
       description:
-        'Applies a batch of operations to one or more custom fields on the contact, in the given order, each addressed by id or name. Each operation is one of `set`, `append`, `prepend`, `increase`, `decrease`: `set` overwrites the current value, `append`/`prepend` concatenate onto it, and `increase`/`decrease` treat the current value as a number (no-op if it is not numeric). On a field with no value yet, every operation uses `value` as the initial value, validated and normalized for the field type like `contacts.setCustomField`. This is the batch equivalent of `contacts.setCustomField` for changing several fields in one call. Example: `{"operations":[{"customFieldId":"123","operation":"increase","value":"1"}]}` to increment a numeric field.',
+        'Applies a batch of operations to one or more custom fields on the contact, in the given order, each addressed by id or name, all-or-nothing. Text fields support `set`/`append`/`prepend`/`clear`; number fields `set`/`increase`/`decrease`/`formula`/`clear`; date and datetime fields `set`/`setNow`/`dateExpression`/`addMinutes`/`addHours`/`addDays`/`clear`; every other type `set`/`clear`. An empty field counts as `0` for numbers and as "now" for date arithmetic. An operation the field type does not support, or an invalid operand, fails the whole request with `invalidFieldOperation` and the reason. This is the batch equivalent of `contacts.setCustomField` for changing several fields in one call. Example: `{"operations":[{"customFieldId":"123","operation":"increase","value":"1"}]}` to increment a numeric field.',
       successStatus: 204,
       tags: ["Contacts"],
     })
@@ -197,28 +196,23 @@ export const contactsCustomFieldsPublicRouter = {
     .errors(possibleErrorsOnWritingContactFields)
     .handler(async ({ context, input }) => {
       const workspaceId = context.workspace.id
-      const contactId = await contactService.resolveIdByIdentifier({
-        identifier: input.identifier,
-        workspaceId,
-      })
+      const contactId = await contactIdFor(context, input.identifier)
 
-      // Resolved outside `applyOperations`' own transaction — a field
-      // deleted between this lookup and the write already throws
-      // `notFoundException` inside that transaction and rolls back, so a
-      // `tx`-aware lookup here would buy nothing.
-      const operations = await Promise.all(
-        input.operations.map(async (op) => {
-          const field = await customFieldService.findByKeyOrFail({
-            workspaceId,
-            key: op.customFieldId,
-          })
-          return {
-            customFieldId: field.id,
-            operation: publicFieldOperationNameToCode[op.operation],
-            value: op.value,
-          }
-        }),
-      )
+      // One batched lookup for every referenced field; a field deleted
+      // between this lookup and the write still fails inside the write's
+      // transaction and rolls it back.
+      const fields = await customFieldService.findManyByKeys({
+        workspaceId,
+        keys: input.operations.map((op) => op.customFieldId),
+      })
+      const operations = input.operations.map((op) => {
+        const field = fields.get(op.customFieldId)
+        const operation = fieldOperationByApiName(op.operation)
+        if (!(field && operation)) {
+          throw notFoundException("Custom field not found")
+        }
+        return { customFieldId: field.id, operation, value: op.value }
+      })
 
       await contactCustomFieldService.applyOperations({
         workspaceId,
@@ -249,10 +243,7 @@ export const contactsCustomFieldsPublicRouter = {
     )
     .errors(possibleErrorsOnDeletingResource)
     .handler(async ({ context, input }) => {
-      const contactId = await contactService.resolveIdByIdentifier({
-        identifier: input.identifier,
-        workspaceId: context.workspace.id,
-      })
+      const contactId = await contactIdFor(context, input.identifier)
       await contactCustomFieldService.deleteByKey({
         workspaceId: context.workspace.id,
         contactId,
@@ -277,10 +268,7 @@ export const contactsCustomFieldsPublicRouter = {
     )
     .errors(possibleErrorsOnDeletingResource)
     .handler(async ({ context, input }) => {
-      const contactId = await contactService.resolveIdByIdentifier({
-        identifier: input.identifier,
-        workspaceId: context.workspace.id,
-      })
+      const contactId = await contactIdFor(context, input.identifier)
       await contactCustomFieldService.clearByContactId({
         workspaceId: context.workspace.id,
         contactId,

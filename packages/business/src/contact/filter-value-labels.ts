@@ -1,10 +1,17 @@
 import type { ContactActivityValueSource } from "@chatbotx.io/database/partials"
 import { automatedResponseService } from "../automated-response/service"
 import { broadcastService } from "../broadcast/service"
+import {
+  contactReferralEventService,
+  formatAdLabel,
+} from "../contact-referral-event/service"
 import { emailTopicService } from "../email-topic/service"
 import { inboxTeamService } from "../enterprise/inbox-team/service"
 import { flowService } from "../flow/service"
 import { inboxService } from "../inbox/service"
+import type { PipelineAccessScope } from "../pipeline/access"
+import { pipelineService } from "../pipeline/service"
+import { pollService } from "../poll/service"
 import { reflinkService } from "../reflink/service"
 import type { IdLabel } from "../select-labels-by-ids"
 import { sequenceService } from "../sequence/service"
@@ -29,14 +36,22 @@ export type FilterValueLabelTypes = {
   keywords: string[]
   whatsappFlows: string[]
   emailTopics: string[]
+  pipelines: string[]
+  /** Stage ids of the pipelines a `pipelineItem` stage condition references. */
+  pipelineStages: string[]
+  /** Ad ids from a "Clicked ad" condition; the label is the ad's headline. */
+  ads: string[]
+  /** Poll ids from a "Voted on the poll" condition. */
+  polls: string[]
 }
 
 export type FilterValueLabels = Record<keyof FilterValueLabelTypes, IdLabel[]>
 
-type LabelResolver = (input: {
-  workspaceId: string
-  ids: string[]
-}) => Promise<IdLabel[]>
+type LabelResolver = (
+  input: { workspaceId: string; ids: string[] },
+  /** Pipeline names are per-pipeline ACL data, unlike every other label. */
+  pipelineScope: PipelineAccessScope,
+) => Promise<IdLabel[]>
 
 // One resolver per filter value type. Each is a primary-key lookup scoped to
 // the workspace, so cost depends on the number of ids asked for, never on how
@@ -59,6 +74,12 @@ const labelResolvers: Record<keyof FilterValueLabelTypes, LabelResolver> = {
   keywords: (input) => automatedResponseService.listKeywordLabelsByIds(input),
   whatsappFlows: (input) => whatsappFlowService.listLabelsByIds(input),
   emailTopics: (input) => emailTopicService.listLabelsByIds(input),
+  pipelines: (input, scope) =>
+    pipelineService.listLabelsByIds({ ...input, scope }),
+  pipelineStages: (input, scope) =>
+    pipelineService.listStageLabelsByIds({ ...input, scope }),
+  ads: (input) => contactReferralEventService.listLabelsByIds(input),
+  polls: (input) => pollService.listLabelsByIds(input),
 }
 
 const labelTypes = Object.keys(
@@ -72,16 +93,21 @@ const labelTypes = Object.keys(
 export const resolveContactFilterValueLabels = async (input: {
   workspaceId: string
   ids: Partial<FilterValueLabelTypes>
+  /** Pipelines (and their stages) the caller cannot view come back unnamed. */
+  pipelineScope: PipelineAccessScope
 }): Promise<FilterValueLabels> => {
   const resolved = await Promise.all(
     labelTypes.map(
       async (type) =>
         [
           type,
-          await labelResolvers[type]({
-            workspaceId: input.workspaceId,
-            ids: [...new Set(input.ids[type] ?? [])],
-          }),
+          await labelResolvers[type](
+            {
+              workspaceId: input.workspaceId,
+              ids: [...new Set(input.ids[type] ?? [])],
+            },
+            input.pipelineScope,
+          ),
         ] as const,
     ),
   )
@@ -111,7 +137,10 @@ const activityValueOptionLoaders: Record<
         search,
         limit: ACTIVITY_VALUE_OPTIONS_LIMIT,
       })
-    ).map((rule) => ({ value: rule.id, label: rule.keywords.join(", ") })),
+    ).map((rule) => ({
+      value: rule.id,
+      label: rule.keywords.join(", ") || `#${rule.id}`,
+    })),
   whatsappFlows: async ({ workspaceId, search }) =>
     (
       await whatsappFlowService.list({
@@ -128,11 +157,19 @@ const activityValueOptionLoaders: Record<
     })
     return data.map((topic) => ({ value: topic.id, label: topic.name }))
   },
+  ads: async ({ workspaceId, search }) =>
+    (
+      await contactReferralEventService.listRecentAds({
+        workspaceId,
+        search,
+        limit: ACTIVITY_VALUE_OPTIONS_LIMIT,
+      })
+    ).map((ad) => ({ value: ad.adId, label: formatAdLabel(ad) })),
 }
 
 /**
  * Searchable values for the activity-backed contact filters whose entity has
- * no cheap full list (keyword rules, WhatsApp Flows, email topics). Bounded to
+ * no cheap full list (keyword rules, WhatsApp Flows, email topics, ads). Bounded to
  * one page; selected values are named separately by id (`labelResolvers`).
  */
 export const listContactActivityValueOptions = async (input: {

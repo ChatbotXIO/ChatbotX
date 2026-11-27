@@ -52,6 +52,10 @@ vi.mock("@/lib/orpc/orpc", () => ({
   },
 }))
 
+vi.mock("@/features/polls/lib/use-poll-options", () => ({
+  usePollOptions: () => ({ options: [], isLoading: false }),
+}))
+
 vi.mock("@/features/leaderboards/lib/use-leaderboard-options", () => ({
   useLeaderboardOptions: () => ({
     leaderboards: [],
@@ -131,6 +135,10 @@ vi.mock(
   "@/features/contact-filter/components/use-product-filter-options",
   () => ({ useProductFilterOptions: () => [] }),
 )
+
+vi.mock("@/features/pipelines/lib/use-pipeline-options", () => ({
+  usePipelineOptions: () => ({ pipelines: [], isLoading: false }),
+}))
 
 vi.mock("@/hooks/routing", () => ({
   useWorkspaceId: () => "workspace-id",

@@ -42,6 +42,7 @@ export const stepTypes = z.enum([
   "setUpCoupon",
   "markCouponUsed",
   "changeGamificationScore",
+  "pipeline",
   "condition",
   "evaluateDecision",
 
@@ -66,6 +67,7 @@ export const stepTypes = z.enum([
   "aiAnalyzeImage",
   "aiGenerateImage",
   "aiEditImage",
+  "aiSegmentImage",
   "aiSpeechToText",
   "aiTextToSpeech",
   "aiExtractData",
@@ -96,6 +98,8 @@ export const stepTypes = z.enum([
   // External/Others (X_)
   "openWebsite",
   "openMiniApp",
+  "callPhoneNumber",
+  "copyText",
   "addNotes",
 
   // Broadcast Operations (B_)
@@ -146,6 +150,9 @@ export const stepTypes = z.enum([
   "disableMessengerComposer",
   "setMessengerPersona",
   "updateMessengerContactData",
+
+  // More options
+  "findPlacesNearMe",
 ])
 
 export type StepType = z.infer<typeof stepTypes>

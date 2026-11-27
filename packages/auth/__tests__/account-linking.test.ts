@@ -4,9 +4,13 @@ import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
  * Hoisted mock handles. `vi.mock` factories run before module top-level, so any
  * value a factory references must be created with `vi.hoisted`.
  */
-const { betterAuthMock } = vi.hoisted(() => ({
-  betterAuthMock: vi.fn((config: Record<string, unknown>) => config),
-}))
+const { betterAuthMock, drizzleAdapterMock, findById, revokeAllForUser } =
+  vi.hoisted(() => ({
+    betterAuthMock: vi.fn((config: Record<string, unknown>) => config),
+    drizzleAdapterMock: vi.fn((..._args: unknown[]) => ({})),
+    findById: vi.fn(),
+    revokeAllForUser: vi.fn(async () => undefined),
+  }))
 
 // Mirrors trusted-origins-build-phase.test.ts's approach: stub `betterAuth` to
 // just hand back its config object so we can inspect the `plugins` array
@@ -21,7 +25,7 @@ vi.mock("better-auth", async () => {
 })
 
 vi.mock("better-auth/adapters/drizzle", () => ({
-  drizzleAdapter: () => ({}),
+  drizzleAdapter: drizzleAdapterMock,
 }))
 
 vi.mock("better-auth/next-js", () => ({
@@ -32,6 +36,8 @@ vi.mock("better-auth/plugins", () => ({
   anonymous: () => ({ id: "anonymous" }),
   bearer: () => ({ id: "bearer" }),
   genericOAuth: () => ({ id: "generic-oauth" }),
+  jwt: () => ({ id: "jwt" }),
+  mcp: () => ({ id: "mcp" }),
   magicLink: () => ({ id: "magic-link" }),
   oneTimeToken: () => ({ id: "one-time-token" }),
 }))
@@ -42,6 +48,14 @@ vi.mock("@chatbotx.io/database/client", () => ({
 
 vi.mock("@chatbotx.io/database/schema", () => ({
   accountModel: {},
+  jwkModel: {},
+  oauthAccessTokenModel: {},
+  oauthClientAssertionModel: {},
+  oauthClientModel: {},
+  oauthClientResourceModel: {},
+  oauthConsentModel: {},
+  oauthRefreshTokenModel: {},
+  oauthResourceModel: {},
   sessionModel: {},
   userModel: {},
   verificationModel: {},
@@ -55,6 +69,8 @@ vi.mock("@chatbotx.io/business", () => ({
   },
   resolveTenantSettingsByDomain: vi.fn(),
   invitationService: { findActiveByCode: vi.fn().mockResolvedValue(null) },
+  mobileRefreshTokenService: { revokeAllForUser },
+  userService: { findById },
 }))
 
 vi.mock("@chatbotx.io/utils", () => ({
@@ -92,6 +108,59 @@ describe("createAuth account linking", () => {
     vi.unstubAllEnvs()
   })
 
+  test("blocks creation of a browser session while account deletion is pending", async () => {
+    findById.mockResolvedValue({ deletionRequestedAt: new Date() })
+    const { createAuth } = await import("../src/server")
+    createAuth({})
+    const config = betterAuthMock.mock.calls.at(-1)?.[0] as {
+      databaseHooks: {
+        session: {
+          create: {
+            before: (session: { userId: string }) => Promise<void>
+          }
+        }
+      }
+    }
+
+    await expect(
+      config.databaseHooks.session.create.before({ userId: "user-1" }),
+    ).rejects.toMatchObject({ body: { code: "ACCOUNT_DELETION_PENDING" } })
+
+    findById.mockResolvedValue({ deletionRequestedAt: null })
+    await expect(
+      config.databaseHooks.session.create.before({ userId: "user-1" }),
+    ).resolves.toBeUndefined()
+  })
+
+  test("revokes mobile refresh tokens after a successful password reset", async () => {
+    const { createAuth } = await import("../src/server")
+    createAuth({})
+    const config = betterAuthMock.mock.calls.at(-1)?.[0] as {
+      emailAndPassword: {
+        onPasswordReset: (input: { user: { id: string } }) => Promise<void>
+      }
+    }
+
+    await config.emailAndPassword.onPasswordReset({ user: { id: "user-1" } })
+
+    expect(revokeAllForUser).toHaveBeenCalledWith({ userId: "user-1" })
+  })
+
+  test("surfaces mobile refresh-token revocation failure after password reset", async () => {
+    revokeAllForUser.mockRejectedValueOnce(new Error("database unavailable"))
+    const { createAuth } = await import("../src/server")
+    createAuth({})
+    const config = betterAuthMock.mock.calls.at(-1)?.[0] as {
+      emailAndPassword: {
+        onPasswordReset: (input: { user: { id: string } }) => Promise<void>
+      }
+    }
+
+    await expect(
+      config.emailAndPassword.onPasswordReset({ user: { id: "user-1" } }),
+    ).rejects.toThrow("database unavailable")
+  })
+
   test("trusts social providers, allows linking into an unverified local user, and keeps emails matched", async () => {
     const { createAuth } = await import("../src/server")
     createAuth({})
@@ -107,7 +176,7 @@ describe("createAuth account linking", () => {
     }
     const linking = config.account.accountLinking
     expect(linking.enabled).toBe(true)
-    expect(linking.trustedProviders).toEqual(["google", "facebook"])
+    expect(linking.trustedProviders).toEqual(["google", "facebook", "apple"])
     expect(linking.requireLocalEmailVerified).toBe(false)
     expect(linking.allowDifferentEmails).toBeUndefined()
   })
@@ -203,5 +272,52 @@ describe("createAuth account linking", () => {
       ).rejects.toThrow()
       expect(upgrade).not.toHaveBeenCalled()
     })
+  })
+})
+
+describe("createAuth keeps the encrypted connection authorization backup out of auth", () => {
+  const SECRET_COLUMN = "connectionAuthorizations"
+
+  beforeEach(() => {
+    vi.resetModules()
+    betterAuthMock.mockClear()
+    drizzleAdapterMock.mockClear()
+    vi.stubEnv("SKIP_ENV_CHECK", "true")
+    vi.stubEnv("NEXT_PUBLIC_BUILDER_URL", BUILDER_URL)
+    vi.stubEnv("NEXT_PUBLIC_BROKER_URL", BROKER_URL)
+    vi.stubEnv("BETTER_AUTH_SECRET", "test-secret")
+    vi.stubEnv("NEXT_PHASE", "phase-production-build")
+  })
+
+  afterEach(() => {
+    vi.unstubAllEnvs()
+  })
+
+  test("never declares the column as a user field, so better-auth cannot return it", async () => {
+    const { createAuth } = await import("../src/server")
+    createAuth({})
+    const config = betterAuthMock.mock.calls.at(-1)?.[0] as {
+      user: { additionalFields: Record<string, unknown> }
+    }
+
+    expect(Object.keys(config.user.additionalFields)).not.toContain(
+      SECRET_COLUMN,
+    )
+  })
+
+  test("does not enable adapter debug logs, which print raw rows", async () => {
+    const { createAuth } = await import("../src/server")
+    createAuth({})
+    const adapterConfig = drizzleAdapterMock.mock.calls.at(-1)?.[1] as Record<
+      string,
+      unknown
+    >
+    const config = betterAuthMock.mock.calls.at(-1)?.[0] as Record<
+      string,
+      unknown
+    >
+
+    expect(adapterConfig.debugLogs).toBeFalsy()
+    expect(JSON.stringify(config.advanced ?? {})).not.toContain("debugLogs")
   })
 })

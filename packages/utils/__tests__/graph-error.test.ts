@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest"
-import { formatGraphErrorMessage } from "../src/graph-error"
+import {
+  formatGraphErrorMessage,
+  isGraphAppNotInstalled,
+} from "../src/graph-error"
 
 describe("formatGraphErrorMessage", () => {
   it("keeps the code, the subcode, and both sentences", () => {
@@ -105,5 +108,21 @@ describe("formatGraphErrorMessage", () => {
     expect(formatGraphErrorMessage({ code: 10 })).toBeUndefined()
     expect(formatGraphErrorMessage({ message: "   " })).toBeUndefined()
     expect(formatGraphErrorMessage({})).toBeUndefined()
+  })
+})
+
+describe("isGraphAppNotInstalled", () => {
+  it("needs both code 100 and Meta's sentence", () => {
+    const message = "(#100) App is not installed: 123"
+
+    expect(isGraphAppNotInstalled({ code: 100, message })).toBe(true)
+    expect(isGraphAppNotInstalled({ code: 200, message })).toBe(false)
+    expect(
+      isGraphAppNotInstalled({
+        code: 100,
+        message: "(#100) Invalid parameter",
+      }),
+    ).toBe(false)
+    expect(isGraphAppNotInstalled({ code: 100 })).toBe(false)
   })
 })

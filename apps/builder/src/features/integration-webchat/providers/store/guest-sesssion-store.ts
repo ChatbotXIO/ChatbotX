@@ -9,6 +9,7 @@ import type { MessageResource } from "@/features/messages/schema/resource"
 import type { UserResource } from "@/features/users/schema/resource"
 import { getWebchatProfileFields } from "../../browser-profile-fields"
 import { getClientEmbeddingOrigin } from "../../lib/authorized-domain"
+import { isValidGuestConversationId } from "../../lib/guest-conversation-id"
 import {
   buildGuestStorageKey,
   readLegacyGuestId,
@@ -57,17 +58,37 @@ export type GuestSessionActions = {
   sendMessage: (content: string, clientId: string) => void
   sendPostback: (button: MessageButtonTemplate) => Promise<void>
   setIsTyping: (isTyping: boolean) => void
+  /**
+   * Shows the typing bubble `OPTIMISTIC_TYPING_DELAY_MS` after the guest sends
+   * something, before the server's own typing event arrives, so the bot feels
+   * responsive. A reply within that delay skips the bubble entirely. It hides
+   * itself after `OPTIMISTIC_TYPING_TIMEOUT_MS` when no reply comes (e.g. no
+   * flow matched), and any reply or server typing event takes over.
+   */
+  showOptimisticTyping: () => void
 
   getMenus: () => WebchatPersistentMenu[]
 }
 
 export type GuestSessionStore = GuestSessionState & GuestSessionActions
 
+export const OPTIMISTIC_TYPING_DELAY_MS = 1000
+export const OPTIMISTIC_TYPING_TIMEOUT_MS = 15_000
+
 export const createGuestSessionStore = (
   props: WebchatClientConfig,
   accessToken: string | null = null,
   workspaceLogoUrl?: string,
 ) => {
+  let typingTimeout: ReturnType<typeof setTimeout> | null = null
+
+  const clearTypingTimeout = () => {
+    if (typingTimeout) {
+      clearTimeout(typingTimeout)
+      typingTimeout = null
+    }
+  }
+
   return createStore<GuestSessionStore>((set, get) => ({
     // default state
     guestConversationId: null,
@@ -94,17 +115,27 @@ export const createGuestSessionStore = (
       const scopedKey = buildGuestStorageKey(config.workspaceId, config.id)
       const scopedGuestId = safeStorageGet(scopedKey)
       if (scopedGuestId) {
-        set({ guestConversationId: scopedGuestId, isNewGuestSession: false })
-        return
+        if (isValidGuestConversationId(scopedGuestId)) {
+          set({ guestConversationId: scopedGuestId, isNewGuestSession: false })
+          return
+        }
+        console.warn(
+          "Discarding corrupted guest conversation id from storage",
+          { scopedKey },
+        )
       }
 
       const legacyGuestId = readLegacyGuestId()
-      if (legacyGuestId) {
+      if (legacyGuestId && isValidGuestConversationId(legacyGuestId)) {
         safeStorageSet(scopedKey, legacyGuestId)
         set({ guestConversationId: legacyGuestId, isNewGuestSession: false })
         return
       }
 
+      // Either nothing was stored, or what was stored failed validation
+      // above — in both cases fall back to the id minted by the server for
+      // this page load (always valid) and overwrite storage so a corrupted
+      // value never persists past the request that detects it.
       safeStorageSet(scopedKey, serverGuestConversationId)
       set({
         guestConversationId: serverGuestConversationId,
@@ -205,6 +236,9 @@ export const createGuestSessionStore = (
     },
 
     markMessageFailed: (clientId: string, error: string) => {
+      // The message never reached the bot, so no reply is coming.
+      clearTypingTimeout()
+      set({ isTyping: false })
       set((state) => {
         const optimisticMessageIndex = state.messages.findIndex(
           (message) =>
@@ -238,12 +272,17 @@ export const createGuestSessionStore = (
 
       await Promise.resolve()
 
+      // A link opens on its own; every other button (a reply, or a call button
+      // shown as one) replays its postback.
+      const postback = button.buttonType === "url" ? undefined : button.postback
+
       try {
-        if (button.buttonType === "postback") {
+        if (postback) {
+          get().showOptimisticTyping()
           await ky.post("/api/guest/messages", {
             json: {
               text: button.label,
-              postback: button.postback,
+              postback,
               workspaceId: config.workspaceId,
               guestConversationId,
               clientId: newMessage.clientId,
@@ -258,6 +297,7 @@ export const createGuestSessionStore = (
           })
         }
       } catch (error) {
+        get().setIsTyping(false)
         console.error("Failed to send postback:", error)
         throw error
       }
@@ -301,7 +341,21 @@ export const createGuestSessionStore = (
     },
 
     setIsTyping: (isTyping: boolean) => {
+      clearTypingTimeout()
       set({ isTyping })
+    },
+
+    showOptimisticTyping: () => {
+      clearTypingTimeout()
+      // One timer slot holds whichever step is pending (the show delay, then
+      // the hide fallback), so a reply or failure cancels either step.
+      typingTimeout = setTimeout(() => {
+        set({ isTyping: true })
+        typingTimeout = setTimeout(() => {
+          typingTimeout = null
+          set({ isTyping: false })
+        }, OPTIMISTIC_TYPING_TIMEOUT_MS)
+      }, OPTIMISTIC_TYPING_DELAY_MS)
     },
   }))
 }

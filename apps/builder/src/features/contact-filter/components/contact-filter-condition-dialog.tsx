@@ -2,9 +2,9 @@
 
 import {
   CONTACT_ACTIVITY_TRACKED_FIELDS,
-  CONTACT_ACTIVITY_TRACKING_STARTED_AT,
   type ContactActivityValueSource,
   type FormFieldType,
+  getContactActivityTrackingStartedAt,
   isContactActivityValueSource,
   type PostTrackingChannel,
   supportsPostTracking,
@@ -68,6 +68,11 @@ import {
   getLeaderboardScoreConditionOptions,
   getLeaderboardScoreValueInputConfig,
 } from "./leaderboard-score-filter-config"
+import {
+  getDefaultPipelineItemValue,
+  getPipelineItemConditionOptions,
+  pipelineItemConfigName,
+} from "./pipeline-item-filter-config"
 import {
   getDefaultStaticFieldValue,
   getStaticFieldConditionOptions,
@@ -141,6 +146,17 @@ export const buildConditionDraft = (
     return shouldOmitValue ? draft : { ...draft, value: values.value }
   }
 
+  if (config?.pipelineItem) {
+    // `exists` uses isEmpty/isNotEmpty but still carries the status to look for.
+    return {
+      field: "pipelineItem" as const,
+      attribute: config.pipelineItem.attribute,
+      pipelineId: config.pipelineItem.pipelineId,
+      operator,
+      value: values.value,
+    }
+  }
+
   if (config?.leaderboardId) {
     return {
       field: "leaderboardScore" as const,
@@ -170,6 +186,9 @@ const resolveDraftFieldName = (condition: ContactFilterCondition): string => {
   }
   if (condition.field === "leaderboardScore" && "leaderboardId" in condition) {
     return `leaderboardScore:${condition.leaderboardId}`
+  }
+  if (condition.field === "pipelineItem" && "attribute" in condition) {
+    return pipelineItemConfigName(condition)
   }
   return condition.field
 }
@@ -210,6 +229,9 @@ export const getConditionOptionsForConfig = (
   if (config.leaderboardId) {
     return getLeaderboardScoreConditionOptions(conditionOptions)
   }
+  if (config.pipelineItem) {
+    return getPipelineItemConditionOptions(config, conditionOptions)
+  }
   return getStaticFieldConditionOptions(config, conditionOptions)
 }
 
@@ -225,6 +247,9 @@ export const getDefaultConditionValue = (
   }
   if (config?.leaderboardId) {
     return ""
+  }
+  if (config?.pipelineItem) {
+    return getDefaultPipelineItemValue(config)
   }
   return getDefaultStaticFieldValue(config, operator)
 }
@@ -541,14 +566,26 @@ const ContactFilterValueFields = ({
   return VALUE_INPUT_RENDERERS[kind]({ enableVariables, valueOptions })
 }
 
-const ChannelPostValueField = () => {
+/**
+ * Multi-select of the workspace's channel posts, searched and paged on the
+ * server. `name` is the form field holding the selected ids (default `value`,
+ * the contact filter's), so a trigger condition can reuse it.
+ */
+export const ChannelPostValueField = ({
+  name = "value",
+  inboxId,
+}: {
+  name?: string
+  /** Lists only the posts of this inbox (page or account). */
+  inboxId?: string
+}) => {
   const t = useTranslations()
-  const value = useWatch<ContactFilterConditionFormDraft>({ name: "value" })
+  const value: unknown = useWatch({ name })
   const selectedIds = Array.isArray(value)
     ? value.filter((item): item is string => typeof item === "string")
     : []
   const { error, isLoading, onReachEnd, onSearchValueChange, options, retry } =
-    useChannelPostSelectOptions(selectedIds)
+    useChannelPostSelectOptions(selectedIds, inboxId)
   const statusIndicator = error ? (
     <div className="px-2 py-1.5 text-center">
       <button className="text-sm underline" onClick={retry} type="button">
@@ -567,7 +604,7 @@ const ChannelPostValueField = () => {
     <MultiSelectField
       emptyIndicator={emptyIndicator}
       hideSelectAll
-      name="value"
+      name={name}
       onReachEnd={onReachEnd}
       onSearchValueChange={onSearchValueChange}
       options={options}
@@ -652,7 +689,12 @@ export const ContactFilterConditionDialog = ({
     if (!activeConfig) {
       return { valueType: null, valueOptions: [] }
     }
-    if (watchOperator && OPERATORS_WITHOUT_VALUE.includes(watchOperator)) {
+    // Pipeline conditions always carry a value, even `isEmpty`/`isNotEmpty`.
+    if (
+      !activeConfig.pipelineItem &&
+      watchOperator &&
+      OPERATORS_WITHOUT_VALUE.includes(watchOperator)
+    ) {
       return { valueType: null, valueOptions: [] }
     }
     return {
@@ -720,6 +762,10 @@ export const ContactFilterConditionDialog = ({
   const triggerOperatorChange = useCallback(
     (nextOperator?: string) => {
       const currentValue = getValues("value")
+      if (activeConfig?.pipelineItem) {
+        // Every operator of an attribute takes the same value shape.
+        return
+      }
       if (nextOperator && OPERATORS_WITHOUT_VALUE.includes(nextOperator)) {
         setValue("value", "")
         return
@@ -836,7 +882,7 @@ export const ContactFilterConditionDialog = ({
               <p className="text-muted-foreground text-xs">
                 {t("condition.trackingSince", {
                   date: format.dateTime(
-                    new Date(CONTACT_ACTIVITY_TRACKING_STARTED_AT),
+                    new Date(getContactActivityTrackingStartedAt(watchField)),
                     { dateStyle: "medium" },
                   ),
                 })}

@@ -1,5 +1,6 @@
 import {
   adsConversionService,
+  contactReferralEventService,
   resolveChannelAdAccountSources,
 } from "@chatbotx.io/business"
 import { facebookAdAccountSchema } from "@chatbotx.io/integration-facebook-ads"
@@ -12,6 +13,10 @@ import {
   listAdsConversionRulesRequest,
   listAdsConversionRulesResponse,
 } from "../schema/conversion-rule"
+import {
+  referralStatsRequest,
+  referralStatsResponse,
+} from "../schema/referral-stats"
 
 export const adsAPI = {
   listRules: authorizedAPI
@@ -57,5 +62,22 @@ export const adsAPI = {
       return {
         data: accounts.map(({ sources: _sources, ...account }) => account),
       }
+    }),
+
+  // Super-admin only, like the rest of the Ads dashboard it feeds.
+  getReferralStats: authorizedAPI
+    .route({
+      method: "GET",
+      path: "/workspaces/{workspaceId}/ads/referral-stats",
+      summary: "Get contacts and conversions per ad for the Ads dashboard",
+      tags: ["Ads"],
+    })
+    .input(referralStatsRequest.extend({ workspaceId: z.string() }))
+    .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
+    .output(referralStatsResponse)
+    .handler(async ({ input }) => {
+      await assertWorkspaceSuperAdmin(input.workspaceId)
+
+      return { data: await contactReferralEventService.getAdStats(input) }
     }),
 }

@@ -29,6 +29,7 @@ const {
   mockAppointmentFindLatestForContact,
   mockQuestionnaireFindLatestCompleted,
   mockLeadAdsFindLatestByContact,
+  mockFindLatestAdTouchAt,
   mockListTeamNamesByUserId,
   mockResolveDefaultTokenPlaintext,
   mockResolveContactAvatarUrl,
@@ -60,6 +61,7 @@ const {
   mockAppointmentFindLatestForContact: vi.fn(),
   mockQuestionnaireFindLatestCompleted: vi.fn(),
   mockLeadAdsFindLatestByContact: vi.fn(),
+  mockFindLatestAdTouchAt: vi.fn(),
   mockListTeamNamesByUserId: vi.fn(),
   mockResolveDefaultTokenPlaintext: vi.fn(),
   mockEnsureContactAvatarMirrored: vi.fn(),
@@ -122,6 +124,9 @@ vi.mock("@chatbotx.io/business", () => ({
   conversationService: {
     findBy: mockConversationFindBy,
     findDMByContact: mockFindDMByContact,
+  },
+  contactReferralEventService: {
+    findLatestAdTouchAt: mockFindLatestAdTouchAt,
   },
   facebookLeadAdsLeadService: {
     findLatestByContact: mockLeadAdsFindLatestByContact,
@@ -765,7 +770,7 @@ describe("getSystemFieldValue", () => {
         systemFieldTypes.enum.last_story_id,
       ),
     ).resolves.toBeNull()
-    // Chatrace's spelling of last_btn_title, kept so imported flows resolve.
+    // Legacy spelling of last_btn_title, kept so imported flows resolve.
     await expect(
       getSystemFieldValue(
         createContext({ contactInbox: trackingInbox }),
@@ -1055,6 +1060,40 @@ describe("getSystemFieldValue", () => {
     ).resolves.toBe("Facebook/IG Comment")
   })
 
+  test("user_source labels a livestream comment source", async () => {
+    await expect(
+      getSystemFieldValue(
+        createContext({
+          contactInbox: {
+            ...contactInbox,
+            channel: "messenger",
+            source: "liveComments",
+          } as ContactInboxModel,
+        }),
+        systemFieldTypes.enum.user_source,
+      ),
+    ).resolves.toBe("Facebook/IG Livestream")
+  })
+
+  test.each([
+    ["tiktok", "TikTok Comment"],
+    ["threads", "Threads Comment"],
+    ["instagram", "Facebook/IG Comment"],
+  ])("user_source names the %s comment channel", async (channel, label) => {
+    await expect(
+      getSystemFieldValue(
+        createContext({
+          contactInbox: {
+            ...contactInbox,
+            channel,
+            source: "comments",
+          } as ContactInboxModel,
+        }),
+        systemFieldTypes.enum.user_source,
+      ),
+    ).resolves.toBe(label)
+  })
+
   test("user_source falls back to the raw value for an unmapped source", async () => {
     await expect(
       getSystemFieldValue(
@@ -1262,10 +1301,12 @@ describe("getSystemFieldValue", () => {
   })
 
   test("location and flow step fields resolve from persisted contact state", async () => {
-    mockFindDMByContact.mockResolvedValue({
+    const conversation = {
+      id: "conversation-1",
+      sourceId: "email:<thread@example.com>",
       lastStep: "step-1",
       currentStep: "step-2",
-    })
+    } as ConversationModel
 
     const locatedContact = {
       ...contact,
@@ -1274,28 +1315,48 @@ describe("getSystemFieldValue", () => {
 
     await expect(
       getSystemFieldValue(
-        createContext({ contact: locatedContact }),
+        createContext({ contact: locatedContact, conversation }),
         systemFieldTypes.enum.last_latitude,
       ),
     ).resolves.toBe("10.75")
     await expect(
       getSystemFieldValue(
-        createContext({ contact: locatedContact }),
+        createContext({ contact: locatedContact, conversation }),
         systemFieldTypes.enum.last_longitude,
       ),
     ).resolves.toBe("106.66")
     await expect(
       getSystemFieldValue(
-        createContext({ contact: locatedContact }),
+        createContext({ contact: locatedContact, conversation }),
         systemFieldTypes.enum.last_step,
       ),
     ).resolves.toBe("step-1")
     await expect(
       getSystemFieldValue(
-        createContext({ contact: locatedContact }),
+        createContext({ contact: locatedContact, conversation }),
         systemFieldTypes.enum.current_step,
       ),
     ).resolves.toBe("step-2")
+  })
+
+  test("flow step fields of a non-email conversation read the contact's DM", async () => {
+    mockFindDMByContact.mockResolvedValueOnce({
+      id: "dm-1",
+      sourceId: null,
+      lastStep: "dm-step",
+    } as ConversationModel)
+    const comment = {
+      id: "comment-thread",
+      sourceId: "post-1",
+      lastStep: "ignored",
+    } as ConversationModel
+
+    await expect(
+      getSystemFieldValue(
+        createContext({ conversation: comment }),
+        systemFieldTypes.enum.last_step,
+      ),
+    ).resolves.toBe("dm-step")
   })
 
   test("profile_pic resolves storage paths to public URLs", async () => {
@@ -1670,7 +1731,7 @@ describe("getSystemFieldValue — contact profile columns", () => {
       [systemFieldTypes.enum.user_country, "VN"],
       [systemFieldTypes.enum.user_state, "Ho Chi Minh"],
       [systemFieldTypes.enum.user_city, "Thu Duc"],
-      // timezone follows the ChatRace signed-offset shape; timezone_name maps to IANA.
+      // timezone follows the signed-offset shape; timezone_name maps to IANA.
       [systemFieldTypes.enum.timezone, "+7"],
     ]
 
@@ -1826,7 +1887,7 @@ describe("getSystemFieldValue — workspace and account fields", () => {
     })
   })
 
-  // Chatrace's spelling of {{api_key}} ("Account API Key"); same value.
+  // Legacy spelling of {{api_key}} ("Account API Key"); same value.
   test("page_api_key resolves the same default token as api_key", async () => {
     mockResolveDefaultTokenPlaintext.mockResolvedValue("cbx_ws_plaintext")
 
@@ -2113,7 +2174,7 @@ describe("getSystemFieldValue — questionnaire fields", () => {
     ).resolves.toBe("0")
   })
 
-  // Observed in Chatrace: a contact who never filled a questionnaire renders 0.
+  // A contact who never filled a questionnaire renders 0.
   test("last_points resolves 0 when the contact has no completed scored submission", async () => {
     mockQuestionnaireFindLatestCompleted.mockResolvedValue(undefined)
 
@@ -2124,8 +2185,8 @@ describe("getSystemFieldValue — questionnaire fields", () => {
 })
 
 describe("getSystemFieldValue — empty", () => {
-  // `{{empty}}` is how a flow clears a field or leaves a template slot blank;
-  // Chatrace renders it as an empty string.
+  // `{{empty}}` is how a flow clears a field or leaves a template slot blank,
+  // so it renders as an empty string.
   test("empty resolves to an empty string", async () => {
     await expect(
       getSystemFieldValue(createContext(), systemFieldTypes.enum.empty),
@@ -2225,6 +2286,12 @@ describe("getSystemFieldValue — lead ads fields", () => {
     formId: "form-3",
     formName: "Summer promo",
     adgroupId: "adgroup-5",
+    adId: "ad-7",
+    adName: "Summer ad",
+    adsetId: "adset-2",
+    adsetName: "VN 18-35",
+    campaignId: "campaign-4",
+    campaignName: "Summer sale",
   }
 
   beforeEach(() => {
@@ -2237,6 +2304,11 @@ describe("getSystemFieldValue — lead ads fields", () => {
     [systemFieldTypes.enum.last_form_id, "form-3"],
     [systemFieldTypes.enum.last_form_name, "Summer promo"],
     [systemFieldTypes.enum.last_adgroup_id, "adgroup-5"],
+    [systemFieldTypes.enum.last_ad_name, "Summer ad"],
+    [systemFieldTypes.enum.last_adset_id, "adset-2"],
+    [systemFieldTypes.enum.last_adset_name, "VN 18-35"],
+    [systemFieldTypes.enum.last_campaign_id, "campaign-4"],
+    [systemFieldTypes.enum.last_campaign_name, "Summer sale"],
   ] as const)("%s resolves from the contact's latest lead", async (key, expected) => {
     mockLeadAdsFindLatestByContact.mockResolvedValue(latestLead)
 
@@ -2255,6 +2327,8 @@ describe("getSystemFieldValue — lead ads fields", () => {
     systemFieldTypes.enum.last_form_id,
     systemFieldTypes.enum.last_form_name,
     systemFieldTypes.enum.last_adgroup_id,
+    systemFieldTypes.enum.last_ad_name,
+    systemFieldTypes.enum.last_campaign_name,
   ] as const)("%s resolves null when the contact has no lead", async (key) => {
     mockLeadAdsFindLatestByContact.mockResolvedValue(undefined)
 
@@ -2281,6 +2355,87 @@ describe("getSystemFieldValue — lead ads fields", () => {
         systemFieldTypes.enum.last_adgroup_id,
       ),
     ).resolves.toBeNull()
+  })
+})
+
+describe("getSystemFieldValue — last_ad", () => {
+  beforeEach(() => {
+    cache.clear()
+    vi.clearAllMocks()
+  })
+
+  const withReferral = () =>
+    createContext({
+      contactInbox: {
+        ...contactInbox,
+        referral: { adId: "referral-ad" },
+      } as ContactInboxModel,
+    })
+
+  test("returns the referral ad when its touch is newer than the lead", async () => {
+    mockLeadAdsFindLatestByContact.mockResolvedValue({
+      adId: "lead-ad",
+      createdAt: new Date("2026-01-01T00:00:00Z"),
+    })
+    mockFindLatestAdTouchAt.mockResolvedValue(new Date("2026-03-01T00:00:00Z"))
+
+    await expect(
+      getSystemFieldValue(withReferral(), systemFieldTypes.enum.last_ad),
+    ).resolves.toBe("referral-ad")
+    expect(mockFindLatestAdTouchAt).toHaveBeenCalledWith({
+      workspaceId: contact.workspaceId,
+      contactId: contact.id,
+      contactInboxId: contactInbox.id,
+    })
+  })
+
+  test("returns the lead ad when the lead is newer than the referral touch", async () => {
+    mockLeadAdsFindLatestByContact.mockResolvedValue({
+      adId: "lead-ad",
+      createdAt: new Date("2026-03-01T00:00:00Z"),
+    })
+    mockFindLatestAdTouchAt.mockResolvedValue(new Date("2026-01-01T00:00:00Z"))
+
+    await expect(
+      getSystemFieldValue(withReferral(), systemFieldTypes.enum.last_ad),
+    ).resolves.toBe("lead-ad")
+  })
+
+  test("returns the lead ad when the referral has no logged touch", async () => {
+    mockLeadAdsFindLatestByContact.mockResolvedValue({
+      adId: "lead-ad",
+      createdAt: new Date("2026-03-01T00:00:00Z"),
+    })
+    mockFindLatestAdTouchAt.mockResolvedValue(null)
+
+    await expect(
+      getSystemFieldValue(withReferral(), systemFieldTypes.enum.last_ad),
+    ).resolves.toBe("lead-ad")
+  })
+
+  test("returns the referral ad when the contact has no lead with an ad", async () => {
+    mockLeadAdsFindLatestByContact.mockResolvedValue(undefined)
+
+    await expect(
+      getSystemFieldValue(withReferral(), systemFieldTypes.enum.last_ad),
+    ).resolves.toBe("referral-ad")
+    expect(mockFindLatestAdTouchAt).not.toHaveBeenCalled()
+  })
+
+  test("falls back to the ad of the latest lead without a referral", async () => {
+    mockLeadAdsFindLatestByContact.mockResolvedValue({ adId: "lead-ad" })
+
+    await expect(
+      getSystemFieldValue(
+        createContext({
+          contactInbox: {
+            ...contactInbox,
+            referral: null,
+          } as ContactInboxModel,
+        }),
+        systemFieldTypes.enum.last_ad,
+      ),
+    ).resolves.toBe("lead-ad")
   })
 })
 

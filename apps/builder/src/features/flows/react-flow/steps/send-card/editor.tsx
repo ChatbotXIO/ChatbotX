@@ -1,5 +1,6 @@
 "use client"
 
+import { buttonContainers } from "@chatbotx.io/flow-config"
 import { Input } from "@chatbotx.io/ui/components/ui/input"
 import { useParams } from "next/navigation"
 import { useTranslations } from "next-intl"
@@ -38,7 +39,10 @@ const SendCardStepEditor = ({ parentName }: SendCardStepEditorProps) => {
         />
       </div>
       <div className="bg-slate-200 px-3 py-2 dark:bg-neutral-900">
-        <ButtonGroupEditor parentName={`${parentName}.buttons`} />
+        <ButtonGroupEditor
+          container={buttonContainers.card}
+          parentName={`${parentName}.buttons`}
+        />
       </div>
     </div>
   )

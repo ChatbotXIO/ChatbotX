@@ -1,6 +1,10 @@
 import { notFound } from "next/navigation"
+import { LockedEditorGuard } from "@/features/templates/components/locked-editor-guard"
 import { EditTiktokCommentForm } from "@/features/tiktok-comments/components/edit-tiktok-comment-form"
-import { getTiktokComment } from "@/features/tiktok-comments/queries"
+import {
+  getTiktokComment,
+  listTiktokInboxIdsWithoutCaptionAccess,
+} from "@/features/tiktok-comments/queries"
 import { withWorkspaceIdAndIdSchema } from "@/features/workspaces/schema/resource"
 
 export default async function EditTiktokCommentPage(props: {
@@ -17,11 +21,20 @@ export default async function EditTiktokCommentPage(props: {
   if (!record) {
     return notFound()
   }
+  const captionUnavailableInboxIds =
+    await listTiktokInboxIdsWithoutCaptionAccess(data.workspaceId)
 
   return (
-    <EditTiktokCommentForm
-      initialData={record}
+    <LockedEditorGuard
+      resourceId={data.id}
+      resourceKind="fbCommentAutomation"
       workspaceId={data.workspaceId}
-    />
+    >
+      <EditTiktokCommentForm
+        captionUnavailableInboxIds={captionUnavailableInboxIds}
+        initialData={record}
+        workspaceId={data.workspaceId}
+      />
+    </LockedEditorGuard>
   )
 }

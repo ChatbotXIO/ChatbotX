@@ -143,7 +143,7 @@ const writeMessengerSettings = async (
       }
 
       await messengerIntegrationService.updateProfileFields(
-        { id: ctx.id },
+        { id: ctx.id, workspaceId: ctx.workspaceId },
         {
           ...integrationInput,
           personas: syncedPersonas,

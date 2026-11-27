@@ -8,6 +8,7 @@ const mocks = vi.hoisted(() => ({
   execute: vi.fn(),
   recordContactHistory: vi.fn(),
   incrementStats: vi.fn(),
+  tryAcquireContactRun: vi.fn(),
 }))
 
 vi.mock("../src/trigger/services/action-executor", () => ({
@@ -19,6 +20,7 @@ vi.mock("@chatbotx.io/business", () => ({
   triggerService: {
     recordContactHistory: mocks.recordContactHistory,
     incrementStats: mocks.incrementStats,
+    tryAcquireContactRun: mocks.tryAcquireContactRun,
   },
 }))
 vi.mock("@chatbotx.io/events", () => ({
@@ -49,6 +51,7 @@ describe("TriggerExecutorService occurrence keys", () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mocks.execute.mockResolvedValue(undefined)
+    mocks.tryAcquireContactRun.mockResolvedValue(true)
   })
 
   test("builds one key per action from the job id, the trigger and the position", async () => {
@@ -89,5 +92,31 @@ describe("TriggerExecutorService occurrence keys", () => {
     })
 
     expect(keysOf()).toEqual([undefined, undefined])
+  })
+})
+
+describe("TriggerExecutorService bookkeeping", () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    mocks.execute.mockResolvedValue(undefined)
+  })
+
+  test("runs every action with one shared scope", async () => {
+    await new TriggerExecutorService().execute(trigger, {
+      contactId: "contact-1",
+    })
+
+    const scopes = mocks.execute.mock.calls.map(([, scope]) => scope)
+    expect(scopes).toHaveLength(2)
+    expect(scopes[0]).toBe(scopes[1])
+  })
+
+  test("a bookkeeping failure after the actions ran does not rethrow, so the job is not retried", async () => {
+    mocks.recordContactHistory.mockRejectedValueOnce(new Error("db down"))
+
+    await expect(
+      new TriggerExecutorService().execute(trigger, { contactId: "contact-1" }),
+    ).resolves.toBeUndefined()
+    expect(mocks.execute).toHaveBeenCalledTimes(2)
   })
 })

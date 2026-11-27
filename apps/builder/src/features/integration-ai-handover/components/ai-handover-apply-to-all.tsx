@@ -87,7 +87,7 @@ function RunProgress(props: {
           value={progressPercent(run)}
         />
         {run.pausedUntil && (
-          <p className="text-amber-600 text-sm dark:text-amber-400">
+          <p className="text-amber-700 text-sm dark:text-amber-400">
             {t("aiHandover.bulk.pausedUntil", {
               at: formatter.dateTime(run.pausedUntil, DATE_TIME_FORMAT),
             })}

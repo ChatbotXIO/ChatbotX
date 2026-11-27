@@ -3,14 +3,27 @@ import { contactInfoUpdated } from "./contact-info-updated"
 import { customFieldValueChanged } from "./custom-field-value-changed"
 import { dateTimeBasedTrigger } from "./date-time-based-trigger"
 import {
+  pipelineItemCreated,
+  pipelineItemMovedToStage,
+  pipelineItemPriorityChanged,
+  pipelineItemStatusChanged,
+  pipelineItemValueChanged,
+} from "./pipeline-item"
+import {
+  contactCommentedOnPost,
+  contactFirstCommentedOnPost,
+} from "./post-comment"
+import {
   archived,
   callEnded,
   callRecorded,
   callTranscribed,
   cartAbandoned,
   categoryAddedToCart,
+  contactBlockedBot,
   contactReferredANewContact,
   contactReferredExistingContact,
+  contactUnblockedBot,
   contactUnsubscribedFormBroadcast,
   conversationAssigned,
   conversationTransferredToBot,
@@ -24,6 +37,8 @@ import {
   orderAccepted,
   orderCancelled,
   orderConcluded,
+  orderPaid,
+  orderRefunded,
   orderShipped,
   productAddedToCart,
   productOrdered,
@@ -54,6 +69,10 @@ export const allConditions = {
   unsubscribedFromSequence,
   contactReferredANewContact,
   contactReferredExistingContact,
+  contactBlockedBot,
+  contactUnblockedBot,
+  contactCommentedOnPost,
+  contactFirstCommentedOnPost,
   incomingCall,
   missedAudioCall,
   callEnded,
@@ -66,11 +85,18 @@ export const allConditions = {
   orderShipped,
   orderConcluded,
   orderCancelled,
+  orderPaid,
+  orderRefunded,
   productOrdered,
   productAddedToCart,
   productRemovedFromCart,
   categoryAddedToCart,
   cartAbandoned,
+  pipelineItemCreated,
+  pipelineItemMovedToStage,
+  pipelineItemValueChanged,
+  pipelineItemStatusChanged,
+  pipelineItemPriorityChanged,
 }
 
 export const conditionSchema = z.union(Object.values(allConditions))

@@ -10,10 +10,12 @@ import type { ExecuteStepProps } from "../src/integration/handlers/flow-utils"
 const {
   integrationQueueAdd,
   matchesContactFilter,
+  refreshContactProfileSnapshot,
   resolveContactVariablesDeep,
 } = vi.hoisted(() => ({
   integrationQueueAdd: vi.fn(async () => undefined),
   matchesContactFilter: vi.fn(),
+  refreshContactProfileSnapshot: vi.fn(async () => undefined),
   resolveContactVariablesDeep: vi.fn(async (_contactId, cases) => cases),
 }))
 
@@ -26,11 +28,13 @@ vi.mock("@chatbotx.io/events/context", () => ({
 }))
 
 vi.mock("@chatbotx.io/variables", () => ({
+  refreshContactProfileSnapshot,
   resolveContactVariablesDeep,
 }))
 
 vi.mock("@chatbotx.io/worker-config", () => ({
   IntegrationJobAction: { sendFlow: "sendFlow" },
+  flowContinuationJobOptions: () => ({}),
   integrationQueue: { add: integrationQueueAdd },
 }))
 
@@ -134,17 +138,21 @@ describe("handleCondition", () => {
         ],
       },
     })
-    expect(integrationQueueAdd).toHaveBeenCalledWith("sendFlow", {
-      type: "sendFlow",
-      data: expect.objectContaining({
-        conversationId: "conversation-1",
-        contactInboxId: "contact-inbox-1",
-        flowId: "flow-1",
-        flowVersionId: "flow-version-1",
-        nodeId: "second-target",
-        origin: "webhook",
-      }),
-    })
+    expect(integrationQueueAdd).toHaveBeenCalledWith(
+      "sendFlow",
+      {
+        type: "sendFlow",
+        data: expect.objectContaining({
+          conversationId: "conversation-1",
+          contactInboxId: "contact-inbox-1",
+          flowId: "flow-1",
+          flowVersionId: "flow-version-1",
+          nodeId: "second-target",
+          origin: "webhook",
+        }),
+      },
+      {},
+    )
   })
 
   test.each([
@@ -179,10 +187,14 @@ describe("handleCondition", () => {
       ] as EdgeSchema[]),
     )
 
-    expect(integrationQueueAdd).toHaveBeenCalledWith("sendFlow", {
-      type: "sendFlow",
-      data: expect.objectContaining({ nodeId: "otherwise-target" }),
-    })
+    expect(integrationQueueAdd).toHaveBeenCalledWith(
+      "sendFlow",
+      {
+        type: "sendFlow",
+        data: expect.objectContaining({ nodeId: "otherwise-target" }),
+      },
+      {},
+    )
   })
 
   test("routes to otherwise when filter evaluation throws", async () => {
@@ -194,10 +206,14 @@ describe("handleCondition", () => {
       ] as EdgeSchema[]),
     )
 
-    expect(integrationQueueAdd).toHaveBeenCalledWith("sendFlow", {
-      type: "sendFlow",
-      data: expect.objectContaining({ nodeId: "otherwise-target" }),
-    })
+    expect(integrationQueueAdd).toHaveBeenCalledWith(
+      "sendFlow",
+      {
+        type: "sendFlow",
+        data: expect.objectContaining({ nodeId: "otherwise-target" }),
+      },
+      {},
+    )
   })
 
   test("does not enqueue when the matched handle has no connected edge", async () => {
@@ -250,10 +266,14 @@ describe("handleCondition", () => {
         ],
       },
     })
-    expect(integrationQueueAdd).toHaveBeenCalledWith("sendFlow", {
-      type: "sendFlow",
-      data: expect.objectContaining({ nodeId: "first-target" }),
-    })
+    expect(integrationQueueAdd).toHaveBeenCalledWith(
+      "sendFlow",
+      {
+        type: "sendFlow",
+        data: expect.objectContaining({ nodeId: "first-target" }),
+      },
+      {},
+    )
   })
 
   test("threads appointmentId through variable resolution and the matched branch", async () => {
@@ -272,13 +292,17 @@ describe("handleCondition", () => {
       step.cases,
       expect.objectContaining({ appointmentId: "appointment-1" }),
     )
-    expect(integrationQueueAdd).toHaveBeenCalledWith("sendFlow", {
-      type: "sendFlow",
-      data: expect.objectContaining({
-        appointmentId: "appointment-1",
-        nodeId: "first-target",
-      }),
-    })
+    expect(integrationQueueAdd).toHaveBeenCalledWith(
+      "sendFlow",
+      {
+        type: "sendFlow",
+        data: expect.objectContaining({
+          appointmentId: "appointment-1",
+          nodeId: "first-target",
+        }),
+      },
+      {},
+    )
   })
 
   test("threads sentByUserId through variable resolution and the matched branch", async () => {
@@ -297,13 +321,17 @@ describe("handleCondition", () => {
       step.cases,
       expect.objectContaining({ sentByUserId: "user-1" }),
     )
-    expect(integrationQueueAdd).toHaveBeenCalledWith("sendFlow", {
-      type: "sendFlow",
-      data: expect.objectContaining({
-        sentByUserId: "user-1",
-        nodeId: "first-target",
-      }),
-    })
+    expect(integrationQueueAdd).toHaveBeenCalledWith(
+      "sendFlow",
+      {
+        type: "sendFlow",
+        data: expect.objectContaining({
+          sentByUserId: "user-1",
+          nodeId: "first-target",
+        }),
+      },
+      {},
+    )
   })
 
   test("threads the case timezone into contact filter matching", async () => {
@@ -341,5 +369,111 @@ describe("handleCondition", () => {
         timezone: "Asia/Ho_Chi_Minh",
       },
     })
+  })
+  test("refreshes the profile snapshot before matching an Instagram profile field", async () => {
+    const step: ConditionStepSchema = {
+      id: "condition-step-1",
+      stepType: "condition",
+      otherwiseId: "otherwise-handle",
+      cases: [
+        {
+          id: "first-case",
+          operator: "and",
+          conditions: [
+            {
+              field: "followsBusinessOnInstagram",
+              operator: "eq",
+              value: "true",
+            },
+          ],
+        },
+        {
+          id: "second-case",
+          operator: "and",
+          conditions: [
+            { field: "followerCountOnInstagram", operator: "gt", value: "10" },
+          ],
+        },
+      ],
+    }
+    matchesContactFilter.mockResolvedValue(false)
+
+    await handleCondition(
+      makeProps(step, [
+        { sourceHandle: "otherwise-handle", target: "otherwise-target" },
+      ] as EdgeSchema[]),
+    )
+
+    expect(refreshContactProfileSnapshot).toHaveBeenCalledTimes(1)
+    expect(refreshContactProfileSnapshot).toHaveBeenCalledWith({
+      contactInbox,
+      workspaceId: "workspace-1",
+    })
+    const [refreshOrder] =
+      refreshContactProfileSnapshot.mock.invocationCallOrder
+    const [firstMatchOrder] = matchesContactFilter.mock.invocationCallOrder
+    expect(refreshOrder).toBeLessThan(firstMatchOrder as number)
+  })
+
+  test("follows this node's edge when a duplicated condition node shares its case ids", async () => {
+    // Regression: Duplicate kept case ids, so the copy's "first-case" handle
+    // is also on the original node. The edge listed first belongs to the
+    // other node; a handle-only lookup sent the contact down its branch.
+    const step = makeStep()
+    const duplicatedStep = { ...makeStep(), id: "condition-step-copy" }
+    matchesContactFilter.mockResolvedValueOnce(true)
+
+    await handleCondition({
+      ...makeProps(step, []),
+      flowVersion: {
+        ...makeFlowVersion([
+          {
+            id: "edge-original",
+            source: "condition-node-original",
+            sourceHandle: "first-case",
+            target: "original-target",
+            targetHandle: "original-target",
+          },
+          {
+            id: "edge-copy",
+            source: "condition-node-copy",
+            sourceHandle: "first-case",
+            target: "copy-target",
+            targetHandle: "copy-target",
+          },
+        ]),
+        nodes: [
+          {
+            id: "condition-node-original",
+            data: { details: { steps: [duplicatedStep] } },
+          },
+          {
+            id: "condition-node-copy",
+            data: { details: { steps: [step] } },
+          },
+        ],
+      } as unknown as FlowVersionModel,
+    })
+
+    expect(integrationQueueAdd).toHaveBeenCalledWith(
+      "sendFlow",
+      {
+        type: "sendFlow",
+        data: expect.objectContaining({ nodeId: "copy-target" }),
+      },
+      {},
+    )
+  })
+
+  test("does not refresh the profile snapshot when no case reads it", async () => {
+    matchesContactFilter.mockResolvedValue(false)
+
+    await handleCondition(
+      makeProps(makeStep(), [
+        { sourceHandle: "otherwise-handle", target: "otherwise-target" },
+      ] as EdgeSchema[]),
+    )
+
+    expect(refreshContactProfileSnapshot).not.toHaveBeenCalled()
   })
 })

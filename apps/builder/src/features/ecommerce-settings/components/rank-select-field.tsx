@@ -13,8 +13,19 @@ const RANKS = Array.from({ length: 20 }, (_, index) => index + 1)
  * The select works in strings, so the form keeps the rank as one and the
  * schema coerces it back to a number.
  */
-export function RankSelectField({ name = "rank" }: { name?: string }) {
+export function RankSelectField({
+  name = "rank",
+  currentRank,
+}: {
+  name?: string
+  /** A saved rank outside 1-20 (e.g. set via the API) stays selectable. */
+  currentRank?: number
+}) {
   const t = useTranslations("ecommerceSettings.rank")
+  const extraRank =
+    currentRank !== undefined && !RANKS.includes(currentRank)
+      ? [{ value: String(currentRank), label: String(currentRank) }]
+      : []
   return (
     <SelectField
       label={t("label")}
@@ -25,6 +36,7 @@ export function RankSelectField({ name = "rank" }: { name?: string }) {
           value: String(rank),
           label: String(rank),
         })),
+        ...extraRank,
       ]}
     />
   )

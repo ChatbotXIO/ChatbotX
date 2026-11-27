@@ -2,13 +2,17 @@ import { beforeEach, describe, expect, test, vi } from "vitest"
 
 const mocks = vi.hoisted(() => ({
   queueAdd: vi.fn(async () => "job-id"),
+  lowQueueAdd: vi.fn(async () => "low-job-id"),
 }))
 
 // Mock bullmq's `Queue` so importing the real `queues/integration` module
 // never opens a socket — only `add()` calls are observed.
 vi.mock("bullmq", () => ({
   Queue: class {
-    add = mocks.queueAdd
+    constructor(name: string) {
+      this.add = name === "low" ? mocks.lowQueueAdd : mocks.queueAdd
+    }
+    add: typeof mocks.queueAdd
   },
 }))
 
@@ -26,12 +30,17 @@ vi.mock("../src/lib/connection", () => ({
   isNoRedisEnv: () => false,
 }))
 
-const { enqueueIntegrationJob, IntegrationJobAction } = await import(
-  "../src/queues/integration"
-)
+const {
+  BROADCAST_SEND_PRIORITY,
+  enqueueIntegrationJob,
+  flowContinuationJobOptions,
+  IntegrationJobAction,
+  SEQUENCE_SEND_PRIORITY,
+} = await import("../src/queues/integration")
 
 beforeEach(() => {
   mocks.queueAdd.mockClear()
+  mocks.lowQueueAdd.mockClear()
 })
 
 describe("jobOptionsByAction", () => {
@@ -140,5 +149,102 @@ describe("enqueueIntegrationJob merge order", () => {
       expect.objectContaining({ type: IntegrationJobAction.agentMarkAsRead }),
       { jobId: "agent-mark-as-read-1" },
     )
+  })
+})
+
+const statusJob = (continuesFlow?: boolean) =>
+  ({
+    type: IntegrationJobAction.messageStatus,
+    data: {
+      integrationType: "whatsapp",
+      integrationIdentifier: "phone-1",
+      payload: { messageId: "wamid.1", status: "delivered", timestamp: "1" },
+      ...(continuesFlow === undefined ? {} : { continuesFlow }),
+    },
+  }) as const
+
+describe("low-queue routing", () => {
+  test("routes a plain message status to the low queue", async () => {
+    await enqueueIntegrationJob(statusJob(), { jobId: "wa-status-1" })
+
+    expect(mocks.queueAdd).not.toHaveBeenCalled()
+    expect(mocks.lowQueueAdd).toHaveBeenCalledWith(
+      IntegrationJobAction.messageStatus,
+      expect.objectContaining({ type: IntegrationJobAction.messageStatus }),
+      { jobId: "wa-status-1" },
+    )
+  })
+
+  test("routes a status with continuesFlow:false to the low queue", async () => {
+    await enqueueIntegrationJob(statusJob(false))
+
+    expect(mocks.lowQueueAdd).toHaveBeenCalledTimes(1)
+    expect(mocks.queueAdd).not.toHaveBeenCalled()
+  })
+
+  test("keeps a status that continues a flow on the integration queue", async () => {
+    await enqueueIntegrationJob(statusJob(true))
+
+    expect(mocks.queueAdd).toHaveBeenCalledTimes(1)
+    expect(mocks.lowQueueAdd).not.toHaveBeenCalled()
+  })
+
+  test.each([
+    [
+      IntegrationJobAction.contactMarkAsRead,
+      {
+        integrationType: "messenger",
+        integrationIdentifier: "page-1",
+        sourceConversationId: "psid-1",
+        payload: {},
+      },
+    ],
+    [
+      IntegrationJobAction.incomingMessageEcho,
+      {
+        integrationType: "zalo",
+        integrationIdentifier: "oa-1",
+        payload: {},
+      },
+    ],
+  ] as const)("routes %s to the low queue", async (type, data) => {
+    await enqueueIntegrationJob({ type, data } as never)
+
+    expect(mocks.lowQueueAdd).toHaveBeenCalledTimes(1)
+    expect(mocks.queueAdd).not.toHaveBeenCalled()
+  })
+
+  test("leaves customer messages on the integration queue", async () => {
+    await enqueueIntegrationJob({
+      type: IntegrationJobAction.incomingMessage,
+      data: {
+        integrationType: "messenger",
+        integrationIdentifier: "page-1",
+        payload: {},
+      },
+    })
+
+    expect(mocks.queueAdd).toHaveBeenCalledTimes(1)
+    expect(mocks.lowQueueAdd).not.toHaveBeenCalled()
+  })
+})
+
+describe("flowContinuationJobOptions", () => {
+  test("a continuation of a live flow gets no priority, so it stays in FIFO order with customer messages", () => {
+    expect(flowContinuationJobOptions()).toEqual({})
+    expect(
+      flowContinuationJobOptions({
+        type: "updateStatus",
+      } as never),
+    ).toEqual({})
+  })
+
+  test("broadcast and sequence runs keep the scheduled-send priority on every step", () => {
+    expect(flowContinuationJobOptions({ type: "broadcast" } as never)).toEqual({
+      priority: BROADCAST_SEND_PRIORITY,
+    })
+    expect(
+      flowContinuationJobOptions({ type: "sequenceSchedule" } as never),
+    ).toEqual({ priority: SEQUENCE_SEND_PRIORITY })
   })
 })

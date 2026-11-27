@@ -1,3 +1,4 @@
+import { sql } from "drizzle-orm"
 import {
   boolean,
   doublePrecision,
@@ -7,13 +8,17 @@ import {
   pgEnum,
   pgTable,
   text,
+  uniqueIndex,
 } from "drizzle-orm/pg-core"
 import {
   type InventoryPolicyType,
   inventoryPolicyTypes,
+  type ProductStatus,
+  productStatuses,
 } from "../partials/product"
 import { bigintAsString, sharedColumns } from "../partials/shared"
 import { productCategoryModel } from "./product-category"
+import { storeSource } from "./store-source"
 import { vendorModel } from "./vendor"
 import { workspaceModel } from "./workspace"
 
@@ -23,6 +28,11 @@ export const inventoryPolicy = pgEnum(
     InventoryPolicyType,
     ...InventoryPolicyType[],
   ],
+)
+
+export const productStatus = pgEnum(
+  "productStatus",
+  productStatuses.options as [ProductStatus, ...ProductStatus[]],
 )
 
 export const productModel = pgTable(
@@ -66,10 +76,27 @@ export const productModel = pgTable(
       onDelete: "set null",
       onUpdate: "cascade",
     }),
-    isActive: boolean().default(true).notNull(),
+    /**
+     * Only `active` is shown and orderable. Our own products switch between
+     * `active` and `draft`; a Shopify product mirrors Shopify's status and is
+     * only changed by a sync.
+     */
+    status: productStatus().default("active").notNull(),
     isSearchable: boolean().default(true).notNull(),
     allowSpecialRequest: boolean().default(false).notNull(),
     isAddonOnly: boolean().default(false).notNull(),
+    /** `shopify` rows are mirrored from the connected store, read-only here. */
+    source: storeSource().default("chatbotx").notNull(),
+    /** Shopify's product GID, with `source: shopify`. */
+    externalId: text(),
+    /** Shopify's product handle, for its storefront URL. */
+    externalHandle: text(),
+    /**
+     * The GID of the one variant Shopify keeps for a product sold without
+     * options; such a product has no `ProductVariant` rows here, yet Shopify
+     * checkout and `orderCreate` need a variant.
+     */
+    externalVariantId: text(),
     workspaceId: bigintAsString()
       .notNull()
       .references(() => workspaceModel.id, {
@@ -90,5 +117,8 @@ export const productModel = pgTable(
     index("Product_categoryId_idx").on(table.categoryId),
     index("Product_subcategoryId_idx").on(table.subcategoryId),
     index("Product_vendorId_idx").on(table.vendorId),
+    uniqueIndex("Product_workspaceId_source_externalId_key")
+      .on(table.workspaceId, table.source, table.externalId)
+      .where(sql`${table.externalId} IS NOT NULL`),
   ],
 )

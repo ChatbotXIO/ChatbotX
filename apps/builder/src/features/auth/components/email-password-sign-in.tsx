@@ -46,6 +46,11 @@ export const EmailPasswordSignIn = () => {
     })
 
     if (data) {
+      if (data.url) {
+        window.location.assign(data.url)
+        return
+      }
+
       toast.success("Signed in successfully")
       // Full reload (not router.push) so a fresh session re-renders
       // layout/sidebar state that depends on auth.

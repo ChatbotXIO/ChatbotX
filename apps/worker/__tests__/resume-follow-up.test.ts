@@ -17,6 +17,7 @@ vi.mock("@chatbotx.io/business/contact-inbox", () => ({ contactInboxService }))
 vi.mock("@chatbotx.io/business/smart-delay", () => ({ smartDelayService }))
 
 vi.mock("@chatbotx.io/worker-config", () => ({
+  flowContinuationJobOptions: () => ({}),
   IntegrationJobAction: {
     resumeFollowUp: "resumeFollowUp",
     resumeWait: "resumeWait",
@@ -85,16 +86,20 @@ describe("runFollowUpResume", () => {
   test("continues the flow when the contact stayed silent", async () => {
     await runFollowUpResume({ smartDelayId: "smart-delay-1" })
 
-    expect(integrationQueueAdd).toHaveBeenCalledWith("sendFlow", {
-      type: "sendFlow",
-      data: {
-        conversationId: "conversation-1",
-        contactInboxId: "contact-inbox-1",
-        flowId: "flow-1",
-        flowVersionId: "flow-version-1",
-        nodeId: "next-node",
+    expect(integrationQueueAdd).toHaveBeenCalledWith(
+      "sendFlow",
+      {
+        type: "sendFlow",
+        data: {
+          conversationId: "conversation-1",
+          contactInboxId: "contact-inbox-1",
+          flowId: "flow-1",
+          flowVersionId: "flow-version-1",
+          nodeId: "next-node",
+        },
       },
-    })
+      {},
+    )
     expect(smartDelayService.claimForRun).toHaveBeenCalledWith({
       id: "smart-delay-1",
       to: "completed",
@@ -113,16 +118,20 @@ describe("runFollowUpResume", () => {
 
     await runFollowUpResume({ smartDelayId: "smart-delay-1" })
 
-    expect(integrationQueueAdd).toHaveBeenCalledWith("sendFlow", {
-      type: "sendFlow",
-      data: expect.objectContaining({
-        metadata: {
-          type: "broadcast",
-          broadcastId: "broadcast-1",
-          contactInboxId: "contact-inbox-1",
-        },
-      }),
-    })
+    expect(integrationQueueAdd).toHaveBeenCalledWith(
+      "sendFlow",
+      {
+        type: "sendFlow",
+        data: expect.objectContaining({
+          metadata: {
+            type: "broadcast",
+            broadcastId: "broadcast-1",
+            contactInboxId: "contact-inbox-1",
+          },
+        }),
+      },
+      {},
+    )
   })
 
   test("does not enqueue when another worker already claimed the row", async () => {

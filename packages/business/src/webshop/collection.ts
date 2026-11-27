@@ -22,7 +22,7 @@ import {
   customerMessageStrings,
 } from "../order/customer-messages"
 import { resolveCustomerMessageLanguage } from "../order/message-language"
-import { resolveTenantSettings } from "../platform/settings"
+import { resolveWorkspaceAppUrl } from "../platform/settings"
 import { buildWebshopUrl } from "./link"
 
 const CARD_TEXT_MAX = 80
@@ -49,6 +49,7 @@ export async function listCollectionProducts(input: {
     }
     const { data } = await productRepository.listForShop({
       workspaceId: input.workspaceId,
+      source: await ecommerceSettingsService.storeSource(input.workspaceId),
       productIds: step.productIds,
     })
     // In the order they were chosen.
@@ -60,6 +61,7 @@ export async function listCollectionProducts(input: {
   const { conditions } = step
   const { data } = await productRepository.listForShop({
     workspaceId: input.workspaceId,
+    source: await ecommerceSettingsService.storeSource(input.workspaceId),
     keyword: conditions.name.trim() || null,
     categoryId: conditions.subcategoryId ?? conditions.categoryId,
     vendorId: conditions.vendorId,
@@ -199,8 +201,8 @@ export async function resolveCollectionStep<
   contactInboxId?: string | null
   step: Step
 }): Promise<(Step & { cards: SendCardStepSchema[] }) | null> {
-  const [{ appUrl }, language, shopToken] = await Promise.all([
-    resolveTenantSettings({ workspaceId: input.workspaceId }),
+  const [appUrl, language, shopToken] = await Promise.all([
+    resolveWorkspaceAppUrl({ workspaceId: input.workspaceId }),
     resolveCustomerMessageLanguage(input),
     signShopToken({
       workspaceId: input.workspaceId,

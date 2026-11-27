@@ -78,6 +78,23 @@ const participant = (
   ...extra,
 })
 
+const nativeContext = {
+  providerType: "instagram" as const,
+  inbox: fakeInbox,
+  accessToken: "token",
+  version: "v20.0",
+  igId,
+}
+
+const facebookContext = {
+  providerType: "facebook" as const,
+  inbox: fakeInbox,
+  accessToken: "token",
+  version: "v20.0",
+  igId,
+  pageId,
+}
+
 describe("instagramContactScanAdapter", () => {
   beforeEach(() => {
     vi.clearAllMocks()
@@ -172,23 +189,6 @@ describe("instagramContactScanAdapter", () => {
   })
 
   describe("listPage", () => {
-    const nativeContext = {
-      providerType: "instagram" as const,
-      inbox: fakeInbox,
-      accessToken: "token",
-      version: "v20.0",
-      igId,
-    }
-
-    const facebookContext = {
-      providerType: "facebook" as const,
-      inbox: fakeInbox,
-      accessToken: "token",
-      version: "v20.0",
-      igId,
-      pageId,
-    }
-
     it("dispatches to listInstagramConversations for a native context", async () => {
       mockListInstagramConversations.mockResolvedValue({ data: [] })
 
@@ -297,7 +297,7 @@ describe("instagramContactScanAdapter", () => {
       expect(page.entries).toEqual([])
     })
 
-    it("maps app-usage headers to the engine's usage signal shape", async () => {
+    it("maps app-usage headers to the neutral usage signal", async () => {
       mockListInstagramConversations.mockResolvedValue({
         data: [],
         appUsage: { call_count: 5, total_cputime: 10, total_time: 15 },
@@ -307,12 +307,7 @@ describe("instagramContactScanAdapter", () => {
         context: nativeContext,
       })
 
-      expect(page.usageSignal).toEqual({
-        kind: "meta-app-usage",
-        callCount: 5,
-        totalCputime: 10,
-        totalTime: 15,
-      })
+      expect(page.usageSignal).toEqual({ usagePercent: 15 })
     })
 
     it("returns a null usage signal when no app-usage header was present", async () => {
@@ -325,62 +320,25 @@ describe("instagramContactScanAdapter", () => {
       expect(page.usageSignal).toBeNull()
     })
 
-    // FIX 4 — this Graph call was previously unretried (unlike the Messenger
-    // adapter's `listPage`), so a transient 429/5xx fell straight through as
-    // a full page loss. Now wrapped in the shared `withInlineRetry`.
-    it("retries a transient (429) failure inline instead of throwing immediately", async () => {
-      const transient = { response: { status: 429 } }
-      mockListInstagramConversations
-        .mockRejectedValueOnce(transient)
-        .mockResolvedValueOnce({ data: [] })
-
-      // Spy on global.setTimeout so the inline retry's backoff delay doesn't
-      // actually block the test — mirrors the pattern used for BUC-pause
-      // assertions in `coexist-messenger-sync.test.ts`.
-      const origSetTimeout = global.setTimeout
-      vi.spyOn(global, "setTimeout").mockImplementation(
-        (fn: TimerHandler, _delay?: number, ...args: unknown[]) => {
-          if (typeof fn === "function") {
-            fn(...(args as []))
-          }
-          return origSetTimeout(fn, 0, ...args)
-        },
-      )
-
-      const page = await instagramContactScanAdapter.listPage({
-        context: nativeContext,
-      })
-
-      vi.restoreAllMocks()
-
-      expect(mockListInstagramConversations).toHaveBeenCalledTimes(2)
-      expect(page.entries).toEqual([])
-    })
-
-    it("does not retry a non-retryable failure — it throws immediately", async () => {
-      const permanent = { response: { status: 400 } }
-      mockListInstagramConversations.mockRejectedValueOnce(permanent)
+    it("does not retry inline: a failure reaches the engine at once", async () => {
+      const failure = new Error("boom")
+      mockListInstagramConversations.mockRejectedValueOnce(failure)
 
       await expect(
         instagramContactScanAdapter.listPage({ context: nativeContext }),
-      ).rejects.toBe(permanent)
+      ).rejects.toBe(failure)
       expect(mockListInstagramConversations).toHaveBeenCalledTimes(1)
     })
   })
 
-  describe("classifyError", () => {
-    // Both `@chatbotx.io/integration-instagram` and
-    // `@chatbotx.io/integration-instagram-facebook` wrap every Graph failure
-    // into their own `InstagramAPIException` (extends `InstagramException`
-    // extends `SdkException`) before it escapes
-    // `listInstagramConversations`/`listInstagramFacebookConversations` — a
-    // flat `httpStatusCode`/`code`/`type`, never a nested `response`/
-    // `errorBody` shape.
-    const apiException = (fields: {
+  describe("classifyError (through each provider's error mapper)", () => {
+    type ExceptionFields = {
       httpStatusCode?: number
       code?: string | number
       type?: string
-    }) =>
+    }
+    // Each provider throws its OWN exception class, which its own mapper reads.
+    const apiException = (fields: ExceptionFields) =>
       new InstagramAPIException(
         "graph error",
         fields.httpStatusCode,
@@ -388,61 +346,119 @@ describe("instagramContactScanAdapter", () => {
         undefined,
         fields.type,
       )
-
-    it("classifies a 429 InstagramAPIException as retryable", () => {
-      const error = apiException({ httpStatusCode: 429 })
-      expect(instagramContactScanAdapter.classifyError(error)).toBe("retryable")
+    // The Facebook package exports no exception class, so its mapper is fed the
+    // raw `{ httpStatus, errorBody }` origin shape it also understands.
+    const facebookApiException = (fields: ExceptionFields) => ({
+      httpStatus: fields.httpStatusCode,
+      errorBody: { error: { code: fields.code, type: fields.type } },
     })
+    const classify = (error: unknown, context = nativeContext) =>
+      instagramContactScanAdapter.classifyError({ error, context })
 
-    it("classifies a 500 InstagramAPIException as retryable", () => {
-      const error = apiException({ httpStatusCode: 500 })
-      expect(instagramContactScanAdapter.classifyError(error)).toBe("retryable")
-    })
-
-    it("classifies Graph code 190 (expired token) as tokenInvalid", () => {
-      const error = apiException({
-        httpStatusCode: 401,
-        code: 190,
-        type: "OAuthException",
-      })
-      expect(instagramContactScanAdapter.classifyError(error)).toBe(
-        "tokenInvalid",
+    it("a 429 is rateLimited and a 500 is retryable", () => {
+      expect(classify(apiException({ httpStatusCode: 429 }))).toBe(
+        "rateLimited",
       )
+      expect(classify(apiException({ httpStatusCode: 500 }))).toBe("retryable")
     })
 
-    it("classifies Graph code 10 (permission denied) as graphPermission", () => {
-      const error = apiException({ httpStatusCode: 403, code: 10 })
-      expect(instagramContactScanAdapter.classifyError(error)).toBe(
+    it("Graph code 190 (expired token) is tokenInvalid", () => {
+      expect(
+        classify(
+          apiException({
+            httpStatusCode: 401,
+            code: 190,
+            type: "OAuthException",
+          }),
+        ),
+      ).toBe("tokenInvalid")
+    })
+
+    it.each([10, 200])("permission code %i is graphPermission", (code) => {
+      expect(classify(apiException({ httpStatusCode: 403, code }))).toBe(
         "graphPermission",
       )
     })
 
-    it("classifies a Graph code in the 200-series permission range as graphPermission", () => {
-      const error = apiException({ httpStatusCode: 403, code: 200 })
-      expect(instagramContactScanAdapter.classifyError(error)).toBe(
-        "graphPermission",
+    it.each([
+      4, 17, 613,
+    ])("Graph code %i is rateLimited on both providers", (code) => {
+      const fields = { httpStatusCode: 400, code }
+      expect(classify(apiException(fields), nativeContext)).toBe("rateLimited")
+      expect(classify(facebookApiException(fields), facebookContext)).toBe(
+        "rateLimited",
       )
     })
 
-    it("classifies Graph code 4 (app-level rate limit) as retryable", () => {
-      const error = apiException({ httpStatusCode: 400, code: 4 })
-      expect(instagramContactScanAdapter.classifyError(error)).toBe("retryable")
+    it("code 80002 is rateLimited on both providers (reason only, so sends keep their category)", () => {
+      const fields = { httpStatusCode: 400, code: 80_002 }
+      expect(classify(apiException(fields), nativeContext)).toBe("rateLimited")
+      expect(classify(facebookApiException(fields), facebookContext)).toBe(
+        "rateLimited",
+      )
     })
 
-    it("classifies Graph code 613 (custom rate limit) as retryable", () => {
-      const error = apiException({ httpStatusCode: 400, code: 613 })
-      expect(instagramContactScanAdapter.classifyError(error)).toBe("retryable")
+    it.each([
+      32, 80_001,
+    ])("code %i is rateLimited only for Instagram via Facebook", (code) => {
+      const fields = { httpStatusCode: 400, code }
+      expect(classify(facebookApiException(fields), facebookContext)).toBe(
+        "rateLimited",
+      )
+      expect(classify(apiException(fields), nativeContext)).not.toBe(
+        "rateLimited",
+      )
     })
 
-    it("classifies an unrecognized InstagramAPIException as unknown", () => {
-      const error = apiException({ httpStatusCode: 400, code: 999 })
-      expect(instagramContactScanAdapter.classifyError(error)).toBe("unknown")
-    })
-
-    it("classifies a plain non-API error as unknown", () => {
-      expect(instagramContactScanAdapter.classifyError(new Error("boom"))).toBe(
+    it("an unrecognized code is unknown, and a plain error is unknown", () => {
+      expect(classify(apiException({ httpStatusCode: 400, code: 999 }))).toBe(
         "unknown",
       )
+      expect(classify(new Error("boom"))).toBe("unknown")
+    })
+  })
+
+  describe("readBackoff", () => {
+    it("reads Meta's wait (minutes) from the failed call's response headers", () => {
+      const exception = new InstagramAPIException(
+        "limit",
+        429,
+        4,
+        undefined,
+        undefined,
+        {
+          response: {
+            headers: new Headers({
+              "x-business-use-case-usage": JSON.stringify({
+                "1": [
+                  {
+                    call_count: 96,
+                    total_cputime: 10,
+                    total_time: 10,
+                    estimated_time_to_regain_access: 4,
+                  },
+                ],
+              }),
+            }),
+          },
+        },
+      )
+
+      expect(
+        instagramContactScanAdapter.readBackoff({
+          error: exception,
+          context: nativeContext,
+        }),
+      ).toEqual({ usagePercent: 96, retryAfterMs: 240_000 })
+    })
+
+    it("returns null without a usage header", () => {
+      expect(
+        instagramContactScanAdapter.readBackoff({
+          error: new Error("boom"),
+          context: nativeContext,
+        }),
+      ).toBeNull()
     })
   })
 })

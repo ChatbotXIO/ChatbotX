@@ -11,23 +11,27 @@ import {
 } from "@chatbotx.io/ui/components/ui/dialog"
 import { useTranslations } from "next-intl"
 import { type ReactElement, useState } from "react"
-import { CreateContactForm } from "./create-contact-form"
+import { CreateContactForm, type CreatedContact } from "./create-contact-form"
 import { useInvalidateContacts } from "./hooks/use-contacts"
 
 export function CreateContactDialog({
   workspaceId,
   trigger,
+  onCreated,
 }: {
   workspaceId: string
   trigger?: ReactElement
+  /** Called with the new contact once it is created (optional). */
+  onCreated?: (contact: CreatedContact) => void
 }) {
   const t = useTranslations()
   const invalidateContacts = useInvalidateContacts()
 
   const [open, setOpen] = useState(false)
-  const onSubmmited = () => {
+  const onSubmmited = (contact: CreatedContact) => {
     setOpen(false)
     invalidateContacts()
+    onCreated?.(contact)
   }
 
   return (

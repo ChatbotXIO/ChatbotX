@@ -29,6 +29,11 @@ import { MoreHorizontalIcon, PencilIcon, Trash2Icon } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import React, { use, useMemo } from "react"
+import { LockBadge } from "@/features/templates/components/lock-badge"
+import {
+  TemplateLockedList,
+  UndeletableGuard,
+} from "@/features/templates/components/lock-context"
 import { stripQrPrefix } from "./constants"
 import { DeleteQrCodesDialog } from "./delete-qr-codes"
 import { QrCodesTableToolbarActions } from "./qr-codes-table-toolbar-actions"
@@ -88,7 +93,12 @@ export function QrCodesTable({ workspaceId, promises }: QrCodesTableProps) {
           return (
             <Tooltip>
               <TooltipTrigger
-                render={<div className="max-w-50 truncate">{displayName}</div>}
+                render={
+                  <div className="flex max-w-50 items-center">
+                    <span className="truncate">{displayName}</span>
+                    <LockBadge resourceId={row.original.id} />
+                  </div>
+                }
               />
               <TooltipContent>
                 <p>{displayName}</p>
@@ -170,13 +180,18 @@ export function QrCodesTable({ workspaceId, promises }: QrCodesTableProps) {
                 {t("actions.edit")}
               </DropdownMenuItem>
 
-              <DropdownMenuItem
-                onClick={() => setRowAction({ row, variant: "delete" })}
-                variant="destructive"
-              >
-                <Trash2Icon />
-                {t("actions.delete")}
-              </DropdownMenuItem>
+              <UndeletableGuard resourceId={row.original.id}>
+                {(disabled) => (
+                  <DropdownMenuItem
+                    disabled={disabled}
+                    onClick={() => setRowAction({ row, variant: "delete" })}
+                    variant="destructive"
+                  >
+                    <Trash2Icon />
+                    {t("actions.delete")}
+                  </DropdownMenuItem>
+                )}
+              </UndeletableGuard>
             </DropdownMenuContent>
           </DropdownMenu>
         ),
@@ -207,22 +222,28 @@ export function QrCodesTable({ workspaceId, promises }: QrCodesTableProps) {
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <DataTable table={table}>
-          <DataTableToolbar table={table}>
-            <QrCodesTableToolbarActions
-              table={table}
-              workspaceId={workspaceId}
-            />
-          </DataTableToolbar>
-        </DataTable>
-
-        <DeleteQrCodesDialog
-          onOpenChange={() => setRowAction(null)}
-          open={rowAction?.variant === "delete"}
-          qrCodes={rowAction?.row.original ? [rowAction?.row.original] : []}
-          showTrigger={false}
+        <TemplateLockedList
+          resourceKind="reflink"
+          rows={data}
           workspaceId={workspaceId}
-        />
+        >
+          <DataTable table={table}>
+            <DataTableToolbar table={table}>
+              <QrCodesTableToolbarActions
+                table={table}
+                workspaceId={workspaceId}
+              />
+            </DataTableToolbar>
+          </DataTable>
+
+          <DeleteQrCodesDialog
+            onOpenChange={() => setRowAction(null)}
+            open={rowAction?.variant === "delete"}
+            qrCodes={rowAction?.row.original ? [rowAction?.row.original] : []}
+            showTrigger={false}
+            workspaceId={workspaceId}
+          />
+        </TemplateLockedList>
       </CardContent>
     </Card>
   )

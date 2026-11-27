@@ -65,7 +65,6 @@ test("reloads the guest session after an expired access token fails a reconnect"
       <WebchatRealtime
         accessToken="access-token-1"
         guestConversationId="workspace-1:guest-1"
-        parentOrigin="https://example.com"
         webchatId="webchat-1"
         workspaceId="workspace-1"
       />,
@@ -142,4 +141,56 @@ test("keeps guest conversation ids unescaped in the proxied realtime route", asy
   act(() => {
     root.unmount()
   })
+})
+
+test("uses the URL parent origin when minting a realtime token", async () => {
+  const fetchMock = vi
+    .fn()
+    .mockResolvedValue(Response.json({ token: "realtime-token" }))
+  vi.stubGlobal("fetch", fetchMock)
+  window.history.replaceState(
+    null,
+    "",
+    "/webchat?parentOrigin=https%3A%2F%2Fwww.example.com",
+  )
+
+  const container = document.createElement("div")
+  const root: Root = createRoot(container)
+  act(() => {
+    root.render(
+      <WebchatRealtime
+        accessToken="access-token-1"
+        guestConversationId="workspace-1:guest-1"
+        webchatId="webchat-1"
+        workspaceId="workspace-1"
+      />,
+    )
+  })
+
+  const options = capturedSocketOptions.current
+  expect(options).not.toBeNull()
+  if (!options) {
+    throw new Error("Realtime socket options were not captured")
+  }
+
+  await options.getUrl()
+
+  const request = fetchMock.mock.calls[0]?.[1]
+  if (
+    !request ||
+    typeof request !== "object" ||
+    !("body" in request) ||
+    typeof request.body !== "string"
+  ) {
+    throw new Error("Realtime token request body was not captured")
+  }
+
+  expect(JSON.parse(request.body)).toMatchObject({
+    parentOrigin: "https://www.example.com",
+  })
+
+  act(() => {
+    root.unmount()
+  })
+  window.history.replaceState(null, "", "/")
 })

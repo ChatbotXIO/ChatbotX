@@ -1,12 +1,19 @@
 import { createId, zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
+import { flowValidationCodes } from "../validation-codes"
 import { baseStepSchema } from "./base"
 import {
   buttonStepDefaultFn,
   buttonStepSchema,
   refineNoOpenMiniAppButtons,
+  refineReplyOnlyButtons,
 } from "./button"
+import {
+  createEmptyPaymentRequest,
+  paymentRequestSchema,
+} from "./payment-request"
 import { stepTypes } from "./step-action"
+import { resolveWaPaymentRequestMethod } from "./wa-template-payment-request-rules"
 import { whatsappFlowFieldMappingSchema } from "./whatsapp-flow"
 
 export const buttonSubTypes = z.enum([
@@ -16,78 +23,113 @@ export const buttonSubTypes = z.enum([
   "flow",
   "catalog",
   "mpm",
+  "payment_request",
 ])
 export type ButtonSubType = z.infer<typeof buttonSubTypes>
 
-export const waTemplateButtonParamSchema = z.object({
-  sub_type: buttonSubTypes
-    .optional()
-    .describe(
-      "Button kind: url, quick_reply, copy_code, flow, catalog or mpm.",
-    ),
-  index: z
-    .number()
-    .optional()
-    .describe("Zero-based position of the button in the template."),
-  text: z
-    .string()
-    .optional()
-    .describe("Variable value for a `url` button (the dynamic URL suffix)."),
-  coupon_code: z
-    .string()
-    .optional()
-    .describe("Coupon code for a `copy_code` button."),
-  payload: z
-    .string()
-    .optional()
-    .describe("Payload returned when a `quick_reply` button is tapped."),
-  flow_token: z
-    .string()
-    .optional()
-    .describe(
-      "Token that identifies the WhatsApp Flow session (`flow` button).",
-    ),
-  flow_action_data: z
-    .record(z.string(), z.unknown())
-    .optional()
-    .describe("Initial data passed to the first screen of the WhatsApp Flow."),
-  flowSourceId: z
-    .string()
-    .optional()
-    .describe("Meta id of the WhatsApp Flow, from `whatsappFlows.list`."),
-  navigateScreenId: z
-    .string()
-    .optional()
-    .describe("Screen id the Flow opens on, from `whatsappFlows.getScreens`."),
-  fieldMappings: z
-    .array(whatsappFlowFieldMappingSchema)
-    .optional()
-    .describe("Maps Flow response fields to custom fields."),
-  thumbnail_product_retailer_id: z
-    .string()
-    .optional()
-    .describe(
-      "Retailer id of the product shown as thumbnail (`catalog` button).",
-    ),
-  sections: z
-    .array(
-      z.object({
-        title: z.string().optional().describe("Section title (`mpm` button)."),
-        product_items: z
-          .array(
-            z.object({
-              product_retailer_id: z
-                .string()
-                .describe("Retailer id of a catalog product."),
-            }),
-          )
-          .optional()
-          .describe("Products listed in the section."),
-      }),
-    )
-    .optional()
-    .describe("Product sections of a multi-product (`mpm`) button."),
-})
+export const waTemplateButtonParamSchema = z
+  .object({
+    sub_type: buttonSubTypes
+      .optional()
+      .describe(
+        "Button kind: url, quick_reply, copy_code, flow, catalog, mpm or payment_request.",
+      ),
+    index: z
+      .number()
+      .optional()
+      .describe("Zero-based position of the button in the template."),
+    text: z
+      .string()
+      .optional()
+      .describe("Variable value for a `url` button (the dynamic URL suffix)."),
+    coupon_code: z
+      .string()
+      .optional()
+      .describe("Coupon code for a `copy_code` button."),
+    payload: z
+      .string()
+      .optional()
+      .describe("Payload returned when a `quick_reply` button is tapped."),
+    flow_token: z
+      .string()
+      .optional()
+      .describe(
+        "Token that identifies the WhatsApp Flow session (`flow` button).",
+      ),
+    flow_action_data: z
+      .record(z.string(), z.unknown())
+      .optional()
+      .describe(
+        "Initial data passed to the first screen of the WhatsApp Flow.",
+      ),
+    flowSourceId: z
+      .string()
+      .optional()
+      .describe("Meta id of the WhatsApp Flow, from `whatsappFlows.list`."),
+    navigateScreenId: z
+      .string()
+      .optional()
+      .describe(
+        "Screen id the Flow opens on, from `whatsappFlows.getScreens`.",
+      ),
+    fieldMappings: z
+      .array(whatsappFlowFieldMappingSchema)
+      .optional()
+      .describe("Maps Flow response fields to custom fields."),
+    thumbnail_product_retailer_id: z
+      .string()
+      .optional()
+      .describe(
+        "Retailer id of the product shown as thumbnail (`catalog` button).",
+      ),
+    sections: z
+      .array(
+        z.object({
+          title: z
+            .string()
+            .optional()
+            .describe("Section title (`mpm` button)."),
+          product_items: z
+            .array(
+              z.object({
+                product_retailer_id: z
+                  .string()
+                  .describe("Retailer id of a catalog product."),
+              }),
+            )
+            .optional()
+            .describe("Products listed in the section."),
+        }),
+      )
+      .optional()
+      .describe("Product sections of a multi-product (`mpm`) button."),
+    payment_request: paymentRequestSchema
+      .optional()
+      .describe(
+        "Payment data of a `payment_request` button. `method` must match the template button (Pix, Boleto, payment link or saved card).",
+      ),
+  })
+  .superRefine((button, ctx) => {
+    // A payment request belongs to a `payment_request` button and nowhere
+    // else, and such a button is useless without its payment data.
+    const isPaymentButton = button.sub_type === "payment_request"
+    if (isPaymentButton !== (button.payment_request !== undefined)) {
+      ctx.addIssue({
+        code: "custom",
+        message: flowValidationCodes.waTemplatePaymentRequestMisplaced,
+        path: ["payment_request"],
+      })
+    }
+    // The send must pair each request with a template button by its index;
+    // a positional fallback could attach it to a different button.
+    if (isPaymentButton && button.index === undefined) {
+      ctx.addIssue({
+        code: "custom",
+        message: flowValidationCodes.waTemplatePaymentRequestMisplaced,
+        path: ["index"],
+      })
+    }
+  })
 export type WaTemplateButtonParam = z.infer<typeof waTemplateButtonParamSchema>
 
 /**
@@ -104,43 +146,54 @@ const waTemplateButtonParamListSchema = z
     ),
   )
 
-export const waTemplateCarouselCardSchema = z.object({
-  card_index: z
-    .number()
-    .describe("Zero-based position of the card in the carousel."),
-  header: z
-    .array(
-      z.object({
-        type: z.enum(["image", "video"]).describe("Card media kind."),
-        image: z
-          .object({
-            link: z.string().describe("Public https URL of the card image."),
-          })
-          .optional()
-          .describe("Image for an `image` card header."),
-        video: z
-          .object({
-            link: z.string().describe("Public https URL of the card video."),
-          })
-          .optional()
-          .describe("Video for a `video` card header."),
-      }),
-    )
-    .optional()
-    .describe("Card header media."),
-  body: z
-    .array(
-      z.object({
-        type: z.literal("text").optional().describe("Always `text`."),
-        text: z.string().describe("Value that replaces the card variable."),
-      }),
-    )
-    .optional()
-    .describe("Card body variables in order."),
-  button: waTemplateButtonParamListSchema
-    .optional()
-    .describe("Parameters for the card's dynamic buttons, by `index`."),
-})
+export const waTemplateCarouselCardSchema = z
+  .object({
+    card_index: z
+      .number()
+      .describe("Zero-based position of the card in the carousel."),
+    header: z
+      .array(
+        z.object({
+          type: z.enum(["image", "video"]).describe("Card media kind."),
+          image: z
+            .object({
+              link: z.string().describe("Public https URL of the card image."),
+            })
+            .optional()
+            .describe("Image for an `image` card header."),
+          video: z
+            .object({
+              link: z.string().describe("Public https URL of the card video."),
+            })
+            .optional()
+            .describe("Video for a `video` card header."),
+        }),
+      )
+      .optional()
+      .describe("Card header media."),
+    body: z
+      .array(
+        z.object({
+          type: z.literal("text").optional().describe("Always `text`."),
+          text: z.string().describe("Value that replaces the card variable."),
+        }),
+      )
+      .optional()
+      .describe("Card body variables in order."),
+    button: waTemplateButtonParamListSchema
+      .optional()
+      .describe("Parameters for the card's dynamic buttons, by `index`."),
+  })
+  .superRefine((card, ctx) => {
+    // Meta documents payment request buttons for default templates only.
+    if (card.button?.some((button) => button.payment_request !== undefined)) {
+      ctx.addIssue({
+        code: "custom",
+        message: flowValidationCodes.waTemplatePaymentRequestMisplaced,
+        path: ["button"],
+      })
+    }
+  })
 export type WaTemplateCarouselCard = z.infer<
   typeof waTemplateCarouselCardSchema
 >
@@ -253,6 +306,8 @@ export type TemplateComponentButton = {
   flow_id?: string | number
   flow_action?: string
   navigate_screen?: string
+  // Present on `PAYMENT_REQUEST` buttons; only the discriminant is read.
+  payment_setting?: { type?: string }
 }
 
 /**
@@ -331,8 +386,14 @@ function extractTextParams(text: string): TemplateTextParam[] {
   })
 }
 
+type ExtractButtonParamsOptions = {
+  /** Payment request buttons are supported on top-level buttons only. */
+  allowPaymentRequest: boolean
+}
+
 function extractButtonParams(
   buttons: TemplateComponentButton[],
+  { allowPaymentRequest }: ExtractButtonParamsOptions,
 ): WaTemplateButtonParam[] {
   const buttonParams: WaTemplateButtonParam[] = []
 
@@ -371,6 +432,15 @@ function extractButtonParams(
         index: idx,
         sections: [],
       })
+    } else if (buttonType === "PAYMENT_REQUEST" && allowPaymentRequest) {
+      const method = resolveWaPaymentRequestMethod(button)
+      if (method !== null) {
+        buttonParams.push({
+          sub_type: "payment_request",
+          index: idx,
+          payment_request: createEmptyPaymentRequest(method),
+        })
+      }
     }
   }
 
@@ -405,7 +475,9 @@ function extractCarouselParams(
           }))
         }
       } else if (comp.type === "BUTTONS" && comp.buttons) {
-        cardParams.button = extractButtonParams(comp.buttons)
+        cardParams.button = extractButtonParams(comp.buttons, {
+          allowPaymentRequest: false,
+        })
       }
     }
 
@@ -461,7 +533,9 @@ export function extractTemplateParams(
         params.body = bodyParams
       }
     } else if (component.type === "BUTTONS" && component.buttons) {
-      const buttonParams = extractButtonParams(component.buttons)
+      const buttonParams = extractButtonParams(component.buttons, {
+        allowPaymentRequest: true,
+      })
       if (buttonParams.length > 0) {
         params.button = buttonParams
       }
@@ -480,6 +554,25 @@ export function extractTemplateParams(
   return params
 }
 
+/** Delivery statuses a `sendWaTemplateMessage` step can branch on. */
+export const WA_TEMPLATE_STATUS_BRANCHES = ["delivered", "failed"] as const
+
+export type WaTemplateStatusBranch =
+  (typeof WA_TEMPLATE_STATUS_BRANCHES)[number]
+
+/**
+ * Labels of the leading status branches of a `sendWaTemplateMessage` step. The
+ * message-status handler routes a delivery status to the step button with the
+ * matching label, so the editor defaults and the handler share these.
+ */
+export const WA_TEMPLATE_STATUS_BUTTON_LABELS: Record<
+  WaTemplateStatusBranch,
+  string
+> = {
+  delivered: "Delivered",
+  failed: "Failed",
+}
+
 export const sendWaTemplateMessageStepSchema = baseStepSchema.extend({
   stepType: z.literal(stepTypes.enum.sendWaTemplateMessage),
   template: z.object({
@@ -496,6 +589,7 @@ export const sendWaTemplateMessageStepSchema = baseStepSchema.extend({
   buttons: z
     .array(buttonStepSchema)
     .superRefine(refineNoOpenMiniAppButtons)
+    .superRefine(refineReplyOnlyButtons)
     .default([])
     // Buttons are kept as-is: the leading pair are the delivery status
     // branches, and any tail buttons are template quick replies whose
@@ -504,8 +598,12 @@ export const sendWaTemplateMessageStepSchema = baseStepSchema.extend({
     .transform((buttons) => {
       if (buttons.length === 0) {
         return [
-          buttonStepDefaultFn({ label: "Delivered" }),
-          buttonStepDefaultFn({ label: "Failed" }),
+          buttonStepDefaultFn({
+            label: WA_TEMPLATE_STATUS_BUTTON_LABELS.delivered,
+          }),
+          buttonStepDefaultFn({
+            label: WA_TEMPLATE_STATUS_BUTTON_LABELS.failed,
+          }),
         ]
       }
 
@@ -531,8 +629,10 @@ export const sendWaTemplateMessageStepDefaultFn = (
       ...templateProps,
     },
     buttons: [
-      buttonStepDefaultFn({ label: "Delivered" }),
-      buttonStepDefaultFn({ label: "Failed" }),
+      buttonStepDefaultFn({
+        label: WA_TEMPLATE_STATUS_BUTTON_LABELS.delivered,
+      }),
+      buttonStepDefaultFn({ label: WA_TEMPLATE_STATUS_BUTTON_LABELS.failed }),
     ],
     ...restProps,
     id: createId(),

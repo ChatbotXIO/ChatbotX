@@ -3,6 +3,7 @@ import "server-only"
 import {
   integrationWhatsappService,
   platformCredentialService,
+  userService,
   type WhatsappSignupSessionAuthorized,
   whatsappBusinessAccountService,
   workspaceMemberService,
@@ -29,6 +30,7 @@ import { toConnectActionFailure } from "@/features/channel-connect/lib/connect-a
 import { logger } from "@/lib/log"
 import { resolvePlatformOwnerId } from "@/lib/platform-credential-owner"
 import { resolveProviderOriginForCredential } from "@/lib/provider-origin"
+import { resolveRequestTenantId } from "@/lib/tenant/request-tenant"
 import {
   checkWorkspaceOwnerAccess,
   workspaceAccessDenialException,
@@ -102,7 +104,7 @@ type ResolvedConnectOwner = {
  * itself) BEFORE any credential lookup or provider call.
  *
  * Session path: the client sends only `{signupSessionId, phoneNumberId,
- * connectExisting, transferPhoneNumber}` (enforced by the schema) — never a
+ * connectExisting}` (enforced by the schema) — never a
  * `workspaceId`, so the session row is the only source of both the owner and
  * the workspace. `findActiveSignupSessionForUser` is scoped by `id` +
  * `userId` only (no `ownerId` filter — the row hasn't been verified as this
@@ -495,6 +497,19 @@ async function persistWhatsappNumber({
   )
   const phoneName = phoneNumber.verified_name.trim() || displayPhoneNumber
 
+  // One backup slot per user and provider, newer wins: parallel per-number
+  // connects of one signup overwrite each other and the last auth survives.
+  // Recorded before `integrationWhatsappService.connectPhoneNumber` so a
+  // failed connect keeps the backup; a null workspace (first-ever connect) has
+  // no id yet.
+  await userService.recordConnectionAuthorization({
+    userId,
+    provider: "whatsapp",
+    auth,
+    phase: "authorizationObtained",
+    workspaceId: workspaceId ?? null,
+  })
+
   const { workspaceId: connectedWorkspaceId, integrationRow } =
     await integrationWhatsappService.connectPhoneNumber({
       actorUserId: userId,
@@ -512,6 +527,7 @@ async function persistWhatsappNumber({
       isCoexist,
       platformType,
       signupSession: prepared.signupSession,
+      hostTenantId: await resolveRequestTenantId(),
     })
 
   return {

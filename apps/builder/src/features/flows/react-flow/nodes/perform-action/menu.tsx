@@ -4,6 +4,7 @@ import {
   SiGooglegemini,
   SiMake,
   SiMessenger,
+  SiMeta,
   SiN8n,
 } from "@icons-pack/react-simple-icons"
 import {
@@ -20,6 +21,7 @@ import {
   CloudDownloadIcon,
   CodeIcon,
   CogIcon,
+  EllipsisIcon,
   GlobeIcon,
   KeyboardIcon,
   KeyboardOffIcon,
@@ -28,6 +30,7 @@ import {
   LayersPlus,
   MailIcon,
   MailOpenIcon,
+  MapPinIcon,
   MegaphoneIcon,
   MessageCircleMoreIcon,
   MessageCirclePlusIcon,
@@ -39,6 +42,7 @@ import {
   SaveOffIcon,
   SheetIcon,
   ShuffleIcon,
+  SquareKanbanIcon,
   StarIcon,
   StarOffIcon,
   TagIcon,
@@ -143,6 +147,49 @@ const PROVIDER_CONFIGS: ProviderConfig[] = [
       {
         stepType: stepTypes.enum.aiTextToSpeech,
         getLabel: stepWithAiName("fields.flows.aiTextToSpeech"),
+      },
+      {
+        stepType: stepTypes.enum.aiDeleteMessageHistory,
+        getLabel: stepWithAiName("fields.flows.aiDeleteMessageHistory"),
+      },
+    ],
+  },
+  {
+    label: "Muse",
+    icon: SiMeta,
+    providerKey: "muse",
+    steps: [
+      {
+        stepType: stepTypes.enum.aiGenerateText,
+        getLabel: stepWithName("flows.aiGenerateText.label"),
+      },
+      {
+        stepType: stepTypes.enum.aiGenerateImage,
+        getLabel: stepWithName("flows.aiGenerateImage.label"),
+      },
+      {
+        stepType: stepTypes.enum.aiEditImage,
+        getLabel: stepWithName("flows.aiEditImage.label"),
+      },
+      {
+        stepType: stepTypes.enum.aiSegmentImage,
+        getLabel: stepWithName("flows.aiSegmentImage.label"),
+      },
+      {
+        stepType: stepTypes.enum.aiAnalyzeImage,
+        getLabel: stepWithName("flows.aiAnalyzeImage.label"),
+      },
+      {
+        stepType: stepTypes.enum.aiGenerateTextAgent,
+        getLabel: stepWithAiName("fields.flows.aiGenerateTextAgent"),
+      },
+      {
+        stepType: stepTypes.enum.aiExtractData,
+        getLabel: stepWithName("flows.aiExtractData.label"),
+      },
+      {
+        stepType: stepTypes.enum.aiSpeechToText,
+        getLabel: stepWithAiName("fields.flows.aiSpeechToText"),
       },
       {
         stepType: stepTypes.enum.aiDeleteMessageHistory,
@@ -288,6 +335,11 @@ const PROVIDER_CONFIGS: ProviderConfig[] = [
 ]
 
 function buildProviderStepProps(providerKey: string, stepType: StepType) {
+  // SAM always runs on the Muse integration; the step has no provider field.
+  if (stepType === stepTypes.enum.aiSegmentImage) {
+    return
+  }
+
   if (providerKey !== "openaiCompatible") {
     return { provider: providerKey }
   }
@@ -573,6 +625,11 @@ export const performActionMenus = (t: TranslationFn): MenuItem[] => [
         stepType: stepTypes.enum.changeGamificationScore,
       },
       {
+        label: t("flows.actions.pipeline"),
+        icon: SquareKanbanIcon,
+        stepType: stepTypes.enum.pipeline,
+      },
+      {
         label: t("flows.actions.getDataFromJson"),
         icon: CodeIcon,
         stepType: stepTypes.enum.getDataFromJson,
@@ -670,6 +727,18 @@ export const performActionMenus = (t: TranslationFn): MenuItem[] => [
         label: t("flows.actions.triggerN8n"),
         icon: SiN8n,
         stepType: stepTypes.enum.triggerN8n,
+      },
+    ],
+  },
+  {
+    label: t("flows.actions.moreOptions"),
+    icon: EllipsisIcon,
+    stepType: null,
+    children: [
+      {
+        label: t("flows.actions.findPlacesNearMe"),
+        icon: MapPinIcon,
+        stepType: stepTypes.enum.findPlacesNearMe,
       },
     ],
   },

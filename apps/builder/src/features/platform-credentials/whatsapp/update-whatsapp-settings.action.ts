@@ -7,7 +7,7 @@ import {
   whatsappCredentialUpdateSchema,
 } from "@chatbotx.io/database/partials"
 import { getTranslations } from "next-intl/server"
-import { ensureWhatsappCallsWebhookSubscribed } from "@/features/integration-whatsapp/libs/ensure-calls-webhook-subscribed"
+import { ensureWhatsappAppWebhookFields } from "@/features/integration-whatsapp/libs/ensure-app-webhook-fields"
 import { logger } from "@/lib/log"
 import { authActionClient } from "@/lib/safe-action"
 import { credentialScopeSchema, resolveCredentialScopedUserId } from "../scope"
@@ -24,7 +24,7 @@ async function ensureCallsWebhookSubscribed(
   const t = await getTranslations()
 
   try {
-    const result = await ensureWhatsappCallsWebhookSubscribed({
+    const result = await ensureWhatsappAppWebhookFields({
       appId: config.clientId,
       appSecret: config.clientSecret,
       verifyToken: config.verifyToken,

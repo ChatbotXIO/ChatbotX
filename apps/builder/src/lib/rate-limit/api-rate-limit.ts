@@ -27,6 +27,13 @@ export type ApiRateLimitScope =
   | "inbound-webhook-rate-limit"
   | "guest-realtime-mint-workspace-rate-limit"
   | "invitation-start-rate-limit"
+  | "ai-file-search-rate-limit"
+  | "ai-file-reindex-rate-limit"
+  | "ai-file-create-url-rate-limit"
+  | "mcp-client-registration"
+  | "mobile-user-rate-limit"
+  | "mobile-token-password-ip-rate-limit"
+  | "mobile-token-password-account-rate-limit"
 
 type ApiRateLimitInput = {
   scope: ApiRateLimitScope

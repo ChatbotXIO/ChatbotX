@@ -4,6 +4,7 @@ import type { ThreadControlStepSchema } from "@chatbotx.io/flow-config"
 import { Card, CardContent } from "@chatbotx.io/ui/components/ui/card"
 import { ArrowRightLeftIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
+import { THREAD_CONTROL_ROLE_LABEL_KEYS } from "@/features/conversations/utils/thread-control"
 import { BaseStateViewer } from "../../states/viewer"
 import { BaseStepViewer } from "../base/viewer"
 import { THREAD_CONTROL_STEP_ACTION_KEYS } from "./labels"
@@ -26,6 +27,11 @@ const ThreadControlStepViewer = ({
           <span className="text-muted-foreground text-xs">
             {t(THREAD_CONTROL_STEP_ACTION_KEYS[data.action])}
           </span>
+          {data.action === "pass" && data.targetRole && (
+            <span className="text-muted-foreground text-xs">
+              {t(THREAD_CONTROL_ROLE_LABEL_KEYS[data.targetRole])}
+            </span>
+          )}
         </div>
         {/* React Flow keeps each state's connector on physical Position.Right. */}
         <div className="my-2 mr-3 flex flex-col gap-1">

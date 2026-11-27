@@ -3,6 +3,7 @@
 import { Button } from "@chatbotx.io/ui/components/ui/button"
 import { Form } from "@chatbotx.io/ui/components/ui/form"
 import { Textarea } from "@chatbotx.io/ui/components/ui/textarea"
+import { useIsTouchDevice } from "@chatbotx.io/ui/hooks/use-touch-device"
 import { createId } from "@chatbotx.io/utils"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
@@ -11,6 +12,7 @@ import { useTranslations } from "next-intl"
 import { type KeyboardEvent, useEffect, useMemo, useRef } from "react"
 import { Controller, useWatch } from "react-hook-form"
 import { toast } from "sonner"
+import { shouldSendOnEnter } from "@/lib/keyboard/should-send-on-enter"
 import { createWebchatMessageAction } from "../messages/actions/create-webchat-message.action"
 import EmojiPicker from "../messages/components/emoji-picker"
 import { FileUploadPreview } from "../messages/components/file-upload"
@@ -18,28 +20,28 @@ import { flattenValidationErrors } from "../messages/lib/validation-errors"
 import { createWebchatMessageRequest } from "../messages/schema/mutation"
 import { getWebchatProfileFields } from "./browser-profile-fields"
 import WebchatMessageMenu from "./components/webchat-message-menu"
+import { getClientEmbeddingOrigin } from "./lib/authorized-domain"
 import { useGuestSessionStore } from "./providers/store/guest-session-provider"
 
 type WebchatMessageInputProps = {
   workspaceId: string
   webchatId: string
   referral?: string | undefined
-  parentOrigin?: string | null
   accessToken?: string | null
 }
 
 export const WebchatMessageInput = (props: WebchatMessageInputProps) => {
+  const { workspaceId, webchatId, referral = "", accessToken } = props
   const {
-    workspaceId,
-    webchatId,
-    referral = "",
-    parentOrigin,
-    accessToken,
-  } = props
-  const { sendMessage, guestConversationId, appendMessage, markMessageFailed } =
-    useGuestSessionStore((state) => state)
+    sendMessage,
+    guestConversationId,
+    appendMessage,
+    markMessageFailed,
+    showOptimisticTyping,
+  } = useGuestSessionStore((state) => state)
 
   const t = useTranslations()
+  const isTouchDevice = useIsTouchDevice()
 
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const defaultValues = useMemo(
@@ -52,16 +54,8 @@ export const WebchatMessageInput = (props: WebchatMessageInputProps) => {
       ref: referral,
       ...getWebchatProfileFields(),
       accessToken: accessToken ?? undefined,
-      parentOrigin: parentOrigin ?? undefined,
     }),
-    [
-      workspaceId,
-      webchatId,
-      guestConversationId,
-      referral,
-      parentOrigin,
-      accessToken,
-    ],
+    [workspaceId, webchatId, guestConversationId, referral, accessToken],
   )
 
   const {
@@ -129,6 +123,7 @@ export const WebchatMessageInput = (props: WebchatMessageInputProps) => {
     const values = {
       ...form.getValues(),
       clientId,
+      parentOrigin: getClientEmbeddingOrigin() ?? undefined,
     }
     const parsed = createWebchatMessageRequest.safeParse(values)
     if (!parsed.success) {
@@ -139,6 +134,7 @@ export const WebchatMessageInput = (props: WebchatMessageInputProps) => {
     if ("text" in parsed.data && parsed.data.text) {
       sendMessage(parsed.data.text, clientId)
     }
+    showOptimisticTyping()
     setValue("text", "")
     textareaRef.current?.focus()
 
@@ -181,14 +177,12 @@ export const WebchatMessageInput = (props: WebchatMessageInputProps) => {
   }
 
   const onKeyDown = async (e: KeyboardEvent) => {
-    if (files.length > 0 || e.nativeEvent.isComposing || e.key === "Process") {
+    if (files.length > 0 || !shouldSendOnEnter(e, isTouchDevice)) {
       return
     }
 
-    if (e.key === "Enter" && e.shiftKey === false) {
-      e.preventDefault()
-      await submitMessage()
-    }
+    e.preventDefault()
+    await submitMessage()
   }
 
   return (
@@ -211,6 +205,7 @@ export const WebchatMessageInput = (props: WebchatMessageInputProps) => {
                     autoComplete="off"
                     className="h-16 resize-none border-0 px-1.5 py-0 shadow-none focus:ring-0 focus-visible:ring-0"
                     disabled={files.length > 0}
+                    enterKeyHint={isTouchDevice ? "enter" : "send"}
                     placeholder="Message..."
                     {...field}
                     onKeyDown={onKeyDown}
@@ -227,7 +222,6 @@ export const WebchatMessageInput = (props: WebchatMessageInputProps) => {
             <div className="flex-1">
               <WebchatMessageMenu
                 accessToken={accessToken}
-                parentOrigin={parentOrigin}
                 webchatId={webchatId}
                 workspaceId={workspaceId}
               />

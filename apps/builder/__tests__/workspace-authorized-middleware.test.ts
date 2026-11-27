@@ -34,6 +34,22 @@ vi.mock("@/lib/auth/auth", () => ({
   auth: { api: { getSession: vi.fn() } },
 }))
 
+const { hostTenantId } = vi.hoisted(() => ({
+  hostTenantId: { value: "root-tenant" },
+}))
+
+vi.mock("server-only", () => ({}))
+vi.mock("@/lib/tenant/request-tenant", () => ({
+  resolveRequestTenantId: async () => hostTenantId.value,
+  canOpenWorkspaceOnHost: (props: {
+    workspaceTenantId: string
+    hostTenantId: string
+    isSupportSession: boolean
+  }) =>
+    (props.isSupportSession && props.hostTenantId === "root-tenant") ||
+    props.workspaceTenantId === props.hostTenantId,
+}))
+
 vi.mock("@/lib/rate-limit/guest-rate-limit", () => ({
   getGuestClientIp: vi.fn().mockReturnValue("127.0.0.1"),
 }))
@@ -72,7 +88,7 @@ const callMiddleware = (method: string | undefined, path?: string) =>
   )
 
 const membership = {
-  workspace: { id: "ws-1", ownerId: "owner-1" },
+  workspace: { id: "ws-1", ownerId: "owner-1", tenantId: "root-tenant" },
 }
 
 beforeEach(() => {
@@ -80,6 +96,7 @@ beforeEach(() => {
   isWorkspaceScheduledForDeletion.mockReturnValue(false)
   getAccessState.mockResolvedValue({ blocked: false })
   isAtLimit.mockResolvedValue(false)
+  hostTenantId.value = "root-tenant"
   findMembership.mockResolvedValue(membership)
   resolveWorkspaceAccess.mockImplementation(
     ({ realMember }: { realMember: typeof membership | undefined }) =>
@@ -93,6 +110,39 @@ beforeEach(() => {
           : undefined,
       ),
   )
+})
+
+describe("workspaceAuthorizedMidddleware host scope", () => {
+  test("tenant host + root workspace → NOT_FOUND", async () => {
+    hostTenantId.value = "tenant-a"
+
+    await expect(callMiddleware("GET")).rejects.toMatchObject({
+      code: "NOT_FOUND",
+    })
+    expect(next).not.toHaveBeenCalled()
+  })
+
+  test("root host + tenant workspace → NOT_FOUND", async () => {
+    findMembership.mockResolvedValue({
+      workspace: { id: "ws-1", ownerId: "owner-1", tenantId: "tenant-a" },
+    })
+
+    await expect(callMiddleware("GET")).rejects.toMatchObject({
+      code: "NOT_FOUND",
+    })
+  })
+
+  test("root host + tenant workspace + support session → allowed", async () => {
+    resolveWorkspaceAccess.mockResolvedValue({
+      workspace: { id: "ws-1", ownerId: "owner-1", tenantId: "tenant-a" },
+      member: {},
+      isSupportSession: true,
+    })
+
+    await callMiddleware("GET")
+
+    expect(next).toHaveBeenCalled()
+  })
 })
 
 describe("workspaceAuthorizedMidddleware", () => {
@@ -158,6 +208,7 @@ describe("workspaceAuthorizedMidddleware", () => {
         context: {
           workspace: membership.workspace,
           workspaceMember: membership,
+          isSupportSession: false,
         },
       }),
     )

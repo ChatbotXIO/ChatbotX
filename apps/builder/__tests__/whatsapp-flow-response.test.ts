@@ -115,9 +115,162 @@ describe("buildWhatsappFlowResponseFields", () => {
         label: "Photos",
         kind: "files",
         value: [
-          { fileName: "IMG_1.jpg", mimeType: "image/jpeg", mediaId: "media-1" },
-          { fileName: "scan.pdf", mimeType: null, mediaId: null },
+          {
+            status: "unprocessed",
+            fileName: "IMG_1.jpg",
+            mimeType: "image/jpeg",
+            mediaId: "media-1",
+          },
+          {
+            status: "unprocessed",
+            fileName: "scan.pdf",
+            mimeType: null,
+            mediaId: null,
+          },
         ],
+      },
+    ])
+  })
+
+  describe("ingested files", () => {
+    const stored = (mediaId: string, fileName = `${mediaId}.pdf`) => ({
+      status: "stored" as const,
+      mediaId,
+      fileName,
+      mimeType: "application/pdf",
+      size: 10,
+    })
+    const failed = (mediaId: string) => ({
+      status: "failed" as const,
+      mediaId,
+      fileName: `${mediaId}.pdf`,
+      mimeType: null,
+      reason: "download_failed" as const,
+    })
+    const rawEntry = (id: string) => ({
+      id,
+      file_name: `${id}.pdf`,
+      mime_type: "application/pdf",
+      sha256: "x",
+    })
+
+    test("links a stored file to its attachment's URL", () => {
+      const { fields } = buildWhatsappFlowResponseFields(
+        { docs: [rawEntry("1")] },
+        [label("docs", "Documents")],
+        {
+          files: { docs: [stored("1", "Pass.pdf")] },
+          urlByMediaId: new Map([["1", "https://files.example/1-pass.pdf"]]),
+        },
+      )
+
+      expect(fields).toEqual([
+        {
+          key: "docs",
+          label: "Documents",
+          kind: "files",
+          value: [
+            {
+              status: "stored",
+              fileName: "Pass.pdf",
+              mimeType: "application/pdf",
+              mediaId: "1",
+              size: 10,
+              url: "https://files.example/1-pass.pdf",
+            },
+          ],
+        },
+      ])
+    })
+
+    test("reports why a file could not be kept", () => {
+      const { fields } = buildWhatsappFlowResponseFields(
+        { docs: [rawEntry("1")] },
+        [],
+        { files: { docs: [failed("1")] }, urlByMediaId: new Map() },
+      )
+
+      expect(fields[0]).toMatchObject({
+        kind: "files",
+        value: [
+          {
+            status: "failed",
+            mediaId: "1",
+            mimeType: null,
+            failureReason: "download_failed",
+          },
+        ],
+      })
+    })
+
+    test("a kept file whose attachment is gone is unprocessed, not a dead link", () => {
+      const { fields } = buildWhatsappFlowResponseFields(
+        { docs: [rawEntry("1")] },
+        [],
+        { files: { docs: [stored("1")] }, urlByMediaId: new Map() },
+      )
+
+      expect(fields[0]).toMatchObject({
+        value: [{ status: "unprocessed", mediaId: "1" }],
+      })
+      expect(JSON.stringify(fields[0])).not.toContain("url")
+    })
+
+    test("mixes stored and failed files of one answer in order", () => {
+      const { fields } = buildWhatsappFlowResponseFields(
+        { docs: [rawEntry("1"), rawEntry("2")] },
+        [],
+        {
+          files: { docs: [stored("1"), failed("2")] },
+          urlByMediaId: new Map([["1", "https://files.example/1.pdf"]]),
+        },
+      )
+
+      expect(
+        fields[0]?.kind === "files" &&
+          fields[0].value.map((file) => file.status),
+      ).toEqual(["stored", "failed"])
+    })
+
+    test("an answer without ingested files still reads as the raw list", () => {
+      const { fields } = buildWhatsappFlowResponseFields(
+        { docs: [rawEntry("1")], other: [rawEntry("2")] },
+        [],
+        { files: { other: [stored("2")] }, urlByMediaId: new Map() },
+      )
+
+      expect(fields.map((field) => [field.key, field.kind])).toEqual([
+        ["docs", "files"],
+        ["other", "files"],
+      ])
+      expect(fields[0]).toMatchObject({
+        value: [{ status: "unprocessed", mediaId: "1" }],
+      })
+    })
+
+    test("a response key named like an inherited member does not read one", () => {
+      const { fields } = buildWhatsappFlowResponseFields(
+        { constructor: ["a", "b"] },
+        [],
+        { files: { docs: [stored("1")] }, urlByMediaId: new Map() },
+      )
+
+      expect(fields[0]).toMatchObject({ kind: "list", value: ["a", "b"] })
+    })
+  })
+
+  test("shows a date range (CalendarPicker) as start - end", () => {
+    const { fields } = buildWhatsappFlowResponseFields(
+      { stay: { "start-date": "2024-10-21", "end-date": "2024-10-25" } },
+      [],
+    )
+
+    expect(fields).toEqual([
+      {
+        key: "stay",
+        label: "Stay",
+        kind: "text",
+        value: "2024-10-21 - 2024-10-25",
       },
     ])
   })
@@ -181,6 +334,7 @@ describe("getWhatsappFlowResponseView", () => {
     conversationId: "conv-1",
     contactInboxId: "ci-1",
     contentAttributes,
+    attachments: [],
   })
 
   const flowResponseAttributes = {
@@ -217,6 +371,42 @@ describe("getWhatsappFlowResponseView", () => {
         { key: "name_input", label: "Full name", kind: "text", value: "An" },
       ],
       labelSource: "whatsappFlow",
+    })
+  })
+
+  test("resolves ingested files through the message's own attachments", async () => {
+    findByIdWithUrls.mockResolvedValue({
+      ...flowMessage({
+        ...flowResponseAttributes,
+        flowResponse: {
+          flow_token: "tok",
+          docs: [{ id: "1", file_name: "Pass.pdf" }],
+        },
+        files: {
+          docs: [
+            {
+              status: "stored",
+              mediaId: "1",
+              fileName: "Pass.pdf",
+              mimeType: "application/pdf",
+              size: 10,
+            },
+          ],
+        },
+      }),
+      attachments: [
+        { sourceId: "1", url: "https://files.example/1-pass.pdf" },
+        { sourceId: "9", url: null },
+        { sourceId: null, url: "https://files.example/other" },
+      ],
+    })
+    runAction.mockResolvedValue([])
+
+    const view = await getWhatsappFlowResponseView(props)
+
+    expect(view.fields[0]).toMatchObject({
+      kind: "files",
+      value: [{ status: "stored", url: "https://files.example/1-pass.pdf" }],
     })
   })
 

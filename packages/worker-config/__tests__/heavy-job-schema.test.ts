@@ -3,9 +3,11 @@ import {
   AITextToSpeechDefaultFn,
   aiEditImageDefaultFn,
   aiGenerateImageDefaultFn,
+  aiSegmentImageDefaultFn,
 } from "@chatbotx.io/flow-config"
 import { describe, expect, test } from "vitest"
 import {
+  getHeavyJobCompletionWaitTimeoutMs,
   getHeavyJobOptions,
   HeavyJobAction,
   heavyAnalyzeImageResultSchema,
@@ -26,6 +28,10 @@ describe("heavyJobDataSchema", () => {
       data: { aiFileId: "ai-file-1" },
     },
     {
+      type: HeavyJobAction.processAIFile,
+      data: { aiFileId: "ai-file-1", runId: "run-1" },
+    },
+    {
       type: HeavyJobAction.aiEditImage,
       data: {
         ...stepBaseData,
@@ -34,6 +40,19 @@ describe("heavyJobDataSchema", () => {
           inputFieldId: "custom-field-input",
           prompt: "Make it brighter",
           outputFieldId: "custom-field-output",
+        }),
+      },
+    },
+    {
+      type: HeavyJobAction.aiSegmentImage,
+      data: {
+        ...stepBaseData,
+        step: aiSegmentImageDefaultFn({
+          id: "5",
+          inputFieldId: "custom-field-input",
+          target: "product box",
+          outputFieldId: "custom-field-output",
+          detailsOutputFieldId: "custom-field-details",
         }),
       },
     },
@@ -210,20 +229,47 @@ describe("heavyJobDataSchema", () => {
 })
 
 describe("heavy result schemas", () => {
-  test("requires outputValue for successful flow-step results", () => {
+  test("requires at least one output value for successful flow-step results", () => {
+    const outputValues = [
+      {
+        customFieldId: "custom-field-output",
+        value: "https://cdn.example.com/result.png",
+      },
+      { customFieldId: "custom-field-details", value: '{"count":1}' },
+    ]
+
     expect(
-      heavyStepResultSchema.parse({
-        status: "success",
-        outputValue: "https://cdn.example.com/result.png",
-      }),
-    ).toEqual({
-      status: "success",
-      outputValue: "https://cdn.example.com/result.png",
-    })
+      heavyStepResultSchema.parse({ status: "success", outputValues }),
+    ).toEqual({ status: "success", outputValues })
 
     expect(heavyStepResultSchema.safeParse({ status: "success" }).success).toBe(
       false,
     )
+    expect(
+      heavyStepResultSchema.safeParse({ status: "success", outputValues: [] })
+        .success,
+    ).toBe(false)
+    expect(
+      heavyStepResultSchema.safeParse({
+        status: "success",
+        outputValues: [{ customFieldId: "custom-field-output", value: "" }],
+      }).success,
+    ).toBe(false)
+  })
+
+  test("rejects the legacy single outputValue success shape", () => {
+    expect(
+      heavyStepResultSchema.safeParse({
+        status: "success",
+        outputValue: "https://cdn.example.com/result.png",
+      }).success,
+    ).toBe(false)
+  })
+
+  test("accepts a skip result without output values", () => {
+    expect(heavyStepResultSchema.parse({ status: "skip" })).toEqual({
+      status: "skip",
+    })
   })
 
   test("requires errorMessage for failed flow-step results", () => {
@@ -266,12 +312,114 @@ describe("heavy job policies", () => {
     )
   })
 
-  test("keeps paid media retries bounded with a longer backoff", () => {
-    expect(getHeavyJobOptions(HeavyJobAction.aiGenerateImage)).toEqual(
+  test.each([
+    HeavyJobAction.aiGenerateImage,
+    HeavyJobAction.aiEditImage,
+    HeavyJobAction.aiSegmentImage,
+  ])("keeps paid media retries bounded with a longer backoff for %s", (action) => {
+    expect(getHeavyJobOptions(action)).toEqual(
       expect.objectContaining({
         attempts: 2,
         backoff: { type: "exponential", delay: 30_000 },
+        removeOnComplete: { count: 200 },
+        removeOnFail: { count: 500 },
       }),
     )
+  })
+})
+
+describe("aiSegmentImage heavy contract", () => {
+  const segmentStep = (overrides = {}) =>
+    aiSegmentImageDefaultFn({
+      id: "5",
+      inputFieldId: "custom-field-input",
+      target: "product box",
+      outputFieldId: "custom-field-output",
+      ...overrides,
+    })
+
+  test("rejects a step whose details share the output field at the Redis boundary", () => {
+    expect(
+      heavyJobDataSchema.safeParse({
+        type: HeavyJobAction.aiSegmentImage,
+        data: {
+          ...stepBaseData,
+          step: segmentStep({ detailsOutputFieldId: "custom-field-output" }),
+        },
+      }).success,
+    ).toBe(false)
+  })
+
+  test("rejects a segment job carrying another step type", () => {
+    expect(
+      heavyJobDataSchema.safeParse({
+        type: HeavyJobAction.aiSegmentImage,
+        data: {
+          ...stepBaseData,
+          step: aiGenerateImageDefaultFn({
+            id: "2",
+            prompt: "A quiet workspace",
+            outputFieldId: "custom-field-output",
+          }),
+        },
+      }).success,
+    ).toBe(false)
+  })
+
+  test("rejects a segment job without its conversation", () => {
+    expect(
+      heavyJobDataSchema.safeParse({
+        type: HeavyJobAction.aiSegmentImage,
+        data: { contactInboxId: "contact-inbox-1", step: segmentStep() },
+      }).success,
+    ).toBe(false)
+  })
+
+  test("keeps the durable continuation on a segment job", () => {
+    const parsed = heavyJobDataSchema.parse({
+      type: HeavyJobAction.aiSegmentImage,
+      data: {
+        ...stepBaseData,
+        outcomeKey: "heavy-step-outcome-1",
+        continuation: {
+          flowExecutionKey: "flow-execution-1",
+          flowId: "flow-1",
+        },
+        step: segmentStep(),
+      },
+    })
+
+    expect(parsed.data).toMatchObject({
+      outcomeKey: "heavy-step-outcome-1",
+      continuation: { flowExecutionKey: "flow-execution-1" },
+    })
+  })
+
+  test("waits for both paid attempts, the backoff and the handoff", () => {
+    // 2 × 120s + 30s backoff + 60s QueueEvents handoff.
+    expect(
+      getHeavyJobCompletionWaitTimeoutMs(
+        HeavyJobAction.aiSegmentImage,
+        120_000,
+      ),
+    ).toBe(330_000)
+  })
+
+  test("strips stray fields from a skip result", () => {
+    expect(
+      heavyStepResultSchema.parse({
+        status: "skip",
+        outputValues: [{ customFieldId: "x", value: "y" }],
+      }),
+    ).toEqual({ status: "skip" })
+  })
+
+  test("rejects an output value without its custom field", () => {
+    expect(
+      heavyStepResultSchema.safeParse({
+        status: "success",
+        outputValues: [{ customFieldId: "", value: "https://cdn/x.png" }],
+      }).success,
+    ).toBe(false)
   })
 })

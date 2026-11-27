@@ -1,14 +1,9 @@
 import { adsEligibleChannelTypes } from "@chatbotx.io/utils/channel"
 import { normalizeForMatch } from "@chatbotx.io/utils/normalize-for-match"
-import {
-  type AnyColumn,
-  inArray,
-  relationsFilterToSQL,
-  type SQL,
-  sql,
-} from "drizzle-orm"
+import { type AnyColumn, inArray, type SQL, sql } from "drizzle-orm"
 import { operatorTypes } from "../../partials"
 import { isContactActivityFilterField } from "../../partials/contact-activity"
+import { relationsFilterToSQL } from "../../relations-filter"
 import {
   contactInboxModel,
   contactModel,
@@ -18,7 +13,7 @@ import {
   questionnaireModel,
   questionnaireSubmissionModel,
 } from "../../schema"
-import { escapeLikePattern, likeContains } from "../../utils"
+import { escapeLikePattern, isBigintId, likeContains } from "../../utils"
 import { buildBotFieldWhere } from "./bot-field-predicates"
 import { buildCommentedOnPostWhere } from "./commented-on-post"
 import {
@@ -45,6 +40,7 @@ import {
 import { buildCustomFieldWhere } from "./custom-field-predicates"
 import { contactInboxExists, existsWhere, joinTableExists } from "./exists"
 import { buildLeaderboardScoreWhere } from "./leaderboard-score"
+import { buildPipelineItemConditionWhere } from "./pipeline-item"
 import {
   buildBooleanColumn,
   buildBooleanFromTimestamp,
@@ -86,6 +82,7 @@ export {
   ctwaRetargetSegments,
 } from "./ctwa-retarget"
 export {
+  contactFilterUsesField,
   EMAIL_PHONE_FILTER_FIELDS,
   pruneContactFilterFields,
   pruneEmailPhoneFilterConditions,
@@ -93,6 +90,7 @@ export {
 export {
   buildContactInboxScopeWhere,
   type ContactInboxScope,
+  contactInboxHasDmSQL,
   contactInboxInteractedWithin24hSQL,
 } from "./predicates"
 export {
@@ -323,6 +321,8 @@ export const buildSmartKeywordWhere = (
   if (PURE_DIGITS_KEYWORD_PATTERN.test(trimmedKeyword)) {
     return {
       OR: [
+        // A pasted contact id matches exactly; longer digit runs cannot be ids.
+        ...(isBigintId(trimmedKeyword) ? [{ id: trimmedKeyword }] : []),
         { firstName: { ilike: likeKeyword } },
         { lastName: { ilike: likeKeyword } },
         ...(includeEmailAndPhone
@@ -695,6 +695,7 @@ function buildConditionWhere(
     case "subscribedToDripCampaign":
     case "entryPointsLinks":
     case "ctwaConversion":
+    case "votedOnPoll":
       return buildRelationSetWhere(field, operator, value)
 
     case "questionnaireStarted":
@@ -730,6 +731,9 @@ function buildConditionWhere(
         operator,
         value,
       )
+
+    case "pipelineItem":
+      return buildPipelineItemConditionWhere(condition, context.workspaceId)
 
     case "conversationAssigned":
       return buildConversationAssignedWhere(operator, value)

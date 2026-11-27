@@ -18,10 +18,25 @@ export const env = createEnv({
     BETTER_AUTH_URL: z.url(),
     LICENSE_KEY: z.string().optional(),
     WHATSAPP_OVERRIDE_CALLBACK_URI: z.url().optional(),
+    // Contact sync from AhaChat (docs/contact-sync.md): optional https base URL,
+    // path included (empty = unset, see emptyStringAsUndefined).
+    AHACHAT_API_BASE_URL: z.url({ protocol: /^https$/ }).optional(),
+    // The two AhaChat secrets: the API key sent and
+    // the hash key it signs with (never sent), each base64 of >= 32 random bytes.
+    // Validated where they are used: a bad value leaves the sync off (empty =
+    // unset). The key id names the pair for rotation (default k1).
+    AHACHAT_API_KEY: z.string().optional(),
+    AHACHAT_HASH_KEY: z.string().optional(),
+    AHACHAT_KEY_ID: z.string().optional(),
     // WhatsApp VoIP calling (docs/whatsapp-calling.md) ICE/TURN relay.
     TURN_URL: z.string().optional(),
     TURN_STATIC_SECRET: z.string().optional(),
     REALTIME_PROXY_URL: z.url().optional().default("http://localhost:1999"),
+    MCP_PROXY_URL: z.url().optional().default("http://localhost:3333"),
+    MCP_PUBLIC_URL: z.url().optional(),
+    // Exact plain-text token supplied by the OpenAI Plugins portal when it
+    // verifies control of the public MCP domain. Keep it server-only.
+    OPENAI_APPS_DOMAIN_CHALLENGE: z.string().min(1).optional(),
   },
   client: {
     NEXT_PUBLIC_BUILDER_URL: z.url(),

@@ -254,3 +254,41 @@ describe("instagram quick replies attachment", () => {
     expect(payload).not.toHaveProperty("quick_replies")
   })
 })
+
+describe("instagram step input skip quick reply", () => {
+  test("encodes the skip postback unchanged as the quick reply payload", () => {
+    const [payload] = Array.from(
+      convertFlowStepText({
+        data: {
+          contact: { id: "ci-1" },
+          flowId: "flow-1",
+          step: {
+            id: "step-1",
+            stepType: "sendText",
+            text: "Choose",
+            buttons: [],
+          },
+          quickReplies: [
+            {
+              id: "skip-1",
+              label: "Skip",
+              buttonType: "postback",
+              postback: "STEP_INPUT_SKIP|11612473309626368",
+            },
+          ],
+        },
+      } as never),
+    )
+
+    expect(payload).toEqual(
+      expect.objectContaining({
+        quick_replies: [
+          expect.objectContaining({
+            title: "Skip",
+            payload: "STEP_INPUT_SKIP|11612473309626368",
+          }),
+        ],
+      }),
+    )
+  })
+})

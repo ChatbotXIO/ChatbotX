@@ -1,0 +1,2209 @@
+{
+  "type": "diff",
+  "version": "10",
+  "dialect": "postgres",
+  "id": "f5f9a8a1-3382-4440-9457-2af6b3b27512",
+  "prevIds": [
+    "46cea7a6-cab9-42c7-8788-c65e7ac40c0c",
+    "bf41f8bf-0ff6-4c9c-9c05-5269f6c7eed1"
+  ],
+  "footprints": [
+    {
+      "statementType": "create_enum",
+      "statementTarget": [
+        "enum",
+        "public",
+        "contactSyncActorType"
+      ],
+      "writes": [
+        "s|enum|public.contactSyncActorType",
+        "n|enum|public.contactSyncActorType",
+        "e|enum|public.contactSyncActorType",
+        "n|type|public.contactSyncActorType"
+      ],
+      "reads": [
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "create_enum",
+      "statementTarget": [
+        "enum",
+        "public",
+        "contactSyncMappingKind"
+      ],
+      "writes": [
+        "s|enum|public.contactSyncMappingKind",
+        "n|enum|public.contactSyncMappingKind",
+        "e|enum|public.contactSyncMappingKind",
+        "n|type|public.contactSyncMappingKind"
+      ],
+      "reads": [
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "create_enum",
+      "statementTarget": [
+        "enum",
+        "public",
+        "contactSyncMappingOrigin"
+      ],
+      "writes": [
+        "s|enum|public.contactSyncMappingOrigin",
+        "n|enum|public.contactSyncMappingOrigin",
+        "e|enum|public.contactSyncMappingOrigin",
+        "n|type|public.contactSyncMappingOrigin"
+      ],
+      "reads": [
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "create_enum",
+      "statementTarget": [
+        "enum",
+        "public",
+        "contactSyncProvider"
+      ],
+      "writes": [
+        "s|enum|public.contactSyncProvider",
+        "n|enum|public.contactSyncProvider",
+        "e|enum|public.contactSyncProvider",
+        "n|type|public.contactSyncProvider"
+      ],
+      "reads": [
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "create_enum",
+      "statementTarget": [
+        "enum",
+        "public",
+        "contactSyncRunItemStatus"
+      ],
+      "writes": [
+        "s|enum|public.contactSyncRunItemStatus",
+        "n|enum|public.contactSyncRunItemStatus",
+        "e|enum|public.contactSyncRunItemStatus",
+        "n|type|public.contactSyncRunItemStatus"
+      ],
+      "reads": [
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "create_enum",
+      "statementTarget": [
+        "enum",
+        "public",
+        "contactSyncRunStatus"
+      ],
+      "writes": [
+        "s|enum|public.contactSyncRunStatus",
+        "n|enum|public.contactSyncRunStatus",
+        "e|enum|public.contactSyncRunStatus",
+        "n|type|public.contactSyncRunStatus"
+      ],
+      "reads": [
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "create_enum",
+      "statementTarget": [
+        "enum",
+        "public",
+        "contactSyncSourceChannel"
+      ],
+      "writes": [
+        "s|enum|public.contactSyncSourceChannel",
+        "n|enum|public.contactSyncSourceChannel",
+        "e|enum|public.contactSyncSourceChannel",
+        "n|type|public.contactSyncSourceChannel"
+      ],
+      "reads": [
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "create_enum",
+      "statementTarget": [
+        "enum",
+        "public",
+        "contactSyncTrigger"
+      ],
+      "writes": [
+        "s|enum|public.contactSyncTrigger",
+        "n|enum|public.contactSyncTrigger",
+        "e|enum|public.contactSyncTrigger",
+        "n|type|public.contactSyncTrigger"
+      ],
+      "reads": [
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "create_enum",
+      "statementTarget": [
+        "enum",
+        "public",
+        "contactSyncTriggerSource"
+      ],
+      "writes": [
+        "s|enum|public.contactSyncTriggerSource",
+        "n|enum|public.contactSyncTriggerSource",
+        "e|enum|public.contactSyncTriggerSource",
+        "n|type|public.contactSyncTriggerSource"
+      ],
+      "reads": [
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "create_table",
+      "statementTarget": [
+        "table",
+        "public",
+        "ContactSyncMapping"
+      ],
+      "writes": [
+        "s|tbl|public.ContactSyncMapping",
+        "n|tbl|public.ContactSyncMapping",
+        "e|tbl|public.ContactSyncMapping",
+        "n|rel|public.ContactSyncMapping",
+        "n|type|public.ContactSyncMapping",
+        "n|rel|public.ContactSyncMapping_pkey"
+      ],
+      "reads": [
+        "n|sch|public",
+        "n|enum|public.contactSyncProvider",
+        "n|enum|public.contactSyncSourceChannel",
+        "n|enum|public.contactSyncMappingKind",
+        "n|enum|public.contactSyncMappingOrigin"
+      ]
+    },
+    {
+      "statementType": "create_table",
+      "statementTarget": [
+        "table",
+        "public",
+        "ContactSyncRunItem"
+      ],
+      "writes": [
+        "s|tbl|public.ContactSyncRunItem",
+        "n|tbl|public.ContactSyncRunItem",
+        "e|tbl|public.ContactSyncRunItem",
+        "n|rel|public.ContactSyncRunItem",
+        "n|type|public.ContactSyncRunItem",
+        "n|rel|public.ContactSyncRunItem_pkey"
+      ],
+      "reads": [
+        "n|sch|public",
+        "n|enum|public.contactSyncSourceChannel",
+        "n|enum|public.contactSyncRunItemStatus"
+      ]
+    },
+    {
+      "statementType": "create_table",
+      "statementTarget": [
+        "table",
+        "public",
+        "ContactSyncRun"
+      ],
+      "writes": [
+        "s|tbl|public.ContactSyncRun",
+        "n|tbl|public.ContactSyncRun",
+        "e|tbl|public.ContactSyncRun",
+        "n|rel|public.ContactSyncRun",
+        "n|type|public.ContactSyncRun",
+        "n|rel|public.ContactSyncRun_pkey"
+      ],
+      "reads": [
+        "n|sch|public",
+        "n|enum|public.contactSyncProvider",
+        "n|enum|public.contactSyncRunStatus",
+        "n|enum|public.contactSyncTriggerSource",
+        "n|enum|public.contactSyncTrigger",
+        "n|enum|public.contactSyncActorType"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "ContactSyncMapping",
+        "ContactSyncMapping_page_kind_externalId_key"
+      ],
+      "writes": [
+        "s|idx|public.ContactSyncMapping_page_kind_externalId_key",
+        "n|idx|public.ContactSyncMapping_page_kind_externalId_key",
+        "e|idx|public.ContactSyncMapping_page_kind_externalId_key",
+        "n|rel|public.ContactSyncMapping_page_kind_externalId_key"
+      ],
+      "reads": [
+        "n|tbl|public.ContactSyncMapping",
+        "n|sch|public",
+        "n|col|public.ContactSyncMapping.workspaceId",
+        "n|col|public.ContactSyncMapping.provider",
+        "n|col|public.ContactSyncMapping.channel",
+        "n|col|public.ContactSyncMapping.pageId",
+        "n|col|public.ContactSyncMapping.kind",
+        "n|col|public.ContactSyncMapping.externalId"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "ContactSyncMapping",
+        "ContactSyncMapping_tagId_idx"
+      ],
+      "writes": [
+        "s|idx|public.ContactSyncMapping_tagId_idx",
+        "n|idx|public.ContactSyncMapping_tagId_idx",
+        "e|idx|public.ContactSyncMapping_tagId_idx",
+        "n|rel|public.ContactSyncMapping_tagId_idx"
+      ],
+      "reads": [
+        "n|tbl|public.ContactSyncMapping",
+        "n|sch|public",
+        "n|col|public.ContactSyncMapping.tagId"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "ContactSyncMapping",
+        "ContactSyncMapping_customFieldId_idx"
+      ],
+      "writes": [
+        "s|idx|public.ContactSyncMapping_customFieldId_idx",
+        "n|idx|public.ContactSyncMapping_customFieldId_idx",
+        "e|idx|public.ContactSyncMapping_customFieldId_idx",
+        "n|rel|public.ContactSyncMapping_customFieldId_idx"
+      ],
+      "reads": [
+        "n|tbl|public.ContactSyncMapping",
+        "n|sch|public",
+        "n|col|public.ContactSyncMapping.customFieldId"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "ContactSyncRunItem",
+        "ContactSyncRunItem_runId_position_key"
+      ],
+      "writes": [
+        "s|idx|public.ContactSyncRunItem_runId_position_key",
+        "n|idx|public.ContactSyncRunItem_runId_position_key",
+        "e|idx|public.ContactSyncRunItem_runId_position_key",
+        "n|rel|public.ContactSyncRunItem_runId_position_key"
+      ],
+      "reads": [
+        "n|tbl|public.ContactSyncRunItem",
+        "n|sch|public",
+        "n|col|public.ContactSyncRunItem.runId",
+        "n|col|public.ContactSyncRunItem.position"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "ContactSyncRunItem",
+        "ContactSyncRunItem_workspaceId_idx"
+      ],
+      "writes": [
+        "s|idx|public.ContactSyncRunItem_workspaceId_idx",
+        "n|idx|public.ContactSyncRunItem_workspaceId_idx",
+        "e|idx|public.ContactSyncRunItem_workspaceId_idx",
+        "n|rel|public.ContactSyncRunItem_workspaceId_idx"
+      ],
+      "reads": [
+        "n|tbl|public.ContactSyncRunItem",
+        "n|sch|public",
+        "n|col|public.ContactSyncRunItem.workspaceId"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "ContactSyncRunItem",
+        "ContactSyncRunItem_inboxId_idx"
+      ],
+      "writes": [
+        "s|idx|public.ContactSyncRunItem_inboxId_idx",
+        "n|idx|public.ContactSyncRunItem_inboxId_idx",
+        "e|idx|public.ContactSyncRunItem_inboxId_idx",
+        "n|rel|public.ContactSyncRunItem_inboxId_idx"
+      ],
+      "reads": [
+        "n|tbl|public.ContactSyncRunItem",
+        "n|sch|public",
+        "n|col|public.ContactSyncRunItem.inboxId"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "ContactSyncRunItem",
+        "ContactSyncRunItem_followUp_pending_idx"
+      ],
+      "writes": [
+        "s|idx|public.ContactSyncRunItem_followUp_pending_idx",
+        "n|idx|public.ContactSyncRunItem_followUp_pending_idx",
+        "e|idx|public.ContactSyncRunItem_followUp_pending_idx",
+        "n|rel|public.ContactSyncRunItem_followUp_pending_idx"
+      ],
+      "reads": [
+        "n|tbl|public.ContactSyncRunItem",
+        "n|sch|public",
+        "n|col|public.ContactSyncRunItem.followUpRequestedAt"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "ContactSyncRun",
+        "ContactSyncRun_workspace_live_uq"
+      ],
+      "writes": [
+        "s|idx|public.ContactSyncRun_workspace_live_uq",
+        "n|idx|public.ContactSyncRun_workspace_live_uq",
+        "e|idx|public.ContactSyncRun_workspace_live_uq",
+        "n|rel|public.ContactSyncRun_workspace_live_uq"
+      ],
+      "reads": [
+        "n|tbl|public.ContactSyncRun",
+        "n|sch|public",
+        "n|col|public.ContactSyncRun.workspaceId"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "ContactSyncRun",
+        "ContactSyncRun_workspace_createdAt_idx"
+      ],
+      "writes": [
+        "s|idx|public.ContactSyncRun_workspace_createdAt_idx",
+        "n|idx|public.ContactSyncRun_workspace_createdAt_idx",
+        "e|idx|public.ContactSyncRun_workspace_createdAt_idx",
+        "n|rel|public.ContactSyncRun_workspace_createdAt_idx"
+      ],
+      "reads": [
+        "n|tbl|public.ContactSyncRun",
+        "n|sch|public",
+        "n|col|public.ContactSyncRun.workspaceId"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "ContactSyncRun",
+        "ContactSyncRun_live_idx"
+      ],
+      "writes": [
+        "s|idx|public.ContactSyncRun_live_idx",
+        "n|idx|public.ContactSyncRun_live_idx",
+        "e|idx|public.ContactSyncRun_live_idx",
+        "n|rel|public.ContactSyncRun_live_idx"
+      ],
+      "reads": [
+        "n|tbl|public.ContactSyncRun",
+        "n|sch|public",
+        "n|col|public.ContactSyncRun.status",
+        "n|col|public.ContactSyncRun.lastHeartbeatAt"
+      ]
+    },
+    {
+      "statementType": "create_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "ContactSyncMapping"
+      ],
+      "writes": [
+        "s|fk|public.ContactSyncMapping.ContactSyncMapping_workspaceId_Workspace_id_fkey",
+        "n|fk|public.ContactSyncMapping.ContactSyncMapping_workspaceId_Workspace_id_fkey",
+        "e|fk|public.ContactSyncMapping.ContactSyncMapping_workspaceId_Workspace_id_fkey",
+        "n|con|public.ContactSyncMapping.ContactSyncMapping_workspaceId_Workspace_id_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.ContactSyncMapping",
+        "n|sch|public",
+        "n|tbl|public.Workspace",
+        "n|sch|public",
+        "n|col|public.ContactSyncMapping.workspaceId",
+        "n|col|public.Workspace.id",
+        "e|uniqueness|public.Workspace.id"
+      ]
+    },
+    {
+      "statementType": "create_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "ContactSyncMapping"
+      ],
+      "writes": [
+        "s|fk|public.ContactSyncMapping.ContactSyncMapping_tagId_Tag_id_fkey",
+        "n|fk|public.ContactSyncMapping.ContactSyncMapping_tagId_Tag_id_fkey",
+        "e|fk|public.ContactSyncMapping.ContactSyncMapping_tagId_Tag_id_fkey",
+        "n|con|public.ContactSyncMapping.ContactSyncMapping_tagId_Tag_id_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.ContactSyncMapping",
+        "n|sch|public",
+        "n|tbl|public.Tag",
+        "n|sch|public",
+        "n|col|public.ContactSyncMapping.tagId",
+        "n|col|public.Tag.id",
+        "e|uniqueness|public.Tag.id"
+      ]
+    },
+    {
+      "statementType": "create_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "ContactSyncMapping"
+      ],
+      "writes": [
+        "s|fk|public.ContactSyncMapping.ContactSyncMapping_customFieldId_CustomField_id_fkey",
+        "n|fk|public.ContactSyncMapping.ContactSyncMapping_customFieldId_CustomField_id_fkey",
+        "e|fk|public.ContactSyncMapping.ContactSyncMapping_customFieldId_CustomField_id_fkey",
+        "n|con|public.ContactSyncMapping.ContactSyncMapping_customFieldId_CustomField_id_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.ContactSyncMapping",
+        "n|sch|public",
+        "n|tbl|public.CustomField",
+        "n|sch|public",
+        "n|col|public.ContactSyncMapping.customFieldId",
+        "n|col|public.CustomField.id",
+        "e|uniqueness|public.CustomField.id"
+      ]
+    },
+    {
+      "statementType": "create_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "ContactSyncRunItem"
+      ],
+      "writes": [
+        "s|fk|public.ContactSyncRunItem.ContactSyncRunItem_runId_ContactSyncRun_id_fkey",
+        "n|fk|public.ContactSyncRunItem.ContactSyncRunItem_runId_ContactSyncRun_id_fkey",
+        "e|fk|public.ContactSyncRunItem.ContactSyncRunItem_runId_ContactSyncRun_id_fkey",
+        "n|con|public.ContactSyncRunItem.ContactSyncRunItem_runId_ContactSyncRun_id_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.ContactSyncRunItem",
+        "n|sch|public",
+        "n|tbl|public.ContactSyncRun",
+        "n|sch|public",
+        "n|col|public.ContactSyncRunItem.runId",
+        "n|col|public.ContactSyncRun.id",
+        "e|uniqueness|public.ContactSyncRun.id"
+      ]
+    },
+    {
+      "statementType": "create_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "ContactSyncRunItem"
+      ],
+      "writes": [
+        "s|fk|public.ContactSyncRunItem.ContactSyncRunItem_workspaceId_Workspace_id_fkey",
+        "n|fk|public.ContactSyncRunItem.ContactSyncRunItem_workspaceId_Workspace_id_fkey",
+        "e|fk|public.ContactSyncRunItem.ContactSyncRunItem_workspaceId_Workspace_id_fkey",
+        "n|con|public.ContactSyncRunItem.ContactSyncRunItem_workspaceId_Workspace_id_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.ContactSyncRunItem",
+        "n|sch|public",
+        "n|tbl|public.Workspace",
+        "n|sch|public",
+        "n|col|public.ContactSyncRunItem.workspaceId",
+        "n|col|public.Workspace.id",
+        "e|uniqueness|public.Workspace.id"
+      ]
+    },
+    {
+      "statementType": "create_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "ContactSyncRunItem"
+      ],
+      "writes": [
+        "s|fk|public.ContactSyncRunItem.ContactSyncRunItem_inboxId_Inbox_id_fkey",
+        "n|fk|public.ContactSyncRunItem.ContactSyncRunItem_inboxId_Inbox_id_fkey",
+        "e|fk|public.ContactSyncRunItem.ContactSyncRunItem_inboxId_Inbox_id_fkey",
+        "n|con|public.ContactSyncRunItem.ContactSyncRunItem_inboxId_Inbox_id_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.ContactSyncRunItem",
+        "n|sch|public",
+        "n|tbl|public.Inbox",
+        "n|sch|public",
+        "n|col|public.ContactSyncRunItem.inboxId",
+        "n|col|public.Inbox.id",
+        "e|uniqueness|public.Inbox.id"
+      ]
+    },
+    {
+      "statementType": "create_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "ContactSyncRun"
+      ],
+      "writes": [
+        "s|fk|public.ContactSyncRun.ContactSyncRun_workspaceId_Workspace_id_fkey",
+        "n|fk|public.ContactSyncRun.ContactSyncRun_workspaceId_Workspace_id_fkey",
+        "e|fk|public.ContactSyncRun.ContactSyncRun_workspaceId_Workspace_id_fkey",
+        "n|con|public.ContactSyncRun.ContactSyncRun_workspaceId_Workspace_id_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.ContactSyncRun",
+        "n|sch|public",
+        "n|tbl|public.Workspace",
+        "n|sch|public",
+        "n|col|public.ContactSyncRun.workspaceId",
+        "n|col|public.Workspace.id",
+        "e|uniqueness|public.Workspace.id"
+      ]
+    }
+  ],
+  "deltas": [
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "name": "ContactSyncMapping",
+        "isRlsEnabled": false,
+        "entityType": "tables"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "name": "ContactSyncRunItem",
+        "isRlsEnabled": false,
+        "entityType": "tables"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "name": "ContactSyncRun",
+        "isRlsEnabled": false,
+        "entityType": "tables"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "name": "contactSyncActorType",
+        "values": [
+          "user",
+          "api_token"
+        ],
+        "entityType": "enums"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "name": "contactSyncMappingKind",
+        "values": [
+          "tag",
+          "customField"
+        ],
+        "entityType": "enums"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "name": "contactSyncMappingOrigin",
+        "values": [
+          "manual",
+          "auto"
+        ],
+        "entityType": "enums"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "name": "contactSyncProvider",
+        "values": [
+          "ahachat"
+        ],
+        "entityType": "enums"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "name": "contactSyncRunItemStatus",
+        "values": [
+          "pending",
+          "running",
+          "succeeded",
+          "partial",
+          "failed",
+          "cancelled"
+        ],
+        "entityType": "enums"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "name": "contactSyncRunStatus",
+        "values": [
+          "pending",
+          "running",
+          "cancelling",
+          "succeeded",
+          "partial",
+          "failed",
+          "cancelled"
+        ],
+        "entityType": "enums"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "name": "contactSyncSourceChannel",
+        "values": [
+          "messenger",
+          "instagram",
+          "zalo",
+          "telegram"
+        ],
+        "entityType": "enums"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "name": "contactSyncTrigger",
+        "values": [
+          "menu",
+          "connect"
+        ],
+        "entityType": "enums"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "name": "contactSyncTriggerSource",
+        "values": [
+          "app",
+          "api"
+        ],
+        "entityType": "enums"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "ContactSyncMapping",
+        "name": "id",
+        "type": "bigint",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "ContactSyncMapping",
+        "name": "createdAt",
+        "type": "timestamp(6) with time zone",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "now()",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "ContactSyncMapping",
+        "name": "updatedAt",
+        "type": "timestamp(6) with time zone",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "now()",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "ContactSyncMapping",
+        "name": "workspaceId",
+        "type": "bigint",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "ContactSyncMapping",
+        "name": "provider",
+        "type": "contactSyncProvider",
+        "typeSchema": "public",
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "ContactSyncMapping",
+        "name": "channel",
+        "type": "contactSyncSourceChannel",
+        "typeSchema": "public",
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "ContactSyncMapping",
+        "name": "pageId",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "ContactSyncMapping",
+        "name": "kind",
+        "type": "contactSyncMappingKind",
+        "typeSchema": "public",
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "ContactSyncMapping",
+        "name": "externalId",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "ContactSyncMapping",
+        "name": "externalName",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "ContactSyncMapping",
+        "name": "tagId",
+        "type": "bigint",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "ContactSyncMapping",
+        "name": "customFieldId",
+        "type": "bigint",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "ContactSyncMapping",
+        "name": "origin",
+        "type": "contactSyncMappingOrigin",
+        "typeSchema": "public",
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "ContactSyncRunItem",
+        "name": "id",
+        "type": "bigint",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "ContactSyncRunItem",
+        "name": "createdAt",
+        "type": "timestamp(6) with time zone",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "now()",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "ContactSyncRunItem",
+        "name": "updatedAt",
+        "type": "timestamp(6) with time zone",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "now()",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "ContactSyncRunItem",
+        "name": "runId",
+        "type": "bigint",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "ContactSyncRunItem",
+        "name": "workspaceId",
+        "type": "bigint",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "ContactSyncRunItem",
+        "name": "inboxId",
+        "type": "bigint",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "ContactSyncRunItem",
+        "name": "sourceChannel",
+        "type": "contactSyncSourceChannel",
+        "typeSchema": "public",
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "ContactSyncRunItem",
+        "name": "sourceAccountId",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "ContactSyncRunItem",
+        "name": "sourceAccountName",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "ContactSyncRunItem",
+        "name": "position",
+        "type": "integer",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "ContactSyncRunItem",
+        "name": "status",
+        "type": "contactSyncRunItemStatus",
+        "typeSchema": "public",
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "ContactSyncRunItem",
+        "name": "cursor",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "ContactSyncRunItem",
+        "name": "upperBoundId",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "ContactSyncRunItem",
+        "name": "boundReadAt",
+        "type": "timestamp(6) with time zone",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "ContactSyncRunItem",
+        "name": "createdCount",
+        "type": "integer",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "ContactSyncRunItem",
+        "name": "updatedCount",
+        "type": "integer",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "ContactSyncRunItem",
+        "name": "skippedCount",
+        "type": "integer",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "ContactSyncRunItem",
+        "name": "failedCount",
+        "type": "integer",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "ContactSyncRunItem",
+        "name": "skippedValueCount",
+        "type": "integer",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "ContactSyncRunItem",
+        "name": "currentError",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "ContactSyncRunItem",
+        "name": "startedAt",
+        "type": "timestamp(6) with time zone",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "ContactSyncRunItem",
+        "name": "finishedAt",
+        "type": "timestamp(6) with time zone",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "ContactSyncRunItem",
+        "name": "followUpCoexist",
+        "type": "boolean",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "ContactSyncRunItem",
+        "name": "followUpAiReadsSyncedHistory",
+        "type": "boolean",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "ContactSyncRunItem",
+        "name": "followUpRunId",
+        "type": "bigint",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "ContactSyncRunItem",
+        "name": "followUpError",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "ContactSyncRunItem",
+        "name": "followUpRequestedAt",
+        "type": "timestamp(6) with time zone",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "ContactSyncRun",
+        "name": "id",
+        "type": "bigint",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "ContactSyncRun",
+        "name": "createdAt",
+        "type": "timestamp(6) with time zone",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "now()",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "ContactSyncRun",
+        "name": "updatedAt",
+        "type": "timestamp(6) with time zone",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "now()",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "ContactSyncRun",
+        "name": "workspaceId",
+        "type": "bigint",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "ContactSyncRun",
+        "name": "provider",
+        "type": "contactSyncProvider",
+        "typeSchema": "public",
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "ContactSyncRun",
+        "name": "status",
+        "type": "contactSyncRunStatus",
+        "typeSchema": "public",
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "ContactSyncRun",
+        "name": "triggerSource",
+        "type": "contactSyncTriggerSource",
+        "typeSchema": "public",
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "ContactSyncRun",
+        "name": "trigger",
+        "type": "contactSyncTrigger",
+        "typeSchema": "public",
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "ContactSyncRun",
+        "name": "requestedByType",
+        "type": "contactSyncActorType",
+        "typeSchema": "public",
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "ContactSyncRun",
+        "name": "requestedById",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "ContactSyncRun",
+        "name": "syncTags",
+        "type": "boolean",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "ContactSyncRun",
+        "name": "syncCustomFields",
+        "type": "boolean",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "ContactSyncRun",
+        "name": "overwriteExisting",
+        "type": "boolean",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "ContactSyncRun",
+        "name": "startedAt",
+        "type": "timestamp(6) with time zone",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "ContactSyncRun",
+        "name": "finishedAt",
+        "type": "timestamp(6) with time zone",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "ContactSyncRun",
+        "name": "lastHeartbeatAt",
+        "type": "timestamp(6) with time zone",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "ContactSyncRun",
+        "name": "pausedUntil",
+        "type": "timestamp(6) with time zone",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "ContactSyncRun",
+        "name": "claimToken",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "ContactSyncRun",
+        "name": "attempts",
+        "type": "integer",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "ContactSyncRun",
+        "name": "chunkSeq",
+        "type": "integer",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "ContactSyncRun",
+        "name": "currentError",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "ContactSyncMapping",
+        "name": "ContactSyncMapping_page_kind_externalId_key",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "workspaceId",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          },
+          {
+            "value": "provider",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          },
+          {
+            "value": "channel",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          },
+          {
+            "value": "pageId",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          },
+          {
+            "value": "kind",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          },
+          {
+            "value": "externalId",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": true,
+        "where": null,
+        "with": "",
+        "method": "btree",
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "ContactSyncMapping",
+        "name": "ContactSyncMapping_tagId_idx",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "tagId",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": false,
+        "where": "\"tagId\" IS NOT NULL",
+        "with": "",
+        "method": "btree",
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "ContactSyncMapping",
+        "name": "ContactSyncMapping_customFieldId_idx",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "customFieldId",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": false,
+        "where": "\"customFieldId\" IS NOT NULL",
+        "with": "",
+        "method": "btree",
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "ContactSyncRunItem",
+        "name": "ContactSyncRunItem_runId_position_key",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "runId",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          },
+          {
+            "value": "position",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": true,
+        "where": null,
+        "with": "",
+        "method": "btree",
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "ContactSyncRunItem",
+        "name": "ContactSyncRunItem_workspaceId_idx",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "workspaceId",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": false,
+        "where": null,
+        "with": "",
+        "method": "btree",
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "ContactSyncRunItem",
+        "name": "ContactSyncRunItem_inboxId_idx",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "inboxId",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": false,
+        "where": "\"inboxId\" IS NOT NULL",
+        "with": "",
+        "method": "btree",
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "ContactSyncRunItem",
+        "name": "ContactSyncRunItem_followUp_pending_idx",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "followUpRequestedAt",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": false,
+        "where": "\"followUpCoexist\" AND \"followUpRunId\" IS NULL AND \"followUpError\" IS NULL AND \"status\" NOT IN ('pending', 'running')",
+        "with": "",
+        "method": "btree",
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "ContactSyncRun",
+        "name": "ContactSyncRun_workspace_live_uq",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "workspaceId",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": true,
+        "where": "status IN ('pending', 'running', 'cancelling')",
+        "with": "",
+        "method": "btree",
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "ContactSyncRun",
+        "name": "ContactSyncRun_workspace_createdAt_idx",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "workspaceId",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          },
+          {
+            "value": "\"createdAt\" DESC",
+            "isExpression": true,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": false,
+        "where": null,
+        "with": "",
+        "method": "btree",
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "ContactSyncRun",
+        "name": "ContactSyncRun_live_idx",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "status",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          },
+          {
+            "value": "lastHeartbeatAt",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": false,
+        "where": "status IN ('pending', 'running', 'cancelling')",
+        "with": "",
+        "method": "btree",
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "ContactSyncMapping",
+        "name": "ContactSyncMapping_workspaceId_Workspace_id_fkey",
+        "nameExplicit": false,
+        "columns": [
+          "workspaceId"
+        ],
+        "schemaTo": "public",
+        "tableTo": "Workspace",
+        "columnsTo": [
+          "id"
+        ],
+        "onUpdate": "CASCADE",
+        "onDelete": "CASCADE",
+        "entityType": "fks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "ContactSyncMapping",
+        "name": "ContactSyncMapping_tagId_Tag_id_fkey",
+        "nameExplicit": false,
+        "columns": [
+          "tagId"
+        ],
+        "schemaTo": "public",
+        "tableTo": "Tag",
+        "columnsTo": [
+          "id"
+        ],
+        "onUpdate": "CASCADE",
+        "onDelete": "CASCADE",
+        "entityType": "fks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "ContactSyncMapping",
+        "name": "ContactSyncMapping_customFieldId_CustomField_id_fkey",
+        "nameExplicit": false,
+        "columns": [
+          "customFieldId"
+        ],
+        "schemaTo": "public",
+        "tableTo": "CustomField",
+        "columnsTo": [
+          "id"
+        ],
+        "onUpdate": "CASCADE",
+        "onDelete": "CASCADE",
+        "entityType": "fks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "ContactSyncRunItem",
+        "name": "ContactSyncRunItem_runId_ContactSyncRun_id_fkey",
+        "nameExplicit": false,
+        "columns": [
+          "runId"
+        ],
+        "schemaTo": "public",
+        "tableTo": "ContactSyncRun",
+        "columnsTo": [
+          "id"
+        ],
+        "onUpdate": "CASCADE",
+        "onDelete": "CASCADE",
+        "entityType": "fks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "ContactSyncRunItem",
+        "name": "ContactSyncRunItem_workspaceId_Workspace_id_fkey",
+        "nameExplicit": false,
+        "columns": [
+          "workspaceId"
+        ],
+        "schemaTo": "public",
+        "tableTo": "Workspace",
+        "columnsTo": [
+          "id"
+        ],
+        "onUpdate": "CASCADE",
+        "onDelete": "CASCADE",
+        "entityType": "fks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "ContactSyncRunItem",
+        "name": "ContactSyncRunItem_inboxId_Inbox_id_fkey",
+        "nameExplicit": false,
+        "columns": [
+          "inboxId"
+        ],
+        "schemaTo": "public",
+        "tableTo": "Inbox",
+        "columnsTo": [
+          "id"
+        ],
+        "onUpdate": "CASCADE",
+        "onDelete": "SET NULL",
+        "entityType": "fks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "ContactSyncRun",
+        "name": "ContactSyncRun_workspaceId_Workspace_id_fkey",
+        "nameExplicit": false,
+        "columns": [
+          "workspaceId"
+        ],
+        "schemaTo": "public",
+        "tableTo": "Workspace",
+        "columnsTo": [
+          "id"
+        ],
+        "onUpdate": "CASCADE",
+        "onDelete": "CASCADE",
+        "entityType": "fks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "ContactSyncMapping",
+        "name": "ContactSyncMapping_pkey",
+        "columns": [
+          "id"
+        ],
+        "nameExplicit": false,
+        "entityType": "pks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "ContactSyncRunItem",
+        "name": "ContactSyncRunItem_pkey",
+        "columns": [
+          "id"
+        ],
+        "nameExplicit": false,
+        "entityType": "pks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "ContactSyncRun",
+        "name": "ContactSyncRun_pkey",
+        "columns": [
+          "id"
+        ],
+        "nameExplicit": false,
+        "entityType": "pks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "ContactSyncMapping",
+        "name": "ContactSyncMapping_target_check",
+        "value": "(\"kind\" = 'tag' AND \"tagId\" IS NOT NULL AND \"customFieldId\" IS NULL) OR (\"kind\" = 'customField' AND \"customFieldId\" IS NOT NULL AND \"tagId\" IS NULL)",
+        "entityType": "checks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "ContactSyncMapping",
+        "name": "ContactSyncMapping_external_check",
+        "value": "btrim(\"externalId\") <> '' AND btrim(\"externalName\") <> ''",
+        "entityType": "checks"
+      }
+    }
+  ]
+}

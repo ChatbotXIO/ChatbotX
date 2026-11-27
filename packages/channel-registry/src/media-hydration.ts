@@ -39,6 +39,7 @@ import {
   guessFileTypeFromMimeType,
   IntegrationException,
   SdkException,
+  videoMimeTypesServedAsAudio,
 } from "@chatbotx.io/sdk"
 import { createId } from "@chatbotx.io/utils"
 import {
@@ -632,6 +633,25 @@ export async function markAttachmentUnresolvable(input: {
   )
 }
 
+// Meta serves a voice note as `.mp4` with `content-type: video/mp4`. The
+// webhook says it is audio, so the stored copy is labelled by that kind:
+// consumers that read only the object's content-type (speech-to-text) would
+// otherwise reject it as video.
+const labelAudioAttachmentMimeType = (
+  media: DownloadedMedia,
+  fileType: AttachmentModel["fileType"],
+): DownloadedMedia => {
+  if (fileType !== "audio") {
+    return media
+  }
+  const videoMimeType = videoMimeTypesServedAsAudio.safeParse(
+    media.mimeType.split(";")[0]?.trim().toLowerCase(),
+  )
+  return videoMimeType.success
+    ? { ...media, mimeType: videoMimeType.data.replace("video/", "audio/") }
+    : media
+}
+
 // Download through the channel strategy, surfacing an over-cap body as a
 // terminal failure. Whether that failure is persisted is the caller's call.
 const downloadMedia = async (
@@ -641,7 +661,10 @@ const downloadMedia = async (
   mediaReference: FreshMedia,
 ): Promise<DownloadedMedia> => {
   try {
-    return await strategy.download(mediaReference, attachment, state)
+    return labelAudioAttachmentMimeType(
+      await strategy.download(mediaReference, attachment, state),
+      attachment.fileType,
+    )
   } catch (err) {
     if (err instanceof AttachmentTooLargeError) {
       throw new TerminalMediaError(

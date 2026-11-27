@@ -23,8 +23,8 @@ import type {
   UnsubscribeSequenceStepSchema,
 } from "@chatbotx.io/flow-config"
 import { TemporalInputParsing } from "@chatbotx.io/utils/datetime"
-import { contactVariableService } from "@chatbotx.io/variables"
 import { logger } from "../../lib/logger"
+import { applyCustomFieldOperation } from "./custom-field-operation"
 import type { ExecuteStepProps } from "./flow"
 
 export async function setContactCustomField({
@@ -34,37 +34,39 @@ export async function setContactCustomField({
   sentByUserId,
 }: ExecuteStepProps<SetCustomFieldStepSchema>) {
   try {
-    // The value can contain {{variable}} tokens inserted via the editor (contact
-    // fields, coupons, etc.); resolve them against this contact before persisting.
-    // Unresolvable tokens are left as-is, and a value that resolves to empty still
-    // falls through to the temporal "now" handling below.
-    const variables = await contactVariableService.getAll({
-      contactId: conversation.contactId,
-      contactInbox,
-      conversation,
-      sentByUserId,
-    })
-    const resolvedValue = await contactVariableService.replaceAll({
-      text: step.value,
-      variables,
-    })
-
-    await contactCustomFieldService.setValueByKey({
-      workspaceId: conversation.workspaceId,
-      contactId: conversation.contactId,
-      keyword: step.inputFieldId,
-      value: resolvedValue,
-      // The editor captured its browser zone at save time; anchor naive
-      // date/datetime values to it (worker has no browser context). Lenient
-      // parsing accepts flexible user input (unix ts, "23/07/2026", ...), and a
-      // blank value stamps "now" in that zone.
-      sourceTimezoneOverride: step.timezone,
-      temporalInputParsing: TemporalInputParsing.Lenient,
-      fillEmptyTemporalWithNow: true,
-      contactInboxId: contactInbox.id,
-      allowBotFields: true,
-      operation: step.operation,
-    })
+    const outcome = await applyCustomFieldOperation(
+      {
+        fieldReference: step.inputFieldId,
+        operation: step.operation,
+        value: step.value,
+        timezone: step.timezone,
+      },
+      {
+        workspaceId: conversation.workspaceId,
+        contactId: conversation.contactId,
+        conversation,
+        contactInbox,
+        sentByUserId,
+        // Lenient parsing accepts flexible user input (unix ts, "23/07/2026",
+        // ...), and a blank value stamps "now" in the step's zone.
+        valueOptions: {
+          temporalInputParsing: TemporalInputParsing.Lenient,
+          fillEmptyTemporalWithNow: true,
+        },
+      },
+    )
+    if (outcome.status === "rejected") {
+      logger.warn(
+        {
+          workspaceId: conversation.workspaceId,
+          contactId: conversation.contactId,
+          stepId: step.id,
+          inputFieldId: step.inputFieldId,
+          reason: outcome.reason,
+        },
+        "Set custom field step rejected; continuing with the remaining steps",
+      )
+    }
   } catch (error: unknown) {
     // Steps run one-per-BullMQ-job and the next step is only enqueued after
     // this one returns — a thrown error (e.g. an invalid number value) would

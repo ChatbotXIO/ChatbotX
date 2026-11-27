@@ -1,6 +1,11 @@
 import ky, { isHTTPError, type KyInstance, type Options } from "ky"
 import { API_URL, BUSINESS_API_URL } from "../constants"
-import { parseOriginError, TiktokAPIException } from "../exception"
+import {
+  isAccessTokenRejection,
+  parseOriginError,
+  TiktokAPIException,
+  TiktokAuthException,
+} from "../exception"
 import { logger } from "./logger"
 
 const RETRY_OPTIONS = {
@@ -38,10 +43,21 @@ abstract class BaseTiktokHttpClient {
     })
   }
 
-  private toException(error: unknown): TiktokAPIException {
+  private toException(
+    error: unknown,
+  ): TiktokAPIException | TiktokAuthException {
     const sdkException = parseOriginError(error)
+    const message = sdkException.message ?? "TikTok API call failed"
+    if (isAccessTokenRejection(sdkException)) {
+      return new TiktokAuthException(
+        message,
+        sdkException.httpStatusCode,
+        sdkException.code ?? "tiktokAuthError",
+        error,
+      )
+    }
     return new TiktokAPIException(
-      sdkException.message ?? "TikTok API call failed",
+      message,
       sdkException.httpStatusCode,
       sdkException.code,
       sdkException.subCode,

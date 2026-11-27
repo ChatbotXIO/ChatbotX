@@ -5,6 +5,7 @@ import {
   operatorTypes,
   parseContactActivityReferences,
 } from "@chatbotx.io/database/partials"
+import { zodBigintIdAsString } from "@chatbotx.io/utils"
 import { normalizeForMatch } from "@chatbotx.io/utils/normalize-for-match"
 import { z } from "zod"
 import { isChannelPostId } from "@/features/channel-posts/schema"
@@ -90,6 +91,36 @@ const DATE_PRESENCE_OPERATORS = [
 // Longest "Sent message" text a condition may compare against.
 const MAX_SENT_MESSAGE_FILTER_LENGTH = 1000
 
+const bigintId = zodBigintIdAsString()
+
+type IdSetRule = {
+  max: number
+  isId: (value: unknown) => boolean
+  message: string
+}
+
+// Fields whose value is a set of bigint ids. Validated here so a non-numeric
+// id is a 4xx instead of failing inside Postgres (500).
+const STATIC_ID_SET_RULES: Record<string, IdSetRule> = {
+  commentedOnPost: {
+    max: 100,
+    isId: isChannelPostId,
+    message: "Commented posts require one to 100 unique bigint ids",
+  },
+  votedOnPoll: {
+    max: 500,
+    isId: (value) => bigintId.safeParse(value).success,
+    message: "Polls require one to 500 unique numeric poll ids",
+  },
+}
+
+const isUniqueIdSet = (value: unknown, rule: IdSetRule) =>
+  Array.isArray(value) &&
+  value.length > 0 &&
+  value.length <= rule.max &&
+  new Set(value).size === value.length &&
+  value.every(rule.isId)
+
 const STATIC_OPERATOR_RULES: Record<string, readonly OperatorType[]> = {
   locale: BASE_OPERATORS,
   language: SET_OPERATORS,
@@ -120,11 +151,15 @@ const STATIC_OPERATOR_RULES: Record<string, readonly OperatorType[]> = {
   executedStep: SET_OPERATORS,
   keywordsReceived: SET_OPERATORS,
   completedWhatsAppFlows: SET_OPERATORS,
+  clickedAd: SET_OPERATORS,
   emailSent: SET_OPERATORS,
   emailDelivered: SET_OPERATORS,
   emailOpened: SET_OPERATORS,
   emailClicked: SET_OPERATORS,
   sentMessage: TEXT_FREE_OPERATORS,
+  // Multi-value eq/ne = voted on any / none of the polls (relation-set
+  // semantics); in/notIn are deliberately not offered.
+  votedOnPoll: BASE_OPERATORS,
   lastDelivered: DATE_PRESENCE_OPERATORS,
   lastUserInputType: [
     operatorTypes.enum.eq,
@@ -170,7 +205,7 @@ const STATIC_OPERATOR_RULES: Record<string, readonly OperatorType[]> = {
   shoppingCartIsEmpty: NON_NULLABLE_BOOLEAN_OPERATORS,
   lastSent: DATE_OPERATORS,
   lastSeen: DATE_OPERATORS,
-  lastInteraction: DATE_OPERATORS,
+  lastInteraction: DATE_PRESENCE_OPERATORS,
 }
 
 /**
@@ -236,17 +271,12 @@ export const staticFieldFilter = <T extends string>(field: T) =>
         return
       }
 
-      if (field === "commentedOnPost") {
-        if (
-          !Array.isArray(condition.value) ||
-          condition.value.length === 0 ||
-          condition.value.length > 100 ||
-          new Set(condition.value).size !== condition.value.length ||
-          !condition.value.every(isChannelPostId)
-        ) {
+      const idSetRule = STATIC_ID_SET_RULES[field]
+      if (idSetRule) {
+        if (!isUniqueIdSet(condition.value, idSetRule)) {
           ctx.addIssue({
             code: "custom",
-            message: "Commented posts require one to 100 unique bigint ids",
+            message: idSetRule.message,
             path: ["value"],
           })
         }

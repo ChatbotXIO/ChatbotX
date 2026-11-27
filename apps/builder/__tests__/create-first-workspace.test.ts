@@ -2,20 +2,23 @@ import { beforeEach, describe, expect, test, vi } from "vitest"
 import enMessages from "../messages/en.json"
 
 const mocks = vi.hoisted(() => ({
-  mockWorkspaceCreate: vi.fn(),
-  mockFindActiveByOwner: vi.fn(
-    async (): Promise<{ id: string } | undefined> => undefined,
-  ),
+  mockEnsureConnectTargetForOwner: vi.fn(),
+  mockEnsureFirstForOwner: vi.fn(),
+  mockResolveRequestTenantId: vi.fn(async () => "tenant-host"),
   mockRedirect: vi.fn((path: string) => {
     throw new Error(`redirect:${path}`)
   }),
 }))
 
 vi.mock("@chatbotx.io/business", () => ({
+  templateInstallIntentService: { clear: vi.fn(async () => undefined) },
   workspaceService: {
-    create: mocks.mockWorkspaceCreate,
-    findActiveByOwner: mocks.mockFindActiveByOwner,
+    ensureConnectTargetForOwner: mocks.mockEnsureConnectTargetForOwner,
+    ensureFirstForOwner: mocks.mockEnsureFirstForOwner,
   },
+}))
+vi.mock("../src/lib/tenant/request-tenant", () => ({
+  resolveRequestTenantId: mocks.mockResolveRequestTenantId,
 }))
 vi.mock("next/navigation", () => ({ redirect: mocks.mockRedirect }))
 
@@ -25,6 +28,7 @@ const { ChatbotXException, workspaceLimitReachedException } = await import(
 const {
   CREATE_CHANNEL_ERROR_MESSAGE_KEYS,
   createFirstWorkspace,
+  ensureFirstWorkspace,
   isCreateChannelErrorCode,
 } = await import("../src/lib/workspace/create-first-workspace")
 
@@ -57,32 +61,58 @@ describe("create-first-workspace", () => {
     expect(isCreateChannelErrorCode(undefined)).toBe(false)
   })
 
-  test("returns the created workspace on success when the user owns none yet", async () => {
-    mocks.mockWorkspaceCreate.mockResolvedValue({ id: "ws-new" })
+  test("createFirstWorkspace delegates to the empty-target service", async () => {
+    mocks.mockEnsureConnectTargetForOwner.mockResolvedValue({ id: "ws-new" })
 
     await expect(createFirstWorkspace("user-1")).resolves.toEqual({
       id: "ws-new",
     })
-    expect(mocks.mockFindActiveByOwner).toHaveBeenCalledWith({
+    expect(mocks.mockEnsureConnectTargetForOwner).toHaveBeenCalledWith({
       ownerId: "user-1",
+      name: "New Workspace",
+      tx: undefined,
+      quotaConsumption: undefined,
+      hostTenantId: "tenant-host",
     })
-    expect(mocks.mockWorkspaceCreate).toHaveBeenCalledWith({
-      data: { name: "New Workspace", ownerId: "user-1" },
-      createdBy: "user-1",
-    })
+    expect(mocks.mockEnsureFirstForOwner).not.toHaveBeenCalled()
   })
 
-  test("reuses the user's existing workspace instead of minting a second one (regression I7: a GET-route retry/back-button/replay must not create an orphan workspace every time)", async () => {
-    mocks.mockFindActiveByOwner.mockResolvedValueOnce({ id: "ws-existing" })
+  test("ensureFirstWorkspace keeps using the first-workspace service", async () => {
+    mocks.mockEnsureFirstForOwner.mockResolvedValue({ id: "ws-1" })
 
-    await expect(createFirstWorkspace("user-1")).resolves.toEqual({
-      id: "ws-existing",
-    })
-    expect(mocks.mockWorkspaceCreate).not.toHaveBeenCalled()
+    await ensureFirstWorkspace("user-1", { name: "Ann's workspace" })
+    expect(mocks.mockEnsureFirstForOwner).toHaveBeenCalledWith(
+      expect.objectContaining({ name: "Ann's workspace" }),
+    )
+    expect(mocks.mockEnsureConnectTargetForOwner).not.toHaveBeenCalled()
+  })
+
+  test("ensureFirstWorkspace passes the server-resolved host tenant down", async () => {
+    mocks.mockEnsureFirstForOwner.mockResolvedValue({ id: "ws-1" })
+
+    await ensureFirstWorkspace("user-1")
+    expect(mocks.mockEnsureFirstForOwner).toHaveBeenCalledWith(
+      expect.objectContaining({ hostTenantId: "tenant-host" }),
+    )
+  })
+
+  test("ensureFirstWorkspace returns null on a plan-limit failure instead of redirecting", async () => {
+    mocks.mockEnsureFirstForOwner.mockRejectedValue(
+      workspaceLimitReachedException(),
+    )
+
+    await expect(ensureFirstWorkspace("user-1")).resolves.toBeNull()
+    expect(mocks.mockRedirect).not.toHaveBeenCalled()
+  })
+
+  test("ensureFirstWorkspace rethrows unknown failures", async () => {
+    mocks.mockEnsureFirstForOwner.mockRejectedValue(new Error("db down"))
+
+    await expect(ensureFirstWorkspace("user-1")).rejects.toThrow("db down")
   })
 
   test("redirects to /channels/create?error=… on a plan-limit failure", async () => {
-    mocks.mockWorkspaceCreate.mockRejectedValue(
+    mocks.mockEnsureConnectTargetForOwner.mockRejectedValue(
       workspaceLimitReachedException(),
     )
 
@@ -92,10 +122,12 @@ describe("create-first-workspace", () => {
   })
 
   test("rethrows any other failure untouched, including unlisted ChatbotXException codes", async () => {
-    mocks.mockWorkspaceCreate.mockRejectedValueOnce(new Error("db down"))
+    mocks.mockEnsureConnectTargetForOwner.mockRejectedValueOnce(
+      new Error("db down"),
+    )
     await expect(createFirstWorkspace("user-1")).rejects.toThrow("db down")
 
-    mocks.mockWorkspaceCreate.mockRejectedValueOnce(
+    mocks.mockEnsureConnectTargetForOwner.mockRejectedValueOnce(
       new ChatbotXException("boom", "systemError"),
     )
     await expect(createFirstWorkspace("user-1")).rejects.toThrow("boom")

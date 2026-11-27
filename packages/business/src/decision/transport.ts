@@ -1,10 +1,7 @@
 import { readBodyWithLimit } from "@chatbotx.io/filesystem"
 import ky from "ky"
-import {
-  Agent,
-  type Response as UndiciResponse,
-  fetch as undiciFetch,
-} from "undici"
+import { fetch as undiciFetch } from "undici"
+import { createPinnedDispatcher, toWebResponse } from "../net/pinned-fetch"
 import { checkSsrfSafety } from "../net/ssrf-guard"
 
 const DECISION_REQUEST_TIMEOUT_MS = 2500
@@ -32,41 +29,6 @@ const resolveProviderEndpoint = (input: {
   return input.endpoint ?? null
 }
 
-const createWebResponse = (response: UndiciResponse): Response => {
-  const headers = new Headers()
-  response.headers.forEach((value, key) => {
-    headers.append(key, value)
-  })
-  const reader = response.body?.getReader()
-  const body = reader
-    ? new ReadableStream<Uint8Array>({
-        async cancel(reason) {
-          await reader.cancel(reason)
-        },
-        async pull(controller) {
-          const { done, value } = await reader.read()
-          if (done) {
-            controller.close()
-            return
-          }
-          if (!(value instanceof Uint8Array)) {
-            controller.error(
-              new Error("Decision provider returned invalid body"),
-            )
-            return
-          }
-          controller.enqueue(value)
-        },
-      })
-    : null
-
-  return new Response(body, {
-    headers,
-    status: response.status,
-    statusText: response.statusText,
-  })
-}
-
 /**
  * Posts JSON through a dispatcher whose connector dials only the already
  * validated public address. TLS still receives the original hostname.
@@ -89,12 +51,7 @@ export const postDecisionRequest = async (input: {
 
   const url = new URL(endpoint)
   const pinnedAddress = safety.resolvedIps[0]
-  const dispatcher = new Agent({
-    connect: {
-      host: pinnedAddress,
-      servername: url.hostname,
-    },
-  })
+  const dispatcher = createPinnedDispatcher(pinnedAddress, url.hostname)
 
   try {
     const client = ky.create({
@@ -115,7 +72,7 @@ export const postDecisionRequest = async (input: {
           signal: request.signal,
         })
 
-        return createWebResponse(response)
+        return toWebResponse(response)
       },
       redirect: "manual",
       retry: 0,
@@ -130,6 +87,7 @@ export const postDecisionRequest = async (input: {
     })
 
     if (response.status >= 300 && response.status < 400) {
+      await response.body?.cancel().catch(() => undefined)
       throw new Error("Decision provider redirect was rejected")
     }
     const bytes = await readBodyWithLimit(

@@ -1,12 +1,11 @@
 // @vitest-environment node
+import { UTF8_BOM } from "@chatbotx.io/utils/csv"
 import { describe, expect, test } from "vitest"
 import {
   buildContactsImportTemplateCsv,
   CONTACTS_IMPORT_TEMPLATE_COLUMNS,
   CONTACTS_IMPORT_TEMPLATE_FILENAME,
 } from "@/features/contacts/lib/contacts-import-template"
-
-const UTF8_BOM = "﻿"
 
 describe("buildContactsImportTemplateCsv", () => {
   const EN_TEMPLATE =

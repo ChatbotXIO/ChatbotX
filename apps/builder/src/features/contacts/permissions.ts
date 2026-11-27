@@ -1,69 +1,28 @@
-import { contactService } from "@chatbotx.io/business"
+import {
+  buildContactPermissionScope as buildContactPermissionScopeForMember,
+  type ContactPermissionScope as ContactPermissionScopeValue,
+  contactService,
+} from "@chatbotx.io/business"
 import {
   ChatbotXException,
   notFoundException,
 } from "@chatbotx.io/business/errors"
-import type { WorkspaceMemberPermissions } from "@chatbotx.io/database/partials"
-import {
-  hasContactsAccess,
-  hasWorkspacePermission,
-} from "@/lib/auth/permission-routes"
+import type { PermissionsInput } from "@chatbotx.io/business/workspace-member/permissions"
+import { isWorkspaceAdminMember } from "@chatbotx.io/business/workspace-member/predicates"
+import type { WorkspaceMemberModel } from "@chatbotx.io/database/types"
 import { getCurrentUserAndTargetWorkspace } from "@/lib/auth/utils"
 
-type Permissions = WorkspaceMemberPermissions | Record<string, unknown>
-
+export type { ContactPermissionScope } from "@chatbotx.io/business"
+export {
+  buildContactPermissionScope,
+  canAccessContactsSection,
+  canViewContactEmailAndPhone,
+} from "@chatbotx.io/business"
 export { maskContactEmailAndPhone } from "@chatbotx.io/business/contact-utils"
 export { stripContactPIIFields } from "@chatbotx.io/worker-config/contact-pii"
+export { TOKEN_CALLER_CAN_VIEW_EMAIL_AND_PHONE } from "./token-caller-permissions"
 
-export type ContactPermissionScope = {
-  canViewEmailAndPhone: boolean
-  restrictToAssignedUserId?: string
-}
-
-export function canViewContactEmailAndPhone(permissions: Permissions): boolean {
-  return hasWorkspacePermission(permissions, "emailAndPhone")
-}
-
-export function canAccessContactsSection(permissions: Permissions): boolean {
-  return hasContactsAccess(permissions)
-}
-
-export function getAssignedContactsUserId(input: {
-  permissions: Permissions
-  userId: string
-}): string | undefined {
-  if (hasWorkspacePermission(input.permissions, "superAdmin")) {
-    return
-  }
-
-  return hasWorkspacePermission(input.permissions, "onlyAssignedContacts")
-    ? input.userId
-    : undefined
-}
-
-/**
- * Builds a member's contact access scope, or `null` when contacts access is
- * denied. Callers must treat `null` as not found to avoid exposing contacts.
- */
-export function buildContactPermissionScope({
-  permissions,
-  userId,
-}: {
-  permissions: Permissions
-  userId: string
-}): ContactPermissionScope | null {
-  if (!canAccessContactsSection(permissions)) {
-    return null
-  }
-
-  return {
-    canViewEmailAndPhone: canViewContactEmailAndPhone(permissions),
-    restrictToAssignedUserId: getAssignedContactsUserId({
-      permissions,
-      userId,
-    }),
-  }
-}
+type Permissions = PermissionsInput
 
 /**
  * Gate for private per-contact reads; null scope is not-found so contact
@@ -75,8 +34,8 @@ export function requireContactPermissionScopeForMember({
 }: {
   permissions: Permissions
   userId: string
-}): ContactPermissionScope {
-  const scope = buildContactPermissionScope({ permissions, userId })
+}): ContactPermissionScopeValue {
+  const scope = buildContactPermissionScopeForMember({ permissions, userId })
   if (!scope) {
     throw notFoundException("Contact not found")
   }
@@ -85,14 +44,14 @@ export function requireContactPermissionScopeForMember({
 }
 export async function resolveContactPermissionScope(
   workspaceId: string,
-): Promise<ContactPermissionScope | null> {
+): Promise<ContactPermissionScopeValue | null> {
   const userAndWorkspace = await getCurrentUserAndTargetWorkspace(workspaceId)
   if (!userAndWorkspace) {
     return null
   }
   const { user, targetWorkspaceMember } = userAndWorkspace
 
-  return buildContactPermissionScope({
+  return buildContactPermissionScopeForMember({
     permissions: targetWorkspaceMember.permissions,
     userId: user.id,
   })
@@ -100,7 +59,7 @@ export async function resolveContactPermissionScope(
 
 export async function requireContactPermissionScope(
   workspaceId: string,
-): Promise<ContactPermissionScope> {
+): Promise<ContactPermissionScopeValue> {
   const scope = await resolveContactPermissionScope(workspaceId)
   if (scope) {
     return scope
@@ -127,8 +86,8 @@ export async function requireContactAccessForMember(input: {
   userId: string
   workspaceId: string
   contactId: string
-}): Promise<ContactPermissionScope> {
-  const scope = buildContactPermissionScope({
+}): Promise<ContactPermissionScopeValue> {
+  const scope = buildContactPermissionScopeForMember({
     permissions: input.permissions,
     userId: input.userId,
   })
@@ -143,4 +102,19 @@ export async function requireContactAccessForMember(input: {
   })
 
   return scope
+}
+
+/**
+ * Whose contact exports a member may list and download. An export holds
+ * contact email and phone numbers, so a plain agent reaches only their own;
+ * a workspace admin (owner or `superAdmin`) reaches every member's. Returns
+ * the user id to filter by, or undefined for no filter.
+ */
+export function exportFileOwnerFilter(context: {
+  user: { id: string }
+  workspaceMember: Pick<WorkspaceMemberModel, "role" | "permissions">
+}): string | undefined {
+  return isWorkspaceAdminMember(context.workspaceMember)
+    ? undefined
+    : context.user.id
 }

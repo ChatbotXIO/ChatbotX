@@ -92,7 +92,19 @@ vi.mock("@chatbotx.io/business", () => ({
       formId: "form-1",
       formName: "Form",
       adgroupId: "adgroup-1",
+      adId: "ad-1",
+      adName: "Ad",
+      adsetId: "adset-1",
+      adsetName: "Ad set",
+      campaignId: "campaign-1",
+      campaignName: "Campaign",
+      createdAt: new Date("2026-01-01T00:00:00Z"),
     }),
+  },
+  contactReferralEventService: {
+    findLatestAdTouchAt: vi
+      .fn()
+      .mockResolvedValue(new Date("2026-02-01T00:00:00Z")),
   },
   questionnaireSubmissionService: {
     findLatestCompletedForContact: vi
@@ -103,6 +115,11 @@ vi.mock("@chatbotx.io/business", () => ({
   workspaceApiTokenService: {
     resolveDefaultTokenPlaintext: vi.fn().mockResolvedValue("cbx_ws_plaintext"),
   },
+}))
+
+vi.mock("@chatbotx.io/business/pipeline/variable-targets", () => ({
+  loadLastPipelineItemId: vi.fn().mockResolvedValue("pipeline-item-1"),
+  loadPipelineVariableTargets: vi.fn().mockResolvedValue([]),
 }))
 
 vi.mock("@chatbotx.io/business/system-field", () => ({
@@ -127,6 +144,8 @@ vi.mock("../src/helpers/contact", () => ({
   findPrimaryContactChannel: vi.fn().mockResolvedValue("messenger"),
   listContactNotesString: vi.fn().mockResolvedValue("note"),
   getLatestContactNoteString: vi.fn().mockResolvedValue("note"),
+  listContactAdIdsString: vi.fn().mockResolvedValue("ad-1, ad-2"),
+  getFirstContactAdId: vi.fn().mockResolvedValue("ad-1"),
 }))
 
 vi.mock("../src/helpers/leaderboard", () => ({
@@ -197,6 +216,7 @@ const contactInbox = {
   lastOutboundMessageAt: new Date("2026-01-02T03:04:05.000Z"),
   lastBtnTitle: "Choose plan",
   lastStoryId: "story-1",
+  lastUserInputType: "text",
   lastInputFailure: "Invalid email",
   lastErrorLog: "(#551) unavailable",
   webchatParentUrl: "https://shop.example",
@@ -227,6 +247,8 @@ const conversation = {
   id: "conversation-1",
   contactId: "contact-1",
   workspaceId: "workspace-1",
+  lastStep: "step-1",
+  currentStep: "step-2",
 } as ConversationModel
 
 const fullContext = {

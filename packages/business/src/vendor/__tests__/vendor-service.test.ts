@@ -11,6 +11,19 @@ const mocks = vi.hoisted(() => ({
   invalidate: vi.fn(),
 }))
 
+vi.mock("../../ecommerce-settings/store-source", () => ({
+  resolveStoreSource: async () => "chatbotx",
+  ecommerceSettingsCacheTag: (workspaceId: string) =>
+    `ecommerce-settings:${workspaceId}`,
+}))
+vi.mock("../../template/installed-resource.service", () => ({
+  assertResourceEditable: vi.fn(),
+  changedKeysOf: () => [],
+  withDeleteGuard: (_input: unknown, run: (tx: unknown) => unknown) => run({}),
+}))
+vi.mock("../../template/template-resource-locks", () => ({
+  withTemplateLockedTransaction: (run: (tx: unknown) => unknown) => run({}),
+}))
 vi.mock("@chatbotx.io/redis", () => ({
   invalidateCacheByTags: (...args: unknown[]) => mocks.invalidate(...args),
 }))
@@ -169,6 +182,7 @@ describe("vendorService.update category consistency", () => {
       expect.objectContaining({
         values: { categoryId: "new", subcategoryId: null },
       }),
+      expect.anything(),
     )
   })
 
@@ -184,6 +198,7 @@ describe("vendorService.update category consistency", () => {
 
     expect(mocks.update).toHaveBeenCalledWith(
       expect.objectContaining({ values: { categoryId: "new" } }),
+      expect.anything(),
     )
   })
 

@@ -18,12 +18,13 @@ export type AdsSwitcherIntegration = {
   isCoexist: boolean
 }
 
-// Redacted to id + name — the channel filter (Phase 6) only needs these to
-// populate the messenger/instagram integration select; the full rows carry
+// Redacted to id + name + inbox — the dashboard maps the shared Inbox filter
+// onto a channel's integrations through `inboxId`; the full rows carry
 // encrypted `auth`, which must never reach a "use client" component's props.
 export type AdsSwitcherChannelIntegration = {
   id: string
   name: string
+  inboxId: string
 }
 
 export type AdsSwitcherData = {
@@ -77,14 +78,12 @@ export async function getAdsSwitcherData(
       WHATSAPP_OAUTH_CALLBACK_PATH,
       originUrl,
     ).toString(),
-    messengerIntegrations: messengerIntegrations.map(({ id, name }) => ({
-      id,
-      name,
-    })),
-    instagramIntegrations: instagramIntegrations.map(({ id, name }) => ({
-      id,
-      name,
-    })),
+    messengerIntegrations: messengerIntegrations.map(
+      ({ id, name, inboxId }) => ({ id, name, inboxId }),
+    ),
+    instagramIntegrations: instagramIntegrations.map(
+      ({ id, name, inboxId }) => ({ id, name, inboxId }),
+    ),
     workspaceCreatedAt: workspace.createdAt,
   }
 }

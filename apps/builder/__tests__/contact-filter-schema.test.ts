@@ -116,6 +116,45 @@ describe("staticFieldFilter", () => {
     ).toBe(false)
   })
 
+  test("votedOnPoll accepts Is / Is not / Has no value with several polls and rejects in/notIn", () => {
+    const parse = (operator: string, value?: string[]) =>
+      staticFieldFilter("votedOnPoll").safeParse({
+        field: "votedOnPoll",
+        operator,
+        ...(value ? { value } : {}),
+      }).success
+
+    expect(parse(operatorTypes.enum.eq, ["1", "2"])).toBe(true)
+    expect(parse(operatorTypes.enum.ne, ["1", "2"])).toBe(true)
+    expect(parse(operatorTypes.enum.isEmpty)).toBe(true)
+    expect(parse(operatorTypes.enum.in, ["1"])).toBe(false)
+    expect(parse(operatorTypes.enum.notIn, ["1"])).toBe(false)
+    expect(parse(operatorTypes.enum.isNotEmpty)).toBe(false)
+  })
+
+  test("votedOnPoll rejects values that are not one to 500 unique bigint poll ids", () => {
+    const parse = (value: unknown) =>
+      staticFieldFilter("votedOnPoll").safeParse({
+        field: "votedOnPoll",
+        operator: operatorTypes.enum.eq,
+        value,
+      }).success
+
+    expect(parse(["best-dish"])).toBe(false)
+    expect(parse(["1.5"])).toBe(false)
+    expect(parse(["-1"])).toBe(false)
+    expect(parse(["99999999999999999999"])).toBe(false)
+    expect(parse("1")).toBe(false)
+    expect(parse([])).toBe(false)
+    expect(parse(["1", "1"])).toBe(false)
+    expect(parse(Array.from({ length: 501 }, (_, i) => String(i + 1)))).toBe(
+      false,
+    )
+    expect(parse(Array.from({ length: 500 }, (_, i) => String(i + 1)))).toBe(
+      true,
+    )
+  })
+
   test("rejects disabled operators and missing interval values", () => {
     expect(
       staticFieldFilter("tags").safeParse({
@@ -787,5 +826,23 @@ describe("flow-only contact filter fields", () => {
     expect(withCondition({ operator: "notIn", value: ["1"] })).toBe(true)
     expect(withCondition({ operator: "eq", value: "1" })).toBe(false)
     expect(withCondition({ operator: "in" })).toBe(false)
+  })
+})
+
+describe("lastInteraction filter", () => {
+  const parse = (operator: string, value?: string) =>
+    staticFieldFilter("lastInteraction").safeParse({
+      field: "lastInteraction",
+      operator,
+      value,
+    }).success
+
+  test("accepts isEmpty (never messaged) and isNotEmpty (has messaged) without a value", () => {
+    expect(parse(operatorTypes.enum.isEmpty)).toBe(true)
+    expect(parse(operatorTypes.enum.isNotEmpty)).toBe(true)
+  })
+
+  test("still accepts a date comparison", () => {
+    expect(parse(operatorTypes.enum.gt, "2026-05-19T10:00:00Z")).toBe(true)
   })
 })

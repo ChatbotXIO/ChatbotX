@@ -14,6 +14,7 @@ import {
 } from "drizzle-orm/pg-core"
 import type { z } from "zod"
 import {
+  type RoutingRolesSnapshot,
   type WhatsappCallHoursSnapshot,
   type WhatsappCallRecordingMode,
   type WhatsappCallTranscriptionMode,
@@ -121,6 +122,12 @@ export const integrationWhatsappModel = pgTable(
      * from the `recording` object's `purpose`/`announcement_language`.
      */
     callRecordingPurpose: text(),
+    /**
+     * Send policy for Pix payment-request buttons: `true` sends them with
+     * `flow_type: APPSWITCH` (Pix with redirect — only for businesses Meta has
+     * onboarded), `false` omits it so the buyer copies and pastes the code.
+     */
+    pixRedirectEnabled: boolean().notNull().default(false),
     coexistAiReadsSyncedHistory: boolean().notNull().default(false),
     isCoexist: boolean().notNull().default(false),
     platformType: text().notNull().default(""),
@@ -144,6 +151,13 @@ export const integrationWhatsappModel = pgTable(
       onDelete: "set null",
       onUpdate: "cascade",
     }),
+    /**
+     * This app's Conversation Routing roles on the number, as Meta last
+     * reported them (`GET /{phone_number_id}/routing_roles`). `null` = never
+     * checked. Tells whether this app is the escalation partner (the only role
+     * that may `take`).
+     */
+    routingRoles: jsonb().$type<RoutingRolesSnapshot>(),
     workspaceId: bigintAsString()
       .notNull()
       .references(() => workspaceModel.id, {
@@ -165,6 +179,11 @@ export const integrationWhatsappModel = pgTable(
     index("IntegrationWhatsapp_workspaceId_idx").using(
       "btree",
       table.workspaceId.asc().nullsLast(),
+    ),
+    // account_update webhooks arrive keyed by WABA id only.
+    index("IntegrationWhatsapp_wabaId_idx").using(
+      "btree",
+      table.wabaId.asc().nullsLast(),
     ),
     index("IntegrationWhatsapp_handoverResumeFlowId_idx").using(
       "btree",

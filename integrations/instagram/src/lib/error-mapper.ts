@@ -1,8 +1,10 @@
 import {
   ChannelError,
   ChannelErrorCategory,
+  ChannelErrorReason,
   UNKNOWN_ERROR,
 } from "@chatbotx.io/sdk"
+import { isGraphAppNotInstalled } from "@chatbotx.io/utils/graph-error"
 import {
   type ChannelErrorSource,
   InstagramException,
@@ -38,10 +40,17 @@ const PERMISSION_DENIED_CODES = new Set([
   368, // Temporarily blocked for policy violations
 ])
 
-const RATE_LIMITED_CODES = new Set([
-  4, // App-level rate limit (FB Graph + IG spam)
-  17, // User-level rate limit
-  613, // Custom rate (FB Graph)
+// developers.facebook.com/docs/graph-api/overview/rate-limiting: every code here
+// means "stop calling and wait". A `category` makes message sends auto-retry;
+// an entry without one only carries the `rate_limited` reason, so send behaviour
+// is unchanged and just the contact scan (which reads the reason) backs off.
+type RateLimitEntry = { category?: ChannelErrorCategory }
+
+const RATE_LIMIT_CODES: ReadonlyMap<number, RateLimitEntry> = new Map([
+  [4, { category: ChannelErrorCategory.RATE_LIMITED }], // App-level rate limit (FB Graph + IG spam)
+  [17, { category: ChannelErrorCategory.RATE_LIMITED }], // User-level rate limit
+  [613, { category: ChannelErrorCategory.RATE_LIMITED }], // Custom rate (FB Graph)
+  [80_002, {}], // Business Use Case limit: Instagram
 ])
 
 const QUOTA_EXCEEDED_CODES = new Set([
@@ -105,8 +114,9 @@ function categorize(
     return ChannelErrorCategory.AUTH_FAILED
   }
 
-  if (RATE_LIMITED_CODES.has(code)) {
-    return ChannelErrorCategory.RATE_LIMITED
+  const rateLimitCategory = RATE_LIMIT_CODES.get(code)?.category
+  if (rateLimitCategory) {
+    return rateLimitCategory
   }
 
   if (QUOTA_EXCEEDED_CODES.has(code)) {
@@ -137,6 +147,28 @@ function categorize(
   return ChannelErrorCategory.UNKNOWN
 }
 
+// Account-level send blocks keyed by subcode (code 100). Source:
+// developers.facebook.com/docs/instagram-platform/instagram-api-with-instagram-login/messaging-api
+const ACCOUNT_SEND_BLOCK_REASONS: ReadonlyMap<number, ChannelErrorReason> =
+  new Map([
+    // The business was blocked from sending messages via the IG Messaging API
+    [2_534_029, ChannelErrorReason.ACCOUNT_POLICY_BLOCKED],
+  ])
+
+function resolveReason(
+  code: number | undefined,
+  subCode: number | undefined,
+): ChannelErrorReason | undefined {
+  if (code !== undefined && RATE_LIMIT_CODES.has(code)) {
+    return ChannelErrorReason.RATE_LIMITED
+  }
+  if (code !== 100 || subCode === undefined) {
+    return
+  }
+
+  return ACCOUNT_SEND_BLOCK_REASONS.get(subCode)
+}
+
 function defaultHttpStatus(category: ChannelErrorCategory): number {
   switch (category) {
     case ChannelErrorCategory.RATE_LIMITED:
@@ -163,6 +195,7 @@ function mapApiFields(fields: ChannelErrorSource): ChannelError {
     httpStatusCode: fields.httpStatusCode ?? defaultHttpStatus(category),
     subCode: fields.subCode,
     type: fields.type,
+    reason: resolveReason(numCode, numSubCode),
   })
 }
 
@@ -201,5 +234,17 @@ export function isRevokedTokenError(error: unknown): boolean {
     mappedError.category === ChannelErrorCategory.AUTH_FAILED &&
     mappedError.code === 190 &&
     REVOKED_TOKEN_SUBCODES.has(subCode)
+  )
+}
+
+// === Disconnect-safe error detection ===
+/** True when retrying the unsubscribe is pointless: the local disconnect proceeds. */
+export function isDisconnectSafeError(error: unknown): boolean {
+  if (!(error instanceof InstagramException)) {
+    return false
+  }
+  return (
+    isRevokedTokenError(error) ||
+    isGraphAppNotInstalled(mapToChannelError(error))
   )
 }

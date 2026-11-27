@@ -7,6 +7,7 @@ import { workspaceTokenAuthAPIForScope } from "@/orpc"
 import { getEcommerceSettings } from "../lib/get-ecommerce-settings"
 import {
   ecommerceSettingsPublicResource,
+  toEcommerceSettingsPatch,
   updateEcommerceSettingsPublicRequest,
 } from "../schema/public"
 
@@ -43,7 +44,7 @@ export const ecommerceSettingsPublicRouter = {
     .handler(async ({ context, input }) => {
       await ecommerceSettingsService.update({
         workspaceId: context.workspace.id,
-        patch: input,
+        patch: toEcommerceSettingsPatch(input),
       })
       return await getEcommerceSettings(context.workspace.id)
     }),

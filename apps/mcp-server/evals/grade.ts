@@ -5,6 +5,7 @@ import type { FixtureSnapshot, HttpTrace } from "./sandbox"
 
 export type ModelToolCall = {
   arguments: Record<string, unknown>
+  confirmationRequired?: boolean
   isError?: boolean
   name: string
   result?: unknown

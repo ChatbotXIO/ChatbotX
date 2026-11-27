@@ -19,6 +19,10 @@ vi.mock("@chatbotx.io/event-bus/worker", () => ({
   stopWorker: state.stopWorker,
 }))
 
+vi.mock("@chatbotx.io/worker-config", () => ({
+  closeAllQueueEvents: vi.fn(async () => undefined),
+}))
+
 vi.mock("../src/lib/bootstrap", () => ({
   ensureBootstrapped: state.ensureBootstrapped,
 }))
@@ -53,5 +57,48 @@ test("drains realtime events after the event worker stop fails", async () => {
     state.flushAllPendingWorkspaceRealtimeEvents.mock.invocationCallOrder[0] ??
       Number.POSITIVE_INFINITY,
   )
+  exit.mockRestore()
+})
+
+test("a startWorker rejection takes the failed-to-start path", async () => {
+  const exit = vi
+    .spyOn(process, "exit")
+    .mockImplementation((() => undefined) as never)
+  state.startWorker.mockRejectedValueOnce(new Error("redis unavailable"))
+  vi.resetModules()
+
+  await import("../src/events/worker")
+
+  await vi.waitFor(() => {
+    expect(state.loggerError).toHaveBeenCalledWith(
+      expect.objectContaining({ worker: "events" }),
+      "Failed to start worker",
+    )
+  })
+  await vi.waitFor(() => {
+    expect(exit).toHaveBeenCalledWith(1)
+  })
+  exit.mockRestore()
+})
+
+test("stops consumers a shutdown missed because it began mid-startup", async () => {
+  const exit = vi
+    .spyOn(process, "exit")
+    .mockImplementation((() => undefined) as never)
+  const { promise: started, resolve: finishStart } =
+    Promise.withResolvers<void>()
+  state.startWorker.mockReturnValueOnce(started)
+  state.stopWorker.mockClear()
+  vi.resetModules()
+
+  await import("../src/events/worker")
+  await vi.waitFor(() => expect(state.startWorker).toHaveBeenCalled())
+
+  // The closer stops the partial set; modules started after it still consume.
+  process.emit("SIGTERM")
+  await vi.waitFor(() => expect(state.stopWorker).toHaveBeenCalledOnce())
+  finishStart()
+
+  await vi.waitFor(() => expect(state.stopWorker).toHaveBeenCalledTimes(2))
   exit.mockRestore()
 })

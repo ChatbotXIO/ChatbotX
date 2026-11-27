@@ -1,35 +1,65 @@
-import { randomUUID } from "node:crypto"
+import { createHash, randomUUID } from "node:crypto"
 import {
   createServer,
   type IncomingMessage,
   type ServerResponse,
 } from "node:http"
+import { getChildLogger } from "@chatbotx.io/logger"
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js"
 import { SSEServerTransport } from "@modelcontextprotocol/sdk/server/sse.js"
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js"
 import { isInitializeRequest } from "@modelcontextprotocol/sdk/types.js"
 import { env } from "../env"
+import { resolveHeaderValue } from "../http-headers"
+import {
+  buildProtectedResourceMetadata,
+  buildWwwAuthenticate,
+  isConnectorProfileAudience,
+  protectedResourcePrefix,
+} from "../oauth"
+import { introspectToken } from "../token-introspection"
 import type { CreateMcpServerOptions } from "./create-mcp-server"
+import {
+  PayloadTooLargeError,
+  parseRequestBody,
+  writeJsonRpcError,
+  writePlainText,
+} from "./http-utils"
+import {
+  CLAUDE_INTERNAL_PATH,
+  handleClaudeRequest,
+  handleOpenAiRequest,
+  OPENAI_INTERNAL_PATH,
+} from "./profile-transport"
+import { createMcpRateLimitGuard } from "./rate-limit"
+import { IdleSessionSweeper } from "./session-sweeper"
+
+const logger = getChildLogger("mcp-server")
 
 /**
- * Mutable holder for a session's current workspace token. The token
- * captured at connect time (GET `/sse`, or POST `/messages` `initialize`)
- * seeds `current`; every later request routed to the same session can
- * overwrite it if — and only if — that request itself carries a token (see
- * `updateApiKeyStateFromRequest`). `createMcpServer`'s `getApiKey` reads
- * `current` lazily on every tool call, so a token rotated or swapped
- * mid-session takes effect on the next call without a reconnect.
+ * Mutable holder for a session's current credentials. Every request may
+ * replace only fields it supplies, so an OAuth caller can select a workspace
+ * once and retain it across a Streamable HTTP session.
  */
-type ApiKeyState = { current: string }
+type CredentialState = { token: string; workspaceId?: string }
+
+/**
+ * Who opened a session, from the verified token: the OAuth user and client,
+ * or a hash of a workspace token. Undefined when OAuth is disabled and no
+ * request is authenticated by this server.
+ */
+type SessionIdentity = string | undefined
 
 type SseSession = {
-  apiKeyState: ApiKeyState
+  credentialState: CredentialState
+  identity: SessionIdentity
   server: McpServer
   transport: StreamableHTTPServerTransport
 }
 
 type LegacySseSession = {
-  apiKeyState: ApiKeyState
+  credentialState: CredentialState
+  identity: SessionIdentity
   server: McpServer
   transport: SSEServerTransport
 }
@@ -43,9 +73,22 @@ type ResolvedSession =
 const sseSessions = new Map<string, SseSession>()
 const legacySseSessions = new Map<string, LegacySseSession>()
 
-const MAX_BODY_BYTES = 1024 * 1024
+const sseSweeper = new IdleSessionSweeper(async (sessionId) => {
+  const session = sseSessions.get(sessionId)
+  sseSessions.delete(sessionId)
+  await session?.transport.close()
+})
+const legacySweeper = new IdleSessionSweeper(async (sessionId) => {
+  const session = legacySseSessions.get(sessionId)
+  legacySseSessions.delete(sessionId)
+  await session?.transport.close()
+})
 
-class PayloadTooLargeError extends Error {}
+/** Refreshes the idle timer of whichever map owns the session. */
+const touchSession = (resolved: ResolvedSession, sessionId: string): void => {
+  const sweeper = resolved.kind === "streamable" ? sseSweeper : legacySweeper
+  sweeper.touch(sessionId)
+}
 
 const resolveSession = (sessionId: string): ResolvedSession | undefined => {
   const streamableSession = sseSessions.get(sessionId)
@@ -59,35 +102,70 @@ const resolveSession = (sessionId: string): ResolvedSession | undefined => {
   }
 }
 
+const SSE_ROUTE = "/sse"
+const MESSAGES_ROUTE = "/messages"
+
+/** The full request path of a route below `CHATBOTX_MCP_BASE_PATH`. */
+const mcpPath = (route: string): string =>
+  `${env.CHATBOTX_MCP_BASE_PATH}${route}`
+
+/** The route below `CHATBOTX_MCP_BASE_PATH`, or undefined outside it. */
+const routeOf = (pathname: string): string | undefined => {
+  const base = env.CHATBOTX_MCP_BASE_PATH
+  if (!base) {
+    return pathname
+  }
+  return pathname.startsWith(`${base}/`)
+    ? pathname.slice(base.length)
+    : undefined
+}
+
+/** Each connector profile's dedicated transport, keyed by route. */
+const PROFILE_TRANSPORTS = new Map([
+  [OPENAI_INTERNAL_PATH, handleOpenAiRequest],
+  [CLAUDE_INTERNAL_PATH, handleClaudeRequest],
+])
+
 const apiTokenHeaderNames = ["x-workspace-token", "x-chatbo-token"] as const
 
-export const resolveHeaderValue = (
-  value: string | string[] | undefined,
-): string => {
-  if (typeof value === "string") {
-    return value.trim()
-  }
+export { resolveHeaderValue } from "../http-headers"
 
-  if (Array.isArray(value)) {
-    for (const item of value) {
-      const trimmed = item.trim()
-      if (trimmed.length > 0) {
-        return trimmed
-      }
-    }
-  }
+const queryTokenOf = (req: IncomingMessage): string | undefined => {
+  const url = new URL(req.url ?? "", "http://localhost")
+  return (
+    (
+      url.searchParams.get("workspace_token") ?? url.searchParams.get("token")
+    )?.trim() || undefined
+  )
+}
 
-  return ""
+/** Logs (never the token) when a credential arrives in the URL. */
+const warnOnQueryToken = (req: IncomingMessage): void => {
+  if (!queryTokenOf(req)) {
+    return
+  }
+  const accepted = env.CHATBOTX_MCP_ALLOW_QUERY_TOKEN === "true"
+  logger.warn(
+    { accepted, path: new URL(req.url ?? "", "http://localhost").pathname },
+    accepted
+      ? "MCP token sent in the URL query; deprecated, send it as Authorization: Bearer"
+      : "MCP token sent in the URL query was ignored (CHATBOTX_MCP_ALLOW_QUERY_TOKEN=false)",
+  )
 }
 
 export const getApiTokenFromRequest = (
   req: IncomingMessage,
 ): string | undefined => {
-  const url = new URL(req.url ?? "", "http://localhost")
-  const urlToken = (
-    url.searchParams.get("workspace_token") ?? url.searchParams.get("token")
-  )?.trim()
-  if (urlToken) {
+  const authorization = resolveHeaderValue(req.headers.authorization)
+  if (authorization.startsWith("Bearer ")) {
+    const token = authorization.slice("Bearer ".length).trim()
+    if (token) {
+      return token
+    }
+  }
+
+  const urlToken = queryTokenOf(req)
+  if (urlToken && env.CHATBOTX_MCP_ALLOW_QUERY_TOKEN === "true") {
     return urlToken
   }
 
@@ -99,66 +177,147 @@ export const getApiTokenFromRequest = (
   }
 }
 
-export const makeApiKeyState = (req: IncomingMessage): ApiKeyState => ({
-  current: getApiTokenFromRequest(req) || env.CHATBOTX_API_KEY,
+export const getWorkspaceIdFromRequest = (
+  req: IncomingMessage,
+): string | undefined => {
+  const url = new URL(req.url ?? "", "http://localhost")
+  return (
+    url.searchParams.get("workspace_id")?.trim() ||
+    resolveHeaderValue(req.headers["x-workspace-id"]) ||
+    undefined
+  )
+}
+
+export const makeCredentialState = (req: IncomingMessage): CredentialState => ({
+  token: getApiTokenFromRequest(req) || env.CHATBOTX_API_KEY,
+  workspaceId: getWorkspaceIdFromRequest(req),
 })
 
-/**
- * Priority order is unchanged from connect time
- * (`?workspace_token=`/`?token=` → `x-workspace-token` → `x-chatbo-token`) —
- * only applied per-request instead of once. A request that carries no token
- * of its own (e.g. a bare Streamable HTTP GET for server-initiated
- * messages) leaves `state.current` as it was, so the connect-time or
- * previously-overwritten token keeps serving until a request explicitly
- * supplies a new one.
- */
-export const updateApiKeyStateFromRequest = (
-  state: ApiKeyState,
+export const updateCredentialStateFromRequest = (
+  state: CredentialState,
   req: IncomingMessage,
 ): void => {
   const token = getApiTokenFromRequest(req)
   if (token) {
-    state.current = token
+    state.token = token
+  }
+  const workspaceId = getWorkspaceIdFromRequest(req)
+  if (workspaceId) {
+    state.workspaceId = workspaceId
   }
 }
 
-const getApiKeyFromState = (state: ApiKeyState) => (): string => state.current
+const getCredentialsFromState = (state: CredentialState) => () =>
+  state.token
+    ? { token: state.token, workspaceId: state.workspaceId }
+    : undefined
 
 const enableCors = (res: ServerResponse): void => {
   res.setHeader("Access-Control-Allow-Origin", env.CHATBOTX_MCP_CORS_ORIGIN)
   res.setHeader("Access-Control-Allow-Methods", "GET,POST,OPTIONS")
   res.setHeader("Access-Control-Allow-Headers", "*")
+  res.setHeader("Access-Control-Expose-Headers", "WWW-Authenticate")
 }
 
-const parseRequestBody = async (req: IncomingMessage): Promise<unknown> => {
-  const contentLength = Number(
-    resolveHeaderValue(req.headers["content-length"]),
-  )
-  if (Number.isFinite(contentLength) && contentLength > MAX_BODY_BYTES) {
-    throw new PayloadTooLargeError()
+type VerifiedIntrospection = Extract<
+  Awaited<ReturnType<typeof introspectToken>>,
+  { status: "ok" }
+>
+
+/** The verified OAuth audience; other credentials have none. */
+const tokenAudiences = (result: VerifiedIntrospection): string[] => {
+  const { principal } = result.data
+  return principal?.credentialType === "oauth" ? [principal.audience] : []
+}
+
+type Authorization = { ok: false } | { ok: true; identity: string }
+
+const UNAUTHORIZED_MESSAGE = "Unauthorized: Authentication required"
+// Matches how long token introspection caches an `unavailable` result.
+const AUTH_UNAVAILABLE_RETRY_AFTER_SECONDS = "2"
+
+const hashToken = (token: string): string =>
+  createHash("sha256").update(token).digest("base64url")
+
+/**
+ * An OAuth session belongs to its user and client, so a refreshed access
+ * token keeps it; any other credential is identified by its own hash.
+ */
+const identityOf = (
+  introspection: VerifiedIntrospection,
+  token: string,
+): string => {
+  const { principal } = introspection.data
+  return principal?.credentialType === "oauth"
+    ? `oauth:${principal.issuer}:${principal.clientId}:${principal.subject}`
+    : `token:${hashToken(token)}`
+}
+
+const authorizeRequest = async (
+  req: IncomingMessage,
+  res: ServerResponse,
+  pathSuffix: string,
+): Promise<Authorization> => {
+  const token = getApiTokenFromRequest(req) || env.CHATBOTX_API_KEY
+  if (!token) {
+    writeJsonRpcError(
+      res,
+      401,
+      UNAUTHORIZED_MESSAGE,
+      buildWwwAuthenticate(req, pathSuffix),
+    )
+    return { ok: false }
   }
 
-  const chunks: Buffer[] = []
-  let bodyBytes = 0
-  for await (const chunk of req) {
-    const buffer = typeof chunk === "string" ? Buffer.from(chunk) : chunk
-    bodyBytes += buffer.byteLength
-    if (bodyBytes > MAX_BODY_BYTES) {
-      throw new PayloadTooLargeError()
-    }
-    chunks.push(buffer)
+  const result = await introspectToken(token, getWorkspaceIdFromRequest(req))
+  if (result.status === "unauthorized") {
+    writeJsonRpcError(
+      res,
+      401,
+      UNAUTHORIZED_MESSAGE,
+      buildWwwAuthenticate(req, pathSuffix, "invalid_token"),
+    )
+    return { ok: false }
+  }
+  if (result.status === "configError") {
+    writeJsonRpcError(res, 400, result.message)
+    return { ok: false }
+  }
+  // Fails closed, like the connector profiles: introspection and the tool
+  // calls hit the same API, so admitting the request would not help it.
+  if (result.status !== "ok") {
+    res.setHeader("Retry-After", AUTH_UNAVAILABLE_RETRY_AFTER_SECONDS)
+    writeJsonRpcError(res, 503, "Authentication is temporarily unavailable")
+    return { ok: false }
   }
 
-  if (chunks.length === 0) {
-    return
+  // Connector-profile tokens are only valid on their dedicated transport
+  // (`/mcp/openai`, `/mcp/claude`); they must not authenticate the default
+  // profile and its `call_tool` access to every operation.
+  if (tokenAudiences(result).some(isConnectorProfileAudience)) {
+    writeJsonRpcError(
+      res,
+      401,
+      UNAUTHORIZED_MESSAGE,
+      buildWwwAuthenticate(req, pathSuffix, "invalid_token"),
+    )
+    return { ok: false }
   }
 
-  const rawBody = Buffer.concat(chunks).toString("utf8").trim()
-  if (rawBody.length === 0) {
-    return
-  }
+  return { ok: true, identity: identityOf(result, token) }
+}
 
-  return JSON.parse(rawBody) as unknown
+/** Refuses a request on a session that another identity opened. */
+const rejectForeignSession = (
+  res: ServerResponse,
+  session: { identity: SessionIdentity },
+  identity: SessionIdentity,
+): boolean => {
+  if (session.identity === identity) {
+    return false
+  }
+  writePlainText(res, 403, "Session belongs to a different identity")
+  return true
 }
 
 const getSessionId = (req: IncomingMessage): string | null => {
@@ -175,20 +334,11 @@ const setSessionIdHeader = (req: IncomingMessage, sessionId: string): void => {
   req.headers["mcp-session-id"] = sessionId
 }
 
-const writePlainText = (
-  res: ServerResponse,
-  statusCode: number,
-  message: string,
-): void => {
-  res.statusCode = statusCode
-  res.setHeader("Content-Type", "text/plain; charset=utf-8")
-  res.end(message)
-}
-
 const handleSseRequest = async (
   req: IncomingMessage,
   res: ServerResponse,
   createMcpServer: CreateMcpServerFn,
+  identity: SessionIdentity,
 ): Promise<void> => {
   if (req.method === "OPTIONS") {
     res.statusCode = 204
@@ -203,21 +353,21 @@ const handleSseRequest = async (
 
   const sessionId = getSessionId(req)
   if (!sessionId) {
-    const apiKeyState = makeApiKeyState(req)
+    const credentialState = makeCredentialState(req)
     const server = createMcpServer({
-      getApiKey: getApiKeyFromState(apiKeyState),
+      getCredentials: getCredentialsFromState(credentialState),
     })
-    const transport = new SSEServerTransport(
-      env.CHATBOTX_MCP_MESSAGES_PATH,
-      res,
-    )
+    const transport = new SSEServerTransport(mcpPath(MESSAGES_ROUTE), res)
     legacySseSessions.set(transport.sessionId, {
-      apiKeyState,
+      credentialState,
+      identity,
       server,
       transport,
     })
+    legacySweeper.touch(transport.sessionId)
     transport.onclose = () => {
       legacySseSessions.delete(transport.sessionId)
+      legacySweeper.forget(transport.sessionId)
     }
     await server.connect(transport)
     return
@@ -230,7 +380,11 @@ const handleSseRequest = async (
   }
 
   const { session } = resolvedSession
-  updateApiKeyStateFromRequest(session.apiKeyState, req)
+  if (rejectForeignSession(res, session, identity)) {
+    return
+  }
+  touchSession(resolvedSession, sessionId)
+  updateCredentialStateFromRequest(session.credentialState, req)
   setSessionIdHeader(req, sessionId)
   await session.transport.handleRequest(req, res)
 }
@@ -240,19 +394,22 @@ const startStreamableSession = async (
   res: ServerResponse,
   parsedBody: unknown,
   createMcpServer: CreateMcpServerFn,
+  identity: SessionIdentity,
 ): Promise<void> => {
-  const apiKeyState = makeApiKeyState(req)
+  const credentialState = makeCredentialState(req)
   const server = createMcpServer({
-    getApiKey: getApiKeyFromState(apiKeyState),
+    getCredentials: getCredentialsFromState(credentialState),
   })
   const transport = new StreamableHTTPServerTransport({
     sessionIdGenerator: () => randomUUID(),
     onsessioninitialized: (initializedSessionId) => {
       sseSessions.set(initializedSessionId, {
-        apiKeyState,
+        credentialState,
+        identity,
         server,
         transport,
       })
+      sseSweeper.touch(initializedSessionId)
     },
   })
 
@@ -260,6 +417,7 @@ const startStreamableSession = async (
     const activeSessionId = transport.sessionId
     if (activeSessionId) {
       sseSessions.delete(activeSessionId)
+      sseSweeper.forget(activeSessionId)
     }
   }
 
@@ -271,6 +429,7 @@ const handleMessagesRequest = async (
   req: IncomingMessage,
   res: ServerResponse,
   createMcpServer: CreateMcpServerFn,
+  identity: SessionIdentity,
 ): Promise<void> => {
   if (req.method === "OPTIONS") {
     res.statusCode = 204
@@ -294,8 +453,15 @@ const handleMessagesRequest = async (
         writePlainText(res, 404, "Unknown sessionId")
         return
       }
+      if (rejectForeignSession(res, resolvedSession.session, identity)) {
+        return
+      }
 
-      updateApiKeyStateFromRequest(resolvedSession.session.apiKeyState, req)
+      touchSession(resolvedSession, sessionId)
+      updateCredentialStateFromRequest(
+        resolvedSession.session.credentialState,
+        req,
+      )
       if (resolvedSession.kind === "streamable") {
         setSessionIdHeader(req, sessionId)
         await resolvedSession.session.transport.handleRequest(
@@ -323,7 +489,13 @@ const handleMessagesRequest = async (
       return
     }
 
-    await startStreamableSession(req, res, parsedBody, createMcpServer)
+    await startStreamableSession(
+      req,
+      res,
+      parsedBody,
+      createMcpServer,
+      identity,
+    )
   } catch (error) {
     if (error instanceof SyntaxError) {
       writePlainText(res, 400, "Invalid JSON body")
@@ -333,20 +505,103 @@ const handleMessagesRequest = async (
   }
 }
 
-export const createRequestListener =
-  (createMcpServer: CreateMcpServerFn) =>
-  async (req: IncomingMessage, res: ServerResponse): Promise<void> => {
-    try {
-      enableCors(res)
+const writeProtectedResourceMetadata = (
+  req: IncomingMessage,
+  res: ServerResponse,
+  pathname: string,
+): boolean => {
+  if (
+    env.CHATBOTX_MCP_OAUTH_ENABLED !== "true" ||
+    !(
+      pathname === protectedResourcePrefix ||
+      pathname.startsWith(`${protectedResourcePrefix}/`)
+    )
+  ) {
+    return false
+  }
+  res.statusCode = 200
+  res.setHeader("Cache-Control", "no-store")
+  res.setHeader("Content-Type", "application/json")
+  // Resolves the connector profile from the path, or the default resource.
+  res.end(JSON.stringify(buildProtectedResourceMetadata(req, pathname)))
+  return true
+}
 
-      const url = new URL(req.url ?? "", "http://localhost")
-      if (url.pathname === env.CHATBOTX_MCP_SSE_PATH) {
-        await handleSseRequest(req, res, createMcpServer)
+/** The default profile's `/sse` and `/messages` routes. */
+const handleDefaultProfileRequest = async (
+  req: IncomingMessage,
+  res: ServerResponse,
+  route: string,
+  createMcpServer: CreateMcpServerFn,
+): Promise<void> => {
+  warnOnQueryToken(req)
+  let identity: SessionIdentity
+  if (env.CHATBOTX_MCP_OAUTH_ENABLED === "true" && req.method !== "OPTIONS") {
+    const authorization = await authorizeRequest(req, res, route)
+    if (!authorization.ok) {
+      return
+    }
+    identity = authorization.identity
+  }
+  // A POST to the SSE path comes from a Streamable HTTP client pointed at
+  // the SSE URL; serve it like the messages path instead of a 405.
+  if (route === SSE_ROUTE && req.method !== "POST") {
+    await handleSseRequest(req, res, createMcpServer, identity)
+    return
+  }
+  await handleMessagesRequest(req, res, createMcpServer, identity)
+}
+
+const isDefaultProfileRoute = (route: string | undefined): route is string =>
+  route === SSE_ROUTE || route === MESSAGES_ROUTE
+
+export const createRequestListener = (createMcpServer: CreateMcpServerFn) => {
+  const rateLimitGuard = createMcpRateLimitGuard({
+    authFailuresPerMinute: env.CHATBOTX_MCP_AUTH_FAILURE_LIMIT_PER_MINUTE,
+    credentialOf: getApiTokenFromRequest,
+    requestsPerMinute: env.CHATBOTX_MCP_RATE_LIMIT_PER_MINUTE,
+    trustedProxyHops: env.CHATBOTX_MCP_TRUSTED_PROXY_HOPS,
+  })
+
+  /** Every MCP route, connector profiles included, behind the rate limits. */
+  const handleMcpRoute = async (
+    req: IncomingMessage,
+    res: ServerResponse,
+    route: string,
+  ): Promise<void> => {
+    // Connector profiles: own CORS, Origin check, auth and session store.
+    const profileTransport = PROFILE_TRANSPORTS.get(route)
+    if (!profileTransport) {
+      // Before the limit check, so a browser client can read a 429.
+      enableCors(res)
+    }
+    if (req.method !== "OPTIONS" && !rateLimitGuard.admit(req, res)) {
+      return
+    }
+    try {
+      if (profileTransport) {
+        await profileTransport(req, res, createMcpServer)
         return
       }
+      await handleDefaultProfileRequest(req, res, route, createMcpServer)
+    } finally {
+      rateLimitGuard.recordOutcome(req, res)
+    }
+  }
 
-      if (url.pathname === env.CHATBOTX_MCP_MESSAGES_PATH) {
-        await handleMessagesRequest(req, res, createMcpServer)
+  return async (req: IncomingMessage, res: ServerResponse): Promise<void> => {
+    try {
+      const url = new URL(req.url ?? "", "http://localhost")
+      const route = routeOf(url.pathname)
+      if (
+        route &&
+        (PROFILE_TRANSPORTS.has(route) || isDefaultProfileRoute(route))
+      ) {
+        await handleMcpRoute(req, res, route)
+        return
+      }
+      enableCors(res)
+      if (writeProtectedResourceMetadata(req, res, url.pathname)) {
         return
       }
 
@@ -370,16 +625,39 @@ export const createRequestListener =
       writePlainText(res, 500, "Internal Server Error")
     }
   }
+}
+
+const REMOVED_PATH_VARIABLES = [
+  "CHATBOTX_MCP_MESSAGES_PATH",
+  "CHATBOTX_MCP_SSE_PATH",
+] as const
+
+/**
+ * Refuses to start while a removed per-route path variable is still set to a
+ * non-empty value: ignoring it would silently move the routes and break every
+ * client. An empty value (e.g. a compose `${VAR:-}` default) names no route.
+ */
+export const assertMcpPathConfig = (): void => {
+  const stale = REMOVED_PATH_VARIABLES.filter((name) =>
+    Boolean(process.env[name]),
+  )
+  if (stale.length > 0) {
+    throw new Error(
+      `${stale.join(", ")} ${stale.length > 1 ? "were" : "was"} removed. Set CHATBOTX_MCP_BASE_PATH to the shared prefix instead (for example "/mcp" for /mcp/messages and /mcp/sse) and unset the old variable.`,
+    )
+  }
+}
 
 export const runSseServer = async (
   createMcpServer: CreateMcpServerFn,
 ): Promise<void> => {
+  assertMcpPathConfig()
   const httpServer = createServer(createRequestListener(createMcpServer))
   const { promise: listening, resolve } = Promise.withResolvers<void>()
   httpServer.listen(env.CHATBOTX_MCP_PORT, env.CHATBOTX_MCP_HOST, resolve)
   await listening
 
   console.error(
-    `MCP Server running on http://${env.CHATBOTX_MCP_HOST}:${env.CHATBOTX_MCP_PORT}${env.CHATBOTX_MCP_SSE_PATH}`,
+    `MCP Server running on http://${env.CHATBOTX_MCP_HOST}:${env.CHATBOTX_MCP_PORT}${mcpPath(SSE_ROUTE)}`,
   )
 }

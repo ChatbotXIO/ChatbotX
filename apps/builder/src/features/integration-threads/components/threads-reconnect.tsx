@@ -17,7 +17,12 @@ export function ThreadsReconnect({
   const t = useTranslations()
   const workspaceId = useWorkspaceId()
   const { execute, isPending } = useAction(
-    reconnectThreadsAction.bind(null, workspaceId, integrationThreads.id),
+    reconnectThreadsAction.bind(
+      null,
+      workspaceId,
+      integrationThreads.id,
+      undefined,
+    ),
     {
       onError: ({ error }) => {
         if (error.serverError) {

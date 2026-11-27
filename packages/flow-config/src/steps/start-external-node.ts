@@ -26,3 +26,15 @@ export const startExternalNodeStepDefaultFn = (
   nodeId: "",
   ...props,
 })
+
+/**
+ * The stored shape of the trigger action "Start External Step": the same
+ * flow + node pair as the `startExternalNode` flow step, without the step
+ * envelope.
+ */
+export const startExternalStepActionSchema = startExternalNodeStepSchema
+  .pick({ flowId: true, nodeId: true })
+  .extend({ type: z.literal("startExternalStep") })
+export type StartExternalStepActionSchema = z.infer<
+  typeof startExternalStepActionSchema
+>

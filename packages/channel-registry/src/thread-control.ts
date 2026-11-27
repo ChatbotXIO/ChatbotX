@@ -23,19 +23,28 @@ import {
   resolveIntegrationContextFromContactInbox,
 } from "./registry"
 
+/** What a take / pass can carry to the channel besides the action itself. */
+type ThreadControlActionOptions = {
+  /** Optional `pass` target; omitted means the channel's default (escalation). */
+  targetRole?: ThreadControlRole
+  /**
+   * Free-form handover note delivered to the receiving partner (`take` and
+   * `pass`). A `release` raises no handover event, so it never carries one.
+   */
+  metadata?: string
+}
+
 export type RequestThreadControlActionProps = Omit<
   RequestThreadControlActionInput,
   "applyOnChannel"
-> & {
-  /** Optional `pass` target; omitted means the channel's default (escalation). */
-  targetRole?: ThreadControlRole
-}
+> &
+  ThreadControlActionOptions
 
 const runOnChannel = async (
   workspaceId: string,
   contactInbox: ContactInboxModel,
-  targetRole: ThreadControlRole | undefined,
   action: ThreadControlAction,
+  options: ThreadControlActionOptions,
 ): Promise<ThreadControlChannelResult> => {
   const { integration, ctx } = await resolveIntegrationContextFromContactInbox({
     workspaceId,
@@ -51,7 +60,12 @@ const runOnChannel = async (
     "updateThreadControl",
     {
       ctx,
-      data: { contact: contactInbox, action, targetRole },
+      data: {
+        contact: contactInbox,
+        action,
+        targetRole: options.targetRole,
+        metadata: action === "release" ? undefined : options.metadata,
+      },
     },
   )
 }
@@ -70,11 +84,14 @@ const runOnChannel = async (
 export function requestThreadControlAction(
   props: RequestThreadControlActionProps,
 ): Promise<ThreadControlSnapshot> {
-  const { targetRole, ...input } = props
+  const { targetRole, metadata, ...input } = props
   return threadControlService.requestAction({
     ...input,
     applyOnChannel: (contactInbox) =>
-      runOnChannel(input.workspaceId, contactInbox, targetRole, input.action),
+      runOnChannel(input.workspaceId, contactInbox, input.action, {
+        targetRole,
+        metadata,
+      }),
   })
 }
 

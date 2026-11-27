@@ -1,4 +1,5 @@
 import { db, relationsFilterToSQL } from "@chatbotx.io/database/client"
+import { userColumnsWithoutSecrets } from "@chatbotx.io/database/repositories/user-columns"
 import { auditLogModel } from "@chatbotx.io/database/schema"
 import type { AuditLogModel, UserModel } from "@chatbotx.io/database/types"
 import {
@@ -109,7 +110,10 @@ export async function listAuditLogs(
   }
 
   return await queryAuditLogs(where, input, (args) =>
-    db.query.auditLogModel.findMany({ ...args, with: { user: true } }),
+    db.query.auditLogModel.findMany({
+      ...args,
+      with: { user: { columns: userColumnsWithoutSecrets } },
+    }),
   )
 }
 
@@ -141,7 +145,7 @@ export async function listPlatformAuditLogs(
     db.query.auditLogModel.findMany({
       ...args,
       with: {
-        user: true,
+        user: { columns: userColumnsWithoutSecrets },
         workspace: { columns: { id: true, name: true } },
       },
     }),

@@ -1,22 +1,28 @@
 import {
   adsAnalyticsService,
   type CapiDeliverySummary,
-  perChannelIntegrationIds,
 } from "@chatbotx.io/business"
 import {
   type AdsEligibleChannelType,
   adsEligibleChannelTypes,
 } from "@chatbotx.io/utils/channel"
-import { notFound } from "next/navigation"
+import { notFound, redirect } from "next/navigation"
 import type { SearchParams } from "nuqs/server"
 import { Suspense } from "react"
 import { AdsAnalyticsView } from "@/features/ads/components/ads-analytics-view"
+import { AdsReferralStats } from "@/features/ads/components/ads-referral-stats"
 import { resolveChannelIntegrations } from "@/features/ads/lib/resolve-channel-integrations"
+import {
+  resolveIntegrationScope,
+  resolveLegacyInboxId,
+  singleIntegrationId,
+} from "@/features/ads/lib/resolve-selected-integration-ids"
 import { getAdsSwitcherData } from "@/features/ads/queries/switcher"
-import { adsAnalyticsSearchParamsCache } from "@/features/ads/schema/analytics"
-import { AnalyticsNav } from "@/features/analytics/components/analytics-nav"
-import { resolveAdsDashboardChannels } from "@/features/analytics/lib/ads-dashboard-channels"
-import { resolveGoogleAdsDashboardEntry } from "@/features/analytics/lib/google-ads-dashboard-entry"
+import {
+  adsAnalyticsSearchParamsCache,
+  parseAnalyticsDateRange,
+} from "@/features/ads/schema/analytics"
+import { loadSharedFilters } from "@/features/analytics/lib/shared-filter-params"
 import { resolveGuardedWorkspaceId } from "@/lib/auth/require-workspace-permission"
 
 /** Validates the `[channel]` route segment against the canonical ads-eligible
@@ -30,6 +36,25 @@ function parseChannelParam(channel: string): AdsEligibleChannelType {
   return parsed.data
 }
 
+/** The section URL with the legacy account params swapped for `inboxIds`. */
+function withLegacyAdsParamsReplaced(input: {
+  path: string
+  searchParams: SearchParams
+  inboxId: string
+}): string {
+  const params = new URLSearchParams()
+  for (const [key, value] of Object.entries(input.searchParams)) {
+    if (key === "channelAccount" || key === "account") {
+      continue
+    }
+    for (const item of [value ?? []].flat()) {
+      params.append(key, item)
+    }
+  }
+  params.set("inboxIds", input.inboxId)
+  return `${input.path}?${params.toString()}`
+}
+
 export default async function AdsChannelAnalyticsPage(props: {
   params: Promise<{ workspaceId: string; channel: string }>
   searchParams: Promise<SearchParams>
@@ -41,31 +66,54 @@ export default async function AdsChannelAnalyticsPage(props: {
   const { channel: channelParam } = await props.params
   const channel = parseChannelParam(channelParam)
 
-  const search = adsAnalyticsSearchParamsCache.parse(await props.searchParams)
+  const searchParams = await props.searchParams
+  const search = adsAnalyticsSearchParamsCache.parse(searchParams)
+  const shared = loadSharedFilters(searchParams)
   const range = { ...search, channel }
+  // The same validated, capped days the rest of the dashboard falls back to
+  // when the URL carries a malformed or oversized range.
+  const resolvedRange = parseAnalyticsDateRange(search)
   // Guarded by `resolveGuardedWorkspaceId(..., "superAdmin")` above, so
   // isSuperAdmin is always true here.
-  const [switcherData, adsChannels, showGoogleAds] = await Promise.all([
-    getAdsSwitcherData(workspaceId),
-    resolveAdsDashboardChannels({ workspaceId, isSuperAdmin: true }),
-    resolveGoogleAdsDashboardEntry({ workspaceId, isSuperAdmin: true }),
-  ])
+  const switcherData = await getAdsSwitcherData(workspaceId)
 
-  // One unified integration select for this channel: an empty
-  // `channelAccount` means "All accounts" — aggregate across every
-  // connected integration of the selected channel (the business layer
-  // treats each per-channel FK as optional narrowing, not a forced single
-  // account). The legacy `account` URL param (still written by the
-  // CAPI-connect redirect flow and old bookmarks) is honored as a fallback
-  // selection when `channelAccount` is absent — WhatsApp only, mirroring
-  // the pre-split page's contract.
+  // The integration scope is the shared Inbox filter's selection (`inboxIds`)
+  // mapped onto this channel's integrations; the channel itself is the route
+  // segment, so the shared Channel picker does not change this data.
+  // `all` = no inbox selected; `none` = an explicit selection that matches no
+  // integration of this channel, which shows empty results (never "all").
   const channelIntegrations = resolveChannelIntegrations(channel, switcherData)
-  const requestedIntegrationId =
-    search.channelAccount || (channel === "whatsapp" ? search.account : "")
-  const selectedChannelIntegration =
-    channelIntegrations.find(
-      (integration) => integration.id === requestedIntegrationId,
-    ) ?? null
+
+  // A legacy `channelAccount` / `account` link (CAPI-connect redirect, old
+  // bookmarks; `account` is WhatsApp-only) is converted to the shared
+  // `inboxIds` form while no inbox is selected, so the effective scope shows in
+  // the shared row and the legacy params leave the URL.
+  if (shared.inboxIds.length === 0) {
+    const legacyInboxId = resolveLegacyInboxId({
+      integrations: channelIntegrations,
+      legacyIntegrationId:
+        search.channelAccount || (channel === "whatsapp" ? search.account : ""),
+    })
+    if (legacyInboxId) {
+      redirect(
+        withLegacyAdsParamsReplaced({
+          path: `/space/${workspaceId}/dashboard/ads/${channel}`,
+          searchParams,
+          inboxId: legacyInboxId,
+        }),
+      )
+    }
+  }
+
+  const scope = resolveIntegrationScope({
+    integrations: channelIntegrations,
+    inboxIds: shared.inboxIds,
+  })
+  const selectedIntegrationIds = scope.kind === "selected" ? scope.ids : []
+  const hasIntegrationScope = scope.kind !== "all"
+  // Surfaces that only take one integration (CSV export, retarget, broadcast)
+  // follow it only when exactly one is selected; they are disabled otherwise.
+  const singleId = singleIntegrationId(scope)
 
   const analyticsScope = {
     workspaceId,
@@ -73,7 +121,9 @@ export default async function AdsChannelAnalyticsPage(props: {
     to: range.to,
     tz: range.tz,
     channel,
-    ...perChannelIntegrationIds(channel, selectedChannelIntegration?.id),
+    integrationIds:
+      selectedIntegrationIds.length > 0 ? selectedIntegrationIds : undefined,
+    matchesNoIntegration: scope.kind === "none",
     adAccountId: range.adAccount,
   }
 
@@ -97,26 +147,32 @@ export default async function AdsChannelAnalyticsPage(props: {
   ])
 
   return (
-    <div className="flex gap-6">
-      {/* Nav filtering only — a deep link to a channel not in `adsChannels`
-          (e.g. historical data for a since-disconnected channel) still
-          renders below; it just won't have its own nav entry. */}
-      <AnalyticsNav adsChannels={adsChannels} showGoogleAds={showGoogleAds} />
-      <div className="flex min-w-0 flex-1 flex-col gap-5">
-        <Suspense>
-          <AdsAnalyticsView
-            channel={channel}
-            channelIntegrations={channelIntegrations}
-            promises={promises}
-            range={range}
-            selectedChannelIntegrationId={
-              selectedChannelIntegration?.id ?? null
-            }
-            workspaceCreatedAt={switcherData.workspaceCreatedAt}
-            workspaceId={workspaceId}
-          />
-        </Suspense>
-      </div>
+    <div className="flex min-w-0 flex-col gap-5">
+      <Suspense>
+        <AdsAnalyticsView
+          channel={channel}
+          matchesNoIntegration={scope.kind === "none"}
+          promises={promises}
+          range={range}
+          selectedChannelIntegrationId={singleId}
+          selectedChannelIntegrationIds={selectedIntegrationIds}
+          workspaceCreatedAt={switcherData.workspaceCreatedAt}
+          workspaceId={workspaceId}
+        />
+      </Suspense>
+      {/* Counts every account of the channel, so it would contradict a
+          narrowed view; shown only for "All accounts". */}
+      {hasIntegrationScope ? null : (
+        <AdsReferralStats
+          channel={channel}
+          range={{
+            from: resolvedRange.from,
+            to: resolvedRange.to,
+            tz: resolvedRange.timezone,
+          }}
+          workspaceId={workspaceId}
+        />
+      )}
     </div>
   )
 }

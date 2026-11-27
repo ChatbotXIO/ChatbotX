@@ -1,5 +1,6 @@
 import { describe, expect, test, vi } from "vitest"
 import {
+  hasReelShare,
   hasStoryMention,
   receiveMessage,
 } from "../src/handlers/message/incoming-message"
@@ -72,5 +73,33 @@ describe("Instagram story mentions", () => {
         attachments: [{ type: "story_mention", payload: {} }],
       }),
     ).toBe(true)
+  })
+})
+
+describe("Instagram reel shares", () => {
+  test.each([
+    "ig_reel",
+    "reel",
+  ])("marks a shared %s attachment as a reel share", async (type) => {
+    const result = await receive({
+      attachments: [{ type, payload: { url: "https://cdn.test/r.mp4" } }],
+    })
+    expect(result.message?.contentAttributes).toEqual({ type: "reel_share" })
+  })
+
+  test("a story mention wins over a reel in the same message", async () => {
+    const result = await receive({
+      attachments: [
+        { type: "story_mention", payload: { url: "https://cdn.test/s.jpg" } },
+        { type: "ig_reel", payload: { url: "https://cdn.test/r.mp4" } },
+      ],
+    })
+    expect(result.message?.contentAttributes).toEqual({ type: "story_mention" })
+  })
+
+  test("hasReelShare ignores other attachments", () => {
+    expect(
+      hasReelShare({ mid: "m", attachments: [{ type: "video", payload: {} }] }),
+    ).toBe(false)
   })
 })

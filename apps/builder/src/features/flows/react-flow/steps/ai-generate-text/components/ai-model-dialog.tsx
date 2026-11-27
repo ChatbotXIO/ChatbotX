@@ -1,6 +1,9 @@
 "use client"
 
-import { aiGenerateTextSchema } from "@chatbotx.io/flow-config"
+import {
+  aiGenerateTextSchema,
+  MUSE_MAX_TEMPERATURE,
+} from "@chatbotx.io/flow-config"
 import { InputNumberField } from "@chatbotx.io/ui/components/form/input-number-field"
 import { SwitchField } from "@chatbotx.io/ui/components/form/switch-field"
 import { Button } from "@chatbotx.io/ui/components/ui/button"
@@ -113,7 +116,7 @@ export const AIModelDialog = ({ parentName }: AIModelDialogProps) => {
 
               <InputNumberField
                 label={t("fields.temperature.label")}
-                max={2}
+                max={provider === "muse" ? MUSE_MAX_TEMPERATURE : 2}
                 min={0}
                 name="temperature"
                 required

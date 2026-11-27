@@ -9,7 +9,8 @@ const DEFAULT_TOKEN_TTL_MS = 60 * 60 * 1000
 
 export const mediaTokenClaimsSchema = z.object({
   workspaceId: z.string().min(1),
-  kind: z.enum(["attachment", "avatar"]),
+  // `destinationAvatar`: refId is a publish destination id (inbox picture).
+  kind: z.enum(["attachment", "avatar", "destinationAvatar"]),
   refId: z.string().min(1),
   // Parent message createdAt (epoch ms) for attachment tokens. Lets the proxy
   // route the shard lookup directly to the time window that holds the row on a

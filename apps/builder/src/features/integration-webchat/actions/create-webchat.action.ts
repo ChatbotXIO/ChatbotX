@@ -7,6 +7,7 @@ import {
 import { auditService } from "@chatbotx.io/business/audit"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
 import { authActionClient } from "@/lib/safe-action"
+import { resolveRequestTenantId } from "@/lib/tenant/request-tenant"
 import { createWebchatRequest } from "../schema/mutation"
 
 export const createWebchatAction = authActionClient
@@ -29,6 +30,7 @@ export const createWebchatAction = authActionClient
       createdBy: ctx.user.id,
       actorUserId: ctx.user.id,
       workspaceName: parsedInput.name,
+      hostTenantId: await resolveRequestTenantId(),
       data: {
         ...rest,
         authorizedDomains: authorizedDomains.map((domain) => domain.value),

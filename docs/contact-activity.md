@@ -1,9 +1,9 @@
 # Contact activity store and activity-backed contact filters
 
-Channel-agnostic record of what a contact did, used by ten contact filters:
+Channel-agnostic record of what a contact did, used by eleven contact filters:
 Last Delivered, Completed WhatsApp Flows, Sent message, Keywords Received,
-Executed Flow, Executed Step, and Email Sent / Delivered / Opened / Clicked.
-Skill: `.agents/skills/contact-filter/`.
+Executed Flow, Executed Step, Clicked ad, and Email Sent / Delivered / Opened /
+Clicked. Skill: `.agents/skills/contact-filter/`.
 
 ## Semantics
 
@@ -40,11 +40,30 @@ Producers write before the irreversible side effect and throw so the job retries
 post-SMTP tracking failures go to the `recordEmailTrackingTransition` repair job,
 which never re-sends.
 
+## Clicked ad
+
+`clickedAd` ("Clicked ad") is `adClicked` / `ad` activity: the contact came from
+that ad at least once. Its producer is `contactReferralEventService.recordAdTouches`
+(`packages/business/src/contact-referral-event/`), called from
+`contactInboxService.updateTracking` whenever an ad referral arrives. It writes
+the per-touch history row (`ContactReferralEvent`, one row per click) and this
+activity row in the same transaction, so a retry repeats neither.
+
+- The reference is the ad id, so only an id that is a positive bigint is
+  recorded here (Meta and Google ad ids are). Any other id, and a touch that has
+  none (a Google click read from Zalo), exists only in `ContactReferralEvent`.
+- Values come from `ads.listReferralAds` (scope `ads`), which looks only at the
+  workspace's newest 2000 ad touches. An older ad is still a valid value: type or
+  paste its id, and its label falls back to the id.
+- Tracking began later than the store (`FIELD_TRACKING_STARTED_AT.clickedAd` in
+  `partials/contact-activity.ts`); there is no backfill from
+  `ContactInbox.referral`.
+
 ## Kill switches
 
 - `CONTACT_ACTIVITY_WRITES_ENABLED` (default `true`): writers return immediately.
 - `CONTACT_ACTIVITY_FILTERS_ENABLED` (default `true`): discovery and the UI hide the
-  ten fields; saved conditions still validate and fail closed (`FALSE`), so an
+  eleven fields; saved conditions still validate and fail closed (`FALSE`), so an
   audience never widens.
 
 ## Counting and broadcast audiences
@@ -70,6 +89,13 @@ which never re-sends.
   (`packages/database/src/partials/contact-activity.ts`) to the moment the writers
   go live. Discovery and the filter hint report it as the start of history, so a
   stale date makes "Is Not" / "Has no value" claim coverage that never existed.
+  Do the same for `FIELD_TRACKING_STARTED_AT.clickedAd`, which is hard-coded to
+  the day its writer was built: set it to the moment `recordAdTouches` ships.
+- Migrations that touch `ContactActivity` are split so no scan runs under an
+  exclusive lock: the replacement pair `CHECK` is added `NOT VALID`, validated in
+  its own migration, then renamed in a third (each with `lock_timeout`). A
+  validation that fails leaves the `_v2` constraint in place; fix the cause and
+  re-run it.
 - Last Delivered is best-effort. A failed receipt batch is logged at error level
   and not redelivered (the message bus acks whole batches); the value only moves
   forward, so the contact's next delivery corrects it.

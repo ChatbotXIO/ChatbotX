@@ -197,7 +197,7 @@ export const QuickRepliesPopover = ({
                   <SavedReplyImagesSummary images={reply.images} />
                   {imageLimit !== undefined &&
                   reply.images.length > imageLimit ? (
-                    <p className="text-amber-600 text-xs dark:text-amber-500">
+                    <p className="text-amber-700 text-xs dark:text-amber-500">
                       {t("messages.savedReplyImagesNotSentHere")}
                     </p>
                   ) : null}

@@ -138,7 +138,7 @@ async function resolveDocumentSource(
         .catch((error: unknown) => {
           logger.warn(
             {
-              error: normalizeError(error),
+              err: normalizeError(error),
               workspaceId: input.workspaceId,
               conversationId: input.conversationId,
             },
@@ -176,7 +176,7 @@ async function resolveDocumentSource(
       const normalizedError = normalizeError(error)
       logger.error(
         {
-          error: normalizedError,
+          err: normalizedError,
           sourceId: source.id,
           workspaceId: input.workspaceId,
           conversationId: input.conversationId,
@@ -207,6 +207,7 @@ async function retrieveDocumentChunks(
   if (!input.query.trim()) {
     const rows = await embeddingRepo.findManyBySource({
       sourceId: resolvedSource.source.id,
+      workspaceId: resolvedSource.source.workspaceId,
       limit: topK,
     })
 
@@ -234,6 +235,7 @@ async function retrieveDocumentChunks(
 
   const rows = await embeddingRepo.vectorSearch({
     sourceId: resolvedSource.source.id,
+    workspaceId: resolvedSource.source.workspaceId,
     queryVector: queryEmbeddingVector,
     topK,
   })

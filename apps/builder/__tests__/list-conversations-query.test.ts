@@ -18,6 +18,9 @@ const mocks = vi.hoisted(() => {
     // against each conversation's own lastActivityAt.
     getSafeSinceTime: vi.fn((value: Date | undefined) => value),
     notFoundException: (message: string) => new Error(message),
+    resolveTenantSettings: vi.fn(async () => ({
+      storageUrl: "https://cdn.example.com",
+    })),
     resolveContactAvatarUrl: vi.fn(
       async (
         input: {
@@ -40,6 +43,10 @@ vi.mock("@chatbotx.io/business", () => ({
     findWithFullRelations: mocks.findWithFullRelations,
   },
   resolveContactAvatarUrl: mocks.resolveContactAvatarUrl,
+  resolveTenantSettings: mocks.resolveTenantSettings,
+}))
+vi.mock("@chatbotx.io/business/utils", () => ({
+  toPublicStorageUrl: (key: string, base: string) => `${base}/${key}`,
 }))
 
 vi.mock("@chatbotx.io/business/errors", () => ({
@@ -48,6 +55,7 @@ vi.mock("@chatbotx.io/business/errors", () => ({
 
 vi.mock("@chatbotx.io/database/repositories", () => ({
   contactInboxOperationalColumns: { sourceIdentityHistory: false },
+  recentParticipantsRelation: { limit: 3 },
   createMessageRepository: mocks.createMessageRepository,
   getSafeSinceTime: mocks.getSafeSinceTime,
 }))
@@ -93,6 +101,7 @@ describe("listConversations / findConversation last-message sinceTime", () => {
       contact: null,
       assignedUser: null,
       assignedInboxTeam: null,
+      conversationParticipants: [],
     }
     const newerDmConversation = {
       id: "conv-dm",
@@ -102,6 +111,7 @@ describe("listConversations / findConversation last-message sinceTime", () => {
       contact: null,
       assignedUser: null,
       assignedInboxTeam: null,
+      conversationParticipants: [],
     }
     mocks.findManyQuery.mockResolvedValue([
       olderCommentConversation,
@@ -133,6 +143,7 @@ describe("listConversations / findConversation last-message sinceTime", () => {
       workspaceId: "ws-1",
       contactId: "contact-1",
       lastActivityAt: new Date("2026-01-01T00:00:00Z"),
+      conversationParticipants: [],
       contactInboxes: [
         {
           id: "ci-1",
@@ -171,6 +182,7 @@ describe("listConversations / findConversation attachment count", () => {
       contact: null,
       assignedUser: null,
       assignedInboxTeam: null,
+      conversationParticipants: [],
     }
     mocks.findManyQuery.mockResolvedValue([conversation])
 
@@ -189,6 +201,141 @@ describe("listConversations / findConversation attachment count", () => {
     )
   })
 
+  test("listConversations loads the assigned user without the secret column", async () => {
+    mocks.findManyQuery.mockResolvedValue([])
+
+    await listConversations(
+      { workspaceId: "ws-1" },
+      { includeEmailAndPhone: true },
+    )
+
+    expect(mocks.findManyQuery.mock.calls[0]?.[0]?.with.assignedUser).toEqual({
+      columns: { connectionAuthorizations: false },
+    })
+  })
+
+  describe("recentParticipants", () => {
+    const repliedAt = new Date("2026-11-20T10:00:00Z")
+    const participant = (userId: string, overrides = {}) => ({
+      userId,
+      lastRepliedAt: repliedAt,
+      user: {
+        id: userId,
+        name: `Name ${userId}`,
+        image: null,
+      },
+      ...overrides,
+    })
+    const row = (conversationParticipants: unknown[]) => ({
+      id: "conv-1",
+      workspaceId: "ws-1",
+      contactId: "contact-1",
+      lastActivityAt: new Date("2026-01-01T00:00:00Z"),
+      contactInboxes: [],
+      assignedUser: null,
+      assignedInboxTeam: null,
+      conversationParticipants,
+    })
+
+    test("listConversations loads the shared preview relation in the same statement", async () => {
+      mocks.findManyQuery.mockResolvedValue([])
+
+      await listConversations(
+        { workspaceId: "ws-1" },
+        { includeEmailAndPhone: true },
+      )
+
+      expect(
+        mocks.findManyQuery.mock.calls[0]?.[0]?.with.conversationParticipants,
+      ).toEqual({ limit: 3 })
+    })
+
+    test("maps the relation to a flat recentParticipants list and drops the raw key", async () => {
+      mocks.findManyQuery.mockResolvedValue([
+        row([participant("u-1"), participant("u-2")]),
+      ])
+
+      const result = await listConversations(
+        { workspaceId: "ws-1" },
+        { includeEmailAndPhone: true },
+      )
+
+      expect(result.data[0]?.recentParticipants).toEqual([
+        {
+          userId: "u-1",
+          name: "Name u-1",
+          image: null,
+          lastRepliedAt: repliedAt,
+        },
+        {
+          userId: "u-2",
+          name: "Name u-2",
+          image: null,
+          lastRepliedAt: repliedAt,
+        },
+      ])
+      expect(result.data[0]).not.toHaveProperty("conversationParticipants")
+    })
+
+    test("the compact view carries the same recentParticipants", async () => {
+      mocks.findManyQuery.mockResolvedValue([row([participant("u-1")])])
+
+      const result = await listConversations(
+        { workspaceId: "ws-1" },
+        { includeEmailAndPhone: true, view: "compact" },
+      )
+
+      expect(result.data[0]?.recentParticipants).toHaveLength(1)
+    })
+
+    test("a conversation nobody replied in has an empty list", async () => {
+      mocks.findManyQuery.mockResolvedValue([row([])])
+
+      const result = await listConversations(
+        { workspaceId: "ws-1" },
+        { includeEmailAndPhone: true },
+      )
+
+      expect(result.data[0]?.recentParticipants).toEqual([])
+    })
+
+    test("skips a row without its member or reply time", async () => {
+      mocks.findManyQuery.mockResolvedValue([
+        row([
+          participant("u-1", { user: null }),
+          participant("u-2", { lastRepliedAt: null }),
+          participant("u-3"),
+        ]),
+      ])
+
+      const result = await listConversations(
+        { workspaceId: "ws-1" },
+        { includeEmailAndPhone: true },
+      )
+
+      expect(result.data[0]?.recentParticipants.map((p) => p.userId)).toEqual([
+        "u-3",
+      ])
+    })
+
+    test("findConversation returns recentParticipants too", async () => {
+      mocks.findWithFullRelations.mockResolvedValue({
+        ...row([participant("u-1")]),
+        contact: null,
+      })
+
+      const result = await findConversation({
+        id: "conv-1",
+        workspaceId: "ws-1",
+      })
+
+      expect(result.data.recentParticipants.map((p) => p.userId)).toEqual([
+        "u-1",
+      ])
+      expect(result.data).not.toHaveProperty("conversationParticipants")
+    })
+  })
+
   test("findConversation requests attachmentCountOnly instead of full attachment rows", async () => {
     const conversation = {
       id: "conv-1",
@@ -196,6 +343,7 @@ describe("listConversations / findConversation attachment count", () => {
       contactId: "contact-1",
       lastActivityAt: new Date("2026-01-01T00:00:00Z"),
       contactInboxes: [],
+      conversationParticipants: [],
     }
     mocks.findWithFullRelations.mockResolvedValue(conversation)
 
@@ -220,6 +368,7 @@ describe("listConversations / findConversation attachment count", () => {
       contact: null,
       assignedUser: null,
       assignedInboxTeam: null,
+      conversationParticipants: [],
     }
     mocks.findManyQuery.mockResolvedValue([conversation])
     mocks.repo.findLastByConversation.mockResolvedValue([
@@ -254,6 +403,7 @@ describe("listConversations / findConversation attachment count", () => {
       contact: { id: "contact-1", avatar: null },
       assignedUser: null,
       assignedInboxTeam: null,
+      conversationParticipants: [],
     }
     mocks.findManyQuery.mockResolvedValue([conversation])
 
@@ -290,6 +440,7 @@ describe("listConversations / findConversation attachment count", () => {
       contact: { id: "contact-1", avatar: "avatars/contact-1.png" },
       assignedUser: null,
       assignedInboxTeam: null,
+      conversationParticipants: [],
     }
     mocks.findManyQuery.mockResolvedValue([conversation])
 
@@ -310,6 +461,7 @@ describe("listConversations / findConversation attachment count", () => {
       contact: { id: "contact-1", avatar: null },
       assignedUser: null,
       assignedInboxTeam: null,
+      conversationParticipants: [],
     }
     mocks.findManyQuery.mockResolvedValue([conversation])
     mocks.resolveContactAvatarUrl.mockResolvedValueOnce(null)
@@ -320,5 +472,122 @@ describe("listConversations / findConversation attachment count", () => {
     )
 
     expect(result.data[0]?.contact?.avatar).toBeNull()
+  })
+
+  test("publicUrls returns a stored avatar key as an absolute URL", async () => {
+    mocks.findManyQuery.mockResolvedValue([
+      {
+        id: "conv-1",
+        contactId: "contact-1",
+        lastActivityAt: new Date("2026-01-01T00:00:00Z"),
+        contactInboxes: [],
+        contact: { id: "contact-1", avatar: "avatars/contact-1.png" },
+        assignedUser: null,
+        assignedInboxTeam: null,
+        conversationParticipants: [],
+      },
+    ])
+
+    const result = await listConversations(
+      { workspaceId: "ws-1" },
+      { includeEmailAndPhone: true, publicUrls: true },
+    )
+
+    expect(result.data[0]?.contact?.avatar).toBe(
+      "https://cdn.example.com/avatars/contact-1.png",
+    )
+  })
+
+  const conversationRow = (
+    id: string,
+    contact: { id: string; avatar: string | null },
+  ) => ({
+    id,
+    contactId: contact.id,
+    lastActivityAt: new Date("2026-01-01T00:00:00Z"),
+    contactInboxes: [],
+    contact,
+    assignedUser: null,
+    assignedInboxTeam: null,
+    conversationParticipants: [],
+  })
+
+  test("publicUrls reads tenant settings once for the whole page, not per row", async () => {
+    mocks.findManyQuery.mockResolvedValue([
+      conversationRow("conv-1", { id: "contact-1", avatar: "a/1.png" }),
+      conversationRow("conv-2", { id: "contact-2", avatar: "a/2.png" }),
+      conversationRow("conv-3", { id: "contact-3", avatar: "a/3.png" }),
+    ])
+
+    await listConversations(
+      { workspaceId: "ws-1" },
+      { includeEmailAndPhone: true, publicUrls: true },
+    )
+
+    expect(mocks.resolveTenantSettings).toHaveBeenCalledTimes(1)
+  })
+
+  test("without publicUrls tenant settings are never read", async () => {
+    mocks.findManyQuery.mockResolvedValue([
+      conversationRow("conv-1", { id: "contact-1", avatar: "a/1.png" }),
+    ])
+
+    await listConversations(
+      { workspaceId: "ws-1" },
+      { includeEmailAndPhone: true },
+    )
+
+    expect(mocks.resolveTenantSettings).not.toHaveBeenCalled()
+  })
+
+  test("publicUrls on an empty page does not read tenant settings", async () => {
+    mocks.findManyQuery.mockResolvedValue([])
+
+    await listConversations(
+      { workspaceId: "ws-1" },
+      { includeEmailAndPhone: true, publicUrls: true },
+    )
+
+    expect(mocks.resolveTenantSettings).not.toHaveBeenCalled()
+  })
+
+  test("resolves one contact's avatar once when it appears in several conversations", async () => {
+    const contact = { id: "contact-1", avatar: "a/1.png" }
+    mocks.findManyQuery.mockResolvedValue([
+      conversationRow("conv-dm", contact),
+      conversationRow("conv-comment-1", contact),
+      conversationRow("conv-comment-2", contact),
+    ])
+
+    const result = await listConversations(
+      { workspaceId: "ws-1" },
+      { includeEmailAndPhone: true, publicUrls: true },
+    )
+
+    expect(mocks.resolveContactAvatarUrl).toHaveBeenCalledTimes(1)
+    expect(result.data.map((c) => c.contact?.avatar)).toEqual([
+      "https://cdn.example.com/a/1.png",
+      "https://cdn.example.com/a/1.png",
+      "https://cdn.example.com/a/1.png",
+    ])
+  })
+
+  test("findConversation with publicUrls returns an absolute avatar URL", async () => {
+    mocks.findWithFullRelations.mockResolvedValue({
+      id: "conv-1",
+      lastActivityAt: new Date("2026-01-01T00:00:00Z"),
+      contactInboxes: [],
+      contact: { id: "contact-1", avatar: "avatars/contact-1.png" },
+      conversationParticipants: [],
+    })
+
+    const result = await findConversation(
+      { id: "conv-1", workspaceId: "ws-1" },
+      { publicUrls: true },
+    )
+
+    expect(result.data.contact?.avatar).toBe(
+      "https://cdn.example.com/avatars/contact-1.png",
+    )
   })
 })

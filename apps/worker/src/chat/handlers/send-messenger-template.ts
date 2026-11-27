@@ -5,6 +5,10 @@ import {
   messageService,
   queueMessageCreatedEvent,
 } from "@chatbotx.io/business"
+import {
+  SENT_FROM_INBOX_KEY,
+  sentByUserAttributes,
+} from "@chatbotx.io/database/partials"
 import type { messageModel } from "@chatbotx.io/database/schema"
 import type {
   ContactInboxModel,
@@ -34,6 +38,7 @@ import {
 } from "@chatbotx.io/sdk"
 import { createId } from "@chatbotx.io/utils"
 import { resolveStackFrames } from "@chatbotx.io/utils/error-log"
+import { isManualSend, type SendFrom } from "@chatbotx.io/utils/send-from"
 import { contactVariableService } from "@chatbotx.io/variables"
 import type {
   BotResponseTrackingContext,
@@ -56,6 +61,7 @@ import {
   isDeliveredDirectMessage,
   markConversationReadAfterDelivery,
   sendFlowStepToChannel,
+  settleFailedTemplateMessage,
 } from "./send-message"
 
 export interface ProcessMessengerTemplateParams {
@@ -68,6 +74,8 @@ export interface ProcessMessengerTemplateParams {
   }
   isBulkBroadcast?: boolean
   metadata?: MetadataPayload
+  /** See `ProcessWhatsappTemplateParams["sendFrom"]`. */
+  sendFrom?: SendFrom
   /** The inbox user who sent the running flow, for `{{admin_name}}` in the params. */
   sentByUserId?: string
   step?: SendMessengerTemplateMessageStepSchema
@@ -204,6 +212,7 @@ export async function processMessengerTemplate(
     isBulkBroadcast,
     willRetryOnThrow = false,
     sentByUserId,
+    sendFrom,
   } = params
   const isBulkOutbound = isBulkOutboundMetadata(
     metadata,
@@ -230,6 +239,9 @@ export async function processMessengerTemplate(
   }
 
   let newMessage: typeof messageModel.$inferSelect | null = null
+  // Set once the provider accepted the template: a failure after that point is
+  // bookkeeping, and the delivered message must not be removed or marked.
+  let isDispatched = false
 
   try {
     const validated = await validateMessengerTemplate(
@@ -306,6 +318,8 @@ export async function processMessengerTemplate(
       ...(flow && { flowVersionId: flow.versionId }),
       ...(trackingContext && { trackingContext }),
       metadata,
+      ...(sendFrom && { [SENT_FROM_INBOX_KEY]: sendFrom === "inbox" }),
+      ...(isManualSend(sendFrom) ? sentByUserAttributes(sentByUserId) : {}),
     }
 
     newMessage = await messageService.create({
@@ -365,6 +379,7 @@ export async function processMessengerTemplate(
         triggerType: "message_bot_sent_messenger_template",
       },
     })
+    isDispatched = true
 
     // Same rule as a flow reply: a delivered bot DM honours the inbox's
     // markReadOnOutbound option. Own-send echoes are ignored by the receive
@@ -435,6 +450,12 @@ export async function processMessengerTemplate(
       "Failed to send Messenger template to provider",
     )
 
+    const willRetry = willSendRetry({
+      error,
+      channel: contactInbox.channel,
+      willRetryOnThrow,
+    })
+
     await emit(messageEventTypeSchema.enum["message:failed"], {
       ...eventLogData,
       action: {
@@ -446,12 +467,20 @@ export async function processMessengerTemplate(
       // stackless `ParsedError`, so `ErrorLog.stackTrace` has no other source.
       errorStack: resolveStackFrames(error),
       occurredAt: new Date(),
-      willRetry: willSendRetry({
-        error,
-        channel: contactInbox.channel,
-        willRetryOnThrow,
-      }),
+      willRetry,
     })
+
+    if (newMessage && !isDispatched) {
+      await settleFailedTemplateMessage({
+        message: newMessage,
+        conversationId: conversation.id,
+        workspaceId: conversation.workspaceId,
+        errorMessage: errorData.message,
+        sendFrom,
+        silent: isBulkOutbound,
+        willRetry,
+      })
+    }
 
     throw error
   }

@@ -3,6 +3,7 @@ import {
   claudeModels,
   deepseekModels,
   geminiModels,
+  museModels,
   openaiModels,
   openrouterModels,
 } from "@chatbotx.io/ai"
@@ -10,6 +11,10 @@ import {
   aiAgentActionRulesSchema,
   aiMessageRoles,
 } from "@chatbotx.io/database/partials"
+import {
+  MUSE_MAX_TEMPERATURE,
+  MUSE_REASONING_HEADROOM_TOKENS,
+} from "@chatbotx.io/flow-config"
 import { z } from "zod"
 import { MAX_WEB_SEARCH_AUTHORIZED_DOMAINS } from "../lib/web-search-tool"
 
@@ -101,6 +106,14 @@ export const createAIAgentRequest = z.object({
               "Model id offered by the `openrouter` provider.",
             ),
           }),
+          z.object({
+            provider: z
+              .literal(aiProviders.enum.muse)
+              .describe("AI provider for this model entry."),
+            model: museModels.describe(
+              "Model id offered by the `muse` provider.",
+            ),
+          }),
         ]),
         z.object({
           kind: z
@@ -126,12 +139,20 @@ export const createAIAgentRequest = z.object({
     .describe(
       "Ordered fallback list of provider/model pairs to try. The first entry is preferred; later ones are used if it fails.",
     ),
-  temperature: z.number().min(0).max(2).describe("Sampling temperature, 0-2."),
+  temperature: z
+    .number()
+    .min(0)
+    .max(2)
+    .describe(
+      `Sampling temperature, 0-2. Muse models use at most ${MUSE_MAX_TEMPERATURE}; a higher value is lowered to it.`,
+    ),
   maxOutputTokens: z
     .number()
     .min(1)
     .max(32_768)
-    .describe("Maximum tokens the model may generate in one reply."),
+    .describe(
+      `Maximum tokens the model may generate in one reply. For Muse models this is the reply-text budget: up to ${MUSE_REASONING_HEADROOM_TOKENS} extra reasoning tokens may be used on top, billed as output.`,
+    ),
   tools: z
     .array(z.string())
     .describe("Tool names this agent is allowed to call."),

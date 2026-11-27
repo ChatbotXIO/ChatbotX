@@ -1,5 +1,8 @@
 import { describe, expect, test } from "vitest"
-import { conditionFilterConditionSchema } from "../src/steps/condition"
+import {
+  conditionFilterConditionSchema,
+  conditionStepSchema,
+} from "../src/steps/condition"
 import {
   FieldOperationType,
   setCustomFieldStepSchema,
@@ -57,5 +60,48 @@ describe("setCustomFieldStepSchema", () => {
     })
 
     expect(parsed.timezone).toBe("Asia/Ho_Chi_Minh")
+  })
+})
+
+describe("pipelineItem in the Condition step", () => {
+  const pipelineCondition = {
+    field: "pipelineItem",
+    operator: "in",
+    value: ["open"],
+  }
+
+  test("is rejected on a condition", () => {
+    const parsed = conditionFilterConditionSchema.safeParse(pipelineCondition)
+
+    expect(parsed.success).toBe(false)
+    expect(parsed.error?.issues[0]?.path).toEqual(["field"])
+  })
+
+  test("fails the whole step so save and publish stop", () => {
+    const parsed = conditionStepSchema.safeParse({
+      id: "1",
+      stepType: "condition",
+      otherwiseId: "2",
+      cases: [{ id: "3", operator: "and", conditions: [pipelineCondition] }],
+    })
+
+    expect(parsed.success).toBe(false)
+  })
+
+  test("other fields are unaffected", () => {
+    expect(
+      conditionStepSchema.safeParse({
+        id: "1",
+        stepType: "condition",
+        otherwiseId: "2",
+        cases: [
+          {
+            id: "3",
+            operator: "and",
+            conditions: [{ field: "email", operator: "eq", value: "a@b.c" }],
+          },
+        ],
+      }).success,
+    ).toBe(true)
   })
 })

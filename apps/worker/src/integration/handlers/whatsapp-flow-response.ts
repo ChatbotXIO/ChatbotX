@@ -3,6 +3,7 @@ import { enqueueLeaderboardAward } from "@chatbotx.io/business/leaderboard"
 import type { ContactInboxModel } from "@chatbotx.io/database/types"
 import type { WhatsappFlowStepSchema } from "@chatbotx.io/flow-config"
 import { createdAtFromId } from "@chatbotx.io/utils"
+import type { ResolvedFlowFile } from "@chatbotx.io/worker-config"
 import { logger } from "../../lib/logger"
 
 /**
@@ -40,6 +41,7 @@ export const applyWhatsappFlowResponseSideEffects = async (props: {
   contactInbox: ContactInboxModel
   step: WhatsappFlowStepSchema
   flowResponse: Record<string, unknown>
+  flowFiles?: Record<string, ResolvedFlowFile[]>
   /** The stored flow-response message; scores the WhatsApp "survey" rule. */
   messageId?: string | null
 }) => {
@@ -59,6 +61,7 @@ export const applyWhatsappFlowResponseSideEffects = async (props: {
     flowSourceId,
     fieldMappings: props.step.flow.fieldMappings,
     flowResponse: props.flowResponse,
+    flowFiles: props.flowFiles,
   })
 
   await awardWhatsappFlowSurvey({

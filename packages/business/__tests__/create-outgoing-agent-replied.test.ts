@@ -11,6 +11,7 @@ const mockFindForAgent = vi.fn()
 const mockWorkspaceFind = vi.fn()
 const mockEmit = vi.fn()
 const mockLoggerError = vi.fn()
+const mockRecordReply = vi.fn()
 const mockQueueMessageCreatedEvent = vi.fn()
 
 vi.mock("@chatbotx.io/database/repositories", () => ({
@@ -48,6 +49,10 @@ vi.mock("@chatbotx.io/worker-config", () => ({
 
 vi.mock("../src/logger", () => ({
   logger: { error: mockLoggerError, warn: vi.fn(), info: vi.fn() },
+}))
+
+vi.mock("../src/conversation-participant/service", () => ({
+  conversationParticipantService: { recordReply: mockRecordReply },
 }))
 
 vi.mock("../src/contact-inbox/service", () => ({
@@ -327,6 +332,50 @@ describe("createOutgoing agent:replied", () => {
       eventId: "reply:flow:generated-id",
       adminId: "user-1",
     })
+  })
+
+  test("flow branch records the member as a participant after the enqueue", async () => {
+    await createOutgoing({
+      conversation: conversation as never,
+      contactInbox: contactInbox as never,
+      input: { flowId: "flow-1" },
+      user: user as never,
+    })
+
+    expect(mockRecordReply).toHaveBeenCalledExactlyOnceWith({
+      workspaceId: conversation.workspaceId,
+      conversationId: conversation.id,
+      userId: "user-1",
+      at: expect.any(Date),
+    })
+    expect(mockIntegrationQueueAdd.mock.invocationCallOrder[0]).toBeLessThan(
+      mockRecordReply.mock.invocationCallOrder[0] ?? 0,
+    )
+  })
+
+  test("flow branch without a member (workspace token) records no participant", async () => {
+    await createOutgoing({
+      conversation: conversation as never,
+      contactInbox: contactInbox as never,
+      input: { flowId: "flow-1" },
+    })
+
+    expect(mockRecordReply).not.toHaveBeenCalled()
+  })
+
+  test("flow branch with a failed enqueue records no participant", async () => {
+    mockIntegrationQueueAdd.mockRejectedValue(new Error("boom"))
+
+    await expect(
+      createOutgoing({
+        conversation: conversation as never,
+        contactInbox: contactInbox as never,
+        input: { flowId: "flow-1" },
+        user: user as never,
+      }),
+    ).rejects.toThrow("boom")
+
+    expect(mockRecordReply).not.toHaveBeenCalled()
   })
 
   test("flow branch with a failed enqueue does not claim or emit", async () => {

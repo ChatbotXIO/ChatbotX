@@ -10,5 +10,9 @@ export {
 } from "./apis/post"
 export * from "./apis/sync"
 export * from "./integration"
-export { isRevokedTokenError, mapToChannelError } from "./lib/error-mapper"
+export {
+  isDisconnectSafeError,
+  isRevokedTokenError,
+  mapToChannelError,
+} from "./lib/error-mapper"
 export * from "./schema"

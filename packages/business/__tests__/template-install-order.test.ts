@@ -32,4 +32,62 @@ describe("template adapter install order", () => {
     expect(sorted).toBeDefined()
     expect(sorted).toHaveLength(Object.keys(templateAdapterRegistry).length)
   })
+
+  test("per-category knowledge is derived from the registry", async () => {
+    const registry = await import("../src/template/adapters/registry")
+    const { requiredFormatVersion } = await import(
+      "../src/template/adapters/registry-derived"
+    )
+    expect(registry.TRACKED_KIND_BY_CATEGORY).toMatchObject({
+      flows: "flow",
+      keywords: "automatedResponse",
+      webchats: "integrationWebchat",
+      entryPointLinks: "reflink",
+      fbCommentAutomations: "fbCommentAutomation",
+      settings: null,
+    })
+    expect(registry.FOLDER_TYPE_CATEGORY).toMatchObject({
+      outboundAutomatedResponse: "keywords",
+      customField: "settings",
+      tag: "flows",
+      igStory: "storyAutomations",
+    })
+    expect(registry.folderTypeToCategory("nope")).toBe("flows")
+    const everyCategoryHasEntries = Object.fromEntries(
+      Object.keys(registry.templateAdapterRegistry).map((category) => [
+        category,
+        { entries: [{ sourceId: "x" }] },
+      ]),
+    )
+    expect(requiredFormatVersion(registry.templateAdapterRegistry, {})).toBe(1)
+    expect(
+      requiredFormatVersion(registry.templateAdapterRegistry, {
+        sequences: { entries: [{ sourceId: "x" }] },
+      }),
+    ).toBe(2)
+    expect(
+      requiredFormatVersion(
+        registry.templateAdapterRegistry,
+        everyCategoryHasEntries,
+      ),
+    ).toBeGreaterThanOrEqual(2)
+    const { buildPayloadResources } = await import(
+      "../src/template/adapters/registry-derived"
+    )
+    const resources = buildPayloadResources({
+      settings: {
+        entries: [
+          { sourceId: "a", kind: "savedReply" },
+          { sourceId: "b", kind: "botField" },
+        ],
+      },
+    })
+    expect(resources.settings).toEqual({
+      savedReplies: [{ sourceId: "a", kind: "savedReply" }],
+      botFields: [{ sourceId: "b", kind: "botField" }],
+    })
+    expect(Object.keys(resources).sort()).toEqual(
+      Object.keys(registry.templateAdapterRegistry).sort(),
+    )
+  })
 })

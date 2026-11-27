@@ -1,4 +1,3 @@
-import { contactService } from "@chatbotx.io/business"
 import { contactSequenceService } from "@chatbotx.io/business/contact-sequence"
 import { z } from "zod"
 import {
@@ -13,6 +12,7 @@ import {
   possibleErrorsOnMutatingResource,
 } from "@/lib/orpc/orpc-error-helper"
 import { publicContactIdentifier } from "@/lib/public-api/contact-identifier"
+import { contactIdFor } from "@/lib/public-api/member-scope"
 import { workspaceTokenAuthAPIForScope } from "@/orpc"
 
 const workspaceTokenAuthAPI = workspaceTokenAuthAPIForScope("contacts")
@@ -26,7 +26,13 @@ export const contactsSequencesPublicRouter = {
       description:
         "Use this to inspect a contact's current sequence subscriptions after resolving the contact with `contacts.get`. Call `contacts.subscribeSequences` to subscribe it, or `sequences.get` to inspect a sequence.",
       tags: ["Contacts"],
-      spec: mcpSpec({ visibility: "default" }),
+      spec: mcpSpec({
+        destructiveHint: false,
+        idempotentHint: true,
+        openWorldHint: false,
+        readOnlyHint: true,
+        visibility: "default",
+      }),
     })
     .input(
       z.object({
@@ -37,10 +43,7 @@ export const contactsSequencesPublicRouter = {
     .errors(possibleErrorsOnFindingResource)
     .handler(async ({ context, input }) => {
       const workspaceId = context.workspace.id
-      const contactId = await contactService.resolveIdByIdentifier({
-        identifier: input.identifier,
-        workspaceId,
-      })
+      const contactId = await contactIdFor(context, input.identifier)
       const data = await contactSequenceService.listByContactId({
         workspaceId,
         contactId,
@@ -57,7 +60,13 @@ export const contactsSequencesPublicRouter = {
         "Adds the contact identified by `identifier` to each given sequence; sequences the contact is already subscribed to are left as-is. Use `sequences.list`/`sequences.create` first to resolve names to ids.",
       successStatus: 204,
       tags: ["Contacts"],
-      spec: mcpSpec({ visibility: "default" }),
+      spec: mcpSpec({
+        destructiveHint: false,
+        idempotentHint: true,
+        openWorldHint: true,
+        readOnlyHint: false,
+        visibility: "default",
+      }),
     })
     .input(
       contactSequenceIdsPublicRequest.and(
@@ -69,10 +78,7 @@ export const contactsSequencesPublicRouter = {
     .errors(possibleErrorsOnMutatingResource)
     .handler(async ({ context, input }) => {
       const workspaceId = context.workspace.id
-      const contactId = await contactService.resolveIdByIdentifier({
-        identifier: input.identifier,
-        workspaceId,
-      })
+      const contactId = await contactIdFor(context, input.identifier)
       await contactSequenceService.subscribeContacts({
         workspaceId,
         contactIds: [contactId],
@@ -100,10 +106,7 @@ export const contactsSequencesPublicRouter = {
     .errors(possibleErrorsOnDeletingResource)
     .handler(async ({ context, input }) => {
       const workspaceId = context.workspace.id
-      const contactId = await contactService.resolveIdByIdentifier({
-        identifier: input.identifier,
-        workspaceId,
-      })
+      const contactId = await contactIdFor(context, input.identifier)
       await contactSequenceService.removeContactSequencesForContacts({
         workspaceId,
         contactIds: [contactId],
@@ -132,10 +135,7 @@ export const contactsSequencesPublicRouter = {
     .errors(possibleErrorsOnMutatingResource)
     .handler(async ({ context, input }) => {
       const workspaceId = context.workspace.id
-      const contactId = await contactService.resolveIdByIdentifier({
-        identifier: input.identifier,
-        workspaceId,
-      })
+      const contactId = await contactIdFor(context, input.identifier)
       await contactSequenceService.updateContactSequences({
         workspaceId,
         contactId,

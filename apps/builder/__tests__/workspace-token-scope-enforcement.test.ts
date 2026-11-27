@@ -8,16 +8,19 @@ const {
   getAccessState,
   isAtLimit,
   assertApiNotRateLimited,
+  resolvePrincipal,
 } = vi.hoisted(() => ({
   findWorkspaceByTokenHash: vi.fn(),
   isWorkspaceScheduledForDeletion: vi.fn().mockReturnValue(false),
   getAccessState: vi.fn().mockResolvedValue({ blocked: false }),
   isAtLimit: vi.fn().mockResolvedValue(false),
   assertApiNotRateLimited: vi.fn().mockResolvedValue(undefined),
+  resolvePrincipal: vi.fn().mockResolvedValue({ kind: "invalidToken" }),
 }))
 
 vi.mock("@chatbotx.io/business", () => ({
   workspaceApiTokenService: { findWorkspaceByTokenHash },
+  mcpOAuthService: { resolvePrincipal },
   isWorkspaceScheduledForDeletion,
   userQuotaService: { getAccessState },
   quotaEnforcementService: { isAtLimit },

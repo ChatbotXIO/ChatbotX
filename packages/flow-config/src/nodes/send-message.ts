@@ -1,7 +1,11 @@
 import { type ChannelType, channelTypes } from "@chatbotx.io/utils/channel"
 import { z } from "zod"
 import { actionSteps } from "../shared"
-import { buttonStepSchema } from "../steps/button"
+import {
+  STEP_INPUT_RESOLUTION_PAYLOAD_TYPE,
+  stepInputResolutionReasons,
+} from "../step-input-resolution"
+import { buttonStepSchema, refineReplyOnlyButtons } from "../steps/button"
 import {
   chooseChannelStepDefaultFn,
   chooseChannelStepSchema,
@@ -77,6 +81,7 @@ export const sendMessageNodeSchema = baseNodeSchema.extend({
         ),
         quickReplies: z
           .array(buttonStepSchema)
+          .superRefine(refineReplyOnlyButtons)
           .max(MAX_QUICK_REPLIES)
           .describe(
             `Quick-reply buttons shown after the last message (max ${MAX_QUICK_REPLIES}); use [] for none.`,
@@ -139,6 +144,7 @@ export const isProactiveOutboundMetadata = (metadata: unknown): boolean =>
   isBulkOutboundMetadata(metadata, true)
 
 export const COMMENT_AUTOMATION_PAYLOAD_TYPE = "commentAutomation"
+export const POST_COMMENT_PAYLOAD_TYPE = "postComment"
 export const UPDATE_STATUS_PAYLOAD_TYPE = "updateStatus"
 export const FLOW_NODE_PAYLOAD_TYPE = "flowNode"
 export const APPOINTMENT_WEBVIEW_SELECTION_PAYLOAD_TYPE =
@@ -193,6 +199,40 @@ export const commentAutomationMetadataPayload = baseMetadataPayload.extend({
   replyChannel: z.enum(["public", "private"]),
 })
 
+/**
+ * Set on the `sendFlow` job when a post-comment trigger starts a flow, so the
+ * flow's steps can render `{{post.*}}` and `{{comment.*}}` for that one
+ * comment. Only ids: the post and the stored comment are read back when a
+ * message renders. It rides in `metadata` because that is what survives every
+ * continuation and a Wait.
+ */
+export const postCommentMetadataPayload = baseMetadataPayload.extend({
+  type: z.literal(POST_COMMENT_PAYLOAD_TYPE),
+  channelPostId: z.string(),
+  commentMessageId: z.string(),
+  commentMessageCreatedAt: z.iso.datetime(),
+})
+export type PostCommentMetadataPayload = z.infer<
+  typeof postCommentMetadataPayload
+>
+
+/** The comment a flow run is about, when a post-comment trigger started it. */
+export const postCommentRefFromMetadata = (
+  metadata: { type: string } | null | undefined,
+): Pick<
+  PostCommentMetadataPayload,
+  "channelPostId" | "commentMessageId" | "commentMessageCreatedAt"
+> | null => {
+  const parsed = postCommentMetadataPayload.safeParse(metadata)
+  return parsed.success
+    ? {
+        channelPostId: parsed.data.channelPostId,
+        commentMessageId: parsed.data.commentMessageId,
+        commentMessageCreatedAt: parsed.data.commentMessageCreatedAt,
+      }
+    : null
+}
+
 export const updateStatusPayload = baseMetadataPayload.extend({
   type: z.literal(UPDATE_STATUS_PAYLOAD_TYPE),
 })
@@ -225,6 +265,18 @@ export const getUserDataWebviewSelectionPayload = baseMetadataPayload.extend({
   selectedValue: z.iso.datetime(),
 })
 
+/**
+ * Stored in the `metadata` column of a `stepInputTimeout` smart-delay row. It
+ * is never passed as flow-run metadata: run metadata propagates to every
+ * continuation and would re-resolve the step if the flow loops back to it.
+ */
+export const stepInputResolutionPayload = baseMetadataPayload.extend({
+  type: z.literal(STEP_INPUT_RESOLUTION_PAYLOAD_TYPE),
+  stepId: z.string(),
+  challengeId: z.string(),
+  reason: stepInputResolutionReasons,
+})
+
 export type BroadcastMetadataPayload = z.infer<typeof broadcastMetadataPayload>
 
 export type SequenceScheduleMetadataPayload = z.infer<
@@ -239,11 +291,13 @@ export const metadataSchema = z.discriminatedUnion("type", [
   broadcastMetadataPayload,
   sequenceScheduleMetadataPayload,
   commentAutomationMetadataPayload,
+  postCommentMetadataPayload,
   updateStatusPayload,
   appointmentWebviewSelectionPayload,
   appointmentAvailabilityRangeSelectionPayload,
   appointmentAvailabilityRangeSkippedPayload,
   getUserDataWebviewSelectionPayload,
+  stepInputResolutionPayload,
 ])
 
 export type MetadataPayload = z.infer<typeof metadataSchema>

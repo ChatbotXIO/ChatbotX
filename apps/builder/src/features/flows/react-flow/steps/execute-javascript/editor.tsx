@@ -164,6 +164,7 @@ const ExecuteJavascriptDialog = ({ parentName }: { parentName: string }) => {
             <TiptapEditorField
               enableEmoji={false}
               includeBotFieldVariables
+              includePostCommentVariables
               label={t("fields.javascriptCode.label")}
               name="code"
               placeholder={t("fields.javascriptCode.placeholder")}

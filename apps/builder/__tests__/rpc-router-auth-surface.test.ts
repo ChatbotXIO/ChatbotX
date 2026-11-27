@@ -28,7 +28,7 @@ const RAW_BASE_ALLOWLIST = new Set([
 ])
 
 const AUTHENTICATED_BASE =
-  /\b(authorizedAPI|workspaceTokenAuthAPIForScope|channelApiTokenAPI)\b/
+  /\b(authorizedAPI|workspaceTokenAuthAPIForScope|channelApiTokenAPI|mobileUserAPI|mobileUserPasswordChangeAPI)\b/
 
 const PROCEDURE_HANDLER = /\.handler\(/
 
@@ -65,11 +65,15 @@ describe("/rpc router auth surface", () => {
     )
 
     // Adding an export here means adding a way to mount a procedure. If it is
-    // not one of these three, it must carry its own auth middleware — and this
-    // test is where that decision gets recorded.
+    // not one of these, it must carry its own auth middleware — and this
+    // test is where that decision gets recorded. The two `mobileUser*` bases
+    // sit behind `mobileUserAuthMiddleware` (a verified mobile access JWT) and
+    // are mounted only on `/v1/me/*`, never on `/rpc`.
     expect(exported.sort()).toEqual([
       "authorizedAPI",
       "channelApiTokenAPI",
+      "mobileUserAPI",
+      "mobileUserPasswordChangeAPI",
       "workspaceTokenAuthAPIForScope",
     ])
   })

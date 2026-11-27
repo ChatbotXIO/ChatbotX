@@ -1,0 +1,39 @@
+{
+  "type": "diff",
+  "version": "10",
+  "dialect": "postgres",
+  "id": "f3fa5182-0f43-4d94-9bfd-7913975036af",
+  "prevIds": [
+    "108bbbdb-c92a-4211-8769-e2e7dfdf82d2"
+  ],
+  "footprints": [
+    {
+      "statementType": "alter_enum",
+      "statementTarget": [
+        "enum",
+        "public",
+        "ContactOnSmartDelayType"
+      ],
+      "writes": [
+        "s|enum|public.ContactOnSmartDelayType"
+      ],
+      "reads": [
+        "n|sch|public"
+      ]
+    }
+  ],
+  "deltas": [
+    {
+      "op": "alter",
+      "key": "enums\u0000[\"public\",\"ContactOnSmartDelayType\"]",
+      "set": {
+        "values": [
+          "waitNode",
+          "followUp",
+          "quickReplyFollowUp",
+          "stepInputTimeout"
+        ]
+      }
+    }
+  ]
+}

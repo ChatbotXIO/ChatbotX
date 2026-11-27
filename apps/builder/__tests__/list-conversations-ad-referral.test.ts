@@ -58,6 +58,7 @@ vi.mock("@chatbotx.io/business/errors", () => ({
 
 vi.mock("@chatbotx.io/database/repositories", () => ({
   contactInboxOperationalColumns: { sourceIdentityHistory: false },
+  recentParticipantsRelation: { limit: 3 },
   createMessageRepository: mocks.createMessageRepository,
   getSafeSinceTime: mocks.getSafeSinceTime,
 }))
@@ -87,7 +88,7 @@ const adAttributedContactInbox = {
   language: null,
   lastIncomingMessageAt: null,
   contactLastReadAt: null,
-  inbox: { name: "WhatsApp Inbox" },
+  inbox: { id: "inbox-1", name: "WhatsApp Inbox", channel: "whatsapp" },
   sourceIdentityHistory: [
     {
       sourceId: "old-source-1",
@@ -136,6 +137,7 @@ describe("listConversations / findConversation adReferral mapping", () => {
       contact: null,
       assignedUser: null,
       assignedInboxTeam: null,
+      conversationParticipants: [],
     }
     mocks.findManyQuery.mockResolvedValue([conversation])
 
@@ -152,6 +154,36 @@ describe("listConversations / findConversation adReferral mapping", () => {
     expect(mappedContactInboxes[1]?.adReferral).toBeNull()
   })
 
+  test("compact list responses omit attribution and thread-control fields", async () => {
+    const conversation = {
+      id: "conv-1",
+      contactId: "contact-1",
+      lastActivityAt: new Date("2026-01-01T00:00:00Z"),
+      contactInboxes: [adAttributedContactInbox],
+      contact: null,
+      assignedUser: null,
+      assignedInboxTeam: null,
+      conversationParticipants: [],
+    }
+    mocks.findManyQuery.mockResolvedValue([conversation])
+
+    const result = await listConversations(
+      { workspaceId: "ws-1" },
+      { includeEmailAndPhone: true, view: "compact" },
+    )
+
+    const compactInbox = result.data[0]?.contactInboxes[0]
+    expect(compactInbox?.inbox).toEqual({
+      id: "inbox-1",
+      name: "WhatsApp Inbox",
+      channel: "whatsapp",
+    })
+    expect(compactInbox).not.toHaveProperty("adReferral")
+    expect(compactInbox).not.toHaveProperty("googleAdsClick")
+    expect(compactInbox).not.toHaveProperty("threadControlState")
+    expect(compactInbox).not.toHaveProperty("threadOwnerRole")
+  })
+
   test("listConversations strips internal jsonb fields from the mapped output", async () => {
     const conversation = {
       id: "conv-1",
@@ -161,6 +193,7 @@ describe("listConversations / findConversation adReferral mapping", () => {
       contact: null,
       assignedUser: null,
       assignedInboxTeam: null,
+      conversationParticipants: [],
     }
     mocks.findManyQuery.mockResolvedValue([conversation])
 
@@ -181,6 +214,7 @@ describe("listConversations / findConversation adReferral mapping", () => {
       contactId: "contact-1",
       lastActivityAt: new Date("2026-01-01T00:00:00Z"),
       contactInboxes: [adAttributedContactInbox, organicContactInbox],
+      conversationParticipants: [],
     }
     mocks.findWithFullRelations.mockResolvedValue(conversation)
 
@@ -201,6 +235,7 @@ describe("listConversations / findConversation adReferral mapping", () => {
       contactId: "contact-1",
       lastActivityAt: new Date("2026-01-01T00:00:00Z"),
       contactInboxes: [adAttributedContactInbox],
+      conversationParticipants: [],
     }
     mocks.findWithFullRelations.mockResolvedValue(conversation)
 
@@ -220,6 +255,7 @@ describe("listConversations / findConversation adReferral mapping", () => {
       contact: null,
       assignedUser: null,
       assignedInboxTeam: null,
+      conversationParticipants: [],
     }
     mocks.findManyQuery.mockResolvedValue([listConversation])
     const listResult = await listConversations(
@@ -232,6 +268,7 @@ describe("listConversations / findConversation adReferral mapping", () => {
       workspaceId: "ws-1",
       contactId: "contact-1",
       lastActivityAt: new Date("2026-01-01T00:00:00Z"),
+      conversationParticipants: [],
       contactInboxes: [adAttributedContactInbox],
     }
     mocks.findWithFullRelations.mockResolvedValue(findConversationRow)
@@ -274,6 +311,7 @@ describe("listConversations / findConversation googleAdsClick mapping", () => {
       contact: null,
       assignedUser: null,
       assignedInboxTeam: null,
+      conversationParticipants: [],
     }
     mocks.findManyQuery.mockResolvedValue([conversation])
     mocks.findWithFullRelations.mockResolvedValue(conversation)

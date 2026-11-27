@@ -11,6 +11,7 @@ import { aiExtractDataStep } from "./ai-extract-data/index"
 import { aiGenerateImageStep } from "./ai-generate-image/index"
 import { aiGenerateTextStep } from "./ai-generate-text"
 import { aiGenerateTextAgentStep } from "./ai-generate-text-agent"
+import { aiSegmentImageStep } from "./ai-segment-image/index"
 import { aiSpeechToTextStep } from "./ai-speech-to-text"
 import { aiTextToSpeechStep } from "./ai-text-to-speech"
 import { appointmentSchedulingStep } from "./appointment-scheduling"
@@ -18,10 +19,12 @@ import { archiveConversationStep } from "./archive-conversation"
 import { assignConversationStep } from "./assign-conversation"
 import { autoAssignConversationStep } from "./auto-assign-conversation"
 import { blockContactStep } from "./block-contact"
+import { callPhoneNumberStep } from "./call-phone-number"
 import { changeGamificationScoreStep } from "./change-gamification-score"
 import { chooseChannelStep } from "./choose-channel"
 import { clearCustomFieldStep } from "./clear-custom-field"
 import { conditionStep } from "./condition"
+import { copyTextStep } from "./copy-text"
 import { countCharactersStep } from "./count-characters"
 import { markCouponUsedStep, setUpCouponStep } from "./coupon"
 import type { StepDefinition } from "./definition"
@@ -36,6 +39,7 @@ import { evaluateDecisionStep } from "./evaluate-decision"
 import { executeJavascriptStep } from "./execute-javascript"
 import { externalRequestStep } from "./external-request"
 import { facebookCustomAudienceStep } from "./facebook-custom-audience"
+import { findPlacesNearMeStep } from "./find-places-near-me"
 import { followConversationStep } from "./follow-conversation"
 import { followUpStep } from "./follow-up"
 import { formatDateStep } from "./format-date"
@@ -55,6 +59,7 @@ import { openMiniAppStep } from "./open-mini-app"
 import { openWebsiteStep } from "./open-website"
 import { optInEmailStep } from "./opt-in-email"
 import { optOutEmailStep } from "./opt-out-email"
+import { pipelineStep } from "./pipeline"
 import { questionnairesStep } from "./questionnaires"
 import { removeContactTagStep } from "./remove-contact-tag"
 import sendAudioStep from "./send-audio"
@@ -160,6 +165,7 @@ export const allSteps: Record<StepType, StepDefinition<any> | undefined> = {
   [stepTypes.enum.getDataFromJson]: getDataFromJsonStep,
   [stepTypes.enum.formatDate]: formatDateStep,
   [stepTypes.enum.generateCode]: generateCodeStep,
+  [stepTypes.enum.findPlacesNearMe]: findPlacesNearMeStep,
   [stepTypes.enum.countCharacters]: countCharactersStep,
   [stepTypes.enum.splitTraffic]: splitTrafficStep,
   [stepTypes.enum.startExternalFlow]: sendExternalFlowStep,
@@ -170,6 +176,8 @@ export const allSteps: Record<StepType, StepDefinition<any> | undefined> = {
   [stepTypes.enum.performAction]: undefined,
   [stepTypes.enum.openWebsite]: openWebsiteStep,
   [stepTypes.enum.openMiniApp]: openMiniAppStep,
+  [stepTypes.enum.callPhoneNumber]: callPhoneNumberStep,
+  [stepTypes.enum.copyText]: copyTextStep,
   [stepTypes.enum.setCustomField]: setCustomFieldStep,
   [stepTypes.enum.clearCustomField]: clearCustomFieldStep,
   [stepTypes.enum.landingPage]: undefined,
@@ -183,6 +191,7 @@ export const allSteps: Record<StepType, StepDefinition<any> | undefined> = {
   [stepTypes.enum.setUpCoupon]: setUpCouponStep,
   [stepTypes.enum.markCouponUsed]: markCouponUsedStep,
   [stepTypes.enum.changeGamificationScore]: changeGamificationScoreStep,
+  [stepTypes.enum.pipeline]: pipelineStep,
   [stepTypes.enum.condition]: conditionStep,
   [stepTypes.enum.addNotes]: addNotesStep,
   [stepTypes.enum.waitUserReply]: undefined,
@@ -191,6 +200,7 @@ export const allSteps: Record<StepType, StepDefinition<any> | undefined> = {
   [stepTypes.enum.aiGenerateTextAgent]: aiGenerateTextAgentStep,
   [stepTypes.enum.aiGenerateImage]: aiGenerateImageStep,
   [stepTypes.enum.aiEditImage]: aiEditImageStep,
+  [stepTypes.enum.aiSegmentImage]: aiSegmentImageStep,
   [stepTypes.enum.aiAnalyzeImage]: aiAnalyzeImageStep,
   [stepTypes.enum.aiSpeechToText]: aiSpeechToTextStep,
   [stepTypes.enum.aiTextToSpeech]: aiTextToSpeechStep,

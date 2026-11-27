@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from "vitest"
+import { z } from "zod"
 
 const mocks = vi.hoisted(() => ({
   aiFindBy: vi.fn(),
@@ -214,6 +215,60 @@ describe("handleAIExtractData", () => {
     )
     expect(mocks.logProviderError).toHaveBeenCalledWith(
       expect.objectContaining({ provider: "claude", workspaceId: "ws-1" }),
+    )
+  })
+})
+
+describe("handleAIExtractData with Muse", () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    mocks.aiFindBy.mockResolvedValue({ id: "ai-1" })
+    mocks.createAIModelInstance.mockReturnValue("model")
+  })
+
+  test("resolves the Muse integration and model for the step", async () => {
+    mocks.generateText.mockResolvedValue({ output: { email: "a@b.test" } })
+    const props = makeProps("muse")
+
+    await expect(
+      handleAIExtractData({
+        ...props,
+        step: { ...props.step, model: "muse-spark-1.3" },
+      }),
+    ).resolves.toMatchObject({ status: "success" })
+
+    expect(mocks.aiFindBy).toHaveBeenCalledWith(
+      expect.objectContaining({ workspaceId: "ws-1", provider: "muse" }),
+    )
+    expect(mocks.createAIModelInstance).toHaveBeenCalledWith(
+      expect.objectContaining({ provider: "muse", modelId: "muse-spark-1.3" }),
+    )
+  })
+
+  // Meta's strict json_schema mode rejects a schema whose properties are not
+  // all listed in `required` (`.optional()` fields → 400).
+  test("sends a structured output schema that lists every key as required", async () => {
+    mocks.generateText.mockResolvedValue({ output: { email: null } })
+
+    await handleAIExtractData(makeProps("muse"))
+
+    const [{ schema }] = mocks.outputObject.mock.calls[0] as [
+      { schema: Parameters<typeof z.toJSONSchema>[0] },
+    ]
+    const jsonSchema = z.toJSONSchema(schema) as {
+      properties: Record<string, unknown>
+      required?: string[]
+    }
+    expect(jsonSchema.required).toEqual(Object.keys(jsonSchema.properties))
+  })
+
+  test("attributes a Muse failure to the muse provider", async () => {
+    mocks.generateText.mockRejectedValue(new Error("ai failed"))
+
+    await handleAIExtractData(makeProps("muse"))
+
+    expect(mocks.logProviderError).toHaveBeenCalledWith(
+      expect.objectContaining({ provider: "muse", workspaceId: "ws-1" }),
     )
   })
 })

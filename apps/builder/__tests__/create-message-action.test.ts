@@ -111,6 +111,7 @@ describe("createMessageAction", () => {
       contactInbox,
       input: { text: "hello", clientId: "client-1" },
       user: { id: "user-1" },
+      sendFrom: "inbox",
     })
     expect(result).toEqual({ id: "msg-1" })
   })
@@ -140,6 +141,7 @@ describe("createMessageAction", () => {
       contactInbox,
       input: parsedInput,
       user: { id: "user-1" },
+      sendFrom: "inbox",
     })
   })
 })

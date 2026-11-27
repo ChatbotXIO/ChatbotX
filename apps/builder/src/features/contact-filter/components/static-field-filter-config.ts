@@ -158,6 +158,7 @@ export const staticFieldRules: Record<string, StaticFieldRule> = {
   appliedJobs: dropdownRule,
   tags: relationSetRule,
   completedWhatsAppFlows: relationSetRule,
+  clickedAd: relationSetRule,
   messengerList: dropdownRule,
   subscribedToDripCampaign: relationSetRule,
   conversationAssigned: relationSetRule,
@@ -221,7 +222,7 @@ export const staticFieldRules: Record<string, StaticFieldRule> = {
   lastSent: dateRule,
   lastDelivered: datePresenceRule,
   lastSeen: dateRule,
-  lastInteraction: dateRule,
+  lastInteraction: datePresenceRule,
   currentDate: dateRule,
   bought: dateRule,
 
@@ -317,7 +318,12 @@ export const getStaticFieldValueInputConfig = (
   config: FieldConfig | undefined,
   operator: string | undefined,
 ): CustomFieldValueInputConfig | undefined => {
-  if (!config || config.customFieldId || config.topicId) {
+  if (
+    !config ||
+    config.customFieldId ||
+    config.topicId ||
+    config.pipelineItem
+  ) {
     return
   }
   if (isValuelessOperator(operator)) {

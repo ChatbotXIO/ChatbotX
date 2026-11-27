@@ -4,6 +4,8 @@ CLI for interacting with the ChatbotX API.
 
 Commands are automatically generated from the ChatbotX public API spec — no manual update needed when new APIs are added.
 
+CLI writes execute directly; MCP-only human approval (`x-mcp.hitlPolicy` and `_confirm`) does not gate CLI commands.
+
 ---
 
 ## Installation
@@ -94,6 +96,12 @@ chatbotx inboxes list                                # List connected inboxes
 
 ---
 
+### `me` / `realtime` (mobile app only — not in the CLI)
+
+`/v1/me`, `/v1/me/workspaces`, `/v1/me/device-tokens`, `/v1/me/password`, `/v1/me/web-handoff` and `/v1/realtime/connect-token` act as a signed-in workspace member and need a native mobile app access token (`mobileAppToken` scheme, from `POST /api/auth/mobile/token`). A workspace token has no member identity, so `MOBILE_APP_TOKEN_ONLY_PATHS` (`apps/builder/src/lib/orpc/public-spec.ts`) marks them mobile-only and `isWorkspaceTokenOperation` filters them out of the CLI: there is no `chatbotx me` or `chatbotx realtime` group. Any new mobile-only path must be added to that set, or it surfaces here as a command that always 401s.
+
+---
+
 ### `teams`
 
 ```bash
@@ -180,6 +188,8 @@ chatbotx bot-fields edit <idOrName>                  # [--name --type --descript
 chatbotx bot-fields set <idOrName> --value <value>   # Set one bot field value (PUT /v1/bot-fields/{idOrName})
 chatbotx bot-fields delete <idOrName>                # Delete the bot field (definition and value)
 chatbotx bot-fields reset <idOrName>                 # Clear one bot field value, keep the field
+chatbotx bot-fields operations <idOrName> --operation <operation> --value <value>
+                                                     # Same operations as the contact batch, by field type (atomic for increase/decrease/append/prepend)
 chatbotx bot-fields bulk-reset --ids <ids>           # Clear up to 100 bot field values by id
 ```
 
@@ -198,7 +208,7 @@ The `<identifier>` parameter (`packages/business/src/contact/utils.ts` `parseCon
 ```bash
 # Basic CRUD
 chatbotx contacts list                               # [--page --perPage --sort --keyword --contactFilter]
-chatbotx contacts create --email <email>             # [--phoneNumber --contactId --firstName --lastName]
+chatbotx contacts create --email <email>             # [--phoneNumber --sourceUserId --contactId --firstName --lastName]  (WhatsApp: a phone number, a BSUID in --sourceUserId, or both)
 chatbotx contacts count                              # Count matching filter [--page --perPage --sort --keyword --contactFilter]
 chatbotx contacts get <identifier>
 chatbotx contacts update <identifier>
@@ -210,10 +220,75 @@ chatbotx contacts block <identifier>
 chatbotx contacts unblock <identifier>
 chatbotx contacts filter-fields                      # Field/operator reference for --contactFilter
                                                      # [--surface flowCondition] also lists flow-only fields (isWithinWorkingHours)
+                                                     # `pipelineItems` = pipelines + stages and the shapes of `pipelineItem` conditions
+chatbotx contacts ad-referrals <identifier>           # Ads the contact came from [--perPage --cursor]
+chatbotx contacts broadcasts list <identifier>        # Broadcasts sent to the contact, newest first [--perPage --cursor --search]
 
 # Discover IDs accepted by contactFilter.commentedOnPost
-chatbotx channel-posts list                           # [--limit --search --cursor]
+chatbotx channel-posts list                           # [--limit --search --inboxId --cursor]
 chatbotx channel-posts options-by-ids --ids <ids>     # Resolve saved-filter post labels
+chatbotx channel-posts list-managed                    # [--channels --inboxIds --authorIds --contentTypes --liveStatus --topicIds --publishedFrom --publishedTo --search --hasComments --sort --limit --cursor] scope `posts`
+chatbotx channel-posts get-managed <id>
+chatbotx channel-posts update-managed <id>              # --topicIds replaces the post's topics
+chatbotx channel-posts bulk-update-managed --ids <ids>  # [--addTopicIds --removeTopicIds], up to 100 posts, all or nothing
+chatbotx channel-posts refresh-managed <id>             # Re-read one post from its channel now; returns the outcome and the updated post
+chatbotx channel-posts refresh-metrics --ids <ids>      # Ask fresh counts of up to 50 posts (background, one channel read per inbox)
+chatbotx channel-posts get-metrics <id>                 # [--from --to] Daily cumulative total and signed gain of one post (local days, default last 30, at most 366); null = never reported; scope `posts`
+chatbotx post-analytics summary                         # [--channels --inboxIds --destinationIds --contentTypes --topicIds --from --to] Gains per metric vs the previous period, posts published, `coverage`
+chatbotx post-analytics timeseries                      # [same filters --metric --groupBy none|channel|inbox] Daily gain per local day
+chatbotx post-analytics top-posts                       # [same filters --metric --rankBy gained|total --limit] Up to 50 posts
+chatbotx post-analytics best-times                      # [--channels --inboxIds --destinationIds --contentTypes --topicIds] Weekday x hour slots; `insufficientData` below 3 posts per slot / 20 overall
+chatbotx social-posts get-metrics <id>                         # [--from --to] Metrics per destination of a composed post
+chatbotx channel-posts list-authors                   # [--channels --inboxIds] Up to 100 post authors with post counts; pass an id as `list-managed --authorIds`
+chatbotx channel-posts list-comments <id>             # [--search --hasPhone --limit --cursor] Comments of one post, newest first
+chatbotx channel-posts merge-comments --postIds <ids> # [--search --hasPhone --limit --cursor] Comments of up to 20 posts as one list
+chatbotx channel-posts like-comment <id> <commentId> --createdAt <iso> --liked true|false   # Not on Instagram or Threads (409)
+chatbotx channel-posts delete-comment <id> <commentId> --createdAt <iso>                    # Not on Threads (409); cannot be undone
+chatbotx channel-posts export-comments --postIds <ids> --kind comments|phones|emails   # Returns the CSV in the response; 20000-comment cap (`truncated`)
+chatbotx channel-posts export-comments --kind rows [--filters '{"channels":["messenger"],"sort":"newest"}']   # The post list itself, one row per post; 5000-post cap
+chatbotx channel-posts start-comment-export --postIds <ids> --kind comments|phones|emails   # Background read of every comment from the channel (no 20000 cap); returns `fileId` (202)
+chatbotx channel-posts get-comment-export <fileId>      # Status, rows read, `truncated`, `failureReason` and, once `uploaded`, a 5-minute `downloadUrl`
+chatbotx channel-posts sync                             # [--inboxIds] Start syncing posts from the channels; first run loads history
+chatbotx channel-posts sync-status                      # [--inboxIds] Where each inbox's post sync stands, last error, re-authorise hint
+chatbotx post-topics list|create|update|delete          # Topics that group posts; scope `posts`
+chatbotx post-snippets list|create|get|update|delete     # Reusable post text (kind signature, hashtags, text), up to 100; scope `posts`; give a signature id as `signatureId` to `social-posts create` to append it once to the new post's text
+chatbotx post-target-sets list|create|get|update|delete # Saved selections of 1-30 destinations, up to 50, each with its current state (ready, needsReconnect, permissionMissing, inboxDisconnected); scope `posts`
+chatbotx social-posts write-with-ai --body '{"mode":"write","brief":"Announce our weekend sale","idempotencyKey":"sale-draft-1","destinationIds":["123"],"hashtags":true,"emoji":true,"variants":2}'   # Suggested post text, nothing saved or published; modes write, rewrite, shorten, expand, tone, fit, hashtags (only hashtags); the result has `variants` (1 to 3 options, or one per network with `"perNetwork":true` and `providers`/`destinationIds` on two networks), `hashtags` and `text` (= first variant); options hashtags, emoji, callToAction + callToActionText (up to 80 characters); pass `integrationId` + `model` (provider name such as `openai`, or an OpenAI-compatible integration id) to pick the AI model, else the one chosen for Inbox translation is used, else 409 `aiModelNotChosen`; idempotencyKey required (replayed 10 min); 30/min and 500/day per workspace; one paid model call
+chatbotx social-posts create --body '{"text":"Sale starts today","targets":[{"destinationId":"123"}],"idempotencyKey":"sale-1"}'   # Create a draft (publish at once with `"publish":"now"`, or schedule with `"scheduledAt"` / `"queue":"next"`; `"plannedAt"` only remembers a time on the draft for the calendar, nothing is scheduled) for one or more destinations (a target gives either `destinationId` from `post-destinations list` or an `inboxId`); scope `posts`; `idempotencyKey` makes it safe to repeat
+chatbotx social-posts list                           # Composed posts, newest first (filters: providers, destinationIds, inboxIds, statuses, bucket, topicIds, from, to, search)
+chatbotx social-posts counts                         # [--providers --destinationIds --inboxIds] How many posts each state holds: drafts, scheduled, published, needsAttention, all; `list --bucket <state>` returns exactly those posts
+chatbotx social-posts get <id>
+chatbotx social-posts update <id> --body '{"text":"New text"}'   # Draft or scheduled posts only; `targets` replaces the destinations
+chatbotx social-posts delete <id>                    # Deletes a draft; cancels a scheduled post (waiting destinations become cancelled, queue times freed). With `--removeFromChannels true` it instead takes the published destinations down from their networks (Facebook, Threads; Instagram has no delete and answers `unsupported`): per destination `queued` / `removed` / `unsupported` / `notPublished`, repeat-safe, refused (402) when the plan expired; `removedAt` or the destination error tells the result
+chatbotx social-posts reschedule <id> --body '{"scheduledAt":"2026-12-01T09:00:00+07:00"}'   # Move waiting destinations (`targetId` for one): `scheduledAt` (ISO 8601 with offset, 2 min to 1 year ahead, optional `timezone`) | `queue` ("next" | "top") | `timezone` alone | `unschedule: true` (back to a draft); all or nothing, 409 when a destination is about to publish
+chatbotx post-destinations list                          # Where a post can go: connected Facebook Page, Instagram and Threads inboxes (published with the inbox's own token) and TikTok accounts, grouped by network with `state` (ready | needsReconnect | permissionMissing | inboxDisconnected) and missing permissions (filters: providers, states); scope `posts`; a reconnect is done by a person in the app
+chatbotx post-destinations get <id>
+chatbotx post-destinations recheck-permissions            # [--ids <ids>] Re-read, in the background, the publishing permissions the platform reports for Facebook Pages and Instagram (Facebook Login) destinations (others are `skipped`; checked in the last 10 minutes = `fresh`); then read `post-destinations list`; scope `posts`
+chatbotx post-destinations posting-schedule get <id>      # Weekly posting times (the queue) of a destination
+chatbotx post-destinations posting-schedule update <id> --body '{"timezone":"Asia/Ho_Chi_Minh","slots":[...7 days...]}'   # Replace the times and re-seat the queue (all or nothing); reports moved and detached posts
+chatbotx post-destinations publishing-settings get <id>   # TikTok: the creator's nickname, allowed privacy levels, disabled interactions and longest video (read live; `options.privacyLevel` must be one of them)
+chatbotx post-destinations free-slots list <id> --limit 5  # The next free posting times (what `queue: "next"` would take)
+chatbotx social-posts duplicate <id>                 # A new draft with the same content, destinations, files and topics
+chatbotx social-posts set-recurrence <id> --body '{"rule":{"frequency":"weekly","interval":1,"weekdays":[1],"timeOfDay":"09:00","timezone":"Asia/Ho_Chi_Minh","startsOn":"2026-12-01","end":{"kind":"never"}}}'   # Make a draft repeat: it becomes a template (never published itself) and a copy is scheduled at each run; or pass `recurrence` to `create`
+chatbotx social-posts list-occurrences <id>          # [--limit --cursor] The runs of the series newest first: created (post id + status) | excluded | missed | skipped
+chatbotx social-posts skip-occurrences <id> --body '{"dates":["2026-12-25"]}'      # Skip runs on local dates (`recurrence.upcoming[].date` of `get`) without pausing; undo with restore-occurrences
+chatbotx social-posts restore-occurrences <id> --body '{"dates":["2026-12-25"]}'
+chatbotx social-posts pause-recurrence <id>          # Stop making copies until resumed (runs during the pause are not made up); allowed when the plan expired
+chatbotx social-posts resume-recurrence <id>
+chatbotx social-posts end-recurrence <id>            # End the series for good; the copies already made stay
+chatbotx social-posts publish <id>                 # Publish a draft now on every destination (each target goes pending, then published | failed | needsReview; poll `get`)
+chatbotx social-posts retry-target <id> <targetId>  # Publish one failed or needsReview destination again; when its first post is out, resumes at the first part not published (optional `partId`), never reposting the head
+chatbotx social-posts remove-target <id> <targetId>  # Take one published destination down from its network, leaving the others published (`social-posts delete <id> --removeFromChannels true` removes every destination)
+chatbotx social-posts resolve-target <id> <targetId> --body '{"outcome":"published"}'   # Settle a needsReview destination: "published" (you saw it on the network) or "retry"; with parts it acts on the first part not published (`partId` optional)
+# Threads destinations take `parts` and `firstComment` in `create`/`update` targets, e.g. {"destinationId":"123","parts":[{"text":"2/"},{"text":"3/"}],"firstComment":{"text":"Link: ..."}}; `content-types` lists which networks support them
+chatbotx social-posts validate --body '{...}'        # Every issue per destination (text length, files, formats, account status) without saving
+chatbotx social-posts preview --body '{...}'         # The normalised content per destination with character counts and issues
+chatbotx social-posts content-types                  # What each network accepts: types, file limits, text limit, settings, daily limit
+chatbotx social-accounts list                          # TikTok accounts connected for publishing with destinations, status, missing permissions (Facebook, Instagram and Threads publish with their inbox token: see `post-destinations list`); scope `posts`; connecting is done by a super admin in the app (a browser login)
+chatbotx social-accounts get <id>
+chatbotx social-accounts verify <id>                   # Prove the stored token still works; a rejected token sets `needsReauth`
+chatbotx social-accounts sync-destinations <id>        # Re-read a TikTok login's destinations from the platform
+chatbotx social-accounts disconnect <id>               # Remove a TikTok publishing login and its stored tokens
 
 # Imports & exports
 chatbotx contacts import-template                    # CSV template as text [--language]
@@ -224,6 +299,7 @@ chatbotx contacts imports                            # [--page --perPage --statu
 chatbotx contacts find-by-imports <id>                # Get one import job
 chatbotx contacts export --fields <fields>            # [--contactIds --exportAll --filter]
 chatbotx contacts find-by-export-files <fileId>       # Poll export status/download URL
+chatbotx contacts export-files                        # Past exports, kept 7 days [--perPage --cursor]
 
 # Bulk
 chatbotx contacts bulk-tags --contactIds <contactIds> --tags <tags>
@@ -239,11 +315,13 @@ chatbotx contacts tags update <identifier> --tags <tags>  # Replace all tags on 
 chatbotx contacts tag add <identifier> --tagIds <tagIds>
 chatbotx contacts tag delete <identifier> --tagIds <tagIds>
 chatbotx contacts by-name add <identifier> --tags <tags>  # Add tags by name (creates missing ones)
+chatbotx contacts by-name delete <identifier> --tags <tags>  # Remove tags by name (nothing is created)
 
 # Custom fields
 chatbotx contacts custom-fields list <identifier>    # Get all custom fields from contact
 chatbotx contacts custom-fields update <identifier> --operations <operations>
-                                                     # Batch set/append/prepend/increase/decrease
+                                                     # Batch by field type: set, append, prepend, increase, decrease, clear, formula,
+                                                     # setNow, dateExpression, addMinutes, addHours, addDays (all-or-nothing)
 chatbotx contacts custom-field get <identifier> <idOrName>
 chatbotx contacts set-custom-field <identifier> <idOrName> --value <value>   # Set one custom field
 chatbotx contacts custom-field delete <identifier> <idOrName>                # Clear ONE custom field
@@ -285,8 +363,11 @@ chatbotx contacts coupons list <identifier>          # List coupons issued to co
 
 ```bash
 chatbotx conversations list                          # [--botCategory --assignedId --channel --status --keyword
-                                                     #  --botEnabled --tags --contactFilter --cursor --perPage --sort]
+                                                     #  --botEnabled --tags --contactFilter --cursor --perPage --sort --view]
+                                                     # Array/object filters are JSON strings: --status '["open"]'
+                                                     # --view compact drops ad attribution and thread-control metadata from contactInboxes (default full)
 chatbotx conversations get <id>
+chatbotx conversations participants list <id>   # [--perPage --cursor] members who replied, newest first (see docs/inbox-participants.md)
 chatbotx conversations assign add <id> --assignedId <assignedId>  # null clears the assignee
 chatbotx conversations archive add <id>
 chatbotx conversations unarchive add <id>
@@ -301,6 +382,7 @@ chatbotx conversations disable-bot add <id>
 chatbotx conversations messages list <conversationId>  # [--perPage --cursor]
 chatbotx conversations message get <conversationId> <messageId> --createdAt <createdAt>
 chatbotx conversations flow-response get <conversationId> <messageId> --createdAt <createdAt>  # WhatsApp Flow answers, labelled
+                                                     # file answers: kind "files", each {status: stored (url, size) | failed (failureReason) | unprocessed (no stored copy)}
 chatbotx conversations message send <conversationId>   # [--text --files --mediaFile --mediaFileId --mediaFileIds
                                                      #  --products (JSON catalog products; ids from `products sendable`)
                                                      #  --flowId --nodeId --inboxId --clientId
@@ -309,8 +391,43 @@ chatbotx conversations messages update <conversationId> <messageId> --createdAt 
                                                      # [--newAttachmentPath --newAttachmentPublicUrl --newAttachmentMimeType
                                                      #  --newAttachmentName --newAttachmentSize --removeAttachment]
 chatbotx conversations message delete <conversationId> <messageId> --createdAt <createdAt>
+chatbotx conversations resend add <conversationId> <messageId> --createdAt <createdAt>  # Resend a failed message (409 if it did not fail or was delivered)
 chatbotx conversations attribute add <conversationId> <messageId> --createdAt <createdAt>  # [--liked --hidden]
+
+# Inbox translation (scope `inbox`; workspace switch and model: see `translation`)
+chatbotx conversations translation list <conversationId>      # The customer's language, its source and the on/off state
+chatbotx conversations translation update <conversationId>    # [--enabledOverride <true|false|null> --language <code>]
+                                                     # --enabledOverride false stops translating this conversation, true turns it on in the Inbox while the bot is on duty; null clears it
+                                                     # --language sets the customer's language by hand (never overwritten by detection)
+chatbotx conversations translation request <conversationId> --messages <messages>
+                                                     # [--retryFailed]  JSON array (max 20) of {"id","createdAt"} from `messages list`;
+                                                     # queues customer text for translation, read it back in `messages list` -> `translation`
+chatbotx conversations translation preview <conversationId> --text <text>
+                                                     # Translate a draft into the customer's language without sending it
+# `conversations message send --translate true` translates the text into the customer's language
+# (waits up to 10 s; if it cannot be translated nothing is sent and it fails with `translationNotSent`);
+# `--editedTranslation '{"text","targetLanguage"}'` sends a translation you already reviewed.
+
+# Appointment booking link (scope `appointments`; `--send true` also needs `inbox`)
+chatbotx conversations appointment-booking-link add <conversationId> --calendarId <calendarId>
+                                                     # [--inboxId --send --bypassThreadControlLock]
+                                                     # Returns {url, expiresAt (24 hours), calendar, messageId};
+                                                     # --send true also sends it as a message with a booking button
 ```
+
+---
+
+### `translation` (scope `settings`; `settings get` also with `inbox`)
+
+```bash
+chatbotx translation settings get                    # enabled, integration + model, workspace language, status
+chatbotx translation settings update --enabled <true|false> --modelConfig <modelConfig>
+                                                     # modelConfig: JSON {"provider","model"} or {"kind":"openaiCompatible","integrationId","model"}, null clears
+                                                     # Needs a connected, enabled AI integration; the workspace pays with its own key
+chatbotx translation settings-test --modelConfig <modelConfig>  # [--sampleText] Translate a sample, report latency (warns on slow models)
+```
+
+Per-conversation commands live under `conversations translation` above.
 
 ---
 
@@ -320,7 +437,7 @@ chatbotx conversations attribute add <conversationId> <messageId> --createdAt <c
 chatbotx broadcasts list
 chatbotx broadcasts get <idOrName>                   # Get broadcast
 chatbotx broadcasts audience list <idOrName>         # Get broadcast audience (contacts) [--page --perPage]
-chatbotx broadcasts contacts list <id> --eventType <eventType>  # Recipients by event (message:sent, message:seen, ...); returns total and conversationId
+chatbotx broadcasts contacts list <id> --eventType <eventType>  # Recipients by event (message:sent, message:seen, ..., contactInfo:phoneCaptured / contactInfo:emailCaptured = contacts who left a phone / an email); returns total and conversationId
 chatbotx broadcasts audience-preview                 # Count (total) and list a would-be audience before sending [--inboxIds --channels --contactFilter --page --perPage ...]
 chatbotx broadcasts create --channel <channel> --subaction <subaction> --schedulesType <schedulesType>
                                                      # Cloud trial Messenger broadcasts: max 60/min and one active at a time
@@ -356,7 +473,8 @@ chatbotx broadcasts restore-occurrence add <id>      # same flags; undo a skip (
 ### `flows`
 
 ```bash
-chatbotx flows list                                  # [--page --perPage --active --name --folderId --startType --integrationWhatsappId --sort]  active defaults to true
+chatbotx flows list                                  # [--page --perPage --active --enableInInbox --name --folderId --startType --integrationWhatsappId --sort]  active defaults to true
+                                                     # --enableInInbox true → only flows that can be started from the inbox; each item returns enableInInbox
 chatbotx flows get <id>                              # Includes its versions
 chatbotx flows create --name <name>                  # [--folderId --spec --nodes --edges --publish]
                                                      # spec: flow-spec DSL (see `schemas flow-spec`); nodes/edges: raw
@@ -370,6 +488,48 @@ chatbotx flows validate --spec <spec>                # Compile/validate a flow-s
 chatbotx flows draft update <id>                     # [--spec | --nodes --edges]  overwrite the draft in place
 chatbotx flows versions list <id>                    # List immutable published versions, newest first
 chatbotx flows import --fileId <fileId>              # [--folderId]  queue async import of an uploaded flow-export file
+chatbotx flows export list <id>                      # [--version published|draft]  portable export of the flow (published graph by default)
+```
+
+---
+
+### `templates` / `template-installations` / `template-previews` / `template-store` (scope `templates`)
+
+Publish a snapshot of resources as a share link, and install templates shared by others (same tenant only).
+
+```bash
+chatbotx templates list                              # [--cursor --limit]  templates this workspace published, with active install count; pass `nextCursor` back for the next page (max 100)
+chatbotx templates get <id>                          # Template with its selection (never the snapshot)
+chatbotx templates create --name <name> --selection <json> --defaultPermissions <json> --createInstallFolder <bool> --defaultAutoUpdate <bool>   # [--video <json>]  share-page video, e.g. --video '{"source":"<link or embed code>"}' (YouTube, Vimeo, Streamable, Cloudinary); omit keeps, --video null or an empty source clears; replaces the deprecated --youtubeVideoId
+                                                     # selection: {"flows":{"mode":"ids","ids":["…"],"lockedIds":["…"]}} — list ids with `templates selectable-resources`
+chatbotx templates update <id> ...                   # Same body as create (incl. --video); takes a new snapshot
+chatbotx templates delete <id>                       # Copies already installed stay (their view-only locks are released)
+chatbotx templates selectable-resources --category <category>  # [--keyword --cursor --limit]  ids for `selection`
+chatbotx templates dependencies-preview --selection <json>  # Read only: what saving that selection takes along (includedDependencies, manifests of tags/custom fields/folders/...)
+chatbotx templates locked-resources --resourceKind <kind> --resourceIds <json>  # Read only: which of those ids (<=200, from the kind's own list) are view-only template copies (editing is refused) and which cannot be deleted
+chatbotx templates link <id>                         # Share link, enabled flag and expiry, plus templateId + templateKey (the pair a white-label owner enters to make it their default)
+chatbotx templates share <id> --enabled <bool>       # [--expiresAt <ISO date-time> | null]  omit expiresAt to keep it
+chatbotx templates rotate-share <id>                 # New link; every earlier link stops working
+chatbotx templates analytics <id>                    # Installation counts by status and by template version (aggregates only)
+chatbotx templates installers <id>                   # [--search --cursor --limit]  who installed it: workspace name, installs, oldest version, auto-update, installedAutomatically (a white-label default installed it; that workspace stays unnamed) (publisherRef is opaque)
+chatbotx templates uninstall-preview <id> <installerId>  # What removing the template from that installer would do (counts by outcome, edited copies listed as `deletedModified`); only if they allowed it
+chatbotx templates uninstall-installer <id> <installerId>  # Start removing it (202, runs in the background; follow `uninstallState` in `templates installers`): everything the install created is deleted, edited copies included; shared tags/fields/folders and items something else depends on are kept
+chatbotx template-store list                         # [--categoryId --language --channel --keyword]  the template store of the token workspace's tenant: `categories` and `templates` (each with the `languages` it is made for; `--language` keeps those and the ones with none; and the `channels` it supports (empty = every channel); `--channel` keeps those listing it and the ones with none) with `shareToken` (feed it to `template-previews get` and `template-installations create`) and `shareUrl`; read only
+chatbotx template-previews get <shareToken>          # Can this link be installed into the token's workspace? (installable / reason) + requiredInboxes / requiredChannels to bind + collisions / collisionSummary (what the install would reuse, create or rename here)
+chatbotx template-installations create --shareToken <token>  # [--allowDuplicate --inboxBindings <json>]  queue an install → { installationId }; an already installed template is updated in place → { installationId, syncId } (use --allowDuplicate for a separate copy)
+                                                     # inboxBindings: {"<templateInboxId>":"<yourInboxId>"} (ids from `template-previews get` / `inboxes list`); an unbound comment automation installs inactive
+chatbotx template-installations list                 # [--status --activeOnly --cursor --limit]  each item has installSource: manual | tenantDefault (installed automatically by a white-label default)
+chatbotx template-installations get <id>             # Status, errorCode, warnings; poll until completed / partial / failed
+chatbotx template-installations resources list <id>  # [--cursor --limit]  what the install created or reused
+chatbotx template-installations retry <id>           # Re-queue a failed install
+chatbotx template-installations update <id> --autoUpdate <bool> --publisherUninstallGrant <bool>  # Follow later saves of the template; get shows updateAvailable
+chatbotx template-installations sync <id>            # Bring the copy to the newest template version → { syncId }; edited copies are backed up first
+chatbotx template-installations syncs <id>           # Sync history, newest first
+chatbotx template-installations sync-detail <id> <syncId>  # Status, counts, warnings and backups (ids for restore-backup)
+chatbotx template-installations uninstall-preview <id>  # What an uninstall would do (counts)
+chatbotx template-installations uninstall <id>       # Start removing the template here (202, background): everything it created is deleted, edited copies included; follow `uninstallState` with `get`
+chatbotx template-installations cancel-uninstall <id>  # Take back an uninstall that stopped part-way (partial / failed / skipped): waiting copies are given back and switched on again
+chatbotx template-installations restore-backup <id> <backupId>  # Put back what a sync overwrote (flows restore into the draft only)
 ```
 
 ---
@@ -432,6 +592,7 @@ chatbotx ai-agents create --name <name> --prompt <prompt> --temperature <tempera
                                                      # fallback list, first entry preferred; tools: JSON array of tool names
                                                      # [--webSearchAuthorizedDomains --isRichResponse]
 chatbotx ai-agents update <id>                       # Same fields as create, all optional (partial update)
+                                                     # --isDefault true makes it the workspace default (previous default is unset)
 chatbotx ai-agents delete <id>
 ```
 
@@ -445,6 +606,8 @@ chatbotx integrations get <id>
 chatbotx integrations status-token-errors            # Channel integrations with failed token refresh
 chatbotx integrations find-by-ai --provider <provider>  # Get AI provider integration (GET only — connect/disconnect
                                                      # PUT/DELETE on the same path collide, see Known command-name collisions)
+chatbotx integrations update-ai --provider <provider> --autoReply <true|false>  # Turn the AI Reply switch on/off
+                                                     # (claude, deepseek, gemini, muse, openai; connect the provider first)
 ```
 
 ---
@@ -453,10 +616,15 @@ chatbotx integrations find-by-ai --provider <provider>  # Get AI provider integr
 
 ```bash
 chatbotx keywords list                               # List keywords (automated responses) [--type]
-chatbotx keywords get <id>                           # [--type]  type: inbound|comment, default inbound
-chatbotx keywords create --keywords <keywords>       # [--type --text --flowId --folderId]
+chatbotx keywords get <id>                           # [--type]  type: inbound|outbound, default inbound
+chatbotx keywords create --keywords <keywords>       # [--type --conditions --text --flowId --folderId]
                                                      # keywords: JSON array of phrases; text or flowId (not both)
-chatbotx keywords update <id>                        # [--type --keywords --text --flowId --folderId]
+chatbotx keywords create --conditions <conditions>   # inbound only, instead of --keywords. JSON array of
+                                                     # {"operator","values"}: conditions are ANDed, values ORed
+                                                     # operators: is, similarTo, contains, containsWholeWord,
+                                                     # beginsWith, endsWith, notContains, matchesRegex,
+                                                     # containsPhone|Email|Link|Image|Audio|Video, isThumbsUp (no values)
+chatbotx keywords update <id>                        # [--type --keywords | --conditions --text --flowId --folderId]
 chatbotx keywords status update <id> --status <status>  # [--type]  enable/disable without touching other fields
 chatbotx keywords delete <id>                        # [--type]
 ```
@@ -470,7 +638,14 @@ chatbotx triggers list                               # [--page --perPage]
 chatbotx triggers get <id>                           # Includes real conditions/actions
 chatbotx triggers create --name <name>               # [--folderId]  creates an empty trigger
 chatbotx triggers update <id> --conditions <conditions> --actions <actions>
-                                                     # Replaces the full condition/action set — JSON arrays
+                                                     # Replaces the full condition/action set — JSON arrays.
+                                                     # Action `type`s include setCustomField (O01–O12), startExternalStep (flowId + nodeId from `flows nodes`),
+                                                     # pipeline (the Pipelines flow-step actions), and addSequence / removeSequence (sequenceIds from `sequences list`, max 50;
+                                                     # they fire no sequence triggers/webhooks); a NEW action that points at a missing record is rejected.
+                                                     # One trigger runs at most about 20 times per contact per minute (fixed window); further runs are skipped.
+                                                     # Condition `type`s contactCommentedOnPost / contactFirstCommentedOnPost fire on a Messenger or Instagram post comment (every / the contact's first on that post);
+                                                     # optional `sourceId` (inbox, from `inboxes list`) and `value` {scope: any|selected|publishedFromPosts, channelPostIds} (ids from `channel-posts list`).
+                                                     # Those runs render {{post.link}} {{post.text}} {{post.published_at}} {{post.page_name}} {{post.id}} {{comment.text}} {{comment.id}} in their actions and flows
 chatbotx triggers settings update <id>               # [--name --active]  name/active only, conditions untouched
 chatbotx triggers delete <id>
 ```
@@ -533,6 +708,8 @@ chatbotx ads funnel                                  # Get ad conversion funnel
 chatbotx ads funnel-timeseries                       # Get daily ad conversion funnel
 chatbotx ads capi-delivery                           # Get Conversions API delivery status
 chatbotx ads conversions-export                      # Export conversion rows [--allChannels]
+chatbotx ads referral-ads                            # List ads contacts recently came from [--search --limit]
+chatbotx ads referral-stats                          # Contacts and conversions per ad [--from --to --tz --channel --limit]
 chatbotx ads ad-accounts list <channel>               # List channel ad accounts
 chatbotx ads analytics-overview                      # Get ad analytics overview
 chatbotx ads analytics-timeseries                    # Get daily ad analytics
@@ -565,8 +742,11 @@ chatbotx ads find-by-connections <channel> <integrationId>    # Disconnect messa
 ```bash
 chatbotx ai-files list                               # List AI knowledge-base files
 chatbotx ai-files get <id>
-chatbotx ai-files create --name <name>               # [--file --url] (exactly one required)
+chatbotx ai-files create --name <name>               # [--file --url] (exactly one required); max 25 MB; --url snapshots once (public Google Docs/Sheets/Slides exported)
 chatbotx ai-files delete <id>
+chatbotx ai-files search --query <text>             # [--agentId | --fileIds <json>] (exactly one) [--limit --similarityThreshold --expectedText]; full token
+chatbotx ai-files chunks list <id>                  # [--limit --cursor --fromChunkIndex]; document order; repeat with nextCursor until null
+chatbotx ai-files reindex <id>                      # [--chunkingConfig <json>] full token; 409 if a run is active and parameters are sent; poll `ai-files get` until processingRun is success/error
 ```
 
 ---
@@ -625,7 +805,7 @@ chatbotx analytics bot-messages-with-response          # [--granularity]
 chatbotx analytics bot-messages-no-response            # [--granularity]
 chatbotx analytics bot-messages-ai-providers
 chatbotx analytics messages-by-sender                  # [--granularity]
-chatbotx analytics broadcasts-stats <broadcastId>       # Get broadcast stats
+chatbotx analytics broadcasts-stats <broadcastId>       # Get broadcast stats (incl. contactInfo:phoneCaptured / contactInfo:emailCaptured)
 chatbotx analytics sequences-steps-stats <sequenceId> <stepId>  # Get sequence step stats
 chatbotx analytics mac-active-count                    # No time range — current billing period
 chatbotx analytics flows-stats <flowId>                # Get flow analytics
@@ -682,7 +862,8 @@ chatbotx appointment-reminders list                   # [--page --perPage --stat
 chatbotx appointments list                            # [--calendarId --tab --search --page --perPage]
 chatbotx appointments get <id>
 chatbotx appointments create --calendarId <calendarId> --contactId <contactId> --startAt <startAt> --inviteeTimezone <inviteeTimezone>
-                                                       # [--conversationId]  (book appointment)
+                                                       # [--conversationId --inboxId]  (book appointment)
+                                                       # --inboxId (needs --conversationId) also sends the calendar's confirmation flow
 chatbotx appointments cancel add <id>
 chatbotx appointments delete <id>
 ```
@@ -721,7 +902,11 @@ Any channel's comment automation id (fb/ig/threads/tiktok).
 chatbotx comment-automations accounts --type <messenger|instagram|instagramFacebook|threads|tiktok>  # Accounts an automation can be scoped to (pass one's inboxId on create/update)
 chatbotx comment-automations missed-comment-run add <id>    # Process missed comments (last 7 days, single-post automations)
 chatbotx comment-automations missed-comment-runs list <id>  # { inProgress } — poll until false
+chatbotx comment-automations moderation-logs list <id> [--from <iso>] [--to <iso>] [--action hide|delete] [--source rule|ai] [--page --perPage]  # Comments hidden/deleted and why (rule + keyword, or AI categories + reason)
+chatbotx comment-automations moderation-summary list <id> [--from <iso>] [--to <iso>] [--action hide|delete] [--source rule|ai]  # { total, hidden, deleted, byRule, byAI, failed, pending }
 ```
+
+AI moderation itself is configured on the automation: `hideComments.aiModeration` (`enabled`, `engine` = `aiAgent` (default, set `aiAgentId` from `ai-agents list`) or `decision` (an AI Router connection such as Jev: `decisionConnectionId` from `decision-connections list`, `decisionModel` from its `modelCatalog`, optional `decisionThreshold` 0.5–0.95, default 0.7), `categories`, `instruction` (max 1000 characters, 500 with `decision`), `action`) on `fb-comments` / `ig-comments` / `threads-comments` / `tiktok-comments` create/update.
 
 ---
 
@@ -731,6 +916,32 @@ chatbotx comment-automations missed-comment-runs list <id>  # { inProgress } —
 chatbotx contact-scans status --inboxId <inboxId>     # Latest Automatic Customer Scan status for inbox
 chatbotx contact-scans list                           # [--page --perPage]
 chatbotx contact-scans create --inboxId <inboxId> --scanFromAt <scanFromAt>
+chatbotx contact-scans cancel --inboxId <inboxId>    # Cancel running Automatic Customer Scan for inbox
+```
+
+---
+
+### `contact-syncs`
+
+Import contacts (with tags and custom fields) from AhaChat into the connected
+Messenger, Instagram, Zalo and Telegram pages of the workspace. AhaChat is asked
+about each page by itself: no AhaChat token is needed. Nothing imported runs a
+trigger, flow or webhook; one sync may run per workspace, and a Contacts-menu
+sync may start once every 4 hours.
+
+```bash
+chatbotx contact-syncs sources                                   # Connected pages and whether AhaChat has them (found / absent / ambiguous / unavailable) [--provider]
+chatbotx contact-syncs sources-schema --inboxId <id>             # Page tags/fields and their mappings
+chatbotx contact-syncs sources-mappings --inboxId <id> --tags '[{"externalId":"12","target":{"tagName":"VIP"}}]'
+                                                                 # [--fields '[{"externalId":"7","target":{"customFieldId":"..."}}]']
+chatbotx contact-syncs availability                              # canSync / blockedReason / nextSyncAt
+chatbotx contact-syncs create --sources '[{"inboxId":"<id>"}]'   # [--syncTags --syncCustomFields --overwriteExisting]
+chatbotx contact-syncs connect-import --pages '[{"inboxId":"<id>","aiReadsSyncedHistory":false}]'
+                                                                 # Just-connected Messenger/Instagram pages: contacts first, then their history sync by itself; needs the contacts and channels scopes
+chatbotx contact-syncs sources-retry-history --inboxId <id>      # Re-open a history sync that could not follow an import
+chatbotx contact-syncs list                                      # [--page --perPage]
+chatbotx contact-syncs get --runId <runId>                       # Run status with per-page counts and the history follow-up
+chatbotx contact-syncs cancel --runId <runId>
 ```
 
 ---
@@ -909,6 +1120,7 @@ chatbotx ig-stories instagram-stories --variant <instagram|facebook>  # List eli
 ```bash
 chatbotx inboxes list                                 # Connected inboxes; use `id` as `inboxId` elsewhere
 chatbotx inboxes update <id> --markReadOnOutbound <true|false>
+chatbotx inboxes avatars --inboxIds <id> [--inboxIds <id> ...]  # Page picture URL and page link (`profileUrl`) and network (`provider`) of each Facebook/Instagram/Threads inbox (max 50); other channels are left out
 ```
 
 ---
@@ -922,6 +1134,28 @@ chatbotx instagram-channels settings update <id>       # Full replace; pushes to
 chatbotx instagram-channels settings edit <id>         # PATCH: only the fields you send
 chatbotx instagram-channels delete <id>                # Disconnect the account (works after the trial ends)
 ```
+
+---
+
+### `place-categories` / `place-locations` (scope `places`)
+
+Places Near Me: business locations customers can find near them. Categories group locations; a lower `rank` is higher priority.
+
+```bash
+chatbotx place-categories list                        # includes locationCount per category
+chatbotx place-categories get <id>
+chatbotx place-categories create --name <name>        # [--rank <n>] (integer >= 1, default 10)
+chatbotx place-categories update <id>                 # Partial (PATCH) [--name --rank]
+chatbotx place-categories delete <id>                 # returns uncategorizedLocationCount
+
+chatbotx place-locations list                         # [--name --page --perPage]
+chatbotx place-locations get <id>
+chatbotx place-locations create --name <name> --latitude <lat> --longitude <long>  # [--categoryId <id>]
+chatbotx place-locations update <id>                  # Partial (PATCH) [--name --latitude --longitude --categoryId]; categoryId null clears it
+chatbotx place-locations delete <id>
+```
+
+Latitude is -90..90 and longitude -180..180 (numbers). Get `categoryId` from `place-categories list`.
 
 ---
 
@@ -970,8 +1204,10 @@ chatbotx inboxes history list <inboxId>                   # [--page --perPage]
 ### Conversation thread control (scope `inbox`)
 
 ```bash
-chatbotx conversations thread-control add <id> --contactInboxId <id> --action take|release|pass|sync
+chatbotx conversations thread-control add <id> --contactInboxId <id> --action take|release|pass|sync [--targetRole ai_agent|ctwa|customer_service|escalation|marketing|utility] [--metadata <note>]
 # --action sync only refreshes the stored thread owner from the channel
+# --targetRole is for pass only (omit it, or escalation, to hand over to the escalation partner)
+# --metadata is a note (max 2000 chars) delivered verbatim to the receiving app, for take and pass only
 ```
 
 ### `workspace` settings (scope `settings`)
@@ -1005,6 +1241,10 @@ chatbotx whatsapp-channels test-event add <id> --messagingId <id>
 chatbotx channel-integrations list                    # [--channel] Connected WhatsApp/Messenger/Instagram/Zalo/TikTok channels
 chatbotx whatsapp-channels list|get <id>              # Same data per channel; also instagram-channels, tiktok-channels
 chatbotx whatsapp-channels handover-resume-flow update <id> --handoverResumeFlowId <flowId|null>
+chatbotx whatsapp-channels routing-roles list <id>    # This app's Conversation Routing roles as last checked (null = never)
+chatbotx whatsapp-channels routing-roles sync <id>    # Ask Meta again (GET routing_roles) and store the answer
+chatbotx whatsapp-channels payment-settings list <id>   # Whether Pix payment-request buttons are sent with redirect (APPSWITCH)
+chatbotx whatsapp-channels payment-settings update <id> --pixRedirectEnabled <true|false>   # Only after Meta has onboarded the business
 ```
 
 ### `messenger-channels`
@@ -1092,6 +1332,7 @@ chatbotx minigames list                                # [--page --perPage]
 chatbotx minigames get <id>
 chatbotx minigames create --name <name> --type <type>
 chatbotx minigames update <id>                          # Full replace (PUT) / partial (PATCH) collide, see note
+chatbotx minigames duplicate <id>                       # Copy as "<name> - Copy", disabled (prizes, plays and counters are not copied)
 chatbotx minigames delete <id>
 chatbotx minigames bulk-delete --ids <ids>
 chatbotx minigames enabled update <id> --enabled <enabled>
@@ -1101,18 +1342,139 @@ chatbotx minigames players list <id>                    # Contacts who played, w
 
 ---
 
+### `polls` (scope `polls`)
+
+```bash
+chatbotx polls list                                    # Newest first, each with votesCount
+chatbotx polls get <id>                                # Poll with candidates and per-candidate votesCount
+chatbotx polls create --name <name> --startsAt <iso> --endsAt <iso> --candidates <json>   # 2-10 candidates; [--afterVoteFlowId <id>] from `flows list`
+chatbotx polls update <id>                             # Partial (PATCH); send candidate ids to keep their votes, omitted candidates are deleted with their votes
+chatbotx polls delete <id>
+chatbotx polls bulk-delete --ids <ids>
+chatbotx polls links list <id>                         # omnichannelUrl + one deep link per connected voting inbox
+chatbotx polls analytics list <id>                     # Vote totals, gender split, per-candidate votes and percentages
+```
+
+---
+
+### `pipelines` (scope `pipelines`)
+
+CRM kanban boards: pipelines hold ordered stages, custom fields and items (one per contact deal, ticket or card).
+
+```bash
+chatbotx pipelines list                                 # Pipelines with item counts
+chatbotx pipelines get <id>                             # Stages (left to right) and custom fields
+chatbotx pipelines create --type <opportunity|ticket|custom> --name <name>
+chatbotx pipelines update <id>                          # [--name --referenceName --currency <code|null> --settings <json>]; follows the workspace default currency until `--currency` sets its own, `null` follows it again
+chatbotx pipelines duplicate <id>                       # Structure only, no items
+chatbotx pipelines delete <id>                          # With all its stages and items
+chatbotx pipelines stage add <id> --name <name>         # [--description --textColor --backgroundColor]
+chatbotx pipelines stages update <id> <stageId>         # [--name --description --textColor --backgroundColor]
+chatbotx pipelines stages reorder <id> --stageIds <json>
+chatbotx pipelines stage delete <id> <stageId>          # [--moveItemsToStageId]; >2000 items runs in the background
+chatbotx pipelines fields list <id>                     # Custom fields in display order
+chatbotx pipelines field add <id> --name <name> --referenceName <ref> --type <type>  # [--required]
+chatbotx pipelines items list <id>                      # [--stageId --status --priority --assigneeMemberId (comma lists) --fieldConditions <json> --contactId --search --sort (manual needs exactly one --stageId) --direction (default asc for manual, desc otherwise) --limit --cursor]
+chatbotx pipelines stage-totals <id>                    # Item count and value per stage; same filters as items list
+chatbotx pipelines item add <id> --contactId <id> --title <title>  # [--value --priority --stageId --dueDate --idempotencyKey]
+chatbotx pipelines item move <id> <itemId> --stageId <id>  # Moves and reorders: [--beforeItemId <id> | --afterItemId <id> | --placement <top|bottom>] (at most one; anchor must be in the stage); no placement = a stage change goes on top
+chatbotx pipelines item transfer <id> <itemId> --destinationPipelineId <id>
+chatbotx pipelines comments list <id> <itemId>          # Newest first, 100 per page [--cursor]
+chatbotx pipelines comment add <id> <itemId> --text <text>
+chatbotx pipelines attachment add <id> <itemId> --mediaLibraryFileId <id>  # One file per call; upload with mediaLibrary first (needs `media` + `pipelines` scopes)
+chatbotx pipelines attachment delete <id> <itemId> <mediaLibraryFileId>  # Detaches only; the file stays in the media library
+chatbotx pipelines stats <id> --from <YYYY-MM-DD> --to <YYYY-MM-DD>  # [--timezone]
+chatbotx contacts pipeline-items list <identifier>      # A contact's items across pipelines
+```
+
+---
+
 ### `orders`
 
 ```bash
-chatbotx orders list                                    # [--status --source --contactId --from --to --keyword --page --perPage]
+chatbotx orders list                                    # [--status --source --paymentStatus --fulfillmentStatus --contactId --from --to --keyword --page --perPage]
+chatbotx orders export                                  # The same filters as list, as one CSV (up to 5000 rows)
 chatbotx orders get <id>                                # Lines, totals and status history
-chatbotx orders create --items <json>                   # COD order from product ids [--contact --customerName --customerPhone --shippingAddress --note]
-chatbotx orders accept <id>                             # pending → accepted [--message, sent to the customer]
+chatbotx orders create --items <json>                   # From product ids [--paymentMethod cod|stripe|paypal --contact --customerName --customerPhone --shippingAddress --note]
+chatbotx orders payment-link add <id>                   # Stripe/PayPal page to pay a pending online order; send `url` to the customer
+chatbotx orders accept <id>                             # pending → accepted; an online order only once paid [--message, sent to the customer]
 chatbotx orders ship <id>                               # accepted → shipped [--message]
 chatbotx orders conclude <id>                           # → completed; COD becomes paid [--message]
-chatbotx orders cancel <id>                             # [--message as the reason] puts stock back
-chatbotx orders delete <id>                             # Puts stock back unless completed/cancelled
+chatbotx orders cancel <id>                             # [--message as the reason] puts stock back; refunds an online payment first
+chatbotx orders delete <id>                             # Puts stock back unless completed/cancelled; an open order paid online must be cancelled instead
 ```
+
+An order paid online (`--paymentMethod stripe|paypal`, needs `--contact`) waits
+30 minutes for its payment and is cancelled if none comes; nothing about it is
+announced until it is paid.
+
+While the store source is Shopify or WooCommerce, `orders list` shows the
+orders mirrored from that store (`source: shopify` or `woocommerce`, with
+`externalName` such as `#1004`, fulfillment and tracking); they are read-only
+here — accept/ship/conclude/cancel/delete answer `externalStoreManaged`.
+
+---
+
+### `shopify` (scope `ecommerce`)
+
+```bash
+chatbotx shopify get                                    # The connected store, its last sync and counts, or connected: false (never a credential)
+chatbotx shopify create --authKind token --shopDomain <store.myshopify.com> --accessToken <shpat_…> --apiSecret <secret>
+chatbotx shopify create --authKind clientCredentials --shopDomain <store.myshopify.com> --clientId <id> --clientSecret <secret>
+chatbotx shopify sync [--scope all|products|orders]     # Queue a sync; poll `shopify get` until syncStatus is succeeded or failed
+chatbotx shopify delete                                 # Disconnect: remove the webhooks, switch the store back to its own catalog
+```
+
+Connecting checks the credentials, subscribes the store's webhooks, stores the
+credentials encrypted and queues a full sync (products, discount codes, the
+last 60 days of orders). Then switch the store to it with `chatbotx ecommerce
+settings update --general '{"storeSource":"shopify"}'`; choose the checkout with
+`--checkout '{"externalCheckoutMethod":"webCheckout"}'` (or `inApp`). Shopify
+products, categories, vendors and discount codes are read-only here — a
+product's `status` included, which follows Shopify (`externalStoreManaged`).
+
+---
+
+### `woocommerce` (scope `ecommerce`)
+
+```bash
+chatbotx woocommerce get                                # The connected store, its last sync and counts, or connected: false (never a credential)
+chatbotx woocommerce create --siteUrl <https://example.com> --consumerKey <ck_…> --consumerSecret <cs_…>
+chatbotx woocommerce sync [--scope all|products|orders] # Queue a sync (and turn disabled webhooks back on); poll `woocommerce get`
+chatbotx woocommerce delete                             # Disconnect: remove the webhooks, switch a WooCommerce store back to its own catalog
+```
+
+The keys come from WooCommerce → Settings → Advanced → REST API (Read/Write);
+the store must be on `https://` with permalinks not set to Plain. Connecting
+checks the keys, registers the store's webhooks (signed with a secret
+generated on connect), stores the keys encrypted and queues a full sync
+(products, coupons, the last 60 days of orders). Then switch the store to it
+with `chatbotx ecommerce settings update --general
+'{"storeSource":"woocommerce"}'`. With `externalCheckoutMethod: webCheckout`
+the web shop creates an unpaid order on WooCommerce and sends the customer to
+its payment page; `inApp` places a cash-on-delivery order. Mirrored rows are
+read-only here (`externalStoreManaged`).
+
+---
+
+### `payment-providers`
+
+```bash
+chatbotx payment-providers list                         # Connected Stripe / PayPal accounts (never a key) and whether Stripe Connect is available
+chatbotx payment-providers connect-link list <provider> # Settings → Integrations page where a super admin connects stripe|paypal
+chatbotx payment-providers stripe-api-key --secret-key <sk_…> # Connect the store's own Stripe account with its secret key (no Stripe Connect needed)
+chatbotx payment-providers delete <provider>            # Disconnect stripe|paypal and stop offering it at checkout (refused while open orders need it)
+```
+
+Connecting decides which account receives the store's money. Stripe Connect
+(OAuth) and PayPal are connected in the browser: give the `connect-link` URL to
+a super admin of the workspace. Stripe can also be connected with the store's
+own secret key (`stripe-api-key`) — only send a key the store owner gave you;
+it is stored encrypted and never returned.
+
+Offer a connected provider at checkout with `chatbotx ecommerce settings update
+--payments '{"paymentMethods":["cod","stripe"]}'`. PayPal does not take every
+currency (not VND).
 
 ---
 
@@ -1155,7 +1517,7 @@ chatbotx discount-codes validate --code <code> --items <json>  # What it takes o
 ### `webshop`
 
 ```bash
-chatbotx webshop link                                   # Shop link signed for a customer [--contact --page cart --productId --vendorId --categoryId]; no --contact = preview link
+chatbotx webshop link                                   # Shop link signed for a customer [--contact --page cart|categories --productId --vendorId --categoryId]; no --contact = preview link
 ```
 
 ---
@@ -1264,8 +1626,10 @@ chatbotx ref-links chat-widget update <id>           # Replace all widget settin
 chatbotx smtp-integrations list
 chatbotx smtp-integrations get <id>
 chatbotx smtp-integrations create --username <username> --password <password> --fromAddress <fromAddress>
-                                                        # [--provider]
-chatbotx smtp-integrations update <id>
+                                                        # [--provider --imap]; imap {enabled,host?,port?,mailbox?,username?,password?} = receive mail by IMAP polling
+chatbotx smtp-integrations update <id>                  # [--imap] same shape; omit to leave receiving unchanged. get/list show provider, imapEnabled, lastPolledAt, lastPollError, inboundWebhookIssued
+chatbotx smtp-integrations get-inbound-webhook <id>    # relay providers (SendGrid/Mailgun/Postmark/Brevo): secret URL to paste into the provider's inbound-parse settings
+chatbotx smtp-integrations rotate-inbound-webhook <id> # replace that URL; the old one stops working at once
 chatbotx smtp-integrations delete <id>
 ```
 
@@ -1363,6 +1727,17 @@ chatbotx zalo-channels tag-sync update <id> --enabled <enabled>
 
 ---
 
+### `line-channels`
+
+```bash
+chatbotx line-channels list|get <id>
+chatbotx line-channels create --channelId <id> --channelSecret <secret>
+chatbotx line-channels delete <id>
+chatbotx line-channels test-webhook add <id>   # POST /v1/line-channels/{id}/test-webhook; no collision, derived name ends in `:add`
+```
+
+---
+
 ## Known command-name collisions
 
 Commands are named by `pathAndMethodToCommandName` (`apps/cli/src/openapi-loader.ts`) from `{path, method}` alone, ignoring the router's own action key. When two operations under the same resource reduce to the same name, `toolsToCommands` keeps the first and silently drops the second (a `Warning: duplicate command name "..." — skipping` line on stderr). Every entry below was verified against source, not just the stderr warning.
@@ -1376,7 +1751,7 @@ Commands are named by `pathAndMethodToCommandName` (`apps/cli/src/openapi-loader
 | `minigames:update` | `PUT` (full) vs `PATCH` (partial) `/v1/minigames/{id}` | Only one |
 | `integrations:find-by-ai` | `GET`/`PUT`/`DELETE /v1/integrations/ai/{provider}` (get/connect/disconnect) | Only `GET` — connecting or disconnecting an AI provider has no CLI command |
 
-Resolved by explicit names in `COMMAND_NAME_OVERRIDES` (`apps/cli/src/openapi-loader.ts`): `bot-fields set`, `bot-fields edit`, `contacts set-custom-field`, `contacts clear-all-custom-fields` (the old `contacts custom-field delete <identifier>` cleared **every** field; it now clears one and needs `<idOrName>`), `ads create-campaign`, `ads create-conversion-rule` / `update-conversion-rule` / `delete-conversion-rule`, `analytics reset-flow-stats`.
+Resolved by explicit names in `COMMAND_NAME_OVERRIDES` (`apps/cli/src/openapi-loader.ts`): `integrations update-ai` (`PATCH /v1/integrations/ai/{provider}`, the AI Reply switch — without the override it would collide with `find-by-ai`), `bot-fields set`, `bot-fields edit`, `contacts set-custom-field`, `contacts clear-all-custom-fields` (the old `contacts custom-field delete <identifier>` cleared **every** field; it now clears one and needs `<idOrName>`), `ads create-campaign`, `ads create-conversion-rule` / `update-conversion-rule` / `delete-conversion-rule`, `analytics reset-flow-stats`.
 
 Root cause for the remaining `integrations:find-by-ai` row: `pathAndMethodToCommandName`'s remainder branch derives `${group}:${subResource}:update` (or its GET/DELETE equivalents) without folding the HTTP method into the name when a literal second path segment is followed by a param — unlike the sibling GET/DELETE branches, which already do this for the two-segment case.
 

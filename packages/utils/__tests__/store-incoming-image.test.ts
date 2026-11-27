@@ -1,7 +1,11 @@
 import sharp from "sharp"
-import { afterEach, describe, expect, it, vi } from "vitest"
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { getImageOptimizationSettings } from "../src/image-optimize-settings"
 import { storeIncomingImage } from "../src/store-incoming-image"
+import {
+  ENCODE_TEST_TIMEOUT_MS,
+  stubGenerousEncodeTimeout,
+} from "./encode-test-env"
 
 const {
   inline: {
@@ -37,7 +41,8 @@ const createUploader = () => {
   return { uploader: { putObject }, putObject }
 }
 
-describe("storeIncomingImage", () => {
+describe("storeIncomingImage", { timeout: ENCODE_TEST_TIMEOUT_MS }, () => {
+  beforeEach(stubGenerousEncodeTimeout)
   afterEach(() => {
     vi.unstubAllEnvs()
   })

@@ -73,3 +73,6 @@ apps/mcp-server/evals/out/
 # local working material — never commit them to source.
 docs/**/*.pdf
 docs/plans/
+
+# TypeScript incremental build info (restored from cache in CI)
+*.tsbuildinfo

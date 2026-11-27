@@ -10,6 +10,9 @@ type RouteConfig = {
 
 type CapturedProcedure = {
   route: RouteConfig
+  inputSchema?: {
+    safeParse: (value: unknown) => { success: boolean; data?: unknown }
+  }
   handler?: (...args: unknown[]) => unknown
 }
 
@@ -21,7 +24,10 @@ const { workspaceTokenAuthAPIForScope, capturedProcedures } = vi.hoisted(() => {
     capturedProcedures.push(record)
 
     const chain = {
-      input: vi.fn(() => chain),
+      input: vi.fn((schema: CapturedProcedure["inputSchema"]) => {
+        record.inputSchema = schema
+        return chain
+      }),
       output: vi.fn(() => chain),
       errors: vi.fn(() => chain),
       handler: vi.fn((fn: (...args: unknown[]) => unknown) => {
@@ -54,6 +60,7 @@ const botFieldService = {
   bulkUpdateByKeys: vi.fn(),
   deleteByKey: vi.fn(),
   clearValueByKey: vi.fn(),
+  applyValueOperation: vi.fn(),
   bulkClearValues: vi.fn(),
 }
 vi.mock("@chatbotx.io/business", () => ({ botFieldService }))
@@ -203,6 +210,111 @@ describe("POST /v1/bot-fields/{idOrName}/reset", () => {
       key: "plan",
     })
     expect(result).toEqual(field)
+  })
+})
+
+describe("POST /v1/bot-fields/{idOrName}/operations", () => {
+  const procedure = findProcedure(
+    "POST",
+    "/v1/bot-fields/{idOrName}/operations",
+  )
+
+  test("applies the named operation through the shared service method", async () => {
+    botFieldService.applyValueOperation.mockResolvedValue({ id: "bf-1" })
+
+    const result = await procedure.handler?.({
+      context: tokenContext,
+      input: { idOrName: "visits", operation: "increase", value: "2" },
+    })
+
+    expect(result).toEqual({ id: "bf-1" })
+    expect(botFieldService.applyValueOperation).toHaveBeenCalledWith({
+      workspaceId: "workspace-1",
+      key: "visits",
+      operation: "O04",
+      value: "2",
+      sourceTimezoneOverride: undefined,
+    })
+  })
+
+  test("forwards the caller's timezone for date operations", async () => {
+    botFieldService.applyValueOperation.mockResolvedValue({ id: "bf-1" })
+
+    await procedure.handler?.({
+      context: tokenContext,
+      input: {
+        idOrName: "deadline",
+        operation: "addDays",
+        value: "3",
+        clientTimezone: "Asia/Ho_Chi_Minh",
+      },
+    })
+
+    expect(botFieldService.applyValueOperation).toHaveBeenCalledWith(
+      expect.objectContaining({
+        operation: "O12",
+        sourceTimezoneOverride: "Asia/Ho_Chi_Minh",
+      }),
+    )
+  })
+
+  test("rejects an unknown operation name without calling the service", async () => {
+    await expect(
+      procedure.handler?.({
+        context: tokenContext,
+        input: { idOrName: "visits", operation: "multiply", value: "2" },
+      }),
+    ).rejects.toMatchObject({ code: "invalidFieldOperation" })
+    expect(botFieldService.applyValueOperation).not.toHaveBeenCalled()
+  })
+
+  test("the input schema trims the value and rejects an unknown operation", () => {
+    const parsed = procedure.inputSchema?.safeParse({
+      idOrName: "note",
+      operation: "append",
+      value: " x ",
+    })
+    expect(parsed?.success).toBe(true)
+    expect((parsed?.data as { value: string }).value).toBe("x")
+    expect(
+      procedure.inputSchema?.safeParse({
+        idOrName: "note",
+        operation: "multiply",
+        value: "1",
+      }).success,
+    ).toBe(false)
+  })
+
+  test("the input schema requires an operand for formula and none for clear", () => {
+    const parse = (operation: string, value?: string) =>
+      procedure.inputSchema?.safeParse({ idOrName: "n", operation, value })
+        .success
+    expect(parse("formula", "  ")).toBe(false)
+    expect(parse("addDays")).toBe(false)
+    expect(parse("clear")).toBe(true)
+    expect(parse("setNow")).toBe(true)
+    expect(parse("increase", "")).toBe(true)
+  })
+
+  test("a type the operation does not fit surfaces the service's invalidFieldOperation", async () => {
+    const { ChatbotXException } = await import("@chatbotx.io/business/errors")
+    botFieldService.applyValueOperation.mockRejectedValue(
+      new ChatbotXException(
+        "increase is not valid for text",
+        "invalidFieldOperation",
+      ),
+    )
+
+    await expect(
+      procedure.handler?.({
+        context: tokenContext,
+        input: { idOrName: "note", operation: "increase", value: "1" },
+      }),
+    ).rejects.toMatchObject({ code: "invalidFieldOperation" })
+  })
+
+  test("is a POST route under the bot-fields tag", () => {
+    expect(procedure.route.tags).toContain("Bot Fields")
   })
 })
 

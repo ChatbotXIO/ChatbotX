@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:1
-FROM node:24.22.1-trixie-slim AS base
+FROM node:24.22.3-trixie-slim AS base
 
 ENV PNPM_HOME="/pnpm"
 ENV PATH="$PNPM_HOME:$PATH"
@@ -57,14 +57,15 @@ RUN --mount=type=cache,target=/app/apps/builder/.next/cache \
   SKIP_ENV_CHECK=true pnpm turbo run build --filter=builder
 
 # Standalone image has no pnpm workspace; bundle a tiny migration runner (drizzle-orm + pg only).
+# Versions come from the pnpm-installed /app/packages/database/node_modules, not its
+# package.json: that manifest uses `catalog:` specs, which plain npm cannot resolve.
 RUN apt-get update && apt-get install -y --no-install-recommends jq \
   && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app/migrate-runner
-COPY packages/database/package.json database-package.json
 COPY packages/database/scripts scripts
 COPY packages/database/drizzle drizzle
-RUN bash /app/migrate-runner/scripts/create-runner-package.sh migrate ./database-package.json > package.json \
+RUN bash /app/migrate-runner/scripts/create-runner-package.sh migrate /app/packages/database > package.json \
   && npm install --omit=dev --ignore-scripts
 
 # Bundled seed (workspace TS → single ESM file; `pg` stays external — installed below).
@@ -80,7 +81,7 @@ RUN mkdir -p /app/seed-runner \
     --external:pg
 
 WORKDIR /app/seed-runner
-RUN bash /app/migrate-runner/scripts/create-runner-package.sh seed /app/migrate-runner/database-package.json > package.json \
+RUN bash /app/migrate-runner/scripts/create-runner-package.sh seed /app/packages/database > package.json \
   && npm install --omit=dev --ignore-scripts
 
 WORKDIR /app

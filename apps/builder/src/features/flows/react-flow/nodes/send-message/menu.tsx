@@ -73,6 +73,8 @@ const ALL_MENU_ITEMS = (
     label: t("flows.actions.getUserData"),
     icon: KeyboardIcon,
     stepType: stepTypes.enum.getUserData,
+    // Author copy: a new step starts with the Skip label in the UI language.
+    props: { skipButtonLabel: t("states.skip") },
   },
   sendGif: {
     label: t("flows.actions.sendGif"),

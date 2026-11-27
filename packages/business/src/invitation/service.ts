@@ -1,12 +1,16 @@
 import type { DatabaseClient } from "@chatbotx.io/database/client"
-import { db } from "@chatbotx.io/database/client"
 import { invitationRepository } from "@chatbotx.io/database/repositories"
-import { invitationModel } from "@chatbotx.io/database/schema"
-import type { InvitationModel } from "@chatbotx.io/database/types"
+import type {
+  InvitationModel,
+  WorkspaceModel,
+} from "@chatbotx.io/database/types"
 import { createId } from "@chatbotx.io/utils"
+import { joinAppUrl } from "@chatbotx.io/utils/web-url"
 import { addDays } from "date-fns"
 import { BaseService } from "../base.service"
 import { ChatbotXException, notFoundException } from "../errors"
+import { logger } from "../logger"
+import { resolveServingHost } from "../platform/settings"
 import { userService } from "../user/service"
 import { workspaceService } from "../workspace/service"
 
@@ -50,19 +54,92 @@ export type InvitationSummary = {
   inviter: { name: string | null; image: string | null }
 }
 
+type InvitationLookupRejection = {
+  invitationId?: string
+  reason: "not_found" | "expired" | "no_workspace" | "tenant_mismatch"
+  requestTenantId?: string
+  servingTenantId?: string
+  workspaceId?: string
+}
+
+type ActiveLookup =
+  | {
+      ok: true
+      invitation: InvitationModel & { workspaceId: string }
+      workspace: WorkspaceModel
+    }
+  | {
+      ok: false
+      reason: InvitationLookupRejection["reason"]
+      log: InvitationLookupRejection
+    }
+
 class InvitationService extends BaseService {
   private isActive(
     invitation: InvitationModel,
+    now: Date,
   ): invitation is InvitationModel & { workspaceId: string } {
-    return Boolean(invitation.workspaceId && invitation.expiresAt >= new Date())
+    return Boolean(invitation.workspaceId && invitation.expiresAt >= now)
   }
 
-  async findByCodeOrFail(code: string): Promise<InvitationModel> {
+  private logLookupRejection(props: InvitationLookupRejection) {
+    logger.debug(props, "Invitation lookup rejected")
+  }
+
+  private async lookupActive(
+    code: string,
+    tenantId: string,
+  ): Promise<ActiveLookup> {
     const invitation = await invitationRepository.findByCode(code)
     if (!invitation) {
-      throw notFoundException("Invitation not found")
+      return {
+        ok: false,
+        reason: "not_found",
+        log: { reason: "not_found" },
+      }
     }
-    return invitation
+
+    const now = new Date()
+    if (!this.isActive(invitation, now)) {
+      const reason = invitation.expiresAt < now ? "expired" : "no_workspace"
+      return {
+        ok: false,
+        reason,
+        log: { invitationId: invitation.id, reason },
+      }
+    }
+
+    const workspace = await workspaceService.find({
+      where: { id: invitation.workspaceId },
+    })
+    if (!workspace) {
+      return {
+        ok: false,
+        reason: "no_workspace",
+        log: {
+          invitationId: invitation.id,
+          reason: "no_workspace",
+          workspaceId: invitation.workspaceId,
+        },
+      }
+    }
+
+    const servingHost = await resolveServingHost(workspace.tenantId)
+    if (servingHost.tenantId !== tenantId) {
+      return {
+        ok: false,
+        reason: "tenant_mismatch",
+        log: {
+          invitationId: invitation.id,
+          reason: "tenant_mismatch",
+          requestTenantId: tenantId,
+          servingTenantId: servingHost.tenantId,
+          workspaceId: invitation.workspaceId,
+        },
+      }
+    }
+
+    return { ok: true, invitation, workspace }
   }
 
   /**
@@ -74,38 +151,41 @@ class InvitationService extends BaseService {
     code: string,
     { tenantId }: { tenantId: string },
   ): Promise<(InvitationModel & { workspaceId: string }) | null> {
-    const invitation = await invitationRepository.findByCode(code)
-    if (!(invitation && this.isActive(invitation))) {
+    const lookup = await this.lookupActive(code, tenantId)
+    if (!lookup.ok) {
+      this.logLookupRejection(lookup.log)
       return null
     }
-
-    const workspace = await workspaceService.find({
-      where: { id: invitation.workspaceId },
-    })
-    return workspace?.tenantId === tenantId ? invitation : null
+    return lookup.invitation
   }
 
   async findActiveByCodeOrFail(
     code: string,
     tenantId: string,
   ): Promise<InvitationModel & { workspaceId: string }> {
-    const invitation = await this.findByCodeOrFail(code)
-    if (!this.isActive(invitation)) {
-      if (invitation.expiresAt < new Date()) {
-        throw new ChatbotXException("Invitation expired")
-      }
+    const lookup = await this.lookupActive(code, tenantId)
+    if (lookup.ok) {
+      return lookup.invitation
+    }
+    if (lookup.reason === "expired") {
+      throw new ChatbotXException("Invitation expired")
+    }
+    if (lookup.reason === "no_workspace" && !lookup.log.workspaceId) {
       throw new ChatbotXException("Invalid invitation: no workspace associated")
     }
+    throw notFoundException("Invitation not found")
+  }
 
-    const workspace = await workspaceService.find({
-      where: { id: invitation.workspaceId },
-    })
-    if (workspace?.tenantId !== tenantId) {
-      // Same response as an unknown code: a cross-tenant guess must not be
-      // distinguishable from one that never existed.
-      throw notFoundException("Invitation not found")
-    }
-    return invitation
+  /** Builds an invitation URL on the host currently serving its workspace. */
+  async buildInviteUrl(props: {
+    code: string
+    workspace: Pick<WorkspaceModel, "tenantId">
+  }): Promise<string> {
+    const servingHost = await resolveServingHost(props.workspace.tenantId)
+    return joinAppUrl(
+      servingHost.appUrl,
+      `/invitations/${encodeURIComponent(props.code)}`,
+    )
   }
 
   /**
@@ -117,26 +197,23 @@ class InvitationService extends BaseService {
     code: string,
     { tenantId }: { tenantId: string },
   ): Promise<InvitationSummary | null> {
-    const invitation = await this.findActiveByCode(code, { tenantId })
-    if (!invitation) {
+    const lookup = await this.lookupActive(code, tenantId)
+    if (!lookup.ok) {
+      this.logLookupRejection(lookup.log)
       return null
     }
 
-    const [inviter, workspace] = await Promise.all([
-      userService.findByIdOrFail(invitation.invitedBy),
-      workspaceService.find({ where: { id: invitation.workspaceId } }),
-    ])
-
+    const inviter = await userService.findByIdOrFail(
+      lookup.invitation.invitedBy,
+    )
     return {
-      code: invitation.code,
-      expiresAt: invitation.expiresAt,
-      workspace: workspace
-        ? {
-            name: workspace.name,
-            logo: workspace.logo,
-            scheduledDeletionAt: workspace.scheduledDeletionAt,
-          }
-        : null,
+      code: lookup.invitation.code,
+      expiresAt: lookup.invitation.expiresAt,
+      workspace: {
+        name: lookup.workspace.name,
+        logo: lookup.workspace.logo,
+        scheduledDeletionAt: lookup.workspace.scheduledDeletionAt,
+      },
       inviter: { name: inviter.name, image: inviter.image },
     }
   }
@@ -148,19 +225,18 @@ class InvitationService extends BaseService {
     permissions: InvitationModel["permissions"]
     tx?: DatabaseClient
   }): Promise<InvitationModel> {
-    const { workspaceId, invitedBy, permissions, tx = db } = props
-    const [invitation] = await tx
-      .insert(invitationModel)
-      .values({
+    const { workspaceId, invitedBy, permissions, tx } = props
+    return await invitationRepository.create(
+      {
         id: createId(),
         code: generateInvitationCode(),
         permissions,
         expiresAt: addDays(new Date(), INVITATION_TTL_DAYS),
         workspaceId,
         invitedBy,
-      })
-      .returning()
-    return invitation
+      },
+      tx,
+    )
   }
 }
 

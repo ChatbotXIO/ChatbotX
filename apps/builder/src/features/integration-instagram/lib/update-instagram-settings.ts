@@ -114,7 +114,7 @@ const writeInstagramSettings = async (
       })
 
       await instagramIntegrationService.updateProfileFields(
-        { id: ctx.id },
+        { id: ctx.id, workspaceId: ctx.workspaceId },
         {
           welcomeFlowId: input.welcomeFlowId,
           conversationStarters: input.conversationStarters,

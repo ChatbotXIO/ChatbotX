@@ -8,7 +8,8 @@ import {
   minigameContactService,
   minigameService,
 } from "@chatbotx.io/business/minigame"
-import { canShareMinigame } from "@chatbotx.io/business/utils"
+import { pollService } from "@chatbotx.io/business/poll"
+import { canReceiveRef, canShareMinigame } from "@chatbotx.io/business/utils"
 import { findOrFail } from "@chatbotx.io/database/client"
 import type { ChannelType } from "@chatbotx.io/database/partials"
 import {
@@ -35,6 +36,7 @@ import {
 import { detectConversationAndContactInbox } from "../../lib/db"
 import { logger } from "../../lib/logger"
 import { saveResultToCustomField } from "../utils/contact"
+import { sendPollCard } from "./poll"
 
 export async function runRef(data: IntegrationJobRunRef["data"]) {
   const { conversationId, contactInboxId, ref, messageId, isNewContact } = data
@@ -260,6 +262,18 @@ export async function runRef(data: IntegrationJobRunRef["data"]) {
       return
     }
 
+    if (refData.type === "poll") {
+      const dispatched = await handlePollRef({
+        conversation,
+        contactInbox,
+        pollId: refData.pollId,
+      })
+      if (dispatched) {
+        emitSuccess()
+      }
+      return
+    }
+
     // Trigger reflink
     await handleReflink({
       conversation,
@@ -354,6 +368,32 @@ async function handleLeaderboardRef(props: {
     logger.warn(error, "Leaderboard ref: welcome flow unavailable")
     return false
   }
+}
+
+/**
+ * A contact opened a poll link: reply with the poll card. `findUnscoped...` +
+ * explicit workspace check, so a stale or crafted `pl_` link is ignored and
+ * never reaches another workspace's poll. Returns whether a message
+ * was enqueued.
+ */
+async function handlePollRef(props: {
+  conversation: ConversationModel
+  contactInbox: ContactInboxModel
+  pollId: string
+}): Promise<boolean> {
+  const { conversation, contactInbox, pollId } = props
+  if (!canReceiveRef(contactInbox.channel as ChannelType)) {
+    return false
+  }
+  // An out-of-range id from a crafted ref resolves to undefined in the
+  // repository; any other error (e.g. a DB outage) throws so the job retries.
+  const poll = await pollService.findUnscopedWithCandidates(pollId)
+  if (!poll || poll.workspaceId !== conversation.workspaceId) {
+    logger.warn({ pollId }, "Poll ref: poll not in workspace")
+    return false
+  }
+  await sendPollCard({ conversation, contactInbox, poll })
+  return true
 }
 
 async function handleReflink(props: {

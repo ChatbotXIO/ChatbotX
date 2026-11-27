@@ -24,8 +24,8 @@ export const GenericOAuthSignIn = ({
 
   const handleSignIn = async (): Promise<void> => {
     const { origin } = window.location
-    await authClient.signIn.oauth2({
-      providerId: GENERIC_OAUTH_PROVIDER_ID,
+    await authClient.signIn.social({
+      provider: GENERIC_OAUTH_PROVIDER_ID,
       callbackURL: new URL(
         resolveSafeCallbackUrl(callbackParam, origin),
         origin,

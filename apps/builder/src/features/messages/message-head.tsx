@@ -11,9 +11,13 @@ import { ArrowLeftIcon, BotIcon, UserRoundIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { useAction } from "next-safe-action/hooks"
 import { toast } from "sonner"
+import { contactDisplayName } from "@/features/contacts/lib/contact-display-name"
+import { withoutTranslationTurnedOn } from "@/features/translation/lib/conversation-translation"
 import { useWorkspaceId } from "@/hooks/routing"
 import { useChatStore } from "../chat/store/chat-store-provider"
 import { enableBotAction } from "../conversations/actions/enable-bot.action"
+import { ConversationPageStrip } from "../conversations/components/conversation-page-strip"
+import { ConversationParticipants } from "../conversations/components/conversation-participants"
 import { ThreadControlPassButton } from "../conversations/components/thread-control-pass-button"
 import { ThreadControlReleaseButton } from "../conversations/components/thread-control-release-button"
 import { UpdateConversationAssignee } from "../conversations/components/update-conversation-assignee"
@@ -79,6 +83,9 @@ export default function MessageHead({
           updateConversation(activeConversation.id, {
             botEnabled: true,
             botResumeAt: null,
+            additionalAttributes: withoutTranslationTurnedOn(
+              activeConversation.additionalAttributes,
+            ),
           })
         }
       },
@@ -92,69 +99,88 @@ export default function MessageHead({
 
   return (
     activeConversation && (
-      <div className="flex shrink-0 items-center gap-2 border-b px-3 pb-3">
-        {onBack && (
-          <Button
-            aria-label={t("actions.back")}
-            className="shrink-0"
-            onClick={onBack}
-            size="icon"
-            variant="ghost"
-          >
-            <ArrowLeftIcon className="rtl:rotate-180" />
-          </Button>
-        )}
-        <div className="flex min-w-0 flex-1 flex-col">
-          <div className="truncate font-medium text-semibold">
-            {activeConversation?.contact?.fullName}
+      <div className="shrink-0 border-b">
+        <div className="flex items-center gap-2 px-3 pb-2">
+          {onBack && (
+            <Button
+              aria-label={t("actions.back")}
+              className="shrink-0"
+              onClick={onBack}
+              size="icon"
+              variant="ghost"
+            >
+              <ArrowLeftIcon className="rtl:rotate-180" />
+            </Button>
+          )}
+          <div className="flex min-w-0 flex-1 flex-col gap-1.5">
+            <div className="flex min-w-0 items-center gap-2">
+              <div className="min-w-0 flex-1 truncate font-semibold text-[0.9375rem] leading-5">
+                {contactDisplayName(activeConversation?.contact)}
+              </div>
+              {/* The actions share the name's row, so they take a compact
+                height here: the header's density belongs to this layout, not
+                to each button component. */}
+              <div className="flex shrink-0 items-center gap-1 [&_button]:h-7 [&_button]:text-xs">
+                {whatsappContactInbox && (
+                  <WhatsappVoipCallButton
+                    contactInboxId={whatsappContactInbox.id}
+                    contactName={contactDisplayName(
+                      activeConversation?.contact,
+                    )}
+                    conversationId={activeConversation.id}
+                    outboundCallMode={outboundCallMode.data}
+                  />
+                )}
+                <ThreadControlReleaseButton conversation={activeConversation} />
+                {!isConversationActive(activeConversation) && (
+                  <Tooltip>
+                    <TooltipTrigger
+                      render={
+                        <Button
+                          disabled={isEnablingBot}
+                          onClick={() => {
+                            enableBot({ ids: [activeConversation.id] })
+                          }}
+                          variant="ghost"
+                        >
+                          <BotIcon />
+                        </Button>
+                      }
+                    />
+                    <TooltipContent>
+                      <p>{t("actions.transferConversationToBot")}</p>
+                    </TooltipContent>
+                  </Tooltip>
+                )}
+                {onOpenContact && (
+                  <Button
+                    aria-label={t("fields.contact.label")}
+                    className="shrink-0"
+                    onClick={onOpenContact}
+                    size="icon"
+                    variant="ghost"
+                  >
+                    <UserRoundIcon />
+                  </Button>
+                )}
+                <ThreadControlPassButton conversation={activeConversation} />
+                <ConversationAction conversation={activeConversation} />
+              </div>
+            </div>
+            <div className="flex min-w-0 items-center justify-between gap-3">
+              <div className="shrink-0">
+                <UpdateConversationAssignee
+                  conversation={activeConversation}
+                  onChange={setAssignee}
+                />
+              </div>
+              <div className="flex min-w-0 justify-end text-end">
+                <ConversationParticipants conversation={activeConversation} />
+              </div>
+            </div>
           </div>
-          <UpdateConversationAssignee
-            conversation={activeConversation}
-            onChange={setAssignee}
-          />
         </div>
-        {whatsappContactInbox && (
-          <WhatsappVoipCallButton
-            contactInboxId={whatsappContactInbox.id}
-            contactName={activeConversation?.contact?.fullName}
-            conversationId={activeConversation.id}
-            outboundCallMode={outboundCallMode.data}
-          />
-        )}
-        <ThreadControlReleaseButton conversation={activeConversation} />
-        {!isConversationActive(activeConversation) && (
-          <Tooltip>
-            <TooltipTrigger
-              render={
-                <Button
-                  disabled={isEnablingBot}
-                  onClick={() => {
-                    enableBot({ ids: [activeConversation.id] })
-                  }}
-                  variant="ghost"
-                >
-                  <BotIcon />
-                </Button>
-              }
-            />
-            <TooltipContent>
-              <p>{t("actions.transferConversationToBot")}</p>
-            </TooltipContent>
-          </Tooltip>
-        )}
-        {onOpenContact && (
-          <Button
-            aria-label={t("fields.contact.label")}
-            className="shrink-0"
-            onClick={onOpenContact}
-            size="icon"
-            variant="ghost"
-          >
-            <UserRoundIcon />
-          </Button>
-        )}
-        <ThreadControlPassButton conversation={activeConversation} />
-        <ConversationAction conversation={activeConversation} />
+        <ConversationPageStrip conversation={activeConversation} />
       </div>
     )
   )

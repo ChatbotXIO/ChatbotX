@@ -25,7 +25,7 @@ import { useEffect, useRef, useState } from "react"
 import type { ShopView } from "../lib/load-shop"
 import { formatShopMoney } from "../lib/shop-money"
 import type { CartData, CartLineView } from "./cart-types"
-import { CheckoutBar, cartSavings } from "./checkout-bar"
+import { CheckoutBar, cartDisplayTotal, cartSavings } from "./checkout-bar"
 import { CheckoutForm } from "./checkout-form"
 import { DiscountCodeBox } from "./discount-code-box"
 import { trackPixel } from "./facebook-pixel"
@@ -52,7 +52,7 @@ function SummaryRow({
           className={cn(
             "flex size-7 shrink-0 items-center justify-center rounded-full",
             saving
-              ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+              ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400"
               : "bg-muted text-muted-foreground",
           )}
         >
@@ -63,7 +63,7 @@ function SummaryRow({
       <span
         className={cn(
           "shrink-0 font-medium tabular-nums",
-          saving && "text-emerald-600 dark:text-emerald-400",
+          saving && "text-emerald-700 dark:text-emerald-400",
         )}
       >
         {value}
@@ -311,7 +311,7 @@ export function CartView({ cart, shop }: { cart: CartData; shop: ShopView }) {
             {t("unavailableItems", { count: cart.unavailable.length })}
           </p>
           {cart.lines.length > 0 ? (
-            <p className="pb-1 text-amber-900/80 text-xs dark:text-amber-100/80">
+            <p className="pb-1 text-amber-900 text-xs dark:text-amber-100/80">
               {t("unavailableNotOrdered")}
             </p>
           ) : null}
@@ -326,7 +326,9 @@ export function CartView({ cart, shop }: { cart: CartData; shop: ShopView }) {
         </div>
       ) : null}
 
-      {cart.lines.length > 0 ? <DiscountCodeBox cart={cart} /> : null}
+      {cart.lines.length > 0 && shop.checkout.showDiscountCodes ? (
+        <DiscountCodeBox cart={cart} />
+      ) : null}
 
       <section className="space-y-3 rounded-2xl border bg-card p-5 shadow-xs">
         <h2 className="flex items-center gap-2 font-semibold">
@@ -354,7 +356,14 @@ export function CartView({ cart, shop }: { cart: CartData; shop: ShopView }) {
             value={money(-cart.discount.amount)}
           />
         ) : null}
-        {cart.shippingType === "delivery" ? (
+        {context.shopifyWebCheckout && cart.shippingType !== "pickup" ? (
+          <SummaryRow
+            icon={TruckIcon}
+            label={t("summary.delivery")}
+            value={t("summary.deliveryAtCheckout")}
+          />
+        ) : null}
+        {!context.shopifyWebCheckout && cart.shippingType === "delivery" ? (
           <SummaryRow
             icon={TruckIcon}
             label={t("summary.delivery")}
@@ -371,7 +380,7 @@ export function CartView({ cart, shop }: { cart: CartData; shop: ShopView }) {
         <div className="flex items-end justify-between gap-4 border-t border-dashed pt-3">
           <span className="font-semibold">{t("summary.total")}</span>
           <span className="font-bold text-2xl text-primary tabular-nums">
-            {money(cart.totals.total)}
+            {money(cartDisplayTotal(cart, context.shopifyWebCheckout))}
           </span>
         </div>
         {savings > 0 ? (
@@ -417,6 +426,7 @@ function CheckoutControl({
   onStart: () => void
 }) {
   const t = useTranslations("webshop")
+  const context = useShop()
   const formRef = useRef<HTMLDivElement>(null)
   const hint =
     cart.belowMinimum === null
@@ -434,7 +444,7 @@ function CheckoutControl({
     }
   }, [checkingOut])
 
-  if (shop.checkout.mode === "externalLink") {
+  if (shop.checkout.mode === "externalLink" && !context.externalWebCheckout) {
     // The store checks out on its own page; without a usable link there is
     // nowhere to send the customer (the server refuses our checkout too).
     if (!shop.checkout.externalLink) {

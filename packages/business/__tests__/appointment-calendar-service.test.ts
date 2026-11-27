@@ -406,6 +406,152 @@ describe("appointmentCalendarService.generateAvailableSlots", () => {
     })
   })
 
+  describe("daily limit", () => {
+    const existing = [
+      new Date("2026-08-12T09:00:00.000Z"),
+      new Date("2026-08-12T10:00:00.000Z"),
+    ]
+
+    const buildTx = () => ({
+      query: {
+        appointmentCalendarModel: {
+          findFirst: vi.fn().mockResolvedValue({
+            id: "calendar-1",
+            workspaceId: "workspace-1",
+            active: true,
+            timezone: "UTC",
+            scheduleWindowType: "rollingDays",
+            scheduleWindowConfig: { rollingDays: 30, minAdvanceDays: 0 },
+            durationMinutes: 60,
+            bufferAfterMinutes: 0,
+            maxAppointmentsPerUser: null,
+            dailyLimitEnabled: true,
+            maxPerDay: 2,
+            allowGroupMeeting: false,
+            maxPerSlot: null,
+          }),
+        },
+        appointmentCalendarAvailabilityModel: {
+          findMany: vi.fn().mockResolvedValue([
+            { weekday: 3, startMinute: 540, endMinute: 720 },
+            { weekday: 4, startMinute: 540, endMinute: 720 },
+          ]),
+        },
+        appointmentModel: {
+          // Mimic the database range filter so a too-narrow lookup window
+          // drops the earlier appointments of the day.
+          findMany: vi.fn(
+            ({ where }: { where: { startAt: { gte: Date; lte: Date } } }) =>
+              Promise.resolve(
+                existing
+                  .filter(
+                    (startAt) =>
+                      startAt >= where.startAt.gte &&
+                      startAt <= where.startAt.lte,
+                  )
+                  .map((startAt) => ({ startAt })),
+              ),
+          ),
+        },
+      },
+      $count: vi.fn(),
+    })
+
+    const generate = (startDate: string, endDate: string) =>
+      appointmentCalendarService.generateAvailableSlots({
+        workspaceId: "workspace-1",
+        calendarId: "calendar-1",
+        startDate: new Date(startDate),
+        endDate: new Date(endDate),
+        externalBusyIntervals: [],
+        tx: buildTx() as never,
+      })
+
+    test("widens the appointment lookup to whole calendar days only with a daily limit", async () => {
+      vi.useFakeTimers()
+      vi.setSystemTime(new Date("2026-08-01T00:00:00.000Z"))
+
+      const limited = buildTx()
+      await appointmentCalendarService.generateAvailableSlots({
+        workspaceId: "workspace-1",
+        calendarId: "calendar-1",
+        startDate: new Date("2026-08-12T10:30:00.000Z"),
+        endDate: new Date("2026-08-12T11:00:00.000Z"),
+        externalBusyIntervals: [],
+        tx: limited as never,
+      })
+      expect(
+        limited.query.appointmentModel.findMany.mock.calls[0]?.[0].where
+          .startAt,
+      ).toEqual({
+        gte: new Date("2026-08-12T00:00:00.000Z"),
+        lte: new Date("2026-08-12T23:59:59.999Z"),
+      })
+
+      const unlimited = buildTx()
+      unlimited.query.appointmentCalendarModel.findFirst.mockResolvedValue({
+        ...(await limited.query.appointmentCalendarModel.findFirst()),
+        dailyLimitEnabled: false,
+        maxPerDay: null,
+      })
+      await appointmentCalendarService.generateAvailableSlots({
+        workspaceId: "workspace-1",
+        calendarId: "calendar-1",
+        startDate: new Date("2026-08-12T10:30:00.000Z"),
+        endDate: new Date("2026-08-12T11:00:00.000Z"),
+        externalBusyIntervals: [],
+        tx: unlimited as never,
+      })
+      // Capacity-only calendars keep the narrow lookup they had before.
+      expect(
+        unlimited.query.appointmentModel.findMany.mock.calls[0]?.[0].where
+          .startAt,
+      ).toEqual({
+        gte: new Date("2026-08-12T10:30:00.000Z"),
+        lte: new Date("2026-08-12T11:00:00.000Z"),
+      })
+    })
+
+    test("rejects a single-slot booking check once the day is full", async () => {
+      vi.useFakeTimers()
+      vi.setSystemTime(new Date("2026-08-01T00:00:00.000Z"))
+
+      await expect(
+        generate("2026-08-12T11:00:00.000Z", "2026-08-12T11:00:00.000Z"),
+      ).resolves.toEqual([])
+    })
+
+    test("hides a full day in a whole-day listing", async () => {
+      vi.useFakeTimers()
+      vi.setSystemTime(new Date("2026-08-01T00:00:00.000Z"))
+
+      await expect(
+        generate("2026-08-12T00:00:00.000Z", "2026-08-12T23:59:59.999Z"),
+      ).resolves.toEqual([])
+    })
+
+    test("counts appointments before a listing that starts mid-day and keeps the next day", async () => {
+      vi.useFakeTimers()
+      vi.setSystemTime(new Date("2026-08-01T00:00:00.000Z"))
+
+      const slots = await generate(
+        "2026-08-12T10:30:00.000Z",
+        "2026-08-13T23:59:59.999Z",
+      )
+
+      expect(
+        slots.some(
+          (slot) => slot.startAt.toISOString().slice(0, 10) === "2026-08-12",
+        ),
+      ).toBe(false)
+      expect(slots.map((slot) => slot.startAt.toISOString())).toEqual([
+        "2026-08-13T09:00:00.000Z",
+        "2026-08-13T10:00:00.000Z",
+        "2026-08-13T11:00:00.000Z",
+      ])
+    })
+  })
+
   test("returns empty listing results when external busy lookup fails", async () => {
     const prepareSpy = vi
       .spyOn(appointmentCalendarService, "prepareAvailabilityContext")

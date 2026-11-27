@@ -1,4 +1,5 @@
-import { isSuperAdmin } from "@chatbotx.io/business"
+import { canUseOwnCredentials, isSuperAdmin } from "@chatbotx.io/business"
+import { ChatbotXException } from "@chatbotx.io/business/errors"
 import type { UserModel } from "@chatbotx.io/database/types"
 import { z } from "zod"
 import { isCloud } from "@/env"
@@ -17,12 +18,20 @@ export type CredentialScope = z.infer<typeof credentialScopeSchema>
 export const resolveCredentialScopedUserId = async (
   user: UserModel,
   scope: CredentialScope,
+  options?: { allowWithoutEntitlement?: boolean },
 ): Promise<string | undefined> => {
   if (scope === "platform") {
     if (!(await isSuperAdmin(user))) {
-      throw new Error("Unauthorized")
+      throw new ChatbotXException("Unauthorized", "unauthorized", 403)
     }
     return
+  }
+  if (
+    isCloud() &&
+    !options?.allowWithoutEntitlement &&
+    !(await canUseOwnCredentials(user.id))
+  ) {
+    throw new ChatbotXException("Unauthorized", "unauthorized", 403)
   }
   return isCloud() ? user.id : undefined
 }

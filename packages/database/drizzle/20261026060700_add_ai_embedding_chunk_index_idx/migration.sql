@@ -1,0 +1,2 @@
+CREATE INDEX CONCURRENTLY IF NOT EXISTS "AIEmbedding_aiFileId_chunkIndex_idx" ON "AIEmbedding" USING btree ("aiFileId","chunkIndex");--> statement-breakpoint
+DROP INDEX CONCURRENTLY IF EXISTS "AIEmbedding_aiFileId_idx";

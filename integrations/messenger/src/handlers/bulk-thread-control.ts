@@ -15,7 +15,7 @@ import {
   type GraphBatchResult,
   sendGraphBatch,
 } from "../apis/batch"
-import type { BucUsage } from "../apis/usage"
+import { type BucUsage, estimatedMinutesToMs } from "../apis/usage"
 import { mapToChannelError } from "../lib/error-mapper"
 import {
   readBusinessAiAppId,
@@ -48,7 +48,6 @@ const BULK_USAGE_CEILING_PERCENT = 50
 const QUOTA_EXHAUSTED_PERCENT = 90
 const SOFT_PAUSE_MS = 60_000
 const EXHAUSTED_PAUSE_MS = 60 * 60_000
-const MS_PER_MINUTE = 60_000
 /** Meta asks callers to spread their calls over time. */
 const BATCH_GAP_MS = 1000
 
@@ -63,7 +62,7 @@ export const retryAfterForQuota = (
   isRateLimited: boolean,
 ): number | null => {
   if (usage && usage.estimatedTimeToRegainAccess > 0) {
-    return usage.estimatedTimeToRegainAccess * MS_PER_MINUTE
+    return estimatedMinutesToMs(usage.estimatedTimeToRegainAccess)
   }
   const peak = usage
     ? Math.max(usage.callCount, usage.totalCpuTime, usage.totalTime)

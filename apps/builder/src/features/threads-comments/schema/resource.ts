@@ -40,7 +40,7 @@ export const threadsCommentResource = createSelectSchema(
     workspaceId: z.string(),
     inboxId: automationInboxIdResourceSchema,
     post: z.object({
-      type: z.enum(["all", "postIds"]),
+      type: z.enum(["all", "postIds", "hashtags"]),
       value: z.array(z.string()),
     }),
     privateReply: z.object({
@@ -58,6 +58,7 @@ export const threadsCommentResource = createSelectSchema(
       replyToUsersWhoCommentedOnOtherPosts: z.boolean(),
       ignoreCommentReplies: z.boolean(),
       trackUserTags: z.boolean(),
+      onlyCommentsWithImage: z.boolean().optional(),
     }),
     hideComments: commentHideCommentsSchema,
     replyAfter: z.object({

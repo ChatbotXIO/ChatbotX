@@ -135,3 +135,28 @@ describe("sendMessage quick_replies vs button-template", () => {
     ])
   })
 })
+
+describe("sendMessage step input skip quick reply", () => {
+  test("encodes the skip postback unchanged as the quick_replies payload", async () => {
+    await sendMessage(
+      makeProps({
+        quickReplies: [
+          {
+            id: "skip-1",
+            label: "Skip",
+            buttonType: "postback",
+            postback: "STEP_INPUT_SKIP|11612473309626368",
+          },
+        ],
+      }),
+    )
+
+    const [, payload] = mockSendPageMessage.mock.calls[0]
+    expect(payload.message.quick_replies).toEqual([
+      expect.objectContaining({
+        title: "Skip",
+        payload: "STEP_INPUT_SKIP|11612473309626368",
+      }),
+    ])
+  })
+})

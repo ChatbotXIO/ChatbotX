@@ -13,6 +13,7 @@ export const TIKTOK_CARD_TITLE_MAX = 40
 export const tiktokFlowPolicy = defineChannelFlowPolicy({
   limits: {
     buttonCount: 3,
+    cardButtonCount: 3,
     buttonLabel: 20,
     cardTitle: TIKTOK_CARD_TITLE_MAX,
     text: 6000,

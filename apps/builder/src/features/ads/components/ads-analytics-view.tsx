@@ -78,14 +78,11 @@ import { parseLocalDateKey } from "../lib/ads-date-key"
 import { buildWhatsappRetargetHref } from "../lib/build-whatsapp-retarget-href"
 import type { AdsAnalyticsSearchParams } from "../schema/analytics"
 import { AdAccountFilter } from "./ad-account-filter"
-import { AdsAccountFilter } from "./ads-account-filter"
 import { AdsPerformanceChart } from "./ads-performance-chart"
-
-type ChannelIntegration = { id: string; name: string }
 
 // The dashboard page always renders one concrete, single ads-eligible
 // channel now (the former "All channels" aggregate view lived only in the
-// URL-filter era — see `AnalyticsNav`'s per-channel menu items). Every
+// URL-filter era — see the Analytics section select's per-channel entries). Every
 // per-channel action (CAPI settings link, retarget dialog seed, export FK
 // lookup) needs exactly one of these.
 type ConcreteAdsChannel = AdsEligibleChannelType
@@ -116,15 +113,20 @@ type RetargetDialogState = {
 type AdsAnalyticsViewProps = {
   workspaceId: string
   range: AdsAnalyticsSearchParams
-  // `channel` is the currently viewed channel (the dashboard menu item
-  // implies it — see `AnalyticsNav`); `selectedChannelIntegrationId` is the
-  // server-resolved integration for it (resolved from `channelIntegrations`
-  // + `channelAccount`, WhatsApp additionally honoring the legacy `account`
-  // param as fallback), null meaning "All accounts — aggregate across every
-  // connected integration for that channel".
+  // `channel` is the currently viewed channel (the Analytics section select
+  // implies it). The integration scope comes from the shared Inbox filter:
+  // `selectedChannelIntegrationIds` are the integrations of this channel the
+  // selected inboxes map to (empty = "All accounts", aggregated across every
+  // connected integration of the channel); `selectedChannelIntegrationId` is
+  // the single one when exactly one is selected (null otherwise), for the
+  // surfaces that only take one integration (CSV export, retarget, CAPI).
   channel: ConcreteAdsChannel
-  channelIntegrations: ChannelIntegration[]
+  selectedChannelIntegrationIds: readonly string[]
   selectedChannelIntegrationId: string | null
+  // The explicit inbox selection matches no integration of this channel: the
+  // dashboard is empty and, like a multi-integration selection, the
+  // single-integration actions stay off (they would cover the whole channel).
+  matchesNoIntegration: boolean
   promises: Promise<
     [AdsAnalyticsData, CapiDeliverySummary, AdsAnalyticsTimeseriesRow[]]
   >
@@ -592,9 +594,10 @@ function RetargetAudienceDialog({
 
 export function AdsAnalyticsView({
   channel,
-  channelIntegrations,
   promises,
   range,
+  matchesNoIntegration,
+  selectedChannelIntegrationIds,
   selectedChannelIntegrationId,
   workspaceCreatedAt,
   workspaceId,
@@ -606,6 +609,12 @@ export function AdsAnalyticsView({
     channel === "whatsapp" ? selectedChannelIntegrationId : null
   const t = useTranslations()
   const locale = useLocale()
+  // CSV export, custom-audience retargeting and the WhatsApp broadcast take
+  // ONE integration. With several selected (or none matching) they would
+  // silently cover the whole channel, including accounts the selection
+  // excludes, so they are disabled until a single inbox is selected.
+  const areActionsDisabled =
+    matchesNoIntegration || selectedChannelIntegrationIds.length > 1
   // `delivery` (CAPI delivery summary) is still fetched by the page so the
   // hidden delivery card can be restored by uncommenting alone — skipped here
   // while that card is hidden. See "TEMPORARILY HIDDEN (conversion tracking unfinished)".
@@ -750,22 +759,15 @@ export function AdsAnalyticsView({
           workspaceCreatedAt={workspaceCreatedAt}
         />
         <div className="flex flex-wrap items-end justify-end gap-3">
-          {/* The channel is implied by the dashboard menu item (see
-              `AnalyticsNav`) — this only selects the integration/account
-              within the current channel, with "All accounts" aggregating
-              across every one of its integrations (WhatsApp included). */}
-          {/* User-requested order: Ad accounts on the left, Integration on
-              the right (was the reverse). */}
+          {/* The channel is implied by the section and the integration scope
+              by the shared Inbox filter above (no second account select
+              here); only the ad-account filter has no shared equivalent. */}
           <AdAccountFilter
             channel={channel}
+            matchesNoIntegration={matchesNoIntegration}
             range={range}
-            selectedChannelIntegrationId={selectedChannelIntegrationId}
+            selectedChannelIntegrationIds={selectedChannelIntegrationIds}
             workspaceId={workspaceId}
-          />
-          <AdsAccountFilter
-            channelIntegrations={channelIntegrations}
-            range={range}
-            selectedIntegrationId={selectedChannelIntegrationId}
           />
         </div>
       </div>
@@ -827,7 +829,7 @@ export function AdsAnalyticsView({
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 lg:grid-cols-1">
           <CostTile
             info={
-              selectedChannelIntegrationId
+              selectedChannelIntegrationIds.length > 0
                 ? t("ads.analytics.spendAccountLevelNote")
                 : undefined
             }
@@ -940,13 +942,15 @@ export function AdsAnalyticsView({
                 />
                 <DeliveryCount
                   label={t("ads.analytics.delivery.failed")}
-                  tone={delivery.failed > 0 ? "text-amber-600" : undefined}
+                  tone={delivery.failed > 0 ? "text-amber-700 dark:text-amber-400" : undefined}
                   value={delivery.failed}
                 />
                 <DeliveryCount
                   label={t("ads.analytics.delivery.skippedNoScope")}
                   tone={
-                    delivery.skippedNoScope > 0 ? "text-amber-600" : undefined
+                    delivery.skippedNoScope > 0
+                      ? "text-amber-700 dark:text-amber-400"
+                      : undefined
                   }
                   value={delivery.skippedNoScope}
                 />
@@ -955,7 +959,7 @@ export function AdsAnalyticsView({
                 <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
                   <DeliveryCount
                     label={t("ads.analytics.delivery.skippedRegion")}
-                    tone="text-amber-600"
+                    tone="text-amber-700 dark:text-amber-400"
                     value={delivery.skippedRegion}
                   />
                 </div>
@@ -992,25 +996,46 @@ export function AdsAnalyticsView({
             {/* TEMPORARILY HIDDEN (conversion tracking unfinished): "leads" and "purchases"
                 export an empty AdsConversionEvent set until the conversion-rule
                 engine ships — restore the full tuple below with it. */}
-            {(["conversations"] as const).map((segment) => (
-              <Link
-                className={buttonVariants({ size: "sm", variant: "outline" })}
-                href={buildExportHref({
-                  workspaceId,
-                  segment,
-                  range,
-                  channel,
-                  integrationWhatsappId: selectedIntegrationWhatsappId,
-                  selectedChannelIntegrationId,
-                })}
-                key={segment}
-              >
-                <DownloadIcon className="size-4" />
-                {t(`ads.analytics.export.${segment}`)}
-              </Link>
-            ))}
+            {(["conversations"] as const).map((segment) =>
+              areActionsDisabled ? (
+                <Button
+                  disabled
+                  key={segment}
+                  size="sm"
+                  type="button"
+                  variant="outline"
+                >
+                  <DownloadIcon className="size-4" />
+                  {t(`ads.analytics.export.${segment}`)}
+                </Button>
+              ) : (
+                <Link
+                  className={buttonVariants({ size: "sm", variant: "outline" })}
+                  href={buildExportHref({
+                    workspaceId,
+                    segment,
+                    range,
+                    channel,
+                    integrationWhatsappId: selectedIntegrationWhatsappId,
+                    selectedChannelIntegrationId,
+                  })}
+                  key={segment}
+                >
+                  <DownloadIcon className="size-4" />
+                  {t(`ads.analytics.export.${segment}`)}
+                </Link>
+              ),
+            )}
           </div>
         </div>
+        {areActionsDisabled ? (
+          <p
+            className="text-end text-muted-foreground text-xs"
+            data-testid="ads-single-inbox-hint"
+          >
+            {t("ads.analytics.singleInboxActionsHint")}
+          </p>
+        ) : null}
         <Card>
           <CardContent className="px-0">
             <Table>
@@ -1080,7 +1105,11 @@ export function AdsAnalyticsView({
                       <DropdownMenu>
                         <DropdownMenuTrigger
                           render={
-                            <Button className="gap-1" size="sm">
+                            <Button
+                              className="gap-1"
+                              disabled={areActionsDisabled}
+                              size="sm"
+                            >
                               {t("ads.analytics.retarget")}
                               <ChevronDownIcon className="size-4" />
                             </Button>

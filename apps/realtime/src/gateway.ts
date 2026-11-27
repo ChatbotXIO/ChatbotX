@@ -27,6 +27,22 @@ const PRESENCE_REPORT_CONCURRENCY = 16
 const CONNECTION_LIFETIME_JITTER_RATIO = 0.15
 const HEARTBEAT_FRAME = JSON.stringify({ hb: 1 })
 
+type PresenceTimer = NodeJS.Timeout
+
+type PresenceTimerScheduler = {
+  clear: (timer: PresenceTimer | undefined) => void
+  schedule: (callback: () => void, delayMs: number) => PresenceTimer
+}
+
+type RealtimeGatewayDependencies = {
+  presenceTimerScheduler?: PresenceTimerScheduler
+}
+
+const systemPresenceTimerScheduler: PresenceTimerScheduler = {
+  clear: (timer) => clearTimeout(timer),
+  schedule: (callback, delayMs) => setTimeout(callback, delayMs),
+}
+
 export type RealtimeGateway = {
   close: () => Promise<void>
   /** Resolves with the actual bound port — useful for `port: 0` (OS-assigned). */
@@ -37,20 +53,25 @@ export type RealtimeGatewayOptions = RealtimeGatewayConfig & {
   redis: Redis
 }
 
-export const createRealtimeGateway = ({
-  builderUrl,
-  connectionLifetimeMs,
-  maxConnections,
-  maxConnectionsPerGuest,
-  maxConnectionsPerWorkspace,
-  maxGuestConnections,
-  maxGuestConnectionsPerWorkspace,
-  presenceReportCoalesceMs,
-  presenceReportIntervalMs,
-  shutdownDrainMs,
-  redis,
-  secret,
-}: RealtimeGatewayOptions): RealtimeGateway => {
+export const createRealtimeGateway = (
+  {
+    builderUrl,
+    connectionLifetimeMs,
+    maxConnections,
+    maxConnectionsPerGuest,
+    maxConnectionsPerWorkspace,
+    maxGuestConnections,
+    maxGuestConnectionsPerWorkspace,
+    presenceReportCoalesceMs,
+    presenceReportIntervalMs,
+    shutdownDrainMs,
+    redis,
+    secret,
+  }: RealtimeGatewayOptions,
+  {
+    presenceTimerScheduler = systemPresenceTimerScheduler,
+  }: RealtimeGatewayDependencies = {},
+): RealtimeGateway => {
   const app = uWS.App()
   const counters = createRealtimeServerCounters()
   const delivery = createRealtimeDelivery(app, counters)
@@ -120,10 +141,10 @@ export const createRealtimeGateway = ({
     if (stopped) {
       return
     }
-    clearTimeout(presenceTimers.get(workspaceId))
+    presenceTimerScheduler.clear(presenceTimers.get(workspaceId))
     presenceTimers.set(
       workspaceId,
-      setTimeout(() => {
+      presenceTimerScheduler.schedule(() => {
         presenceTimers.delete(workspaceId)
         presenceReporter.reportNow(workspaceId)
       }, presenceReportCoalesceMs),
@@ -310,7 +331,7 @@ export const createRealtimeGateway = ({
       clearInterval(presenceHeartbeat)
       clearInterval(metricsTimer)
       for (const timer of presenceTimers.values()) {
-        clearTimeout(timer)
+        presenceTimerScheduler.clear(timer)
       }
       presenceTimers.clear()
       presenceReporter.stop()

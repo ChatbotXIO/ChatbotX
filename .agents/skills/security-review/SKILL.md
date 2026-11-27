@@ -37,13 +37,13 @@ Invariants: `hasWorkspacePermission` treats missing jsonb keys as **denied** (fa
 - Customer messages (WhatsApp/Messenger/webchat), uploaded documents, and fetched URLs are **untrusted**. When their content reaches an AI prompt or RAG context, it must be framed as data, not instructions (clear delimiters, "the following is user-provided content").
 - Flag raw `content: row.content` passthrough from a context-source adapter into a model prompt (`apps/worker/src/integration/handlers/automated-response/system-tools/context-sources/`, `packages/ai/`).
 
-## 3. Tool / permission allowlist (`.claude/settings.local.json`)
+## 3. Tool / permission allowlist (`.claude/settings.json`, and your git-ignored `.claude/settings.local.json`)
 
-- This file is git-ignored and local — but it is live in every agent session.
+- `settings.json` is committed and applies to the whole team; `settings.local.json` is git-ignored but just as live in your agent sessions.
 - **Never** put credential literals (`PGPASSWORD`, `DATABASE_URL` with a real password) inside `Bash(...)` allow-patterns. Use env indirection.
 - **Never** grant wildcard exec: `Bash(pnpm *)`, `Bash(node *)`, `Bash(python3 *)`, `Bash(git *)`. Grant the specific commands you need (`Bash(pnpm lint)`, `Bash(pnpm --filter <x> test)`).
 - **Never** auto-approve `cp` of any `.env`, or reads of `~`/`/etc`. Scope filesystem grants to the repo.
-- Paths must be relative/repo-local, not machine-absolute, and must match this repo (`ChatbotX01`).
+- Paths must be relative/repo-local, never machine-absolute.
 
 ## 4. Secret handling
 
@@ -54,3 +54,7 @@ Invariants: `hasWorkspacePermission` treats missing jsonb keys as **denied** (fa
 ## Stop condition
 
 Produce a findings list (`file:line | risk | severity | fix`) ranked by severity. If a CRITICAL (secret-in-grant, wildcard exec, cross-tenant access, auth bypass) is found, state it first and recommend blocking the commit until fixed. If nothing security-relevant changed, say `SECURITY: not applicable to this diff` and stop — do not invent risks.
+
+## 5. Data that travels with a template
+
+A template snapshot is copied into other workspaces (and shared by link). Never ship credentials, tokens, signing secrets, AI Router connections, payment setup, per-contact data, or the source workspace's ids/URLs: collectors select an explicit column list, install mints new tokens and installs anything that sends messages or accepts public data switched off. Check text and JSON fields (HTTP step headers, mini-app definitions, URLs) for secrets, and that links are rewritten only through `RESOURCE_LINK_PATTERNS`. See `template-integration` section 1a.

@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, test, vi } from "vitest"
 
 const {
   mockAuditRecord,
+  mockBuildInviteUrl,
   mockFindOrFail,
   mockFindByIdOrFail,
   mockFindNameAndEmail,
@@ -25,6 +26,7 @@ const {
 
   return {
     mockAuditRecord: vi.fn(),
+    mockBuildInviteUrl: vi.fn(),
     mockDbInsert,
     mockFindOrFail: vi.fn(),
     mockFindByIdOrFail: vi.fn(),
@@ -67,6 +69,7 @@ vi.mock("@chatbotx.io/business", () => ({
   workspaceMemberCacheTag: (userId: string) =>
     `users:${userId}:workspace-members`,
   invitationService: {
+    buildInviteUrl: mockBuildInviteUrl,
     create: mockInvitationCreate,
   },
   quotaEnforcementService: {
@@ -166,6 +169,9 @@ const updateInput = {
     notifyAdmin: true,
     newMessageToHuman: false,
     newOrder: false,
+    postFailed: false,
+    postNeedsReview: false,
+    publishConnection: false,
   },
   notificationChannels: {
     messenger: false,
@@ -223,12 +229,16 @@ describe("inviteWorkspaceMemberAction", () => {
     mockWorkspaceFindById.mockResolvedValue({
       id: WORKSPACE_ID,
       ownerId: "owner-1",
+      tenantId: "tenant-1",
     })
     mockQuotaHasReachedLimit.mockResolvedValue(false)
     mockInvitationCreate.mockResolvedValue({
       id: "invitation-id",
       code: "invite-code",
     })
+    mockBuildInviteUrl.mockResolvedValue(
+      "https://app.chatbotx.test/invitations/invite-code",
+    )
     mockIsCommunity.mockReturnValue(false)
   })
 
@@ -279,6 +289,28 @@ describe("inviteWorkspaceMemberAction", () => {
 
     const insertedValues = getInsertedValues()
     expect(insertedValues.permissions).toEqual(assignedOnlyPermissions)
+  })
+
+  test("returns the invitation URL resolved by the invitation service", async () => {
+    mockCurrentMember()
+
+    await expect(
+      (inviteWorkspaceMemberAction as (props: unknown) => Promise<unknown>)(
+        actionCtx(),
+      ),
+    ).resolves.toEqual({
+      code: "invite-code",
+      id: "invitation-id",
+      inviteUrl: "https://app.chatbotx.test/invitations/invite-code",
+    })
+    expect(mockBuildInviteUrl).toHaveBeenCalledWith({
+      code: "invite-code",
+      workspace: {
+        id: WORKSPACE_ID,
+        ownerId: "owner-1",
+        tenantId: "tenant-1",
+      },
+    })
   })
 
   test("records an invite audit event labeled with the granted role", async () => {
@@ -395,6 +427,49 @@ describe("updateWorkspaceMemberAction", () => {
     })
   })
 
+  test("a request without the post notification types keeps the stored ones", async () => {
+    const storedTypes = {
+      ...updateInput.notificationTypes,
+      notifyAdmin: false,
+      postFailed: true,
+      postNeedsReview: true,
+      publishConnection: true,
+    }
+    mockFindByIdOrFail.mockResolvedValue({
+      id: MEMBER_ID,
+      userId: MEMBER_USER_ID,
+      workspaceId: WORKSPACE_ID,
+      permissions: normalizedGranularPermissions,
+      notificationTypes: storedTypes,
+      notificationChannels: updateInput.notificationChannels,
+    })
+    const legacyTypes = {
+      notifyAdmin: true,
+      newMessageToHuman: false,
+      newOrder: false,
+    }
+
+    await (updateWorkspaceMemberAction as (props: unknown) => Promise<unknown>)(
+      {
+        bindArgsParsedInputs: [WORKSPACE_ID, MEMBER_ID],
+        parsedInput: { ...updateInput, notificationTypes: legacyTypes },
+      },
+    )
+
+    expect(mockUpdateMember).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          notificationTypes: {
+            ...legacyTypes,
+            postFailed: true,
+            postNeedsReview: true,
+            publishConnection: true,
+          },
+        }),
+      }),
+    )
+  })
+
   test("skips DB update, cache invalidation, and audit when nothing changed", async () => {
     mockFindByIdOrFail.mockResolvedValue({
       id: MEMBER_ID,
@@ -427,6 +502,9 @@ describe("updateWorkspaceMemberAction", () => {
         notifyAdmin: false,
         newMessageToHuman: false,
         newOrder: false,
+        postFailed: false,
+        postNeedsReview: false,
+        publishConnection: false,
       },
       notificationChannels: {
         messenger: false,

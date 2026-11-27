@@ -5,8 +5,8 @@
   "devDependencies": {
     "@chatbotx.io/typescript-config": "workspace:*",
     "@chatbotx.io/vitest-config": "workspace:*",
-    "typescript": "^5",
-    "vitest": "^4.1.0"
+    "typescript": "catalog:",
+    "vitest": "catalog:"
   },
   "dependencies": {
     "@chatbotx.io/analytics": "workspace:*",
@@ -16,11 +16,11 @@
     "@chatbotx.io/redis": "workspace:*",
     "@chatbotx.io/sdk": "workspace:*",
     "@chatbotx.io/utils": "workspace:*",
-    "@t3-oss/env-nextjs": "^0.13.11",
-    "@types/node": "^24.10.4",
+    "@t3-oss/env-nextjs": "catalog:",
+    "@types/node": "catalog:",
     "bullmq": "^5.76.4",
-    "ioredis": "5.10.1",
-    "zod": "^4.3.6"
+    "ioredis": "catalog:",
+    "zod": "catalog:"
   },
   "exports": {
     ".": "./src/index.ts",

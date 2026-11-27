@@ -1,0 +1,1 @@
+CREATE INDEX "Workspace_ownerId_idx" ON "Workspace" ("ownerId");

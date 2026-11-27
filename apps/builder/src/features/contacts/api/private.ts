@@ -1,20 +1,36 @@
+import { contactExportService } from "@chatbotx.io/business"
 import { notFoundException } from "@chatbotx.io/business/errors"
 import { withWorkspaceIdSchema } from "@/features/workspaces/schema/resource"
 import { workspaceAuthorizedMidddleware } from "@/middlewares/auth"
 import { authorizedAPI } from "@/orpc"
+import { listContactAdReferrals } from "../lib/list-contact-ad-referrals"
+import { listContactBroadcastsPage } from "../lib/list-contact-broadcasts"
+import { listContactExportFiles } from "../lib/list-contact-export-files"
 import {
   buildContactPermissionScope,
+  exportFileOwnerFilter,
   requireContactPermissionScope,
   requireContactPermissionScopeForMember,
 } from "../permissions"
 import { getContact } from "../queries/get-contact.query"
-import { getExportFile } from "../queries/get-export-file.query"
 import {
   countContactInboxes,
   listAudienceInboxesPreview,
 } from "../queries/list-contact-inboxes.queries"
 import { countContacts, listContacts } from "../queries/list-contacts.queries"
 import { getExportFileRequest, getExportFileResponse } from "../schema/action"
+import {
+  listContactAdReferralsRequest,
+  listContactAdReferralsResponse,
+} from "../schema/ad-referral"
+import {
+  listContactBroadcastsRequest,
+  listContactBroadcastsResponse,
+} from "../schema/contact-broadcast"
+import {
+  listContactExportFilesRequest,
+  listContactExportFilesResponse,
+} from "../schema/export-file"
 import {
   countContactsRequest,
   countContactsResponse,
@@ -48,6 +64,59 @@ export const contactsAuthenticatedAPI = {
       }
 
       return await getContact({ workspaceId, contactId }, scope)
+    }),
+
+  listContactAdReferralsAuthenticatedAPI: authorizedAPI
+    .route({
+      method: "GET",
+      path: "/workspaces/{workspaceId}/contacts/{contactId}/ad-referrals",
+      summary: "List the ads a contact came from",
+      tags: ["Contacts"],
+    })
+    .input(listContactAdReferralsRequest.and(getContactRequest))
+    .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
+    .output(listContactAdReferralsResponse)
+    .handler(async ({ input, context }) => {
+      const scope = requireContactPermissionScopeForMember({
+        permissions: context.workspaceMember.permissions,
+        userId: context.user.id,
+      })
+      return await listContactAdReferrals({
+        workspaceId: input.workspaceId,
+        contactId: input.contactId,
+        perPage: input.perPage,
+        cursor: input.cursor,
+        accessScope: {
+          restrictToAssignedUserId: scope.restrictToAssignedUserId,
+        },
+      })
+    }),
+
+  listContactBroadcastsAuthenticatedAPI: authorizedAPI
+    .route({
+      method: "GET",
+      path: "/workspaces/{workspaceId}/contacts/{contactId}/broadcasts",
+      summary: "List the broadcasts sent to a contact",
+      tags: ["Contacts"],
+    })
+    .input(listContactBroadcastsRequest.and(getContactRequest))
+    .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
+    .output(listContactBroadcastsResponse)
+    .handler(async ({ input, context }) => {
+      const scope = requireContactPermissionScopeForMember({
+        permissions: context.workspaceMember.permissions,
+        userId: context.user.id,
+      })
+      return await listContactBroadcastsPage({
+        workspaceId: input.workspaceId,
+        contactId: input.contactId,
+        perPage: input.perPage,
+        cursor: input.cursor,
+        search: input.search,
+        accessScope: {
+          restrictToAssignedUserId: scope.restrictToAssignedUserId,
+        },
+      })
     }),
 
   listContactsByPOSTAuthenticatedAPI: authorizedAPI
@@ -126,8 +195,31 @@ export const contactsAuthenticatedAPI = {
     .input(getExportFileRequest)
     .output(getExportFileResponse)
     .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
-    .handler(async ({ input }) => {
+    .handler(async ({ input, context }) => {
       await requireContactPermissionScope(input.workspaceId)
-      return await getExportFile(input)
+      return await contactExportService.getFile({
+        ...input,
+        userId: exportFileOwnerFilter(context),
+      })
+    }),
+
+  listExportFilesAuthenticatedAPI: authorizedAPI
+    .route({
+      method: "GET",
+      path: "/workspaces/{workspaceId}/contacts/export-files",
+      summary: "List contact exports",
+      tags: ["Contacts"],
+    })
+    .input(listContactExportFilesRequest.and(withWorkspaceIdSchema))
+    .output(listContactExportFilesResponse)
+    .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
+    .handler(async ({ input, context }) => {
+      await requireContactPermissionScope(input.workspaceId)
+      return await listContactExportFiles({
+        workspaceId: input.workspaceId,
+        userId: exportFileOwnerFilter(context),
+        perPage: input.perPage,
+        cursor: input.cursor,
+      })
     }),
 }

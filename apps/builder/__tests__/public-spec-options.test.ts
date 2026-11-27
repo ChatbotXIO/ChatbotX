@@ -3,19 +3,21 @@
 import { describe, expect, test } from "vitest"
 import {
   CHANNEL_API_TOKEN_SCHEME,
+  MOBILE_APP_TOKEN_SCHEME,
   PUBLIC_SECURITY_SCHEMES,
   publicSpecGenerateOptions,
   withIdempotencyKeyHeader,
 } from "../src/lib/orpc/public-spec"
 
 describe("publicSpecGenerateOptions", () => {
-  test("declares all four security schemes", () => {
+  test("declares all five security schemes", () => {
     expect(Object.keys(PUBLIC_SECURITY_SCHEMES).sort()).toEqual(
       [
         "bearerAuth",
         "developerAccessToken",
         "tokenInSearchParams",
         CHANNEL_API_TOKEN_SCHEME,
+        MOBILE_APP_TOKEN_SCHEME,
       ].sort(),
     )
   })
@@ -31,6 +33,7 @@ describe("publicSpecGenerateOptions", () => {
 
     for (const requirement of options.security) {
       expect(Object.keys(requirement)).not.toContain(CHANNEL_API_TOKEN_SCHEME)
+      expect(Object.keys(requirement)).not.toContain(MOBILE_APP_TOKEN_SCHEME)
     }
   })
 

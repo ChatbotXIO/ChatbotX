@@ -2,7 +2,7 @@
 // values against freshly-built payloads with plain JSON.stringify produces
 // false positives whenever the key order differs. Sort keys recursively
 // before comparing so the diff reflects real content changes only.
-function stableStringify(value: unknown): string {
+export function stableStringify(value: unknown): string {
   if (Array.isArray(value)) {
     return `[${value.map(stableStringify).join(",")}]`
   }

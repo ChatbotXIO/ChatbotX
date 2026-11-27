@@ -95,7 +95,7 @@ export function AuditLogDialog({
                           className={cn(
                             "font-semibold",
                             entry.delta > 0
-                              ? "text-emerald-600 dark:text-emerald-400"
+                              ? "text-emerald-700 dark:text-emerald-400"
                               : "text-destructive",
                           )}
                         >

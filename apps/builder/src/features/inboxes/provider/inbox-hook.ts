@@ -29,7 +29,7 @@ export const allInboxConfigs = {
     value: "instagram",
   },
   whatsapp: {
-    label: "Whatsapp",
+    label: "WhatsApp",
     value: "whatsapp",
   },
   zalo: {
@@ -44,9 +44,17 @@ export const allInboxConfigs = {
     label: "TikTok",
     value: "tiktok",
   },
+  line: {
+    label: "LINE",
+    value: "line",
+  },
   webchat: {
     label: "Webchat",
     value: "webchat",
+  },
+  smtp: {
+    label: "Email",
+    value: "smtp",
   },
 } as const
 
@@ -103,10 +111,7 @@ export const useConfiguredInboxTypeOptions = (options?: {
   return useMemo(() => {
     const inboxTypes = new Set<string>(["omnichannel"])
     for (const inbox of inboxes) {
-      // Ignore SMTP inbox type
-      if (inbox.channel !== channelTypes.enum.smtp) {
-        inboxTypes.add(inbox.channel)
-      }
+      inboxTypes.add(inbox.channel)
     }
 
     return Array.from(inboxTypes)

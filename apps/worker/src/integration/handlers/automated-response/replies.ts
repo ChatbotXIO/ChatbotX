@@ -4,12 +4,15 @@ import {
   helpTexts,
   processStreamingText,
   systemFunctionNames,
+  toFinalStepTextStream,
   toolPrefixes,
+  toStepSeparatedTextStream,
 } from "@chatbotx.io/ai"
 import {
   type AIProviderInstance,
   aiContextService,
   appendAIAgentActionToolProtocol,
+  appendCustomerInputGuard,
   appendFabricationGuard,
   appendHandoffPolicy,
   appendKnowledgeBaseGuard,
@@ -55,13 +58,17 @@ import { logger } from "../../../lib/logger"
 import { handoffExecutorService } from "../../../trigger/services/handoff-executor.service"
 import { sendMessageAndWait, sendMessageWithRender } from "../../utils/message"
 import { buildAIAgentActionsPrompt } from "../ai-agent-actions/prompt"
-import { createAIAgentActionsTool } from "../ai-agent-actions/tool-executor"
+import {
+  createAIAgentActionsTool,
+  resolveActionValueFieldNames,
+} from "../ai-agent-actions/tool-executor"
 import {
   type AgentToolStats,
   createAgentToolStatsCollector,
 } from "../shared/agent-tool-stats"
 import { logProviderAttempt } from "../shared/provider-attempt-logger"
 import { createMcpTokenResolver } from "../shared/resolve-mcp-token"
+import { resolveAdContextPrompt } from "./ad-context"
 import { triggerDefaultReplyFlow } from "./default-reply"
 import { handleRichAIReply } from "./rich-reply"
 import { createDocumentReaderExecutor } from "./system-tools/document-reader"
@@ -334,6 +341,7 @@ function createReplyToolset(options: {
   providerInfo: AIAgentModelConfig
   providerInstance?: AIProviderInstance
   actionRules?: AIAgentActionRule[]
+  actionFieldNames?: ReadonlyMap<string, string>
   executedRuleIds: Set<string>
   trackingContextRef: TrackingContextRef
 }) {
@@ -464,6 +472,7 @@ function createReplyToolset(options: {
         ? {
             apply_ai_agent_actions: createAIAgentActionsTool({
               rules: options.actionRules,
+              fieldNames: options.actionFieldNames,
               executedRuleIds: options.executedRuleIds,
               context: {
                 workspaceId: conversation.workspaceId,
@@ -764,6 +773,22 @@ async function runAIReply(
         "[ai-agent-actions] action tool disabled",
       )
     }
+    const actionFieldNames = actionRules?.length
+      ? await resolveActionValueFieldNames({
+          rules: actionRules,
+          workspaceId: conversation.workspaceId,
+        }).catch((error) => {
+          logger.warn(
+            {
+              err: normalizeError(error),
+              workspaceId: conversation.workspaceId,
+              conversationId: conversation.id,
+            },
+            "[ai-agent-actions] custom field names unavailable",
+          )
+          return new Map<string, string>()
+        })
+      : undefined
     const toolset = await createReplyToolset({
       abortSignal,
       directSendTracker,
@@ -775,6 +800,7 @@ async function runAIReply(
       providerInstance: modelConfig.providerInstance,
       trackingContextRef,
       actionRules: actionRules?.length ? actionRules : undefined,
+      actionFieldNames,
       executedRuleIds,
     })
     const tools = toolset.tools
@@ -791,9 +817,19 @@ async function runAIReply(
           variables,
         })
       : ""
-    const completePrompt = props.summary
+    const promptWithSummary = props.summary
       ? `Conversation Context: ${props.summary}\n\n${promptBase}`
       : promptBase
+    // A customer who just clicked a paid ad gets that ad prioritised for vague
+    // messages. It goes after the workspace prompt and before every guard, so
+    // the guards still have the last word.
+    const adContextPrompt = await resolveAdContextPrompt({
+      contactInbox: props.contactInbox,
+      conversation,
+    })
+    const completePrompt = adContextPrompt
+      ? [promptWithSummary, adContextPrompt].filter(Boolean).join("\n\n")
+      : promptWithSummary
 
     const richModeEnabled =
       aiAgent.isRichResponse && Boolean(props.triggerMessageId)
@@ -817,18 +853,20 @@ async function runAIReply(
       promptWithActions,
       Boolean(actionRules?.length),
     )
-    const guardedPrompt = appendUnavailableWebSearchPolicy(
-      appendHandoffPolicy(
-        appendKnowledgeBaseGuard(
-          appendFabricationGuard(
-            appendToolOutputGuard(promptWithActionProtocol),
+    const guardedPrompt = appendCustomerInputGuard(
+      appendUnavailableWebSearchPolicy(
+        appendHandoffPolicy(
+          appendKnowledgeBaseGuard(
+            appendFabricationGuard(
+              appendToolOutputGuard(promptWithActionProtocol),
+              tools,
+            ),
             tools,
           ),
           tools,
         ),
-        tools,
+        toolset.webSearchOmitReason,
       ),
-      toolset.webSearchOmitReason,
     )
     const systemPrompt = richModeEnabled
       ? appendRichResponseFormat(guardedPrompt)
@@ -894,7 +932,9 @@ async function runAIReply(
     if (richModeEnabled) {
       const richResult = await handleRichAIReply({
         props,
-        textStream: result.textStream,
+        // Rich mode parses one JSON document: drop prose written before a tool
+        // call (`textStream` would glue it to the JSON and fail the parse).
+        textStream: toFinalStepTextStream(result.stream),
         directSendTracker,
         provider,
         modelId: selectedModelId,
@@ -906,7 +946,7 @@ async function runAIReply(
     }
 
     const { messageCount, fullText } = await processStreamingText(
-      result.textStream,
+      toStepSeparatedTextStream(result.stream),
       async (_segment, parts) => {
         if (directSendTracker.sent) {
           return

@@ -1602,6 +1602,46 @@ describe("media hydration", () => {
     )
   })
 
+  test.each([
+    ["video/mp4", "audio/mp4"],
+    ["video/mp4; codecs=mp4a.40.2", "audio/mp4"],
+    ["video/webm", "audio/webm"],
+    ["audio/mpeg", "audio/mpeg"],
+  ])("stores an audio attachment served as %s with content-type %s", async (served, expected) => {
+    const pending = { ...attachment("101"), fileType: "audio" as const }
+    arrangeAttachmentGraph([pending])
+    mocks.runChannelHandler.mockResolvedValue([
+      {
+        sourceId: "source-101",
+        url: "https://fresh.example/101.mp4",
+        mimeType: served,
+      },
+    ])
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () =>
+        Promise.resolve(
+          new Response(new Uint8Array([1, 2, 3]), {
+            headers: { "content-type": served },
+          }),
+        ),
+      ),
+    )
+
+    await ensureAttachmentMirrored({ attachmentId: "101", workspaceId })
+
+    expect(mocks.putObject).toHaveBeenCalledWith(
+      "workspace/messenger/workspace-1/integration-1/2026/10/06/storage-1.mp4",
+      expect.any(Buffer),
+      expect.objectContaining({ ContentType: expected }),
+    )
+    expect(mocks.updateAttachment).toHaveBeenCalledWith(
+      expect.objectContaining({
+        fields: expect.objectContaining({ mimeType: expected }),
+      }),
+    )
+  })
+
   test("marks an oversized attachment failed and throws a terminal error", async () => {
     const pending = attachment("101")
     arrangeAttachmentGraph([pending])

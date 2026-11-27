@@ -148,7 +148,7 @@ const cases: [
       addToWelcome(definition, {
         id: "n_photo",
         type: "PhotoPicker",
-        props: { name: "photo", label: "Photo", "max-uploaded-photos": 3 },
+        props: { name: "photo", label: "Photo", "max-uploaded-photos": 11 },
       })
     },
   ],

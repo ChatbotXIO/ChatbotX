@@ -10,27 +10,23 @@ import {
   type IntegrationJobCoexistInstagramSync,
   integrationQueue,
 } from "@chatbotx.io/worker-config"
-import pLimit from "p-limit"
 import { logger } from "../../../lib/logger"
 import { enqueueProfileSnapshotJobs } from "../profile-snapshot/queue"
 import {
   applyCoexistActivityUpdates,
   bulkImportContacts,
-  bulkImportMessages,
   type CoexistActivityUpdate,
   type ContactImportLink,
   createHistoricalIdFactory,
-  type HistoricalMessage,
 } from "./bulk-historical-import"
 import { instagramCoexistAdapter } from "./instagram-adapter"
 import { instagramFacebookCoexistAdapter } from "./instagram-facebook-adapter"
+import { importInstagramMessagePage } from "./instagram-message-import"
 import { splitDisplayName } from "./instagram-normalize"
-import type { CoexistUsageSignal, PullCoexistAdapter } from "./pull-adapter"
-import { resolveUsageThrottle, sleepForUsageThrottle } from "./usage-throttle"
+import { createInstagramUsageThrottle } from "./instagram-throttle"
+import type { PullCoexistAdapter } from "./pull-adapter"
 
-const DEFAULT_CONCURRENCY = 3
 const CHUNK_BUDGET_MS = 4 * 60 * 1000
-const MAX_USAGE_PAUSE_MS = 45_000
 const STORE_WINDOW_MS = 90 * 24 * 60 * 60 * 1000
 
 type InstagramIntegrationType = IntegrationInstagramModel["type"]
@@ -92,9 +88,8 @@ const runInstagramCoexistPull = async <
   })
   const cutoff = new Date(Date.now() - STORE_WINDOW_MS)
   const idFactory = createHistoricalIdFactory()
-  let currentConcurrency = DEFAULT_CONCURRENCY
-  let limit = pLimit(currentConcurrency)
-  let pauseUntil = 0
+  const { applyUsageThrottle, respectUsagePause, getLimit } =
+    createInstagramUsageThrottle({ runId })
   const frontier = claimed.lastSyncedAt
   let cursor: string | undefined
   let pageNumber = claimed.currentPageNumber ?? 0
@@ -104,40 +99,6 @@ const runInstagramCoexistPull = async <
   let failedTotal = claimed.failedCount ?? 0
   let continueLater = false
   let currentError: string | undefined
-
-  const applyUsageThrottle = (
-    usageSignal: CoexistUsageSignal | null | undefined,
-  ): void => {
-    const decision = resolveUsageThrottle({
-      signal: usageSignal,
-      defaultConcurrency: DEFAULT_CONCURRENCY,
-      maxPauseMs: MAX_USAGE_PAUSE_MS,
-    })
-    if (decision.pauseMs > 0) {
-      pauseUntil = Math.max(pauseUntil, Date.now() + decision.pauseMs)
-      logger.warn(
-        { runId, usageSignal, pauseMs: decision.pauseMs },
-        "[coexist] Instagram usage budget exhausted; pausing Graph calls",
-      )
-    }
-
-    const nextConcurrency = decision.concurrency > 0 ? decision.concurrency : 1
-    if (nextConcurrency !== currentConcurrency) {
-      currentConcurrency = nextConcurrency
-      limit = pLimit(currentConcurrency)
-      logger.info(
-        { runId, usageSignal, concurrency: currentConcurrency },
-        "[coexist] Instagram usage throttle adjusted concurrency",
-      )
-    }
-  }
-
-  const respectUsagePause = async (): Promise<void> => {
-    const waitMs = pauseUntil - Date.now()
-    if (waitMs > 0) {
-      await sleepForUsageThrottle(waitMs)
-    }
-  }
 
   try {
     while (true) {
@@ -163,7 +124,7 @@ const runInstagramCoexistPull = async <
 
       await Promise.all(
         page.conversations.map((conversation) =>
-          limit(async () => {
+          getLimit()(async () => {
             await respectUsagePause()
             const conversationUpdatedAt = adapter.getConversationUpdatedAt({
               conversation,
@@ -286,53 +247,24 @@ const runInstagramCoexistPull = async <
                   contactLink = link
                 }
 
-                const historicalMessages: HistoricalMessage[] = []
-                for (const message of pendingMessages.splice(0)) {
-                  totalMessagesSeen += 1
-                  const historical = adapter.toHistoricalMessage({
-                    context,
-                    message,
-                    cutoff,
-                    totalMessagesSeen,
-                  })
-                  if (historical) {
-                    historicalMessages.push(historical)
-                  }
-                }
-
-                const imported = await bulkImportMessages({
+                const written = await importInstagramMessagePage({
+                  adapter,
+                  context,
+                  aiReadsSyncedHistory:
+                    context.integration.coexistAiReadsSyncedHistory,
                   workspaceId,
                   runId,
-                  contactInboxId: contactLink.contactInboxId,
-                  contactId: contactLink.contactId,
-                  conversationId: contactLink.conversationId,
-                  messages: historicalMessages,
-                  contactEnrichment: adapter.discoverContactEnrichment({
-                    context,
-                    messages: historicalMessages,
-                  }),
+                  link: contactLink,
+                  messages: pendingMessages.splice(0),
+                  cutoff,
+                  totalSeen: totalMessagesSeen,
                   idFactory,
                 })
-
-                pageImportedMessages += imported.importedMessages
-                pageSkipped += imported.skippedMessages
-                const aiMarkerMessageId = context.integration
-                  .coexistAiReadsSyncedHistory
-                  ? null
-                  : imported.newestMessageId
-                if (
-                  imported.newestMessageAt !== null ||
-                  aiMarkerMessageId !== null
-                ) {
-                  activityUpdates.push({
-                    contactInboxId: contactLink.contactInboxId,
-                    contactId: contactLink.contactId,
-                    conversationId: contactLink.conversationId,
-                    newestMessageAt: imported.newestMessageAt,
-                    oldestMessageAt: imported.oldestMessageAt,
-                    newestIncomingMessageAt: imported.newestIncomingMessageAt,
-                    aiMarkerMessageId,
-                  })
+                totalMessagesSeen += written.messagesRead
+                pageImportedMessages += written.importedMessages
+                pageSkipped += written.skippedMessages
+                if (written.activity) {
+                  activityUpdates.push(written.activity)
                 }
 
                 messageCursor = messagesPage.after

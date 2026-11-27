@@ -110,6 +110,49 @@ describe("resolvePublicBroadcastTemplateParams", () => {
 })
 
 describe("createBroadcastPublicRequest", () => {
+  test("keeps a nested payment request instead of stripping it", () => {
+    const templateData = {
+      button: [
+        {
+          sub_type: "payment_request",
+          index: 0,
+          payment_request: { method: "pix", code: "{{pix_code}}" },
+        },
+      ],
+    }
+
+    const parsed = createBroadcastPublicRequest.safeParse({
+      ...base,
+      templateId: "1",
+      integrationWhatsappId: "2",
+      inboxIds: ["3"],
+      templateData,
+    })
+
+    expect(parsed.success).toBe(true)
+    expect(parsed.data?.templateData).toEqual(templateData)
+  })
+
+  test("keeps a per-target nested payment request", () => {
+    const templateData = {
+      button: [
+        {
+          sub_type: "payment_request",
+          index: 1,
+          payment_request: { method: "boleto", digitableLine: "0339" },
+        },
+      ],
+    }
+
+    const parsed = createBroadcastPublicRequest.safeParse({
+      ...base,
+      targets: [{ inboxId: "3", templateId: "1", templateData }],
+    })
+
+    expect(parsed.success).toBe(true)
+    expect(parsed.data?.targets?.[0]?.templateData).toEqual(templateData)
+  })
+
   test("accepts templateParams", () => {
     expect(
       createBroadcastPublicRequest.safeParse({

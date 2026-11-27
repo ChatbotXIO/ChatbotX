@@ -24,6 +24,12 @@ const workerState = vi.hoisted(() => ({
   capturedWorkers: [] as CapturedWorker[],
   dispatchAdsConversionJob: vi.fn(async () => undefined),
   ensureBootstrapped: vi.fn(async () => undefined),
+  getJobCounts: vi.fn(async () => ({
+    waiting: 3,
+    prioritized: 2,
+    delayed: 1,
+    active: 4,
+  })),
   getStoryReply: vi.fn(),
   handleWhatsappIdentityChange: vi.fn(async () => undefined),
   receiveMessage: vi.fn(),
@@ -52,7 +58,11 @@ vi.mock("bullmq", () => {
   return { Worker: WorkerMock }
 })
 
-vi.mock("@chatbotx.io/worker-config", () => ({
+vi.mock("@chatbotx.io/worker-config", async () => ({
+  // heavy-step-runner builds its outcome schema from this at import time.
+  heavyStepOutputValueSchema: await import("zod").then(({ z }) =>
+    z.object({ customFieldId: z.string(), value: z.string() }),
+  ),
   AIJobAction: {
     commentAIReply: "commentAIReply",
     processAutomatedResponse: "processAutomatedResponse",
@@ -60,7 +70,7 @@ vi.mock("@chatbotx.io/worker-config", () => ({
     processStoryMentionAutomation: "processStoryMentionAutomation",
   },
   aiAgentQueue: { add: workerState.aiAgentQueueAdd },
-  closeIntegrationQueueEvents: vi.fn(async () => undefined),
+  closeAllQueueEvents: vi.fn(async () => undefined),
   defaultWorkerOptions: {
     concurrency: 5,
     removeOnComplete: { count: 1000 },
@@ -72,6 +82,7 @@ vi.mock("@chatbotx.io/worker-config", () => ({
   HeavyJobAction: { aiGenerateImage: "aiGenerateImage" },
   IntegrationJobAction: {
     incomingMessage: "incomingMessage",
+    incomingMessageEcho: "incomingMessageEcho",
     processAutomatedResonse: "processAutomatedResponse",
     commentAIReply: "commentAIReply",
     processStoryReplyAutomation: "processStoryReplyAutomation",
@@ -81,12 +92,17 @@ vi.mock("@chatbotx.io/worker-config", () => ({
     syncRetargetAudience: "syncRetargetAudience",
     whatsappCallEvent: "whatsappCallEvent",
     whatsappIdentityChange: "whatsappIdentityChange",
+    contactSync: "contactSync",
   },
   PURGE_WORKSPACES_INTERVAL_MINUTES: 60,
-  integrationQueue: { add: vi.fn() },
+  chatQueue: { getJobCounts: workerState.getJobCounts },
+  integrationQueue: { add: vi.fn(), getJobCounts: workerState.getJobCounts },
+  lowQueue: { getJobCounts: workerState.getJobCounts },
   queueNames: {
     enum: {
       integration: "integration",
+      chat: "chat",
+      low: "low",
       callTranscription: "callTranscription",
       whatsappVoipSignaling: "whatsappVoipSignaling",
     },
@@ -98,9 +114,21 @@ vi.mock("@chatbotx.io/automated-response", () => ({
     enqueue: vi.fn(),
     enqueueHandoffReentry: vi.fn(),
   },
+  isKeywordMediaFileType: (fileType: string) =>
+    ["image", "gif", "video", "audio"].includes(fileType),
 }))
 
 vi.mock("@chatbotx.io/business", () => ({
+  flushAllPendingWorkspaceRealtimeEvents: vi.fn(),
+  // Mirror of the real pure helper — the module is fully mocked here.
+  getContactInputAttachments: (message: {
+    contentAttributes?: unknown
+    attachments?: unknown[] | null
+  }) =>
+    (message.contentAttributes as { type?: unknown } | null)?.type ===
+    "whatsapp_flow_response"
+      ? []
+      : (message.attachments ?? []),
   buildContext: vi.fn(),
   conversationService: { ensureActive: vi.fn() },
   withBlockedOwnerGuard: vi.fn(
@@ -134,7 +162,7 @@ vi.mock("../src/lib/is-blocked-workspace", () => ({
 }))
 
 vi.mock("../src/lib/logger", () => ({
-  logger: { error: vi.fn(), info: vi.fn(), warn: vi.fn() },
+  logger: { error: vi.fn(), fatal: vi.fn(), info: vi.fn(), warn: vi.fn() },
 }))
 
 vi.mock("../src/lib/resolve-workspace-id", () => ({
@@ -254,6 +282,9 @@ vi.mock("../src/integration/handlers/template-flow-response", () => ({
 vi.mock("../src/integration/handlers/wait-resume", () => ({
   runWaitResume: vi.fn(),
 }))
+vi.mock("../src/integration/handlers/contact-sync/engine", () => ({
+  runContactSync: vi.fn(async () => undefined),
+}))
 vi.mock("../src/integration/handlers/whatsapp-call", () => ({
   handleWhatsappCallEvent: vi.fn(async () => undefined),
 }))
@@ -273,17 +304,19 @@ vi.mock("../src/integration/routing", async (importOriginal) => ({
   ...(await importOriginal<typeof import("../src/integration/routing")>()),
   resolveIncomingTextRouting: vi.fn(),
 }))
-vi.mock("../src/integration/utils/message", () => ({
-  closeChatQueueEvents: vi.fn(async () => undefined),
-}))
 
 // Importing the worker module boots it exactly once (ESM module cache) —
 // the three `new Worker(...)` calls happen as a side effect of this import,
 // so they must happen once, before any assertions, rather than per-test.
+const setIntervalSpy = vi.spyOn(globalThis, "setInterval")
 await import("../src/integration/worker")
 await vi.waitFor(() => {
   expect(workerState.capturedWorkers).toHaveLength(3)
 })
+// Captured at boot: mock call history is cleared between tests.
+const queueDepthTick = setIntervalSpy.mock.calls.find(
+  ([, delay]) => delay === 60_000,
+)?.[0] as (() => void) | undefined
 
 describe("integration worker process boot", () => {
   test("boots exactly three Workers: the shared integration queue, the dedicated callTranscription queue, and the dedicated whatsappVoipSignaling queue", () => {
@@ -295,17 +328,66 @@ describe("integration worker process boot", () => {
     )
   })
 
+  test("logs the depth of the integration, chat and low queues every minute", async () => {
+    const { logger } = await import("../src/lib/logger")
+    expect(queueDepthTick).toBeDefined()
+    vi.mocked(logger.info).mockClear()
+
+    queueDepthTick?.()
+    await vi.waitFor(() => {
+      expect(logger.info).toHaveBeenCalledTimes(3)
+    })
+
+    expect(vi.mocked(logger.info).mock.calls.map(([fields]) => fields)).toEqual(
+      [
+        {
+          queue: "integration",
+          waiting: 3,
+          prioritized: 2,
+          delayed: 1,
+          active: 4,
+        },
+        { queue: "chat", waiting: 3, prioritized: 2, delayed: 1, active: 4 },
+        { queue: "low", waiting: 3, prioritized: 2, delayed: 1, active: 4 },
+      ],
+    )
+    expect(workerState.getJobCounts).toHaveBeenCalledWith(
+      "waiting",
+      "prioritized",
+      "delayed",
+      "active",
+    )
+  })
+
+  test("a failed depth read is logged and does not stop the other queues", async () => {
+    const { logger } = await import("../src/lib/logger")
+    vi.mocked(logger.info).mockClear()
+    vi.mocked(logger.warn).mockClear()
+    workerState.getJobCounts.mockRejectedValueOnce(new Error("redis down"))
+
+    queueDepthTick?.()
+    await vi.waitFor(() => {
+      expect(logger.info).toHaveBeenCalledTimes(2)
+    })
+
+    expect(logger.warn).toHaveBeenCalledWith(
+      expect.objectContaining({ queue: "integration" }),
+      "Failed to read queue depth",
+    )
+  })
+
   test("does not consume the profileSnapshot queue (it runs in the low process)", () => {
     expect(
       workerState.capturedWorkers.map((worker) => worker.queueName),
     ).not.toContain("profileSnapshot")
   })
 
-  test("keeps the env-tunable concurrency and long coexist lock on the integration worker", () => {
+  test("keeps the env-tunable concurrency and a short renewable lock on the integration worker", () => {
     const [integrationWorker] = workerState.capturedWorkers
 
     expect(integrationWorker?.options.concurrency).toBe(10)
-    expect(integrationWorker?.options.lockDuration).toBe(10 * 60 * 1000)
+    expect(integrationWorker?.options.lockDuration).toBe(600_000)
+    expect(integrationWorker?.options.stalledInterval).toBe(600_000)
   })
 
   test("the callTranscription worker carries the CALL_TRANSCRIBE_PER_MIN limiter", () => {
@@ -460,6 +542,54 @@ describe("whatsappCallEvent (the main integration queue's isBlockedWorkspace gat
     expect(isBlockedWorkspace).toHaveBeenCalledWith("ws-frozen")
     expect(handleWhatsappCallEvent).not.toHaveBeenCalled()
     expect(result).toBeUndefined()
+  })
+})
+
+describe("contactSync integration worker dispatch", () => {
+  const job = {
+    type: "contactSync",
+    data: { runId: "run-1", workspaceId: "ws-1" },
+  }
+
+  test("runs the engine for an active workspace", async () => {
+    const { runContactSync } = await import(
+      "../src/integration/handlers/contact-sync/engine"
+    )
+    const { resolveWorkspaceId } = await import(
+      "../src/lib/resolve-workspace-id"
+    )
+    vi.mocked(runContactSync).mockClear()
+    vi.mocked(resolveWorkspaceId).mockResolvedValueOnce("ws-1")
+    const [integrationWorker] = workerState.capturedWorkers
+
+    await integrationWorker?.processor({ data: job })
+
+    await integrationWorker?.processor({ data: job })
+
+    expect(runContactSync).toHaveBeenCalledWith(job.data)
+  })
+
+  test("a blocked owner completes without invoking the engine and without throwing", async () => {
+    const { isBlockedWorkspace } = await import(
+      "../src/lib/is-blocked-workspace"
+    )
+    const { runContactSync } = await import(
+      "../src/integration/handlers/contact-sync/engine"
+    )
+    const { resolveWorkspaceId } = await import(
+      "../src/lib/resolve-workspace-id"
+    )
+    vi.mocked(runContactSync).mockClear()
+    vi.mocked(resolveWorkspaceId).mockResolvedValueOnce("ws-1")
+    vi.mocked(isBlockedWorkspace).mockResolvedValueOnce(true)
+    const [integrationWorker] = workerState.capturedWorkers
+
+    await expect(
+      integrationWorker?.processor({ data: job }),
+    ).resolves.toBeUndefined()
+
+    expect(isBlockedWorkspace).toHaveBeenCalledWith("ws-1")
+    expect(runContactSync).not.toHaveBeenCalled()
   })
 })
 

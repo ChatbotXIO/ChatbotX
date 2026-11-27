@@ -1,0 +1,5582 @@
+{
+  "type": "diff",
+  "version": "10",
+  "dialect": "postgres",
+  "id": "ae680038-e4d2-41d5-b70c-8d196e054d80",
+  "prevIds": [
+    "f0d5b76b-3b8a-4b73-a670-7a0a688e85e0"
+  ],
+  "footprints": [
+    {
+      "statementType": "create_enum",
+      "statementTarget": [
+        "enum",
+        "public",
+        "pipelineActivityKind"
+      ],
+      "writes": [
+        "s|enum|public.pipelineActivityKind",
+        "n|enum|public.pipelineActivityKind",
+        "e|enum|public.pipelineActivityKind",
+        "n|type|public.pipelineActivityKind"
+      ],
+      "reads": [
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "create_enum",
+      "statementTarget": [
+        "enum",
+        "public",
+        "pipelineActorKind"
+      ],
+      "writes": [
+        "s|enum|public.pipelineActorKind",
+        "n|enum|public.pipelineActorKind",
+        "e|enum|public.pipelineActorKind",
+        "n|type|public.pipelineActorKind"
+      ],
+      "reads": [
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "create_enum",
+      "statementTarget": [
+        "enum",
+        "public",
+        "pipelineItemPriority"
+      ],
+      "writes": [
+        "s|enum|public.pipelineItemPriority",
+        "n|enum|public.pipelineItemPriority",
+        "e|enum|public.pipelineItemPriority",
+        "n|type|public.pipelineItemPriority"
+      ],
+      "reads": [
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "create_enum",
+      "statementTarget": [
+        "enum",
+        "public",
+        "pipelineItemStatus"
+      ],
+      "writes": [
+        "s|enum|public.pipelineItemStatus",
+        "n|enum|public.pipelineItemStatus",
+        "e|enum|public.pipelineItemStatus",
+        "n|type|public.pipelineItemStatus"
+      ],
+      "reads": [
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "create_enum",
+      "statementTarget": [
+        "enum",
+        "public",
+        "pipelineType"
+      ],
+      "writes": [
+        "s|enum|public.pipelineType",
+        "n|enum|public.pipelineType",
+        "e|enum|public.pipelineType",
+        "n|type|public.pipelineType"
+      ],
+      "reads": [
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "create_table",
+      "statementTarget": [
+        "table",
+        "public",
+        "PipelineField"
+      ],
+      "writes": [
+        "s|tbl|public.PipelineField",
+        "n|tbl|public.PipelineField",
+        "e|tbl|public.PipelineField",
+        "n|rel|public.PipelineField",
+        "n|type|public.PipelineField",
+        "n|rel|public.PipelineField_pkey"
+      ],
+      "reads": [
+        "n|sch|public",
+        "n|enum|public.customFieldType"
+      ]
+    },
+    {
+      "statementType": "create_table",
+      "statementTarget": [
+        "table",
+        "public",
+        "PipelineItemActivity"
+      ],
+      "writes": [
+        "s|tbl|public.PipelineItemActivity",
+        "n|tbl|public.PipelineItemActivity",
+        "e|tbl|public.PipelineItemActivity",
+        "n|rel|public.PipelineItemActivity",
+        "n|type|public.PipelineItemActivity",
+        "n|rel|public.PipelineItemActivity_pkey"
+      ],
+      "reads": [
+        "n|sch|public",
+        "n|enum|public.pipelineActivityKind",
+        "n|enum|public.pipelineActorKind",
+        "n|enum|public.pipelineItemStatus",
+        "n|enum|public.pipelineItemStatus",
+        "n|enum|public.pipelineItemPriority",
+        "n|enum|public.pipelineItemPriority"
+      ]
+    },
+    {
+      "statementType": "create_table",
+      "statementTarget": [
+        "table",
+        "public",
+        "PipelineItemAssignee"
+      ],
+      "writes": [
+        "s|tbl|public.PipelineItemAssignee",
+        "n|tbl|public.PipelineItemAssignee",
+        "e|tbl|public.PipelineItemAssignee",
+        "n|rel|public.PipelineItemAssignee",
+        "n|type|public.PipelineItemAssignee",
+        "n|rel|public.PipelineItemAssignee_pkey"
+      ],
+      "reads": [
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "create_table",
+      "statementTarget": [
+        "table",
+        "public",
+        "PipelineItemAttachment"
+      ],
+      "writes": [
+        "s|tbl|public.PipelineItemAttachment",
+        "n|tbl|public.PipelineItemAttachment",
+        "e|tbl|public.PipelineItemAttachment",
+        "n|rel|public.PipelineItemAttachment",
+        "n|type|public.PipelineItemAttachment",
+        "n|rel|public.PipelineItemAttachment_pkey"
+      ],
+      "reads": [
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "create_table",
+      "statementTarget": [
+        "table",
+        "public",
+        "PipelineItemComment"
+      ],
+      "writes": [
+        "s|tbl|public.PipelineItemComment",
+        "n|tbl|public.PipelineItemComment",
+        "e|tbl|public.PipelineItemComment",
+        "n|rel|public.PipelineItemComment",
+        "n|type|public.PipelineItemComment",
+        "n|rel|public.PipelineItemComment_pkey"
+      ],
+      "reads": [
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "create_table",
+      "statementTarget": [
+        "table",
+        "public",
+        "PipelineItemCounter"
+      ],
+      "writes": [
+        "s|tbl|public.PipelineItemCounter",
+        "n|tbl|public.PipelineItemCounter",
+        "e|tbl|public.PipelineItemCounter",
+        "n|rel|public.PipelineItemCounter",
+        "n|type|public.PipelineItemCounter",
+        "n|rel|public.PipelineItemCounter_pkey"
+      ],
+      "reads": [
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "create_table",
+      "statementTarget": [
+        "table",
+        "public",
+        "PipelineItem"
+      ],
+      "writes": [
+        "s|tbl|public.PipelineItem",
+        "n|tbl|public.PipelineItem",
+        "e|tbl|public.PipelineItem",
+        "n|rel|public.PipelineItem",
+        "n|type|public.PipelineItem",
+        "n|rel|public.PipelineItem_pkey"
+      ],
+      "reads": [
+        "n|sch|public",
+        "n|enum|public.pipelineItemStatus",
+        "n|enum|public.pipelineItemPriority"
+      ]
+    },
+    {
+      "statementType": "create_table",
+      "statementTarget": [
+        "table",
+        "public",
+        "PipelineMember"
+      ],
+      "writes": [
+        "s|tbl|public.PipelineMember",
+        "n|tbl|public.PipelineMember",
+        "e|tbl|public.PipelineMember",
+        "n|rel|public.PipelineMember",
+        "n|type|public.PipelineMember",
+        "n|rel|public.PipelineMember_pkey"
+      ],
+      "reads": [
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "create_table",
+      "statementTarget": [
+        "table",
+        "public",
+        "Pipeline"
+      ],
+      "writes": [
+        "s|tbl|public.Pipeline",
+        "n|tbl|public.Pipeline",
+        "e|tbl|public.Pipeline",
+        "n|rel|public.Pipeline",
+        "n|type|public.Pipeline",
+        "n|rel|public.Pipeline_pkey"
+      ],
+      "reads": [
+        "n|sch|public",
+        "n|enum|public.pipelineType"
+      ]
+    },
+    {
+      "statementType": "create_table",
+      "statementTarget": [
+        "table",
+        "public",
+        "PipelineStage"
+      ],
+      "writes": [
+        "s|tbl|public.PipelineStage",
+        "n|tbl|public.PipelineStage",
+        "e|tbl|public.PipelineStage",
+        "n|rel|public.PipelineStage",
+        "n|type|public.PipelineStage",
+        "n|rel|public.PipelineStage_pkey"
+      ],
+      "reads": [
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "drop_table",
+      "statementTarget": [
+        "table",
+        "public",
+        "IntegrationMuse"
+      ],
+      "writes": [
+        "s|tbl|public.IntegrationMuse",
+        "n|tbl|public.IntegrationMuse",
+        "e|tbl|public.IntegrationMuse",
+        "n|rel|public.IntegrationMuse",
+        "n|type|public.IntegrationMuse"
+      ],
+      "reads": [
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "PipelineField",
+        "PipelineField_pipelineId_referenceName_key"
+      ],
+      "writes": [
+        "s|idx|public.PipelineField_pipelineId_referenceName_key",
+        "n|idx|public.PipelineField_pipelineId_referenceName_key",
+        "e|idx|public.PipelineField_pipelineId_referenceName_key",
+        "n|rel|public.PipelineField_pipelineId_referenceName_key"
+      ],
+      "reads": [
+        "n|tbl|public.PipelineField",
+        "n|sch|public",
+        "n|col|public.PipelineField.pipelineId",
+        "n|col|public.PipelineField.referenceName"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "PipelineField",
+        "PipelineField_workspaceId_idx"
+      ],
+      "writes": [
+        "s|idx|public.PipelineField_workspaceId_idx",
+        "n|idx|public.PipelineField_workspaceId_idx",
+        "e|idx|public.PipelineField_workspaceId_idx",
+        "n|rel|public.PipelineField_workspaceId_idx"
+      ],
+      "reads": [
+        "n|tbl|public.PipelineField",
+        "n|sch|public",
+        "n|col|public.PipelineField.workspaceId"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "PipelineItemActivity",
+        "PipelineItemActivity_pipeline_kind_occurredAt_idx"
+      ],
+      "writes": [
+        "s|idx|public.PipelineItemActivity_pipeline_kind_occurredAt_idx",
+        "n|idx|public.PipelineItemActivity_pipeline_kind_occurredAt_idx",
+        "e|idx|public.PipelineItemActivity_pipeline_kind_occurredAt_idx",
+        "n|rel|public.PipelineItemActivity_pipeline_kind_occurredAt_idx"
+      ],
+      "reads": [
+        "n|tbl|public.PipelineItemActivity",
+        "n|sch|public",
+        "n|col|public.PipelineItemActivity.workspaceId",
+        "n|col|public.PipelineItemActivity.pipelineId",
+        "n|col|public.PipelineItemActivity.kind",
+        "n|col|public.PipelineItemActivity.occurredAt"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "PipelineItemActivity",
+        "PipelineItemActivity_item_occurredAt_idx"
+      ],
+      "writes": [
+        "s|idx|public.PipelineItemActivity_item_occurredAt_idx",
+        "n|idx|public.PipelineItemActivity_item_occurredAt_idx",
+        "e|idx|public.PipelineItemActivity_item_occurredAt_idx",
+        "n|rel|public.PipelineItemActivity_item_occurredAt_idx"
+      ],
+      "reads": [
+        "n|tbl|public.PipelineItemActivity",
+        "n|sch|public",
+        "n|col|public.PipelineItemActivity.workspaceId",
+        "n|col|public.PipelineItemActivity.itemId"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "PipelineItemActivity",
+        "PipelineItemActivity_contact_idx"
+      ],
+      "writes": [
+        "s|idx|public.PipelineItemActivity_contact_idx",
+        "n|idx|public.PipelineItemActivity_contact_idx",
+        "e|idx|public.PipelineItemActivity_contact_idx",
+        "n|rel|public.PipelineItemActivity_contact_idx"
+      ],
+      "reads": [
+        "n|tbl|public.PipelineItemActivity",
+        "n|sch|public",
+        "n|col|public.PipelineItemActivity.workspaceId",
+        "n|col|public.PipelineItemActivity.contactId"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "PipelineItemActivity",
+        "PipelineItemActivity_pipelineId_idx"
+      ],
+      "writes": [
+        "s|idx|public.PipelineItemActivity_pipelineId_idx",
+        "n|idx|public.PipelineItemActivity_pipelineId_idx",
+        "e|idx|public.PipelineItemActivity_pipelineId_idx",
+        "n|rel|public.PipelineItemActivity_pipelineId_idx"
+      ],
+      "reads": [
+        "n|tbl|public.PipelineItemActivity",
+        "n|sch|public",
+        "n|col|public.PipelineItemActivity.pipelineId"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "PipelineItemActivity",
+        "PipelineItemActivity_actorUserId_idx"
+      ],
+      "writes": [
+        "s|idx|public.PipelineItemActivity_actorUserId_idx",
+        "n|idx|public.PipelineItemActivity_actorUserId_idx",
+        "e|idx|public.PipelineItemActivity_actorUserId_idx",
+        "n|rel|public.PipelineItemActivity_actorUserId_idx"
+      ],
+      "reads": [
+        "n|tbl|public.PipelineItemActivity",
+        "n|sch|public",
+        "n|col|public.PipelineItemActivity.actorUserId"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "PipelineItemAssignee",
+        "PipelineItemAssignee_item_member_key"
+      ],
+      "writes": [
+        "s|idx|public.PipelineItemAssignee_item_member_key",
+        "n|idx|public.PipelineItemAssignee_item_member_key",
+        "e|idx|public.PipelineItemAssignee_item_member_key",
+        "n|rel|public.PipelineItemAssignee_item_member_key"
+      ],
+      "reads": [
+        "n|tbl|public.PipelineItemAssignee",
+        "n|sch|public",
+        "n|col|public.PipelineItemAssignee.itemId",
+        "n|col|public.PipelineItemAssignee.workspaceMemberId"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "PipelineItemAssignee",
+        "PipelineItemAssignee_item_team_key"
+      ],
+      "writes": [
+        "s|idx|public.PipelineItemAssignee_item_team_key",
+        "n|idx|public.PipelineItemAssignee_item_team_key",
+        "e|idx|public.PipelineItemAssignee_item_team_key",
+        "n|rel|public.PipelineItemAssignee_item_team_key"
+      ],
+      "reads": [
+        "n|tbl|public.PipelineItemAssignee",
+        "n|sch|public",
+        "n|col|public.PipelineItemAssignee.itemId",
+        "n|col|public.PipelineItemAssignee.inboxTeamId"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "PipelineItemAssignee",
+        "PipelineItemAssignee_member_idx"
+      ],
+      "writes": [
+        "s|idx|public.PipelineItemAssignee_member_idx",
+        "n|idx|public.PipelineItemAssignee_member_idx",
+        "e|idx|public.PipelineItemAssignee_member_idx",
+        "n|rel|public.PipelineItemAssignee_member_idx"
+      ],
+      "reads": [
+        "n|tbl|public.PipelineItemAssignee",
+        "n|sch|public",
+        "n|col|public.PipelineItemAssignee.workspaceId",
+        "n|col|public.PipelineItemAssignee.workspaceMemberId"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "PipelineItemAssignee",
+        "PipelineItemAssignee_team_idx"
+      ],
+      "writes": [
+        "s|idx|public.PipelineItemAssignee_team_idx",
+        "n|idx|public.PipelineItemAssignee_team_idx",
+        "e|idx|public.PipelineItemAssignee_team_idx",
+        "n|rel|public.PipelineItemAssignee_team_idx"
+      ],
+      "reads": [
+        "n|tbl|public.PipelineItemAssignee",
+        "n|sch|public",
+        "n|col|public.PipelineItemAssignee.workspaceId",
+        "n|col|public.PipelineItemAssignee.inboxTeamId"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "PipelineItemAssignee",
+        "PipelineItemAssignee_workspaceMemberId_idx"
+      ],
+      "writes": [
+        "s|idx|public.PipelineItemAssignee_workspaceMemberId_idx",
+        "n|idx|public.PipelineItemAssignee_workspaceMemberId_idx",
+        "e|idx|public.PipelineItemAssignee_workspaceMemberId_idx",
+        "n|rel|public.PipelineItemAssignee_workspaceMemberId_idx"
+      ],
+      "reads": [
+        "n|tbl|public.PipelineItemAssignee",
+        "n|sch|public",
+        "n|col|public.PipelineItemAssignee.workspaceMemberId"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "PipelineItemAssignee",
+        "PipelineItemAssignee_inboxTeamId_idx"
+      ],
+      "writes": [
+        "s|idx|public.PipelineItemAssignee_inboxTeamId_idx",
+        "n|idx|public.PipelineItemAssignee_inboxTeamId_idx",
+        "e|idx|public.PipelineItemAssignee_inboxTeamId_idx",
+        "n|rel|public.PipelineItemAssignee_inboxTeamId_idx"
+      ],
+      "reads": [
+        "n|tbl|public.PipelineItemAssignee",
+        "n|sch|public",
+        "n|col|public.PipelineItemAssignee.inboxTeamId"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "PipelineItemAttachment",
+        "PipelineItemAttachment_item_file_key"
+      ],
+      "writes": [
+        "s|idx|public.PipelineItemAttachment_item_file_key",
+        "n|idx|public.PipelineItemAttachment_item_file_key",
+        "e|idx|public.PipelineItemAttachment_item_file_key",
+        "n|rel|public.PipelineItemAttachment_item_file_key"
+      ],
+      "reads": [
+        "n|tbl|public.PipelineItemAttachment",
+        "n|sch|public",
+        "n|col|public.PipelineItemAttachment.itemId",
+        "n|col|public.PipelineItemAttachment.mediaLibraryFileId"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "PipelineItemAttachment",
+        "PipelineItemAttachment_mediaLibraryFileId_idx"
+      ],
+      "writes": [
+        "s|idx|public.PipelineItemAttachment_mediaLibraryFileId_idx",
+        "n|idx|public.PipelineItemAttachment_mediaLibraryFileId_idx",
+        "e|idx|public.PipelineItemAttachment_mediaLibraryFileId_idx",
+        "n|rel|public.PipelineItemAttachment_mediaLibraryFileId_idx"
+      ],
+      "reads": [
+        "n|tbl|public.PipelineItemAttachment",
+        "n|sch|public",
+        "n|col|public.PipelineItemAttachment.mediaLibraryFileId"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "PipelineItemAttachment",
+        "PipelineItemAttachment_workspaceId_idx"
+      ],
+      "writes": [
+        "s|idx|public.PipelineItemAttachment_workspaceId_idx",
+        "n|idx|public.PipelineItemAttachment_workspaceId_idx",
+        "e|idx|public.PipelineItemAttachment_workspaceId_idx",
+        "n|rel|public.PipelineItemAttachment_workspaceId_idx"
+      ],
+      "reads": [
+        "n|tbl|public.PipelineItemAttachment",
+        "n|sch|public",
+        "n|col|public.PipelineItemAttachment.workspaceId"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "PipelineItemComment",
+        "PipelineItemComment_item_createdAt_idx"
+      ],
+      "writes": [
+        "s|idx|public.PipelineItemComment_item_createdAt_idx",
+        "n|idx|public.PipelineItemComment_item_createdAt_idx",
+        "e|idx|public.PipelineItemComment_item_createdAt_idx",
+        "n|rel|public.PipelineItemComment_item_createdAt_idx"
+      ],
+      "reads": [
+        "n|tbl|public.PipelineItemComment",
+        "n|sch|public",
+        "n|col|public.PipelineItemComment.itemId"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "PipelineItemComment",
+        "PipelineItemComment_createdById_idx"
+      ],
+      "writes": [
+        "s|idx|public.PipelineItemComment_createdById_idx",
+        "n|idx|public.PipelineItemComment_createdById_idx",
+        "e|idx|public.PipelineItemComment_createdById_idx",
+        "n|rel|public.PipelineItemComment_createdById_idx"
+      ],
+      "reads": [
+        "n|tbl|public.PipelineItemComment",
+        "n|sch|public",
+        "n|col|public.PipelineItemComment.createdById"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "PipelineItemComment",
+        "PipelineItemComment_item_idempotencyKey_key"
+      ],
+      "writes": [
+        "s|idx|public.PipelineItemComment_item_idempotencyKey_key",
+        "n|idx|public.PipelineItemComment_item_idempotencyKey_key",
+        "e|idx|public.PipelineItemComment_item_idempotencyKey_key",
+        "n|rel|public.PipelineItemComment_item_idempotencyKey_key"
+      ],
+      "reads": [
+        "n|tbl|public.PipelineItemComment",
+        "n|sch|public",
+        "n|col|public.PipelineItemComment.workspaceId",
+        "n|col|public.PipelineItemComment.itemId",
+        "n|col|public.PipelineItemComment.idempotencyKey"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "PipelineItem",
+        "PipelineItem_workspaceId_number_key"
+      ],
+      "writes": [
+        "s|idx|public.PipelineItem_workspaceId_number_key",
+        "n|idx|public.PipelineItem_workspaceId_number_key",
+        "e|idx|public.PipelineItem_workspaceId_number_key",
+        "n|rel|public.PipelineItem_workspaceId_number_key"
+      ],
+      "reads": [
+        "n|tbl|public.PipelineItem",
+        "n|sch|public",
+        "n|col|public.PipelineItem.workspaceId",
+        "n|col|public.PipelineItem.number"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "PipelineItem",
+        "PipelineItem_pipeline_idempotencyKey_key"
+      ],
+      "writes": [
+        "s|idx|public.PipelineItem_pipeline_idempotencyKey_key",
+        "n|idx|public.PipelineItem_pipeline_idempotencyKey_key",
+        "e|idx|public.PipelineItem_pipeline_idempotencyKey_key",
+        "n|rel|public.PipelineItem_pipeline_idempotencyKey_key"
+      ],
+      "reads": [
+        "n|tbl|public.PipelineItem",
+        "n|sch|public",
+        "n|col|public.PipelineItem.workspaceId",
+        "n|col|public.PipelineItem.pipelineId",
+        "n|col|public.PipelineItem.idempotencyKey"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "PipelineItem",
+        "PipelineItem_contact_status_idx"
+      ],
+      "writes": [
+        "s|idx|public.PipelineItem_contact_status_idx",
+        "n|idx|public.PipelineItem_contact_status_idx",
+        "e|idx|public.PipelineItem_contact_status_idx",
+        "n|rel|public.PipelineItem_contact_status_idx"
+      ],
+      "reads": [
+        "n|tbl|public.PipelineItem",
+        "n|sch|public",
+        "n|col|public.PipelineItem.workspaceId",
+        "n|col|public.PipelineItem.pipelineId",
+        "n|col|public.PipelineItem.contactId",
+        "n|col|public.PipelineItem.status"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "PipelineItem",
+        "PipelineItem_stage_createdAt_idx"
+      ],
+      "writes": [
+        "s|idx|public.PipelineItem_stage_createdAt_idx",
+        "n|idx|public.PipelineItem_stage_createdAt_idx",
+        "e|idx|public.PipelineItem_stage_createdAt_idx",
+        "n|rel|public.PipelineItem_stage_createdAt_idx"
+      ],
+      "reads": [
+        "n|tbl|public.PipelineItem",
+        "n|sch|public",
+        "n|col|public.PipelineItem.pipelineId",
+        "n|col|public.PipelineItem.stageId"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "PipelineItem",
+        "PipelineItem_pipeline_createdAt_idx"
+      ],
+      "writes": [
+        "s|idx|public.PipelineItem_pipeline_createdAt_idx",
+        "n|idx|public.PipelineItem_pipeline_createdAt_idx",
+        "e|idx|public.PipelineItem_pipeline_createdAt_idx",
+        "n|rel|public.PipelineItem_pipeline_createdAt_idx"
+      ],
+      "reads": [
+        "n|tbl|public.PipelineItem",
+        "n|sch|public",
+        "n|col|public.PipelineItem.pipelineId"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "PipelineItem",
+        "PipelineItem_pipeline_id_idx"
+      ],
+      "writes": [
+        "s|idx|public.PipelineItem_pipeline_id_idx",
+        "n|idx|public.PipelineItem_pipeline_id_idx",
+        "e|idx|public.PipelineItem_pipeline_id_idx",
+        "n|rel|public.PipelineItem_pipeline_id_idx"
+      ],
+      "reads": [
+        "n|tbl|public.PipelineItem",
+        "n|sch|public",
+        "n|col|public.PipelineItem.pipelineId",
+        "n|col|public.PipelineItem.id"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "PipelineItem",
+        "PipelineItem_contactId_idx"
+      ],
+      "writes": [
+        "s|idx|public.PipelineItem_contactId_idx",
+        "n|idx|public.PipelineItem_contactId_idx",
+        "e|idx|public.PipelineItem_contactId_idx",
+        "n|rel|public.PipelineItem_contactId_idx"
+      ],
+      "reads": [
+        "n|tbl|public.PipelineItem",
+        "n|sch|public",
+        "n|col|public.PipelineItem.contactId"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "PipelineItem",
+        "PipelineItem_stageId_idx"
+      ],
+      "writes": [
+        "s|idx|public.PipelineItem_stageId_idx",
+        "n|idx|public.PipelineItem_stageId_idx",
+        "e|idx|public.PipelineItem_stageId_idx",
+        "n|rel|public.PipelineItem_stageId_idx"
+      ],
+      "reads": [
+        "n|tbl|public.PipelineItem",
+        "n|sch|public",
+        "n|col|public.PipelineItem.stageId"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "PipelineItem",
+        "PipelineItem_createdById_idx"
+      ],
+      "writes": [
+        "s|idx|public.PipelineItem_createdById_idx",
+        "n|idx|public.PipelineItem_createdById_idx",
+        "e|idx|public.PipelineItem_createdById_idx",
+        "n|rel|public.PipelineItem_createdById_idx"
+      ],
+      "reads": [
+        "n|tbl|public.PipelineItem",
+        "n|sch|public",
+        "n|col|public.PipelineItem.createdById"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "PipelineItem",
+        "PipelineItem_closedById_idx"
+      ],
+      "writes": [
+        "s|idx|public.PipelineItem_closedById_idx",
+        "n|idx|public.PipelineItem_closedById_idx",
+        "e|idx|public.PipelineItem_closedById_idx",
+        "n|rel|public.PipelineItem_closedById_idx"
+      ],
+      "reads": [
+        "n|tbl|public.PipelineItem",
+        "n|sch|public",
+        "n|col|public.PipelineItem.closedById"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "PipelineMember",
+        "PipelineMember_pipeline_member_key"
+      ],
+      "writes": [
+        "s|idx|public.PipelineMember_pipeline_member_key",
+        "n|idx|public.PipelineMember_pipeline_member_key",
+        "e|idx|public.PipelineMember_pipeline_member_key",
+        "n|rel|public.PipelineMember_pipeline_member_key"
+      ],
+      "reads": [
+        "n|tbl|public.PipelineMember",
+        "n|sch|public",
+        "n|col|public.PipelineMember.pipelineId",
+        "n|col|public.PipelineMember.workspaceMemberId"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "PipelineMember",
+        "PipelineMember_member_idx"
+      ],
+      "writes": [
+        "s|idx|public.PipelineMember_member_idx",
+        "n|idx|public.PipelineMember_member_idx",
+        "e|idx|public.PipelineMember_member_idx",
+        "n|rel|public.PipelineMember_member_idx"
+      ],
+      "reads": [
+        "n|tbl|public.PipelineMember",
+        "n|sch|public",
+        "n|col|public.PipelineMember.workspaceId",
+        "n|col|public.PipelineMember.workspaceMemberId"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "PipelineMember",
+        "PipelineMember_workspaceMemberId_idx"
+      ],
+      "writes": [
+        "s|idx|public.PipelineMember_workspaceMemberId_idx",
+        "n|idx|public.PipelineMember_workspaceMemberId_idx",
+        "e|idx|public.PipelineMember_workspaceMemberId_idx",
+        "n|rel|public.PipelineMember_workspaceMemberId_idx"
+      ],
+      "reads": [
+        "n|tbl|public.PipelineMember",
+        "n|sch|public",
+        "n|col|public.PipelineMember.workspaceMemberId"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "Pipeline",
+        "Pipeline_workspaceId_referenceName_key"
+      ],
+      "writes": [
+        "s|idx|public.Pipeline_workspaceId_referenceName_key",
+        "n|idx|public.Pipeline_workspaceId_referenceName_key",
+        "e|idx|public.Pipeline_workspaceId_referenceName_key",
+        "n|rel|public.Pipeline_workspaceId_referenceName_key"
+      ],
+      "reads": [
+        "n|tbl|public.Pipeline",
+        "n|sch|public",
+        "n|col|public.Pipeline.workspaceId",
+        "n|col|public.Pipeline.referenceName"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "Pipeline",
+        "Pipeline_workspaceId_name_key"
+      ],
+      "writes": [
+        "s|idx|public.Pipeline_workspaceId_name_key",
+        "n|idx|public.Pipeline_workspaceId_name_key",
+        "e|idx|public.Pipeline_workspaceId_name_key",
+        "n|rel|public.Pipeline_workspaceId_name_key"
+      ],
+      "reads": [
+        "n|tbl|public.Pipeline",
+        "n|sch|public",
+        "n|col|public.Pipeline.workspaceId",
+        "n|col|public.Pipeline.name"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "Pipeline",
+        "Pipeline_createdById_idx"
+      ],
+      "writes": [
+        "s|idx|public.Pipeline_createdById_idx",
+        "n|idx|public.Pipeline_createdById_idx",
+        "e|idx|public.Pipeline_createdById_idx",
+        "n|rel|public.Pipeline_createdById_idx"
+      ],
+      "reads": [
+        "n|tbl|public.Pipeline",
+        "n|sch|public",
+        "n|col|public.Pipeline.createdById"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "PipelineStage",
+        "PipelineStage_pipelineId_position_idx"
+      ],
+      "writes": [
+        "s|idx|public.PipelineStage_pipelineId_position_idx",
+        "n|idx|public.PipelineStage_pipelineId_position_idx",
+        "e|idx|public.PipelineStage_pipelineId_position_idx",
+        "n|rel|public.PipelineStage_pipelineId_position_idx"
+      ],
+      "reads": [
+        "n|tbl|public.PipelineStage",
+        "n|sch|public",
+        "n|col|public.PipelineStage.pipelineId",
+        "n|col|public.PipelineStage.position"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "PipelineStage",
+        "PipelineStage_workspaceId_idx"
+      ],
+      "writes": [
+        "s|idx|public.PipelineStage_workspaceId_idx",
+        "n|idx|public.PipelineStage_workspaceId_idx",
+        "e|idx|public.PipelineStage_workspaceId_idx",
+        "n|rel|public.PipelineStage_workspaceId_idx"
+      ],
+      "reads": [
+        "n|tbl|public.PipelineStage",
+        "n|sch|public",
+        "n|col|public.PipelineStage.workspaceId"
+      ]
+    },
+    {
+      "statementType": "create_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "PipelineField"
+      ],
+      "writes": [
+        "s|fk|public.PipelineField.PipelineField_workspaceId_Workspace_id_fkey",
+        "n|fk|public.PipelineField.PipelineField_workspaceId_Workspace_id_fkey",
+        "e|fk|public.PipelineField.PipelineField_workspaceId_Workspace_id_fkey",
+        "n|con|public.PipelineField.PipelineField_workspaceId_Workspace_id_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.PipelineField",
+        "n|sch|public",
+        "n|tbl|public.Workspace",
+        "n|sch|public",
+        "n|col|public.PipelineField.workspaceId",
+        "n|col|public.Workspace.id",
+        "e|uniqueness|public.Workspace.id"
+      ]
+    },
+    {
+      "statementType": "create_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "PipelineField"
+      ],
+      "writes": [
+        "s|fk|public.PipelineField.PipelineField_pipelineId_Pipeline_id_fkey",
+        "n|fk|public.PipelineField.PipelineField_pipelineId_Pipeline_id_fkey",
+        "e|fk|public.PipelineField.PipelineField_pipelineId_Pipeline_id_fkey",
+        "n|con|public.PipelineField.PipelineField_pipelineId_Pipeline_id_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.PipelineField",
+        "n|sch|public",
+        "n|tbl|public.Pipeline",
+        "n|sch|public",
+        "n|col|public.PipelineField.pipelineId",
+        "n|col|public.Pipeline.id",
+        "e|uniqueness|public.Pipeline.id"
+      ]
+    },
+    {
+      "statementType": "create_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "PipelineItemActivity"
+      ],
+      "writes": [
+        "s|fk|public.PipelineItemActivity.PipelineItemActivity_workspaceId_Workspace_id_fkey",
+        "n|fk|public.PipelineItemActivity.PipelineItemActivity_workspaceId_Workspace_id_fkey",
+        "e|fk|public.PipelineItemActivity.PipelineItemActivity_workspaceId_Workspace_id_fkey",
+        "n|con|public.PipelineItemActivity.PipelineItemActivity_workspaceId_Workspace_id_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.PipelineItemActivity",
+        "n|sch|public",
+        "n|tbl|public.Workspace",
+        "n|sch|public",
+        "n|col|public.PipelineItemActivity.workspaceId",
+        "n|col|public.Workspace.id",
+        "e|uniqueness|public.Workspace.id"
+      ]
+    },
+    {
+      "statementType": "create_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "PipelineItemActivity"
+      ],
+      "writes": [
+        "s|fk|public.PipelineItemActivity.PipelineItemActivity_pipelineId_Pipeline_id_fkey",
+        "n|fk|public.PipelineItemActivity.PipelineItemActivity_pipelineId_Pipeline_id_fkey",
+        "e|fk|public.PipelineItemActivity.PipelineItemActivity_pipelineId_Pipeline_id_fkey",
+        "n|con|public.PipelineItemActivity.PipelineItemActivity_pipelineId_Pipeline_id_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.PipelineItemActivity",
+        "n|sch|public",
+        "n|tbl|public.Pipeline",
+        "n|sch|public",
+        "n|col|public.PipelineItemActivity.pipelineId",
+        "n|col|public.Pipeline.id",
+        "e|uniqueness|public.Pipeline.id"
+      ]
+    },
+    {
+      "statementType": "create_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "PipelineItemActivity"
+      ],
+      "writes": [
+        "s|fk|public.PipelineItemActivity.PipelineItemActivity_actorUserId_User_id_fkey",
+        "n|fk|public.PipelineItemActivity.PipelineItemActivity_actorUserId_User_id_fkey",
+        "e|fk|public.PipelineItemActivity.PipelineItemActivity_actorUserId_User_id_fkey",
+        "n|con|public.PipelineItemActivity.PipelineItemActivity_actorUserId_User_id_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.PipelineItemActivity",
+        "n|sch|public",
+        "n|tbl|public.User",
+        "n|sch|public",
+        "n|col|public.PipelineItemActivity.actorUserId",
+        "n|col|public.User.id",
+        "e|uniqueness|public.User.id"
+      ]
+    },
+    {
+      "statementType": "create_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "PipelineItemAssignee"
+      ],
+      "writes": [
+        "s|fk|public.PipelineItemAssignee.PipelineItemAssignee_workspaceId_Workspace_id_fkey",
+        "n|fk|public.PipelineItemAssignee.PipelineItemAssignee_workspaceId_Workspace_id_fkey",
+        "e|fk|public.PipelineItemAssignee.PipelineItemAssignee_workspaceId_Workspace_id_fkey",
+        "n|con|public.PipelineItemAssignee.PipelineItemAssignee_workspaceId_Workspace_id_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.PipelineItemAssignee",
+        "n|sch|public",
+        "n|tbl|public.Workspace",
+        "n|sch|public",
+        "n|col|public.PipelineItemAssignee.workspaceId",
+        "n|col|public.Workspace.id",
+        "e|uniqueness|public.Workspace.id"
+      ]
+    },
+    {
+      "statementType": "create_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "PipelineItemAssignee"
+      ],
+      "writes": [
+        "s|fk|public.PipelineItemAssignee.PipelineItemAssignee_itemId_PipelineItem_id_fkey",
+        "n|fk|public.PipelineItemAssignee.PipelineItemAssignee_itemId_PipelineItem_id_fkey",
+        "e|fk|public.PipelineItemAssignee.PipelineItemAssignee_itemId_PipelineItem_id_fkey",
+        "n|con|public.PipelineItemAssignee.PipelineItemAssignee_itemId_PipelineItem_id_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.PipelineItemAssignee",
+        "n|sch|public",
+        "n|tbl|public.PipelineItem",
+        "n|sch|public",
+        "n|col|public.PipelineItemAssignee.itemId",
+        "n|col|public.PipelineItem.id",
+        "e|uniqueness|public.PipelineItem.id"
+      ]
+    },
+    {
+      "statementType": "create_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "PipelineItemAssignee"
+      ],
+      "writes": [
+        "s|fk|public.PipelineItemAssignee.PipelineItemAssignee_workspaceMemberId_WorkspaceMember_id_fkey",
+        "n|fk|public.PipelineItemAssignee.PipelineItemAssignee_workspaceMemberId_WorkspaceMember_id_fkey",
+        "e|fk|public.PipelineItemAssignee.PipelineItemAssignee_workspaceMemberId_WorkspaceMember_id_fkey",
+        "n|con|public.PipelineItemAssignee.PipelineItemAssignee_workspaceMemberId_WorkspaceMember_id_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.PipelineItemAssignee",
+        "n|sch|public",
+        "n|tbl|public.WorkspaceMember",
+        "n|sch|public",
+        "n|col|public.PipelineItemAssignee.workspaceMemberId",
+        "n|col|public.WorkspaceMember.id",
+        "e|uniqueness|public.WorkspaceMember.id"
+      ]
+    },
+    {
+      "statementType": "create_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "PipelineItemAssignee"
+      ],
+      "writes": [
+        "s|fk|public.PipelineItemAssignee.PipelineItemAssignee_inboxTeamId_InboxTeam_id_fkey",
+        "n|fk|public.PipelineItemAssignee.PipelineItemAssignee_inboxTeamId_InboxTeam_id_fkey",
+        "e|fk|public.PipelineItemAssignee.PipelineItemAssignee_inboxTeamId_InboxTeam_id_fkey",
+        "n|con|public.PipelineItemAssignee.PipelineItemAssignee_inboxTeamId_InboxTeam_id_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.PipelineItemAssignee",
+        "n|sch|public",
+        "n|tbl|public.InboxTeam",
+        "n|sch|public",
+        "n|col|public.PipelineItemAssignee.inboxTeamId",
+        "n|col|public.InboxTeam.id",
+        "e|uniqueness|public.InboxTeam.id"
+      ]
+    },
+    {
+      "statementType": "create_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "PipelineItemAttachment"
+      ],
+      "writes": [
+        "s|fk|public.PipelineItemAttachment.PipelineItemAttachment_workspaceId_Workspace_id_fkey",
+        "n|fk|public.PipelineItemAttachment.PipelineItemAttachment_workspaceId_Workspace_id_fkey",
+        "e|fk|public.PipelineItemAttachment.PipelineItemAttachment_workspaceId_Workspace_id_fkey",
+        "n|con|public.PipelineItemAttachment.PipelineItemAttachment_workspaceId_Workspace_id_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.PipelineItemAttachment",
+        "n|sch|public",
+        "n|tbl|public.Workspace",
+        "n|sch|public",
+        "n|col|public.PipelineItemAttachment.workspaceId",
+        "n|col|public.Workspace.id",
+        "e|uniqueness|public.Workspace.id"
+      ]
+    },
+    {
+      "statementType": "create_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "PipelineItemAttachment"
+      ],
+      "writes": [
+        "s|fk|public.PipelineItemAttachment.PipelineItemAttachment_itemId_PipelineItem_id_fkey",
+        "n|fk|public.PipelineItemAttachment.PipelineItemAttachment_itemId_PipelineItem_id_fkey",
+        "e|fk|public.PipelineItemAttachment.PipelineItemAttachment_itemId_PipelineItem_id_fkey",
+        "n|con|public.PipelineItemAttachment.PipelineItemAttachment_itemId_PipelineItem_id_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.PipelineItemAttachment",
+        "n|sch|public",
+        "n|tbl|public.PipelineItem",
+        "n|sch|public",
+        "n|col|public.PipelineItemAttachment.itemId",
+        "n|col|public.PipelineItem.id",
+        "e|uniqueness|public.PipelineItem.id"
+      ]
+    },
+    {
+      "statementType": "create_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "PipelineItemAttachment"
+      ],
+      "writes": [
+        "s|fk|public.PipelineItemAttachment.PipelineItemAttachment_BBiTPytjYFfD_fkey",
+        "n|fk|public.PipelineItemAttachment.PipelineItemAttachment_BBiTPytjYFfD_fkey",
+        "e|fk|public.PipelineItemAttachment.PipelineItemAttachment_BBiTPytjYFfD_fkey",
+        "n|con|public.PipelineItemAttachment.PipelineItemAttachment_BBiTPytjYFfD_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.PipelineItemAttachment",
+        "n|sch|public",
+        "n|tbl|public.MediaLibraryFile",
+        "n|sch|public",
+        "n|col|public.PipelineItemAttachment.mediaLibraryFileId",
+        "n|col|public.MediaLibraryFile.id",
+        "e|uniqueness|public.MediaLibraryFile.id"
+      ]
+    },
+    {
+      "statementType": "create_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "PipelineItemComment"
+      ],
+      "writes": [
+        "s|fk|public.PipelineItemComment.PipelineItemComment_workspaceId_Workspace_id_fkey",
+        "n|fk|public.PipelineItemComment.PipelineItemComment_workspaceId_Workspace_id_fkey",
+        "e|fk|public.PipelineItemComment.PipelineItemComment_workspaceId_Workspace_id_fkey",
+        "n|con|public.PipelineItemComment.PipelineItemComment_workspaceId_Workspace_id_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.PipelineItemComment",
+        "n|sch|public",
+        "n|tbl|public.Workspace",
+        "n|sch|public",
+        "n|col|public.PipelineItemComment.workspaceId",
+        "n|col|public.Workspace.id",
+        "e|uniqueness|public.Workspace.id"
+      ]
+    },
+    {
+      "statementType": "create_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "PipelineItemComment"
+      ],
+      "writes": [
+        "s|fk|public.PipelineItemComment.PipelineItemComment_itemId_PipelineItem_id_fkey",
+        "n|fk|public.PipelineItemComment.PipelineItemComment_itemId_PipelineItem_id_fkey",
+        "e|fk|public.PipelineItemComment.PipelineItemComment_itemId_PipelineItem_id_fkey",
+        "n|con|public.PipelineItemComment.PipelineItemComment_itemId_PipelineItem_id_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.PipelineItemComment",
+        "n|sch|public",
+        "n|tbl|public.PipelineItem",
+        "n|sch|public",
+        "n|col|public.PipelineItemComment.itemId",
+        "n|col|public.PipelineItem.id",
+        "e|uniqueness|public.PipelineItem.id"
+      ]
+    },
+    {
+      "statementType": "create_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "PipelineItemComment"
+      ],
+      "writes": [
+        "s|fk|public.PipelineItemComment.PipelineItemComment_createdById_User_id_fkey",
+        "n|fk|public.PipelineItemComment.PipelineItemComment_createdById_User_id_fkey",
+        "e|fk|public.PipelineItemComment.PipelineItemComment_createdById_User_id_fkey",
+        "n|con|public.PipelineItemComment.PipelineItemComment_createdById_User_id_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.PipelineItemComment",
+        "n|sch|public",
+        "n|tbl|public.User",
+        "n|sch|public",
+        "n|col|public.PipelineItemComment.createdById",
+        "n|col|public.User.id",
+        "e|uniqueness|public.User.id"
+      ]
+    },
+    {
+      "statementType": "create_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "PipelineItemCounter"
+      ],
+      "writes": [
+        "s|fk|public.PipelineItemCounter.PipelineItemCounter_workspaceId_Workspace_id_fkey",
+        "n|fk|public.PipelineItemCounter.PipelineItemCounter_workspaceId_Workspace_id_fkey",
+        "e|fk|public.PipelineItemCounter.PipelineItemCounter_workspaceId_Workspace_id_fkey",
+        "n|con|public.PipelineItemCounter.PipelineItemCounter_workspaceId_Workspace_id_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.PipelineItemCounter",
+        "n|sch|public",
+        "n|tbl|public.Workspace",
+        "n|sch|public",
+        "n|col|public.PipelineItemCounter.workspaceId",
+        "n|col|public.Workspace.id",
+        "e|uniqueness|public.Workspace.id"
+      ]
+    },
+    {
+      "statementType": "create_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "PipelineItem"
+      ],
+      "writes": [
+        "s|fk|public.PipelineItem.PipelineItem_workspaceId_Workspace_id_fkey",
+        "n|fk|public.PipelineItem.PipelineItem_workspaceId_Workspace_id_fkey",
+        "e|fk|public.PipelineItem.PipelineItem_workspaceId_Workspace_id_fkey",
+        "n|con|public.PipelineItem.PipelineItem_workspaceId_Workspace_id_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.PipelineItem",
+        "n|sch|public",
+        "n|tbl|public.Workspace",
+        "n|sch|public",
+        "n|col|public.PipelineItem.workspaceId",
+        "n|col|public.Workspace.id",
+        "e|uniqueness|public.Workspace.id"
+      ]
+    },
+    {
+      "statementType": "create_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "PipelineItem"
+      ],
+      "writes": [
+        "s|fk|public.PipelineItem.PipelineItem_pipelineId_Pipeline_id_fkey",
+        "n|fk|public.PipelineItem.PipelineItem_pipelineId_Pipeline_id_fkey",
+        "e|fk|public.PipelineItem.PipelineItem_pipelineId_Pipeline_id_fkey",
+        "n|con|public.PipelineItem.PipelineItem_pipelineId_Pipeline_id_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.PipelineItem",
+        "n|sch|public",
+        "n|tbl|public.Pipeline",
+        "n|sch|public",
+        "n|col|public.PipelineItem.pipelineId",
+        "n|col|public.Pipeline.id",
+        "e|uniqueness|public.Pipeline.id"
+      ]
+    },
+    {
+      "statementType": "create_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "PipelineItem"
+      ],
+      "writes": [
+        "s|fk|public.PipelineItem.PipelineItem_stageId_PipelineStage_id_fkey",
+        "n|fk|public.PipelineItem.PipelineItem_stageId_PipelineStage_id_fkey",
+        "e|fk|public.PipelineItem.PipelineItem_stageId_PipelineStage_id_fkey",
+        "n|con|public.PipelineItem.PipelineItem_stageId_PipelineStage_id_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.PipelineItem",
+        "n|sch|public",
+        "n|tbl|public.PipelineStage",
+        "n|sch|public",
+        "n|col|public.PipelineItem.stageId",
+        "n|col|public.PipelineStage.id",
+        "e|uniqueness|public.PipelineStage.id"
+      ]
+    },
+    {
+      "statementType": "create_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "PipelineItem"
+      ],
+      "writes": [
+        "s|fk|public.PipelineItem.PipelineItem_contactId_Contact_id_fkey",
+        "n|fk|public.PipelineItem.PipelineItem_contactId_Contact_id_fkey",
+        "e|fk|public.PipelineItem.PipelineItem_contactId_Contact_id_fkey",
+        "n|con|public.PipelineItem.PipelineItem_contactId_Contact_id_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.PipelineItem",
+        "n|sch|public",
+        "n|tbl|public.Contact",
+        "n|sch|public",
+        "n|col|public.PipelineItem.contactId",
+        "n|col|public.Contact.id",
+        "e|uniqueness|public.Contact.id"
+      ]
+    },
+    {
+      "statementType": "create_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "PipelineItem"
+      ],
+      "writes": [
+        "s|fk|public.PipelineItem.PipelineItem_createdById_User_id_fkey",
+        "n|fk|public.PipelineItem.PipelineItem_createdById_User_id_fkey",
+        "e|fk|public.PipelineItem.PipelineItem_createdById_User_id_fkey",
+        "n|con|public.PipelineItem.PipelineItem_createdById_User_id_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.PipelineItem",
+        "n|sch|public",
+        "n|tbl|public.User",
+        "n|sch|public",
+        "n|col|public.PipelineItem.createdById",
+        "n|col|public.User.id",
+        "e|uniqueness|public.User.id"
+      ]
+    },
+    {
+      "statementType": "create_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "PipelineItem"
+      ],
+      "writes": [
+        "s|fk|public.PipelineItem.PipelineItem_closedById_User_id_fkey",
+        "n|fk|public.PipelineItem.PipelineItem_closedById_User_id_fkey",
+        "e|fk|public.PipelineItem.PipelineItem_closedById_User_id_fkey",
+        "n|con|public.PipelineItem.PipelineItem_closedById_User_id_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.PipelineItem",
+        "n|sch|public",
+        "n|tbl|public.User",
+        "n|sch|public",
+        "n|col|public.PipelineItem.closedById",
+        "n|col|public.User.id",
+        "e|uniqueness|public.User.id"
+      ]
+    },
+    {
+      "statementType": "create_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "PipelineMember"
+      ],
+      "writes": [
+        "s|fk|public.PipelineMember.PipelineMember_workspaceId_Workspace_id_fkey",
+        "n|fk|public.PipelineMember.PipelineMember_workspaceId_Workspace_id_fkey",
+        "e|fk|public.PipelineMember.PipelineMember_workspaceId_Workspace_id_fkey",
+        "n|con|public.PipelineMember.PipelineMember_workspaceId_Workspace_id_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.PipelineMember",
+        "n|sch|public",
+        "n|tbl|public.Workspace",
+        "n|sch|public",
+        "n|col|public.PipelineMember.workspaceId",
+        "n|col|public.Workspace.id",
+        "e|uniqueness|public.Workspace.id"
+      ]
+    },
+    {
+      "statementType": "create_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "PipelineMember"
+      ],
+      "writes": [
+        "s|fk|public.PipelineMember.PipelineMember_pipelineId_Pipeline_id_fkey",
+        "n|fk|public.PipelineMember.PipelineMember_pipelineId_Pipeline_id_fkey",
+        "e|fk|public.PipelineMember.PipelineMember_pipelineId_Pipeline_id_fkey",
+        "n|con|public.PipelineMember.PipelineMember_pipelineId_Pipeline_id_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.PipelineMember",
+        "n|sch|public",
+        "n|tbl|public.Pipeline",
+        "n|sch|public",
+        "n|col|public.PipelineMember.pipelineId",
+        "n|col|public.Pipeline.id",
+        "e|uniqueness|public.Pipeline.id"
+      ]
+    },
+    {
+      "statementType": "create_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "PipelineMember"
+      ],
+      "writes": [
+        "s|fk|public.PipelineMember.PipelineMember_workspaceMemberId_WorkspaceMember_id_fkey",
+        "n|fk|public.PipelineMember.PipelineMember_workspaceMemberId_WorkspaceMember_id_fkey",
+        "e|fk|public.PipelineMember.PipelineMember_workspaceMemberId_WorkspaceMember_id_fkey",
+        "n|con|public.PipelineMember.PipelineMember_workspaceMemberId_WorkspaceMember_id_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.PipelineMember",
+        "n|sch|public",
+        "n|tbl|public.WorkspaceMember",
+        "n|sch|public",
+        "n|col|public.PipelineMember.workspaceMemberId",
+        "n|col|public.WorkspaceMember.id",
+        "e|uniqueness|public.WorkspaceMember.id"
+      ]
+    },
+    {
+      "statementType": "create_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "Pipeline"
+      ],
+      "writes": [
+        "s|fk|public.Pipeline.Pipeline_workspaceId_Workspace_id_fkey",
+        "n|fk|public.Pipeline.Pipeline_workspaceId_Workspace_id_fkey",
+        "e|fk|public.Pipeline.Pipeline_workspaceId_Workspace_id_fkey",
+        "n|con|public.Pipeline.Pipeline_workspaceId_Workspace_id_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.Pipeline",
+        "n|sch|public",
+        "n|tbl|public.Workspace",
+        "n|sch|public",
+        "n|col|public.Pipeline.workspaceId",
+        "n|col|public.Workspace.id",
+        "e|uniqueness|public.Workspace.id"
+      ]
+    },
+    {
+      "statementType": "create_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "Pipeline"
+      ],
+      "writes": [
+        "s|fk|public.Pipeline.Pipeline_createdById_User_id_fkey",
+        "n|fk|public.Pipeline.Pipeline_createdById_User_id_fkey",
+        "e|fk|public.Pipeline.Pipeline_createdById_User_id_fkey",
+        "n|con|public.Pipeline.Pipeline_createdById_User_id_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.Pipeline",
+        "n|sch|public",
+        "n|tbl|public.User",
+        "n|sch|public",
+        "n|col|public.Pipeline.createdById",
+        "n|col|public.User.id",
+        "e|uniqueness|public.User.id"
+      ]
+    },
+    {
+      "statementType": "create_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "PipelineStage"
+      ],
+      "writes": [
+        "s|fk|public.PipelineStage.PipelineStage_workspaceId_Workspace_id_fkey",
+        "n|fk|public.PipelineStage.PipelineStage_workspaceId_Workspace_id_fkey",
+        "e|fk|public.PipelineStage.PipelineStage_workspaceId_Workspace_id_fkey",
+        "n|con|public.PipelineStage.PipelineStage_workspaceId_Workspace_id_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.PipelineStage",
+        "n|sch|public",
+        "n|tbl|public.Workspace",
+        "n|sch|public",
+        "n|col|public.PipelineStage.workspaceId",
+        "n|col|public.Workspace.id",
+        "e|uniqueness|public.Workspace.id"
+      ]
+    },
+    {
+      "statementType": "create_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "PipelineStage"
+      ],
+      "writes": [
+        "s|fk|public.PipelineStage.PipelineStage_pipelineId_Pipeline_id_fkey",
+        "n|fk|public.PipelineStage.PipelineStage_pipelineId_Pipeline_id_fkey",
+        "e|fk|public.PipelineStage.PipelineStage_pipelineId_Pipeline_id_fkey",
+        "n|con|public.PipelineStage.PipelineStage_pipelineId_Pipeline_id_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.PipelineStage",
+        "n|sch|public",
+        "n|tbl|public.Pipeline",
+        "n|sch|public",
+        "n|col|public.PipelineStage.pipelineId",
+        "n|col|public.Pipeline.id",
+        "e|uniqueness|public.Pipeline.id"
+      ]
+    }
+  ],
+  "deltas": [
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "name": "PipelineField",
+        "isRlsEnabled": false,
+        "entityType": "tables"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "name": "PipelineItemActivity",
+        "isRlsEnabled": false,
+        "entityType": "tables"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "name": "PipelineItemAssignee",
+        "isRlsEnabled": false,
+        "entityType": "tables"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "name": "PipelineItemAttachment",
+        "isRlsEnabled": false,
+        "entityType": "tables"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "name": "PipelineItemComment",
+        "isRlsEnabled": false,
+        "entityType": "tables"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "name": "PipelineItemCounter",
+        "isRlsEnabled": false,
+        "entityType": "tables"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "name": "PipelineItem",
+        "isRlsEnabled": false,
+        "entityType": "tables"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "name": "PipelineMember",
+        "isRlsEnabled": false,
+        "entityType": "tables"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "name": "Pipeline",
+        "isRlsEnabled": false,
+        "entityType": "tables"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "name": "PipelineStage",
+        "isRlsEnabled": false,
+        "entityType": "tables"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "name": "pipelineActivityKind",
+        "values": [
+          "created",
+          "stageChanged",
+          "statusChanged",
+          "valueChanged",
+          "priorityChanged",
+          "dueDateChanged",
+          "titleChanged",
+          "descriptionChanged",
+          "fieldValuesChanged",
+          "assigneesChanged",
+          "attachmentAdded",
+          "attachmentRemoved",
+          "commentAdded",
+          "commentDeleted",
+          "transferred",
+          "deleted"
+        ],
+        "entityType": "enums"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "name": "pipelineActorKind",
+        "values": [
+          "user",
+          "workspaceToken",
+          "flow",
+          "trigger",
+          "system"
+        ],
+        "entityType": "enums"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "name": "pipelineItemPriority",
+        "values": [
+          "low",
+          "medium",
+          "high"
+        ],
+        "entityType": "enums"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "name": "pipelineItemStatus",
+        "values": [
+          "open",
+          "won",
+          "lost"
+        ],
+        "entityType": "enums"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "name": "pipelineType",
+        "values": [
+          "opportunity",
+          "ticket",
+          "custom"
+        ],
+        "entityType": "enums"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PipelineField",
+        "name": "id",
+        "type": "bigint",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PipelineField",
+        "name": "createdAt",
+        "type": "timestamp(6) with time zone",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "now()",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PipelineField",
+        "name": "updatedAt",
+        "type": "timestamp(6) with time zone",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "now()",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PipelineField",
+        "name": "workspaceId",
+        "type": "bigint",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PipelineField",
+        "name": "pipelineId",
+        "type": "bigint",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PipelineField",
+        "name": "name",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PipelineField",
+        "name": "referenceName",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PipelineField",
+        "name": "type",
+        "type": "customFieldType",
+        "typeSchema": "public",
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PipelineField",
+        "name": "required",
+        "type": "boolean",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "false",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PipelineField",
+        "name": "position",
+        "type": "integer",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PipelineItemActivity",
+        "name": "id",
+        "type": "bigint",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PipelineItemActivity",
+        "name": "workspaceId",
+        "type": "bigint",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PipelineItemActivity",
+        "name": "pipelineId",
+        "type": "bigint",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PipelineItemActivity",
+        "name": "itemId",
+        "type": "bigint",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PipelineItemActivity",
+        "name": "itemNumber",
+        "type": "bigint",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PipelineItemActivity",
+        "name": "itemTitle",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PipelineItemActivity",
+        "name": "contactId",
+        "type": "bigint",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PipelineItemActivity",
+        "name": "kind",
+        "type": "pipelineActivityKind",
+        "typeSchema": "public",
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PipelineItemActivity",
+        "name": "actorKind",
+        "type": "pipelineActorKind",
+        "typeSchema": "public",
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PipelineItemActivity",
+        "name": "actorUserId",
+        "type": "bigint",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PipelineItemActivity",
+        "name": "actorSourceId",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PipelineItemActivity",
+        "name": "fromStageId",
+        "type": "bigint",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PipelineItemActivity",
+        "name": "toStageId",
+        "type": "bigint",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PipelineItemActivity",
+        "name": "fromStatus",
+        "type": "pipelineItemStatus",
+        "typeSchema": "public",
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PipelineItemActivity",
+        "name": "toStatus",
+        "type": "pipelineItemStatus",
+        "typeSchema": "public",
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PipelineItemActivity",
+        "name": "fromValue",
+        "type": "numeric(19,4)",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PipelineItemActivity",
+        "name": "toValue",
+        "type": "numeric(19,4)",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PipelineItemActivity",
+        "name": "fromPriority",
+        "type": "pipelineItemPriority",
+        "typeSchema": "public",
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PipelineItemActivity",
+        "name": "toPriority",
+        "type": "pipelineItemPriority",
+        "typeSchema": "public",
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PipelineItemActivity",
+        "name": "fromDueDate",
+        "type": "timestamp(6) with time zone",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PipelineItemActivity",
+        "name": "toDueDate",
+        "type": "timestamp(6) with time zone",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PipelineItemActivity",
+        "name": "fromTitle",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PipelineItemActivity",
+        "name": "toTitle",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PipelineItemActivity",
+        "name": "fromPipelineId",
+        "type": "bigint",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PipelineItemActivity",
+        "name": "version",
+        "type": "integer",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "1",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PipelineItemActivity",
+        "name": "occurredAt",
+        "type": "timestamp(6) with time zone",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PipelineItemAssignee",
+        "name": "id",
+        "type": "bigint",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PipelineItemAssignee",
+        "name": "createdAt",
+        "type": "timestamp(6) with time zone",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "now()",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PipelineItemAssignee",
+        "name": "updatedAt",
+        "type": "timestamp(6) with time zone",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "now()",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PipelineItemAssignee",
+        "name": "workspaceId",
+        "type": "bigint",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PipelineItemAssignee",
+        "name": "itemId",
+        "type": "bigint",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PipelineItemAssignee",
+        "name": "workspaceMemberId",
+        "type": "bigint",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PipelineItemAssignee",
+        "name": "inboxTeamId",
+        "type": "bigint",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PipelineItemAttachment",
+        "name": "id",
+        "type": "bigint",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PipelineItemAttachment",
+        "name": "createdAt",
+        "type": "timestamp(6) with time zone",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "now()",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PipelineItemAttachment",
+        "name": "updatedAt",
+        "type": "timestamp(6) with time zone",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "now()",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PipelineItemAttachment",
+        "name": "workspaceId",
+        "type": "bigint",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PipelineItemAttachment",
+        "name": "itemId",
+        "type": "bigint",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PipelineItemAttachment",
+        "name": "mediaLibraryFileId",
+        "type": "bigint",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PipelineItemComment",
+        "name": "id",
+        "type": "bigint",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PipelineItemComment",
+        "name": "createdAt",
+        "type": "timestamp(6) with time zone",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "now()",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PipelineItemComment",
+        "name": "updatedAt",
+        "type": "timestamp(6) with time zone",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "now()",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PipelineItemComment",
+        "name": "workspaceId",
+        "type": "bigint",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PipelineItemComment",
+        "name": "itemId",
+        "type": "bigint",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PipelineItemComment",
+        "name": "text",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PipelineItemComment",
+        "name": "createdById",
+        "type": "bigint",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PipelineItemComment",
+        "name": "idempotencyKey",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PipelineItemCounter",
+        "name": "workspaceId",
+        "type": "bigint",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PipelineItemCounter",
+        "name": "lastNumber",
+        "type": "bigint",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "0",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PipelineItem",
+        "name": "id",
+        "type": "bigint",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PipelineItem",
+        "name": "createdAt",
+        "type": "timestamp(6) with time zone",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "now()",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PipelineItem",
+        "name": "updatedAt",
+        "type": "timestamp(6) with time zone",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "now()",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PipelineItem",
+        "name": "workspaceId",
+        "type": "bigint",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PipelineItem",
+        "name": "pipelineId",
+        "type": "bigint",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PipelineItem",
+        "name": "stageId",
+        "type": "bigint",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PipelineItem",
+        "name": "contactId",
+        "type": "bigint",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PipelineItem",
+        "name": "number",
+        "type": "bigint",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PipelineItem",
+        "name": "title",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PipelineItem",
+        "name": "description",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PipelineItem",
+        "name": "value",
+        "type": "numeric(19,4)",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PipelineItem",
+        "name": "status",
+        "type": "pipelineItemStatus",
+        "typeSchema": "public",
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PipelineItem",
+        "name": "priority",
+        "type": "pipelineItemPriority",
+        "typeSchema": "public",
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PipelineItem",
+        "name": "dueDate",
+        "type": "timestamp(6) with time zone",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PipelineItem",
+        "name": "fieldValues",
+        "type": "jsonb",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PipelineItem",
+        "name": "createdById",
+        "type": "bigint",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PipelineItem",
+        "name": "closedById",
+        "type": "bigint",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PipelineItem",
+        "name": "stageEnteredAt",
+        "type": "timestamp(6) with time zone",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PipelineItem",
+        "name": "statusChangedAt",
+        "type": "timestamp(6) with time zone",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PipelineItem",
+        "name": "closedAt",
+        "type": "timestamp(6) with time zone",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PipelineItem",
+        "name": "lastCommentAt",
+        "type": "timestamp(6) with time zone",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PipelineItem",
+        "name": "idempotencyKey",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PipelineMember",
+        "name": "id",
+        "type": "bigint",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PipelineMember",
+        "name": "createdAt",
+        "type": "timestamp(6) with time zone",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "now()",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PipelineMember",
+        "name": "updatedAt",
+        "type": "timestamp(6) with time zone",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "now()",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PipelineMember",
+        "name": "workspaceId",
+        "type": "bigint",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PipelineMember",
+        "name": "pipelineId",
+        "type": "bigint",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PipelineMember",
+        "name": "workspaceMemberId",
+        "type": "bigint",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PipelineMember",
+        "name": "canManageSettings",
+        "type": "boolean",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "false",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PipelineMember",
+        "name": "canView",
+        "type": "boolean",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "true",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PipelineMember",
+        "name": "canEdit",
+        "type": "boolean",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "false",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PipelineMember",
+        "name": "canDelete",
+        "type": "boolean",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "false",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "Pipeline",
+        "name": "id",
+        "type": "bigint",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "Pipeline",
+        "name": "createdAt",
+        "type": "timestamp(6) with time zone",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "now()",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "Pipeline",
+        "name": "updatedAt",
+        "type": "timestamp(6) with time zone",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "now()",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "Pipeline",
+        "name": "workspaceId",
+        "type": "bigint",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "Pipeline",
+        "name": "name",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "Pipeline",
+        "name": "type",
+        "type": "pipelineType",
+        "typeSchema": "public",
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "Pipeline",
+        "name": "referenceName",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "Pipeline",
+        "name": "currency",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "Pipeline",
+        "name": "settings",
+        "type": "jsonb",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "Pipeline",
+        "name": "createdById",
+        "type": "bigint",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PipelineStage",
+        "name": "id",
+        "type": "bigint",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PipelineStage",
+        "name": "createdAt",
+        "type": "timestamp(6) with time zone",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "now()",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PipelineStage",
+        "name": "updatedAt",
+        "type": "timestamp(6) with time zone",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "now()",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PipelineStage",
+        "name": "workspaceId",
+        "type": "bigint",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PipelineStage",
+        "name": "pipelineId",
+        "type": "bigint",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PipelineStage",
+        "name": "name",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PipelineStage",
+        "name": "description",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PipelineStage",
+        "name": "textColor",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PipelineStage",
+        "name": "backgroundColor",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PipelineStage",
+        "name": "position",
+        "type": "integer",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PipelineStage",
+        "name": "bulkJobId",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PipelineField",
+        "name": "PipelineField_pipelineId_referenceName_key",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "pipelineId",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          },
+          {
+            "value": "referenceName",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": true,
+        "where": null,
+        "with": "",
+        "method": "btree",
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PipelineField",
+        "name": "PipelineField_workspaceId_idx",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "workspaceId",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": false,
+        "where": null,
+        "with": "",
+        "method": "btree",
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PipelineItemActivity",
+        "name": "PipelineItemActivity_pipeline_kind_occurredAt_idx",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "workspaceId",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          },
+          {
+            "value": "pipelineId",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          },
+          {
+            "value": "kind",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          },
+          {
+            "value": "occurredAt",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": false,
+        "where": null,
+        "with": "",
+        "method": "btree",
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PipelineItemActivity",
+        "name": "PipelineItemActivity_item_occurredAt_idx",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "workspaceId",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          },
+          {
+            "value": "itemId",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          },
+          {
+            "value": "\"occurredAt\" DESC",
+            "isExpression": true,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": false,
+        "where": null,
+        "with": "",
+        "method": "btree",
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PipelineItemActivity",
+        "name": "PipelineItemActivity_contact_idx",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "workspaceId",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          },
+          {
+            "value": "contactId",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": false,
+        "where": null,
+        "with": "",
+        "method": "btree",
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PipelineItemActivity",
+        "name": "PipelineItemActivity_pipelineId_idx",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "pipelineId",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": false,
+        "where": null,
+        "with": "",
+        "method": "btree",
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PipelineItemActivity",
+        "name": "PipelineItemActivity_actorUserId_idx",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "actorUserId",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": false,
+        "where": "\"actorUserId\" IS NOT NULL",
+        "with": "",
+        "method": "btree",
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PipelineItemAssignee",
+        "name": "PipelineItemAssignee_item_member_key",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "itemId",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          },
+          {
+            "value": "workspaceMemberId",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": true,
+        "where": null,
+        "with": "",
+        "method": "btree",
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PipelineItemAssignee",
+        "name": "PipelineItemAssignee_item_team_key",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "itemId",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          },
+          {
+            "value": "inboxTeamId",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": true,
+        "where": null,
+        "with": "",
+        "method": "btree",
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PipelineItemAssignee",
+        "name": "PipelineItemAssignee_member_idx",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "workspaceId",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          },
+          {
+            "value": "workspaceMemberId",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": false,
+        "where": null,
+        "with": "",
+        "method": "btree",
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PipelineItemAssignee",
+        "name": "PipelineItemAssignee_team_idx",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "workspaceId",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          },
+          {
+            "value": "inboxTeamId",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": false,
+        "where": null,
+        "with": "",
+        "method": "btree",
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PipelineItemAssignee",
+        "name": "PipelineItemAssignee_workspaceMemberId_idx",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "workspaceMemberId",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": false,
+        "where": "\"workspaceMemberId\" IS NOT NULL",
+        "with": "",
+        "method": "btree",
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PipelineItemAssignee",
+        "name": "PipelineItemAssignee_inboxTeamId_idx",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "inboxTeamId",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": false,
+        "where": "\"inboxTeamId\" IS NOT NULL",
+        "with": "",
+        "method": "btree",
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PipelineItemAttachment",
+        "name": "PipelineItemAttachment_item_file_key",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "itemId",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          },
+          {
+            "value": "mediaLibraryFileId",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": true,
+        "where": null,
+        "with": "",
+        "method": "btree",
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PipelineItemAttachment",
+        "name": "PipelineItemAttachment_mediaLibraryFileId_idx",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "mediaLibraryFileId",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": false,
+        "where": null,
+        "with": "",
+        "method": "btree",
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PipelineItemAttachment",
+        "name": "PipelineItemAttachment_workspaceId_idx",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "workspaceId",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": false,
+        "where": null,
+        "with": "",
+        "method": "btree",
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PipelineItemComment",
+        "name": "PipelineItemComment_item_createdAt_idx",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "itemId",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          },
+          {
+            "value": "\"createdAt\" DESC",
+            "isExpression": true,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": false,
+        "where": null,
+        "with": "",
+        "method": "btree",
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PipelineItemComment",
+        "name": "PipelineItemComment_createdById_idx",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "createdById",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": false,
+        "where": "\"createdById\" IS NOT NULL",
+        "with": "",
+        "method": "btree",
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PipelineItemComment",
+        "name": "PipelineItemComment_item_idempotencyKey_key",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "workspaceId",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          },
+          {
+            "value": "itemId",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          },
+          {
+            "value": "idempotencyKey",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": true,
+        "where": "\"idempotencyKey\" IS NOT NULL",
+        "with": "",
+        "method": "btree",
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PipelineItem",
+        "name": "PipelineItem_workspaceId_number_key",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "workspaceId",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          },
+          {
+            "value": "number",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": true,
+        "where": null,
+        "with": "",
+        "method": "btree",
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PipelineItem",
+        "name": "PipelineItem_pipeline_idempotencyKey_key",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "workspaceId",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          },
+          {
+            "value": "pipelineId",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          },
+          {
+            "value": "idempotencyKey",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": true,
+        "where": "\"idempotencyKey\" IS NOT NULL",
+        "with": "",
+        "method": "btree",
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PipelineItem",
+        "name": "PipelineItem_contact_status_idx",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "workspaceId",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          },
+          {
+            "value": "pipelineId",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          },
+          {
+            "value": "contactId",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          },
+          {
+            "value": "status",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          },
+          {
+            "value": "\"createdAt\" DESC",
+            "isExpression": true,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": false,
+        "where": null,
+        "with": "",
+        "method": "btree",
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PipelineItem",
+        "name": "PipelineItem_stage_createdAt_idx",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "pipelineId",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          },
+          {
+            "value": "stageId",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          },
+          {
+            "value": "\"createdAt\" DESC",
+            "isExpression": true,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          },
+          {
+            "value": "\"id\" DESC",
+            "isExpression": true,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": false,
+        "where": null,
+        "with": "",
+        "method": "btree",
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PipelineItem",
+        "name": "PipelineItem_pipeline_createdAt_idx",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "pipelineId",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          },
+          {
+            "value": "\"createdAt\" DESC",
+            "isExpression": true,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          },
+          {
+            "value": "\"id\" DESC",
+            "isExpression": true,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": false,
+        "where": null,
+        "with": "",
+        "method": "btree",
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PipelineItem",
+        "name": "PipelineItem_pipeline_id_idx",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "pipelineId",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          },
+          {
+            "value": "id",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": false,
+        "where": null,
+        "with": "",
+        "method": "btree",
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PipelineItem",
+        "name": "PipelineItem_contactId_idx",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "contactId",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": false,
+        "where": null,
+        "with": "",
+        "method": "btree",
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PipelineItem",
+        "name": "PipelineItem_stageId_idx",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "stageId",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": false,
+        "where": null,
+        "with": "",
+        "method": "btree",
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PipelineItem",
+        "name": "PipelineItem_createdById_idx",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "createdById",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": false,
+        "where": "\"createdById\" IS NOT NULL",
+        "with": "",
+        "method": "btree",
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PipelineItem",
+        "name": "PipelineItem_closedById_idx",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "closedById",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": false,
+        "where": "\"closedById\" IS NOT NULL",
+        "with": "",
+        "method": "btree",
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PipelineMember",
+        "name": "PipelineMember_pipeline_member_key",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "pipelineId",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          },
+          {
+            "value": "workspaceMemberId",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": true,
+        "where": null,
+        "with": "",
+        "method": "btree",
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PipelineMember",
+        "name": "PipelineMember_member_idx",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "workspaceId",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          },
+          {
+            "value": "workspaceMemberId",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": false,
+        "where": null,
+        "with": "",
+        "method": "btree",
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PipelineMember",
+        "name": "PipelineMember_workspaceMemberId_idx",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "workspaceMemberId",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": false,
+        "where": null,
+        "with": "",
+        "method": "btree",
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "Pipeline",
+        "name": "Pipeline_workspaceId_referenceName_key",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "workspaceId",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          },
+          {
+            "value": "referenceName",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": true,
+        "where": null,
+        "with": "",
+        "method": "btree",
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "Pipeline",
+        "name": "Pipeline_workspaceId_name_key",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "workspaceId",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          },
+          {
+            "value": "name",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": true,
+        "where": null,
+        "with": "",
+        "method": "btree",
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "Pipeline",
+        "name": "Pipeline_createdById_idx",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "createdById",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": false,
+        "where": "\"createdById\" IS NOT NULL",
+        "with": "",
+        "method": "btree",
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PipelineStage",
+        "name": "PipelineStage_pipelineId_position_idx",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "pipelineId",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          },
+          {
+            "value": "position",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": false,
+        "where": null,
+        "with": "",
+        "method": "btree",
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PipelineStage",
+        "name": "PipelineStage_workspaceId_idx",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "workspaceId",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": false,
+        "where": null,
+        "with": "",
+        "method": "btree",
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PipelineField",
+        "name": "PipelineField_workspaceId_Workspace_id_fkey",
+        "nameExplicit": false,
+        "columns": [
+          "workspaceId"
+        ],
+        "schemaTo": "public",
+        "tableTo": "Workspace",
+        "columnsTo": [
+          "id"
+        ],
+        "onUpdate": "CASCADE",
+        "onDelete": "CASCADE",
+        "entityType": "fks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PipelineField",
+        "name": "PipelineField_pipelineId_Pipeline_id_fkey",
+        "nameExplicit": false,
+        "columns": [
+          "pipelineId"
+        ],
+        "schemaTo": "public",
+        "tableTo": "Pipeline",
+        "columnsTo": [
+          "id"
+        ],
+        "onUpdate": "CASCADE",
+        "onDelete": "CASCADE",
+        "entityType": "fks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PipelineItemActivity",
+        "name": "PipelineItemActivity_workspaceId_Workspace_id_fkey",
+        "nameExplicit": false,
+        "columns": [
+          "workspaceId"
+        ],
+        "schemaTo": "public",
+        "tableTo": "Workspace",
+        "columnsTo": [
+          "id"
+        ],
+        "onUpdate": "CASCADE",
+        "onDelete": "CASCADE",
+        "entityType": "fks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PipelineItemActivity",
+        "name": "PipelineItemActivity_pipelineId_Pipeline_id_fkey",
+        "nameExplicit": false,
+        "columns": [
+          "pipelineId"
+        ],
+        "schemaTo": "public",
+        "tableTo": "Pipeline",
+        "columnsTo": [
+          "id"
+        ],
+        "onUpdate": "CASCADE",
+        "onDelete": "CASCADE",
+        "entityType": "fks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PipelineItemActivity",
+        "name": "PipelineItemActivity_actorUserId_User_id_fkey",
+        "nameExplicit": false,
+        "columns": [
+          "actorUserId"
+        ],
+        "schemaTo": "public",
+        "tableTo": "User",
+        "columnsTo": [
+          "id"
+        ],
+        "onUpdate": "CASCADE",
+        "onDelete": "SET NULL",
+        "entityType": "fks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PipelineItemAssignee",
+        "name": "PipelineItemAssignee_workspaceId_Workspace_id_fkey",
+        "nameExplicit": false,
+        "columns": [
+          "workspaceId"
+        ],
+        "schemaTo": "public",
+        "tableTo": "Workspace",
+        "columnsTo": [
+          "id"
+        ],
+        "onUpdate": "CASCADE",
+        "onDelete": "CASCADE",
+        "entityType": "fks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PipelineItemAssignee",
+        "name": "PipelineItemAssignee_itemId_PipelineItem_id_fkey",
+        "nameExplicit": false,
+        "columns": [
+          "itemId"
+        ],
+        "schemaTo": "public",
+        "tableTo": "PipelineItem",
+        "columnsTo": [
+          "id"
+        ],
+        "onUpdate": "CASCADE",
+        "onDelete": "CASCADE",
+        "entityType": "fks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PipelineItemAssignee",
+        "name": "PipelineItemAssignee_workspaceMemberId_WorkspaceMember_id_fkey",
+        "nameExplicit": false,
+        "columns": [
+          "workspaceMemberId"
+        ],
+        "schemaTo": "public",
+        "tableTo": "WorkspaceMember",
+        "columnsTo": [
+          "id"
+        ],
+        "onUpdate": "CASCADE",
+        "onDelete": "CASCADE",
+        "entityType": "fks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PipelineItemAssignee",
+        "name": "PipelineItemAssignee_inboxTeamId_InboxTeam_id_fkey",
+        "nameExplicit": false,
+        "columns": [
+          "inboxTeamId"
+        ],
+        "schemaTo": "public",
+        "tableTo": "InboxTeam",
+        "columnsTo": [
+          "id"
+        ],
+        "onUpdate": "CASCADE",
+        "onDelete": "CASCADE",
+        "entityType": "fks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PipelineItemAttachment",
+        "name": "PipelineItemAttachment_workspaceId_Workspace_id_fkey",
+        "nameExplicit": false,
+        "columns": [
+          "workspaceId"
+        ],
+        "schemaTo": "public",
+        "tableTo": "Workspace",
+        "columnsTo": [
+          "id"
+        ],
+        "onUpdate": "CASCADE",
+        "onDelete": "CASCADE",
+        "entityType": "fks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PipelineItemAttachment",
+        "name": "PipelineItemAttachment_itemId_PipelineItem_id_fkey",
+        "nameExplicit": false,
+        "columns": [
+          "itemId"
+        ],
+        "schemaTo": "public",
+        "tableTo": "PipelineItem",
+        "columnsTo": [
+          "id"
+        ],
+        "onUpdate": "CASCADE",
+        "onDelete": "CASCADE",
+        "entityType": "fks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PipelineItemAttachment",
+        "name": "PipelineItemAttachment_BBiTPytjYFfD_fkey",
+        "nameExplicit": false,
+        "columns": [
+          "mediaLibraryFileId"
+        ],
+        "schemaTo": "public",
+        "tableTo": "MediaLibraryFile",
+        "columnsTo": [
+          "id"
+        ],
+        "onUpdate": "CASCADE",
+        "onDelete": "CASCADE",
+        "entityType": "fks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PipelineItemComment",
+        "name": "PipelineItemComment_workspaceId_Workspace_id_fkey",
+        "nameExplicit": false,
+        "columns": [
+          "workspaceId"
+        ],
+        "schemaTo": "public",
+        "tableTo": "Workspace",
+        "columnsTo": [
+          "id"
+        ],
+        "onUpdate": "CASCADE",
+        "onDelete": "CASCADE",
+        "entityType": "fks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PipelineItemComment",
+        "name": "PipelineItemComment_itemId_PipelineItem_id_fkey",
+        "nameExplicit": false,
+        "columns": [
+          "itemId"
+        ],
+        "schemaTo": "public",
+        "tableTo": "PipelineItem",
+        "columnsTo": [
+          "id"
+        ],
+        "onUpdate": "CASCADE",
+        "onDelete": "CASCADE",
+        "entityType": "fks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PipelineItemComment",
+        "name": "PipelineItemComment_createdById_User_id_fkey",
+        "nameExplicit": false,
+        "columns": [
+          "createdById"
+        ],
+        "schemaTo": "public",
+        "tableTo": "User",
+        "columnsTo": [
+          "id"
+        ],
+        "onUpdate": "CASCADE",
+        "onDelete": "SET NULL",
+        "entityType": "fks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PipelineItemCounter",
+        "name": "PipelineItemCounter_workspaceId_Workspace_id_fkey",
+        "nameExplicit": false,
+        "columns": [
+          "workspaceId"
+        ],
+        "schemaTo": "public",
+        "tableTo": "Workspace",
+        "columnsTo": [
+          "id"
+        ],
+        "onUpdate": "CASCADE",
+        "onDelete": "CASCADE",
+        "entityType": "fks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PipelineItem",
+        "name": "PipelineItem_workspaceId_Workspace_id_fkey",
+        "nameExplicit": false,
+        "columns": [
+          "workspaceId"
+        ],
+        "schemaTo": "public",
+        "tableTo": "Workspace",
+        "columnsTo": [
+          "id"
+        ],
+        "onUpdate": "CASCADE",
+        "onDelete": "CASCADE",
+        "entityType": "fks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PipelineItem",
+        "name": "PipelineItem_pipelineId_Pipeline_id_fkey",
+        "nameExplicit": false,
+        "columns": [
+          "pipelineId"
+        ],
+        "schemaTo": "public",
+        "tableTo": "Pipeline",
+        "columnsTo": [
+          "id"
+        ],
+        "onUpdate": "CASCADE",
+        "onDelete": "CASCADE",
+        "entityType": "fks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PipelineItem",
+        "name": "PipelineItem_stageId_PipelineStage_id_fkey",
+        "nameExplicit": false,
+        "columns": [
+          "stageId"
+        ],
+        "schemaTo": "public",
+        "tableTo": "PipelineStage",
+        "columnsTo": [
+          "id"
+        ],
+        "onUpdate": "CASCADE",
+        "onDelete": "CASCADE",
+        "entityType": "fks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PipelineItem",
+        "name": "PipelineItem_contactId_Contact_id_fkey",
+        "nameExplicit": false,
+        "columns": [
+          "contactId"
+        ],
+        "schemaTo": "public",
+        "tableTo": "Contact",
+        "columnsTo": [
+          "id"
+        ],
+        "onUpdate": "CASCADE",
+        "onDelete": "CASCADE",
+        "entityType": "fks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PipelineItem",
+        "name": "PipelineItem_createdById_User_id_fkey",
+        "nameExplicit": false,
+        "columns": [
+          "createdById"
+        ],
+        "schemaTo": "public",
+        "tableTo": "User",
+        "columnsTo": [
+          "id"
+        ],
+        "onUpdate": "CASCADE",
+        "onDelete": "SET NULL",
+        "entityType": "fks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PipelineItem",
+        "name": "PipelineItem_closedById_User_id_fkey",
+        "nameExplicit": false,
+        "columns": [
+          "closedById"
+        ],
+        "schemaTo": "public",
+        "tableTo": "User",
+        "columnsTo": [
+          "id"
+        ],
+        "onUpdate": "CASCADE",
+        "onDelete": "SET NULL",
+        "entityType": "fks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PipelineMember",
+        "name": "PipelineMember_workspaceId_Workspace_id_fkey",
+        "nameExplicit": false,
+        "columns": [
+          "workspaceId"
+        ],
+        "schemaTo": "public",
+        "tableTo": "Workspace",
+        "columnsTo": [
+          "id"
+        ],
+        "onUpdate": "CASCADE",
+        "onDelete": "CASCADE",
+        "entityType": "fks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PipelineMember",
+        "name": "PipelineMember_pipelineId_Pipeline_id_fkey",
+        "nameExplicit": false,
+        "columns": [
+          "pipelineId"
+        ],
+        "schemaTo": "public",
+        "tableTo": "Pipeline",
+        "columnsTo": [
+          "id"
+        ],
+        "onUpdate": "CASCADE",
+        "onDelete": "CASCADE",
+        "entityType": "fks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PipelineMember",
+        "name": "PipelineMember_workspaceMemberId_WorkspaceMember_id_fkey",
+        "nameExplicit": false,
+        "columns": [
+          "workspaceMemberId"
+        ],
+        "schemaTo": "public",
+        "tableTo": "WorkspaceMember",
+        "columnsTo": [
+          "id"
+        ],
+        "onUpdate": "CASCADE",
+        "onDelete": "CASCADE",
+        "entityType": "fks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "Pipeline",
+        "name": "Pipeline_workspaceId_Workspace_id_fkey",
+        "nameExplicit": false,
+        "columns": [
+          "workspaceId"
+        ],
+        "schemaTo": "public",
+        "tableTo": "Workspace",
+        "columnsTo": [
+          "id"
+        ],
+        "onUpdate": "CASCADE",
+        "onDelete": "CASCADE",
+        "entityType": "fks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "Pipeline",
+        "name": "Pipeline_createdById_User_id_fkey",
+        "nameExplicit": false,
+        "columns": [
+          "createdById"
+        ],
+        "schemaTo": "public",
+        "tableTo": "User",
+        "columnsTo": [
+          "id"
+        ],
+        "onUpdate": "CASCADE",
+        "onDelete": "SET NULL",
+        "entityType": "fks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PipelineStage",
+        "name": "PipelineStage_workspaceId_Workspace_id_fkey",
+        "nameExplicit": false,
+        "columns": [
+          "workspaceId"
+        ],
+        "schemaTo": "public",
+        "tableTo": "Workspace",
+        "columnsTo": [
+          "id"
+        ],
+        "onUpdate": "CASCADE",
+        "onDelete": "CASCADE",
+        "entityType": "fks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PipelineStage",
+        "name": "PipelineStage_pipelineId_Pipeline_id_fkey",
+        "nameExplicit": false,
+        "columns": [
+          "pipelineId"
+        ],
+        "schemaTo": "public",
+        "tableTo": "Pipeline",
+        "columnsTo": [
+          "id"
+        ],
+        "onUpdate": "CASCADE",
+        "onDelete": "CASCADE",
+        "entityType": "fks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PipelineItemActivity",
+        "name": "PipelineItemActivity_pkey",
+        "columns": [
+          "id",
+          "workspaceId"
+        ],
+        "nameExplicit": true,
+        "entityType": "pks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PipelineField",
+        "name": "PipelineField_pkey",
+        "columns": [
+          "id"
+        ],
+        "nameExplicit": false,
+        "entityType": "pks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PipelineItemAssignee",
+        "name": "PipelineItemAssignee_pkey",
+        "columns": [
+          "id"
+        ],
+        "nameExplicit": false,
+        "entityType": "pks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PipelineItemAttachment",
+        "name": "PipelineItemAttachment_pkey",
+        "columns": [
+          "id"
+        ],
+        "nameExplicit": false,
+        "entityType": "pks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PipelineItemComment",
+        "name": "PipelineItemComment_pkey",
+        "columns": [
+          "id"
+        ],
+        "nameExplicit": false,
+        "entityType": "pks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PipelineItemCounter",
+        "name": "PipelineItemCounter_pkey",
+        "columns": [
+          "workspaceId"
+        ],
+        "nameExplicit": false,
+        "entityType": "pks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PipelineItem",
+        "name": "PipelineItem_pkey",
+        "columns": [
+          "id"
+        ],
+        "nameExplicit": false,
+        "entityType": "pks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PipelineMember",
+        "name": "PipelineMember_pkey",
+        "columns": [
+          "id"
+        ],
+        "nameExplicit": false,
+        "entityType": "pks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "Pipeline",
+        "name": "Pipeline_pkey",
+        "columns": [
+          "id"
+        ],
+        "nameExplicit": false,
+        "entityType": "pks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PipelineStage",
+        "name": "PipelineStage_pkey",
+        "columns": [
+          "id"
+        ],
+        "nameExplicit": false,
+        "entityType": "pks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "PipelineItemAssignee",
+        "name": "PipelineItemAssignee_one_target_check",
+        "value": "(\"workspaceMemberId\" IS NULL) <> (\"inboxTeamId\" IS NULL)",
+        "entityType": "checks"
+      }
+    },
+    {
+      "op": "drop",
+      "key": "tables\u0000[\"public\",\"IntegrationMuse\"]"
+    },
+    {
+      "op": "drop",
+      "key": "columns\u0000[\"public\",\"IntegrationMuse\",\"id\"]"
+    },
+    {
+      "op": "drop",
+      "key": "columns\u0000[\"public\",\"IntegrationMuse\",\"createdAt\"]"
+    },
+    {
+      "op": "drop",
+      "key": "columns\u0000[\"public\",\"IntegrationMuse\",\"updatedAt\"]"
+    },
+    {
+      "op": "drop",
+      "key": "columns\u0000[\"public\",\"IntegrationMuse\",\"auth\"]"
+    },
+    {
+      "op": "drop",
+      "key": "columns\u0000[\"public\",\"IntegrationMuse\",\"autoReply\"]"
+    },
+    {
+      "op": "drop",
+      "key": "columns\u0000[\"public\",\"IntegrationMuse\",\"workspaceId\"]"
+    },
+    {
+      "op": "drop",
+      "key": "columns\u0000[\"public\",\"IntegrationMuse\",\"integrationId\"]"
+    },
+    {
+      "op": "drop",
+      "key": "columns\u0000[\"public\",\"IntegrationMuse\",\"maxOutputTokens\"]"
+    },
+    {
+      "op": "drop",
+      "key": "columns\u0000[\"public\",\"IntegrationMuse\",\"model\"]"
+    },
+    {
+      "op": "drop",
+      "key": "columns\u0000[\"public\",\"IntegrationMuse\",\"prompt\"]"
+    },
+    {
+      "op": "drop",
+      "key": "columns\u0000[\"public\",\"IntegrationMuse\",\"temperature\"]"
+    },
+    {
+      "op": "drop",
+      "key": "indexes\u0000[\"public\",\"IntegrationMuse_workspaceId_key\"]"
+    },
+    {
+      "op": "drop",
+      "key": "indexes\u0000[\"public\",\"IntegrationMuse_integrationId_key\"]"
+    },
+    {
+      "op": "drop",
+      "key": "fks\u0000[\"public\",\"IntegrationMuse\",\"IntegrationMuse_workspaceId_Workspace_id_fkey\"]"
+    },
+    {
+      "op": "drop",
+      "key": "fks\u0000[\"public\",\"IntegrationMuse\",\"IntegrationMuse_integrationId_Integration_id_fkey\"]"
+    },
+    {
+      "op": "drop",
+      "key": "pks\u0000[\"public\",\"IntegrationMuse\",\"IntegrationMuse_pkey\"]"
+    }
+  ]
+}

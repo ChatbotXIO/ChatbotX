@@ -1,4 +1,7 @@
-import { conversationService } from "@chatbotx.io/business"
+import {
+  conversationMemberScope,
+  conversationService,
+} from "@chatbotx.io/business"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
 import {
   requestConversationThreadControl,
@@ -16,24 +19,36 @@ import { mcpSpec } from "@/lib/orpc/mcp-annotations"
 import {
   possibleErrorsOnFindingResource,
   possibleErrorsOnListingResource,
+  possibleErrorsOnListingWithCursor,
   possibleErrorsOnMutatingResource,
   possibleErrorsOnThreadControl,
 } from "@/lib/orpc/orpc-error-helper"
 import { cursorPaginationRequest } from "@/lib/pagination"
+import {
+  assertConversationAccessForCaller,
+  conversationScopeForCaller,
+  maskContactForCaller,
+} from "@/lib/public-api/member-scope"
 import { workspaceTokenAuthAPIForScope } from "@/orpc"
 import { mapThreadControlError } from "../lib/thread-control-errors"
 import {
   findConversation,
   listConversations,
 } from "../queries/list-conversations.query"
+import { listConversationParticipants } from "../queries/list-participants.query"
 import {
   assignConversationPublicRequest,
   conversationIdPathParam,
   getConversationPublicResponse,
+  listConversationParticipantsRequest,
   threadControlPublicRequest,
   threadControlPublicResponse,
 } from "../schema/public"
-import { listConversationsResponse } from "../schema/resource"
+import {
+  listConversationParticipantsResponse,
+  listConversationsCompactResponse,
+  listConversationsResponse,
+} from "../schema/resource"
 
 const workspaceTokenAuthAPI = workspaceTokenAuthAPIForScope("inbox")
 
@@ -112,6 +127,12 @@ const listConversationsQueryRequest = z.object({
         "Structured filter for advanced matching on the conversation's contact. Sent as a JSON-encoded object. See `contacts.listFilterFields` for the field/operator reference.",
       ),
   ),
+  view: z
+    .enum(["full", "compact"])
+    .default("full")
+    .describe(
+      "Response detail level. `compact` omits ad attribution and thread-control metadata from contact inboxes.",
+    ),
   ...cursorPaginationRequest.shape,
 })
 
@@ -122,25 +143,71 @@ export const conversationsPublicRouter = {
       path: "/v1/conversations",
       summary: "List conversations",
       description:
-        "Use this to find conversations by status, channel, assignee, tags, or contact filter before inspecting one with `conversations.get`. Returns cursor-paginated workspace conversations.",
+        'Use this to find conversations by status, channel, assignee, tags, or contact filter before inspecting one with `conversations.get`. Returns cursor-paginated workspace conversations. The array and object filters (`status`, `tags`, `contactFilter`) are query parameters whose value is a JSON-encoded string, for example `status=["open"]`; `contactFilter` is the JSON of the criteria object from `contacts.listFilterFields`; bracket (deepObject) notation such as `status[0]=open` is not understood and the filter is ignored.',
       tags: ["Conversations"],
-      spec: mcpSpec({ visibility: "default" }),
+      spec: mcpSpec({
+        destructiveHint: false,
+        idempotentHint: true,
+        openWorldHint: false,
+        readOnlyHint: true,
+        visibility: "default",
+      }),
     })
     .input(listConversationsQueryRequest)
-    .output(listConversationsResponse)
+    .output(
+      z.union([listConversationsResponse, listConversationsCompactResponse]),
+    )
     .errors(possibleErrorsOnListingResource)
-    .handler(
-      async ({ context, input }) =>
-        await listConversations(
+    .handler(async ({ context, input }) => {
+      // Mobile (member) callers: restricted to their chat scope, email/phone
+      // masked without the permission. Workspace tokens stay workspace-level.
+      const access = await conversationScopeForCaller(context)
+      const { view, ...request } = input
+      const listAccess = {
+        includeEmailAndPhone:
+          !context.member ||
+          context.member.permissions.emailAndPhone === true ||
+          context.member.permissions.superAdmin === true,
+        scopeWhere: conversationMemberScope.where(access),
+        // No client-side storage resolver on API callers: return full URLs.
+        publicUrls: true,
+      }
+      if (view === "compact") {
+        const result = await listConversations(
           {
-            ...input,
+            ...request,
             workspaceId: context.workspace.id,
           },
-          // Workspace tokens are workspace-level, not member-scoped — see
-          // docs/developer/workspace-api-tokens.md.
-          { includeEmailAndPhone: true },
-        ),
-    ),
+          { ...listAccess, view },
+        )
+        return {
+          ...result,
+          data: result.data.map((conversation) => ({
+            ...conversation,
+            contact: conversation.contact
+              ? maskContactForCaller(context, conversation.contact)
+              : conversation.contact,
+          })),
+        }
+      }
+
+      const result = await listConversations(
+        {
+          ...request,
+          workspaceId: context.workspace.id,
+        },
+        listAccess,
+      )
+      return {
+        ...result,
+        data: result.data.map((conversation) => ({
+          ...conversation,
+          contact: conversation.contact
+            ? maskContactForCaller(context, conversation.contact)
+            : conversation.contact,
+        })),
+      }
+    }),
 
   get: workspaceTokenAuthAPI
     .route({
@@ -150,18 +217,61 @@ export const conversationsPublicRouter = {
       description:
         "Use this to inspect one conversation's contact, channel, assignee, and status after locating it with `conversations.list`. Call `conversations.assign` to change its assignee.",
       tags: ["Conversations"],
-      spec: mcpSpec({ visibility: "default" }),
+      spec: mcpSpec({
+        destructiveHint: false,
+        idempotentHint: true,
+        openWorldHint: false,
+        readOnlyHint: true,
+        visibility: "default",
+      }),
     })
     .input(conversationIdPathParam)
     .output(getConversationPublicResponse)
     .errors(possibleErrorsOnFindingResource)
-    .handler(
-      async ({ context, input }) =>
-        await findConversation({
+    .handler(async ({ context, input }) => {
+      await assertConversationAccessForCaller(context, input.id)
+      const result = await findConversation(
+        {
           id: input.id,
           workspaceId: context.workspace.id,
-        }),
-    ),
+        },
+        { publicUrls: true },
+      )
+      return {
+        ...result,
+        data: {
+          ...result.data,
+          contact: result.data.contact
+            ? maskContactForCaller(context, result.data.contact)
+            : result.data.contact,
+        },
+      }
+    }),
+
+  listParticipants: workspaceTokenAuthAPI
+    .route({
+      method: "GET",
+      path: "/v1/conversations/{id}/participants",
+      summary: "List conversation participants",
+      description:
+        "Lists the workspace members who replied in the conversation from the Inbox (typed messages, files, products, flows, nodes and templates), most recent reply first, with the time of each member's latest reply. Only replies sent after this was introduced are counted. `conversations.list` and `conversations.get` carry a `recentParticipants` preview of the latest three; page through this for everyone with `cursor`.",
+      tags: ["Conversations"],
+    })
+    .input(listConversationParticipantsRequest)
+    .output(listConversationParticipantsResponse)
+    .errors({
+      ...possibleErrorsOnFindingResource,
+      ...possibleErrorsOnListingWithCursor,
+    })
+    .handler(async ({ context, input }) => {
+      await assertConversationAccessForCaller(context, input.id)
+      return await listConversationParticipants({
+        workspaceId: context.workspace.id,
+        conversationId: input.id,
+        cursor: input.cursor,
+        perPage: input.perPage,
+      })
+    }),
 
   // Single-conversation, path-addressed — not the private bulk
   // `POST /conversations/assign` shape, which takes contact ids directly.
@@ -176,7 +286,13 @@ export const conversationsPublicRouter = {
       description:
         "Changes a conversation's user or inbox-team assignee, or clears it when `assignedId` is null. Call `conversations.get` first to inspect the current assignee and `conversations.list` to find the id.",
       tags: ["Conversations"],
-      spec: mcpSpec({ visibility: "default" }),
+      spec: mcpSpec({
+        destructiveHint: true,
+        idempotentHint: true,
+        openWorldHint: false,
+        readOnlyHint: false,
+        visibility: "default",
+      }),
     })
     .input(assignConversationPublicRequest.and(conversationIdPathParam))
     .output(successResponse)
@@ -184,14 +300,16 @@ export const conversationsPublicRouter = {
     .handler(async ({ context, input }) => {
       const workspaceId = context.workspace.id
 
-      const conversation = await conversationService.findByOrFail({
-        where: { id: input.id, workspaceId },
-      })
+      const conversation = await assertConversationAccessForCaller(
+        context,
+        input.id,
+      )
 
       await conversationService.assignOne({
         workspaceId,
         conversation,
         assignedId: input.assignedId,
+        assignedBy: context.member?.userId,
         triggerContext: {
           triggerSource: "api",
           triggerHandler: "assignConversation",
@@ -214,12 +332,11 @@ export const conversationsPublicRouter = {
     .errors(possibleErrorsOnMutatingResource)
     .handler(async ({ context, input }) => {
       const workspaceId = context.workspace.id
-      await conversationService.findByOrFail({
-        where: { id: input.id, workspaceId },
-      })
+      await assertConversationAccessForCaller(context, input.id)
       await conversationService.archiveByIds({
         workspaceId,
         ids: [input.id],
+        userId: context.member?.userId,
         triggerContext: {
           triggerSource: "api",
           triggerHandler: "archiveConversationAction",
@@ -243,12 +360,11 @@ export const conversationsPublicRouter = {
     .errors(possibleErrorsOnMutatingResource)
     .handler(async ({ context, input }) => {
       const workspaceId = context.workspace.id
-      await conversationService.findByOrFail({
-        where: { id: input.id, workspaceId },
-      })
+      await assertConversationAccessForCaller(context, input.id)
       await conversationService.unarchiveByIds({
         workspaceId,
         ids: [input.id],
+        userId: context.member?.userId,
         triggerContext: {
           triggerSource: "api",
           triggerHandler: "unarchiveConversationAction",
@@ -272,9 +388,7 @@ export const conversationsPublicRouter = {
     .errors(possibleErrorsOnMutatingResource)
     .handler(async ({ context, input }) => {
       const workspaceId = context.workspace.id
-      await conversationService.findByOrFail({
-        where: { id: input.id, workspaceId },
-      })
+      await assertConversationAccessForCaller(context, input.id)
       await conversationService.updateReadStatus({
         workspaceId,
         id: input.id,
@@ -301,6 +415,7 @@ export const conversationsPublicRouter = {
     .output(successResponse)
     .errors(possibleErrorsOnMutatingResource)
     .handler(async ({ context, input }) => {
+      await assertConversationAccessForCaller(context, input.id)
       await conversationService.markUnread({
         workspaceId: context.workspace.id,
         id: input.id,
@@ -321,10 +436,12 @@ export const conversationsPublicRouter = {
     .output(successResponse)
     .errors(possibleErrorsOnMutatingResource)
     .handler(async ({ context, input }) => {
+      await assertConversationAccessForCaller(context, input.id)
       await conversationService.setFollowed({
         workspaceId: context.workspace.id,
         id: input.id,
         followed: true,
+        userId: context.member?.userId,
         triggerContext: {
           triggerSource: "api",
           triggerHandler: "followConversationAction",
@@ -347,10 +464,12 @@ export const conversationsPublicRouter = {
     .output(successResponse)
     .errors(possibleErrorsOnMutatingResource)
     .handler(async ({ context, input }) => {
+      await assertConversationAccessForCaller(context, input.id)
       await conversationService.setFollowed({
         workspaceId: context.workspace.id,
         id: input.id,
         followed: false,
+        userId: context.member?.userId,
         triggerContext: {
           triggerSource: "api",
           triggerHandler: "unfollowConversationAction",
@@ -374,13 +493,12 @@ export const conversationsPublicRouter = {
     .errors(possibleErrorsOnMutatingResource)
     .handler(async ({ context, input }) => {
       const workspaceId = context.workspace.id
-      await conversationService.findByOrFail({
-        where: { id: input.id, workspaceId },
-      })
+      await assertConversationAccessForCaller(context, input.id)
       await conversationService.setBotEnabledByIds({
         workspaceId,
         ids: [input.id],
         botEnabled: true,
+        userId: context.member?.userId,
         triggerContext: {
           triggerSource: "api",
           triggerHandler: "enableBotAction",
@@ -404,13 +522,12 @@ export const conversationsPublicRouter = {
     .errors(possibleErrorsOnMutatingResource)
     .handler(async ({ context, input }) => {
       const workspaceId = context.workspace.id
-      await conversationService.findByOrFail({
-        where: { id: input.id, workspaceId },
-      })
+      await assertConversationAccessForCaller(context, input.id)
       await conversationService.setBotEnabledByIds({
         workspaceId,
         ids: [input.id],
         botEnabled: false,
+        userId: context.member?.userId,
         triggerContext: {
           triggerSource: "api",
           triggerHandler: "disableBotAction",
@@ -426,7 +543,7 @@ export const conversationsPublicRouter = {
       path: "/v1/conversations/{id}/thread-control",
       summary: "Control conversation thread",
       description:
-        "Controls who owns a contact inbox's routing thread on channels that share a conversation with another app (e.g. WhatsApp with Meta AI or a partner): `take` it, `release` it, or `pass` it to the escalation role. `sync` asks the channel who currently owns the thread and updates the stored state to match without changing anything at the channel (channels that cannot report an owner, like WhatsApp, leave it unchanged). Read `contactInboxes[].threadControlState` and `threadOwnerRole` with `conversations.get` first. A `take` the channel refuses returns `status: notEscalation` (HTTP 200) instead of an error. Every successful call returns the routing `snapshot`.",
+        "Controls who owns a contact inbox's routing thread on channels that share a conversation with another app (e.g. WhatsApp with Meta AI or a partner): `take` it, `release` it, or `pass` it to another partner (`targetRole`, default: the escalation partner). `take` and `pass` accept a `metadata` note that is delivered verbatim to the receiving app. `sync` asks the channel who currently owns the thread and updates the stored state to match without changing anything at the channel (channels that cannot report an owner, like WhatsApp, leave it unchanged). Read `contactInboxes[].threadControlState` and `threadOwnerRole` with `conversations.get` first. A `take` the channel refuses returns `status: notEscalation` (HTTP 200) instead of an error. Every successful call returns the routing `snapshot`.",
       tags: ["Conversations"],
     })
     .input(threadControlPublicRequest)
@@ -434,9 +551,10 @@ export const conversationsPublicRouter = {
     .errors(possibleErrorsOnThreadControl)
     .handler(async ({ context, input }) => {
       const workspaceId = context.workspace.id
-      const conversation = await conversationService.findByOrFail({
-        where: { id: input.id, workspaceId },
-      })
+      const conversation = await assertConversationAccessForCaller(
+        context,
+        input.id,
+      )
       try {
         // `sync` goes through the same error mapping as the other actions,
         // so an unsupported channel or a channel failure is a declared 400.
@@ -452,6 +570,8 @@ export const conversationsPublicRouter = {
                 conversation,
                 contactInboxId: input.contactInboxId,
                 action: input.action,
+                targetRole: input.targetRole,
+                metadata: input.metadata,
               })
         return { status: "applied" as const, snapshot }
       } catch (error) {

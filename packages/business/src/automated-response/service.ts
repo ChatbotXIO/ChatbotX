@@ -7,11 +7,16 @@ import {
   relationsFilterToSQL,
   sql,
 } from "@chatbotx.io/database/client"
-import type { AutomatedResponseType } from "@chatbotx.io/database/partials"
+import type {
+  AutomatedResponseType,
+  KeywordCondition,
+} from "@chatbotx.io/database/partials"
 import {
   automatedResponseFolderTypeByType,
+  flattenKeywordConditionValues,
   rootFolderId,
 } from "@chatbotx.io/database/partials"
+import { keywordConditionsSchema } from "@chatbotx.io/database/partials/keyword-condition-schema"
 import { automatedResponseModel } from "@chatbotx.io/database/schema"
 import type { AutomatedResponseModel } from "@chatbotx.io/database/types"
 import {
@@ -25,15 +30,107 @@ import { BaseService } from "../base.service"
 import { notFoundException, validationException } from "../errors"
 import { flowService } from "../flow/service"
 import { folderService } from "../folder/service"
-import { assertDeletable } from "../template/installed-resource.service"
+import {
+  assertReferencable,
+  assertResourceEditable,
+  changedKeysOf,
+  withDeleteGuard,
+} from "../template/installed-resource.service"
+import { withTemplateLockedTransaction } from "../template/template-resource-locks"
 import type { PaginatedResult } from "../types"
 
 export type UpdateAutomatedResponseRequest = {
   folderId?: string | null
   keywords?: Array<{ value: string }>
+  conditions?: KeywordCondition[]
   text?: string | null
   flowId?: string | null
 }
+
+type KeywordRuleMatch = {
+  keywords: string[]
+  conditions: KeywordCondition[] | null
+}
+
+/**
+ * Resolves what a rule matches on. Contact (inbound) rules always store
+ * `conditions` — plain `keywords` become one "contains" condition — and the
+ * flat `keywords` column mirrors every condition value. Page (outbound)
+ * rules keep exact `keywords` and never take conditions.
+ */
+export const resolveKeywordRuleMatch = (
+  type: AutomatedResponseType,
+  input: { keywords?: string[]; conditions?: KeywordCondition[] | null },
+): KeywordRuleMatch => {
+  if (input.conditions && input.keywords) {
+    throw validationException(
+      "conditions",
+      "Send either keywords or conditions, not both",
+    )
+  }
+  if (input.conditions) {
+    if (type !== "inbound") {
+      throw validationException(
+        "conditions",
+        "Conditions are only supported for contact (inbound) keywords",
+      )
+    }
+    const parsed = keywordConditionsSchema.safeParse(input.conditions)
+    if (!parsed.success) {
+      throw validationException(
+        "conditions",
+        parsed.error.issues[0]?.message ?? "Invalid keyword conditions",
+      )
+    }
+    return {
+      keywords: flattenKeywordConditionValues(parsed.data),
+      conditions: parsed.data,
+    }
+  }
+  const keywords = (input.keywords ?? [])
+    .map((keyword) => keyword.trim())
+    .filter((keyword) => keyword.length > 0)
+  if (keywords.length === 0) {
+    throw validationException("keywords", "At least one keyword is required")
+  }
+  if (type !== "inbound") {
+    return { keywords, conditions: null }
+  }
+  // Same limits as `conditions`, so a rule created from plain keywords can
+  // still be saved from the edit form later.
+  const parsed = keywordConditionsSchema.safeParse([
+    { operator: "contains", values: keywords },
+  ])
+  if (!parsed.success) {
+    throw validationException(
+      "keywords",
+      parsed.error.issues[0]?.message ?? "Invalid keywords",
+    )
+  }
+  return {
+    keywords: flattenKeywordConditionValues(parsed.data),
+    conditions: parsed.data,
+  }
+}
+
+// Postgres jsonb returns object keys in its own order, so compare the
+// conditions field by field rather than as JSON strings.
+const isSameKeywordConditions = (
+  a: KeywordCondition[] | null,
+  b: KeywordCondition[] | null,
+): boolean =>
+  (a ?? []).length === (b ?? []).length &&
+  (a ?? []).every((condition, index) => {
+    const other = b?.[index]
+    return (
+      other !== undefined &&
+      condition.operator === other.operator &&
+      condition.values.length === other.values.length &&
+      condition.values.every(
+        (value, valueIndex) => value === other.values[valueIndex],
+      )
+    )
+  })
 
 export type FindAutomatedResponseRequest = {
   workspaceId: string
@@ -96,7 +193,12 @@ class AutomatedResponseService extends BaseService {
       },
       columns: { id: true, keywords: true },
     })
-    return rows.map((row) => ({ id: row.id, name: row.keywords.join(", ") }))
+    // A rule made only of value-less conditions (e.g. "contains image") has
+    // no keywords to show, so fall back to its id.
+    return rows.map((row) => ({
+      id: row.id,
+      name: row.keywords.join(", ") || `#${row.id}`,
+    }))
   }
 
   async findBy(
@@ -196,14 +298,31 @@ class AutomatedResponseService extends BaseService {
       text?: string | null
       flowId?: string | null
       folderId?: string | null
-      keywords: string[]
+      keywords?: string[]
+      conditions?: KeywordCondition[] | null
     },
     tx?: DatabaseClient,
   ): Promise<AutomatedResponseModel> {
     const client = tx ?? db
+    const match = resolveKeywordRuleMatch(values.type, values)
 
-    const flowId = values.flowId ?? undefined
-    const text = values.text ?? undefined
+    // The keyword form sends the unused reply field as "" (e.g. `flowId: ""`
+    // in text mode); "" is not a valid bigint, so blank means "not set".
+    const flowId = values.flowId || undefined
+    const text = values.text || undefined
+    if (flowId && !tx) {
+      // The referenced flow's lock must be held until the reference commits.
+      return await withTemplateLockedTransaction((locked) =>
+        this.create(workspaceId, values, locked),
+      )
+    }
+    if (flowId && tx) {
+      await assertReferencable({
+        workspaceId,
+        parents: [{ kind: "flow", resourceId: flowId }],
+        tx,
+      })
+    }
 
     if (flowId && text) {
       throw validationException(
@@ -237,7 +356,8 @@ class AutomatedResponseService extends BaseService {
         text,
         flowId,
         folderId: values.folderId,
-        keywords: values.keywords,
+        keywords: match.keywords,
+        conditions: match.conditions,
         type: values.type,
       })
       .returning()
@@ -265,7 +385,42 @@ class AutomatedResponseService extends BaseService {
     data: UpdateAutomatedResponseRequest,
     tx?: DatabaseClient,
   ): Promise<AutomatedResponseModel> {
-    const client = tx ?? db
+    if (tx) {
+      const { updated } = await this.updateIn(ctx, data, tx)
+      await this.invalidateCache(ctx.workspaceId)
+      return updated
+    }
+    // The row and its flow are locked before the stored row is read, so the
+    // diff that decides the guard is computed under the lock; the cache and the
+    // audit follow the commit.
+    const { updated, changed } = await withTemplateLockedTransaction(
+      (lockedTx) => this.updateIn(ctx, data, lockedTx),
+      {
+        workspaceId: ctx.workspaceId,
+        initialKeys: [
+          { kind: "automatedResponse", resourceId: ctx.id },
+          ...(data.flowId
+            ? [{ kind: "flow" as const, resourceId: data.flowId }]
+            : []),
+        ],
+      },
+    )
+    await this.invalidateCache(ctx.workspaceId)
+    if (changed) {
+      await this.audit(
+        "update",
+        `updated a keyword automation (#${updated.id})`,
+      )
+    }
+    return updated
+  }
+
+  private async updateIn(
+    ctx: { id: string; workspaceId: string; type: AutomatedResponseType },
+    data: UpdateAutomatedResponseRequest,
+    tx: DatabaseClient,
+  ): Promise<{ updated: AutomatedResponseModel; changed: boolean }> {
+    const client = tx
 
     // Fetched before the write so a Save that resubmits identical values
     // doesn't produce an "updated" audit entry.
@@ -275,8 +430,29 @@ class AutomatedResponseService extends BaseService {
         workspaceId: ctx.workspaceId,
         type: ctx.type,
       },
-      columns: { folderId: true, keywords: true, text: true, flowId: true },
+      columns: {
+        folderId: true,
+        keywords: true,
+        conditions: true,
+        text: true,
+        flowId: true,
+      },
     })
+
+    // Keywords, reply text and flow are template content; the status toggle
+    // and the folder are the installer's.
+    if (existing) {
+      await assertResourceEditable({
+        workspaceId: ctx.workspaceId,
+        resourceKind: "automatedResponse",
+        resourceIds: [ctx.id],
+        changedKeys: changedKeysOf(existing, data),
+        referencedParents: data.flowId
+          ? [{ kind: "flow", resourceId: data.flowId }]
+          : [],
+        tx,
+      })
+    }
 
     // `text` and `flowId` are mutually exclusive: setting one nulls the
     // other, mirroring `create`'s behavior. Validate `flowId` belongs to
@@ -297,17 +473,25 @@ class AutomatedResponseService extends BaseService {
       nextText = null
     }
 
-    const { keywords: _keywords, ...restData } = data
+    const { keywords: _keywords, conditions: _conditions, ...restData } = data
     const updatePayload: Partial<AutomatedResponseModel> = {
       ...restData,
       text: nextText,
       flowId: nextFlowId,
     }
-    // Only touch the `keywords` column when the caller actually supplied a
-    // value — omitting it must never wipe existing keywords.
-    const nextKeywords = data.keywords?.map((m) => m.value)
-    if (nextKeywords !== undefined) {
-      updatePayload.keywords = nextKeywords
+    // Only touch `keywords`/`conditions` when the caller actually supplied
+    // one — omitting both must never wipe what the rule matches on.
+    const nextMatch =
+      data.keywords !== undefined || data.conditions !== undefined
+        ? resolveKeywordRuleMatch(ctx.type, {
+            keywords: data.keywords?.map((m) => m.value),
+            conditions: data.conditions,
+          })
+        : undefined
+    const nextKeywords = nextMatch?.keywords
+    if (nextMatch) {
+      updatePayload.keywords = nextMatch.keywords
+      updatePayload.conditions = nextMatch.conditions
     }
 
     const [updated] = await client
@@ -321,7 +505,6 @@ class AutomatedResponseService extends BaseService {
         ),
       )
       .returning()
-    await this.invalidateCache(ctx.workspaceId)
 
     if (!updated) {
       throw notFoundException("Automated response not found")
@@ -334,21 +517,22 @@ class AutomatedResponseService extends BaseService {
         nextKeywords.some(
           (keyword, index) => keyword !== existing.keywords[index],
         ))
+    const conditionsChanged =
+      nextMatch !== undefined &&
+      !isSameKeywordConditions(
+        nextMatch.conditions,
+        existing?.conditions ?? null,
+      )
     const changed =
       !existing ||
+      conditionsChanged ||
       (data.folderId !== undefined && data.folderId !== existing.folderId) ||
       (nextText !== undefined && nextText !== existing.text) ||
       (nextFlowId !== undefined && nextFlowId !== existing.flowId) ||
       keywordsChanged
 
-    if (!tx && changed) {
-      await this.audit(
-        "update",
-        `updated a keyword automation (#${updated.id})`,
-      )
-    }
-
-    return updated
+    // An open transaction owner audits (or not) itself, as before.
+    return { updated, changed }
   }
 
   async setStatus(
@@ -399,33 +583,53 @@ class AutomatedResponseService extends BaseService {
     ids: string[],
     type: AutomatedResponseType,
     tx?: DatabaseClient,
+    /** An uninstall passes its own installations: their locks stop governing once it commits. */
+    context?: { excludeInstallationIds?: readonly string[] },
   ): Promise<void> {
-    await assertDeletable({
-      workspaceId,
-      resourceKind: "automatedResponse",
-      resourceIds: ids,
-    })
-
-    const client = tx ?? db
-
-    const deleted = await client
-      .delete(automatedResponseModel)
-      .where(
-        and(
-          eq(automatedResponseModel.workspaceId, workspaceId),
-          inArray(automatedResponseModel.id, ids),
-          eq(automatedResponseModel.type, type),
-        ),
-      )
-      .returning({ id: automatedResponseModel.id })
+    const deleted = await withDeleteGuard(
+      {
+        workspaceId,
+        targets: [{ resourceKind: "automatedResponse", resourceIds: ids }],
+        tx,
+        excludeInstallationIds: context?.excludeInstallationIds,
+      },
+      (client) =>
+        this.deleteInTx(client, {
+          workspaceId,
+          ids,
+          type,
+        }),
+    )
     await this.invalidateCache(workspaceId)
 
     if (!tx && deleted.length > 0) {
       await this.audit(
         "delete",
-        `deleted keyword automation${deleted.length > 1 ? "s" : ""} (${deleted.map((row) => `#${row.id}`).join(", ")})`,
+        `deleted keyword automation${deleted.length > 1 ? "s" : ""} (${deleted.map((id) => `#${id}`).join(", ")})`,
       )
     }
+  }
+
+  /**
+   * The delete core (row write only), shared with the template uninstall so
+   * there is one implementation. `type` is omitted by the uninstall, which
+   * never assumes a keyword's type. Returns the ids actually deleted.
+   */
+  async deleteInTx(
+    tx: DatabaseClient,
+    input: { workspaceId: string; ids: string[]; type?: AutomatedResponseType },
+  ): Promise<string[]> {
+    const rows = await tx
+      .delete(automatedResponseModel)
+      .where(
+        and(
+          eq(automatedResponseModel.workspaceId, input.workspaceId),
+          inArray(automatedResponseModel.id, input.ids),
+          input.type ? eq(automatedResponseModel.type, input.type) : undefined,
+        ),
+      )
+      .returning({ id: automatedResponseModel.id })
+    return rows.map((row) => String(row.id))
   }
 
   async invalidateCache(workspaceId: string): Promise<void> {

@@ -1,3 +1,4 @@
+import { ecommerceSettingsService } from "@chatbotx.io/business"
 import { notFound } from "next/navigation"
 
 import { findWebhook } from "@/features/webhooks/queries"
@@ -22,5 +23,13 @@ export default async function UpdateWebhookPage({
     return notFound()
   }
 
-  return <UpdateWebhookForm webhook={webhook} workspaceId={workspaceId} />
+  const storeSource = await ecommerceSettingsService.storeSource(workspaceId)
+
+  return (
+    <UpdateWebhookForm
+      storeSource={storeSource}
+      webhook={webhook}
+      workspaceId={workspaceId}
+    />
+  )
 }

@@ -1,0 +1,48 @@
+{
+  "type": "diff",
+  "version": "10",
+  "dialect": "postgres",
+  "id": "51e8a458-8593-47ef-8492-2d1f3dc72bd6",
+  "prevIds": [
+    "cce19a98-af13-47c9-9045-e27e6b1c5a56",
+    "a61d983a-4350-409d-b68b-1c179a6c8b4c"
+  ],
+  "footprints": [
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "IntegrationWhatsapp",
+        "routingRoles"
+      ],
+      "writes": [
+        "s|col|public.IntegrationWhatsapp.routingRoles",
+        "n|col|public.IntegrationWhatsapp.routingRoles",
+        "e|col|public.IntegrationWhatsapp.routingRoles"
+      ],
+      "reads": [
+        "n|tbl|public.IntegrationWhatsapp",
+        "n|sch|public"
+      ]
+    }
+  ],
+  "deltas": [
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "IntegrationWhatsapp",
+        "name": "routingRoles",
+        "type": "jsonb",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    }
+  ]
+}

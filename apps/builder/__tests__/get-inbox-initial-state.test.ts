@@ -128,6 +128,22 @@ describe("getInboxInitialState", () => {
     })
   })
 
+  test("seeds the messages with the member's conversation scope, so translations outside it are hidden", async () => {
+    mockDeepLinkSeedRequests()
+    const canSeeConversation = vi.fn(async () => false)
+
+    await getInitialState({
+      workspaceId: "workspace-1",
+      conversationId: DEEP_LINK_ID,
+      canSeeConversation,
+    })
+
+    expect(mockListMessages).toHaveBeenCalledWith(
+      expect.objectContaining({ conversationId: DEEP_LINK_ID }),
+      { includeTranslation: true, canSeeConversation },
+    )
+  })
+
   test("moves a found URL conversation to the top", async () => {
     const target = makeConversation("2")
     mockListConversations.mockResolvedValue({

@@ -1,3 +1,4 @@
+import { normalizeCommentId } from "@chatbotx.io/integration-instagram/schema"
 import type { Context, Oauth2AuthValue, Oauth2Config } from "@chatbotx.io/sdk"
 import { z } from "zod"
 
@@ -17,6 +18,11 @@ export type InstagramAuthValue = Oauth2AuthValue & {
     igName: string
     pageId: string
     version: string
+    /**
+     * Permissions the person granted at connect; absent or null when the
+     * platform did not report them. Read by the publish-state capture.
+     */
+    grantedScopes?: string[] | null
   }
 }
 
@@ -137,7 +143,7 @@ export const instagramMessageSchema = z.object({
 export type InstagramMessage = z.infer<typeof instagramMessageSchema>
 
 export const instagramReadSchema = z.object({
-  watermark: z.number(),
+  watermark: z.number().optional(),
 })
 
 export const instagramPostbackSchema = z.object({
@@ -183,15 +189,20 @@ export type InstagramPageEntry = z.infer<typeof instagramPageEntrySchema>
 
 // Instagram only fires comment webhooks for new comments (no edit/delete events).
 // The "text" field holds the comment body; "from" is always present.
-export const instagramCommentEventValueSchema = z.object({
-  id: z.string(),
-  text: z.string().optional(),
-  from: z.object({ id: z.string(), username: z.string().optional() }),
-  media: z
-    .object({ id: z.string(), media_product_type: z.string().optional() })
-    .optional(),
-  parent_id: z.string().optional(),
-})
+// Facebook Login for Business / Unified Login deliver the comment id as
+// `comment_id`; Instagram Login uses `id`. `normalizeCommentId` maps it to `id`.
+export const instagramCommentEventValueSchema = z.preprocess(
+  normalizeCommentId,
+  z.object({
+    id: z.string(),
+    text: z.string().optional(),
+    from: z.object({ id: z.string(), username: z.string().optional() }),
+    media: z
+      .object({ id: z.string(), media_product_type: z.string().optional() })
+      .optional(),
+    parent_id: z.string().optional(),
+  }),
+)
 export type InstagramCommentEventValue = z.infer<
   typeof instagramCommentEventValueSchema
 >

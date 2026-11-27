@@ -22,7 +22,7 @@ export const webshopPublicRouter = {
       path: "/v1/webshop/link",
       summary: "Get shop link",
       description:
-        "Returns a link to the web shop signed for one customer: they browse, fill their cart and place a cash-on-delivery order as that contact, and get the order messages in their conversation. Without a contact it is a preview link that cannot order (any token may request one); a link for a contact can change that contact's cart and place orders, so it needs a token with write permission, not a read-only one. Optionally opens on a product's page (`products.list`), a vendor (`productVendors.list`), a category (`productCategories.list`) or the cart. For a bot button, flow, broadcast or sequence message, use `buttonUrl`: it carries `{{shop_token}}`, signed for whoever receives it.",
+        "Returns a link to the web shop signed for one customer: they browse, fill their cart and place a cash-on-delivery order as that contact, and get the order messages in their conversation. Without a contact it is a preview link that cannot order (any token may request one); a link for a contact can change that contact's cart and place orders, so it needs a token with write permission, not a read-only one. Optionally opens on a product's page (`products.list`), a vendor (`productVendors.list`), a category (`productCategories.list`), the cart (`page: cart`) or the list of categories (`page: categories`). For a bot button, flow, broadcast or sequence message, use `buttonUrl`: it carries `{{shop_token}}`, signed for whoever receives it.",
       tags: ["Web shop"],
     })
     .input(getWebshopLinkPublicRequest)

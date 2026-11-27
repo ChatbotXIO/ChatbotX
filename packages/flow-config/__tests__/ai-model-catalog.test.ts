@@ -43,4 +43,16 @@ describe("AI extract data model catalog", () => {
       "whisper-1",
     )
   })
+
+  test("defaults Muse steps to muse-spark-1.3", () => {
+    expect(aiGenerateTextDefaultFn({ provider: "muse" }).model).toBe(
+      "muse-spark-1.3",
+    )
+    expect(aiExtractDataDefaultFn({ provider: "muse" }).model).toBe(
+      "muse-spark-1.3",
+    )
+    expect(AIAnalyzeImageDefaultFn({ provider: "muse" }).model).toBe(
+      "muse-spark-1.3",
+    )
+  })
 })

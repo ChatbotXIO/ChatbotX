@@ -1,6 +1,10 @@
+import type { ConversationAttributes } from "@chatbotx.io/database/partials"
+import type { ConversationModel } from "@chatbotx.io/database/types"
 import {
   decodeButtonPayload,
+  encodeStepInputSkipPostback,
   type FlowNode,
+  getUserDataStepSchema,
   resolveFlowActionTarget,
   ZALO_POSTBACK_TEXT_PREFIX,
 } from "@chatbotx.io/flow-config"
@@ -8,6 +12,7 @@ import type { IncomingMessage } from "@chatbotx.io/sdk"
 import { normalizeError } from "universal-error-normalizer"
 import { detectFlowVersion } from "../../lib/db"
 import { logger } from "../../lib/logger"
+import { resolveStepChallengeTarget } from "./step-challenge-target"
 
 export type FlowActionKind = "postback" | "quickReply"
 
@@ -95,6 +100,68 @@ export const resolvePostbackButtonLabel = async (props: {
     logger.warn(
       { error: normalizeError(error), postbackAction, workspaceId },
       "Could not resolve button label for postback message",
+    )
+    return null
+  }
+}
+
+const skipLabelStepSchema = getUserDataStepSchema.pick({
+  stepType: true,
+  skipButtonLabel: true,
+})
+
+/**
+ * Zalo and Telegram deliver a Skip tap as a text message whose body is the raw
+ * payload, with no button title (see `resolvePostbackButtonLabel`). Returns
+ * the label the contact actually pressed, read from the step the pending
+ * challenge belongs to, so the inbox shows it instead of the payload.
+ *
+ * Returns null (leaving the raw text untouched) when the channel already sent
+ * a title, the text is not the payload echo, or the challenge or step can no
+ * longer be resolved: a stale tap must never fail the message save.
+ */
+export const resolveStepInputSkipLabel = async (props: {
+  challengeId: string
+  conversation: Pick<ConversationModel, "workspaceId" | "additionalAttributes">
+  message: IncomingMessage | null
+  buttonTitle: string | null | undefined
+}): Promise<string | null> => {
+  const { challengeId, conversation, message, buttonTitle } = props
+
+  const payload = encodeStepInputSkipPostback(challengeId)
+  const isPayloadEcho =
+    message?.text === payload ||
+    message?.text === `${ZALO_POSTBACK_TEXT_PREFIX}${payload}`
+  if (buttonTitle || !isPayloadEcho) {
+    return null
+  }
+
+  const challenge = (
+    conversation.additionalAttributes as ConversationAttributes | undefined
+  )?.challenge
+  if (
+    challenge?.type !== "step" ||
+    challenge.data.challengeId !== challengeId
+  ) {
+    return null
+  }
+
+  try {
+    const target = await resolveStepChallengeTarget({
+      challenge,
+      workspaceId: conversation.workspaceId,
+    })
+    const step = target.details.steps?.find(
+      (candidate) => candidate.id === challenge.data.stepId,
+    )
+    // Only the label is read, so an unrelated field that fails the full step
+    // schema cannot hide it.
+    const parsed = skipLabelStepSchema.safeParse(step)
+    return parsed.success ? parsed.data.skipButtonLabel.trim() || null : null
+  } catch (error) {
+    logger.warn(
+      { err: error, challengeId },
+      "Could not resolve the Skip button label for the tap message",
     )
     return null
   }

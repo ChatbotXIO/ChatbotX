@@ -19,9 +19,11 @@ import {
   NO_TOPIC_FIXED_VALUE,
   type OperatorType,
   operatorTypes,
+  type PipelineItemFilterAttribute,
 } from "@chatbotx.io/database/partials"
 import type { SelectOption } from "@chatbotx.io/ui/components/form/select-field"
 import { languageOptions } from "@/features/integration-whatsapp/message-templates/type"
+import type { PipelineOptionsResponse } from "@/features/pipelines/schema/resource"
 import {
   allContinentOptions,
   allCountryOptions,
@@ -39,6 +41,7 @@ import {
   isFieldOnSurface,
 } from "../schema"
 import type { ResolveFilterValueLabelsResponse } from "../schema/value-labels"
+import { buildPipelineItemConfigs } from "./pipeline-item-filter-config"
 
 const isContactActivityTrackedField = (field: string): boolean =>
   CONTACT_ACTIVITY_TRACKED_FIELDS.some((tracked) => tracked === field)
@@ -66,6 +69,13 @@ export type FieldConfig = {
   topicId?: string
   /** Set for dynamic "Gamification scores" configs; identifies the leaderboard. */
   leaderboardId?: string
+  /** Set for dynamic "pipeline item" configs: which attribute of which pipeline (`null` = any). */
+  pipelineItem?: {
+    attribute: PipelineItemFilterAttribute
+    pipelineId: string | null
+  }
+  /** Operator labels that replace the generic ones for this field only. */
+  operatorLabels?: Partial<Record<OperatorType, string>>
   /** Display label override (custom field / coupon topic name); static fields fall back to i18n. */
   label?: string
   formField: FormFieldType
@@ -104,6 +114,7 @@ export type ContactFilterFieldGroup =
   | "systemFields"
   | "topicCoupon"
   | "leaderboard"
+  | "pipeline"
   | "customFields"
   | "botFields"
   | "ctwaAds"
@@ -234,6 +245,7 @@ const resolveContactFilterOptions = (
     flowVersionOptions: SelectOption[]
     broadcastOptions: SelectOption[]
     sequenceOptions: SelectOption[]
+    pollOptions: SelectOption[]
     reflinkOptions: SelectOption[]
     assigneeOptions: SelectOption[]
     channelPostOptions: SelectOption[]
@@ -282,6 +294,7 @@ const resolveContactFilterOptions = (
     // topics carry the one fixed choice that is not a topic row.
     case "keywords":
     case "whatsappFlows":
+    case "ads":
       return
     case "emailTopics":
       return [
@@ -291,6 +304,8 @@ const resolveContactFilterOptions = (
       return ctx.broadcastOptions
     case "sequences":
       return ctx.sequenceOptions
+    case "polls":
+      return ctx.pollOptions
     case "reflinks":
       return ctx.reflinkOptions
     case "assignees":
@@ -383,7 +398,7 @@ const CONTACT_FILTER_GROUP_FIELDS = {
     "emailOpened",
     "emailClicked",
   ],
-  ctwaAds: ["fromCtwaAd", "fromGoogleAd", "ctwaConversion"],
+  ctwaAds: ["fromCtwaAd", "fromGoogleAd", "clickedAd", "ctwaConversion"],
   systemTime: [
     "isWithinWorkingHours",
     "currentDate",
@@ -410,6 +425,9 @@ const CONTACT_FILTER_GROUP_FIELDS = {
   // Populated dynamically — each leaderboard gets its own FieldConfig with
   // group "leaderboard" set directly (see leaderboardConfigs below).
   leaderboard: [],
+  // Populated dynamically — pipeline-item configs set group "pipeline"
+  // directly (see buildPipelineItemConfigs).
+  pipeline: [],
   customFields: ["customFields"],
   // Populated dynamically (opt-in only — see `getFieldConfigs`'s
   // `includeBotFields`) — each workspace bot field gets its own FieldConfig
@@ -448,6 +466,7 @@ export const getFieldConfigs = ({
   flowVersionOptions,
   broadcastOptions = [],
   sequenceOptions = [],
+  pollOptions = [],
   reflinkOptions = [],
   assigneeOptions = [],
   channelPostOptions = [],
@@ -456,6 +475,7 @@ export const getFieldConfigs = ({
   workingHourOptions = [],
   couponTopicOptions = [],
   leaderboardOptions = [],
+  pipelineOptions = [],
   productOptions = [],
   botFields = [],
   includeBotFields = false,
@@ -469,6 +489,8 @@ export const getFieldConfigs = ({
   flowVersionOptions: SelectOption[]
   broadcastOptions?: SelectOption[]
   sequenceOptions?: SelectOption[]
+  /** Workspace polls, the "Voted on the poll" values. */
+  pollOptions?: SelectOption[]
   reflinkOptions?: SelectOption[]
   assigneeOptions?: SelectOption[]
   channelPostOptions?: SelectOption[]
@@ -481,6 +503,8 @@ export const getFieldConfigs = ({
   couponTopicOptions?: SelectOption[]
   /** Workspace leaderboards, each offered as a "Gamification scores" field. */
   leaderboardOptions?: SelectOption[]
+  /** Workspace pipelines with stages, each offered as "pipeline item" fields. */
+  pipelineOptions?: PipelineOptionsResponse["data"]
   /** Workspace products, for the purchase and cart fields. */
   productOptions?: SelectOption[]
   /** Workspace bot (account) fields — only read when `includeBotFields` is true. */
@@ -532,6 +556,7 @@ export const getFieldConfigs = ({
         flowVersionOptions,
         broadcastOptions,
         sequenceOptions,
+        pollOptions,
         reflinkOptions,
         assigneeOptions,
         channelPostOptions,
@@ -606,6 +631,15 @@ export const getFieldConfigs = ({
     ...botFieldConfigs,
     ...couponTopicConfigs,
     ...leaderboardConfigs,
+    // The flow Condition step's stored schema drops `attribute`/`pipelineId`,
+    // so a pipeline condition could never match there: not offered.
+    ...(surface === "flowCondition"
+      ? []
+      : buildPipelineItemConfigs({
+          t,
+          pipelines: pipelineOptions,
+          stageLabels: filterValueLabels?.pipelineStages,
+        })),
   ]
 }
 

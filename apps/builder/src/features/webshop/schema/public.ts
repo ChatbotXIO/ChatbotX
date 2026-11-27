@@ -10,9 +10,11 @@ export const getWebshopLinkPublicRequest = z.object({
       "The customer the link is for, as id:123, email:… or phone:…; their cart and orders are kept under it. Omit for a preview link that browses the shop but cannot order. Get ids from `contacts.list`.",
     ),
   page: z
-    .enum(["cart"])
+    .enum(["cart", "categories"])
     .optional()
-    .describe("`cart` opens the customer's cart, ready to check out."),
+    .describe(
+      "`cart` opens the customer's cart, ready to check out; `categories` opens the list of the shop's categories. Omit to open the shop's front page.",
+    ),
   productId: zodBigintAsString()
     .optional()
     .describe(

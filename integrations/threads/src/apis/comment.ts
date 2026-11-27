@@ -213,6 +213,45 @@ export const getReplyGifUrl = async (
   return response.gif_url || null
 }
 
+type ReplyAttachmentResponse = {
+  gif_url?: string
+  media_type?: string
+}
+
+export type ThreadsReplyAttachment = {
+  gifUrl: string | null
+  mediaType: string | null
+}
+
+/**
+ * What a reply carries, in one lookup: its `gif_url` (a GIF reply is still
+ * `TEXT_POST` by `media_type`) and its `media_type` (`IMAGE`,
+ * `CAROUSEL_ALBUM`, `VIDEO` for a reply with a photo or video). The reply
+ * webhook carries neither.
+ */
+export const getReplyAttachment = async (
+  auth: ThreadsAuthValue,
+  replyId: string,
+): Promise<ThreadsReplyAttachment> => {
+  const version = getVersion(auth)
+  const endpoint = `${version}/${replyId}`
+
+  const response = await rescue(
+    endpoint,
+    async () =>
+      await threadsGraphClient.get<ReplyAttachmentResponse>(endpoint, {
+        searchParams: {
+          fields: "gif_url,media_type",
+          access_token: auth.tokens.accessToken,
+        },
+      }),
+  )
+  return {
+    gifUrl: response.gif_url || null,
+    mediaType: response.media_type || null,
+  }
+}
+
 export type ThreadsConversationReply = {
   id: string
   text?: string
@@ -220,6 +259,7 @@ export type ThreadsConversationReply = {
   username?: string
   replied_to?: { id: string }
   is_reply_owned_by_me?: boolean
+  hide_status?: string
 }
 
 export type ThreadsConversationPage = {
@@ -247,7 +287,8 @@ export const listPostConversation = (props: {
       paging?: { cursors?: { after?: string }; next?: string }
     }>(endpoint, {
       searchParams: {
-        fields: "id,text,timestamp,username,replied_to,is_reply_owned_by_me",
+        fields:
+          "id,text,timestamp,username,replied_to,is_reply_owned_by_me,hide_status",
         reverse: "true",
         limit: "100",
         access_token: auth.tokens.accessToken,

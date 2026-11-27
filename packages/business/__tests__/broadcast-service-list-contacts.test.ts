@@ -9,6 +9,13 @@ const mocks = vi.hoisted(() => ({
   dispatchAuditRecord: vi.fn().mockResolvedValue(undefined),
 }))
 
+// The service queues draft cleanups; these suites never reach that path.
+vi.mock("@chatbotx.io/worker-config", () => ({
+  ScheduleJobData: {},
+  broadcastDraftPurgeJobId: vi.fn(),
+  scheduleQueue: { add: vi.fn() },
+}))
+
 vi.mock("@chatbotx.io/database/client", () => ({
   and: (...conditions: unknown[]) => ({ and: conditions }),
   db: {
@@ -51,6 +58,12 @@ vi.mock("@chatbotx.io/database/utils", () => ({
   escapeLikePattern: (value: string) => value,
   getPaginationWithDefaults: vi.fn(),
   likeContains: (value: string) => `%${value}%`,
+}))
+
+// The filter extractor reads the real flow-config registry, which this file
+// mocks partially; it has its own suite (template-contact-filter-guard).
+vi.mock("../src/template/uninstall-references", () => ({
+  contactFilterParentsOf: vi.fn(() => []),
 }))
 
 vi.mock("@chatbotx.io/flow-config", () => ({
@@ -323,5 +336,67 @@ describe("broadcastService.listContactsPage", () => {
       workspaceId: "ws-1",
       ids: ["ci-1"],
     })
+  })
+
+  test("passes a contact-info capture event to the analytics lookup and keeps only contact inboxes that still exist", async () => {
+    mocks.where.mockResolvedValueOnce([{ id: "b-1" }])
+    mocks.getContacts.mockResolvedValueOnce({
+      contactInboxIds: ["ci-1", "ci-deleted"],
+      contactEventMap: new Map([
+        [
+          "ci-1",
+          {
+            contactId: "contact-1",
+            occurredAt: "2026-01-01T00:00:00.000Z",
+            conversationId: "conv-1",
+          },
+        ],
+        [
+          "ci-deleted",
+          {
+            contactId: "contact-2",
+            occurredAt: "2026-01-02T00:00:00.000Z",
+            conversationId: "conv-2",
+          },
+        ],
+      ]),
+      total: 2,
+    })
+    mocks.findManyByIds.mockResolvedValueOnce([
+      {
+        id: "ci-1",
+        sourceId: "src-1",
+        channel: "whatsapp",
+        conversation: { id: "conv-1" },
+        contact: {
+          id: "contact-1",
+          firstName: "Ada",
+          lastName: null,
+          fullName: "Ada",
+          avatar: null,
+        },
+      },
+    ])
+
+    const result = await broadcastService.listContactsPage({
+      workspaceId: "ws-1",
+      broadcastId: "b-1",
+      eventType: "contactInfo:phoneCaptured",
+      page: 2,
+      perPage: 20,
+    })
+
+    expect(mocks.getContacts).toHaveBeenCalledWith({
+      workspaceId: "ws-1",
+      broadcastId: "b-1",
+      eventType: "contactInfo:phoneCaptured",
+      page: 2,
+      perPage: 20,
+    })
+    // The repository already joins existing contact inboxes before paging; a
+    // contact inbox deleted between that read and this lookup still drops out
+    // here rather than being emitted as an empty row (a rare race).
+    expect(result.data.map((row) => row.contactInboxId)).toEqual(["ci-1"])
+    expect(result.total).toBe(2)
   })
 })

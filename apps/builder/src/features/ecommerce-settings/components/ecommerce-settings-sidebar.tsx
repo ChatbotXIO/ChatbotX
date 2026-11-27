@@ -4,6 +4,7 @@ import { buttonVariants } from "@chatbotx.io/ui/components/ui/button"
 import { cn } from "@chatbotx.io/ui/lib/utils"
 import Link from "next/link"
 import { useTranslations } from "next-intl"
+import { LinkPendingSpinner } from "@/components/navigation-pending"
 import {
   type EcommerceSettingsSection,
   ecommerceSettingsSections,
@@ -16,9 +17,11 @@ import {
 export function EcommerceSettingsSidebar({
   workspaceId,
   active,
+  hiddenSections = [],
 }: {
   workspaceId: string
   active: EcommerceSettingsSection
+  hiddenSections?: readonly EcommerceSettingsSection[]
 }) {
   const t = useTranslations()
   return (
@@ -26,21 +29,25 @@ export function EcommerceSettingsSidebar({
       <div className="mb-2 px-2">
         <h2 className="font-semibold text-sm">{t("settings.title")}</h2>
       </div>
-      <nav className="flex flex-col gap-1">
-        {ecommerceSettingsSections.options.map((section) => (
-          <Link
-            aria-current={section === active ? "page" : undefined}
-            className={cn(
-              buttonVariants({ variant: "ghost" }),
-              "w-full justify-start",
-              section === active && "bg-accent",
-            )}
-            href={`/space/${workspaceId}/ecommerce-settings/${section}`}
-            key={section}
-          >
-            {t(`ecommerceSettings.tabs.${section}`)}
-          </Link>
-        ))}
+      {/* Shows a spinner on the clicked entry instead of the page skeleton. */}
+      <nav className="flex flex-col gap-1" data-local-navigation-pending="">
+        {ecommerceSettingsSections.options
+          .filter((section) => !hiddenSections.includes(section))
+          .map((section) => (
+            <Link
+              aria-current={section === active ? "page" : undefined}
+              className={cn(
+                buttonVariants({ variant: "ghost" }),
+                "w-full justify-start",
+                section === active && "bg-accent",
+              )}
+              href={`/space/${workspaceId}/ecommerce-settings/${section}`}
+              key={section}
+            >
+              {t(`ecommerceSettings.tabs.${section}`)}
+              <LinkPendingSpinner />
+            </Link>
+          ))}
       </nav>
     </aside>
   )

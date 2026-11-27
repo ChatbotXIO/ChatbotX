@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation"
 import EditAutomatedResponseForm from "@/features/automated-response/edit-automated-response-form"
 import { findAutomatedResponse } from "@/features/automated-response/queries"
+import { LockedEditorGuard } from "@/features/templates/components/locked-editor-guard"
 import { withWorkspaceIdAndIdSchema } from "@/features/workspaces/schema/resource"
 
 export default async function EditAutomatedResponePage({
@@ -24,10 +25,16 @@ export default async function EditAutomatedResponePage({
   }
 
   return (
-    <EditAutomatedResponseForm
-      automatedResponse={automatedResponse}
-      type="inbound"
+    <LockedEditorGuard
+      resourceId={id}
+      resourceKind="automatedResponse"
       workspaceId={workspaceId}
-    />
+    >
+      <EditAutomatedResponseForm
+        automatedResponse={automatedResponse}
+        type="inbound"
+        workspaceId={workspaceId}
+      />
+    </LockedEditorGuard>
   )
 }

@@ -7,6 +7,7 @@ const mocks = vi.hoisted(() => ({
   findAttributionByContactInbox: vi.fn(),
   findAttributionByCtwaClid: vi.fn(),
   findAttributionByAdReferral: vi.fn(),
+  findLatestAdTouchId: vi.fn().mockResolvedValue(null),
   findBySourceEventId: vi.fn(),
   findWorkspaceRule: vi.fn(),
   findWorkspaceFacebookAdsIntegration: vi.fn(),
@@ -33,6 +34,9 @@ vi.mock("@chatbotx.io/database/repositories", () => ({
     findAttributionByAdReferral: mocks.findAttributionByAdReferral,
     findBySourceEventId: mocks.findBySourceEventId,
     insertIgnoreDuplicate: mocks.insertIgnoreDuplicate,
+  },
+  contactReferralEventRepository: {
+    findLatestAdTouchId: mocks.findLatestAdTouchId,
   },
   adsConversionRuleRepository: {
     create: mocks.create,
@@ -1975,6 +1979,49 @@ describe("AdsConversionService.evaluateTemplateSent — messenger/instagram (Ame
         templateId: "mt-1",
       }),
     ).rejects.toThrow(NOT_SUPPORTED_FOR_FACEBOOK)
+  })
+
+  test("links the conversion to the ad touch of its click id", async () => {
+    mocks.findAttributionByContactInbox.mockResolvedValue({
+      id: "101",
+      referral: { adId: "ad-1", ctwaClid: "clid-1" },
+      wabaId: "waba-1",
+    })
+    mocks.findLatestAdTouchId.mockResolvedValueOnce("touch-1")
+    mocks.listByWorkspace.mockResolvedValue([
+      {
+        id: "304",
+        workspaceId: "1",
+        channel: "whatsapp",
+        integrationWhatsappId: "201",
+        eventType: "lead",
+        trigger: { type: "templateSent", templateIds: ["template-1"] },
+        enabled: true,
+      },
+    ])
+
+    await adsConversionService.evaluateTemplateSent({
+      workspaceId: "1",
+      channel: "whatsapp",
+      integrationId: "201",
+      contactInboxId: "101",
+      templateId: "template-1",
+    })
+
+    expect(mocks.findLatestAdTouchId).toHaveBeenCalledWith(
+      {
+        workspaceId: "1",
+        contactInboxId: "101",
+        provider: "meta",
+        clickId: "clid-1",
+        adId: "ad-1",
+      },
+      expect.anything(),
+    )
+    expect(mocks.insertIgnoreDuplicate).toHaveBeenCalledWith(
+      expect.objectContaining({ referralEventId: "touch-1" }),
+      undefined,
+    )
   })
 
   test("whatsapp regression: unchanged ctwaClid-gated behavior still works after the channel dispatch was added", async () => {

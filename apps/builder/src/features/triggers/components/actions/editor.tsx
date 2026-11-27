@@ -9,10 +9,13 @@ import { useTranslations } from "next-intl"
 import { SetCustomField } from "@/features/contacts/components/add-custom-field-dialog"
 import { CustomFieldSelect } from "@/features/custom-fields/custom-field-select"
 import { useFlowSelectOptions } from "@/features/flows/provider/flow-hook"
+import { FlowNodePickerFields } from "@/features/flows/react-flow/steps/start-external-node/flow-node-picker-fields"
 import { GoogleAdsConversionFields } from "@/features/integration-google-ads/components/google-ads-conversion-fields"
 import { MetaCapiEventFields } from "@/features/meta-conversions/components/meta-capi-event-fields"
 import { useTagSelectOptions } from "@/features/tags/provider/tag-hook"
+import { PipelineActionEditor } from "./pipeline-action-editor"
 import { GoogleSheetAction } from "./run-google-sheet"
+import { SequenceActionEditor } from "./sequence-action-editor"
 
 export const ActionEditor = ({
   parentName,
@@ -36,6 +39,9 @@ export const ActionEditor = ({
         />
       )
     }
+    case triggerActions.enum.addSequence:
+    case triggerActions.enum.removeSequence:
+      return <SequenceActionEditor parentName={parentName} />
     case triggerActions.enum.setCustomField:
       return (
         <div className="flex flex-col gap-4">
@@ -60,6 +66,10 @@ export const ActionEditor = ({
           required={true}
         />
       )
+    case triggerActions.enum.startExternalStep:
+      return <FlowNodePickerFields parentName={parentName} />
+    case triggerActions.enum.pipeline:
+      return <PipelineActionEditor parentName={parentName} />
     case triggerActions.enum.transferConversationToHuman:
       return (
         <SwitchField

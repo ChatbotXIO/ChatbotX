@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import type { UseFormReturn } from "react-hook-form"
 import { toast } from "sonner"
+import { AI_MODERATION_DEFAULTS } from "@/features/shared/comment-automation/lib/ai-moderation-defaults"
 import { createThreadsCommentAction } from "../actions/create-threads-comment.action"
 import {
   type CreateThreadsCommentRequest,
@@ -28,6 +29,7 @@ const defaultValues = {
     replyToUsersWhoCommentedOnOtherPosts: true,
     ignoreCommentReplies: true,
     trackUserTags: false,
+    onlyCommentsWithImage: false,
   },
   hideComments: {
     all: false,
@@ -38,6 +40,7 @@ const defaultValues = {
     hasEmoji: false,
     keywords: [],
     showCommentsAfter: "none" as const,
+    aiModeration: AI_MODERATION_DEFAULTS,
   },
   replyAfter: { type: "immediately" as const, value: 0 },
 }

@@ -23,6 +23,7 @@ import {
   THREAD_CONTROL_NOT_ESCALATION_CODE,
 } from "../lib/error-mapper"
 import { logger } from "../lib/logger"
+import { readWhatsappOriginErrorDetail } from "../lib/origin-error"
 import { resolveRecipientParams } from "../lib/recipient"
 import type { WhatsappAuthValue } from "../schema"
 
@@ -70,8 +71,9 @@ const agentMarkAsRead: ConversationHandlers<WhatsappAuthValue>["agentMarkAsRead"
 /**
  * The owner role after our own successful action, so the UI can name it:
  * - `take`: only the escalation partner may take (Meta error `2494191`
- *   otherwise), so after a take we ARE escalation — which also hides Pass,
- *   since escalation cannot pass to itself;
+ *   otherwise), so after a take we ARE escalation — which is why the pass
+ *   dialog then drops the escalation target: an untargeted pass by the
+ *   escalation partner is refused (Meta E-7), a targeted one is valid;
  * - `pass`: the target (Meta's default is the escalation partner);
  * - `release`: the thread is idle and has no owner.
  */
@@ -91,8 +93,9 @@ const updateThreadControl: ConversationHandlers<WhatsappAuthValue>["updateThread
       data: { contact, action, targetRole, metadata },
     } = props
 
+    const phoneNumberId = ctx.auth.metadata.phoneNumber.id
     try {
-      await postThreadControl(
+      const { requestId } = await postThreadControl(
         ctx.auth,
         buildThreadControlBody({
           recipient: resolveRecipientParams(contact),
@@ -101,8 +104,35 @@ const updateThreadControl: ConversationHandlers<WhatsappAuthValue>["updateThread
           metadata,
         }),
       )
+      // Meta's request id is what its support asks for (Partner Testing
+      // Guide §2.2 / §7): keep it on every successful call.
+      logger.info(
+        {
+          action,
+          targetRole,
+          hasMetadata: Boolean(metadata),
+          phoneNumberId,
+          requestId,
+        },
+        "Whatsapp thread_control applied",
+      )
     } catch (error) {
-      throw toThreadControlChannelError(action, mapToChannelError(error))
+      const channelError = mapToChannelError(error)
+      // Meta's fbtrace_id is what its support asks for on a failed call.
+      logger.warn(
+        {
+          err: channelError,
+          action,
+          targetRole,
+          phoneNumberId,
+          code: channelError.code,
+          fbtraceId: readWhatsappOriginErrorDetail(
+            channelError.getOriginError(),
+          ).fbtraceId,
+        },
+        "Whatsapp thread_control refused",
+      )
+      throw toThreadControlChannelError(action, channelError)
     }
     return { ownerRole: OWNER_ROLE_AFTER_ACTION[action](targetRole) }
   }

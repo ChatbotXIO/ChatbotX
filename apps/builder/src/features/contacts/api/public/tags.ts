@@ -1,4 +1,4 @@
-import { contactService, tagService } from "@chatbotx.io/business"
+import { tagService } from "@chatbotx.io/business"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
 import { publicTagResource } from "@/features/tags/schema/resource"
@@ -9,10 +9,12 @@ import {
   possibleErrorsOnMutatingResource,
 } from "@/lib/orpc/orpc-error-helper"
 import { publicContactIdentifier } from "@/lib/public-api/contact-identifier"
+import { contactIdFor } from "@/lib/public-api/member-scope"
 import { workspaceTokenAuthAPIForScope } from "@/orpc"
 import { listContactTags } from "../../lib/list-contact-tags"
 import {
   addTagsByNamePublicRequest,
+  removeTagsByNamePublicRequest,
   setAllContactTagsPublicRequest,
 } from "../../schema/public/tags"
 
@@ -27,7 +29,13 @@ export const contactsTagsPublicRouter = {
       description:
         "Use this to inspect tags attached to a contact after resolving its identifier with `contacts.get`. Call `contacts.addTags` to attach more tags or `tags.list` to discover available tags.",
       tags: ["Contacts"],
-      spec: mcpSpec({ visibility: "default" }),
+      spec: mcpSpec({
+        destructiveHint: false,
+        idempotentHint: true,
+        openWorldHint: false,
+        readOnlyHint: true,
+        visibility: "default",
+      }),
     })
     .input(
       z.object({
@@ -37,10 +45,7 @@ export const contactsTagsPublicRouter = {
     .output(z.object({ data: z.array(publicTagResource) }))
     .errors(possibleErrorsOnFindingResource)
     .handler(async ({ context, input }) => {
-      const contactId = await contactService.resolveIdByIdentifier({
-        identifier: input.identifier,
-        workspaceId: context.workspace.id,
-      })
+      const contactId = await contactIdFor(context, input.identifier)
       return await listContactTags({
         workspaceId: context.workspace.id,
         contactId,
@@ -71,10 +76,7 @@ export const contactsTagsPublicRouter = {
     )
     .errors(possibleErrorsOnMutatingResource)
     .handler(async ({ context, input }) => {
-      const contactId = await contactService.resolveIdByIdentifier({
-        identifier: input.identifier,
-        workspaceId: context.workspace.id,
-      })
+      const contactId = await contactIdFor(context, input.identifier)
       await tagService.attachToContact({
         workspaceId: context.workspace.id,
         contactId,
@@ -106,10 +108,7 @@ export const contactsTagsPublicRouter = {
     )
     .errors(possibleErrorsOnDeletingResource)
     .handler(async ({ context, input }) => {
-      const contactId = await contactService.resolveIdByIdentifier({
-        identifier: input.identifier,
-        workspaceId: context.workspace.id,
-      })
+      const contactId = await contactIdFor(context, input.identifier)
       await tagService.detachFromContact({
         workspaceId: context.workspace.id,
         contactId,
@@ -126,17 +125,42 @@ export const contactsTagsPublicRouter = {
         'Same as `addTags` but takes tag names instead of ids — existing tags whose name matches are reused, unmatched names are created. Use this when you know the tag name but not its id (call `tags.list` first only if you need the id back). Example: `{"tags":["VIP"]}`.',
       successStatus: 204,
       tags: ["Contacts"],
-      spec: mcpSpec({ visibility: "default" }),
+      spec: mcpSpec({
+        destructiveHint: false,
+        idempotentHint: true,
+        openWorldHint: false,
+        readOnlyHint: false,
+        visibility: "default",
+      }),
     })
     .input(addTagsByNamePublicRequest)
     .errors(possibleErrorsOnMutatingResource)
     .handler(async ({ context, input }) => {
       const workspaceId = context.workspace.id
-      const contactId = await contactService.resolveIdByIdentifier({
-        identifier: input.identifier,
-        workspaceId,
-      })
+      const contactId = await contactIdFor(context, input.identifier)
       await tagService.attachByNamesToContacts({
+        workspaceId,
+        contactIds: [contactId],
+        names: input.tags,
+      })
+    }),
+
+  removeTagsByName: workspaceTokenAuthAPI
+    .route({
+      method: "DELETE",
+      path: "/v1/contacts/{identifier}/tags/by-name",
+      summary: "Remove tags from contact by name",
+      description:
+        'Same as `removeTags` but takes tag names instead of ids; nothing is created. Use this when you know the tag name but not its id. Example: `{"tags":["VIP"]}`.',
+      successStatus: 204,
+      tags: ["Contacts"],
+    })
+    .input(removeTagsByNamePublicRequest)
+    .errors(possibleErrorsOnDeletingResource)
+    .handler(async ({ context, input }) => {
+      const workspaceId = context.workspace.id
+      const contactId = await contactIdFor(context, input.identifier)
+      await tagService.detachByNamesFromContacts({
         workspaceId,
         contactIds: [contactId],
         names: input.tags,
@@ -157,10 +181,7 @@ export const contactsTagsPublicRouter = {
     .errors(possibleErrorsOnMutatingResource)
     .handler(async ({ context, input }) => {
       const workspaceId = context.workspace.id
-      const contactId = await contactService.resolveIdByIdentifier({
-        identifier: input.identifier,
-        workspaceId,
-      })
+      const contactId = await contactIdFor(context, input.identifier)
       await tagService.replaceContactTagsByNames({
         workspaceId,
         contactId,

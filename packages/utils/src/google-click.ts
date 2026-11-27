@@ -307,7 +307,7 @@ export const hasGoogleClick = (
   referral: GoogleClickCarrier | null | undefined,
 ): boolean => Boolean(referral?.gclid || referral?.gbraid)
 
-const readGoogleClick = (
+export const readGoogleClick = (
   referral: GoogleClickCarrier | null | undefined,
 ): { clickIdType: GoogleClickIdType; clickId: string } | null => {
   if (referral?.gclid) {

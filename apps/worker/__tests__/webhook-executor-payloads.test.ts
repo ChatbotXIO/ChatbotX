@@ -139,6 +139,22 @@ const payloadCases = [
     expectedPayload: basePayload("contact_unsubscribed"),
   },
   {
+    eventType: triggerEventTypes.enum.contactBlockedBot,
+    metadata: { channel: "telegram" },
+    expectedPayload: {
+      ...basePayload("contact_blocked_bot"),
+      channel: "telegram",
+    },
+  },
+  {
+    eventType: triggerEventTypes.enum.contactUnblockedBot,
+    metadata: { channel: "telegram" },
+    expectedPayload: {
+      ...basePayload("contact_unblocked_bot"),
+      channel: "telegram",
+    },
+  },
+  {
     eventType: triggerEventTypes.enum.archived,
     metadata: { conversationId: "conversation-1" },
     expectedPayload: {

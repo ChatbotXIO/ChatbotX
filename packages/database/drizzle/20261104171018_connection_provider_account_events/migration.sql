@@ -1,0 +1,5 @@
+ALTER TABLE "Connection" ADD COLUMN "providerEventAt" timestamp(6) with time zone;--> statement-breakpoint
+ALTER TABLE "Connection" ADD COLUMN "providerEventKind" text;--> statement-breakpoint
+CREATE INDEX "IntegrationWhatsapp_wabaId_idx" ON "IntegrationWhatsapp" ("wabaId");--> statement-breakpoint
+ALTER TABLE "Connection" ADD CONSTRAINT "Connection_providerEventKind_check" CHECK ("providerEventKind" IS NULL OR "providerEventKind" IN ('revoked', 'offboarded', 'reconnected'));--> statement-breakpoint
+ALTER TABLE "Connection" DROP CONSTRAINT "Connection_statusReason_check", ADD CONSTRAINT "Connection_statusReason_check" CHECK ("statusReason" IN ('manual', 'workspace_purge', 'trial_expired', 'tenant_suspended', 'token_revoked', 'provider_revoked', 'provider_offboarded', 'refresh_failed', 'verify_failed', 'quota_exceeded', 'orphaned_webhook'));

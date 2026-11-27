@@ -6,18 +6,19 @@ import type {
   InboxModel,
   IntegrationInstagramModel,
 } from "@chatbotx.io/database/types"
+import { mapToChannelError as mapInstagramError } from "@chatbotx.io/integration-instagram"
 import { listInstagramConversations } from "@chatbotx.io/integration-instagram/apis/sync"
+import { mapToChannelError as mapInstagramFacebookError } from "@chatbotx.io/integration-instagram-facebook"
 import { listInstagramFacebookConversations } from "@chatbotx.io/integration-instagram-facebook/apis/sync"
 import { z } from "zod"
 import {
   findCustomerParticipant,
   parseInstagramApiDate,
-  toAppUsageSignal,
   toIncomingContact,
 } from "../../coexist/instagram-normalize"
-import { withInlineRetry } from "../../coexist/messenger-helpers"
 import type { ContactScanAdapter, ContactScanPage } from "../adapter"
-import { classifyGraphSdkError } from "../graph-error"
+import { classifyChannelErrorForScan } from "../graph-error"
+import { peakUsagePercent, readBackoffFromErrorResponse } from "../usage-signal"
 
 type InstagramIntegrationType = IntegrationInstagramModel["type"]
 
@@ -132,6 +133,18 @@ const listConversationsByProviderType: Record<
   },
 }
 
+/**
+ * Each Instagram provider has its own error mapper (the two packages carry
+ * different rate-limit code tables), picked by the integration type.
+ */
+const mapErrorByProviderType: Record<
+  InstagramIntegrationType,
+  typeof mapInstagramError
+> = {
+  instagram: mapInstagramError,
+  facebook: mapInstagramFacebookError,
+}
+
 export const instagramContactScanAdapter: ContactScanAdapter<InstagramContactScanContext> =
   {
     channel: "instagram",
@@ -172,21 +185,16 @@ export const instagramContactScanAdapter: ContactScanAdapter<InstagramContactSca
     },
 
     async listPage({ context, cursor }): Promise<ContactScanPage> {
-      // Wrapped in the same `withInlineRetry` the Messenger adapter uses
-      // (`messenger.ts`'s `listPage`) — this Graph list call was previously
-      // unretried, so a transient 429/5xx would fall straight through to the
-      // engine's outer classifier as a full page loss instead of resolving
-      // inline.
-      const page = await withInlineRetry(() =>
-        listConversationsByProviderType[context.providerType]({
-          igId: context.igId,
-          pageId:
-            context.providerType === "facebook" ? context.pageId : undefined,
-          accessToken: context.accessToken,
-          version: context.version,
-          cursor,
-        }),
-      )
+      // No inline retry: a transient failure or a rate limit is handed back to
+      // the engine, which waits through the queue instead of sleeping here.
+      const page = await listConversationsByProviderType[context.providerType]({
+        igId: context.igId,
+        pageId:
+          context.providerType === "facebook" ? context.pageId : undefined,
+        accessToken: context.accessToken,
+        version: context.version,
+        cursor,
+      })
 
       const entries: ContactScanPage["entries"] = []
       for (const conversation of page.data) {
@@ -207,9 +215,23 @@ export const instagramContactScanAdapter: ContactScanAdapter<InstagramContactSca
       return {
         entries,
         after: page.after,
-        usageSignal: toAppUsageSignal(page.appUsage),
+        usageSignal: page.appUsage
+          ? {
+              usagePercent: peakUsagePercent({
+                callCount: page.appUsage.call_count,
+                totalCputime: page.appUsage.total_cputime,
+                totalTime: page.appUsage.total_time,
+              }),
+            }
+          : null,
       }
     },
 
-    classifyError: classifyGraphSdkError,
+    classifyError: ({ error, context }) =>
+      classifyChannelErrorForScan({
+        error,
+        mapToChannelError: mapErrorByProviderType[context.providerType],
+      }),
+
+    readBackoff: ({ error }) => readBackoffFromErrorResponse(error),
   }

@@ -130,11 +130,16 @@ vi.mock("@/features/contacts/components/remove-contact-tag-dialog", () => ({
 vi.mock("@/features/contacts/export-contact-dialog", () => ({
   ExportContactDialog: passthroughTrigger,
 }))
+vi.mock("@/features/contact-sync/components/contact-sync-dialog", () => ({
+  ContactSyncDialog: ({ open }: { open: boolean }) => (
+    <div data-contact-sync-open={String(open)} />
+  ),
+}))
 
 let container: HTMLDivElement | null = null
 let root: Root | null = null
 
-function render() {
+function render(props: { showContactSync?: boolean } = {}) {
   Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true })
   container = document.createElement("div")
   document.body.append(container)
@@ -150,7 +155,11 @@ function render() {
   act(() => {
     root?.render(
       <QueryClientProvider client={queryClient}>
-        <ContactListAction table={table} workspaceId="ws-1" />
+        <ContactListAction
+          showContactSync={props.showContactSync}
+          table={table}
+          workspaceId="ws-1"
+        />
       </QueryClientProvider>,
     )
   })
@@ -212,5 +221,29 @@ describe("ContactListAction — Import submenu", () => {
     const el = render()
 
     expect(el.textContent).not.toContain("contactScan.menu.automaticScan")
+  })
+  test("offers Sync with AhaChat only when the deployment configured it", () => {
+    expect(render({ showContactSync: true }).textContent).toContain(
+      "contactSync.menu",
+    )
+    act(() => root?.unmount())
+    root = null
+
+    expect(render().textContent).not.toContain("contactSync.menu")
+  })
+
+  test("choosing Sync with AhaChat opens its dialog, rendered outside the menu", () => {
+    const el = render({ showContactSync: true })
+    const dialog = () => el.querySelector("[data-contact-sync-open]")
+    expect(dialog()?.getAttribute("data-contact-sync-open")).toBe("false")
+
+    const item = Array.from(el.querySelectorAll("button")).find((button) =>
+      button.textContent?.includes("contactSync.menu"),
+    )
+    act(() => {
+      item?.click()
+    })
+
+    expect(dialog()?.getAttribute("data-contact-sync-open")).toBe("true")
   })
 })

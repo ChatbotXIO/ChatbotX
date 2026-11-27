@@ -1,8 +1,6 @@
 import { assertLicenseAtStartup } from "@chatbotx.io/business/license-startup"
-import {
-  initErrorTracking,
-  startMetricsServer,
-} from "@chatbotx.io/observability"
+import { initErrorTracking } from "@chatbotx.io/observability"
+import { startMetricsServer } from "@chatbotx.io/observability/metrics-server"
 import { logger } from "./logger"
 
 async function bootstrapApp(): Promise<void> {

@@ -1,13 +1,16 @@
 import type { TriggerEventType } from "@chatbotx.io/database/partials"
 import { webhookQueue } from "@chatbotx.io/worker-config"
-import { BaseEventEmitter } from "../base-emitter"
+import { BaseEventEmitter, postCommentJobId } from "../base-emitter"
 import {
-  COMMERCE_EVENT_TYPE_SET,
+  CONTEXT_FREE_EVENT_TYPE_SET,
   EMITTED_EVENT_TYPE_SET,
 } from "../event-type-registry"
 import { logger } from "../logger"
 import { hasActiveWebhooks } from "./cache"
 import { isWebhookContext } from "./context"
+
+const jobIdOption = (jobId: string | undefined): { jobId?: string } =>
+  jobId ? { jobId } : {}
 
 class WebhookEventEmitterImpl extends BaseEventEmitter {
   protected supportedEventTypes = EMITTED_EVENT_TYPE_SET
@@ -18,7 +21,7 @@ class WebhookEventEmitterImpl extends BaseEventEmitter {
     sourceId?: string,
   ): Promise<boolean> {
     const inWebhookContext =
-      isWebhookContext() || COMMERCE_EVENT_TYPE_SET.has(eventType)
+      isWebhookContext() || CONTEXT_FREE_EVENT_TYPE_SET.has(eventType)
 
     if (!inWebhookContext) {
       logger.debug(
@@ -64,6 +67,7 @@ class WebhookEventEmitterImpl extends BaseEventEmitter {
         },
       },
       {
+        ...jobIdOption(postCommentJobId(eventType, data.metadata)),
         removeOnComplete: true,
         removeOnFail: 100,
       },

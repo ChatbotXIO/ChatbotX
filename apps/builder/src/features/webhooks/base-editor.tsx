@@ -14,6 +14,7 @@ import {
 import { XIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { type ReactNode, useMemo } from "react"
+import { isPipelineItemEventType } from "@/features/conditions/schema/pipeline-item"
 
 export const BaseEditor = ({
   conditionType,
@@ -29,6 +30,10 @@ export const BaseEditor = ({
   const t = useTranslations()
 
   const conditionLabel = useMemo(() => {
+    // Every pipeline event is labelled the same way; listed once, in its schema.
+    if (isPipelineItemEventType(conditionType)) {
+      return t(`trigger.conditions.${conditionType}`)
+    }
     switch (conditionType) {
       case triggerEventTypes.enum.tagApplied:
         return t("trigger.conditions.tagApplied")
@@ -62,16 +67,6 @@ export const BaseEditor = ({
         return t("trigger.conditions.missedAudioCall")
       case triggerEventTypes.enum.callEnded:
         return t("trigger.conditions.callEnded")
-      case triggerEventTypes.enum.ticketCreated:
-        return t("trigger.conditions.ticketCreated")
-      case triggerEventTypes.enum.ticketMovedToStage:
-        return t("trigger.conditions.ticketMovedToStage")
-      case triggerEventTypes.enum.ticketValueChanged:
-        return t("trigger.conditions.ticketValueChanged")
-      case triggerEventTypes.enum.ticketStatusChanged:
-        return t("trigger.conditions.ticketStatusChanged")
-      case triggerEventTypes.enum.ticketPriorityChanged:
-        return t("trigger.conditions.ticketPriorityChanged")
       case triggerEventTypes.enum.subscribedToSequence:
         return t("trigger.conditions.subscribedToSequence")
       case triggerEventTypes.enum.unsubscribedFromSequence:
@@ -92,6 +87,10 @@ export const BaseEditor = ({
         return t("trigger.conditions.orderConcluded")
       case triggerEventTypes.enum.orderCancelled:
         return t("trigger.conditions.orderCancelled")
+      case triggerEventTypes.enum.orderPaid:
+        return t("trigger.conditions.orderPaid")
+      case triggerEventTypes.enum.orderRefunded:
+        return t("trigger.conditions.orderRefunded")
       case triggerEventTypes.enum.categoryAddedToCart:
         return t("trigger.conditions.categoryAddedToCart")
       case triggerEventTypes.enum.productAddedToCart:
@@ -104,6 +103,10 @@ export const BaseEditor = ({
         return t("trigger.conditions.contactReferredANewContact")
       case triggerEventTypes.enum.contactReferredExistingContact:
         return t("trigger.conditions.contactReferredExistingContact")
+      case triggerEventTypes.enum.contactBlockedBot:
+        return t("trigger.conditions.contactBlockedBot")
+      case triggerEventTypes.enum.contactUnblockedBot:
+        return t("trigger.conditions.contactUnblockedBot")
       default:
         break
     }
@@ -121,6 +124,8 @@ export const BaseEditor = ({
         return t("trigger.actions.clearCustomField")
       case triggerActions.enum.startAnotherFlow:
         return t("trigger.actions.startAnotherFlow")
+      case triggerActions.enum.startExternalStep:
+        return t("trigger.actions.startExternalStep")
       case triggerActions.enum.transferConversationToHuman:
         return t("trigger.actions.transferConversationToHuman")
       case triggerActions.enum.runGoogleSheet:

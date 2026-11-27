@@ -5,10 +5,10 @@
   "devDependencies": {
     "@chatbotx.io/typescript-config": "workspace:*",
     "@chatbotx.io/vitest-config": "workspace:*",
-    "@types/node": "^24.10.4",
+    "@types/node": "catalog:",
     "@types/unzipper": "^0.10.11",
-    "typescript": "^5",
-    "vitest": "^3.2.4"
+    "typescript": "catalog:",
+    "vitest": "catalog:"
   },
   "dependencies": {
     "@chatbotx.io/database": "workspace:*",
@@ -16,7 +16,7 @@
     "csv-parse": "^7.0.2",
     "exceljs": "^4.4.0",
     "unzipper": "^0.12.5",
-    "zod": "^4.3.6"
+    "zod": "catalog:"
   },
   "exports": {
     ".": "./src/index.ts",

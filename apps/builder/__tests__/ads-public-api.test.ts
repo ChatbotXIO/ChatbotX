@@ -89,6 +89,11 @@ const messagingAdsConnectionService = {
   revokeAndDisconnect: vi.fn(),
 }
 
+const contactReferralEventService = {
+  listRecentAds: vi.fn(),
+  getAdStats: vi.fn(),
+}
+
 const listCachedMessagingAdAccounts = vi.fn()
 const getCachedMessagingAdAccountDetails = vi.fn()
 const buildMessagingAdsContext = vi.fn()
@@ -127,6 +132,7 @@ vi.mock("@chatbotx.io/business", async () => {
 
   return {
     adsConversionService,
+    contactReferralEventService,
     adsAnalyticsService,
     adsRetargetService,
     startRetargetAudienceSyncShape,
@@ -173,6 +179,94 @@ beforeEach(() => {
 
 test("registers the ads public router under the ads scope", () => {
   expect(scopeArgAtImport).toBe("ads")
+})
+
+describe("GET /v1/ads/referral-ads", () => {
+  const procedure = findProcedure("GET", "/v1/ads/referral-ads")
+
+  test("lists the workspace's recent ads from context, exposing `adId` as `id`", async () => {
+    contactReferralEventService.listRecentAds.mockResolvedValueOnce([
+      { adId: "120", title: "Summer sale" },
+      { adId: "121", title: null },
+    ])
+
+    const result = await procedure.handler?.({
+      context: { workspace: { id: "workspace-1" } },
+      input: { search: "summer", limit: 20 },
+    })
+
+    expect(contactReferralEventService.listRecentAds).toHaveBeenCalledWith({
+      workspaceId: "workspace-1",
+      search: "summer",
+      limit: 20,
+    })
+    expect(result).toEqual({
+      data: [
+        { id: "120", title: "Summer sale" },
+        { id: "121", title: null },
+      ],
+    })
+  })
+
+  test("treats an empty search as no search", async () => {
+    contactReferralEventService.listRecentAds.mockResolvedValueOnce([])
+
+    await procedure.handler?.({
+      context: { workspace: { id: "workspace-1" } },
+      input: { search: "", limit: 50 },
+    })
+
+    expect(contactReferralEventService.listRecentAds).toHaveBeenCalledWith({
+      workspaceId: "workspace-1",
+      search: undefined,
+      limit: 50,
+    })
+  })
+})
+
+describe("GET /v1/ads/referral-stats", () => {
+  const procedure = findProcedure("GET", "/v1/ads/referral-stats")
+
+  test("reports the context workspace's ads for the requested range and channel", async () => {
+    contactReferralEventService.getAdStats.mockResolvedValueOnce([
+      { adId: "120", anyTouchContacts: 5 },
+    ])
+
+    const result = await procedure.handler?.({
+      context: { workspace: { id: "workspace-1" } },
+      input: {
+        from: "2026-10-01",
+        to: "2026-10-30",
+        tz: "Asia/Ho_Chi_Minh",
+        channel: "messenger",
+        limit: 20,
+      },
+    })
+
+    expect(contactReferralEventService.getAdStats).toHaveBeenCalledWith({
+      workspaceId: "workspace-1",
+      from: "2026-10-01",
+      to: "2026-10-30",
+      tz: "Asia/Ho_Chi_Minh",
+      channel: "messenger",
+      limit: 20,
+    })
+    expect(result).toEqual({ data: [{ adId: "120", anyTouchContacts: 5 }] })
+  })
+
+  test("leaves the default range to the service when none is given", async () => {
+    contactReferralEventService.getAdStats.mockResolvedValueOnce([])
+
+    await procedure.handler?.({
+      context: { workspace: { id: "workspace-1" } },
+      input: { limit: 50 },
+    })
+
+    const call = contactReferralEventService.getAdStats.mock.calls[0]?.[0]
+    expect(call).toMatchObject({ workspaceId: "workspace-1", limit: 50 })
+    expect(call.from).toBeUndefined()
+    expect(call.to).toBeUndefined()
+  })
 })
 
 describe("GET /v1/ads/conversion-rules", () => {
@@ -365,6 +459,70 @@ describe("GET /v1/ads/{channel}/ad-accounts", () => {
       expect.objectContaining({ workspaceId: "workspace-1" }),
     )
     expect(result).toEqual({ data: [{ id: "act_1" }] })
+  })
+})
+
+describe("integrationIds on the public handlers", () => {
+  test("ad-accounts forwards the list alongside the single id, workspace from context", async () => {
+    resolveChannelAdAccountSources.mockResolvedValueOnce([])
+    const procedure = findProcedure("GET", "/v1/ads/{channel}/ad-accounts")
+
+    await procedure.handler?.({
+      context: { workspace: { id: "workspace-1" } },
+      input: { channel: "messenger", integrationIds: ["10", "11"] },
+    })
+
+    expect(resolveChannelAdAccountSources).toHaveBeenCalledWith(
+      expect.objectContaining({
+        workspaceId: "workspace-1",
+        channel: "messenger",
+        integrationIds: ["10", "11"],
+      }),
+    )
+  })
+
+  test.each([
+    ["GET", "/v1/ads/funnel", "getCtwaFunnel", adsConversionService],
+    [
+      "GET",
+      "/v1/ads/funnel/timeseries",
+      "getCtwaFunnelTimeseries",
+      adsConversionService,
+    ],
+    ["GET", "/v1/ads/analytics/overview", "getOverview", adsAnalyticsService],
+    [
+      "GET",
+      "/v1/ads/analytics/timeseries",
+      "getTimeseries",
+      adsAnalyticsService,
+    ],
+  ] as const)("%s %s forwards the list to %s with the context workspace", async (method, path, serviceMethod, service) => {
+    const procedure = findProcedure(method, path)
+    ;(service as Record<string, ReturnType<typeof vi.fn>>)[
+      serviceMethod
+    ]?.mockResolvedValueOnce({ totals: {}, perAd: [] })
+
+    await procedure.handler?.({
+      context: { workspace: { id: "workspace-1" } },
+      input: {
+        from: "2026-08-01",
+        to: "2026-08-02",
+        since: new Date("2026-08-01"),
+        until: new Date("2026-08-02"),
+        channel: "messenger",
+        integrationIds: ["10", "11"],
+      },
+    })
+
+    expect(
+      (service as Record<string, ReturnType<typeof vi.fn>>)[serviceMethod],
+    ).toHaveBeenCalledWith(
+      expect.objectContaining({
+        workspaceId: "workspace-1",
+        channel: "messenger",
+        integrationIds: ["10", "11"],
+      }),
+    )
   })
 })
 

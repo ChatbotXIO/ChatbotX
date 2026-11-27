@@ -10,6 +10,7 @@ import {
   type MetadataPayload,
   resolveActiveQuickReplySettings,
 } from "@chatbotx.io/flow-config"
+import { isManualSend, type SendFrom } from "@chatbotx.io/utils/send-from"
 import { logger } from "../../lib/logger"
 import { scheduleSmartDelayResume } from "./smart-delay"
 
@@ -41,14 +42,14 @@ export async function armQuickReplySettings(props: {
   nodeId: string
   details: unknown
   metadata?: MetadataPayload
-  sendFrom?: "inbox"
+  sendFrom?: SendFrom
 }): Promise<void> {
   const conversationId = props.conversation.id
   try {
     const active = resolveActiveQuickReplySettings(props.details)
     const canArm =
       Boolean(active.retry || active.followUp) &&
-      props.sendFrom !== "inbox" &&
+      !isManualSend(props.sendFrom) &&
       (await conversationService.ensureActive(props.conversation))
     const retry = canArm ? active.retry : undefined
 
@@ -96,7 +97,7 @@ export async function armQuickReplySettings(props: {
         flowVersionId: props.flowVersionId,
         conversationId,
         contactInboxId: props.contactInboxId,
-        connectedNodeId: props.nodeId,
+        nodeId: props.nodeId,
         stepId: followUp.id,
         metadata: props.metadata,
         sendFrom: props.sendFrom,

@@ -23,6 +23,35 @@ export type StatementTimeout = `${number}ms` | `${number}s`
 const STATEMENT_TIMEOUT_LITERAL = /^\d+(?:ms|s)$/
 
 /**
+ * Cap how long any statement of the current transaction waits for a lock (a
+ * row, a table or a `pg_advisory_xact_lock`; Postgres: "Abort any statement
+ * that waits longer than the specified amount of time while attempting to
+ * acquire a lock on a table, index, row, or other database object"). Unlike
+ * `statement_timeout` it does not bound running time, so a transaction can
+ * bracket just its lock waits with this and {@link resetLocalLockTimeout}.
+ * A timeout raises SQLSTATE 55P03. Same `SET LOCAL` and transaction rules as
+ * {@link setLocalStatementTimeout}.
+ */
+export const setLocalLockTimeout = async (
+  tx: StatementExecutor,
+  timeout: StatementTimeout,
+): Promise<void> => {
+  if (!STATEMENT_TIMEOUT_LITERAL.test(timeout)) {
+    throw new RangeError(
+      `lock_timeout must be a whole number of ms or s, got ${JSON.stringify(timeout)}`,
+    )
+  }
+  await tx.execute(sql`SET LOCAL lock_timeout = ${sql.raw(`'${timeout}'`)}`)
+}
+
+/** Puts `lock_timeout` back to the server default for the rest of the transaction. */
+export const resetLocalLockTimeout = async (
+  tx: StatementExecutor,
+): Promise<void> => {
+  await tx.execute(sql`SET LOCAL lock_timeout TO DEFAULT`)
+}
+
+/**
  * Cap every statement of the current transaction at `timeout`.
  *
  * Postgres measures `statement_timeout` from the moment a command arrives at

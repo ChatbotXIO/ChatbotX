@@ -11,6 +11,7 @@ import {
   sendAccountCredentials,
 } from "@chatbotx.io/mail"
 import { isPlaceholderEmail } from "@chatbotx.io/utils/placeholder-email"
+import { assertNotTenantOwnerEmail } from "./tenant-owner-email"
 
 export type ProvisionResellerAccountInput = {
   /** The reseller (white-label owner) provisioning the account. */
@@ -19,8 +20,6 @@ export type ProvisionResellerAccountInput = {
   email: string
   /** End-customer's display name. */
   name: string
-  /** Live vs test credential selector; defaults to test. */
-  livemode?: boolean
   /** Override the sign-in link; defaults to the reseller's branded app URL. */
   signInUrl?: string
 }
@@ -44,8 +43,8 @@ export type ProvisionResellerAccountResult = {
 export async function provisionResellerAccount(
   input: ProvisionResellerAccountInput,
 ): Promise<ProvisionResellerAccountResult> {
-  const { resellerUserId, email, name } = input
-  const livemode = input.livemode ?? false
+  const { resellerUserId, name } = input
+  const email = input.email.trim().toLowerCase()
 
   // The Facebook placeholder domain belongs to phone-only Facebook users; a
   // verified row on it would capture that person's Facebook sign-in while the
@@ -65,7 +64,6 @@ export async function provisionResellerAccount(
   const smtp = await platformCredentialService.findDecryptedForUser({
     userId: resellerUserId,
     type: "smtp",
-    livemode,
   })
   if (!smtp) {
     throw new ChatbotXException(
@@ -78,6 +76,10 @@ export async function provisionResellerAccount(
   // 2. Derive the tenant the sub-account belongs to (owner-derived, never from
   //    request input — see docs/tenancy.md).
   const tenantId = await workspaceService.resolveTenantForOwner(resellerUserId)
+
+  // The tenant owner already signs in on the platform with this email; a
+  // sub-account copy would shadow them inside their own tenant.
+  await assertNotTenantOwnerEmail({ email, tenantId })
 
   // 3. Idempotency: email is unique per tenant. If the account already exists,
   //    do not recreate it or re-send (the temp password is only known at

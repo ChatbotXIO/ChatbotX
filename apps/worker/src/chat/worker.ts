@@ -1,23 +1,21 @@
-import { flushAllPendingWorkspaceRealtimeEvents } from "@chatbotx.io/business"
 import { SdkException } from "@chatbotx.io/sdk"
 import {
   ChatJobAction,
   type ChatJobData,
-  defaultWorkerOptions,
-  getQueueConnection,
   queueNames,
 } from "@chatbotx.io/worker-config"
-import { type Job, Worker } from "bullmq"
+import type { Job } from "bullmq"
 import { env } from "../env"
-import { ensureBootstrapped } from "../lib/bootstrap"
+import { createQueueWorker } from "../lib/create-queue-worker"
 import { isBlockedWorkspace } from "../lib/is-blocked-workspace"
 import { isBotMessageQuotaReached } from "../lib/is-bot-message-quota-reached"
 import { isFinalAttempt } from "../lib/job-attempts"
-import { instrumentWorker } from "../lib/job-observability"
 import { logger } from "../lib/logger"
 import { resolveWorkspaceId } from "../lib/resolve-workspace-id"
 import { runJobWithAuditContext } from "../lib/run-job-with-audit-context"
+import { runWorker } from "../lib/shutdown"
 import { checkOutboundAutomatedResponse } from "./handlers/outbound-automated-response"
+import { recordQuotaSkippedSend } from "./handlers/record-quota-skipped-send"
 import { sendChatMessage, sendFlowStep } from "./handlers/send-flow-step"
 import {
   changeMessageStateOnChannel,
@@ -31,6 +29,7 @@ import {
   sendWhatsappTemplateMessage,
   sendWhatsappTemplateToConversation,
 } from "./handlers/send-whatsapp-template"
+import { deferSendWhileAccountReconnecting } from "./utils/connection-send-gate"
 
 const botSendActions = new Set<ChatJobData["type"]>([
   ChatJobAction.sendFlowMessage,
@@ -61,18 +60,10 @@ function isBotSendJob(data: ChatJobData): boolean {
   )
 }
 
-async function startChatWorker() {
-  try {
-    await ensureBootstrapped()
-    logger.info("Chat worker bootstrapped successfully")
-  } catch (err) {
-    logger.error(err, "Failed to bootstrap chat worker")
-    process.exit(1)
-  }
-
-  const worker = new Worker(
+function startChatWorker() {
+  createQueueWorker(
     queueNames.enum.chat,
-    async (job: Job<ChatJobData>) => {
+    async (job: Job<ChatJobData>, token?: string) => {
       const workspaceId = await resolveWorkspaceId(job.data.data)
       if (await isBlockedWorkspace(workspaceId)) {
         return
@@ -86,8 +77,12 @@ async function startChatWorker() {
           { jobId: job.id, workspaceId },
           "Skipping bot send — quota reached",
         )
+        await recordQuotaSkippedSend(job.data)
         return
       }
+
+      // Before any handler runs, so a deferred send creates no Message.
+      await deferSendWhileAccountReconnecting(job, token)
 
       await runJobWithAuditContext(
         { workspaceId, source: `chat:${job.data.type}` },
@@ -104,7 +99,7 @@ async function startChatWorker() {
               await sendFlowStep(job.data.data)
               return
             case ChatJobAction.sendChatMessage:
-              await sendChatMessage(job.data.data, !isFinalAttempt(job))
+              await sendChatMessage(job.data.data)
               return
             case ChatJobAction.sendWhatsappTemplateMessage:
               await sendWhatsappTemplateMessage(
@@ -157,46 +152,8 @@ async function startChatWorker() {
         },
       )
     },
-    {
-      connection: getQueueConnection(queueNames.enum.chat),
-      ...defaultWorkerOptions,
-      concurrency: env.CHAT_WORKER_CONCURRENCY,
-    },
+    { concurrency: env.CHAT_WORKER_CONCURRENCY },
   )
-
-  worker.on("failed", (job, err) => {
-    if (job) {
-      logger.error(err, `Job ${job.id} has failed`)
-    }
-  })
-  instrumentWorker(worker, { queue: queueNames.enum.chat })
-
-  let isShuttingDown = false
-  async function shutdown() {
-    if (isShuttingDown) {
-      return
-    }
-    isShuttingDown = true
-    let shutdownFailed = false
-    try {
-      await worker.close()
-    } catch (err) {
-      shutdownFailed = true
-      logger.error(err, "[ChatWorker] Error closing worker during shutdown")
-    } finally {
-      try {
-        // After close(): drains events published by jobs that finished during
-        // the close drain, whose coalesce timers would never fire past exit.
-        await flushAllPendingWorkspaceRealtimeEvents()
-      } catch (err) {
-        shutdownFailed = true
-        logger.error(err, "[ChatWorker] Error flushing realtime events")
-      }
-    }
-    process.exit(shutdownFailed ? 1 : 0)
-  }
-  process.once("SIGINT", shutdown)
-  process.once("SIGTERM", shutdown)
 }
 
-startChatWorker()
+runWorker("chat", startChatWorker)

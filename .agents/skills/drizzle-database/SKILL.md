@@ -1,9 +1,12 @@
 ---
 name: drizzle-database
 description: >-
-  Work with Drizzle ORM database schema, migrations, relations, and queries in
-  PostgreSQL. Use when creating tables, modifying schema, writing migrations,
-  defining relations, or querying the database.
+  Use when creating or changing a table in `packages/database/src/schema`,
+  generating a migration (`make:migration`), adding relations to
+  `relations/index.ts`, fixing `db:check-drift`, or writing Drizzle queries in a
+  repository, or upgrading `drizzle-orm`/`drizzle-kit`. Covers migration safety
+  (never auto-apply `db:migrate`), the `.default()`-is-not-a-DB-default trap, and
+  the drizzle-orm rc `undefined`-in-`where` trap.
 ---
 
 # Drizzle Database
@@ -96,6 +99,8 @@ export const myModel = pgTable("MyModel", {
 
 The enum name passed to `pgEnum` becomes the PostgreSQL enum type name — use `camelCase` matching the column name.
 
+> **Templates.** A new table holding content users build, or a new column on a template-copied kind (or an id column pointing at one), must be registered with the Templates engine — read the `template-integration` skill before writing the migration. A new column on a template-copied table must also be classified (copy / reset / drop / rebind / reference) in that adapter's column map, or the build fails. A new `templateResourceCategory` value is its own forward-only `ALTER TYPE … ADD VALUE … BEFORE 'customFields'` migration.
+
 ## Relations
 
 Define in `src/relations/<domain>.ts` using `defineRelationsPart`:
@@ -130,10 +135,15 @@ Then add the export to `src/relations/index.ts`.
 
 1. **Modify schema** in `src/schema/` (and `src/relations/` if needed)
 2. **Generate migration:** `pnpm --filter database make:migration <descriptive_name>`
-3. **Apply migration:** `pnpm --filter database db:migrate`
-4. **Inspect:** `pnpm --filter database db:studio`
+3. **Read the generated SQL** and show it to the user. Diff it against the schema change: the snapshot chain has broken before, so a migration can re-add columns that already exist.
+4. **Apply only after explicit user approval:** `pnpm --filter database db:migrate`. Never apply it automatically, even when a plan lists it as a verification step.
+5. **Inspect:** `pnpm --filter database db:studio`
 
-Migrations output to `packages/database/drizzle/<timestamp>_<name>/migration.sql`.
+Migrations output to `packages/database/drizzle/<timestamp>_<name>/migration.sql`. `pnpm lint` runs `db:check-drift`, which fails when `src/schema` and the snapshot chain disagree.
+
+### Trap — `.default()` is not a database default
+
+`.default(...)` only makes the column optional in `$inferInsert`; drizzle emits the bare `DEFAULT` keyword and never inlines the value. A `jsonb().default(sql\`[]\`)` serializes as *no* database default, so omitting the key is a NOT NULL violation at runtime that `db:check-drift` cannot see. Prefer a real SQL default; if a column must stay TS-only, add it to `packages/database/__tests__/integration/schema-default-parity.test.ts` and write the value explicitly on every insert path.
 
 ## Schema Registration
 
@@ -173,7 +183,7 @@ When adding a new channel or integration type:
 
 ## Query Patterns
 
-**Important:** Direct `db` usage is only allowed inside `packages/database/src/repositories/` and `packages/business/src/`. App-layer code (`apps/`, `integrations/`) must call a service or repository instead. See `.agents/rules/data-access.md`.
+**Important:** Direct `db` usage is only allowed inside `packages/database/src/repositories/` and `packages/business/src/`. App-layer code (`apps/`, `integrations/`) calls a service from `@chatbotx.io/business`, never `db` (lint-enforced) and not a repository unless it is a pure read with no business logic. See `.agents/rules/data-access.md`.
 
 ### Relational Queries (inside a service or repository)
 
@@ -190,6 +200,22 @@ const item = await db.query.myModel.findFirst({
   where: { id: itemId, workspaceId },
 })
 ```
+
+### Trap — `undefined` in a relational `where`
+
+drizzle-orm 1.0.0-rc **throws** `Unexpected 'undefined' in filter value. Use 'EmptyFilter'…` when a relational filter holds `undefined`, at the top level or inside `with: { x: { where } }`. Beta skipped those keys, and many repositories build `where` objects with optional filters (`name: input.name ? { ilike: … } : undefined`). After #1759 bumped drizzle to rc, that took down the Flows list in production.
+
+The fix is now central, so do not copy it per repository:
+
+- `packages/database/src/client.ts` wraps `findMany`/`findFirst` on the shared relational query builder prototype. The config goes through `stripUndefined` (`relations-filter.ts`), which covers every `db.query.*` and `tx.query.*`.
+- `relationsFilterToSQL` from `@chatbotx.io/database/client` (used by `$count`, `countWithRelationsFilter`) strips them too. Import it from there, never straight from `drizzle-orm`.
+- Guarded by `packages/database/__tests__/relational-query-undefined.test.ts` and `relations-filter.test.ts`.
+
+Rules:
+
+- Optional filter keys may stay `undefined`. Do not use `null` to mean "skip": `null` is a real value (`{ isNull: true }` is the explicit form).
+- Any query path that bypasses `db.query.*` and the wrapped `relationsFilterToSQL` (a new drizzle instance, raw drizzle `relationsFilterToSQL`) must strip `undefined` itself.
+- A repository test should run the query **without** its optional filters (`findMany(...).toSQL()` is enough, no database needed). Most `undefined` bugs only show up on the unfiltered default view.
 
 ### SQL Builder (inside a service or repository)
 
@@ -213,6 +239,14 @@ import { myModel } from "@chatbotx.io/database/schema"
 
 const item = await findOrFail({ table: myModel, where: { id } })
 ```
+
+## Upgrading `drizzle-orm` / `drizzle-kit`
+
+The versions are pinned in the `catalog:` of `pnpm-workspace.yaml`. Before merging a bump, especially beta → rc → stable:
+
+1. Read the drizzle release notes for changes to relational-query filter semantics (`undefined`/`EmptyFilter`, `null`), the `relationsFilterToSQL` return shape, and the `db.execute` result shape.
+2. Keep the guard tests green: `relational-query-undefined.test.ts`, `relations-filter.test.ts`, and the `db.execute` shape test. If a bump breaks the prototype wrap in `client.ts` (the class or method names changed), fix the wrap. Do not delete the test.
+3. Mocked repository and service tests do not exercise drizzle's query builder. Also smoke-test the main list pages (Flows, Contacts, Broadcasts, Inbox) with **no filters** against a real database before deploying.
 
 ## Soft-delete convention
 

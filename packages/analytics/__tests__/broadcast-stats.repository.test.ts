@@ -67,6 +67,19 @@ vi.mock("@chatbotx.io/database/client", () => ({
   or,
 }))
 
+const countBySources = vi.fn()
+const listContacts = vi.fn()
+const countContacts = vi.fn()
+const listContactIds = vi.fn()
+vi.mock("@chatbotx.io/database/repositories/contact-info-capture", () => ({
+  contactInfoCaptureRepository: {
+    countBySources,
+    listContacts,
+    countContacts,
+    listContactIds,
+  },
+}))
+
 vi.mock("@chatbotx.io/database/queries/date-bucket", () => ({
   zonedBucketKey: (...args: unknown[]) => ({ bucketKey: args }),
 }))
@@ -83,6 +96,12 @@ vi.mock("@chatbotx.io/database/schema", () => ({
     failedAt: "cob.failedAt",
     errorContent: "cob.errorContent",
   },
+  contactInfoCaptureModel: {
+    workspaceId: "cic.workspaceId",
+    sourceType: "cic.sourceType",
+    sourceId: "cic.sourceId",
+    infoType: "cic.infoType",
+  },
   broadcastModel: {
     id: "b.id",
     workspaceId: "b.workspaceId",
@@ -97,6 +116,8 @@ const EMPTY_STATS = {
   "message:seen": 0,
   "flow:clicked": 0,
   "message:failed": 0,
+  "contactInfo:phoneCaptured": 0,
+  "contactInfo:emailCaptured": 0,
 }
 
 const { BroadcastStatsRepository } = await import(
@@ -106,6 +127,10 @@ const { BroadcastStatsRepository } = await import(
 beforeEach(() => {
   resultQueue.length = 0
   vi.clearAllMocks()
+  countBySources.mockResolvedValue([])
+  listContacts.mockResolvedValue([])
+  countContacts.mockResolvedValue(0)
+  listContactIds.mockResolvedValue([])
 })
 
 describe("BroadcastStatsRepository — workspace scoping", () => {
@@ -123,6 +148,11 @@ describe("BroadcastStatsRepository — workspace scoping", () => {
     // `getBatchStats({ workspaceId: "ws-A", broadcastIds: ["b-of-ws-B"] })`
     // would return workspace B's real counts instead of empty stats.
     expect(dbSelect).toHaveBeenCalledTimes(1)
+    expect(countBySources).toHaveBeenCalledWith({
+      workspaceId: "ws-A",
+      sourceType: "broadcast",
+      sourceIds: ["broadcast-of-ws-B"],
+    })
     const chain = dbSelect.mock.results[0].value as QueryChain
     expect(chain.innerJoin).toHaveBeenCalledWith(
       {
@@ -159,9 +189,56 @@ describe("BroadcastStatsRepository — workspace scoping", () => {
       "message:seen": 5,
       "flow:clicked": 2,
       "message:failed": 3,
+      "contactInfo:phoneCaptured": 0,
+      "contactInfo:emailCaptured": 0,
     })
     // A broadcast with no recipient rows still gets zeroed stats.
     expect(result.b2).toEqual(EMPTY_STATS)
+  })
+
+  test("getBatchStats adds the capture counts per broadcast and info type, defaulting to 0", async () => {
+    queueResult([
+      { broadcastId: "b1", delivered: 8, seen: 5, clicked: 2, failed: 3 },
+    ])
+    countBySources.mockResolvedValue([
+      { sourceId: "b1", infoType: "phone", count: 4 },
+      { sourceId: "b1", infoType: "email", count: 1 },
+      { sourceId: "b2", infoType: "email", count: 6 },
+    ])
+
+    const repo = new BroadcastStatsRepository()
+    const result = await repo.getBatchStats({
+      workspaceId: "ws-A",
+      broadcastIds: ["b1", "b2", "b3"],
+    })
+
+    expect(result.b1).toMatchObject({
+      "message:delivered": 8,
+      "contactInfo:phoneCaptured": 4,
+      "contactInfo:emailCaptured": 1,
+    })
+    // Captures without recipient rows still surface; the rest stay 0.
+    expect(result.b2).toEqual({
+      ...EMPTY_STATS,
+      "contactInfo:emailCaptured": 6,
+    })
+    expect(result.b3).toEqual(EMPTY_STATS)
+  })
+
+  test("getBatchStats ignores capture rows of ids it was not asked about", async () => {
+    queueResult([])
+    countBySources.mockResolvedValue([
+      { sourceId: "stray", infoType: "phone", count: 9 },
+    ])
+
+    const repo = new BroadcastStatsRepository()
+    const result = await repo.getBatchStats({
+      workspaceId: "ws-A",
+      broadcastIds: ["b1"],
+    })
+
+    expect(Object.keys(result)).toEqual(["b1"])
+    expect(result.b1).toEqual(EMPTY_STATS)
   })
 
   test("getBatchStats short-circuits on an empty id list", async () => {
@@ -170,6 +247,7 @@ describe("BroadcastStatsRepository — workspace scoping", () => {
       await repo.getBatchStats({ workspaceId: "ws-A", broadcastIds: [] }),
     ).toEqual({})
     expect(dbSelect).not.toHaveBeenCalled()
+    expect(countBySources).not.toHaveBeenCalled()
   })
 
   test("getStatsByOccurrenceBucket scopes on workspace and parent, returns one entry per requested bucket", async () => {
@@ -186,9 +264,12 @@ describe("BroadcastStatsRepository — workspace scoping", () => {
       buckets: ["2026-10-12", "2026-10-11"],
     })
 
-    expect(dbSelect).toHaveBeenCalledTimes(1)
+    // Recipients and captures: two grouped reads, however many buckets.
+    expect(dbSelect).toHaveBeenCalledTimes(2)
     expect(eq).toHaveBeenCalledWith("b.workspaceId", "ws-A")
     expect(eq).toHaveBeenCalledWith("b.parentBroadcastId", "tpl-1")
+    expect(eq).toHaveBeenCalledWith("cic.workspaceId", "ws-A")
+    expect(eq).toHaveBeenCalledWith("cic.sourceType", "broadcast")
     expect(result["2026-10-12"]["message:sent"]).toBe(5)
     // A bucket with only skipped/missed slots has no recipients: zeros, not absent.
     expect(result["2026-10-11"]).toEqual(EMPTY_STATS)
@@ -204,9 +285,45 @@ describe("BroadcastStatsRepository — workspace scoping", () => {
       timezone: "UTC",
       buckets: ["2026-10-01"],
     })
-    const chain = dbSelect.mock.results[0].value as QueryChain
-    const [groupBy] = chain.groupBy.mock.calls[0] as [{ strings: string[] }]
-    expect(groupBy.strings.join("")).toBe("1")
+    for (const result of dbSelect.mock.results) {
+      const chain = result.value as QueryChain
+      const [groupBy] = chain.groupBy.mock.calls[0] as [{ strings: string[] }]
+      expect(groupBy.strings.join("")).toBe("1")
+    }
+  })
+
+  test("getStatsByOccurrenceBucket adds each run's captures to its bucket", async () => {
+    queueResult([
+      { bucket: "2026-10-12", delivered: 4, seen: 1, clicked: 0, failed: 1 },
+    ])
+    queueResult([
+      { bucket: "2026-10-12", infoType: "phone", count: 3 },
+      { bucket: "2026-10-12", infoType: "email", count: 2 },
+      { bucket: "2026-10-11", infoType: "phone", count: 1 },
+      { bucket: "2026-09-01", infoType: "phone", count: 7 },
+    ])
+
+    const repo = new BroadcastStatsRepository()
+    const result = await repo.getStatsByOccurrenceBucket({
+      workspaceId: "ws-A",
+      parentBroadcastId: "tpl-1",
+      granularity: "day",
+      timezone: "UTC",
+      buckets: ["2026-10-12", "2026-10-11"],
+    })
+
+    expect(result["2026-10-12"]).toMatchObject({
+      "message:sent": 5,
+      "contactInfo:phoneCaptured": 3,
+      "contactInfo:emailCaptured": 2,
+    })
+    // A bucket with captures but no recipient rows keeps its zeros elsewhere.
+    expect(result["2026-10-11"]).toEqual({
+      ...EMPTY_STATS,
+      "contactInfo:phoneCaptured": 1,
+    })
+    // A bucket nobody asked for is dropped.
+    expect(result["2026-09-01"]).toBeUndefined()
   })
 
   test("getStatsByOccurrenceBucket does not query when no buckets are requested", async () => {
@@ -243,5 +360,127 @@ describe("BroadcastStatsRepository — workspace scoping", () => {
 
     const whereArg = chain.where.mock.calls[0][0] as { values: unknown[] }
     expect(whereArg.values).toContain("ws-A")
+  })
+})
+
+describe("BroadcastStatsRepository — contact-info capture events", () => {
+  test("getContacts reads the capture table, not the recipients, and pages by offset", async () => {
+    listContacts.mockResolvedValue([
+      {
+        contactId: "c1",
+        contactInboxId: "ci1",
+        conversationId: "cv1",
+        createdAt: new Date("2026-01-02T00:00:00.000Z"),
+        inboxId: "i1",
+      },
+    ])
+    countContacts.mockResolvedValue(41)
+
+    const repo = new BroadcastStatsRepository()
+    const result = await repo.getContacts({
+      workspaceId: "ws-A",
+      broadcastId: "b1",
+      eventType: "contactInfo:phoneCaptured",
+      page: 3,
+      perPage: 20,
+    })
+
+    expect(dbSelect).not.toHaveBeenCalled()
+    expect(listContacts).toHaveBeenCalledWith({
+      workspaceId: "ws-A",
+      sourceType: "broadcast",
+      sourceId: "b1",
+      infoType: "phone",
+      limit: 20,
+      offset: 40,
+    })
+    expect(countContacts).toHaveBeenCalledWith({
+      workspaceId: "ws-A",
+      sourceType: "broadcast",
+      sourceId: "b1",
+      infoType: "phone",
+    })
+    expect(result.total).toBe(41)
+    expect(result.contactInboxIds).toEqual(["ci1"])
+    expect(result.contactEventMap.get("ci1")).toEqual({
+      contactId: "c1",
+      contactInboxId: "ci1",
+      occurredAt: "2026-01-02T00:00:00.000Z",
+      conversationId: "cv1",
+    })
+  })
+
+  test("getContacts maps the email event to the email info type and a missing count to 0", async () => {
+    const repo = new BroadcastStatsRepository()
+    const result = await repo.getContacts({
+      workspaceId: "ws-A",
+      broadcastId: "b1",
+      eventType: "contactInfo:emailCaptured",
+      page: 1,
+      perPage: 20,
+    })
+
+    expect(listContacts).toHaveBeenCalledWith(
+      expect.objectContaining({ infoType: "email", offset: 0 }),
+    )
+    expect(result).toEqual({
+      contactInboxIds: [],
+      contactEventMap: new Map(),
+      total: 0,
+    })
+  })
+
+  test("getContactIdsPage branches to the capture repository before building an event filter", async () => {
+    listContactIds.mockResolvedValue(["10", "11"])
+
+    const repo = new BroadcastStatsRepository()
+    const rows = await repo.getContactIdsPage({
+      workspaceId: "ws-A",
+      broadcastId: "b1",
+      eventType: "contactInfo:emailCaptured",
+      cursor: "9",
+      limit: 100,
+      excludeContactIds: ["11"],
+    })
+
+    expect(dbSelect).not.toHaveBeenCalled()
+    expect(listContactIds).toHaveBeenCalledWith({
+      workspaceId: "ws-A",
+      sourceType: "broadcast",
+      sourceId: "b1",
+      infoType: "email",
+      afterContactId: "9",
+      excludeContactIds: ["11"],
+      limit: 100,
+    })
+    expect(rows).toEqual([
+      { id: "10", contactId: "10" },
+      { id: "11", contactId: "11" },
+    ])
+  })
+
+  test("getContactIdsPage omits the cursor on the first page and keeps recipient events on the recipient table", async () => {
+    const repo = new BroadcastStatsRepository()
+    await repo.getContactIdsPage({
+      workspaceId: "ws-A",
+      broadcastId: "b1",
+      eventType: "contactInfo:phoneCaptured",
+      cursor: null,
+      limit: 10,
+    })
+    expect(listContactIds).toHaveBeenCalledWith(
+      expect.objectContaining({ afterContactId: undefined }),
+    )
+
+    queueResult([])
+    await repo.getContactIdsPage({
+      workspaceId: "ws-A",
+      broadcastId: "b1",
+      eventType: "message:seen",
+      cursor: null,
+      limit: 10,
+    })
+    expect(dbSelect).toHaveBeenCalledTimes(1)
+    expect(listContactIds).toHaveBeenCalledTimes(1)
   })
 })

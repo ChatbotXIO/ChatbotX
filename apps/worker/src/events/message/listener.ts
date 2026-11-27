@@ -33,6 +33,11 @@ import type {
 } from "@chatbotx.io/event-bus"
 import { EVENT_BUS_MESSAGE_ID } from "@chatbotx.io/event-bus"
 import { messageEventTypeSchema } from "@chatbotx.io/flow-config"
+import { withTimeout } from "@chatbotx.io/utils"
+import {
+  buildContactInfoCaptureJob,
+  contactInfoCaptureQueue,
+} from "@chatbotx.io/worker-config"
 import { logger } from "../../lib/logger"
 import { recordProviderErrorLog } from "./handlers/record-provider-error-log"
 
@@ -220,6 +225,75 @@ async function enqueueContactRepliedEvaluations(
         "Ads contact-replied gating failed; skipping payload",
       )
     }
+  }
+}
+
+/**
+ * Upper bound on the capture enqueue: the event batch is acked only after every
+ * listener returns, so a slow Redis here must not hold the whole batch. The
+ * statistic may be late or miss a message, the batch must not.
+ */
+const CONTACT_INFO_CAPTURE_ENQUEUE_TIMEOUT_MS = 2000
+
+/**
+ * "Left a phone / email" attribution. Hands the inbound messages in which a
+ * phone/email was extracted to the dedicated `contactInfoCapture` queue; the
+ * attribution itself (a history read) runs there, off this batch. Batches
+ * without such a message cost one in-memory filter. Never throws: a lost or
+ * late job only undercounts the statistic, and the job id makes a redelivered
+ * event a no-op.
+ */
+async function enqueueContactInfoCaptures(
+  payloads: MessageReceivedPayload[],
+): Promise<void> {
+  const jobs = payloads.flatMap((payload) => {
+    const { contactInfoCapture, messageId } = payload
+    const messageCreatedAt = new Date(payload.occurredAt)
+    if (
+      payload.origin !== "inbound" ||
+      !contactInfoCapture ||
+      !messageId ||
+      Number.isNaN(messageCreatedAt.getTime())
+    ) {
+      return []
+    }
+    return [
+      buildContactInfoCaptureJob(
+        {
+          contactId: payload.contactId,
+          contactInboxId: payload.contactInboxId,
+          conversationCreatedAt: contactInfoCapture.conversationCreatedAt,
+          conversationId: contactInfoCapture.conversationId,
+          inboxId: payload.inboxId,
+          infoTypes: contactInfoCapture.infoTypes,
+          messageCreatedAt: messageCreatedAt.toISOString(),
+          messageId,
+          workspaceId: payload.workspaceId,
+        },
+        "s0",
+      ),
+    ]
+  })
+  if (jobs.length === 0) {
+    return
+  }
+
+  // The failure is logged here, so a rejection that arrives after the timeout
+  // abandoned the wait is still visible, and the wait itself never rejects.
+  const enqueued: Promise<unknown> = contactInfoCaptureQueue.addBulk(jobs)
+  const work = enqueued.catch((err: unknown) => {
+    logger.warn(
+      { err, count: jobs.length },
+      "contact-info-capture: enqueue failed",
+    )
+  })
+  try {
+    await withTimeout(work, CONTACT_INFO_CAPTURE_ENQUEUE_TIMEOUT_MS)
+  } catch (err) {
+    logger.warn(
+      { err, count: jobs.length },
+      "contact-info-capture: enqueue did not finish in time; the batch is not held",
+    )
   }
 }
 
@@ -417,6 +491,10 @@ export const messageListeners: Partial<MessageEvenTypeMap> = {
     {
       name: "ads-conversion-contact-replied",
       handler: enqueueContactRepliedEvaluations,
+    },
+    {
+      name: "contact-info-capture",
+      handler: enqueueContactInfoCaptures,
     },
   ],
 }

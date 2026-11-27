@@ -96,6 +96,7 @@ class AdminWorkspaceService {
     const workspace = await workspaceService.create({
       data: { name: props.name, ownerId: owner.userId, tenantId },
       createdBy: owner.userId,
+      consumeInstallIntent: false,
       members: members.map((member) => ({
         userId: member.userId,
         permissions: props.permissions,

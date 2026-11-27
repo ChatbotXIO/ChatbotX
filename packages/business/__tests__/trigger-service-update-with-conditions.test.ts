@@ -2,6 +2,29 @@
 
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
 
+vi.mock("../src/template/uninstall-references", () => ({
+  referencedParentsOf: () => [],
+}))
+
+const referenceMocks = vi.hoisted(() => ({
+  findInvalid: vi.fn(),
+  newIndexes: vi.fn(),
+  lockRow: vi.fn(),
+}))
+
+vi.mock("../src/automation-action/references", () => ({
+  findInvalidActionReferences: referenceMocks.findInvalid,
+  indexesOfNewActions: referenceMocks.newIndexes,
+}))
+
+// The template lock guard has its own suite; these tests cover the service.
+vi.mock("../src/template/installed-resource.service", async () => ({
+  ...(await import("./helpers/template-guard-mocks")).templateGuardMocks({
+    assertDeletable: vi.fn(),
+    assertResourceEditable: vi.fn(),
+  }),
+}))
+
 // The broadcast policy import reaches quota/workspace modules these narrow mocks omit.
 vi.mock("../src/broadcast/plan-policy.service", () => ({
   broadcastPlanPolicyService: {},
@@ -52,9 +75,15 @@ const {
 
 const tx = {
   query: {
+    templateInstalledResourceModel: { findMany: async () => [] },
     triggerModel: { findFirst: mockTriggerFindFirst },
     conditionModel: { findMany: mockConditionFindMany },
   },
+  select: () => ({
+    from: () => ({
+      where: () => ({ for: referenceMocks.lockRow }),
+    }),
+  }),
   update: mockTxUpdate,
   delete: mockTxDelete,
   insert: mockTxInsert,
@@ -75,7 +104,10 @@ vi.mock("@chatbotx.io/database/schema", () => ({
   },
 }))
 
+const channelPostMocks = vi.hoisted(() => ({ findByIds: vi.fn() }))
+
 vi.mock("@chatbotx.io/database/repositories", () => ({
+  channelPostRepository: { findByIds: channelPostMocks.findByIds },
   triggerRepository: { listPaginatedWithConditions: vi.fn() },
 }))
 
@@ -84,7 +116,8 @@ vi.mock("@chatbotx.io/events", () => ({
   updateTriggerCache: mockUpdateTriggerCache,
 }))
 
-vi.mock("@chatbotx.io/utils", () => ({
+vi.mock("@chatbotx.io/utils", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@chatbotx.io/utils")>()),
   createId: mockCreateId,
 }))
 
@@ -106,6 +139,9 @@ describe("triggerService.updateWithConditions", () => {
     mockDbTransaction.mockImplementation(
       async (fn: (tx: unknown) => Promise<unknown>) => fn(tx),
     )
+    referenceMocks.lockRow.mockResolvedValue([{ id: TRIGGER_ID }])
+    referenceMocks.newIndexes.mockReturnValue(new Set<number>())
+    referenceMocks.findInvalid.mockResolvedValue([])
   })
 
   afterEach(() => {
@@ -227,5 +263,189 @@ describe("triggerService.updateWithConditions", () => {
         type: "newContact",
       }),
     ])
+  })
+
+  describe("action references", () => {
+    const existing = {
+      id: TRIGGER_ID,
+      workspaceId: WS,
+      actions: [{ type: "addTag", tagIds: ["1"] }],
+    }
+
+    beforeEach(() => {
+      mockTriggerFindFirst.mockResolvedValue(existing)
+      mockConditionFindMany.mockResolvedValue([])
+    })
+
+    test("locks the trigger row before reading what is stored", async () => {
+      await triggerService.updateWithConditions({
+        workspaceId: WS,
+        id: TRIGGER_ID,
+        actions: existing.actions,
+        conditions: [],
+      })
+
+      expect(referenceMocks.lockRow).toHaveBeenCalledTimes(1)
+      expect(referenceMocks.lockRow.mock.invocationCallOrder[0]).toBeLessThan(
+        mockTriggerFindFirst.mock.invocationCallOrder[0] ?? 0,
+      )
+    })
+
+    test("checks only the actions that are not already stored", async () => {
+      const next = [
+        { type: "addTag", tagIds: ["1"] },
+        { type: "startExternalStep", flowId: "9", nodeId: "8" },
+      ]
+      referenceMocks.newIndexes.mockReturnValue(new Set([1]))
+
+      await triggerService.updateWithConditions({
+        workspaceId: WS,
+        id: TRIGGER_ID,
+        actions: next,
+        conditions: [],
+      })
+
+      expect(referenceMocks.newIndexes).toHaveBeenCalledWith(
+        next,
+        existing.actions,
+      )
+      expect(referenceMocks.findInvalid).toHaveBeenCalledWith({
+        workspaceId: WS,
+        actions: next,
+        indexes: new Set([1]),
+        // A trigger resolves a custom field by name, and the lookups run on the
+        // transaction that holds the row lock.
+        fieldNames: true,
+        tx,
+      })
+    })
+
+    test("a dangling new reference fails at actions.<index>.<field> and writes nothing", async () => {
+      referenceMocks.newIndexes.mockReturnValue(new Set([0]))
+      referenceMocks.findInvalid.mockResolvedValue([
+        { index: 0, field: "nodeId" },
+      ])
+
+      await expect(
+        triggerService.updateWithConditions({
+          workspaceId: WS,
+          id: TRIGGER_ID,
+          actions: [{ type: "startExternalStep", flowId: "9", nodeId: "8" }],
+          conditions: [],
+        }),
+      ).rejects.toMatchObject({
+        field: "actions.0.nodeId",
+        message: "validation.trigger.actionReferenceNotFound",
+        data: { field: "actions.0.nodeId" },
+      })
+      expect(mockTxUpdate).not.toHaveBeenCalled()
+      expect(mockUpdateTriggerCache).not.toHaveBeenCalled()
+    })
+
+    test("nothing new means no reference lookup at all", async () => {
+      await triggerService.updateWithConditions({
+        workspaceId: WS,
+        id: TRIGGER_ID,
+        actions: existing.actions,
+        conditions: [],
+      })
+
+      expect(referenceMocks.findInvalid).not.toHaveBeenCalled()
+    })
+  })
+})
+
+describe("triggerService.updateWithConditions: post-comment posts", () => {
+  const POST_COMMENT = "contactCommentedOnPost"
+  const condition = (
+    sourceId: string | null,
+    channelPostIds: string[],
+    id?: string,
+  ) => ({
+    ...(id ? { id } : {}),
+    type: POST_COMMENT,
+    sourceId,
+    value: { scope: "selected", channelPostIds },
+  })
+  const save = (conditions: ReturnType<typeof condition>[]) =>
+    triggerService.updateWithConditions({
+      workspaceId: WS,
+      id: TRIGGER_ID,
+      actions: [],
+      conditions,
+    })
+
+  beforeEach(() => {
+    mockDbTransaction.mockImplementation(
+      async (fn: (tx: unknown) => Promise<unknown>) => fn(tx),
+    )
+    referenceMocks.lockRow.mockResolvedValue([{ id: TRIGGER_ID }])
+    referenceMocks.newIndexes.mockReturnValue(new Set<number>())
+    mockTriggerFindFirst.mockResolvedValue({ id: TRIGGER_ID, actions: [] })
+    mockConditionFindMany.mockResolvedValue([])
+    channelPostMocks.findByIds.mockResolvedValue([
+      { id: "10", inboxId: "1" },
+      { id: "11", inboxId: "2" },
+    ])
+  })
+
+  afterEach(() => {
+    vi.clearAllMocks()
+  })
+
+  test("a post of another inbox than the pinned one is rejected, at the condition's field, before any write", async () => {
+    await expect(save([condition("1", ["10", "11"])])).rejects.toMatchObject({
+      field: "conditions.0.value.channelPostIds",
+      message: "validation.trigger.postCommentPostsInvalid",
+    })
+    expect(mockTxInsert).not.toHaveBeenCalled()
+    expect(mockUpdateTriggerCache).not.toHaveBeenCalled()
+  })
+
+  test("a post that is not in the workspace is rejected, and the read is workspace-scoped, once", async () => {
+    await expect(save([condition(null, ["10", "99"])])).rejects.toMatchObject({
+      field: "conditions.0.value.channelPostIds",
+    })
+    expect(channelPostMocks.findByIds).toHaveBeenCalledTimes(1)
+    expect(channelPostMocks.findByIds).toHaveBeenCalledWith(
+      { ids: ["10", "99"], workspaceId: WS },
+      tx,
+    )
+  })
+
+  test("posts of the pinned inbox, or of any inbox when none is pinned, are accepted", async () => {
+    await expect(
+      save([condition("1", ["10"]), condition(null, ["10", "11"])]),
+    ).resolves.toBeDefined()
+    expect(channelPostMocks.findByIds).toHaveBeenCalledTimes(1)
+  })
+
+  test("a condition that keeps the pair it already stores is not checked again", async () => {
+    mockConditionFindMany.mockResolvedValue([
+      {
+        id: "5",
+        triggerId: TRIGGER_ID,
+        type: POST_COMMENT,
+        sourceId: "1",
+        operator: null,
+        value: { scope: "selected", channelPostIds: ["99"] },
+      },
+    ])
+
+    await save([condition("1", ["99"], "5")])
+
+    expect(channelPostMocks.findByIds).not.toHaveBeenCalled()
+  })
+
+  test("conditions without posts do not read the posts at all", async () => {
+    await save([
+      {
+        type: POST_COMMENT,
+        sourceId: "1",
+        value: { scope: "any", channelPostIds: [] },
+      },
+    ])
+
+    expect(channelPostMocks.findByIds).not.toHaveBeenCalled()
   })
 })

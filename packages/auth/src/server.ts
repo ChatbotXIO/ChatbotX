@@ -1,14 +1,31 @@
 import {
+  checksSchema,
+  registerSchemaCheck,
+  schemaCheckFor,
+} from "@better-auth/core/db/internal"
+import { mcp } from "@better-auth/mcp"
+import {
   customDomainService,
+  mobileRefreshTokenService,
   type PlatformSmtpTransport,
   platformCredentialService,
   resolvePlatformSmtpTransport,
   resolveTenantSettingsByDomain,
   toSmtpTransport,
+  userService,
 } from "@chatbotx.io/business"
+import { ChatbotXException } from "@chatbotx.io/business/errors"
 import { db } from "@chatbotx.io/database/client"
 import {
   accountModel,
+  jwkModel,
+  oauthAccessTokenModel,
+  oauthClientAssertionModel,
+  oauthClientModel,
+  oauthClientResourceModel,
+  oauthConsentModel,
+  oauthRefreshTokenModel,
+  oauthResourceModel,
   ROOT_TENANT_ID,
   sessionModel,
   userModel,
@@ -35,14 +52,24 @@ import {
   anonymous,
   bearer,
   genericOAuth,
+  jwt,
   magicLink,
   oneTimeToken,
 } from "better-auth/plugins"
 import { PHASE_PRODUCTION_BUILD } from "next/constants"
+import { createAppleIdTokenVerifier } from "./apple-id-token"
 import { claimUnverifiedAccountBeforeLink } from "./claim-unverified-account"
 import { resolveGenericOAuthConfig } from "./generic-oauth"
-import { env, getBrokerUrl } from "./keys"
+import {
+  env,
+  getAppleAppBundleIds,
+  getBrokerUrl,
+  getBuilderOrigin,
+  getMcpResourceUrl,
+} from "./keys"
 import { logger } from "./logger"
+import { buildMcpPluginOptions, defaultMcpResource } from "./mcp-config"
+import { mobileAuth } from "./mobile-auth"
 import { GENERIC_OAUTH_PROVIDER_ID } from "./oauth-constants"
 import {
   isSignUpAllowed,
@@ -50,6 +77,9 @@ import {
   type SignUpGateContext,
 } from "./signup-gate"
 import { getTenantId, resolveTenantOwnerId } from "./tenant-context"
+import { assertNotTenantOwnerEmail } from "./tenant-owner-email"
+
+const NATIVE_ONLY_PROVIDERS: Record<string, true> = { apple: true }
 
 const getTenantSettings = async (request: Request) => {
   const domain = request.headers.get("x-domain") ?? ""
@@ -120,15 +150,17 @@ export function createTenantScopedAdapter(
   // isolated:
   //   • `user` lookups *by email* — the same email is a separate account per
   //     tenant.
-  //   • `account` lookups *by social identity* (`accountId`) — the same provider
-  //     identity links to a separate account row per tenant, so sub-accounts stay
-  //     isolated. The reseller owner's own row is stamped `ROOT_TENANT_ID` (see
-  //     `create` below) and so misses here on their domain; better-auth then
-  //     falls through to the email lookup, where the reseller-owner fallback
-  //     resolves their root-tenant account and the unscoped `userId` account list
-  //     shows the identity as already linked.
-  // Lookups by id/token/userId are left untouched, so sessions and a user's own
-  // account list stay tenant-neutral.
+  //   • `account` lookups *by social identity* (`accountId` without `userId`) —
+  //     the same provider identity links to a separate account row per tenant,
+  //     so sub-accounts stay isolated. The reseller owner's own row is stamped
+  //     `ROOT_TENANT_ID` (see `create` below) and so misses here on their domain;
+  //     better-auth then falls through to the email lookup, where the
+  //     reseller-owner fallback resolves their root-tenant account.
+  // Lookups by id/token/userId are left untouched, so sessions, a user's own
+  // account list, and credential lookups stay tenant-neutral. Credential
+  // lookups use `userId` and therefore already identify one user; adding a
+  // tenant predicate would hide a reseller credential from server actions that
+  // run in the root tenant.
   const scopeByTenant = (
     model: string,
     where: WhereClause[] | undefined,
@@ -140,7 +172,8 @@ export function createTenantScopedAdapter(
       model === "user" && where.some((clause) => clause.field === "email")
     const scopesAccountByIdentity =
       model === "account" &&
-      where.some((clause) => clause.field === "accountId")
+      where.some((clause) => clause.field === "accountId") &&
+      !where.some((clause) => clause.field === "userId")
     if (!(scopesUserByEmail || scopesAccountByIdentity)) {
       return where
     }
@@ -251,7 +284,17 @@ export function createTenantScopedAdapter(
     }
   }
 
-  return (options) => wrapAdapter(base(options))
+  return (options) => {
+    const inner = base(options)
+    const wrapped = wrapAdapter(inner)
+    const schemaCheck = schemaCheckFor(inner)
+    if (schemaCheck) {
+      registerSchemaCheck(wrapped, schemaCheck, {
+        runtimeEnabled: checksSchema(options),
+      })
+    }
+    return wrapped
+  }
 }
 
 /**
@@ -356,6 +399,25 @@ export type AuthConfig = {
 }
 
 /**
+ * Native Sign in with Apple, verified only by `POST /mobile/token` (`id_token`
+ * grant). Web social and callback paths are blocked by `guardAuthEntryPoints`.
+ */
+function buildAppleProvider() {
+  const bundleIds = getAppleAppBundleIds()
+  const [primaryBundleId] = bundleIds
+  if (!primaryBundleId) {
+    return
+  }
+  return {
+    clientId: primaryBundleId,
+    clientSecret: "",
+    audience: bundleIds,
+    appBundleIdentifier: primaryBundleId,
+    verifyIdToken: createAppleIdTokenVerifier(bundleIds),
+  }
+}
+
+/**
  * Build the `socialProviders` config from the resolved per-provider credentials.
  * Returns `undefined` (all social disabled) during the production build phase —
  * the thunk runs without request context then — or when nothing resolved.
@@ -365,7 +427,7 @@ function buildSocialProviders(
   socialScopes: AuthConfig["socialScopes"],
   redirectOrigin: AuthConfig["socialRedirectOrigin"],
 ) {
-  if (process.env.NEXT_PHASE === PHASE_PRODUCTION_BUILD || !socialCredentials) {
+  if (process.env.NEXT_PHASE === PHASE_PRODUCTION_BUILD) {
     return
   }
 
@@ -382,7 +444,7 @@ function buildSocialProviders(
   } = {}
   const pinnedOrigin = new URL(redirectOrigin ?? getBrokerUrl()).origin
   for (const provider of SOCIAL_PROVIDERS) {
-    const credential = socialCredentials[provider]
+    const credential = socialCredentials?.[provider]
     if (credential?.clientId && credential.clientSecret) {
       const scope = socialScopes?.[provider]
       providers[provider] = {
@@ -415,7 +477,9 @@ function buildSocialProviders(
     }
   }
 
-  return Object.keys(providers).length > 0 ? providers : undefined
+  const apple = buildAppleProvider()
+  const allProviders = { ...providers, ...(apple && { apple }) }
+  return Object.keys(allProviders).length > 0 ? allProviders : undefined
 }
 
 /**
@@ -449,6 +513,24 @@ function buildDatabaseHooks({
           // better-auth turns this exact message into the OAuth redirect's
           // `error` parameter.
           throw new APIError("FORBIDDEN", { message: SIGNUP_DISABLED_CODE })
+        }
+        // Defense in depth: never let a tenant's owner email be re-created as
+        // a sub-account row in that tenant through any better-auth path.
+        if (typeof user.email === "string") {
+          try {
+            await assertNotTenantOwnerEmail({
+              email: user.email,
+              tenantId: getTenantId(),
+            })
+          } catch (err) {
+            if (
+              err instanceof ChatbotXException &&
+              err.code === "tenantOwnerEmailReserved"
+            ) {
+              throw new APIError("CONFLICT", { message: err.code })
+            }
+            throw err
+          }
         }
       },
       ...(onUserCreated && {
@@ -496,6 +578,21 @@ function buildDatabaseHooks({
 
   return {
     user: userHooks,
+    session: {
+      create: {
+        before: async (session: Record<string, unknown>) => {
+          const userId =
+            typeof session.userId === "string" ? session.userId : ""
+          const user = userId ? await userService.findById(userId) : undefined
+          if (user?.deletionRequestedAt) {
+            throw new APIError("FORBIDDEN", {
+              code: "ACCOUNT_DELETION_PENDING",
+              message: "Account deletion is pending",
+            })
+          }
+        },
+      },
+    },
     account: {
       create: {
         before: async (
@@ -516,26 +613,41 @@ function buildDatabaseHooks({
 }
 
 /**
- * Gates `/sign-up/email` on two independent rules, both enforced before
- * better-auth creates the row:
- * - the Facebook placeholder domain is reserved for phone-only Facebook users
- *   (see `placeholder-email.ts`); nobody may register it by hand, or they
- *   could pre-create the row a Facebook sign-in later resolves to by email.
- * - signup lockdown (`AUTH_DISABLE_SIGNUP`): rejected unless the request
- *   carries a live invitation cookie (`isSignUpAllowed`). Existing email
- *   sign-*in* is untouched — only this one path is matched.
+ * Gates `/sign-up/email` and prevents native-only providers from reaching
+ * better-auth's web social endpoints.
  */
-const guardEmailSignUp = createAuthMiddleware(async (ctx) => {
+const guardAuthEntryPoints = createAuthMiddleware(async (ctx) => {
+  const body = ctx.body as { email?: unknown; provider?: unknown } | undefined
   if (
-    ctx.path === "/sign-up/email" &&
-    isPlaceholderEmail((ctx.body as { email?: unknown } | undefined)?.email)
+    (ctx.path === "/sign-in/social" || ctx.path === "/link-social") &&
+    typeof body?.provider === "string" &&
+    NATIVE_ONLY_PROVIDERS[body.provider]
   ) {
+    throw new APIError("NOT_FOUND", {
+      code: "PROVIDER_NOT_ENABLED",
+      message: "Provider is not enabled",
+    })
+  }
+  if (ctx.path === "/callback/:id" && ctx.params?.id === "apple") {
+    throw new APIError("NOT_FOUND", {
+      code: "PROVIDER_NOT_ENABLED",
+      message: "Provider is not enabled",
+    })
+  }
+  if (ctx.path === "/sign-up/email" && isPlaceholderEmail(body?.email)) {
     throw new APIError("BAD_REQUEST", { message: "Invalid email" })
   }
   if (ctx.path === "/sign-up/email" && !(await isSignUpAllowed(ctx))) {
     throw new APIError("FORBIDDEN", { message: "Sign-up is disabled" })
   }
+  return defaultMcpResource(ctx)
 })
+
+const firstString = (...values: unknown[]): string | undefined =>
+  values.find((value): value is string => typeof value === "string")
+
+const joinStrings = (...values: unknown[]): string =>
+  values.filter((value): value is string => typeof value === "string").join(" ")
 
 export function createAuth(config: AuthConfig) {
   const socialProviders = buildSocialProviders(
@@ -544,6 +656,7 @@ export function createAuth(config: AuthConfig) {
     config.socialRedirectOrigin,
   )
   const genericOAuthProvider = resolveGenericOAuthConfig()
+  const mcpResource = getMcpResourceUrl()
 
   return betterAuth({
     databaseHooks: buildDatabaseHooks({
@@ -558,6 +671,14 @@ export function createAuth(config: AuthConfig) {
           verification: verificationModel,
           session: sessionModel,
           account: accountModel,
+          jwks: jwkModel,
+          oauthAccessToken: oauthAccessTokenModel,
+          oauthClient: oauthClientModel,
+          oauthClientAssertion: oauthClientAssertionModel,
+          oauthClientResource: oauthClientResourceModel,
+          oauthConsent: oauthConsentModel,
+          oauthRefreshToken: oauthRefreshTokenModel,
+          oauthResource: oauthResourceModel,
         },
       }),
     ),
@@ -605,6 +726,10 @@ export function createAuth(config: AuthConfig) {
         // below for how an unverified local placeholder is handled.
         trustedProviders: [
           ...SOCIAL_PROVIDERS,
+          // Apple identity tokens always carry `email_verified` (also for
+          // private relay addresses); the claim is attested in
+          // `claim-unverified-account.ts`.
+          "apple",
           ...(env.AUTH_OAUTH_TRUST_EMAIL ? [GENERIC_OAUTH_PROVIDER_ID] : []),
         ],
         // The local side may be an email/password sign-up that never clicked
@@ -633,11 +758,14 @@ export function createAuth(config: AuthConfig) {
     },
     socialProviders,
     hooks: {
-      before: guardEmailSignUp,
+      before: guardAuthEntryPoints,
     },
     emailAndPassword: {
       enabled: true,
       requireEmailVerification: true,
+      onPasswordReset: async ({ user }) => {
+        await mobileRefreshTokenService.revokeAllForUser({ userId: user.id })
+      },
       sendResetPassword: async ({ user, url }, request) => {
         if (isPlaceholderEmail(user.email)) {
           return
@@ -786,6 +914,8 @@ export function createAuth(config: AuthConfig) {
                 ...(ownerId ? [{ id: ownerId, tenantId: ROOT_TENANT_ID }] : []),
               ],
             },
+            // Only the display name is used, so never read the whole row.
+            columns: { name: true },
           })
           if (!user) {
             throw new APIError(400, {
@@ -827,19 +957,31 @@ export function createAuth(config: AuthConfig) {
                 {
                   ...genericOAuthProvider,
                   pkce: true,
+                  // The web client signs out locally and never follows an
+                  // `end_session_endpoint` redirect, so keep 1.6 behavior.
+                  disableProviderLogout: true,
+                  // 1.7 binds an ID token to a nonce; an IdP that never echoes
+                  // one needs this escape hatch (AUTH_OAUTH_DISABLE_NONCE_BINDING).
+                  disableIdTokenNonceBinding:
+                    env.AUTH_OAUTH_DISABLE_NONCE_BINDING,
                   // Pin the redirect URI to the broker, then relay the callback
                   // to the originating branded host as social OAuth already does.
+                  // Better Auth 1.7 moved this from /oauth2/callback/<id>; IdPs
+                  // registered before the upgrade must update their redirect URI.
                   redirectURI: new URL(
-                    `/api/auth/oauth2/callback/${GENERIC_OAUTH_PROVIDER_ID}`,
+                    `/api/auth/callback/${GENERIC_OAUTH_PROVIDER_ID}`,
                     new URL(getBrokerUrl()).origin,
                   ).toString(),
+                  accountSubject: ({ profile }) => {
+                    const subject = profile.id ?? profile.sub
+                    return subject === undefined || subject === null
+                      ? ""
+                      : String(subject)
+                  },
                   mapProfileToUser: (profile) => ({
                     name:
-                      profile.name ??
-                      profile.preferred_username ??
-                      ([profile.given_name, profile.family_name]
-                        .filter(Boolean)
-                        .join(" ") ||
+                      firstString(profile.name, profile.preferred_username) ??
+                      (joinStrings(profile.given_name, profile.family_name) ||
                         undefined),
                   }),
                 },
@@ -847,6 +989,21 @@ export function createAuth(config: AuthConfig) {
             }),
           ] as const)
         : ([] as const)),
+      jwt({
+        disableSettingJwtHeader: true,
+        jwt: { issuer: getBuilderOrigin() },
+      }),
+      // The mcp/oauth-provider plugin seeds its `OAuthResource` row from `init`,
+      // i.e. a DB query whenever `createAuth` runs. During `next build` that fires
+      // in every page-data worker for nothing (and fails with no DB). Skip it
+      // there; the runtime server re-evaluates `createAuth` and seeds normally.
+      ...(process.env.NEXT_PHASE === "phase-production-build"
+        ? ([] as const)
+        : ([mcp(buildMcpPluginOptions(mcpResource))] as const)),
+      // Native mobile app JWT grants (`/mobile/*`). Own endpoints and a
+      // password-change hook only; no hook on sign-in/session, and the global
+      // jwt()/JWKS/MCP configuration above is untouched.
+      mobileAuth(),
       // Relays better-auth's Set-Cookie into the Next.js response. Required so a
       // server-side `auth.api.changePassword` (with `revokeOtherSessions`) rotates
       // the caller's session cookie instead of silently logging them out. Must be
@@ -872,9 +1029,11 @@ export function createAuth(config: AuthConfig) {
       const staticOrigins = [
         getBrokerUrl(),
         env.NEXT_PUBLIC_BUILDER_URL,
-        // Mobile app deep-link scheme (chatbotx-mobile-app) — social sign-in relays back into the
-        // app via this custom scheme instead of an https:// origin.
+        // Mobile app deep-link schemes (chatbotx-mobile-app) — social sign-in relays back into the
+        // app via these custom schemes instead of an https:// origin. Keep in sync with
+        // DEFAULT_MOBILE_APP_SCHEMES in ./keys.
         "chatconnectxapp://",
+        "chatbotxmobileapp://",
       ]
       if (process.env.NEXT_PHASE === PHASE_PRODUCTION_BUILD) {
         return Array.from(new Set(staticOrigins))
@@ -898,6 +1057,7 @@ export type Auth = ReturnType<typeof createAuth>
 
 export {
   isGenericOAuthPath,
+  isSharedSocialPath,
   resolveGenericOAuthConfig,
   warnIfGenericOAuthUnlicensed,
 } from "./generic-oauth"

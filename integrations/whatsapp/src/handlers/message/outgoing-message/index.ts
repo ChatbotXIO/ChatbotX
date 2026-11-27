@@ -42,6 +42,7 @@ import type {
   WhatsappAuthValue,
 } from "../../../schema"
 import { clampText, messageLimits } from "../message-limits"
+import { prepareOutboundMedia } from "./outbound-media"
 import { generateOutgoingMessages as convertFlowStepCarousel } from "./send-carousel"
 import {
   convertFlowStepImage,
@@ -382,6 +383,7 @@ export const sendMessage: MessageHandlers<WhatsappAuthValue>["sendMessage"] =
           continue
         }
 
+        await prepareOutboundMedia(whatsappMessage, ctx)
         logger.debug(
           {
             phoneId: ctx.auth.metadata.phoneNumber.id,
@@ -470,6 +472,7 @@ export const sendFlowStep: MessageHandlers<WhatsappAuthValue>["sendFlowStep"] =
           continue
         }
 
+        await prepareOutboundMedia(whatsappMessage, ctx)
         let sendResponse: ServerErrorResponse | ServerSentMessageResponse
 
         if (isRawWhatsappMessage(whatsappMessage) || isBsuidKeyedRecipient) {

@@ -98,6 +98,38 @@ describe("GET /v1/token", () => {
       workspaceId: "workspace-1",
       permission: "full",
       scopes: ["contacts", "automation"],
+      principal: { credentialType: "workspace_token" },
+    })
+  })
+
+  test("reports a verified OAuth principal", async () => {
+    const result = await procedure.handler?.({
+      context: {
+        workspace: { id: "workspace-1" },
+        apiToken: {
+          id: "oauth:client-1:user-1",
+          workspaceId: "workspace-1",
+          permission: "full",
+          scopes: null,
+          isDefault: false,
+        },
+        oauthPrincipal: {
+          audience: "https://app.example.com/mcp/openai",
+          clientId: "client-1",
+          issuer: "https://app.example.com",
+          subject: "user-1",
+        },
+      },
+    })
+
+    expect(result).toMatchObject({
+      principal: {
+        audience: "https://app.example.com/mcp/openai",
+        clientId: "client-1",
+        credentialType: "oauth",
+        issuer: "https://app.example.com",
+        subject: "user-1",
+      },
     })
   })
 

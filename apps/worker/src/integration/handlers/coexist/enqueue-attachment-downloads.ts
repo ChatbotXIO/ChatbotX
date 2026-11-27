@@ -1,4 +1,5 @@
 import {
+  LOW_BULK_PRIORITY,
   LowJobAction,
   type LowJobCoexistAttachmentDownload,
   lowQueue,
@@ -44,6 +45,7 @@ export const enqueueAttachmentDownloadJobs = async (input: {
       },
       opts: {
         jobId: `att-${attachmentId}`,
+        priority: LOW_BULK_PRIORITY,
         attempts: 5,
         backoff: { type: "exponential" as const, delay: 30_000 },
         removeOnComplete: true,

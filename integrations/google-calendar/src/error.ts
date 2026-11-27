@@ -1,5 +1,5 @@
 import { SdkException } from "@chatbotx.io/sdk"
-import type { Common as GoogleApisCommon } from "googleapis"
+import type { GaxiosError } from "googleapis-common"
 import { normalizeError } from "universal-error-normalizer"
 import { googleCalendarLogger } from "./logger"
 
@@ -32,7 +32,7 @@ const extractGoogleApiError = (error: Error) =>
         .join(", ")
     : null
 
-type AggregateGaxiosError = GoogleApisCommon.GaxiosError & {
+type AggregateGaxiosError = GaxiosError & {
   errors: { message?: string }[]
 }
 

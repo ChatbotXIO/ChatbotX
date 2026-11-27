@@ -15,7 +15,7 @@ type DrizzleQueryExpression = {
 }
 
 type DrizzleQueryChunk = {
-  value: unknown[]
+  value: unknown[] | string
 }
 
 const isOrderByCallback = (
@@ -33,7 +33,7 @@ const hasValueParts = (value: unknown): value is DrizzleQueryChunk =>
   typeof value === "object" &&
   value !== null &&
   "value" in value &&
-  Array.isArray(value.value)
+  (Array.isArray(value.value) || typeof value.value === "string")
 
 const getOrderBy = (call: unknown): unknown => {
   if (!Array.isArray(call)) {
@@ -66,7 +66,7 @@ const orderBySql = (orderBy: unknown): string => {
     .flatMap((item) =>
       hasQueryChunks(item)
         ? item.queryChunks.flatMap((chunk) =>
-            hasValueParts(chunk) ? chunk.value : [],
+            hasValueParts(chunk) ? [chunk.value].flat() : [],
           )
         : [],
     )

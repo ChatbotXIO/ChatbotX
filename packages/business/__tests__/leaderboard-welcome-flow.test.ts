@@ -6,6 +6,15 @@ const mocks = vi.hoisted(() => ({
   createPublishedDefault: vi.fn(),
   invalidateList: vi.fn(),
   inboxFind: vi.fn(),
+  assertReferencable: vi.fn(),
+}))
+
+vi.mock("../src/template/installed-resource.service", () => ({
+  assertReferencable: mocks.assertReferencable,
+}))
+vi.mock("../src/template/template-resource-locks", () => ({
+  withTemplateLockedTransaction: (run: (tx: unknown) => unknown) =>
+    run({ tx: true }),
 }))
 
 vi.mock("@chatbotx.io/database/client", () => ({
@@ -112,5 +121,38 @@ describe("leaderboardService.create welcome flow", () => {
     }
     await leaderboardService.create(input(overrides), { buildViewUrl })
     expect(mocks.createPublishedDefault).not.toHaveBeenCalled()
+  })
+})
+
+describe("leaderboardService.create flow references", () => {
+  test("checks the reward flow (JSON, no foreign key) with the welcome flow", async () => {
+    await leaderboardService.create(
+      input({
+        referralWelcomeFlowId: "7",
+        rewardSettings: { flowId: "8", topN: 3, autoOnFinish: false },
+      }),
+      { buildViewUrl },
+    )
+    expect(mocks.assertReferencable).toHaveBeenCalledWith(
+      expect.objectContaining({
+        parents: [
+          { kind: "flow", resourceId: "7" },
+          { kind: "flow", resourceId: "8" },
+        ],
+      }),
+    )
+  })
+
+  test("refuses without inserting when the reward flow is being uninstalled", async () => {
+    mocks.assertReferencable.mockRejectedValueOnce(new Error("uninstalling"))
+    await expect(
+      leaderboardService.create(
+        input({
+          rewardSettings: { flowId: "8", topN: 3, autoOnFinish: false },
+        }),
+        { buildViewUrl },
+      ),
+    ).rejects.toThrow("uninstalling")
+    expect(mocks.insert).not.toHaveBeenCalled()
   })
 })

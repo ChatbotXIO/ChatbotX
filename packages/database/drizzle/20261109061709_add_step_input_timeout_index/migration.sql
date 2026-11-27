@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX CONCURRENTLY IF NOT EXISTS "ContactOnSmartDelay_stepInputTimeout_active_key" ON "ContactOnSmartDelay" ("workspaceId","conversationId") WHERE "status" NOT IN ('completed', 'failed', 'canceled') AND "type" = 'stepInputTimeout';

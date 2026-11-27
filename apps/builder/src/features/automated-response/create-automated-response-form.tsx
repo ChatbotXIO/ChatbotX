@@ -20,6 +20,10 @@ import { useFieldArray } from "react-hook-form"
 import { toast } from "sonner"
 import { useFlowSelectOptions } from "../flows/provider/flow-hook"
 import { createAutomatedResponseAction } from "./actions/create-automated-response-action"
+import {
+  createEmptyKeywordCondition,
+  KeywordConditionsField,
+} from "./components/keyword-conditions-field"
 import { useKeywordFieldNavigation } from "./hooks/use-keyword-field-navigation"
 import { createAutomatedResponseRequest, responseModes } from "./schema/action"
 
@@ -72,7 +76,10 @@ export function CreateAutomatedResponseForm(
         mode: "onChange",
         defaultValues: {
           folderId: folderId ?? null,
-          keywords: [{ value: "" }],
+          // Contact rules match on conditions; Page rules on exact keywords.
+          ...(type === "inbound"
+            ? { conditions: [createEmptyKeywordCondition()] }
+            : { keywords: [{ value: "" }] }),
           text: "",
           flowId: "",
         },
@@ -109,48 +116,52 @@ export function CreateAutomatedResponseForm(
         className="w-1/2 flex-1 space-y-4"
         onSubmit={handleSubmitWithAction}
       >
-        <div className="flex flex-col gap-2">
-          <Label className="flex-1 font-bold" htmlFor="keywords">
-            {t("fields.keywords.label")}
-          </Label>
-
+        {type === "inbound" ? (
+          <KeywordConditionsField />
+        ) : (
           <div className="flex flex-col gap-2">
-            {keywords.map((_, index) => (
-              // biome-ignore lint/suspicious/noArrayIndexKey: wip
-              <div className="flex gap-2" key={index}>
-                <InputField
-                  name={`keywords.${index}.value`}
-                  onKeyDown={(event) => {
-                    handleKeywordInputKeyDown(event, index)
-                  }}
-                />
-                {index === 0 ? (
-                  <div className="w-12">&nbsp;</div>
-                ) : (
-                  <Button
-                    onClick={() => {
-                      removeKeywords(index)
+            <Label className="flex-1 font-bold" htmlFor="keywords">
+              {t("fields.keywords.label")}
+            </Label>
+
+            <div className="flex flex-col gap-2">
+              {keywords.map((_, index) => (
+                // biome-ignore lint/suspicious/noArrayIndexKey: wip
+                <div className="flex gap-2" key={index}>
+                  <InputField
+                    name={`keywords.${index}.value`}
+                    onKeyDown={(event) => {
+                      handleKeywordInputKeyDown(event, index)
                     }}
-                    variant="ghost"
-                  >
-                    <XIcon />
-                  </Button>
-                )}
-              </div>
-            ))}
+                  />
+                  {index === 0 ? (
+                    <div className="w-12">&nbsp;</div>
+                  ) : (
+                    <Button
+                      onClick={() => {
+                        removeKeywords(index)
+                      }}
+                      variant="ghost"
+                    >
+                      <XIcon />
+                    </Button>
+                  )}
+                </div>
+              ))}
+            </div>
+            <FormMessage />
+            <div>
+              <Button
+                onClick={() => {
+                  appendKeywords({ value: "" })
+                }}
+                variant="ghost"
+              >
+                <PlusCircleIcon /> {t("actions.addMore")}
+              </Button>
+            </div>
           </div>
-          <FormMessage />
-          <div>
-            <Button
-              onClick={() => {
-                appendKeywords({ value: "" })
-              }}
-              variant="ghost"
-            >
-              <PlusCircleIcon /> {t("actions.addMore")}
-            </Button>
-          </div>
-        </div>
+        )}
 
         {/* Bot response block */}
         <div className="mt-4 flex items-center gap-4">

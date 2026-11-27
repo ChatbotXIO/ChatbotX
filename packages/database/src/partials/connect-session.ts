@@ -13,7 +13,12 @@ export const connectSessionTargetSchema = z.object({
   name: z.string(),
   avatarUrl: z.string().optional(),
   selectable: z.boolean(),
-  disabledReason: z.string().optional(),
+  disabledReason: z
+    .string()
+    .optional()
+    .describe(
+      'Why a non-selectable target cannot be connected, when it is not simply already connected. Known values: `insufficientPermissions` (the authorizing user lacks full admin access to the account), `missingAccessToken` (the provider returned no access token for it). Treat unknown values as a generic "unavailable".',
+    ),
   alreadyConnected: z.enum(["this_workspace", "other_workspace"]).optional(),
 })
 export type ConnectSessionTarget = z.infer<typeof connectSessionTargetSchema>

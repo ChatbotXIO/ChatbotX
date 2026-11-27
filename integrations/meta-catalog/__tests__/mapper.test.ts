@@ -16,7 +16,7 @@ const product = (overrides: Partial<CatalogProduct> = {}): CatalogProduct => ({
   inventoryPolicy: "track",
   inventoryQuantity: 5,
   allowOutOfStockPurchase: false,
-  isActive: true,
+  status: "active",
   images: [{ url: "https://example.com/one.jpg", type: "link" }],
   tags: [],
   vendor: "ChatbotX",
@@ -68,7 +68,8 @@ describe("Meta Catalog product mapper", () => {
   })
 
   test.each([
-    [{ isActive: false }, "discontinued"],
+    [{ status: "draft" }, "discontinued"],
+    [{ status: "unlisted" }, "discontinued"],
     [{ inventoryPolicy: "dont_track" }, "available for order"],
     [{ inventoryQuantity: 1 }, "in stock"],
     [
@@ -95,7 +96,7 @@ describe("Meta Catalog product mapper", () => {
       product({
         inventoryPolicy: "dont_track",
         inventoryQuantity: 42,
-        isActive: false,
+        status: "draft",
       }),
       settings,
     )

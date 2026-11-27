@@ -8,16 +8,18 @@ import {
   signShopPreviewToken,
   signShopToken,
 } from "@chatbotx.io/encryption/shop-token"
+import { joinAppUrl } from "@chatbotx.io/utils/web-url"
 import { notFoundException } from "../errors"
-import { resolveTenantSettings } from "../platform/settings"
+import { resolveWorkspaceAppUrl } from "../platform/settings"
 import { vendorService } from "../vendor/service"
-
-const TRAILING_SLASHES = /\/+$/
 
 /** The shop page a link opens. */
 export type WebshopLinkTarget = {
-  /** `cart` opens the cart, ready to check out; omitted opens the shop. */
-  page?: "cart"
+  /**
+   * `cart` opens the cart, ready to check out; `categories` the list of
+   * categories; omitted opens the shop.
+   */
+  page?: "cart" | "categories"
   /** Opens this product's page (instead of `page`). */
   productId?: string | null
   /** Opens the shop searching for this. */
@@ -28,7 +30,7 @@ export type WebshopLinkTarget = {
   categoryId?: string | null
 }
 
-/** `/products/<id>`, `/cart` or the shop's front page. */
+/** `/products/<id>`, `/cart`, `/categories` or the shop's front page. */
 const pagePath = (target: WebshopLinkTarget): string => {
   if (target.productId) {
     return `/products/${encodeURIComponent(target.productId)}`
@@ -48,7 +50,6 @@ export const buildWebshopUrl = (
     token: string
   },
 ): string => {
-  const base = input.appUrl.replace(TRAILING_SLASHES, "")
   const page = pagePath(input)
   const path = `/shop/${encodeURIComponent(input.workspaceId)}${page}`
   const query = [
@@ -62,7 +63,7 @@ export const buildWebshopUrl = (
       ? [`products=${input.productIds.map(encodeURIComponent).join(",")}`]
       : []),
   ].join("&")
-  return `${base}${path}?${query}`
+  return joinAppUrl(input.appUrl, `${path}?${query}`)
 }
 
 /**
@@ -108,7 +109,7 @@ export const createWebshopLink = async (
   ) {
     throw notFoundException("Product does not exist.")
   }
-  const { appUrl } = await resolveTenantSettings({
+  const appUrl = await resolveWorkspaceAppUrl({
     workspaceId: input.workspaceId,
   })
   const preview = !input.contactId
@@ -126,6 +127,32 @@ export const createWebshopLink = async (
     preview,
     expiresInSeconds:
       (preview ? SHOP_PREVIEW_TOKEN_TTL_MS : SHOP_TOKEN_TTL_MS) / 1000,
+  }
+}
+
+/**
+ * The links the Ecommerce pages offer to share: a preview of the shop, and
+ * the shop, cart and categories as bot-button links. One app URL lookup and
+ * one preview token for all of them.
+ */
+export const createWebshopShareLinks = async (input: {
+  workspaceId: string
+}): Promise<{
+  previewUrl: string
+  buttonUrls: { shop: string; cart: string; categories: string }
+}> => {
+  const [appUrl, token] = await Promise.all([
+    resolveWorkspaceAppUrl({ workspaceId: input.workspaceId }),
+    signShopPreviewToken(input.workspaceId),
+  ])
+  const base = { appUrl, workspaceId: input.workspaceId }
+  return {
+    previewUrl: buildWebshopUrl({ ...base, token }),
+    buttonUrls: {
+      shop: buildWebshopButtonUrl(base),
+      cart: buildWebshopButtonUrl({ ...base, page: "cart" }),
+      categories: buildWebshopButtonUrl({ ...base, page: "categories" }),
+    },
   }
 }
 

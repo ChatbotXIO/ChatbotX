@@ -8,7 +8,6 @@ import {
   resolveBroadcastTargetInboxIds,
 } from "@chatbotx.io/database/partials"
 import type { ContactFilterCriteriaInput } from "@chatbotx.io/database/queries"
-import { purgeBroadcastRecipients } from "@chatbotx.io/database/repositories"
 import {
   broadcastSendJobId,
   ScheduleJobData,
@@ -16,12 +15,6 @@ import {
 } from "@chatbotx.io/worker-config"
 import { isBlockedWorkspace } from "../../lib/is-blocked-workspace"
 import { logger } from "../../lib/logger"
-
-// Purge tuning for the stale-recipient cleanup at the start of a prepare run.
-// Normally 0 rows (nothing to clean up), so a generous budget is cheap.
-const PREPARE_PURGE_CHUNK_SIZE = 1000
-const PREPARE_PURGE_INTER_CHUNK_DELAY_MS = 50
-const PREPARE_PURGE_MAX_RUN_DURATION_MS = 60_000
 
 export const prepareBroadcast = async (broadcastId: string) => {
   const broadcast = await broadcastService.findScheduledForPrepare({
@@ -37,22 +30,25 @@ export const prepareBroadcast = async (broadcastId: string) => {
     return
   }
 
-  // A prior prepare run may have left stale `ContactOnBroadcast` rows behind
-  // (e.g. a moveToDraft → re-schedule race). Clearing them before rebuilding
-  // the audience stops a later re-schedule from leaking old recipients.
-  // Normally a no-op — 0 rows removed.
-  await purgeBroadcastRecipients({
-    broadcastId,
-    chunkSize: PREPARE_PURGE_CHUNK_SIZE,
-    interChunkDelayMs: PREPARE_PURGE_INTER_CHUNK_DELAY_MS,
-    maxRunDurationMs: PREPARE_PURGE_MAX_RUN_DURATION_MS,
-  })
-
   // The dispatch epoch read at the start of this run. `moveToDraft` bumps
   // `resumeCount`, so pinning the promotion UPDATE below to this value
   // defeats a stale prepare (running behind a moveToDraft → re-schedule
   // round-trip) from wrongly promoting the NEW schedule's row.
   const promotionEpoch = broadcast.resumeCount
+
+  // A retry of a run that failed midway keeps the rows it already wrote (same
+  // audience), so they start the count; normally there are none and this
+  // returns at once. Each chunk then adds the rows it actually wrote.
+  let contactCount = await broadcastService.countRecipients({ broadcastId })
+
+  // Rows a stale run wrote belong to a schedule nobody will send: queue their
+  // cleanup (the draft cannot be scheduled again until they are gone).
+  const queueStaleRecipientsPurge = () =>
+    broadcastService.queueDraftRecipientsPurge({
+      workspaceId: broadcast.workspaceId,
+      broadcastId,
+      requester: "stalePrepare",
+    })
 
   const parsedChannel = channelTypes.safeParse(broadcast.channel)
   const parsedSubaction = broadcastSubactions.safeParse(broadcast.subaction)
@@ -76,9 +72,6 @@ export const prepareBroadcast = async (broadcastId: string) => {
       })
   }
 
-  let hasContactOnBroadcast = false
-  let contactCount = 0
-
   await broadcastService.forEachAudienceChunk(
     {
       workspaceId: broadcast.workspaceId,
@@ -95,61 +88,83 @@ export const prepareBroadcast = async (broadcastId: string) => {
       audienceRange: resolveBroadcastAudienceRange(broadcast),
     },
     async (contactInboxes): Promise<boolean | undefined> => {
-      const conversations = await conversationService.findDMByContactIds({
-        workspaceId: broadcast.workspaceId,
-        contactIds: contactInboxes.map(
-          (contactInbox) => contactInbox.contactId,
-        ),
-      })
-
-      const conversationMap = new Map(
-        conversations.map((conversation) => [
+      const smtpContactInboxes = contactInboxes.filter(
+        (contactInbox) => contactInbox.channel === "smtp",
+      )
+      const directContactInboxes = contactInboxes.filter(
+        (contactInbox) => contactInbox.channel !== "smtp",
+      )
+      const directConversations =
+        await conversationService.findOrCreateDMByContactIds({
+          workspaceId: broadcast.workspaceId,
+          contactIds: directContactInboxes.map(
+            (contactInbox) => contactInbox.contactId,
+          ),
+        })
+      const directConversationByContactId = new Map(
+        directConversations.map((conversation) => [
           conversation.contactId,
           conversation,
         ]),
       )
-
-      const recipients = contactInboxes.flatMap((contactInbox) => {
-        const conversation = conversationMap.get(contactInbox.contactId)
-        if (!conversation) {
-          return []
-        }
-
-        return [
-          {
-            broadcastId,
-            contactId: contactInbox.contactId,
-            contactInboxId: contactInbox.id,
-            conversationId: conversation.id,
-          },
-        ]
+      const smtpConversations = await conversationService.openEmailThreads({
+        workspaceId: broadcast.workspaceId,
+        contactInboxes: smtpContactInboxes,
+        seedFor: (contactInbox) => `${broadcastId}:${contactInbox.id}`,
       })
-      const skippedCount = contactInboxes.length - recipients.length
-
-      if (skippedCount > 0) {
-        logger.info(
-          { broadcastId, skippedCount },
-          "Skipped broadcast contacts without a DM conversation",
+      const conversationByContactInboxId = new Map<
+        string,
+        (typeof directConversations)[number]
+      >()
+      for (const contactInbox of directContactInboxes) {
+        const conversation = directConversationByContactId.get(
+          contactInbox.contactId,
         )
+        if (conversation) {
+          conversationByContactInboxId.set(contactInbox.id, conversation)
+        }
+      }
+      for (const [contactInboxId, conversation] of smtpConversations) {
+        conversationByContactInboxId.set(contactInboxId, conversation)
+      }
+      const recipients = contactInboxes.flatMap((contactInbox) => {
+        const conversation = conversationByContactInboxId.get(contactInbox.id)
+        return conversation
+          ? [
+              {
+                broadcastId,
+                contactId: contactInbox.contactId,
+                contactInboxId: contactInbox.id,
+                conversationId: conversation.id,
+              },
+            ]
+          : []
+      })
+
+      if (recipients.length > 0) {
+        contactCount += await broadcastService.insertRecipients({ recipients })
       }
 
-      if (recipients.length === 0) {
+      // Checked after writing: `moveToDraft` bumps the epoch mid-run, and a
+      // chunk written after it looked for leftovers would be left behind. So
+      // queue their cleanup, and stop writing an audience nobody will send.
+      if (
+        await broadcastService.isStillPreparing({
+          broadcastId,
+          resumeCount: promotionEpoch,
+        })
+      ) {
         return
       }
-
-      hasContactOnBroadcast = true
-
-      await broadcastService.insertRecipients({ recipients })
-
-      contactCount += recipients.length
-
-      return
+      await queueStaleRecipientsPurge()
+      return false
     },
   )
 
-  const broadcastStatus: BroadcastStatus = hasContactOnBroadcast
-    ? broadcastStatuses.enum.sending
-    : broadcastStatuses.enum.sent
+  const broadcastStatus: BroadcastStatus =
+    contactCount > 0
+      ? broadcastStatuses.enum.sending
+      : broadcastStatuses.enum.sent
 
   const promoted = await broadcastService.promoteAfterPrepare({
     broadcastId,
@@ -160,9 +175,10 @@ export const prepareBroadcast = async (broadcastId: string) => {
 
   if (!promoted) {
     // Lost the promotion race — a moveToDraft (or delete) bumped the epoch
-    // or moved the row off `scheduled` since this run started. The audience
-    // rows this run just inserted belong to a stale schedule; the next
-    // prepare (or the cleanup at the top of this function) removes them.
+    // or moved the row off `scheduled` after the walk's last check.
+    if (contactCount > 0) {
+      await queueStaleRecipientsPurge()
+    }
     logger.warn(
       { broadcastId, promotionEpoch },
       "prepareBroadcast: lost the promotion race, skipping sendBroadcast enqueue",

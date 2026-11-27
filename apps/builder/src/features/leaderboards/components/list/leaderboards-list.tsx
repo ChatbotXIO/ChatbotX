@@ -14,6 +14,7 @@ import { useTranslations } from "next-intl"
 import { parseAsInteger, parseAsStringLiteral, useQueryStates } from "nuqs"
 import { type ReactNode, use, useMemo } from "react"
 import { useInboxList } from "@/features/inboxes/provider/inbox-hook"
+import { TemplateLockedList } from "@/features/templates/components/lock-context"
 import {
   LEADERBOARD_PLATFORM_LABEL_KEY,
   LEADERBOARD_PLATFORMS,
@@ -257,9 +258,15 @@ export function LeaderboardsList({
               ))}
             </TabsList>
           </Tabs>
-          <DataTable table={table}>
-            <DataTableToolbar table={table} />
-          </DataTable>
+          <TemplateLockedList
+            resourceKind="leaderboard"
+            rows={data}
+            workspaceId={workspaceId}
+          >
+            <DataTable table={table}>
+              <DataTableToolbar table={table} />
+            </DataTable>
+          </TemplateLockedList>
         </CardContent>
       </Card>
     </div>

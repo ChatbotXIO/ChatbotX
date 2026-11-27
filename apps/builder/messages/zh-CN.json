@@ -43,6 +43,7 @@
     "connectFeature": "连接 {feature}",
     "continue": "继续",
     "copy": "拷贝",
+    "copyId": "复制 ID",
     "copyUrl": "拷贝 URL",
     "chatWidget": "聊天小部件",
     "create": "创建",
@@ -239,7 +240,6 @@
       },
       "channelFilter": {
         "label": "渠道",
-        "allAccounts": "所有账号",
         "allChannels": "所有渠道"
       },
       "adSpend": "广告花费",
@@ -309,6 +309,7 @@
       "revenueCurrencyNote": "营收默认按单一币种（USD）计算。混合币种广告账号目前还无法汇总。",
       "roas": "ROAS",
       "sendWhatsappBroadcast": "发送 WhatsApp 广播",
+      "singleInboxActionsHint": "导出和再营销一次只针对一个收件箱。请选择单个收件箱后再使用。",
       "retargetOnChannel": "在{channel}上重新定向",
       "spendAccountLevelNote": "花费按 Meta 广告账号层级统计；选择账号后，该账号下只有花费但没有漏斗活动的广告会被隐藏。",
       "thoseWhoPurchased": "已购买的人",
@@ -421,9 +422,166 @@
     "title": "AI Agent"
   },
   "aiFiles": {
+    "detail": {
+      "title": "Knowledge details",
+      "details": "Details",
+      "noChunkingInfo": "No processing information is available yet."
+    },
+    "chunking": {
+      "title": "Chunking",
+      "strategyLabel": "Strategy",
+      "version": "Chunker version",
+      "chunkSize": "Chunk size",
+      "overlapSize": "Overlap size",
+      "chunkCount": "Chunks",
+      "processedAt": "Processed at",
+      "outdated": "Reindex recommended",
+      "strategy": {
+        "prose": "Prose",
+        "tabular": "Tabular",
+        "markdown": "Markdown"
+      },
+      "configDefault": "Chunking parameters: defaults ({chunkSize} characters, overlap {overlapSize}).",
+      "configCustom": "Chunking parameters: {chunkSize} characters, overlap {overlapSize}."
+    },
+    "processingRun": {
+      "title": "Processing run",
+      "noRun": "No processing run has been tracked for this file yet.",
+      "queuedAt": "Queued at",
+      "startedAt": "Started at",
+      "heartbeatAt": "Last heartbeat",
+      "finishedAt": "Finished at",
+      "stale": "Processing appears stalled",
+      "failedBadge": "Processing failed",
+      "successNote": "Chunking and embedding enqueueing completed. The file is searchable when embedding status is also complete.",
+      "status": {
+        "queued": "Queued",
+        "processing": "Processing",
+        "success": "Prepared",
+        "error": "Failed"
+      },
+      "error": {
+        "fileTooLarge": "The file is too large to process.",
+        "tooManyChunks": "The file produced too many chunks.",
+        "fileUnreadable": "The file could not be read. For CSV files, save as CSV UTF-8 and try again.",
+        "noExtractableContent": "No content could be extracted. Check the spreadsheet header row, or the file may be a scan or empty.",
+        "noEmbeddingProvider": "No embedding provider is configured.",
+        "enqueueFailed": "The file was saved but processing could not be queued. Reindex it to try again.",
+        "unknown": "Processing failed unexpectedly."
+      }
+    },
+    "reindex": {
+      "action": "Reindex",
+      "confirmTitle": "Reindex this file?",
+      "confirmDescription": "The file will be processed with the current chunker.",
+      "downtimeWarning": "Search may be temporarily unavailable while this file is reindexed.",
+      "queued": "Reindex queued",
+      "alreadyRunning": "Processing is already running for this file.",
+      "rateLimited": "Too many requests. Try again shortly.",
+      "parameters": "Chunking parameters",
+      "strategyLabel": "How to split",
+      "strategy": {
+        "auto": "Automatic (by file type)",
+        "prose": "Plain text"
+      },
+      "chunkSize": "Chunk size (characters)",
+      "overlapSize": "Overlap (characters)",
+      "overlapDisabledTabular": "Spreadsheets keep each row whole, so overlap is not used.",
+      "tabularHeaderRow": "Header row (spreadsheets)",
+      "presets": {
+        "small": "Small",
+        "medium": "Medium",
+        "large": "Large",
+        "custom": "Custom chunk size"
+      },
+      "resetDefaults": "Restore defaults",
+      "estimate": "Estimate: about {estimate} chunks (currently {current})",
+      "reembedWarning": "Changing parameters re-embeds the whole file (about {count} chunks) with your workspace key, and the file cannot be searched until it finishes.",
+      "largeChunkWarning": "Larger chunks make every agent answer read more text and cost more tokens.",
+      "noChangeNote": "Parameters are unchanged: chunks that are already embedded are kept and not embedded again.",
+      "conflict": "This file is being processed, so the new parameters were not applied. Try again when processing finishes."
+    },
+    "chunks": {
+      "indexOutdated": "Some chunks have no position yet. Reindex the file to number them."
+    },
     "description": "让您的Agent程序访问 PDF、文件等",
     "noEmbeddingProvider": "尚未设置嵌入提供者。AI 文件嵌入需要 OpenAI 或 Gemini 集成；DeepSeek 和 Claude 不支持嵌入模型。",
-    "title": "知识"
+    "title": "知识",
+    "testQuery": {
+      "title": "Test query",
+      "description": "Pick files, ask a question and see which chunk answers it. Only the retrieval step is simulated; no AI answer is generated.",
+      "open": "Test query",
+      "backToKnowledge": "Back to Knowledge",
+      "run": "Run test",
+      "files": "Files",
+      "filterFiles": "Filter files by name",
+      "selectAllReady": "Select all ready files",
+      "selectedCount": "{count}/{max} selected",
+      "fileNotReady": "This file has no chunks ready for search yet.",
+      "question": "Question",
+      "expected": "Expected answer (optional)",
+      "expectedHelp": "Type the answer exactly as it appears in the document, accents included. It is matched against every chunk of the selected files.",
+      "limit": "Result limit",
+      "simulationNote": "This simulates retrieval only; an agent may phrase a question differently. Each run uses one embedding from your workspace key.",
+      "rateLimited": "Too many test requests. Try again shortly.",
+      "byFile": "By file",
+      "matches": "{count} matching chunks",
+      "bestRank": "best rank {rank}",
+      "needsReindex": "Needs reindex",
+      "openDetail": "Open details",
+      "rank": "#{rank}",
+      "chunkNumber": "chunk #{index}",
+      "chunkUnnumbered": "chunk not numbered",
+      "aiWillSee": "AI will see",
+      "belowThreshold": "Below threshold",
+      "containsExpected": "Contains the answer",
+      "thresholdLine": "Threshold {threshold}",
+      "appliedConfig": "Applied configuration",
+      "agentDefaultThreshold": "Agent default threshold",
+      "timings": "Search time",
+      "scoreNotComparable": "Similarity scores are not directly comparable across embedding models.",
+      "answerLocation": "Answer is in {file} · {chunk} · rank {rank}",
+      "splitHint": "The answer may be split between two chunks. Try a larger chunk size or overlap, or check the file was read correctly.",
+      "previousRun": "Previous run ({time}): answer rank {from} → now {to}",
+      "previousRunTop": "Previous run ({time}): {changed} of {total} top chunks changed",
+      "verdict": {
+        "inTopResults": "The AI will see the expected answer.",
+        "foundButLowRank": "The answer is in the documents but ranks too low for the AI to see it. Try a closer question, or reindex with smaller chunks.",
+        "notInAnyChunk": "No chunk of the selected files contains the answer. The document may be read or split wrongly: view the chunks or reindex with other settings."
+      },
+      "diagnosis": {
+        "ok": "Matching chunks found.",
+        "noReadyChunks": "No chunks are ready for search yet. Open the file to check its processing status.",
+        "allBelowThreshold": "Chunks were found but all are below the threshold. Try a lower trial threshold.",
+        "noMatches": "No matching chunks were found.",
+        "agentHasNoFiles": "This agent has no knowledge files."
+      }
+    },
+    "create": {
+      "trigger": "添加知识",
+      "title": "添加知识",
+      "description": "上传文件或从公开 URL 导入。AI 智能体在回答时会搜索其内容。",
+      "tabs": {
+        "fromUrl": "从 URL"
+      },
+      "urlHelp": "支持格式文件的直接链接、公开共享的 Google 文档/表格/幻灯片链接，或静态网页。由 JavaScript 渲染的内容可能缺失。",
+      "snapshotNotice": "URL 只会作为快照下载一次。来源之后的更改不会同步；如需更新请重新添加。",
+      "uploadFailed": "上传 {name} 失败",
+      "rateLimited": "从 URL 导入过于频繁。请等待几秒后重试。",
+      "errors": {
+        "urlNotAllowed": "不允许使用此 URL。请使用公开的互联网地址。",
+        "invalidUrl": "URL 无效。请使用不含用户名或密码的完整 http(s) 链接。",
+        "googleFileNotPublic": "此 Google 文件未公开共享。请将常规访问权限设为“知道链接的任何人”后重试。",
+        "googlePublishedNotSupported": "不支持 Google“发布到网络”链接。请公开共享文件并使用其普通链接。",
+        "unsupportedFileType": "此文件类型不支持作为知识。",
+        "fileTooLarge": "文件大于 {maxSize}。",
+        "downloadTimedOut": "下载耗时过长。请尝试更小的文件或更快的主机。",
+        "downloadFailed": "来源返回了错误。请确认链接无需登录即可打开。",
+        "tooManyRedirects": "URL 重定向次数过多。",
+        "invalidRedirect": "URL 重定向到了无效地址。",
+        "uploadPathNotAllowed": "不允许使用已上传的文件。请重新上传。"
+      }
+    }
   },
   "aiFunctions": {
     "description": "设置 LLM 功能，让您的 AI Agent 更加智能",
@@ -439,6 +597,7 @@
   "aiProviders": {
     "claude": "Claude",
     "deepseek": "DeepSeek",
+    "muse": "Muse",
     "gemini": "Gemini",
     "openai": "OpenAI",
     "openaiCompatible": "OpenAI兼容",
@@ -541,8 +700,10 @@
       "close": "关闭",
       "options": "可用选项",
       "remove": "移除",
-      "filterHint": "筛选只统计添加筛选功能后记录的事件：较早的事件没有收件箱，较早的机器人和对话事件也没有渠道。“全部”始终统计所有数据。",
       "tooManyInboxes": "最多选择 {max} 个收件箱，或勾选全部。"
+    },
+    "sections": {
+      "posts": "帖子"
     }
   },
   "appointmentScheduling": {
@@ -747,7 +908,8 @@
       "template": "范本",
       "title": "广播详细信息",
       "schedule": "重复计划",
-      "runOf": "<link>{name}</link> 的运行"
+      "runOf": "<link>{name}</link> 的运行",
+      "linkNotFound": "此广播已不存在。"
     },
     "flowType": {
       "flow": {
@@ -795,6 +957,10 @@
       "clicked": "已点击",
       "delivered": "已交付",
       "failed": "失败",
+      "leftEmail": "留下邮箱地址",
+      "leftPhoneShort": "留电话",
+      "leftEmailShort": "留邮箱",
+      "leftPhone": "留下电话号码",
       "loadingMore": "加载更多...",
       "noContacts": "找不到联系人",
       "pageInfo": "第 {page} 页（共 {pageCount}）",
@@ -818,9 +984,18 @@
       "paused": "已暂停",
       "ended": "已结束"
     },
+    "statusReason": {
+      "accountPolicyBlocked": "已自动停止：渠道账号因违反政策而被禁止发送。",
+      "accountSendRestricted": "已自动停止：渠道账号的发送功能被暂时限制。",
+      "page": "主页：{name}"
+    },
     "telegramAllContacts": {
       "description": "如果您想向您的Telegram 联系人发送广播，请使用此消息类型。",
       "title": "Telegram"
+    },
+    "lineAllContacts": {
+      "title": "LINE",
+      "description": "随时向您的 LINE 联系人发送群发消息。每条消息都会计入您的 LINE 官方账号的每月消息额度。已屏蔽您账号的联系人将被跳过。"
     },
     "tiktokActiveContacts": {
       "description": "可能包含促销消息，并且只会发送给过去 24 小时内向您的机器人发送消息的用户。TikTok 广播仅支持文本和影像。",
@@ -895,7 +1070,14 @@
     "resumeDialog": {
       "title": "Resume broadcast",
       "description": "\"{name}\" will continue sending to recipients who have not received it yet.",
-      "templateDescription": "“{name}”将从下一个计划时间起重新重复。暂停期间的运行已被跳过。"
+      "templateDescription": "“{name}”将从下一个计划时间起重新重复。暂停期间的运行已被跳过。",
+      "blocked": {
+        "title": "因渠道账号无法发送而停止",
+        "description": "如果账号仍被封禁，第一条消息会失败，群发将再次停止。在封禁期间继续发送可能导致更严厉的限制。",
+        "pageLabel": "主页",
+        "errorLabel": "渠道返回的错误",
+        "confirm": "仍然继续"
+      }
     },
     "planLimitDialog": {
       "title": "升级您的套餐",
@@ -980,6 +1162,7 @@
       "clicked": "已点击",
       "failed": "失败",
       "missed": "漏回",
+      "moderated": "已审核",
       "noContacts": "找不到联系人",
       "noComment": "(无内容)",
       "pageInfo": "第 {page} 页（共 {pageCount}）",
@@ -999,7 +1182,11 @@
       "contactNotNew": "联系人不是新用户",
       "alreadyRepliedOnPost": "已在该帖子回复过",
       "engagedOnOtherPost": "已在其他帖子互动过",
-      "mentionCountNotMatched": "提及人数不匹配"
+      "mentionCountNotMatched": "提及人数不匹配",
+      "noImageAttachment": "未附带图片",
+      "moderated": "已被审核隐藏或删除",
+      "postHashtagNotMatched": "帖子没有匹配的话题标签",
+      "postCaptionUnavailable": "无法读取帖子正文"
     },
     "replyTo": {
       "mentions": "提及人数足够的评论",
@@ -1019,6 +1206,10 @@
       "label": "追踪用户是否标记了其他用户",
       "descriptionText": "统计每条评论中被标记的账号数,并在所有评论中累加到联系人的总数。使用 '{{total_tagged}}' 表示所有被标记的账号,使用 '{{total_new_tagged}}' 表示从未给您的主页发过消息或从未成为联系人的账号。"
     },
+    "onlyCommentsWithImage": {
+      "label": "仅回复带图片的评论",
+      "descriptionText": "仅当评论包含图片时才自动回复。GIF 和贴纸不计入。没有图片的评论将被跳过，并尝试下一个自动化。"
+    },
     "card": {
       "reply": "回复"
     },
@@ -1036,12 +1227,116 @@
       "column": "账号",
       "disconnected": "已断开连接的账号",
       "disconnectedDescription": "此自动化关联的账号已不再连接，因此不会回复任何评论。请重新连接该账号或选择其他账号。"
+    },
+    "aiModeration": {
+      "enabled": "AI 审核",
+      "description": "机器人回复之前，AI 智能体会阅读每条留言，并隐藏或删除属于以下类别的留言。被审核的留言不会收到回复。",
+      "aiAgentDescription": "仅使用智能体的 AI 模型，不使用其提示词。",
+      "engine": "判定方式",
+      "engines": {
+        "aiAgent": "AI 智能体",
+        "decision": "AI Router (Jev)"
+      },
+      "decisionConnection": "AI Router 连接",
+      "decisionConnectionDescription": "仅列出已启用的连接。将使用该连接的 API 密钥判定每条评论。",
+      "decisionConnectionUnavailable": "此连接已被删除或停用。请选择其他连接，否则评论将不会被检查。",
+      "decisionModel": "模型",
+      "decisionThreshold": "匹配阈值",
+      "decisionThresholdDescription": "AI Router 需要多大把握（0.5–0.95）才将评论归入某个类别。数值越高，被拦截的评论越少。",
+      "noDecisionConnection": "此工作区没有已启用的 AI Router 连接。",
+      "addDecisionConnection": "添加连接",
+      "categoriesLabel": "屏蔽属于以下类型的留言",
+      "categories": {
+        "hate": "仇恨言论",
+        "offensive": "冒犯性",
+        "harassment": "骚扰",
+        "negative": "对品牌怀有敌意",
+        "spam": "垃圾信息或诈骗"
+      },
+      "categoryDescriptions": {
+        "hate": "因种族、宗教、性别、国籍等攻击某一群体",
+        "offensive": "侮辱、脏话、粗俗语言",
+        "harassment": "威胁、欺凌、攻击个人",
+        "negative": "意图损害品牌。礼貌的投诉不会被屏蔽",
+        "spam": "诈骗、网络钓鱼、无关推广"
+      },
+      "instruction": "给 AI 的额外指引",
+      "instructionDescription": "可选。告诉 AI 哪些内容允许或需要屏蔽。",
+      "instructionPlaceholder": "例如：不要屏蔽抱怨价格的客户",
+      "action": "屏蔽留言时",
+      "actions": {
+        "hide": "隐藏",
+        "delete": "删除"
+      },
+      "deleteWarning": "删除的留言将永久消失，无法恢复。如果 AI 判断有误，隐藏更安全。"
+    },
+    "moderationLog": {
+      "title": "已审核的留言",
+      "description": "此自动化隐藏或删除的留言及原因。",
+      "allActions": "所有操作",
+      "allSources": "规则和 AI",
+      "actions": {
+        "hide": "已隐藏",
+        "delete": "已删除"
+      },
+      "sources": {
+        "rule": "由隐藏规则",
+        "ai": "由 AI"
+      },
+      "statuses": {
+        "pending": "进行中",
+        "done": "已完成",
+        "failed": "失败"
+      },
+      "rules": {
+        "all": "隐藏所有留言",
+        "phoneNumber": "包含电话号码",
+        "link": "包含链接",
+        "keyword": "包含关键字",
+        "image": "包含图片",
+        "video": "包含视频",
+        "gif": "包含 GIF",
+        "emoji": "包含表情符号"
+      },
+      "summary": {
+        "total": "已审核 {count} 条",
+        "hidden": "已隐藏 {count} 条",
+        "deleted": "已删除 {count} 条",
+        "byAI": "AI 处理 {count} 条",
+        "byRule": "规则处理 {count} 条",
+        "failed": "失败 {count} 条"
+      },
+      "columns": {
+        "time": "时间",
+        "contact": "联系人",
+        "comment": "留言",
+        "action": "操作",
+        "reason": "原因",
+        "status": "状态"
+      },
+      "loading": "加载中…",
+      "empty": "尚未隐藏或删除任何留言。",
+      "unknownContact": "未知",
+      "noText": "（无文字）",
+      "previous": "上一页",
+      "next": "下一页",
+      "page": "第 {page} 页，共 {pageCount} 页"
+    },
+    "postType": {
+      "hashtags": "带话题标签的帖子"
+    },
+    "postHashtags": {
+      "label": "话题标签",
+      "description": "仅回复正文包含以下至少一个话题标签的帖子。输入话题标签后按 Enter。之后添加到帖子的话题标签会在约 10 分钟内生效。",
+      "placeholder": "例如：automation",
+      "required": "请至少添加一个话题标签。"
     }
   },
   "channels": {
     "duplicated": {
       "generic": "此帐户已连接到另一个工作区。",
       "instagram": "此 Instagram 帐户已连接到另一个工作区。",
+      "line": "This LINE channel is already connected to another workspace.",
       "messenger": "此Facebook 页面已连接到另一个工作区。",
       "telegram": "此Telegram 机器人已连接到另一个工作区。",
       "threads": "此Threads帐户已连接到另一个工作区。",
@@ -1160,7 +1455,8 @@
       "notEligible": "此号码不符合历史同步条件。",
       "triggerFailed": "无法启动同步。请稍后重试。",
       "unknown": "无法激活同步。请稍后重试。",
-      "windowExpired": "24 小时同步窗口已过期。请中断并重新连接此号码以再次同步。"
+      "windowExpired": "24 小时同步窗口已过期。请中断并重新连接此号码以再次同步。",
+      "contactImportRunning": "History sync can't start while this page's contacts are importing; it starts by itself afterwards."
     },
     "success": {
       "disabled": "同步已停用。",
@@ -1207,7 +1503,8 @@
       "systemFields": "系统字段",
       "systemTime": "系统时间",
       "topicCoupon": "主题优惠券",
-      "leaderboard": "积分"
+      "leaderboard": "积分",
+      "pipeline": "管道"
     },
     "fields": {
       "appliedJobs": "申请的职位",
@@ -1260,6 +1557,7 @@
       "followsBusinessOnInstagram": "关注 Instagram 上的商家",
       "fromCtwaAd": "来自广告",
       "fromGoogleAd": "来自 Google Ads",
+      "clickedAd": "点击过广告",
       "fullName": "全名",
       "gender": "性别",
       "hasContactInfo": "电话和电子邮件",
@@ -1296,7 +1594,8 @@
         "refLink": "参考链接",
         "text": "文本",
         "video": "视频",
-        "storyMention": "限时动态提及"
+        "storyMention": "限时动态提及",
+        "reel": "Reels"
       },
       "locale": "语言",
       "messengerList": "Messenger 清单",
@@ -1325,7 +1624,8 @@
       "unread": "未读",
       "unreplied": "未回复",
       "verifiedAccountOnInstagram": "Instagram 已验证帐号",
-      "votedOnPoll": "已投票"
+      "votedOnPoll": "已投票",
+      "pipelineItem": "管道项目"
     },
     "languages": {
       "ar": "阿拉伯语",
@@ -1361,6 +1661,7 @@
       "botLink": "机器人链接",
       "chatPlugin": "C.聊天插件",
       "comments": "留言",
+      "liveComments": "直播评论",
       "direct": "直接",
       "fbLeadAd": "FB 领先广告",
       "imported": "导入",
@@ -1371,7 +1672,21 @@
     "valuePlaceholder": "...",
     "yes": "是",
     "noTopic": "无主题",
-    "trackingSince": "自 {date} 起记录。此前的活动不包含在内。"
+    "trackingSince": "自 {date} 起记录。此前的活动不包含在内。",
+    "pipelineItem": {
+      "anyPipeline": "任意管道",
+      "anyStatus": "任意状态",
+      "attributes": {
+        "exists": "项目",
+        "status": "项目状态",
+        "stage": "项目阶段",
+        "priority": "项目优先级"
+      },
+      "operators": {
+        "has": "有",
+        "hasNo": "没有"
+      }
+    }
   },
   "contacts": {
     "copyLink": "拷贝链接",
@@ -1387,7 +1702,26 @@
     "exportTakingLong": "导出花费的时间比预期长",
     "exportTakingLongDescription": "导出仍在处理中。您可以关闭此对话框，并在几分钟后返回查看导出历史记录。",
     "linkCopied": "链接已拷贝到剪贴板",
-    "title": "联系人"
+    "title": "联系人",
+    "search": {
+      "placeholder": "搜索（姓名、电子邮件、电话、联系人 ID）",
+      "searching": "正在搜索…",
+      "error": "无法搜索联系人",
+      "empty": "未找到联系人"
+    },
+    "exportHistory": {
+      "title": "导出记录",
+      "description": "最近 {days} 天的联系人导出。之后文件将被删除。",
+      "empty": "暂无导出。",
+      "requestedBy": "由 {name} 导出",
+      "deletesOn": "将于 {date} 删除",
+      "rows": "{count, plural, one {# 个联系人} other {# 个联系人}}",
+      "status": {
+        "pending": "处理中",
+        "uploaded": "已就绪",
+        "failed": "失败"
+      }
+    }
   },
   "contactScan": {
     "menu": {
@@ -1412,7 +1746,8 @@
       "total": "Total customers scanned: {count}",
       "waitCooldown": "You must wait another 24 hours before you can use this feature again.",
       "failed": "The last scan failed. You can try again once the cooldown ends.",
-      "partial": "The last scan finished partially — some conversations could not be imported."
+      "partial": "The last scan finished partially — some conversations could not be imported.",
+      "cancelled": "上一次扫描在完成前已被取消。"
     },
     "errors": {
       "contactScanFromTimeInvalid": "Scan-from time must be in the past.",
@@ -1438,10 +1773,41 @@
         "running": "Running",
         "succeeded": "Succeeded",
         "partial": "Partial",
-        "failed": "Failed"
+        "failed": "Failed",
+        "cancelled": "已取消"
       },
       "empty": "No scans have been run yet."
+    },
+    "cancel": {
+      "button": "取消扫描",
+      "title": "取消此次扫描？",
+      "description": "扫描将停止，已导入的客户会保留。自本次扫描开始起，仍需等待24小时才能再次扫描此收件箱。",
+      "keep": "继续扫描",
+      "confirm": "取消扫描",
+      "success": "扫描已取消。",
+      "notRunning": "此收件箱当前没有正在运行的扫描。",
+      "failed": "无法取消扫描，请重试。"
     }
+  },
+  "contactAdReferrals": {
+    "title": "广告历史",
+    "empty": "尚未记录此联系人的广告点击。"
+  },
+  "contactBroadcasts": {
+    "empty": "尚未向此联系人发送任何广播。",
+    "searchPlaceholder": "按名称或 ID 搜索"
+  },
+  "adsReferralStats": {
+    "title": "按广告统计联系人",
+    "description": "每个广告触达的联系人，以及归因于其点击的转化。统计自开始追踪以来的点击。",
+    "ad": "广告",
+    "contacts": "联系人",
+    "firstTouch": "首次接触",
+    "leads": "潜在客户",
+    "purchases": "购买",
+    "revenue": "收入",
+    "empty": "此时段内没有广告点击。",
+    "timeout": "此报表耗时过长。请选择更短的日期范围。"
   },
   "coupons": {
     "actions": {
@@ -1524,6 +1890,106 @@
     },
     "title": "DeepSeek"
   },
+  "inboxTranslation": {
+    "settings": {
+      "title": "会话翻译",
+      "description": "在收件箱中，为团队翻译客户的消息，并为客户翻译你的回复。",
+      "saved": "翻译设置已保存",
+      "readOnly": "只有工作区管理员可以更改这些设置。",
+      "languageHint": "也是开启会话翻译后，客户消息所翻译成的语言。",
+      "alert": {
+        "needsReconfiguration": "需要重新配置：AI 集成已被移除或已关闭。",
+        "noIntegration": "请先连接 AI 集成以使用翻译。",
+        "connect": "连接 AI"
+      },
+      "enabled": {
+        "label": "翻译会话",
+        "description": "仅当有人打开会话时才会翻译客户消息。聊天文本会发送给你选择的 AI 提供商，并按你的 AI 密钥计费。"
+      },
+      "integration": {
+        "label": "AI 集成",
+        "description": "仅列出已连接的 AI 提供商。"
+      },
+      "test": {
+        "label": "测试连接",
+        "button": "测试",
+        "result": "用时 {seconds} 秒：“{sample}” → “{translated}”",
+        "slow": "此模型较慢：发出的消息可能来不及翻译，届时将不会发送。",
+        "failed": "测试失败。"
+      }
+    },
+    "message": {
+      "translating": "正在翻译…",
+      "stillWaiting": "仍在等待翻译",
+      "requestAgain": "重新请求",
+      "failed": "无法翻译",
+      "translatedFrom": "译自{language}。显示原文",
+      "translatedFromNoLanguage": "已翻译。显示原文",
+      "sentIn": "以{language}发送。显示已发送内容",
+      "sentInNoLanguage": "已翻译发送。显示已发送内容",
+      "hideOriginal": "隐藏原文",
+      "hideSent": "隐藏已发送内容",
+      "translatedLabelNoLanguage": "已翻译",
+      "sentLabelNoLanguage": "已翻译发送"
+    },
+    "badge": {
+      "tooltip": "客户语言：{language}"
+    },
+    "panel": {
+      "title": "翻译设置",
+      "statusOn": "开启",
+      "statusOff": "关闭",
+      "translateConversation": "翻译此会话",
+      "translateConversationHint": "自动翻译消息",
+      "botActiveHint": "此会话由机器人处理，因此翻译已关闭。开启后即可翻译此会话。",
+      "botPausedHint": "你已从机器人接管此对话，因此翻译保持关闭。开启即可翻译此对话。",
+      "displayOptions": "显示选项",
+      "showOriginals": "显示原文",
+      "previewBeforeSending": "发送前预览译文"
+    },
+    "composer": {
+      "hintUnknown": "未检测到语言 · 将按原文发送",
+      "hintDetecting": "正在识别客户的语言…",
+      "chip": {
+        "aria": "翻译语言",
+        "target": "→ {language}",
+        "sameLanguage": "与工作区语言相同",
+        "unknown": "语言未知",
+        "hasFiles": "带文件的消息不会被翻译",
+        "off": "翻译已关闭"
+      },
+      "popover": {
+        "customerLanguage": "客户语言",
+        "chooseLanguage": "选择语言"
+      },
+      "preview": {
+        "title": "客户预览 · {language}",
+        "translating": "正在翻译…",
+        "needsRetranslate": "需要重新翻译",
+        "retranslate": "重新翻译",
+        "failed": "无法翻译——发送时会再次尝试",
+        "done": "完成",
+        "ready": "可以发送"
+      }
+    },
+    "send": {
+      "translating": "正在翻译…",
+      "failed": "翻译失败",
+      "turnedOff": "翻译不可用。已为此对话关闭翻译。"
+    }
+  },
+  "muse": {
+    "autoReply": {
+      "description": "激活人工智能自动回复，通过您的业务数据支持的人工智能自然地回复用户。",
+      "label": "人工智能自动回复"
+    },
+    "connect": {
+      "description": "利用由您的业务数据提供支持的 AI 自然地回应用户。",
+      "embeddingHint": "Muse 不提供嵌入模型。知识库和 AI 文件仍需要接入 OpenAI 或 Gemini。",
+      "label": "Muse"
+    },
+    "title": "Muse"
+  },
   "developerAccessToken": {
     "description": "产生权杖以允许您的工作区访问公共 API。请将此权杖保密，不要与任何人共享。",
     "title": "API 访问权杖",
@@ -1575,9 +2041,6 @@
   "ecommerce": {
     "description": "创建并管理您的电子商务商店。",
     "title": "电子商务"
-  },
-  "editProfile": {
-    "title": "编辑个人数据"
   },
   "emailTopics": {
     "title": "电子邮件主题"
@@ -2118,6 +2581,13 @@
     "bot": {
       "label": "机器人"
     },
+    "botCategory": {
+      "options": {
+        "all": "全部",
+        "human": "真人客服",
+        "bot": "机器人"
+      }
+    },
     "botField": {
       "label": "机器人字段"
     },
@@ -2146,7 +2616,18 @@
     },
     "button": {
       "label": "按钮",
-      "whenPressed": "当按下此按钮时"
+      "whenPressed": "当按下此按钮时",
+      "callToThisNumber": "拨打此号码",
+      "style": {
+        "label": "按钮样式",
+        "description": "按钮在联系人端的显示方式。",
+        "default": "{style}（默认）",
+        "options": {
+          "primary": "主要",
+          "secondary": "次要",
+          "link": "链接"
+        }
+      }
     },
     "buttonLabel": {
       "label": "按钮标签"
@@ -2212,7 +2693,8 @@
       "threadsUsername": "Threads 用户名",
       "webchatGuestId": "网页聊天访客 ID",
       "externalId": "外部 ID",
-      "channelId": "渠道 ID"
+      "channelId": "渠道 ID",
+      "lineUserId": "LINE User ID"
     },
     "contactNote": {
       "label": "联系人备注"
@@ -2266,6 +2748,15 @@
       "prepend": "加入到开头",
       "savePayloadTo": "将回应保存到自订字段",
       "set_value": "设置值",
+      "clear": "Clear value",
+      "formula": "Use custom formula",
+      "set_now": "Set to now",
+      "date_expression": "Free-form date (with math)",
+      "add_minutes": "Add minutes",
+      "add_hours": "Add hours",
+      "add_days": "Add days",
+      "formulaHint": "Math where value is the current number, e.g. round(value * 1.1). Functions: abs, ceil, floor, round, min, max, pow, sqrt, log, sin, cos.",
+      "dateExpressionHint": "e.g. now + 2 days - 3 hours. Units: min, h, d, w, mo, y.",
       "groupSystemFields": "系统字段",
       "groupCustomFields": "自订字段",
       "groupAccountFields": "机器人字段"
@@ -2422,7 +2913,8 @@
       "aiSpeechToText": "{aiName}：语音转文本",
       "aiTextToSpeech": "{aiName}：文本转语音",
       "label": "流程",
-      "placeholder": "选择流程"
+      "placeholder": "选择流程",
+      "aiSegmentImage": "{aiName}: 图像分割"
     },
     "folder": {
       "label": "文件夹"
@@ -2645,6 +3137,12 @@
     "lastAd": {
       "label": "最后一个广告"
     },
+    "adIds": {
+      "label": "全部广告ID"
+    },
+    "adId": {
+      "label": "首个广告ID"
+    },
     "lastAdSourcePlatform": {
       "label": "最后一个广告来源平台"
     },
@@ -2712,7 +3210,8 @@
       "refLink": "参考链接",
       "text": "文本",
       "video": "视频",
-      "storyMention": "限时动态提及"
+      "storyMention": "限时动态提及",
+      "reel": "Reels"
     },
     "lifeTime": {
       "label": "生命周期"
@@ -2853,7 +3352,10 @@
       "label": "通知类型",
       "newMessageToHuman": "人类新消息",
       "newOrder": "新订单",
-      "notifyAdmin": "通知管理员"
+      "notifyAdmin": "通知管理员",
+      "postFailed": "帖子发布失败",
+      "postNeedsReview": "帖子需要确认",
+      "publishConnection": "发布连接需要处理"
     },
     "number": {
       "label": "号码",
@@ -3173,14 +3675,15 @@
     },
     "status": {
       "completed": "已完成",
-      "partial": "Partial",
+      "partial": "部分完成",
       "error": "错误",
       "failed": "失败",
       "label": "状态",
       "pending": "待定",
       "processing": "处理中",
       "installing": "Installing",
-      "success": "成功"
+      "success": "成功",
+      "uninstalled": "Uninstalled"
     },
     "statusCode": {
       "label": "状态码"
@@ -3221,6 +3724,7 @@
       "label": "标签"
     },
     "targetCountry": {
+      "currencyHint": "同时设置没有自有货币的管道的默认货币。",
       "description": "您的大多数联系人居住的国家。",
       "label": "目标国家/地区"
     },
@@ -3279,7 +3783,13 @@
       "commentToMessage": "Comment-to-Message",
       "commentToMessageDescription": "Lets this account answer high-intent comments with a direct message. Required for TikTok comment automations that use a private reply.",
       "commentToMessageEligibility": "Only available to Business Accounts registered in Vietnam, Indonesia or Thailand, owned by someone over 18, that are registered businesses or have run Messaging Ads, with messaging permissions set to \"Requests\".",
-      "commentToMessageUnknown": "Not checked with TikTok yet — refresh to read the current setting."
+      "commentToMessageUnknown": "Not checked with TikTok yet — refresh to read the current setting.",
+      "features": "功能",
+      "featureMessaging": "消息",
+      "featureMessagingDescription": "接收和发送私信。TikTok 不向在欧洲经济区、瑞士或英国注册的账号提供消息功能——请为这些账号关闭此项。",
+      "featureComments": "评论",
+      "featureCommentsDescription": "接收评论用于评论自动化：公开回复、点赞和隐藏。",
+      "featuresReconnectHint": "更改适用于今后连接的账号。请重新连接现有账号以更新其权限。"
     },
     "timezone": {
       "description": "联系人将套用此时区。",
@@ -3339,6 +3849,7 @@
       "placeholders": {
         "instagram": "Instagram 用户 ID",
         "messenger": "MessengerPSID",
+        "line": "LINE user ID",
         "telegram": "Telegram 聊天 ID",
         "tiktok": "TikTok 用户 ID",
         "zalo": "Zalo 用户 ID"
@@ -3501,7 +4012,12 @@
       "ads": "广告",
       "settings": "设置",
       "miniApps": "迷你应用",
-      "leaderboards": "排行榜"
+      "leaderboards": "排行榜",
+      "pipelines": "管道",
+      "places": "地点",
+      "templates": "模板",
+      "polls": "Polls",
+      "posts": "帖子"
     },
     "adReferral": {
       "label": "Ads",
@@ -3560,6 +4076,9 @@
     "miniApp": {
       "label": "小程序"
     },
+    "lastOpportunityId": {
+      "label": "最近商机 ID"
+    },
     "adminName": {
       "label": "发送管理员姓名"
     },
@@ -3598,6 +4117,42 @@
     },
     "empty": {
       "label": "空"
+    },
+    "aiSegmentImage": {
+      "description": "使用 SAM 3.1 在图像中查找对象，并保存其裁剪后的图像。",
+      "inputFieldId": {
+        "label": "源图像"
+      },
+      "target": {
+        "label": "要查找的对象",
+        "description": "简短的名词短语，例如“红色汽车”或“产品盒”。不要使用问句或指令。",
+        "placeholder": "产品盒"
+      },
+      "matchSelection": {
+        "label": "匹配",
+        "options": {
+          "largest": "仅最大的对象",
+          "all": "所有匹配的对象（一个包含全部对象的裁剪区域）"
+        }
+      },
+      "outputFieldId": {
+        "label": "图像保存到"
+      },
+      "detailsOutputFieldId": {
+        "label": "详情保存到",
+        "description": "可选。接收包含匹配数量和边框的 JSON。",
+        "sameAsOutput": "请选择与输出图像不同的字段。",
+        "sameAsInput": "请选择与源图像不同的字段。"
+      },
+      "overwriteWarning": "结果将替换此字段中的源图像。",
+      "states": {
+        "success": "已找到",
+        "skip": "未找到",
+        "error": "失败"
+      }
+    },
+    "tiktokPublishing": {
+      "label": "TikTok 发布"
     }
   },
   "flowAnalytics": {
@@ -3616,6 +4171,7 @@
   "flows": {
     "export": {
       "notPublished": "该流程从未发布过。请先发布后再导出。",
+      "viewOnly": "此流程是从仅查看模板安装的，因此无法导出。",
       "failed": "导出失败，请重试。"
     },
     "actions": {
@@ -3738,7 +4294,12 @@
       "changeGamificationScore": "更改积分",
       "sendViewCatalog": "查看商品目录",
       "sendProducts": "发送商品",
-      "sendCollection": "商品集合"
+      "sendCollection": "商品集合",
+      "pipeline": "管道",
+      "moreOptions": "更多选项",
+      "findPlacesNearMe": "查找我附近的地点",
+      "callPhoneNumber": "拨打电话号码",
+      "copyText": "复制文本"
     },
     "externalRequest": {
       "errors": {
@@ -3890,7 +4451,12 @@
       "selectFlow": "WhatsApp流程",
       "selectFlowPlaceholder": "选择流",
       "selectScreenPlaceholder": "选择一个屏幕",
-      "startScreen": "开始画面"
+      "startScreen": "开始画面",
+      "fileBadge": "文件",
+      "fileFormat": "文件链接",
+      "fileFormatAllUrls": "所有链接，以逗号分隔",
+      "fileFormatFirstUrl": "仅第一个链接",
+      "fileFormatHint": "自定义字段按此处的选择保存已上传文件的链接。"
     },
     "whatsappOptionList": {
       "addOption": "添加新",
@@ -4009,6 +4575,119 @@
       "summaryManual": "{count, plural, one {# 个商品} other {# 个商品}}",
       "cancel": "取消",
       "save": "保存"
+    },
+    "pipelineStep": {
+      "action": "操作",
+      "pipeline": "管道",
+      "targetHint": "对联系人在此管道中最近的未结项目执行操作。若没有，则走“跳过”路径。",
+      "noPipelines": "未找到管道",
+      "actions": {
+        "addToPipeline": "将联系人添加到管道",
+        "moveToStage": "移至某个阶段",
+        "changeValue": "更改金额",
+        "assign": "分配给管理员",
+        "changeStatus": "更改状态",
+        "changePriority": "更改优先级",
+        "changeDueDate": "更改截止日期",
+        "changeTitle": "更改标题",
+        "setCustomField": "设置自定义字段",
+        "clearCustomField": "清除自定义字段",
+        "changeDescription": "更改描述",
+        "removeFromPipeline": "将联系人从管道中移除",
+        "addComment": "添加评论",
+        "transfer": "转移到其他管道"
+      },
+      "title": "标题",
+      "description": "描述",
+      "stage": "阶段",
+      "firstStage": "第一阶段",
+      "status": "状态",
+      "assigneeMembers": "已分配的管理员",
+      "assigneeTeams": "已分配的团队",
+      "value": "金额",
+      "priority": "优先级",
+      "dueDate": "截止日期",
+      "dueNone": "无",
+      "dueNoneHint": "该项目没有截止日期。",
+      "dueCustomField": "来自日期自定义字段",
+      "dueFixed": "固定日期和时间",
+      "dueField": "日期或日期时间自定义字段",
+      "fieldValues": "自定义字段",
+      "field": "字段",
+      "fieldValue": "值",
+      "fields": "字段",
+      "addField": "添加字段值",
+      "removeHint": "删除联系人在此管道中最近的未结项目。",
+      "comment": "评论",
+      "destinationPipeline": "目标管道",
+      "destinationStage": "目标阶段",
+      "missingRequiredFields": "必填字段尚未填写：{names}。所有必填字段都有值后才能创建条目。",
+      "addRequiredFields": "添加必填字段"
+    },
+    "aiSegmentImage": {
+      "label": "{name}: 图像分割"
+    },
+    "aiSpeechToText": {
+      "muse": {
+        "formatHint": "仅支持 WAV 文件：PCM 16 位、单声道、16 kHz 或 24 kHz，最长 10 分钟。其他文件（例如语音消息）将进入错误分支。",
+        "languageBias": {
+          "label": "语言偏好",
+          "description": "音频可能使用的语言。留空则自动检测。",
+          "placeholder": "自动检测"
+        },
+        "keywords": {
+          "label": "关键词",
+          "description": "帮助 Muse 正确拼写的名称或专业术语。",
+          "placeholder": "输入关键词后按 Enter"
+        }
+      },
+      "languages": {
+        "Arabic": "阿拉伯语",
+        "Bengali": "孟加拉语",
+        "Dutch": "荷兰语",
+        "English": "英语",
+        "French": "法语",
+        "German": "德语",
+        "Hebrew": "希伯来语",
+        "Hindi": "印地语",
+        "Indonesian": "印度尼西亚语",
+        "Italian": "意大利语",
+        "Japanese": "日语",
+        "Kannada": "卡纳达语",
+        "Korean": "韩语",
+        "Malay": "马来语",
+        "MandarinChinese": "普通话",
+        "Marathi": "马拉地语",
+        "Polish": "波兰语",
+        "Portuguese": "葡萄牙语",
+        "Spanish": "西班牙语",
+        "Tagalog": "他加禄语",
+        "Tamil": "泰米尔语",
+        "Telugu": "泰卢固语",
+        "Thai": "泰语",
+        "Turkish": "土耳其语",
+        "Vietnamese": "越南语"
+      }
+    },
+    "findPlacesNearMe": {
+      "category": "地点类别",
+      "allLocations": "所有地点",
+      "whatsappOnly": "仅发送给 WhatsApp 联系人。",
+      "noLocationSource": "位置必须在此流程中收集：请在此操作之前添加一个回复格式为“位置”的获取用户数据步骤。其他流程保存的位置不会被使用。否则将跳过此操作。"
+    },
+    "callPhoneNumber": {
+      "fallbackHint": "在无法发起通话的渠道上，联系人将改为收到这个号码作为回复。",
+      "countryLabel": "国家/地区代码",
+      "noCountry": "不选择国家/地区",
+      "invalidForCountry": "这不是有效的{country}电话号码。",
+      "needsCountry": "请选择国家/地区，或以 + 和国家代码开头输入号码。",
+      "invalidInternational": "这不是有效的国际电话号码。"
+    },
+    "copyText": {
+      "textLabel": "要复制的文本",
+      "limitHint": "填入变量后最多 {max} 个字符。",
+      "fallbackHint": "在无法复制文本的渠道上，联系人会以回复的形式收到此文本。",
+      "viewerTitle": "复制此文本"
     }
   },
   "folders": {
@@ -4101,6 +4780,11 @@
     "noWorkspaces": "您还没有任何工作区。",
     "owner": "所有者",
     "subtitle": "选择要跳回的工作区，或创建新工作区。",
+    "tabs": {
+      "label": "首页分区",
+      "backToTemplates": "返回模板列表",
+      "templates": "模板"
+    },
     "welcomeBack": "欢迎回来，{name}"
   },
   "notFound": {
@@ -4188,7 +4872,8 @@
       "replyToNewContactsOnly": "仅回复新联系人",
       "replyToNewContactsOnlyDescription": "仅自动回复过去从未成为此工作区联系人的人。",
       "replyToUsersWhoCommentedOnOtherPosts": "回复曾在其他贴文留言的用户",
-      "replyToUsersWhoCommentedOnOtherPostsDescription": "若用户曾在您其他贴文下留言，仍持续对其回复。"
+      "replyToUsersWhoCommentedOnOtherPostsDescription": "若用户曾在您其他贴文下留言，仍持续对其回复。",
+      "likeUserCommentUnavailable": "Instagram 上不可用。此选项会被跳过；关闭即可移除。"
     },
     "postIdPlaceholder": "输入贴文 ID，每行一笔...",
     "postIdTab": "贴文 ID",
@@ -4320,7 +5005,8 @@
       "delayMustBeZero": "所选的时机选项不支持延迟时间，请设为零。",
       "atLeastOneFieldRequired": "请至少填写一个字段。",
       "replyTextRequired": "请至少输入一条回复消息。",
-      "hideKeywordsRequired": "Enter at least one keyword to hide comments by keyword."
+      "hideKeywordsRequired": "Enter at least one keyword to hide comments by keyword.",
+      "hashtagsRequired": "请至少添加一个话题标签。"
     },
     "hideCommentsDescription": "只能隐藏您帖子下的顶级回复。",
     "hideComments": {
@@ -4436,13 +5122,18 @@
       "delayMustBeZero": "Delay value must be zero for the selected timing option.",
       "hideKeywordsRequired": "Enter at least one keyword to hide comments by keyword.",
       "atLeastOneFieldRequired": "At least one field is required.",
-      "replyTextRequired": "请至少输入一条回复消息。"
+      "replyTextRequired": "请至少输入一条回复消息。",
+      "hashtagsRequired": "请至少添加一个话题标签。"
     },
     "privateReply": "Private reply (Comment-to-Message)",
     "privateReplyDescription": "Send a direct message to the commenter. TikTok only allows this for comments it flags as high intent, so it will not fire for every matching comment.",
     "privateReplyMessage": "Private reply message",
     "privateReplyHighIntentTitle": "TikTok decides which comments can be messaged",
-    "privateReplyHighIntentNotice": "Comment-to-Message must be enabled on the connected TikTok account, and the account must be a Business Account registered in Vietnam, Indonesia or Thailand. TikTok sends the direct message only for first-level comments it flags as high intent, within 48 hours, once per comment, and not if the commenter already messaged you in the past 24 hours."
+    "privateReplyHighIntentNotice": "Comment-to-Message must be enabled on the connected TikTok account, and the account must be a Business Account registered in Vietnam, Indonesia or Thailand. TikTok sends the direct message only for first-level comments it flags as high intent, within 48 hours, once per comment, and not if the commenter already messaged you in the past 24 hours.",
+    "postHashtags": {
+      "reconnectRequired": "此 TikTok 账号暂时无法读取视频描述，因此所有评论都会被跳过。请在 设置 → 渠道 → TikTok 中重新连接账号以授权。",
+      "someAccountsReconnectRequired": "部分 TikTok 账号暂时无法读取视频描述，因此它们的评论会被跳过。请在 设置 → 渠道 → TikTok 中重新连接。"
+    }
   },
   "commentAutomationMissedComments": {
     "action": "处理遗漏的评论",
@@ -4659,6 +5350,36 @@
     "signUpToJoin": "创建账户以加入"
   },
   "keywords": {
+    "conditions": {
+      "operators": {
+        "is": "消息等于",
+        "similarTo": "消息相似于",
+        "contains": "消息包含",
+        "containsPhone": "消息包含电话",
+        "containsEmail": "消息包含邮箱",
+        "containsImage": "消息包含图片",
+        "containsAudio": "消息包含音频",
+        "containsVideo": "消息包含视频",
+        "containsLink": "消息包含链接",
+        "containsWholeWord": "消息包含完整单词",
+        "beginsWith": "消息开头为",
+        "endsWith": "消息结尾为",
+        "isThumbsUp": "消息是 👍",
+        "notContains": "消息不包含",
+        "matchesRegex": "消息匹配正则"
+      },
+      "and": "且",
+      "addCondition": "消息条件",
+      "removeCondition": "删除条件",
+      "note": "关键词不区分大小写并忽略声调符号，例如 \"Tư vấn\" 和 \"tu van\" 视为相同。",
+      "keywordPlaceholder": "+ 关键词",
+      "regexPlaceholder": "+ 正则",
+      "errors": {
+        "keywordConditionValuesRequired": "请至少添加一个关键词。",
+        "keywordConditionTakesNoValues": "此条件不需要关键词。",
+        "invalidKeywordRegex": "正则表达式无效。"
+      }
+    },
     "descriptions": {
       "contact": "当联系人发送包含关键字的消息给您的工作区时自动回复。",
       "contactTitle": "联系人关键字",
@@ -4792,7 +5513,8 @@
       "botId": "Telegram 机器人 ID",
       "oaId": "Zalo OA ID",
       "openId": "TikTok 账号 open id",
-      "threadsUserId": "Threads 用户 ID"
+      "threadsUserId": "Threads 用户 ID",
+      "channelId": "LINE Channel ID"
     },
     "channelUserIdKinds": {
       "psid": "Messenger PSID",
@@ -4802,7 +5524,8 @@
       "tiktokCustomerOpenId": "TikTok 客户 open id",
       "threadsUsername": "Threads 用户名",
       "apiSourceId": "联系人来源 ID",
-      "whatsappId": "WhatsApp ID (wa_id)"
+      "whatsappId": "WhatsApp ID (wa_id)",
+      "lineUserId": "LINE user id"
     },
     "mappings": {
       "title": "保存传入数据",
@@ -4966,8 +5689,7 @@
     "title": "Make.com"
   },
   "manageSidebar": {
-    "communityGroup": "社区",
-    "enterpriseGroup": "企业版",
+    "administrationGroup": "管理",
     "platformGroup": "平台",
     "portalCustomDomain": "自订网域",
     "portalPaymentProcessor": "支付处理器",
@@ -5128,6 +5850,9 @@
     "waTemplateMpmTooManySections": "多商品按钮最多可包含 10 个版块。请在发布前移除部分版块。",
     "waTemplateMpmTooManyProducts": "多商品按钮总共最多可包含 30 个商品。请在发布前移除部分商品。",
     "waTemplateLtoExpirationRequired": "发送前请为限时优惠选择到期时间。",
+    "waTemplatePaymentRequestIncomplete": "发布前请填写此按钮的付款信息。",
+    "waTemplatePaymentRequestInvalid": "付款信息格式无效。请检查金额、链接和卡号后四位。",
+    "waTemplatePaymentRequestMisplaced": "付款信息只能设置在普通（非轮播）模板的付款按钮上。",
     "waTemplateMpmIncompleteProducts": "每个分组至少需要一个已选择的商品——请删除空行或为其选择商品。",
     "unsupportedBlock": "此渠道不支持此模块。",
     "constraintExceeded": "已超出此渠道的限制。",
@@ -5154,7 +5879,15 @@
       "noAnswer": "未回答",
       "labelsUnavailable": "无法加载 Flow 的问题，因此显示字段名称。",
       "yes": "是",
-      "no": "否"
+      "no": "否",
+      "fileNotSaved": "文件未保存",
+      "filesNotSaved": "{count, plural, one {# 个文件未保存} other {# 个文件未保存}}",
+      "filesAttached": "{count, plural, one {# 个附件} other {# 个附件}}",
+      "fileFailure": {
+        "too_large": "文件过大",
+        "unsupported_type": "不支持的文件类型",
+        "download_failed": "无法下载"
+      }
     },
     "sendViewCatalogBodyTooLong": "消息文本对目录消息来说太长，请缩短。",
     "sendViewCatalogFooterTooLong": "页脚对目录消息来说太长，请缩短。",
@@ -5181,7 +5914,31 @@
     "savedReplyImagesRemoved": "已移除无法在此发送的图片",
     "onlyImagesAllowed": "只能添加图片",
     "tooManySavedReplyImages": "一条快捷回复最多包含 {max} 张图片",
-    "savedReplyImagesNotSentHere": "图片不会在此发送"
+    "savedReplyImagesNotSentHere": "图片不会在此发送",
+    "invalidPhoneNumber": "这不是有效的电话号码。请包含国家代码，例如 +1。",
+    "buttonCallPhoneNumberUnsupported": "此按钮在这里无法拨打电话号码，请选择其他操作。",
+    "buttonCopyTextUnsupported": "此按钮在这里无法复制文本。请选择其他操作。",
+    "paymentRequest": {
+      "title": "付款请求",
+      "cardEnding": "尾号 {lastFourDigits} 的卡",
+      "status": "WhatsApp 不会通知付款情况，请在支付服务商处查看。",
+      "cardStatus": "客户确认不会扣款，请通过您的支付服务商扣款。",
+      "sentFromTemplate": "模板：{name}"
+    },
+    "paymentConfirmation": {
+      "title": "客户已确认付款",
+      "cardTitle": "客户已确认银行卡付款",
+      "cardEnding": "尾号 {lastFourDigits} 的卡",
+      "notCharged": "尚未扣款，请通过您的支付服务商扣款。",
+      "reference": "参考号 {referenceId}"
+    },
+    "sendQueue": {
+      "failed": "有一条消息发送失败。如可以，请在对话中重新发送，或继续发送。",
+      "unconfirmed": "无法确认最后一条消息是否已发送。请选择是否继续发送。",
+      "continue": "继续发送",
+      "discard": "丢弃排队中的消息",
+      "dismiss": "忽略"
+    }
   },
   "messenger": {
     "botProfile": "机器人个人数据",
@@ -5244,7 +6001,10 @@
       "alreadyConnectedNote": "该页面已连接",
       "noPagesDescription": "商务管理平台内的页面需要在连接期间访问商务管理平台。重新连接Messenger并授予所有请求的权限。",
       "noPagesTitle": "找不到Facebook 页面",
-      "tryAgain": "尝试重新连接"
+      "tryAgain": "尝试重新连接",
+      "unavailableInsufficientPermissions": "你需要拥有此主页的完整管理员权限才能连接它。",
+      "unavailableMissingAccessToken": "Facebook 未授予对此主页的访问权限。请重新连接并允许访问。",
+      "unavailableGeneric": "无法连接此主页。"
     },
     "tabs": {
       "generalSettings": "一般设置",
@@ -5514,6 +6274,11 @@
     "modelCatalog": "Available models",
     "modelCatalogDescription": "Enter one model ID per line, or separate model IDs with commas.",
     "provider": "Provider",
+    "providers": {
+      "openrouterDecision": "OpenRouter Decision",
+      "systemOneCompatible": "System One-compatible",
+      "typesafe": "TypeSafe"
+    },
     "testFailed": "AI Router connection test failed.",
     "testPassed": "AI Router connection test passed.",
     "toolDescription": "Create reusable profiles for the AI Router flow step.",
@@ -5560,7 +6325,9 @@
       "rating": "评分",
       "quantity": "数量",
       "price": "价格",
-      "vendor": "供应商"
+      "vendor": "供应商",
+      "orderStatus": "订单状态",
+      "payment": "付款"
     },
     "fields": {
       "name": "姓名",
@@ -5585,7 +6352,9 @@
       "cancelReason": "取消原因",
       "rating": "评分",
       "ratingComment": "顾客评论",
-      "coupon": "优惠券（{code}）"
+      "coupon": "优惠券（{code}）",
+      "paymentStatus": "付款状态",
+      "payments": "在线付款"
     },
     "statuses": {
       "pending": "未处理",
@@ -5601,18 +6370,114 @@
       "cancelled": "取消"
     },
     "paymentMethods": {
-      "cod": "货到付款"
+      "cod": "货到付款",
+      "stripe": "银行卡",
+      "paypal": "PayPal"
     },
     "shippingTypes": {
       "delivery": "送货上门",
       "pickup": "到店自提"
     },
     "description": "客户下的订单。",
-    "ratingValue": "{rating}/5 ★"
+    "ratingValue": "{rating}/5 ★",
+    "paymentStatuses": {
+      "unpaid": "未付款",
+      "paid": "已付款",
+      "refunded": "已退款"
+    },
+    "attemptStatuses": {
+      "open": "等待中",
+      "paid": "已付款",
+      "expired": "已过期",
+      "refunded": "已退款"
+    },
+    "testPayment": "测试",
+    "awaitingPaymentHint": "正在等待客户在线付款。付款后即可接受订单。",
+    "refundWarning": "{amount} 将退还给客户。",
+    "paymentStates": {
+      "paid": "已付款",
+      "refunded": "已退款",
+      "awaitingPayment": "等待付款",
+      "payOnDelivery": "货到付款",
+      "notPaid": "未付款"
+    },
+    "paymentUntil": "截至 {time}",
+    "paymentExpiredCancelReason": "未在规定时间内收到付款。",
+    "exportTruncated": "导出已限制为前 {count} 个订单",
+    "exportError": "无法导出订单",
+    "shopify": {
+      "syncOrders": "同步订单",
+      "orderColumn": "订单",
+      "customerColumn": "客户",
+      "paymentPending": "待处理",
+      "paymentFilter": "付款",
+      "paymentFilterAll": "付款：全部",
+      "fulfillmentFilter": "履约",
+      "fulfillmentFilterAll": "履约：全部",
+      "fulfillmentStatuses": {
+        "fulfilled": "已履约",
+        "unfulfilled": "未履约",
+        "partial": "部分履约"
+      },
+      "viewDetails": "查看详情",
+      "viewOnStore": "在 {store} 中查看",
+      "detailsTitle": "订单 {name}",
+      "placedOn": "在 {store} 店铺下单 • {date}",
+      "customerDetails": "客户详情",
+      "shippingAddress": "收货地址",
+      "noShippingAddress": "无收货地址",
+      "tracking": "物流跟踪：{company} #{number}",
+      "lineItems": "订单商品",
+      "itemColumn": "商品",
+      "skuColumn": "SKU",
+      "shipping": "运费",
+      "free": "免费",
+      "loading": "加载中...",
+      "loadError": "无法加载订单详情",
+      "close": "关闭"
+    }
   },
   "placesNearMe": {
-    "description": "寻找您的联系人附近的地点。",
-    "title": "我附近的地方"
+    "description": "让您的客户轻松找到离他们最近的营业地点。",
+    "title": "我附近的地方",
+    "tabs": {
+      "locations": "地点",
+      "categories": "分类"
+    },
+    "categories": {
+      "columns": {
+        "locations": "地点"
+      },
+      "add": "添加分类",
+      "edit": "编辑分类",
+      "empty": "暂无分类。",
+      "created": "分类已添加",
+      "updated": "分类已更新",
+      "deleted": "分类已删除",
+      "saveError": "无法保存分类",
+      "deleteError": "无法删除分类",
+      "deleteTitle": "删除 {name}?",
+      "deleteDescription": "{count, plural, =0 {没有地点使用此分类。} one {# 个地点将变为未分类。} other {# 个地点将变为未分类。}}"
+    },
+    "locations": {
+      "columns": {
+        "coordinates": "坐标"
+      },
+      "preview": "预览",
+      "add": "添加地点",
+      "edit": "编辑地点",
+      "empty": "暂无地点。",
+      "created": "地点已添加",
+      "updated": "地点已更新",
+      "deleted": "地点已删除",
+      "saveError": "无法保存地点",
+      "deleteError": "无法删除地点",
+      "deleteTitle": "删除 {name}？",
+      "deleteDescription": "此地点将被永久删除。",
+      "noCategory": "无分类",
+      "latitude": "纬度",
+      "longitude": "经度"
+    }
   },
   "platformAdmin": {
     "helpItems": {
@@ -5723,6 +6588,23 @@
     "hint": "取消选取每个频道以允许所有频道。",
     "title": "允许频道"
   },
+  "platformDefaultTemplate": {
+    "title": "默认模板",
+    "description": "将此模板安装到该白标下创建的每个新工作区。现有工作区不会改变。",
+    "clearTitle": "移除默认模板？",
+    "clearDescription": "新工作区将不再自动获得模板。已有该模板的工作区会保留。",
+    "status": {
+      "notConfigured": "未设置",
+      "ready": "生效中",
+      "templateUnavailable": "模板不可用",
+      "shareDisabled": "分享链接已关闭",
+      "keyRotated": "密钥无效"
+    },
+    "errors": {
+      "unavailable": "模板 ID 或密钥无效。",
+      "shareDisabled": "请先开启模板的分享链接。"
+    }
+  },
   "platformCredentials": {
     "notConfigured": "尚未设置",
     "notConfiguredHint": "添加您的设置以开始使用此集成。",
@@ -5779,8 +6661,58 @@
     "title": "平台设置"
   },
   "pollManager": {
-    "description": "创建并管理您的联系人的投票。",
-    "title": "投票管理器"
+    "description": "开展投票或表决。您也可以用它来收集客户的意见。",
+    "title": "投票管理器",
+    "feature": "Poll",
+    "deleteDescription": "Deleting a poll also deletes its candidates and votes. This cannot be undone.",
+    "list": {
+      "startDate": "Start Date",
+      "endDate": "End Date",
+      "votes": "Votes",
+      "getLink": "Get Link"
+    },
+    "getLink": {
+      "title": "Get Link",
+      "description": "Share a link that opens a chat and starts the poll.",
+      "omnichannel": "Omnichannel",
+      "noInboxes": "No connected channels can open this poll yet.",
+      "loadError": "Could not load the links."
+    },
+    "form": {
+      "createTitle": "Create poll",
+      "editTitle": "Edit poll",
+      "votingPeriod": "Voting period",
+      "imageRequired": "An image is required.",
+      "dateRangeInvalid": "结束日期必须晚于开始日期。",
+      "candidatesTitle": "Candidates or Options",
+      "candidateNumber": "Candidate {number}",
+      "moreOptions": "More Options",
+      "afterVoteFlow": "Flow to be sent after the user votes",
+      "afterVoteFlowNone": "None",
+      "removeVotesTitle": "Remove candidates?",
+      "removeVotesDescription": "Deleting candidates also deletes their votes."
+    },
+    "analytics": {
+      "title": "Analytics",
+      "results": "Results",
+      "votesPerGender": "Votes per gender",
+      "totalVotes": "Total votes",
+      "noVotes": "No votes yet",
+      "other": "Other",
+      "male": "Male",
+      "female": "Female",
+      "unknown": "Unknown",
+      "loadError": "Could not load the analytics.",
+      "columns": {
+        "name": "Name",
+        "totalVotes": "Total votes",
+        "totalPercent": "T%",
+        "maleVotes": "Male votes",
+        "malePercent": "M%",
+        "femaleVotes": "Female votes",
+        "femalePercent": "F%"
+      }
+    }
   },
   "productCategories": {
     "actions": "分类操作",
@@ -5975,6 +6907,14 @@
       "vendor": {
         "label": "供应商",
         "none": "无"
+      },
+      "status": {
+        "label": "状态",
+        "values": {
+          "active": "在售",
+          "draft": "草稿",
+          "unlisted": "未列出"
+        }
       }
     },
     "inventoryPolicy": {
@@ -5990,7 +6930,33 @@
       "tags": "标签",
       "variants": "变体"
     },
-    "title": "产品"
+    "title": "产品",
+    "shopify": {
+      "openStore": "打开 {store}",
+      "syncProducts": "同步商品",
+      "syncStarted": "同步已开始",
+      "syncError": "无法开始同步",
+      "viewDetails": "查看详情",
+      "editOnStore": "在 {store} 中编辑",
+      "copyProductLink": "复制商品链接",
+      "linkCopied": "商品链接已复制",
+      "noProductLink": "此商品没有店铺链接",
+      "inStock": "库存 {count}",
+      "inStockWithVariants": "库存 {count}（{variants} 个变体）",
+      "detailsTitle": "商品详情 — {name}",
+      "detailsSubtitle": "已从 {store} 店铺 {shop} 同步",
+      "summaryLine": "分类：{category} • 总库存：{variants, plural, one {# 个变体} other {# 个变体}}共 {units} 件",
+      "uncategorized": "未分类",
+      "variantsTitle": "变体（{count}）",
+      "variantColumn": "变体",
+      "skuColumn": "SKU",
+      "priceColumn": "价格",
+      "inventoryColumn": "库存",
+      "defaultVariant": "默认",
+      "loading": "加载中...",
+      "loadError": "无法加载商品详情",
+      "close": "关闭"
+    }
   },
   "qrCodeGenerator": {
     "description": "创建并管理您的 QR Code。",
@@ -6298,6 +7264,10 @@
       "description": "DeepSeek 集成说明",
       "title": "DeepSeek集成"
     },
+    "muse": {
+      "description": "Muse 集成说明",
+      "title": "Muse集成"
+    },
     "openai": {
       "description": "OpenAI 集成说明",
       "title": "OpenAI集成"
@@ -6306,11 +7276,102 @@
   },
   "smtp": {
     "errors": {
-      "connectionFailed": "无法连接到SMTP 服务器。请检查您的凭证并重试。"
+      "connectionFailed": "无法连接到SMTP 服务器。请检查您的凭证并重试。",
+      "imapConnectionFailed": "无法连接到 IMAP 邮箱。请检查主机、凭据和邮箱名称后重试。"
     },
     "setting": {
-      "description": "使用您的SMTP 服务器发送电子邮件。",
+      "description": "通过您的 SMTP 服务器、IMAP 邮箱或入站 Webhook 收发邮件。",
       "label": "（电子邮件）SMTP"
+    },
+    "guide": {
+      "trigger": "设置指南：{provider}",
+      "openDocs": "打开 {provider} 文档",
+      "receiveImap": "接收邮件",
+      "receiveImapDescription": "每分钟检查一次此邮箱，并为每封新邮件创建一个对话。仅导入开启此功能之后收到的邮件。",
+      "imapHost": "IMAP 主机",
+      "imapPort": "IMAP 端口",
+      "relayReceive": "此服务商仅支持发送邮件。要接收回复，请将其入站解析指向一个 Webhook URL。",
+      "sendOnly": "Amazon SES 通过 SNS 接收邮件，此处暂不支持。此收件箱只能发送邮件。",
+      "webhook": {
+        "title": "入站 Webhook URL",
+        "hint": "将此 URL 粘贴到服务商的入站设置中。任何拥有此 URL 的人都可以向此收件箱添加邮件，请像对待密码一样妥善保管。",
+        "saveFirst": "请先连接，然后重新打开此收件箱以获取 Webhook URL。",
+        "show": "显示 Webhook URL",
+        "rotate": "轮换 URL",
+        "copied": "已复制 Webhook URL",
+        "failed": "无法加载 Webhook URL，请重试。"
+      },
+      "status": {
+        "title": "状态",
+        "sending": "发送",
+        "receivingImap": "接收：IMAP",
+        "receivingWebhook": "接收：Webhook",
+        "receivingOff": "接收：已关闭",
+        "lastPolled": "上次检查：{time}",
+        "neverPolled": "尚未检查",
+        "error": "最近一次错误：{error}"
+      },
+      "errors": {
+        "title": "常见错误",
+        "authFailed": "535 或身份验证失败：请使用应用专用密码，而不是账户的常规密码。",
+        "timeout": "超时：请尝试使用 465 端口 (SSL) 代替 587 (STARTTLS)，并检查您的主机是否允许出站连接。",
+        "imap": "IMAP 登录失败：请在邮箱设置中开启 IMAP，并使用相同的应用专用密码。"
+      },
+      "providers": {
+        "google": {
+          "step1": "为 Google 账户开启两步验证。",
+          "step2": "创建应用专用密码（Google 账户 > 安全性 > 应用专用密码）。",
+          "step3": "输入完整的 Gmail 地址作为用户名，应用专用密码作为密码。",
+          "step4": "要接收邮件，请在 Gmail 中开启 IMAP（设置 > 转发和 POP/IMAP），并开启下方的“接收邮件”。"
+        },
+        "outlook": {
+          "step1": "为 Microsoft 账户开启两步验证。",
+          "step2": "在 Microsoft 账户的安全设置中创建应用密码。",
+          "step3": "使用完整地址作为用户名，应用密码作为密码。",
+          "note": "Microsoft 正在停用 Exchange Online 的基本身份验证。如果连接被拒绝，可能是您的组织已将其关闭。"
+        },
+        "yahoo": {
+          "step1": "在 Yahoo 账户的安全设置中开启两步验证。",
+          "step2": "为此连接生成应用密码。",
+          "step3": "使用您的 Yahoo 地址作为用户名，应用密码作为密码。"
+        },
+        "zoho": {
+          "step1": "为您的 Zoho 账户开启双重身份验证。",
+          "step2": "创建应用专用密码。",
+          "step3": "使用您的 Zoho 地址作为用户名，该密码作为密码。必须在 Zoho Mail 设置中启用 IMAP。"
+        },
+        "sendgrid": {
+          "step1": "创建具有 Mail Send 权限的 API 密钥。使用用户名 apikey，并将该密钥作为密码。",
+          "step2": "要接收邮件，请先连接，然后重新打开此收件箱并复制其 Webhook URL。",
+          "step3": "在 SendGrid 中，将该 URL 添加到 Settings > Inbound Parse，并勾选 \"POST the raw, full MIME message\"。"
+        },
+        "mailgun": {
+          "step1": "使用发送域名的 SMTP 凭据（Sending > Domain settings > SMTP credentials）。",
+          "step2": "要接收邮件，请先连接，然后重新打开此收件箱并复制其 Webhook URL。",
+          "step3": "在 Mailgun 中，创建一条转发到该 URL 的接收路由。"
+        },
+        "postmark": {
+          "step1": "将服务器的 API 令牌同时用作用户名和密码。",
+          "step2": "要接收邮件，请先连接，然后重新打开此收件箱并复制其 Webhook URL。",
+          "step3": "在 Postmark 中，将其设置为服务器的 Inbound Webhook，并包含原始邮件内容。"
+        },
+        "brevo": {
+          "step1": "使用您的 Brevo SMTP 登录名，并将 SMTP 密钥作为密码。",
+          "step2": "要接收邮件，请先连接，然后重新打开此收件箱并复制其 Webhook URL。",
+          "step3": "在 Brevo 中，将该 URL 添加为接收域名的入站解析 Webhook。",
+          "note": "Brevo 不会随入站邮件发送附件，因此无法接收附件。"
+        },
+        "amazonSes": {
+          "step1": "在 Amazon SES 控制台中创建 SMTP 凭据。它们与您的 AWS 访问密钥不同。",
+          "step2": "使用您所在 SES 区域的 SMTP 端点作为主机，并验证发件人地址。",
+          "step3": "输入控制台中的 SMTP 用户名和密码。",
+          "note": "此收件箱只能发送邮件。"
+        },
+        "other": {
+          "step1": "向您的邮件服务商询问 SMTP 主机和端口。587 端口使用 STARTTLS，465 端口使用 SSL。",
+          "step2": "要接收邮件，还需询问 IMAP 主机和端口（通常为 993），然后开启下方的“接收邮件”。"
+        }
+      }
     }
   },
   "states": {
@@ -6327,6 +7388,9 @@
   },
   "templates": {
     "description": "创建和管理您的范本。",
+    "createDialog": {
+      "title": "新建模板"
+    },
     "title": "范本",
     "share": {
       "label": "分享",
@@ -6336,14 +7400,136 @@
       "dialogDescription": "任何拥有此链接的人都可以将此范本的副本安装到您所在租户的工作区中。",
       "enableLabel": "启用分享链接",
       "linkLabel": "分享链接",
-      "description": "任何拥有该链接的人都可以将此模板安装到自己的工作区。"
+      "rotateLabel": "重新生成链接",
+      "rotateTitle": "重新生成分享链接？",
+      "rotateDescription": "当前链接将立即失效。仍需安装此范本的人需要使用新链接。",
+      "rotated": "分享链接已重新生成",
+      "expiryLabel": "链接到期时间",
+      "expiryHint": "留空表示链接永不过期。",
+      "clearExpiry": "移除到期时间",
+      "expiredNotice": "此链接已过期。请设置更晚的日期或移除到期时间以重新分享。",
+      "templateId": "模板 ID",
+      "templateKey": "模板密钥",
+      "showKey": "显示密钥",
+      "hideKey": "隐藏密钥",
+      "copyField": "复制{field}"
+    },
+    "sync": {
+      "title": "更新",
+      "updateAvailable": "有可用更新",
+      "upToDate": "已是最新",
+      "sourceDeleted": "范本已删除",
+      "sourceDeletedHint": "发布者已删除此范本。你的副本仍可使用，但无法再更新。",
+      "updateNow": "立即更新",
+      "updating": "正在更新…",
+      "version": "范本版本 {version}",
+      "lastSynced": "最后更新于 {date}",
+      "autoUpdateLabel": "范本变更时自动更新",
+      "noHistory": "暂无更新。",
+      "countAdded": "已添加 {count} 项",
+      "countUpdated": "已更新 {count} 项",
+      "countDetached": "{count} 项不再跟随模板",
+      "notUpdatable": "{count} 项暂时无法更新",
+      "overwritten": "{name} 已被编辑，并被此次更新替换",
+      "restore": "恢复我的版本",
+      "restored": "已恢复您的版本",
+      "status": {
+        "pending": "排队中",
+        "running": "运行中",
+        "completed": "已完成",
+        "partial": "部分完成",
+        "failed": "失败",
+        "skipped": "已跳过",
+        "cancelled": "已取消"
+      },
+      "trigger": {
+        "autoUpdate": "自动",
+        "manual": "手动",
+        "reinstall": "重新安装"
+      },
+      "requestedVersion": "请求的版本 v{version}",
+      "errors": {
+        "unknown": "更新失败。请重试；如果持续失败，请联系支持团队。",
+        "templateSyncFailed": "更新失败。请重试。",
+        "templateSyncSuperseded": "更新的版本已取代此次更新。",
+        "templateSyncAbandoned": "更新未能及时完成，已被关闭。",
+        "templateInstallationInactive": "此安装已不再有效。",
+        "workspaceOwnerBlocked": "工作区所有者的账户已被封禁。",
+        "templateUninstallInProgress": "模板正在卸载。",
+        "templateAutoUpdateOff": "自动更新已关闭。",
+        "templateUpToDate": "该副本已是最新。",
+        "templateInstallerAccessLost": "安装者已无权更新此副本。",
+        "templateInstallationSourceMissing": "更新运行之前，模板已被删除。",
+        "templateCategoryPermissionDenied": "你已无权更新此模板中的全部内容。",
+        "templatePayloadIncompatible": "此范本以较新的格式保存，此服务器无法安装。",
+        "templateCrossTenantInstall": "此范本不适用于您的工作区。",
+        "templateInvalidInboxBinding": "所选收件匣与范本不匹配。"
+      }
+    },
+    "versions": {
+      "detailsTab": "详情",
+      "tab": "版本",
+      "versionNumber": "版本 {version}",
+      "current": "当前",
+      "first": "第一个版本",
+      "noDetail": "此版本没有记录详细信息。",
+      "added": "已添加",
+      "changed": "已更改",
+      "removed": "已移除"
+    },
+    "installers": {
+      "title": "查看分析",
+      "workspace": "工作区",
+      "lastInstalled": "最近安装",
+      "version": "Version",
+      "autoUpdate": "自动更新",
+      "uninstalled": "已卸载",
+      "hidden": "工作区未分享",
+      "uninstallNotAllowed": "安装方未允许发布者卸载此副本。",
+      "loadError": "无法加载安装方列表,请重试。",
+      "automatic": "自动",
+      "details": "详情",
+      "noIssues": "没有警告或错误。"
     },
     "installs": {
       "title": "安装记录",
       "resources": "资源",
       "warnings": "警告",
       "completedAt": "完成时间",
-      "autoUpdate": "自动更新"
+      "autoUpdate": "自动更新",
+      "installedBy": "安装者",
+      "viaApi": "API 令牌",
+      "attempts": "尝试次数",
+      "autoUpdateOn": "开启",
+      "autoUpdateOff": "关闭",
+      "retry": "重试安装",
+      "resourcesTitle": "已安装的资源",
+      "noResources": "尚未创建任何内容。",
+      "deletedResource": "已删除的资源",
+      "wholeCategory": "{count, plural, one {# 项} other {# 项}}",
+      "viewOnly": "仅查看",
+      "created": "已创建",
+      "reused": "已复用",
+      "loadMore": "加载更多",
+      "statusFilter": "状态",
+      "allStatuses": "所有状态",
+      "errors": {
+        "unknown": "安装失败。请重试；如果持续失败，请联系支持团队。",
+        "templatePayloadIncompatible": "此范本以较新的格式保存，此服务器无法安装。",
+        "templateInstallationSourceMissing": "范本在安装运行前已被删除。",
+        "templateCrossTenantInstall": "此范本不适用于您的工作区。",
+        "templateCategoryPermissionDenied": "您已无权安装此范本中的全部内容。",
+        "templateInvalidInboxBinding": "所选收件匣与范本不匹配。",
+        "templateInstallEnqueueFailed": "无法将安装加入队列。",
+        "templateInstallFailed": "安装失败，请重试。",
+        "templateInstallAbandoned": "安装未能及时完成，已被关闭。",
+        "templateInstallSuperseded": "此范本的一次较新安装已取代本次安装。",
+        "workspaceOwnerBlocked": "工作区所有者的账户已被封禁。"
+      },
+      "uninstalledBy": "{by, select, publisher {发布者已卸载此范本。} installer {此范本已从此工作区卸载。} other {此范本已被卸载。}}",
+      "uninstalledSummary": "已删除 {deleted} 项，保留 {kept} 项。",
+      "lastAttemptAt": "最近一次尝试",
+      "installedAutomatically": "已自动安装（白标默认）"
     },
     "form": {
       "contents": "范本内容",
@@ -6355,15 +7541,41 @@
       "allowEdit": "允许安装后编辑",
       "allowDelete": "允许安装后删除",
       "publisherName": "发布者名称",
-      "youtubeVideoId": "YouTube 视频 ID",
-      "youtubeVideoIdDescription": "视频 URL 中的 11 位字符 ID，例如 youtube.com/watch?v=dQw4w9WgXcQ 中的 \"dQw4w9WgXcQ\"",
+      "video": "封面视频",
+      "videoDescription": "粘贴 YouTube、Vimeo、Streamable 或 Cloudinary 的视频链接，或该平台的嵌入代码。没有视频请留空。",
+      "videoEmpty": "在下方粘贴视频链接，即可在此预览。",
+      "videoOrientationNote": "视频方向（横向或竖向）将在保存时识别。",
+      "videoPreviewTitle": "视频预览",
+      "videoErrors": {
+        "tooLong": "视频链接或嵌入代码过长",
+        "invalidUrl": "请输入有效的 https 视频链接或嵌入代码",
+        "unsupportedProvider": "仅支持 YouTube、Vimeo、Streamable 和 Cloudinary 视频",
+        "invalidVideoId": "该链接不包含有效的视频"
+      },
       "testLink": "测试链接",
       "imageUrl": "封面图片",
       "installBehavior": "安装行为",
-      "createInstallFolder": "安装到专属文件夹",
+      "createInstallFolder": "在安装的账户上创建文件夹并安装资源。",
       "createInstallFolderDescription": "将每个已安装的资源都归入一个以此范本命名的新文件夹中。",
-      "defaultAutoUpdate": "默认将安装标记为需要更新",
-      "defaultAutoUpdateDescription": "每次重新发布此范本时，新安装都会显示可用更新的提示。"
+      "defaultAutoUpdate": "自动更新已安装的模板",
+      "defaultAutoUpdateDescription": "每当您保存内容有变更的此范本时，开启自动更新的安装都会被新内容覆盖（安装方编辑过的副本会先备份）。安装方可以关闭此功能。",
+      "viewOnly": "仅查看",
+      "viewOnlyAll": "将所选项全部设为仅查看",
+      "includedAutomatically": {
+        "title": "自动包含",
+        "hint": "因您选择的项目需要而一并带入。只读。",
+        "rows": "{count, plural, one {另有 # 项} other {另有 # 项}}",
+        "kind": {
+          "folders": "文件夹",
+          "placeCategories": "地点分类"
+        }
+      },
+      "viewOnlyCopyIncluded": "你选择的项目（或其依赖的项目）是从仅查看范本安装的，因此无法在新范本中共享。",
+      "miniAppPublishedExcluded": {
+        "title": "已排除的迷你应用",
+        "hint": "这些流程使用了已发布到 WhatsApp 的迷你应用。它无法共享，因此模板不包含它，安装时会移除该引用。",
+        "item": "{flowName}：{miniAppName}"
+      }
     },
     "categories": {
       "flows": "流程",
@@ -6378,8 +7590,148 @@
       "keywords": "关键字",
       "entryPointLinks": "入口点链接",
       "triggers": "触发器",
-      "fbCommentAutomations": "Facebook 评论自动化",
-      "settings": "设置"
+      "fbCommentAutomations": "评论自动化",
+      "settings": "机器人字段和已保存回复",
+      "sequences": "序列",
+      "aiMcpServers": "MCP 服务器",
+      "aiFiles": "AI 知识文件",
+      "questionnaires": "Questionnaires",
+      "couponTopics": "优惠券主题",
+      "pipelines": "管道",
+      "magicLinks": "魔法链接",
+      "polls": "投票",
+      "dynamicImages": "动态图片",
+      "placeLocations": "地点",
+      "miniApps": "迷你应用",
+      "minigames": "小游戏",
+      "leaderboards": "排行榜",
+      "openHours": "营业时间",
+      "vendors": "供应商",
+      "discountCodes": "折扣码",
+      "storeSettings": "店铺设置",
+      "storyAutomations": "Instagram 限时动态自动化",
+      "inboundWebhooks": "入站 Webhook"
+    },
+    "locked": {
+      "flowBanner": "此流程来自仅查看的模板。你可以查看，但无法编辑。",
+      "badge": "仅查看",
+      "editorBanner": "这是从仅查看模板安装的。你可以查看，但不能编辑。",
+      "badgeHint": "从仅查看范本安装"
+    },
+    "channels": {
+      "messenger": "Messenger",
+      "instagram": "Instagram",
+      "instagramFacebook": "Instagram (Facebook login)",
+      "threads": "Threads",
+      "tiktok": "TikTok",
+      "whatsapp": "WhatsApp",
+      "telegram": "Telegram",
+      "zalo": "Zalo",
+      "webchat": "Webchat",
+      "line": "LINE",
+      "email": "电子邮件"
+    },
+    "uninstall": {
+      "title": "卸载范本",
+      "description": "范本会移除它在此工作区创建的所有内容，包括已编辑的副本。共享的标签、字段和文件夹、原本就存在的项目，以及您基于副本构建的任何内容都会保留。",
+      "loading": "正在检查会发生什么…",
+      "previewFailed": "无法检查卸载会产生的影响。",
+      "failed": "无法卸载范本。",
+      "confirm": "卸载",
+      "action": "卸载",
+      "deleted": "{count, plural, one {将删除 # 项} other {将删除 # 项}}",
+      "deletedDone": "{count, plural, one {已删除 # 项} other {已删除 # 项}}",
+      "keptModified": "{count, plural, one {保留 # 个已编辑或未验证的副本} other {保留 # 个已编辑或未验证的副本}}",
+      "keptShared": "{count, plural, one {保留 # 个共享标签或字段} other {保留 # 个共享标签和字段}}",
+      "keptByPolicy": "{count, plural, one {保留 # 个其他项目} other {保留 # 个其他项目}}",
+      "keptHasDependents": "{count, plural, one {保留 # 个副本，因为仍有内容在使用它} other {保留 # 个副本，因为仍有内容在使用它们}}",
+      "deletedModified": "{count, plural, one {其中 # 项经您编辑：这些编辑将丢失且无法恢复} other {其中 # 项经您编辑：这些编辑将丢失且无法恢复}}",
+      "keptLockedByOther": "{count, plural, one {保留 # 项，因为另一个范本安装仍在保护它} other {保留 # 项，因为另一个范本安装仍在保护它们}}",
+      "confirmCheckbox": "我了解此操作会删除上述项目且无法撤销",
+      "started": "卸载已开始",
+      "inProgress": "正在卸载…",
+      "retry": "重试卸载",
+      "state": {
+        "pending": "卸载排队中",
+        "running": "正在卸载…",
+        "partial": "卸载未完成，请重试",
+        "failed": "卸载失败，请重试",
+        "skipped": "已跳过卸载：工作区已被封禁"
+      },
+      "deletedUnverified": "{count, plural, one {其中 # 项无法检查是否经过编辑：如果您更改过，这些更改将丢失} other {其中 # 项无法检查是否经过编辑：如果您更改过，这些更改将丢失}}",
+      "cancelAction": "取消卸载",
+      "cancelled": "已取消卸载：剩余项目可重新供您使用",
+      "blockedByReference": "{count, plural, one {# 项未被删除，因为您创建的内容仍引用它：请移除该引用，然后重试卸载} other {# 项未被删除，因为您创建的内容仍引用它们：请移除这些引用，然后重试卸载}}",
+      "keptPartlyRemoved": "{count, plural, one {卸载受阻后保留了 # 个副本；其历史记录和防重复数据可能已被移除，请在启用前检查} other {卸载受阻后保留了 # 个副本；其历史记录和防重复数据可能已被移除，请在启用前检查}}",
+      "keptInactiveForReview": "{count, plural, one {# 个副本保持未启用：其历史记录和防重复数据已被移除，请在启用前检查} other {# 个副本保持未启用：其历史记录和防重复数据已被移除，请在启用前检查}}",
+      "keptHistoryRemoved": "{count, plural, one {保留了 # 个副本，但其历史记录已被移除（无需启用）：请在依赖它之前检查} other {保留了 # 个副本，但其历史记录已被移除（无需启用）：请在依赖它们之前检查}}",
+      "cancelledPartial": "{count, plural, one {# 项已在删除中并将完成；其余项目已归还} other {# 项已在删除中并将完成；其余项目已归还}}"
+    },
+    "warningCodes": {
+      "aiFileTooLarge": "此知识文件超出了模板安装可复制的大小，已跳过。",
+      "aiFileUnavailable": "此知识文件无法复制，已跳过。",
+      "assigneeRequired": "请选择此步骤将会话分配给谁。",
+      "ambiguousSourceFieldToken": "多个源字段使用相同名称，因此使用该名称的变量保持不变。",
+      "backupTooLarge": "本地编辑过的项目太大，无法备份，因此未被覆盖。",
+      "backupUnavailable": "此项目的备份已不可用。",
+      "botFieldRenamed": "已存在同名但类型不同的机器人字段，因此已创建一个重命名的字段。",
+      "categoryPermissionDenied": "你没有此类别的权限，因此已跳过。",
+      "couponTopicExpired": "此优惠券主题已过期。",
+      "credentialRequired": "使用此项目前，请先添加其凭据。",
+      "custom": "在此工作区中未找到被引用的项目，因此已移除该链接。",
+      "customField": "在此工作区中未找到被引用的项目，因此已移除该链接。",
+      "customFieldRenamed": "已存在同名但类型不同的字段，因此创建了一个重命名的字段。",
+      "enqueueFailed": "无法将此项目的后台处理加入队列。",
+      "flow": "在此工作区中未找到被引用的项目，因此已移除该链接。",
+      "flowInvalidStructure": "Flow 的结构无效，因此已跳过。",
+      "flowNotPublished": "Flow 已作为草稿安装，尚未发布。",
+      "flowSkippedRequiredReference": "由于无法解析必需的引用，已跳过该 Flow。",
+      "folder": "在此工作区中未找到被引用的项目，因此已移除该链接。",
+      "inboundWebhookLimitReached": "已跳过此入站 Webhook：工作区的入站 Webhook 数量已达上限。",
+      "inboxBindingRequired": "请为此频道选择收件匣；在此之前该项目保持未启用状态。",
+      "integration": "在此工作区中未找到被引用的项目，因此已移除该链接。",
+      "localModifiedOverwritten": "本地编辑过的项目已被覆盖。已保存备份，可以还原。",
+      "name": "未找到此项目可用的名称，因此已跳过。",
+      "noEmbeddingProvider": "此工作区未配置嵌入服务提供商，因此已跳过知识文件。请连接 OpenAI 或 Gemini 后重新安装。",
+      "notUpdatable": "此类项目暂不支持自动更新。",
+      "pipeline": "使用了已不存在的管道。",
+      "pipelineField": "使用了已不存在的管道字段。",
+      "pipelineStage": "使用了已不存在的管道阶段。",
+      "postSelectionRequired": "请重新选择帖子：无法带入原始帖子。",
+      "product": "在此工作区中未找到被引用的项目，因此已移除该链接。",
+      "productCategory": "在此工作区中未找到被引用的项目，因此已移除该链接。",
+      "questionImage": "无法复制图片。",
+      "quota": "已达到套餐上限，因此已跳过该项目。",
+      "referenceRemoved": "无法解析的引用已被移除。",
+      "savedReply": "在此工作区中未找到被引用的项目，因此已移除该链接。",
+      "savedReplyImage": "无法复制图片。",
+      "tag": "在此工作区中未找到被引用的项目，因此已移除该链接。",
+      "unlisted": "项目未完全导入：{code}",
+      "workspaceMember": "已分配给不在此工作区的成员。",
+      "workspaceUnavailable": "此工作区已不可用，因此跳过了该项。",
+      "scheduleExpired": "此项目的日期已过；使用前请设置新的日期。",
+      "linkNotRemapped": "指向未包含在模板中的工具的链接已保持不变。",
+      "dynamicImage": "由于无法复制背景，已跳过此动态图片。",
+      "dynamicImageFieldNotBound": "请选择一个自定义字段来缓存此图片；原字段已存在于你的工作区中。",
+      "dynamicImageRerenderFailed": "此动态图片已关闭，因为无法使用复制后的链接重新渲染其背景。再次打开即可重试。",
+      "pollImage": "无法复制一张图片。",
+      "leaderboardInvalid": "无法安装此排行榜的配置，已跳过。",
+      "placeLocationInvalid": "此地点的名称为空，已跳过。",
+      "minigame": "此排行榜计分所用的小游戏不在模板中，已跳过。",
+      "minigameImage": "无法复制一张图片。",
+      "leaderboardImage": "无法复制一张图片。",
+      "leaderboardHostMissing": "此排行榜需要专属的渠道（或小游戏），本次安装未提供，已跳过。",
+      "externalStoreSkipped": "此工作区通过已连接的店铺（Shopify 或 WooCommerce）销售，因此未安装商品、供应商、折扣码、营业时间和店铺设置。",
+      "discountCodeSkipped": "已跳过此折扣码：它适用的商品或分类不在模板中，或其设置被拒绝。",
+      "storeSettingsKept": "此工作区已有店铺设置，已保持原样。",
+      "vendorImage": "无法复制一张图片。",
+      "storeSettingsCurrencyKept": "工作区有其他币种的商品，因此保留了其币种而非模板的币种。",
+      "storySelectionRequired": "请重新选择快拍：无法带入原有的快拍。"
+    },
+    "tabs": {
+      "mine": "我的模板",
+      "installed": "已安装",
+      "installedEmpty": "还没有已安装的模板。从其他工作区安装的模板会显示在这里。"
     }
   },
   "texts": {
@@ -6408,6 +7760,7 @@
       "sendMetaCapiEvent": "发送 Meta CAPI 事件",
       "setCustomField": "设置自订字段",
       "startAnotherFlow": "开始另一个流程",
+      "startExternalStep": "Start External Step",
       "transferConversationToHuman": "将对话转移给人类",
       "sendGoogleAdsConversion": "发送 Google Ads 转化"
     },
@@ -6424,6 +7777,8 @@
       "contactInfoUpdated": "电话或电子邮件已更新",
       "contactReferredANewContact": "联系人推荐了新联系人",
       "contactReferredExistingContact": "联系人引用现有联系人",
+      "contactBlockedBot": "联系人屏蔽了机器人",
+      "contactUnblockedBot": "联系人取消屏蔽机器人",
       "contactUnsubscribedFormBroadcast": "联系人取消订阅广播",
       "conversationAssigned": "分配的对话",
       "conversationTransferredToBot": "对话已转移到机器人",
@@ -6438,6 +7793,8 @@
       "newOrder": "新订单",
       "orderAccepted": "订单已接受",
       "orderCancelled": "订单已取消",
+      "orderPaid": "订单已付款",
+      "orderRefunded": "订单已退款",
       "orderConcluded": "订单已完成",
       "orderShipped": "订单已出货",
       "productAddedToCart": "产品已加入购物车",
@@ -6446,17 +7803,30 @@
       "subscribedToSequence": "订阅串行",
       "tagApplied": "标签已应用",
       "tagRemoved": "标签已删除",
-      "ticketCreated": "工单已创建",
-      "ticketMovedToStage": "门票已移至舞台",
-      "ticketPriorityChanged": "票证优先权已更改",
-      "ticketStatusChanged": "票证状态已更改",
-      "ticketValueChanged": "票价已更改",
+      "pipelineItemCreated": "工单已创建",
+      "pipelineItemMovedToStage": "门票已移至舞台",
+      "pipelineItemPriorityChanged": "票证优先权已更改",
+      "pipelineItemStatusChanged": "票证状态已更改",
+      "pipelineItemValueChanged": "票价已更改",
       "unsubscribedFromSequence": "取消订阅串行",
       "userAskedAboutProduct": "联系人询问了产品",
       "callRecorded": "通话已录音",
       "callTranscribed": "通话已转写",
       "anyProduct": "任意商品",
-      "anyCategory": "任意分类"
+      "anyCategory": "任意分类",
+      "anyPipeline": "任意管道",
+      "anyStage": "任意阶段",
+      "unavailablePipeline": "已删除或不可用的管道",
+      "unavailableStage": "已删除或不可用的阶段",
+      "contactCommentedOnPost": "联系人评论了帖子",
+      "contactFirstCommentedOnPost": "联系人首次评论了帖子",
+      "anyInbox": "任意主页或账号",
+      "unavailableInbox": "已删除或不可用的主页或账号",
+      "postScope": {
+        "any": "任意帖子",
+        "selected": "指定帖子",
+        "publishedFromPosts": "仅限从“帖子”发布的帖子"
+      }
     },
     "day": "日",
     "hour": "小时",
@@ -6493,15 +7863,39 @@
   "templatesPublicPage": {
     "invalidTitle": "此链接已不再可用。",
     "invalidDescription": "此范本分享链接无效、已禁用或已过期。",
-    "byPublisher": "发布者：{publisherName}",
-    "includes": "此范本包含",
     "videoTitle": "模板预览视频",
-    "tryItOut": "立即体验",
-    "signInToInstall": "登录以安装",
+    "preview": "预览",
+    "aboutTemplate": "关于此模板",
     "selectWorkspace": "选择一个工作区",
     "install": "安装",
     "installStarted": "安装已开始",
-    "noEligibleWorkspaces": "您没有可安装此范本的合适工作区。"
+    "noEligibleWorkspaces": "您没有可安装此范本的合适工作区。",
+    "alreadyInstalled": "此范本已安装在此工作区中。",
+    "viewInstall": "查看安装",
+    "installAnotherCopy": "再安装一个副本",
+    "inboxesTitle": "收件匣",
+    "inboxesHint": "此范本是围绕这些收件匣构建的。请选择要使用您自己的哪些收件匣；未选择的部分将以停用状态安装。",
+    "noInbox": "不连接 — 以停用状态安装",
+    "noInboxAvailable": "此频道没有已连接的收件匣",
+    "updateExisting": "更新已安装的副本",
+    "updateStarted": "更新已开始",
+    "autoUpdateLabel": "范本变更时自动更新",
+    "collisions": {
+      "title": "安装在此处将执行的操作",
+      "loading": "正在检查此工作区…",
+      "action": {
+        "create": "已创建",
+        "reuse": "已复用",
+        "rename": "已重命名",
+        "bind": "已绑定",
+        "unbound": "保持未绑定"
+      },
+      "detail": {
+        "rename": "“{name}”已存在且类型不同，因此范本中的该项将以新名称添加。",
+        "unbound": "在您选择收件匣之前，“{name}”将保持未连接。"
+      }
+    },
+    "createWorkspace": "创建新工作区"
   },
   "userPersistentMenus": {
     "title": "用户常驻菜单"
@@ -6515,6 +7909,10 @@
     "maxCharacters": "最多 {max} 个字符。",
     "maxMustBeGreaterThanMin": "{maxField} 必须大于或等于 {minField}",
     "maxSize": "文件大小超出上限",
+    "trigger": {
+      "actionReferenceNotFound": "An action refers to a record that no longer exists. Re-select it in the action and save again.",
+      "postCommentPostsInvalid": "所选的某篇帖子不存在于此工作区，或不属于所选的收件箱。请重新选择帖子后再保存。"
+    },
     "inboundWebhook": {
       "inboxRequired": "请选择一个收件箱。",
       "inboxNotFound": "未找到所选收件箱。",
@@ -6548,6 +7946,7 @@
   "webchat": {
     "chatUnavailable": "此聊天目前不可用。",
     "description": "让您的客户直接从您的网站获得来自您企业的即时自动回复",
+    "loadMessagesError": "无法加载消息。请检查您的网络连接并重试。",
     "rateLimitExceeded": "请求过多。请稍后重试。",
     "title": "网络聊天",
     "unauthorizedDomain": {
@@ -6775,7 +8174,28 @@
         "mpmSectionLimitReached": "已达到最多 10 个版块的上限。",
         "mpmProductLimitReached": "已达到最多 30 个商品的上限。",
         "mpmProductsSummary": "{sectionCount} 个版块中共 {productCount} 个商品",
-        "unsupportedButtonParam": "暂不支持此按钮类型。"
+        "unsupportedButtonParam": "暂不支持此按钮类型。",
+        "payment": {
+          "method": {
+            "pix": "Pix",
+            "boleto": "Boleto",
+            "payment_link": "付款链接",
+            "card_on_file": "一键银行卡支付"
+          },
+          "field": {
+            "code": "Pix 代码",
+            "digitableLine": "Boleto 数字行",
+            "url": "付款链接 URL",
+            "lastFourDigits": "银行卡后四位",
+            "credentialId": "银行卡凭据 ID（可选）",
+            "amount": "以 BRL 计的金额，例如 12.34"
+          },
+          "notice": {
+            "general": "使用变量，让每位客户收到各自的付款信息。",
+            "cardOnFile": "一键银行卡支付仅适用于已获 Meta 启用的企业。"
+          },
+          "unsupportedButton": "此模板包含无法发送的付款按钮：无法确定其付款类型。请重新同步模板或选择其他模板。"
+        }
       },
       "text": {
         "label": "文本"
@@ -6863,7 +8283,6 @@
     "templateHeader": {
       "label": "范本标头"
     },
-    "transferPhoneNumber": "从其他 Whatsapp 供应商转接电话",
     "selectPage": {
       "tryAgain": "尝试重新连接"
     },
@@ -7122,7 +8541,16 @@
     },
     "credentialSecretsRequired": "请输入应用密钥和系统用户令牌。它们尚未保存。",
     "embeddedSignupCancelled": "注册已取消——你可以关闭此标签页。",
-    "embeddedSignupFailed": "注册未完成——请关闭此标签页并重试。"
+    "embeddedSignupFailed": "注册未完成——请关闭此标签页并重试。",
+    "payment": {
+      "settings": {
+        "title": "付款",
+        "description": "此号码发送付款请求按钮的方式。",
+        "pixRedirectLabel": "以跳转方式发送 Pix",
+        "pixRedirectDescription": "买家打开银行应用付款后返回 WhatsApp。请在 Meta 完成对您企业的接入后再开启；无法跳转的买家仍会收到复制粘贴方式。",
+        "adminOnly": "只有工作区管理员可以更改付款设置。"
+      }
+    }
   },
   "workspace": {
     "deletion": {
@@ -7175,7 +8603,8 @@
   "workspaces": {
     "list": {
       "title": "工作区清单"
-    }
+    },
+    "defaultName": "{name}的工作区"
   },
   "zalo": {
     "duplicated": "此Zalo OA 帐户已连接到另一个工作区。",
@@ -7838,6 +9267,15 @@
     },
     "messages": {
       "empty": "暂无预约。"
+    },
+    "actions": {
+      "create": "创建预约"
+    },
+    "create": {
+      "title": "创建预约",
+      "description": "选择日历和空闲时间，为该联系人预约。",
+      "noConversationHint": "当前没有打开的会话，联系人将不会收到确认消息。",
+      "success": "预约已创建。"
     }
   },
   "appointmentManagement": {
@@ -8055,6 +9493,7 @@
       "invalidTokenTitle": "此预约链接不可用。",
       "invalidTokenDescription": "该链接可能无效或已过期，请索取新的预约链接。",
       "staleSlot": "此时间段已不可用，请选择其他时间。",
+      "alreadyScheduled": "该联系人在此日历的这个时间已有预约，请选择其他时间。",
       "availabilityChanged": "在您选择时间的过程中，可预约时间已发生变化，请重新选择。",
       "submitFailed": "无法完成此请求，请重试。"
     },
@@ -8234,6 +9673,11 @@
         "lose": "未中奖",
         "empty": "暂无游戏记录"
       }
+    },
+    "duplicateDialog": {
+      "title": "复制小游戏",
+      "description": "将创建包含全部设置的小游戏副本。奖品和奖品图片不会被复制，副本初始为关闭状态——请先添加奖品，再将其开启。",
+      "success": "小游戏已复制"
     }
   },
   "userDataWebview": {
@@ -8539,7 +9983,9 @@
       "customer_service": "客户服务",
       "escalation": "升级处理",
       "marketing": "营销",
-      "utility": "通用"
+      "utility": "通用",
+      "calls": "通话",
+      "other": "其他"
     },
     "pill": {
       "standby": "待命（{owner}）",
@@ -8549,14 +9995,18 @@
     "release": {
       "label": "释放",
       "tooltip": "释放此对话，以便其他应用可以回复",
-      "success": "对话已释放"
+      "success": "对话已释放",
+      "menu": "释放或移交"
     },
     "pass": {
-      "menuItem": "转交升级处理",
-      "title": "转交给升级处理合作伙伴？",
-      "description": "要将此会话转交给您的升级合作伙伴吗？在会话返回之前，您的回复将暂停。",
+      "menuItem": "移交给合作伙伴",
+      "title": "移交给合作伙伴?",
+      "description": "选择由谁接手这个会话。在会话返回之前,你的回复将暂停。",
       "confirm": "转交",
-      "success": "对话已转交给升级处理合作伙伴"
+      "success": "对话已转交给升级处理合作伙伴",
+      "targetLabel": "移交给",
+      "noteLabel": "给接收方合作伙伴的备注",
+      "successTargeted": "会话已移交给 {role}"
     },
     "aiHandover": {
       "label": "BizAI",
@@ -8575,7 +10025,10 @@
       "notEscalation": "只有升级处理合作伙伴可以接管。路由在 Meta Business Suite 中配置。",
       "notPrimaryReceiver": "此应用必须是主页的主要接收方才能接管。请在主页的 Handover Protocol 设置中配置。",
       "learnMore": "了解详情",
-      "dismiss": "仍然发送"
+      "dismiss": "仍然发送",
+      "takeOverTitle": "接管此会话?",
+      "takeOverDescription": "合作伙伴将停止处理,由你接管。你可以给对方留一条备注。",
+      "takeOverNoteLabel": "给当前合作伙伴的备注"
     },
     "divider": {
       "ownerHandling": "{owner} 现在正在处理此对话",
@@ -8628,7 +10081,17 @@
       "adminOnly": "只有工作区管理员可以更改路由",
       "flowNotFound": "未找到所选流程，或该流程未启用",
       "integrationNotFound": "未找到 WhatsApp 号码",
-      "messengerIntegrationNotFound": "未找到 Messenger 主页"
+      "messengerIntegrationNotFound": "未找到 Messenger 主页",
+      "rolesTitle": "你在此号码上的路由角色",
+      "rolesDescription": "由企业在 Meta Business Suite 中分配。",
+      "rolesNone": "你在此号码上未被分配任何路由角色。",
+      "rolesNeverChecked": "尚未检查。",
+      "rolesNotEnabled": "此号码未启用会话路由。",
+      "rolesStandbyOn": "待命访问：开启（可查看不属于你的会话）",
+      "rolesStandbyOff": "待命访问：关闭",
+      "rolesCheckedAt": "检查于 {time}",
+      "rolesRefresh": "重新检查",
+      "rolesSyncFailed": "无法从 Meta 获取路由角色，请重试。"
     },
     "errors": {
       "unsupported": "此渠道不支持对话路由",
@@ -8638,8 +10101,12 @@
     "step": {
       "action": "操作",
       "release": "释放对话",
-      "pass": "转交给升级处理合作伙伴",
-      "helper": "仅限 WhatsApp。在其他渠道，或会话不归此处管理时，该步骤将走错误路径。"
+      "pass": "移交给合作伙伴",
+      "helper": "仅限 WhatsApp。在其他渠道，或会话不归此处管理时，该步骤将走错误路径。",
+      "targetRole": "移交给",
+      "targetRoleDefault": "升级处理合作伙伴(默认)",
+      "metadata": "移交备注",
+      "metadataHelper": "可选。将原样发送给接收会话的应用。支持变量。最多 {max} 个字符。"
     },
     "template": {
       "sent": "模板已发送"
@@ -8973,7 +10440,7 @@
       "too_many_components": "一个屏幕最多可包含 {max} 个组件。",
       "component_limit": "一个屏幕最多可包含 {max} 个{type}。",
       "picker_conflict": "一个屏幕不能同时包含照片上传和文档上传。",
-      "picker_multiple_in_complete": "请将 {property} 设为 1：流程完成时 WhatsApp 只会发送单个文件。",
+      "picker_multiple_in_complete": "流程完成时，WhatsApp 最多发送 {max} 个文件。请减少通向此屏幕的文件输入项的最大文件数。",
       "footer_not_last": "Footer 必须是屏幕上的最后一个组件。",
       "footer_in_nested_branch": "Footer 只能直接放在第一层 If 分支中。",
       "footer_missing_in_branch": "如果一个分支有 Footer，另一个分支也需要有。",
@@ -9529,7 +10996,9 @@
       "general": "常规",
       "payments": "支付",
       "shipping": "配送",
-      "checkout": "结账"
+      "checkout": "结账",
+      "shopify": "Shopify",
+      "woocommerce": "WooCommerce"
     },
     "general": {
       "orderingAvailable": {
@@ -9597,6 +11066,15 @@
         "label": "弃购流程",
         "description": "购物车被搁置这么久后，机器人为顾客运行的流程。在按钮中使用 '{{shop_token}}' 可打开购物车。触发器也可使用“Cart abandoned”事件。",
         "none": "不运行流程（仅触发器事件）"
+      },
+      "storeSource": {
+        "label": "店铺来源",
+        "description": "选择用于管理商品、库存和订单的店铺来源。设置为 Shopify / WooCommerce 后，所有商品和订单都将直接在您的 Shopify / WooCommerce 店铺中管理。",
+        "options": {
+          "chatbotx": "ChatbotX",
+          "shopify": "Shopify",
+          "woocommerce": "WooCommerce"
+        }
       }
     },
     "payments": {
@@ -9605,8 +11083,11 @@
         "label": "支付方式",
         "description": "结账页面启用的支付方式。列表中的第一个支付方式将在结账页面默认选中。",
         "options": {
-          "cod": "货到付款"
-        }
+          "cod": "货到付款",
+          "stripe": "银行卡",
+          "paypal": "PayPal"
+        },
+        "connectHint": "要提供 {provider},请在 <link>设置 → 集成</link> 中连接它。"
       },
       "currency": {
         "label": "币种",
@@ -9719,6 +11200,131 @@
       "orderConfirmationFlowId": {
         "label": "订单确认流程",
         "description": "客户下单后，代替默认消息发送给客户的流程。"
+      },
+      "shopifyCheckoutMethod": {
+        "label": "结账方式",
+        "description": "选择客户在 Shopify 结账页面完成付款，还是直接在网店下单。",
+        "options": {
+          "webCheckout": "Shopify 网页结账",
+          "inApp": "应用内结账"
+        }
+      },
+      "shopifyAutoApplyDiscounts": {
+        "label": "自动应用折扣码",
+        "description": "允许客户在跳转到结账页之前，直接在购物车中使用 Shopify 折扣码。"
+      },
+      "wooCommerceCheckoutMethod": {
+        "description": "选择客户是在您 WooCommerce 店铺的付款页面付款，还是直接在网店下单（货到付款）。",
+        "options": {
+          "webCheckout": "WooCommerce 付款页面",
+          "inApp": "应用内结账"
+        }
+      },
+      "wooCommerceAutoApplyDiscounts": {
+        "description": "允许客户在跳转到结账页之前，直接在购物车中使用 WooCommerce 折扣码。"
+      },
+      "inAppDeliveryCost": {
+        "label": "配送费用",
+        "description": "添加到应用内结账订单的配送费。"
+      },
+      "wooCommerceDeliveryCost": {
+        "description": "发送到 WooCommerce 的订单所加收的配送费，两种结账方式均适用。"
+      }
+    },
+    "shopify": {
+      "shopDomain": {
+        "label": "店铺域名",
+        "placeholder": "your-store.myshopify.com",
+        "hint": "请输入您 Shopify 店铺的 .myshopify.com 域名。",
+        "connectedHint": "您已连接的 Shopify 店铺域名。"
+      },
+      "authKind": {
+        "label": "身份验证",
+        "description": "ChatbotX 登录您店铺的方式：使用自定义应用的 Admin API 访问令牌，或使用在 Shopify Dev Dashboard 中创建的应用的 Client ID 和密钥。",
+        "options": {
+          "token": "Admin API 访问令牌",
+          "clientCredentials": "Client ID 和密钥（Dev Dashboard 应用）"
+        }
+      },
+      "accessToken": {
+        "label": "Admin API 访问令牌",
+        "hint": "您自定义应用的 Admin API 访问令牌。请授予以下权限范围：{scopes}。",
+        "connectedHint": "您的 Shopify Admin API 访问令牌已加密存储。"
+      },
+      "apiSecret": {
+        "label": "API 密钥",
+        "hint": "应用的 API 密钥，用于验证 Shopify 发送的 Webhook。"
+      },
+      "clientId": {
+        "label": "Client ID",
+        "hint": "您的 Dev Dashboard 应用的 Client ID。请授予以下权限范围：{scopes}。"
+      },
+      "clientSecret": {
+        "label": "Client Secret",
+        "hint": "应用的 Client Secret。已加密存储。"
+      },
+      "webhookUrl": {
+        "label": "Webhook URL",
+        "description": "连接时自动在 Shopify 注册，以实时接收商品、库存和订单更新。"
+      },
+      "syncNow": "立即同步",
+      "syncStarted": "同步已开始",
+      "syncError": "无法开始同步",
+      "syncStatus": {
+        "label": "同步状态",
+        "description": "商品、折扣码和订单会从您的 Shopify 店铺镜像同步。",
+        "connectedTo": "已连接到 {shopDomain}",
+        "lastSynced": "上次同步：{time}（{productCount} 件商品，{orderCount} 个订单）",
+        "neverSynced": "尚未同步",
+        "noReason": "请重新连接您的店铺以继续。",
+        "invalid": "连接已失效：{reason}",
+        "state": {
+          "idle": "空闲",
+          "queued": "同步已加入队列...",
+          "running": "正在同步...",
+          "succeeded": "上次同步成功",
+          "failed": "上次同步失败"
+        }
+      }
+    },
+    "woocommerce": {
+      "siteUrl": {
+        "label": "店铺网址",
+        "placeholder": "https://example.com",
+        "hint": "您的 WordPress 网站地址，以 https:// 开头。在 WordPress 中，Settings → Permalinks 不能设置为 Plain。",
+        "connectedHint": "已连接的 WooCommerce 店铺。"
+      },
+      "consumerKey": {
+        "label": "Consumer key",
+        "hint": "在 WooCommerce → Settings → Advanced → REST API → Add key 中创建具有 Read/Write 权限的密钥，并粘贴其 Consumer key（ck_…）。",
+        "connectedHint": "已连接密钥的开头部分。密钥以加密方式存储。"
+      },
+      "consumerSecret": {
+        "label": "Consumer secret",
+        "hint": "该密钥的 Consumer secret（cs_…），以加密方式存储。"
+      },
+      "webhookUrl": {
+        "label": "Webhook URL",
+        "description": "连接时自动在 WooCommerce 注册，以实时接收商品、库存和订单更新。"
+      },
+      "syncNow": "立即同步",
+      "syncStarted": "同步已开始",
+      "syncError": "无法开始同步",
+      "syncStatus": {
+        "label": "同步状态",
+        "description": "商品、折扣码和订单会从您的 WooCommerce 店铺镜像同步。",
+        "connectedTo": "已连接到 {store}",
+        "lastSynced": "上次同步：{time}（{productCount} 件商品，{orderCount} 个订单）",
+        "neverSynced": "尚未同步",
+        "noReason": "请重新连接您的店铺以继续。",
+        "invalid": "连接已失效：{reason}",
+        "state": {
+          "idle": "空闲",
+          "queued": "同步已加入队列...",
+          "running": "正在同步...",
+          "succeeded": "上次同步成功",
+          "failed": "上次同步失败"
+        }
       }
     }
   },
@@ -9798,7 +11404,8 @@
       "total": "合计",
       "coupon": "优惠券（{code}）",
       "title": "订单摘要",
-      "saved": "为你节省 {amount}"
+      "saved": "为你节省 {amount}",
+      "deliveryAtCheckout": "结账时计算"
     },
     "belowMinimum": "最低订单金额为 {amount}。",
     "checkOut": "去结算",
@@ -9824,7 +11431,19 @@
     },
     "payment": {
       "title": "付款方式",
-      "cod": "货到付款"
+      "cod": "货到付款",
+      "stripe": "银行卡",
+      "paypal": "PayPal",
+      "paid": "已付款",
+      "refunded": "已退款",
+      "awaiting": "等待您付款",
+      "payBefore": "请在 {time} 前付款,否则订单将被取消。",
+      "payNow": "立即付款",
+      "onlineHint": "您将在下一页付款。您的订单将保留 30 分钟。",
+      "continueToPayment": "继续付款",
+      "notYet": "我们尚未收到您的付款。如果您刚刚付款,请稍等片刻并刷新此页面。",
+      "leftPaymentPage": "您已离开付款页面。您仍可在下方付款。",
+      "paidThanks": "已收到付款。感谢您的订单!"
     },
     "placeOrder": "提交订单",
     "orderPlaced": "谢谢！订单已提交，我们会在聊天中通知您进展。",
@@ -9874,7 +11493,14 @@
       "discountCodeNotEligible": "该折扣码不适用于您。",
       "discountCodeNotApplicable": "该折扣码不适用于购物车中的商品。",
       "discountCodeMinimumAmount": "该折扣码需消费满 {minimum}，还差 {missing}。",
-      "discountCodeMinimumQuantity": "该折扣码需至少 {minimum} 件，还差 {missing} 件。"
+      "discountCodeMinimumQuantity": "该折扣码需至少 {minimum} 件，还差 {missing} 件。",
+      "paymentMethodUnavailable": "此付款方式不可用。",
+      "paymentProviderNotConnected": "此付款方式不可用。",
+      "paymentProviderUnavailable": "支付服务无响应。请稍后重试。",
+      "paymentProviderRejected": "无法发起付款。请选择其他付款方式。",
+      "paymentProviderCredentialsRejected": "无法发起付款。请选择其他付款方式。",
+      "paymentAmountUnsupported": "此订单无法在线付款。请选择其他付款方式。",
+      "orderPaymentNotOpen": "此订单已无法在线付款。"
     },
     "discount": {
       "label": "折扣码",
@@ -9898,7 +11524,11 @@
       "notEligible": "暂不符合条件"
     },
     "itemCount": "{count, plural, one {# 件} other {# 件}}",
-    "relatedProducts": "猜你喜欢"
+    "relatedProducts": "猜你喜欢",
+    "soldOut": "已售罄",
+    "sku": "SKU：{sku}",
+    "allProducts": "全部商品",
+    "noCategories": "该店铺还没有分类。"
   },
   "webshopLinks": {
     "preview": "预览",
@@ -9907,12 +11537,26 @@
     "error": "无法获取链接。",
     "copyError": "无法复制链接。",
     "shopLink": {
-      "label": "商店链接",
+      "label": "店铺网址",
       "hint": "将此链接粘贴到流程、群发或序列中的按钮里。收到链接的每位联系人都会打开自己的商店并可以下单。"
     },
     "productLink": {
       "label": "公开链接",
       "hint": "复制该链接并粘贴到流程、群发或序列中。收到链接的每位联系人都会打开此商品并可以下单。"
+    },
+    "bar": "分享店铺：获取店铺、购物车和分类的链接，用于流程、群发和序列中的按钮。",
+    "dialog": {
+      "title": "店铺链接",
+      "description": "将链接粘贴到流程、群发或序列中的按钮里。每个收到的联系人都会打开自己的店铺。",
+      "shopHint": "打开包含所有商品的商店首页。"
+    },
+    "cartLink": {
+      "label": "购物车",
+      "hint": "打开联系人的购物车，可直接结账。"
+    },
+    "categoriesLink": {
+      "label": "分类",
+      "hint": "打开店铺的分类列表。"
     }
   },
   "discountCodes": {
@@ -10035,5 +11679,2014 @@
     "metHelp": "设有 SLA 的回复中达标的占比。",
     "eligibleCount": "{count} 条回复设有 SLA",
     "enable": "启用响应 SLA"
+  },
+  "stripe": {
+    "title": "Stripe",
+    "setting": {
+      "label": "Stripe",
+      "description": "使用您自己的 Stripe 账户在网店接收银行卡付款。款项会直接进入您的 Stripe 账户。"
+    },
+    "connectWithStripe": "通过 Stripe 连接",
+    "connectWithKey": "使用密钥",
+    "connectionType": {
+      "oauth": "Stripe Connect",
+      "apiKey": "密钥"
+    },
+    "fields": {
+      "secretKey": "密钥",
+      "secretKeyHint": "以 sk_live_ 开头(测试模式为 sk_test_)。也可使用受限密钥(rk_…),前提是它能读取账户并写入 Checkout Sessions、Refunds 和 Webhook Endpoints。"
+    },
+    "dialog": {
+      "description": "从 <link>Stripe 控制台 → Developers → API keys</link> 复制您的密钥并粘贴到这里。我们会验证密钥、在您的 Stripe 账户上设置付款通知,并加密保存密钥。"
+    },
+    "testMode": "测试模式",
+    "liveMode": "正式",
+    "chargesDisabled": "您的 Stripe 账户暂时无法收款。请在 Stripe 控制台中完成设置。",
+    "outcome": {
+      "expired": "Stripe 连接链接已过期。请重试。",
+      "access_denied": "Stripe 上未允许此连接。",
+      "stripeAccountAlreadyConnected": "此 Stripe 账户已连接到另一个工作区。",
+      "stripePlatformNotConfigured": "此平台尚未设置 Stripe。",
+      "superAdminRequired": "只有工作区管理员才能连接 Stripe。",
+      "signInRequired": "请登录后重试。",
+      "paymentProviderCredentialsRejected": "Stripe 拒绝了此连接。请重试。",
+      "startedByAnotherUser": "只有点击“连接”的人才能完成。请重新点击“连接”。",
+      "paymentProviderInUse": "仍有未完成的订单需要此 Stripe 账户。请先完成或取消这些订单。"
+    },
+    "platform": {
+      "connectClientId": "Connect client ID",
+      "connectClientIdHint": "来自 Stripe Dashboard → Settings → Connect → Onboarding options → OAuth(以 ca_ 开头)。商店通过它连接各自的 Stripe 账户。",
+      "redirectUri": "Redirect URI",
+      "webhookReady": "商店可以连接 Stripe,其付款会自动确认。",
+      "webhookMissing": "缺少支付 Webhook。请再次保存这些设置以创建它。",
+      "connectMissing": "请添加 Connect client ID,以便商店连接其 Stripe 账户。"
+    }
+  },
+  "paypal": {
+    "title": "PayPal",
+    "setting": {
+      "label": "PayPal",
+      "description": "使用您自己的 PayPal 账户在网店接收 PayPal 付款。"
+    },
+    "sandbox": "Sandbox",
+    "liveMode": "正式",
+    "fields": {
+      "clientId": "Client ID",
+      "clientSecret": "Secret"
+    },
+    "dialog": {
+      "description": "在 <link>PayPal Developer → Apps & Credentials</link> 中创建一个 REST 应用,并粘贴其 Client ID 和 Secret。系统会根据密钥自动识别正式或沙盒环境。"
+    }
+  },
+  "pipelines": {
+    "title": "管道",
+    "retry": "重试",
+    "save": "保存",
+    "saveFailed": "无法保存您的更改。请重试。",
+    "list": {
+      "name": "名称",
+      "type": "类型",
+      "items": "项目",
+      "add": "添加管道",
+      "empty": "还没有管道",
+      "emptyHint": "创建一个管道，以看板卡片的形式跟踪交易、工单或任何流程。",
+      "error": "无法加载管道",
+      "contacts": "联系人",
+      "addShort": "添加",
+      "description": "以在各阶段间移动的卡片跟踪商机、工单或任何流程。"
+    },
+    "types": {
+      "opportunity": {
+        "label": "商机中心",
+        "description": "按阶段跟踪销售交易。第一阶段：线索。"
+      },
+      "ticket": {
+        "label": "支持中心",
+        "description": "处理支持请求。第一阶段：新问题。"
+      },
+      "custom": {
+        "label": "自定义看板",
+        "description": "构建您自己的流程。第一阶段：接收。"
+      }
+    },
+    "noun": {
+      "opportunity": {
+        "one": "商机",
+        "many": "商机",
+        "add": "添加商机"
+      },
+      "ticket": {
+        "one": "工单",
+        "many": "工单",
+        "add": "添加工单"
+      },
+      "card": {
+        "one": "卡片",
+        "many": "卡片",
+        "add": "添加卡片"
+      }
+    },
+    "create": {
+      "title": "新建管道",
+      "description": "选择看板的用途，然后为其命名。",
+      "type": "类型",
+      "name": "管道名称",
+      "namePlaceholder": "例如：销售",
+      "submit": "创建管道",
+      "success": "管道已创建"
+    },
+    "menu": {
+      "open": "管道操作",
+      "rename": "重命名",
+      "duplicate": "复制",
+      "delete": "删除"
+    },
+    "rename": {
+      "title": "重命名管道",
+      "submit": "重命名",
+      "success": "管道已重命名"
+    },
+    "duplicate": {
+      "success": "管道已复制"
+    },
+    "delete": {
+      "title": "删除管道",
+      "description": "{name} 及其所有阶段和项目将被删除。此操作无法撤销。",
+      "success": "管道已删除"
+    },
+    "board": {
+      "title": "看板",
+      "count": "{count, plural, one {# 个项目} other {# 个项目}}",
+      "total": "总计 {value}",
+      "search": "按标题、编号或联系人搜索",
+      "sort": "排序",
+      "filter": "筛选",
+      "analytics": "分析",
+      "settings": "设置",
+      "emptyStage": "将卡片拖放到此处，即可移至此阶段。",
+      "loadMore": "加载更多",
+      "loadMoreFailed": "无法加载更多项目",
+      "error": "无法加载看板",
+      "processing": "正在处理此阶段…",
+      "moveFailed": "无法移动卡片",
+      "reorderNeedsManualSort": "将排序切换为“手动顺序”，即可在阶段内重新排列卡片。",
+      "dragHandle": "拖动以移动卡片",
+      "dragInstructions": "要拿起卡片，请在其拖动手柄上按空格键或回车键。使用方向键移动，按空格键或回车键放下，按 Esc 取消。",
+      "announce": {
+        "pickedUp": "已拿起 {name}。",
+        "over": "{name} 位于 {stage} 上方。",
+        "dropped": "已将 {name} 放入 {stage}。",
+        "cancelled": "已取消移动。{name} 已回到原位。"
+      },
+      "sortOptions": {
+        "manualAsc": "手动顺序",
+        "createdAtDesc": "创建日期 (从新到旧)",
+        "createdAtAsc": "创建日期 (从旧到新)",
+        "updatedAtDesc": "更新日期 (从新到旧)",
+        "valueDesc": "商机金额 (从高到低)",
+        "valueAsc": "商机金额 (从低到高)",
+        "dueDateAsc": "截止日期 (从近到远)",
+        "dueDateDesc": "截止日期 (从远到近)",
+        "priorityDesc": "优先级 (从高到低)",
+        "priorityAsc": "优先级 (从低到高)",
+        "updatedAtAsc": "更新日期 (从旧到新)"
+      },
+      "searchAction": "搜索",
+      "closeSearch": "关闭搜索",
+      "cardMenu": "卡片操作",
+      "moveTo": "移至",
+      "unknownContact": "未知联系人",
+      "staleError": "无法刷新看板。当前显示的内容可能已过时。"
+    },
+    "stage": {
+      "add": "添加阶段",
+      "name": "阶段名称",
+      "namePlaceholder": "阶段名称",
+      "menu": "阶段操作",
+      "edit": "编辑阶段",
+      "delete": "删除阶段",
+      "deleteTitle": "删除阶段",
+      "deleteDescription": "{name} 及其上的所有项目将被删除。此操作无法撤销。",
+      "moveItemsTo": "将项目移至",
+      "deleteItemsToo": "同时删除项目",
+      "description": "描述",
+      "textColor": "文字颜色",
+      "backgroundColor": "背景颜色",
+      "saved": "阶段已保存",
+      "deleted": "阶段已删除",
+      "queued": "该阶段正在后台清理。",
+      "resetColor": "默认",
+      "deleteMoveDescription": "{name} 将被删除。其项目将移至 {target}。",
+      "rename": "重命名",
+      "settings": "设置",
+      "general": "常规",
+      "color": "颜色",
+      "cancel": "取消"
+    },
+    "priority": {
+      "low": "低",
+      "medium": "中",
+      "high": "高"
+    },
+    "item": {
+      "loading": "正在加载…",
+      "error": "无法加载此项目",
+      "title": "标题",
+      "status": "状态",
+      "stage": "阶段",
+      "priority": "优先级",
+      "value": "金额",
+      "dueDate": "截止日期",
+      "assignees": "已分配的管理员",
+      "description": "描述",
+      "attachments": "附件",
+      "attach": "附加文件",
+      "noAttachments": "没有附件",
+      "removeAttachment": "移除附件",
+      "removeAttachmentDescription": "文件将从此项目中移除，但仍保留在媒体库中。",
+      "comments": "评论",
+      "addComment": "添加评论",
+      "commentPlaceholder": "写下评论…",
+      "noComments": "还没有评论",
+      "deleteComment": "删除评论",
+      "deleteCommentDescription": "此评论将被删除，且无法撤销。",
+      "activity": "动态",
+      "noActivity": "还没有动态",
+      "transfer": "转移到管道",
+      "transferTitle": "转移到其他管道",
+      "transferDescription": "项目保留其编号和创建日期。当另一个管道中有同名引用且类型相同的字段时，自定义字段会一并转移。",
+      "destinationPipeline": "目标管道",
+      "destinationStage": "目标阶段",
+      "firstStage": "第一阶段",
+      "choose": "请选择…",
+      "transferred": "项目已转移",
+      "delete": "删除",
+      "deleteDescription": "将删除一个项目。此操作无法撤销。",
+      "deleted": "项目已删除",
+      "number": "编号",
+      "createdBy": "创建者",
+      "createdByValue": "{name}，{date}",
+      "inbox": "收件箱",
+      "moreActions": "更多操作",
+      "noDescription": "无描述",
+      "yes": "是",
+      "no": "否",
+      "assigneesMembers": "客服",
+      "assigneesTeams": "收件箱团队",
+      "assigneesSearch": "搜索管理员或团队…",
+      "assigneesEmpty": "无结果",
+      "assigneesPlaceholder": "选择管理员或团队",
+      "olderComments": "显示更早的评论",
+      "olderActivity": "查看更早的动态",
+      "activityFilter": "筛选",
+      "activityFilterCount": "{count, plural, one {# 个筛选条件} other {# 个筛选条件}}",
+      "activityFilterClear": "显示全部",
+      "noFilteredActivity": "没有符合此筛选条件的活动。",
+      "activityGroup": {
+        "lifecycle": "创建与转移",
+        "stage": "阶段",
+        "status": "状态",
+        "value": "金额",
+        "priority": "优先级",
+        "dueDate": "截止日期",
+        "details": "标题、描述和字段",
+        "assignees": "负责人",
+        "comments": "评论",
+        "attachments": "附件"
+      }
+    },
+    "activity": {
+      "created": "已创建",
+      "stageChanged": "已移至其他阶段",
+      "statusChanged": "状态已更改",
+      "valueChanged": "金额已更改",
+      "priorityChanged": "优先级已更改",
+      "dueDateChanged": "截止日期已更改",
+      "titleChanged": "标题已更改",
+      "descriptionChanged": "描述已更改",
+      "fieldValuesChanged": "自定义字段已更改",
+      "assigneesChanged": "负责人已更改",
+      "attachmentAdded": "已添加附件",
+      "attachmentRemoved": "已移除附件",
+      "commentAdded": "已添加评论",
+      "commentDeleted": "已删除评论",
+      "transferred": "从其他管道转入",
+      "deleted": "已删除"
+    },
+    "activityActor": {
+      "flow": "流程",
+      "trigger": "触发器",
+      "workspaceToken": "API",
+      "system": "系统",
+      "formerMember": "前成员"
+    },
+    "add": {
+      "changeContact": "选择其他联系人",
+      "success": "已创建",
+      "stepContact": "选择联系人",
+      "stepDetails": "{noun}详情",
+      "contact": "联系人",
+      "addNewContact": "新增"
+    },
+    "filter": {
+      "title": "筛选",
+      "status": "状态",
+      "statusLabels": {
+        "open": "进行中",
+        "won": "赢单",
+        "lost": "输单"
+      },
+      "priority": "优先级",
+      "assignee": "已分配的管理员",
+      "value": "{noun}金额",
+      "min": "最小值",
+      "max": "最大值",
+      "dueDate": "截止日期",
+      "createdAt": "创建日期",
+      "from": "从",
+      "to": "至",
+      "clear": "清除筛选",
+      "apply": "应用",
+      "back": "返回",
+      "updatedAt": "更新日期",
+      "resolvedOn": "{noun}解决日期",
+      "statusChangedOn": "状态更改日期",
+      "stageChangedOn": "阶段更改日期",
+      "lastCommentOn": "最近评论日期",
+      "customFields": "自定义字段",
+      "any": "任意",
+      "yes": "是",
+      "no": "否",
+      "notResolvedOn": "{noun}未解决日期",
+      "equal": "等于",
+      "different": "不等于",
+      "reset": "重置",
+      "presets": {
+        "thisWeek": "本周",
+        "lastWeek": "上周",
+        "last14": "最近 14 天",
+        "thisYear": "今年",
+        "lastYear": "去年",
+        "tomorrow": "明天",
+        "next7": "7 天内",
+        "next14": "14 天内",
+        "next30": "30 天内",
+        "allTime": "全部时间"
+      },
+      "pickDate": "选择日期",
+      "activity": "活动",
+      "activityKinds": "变更类型",
+      "activityActors": "操作人",
+      "activityWhen": "时间",
+      "activityAutomation": "自动化"
+    },
+    "analytics": {
+      "title": "分析",
+      "loading": "正在加载统计数据…",
+      "error": "无法加载统计数据",
+      "created": "已创建",
+      "won": "赢单",
+      "wonValue": "赢单金额",
+      "lost": "输单",
+      "lostValue": "输单金额",
+      "admin": "管理员",
+      "automation": "自动化",
+      "back": "返回",
+      "admins": "管理员",
+      "chart": {
+        "created": "每日新增",
+        "won": "每日赢单",
+        "lost": "每日输单",
+        "wonValue": "每日赢单金额",
+        "lostValue": "每日输单金额"
+      },
+      "pie": {
+        "created": "按管理员统计的新建",
+        "won": "按管理员统计的赢单",
+        "lost": "按管理员统计的输单",
+        "other": "其他",
+        "empty": "暂无数据"
+      }
+    },
+    "settings": {
+      "title": "管道设置",
+      "general": "常规",
+      "fields": "自定义字段",
+      "display": "显示",
+      "permissions": "权限",
+      "saved": "设置已保存",
+      "referenceName": "引用名称",
+      "referenceNameHint": "用于 pipelines.reference_name.stage_name 变量。更改后，使用旧名称的消息将失效。",
+      "referenceNameFormat": "仅可使用小写字母、数字和下划线，并以字母开头（例如 close_date）。",
+      "currency": "货币",
+      "currencyFollowCountry": "工作区所在国家 · {country} · {currency}",
+      "currencyFollowNoCountry": "工作区未设置国家 · {currency}",
+      "currencyHint": "跟随工作区的目标国家（设置 → 常规），国家变更时自动更新。未设置国家时使用 USD。金额不会被换算。",
+      "assignContact": "分配项目时，同时将联系人分配给管理员",
+      "limit": "限制每位联系人的未结项目数",
+      "statusLabels": "状态标签",
+      "status": {
+        "open": "进行中",
+        "won": "赢单",
+        "lost": "输单"
+      },
+      "features": "可见功能",
+      "cardElements": "卡片元素",
+      "card": {
+        "contactPhone": "联系人电话",
+        "contactEmail": "联系人电子邮件",
+        "createdAt": "创建日期",
+        "updatedAt": "更新日期",
+        "assignees": "已分配的管理员",
+        "comments": "评论",
+        "cardId": "项目编号",
+        "priority": "优先级",
+        "value": "金额",
+        "dueDate": "截止日期"
+      },
+      "noFields": "还没有自定义字段",
+      "fieldName": "字段名称",
+      "fieldReference": "引用名称",
+      "fieldType": "字段类型",
+      "required": "必填",
+      "requiredShort": "必填",
+      "addField": "添加字段",
+      "fieldAdded": "字段已添加",
+      "deleteField": "删除字段",
+      "permissionsHint": "工作区所有者和管理员始终拥有完全访问权限。请授予其他成员在此管道中可执行的操作。",
+      "revoke": "撤销",
+      "permission": {
+        "view": "查看",
+        "edit": "编辑",
+        "delete": "删除",
+        "settings": "设置"
+      },
+      "noMembers": "没有其他可配置的成员",
+      "confirmDeleteField": "删除此字段及其在所有项目上的值？",
+      "adminPermissions": "管理员权限",
+      "cardVisibleElements": "卡片可见元素"
+    },
+    "panel": {
+      "empty": "此联系人没有管道项目",
+      "error": "无法加载管道项目",
+      "choosePipeline": "选择管道",
+      "add": "新增"
+    },
+    "variables": {
+      "group": "管道",
+      "attributes": {
+        "name": "项目名称",
+        "stageName": "阶段",
+        "status": "状态",
+        "priority": "优先级",
+        "value": "金额",
+        "assignedAdmins": "已分配的管理员",
+        "createdDate": "创建日期",
+        "dueDate": "截止日期",
+        "updatedDate": "更新日期",
+        "id": "项目 ID"
+      }
+    }
+  },
+  "oauthConsent": {
+    "title": "Authorize {clientName}",
+    "description": "This application is requesting access to your workspace.",
+    "permissionsTitle": "Requested permissions",
+    "signedInAs": "Signed in as",
+    "approve": "Approve",
+    "deny": "Deny",
+    "failed": "无法完成授权。请重试。",
+    "workspaceLabel": "工作区",
+    "workspacePlaceholder": "选择工作区",
+    "workspaceHint": "{clientName} 只能在此工作区中操作。如需更换，请断开连接后重新连接。",
+    "noWorkspaces": "你不是任何工作区的管理员，因此无法授权此应用。"
+  },
+  "chatbotxMcp": {
+    "title": "MCP 连接器",
+    "streamableUrl": "Streamable HTTP URL",
+    "sseUrl": "旧版 SSE URL",
+    "guide": {
+      "title": "连接 MCP 客户端",
+      "subtitle": "选择你使用的应用，按三个步骤完成设置。",
+      "ownerOnly": "只有工作区所有者和 superAdmin 可以授权 MCP 访问。你可以在批准页面选择工作区。",
+      "otherClients": "其他兼容 MCP 的客户端同样可用",
+      "otherIntro": "在其他兼容 MCP 的客户端中使用以下端点和配置。",
+      "opensInNewTab": "（在新标签页中打开）",
+      "actions": {
+        "addConnector": "添加连接器",
+        "startChatting": "开始聊天"
+      },
+      "steps": {
+        "claude": {
+          "step1": {
+            "title": "复制连接器 URL",
+            "body": "下一步你会把这个 URL 粘贴到 Claude 中。"
+          },
+          "step2": {
+            "title": "前往 Claude → Customize → Connectors → Add custom connector",
+            "body": "下方按钮会打开你在 Claude 中的连接器。点击 Add custom connector，命名并粘贴 URL。它也会出现在 Claude 桌面端和移动端应用中。"
+          },
+          "step3": {
+            "title": "点击 Connect 并批准访问",
+            "body": "登录、选择工作区并批准。之后就可以直接在聊天中让 Claude 处理联系人、流程和群发。"
+          }
+        },
+        "chatgpt": {
+          "step1": {
+            "title": "复制连接器 URL",
+            "body": "下一步你会把这个 URL 粘贴到 ChatGPT 中。"
+          },
+          "step2": {
+            "title": "前往 ChatGPT → Settings → Apps & Connectors → Create",
+            "body": "下方按钮会打开 ChatGPT 设置。如果看不到 Create，请在 Advanced settings 中开启 Developer mode。为连接器命名、粘贴 URL 并选择 OAuth。"
+          },
+          "step3": {
+            "title": "连接并批准访问",
+            "body": "登录、选择工作区并批准。之后在新对话中启用该连接器即可使用。"
+          }
+        },
+        "claudeCode": {
+          "step1": {
+            "title": "复制安装命令",
+            "body": "在终端中运行它。"
+          },
+          "step2": {
+            "title": "在 Claude Code 中登录",
+            "body": "启动 Claude Code，输入 /mcp，选择该服务器并选择 Authenticate。浏览器窗口会打开。"
+          },
+          "step3": {
+            "title": "批准访问",
+            "body": "选择工作区并批准。Claude Code 现在可以使用你的工作区工具了。"
+          }
+        },
+        "cursor": {
+          "step1": {
+            "title": "复制配置",
+            "body": "下一步你会把它粘贴到 Cursor 中。"
+          },
+          "step2": {
+            "title": "打开 Cursor Settings → MCP → Add new MCP server",
+            "body": "将配置粘贴到 mcp.json 并保存。Cursor 会在服务器旁显示 Login 按钮。"
+          },
+          "step3": {
+            "title": "批准访问",
+            "body": "点击 Login，选择工作区并批准。工具会出现在 Cursor 的智能体中。"
+          }
+        },
+        "openclaw": {
+          "step1": {
+            "title": "安装插件",
+            "body": "在终端中运行此命令。"
+          },
+          "step2": {
+            "title": "登录",
+            "body": "运行此命令，浏览器窗口会打开。"
+          },
+          "step3": {
+            "title": "批准访问",
+            "body": "选择工作区并批准。OpenClaw 现在可以使用你的工作区工具了。"
+          }
+        },
+        "hermes": {
+          "step1": {
+            "title": "复制配置",
+            "body": "下一步你会把它添加到 Hermes 配置中。"
+          },
+          "step2": {
+            "title": "添加到 ~/.hermes/config.yaml",
+            "body": "将其粘贴到 ~/.hermes/config.yaml 的 mcp_servers 下并保存。然后在 Hermes 中运行此命令。"
+          },
+          "step3": {
+            "title": "批准访问",
+            "body": "Hermes 会打开浏览器窗口。登录、选择工作区并批准。Hermes 现在可以使用你的工作区工具了。"
+          }
+        }
+      }
+    },
+    "clients": {
+      "claude": "Claude",
+      "claudeCode": "Claude Code",
+      "claudeDesktop": "Claude Desktop",
+      "cursor": "Cursor",
+      "chatgpt": "ChatGPT",
+      "stdio": "stdio 备用方案",
+      "stdioHint": "此备用方案请使用工作区令牌。",
+      "openclaw": "OpenClaw",
+      "hermes": "Hermes",
+      "other": "其他客户端"
+    },
+    "grants": {
+      "title": "已授权的应用",
+      "description": "授权属于你的账号，适用于你管理的所有工作区；撤销后客户端会在所有位置断开连接。",
+      "empty": "连接 MCP 客户端后，OAuth 授权会显示在这里。",
+      "client": "客户端",
+      "scopes": "权限范围",
+      "firstAuthorizedAt": "首次授权时间",
+      "lastRefreshedAt": "上次刷新时间",
+      "activeUntil": "有效期至",
+      "noActiveToken": "没有有效令牌",
+      "revoke": "撤销",
+      "revokeConfirmTitle": "撤销应用的访问权限？",
+      "revokeConfirmDescription": "撤销 {clientName} 的访问权限？这会让该客户端在所有位置断开连接。",
+      "revokedSuccess": "已撤销应用的访问权限。",
+      "notFound": "该 OAuth 授权已不存在"
+    },
+    "unavailableOnDomain": {
+      "title": "此域名暂不可用",
+      "body": "此域名暂不支持连接 Claude 或 ChatGPT 等 AI 助手。现有授权列在下方，仍可撤销。"
+    }
+  },
+  "connectionStatus": {
+    "column": "Status",
+    "reconnecting": "The provider is reconnecting this account. Messages are held until it finishes.",
+    "accessRemoved": "The provider removed access to this account. Reconnect to resume.",
+    "needsReconnect": "Reconnect required.",
+    "inactive": "This channel is inactive."
+  },
+  "inbox": {
+    "createAppointment": {
+      "title": "创建预约",
+      "description": "向联系人发送日历的预约链接，或打开链接代其预约。",
+      "inactive": "未启用",
+      "sendLink": "发送日历链接",
+      "goToLink": "打开日历链接",
+      "sent": "预约链接已发送。",
+      "failed": "无法创建预约链接。",
+      "noCalendars": "暂无预约日历。",
+      "manageCalendars": "管理预约日历"
+    }
+  },
+  "templateStore": {
+    "title": "模板商店",
+    "description": "已批准进入公开商店的模板。每个模板会出现在你选择的分类中。",
+    "add": "添加",
+    "addCategory": "添加分类",
+    "renameCategory": "重命名",
+    "editListing": "编辑条目",
+    "templateId": "模板 ID",
+    "template": "模板",
+    "categories": "分类",
+    "categoriesPlaceholder": "无分类",
+    "close": "关闭",
+    "removeChip": "移除 {name}",
+    "moreSelected": "另外 {count} 项",
+    "categoriesHint": "可选。没有分类的模板只显示在“全部”中。",
+    "languages": "语言",
+    "allLanguages": "所有语言",
+    "languagesHint": "可选。留空则模板在所有语言下显示。",
+    "noCategoriesYet": "还没有分类。",
+    "added": "模板已添加到商店",
+    "updated": "条目已更新",
+    "removed": "模板已从商店移除",
+    "removeError": "无法移除模板",
+    "removeTitle": "移除 {name}？",
+    "removeDescription": "它将从商店消失。模板本身及其安装不受影响。",
+    "saveError": "无法保存",
+    "deleteError": "无法删除分类",
+    "categoryCreated": "分类已创建",
+    "categoryUpdated": "分类已更新",
+    "categoryMoved": "分类已移动",
+    "categoryDeleted": "分类已删除",
+    "deleteCategoryTitle": "删除 {name}？",
+    "deleteCategoryDescription": "此分类下的模板数：{count}。它们仍保留在商店中，并显示在“全部”里。",
+    "moveUp": "上移",
+    "moveDown": "下移",
+    "searchPlaceholder": "按名称或模板 ID 搜索",
+    "emptyListings": "还没有已批准的模板。",
+    "noMatches": "没有与搜索或筛选匹配的模板。",
+    "allCategories": "全部分类",
+    "allStatuses": "全部状态",
+    "installs": "安装次数",
+    "owner": "所有者",
+    "statusLabel": "状态",
+    "openInStore": "打开商店",
+    "storeUnavailable": "你的商店在自定义域名上打开。请先设置一个域名。",
+    "openTemplatePage": "打开模板页面",
+    "remove": "移除",
+    "status": {
+      "published": "已发布",
+      "templateUnavailable": "模板不可用",
+      "shareDisabled": "分享链接已关闭"
+    },
+    "errors": {
+      "templateUnavailable": "无法将此 ID 的模板添加到你的商店。",
+      "listingExists": "此模板已在你的商店中。",
+      "listingUnavailable": "此商店条目已不存在。",
+      "listingLimit": "一个商店最多可包含 {templateLimit} 个模板。",
+      "categoryUnavailable": "此分类已不存在。",
+      "categoryNameTaken": "已存在同名分类。",
+      "categoryLimit": "一个商店最多可有 {categoryLimit} 个分类。"
+    },
+    "store": {
+      "pageTitle": "{tenantName} – 模板商店",
+      "empty": "商店里还没有模板。",
+      "search": "搜索模板",
+      "noResults": "没有符合筛选条件的模板。",
+      "clearSearch": "清除筛选",
+      "loadFailed": "无法加载模板。请稍后再试。",
+      "languageValue": "语言：{language}",
+      "allLanguages": "所有语言",
+      "otherLanguages": "其他语言",
+      "allChannels": "所有频道",
+      "channel": "频道",
+      "uncategorized": "其他"
+    },
+    "picker": {
+      "placeholder": "选择模板",
+      "search": "按名称或模板 ID 搜索",
+      "empty": "没有可添加的模板。",
+      "error": "无法加载模板。",
+      "retry": "重试",
+      "meta": "ID {id} · {workspace}"
+    },
+    "bulk": {
+      "setCategories": "设置分类",
+      "setLanguages": "设置语言",
+      "categoriesHint": "替换所选模板（{count}）的分类。留空则移除所有分类。",
+      "languagesHint": "替换所选模板（{count}）的语言。留空则在所有语言下显示。",
+      "updated": "已更新所选模板",
+      "removeTitle": "移除所选模板？",
+      "removeDescription": "已选：{count}。它们将从商店消失；模板本身及其安装不受影响。",
+      "removed": "已从商店移除所选模板",
+      "setChannels": "设置频道",
+      "channelsHint": "替换所选模板（{count}）的频道。留空表示所有频道。"
+    },
+    "channels": "频道",
+    "channelsHint": "可选。如果模板适用于所有频道，请留空。在商店中显示为图标，访客可按频道筛选。"
+  },
+  "accountDeletion": {
+    "title": "Delete account",
+    "description": "Your owned workspaces will be deleted with your account.",
+    "workspacesTitle": "将被删除的工作区",
+    "noWorkspaces": "您没有任何工作区。",
+    "warningGracePeriod": "删除将在 24 小时宽限期后开始。",
+    "warningIrreversible": "此操作无法恢复。",
+    "warningSubscriptions": "请先取消所有订阅。",
+    "signedInAs": "已登录为 {email}",
+    "confirmationLabel": "确认",
+    "confirmationHint": "输入 <code>DELETE</code> 以确认。",
+    "confirmationError": "Type DELETE exactly to confirm.",
+    "supportRequired": "Contact support to delete this reseller account.",
+    "submit": "Delete account",
+    "cancel": "取消",
+    "backToSignIn": "返回登录",
+    "receivedTitle": "Deletion request received",
+    "receivedDescription": "Your account and owned workspaces are scheduled for deletion."
+  },
+  "account": {
+    "title": "Account settings",
+    "description": "Manage your profile and account settings.",
+    "backToWorkspaces": "Workspaces",
+    "profile": {
+      "title": "Profile",
+      "description": "Update your name and profile image."
+    },
+    "emailReadOnly": "Email can't be changed",
+    "dangerZone": {
+      "title": "Danger zone",
+      "description": "Deletes your account and the {count, plural, =0 {0 workspaces} one {# workspace} other {# workspaces}} you own.",
+      "openSettings": "Delete account"
+    }
+  },
+  "integrationLine": {
+    "channelIdLabel": "Channel ID",
+    "channelSecretLabel": "Channel secret",
+    "credentialsHelp": "Find both values in the LINE Developers console: open your Messaging API channel and go to Basic settings.",
+    "webhookNotEnabled": "LINE is not delivering messages yet. In LINE Official Account Manager, turn on \"Use webhook\" and turn off \"Auto-reply messages\", then press Test webhook.",
+    "webhookReplaced": "The webhook URL previously set on this LINE channel ({url}) was replaced with ChatbotX's.",
+    "testWebhook": "Test webhook",
+    "testWebhookSuccess": "LINE webhook is working.",
+    "webhookTestFailed": "LINE's webhook test failed: {reason}",
+    "continue": "Continue",
+    "errors": {
+      "channelHidden": "LINE is not available for this workspace.",
+      "credentialsRejected": "Invalid LINE Channel ID or Channel secret.",
+      "webhookRejected": "LINE rejected the webhook URL. Please try again later or contact support.",
+      "providerUnavailable": "LINE is temporarily unavailable. Please try again in a moment."
+    }
+  },
+  "contactSync": {
+    "menu": "Sync with AhaChat",
+    "title": "Sync with AhaChat",
+    "description": "Quickly get contacts, tags and custom fields from AhaChat for your connected pages found there.",
+    "start": "Start sync",
+    "empty": "Connect a Messenger, Instagram, Zalo or Telegram page first.",
+    "noneInAhachat": "None of your connected pages exist in AhaChat.",
+    "cooldown": "One sync every 4 hours. Next from {time}.",
+    "options": {
+      "syncTags": "Sync tags",
+      "syncCustomFields": "Sync custom fields",
+      "overwriteExisting": "Overwrite existing data",
+      "hint": "With overwrite off, only missing data is filled. Tags are never removed and empty values never clear data."
+    },
+    "advanced": {
+      "show": "Edit mappings",
+      "hide": "Hide mappings"
+    },
+    "mapping": {
+      "auto": "Match by name",
+      "saved": "Mappings saved",
+      "tags": "Tags",
+      "fields": "Custom fields",
+      "noTags": "This page has no tags.",
+      "noFields": "This page has no custom fields.",
+      "typeMismatch": "Type differs: values are skipped.",
+      "save": "Save mappings"
+    },
+    "progress": {
+      "title": "Sync progress",
+      "source": "Source",
+      "counts": "{created} created · {updated} updated · {skipped} skipped · {failed} failed",
+      "skippedValues": "已跳过 {count} 个自定义字段值（类型不兼容或值无效）",
+      "cancel": "Cancel sync",
+      "done": "Done",
+      "requested": "Requested {time}",
+      "started": "Started {time}",
+      "finished": "finished {time}"
+    },
+    "ineligible": {
+      "notInAhachat": "Not in AhaChat",
+      "pageAmbiguous": "Matches several AhaChat pages",
+      "ahachatUnavailable": "AhaChat unavailable. Try again."
+    },
+    "status": {
+      "pending": "Waiting",
+      "running": "Running",
+      "cancelling": "Cancelling",
+      "succeeded": "Completed",
+      "partial": "Partly completed",
+      "failed": "Failed",
+      "cancelled": "Cancelled"
+    },
+    "runErrors": {
+      "inboxUnavailable": "The inbox was disconnected.",
+      "sourceUnavailable": "AhaChat returned unexpected data.",
+      "sourceDisconnected": "The AhaChat page was removed.",
+      "pageLimitReached": "Stopped at the per-page limit.",
+      "maxAttempts": "Stopped after repeated failures.",
+      "channelUnsupported": "Contacts of this channel can no longer be synced.",
+      "pageNotFound": "The page was removed from AhaChat."
+    },
+    "errors": {
+      "alreadyRunning": "A sync is already running in this workspace.",
+      "cooldown": "You can sync once every 4 hours.",
+      "noSources": "Choose at least one page.",
+      "tooManySources": "Too many pages in one sync.",
+      "sourceNotEligible": "One of the pages cannot be synced.",
+      "mappingInvalid": "Some mappings are invalid.",
+      "forbidden": "Only a workspace admin can sync contacts from AhaChat.",
+      "generic": "Something went wrong. Try again.",
+      "sourceUnavailable": "AhaChat could not be reached. Try again shortly.",
+      "notConfigured": "The AhaChat sync is not set up on this server."
+    },
+    "history": {
+      "open": "Sync history",
+      "title": "AhaChat sync history",
+      "run": "Sync details",
+      "empty": "No syncs yet.",
+      "columns": {
+        "pages": "Pages",
+        "created": "Created",
+        "updated": "Updated",
+        "skipped": "Skipped",
+        "failed": "Failed",
+        "finishedAt": "Finished"
+      }
+    },
+    "followUp": {
+      "statusLine": "History sync: {status}",
+      "pending": "History syncs after this import",
+      "linked": "History sync started",
+      "cancelled": "Cancelled: the page was disconnected",
+      "channelUnavailable": "Not started: the page is no longer connected",
+      "superseded": "A newer import of this page syncs history",
+      "workspaceUnavailable": "Not started: the workspace is unavailable",
+      "expired": "Not started: it waited too long",
+      "retry": "Retry",
+      "retried": "History sync starts shortly"
+    },
+    "source": {
+      "mapsTo": "{channel} → AhaChat: {page}"
+    }
+  },
+  "deleteAccountPage": {
+    "title": "删除您的 ChatbotX 账号",
+    "intro": "您可以通过以下任一方式删除账号及其数据。",
+    "waysTitle": "如何删除账号",
+    "wayMobile": "在移动应用中：设置 → 删除账号。",
+    "wayWeb": "在网页端：登录后打开账号删除页面。",
+    "wayWebLink": "打开账号删除页面",
+    "wayEmail": "通过邮件：使用注册邮箱向 {email} 发送邮件。",
+    "whatHappensTitle": "接下来会发生什么",
+    "whatHappens": "删除将在 24 小时宽限期后开始，且无法撤销。请先取消所有订阅。",
+    "deletedTitle": "我们会删除的数据",
+    "deleted": "您的个人资料（姓名和邮箱）、登录凭据、推送通知令牌，以及您拥有的所有工作区，包括其中的联系人、对话、消息和上传的文件。",
+    "sharedWorkspace": "如果您拥有的工作区还有其他成员，该工作区对他们也会被删除。",
+    "retainedTitle": "我们会保留的数据",
+    "retained": "您在他人拥有的工作区中撰写的备注会保留，但会移除您的姓名。我们会保留一条删除已发生的记录。账单和发票记录可能会按法律要求的期限保留。"
+  },
+  "ahachatImport": {
+    "dialogTitle": "Use data from AhaChat?",
+    "dialogDescription": "{page} is already on AhaChat. Use its data so contacts arrive right away and the history sync runs faster.",
+    "importFirst": "Use AhaChat",
+    "historyOnly": "Skip AhaChat",
+    "panelDescription": "Contacts, tags and custom fields come from AhaChat; history syncs on its own.",
+    "errors": {
+      "unknown": "Couldn't start the AhaChat import. Try again later.",
+      "historyNotStarted": "Couldn't start the import or the history sync. Try again later."
+    },
+    "badge": {
+      "onAhachat": "On AhaChat",
+      "selected": "Uses AhaChat data"
+    }
+  },
+  "conversationPages": {
+    "label": "此联系人沟通的主页",
+    "lastMessage": "最后一条消息",
+    "morePages": "另外 {count} 个"
+  },
+  "conversationParticipants": {
+    "joined": "{names} 已参与会话",
+    "joinedShort": "{count, plural, one {{names} 已加入} other {{names} 已加入}}",
+    "replied": "{name} 回复于 {time}",
+    "showMore": "显示更多",
+    "label": "谁在此会话中回复过",
+    "unnamedMember": "成员",
+    "loadMoreFailed": "无法加载更多成员",
+    "lastMessageBy": "{name} 的最后一条消息"
+  },
+  "posts": {
+    "title": "帖子",
+    "searchPlaceholder": "按文字、链接或帖子 ID 搜索",
+    "dateFrom": "起始日期",
+    "dateTo": "结束日期",
+    "export": {
+      "title": "导出此日期范围内帖子的评论(最多 {count} 篇帖子)",
+      "needsRange": "请选择开始日期和结束日期以导出评论。",
+      "nothing": "此日期范围内没有符合这些筛选条件的帖子。",
+      "failed": "导出失败,请重试。",
+      "done": "{count, plural, one {已导出 # 篇帖子的评论。} other {已导出 # 篇帖子的评论。}}",
+      "doneLimited": "已导出最新 {count} 篇帖子的评论。还有更多帖子符合条件,请缩小日期范围以导出其余部分。",
+      "truncated": "导出内容在达到行数上限处被截断。请缩小日期范围或筛选条件以导出其余部分。",
+      "quotaExceeded": "此账号的消息额度已用完，因此未执行下载。请升级套餐或等待下一个计费周期。",
+      "blocked": "此工作区的套餐或试用已到期。",
+      "menu": "导出",
+      "rowsTitle": "导出帖子列表(每个帖子一行)",
+      "rowsDone": "已导出帖子列表。",
+      "rowsTruncated": "列表已在帖子数量上限处截断。请缩小筛选范围以导出其余部分。",
+      "sourceStored": "已存储的数据",
+      "sourceChannel": "从渠道读取"
+    },
+    "showAllPosts": "同时显示没有评论的帖子",
+    "noCaption": "无文字",
+    "liveNow": "直播中",
+    "empty": "没有符合筛选条件的帖子。",
+    "loadMore": "加载更多",
+    "columns": {
+      "content": "帖子",
+      "topic": "主题",
+      "author": "作者",
+      "pages": "主页",
+      "status": "状态"
+    },
+    "contentType": {
+      "text": "文字",
+      "photo": "照片",
+      "video": "视频",
+      "reel": "Reels",
+      "carousel": "轮播",
+      "story": "快拍",
+      "live": "直播",
+      "link": "链接",
+      "audio": "音频",
+      "other": "其他"
+    },
+    "filters": {
+      "channel": "渠道",
+      "allChannels": "全部渠道",
+      "inbox": "主页 / 账号",
+      "allInboxes": "全部主页和账号",
+      "postType": "帖子类型",
+      "commentSettings": "评论设置",
+      "hidden": "已隐藏评论",
+      "notHidden": "未隐藏评论",
+      "phoneHidden": "已隐藏含电话号码的评论",
+      "phoneNotHidden": "未隐藏含电话号码的评论",
+      "skipped": "已跳过评论",
+      "notSkipped": "未跳过评论",
+      "sort": "排序",
+      "topics": "主题",
+      "title": "筛选",
+      "engagement": "互动",
+      "topicSearch": "搜索主题",
+      "author": "作者",
+      "allAuthors": "全部作者"
+    },
+    "postType": {
+      "all": "全部",
+      "photo": "照片",
+      "video": "视频",
+      "post": "帖子",
+      "pastLive": "已结束直播",
+      "liveNow": "正在直播"
+    },
+    "sort": {
+      "newest": "最新",
+      "mostComments": "评论最多",
+      "fewestComments": "评论最少",
+      "mostPhones": "电话号码最多",
+      "fewestPhones": "电话号码最少",
+      "mostEngagement": "互动最多",
+      "leastEngagement": "互动最少",
+      "mostShares": "分享最多",
+      "fewestShares": "分享最少"
+    },
+    "settings": {
+      "hideComments": "隐藏所有评论",
+      "hidePhoneComments": "隐藏含电话号码的评论",
+      "skipComments": "跳过评论（标为已读）",
+      "unavailable": "此渠道暂不支持按帖子设置评论。"
+    },
+    "sync": {
+      "refresh": "刷新帖子",
+      "started": "正在同步帖子，新帖子稍后显示。",
+      "alreadyRunning": "同步已在进行中或刚刚完成。",
+      "failedCount": "{count, plural, one {# 个页面同步失败} other {# 个页面同步失败}}",
+      "reconnect": "重新连接渠道",
+      "reconnectWithPermission": "重新连接并允许访问帖子",
+      "retry": "重试"
+    },
+    "topics": {
+      "edit": "编辑主题",
+      "newPlaceholder": "新主题名称",
+      "empty": "还没有主题。输入名称即可创建。"
+    },
+    "emptyHint": "请尝试其他筛选条件，或开启“同时显示没有评论的帖子”。",
+    "actions": {
+      "viewComments": "查看评论",
+      "viewOriginal": "查看原帖",
+      "refreshPost": "从渠道刷新",
+      "refreshRemoved": "该帖子已不在渠道上，因此已被隐藏。",
+      "refreshUnavailable": "无法从渠道读取该帖子。请稍后再试。",
+      "refreshRateLimited": "渠道要求放慢请求速度。请几分钟后再试。",
+      "refreshCooldown": "该帖子刚刚刷新过。请一分钟后再试。",
+      "downloadPhones": "下载电话号码",
+      "downloadComments": "下载评论",
+      "viewDetails": "查看详情",
+      "download": "下载",
+      "downloadEmails": "下载邮箱"
+    },
+    "merge": {
+      "title": "合并帖子",
+      "selectAll": "全选",
+      "selected": "已选 {count}/{max}",
+      "confirm": "合并帖子"
+    },
+    "comments": {
+      "title": "此帖子的所有评论",
+      "mergedTitle": "来自 {count} 个帖子的合并评论",
+      "searchPlaceholder": "搜索评论",
+      "phoneOnly": "含电话号码",
+      "empty": "没有可显示的评论。",
+      "loadOlder": "加载更早的评论",
+      "like": "点赞评论",
+      "delete": "删除评论",
+      "confirmDelete": "再次点击以删除",
+      "hidden": "已隐藏",
+      "unknownAuthor": "未知客户"
+    },
+    "state": {
+      "noChannelTitle": "尚未连接渠道",
+      "noChannelHint": "连接 Messenger、Instagram、Threads 或 TikTok 渠道后，可在此查看其帖子。",
+      "connectChannel": "连接渠道",
+      "neverSyncedTitle": "尚未加载帖子",
+      "neverSyncedHint": "加载已连接渠道的帖子。此操作在后台运行，可能需要几分钟。",
+      "loadPosts": "加载帖子"
+    },
+    "counts": {
+      "comments": "评论",
+      "reactions": "反应",
+      "shares": "分享",
+      "phones": "含电话号码的评论"
+    },
+    "tabs": {
+      "posts": "帖子",
+      "calendar": "日历",
+      "connect": "连接",
+      "feeds": "订阅源",
+      "analytics": "分析"
+    },
+    "calendar": {
+      "views": {
+        "month": "月",
+        "week": "周",
+        "day": "日",
+        "list": "列表"
+      },
+      "viewLabel": "日历视图",
+      "previous": "上一周期",
+      "next": "下一周期",
+      "today": "今天",
+      "network": "网络",
+      "destination": "主页或个人资料",
+      "allNetworks": "所有网络",
+      "allDestinations": "所有主页和个人资料",
+      "noText": "（无文字）",
+      "noDate": "无日期",
+      "noDateEmpty": "没有日期的草稿会显示在这里。将帖子拖放到此处可将其移回草稿。",
+      "newPostOn": "在 {date} 新建帖子",
+      "more": "另外 {count} 条",
+      "emptyDay": "这一天没有帖子。",
+      "emptyHint": "此时间段内没有任何排期。",
+      "loading": "加载中…",
+      "loadError": "无法加载日历。",
+      "retry": "重试",
+      "readOnly": "此工作区为只读，无法移动或创建帖子。",
+      "truncated": "仅显示此时间段内的部分帖子。请缩小时间范围，或按网络或账号筛选。",
+      "openPost": "打开帖子",
+      "moveToDrafts": "移回草稿",
+      "reschedule": "重新排期",
+      "schedule": "排期",
+      "rescheduleLabel": "发布时间",
+      "scheduleLabel": "排期至",
+      "pickTime": "选择日期和时间",
+      "status": {
+        "draft": "草稿"
+      },
+      "errors": {
+        "past": "请选择距现在至少 15 分钟之后的时间。",
+        "cannotUnschedule": "只有已排期的帖子才能移回草稿。"
+      },
+      "list": {
+        "filterLabel": "按状态筛选",
+        "filterCount": "{label}，{count, plural, one {# 篇帖子} other {# 篇帖子}}",
+        "filters": {
+          "all": "全部",
+          "drafts": "草稿",
+          "scheduled": "已排期",
+          "published": "已发布",
+          "needsAttention": "需要处理"
+        },
+        "empty": {
+          "all": "没有帖子",
+          "drafts": "没有草稿帖子",
+          "scheduled": "没有已排期的帖子",
+          "published": "没有已发布的帖子",
+          "needsAttention": "没有需要处理的内容"
+        },
+        "loadMore": "加载更多"
+      },
+      "freeSlots": {
+        "label": "空闲发布时间",
+        "compose": "{time} 的新帖子",
+        "truncated": "未显示更多空闲时间"
+      }
+    },
+    "connect": {
+      "title": "连接",
+      "connectNetwork": "连接 {network}",
+      "reconnect": "重新连接",
+      "reconnectName": "{label}: {name}",
+      "facebookReconnectHint": "重新连接一个主页，会更新使用同一 Facebook 登录的所有主页。",
+      "comingSoon": "暂不可用",
+      "connectedAlready": "{count, plural, one {已连接 # 个账号。点击可再添加一个。} other {已连接 # 个账号。点击可再添加一个。}}",
+      "truncated": "显示前 {count} 个页面。",
+      "tiktokTitle": "TikTok 发布账号",
+      "pageCount": "{count, plural, one {# 个主页} other {# 个主页}}",
+      "verify": "验证",
+      "verified": "账号已验证。",
+      "syncDestinations": "同步主页",
+      "destinationsSynced": "主页和个人资料已更新。",
+      "disconnect": "断开连接",
+      "confirmDisconnect": "再次点击以断开",
+      "disconnected": "账号已断开连接。",
+      "missingScopes": "缺少权限：{scopes}。请重新连接以授予。",
+      "lastVerified": "验证于 {date}",
+      "status": {
+        "connected": "已连接",
+        "needsReauth": "需要重新连接",
+        "disconnected": "已断开"
+      },
+      "reason": {
+        "tokenRejected": "平台拒绝了已保存的登录。请重新连接账号。",
+        "tokenExpired": "已保存的登录已过期。请重新连接账号。",
+        "refreshRejected": "平台拒绝续期登录。请重新连接账号。",
+        "permissionNotGranted": "缺少部分权限。请重新连接账号以授予。"
+      },
+      "emptyTitle": "尚未连接任何渠道",
+      "emptyAction": "前往渠道",
+      "schedule": {
+        "open": "发布时间",
+        "title": "{name} 的发布时间",
+        "description": "加入队列的帖子会使用此列表中的下一个空闲时间。",
+        "timezone": "时区：{timezone}",
+        "maxTimes": "每天最多 {count} 个时间",
+        "dayOn": "在{day}发布",
+        "noTimes": "没有时间",
+        "addTime": "添加时间",
+        "timeLabel": "{day}的新时间",
+        "removeTime": "移除 {time}",
+        "copyTo": "复制到其他日期",
+        "copyApply": "复制",
+        "save": "保存",
+        "saved": "发布时间已保存。",
+        "reflowMoved": "{count, plural, one {队列中的 # 篇帖子已移到新的时间。} other {队列中的 # 篇帖子已移到新的时间。}}",
+        "reflowDetached": "{count, plural, one {队列中的 # 篇帖子已没有可用的发布时间。它们保留原时间，但不再在队列中（改为自定义时间）。} other {队列中的 # 篇帖子已没有可用的发布时间。它们保留原时间，但不再在队列中（改为自定义时间）。}}"
+      }
+    },
+    "detail": {
+      "title": "帖子详情",
+      "caption": "正文",
+      "metrics": "互动",
+      "metricsUnavailable": "此渠道不提供这些数据。",
+      "views": "浏览量",
+      "settings": "评论设置",
+      "settingsHint": "这些设置适用于此帖子的新评论，已有评论不会改变。",
+      "skipCommentsHint": "将每条新评论标为已读，自动化仍会运行。",
+      "hideCommentsHint": "隐藏此帖子的每条新评论。",
+      "hidePhoneCommentsHint": "隐藏含电话号码的新评论。",
+      "topics": "主题",
+      "info": "信息",
+      "postId": "帖子 ID",
+      "channel": "渠道",
+      "contentType": "类型",
+      "author": "作者",
+      "publishedAt": "发布时间",
+      "metricsUpdated": "数据更新时间",
+      "never": "尚未统计",
+      "ownerPage": "主页",
+      "ownerAccount": "账号"
+    },
+    "feeds": {
+      "title": "订阅源自动发布",
+      "description": "将 RSS 或 Atom 订阅源中的新条目转换为帖子。首次检查只会记录订阅源中已有的条目。",
+      "add": "添加订阅源",
+      "empty": "还没有订阅源。添加一个，即可把新文章自动转换为帖子。",
+      "status": {
+        "active": "运行中",
+        "paused": "已暂停",
+        "error": "已暂停 – 订阅源错误"
+      },
+      "mode": {
+        "draft": "保存为草稿",
+        "queue": "自动加入队列"
+      },
+      "lastChecked": "上次检查：{time}",
+      "neverChecked": "尚未检查",
+      "firstCheckPending": "首次检查只会记录订阅源中已有的条目，不会据此创建帖子。",
+      "every": "每 {minutes} 分钟",
+      "destinations": "{count, plural, one {# 个发布目标} other {# 个发布目标}}",
+      "actions": {
+        "checkNow": "立即检查",
+        "pause": "暂停",
+        "resume": "恢复",
+        "edit": "编辑",
+        "delete": "删除",
+        "items": "条目",
+        "sendTest": "发送测试"
+      },
+      "toast": {
+        "checkStarted": "已开始检查",
+        "paused": "订阅源已暂停",
+        "resumed": "订阅源已恢复",
+        "deleted": "订阅源已删除",
+        "saved": "订阅源已保存",
+        "testDraftCreated": "已创建测试草稿",
+        "openDraft": "打开草稿",
+        "testUsedTemplate": "AI 未能写出文案,已改用文本模板。"
+      },
+      "deleteConfirm": "删除此订阅源及其条目历史？已创建的帖子会保留。",
+      "error": {
+        "blocked": "不允许使用该订阅源地址。",
+        "timeout": "订阅源响应时间过长。",
+        "tooLarge": "订阅源超过 2 MB。",
+        "badStatus": "订阅源返回了错误。",
+        "badContentType": "该地址不是 RSS 或 Atom 订阅源。",
+        "unreachable": "无法连接到订阅源。",
+        "tooManyRedirects": "订阅源重定向次数过多。",
+        "invalidFeed": "无法读取订阅源。",
+        "internal": "检查订阅源时出错。",
+        "postRefused": "无法创建帖子（例如没有空闲的发布时间，或工作区被封锁）。下次检查时会重试。"
+      },
+      "apiError": {
+        "feedUrlTaken": "此订阅源已添加。",
+        "feedCheckCooldown": "每个订阅源每 5 分钟只能手动检查一次。",
+        "feedPreviewRateLimited": "预览次数过多，请稍后再试。",
+        "feedNotParseable": "此地址不是 RSS 或 Atom 订阅源。请尝试在网站地址后添加 /feed 或 /rss。",
+        "feedUnreachable": "无法访问此地址。请检查后重试。",
+        "feedTestRateLimited": "测试帖子过多,请稍后再试。",
+        "feedHasNoItems": "此订阅源还没有条目。",
+        "feedFetchRateLimited": "订阅源地址检查次数过多，请稍后再试。",
+        "feedCheckInProgress": "此订阅源的检查已在等待或正在运行。"
+      },
+      "form": {
+        "createTitle": "添加订阅源",
+        "editTitle": "编辑订阅源",
+        "name": "名称",
+        "url": "订阅源地址",
+        "urlPlaceholder": "https://example.com/feed.xml",
+        "preview": "预览",
+        "previewEmpty": "此订阅源中没有找到条目。",
+        "destinations": "发布到",
+        "noDestinations": "请先连接社交账号。",
+        "interval": "检查间隔",
+        "dailyCap": "每天最多发布数",
+        "mode": "新条目将",
+        "modeDraftHelp": "每个新条目都会成为草稿，供你审阅。",
+        "modeQueueHelp": "每个新条目会按发布目标的发布时间表加入队列，并且无需审阅直接发布。",
+        "template": "帖子文本",
+        "templateHelp": "可用变量：{variables}",
+        "save": "保存",
+        "cancel": "取消",
+        "didYouMean": "您是指 {url} 吗?",
+        "useSuggestion": "使用",
+        "aiWrite": "用 AI 撰写每条帖子",
+        "aiWriteHelp": "AI 会根据条目的标题、摘要和链接撰写文案。如果无法完成,则使用下方的文本模板。",
+        "aiInstructions": "给 AI 的额外说明(可选)",
+        "aiInstructionsHelp": "例如:语气友好,提及店铺名称。最多 300 个字符。",
+        "postLatestOnFirstCheck": "首次检查时发布最新条目",
+        "postLatestOnFirstCheckHelp": "不开启时,首次检查只会记录订阅源中已有的内容。",
+        "contentTitle": "帖子内容",
+        "templateInsert": "插入字段",
+        "templateVariables": "条目字段",
+        "templateFeedFields": "在此订阅源中找到的字段",
+        "templatePresets": "从模板开始",
+        "presetTitleLink": "标题和链接",
+        "presetSummaryHashtags": "标题、摘要、链接和话题标签",
+        "presetProduct": "商品：标题、价格和链接",
+        "templateLegacy": "此订阅源使用旧的 {token} 标记，在你转换之前会继续按原样发布。",
+        "templateConvert": "转换为新语法",
+        "templateHint": "从菜单插入字段，或直接输入，例如 {example}。可用过滤器：{filters}。",
+        "templateProblem": "第 {line} 行，第 {column} 列：{message}",
+        "previewTitle": "预览",
+        "previewSample": "示例条目",
+        "previewHint": "预览订阅源地址，查看帖子的样子。",
+        "previewCharacters": "{network}：{count} 个字符",
+        "previewDropped": "此帖子中被排除的发布目标：{count}",
+        "previewFiltered": "已过滤：{reason}",
+        "previewSkipped": "此条目将被跳过。",
+        "previewNoPicture": "无图片",
+        "mediaTitle": "图片",
+        "mediaMode": "图片来源",
+        "mediaModeAuto": "来自订阅源（自动）",
+        "mediaModeField": "来自字段或地址",
+        "mediaModeNone": "无图片",
+        "mediaField": "字段或地址",
+        "mediaFieldHelp": "生成图片地址的模板，例如 {example}。",
+        "mediaLibrary": "备用图片",
+        "mediaLibraryHelp": "来自你的媒体库；条目没有自带图片时使用。",
+        "mediaLibraryAdd": "添加图片",
+        "mediaRemove": "移除",
+        "postAs": "发布为",
+        "postAsPhoto": "图片帖子",
+        "postAsLink": "链接",
+        "postAsText": "仅文本",
+        "postAsHelpLink": "链接：在 Facebook 和 Threads 上显示带文章图片的预览卡片。",
+        "postAsHelpPhoto": "图片帖：条目的图片会与文字一起发布。",
+        "postAsHelpText": "仅文字：只发布文字和地址,不带图片。",
+        "postAsTextFacebookWarning": "Facebook 不会为文字中的链接生成链接预览卡片(图片)。请选择“链接”以获得带文章图片的卡片。",
+        "noImageFallback": "条目没有图片时",
+        "fallbackLink": "分享链接",
+        "fallbackText": "仅文本",
+        "fallbackSkip": "跳过该条目",
+        "filtersTitle": "过滤器",
+        "filterInclude": "包含其中之一",
+        "filterExclude": "不包含其中任何一个",
+        "filterCategories": "分类为其中之一",
+        "filterTermsHelp": "输入一个词后按回车。大小写和重音符号会被忽略。",
+        "filterRequireImage": "仅含图片的条目",
+        "filterMaxAge": "仅比此更新的条目（小时）",
+        "networkTexts": "各网络使用不同文案",
+        "networkTextsHelp": "可为某个网络单独撰写文案；没有单独文案的网络使用通用文案。网络拒绝的文案会被跳过，绝不会被截短。由 AI 撰写的帖子使用同一份通用文案。",
+        "networkTabShared": "通用",
+        "networkTextUsesShared": "此网络使用通用文案。",
+        "networkTextClear": "使用通用文案",
+        "networkTextAria": "{network}的文案",
+        "fetchArticleImage": "在文章页面查找图片",
+        "fetchArticleImageHelp": "当条目没有图片时，会读取其文章页面一次以获取主图（og:image）。仅适用于将要发布的条目；无法读取的页面不会阻止发布。",
+        "previewArticlePicture": "将读取文章页面"
+      },
+      "items": {
+        "title": "{name} 的条目",
+        "empty": "尚未检查任何条目。",
+        "loadMore": "加载更多",
+        "openPost": "打开帖子",
+        "reasons": {
+          "existing": "添加时已在订阅源中",
+          "undated": "没有发布日期",
+          "tooOld": "太旧",
+          "perRunLimit": "超出每次检查的上限",
+          "noDestination": "未选择发布目标",
+          "emptyText": "帖子文本为空",
+          "textTooLong": "帖子文本过长",
+          "invalid": "帖子被拒绝",
+          "other": "无法使用该条目",
+          "aiFallback": "由模板生成(AI 未能写出)",
+          "excludedKeyword": "包含被排除的词",
+          "missingKeyword": "不包含任何必需的词",
+          "category": "不在所选分类中",
+          "noImage": "无图片",
+          "tooOldForFilter": "早于时间过滤器",
+          "undatedForFilter": "没有日期，无法检查时间过滤器",
+          "imageFailed": "无法使用该图片",
+          "noImageFallback": "已不带图片发布",
+          "droppedTargets": "部分发布目标已被排除",
+          "templateError": "无法渲染模板",
+          "noDestinationAccepts": "没有任何发布目标能承载此帖子",
+          "issueTextRequired": "帖子没有文字",
+          "issueTextTooLong": "文字对某个网络来说太长",
+          "issueLinkNotSupported": "某个网络不接受链接",
+          "issueLinkRequired": "某个网络需要链接",
+          "issueTooManyLinks": "链接数量超过某个网络的允许上限",
+          "issueContentType": "某个网络不发布此类帖子",
+          "issueMedia": "图片不符合某个网络的规则",
+          "issueOptions": "某个网络的设置无效",
+          "issueParts": "某个网络不接受后续部分",
+          "issueDestination": "某个发布目标目前无法发布",
+          "alreadyPosted": "此条目已有对应的帖子"
+        },
+        "createPost": "创建帖子",
+        "picture": "图片：{source}",
+        "dropped": "已排除：{count}",
+        "imageSources": {
+          "enclosure": "图片附件",
+          "mediaContent": "媒体内容",
+          "mediaThumbnail": "缩略图",
+          "itunesImage": "播客封面",
+          "contentImage": "正文中的图片",
+          "jsonFeed": "JSON Feed 图片",
+          "field": "字段或地址",
+          "library": "媒体库",
+          "article": "文章页面（og:image）"
+        },
+        "imageErrors": {
+          "unreachable": "无法下载图片。",
+          "blocked": "不允许使用该图片地址。",
+          "tooBig": "图片太大。",
+          "notImage": "该文件不是可用的图片。",
+          "storage": "无法保存图片。",
+          "articleUnreachable": "无法读取文章页面。",
+          "articleNoImage": "文章页面未指定图片。"
+        }
+      },
+      "outcome": {
+        "created": "已创建帖子",
+        "skippedOld": "已跳过：已存在或过旧",
+        "skippedInvalid": "已跳过：被拒绝",
+        "skippedFiltered": "已跳过：被过滤",
+        "skippedNoImage": "已跳过：无图片"
+      },
+      "deleteConfirmTitle": "删除“{name}”？",
+      "sendTestConfirm": {
+        "title": "发送测试帖子？",
+        "description": "将根据此订阅源的最新条目创建一份草稿，方式与订阅源自动撰写相同。不会发布任何内容；你可以打开草稿进行查看。"
+      },
+      "bulkDelete": {
+        "selectAll": "全选",
+        "selectFeed": "选择 {name}",
+        "deleteSelected": "删除所选 ({count})",
+        "confirmTitle": "{count, plural, one {删除 # 个订阅源？} other {删除 # 个订阅源？}}",
+        "confirmDescription": "所选订阅源及其条目历史将被删除。已发布的帖子会保留。",
+        "success": "{count, plural, one {已删除 # 个订阅源} other {已删除 # 个订阅源}}"
+      },
+      "columns": {
+        "name": "订阅源",
+        "status": "状态",
+        "mode": "模式",
+        "schedule": "检查间隔",
+        "destinations": "发布目标",
+        "lastChecked": "上次检查"
+      },
+      "filters": {
+        "search": "搜索订阅源",
+        "searchPlaceholder": "按名称或订阅源地址搜索",
+        "status": "按状态筛选",
+        "mode": "按模式筛选",
+        "destination": "按发布目标筛选",
+        "allStatuses": "所有状态",
+        "allModes": "所有模式",
+        "allDestinations": "所有发布目标",
+        "destinationsSelected": "{count, plural, one {# 个发布目标} other {# 个发布目标}}",
+        "noDestinations": "还没有可用于筛选的发布目标。",
+        "clear": "清除筛选",
+        "noMatch": "没有符合这些筛选条件的订阅源。"
+      },
+      "destinationsDialog": {
+        "title": "{name} 的发布目标",
+        "removed": "已移除的发布目标",
+        "close": "关闭",
+        "edit": "编辑发布目标"
+      },
+      "lastRun": {
+        "noNew": "来源中没有新条目",
+        "skippedOnly": "新条目已被跳过（太旧或被筛选掉）",
+        "stale": "来源返回了较旧的副本，稍后将再次检查",
+        "notModified": "自上次检查以来来源没有变化",
+        "created": "{count, plural, one {已创建 # 篇帖子} other {已创建 # 篇帖子}}",
+        "refused": "{count, plural, one {# 个条目被网络拒绝} other {# 个条目被网络拒绝}}",
+        "waiting": "{count, plural, one {# 个新条目等待下次检查} other {# 个新条目等待下次检查}}",
+        "dailyCap": "已达到每日上限（每 24 小时 {cap} 条） — {count, plural, one {# 个新条目等待中} other {# 个新条目等待中}}",
+        "dailyCapUntil": "已达到每日上限（每 24 小时 {cap} 条） — {count, plural, one {# 个新条目等待中} other {# 个新条目等待中}}. 下一个名额释放时间：{until}"
+      }
+    },
+    "show": {
+      "label": "显示",
+      "channels": "渠道上"
+    },
+    "composed": {
+      "deleted": "帖子已删除。",
+      "deleteTitle": "删除这篇帖子？",
+      "deleteDescription": "草稿将被永久删除。已排期的帖子将被取消，不会发布。"
+    },
+    "analytics": {
+      "title": "帖子分析",
+      "filters": {
+        "title": "分析筛选器",
+        "allContentTypes": "所有内容类型",
+        "allTopics": "所有主题"
+      },
+      "metrics": {
+        "comments": "评论",
+        "reactions": "回应",
+        "shares": "分享",
+        "engagement": "互动",
+        "views": "浏览量"
+      },
+      "metricsLower": {
+        "comments": "评论",
+        "reactions": "回应",
+        "shares": "分享",
+        "engagement": "互动",
+        "views": "浏览量"
+      },
+      "kpi": {
+        "title": "关键指标",
+        "notReported": "未提供",
+        "notReportedHint": "该渠道不提供此项数据。",
+        "vsPrevious": "与上一周期相比",
+        "noComparison": "暂无对比数据",
+        "previous": "上一周期：{value}",
+        "postsPublished": "{count, plural, one {本周期发布了 # 篇帖子} other {本周期发布了 # 篇帖子}}"
+      },
+      "chart": {
+        "title": "每日增长",
+        "description": "{metricLower}的每日增量",
+        "groupBy": "图表分组",
+        "group": {
+          "none": "总计",
+          "channel": "按渠道",
+          "inbox": "按主页或账号"
+        },
+        "other": "其他",
+        "viewTable": "以表格查看",
+        "hideTable": "隐藏表格",
+        "day": "日期",
+        "summary": "{from} 至 {to} 每日新增{metric}：共 {total}。",
+        "empty": "暂无增长记录",
+        "emptyHint": "此期间没有变化，或尚未开始追踪。"
+      },
+      "breakdown": {
+        "title": "明细",
+        "description": "按渠道或主页统计的{metric}增量",
+        "by": {
+          "channel": "渠道",
+          "inbox": "主页和账号"
+        },
+        "empty": "这些筛选条件下没有数据"
+      },
+      "topPosts": {
+        "title": "热门帖子",
+        "description": "按{metricLower}排序",
+        "rankBy": "排序方式",
+        "rank_gained": "增长最多",
+        "rank_total": "总数最高",
+        "rank": "#",
+        "post": "帖子",
+        "channel": "渠道",
+        "gained": "增量",
+        "total": "总数",
+        "published": "发布时间",
+        "open": "打开帖子",
+        "noCaption": "无文案",
+        "empty": "没有可排名的帖子",
+        "emptyHint": "帖子的数据被追踪后会显示在这里。"
+      },
+      "bestTimes": {
+        "title": "最佳发布时间",
+        "description": "与同一主页的普通帖子比较，时区：{timezone}。",
+        "caption": "按星期和小时的互动得分",
+        "cell": "{when}：得分 {score}，{posts, plural, one {# 篇帖子} other {# 篇帖子}}",
+        "cellEmpty": "{when}：没有帖子",
+        "legendLow": "较低",
+        "legendHigh": "较高",
+        "legendTop": "最佳时段",
+        "scoreHint": "得分 1.0 相当于同一主页的普通帖子。",
+        "topHeading": "表现最好的时段",
+        "slotDetail": "得分 {score} · {posts, plural, one {# 篇帖子} other {# 篇帖子}}",
+        "insufficientTitle": "数据暂时不足",
+        "insufficientHint": "最佳时间需要至少 {min} 篇发布于 90 天前至 3 天前的帖子。目前有 {count} 篇。",
+        "capped": "仅使用了最近帖子的样本。"
+      },
+      "coverage": {
+        "noneTitle": "暂无历史数据",
+        "partialTitle": "历史数据仍在积累中",
+        "fullTitle": "仅统计了部分帖子",
+        "since": "增长从追踪开始的 {date} 起计算，此前的活动不包含在内。",
+        "sinceUnknown": "增长从开始追踪时起计算，此前的活动不包含在内。",
+        "withHistory": "最近 {posts} 篇帖子中有 {withHistory} 篇有增长历史。",
+        "truncated": "帖子数量超过一次可统计的上限，仅显示最近的帖子。"
+      },
+      "states": {
+        "error": "无法加载此部分。",
+        "retry": "重试",
+        "noChannelHint": "连接 Messenger、Instagram、Threads 或 TikTok 渠道，即可查看其帖子表现。"
+      },
+      "perPost": {
+        "title": "表现",
+        "description": "渠道所报告数据的每日变化，基于我们每日的快照。",
+        "metric": "指标",
+        "notReported": "该渠道不提供此数据。",
+        "empty": "暂无增长记录",
+        "since": "自 {date} 起追踪。变化将在下一次每日快照后显示。",
+        "notTracked": "此帖子尚未被追踪。",
+        "summary": "每日新增{metric}：共 {total}。",
+        "totalNow": "本周期新增 · 共 {total}"
+      },
+      "composedPost": {
+        "reasons": {
+          "notPublished": "尚未发布。",
+          "notLinked": "尚未与渠道中的帖子匹配。匹配后将显示数据。",
+          "networkNotSupported": "此网络不提供帖子数据。",
+          "removed": "已从渠道中移除。"
+        }
+      }
+    },
+    "channelExport": {
+      "started": "正在从渠道读取评论，可能需要一些时间。",
+      "progress": "正在从渠道读取… 目前已读取 {count} 行。",
+      "progressEstimate": "正在从渠道读取… 目前已读取 {count} 行（评论共约 {expected} 条）。",
+      "ready": "文件已准备好。",
+      "download": "下载",
+      "truncated": "导出在安全上限处停止，因此文件不完整。请减少导出的帖子数量以获取其余内容。",
+      "forbidden": "你没有下载电话号码和邮箱的权限。",
+      "startFailed": "无法开始导出，请重试。",
+      "inProgress": "导出正在启动，请稍后再试。",
+      "failure": {
+        "channelDisconnected": "渠道已断开连接。请重新连接后重试。",
+        "postNotFound": "有一篇帖子在渠道上已不存在。",
+        "notSupported": "无法从渠道读取此渠道的评论。",
+        "rateLimited": "渠道要求降低速度。请几分钟后重试。",
+        "failed": "导出失败，请重试。"
+      }
+    }
+  },
+  "socialAccounts": {
+    "errors": {
+      "providerNotSupported": "此网络暂时无法连接。",
+      "appNotConfigured": "此网络的平台应用尚未为你的工作区配置。"
+    },
+    "connectResult": {
+      "success": "账号已连接。",
+      "cancelled": "连接已取消。",
+      "notFound": "无法完成连接。",
+      "sessionExpired": "连接会话已过期，请重新尝试连接。",
+      "permissionNotGranted": "由于未授予以下权限，账号未连接：{permissions}。",
+      "accountUnsupported": "此类账号无法发布内容，请使用专业账号。",
+      "notSupported": "此网络暂时无法连接。",
+      "failed": "无法连接账号，请重试。"
+    }
+  },
+  "composer": {
+    "publishTo": "发布到",
+    "reconnect": "重新连接",
+    "noDestinations": "暂无已连接的主页或个人资料可以发布。",
+    "sharedContent": "共享内容",
+    "text": "帖子文字",
+    "textPlaceholder": "撰写你的帖子",
+    "link": "链接",
+    "linkPlaceholder": "https://example.com",
+    "linkInvalid": "请输入以 https:// 开头的完整链接",
+    "removeMedia": "移除文件",
+    "addMedia": "添加照片或视频",
+    "removeDestination": "移除发布位置",
+    "customise": "为此渠道自定义",
+    "usesSharedContent": "使用共享内容",
+    "channelText": "此渠道的文字",
+    "channelTextPlaceholder": "留空则使用共享文字",
+    "contentType": "内容类型",
+    "previewEmpty": "选择发布位置以查看预览。",
+    "noText": "无文字",
+    "justNow": "刚刚",
+    "linkInCaption": "链接将添加到说明文字的末尾。",
+    "previewMediaAlt": "附件 {index}",
+    "previewMoreMedia": "+{count}",
+    "previewSlideLabel": "第 {current} 张，共 {total} 张",
+    "previewPrevious": "上一张",
+    "previewNext": "下一张",
+    "publishNow": "立即发布",
+    "newPost": "新帖子",
+    "draftSaved": "草稿已保存",
+    "noTargets": "请至少选择一个发布位置以开始。",
+    "preview": "预览",
+    "previewError": "无法更新预览。",
+    "issueCount": "待修复的问题：{count}",
+    "saveDraft": "保存草稿",
+    "retry": "重试",
+    "noAccountsTitle": "尚未连接账号",
+    "noAccountsHint": "请在“连接”标签页中连接账号，开始撰写帖子。",
+    "goToAccounts": "前往“连接”",
+    "notEditable": "此帖子已无法编辑。",
+    "options": {
+      "shareToFeed": "同时分享到动态",
+      "title": "标题",
+      "thumbOffsetMs": "封面帧（毫秒）",
+      "privacyLevel": "谁可以观看此视频",
+      "allowComment": "评论",
+      "allowDuet": "合拍",
+      "allowStitch": "拼接",
+      "commercialContent": "披露商业内容",
+      "brandOrganic": "你的品牌",
+      "brandContent": "品牌合作内容",
+      "isAigc": "标注为 AI 生成内容",
+      "coverTimestampMs": "封面帧（毫秒）"
+    },
+    "contentTypes": {
+      "text": "文字",
+      "link": "链接",
+      "image": "图片",
+      "video": "视频",
+      "reel": "Reel",
+      "carousel": "轮播",
+      "story": "快拍"
+    },
+    "issues": {
+      "accountDisconnected": "此账号已断开连接。",
+      "accountNeedsReauth": "此账号需要重新连接。",
+      "inboxDisconnected": "此渠道已断开连接。",
+      "inboxNeedsReconnect": "此渠道的连接已过期，请重新连接。",
+      "publishPermissionMissing": "此渠道未授予发布权限。请重新连接以允许发布。",
+      "contentTypeDisabled": "此内容类型暂不可用。",
+      "contentTypeNotSupported": "此平台不支持该内容类型。",
+      "destinationInactive": "此发布位置已停用。",
+      "destinationNotFound": "未找到此发布位置。",
+      "linkNotSupported": "此内容类型不能包含链接。",
+      "linkRequired": "必须提供链接。",
+      "mediaFormatNotSupported": "存在不支持的文件格式。",
+      "mediaKindNotAllowed": "此处不允许某种文件类型。",
+      "mediaTooFew": "请添加更多文件。",
+      "mediaTooLarge": "有文件过大。",
+      "mediaTooLong": "有视频过长。",
+      "mediaTooMany": "文件过多。",
+      "mediaTooShort": "有视频过短。",
+      "optionsInvalid": "设置无效。",
+      "textRequired": "必须填写文字。",
+      "textTooLong": "文字过长。",
+      "partsNotSupported": "该网络不支持发布串文分段。",
+      "firstCommentNotSupported": "该网络不支持发布首条评论。",
+      "tooManyParts": "分段数量超过了该网络的允许上限。",
+      "partTextRequired": "此段需要填写文字。",
+      "partTextTooLong": "此段超过了该网络允许的长度。",
+      "tooManyLinks": "此文本的链接数量超过 Threads 允许的上限(最多 5 个)。"
+    },
+    "publishStarted": "已开始发布",
+    "publishRefused": "帖子无法按当前内容发布。请修复所显示的问题。",
+    "targetsStatus": "发布位置",
+    "viewPost": "查看帖子",
+    "retryTarget": "重试",
+    "markPublished": "标记为已发布",
+    "retryReviewTitle": "重试可能已经发布的帖子？",
+    "retryReviewDescription": "此帖子可能已经发布。重试可能会再发布一次。请先检查主页。",
+    "retryReviewConfirm": "仍然重试",
+    "status": {
+      "pending": "等待中",
+      "publishing": "发布中",
+      "processing": "处理中",
+      "published": "已发布",
+      "failed": "失败",
+      "cancelled": "已取消",
+      "needsReview": "需要审核"
+    },
+    "schedule": "排期",
+    "scheduleAt": "发布时间",
+    "pickTime": "选择日期和时间",
+    "scheduleTooSoon": "请选择距现在至少 2 分钟之后的时间。",
+    "scheduled": "帖子已排期。",
+    "repeatLabel": "重复",
+    "repeatHint": "重复发布的帖子会保存为模板，本身不会被发布。每次运行都会安排一份副本。",
+    "repeatInvalid": "请完成重复设置后再保存。",
+    "repeatStateActive": "重复中",
+    "repeatStatePaused": "已暂停",
+    "repeatStateEnded": "系列已结束",
+    "repeatNextRun": "下次运行：{date}",
+    "repeatPause": "暂停",
+    "repeatResume": "恢复",
+    "repeatEnd": "结束系列",
+    "repeatUpdated": "重复系列已更新",
+    "repeatScheduleOff": "定时和发布适用于每份副本，而不是模板。",
+    "moveMediaEarlier": "前移",
+    "moveMediaLater": "后移",
+    "removeFromAllChannels": "从所有渠道中删除",
+    "removeTarget": "删除",
+    "removeTargetTitle": "要从 {destination} 删除此帖子吗？",
+    "removeTargetDescription": "已发布的帖子将从 {network} 上的 {destination} 删除。其他发布目标会保留它。此操作无法撤销。",
+    "removeTargetConfirm": "删除",
+    "removing": "正在删除…",
+    "removeFromChannelsTitle": "要从各网络中删除这篇帖子吗？",
+    "removeFromChannelsDescription": "已发布的帖子会从所有支持删除的网络中撤下。不支持删除的网络会保留该帖子。此操作无法撤销。",
+    "removeFromChannelsConfirm": "删除",
+    "removeCancel": "取消",
+    "removeRequested": "{count, plural, one {已开始从 # 个发布目标删除。} other {已开始从 # 个发布目标删除。}}",
+    "removeUnsupported": "{count, plural, one {# 个发布目标无法通过网络 API 删除，请在应用中删除。} other {# 个发布目标无法通过网络 API 删除，请在应用中删除。}}",
+    "removedFromChannel": "已从网络中删除",
+    "removalPermissionMissing": "请重新连接此账号以允许删除帖子。",
+    "removalQueueFailed": "无法将删除任务加入队列。请重试。",
+    "postMessageQuotaExceeded": "此账号的消息额度已用完，因此该帖子未能发布。请升级套餐或等待下一个计费周期后重试。",
+    "tiktokLoading": "正在加载 TikTok 账号设置…",
+    "tiktokUnavailable": "无法加载 TikTok 账号设置，请重试。",
+    "tiktokCreator": "发布到 TikTok 账号 {nickname}",
+    "tiktokCannotPost": "此 TikTok 账号目前无法发布，请稍后再试。",
+    "tiktokPrivacyPlaceholder": "选择谁可以观看",
+    "tiktokInteractions": "允许其他人",
+    "tiktokInteractionDisabled": "已在此账号的 TikTok 设置中关闭",
+    "tiktokYourBrand": "你的品牌",
+    "tiktokBrandedContent": "品牌合作内容",
+    "tiktokLabelPromotional": "你的视频将被标注为“推广内容”。",
+    "tiktokLabelPaid": "你的视频将被标注为“付费合作”。",
+    "tiktokCommercialRequired": "请说明你的内容是推广自己、第三方，还是两者兼有。",
+    "tiktokBrandedNotPrivate": "品牌合作内容的可见性不能设为私密。",
+    "tiktokConsentMusic": "发布即表示你同意 TikTok 的<music>音乐使用确认</music>。",
+    "tiktokConsentBranded": "发布即表示你同意 TikTok 的<branded>品牌内容政策</branded>和<music>音乐使用确认</music>。",
+    "tiktokMaxDuration": "此账号可发布的最长视频为 {seconds} 秒。",
+    "tiktokProcessingNote": "发布后，视频可能需要几分钟处理，之后才会显示在主页上。",
+    "tiktokPrivacy": {
+      "PUBLIC_TO_EVERYONE": "所有人",
+      "MUTUAL_FOLLOW_FRIENDS": "好友",
+      "FOLLOWER_OF_CREATOR": "粉丝",
+      "SELF_ONLY": "仅自己"
+    },
+    "partsTitle": "串文分段",
+    "partsHint": "每一段都会在主帖发布后，作为对上一段的回复发布。",
+    "partLabel": "第 {number} 段",
+    "partPlaceholder": "撰写下一段",
+    "partMoveUp": "上移此段",
+    "partMoveDown": "下移此段",
+    "partRemove": "删除此段",
+    "partsAdd": "添加分段",
+    "partsRemaining": "{count, plural, one {还可再添加 # 段} other {还可再添加 # 段}}",
+    "firstCommentTitle": "首条评论",
+    "firstCommentPlaceholder": "在帖子发布后立即作为评论发布",
+    "aiAssist": "使用 AI 写作",
+    "aiPrivacy": "你提供的文本会发送给下方所选的 AI 服务商。在你插入之前，不会保存或发布任何内容。",
+    "aiIntegration": "AI 集成",
+    "aiNoIntegration": "尚未连接任何 AI 集成。",
+    "aiConnectIntegration": "连接 AI 集成",
+    "aiMode": "AI 应该做什么？",
+    "aiModes": {
+      "write": "撰写新帖子",
+      "rewrite": "改写",
+      "shorten": "缩短",
+      "expand": "扩写",
+      "tone": "更改语气",
+      "fit": "适配发布位置的字数限制",
+      "hashtags": "建议话题标签"
+    },
+    "aiTone": "语气",
+    "aiTones": {
+      "friendly": "友好",
+      "professional": "专业",
+      "casual": "随意",
+      "playful": "俏皮",
+      "formal": "正式",
+      "persuasive": "有说服力",
+      "inspiring": "鼓舞人心"
+    },
+    "aiBrief": "帖子是关于什么的？",
+    "aiBriefPlaceholder": "例如：宣布周末促销，8 折优惠",
+    "aiUsesPostText": "使用上方的帖子文本。",
+    "aiNeedsPostText": "请先写好帖子文本。",
+    "aiFitNeedsDestination": "请先选择一个发布位置。",
+    "aiGenerate": "生成",
+    "aiGenerating": "正在撰写…",
+    "aiSuggestion": "建议",
+    "aiCutToLimit": "已按 {limit, plural, one {# 个字符} other {# 个字符}}的限制截断。",
+    "aiInsert": "插入到末尾",
+    "aiReplace": "替换帖子文本",
+    "aiHashtags": "话题标签",
+    "aiEmoji": "表情符号",
+    "aiCallToAction": "行动号召",
+    "aiCallToActionText": "行动号召的措辞（可选）",
+    "aiCallToActionPlaceholder": "例如：今天就预订您的餐位",
+    "aiVariants": "方案数量",
+    "aiPerNetwork": "按渠道分别撰写",
+    "aiPerNetworkHint": "按每个网络的风格各写一个版本。",
+    "aiOption": "方案 {number}",
+    "aiApplyTo": "应用到 {network}",
+    "aiApplyToEach": "应用到每个渠道",
+    "aiHashtagPick": "点击话题标签即可将其添加到帖子中。",
+    "aiErrors": {
+      "modelNotChosen": "请选择 AI 集成和模型，以使用 AI 撰写。",
+      "needsReconfiguration": "所选的 AI 集成不存在、已停用或无效。",
+      "rateLimited": "AI 请求过多，请稍后再试。",
+      "timeout": "AI 模型未能及时响应，请重试。",
+      "provider": "AI 提供商无法撰写文本，请重试。",
+      "inProgress": "已有一个 AI 请求正在运行。",
+      "blocked": "此工作区的套餐或试用已到期。",
+      "generic": "无法撰写文本，请重试。"
+    },
+    "snippets": "文本片段",
+    "snippetsKinds": {
+      "signature": "签名",
+      "hashtags": "话题标签",
+      "text": "文本"
+    },
+    "snippetsLoadFailed": "无法加载文本片段。",
+    "snippetsEmpty": "还没有文本片段。",
+    "snippetsSignature": "签名",
+    "snippetsSignatureHint": "创建帖子时，签名会在文本末尾添加一次。带有自己文本的发布位置不会添加签名。",
+    "snippetsSignatureChosen": "签名：{name}",
+    "snippetsManage": "管理文本片段",
+    "snippetsName": "名称",
+    "snippetsKind": "类型",
+    "snippetsContent": "文本",
+    "snippetsAdd": "添加片段",
+    "snippetsSaved": "片段已保存。",
+    "snippetsDeleted": "片段已删除。",
+    "snippetsNameTaken": "已存在同名片段。",
+    "targetSets": "页面分组",
+    "targetSetsLoadFailed": "无法加载分组。",
+    "targetSetsEmpty": "还没有保存的分组。",
+    "targetSetsName": "分组名称",
+    "targetSetsNamePlaceholder": "为分组命名…",
+    "targetSetsSave": "保存",
+    "targetSetsNeedsSelection": "选择页面以保存为分组。",
+    "targetSetsSaved": "分组已保存。",
+    "targetSetsDeleted": "分组已删除。",
+    "targetSetsNameTaken": "已存在同名分组。",
+    "targetSetsApplied": "已选择“{name}”中的页面。",
+    "targetSetsSkipped": "{count, plural, one {# 个页面需要处理，已跳过。} other {# 个页面需要处理，已跳过。}}",
+    "destinationState": {
+      "ready": "可以发布",
+      "inboxDisconnected": "已断开连接",
+      "needsReconnect": "连接已过期",
+      "permissionMissing": "未授予发布权限"
+    },
+    "destinationPause": {
+      "until": "已暂停至 {time}",
+      "reason": {
+        "limitReached": "该平台限制了此账号的发布。帖子将等待，并在暂停结束后发出。",
+        "accountRestricted": "该平台限制了此账号。帖子将等待，并在暂停结束后发出。",
+        "spamRisk": "该平台将此账号的活动标记为垃圾信息风险。帖子将等待，并在暂停结束后发出。"
+      }
+    },
+    "viaFacebook": "通过 Facebook",
+    "openProfile": "在 {network} 上打开 {name}",
+    "someNeedAttention": "部分主页或个人资料需重新连接后才能发布。",
+    "viewPosts": "查看",
+    "queue": {
+      "modeLabel": "发布时间",
+      "atTime": "选择时间",
+      "next": "加入队列",
+      "top": "优先发布",
+      "nextHint": "在每个页面下一个空闲时段发布。",
+      "topHint": "在最近的时段发布，队列中的帖子顺延一个时段。",
+      "noDestination": "选择一个页面以查看其发布时间。",
+      "noSchedule": "{names} 尚未设置发布时间。",
+      "setUpSlots": "设置发布时间"
+    },
+    "targetOwnTime": "为此渠道单独设置时间",
+    "targetTimeInvalid": "请选择从现在起 2 分钟到 1 年之间的时间。",
+    "targetMediaOwn": "为此渠道使用不同的文件",
+    "targetMediaNone": "无文件：此渠道将不带文件发布。",
+    "occurrencesUpcoming": "即将运行",
+    "occurrencesNoUpcoming": "没有即将运行的任务。",
+    "occurrenceSkip": "跳过",
+    "occurrenceRestore": "恢复",
+    "occurrenceSkipped": "已跳过该次运行。",
+    "occurrenceRestored": "已恢复该次运行。",
+    "occurrencesHistory": "显示过往运行",
+    "occurrencesHideHistory": "隐藏过往运行",
+    "occurrencesLoadFailed": "无法加载运行记录。",
+    "occurrencesNoHistory": "暂无运行记录。",
+    "occurrencesLoadMore": "加载更多",
+    "occurrenceOpen": "打开帖子",
+    "targetSetsUpdated": "分组已更新。",
+    "targetSetsMembers": "此分组中的页面",
+    "targetSetsNeedsMember": "请至少保留一个页面。",
+    "occurrenceOutcomes": {
+      "created": "已安排",
+      "excluded": "已跳过",
+      "missed": "已错过",
+      "skipped": "未创建"
+    }
+  },
+  "postCommentVariables": {
+    "group": "帖子评论",
+    "postLink": "帖子链接",
+    "postText": "帖子文本",
+    "postPublishedAt": "帖子发布时间",
+    "postPageName": "帖子主页名称",
+    "postId": "帖子 ID",
+    "commentText": "评论文本",
+    "commentId": "评论 ID"
   }
 }

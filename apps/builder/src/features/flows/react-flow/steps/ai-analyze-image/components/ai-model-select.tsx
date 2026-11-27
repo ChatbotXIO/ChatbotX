@@ -1,6 +1,7 @@
 import {
   claudeAnalyzeImageModelOptions,
   geminiAnalyzeImageModelOptions,
+  museAnalyzeImageModelOptions,
   openaiAnalyzeImageModelOptions,
   openrouterAnalyzeImageModelOptions,
 } from "@chatbotx.io/ai"
@@ -19,6 +20,7 @@ const analyzeModelOptions: Record<AIAnalyzeImageProvider, SelectOption[]> = {
   gemini: geminiAnalyzeImageModelOptions,
   claude: claudeAnalyzeImageModelOptions,
   openrouter: openrouterAnalyzeImageModelOptions,
+  muse: museAnalyzeImageModelOptions,
 }
 
 type AIModelSelectProps = SelectFieldProps<FieldValues> & {

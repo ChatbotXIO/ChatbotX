@@ -1,4 +1,5 @@
 import type { MetadataPayload } from "@chatbotx.io/flow-config"
+import type { SendFrom } from "@chatbotx.io/utils/send-from"
 import type { AuthValue, Oauth2AuthValue } from "./auth"
 import type { ConnectionProvider } from "./connection"
 import {
@@ -14,7 +15,13 @@ import type {
   BulkThreadControlAction,
   BulkThreadControlLimits,
   BulkThreadControlResult,
+  ChannelLiveBroadcast,
+  ChannelPostCommentPage,
   ChannelPostDetails,
+  ChannelPostListItem,
+  ChannelPostListPage,
+  ChannelPostLiveState,
+  ChannelPostMetricsItem,
   CommentAnchor,
   Context,
   HandleRequestProps,
@@ -52,7 +59,12 @@ const sleep = (ms: number): Promise<void> =>
 // Channel handler types
 // ---------------------------------------------------------------------------
 
-export type ChannelHandlerGroup = "message" | "conversation" | "contact" | "bot"
+export type ChannelHandlerGroup =
+  | "message"
+  | "conversation"
+  | "contact"
+  | "bot"
+  | "post"
 
 export type RichResponseContentAttributes = {
   executionId: string
@@ -66,6 +78,9 @@ export type RichResponseContentAttributes = {
         | { type: "actions"; actions: Record<string, unknown>[] }
         | { type: "text"; text: string }
         | { type: "unsupported"; reason: string }
+        | { type: "poll_open"; pollId: string }
+        | { type: "poll_vote"; pollId: string; candidateId: string }
+        | { type: "poll_list" }
     }
   >
 }
@@ -86,16 +101,29 @@ export type ChannelSendFlowStepProps<IAuth extends AuthValue> = {
     quickReplies?: MessageButtonTemplate[]
     metadata?: MetadataPayload
     richResponse?: RichResponseContentAttributes
-    sendFrom?: "inbox"
+    sendFrom?: SendFrom
     /**
      * See {@link CommentAnchor}. Honored by Messenger and Instagram; other
      * channels ignore it.
      */
     commentAnchor?: CommentAnchor
+    /**
+     * Thread headers (subject, message id, references) of the conversation's
+     * last inbound email, so a flow reply lands in the same thread. Read only
+     * by the SMTP channel; other channels ignore it.
+     */
+    emailThread?: Record<string, unknown>
   }
 }
 export type OutgoingSendResult = {
   messageIds: string[]
+  /** The SMTP headers sent with this result. Other channels omit it. */
+  email?: {
+    messageId: string
+    subject: string
+    inReplyTo?: string
+    references?: string[]
+  }
   /** Number of discrete channel messages accepted by the provider. */
   sentCount: number
 }
@@ -112,7 +140,7 @@ export type MessageHandlers<
         message: OutgoingMessage
         quickReplies?: MessageButtonTemplate[]
         metadata?: MetadataPayload
-        sendFrom?: "inbox"
+        sendFrom?: SendFrom
       }
     },
     OutgoingSendResult
@@ -141,9 +169,11 @@ export type MessageHandlers<
         quickReplies?: MessageButtonTemplate[]
         metadata?: MetadataPayload
         richResponse?: RichResponseContentAttributes
-        sendFrom?: "inbox"
+        sendFrom?: SendFrom
         /** See {@link ChannelSendFlowStepProps}. */
         commentAnchor?: CommentAnchor
+        /** See {@link ChannelSendFlowStepProps}. */
+        emailThread?: Record<string, unknown>
       }
     },
     OutgoingSendResult
@@ -178,7 +208,7 @@ export type CommentHandlers<IAuth extends AuthValue> = {
         contact: OutgoingContact
         message: OutgoingMessage
         metadata?: MetadataPayload
-        sendFrom?: "inbox"
+        sendFrom?: SendFrom
       }
     },
     OutgoingSendResult
@@ -193,7 +223,7 @@ export type CommentHandlers<IAuth extends AuthValue> = {
         contact: OutgoingContact
         message: OutgoingMessage
         metadata?: MetadataPayload
-        sendFrom?: "inbox"
+        sendFrom?: SendFrom
       }
     },
     OutgoingSendResult
@@ -503,6 +533,77 @@ export type BotHandlers<IAuth extends AuthValue> = {
   >
 }
 
+/**
+ * Reading a channel's own posts for the Posts menu. Separate from the contact
+ * handlers: it lists posts of the connected account (with their counts), while
+ * `contact.getPostDetails` describes one post a contact commented on.
+ */
+export type PostHandlers<IAuth extends AuthValue> = {
+  /** One page of the account's posts, newest first. */
+  listPosts: Handler<
+    {
+      ctx: Context<IAuth>
+      data: { cursor?: string; limit: number }
+    },
+    ChannelPostListPage
+  >
+  /**
+   * One post of the account by its external id, with the same fields the
+   * listing reports. Throws a `ChannelError`; only the `NOT_FOUND` category
+   * means the channel confirmed the post is gone. A channel whose "does not
+   * exist" answer also covers a missing permission (the Graph API's) never
+   * raises it, so a caller must not mark a post removed on any other failure.
+   */
+  getPost: Handler<
+    { ctx: Context<IAuth>; data: { postId: string } },
+    ChannelPostListItem
+  >
+  /**
+   * The counts of up to `CHANNEL_POST_METRICS_BATCH_MAX` posts in as few channel calls
+   * as the channel allows. A post the channel does not answer for (gone,
+   * hidden, a failed sub-read) is simply absent from the result: the caller
+   * leaves its stored counts alone and never marks it removed. A failure that
+   * affects the whole account (auth, rate limit, permission) is thrown as a
+   * `ChannelError`.
+   */
+  getPostsMetrics?: Handler<
+    { ctx: Context<IAuth>; data: { postIds: string[] } },
+    ChannelPostMetricsItem[]
+  >
+  /**
+   * Reads one broadcast by its own id, for a channel whose live-state webhook
+   * names only that id. `null` means nothing to record (scheduled, unpublished,
+   * or the read names no post).
+   */
+  readLiveBroadcast?: Handler<
+    { ctx: Context<IAuth>; data: { liveVideoId: string } },
+    ChannelLiveBroadcast | null
+  >
+  /**
+   * Whether the broadcast behind a post is on right now, for a channel that
+   * reports live broadcasts. Answers `unknown` when the read cannot tell (the
+   * caller then leaves the stored status alone); only an authoritative read may
+   * answer `ended`.
+   */
+  getLiveState?: Handler<
+    { ctx: Context<IAuth>; data: { postId: string } },
+    ChannelPostLiveState
+  >
+  /**
+   * One page of every comment and reply on a post, behind an opaque cursor
+   * (omit it for the first page). A channel returns a complete traversal: the
+   * caller pages until `nextCursor` is `null`. Errors are thrown, never
+   * swallowed, so the caller can tell a rate limit from a missing permission;
+   * a cursor the channel did not issue throws a `PAYLOAD_INVALID`
+   * `ChannelError`. A channel whose API cannot read a post's comments does not
+   * implement it.
+   */
+  listComments?: Handler<
+    { ctx: Context<IAuth>; data: { postId: string; cursor?: string } },
+    ChannelPostCommentPage
+  >
+}
+
 export type IChannel<
   IAuth extends AuthValue,
   TStep extends SendFlowStepData = SendFlowStepData,
@@ -512,6 +613,7 @@ export type IChannel<
   conversation?: Partial<ConversationHandlers<IAuth>>
   contact?: Partial<ContactHandlers<IAuth>>
   bot?: Partial<BotHandlers<IAuth>>
+  post?: Partial<PostHandlers<IAuth>>
 }
 
 // ---------------------------------------------------------------------------
@@ -577,6 +679,7 @@ export type IntegrationHandlerMap<T> =
         conversation: ConversationHandlers<IAuth>
         contact: ContactHandlers<IAuth>
         bot: BotHandlers<IAuth>
+        post: PostHandlers<IAuth>
       }
     : never
 
@@ -748,6 +851,13 @@ export class Integration<
     } catch (error) {
       if (error instanceof AuthException && this.props.refreshAuth) {
         ctx = await this.refreshAndPersist(ctx, { force: true })
+        // Without this line a token the provider rejected and the refresh that
+        // recovered it leave no trace, so operators cannot tell a self-healed
+        // channel from one that never failed.
+        sdkLogger.info(
+          { integration: this.name, reason: error.message },
+          "Access token rejected; refreshed it and retrying the call",
+        )
         return await handler({ ...(props as object), ctx })
       }
       throw error

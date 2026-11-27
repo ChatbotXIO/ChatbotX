@@ -6,7 +6,10 @@ import {
   isNoRedisEnv,
 } from "../../lib/connection"
 import { queueNames } from "../../lib/types"
-import type { IntegrationJobReceiveComment } from "../integration"
+import type {
+  IntegrationJobReceiveComment,
+  LowRoutedIntegrationJob,
+} from "../integration"
 
 /**
  * Workload-class queue for jobs that are individually *light* (short, I/O-bound)
@@ -17,15 +20,35 @@ import type { IntegrationJobReceiveComment } from "../integration"
  * enqueue work here whenever running it on a latency-sensitive domain worker
  * would starve customer-facing throughput during a burst. Current tenants are
  * the Coexist/Customer-Scan media backfill jobs (attachment mirroring, contact
- * avatar mirroring); future light-but-bulky jobs can join with their own action.
+ * avatar mirroring), and the bookkeeping ingress that `enqueueIntegrationJob`
+ * routes here (read receipts, delivery statuses, channel echoes); future
+ * light-but-bulky jobs can join with their own action.
  */
 export const LowJobAction = {
   coexistAttachmentDownload: "coexistAttachmentDownload",
   updateContactAvatar: "updateContactAvatar",
   replayMissedComment: "replayMissedComment",
+  syncChannelPosts: "syncChannelPosts",
+  refreshChannelPost: "refreshChannelPost",
+  refreshChannelPostMetrics: "refreshChannelPostMetrics",
+  reconnectPublishFanOut: "reconnectPublishFanOut",
+  refreshPublishDestinationAvatar: "refreshPublishDestinationAvatar",
+  recheckPublishDestinationScopes: "recheckPublishDestinationScopes",
+  // Routed here by `enqueueIntegrationJob`; same strings as IntegrationJobAction.
+  messageStatus: "messageStatus",
+  contactMarkAsRead: "contactMarkAsRead",
+  incomingMessageEcho: "incomingMessageEcho",
+  liveVideoStatusChange: "liveVideoStatusChange",
 } as const
 
 export type LowJobAction = (typeof LowJobAction)[keyof typeof LowJobAction]
+
+/**
+ * BullMQ priority for bulk producers on this queue (attachment mirroring,
+ * avatar mirroring, missed-comment replay). Jobs without a priority run first,
+ * so the unprioritized receipts/echoes always pass a backlog of these.
+ */
+export const LOW_BULK_PRIORITY = 10
 
 /**
  * Mirror a Coexist historical attachment's bytes to object storage and persist
@@ -82,10 +105,110 @@ export type LowJobReplayMissedComment = {
   }
 }
 
+/**
+ * One slice of a channel's post sync: reads up to a few pages of the inbox's
+ * posts and hands the rest to the next scanner tick.
+ */
+export type LowJobSyncChannelPosts = {
+  type: typeof LowJobAction.syncChannelPosts
+  data: { inboxId: string; workspaceId: string }
+}
+
+/** Re-reads one post from its channel: its counts, or that it is gone. */
+export type LowJobRefreshChannelPost = {
+  type: typeof LowJobAction.refreshChannelPost
+  data: {
+    channelPostId: string
+    /** Set when the refresh follows a publish from Posts: the composed post is told once the counts are read. */
+    publishedTarget?: { socialPostId: string; targetId: string }
+    workspaceId: string
+  }
+}
+
+/**
+ * Re-reads the counts of several posts of ONE inbox in a single channel call
+ * (at most 50 posts). Best effort: runs once, never retried.
+ */
+export type LowJobRefreshChannelPostMetrics = {
+  type: typeof LowJobAction.refreshChannelPostMetrics
+  data: {
+    channelPostIds: string[]
+    inboxId: string
+    workspaceId: string
+  }
+}
+
+/**
+ * The rest of a Facebook-login reconnect fan-out that did not fit the inline
+ * budget (100 pages / 20 s): refresh the other inbox integrations of the same
+ * person in the same workspace. Idempotent (a refreshed row is simply matched
+ * again) and guarded exactly like the inline run: same workspace, same app
+ * client id, same stored authorizer, connected inbox only, never creates one.
+ *
+ * `encryptedPages` is the JSON of an `EncryptedData` blob (AAD bound to the
+ * workspace and the Facebook user) holding the page ids and page tokens; no
+ * token ever sits in Redis in plaintext. jobId `reconnect-fan-out-<workspace>-<facebookUserId>-h<hop>`
+ * dedups a second reconnect while one is queued or running; a job that runs out
+ * of budget enqueues the next hop (never its own id), up to a bounded hop count.
+ */
+export type LowJobReconnectPublishFanOut = {
+  type: typeof LowJobAction.reconnectPublishFanOut
+  data: {
+    workspaceId: string
+    /**
+     * ISO time the reconnect began (its authorization generation): rows written
+     * after it are never overwritten with this job's older snapshot, and rows
+     * this job writes are stamped with it.
+     */
+    authorizedAt: string
+    clientId: string
+    facebookUserId: string
+    encryptedPages: string
+    /** Permissions the reconnect saw (same user, same app); null when unknown. */
+    grantedScopes: string[] | null
+    kinds: ("messenger" | "instagramFacebook")[]
+    /** The row the reconnect already refreshed; the job never touches it. */
+    selectedIntegrationId?: string
+    /** Continuation count: 0 for the first job, +1 per continuation, capped by the service. */
+    hop: number
+  }
+}
+
+/**
+ * Fetches and re-hosts the page or profile picture of one inbox publish
+ * destination (Facebook Page, Instagram, Threads). Carries ids only: the worker
+ * loads the token itself, so no credential sits in Redis. jobId
+ * `refresh-publish-destination-avatar-<destinationId>` dedups a connect, a
+ * reconnect and the list backfill that all ask for the same destination.
+ */
+export type LowJobRefreshPublishDestinationAvatar = {
+  type: typeof LowJobAction.refreshPublishDestinationAvatar
+  data: { workspaceId: string; publishDestinationId: string }
+}
+
+/**
+ * Re-reads the granted permissions of the inbox publish destinations a Posts
+ * Connect tab showed, from the platform (`debug_token` of the stored token),
+ * one destination after the other. Ids only (the worker loads the token). One
+ * job per request with a generated job id: the per-destination Redis claims
+ * (not the job id) keep overlapping requests from reading a destination twice.
+ */
+export type LowJobRecheckPublishDestinationScopes = {
+  type: typeof LowJobAction.recheckPublishDestinationScopes
+  data: { destinationIds: string[]; workspaceId: string }
+}
+
 export type LowJobData =
+  | LowJobRecheckPublishDestinationScopes
+  | LowJobReconnectPublishFanOut
+  | LowJobRefreshPublishDestinationAvatar
   | LowJobCoexistAttachmentDownload
+  | LowJobSyncChannelPosts
+  | LowJobRefreshChannelPost
+  | LowJobRefreshChannelPostMetrics
   | LowJobUpdateContactAvatar
   | LowJobReplayMissedComment
+  | LowRoutedIntegrationJob
 
 export const lowQueue = isNoRedisEnv()
   ? fakeQueue

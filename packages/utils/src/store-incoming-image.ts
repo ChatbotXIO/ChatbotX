@@ -34,6 +34,7 @@ export type IncomingImageUploader = {
       ContentLength: number
       ContentType: string
     },
+    abortSignal?: AbortSignal,
   ): Promise<unknown>
 }
 
@@ -134,6 +135,8 @@ type StoreIncomingImageInput = {
   mimeType: string
   profile: ImageOptimizeProfile
   acl?: "public-read"
+  /** Cancels the upload, e.g. when the caller's deadline passes. */
+  abortSignal?: AbortSignal
 }
 
 export async function storeIncomingImage(
@@ -232,6 +235,7 @@ async function write(
     uploader: IncomingImageUploader | undefined
     key: string
     acl?: "public-read"
+    abortSignal?: AbortSignal
   },
   bytes: Buffer,
   mimeType: string,
@@ -240,11 +244,16 @@ async function write(
     "optimized" | "skipped" | "width" | "height"
   >,
 ): Promise<StoredIncomingImage> {
-  await input.uploader?.putObject(input.key, bytes, {
-    ...(input.acl ? { ACL: input.acl } : {}),
-    ContentLength: bytes.length,
-    ContentType: mimeType,
-  })
+  await input.uploader?.putObject(
+    input.key,
+    bytes,
+    {
+      ...(input.acl ? { ACL: input.acl } : {}),
+      ContentLength: bytes.length,
+      ContentType: mimeType,
+    },
+    input.abortSignal,
+  )
   return {
     originPath: input.key,
     mimeType,

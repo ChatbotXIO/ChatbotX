@@ -33,7 +33,8 @@ export type CatalogProduct = {
   inventoryPolicy: string
   inventoryQuantity: number
   allowOutOfStockPurchase: boolean
-  isActive: boolean
+  /** Only `active` is sold; `draft` and `unlisted` go out as discontinued. */
+  status: string
   images: Array<{ url: string; type: "link" | "file" }>
   tags: string[]
   vendor: string | null
@@ -84,7 +85,7 @@ const AVAILABILITY_RULES: ReadonlyArray<{
   when: (product: CatalogProduct) => boolean
   value: Availability
 }> = [
-  { when: (product) => !product.isActive, value: "discontinued" },
+  { when: (product) => product.status !== "active", value: "discontinued" },
   {
     when: (product) => product.inventoryPolicy === "dont_track",
     value: "available for order",

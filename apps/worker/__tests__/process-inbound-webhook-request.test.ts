@@ -154,14 +154,22 @@ describe("running the actions", () => {
       },
     })
     expect(mocks.execute).toHaveBeenCalledTimes(2)
-    expect(mocks.execute).toHaveBeenNthCalledWith(1, {
-      action: { type: "addTag", tagIds: ["t1"] },
-      contactId: "c-1",
-      contactInboxId: "ci-1",
-      workspaceId: "ws-1",
-      source: { kind: "inboundWebhook", inboundWebhookId: "w-1" },
-      occurrenceKey: "inboundWebhook:r-1:0",
-    })
+    expect(mocks.execute).toHaveBeenNthCalledWith(
+      1,
+      {
+        action: { type: "addTag", tagIds: ["t1"] },
+        contactId: "c-1",
+        contactInboxId: "ci-1",
+        workspaceId: "ws-1",
+        source: { kind: "inboundWebhook", inboundWebhookId: "w-1" },
+        occurrenceKey: "inboundWebhook:r-1:0",
+      },
+      expect.any(Object),
+    )
+    // Every action of the request shares one memoized scope.
+    expect(mocks.execute.mock.calls[1]?.[1]).toBe(
+      mocks.execute.mock.calls[0]?.[1],
+    )
     expect(mocks.execute.mock.calls[1]?.[0].occurrenceKey).toBe(
       "inboundWebhook:r-1:1",
     )
@@ -389,6 +397,33 @@ describe("reclaiming", () => {
 
     expect(mocks.execute).toHaveBeenCalledTimes(1)
     expect(mocks.completeRequest).not.toHaveBeenCalled()
+  })
+})
+
+describe("a failing checkpoint after an action ran", () => {
+  test("is retried so a transient error does not replay the action", async () => {
+    mocks.checkpointRequest
+      .mockResolvedValueOnce(true) // the applied target
+      .mockRejectedValueOnce(new Error("db blip")) // first action's result
+      .mockResolvedValue(true)
+
+    await expect(run()).resolves.toBeUndefined()
+
+    // Each action ran exactly once: the first one's result was recorded on the retry.
+    expect(mocks.execute).toHaveBeenCalledTimes(2)
+    expect(completion()).toMatchObject({ status: "processed" })
+  })
+
+  test("still fails the attempt once the retries are spent", async () => {
+    mocks.checkpointRequest
+      .mockResolvedValueOnce(true)
+      .mockRejectedValue(new Error("db down"))
+
+    await expect(run(job(0, 2))).rejects.toThrow("db down")
+
+    // Three attempts at the first action's checkpoint, and no second action.
+    expect(mocks.checkpointRequest).toHaveBeenCalledTimes(4)
+    expect(mocks.execute).toHaveBeenCalledTimes(1)
   })
 })
 

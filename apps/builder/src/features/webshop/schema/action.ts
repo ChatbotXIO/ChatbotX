@@ -1,5 +1,6 @@
 import {
   orderShippingAddressSchema,
+  paymentMethods,
   shippingTypes,
 } from "@chatbotx.io/database/partials"
 import { zodBigintAsString } from "@chatbotx.io/utils"
@@ -18,12 +19,17 @@ export const changeCartRequest = shopRequest.extend({
 })
 
 export const checkoutRequest = shopRequest.extend({
+  paymentMethod: paymentMethods.optional(),
   customerName: z.string().trim().max(255).optional(),
   customerEmail: z.union([z.literal(""), z.email().max(255)]).optional(),
   customerPhone: z.string().trim().max(64).optional(),
   shippingType: shippingTypes.optional(),
   shippingAddress: orderShippingAddressSchema.optional(),
   note: z.string().trim().max(2000).optional(),
+})
+
+export const payOrderRequest = shopRequest.extend({
+  orderId: zodBigintAsString(),
 })
 
 export const rateOrderRequest = shopRequest.extend({

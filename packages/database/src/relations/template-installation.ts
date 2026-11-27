@@ -22,6 +22,10 @@ export const templateInstallationRelations = defineRelationsPart(
         from: r.templateInstallationModel.installedBy,
         to: r.userModel.id,
       }),
+      uninstallOperation: r.one.templateUninstallOperationModel({
+        from: r.templateInstallationModel.uninstallOperationId,
+        to: r.templateUninstallOperationModel.id,
+      }),
       installedResources: r.many.templateInstalledResourceModel({
         from: r.templateInstallationModel.id,
         to: r.templateInstalledResourceModel.installationId,

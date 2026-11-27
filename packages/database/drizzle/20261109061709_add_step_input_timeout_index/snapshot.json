@@ -1,0 +1,64 @@
+{
+  "type": "diff",
+  "version": "10",
+  "dialect": "postgres",
+  "id": "8a58d11f-ab83-4dc7-9495-5bdb15e41e28",
+  "prevIds": [
+    "f3fa5182-0f43-4d94-9bfd-7913975036af"
+  ],
+  "footprints": [
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "ContactOnSmartDelay",
+        "ContactOnSmartDelay_stepInputTimeout_active_key"
+      ],
+      "writes": [
+        "s|idx|public.ContactOnSmartDelay_stepInputTimeout_active_key",
+        "n|idx|public.ContactOnSmartDelay_stepInputTimeout_active_key",
+        "e|idx|public.ContactOnSmartDelay_stepInputTimeout_active_key",
+        "n|rel|public.ContactOnSmartDelay_stepInputTimeout_active_key"
+      ],
+      "reads": [
+        "n|tbl|public.ContactOnSmartDelay",
+        "n|sch|public",
+        "n|col|public.ContactOnSmartDelay.workspaceId",
+        "n|col|public.ContactOnSmartDelay.conversationId"
+      ]
+    }
+  ],
+  "deltas": [
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "ContactOnSmartDelay",
+        "name": "ContactOnSmartDelay_stepInputTimeout_active_key",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "workspaceId",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          },
+          {
+            "value": "conversationId",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": true,
+        "where": "\"status\" NOT IN ('completed', 'failed', 'canceled') AND \"type\" = 'stepInputTimeout'",
+        "with": "",
+        "method": "btree",
+        "entityType": "indexes"
+      }
+    }
+  ]
+}

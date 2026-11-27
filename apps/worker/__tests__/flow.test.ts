@@ -20,6 +20,7 @@ const detectConversationAndContactInbox = vi.fn()
 const detectFlowVersion = vi.fn()
 const findSendableBroadcast = vi.fn()
 const resetContactForResume = vi.fn()
+const applyWhatsappFlowResponseSideEffects = vi.fn(async () => undefined)
 
 const recordContactActivity = vi.fn(async (..._args: unknown[]) => true)
 
@@ -59,7 +60,18 @@ vi.mock("@chatbotx.io/database/client", () => ({
 
 // Any action carrying a button ID goes through the rich-response fallback
 // before the flow is consulted, so it has to resolve to "no rich response".
-const findRichResponseByButton = vi.fn(async () => null)
+const findRichResponseByButton = vi.fn(
+  async (..._args: unknown[]) => null as unknown,
+)
+const handlePollTap = vi.fn(async (..._args: unknown[]) => undefined)
+vi.mock("../src/integration/handlers/poll", async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import("../src/integration/handlers/poll")>()
+  return {
+    ...actual,
+    handlePollTap: (...args: unknown[]) => handlePollTap(...args),
+  }
+})
 vi.mock("@chatbotx.io/database/repositories", () => ({
   createMessageRepository: async () => ({ findRichResponseByButton }),
 }))
@@ -82,6 +94,11 @@ const clearQuickReplyPendingOnFlowEntry = vi.fn(
 const clearQuickReplyChallengeOnTap = vi.fn(
   async (..._args: unknown[]) => undefined,
 )
+vi.mock("../src/integration/handlers/whatsapp-flow-response", () => ({
+  applyWhatsappFlowResponseSideEffects: (...args: unknown[]) =>
+    applyWhatsappFlowResponseSideEffects(...args),
+}))
+
 vi.mock("../src/integration/handlers/quick-reply-settings", () => ({
   armQuickReplySettings: (...args: unknown[]) => armQuickReplySettings(...args),
   clearQuickReplyPendingOnFlowEntry: (...args: unknown[]) =>
@@ -886,6 +903,86 @@ describe("executeMultipleSteps — explicit status routing", () => {
     expect(secondOptions.jobId).toBe(firstOptions.jobId)
   })
 
+  test.each([
+    ["a live flow", undefined, undefined],
+    ["a broadcast run", { type: "broadcast" }, 5],
+    ["a sequence run", { type: "sequenceSchedule" }, 5],
+  ] as const)("queues the state continuation of %s with priority %s and keeps its jobId", async (_label, metadata, priority) => {
+    const stateId = "state-ok"
+    const step = makeStep("autoAssignConversation", [
+      { id: stateId, stateType: "success" },
+    ])
+    const flowVersion = makeFlowVersion(
+      [],
+      [
+        {
+          id: "e1",
+          source: "n1",
+          sourceHandle: stateId,
+          target: "success-node",
+          targetHandle: "input",
+        },
+      ],
+    )
+    const { flowStepHandlers } = await import(
+      "../src/integration/handlers/step"
+    )
+    mockSpy(flowStepHandlers, "autoAssignConversation").mockResolvedValue({
+      status: "success",
+      result: null,
+    })
+
+    await executeMultipleSteps({
+      ...makeBaseProps(flowVersion),
+      flowExecutionKey: "parent-job-1:123",
+      nodeVisits: { "node-1": 1 },
+      metadata,
+      steps: [step],
+    })
+
+    const [, , options] = integrationQueueAdd.mock.calls[0] as unknown as [
+      string,
+      unknown,
+      { jobId?: string; priority?: number },
+    ]
+    expect(options.priority).toBe(priority)
+    expect(options.jobId).toMatch(stateContinuationJobIdPattern)
+  })
+
+  test("queues a live continuation without a durable key with no priority", async () => {
+    const stateId = "state-ok"
+    const step = makeStep("autoAssignConversation", [
+      { id: stateId, stateType: "success" },
+    ])
+    const flowVersion = makeFlowVersion(
+      [],
+      [
+        {
+          id: "e1",
+          source: "n1",
+          sourceHandle: stateId,
+          target: "success-node",
+          targetHandle: "input",
+        },
+      ],
+    )
+    const { flowStepHandlers } = await import(
+      "../src/integration/handlers/step"
+    )
+    mockSpy(flowStepHandlers, "autoAssignConversation").mockResolvedValue({
+      status: "success",
+      result: null,
+    })
+
+    await executeMultipleSteps({ ...makeBaseProps(flowVersion), steps: [step] })
+
+    expect(integrationQueueAdd).toHaveBeenCalledWith(
+      "sendFlow",
+      expect.anything(),
+      {},
+    )
+  })
+
   test("error status routes to error-connected node, not success node", async () => {
     const successStateId = "state-ok"
     const errorStateId = "state-err"
@@ -1270,7 +1367,10 @@ describe("runStepsAndQuickReplies — message-driven flag continuation", () => {
 })
 
 describe("runStepsAndQuickReplies — button action vs. leftover edge", () => {
-  beforeEach(() => integrationQueueAdd.mockClear())
+  beforeEach(() => {
+    integrationQueueAdd.mockClear()
+    chatQueueAdd.mockClear()
+  })
 
   /** node-2 is wired to `btn-1`'s handle, as a since-changed config left it. */
   function makeFlowWithEdgeFromButton() {
@@ -1345,6 +1445,35 @@ describe("runStepsAndQuickReplies — button action vs. leftover edge", () => {
     )
 
     expect(integrationQueueAdd).not.toHaveBeenCalled()
+  })
+
+  test("a callPhoneNumber button replies with its number and does not fire the node a stale edge still points at", async () => {
+    await runStepsAndQuickReplies(
+      makeButtonProps({
+        id: "btn-1",
+        label: "Call us",
+        buttonType: "callPhoneNumber",
+        beforeStep: {
+          id: "before-1",
+          stepType: "callPhoneNumber",
+          phoneNumber: "+14155552671",
+        },
+        steps: [],
+      } as unknown as ButtonStepProps),
+    )
+
+    expect(integrationQueueAdd).not.toHaveBeenCalled()
+
+    // The tap on a channel that cannot dial replies with the number, once.
+    expect(chatQueueAdd).toHaveBeenCalledOnce()
+    const [, job] = chatQueueAdd.mock.calls[0] as unknown as [
+      string,
+      { data: { step: { stepType: string; text: string } } },
+    ]
+    expect(job.data.step).toMatchObject({
+      stepType: "sendText",
+      text: "+14155552671",
+    })
   })
 
   // --- preserved behavior: these buttons legitimately route by edge ---
@@ -1440,6 +1569,414 @@ describe("runStepsAndQuickReplies — button action vs. leftover edge", () => {
       { data: { nodeId: string } },
     ]
     expect(job.data.nodeId).toBe("node-2")
+  })
+})
+
+describe("runStepsAndQuickReplies — a step that branches and also continues (Get User Data)", () => {
+  const continueNode: FlowNode = {
+    id: "continue-node",
+    position: { x: 0, y: 0 },
+    measured: { width: 100, height: 100 },
+    data: { name: "Continue", isStartNode: false, details: { steps: [] } },
+  }
+  const states = [
+    { id: "state-ok", stateType: "success" },
+    { id: "state-skip", stateType: "skip" },
+  ] as BaseStepSchema["states"]
+
+  type QueuedSendFlow = {
+    nodeId?: string
+    startFromStepId?: string
+    branchedNodeId?: string
+    thenSendFlow?: QueuedSendFlow
+  }
+
+  function edge(sourceHandle: string, target: string): EdgeSchema {
+    return {
+      id: `e-${sourceHandle}`,
+      source: "node-1",
+      sourceHandle,
+      target,
+      targetHandle: "input",
+    }
+  }
+
+  async function runGetUserData(props: {
+    status: "success" | "skip" | "wait" | "retry" | "error"
+    edges: EdgeSchema[]
+    steps?: BaseStepSchema[]
+    thenSendFlow?: QueuedSendFlow
+  }) {
+    const { flowStepHandlers } = await import(
+      "../src/integration/handlers/step"
+    )
+    mockSpy(flowStepHandlers, "getUserData").mockResolvedValue({
+      status: props.status,
+      result: undefined,
+    })
+    const step = { ...makeStep("getUserData", states), id: "step-1" }
+    return await runStepsAndQuickReplies({
+      ...makeBaseProps(makeFlowVersion([continueNode], props.edges)),
+      details: { steps: props.steps ?? [step] },
+      triggerNextNode: true,
+      thenSendFlow: props.thenSendFlow,
+    })
+  }
+
+  const queuedJobs = (): QueuedSendFlow[] =>
+    integrationQueueAdd.mock.calls.map(
+      ([, job]) => (job as { data: QueuedSendFlow }).data,
+    )
+
+  /** Node ids in the order they will run: each job, then its continuation. */
+  const runOrder = (job: QueuedSendFlow | undefined): string[] =>
+    job ? [job.nodeId ?? "", ...runOrder(job.thenSendFlow)] : []
+
+  const targetNodes = () => queuedJobs().map((job) => job.nodeId)
+
+  beforeEach(() => integrationQueueAdd.mockClear())
+
+  test.each([
+    ["success", "state-ok", "success-node"],
+    ["skip", "state-skip", "skip-node"],
+  ] as const)("%s queues its branch, with the node's Continue to run after it", async (status, stateId, branchNode) => {
+    await runGetUserData({
+      status,
+      edges: [edge(stateId, branchNode), edge("node-1", "continue-node")],
+    })
+
+    // One job: the Continue is not raced against the branch.
+    expect(targetNodes()).toEqual([branchNode])
+    expect(runOrder(queuedJobs()[0])).toEqual([branchNode, "continue-node"])
+  })
+
+  test("a deferred branch keeps its dedup job id on a durable run", async () => {
+    const { flowStepHandlers } = await import(
+      "../src/integration/handlers/step"
+    )
+    mockSpy(flowStepHandlers, "getUserData").mockResolvedValue({
+      status: "skip",
+      result: undefined,
+    })
+
+    await runStepsAndQuickReplies({
+      ...makeBaseProps(
+        makeFlowVersion(
+          [continueNode],
+          [edge("state-skip", "skip-node"), edge("node-1", "continue-node")],
+        ),
+      ),
+      details: {
+        steps: [{ ...makeStep("getUserData", states), id: "step-1" }],
+      },
+      triggerNextNode: true,
+      flowExecutionKey: "parent-job-1:123",
+    })
+
+    const [, , options] = integrationQueueAdd.mock.calls[0] ?? []
+    expect((options as { jobId?: string } | undefined)?.jobId).toEqual(
+      expect.any(String),
+    )
+  })
+
+  test("a Skip with no branch connected still continues, as before", async () => {
+    await runGetUserData({
+      status: "skip",
+      edges: [edge("node-1", "continue-node")],
+    })
+
+    expect(targetNodes()).toEqual(["continue-node"])
+    expect(queuedJobs()[0]?.thenSendFlow).toBeUndefined()
+  })
+
+  test("a branch with nothing after it runs only the branch", async () => {
+    await runGetUserData({
+      status: "success",
+      edges: [edge("state-ok", "success-node")],
+    })
+
+    expect(targetNodes()).toEqual(["success-node"])
+    expect(queuedJobs()[0]?.thenSendFlow).toBeUndefined()
+  })
+
+  test("a later step of the node runs after the branch", async () => {
+    const step1 = { ...makeStep("getUserData", states), id: "step-1" }
+    const step2 = { ...makeStep("sendText"), id: "step-2" }
+
+    await runGetUserData({
+      status: "skip",
+      edges: [edge("state-skip", "skip-node")],
+      steps: [step1, step2],
+    })
+
+    const [branch] = queuedJobs()
+    expect(queuedJobs()).toHaveLength(1)
+    expect(branch?.nodeId).toBe("skip-node")
+    expect(branch?.thenSendFlow?.startFromStepId).toBe("step-2")
+  })
+
+  test.each([
+    "wait",
+    "retry",
+  ] as const)("%s (still waiting for the contact) continues nothing", async (status) => {
+    await runGetUserData({
+      status,
+      edges: [edge("node-1", "continue-node")],
+    })
+
+    expect(integrationQueueAdd).not.toHaveBeenCalled()
+  })
+
+  test("a branch and Continue wired to the same node send that node once", async () => {
+    await runGetUserData({
+      status: "success",
+      edges: [
+        edge("state-ok", "continue-node"),
+        edge("node-1", "continue-node"),
+      ],
+    })
+
+    expect(targetNodes()).toEqual(["continue-node"])
+    expect(queuedJobs()[0]?.thenSendFlow).toBeUndefined()
+  })
+
+  test("a branch and Continue to the same node send it once, even with a step between", async () => {
+    const step1 = { ...makeStep("getUserData", states), id: "step-1" }
+    const step2 = { ...makeStep("sendText"), id: "step-2" }
+
+    await runGetUserData({
+      status: "success",
+      edges: [
+        edge("state-ok", "continue-node"),
+        edge("node-1", "continue-node"),
+      ],
+      steps: [step1, step2],
+    })
+
+    // The branch carries the next step, which remembers the branch target.
+    const [branch] = queuedJobs()
+    expect(branch?.nodeId).toBe("continue-node")
+    expect(branch?.thenSendFlow).toMatchObject({
+      startFromStepId: "step-2",
+      branchedNodeId: "continue-node",
+    })
+
+    // That next step's run then reaches the Continue edge and skips the node.
+    integrationQueueAdd.mockClear()
+    const { flowStepHandlers } = await import(
+      "../src/integration/handlers/step"
+    )
+    mockSpy(flowStepHandlers, "sendText").mockResolvedValue({
+      status: "success",
+      result: null,
+    })
+    await runStepsAndQuickReplies({
+      ...makeBaseProps(
+        makeFlowVersion([continueNode], [edge("node-1", "continue-node")]),
+      ),
+      details: { steps: [step1, step2] },
+      startFromStepId: "step-2",
+      branchedNodeId: "continue-node",
+      triggerNextNode: true,
+    })
+    expect(integrationQueueAdd).not.toHaveBeenCalled()
+  })
+
+  test("an error result (challenge could not be restored) does not branch and continues", async () => {
+    await runGetUserData({
+      status: "error",
+      edges: [
+        edge("state-ok", "success-node"),
+        edge("node-1", "continue-node"),
+      ],
+    })
+
+    expect(targetNodes()).toEqual(["continue-node"])
+  })
+
+  test("other branching steps still stop at their branch (unchanged)", async () => {
+    const { flowStepHandlers } = await import(
+      "../src/integration/handlers/step"
+    )
+    mockSpy(flowStepHandlers, "autoAssignConversation").mockResolvedValue({
+      status: "success",
+      result: null,
+    })
+    const step = makeStep("autoAssignConversation", [
+      { id: "state-ok", stateType: "success" },
+    ] as BaseStepSchema["states"])
+
+    await runStepsAndQuickReplies({
+      ...makeBaseProps(
+        makeFlowVersion(
+          [continueNode],
+          [edge("state-ok", "success-node"), edge("node-1", "continue-node")],
+        ),
+      ),
+      details: { steps: [step] },
+      triggerNextNode: true,
+    })
+
+    expect(targetNodes()).toEqual(["success-node"])
+  })
+
+  describe("a run that carries a continuation (thenSendFlow)", () => {
+    const pending: QueuedSendFlow = { nodeId: "outer-continue" }
+
+    test("is enqueued once the node's run stops waiting for the contact", async () => {
+      await runGetUserData({
+        status: "wait",
+        edges: [edge("node-1", "continue-node")],
+        thenSendFlow: pending,
+      })
+
+      expect(targetNodes()).toEqual(["outer-continue"])
+    })
+
+    test("is enqueued when the node has nothing after it", async () => {
+      await runGetUserData({
+        status: "success",
+        edges: [],
+        thenSendFlow: pending,
+      })
+
+      expect(targetNodes()).toEqual(["outer-continue"])
+    })
+
+    test("rides on the node's own next node, so it runs after that node", async () => {
+      await runGetUserData({
+        status: "success",
+        edges: [edge("node-1", "continue-node")],
+        thenSendFlow: pending,
+      })
+
+      expect(queuedJobs()).toHaveLength(1)
+      expect(runOrder(queuedJobs()[0])).toEqual([
+        "continue-node",
+        "outer-continue",
+      ])
+    })
+
+    test("nests behind a Get User Data branch and its Continue", async () => {
+      await runGetUserData({
+        status: "skip",
+        edges: [
+          edge("state-skip", "skip-node"),
+          edge("node-1", "continue-node"),
+        ],
+        thenSendFlow: pending,
+      })
+
+      expect(queuedJobs()).toHaveLength(1)
+      expect(runOrder(queuedJobs()[0])).toEqual([
+        "skip-node",
+        "continue-node",
+        "outer-continue",
+      ])
+    })
+
+    test("rides on a branch that ends the node's run", async () => {
+      const { flowStepHandlers } = await import(
+        "../src/integration/handlers/step"
+      )
+      mockSpy(flowStepHandlers, "autoAssignConversation").mockResolvedValue({
+        status: "success",
+        result: null,
+      })
+      const step = makeStep("autoAssignConversation", [
+        { id: "state-ok", stateType: "success" },
+      ] as BaseStepSchema["states"])
+
+      await runStepsAndQuickReplies({
+        ...makeBaseProps(
+          makeFlowVersion([continueNode], [edge("state-ok", "success-node")]),
+        ),
+        details: { steps: [step] },
+        triggerNextNode: true,
+        thenSendFlow: pending,
+      })
+
+      expect(queuedJobs()).toHaveLength(1)
+      expect(runOrder(queuedJobs()[0])).toEqual([
+        "success-node",
+        "outer-continue",
+      ])
+    })
+
+    test("is forwarded to the node's next step instead of being run early", async () => {
+      const step1 = { ...makeStep("sendText"), id: "step-1" }
+      const step2 = { ...makeStep("sendText"), id: "step-2" }
+      const { flowStepHandlers } = await import(
+        "../src/integration/handlers/step"
+      )
+      mockSpy(flowStepHandlers, "sendText").mockResolvedValue({
+        status: "success",
+        result: null,
+      })
+
+      await runStepsAndQuickReplies({
+        ...makeBaseProps(makeFlowVersion([continueNode], [])),
+        details: { steps: [step1, step2] },
+        triggerNextNode: true,
+        thenSendFlow: pending,
+      })
+
+      const [next] = queuedJobs()
+      expect(queuedJobs()).toHaveLength(1)
+      expect(next?.startFromStepId).toBe("step-2")
+      expect(next?.thenSendFlow).toEqual(pending)
+    })
+
+    test("is released once when the node's start step no longer exists", async () => {
+      await runStepsAndQuickReplies({
+        ...makeBaseProps(makeFlowVersion([continueNode], [])),
+        details: { steps: [{ ...makeStep("sendText"), id: "step-1" }] },
+        startFromStepId: "deleted-step",
+        triggerNextNode: true,
+        thenSendFlow: pending,
+      })
+
+      expect(targetNodes()).toEqual(["outer-continue"])
+    })
+
+    test("is released once when the loop guard stops the node", async () => {
+      await runStepsAndQuickReplies({
+        ...makeBaseProps(makeFlowVersion([continueNode], [])),
+        details: { steps: [{ ...makeStep("sendText"), id: "step-1" }] },
+        nodeVisits: { "node-1": 99 },
+        triggerNextNode: true,
+        thenSendFlow: pending,
+      })
+
+      expect(targetNodes()).toEqual(["outer-continue"])
+    })
+
+    test("with triggerNextNode off, the branch carries only the pending continuation", async () => {
+      const { flowStepHandlers } = await import(
+        "../src/integration/handlers/step"
+      )
+      mockSpy(flowStepHandlers, "getUserData").mockResolvedValue({
+        status: "skip",
+        result: undefined,
+      })
+
+      await runStepsAndQuickReplies({
+        ...makeBaseProps(
+          makeFlowVersion(
+            [continueNode],
+            [edge("state-skip", "skip-node"), edge("node-1", "continue-node")],
+          ),
+        ),
+        details: {
+          steps: [{ ...makeStep("getUserData", states), id: "step-1" }],
+        },
+        triggerNextNode: false,
+        thenSendFlow: pending,
+      })
+
+      expect(queuedJobs()).toHaveLength(1)
+      expect(runOrder(queuedJobs()[0])).toEqual(["skip-node", "outer-continue"])
+    })
   })
 })
 
@@ -2927,6 +3464,46 @@ describe("runFlowNode — stop/resume guard", () => {
   })
 })
 
+describe("runFlowNode — a target removed from the flow", () => {
+  beforeEach(() => {
+    integrationQueueAdd.mockClear()
+    detectConversationAndContactInbox.mockReset().mockResolvedValue({
+      conversation: makeConversation(),
+      contactInbox: makeContactInbox(),
+    })
+    detectFlowVersion.mockReset().mockResolvedValue({
+      flowVersion: makeFlowVersion([]),
+      useLatestFlowVersion: true,
+    })
+  })
+
+  const jobData: IntegrationJobRunFlowNode["data"] = {
+    flowId: "flow-1",
+    conversationId: "conv-1",
+    contactInboxId: "ci-1",
+    nodeId: "deleted-node",
+  }
+
+  test("runs the pending continuation instead of failing", async () => {
+    await runFlowNode({
+      ...jobData,
+      thenSendFlow: { ...jobData, nodeId: "outer" },
+    })
+
+    const queued = integrationQueueAdd.mock.calls.map(
+      ([, job]) => (job as { data: { nodeId?: string } }).data.nodeId,
+    )
+    expect(queued).toEqual(["outer"])
+  })
+
+  test("still fails when there is no continuation to save", async () => {
+    await expect(runFlowNode(jobData)).rejects.toThrow(
+      "FlowVersion does not contain start node",
+    )
+    expect(integrationQueueAdd).not.toHaveBeenCalled()
+  })
+})
+
 describe("runStepsAndQuickReplies — quick reply settings", () => {
   beforeEach(() => {
     integrationQueueAdd.mockClear()
@@ -2997,5 +3574,196 @@ describe("runStepsAndQuickReplies — quick reply settings", () => {
     } finally {
       sendSpy.mockRestore()
     }
+  })
+})
+
+describe("WhatsApp Flow response postback", () => {
+  // Flow and button ids are 17-digit snowflakes; anything shorter does not decode.
+  const FLOW_ID = "11612473309626368"
+  const BUTTON_ID = "11612473309626369"
+  const flowResponse = { docs: [{ id: "111" }] }
+  const flowFiles = {
+    docs: [
+      {
+        mediaId: "111",
+        fileName: "Pass.pdf",
+        mimeType: "application/pdf",
+        size: 10,
+        url: "https://storage.example.com/111-pass.pdf",
+      },
+    ],
+  }
+
+  beforeEach(() => {
+    applyWhatsappFlowResponseSideEffects.mockClear()
+    detectConversationAndContactInbox.mockReset()
+    detectConversationAndContactInbox.mockResolvedValue({
+      conversation: makeConversation(),
+      contactInbox: { ...makeContactInbox(), channel: "whatsapp" },
+    })
+    const whatsappFlowStep = {
+      id: "step-wa",
+      stepType: "whatsappFlow",
+      text: "body",
+      buttons: [
+        {
+          id: BUTTON_ID,
+          label: "Go",
+          buttonType: null,
+          beforeStep: null,
+          steps: [],
+        },
+      ],
+      inboxId: null,
+      flow: {
+        id: "1",
+        sourceId: "wa-flow-1",
+        startScreenId: "SCREEN_1",
+        fieldMappings: [],
+      },
+    }
+    const node: FlowNode = {
+      id: "wa-node",
+      position: { x: 0, y: 0 },
+      measured: { width: 100, height: 100 },
+      data: {
+        name: "WA",
+        isStartNode: true,
+        details: { steps: [whatsappFlowStep] } as never,
+      },
+    }
+    detectFlowVersion.mockReset()
+    detectFlowVersion.mockResolvedValue({
+      flowVersion: makeFlowVersion([node]),
+      useLatestFlowVersion: true,
+    })
+  })
+
+  const run = (payload: Record<string, unknown>, messageId = "msg-1") =>
+    runFlowPostback({
+      conversationId: "conv-1",
+      contactInboxId: "ci-1",
+      action: encodeButtonPayload({ flowId: FLOW_ID, buttonId: BUTTON_ID }),
+      ref: null,
+      messageId,
+      payload,
+    } as never)
+
+  test("hands the stored files of the response to the step's side effects", async () => {
+    await run({ waFlowResponse: flowResponse, flowFiles })
+
+    expect(applyWhatsappFlowResponseSideEffects).toHaveBeenCalledWith(
+      expect.objectContaining({ flowResponse, flowFiles, messageId: "msg-1" }),
+    )
+  })
+
+  test("a response without files passes none", async () => {
+    await run({ waFlowResponse: flowResponse })
+
+    expect(applyWhatsappFlowResponseSideEffects).toHaveBeenCalledWith(
+      expect.objectContaining({ flowResponse, flowFiles: undefined }),
+    )
+  })
+})
+
+describe("poll button taps", () => {
+  const POLL_BUTTON_ID = "11612473309626371"
+
+  beforeEach(() => {
+    integrationQueueAdd.mockClear()
+    chatQueueAdd.mockClear()
+    vi.mocked(logger.warn).mockClear()
+    findRichResponseByButton.mockReset()
+    handlePollTap.mockClear()
+    detectFlowVersion.mockReset()
+    detectConversationAndContactInbox.mockReset()
+    detectConversationAndContactInbox.mockResolvedValue({
+      conversation: makeConversation(),
+      contactInbox: { ...makeContactInbox(), channel: "whatsapp" },
+    })
+  })
+
+  function pollAction() {
+    return encodeButtonPayload({ flowId: "0", buttonId: POLL_BUTTON_ID })
+  }
+
+  function tap() {
+    return runFlowPostback({
+      conversationId: "conv-1",
+      contactInboxId: "ci-1",
+      action: pollAction(),
+      messageId: "msg-1",
+      ref: null,
+    } as never)
+  }
+
+  test("a stored poll_vote payload is handed to handlePollTap, not to a flow", async () => {
+    findRichResponseByButton.mockResolvedValue({
+      executionId: "exec-1",
+      buttonPayloads: {
+        [POLL_BUTTON_ID]: {
+          executionId: "exec-1",
+          payload: { type: "poll_vote", pollId: "p1", candidateId: "c1" },
+        },
+      },
+    })
+
+    await tap()
+
+    expect(handlePollTap).toHaveBeenCalledTimes(1)
+    expect(handlePollTap.mock.calls[0]?.[0]).toMatchObject({
+      payload: { type: "poll_vote", pollId: "p1", candidateId: "c1" },
+    })
+    expect(detectFlowVersion).not.toHaveBeenCalled()
+  })
+
+  test("looks the payload up with the extended poll window, not the 7-day default", async () => {
+    findRichResponseByButton.mockResolvedValue(null)
+    const before = Date.now()
+
+    await tap()
+
+    const params = findRichResponseByButton.mock.calls[0]?.[0] as {
+      sinceTime?: Date
+    }
+    expect(params.sinceTime).toBeInstanceOf(Date)
+    const ageMs = before - (params.sinceTime as Date).getTime()
+    expect(ageMs).toBeGreaterThanOrEqual(89 * 24 * 60 * 60 * 1000)
+  })
+
+  test("a non-poll tap keeps the default lookback (no sinceTime)", async () => {
+    findRichResponseByButton.mockResolvedValue(null)
+    detectFlowVersion.mockRejectedValue(
+      new SdkException("flow", "notFound" as never),
+    )
+
+    await runFlowPostback({
+      conversationId: "conv-1",
+      contactInboxId: "ci-1",
+      action: encodeButtonPayload({
+        flowId: "123",
+        buttonId: "11612473309626372",
+      }),
+      messageId: "msg-1",
+      ref: null,
+    } as never).catch(() => undefined)
+
+    const params = findRichResponseByButton.mock.calls[0]?.[0] as {
+      sinceTime?: Date
+    }
+    expect(params.sinceTime).toBeUndefined()
+    expect(handlePollTap).not.toHaveBeenCalled()
+  })
+
+  test("an unresolved poll tap sends the Polls list instead of silently skipping", async () => {
+    findRichResponseByButton.mockResolvedValue(null)
+
+    await tap()
+
+    expect(handlePollTap).toHaveBeenCalledTimes(1)
+    expect(handlePollTap.mock.calls[0]?.[0]).toMatchObject({
+      payload: { type: "poll_list" },
+    })
+    expect(detectFlowVersion).not.toHaveBeenCalled()
   })
 })

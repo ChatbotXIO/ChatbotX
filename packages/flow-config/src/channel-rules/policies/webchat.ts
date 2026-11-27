@@ -1,3 +1,4 @@
+import { buttonTypes } from "../../steps/button"
 import { stepTypes } from "../../steps/step-action"
 import { defineChannelFlowPolicy } from "./define"
 // Webchat retains the 6,000-character platform message limit.
@@ -5,9 +6,11 @@ import { defineChannelFlowPolicy } from "./define"
 export const webchatFlowPolicy = defineChannelFlowPolicy({
   limits: {
     buttonCount: 3,
+    cardButtonCount: 3,
     buttonLabel: 20,
     text: 6000,
   },
+  nativeButtonTypes: [buttonTypes.enum.callPhoneNumber],
   supported: [
     stepTypes.enum.sendText,
     stepTypes.enum.sendImage,

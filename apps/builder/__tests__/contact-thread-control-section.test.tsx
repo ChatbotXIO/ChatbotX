@@ -28,6 +28,7 @@ const view = (
   overrides: Partial<ThreadControlView> = {},
 ): ThreadControlView => ({
   contactInboxId: "ci-1",
+  inboxId: "inbox-1",
   channel: "whatsapp",
   state: "standby",
   ownerRole: "ai_agent",
@@ -91,7 +92,7 @@ describe("ContactThreadControlSection", () => {
     expect(container.textContent).toContain("Meta AI")
     // Brand-neutral role label and the standby role box.
     expect(container.textContent).toContain("Your role")
-    expect(container.textContent).toContain("Standby — listening only")
+    expect(container.textContent).toContain("Standby listening only")
     expect(onError).not.toHaveBeenCalled()
   })
 

@@ -47,5 +47,5 @@ describe("hideComment (idempotent, unaffected by the fix)", () => {
 
     await expect(hideComment(auth, COMMENT_ID, true)).rejects.toThrow()
     expect(requestCount).toBeGreaterThan(1)
-  }, 10_000)
+  })
 })

@@ -12,11 +12,11 @@ import { Form } from "@chatbotx.io/ui/components/ui/form"
 import { useTranslations } from "next-intl"
 import { useForm } from "react-hook-form"
 import { PRICE_INPUT_PROPS } from "@/features/products/constants"
+import { useCountryOptions } from "@/hooks/use-country-options"
 import {
   type FieldRule,
   useInvalidFormToast,
 } from "@/lib/validation/use-request-resolver"
-import { useCountryOptions } from "../lib/use-country-options"
 import type { EcommerceSettingsPublicResource } from "../schema/public"
 import { SettingRow, SettingsSaveBar } from "./setting-row"
 import { useSettingsResolver } from "./use-settings-resolver"

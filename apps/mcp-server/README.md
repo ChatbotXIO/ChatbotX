@@ -8,14 +8,35 @@ Published skill/agent distribution docs live in the separate `chatbotx-agent` pa
 
 On startup the server fetches `{CHATBOTX_API_URL}/public-spec.json` and registers one MCP tool per API operation the spec marks `x-mcp.visibility: "default"`. `CHATBOTX_API_URL` is the origin **including** the `/api` path prefix (e.g. `https://app.chatbotx.io/api`). Adding a new default-visible API endpoint in ChatbotX automatically makes it available as a tool — the spec is re-fetched in the background whenever it's older than `CHATBOTX_SPEC_TTL_MS` (default 5 minutes), so a new/changed operation shows up on the next `tools/list` call without a server restart.
 
+
+## OAuth 2.1
+
+Remote MCP clients should authenticate through OAuth 2.1. The production endpoints are
+`https://app.chatbotx.io/mcp/messages` for Streamable HTTP and
+`https://app.chatbotx.io/mcp/sse` for legacy SSE — the same URL for every account, so it
+works for any MCP client. ChatGPT and Codex use the separate OpenAI profile
+at `https://app.chatbotx.io/mcp/openai` (see [OpenAI profile](#openai-profile)); the Claude
+directory connector and plugin use the Claude profile at `https://app.chatbotx.io/mcp/claude`
+(see [Claude profile](#claude-profile)). The user picks the target workspace on
+the consent screen, and every token the client holds acts on that workspace; to switch,
+disconnect and connect again. Only workspace owners and `superAdmin` members can authorize.
+An explicit `?workspace_id=<id>` (or `x-workspace-id` header) may select a
+workspace only for legacy connections that predate the picker. A different
+workspace than the one consented for a new connection is rejected; disconnect
+and connect again to switch.
+The builder settings block **Settings → Integrations → MCP connector** provides the exact
+connection URL and lets each user revoke their OAuth grants.
+
+Legacy workspace tokens remain supported for stdio and existing connections.
 ### Default tools vs. the full API
 
-ChatbotX's public API has ~350 operations. Listing all of them as MCP tools overwhelms an agent's context and its ability to pick the right one, so `tools/list` returns only a curated default set (see below) plus two meta-tools:
+ChatbotX's public API has ~350 operations. Listing all of them as MCP tools overwhelms an agent's context and its ability to pick the right one, so `tools/list` returns only a curated default set (see below) plus three meta-tools:
 
 | Tool | Description |
 |---|---|
 | `search_tools` | Search the full API for a tool not in the default set. Returns `{ matches, hint? }`, where each match has its name, description, and input schema. |
 | `call_tool` | Execute any tool by name, including ones `search_tools` found but `tools/list` doesn't show. |
+| `get_guide` | Read an operational safety guide when a workflow involves approvals, flows, inbox handover, contacts, or pipelines. |
 
 Use `search_tools` when the task needs something outside the default set (e.g. deleting a resource, managing AI agents, coupons, products) — then invoke it with `call_tool`.
 
@@ -25,6 +46,14 @@ Use `search_tools` when the task needs something outside the default set (e.g. d
 - **Unknown-tool suggestions**: an unrecognized `name` returns the closest matching tool names instead of a bare error, so a model can self-correct without another `search_tools` round trip.
 - **Pre-flight argument check**: a `call_tool` invocation missing a field the selected tool's `inputSchema` marks `required` is rejected immediately with the missing field names, instead of waiting for the real API's 422. A common wrapper mistake (nesting every field under `body`/`params`/`input` instead of passing them at the top level) is called out explicitly.
 - **Contact identifier auto-prefix**: a bare email, `+`-prefixed or local `0`-prefixed phone number, or numeric id passed as `identifier` to a contact tool is automatically prefixed (`email:`/`phone:`/`id:`) before the request is sent, matching what the API actually requires.
+
+### Human approval
+
+Every operation carries an `x-mcp.hitlPolicy` from the public OpenAPI spec; reads use `none`. Mutating operations return `CONFIRMATION_REQUIRED` with the policy, proposed arguments, and current state when available; show that response to the user, then repeat the same call with `_confirm: true` only after explicit approval. `_confirm` is a compatibility guardrail, not an authorization boundary.
+
+Writes that are read-only computations declare `hitlPolicy: "none"` in the backend. Destructive writes also carry the MCP `destructiveHint` annotation. When a current-state read fails for any reason, `currentState` is omitted and `currentStateUnavailable` explains why; the failed read never blocks confirmation.
+
+Every `tools/list` definition also includes a human-readable `title` and explicit `readOnlyHint`, `destructiveHint`, `idempotentHint`, and `openWorldHint` annotations. Dynamic tool titles come from the OpenAPI operation summary. The loader marks `confirm_outbound` operations as open-world by default; an `x-mcp.openWorldHint` override takes precedence.
 
 ### Scope-based filtering
 
@@ -45,7 +74,7 @@ Use `search_tools` when the task needs something outside the default set (e.g. d
 
 ## Available tools
 
-Tool names are derived from the OpenAPI `operationId` converted to `snake_case` (e.g. `tags.list` → `tags_list`). The current default set has 48 tools:
+Tool names are derived from the OpenAPI `operationId` converted to `snake_case` (e.g. `tags.list` → `tags_list`). The current default set has 53 tools:
 
 ### Capabilities
 
@@ -74,6 +103,7 @@ Tool names are derived from the OpenAPI `operationId` converted to `snake_case` 
 | `analytics_flow_stats` | Get flow analytics |
 | `analytics_broadcast_stats` | Get broadcast stats |
 | `analytics_sequence_step_stats` | Get sequence step stats |
+| `post_analytics_summary` | Get post analytics summary |
 
 ### Broadcasts
 
@@ -154,6 +184,15 @@ For `connections_create` with `provider: "api"`, the response includes a one-tim
 | `mini_apps_list` | List Mini Apps |
 | `mini_apps_create` | Create Mini App |
 
+### Pipelines
+
+| Tool | Description |
+|---|---|
+| `pipelines_list` | List pipelines |
+| `pipelines_list_items` | List pipeline items |
+| `pipelines_create_item` | Create pipeline item |
+| `pipelines_move_item` | Move or reorder item |
+
 ### Sequences
 
 | Tool | Description |
@@ -162,16 +201,115 @@ For `connections_create` with `provider: "api"`, the response includes a one-tim
 | `sequences_get` | Get sequence |
 | `sequences_update` | Update sequence name or active state |
 
-Everything else — deletes, less-common resources (coupons, products, webhooks, saved replies, tags/triggers/inboxes/custom-fields management, workspace members, etc.), connection lifecycle management beyond the initial connect (disconnect, reconnect, refresh, verify, rename), and channel-token-only or deprecated operations — is reachable via `search_tools` → `call_tool`, not `tools/list`.
+Everything else — deletes, less-common resources (coupons, products, webhooks, saved replies, tags/triggers/inboxes/custom-fields management, workspace members, etc.), connection lifecycle management beyond the initial connect (disconnect, reconnect, refresh, verify, rename) — is reachable via `search_tools` → `call_tool`, not `tools/list`.
+
+Operations whose `security` names no workspace-token scheme are not tools at all — `isWorkspaceTokenOperation` (`src/openapi-loader.ts`) drops them, so neither `tools/list` nor `search_tools` returns them. That covers deprecated operations, channel-token operations (`/v1/channels/api/*`), and the mobile-app-only member surface (`/v1/me*`, `/v1/realtime/connect-token`, marked by `MOBILE_APP_TOKEN_ONLY_PATHS` in `apps/builder/src/lib/orpc/public-spec.ts`): an MCP OAuth or workspace token has no member identity and would always get 401.
+
+`conversations_list` accepts `view: "compact"` to drop ad attribution and thread-control metadata from each conversation's contact inboxes (default `full`); `flows_list` accepts `enableInInbox: true` to return only flows that can be started from the inbox.
+
+## OpenAI profile
+
+A second, fixed profile serves OpenAI clients (ChatGPT, Codex) from the same process.
+
+| | Default profile | OpenAI profile |
+| --- | --- | --- |
+| Route below the base path | `/messages` | `/openai` |
+| Public path | `/mcp/messages` | `/mcp/openai` |
+| OAuth resource and audience | `<origin>/mcp` | `<origin>/mcp/openai` |
+| Tools | Scope-filtered default set plus `search_tools`, `call_tool`, `get_guide` | 36 API tools plus `get_guide` (37), filtered by the token's permission and scopes like the default profile |
+
+The OpenAI tool list is built at runtime from the live public spec (the same cache the default profile uses). The reviewed part is `src/profiles/openai-contract.ts`: which operations are served, description and annotation overrides, removed properties, and which approval policies keep the `_confirm` round trip. A contract operation missing from the spec is skipped and logged, not fatal. The builder test `public-spec-mcp.test.ts` checks the contract against the live spec.
+
+OpenAI stores the scanned tool definitions and re-reviews changes; while a changed definition is held, ChatGPT keeps calling with the previously approved one. Keep these operations backward compatible (no removed or newly required input fields) until the update is live.
+
+For OpenAI Plugin directory submission, configure the exact challenge value from
+the OpenAI portal as the builder's `OPENAI_APPS_DOMAIN_CHALLENGE`. The builder
+then serves it as uncached plain text at
+`https://app.chatbotx.io/.well-known/openai-apps-challenge`; do not place the
+value in this service's environment or commit it. The token is served on the
+platform host only; a white-label domain gets 404.
+
+Rules enforced on this profile only:
+
+- OAuth bearer tokens only. No environment-key fallback, no API keys, no query or alternate-header tokens. The token audience must be `/mcp/openai`. Failures return 401 (or 503 when verification is unavailable).
+- Sessions bind to the verified issuer, subject, client id and workspace. A different identity or workspace gets 403; session ids never cross profiles.
+- Requests with an `Origin` outside `CHATBOTX_MCP_ALLOWED_ORIGINS` (plus the public URL origin) get 403. GET (SSE), POST, DELETE and OPTIONS are supported.
+- Approval: ChatGPT already asks the user before any tool without `readOnlyHint`, so only `confirm_outbound` (`contacts_send_message`) and `confirm_destructive` (`broadcasts_stop`) keep the `_confirm` round trip; ordinary updates run on the first call and have no `_confirm` argument (a stray one is ignored). `CONFIRMATION_REQUIRED` is returned as a normal result, not an error.
+- Arguments are validated against the reviewed schema before confirmation or execution. Free-form objects and unknown properties are rejected. `contacts_create` never accepts `gender`; the adapter sends `unknown`.
+- Every response, confirmation preview and error is projected through the reviewed response schema; a free-form body is withheld and reported as `{ "ok": true }`. Raw upstream errors are replaced with fixed, brand-neutral messages. `token_get` never returns `principal` (transport-only, on the Claude profile too).
+- Deferred to v2: flow authoring and sending, `sequences_update`, sequence subscription.
+
+## Claude profile
+
+A third fixed profile is the surface submitted to Anthropic's connector and plugin directory.
+
+| | Default profile | Claude profile |
+| --- | --- | --- |
+| Route below the base path | `/messages` | `/claude` |
+| Public path | `/mcp/messages` | `/mcp/claude` |
+| OAuth resource and audience | `<origin>/mcp` | `<origin>/mcp/claude` |
+| Tools | Scope-filtered default set plus `search_tools`, `call_tool`, `get_guide` | 50 API tools (33 read, 17 write) plus `get_guide`, scope-filtered |
+
+The tool list is `src/profiles/claude-contract.ts`. Unlike the OpenAI profile, tools are served from the live OpenAPI spec and executed exactly like the default profile (same argument handling, `_confirm` approval step and API error details); only the allow-list is fixed. The builder test `public-spec-mcp.test.ts` fails when a profile tool stops being default-visible, and when a new default-visible operation is neither added to the profile nor listed in `CLAUDE_EXCLUDED_TOOLS`.
+
+Directory rules this profile enforces (https://claude.com/docs/connectors/building/review-criteria):
+
+- No catch-all tool: no `search_tools` or `call_tool`, so every operation is its own tool and reads and writes are separate. An operation outside the allow-list is `Unknown tool`, even with a valid token.
+- Every tool has a `title`. A read is `readOnlyHint: true`; anything that changes data is `destructiveHint: true`, whatever the route metadata says, so Claude asks the user before each write.
+- Descriptions never name an operation outside the profile, and the guides name only profile tools.
+- OAuth bearer tokens only, with audience `/mcp/claude`; the transport rules match the OpenAI profile. Origins come from `CHATBOTX_MCP_CLAUDE_ALLOWED_ORIGINS`; Claude's hosted apps and Claude Code connect server-side without one.
+- Left out: connecting channels (`connection_providers_list`, `connections_create`, `connect_sessions_get`), which is done in the app.
+
+## White-label
+
+One MCP server serves every white-label tenant, so nothing a client or model sees names the platform: the server name defaults to `mcp`, instructions, guides and errors use neutral wording, and guide resources use `guides://<name>` URIs. `__tests__/white-label-surface.test.ts` and `claude-profile.test.ts` fail on any `chatbotx` text in that surface.
+
+The MCP endpoint and its OAuth sign-in currently live on the platform host only (`MCP_PUBLIC_URL`, `BETTER_AUTH_URL`). On a white-label domain the builder's **Settings → Integrations → MCP connector** page shows an "not available on this domain" notice instead of connect URLs, and keeps the grants list so existing authorizations can be revoked. Serving MCP per custom domain needs a per-host OAuth issuer and resource; that is tracked as a separate change.
 
 ## Prerequisites
 
 - Node.js >= 24
-- A ChatbotX workspace token (`Settings → Developer → API Keys`)
+- A workspace token only for the stdio and workspace-token connection options.
 
 ## Quick start
 
-### Option A — stdio (recommended for local use)
+### Option A — OAuth (recommended, remote)
+
+Use the builder-hosted MCP endpoint. The client opens a browser for sign-in and consent;
+no workspace token belongs in the client configuration.
+
+**Claude Code:**
+```bash
+claude mcp add mcp -t http -s user \
+  "https://app.chatbotx.io/mcp/messages"
+```
+
+**Claude Desktop / Cursor:**
+```json
+{
+  "mcpServers": {
+    "mcp": {
+      "type": "http",
+      "url": "https://app.chatbotx.io/mcp/messages"
+    }
+  }
+}
+```
+
+**ChatGPT / Codex:** add `https://app.chatbotx.io/mcp/openai`
+as a custom connector. ChatGPT completes OAuth in the browser.
+
+**OpenClaw:** `openclaw plugins install clawhub:@chatbotx/chatbotx`, then
+`openclaw mcp login chatbotx`. The plugin (built in `ChatbotXIO/chatbotx-agent`) registers
+`/mcp/messages` with `auth: "oauth"` and signs in through dynamic client registration. For a
+hand-written `mcp.servers` entry, set `"transport": "streamable-http"` and `"auth": "oauth"`;
+without `auth`, OpenClaw sends no token and the server answers 401.
+
+The load balancer must forward `/mcp/*` to the MCP server **without stripping the
+`/mcp` prefix**, and the server runs with `CHATBOTX_MCP_BASE_PATH=/mcp`. The builder
+serves protected-resource discovery under `/.well-known/oauth-protected-resource/mcp/*`.
+
+### Option B — stdio (workspace token, local use)
 
 Claude spawns the server process on demand. No server needs to be running. The workspace token is supplied via `CHATBOTX_API_KEY`.
 
@@ -206,7 +344,7 @@ claude mcp add chatbotx \
 
 Running from a local checkout instead (e.g. `node /path/to/dist/index.mjs`) works the same way — swap `command`/`args` accordingly.
 
-### Option B — SSE (for shared / remote access)
+### Option C — SSE (workspace token, shared / remote access)
 
 Run the server once and multiple clients connect via URL. Pass the workspace token in the request header.
 
@@ -237,27 +375,27 @@ claude mcp add chatbotx \
 }
 ```
 
-### Option C — ChatGPT.com (remote SSE)
-
-ChatGPT.com connects via SSE. The server must be publicly reachable. Because ChatGPT does not support custom request headers, pass the workspace token directly in the URL:
-
-1. Start the server with `CHATBOTX_MCP_TRANSPORT=sse` (or `both`).
-2. In ChatGPT Settings → Connectors → Add custom connector, set the URL:
-   ```
-   https://your-mcp-server.com/sse?workspace_token=<your-token>
-   ```
-   When using this URL in a shell command, always quote it to prevent `?` being interpreted as a glob:
-   ```bash
-   claude mcp add chatbotx -t sse -s user "https://your-mcp-server.com/sse?workspace_token=<your-token>"
-   ```
-3. Set `CHATBOTX_MCP_SERVER_INSTRUCTIONS` so ChatGPT uses tools instead of its training data (see `.env.example` for the recommended value).
-
 ## Token resolution order
 
 | Transport | Priority |
 |-----------|----------|
-| SSE / Streamable HTTP | `?workspace_token=` or `?token=` query param → `x-workspace-token` / `x-chatbo-token` header → `CHATBOTX_API_KEY` env |
+| SSE / Streamable HTTP | `Authorization: Bearer` (OAuth access token or workspace token) → `?workspace_token=` or `?token=` query param (deprecated; off when `CHATBOTX_MCP_ALLOW_QUERY_TOKEN=false`) → `x-workspace-token` / `x-chatbo-token` header → `CHATBOTX_API_KEY` env |
 | stdio | `CHATBOTX_API_KEY` env |
+
+Tokens in a URL end up in proxy and access logs, so send them as `Authorization: Bearer`. The server logs a warning (never the token) each time one arrives in the query.
+
+With OAuth enabled, the default profile (`/sse`, `/messages`):
+- answers `503` while token introspection is unavailable, instead of admitting the request;
+- binds each session to the identity that opened it (the OAuth user and client, or the workspace token). A request from another identity on that session gets `403`; a refreshed access token for the same user keeps the session.
+
+## Rate limits
+
+Every MCP route (`/sse`, `/messages`, `/openai`, `/claude`) is guarded in each process. OAuth metadata and `OPTIONS` preflights are not limited.
+
+- **Requests per credential:** `CHATBOTX_MCP_RATE_LIMIT_PER_MINUTE` per token (hashed, never stored raw). A request without a token is not counted: it gets a cheap `401`, and keying it by IP would put every client behind one proxy, or behind Claude's and ChatGPT's shared egress, into one bucket.
+- **Rejected credentials per client IP:** after `CHATBOTX_MCP_AUTH_FAILURE_LIMIT_PER_MINUTE` rejected tokens, an IP is refused for the rest of the minute without further token introspection. An expired JWT is not counted: it is the normal refresh path and is rejected without calling the API. **Off by default.** Enable it only after setting `CHATBOTX_MCP_TRUSTED_PROXY_HOPS` to the number of proxies that append to `X-Forwarded-For` in front of the server; the client IP is read that many entries from the right, and `0` uses the socket address. A wrong value lets a client forge its IP, either to dodge the limit or to lock out a shared egress IP.
+
+Both answer `429` with a `Retry-After` header. While token introspection is unavailable, authenticated routes answer `503` with `Retry-After: 2`; that result is cached for 2 seconds only.
 
 ## Configuration
 
@@ -269,19 +407,28 @@ cp .env.example .env
 
 | Variable | Description | Default | Required |
 |---|---|---|---|
-| `CHATBOTX_API_KEY` | Workspace token (stdio) | — | Yes (stdio) |
-| `CHATBOTX_API_URL` | ChatbotX API origin, including `/api` (e.g. `https://app.chatbotx.io/api`) | `https://app.chatbotx.io` | Yes |
+| `CHATBOTX_API_KEY` | Workspace token for stdio only; leave empty on shared HTTP deployments | — | Yes (stdio) |
+| `CHATBOTX_API_URL` | ChatbotX API origin, including `/api` (e.g. `https://app.chatbotx.io/api`) | `https://app.chatbotx.io/api` | Yes |
 | `CHATBOTX_ALLOW_SELF_SIGNED_CERT` | Disable TLS verification (`true`/`false`) | — | No |
 | `CHATBOTX_SPEC_TTL_MS` | How long the fetched OpenAPI spec/tool list and a token's introspected scopes are trusted before a background re-fetch | `300000` | No |
 | `CHATBOTX_HTTP_TIMEOUT_MS` | Maximum duration for each OpenAPI, token introspection, or tool-call HTTP request | `30000` | No |
 | `CHATBOTX_MCP_TRANSPORT` | `stdio` \| `sse` \| `both` | `both` | No |
 | `CHATBOTX_MCP_HOST` | SSE server host | `0.0.0.0` | No |
 | `CHATBOTX_MCP_PORT` | SSE server port | `3333` | No |
-| `CHATBOTX_MCP_SSE_PATH` | SSE endpoint path | `/sse` | No |
-| `CHATBOTX_MCP_MESSAGES_PATH` | JSON-RPC messages path | `/messages` | No |
+| `CHATBOTX_MCP_BASE_PATH` | Prefix of every route (`<base>/messages`, `<base>/sse`, `<base>/openai`, `<base>/claude`). Empty when the proxy strips `/mcp`; `/mcp` when it forwards `/mcp/*` unchanged. Replaces `CHATBOTX_MCP_MESSAGES_PATH` and `CHATBOTX_MCP_SSE_PATH`; the server refuses to start while either is still set. | `""` | No (production: `/mcp`) |
 | `CHATBOTX_MCP_CORS_ORIGIN` | CORS origin allowed to call the SSE/HTTP endpoints | `*` | No |
-| `CHATBOTX_MCP_SERVER_NAME` | Display name sent to AI clients | package name | No |
+| `CHATBOTX_MCP_SERVER_NAME` | Display name sent to AI clients | `mcp` (brand-neutral for white-label) | No |
 | `CHATBOTX_MCP_SERVER_INSTRUCTIONS` | Instructions sent to AI clients on connect (helps ChatGPT know when to call tools) | built-in default | No |
+| `CHATBOTX_MCP_ALLOWED_ORIGINS` | Comma-separated Origins allowed on the OpenAI endpoint. | `https://chatgpt.com,https://chat.openai.com` |
+| `CHATBOTX_MCP_CLAUDE_ALLOWED_ORIGINS` | Comma-separated Origins allowed on the Claude endpoint. | `https://claude.ai,https://claude.com` |
+| `CHATBOTX_MCP_SESSION_IDLE_TTL_MS` | Idle time after which an HTTP session is closed and evicted (all transports). | `1800000` |
+| `CHATBOTX_MCP_RATE_LIMIT_PER_MINUTE` | Requests per minute per credential on every MCP route; `0` disables. See [Rate limits](#rate-limits). | `600` | No |
+| `CHATBOTX_MCP_AUTH_FAILURE_LIMIT_PER_MINUTE` | Rejected credentials per minute per client IP before that IP is refused; `0` disables. Needs `CHATBOTX_MCP_TRUSTED_PROXY_HOPS`. | `0` | No |
+| `CHATBOTX_MCP_TRUSTED_PROXY_HOPS` | Proxies in front of the server that append to `X-Forwarded-For`; the client IP is read that many entries from the right. `0` uses the socket address. | `0` | No |
+| `CHATBOTX_MCP_ALLOW_QUERY_TOKEN` | Accept `?workspace_token=` / `?token=` on the default profile (deprecated). Set `false` to accept header tokens only. | `true` | No |
+| `CHATBOTX_MCP_OAUTH_ENABLED` | Enable OAuth 2.1 protected-resource metadata and bearer challenges | `true` | No |
+| `CHATBOTX_MCP_OAUTH_ISSUER` | Authorization server issuer URL | derived from `CHATBOTX_API_URL` | No |
+| `CHATBOTX_MCP_PUBLIC_URL` | Canonical public origin; required in production so metadata advertises the TLS endpoint | derived from request headers | Yes (production) |
 
 ## Scripts
 
@@ -357,19 +504,18 @@ Evaluation output is written under `evals/out/` (gitignored) unless `--out` poin
 src/
 ├── index.ts                # Entry point — loads spec, starts transport(s)
 ├── env.ts                  # Environment variable schema
+├── guides/                 # Packaged markdown operational guides
 ├── http.ts                 # Timed fetch helper for OpenAPI, token, and tool requests
 ├── openapi-loader.ts       # Fetches OpenAPI spec → DynamicTool list, x-mcp
-│                           # visibility/scope parsing, scope-filtered getVisibleTools()
+│                           # visibility/scope/HITL parsing, scope-filtered getVisibleTools()
 ├── token-introspection.ts  # GET /v1/token → cached {permission, scopes} per token
 ├── test-tools.ts           # Dev utility — prints loaded tools
 └── server/
-    ├── create-mcp-server.ts   # MCP server factory, tools/list + tools/call handlers
-    ├── meta-tools.ts          # search_tools / call_tool definitions, name resolution,
-    │                          # unknown-tool suggestions, pre-flight argument checks
-    ├── execute-tool.ts        # Shared HTTP dispatch for a DynamicTool call + argument
-    │                          # normalization (contact identifier auto-prefix)
-    ├── search/                # search_tools ranking: normalization and
-    │                          # IDF-weighted scoring
+    ├── create-mcp-server.ts   # MCP server factory, resources, tools/list + tools/call
+    ├── hitl-gate.ts           # Two-step confirmation gate for mutations
+    ├── meta-tools.ts          # search_tools / call_tool / get_guide definitions
+    ├── execute-tool.ts        # Shared HTTP dispatch, confirmation, argument normalization
+    ├── search/                # search_tools ranking: normalization and IDF scoring
     ├── sse-server.ts          # SSE / Streamable HTTP transport
     └── stdio-server.ts        # stdio transport
 
@@ -405,4 +551,4 @@ CHATBOTX_ALLOW_SELF_SIGNED_CERT=true
 
 **ChatGPT uses its training knowledge instead of calling tools**
 - Set `CHATBOTX_MCP_SERVER_INSTRUCTIONS` to explicitly instruct ChatGPT to use tools (see `.env.example`).
-- Make sure the connector URL includes `?workspace_token=<your-token>` so authentication is handled automatically.
+- Make sure the connector is authenticated: sign in with OAuth, or send the workspace token as `Authorization: Bearer <your-token>`. A `?workspace_token=` URL still works but is deprecated (see [Token resolution order](#token-resolution-order)).

@@ -21,15 +21,15 @@
   },
   "dependencies": {
     "@vitejs/plugin-react": "^4.7.0",
-    "@vitest/coverage-v8": "^4.1.8",
+    "@vitest/coverage-v8": "^5.1.0",
     "jsdom": "^25.0.1",
-    "msw": "^2.7.3",
+    "msw": "catalog:",
     "vite-tsconfig-paths": "^5.1.4",
-    "vitest": "^4.1.8"
+    "vitest": "catalog:"
   },
   "devDependencies": {
     "@chatbotx.io/typescript-config": "workspace:*",
-    "@types/node": "^24.10.4",
-    "typescript": "^5"
+    "@types/node": "catalog:",
+    "typescript": "catalog:"
   }
 }

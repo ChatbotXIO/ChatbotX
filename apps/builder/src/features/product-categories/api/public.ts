@@ -2,6 +2,7 @@ import { productCategoryService } from "@chatbotx.io/business"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
 import {
+  externalStoreManagedErrors,
   possibleErrorsOnCreatingResource,
   possibleErrorsOnDeletingResource,
   possibleErrorsOnListingResource,
@@ -51,7 +52,10 @@ export const productCategoriesPublicRouter = {
     })
     .input(setProductCategoryVisiblePublicRequest)
     .output(publicProductCategoryWriteResource)
-    .errors(possibleErrorsOnMutatingResource)
+    .errors({
+      ...possibleErrorsOnMutatingResource,
+      ...externalStoreManagedErrors,
+    })
     .handler(
       async ({ context, input }) =>
         await productCategoryService.update({
@@ -72,7 +76,10 @@ export const productCategoriesPublicRouter = {
     })
     .input(createProductCategoryPublicRequest)
     .output(publicProductCategoryWriteResource)
-    .errors(possibleErrorsOnCreatingResource)
+    .errors({
+      ...possibleErrorsOnCreatingResource,
+      ...externalStoreManagedErrors,
+    })
     .handler(
       async ({ context, input }) =>
         await productCategoryService.create({
@@ -96,7 +103,10 @@ export const productCategoriesPublicRouter = {
     })
     .input(updateProductCategoryPublicRequest)
     .output(publicProductCategoryWriteResource)
-    .errors(possibleErrorsOnMutatingResource)
+    .errors({
+      ...possibleErrorsOnMutatingResource,
+      ...externalStoreManagedErrors,
+    })
     .handler(async ({ context, input }) => {
       const { id, ...data } = input
       return await productCategoryService.update({
@@ -133,7 +143,10 @@ export const productCategoriesPublicRouter = {
         ),
       }),
     )
-    .errors(possibleErrorsOnDeletingResource)
+    .errors({
+      ...possibleErrorsOnDeletingResource,
+      ...externalStoreManagedErrors,
+    })
     .handler(async ({ context, input }) => {
       await productCategoryService.delete({
         workspaceId: context.workspace.id,

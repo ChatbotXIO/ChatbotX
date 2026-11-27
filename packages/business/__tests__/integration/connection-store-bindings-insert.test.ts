@@ -41,6 +41,7 @@ import {
   integrationClaudeModel,
   integrationDeepseekModel,
   integrationGeminiModel,
+  integrationMuseModel,
   integrationOpenaiCompatibleModel,
   integrationOpenaiModel,
   integrationOpenrouterModel,
@@ -158,6 +159,14 @@ describe.skipIf(!databaseUrl)(
         table: integrationGeminiModel,
         model: "gemini-3.5-flash",
         maxOutputTokens: 1024,
+      },
+      {
+        provider: "muse" as const,
+        displayName: "Muse",
+        config: {},
+        table: integrationMuseModel,
+        model: "muse-spark-1.3",
+        maxOutputTokens: 4096,
       },
       {
         provider: "openai" as const,

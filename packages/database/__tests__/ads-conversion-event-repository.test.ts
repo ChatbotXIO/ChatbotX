@@ -1267,3 +1267,156 @@ describe("adsConversionEventRepository day-bucketing — viewer timezone paramet
     expect(renderDateExpression(tzChain).params).toContain("Asia/Saigon")
   })
 })
+
+describe("adsConversionEventRepository — integrationIds (several integrations of one channel)", () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  const range = {
+    workspaceId: "ws-1",
+    since: new Date("2026-08-01T00:00:00.000Z"),
+    until: new Date("2026-08-10T23:59:59.999Z"),
+  }
+  const renderWhere = (chain: Chain) =>
+    new PgDialect().sqlToQuery(chain.where.mock.calls[0][0] as never)
+
+  test.each([
+    ["messenger", '"AdsConversionEvent"."integrationMessengerId" in'],
+    ["instagram", '"AdsConversionEvent"."integrationInstagramId" in'],
+    ["whatsapp", '"AdsConversionEvent"."integrationWhatsappId" in'],
+  ] as const)("event counts for %s match only that channel's FK column against the list", async (channel, expected) => {
+    const chain = createQueryChain([])
+
+    await adsConversionEventRepository.countConversionEventsByAd(
+      { ...range, channel, integrationIds: ["10", "11"] },
+      { select: chain.select } as never,
+    )
+
+    const query = renderWhere(chain)
+    expect(query.sql).toContain(expected)
+    expect(query.params).toEqual(expect.arrayContaining(["10", "11"]))
+  })
+
+  test.each([
+    ["countConversionEventsByAd"],
+    ["countConversionEventsByDayAndAd"],
+    ["countByCapiStatus"],
+  ] as const)("%s: a list overrides a conflicting single id instead of intersecting with it", async (method) => {
+    const chain = createQueryChain([])
+
+    await adsConversionEventRepository[method](
+      {
+        ...range,
+        channel: "messenger",
+        integrationMessengerId: "9",
+        integrationIds: ["10", "11"],
+      },
+      { select: chain.select } as never,
+    )
+
+    const query = renderWhere(chain)
+    expect(query.sql).toContain('"integrationMessengerId" in')
+    expect(query.sql).not.toContain('"integrationMessengerId" =')
+    expect(query.params).not.toContain("9")
+  })
+
+  test("the single id still applies when no list is given", async () => {
+    const chain = createQueryChain([])
+
+    await adsConversionEventRepository.countConversionEventsByAd(
+      { ...range, channel: "messenger", integrationMessengerId: "9" },
+      { select: chain.select } as never,
+    )
+
+    const query = renderWhere(chain)
+    expect(query.sql).toContain('"integrationMessengerId" =')
+    expect(query.params).toContain("9")
+  })
+
+  test("conversation counts (ad referral) use the list, not a conflicting single id", async () => {
+    const chain = createQueryChain([])
+
+    await adsConversionEventRepository.countAdConversationsByAd(
+      {
+        ...range,
+        channel: "messenger",
+        integrationMessengerId: "9",
+        integrationIds: ["10", "11"],
+      },
+      { select: chain.select } as never,
+    )
+
+    const query = renderWhere(chain)
+    expect(query.params).toEqual(expect.arrayContaining(["10", "11"]))
+    expect(query.params).not.toContain("9")
+  })
+
+  test("an empty list adds no integration filter", async () => {
+    const chain = createQueryChain([])
+
+    await adsConversionEventRepository.countConversionEventsByAd(
+      { ...range, channel: "messenger", integrationIds: [] },
+      { select: chain.select } as never,
+    )
+
+    expect(renderWhere(chain).sql).not.toContain('"integrationMessengerId" in')
+  })
+
+  test("the list is parameterised, never interpolated", async () => {
+    const chain = createQueryChain([])
+
+    await adsConversionEventRepository.countConversionEventsByAd(
+      { ...range, channel: "messenger", integrationIds: ["1' OR '1'='1"] },
+      { select: chain.select } as never,
+    )
+
+    const query = renderWhere(chain)
+    expect(query.sql).not.toContain("OR '1'='1")
+    expect(query.params).toContain("1' OR '1'='1")
+  })
+
+  test("ad-referral conversation counts scope with one EXISTS over the whole list, workspace-bound", async () => {
+    const chain = createQueryChain([])
+
+    await adsConversionEventRepository.countAdConversationsByAd(
+      { ...range, channel: "messenger", integrationIds: ["10", "11"] },
+      { select: chain.select } as never,
+    )
+
+    const query = renderWhere(chain)
+    expect(query.sql).toContain("EXISTS")
+    expect(query.sql).toContain('"workspaceId" =')
+    expect(query.params).toEqual(expect.arrayContaining(["10", "11", "ws-1"]))
+  })
+
+  test("whatsapp conversation counts join IntegrationWhatsapp restricted to the list", async () => {
+    const chain = createQueryChain([])
+
+    await adsConversionEventRepository.countCtwaConversationsByAd(
+      { ...range, channel: "whatsapp", integrationIds: ["10", "11"] },
+      { select: chain.select } as never,
+    )
+
+    expect(chain.innerJoin).toHaveBeenCalledWith(
+      integrationWhatsappModel,
+      expect.anything(),
+    )
+    const joinOn = new PgDialect().sqlToQuery(
+      chain.innerJoin.mock.calls[0][1] as never,
+    )
+    expect(joinOn.sql).toContain('"IntegrationWhatsapp"."id" in')
+    expect(joinOn.params).toEqual(expect.arrayContaining(["10", "11"]))
+  })
+
+  test("a list for a non-whatsapp channel never narrows the whatsapp conversation count", async () => {
+    const chain = createQueryChain([])
+
+    await adsConversionEventRepository.countCtwaConversationsByAd(
+      { ...range, channel: "messenger", integrationIds: ["10"] },
+      { select: chain.select } as never,
+    )
+
+    expect(chain.innerJoin).toHaveBeenCalledTimes(1)
+  })
+})

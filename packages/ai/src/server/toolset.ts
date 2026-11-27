@@ -90,7 +90,7 @@ export async function getAIToolset(
             c.close?.().catch((error: unknown) => {
               const parsedError = normalizeError(error)
               logger.error(
-                { error: parsedError },
+                { err: parsedError },
                 "[ai-package] Failed to close MCP client",
               )
             }),
@@ -111,7 +111,7 @@ export async function getAIToolset(
   } catch (error) {
     const parsedError = normalizeError(error)
     logger.error(
-      { error: parsedError, workspaceId },
+      { err: parsedError, workspaceId },
       "[ai-package] getAIToolset failed",
     )
     return {

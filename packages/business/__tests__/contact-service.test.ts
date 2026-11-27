@@ -123,7 +123,7 @@ describe("contactService assigned-contact access scope", () => {
       where: {
         id: "contact-1",
         workspaceId: "ws-1",
-        conversation: { assignedUserId: "user-1" },
+        conversation: { OR: [{ assignedUserId: "user-1" }] },
       },
     })
   })
@@ -149,7 +149,7 @@ describe("contactService assigned-contact access scope", () => {
       where: {
         workspaceId: "ws-1",
         id: { in: ["contact-1", "contact-2"] },
-        conversation: { assignedUserId: "user-1" },
+        conversation: { OR: [{ assignedUserId: "user-1" }] },
       },
       columns: { id: true },
     })

@@ -29,7 +29,12 @@ import type {
 import { getPaginationWithDefaults } from "@chatbotx.io/database/utils"
 import { createId } from "@chatbotx.io/utils"
 import { BaseService } from "../base.service"
+import {
+  releaseParkedChannelPostSync,
+  resetChannelPostSyncAfterAuthChange,
+} from "../channel-post/sync-reset"
 import { channelLimitReachedException, notFoundException } from "../errors"
+import { projectIntegrationSmtp } from "../integration-smtp/resource"
 import { logger } from "../logger"
 import { quotaEnforcementService } from "../quota-enforcement/service"
 import { type IdLabel, selectLabelsByIds } from "../select-labels-by-ids"
@@ -75,6 +80,7 @@ class InboxService extends BaseService {
     integrationInstagram: true,
     integrationThreads: true,
     integrationZalo: true,
+    integrationLine: true,
     integrationTelegram: true,
     integrationSmtp: true,
     integrationTiktok: true,
@@ -114,7 +120,7 @@ class InboxService extends BaseService {
     const limit = input.perPage ?? 10
     const pageCount = Math.ceil(totalRows / limit)
 
-    return { data, pageCount }
+    return { data: projectIntegrationSmtp(data), pageCount }
   }
 
   /**
@@ -133,7 +139,7 @@ class InboxService extends BaseService {
       with: InboxService.integrationsWith(input.includes),
     })
 
-    return { data }
+    return { data: projectIntegrationSmtp(data) }
   }
 
   /**
@@ -476,6 +482,13 @@ class InboxService extends BaseService {
           .where(eq(inboxModel.id, existing.id))
           .returning()
 
+        // The same page is connected again: its post sync, parked as not
+        // connected or failed while the inbox was off, is due again.
+        await resetChannelPostSyncAfterAuthChange(
+          { inboxId: existing.id, workspaceId: data.workspaceId },
+          tx,
+        )
+
         if (!skipQuota) {
           await this.creditChannelUsage(data.workspaceId)
         }
@@ -619,6 +632,10 @@ class InboxService extends BaseService {
           eq(inboxModel.workspaceId, props.workspaceId),
         ),
       )
+    await releaseParkedChannelPostSync(
+      { inboxId: props.inboxId, workspaceId: props.workspaceId },
+      client,
+    )
 
     // Display-only breakdown, mirroring `create`'s increment. Never let a
     // failure here affect the authoritative quota unit already consumed above.

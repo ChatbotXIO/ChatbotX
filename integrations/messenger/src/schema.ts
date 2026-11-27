@@ -1,4 +1,6 @@
 import type {
+  ChannelPostLiveState,
+  ConnectionCandidateUnavailableReason,
   Context,
   Handler,
   IncomingAttachment,
@@ -88,6 +90,7 @@ export type MessengerActions<
     type: string | null
     attachment?: IncomingAttachment
     isLive: boolean
+    liveState: ChannelPostLiveState | null
   }>
   getCommentMessageTags: (props: {
     ctx: Context<IAuth>
@@ -336,6 +339,18 @@ export const messengerFeedChangeSchema = z.object({
   value: z.unknown(),
 })
 export type MessengerFeedChange = z.infer<typeof messengerFeedChangeSchema>
+
+// Page `live_videos` webhook: "changes to a page's live video status", with the
+// live video id and its status. The value is not trusted beyond these two
+// strings; the worker re-reads the broadcast.
+export const messengerLiveVideoValueSchema = z.object({
+  id: z.string().regex(/^\d+$/),
+  // Becomes part of a job id, so only the shape of a status name is accepted.
+  status: z.string().regex(/^[A-Za-z_]{1,64}$/),
+})
+export type MessengerLiveVideoValue = z.infer<
+  typeof messengerLiveVideoValueSchema
+>
 
 // Facebook Lead Ads: a `leadgen` change carries only ids — the worker fetches
 // the lead's answers from the Graph API using the page token.
@@ -622,7 +637,10 @@ export const facebookPageSchema = z.object({
   tasks: z.array(z.string()).optional(),
 })
 export type FacebookPage = z.infer<typeof facebookPageSchema>
-export type ConnectableFacebookPage = FacebookPage & { isConnectable: boolean }
+export type ConnectableFacebookPage = FacebookPage & {
+  isConnectable: boolean
+  unavailableReason?: ConnectionCandidateUnavailableReason
+}
 
 // Webhook verification schemas
 export const webhookVerificationRequestSchema = z.object({

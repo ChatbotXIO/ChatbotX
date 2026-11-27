@@ -1,0 +1,89 @@
+{
+  "type": "diff",
+  "version": "10",
+  "dialect": "postgres",
+  "id": "180f66f9-9257-40af-bcfe-ac80f03df9e7",
+  "prevIds": [
+    "57363325-97c4-4af1-83b6-e2179d41fc4d"
+  ],
+  "footprints": [
+    {
+      "statementType": "drop_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "AIEmbedding",
+        "AIEmbedding_aiFileId_idx"
+      ],
+      "writes": [
+        "s|idx|public.AIEmbedding_aiFileId_idx",
+        "n|idx|public.AIEmbedding_aiFileId_idx",
+        "e|idx|public.AIEmbedding_aiFileId_idx",
+        "n|rel|public.AIEmbedding_aiFileId_idx"
+      ],
+      "reads": [
+        "e|tbl|public.AIEmbedding",
+        "n|sch|public",
+        "e|col|public.AIEmbedding.aiFileId"
+      ],
+      "sharedWrites": []
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "AIEmbedding",
+        "AIEmbedding_aiFileId_chunkIndex_idx"
+      ],
+      "writes": [
+        "s|idx|public.AIEmbedding_aiFileId_chunkIndex_idx",
+        "n|idx|public.AIEmbedding_aiFileId_chunkIndex_idx",
+        "e|idx|public.AIEmbedding_aiFileId_chunkIndex_idx",
+        "n|rel|public.AIEmbedding_aiFileId_chunkIndex_idx"
+      ],
+      "reads": [
+        "n|tbl|public.AIEmbedding",
+        "n|sch|public",
+        "n|col|public.AIEmbedding.aiFileId",
+        "n|col|public.AIEmbedding.chunkIndex"
+      ]
+    }
+  ],
+  "deltas": [
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "AIEmbedding",
+        "name": "AIEmbedding_aiFileId_chunkIndex_idx",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "aiFileId",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          },
+          {
+            "value": "chunkIndex",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": false,
+        "where": null,
+        "with": "",
+        "method": "btree",
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "drop",
+      "key": "indexes\u0000[\"public\",\"AIEmbedding_aiFileId_idx\"]"
+    }
+  ]
+}

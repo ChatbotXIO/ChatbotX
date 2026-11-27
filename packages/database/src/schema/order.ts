@@ -1,3 +1,4 @@
+import { sql } from "drizzle-orm"
 import {
   bigint,
   index,
@@ -10,6 +11,8 @@ import {
   uniqueIndex,
 } from "drizzle-orm/pg-core"
 import {
+  type FulfillmentStatus,
+  fulfillmentStatuses,
   type OrderActorType,
   type OrderShippingAddress,
   type OrderSource,
@@ -62,6 +65,10 @@ export const shippingType = pgEnum(
   "shippingType",
   shippingTypes.options as [ShippingType, ...ShippingType[]],
 )
+export const fulfillmentStatus = pgEnum(
+  "fulfillmentStatus",
+  fulfillmentStatuses.options as [FulfillmentStatus, ...FulfillmentStatus[]],
+)
 export const orderActorType = pgEnum(
   "orderActorType",
   orderActorTypes.options as [OrderActorType, ...OrderActorType[]],
@@ -100,6 +107,12 @@ export const orderModel = pgTable(
     status: orderStatus().default("pending").notNull(),
     paymentMethod: paymentMethod().default("cod").notNull(),
     paymentStatus: paymentStatus().default("unpaid").notNull(),
+    /**
+     * When an online order still unpaid is cancelled. Null for cash on
+     * delivery.
+     */
+    paymentExpiresAt: timestamp(timestampConfig),
+    paidAt: timestamp(timestampConfig),
     /** ISO 4217, copied from the store settings (or the cart) when placed. */
     currency: text().notNull(),
     subtotal: money().notNull(),
@@ -130,8 +143,25 @@ export const orderModel = pgTable(
     concludedAt: timestamp(timestampConfig),
     cancelledAt: timestamp(timestampConfig),
     cancelReason: text(),
+    /** Shopify's order GID, with `source: shopify`. */
+    externalId: text(),
+    /** Shopify's order name, e.g. `#1004`. */
+    externalName: text(),
+    /** Mirrored from Shopify; null for our own orders. */
+    fulfillmentStatus: fulfillmentStatus(),
+    trackingCompany: text(),
+    trackingNumber: text(),
+    trackingUrl: text(),
   },
   (table) => [
+    uniqueIndex("Order_workspaceId_externalId_key")
+      .on(table.workspaceId, table.externalId)
+      .where(sql`${table.externalId} IS NOT NULL`),
+    index("Order_workspaceId_source_createdAt_idx").on(
+      table.workspaceId,
+      table.source,
+      table.createdAt.desc(),
+    ),
     uniqueIndex("Order_workspaceId_number_key").on(
       table.workspaceId,
       table.number,
@@ -147,6 +177,12 @@ export const orderModel = pgTable(
     index("Order_inboxId_idx").on(table.inboxId),
     index("Order_conversationId_idx").on(table.conversationId),
     index("Order_discountCodeId_idx").on(table.discountCodeId),
+    // The scan that cancels online orders whose payment never came.
+    index("Order_paymentExpiresAt_idx")
+      .on(table.paymentExpiresAt)
+      .where(
+        sql`${table.status} = 'pending' AND ${table.paymentStatus} = 'unpaid' AND ${table.paymentExpiresAt} IS NOT NULL`,
+      ),
   ],
 )
 

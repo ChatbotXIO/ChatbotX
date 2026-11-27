@@ -1,0 +1,14 @@
+{
+  // Opt-in via CHECK_TYPES_SKIP_TESTS=1 (for example exported in a local shell
+  // so the pre-commit hook skips tests): the same program as tsconfig.json
+  // without test files, which is ~10% faster and ~1 GB lighter. CI always runs
+  // the full tsconfig.json.
+  "extends": "./tsconfig.json",
+  "compilerOptions": { "tsBuildInfoFile": "./tsconfig.check.tsbuildinfo" },
+  "exclude": [
+    "node_modules",
+    "**/__tests__/**",
+    "**/*.test.ts",
+    "**/*.test.tsx"
+  ]
+}

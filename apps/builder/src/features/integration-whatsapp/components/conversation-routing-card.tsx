@@ -20,6 +20,7 @@ import { type ReactNode, useState } from "react"
 import { toast } from "sonner"
 import { FlowSelectorSimple } from "@/features/sequences/components/flow-selector"
 import { updateHandoverResumeFlowAction } from "../actions/update-handover-resume-flow.action"
+import { RoutingRolesSection } from "./routing-roles-section"
 
 type ConversationRoutingCardProps = {
   workspaceId: string
@@ -103,6 +104,10 @@ export function ConversationRoutingCard({
         </CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col gap-4">
+        <RoutingRolesSection
+          integrationWhatsappId={integrationWhatsappId}
+          workspaceId={workspaceId}
+        />
         <div className="flex flex-col gap-2">
           <span className="font-medium text-sm" id="handover-resume-flow">
             {t("conversationRouting.settings.resumeFlowLabel")}

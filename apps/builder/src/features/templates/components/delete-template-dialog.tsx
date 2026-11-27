@@ -16,6 +16,8 @@ import { useTranslations } from "next-intl"
 import { useAction } from "next-safe-action/hooks"
 import { toast } from "sonner"
 import { deleteTemplateAction } from "../actions/delete-template.action"
+import { toastActionError } from "../lib/action-error-toast"
+import { useInvalidateAfterTemplateChange } from "../lib/use-invalidate-template-kinds"
 
 type DeleteTemplateDialogProps = {
   workspaceId: string
@@ -32,6 +34,7 @@ export function DeleteTemplateDialog({
 }: DeleteTemplateDialogProps) {
   const t = useTranslations()
   const router = useRouter()
+  const { invalidateLocks } = useInvalidateAfterTemplateChange()
 
   const { execute, isPending } = useAction(
     deleteTemplateAction.bind(null, workspaceId, templateId),
@@ -40,14 +43,13 @@ export function DeleteTemplateDialog({
         toast.success(
           t("messages.deletedSuccess", { feature: t("fields.template.label") }),
         )
+        // Deleting a template releases the locks on the copies it governed.
+        invalidateLocks().catch(() => undefined)
         onOpenChange(false)
         router.refresh()
       },
-      onError: ({ error }) => {
-        if (error.serverError) {
-          toast.error(error.serverError)
-        }
-      },
+      onError: ({ error }) =>
+        toastActionError(error, t("messages.unknownError")),
     },
   )
 
@@ -63,7 +65,6 @@ export function DeleteTemplateDialog({
           <AlertDialogDescription>
             {t("messages.deleteConfirmation", {
               feature: t("fields.template.label"),
-              name: "",
             })}
           </AlertDialogDescription>
         </AlertDialogHeader>

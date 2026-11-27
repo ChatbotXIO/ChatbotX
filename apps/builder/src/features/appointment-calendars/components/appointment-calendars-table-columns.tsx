@@ -28,6 +28,11 @@ import Link from "next/link"
 import type { useTranslations } from "next-intl"
 import { useAction } from "next-safe-action/hooks"
 import type { Dispatch, SetStateAction } from "react"
+import { LockBadge } from "@/features/templates/components/lock-badge"
+import {
+  LockedGuard,
+  UndeletableGuard,
+} from "@/features/templates/components/lock-context"
 import { useTenantSettings } from "@/features/tenant"
 import { useClipboard } from "@/hooks/use-clipboard"
 import { updateAppointmentCalendarActiveAction } from "../actions/update-appointment-calendar-active.action"
@@ -125,12 +130,15 @@ export function getAppointmentCalendarColumns({
         <Tooltip>
           <TooltipTrigger
             render={
-              <Link
-                className="inline-block max-w-[320px] truncate font-medium"
-                href={`/space/${row.original.workspaceId}/appointment-calendars/${row.original.id}/edit`}
-              >
-                {row.original.name}
-              </Link>
+              <span className="flex max-w-[320px] items-center font-medium">
+                <Link
+                  className="truncate"
+                  href={`/space/${row.original.workspaceId}/appointment-calendars/${row.original.id}/edit`}
+                >
+                  {row.original.name}
+                </Link>
+                <LockBadge resourceId={row.original.id} />
+              </span>
             }
           />
           <TooltipContent>{row.original.name}</TooltipContent>
@@ -181,25 +189,40 @@ export function getAppointmentCalendarColumns({
               calendar={row.original}
               label={t("actions.copyUrl")}
             />
-            <DropdownMenuItem
-              onClick={() => setRowAction({ row, variant: "rename" })}
-            >
-              <TextIcon />
-              {t("actions.rename")}
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={() => setRowAction({ row, variant: "duplicate" })}
-            >
-              <CopyPlusIcon />
-              {t("actions.duplicate")}
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={() => setRowAction({ row, variant: "delete" })}
-              variant="destructive"
-            >
-              <Trash2Icon />
-              {t("actions.delete")}
-            </DropdownMenuItem>
+            <LockedGuard resourceId={row.original.id}>
+              {(locked) => (
+                <DropdownMenuItem
+                  disabled={locked}
+                  onClick={() => setRowAction({ row, variant: "rename" })}
+                >
+                  <TextIcon />
+                  {t("actions.rename")}
+                </DropdownMenuItem>
+              )}
+            </LockedGuard>
+            <LockedGuard resourceId={row.original.id}>
+              {(locked) => (
+                <DropdownMenuItem
+                  disabled={locked}
+                  onClick={() => setRowAction({ row, variant: "duplicate" })}
+                >
+                  <CopyPlusIcon />
+                  {t("actions.duplicate")}
+                </DropdownMenuItem>
+              )}
+            </LockedGuard>
+            <UndeletableGuard resourceId={row.original.id}>
+              {(disabled) => (
+                <DropdownMenuItem
+                  disabled={disabled}
+                  onClick={() => setRowAction({ row, variant: "delete" })}
+                  variant="destructive"
+                >
+                  <Trash2Icon />
+                  {t("actions.delete")}
+                </DropdownMenuItem>
+              )}
+            </UndeletableGuard>
           </DropdownMenuContent>
         </DropdownMenu>
       ),

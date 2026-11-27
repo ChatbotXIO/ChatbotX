@@ -1,5 +1,14 @@
-import { type AnyColumn, asc, desc, type SQL } from "drizzle-orm"
-import type { PgTable } from "drizzle-orm/pg-core"
+import {
+  type AnyColumn,
+  and,
+  asc,
+  desc,
+  eq,
+  inArray,
+  type SQL,
+} from "drizzle-orm"
+import type { AnyPgColumn, PgTable } from "drizzle-orm/pg-core"
+import type { DatabaseClient } from "./client"
 
 type PaginationInput = {
   page?: number | null
@@ -23,6 +32,15 @@ export const escapeLikePattern = (value: string): string =>
 
 export const likeContains = (value: string): string =>
   `%${escapeLikePattern(value)}%`
+
+const DIGITS_PATTERN = /^\d+$/
+const MAX_BIGINT = 9_223_372_036_854_775_807n
+
+/** Whether `value` fits a signed bigint id, so a `::bigint` cast or id compare cannot fail in SQL. */
+export const isBigintId = (value: string): boolean =>
+  DIGITS_PATTERN.test(value) &&
+  value.length <= 19 &&
+  BigInt(value) <= MAX_BIGINT
 
 export const parsePagination = (
   input: PaginationInput,
@@ -136,6 +154,17 @@ export const parseOrderByAsObject = (
   )
 }
 
+/**
+ * Rows written in one statement share `createdAt`, and ties come back in no
+ * set order: ids grow in creation order, so they settle it the same way.
+ */
+export const withIdTieBreak = (
+  orderBy: Record<string, unknown>,
+): Record<string, unknown> =>
+  "id" in orderBy
+    ? orderBy
+    : { ...orderBy, id: Object.values(orderBy)[0] ?? "desc" }
+
 type ChunkByIdOptions<T> = {
   chunkSize?: number
   callback: (records: T[]) => Promise<boolean | undefined>
@@ -169,4 +198,28 @@ export async function chunkById<T extends { id: string }>(
       lastId = records.at(-1)?.id ?? null
     }
   }
+}
+
+/**
+ * Deletes the rows of a workspace-scoped table by id in one statement and
+ * returns the ids that went (so a caller can tell which were already absent).
+ */
+export const deleteByIdsInWorkspace = async (
+  tx: DatabaseClient,
+  model: PgTable & { id: AnyPgColumn; workspaceId: AnyPgColumn },
+  input: { workspaceId: string; ids: string[] },
+): Promise<string[]> => {
+  if (input.ids.length === 0) {
+    return []
+  }
+  const rows = await tx
+    .delete(model)
+    .where(
+      and(
+        eq(model.workspaceId, input.workspaceId),
+        inArray(model.id, input.ids),
+      ),
+    )
+    .returning({ id: model.id })
+  return rows.map((row) => String(row.id))
 }

@@ -1,4 +1,4 @@
-import { getChannelFlowPolicy } from "@chatbotx.io/flow-config"
+import { getChannelFlowPolicy, stepSupport } from "@chatbotx.io/flow-config"
 import { Button } from "@chatbotx.io/ui/components/ui/button"
 import { channelTypes } from "@chatbotx.io/utils/channel"
 import { WorkflowIcon } from "lucide-react"
@@ -8,6 +8,7 @@ import { SelectFlowDialog } from "@/features/flows/components/select-flow-dialog
 import SavedReplyManage from "@/features/saved-replies/saved-reply-manage"
 import type { SavedReplyResource } from "@/features/saved-replies/schema/resource"
 import { useChatStore } from "../../chat/store/chat-store-provider"
+import { CreateAppointmentDialogTrigger } from "./create-appointment-trigger"
 import EmojiPicker from "./emoji-picker"
 import { SendProductsDialogTrigger } from "./send-products-trigger"
 
@@ -65,6 +66,11 @@ export const InputMenu = ({
   const canSendProducts =
     channel.success &&
     Boolean(getChannelFlowPolicy(channel.data)?.productMessages)
+  // The booking link travels in a URL button, not in the text: a channel that
+  // cannot send text with buttons would deliver the prompt without the link.
+  const canSendBookingLink =
+    channel.success &&
+    getChannelFlowPolicy(channel.data)?.steps.sendText === stepSupport.full
 
   return (
     <>
@@ -79,6 +85,12 @@ export const InputMenu = ({
         <SendProductsDialogTrigger
           bypassThreadControlLock={bypassThreadControlLock}
           channel={channel.data}
+          inboxId={contactInbox.inboxId}
+        />
+      )}
+      {!activePost && canSendBookingLink && contactInbox && (
+        <CreateAppointmentDialogTrigger
+          bypassThreadControlLock={bypassThreadControlLock}
           inboxId={contactInbox.inboxId}
         />
       )}

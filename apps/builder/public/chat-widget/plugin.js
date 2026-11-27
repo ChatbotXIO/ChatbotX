@@ -57,7 +57,7 @@
       url.searchParams.set("parentOrigin", window.location.origin)
 
       csmChatWidget.floatButton = `<button type="button" class="ahc-btn"><img src="${iconUrl}" alt="Chat"></button>`
-      csmChatWidget.floatHtml = `<div class="ahc-iframe-container"><iframe id="ahc-iframe" src="${url.toString()}"></iframe></div>`
+      csmChatWidget.floatHtml = `<div class="ahc-iframe-container"><iframe id="ahc-iframe" referrerpolicy="origin" src="${url.toString()}"></iframe></div>`
 
       appendHtml(document.body, csmChatWidget.floatButton)
 

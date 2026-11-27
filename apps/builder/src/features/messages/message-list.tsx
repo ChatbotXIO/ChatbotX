@@ -6,21 +6,28 @@ import { cn } from "@chatbotx.io/ui/lib/utils"
 import { ArrowDownIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { useAction } from "next-safe-action/hooks"
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import {
   type GridComponents,
   Virtuoso,
   type VirtuosoHandle,
 } from "react-virtuoso"
 import { toast } from "sonner"
+import { TranslatedMessage } from "@/features/translation/components/translated-message"
+import { useRequestTranslations } from "@/features/translation/hooks/use-request-translations"
 import { useWorkspaceId } from "@/hooks/routing"
+import { authClient } from "@/lib/auth/auth-client"
 import { INBOX_MESSAGES_PER_PAGE } from "../chat/store/chat-store"
 import { useChatStore } from "../chat/store/chat-store-provider"
 import { ConversationInfo } from "../conversations/components/conversation-info"
+import { useConversationParticipants } from "../conversations/hooks/use-conversation-participants"
+import type { ConversationParticipantResource } from "../conversations/schema/resource"
 import { changeMessageAttributesAction } from "./actions/change-message-attributes.action"
 import { deleteMessageAction } from "./actions/delete-message.action"
 import { editMessageAction } from "./actions/edit-message.action"
 import { MessageItem } from "./components/message-item"
+import { ResendMessageButton } from "./components/resend-message-button"
+import { findLatestMessageIdByAuthor } from "./lib/find-latest-message-id-by-author"
 import { canPrivateReplyToComment } from "./lib/private-reply"
 import type { MessageResourceWithRelations } from "./schema/resource"
 
@@ -46,6 +53,57 @@ export function MessageList() {
     updateMessageText,
     updateMessageAttributes,
   } = useChatStore((state) => state)
+
+  // The small avatar under each member's latest message. Their identity comes
+  // from the participants list (shared with the header, one request), the row
+  // preview while it loads, and the session user for a message just sent.
+  const session = authClient.useSession()
+  const participantsQuery = useConversationParticipants(
+    workspaceId,
+    activeConversationId ?? undefined,
+  )
+  const activeConversation = conversations.find(
+    (conversation) => conversation.id === activeConversationId,
+  )
+  const authorMarkerByMessageId = useMemo(() => {
+    const participantByUserId = new Map<
+      string,
+      ConversationParticipantResource
+    >(
+      (
+        participantsQuery.data?.pages.flatMap((page) => page.data) ??
+        activeConversation?.recentParticipants ??
+        []
+      ).map((participant) => [participant.userId, participant]),
+    )
+    const sessionUser = session.data?.user
+    const markers = new Map<string, ConversationParticipantResource>()
+    for (const [authorId, messageId] of findLatestMessageIdByAuthor(messages)) {
+      const participant =
+        participantByUserId.get(authorId) ??
+        (sessionUser?.id === authorId
+          ? {
+              userId: authorId,
+              name: sessionUser.name,
+              image: sessionUser.image ?? null,
+              lastRepliedAt: new Date(),
+            }
+          : undefined)
+      if (participant) {
+        markers.set(messageId, participant)
+      }
+    }
+    return markers
+  }, [
+    messages,
+    participantsQuery.data,
+    activeConversation?.recentParticipants,
+    session.data?.user,
+  ])
+
+  // Asks for the visible inbound messages to be translated; a no-op while
+  // translation is off, so the Inbox is unchanged for such workspaces.
+  useRequestTranslations()
 
   // Which channel this conversation belongs to, for the private-reply gate
   // below. The same `contactInboxes[0].channel` the store reads elsewhere.
@@ -302,6 +360,7 @@ export function MessageList() {
         atBottomStateChange={handleAtBottomStateChange}
         atBottomThreshold={100}
         components={{
+          Footer: MessageComponentFooter,
           List: MessageComponentList,
           Header: MessageComponentHeader,
         }}
@@ -310,27 +369,38 @@ export function MessageList() {
         followOutput
         initialTopMostItemIndex={{ index: "LAST" }}
         itemContent={(_, message) => (
-          <MessageItem
-            canPrivateReply={(comment) =>
-              canPrivateReplyToComment({
-                channel: activeChannel,
-                message: comment,
-              })
-            }
-            key={message.id}
-            message={message}
-            onChangeHide={() => handleChangeHideState(message)}
-            onChangeLike={() => handleChangeLikeState(message)}
-            onDelete={() => {
-              handleDeleteComment({
-                id: message.id,
-                createdAt: message.createdAt,
-              })
-            }}
-            onEdit={handleEditMessage}
-            onPrivateReply={handlePrivateReplyComment}
-            onReply={handleReplyComment}
-          />
+          <div className="pb-1.5">
+            <TranslatedMessage message={message}>
+              {(translation) => (
+                <MessageItem
+                  authorMarker={authorMarkerByMessageId.get(message.id)}
+                  canPrivateReply={(comment) =>
+                    canPrivateReplyToComment({
+                      channel: activeChannel,
+                      message: comment,
+                    })
+                  }
+                  key={message.id}
+                  message={message}
+                  onChangeHide={() => handleChangeHideState(message)}
+                  onChangeLike={() => handleChangeLikeState(message)}
+                  onDelete={() => {
+                    handleDeleteComment({
+                      id: message.id,
+                      createdAt: message.createdAt,
+                    })
+                  }}
+                  onEdit={handleEditMessage}
+                  onPrivateReply={handlePrivateReplyComment}
+                  onReply={handleReplyComment}
+                  renderResend={(failed) => (
+                    <ResendMessageButton message={failed} />
+                  )}
+                  translation={translation}
+                />
+              )}
+            </TranslatedMessage>
+          </div>
         )}
         ref={virtuosoRef}
         startReached={loadMoreItems}
@@ -365,25 +435,26 @@ const MessageComponentHeader: GridComponents["Header"] = () => {
   const { isLoadMoreMessage } = useChatStore((state) => state)
 
   return (
-    <>
+    <div className="pt-3">
       <ConversationInfo />
       {isLoadMoreMessage && (
         <div className="flex items-center space-x-2 px-3 py-2">
           <Skeleton className="h-8 w-3/5 rounded-xl" />
         </div>
       )}
-    </>
+    </div>
   )
 }
+
+const MessageComponentFooter: GridComponents["Footer"] = () => (
+  <div className="h-3" />
+)
 
 const MessageComponentList: GridComponents["List"] = ({
   children,
   ...props
 }) => (
-  <div
-    {...props}
-    className="virtuoso-item-list flex flex-col gap-1.5 [&>div:first-child]:mt-3"
-  >
+  <div {...props} className="virtuoso-item-list flex flex-col">
     {children}
   </div>
 )

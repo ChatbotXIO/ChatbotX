@@ -1,4 +1,10 @@
-import { pgTable, text, timestamp, uniqueIndex } from "drizzle-orm/pg-core"
+import {
+  index,
+  pgTable,
+  text,
+  timestamp,
+  uniqueIndex,
+} from "drizzle-orm/pg-core"
 import {
   bigintAsString,
   sharedColumns,
@@ -26,5 +32,6 @@ export const sessionModel = pgTable(
       "btree",
       table.token.asc().nullsLast(),
     ),
+    index("Session_userId_idx").on(table.userId),
   ],
 )

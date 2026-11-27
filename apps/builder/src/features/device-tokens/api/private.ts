@@ -1,10 +1,9 @@
-import {
-  deviceTokenService,
-  workspaceMemberService,
-} from "@chatbotx.io/business"
-import { ChatbotXException } from "@chatbotx.io/business/errors"
 import { successResponse } from "@/features/common/schema"
 import { authorizedAPI } from "@/orpc"
+import {
+  registerDeviceToken,
+  unregisterDeviceToken,
+} from "../lib/device-tokens"
 import {
   registerDeviceTokenRequest,
   unregisterDeviceTokenRequest,
@@ -20,29 +19,10 @@ export const deviceTokensAuthenticatedAPI = {
     })
     .input(registerDeviceTokenRequest)
     .output(successResponse)
-    .handler(async ({ input, context }) => {
-      if (input.workspaceId) {
-        const isMember = await workspaceMemberService.isMember({
-          workspaceId: input.workspaceId,
-          userId: context.user.id,
-        })
-        if (!isMember) {
-          throw new ChatbotXException(
-            "Not a member of this workspace",
-            "forbidden",
-            403,
-          )
-        }
-      }
-
-      await deviceTokenService.upsert({
-        userId: context.user.id,
-        workspaceId: input.workspaceId,
-        platform: input.platform,
-        token: input.token,
-      })
-      return { success: true as const }
-    }),
+    .handler(
+      async ({ input, context }) =>
+        await registerDeviceToken(context.user.id, input),
+    ),
 
   unregisterDeviceTokenAPI: authorizedAPI
     .route({
@@ -53,11 +33,8 @@ export const deviceTokensAuthenticatedAPI = {
     })
     .input(unregisterDeviceTokenRequest)
     .output(successResponse)
-    .handler(async ({ input, context }) => {
-      await deviceTokenService.deleteByToken({
-        userId: context.user.id,
-        token: input.token,
-      })
-      return { success: true as const }
-    }),
+    .handler(
+      async ({ input, context }) =>
+        await unregisterDeviceToken(context.user.id, input),
+    ),
 }

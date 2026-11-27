@@ -1,3 +1,4 @@
+import { keywordConditionOperators } from "@chatbotx.io/database/partials"
 import {
   automatedResponseModel,
   createSelectSchema,
@@ -17,10 +18,24 @@ export const publicKeywordResource = createSelectSchema(
   {
     id: z.string(),
     flowId: z.string().nullable(),
+    // Plain shape on output — input validation (regex compile, limits) lives
+    // in `keywordConditionsSchema`.
+    conditions: z
+      .array(
+        z.object({
+          operator: keywordConditionOperators,
+          values: z.array(z.string()),
+        }),
+      )
+      .nullish()
+      .describe(
+        "Contact (inbound) match conditions; null on outbound rules. `keywords` lists every condition value.",
+      ),
   },
 ).pick({
   id: true,
   keywords: true,
+  conditions: true,
   status: true,
   text: true,
   flowId: true,

@@ -16,10 +16,15 @@ import {
   commonApiErrors,
   STRUCTURED_ERROR_CODES,
 } from "./lib/orpc/orpc-error-helper"
+import { tokenHasAnyScope } from "./lib/public-api/token-scope"
 import { authMiddleware } from "./middlewares/auth"
 import { channelApiTokenAuthMidddleware } from "./middlewares/channel-api-token-auth"
 import { base } from "./middlewares/context"
 import { apiIdempotencyMiddleware } from "./middlewares/idempotency"
+import {
+  mobileUserAuthMiddleware,
+  mobileUserPasswordChangeAuthMiddleware,
+} from "./middlewares/mobile-user-auth"
 import { workspaceTokenAuthMidddleware } from "./middlewares/workspace-token-auth"
 
 const CHANNEL_ERROR_FALLBACK = "The provider rejected the request."
@@ -178,13 +183,8 @@ const requireTokenScope = (
     // chained after workspaceTokenAuthMidddleware via
     // workspaceTokenAuthAPIForScope below — but the base context type marks
     // it optional (shared with authorizedAPI, which never sets it).
-    const scopes = context.apiToken?.scopes
     const required = Array.isArray(scope) ? scope : [scope]
-    if (
-      scopes !== null &&
-      scopes !== undefined &&
-      !required.some((candidate) => scopes.includes(candidate))
-    ) {
+    if (!tokenHasAnyScope(context.apiToken?.scopes, required)) {
       throw new ORPCError("FORBIDDEN", {
         message: `Token is not authorized for the '${required.join("' or '")}' scope`,
       })
@@ -224,3 +224,17 @@ export const workspaceTokenAuthAPIForScope = (
 export const channelApiTokenAPI = publicAPI
   .use(channelApiTokenAuthMidddleware)
   .use(apiIdempotencyMiddleware)
+
+/**
+ * User-level `/v1/me/*` operations for the native mobile app: a mobile access
+ * JWT (audience `<builder>/api`) acting as the signed-in user, no workspace.
+ * Refuses a user who still has a provisioned temporary password.
+ */
+export const mobileUserAPI = publicAPI
+  .use(mobileUserAuthMiddleware)
+  .use(apiIdempotencyMiddleware)
+
+/** Same, but still callable while `mustChangePassword` is set: identity read and password change. */
+export const mobileUserPasswordChangeAPI = publicAPI.use(
+  mobileUserPasswordChangeAuthMiddleware,
+)

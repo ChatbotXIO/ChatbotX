@@ -157,6 +157,7 @@ const loadConnection = async (
 
 type ChannelFixtureProvider =
   | "instagram"
+  | "instagramFacebook"
   | "messenger"
   | "telegram"
   | "threads"
@@ -652,6 +653,91 @@ describe.skipIf(!databaseUrl)(
           .where(eq(userQuotaModel.userId, ownerId))
           .limit(1)
         expect(quotaAfterDisconnect?.channelsUsed).toBe(0)
+      } finally {
+        await cleanupCommittedWorkspace({ ownerId, workspaceId })
+      }
+    })
+  },
+)
+
+describe.skipIf(!databaseUrl)(
+  "Switching Instagram login on a disconnected inbox against Postgres",
+  () => {
+    test.each([
+      ["instagramFacebook", "instagram"],
+      ["instagram", "instagramFacebook"],
+    ] as const)("connects again as %s then %s on the same inbox", async (first, second) => {
+      const { ownerId, workspaceId } = await seedCommittedWorkspace(false)
+      try {
+        const sourceId = createId()
+        const fixture = CHANNEL_FIXTURES.find(
+          (candidate) => candidate.provider === "instagram",
+        )
+        if (!fixture) {
+          throw new Error("instagram fixture is missing")
+        }
+        // The same steps `connectAndPersist` runs for a fresh target.
+        const connect = (provider: ChannelFixtureProvider) =>
+          db.transaction(async (tx) => {
+            const { inbox } = await inboxService.create({
+              data: {
+                workspaceId,
+                channel: toChannelType(provider),
+                sourceId,
+                name: fixture.displayName,
+              },
+              ownerId,
+              tx,
+              skipQuota: true,
+            })
+            return await upsertConnectionRow({
+              tx,
+              workspaceId,
+              provider,
+              kind: "channel",
+              descriptor: { sourceId, displayName: fixture.displayName },
+              auth: fixture.auth(sourceId),
+              extraConfig: fixture.extraConfig,
+              existing: undefined,
+              store: storeFor(provider),
+              ownerId,
+              quotaConsumption: {
+                consumed: false,
+                workspaceUsageIncremented: false,
+              },
+              inboxId: inbox.id,
+            })
+          })
+
+        const original = await connect(first)
+        // What a user disconnect leaves: no satellite row, the Connection kept.
+        await db.transaction(async (tx) => {
+          await storeFor(first).deleteRowByForeignKey(
+            original.inboxId as string,
+            workspaceId,
+            tx,
+          )
+          await connectionStateService.transition({
+            connectionId: original.id,
+            event: "user.disconnect",
+            ownerId,
+            tx,
+          })
+        })
+
+        const switched = await connect(second)
+
+        expect(switched.id).toBe(original.id)
+        expect(switched.provider).toBe(second)
+        expect(switched.status).toBe("connected")
+        expect(switched.inboxId).toBe(original.inboxId)
+
+        const [quota] = await db
+          .select()
+          .from(userQuotaModel)
+          .where(eq(userQuotaModel.userId, ownerId))
+          .limit(1)
+        expect(quota?.channelsUsed).toBe(1)
       } finally {
         await cleanupCommittedWorkspace({ ownerId, workspaceId })
       }

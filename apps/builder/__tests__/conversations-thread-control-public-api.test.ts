@@ -113,6 +113,30 @@ describe("POST /v1/conversations/{id}/thread-control", () => {
     })
   })
 
+  test("forwards the target role and the handover note on a pass", async () => {
+    mocks.requestConversationThreadControl.mockResolvedValue(snapshot)
+
+    await find("/v1/conversations/{id}/thread-control")?.({
+      context,
+      input: {
+        id: "conv-1",
+        contactInboxId: "ci-1",
+        action: "pass",
+        targetRole: "marketing",
+        metadata: "Delivery issue",
+      },
+    })
+
+    expect(mocks.requestConversationThreadControl).toHaveBeenCalledWith({
+      workspaceId: "ws-1",
+      conversation,
+      contactInboxId: "ci-1",
+      action: "pass",
+      targetRole: "marketing",
+      metadata: "Delivery issue",
+    })
+  })
+
   test("does not expose the bypass flag", async () => {
     mocks.requestConversationThreadControl.mockResolvedValue(snapshot)
 

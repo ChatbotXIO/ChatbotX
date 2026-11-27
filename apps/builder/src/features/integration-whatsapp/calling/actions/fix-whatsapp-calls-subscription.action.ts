@@ -9,7 +9,7 @@ import { ChatbotXException } from "@chatbotx.io/business/errors"
 import type { WhatsappAuthValue } from "@chatbotx.io/integration-whatsapp"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { getTranslations } from "next-intl/server"
-import { ensureWhatsappCallsWebhookSubscribed } from "@/features/integration-whatsapp/libs/ensure-calls-webhook-subscribed"
+import { ensureWhatsappAppWebhookFields } from "@/features/integration-whatsapp/libs/ensure-app-webhook-fields"
 import { assertWorkspaceSuperAdmin } from "@/lib/auth/assert-workspace-super-admin"
 import { resolveOwnerForWorkspace } from "@/lib/platform-credential-owner"
 import { callingAdminActionClient } from "@/lib/safe-action"
@@ -60,7 +60,7 @@ export const fixWhatsappCallsSubscriptionAction = callingAdminActionClient
         )
       }
 
-      const result = await ensureWhatsappCallsWebhookSubscribed({
+      const result = await ensureWhatsappAppWebhookFields({
         appId: credential.config.clientId,
         appSecret: credential.config.clientSecret,
         verifyToken: credential.config.verifyToken,

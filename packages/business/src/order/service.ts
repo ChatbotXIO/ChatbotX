@@ -1,16 +1,29 @@
-import { type DatabaseClient, db } from "@chatbotx.io/database/client"
+import {
+  type DatabaseClient,
+  db,
+  isUniqueViolationError,
+} from "@chatbotx.io/database/client"
 import {
   type EcommerceSettings,
+  type ExternalStoreSource,
   getOrderStatusesAllowedBefore,
+  isAwaitingOnlinePayment,
+  isExternalStoreSource,
+  isOnlinePaymentMethod,
   type OrderActorType,
   type OrderShippingAddress,
   type OrderSource,
   type OrderStatus,
+  orderSources,
+  PAYMENT_EXPIRED_CANCEL_REASON,
+  PAYMENT_EXPIRY_MINUTES,
+  type PaymentMethod,
   SHIPPING_TYPES_BY_MODE,
   type ShippingType,
 } from "@chatbotx.io/database/partials"
 import {
   ecommerceSettingsRepository,
+  type OrderInsertValues,
   type OrderItemInsertValues,
   type OrderListInput,
   type OrderUpdateValues,
@@ -49,20 +62,28 @@ import {
 } from "../discount-code/service"
 import { ecommerceSettingsService } from "../ecommerce-settings/service"
 import { ChatbotXException, notFoundException } from "../errors"
+import { externalStoreManagedException } from "../external-store/errors"
 import { logger } from "../logger"
 import { messageService } from "../message/service"
+import {
+  assertDeletableWithPayments,
+  settlePaymentsForCancel,
+} from "../order-payment/settle"
+import { paymentMethodUnavailableException } from "../payment-provider/errors"
 import { workspaceService } from "../workspace/service"
 import {
   buildOrderConfirmationText,
   buildOrderStatusText,
 } from "./customer-messages"
 import {
+  orderAwaitingPaymentException,
   orderBelowMinimumException,
   orderBelowVendorMinimumException,
   orderEmptyException,
   orderInvalidStatusTransitionException,
   orderingUnavailableException,
   orderOutOfStockException,
+  orderPaymentContactRequiredException,
   orderProductUnavailableException,
   orderShippingTypeUnavailableException,
 } from "./errors"
@@ -114,6 +135,12 @@ export type PlaceOrderInput = {
    */
   autoApplyDiscount?: boolean
   /**
+   * How the customer pays; cash on delivery when left out. Stripe and PayPal
+   * must be offered by the store, and the order waits for its payment
+   * (`paymentExpiresAt`) before anything about it is announced.
+   */
+  paymentMethod?: PaymentMethod
+  /**
    * Runs inside the order's transaction once the order is written — the web
    * shop empties the cart here, so a failed order never loses it.
    */
@@ -157,6 +184,27 @@ const ORDER_STATUS_EVENTS: Record<OrderStatus, OrderStatusEventType> = {
   cancelled: "orderCancelled",
 }
 
+/** Most rows one export returns. */
+export const ORDER_EXPORT_LIMIT = 5000
+
+/** The repository's page cap; the export reads that many orders at a time. */
+const ORDER_EXPORT_PAGE_SIZE = 50
+
+/** One mirrored order per store order: the unique key on `externalId`. */
+const EXTERNAL_ORDER_CONSTRAINT = "Order_workspaceId_externalId_key"
+
+/**
+ * Quoted when it holds a comma, quote or line break; a leading `=`, `+`,
+ * `-` or `@` is prefixed with `'` so a spreadsheet never runs it as a formula.
+ */
+const CSV_FORMULA_START = /^[=+\-@]/
+const CSV_NEEDS_QUOTES = /[",\r\n]/
+
+const toCsvCell = (value: string) => {
+  const safe = CSV_FORMULA_START.test(value) ? `'${value}` : value
+  return CSV_NEEDS_QUOTES.test(safe) ? `"${safe.replaceAll('"', '""')}"` : safe
+}
+
 /** An order in one of these still holds the stock it took. */
 const STOCK_HOLDING_STATUSES: readonly OrderStatus[] = [
   "pending",
@@ -185,7 +233,8 @@ const mergeItems = (items: PlaceOrderItem[]): PlaceOrderItem[] => {
 }
 
 const assertOrderable = (product: ProductForOrder | undefined, id: string) => {
-  if (!product?.isActive) {
+  // Draft or unlisted — here, or in the store it is mirrored from.
+  if (product?.status !== "active") {
     throw orderProductUnavailableException(`Product ${id} is not available.`)
   }
   if (product.vendor && !product.vendor.isActive) {
@@ -447,6 +496,57 @@ const goodsAfterDiscounts = (
     currency,
   )
 
+/**
+ * How a new order is paid and where its payment stands when it is placed.
+ * Cash on delivery stays open to a member or an API caller typing an order
+ * in, as before; the web shop, and every online method, need the store to
+ * offer the method. An online order waits `PAYMENT_EXPIRY_MINUTES` for its
+ * money — one that costs nothing has nothing to wait for.
+ */
+const resolvePayment = (input: {
+  method: PaymentMethod | undefined
+  source: OrderSource
+  settings: EcommerceSettings
+  hasContact: boolean
+  total: number
+  now: Date
+}) => {
+  const paymentMethod = input.method ?? "cod"
+  const online = isOnlinePaymentMethod(paymentMethod)
+  const offered = input.settings.payments.paymentMethods.includes(paymentMethod)
+  if (!offered && (online || input.source === "webshop")) {
+    throw paymentMethodUnavailableException(paymentMethod)
+  }
+  if (!online) {
+    return {
+      paymentMethod,
+      paymentStatus: "unpaid" as const,
+      paymentExpiresAt: null,
+      paidAt: null,
+    }
+  }
+  // The provider sends the customer back to their own order page.
+  if (!input.hasContact) {
+    throw orderPaymentContactRequiredException()
+  }
+  if (input.total <= 0) {
+    return {
+      paymentMethod,
+      paymentStatus: "paid" as const,
+      paymentExpiresAt: null,
+      paidAt: input.now,
+    }
+  }
+  return {
+    paymentMethod,
+    paymentStatus: "unpaid" as const,
+    paymentExpiresAt: new Date(
+      input.now.getTime() + PAYMENT_EXPIRY_MINUTES * 60_000,
+    ),
+    paidAt: null,
+  }
+}
+
 /** Stock each product loses, summed over its lines. */
 const quantitiesByProduct = (
   lines: Array<{ stockProductId: string | null; quantity: number }>,
@@ -485,8 +585,90 @@ const allocateStockTaken = (
 }
 
 class OrderService extends BaseService {
+  /**
+   * Orders of the store's current source unless `source` names some: the
+   * Shopify ones while the store mirrors Shopify, all of ours otherwise.
+   */
   async list(input: OrderListInput) {
-    return await orderRepository.list(input)
+    return await orderRepository.list({
+      ...input,
+      source: input.source?.length
+        ? input.source
+        : await this.defaultSources(input.workspaceId),
+    })
+  }
+
+  private async defaultSources(workspaceId: string): Promise<OrderSource[]> {
+    const storeSource = await ecommerceSettingsService.storeSource(workspaceId)
+    return isExternalStoreSource(storeSource)
+      ? [storeSource]
+      : orderSources.options.filter((source) => !isExternalStoreSource(source))
+  }
+
+  /**
+   * The orders `list` would show, newest first, as CSV rows for a
+   * spreadsheet. Capped at `ORDER_EXPORT_LIMIT` rows.
+   */
+  async exportCsv(input: Omit<OrderListInput, "page" | "perPage">) {
+    const { data, truncated } = await this.listForExport(input)
+    const header = [
+      "Order",
+      "Created at",
+      "Status",
+      "Payment",
+      "Fulfillment",
+      "Customer",
+      "Email",
+      "Phone",
+      "Items",
+      "Currency",
+      "Total",
+    ]
+    const rows = data.map((order) => [
+      order.externalName ?? `#${order.number}`,
+      order.createdAt.toISOString(),
+      order.status,
+      order.paymentStatus,
+      order.fulfillmentStatus ?? "",
+      order.customerName ?? "",
+      order.customerEmail ?? "",
+      order.customerPhone ?? "",
+      String(order.itemCount),
+      order.currency,
+      String(order.total),
+    ])
+    const csv = [header, ...rows]
+      .map((row) => row.map(toCsvCell).join(","))
+      .join("\r\n")
+    return { csv, rowCount: rows.length, truncated }
+  }
+
+  /**
+   * Up to `ORDER_EXPORT_LIMIT` orders of `list`, read page by page: a single
+   * page is capped far lower by the repository's pagination.
+   */
+  private async listForExport(input: Omit<OrderListInput, "page" | "perPage">) {
+    const source = input.source?.length
+      ? input.source
+      : await this.defaultSources(input.workspaceId)
+    const data: Awaited<ReturnType<typeof orderRepository.list>>["data"] = []
+    let page = 1
+    let pageCount: number
+    do {
+      const result = await orderRepository.list({
+        ...input,
+        source,
+        page,
+        perPage: ORDER_EXPORT_PAGE_SIZE,
+      })
+      data.push(...result.data)
+      pageCount = result.pageCount
+      page++
+    } while (page <= pageCount && data.length < ORDER_EXPORT_LIMIT)
+    return {
+      data: data.slice(0, ORDER_EXPORT_LIMIT),
+      truncated: data.length > ORDER_EXPORT_LIMIT || page <= pageCount,
+    }
   }
 
   async getDetail(input: { workspaceId: string; orderId: string }) {
@@ -543,6 +725,14 @@ class OrderService extends BaseService {
         }
         assertVendorMinimums(lines, products, currency)
       }
+      const payment = resolvePayment({
+        method: input.paymentMethod,
+        source: input.source,
+        settings,
+        hasContact: Boolean(contact?.contactId),
+        total: totals.total,
+        now: new Date(),
+      })
 
       const stockTakenByProduct = await this.takeStock({
         workspaceId: input.workspaceId,
@@ -566,6 +756,7 @@ class OrderService extends BaseService {
           conversationId: contact?.conversationId ?? null,
           channel: contact?.channel ?? null,
           source: input.source,
+          ...payment,
           currency,
           ...totals,
           discountCodeId: discount?.discountCode.id ?? null,
@@ -712,6 +903,7 @@ class OrderService extends BaseService {
             code: draft.discount.discountCode.code,
             amount: draft.discount.amount,
             discountType: draft.discount.discountCode.discountType,
+            discountValue: draft.discount.discountCode.discountValue,
             automatic: !input.discountCode || discountError !== null,
           }
         : null,
@@ -775,6 +967,7 @@ class OrderService extends BaseService {
         : 0
     const couponContext: DiscountOrderContext = {
       workspaceId: input.workspaceId,
+      source: settings.general.storeSource,
       contactId: input.contactId ?? null,
       lines: lines.map((line) => toCouponLine(line, products, currency)),
       shippingType,
@@ -831,12 +1024,16 @@ class OrderService extends BaseService {
     to: Exclude<OrderStatus, "pending">
     actor: OrderActor
     message?: string | null
+    /** The expiry scan's cancel: the online payment never came. */
+    reason?: "paymentExpired"
   }) {
     const { workspaceId, orderId, to } = input
     const message = input.message?.trim() || null
+    const paymentExpired = input.reason === "paymentExpired"
     const result = await db.transaction(async (tx) => {
       // Locked, so a concurrent move or delete cannot slip in between this
-      // read and the update — the history's `from` is the real one.
+      // read and the update — the history's `from` is the real one. A
+      // payment landing at the same time waits for this lock too.
       const current = await orderRepository.findForUpdate(
         { workspaceId, orderId },
         tx,
@@ -844,14 +1041,40 @@ class OrderService extends BaseService {
       if (!current) {
         throw notFoundException("Order does not exist.")
       }
+      // A mirrored order moves on its own store; it follows along here.
+      if (isExternalStoreSource(current.source)) {
+        throw externalStoreManagedException(current.source)
+      }
+      // Refused before any money moves: a refund for a move that cannot
+      // happen would be one too many.
+      if (!getOrderStatusesAllowedBefore(to).includes(current.status)) {
+        throw orderInvalidStatusTransitionException(current.status, to)
+      }
+      if (to === "accepted" && isAwaitingOnlinePayment(current)) {
+        throw orderAwaitingPaymentException()
+      }
       const values: OrderUpdateValues = {
         [STATUS_TIMESTAMP_COLUMNS[to]]: new Date(),
       }
       if (to === "concluded" && current.paymentMethod === "cod") {
         values.paymentStatus = "paid"
       }
+      let refunded = false
       if (to === "cancelled") {
-        values.cancelReason = message
+        // No money may stay with the store for a cancelled order: a paid
+        // attempt is refunded, an open one closed. A refund that fails
+        // throws, and the order stays as it was. The expiry scan's cancel
+        // stops instead when a page turns out paid: that customer paid in
+        // time, so the order is kept.
+        ;({ refunded } = await settlePaymentsForCancel(current, tx, {
+          keepLatePayment: paymentExpired,
+        }))
+        if (refunded) {
+          values.paymentStatus = "refunded"
+        }
+        values.paymentExpiresAt = null
+        values.cancelReason =
+          message ?? (paymentExpired ? PAYMENT_EXPIRED_CANCEL_REASON : null)
       }
 
       const updated = await orderRepository.transitionStatus(
@@ -890,11 +1113,215 @@ class OrderService extends BaseService {
         },
         tx,
       )
-      return { order: updated, from: current.status }
+      return { order: updated, from: current.status, refunded }
     })
 
-    await this.afterStatusChange({ ...result, message })
+    await this.afterStatusChange({ ...result, message, paymentExpired })
     return await this.getDetail({ workspaceId, orderId })
+  }
+
+  /**
+   * Writes an order mirrored from another store (Shopify), matched by its
+   * `externalId`: created the first time, updated after. Nothing about stock,
+   * discount redemption or payment pages happens here — the other store owns
+   * those. With `announce`, a new order is announced like one placed here
+   * (`newOrder`, `productOrdered`, the confirmation) and a status move fires
+   * its event and status message like any move, so the store's triggers work
+   * the same. Without it (history pulled by a full sync) the order is only
+   * written: nobody is told about orders placed long ago.
+   * Statuses only move forward (`nextStatus`).
+   */
+  async syncExternal(input: {
+    workspaceId: string
+    /** The external store the order is mirrored from. */
+    source: ExternalStoreSource
+    externalId: string
+    announce: boolean
+    values: Omit<
+      OrderInsertValues,
+      "workspaceId" | "number" | "status" | "externalId" | "source"
+    > & {
+      /** When the order was placed on the other store; kept on create only. */
+      createdAt?: Date
+    }
+    items: OrderItemInsertValues[]
+    status: OrderStatus
+    nextStatus: (current: OrderStatus, incoming: OrderStatus) => OrderStatus
+  }): Promise<{ order: OrderModel; created: boolean }> {
+    // Tied to the contact's conversation like an order placed here, so the
+    // order page links to it and status messages reach the customer.
+    const conversation = input.values.contactId
+      ? await this.resolveConversation(input.workspaceId, {
+          contactId: input.values.contactId,
+          contactInboxId: input.values.contactInboxId,
+          conversationId: input.values.conversationId,
+          inboxId: input.values.inboxId,
+          channel: input.values.channel,
+        })
+      : undefined
+    const write = () =>
+      db.transaction(async (tx) => {
+        const current = await orderRepository.findByExternalIdForUpdate(
+          { workspaceId: input.workspaceId, externalId: input.externalId },
+          tx,
+        )
+        const now = new Date()
+
+        const { createdAt, ...mirrored } = input.values
+        const values = {
+          ...mirrored,
+          contactInboxId:
+            conversation?.contactInboxId ?? mirrored.contactInboxId ?? null,
+          conversationId:
+            conversation?.conversationId ?? mirrored.conversationId ?? null,
+          inboxId: conversation?.inboxId ?? mirrored.inboxId ?? null,
+          channel: conversation?.channel ?? mirrored.channel ?? null,
+        }
+        if (!current) {
+          const number = await ecommerceSettingsRepository.nextOrderNumber(
+            input.workspaceId,
+            tx,
+          )
+          const timestamps: OrderUpdateValues =
+            input.status === "pending"
+              ? {}
+              : { [STATUS_TIMESTAMP_COLUMNS[input.status]]: now }
+          const created = await orderRepository.insert(
+            {
+              ...values,
+              ...timestamps,
+              ...(createdAt ? { createdAt } : {}),
+              workspaceId: input.workspaceId,
+              number,
+              source: input.source,
+              externalId: input.externalId,
+              status: input.status,
+            },
+            tx,
+          )
+          if (!created) {
+            throw new Error("Failed to save the mirrored order")
+          }
+          await orderRepository.insertItems(
+            {
+              workspaceId: input.workspaceId,
+              orderId: created.id,
+              items: input.items,
+            },
+            tx,
+          )
+          await orderRepository.insertHistory(
+            {
+              orderId: created.id,
+              workspaceId: input.workspaceId,
+              fromStatus: null,
+              toStatus: created.status,
+              actorType: "system",
+              actorUserId: null,
+              note: null,
+            },
+            tx,
+          )
+          return { order: created, from: null, created: true, wasPaid: false }
+        }
+
+        const next = input.nextStatus(current.status, input.status)
+        const moved = next !== current.status
+        const updated = await orderRepository.update(
+          {
+            workspaceId: input.workspaceId,
+            orderId: current.id,
+            values: {
+              ...values,
+              // The contact found the first time is kept: a later update
+              // carries no shop link to find it again.
+              contactId: current.contactId ?? values.contactId,
+              contactInboxId: current.contactInboxId ?? values.contactInboxId,
+              inboxId: current.inboxId ?? values.inboxId,
+              conversationId: current.conversationId ?? values.conversationId,
+              // First paid, as the order page shows it — not each later sync.
+              paidAt: current.paidAt ?? values.paidAt,
+              channel: current.channel ?? values.channel,
+              status: next,
+              ...(moved && next !== "pending"
+                ? { [STATUS_TIMESTAMP_COLUMNS[next]]: now }
+                : {}),
+            },
+          },
+          tx,
+        )
+        if (!updated) {
+          throw new Error("Failed to update the mirrored order")
+        }
+        await orderRepository.deleteItems(
+          { workspaceId: input.workspaceId, orderId: current.id },
+          tx,
+        )
+        await orderRepository.insertItems(
+          {
+            workspaceId: input.workspaceId,
+            orderId: current.id,
+            items: input.items,
+          },
+          tx,
+        )
+        if (moved) {
+          await orderRepository.insertHistory(
+            {
+              orderId: current.id,
+              workspaceId: input.workspaceId,
+              fromStatus: current.status,
+              toStatus: next,
+              actorType: "system",
+              actorUserId: null,
+              note: null,
+            },
+            tx,
+          )
+        }
+        return {
+          order: updated,
+          from: moved ? current.status : undefined,
+          created: false,
+          wasPaid: current.paymentStatus === "paid",
+        }
+      })
+
+    let result: Awaited<ReturnType<typeof write>>
+    try {
+      result = await write()
+    } catch (error) {
+      if (!isUniqueViolationError(error, EXTERNAL_ORDER_CONSTRAINT)) {
+        throw error
+      }
+      // A row that does not exist yet cannot be locked, so the checkout and
+      // the orders/create webhook can both try to create the same order. The
+      // other one won: write again, which now updates its row.
+      result = await write()
+    }
+
+    const { order } = result
+    if (!input.announce) {
+      await this.invalidateCacheTags(`orders:${order.workspaceId}`)
+      return { order, created: result.created }
+    }
+    if (result.created) {
+      await this.afterStatusChange({
+        order: { ...order, status: "pending" },
+        from: null,
+      })
+      if (order.status !== "pending") {
+        await this.afterStatusChange({ order, from: "pending" })
+      }
+    } else if (result.from) {
+      await this.afterStatusChange({ order, from: result.from })
+    } else {
+      await this.invalidateCacheTags(`orders:${order.workspaceId}`)
+    }
+    if (!result.wasPaid && order.paymentStatus === "paid" && order.contactId) {
+      await this.announceOrderEvents(order, "orderPaid")
+    }
+    return { order, created: result.created }
   }
 
   accept(input: TransitionShortcutInput) {
@@ -924,6 +1351,12 @@ class OrderService extends BaseService {
       if (!current) {
         throw notFoundException("Order does not exist.")
       }
+      if (isExternalStoreSource(current.source)) {
+        throw externalStoreManagedException(current.source)
+      }
+      // A paid online order is cancelled (and refunded), never deleted with
+      // the money kept; an unpaid one's payment pages are closed first.
+      await assertDeletableWithPayments(current, tx)
       // The code before the products, as when placing an order.
       await discountCodeService.release(input, tx)
       if (STOCK_HOLDING_STATUSES.includes(current.status)) {
@@ -936,47 +1369,62 @@ class OrderService extends BaseService {
 
   /**
    * The one place an order's side effects hang off — placed (`from` null) or
-   * moved. A placed order confirms itself to the customer and pushes to the
-   * members who want new orders; a move tells the customer the new status
-   * when the store sends those, or always for a cancel or a completion, with
-   * the member's message riding along.
+   * moved. A placed order is announced (`announcePlaced`) at once, unless it
+   * waits for an online payment: then it is announced when the money comes
+   * in. A move tells the customer the new status when the store sends those,
+   * or always for a cancel or a completion, with the member's message riding
+   * along.
    */
   private async afterStatusChange(input: {
     order: OrderModel
     from: OrderStatus | null
     message?: string | null
+    /** The move refunded the order's online payment. */
+    refunded?: boolean
+    paymentExpired?: boolean
   }) {
     const { order } = input
     await this.invalidateCacheTags(`orders:${order.workspaceId}`)
 
     if (input.from === null) {
-      await notificationQueue
-        .add(
-          NotificationJobAction.notifyNewOrder,
-          {
-            type: NotificationJobAction.notifyNewOrder,
-            data: { workspaceId: order.workspaceId, orderId: order.id },
-          },
-          { jobId: getNewOrderNotificationJobId(order.id) },
-        )
-        .catch((err: unknown) =>
-          logger.warn(
-            { err, orderId: order.id },
-            "[order] could not queue the new-order notification",
-          ),
-        )
+      if (!isAwaitingOnlinePayment(order)) {
+        await this.announcePlaced(order)
+      }
+      return
     }
 
     if (!order.contactId) {
       return
     }
-    await this.announceOrderEvents(order, input.from)
+    // An online order whose money never came was never announced: its cancel
+    // fires nothing — only the customer who left the payment page is told
+    // why it is gone when its time ran out.
+    if (isOnlinePaymentMethod(order.paymentMethod) && !order.paidAt) {
+      if (input.paymentExpired) {
+        try {
+          const language = await resolveCustomerMessageLanguage(order)
+          await this.messageCustomer(
+            order,
+            buildOrderStatusText(
+              { status: order.status, paymentExpired: true },
+              { language },
+            ),
+          )
+        } catch (err) {
+          logger.warn(
+            { err, orderId: order.id },
+            "[order] could not tell the customer the payment expired",
+          )
+        }
+      }
+      return
+    }
+    await this.announceOrderEvents(order, ORDER_STATUS_EVENTS[order.status])
+    if (input.refunded) {
+      await this.announceOrderEvents(order, "orderRefunded")
+    }
     try {
       const settings = await ecommerceSettingsService.get(order.workspaceId)
-      if (input.from === null) {
-        await this.confirmToCustomer(order, settings)
-        return
-      }
       const language = await resolveCustomerMessageLanguage(order)
       const alwaysNotified =
         order.status === "cancelled" || order.status === "concluded"
@@ -988,7 +1436,12 @@ class OrderService extends BaseService {
         await this.messageCustomer(
           order,
           buildOrderStatusText(
-            { status: order.status, message: input.message },
+            {
+              status: order.status,
+              message: input.message,
+              refunded: input.refunded,
+              paymentExpired: input.paymentExpired,
+            },
             { language },
           ),
         )
@@ -999,6 +1452,102 @@ class OrderService extends BaseService {
         "[order] could not tell the customer about the order",
       )
     }
+  }
+
+  /**
+   * Everything a new order sets off, once: the push to the members who want
+   * new orders, the `newOrder` / `productOrdered` events, the confirmation to
+   * the customer and the web shop's checkout flow. A cash order runs it when
+   * placed; an online one when its payment comes in (`markPaid`), so nobody
+   * hears about an order that was never paid. Every part is keyed by the
+   * order, so running it again sends nothing twice.
+   */
+  async announcePlaced(order: OrderModel) {
+    await notificationQueue
+      .add(
+        NotificationJobAction.notifyNewOrder,
+        {
+          type: NotificationJobAction.notifyNewOrder,
+          data: { workspaceId: order.workspaceId, orderId: order.id },
+        },
+        { jobId: getNewOrderNotificationJobId(order.id) },
+      )
+      .catch((err: unknown) =>
+        logger.warn(
+          { err, orderId: order.id },
+          "[order] could not queue the new-order notification",
+        ),
+      )
+
+    if (!order.contactId) {
+      return
+    }
+    await this.announceOrderEvents(order, "newOrder", {
+      productOrdered: true,
+    })
+    try {
+      const settings = await ecommerceSettingsService.get(order.workspaceId)
+      await this.confirmToCustomer(order, settings)
+      await this.startCheckoutFlow(order, settings)
+    } catch (err) {
+      logger.warn(
+        { err, orderId: order.id },
+        "[order] could not tell the customer about the order",
+      )
+    }
+  }
+
+  /**
+   * An online order's payment came in (`orderPaymentService.markPaid`): the
+   * `orderPaid` event, then the order is announced as placed.
+   */
+  async afterPaid(order: OrderModel) {
+    await this.invalidateCacheTags(`orders:${order.workspaceId}`)
+    if (order.contactId) {
+      await this.announceOrderEvents(order, "orderPaid")
+    }
+    await this.announcePlaced(order)
+  }
+
+  /**
+   * "Start a flow" checkout: once a web shop order is placed (paid, when
+   * paid online), the chosen flow runs in the customer's conversation. A
+   * customer without one (the link was opened outside a chat) just gets the
+   * order.
+   */
+  private async startCheckoutFlow(
+    order: OrderModel,
+    settings: EcommerceSettings,
+  ) {
+    const flowId = settings.checkout.checkoutFlowId
+    if (
+      order.source !== "webshop" ||
+      settings.checkout.checkoutMode !== "flow" ||
+      !flowId ||
+      !order.conversationId ||
+      !order.contactInboxId
+    ) {
+      return
+    }
+    await integrationQueue
+      .add(
+        IntegrationJobAction.sendFlow,
+        {
+          type: IntegrationJobAction.sendFlow,
+          data: {
+            conversationId: order.conversationId,
+            contactInboxId: order.contactInboxId,
+            flowId,
+          },
+        },
+        { jobId: `webshop-checkout-flow-${order.id}` },
+      )
+      .catch((err: unknown) =>
+        logger.warn(
+          { err, orderId: order.id },
+          "[order] could not start the checkout flow",
+        ),
+      )
   }
 
   /**
@@ -1072,13 +1621,14 @@ class OrderService extends BaseService {
   }
 
   /**
-   * The trigger and webhook events of a placed or moved order: its status
-   * event, and `productOrdered` once when it is placed. Best effort: the
-   * order already stands.
+   * One trigger and webhook event of an order (its status, `orderPaid`,
+   * `orderRefunded`), and `productOrdered` once when it is placed. Best
+   * effort: the order already stands.
    */
   private async announceOrderEvents(
     order: OrderModel,
-    from: OrderStatus | null,
+    event: OrderStatusEventType,
+    options?: { productOrdered?: boolean },
   ) {
     if (!order.contactId) {
       return
@@ -1128,13 +1678,13 @@ class OrderService extends BaseService {
       }
       const contactInboxId = order.contactInboxId ?? undefined
       await emitOrderStatus(
-        from === null ? "newOrder" : ORDER_STATUS_EVENTS[order.status],
+        event,
         order.workspaceId,
         order.contactId,
         metadata,
         contactInboxId,
       )
-      if (from === null) {
+      if (options?.productOrdered) {
         await emitProductOrdered(
           order.workspaceId,
           order.contactId,
@@ -1212,6 +1762,8 @@ class OrderService extends BaseService {
         conversation,
         contactInbox,
         input: { text },
+        // A system notification: a failed one is removed, not kept.
+        sendFrom: "api",
       })
     } catch (err) {
       logger.warn(

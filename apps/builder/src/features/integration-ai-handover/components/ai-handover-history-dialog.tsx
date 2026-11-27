@@ -59,7 +59,7 @@ function StatusCell({ run }: { run: AiHandoverBulkRunResource }) {
         {t(copy.key)}
       </span>
       {run.pausedUntil && (
-        <span className="text-amber-600 text-xs dark:text-amber-400">
+        <span className="text-amber-700 text-xs dark:text-amber-400">
           {t("aiHandover.bulk.pausedUntil", {
             at: formatter.dateTime(run.pausedUntil, DATE_TIME_FORMAT),
           })}

@@ -34,6 +34,7 @@ const QUICK_REPLY_CARRIER_STEPS_BY_CHANNEL: Partial<
   Record<ChannelType, ReadonlySet<StepType>>
 > = {
   instagram: META_QUICK_REPLY_CARRIER_STEPS,
+  line: MEDIA_QUICK_REPLY_CARRIER_STEPS,
   messenger: META_QUICK_REPLY_CARRIER_STEPS,
   telegram: MEDIA_QUICK_REPLY_CARRIER_STEPS,
   whatsapp: new Set<StepType>([

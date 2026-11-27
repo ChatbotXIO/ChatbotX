@@ -128,7 +128,7 @@ export function CouponTicket({
             ) : null}
           </p>
           {usable ? (
-            <p className="font-medium text-emerald-600 text-xs tabular-nums dark:text-emerald-400">
+            <p className="font-medium text-emerald-700 text-xs tabular-nums dark:text-emerald-400">
               {t("discount.saves", {
                 amount: formatShopMoney(discount.amount, money),
               })}

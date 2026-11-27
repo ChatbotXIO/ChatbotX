@@ -5,12 +5,19 @@ import {
   SdkException,
 } from "@chatbotx.io/sdk"
 import { sha256Hex, verifyHmacSha256Signature } from "@chatbotx.io/utils/crypto"
-import type { WhatsappIdentityChangePayload } from "@chatbotx.io/worker-config"
+import type {
+  IntegrationJobData,
+  WhatsappIdentityChangePayload,
+} from "@chatbotx.io/worker-config"
 import type { OnMessageArgs, OnStatusArgs } from "whatsapp-api-js/emitters"
 import { WhatsAppAPI as Middleware } from "whatsapp-api-js/middleware/next"
 import type { GetParams } from "whatsapp-api-js/types"
 import { z } from "zod"
 import { DEFAULT_API_VERSION } from "../constants"
+import {
+  extractAccountUpdatePayloads,
+  type WhatsappAccountUpdatePayload,
+} from "../lib/account-update"
 import {
   type WhatsappAutomaticEventPayload,
   whatsappAutomaticEventNameSchema,
@@ -35,6 +42,19 @@ import {
 import { readWhatsappReaction } from "../lib/reaction"
 import { resolveSignaturePolicy } from "../lib/signature-policy"
 import {
+  readSmbEchoEdit,
+  readSmbEchoKind,
+  readSmbEchoRevokedMessageId,
+  SMB_MESSAGE_ECHO_PAYLOAD_KIND,
+  SMB_MESSAGE_ECHOES_FIELD,
+  type SmbEchoKind,
+  type SmbMessageEchoContact,
+  type SmbMessageEchoEnvelope,
+  smbEchoKinds,
+  smbMessageEchoContactSchema,
+  smbMessageEchoEnvelopeSchema,
+} from "../lib/smb-message-echo"
+import {
   extractIdentityChangePayloads,
   isSystemMessage,
 } from "../lib/system-messages"
@@ -57,7 +77,10 @@ type WebhookQueue = HandleRequestProps<WhatsappConfig>["queue"]
  *
  *   field: "history"            → value.history[]            (legacy chat history)
  *   field: "smb_app_state_sync" → value.state_sync[]         (contact backfill)
- *   field: "smb_message_echoes" → value.message_echoes[]     (live SMB messages)
+ *
+ * `smb_message_echoes` (messages the business sent from the Business app) is
+ * NOT a Coexistence payload: it is delivered live, see
+ * `extractSmbMessageEchoPayloads`.
  *
  * Legacy `value.smb_app_state_sync` and `value.history` forms (older Meta
  * shapes) are kept as fallbacks so old samples still parse.
@@ -65,7 +88,6 @@ type WebhookQueue = HandleRequestProps<WhatsappConfig>["queue"]
 const COEXIST_FIELD_KEY: Record<string, string> = {
   history: "history",
   smb_app_state_sync: "state_sync",
-  smb_message_echoes: "message_echoes",
 }
 
 export const extractCoexistPayloads = (rawBody: unknown): CoexistPayload[] => {
@@ -83,7 +105,6 @@ export const extractCoexistPayloads = (rawBody: unknown): CoexistPayload[] => {
       const typed = value as {
         history?: unknown
         state_sync?: unknown
-        message_echoes?: unknown
         smb_app_state_sync?: unknown
         metadata?: { phone_number_id?: unknown }
       }
@@ -104,6 +125,225 @@ export const extractCoexistPayloads = (rawBody: unknown): CoexistPayload[] => {
     }
   }
   return payloads
+}
+
+/**
+ * Remove a deterministic-jobId job as soon as it fails: BullMQ keeps failed
+ * jobs under their id, which would swallow the redelivery meant to reprocess
+ * it. Completed jobs stay and keep deduping.
+ */
+const REDELIVERABLE_JOB_OPTIONS = { removeOnFail: true } as const
+
+/**
+ * A message the business sent is not a reply to wait on. Meta will not
+ * redeliver once the webhook answered 200, and storing it may download media
+ * and create the contact, so it rides out a transient failure longer than the
+ * queue default (2 attempts): 5 attempts, 5s exponential backoff.
+ */
+type SmbEchoJobOptions = {
+  removeOnFail: true
+  attempts: number
+  backoff: { type: "exponential"; delay: number }
+}
+
+const SMB_MESSAGE_ECHO_JOB_OPTIONS: SmbEchoJobOptions = {
+  ...REDELIVERABLE_JOB_OPTIONS,
+  attempts: 5,
+  backoff: { type: "exponential", delay: 5000 },
+}
+
+/**
+ * An edit or revoke can arrive while the message it changes is still being
+ * stored by its own job (`retryIfMissing`), so it retries for longer than that
+ * job does: 6 attempts, 5s exponential backoff.
+ */
+const SMB_ECHO_CHANGE_JOB_OPTIONS: SmbEchoJobOptions = {
+  ...REDELIVERABLE_JOB_OPTIONS,
+  attempts: 6,
+  backoff: { type: "exponential", delay: 5000 },
+}
+
+/** One live echo to enqueue: its number, the queue job, and how it dedupes and retries. */
+type SmbMessageEchoJob = {
+  phoneNumberId: string
+  jobId: string
+  queueJob: IntegrationJobData
+  options: SmbEchoJobOptions
+}
+
+type SmbEchoJobContext = {
+  phoneNumberId: string
+  echo: SmbMessageEchoEnvelope
+  contact: SmbMessageEchoContact | undefined
+}
+type SmbEchoJobBuilder = (
+  context: SmbEchoJobContext,
+) => SmbMessageEchoJob | null
+
+/**
+ * The job id is deterministic so a Meta redelivery re-adds nothing; the message
+ * row also dedupes by sourceId.
+ */
+const buildSmbEchoJobId = (
+  kind: SmbEchoKind,
+  { phoneNumberId, echo }: SmbEchoJobContext,
+): string =>
+  `wa-smb-${kind}-${toBullMqSafeIdSegment(phoneNumberId)}-${toBullMqSafeIdSegment(echo.id)}`
+
+const buildSentMessageJob: SmbEchoJobBuilder = (context) => ({
+  phoneNumberId: context.phoneNumberId,
+  jobId: buildSmbEchoJobId(smbEchoKinds.message, context),
+  options: SMB_MESSAGE_ECHO_JOB_OPTIONS,
+  queueJob: {
+    type: "incomingMessageEcho",
+    data: {
+      integrationType: "whatsapp",
+      integrationIdentifier: context.phoneNumberId,
+      payload: {
+        kind: SMB_MESSAGE_ECHO_PAYLOAD_KIND,
+        phoneID: context.phoneNumberId,
+        echo: context.echo,
+        ...(context.contact ? { contact: context.contact } : {}),
+      },
+    },
+  },
+})
+
+/**
+ * The fields every edit or revoke job shares: it changes a message that may
+ * still be stored by its own job, so it waits for it (`retryIfMissing`).
+ */
+const changeJobFields = (context: SmbEchoJobContext) =>
+  ({
+    integrationType: "whatsapp",
+    integrationIdentifier: context.phoneNumberId,
+    retryIfMissing: true,
+  }) as const
+
+const buildChangeJob = (
+  kind: SmbEchoKind,
+  context: SmbEchoJobContext,
+  queueJob: IntegrationJobData,
+): SmbMessageEchoJob => ({
+  phoneNumberId: context.phoneNumberId,
+  jobId: buildSmbEchoJobId(kind, context),
+  options: SMB_ECHO_CHANGE_JOB_OPTIONS,
+  queueJob,
+})
+
+const buildEditJob: SmbEchoJobBuilder = (context) => {
+  const edit = readSmbEchoEdit(context.echo)
+  if (!edit) {
+    logger.info(
+      { phoneNumberId: context.phoneNumberId, echoId: context.echo.id },
+      "Whatsapp SMB edit echo skipped: it names no message or carries no text",
+    )
+    return null
+  }
+  return buildChangeJob(smbEchoKinds.edit, context, {
+    type: "updateIncomingMessage",
+    data: {
+      ...changeJobFields(context),
+      messageId: edit.originalMessageId,
+      newText: edit.newText,
+    },
+  })
+}
+
+const buildRevokeJob: SmbEchoJobBuilder = (context) => {
+  const messageId = readSmbEchoRevokedMessageId(context.echo)
+  if (!messageId) {
+    logger.warn(
+      { phoneNumberId: context.phoneNumberId, echoId: context.echo.id },
+      "Whatsapp SMB revoke echo dropped: it names no message",
+    )
+    return null
+  }
+  return buildChangeJob(smbEchoKinds.revoke, context, {
+    type: "deleteIncomingMessage",
+    data: { ...changeJobFields(context), messageId },
+  })
+}
+
+const SMB_ECHO_JOB_BUILDERS: Record<SmbEchoKind, SmbEchoJobBuilder> = {
+  [smbEchoKinds.message]: buildSentMessageJob,
+  [smbEchoKinds.edit]: buildEditJob,
+  [smbEchoKinds.revoke]: buildRevokeJob,
+}
+
+const readSmbMessageEchoJobs = (
+  value: Record<string, unknown>,
+): SmbMessageEchoJob[] => {
+  const phoneNumberId = asString(
+    (value.metadata as { phone_number_id?: unknown } | undefined)
+      ?.phone_number_id,
+  )
+  const echoes = value.message_echoes
+  if (!(phoneNumberId && Array.isArray(echoes))) {
+    return []
+  }
+  const contacts = Array.isArray(value.contacts) ? value.contacts : undefined
+  const jobs: SmbMessageEchoJob[] = []
+  for (const [index, rawEcho] of echoes.entries()) {
+    const echo = smbMessageEchoEnvelopeSchema.safeParse(rawEcho)
+    if (!echo.success) {
+      logger.warn(
+        { phoneNumberId, issues: echo.error.issues },
+        "Whatsapp SMB message echo dropped: it has no usable id",
+      )
+      continue
+    }
+    const contact = smbMessageEchoContactSchema.safeParse(
+      pickContactsForMessage(
+        contacts,
+        rawEcho,
+        index,
+        SMB_ECHO_IDENTITY_KEYS,
+      )?.[0],
+    )
+    const job = SMB_ECHO_JOB_BUILDERS[readSmbEchoKind(echo.data.type)]({
+      phoneNumberId,
+      echo: echo.data,
+      contact: contact.success ? contact.data : undefined,
+    })
+    if (job) {
+      jobs.push(job)
+    }
+  }
+  return jobs
+}
+
+/**
+ * What the business did in the WhatsApp Business app, one job per echo. A sent
+ * message takes the same path as a Messenger echo (`incomingMessageEcho`); an
+ * edit or a revoke changes the stored message. None of them goes through the
+ * Coexistence history buffer, which would only show them after its delay and
+ * without a realtime event.
+ */
+export const extractSmbMessageEchoPayloads = (
+  rawBody: unknown,
+): SmbMessageEchoJob[] => {
+  const jobs: SmbMessageEchoJob[] = []
+  for (const entry of readWebhookEntries(rawBody)) {
+    const changes = (entry as { changes?: unknown }).changes
+    if (!Array.isArray(changes)) {
+      continue
+    }
+    for (const change of changes) {
+      const { field, value } = (change ?? {}) as {
+        field?: unknown
+        value?: unknown
+      }
+      if (
+        field === SMB_MESSAGE_ECHOES_FIELD &&
+        typeof value === "object" &&
+        value !== null
+      ) {
+        jobs.push(...readSmbMessageEchoJobs(value as Record<string, unknown>))
+      }
+    }
+  }
+  return jobs
 }
 
 type AutomaticEventFieldExtractor = (props: {
@@ -301,6 +541,21 @@ const readStringField = (value: unknown, key: string): string | undefined =>
   ) ?? undefined
 
 /**
+ * The fields that name the customer on a message. A customer's message carries
+ * them as `from` / `from_user_id`; a message the business sent names the
+ * recipient as `to` / `to_user_id`.
+ */
+type ContactIdentityKeys = { phone: string; userId: string }
+const INBOUND_IDENTITY_KEYS: ContactIdentityKeys = {
+  phone: "from",
+  userId: "from_user_id",
+}
+const SMB_ECHO_IDENTITY_KEYS: ContactIdentityKeys = {
+  phone: "to",
+  userId: "to_user_id",
+}
+
+/**
  * The contact for one message of a batch, matched by identity
  * (`wa_id`/`user_id`), not position — Meta does not guarantee index alignment
  * and the SDK prefers `contact.wa_id` over `message.from`. Falls back to the
@@ -311,22 +566,22 @@ const pickContactsForMessage = (
   contacts: unknown[] | undefined,
   message: unknown,
   index: number,
+  identityKeys: ContactIdentityKeys = INBOUND_IDENTITY_KEYS,
 ): unknown[] | undefined => {
   if (!Array.isArray(contacts) || contacts.length === 0) {
     return contacts
   }
-  const from = readStringField(message, "from")
-  const fromUserId = readStringField(message, "from_user_id")
+  const phone = readStringField(message, identityKeys.phone)
+  const userId = readStringField(message, identityKeys.userId)
   const matched = contacts.find(
     (contact) =>
-      (from !== undefined && readStringField(contact, "wa_id") === from) ||
-      (fromUserId !== undefined &&
-        readStringField(contact, "user_id") === fromUserId),
+      (phone !== undefined && readStringField(contact, "wa_id") === phone) ||
+      (userId !== undefined && readStringField(contact, "user_id") === userId),
   )
   if (matched !== undefined) {
     return [matched]
   }
-  if (from === undefined && fromUserId === undefined) {
+  if (phone === undefined && userId === undefined) {
     return contacts.length === 1 ? contacts : contacts.slice(index, index + 1)
   }
   return
@@ -691,14 +946,18 @@ const parsePostPayloads = (
   pinnedPhoneNumberId: string | undefined,
 ): {
   coexistPayloads: CoexistPayload[]
+  smbMessageEchoJobs: SmbMessageEchoJob[]
   automaticEventPayloads: AutomaticEventPayload[]
   callEventPayloads: WhatsappCallEventPayload[]
   identityChangePayloads: WhatsappIdentityChangePayload[]
   messagesChangeBuffers: ArrayBuffer[]
   conversationRoutingPayloads: ConversationRoutingPayload[]
+  accountUpdatePayloads: WhatsappAccountUpdatePayload[]
 } => {
+  let accountUpdatePayloads: WhatsappAccountUpdatePayload[] = []
   let conversationRoutingPayloads: ConversationRoutingPayload[] = []
   let coexistPayloads: CoexistPayload[] = []
+  let smbMessageEchoJobs: SmbMessageEchoJob[] = []
   let automaticEventPayloads: AutomaticEventPayload[] = []
   let callEventPayloads: WhatsappCallEventPayload[] = []
   let identityChangePayloads: WhatsappIdentityChangePayload[] = []
@@ -707,6 +966,15 @@ const parsePostPayloads = (
     const rawBodyText = new TextDecoder().decode(rawBodyBuffer)
     const rawBody = JSON.parse(rawBodyText) as unknown
     coexistPayloads = extractCoexistPayloads(rawBody)
+    smbMessageEchoJobs = extractSmbMessageEchoPayloads(rawBody)
+    try {
+      accountUpdatePayloads = extractAccountUpdatePayloads(rawBody)
+    } catch (err) {
+      logger.error(
+        { err },
+        "Whatsapp account_update extraction failed; webhook will still acknowledge",
+      )
+    }
     try {
       automaticEventPayloads = extractAutomaticEventPayloads(rawBody)
     } catch (err) {
@@ -752,11 +1020,13 @@ const parsePostPayloads = (
 
   return {
     coexistPayloads,
+    smbMessageEchoJobs,
     automaticEventPayloads,
     callEventPayloads,
     identityChangePayloads,
     messagesChangeBuffers,
     conversationRoutingPayloads,
+    accountUpdatePayloads,
   }
 }
 
@@ -877,6 +1147,28 @@ const enqueueCoexistPayloads = async (
       },
       {
         jobId: `wa-coexist-${toBullMqSafeIdSegment(phoneNumberId)}-${payloadHash}`,
+        ...REDELIVERABLE_JOB_OPTIONS,
+      },
+    )
+  }
+}
+
+/**
+ * Lifecycle events arrive once and change connection state, so a failed
+ * enqueue propagates (Meta redelivers) and the deterministic jobId makes the
+ * redelivery a no-op for events that did get queued.
+ */
+const enqueueAccountUpdatePayloads = async (
+  queue: WebhookQueue,
+  accountUpdatePayloads: WhatsappAccountUpdatePayload[],
+): Promise<void> => {
+  for (const payload of accountUpdatePayloads) {
+    const payloadHash = await sha256Hex(JSON.stringify(payload))
+    await queue?.add(
+      "providerAccountEvent",
+      { type: "providerAccountEvent", data: payload },
+      {
+        jobId: `provider-account-whatsapp-${toBullMqSafeIdSegment(payload.account.id)}-${payload.event}-${payload.occurredAt}-${payloadHash}`,
         ...REDELIVERABLE_JOB_OPTIONS,
       },
     )
@@ -1174,13 +1466,6 @@ const enqueueNativeCallCapture = async (
   }
 }
 
-/**
- * Remove a deterministic-jobId job as soon as it fails: BullMQ keeps failed
- * jobs under their id, which would swallow the redelivery meant to reprocess
- * it. Completed jobs stay and keep deduping.
- */
-const REDELIVERABLE_JOB_OPTIONS = { removeOnFail: true } as const
-
 const enqueueIdentityChangePayloads = async (
   queue: WebhookQueue,
   identityChangePayloads: WhatsappIdentityChangePayload[],
@@ -1361,6 +1646,44 @@ const enqueueConversationRoutingPayloads = async (
   }
 }
 
+/**
+ * An edit or a revoke rewrites or hides a message that is already stored, so it
+ * is only trusted from a delivery whose signature was actually verified (like
+ * `account_update`). A manual integration without an app secret is accepted
+ * unsigned for backward compatibility: there a sent message is still stored, but
+ * a change to a stored message is dropped.
+ */
+const keepTrustedSmbMessageEchoJobs = (
+  jobs: SmbMessageEchoJob[],
+  config: WhatsappConfig,
+): SmbMessageEchoJob[] => {
+  if (resolveSignaturePolicy(config) === "enforce") {
+    return jobs
+  }
+  const trusted = jobs.filter(
+    (job) => job.queueJob.type === "incomingMessageEcho",
+  )
+  if (trusted.length < jobs.length) {
+    logger.warn(
+      {
+        integrationId: config.integrationId,
+        dropped: jobs.length - trusted.length,
+      },
+      "Whatsapp SMB edit/revoke echoes ignored: the webhook is not signature-verified",
+    )
+  }
+  return trusted
+}
+
+const enqueueSmbMessageEchoJobs = async (
+  queue: NonNullable<WebhookQueue>,
+  jobs: SmbMessageEchoJob[],
+): Promise<void> => {
+  for (const { queueJob, jobId, options } of jobs) {
+    await queue.add(queueJob.type, queueJob, { ...options, jobId })
+  }
+}
+
 export const webhookHandler = async (
   props: HandleRequestProps<WhatsappConfig>,
 ) => {
@@ -1405,12 +1728,23 @@ export const webhookHandler = async (
       const pinnedPhoneNumberId = resolvePinnedPhoneNumberId(props.config)
       const {
         coexistPayloads,
+        smbMessageEchoJobs,
         automaticEventPayloads,
         callEventPayloads,
         identityChangePayloads,
         messagesChangeBuffers,
         conversationRoutingPayloads,
+        accountUpdatePayloads,
       } = parsePostPayloads(signatureOutcome.rawBodyBuffer, pinnedPhoneNumberId)
+
+      const boundSmbMessageEchoJobs = keepTrustedSmbMessageEchoJobs(
+        dropMismatchedPhoneNumberId(
+          smbMessageEchoJobs,
+          pinnedPhoneNumberId,
+          "smbMessageEcho",
+        ),
+        props.config,
+      )
 
       const boundCoexistPayloads = dropMismatchedPhoneNumberId(
         coexistPayloads,
@@ -1463,6 +1797,16 @@ export const webhookHandler = async (
 
       // Enqueues that propagate (and are jobId-deduped) run first; coexist and
       // automatic events log-and-skip, so they run last.
+      // These change connection state (revoke, release quota), so they are
+      // only trusted from a delivery whose signature was actually verified.
+      if (resolveSignaturePolicy(props.config) === "enforce") {
+        await enqueueAccountUpdatePayloads(props.queue, accountUpdatePayloads)
+      } else if (accountUpdatePayloads.length > 0) {
+        logger.warn(
+          { integrationId: props.config.integrationId },
+          "Whatsapp account_update ignored: the webhook is not signature-verified",
+        )
+      }
       await enqueueCallEventPayloads(props.queue, boundCallEventPayloads)
       await enqueueVoipConnectSignaling(boundCallEventPayloads)
       await enqueueNativeCallCapture(boundCallEventPayloads)
@@ -1477,6 +1821,14 @@ export const webhookHandler = async (
         props.queue,
         conversationRoutingPayloads,
       )
+      if (boundSmbMessageEchoJobs.length > 0) {
+        // Unlike the helpers above this must not ACK without enqueueing: an
+        // echo is never redelivered once Meta got a 200.
+        if (!props.queue) {
+          throw new SdkException("Whatsapp webhook has no queue for SMB echoes")
+        }
+        await enqueueSmbMessageEchoJobs(props.queue, boundSmbMessageEchoJobs)
+      }
       await enqueueCoexistPayloads(props.queue, boundCoexistPayloads)
       await enqueueAutomaticEventPayloads(
         props.queue,

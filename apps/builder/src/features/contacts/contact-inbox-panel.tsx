@@ -8,9 +8,11 @@ import {
 } from "@chatbotx.io/ui/components/ui/accordion"
 import { Button } from "@chatbotx.io/ui/components/ui/button"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
-import { Loader2Icon } from "lucide-react"
+import { Loader2Icon, PlusIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
+import { CreateContactAppointmentDialog } from "@/features/appointment-management/components/inbox/create-contact-appointment-dialog"
+import { ContactPipelinesSection } from "@/features/pipelines/components/inbox/contact-pipelines-section"
 import { orpc } from "@/lib/orpc/query"
 import { useChatStore } from "../chat/store/chat-store-provider"
 import { ContactNotesManage } from "../contact-notes/contact-notes-manage"
@@ -19,11 +21,14 @@ import UpdateContactSequenceField, {
 } from "../contact-sequences/update-contact-sequence-field"
 import { useThreadControl } from "../conversations/hooks/use-thread-control"
 import type { TagResource } from "../tags/schema/resource"
+import { ContactAdReferralsList } from "./components/contact-ad-referrals-list"
 import { ContactAppointmentsList } from "./components/contact-appointments-list"
+import { ContactBroadcastsList } from "./components/contact-broadcasts-list"
 import { ContactThreadControlSection } from "./components/contact-thread-control-section"
 import UpdateContactTagField from "./components/update-contact-tag-field"
 import { ContactDetail } from "./contact-detail"
 import { useAutoRefreshContactProfile } from "./hooks/use-auto-refresh-contact-profile"
+import { contactDisplayName } from "./lib/contact-display-name"
 import type { GetContactResponse } from "./schema/query"
 
 type AccordionModule = {
@@ -69,9 +74,12 @@ const SectionQueryState = ({
 export const ContactInboxPanel = ({
   workspaceId,
   activeConversationId,
+  canOpenBroadcasts = false,
 }: {
   workspaceId: string
   activeConversationId: string | null
+  /** Whether the member may open the Broadcasts section: a broadcast's name links there only then. */
+  canOpenBroadcasts?: boolean
 }) => {
   const t = useTranslations()
 
@@ -179,9 +187,9 @@ export const ContactInboxPanel = ({
     return [
       ...routingModules,
       {
-        keyName: t("coupons.title"),
+        keyName: t("contactAdReferrals.title"),
         content: (
-          <ContactCouponsSection
+          <ContactAdReferralsList
             contactId={contactData.id}
             workspaceId={workspaceId}
           />
@@ -191,6 +199,17 @@ export const ContactInboxPanel = ({
         keyName: t("appointments.title"),
         content: (
           <ContactAppointmentsSection
+            contactId={contactData.id}
+            conversationId={activeConversationId}
+            key={contactData.id}
+            workspaceId={workspaceId}
+          />
+        ),
+      },
+      {
+        keyName: t("coupons.title"),
+        content: (
+          <ContactCouponsSection
             contactId={contactData.id}
             workspaceId={workspaceId}
           />
@@ -214,6 +233,31 @@ export const ContactInboxPanel = ({
         ),
       },
       {
+        keyName: t("fields.pipelines.label"),
+        content: (
+          <ContactPipelinesSection
+            contactId={contactData.id}
+            contactName={
+              contactDisplayName(contactData) ??
+              t("pipelines.board.unknownContact")
+            }
+            key={contactData.id}
+            workspaceId={workspaceId}
+          />
+        ),
+      },
+      {
+        keyName: t("broadcasts.title"),
+        content: (
+          <ContactBroadcastsList
+            canOpenBroadcast={canOpenBroadcasts}
+            contactId={contactData.id}
+            key={contactData.id}
+            workspaceId={workspaceId}
+          />
+        ),
+      },
+      {
         keyName: t("sequences.title"),
         content: (
           <ContactSequencesSection
@@ -231,6 +275,7 @@ export const ContactInboxPanel = ({
     setContactData,
     threadControl,
     activeConversationId,
+    canOpenBroadcasts,
   ])
 
   if (!storeContact) {
@@ -432,10 +477,14 @@ function ContactCouponsSection({
 function ContactAppointmentsSection({
   workspaceId,
   contactId,
+  conversationId,
 }: {
   workspaceId: string
   contactId: string
+  conversationId: string | null
 }) {
+  const t = useTranslations()
+  const [isCreating, setIsCreating] = useState(false)
   const queryOptions =
     orpc.appointmentsAPI.listContactAppointmentsAPI.queryOptions({
       input: { workspaceId, contactId },
@@ -459,5 +508,26 @@ function ContactAppointmentsSection({
     )
   }
 
-  return <ContactAppointmentsList appointments={appointments} />
+  return (
+    <div className="grid gap-3 text-sm">
+      <ContactAppointmentsList appointments={appointments} />
+      <Button
+        className="justify-self-start"
+        onClick={() => setIsCreating(true)}
+        size="sm"
+        type="button"
+        variant="outline"
+      >
+        <PlusIcon className="size-4" />
+        {t("appointments.actions.create")}
+      </Button>
+      <CreateContactAppointmentDialog
+        contactId={contactId}
+        conversationId={conversationId}
+        onOpenChange={setIsCreating}
+        open={isCreating}
+        workspaceId={workspaceId}
+      />
+    </div>
+  )
 }

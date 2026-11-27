@@ -34,6 +34,8 @@ vi.mock("better-auth/plugins", () => ({
   anonymous: () => ({ id: "anonymous" }),
   bearer: () => ({ id: "bearer" }),
   genericOAuth: () => ({ id: "generic-oauth" }),
+  jwt: () => ({ id: "jwt" }),
+  mcp: () => ({ id: "mcp" }),
   magicLink: () => ({ id: "magic-link" }),
   oneTimeToken: () => ({ id: "one-time-token" }),
 }))
@@ -44,6 +46,14 @@ vi.mock("@chatbotx.io/database/client", () => ({
 
 vi.mock("@chatbotx.io/database/schema", () => ({
   accountModel: {},
+  jwkModel: {},
+  oauthAccessTokenModel: {},
+  oauthClientAssertionModel: {},
+  oauthClientModel: {},
+  oauthClientResourceModel: {},
+  oauthConsentModel: {},
+  oauthRefreshTokenModel: {},
+  oauthResourceModel: {},
   sessionModel: {},
   userModel: {},
   verificationModel: {},
@@ -107,9 +117,14 @@ describe("trustedOrigins during next build", () => {
     const origins = await config.trustedOrigins()
 
     expect(origins).toEqual(
-      expect.arrayContaining([BROKER_URL, BUILDER_URL, "chatconnectxapp://"]),
+      expect.arrayContaining([
+        BROKER_URL,
+        BUILDER_URL,
+        "chatconnectxapp://",
+        "chatbotxmobileapp://",
+      ]),
     )
-    expect(origins).toHaveLength(3)
+    expect(origins).toHaveLength(4)
     expect(listActiveDomains).not.toHaveBeenCalled()
   })
 

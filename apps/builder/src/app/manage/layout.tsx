@@ -1,8 +1,4 @@
-import {
-  customDomainService,
-  tenantService,
-  userQuotaService,
-} from "@chatbotx.io/business"
+import { customDomainService } from "@chatbotx.io/business"
 import type { PortalPricingState } from "@chatbotx.io/ui/components/portal/pricing-nav-item"
 import type { PortalSaasFlags } from "@chatbotx.io/ui/config/portal-nav"
 import { buildResellerPricingUrl } from "@chatbotx.io/ui/lib/portal-pricing-url"
@@ -11,7 +7,7 @@ import { PortalManageSidebar } from "@/enterprise/features/manage/components/por
 import { isCloud } from "@/env"
 import { ManageLayout } from "@/features/manage/manage-layout"
 import { enforcePasswordCurrent } from "@/lib/auth/require-password-current"
-import { getCurrentUser } from "@/lib/auth/utils"
+import { getManageAccess } from "./reseller-guard"
 
 async function resolvePricingState(
   tenantId: string,
@@ -28,7 +24,8 @@ export default async function ManageLayoutPage({
 }: {
   children: React.ReactNode
 }) {
-  const user = await getCurrentUser()
+  const { user, tenant, quota, canManageCredentials, canManageReseller } =
+    await getManageAccess()
   if (!user) {
     return notFound()
   }
@@ -43,25 +40,30 @@ export default async function ManageLayoutPage({
     return notFound()
   }
 
-  const tenant = await tenantService.findByOwner(user.id)
-  if (tenant?.status !== "active") {
+  if (!canManageCredentials) {
     return notFound()
   }
 
-  const quota = await userQuotaService.getForUser(user.id)
   const flags: PortalSaasFlags = {
     saasMode: quota?.saasMode ?? false,
     whiteLabel: quota?.whiteLabel ?? false,
   }
   // Pricing lives on the reseller's custom domain — only white-label resellers
   // have one, so resolve it only then (mirrors the enterprise portal sidebar).
-  const pricing = flags.whiteLabel
-    ? await resolvePricingState(tenant.id)
-    : undefined
+  const pricing =
+    tenant && canManageReseller && flags.whiteLabel
+      ? await resolvePricingState(tenant.id)
+      : undefined
 
   return (
     <ManageLayout
-      sidebar={<PortalManageSidebar flags={flags} pricing={pricing} />}
+      sidebar={
+        <PortalManageSidebar
+          canManageReseller={canManageReseller}
+          flags={flags}
+          pricing={pricing}
+        />
+      }
     >
       {children}
     </ManageLayout>
