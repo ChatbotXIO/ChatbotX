@@ -1,6 +1,8 @@
 import { db } from "@chatbotx.io/database/client"
 import { withCache } from "@chatbotx.io/redis"
 
+const NO_ACTIVE_DOMAIN_TTL_SECONDS = 60
+
 // Read-only service. Write and domain-verification operations live in the
 // private enterprise source — they are not available in the OSS edition.
 export const customDomainService = {
@@ -53,18 +55,31 @@ export const customDomainService = {
   /**
    * The tenant's active custom domain, if any. `CustomDomain.tenantId` is
    * unique, so there is at most one — no "first active" picking needed.
+   *
+   * The "no active domain" answer is cached too (wrapped, since withCache
+   * never stores null/undefined). Most non-root tenants have no custom domain,
+   * and this runs per row when public media URLs are built for a list, so an
+   * uncached miss was one `CustomDomain` query per avatar. The miss is kept
+   * for a short TTL only, so a newly verified domain shows up within a minute
+   * even if the (private) write path doesn't invalidate the tenant tag.
    */
-  findActiveByTenantId(tenantId: string) {
-    return withCache(
-      `custom-domain:active-tenant:${tenantId}`,
-      () =>
-        db.query.customDomainModel.findFirst({
-          where: { tenantId, status: "active" },
-        }),
+  async findActiveByTenantId(tenantId: string) {
+    const { domain } = await withCache(
+      `custom-domain:active-tenant:v2:${tenantId}`,
+      async () => ({
+        domain:
+          (await db.query.customDomainModel.findFirst({
+            where: { tenantId, status: "active" },
+          })) ?? null,
+      }),
       {
         tags: [`cd:tenant:${tenantId}`],
-        dynamicTags: (result) => (result ? [`cd:domain:${result.domain}`] : []),
+        ttlFor: (result) =>
+          result.domain ? undefined : NO_ACTIVE_DOMAIN_TTL_SECONDS,
+        dynamicTags: (result) =>
+          result.domain ? [`cd:domain:${result.domain.domain}`] : [],
       },
     )
+    return domain ?? undefined
   },
 }
