@@ -12591,6 +12591,11 @@
       "selected": "Uses AhaChat data"
     }
   },
+  "conversationPages": {
+    "label": "Sivut, joiden kanssa tämä kontakti viestii",
+    "lastMessage": "Viimeisin viesti",
+    "morePages": "+{count} lisää"
+  },
   "conversationParticipants": {
     "joined": "{names} osallistui keskusteluun",
     "replied": "{name} vastasi {time}",

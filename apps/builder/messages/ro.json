@@ -12591,6 +12591,11 @@
       "selected": "Uses AhaChat data"
     }
   },
+  "conversationPages": {
+    "label": "Paginile cu care vorbește acest contact",
+    "lastMessage": "Ultimul mesaj",
+    "morePages": "încă {count}"
+  },
   "conversationParticipants": {
     "joined": "{names} au participat la conversație",
     "replied": "{name} a răspuns {time}",

@@ -12591,6 +12591,11 @@
       "selected": "Uses AhaChat data"
     }
   },
+  "conversationPages": {
+    "label": "此聯絡人溝通的粉絲專頁",
+    "lastMessage": "最後一則訊息",
+    "morePages": "另外 {count} 個"
+  },
   "conversationParticipants": {
     "joined": "{names} 已參與對話",
     "replied": "{name} 回覆於 {time}",

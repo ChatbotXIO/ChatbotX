@@ -42,6 +42,15 @@ export type PublishDestinationList = {
   truncated: boolean
 }
 
+/** The page picture of one inbox, as the Posts destination pickers show it. */
+export type InboxAvatar = {
+  avatar: string | null
+  inboxId: string
+}
+
+/** Inboxes one avatar read resolves: a conversation header asks for a handful. */
+export const MAX_INBOX_AVATARS = 50
+
 const INBOX_PROVIDERS: readonly InboxPublishProvider[] = [
   "facebook",
   "instagram",
@@ -174,6 +183,52 @@ class PublishDestinationService extends BaseService {
         workspaceId: input.workspaceId,
       })
     }
+  }
+
+  /**
+   * The page picture of each inbox that can publish (Facebook, Instagram,
+   * Threads), from the same destination rows and URLs as `list`: the stored
+   * copy, else the on-view route that fetches it. Missing bindings are created
+   * (idempotent, workspace-checked) so a page shows its picture before Posts
+   * was ever opened. Inboxes of another workspace or of a channel without a
+   * page picture are left out; at most `MAX_INBOX_AVATARS` ids are read.
+   */
+  async listInboxAvatars(input: {
+    inboxIds: readonly string[]
+    workspaceId: string
+  }): Promise<InboxAvatar[]> {
+    const { workspaceId } = input
+    const inboxIds = [...new Set(input.inboxIds)].slice(0, MAX_INBOX_AVATARS)
+    if (inboxIds.length === 0) {
+      return []
+    }
+    await publishDestinationRepository.ensureForInboxes({
+      inboxIds,
+      workspaceId,
+    })
+    const rows = await publishDestinationStateRepository.list({
+      inboxIds,
+      workspaceId,
+    })
+    const { storageUrl } = await resolveTenantSettings({ workspaceId })
+    const proxyUrls = await buildDestinationAvatarUrls({
+      publishDestinationIds: rows.filter(needsAvatarProxy).map((row) => row.id),
+      workspaceId,
+    })
+    return rows.flatMap((row) =>
+      row.inboxId
+        ? [
+            {
+              avatar: toPublishDestinationDto(
+                row,
+                storageUrl,
+                proxyUrls.get(row.id) ?? null,
+              ).avatar,
+              inboxId: row.inboxId,
+            },
+          ]
+        : [],
+    )
   }
 
   /** The destinations of the workspace with the state a person sees; never a token. */

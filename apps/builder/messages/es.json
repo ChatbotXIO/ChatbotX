@@ -12591,6 +12591,11 @@
       "selected": "Uses AhaChat data"
     }
   },
+  "conversationPages": {
+    "label": "Páginas con las que habla este contacto",
+    "lastMessage": "Último mensaje",
+    "morePages": "+{count} más"
+  },
   "conversationParticipants": {
     "joined": "{names} han participado en la conversación",
     "replied": "{name} respondió {time}",

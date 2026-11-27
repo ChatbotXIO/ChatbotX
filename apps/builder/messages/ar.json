@@ -12591,6 +12591,11 @@
       "selected": "Uses AhaChat data"
     }
   },
+  "conversationPages": {
+    "label": "الصفحات التي يراسلها جهة الاتصال هذه",
+    "lastMessage": "آخر رسالة",
+    "morePages": "+{count} أخرى"
+  },
   "conversationParticipants": {
     "joined": "{names} شاركوا في المحادثة",
     "replied": "{name} ردّ {time}",
