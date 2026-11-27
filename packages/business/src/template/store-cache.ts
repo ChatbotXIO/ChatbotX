@@ -19,13 +19,21 @@ const SNAPSHOT_ENTRY = "snapshot"
 const TEMPLATE_STORE_NAMESPACE = "template-store"
 
 /** One entry per tenant; the `:v1` suffix is bumped whenever the snapshot shape changes. */
-const snapshotCache = createReadCache<TemplateStoreSnapshotData>({
-  namespace: "template-store:v1",
-  ttlMs: 900_000,
-  maxEntryBytes: 1_048_576,
-  redisTimeoutMs: 150,
-  memory: { maxBytes: 8_388_608 },
-})
+let snapshotCacheInstance:
+  | ReturnType<typeof createReadCache<TemplateStoreSnapshotData>>
+  | undefined
+
+/** Created on first read, so importing this module has no side effects. */
+const getSnapshotCache = () => {
+  snapshotCacheInstance ??= createReadCache<TemplateStoreSnapshotData>({
+    namespace: "template-store:v1",
+    ttlMs: 900_000,
+    maxEntryBytes: 1_048_576,
+    redisTimeoutMs: 150,
+    memory: { maxBytes: 8_388_608 },
+  })
+  return snapshotCacheInstance
+}
 
 export type TemplateStoreSnapshotRead = {
   snapshot: ReadonlyTemplateStoreSnapshot
@@ -162,7 +170,7 @@ export const readTemplateStoreSnapshot = async (
       scopeId: tenantId,
       lowercase: hasKeyword ? likeContains(trimmed) : undefined,
     })
-  const { value: snapshot } = await snapshotCache.getOrLoad({
+  const { value: snapshot } = await getSnapshotCache().getOrLoad({
     scope: tenantId,
     entry: SNAPSHOT_ENTRY,
     version,

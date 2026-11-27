@@ -199,8 +199,8 @@ const publishedTemplateWhere = (tenantId: string) =>
     STATUS_PREDICATES.published(),
   ) as SQL
 
-/** The columns of a published listing, shared by the live query and the snapshot. */
-const publishedRowColumns = {
+/** The columns of a published listing, shared by the live query and the snapshot. A function so no `sql` template is built at import time. */
+const publishedRowColumns = () => ({
   listingId: templateStoreListingModel.id,
   templateId: templateModel.id,
   name: templateModel.name,
@@ -214,7 +214,7 @@ const publishedRowColumns = {
   categoryIds: sql<
     string[]
   >`coalesce(array_agg(${templateStoreListingCategoryModel.categoryId}::text order by ${templateStoreListingCategoryModel.categoryId}) filter (where ${templateStoreListingCategoryModel.categoryId} is not null), '{}')`,
-}
+})
 
 /** Newest first, ties by id. */
 const publishedRowsOrder = () => [
@@ -704,7 +704,7 @@ export const templateStoreRepository = {
     const filterLink = alias(templateStoreListingCategoryModel, "filter_link")
     const keyword = input.keyword?.trim()
     return await tx
-      .select(publishedRowColumns)
+      .select(publishedRowColumns())
       .from(templateStoreListingModel)
       .innerJoin(
         templateModel,
@@ -781,7 +781,7 @@ export const templateStoreRepository = {
           )
         const rows = await tx
           .select({
-            ...publishedRowColumns,
+            ...publishedRowColumns(),
             shareExpiresAtMicros: sql<
               string | null
             >`case when ${templateModel.shareExpiresAt} = 'infinity' then null else floor(extract(epoch from ${templateModel.shareExpiresAt}) * 1000000)::bigint::text end`,
