@@ -12591,6 +12591,11 @@
       "selected": "Uses AhaChat data"
     }
   },
+  "conversationPages": {
+    "label": "Sidor som den här kontakten skriver med",
+    "lastMessage": "Senaste meddelande",
+    "morePages": "+{count} till"
+  },
   "conversationParticipants": {
     "joined": "{names} har deltagit i konversationen",
     "replied": "{name} svarade {time}",

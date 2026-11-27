@@ -27,11 +27,10 @@ import {
   StarIcon,
   UsersRoundIcon,
 } from "lucide-react"
-import { useFormatter, useTranslations } from "next-intl"
+import { useTranslations } from "next-intl"
 import { useMemo } from "react"
 import { contactDisplayName } from "@/features/contacts/lib/contact-display-name"
 import { hasRealContactEmail } from "@/features/contacts/lib/has-real-contact-email"
-import { useNow } from "@/hooks/use-now"
 import { useUserAvatarUrl } from "@/lib/auth/avatar"
 import { useChatStore } from "../chat/store/chat-store-provider"
 import { useAvatarUrl } from "../contacts/utils"
@@ -41,11 +40,11 @@ import { useOptionalWhatsappVoipCallContext } from "../integration-whatsapp/call
 import { useTenantSettings } from "../tenant/tenant-settings-provider"
 import { ConversationLanguageBadge } from "../translation/components/conversation-language-badge"
 import { ConversationParticipantStack } from "./components/conversation-participant-stack"
+import { LastActivityAgo } from "./components/last-activity-ago"
 import { SlaPill } from "./components/sla-pill"
 import { ThreadControlPill } from "./components/thread-control-pill"
 import { useMarkConversationRead } from "./hooks/use-mark-conversation-read"
 import { isConversationUnread } from "./lib/is-conversation-unread"
-import { type ShortTimeUnit, shortTimeAgo } from "./lib/short-time-ago"
 import {
   type CallPreviewKind,
   resolveCallPreviewKind,
@@ -171,41 +170,6 @@ const AD_BADGE_STYLE = {
   borderColor: "#ddd6fe",
   color: "#6d28d9",
 } as const
-
-const AGE_LABEL_KEY: Record<Exclude<ShortTimeUnit, "now">, string> = {
-  minute: "messages.timeAgo.minutes",
-  hour: "messages.timeAgo.hours",
-  day: "messages.timeAgo.days",
-  month: "messages.timeAgo.months",
-  year: "messages.timeAgo.years",
-}
-
-const EXACT_TIME_FORMAT = { dateStyle: "medium", timeStyle: "short" } as const
-
-/**
- * "5m" / "3h" / "8d" for the row's last activity (never seconds — see
- * `shortTimeAgo`), with the exact time as the tooltip, re-rendered on the
- * shared minute tick so the list keeps up with the clock without anyone
- * touching it. Isolated in its own component so the tick re-renders only
- * this text, not the whole row.
- */
-function LastActivityAgo({ at }: { at: Date | string }) {
-  const t = useTranslations()
-  const format = useFormatter()
-  const now = useNow()
-  const date = new Date(at)
-  const age = shortTimeAgo(date, now)
-  return (
-    <time
-      dateTime={date.toISOString()}
-      title={format.dateTime(date, EXACT_TIME_FORMAT)}
-    >
-      {age.unit === "now"
-        ? t("messages.timeAgo.now")
-        : t(AGE_LABEL_KEY[age.unit], { count: age.count })}
-    </time>
-  )
-}
 
 // Compact violet "Ads" pill shown on the conversation row's bottom line when
 // the contact arrived from a Meta ad. The ad title (when present) is surfaced

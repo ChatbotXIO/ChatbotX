@@ -33,6 +33,45 @@ export const updateInboxPublicRequest = z.object({
     ),
 })
 
+// Same cap as the service's `MAX_INBOX_AVATARS` (kept local: this schema is
+// also read by client code, which must not import the business root).
+const MAX_INBOX_AVATAR_IDS = 50
+
+export const listInboxAvatarsPublicRequest = z.object({
+  inboxIds: z
+    // One `?inboxIds=` value arrives as a string; repeated values as an array.
+    .preprocess(
+      (value) => (typeof value === "string" ? [value] : value),
+      z.array(zodBigintAsString()).min(1).max(MAX_INBOX_AVATAR_IDS),
+    )
+    .describe(
+      "Inboxes to read, at most 50. Get ids from `inboxes.list` or from a conversation's `contactInboxes[].inboxId`.",
+    ),
+})
+
+export const listInboxAvatarsRequest = listInboxAvatarsPublicRequest.extend({
+  workspaceId: zodBigintAsString(),
+})
+
+export const inboxAvatarResource = z.object({
+  inboxId: z.string().describe("The inbox the picture belongs to."),
+  avatar: z
+    .string()
+    .nullable()
+    .describe(
+      "URL of the page's profile picture, the same one the Posts pickers show. Null when the page has no picture or it cannot be read now (for example a disconnected inbox).",
+    ),
+})
+export type InboxAvatarResource = z.infer<typeof inboxAvatarResource>
+
+export const listInboxAvatarsResponse = z.object({
+  data: z
+    .array(inboxAvatarResource)
+    .describe(
+      "One entry per requested inbox whose channel has a page picture (Facebook, Instagram, Threads). Inboxes of other channels or of another workspace are left out.",
+    ),
+})
+
 export const publicListInboxResponse = z.object({
   data: z.array(publicInboxResource),
   pageCount: z.number(),

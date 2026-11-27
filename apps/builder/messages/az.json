@@ -12591,6 +12591,11 @@
       "selected": "Uses AhaChat data"
     }
   },
+  "conversationPages": {
+    "label": "Bu kontaktın yazışdığı səhifələr",
+    "lastMessage": "Son mesaj",
+    "morePages": "+{count} daha"
+  },
   "conversationParticipants": {
     "joined": "{names} söhbətdə iştirak etdi",
     "replied": "{name} cavab verdi {time}",

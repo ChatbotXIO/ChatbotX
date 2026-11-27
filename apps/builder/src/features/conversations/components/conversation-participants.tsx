@@ -26,6 +26,9 @@ const REPLY_TIME_FORMAT = {
   minute: "2-digit",
 } as const
 
+/** Avatars shown before the names; the dialog lists everyone. */
+const MAX_INLINE_AVATARS = 3
+
 /**
  * Under the contact name: who replied in this conversation and when the last
  * reply was. Click opens a dialog with the full list, newest first. The row's
@@ -64,6 +67,15 @@ export function ConversationParticipants({
             className="flex min-w-0 max-w-full items-center gap-1 text-start text-muted-foreground text-xs hover:text-foreground"
             type="button"
           >
+            <span aria-hidden className="flex shrink-0 items-center -space-x-1">
+              {participants.slice(0, MAX_INLINE_AVATARS).map((participant) => (
+                <ParticipantAvatar
+                  className="ring-1 ring-background"
+                  key={participant.userId}
+                  participant={participant}
+                />
+              ))}
+            </span>
             <span className="truncate">
               {t("joined", {
                 names: format.list(participants.map(nameOf), {

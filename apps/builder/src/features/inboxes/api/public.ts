@@ -1,4 +1,4 @@
-import { inboxService } from "@chatbotx.io/business"
+import { inboxService, publishDestinationService } from "@chatbotx.io/business"
 import {
   possibleErrorsOnListingResource,
   possibleErrorsOnMutatingResource,
@@ -6,6 +6,8 @@ import {
 import { workspaceTokenAuthAPIForScope } from "@/orpc"
 import { listInboxes } from "../queries"
 import {
+  listInboxAvatarsPublicRequest,
+  listInboxAvatarsResponse,
   publicInboxResource,
   publicListInboxesResponse,
   publicListInboxResponse,
@@ -35,6 +37,25 @@ export const inboxesPublicRouter = {
           workspaceId: context.workspace.id,
         }),
     ),
+
+  listAvatars: workspaceTokenAuthAPI
+    .route({
+      method: "GET",
+      path: "/v1/inboxes/avatars",
+      summary: "List inbox page pictures",
+      description:
+        "Returns the profile picture URL of each given inbox's page (Facebook, Instagram, Threads), the same picture the Inbox conversation header and the Posts pickers show. Use it to show which page a contact talks to. Inboxes of other channels have no page picture and are left out.",
+      tags: ["Channels"],
+    })
+    .input(listInboxAvatarsPublicRequest)
+    .output(listInboxAvatarsResponse)
+    .errors(possibleErrorsOnListingResource)
+    .handler(async ({ context, input }) => ({
+      data: await publishDestinationService.listInboxAvatars({
+        inboxIds: input.inboxIds,
+        workspaceId: context.workspace.id,
+      }),
+    })),
 
   update: workspaceTokenAuthAPI
     .route({

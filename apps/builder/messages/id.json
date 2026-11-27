@@ -12591,6 +12591,11 @@
       "selected": "Uses AhaChat data"
     }
   },
+  "conversationPages": {
+    "label": "Halaman yang dihubungi kontak ini",
+    "lastMessage": "Pesan terakhir",
+    "morePages": "+{count} lainnya"
+  },
   "conversationParticipants": {
     "joined": "{names} telah bergabung dalam percakapan",
     "replied": "{name} membalas {time}",

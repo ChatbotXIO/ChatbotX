@@ -12591,6 +12591,11 @@
       "selected": "Uses AhaChat data"
     }
   },
+  "conversationPages": {
+    "label": "הדפים שאיש הקשר הזה מתכתב איתם",
+    "lastMessage": "הודעה אחרונה",
+    "morePages": "+{count} נוספים"
+  },
   "conversationParticipants": {
     "joined": "{names} השתתפו בשיחה",
     "replied": "{name} השיב {time}",

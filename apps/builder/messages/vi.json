@@ -12591,6 +12591,11 @@
       "selected": "Dùng dữ liệu AhaChat"
     }
   },
+  "conversationPages": {
+    "label": "Các page mà contact này nhắn tin",
+    "lastMessage": "Tin nhắn cuối",
+    "morePages": "+{count} page"
+  },
   "conversationParticipants": {
     "joined": "{names} đã tham gia hội thoại",
     "replied": "{name} đã trả lời {time}",
