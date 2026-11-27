@@ -3,6 +3,7 @@
 import type { SendVideoStepSchema } from "@chatbotx.io/flow-config"
 import { Card, CardContent } from "@chatbotx.io/ui/components/ui/card"
 import { VideoIcon } from "lucide-react"
+import { MediaCaptionViewer } from "../button/media-caption-viewer"
 import { ButtonGroupViewer } from "../button/viewer"
 
 type SendVideoStepViewerProps = {
@@ -21,6 +22,7 @@ const SendVideoStepViewer = (props: SendVideoStepViewerProps) => {
             <span className="flex-1 truncate">{data.url}</span>
           </div>
         )}
+        {data.caption && <MediaCaptionViewer caption={data.caption} />}
         {data.buttons.length > 0 && <ButtonGroupViewer data={data.buttons} />}
       </CardContent>
     </Card>

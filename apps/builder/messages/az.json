@@ -4124,7 +4124,9 @@
     "dataWasSaved": "Məlumat yadda saxlanıldı",
     "media": {
       "stepUnsupportedOnChannel": "Bu kanal bu media növünü göndərə bilmir, buna görə addım həmin kanalda icra edilmir. Addımı çıxarın və ya düyünü bu növü dəstəkləyən kanala keçirin.",
-      "buttonsSkippedOnChannel": "Bu kanal media mesajı ilə düymə göndərə bilmir, buna görə düymələr həmin kanalda göndərilmir. Onları sonrakı mətn addımına yerləşdirin."
+      "buttonsSkippedOnChannel": "Bu kanal media mesajı ilə düymə göndərə bilmir, buna görə düymələr həmin kanalda göndərilmir. Onları sonrakı mətn addımına yerləşdirin.",
+      "captionLabel": "Başlıq",
+      "captionPlaceholder": "Media ilə göndərilən mətn (istəyə bağlı)"
     },
     "whatsappCallButton": {
       "editButtonTitle": "Düyməni redaktə et",
@@ -5371,6 +5373,8 @@
     "unsupportedBlock": "Bu kanal bu bloku dəstəkləmir.",
     "constraintExceeded": "Bu kanalın limiti aşıldı.",
     "mediaButtonsUnsupported": "Bu kanal media mesajı ilə düymə göndərə bilmir. Düymələri çıxarın və ya onları bundan sonrakı mətn addımına köçürün.",
+    "mediaCaptionUnsupported": "Bu kanal media ilə başlıq göndərə bilmir. Başlığı silin və ya mətni ayrıca mətn addımına köçürün.",
+    "mediaCaptionTooLong": "Başlıq bu kanal üçün çox uzundur. Onu qısaldın və ya mətnin bir hissəsini ayrıca mətn addımına köçürün.",
     "voiceCall": "Səsli zəng",
     "voiceCallDuration": "Səsli zəng · {duration}",
     "missedVoiceCall": "Buraxılmış səsli zəng",

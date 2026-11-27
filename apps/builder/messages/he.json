@@ -866,7 +866,9 @@
     "dataWasSaved": "הנתונים נשמרו",
     "media": {
       "stepUnsupportedOnChannel": "ערוץ זה לא יכול לשלוח סוג מדיה זה — השלב ידולג שם. הסר אותו או העבר את הצומת לערוץ שתומך בכך.",
-      "buttonsSkippedOnChannel": "ערוץ זה לא יכול לשלוח כפתורים עם הודעת מדיה — הם ידולגו שם. הוסף אותם לשלב טקסט שלאחר מכן."
+      "buttonsSkippedOnChannel": "ערוץ זה לא יכול לשלוח כפתורים עם הודעת מדיה — הם ידולגו שם. הוסף אותם לשלב טקסט שלאחר מכן.",
+      "captionLabel": "כיתוב",
+      "captionPlaceholder": "טקסט שנשלח עם המדיה (אופציונלי)"
     },
     "whatsappCallButton": {
       "editButtonTitle": "עריכת כפתור",
@@ -2270,6 +2272,8 @@
     "unsupportedBlock": "הערוץ הזה אינו תומך בבלוק הזה.",
     "constraintExceeded": "חרגת ממגבלת הערוץ.",
     "mediaButtonsUnsupported": "ערוץ זה לא יכול לשלוח כפתורים עם הודעת מדיה. הסר את הכפתורים או העבר אותם לשלב טקסט שלאחר שלב זה.",
+    "mediaCaptionUnsupported": "ערוץ זה לא יכול לשלוח כיתוב עם מדיה. הסר את הכיתוב או העבר את הטקסט לשלב טקסט נפרד.",
+    "mediaCaptionTooLong": "הכיתוב ארוך מדי עבור ערוץ זה. קצר אותו או העבר חלק מהטקסט לשלב טקסט נפרד.",
     "voiceCall": "שיחה קולית",
     "voiceCallDuration": "שיחה קולית · {duration}",
     "missedVoiceCall": "שיחה קולית שלא נענתה",

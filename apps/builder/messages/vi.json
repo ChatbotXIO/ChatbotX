@@ -3484,7 +3484,9 @@
     "dataWasSaved": "Đã lưu dữ liệu",
     "media": {
       "stepUnsupportedOnChannel": "Kênh này không gửi được loại media này — bước sẽ bị bỏ qua. Hãy xoá bước, hoặc đổi node sang kênh có hỗ trợ.",
-      "buttonsSkippedOnChannel": "Kênh này không gửi được nút kèm tin nhắn media — các nút sẽ bị bỏ qua. Hãy đặt chúng ở bước văn bản ngay sau."
+      "buttonsSkippedOnChannel": "Kênh này không gửi được nút kèm tin nhắn media — các nút sẽ bị bỏ qua. Hãy đặt chúng ở bước văn bản ngay sau.",
+      "captionLabel": "Chú thích",
+      "captionPlaceholder": "Văn bản gửi kèm phương tiện (không bắt buộc)"
     },
     "whatsappCallButton": {
       "editButtonTitle": "Chỉnh sửa nút",
@@ -4731,6 +4733,8 @@
     "unsupportedBlock": "Kênh này không hỗ trợ khối này.",
     "constraintExceeded": "Đã vượt quá giới hạn của kênh này.",
     "mediaButtonsUnsupported": "Kênh này không gửi được nút kèm tin nhắn media. Hãy xoá các nút, hoặc chuyển sang một bước văn bản ngay sau bước này.",
+    "mediaCaptionUnsupported": "Kênh này không thể gửi chú thích kèm phương tiện. Hãy xóa chú thích hoặc chuyển văn bản sang một bước văn bản riêng.",
+    "mediaCaptionTooLong": "Chú thích quá dài đối với kênh này. Hãy rút ngắn hoặc chuyển một phần văn bản sang một bước văn bản riêng.",
     "voiceCall": "Cuộc gọi thoại",
     "voiceCallDuration": "Cuộc gọi thoại · {duration}",
     "missedVoiceCall": "Cuộc gọi thoại nhỡ",

@@ -39,19 +39,15 @@ export function* convertFlowStepImage(
     ...(props.data.quickReplies ?? []).map(buildCanonicalInlineButton),
   ]
 
-  if (buttons.length === 0) {
-    yield { chat_id: chatId, photo: step.url }
-    return
-  }
-
-  const keyboard = buildInlineKeyboardFromButtons(
-    buttons,
-    MAX_INLINE_BUTTONS_PER_ROW,
-  )
+  const keyboard =
+    buttons.length > 0
+      ? buildInlineKeyboardFromButtons(buttons, MAX_INLINE_BUTTONS_PER_ROW)
+      : undefined
 
   yield {
     chat_id: chatId,
     photo: step.url,
+    caption: step.caption || undefined,
     reply_markup: keyboard,
   }
 }
@@ -82,6 +78,7 @@ export function* convertFlowStepVideo(
   yield {
     chat_id: chatId,
     video: step.url,
+    caption: step.caption || undefined,
     reply_markup: keyboard,
   }
 }

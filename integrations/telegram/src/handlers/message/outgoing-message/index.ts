@@ -1,4 +1,5 @@
 import {
+  resolveMediaCaptionLimit,
   type SendAudioStepSchema,
   type SendCarouselStepSchema,
   type SendFileStepSchema,
@@ -15,6 +16,7 @@ import {
   type MessageHandlers,
   type SendFlowStepProps,
 } from "@chatbotx.io/sdk"
+import { channelTypes } from "@chatbotx.io/utils/channel"
 import {
   sendTelegramAudio,
   sendTelegramDocument,
@@ -42,6 +44,9 @@ import { convertFlowStepCarousel } from "./send-carousel"
 import { convertFlowStepQuickReply } from "./send-quick-reply"
 import { convertFlowStepText } from "./send-text"
 
+const TELEGRAM_CAPTION_MAX =
+  resolveMediaCaptionLimit(channelTypes.enum.telegram) ?? 0
+
 export const handledFlowStepTypes = [
   stepTypes.enum.sendText,
   stepTypes.enum.sendImage,
@@ -65,20 +70,13 @@ export const sendMessage: MessageHandlers<TelegramAuthValue>["sendMessage"] =
 
     try {
       if (message.contentType === contentTypes.enum.text) {
-        if (message.text) {
-          const messageId = await sendTelegramMessage(ctx.auth, {
-            chat_id: contact.sourceId,
-            text: message.text,
-            reply_markup:
-              quickReplies && quickReplies.length > 0
-                ? buildInlineKeyboardFromButtons(
-                    quickReplies.map(buildCanonicalInlineButton),
-                    MAX_INLINE_BUTTONS_PER_ROW,
-                  )
-                : undefined,
-          })
-          messageIds.push(String(messageId))
-        }
+        const keyboard =
+          quickReplies && quickReplies.length > 0
+            ? buildInlineKeyboardFromButtons(
+                quickReplies.map(buildCanonicalInlineButton),
+                MAX_INLINE_BUTTONS_PER_ROW,
+              )
+            : undefined
 
         // Multiple images in one outgoing message batch into a single
         // sendMediaGroup call (same mechanism the sendMultipleImages flow
@@ -91,6 +89,24 @@ export const sendMessage: MessageHandlers<TelegramAuthValue>["sendMessage"] =
         const otherAttachments = attachments.filter(
           (attachment) => attachment.fileType !== "image",
         )
+
+        // One image with text that fits a caption goes out as one captioned
+        // photo. UTF-16 length, as Telegram counts it.
+        const caption =
+          imageAttachments.length === 1 &&
+          message.text &&
+          message.text.length <= TELEGRAM_CAPTION_MAX
+            ? message.text
+            : undefined
+
+        if (message.text && !caption) {
+          const messageId = await sendTelegramMessage(ctx.auth, {
+            chat_id: contact.sourceId,
+            text: message.text,
+            reply_markup: keyboard,
+          })
+          messageIds.push(String(messageId))
+        }
 
         if (imageAttachments.length > 1) {
           const ids = await sendTelegramMediaGroup(ctx.auth, {
@@ -105,6 +121,8 @@ export const sendMessage: MessageHandlers<TelegramAuthValue>["sendMessage"] =
           const messageId = await sendTelegramPhoto(ctx.auth, {
             chat_id: contact.sourceId,
             photo: imageAttachments[0].url as string,
+            caption,
+            reply_markup: caption ? keyboard : undefined,
           })
           messageIds.push(String(messageId))
         }

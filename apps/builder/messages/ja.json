@@ -3285,7 +3285,9 @@
     "dataWasSaved": "データが保存されました",
     "media": {
       "stepUnsupportedOnChannel": "このチャネルではこの種類のメディアを送信できず、ステップはスキップされます。ステップを削除するか、対応しているチャネルにノードを切り替えてください。",
-      "buttonsSkippedOnChannel": "このチャネルではメディアメッセージと一緒にボタンを送信できず、ボタンはスキップされます。代わりに次のテキストステップに配置してください。"
+      "buttonsSkippedOnChannel": "このチャネルではメディアメッセージと一緒にボタンを送信できず、ボタンはスキップされます。代わりに次のテキストステップに配置してください。",
+      "captionLabel": "キャプション",
+      "captionPlaceholder": "メディアと一緒に送信するテキスト（任意）"
     },
     "whatsappCallButton": {
       "editButtonTitle": "ボタンを編集",
@@ -4666,6 +4668,8 @@
     "unsupportedBlock": "このチャネルはこのブロックに対応していません。",
     "constraintExceeded": "このチャネルの上限を超えました。",
     "mediaButtonsUnsupported": "このチャネルではメディアメッセージと一緒にボタンを送信できません。ボタンを削除するか、この後のテキストステップに移動してください。",
+    "mediaCaptionUnsupported": "このチャネルではメディアと一緒にキャプションを送信できません。キャプションを削除するか、テキストを別のテキストステップに移動してください。",
+    "mediaCaptionTooLong": "キャプションがこのチャネルには長すぎます。短くするか、テキストの一部を別のテキストステップに移動してください。",
     "voiceCall": "音声通話",
     "voiceCallDuration": "音声通話 · {duration}",
     "missedVoiceCall": "不在着信",

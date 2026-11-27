@@ -28,6 +28,7 @@ export const sendCardStepSchema = baseStepSchema.extend({
     )
     .optional(),
   image: sendImageStepSchema
+    .omit({ caption: true })
     .extend({
       url: zodUrlWithVariables().or(z.literal("")),
     })

@@ -3442,7 +3442,9 @@
     "dataWasSaved": "Veriler kaydedildi",
     "media": {
       "stepUnsupportedOnChannel": "Bu kanal bu medya türünü gönderemez; adım orada atlanır. Adımı kaldırın veya düğümü bunu destekleyen bir kanala geçirin.",
-      "buttonsSkippedOnChannel": "Bu kanal, düğmeleri bir medya mesajıyla birlikte gönderemez; orada atlanır. Bunun yerine sonraki bir metin adımına ekleyin."
+      "buttonsSkippedOnChannel": "Bu kanal, düğmeleri bir medya mesajıyla birlikte gönderemez; orada atlanır. Bunun yerine sonraki bir metin adımına ekleyin.",
+      "captionLabel": "Açıklama",
+      "captionPlaceholder": "Medyayla birlikte gönderilen metin (isteğe bağlı)"
     },
     "whatsappCallButton": {
       "editButtonTitle": "Butonu Düzenle",
@@ -4689,6 +4691,8 @@
     "unsupportedBlock": "Bu kanal bu bloğu desteklemiyor.",
     "constraintExceeded": "Bu kanalın sınırı aşıldı.",
     "mediaButtonsUnsupported": "Bu kanal, düğmeleri bir medya mesajıyla birlikte gönderemez. Düğmeleri kaldırın veya bundan sonraki bir metin adımına taşıyın.",
+    "mediaCaptionUnsupported": "Bu kanal medyayla birlikte açıklama gönderemez. Açıklamayı kaldırın veya metni ayrı bir metin adımına taşıyın.",
+    "mediaCaptionTooLong": "Açıklama bu kanal için çok uzun. Kısaltın veya metnin bir kısmını ayrı bir metin adımına taşıyın.",
     "voiceCall": "Sesli arama",
     "voiceCallDuration": "Sesli arama · {duration}",
     "missedVoiceCall": "Cevapsız sesli arama",

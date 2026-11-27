@@ -3285,7 +3285,9 @@
     "dataWasSaved": "Tiedot tallennettiin",
     "media": {
       "stepUnsupportedOnChannel": "Tämä kanava ei voi lähettää tätä mediatyyppiä – vaihe ohitetaan siellä. Poista se tai vaihda solmun kanava sellaiseen, joka tukee sitä.",
-      "buttonsSkippedOnChannel": "Tämä kanava ei voi lähettää painikkeita mediaviestin mukana – ne ohitetaan siellä. Sijoita ne sen sijaan seuraavaan tekstivaiheeseen."
+      "buttonsSkippedOnChannel": "Tämä kanava ei voi lähettää painikkeita mediaviestin mukana – ne ohitetaan siellä. Sijoita ne sen sijaan seuraavaan tekstivaiheeseen.",
+      "captionLabel": "Kuvateksti",
+      "captionPlaceholder": "Median mukana lähetettävä teksti (valinnainen)"
     },
     "whatsappCallButton": {
       "editButtonTitle": "Muokkaa painiketta",
@@ -4689,6 +4691,8 @@
     "unsupportedBlock": "Tämä kanava ei tue tätä lohkoa.",
     "constraintExceeded": "Tämän kanavan raja ylittyi.",
     "mediaButtonsUnsupported": "Tämä kanava ei voi lähettää painikkeita mediaviestin mukana. Poista painikkeet tai siirrä ne tämän jälkeiseen tekstivaiheeseen.",
+    "mediaCaptionUnsupported": "Tämä kanava ei voi lähettää kuvatekstiä median mukana. Poista kuvateksti tai siirrä teksti erilliseen tekstivaiheeseen.",
+    "mediaCaptionTooLong": "Kuvateksti on liian pitkä tälle kanavalle. Lyhennä sitä tai siirrä osa tekstistä erilliseen tekstivaiheeseen.",
     "voiceCall": "Äänipuhelu",
     "voiceCallDuration": "Äänipuhelu · {duration}",
     "missedVoiceCall": "Vastaamaton äänipuhelu",

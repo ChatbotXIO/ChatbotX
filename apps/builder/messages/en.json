@@ -4124,7 +4124,9 @@
     "dataWasSaved": "Data was saved",
     "media": {
       "stepUnsupportedOnChannel": "This channel can't send this media type — the step is skipped there. Remove it, or switch the node to a channel that supports it.",
-      "buttonsSkippedOnChannel": "This channel can't send buttons with a media message — they are skipped there. Put them on a following text step instead."
+      "buttonsSkippedOnChannel": "This channel can't send buttons with a media message — they are skipped there. Put them on a following text step instead.",
+      "captionLabel": "Caption",
+      "captionPlaceholder": "Text sent with the media (optional)"
     },
     "whatsappCallButton": {
       "editButtonTitle": "Edit Button",
@@ -5371,6 +5373,8 @@
     "unsupportedBlock": "This channel does not support this block.",
     "constraintExceeded": "This channel limit was exceeded.",
     "mediaButtonsUnsupported": "This channel can't send buttons with a media message. Remove the buttons, or move them to a text step after this one.",
+    "mediaCaptionUnsupported": "This channel can't send a caption with media. Remove the caption, or put the text in a separate text step.",
+    "mediaCaptionTooLong": "The caption is too long for this channel. Shorten it, or move part of the text to a separate text step.",
     "voiceCall": "Voice call",
     "voiceCallDuration": "Voice call · {duration}",
     "missedVoiceCall": "Missed voice call",

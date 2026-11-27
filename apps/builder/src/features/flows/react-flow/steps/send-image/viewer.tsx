@@ -5,6 +5,7 @@ import { Card, CardContent } from "@chatbotx.io/ui/components/ui/card"
 import Image from "next/image"
 import { DynamicImagePreviewPlaceholder } from "@/features/dynamic-images/components/preview-placeholder"
 import { useDynamicImagePreview } from "@/features/dynamic-images/hooks/use-dynamic-image-preview"
+import { MediaCaptionViewer } from "../button/media-caption-viewer"
 import { ButtonGroupViewer } from "../button/viewer"
 
 type SendImageStepViewerProps = {
@@ -30,6 +31,7 @@ const SendImageStepViewer = (props: SendImageStepViewerProps) => {
         ) : (
           hasError && <DynamicImagePreviewPlaceholder hasError={hasError} />
         )}
+        {data.caption && <MediaCaptionViewer caption={data.caption} />}
         {data.buttons.length > 0 && <ButtonGroupViewer data={data.buttons} />}
       </CardContent>
     </Card>

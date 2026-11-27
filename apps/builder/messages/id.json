@@ -3285,7 +3285,9 @@
     "dataWasSaved": "Data telah disimpan",
     "media": {
       "stepUnsupportedOnChannel": "Saluran ini tidak dapat mengirim jenis media ini — langkahnya dilewati di sana. Hapus langkah ini, atau ubah node ke saluran yang mendukungnya.",
-      "buttonsSkippedOnChannel": "Saluran ini tidak dapat mengirim tombol bersama pesan media — tombol dilewati di sana. Letakkan pada langkah teks berikutnya saja."
+      "buttonsSkippedOnChannel": "Saluran ini tidak dapat mengirim tombol bersama pesan media — tombol dilewati di sana. Letakkan pada langkah teks berikutnya saja.",
+      "captionLabel": "Keterangan",
+      "captionPlaceholder": "Teks yang dikirim bersama media (opsional)"
     },
     "whatsappCallButton": {
       "editButtonTitle": "Edit Tombol",
@@ -4689,6 +4691,8 @@
     "unsupportedBlock": "Saluran ini tidak mendukung blok ini.",
     "constraintExceeded": "Batas saluran ini telah terlampaui.",
     "mediaButtonsUnsupported": "Saluran ini tidak dapat mengirim tombol bersama pesan media. Hapus tombolnya, atau pindahkan ke langkah teks setelah langkah ini.",
+    "mediaCaptionUnsupported": "Saluran ini tidak dapat mengirim keterangan bersama media. Hapus keterangan, atau pindahkan teksnya ke langkah teks terpisah.",
+    "mediaCaptionTooLong": "Keterangan terlalu panjang untuk saluran ini. Persingkat, atau pindahkan sebagian teks ke langkah teks terpisah.",
     "voiceCall": "Panggilan suara",
     "voiceCallDuration": "Panggilan suara · {duration}",
     "missedVoiceCall": "Panggilan suara tak terjawab",

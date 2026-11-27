@@ -3285,7 +3285,9 @@
     "dataWasSaved": "Daten wurden gespeichert",
     "media": {
       "stepUnsupportedOnChannel": "Dieser Kanal kann diesen Medientyp nicht senden – der Schritt wird dort übersprungen. Entferne ihn oder stelle den Node auf einen Kanal um, der ihn unterstützt.",
-      "buttonsSkippedOnChannel": "Dieser Kanal kann keine Buttons mit einer Mediennachricht senden – dort werden sie übersprungen. Platziere sie stattdessen in einem folgenden Textschritt."
+      "buttonsSkippedOnChannel": "Dieser Kanal kann keine Buttons mit einer Mediennachricht senden – dort werden sie übersprungen. Platziere sie stattdessen in einem folgenden Textschritt.",
+      "captionLabel": "Bildunterschrift",
+      "captionPlaceholder": "Text, der mit dem Medium gesendet wird (optional)"
     },
     "whatsappCallButton": {
       "editButtonTitle": "Schaltfläche bearbeiten",
@@ -4689,6 +4691,8 @@
     "unsupportedBlock": "Dieser Kanal unterstützt diesen Block nicht.",
     "constraintExceeded": "Das Limit dieses Kanals wurde überschritten.",
     "mediaButtonsUnsupported": "Dieser Kanal kann keine Buttons mit einer Mediennachricht senden. Entferne die Buttons oder verschiebe sie in einen Textschritt nach diesem.",
+    "mediaCaptionUnsupported": "Dieser Kanal kann keine Bildunterschrift mit Medien senden. Entferne die Bildunterschrift oder setze den Text in einen eigenen Textschritt.",
+    "mediaCaptionTooLong": "Die Bildunterschrift ist für diesen Kanal zu lang. Kürze sie oder verschiebe einen Teil des Textes in einen eigenen Textschritt.",
     "voiceCall": "Sprachanruf",
     "voiceCallDuration": "Sprachanruf · {duration}",
     "missedVoiceCall": "Verpasster Sprachanruf",

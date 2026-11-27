@@ -19,6 +19,8 @@ export const flowValidationCodes = {
   sendViewCatalogBodyTooLong: "sendViewCatalogBodyTooLong",
   sendViewCatalogFooterTooLong: "sendViewCatalogFooterTooLong",
   mediaButtonsUnsupported: "mediaButtonsUnsupported",
+  mediaCaptionUnsupported: "mediaCaptionUnsupported",
+  mediaCaptionTooLong: "mediaCaptionTooLong",
   unsupportedBlock: "unsupportedBlock",
   constraintExceeded: "constraintExceeded",
   waTemplateMpmNoProducts: "waTemplateMpmNoProducts",
