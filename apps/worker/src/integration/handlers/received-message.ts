@@ -196,7 +196,14 @@ import {
   tagAdReferralOnlyContact,
 } from "./sync-ad-labels"
 import { recordInboundThreadControl } from "./thread-control-inbound"
-import { resolveTiktokCommenterIdentity } from "./tiktok-comment-identity"
+import { resolveTiktokAuthorship } from "./tiktok-comment-authorship"
+import {
+  findTiktokCommentToRecheck,
+  rememberTiktokOwnerIdentifier,
+  resolveTiktokCommenterIdentity,
+  settleTiktokRecheck,
+  withholdTiktokComment,
+} from "./tiktok-comment-identity"
 
 type ContactInboxTracking = ContactInboxTrackingData
 
@@ -1896,7 +1903,32 @@ export const receiveComment = async (
 ): Promise<void> => {
   setWebhookExecutionContext({ source: "webhook" })
 
-  const { integrationType, integrationIdentifier, commentData, replay } = props
+  const {
+    integrationType,
+    integrationIdentifier,
+    replay,
+    tiktokIdentityRecheck,
+  } = props
+
+  // A re-check exists only for a comment whose automation was withheld, and
+  // runs on the comment as first delivered. Once another run has settled it
+  // (or it was never withheld, as with an old comment the shop un-hides),
+  // there is nothing left to do.
+  let commentData = props.commentData
+  if (tiktokIdentityRecheck) {
+    const withheldComment = await findTiktokCommentToRecheck({
+      integrationIdentifier,
+      commentId: commentData.commentId,
+    })
+    if (!withheldComment) {
+      logger.info(
+        { commentId: commentData.commentId, recheck: tiktokIdentityRecheck },
+        "receiveComment: TikTok re-check no longer needed",
+      )
+      return
+    }
+    commentData = withheldComment
+  }
 
   if (commentData.fromId === integrationIdentifier) {
     logger.info(
@@ -1931,7 +1963,40 @@ export const receiveComment = async (
         })
       : undefined
 
+  // The `fromId === integrationIdentifier` guard above can never fire on
+  // TikTok, because the webhook reports a `unique_identifier` while the
+  // integration is keyed by `open_id`. Authorship comes from the lookup's
+  // `owner` flag, or — when the lookup returns nothing — from the account's
+  // own `unique_identifier`, learned the first time `owner` said so.
+  const tiktokAuthorship =
+    integrationType === "tiktok"
+      ? resolveTiktokAuthorship({
+          identity: tiktokIdentity,
+          fromId: commentData.fromId,
+          ownerUniqueIdentifier: (integrationRow.auth as TiktokAuthValue)
+            .metadata?.ownerUniqueIdentifier,
+        })
+      : undefined
+
   if (tiktokIdentity?.isOwner) {
+    await rememberTiktokOwnerIdentifier({
+      integrationRow: {
+        id: integrationRow.id,
+        auth: integrationRow.auth as TiktokAuthValue,
+      },
+      workspaceId: inbox.workspaceId,
+      uniqueIdentifier: commentData.fromId,
+    })
+  }
+
+  if (tiktokIdentityRecheck && tiktokAuthorship !== "unknown") {
+    await settleTiktokRecheck({
+      integrationIdentifier,
+      commentId: commentData.commentId,
+    })
+  }
+
+  if (tiktokAuthorship === "owner") {
     logger.info(
       { commentId: commentData.commentId, integrationIdentifier },
       "receiveComment: skipping self-authored comment",
@@ -1939,18 +2004,13 @@ export const receiveComment = async (
     return
   }
 
-  // `owner` is the ONLY self-authorship signal TikTok has — the
-  // `fromId === integrationIdentifier` guard above can never fire on this
-  // channel, because the webhook reports a `unique_identifier` while the
-  // integration is keyed by `open_id`. So an unresolved identity means "might
-  // be our own comment", not "an ordinary commenter whose name we missed".
-  //
-  // The comment is still ingested (a missing display name beats a missing
-  // comment), but the automation is withheld further down. Failing open here
-  // would let the account reply to itself — and on TikTok that reply is not
-  // idempotent, so the loop it opens cannot be undone by a retry policy.
-  const tiktokAuthorshipUnknown =
-    integrationType === "tiktok" && !tiktokIdentity
+  // An unresolved author means "might be our own comment", not "an ordinary
+  // commenter whose name we missed". The comment is still ingested (a missing
+  // display name beats a missing comment), but the automation is withheld
+  // further down and re-checked later. Failing open here would let the
+  // account reply to itself — and on TikTok that reply is not idempotent, so
+  // the loop it opens cannot be undone by a retry policy.
+  const tiktokAuthorshipUnknown = tiktokAuthorship === "unknown"
 
   // `from.id` is the commenter's ID (PSID for Messenger, Instagram User ID for Instagram);
   // `fromName` is the fallback firstName.
@@ -2263,6 +2323,11 @@ export const receiveComment = async (
       { commentId: commentData.commentId, integrationIdentifier },
       "receiveComment: TikTok commenter identity unresolved, withholding automation",
     )
+    // A missed-comment replay is a one-off run of one automation; it is not
+    // re-checked on its own.
+    if (!replay) {
+      await withholdTiktokComment({ ...props, commentData })
+    }
     return
   }
 

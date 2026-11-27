@@ -1,9 +1,161 @@
-import { buildContext } from "@chatbotx.io/business"
+import { buildContext, tiktokIntegrationService } from "@chatbotx.io/business"
 import {
   integration as integrationTiktok,
   type TiktokAuthValue,
 } from "@chatbotx.io/integration-tiktok"
+import {
+  IntegrationJobAction,
+  type IntegrationJobReceiveComment,
+  integrationQueue,
+} from "@chatbotx.io/worker-config"
 import { logger } from "../../lib/logger"
+
+/**
+ * When a withheld comment is looked up again, counted from the previous try.
+ * A comment can be missing from `business/comment/list/` for a moment right
+ * after its webhook (on photo posts TikTok reports `set_to_public` about a
+ * second later, #1715), so the first re-check comes quickly and the last one
+ * a few minutes in.
+ */
+export const TIKTOK_IDENTITY_RECHECK_DELAYS_MS = [5000, 30_000, 120_000]
+
+/**
+ * Records the account's own `unique_identifier` the first time a lookup proves
+ * a comment is the account's (and again if it ever changes). Best effort: a
+ * failure only delays learning it until the next own comment.
+ */
+export async function rememberTiktokOwnerIdentifier(props: {
+  integrationRow: { id: string; auth: TiktokAuthValue }
+  workspaceId: string
+  uniqueIdentifier: string
+}): Promise<void> {
+  if (
+    props.integrationRow.auth.metadata?.ownerUniqueIdentifier ===
+    props.uniqueIdentifier
+  ) {
+    return
+  }
+  try {
+    await tiktokIntegrationService.rememberOwnerUniqueIdentifier({
+      id: props.integrationRow.id,
+      workspaceId: props.workspaceId,
+      uniqueIdentifier: props.uniqueIdentifier,
+    })
+  } catch (err) {
+    logger.warn(
+      { err, integrationId: props.integrationRow.id },
+      "rememberTiktokOwnerIdentifier: unable to store the account's unique_identifier",
+    )
+  }
+}
+
+type TiktokCommentData = IntegrationJobReceiveComment["data"]["commentData"]
+
+/**
+ * The comment a re-check should run on: the one stored when its automation
+ * was withheld, or `undefined` when there is nothing left to re-check — it
+ * was never withheld (an old comment the shop un-hides), or an earlier run
+ * already settled it. The stored copy is used rather than the re-check's own
+ * payload because `set_to_public` may not carry the comment text.
+ */
+export async function findTiktokCommentToRecheck(props: {
+  integrationIdentifier: string
+  commentId: string
+}): Promise<TiktokCommentData | undefined> {
+  try {
+    const comment =
+      await tiktokIntegrationService.findCommentIdentityWithheld<TiktokCommentData>(
+        props,
+      )
+    return comment ?? undefined
+  } catch (err) {
+    logger.warn(
+      { err, commentId: props.commentId },
+      "findTiktokCommentToRecheck: unable to read the withheld mark, skipping the re-check",
+    )
+    return
+  }
+}
+
+/** Ends the re-checks of a comment whose authorship is now settled. */
+export async function settleTiktokRecheck(props: {
+  integrationIdentifier: string
+  commentId: string
+}): Promise<void> {
+  try {
+    await tiktokIntegrationService.clearCommentIdentityWithheld(props)
+  } catch (err) {
+    // The re-checks still pending will run, find the comment already stored
+    // and stop at the automation's jobId — wasted work, not a second reply.
+    logger.warn(
+      { err, commentId: props.commentId },
+      "settleTiktokRecheck: unable to clear the withheld mark",
+    )
+  }
+}
+
+/**
+ * Called when a comment's automation is withheld because its author is
+ * unknown: marks the comment as withheld and schedules the next re-check of
+ * the whole `incomingComment` job.
+ *
+ * Re-running the job is safe: the comment is already stored (it is not saved
+ * or counted twice), post-comment triggers are claimed per comment, and the
+ * automation job is keyed by comment id. A `set_to_public` run does not start
+ * a new chain — the chain the first delivery started is still going.
+ */
+export async function withholdTiktokComment(
+  props: IntegrationJobReceiveComment["data"],
+): Promise<void> {
+  const { integrationIdentifier, commentData, tiktokIdentityRecheck } = props
+  const commentId = commentData.commentId
+
+  try {
+    await tiktokIntegrationService.markCommentIdentityWithheld({
+      integrationIdentifier,
+      commentId,
+      comment: commentData,
+    })
+  } catch (err) {
+    // A re-check without the mark would stop at once, so none is scheduled.
+    logger.warn(
+      { err, commentId },
+      "withholdTiktokComment: unable to mark the comment, no re-check scheduled",
+    )
+    return
+  }
+
+  if (tiktokIdentityRecheck?.source === "visibility") {
+    return
+  }
+
+  const attempt = (tiktokIdentityRecheck?.attempt ?? 0) + 1
+  const delay = TIKTOK_IDENTITY_RECHECK_DELAYS_MS[attempt - 1]
+  if (delay === undefined) {
+    logger.warn(
+      { commentId, attempts: TIKTOK_IDENTITY_RECHECK_DELAYS_MS.length },
+      "withholdTiktokComment: commenter still unknown after every re-check, automation stays withheld",
+    )
+    return
+  }
+
+  await integrationQueue.add(
+    IntegrationJobAction.incomingComment,
+    {
+      type: IntegrationJobAction.incomingComment,
+      data: {
+        ...props,
+        tiktokIdentityRecheck: { source: "retry", attempt },
+      },
+    },
+    {
+      delay,
+      // One job per comment and attempt: a redelivered webhook that is
+      // withheld again does not start a second chain.
+      jobId: `tiktok-identity-recheck-${commentId}-${attempt}`,
+    },
+  )
+}
 
 export type TiktokCommenterIdentity = {
   displayName?: string

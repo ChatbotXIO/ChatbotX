@@ -858,15 +858,32 @@ fails the comment is processed immediately.
   after a partial failure posts a SECOND visible reply with no id to resume from. It is an
   allowlist, so a new channel keeps the default retry policy — only add one there once you
   have checked the channel deduplicates the reply itself.
-- **TikTok's `owner` flag is the only self-authorship check that channel has.**
+- **TikTok's `owner` flag is the main self-authorship check that channel has.**
   `receiveComment`'s `fromId === integrationIdentifier` guard cannot fire on TikTok: the
-  webhook reports a `unique_identifier` while the integration is keyed by `open_id`. So
-  when `resolveTiktokCommenterIdentity` cannot answer — the enrichment call failed, or the
-  comment is absent from the response — the result means "authorship unknown", not
-  "ordinary commenter". The comment is still ingested (a missing display name must not cost
-  the inbox a comment) but the automation is withheld, because answering a comment that may
-  be the business's own would have the account replying to itself on a channel whose reply
-  no retry policy can retract.
+  webhook reports a `unique_identifier` while the integration is keyed by `open_id`. Every
+  time a lookup answers `owner: true`, that comment's `unique_identifier` is stored on
+  `auth.metadata.ownerUniqueIdentifier` (a single-field `jsonb_set`, never a whole-`auth`
+  write). When `resolveTiktokCommenterIdentity` cannot answer — the enrichment call failed,
+  or the comment is absent from the response — `resolveTiktokAuthorship`
+  (`tiktok-comment-authorship.ts`) falls back to that stored id: a different commenter id is
+  someone else, the same id is the account itself. With no stored id yet, the result means
+  "authorship unknown", not "ordinary commenter". The comment is still ingested (a missing
+  display name must not cost the inbox a comment) but the automation is withheld, because
+  answering a comment that may be the business's own would have the account replying to
+  itself on a channel whose reply no retry policy can retract.
+- **A withheld TikTok comment is re-checked, never dropped on the first miss (#1715).**
+  On a photo post the comment can be missing from `business/comment/list/` for a moment,
+  and TikTok reports `set_to_public` for it about a second later. `withholdTiktokComment`
+  stores the comment as first delivered in Redis
+  (`tiktok:comment-identity-withheld:{openId}:{commentId}`, one hour) and re-enqueues the
+  whole `incomingComment` job after 5 s, 30 s and 2 min (`TIKTOK_IDENTITY_RECHECK_DELAYS_MS`,
+  `tiktokIdentityRecheck: { source: "retry", attempt }`). The webhook sends `set_to_public`
+  on as `tiktokIdentityRecheck: { source: "visibility" }`. A re-check runs only while the
+  Redis entry exists, and on the stored comment, not its own payload (`set_to_public` may
+  not carry the text) — so an old comment the shop un-hides is never answered. Re-running
+  the job is safe: the comment is not stored twice, post-comment triggers are claimed per
+  comment, and the automation job is keyed by comment id. The first run that settles the
+  author clears the entry, and the re-checks still pending stop early.
 - **An AI reply records its analytics event in two places.** The dispatcher opens the row
   with `replyText: null` (the text does not exist yet); `processCommentAIReply` settles it
   with the generated text, or marks it `failed` with the bail-out reason. Every

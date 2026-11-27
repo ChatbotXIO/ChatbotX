@@ -275,6 +275,16 @@ export type IntegrationJobReceiveComment = {
      * runs on it. Absent on every webhook-driven comment.
      */
     replay?: { automationId: string }
+    /**
+     * TikTok only: this run looks again at a comment whose commenter lookup
+     * came back empty, so its automation was withheld. `retry` is one of the
+     * scheduled follow-ups (`attempt` counts from 1); `visibility` is TikTok's
+     * `set_to_public` for that comment. Either one stops early unless the
+     * comment is still marked as withheld. Absent on a first delivery.
+     */
+    tiktokIdentityRecheck?:
+      | { source: "retry"; attempt: number }
+      | { source: "visibility" }
   }
 }
 

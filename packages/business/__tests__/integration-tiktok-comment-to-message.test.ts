@@ -14,8 +14,19 @@ const mocks = vi.hoisted(() => {
     updateTiktokDirectReplyStatus: vi.fn(),
     getTiktokDirectReplyStatus: vi.fn(),
     auditRecord: vi.fn(),
+    storePut: vi.fn(),
+    storeGet: vi.fn(),
+    storeDelete: vi.fn(),
   }
 })
+
+vi.mock("@chatbotx.io/redis", () => ({
+  distributedStore: {
+    put: mocks.storePut,
+    get: mocks.storeGet,
+    delete: mocks.storeDelete,
+  },
+}))
 
 vi.mock("@chatbotx.io/database/client", () => ({
   db: { update: mocks.update },
@@ -188,5 +199,49 @@ describe("tiktokIntegrationService.refreshCommentToMessage", () => {
       }),
     ).resolves.toBeNull()
     expect(mocks.update).not.toHaveBeenCalled()
+  })
+})
+
+// #1715: lets the worker tell the account's own comments apart when TikTok's
+// comment lookup returns nothing.
+describe("tiktokIntegrationService.rememberOwnerUniqueIdentifier", () => {
+  test("writes only metadata.ownerUniqueIdentifier, never the tokens", async () => {
+    await tiktokIntegrationService.rememberOwnerUniqueIdentifier({
+      id: "tt-1",
+      workspaceId: "ws-1",
+      uniqueIdentifier: "+Owner/Unique1",
+    })
+
+    const [setArg] = mocks.updateSet.mock.calls[0] as unknown as [
+      { auth: { sql: string; values: unknown[] } },
+    ]
+    expect(setArg.auth.sql).toContain("jsonb_set")
+    expect(setArg.auth.sql).toContain("ownerUniqueIdentifier")
+    expect(setArg.auth.values).toContain("+Owner/Unique1")
+    expect(JSON.stringify(setArg)).not.toContain("token-1")
+  })
+})
+
+describe("tiktokIntegrationService withheld comment marks", () => {
+  const props = { integrationIdentifier: "open-1", commentId: "c-1" }
+  const KEY = "tiktok:comment-identity-withheld:open-1:c-1"
+
+  test("stores the comment for an hour, reads it back and clears it", async () => {
+    const comment = { commentId: "c-1", message: "bac" }
+
+    await tiktokIntegrationService.markCommentIdentityWithheld({
+      ...props,
+      comment,
+    })
+    expect(mocks.storePut).toHaveBeenCalledWith(KEY, comment, 3600)
+
+    mocks.storeGet.mockResolvedValueOnce(comment)
+    await expect(
+      tiktokIntegrationService.findCommentIdentityWithheld(props),
+    ).resolves.toEqual(comment)
+    expect(mocks.storeGet).toHaveBeenCalledWith(KEY)
+
+    await tiktokIntegrationService.clearCommentIdentityWithheld(props)
+    expect(mocks.storeDelete).toHaveBeenCalledWith(KEY)
   })
 })

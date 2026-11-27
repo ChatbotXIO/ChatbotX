@@ -678,8 +678,17 @@ vi.mock("../src/services/integrations", () => ({
 }))
 
 const mockResolveTiktokCommenterIdentity = vi.fn()
+const mockWithholdTiktokComment = vi.fn()
+const mockFindTiktokCommentToRecheck = vi.fn()
+const mockSettleTiktokRecheck = vi.fn()
+const mockRememberTiktokOwnerIdentifier = vi.fn()
+// `resolveTiktokAuthorship` lives in its own module and stays real.
 vi.mock("../src/integration/handlers/tiktok-comment-identity", () => ({
   resolveTiktokCommenterIdentity: mockResolveTiktokCommenterIdentity,
+  withholdTiktokComment: mockWithholdTiktokComment,
+  findTiktokCommentToRecheck: mockFindTiktokCommentToRecheck,
+  settleTiktokRecheck: mockSettleTiktokRecheck,
+  rememberTiktokOwnerIdentifier: mockRememberTiktokOwnerIdentifier,
 }))
 
 const mockFetchThreadsCommentAttachments = vi.fn().mockResolvedValue([])
@@ -6749,6 +6758,178 @@ describe("contact source taxonomy", () => {
     // The comment itself still reaches the inbox — a missing display name must
     // not cost the workspace a comment.
     expect(mockCreateMessageRepository).toHaveBeenCalled()
+    // …and it is looked at again later (#1715).
+    expect(mockWithholdTiktokComment).toHaveBeenCalledWith(
+      expect.objectContaining({
+        integrationIdentifier: "inbox-1",
+        commentData: expect.objectContaining({ commentId: "comment-tiktok-2" }),
+      }),
+    )
+  })
+
+  // #1715: once the account's own unique_identifier is known, a lookup that
+  // misses (photo posts) no longer withholds the reply.
+  test("answers a TikTok comment whose lookup missed when the commenter is not the remembered account", async () => {
+    vi.mocked(
+      integrationService.identifyInboxAndIntegrationAuthFromIdentifier,
+    ).mockResolvedValue({
+      inbox: { ...fakeInbox, channel: "tiktok" },
+      integrationRow: {
+        ...fakeIntegrationRow,
+        auth: { metadata: { ownerUniqueIdentifier: "+Owner/Unique1" } },
+      },
+    } as never)
+    mockResolveTiktokCommenterIdentity.mockResolvedValue(undefined)
+
+    await receiveComment({
+      integrationType: "tiktok",
+      integrationIdentifier: "inbox-1",
+      commentData: {
+        commentId: "comment-tiktok-photo-1",
+        fromId: "+ABc1D2/E0fGhijkl",
+        message: "bac",
+        postId: "photo-post-1",
+        createdTime: 1_783_674_105,
+      },
+    })
+
+    expect(mockWithholdTiktokComment).not.toHaveBeenCalled()
+    expect(mockIntegrationQueueAdd).toHaveBeenCalledWith(
+      "processCommentAutomation",
+      expect.anything(),
+      expect.objectContaining({ jobId: "comment-auto-comment-tiktok-photo-1" }),
+    )
+  })
+
+  test("skips a TikTok comment whose lookup missed when it is the remembered account's own", async () => {
+    vi.mocked(
+      integrationService.identifyInboxAndIntegrationAuthFromIdentifier,
+    ).mockResolvedValue({
+      inbox: { ...fakeInbox, channel: "tiktok" },
+      integrationRow: {
+        ...fakeIntegrationRow,
+        auth: { metadata: { ownerUniqueIdentifier: "+Owner/Unique1" } },
+      },
+    } as never)
+    mockResolveTiktokCommenterIdentity.mockResolvedValue(undefined)
+
+    await receiveComment({
+      integrationType: "tiktok",
+      integrationIdentifier: "inbox-1",
+      commentData: {
+        commentId: "comment-tiktok-own-1",
+        fromId: "+Owner/Unique1",
+        message: "thanks!",
+        postId: "photo-post-1",
+        createdTime: 1_783_674_105,
+      },
+    })
+
+    expect(mockCreateMessageRepository).not.toHaveBeenCalled()
+    expect(mockIntegrationQueueAdd).not.toHaveBeenCalledWith(
+      "processCommentAutomation",
+      expect.anything(),
+      expect.anything(),
+    )
+  })
+
+  test("remembers the account's unique_identifier when the lookup says the comment is its own", async () => {
+    vi.mocked(
+      integrationService.identifyInboxAndIntegrationAuthFromIdentifier,
+    ).mockResolvedValue({
+      inbox: { ...fakeInbox, channel: "tiktok" },
+      integrationRow: fakeIntegrationRow,
+    } as never)
+    mockResolveTiktokCommenterIdentity.mockResolvedValue({ isOwner: true })
+
+    await receiveComment({
+      integrationType: "tiktok",
+      integrationIdentifier: "inbox-1",
+      commentData: {
+        commentId: "comment-tiktok-own-2",
+        fromId: "+Owner/Unique1",
+        message: "thanks!",
+        postId: "video-1",
+        createdTime: 1_783_674_105,
+      },
+    })
+
+    expect(mockRememberTiktokOwnerIdentifier).toHaveBeenCalledWith({
+      integrationRow: { id: "integration-1", auth: {} },
+      workspaceId: "ws-1",
+      uniqueIdentifier: "+Owner/Unique1",
+    })
+    expect(mockCreateMessageRepository).not.toHaveBeenCalled()
+  })
+
+  test("a TikTok re-check stops when the comment is no longer withheld", async () => {
+    mockFindTiktokCommentToRecheck.mockResolvedValue(undefined)
+
+    await receiveComment({
+      integrationType: "tiktok",
+      integrationIdentifier: "inbox-1",
+      commentData: {
+        commentId: "comment-tiktok-3",
+        fromId: "+ABc1D2/E0fGhijkl",
+        postId: "video-1",
+        createdTime: 1_783_674_105,
+      },
+      tiktokIdentityRecheck: { source: "visibility" },
+    })
+
+    expect(
+      integrationService.identifyInboxAndIntegrationAuthFromIdentifier,
+    ).not.toHaveBeenCalled()
+    expect(mockResolveTiktokCommenterIdentity).not.toHaveBeenCalled()
+  })
+
+  // `set_to_public` may arrive without the text; the automation matches on the
+  // text stored when the comment was first withheld.
+  test("a TikTok re-check runs on the stored comment and settles it once the commenter is known", async () => {
+    vi.mocked(
+      integrationService.identifyInboxAndIntegrationAuthFromIdentifier,
+    ).mockResolvedValue({
+      inbox: { ...fakeInbox, channel: "tiktok" },
+      integrationRow: fakeIntegrationRow,
+    } as never)
+    mockFindTiktokCommentToRecheck.mockResolvedValue({
+      commentId: "comment-tiktok-4",
+      fromId: "+ABc1D2/E0fGhijkl",
+      message: "bac",
+      postId: "photo-post-1",
+      createdTime: 1_783_674_105,
+    })
+    mockResolveTiktokCommenterIdentity.mockResolvedValue({
+      displayName: "Commenter",
+      isOwner: false,
+    })
+
+    await receiveComment({
+      integrationType: "tiktok",
+      integrationIdentifier: "inbox-1",
+      commentData: {
+        commentId: "comment-tiktok-4",
+        fromId: "",
+        postId: "photo-post-1",
+        createdTime: 1_783_674_106,
+      },
+      tiktokIdentityRecheck: { source: "visibility" },
+    })
+
+    expect(mockSettleTiktokRecheck).toHaveBeenCalledWith({
+      integrationIdentifier: "inbox-1",
+      commentId: "comment-tiktok-4",
+    })
+    expect(mockIntegrationQueueAdd).toHaveBeenCalledWith(
+      "processCommentAutomation",
+      expect.objectContaining({
+        data: expect.objectContaining({
+          message: "bac",
+          fromId: "+ABc1D2/E0fGhijkl",
+        }),
+      }),
+      expect.anything(),
+    )
   })
 
   test("downloads and re-hosts a Threads commenter's avatar from the webhook payload", async () => {
