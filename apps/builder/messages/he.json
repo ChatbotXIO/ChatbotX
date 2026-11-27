@@ -5115,8 +5115,10 @@
       "allowEdit": "אפשר עריכה לאחר ההתקנה",
       "allowDelete": "אפשר מחיקה לאחר ההתקנה",
       "publisherName": "שם המפרסם",
-      "video": "סרטון",
+      "video": "סרטון שער",
       "videoDescription": "הדביקו קישור לסרטון YouTube, Vimeo, Streamable או Cloudinary, או את קוד ההטמעה מאותה פלטפורמה. השאירו ריק אם אין סרטון.",
+      "videoEmpty": "הדביקו למטה קישור לסרטון כדי לצפות בתצוגה מקדימה כאן.",
+      "videoOrientationNote": "כיוון הסרטון (לרוחב או לאורך) מזוהה בעת השמירה.",
       "videoPreviewTitle": "תצוגה מקדימה של הסרטון",
       "videoErrors": {
         "tooLong": "קישור הסרטון או קוד ההטמעה ארוך מדי",

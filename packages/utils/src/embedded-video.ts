@@ -18,6 +18,20 @@ export const EMBEDDED_VIDEO_PROVIDER_IDS = [
 ] as const
 export type EmbeddedVideoProvider = (typeof EMBEDDED_VIDEO_PROVIDER_IDS)[number]
 
+/**
+ * Providers whose link carries no ratio, so the server reads it from the
+ * provider's oEmbed when a template is saved. (YouTube's comes from the link:
+ * Shorts; Cloudinary's from the embed code or the file itself.)
+ */
+export const EMBEDDED_VIDEO_OEMBED_PROVIDERS = ["vimeo", "streamable"] as const
+export type EmbeddedVideoOEmbedProvider =
+  (typeof EMBEDDED_VIDEO_OEMBED_PROVIDERS)[number]
+
+export const usesOEmbedAspectRatio = (
+  provider: EmbeddedVideoProvider,
+): provider is EmbeddedVideoOEmbedProvider =>
+  (EMBEDDED_VIDEO_OEMBED_PROVIDERS as readonly string[]).includes(provider)
+
 export const EMBEDDED_VIDEO_SOURCE_MAX_LENGTH = 4000
 
 /** Shown when a video has no known orientation. */

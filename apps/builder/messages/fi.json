@@ -7534,8 +7534,10 @@
       "allowEdit": "Salli muokkaus asennuksen jälkeen",
       "allowDelete": "Salli poistaminen asennuksen jälkeen",
       "publisherName": "Julkaisijan nimi",
-      "video": "Video",
+      "video": "Kansivideo",
       "videoDescription": "Liitä YouTube-, Vimeo-, Streamable- tai Cloudinary-videon linkki tai kyseisen palvelun upotuskoodi. Jätä tyhjäksi, jos videota ei ole.",
+      "videoEmpty": "Liitä videolinkki alle nähdäksesi esikatselun tässä.",
+      "videoOrientationNote": "Videon suunta (vaaka tai pysty) tunnistetaan tallennettaessa.",
       "videoPreviewTitle": "Videon esikatselu",
       "videoErrors": {
         "tooLong": "Videolinkki tai upotuskoodi on liian pitkä",

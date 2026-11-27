@@ -7534,8 +7534,10 @@
       "allowEdit": "インストール後の編集を許可",
       "allowDelete": "インストール後の削除を許可",
       "publisherName": "公開者名",
-      "video": "動画",
+      "video": "カバー動画",
       "videoDescription": "YouTube、Vimeo、Streamable、Cloudinary の動画リンク、またはそのプラットフォームの埋め込みコードを貼り付けてください。動画がない場合は空欄のままにします。",
+      "videoEmpty": "下に動画のリンクを貼り付けると、ここにプレビューが表示されます。",
+      "videoOrientationNote": "動画の向き（横長か縦長）は保存時に判定されます。",
       "videoPreviewTitle": "動画のプレビュー",
       "videoErrors": {
         "tooLong": "動画のリンクまたは埋め込みコードが長すぎます",

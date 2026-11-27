@@ -7534,8 +7534,10 @@
       "allowEdit": "Yüklemeden sonra düzenlemeye izin ver",
       "allowDelete": "Yüklemeden sonra silmeye izin ver",
       "publisherName": "Yayıncı adı",
-      "video": "Video",
+      "video": "Kapak videosu",
       "videoDescription": "Bir YouTube, Vimeo, Streamable veya Cloudinary video bağlantısını ya da o platformun gömme kodunu yapıştırın. Video yoksa boş bırakın.",
+      "videoEmpty": "Burada önizlemek için aşağıya bir video bağlantısı yapıştırın.",
+      "videoOrientationNote": "Videonun yönü (yatay veya dikey) kaydettiğinizde algılanır.",
       "videoPreviewTitle": "Video önizlemesi",
       "videoErrors": {
         "tooLong": "Video bağlantısı veya gömme kodu çok uzun",

@@ -2,7 +2,10 @@
 
 import { toEmbeddedVideoAspectRatio } from "@chatbotx.io/utils/embedded-video"
 import { useEffect, useRef, useState } from "react"
-import { getEmbeddedVideoBox } from "./embedded-video-box"
+import {
+  type EmbeddedVideoFit,
+  getEmbeddedVideoBox,
+} from "./embedded-video-box"
 
 type EmbeddedVideoFileProps = {
   /** The stored ratio, or the 16:9 default while the real one is unknown. */
@@ -10,6 +13,7 @@ type EmbeddedVideoFileProps = {
   src: string
   title: string
   coverUrl?: string
+  fit?: EmbeddedVideoFit
 }
 
 /**
@@ -22,11 +26,12 @@ export function EmbeddedVideoFile({
   src,
   title,
   coverUrl,
+  fit,
 }: EmbeddedVideoFileProps) {
   const [measuredRatio, setMeasuredRatio] = useState<number | null>(null)
   const [hasFailed, setHasFailed] = useState(false)
   const videoRef = useRef<HTMLVideoElement>(null)
-  const box = getEmbeddedVideoBox(measuredRatio ?? aspectRatio)
+  const box = getEmbeddedVideoBox(measuredRatio ?? aspectRatio, fit)
 
   // The server-rendered <video> can fail or load its metadata before React
   // attaches `onError` / `onLoadedMetadata` (each event fires once and is

@@ -7534,8 +7534,10 @@
       "allowEdit": "Permitir edição após a instalação",
       "allowDelete": "Permitir eliminação após a instalação",
       "publisherName": "Nome do publicador",
-      "video": "Vídeo",
+      "video": "Vídeo de capa",
       "videoDescription": "Cole a ligação de um vídeo do YouTube, Vimeo, Streamable ou Cloudinary, ou o código de incorporação dessa plataforma. Deixe vazio se não houver vídeo.",
+      "videoEmpty": "Cole uma ligação de vídeo abaixo para ver a pré-visualização aqui.",
+      "videoOrientationNote": "A orientação do vídeo (horizontal ou vertical) é detetada ao guardar.",
       "videoPreviewTitle": "Pré-visualização do vídeo",
       "videoErrors": {
         "tooLong": "A ligação ou o código de incorporação do vídeo é demasiado longo",

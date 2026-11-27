@@ -7534,8 +7534,10 @@
       "allowEdit": "Izinkan pengeditan setelah instalasi",
       "allowDelete": "Izinkan penghapusan setelah instalasi",
       "publisherName": "Nama penerbit",
-      "video": "Video",
+      "video": "Video sampul",
       "videoDescription": "Tempel tautan video YouTube, Vimeo, Streamable, atau Cloudinary, atau kode sematan dari platform tersebut. Kosongkan jika tidak ada video.",
+      "videoEmpty": "Tempel tautan video di bawah untuk melihat pratinjaunya di sini.",
+      "videoOrientationNote": "Orientasi video (lanskap atau potret) terdeteksi saat Anda menyimpan.",
       "videoPreviewTitle": "Pratinjau video",
       "videoErrors": {
         "tooLong": "Tautan atau kode sematan video terlalu panjang",

@@ -7534,8 +7534,10 @@
       "allowEdit": "Bewerken na installatie toestaan",
       "allowDelete": "Verwijderen na installatie toestaan",
       "publisherName": "Naam uitgever",
-      "video": "Video",
+      "video": "Omslagvideo",
       "videoDescription": "Plak een link naar een YouTube-, Vimeo-, Streamable- of Cloudinary-video, of de insluitcode van dat platform. Laat leeg als er geen video is.",
+      "videoEmpty": "Plak hieronder een videolink om hier een voorbeeld te zien.",
+      "videoOrientationNote": "De oriëntatie van de video (liggend of staand) wordt bij het opslaan bepaald.",
       "videoPreviewTitle": "Videovoorbeeld",
       "videoErrors": {
         "tooLong": "De videolink of insluitcode is te lang",

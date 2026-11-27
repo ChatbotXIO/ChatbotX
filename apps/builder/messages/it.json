@@ -7534,8 +7534,10 @@
       "allowEdit": "Consenti la modifica dopo l'installazione",
       "allowDelete": "Consenti l'eliminazione dopo l'installazione",
       "publisherName": "Nome dell'editore",
-      "video": "Video",
+      "video": "Video di copertina",
       "videoDescription": "Incolla il link di un video YouTube, Vimeo, Streamable o Cloudinary, oppure il codice di incorporamento di quella piattaforma. Lascia vuoto se non c'è un video.",
+      "videoEmpty": "Incolla qui sotto un link video per vederne l'anteprima.",
+      "videoOrientationNote": "L'orientamento del video (orizzontale o verticale) viene rilevato al salvataggio.",
       "videoPreviewTitle": "Anteprima del video",
       "videoErrors": {
         "tooLong": "Il link o il codice di incorporamento del video è troppo lungo",

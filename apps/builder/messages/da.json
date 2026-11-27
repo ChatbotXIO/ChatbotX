@@ -7534,8 +7534,10 @@
       "allowEdit": "Tillad redigering efter installation",
       "allowDelete": "Tillad sletning efter installation",
       "publisherName": "Udgivernavn",
-      "video": "Video",
+      "video": "Covervideo",
       "videoDescription": "Indsæt et link til en YouTube-, Vimeo-, Streamable- eller Cloudinary-video, eller indlejringskoden fra den platform. Lad feltet være tomt, hvis der ikke er nogen video.",
+      "videoEmpty": "Indsæt et videolink nedenfor for at se en forhåndsvisning her.",
+      "videoOrientationNote": "Videoens retning (liggende eller stående) registreres, når du gemmer.",
       "videoPreviewTitle": "Forhåndsvisning af video",
       "videoErrors": {
         "tooLong": "Videolinket eller indlejringskoden er for langt",

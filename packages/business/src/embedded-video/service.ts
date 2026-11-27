@@ -1,12 +1,13 @@
 import {
   type EmbeddedVideo,
+  type EmbeddedVideoOEmbedProvider,
   type EmbeddedVideoParseFailure,
   type EmbeddedVideoParseFailureReason,
-  type EmbeddedVideoProvider,
   isSameEmbeddedVideo,
   parseEmbeddedVideoSource,
   toEmbeddedVideoAspectRatio,
   toEmbeddedVideoView,
+  usesOEmbedAspectRatio,
 } from "@chatbotx.io/utils/embedded-video"
 import { z } from "zod"
 import { logger } from "../logger"
@@ -17,8 +18,9 @@ import { logger } from "../logger"
  * SSRF surface. YouTube is not listed: its orientation comes from the link
  * (Shorts), and its oEmbed rejects the embed forms.
  */
-const EMBEDDED_VIDEO_OEMBED_ENDPOINTS: Partial<
-  Record<EmbeddedVideoProvider, string>
+const EMBEDDED_VIDEO_OEMBED_ENDPOINTS: Record<
+  EmbeddedVideoOEmbedProvider,
+  string
 > = {
   vimeo: "https://vimeo.com/api/oembed.json",
   streamable: "https://api.streamable.com/oembed.json",
@@ -128,10 +130,10 @@ class EmbeddedVideoService {
     ) {
       return { ok: true, video: { ...video, aspectRatio: current.aspectRatio } }
     }
-    const endpoint = EMBEDDED_VIDEO_OEMBED_ENDPOINTS[video.provider]
-    if (!endpoint) {
+    if (!usesOEmbedAspectRatio(video.provider)) {
       return { ok: true, video }
     }
+    const endpoint = EMBEDDED_VIDEO_OEMBED_ENDPOINTS[video.provider]
     try {
       const aspectRatio = await fetchOEmbedAspectRatio(
         endpoint,

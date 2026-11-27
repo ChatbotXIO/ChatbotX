@@ -7534,8 +7534,10 @@
       "allowEdit": "Permitir edición después de instalar",
       "allowDelete": "Permitir eliminación después de instalar",
       "publisherName": "Nombre del publicador",
-      "video": "Vídeo",
+      "video": "Vídeo de portada",
       "videoDescription": "Pega el enlace de un vídeo de YouTube, Vimeo, Streamable o Cloudinary, o el código de inserción de esa plataforma. Déjalo vacío si no hay vídeo.",
+      "videoEmpty": "Pega un enlace de vídeo abajo para previsualizarlo aquí.",
+      "videoOrientationNote": "La orientación del vídeo (horizontal o vertical) se detecta al guardar.",
       "videoPreviewTitle": "Vista previa del vídeo",
       "videoErrors": {
         "tooLong": "El enlace o el código de inserción del vídeo es demasiado largo",

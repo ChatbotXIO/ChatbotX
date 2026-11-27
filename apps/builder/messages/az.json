@@ -8412,8 +8412,10 @@
       "allowEdit": "Quraşdırıldıqdan sonra redaktəyə icazə ver",
       "allowDelete": "Quraşdırıldıqdan sonra silməyə icazə ver",
       "publisherName": "Dərc edənin adı",
-      "video": "Video",
+      "video": "Örtük videosu",
       "videoDescription": "YouTube, Vimeo, Streamable və ya Cloudinary video linkini və ya həmin platformanın yerləşdirmə kodunu yapışdırın. Video yoxdursa, boş buraxın.",
+      "videoEmpty": "Burada önizləmək üçün aşağıya video linki yapışdırın.",
+      "videoOrientationNote": "Videonun istiqaməti (üfüqi və ya şaquli) yadda saxlayanda müəyyən edilir.",
       "videoPreviewTitle": "Videoya önbaxış",
       "videoErrors": {
         "tooLong": "Video linki və ya yerləşdirmə kodu çox uzundur",

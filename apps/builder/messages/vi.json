@@ -7768,8 +7768,10 @@
       "allowEdit": "Cho phép chỉnh sửa sau khi cài đặt",
       "allowDelete": "Cho phép xóa sau khi cài đặt",
       "publisherName": "Tên nhà xuất bản",
-      "video": "Video",
+      "video": "Video bìa",
       "videoDescription": "Dán liên kết video YouTube, Vimeo, Streamable hoặc Cloudinary, hoặc mã nhúng của nền tảng đó. Để trống nếu không có video.",
+      "videoEmpty": "Dán liên kết video bên dưới để xem trước tại đây.",
+      "videoOrientationNote": "Hướng của video (ngang hoặc dọc) sẽ được nhận diện khi bạn lưu.",
       "videoPreviewTitle": "Xem trước video",
       "videoErrors": {
         "tooLong": "Liên kết hoặc mã nhúng video quá dài",

@@ -7541,8 +7541,10 @@
       "allowEdit": "Tillåt redigering efter installation",
       "allowDelete": "Tillåt borttagning efter installation",
       "publisherName": "Utgivarens namn",
-      "video": "Video",
+      "video": "Omslagsvideo",
       "videoDescription": "Klistra in en länk till en YouTube-, Vimeo-, Streamable- eller Cloudinary-video, eller inbäddningskoden från den plattformen. Lämna tomt om det inte finns någon video.",
+      "videoEmpty": "Klistra in en videolänk nedan för att se en förhandsvisning här.",
+      "videoOrientationNote": "Videons orientering (liggande eller stående) identifieras när du sparar.",
       "videoPreviewTitle": "Förhandsgranskning av video",
       "videoErrors": {
         "tooLong": "Videolänken eller inbäddningskoden är för lång",

@@ -81,6 +81,24 @@ describe("embedded video player: iframe", () => {
   })
 })
 
+describe("embedded video player: frame fit", () => {
+  test("fills a frame's width when landscape and its height when portrait, with no page sizing", () => {
+    const landscape = renderToStaticMarkup(
+      <EmbeddedVideoPlayer fit="frame" title="t" video={viewOf(YOUTUBE)} />,
+    )
+    const portrait = renderToStaticMarkup(
+      <EmbeddedVideoPlayer fit="frame" title="t" video={viewOf(SHORT)} />,
+    )
+
+    expect(landscape).toContain("w-full overflow-hidden")
+    expect(portrait).toContain("h-full overflow-hidden")
+    for (const html of [landscape, portrait]) {
+      expect(html).not.toContain("max-w-3xl")
+      expect(html).not.toContain("70vh")
+    }
+  })
+})
+
 describe("embedded video player: file", () => {
   let container: HTMLDivElement
   let root: Root

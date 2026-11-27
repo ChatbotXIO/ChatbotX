@@ -7534,8 +7534,10 @@
       "allowEdit": "Autoriser la modification après installation",
       "allowDelete": "Autoriser la suppression après installation",
       "publisherName": "Nom de l'éditeur",
-      "video": "Vidéo",
+      "video": "Vidéo de couverture",
       "videoDescription": "Collez le lien d'une vidéo YouTube, Vimeo, Streamable ou Cloudinary, ou le code d'intégration de cette plateforme. Laissez vide s'il n'y a pas de vidéo.",
+      "videoEmpty": "Collez un lien vidéo ci-dessous pour l'aperçu ici.",
+      "videoOrientationNote": "L'orientation de la vidéo (paysage ou portrait) est détectée à l'enregistrement.",
       "videoPreviewTitle": "Aperçu de la vidéo",
       "videoErrors": {
         "tooLong": "Le lien ou le code d'intégration de la vidéo est trop long",

@@ -1,5 +1,8 @@
 import type { EmbeddedVideoView } from "@chatbotx.io/utils/embedded-video"
-import { getEmbeddedVideoBox } from "./embedded-video-box"
+import {
+  type EmbeddedVideoFit,
+  getEmbeddedVideoBox,
+} from "./embedded-video-box"
 import { EmbeddedVideoFile } from "./embedded-video-file"
 
 type EmbeddedVideoPlayerProps = {
@@ -8,6 +11,8 @@ type EmbeddedVideoPlayerProps = {
   title: string
   /** Shown as the poster of a file video, and instead of it when it fails. */
   coverUrl?: string
+  /** `frame` fits the video inside a fixed-size frame (the form preview); default is the public page sizing. */
+  fit?: EmbeddedVideoFit
 }
 
 /**
@@ -20,6 +25,7 @@ export function EmbeddedVideoPlayer({
   video,
   title,
   coverUrl,
+  fit,
 }: EmbeddedVideoPlayerProps) {
   const { playback } = video
   if (playback.kind === "file") {
@@ -27,6 +33,7 @@ export function EmbeddedVideoPlayer({
       <EmbeddedVideoFile
         aspectRatio={video.aspectRatio}
         coverUrl={coverUrl}
+        fit={fit}
         key={playback.src}
         src={playback.src}
         title={title}
@@ -34,7 +41,7 @@ export function EmbeddedVideoPlayer({
     )
   }
 
-  const box = getEmbeddedVideoBox(video.aspectRatio)
+  const box = getEmbeddedVideoBox(video.aspectRatio, fit)
   return (
     <div className={box.className} style={box.style}>
       <iframe

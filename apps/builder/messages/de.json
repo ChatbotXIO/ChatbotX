@@ -7534,8 +7534,10 @@
       "allowEdit": "Bearbeitung nach Installation erlauben",
       "allowDelete": "Löschen nach Installation erlauben",
       "publisherName": "Name des Herausgebers",
-      "video": "Video",
+      "video": "Titelvideo",
       "videoDescription": "Füge einen Link zu einem YouTube-, Vimeo-, Streamable- oder Cloudinary-Video ein oder den Einbettungscode dieser Plattform. Leer lassen, wenn es kein Video gibt.",
+      "videoEmpty": "Fügen Sie unten einen Videolink ein, um hier eine Vorschau zu sehen.",
+      "videoOrientationNote": "Die Ausrichtung des Videos (Quer- oder Hochformat) wird beim Speichern erkannt.",
       "videoPreviewTitle": "Videovorschau",
       "videoErrors": {
         "tooLong": "Der Videolink oder Einbettungscode ist zu lang",

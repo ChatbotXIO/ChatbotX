@@ -8412,8 +8412,10 @@
       "allowEdit": "Allow editing after install",
       "allowDelete": "Allow deleting after install",
       "publisherName": "Publisher name",
-      "video": "Video",
+      "video": "Cover video",
       "videoDescription": "Paste a link to a YouTube, Vimeo, Streamable or Cloudinary video, or the embed code from that platform. Leave empty for no video.",
+      "videoEmpty": "Paste a video link below to preview it here.",
+      "videoOrientationNote": "The video's orientation (landscape or portrait) is detected when you save.",
       "videoPreviewTitle": "Video preview",
       "videoErrors": {
         "tooLong": "The video link or embed code is too long",

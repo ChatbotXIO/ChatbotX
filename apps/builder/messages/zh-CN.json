@@ -7541,8 +7541,10 @@
       "allowEdit": "允许安装后编辑",
       "allowDelete": "允许安装后删除",
       "publisherName": "发布者名称",
-      "video": "视频",
+      "video": "封面视频",
       "videoDescription": "粘贴 YouTube、Vimeo、Streamable 或 Cloudinary 的视频链接，或该平台的嵌入代码。没有视频请留空。",
+      "videoEmpty": "在下方粘贴视频链接，即可在此预览。",
+      "videoOrientationNote": "视频方向（横向或竖向）将在保存时识别。",
       "videoPreviewTitle": "视频预览",
       "videoErrors": {
         "tooLong": "视频链接或嵌入代码过长",

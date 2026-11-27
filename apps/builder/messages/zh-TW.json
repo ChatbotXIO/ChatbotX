@@ -7580,8 +7580,10 @@
       "allowEdit": "允許安裝後編輯",
       "allowDelete": "允許安裝後刪除",
       "publisherName": "發布者名稱",
-      "video": "影片",
+      "video": "封面影片",
       "videoDescription": "貼上 YouTube、Vimeo、Streamable 或 Cloudinary 的影片連結，或該平台的嵌入程式碼。沒有影片請留空。",
+      "videoEmpty": "在下方貼上影片連結，即可在此預覽。",
+      "videoOrientationNote": "影片方向（橫向或直向）將在儲存時偵測。",
       "videoPreviewTitle": "影片預覽",
       "videoErrors": {
         "tooLong": "影片連結或嵌入程式碼過長",

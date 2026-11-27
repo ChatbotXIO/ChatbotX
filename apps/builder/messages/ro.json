@@ -8361,8 +8361,10 @@
       "allowEdit": "Permite editarea după instalare",
       "allowDelete": "Permite ștergerea după instalare",
       "publisherName": "Numele editorului",
-      "video": "Video",
+      "video": "Video de copertă",
       "videoDescription": "Lipește linkul unui videoclip YouTube, Vimeo, Streamable sau Cloudinary ori codul de încorporare de pe acea platformă. Lasă gol dacă nu există videoclip.",
+      "videoEmpty": "Lipiți mai jos un link video pentru a-l previzualiza aici.",
+      "videoOrientationNote": "Orientarea videoclipului (peisaj sau portret) este detectată la salvare.",
       "videoPreviewTitle": "Previzualizare video",
       "videoErrors": {
         "tooLong": "Linkul sau codul de încorporare al videoclipului este prea lung",
