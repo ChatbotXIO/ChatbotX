@@ -695,6 +695,9 @@ describe("ConnectionStateService.commitReconnect", () => {
   test.each([
     "manual",
     "tenant_suspended",
+    // Disconnected before the reason column existed: its unit was released by
+    // `inboxService.disconnect` too, so reviving it must consume one again.
+    null,
   ])("resumes an orphan inbox disconnected as %s through the limit-checked resume instead of mirroring it for free", async (disconnectReason) => {
     mocks.findByInboxId.mockResolvedValue(undefined)
     mocks.findInbox.mockResolvedValue({
@@ -715,6 +718,8 @@ describe("ConnectionStateService.commitReconnect", () => {
         inboxId: "inbox-1",
         workspaceId: "ws-1",
         ownerId: "owner-1",
+        // Joins the reconnect transaction, so its usage row rolls back with it.
+        tx: {},
       }),
     )
     expect(mocks.mirrorInbox).not.toHaveBeenCalled()

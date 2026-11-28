@@ -637,6 +637,18 @@ class InboxService extends BaseService {
         { inboxId: props.inboxId, workspaceId: props.workspaceId },
         client,
       )
+      if (props.tx) {
+        // On the caller's transaction, so a rollback undoes the usage row with
+        // it and the caller's compensation (`rollback`) only corrects Redis. A
+        // failed write has already aborted that transaction, so it is not
+        // swallowed: the catch below gives the quota unit back.
+        await workspaceUsageService.increment(
+          props.workspaceId,
+          "channels",
+          1,
+          props.tx,
+        )
+      }
     } catch (err) {
       // The unit was consumed above; the inbox never came back, so give it
       // back instead of leaking one until the nightly reconcile.
@@ -651,6 +663,9 @@ class InboxService extends BaseService {
       throw err
     }
 
+    if (props.tx) {
+      return
+    }
     // Display-only breakdown, mirroring `create`'s increment. Never let a
     // failure here affect the authoritative quota unit already consumed above.
     await workspaceUsageService

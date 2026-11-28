@@ -8,6 +8,7 @@ const mocks = vi.hoisted(() => ({
   resetAfterAuthChange: vi.fn(),
   releaseParkedForInbox: vi.fn(),
   tryConsume: vi.fn(),
+  release: vi.fn(),
   increment: vi.fn(),
 }))
 
@@ -19,7 +20,10 @@ vi.mock("@chatbotx.io/database/repositories", async (importActual) => ({
   },
 }))
 vi.mock("../src/quota-enforcement/service", () => ({
-  quotaEnforcementService: { tryConsume: mocks.tryConsume },
+  quotaEnforcementService: {
+    tryConsume: mocks.tryConsume,
+    release: mocks.release,
+  },
 }))
 vi.mock("../src/workspace-usage/service", () => ({
   workspaceUsageService: { increment: mocks.increment },
@@ -53,8 +57,10 @@ const data = {
 beforeEach(() => {
   vi.clearAllMocks()
   mocks.tryConsume.mockResolvedValue({ ok: true })
+  mocks.release.mockResolvedValue(undefined)
   mocks.increment.mockResolvedValue(true)
   mocks.resetAfterAuthChange.mockResolvedValue(true)
+  where.mockImplementation(() => ({ returning }))
 })
 
 describe("inboxService.create", () => {
@@ -93,5 +99,92 @@ describe("inboxService.resumeTenantSuspended", () => {
       { inboxId: "inbox-1", workspaceId: "ws-1", now: expect.any(Date) },
       tx,
     )
+  })
+
+  test("writes the workspace usage row on the caller's transaction so a rollback undoes it", async () => {
+    await inboxService.resumeTenantSuspended({
+      inboxId: "inbox-1",
+      workspaceId: "ws-1",
+      ownerId: "owner-1",
+      tx: tx as never,
+    })
+
+    expect(mocks.increment).toHaveBeenCalledExactlyOnceWith(
+      "ws-1",
+      "channels",
+      1,
+      tx,
+    )
+  })
+
+  test("gives the quota unit back and rethrows when the usage write fails on the caller's transaction", async () => {
+    const usageError = new Error("usage upsert failed")
+    mocks.increment.mockRejectedValueOnce(usageError)
+
+    await expect(
+      inboxService.resumeTenantSuspended({
+        inboxId: "inbox-1",
+        workspaceId: "ws-1",
+        ownerId: "owner-1",
+        tx: tx as never,
+      }),
+    ).rejects.toBe(usageError)
+
+    expect(mocks.release).toHaveBeenCalledExactlyOnceWith({
+      userId: "owner-1",
+      metric: "channels",
+    })
+  })
+
+  test("gives the quota unit back when the inbox update fails, without touching usage", async () => {
+    const updateError = new Error("update failed")
+    where.mockImplementationOnce(() => {
+      throw updateError
+    })
+
+    await expect(
+      inboxService.resumeTenantSuspended({
+        inboxId: "inbox-1",
+        workspaceId: "ws-1",
+        ownerId: "owner-1",
+        tx: tx as never,
+      }),
+    ).rejects.toBe(updateError)
+
+    expect(mocks.release).toHaveBeenCalledExactlyOnceWith({
+      userId: "owner-1",
+      metric: "channels",
+    })
+    expect(mocks.increment).not.toHaveBeenCalled()
+  })
+
+  test("without a caller transaction, a usage failure is best-effort and keeps the consumed unit", async () => {
+    mocks.increment.mockRejectedValueOnce(new Error("usage upsert failed"))
+
+    await inboxService.resumeTenantSuspended({
+      inboxId: "inbox-1",
+      workspaceId: "ws-1",
+      ownerId: "owner-1",
+    })
+
+    expect(mocks.increment).toHaveBeenCalledExactlyOnceWith("ws-1", "channels")
+    expect(mocks.release).not.toHaveBeenCalled()
+  })
+
+  test("does not resume when the channel limit is reached", async () => {
+    mocks.tryConsume.mockResolvedValueOnce({ ok: false, level: "pool" })
+
+    await expect(
+      inboxService.resumeTenantSuspended({
+        inboxId: "inbox-1",
+        workspaceId: "ws-1",
+        ownerId: "owner-1",
+        tx: tx as never,
+      }),
+    ).rejects.toMatchObject({ code: expect.anything() })
+
+    expect(tx.update).not.toHaveBeenCalled()
+    expect(mocks.increment).not.toHaveBeenCalled()
+    expect(mocks.release).not.toHaveBeenCalled()
   })
 })

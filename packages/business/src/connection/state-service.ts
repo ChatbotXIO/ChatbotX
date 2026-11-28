@@ -422,7 +422,10 @@ class ConnectionStateService extends BaseService {
    * `markLegacyInboxUnhealthy`) never released its unit, so the mirror alone is
    * right. Every other disconnect reason went through `inboxService.disconnect`,
    * which released the unit: reviving without consuming one again would bypass
-   * the channel limit, so those go through the limit-checked resume.
+   * the channel limit, so those go through the limit-checked resume. A `null`
+   * reason (an inbox disconnected before the column existed) counts as released
+   * too: consuming one unit too many is corrected by the reconcile, while
+   * reviving for free would let the owner (or a reseller pool) exceed its limit.
    */
   private async reconnectOrphanInbox(input: {
     inboxId: string
@@ -441,7 +444,6 @@ class ConnectionStateService extends BaseService {
 
     const quotaReleased =
       inbox?.status === inboxStatuses.enum.disconnected &&
-      inbox.disconnectReason !== null &&
       inbox.disconnectReason !== "token_revoked"
     if (quotaReleased) {
       const ownerId =
