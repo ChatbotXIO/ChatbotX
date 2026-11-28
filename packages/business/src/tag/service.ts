@@ -465,6 +465,9 @@ class TagService extends BaseService {
           upserted.length > 0
             ? await tx.query.tagModel.findMany({
                 where: { id: { in: upserted.map((tag) => tag.id) } },
+                // A fixed insert order: two replaces linking overlapping tags
+                // take the row locks in the same order instead of deadlocking.
+                orderBy: { id: "asc" },
               })
             : []
         const wantedIds = tags.map((tag) => tag.id)
@@ -561,9 +564,20 @@ class TagService extends BaseService {
         })
       }
     } finally {
-      // The write committed: the caches drop even when a downstream enqueue fails.
-      await this.invalidateCacheTags(tagCacheTags(workspaceId))
-      await contactService.invalidate({ workspaceId, ids: [contact.id] })
+      // The write committed: both caches drop even when a downstream enqueue
+      // fails, each on its own, and a cache failure never hides that error.
+      const invalidations = await Promise.allSettled([
+        this.invalidateCacheTags(tagCacheTags(workspaceId)),
+        contactService.invalidate({ workspaceId, ids: [contact.id] }),
+      ])
+      for (const invalidation of invalidations) {
+        if (invalidation.status === "rejected") {
+          logger.error(
+            { err: invalidation.reason, workspaceId, contactId: contact.id },
+            "Failed to invalidate caches after replacing contact tags",
+          )
+        }
+      }
     }
 
     return returnedTags

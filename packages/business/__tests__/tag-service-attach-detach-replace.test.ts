@@ -1011,4 +1011,42 @@ describe("tagService.replaceContactTagsByNames", () => {
       ids: ["c-1"],
     })
   })
+
+  test("a failing tag cache drop still drops the contact cache and keeps the enqueue error", async () => {
+    state.findOrFailResult = { id: "c-1" }
+    setChangedLinks({ inserted: ["tag-1"] })
+    state.txTagFindMany = [{ id: "tag-1", name: "alpha" }]
+    enqueueAttach.mockRejectedValueOnce(new Error("queue down"))
+    invalidateCacheByTags.mockRejectedValueOnce(new Error("redis down"))
+
+    await expect(
+      tagService.replaceContactTagsByNames({
+        workspaceId: "ws-9",
+        contactId: "c-1",
+        names: ["alpha"],
+      }),
+    ).rejects.toThrow("queue down")
+
+    expect(contactInvalidate).toHaveBeenCalledWith({
+      workspaceId: "ws-9",
+      ids: ["c-1"],
+    })
+  })
+
+  test("a failing cache drop alone does not fail a replace that wrote its links", async () => {
+    state.findOrFailResult = { id: "c-1" }
+    setChangedLinks({ inserted: ["tag-1"] })
+    state.txTagFindMany = [{ id: "tag-1", name: "alpha" }]
+    contactInvalidate.mockRejectedValueOnce(new Error("redis down"))
+
+    await expect(
+      tagService.replaceContactTagsByNames({
+        workspaceId: "ws-9",
+        contactId: "c-1",
+        names: ["alpha"],
+      }),
+    ).resolves.toEqual([{ id: "tag-1", name: "alpha" }])
+
+    expect(invalidateCacheByTags).toHaveBeenCalledWith(["tags", "tags:ws-9"])
+  })
 })
